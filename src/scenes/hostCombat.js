@@ -714,7 +714,7 @@ export function windupFeedback(word, f, { audio = null, hitEffects = null, shake
   if (word === 'stagger') {
     hitEffects?.showMissEffect?.('clang', at, { scale: 2.5 });
     audio?.play3d?.(SOUND.Hit2, at, 1, { maxDistance: 16 });
-    if (basics?.barkSound != null && (f.mobileType < 128 || f.mobileType === KNIGHT_CITY_WATCH)) audio?.play3d?.(basics.barkSound, at, 1, { maxDistance: 16, pitch: 0.7 });
+    if (basics?.barkSound != null && (f.mobileType < 128 || (f.mobileType === KNIGHT_CITY_WATCH && !f.quietVoice))) audio?.play3d?.(basics.barkSound, at, 1, { maxDistance: 16, pitch: 0.7 });   // HALT-ONE: the living watch's stagger is a person's - its one voice is its call (cityGuards.js)
     shake?.(0.6);
   } else if (word === 'hold' && basics?.parrySounds) {
     audio?.play3d?.(PARRY_1 + Math.floor(rolls() * PARRY_SOUND_COUNT), at, PARRY_VOLUME, { maxDistance: 16 });
@@ -757,7 +757,7 @@ export function tellCues(f, audio, hearing = 1, now = tacticsNow()) {
     if (s.key === LOCAL_TARGET) { markFoeThreat(f); try { _windupAtMe?.(f, b); } catch { /* a warning is no blow's business */ } }   // TELL9: a foe winding up at me takes the target bar; RVN11: the host hears it begin
     if (!b.feint) {
       // RVN5 (Feud-Arc.md 16.1): a signature's WIND deeper (`b.windPitch`)
-      if (ignoreHumanSounds(f.mobileType)) play(SOUND.SwingMediumPitch, b.windPitch ? TELL.WIND_CLASS_PITCH * (b.windPitch / TELL.WIND_PITCH) : TELL.WIND_CLASS_PITCH, TELL.WIND_CLASS_VOLUME);
+      if (ignoreHumanSounds(f.mobileType) || f.quietVoice) play(SOUND.SwingMediumPitch, b.windPitch ? TELL.WIND_CLASS_PITCH * (b.windPitch / TELL.WIND_PITCH) : TELL.WIND_CLASS_PITCH, TELL.WIND_CLASS_VOLUME);   // HALT-ONE: the living watch's wind-up is a person's low swing - never its Halt
       else play(row?.barkSound, b.windPitch ?? TELL.WIND_PITCH);
     }
   }

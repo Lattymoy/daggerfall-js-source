@@ -84,7 +84,7 @@ import {
   backstabChanceOf, tallySwingSkills,
   zeroDamageHitSound,
   enemyMissSound, enemyAttackVoice, enemyPainVoice, playerAttackGrunt,   // C2-slice (combat-9/17)
-  tickEnemySound, playEnemyClip,   // AUDIT 24 (wave 41)
+  tickEnemySound, playEnemyClip, enemySoundOccluded,   // AUDIT 24 (wave 41); HALT-ONE: the one voice's call, dampened as an attract sound is
   tryLanguagePacification,         // AUDIT 24 (wave 42)
 } from './hostCombat.js';   // AUDIT 18: the laws every host must share
 import { billboardSize, mobileBillboardSize } from '../world/rmbFlats.js';
@@ -99,7 +99,7 @@ import { corpseName, mobileEntityName, liveEntityName } from '../systems/worldTo
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // GetLocalizedEnemyName, the index law in one place
 import { bloodCentre } from './hitEffects.js';   // AUDIT 24 (wave 39): EnemyBlood.ShowBloodSplash
 import { bloodHit, LETHAL_HIT } from '../combat/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
-import { EnemySoundSource, acuteHearingMultiplier } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home
+import { EnemySoundSource, acuteHearingMultiplier, WatchVoice, ATTRACT_RADIUS, OCCLUDED_VOLUME_SCALE } from '../characters/enemySounds.js';   // AUDIT 24 (wave 41): EnemySounds.cs, one home; HALT-ONE: the watch's one voice
 import { placeFoeEnv, entityOccupancy } from './questFoeHost.js';   // D9: FoeSpawner.PlaceFoeFreely's env, over THIS pool's collider
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // D9: PlayerEntity.cs:687 spawns through FoeSpawner like everything else
 import { SPAWNER_ARMS } from '../systems/encounters.js';   // the CreateFoeSpawner call-site table - cityGuards is one of its rows
@@ -168,7 +168,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // with no Y test. The default keeps the two street pools as they were.
   playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:233).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:234).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -191,12 +191,21 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // into a shop meets action doors and must walk at them, not detour.
   // The two STREET pools pass nothing and keep the `() => false`
   // fallback, which is right for them.
-  isActionDoor = null }) {
+  isActionDoor = null,
+  // HALT-ONE (2026-10-05, Mac: "reduce the HALT noise"): the living watch's lane - () => true where the town is the
+  // living world's (scenes/world.js, scenes/worldModes.js: livingWorldOn). The watch then CALLS AS ONE
+  // (characters/enemySounds.js WatchVoice): one Halt as it first comes for the player, then at most one every
+  // HALT_GAP_S from the whole watch while it is after him; never a defender's, a pacified, running or walking-away
+  // watchman's, and nobody's while a window is over the world (`windowUp`). Off - the classic skin, the row off, the
+  // fixed-city page - EnemySounds.FixedUpdate per watchman, 1:1.
+  oneVoice = () => false,
+  windowUp = () => false }) {
   // AUDIT 23 (hosts-3): currentMinute is REQUIRED - the () => 0 default
   // let a guard's poisoned hit anchor at minute 0, and the next world
   // tick (absolute clock ~523,530) caught the whole course up at once.
   if (typeof currentMinute !== 'function') throw new Error('createCityGuards needs currentMinute (the classic-minute clock)');
   const guards = [];       // { mobile, ai, attack, entity, batch, tex, archive, dead, sounds }
+  const voice = new WatchVoice();   // HALT-ONE: the watch's one voice, in the living watch's lane
   const corpseBatches = [];
   // AUDIT-39r / THE FOUR HOSTS RULE: an IN-FLIGHT spawn's feet, the
   // encounter pool's list to the line (exteriorFoes.js). spawnGuardAt
@@ -523,8 +532,11 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  concerned. `stopLookingIfFound` is a short-circuit, not a
    *  different answer, so the port takes a boolean when that is what
    *  the caller wanted. */
-  const anyWatchStanding = () => guards.some((g) =>
-    !g.dead && !g.defender && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly');   // DISC19-F: a defender is not the crime's watch (AUDIT DISC19: a half-reset one read as standing and turned every wandering guard); WERE-FRIGHT: nor a man running from a beast, struck or not
+  const anyWatchStanding = () => guards.some(watchStands);
+  /** HALT-ONE: one watchman of the count above - the watch standing after the player, the one that calls (WatchVoice). */
+  function watchStands(g) {
+    return !g.dead && !g.defender && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly';   // DISC19-F: a defender is not the crime's watch (AUDIT DISC19: a half-reset one read as standing and turned every wandering guard); WERE-FRIGHT: nor a man running from a beast, struck or not
+  }
 
   /**
    * WERE-FRIGHT (2026-09-29, Mac: the beast "cannot surrender, but instead a chance to frighten"; frightened, the
@@ -760,7 +772,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:325)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:3073). */
+   *  encounter pool's is (exteriorFoes.js:3078). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     // DISC19-F (AUDIT DISC19): A BLOW ON A DEFENDER IS ASSAULT. The
@@ -1040,6 +1052,8 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         spawnCityGuards(true, { playerFeet, playerFwd: [0, 0, 1], pool: [] });   // arrivals ride the ring fallback
       }
     }
+    const one = !!oneVoice();   // HALT-ONE: the living watch's lane - the watch calls as one (after the walk, below)
+    const calling = [];
     spaceFoes(guards, collider, foeFrameDt(dt));   // FOE-SPACING: two watchmen in one spot are pushed apart (characters/foeSpacing.js)
     const out = [];
     for (const g of guards) {
@@ -1116,7 +1130,16 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // within 16m, and the watch is the ONE class enemy the human
       // mute spares (:222), which is why you hear it and not a
       // brigand.
-      tickEnemySound(g.sounds, g.ai.feet, g.fleeing ? null : playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });   // WERE-FRIGHT: a man running from a beast calls no halt - the attract bark asks no hostility, only the player inside 16 m, so a fleer is handed no player (the cadence steps as DFU's does with the player out of range)
+      // HALT-ONE: in the living watch's lane a watchman standing after the player inside the attract radius is one of
+      // the watch's callers, his own clock left still; the call is the one voice's, after the walk. `quietVoice`: his
+      // wind-up and his stagger are a person's, never the Halt (hostCombat.js tellCues, windupFeedback).
+      g.quietVoice = one;
+      if (one) {
+        const d = playerFeet ? Math.hypot(playerFeet[0] - g.ai.feet[0], playerFeet[1] - g.ai.feet[1], playerFeet[2] - g.ai.feet[2]) : Infinity;
+        if (d < ATTRACT_RADIUS && watchStands(g)) calling.push({ g, dist: d });
+      } else {
+        tickEnemySound(g.sounds, g.ai.feet, g.fleeing ? null : playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });   // WERE-FRIGHT: a man running from a beast calls no halt - the attract bark asks no hostility, only the player inside 16 m, so a fleer is handed no player (the cadence steps as DFU's does with the player out of range)
+      }
       g.mobile.frameSpeedDivisor = Math.max(1, Math.trunc((g.entity.stats?.speed ?? 50) / Math.max(8, liveStat(g.entity, 'speed'))));   // AUDIT 23 (characters-11)
       if (!_gParalyzed && _tgt) g.attack.update(foeFrameDt(dt), g.ai, _tgt);   // MT-ii: at the SELECTED target;/ AUDIT (pre-merge) P5: FOE-CATCHUP's step - the motor's clock, not the frame's (a 1 s hitch no longer swings at once)
       const seq = g.attack.swingSeq;   // AUDIT 68 S04-strike-edge-cut: EnemyAttack's own start count, the foes' one edge law
@@ -1242,6 +1265,14 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     // and every per-frame walk over `guards` paid for it for the rest
     // of the session. A KILLED body stays while its corpse does, which
     // is what DFU keeps too (EnemyDeath disables, never destroys).
+    // HALT-ONE: the watch's one voice - over when no watchman stands after the player, so the next incident is met by
+    // its first call at once; the call at its caller's feet, dampened by a wall between as DFU's attract sound is
+    // (SetVolumeScale), linear to the attract radius (playEnemyClip), and never under a window.
+    if (one) {
+      if (!anyWatchStanding()) voice.end();
+      const c = voice.tick(dt, calling, { quiet: !!windowUp() });
+      if (c) playEnemyClip(audio, { clip: ENEMY_BASICS[GUARD_MOBILE_TYPE].barkSound, volume: enemySoundOccluded(collider, c.g.ai.feet, playerFeet) ? OCCLUDED_VOLUME_SCALE : 1 }, c.g.ai.feet, acuteHearingMultiplier(playerEntity));
+    }
     for (let i = guards.length - 1; i >= 0; i--) if (guards[i].dead && !guards[i].corpse) guards.splice(i, 1);
     return [...out, ...corpseBatches.map((c) => c.batch)];
   }

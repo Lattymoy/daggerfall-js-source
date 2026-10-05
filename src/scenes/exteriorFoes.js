@@ -14,6 +14,7 @@
 // 13 fixed-list casters do not cast up here yet.
 
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // HALT-ONE: a peer's watchman, silent in the living watch's lane
 import { foeTitle } from '../systems/foeTitle.js';   // FOE-TITLE: what a revenant, a champion or an elite is called
 import { effectiveLevel } from '../systems/mentorMode.js';   // SOFTCAP2: mentor mode - the level the world is built around
 import { markFoeStruck } from '../ui/hudFoeTarget.js';   // PX30
@@ -260,7 +261,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   // REVENANT-FATE: the host can open a yielded revenant's choice (its activation's door) - a host that cannot leaves
   // its revenants dying as ever; `dropLoot(items, feet)` where an executed one's pile is minted (the host's dropped-loot
   // pool), absent a body is left holding it; `shake(k)` the camera's kick
-  fates = false, dropLoot = null, shake = null }) {
+  fates = false, dropLoot = null, shake = null,
+  // HALT-ONE: the living watch's lane (cityGuards.js `oneVoice`) - a peer's watchman riding my stream (WATCH1) calls
+  // on his owner's client, where he is after the player he hunts: here he is silent, and his tells a person's
+  oneVoice = () => false }) {
   const foes = [];        // { mobile, ai, attack, entity, batch, tex, archive, mobileType, dead, _encounter: true }
   const corpseBatches = [];
   // AUDIT 39 / THE FOUR HOSTS RULE: an IN-FLIGHT spawn's feet. spawnFoe
@@ -1457,9 +1461,10 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
         else if (f._pupSpare && f.mobile.heldPose) f._mout = f.mobile.heldPose('idle', 0, f.ai.yaw, f.ai.feet, eye ?? f.ai.feet);   // ...and rises, sworn, into the light
         if (f._pupSpare && !f._pupSpareGate) { f._pupSpareGate = true; portals.open(f.ai.feet, { quiet: true }); }   // its portal, seen here too
         f._castPending = false;
+        f.quietVoice = f.mobileType === KNIGHT_CITY_WATCH && !!oneVoice();   // HALT-ONE: a peer's watchman, in the living watch's lane
         if (edge && f.ai._tac?.state !== 'windup') playEnemyClip(audio, f.sounds.attack(), f.ai.feet, acuteHearingMultiplier(playerEntity));   // TELL8: a wind-up's swing is its cues'
         tellCues(f, audio, acuteHearingMultiplier(playerEntity));   // TELL8: its wind, its release and its landing in the ear - a peer's foe's as my own's
-        tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity), companion: f.companion != null });
+        if (!f.quietVoice) tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity), companion: f.companion != null });
         // WORLD6b-ii: a puppet lands no blow of its own (WORLD2) - unless the blow is at ME, and a shaft at anyone flies.
         // AUDIT WORLD6b-iii(a) A3: at ME by the SWING's own recipient (b), latched at its edge - not the hunt's live word
         const _blowMine = f._pupBlowAt != null && recipientIsMe(f, f._pupBlowAt);

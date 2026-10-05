@@ -969,6 +969,39 @@ The same report's other half, on the roads ("stuck over bodies of water"). Pinne
   dead, the audit's 8 among them; the first cut's morning-jump and morning-camp-behind retired with the morning they
   aimed at; `tools/mutants/forest1.json` FOREST1-beach-line re-aimed.
 
+## HALT-ONE - the watch calls as one (2026-10-05)
+
+Mac: "with the living world we take it further and improve the guards and also reduce the HALT noise" - and asked how
+often the watch should call, "Once, then rarely". A recorded departure from DFU (Port-Ledger), the living watch's lane
+alone (`livingWorldOn`: the enhanced skin with the Features row on); the classic lane keeps DFU's cadence, pinned
+call for call.
+
+- **The cause** (DFU-faithful, `characters/enemySounds.js`, EnemySounds.cs:78-100, 196-226). Every watchman within
+  16 m of the player sounds his attract clock every 3 to 9 seconds, the bark 80% of the time - and the city watch's
+  bark is "Halt!" (clip 456). Eight a minute a watchman, hostile or not; a crime's five, forty a minute; a squad
+  arriving after its walk, four at once on one frame. The port added more mouths: the town's defenders (DISC19-F) and a
+  raid's, who stand with the player; another player's watch riding the stream (WATCH1); the watch kept moving under
+  the surrender box (WINFOE1); TELL1's stagger and TELL2's wind-up, both the bark pitched down; the siege's Town Guard,
+  the bark at every wound.
+- **The one voice** (`enemySounds.js WatchVoice`, HALT_GAP_S 15; `scenes/cityGuards.js` `oneVoice`, `windowUp`). A
+  watchman standing after the player (`watchStands` - HowManyEnemiesOfType's own two terms: not a defender, not
+  pacified or charmed, not running) inside the attract radius is a caller; his own clock is left still. The first of
+  them calls at once; then the nearest calling, no sooner than 15 s after the last call - five watchmen, eight calls in
+  two minutes where their clocks gave some eighty. Nobody calls under a window; the incident over (no watchman
+  standing after the player) the next is met by its first call at once. The call is DFU's own play: at the caller's
+  feet a metre up, a quarter through a wall (SetVolumeScale), linear to the attract radius.
+- **The rest of the noise.** A defender, a pacified, running or walking-away watchman: silent. A watchman's stagger
+  and wind-up are a person's (`hostCombat.js windupFeedback`, `tellCues`: the low swing, as every class enemy's) - never
+  the Halt. Another player's watchman calls on his owner's client, where he hunts; here he is silent
+  (`exteriorFoes.js`, `quietVoice`). The siege's Town Guard (`siegeNpcs.js`, the port's own) cries his move voice
+  when hurt.
+- **The four hosts.** `scenes/world.js` - WIRED (the street's watch: the lane and the window; the street's foe pool:
+  the lane, for a peer's watchman). `scenes/worldModes.js` - WIRED (a building's watch, called in by a crime indoors).
+  `scenes/exterior.js` - FLAGGED: the fixed-city page has no living town, and keeps DFU's watch. `scenes/dungeonContext.js`
+  - no watch stands there.
+- **Pinned** by `test/haltone_watch.test.js` (the voice; the real pool driven frame by frame against DFU's cadence; who
+  calls; the incident and the wall; the tells; beyond the pool; the hosts) and `tools/mutants/haltone.json`.
+
 ## The four hosts
 
 - `scenes/world.js` - WIRED (LW2 the towns, LW3 the roads and the Overworld).

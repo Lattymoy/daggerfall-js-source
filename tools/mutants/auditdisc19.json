@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-DISC19-W2-defender-counts-as-watch",
     "file": "src/scenes/cityGuards.js",
-    "old": "    !g.dead && !g.defender && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly');",
-    "new": "    !g.dead && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly');",
+    "old": "    return !g.dead && !g.defender && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly';",
+    "new": "    return !g.dead && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly';",
     "tests": [
       "test/auditdisc19.test.js"
     ]
