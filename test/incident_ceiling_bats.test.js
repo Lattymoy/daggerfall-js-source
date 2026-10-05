@@ -108,7 +108,8 @@ test('bats 1: both spawn hosts build the capsule from the idle sprite and drop a
     'the exterior pool reads the sprite BEFORE the AI stands, and drops a flyer from FinalizeFoe\'s lifted centre as a delta');
   // AUDIT 63 F24 widened the option bag with the revived quest link;
   // `feetGiven: true` is the clause this pin is about and still stands.
-  assert.match(x, /spawnFoe\(sf\.mobileType, \[lx, sf\.y \+ yOffset, lz\], \{ gender: sf\.gender, feetGiven: true, questBehaviour, placed: !!sf\.placed, eliteFoe: sf\.eliteFoe === true, champion: sf\.champion \? championIndex\(sf\.champion\) : null \}\)/, 'restoreWorld hands back FEET and says so - no second drop per load');   // WOD3: and a placed foe restores placed; LOOT7: a champion as one
+  assert.match(x, /const feet = \(questBehaviour && restandQuestFoe\?\.\(questBehaviour, \[lx, sf\.y \+ yOffset, lz\]\)\) \|\| \[lx, sf\.y \+ yOffset, lz\];/);   // PIN MOVED (SEALED-SAVE, FIELD BUGS 2026-10-05c): the saved feet, or the moved marker's
+  assert.match(x, /spawnFoe\(sf\.mobileType, feet, \{ gender: sf\.gender, feetGiven: true, questBehaviour, placed: !!sf\.placed, eliteFoe: sf\.eliteFoe === true, champion: sf\.champion \? championIndex\(sf\.champion\) : null \}\)/, 'restoreWorld hands back FEET and says so - no second drop per load');   // WOD3: and a placed foe restores placed; LOOT7: a champion as one
   assert.match(x, /const pending = \{ feet: \[pos\[0\], pos\[1\] \+ \(feetGiven \|\| groundAlign \|\| transformY \? 0 : 0\.1\), pos\[2\]\] \};/, 'and takes no walker lift either (a flyer never grounds - 0.1 per load, cumulative)');   // WOD3: nor does a ground-aligned spawn; DW-E4: nor one whose transform is set straight
   assert.match(x, /height: enemyControllerHeight\(idleH, behaviour\),/);
   assert.match(x, /org\[1\] = spriteOriginY\(f\.ai\.feet\[1\], f\.idleH, sz\.h, _bh\);/, 'the exterior draw pins a flyer\'s centre');
