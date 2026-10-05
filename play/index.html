@@ -17,6 +17,11 @@
   <link rel="apple-touch-icon" href="../icons/icon-192.png" />
   <style>
     html, body { margin: 0; padding: 0; background: #000; height: 100%; overflow: hidden; overscroll-behavior: none; }
+    /* No blue text/UI selection anywhere in the client. Text fields stay editable/selectable. */
+    html, body, body * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+    input, textarea, select, [contenteditable], [contenteditable] * { -webkit-user-select: text; user-select: text; }
+    ::selection { background: transparent; color: inherit; }
+    input::selection, textarea::selection { background: #3a4a6b; color: #fff; }
     #c { display: block; width: 100vw; height: 100vh; touch-action: none; -webkit-user-select: none; user-select: none; }
   </style>
 </head>

@@ -544,9 +544,15 @@ test('DECOR1d the host (worldModes.js, world.js) by source: one tool on the room
   assert.match(m, /openSlot: \(o\) => \{ interiorOverlay = o; \}, closeSlot: \(o\) => \{ if \(interiorOverlay === o\) interiorOverlay = null; \},/);
   // GUILD1d (re-aimed by content): the owner's room, or a guild's hall its keeper stands in - a hall's kind is an online home's
   assert.match(m, /if \(mode !== 'interior' \|\| !b \|\| !\(decorOwnerHere\(\) \|\| decorKeeperHere\(\)\)\) return null;\n(?:    \/\/[^\n]*\n)*    if \(\(interiorHome \|\| interiorSeatHall\) && _decorListed !== _decorVisit\) return null;\n    if \(interiorHome\?\.hall\) return \{ kind: 'home', hall: true[^\n]*\n    if \(interiorHome\) return \{ kind: 'home', where: 'Your home', mapId: homeTownOf\(b\), buildingKey: b\.buildingKey \};/);   // PIN MOVED (SEAT-HALL): the palace's hall shares the line
-  assert.match(m, /isTownBlock: \(t\) => t === BLOCK_TYPES\.Rmb,/);
-  assert.match(m, /return r > 0 \? r \* GLOBAL_SCALE : null;/);
-  assert.match(m, /return Math\.hypot\(size\.w, size\.h\) \/ 2;/);
+  // DECOR-DUNGEON (PIN MOVED): the scan's measures are ONE constructor's (systems/decorScan.js decorScanDeps), which both
+  // hosts call - the interior host here, the yards' in world.js
+  assert.match(m, /const decorScanDepsHere = \(\) => decorScanDeps\(\{ blocks, arch, getTexture \}\);/);
+  assert.match(m, /scanDeps: \(\) => decorScanDepsHere\(\),/);
+  assert.match(w, /scanDeps: \(\) => decorScanDeps\(\{ blocks, arch, getTexture \}\),/);
+  const sd = src('src/systems/decorScan.js');
+  assert.match(sd, /isTownBlock: \(t\) => t === BLOCK_TYPES\.Rmb,/);
+  assert.match(sd, /return r > 0 \? r \* GLOBAL_SCALE : null;/);
+  assert.match(sd, /return Math\.hypot\(size\.w, size\.h\) \/ 2;/);
   assert.match(m, /pay: \(n\) => purse\.pay\(n, account\),/);   // MARKET-AUDIT (PIN MOVED): the purse, then the account - answering its exact undo
   assert.match(m, /pay: \(n, account = null\) => payUndoable\(playerEntity, n, account\),/);
   assert.match(m, /decorTool\.frame\(\{ dt, cam, overlayUp: overlayHeld, interior: mode === 'interior' \}\);/);

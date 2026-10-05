@@ -263,7 +263,7 @@
   {
     "name": "DECOR-FLIP-ghost-unflipped",
     "file": "src/scenes/decorTool.js",
-    "old": " * (decorFlatMirrored(p.piece) ? -1 : 1), h: p.flatSize.h * sc };",
+    "old": " * (p.mirrors !== false && decorFlatMirrored(p.piece) ? -1 : 1), h: p.flatSize.h * sc };",
     "new": ", h: p.flatSize.h * sc };",
     "tests": [
       "test/decorflip.test.js"

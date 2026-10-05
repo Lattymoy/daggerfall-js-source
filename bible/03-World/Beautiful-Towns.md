@@ -274,9 +274,14 @@ elsewhere.
   together name a neighbour's house "Dharjen Custom Armor". The key is read off
   the town's grid (`systems/rrQuestLine.js` `rrMasterArmBuildingKeyIn`) - a
   recorded departure.
-- **The decor catalogue** stays what DAGGERFALL furnishes: it reads
-  `BLOCKS.BSA` past the door (`decorScan.js`), so 1,400 redecorated interiors
-  never renumber or grow it.
+- **The decor catalogue** reads `BLOCKS.BSA` past the door (`decorScan.js`),
+  so 1,400 redecorated interiors never renumber it. DECOR-MODS (FIELD BUGS
+  2026-10-05b, the owner asked for the town mods' furnishings): the pieces the
+  port stands in for what the mods place join it after every place of
+  Daggerfall's - every one whatever is on, so none renumbers it, and offered
+  while the port stands it (asked as the offer is made, AUDIT 05b A3) -
+  measured over both packs and Detailed Ships' ships, never the town's own
+  structure (`systems/decorMods.js`; `01-Overview/Field-Bugs-2026-10-05b.md`).
 - **Houses for sale.** Every building the bank or a door can sell in either
   mod stands on a classic model (measured: 1,658 village houses and 3,358 city
   houses), so every price reads the ARCH3D record: the bank's DFU's own `GetHousePrice` over its radius, a door's
@@ -414,8 +419,10 @@ layout pins above, and by four more things the stand-ins needed:
 - **The decor preview and the ghost** draw a stand-in or an alias bed as the
   room does - both ask the pipeline (`getGpuMesh`, `cpuModels`), which
   builds an alias from the player's own ARCH3D.
-- **The decor catalogue** is what Daggerfall furnishes (above): a stand-in
-  never joins it.
+- **The decor catalogue** offers the stand-ins while they stand (above,
+  DECOR-MODS): a piece placed stands while its mod does, as the mod's towns do.
+  A hanging is named by the picture its builder wears - one table both read
+  (`DET_PICTURES`, `ROSYS_PICTURES`, AUDIT 05b A8).
 - **A bed is a bed.** Roleplay & Realism's rest-in-bed reads the classic
   model under an alias (`classicModelIdOf`), so a town's coloured bed rests
   the player as a classic one does - in DFU the null prefab is nothing to

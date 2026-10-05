@@ -13,20 +13,25 @@ import { PROP_MODEL_TYPE } from '../src/world/interiorLayout.js';
 import { isFurnishing } from '../src/systems/decorFurnish.js';
 import { decorMatrix, decorKeyOf } from '../src/scenes/decorRoom.js';
 import { localAabb } from '../src/render/frustum.js';
+import { createHomeYards } from '../src/scenes/homeYards.js';
+import { applyClimate, SEASON } from '../src/world/climateSwaps.js';
+import { getWorldClimateSettings } from '../src/formats/mapsFile.js';
+import { billboardSize } from '../src/world/rmbFlats.js';
 
 export const settle = () => new Promise((r) => setTimeout(r, 0));
 export const near = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;
 
 
 /** A parsed RMB block holding one room with `models` (ids) and `flats` ([a, r] pairs) - HOME-DOORS: and `doors`, its
- *  door records' model indices. */
-export const rmb = (models = [], flats = [], doors = []) => ({
+ *  door records' model indices; NUDE-DECOR: and `people`, the room's people ([a, r] pairs, its blockPeopleRecords). */
+export const rmb = (models = [], flats = [], doors = [], people = []) => ({
   rmbBlock: {
     subRecords: [{
       interior: {
         block3dObjectRecords: models.map((id) => ({ objectType: PROP_MODEL_TYPE, modelIdNum: id })),
         blockFlatObjectRecords: flats.map(([a, r]) => ({ textureArchive: a, textureRecord: r })),
         blockDoorRecords: doors.map((i) => ({ doorModelIndex: i })),
+        blockPeopleRecords: people.map(([a, r]) => ({ textureArchive: a, textureRecord: r })),
       },
     }],
   },
@@ -130,11 +135,16 @@ export const ACTIONS = new Map([['KeyW', 'MoveForwards'], ['KeyS', 'MoveBackward
  * `walls` its walls' filter - neither unless a pin hands one. HOME-RENT: `rent` the host's rooms door (none unless handed).
  * HOME-LOOK: `look` the painter's door; HOME-YARD: `placeOk`, `lot` and `yardCap` - the lot's law (each none unless handed).
  * SEAT-HALL: `charterClear` the host's two metres from the court (none unless handed).
+ * NUDE-DECOR: `extraPeople` the second block's room's people ([a, r] pairs - Vendors in the catalogue), and the texture
+ * door's records sized by `recordSize(archive, record)` ({ width, height }; 16 x 32 for every record, as before).
+ * AUDIT 05b A3: `scan` - scan deps of the pin's own over the rig's (`mods`, `modelRadius`, `flatRadius`; none, as before).
+ * AUDIT 05b A5: `prepareModel` the host's law over a model the tool draws (none unless handed). AUDIT 05b A6: `getTexture`
+ * the pipeline's texture door over the rig's, and `flatPicture` the host's picture door for a flat (none unless handed).
  */
-export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 1000, homeDecor = null, locked = true, touch = false, radius = () => 0.8, base = null, mwPicture = null, collider = null, iconUrl = async () => null, getGpuMesh = async (id) => ({ gpu: id }), now = () => 0, extraFlats = [], realm = null, doors = [], doorsHere = null, walls = null, rent = null, look = null, placeOk = null, lot = null, yardCap = null, charterClear = null } = {}) {
+export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 1000, homeDecor = null, locked = true, touch = false, radius = () => 0.8, base = null, mwPicture = null, collider = null, iconUrl = async () => null, getGpuMesh = async (id) => ({ gpu: id }), now = () => 0, extraFlats = [], extraPeople = [], recordSize = () => ({ width: 16, height: 32 }), realm = null, doors = [], doorsHere = null, walls = null, rent = null, look = null, placeOk = null, lot = null, yardCap = null, charterClear = null, scan = {}, prepareModel = null, getTexture = null, flatPicture = null } = {}) {
   const doc = fakeDoc();
   const win = fakeWin();
-  const entries = decorCatalogue(collectDecor([rmb([41000, 41000, 41001, 41811], [[210, 3], [209, 0]]), rmb([41000], [[209, 0]], doors)]));
+  const entries = decorCatalogue(collectDecor([rmb([41000, 41000, 41001, 41811], [[210, 3], [209, 0]]), rmb([41000], [[209, 0]], doors, extraPeople)]));
   const standing = [];
   const holds = new Set();
   const owned = new Map();   // DECOR2a: the owner's own items by piece id (scenes/decorRoom.js keepOwn and its kin)
@@ -194,11 +204,12 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     room: () => state.room,
     base: () => base,   // BASE-HIDE: the room's own furniture (scenes/decorBase.js), none unless a pin hands one
     scanDeps: () => ({
-      blocks: fakeBlocks([{ type: TOWN, block: rmb([41000, 41000, 41001, 41811], [[210, 3], [209, 0]]) }, { type: TOWN, block: rmb([41000], [[209, 0], ...extraFlats], doors) }]),   // DECOR-MODFLATS: `extraFlats`, a pin's own; HOME-DOORS: `doors`
+      blocks: fakeBlocks([{ type: TOWN, block: rmb([41000, 41000, 41001, 41811], [[210, 3], [209, 0]]) }, { type: TOWN, block: rmb([41000], [[209, 0], ...extraFlats], doors, extraPeople) }]),   // DECOR-MODFLATS: `extraFlats`, a pin's own; HOME-DOORS: `doors`; NUDE-DECOR: `extraPeople`
       isTownBlock: (t) => t === TOWN, modelRadius: radius, flatRadius: async () => 0.2,
+      ...scan,   // AUDIT 05b A3: a pin's own scan deps (the mods joined, its own measures)
     }),
     getGpuMesh, cpuModels,
-    getTexture: async () => ({ recordCount: 64, getSize: () => ({ width: 16, height: 32 }), getScale: () => ({ width: 0, height: 0 }) }),
+    getTexture: getTexture ?? (async (a) => ({ recordCount: 64, getSize: (r) => recordSize(a, r), getScale: () => ({ width: 0, height: 0 }) })),   // NUDE-DECOR: `recordSize`; AUDIT 05b A6: a pin's own
     uploadRecord: (a, r, opts = {}) => {   // DECOR2c: the icon arm answers its variant, as dataPipeline.js's does
       if (opts.mips !== false) return undefined;
       textures.set(`${a}_${r}#ui`, `tex:${a}.${r}`);
@@ -229,6 +240,8 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     ...(rent ? { rent } : {}),   // HOME-RENT
     ...(look ? { look } : {}), ...(placeOk ? { placeOk } : {}), ...(lot ? { lot } : {}), ...(yardCap ? { yardCap } : {}),   // HOME-LOOK; HOME-YARD
     ...(charterClear ? { charterClear } : {}),   // SEAT-HALL: the court's two metres
+    ...(prepareModel ? { prepareModel } : {}),   // AUDIT 05b A5
+    ...(flatPicture ? { flatPicture } : {}),   // AUDIT 05b A6
   });
   const cam = { pos: [10, 1.6, 10], yaw: 0, pitch: 0 };
   const frame = (over = {}) => tool.frame({ dt: 0.1, cam, overlayUp: false, interior: true, ...over });
@@ -250,3 +263,64 @@ export async function placeFrom(rig, key) {
   rig.frame();
   return root;
 }
+
+// ─── THE YARD (DECOR-OUTDOOR, DECOR-LPT) ─────────────────────────────────────────────────────────────────────────────
+
+export const DESERT = getWorldClimateSettings(224).climateType;
+export const WOODS = getWorldClimateSettings(231).climateType;
+/** An archive the town's climate swaps (applyClimate's own answer) - found, never assumed. */
+export const SWAPPED = [...Array(500).keys()].find((a) => applyClimate(a, 0, DESERT, SEASON.Summer) !== a && applyClimate(a, 0, DESERT, SEASON.Summer) !== applyClimate(a, 0, WOODS, SEASON.Summer));
+export const yardPiece = (over = {}) => ({ id: 'p1', model: null, flat: [504, 12], pos: [8, 0, 2], rot: [0, 0, 0], scale: 2, light: null, storage: false, paid: 120, ...over });
+
+/** The real yard host over a town pixel built in `season`, its town of `climate`, a home (300) holding `pieces` - `own`
+ *  the player's, who stands on its lot - with the panel's picture door `iconUrl`. DECOR-LPT: `trees` the world's Low Poly
+ *  Trees (`{ door, sway }`, scenes/yardNature.js), `sizes` a record's picture over its archive's (`'504.20': [w, h]`);
+ *  `shift` is where the pixel stands in the scene (written in place, then `yards.rebase()` - a recentre). AUDIT 05b A4:
+ *  `town.pieces` the service's answer for the home (written in place - another writer's), `clock.t` the host's clock (ms:
+ *  the town asked again past YARD_TOWN_TTL_MS). AUDIT 05b A5: every model a metre's box (the pipeline's cpu copy - the
+ *  decorator's ghost reads its box), and `meshDraws` each model drawn with the table it was drawn with, as it stood then. */
+export function yardWorld({ pieces, season = SEASON.Summer, climate = WOODS, seasonal = null, own = false, iconUrl = async () => null, trees = null, sizes: own_sizes = {} } = {}) {
+  const made = [];
+  const uploads = [];
+  const animated = [];
+  const doc = fakeDoc();
+  const win = fakeWin();
+  const shift = [0, 0, 0];
+  const town = { pieces };
+  const clock = { t: 0 };
+  const meshDraws = [];
+  const box = { positions: new Float32Array([-0.5, 0, -0.5, 0.5, 1, 0.5]) };
+  const pixel = (s) => ({
+    px: 0, py: 0, homeTown: 7, homeRegion: 17, season: s, townClimate: climate,
+    homeFrames: new Map([[300, { at: [10, 0, 10], box: [6, 0, 7, 14, 6, 13] }]]),
+    texRemap: new Map(), forest: { base: 504, archive: s === SEASON.Winter ? 505 : 504 },
+    flatAnims: { add: (b, a, n) => animated.push([b, a, n]), remove() {} },
+  });
+  const built = new Map([['0,0', pixel(season)]]);
+  const sizes = { 504: [40, 120], 505: [44, 130], 201: [30, 20], ...own_sizes };
+  const yards = createHomeYards({
+    api: { yards: async () => ({ ok: true, data: { yards: [{ buildingKey: 300, pieces: town.pieces }] } }) },
+    homes: { homeAt: (m, k) => (k === 300 ? { owner: 'Tomas', own, look: null } : null) },
+    built: () => built, translation: () => shift, feet: () => (own ? [18, 0, 10] : [100, 0, 100]), outside: () => true, eye: () => (own ? [18, 1.6, 10] : [100, 1.6, 100]),
+    collider: () => ({ addMesh() {}, removeBucket() {} }),
+    meshes: { getGpuMesh: async (id) => ({ id, subMeshes: [{ textureArchive: SWAPPED, textureRecord: 0 }] }), cpuModels: { get: () => box } },
+    renderer: {
+      drawMesh: (gpu, m, remap) => meshDraws.push({ gpu, remap: remap ? new Map(remap) : null }),
+      createBillboardBatch: (a, r, size, centers, opts = {}) => { const b = { a, r, size, centers, scales: opts.scales ?? null }; made.push(b); return b; },
+      destroyBillboardBatch: (b) => { b.gone = true; }, uploadTexture: (a, k) => uploads.push(`${a}_${k}`),
+    },
+    getTexture: async (a) => ({ recordCount: 32, getSize: (r) => { const [w, h] = sizes[`${a}.${r}`] ?? sizes[a] ?? [16, 32]; return { width: w, height: h }; }, getScale: () => ({ width: 0, height: 0 }), getFrameCount: (r) => (a === 201 ? 4 : 1) }),
+    uploadRecord() {}, uploadRecordFrame() {}, iconUrl,
+    seasonal: () => seasonal,
+    trees,
+    scanDeps: () => ({ blocks: fakeBlocks([{ type: TOWN, block: rmb([41000]) }]), isTownBlock: (x) => x === TOWN, nature: true, modelRadius: () => 0.8, flatRadius: async () => 0.2 }),
+    character: () => 'r0123456789abcdef0123', realm: () => null, wallet: () => ({ gold: 5000, pay() {}, credit() {} }), regionOf: () => 17,
+    doc, win, canvas: null, touch: false, actionOf: (e) => ACTIONS.get(e.code) ?? null, locked: () => true, cursorOff() {}, stick: () => null,
+    say() {}, refusal: (w) => w, openSlot() {}, now: () => clock.t,
+  });
+  const cam = own ? { pos: [18, 1.6, 10], yaw: Math.PI, pitch: -0.6 } : { pos: [100, 1.6, 100], yaw: 0, pitch: 0 };
+  const run = async (n = 3, overlayUp = false) => { for (let i = 0; i < n; i++) { yards.frame({ dt: 1, cam, overlayUp }); await settle(); await settle(); } };
+  return { yards, built, made, uploads, animated, pixel, run, doc, win, shift, town, clock, meshDraws };
+}
+export const live = (made) => made.filter((b) => !b.gone);
+export const sized = (w, h, k = 1) => { const s = billboardSize({ getSize: () => ({ width: w, height: h }), getScale: () => ({ width: 0, height: 0 }) }, 0); return { w: s.w * k, h: s.h * k }; };

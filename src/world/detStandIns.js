@@ -187,14 +187,14 @@ export const DET_MODELS = Object.freeze({
   },
   // DET's decorative tapestries - 45164 on the small ship's stern staff (scale 1.4) hanging from its head as a banner,
   // 45161 from the large ship's masthead (two, scale 2) and its stern staff; in the towns both hang on walls.
-  45164: () => hanging(PICTURE.decorative(13), 0.8, 1.2),
-  45161: () => hanging(PICTURE.decorative(10), 0.8, 1.2),
+  45164: () => hanging(DET_PICTURES[45164], 0.8, 1.2),
+  45161: () => hanging(DET_PICTURES[45161], 0.8, 1.2),
   // The ensign staff at the stern, the pennant flying from its head.
   45082: () => { const m = new MeshBuilder(); m.cylinderY(WOOD, [0, 0, 0], 0.045, 2.1, 6, 0.6); m.box(WOOD_DARK, [0, 2.13, 0], [0.1, 0.07, 0.1], 4); return m.build(); },
   // Another decorative tapestry: four hang from the large ship's mess-deck beams; seventy-two hang on town walls.
-  45162: () => hanging(PICTURE.decorative(11), 0.8, 1.2),
+  45162: () => hanging(DET_PICTURES[45162], 0.8, 1.2),
   // Kynareth's tapestry - the sailors' goddess over the large ship's berths, and in her temples ashore.
-  45145: () => hanging(PICTURE.divineTapestry('Kynareth'), 1.0, 1.5),
+  45145: () => hanging(DET_PICTURES[45145], 1.0, 1.5),
   // The captain's sea chest, lengthwise on its own X (the author turns it a quarter).
   45190: () => {
     const m = new MeshBuilder();
@@ -320,20 +320,33 @@ const DECOR_ORDER = Object.freeze([45134, 45135, 45136, 45137, 45138, 45139, 451
 const decor = (id) => PICTURE.decorative(DECOR_ORDER.indexOf(id));
 const REGIONS = Object.freeze([['Glenpoint', 45008, 45044], ['Totambu', 45023, 45059], ['Lainlyn', 45024, 45060], ['Santaki', 45029, 45065], ['Abibon-Gora', 45034, 45070]]);
 const DIVINES = Object.freeze(['Akatosh', 'Arkay', 'Dibella', 'Julianos', 'Kynareth', 'Zenithar', 'Mara', 'Stendarr']);
+const DIVINE_TAPESTRIES = Object.freeze(DIVINES.map((god) => 45141 + DIVINES.indexOf(god)));   // Kynareth's, 45145, among them
+const DIVINE_BANNERS = Object.freeze(DIVINES.map((_god, k) => 45150 + k));
+
+/** THE PICTURE EACH OF DET'S HANGINGS AND RUGS WEARS (world/townPictures.js, TOWN_PICTURE_ARCHIVE), by id - the one table
+ *  its builder and its name in the house decorator (systems/decorMods.js decorModNaming) both read. AUDIT 05b A8: the
+ *  name was read off the built model - a whole model built to name a piece, and none to be had while its switch was off. */
+export const DET_PICTURES = Object.freeze({
+  ...Object.fromEntries(REGIONS.flatMap(([name, tapestry, flag]) => [[tapestry, PICTURE.regionTapestry(name)], [flag, PICTURE.regionBanner(name)]])),
+  ...Object.fromEntries(DIVINE_TAPESTRIES.map((id, k) => [id, PICTURE.divineTapestry(DIVINES[k])])),
+  ...Object.fromEntries(DIVINE_BANNERS.map((id, k) => [id, PICTURE.divineBanner(DIVINES[k])])),
+  ...Object.fromEntries(DECOR_ORDER.map((id) => [id, decor(id)])),   // 45161, 45162 and 45164 the ships' too
+  45192: PICTURE.rug(0), 45194: PICTURE.rug(1),
+});
 
 /** The DET models only the town mods place, by id, read off the catalogue's names and the placements
  *  (bible `03-World/Beautiful-Towns.md` keeps the table). */
 export const DET_TOWN_MODELS = Object.freeze({
   // the regions' tapestries and banners (on house fronts and in halls)
-  ...Object.fromEntries(REGIONS.flatMap(([name, tapestry, flag]) => [
-    [tapestry, () => hanging(PICTURE.regionTapestry(name), 0.9, 1.35)],
-    [flag, () => hanging(PICTURE.regionBanner(name), 0.6, 1.6, { banner: true })],
+  ...Object.fromEntries(REGIONS.flatMap(([_name, tapestry, flag]) => [
+    [tapestry, () => hanging(DET_PICTURES[tapestry], 0.9, 1.35)],
+    [flag, () => hanging(DET_PICTURES[flag], 0.6, 1.6, { banner: true })],
   ])),
   // the Eight's tapestries (45141-45148; Kynareth's, 45145, is one the ships hang too) and their second set (45150-45157)
-  ...Object.fromEntries(DIVINES.filter((g) => g !== 'Kynareth').map((god) => [45141 + DIVINES.indexOf(god), () => hanging(PICTURE.divineTapestry(god), 1.0, 1.5)])),
-  ...Object.fromEntries(DIVINES.map((god, k) => [45150 + k, () => hanging(PICTURE.divineBanner(god), 0.7, 1.8, { banner: true })])),
+  ...Object.fromEntries(DIVINE_TAPESTRIES.filter((id) => id !== 45145).map((id) => [id, () => hanging(DET_PICTURES[id], 1.0, 1.5)])),
+  ...Object.fromEntries(DIVINE_BANNERS.map((id) => [id, () => hanging(DET_PICTURES[id], 0.7, 1.8, { banner: true })])),
   // the decorative tapestries
-  ...Object.fromEntries(DECOR_ORDER.filter((id) => ![45161, 45162, 45164].includes(id)).map((id) => [id, () => hanging(decor(id), 0.8, 1.2)])),
+  ...Object.fromEntries(DECOR_ORDER.filter((id) => ![45161, 45162, 45164].includes(id)).map((id) => [id, () => hanging(DET_PICTURES[id], 0.8, 1.2)])),
   // the chimney: its sloped base, the stackable flue, the topper
   45074: flueBase,
   45076: flue,
@@ -354,8 +367,8 @@ export const DET_TOWN_MODELS = Object.freeze({
   45169: columnDrum,
   45170: columnHead,
   // two rugs by a bed
-  45192: () => rugModel(PICTURE.rug(0), 1.2, 0.8),
-  45194: () => rugModel(PICTURE.rug(1), 1.2, 0.8),
+  45192: () => rugModel(DET_PICTURES[45192], 1.2, 0.8),
+  45194: () => rugModel(DET_PICTURES[45194], 1.2, 0.8),
 });
 
 // ---- the flats ---------------------------------------------------------------

@@ -158,7 +158,8 @@ export const CLIMATE_BASE_TYPES = Object.freeze({
 });
 
 // ClimateTextureSet nature archives.
-const NATURE = Object.freeze({
+/** The climates' nature sets - their summer archives (DECOR-OUTDOOR: a yard's trees and plants are its climate's). */
+export const CLIMATE_NATURE = Object.freeze({
   RainForest: 500, SubTropical: 501, Swamp: 502, Desert: 503,
   TemperateWoodland: 504, WoodlandHills: 506, HauntedWoodlands: 508,
   Mountains: 510,
@@ -213,7 +214,7 @@ export function getWorldClimateSettings(worldClimate) {
     case CLIMATES.Ocean:
       s.climateType = CLIMATE_BASE_TYPES.Swamp;
       s.groundArchive = 402;
-      s.natureArchive = NATURE.TemperateWoodland;
+      s.natureArchive = CLIMATE_NATURE.TemperateWoodland;
       s.skyBase = 24;
       s.people = FACTION_RACES.Breton;
       break;
@@ -221,63 +222,63 @@ export function getWorldClimateSettings(worldClimate) {
     case CLIMATES.Desert2:
       s.climateType = CLIMATE_BASE_TYPES.Desert;
       s.groundArchive = 2;
-      s.natureArchive = NATURE.Desert;
+      s.natureArchive = CLIMATE_NATURE.Desert;
       s.skyBase = 8;
       s.people = FACTION_RACES.Redguard;
       break;
     case CLIMATES.Mountain:
       s.climateType = CLIMATE_BASE_TYPES.Mountain;
       s.groundArchive = 102;
-      s.natureArchive = NATURE.Mountains;
+      s.natureArchive = CLIMATE_NATURE.Mountains;
       s.skyBase = 0;
       s.people = FACTION_RACES.Nord;
       break;
     case CLIMATES.Rainforest:
       s.climateType = CLIMATE_BASE_TYPES.Swamp;
       s.groundArchive = 402;
-      s.natureArchive = NATURE.RainForest;
+      s.natureArchive = CLIMATE_NATURE.RainForest;
       s.skyBase = 24;
       s.people = FACTION_RACES.Redguard;
       break;
     case CLIMATES.Swamp:
       s.climateType = CLIMATE_BASE_TYPES.Swamp;
       s.groundArchive = 402;
-      s.natureArchive = NATURE.Swamp;
+      s.natureArchive = CLIMATE_NATURE.Swamp;
       s.skyBase = 24;
       s.people = FACTION_RACES.Breton;
       break;
     case CLIMATES.Subtropical:
       s.climateType = CLIMATE_BASE_TYPES.Desert;
       s.groundArchive = 2;
-      s.natureArchive = NATURE.SubTropical;
+      s.natureArchive = CLIMATE_NATURE.SubTropical;
       s.skyBase = 24;
       s.people = FACTION_RACES.Breton;
       break;
     case CLIMATES.MountainWoods:
       s.climateType = CLIMATE_BASE_TYPES.Temperate;
       s.groundArchive = 102;
-      s.natureArchive = NATURE.WoodlandHills;
+      s.natureArchive = CLIMATE_NATURE.WoodlandHills;
       s.skyBase = 16;
       s.people = FACTION_RACES.Breton;
       break;
     case CLIMATES.Woodlands:
       s.climateType = CLIMATE_BASE_TYPES.Temperate;
       s.groundArchive = 302;
-      s.natureArchive = NATURE.TemperateWoodland;
+      s.natureArchive = CLIMATE_NATURE.TemperateWoodland;
       s.skyBase = 16;
       s.people = FACTION_RACES.Breton;
       break;
     case CLIMATES.HauntedWoodlands:
       s.climateType = CLIMATE_BASE_TYPES.Temperate;
       s.groundArchive = 302;
-      s.natureArchive = NATURE.HauntedWoodlands;
+      s.natureArchive = CLIMATE_NATURE.HauntedWoodlands;
       s.skyBase = 16;
       s.people = FACTION_RACES.Breton;
       break;
     default:
       s.climateType = CLIMATE_BASE_TYPES.Temperate;
       s.groundArchive = 302;
-      s.natureArchive = NATURE.TemperateWoodland;
+      s.natureArchive = CLIMATE_NATURE.TemperateWoodland;
       s.skyBase = 16;
       s.people = FACTION_RACES.Breton;
       break;
