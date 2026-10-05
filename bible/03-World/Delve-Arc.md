@@ -163,13 +163,31 @@ guard Smaller Dungeons keeps, Medium keeps (main story, the arena's undercroft, 
 Dungeons wins when both are on; DFU's `useSmallerDungeon` stays DFU's, verbatim. The quest freeze and the save stamp
 carry it as 3, APPENDED past DFU's NotSet/Disabled/Enabled (which stay verbatim); the load-time warp compares the stamp
 whole, so a save made at any of the three sizes and loaded at another stands at the start - and its world record (a
-layout's foes, piles and acts) is left unapplied (`otherLayout`). Online the stamp is Disabled (the room builds every
-dungeon whole); a quest whose markers were chosen through another quest's link takes that link's size where the medium
-size is either side (`adoptLinkedDungeonSize`, the machine's Start); and a quest frozen small or medium loaded online is
-RE-LAID on the whole dungeon (`systems/quest/questRepair.js relayWholeDungeons`: its markers enumerated again, its
-placements put back, its stamp Disabled). Its own row beside DFU's, which stays DFU's switch, whole.
+layout's foes, piles and acts) is left unapplied (`otherLayout`). Online the stamp is the world's sizes (it was
+Disabled: the room built every dungeon whole); a quest whose markers were chosen through another quest's link takes that link's
+size where the medium size is either side (`adoptLinkedDungeonSize`, the machine's Start); and a quest frozen at another
+size loaded online is RE-LAID on the room's build (`systems/quest/questRepair.js`: its markers enumerated again, its
+placements put back, its stamp the room's). Its own row beside DFU's, which stays DFU's switch, whole.
 `test/dsize1_mediumdungeons.test.js` (11, DETECT-FINDS' with it, MAPS.BSA's with ARENA2); `tools/mutants/dsize1.json`
-(26).
+(27).
+
+**SD-ONLINE (2026-10-05, Mac: "So medium dungeons will be the new by default option thats on (online only)", then "On
+second thought. Large, medium and small should all play into account online" - "World mixes sizes") - ONLINE EVERY
+DUNGEON HAS THE WORLD'S OWN SIZE.** The first of the Super Dungeons arc's slices (`11-Multiplayer/Super-Dungeons.md`
+section 13). Online the size law answers the world's size for the dungeon (`onlineDungeonSize`: one salted draw of the
+port's seeded die on its map id - small, medium or large, half of them medium; it answered `'full'`, AUDIT WORLD34 B2's
+one layout), whatever either switch or a quest's frozen copy says; the quest stamp online is ONLINE_DUNGEONS_STATE (4,
+past the medium size's 3), so a quest started online builds its dungeons at their online sizes offline too; the re-lay
+turned around (`relayOnlineDungeons`, it was `relayWholeDungeons`) and reads every other stamp, DFU's NotSet included,
+keeping the stamp of a quest one of whose dungeons it could not read; a new row, *Dungeon sizes as online*
+(`world-dungeon-sizes`), asks for the world's sizes offline and is forced on online, so the sync copies it home (the
+medium row is forced off online). And A DUNGEON'S ROOM IS ITS LAYOUT'S, as a building's is (WD3): an older page lays
+every dungeon whole and the relay keeps a room's memory for thirty days, so a re-laid dungeon stands in
+`dungeon:m<id>.s` or `dungeon:m<id>.m` (`net/online.js roomKeyFor`, reading `world/smallerDungeons.js
+builtDungeonSize` off the build through the mode machine's identity; `net/wire.js` WORLD_ROOM and DUNGEON_ROOM_TAGS -
+the relay's `world171`), while a dungeon built whole - the main story's, the undercroft, one the world leaves large, one
+no bigger than its size - keeps the room and the memory it always had. `test/sdonline.test.js` (10);
+`tools/mutants/sdonline.json` (13).
 
 ## THE FOUR HOSTS
 

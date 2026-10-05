@@ -23,6 +23,8 @@ folds in with the other 2. We have: Normal, Elite. We introduce: Super."* Then:
 - *"This needs to be complex, hard and challenge even the best builds that players have. It shouldnt be easy to overcome
   and should be a feat when players complete this. The Super dungeon collapses when the feat is done."*
 - *"Along with this change will be a simplier addition, visible showing dungeons difficulty as Regular, Elite or Super."*
+- Then, on the first slice: *"On second though. Large, medium and small should all play into account online"* - and,
+  asked whether each player picks or the world mixes, *"World mixes sizes"*.
 - *"You full have autonomy, and I want you to be as detailed as possible."*
 
 So, as decided here (each decision is argued in its section):
@@ -40,7 +42,7 @@ So, as decided here (each decision is argued in its section):
   it is in sight (Elite's own), a word in the taverns of the city it stands by - and FOUND by the first player to reach
   its door, whom everyone online then hears of (section 4).
 - **A real dungeon, made Super.** It is a spawned dungeon (the Elite's machinery, `world/spawnedDungeons.js`) at the
-  site, built at the online size (medium, section 13), with the hardest foes the port stands (section 5). Its END is the
+  site, built whole (section 5 - the world's sizes are for the Bay's own dungeons), with the hardest foes the port stands (section 5). Its END is the
   point of the layout farthest from its entrance, where the Rift and the Return stand (section 6).
 - **The Shattered Hour, not Oblivion.** The Rift opens on the place the Warp in the West left behind - Daggerfall's own
   Dragon Break of 3E 417, when the Numidium walked and the Bay broke into every ending at once (section 7).
@@ -57,10 +59,11 @@ So, as decided here (each decision is argued in its section):
   BRASS OF NUMIDIUM, one time in three; the title *Hourbreaker* one time in four and the aura *The Turning Hour* one time
   in eight, each rolled once by the account service from the relay's own seed (section 11).
 - **Regular, Elite, Super - one word, everywhere a dungeon is named** (section 12).
-- **Medium dungeons are the online law** (section 13).
+- **The world's dungeon sizes are the online law** - small, medium or large by each dungeon's map id, the same for
+  everyone (section 13).
 
 Daggerfall has no other players, no Elite or Super dungeon and no Shattered Hour, so none of this is a DFU member. Its
-Ledger A rows are SD-ONLINE (medium online), TIER1 (the labels) and SUPER-DUNGEONS (the rest).
+Ledger A rows are SD-ONLINE (the world's dungeon sizes online), TIER1 (the labels) and SUPER-DUNGEONS (the rest).
 
 ## 1. The shape, end to end
 
@@ -73,7 +76,7 @@ Ledger A rows are SD-ONLINE (medium online), TIER1 (the labels) and SUPER-DUNGEO
    column of light on the horizon · a line in sight · taverns of the city speak of it
    │ the first player at its door ─► `found` to the cell ─► the hub: ph 'found', fanned: "<who> found a Super dungeon"
    ▼
- the DUNGEON (medium layout, Super foes) ── its END: the RIFT (to the realm) + the RETURN (to the entrance)
+ the DUNGEON (whole, Super foes) ── its END: the RIFT (to the realm) + the RETURN (to the entrance)
    │ the Rift, pressed ─► the realm room `sd:<s>` admits ─► the SHATTERED HOUR (a made level)
    ▼
  THRESHOLD ─► ORRERY OF ENDINGS (puzzle: relay-judged) ─► UNMOORED STEPS (platforming: the shared clock)
@@ -153,8 +156,8 @@ places it from its own map files - and can only flip the record a little early.
 ## 5. The dungeon - Super
 
 The Hollow is a spawned dungeon (`synthesizeDungeonLocation`, the Elite's), cloned from a template dungeon the slot's
-hash picks from the region's (or the Bay's) labyrinths and keeps of at least 12 blocks, laid at the online size
-(medium: two interior blocks closed by six, section 13). It is named from the slot: *The Brass Hollow*, *The Stopped
+hash picks from the region's (or the Bay's) labyrinths and keeps of at least 12 blocks, laid WHOLE - the world's
+sizes (section 13) are not drawn for it: the feat is the longest walk its template has. It is named from the slot: *The Brass Hollow*, *The Stopped
 Bell*, *The Unwound Halls*, *The Clockless Deep*, *The Hour's Wound*, *The Splintered Keep*, *The Last Bell of
 <city>*, *The Hollow Under <city>*.
 
@@ -333,22 +336,38 @@ One law, `dungeonTier(loc)` (`systems/dungeonTier.js`): `'super'` for a Hollow, 
 Not on the classic travel map, automap or logbook: they are native windows, and DFU has no such word (the NATIVE-WINDOW
 RULE).
 
-## 13. Medium dungeons, the online law (SD-ONLINE)
+## 13. The world's dungeon sizes, the online law (SD-ONLINE)
 
 THE DELVE ARC shipped Medium Dungeons (DSIZE1) as an Enhanced row, off by default and refused online - every peer in a
-dungeon room must lay the same layout, and the setting is each player's own. Mac: medium is now the online default.
-So online it is not a setting at all but the room's law:
+dungeon room must lay the same layout, and the settings are each player's own. Mac first made medium the online
+default; then, on second thought, *"Large, medium and small should all play into account online"* - and, asked whether
+that meant each player's pick or the world's, chose **the world mixing sizes**: every dungeon has ONE online size,
+small, medium or large, the same for every player, most of them medium. So online the size is no setting at all but
+the room's law:
 
-- **`dungeonSizeFor`**: online answers `'medium'` (the main story's dungeons and the arena undercroft stay whole, as
-  they always have); offline the row decides, as before.
-- **The row**: `online: true` - online it is forced on, and says so; offline it stays the player's choice (off).
-- **The quest stamp** online is `MEDIUM_DUNGEONS_STATE`, so a quest's markers are chosen in the layout everyone lays.
-- **The re-lay** (AUDIT DELVE E1) turns around: an online character's quests stamped whole (or Smaller) are re-laid on
-  the medium dungeon, and stamped MEDIUM.
-- **The layout stamp on the wire.** A dungeon room's memory and its streams are keyed by location alone, and the relay
-  keeps a room's memory for 30 days - memory written by a whole layout would be read by index into a medium one, foe i
-  of one standing in a wall of the other. Every shared frame and memory now carries the layout's size (`lz`), and a
-  receiver refuses one laid at another size (memory: left as built, and rewritten by the room's host).
+- **`onlineDungeonSize`**: one draw of the port's seeded die (`systems/wind.js seededFirst`) on the dungeon's map id
+  and its own salt, weighted small 1, medium 2, large 1 (`ONLINE_DUNGEON_SIZES`) - a quarter of the Bay's dungeons
+  small, half medium, a quarter whole - the same on every client, every visit, for good.
+- **`dungeonSizeFor`**: online answers the world's size, whatever either switch or a quest's frozen copy says (the main
+  story's dungeons and the arena undercroft stay whole, as they always have); offline the settings decide, as before.
+- **The quest stamp** online is `ONLINE_DUNGEONS_STATE` (4, appended past the medium size's 3): "each dungeon at the
+  world's size for it", so a quest started online builds its dungeons at their online sizes offline too.
+- **The re-lay** (AUDIT DELVE E1) turns around: an online character's quests stamped at any other size (DFU's NotSet
+  included) are re-laid on the room's builds and stamped with the world's sizes.
+- **The rows**: `world-dungeon-sizes` (*Dungeon sizes as online*, Enhanced) asks for the world's sizes offline; online
+  the lane forces it on and the sync copies it home, so offline play can match. Under DFU's Smaller switch, over the
+  medium row, which is forced off online.
+- **A dungeon's room is its layout's.** A dungeon room's memory and its streams address foes, doors and piles by their
+  index in the layout, the relay keeps a room's memory for 30 days, and a page from before this still lays every
+  dungeon whole - memory written by one layout would be read by index into another, foe i of one standing in a wall of
+  the other, and two pages in one room would trade blows on each other's foe i. So a re-laid dungeon stands in a room
+  of its own, `dungeon:m<id>.s` or `dungeon:m<id>.m`, as a building's room is its layout's (WD3): named off the BUILD
+  (`builtDungeonSize`), admitted by the wire's one room law at both ends (`WORLD_ROOM`, `DUNGEON_ROOM_TAGS` - a relay
+  change, `world171`). A dungeon built whole keeps `dungeon:m<id>`, and its memory - and shares it, rightly, with an
+  older page, which lays the same whole dungeon. (This page first said each frame would carry the layout's size, `lz`,
+  and a receiver refuse another's; a room per layout needs no receiver to refuse anything, and an old page's blows -
+  which carry no stamp - cannot reach a re-laid room at all.)
+- **The Super dungeon** is always whole (section 5): the feat is the longest walk the template has.
 
 ## 14. The wire
 
@@ -394,3 +413,36 @@ an `sd:<s>` object only for the slot the hub's record names and only while it is
 | SD10 | the collapse, the readouts, the audit |
 
 Each slice records below what it shipped, what it pins and what it leaves.
+
+### SD-ONLINE - shipped 2026-10-05
+
+Section 13, whole. `world/smallerDungeons.js`: `onlineDungeonSize` (the world's size for a dungeon: one salted draw of
+the seeded die on its map id, `ONLINE_DUNGEON_SIZES` small 1 : medium 2 : large 1); `dungeonSizeFor` online answers it
+(AUDIT WORLD34 B2's one layout, which was the whole dungeon), and offline a quest stamped `ONLINE_DUNGEONS_STATE` - and
+the `world-dungeon-sizes` ask, under Smaller and over Medium - answer it too; `smallerDungeonsStateNow` online (and
+offline with the ask) answers ONLINE_DUNGEONS_STATE; `adoptLinkedDungeonSize` treats the world's sizes as a port's
+size beside the medium one; `builtDungeonSize` reads the size off the build. `systems/quest/questRepair.js
+relayOnlineDungeons` (it was `relayWholeDungeons`): every running quest stamped at another size - DFU's NotSet
+included - has its dungeon markers enumerated again on the room's builds, its placements put back, and its stamp set to
+the world's sizes; a quest one of whose dungeons cannot be read keeps its stamp. `systems/features.js`: the new
+`world-dungeon-sizes` row (forced on online), the medium row forced off online, and both size rows' notes say what
+online does; `systems/onlineSync.js` copies the forced rows home. The room: `net/online.js roomKeyFor` takes the
+dungeon's `size`, the mode machine's identity carries `builtDungeonSize(dungeonLoc)` and the world host hands it on;
+`net/wire.js` admits `dungeon:m<id>.m` and `.s` (`WORLD_ROOM`, `DUNGEON_ROOM_TAGS`, `dungeonRoomTag`), so
+RELAY_VERSION is `world171` - the arc's one version, re-hashed in place while it is undeployed.
+
+The slice was first built as "medium everywhere online" (Mac's first word) and turned to the world's mix the same hour
+on his second; nothing of the first shape shipped but the room per layout, which both needed.
+
+Pins: `test/sdonline.test.js` (10 - the world's sizes and their weights, the size law online and off with its guards
+and the stamps, the build's size, the room law at both ends, driven end to end, the hosts by source, the row, a session
+in the medium and the small rooms, the relay's Room keeping each size's memory apart; MAPS.BSA whole with ARENA2);
+`test/dsize1_mediumdungeons.test.js`, `test/ft1_smallerdungeons.test.js`, `test/auditworld34.test.js`,
+`test/uxb1e_onlinesync.test.js`, `test/features.test.js`, `test/ft18_features.test.js` (PINS MOVED);
+`tools/mutants/sdonline.json` (13) and `tools/mutants/dsize1.json` (27), all dead. Deploy: relay first (a page of this
+build on a relay before `world171` joins a `.s` or `.m` room the relay keeps no world for - presence alone, every player
+stepping their own foes - which is safe, and is why the order matters).
+
+Leaves: an older page in a dungeon the world re-lays stands in the whole dungeon's room, apart from this build's
+players, until it reloads. Offline, a dungeon no quest holds follows the switches unless the world's sizes are asked
+for (the sync asks for them).

@@ -47,11 +47,12 @@
   {
     "name": "DSIZE1-medium-beats-small",
     "file": "src/world/smallerDungeons.js",
-    "old": "  return setting ? 'small' : medium ? 'medium' : 'full';",
-    "new": "  return medium ? 'medium' : setting ? 'small' : 'full';",
+    "old": "  if (setting) return 'small';\n  if (world) return onlineDungeonSize(dfLocation);   // SD-ONLINE: offline, the world's sizes asked for\n  return medium ? 'medium' : 'full';",
+    "new": "  if (medium) return 'medium';\n  if (setting) return 'small';\n  if (world) return onlineDungeonSize(dfLocation);   // SD-ONLINE: offline, the world's sizes asked for\n  return 'full';",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
-    ]
+    ],
+    "note": "SD-ONLINE (re-aimed by content): the tail of the law is three lines now, the world's sizes between Smaller and Medium; Smaller still wins."
   },
   {
     "name": "DSIZE1-the-quest-frozen-medium-ignored",
@@ -63,13 +64,15 @@
     ]
   },
   {
-    "name": "DSIZE1-medium-online",
+    "name": "SD-ONLINE-the-room-lays-it-whole",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (online) return 'full';",
-    "new": "  if (online && !medium) return 'full';",
+    "old": "  if (online) return onlineDungeonSize(dfLocation);",
+    "new": "  if (online) return 'full';",
     "tests": [
-      "test/dsize1_mediumdungeons.test.js"
-    ]
+      "test/dsize1_mediumdungeons.test.js",
+      "test/sdonline.test.js"
+    ],
+    "note": "SD-ONLINE (re-aimed by content; it was DSIZE1-medium-online, the medium size leaking online): online every dungeon has the world's own size, and the law answering the whole dungeon again is the defect."
   },
   {
     "name": "DSIZE1-the-quest-stamped-full",
@@ -123,7 +126,8 @@
     "new": "key: 'mediumDungeons', initial: false, online: 'player' }",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
-    ]
+    ],
+    "note": "SD-ONLINE (re-aimed by content, back to its DSIZE1 law): the medium row is forced OFF online - every dungeon there has the world's own size - and left to the player it would say a size the room does not build."
   },
   {
     "name": "DETECT-FINDS-the-finds-unwalked",
@@ -155,20 +159,22 @@
   {
     "name": "AUDIT-DELVE-E4-online-stamped-by-the-setting",
     "file": "src/world/smallerDungeons.js",
-    "old": "  if (online) return SMALLER_DUNGEONS_STATE.Disabled;\n  if (enabled)",
+    "old": "  if (online) return ONLINE_DUNGEONS_STATE;\n  if (enabled)",
     "new": "  if (enabled)",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
-    ]
+    ],
+    "note": "SD-ONLINE (re-aimed by content): online the quest's stamp is the world's sizes, ONLINE_DUNGEONS_STATE (it was Disabled, the whole)."
   },
   {
     "name": "AUDIT-DELVE-E5-DFU-pair-adopted",
     "file": "src/world/smallerDungeons.js",
-    "old": "    if (held !== MEDIUM_DUNGEONS_STATE && quest.smallerDungeonsState !== MEDIUM_DUNGEONS_STATE) continue;\n",
+    "old": "    if (!portSize(held) && !portSize(quest.smallerDungeonsState)) continue;\n",
     "new": "",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
-    ]
+    ],
+    "note": "SD-ONLINE (re-aimed by content): the port's sizes are the medium AND the world's (portSize); DFU's own pair stays DFU's."
   },
   {
     "name": "AUDIT-DELVE-E5-its-own-link-adopted",
@@ -191,11 +197,12 @@
   {
     "name": "AUDIT-DELVE-E1-the-stamp-kept",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    quest.smallerDungeonsState = SMALLER_DUNGEONS_STATE.Disabled;\n    if (!moved) continue;",
+    "old": "    if (!unread) quest.smallerDungeonsState = ONLINE_DUNGEONS_STATE;\n    if (!moved) continue;",
     "new": "    if (!moved) continue;",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
-    ]
+    ],
+    "note": "SD-ONLINE (re-aimed by content): a re-laid quest's stamp becomes the world's sizes, ONLINE_DUNGEONS_STATE (it was Disabled)."
   },
   {
     "name": "AUDIT-DELVE-E1-nothing-put-back",
@@ -207,22 +214,24 @@
     ]
   },
   {
-    "name": "AUDIT-DELVE-E1-a-whole-quest-relaid",
+    "name": "SD-ONLINE-E1-a-world-sized-quest-relaid",
     "file": "src/systems/quest/questRepair.js",
-    "old": "    if (state !== SMALLER_DUNGEONS_STATE.Enabled && state !== MEDIUM_DUNGEONS_STATE) continue;",
+    "old": "    if (quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) continue;",
     "new": "    if (false) continue;",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
-    ]
+    ],
+    "note": "SD-ONLINE (re-aimed by content; it was AUDIT-DELVE-E1-a-whole-quest-relaid): a quest already at the world's sizes is not read - read, its markers are enumerated again for nothing."
   },
   {
     "name": "AUDIT-DELVE-E1-the-load-unwired",
     "file": "src/scenes/questBridge.js",
-    "old": "      if (isOnlinePage()) relayWholeDungeons(machine, ",
-    "new": "      if (false) relayWholeDungeons(machine, ",
+    "old": "      if (isOnlinePage()) relayOnlineDungeons(machine, ",
+    "new": "      if (false) relayOnlineDungeons(machine, ",
     "tests": [
       "test/dsize1_mediumdungeons.test.js"
-    ]
+    ],
+    "note": "SD-ONLINE (re-aimed by content): the online re-lay, renamed relayOnlineDungeons, still wired at the bridge's load."
   },
   {
     "name": "AUDIT-DELVE-E2-the-other-layout-applied",
@@ -232,5 +241,15 @@
     "tests": [
       "test/audit28_smallerdungeons.test.js"
     ]
+  },
+  {
+    "name": "SD-ONLINE-E1-an-unread-dungeon-restamped",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "      if (!location?.dungeon?.blocks) { unread = true; continue; }",
+    "new": "      if (!location?.dungeon?.blocks) continue;",
+    "tests": [
+      "test/dsize1_mediumdungeons.test.js"
+    ],
+    "note": "SD-ONLINE: a quest one of whose dungeons could not be read keeps its stamp - the size its markers there still know; restamped medium, a copy taken offline would build a layout its markers were never chosen on."
   }
 ]

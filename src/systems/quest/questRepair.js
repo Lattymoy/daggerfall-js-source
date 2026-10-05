@@ -27,7 +27,7 @@
 //
 // Not a DFU member: DFU has no such pass (its quest debugger is a developer's console). Ledger A (QREPAIR).
 import { MARKER_PREFERENCE, SITE_TYPES } from './place.js';
-import { SMALLER_DUNGEONS_STATE, MEDIUM_DUNGEONS_STATE } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1: the sizes a quest can freeze
+import { ONLINE_DUNGEONS_STATE } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / SD-ONLINE: the sizes the room builds online
 
 const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol' });
 
@@ -116,39 +116,46 @@ export function putBackPlacements(quest, env = {}, report = { people: 0, items: 
 const markerAddresses = (list) => (list ?? []).map((m) => `${m?.dungeonX},${m?.dungeonZ},${m?.markerID}`).join(';');
 
 /**
- * DSIZE1 (AUDIT DELVE E1): A FROZEN SIZE, CROSSING ONLINE. Online every dungeon is built whole (smallerDungeons.js,
- * AUDIT WORLD34 B2), but a quest started offline at the small or medium size chose its markers on THAT layout: a
- * marker is a block's (dungeonX, dungeonZ) and a flat in it, and on the whole dungeon the same address is another
- * block, or none - the quest item in rock, the foe in the void, and a quest no one in the party can finish. So when a
- * game is loaded where dungeons are whole, a running quest frozen at either size has each dungeon Place's markers
- * enumerated again on the dungeon the world now builds (Place's own enumeration, through the quest's own world), the
- * pass's first step puts back what its own placements had stood there, and the stamp becomes Disabled - the size its
- * markers now know, so a copy taken back offline keeps the whole dungeon. A Place whose markers come out the same (a
- * main-story keep, the arena's undercroft, a dungeon no bigger than the size) is left as it is. Answers the count of
- * quests re-laid. Not a DFU member (DFU has no online).
+ * DSIZE1 (AUDIT DELVE E1): A FROZEN SIZE, CROSSING ONLINE. Online the room builds every dungeon at ITS OWN size,
+ * whatever a quest froze (smallerDungeons.js dungeonSizeFor, AUDIT WORLD34 B2) - but a quest started offline chose its
+ * markers on the layout ITS stamp names: a marker is a block's (dungeonX, dungeonZ) and a flat in it, and on another layout the
+ * same address is another block, or none - the quest item in rock, the foe in the void, and a quest no one in the
+ * party can finish. So when a game is loaded online, a running quest stamped at any other size has each dungeon
+ * Place's markers enumerated again on the dungeon the room builds (Place's own enumeration, through the quest's own
+ * world, which online is the room's build), the pass's first step puts back what its own placements had stood there,
+ * and the stamp becomes the room's - the size its markers now know, so a copy taken back offline builds the dungeon
+ * they know. A Place whose markers come out the same (a main-story keep, the arena's undercroft, a dungeon no bigger
+ * than the size) is left as it is. Answers the count of quests re-laid. Not a DFU member (DFU has no online).
+ *
+ * SD-ONLINE (Super-Dungeons.md section 13): online every dungeon has the WORLD's size now - small, medium or large by
+ * its map id (onlineDungeonSize) - so this turned around: it was relayWholeDungeons, which re-laid the small and medium
+ * sizes on the whole dungeon and left the whole alone. Every stamp but ONLINE_DUNGEONS_STATE is read now - the whole
+ * dungeon's, the small one's, the medium one's, and DFU's NotSet, which meant "the setting" and so names no layout at
+ * all - and each of its dungeons compared with its online build (a dungeon whose online size is the stamp's size
+ * agrees, and nothing moves). A quest one of whose dungeons could not be read here (no world, no such location, a
+ * throw) keeps its stamp: the size its markers there still know.
  */
-export function relayWholeDungeons(machine, env = {}) {
+export function relayOnlineDungeons(machine, env = {}) {
   let relaid = 0;
   for (const quest of machine?.quests?.values?.() ?? []) {
     if (!questRunning(quest)) continue;
-    const state = quest.smallerDungeonsState;
-    if (state !== SMALLER_DUNGEONS_STATE.Enabled && state !== MEDIUM_DUNGEONS_STATE) continue;
+    if (quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) continue;
     const world = quest.hooks?.world ?? null;
-    let moved = false;
+    let moved = false, unread = false;
     for (const r of quest.resources?.values?.() ?? []) {
       const sd = r?.isPlace ? r.siteDetails : null;
-      if (sd?.siteType !== SITE_TYPES.Dungeon || !world?.maps) continue;
-      const index = world.maps.getRegion?.(sd.regionIndex)?.mapNameLookup?.get?.(sd.locationName);
+      if (sd?.siteType !== SITE_TYPES.Dungeon) continue;
+      const index = world?.maps?.getRegion?.(sd.regionIndex)?.mapNameLookup?.get?.(sd.locationName);
       const location = index == null ? null : world.maps.getLocation(sd.regionIndex, index);
-      if (!location?.dungeon?.blocks) continue;
+      if (!location?.dungeon?.blocks) { unread = true; continue; }
       let markers;
-      try { markers = r._enumerateDungeonQuestMarkers(world, location); } catch { continue; }
+      try { markers = r._enumerateDungeonQuestMarkers(world, location); } catch { unread = true; continue; }
       if (markerAddresses(markers.questSpawnMarkers) === markerAddresses(sd.questSpawnMarkers)
         && markerAddresses(markers.questItemMarkers) === markerAddresses(sd.questItemMarkers)) continue;
       r.siteDetails = { ...sd, questSpawnMarkers: markers.questSpawnMarkers, questItemMarkers: markers.questItemMarkers, selectedMarker: { targetResources: null } };
       moved = true;
     }
-    quest.smallerDungeonsState = SMALLER_DUNGEONS_STATE.Disabled;
+    if (!unread) quest.smallerDungeonsState = ONLINE_DUNGEONS_STATE;
     if (!moved) continue;
     putBackPlacements(quest, env);
     relaid++;

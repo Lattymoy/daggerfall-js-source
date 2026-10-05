@@ -6,9 +6,12 @@
 // commonest shape MAPS.BSA has (AUDIT DELVE: the first cut's thirteen-block cross made the real big dungeons bigger
 // inside) - from its own block list, DFRandom seeded on its MapId. Every guard Smaller Dungeons keeps, Medium keeps;
 // Smaller Dungeons wins when both are on; the quest freeze and the save stamp carry it at a value appended past DFU's
-// three (world/smallerDungeons.js); online the stamp is the whole dungeon's (E4); a quest whose markers were chosen
+// three (world/smallerDungeons.js); online the stamp is the room's size (E4); a quest whose markers were chosen
 // through another quest's link takes that link's size where the medium size is either side (E5); a quest frozen at
-// either size crossing online is re-laid on the whole dungeon (E1, quest/questRepair.js). And DETECT-FINDS: a
+// another size crossing online is re-laid on the room's build (E1, quest/questRepair.js). SD-ONLINE (PINS MOVED -
+// bible/11-Multiplayer/Super-Dungeons.md section 13; test/sdonline.test.js holds the law itself): online every
+// dungeon has the world's own size now - small, medium or large by its map id - where it was the whole dungeon. And
+// DETECT-FINDS: a
 // searched object's find is in the one loot walk (scenes/shared.js). bible/03-World/Delve-Arc.md, DSIZE1 and
 // DETECT-FINDS; bible/01-Overview/Audit-Delve.md.
 import { test } from 'node:test';
@@ -18,6 +21,7 @@ import { join } from 'node:path';
 
 import {
   SMALLER_DUNGEONS_STATE, MEDIUM_DUNGEON_THRESHOLD, MEDIUM_DUNGEONS_STATE, MEDIUM_DUNGEONS_PREF, MEDIUM_LAYOUT,
+  ONLINE_DUNGEONS_STATE, onlineDungeonSize,
   mediumDungeonsWanted, smallerDungeonsStateNow, useSmallerDungeon, dungeonSizeFor, generateMediumDungeon,
   generateSmallerDungeon, isMediumDungeon, isSmallerDungeon, smallerDungeonsStamp, needsStartWarp, dungeonLocationFor,
   adoptLinkedDungeonSize,
@@ -26,7 +30,7 @@ import { isMainStoryDungeon } from '../src/world/dungeonTextures.js';
 import { QuestMachine } from '../src/systems/quest/machine.js';
 import { Place } from '../src/systems/quest/place.js';
 import { loadQuestTables } from '../src/systems/quest/tables.js';
-import { relayWholeDungeons } from '../src/systems/quest/questRepair.js';
+import { relayOnlineDungeons } from '../src/systems/quest/questRepair.js';
 import { RDB_RESOURCE_TYPES } from '../src/formats/blocksFile.js';
 import { readdirSync } from 'node:fs';
 import { setSeed, randomRange } from '../src/formats/dfRandom.js';
@@ -106,7 +110,9 @@ test('DSIZE1: the size a dungeon is built at - the guards, the quest\'s frozen s
   assert.equal(dungeonSizeFor(big, { setting: false, medium: false }), 'full');
   assert.equal(dungeonSizeFor(big, { setting: false, medium: true }), 'medium');
   assert.equal(dungeonSizeFor(big, { setting: true, medium: true }), 'small', 'Smaller Dungeons wins');
-  assert.equal(dungeonSizeFor(big, { setting: true, medium: true, online: true }), 'full', 'online, the whole dungeon');
+  assert.equal(dungeonSizeFor(big, { setting: true, medium: true, online: true }), onlineDungeonSize(big), 'online, the world\'s size for it (SD-ONLINE - PIN MOVED: it was the whole dungeon)');
+  assert.equal(dungeonSizeFor(big, { setting: false, medium: false, online: true }), onlineDungeonSize(big), '...whatever either switch says');
+  assert.equal(onlineDungeonSize(big), 'medium', 'map 777\'s draw (test/sdonline.test.js holds the law)');
   assert.equal(dungeonSizeFor(loc(20, PRIVATEERS_HOLD), { setting: true, medium: true }), 'full', 'main story never shrinks');
   assert.equal(dungeonSizeFor({ hasDungeon: false }, { setting: true }), 'full');
   const machine = (state) => ({
@@ -131,12 +137,12 @@ test('DSIZE1: the size a dungeon is built at - the guards, the quest\'s frozen s
   assert.equal(dungeonLocationFor(big, { setting: false, medium: false }), big);
 });
 
-test('DSIZE1: the quest\'s stamp, the save\'s stamp and the warp - three layouts, compared whole; online the stamp is the whole dungeon\'s (E4)', () => {
+test('DSIZE1: the quest\'s stamp, the save\'s stamp and the warp - three layouts, compared whole; online the stamp is the room\'s size (E4)', () => {
   assert.equal(smallerDungeonsStateNow(true, true, false), SMALLER_DUNGEONS_STATE.Enabled);
   assert.equal(smallerDungeonsStateNow(false, true, false), MEDIUM_DUNGEONS_STATE);
   assert.equal(smallerDungeonsStateNow(false, false, false), SMALLER_DUNGEONS_STATE.Disabled);
-  assert.equal(smallerDungeonsStateNow(true, false, true), SMALLER_DUNGEONS_STATE.Disabled, 'E4: online, the room builds it whole whatever the setting says');
-  assert.equal(smallerDungeonsStateNow(false, true, true), SMALLER_DUNGEONS_STATE.Disabled);
+  assert.equal(smallerDungeonsStateNow(true, false, true), ONLINE_DUNGEONS_STATE, 'E4: online, the room builds every dungeon at its own size whatever the setting says (SD-ONLINE: the world\'s - PIN MOVED)');
+  assert.equal(smallerDungeonsStateNow(false, false, true), ONLINE_DUNGEONS_STATE);
   assert.equal(smallerDungeonsStateNow(true, true), SMALLER_DUNGEONS_STATE.Enabled, 'off the online page, the settings');
   const full = loc(20), med = generateMediumDungeon(loc(20)), sml = generateSmallerDungeon(loc(20));
   assert.equal(smallerDungeonsStamp(med), MEDIUM_DUNGEONS_STATE);
@@ -158,11 +164,13 @@ test('DSIZE1 E5: the machine\'s Start takes a linked dungeon\'s size where the m
     getSiteLinks: (type, mapId) => (type === SITE_TYPES.Dungeon && mapId === 777 && held != null ? [{ questUID: 1 }] : []),
     getQuest: (uid) => (uid === 1 ? { smallerDungeonsState: held } : null),
   });
-  const S = SMALLER_DUNGEONS_STATE, M = MEDIUM_DUNGEONS_STATE;
+  const S = SMALLER_DUNGEONS_STATE, M = MEDIUM_DUNGEONS_STATE, O = ONLINE_DUNGEONS_STATE;
   for (const [held, stamped, want] of [
     [S.Disabled, M, S.Disabled], [M, S.Enabled, M], [S.Enabled, M, S.Enabled], [M, S.Disabled, M],
     [S.Enabled, S.Disabled, S.Disabled], [S.Disabled, S.Enabled, S.Enabled],   // DFU's own pair: DFU's stamp, untouched
     [S.NotSet, M, M], [null, M, M], [M, M, M],
+    // SD-ONLINE: the world's sizes are a port's size too - either side, the link's
+    [O, S.Disabled, O], [S.Disabled, O, S.Disabled], [O, M, O], [M, O, M], [O, S.Enabled, O], [S.NotSet, O, O], [O, O, O],
   ]) {
     const q = quest(2, stamped);
     adoptLinkedDungeonSize(q, machineOf(held));
@@ -179,17 +187,18 @@ test('DSIZE1 E5: the machine\'s Start takes a linked dungeon\'s size where the m
   assert.match(m, /startQuestImmediate\(quest\) \{\n    quest\.start\(\);\n    adoptLinkedDungeonSize\(quest, this\);/);
 });
 
-test('DSIZE1 E1: a quest frozen small or medium, loaded online, has its dungeon markers enumerated again on the whole dungeon, its placements put back there, and its stamp set to the whole', () => {
+test('DSIZE1 E1 (SD-ONLINE, PIN MOVED): a quest stamped at another size, loaded online, has its dungeon markers enumerated again on the room\'s build (the world\'s size for each dungeon), its placements put back there, and its stamp set to the world\'s sizes', () => {
   const m = new QuestMachine();
   const q = m.parseQuestForLists(BARE_SRC, 0, { rolls: () => 0 });
   m.startQuestImmediate(q);
-  q.smallerDungeonsState = MEDIUM_DUNGEONS_STATE;
-  // the whole dungeon: two blocks, a spawn marker in each, at block (0,0) and (1,0)
+  q.smallerDungeonsState = SMALLER_DUNGEONS_STATE.Disabled;   // chosen on the whole dungeon, offline
+  // the room's build (the quest's world answers it - online, world.js questWorld sizes through dungeonLocationFor):
+  // two blocks, a spawn marker in each, at block (0,0) and (1,0)
   const flat = (record, x) => ({ type: RDB_RESOURCE_TYPES.Flat, position: x, xPos: x, yPos: 0, zPos: 0, resources: { flatResource: { textureArchive: 199, textureRecord: record } } });
   const blockData = { W1: { position: 100, rdbBlock: { objectRootList: [{ rdbObjects: [flat(11, 1), flat(18, 2)] }] } }, B1: { position: 200, rdbBlock: { objectRootList: [{ rdbObjects: [flat(11, 3)] }] } } };
-  const whole = { name: 'Keep', mapTableData: { mapId: 777 }, dungeon: { blocks: [{ blockName: 'W1', x: 0, z: 0 }, { blockName: 'B1', x: 1, z: 0 }] } };
+  const built = { name: 'Keep', mapTableData: { mapId: 777 }, dungeon: { medium: true, blocks: [{ blockName: 'W1', x: 0, z: 0 }, { blockName: 'B1', x: 1, z: 0 }] } };
   q.hooks = { ...(q.hooks ?? {}), world: {
-    maps: { getRegion: (r) => (r === 3 ? { mapNameLookup: new Map([['Keep', 5]]) } : null), getLocation: (r, l) => (r === 3 && l === 5 ? whole : null) },
+    maps: { getRegion: (r) => (r === 3 ? { mapNameLookup: new Map([['Keep', 5]]) } : null), getLocation: (r, l) => (r === 3 && l === 5 ? built : null) },
     getBlock: (n) => blockData[n] ?? null,
   } };
   const dun = new Place(q);
@@ -201,27 +210,39 @@ test('DSIZE1 E1: a quest frozen small or medium, loaded online, has its dungeon 
   q.resources.set('dun', dun);
   q.resources.set('boss', { symbol: sym('boss'), isFoe: true, spawnCount: 1, killCount: 0, parentQuest: q, questResourceBehaviour: null });
   q.tasks.set('_go_', { actions: [{ typeName: 'PlaceFoe', foeSymbol: sym('boss'), placeSymbol: sym('dun'), marker: -1, isComplete: true }] });
-  assert.equal(relayWholeDungeons(m), 1, 'one quest re-laid');
-  assert.deepEqual(dun.siteDetails.questSpawnMarkers.map((k) => [k.dungeonX, k.dungeonZ, k.markerID]), [[0, 0, 101], [1, 0, 203]], 'the whole dungeon\'s markers');
+  assert.equal(relayOnlineDungeons(m), 1, 'one quest re-laid');
+  assert.deepEqual(dun.siteDetails.questSpawnMarkers.map((k) => [k.dungeonX, k.dungeonZ, k.markerID]), [[0, 0, 101], [1, 0, 203]], 'the room\'s build\'s markers');
   assert.deepEqual(dun.siteDetails.questItemMarkers.map((k) => [k.dungeonX, k.markerID]), [[0, 102]]);
-  assert.deepEqual(dun.siteDetails.selectedMarker.targetResources.map((t) => t.name), ['boss'], 'the boss stands on the whole dungeon\'s marker');
-  assert.equal(dun.siteDetails.selectedMarker.dungeonZ, 0, '...a marker the whole dungeon has');
-  assert.equal(q.smallerDungeonsState, SMALLER_DUNGEONS_STATE.Disabled, 'the size its markers now know');
-  // again: the markers agree, nothing moves, nothing counted
+  assert.deepEqual(dun.siteDetails.selectedMarker.targetResources.map((t) => t.name), ['boss'], 'the boss stands on the room\'s build\'s marker');
+  assert.equal(dun.siteDetails.selectedMarker.dungeonZ, 0, '...a marker the room\'s build has');
+  assert.equal(q.smallerDungeonsState, ONLINE_DUNGEONS_STATE, 'the sizes its markers now know');
+  // again from the small size, and from the medium: the markers agree, nothing moves, nothing counted - and the stamp is the room's
   const held = dun.siteDetails.selectedMarker;
-  q.smallerDungeonsState = SMALLER_DUNGEONS_STATE.Enabled;
-  assert.equal(relayWholeDungeons(m), 0);
-  assert.equal(dun.siteDetails.selectedMarker, held, 'a Place whose markers come out the same keeps its targets');
-  assert.equal(q.smallerDungeonsState, SMALLER_DUNGEONS_STATE.Disabled);
-  // a quest at the whole size is not read
-  q.smallerDungeonsState = SMALLER_DUNGEONS_STATE.NotSet;
+  for (const from of [SMALLER_DUNGEONS_STATE.Enabled, MEDIUM_DUNGEONS_STATE]) {
+    q.smallerDungeonsState = from;
+    assert.equal(relayOnlineDungeons(m), 0);
+    assert.equal(dun.siteDetails.selectedMarker, held, 'a Place whose markers come out the same keeps its targets');
+    assert.equal(q.smallerDungeonsState, ONLINE_DUNGEONS_STATE);
+  }
+  // a quest at the room's sizes is not read
   dun.siteDetails.questSpawnMarkers = [old(1, 0, -1)];
-  assert.equal(relayWholeDungeons(m), 0);
-  assert.equal(dun.siteDetails.questSpawnMarkers[0].dungeonZ, -1, 'NotSet: DFU\'s, left as it is');
+  assert.equal(relayOnlineDungeons(m), 0);
+  assert.equal(dun.siteDetails.questSpawnMarkers[0].dungeonZ, -1, 'ONLINE: the room\'s, left as it is');
+  // DFU's NotSet names no layout ("the setting"): read and compared like any other
+  q.smallerDungeonsState = SMALLER_DUNGEONS_STATE.NotSet;
+  assert.equal(relayOnlineDungeons(m), 1, 'NotSet, its markers off the room\'s build: re-laid');
+  assert.equal(dun.siteDetails.questSpawnMarkers[0].dungeonZ, 0);
+  assert.equal(q.smallerDungeonsState, ONLINE_DUNGEONS_STATE);
+  // a dungeon this pass cannot read keeps the quest's stamp - the size its markers there still know
+  q.smallerDungeonsState = SMALLER_DUNGEONS_STATE.Disabled;
+  dun.siteDetails = { ...dun.siteDetails, locationName: 'Nowhere' };
+  assert.equal(relayOnlineDungeons(m), 0);
+  assert.equal(q.smallerDungeonsState, SMALLER_DUNGEONS_STATE.Disabled, 'unread: the stamp stands');
   // wired at the bridge's load, online only, before anything mounts
   const bridge = src('src/scenes/questBridge.js');
   const restore = bridge.slice(bridge.indexOf('restore(data) {'));
-  assert.match(restore, /machine\.restoreSaveData\(data\.machine \?\? \{ siteLinks: \[\], quests: \[\] \}\);\n(?:\s*\/\/[^\n]*\n)+\s*if \(isOnlinePage\(\)\) relayWholeDungeons\(machine, /);
+  assert.match(restore, /machine\.restoreSaveData\(data\.machine \?\? \{ siteLinks: \[\], quests: \[\] \}\);\n(?:\s*\/\/[^\n]*\n)+\s*if \(isOnlinePage\(\)\) relayOnlineDungeons\(machine, /);
+  assert.doesNotMatch(src('src/systems/quest/questRepair.js'), /function relayWholeDungeons/, 'the whole-dungeon re-lay is gone, not beside it');
 });
 
 const ARENA2 = process.env.ARENA2_PATH;
@@ -267,11 +288,13 @@ test('DSIZE1: the ask is the enhanced skin\'s', () => {
   } finally { setUiSkin(skin); setPref(MEDIUM_DUNGEONS_PREF, pref); }
 });
 
-test('DSIZE1: the Features row - Enhanced, its own, off by default and forced off online', () => {
+test('DSIZE1: the Features row - Enhanced, its own, off by default and forced off online (SD-ONLINE: the world\'s sizes are the room\'s law there)', () => {
   const f = FEATURES.find((x) => x.id === 'medium-dungeons');
   assert.ok(f);
   assert.deepEqual(f.kinds, ['enhanced']);
   assert.deepEqual({ ...f.control }, { store: 'prefs', key: MEDIUM_DUNGEONS_PREF, initial: false, online: false });
+  assert.match(f.note, /Online every dungeon has its own size instead\./, 'the row says what the room does (PIN MOVED)');
+  assert.doesNotMatch(f.note, /every dungeon online, keep full size/, 'and no longer the law it replaced');
   assert.equal(FEATURES.findIndex((x) => x.id === 'medium-dungeons'), FEATURES.findIndex((x) => x.id === 'smaller-dungeons') + 1, 'beside DFU\'s own switch');
 });
 

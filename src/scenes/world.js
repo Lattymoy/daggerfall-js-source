@@ -16565,7 +16565,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     maps: Object.create(maps, {
       // the page flag off `params`, not `onlineOn` - that const is declared far below, and a quest parsed at chargen
       // asks for its dungeon before it is ("Parsing quest FAILED! Cannot access 'onlineOn' before initialization")
-      getLocation: { value: (r, l) => dungeonLocationFor(maps.getLocation(r, l), { questMachine: questBridge?.machine, online: params.has('online') }) },   // AUDIT WORLD34 B2: online, the whole dungeon
+      getLocation: { value: (r, l) => dungeonLocationFor(maps.getLocation(r, l), { questMachine: questBridge?.machine, online: params.has('online') }) },   // AUDIT WORLD34 B2: online, the room's one layout (SD-ONLINE: the world's size for it)
       getLocationByName: { value: (rn, ln) => dungeonLocationFor(maps.getLocationByName(rn, ln), { questMachine: questBridge?.machine, online: params.has('online') }) },
     }),
     getBlock: (name) => blocks.getBlockByName(name),
@@ -23144,6 +23144,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         locationName: ident?.kind === 'dungeon' ? ident.name : (loc?.name ?? ''),
         buildingKey: ident?.buildingKey ?? 0,
         layout: ident?.layout ?? null,   // WD3 (AUDIT WD3 B3): an interior's room is its layout's
+        size: ident?.kind === 'dungeon' ? (ident.size ?? null) : null,   // SD-ONLINE: and a dungeon's (`dungeon:m<id>.m` or `.s`, re-laid medium or small)
       });
     }
     // the pose: MapsFile's frame in the overworld (the floating origin's
@@ -23683,7 +23684,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     onDungeonSpawned: () => { const p = playerTravelPixel(); _spawnSeen(`${p.x},${p.y}`); },   // OW6L: the one first-sight door
     onDungeonCleared: _noteSpawnCleared,
     spawnLedger: () => _spawnLedger,   // TTL1: so a save made INSIDE a dungeon carries the clocks too
-    dungeonOnline: () => onlineOn,   // AUDIT WORLD34 B2: online, the dungeon that gets built is the WHOLE dungeon - the room's layout is one layout
+    dungeonOnline: () => onlineOn,   // AUDIT WORLD34 B2: online, the dungeon that gets built is the ROOM's - one layout (SD-ONLINE: the world's size for it)
     // D-ONLINE1: the death screen's door for the deaths this host does
     // not present itself (a dungeon's, a building interior's -
     // worldModes.js). False (not handled) when this session is not

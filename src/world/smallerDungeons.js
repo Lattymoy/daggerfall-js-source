@@ -28,7 +28,8 @@ import { isMainStoryDungeon } from './dungeonTextures.js';
 import { isArenaUndercroft } from './arenaCity.js';   // ARENA5: the fighters' hall keeps its blocks
 import { isEnhanced } from '../systems/uiSkin.js';   // DSIZE1: the medium size is the enhanced skin's
 import { getPref } from '../systems/uiPrefs.js';   // DSIZE1: ...and the player's ask (the `medium-dungeons` row)
-import { isOnlinePage } from '../systems/onlineLane.js';   // AUDIT DELVE E4: online the quest's stamp is the whole dungeon's
+import { isOnlinePage } from '../systems/onlineLane.js';   // AUDIT DELVE E4 / SD-ONLINE: online the quest's stamp is the world's sizes
+import { seededFirst } from '../systems/wind.js';   // SD-ONLINE: the port's one seeded die - a dungeon's online size, the same on every client
 
 /** QuestSmallerDungeonsState (DaggerfallUnityEnums.cs:758-763) -
  *  NotSet, DISABLED, ENABLED, in that order. F-B3 (self-audit 2): the
@@ -46,8 +47,19 @@ export const SMALLER_DUNGEON_THRESHOLD = 5;
  * Medium is the step between - a dungeon of more than MEDIUM_DUNGEON_THRESHOLD blocks is regenerated, by
  * GenerateSmallerDungeon's own law (its own block list, DFRandom seeded on its MapId, so the same every visit), as
  * MEDIUM_LAYOUT: two interior blocks side by side (the starting block first) and the six border blocks that close them.
- * Every quest guard Smaller Dungeons keeps, Medium keeps: main story, the arena's undercroft, online and a quest's frozen
- * size. Smaller Dungeons, when it is on, wins. Not a DFU member.
+ * Every quest guard Smaller Dungeons keeps, Medium keeps: main story, the arena's undercroft and a quest's frozen size.
+ * Smaller Dungeons, when it is on, wins. Not a DFU member.
+ *
+ * SD-ONLINE (2026-10-05, Mac: "So medium dungeons will be the new by default option thats on (online only)", then "On
+ * second thought. Large, medium and small should all play into account online" - and, asked which, "World mixes
+ * sizes"; bible/11-Multiplayer/Super-Dungeons.md section 13): ONLINE EVERY DUNGEON HAS ITS OWN SIZE, THE WORLD'S. Not
+ * the player's settings, which are each player's own while every peer in a dungeon's room must lay one layout (AUDIT
+ * WORLD34 B2, which made it the whole dungeon): online each dungeon the guards let through is built at the size one
+ * seeded draw on its map id gives it - small, medium or large, half of them medium (ONLINE_DUNGEON_SIZES,
+ * onlineDungeonSize) - the same on every client and every visit, whatever either switch says. A dungeon's room is its
+ * layout's (net/online.js roomKeyFor: `dungeon:m<id>.s`, `dungeon:m<id>.m`, or the plain room for the whole dungeon).
+ * The quest freeze carries it as ONLINE_DUNGEONS_STATE, so a quest started online builds its dungeons at their online
+ * sizes offline too; and offline the `world-dungeon-sizes` row asks for the world's sizes outright.
  *
  * AUDIT DELVE (MAPS.BSA, read whole - bible/01-Overview/Audit-Delve.md): the first cut was a cross of five interior
  * blocks and its eight-block ring over THIRTEEN, and the real data had it backwards. Of the 4,232 dungeons, 159 have
@@ -66,6 +78,33 @@ export const MEDIUM_DUNGEONS_STATE = 3;
 export const MEDIUM_DUNGEONS_PREF = 'mediumDungeons';
 /** The player's ask, on the enhanced skin. */
 export const mediumDungeonsWanted = () => isEnhanced() && getPref(MEDIUM_DUNGEONS_PREF) === true;
+
+/** SD-ONLINE: the quest freeze's value for "each dungeon at the size the online world gives it" (onlineDungeonSize) -
+ *  appended past the medium size, as the medium size was past DFU's three, and read by an older build as neither. */
+export const ONLINE_DUNGEONS_STATE = 4;
+/** SD-ONLINE: the online world's sizes and their weights - small 1, medium 2, large (the whole dungeon) 1. */
+export const ONLINE_DUNGEON_SIZES = Object.freeze([['small', 1], ['medium', 2], ['full', 1]].map((r) => Object.freeze(r)));
+/** SD-ONLINE: the draw's own salt, so a dungeon's size is not any other roll the port makes on its map id. */
+export const ONLINE_DUNGEON_SIZE_SALT = 0x5d1e5a2b;
+/** SD-ONLINE: THE SIZE THE ONLINE WORLD GIVES A DUNGEON - one draw of the port's seeded die on its map id and the
+ *  salt, weighted by ONLINE_DUNGEON_SIZES: the same on every client, every visit, for good. `^` reads the id as its 32
+ *  bits, so a map id read signed is the same dungeon as the unsigned one (AUDIT WORLD34 A1). The guards (the main
+ *  story's, the undercroft's) are dungeonSizeFor's, not this: it answers for any map id. */
+export function onlineDungeonSize(dfLocation) {
+  const id = dfLocation?.mapTableData?.mapId;
+  if (!Number.isFinite(id)) return 'full';
+  const total = ONLINE_DUNGEON_SIZES.reduce((sum, [, w]) => sum + w, 0);
+  let u = seededFirst(id ^ ONLINE_DUNGEON_SIZE_SALT) * total;
+  for (const [size, w] of ONLINE_DUNGEON_SIZES) {
+    if (u < w) return size;
+    u -= w;
+  }
+  return 'full';
+}
+/** SD-ONLINE: the prefs key of the `world-dungeon-sizes` Features row - offline, every dungeon at its online size. */
+export const WORLD_DUNGEON_SIZES_PREF = 'worldDungeonSizes';
+/** SD-ONLINE: the player's ask for the world's sizes, on the enhanced skin (forced on online, where it is the law). */
+export const worldDungeonSizesWanted = () => isEnhanced() && getPref(WORLD_DUNGEON_SIZES_PREF) === true;
 /** The medium size: [x, z, border] - the two interior blocks first (the starting block, then the one east of it),
  *  then the six border blocks that close them (the two north, west, east, the two south). */
 export const MEDIUM_LAYOUT = Object.freeze([
@@ -85,12 +124,14 @@ const SMALLER_LAYOUT = Object.freeze([
 
 /** Quest.Start's stamp (Quest.cs:284): the setting AS OF the quest's
  *  start, frozen into the quest. DSIZE1: and the medium size, when it is asked for and Smaller Dungeons is not on.
- *  AUDIT DELVE E4: online, Disabled - the room builds every dungeon whole (dungeonSizeFor, below), so a quest started
- *  there placed its markers on the whole dungeon whatever the player's own Smaller setting says, and the stamp is the
- *  size its markers were chosen on: a copy taken offline then builds the whole dungeon its markers know. */
-export function smallerDungeonsStateNow(enabled = getBool('Experimental', 'SmallerDungeons'), medium = mediumDungeonsWanted(), online = isOnlinePage()) {
-  if (online) return SMALLER_DUNGEONS_STATE.Disabled;
+ *  AUDIT DELVE E4: online, the ROOM's sizes - the stamp is the size the quest's markers were chosen on, and online the
+ *  room builds every dungeon at its own size whatever the player's settings say (dungeonSizeFor, below), so a copy
+ *  taken offline builds the dungeon its markers know. SD-ONLINE: those are the online world's sizes (it was the whole
+ *  dungeon), ONLINE_DUNGEONS_STATE - and offline too, when the world's sizes are asked for and Smaller is not on. */
+export function smallerDungeonsStateNow(enabled = getBool('Experimental', 'SmallerDungeons'), medium = mediumDungeonsWanted(), online = isOnlinePage(), world = worldDungeonSizesWanted()) {
+  if (online) return ONLINE_DUNGEONS_STATE;
   if (enabled) return SMALLER_DUNGEONS_STATE.Enabled;
+  if (world) return ONLINE_DUNGEONS_STATE;
   return medium ? MEDIUM_DUNGEONS_STATE : SMALLER_DUNGEONS_STATE.Disabled;
 }
 
@@ -105,7 +146,7 @@ export function useSmallerDungeon(dfLocation, { questMachine = null,
   setting = getBool('Experimental', 'SmallerDungeons'), online = false } = {}) {
   if (!dfLocation?.hasDungeon || isMainStoryDungeon(dfLocation.mapTableData?.mapId)) return false;
   if (isArenaUndercroft(dfLocation)) return false;   // ARENA5: the arena's undercroft never shrinks (dungeonSizeFor, below)
-  if (online) return false;   // AUDIT WORLD34 B2: online, the whole dungeon (dungeonSizeFor, below)
+  if (online) return false;   // AUDIT WORLD34 B2: online, not the setting's (dungeonSizeFor, below: SD-ONLINE, the world's sizes)
   const links = questMachine?.getSiteLinks(SITE_TYPES.Dungeon, dfLocation.mapTableData?.mapId) ?? [];
   if (links.length > 0) {
     const quest = questMachine.getQuest(links[0].questUID);
@@ -117,32 +158,44 @@ export function useSmallerDungeon(dfLocation, { questMachine = null,
 
 /**
  * DSIZE1: THE SIZE A DUNGEON IS BUILT AT - 'small', 'medium' or 'full' - by UseSmallerDungeon's law (:776-797), whole,
- * with the medium size beside it: the same guards (no dungeon, main story, the arena's undercroft, online: full), a
- * quest's frozen state first (Enabled small, MEDIUM_DUNGEONS_STATE medium, Disabled full - first link wins), and then
- * the setting (small), else the medium ask, else full.
+ * with the medium size beside it: the same guards (no dungeon, main story, the arena's undercroft: full), online the
+ * world's size (SD-ONLINE: onlineDungeonSize), a quest's frozen state first (Enabled small, MEDIUM_DUNGEONS_STATE
+ * medium, ONLINE_DUNGEONS_STATE the world's, Disabled full - first link wins), and then the setting (small), else the
+ * world's sizes asked for, else the medium ask, else full.
  */
 export function dungeonSizeFor(dfLocation, { questMachine = null,
-  setting = getBool('Experimental', 'SmallerDungeons'), medium = mediumDungeonsWanted(), online = false } = {}) {
+  setting = getBool('Experimental', 'SmallerDungeons'), medium = mediumDungeonsWanted(), online = false,
+  world = worldDungeonSizesWanted() } = {}) {
   if (!dfLocation?.hasDungeon || isMainStoryDungeon(dfLocation.mapTableData?.mapId)) return 'full';
   // ARENA5 (the audit, closing ARENA1's open item "Smaller Dungeons may trim the undercroft"): THE ARENA'S UNDERCROFT
   // NEVER SHRINKS. It is no keep of Daggerfall's but the fighters' hall (world/arenaUndercroft.js): its people, the Pit
   // Master's ring and the Keeper's Hall stand by their distance out from the stair over Kamer's 32 blocks, and a five-
   // block plus of random ones drawn from his list would stand the pit in a cellar and the Hall nowhere. Main story's rule.
   if (isArenaUndercroft(dfLocation)) return 'full';
-  // AUDIT WORLD34 B2: ONLINE, THE WHOLE DUNGEON. The room's stream, its acts and its memory address foes, doors and
-  // piles by their index in the layout, and the layout was a per-client SETTING (or a quest's frozen copy of one):
-  // a five-block client and a full-dungeon client shared one `_locationKey`, accepted each other's frames, and
-  // landed them on the wrong markers. Online there is one layout, the dungeon as MAPS.BSA has it.
-  if (online) return 'full';
+  // AUDIT WORLD34 B2: ONLINE, ONE LAYOUT. The room's stream, its acts and its memory address foes, doors and piles by
+  // their index in the layout, and the layout was a per-client SETTING (or a quest's frozen copy of one): a five-block
+  // client and a full-dungeon client shared one `_locationKey`, accepted each other's frames, and landed them on the
+  // wrong markers. Online there is one layout, and no setting and no quest's copy reaches it.
+  // SD-ONLINE (Super-Dungeons.md section 13): that one layout is the WORLD's size for the dungeon - small, medium or
+  // large by one seeded draw on its map id (onlineDungeonSize), the same for every client (it was the dungeon as
+  // MAPS.BSA has it) - and since an older page still lays the whole, a re-laid dungeon stands in a room of its own
+  // (builtDungeonSize, below; net/online.js roomKeyFor), so two layouts never share a stream or a memory.
+  if (online) return onlineDungeonSize(dfLocation);
   const links = questMachine?.getSiteLinks(SITE_TYPES.Dungeon, dfLocation.mapTableData?.mapId) ?? [];
   if (links.length > 0) {
     const quest = questMachine.getQuest(links[0].questUID);
     if (quest && quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Enabled) return 'small';
     if (quest && quest.smallerDungeonsState === MEDIUM_DUNGEONS_STATE) return 'medium';   // DSIZE1
+    if (quest && quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return onlineDungeonSize(dfLocation);   // SD-ONLINE: the world's, as its markers know it
     if (quest && quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return 'full';
   }
-  return setting ? 'small' : medium ? 'medium' : 'full';
+  if (setting) return 'small';
+  if (world) return onlineDungeonSize(dfLocation);   // SD-ONLINE: offline, the world's sizes asked for
+  return medium ? 'medium' : 'full';
 }
+
+/** SD-ONLINE: a frozen state that is one of the port's sizes (DFU's are NotSet, Disabled and Enabled). */
+const portSize = (state) => state === MEDIUM_DUNGEONS_STATE || state === ONLINE_DUNGEONS_STATE;
 
 /**
  * AUDIT DELVE E5: THE SIZE A QUEST'S MARKERS WERE CHOSEN ON. A quest's dungeon Place enumerates its markers when the
@@ -150,11 +203,12 @@ export function dungeonSizeFor(dfLocation, { questMachine = null,
  * dungeon decides that size (first link wins, above) - but Start stamps the settings as of now, so a quest whose
  * markers were chosen on the whole dungeon could stamp the medium size, and once the first quest ended, stand its
  * people in blocks the medium build does not have. Between DFU's two values the stamp is DFU's (Quest.cs:284,
- * untouched); where the medium size is either side - the stamp or the link's frozen state - the quest takes the
- * link's: the size its markers know. Called by the machine's Start (machine.js startQuestImmediate), after the stamp.
+ * untouched); where a port's size is either side - the medium size or SD-ONLINE's world sizes, in the stamp or in the
+ * link's frozen state - the quest takes the link's: the size its markers know. Called by the machine's Start
+ * (machine.js startQuestImmediate), after the stamp.
  */
 export function adoptLinkedDungeonSize(quest, questMachine) {
-  const known = [SMALLER_DUNGEONS_STATE.Disabled, SMALLER_DUNGEONS_STATE.Enabled, MEDIUM_DUNGEONS_STATE];
+  const known = [SMALLER_DUNGEONS_STATE.Disabled, SMALLER_DUNGEONS_STATE.Enabled, MEDIUM_DUNGEONS_STATE, ONLINE_DUNGEONS_STATE];
   for (const r of quest?.resources?.values?.() ?? []) {
     const sd = r?.isPlace ? r.siteDetails : null;
     if (sd?.siteType !== SITE_TYPES.Dungeon) continue;
@@ -162,7 +216,7 @@ export function adoptLinkedDungeonSize(quest, questMachine) {
     if (!link || link.questUID === quest.uid) continue;
     const held = questMachine.getQuest?.(link.questUID)?.smallerDungeonsState;
     if (!known.includes(held) || held === quest.smallerDungeonsState) continue;
-    if (held !== MEDIUM_DUNGEONS_STATE && quest.smallerDungeonsState !== MEDIUM_DUNGEONS_STATE) continue;
+    if (!portSize(held) && !portSize(quest.smallerDungeonsState)) continue;
     quest.smallerDungeonsState = held;
     return held;
   }
@@ -238,13 +292,21 @@ export function isMediumDungeon(dfLocation) {
   return dfLocation?.dungeon?.medium === true;
 }
 
+/** SD-ONLINE: the size a location was BUILT at, in dungeonSizeFor's words - read off the build (FT1: the clone says its
+ *  size), so a dungeon at or under a size's threshold, which no regeneration touched, is 'full' whatever was asked.
+ *  The room's name reads it (net/online.js roomKeyFor): a dungeon's room is its layout's. */
+export function builtDungeonSize(dfLocation) {
+  if (isMediumDungeon(dfLocation)) return 'medium';
+  return isSmallerDungeon(dfLocation) ? 'small' : 'full';
+}
+
 /**
  * The save stamp - PlayerPositionData_v1.smallerDungeonsState
  * (SerializablePlayer.cs:224). DEPARTURE (recorded, Ledger A: THE
  * SMALLER-DUNGEON SAVE STAMP IS THE BUILD): DFU stamps the RAW SETTING
  * as of the save; the port stamps the size ACTUALLY BUILT. They agree
- * wherever DFU can reach - but online the dungeon is always full
- * (AUDIT WORLD34 B2, above) whatever the setting says, and under a
+ * wherever DFU can reach - but online the dungeon is always the room's
+ * (AUDIT WORLD34 B2, above; SD-ONLINE: the world's) whatever the setting says, and under a
  * quest's frozen state the build and the setting differ too, so a save
  * made online with the setting on and loaded offline stood the player
  * in a block the five-block dungeon does not have, and never warped

@@ -288,27 +288,44 @@ export const FEATURES = Object.freeze([
     group: 'world',
     title: 'Smaller dungeons',
     note: 'Dungeons bigger than five blocks are cut down to five: a centre block with four around it, the same '
-      + 'every visit. Main-story dungeons and dungeons a quest sends you to keep their full size, and online '
-      + 'every dungeon is full size.',
+      + 'every visit. Main-story dungeons and dungeons a quest sends you to keep their full size. Online every '
+      + 'dungeon has its own size instead.',
     effect: 'Takes effect on the next dungeon you enter. A save made at the other size puts you at the dungeon\u2019s start.',
     kinds: Object.freeze(['classic']),
     control: Object.freeze({ store: 'settings', key: 'Experimental/SmallerDungeons' }),
   }),
   // DSIZE1 (2026-10-05, the delve arc): MEDIUM DUNGEONS - the size tier the smaller-dungeons row's note left open
-  // (Features-Arc.md: "a size tier ... would earn the Enhanced label"): over thirteen blocks, a cross of five ringed by
-  // eight, by GenerateSmallerDungeon's own law (world/smallerDungeons.js generateMediumDungeon). Its own row because the
-  // row above is DFU's switch, kept whole; that switch wins when both are on. Off by default; online every dungeon is
-  // full size, so the lane forces it off there.
+  // (Features-Arc.md: "a size tier ... would earn the Enhanced label"): over eight blocks, two interior blocks side by
+  // side closed by six (AUDIT DELVE: the first cut's thirteen-block cross is struck), by GenerateSmallerDungeon's own
+  // law (world/smallerDungeons.js generateMediumDungeon). Its own row because the row above is DFU's switch, kept whole;
+  // that switch wins when both are on. Off by default; online every dungeon has the world's own size (the row below),
+  // so the lane forces it off there.
   Object.freeze({
     id: 'medium-dungeons',
     group: 'world',
     title: 'Medium dungeons',
     note: 'Dungeons over eight blocks are cut to eight: two side by side, closed by six, the same every visit. Smaller '
-      + 'dungeons wins when both are on. Main-story dungeons, and every dungeon online, keep full size; a quest keeps the '
-      + 'size it was set up at (an older save\u2019s may not).',
+      + 'dungeons wins when both are on. Main-story dungeons keep full size; a quest keeps the size it was set up at (an '
+      + 'older save\u2019s may not). Online every dungeon has its own size instead.',
     effect: 'Takes effect on the next dungeon you enter. A save made at another size puts you at the dungeon\u2019s start.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mediumDungeons', initial: false, online: false }),   // world/smallerDungeons.js MEDIUM_DUNGEONS_PREF
+  }),
+  // SD-ONLINE (2026-10-05, Mac: "So medium dungeons will be the new by default option thats on (online only)", then "On
+  // second thought. Large, medium and small should all play into account online" - "World mixes sizes"): THE WORLD'S
+  // DUNGEON SIZES. Online every dungeon is built at the size one seeded draw on its map id gives it - small, medium or
+  // large, half of them medium, the same for every player (world/smallerDungeons.js onlineDungeonSize) - which is the
+  // room's law there, so the lane forces this row ON online and the sync copies it home: offline it asks for the same
+  // sizes. Below DFU's switch (Smaller wins when both are on), above the medium one.
+  Object.freeze({
+    id: 'world-dungeon-sizes',
+    group: 'world',
+    title: 'Dungeon sizes as online',
+    note: 'Every dungeon takes the size it has online - small, medium or large, half of them medium - the same every '
+      + 'visit. Smaller dungeons wins when both are on, this over medium. Online it is always on.',
+    effect: 'Takes effect on the next dungeon you enter. A save made at another size puts you at the dungeon\u2019s start.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'worldDungeonSizes', initial: false, online: true }),   // world/smallerDungeons.js WORLD_DUNGEON_SIZES_PREF; forced on online, the room's sizes
   }),
   // FT2 (2026-09-14): LAND VIEW DISTANCE - the first CONDENSED row. Two
   // controls for one radius: the pref (LV1, the enhanced lane's 1..6)

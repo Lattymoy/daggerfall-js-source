@@ -268,7 +268,7 @@ import { currentWeather } from '../systems/weatherSim.js';   // AUDIT AT F3: the
 import { weatherFlags } from '../world/weather.js';   // AUDIT AT F3: WeatherManager's four public flags, derived once from SetWeather's switch
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
 import { hasCart } from '../systems/inventorySession.js';   // AUDIT 28 W2c: the exit-door wagon prompt's cart test
-import { dungeonLocationFor } from '../world/smallerDungeons.js';   // AUDIT 28 W4: the size the dungeon is built at
+import { dungeonLocationFor, builtDungeonSize } from '../world/smallerDungeons.js';   // AUDIT 28 W4: the size the dungeon is built at (SD-ONLINE: and its room's, read off the build)
 import { dismountOnTransition } from '../systems/transport.js';   // TR5: the interior dismount
 import { CANNOT_CHANGE_INDOORS } from '../ui/transportWindow.js';   // TR5: the indoors refusal
 import { createUseMagicItemWindow, NO_ITEM_TO_ACTIVATE_TEXT } from '../ui/useMagicItemWindow.js';   // UI1: the U key's window
@@ -7922,7 +7922,7 @@ export function createWorldModes(host) {
     // sized by MapsFile's law (setting, main-story gate, and a live
     // quest's frozen state through its SiteLink), on a clone; the
     // cached location the exterior shares is never touched.
-    const sized = dungeonLocationFor(hit.dfLocation, { questMachine: questBridge?.machine, online: host.dungeonOnline?.() ?? false });   // AUDIT WORLD34 B2: online, the whole dungeon (WB3b: the court's one block passes through whole)
+    const sized = dungeonLocationFor(hit.dfLocation, { questMachine: questBridge?.machine, online: host.dungeonOnline?.() ?? false });   // AUDIT WORLD34 B2: online, the room's one layout - SD-ONLINE: the world's size for the dungeon (WB3b: the court's one block passes through whole)
     if (!sized || !sized.hasDungeon) return false;
     // OH-E: MapsFile.GetLocation reads each caller its own DFLocation - a struct, its Dungeon.Blocks array fresh - where
     // the port's is the maps cache's one object. The dungeon's summary is its own here, so a writer on it (There's a
@@ -11280,7 +11280,7 @@ export function createWorldModes(host) {
     // ONLINE1: what the host needs to name the room - the mounted dungeon's
     // location, the interior's building; null in the exterior
     // ARENA4: the floor's instance standing a relay's bout is that bout's room (`arena:b<id>`)
-    roomIdentity: () => (mode === 'dungeon' ? (isGateArena(dungeonLoc) ? { kind: 'gate', day: dungeonLoc.gate } : isArenaFloor(dungeonLoc) && dungeonLoc.arenaBout ? { kind: 'arena', o: dungeonLoc.arenaBout } : { kind: 'dungeon', mapId: dungeonLoc?.mapTableData?.mapId ?? null, regionIndex: dungeonLoc?.regionIndex ?? -1, name: dungeonLoc?.name ?? '' })   // WB3b: the court's room is its gate's own
+    roomIdentity: () => (mode === 'dungeon' ? (isGateArena(dungeonLoc) ? { kind: 'gate', day: dungeonLoc.gate } : isArenaFloor(dungeonLoc) && dungeonLoc.arenaBout ? { kind: 'arena', o: dungeonLoc.arenaBout } : { kind: 'dungeon', mapId: dungeonLoc?.mapTableData?.mapId ?? null, regionIndex: dungeonLoc?.regionIndex ?? -1, name: dungeonLoc?.name ?? '', size: builtDungeonSize(dungeonLoc) })   // WB3b: the court's room is its gate's own; SD-ONLINE: a dungeon's room is its layout's (the size it was BUILT at)
       : mode === 'interior' ? { kind: 'interior', buildingKey: interiorBuilding?.buildingKey ?? 0, layout: _visitLayout, ...(interiorCabin ? { boatUid: interiorCabin.uid } : {}), ...(_intShared?.owned ? { private: true, privateRoom: privateVisitRoom } : {}) } : null),   // personal interiors share presence in an owner-specific room, never world memory/loot
     get dungeonLocation() { return dungeonLoc; },   // B2: playerInside's dungeon arm
     /** X7: the Identify SPELL's window (Identify.cs:71-76 pushes the
