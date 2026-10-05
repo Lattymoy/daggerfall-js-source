@@ -79,9 +79,16 @@ export function homeCandidate(bd) {
   return t === BUILDING_TYPES.HouseForSale || isResidence(t) || t === BUILDING_TYPES.House5 || t === BUILDING_TYPES.House6;
 }
 
-/** ...and whether one can be BOUGHT: a candidate no active quest is using (GetHousesForSale's own exclusion). */
+/** ...and whether one can be BOUGHT: a candidate no active quest is using (GetHousesForSale's own exclusion).
+ *  FIELD BUGS 2026-10-05 CRYPT-SALE (Discord: "I bought a house and only get the following message This house has
+ *  nothing of value"; "the house inside the graveyard in Wayrest"; "Wickcroft Tombs"): and one with a room to enter.
+ *  HOME2's House5 is the graveyard's crypt - six GRVE blocks, 67 buildings in 67 places - and its interior holds no
+ *  model, so DFU's AssignBlockData refuses it (DaggerfallInterior.cs:388-389); DFU never sells one (GetHousesForSale
+ *  takes HouseForSale and House1-4, BuildingDirectory.cs:156-184). The producers stamp `hasInterior`
+ *  (talkTopics.js); a record without the stamp is not refused. Not in homeCandidate: a crypt already bought stays its
+ *  owner's home, plaque and "Sell it" row with it. */
 export const homePurchasable = (bd, { isActiveQuestBuilding = null } = {}) =>
-  homeCandidate(bd) && !(isActiveQuestBuilding?.(bd) ?? false);
+  homeCandidate(bd) && bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);
 
 /** The scene an online home's things are kept under - its own, never the building's (the header). */
 export const homeSceneName = (mapId, buildingKey) => `OnlineHome [MapID=${Number(mapId) >>> 0}, BuildingKey=${buildingKey}]`;

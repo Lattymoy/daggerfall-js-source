@@ -753,7 +753,7 @@ the orb is, so the two answers cannot drift apart.
 **One residual, named rather than half-fixed:** the multiplayer wire
 carries a hit's `kind` (`'arrow'`), not its weapon, so a peer-owned
 puppet struck by a Thunderlock still gains a shaft on its owner's
-client (`exteriorFoes.js:2661`, `dungeonContext.js:5181`, both gated on
+client (`exteriorFoes.js:2661`, `dungeonContext.js:5188`, both gated on
 `data.ar === 1`). Fixing it means widening the hit packet, which is a
 protocol change and not this slice's.
 

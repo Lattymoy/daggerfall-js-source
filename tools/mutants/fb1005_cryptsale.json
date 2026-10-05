@@ -1,0 +1,102 @@
+[
+  {
+    "name": "CRYPTSALE-gate-dropped",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  homeCandidate(bd) && bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);",
+    "new": "  homeCandidate(bd) && !(isActiveQuestBuilding?.(bd) ?? false);",
+    "tests": [
+      "test/fb1005_cryptsale.test.js"
+    ],
+    "note": "the crypt is priced at its door again, and its buyer is told it has nothing of value"
+  },
+  {
+    "name": "CRYPTSALE-unstamped-refused",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  homeCandidate(bd) && bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);",
+    "new": "  homeCandidate(bd) && bd.hasInterior === true && !(isActiveQuestBuilding?.(bd) ?? false);",
+    "tests": [
+      "test/fb1005_cryptsale.test.js"
+    ],
+    "note": "a record no producer stamped is refused: every hand-made home record stops selling"
+  },
+  {
+    "name": "CRYPTSALE-door-unstamped",
+    "file": "src/systems/talkTopics.js",
+    "old": ", modelIdNum: model?.modelIdNum ?? null, hasInterior: hasInteriorModels(sub) };",
+    "new": ", modelIdNum: model?.modelIdNum ?? null };",
+    "tests": [
+      "test/fb1005_cryptsale.test.js"
+    ],
+    "note": "the door's own record (the plaque, the click) never says the room is empty"
+  },
+  {
+    "name": "CRYPTSALE-list-unstamped",
+    "file": "src/systems/talkTopics.js",
+    "old": "        hasInterior: hasInteriorModels(sub),   // FIELD BUGS 2026-10-05 CRYPT-SALE",
+    "new": "",
+    "tests": [
+      "test/fb1005_cryptsale.test.js"
+    ],
+    "note": "the location's list never says the room is empty"
+  },
+  {
+    "name": "CRYPTSALE-law-unknown-empty",
+    "file": "src/world/interiorLayout.js",
+    "old": "export const hasInteriorModels = (sub) => sub?.interior?.header?.num3dObjectRecords !== 0;",
+    "new": "export const hasInteriorModels = (sub) => (sub?.interior?.header?.num3dObjectRecords ?? 0) !== 0;",
+    "tests": [
+      "test/fb1005_cryptsale.test.js"
+    ],
+    "note": "a subrecord with no header read as empty"
+  },
+  {
+    "name": "CRYPTSALE-candidate-gated",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  return t === BUILDING_TYPES.HouseForSale || isResidence(t) || t === BUILDING_TYPES.House5 || t === BUILDING_TYPES.House6;",
+    "new": "  if (bd?.hasInterior === false) return false;\n  return t === BUILDING_TYPES.HouseForSale || isResidence(t) || t === BUILDING_TYPES.House5 || t === BUILDING_TYPES.House6;",
+    "tests": [
+      "test/fb1005_cryptsale.test.js"
+    ],
+    "note": "the gate put in homeCandidate: a crypt already bought loses its plaque and its Sell it row"
+  },
+  {
+    "name": "CRYPTSALE-arena-move-unasked",
+    "file": "src/systems/arenaMove.js",
+    "old": "(s) => homeCandidate(s) && s.hasInterior !== false)",
+    "new": "(s) => homeCandidate(s))",
+    "tests": [
+      "test/fb1005_cryptsale.test.js"
+    ],
+    "note": "AUDIT FB1005 C2: a displaced home moved into a grave"
+  },
+  {
+    "name": "CRYPTSALE-summaries-unstamped",
+    "file": "src/world/buildingSummaries.js",
+    "old": "        hasInterior: hasInteriorModels(sub),   // AUDIT FB1005 C2",
+    "new": "        // AUDIT FB1005 C2",
+    "tests": [
+      "test/fb1005_cryptsale.test.js"
+    ],
+    "note": "AUDIT FB1005 C2: the arena's list never says a room is empty"
+  },
+  {
+    "name": "CRYPTSALE-world-wrapper-drops",
+    "file": "src/scenes/world.js",
+    "old": "      return { ...d, regionIndex: dfLoc.regionIndex, townMapId:",
+    "new": "      return { ...d, hasInterior: undefined, regionIndex: dfLoc.regionIndex, townMapId:",
+    "tests": [
+      "test/fb1005_cryptsale.test.js"
+    ],
+    "note": "AUDIT FB1005 C4: the streamed world's door record loses the stamp"
+  },
+  {
+    "name": "CRYPTSALE-exterior-wrapper-drops",
+    "file": "src/scenes/exterior.js",
+    "old": "      return { ...d, regionIndex: dfLocation.regionIndex, townBlocks:",
+    "new": "      return { ...d, hasInterior: undefined, regionIndex: dfLocation.regionIndex, townBlocks:",
+    "tests": [
+      "test/fb1005_cryptsale.test.js"
+    ],
+    "note": "AUDIT FB1005 C4: the one-location exterior's door record loses the stamp"
+  }
+]

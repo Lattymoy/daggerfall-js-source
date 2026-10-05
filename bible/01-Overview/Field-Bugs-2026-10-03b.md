@@ -42,15 +42,13 @@ records are carried whole - no game data) through blockFromJson, layoutRmbBlock,
 and measures with a ray of its own; `test/natureground.test.js`'s pins re-aimed (`tools/mutants/natureground.json`'s
 lift-dropped record with them).
 
-**Said, not fixed.** The mounds themselves. Measured on the pack's published files (`node tools/rmbrpHills.mjs <a
-clone of drcarademono/rmb-resource-pack>` reads each prefab, its .blend and the scale it stands at - 0.01 Large, 0.005
-Medium, 0.0025 Small; nothing of the pack is committed), the pack's hills are mostly 3-4x wider (1.7-4.5x across the
-23 ids) and 2-7x taller than the stand-ins: 52548 is 41.2 x 36.7 m in half-extents and 7.82 m high (stand-in radius
-10, 1.6 high), 52058 41.5 x 41.7 m and 16.03 m (10, 3.5), 52703 11.6 x 11.2 m and 8.99 m (3, 1.4). So a tree authored
-on a slope the stand-in does not reach now stands on the ground beside a smaller mound, not on a hill. Resizing them
-is the DFU-faithful half; a smooth mound at the measured size still leaves about a quarter of the trees more than
-1.5 m off the lumpy real hill (a measured radial profile: median 0.18 m, 34 of 130 over 1.5 m), so the seat stays
-either way. Whether Tamhope's own grid holds one of the six blocks needs the player's MAPS.BSA
+The mounds themselves were drawn at the pack's measured shape by FIELD BUGS 2026-10-05 HILL-SHAPES
+(`01-Overview/Field-Bugs-2026-10-05.md`: a polar profile per hill; one of the 130 trees hangs over it now). Measured on
+the pack's published files (`node tools/rmbrpHills.mjs <a clone of drcarademono/rmb-resource-pack>` reads each prefab,
+its .blend and the scale it stands at - 0.01 Large, 0.005 Medium, 0.0025 Small; nothing of the pack is committed), the
+pack's hills were mostly 3-4x wider (1.7-4.5x across the 23 ids) and 2-7x taller than the catalogue's stand-ins: 52548
+is 41.2 x 36.7 m in half-extents and 7.82 m high (stand-in radius 10, 1.6 high), 52058 41.5 x 41.7 m and 16.03 m (10,
+3.5), 52703 11.6 x 11.2 m and 8.99 m (3, 1.4). The seat stays either way: it stands the trees on whatever is drawn. Whether Tamhope's own grid holds one of the six blocks needs the player's MAPS.BSA
 (`maps.getLocationByName('Glenpoint', 'Tamhope').exterior.exteriorData.blockNames`); the cause is the six blocks'
 wherever they stand (TVRNAS0x are the roadside taverns' too). The far ring's stride-4 ground is not re-read, as for
 NATURE-GROUND.

@@ -2173,6 +2173,8 @@ ${badgeCss()}
 .px-build { justify-self: start; }
 /* MENU-TOGGLE: the skin switch that stood centred is retired; the centre is left open and About keeps the right. */
 .px-foot .px-about { grid-column: 3; }
+/* LOAD1: the Screenshots plaque - About's box, beside it on the right. */
+.px-footright { grid-column: 3; justify-self: end; display: flex; align-items: flex-end; gap: 10px; }
 /* The About box: the ONE box on the boxless face, which is what makes
    it read as a plaque rather than a menu row. 2px border in whole
    pixels, gold on hover by the same pair. */
@@ -2418,6 +2420,8 @@ ${badgeCss()}
   .px-foot { grid-template-columns: 1fr auto; grid-template-areas: 'build about'; }
   .px-build { grid-area: build; align-self: center; }
   .px-foot .px-about { grid-area: about; grid-column: auto; }
+  /* LOAD1: on a phone the two plaques stack at the right - inside the 132px the stage keeps for the foot (PX8) */
+  .px-footright { grid-area: about; grid-column: auto; flex-direction: column; gap: 8px; }
 }
 @media (prefers-reduced-motion: reduce) { .px-ground { animation: none; } }
 /* PX8, caught by the tap probe TWICE: centering the list on a SHORT

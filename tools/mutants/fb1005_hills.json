@@ -1,0 +1,94 @@
+[
+  {
+    "name": "HILLSHAPES-catalogue-mound",
+    "file": "src/world/townStandIns.js",
+    "old": "[id, () => hillMesh(RMBRP_HILL_SHAPES[id], surface)]",
+    "new": "[id, () => hillMesh({ ...RMBRP_HILL_SHAPES[id], top: 1.6, reach: RMBRP_HILL_SHAPES[id].reach.map(() => 10), rings: RMBRP_HILL_SHAPES[id].rings.map((r) => r.map((h, j) => (j === r.length - 1 ? h : 1.6 * (1 - j / r.length)))) }, surface)]",
+    "tests": [
+      "test/fb1005_hills.test.js"
+    ],
+    "note": "the catalogue's 10 m, 1.6 m mound again: Ipsham's houses hang over it"
+  },
+  {
+    "name": "HILLSHAPES-reach-halved",
+    "file": "src/world/townStandIns.js",
+    "old": "    const b = k % K, a = (b / K) * Math.PI * 2, r = (shape.reach[b] * j) / N;",
+    "new": "    const b = k % K, a = (b / K) * Math.PI * 2, r = (shape.reach[b] * j) / N / 2;",
+    "tests": [
+      "test/fb1005_hills.test.js"
+    ],
+    "note": "a hill half its measured reach"
+  },
+  {
+    "name": "HILLSHAPES-ring-shifted",
+    "file": "src/world/townStandIns.js",
+    "old": "    return [cx + Math.cos(a) * r, shape.rings[b][j - 1], cz + Math.sin(a) * r];",
+    "new": "    return [cx + Math.cos(a) * r, shape.rings[b][Math.min(j, N - 1)], cz + Math.sin(a) * r];",
+    "tests": [
+      "test/fb1005_hills.test.js"
+    ],
+    "note": "each ring a ring further out's height"
+  },
+  {
+    "name": "HILLSHAPES-unmirrored",
+    "file": "src/world/townStandIns.js",
+    "old": "    return [cx + Math.cos(a) * r, shape.rings[b][j - 1], cz + Math.sin(a) * r];",
+    "new": "    return [-(cx + Math.cos(a) * r), shape.rings[b][j - 1], cz + Math.sin(a) * r];",
+    "tests": [
+      "test/fb1005_hills.test.js",
+      "test/fb1003b_trees.test.js"
+    ],
+    "note": "the hill mirrored back across x: the profile no longer stands where the pack's surface does - AUDIT FB1005 H5: and 25 of TREES-SEATED's trees hang over it where 1 did (no game data)"
+  },
+  {
+    "name": "HILLSHAPES-centre-dropped",
+    "file": "src/world/townStandIns.js",
+    "old": "    if (j === 0) return [cx, shape.top, cz];",
+    "new": "    if (j === 0) return [cx, 0, cz];",
+    "tests": [
+      "test/fb1005_hills.test.js"
+    ],
+    "note": "a pit at the hill's centre"
+  },
+  {
+    "name": "HILLSHAPES-faces-down",
+    "file": "src/world/townStandIns.js",
+    "old": "l = Math.hypot(...n) || 1, sgn = n[1] < 0 ? -1 : 1;",
+    "new": "l = Math.hypot(...n) || 1, sgn = n[1] < 0 ? 1 : -1;",
+    "tests": [
+      "test/fb1005_hills.test.js"
+    ],
+    "note": "every face turned down: the hill seen from above is its back"
+  },
+  {
+    "name": "HILLSHAPES-cell-one-triangle",
+    "file": "src/world/townStandIns.js",
+    "old": "    else { face(a, b, c); face(a, c, d); }",
+    "new": "    else { face(a, b, c); }",
+    "tests": [
+      "test/fb1005_hills.test.js"
+    ],
+    "note": "half of every cell out to the rim left open"
+  },
+  {
+    "name": "HILLSHAPES-ipsham-hill-narrowed",
+    "file": "src/world/rmbrpHillShapes.js",
+    "old": "  52758: { c: [-0.11, 0.52], top: 3.89, reach: [34.65, 32.7, 31.43, 31.74, 29.58, 27.91, 27.89, 32.93, 35.89, 36.71, 35.12, 32.44, 27.81, 30.01, 30.7, 36.62]",
+    "new": "  52758: { c: [-0.11, 0.52], top: 3.89, reach: [20.79, 19.62, 18.86, 19.04, 17.75, 16.75, 16.73, 19.76, 21.53, 22.03, 21.07, 19.46, 16.69, 18.01, 18.42, 21.97]",
+    "tests": [
+      "test/fb1005_hills.test.js"
+    ],
+    "note": "AUDIT FB1005 T4: Ipsham's hill measured at six tenths of its reach - its plateau's edge falls under the houses (the props' pin, and with ARENA2_PATH the houses' and the whole packs' sweep)"
+  },
+  {
+    "name": "HILLSHAPES-52018-top-raised",
+    "file": "src/world/rmbrpHillShapes.js",
+    "old": "  52018: { c: [0.92, -0.53], top: 11.17,",
+    "new": "  52018: { c: [0.92, -0.53], top: 14.17,",
+    "equivalent": true,
+    "why": "AUDIT FB1005 T4: left alive and said - a single table cell (52018's centre, RESIAS01's hill) moved 3 m reaches no pin: raising it hangs nothing for the whole-pack sweep to find, and the table's truth is the tool's measure (tools/rmbrpHills.mjs --shapes regenerates it byte for byte from the pack's clone), which no test can run without the clone",
+    "tests": [
+      "test/fb1005_hills.test.js"
+    ]
+  }
+]

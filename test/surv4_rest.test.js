@@ -154,7 +154,7 @@ test('SURV4: by source - the four hosts name their kind, the three rolls carry t
   // player may use, which Off hides), and an interior's hearth is a camp's rest as a brazier is outdoors
   assert.match(w, /restKind: \(\) => \(_restFromBed \? 'bed' : camps\.fireNear\(walkMode && playerSpawned \? player\.pos : cam\.pos\) \? 'camp' : 'rough'\),/);   // AUDIT REST-PARTY A3: a pressed bed first
   assert.match(x, /restKind: \(\) => \(camps\.fireNear\(walkMode \? player\.pos : cam\.pos\) \? 'camp' : 'rough'\),/);
-  assert.match(dc, /restKind: \(\) => \(_fpFeet && camps\.fireNear\(_fpFeet\) \? 'camp' : 'rough'\),/);
+  assert.match(dc, /restKind: \(\) => \(_restFromBed \|\| bedInReach\(dungeonBeds, _fpFeet\) \? 'bed' : _fpFeet && camps\.fireNear\(_fpFeet\) \? 'camp' : 'rough'\),/);   // FIELD BUGS 2026-10-05 DUNGEON-BEDS: a bed first
   assert.match(wm, /restKind: \(\) => \{ const p = interiorRestPlaceHere\(\); return p\.houseOwned \|\| p\.isShip \|\| !!p\.room \? 'bed' : interiorCamps\.fireNear\(player\.pos\) \? 'camp' : 'rough'; \},/);
   // SURV-TIERS: the three rolls hand the rest's asks, its kind priced by the player's tier at the open (scenes/shared.js)
   assert.match(w, /restAsks: playerEntity\.isResting \? playerEntity\.restAsks : 1,/);
