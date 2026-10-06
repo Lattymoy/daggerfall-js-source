@@ -47,8 +47,8 @@
  {
   "name": "WEEDS1-the-LANTERN-replay-starts-passing-a-texel-and-props-stop-shadowing-by-lamplight",
   "file": "src/render/shadowPass.js",
-  "old": "this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_ALL, selfNear);",
-  "new": "this.replay(f, this.faceVP[face], pos, false, 0, 0.5, REPLAY_ALL, selfNear);",
+  "old": "this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_ALL, selfNear, cand);",
+  "new": "this.replay(f, this.faceVP[face], pos, false, 0, 0.5, REPLAY_ALL, selfNear, cand);",
   "tests": [
    "test/weeds1_flatcasters.test.js"
   ]

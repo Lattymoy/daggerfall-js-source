@@ -1,0 +1,173 @@
+[
+  {
+    "name": "PERF-SHADOW1-a-the-cube-without-its-one-plus-root-two",
+    "file": "src/render/shadowPass.js",
+    "old": "export const CUBE_REACH = 1 + Math.SQRT2;",
+    "new": "export const CUBE_REACH = 1;",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-b-the-cube-without-its-slack",
+    "file": "src/render/shadowPass.js",
+    "old": "export const cubeSlack = (px, py, pz, far) => 1e-3 + 1e-5 * (Math.abs(px) + Math.abs(py) + Math.abs(pz) + far);",
+    "new": "export const cubeSlack = (px, py, pz, far) => 0;",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-c-a-nan-sphere-culled-by-the-cube",
+    "file": "src/render/shadowPass.js",
+    "old": "  return !(Math.max(Math.abs(x - lim[o]), Math.abs(y - lim[o + 1]), Math.abs(z - lim[o + 2])) > R);",
+    "new": "  return Math.max(Math.abs(x - lim[o]), Math.abs(y - lim[o + 1]), Math.abs(z - lim[o + 2])) <= R;",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-c2-a-sphere-nan-on-one-axis-culled-by-another",
+    "file": "src/render/shadowPass.js",
+    "old": "  return !(Math.max(Math.abs(x - lim[o]), Math.abs(y - lim[o + 1]), Math.abs(z - lim[o + 2])) > R);",
+    "new": "  return !(Math.abs(x - lim[o]) > R || Math.abs(y - lim[o + 1]) > R || Math.abs(z - lim[o + 2]) > R);",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-d-a-placed-batch-asked-by-the-far-alone",
+    "file": "src/render/shadowPass.js",
+    "old": "lim[o + 3] + rad * Math.SQRT2 + lim[o + 4])) continue;",
+    "new": "lim[o + 3])) continue;",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-e-a-nan-placed-batch-asked-of-its-quads",
+    "file": "src/render/shadowPass.js",
+    "old": "            if (c && c[0] === c[0] && c[1] === c[1] && c[2] === c[2] && c[3] === c[3]) {",
+    "new": "            if (c) {",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-f-a-nan-radius-asked-of-its-quads",
+    "file": "src/render/shadowPass.js",
+    "old": "if (rad === rad && !placementsInCube(",
+    "new": "if (!placementsInCube(",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-g-an-unbounded-record-left-out",
+    "file": "src/render/shadowPass.js",
+    "old": "if (out[k] && (!r.bounded || cubeKeeps(lim, k, sx, sy, sz, sr))) add(k, i);",
+    "new": "if (out[k] && cubeKeeps(lim, k, sx, sy, sz, sr)) add(k, i);",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-h-the-faces-walk-every-flat-again",
+    "file": "src/render/shadowPass.js",
+    "old": "        for (const b of (cand ? cand.bb[j] : r.batches)) {\n          if (!b?.vao",
+    "new": "        for (const b of r.batches) {\n          if (!b?.vao",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-i-the-dynamic-scan-walks-every-flat-again",
+    "file": "src/render/shadowPass.js",
+    "old": "        for (const b of (cand ? cand.bb[j] : r.batches)) {\n          if (!b?._shDyn",
+    "new": "        for (const b of r.batches) {\n          if (!b?._shDyn",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-j-no-candidates-handed-to-the-faces",
+    "file": "src/render/shadowPass.js",
+    "old": "    const cands = casters.length ? this._casterCandidates(L, casters, farOf) : null;",
+    "new": "    const cands = null;",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-k-a-light-not-a-number-given-candidates",
+    "file": "src/render/shadowPass.js",
+    "old": "SHADOW_TUNING.facePrepass !== false && Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z) && Number.isFinite(far);",
+    "new": "SHADOW_TUNING.facePrepass !== false;",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-l-a-flat-under-a-second-lantern-left-out-of-its-list",
+    "file": "src/render/shadowPass.js",
+    "old": "      for (let k = 0; k < nC; k++) open[k] = -1;",
+    "new": "      open[0] = -1;",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-m-the-quads-never-asked",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (!cand || !this._candQuads[rank]) return;",
+    "new": "    return;",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-n-no-lantern-told-it-has-a-placed-batch-to-ask",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (b._place) quads[k] = 1;",
+    "new": "          if (b._place) quads[k] = 0;",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-o-the-quads-asked-in-the-one-walk-for-every-lantern",
+    "file": "src/render/shadowPass.js",
+    "old": "    const cands = casters.length ? this._casterCandidates(L, casters, farOf) : null;",
+    "new": "    const cands = casters.length ? this._casterCandidates(L, casters, farOf) : null;\n    if (cands) for (let rank = 0; rank < casters.length; rank++) this._candidateQuads(rank);",
+    "tests": [
+      "test/perfexta.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-p-a-record-left-with-no-flat-kept-in-the-list",
+    "file": "src/render/shadowPass.js",
+    "old": "        if (m === 0) continue;",
+    "new": "",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-q-a-record-moved-without-its-list",
+    "file": "src/render/shadowPass.js",
+    "old": "const t = bb[w]; bb[w] = bb[j]; bb[j] = t;",
+    "new": "",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SHADOW1-r-a-list-not-cut-to-the-flats-it-kept",
+    "file": "src/render/shadowPass.js",
+    "old": "        list.length = m;",
+    "new": "",
+    "tests": [
+      "test/perfshadow1.test.js"
+    ]
+  }
+]
