@@ -324,11 +324,43 @@ test('LW-SPACE the step aside: a walker steps round one standing on its line - t
   town.pool = [settling, body('L1.401', x0 + 0.3, z0, 0, false)];
   const gs = town._dodge(/** @type {any} */ (settling), settling.person, { x: x0 + DODGE_SETTLE_M * 0.9, z: z0, yaw: 0, moving: false }, 1 / 30);
   assert.ok(Math.abs(gs.z - z0) < 1e-9 && settling.side === 0, 'within DODGE_SETTLE_M of its stand: no step aside');
-  // held by the politeness gate: stands
+  // held by the politeness gate: stands - LW-SPREAD's audit: aside or not, where it stood (held, it drifted back to its line)
   const held = body('L1.500', x0, z0, EAST, true, true);
   town.pool = [held, body('L1.501', x0 + 1, z0, 0, false)];
   const gh = town._dodge(/** @type {any} */ (held), held.person, { x: x0, z: z0, yaw: EAST, moving: true }, 1 / 30);
   assert.ok(Math.abs(gh.z - z0) < 1e-9 && held.side === 0, 'held where it stands: no step aside');
+  const aside = body('L1.510', x0, z0 - 0.9, EAST, true, true);
+  aside.side = 0.9;
+  town.pool = [aside];
+  for (let i = 0; i < 30; i++) town._dodge(/** @type {any} */ (aside), aside.person, { x: x0, z: z0, yaw: EAST, moving: true }, 1 / 30);
+  assert.equal(aside.side, 0.9, 'held aside: still aside, the way clear or not');
+});
+
+test('LW-SPACE the hold (LW-SPREAD\'s audit): a body the politeness gate holds stands where it is - one trailing its walk\'s point (catching it up, or round one in its way) walked up to it while held (mutants: the held body walking)', () => {
+  const { town, clock } = makeTown(100 * DAY_MIN + 9 * 60, synthTown({ blocksW: 4, blocksH: 4 }), { ...TOWN, blocks: 16 });
+  // one on a walk a minute from now still - its path searched - and the player a few metres off its way, as it comes in view
+  let res = null, w = null;
+  for (const r of town.peopleOf(town.dayOf(clock.t))) {
+    for (let k = 0; k < 400 && (w = town.where(r, clock.t, true))?.pending; k++) { town._paths.cells(1e9); town._paths.budget(1e9); town._paths.run(); }
+    const later = w?.moving ? town.where(r, clock.t + 1, true) : null;
+    if (later?.moving && later.e === w?.e) { res = r; break; }
+  }
+  assert.ok(res && w, 'one on a walk');
+  const at = [w.x + Math.cos(w.yaw) * 3, 0, w.z - Math.sin(w.yaw) * 3];   // three metres to its right
+  let row = null;
+  for (let i = 0; i < 30 && !row?.person.moving; i++) {
+    clock.t += RATE / 30;
+    town.update(1 / 30, at, 0, at, true);
+    row = town._rowOf(res);
+    if (!row?.visible) row = null;
+  }
+  assert.ok(row?.person.moving, 'walking in view');
+  const p = row.person;
+  // set back along its way (behind its walk's point, as a walker catching it up is), then held a second
+  p.pos[0] -= Math.sin(p.yaw) * 1.5; p.pos[2] -= Math.cos(p.yaw) * 1.5;
+  const was = [...p.pos];
+  for (let i = 0; i < 30; i++) { clock.t += RATE / 30; town.update(1 / 30, [p.pos[0] + 1, 0, p.pos[2]], 0, at, true, (q) => q === p); }
+  assert.ok(row.res && Math.hypot(p.pos[0] - was[0], p.pos[2] - was[2]) < 1e-9 && !p.moving, 'held: where it stood, still');
 });
 
 test('LW-SPACE the street through the day: on the open and the close-built towns, the bodies in view at eight, one and six - nearly none inside another (within half a metre: measured at LW-SPACE, 34.7% of the open town\'s body-frames and 51.5% of the close-built\'s before; after, none and 0.2% - the walkers 0.6% in the close-built town\'s lanes, 3.1% without the step aside), every step on the street (mutants: the host\'s places unread, the circles unlaid, the file unread, the step unread)', () => {
@@ -340,11 +372,11 @@ test('LW-SPACE the street through the day: on the open and the close-built towns
   }
 });
 
-test('LW-SPACE the game\'s own cities (ARENA2): Ripmarket, Wayrest and Daggerfall at one and at six, the player at the square - nearly none in view inside another (tools/livingCrowdProbe.mjs, measured at LW-SPACE: 29.9%, 27.4% and 19.5% of the body-frames at one, 30.8%, 16.1% and 12.0% at six before; 0.0%, 0.1% and 0.4%, 3.0%, 0.4% and 0.2% after - the rest walkers through Ripmarket\'s square at six, its crowd forty-three), and no two inside each other a second (mutants: the host\'s places unread, the step unread)', { skip: skipReal }, () => {
+test('LW-SPACE the game\'s own cities (ARENA2): Ripmarket, Wayrest and Daggerfall at one and in the evening (LW-SPREAD: at seven), the player at the square - nearly none in view inside another (tools/livingCrowdProbe.mjs, measured at LW-SPACE: 29.9%, 27.4% and 19.5% of the body-frames at one, 30.8%, 16.1% and 12.0% at six before; 0.0%, 0.1% and 0.4%, 3.0%, 0.4% and 0.2% after - the rest walkers through Ripmarket\'s square at six, its crowd forty-three), and no two inside each other a second (mutants: the host\'s places unread, the step unread)', { skip: skipReal }, () => {
   const all = cities();
   for (const name of ['Ripmarket', 'Wayrest', 'Daggerfall']) {
     const h = hostTown(/** @type {any} */ (all.find((c) => c.name === name)));
-    for (const hour of [13, 18]) {
+    for (const hour of [13, 19]) {   // LW-SPREAD: PIN MOVED - the evening out at seven (from six to a quarter past seven now)
       const m = streetAt(h, hour, 20);
       assert.ok(m.seen > 20, `${name} at ${hour}:00: a street in view (${m.seen.toFixed(1)})`);
       assert.ok(m.share < 0.04, `${name} at ${hour}:00: ${(100 * m.share).toFixed(1)}% of the body-frames inside another`);

@@ -11,6 +11,11 @@
 //    not the grid's largest: a walled city's wall and gates are covered cells, so its streets and the fields outside its
 //    walls are two components, and the fields are the larger in 407 of the game's 410 cities.
 //  - THE SQUARE is the most open ground near the town's middle (the walkable cells about a cell, sampled on a stride).
+//    LW-SPREAD: and it is GROUND, not a point - its POINTS (`squares`, the square's own spot first) are the most open
+//    cells about it, apart, seen from it over the street: where the town's people gather at the square, each to their
+//    own (dayPlan.js squareOf). And a town has its CORNERS (`corners`): each block's most open street, apart from the
+//    social spots and from one another - where a neighbourhood gathers (a hamlet of seven social spots stood its whole
+//    evening at them).
 //  - SOCIAL SPOTS stand a few paces before the taverns, temples, guild halls and the palace, and the square is one;
 //    MARKET SPOTS before the shops; the DOCK is a Ship building's door where the town has one.
 //  - THE EXITS are, for each side of the grid, the street-net cell nearest that edge: on the border itself in an open
@@ -31,16 +36,32 @@ export const MARKET_OUT = 2;
 /** The square's openness window (cells either side) and its search stride (cells). */
 export const SQUARE_WINDOW = 3;
 export const SQUARE_STRIDE = 3;
+/** LW-SPREAD: THE SQUARE'S POINTS - looked for within SQUARE_REACH cells of the square, each SQUARE_GAP cells from every
+ *  other, at least SQUARE_OPEN as open as the square itself, to SQUARE_POINTS with the square's own. */
+export const SQUARE_REACH = 14;
+export const SQUARE_GAP = 6;
+export const SQUARE_OPEN = 0.75;
+export const SQUARE_POINTS = 5;
+/** LW-SPREAD: THE TOWN'S CORNERS - each block's most open street cell (the square's window, a margin of CORNER_MARGIN
+ *  cells inside the block), at least CORNER_OPEN as open as the square, CORNER_GAP cells from every social spot, every
+ *  point of the square and every other corner. */
+export const CORNER_MARGIN = 6;
+export const CORNER_OPEN = 0.6;
+export const CORNER_GAP = 16;
+/** The grid's cells to a block's side (world/cityNavigation.js NAV_CELLS_PER_BLOCK). */
+const BLOCK_CELLS = 64;
 
 /** The buildings before which a town gathers to talk. @type {Set<number>} */
 const SOCIAL_TYPES = new Set([BUILDING_TYPES.Tavern, BUILDING_TYPES.Temple, BUILDING_TYPES.GuildHall, BUILDING_TYPES.Palace]);
 
 /**
- * @typedef {{ key: string, kind: 'door'|'social'|'square'|'market'|'dock'|'exit', cell: number[], x: number, z: number,
- *   yaw: number, building?: number, side?: 'n'|'s'|'e'|'w' }} Spot - `yaw` the way one faces standing there (a door: in
+ * @typedef {{ key: string, kind: 'door'|'social'|'square'|'corner'|'market'|'dock'|'exit', cell: number[], x: number, z: number,
+ *   yaw: number, building?: number, side?: 'n'|'s'|'e'|'w' }} Spot - LW-SPREAD: a point of the square is a 'square' too, a
+ *   town's corner a 'corner' - `yaw` the way one faces standing there (a door: in
  *   toward it; a spot: toward its building; an exit: out of town)
- * @typedef {{ doors: Map<number, Spot>, square: Spot|null, social: Spot[], market: Spot[], dock: Spot[], exits: Spot[],
- *   types: Map<number, number>, net: Int32Array, netId: number }} Places
+ * @typedef {{ doors: Map<number, Spot>, square: Spot|null, squares: Spot[], corners: Spot[], social: Spot[], market: Spot[], dock: Spot[], exits: Spot[],
+ *   types: Map<number, number>, net: Int32Array, netId: number }} Places - LW-SPREAD `squares` the square's points (the
+ *   square's own spot first; none without a square), `corners` the town's corners
  */
 
 /**
@@ -316,10 +337,65 @@ export function townPlaces(nav, doors, buildings) {
   }
   /** @type {Spot|null} */
   let squareSpot = null;
+  /** @type {Spot[]} */
+  const squares = [];
   if (square) {
     const [x, z] = centre(square);
     squareSpot = { key: 'sq', kind: 'square', cell: square, x, z, yaw: 0 };
     social.unshift(squareSpot);
+    squares.push(squareSpot);
+    // LW-SPREAD: THE SQUARE'S POINTS - the most open cells about it (the same window), SQUARE_GAP apart and seen from it
+    // over the street, the nearer first on a tie: where the square's people gather, each to their own. The square was
+    // one point, and a town's every stall and a third of its evening stood about it (Bubyrydata at six: sixty-four)
+    const [sx, sy] = square;
+    /** @type {{ x: number, y: number, open: number, d: number }[]} */
+    const near = [];
+    for (let y = Math.max(SQUARE_WINDOW, sy - SQUARE_REACH); y <= Math.min(H - 1 - SQUARE_WINDOW, sy + SQUARE_REACH); y++) {
+      for (let cx = Math.max(SQUARE_WINDOW, sx - SQUARE_REACH); cx <= Math.min(W - 1 - SQUARE_WINDOW, sx + SQUARE_REACH); cx++) {
+        const d = Math.hypot(cx - sx, y - sy);
+        if (d > SQUARE_REACH || net[y * W + cx] !== netId) continue;
+        const open = openIn(cx - SQUARE_WINDOW, y - SQUARE_WINDOW, cx + SQUARE_WINDOW, y + SQUARE_WINDOW);
+        if (open >= SQUARE_OPEN * bestOpen) near.push({ x: cx, y, open, d });
+      }
+    }
+    near.sort((a, b) => b.open - a.open || a.d - b.d || a.y - b.y || a.x - b.x);
+    for (const c of near) {
+      if (squares.length >= SQUARE_POINTS) break;
+      if (squares.some((s) => Math.hypot(s.cell[0] - c.x, s.cell[1] - c.y) < SQUARE_GAP)) continue;
+      if (!netLine(net, netId, W, square, [c.x, c.y])) continue;
+      const [px, pz] = centre([c.x, c.y]);
+      squares.push({ key: `sq${squares.length}`, kind: 'square', cell: [c.x, c.y], x: px, z: pz, yaw: 0 });
+    }
+  }
+  // LW-SPREAD: THE TOWN'S CORNERS - each block's most open street cell inside its margin (the first in the grid's order on
+  // a tie), as open as CORNER_OPEN of the square; then, the most open first, each CORNER_GAP from every social spot, every
+  // point of the square and every corner taken - where a neighbourhood gathers
+  /** @type {Spot[]} */
+  const corners = [];
+  if (square) {
+    /** @type {{ x: number, y: number, open: number, bx: number, by: number }[]} */
+    const best = [];
+    for (let by = 0; by * BLOCK_CELLS < H; by++) {
+      for (let bx = 0; bx * BLOCK_CELLS < W; bx++) {
+        let top = null;
+        for (let y = Math.max(SQUARE_WINDOW, by * BLOCK_CELLS + CORNER_MARGIN); y < Math.min(H - SQUARE_WINDOW, (by + 1) * BLOCK_CELLS - CORNER_MARGIN); y++) {
+          for (let x = Math.max(SQUARE_WINDOW, bx * BLOCK_CELLS + CORNER_MARGIN); x < Math.min(W - SQUARE_WINDOW, (bx + 1) * BLOCK_CELLS - CORNER_MARGIN); x++) {
+            if (net[y * W + x] !== netId) continue;
+            const open = openIn(x - SQUARE_WINDOW, y - SQUARE_WINDOW, x + SQUARE_WINDOW, y + SQUARE_WINDOW);
+            if (!top || open > top.open) top = { x, y, open, bx, by };
+          }
+        }
+        if (top && top.open >= CORNER_OPEN * bestOpen) best.push(top);
+      }
+    }
+    best.sort((a, b) => b.open - a.open || a.by - b.by || a.bx - b.bx);
+    const taken = [...social, ...squares].map((s) => s.cell);
+    for (const c of best) {
+      if (taken.some((t) => Math.hypot(t[0] - c.x, t[1] - c.y) < CORNER_GAP)) continue;
+      const [px, pz] = centre([c.x, c.y]);
+      corners.push({ key: `c${c.bx}.${c.by}`, kind: 'corner', cell: [c.x, c.y], x: px, z: pz, yaw: 0 });
+      taken.push([c.x, c.y]);
+    }
   }
   // the exits: per side, the net cell nearest that edge (ties to the side's middle, then the first in the grid's order).
   // LW-PERF: each side read in from its edge, a row or a column at a time, to the first that holds the net - never the
@@ -347,7 +423,19 @@ export function townPlaces(nav, doors, buildings) {
     const yaw = side === 'n' ? 0 : side === 's' ? Math.PI : side === 'e' ? Math.PI / 2 : -Math.PI / 2;
     exits.push(/** @type {Spot} */ ({ key: `x${side}`, kind: 'exit', cell: best, x, z, yaw, side }));
   }
-  return { doors: doorSpots, square: squareSpot, social, market, dock, exits, types, net, netId };
+  return { doors: doorSpots, square: squareSpot, squares, corners, social, market, dock, exits, types, net, netId };
+}
+
+/** LW-SPREAD: whether every cell the straight line from cell `a` to cell `b` crosses (their middles, sampled a quarter
+ *  cell apart) is on the street net - the square's points seen from it over open street.
+ *  @param {Int32Array} net @param {number} netId @param {number} W @param {number[]} a @param {number[]} b */
+function netLine(net, netId, W, a, b) {
+  const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) * 4));
+  for (let i = 0; i <= n; i++) {
+    const x = Math.floor(a[0] + 0.5 + ((b[0] - a[0]) * i) / n), y = Math.floor(a[1] + 0.5 + ((b[1] - a[1]) * i) / n);
+    if (net[y * W + x] !== netId) return false;
+  }
+  return true;
 }
 
 /** The exit facing a direction (a world yaw out of town: 0 north, +PI/2 east). @param {Places} places @param {number} yaw */

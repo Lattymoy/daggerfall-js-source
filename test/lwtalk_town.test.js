@@ -271,7 +271,7 @@ test('LW-TALK on the street: a circle\'s talk waits for its people to gather - f
   }
   // stepped past them (no arrival), out of the player's sight: their rows to the nearer
   {
-    const s = makeTown(closeTown(), CLOSE, 100 * DAY_MIN + 18 * 60);
+    const s = makeTown(closeTown(), CLOSE, 100 * DAY_MIN + 19.5 * 60);   // LW-SPREAD: PIN MOVED - the evening goes out from six to a quarter past seven now
     s.town.maxPopulation = 8;
     run(s, 0.5);
     const was = new Set(s.town.pool.filter((r) => r.visible && r.res).map((r) => r.res.id));
@@ -284,7 +284,15 @@ test('LW-TALK on the street: a circle\'s talk waits for its people to gather - f
   // arrival stood the street by the last scene's (none: each one about their own stand) and let 12 of the 24 it stood
   // go a beat later, dealt into circles farther off
   {
-    const s = makeTown(synthTown(), SYNTH, 100 * DAY_MIN + 18 * 60);
+    // LW-SPREAD: PIN MOVED - the evening at half past seven (out from six to a quarter past seven now), and every walk of
+    // its next second searched before the way in: the evening's walks out, searched a slice a frame (LW-PERF), came
+    // nearer a beat later and let the farthest circles go - the searching's, not the deal's
+    const s = makeTown(synthTown(), SYNTH, 100 * DAY_MIN + 19.5 * 60);
+    for (const r of s.town.peopleOf(s.town.dayOf(s.clock.t))) {
+      for (const ahead of [0, 0.2, 0.4]) {
+        for (let k = 0; k < 400 && s.town.where(r, s.clock.t + ahead, true)?.pending; k++) { s.town._paths.cells(1e9); s.town._paths.budget(1e9); s.town._paths.run(); }
+      }
+    }
     step(s);
     const first = s.town.pool.filter((r) => r.active && r.res).map((r) => r.res.id);
     for (let i = 0; i < 9; i++) step(s);
@@ -304,7 +312,7 @@ test('LW-TALK on the street: a circle\'s talk waits for its people to gather - f
 });
 
 test('LW-TALK every reader deals alike: the deal is the plans\' - one taken off this street alone (the trample) is dealt and left out after, the spot\'s other circles as every reader has them, their partner left to their own counsel; two readers come at different minutes keep the same circles, gatherings and words (mutants: the deal from the street, the drop)', () => {
-  const a = makeTown(synthTown(), SYNTH, 100 * DAY_MIN + 18 * 60);
+  const a = makeTown(synthTown(), SYNTH, 100 * DAY_MIN + 10 * 60);   // LW-SPREAD: PIN MOVED - the morning's market (from half past seven to half past ten): the evening's people are over the town's spots now
   run(a, 30);
   const b = makeTown(synthTown(), SYNTH, a.clock.t);
   for (let i = 0; i < 30 * 20; i++) { step(a); b.clock.t = a.clock.t; b.town.update(1 / 30, b.at, Math.PI, b.eye, true, () => false); }

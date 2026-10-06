@@ -6,10 +6,12 @@
 //     about (both walking, the same way, the other way or across - and whether they left one place together; one walking
 //     by one standing; both standing, in one circle, alone at one spot, or at two spots), and how many pairs stood inside
 //     each other a second and more;
-//   - THE CROWD: the town's people standing out of doors, at how many spots, and the busiest spots (the square marked).
+//   - THE CROWD: the town's people standing out of doors, at how many spots, and the busiest spots (the square marked;
+//     LW-SPREAD: the square's people at any of its points).
 // Numbers only: nothing of the game's data is written, drawn or kept.
 //
 // Usage: ARENA2_PATH=<arena2> node tools/livingCrowdProbe.mjs [towns, comma-separated: Ripmarket,Daggerfall] [hours: 8,13,18] [seconds: 40]
+//        ARENA2_PATH=<arena2> node tools/livingCrowdProbe.mjs --crowds     (LW-SPREAD: a sample of 34 towns' busiest spots)
 import { skipReal, hostTown, townsOf, LOCATION_TYPES } from '../test/lwRealTown.mjs';
 import { LivingTown } from '../src/systems/livingWorld/livingTown.js';
 import { ResidentWalker } from '../src/characters/residentWalker.js';
@@ -86,12 +88,61 @@ export function streetAt(h, hour, seconds) {
     bySpot.set(a.e.at.key, (bySpot.get(a.e.at.key) ?? 0) + 1);
   }
   const busiest = [...bySpot.entries()].sort((x, y) => y[1] - x[1]).slice(0, 4).map(([k, n]) => ({ spot: k === sq?.key ? 'the square' : k, n }));
+  // LW-SPREAD: the square is its points - the town at the square is the town at any of them
+  const squareKeys = new Set((lt.places.squares ?? (sq ? [sq] : [])).map((s) => s.key));
+  const atSquare = [...bySpot.entries()].reduce((n, [k, c]) => n + (squareKeys.has(k) ? c : 0), 0);
   return { frames, seen: bodies / Math.max(1, frames), share: inside / Math.max(1, bodies), glued, kinds: Object.fromEntries(Object.entries(kinds).map(([k, n]) => [k, n / Math.max(1, frames)])),
-    standing, walking, spots: bySpot.size, busiest, atSquare: bySpot.get(sq?.key ?? '') ?? 0 };
+    standing, walking, spots: bySpot.size, busiest, atSquare, mostAtOne: busiest[0]?.n ?? 0 };
+}
+
+/**
+ * LW-SPREAD: A TOWN'S CROWDS THROUGH A DAY, by its plans alone (no frames): every `step` minutes from `from` to `to`
+ * (hours), the most of its people standing at one spot, and at the square (all its points); the town's own living town.
+ * @param {ReturnType<typeof hostTown>} h @param {number} [from] @param {number} [to] @param {number} [step]
+ * @returns {{ people: number, busiest: number, busiestAt: number, outThen: number, square: number }}
+ */
+export function crowdsOf(h, from = 7, to = 22, step = 10) {
+  const lt = new LivingTown(h.nav, { town: h.town, buildings: h.buildings, doors: h.doors, makePerson: () => null, clock: () => DAY * DAY_MIN, rate: () => RATE, mpm: MPM });
+  const squareKeys = new Set((lt.places.squares ?? (lt.places.square ? [lt.places.square] : [])).map((s) => s.key));
+  let busiest = 0, busiestAt = 0, outThen = 0, square = 0;
+  for (let m = from * 60; m <= to * 60; m += step) {
+    const t = DAY * DAY_MIN + m;
+    /** @type {Map<string, number>} */
+    const at = new Map();
+    let out = 0;
+    for (const res of lt.peopleOf(DAY)) {
+      const a = lt.entryOf(res, t);
+      if (!a || a.e.kind === 'walk' || !isOutdoor(a.e)) continue;
+      out++;
+      at.set(a.e.at.key, (at.get(a.e.at.key) ?? 0) + 1);
+    }
+    const top = Math.max(0, ...at.values());
+    if (top > busiest) { busiest = top; busiestAt = m / 60; outThen = out; }
+    square = Math.max(square, [...at].reduce((n, [k, c]) => n + (squareKeys.has(k) ? c : 0), 0));
+  }
+  return { people: lt.residents.length, busiest, busiestAt, outThen, square };
+}
+
+/** LW-SPREAD: a sample of the game's towns - `n` of each kind asked, spread over its rows. @param {readonly [number, number][]} kinds */
+export function sampleTowns(kinds) {
+  const out = [];
+  for (const [type, n] of kinds) {
+    const all = townsOf([type]);
+    for (let i = 0; i < n; i++) out.push(all[Math.floor((i * all.length) / n)]);
+  }
+  return out;
 }
 
 if (isMain(import.meta.url)) {
   if (skipReal) { console.log(skipReal); process.exit(1); }
+  if (process.argv[2] === '--crowds') {
+    // LW-SPREAD: the busiest spot of each of a sample of the game's towns, by its plans, 07:00 to 22:00
+    const towns = sampleTowns([[LOCATION_TYPES.TownCity, 14], [LOCATION_TYPES.TownVillage, 10], [LOCATION_TYPES.TownHamlet, 10]]);
+    const rows = towns.map((loc) => ({ name: loc.name, ...crowdsOf(hostTown(loc)) }));
+    console.log(`${rows.length} towns: the busiest spot ${(rows.reduce((n, r) => n + r.busiest, 0) / rows.length).toFixed(1)} on average, the square ${(rows.reduce((n, r) => n + r.square, 0) / rows.length).toFixed(1)}`);
+    for (const r of rows.sort((a, b) => b.busiest - a.busiest).slice(0, 10)) console.log(`  ${r.name} (${r.people}): ${r.busiest} at one spot at ${r.busiestAt.toFixed(1)}h of ${r.outThen} out; the square ${r.square}`);
+    process.exit(0);
+  }
   const names = (process.argv[2] ?? 'Ripmarket,Wayrest,Daggerfall,Tuntale,Bubyrydata').split(',');
   const hours = (process.argv[3] ?? '8,13,18').split(',').map(Number);
   const seconds = Number(process.argv[4] ?? 40);
@@ -104,7 +155,7 @@ if (isMain(import.meta.url)) {
     for (const hour of hours) {
       const m = streetAt(h, hour, seconds);
       console.log(`  ${String(hour).padStart(2)}:00  ${m.seen.toFixed(1)} in view, ${(100 * m.share).toFixed(1)}% inside another, ${m.glued} pairs a second and more;`
-        + ` ${m.standing} standing out at ${m.spots} spots (the square ${m.atSquare}), ${m.walking} walking`);
+        + ` ${m.standing} standing out at ${m.spots} spots (the square ${m.atSquare}; the busiest ${m.busiest.map((b) => `${b.spot} ${b.n}`).join(', ')}), ${m.walking} walking`);
       for (const [k, n] of Object.entries(m.kinds).sort((x, y) => y[1] - x[1])) console.log(`         ${n.toFixed(2)} pairs a frame ${k}`);
     }
   }

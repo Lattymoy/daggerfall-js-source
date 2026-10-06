@@ -1395,6 +1395,80 @@ root (`test/lwspace_street.test.js`, `tools/mutants/lwspace.json`).
   LW2-facing-dropped, `lwstand.json` LW-STAND-host-unkept-circle and LW-STAND-way-straight, `lwtalk.json`
   LW-TALK-deal-from-street and `watchday.json` WATCH-DAY-no-shoulder re-aimed by content (5, all dead).
 
+## LW-SPREAD - the town gathers in many places (2026-10-06)
+
+Mac: "in towns some NPCs can group up too much when talking to each other. Almost like they are all situated in one
+place". Measured on the game's own towns (LW-SPACE's probe, `tools/livingCrowdProbe.mjs`): at six in the evening 99-161
+of a town stood out of doors at 8-28 spots, 30-64 of them about one point - the square's (Bubyrydata: 64 of its 161, at
+eight spots); through the day, the most of a town at one spot was 41 on average over a sample of thirty-four towns, and
+70 at the most - Kirkcester's every homemaker at its one shop's front at twenty past nine. Three causes, each fixed at
+its root (`test/lwspread_town.test.js`, `tools/mutants/lwspread.json`).
+
+- **The square was one point.** Six in ten of a town kept it for their first social spot (84-85% for one of their two),
+  and every stall stood there, a mercenary's morning, an adventurer's afternoon, a visitor's and a courtier's talk. The
+  square is ground now: its POINTS (`places.js` `squares`, SQUARE_REACH, SQUARE_GAP, SQUARE_OPEN, SQUARE_POINTS) are its
+  own spot and the most open street cells about it - within fourteen cells of it, six apart, three quarters as open,
+  seen from it over the street (`netLine`), to five - and each resident keeps to their OWN point of it (`dayPlan.js
+  squareOf`, their seed's alone, the same every day). Whatever takes one to the square takes them there (dayPlan's
+  intents): a stall, the talk, the market, a stroll's stop, a labourer's job, a beggar's pitch - the watch's beat aside,
+  its stops a patrol's pair's.
+- **A town's people kept to a few spots.** A resident's two social spots were of the two nearest home of the spots before
+  the taverns, temples, guild halls and the palace - five in a town of nine blocks - and the square. A town has its
+  CORNERS now (`places.js` `corners`, CORNER_MARGIN, CORNER_OPEN, CORNER_GAP): each block's most open street cell inside
+  its margin, as open as six tenths of the square, sixteen cells from every social spot, every point of the square and
+  every corner before it - where a neighbourhood gathers. The favourites (`dayPlan.js favouritesNow`, SQUARE_LIKE,
+  SOCIAL_NEAR): two social spots of the SOCIAL_NEAR (three) nearest home, the corners among them and the square where it
+  is near, and the square from anywhere for SQUARE_LIKE (a fifth) of the town; the market of the three nearest of the
+  shops' fronts and the square's points (the more points, the more of the market the square's); every spot's key breaks
+  a tie of nearness (`doorKinds` rank, the corners and points among them). A stroll's stops are the corners' too, and a
+  stall-keeper's stall (a crafter's, a fisher's) at the square or at their market.
+- **The town went out on the hour.** Everyone's evening at six (a homemaker's and a sailor's at half past), and the
+  morning's market within one hour (08:30-09:30). Each goes out for the evening at their own minute now, over
+  EVENING_SPREAD_MIN (75) after its hour, and to the morning's market at their own hour within MARKET_HOURS
+  (07:30-10:30) - drawn of the day's seed, as every hour of a plan is.
+- **LW-SPACE's hold, audited.** Held by the politeness gate, a body stood still only where it stood on its walk's point:
+  one trailing it (catching it up, or round one in its way) walked up to it while held, and one held aside drifted back
+  to its line. The gate's hold is whole now: held, it stands where it is (`livingTown.js` update - DFU's walker idles on
+  the spot), aside or not (`_dodge`: held, its side kept).
+- **Measured** (before / after; `tools/livingCrowdProbe.mjs`):
+
+  | evening (six before, seven after) | out of doors | at spots | the most at one | inside another |
+  |---|---|---|---|---|
+  | Ripmarket (6x7) | 135 / 121 | 21 / 40 | 43 the square / 9 a corner | 3.0% / 0.1% |
+  | Wayrest (8x8) | 107 / 92 | 25 / 48 | 34 the square / 6 the square | 0.4% / 0.1% |
+  | Daggerfall (8x8) | 99 / 103 | 28 / 49 | 30 the square / 6 a point of it | 0.2% / 0.1% |
+  | Tuntale (6x7) | 126 / 123 | 21 / 41 | 38 the square / 8 a corner | 0.8% / 0.0% |
+  | Bubyrydata (4x3) | 161 / 138 | 8 / 22 | 64 the square / 17 a corner | 0.0% / 0.0% |
+
+  Read at seven after: the town goes out for the evening from six to a quarter past seven now. Over the day
+  (07:00-22:00, every ten minutes, by the plans; `--crowds`), the sample of fourteen cities, ten villages and ten
+  hamlets: the most of a town at one spot 41.1 on average and 70 at the most before, 11.6 and 24 after (Kirkcester's
+  morning market at its square's three points); the square's people at their most 40.4 on average before (at its one
+  point), 27.4 after (over its points). The synthetic towns: the most at one spot 30, 63 and 90 before (all at the
+  square), 11, 16 and 26 after; the square a favourite of 84-85% of a town before, 26-38% after.
+- **The four hosts.** LW-SPREAD is the living town's core (`places.js`, `dayPlan.js`, `livingTown.js`): `scenes/world.js`
+  runs the town it lays (no host change); `scenes/worldModes.js` - the rooms keep their own places (LW8, untouched);
+  `scenes/exterior.js` - FLAGGED as LW2 has it: the fixed-city page keeps DFU's walkers; `scenes/dungeonContext.js` - no
+  town.
+- **Pinned** by `test/lwspread_town.test.js` (the square's points - and a plaza behind a wall within its reach none of
+  them; the corners - and a plaza across two blocks' border one of them, a lane none; one's own point; the favourites -
+  the same whatever order the town's spots stand in; the day - whatever takes one to the square their own point, the
+  watch's beat its own, the evening and the market at their own minute; the synthetic towns' crowds; and, where
+  ARENA2_PATH names the data, the sample of thirty-four towns) and `test/lwspace_street.test.js` (the hold: held aside,
+  still aside; a held body trailing its walk's point stands), `tools/mutants/lwspread.json` (26, all dead). PIN MOVED:
+  `lw1_livingWorld` (a social favourite a corner or one's own point of the square), `lwperf_cost` (the favourites
+  written the slow way, to LW-SPREAD's law; the arrival's window at eight), `lw2_livingTown` (the one waiting to be
+  unseen counted through the churn; the gate's walker held with the player beside it), `lwtalk_town` (the keeping's
+  step and the deal at half past seven, every walk searched before the way in; the readers' trample at ten),
+  `watchprotects_watch` (the cornered in the close-built town; the frightened at seven), `lwspace_street` (the game's
+  cities in the evening at seven). And the records of the lists LW-SPREAD's files touch, re-judged (343 of 348 dead, one
+  equivalent as recorded): three it left unkilled, their pins' scenes moved - `lwperf.json` LW-PERF-arrival-cells and
+  LW-PERF-waiting-wanted (`lwperf_cost`: the town's frames at two in the afternoon, the street's reach read every
+  frame), `watchday.json` WATCH-DAY-late-from-supper (`watchday_watch`: the supper before the night's watch laid by
+  hand - the great city's suppers near home now, none ran into the walk out) - and one LW-SPACE had (`lwstand.json`
+  LW-STAND-host-unkept-alone: those alone stand where the census's beat placed them, and `lwstand_street` read no other
+  stand; a town whose census never ran is read too).
+
 ## The four hosts
 
 - `scenes/world.js` - WIRED (LW2 the towns, LW3 the roads and the Overworld).

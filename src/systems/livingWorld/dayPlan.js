@@ -225,7 +225,7 @@ function doorKinds(places) {
       if (t >= BUILDING_TYPES.House1 && t <= BUILDING_TYPES.House6) houses.push(spot);
       if (t === BUILDING_TYPES.Armorer || t === BUILDING_TYPES.WeaponSmith || t === BUILDING_TYPES.Alchemist) outfitters.push(spot);
     }
-    const spots = [...new Set([...places.doors.values(), ...places.social, ...places.market])].sort((a, b) => a.key.localeCompare(b.key));
+    const spots = [...new Set([...places.doors.values(), ...places.social, ...(places.corners ?? []), ...(places.squares ?? []), ...places.market])].sort((a, b) => a.key.localeCompare(b.key));
     k = { tavern, temple, guild, shops, houses, outfitters, rank: new Map(spots.map((s, i) => [s, i])) };
     doorKindsOf.set(places, k);
   }
@@ -242,23 +242,52 @@ function nearestOf(places, list, from) {
     || (rank.get(a) ?? 0) - (rank.get(b) ?? 0));
 }
 
-/** A resident's favourites, worked out. @param {Resident} res @param {Places} places @param {Spot|null} home */
+/** LW-SPREAD: the share of a town who keep to its square from wherever they live (the rest keep to it where it is one of
+ *  the social spots nearest their home), how many of the social spots (and of the markets) nearest home a favourite is
+ *  drawn from, and how late after its hour one goes out for the evening (minutes, their own each day - the town went
+ *  out on the hour). */
+export const SQUARE_LIKE = 0.2;
+export const SOCIAL_NEAR = 3;
+export const EVENING_SPREAD_MIN = 75;
+/** LW-SPREAD: the hours a homemaker goes to the morning's market between (the first cut's one hour, 08:30-09:30, stood a
+ *  hamlet's every homemaker at its one store's front at once). */
+export const MARKET_HOURS = Object.freeze([7.5, 10.5]);
+
+/**
+ * LW-SPREAD: THE SQUARE'S POINT A RESIDENT KEEPS TO - one of its points (places.js `squares`), their seed's alone, the
+ * same every day; none without a square. Whatever takes them to the square takes them there (dayPlan's intents): a
+ * stall, the talk, the market, a stroll's stop, a labourer's job - the watch's beat aside, its stops a patrol's pair's.
+ * @param {Resident} res @param {Places} places @returns {Spot|null}
+ */
+export function squareOf(res, places) {
+  const pts = places.squares?.length ? places.squares : places.square ? [places.square] : [];
+  return pts.length ? pts[lwSeed(res.town, res.roll.charCodeAt(0), res.slot, 0x73717561) % pts.length] : null;   // 'squa'
+}
+
+/** A resident's favourites, worked out. LW-SPREAD: their two social spots are of those nearest home (SOCIAL_NEAR), the
+ *  square among them where it is near - and the square from anywhere for SQUARE_LIKE of them - and their market of the
+ *  shops' fronts and the square's points nearest home; the square their own point of it. The first cut kept six in ten
+ *  of a town to the square, and its evening stood about one point; and a hamlet's market was its one shop's front.
+ *  @param {Resident} res @param {Places} places @param {Spot|null} home */
 function favouritesNow(res, places, home) {
   const rng = lwRng(res.town, res.roll.charCodeAt(0), res.slot, 0x666176);   // 'fav'
-  const near = (list) => (list.length ? list[Math.floor(rng() * Math.min(list.length, 2))] : null);
+  const near = (list, n = 2) => (list.length ? list[Math.floor(rng() * Math.min(list.length, n))] : null);
   const kinds = doorKinds(places);
   const byNear = (/** @type {readonly Spot[]} */ list) => nearestOf(places, list, home);
-  const social = byNear(places.social);
-  const s1 = places.square && rng() < 0.6 ? places.square : near(social);
-  const s2 = near(social.filter((s) => s !== s1)) ?? s1;
-  const market = byNear(places.market);
+  const sq = squareOf(res, places);
+  const own = (/** @type {Spot|null} */ s) => (s?.kind === 'square' ? sq : s);
+  const social = byNear([...places.social, ...(places.corners ?? [])]);   // a corner of the town a social spot as any
+  const s1 = places.square && rng() < SQUARE_LIKE ? sq : own(near(social, SOCIAL_NEAR));
+  const s2 = own(near(social.filter((s) => own(s) !== s1), SOCIAL_NEAR)) ?? s1;
+  const market = byNear([...places.market, ...(places.squares ?? [])]);   // a shop's front, or the square where the stalls stand - by its points, the more of them the more of the market
   return {
     social: [s1, s2].filter(Boolean),
     tavern: near(byNear(kinds.tavern)),
     temple: near(byNear(kinds.temple)),
     guild: near(byNear(kinds.guild)),
-    market: near(market) ?? places.square,
+    market: own(near(market, SOCIAL_NEAR)),
     shops: byNear(kinds.shops),
+    square: sq,
   };
 }
 
@@ -294,10 +323,12 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
   const walkOut = shift === 3 ? morningWalk(res, places, day + 1, watchSize, mpm) : null;
   /** @type {{ kind: string, at: Spot|null, from: number, dur: number, until?: number, slack?: number, mark?: { duty?: boolean, pair?: 0|1|null } }[]} */
   const intents = [];
-  const I = (kind, at, from, dur, until = undefined, slack = undefined, mark = undefined) => { if (at) intents.push({ kind, at, from, dur, until, slack, mark }); };
+  // LW-SPREAD: whatever takes them to the square takes them to their own point of it (squareOf) - the watch's beat aside,
+  // its stops a patrol's pair's
+  const I = (kind, at, from, dur, until = undefined, slack = undefined, mark = undefined) => { if (at) intents.push({ kind, at: at.kind === 'square' && !mark?.duty ? fav.square : at, from, dur, until, slack, mark }); };
   /** A stroll: two short stops at two of the town's spots - out among people, seen walking. */
   const stroll = (from) => {
-    const spots = [...places.social, ...places.market];
+    const spots = [...places.social, ...(places.corners ?? []), ...places.market];   // LW-SPREAD: the town's corners too
     if (spots.length < 2) return;
     const a = spots[Math.floor(rng() * spots.length)];
     let b = spots[Math.floor(rng() * spots.length)];
@@ -305,7 +336,8 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
     I('social', a, from, rollInt(rng, 6, 15));
     I('market', b, from + 20, rollInt(rng, 6, 15));
   };
-  const evening = (from = h(18)) => {
+  const evening = (at = h(18)) => {
+    const from = at + rollInt(rng, 0, EVENING_SPREAD_MIN);   // LW-SPREAD: out for the evening at their own minute
     if (res.social > 0.3) I('social', pickOf(rng, fav.social.length ? fav.social : [null]), from, rollInt(rng, 30, 90));
     if (res.drink > 0.55 && rng() < 0.75) I('tavern', fav.tavern, from + 60, rollInt(rng, 90, 180));
     else if (res.pious > 0.7 && rng() < 0.6) I('temple', fav.temple, from + 30, rollInt(rng, 30, 60));
@@ -333,13 +365,13 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
     }
     case 'crafter': {
       if (rng() < 0.7) errand(h(9));
-      if (rng() < 0.5) I('stall', places.square ?? fav.market, h(13), rollInt(rng, 60, 150));   // their wares at the square
+      if (rng() < 0.5) I('stall', rng() < 0.5 ? places.square ?? fav.market : fav.market, h(13), rollInt(rng, 60, 150));   // their wares at the square - LW-SPREAD: or at their market
       else if (rng() < 0.5) errand(h(14));
       evening();
       break;
     }
     case 'homemaker': {
-      I('market', fav.market, h(8.5 + rng()), rollInt(rng, 45, 90));
+      I('market', fav.market, h(MARKET_HOURS[0] + rng() * (MARKET_HOURS[1] - MARKET_HOURS[0])), rollInt(rng, 45, 90));   // LW-SPREAD: the morning's market at their own hour
       errand(h(11));
       if (res.social > 0.5) stroll(h(13));
       if (res.pious > 0.6) I('temple', fav.temple, h(15), rollInt(rng, 30, 60));
@@ -368,7 +400,7 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
     case 'fisher': case 'sailor': {
       const dock = places.dock.length ? places.dock[lwSeed(res.town, res.slot) % places.dock.length] : null;
       I(dock ? 'dock' : 'fields', dock ?? exitNearest(places, home.cell), h(job === 'sailor' ? 6 : 5.5), 450, h(job === 'sailor' ? 15 : 13));
-      if (job === 'fisher') I('stall', places.square ?? fav.market, h(14), rollInt(rng, 60, 90));
+      if (job === 'fisher') I('stall', rng() < 0.5 ? places.square ?? fav.market : fav.market, h(14), rollInt(rng, 60, 90));   // LW-SPREAD: the catch at the square, or at their market
       if (job === 'sailor' && res.drink > 0.3) I('tavern', fav.tavern, h(16), rollInt(rng, 120, 240));
       evening(h(18.5));
       break;

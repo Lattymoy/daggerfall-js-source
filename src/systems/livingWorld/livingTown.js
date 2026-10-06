@@ -909,6 +909,7 @@ export class LivingTown {
         const d0 = Math.hypot(w.x - p.pos[0], w.z - p.pos[2]);
         const step = PERSON_MOVE_SPEED * WALK_FAST * dt * scale;
         if (!row.visible || d0 > Math.max(SNAP_M, step * 3)) { p.pos[0] = w.x; p.pos[2] = w.z; p.yaw = w.yaw; p.moving = w.moving; row.side = 0; }
+        else if (stop) p.moving = false;   // held by the politeness gate: where it stands, still (DFU's walker idles on the spot) - LW-SPREAD's audit: a body trailing its walk's point walked up to it while held
         else {
           const g = this._dodge(row, p, w, dt);   // LW-SPACE: where they walk this frame, stepped aside for whoever is in the way
           const dx0 = g.x - p.pos[0], dz0 = g.z - p.pos[2];
@@ -957,7 +958,8 @@ export class LivingTown {
    * the other steps round). Aside to the nearest of DODGE_SIDES that keeps SPACE_M from every one of them and that the
    * street holds - the right before the left, so two coming at each other both keep right - stepped to at DODGE_SPEED,
    * and back to its line once the way is clear. A walker walking up to its stand steps aside till it is DODGE_SETTLE_M
-   * off it, never after (it is there); one the politeness gate holds stands. DFU's walkers keep off one another by the
+   * off it, never after (it is there); one the politeness gate holds stands where it stood, aside or not (LW-SPREAD's
+   * audit: held, it drifted back to its line). DFU's walkers keep off one another by the
    * tiles they claim (MobilePersonMotor.cs SetTargetPosition, CityNavigation's Occupied flag); a resident claims none - its
    * day lays its walk - and the town's people walked inside one another. The day is the plans' (every reader's alike);
    * the step aside, a few hands' breadth, is this reader's street.
@@ -970,7 +972,7 @@ export class LivingTown {
     const yaw = w.moving ? w.yaw : Math.atan2(toX, toZ);
     const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);   // its way and its right
     const cur = row.side ?? 0;
-    let want = 0;
+    let want = row.halt ? cur : 0;   // held, it stands where it stood - aside or not (the politeness gate's hold is whole)
     if (!row.halt && (w.moving || Math.hypot(toX, toZ) > DODGE_SETTLE_M)) {
       const far = Math.max(...DODGE_SIDES) + SPACE_M;
       const back = Math.min(0, -toX * fx - toZ * fz) - SPACE_M;   // the body may trail its day's place: whoever stands between counts

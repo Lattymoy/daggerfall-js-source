@@ -14,7 +14,7 @@ import { Collider } from '../src/player/collider.js';
 import { makeQuarry, QUARRY_BLOW, QUARRY_HEIGHT } from '../src/systems/livingWorld/quarry.js';
 import { applyDamageToNonPlayer } from '../src/scenes/hostCombat.js';
 import { isTownThreat, createTownWatch, runTownWatchFrame } from '../src/systems/townWatch.js';
-import { synthTown } from './lwTown.mjs';
+import { synthTown, closeTown } from './lwTown.mjs';
 import { LivingTown, PANIC_M, FLEE_SPEED, FLEE_HOLD_S, FLEE_FAR_M, FLEE_WARY_M, SNAP_M } from '../src/systems/livingWorld/livingTown.js';
 import { ResidentWalker } from '../src/characters/residentWalker.js';
 import { PERSON_MOVE_SPEED, PERSON_IDLE_RECORD, MOVE_RECORDS } from '../src/characters/mobilePerson.js';
@@ -100,8 +100,7 @@ test('WATCH-PROTECTS the watch comes: a monster hunting a townsperson alive is t
 
 const RATE = CLASSIC_MINUTES_PER_SECOND;
 const TOWN = Object.freeze({ mapId: 12345, blocks: 9, region: 17, people: 3, port: false });
-function makeTown(minute, dangers) {
-  const fx = synthTown();
+function makeTown(minute, dangers, fx = synthTown()) {
   const clock = { t: minute }, killed = [];
   const relations = createRelations();
   const town = new LivingTown(fx.nav, {
@@ -184,7 +183,9 @@ test('WATCH-PROTECTS the street runs: one on the street a hostile monster comes 
 
 test('WATCH-PROTECTS cornered: one whose straight way from a monster is a wall turns along it, every stride on the street - never through the wall (mutants: the street)', () => {
   const dangers = { list: [] };
-  const t = makeTown(100 * DAY_MIN + 13 * 60, dangers);
+  // LW-SPREAD: PIN MOVED - the town built solid to its lanes (a wall beside every one standing): the open town's people
+  // stand off its walls now, spread over its spots
+  const t = makeTown(100 * DAY_MIN + 13 * 60, dangers, closeTown());
   const { p: victim, reach, dir } = standingAbout(t)[0];
   assert.ok(reach < 2, `one standing by a wall (${reach.toFixed(2)} m)`);
   const at = [victim.pos[0] - Math.sin(dir) * 3, victim.pos[2] - Math.cos(dir) * 3];   // three metres off, the wall at their back
@@ -229,9 +230,10 @@ const farWalker = (t) => t.town.update(0, t.at, 0, t.at, true, () => false).map(
   .find((p) => p.moving && Math.hypot(p.pos[0] - t.at[0], p.pos[2] - t.at[2]) > 30 && !t.town._inCircle.has(p.living.res.id));
 
 test('WATCH-PROTECTS the frightened say nothing: a circle with any of it frightened is silent - a pair one of whom took fright and the other did not (its twin town, no monster, talks on) - and a greeting goes with the fright: none said while it lasts (said unseen, it would rest them GREET_REST_MIN past it), one said before it gone from over their head (mutants: the circle, the greeting, the speaker)', () => {
-  const twin = makeTown(100 * DAY_MIN + 13 * 60, { list: [] });
+  // LW-SPREAD: PIN MOVED - the evening (at seven: its people out over the town's spots, a pair standing together in view)
+  const twin = makeTown(100 * DAY_MIN + 19 * 60, { list: [] });
   const dangers = { list: [] };
-  const t = makeTown(100 * DAY_MIN + 13 * 60, dangers);
+  const t = makeTown(100 * DAY_MIN + 19 * 60, dangers);
   for (let i = 0; i < 60; i++) { frame(twin); frame(t); }
   const rowOf = (town, id) => town.town.pool.find((r) => r.res?.id === id);
   const pair = [...t.town._inCircle.values()].map((x) => x.circle)
