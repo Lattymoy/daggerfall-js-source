@@ -120,8 +120,9 @@ export function levelingSettings(r = null) {
  *  players are forced into oblivion"): THE ONE LAW for the system a NEW character is born with. Online, Oblivion's
  *  leveling is not offered - a character made (or imported from a classic save) on the online page levels the
  *  Daggerfall way whatever was asked for; offline the request stands. It is applied where a character is BORN
- *  (finishChargen, the `?class=` skip, the classic-save import) and never where one is LOADED, so a character already
- *  levelling the Oblivion way online keeps it: the save is the law (usesVirtueLeveling). */
+ *  (finishChargen, the `?class=` skip, the classic-save import) and never where one is LOADED - an existing ONLINE
+ *  character is switched by realmCustoms.js crossLeveling at the realm boot (LEVEL-ONLINE-3), never by a load, so an
+ *  offline Oblivion character keeps its system: the save is the law offline (usesVirtueLeveling). */
 export const ONLINE_LEVELING_SYSTEM = LEVELING_CLASSIC;
 export function newCharacterLevelingSystem(requested, { online = false } = {}) {
   const want = requested === LEVELING_VIRTUE ? LEVELING_VIRTUE : LEVELING_CLASSIC;

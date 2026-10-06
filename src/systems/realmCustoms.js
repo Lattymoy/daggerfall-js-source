@@ -153,8 +153,11 @@ const REST_ITEM_IDS = new Set(Object.values(REST_ITEM));
  * (advancement.js levelUpSkillSumAnchor) - Daggerfall's sum was never its measure, so read raw it could pay out
  * several levels at once or owe them; a level-up already earned is kept (the anchor is the pending level's, and the
  * Daggerfall window takes the same readyToLevelUp and pendingLevel). Customs runs on the realm's COPY, so the offline
- * character keeps Oblivion's leveling offline; a character already online never passes here again. A Daggerfall
- * character (or a save from before ORL1, which reads as one) crosses untouched. Answers whether it switched.
+ * character keeps Oblivion's leveling offline. A Daggerfall character (or a save from before ORL1, which reads as
+ * one) crosses untouched. LEVEL-ONLINE-3 (2026-10-06, Mac: "Can we somehow switch people who have oblivion leveling
+ * online"): THE REALM BOOT runs it too (scenes/world.js `releveled`, beside the loan amnesty), so a character born
+ * online on Oblivion's bar under LEVEL-ONLINE is switched at its next join, its first checkpoint keeping it; once
+ * switched it reads as Daggerfall's and passes untouched. Answers whether it switched.
  * @param {any} snap
  */
 export function crossLeveling(snap) {
@@ -272,6 +275,7 @@ export function reclaimLines(/** @type {{ houses: string[], ship: boolean, piece
 export const LEVELING_CROSS_LINE = Object.freeze({
   before: 'Online characters level the Daggerfall way: this character will level by its skills from here on, starting from its current level.',
   after: 'Online, this character levels the Daggerfall way, by its skills.',
+  switched: 'Online characters now level the Daggerfall way: you will level by your skills from here on, starting from your current level.',
 });
 
 /** CUSTOMS-CARRY (2026-09-29): what the door promises before customs runs, whatever it finds - what crosses beside the

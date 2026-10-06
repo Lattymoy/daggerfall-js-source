@@ -396,8 +396,12 @@ door a character is BORN through: finishChargen, the `?class=` skip and
 the classic-save import. Online the question is still always put, so the
 player reads it before the world: Daggerfall's option open, Oblivion's
 shown SHUT with 'Offline characters only'. Offline both are open. No LOAD
-path re-decides the system, so a character already levelling the
-Oblivion way online keeps it - the save is the law. An offline Oblivion
+path re-decides the system - the save is the law offline. Online,
+LEVEL-ONLINE-3 (2026-10-06, Mac: "Can we somehow switch people who have
+oblivion leveling online") switches the characters LEVEL-ONLINE put on
+Oblivion's bar: the realm boot (scenes/world.js `releveled`) runs
+`crossLeveling` on the joined save before it is restored, says so once
+the world stands, and the first checkpoint keeps it. An offline Oblivion
 character brought online (`crossLeveling`, realmCustoms.js) crosses onto
 Daggerfall's leveling on the realm's copy: its bar is dropped and its
 skill sum re-anchored at the start of the level it has
