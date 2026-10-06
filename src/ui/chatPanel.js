@@ -626,6 +626,8 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   let hidden = getPref('chatHidden') === true;
   let whoRows = [];        // the drawn rows, keyed so an unchanged roster repaints nothing
   let whoKey = '';
+  // PERF-ON3: what the last paintWho was handed - the roster's frozen rows, its count, its word and the open menu
+  let whoRowsSeen = null, whoTotalSeen = NaN, whoLabelSeen = null, whoMenuSeen = undefined;
   let whoNames = [];       // SOC3: [{ id, nameEl, css }] - the roster's name spans, for the colour pass
   let menuFor = null;      // SOC3: the roster row whose action menu is open (a peer id), or null
   let unseen = 0;          // CHAT-SCROLL: lines that arrived below a reader who had scrolled up
@@ -877,6 +879,11 @@ export function createChatPanel({ log, onSend, roster = null, canOpen = () => tr
   const paintWho = () => {
     if (!roster) { who.style.display = 'none'; return; }
     const { rows, total, shown, label } = rosterRows(roster());
+    // PERF-ON3: THE SAME LIST IS NO NEWS. net/roster.js answers the very (frozen) array it answered last frame while
+    // nothing it is made of moved, so with the heading's word, the count and the open menu also as they were, the key
+    // below could only come out as it did - and building it was a string over every row, every frame the chat is open.
+    if (rows === whoRowsSeen && total === whoTotalSeen && label === whoLabelSeen && menuFor === whoMenuSeen) return;
+    whoRowsSeen = rows; whoTotalSeen = total; whoLabelSeen = label; whoMenuSeen = menuFor;
     // SOC3: the open menu is part of what is DRAWN, so it joins the key - a roster that did not change still has to
     // repaint when a row is opened or closed, and nothing else about this law moved.
     // ACC3c: THE BADGE JOINS THE KEY. This list repaints only when the

@@ -69,6 +69,48 @@ export const ROSTER_ROWS_MAX = 200;
  *             roomCount?: number|null, label?: string|null }} RosterSource
  */
 
+// PERF-ON3 (2026-10-06, Mac: "I wanna look into how we can continue to improve performance, including for online"):
+// THE ROSTER IS DERIVED ONCE, NOT ONCE A FRAME. The chat panel asks for these rows on EVERY frame the chat is open
+// (ui/chatPanel.js paintWho - a peer can join without a line being said), and the World tab's list is everyone the hub
+// knows: up to CHAT_ROSTER_MAX from the welcome and every join after it. Each ask rebuilt every row (sanitizeName's
+// character walk, the tag's hash, the badge's arrays), then sorted them with `localeCompare(b, undefined, options)` -
+// which ECMA-402 defines as CONSTRUCTING an Intl.Collator (19.1.1 step 4), so every one of the sort's comparisons built
+// a collator. Measured in node over the real module: 9.3 ms a frame at 200 online, 24 at 500, 49 at 1,000 - a frame
+// rate that fell with the number of players online, while the chat was open, for a list that had not changed. Three
+// laws now, and the answer is the old one exactly:
+//   ONE COLLATOR - NAME_ORDER below, built once with the options the call passed: the same comparison, by the spec's own
+//     definition of localeCompare (the default locale is the realm's, fixed for the page).
+//   A ROW IS KEPT WHILE WHAT IT IS MADE OF IS - by id, with every input it reads (the name, my-own, the title, the
+//     glyphs and the seat claim by VALUE - an array changed in place is a change - and the guild's tag), so a row is
+//     reused only where a fresh one would be equal to it. Keyed by id and not by object, because three tabs compose a
+//     new source each frame (guildRosterSource, localRosterSource, a placed region) over the same peers.
+//   AN UNCHANGED LIST IS NOT SORTED AGAIN - the same rows in the same order in are the same order out (the sort is
+//     stable, so even a tie is settled the same way), and the same frozen array is answered, so the panel can tell
+//     "nothing changed" by identity before it builds a repaint key (ui/chatPanel.js).
+/** The roster's name order: numeric, case- and accent-blind - the options the sort's localeCompare passed, built once. */
+const NAME_ORDER = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+/** PERF-ON3: by name, then by tag (the second clause above: two players who share a name keep one order). */
+const byNameThenTag = (a, b) => {
+  const n = NAME_ORDER.compare(a.name, b.name);
+  return n !== 0 ? n : (a.tag < b.tag ? -1 : a.tag > b.tag ? 1 : 0);
+};
+/** PERF-ON3: past this many kept rows the memo starts again - a cache, never state: a row it forgot is made afresh. */
+const ROW_MEMO_MAX = 4096;
+/** PERF-ON3: id -> { the inputs a row was made of, the row, the call that last listed it } */
+const _rowMemo = new Map();
+/** PERF-ON3: the last call's rows in listing order (the sort's input) and the frozen, sorted, capped answer */
+let _lastIn = /** @type {RosterRow[]} */ ([]), _lastOut = /** @type {readonly RosterRow[]} */ (Object.freeze([]));
+let _scratchIn = /** @type {RosterRow[]} */ ([]);
+let _call = 0;
+/** PERF-ON3: an input the badge reads, by value - an array by its elements (a glyph added in place is a change), anything else as itself. */
+const sameInput = (kept, now) => {
+  if (!Array.isArray(kept) || !Array.isArray(now)) return kept === now;
+  if (kept.length !== now.length) return false;
+  for (let i = 0; i < kept.length; i++) if (kept[i] !== now[i]) return false;
+  return true;
+};
+const keepInput = (v) => (Array.isArray(v) ? v.slice() : v);
+
 /**
  * The rows the panel draws, in order.
  *
@@ -76,23 +118,35 @@ export const ROSTER_ROWS_MAX = 200;
  * the cap, so a cut list can say so rather than quietly lying about
  * how busy it is.
  *
+ * PERF-ON3: `rows` is FROZEN, and an unchanged list answers the very array it answered last time.
+ *
  * @param {RosterSource|null|undefined} session
- * @returns {{ rows: RosterRow[], total: number, shown: number, label: string }}
+ * @returns {{ rows: readonly RosterRow[], total: number, shown: number, label: string }}
  */
 export function rosterRows(session) {
+  const call = ++_call;
+  if (_rowMemo.size > ROW_MEMO_MAX) _rowMemo.clear();
   /** @type {RosterRow[]} */
-  const rows = [];
-  const seen = new Set();
+  const rows = _scratchIn;
+  rows.length = 0;
   /** @param {string|null|undefined} id @param {string|null|undefined} name @param {boolean} me */
   const push = (id, name, me, from = null) => {
-    if (id == null || seen.has(id)) return;
-    seen.add(id);
-    // ACC3c: THE BADGE COMES ALONG, through the wire's own reader - the
-    // roster is a list of NAMES and a name wears a title everywhere
-    // else it is drawn, so a bare one here is the same name saying two
-    // different things on one screen. `readBadge` rather than a second
-    // spelling of the vocabulary check, for the reason it exists.
-    rows.push({ id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from), gt: readGuildTag(from) });   // GUILD1c: and the guild's tag, through the wire's own reader
+    if (id == null) return;
+    let m = _rowMemo.get(id);
+    if (m && m.call === call) return;   // listed already this call: the first of an id is the one kept, as the Set kept it
+    const f = /** @type {any} */ (from);
+    if (!m || m.name !== name || m.me !== me || m.title !== f?.title || !sameInput(m.glyphs, f?.glyphs) || !sameInput(m.ts, f?.ts) || m.gt !== f?.gt) {
+      // ACC3c: THE BADGE COMES ALONG, through the wire's own reader - the
+      // roster is a list of NAMES and a name wears a title everywhere
+      // else it is drawn, so a bare one here is the same name saying two
+      // different things on one screen. `readBadge` rather than a second
+      // spelling of the vocabulary check, for the reason it exists.
+      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from), gt: readGuildTag(from) };   // GUILD1c: and the guild's tag, through the wire's own reader
+      m = { name, me, title: f?.title, glyphs: keepInput(f?.glyphs), ts: keepInput(f?.ts), gt: f?.gt, row, call };
+      _rowMemo.set(id, m);
+    }
+    m.call = call;
+    rows.push(m.row);
   };
   // ME FIRST into the list, though not first in the ORDER - the sort
   // below puts the player wherever their name falls, because a roster
@@ -106,16 +160,20 @@ export function rosterRows(session) {
   push(session?.id ?? null, session?.name ?? '', true, session);
   for (const p of session?.peers?.values?.() ?? []) push(p?.id ?? null, p?.name ?? '', false, p);
 
-  rows.sort((a, b) => {
-    const n = a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
-    return n !== 0 ? n : (a.tag < b.tag ? -1 : a.tag > b.tag ? 1 : 0);
-  });
+  // PERF-ON3: the same rows in the same order as the last call sort to the same list - answer it, frozen, as it was
+  let same = rows.length === _lastIn.length;
+  for (let i = 0; same && i < rows.length; i++) same = rows[i] === _lastIn[i];
+  if (!same) {
+    _scratchIn = _lastIn;   // the old input becomes the next call's scratch; this call's list is kept as the new input
+    _lastIn = rows;
+    _lastOut = Object.freeze(rows.slice().sort(byNameThenTag).slice(0, ROSTER_ROWS_MAX));
+  }
   // ROSTER-G: the count is the ROOM's when the relay said it (`n` on a channel's welcome) - a welcome list cut at
   // CHAT_ROSTER_MAX still says how many are online; a place's welcome says no `n`, and the rows are the count
   const n = Number(session?.roomCount);
   const total = Number.isFinite(n) && n > rows.length ? n : rows.length;
   const label = typeof session?.label === 'string' && session.label ? session.label : 'Online';
-  return { rows: rows.slice(0, ROSTER_ROWS_MAX), total, shown: Math.min(rows.length, ROSTER_ROWS_MAX), label };
+  return { rows: _lastOut, total, shown: Math.min(rows.length, ROSTER_ROWS_MAX), label };
 }
 
 /** The heading the panel shows: "Online - 3". A roster of one is

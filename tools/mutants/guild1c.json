@@ -461,8 +461,8 @@
   {
     "name": "GUILD1c-a-row-without-its-tag",
     "file": "src/net/roster.js",
-    "old": "...readBadge(from), gt: readGuildTag(from) });",
-    "new": "...readBadge(from) });",
+    "old": "...readBadge(from), gt: readGuildTag(from) };",
+    "new": "...readBadge(from) };",
     "tests": [
       "test/guild1c.test.js"
     ]
