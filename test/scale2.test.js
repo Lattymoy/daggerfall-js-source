@@ -48,18 +48,20 @@ test('SCALE2 A: one token opens every OTHER room asked within TOKEN_REUSE_MS - a
   let t = 1_000_000;
   const svc = service();
   const mint = accountTokenMinter({ fetch: svc.fetch, storage: fakeStorage(SESSION), now: () => t });
-  const cell = await mint('world:3,12');
+  // STORM-SHED (PIN MOVED): a room is opened by the hello that carries the token - net/online.js says so (`opened`), as here
+  const open = async (/** @type {string} */ room) => { const tok = await mint(room); if (tok) mint.opened(room, tok); return tok; };
+  const cell = await open('world:3,12');
   assert.equal(svc.n, 1);
-  assert.equal(await mint('world:4,12'), cell, 'a halo: the same token');
-  assert.equal(await mint('chat:world'), cell, 'the hub');
-  assert.equal(await mint('chat:region.17'), cell, 'the region channel');
+  assert.equal(await open('world:4,12'), cell, 'a halo: the same token');
+  assert.equal(await open('chat:world'), cell, 'the hub');
+  assert.equal(await open('chat:region.17'), cell, 'the region channel');
   assert.equal(svc.n, 1, 'one mint for the connect');
   // the relay spends a token once IN A ROOM: a room it opened gets a fresh one
-  const again = await mint('world:3,12');
+  const again = await open('world:3,12');
   assert.notEqual(again, cell);
   assert.equal(svc.n, 2, 'a reconnect into a room the token opened mints');
   // and that fresh token is the one other rooms get now
-  assert.equal(await mint('world:5,12'), again);
+  assert.equal(await open('world:5,12'), again);
   // past the minute: minted again, whatever the room
   t += TOKEN_REUSE_MS;
   assert.notEqual(await mint('world:9,9'), again);
