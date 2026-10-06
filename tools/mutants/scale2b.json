@@ -330,12 +330,12 @@
   {
     "name": "SCALE2b-timed-standing-walked",
     "file": "src/net/online.js",
-    "old": "    const longest = wasMoving ? GAP_MAX_MS : cadence;",
-    "new": "    const longest = GAP_MAX_MS;",
+    "old": "    const longest = wasMoving ? Math.max(GAP_MAX_MS, cadence) : cadence;",
+    "new": "    const longest = Math.max(GAP_MAX_MS, cadence);",
     "tests": [
       "test/scale2b.test.js"
     ],
-    "note": "A step after standing still is walked over a second of the standing."
+    "note": "A step after standing still is walked over a second of the standing. AUDIT 637 (re-aimed by content): C2 walks a moving peer's own interval whole (`Math.max(GAP_MAX_MS, cadence)`); the mutant still hands the still arm the moving one's."
   },
   {
     "name": "SCALE2b-timed-dead-time-raced",

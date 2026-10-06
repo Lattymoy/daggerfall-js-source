@@ -289,7 +289,7 @@ test('LW3 the town and the roads: a traveller away is geared at home, walks out 
   assert.equal(body.archive, classLookOf(adventurer).archive);
   assert.ok(armed.includes(adventurer.id));
   body.moving = false;
-  assert.notEqual(body.update(0.1, [0, 1.6, 0], false).record, 5, 'the class sprite\'s own frames, not the outfit\'s idle');
+  assert.ok(body.update(0.1, [0, 1.6, 0], false).record > 4, 'the class sprite\'s own idle, not the outfit\'s');   // LW-TALK: PIN MOVED - the outfit standing is on its walk wheel (records 0-4), no longer its idle record 5
 });
 
 test('LW3 the road\'s bodies: an armed traveller in their class\'s sprite (its archive by their sex), the rest in their own outfit; each a talk target in the street\'s shape; a body gone from the list is freed, and clear() frees them all; under the Overworld faded by distance to the bands\' own far edge (mutants: the sex, the free, the fade)', () => {

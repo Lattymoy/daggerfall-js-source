@@ -14,13 +14,21 @@
 // farmer is in the fields by six, the watch walks its beat in shifts - and the TEMPER, the drink, the piety and the
 // liking for company set the rest: the errand, the meal, the evening's tavern, temple or square, a neighbour visited.
 //
+// WATCH-DAY (2026-10-05, Mac: "improve the guards" - asked, the night watch, gate posts and pairs, the uniform only on
+// duty): THE WATCH KEEPS THE TOWN ROUND THE CLOCK. Four companies of it (census.js WATCH_COMPANIES) turn through the day's
+// shift, the evening's and the night's, the fourth day off; in each, two of a company walk a patrol together on the
+// patrol's own stops, the rest stand POSTS at the town's gates; the night runs past the day's turn, and the next day
+// begins where it stands. On duty - the walk out, the watch, the walk home - they are in uniform (`duty`); off it, the
+// town's people in their own clothes. The watch keeps its shift from its hour to its end: whatever its bedtime, an
+// evening off left in time to walk out, and in a great city the morning's walk out begun before the day's turn.
+//
 // AWAY: a window the roads hold the resident (trips.js) is handed in and the day bends round it - geared at home (an
 // armed traveller), walked out to the exit facing the road, away, walked home after; every walk to or from an away
 // window ARMED (LW0 decision 5 - the host draws the class sprite).
 import { NAV_CELL } from '../../world/cityNavigation.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { lwRng, lwSeed, rollInt, pickOf } from './seed.js';
-import { hasShopJob } from './census.js';
+import { hasShopJob, WATCH_COMPANIES } from './census.js';
 import { exitNearest } from './places.js';
 
 /** The living day turns at 04:00 (minutes after midnight). */
@@ -37,14 +45,17 @@ export const GEAR_MIN = 30;
 export const HOME_GAP = 30;
 
 /** The kinds seen in the street. */
-export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch']));
+export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post']));
 
 /**
  * @typedef {import('./places.js').Spot} Spot
  * @typedef {import('./places.js').Places} Places
  * @typedef {import('./census.js').Resident} Resident
- * @typedef {{ kind: string, at: Spot, t0: number, t1: number, from?: Spot, to?: Spot, armed?: boolean }} Entry -
- *   minutes on the clock (classic minutes, the day's own numbers); a walk carries `from` and `to`, `at` its end
+ * @typedef {{ from: Spot, to: Spot, t0: number, t1: number, kind: 'post'|'watch', mark: { duty: boolean, pair: 0|1|null } }} MorningWalk -
+ *   WATCH-DAY: a walk out to the day's watch across the day's turn (morningWalk)
+ * @typedef {{ kind: string, at: Spot, t0: number, t1: number, from?: Spot, to?: Spot, armed?: boolean, duty?: boolean, pair?: 0|1|null }} Entry -
+ *   minutes on the clock (classic minutes, the day's own numbers); a walk carries `from` and `to`, `at` its end; WATCH-DAY
+ *   `duty` one of the watch on duty (in uniform), `pair` his place in a patrol's pair
  * @typedef {{ t0: number, t1: number, exit?: Spot|null, armed?: boolean }} Away
  */
 
@@ -59,6 +70,123 @@ export function walkMinutes(a, b, mpm) {
   return Math.max(1, Math.ceil((cells * NAV_CELL * WALK_DETOUR + WALK_EXTRA_M) / Math.max(0.1, mpm)));
 }
 
+
+/** WATCH-DAY: the watch's three shifts of a living day, in its hours (DAY_START_MIN is 04:00, so hour 30 is 06:00 the
+ *  next morning): the day's 06-14, the evening's 14-22, the night's 22-06 - the night runs past the day's turn, and the
+ *  next day's plan begins where it stands. */
+export const WATCH_SHIFTS = Object.freeze([Object.freeze([6, 14]), Object.freeze([14, 22]), Object.freeze([22, 30])]);
+/** WATCH-DAY: the watch's rotation - a watchman's shift is a shift later each day, the fourth day off: day, evening,
+ *  night, off. Never a shift begun inside eight hours of the last one's end. */
+export const WATCH_ROTATION = WATCH_COMPANIES;
+/** WATCH-DAY: a patrol's stop, its least and most minutes. */
+export const PATROL_STOP_MIN = MIN_STAY + 4;
+export const PATROL_STOP_MAX = MIN_STAY + 14;
+
+/**
+ * WATCH-DAY: ONE OF THE WATCH'S DUTY on `day`. `size` the watch's strength a shift (census.js watchShiftSize - the
+ * watch is four companies of it, one to each day of the rotation). A watchman's COMPANY is his slot's residue - the
+ * slots that share it share a shift every day, so the same men stand a watch together - his RANK his place in it.
+ * The first two of a company PATROL together, a pair (one alone where the company is one); the rest are POSTED at the
+ * town's gates, one to an exit (the gate each keeps turns by the day); more than the gates patrol too.
+ * @param {Resident} res @param {Places} places @param {number} day @param {number} size
+ * @returns {{ shift: number, company: number, rank: number, kind: 'post'|'patrol', post: Spot|null, patrol: number, pair: 0|1|null }}
+ *   `shift` 0 day, 1 evening, 2 night, 3 off; `patrol` which of the company's patrols, `pair` his place in it (null alone)
+ */
+export function watchDuty(res, places, day, size = 1) {
+  const company = res.slot % WATCH_ROTATION, rank = Math.floor(res.slot / WATCH_ROTATION);
+  const shift = (company + day) % WATCH_ROTATION;
+  const exits = [...places.exits].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  const posts = size >= 3 ? Math.min(exits.length, size - 2) : 0;
+  if (rank >= 2 && rank - 2 < posts) {
+    const turn = lwSeed(res.town, 0x706f7374, company, day) % exits.length;   // 'post'
+    return { shift, company, rank, kind: 'post', post: exits[(rank - 2 + turn) % exits.length], patrol: -1, pair: null };
+  }
+  const i = rank < 2 ? rank : rank - posts, patrols = Math.max(1, size - posts);
+  const alone = patrols % 2 === 1 && i === patrols - 1;
+  return { shift, company, rank, kind: 'patrol', post: null, patrol: Math.floor(i / 2), pair: alone ? null : /** @type {0|1} */ (i % 2) };
+}
+
+/** WATCH-DAY: a patrol's beat for a shift - a DISTRICT of the town: four to six of its spots (its exits, its social
+ *  spots, its markets), the nearest about an anchor the patrol draws, walked as a ring about their middle - the
+ *  patrol's own, so both of a pair walk it. The first cut drew a guard's stops from the whole town, and in a great
+ *  city a leg ran past an hour of the clock: the beat ran out of stops it could reach hours before the shift's end.
+ *  @param {Places} places @param {number} town @param {number} company @param {number} patrol @param {number} day
+ *  @param {number} shift @returns {Spot[]} */
+export function patrolBeat(places, town, company, patrol, day, shift) {
+  const rng = lwRng(town, 0x62656174, company, patrol, day, shift);   // 'beat'
+  const pool = [...places.exits, ...places.social, ...places.market];
+  if (!pool.length) return [];
+  const anchor = pool[Math.floor(rng() * pool.length)];
+  const n = Math.min(pool.length, rollInt(rng, 4, 6));
+  const gap = (/** @type {Spot} */ a) => Math.abs(a.cell[0] - anchor.cell[0]) + Math.abs(a.cell[1] - anchor.cell[1]);
+  const near = pool.map((sp) => ({ sp, d: gap(sp) })).sort((a, b) => a.d - b.d || (a.sp.key < b.sp.key ? -1 : a.sp.key > b.sp.key ? 1 : 0)).slice(0, n).map((x) => x.sp);
+  const cx = near.reduce((a, sp) => a + sp.x, 0) / near.length, cz = near.reduce((a, sp) => a + sp.z, 0) / near.length;
+  const bearing = (/** @type {Spot} */ sp) => Math.atan2(sp.x - cx, sp.z - cz);
+  return near.sort((a, b) => bearing(a) - bearing(b) || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+}
+
+/**
+ * WATCH-DAY: A PATROL'S STOPS laid on the clock, from the beat's `first` spot at `from` to `until`: each a stay of
+ * PATROL_STOP_MIN to PATROL_STOP_MAX minutes and the walk to the next - so the two of a pair are at the same stop at the
+ * same minute, whatever their homes. `hold`: the last stop kept to `until` (the night's, held over the day's turn, so
+ * the next day's plan begins there), a stop too late to be made dropped first.
+ * @param {readonly Spot[]} beat @param {() => number} rng @param {number} first @param {number} from @param {number} until
+ * @param {number} mpm @param {boolean} [hold] @returns {{ at: Spot, i: number, from: number, dur: number }[]}
+ */
+export function patrolStops(beat, rng, first, from, until, mpm, hold = false) {
+  const out = [];
+  for (let t = from, i = first; beat.length && t < until; i++) {
+    const at = beat[i % beat.length], next = beat[(i + 1) % beat.length];
+    const dur = rollInt(rng, PATROL_STOP_MIN, PATROL_STOP_MAX);
+    out.push({ at, i: i % beat.length, from: t, dur });
+    t += dur + walkMinutes(at, next, mpm);
+  }
+  if (hold) {
+    while (out.length > 1 && out[out.length - 1].from > until - MIN_STAY * 2) out.pop();
+    if (out.length) { const last = out[out.length - 1]; last.dur = until - last.from; }
+  }
+  return out;
+}
+
+/**
+ * WATCH-DAY: THE NIGHT'S END - where one of the watch stands at the day's turn after a night shift, read off the
+ * night's own plan (his post, or his patrol's last stop held over 04:00), and what he keeps to 06:00: the next day's
+ * plan begins there. The first cut replayed the night's stops apart from its plan, and a man the clock had put
+ * elsewhere began the morning at a post he had left. Nobody on watch at the turn (a beat with no spots), nothing.
+ * @param {Resident} res @param {Places} places @param {number} day - the night's own day @param {number} size @param {number} mpm
+ * @returns {{ at: Spot, kind: 'post'|'watch', pair: 0|1|null, stops: { at: Spot, from: number, dur: number }[] } | null}
+ */
+export function nightTail(res, places, day, size, mpm) {
+  const d = watchDuty(res, places, day, size);
+  if (d.shift !== 2) return null;
+  const night = dayPlan(res, places, day, { mpm, watch: size });   // the watch never takes the roads: no away windows
+  const last = night[night.length - 1];
+  if (!last?.duty) return null;
+  const D1 = (day + 1) * DAY_MIN + DAY_START_MIN, morning = hourOf(day, WATCH_SHIFTS[2][1]);
+  if (last.kind === 'post') return { at: last.at, kind: 'post', pair: null, stops: [{ at: last.at, from: D1, dur: morning - D1 }] };
+  const beat = patrolBeat(places, res.town, d.company, d.patrol, day, 2);
+  const tail = patrolStops(beat, lwRng(res.town, 0x7461696c, d.company, d.patrol, day), beat.indexOf(last.at), D1, morning, mpm, true);   // 'tail' - held to six
+  return { at: last.at, kind: 'watch', pair: d.pair, stops: tail };
+}
+
+/**
+ * WATCH-DAY: THE MORNING'S WALK OUT, BEGUN THE NIGHT BEFORE - one of the day's watch whose walk from his door to his
+ * post or his patrol's first stop is longer than the two hours from the day's turn to six (a great city's far house)
+ * leaves before the turn: his day off ends with the walk and his day begins with it, one walk across 04:00. The first
+ * cut began every day at home at the turn, and in a great city half the day's watch came on up to an hour late - the
+ * night's man gone home at six, the gate empty. Null where the walk fits the morning.
+ * @param {Resident} res @param {Places} places @param {number} day - the day of the day's watch @param {number} size @param {number} mpm
+ * @returns {{ from: Spot, to: Spot, t0: number, t1: number, kind: 'post'|'watch', mark: { duty: boolean, pair: 0|1|null } } | null}
+ */
+export function morningWalk(res, places, day, size, mpm) {
+  const d = watchDuty(res, places, day, size);
+  if (d.shift !== 0) return null;
+  const home = res.home != null ? places.doors.get(res.home) ?? null : null;
+  const to = d.kind === 'post' ? d.post : patrolBeat(places, res.town, d.company, d.patrol, day, 0)[0] ?? null;
+  if (!home || !to) return null;
+  const t1 = hourOf(day, WATCH_SHIFTS[0][0]), t0 = t1 - walkMinutes(home, to, mpm);
+  return t0 < day * DAY_MIN + DAY_START_MIN ? { from: home, to, t0, t1, kind: d.kind === 'post' ? 'post' : 'watch', mark: { duty: true, pair: d.pair } } : null;
+}
 
 /** LW-PERF: each town's favourites, kept by its places (a resident's are their seed's alone, the same every day). */
 const favouritesOf = new WeakMap();
@@ -137,11 +265,12 @@ function favouritesNow(res, places, home) {
 /**
  * THE DAY: `res`'s entries for `day` (the day's number - the living day begins at `day * 1440 + DAY_START_MIN`).
  * @param {Resident} res @param {Places} places @param {number} day
- * @param {{ mpm: number, away?: readonly Away[], visitor?: boolean, home?: Spot|null }} opts - `away` the windows the
- *   roads hold them (trips.js); `visitor` a traveller lodging here (their home `home`, a tavern's door)
+ * @param {{ mpm: number, away?: readonly Away[], visitor?: boolean, home?: Spot|null, watch?: number }} opts - `away` the
+ *   windows the roads hold them (trips.js); `visitor` a traveller lodging here (their home `home`, a tavern's door);
+ *   WATCH-DAY `watch` the town's watch a shift (census.js watchShiftSize)
  * @returns {Entry[]}
  */
-export function dayPlan(res, places, day, { mpm, away = [], visitor = false, home: homeIn = null }) {
+export function dayPlan(res, places, day, { mpm, away = [], visitor = false, home: homeIn = null, watch: watchSize = 1 }) {
   const D0 = day * DAY_MIN + DAY_START_MIN, D1 = D0 + DAY_MIN;
   const home = homeIn ?? (res.home != null ? places.doors.get(res.home) ?? null : null);
   if (!home) return [{ kind: 'home', at: /** @type {any} */ (null), t0: D0, t1: D1 }];   // a home off the net: always in
@@ -149,15 +278,23 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
   const fav = favourites(res, places, home);
   const work = res.work != null ? places.doors.get(res.work) ?? null : null;
   const h = (hh) => hourOf(day, hh);
-  // the temper's waking and bedtime - the watch's by its shift (a day shift rises early, an evening shift late)
-  const shift = res.job === 'guard' && !visitor ? (res.slot + day) % 3 : -1;
+  // the temper's waking and bedtime - the watch's by its shift (WATCH-DAY: a day shift rises early, an evening shift
+  // late; the night sleeps the day, abed after the night's watch till the afternoon)
+  const shift = res.job === 'guard' && !visitor ? watchDuty(res, places, day, watchSize).shift : -1;
   let wake = res.temper === 0 ? h(5 + rng()) : res.temper === 2 ? h(8 + rng() * 2) : h(6 + rng() * 1.5);
   let bed = res.temper === 0 ? h(20 + rng()) : res.temper === 2 ? h(24.5 + rng() * 1.5) : h(21.5 + rng() * 1.5);
   if (shift === 0) { wake = h(5 + rng() * 0.5); bed = h(21 + rng()); }
-  else if (shift === 1) { wake = h(9 + rng()); bed = h(24.5 + rng()); }
-  /** @type {{ kind: string, at: Spot|null, from: number, dur: number, until?: number, slack?: number }[]} */
+  else if (shift === 1) { wake = h(9 + rng()); bed = h(23 + rng()); }
+  else if (shift === 2) { wake = h(10.5 + rng()); bed = h(WATCH_SHIFTS[2][1]); }
+  else if (shift === 3) { wake = h(13 + rng()); bed = h(21.5 + rng()); }
+  // WATCH-DAY: the morning after the night's watch begins where it stood at the day's turn - his post, his patrol's stop;
+  // a day's watch whose walk out is longer than the morning begins the day on it, and his day off ends with it
+  const startOut = shift === 3 ? nightTail(res, places, day - 1, watchSize, mpm) : null;
+  const walkIn = shift === 0 ? morningWalk(res, places, day, watchSize, mpm) : null;
+  const walkOut = shift === 3 ? morningWalk(res, places, day + 1, watchSize, mpm) : null;
+  /** @type {{ kind: string, at: Spot|null, from: number, dur: number, until?: number, slack?: number, mark?: { duty?: boolean, pair?: 0|1|null } }[]} */
   const intents = [];
-  const I = (kind, at, from, dur, until = undefined, slack = undefined) => { if (at) intents.push({ kind, at, from, dur, until, slack }); };
+  const I = (kind, at, from, dur, until = undefined, slack = undefined, mark = undefined) => { if (at) intents.push({ kind, at, from, dur, until, slack, mark }); };
   /** A stroll: two short stops at two of the town's spots - out among people, seen walking. */
   const stroll = (from) => {
     const spots = [...places.social, ...places.market];
@@ -258,18 +395,27 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
       break;
     }
     case 'guard': {
-      if (shift === 2) { evening(h(17)); break; }
-      const [from, until] = shift === 0 ? [h(6), h(16)] : [h(14), h(24)];
-      const beat = guardBeat(res, places, day);
-      let t = from;
-      // AUDIT-G2: each stop a stay's length at the least (MIN_STAY - `schedule` drops a shorter one: drawn at three to
-      // eight minutes, five stops in six were dropped and the 64 ran out hours before the shift's end), and stops enough
-      // for the whole shift
-      for (let i = 0, n = Math.ceil((until - from) / MIN_STAY); beat.length && t < until && i < n; i++) {
-        I('watch', beat[i % beat.length], t, rollInt(rng, MIN_STAY, MIN_STAY + 7), until, Infinity);
-        t += 1;   // each stop follows the last as soon as the walk to it allows
+      // WATCH-DAY: the watch's day by its rotation (watchDuty): a shift of eight hours - a patrol, its two together on
+      // the patrol's own stops, or a post at a gate - in uniform from the walk out to the walk home (`duty`); the night's
+      // run past the day's turn, the next day beginning where it stands (nightTail) and home to sleep at six
+      const duty = watchDuty(res, places, day, watchSize);
+      if (duty.shift === 3) {
+        // the morning after the night: the watch kept to six, then home to bed - up in the afternoon, the evening theirs
+        if (startOut) for (const s of startOut.stops) I(startOut.kind, s.at, s.from, s.dur, undefined, Infinity, { duty: true, pair: startOut.pair });
+        evening(h(18));
+        break;
       }
-      if (shift === 0) evening(h(18));
+      const [s0, s1] = WATCH_SHIFTS[duty.shift];
+      const [from, until] = [h(s0), Math.min(h(s1), D1)];
+      if (duty.shift === 2) { errand(h(15)); if (res.social > 0.4) I('social', pickOf(rng, fav.social.length ? fav.social : [null]), h(17.5), rollInt(rng, 30, 75)); }
+      const mark = { duty: true, pair: duty.pair };
+      if (duty.kind === 'post') I('post', duty.post, from, until - from, until, Infinity, mark);
+      else {
+        const beat = patrolBeat(places, res.town, duty.company, duty.patrol, day, duty.shift);
+        const stops = patrolStops(beat, lwRng(res.town, 0x73746f70, duty.company, duty.patrol, day, duty.shift), 0, from, until, mpm, true);   // 'stop' - the last held to the shift's end
+        for (const s of stops) I('watch', s.at, s.from, s.dur, until, Infinity, mark);
+      }
+      if (duty.shift === 0) evening(h(17.5));
       break;
     }
     case 'merchant': {
@@ -315,32 +461,26 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
   }
   // the larks and the restless take a turn about the town before the day's business (a stroll at first light)
   if (res.temper === 0 && res.social > 0.6 && job !== 'guard' && job !== 'farmer' && job !== 'fisher') { const at = intents.length; stroll(wake + 20); intents.unshift(...intents.splice(at)); }
-  return schedule(intents, { D0, D1, wake, bed, home, mpm, away });
-}
-
-/**
- * A guard's beat for the day: four to six spots of the town - its exits, its social spots, its market - in a ring.
- * @param {Resident} res @param {Places} places @param {number} day @returns {Spot[]}
- */
-export function guardBeat(res, places, day) {
-  const rng = lwRng(res.town, res.roll.charCodeAt(0), res.slot, day, 0x62656174);   // 'beat'
-  const pool = [...places.exits, ...places.social, ...places.market];
-  const out = [];
-  for (let i = 0, n = Math.min(pool.length, rollInt(rng, 4, 6)); i < n; i++) out.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]);
-  return out;
+  const start = startOut ? { at: startOut.at, kind: startOut.kind, mark: { duty: true, pair: startOut.pair } } : walkIn ? { at: walkIn.to, kind: walkIn.kind, mark: walkIn.mark, walk: walkIn } : null;
+  return schedule(intents, { D0, D1, wake, bed, home, mpm, away, start, end: walkOut });
 }
 
 /**
  * The intents laid on the clock: each begins when the walk to it allows and not before its hour (nor more than its
  * slack after it - a morning's work is not done at dusk), stays its minutes (and not past its `until`, nor past the
  * walk home before bed, nor into the next away window's going); between two the resident stays where they were - at
- * home asleep before waking and after bed; every minute of the day covered once. An away window cuts the day: the walk
+ * home asleep before waking and after bed; every minute of the day covered once (WATCH-DAY: a walk out across the day's
+ * turn, morningWalk, the one entry both days carry). An away window cuts the day: the walk
  * out (armed, after gearing at home where they go armed) arrives as it opens, and the walk home leaves as it closes.
- * @param {{ kind: string, at: Spot|null, from: number, dur: number, until?: number, slack?: number }[]} intents
- * @param {{ D0: number, D1: number, wake: number, bed: number, home: Spot, mpm: number, away: readonly Away[] }} o
+ * WATCH-DAY: `start` where the day begins when it is not at home (the morning after the night's watch: his post or his
+ * patrol's stop, about it what he was - `mark`; or on the walk to it begun the night before, `walk`); `end` the walk out
+ * the day ends with where the next day begins on it (morningWalk); an intent's `mark` rides on its stay and on the walks
+ * to and from it (the watch in uniform from the walk out to the walk home).
+ * @param {{ kind: string, at: Spot|null, from: number, dur: number, until?: number, slack?: number, mark?: { duty?: boolean, pair?: 0|1|null } }[]} intents
+ * @param {{ D0: number, D1: number, wake: number, bed: number, home: Spot, mpm: number, away: readonly Away[], start?: { at: Spot, kind: string, mark?: { duty?: boolean, pair?: 0|1|null }, walk?: MorningWalk } | null, end?: MorningWalk | null }} o
  * @returns {Entry[]}
  */
-export function schedule(intents, { D0, D1, wake, bed, home, mpm, away }) {
+export function schedule(intents, { D0, D1, wake, bed, home, mpm, away, start = null, end: walkOut = null }) {
   /** @type {Entry[]} */
   const out = [];
   const push = (kind, at, t0, t1, extra = {}) => {
@@ -350,7 +490,10 @@ export function schedule(intents, { D0, D1, wake, bed, home, mpm, away }) {
     out.push({ kind, at, t0, t1, ...extra });
   };
   const windows = [...(away ?? [])].filter((w) => w.t1 > D0 && w.t0 < D1).sort((a, b) => a.t0 - b.t0);
-  let at = home, atKind = 'home', cursor = D0;
+  let at = start?.at ?? home, atKind = start?.kind ?? 'home', cursor = D0;
+  /** WATCH-DAY: the mark of where they are (a duty stay's), carried onto the walk that leaves it */
+  let atMark = start?.mark ?? null;
+  if (start?.walk) { const w = start.walk; push('walk', w.to, w.t0, w.t1, { from: w.from, to: w.to, ...w.mark }); cursor = w.t1; }   // begun the night before
   /** Stay where they are until `t` - at home asleep before waking and from bed on. */
   const fill = (t) => {
     t = Math.min(t, D1);
@@ -359,17 +502,18 @@ export function schedule(intents, { D0, D1, wake, bed, home, mpm, away }) {
       for (const [a, b, k] of [[cursor, Math.min(t, wake), 'sleep'], [Math.max(cursor, wake), Math.min(t, bed), 'home'], [Math.max(cursor, bed), t, 'sleep']]) {
         if (b > a) push(/** @type {string} */ (k), home, /** @type {number} */ (a), /** @type {number} */ (b));
       }
-    } else push(atKind, at, cursor, t);
+    } else push(atKind, at, cursor, t, atMark ?? {});
     cursor = t;
   };
   /** Walk to `to`, arriving by `by` where the clock allows (leaving now if it is already late); there, `arriveKind`
    *  is what they are about while they wait. */
-  const go = (to, by, extra = {}, arriveKind = 'home') => {
+  const go = (to, by, extra = {}, arriveKind = 'home', arriveMark = null) => {
     if (to === at) return;
     const m = walkMinutes(at, to, mpm);
-    if (m > 0) { fill(Math.max(cursor, by - m)); push('walk', to, cursor, cursor + m, { from: at, to, ...extra }); cursor += m; }
+    if (m > 0) { fill(Math.max(cursor, by - m)); push('walk', to, cursor, cursor + m, { from: at, to, ...(atMark ?? {}), ...(arriveMark ?? {}), ...extra }); cursor += m; }
     at = to;
     atKind = arriveKind;
+    atMark = arriveMark;
   };
   const runAway = (w) => {
     const exit = w.exit ?? null;
@@ -396,33 +540,46 @@ export function schedule(intents, { D0, D1, wake, bed, home, mpm, away }) {
   };
   let wi = 0;
   while (wi < windows.length && windows[wi].t0 <= D0) runAway(windows[wi++]);
-  for (const it of intents) {
+  /** WATCH-DAY: the watch next after each intent (the one a stay off duty must leave in time for) */
+  const nextWatch = intents.map(() => /** @type {typeof intents[number] | null} */ (null));
+  for (let k = intents.length - 2; k >= 0; k--) nextWatch[k] = intents[k + 1].mark?.duty ? intents[k + 1] : nextWatch[k + 1];
+  for (const [k, it] of intents.entries()) {
     if (cursor >= D1) break;
+    // WATCH-DAY: into the uniform and out of it at home - never from one's watch straight to the evening's errand, nor
+    // from an errand to one's watch (a stay at the same spot read as the watch kept the man in uniform till evening)
+    if (!!atMark?.duty !== !!it.mark?.duty && at !== home) go(home, cursor);
     const m = walkMinutes(at, it.at, mpm);
     while (wi < windows.length && windows[wi].t0 < Math.max(cursor + m, it.from) + MIN_STAY) runAway(windows[wi++]);
     const m2 = walkMinutes(at, it.at, mpm);
     const start = Math.max(cursor + m2, it.from);
     if (start - it.from > (it.slack ?? 120)) continue;
-    const homeBy = bed - walkMinutes(it.at, home, mpm);
+    // WATCH-DAY: the watch keeps its shift to its end and goes to bed when it is home - a bedtime cut a great city's
+    // evening and night watch short by the walk home (the night's last stop never kept, the morning begun at a post its
+    // man had left); off duty, a stay ends in time to change at home and walk out to the next watch on its hour
+    const homeBy = it.mark?.duty ? Infinity : bed - walkMinutes(it.at, home, mpm);
     const w = windows[wi];
     const awayBy = w ? w.t0 - (w.armed ? GEAR_MIN : 0) - walkMinutes(home, w.exit ?? home, mpm) - walkMinutes(it.at, home, mpm) : Infinity;
-    const end = Math.min(start + it.dur, it.until ?? Infinity, homeBy, awayBy, D1);
+    const nw = it.mark?.duty ? null : nextWatch[k];
+    const watchBy = nw ? nw.from - walkMinutes(it.at, home, mpm) - walkMinutes(home, nw.at, mpm) : Infinity;
+    const end = Math.min(start + it.dur, it.until ?? Infinity, homeBy, awayBy, watchBy, D1);
     if (end - start < MIN_STAY) continue;
     // between two places, never lingering where the last stay ended (a shop shut at six is left at six): a long gap
     // is spent at home, a short one going on at once and waiting at the next
     if (at !== home && at !== it.at) {
       if (start - cursor > walkMinutes(at, home, mpm) + walkMinutes(home, it.at, mpm) + HOME_GAP) go(home, cursor);
-      else go(/** @type {Spot} */ (it.at), cursor + walkMinutes(at, it.at, mpm), {}, it.kind);
+      else go(/** @type {Spot} */ (it.at), cursor + walkMinutes(at, it.at, mpm), {}, it.kind, it.mark ?? null);
     }
-    go(/** @type {Spot} */ (it.at), start, {}, it.kind);
+    go(/** @type {Spot} */ (it.at), start, {}, it.kind, it.mark ?? null);
     fill(start);
-    push(it.kind, it.at, start, end);
+    push(it.kind, it.at, start, end, it.mark ?? {});
     cursor = end;
     atKind = it.kind;
+    atMark = it.mark ?? null;
   }
   while (wi < windows.length) runAway(windows[wi++]);
   if (cursor < D1 && at !== home) go(home, cursor);
-  fill(D1);
+  if (walkOut) { fill(walkOut.t0); push('walk', walkOut.to, walkOut.t0, walkOut.t1, { from: walkOut.from, to: walkOut.to, ...walkOut.mark }); }   // on into the next day
+  else fill(D1);
   return out;
 }
 

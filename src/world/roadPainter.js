@@ -442,8 +442,8 @@ export function classify(x, y, mask) {
  *  with JobHelpers.cs:19-22 Idx(r, c, dim) = r + c*dim) and the
  *  HEIGHTMAP is JobA.Idx(y, x, hDim) = y + x*hDim (TerrainSampler
  *  .cs:123) - which is what terrainSampler.js:160 writes and what every
- *  consumer in this tree reads (terrainTiles.js:149 and :317,
- *  terrainSurface.js:320-321, terrainNature.js:182 and :136). The mod
+ *  consumer in this tree reads (terrainTiles.js:173 and :344,
+ *  terrainSurface.js:139, :235 and :329, terrainNature.js:76, :146, :182 and :446). The mod
  *  reads its tile at Idx(x, y, tDim) and its corner base at
  *  Idx(y, x, hDim) - BOTH in the layout that owns them - and so does
  *  this: the tile at y*tDim + x, the base at x*hDim + y. Byte for byte
@@ -463,7 +463,7 @@ export function classify(x, y, mask) {
  *   layout, sample(x, y) = samples[x * hDim + y] (terrainSampler.js:160);
  *   mutated in place.
  * @param {Uint8Array} tilemap - 128x128 after the painter, tile(x, y) =
- *   tilemap[y * tDim + x] (terrainTiles.js:266). The two differ.
+ *   tilemap[y * tDim + x] (terrainTiles.js:276). The two differ.
  * @returns {number} corner samples smoothed (with repeats, as his counts).
  */
 export const SMOOTHED_TILES = Object.freeze(new Set([46, 0xff]));

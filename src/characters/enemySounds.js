@@ -154,3 +154,41 @@ export class EnemySoundSource {
     return clip == null ? null : { clip, volume: this.volumeScale };
   }
 }
+
+/** HALT-ONE: the least time between two of the watch's calls (seconds) - the whole watch's, not a watchman's. */
+export const HALT_GAP_S = 15;
+
+/**
+ * HALT-ONE (2026-10-05, Mac: "reduce the HALT noise"; asked, "Once, then rarely"): THE WATCH CALLS AS ONE - the living
+ * watch's lane (scenes/cityGuards.js `oneVoice`), a recorded departure from FixedUpdate above. DFU gives every
+ * watchman his own attract clock: each within 16 m of the player says "Halt!" every 3 to 9 seconds, eight times a
+ * minute, whatever he is doing - five of them forty times a minute, a squad arriving together in chorus. Here the
+ * watch has one voice: the first of them to come within the attract radius calls at once, and then the nearest one
+ * calling, no sooner than HALT_GAP_S after the last call. Who is calling is the host's to say (a watchman after the
+ * player); `quiet` is a window over the world, under which nobody calls; `end` is the incident over (no watchman after
+ * the player), so the next one is met by its first call at once. Pure: the clock is the frames' dt.
+ */
+export class WatchVoice {
+  constructor() {
+    this.since = Infinity;   // seconds since the last call - none yet
+  }
+
+  /**
+   * One frame. `callers` - the watchmen calling, each `{ dist }` (and whatever the host carries); answers the one who
+   * calls now, or null.
+   * @template {{ dist: number }} T
+   * @param {number} dt @param {readonly T[]} callers @param {{ quiet?: boolean }} [o]
+   * @returns {T|null}
+   */
+  tick(dt, callers, { quiet = false } = {}) {
+    this.since += dt > 0 ? dt : 0;
+    if (quiet || !callers.length || this.since < HALT_GAP_S) return null;
+    let near = callers[0];
+    for (const c of callers) if (c.dist < near.dist) near = c;
+    this.since = 0;
+    return near;
+  }
+
+  /** The incident over: no watchman after the player - the next is met by its first call at once. */
+  end() { this.since = Infinity; }
+}

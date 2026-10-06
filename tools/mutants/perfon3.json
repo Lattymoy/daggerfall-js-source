@@ -1,0 +1,101 @@
+[
+  {
+    "name": "PERF-ON3-a-sorted-every-ask",
+    "file": "src/net/roster.js",
+    "old": "  if (!same) {\n    const out = Object.freeze(",
+    "new": "  if (true) {\n    const out = Object.freeze(",
+    "tests": ["test/perfon3.test.js"],
+    "note": "AUDIT 637 (re-aimed by content): A6 makes the answer before it commits the listing, so the block opens on the answer now."
+  },
+  {
+    "name": "PERF-ON3-b-a-row-kept-past-its-rename",
+    "file": "src/net/roster.js",
+    "old": "if (!m || m.name !== name || m.me !== me",
+    "new": "if (!m || m.me !== me",
+    "tests": ["test/perfon3.test.js"]
+  },
+  {
+    "name": "PERF-ON3-c-a-row-kept-past-my-own-flag",
+    "file": "src/net/roster.js",
+    "old": "m.name !== name || m.me !== me || m.title",
+    "new": "m.name !== name || m.title",
+    "tests": ["test/perfon3.test.js"]
+  },
+  {
+    "name": "PERF-ON3-d-a-row-kept-past-its-title",
+    "file": "src/net/roster.js",
+    "old": " || m.title !== f?.title || ",
+    "new": " || ",
+    "tests": ["test/perfon3.test.js"]
+  },
+  {
+    "name": "PERF-ON3-e-glyphs-kept-by-reference",
+    "file": "src/net/roster.js",
+    "old": "const keepInput = (v) => (Array.isArray(v) ? v.slice() : v);",
+    "new": "const keepInput = (v) => v;",
+    "tests": ["test/perfon3.test.js"]
+  },
+  {
+    "name": "PERF-ON3-f-glyphs-unread",
+    "file": "src/net/roster.js",
+    "old": " || !sameInput(m.glyphs, f?.glyphs)",
+    "new": "",
+    "tests": ["test/perfon3.test.js"]
+  },
+  {
+    "name": "PERF-ON3-g-the-seat-claim-unread",
+    "file": "src/net/roster.js",
+    "old": " || !sameInput(m.ts, f?.ts)",
+    "new": "",
+    "tests": ["test/perfon3.test.js"]
+  },
+  {
+    "name": "PERF-ON3-h-the-guild-tag-unread",
+    "file": "src/net/roster.js",
+    "old": " || m.gt !== f?.gt) {",
+    "new": ") {",
+    "tests": ["test/perfon3.test.js"]
+  },
+  {
+    "name": "PERF-ON3-i-the-impostor-listed-twice",
+    "file": "src/net/roster.js",
+    "old": "    if (m && m.call === call) return;",
+    "new": "",
+    "tests": ["test/perfon3.test.js"]
+  },
+  {
+    "name": "PERF-ON3-j-the-per-comparison-localeCompare-back",
+    "file": "src/net/roster.js",
+    "old": "const n = NAME_ORDER.compare(a.name, b.name);",
+    "new": "const n = a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });",
+    "tests": ["test/perfon3.test.js"]
+  },
+  {
+    "name": "PERF-ON3-k-every-row-made-again",
+    "file": "src/net/roster.js",
+    "old": "    if (!m || m.name !== name",
+    "new": "    if (true || m.name !== name",
+    "tests": ["test/perfon3.test.js"]
+  },
+  {
+    "name": "PERF-ON3-l-the-panel-blind-to-the-count",
+    "file": "src/ui/chatPanel.js",
+    "old": " && total === whoTotalSeen",
+    "new": "",
+    "tests": ["test/perfon3.test.js"]
+  },
+  {
+    "name": "PERF-ON3-m-the-panel-blind-to-the-word",
+    "file": "src/ui/chatPanel.js",
+    "old": " && label === whoLabelSeen",
+    "new": "",
+    "tests": ["test/perfon3.test.js"]
+  },
+  {
+    "name": "PERF-ON3-n-the-panel-blind-to-the-open-row",
+    "file": "src/ui/chatPanel.js",
+    "old": " && menuFor === whoMenuSeen) return;",
+    "new": ") return;",
+    "tests": ["test/perfon3.test.js"]
+  }
+]

@@ -461,11 +461,12 @@
   {
     "name": "GUILD1c-a-row-without-its-tag",
     "file": "src/net/roster.js",
-    "old": "...readBadge(from), gt: readGuildTag(from) });",
-    "new": "...readBadge(from) });",
+    "old": "...readBadge(from), gt: readGuildTag(from) };",
+    "new": "...readBadge(from) };",
     "tests": [
       "test/guild1c.test.js"
-    ]
+    ],
+    "note": "PERF-ON3 (re-aimed by content): the roster row is built once into its memo (`const row = {...}`) rather than pushed whole; the mutant still leaves the guild's tag off it."
   },
   {
     "name": "GUILD1c-my-own-row-untagged",

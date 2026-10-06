@@ -416,6 +416,18 @@
   },
   {
    "file": "src/scenes/world.js",
+   "has": "known: knownCriminal(playerEntity, region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() })",
+   "clock": "event",
+   "why": "a banishment's term - the living watch's word (WATCH-KNOWS)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "warnsFirst: () => livingWorldOn(), regionName: (r) => REGION_NAMES[r] ?? 'this region', worldNow: () => trustedWorldMinutes(),",
+   "clock": "event",
+   "why": "a banishment's term - no first offence warned to a banished one (WATCH-KNOWS)"
+  },
+  {
+   "file": "src/scenes/world.js",
    "has": "hour: () => Math.floor((((skyMinutes() % 1440) + 1440) % 1440) / 60),",
    "clock": "sky",
    "why": "the sound host's hour"

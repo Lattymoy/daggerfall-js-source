@@ -43,7 +43,7 @@ import { isTransformedLycanthrope, frightenChance, frightenRoar } from '../syste
 import { guildOfFaction, membershipOf, activeMemberships } from '../systems/guilds.js';   // CR1: the rescue arms' member reads
 import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { advanceOwnMinutes, MINUTES_PER_DAY, ownMinutes, trustedWorldMinutes } from '../systems/worldTick.js';   // LIVED1: a sentence is served on the prisoner's own clock, online too
-import { banish, grantGrace } from '../systems/standing.js';   // REP3: a banishment's term; REP1: the grace an answered law gives
+import { banish, grantGrace, warningDue, noteWarning } from '../systems/standing.js';   // REP3: a banishment's term; REP1: the grace an answered law gives; WATCH-KNOWS: a first offence warned
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallCourtWindow_OnEndPrisonTime (EntityEffectBroker.cs:841-842)
 import { fillVitalSigns } from '../systems/statMods.js';
 import { registerPlayerDamageVeto } from '../characters/playerEntity.js';   // ARREST-SHIELD: the one damage door consults this flow while a trial is up online
@@ -121,6 +121,12 @@ export function createArrestFlow({
   say = () => {},
   playSound = () => {},
   watchFlees = () => 0,
+  // WATCH-KNOWS: whether the living world's watch is the one that comes (scenes/world.js: livingWorldOn) - it warns a
+  // first minor offence in a region rather than arrest it (systems/standing.js warningDue); none, DFU's watch, always
+  // the box. The region's name for the warning's words, and the world's calendar a banishment runs on (AUDIT REP F2).
+  warnsFirst = () => false,
+  regionName = () => 'this region',
+  worldNow = () => ownMinutes(),
 }) {
   /** AUDIT 39 (#21): every DFU consumer of this number reads
    *  PlayerGPS.CurrentRegionIndex AT THE MOMENT it acts - the crime,
@@ -259,6 +265,11 @@ export function createArrestFlow({
     lowerRepForCrime(playerEntity, region(), crimeId());
   }
 
+  /** WATCH-KNOWS: the watch's warning, in its words. @param {number} crime @param {string} name */
+  function warningLines(crime, name) {
+    return [`Hold! ${CRIME_NAMES[crime] ?? 'That'} is against the law of ${name}.`, 'This once, you have a warning. The next time, it is the court.'];
+  }
+
   function onGuardHit(dmg, applyDamage, { guardLevel = null } = {}) {
     if (crimeId() === 0) return false;
     if (inCourt()) return true;
@@ -266,6 +277,18 @@ export function createArrestFlow({
     // for the crime - but it is never asked to surrender; it may roar instead (beastHaltBox, below). `guardLevel` is
     // the striking watchman's, for the roll.
     const beast = isTransformedLycanthrope(playerEntity);
+    // WATCH-KNOWS: THE FIRST MINOR OFFENCE IS WARNED - the living world's watch, come for a minor crime the character has
+    // never been warned for in this region (no known criminal), halts them with a word instead of the box: the crime
+    // charged as the box would (chargeOnce), the warning noted, the crime let go - and the watch walks off with it
+    // (cityGuards.js's crime-clear law). The next minor offence there is the box's. The blow is withheld.
+    if (!beast && !playerEntity.haveShownSurrenderDialogue && warnsFirst() && warningDue(playerEntity, region(), crimeId(), { ownNow: ownMinutes(), worldNow: worldNow() })) {
+      const crime = crimeId();
+      chargeOnce();
+      noteWarning(playerEntity, region(), ownMinutes());
+      setCrimeCommitted(playerEntity, 0);
+      townTalk.showOverlay(new ChoiceWindow({ lines: warningLines(crime, regionName(region())) }));
+      return true;
+    }
     if (!playerEntity.haveShownSurrenderDialogue) {
       playerEntity.haveShownSurrenderDialogue = true;
       chargeOnce();

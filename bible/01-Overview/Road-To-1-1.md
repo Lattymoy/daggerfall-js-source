@@ -108,7 +108,7 @@ in the wave reports.
   UpdateNpcPresence on pop, the toggle-binding close - and, on the same
   stack, the two recorded stages Wave A routed here: the courtroom
   backdrop, ONE window on CORT01I0 with every box of the trial pushed
-  over it (`ui/prisonScreen.js:64`, `scenes/arrestFlow.js:137`), and
+  over it (`ui/prisonScreen.js:64`, `scenes/arrestFlow.js:143`), and
   the prison screen's held-Back accelerator, DFU's raw Escape poll
   rather than a binding (`ui/prisonScreen.js:70`). Both pinned by
   `test/roadb_court_backdrop.test.js` (10).
@@ -222,11 +222,11 @@ narrowed while E3 closed the two console verbs
 (`ui/exteriorAutomapWindow.js:96` - the site id the flag list was
 measured on; the closure narrates at `:100` today) by building the
 console host they were waiting on. The SHIP LANDING then took a seventh
-(`scenes/world.js:12140`, the two ship pixels): the owner supplied the
+(`scenes/world.js:12223`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the
-guild-service popup above ground (`scenes/worldModes.js:2792`) with the
+guild-service popup above ground (`scenes/worldModes.js:2794`) with the
 replace-mode mount door plus the sweep of the subtree under it, and GS2
 reworded `systems/skills.js:263` - a RETIREMENT RECORD whose only claim
 on the list was that it wrote the marker down in the past tense.

@@ -1,0 +1,23 @@
+[
+  {
+    "name": "PERF-URL2-the-page-asked-first-again",
+    "file": "src/systems/onlineLane.js",
+    "old": "  return Object.hasOwn(ONLINE_FORCED_PREFS, key) && isOnlinePage(search) ? ONLINE_FORCED_PREFS[key] : undefined;",
+    "new": "  return isOnlinePage(search) && Object.hasOwn(ONLINE_FORCED_PREFS, key) ? ONLINE_FORCED_PREFS[key] : undefined;",
+    "tests": ["test/perfurl2.test.js"]
+  },
+  {
+    "name": "PERF-URL2-the-page-test-dropped",
+    "file": "src/systems/onlineLane.js",
+    "old": "  return Object.hasOwn(ONLINE_FORCED_PREFS, key) && isOnlinePage(search) ? ONLINE_FORCED_PREFS[key] : undefined;",
+    "new": "  return Object.hasOwn(ONLINE_FORCED_PREFS, key) ? ONLINE_FORCED_PREFS[key] : undefined;",
+    "tests": ["test/perfurl2.test.js"]
+  },
+  {
+    "name": "PERF-URL2-the-forced-value-lost",
+    "file": "src/systems/onlineLane.js",
+    "old": "  return Object.hasOwn(ONLINE_FORCED_PREFS, key) && isOnlinePage(search) ? ONLINE_FORCED_PREFS[key] : undefined;",
+    "new": "  return undefined;",
+    "tests": ["test/perfurl2.test.js"]
+  }
+]

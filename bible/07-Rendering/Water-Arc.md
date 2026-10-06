@@ -165,6 +165,13 @@ differed from the reference in 17% of draws by an ulp and moved the
 tile threshold itself for 1% of corners), the nature scatter's twin
 compare is float32, and `SCALED_OCEAN_ELEVATION` is the float
 `3.4f * 8` is in C# - one value of the ocean elevation in the port.
+LW-DRY (2026-10-05) gave the job's height and its water compare one
+home (`terrainTiles.js` `sampleHeight`, `isWaterHeight`), which the
+living world's dry ground reads as well (`world/dryGround.js`: a road
+party's camp, halt and fallen stand where no water shows); PIN MOVED:
+`terrain`. AUDIT LW-DRY (the same day): the nature scatter's three
+beach reads (`terrainNature.js`) still wrote the product out
+themselves - they read `sampleHeight` now, and `terrain` pins it.
 
 Two consequences to know. A location on a pixel where every sample
 clamps has its whole rect flattened to the clamp and stamped only

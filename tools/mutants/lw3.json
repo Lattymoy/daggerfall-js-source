@@ -193,8 +193,8 @@
   {
     "name": "LW3-trim-unread",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  if (t < trip.outT1) return placed('out', Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, t)) - lag('out')));",
-    "new": "  if (t < trip.outT1) return placed('out', Math.max(0, Math.min(walk, pace * walkedMinutes(trip.outT0, t)) - lag('out')));",
+    "old": "  if (t < trip.outT1) return walked('out', trip.outT0, (m) => Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m)));",
+    "new": "  if (t < trip.outT1) return walked('out', trip.outT0, (m) => Math.max(0, Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m)));",
     "tests": [
       "test/lw3_roads.test.js"
     ]

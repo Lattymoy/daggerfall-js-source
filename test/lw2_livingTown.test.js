@@ -43,7 +43,7 @@ function run(t, seconds, at = SQUARE, stop = () => false, viewYaw = 0) {
   return seats;
 }
 
-test('LW2 the body: a ResidentWalker is a MobilePerson (every seam that takes a walker takes it) wearing the walker\'s billboard on a yaw of its own - the MoveAnims wheel through mobileOrientation, idle record 5 (the watch\'s 15), the frame reset at each change of state; it claims no grid tile (mutants: the wheel off the yaw, the guard\'s idle, the reset)', () => {
+test('LW2 the body: a ResidentWalker is a MobilePerson (every seam that takes a walker takes it) wearing the walker\'s billboard on a yaw of its own - the MoveAnims wheel through mobileOrientation, idle record 5 (the watch\'s 15) under the politeness gate (LW-TALK: standing otherwise, the way it faces - lwtalk_town.test.js), the frame reset at each change of state; it claims no grid tile (mutants: the wheel off the yaw, the guard\'s idle, the reset)', () => {
   const p = new ResidentWalker({}, { archive: 385, frameCount: () => 4, groundY: () => 0 });
   assert.ok(p instanceof MobilePerson);
   p.pos = [0, 0, 0]; p.yaw = 1.0; p.moving = true;
@@ -61,7 +61,7 @@ test('LW2 the body: a ResidentWalker is a MobilePerson (every seam that takes a 
   assert.equal(p.frame, 0);
   const g = new ResidentWalker({}, { archive: 399, guard: true, frameCount: () => 1, groundY: () => 0 });
   g.pos = [0, 0, 0];
-  assert.equal(g.update(0.1, eye, false).record, PERSON_GUARD_IDLE_RECORD);
+  assert.equal(g.update(0.1, eye, true).record, PERSON_GUARD_IDLE_RECORD);   // LW-TALK: PIN MOVED - the gate's (standing, the walk wheel's still frame)
   assert.doesNotThrow(() => p.release(), 'nothing on the grid to release');
 });
 
@@ -149,7 +149,7 @@ test('LW2 coming onto the street: on ARRIVAL (the first frame, a jump of the clo
   run(t, 4);
   const seen = new Set(t.town.pool.filter((r) => r.visible && r.res).map((r) => r.res.id));
   let checked = 0;
-  for (let f = 0; f < 30 * 40; f++) {
+  for (let f = 0; f < 30 * 160; f++) {   // LW-TALK: PIN MOVED - the street keeps a circle whole: under a tight cap the churn waits on a round's turn (two minutes)
     t.clock.t += RATE / 30;
     const seats = t.town.update(1 / 30, SQUARE, 0, SQUARE, true);
     const now = new Set();
