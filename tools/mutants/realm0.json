@@ -510,10 +510,11 @@
   {
     "name": "REALM0-checkpoint-ignores-mode-death",
     "file": "src/scenes/world.js",
-    "old": "      const names = exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() });",
-    "new": "      const names = exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen });",
+    "old": "      const names = exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() });",
+    "new": "      const names = exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || successionOpen() });",
     "tests": [
       "test/realm0.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
   }
 ]

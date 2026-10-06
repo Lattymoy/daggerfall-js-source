@@ -12,12 +12,13 @@
   {
     "name": "PLAIN-LOOT-the-gold-cut-too",
     "file": "src/scenes/hostCombat.js",
-    "old": "isGoldPieces(it) || rolls() < PLAIN_FOE_LOOT_KEEP",
-    "new": "rolls() < PLAIN_FOE_LOOT_KEEP",
+    "old": "isGoldPieces(it) || rolls() < keep",
+    "new": "rolls() < keep",
     "why": "a plain foe's gold halved with its pieces",
     "tests": [
       "test/rf2_spawnloot.test.js"
-    ]
+    ],
+    "note": "RENOWN-LOOT (PIN MOVED): re-aimed by content - the line reads its knob at the roller's Renown now."
   },
   {
     "name": "PLAIN-LOOT-the-elites-cut-too",
@@ -32,9 +33,9 @@
   {
     "name": "PLAIN-LOOT-not-half",
     "file": "src/scenes/hostCombat.js",
-    "old": "const PLAIN_FOE_LOOT_KEEP = 0.5;",
-    "new": "const PLAIN_FOE_LOOT_KEEP = 0.6;",
-    "why": "the seeded thousand bodies keep 60%, not half",
+    "old": "const PLAIN_FOE_LOOT_KEEP = 0.75;",
+    "new": "const PLAIN_FOE_LOOT_KEEP = 0.85;",
+    "why": "the seeded thousand bodies keep 85%, not three in four (LOOT-EASE)",
     "tests": [
       "test/rf2_spawnloot.test.js"
     ]

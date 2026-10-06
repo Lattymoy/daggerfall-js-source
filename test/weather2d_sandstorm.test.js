@@ -176,6 +176,6 @@ test('WEATHER2d the hosts: the sand renderer built on the enhanced lane, the san
 test('WEATHER2d records: the arc page\'s D and its close, the ledger row, Home\'s index and the testing row', () => {
   assert.match(rd('bible/07-Rendering/Weather-Arc.md'), /^## D - THE SANDSTORM \(WEATHER2d, 2026-09-14\)/m);
   assert.match(rd('bible/01-Overview/Port-Ledger.md'), /^\| \*\*THE SANDSTORM \(WEATHER2d, 2026-09-14\)\*\*/m);
-  assert.match(rd('bible/Home.md'), /D: the sandstorm/);
+  assert.match(rd('bible/01-Overview/Page-Index.md'), /D: the sandstorm/);   // PIN MOVED (WALLET1's merge of main, 2026-10-05): Home.md's page index moved, byte for byte, to its own page
   assert.match(rd('bible/09-Testing/Testing.md'), /^\| weather2d_sandstorm\.test\.js \| \d+ \| WEATHER2d/m);
 });

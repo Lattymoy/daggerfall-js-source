@@ -22,8 +22,8 @@
   {
     "name": "RESEAT-GAPS-unseated-asks-by-key-0",
     "file": "src/systems/quest/place.js",
-    "old": "    const held = sd.unseated ? { ...sd, ...sd.unseated } : sd;",
-    "new": "    const held = sd;",
+    "old": "    const held = sd.unseated ? { ...sd, ...sd.unseated } : sd;   // RESEAT-GAPS: an unseated site is asked by its own record",
+    "new": "    const held = sd;   // RESEAT-GAPS: an unseated site is asked by its own record",
     "tests": [
       "test/fb1004d_reseatgaps.test.js"
     ],

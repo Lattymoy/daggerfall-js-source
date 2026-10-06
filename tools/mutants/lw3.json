@@ -193,8 +193,8 @@
   {
     "name": "LW3-trim-unread",
     "file": "src/systems/livingWorld/trips.js",
-    "old": "  if (t < trip.outT1) return placed('out', Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, t)) - lag('out')));",
-    "new": "  if (t < trip.outT1) return placed('out', Math.max(0, Math.min(walk, pace * walkedMinutes(trip.outT0, t)) - lag('out')));",
+    "old": "  if (t < trip.outT1) return walked('out', trip.outT0, (m) => Math.max(trim0, trim0 + Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m)));",
+    "new": "  if (t < trip.outT1) return walked('out', trip.outT0, (m) => Math.max(0, Math.min(walk, pace * walkedMinutes(trip.outT0, m)) - lag('out', m)));",
     "tests": [
       "test/lw3_roads.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "LW3-never-armed",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "      const armed = !!w.e.armed && res.cls != null;",
-    "new": "      const armed = false;",
+    "old": "      const cls = townClassOf(res);",
+    "new": "      const cls = null;",
     "tests": [
       "test/lw3_roads.test.js"
     ]
@@ -490,7 +490,7 @@
   {
     "name": "LW3-host-tripless-town",
     "file": "src/scenes/world.js",
-    "old": "          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf,   // LW3: its travellers away and armed, its visitors",
+    "old": "          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf, flatOf: livingFlatOf,   // LW3: its travellers away and armed, its visitors - LW-LOOKS: its still pictures",
     "new": "          // LW3",
     "tests": [
       "test/lw3_roads.test.js"

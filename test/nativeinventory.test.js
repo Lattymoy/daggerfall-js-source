@@ -222,7 +222,9 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
     // a DaggerfallLoot) - one hoisted object either way, handed to the window and to quick loot alike.
     const pileAt = src.search(/const _hooks = (?:_fish \? dwFishLootHooks\(_fish\) : )?droppedLootHooks\(pile\);/);
     assert.ok(pileAt > 0, `${f}: the pile arm no longer names its own identity`);
-    const pile = src.slice(pileAt, pileAt + 1100);   // QUICK-LOOT B4: past the decline and its reasoning, to the property itself
+    // QUICK-LOOT B4: past the decline and its reasoning, to the property itself - PIN MOVED (AUDIT 625 S2): to the arm's
+    // own end (the take's close), not a count of characters a comment above the property can outgrow
+    const pile = src.slice(pileAt, src.indexOf('droppedLoot.releaseEmptied();   // AUDIT 68 S20', pileAt));
     // G5: DaggerfallLoot's identity travels with the pile through the
     // ONE shared shape, so a fifth call site cannot ship a partial one.
     assert.match(pile, /loot: _hooks,/);
@@ -239,7 +241,8 @@ test('U25 / THE ONE CONSTRUCTION SEAM: ONE inventory builder per host', () => {
     // handed that very object and answers null when it is not wanted.
     // LOOT-STACK: the decline is a press's only, and the pile rides
     // beside the pool's hooks into the same builder.
-    assert.match(src, /takeLoot\(lootKey, \(l\) => townTalk\.say\(l\),\n\s*inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(!pileKeys && quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\), \{ getQuest: [^}]*\}\)\) return;[^\n]*\n\s*const pile = lootPile\([^\n]*\n\s*const w = makeInventoryWindow\(\{ loot: pile \? \{ \.\.\.loot, pile \} : loot \}\);\n\s*if \(w\) townTalk\.showOverlay\(w\);[^\n]*\n\s*\} : null\)/,   // DISC10-E L3 re-aim: a refused pack is null and mounts nothing
+    // PIN MOVED (AUDIT 625 D6): and the door answers whether it opened (the quick take, or the window's own answer)
+    assert.match(src, /takeLoot\(lootKey, \(l\) => townTalk\.say\(l\),\n\s*inventoryDoorReady\(\) \? \(loot\) => \{\n\s*if \(!pileKeys && quickLootTake\(lootKey, loot, playerEntity, \(l\) => townTalk\.say\(l\), \{ getQuest: [^}]*\}\)\) return true;[^\n]*\n\s*const pile = lootPile\([^\n]*\n\s*const w = makeInventoryWindow\(\{ loot: pile \? \{ \.\.\.loot, pile \} : loot \}\);\n\s*if \(w\) townTalk\.showOverlay\(w\);[^\n]*\n\s*return !!w;[^\n]*\n\s*\} : null\)/,   // DISC10-E L3 re-aim: a refused pack is null and mounts nothing
       `${f}: the corpse must reach the same builder, behind the same art gate`);
   }
   // the dungeon host has one too, and it is the door's
@@ -506,7 +509,7 @@ test('U47: the window is the guard, not its click method - and F11 no longer goe
   // destroyed the session (AUDIT 17e F41's own failure) and F11 went
   // fullscreen. A list a lane has to remember to extend is what let that
   // happen, so the pin now asks the tree which hosts register a keydown
-  // and holds every one of them to ui/input.js:872-873's "every host
+  // and holds every one of them to ui/input.js:"One list, because"'s "every host
   // that registers a keydown calls this FIRST".
   const SCENES = join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'scenes');
   const hosts = readdirSync(SCENES).filter((f) => f.endsWith('.js')

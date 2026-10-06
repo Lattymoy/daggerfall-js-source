@@ -97,7 +97,7 @@ import { walkSpeed } from '../player/motor.js';   // WW1: GetBaseSpeed's walk ar
  *
  * AND THE GENDER FIX: `gender` is the STRING 'male'/'female'
  * everywhere in this port (chargen.js applyCharacter,
- * classicSave.js:694), so the card's old `female: !!playerEntity
+ * classicSave.js:"The transform curses"), so the card's old `female: !!playerEntity
  * .gender` was TRUE FOR EVERYONE - every build asked for the female
  * skeleton and the female body columns, and the male-record fallback
  * fills made it look almost right. The test is the string compare,
@@ -297,9 +297,9 @@ export async function autoBuildArms(entity, { dataCount = morrowindDataCount, me
  *                     The note that hosts without a HUD text layer
  *                     pass console is retired: every call site hands
  *                     over a real one - hudText.add
- *                     (dungeonContext.js:3694), townTalk.say
- *                     (exterior.js:2383, world.js:10220) and
- *                     worldModes' own interior sink (worldModes.js:546,
+ *                     (dungeonContext.js:"let _drawSprite ="), townTalk.say
+ *                     (exterior.js:"actionDown: (action) => held".."say: (l) => townTalk.say(l),", world.js:"toggleSheathCalls:") and
+ *                     worldModes' own interior sink (worldModes.js:"second argument is",
  *                     which warns to console only where a host mounts
  *                     no townTalk at all), so the empty default below
  *                     is unreached,
@@ -1400,7 +1400,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *             "does not toggle / toggles twice / gets stuck", and
      *             it is why Handheld Torches misbehaved with it: the
      *             mod's UpdateFreeHand reads WeaponManager.Sheathed
-     *             LIVE (handheldTorches.js:323), so a flag flipped to
+     *             LIVE (handheldTorches.js:"x = snap(x, interval)"), so a flag flipped to
      *             "drawn" with no weapon on screen stows the torch.
      *   :268      `!isAttacking` - the hand already had this gate
      *             (switchHand below); the sheath did not, so Z
@@ -1496,7 +1496,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       const c = cv();
       // MW-D12: THE RETURN VALUE WAS BEING THROWN AWAY, and it is the
       // only signal that a blow has started. gesture() answers with the
-      // strike the drag resolved to (playerWeapon.js:234-237) and
+      // strike the drag resolved to (playerWeapon.js:"not immune: :1057-1064's") and
       // clickAttack() with the one the click rolled - the Morrowind arm
       // needs exactly that to pick rule 11's attack type.
       // AUDIT 68 S09-sheathed-swing: and no attack STARTS where Update

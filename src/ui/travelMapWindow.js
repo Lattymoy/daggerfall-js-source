@@ -332,7 +332,7 @@ let _art = null;
  *  (indices, not a texture - the region shapes are read out of it),
  *  the button sheets, the border, FMAP_PAL.COL and TEXT.RSC. */
 /** TO1: a PNG out of a vendored mod folder, in the shape `drawImg`
- *  reads. The precedent is systems/handheldTorches.js:841-847 -
+ *  reads. The precedent is systems/handheldTorches.js:"async function defaultLoadSprite" -
  *  `toScreenOrder`, not `toColor32`, because this is drawn on a screen
  *  quad and the flip would stand it on its head. A file that is not
  *  there answers null and the caller draws nothing. */

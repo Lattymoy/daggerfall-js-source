@@ -64,6 +64,7 @@ import { magicPowersLines } from '../systems/itemPowers.js';   // PLUS10: %mpw
 import { CHAT_MAX } from '../net/wire.js';   // CHAT-POST: a posted item is one chat line
 import { itemIsIdentified } from '../systems/tradeModes.js';   // PLUS10: MagicPowers' identified arm
 import { PACK_PAGES, PAGE_IDS, pageOf, filterByPage } from './packPages.js';   // PX31: the pack's nine pages (the classic keeps DFU's four)
+import { isWalletItem, walletContents, walletLines, refreshWalletSilver } from '../systems/walletItem.js';   // WALLET1: the wallet's sheet
 import { useItem, isLightSource, usableItem, isPotionRecipe, toggleHood, HOOD_TEXT, nextDrape, drapeCount, DRAPE_TEXT } from '../systems/useItem.js';   // PLUS10: isPotionRecipe, a recipe's second Info box   // HT2: the light source's own act; Mac: Use only where the law has an arm   // HOOD-SAID: the hood's button and its lines   // CLOAK-DRAPE: the drape's
 // QS2: the quickslot model (systems/quickslots.js). This screen is the ONE
 // place a slot is filled - Mac's own words, "in the enhanced menu through the
@@ -127,6 +128,7 @@ import { conditionWord, conditionPercentage, itemNameParts, itemLongName, itemDa
 import { survivalInfoTokens, potionMacroName, potionRecipeIngredientNames } from '../systems/itemInfo.js'; import { isPortalStone } from '../systems/gateSpoils.js';   // AUDIT SURV C: the survival items' tokens on this skin's card too
 import { isSurvivalItem } from '../systems/survival/items.js';
 import { hoodCapable, hoodUp } from '../systems/survival/temperature.js';   // HOOD-SAID: the one hood law, on the card and the panel
+import { heirloomLine } from '../systems/legacy/heirloom.js';   // LEGACY4: Project Legacy's heirlooms, named on the card
 import { rarityAttr, rarityLines, lootRarityOn } from '../systems/lootRarity.js';   // LR1: the row's tier attribute and the card's lines
 import { pieceLines } from '../net/recipeLaw.js';   // PROF3: a crafted piece's quality and maker, above its powers
 import { craftedJewelPoints } from '../systems/enchanting.js';   // AUDIT PROF-541 R2-C4: a jewel's points as the item maker reads them
@@ -135,7 +137,7 @@ import { validSigil } from '../systems/sigil.js';   // SIGIL-UI: the tile's corn
 import { setCard, setStrip, markSetFrame } from './setCard.js';   // SET5: a set piece's set on its card, the worn sets on the doll's column, a set piece's rune
 import { setIdOf, setById, setLines, setSigilLines } from '../systems/sigilSets.js';   // CARD-FIT U4/U10: a set piece and its sigil in a line each
 import { isLocked, toggleLocked, lockRefuses, lockedText, LOCKED_LINE } from '../systems/itemLock.js';   // LOCK1
-import { isBound, BOUND_LINE, boundRefusesPut, boundText } from '../systems/itemBound.js';   // SS1: a bound piece says so on its card   // SS3: and goes nowhere but the wagon and the player's own storage
+import { isBound, BOUND_LINE, boundRefusesPut, boundText, isPackOnly, packOnlyText } from '../systems/itemBound.js';   // SS1: a bound piece says so on its card   // SS3: and goes nowhere but the wagon and the player's own storage
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
 import { repaintKeepingScroll } from './domRepaint.js';
@@ -235,8 +237,16 @@ export function packModel(deps = {}) {
   // halves the same member does.
   const carried = items.reduce((kg, it) => kg + itemWeight(it), 0)
     + goldPiecesOf(entity) * GOLD_PIECE_WEIGHT_KG;
+  // WALLET1: WHAT THE WALLET HOLDS LEAVES THE PAGES for its sheet, while the pack holds one (systems/walletItem.js) - the
+  // letters of credit, the embers and the shards. Every piece stays in `items`, where every spender reads it; the pages
+  // and the wallet together are still a partition of what the pack holds unworn.
+  const walletItem = items.find(isWalletItem) ?? null;
+  const wallet = walletItem ? { item: walletItem, ...walletContents(items, entity) } : null;
+  const held = new Set(wallet?.held ?? []);
+  const paged = held.size ? items.filter((it) => !held.has(it)) : items;
   return {
-    tabs: PACK_PAGES.map(([tab, label]) => ({ tab, label, items: filterByPage(items, tab) })),   // PX31
+    tabs: PACK_PAGES.map(([tab, label]) => ({ tab, label, items: filterByPage(paged, tab) })),   // PX31; WALLET1: less what the wallet holds
+    wallet,
     worn,
     // PlayerEntity.GoldPieces, the COUNTER - gold has not been an item
     // in the pack since E4, so there is no stack here to find.
@@ -577,6 +587,8 @@ export function useResultAction(r, { openBook = null, openSpellbook = null, plac
       ? { kind: 'openPortal', item: r.item, closeFirst: true }
       : { kind: 'message', text: USE_PENDING.openPortal };
   }
+  // WALLET1: the wallet - its sheet, in the detail column; nothing closes
+  if (r.kind === 'wallet') return { kind: 'pickWallet', item: r.item };
   // MEND-AIM: a use that asks WHICH (a repair kit, more than one piece to mend) - the pack asks, and uses it again aimed
   if (r.kind === 'chooseTarget') return { kind: 'chooseTarget', item: r.item, targets: r.targets, labels: r.labels, title: r.title };
   // The classic window's own ladder, in its own order: an explicit
@@ -607,6 +619,7 @@ let picked = null;      // the selected item object
 let fatePick = null;    // REVENANT-FATE: the fate row picked ('kill' | 'spare'), the second press confirms
 let side = 'local';     // which list `picked` came out of
 let notice = null;
+let walletAsked = false;   // WALLET1: the account's silver asked afresh once a mount, as the wallet's sheet first shows
 /** CHAT-POST: what the card says after a post. */
 export const POSTED_TEXT = 'Posted in chat.';
 export const NOT_POSTED_TEXT = 'Could not post that in chat right now.';
@@ -1356,6 +1369,7 @@ function use(item, collection = deps.items?.() ?? [], target = null) {
     return;
   }
   if (act.kind === 'chooseTarget') { askTarget(act, collection); return; }   // MEND-AIM
+  if (act.kind === 'pickWallet') { picked = act.item; side = 'local'; return render(); }   // WALLET1: its sheet, the pack still up
   if (act.textId && deps.rows) {
     const rows = expandRowValues(deps.rows(act.textId) ?? [], act.macros ?? null);   // MACROS1: %map is the map's name
     notice = rows.map((row) => (typeof row === 'string' ? row : row?.text ?? '')).join(' ').trim() || null;
@@ -1498,7 +1512,11 @@ function stow(item) {
   }
   // SS3: a BOUND piece goes nowhere but the wagon and the player's own storage (systems/itemBound.js BOUND_KEEPS) - the
   // ground and every container refuse it, a container being the room's once it is opened online. Ahead of the ladder,
-  // and it speaks.
+  // and it speaks. WALLET1: a pack-only piece goes nowhere at all, and says so in its own words.
+  if (remote && isPackOnly(item)) {
+    notice = packOnlyText(itemLongName(item, { getQuest: deps.getQuest ?? null }));
+    return render();
+  }
   if (remote && boundRefusesPut(item, remote.kind)) {
     notice = boundText(itemLongName(item, { getQuest: deps.getQuest ?? null }));
     return render();
@@ -1517,7 +1535,7 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:984) and this one did not, so dragging a
+  // (nativeInventory.js:"if (mode === 'equip' && this.hooks.entity)") and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
@@ -1527,7 +1545,7 @@ function stow(item) {
   if (amount == null) { notice = HOW_MANY_ITEMS(plan.amount); render(); return; }
   // MAC-O6: the same cue this window's `take()` gained - storing (selling,
   // banking, dropping into a wagon or a pile) is a transfer too, and
-  // planStore already hands back the sound (itemTransfer.js:289), unread
+  // planStore already hands back the sound (itemTransfer.js:"if (capacity.gone || canHold <= 0)"), unread
   // until now.
   audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // SND1: a take always sounds - the click, or the gold
   // PX24 (Mac: an action taken closes the tooltip): the transfer
@@ -1536,7 +1554,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:990). Without them
+  // the classic window's own call (nativeInventory.js:"{ ...plan, amount }, this.hooks.items"). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1565,7 +1583,7 @@ function take(item) {
   });
   if (!plan.ok) return refuse(plan.refusal);
   // AUDIT INV2 B-F2: the map is an interception in EITHER direction
-  // (itemTransfer.js:311, "F156: either direction") - taking one off a
+  // (itemTransfer.js:"and is written anyway", "F156: either direction") - taking one off a
   // pile reveals and consumes it, exactly as stowing one does. The
   // classic window routes both; this one routed neither.
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
@@ -1573,7 +1591,7 @@ function take(item) {
   if (amount == null) { notice = HOW_MANY_ITEMS(plan.amount); render(); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:1010) and this one never did - the ONLY
+  // window plays (nativeInventory.js:"if (equipItem(this.hooks.entity, it) !== null)".."return;") and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits
@@ -2829,6 +2847,7 @@ function quickslotActs(item) {
 export function itemPowerLines(item, d = deps, { set = true, lore = true } = {}) {
   const lines = rarityLines(item, { sigil: false, set, lore });   // SET5: the card draws the set in its own block (set: false); CARD-FIT: and leaves the lore to the Info box (lore: false)
   lines.unshift(...pieceLines(item, craftedJewelPoints(item)));   // PROF3: a crafted piece's quality and maker above them
+  { const h = heirloomLine(item); if (h) lines.unshift(h); }   // LEGACY4: an heirloom's house and its generations, first
   if (item && !(item.rarity && lootRarityOn()) && isEnchanted(item)) {
     // unidentified: DFU's "powers unknown" - unless the tier list already said "Unidentified"
     const known = itemIsIdentified(item);
@@ -3288,6 +3307,40 @@ function openInfo(item) {
   infoOff = () => { clearTimeout(timer); document.removeEventListener('pointerdown', away, true); document.removeEventListener('keydown', key, true); };
 }
 
+/**
+ * WALLET1: THE WALLET'S SHEET - what it holds, in the classic box's own words (systems/walletItem.js walletLines: the
+ * gold, the silver, the letters and what they are worth, the embers, the shards), then each piece it holds as the
+ * PACK'S OWN ROW (AUDIT 625 W3: `itemRow`, the page's - its picture, its count, its hotbar chip, and every gesture a page
+ * gives a piece: the click that opens its card, whose acts are the pack's (its lock, its stow, the bound law's
+ * refusals); Shift into the store beside it; the double click that wears a crystal; the drag; the right click's menu;
+ * the pad's quick act. A button that only opened the card took all but the first from the letters, the embers and the
+ * shards the wallet gathered off their pages). The account's silver is asked afresh of the host once a mount, as the
+ * sheet first shows, and the pack redrawn with the answer WHATEVER IS PICKED as it lands: a model kept back while a
+ * piece was picked was the sheet's for the rest of the mount (the way back draws, it does not refresh), its silver
+ * "kept online" though the answer had come. A repaint landing after a press is the pack's own contract
+ * (refreshFigure's, the fpArm's), and after the unmount none (JAN2).
+ */
+function walletSheet(w) {
+  const box = el('div', 'walletsheet');
+  for (const text of walletLines(w).slice(1)) box.append(el('p', 'meta', text));
+  if (w.held.length) {
+    const rows = el('div', 'walletpieces');
+    for (const it of w.held) rows.append(itemRow(it));
+    box.append(rows);
+  }
+  if (!walletAsked) {
+    walletAsked = true;
+    refreshWalletSilver().then(() => { if (host) { refresh(); render(); } });
+  }
+  return box;
+}
+/** WALLET1: a held piece's way back to the wallet's sheet. */
+function walletBack(wallet) {
+  const b = el('button', 'act', 'Wallet');
+  b.onclick = () => { picked = wallet; side = 'local'; notice = null; render(); };
+  return b;
+}
+
 function detailCol() {
   const col = el('section', `packcol packdetail${picked ? ' open' : ''}`);
   // PX16c: the plaque wears the pause window's own corners - one
@@ -3305,6 +3358,10 @@ function detailCol() {
   const { c, line, big } = infoCard(picked, side, render, { body: true });
   const acts = itemActs(picked, side);
   c.append(acts);
+  // WALLET1: the wallet picked - its sheet in the card's body (the part that gives way when the card will not fit, above
+  // the buttons); a piece the wallet holds - the way back to the wallet, beside its own acts
+  if (side === 'local' && model?.wallet && picked === model.wallet.item) (c.querySelector('.card-body') ?? c).append(walletSheet(model.wallet));
+  if (side === 'local' && model?.wallet?.held.includes(picked)) acts.append(walletBack(model.wallet.item));
   col.append(c);
   // The address, for the player who wants it and the developer who
   // needs it - the same place the classic window's own info panel
@@ -3758,6 +3815,7 @@ export function mountEnhancedInventory(hostEl, d = {}) {
   onExit = d.onExit ?? (() => {});
   tab = PAGE_IDS[0];
   picked = null;
+  walletAsked = false;   // WALLET1
   storeFilter = freshStoreFilter();   // WAGON-FILTER
   // PX20b: a LOOT target opens its own frame alone; every other way in
   // (F6, the world's inventory door) opens the pack as it always did.

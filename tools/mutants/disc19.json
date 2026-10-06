@@ -92,11 +92,12 @@
   {
     "name": "DISC19-C-handler-reads-no-death",
     "file": "src/scenes/world.js",
-    "old": "for (const saveName of exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() })) save(saveName);",
-    "new": "for (const saveName of exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen })) save(saveName);",
+    "old": "for (const saveName of exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() })) save(saveName);",
+    "new": "for (const saveName of exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || successionOpen() })) save(saveName);",
     "tests": [
       "test/disc19.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
   },
   {
     "name": "DISC19-F-watch-comes-for-the-wanted",
@@ -146,7 +147,7 @@
   {
     "name": "DISC19-F-threat-need-not-hunt",
     "file": "src/systems/townWatch.js",
-    "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion != null && !t.dead)) return false;   // AUDIT CC-B6: a monster fighting a companion is still the fight\n",
+    "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion != null && !t.dead)   // AUDIT CC-B6: a monster fighting a companion is still the fight\n    && !(t?.civilian === true && (t.entity?.health ?? 0) > 0)) return false;   // WATCH-PROTECTS: and one hunting a townsperson of the living world\n",
     "new": "",
     "tests": [
       "test/disc19.test.js"

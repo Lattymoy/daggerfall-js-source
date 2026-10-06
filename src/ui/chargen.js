@@ -1134,7 +1134,7 @@ export class ChargenFlow {
 
   /** VerticalScrollBar.Update's per-frame arm (:101-130), on the
    *  hosts' HOVER seam - `e.buttons & 1` is the port's only reading of
-   *  InputManager.GetMouseButton(0), the same one ui/listPicker.js:295
+   *  InputManager.GetMouseButton(0), the same one ui/listPicker.js:"if (vy >= 0 && this.scrollBar.update(!!(e?.buttons & 1), vy))"
    *  takes; nothing else here reads the pointer.
    *
    *  ROAD-G G4 (review): the (-1, -1) the hosts answer with for a
@@ -1596,7 +1596,7 @@ export class ChargenFlow {
         // two things and the port had conflated them. Every AddButton
         // binds a HOTKEY unconditionally (DaggerfallMessageBox.cs:377,
         // `DaggerfallShortcut.GetBinding(ToShortcutButton(...))` -
-        // Yes 'Y', No 'N', dialogShortcuts.js:309), and RETURN clicks
+        // Yes 'Y', No 'N', dialogShortcuts.js:"Accept: 'A', Reject"), and RETURN clicks
         // the DEFAULT button, if there is one (:318-324 through
         // GetDefaultButton :394-403). This box is built with two bare
         // `AddButton(Yes)`/`AddButton(No)` calls
@@ -1641,7 +1641,7 @@ export class ChargenFlow {
       // here, exactly as on the race and class-list boxes. What DOES
       // act is the hotkey every AddButton binds unconditionally
       // (:377): M and F (DialogShortcuts.txt Male/Female,
-      // dialogShortcuts.js:311). Each button's handler sets the gender
+      // dialogShortcuts.js:"ResetBonusPool: 'Ctrl-U',"). Each button's handler sets the gender
       // AND closes the window (:59-71), which is what { setGender }
       // already does - so the two keys take the same door the mouse
       // does, and the bare 'confirm' that used to advance is gone.
@@ -1810,7 +1810,7 @@ export class ChargenFlow {
       // while the name TextBox holds focus with no character filter
       // (CreateCharCustomClass.cs:156-158). The port had a 'plus' arm
       // that spent a point, and a 'minus' arm that was DEAD: the shared
-      // overlay table (ui/input.js:18) matches '-' inside its char
+      // overlay table (ui/input.js:"if (e.key.length === 1 && /[a-zA-Z0-9 '-]/.test(e.key))") matches '-' inside its char
       // class first, so '-' arrives as 'char:-' and types a hyphen into
       // the class name, exactly as DFU's unfiltered TextBox does. The
       // pair was therefore asymmetric - a keyboard could spend from the
@@ -1823,7 +1823,7 @@ export class ChargenFlow {
       // (CreateCharCustomClass.cs:257-259) - a Rect(0,0,0,0) Button
       // whose only reason to exist is its Hotkey, Ctrl-U by default
       // (StreamingAssets/Text/DialogShortcuts.txt, carried at
-      // systems/dialogShortcuts.js:320). It is a control of THIS
+      // systems/dialogShortcuts.js:"ResetBonusPool: 'Ctrl-U',"). It is a control of THIS
       // window, so it answers only while the window itself is on top:
       // the two returns above have already taken every key while a
       // ClickAnywhereToClose box or one of the pushed sub-windows
@@ -1889,16 +1889,16 @@ export class ChargenFlow {
       else if (action === 'plus') this.spendStat(1);
       // AUDIT 17k follow-up: 'minus' was UNREACHABLE from a keyboard.
       // overlayAction tests the typed-character class FIRST and the
-      // hyphen is a literal inside it (input.js:18), so the '-' key
+      // hyphen is a literal inside it (input.js:"if (e.key.length === 1 && /[a-zA-Z0-9 '-]/.test(e.key))"), so the '-' key
       // always arrives as 'char:-' - a point could be spent and never
       // taken back except by clicking the spinner. '+' and '=' were
       // never affected (neither is a typed character here).
       else if (action === 'minus' || action === 'char:-') this.spendStat(-1);
       // AUDIT 58 (f3/input): + 'char:r'/'char:R', the same root cause
       // as the 'minus' line above - r and R fall inside overlayAction's
-      // typed-character class (ui/input.js:386), so the 'reroll' row
+      // typed-character class (ui/input.js:"pollLatch(b, down)"), so the 'reroll' row
       // that used to sit in its table was unreachable and only the
-      // mouse rect (ui/chargenArt.js:1480) ever reached this. The hint
+      // mouse rect (ui/chargenArt.js:"if (inRect(RECTS.reroll))") ever reached this. The hint
       // drawn at :2059, 'R reroll', is true again. The bare 'reroll'
       // arm stays for that mouse rect.
       else if (action === 'reroll' || action === 'char:r' || action === 'char:R') this.reroll();

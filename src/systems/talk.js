@@ -15,11 +15,11 @@
 // save and mutates rep in place, and both halves are here now. The
 // rep deltas landed with S25's systems/factionRep.js (changeReputation
 // :116, propagateReputationChange :165) and are driven by court.js
-// :181, quest/quest.js:348's QuestSuccessRep/FailureRep, quest/
-// actions.js:2102 and guildServiceActions.js:206. The save arc carries
-// them: save.js:544 snapshotFactionRep writes and :379
+// :181, quest/quest.js:"this.hooks?.changeReputation?.(this.factionId, repChange, true)"'s QuestSuccessRep/FailureRep, quest/
+// actions.js:"static typeName = 'ChangeReputeWith';" and guildServiceActions.js:"if (raised) changeReputation". The save arc carries
+// them: save.js:"(DaggerfallGuildServiceCureDisease.cs:58)" snapshotFactionRep writes and :379
 // restoreFactionRep reads back INTO the store the loader rebuilt from
-// FACTION.TXT (the AUDIT 20 note at save.js:858). The live FactionFile
+// FACTION.TXT (the AUDIT 20 note at save.js:"E2: re-instantiate"). The live FactionFile
 // dict is still the working state - what round-trips is the mutable
 // columns, a recorded departure from FactionData_v2's whole-dictionary
 // write.

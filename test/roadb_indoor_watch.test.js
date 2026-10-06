@@ -107,7 +107,7 @@ test('ROAD-B: the arrival clearance is PlayerController.radius + 0.1', () => {
 
 test('ROAD-B: the indoor arm is the FIRST thing in SpawnCityGuards and always returns', () => {
   const g = src('src/scenes/cityGuards.js');
-  const fn = g.slice(g.indexOf('async function spawnCityGuards('));
+  const fn = g.slice(g.indexOf('async function spawnCityGuardsNow('));   // WATCH-FIX: PIN MOVED - the member's body, behind the crime response's turn
   const cap = fn.indexOf('if (activeCount() > MAX_ACTIVE_GUARD_SPAWNS) return;');
   const arm = fn.indexOf('if (interior?.eligible) {');
   const street = fn.indexOf('if (immediate) {');

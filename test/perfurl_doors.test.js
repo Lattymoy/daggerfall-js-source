@@ -123,6 +123,7 @@ test('PERF-URL: no door parses the query on its own - src/ reads the query only 
     ['src/systems/pageQuery.js', /_params = new URLSearchParams\(search\);/, 'the one home'],
     ['src/main.js', /const params = new URLSearchParams\(location\.search\);/, 'the boot\u2019s own params, which it edits and publishes'],
     ['src/systems/realmSaves.js', /const p = new URLSearchParams\(search\);/, 'realmBootSearch BUILDS a search (deletes and sets)'],
+    ['src/systems/legacy/places.js', /const p = new URLSearchParams\(search\);/, 'LEGACY1: birthSearch and loadSearch BUILD a search, as realmBootSearch does'],
     ['src/systems/renderScale.js', /if \(_door === undefined\) _door = renderScaleOf\(new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('(\w+)'\)\);/, 'a latch, once a page (test/perfscale.test.js: "read once")'],
     ['src/systems/weatherSim.js', /UrlDoor \?\?= new URLSearchParams\(globalThis\.location\?\.search \?\? ''\)\.get\('(\w+)'\)/, 'four latches, once a page (test/clockArc.test.js: "read once")'],
   ];
@@ -142,7 +143,7 @@ test('PERF-URL: no door parses the query on its own - src/ reads the query only 
     }
   }
   assert.deepEqual(offenders, [], 'a door that reads the query on its own - read it through systems/pageQuery.js (pageParam / pageHas)');
-  assert.equal(allowed, 8, 'the allowed sites are all still there - one each, and weatherSim\u2019s four (a stale allowance is a hole in the sweep)');
+  assert.equal(allowed, 10, 'the allowed sites are all still there - one each, places.js\u2019s two and weatherSim\u2019s four (a stale allowance is a hole in the sweep)');
   // AUDIT PERF-URL A5: WHY A LATCH IS SAFE, HELD RATHER THAN SAID. The first cut claimed the boot's publish "runs before
   // any of them is asked" - unverified. What is true: the publish (onlineLane.js publishBootParams) writes main.js's
   // own params, which start from the page's search and edit only the boot's door keys (BOOT_DOOR_KEYS) and, online,

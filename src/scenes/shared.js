@@ -755,7 +755,7 @@ export function createSkyController(gl, params) {
  *
  *  RECORDED, not a gap: the pre-chargen guard is load-bearing, and
  *  what it guards is a state DFU never has. The pre-chargen literal
- *  (characters/playerEntity.js:29) is `stats: { strength: 50,
+ *  (characters/playerEntity.js:"faceIndex: 0,") is `stats: { strength: 50,
  *  agility: 50, luck: 50 }` with no `speed` key, so an unguarded
  *  liveStat() would walk a fresh boot at (0 + 150 - 35)/39.5 instead
  *  of the documented SPD-50 stand-in. DFU builds its stats from the
@@ -1282,7 +1282,7 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null, 
     // FallHardSound (:315-319) - the 0.7 is CHOSEN on these, not an
     // inherited default: PlayWeaponHitSound in the same component
     // (:331-337) deliberately passes 1f. The stride already carried it
-    // (footsteps.js:26); its three siblings rang 43% too loud.
+    // (footsteps.js:"export const FOOTSTEP_VOLUME"); its three siblings rang 43% too loud.
     sound?.(SOUND.FallDamage, FOOTSTEP_VOLUME);
   } else if (distance > FALL_DAMAGE_THRESHOLD / 2) {
     sound?.(SOUND.FallHard, FOOTSTEP_VOLUME);   // BadFallDetected, PlayerFootsteps.cs:315-319
@@ -2049,7 +2049,7 @@ export function wireInfectionVideos(renderer, { textAt = null, factionDict = nul
       // which answers { text, center } records - while dungeonContext
       // passes `textRsc.plainText(id)`, which answers strings. Both
       // windows this reaches iterate the STRING (ChoiceWindow
-      // talkWindow.js:63-64, ActionTextBox likewise), so "Death is not
+      // talkWindow.js:"(opt) { this.done = true; closeEnhancedChoice(this); opt.action?.(); }", ActionTextBox likewise), so "Death is not
       // eternal" threw `TypeError: text is not iterable` on draw
       // everywhere above ground and worked only in a dungeon: the
       // four-hosts divergence this project keeps meeting. Flattened
@@ -2235,7 +2235,7 @@ export function createMusicDirector({ fm = null, play = null, stop = null, playi
  *  through to `cam.yaw += movementX` - so every swing inside a
  *  building or a dungeon turned the camera with it.
  *
- *  `dungeon.js:290`, the standalone host, has always had the right
+ *  `dungeon.js:"nothingText: () =>"`, the standalone host, has always had the right
  *  shape: attack, then return. It has no modal sibling to share the
  *  drag with, which is why it never needed a mode in the test at all.
  *

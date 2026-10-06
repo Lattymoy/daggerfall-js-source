@@ -168,7 +168,7 @@ test('TACT3c: a narrow hall - the collider stops a lane at its wall, the watchma
 
 test('TACT3c: the arm uses it, five in a row at most, the classic point and count kept', () => {
   const g = rd('src/scenes/cityGuards.js');
-  const fn = g.slice(g.indexOf('async function spawnCityGuards('));
+  const fn = g.slice(g.indexOf('async function spawnCityGuardsNow('));   // WATCH-FIX: PIN MOVED - the member's body, behind the crime response's turn
   const arm = fn.slice(fn.indexOf('if (interior?.eligible) {'), fn.indexOf('if (immediate) {'));
   assert.match(arm, /door\.pos\[0\] \+ door\.normal\[0\] \* GUARD_INDOOR_DOOR_OFFSET/);
   assert.match(arm, /const guardCount = 2 \+ Math\.floor\(rand\(\) \* 4\);/);

@@ -341,8 +341,8 @@
   {
     "name": "LS-interior-pile-dropped",
     "file": "src/scenes/worldModes.js",
-    "old": "            mountInterior(interiorInventory({ loot: pile ? { ...loot, pile } : loot }));",
-    "new": "            mountInterior(interiorInventory({ loot }));",
+    "old": "            const w = interiorInventory({ loot: pile ? { ...loot, pile } : loot });",
+    "new": "            const w = interiorInventory({ loot });",
     "tests": [
       "test/lootstack.test.js",
       "test/worldhover.test.js"

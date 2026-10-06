@@ -47,11 +47,12 @@
   {
     "name": "LOOT9-shard-unlisted",
     "file": "src/net/realmTradeLaw.js",
-    "old": "Object.freeze([570, 571, 572]);",
-    "new": "Object.freeze([570, 572]);",
+    "old": "Object.freeze([570, 571, 572, 580]);",
+    "new": "Object.freeze([570, 572, 580]);",
     "tests": [
       "test/loot9_reforge.test.js"
-    ]
+    ],
+    "note": "WALLET1 (PIN MOVED): re-aimed by content - the list names the Wallet's 580 too (systems/walletItem.js)."
   },
   {
     "name": "LOOT9-salvage-magic-two",

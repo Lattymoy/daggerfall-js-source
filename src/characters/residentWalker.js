@@ -11,8 +11,23 @@
 // LW3: ARMED (`arm`). A resident walking out to the road, or home from it, in their gear (LW0 decision 5) wears their
 // class's sprite instead - the enemy's own eight-way MobileUnit (characters/mobileUnit.js, the band's and the crew's
 // body) on its class archive - and their own outfit again when the walk is done.
+//
+// LW-LOOKS (2026-10-06, "Class looks + still flats"): IN TOWN TOO - one whose calling is a class's walks the town in its
+// sprite (`arm` with their town class, systems/livingWorld/looks.js townClassOf; `cls` the one worn), and one keeping their
+// place alone stands as Daggerfall's still picture of their kind (`still`: an NPC flat's record, its frames animated on
+// the game's own billboard clock, render/flatAnimation.js FlatAnim) - themselves again when they go on.
+//
+// LW-TALK (2026-10-06, Mac: asked how two who talk should stand, "Turn them"): STANDING, A RESIDENT KEEPS THE WAY THEY
+// FACE - the walk wheel's record for their yaw against the camera, held on its STAND_FRAME. DFU's idle record is one
+// front view: every talker in a circle faced the camera, never the one they talked to (88,358 of 88,358 standing
+// frames), and the watch's post the street, never the road. The idle record is the politeness gate's alone - DFU's own
+// use of it: one who stops for the player turns to face them.
 import { MobilePerson, MOVE_RECORDS, MOVE_FLIPS, PERSON_MOVE_FPS, PERSON_IDLE_FPS, PERSON_IDLE_RECORD, PERSON_GUARD_IDLE_RECORD } from './mobilePerson.js';
 import { mobileOrientation, MobileUnit } from './mobileUnit.js';
+import { FlatAnim } from '../render/flatAnimation.js';
+
+/** LW-TALK: the walk record's frame a standing resident holds. */
+export const STAND_FRAME = 0;
 
 export class ResidentWalker extends MobilePerson {
   /**
@@ -37,6 +52,17 @@ export class ResidentWalker extends MobilePerson {
     this.unit = null;
     this.armed = false;
     this.ownArchive = opts.archive;
+    /** LW-LOOKS: the class worn (null: their outfit), its archive; the still picture stood as (null: none) and its clock. */
+    /** @type {number|null} */
+    this.cls = null;
+    this.classArchive = opts.archive;
+    /** @type {{ archive: number, record: number, frameCount: number } | null} */
+    this.stillLook = null;
+    /** @type {FlatAnim|null} */
+    this._stillAnim = null;
+    /** WATCH-PROTECTS: the walk wheel's cadence as a share of the walk's - the living town's run, twice (livingTown.js
+     *  _run): at the walk's four frames a second a runner's legs skated a stride twice their own. */
+    this.pace = 1;
     this.state = 'idle';
     this.moveCount = 1;   // the anti-skate rule is the pool's: a resident is placed where it is, never mid-tile
   }
@@ -44,11 +70,12 @@ export class ResidentWalker extends MobilePerson {
   /** The facing the watch's conversion and a guard's spawn read (G1). */
   get facingYaw() { return this.yaw; }
 
-  /** Nothing on the grid to claim: a resident walks the path its day laid, through the others as DFU's walkers pass. */
+  /** Nothing on the grid to claim: a resident walks the path its day laid - LW-SPACE: and steps aside for the others
+   *  (livingTown.js `_dodge`; DFU's walkers keep apart by the tiles they claim, `_setTarget`). */
   release() {}
 
   /** A resident's own outfit (the body is dressed as another resident - livingTown.js `_dress`). @param {number} archive @param {boolean} guard */
-  setIdentity(archive, guard) { super.setIdentity(archive, guard); this.ownArchive = archive; this.unit = null; this.armed = false; }
+  setIdentity(archive, guard) { super.setIdentity(archive, guard); this.ownArchive = archive; this.classArchive = archive; this.unit = null; this.armed = false; this.cls = null; this.stillLook = null; this._stillAnim = null; }
 
   /**
    * LW3: into their gear - `look` the class sprite ({ mobileType, basics, archive, frameCount, sex }) - or, null, out of
@@ -58,12 +85,33 @@ export class ResidentWalker extends MobilePerson {
   arm(look) {
     if (look) {
       this.unit = new MobileUnit(look.mobileType, look.basics, look.frameCount, Math.random, look.sex ?? 'male');
-      this.archive = look.archive;
+      this.classArchive = look.archive;
+      this.cls = look.mobileType;
       this.armed = true;
     } else if (this.armed) {
       this.unit = null;
-      this.archive = this.ownArchive;
+      this.classArchive = this.ownArchive;
+      this.cls = null;
       this.armed = false;
+    }
+    if (!this.stillLook) this.archive = this.classArchive;
+    this.frame = 0; this._timer = 0;
+  }
+
+  /**
+   * LW-LOOKS: standing as a still picture - `look` an NPC flat ({ archive, record, frameCount }) - or, null, themselves
+   * again (their class's sprite, or their outfit).
+   * @param {{ archive: number, record: number, frameCount: number } | null} look
+   */
+  still(look) {
+    if (look) {
+      this.stillLook = look;
+      this._stillAnim = new FlatAnim(look.archive, look.frameCount);
+      this.archive = look.archive;
+    } else if (this.stillLook) {
+      this.stillLook = null;
+      this._stillAnim = null;
+      this.archive = this.classArchive;
     }
     this.frame = 0; this._timer = 0;
   }
@@ -71,15 +119,16 @@ export class ResidentWalker extends MobilePerson {
   /**
    * One frame of the billboard. The position is the living town's; `wantsToStop` the street's politeness gate (the
    * walker's own, mobilePerson.js personWantsToStop), which stands it to face the player - the town holds its clock
-   * back while it does (livingTown.js).
+   * back while it does (livingTown.js). LW-TALK: standing otherwise (`stand`), the way it faces on the walk wheel.
    * @param {number} dt @param {number[]} cameraPos @param {boolean} [wantsToStop]
    * @returns {{ record: number, frame: number, flip: boolean }}
    */
   update(dt, cameraPos, wantsToStop = false) {
+    if (this.stillLook && this._stillAnim) return this._frameOut(this.stillLook.record, this._stillAnim.tick(dt), false);   // LW-LOOKS: a still picture
     if (this.armed && this.unit) return this.unit.update(dt, { moving: this.moving && !wantsToStop }, this.yaw, this.pos, cameraPos);
-    const st = this.moving && !wantsToStop ? 'move' : 'idle';
+    const st = wantsToStop ? 'idle' : this.moving ? 'move' : 'stand';
     if (st !== this.state) { this.state = st; this.frame = 0; this._timer = 0; }
-    const fps = st === 'idle' ? PERSON_IDLE_FPS : PERSON_MOVE_FPS;
+    const fps = st === 'idle' ? PERSON_IDLE_FPS : PERSON_MOVE_FPS * this.pace;
     this._timer += dt;
     while (this._timer >= 1 / fps) { this._timer -= 1 / fps; this.frame++; }
     if (st === 'idle') {
@@ -90,6 +139,6 @@ export class ResidentWalker extends MobilePerson {
     const o = mobileOrientation(this.yaw, this.pos, cameraPos);
     const rec = MOVE_RECORDS[o];
     const n = Math.max(1, this.frameCount(rec, this.archive));
-    return this._frameOut(rec, this.frame % n, MOVE_FLIPS[o]);
+    return this._frameOut(rec, st === 'stand' ? Math.min(STAND_FRAME, n - 1) : this.frame % n, MOVE_FLIPS[o]);
   }
 }

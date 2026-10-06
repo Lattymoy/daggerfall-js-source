@@ -23,8 +23,8 @@ import { wodSiteId, yieldsTo } from '../world/wodShared.js';   // WOD7: a camp's
 import { alignBillboardToGround, alignControllerToGround } from '../world/groundAlign.js';   // WOD3: SpawnLoot's drop; CSA-D: BoardBoat's AlignControllerToGround
 import { PRIVATEERS_HOLD_BLOCK, HOLD_MODELS, HOLD_FLATS, holdModelMatrix, holdFireLights, rollHoldFoes } from '../world/wodPrivateersHold.js';   // WOD4: the camp at Privateer's Hold
 import { rollLootRarity, pileSource, dungeonRarityTier, dungeonFamily, stampWonWeapons } from '../systems/lootRarity.js';   // WOD3: LR1 over the camps' piles; SIGIL1: their weapons' sigils
-import { revenantToReturn, revenantSpawnOptions, revenantPresence, takeRevenantNotice, revenantSay, releaseRevenantStand, revenantRecord, revenantMomentEvent, revenantRumor, revenantMapMarks, revenantHuntEntries, revenantTakes, revenantFelled, revenantFelledEvent, revenantRoutSweep, revenantRoutedEvent, revenantWarnEvent, revenantBetrayEvent, forgetLastSlew } from '../systems/revenant.js';   // REVENANT: who comes back, and what the player is told
-import { endPlayerFights } from '../systems/harmMark.js';   // RVN10 (bible/12-Enhanced-AI/Feud-Arc.md 21.2): a respawn's jump is no flight
+import { revenantToReturn, revenantSpawnOptions, revenantPresence, takeRevenantNotice, revenantSay, releaseRevenantStand, revenantRecord, revenantMomentEvent, revenantRumor, revenantMapMarks, revenantHuntEntries, revenantTakes, revenantFelled, revenantFelledEvent, revenantRoutSweep, revenantRoutedEvent, revenantWarnEvent, revenantBetrayEvent, forgetLastSlew, killerOf as revenantKillerOf, inheritRevenant } from '../systems/revenant.js';   // REVENANT: who comes back, and what the player is told
+import { endPlayerFights, playerHarmMark } from '../systems/harmMark.js';   // RVN10 (bible/12-Enhanced-AI/Feud-Arc.md 21.2): a respawn's jump is no flight
 import { DEVOTED } from '../systems/revenantFeud.js';   // RVN11 (Feud-Arc.md 22.1): a Devoted one's wait between warnings
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { Arch3dFile } from '../formats/arch3dFile.js';
@@ -55,7 +55,7 @@ import { cityFloorCentre, standsRail, SAND_R } from '../world/arenaFloor.js';   
 import { ARENA_TEXT } from '../systems/arenaText.js';   // ARENA1: the Daggerfall Bank's letter
 import { moveArenaRecords, arenaHomeFor, emptyArenaScene } from '../systems/arenaMove.js';   // ARENA1: a deed whose house the arena took, moved once; ARENA4b: and an online home, by its owner's client
 import { loadModWorldData, ensureWorldDataPack, worldDataPacksMissing } from './modWorldData.js';   // RR3b; WD3: a pack a save's pins let in
-import { configureLayoutPins, layoutRecordsOf, pinsFrom, setLayoutPins, stampLayout, layoutStampOfPixel, HOME_LAYOUTS_WAIT_MS, HOME_LAYOUTS_RETRIES, PINS_DROPPED_LINE } from '../systems/layoutPins.js';   // WD3: a town keeps the layout a save's things were made in
+import { configureLayoutPins, layoutRecordsOf, pinsFrom, setLayoutPins, admitPinnedPacks, stampLayout, layoutStampOfPixel, HOME_LAYOUTS_WAIT_MS, HOME_LAYOUTS_RETRIES, PINS_DROPPED_LINE } from '../systems/layoutPins.js';   // WD3: a town keeps the layout a save's things were made in
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES, CLIMATES, REGION_NAMES } from '../formats/mapsFile.js';   // SPAWNED-DUNGEONS1: the ocean gate and the synthesized location's region name
 import { questTracker } from '../ui/questTracker.js';   // GUIDE5: the quest the player follows - its places, marked
@@ -106,11 +106,14 @@ import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { LivingTown, LINE_HEAD_M as LIVING_HEAD_M } from '../systems/livingWorld/livingTown.js';   // LW2: the living world's streets - residents with days, where DFU's pool stood
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';
+import { makeQuarry } from '../systems/livingWorld/quarry.js';   // WATCH-PROTECTS: a townsperson as a monster's quarry
+import { knownCriminal } from '../systems/standing.js';   // WATCH-KNOWS: the living watch's word by the law - one whose face it knows
 import { createRelations, LIVING_WORLD_VENDOR } from '../systems/livingWorld/relations.js';   // LW2: how the living world regards this character (modData `LivingWorld`)
 import { ResidentWalker } from '../characters/residentWalker.js';
 import { firstNameOf } from '../systems/livingWorld/lines.js';
 import { travellerRoster, mintResident } from '../systems/livingWorld/census.js';   // LW3: a town's travellers, off its MAPS row alone; LW4: a newcomer to a place the road emptied
-import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths
+import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
+import { createDryGround } from '../world/dryGround.js';   // LW-DRY: the height map's own dry ground, every client's alike
 import { placeAt, turnKey } from '../systems/livingWorld/lives.js';   // LW4: who holds a traveller's place
 import { peoplePage } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page
 import { troubleOf, troubledTrip } from '../systems/livingWorld/trouble.js';   // LW4: trouble on the road
@@ -161,7 +164,7 @@ import { maxFatigue, FATIGUE_MULTIPLIER, liveStat, STAT_KEYS_ORDER } from '../sy
 // finished since U7; what was missing was a host outside the dungeon
 // that opens one, and CanRest's whole town half.
 import { restDecision, getPreventedRestMessage, REST_TEXT } from '../systems/restSession.js';   // U48: the DISPATCH (DaggerfallUI.cs:651-688) above the rest window   // ROAD-B B5: GetPreventedRestMessage   // PARTY-REST5: enemiesNearby's own textId, for a follower's own relayed break
-import { isHouseOwned, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
+import { isHouseOwned, deedStands, shipCoords, ownsShip, assignShipToPlayer, resetShip, SHIP_COORDS, SHIP_INTERIOR_MAP_IDS, SHIP_TYPES, createBankAccounts, BANK_REGION_COUNT, forgiveLoans, loanAmnestyLines, foldEmpireAccounts, empireAccountLines, goldRegion } from '../systems/banking.js';   // H1: the quest residence filter; GetShipCoords for the map-pixel scene clear; OwnsShip for the travel popup   // AUDIT 58: AssignShipToPlayer's permanent half, which the classic import owed
 import {
   clearSceneCache,           // P1: SaveLoadManager.ClearSceneCache, at PlayerGPS's map-pixel seam
   createSceneCache, cacheScene, restoreCachedScene, worldSceneName, LOOT_CONTAINER_TYPES,   // A10: the ship arm's Cache/RestoreCachedScene pair (TransportManager.cs:382-398)
@@ -359,7 +362,7 @@ import { markShown, travellerKin } from '../systems/travelViewFilters.js';   // 
 import { travelPathMode, travelPathUsesRoads, pickTakesPlace, fineMoveHeld, TRAVEL_PATH_TEXT } from '../systems/travelPathMode.js';   // OW-PATH: roads or free, and the snap to a town
 import { groundHit, canvasPoint, classifyPick } from '../player/travelPick.js';   // TV2: the click's ground
 import { planRoute, routeLegs, roadShare, crossesWater, dryLine, SEA_KINDS } from '../systems/travelRoute.js';   // TV2: the way by the roads; OWS2: and over the water
-import { createSeaHelm, seaHelmStep, headingOf as seaHeadingOf, squareOnly as seaSquareOnly, SEA_HELM } from '../systems/seaHelm.js';   // OWS2: the journey's hand on the helm
+import { createSeaHelm, seaHelmStep, seaHelmLook, headingOf as seaHeadingOf, squareOnly as seaSquareOnly } from '../systems/seaHelm.js';   // OWS2: the journey's hand on the helm
 import { createLoadGovernor, unbuiltAround } from '../systems/travelGovernor.js';   // TV2: "Cap it to what loads cleanly"
 import { createWildAlert, noticeChance, WILD_MARK, WILD_MARK_S } from '../systems/wildAlert.js';   // WILD-ALERT: the wilderness notices a fast traveller on a stealth check
 import { drawWildMarks, WILD_MARK_RANGE } from '../ui/wildMarks.js';   // WILD-ALERT: the "!" over an alerted foe
@@ -379,6 +382,8 @@ import { travellerMarkOf, travellerWorldOf, travellerDue, createTravellerBook, i
 import { RainCurtainsRenderer, curtainsOf, CURTAIN_FOOT_MARGIN_M } from '../render/rainCurtains.js';   // TV4: the weather's curtains, stood in the world for the view
 import { RANGE_PIXELS as TV_BODY_RANGE } from '../net/wire.js';   // TV3: within the pose range a traveller is their body, not a mark
 import { quickLootWheel, quickLootTake, quickLootArm, plaqueActionFor, plaqueActionSelection, plaqueLightFirst, plaqueStep } from '../systems/quickLoot.js'; import { showPickups, showHaul } from '../ui/pickupFeed.js'; import { claimHauls } from '../ui/haulCards.js';   // QUICK-LOOT B4: the wheel, the take, and the two keys that arm what the next activate means; PICKUP-FEED: what a take moved, as cards (the take's `took`)
+import { findHaul } from '../ui/haulCards.js'; import { setSilverFinder, silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS: a loot find's card; the finder every host's loot door asks, and a headstone's find
+import { setWalletSilver } from '../systems/walletItem.js';   // WALLET1: the wallet counts the account's silver
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: the contents ladder's one law (AUDIT-WH H3)
 import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:534-548), outdoors too
@@ -477,7 +482,7 @@ import { createSailingCabinLink } from '../net/sailingCabinLink.js';
 import { capsuleFits } from '../player/parkour.js';
 import { TRIGGER_MODEL as CSA_TRIGGER_MODEL, setLights as csaSetLights, HULL_NAMES as CSA_HULL_NAMES, nodeOf as csaNodeOf, AUDIO_CLIPS as CSA_AUDIO_CLIPS, colliderBoundsInChildren as csaColliderBoundsInChildren, animatorOf as csaAnimatorOf, meshLocalBounds as csaMeshLocalBounds } from '../systems/comeSailAwayBoat.js';   // CSA-B: the probe's lanterns; CSA-D: the plaque's word for a boat; CSA-G: the loops' objects and the five clips; CSA-J: Eye of the Beholder's Collider.bounds
 import { travelMapPicture, TRAVEL_MAP_IMG, LINE_TEXTURE as CSA_LINE_TEXTURE } from '../systems/comeSailAwayMap.js';   // CSA-I: the position reading's picture and lines
-import { createComeSailAwayRuntime, comeSailAwayCarrier, WATER_WALKING_SILENT, COME_SAIL_AWAY_VENDOR, CONSOLE as CSA_CONSOLE, NO_WATER_LEVEL, NICE_BOAT_TEXT as CSA_NICE_BOAT_TEXT, activationModelOf as csaActivationModelOf, customModelOf as csaCustomModelOf, ACTIVATION_DISTANCE as CSA_ACTIVATION_DISTANCE, windWidgetFrameCount as csaWindWidgetFrameCount, BOAT_ACTIONS as CSA_BOAT_ACTIONS, HANDLING as CSA_HANDLING, hullFromMessage as csaHullFromMessage, tileMapIndexAtPosition as csaTileMapIndexAtPosition } from '../systems/comeSailAway.js';   // NAV-H: the tile a sea ship floats on
+import { createComeSailAwayRuntime, comeSailAwayCarrier, WATER_WALKING_SILENT, COME_SAIL_AWAY_VENDOR, CONSOLE as CSA_CONSOLE, NO_WATER_LEVEL, NICE_BOAT_TEXT as CSA_NICE_BOAT_TEXT, activationModelOf as csaActivationModelOf, customModelOf as csaCustomModelOf, ACTIVATION_DISTANCE as CSA_ACTIVATION_DISTANCE, windWidgetFrameCount as csaWindWidgetFrameCount, BOAT_ACTIONS as CSA_BOAT_ACTIONS, hullFromMessage as csaHullFromMessage, tileMapIndexAtPosition as csaTileMapIndexAtPosition } from '../systems/comeSailAway.js';   // NAV-H: the tile a sea ship floats on
 import { windWidgetFrameUrl as csaWindWidgetFrameUrl, waveDerivedUrl as csaWaveDerivedUrl, wavePaintUrl as csaWavePaintUrl, soundUrl as csaSoundUrl } from '../systems/comeSailAwayModels.js';   // CSA-E: the wind widget's pictures; CSA-F: the waves' recipes and paints
 import { WAVE_FRAME_COUNT as CSA_WAVE_FRAME_COUNT, waveDitherOf as csaWaveDitherOf } from '../systems/comeSailAwayWaves.js';   // CSA-F
 import { ComeSailAwayRenderer, softParticleTexture as csaSoftParticleTexture } from '../render/comeSailAwayRender.js';   // CSA-F: the waves' and the particles' passes
@@ -516,6 +521,17 @@ import { RAIDER_LEAD_S } from '../systems/naval/navalRaiders.js';   // NAV-R: a 
 import { setRaidingPartiesHost, raidFrame as raidingPartiesFrame, raidState, raidingPartiesOn, raidTypeName as raidKindName, raidDefendingHere, outOfSight as raidOutOfSight, raidWireWord, raidPeerWord, raidRelayWord, raidTownsFor, RAID_SPAWN_MIN_DISTANCE, RAID_SPAWN_MAX_DISTANCE } from '../systems/raidingParties.js';   // RAID1: World Events - Raiding Parties, the towns' raids
 import { modSaveRecords, restoreModSaveRecords, newGameModSaveRecords, registerModSaveData } from '../systems/modSaveData.js';   // WA1: DFU's per-mod save slot, for the mods after HCC; OH-D: Ocean Holes' OceanHoleSaveData
 import { applyDeathPenalty, deathPenaltyText, stateDeathLoss, statedDeathLoss } from '../systems/deathPenalty.js';   // DEATH-PENALTY: an online death costs a tenth of the purse
+import { createLegacyHost, LEGACY_TEXT, REMAINS_FLAT } from './legacyHost.js';   // LEGACY1: Project Legacy's family - the record, the deaths, the births
+import { isFamilyRes } from '../systems/legacy/household.js';   // LEGACY-HOME: one of the line among a town's residents
+import { legacyOn, legacySettings } from '../systems/legacy/settings.js';
+import { listFamilies, newestSaveOf } from '../systems/legacy/store.js';
+import { nearestTown, nearestTownAnywhere, isTownEntry, loadSearch } from '../systems/legacy/places.js';
+import { setFamilyProvider, raceWord, identityLine } from '../ui/familyPages.js';   // LEGACY3: the pause window's Family tab
+import { createSuccessionOverlay, successionOpen, createKinOverlay } from '../ui/legacyDoor.js';   // LEGACY3: who carries the line on - AUDIT LEGACY: and the death's own screen while it stands
+import { createFaceLoader } from '../ui/partyPanel.js';   // LEGACY3: a member's portrait, the party HUD's own door
+import { goldPiecesOf as legacyGold, addItem as legacyAddItem, letterOfCredit } from '../systems/inventory.js';   // LEGACY1: the estate
+import { tabStorage } from '../systems/appStorage.js';   // LEGACY1: a birth crosses the reload in the tab's own store
+import { MONTH_NAMES } from '../systems/gameDate.js';
 import { createBountyHost } from './bountyHost.js';   // BOUNTY1: the town's bounty boards - the hunts, their packs, their purse
 import { createBountyFarms, farmSpotLocal, pickFarm } from './bountyFarms.js';   // BOUNTY-FARM: a farm on a farm bounty's pixel, while it is held
 import { questBoardIndices, bountyDungeons } from '../systems/bountyBoard.js';   // BOUNTY1: which of a town's boards post bounties (half); RVN7: a revenant's lair, in the boards' ring
@@ -558,7 +574,7 @@ import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exterio
 import { isOnFoot } from '../systems/transport.js';   // TransportManager.IsOnFoot - the raycast's reach and the mounted footstep gate
 import { floorLanding, doorWorldPosition } from '../player/enterExit.js';   // FixStanding for the exterior arrivals (2026-08-27); SD2b: where a Hollow's mouth stands, to find it at
 import { jumpSpeedMultiplier, isEnhancedJumping, tallySkill, SKILLS } from '../systems/skills.js';   // TO1: the avoid-encounter roll reads skillValue live (imported above) Stealth   // AUDIT 64 F2: CheckAirControl's IsEnhancedJumping disjunct
-import { playerEntity, surfacePlayer, hurtPlayer, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setAvoidDeathHook, registerDuelFell, duelSpare, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
+import { playerEntity, surfacePlayer, hurtPlayer, playerBlowCameToNothing, setDeathPresenter, presentPlayerDeath, setDeathListener, setAvoidDeathHook, registerDuelFell, duelSpare, setStaffPowers, staffPowers, registerLevitateWard, registerFreeFlight } from '../characters/playerEntity.js';   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
 import { SOUND } from '../systems/soundClips.js';
 import { createWeaponRig, autoBuildArms, armIdentityOf, armBuiltFor, armsReady, sheetHolderOf, buildArmsFor, prebuildArmsForSave } from '../combat/weaponRig.js';   // MWA1: the arms at boot; MWA3: the identity the arm should stand for, beside the one it does; MW-EARLY: and before the world is read
 import { weaponPoseOf, applyWeaponPose, mergeWeaponPose, playerMeleeCanHit, registerPlayerSwingListener, WEAPON_REACH } from '../combat/playerWeapon.js';   // HARD2c: the sheath+hand pair as ONE law, and SL-2's per-field merge with the mode host's live rig
@@ -575,7 +591,7 @@ import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
-import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, WORLD_REPUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
+import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, WORLD_REPUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS, SHOWN_MOVE_HOLD_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory; AUDIT 637 D7: the move hold, one law both ends
 import { createSeatLock, SEAT_NOTICE, SEAT_MID_TEXT, PLAY_HERE_LABEL } from '../net/oneSeat.js';   // ONE-SEAT: one tab of a player online - the browser's arm, beside the hub's
 import { readAccount, buyInsignia, equipTitle, equipAura, adoptIdentity as adoptSessionIdentity } from '../net/accountClient.js';   // WB9g: the Broker's insignia - the account's wardrobe, its sale and its wearing, and my own screen's word of it
 import { ownAura } from '../systems/ownGlyphs.js';   // WB9g: the aura at my own feet - the service's last word, kept on the stored session
@@ -619,9 +635,10 @@ import { GROUP_ROLL_RADIUS } from '../systems/campEncounters.js';   // PSCALE1: 
 import {
   realmIo, openRealmBoot, createRealmSession, realmSummaryOf, setRealmNotice, realmCreate, realmPut, realmBootSearch, realmRefusalText,
   sayRealmSave, REALM_OFFLINE_TEXT, REALM_EXIT_WAIT_MS, whenPageHides, whenPageGoes, realmTradeEscrow, realmGoldAct, realmDoorShut,
-  REALM_RESTORED_TEXT, realmSaveWithHeld,
+  REALM_RESTORED_TEXT, realmSaveWithHeld, realmList, realmUnions,
 } from '../systems/realmSaves.js';   // REALM P1.3: an online character is the realm's - joined, loaded and checkpointed through the service
-import { reclaimFromDevice, reclaimLines } from '../systems/realmCustoms.js';   // RESTORE: what customs once kept back, given back at the boot
+import { createRealmLine } from '../systems/legacy/realmLine.js';   // LEGACY7: online, Project Legacy's lines are the realm's
+import { reclaimFromDevice, reclaimLines, crossLeveling, LEVELING_CROSS_LINE } from '../systems/realmCustoms.js';   // RESTORE: what customs once kept back, given back at the boot; LEVEL-ONLINE-3: the realm's one leveling
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
 import { skyClassicMinutes, wallMsForSkyMinutes, skyMinutesPerMsAt } from '../net/skyLaw.js';   // TIME1: the sky's own clock, installed beside the event clock
 import { POSE_STRIKES, isWorldRoom, isCellRoom, cellHaloFor, actFrameFits, sharedClassicMinutes, wallMsForClassicMinutes } from '../net/wire.js';   // WORLD6b-iii(b): the cell seam's halo   // MAC7 #1: the swing's kind on the wire; AUDIT WORLD4 A1: whether an act frame can be said at all
@@ -673,6 +690,9 @@ import { createPeerMenuReader } from '../systems/peerMenuBind.js';   // PEERMENU
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
 import { createProfileWindow, profileView, profileDuelLine, profileRenown, profileGateLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duelSession.js';   // DUEL1: the duel's state machine (pure)
+import { createWedManager, wedWhyText, wedMineText } from '../net/wedSession.js';   // LEGACY7 part three: two players wed - the handshake's state machine (pure)
+import { createFamilyBodies, familyRoomSprites } from '../world/familyBodies.js';   // LEGACY7 part four: the line drawn in its own body, as an online peer is
+import { houseLine } from '../net/houseLaw.js'; import { houseWord } from '../systems/legacy/houseName.js';   // LEGACY7 part three: the house a proposal comes from, on its prompt; LEGACY-NAME: a seat's house said once
 import { createDuelRecords, duelUncountedText } from '../net/duelRecord.js';   // DUEL1: the Inspect card's duelling record, asked and kept
 import { createDuelPrompt } from '../ui/duelPrompt.js';   // DUEL1: the challenge, as the challenged player sees it
 import { DuelWallRenderer } from '../render/duelWall.js';   // DUEL1: the ring's holographic wall
@@ -912,6 +932,20 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  checkpoint (the composers' sink, scenes/shared.js realmSaveSink), and its end - another tab joined it, it was
    *  deleted, the account signed out - takes the player to the door with the reason. */
   const realmSession = realmBoot ? createRealmSession({ io: realmIoNow(), id: params.get('realm'), lease: realmBoot.lease, seq: realmBoot.seq, gzip: realmBoot.gzip, onLost: (why) => realmLost(why) }) : null;   // REALM-GZIP: packed when the join said so
+  // LEGACY7 (bible/06-Systems/Legacy-Arc.md section 9): ONLINE, PROJECT LEGACY'S LINES ARE THE REALM'S - read into the
+  // device's store before any save is restored (a death another device wrote stands here), written after each of the
+  // device's writes; and the account's living realm characters, the question "is there a save of this member?" online
+  // AUDIT LEGACY III O2/P1: a line the realm refuses for the record's own sake is said, once (realmLine.js onRefused)
+  const legacyRealmLine = params.has('online') && (realmBoot || realmNew)
+    ? createRealmLine({ io: realmIoNow, storage: () => appStorage(), onRefused: (id, error) => { townTalk.say(LEGACY_TEXT.lineRefused(realmRefusalText(error))); } }) : null;
+  /** @type {Set<string> | null} the living realm characters' ids - null unknown (unread: every id is taken to stand) */
+  let legacyRealmRoster = null;
+  if (legacyRealmLine) {
+    status('Reading the family');
+    await legacyRealmLine.pull().catch((e) => console.warn('[legacy] the realm\'s lines were not read', e));
+    const listed = await realmList(realmIoNow()).catch(() => null);
+    if (listed?.ok) legacyRealmRoster = new Set(listed.characters.map((c) => String(c.id)));
+  }
   // REALM P1.3: a realm checkpoint that LANDS is a save that lands - the gate's spoils it was composed holding are then
   // safe on the service, and their device record goes (scenes/spoilsPool.js saved, as onSlotSaved tells it for a slot).
   // Without it no realm save ever cleared them, and every boot handed the same spoils back. The hooks are the spoils
@@ -940,6 +974,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   if (testRoomOffline) { params.delete('online'); publishBootParams(params); }
   if (testRoomOffline && realmSession) { setRealmNotice(globalThis.sessionStorage, realmRefusalText('test-room')); exitToTitleMenu(); return; }   // REALM P1.3: never the realm's
   const loansForgiven = realmBoot ? forgiveLoans(bootSnapRead) : null;   // LOAN-AMNESTY: the Empire's amnesty, into the one parse before it is restored and before the join settles a loan (systems/banking.js)
+  const releveled = realmBoot && bootSnapRead ? crossLeveling(bootSnapRead) : false;   // LEVEL-ONLINE-3: an Oblivion-levelling realm character onto Daggerfall's leveling, into the one parse before it is restored (systems/realmCustoms.js)
   const empireFolded = realmBoot ? foldEmpireAccounts(bootSnapRead) : null;   // EMPIRE-ACCOUNT: every branch's gold into the Empire's one account, before it is restored and before the join settles a loan (systems/banking.js)
   if (refuseOnlinePowerFlags(params).length) publishBootParams(params);   // REALM P0.1: ?shot, ?fly, ?nofoes and the rest - dropped online before anything below reads them
   const regionName = params.get('region') || 'Daggerfall';
@@ -965,6 +1000,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     else if (name === 'eventide') audio.playOneShotId(SPELL_CAST_SOUND[4], 1);
     else if (name === 'mark') audio.playOneShot(SOUND.DrawWeapon, 1);   // RAID4b: No Escape - a blade drawn for the next of them
     else if (name === 'ward') audio.playOneShot(SOUND.EquipMaceOrHammer, 1);   // RAID4b: Iron Hide - iron closing over you
+    else if (name === 'shed') audio.playOneShot(SOUND.SplashLarge, 1);   // SERPENT-SET: Shed Skin - the old skin into the sea
   } });
   // A1: THE TEXTURE SEASON IS THE CALENDAR'S, NOT A URL PARAM.
   // Every production site in the reference reads the world clock -
@@ -1304,7 +1340,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // SEAT1a (Seats-Arc 3.1): every location with a Palace a seat, the three capitals crowns - over the SAME rows, the
   // game's own (a mod's rows never count), so every client derives the same seats (systems/townSeats.js). Online alone.
   const townSeats = deriveTownSeats(_hubRows, { regionNameOf: (r) => maps.getRegionName(r), isHub: (k) => regionHubs.byMapId.has(k) });
-  _hubRows.length = 0;
+  // AUDIT LEGACY III W1: the rows are kept for the Living World's two indices (livingTownsIndex, livingDungeonsIndex -
+  // built at their first ask, far below) and let go once both stand: emptied here, at the boot, every index was empty -
+  // no town for the roads (LW3), no dungeon for the deep (LW6), no town name for an online home of the line
   setSeatTitlePlaces((key) => seatAtMapId(townSeats, key));   // SEAT1c: a seat title worded off the seats this client derived
   /** AUDIT 28 H8: which of a built pixel's boards are bounty boards (systems/bountyBoard.js questBoardIndices), worked out
    *  once a pixel - the count over the boards and the press's targets asked it every frame, a sort each time. A pixel's
@@ -1317,7 +1355,27 @@ export async function bootWorld(canvas, renderer, params, status) {
   // off `params`: `onlineOn` is declared far below, and a quest can be set up before it is.
   // HOME-RENT: the service's homes door itself, for a home's rooms - read at its door, rented, offered, collected
   const homesApi = params.has('online') ? accountHomes({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }) : null;
-  const onlineHomes = homesApi ? createOnlineHomes({ api: homesApi, character: () => characterIdOf(playerEntity) }) : null;
+  const onlineHomes = homesApi ? createOnlineHomes({ api: homesApi, character: () => characterIdOf(playerEntity), onWrote: () => legacyOnlineHomesRead() }) : null;   // LEGACY7 part five: a home of mine bought, sold or changed - the line's to learn again
+  /** LEGACY7 part five: ONLINE, THE LINE'S HOUSES ARE ITS MEMBERS' ONLINE HOMES (Legacy-Arc 10b) - this realm character's
+   *  rows of the account's homes (/v1/homes/mine; HOME1: a home is a realm character's), each named by its town. Read at
+   *  the boot and after each home of mine changed (the registry's `onWrote`); the house's save takes the last read - null
+   *  until one landed, which learns nothing and drops nothing (legacyHost.js syncHousesNow). */
+  let _legacyOnlineHomes = null;
+  /** AUDIT LEGACY III W5: the read asked last - an older answer landing after it changes nothing (_pinsGen's law). */
+  let _legacyHomesGen = 0;
+  function legacyOnlineHomesRead() {
+    if (!homesApi || !realmSession) return;
+    const me = realmSession.id;
+    const gen = ++_legacyHomesGen;
+    homesApi.mine().then((r) => {
+      if (gen !== _legacyHomesGen || !r?.ok || !Array.isArray(r.data?.homes)) return;
+      _legacyOnlineHomes = r.data.homes.filter((h) => h?.character === me).map((h) => ({
+        regionIndex: h.region | 0, mapId: h.mapId >>> 0, buildingKey: h.buildingKey | 0,
+        // AUDIT LEGACY III W1: named off the boot's own complete table, the town's by its map id
+        location: _townOfMapId.get(h.mapId >>> 0)?.name ?? '',
+      }));
+    }).catch(() => {});
+  }
   // WD3: THE TOWNS THAT HOLD AN ONLINE HOME, AND THE LAYOUT EACH WAS BOUGHT IN (net/homeLaw.js) - asked now, beside the
   // boot's own loading, and answered into the layout pins before the first town stands (below, at the first build), so
   // every client of the room stands a home's town as its homes were bought in it. An answer that does not come is asked
@@ -1344,7 +1402,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // MARKS1 (PROF0 10.5): the account's Marks as this page knows them - the balance, the Bank's sale carried to its end
   // (a sale whose answer was lost is kept and settled), a guild's Marks moved (net/marksBook.js). Online only.
   const marksBook = params.has('online')
-    ? createMarksBook({ door: accountMarks({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), store: { get: (k) => _spoilsStore.get(k), set: (k, v) => _spoilsStore.set(k, v) }, character: () => characterIdOf(playerEntity) })   // AUDIT WB A6's one store, reached at bank time (it is made below)
+    ? createMarksBook({ door: accountMarks({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), store: { get: (k) => _spoilsStore.get(k), set: (k, v) => _spoilsStore.set(k, v) }, character: () => characterIdOf(playerEntity),   // AUDIT WB A6's one store, reached at bank time (it is made below)
+      nowMs: () => Date.now() + _sharedOffsetMs })   // SILVER-FINDS: the day's finds counted by the shared clock
     : null;
   // NOTICE1 (PROF0 10.1): this device's Notice Boards - each town's board read through a minute's cache, what has been
   // read of it (the count over the board is the rest), a note pinned with its own request id (net/noticeBook.js).
@@ -2128,11 +2187,24 @@ export async function bootWorld(canvas, renderer, params, status) {
   const livingBaseRate = () => (params.has('online') ? skyMinutesPerMsAt(Date.now() + _sharedOffsetMs) * 1000 : CLASSIC_MINUTES_PER_SECOND);
   const livingRate = () => (params.has('online') ? livingBaseRate() : CLASSIC_MINUTES_PER_SECOND * worldTimeScale());
   let livingRelations = createRelations();   // LW2: how the living world regards this character - the save's `LivingWorld` record
+  const LEGACY_REMAINS_NEAR = 60 * 40;   // LEGACY4: 60 m in native world units (40 to the metre) - near enough to find the fallen's remains
+  const LEGACY_REMAINS_NEAR_DUNGEON = 6;   // AUDIT LEGACY H1: underground, six paces in the scene's metres (the wagon's own access reach is five)
+  /** LEGACY7: an online birth's first save - the realm's checkpoint, answered later (legacyRealmBirth) - or null. */
+  let legacyFirstSave = null;
+  let legacyHost = null;   // LEGACY1: Project Legacy's family (scenes/legacyHost.js) - made beside the bounty boards, read by the death resets above it
+  let _legacyMade = () => {};
+  /** LEGACY1: the host, once made - a birth's chargen (`?legacyborn=`) waits for it, since the flow's files can land first. */
+  const legacyReady = new Promise((res) => { _legacyMade = res; });
   registerModSaveData(LIVING_WORLD_VENDOR, {
     newSaveData: () => null,
     getSaveData: () => livingRelations.snapshot(),
     restoreSaveData: (rec) => { livingRelations = createRelations(rec); },
+    // LEGACY6: a new character knows nobody - unless born of the house on this page: the birth's share of the parent's
+    // regard (legacyHost.seedRegards), whichever of the birth and this reset lands first
+    newGame: () => { livingRelations = createRelations(); legacyHost?.seedRegards(livingRelations); },
   });
+  /** The Living World's day of the sky's minute (livingTown.js dayOf: a day starts at 04:00). */
+  const livingRegardDay = () => Math.floor((skyMinutes() - 240) / 1440);
 
   // A5b: OUTDOOR MUSIC. AssignPlaylist's City/Wilderness arms - night
   // overrides everything, and by day the weather picks the list
@@ -2218,6 +2290,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // or none), asked once a pair in ONE direction (the lower map id first, the other its reverse) so every client walks
   // the same way, a few a frame. A traveller's trip of a cycle never changes, so the book keeps every one it has made.
   let _livingTowns = null;
+  /** AUDIT LEGACY III W1: the game's rows let go once both indices that read them stand. */
+  const releaseHubRows = () => { if (_livingTowns && _livingDungeons) _hubRows.length = 0; };
   const livingTownsIndex = () => {
     if (_livingTowns) return _livingTowns;
     _livingTowns = new Map();
@@ -2232,6 +2306,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         port: hasPort(md.mapId),
       });
     }
+    releaseHubRows();
     return _livingTowns;
   };
   // LW6: THE DUNGEONS an adventurer dives - the game's own rows of a dungeon's kind (a labyrinth, a keep, a ruin, a
@@ -2248,6 +2323,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const d = { mapId: md.mapId >>> 0, name: String(loc.name ?? ''), px: p.x, py: p.y, type: md.locationType, region: loc.regionIndex, blocks: 1, dungeon: true, dungeonType: md.dungeonType ?? 0 };
       _livingDungeons.set(p.y * 1000 + p.x, d); _livingDungeonById.set(d.mapId, d);
     }
+    releaseHubRows();
     return _livingDungeons;
   };
   const _livingDungeonsNear = new Map();
@@ -2285,12 +2361,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   const livingRouteOf = (a, b) => livingWays.wayOf(a, b);
   const _livingRosters = new Map();
+  /** @type {((nx: number, nz: number) => boolean) | null} */
+  let _livingDry = null;
   const livingTripWorld = {
     townsNear: livingTownsNear,
     routeOf: livingRouteOf,
     rosterOf: (t) => { let r = _livingRosters.get(t.mapId); if (!r) { r = travellerRoster(t); _livingRosters.set(t.mapId, r); } return r; },
     templeTown: (t) => t.type === LOCATION_TYPES.ReligionTemple || t.blocks >= 9,
     dungeonsNear: livingDungeonsNear,   // LW6: an adventurer's dives
+    dryAt: (nx, nz) => (_livingDry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground
   };
   const _livingTripMemo = new Map();
   let _livingWaysSeen = 0;
@@ -2339,13 +2418,26 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** LW7: THE HAND DEATHS (lives.js handDeath) - whether a hand took a resident by minute `t`, and the player striking one
    *  down at `t` (the turn at their place and cycle, with whether it was seen and the name they bore). */
   const livingDeadAt = (res, t) => {
+    if (isFamilyRes(res)) return false;   // LEGACY-HOME: one of the line dies in the family's record, and stands no more
     const turns = livingRelations.turns();
-    if (!turns.slain.size && !turns.died.size) return false;
+    if (!turns.slain.size && !turns.died.size && !turns.killed.size) return false;   // WATCH-FIX: and one of the watch another hand killed
     const h = livingPlaceOf(res, livingCycleOf(res, Math.floor((t - 240) / 1440))).hand;
     return h != null && h <= t;
   };
-  const livingSlay = (res, t, seen) => { livingRelations.turn('slain', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, seen, who: res.name }); };
-  const livingDied = (res, t) => { livingRelations.turn('died', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, who: res.name }); };   // LW7b: at the player's side
+  const livingSlay = (res, t, seen) => {
+    if (isFamilyRes(res)) { legacyHost?.kinSlain(res); return; }   // LEGACY-HOME: kin struck down - the family's record keeps the death
+    legacyHost?.residentDied(res.id);   // LEGACY5: a courtship of theirs ends
+    livingRelations.turn('slain', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, seen, who: res.name });
+  };
+  const livingDied = (res, t) => { legacyHost?.residentDied(res.id); livingRelations.turn('died', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, who: res.name }); };   // LW7b: at the player's side
+  const livingKilled = (res, t) => {   // WATCH-FIX: by another hand, in the player's town
+    // PROJECT LEGACY'S MERGE OF WATCH-PROTECTS: one of the line a beast cut down in the street dies in the family's record.
+    // They were never the census's: a turn of the lives' named a census place not theirs, and the record, alive still,
+    // stood them again with the next day's people
+    if (isFamilyRes(res)) { legacyHost?.kinKilled(res); return; }
+    legacyHost?.residentDied(res.id);   // LEGACY5: a courtship of theirs ends
+    livingRelations.turn('killed', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, who: res.name });
+  };
   /** A traveller's place on a trip, at the trip's own cycle (their town's roster's, by their slot). */
   const livingTripPlace = (res, trip) => {
     const town = livingTownOfId(res.town);
@@ -2405,7 +2497,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (let d = 0; d <= NEWS_DAYS; d++) { const tr = townTrips(town, noon - d * 1440, livingTripWorld, o); if (tr) told.push(...tr); }
     const won = livingRelations.turns().won;
     const news = newsOf(told, noon).map((n) => ({ ...n, foe: n.foe != null ? livingFoeWord(n.foe, 2) : '', helped: won.has(n.enc) }));   // LW7: a fight the player turned
-    return { away, visitors, holders, news };
+    // LW-TALK: the towns of its road - where its people's trips of these days were bound - for its talk's {place}
+    const places = [...new Set([...trips, ...told].map((tr) => tr.to?.name).filter(Boolean))].sort();
+    return { away, visitors, holders, news, places };
   };
   // LW5: THE BAY'S SAILORS (systems/livingWorld/portCrews.js) - a port's sailors the crews of the packets calling at it,
   // each where her clock has her (the shared one the naval host stands and steers her by, raidNowMs): aboard under way,
@@ -2572,6 +2666,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // in, stood in its room and talked to through the street's own ray; their regard hears it through the room's own door
   // (a caught hand seen by those in the room)
   let livingIndoors = null;
+  /** LEGACY7 part four: THE LINE IN ITS OWN BODY (world/familyBodies.js) - a member whose newest save wrote down their
+   *  look drawn as an online peer is, by layers of the line's own for each place (the street's, a room's): a RemotePlayers
+   *  with no sound - a townsperson's steps are the town's - and a PeerBodies behind the enhanced lane's own gate. */
+  let familyStreet = null, familyRoom = null;
+  const makeFamilyBodies = () => createFamilyBodies({
+    dolls: new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture, uploadRecordFrame } }),
+    bodies: new PeerBodies({ renderer, enabled: () => isEnhanced() && morrowindDataCount() > 0, generation: morrowindDataGeneration, collider: () => collider }),
+  });
   const _livingIndoorsDoor = {
     refuses: (p) => livingIndoors?.town()?.refuses(p) ?? null,
     talked: (p) => livingIndoors?.town()?.talked(p) ?? null,
@@ -2586,8 +2688,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   const livingIndoorsStep = (dt) => {
     if (!livingWorldOn() || _mode() !== 'interior') { if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear(); return; }   // LW-FIX1: a room with nobody in it let go too (a house asleep) - the next way in sounds it again
     livingIndoors ??= createLivingIndoors({
-      sprites: createTravellerSprites({ renderer, getTexture, uploadRecordFrame, living: _livingIndoorsDoor }),
-      building: () => { const b = modes?.interiorBuilding; const town = b && !modes?.interiorCtx?.ownedRoom ? livingTownOfMap(b.townMapId ?? 0) : null; return b && town ? { key: b.buildingKey, town } : null; },   // AUDIT-E1: never a player's own room
+      sprites: familyRoomSprites(createTravellerSprites({ renderer, getTexture, uploadRecordFrame, living: _livingIndoorsDoor }), (familyRoom ??= makeFamilyBodies()), _livingIndoorsDoor),   // LEGACY7 part four: the line in its own body, the rest as before
+      building: () => {
+        const b = modes?.interiorBuilding;
+        const town = b ? livingTownOfMap(b.townMapId ?? 0) : null;
+        if (!b || !town) return null;
+        // LEGACY-HOME: a house of Project Legacy's family holds the line and no one else - the one played's own included
+        if (legacyHost?.isFamilyHouse({ mapId: b.townMapId ?? 0, buildingKey: b.buildingKey })) return { key: b.buildingKey, town, only: isFamilyRes };
+        return modes?.interiorCtx?.ownedRoom ? null : { key: b.buildingKey, town };   // AUDIT-E1: never a player's own room
+      },
       collider: () => modes?.interiorCollider ?? null,
       floorAt: (x, y, z) => { const d = modes?.interiorCollider?.raycast([x, y, z], [0, -1, 0], 3); return Number.isFinite(d) ? y - d : null; },
       origin: () => modes?.interiorCtx?.landing ?? null,   // AUDIT-E4: the landing of the building's first door - a load made inside, another door, a peer: the room laid out the same
@@ -2595,6 +2704,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       staticFeet: () => (modes?.interiorCtx?.people ?? []).filter((p) => p.active !== false).map((p) => [p.x, p.y, p.z]).concat(modes?.interiorQuestFeet?.() ?? []),   // AUDIT-E7: and the quest's people
       clock: skyMinutes,
       ready: () => !_loading && !modes?.transitioning,
+      beds: () => modes?.interiorBeds ?? [],   // LW-LODGE: the tavern's rooms for its lodgers...
+      rented: () => modes?.rentedBedHere ?? -1,   // ...but the one the player rents
     });
     livingIndoors.frame(dt, player.pos, cam.yaw, cam.pos);
   };
@@ -2610,6 +2721,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       return null;
     }
     return { ...look, frameCount: (rec) => tex.getFrameCount(rec), sex: res.sex };
+  };
+  /** LW-LOOKS: a still picture a resident stands as (an NPC flat - looks.js) - its art loaded into the people's own texture
+   *  table as a class's is, and its record's frames; null until it is. */
+  const livingFlatOf = (flat) => {
+    const tex = personTex.get(flat.archive);
+    if (!tex) {
+      if (!_livingClassLoading.has(flat.archive)) { _livingClassLoading.add(flat.archive); getTexture(flat.archive).then((t) => { if (t) personTex.set(flat.archive, t); }).catch(() => {}); }
+      return null;
+    }
+    return { archive: flat.archive, record: flat.record, frameCount: Math.max(1, tex.getFrameCount(flat.record)) };
   };
   // the person's town on the road: the roads' layer answers a refusal and notes a word (townTalk's `livingTalk` door)
   const _livingRoadsDoor = { refuses: (p) => livingRoads?.refuses(p) ?? null, talked: (p) => livingRoads?.talked(p) ?? null, caught: (p) => livingRoads?.caught(p) ?? null, roadside: true };
@@ -3050,7 +3171,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // (x, z) and the 49-entry scan (with a fresh translation array per
   // entry, inside the collider's substeps) collapses to one Map.get.
   // The invariant it leans on - the current pixel's frame sits at the
-  // origin under compensation - is the one streaming.test.js:139 fuzz
+  // origin under compensation - is the one streaming.test.js:"2000-step fuzz holds" fuzz
   // pins over 2000 crossings.
   const _htT = [0, 0, 0];
   /** @param {boolean} [terrainOnly] - DW-D: a carved cell's seafloor is no DaggerfallTerrain (DeepWaterFloorMesh), so
@@ -4026,12 +4147,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  AUDIT-FIELD F7: A FLOOR, NOT THE WHOLE DISTANCE. The first cut
    *  called 64 "more than the fastest accelerated step", which is true
    *  of a fixed physics STEP and false of a FRAME: the motor moves
-   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1495),
+   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:"if (!this.levitating)"),
    *  and the frame that hitches is exactly the frame in which the
    *  streamer is behind. A horse at the shipped default limit of sixty
    *  covers ~65 units in a 10 fps frame and ~120 at the mod's ceiling of
    *  a hundred - past a 64-unit probe, off the built world, and once the
-   *  motor is airborne `airControl` is false (motor.js:3174) so zeroing
+   *  motor is airborne `airControl` is false (motor.js:"a Jump-buffed player") so zeroing
    *  the drive on the NEXT frame no longer steers: the fall is already
    *  paid for. `travelLookahead` measures the frame that is about to
    *  run instead, and keeps 64 as its floor. */
@@ -4673,10 +4794,16 @@ export async function bootWorld(canvas, renderer, params, status) {
           suppressSpawns: () => racialSuppressPopulationSpawns(playerEntity),   // V4: the transformed lycanthrope empties the streets - here they stay in
           relations: () => livingRelations, playerName: () => playerEntity.name ?? '', weather: () => weather,
           townName: dfLocation.name, regionName: dfLocation.regionName ?? '',
-          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf,   // LW3: its travellers away and armed, its visitors
+          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf, flatOf: livingFlatOf,   // LW3: its travellers away and armed, its visitors - LW-LOOKS: its still pictures
+          familyNews: (t) => legacyHost?.newsFor(livingTown.mapId, t) ?? null,   // LEGACY6: what the town says of the line
+          extraPeople: (day, town) => legacyHost?.residentsOf(livingTown.mapId, (seed) => town.homeFor(seed), (id) => town.residents.find((r) => r.id === id) ?? null) ?? null,   // LEGACY-HOME: Project Legacy's line, at home here (LEGACY5: a spouse, the census's own)
           ashore: (res) => livingAshore(livingTown, res), crews: () => livingCrews(livingTown),   // LW5: its sailors by their ships' clock; the crews lying here
           // LW7: a townsperson's place by the lives, a hand's death, the player's, and the town's own lines of sight
-          holderOf: (res, day) => livingPlaceOf(res, livingCycleOf(res, day)).holder, deadAt: livingDeadAt, slay: livingSlay,
+          // LEGACY5: a townsperson wed into Project Legacy's line is the line's resident now (extraPeople) - the census's place
+          // stands empty of them, living or dead
+          holderOf: (res, day) => (legacyHost?.holdsResident(res.id) ? null : livingPlaceOf(res, livingCycleOf(res, day)).holder), deadAt: livingDeadAt, slay: livingSlay, killed: livingKilled,   // WATCH-FIX: one of the watch another hand cut down
+          legalStanding: (region) => ({ rep: legalRepOf(playerEntity, region), known: knownCriminal(playerEntity, region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() }) }),   // WATCH-KNOWS: the watch's word by the law
+          dangers: () => livingDangers(px, py, locOrigin),   // WATCH-PROTECTS: the monsters its people run from
           sees: (a, b) => {
             const tr = state.pixelTranslation(px, py);
             const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], len = Math.hypot(d[0], d[1], d[2]);
@@ -4963,7 +5090,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 26 (F019): the pixel's street StaticNPCs - identity inputs
     // + the billboard extent the activation ray needs, resolved the
     // way the interior host resolves its people's
-    // (interiorContext.js:445-466). FLATS.CFG is awaited because
+    // (interiorContext.js:"const standPerson"). FLATS.CFG is awaited because
     // SetLayoutData's exterior overload reads it for the gender
     // (StaticNPC.cs:185-194); loadFlats never throws and is warmed with
     // the scene, so this is a coalesced wait. The list rides the pixel,
@@ -5821,7 +5948,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Mac's word, and the whole of it: `resting` is not a fatigue knob,
     // it is the needs' one word for "sat still", and other laws read
     // it. It held the bare-skin block's naked-cold and sunburn ticks
-    // and the byFire exposure damage (needs.js:544, :520) - the health
+    // and the byFire exposure damage (needs.js:"&& !vampire && !ctx.beastForm", needs.js:"if (!resting || !env.byFire)") - the health
     // Mac wants ticking. One flag, several laws; the journey takes the
     // world as it finds it.
     //
@@ -5881,7 +6008,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // online" a frame later; and not on the reset, which a fast F11
       // reaches before that frame. The reset reads this snapshot.
       _deathWasOnline = _onlineWorldSession();
-      townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => (_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer)) }));   // D1; D-ONLINE1: online play respawns instead of ending the run
+      townTalk.showOverlay(new DeathScreen({ eyeHeight: player.eye[1] - player.pos[1], capsuleHeight: player.height, onReset: () => (legacyDeathReset() || (_deathWasOnline ? respawnOnlinePlayer() : endRunToTitleMenu(renderer))) }));   // D1; D-ONLINE1: online play respawns instead of ending the run; LEGACY1: Project Legacy asked first
       // RISE-STUCK (Ninilac: "fast travelling while playing online ...
       // climb a wall that was in the way and died"): A DEATH ENDS THE
       // JOURNEY - the mod's own "pauseTravel" message (TravelOptionsMod
@@ -6046,7 +6173,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     renderer, canvas, fetchBytes, playerEntity, palette,
     // LW2: the living world's two doors - an enemy's refusal, and a word noted in the resident's regard (the body's
     // own town answers both: systems/livingWorld/livingTown.js)
-    livingTalk: { refuses: (person) => person?.living?.town?.refuses(person) ?? null, talked: (person) => person?.living?.town?.talked(person), caught: (person) => person?.living?.town?.caught?.(person) },
+    livingTalk: { refuses: (person) => person?.living?.town?.refuses(person) ?? null, talked: (person) => person?.living?.town?.talked(person), caught: (person) => person?.living?.town?.caught?.(person),
+      kin: (person, talk) => legacyMeetKin(person, talk) },   // LEGACY-HOME: one of the player's line, met
+    legacyTopics: (person) => legacyTopicRows(person),   // LEGACY5: courting, the proposal, the wedding, the family
     livingTone: (person, tone) => person?.living?.town?.toned?.(person, tone),   // LW7: a question's tone, in a resident's regard
     // RP1: a GETTER, not startLoc's number - see the note above. It is
     // declared below this call, so the arrow defers the read to call
@@ -6361,6 +6490,30 @@ export async function bootWorld(canvas, renderer, params, status) {
         if (!res.ok) console.warn(`[testroom] arms refused - ${res.stage}: ${res.error}`);
       }
     })().catch((e) => console.warn('[testroom] boot failed; the wizard stands in', e));
+  } else if (!playerEntity.chargenDone && params.has('legacyborn') && !params.has('load')) {
+    // LEGACY1 (bible/06-Systems/Legacy-Arc.md section 4): A MEMBER OF THE FAMILY IS BORN - Project Legacy's heir, or a
+    // sibling played for the first time. Not the wizard: the person's own record, through THE ONE CONSTRUCTION SEAM
+    // (finishChargen over a result the family law builds - legacyHost.bornResult), in the town the boot stood the world
+    // in (`?region=&loc=`). AUDIT LEGACY B7: a birth that waits for nobody (a stale address, a birth already made) or
+    // whose files would not load goes back to the title menu, SAID - never to a stranger's wizard: the line waits on the
+    // record (its heir chosen, unborn), and the fallen's save asks again.
+    const legacyBirthFailed = (why) => { console.warn(`[legacy] the birth did not take: ${why}`); setRealmNotice(globalThis.sessionStorage, `The heir could not be born: ${why}. The house waits - load the fallen's save to try again.`); releaseUnloadGuard(); exitToTitleMenu(); };
+    Promise.all([createChargenFlow(fetchBytes), legacyReady]).then(([{ careers, spellsByIndex: sbi, factionDict }, host]) => {
+      spellsByIndex = sbi;
+      const r = host?.bornResult({ careers, factionDict });
+      if (!r) { legacyBirthFailed('no birth waits for this address'); return; }
+      finishChargen(playerEntity, r, sbi);
+      if (sharedClockOn()) playerEntity.lastSkillCheckTime = Math.floor(ownMinutes());   // AUDIT LIVED1b R4, as the wizard's
+      preloadPaperDollArt({ renderer, fetchBytes, palette, getTexture }, { race: r.race, gender: r.gender, faceIndex: r.faceIndex });
+      surfacePlayer();
+      questInitAtGameStart();
+      autoBuildArms(playerEntity);
+      if (realmNew) { legacyRealmBirth(host).catch((e) => { console.error('[legacy] the online birth failed', e); realmLost('server'); }); return; }   // LEGACY7: born into the realm
+      host.onBorn();
+      // AUDIT LEGACY B7: the born member is saved (onBorn) - this page is that save's now, so a reload loads them
+      const key = newestSaveOf(enumerateSaves().info, String(playerEntity.characterId ?? ''));
+      if (key >= 0) { try { globalThis.history.replaceState(globalThis.history.state, '', `${location.pathname}${loadSearch(location.search, key)}`); } catch { /* a page that refuses keeps its address; the menu's Load still finds them */ } }
+    }).catch((e) => legacyBirthFailed(e?.message ?? String(e)));
   } else if (!playerEntity.chargenDone && params.has('class')) {
     // AUDIT 17f: ?class=N is the headless skip - parsed here for the
     // DUNGEON the host might build, but never honoured for the host's
@@ -6371,6 +6524,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           { race: playerEntity.race, gender: playerEntity.gender, faceIndex: playerEntity.faceIndex });
         surfacePlayer();
         questInitAtGameStart();   // Q4-v: OnStartGame for the headless character
+        legacyHost?.onCharacterMade();   // LEGACY1: and its family
       })
       .catch((e) => console.warn('[chargen] CLASS*.CFG unavailable; the interim entity stands in', e));
   } else if (!playerEntity.chargenDone && !params.has('load')
@@ -6409,6 +6563,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           surfacePlayer();
           questInitAtGameStart();   // Q4-v: OnStartGame for the new character
           autoBuildArms(playerEntity);   // MWA1: the new character's arms - race, sex and face are known now
+          legacyHost?.onCharacterMade(r.legacyModel ?? null);   // LEGACY1: the family founded at the character's birth (D9), its model the question's answer
           if (realmNew) realmBirth().catch((e) => { console.error('[realm] the birth failed', e); realmLost('server'); });   // REALM P1.3: born online
         },
       }));
@@ -9292,6 +9447,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     raidHere: () => raidDefendingHere(),   // RAID-GUARDS: a raid on in this town spares its defenders every blow of the player's
     levelBonus: () => seatEdicts.guardLevelBonus(Math.floor(skyMinutes())),   // SEAT1d: a Curfew's night watch - AUDIT SEATS-3 E1: the sky's night (TIME1), the one the town sees
     fightHere: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),   // PROTECT-FIGHT: under the protection, a fight spares the street's walkers
+    oneVoice: () => livingWorldOn(), windowUp: () => townTalk.overlayActive,   // HALT-ONE: the living watch calls as one, and nobody under a window (cityGuards.js)
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.ownMinutes),   // AUDIT 23 (hosts-3): the poison clock
     currentPixelKey: () => `${playerTravelPixel().x},${playerTravelPixel().y}`,   // TrackLooseObject's stamp - the pile seam's key, one shape
@@ -9330,6 +9486,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // X-slice: the encounter-foe pool - S32's above-ground arms go
   // LIVE. Same damage door shape as the guards; no crime machinery.
   const exteriorFoes = createExteriorFoes({
+    oneVoice: () => livingWorldOn(),   // HALT-ONE: a peer's watchman calls on his owner's client, not here
     inLocation: () => _musicInLocationRect(),   // SOFTCAP5: only the wilderness scales its foes (towns and cities never)
     skyMinute: () => Math.floor(skyMinutes()),   // TIME1: the wilds' night is the sky's
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects, groundStands: (x, z) => Number.isFinite(heightAt(x, z)),   // FALL-HOLD: a foe over a pixel not built is held, not stepped
@@ -9744,6 +9901,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and minted the watch outside the wall.
   const _guardPool = () => ((modes?.mode ?? 'exterior') !== 'exterior' ? [] : _livePersons.map(({ person, pos }) => ({
     pos, fwdYaw: person.facingYaw, guard: person.guard, person,   // LW7: whom a swing takes (livingStruckPool)
+    live: ((living) => () => _streetHolds(person, living))(person.living),   // WATCH-FIX: still on the street, as read (cityGuards.js turnNpc)
     disable: () => {
       for (const p of built.values()) {
         const it = p.population?.pool.find((i) => i.person === person);
@@ -9751,21 +9909,59 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
     },
   })));
+  /** WATCH-FIX: a walker read into a pool still on the street - its row active and (the living town's) dressed as the same
+   *  resident it was read as; the conversion never turns one another arm took, nor a body since dressed as another. */
+  const _streetHolds = (person, living) => {
+    for (const p of built.values()) {
+      const it = p.population?.pool.find((i) => i.person === person);
+      if (it) return !!it.active && (person.living ?? null) === (living ?? null);
+    }
+    return false;
+  };
   // LW7 (bible/06-Systems/Living-World.md "LW7"): THE DEEDS AT THE STREET'S SEAMS. A resident a swing or the trample takes
   // (DFU's one-hit civilian, the watch's conversion) is the living world's deed first: one of the watch STRUCK - the
-  // assault that turns them on the player; the guard it stands carries them, and cut down, they are slain for good -
-  // anyone else STRUCK DOWN (their town's: their own and the witnesses turned, the lives take the place)
+  // assault that turns them on the player (the guard stood in his place is followed: livingWatchStep) - anyone else
+  // STRUCK DOWN (their town's: their own and the witnesses turned, the lives take the place)
   const _livingWatchTurned = [];
   const livingDeedOf = (person, near = null) => {
     const town = livingWorldOn() ? person?.living?.town : null;
     if (!town?.slain) return;
     if (!person.guard) { town.slain(person); return; }
-    if (town.struck(person)) _livingWatchTurned.push({ res: person.living.res, from: person.living, town, at: [...person.pos], guard: null, waited: 0 });   // LW-FIX2: his guard found by the mark the conversion puts on it (scenes/livingWatch.js)
+    town.struck(person);
   };
   const livingStruckPool = (pool) => (livingWorldOn() ? pool.map((e) => ({ ...e, disable: () => { livingDeedOf(e.person, e.pos); e.disable(); } })) : pool);
-  /** LW7: each turned watchman's guard found and watched (scenes/livingWatch.js - LW-FIX2: by the conversion's own mark on
-   *  it, and cut down the town's whole deed, `slain`): gone with the crime, or never stood, let be. */
-  const livingWatchStep = () => watchStep(_livingWatchTurned, cityGuards.guards);
+  /** WATCH-FIX: a resident by id among the towns stood (a guard a load restored knows whom he stands for by it alone). */
+  const livingResidentOf = (id) => {
+    for (const p of built.values()) {
+      const town = p.population;
+      const res = town?.residentOf?.(id) ?? null;
+      if (res) return { town, res };
+    }
+    return null;
+  };
+  /** WATCH-FIX: a world point in a living town's own frame (where a guard of its fell, for its witnesses), or null. */
+  const livingLocalOf = (town, feet) => {
+    if (!feet) return null;
+    for (const p of built.values()) {
+      if (p.population !== town) continue;
+      const t = state.pixelTranslation(p.px, p.py);
+      return [feet[0] - t[0] - p.locOrigin[0], feet[1] - t[1], feet[2] - t[2] - p.locOrigin[2]];
+    }
+    return null;
+  };
+  /** LW7 / WATCH-FIX: every guard of the watch's that stands for a resident - the conversion's mark on it, whichever arm
+   *  stood it (a swing, the trample, the crime response, the minute's sweep, the town watch's summons, a load) - followed
+   *  to its end (scenes/livingWatch.js): the resident lent to it meanwhile, then back to their day, or slain by the
+   *  player's own blow, or killed by another hand. */
+  const livingWatchStep = () => watchStep(_livingWatchTurned, cityGuards.guards, { resolve: livingResidentOf, localOf: livingLocalOf });
+  /** WATCH-FIX: THE RESIDENTS ANOTHER PLAYER'S WATCH STANDS FOR HERE - its puppets' `livingId` (WATCH1's records, `lr`),
+   *  each town told, so a resident is never on its street beside his own guard. One set, refilled each frame. */
+  const _livingPeerWatch = new Set();
+  const livingPeerWatchStep = () => {
+    _livingPeerWatch.clear();
+    for (const f of exteriorFoes.foes) if (f.puppet && typeof f.livingId === 'string') _livingPeerWatch.add(f.livingId);
+    for (const p of built.values()) p.population?.peerLend?.(_livingPeerWatch);
+  };
   /** LW7: a swing that met no one in the street, at the road's travellers - the body on the ray within reach (no wall
    *  before it), DFU's one-hit civilian (WeaponManager.cs:504-521, less the watch: there is none on the road): struck
    *  down for good (the roads' deed), the blood, the Brotherhood's five and the racial override's hit. */
@@ -9863,6 +10059,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l),
     playSound: (clip) => audio.playOneShot(clip, 1),
     watchFlees: () => cityGuards.frighten(walkMode && playerSpawned ? player.pos : cam.pos) + (modes?.frightenWatch?.() ?? 0),   // the feet the street's pool is driven against (the frame's update)
+    // WATCH-KNOWS: the living world's watch warns a first minor offence in a region (systems/standing.js warningDue)
+    warnsFirst: () => livingWorldOn(), regionName: (r) => REGION_NAMES[r] ?? 'this region', worldNow: () => trustedWorldMinutes(),
   });
   // REP1: THE WATCH STOPS A KNOWN CRIMINAL IT SEES - on the street, a guard's clear line, once in two game hours per
   // region, never in the grace an answered law gives (scenes/standingHost.js; the law's terms: systems/standing.js).
@@ -9974,6 +10172,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         built: () => built, pixelTranslation: (x, y, out) => state.pixelTranslation(x, y, out),
         pixelInfo: (x, y) => { try { return { climate: maps.getClimateIndex(x, y), region: maps.getRegionIndexAt(x, y) }; } catch { return null; } }, settled: (pos) => { const wc = state.worldCoords(pos), p = worldCoordToMapPixel(wc.x, wc.z), loc = locationIndex.get(`${p.x},${p.y}`); return !!loc?.exterior?.exteriorData && isPlayerInTown(loc.mapTableData?.locationType, { mustBeInLocationRect: true, mustBeOutside: true, inLocationRect: isInLocationRect(wc.x, wc.z, locationWorldRect(loc, p.x, p.y)), inside: false }); },   // SETTLE-STAND: the acts' own settlement check (Foraging's 'town'), asked of a node's place
         nowMs: () => Date.now() + _sharedOffsetMs, haul: (entries) => showHaul(entries),   // HAUL-CARDS: a harvest's goods and XP as one card (the enhanced skin's)
+        marks: marksBook,   // SILVER-FINDS: a harvest's find said, its balance kept
         eye: () => ({ pos: cam.pos, dir: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)] }),
         // AUDIT 29 C1: a node seen - the eye's ray to it through the place's collider (the street's, or the dungeon's own)
         clear: (from, to, underground) => {
@@ -10398,10 +10597,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:3265 mounts the same one, gated on
+  // and dungeonContext.js:"if (opts.enchantCtx !== false)" mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:7315
+  // that context through modes.dungeonCtx - so worldModes.js:"carries no mode qualifier"
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -10431,7 +10630,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // artifact affinity scans saw an empty room. Nothing threw and
   // nothing was logged - the enchantment simply had no effect where
   // the fighting is. The one ctx in play is this mount: no host passes
-  // an enchantCtx at the strike site (formulas.js:522 defaults it
+  // an enchantCtx at the strike site (formulas.js:"why the player arm" defaults it
   // null), so mergeCtx folds this default under every dispatch.
   // The law itself is in shared.js, tested on its own - which pool is
   // live, and whose sinks a record from it must go through. This host
@@ -10497,11 +10696,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:581-586) never looks the record up in `foes`, and
+    // (exteriorFoes.js:"if (f.companion != null) _fullNext") never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1648-1666) gives it -
+    // got exactly what removeGuard (cityGuards.js:"function removeGuard") gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:1046) and spliced out at the end of it (:1245).
+    // (cityGuards.js:"spaceFoes(guards, collider, foeFrameDt(dt))".."if (g.dead) continue;") and spliced out at the end of it (cityGuards.js:"for (let i = guards.length - 1; i >= 0; i--)").
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -11016,6 +11215,34 @@ export async function bootWorld(canvas, renderer, params, status) {
   // none of them: above ground a foe's Continuous Damage never took a
   // round, its poison never fired, and a paralysed foe stayed paralysed.
   subscribeFoePools(playerTicker, [() => cityGuards.guards, () => exteriorFoes.foes], foeSinks);
+  // WATCH-PROTECTS: THE STREET'S PEOPLE AS A MONSTER'S QUARRY (systems/livingWorld/quarry.js) - the living world's
+  // townspeople on the street, none of the watch, each a body at their world feet that a hostile monster fighting hand to
+  // hand may hunt (characters/enemyTargets.js huntsCivilians); struck, killed by another hand (livingTown.js killed)
+  const _quarryOf = new WeakMap();
+  const livingQuarry = () => {
+    if (!livingWorldOn() || _mode() !== 'exterior') return [];
+    const out = [];
+    for (const seat of _livePersons) {
+      const p = seat.person, living = p?.living;
+      if (!living?.town || p.guard) continue;
+      let q = _quarryOf.get(p);
+      if (!q || q.living !== living) { q = makeQuarry(p, (body) => body.living.town.killed(body.person)); _quarryOf.set(p, q); }   // a row dressed anew: another body
+      if (q.entity.health <= 0) continue;
+      q.ai.feet[0] = seat.pos[0]; q.ai.feet[1] = seat.pos[1]; q.ai.feet[2] = seat.pos[2]; q.ai.yaw = p.yaw;
+      out.push(q);
+    }
+    return out;
+  };
+  // WATCH-PROTECTS: the monsters a town's people run from (livingTown.js PANIC_M) - this host's foes, alive, hostile, and
+  // neither the player's ally nor a companion, at their feet in the location frame of the town at px, py
+  const livingDangers = (px, py, locOrigin) => {
+    const tr = state.pixelTranslation(px, py), out = [];
+    for (const f of exteriorFoes.foes) {
+      if (f.dead || !f.ai?.isHostile || f.companion != null || f.entity?.team === 'PlayerAlly') continue;
+      out.push([f.ai.feet[0] - locOrigin[0] - tr[0], f.ai.feet[2] - locOrigin[2] - tr[2]]);
+    }
+    return out;
+  };
   /** AUDIT 24 (wave 36): the senses context every foe pool owes its
    *  foes, built ONCE per frame for all of them. This host used to pass
    *  `{ playerInvisible }` alone, which left Chameleon and Shade inert,
@@ -11034,7 +11261,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // DFU's database yields only ACTIVE behaviours. Passing the
     // getter (not the array) keeps one live view per frame with no
     // pool importing the other.
-    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes].filter((f) => !f.dead && !f.puppet),   // AUDIT WORLD6b B8: a puppet is nobody's target here - it lands no blow and takes none of mine (a foe hunting a peer is 6b-ii's)
+    // WATCH-PROTECTS: and the street's people, the living world's (livingQuarry, above)
+    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes, ...livingQuarry()].filter((f) => !f.dead && !f.puppet),   // AUDIT WORLD6b B8: a puppet is nobody's target here - it lands no blow and takes none of mine (a foe hunting a peer is 6b-ii's)
     playerEntity,
     wildUnaware: (f) => wildGated(f),   // WILD-ALERT: a wilderness foe that has not noticed a fast traveller leaves them off its list
   });
@@ -11197,10 +11425,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   const openBodyLoot = (lootKey, pileKeys = null) => {
     bodyPool(lootKey).takeLoot(lootKey, (l) => townTalk.say(l),
       inventoryDoorReady() ? (loot) => {
-        if (!pileKeys && quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) return;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards
+        if (!pileKeys && quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards
         const pile = lootPile(lootKey, { keys: pileKeys, describe: (k) => bodyPool(k).pileBody(k), open: openBodyLoot });
         const w = makeInventoryWindow({ loot: pile ? { ...loot, pile } : loot });
         if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+        return !!w;   // AUDIT 625 D6: whether it OPENED - the corpse door rolls a body's silver on this answer alone
       } : null);
   };
   // U42: the CLASSIC spellbook. PlayerEntity.GetSpells() is the
@@ -11673,12 +11902,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  area / if (...IsPlayerInsideDungeon) return;" - so WorldX/WorldZ,
    *  and with them CurrentMapPixel, hold the entrance's values for as
    *  long as the player is down there. A dungeon's local frame is its
-   *  own (RDB block origins are SIGNED, dungeonLayout.js:75-76), so
+   *  own (RDB block origins are SIGNED, dungeonLayout.js:"const originX = block.x"), so
    *  converting the player's dungeon feet through the streamer's
    *  exterior origin slides the pixel a step west on any negative local
    *  x and a step south on any negative local z - one block off the
    *  start of Privateer's Hold is enough. That is what made Recall's
-   *  IsSameInterior dungeon arm (teleportAnchor.js:169-172) unable to
+   *  IsSameInterior dungeon arm (teleportAnchor.js:"if (here.insideDungeon && ctx === WORLD_CONTEXT.Dungeon)") unable to
    *  answer true against an anchor set in the room the player is
    *  standing in: setRecallAnchor already took the streamer's pixel
    *  (:2777) and this read did not. The streamer is frozen while a mode
@@ -11718,7 +11947,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *
    *  A terrain tile is 2 x WorldMapTileDim = 256 world units - the same
    *  step locationWorldRect walks when it shifts a pixel corner by the
-   *  location's tile origin (streamingWorld.js:60-61). Tile ROWS rise
+   *  location's tile origin (streamingWorld.js:"const minX = origin.x"). Tile ROWS rise
    *  with z, which is why row 127 is north and row 0 south, derived
    *  from generateTileData.
    *
@@ -12735,6 +12964,134 @@ export async function bootWorld(canvas, renderer, params, status) {
     gateLink?.leave();
     setMidScreenText(words);
   }
+  /** LEGACY1-LEGACY3: THE DEATH'S RESET, ASKED OF PROJECT LEGACY FIRST - by the street's death screen and, through
+   *  `onlineRespawn`, by the building's and the dungeon's. Answers whether it took the death: an Enduring member rises
+   *  (the respawn, with Arkay's toll - offline too), a member who falls for good opens the Succession. False: the
+   *  host's own death stands (DFU's title menu offline, D-ONLINE1's respawn online). */
+  function legacyDeathReset() {
+    const out = legacyHost?.deathOutcome() ?? { kind: 'none' };
+    if (out.kind === 'rise') {
+      // LEGACY2: OFFLINE THE TOLL IS THE PRICE. The respawn is D-ONLINE1's own; offline nothing was said on the death
+      // screen (no loss shown), so the purse it takes is that word - none - and a revenant's theft stays online's (RVN8)
+      if (!(_deathWasOnline ?? _onlineWorldSession())) { stateDeathLoss(0); forgetLastSlew(); }
+      respawnOnlinePlayer();
+      townTalk.say(out.line);   // Arkay's years, on the notices over the waking
+      return true;
+    }
+    if (out.kind !== 'fall') return false;
+    openLegacySuccession(out);
+    return true;
+  }
+  /** LEGACY3: THE SUCCESSION over the fallen - every living member of the blood, a newborn heir when the heir answer
+   *  allows, and the line's end. The world is left first (the respawn's own order) so the window stands in the street's
+   *  slot whatever mode the death came in; AUDIT LEGACY B1: it IS the death's screen while it stands (the DEATH-KEPT
+   *  backstop and the exit autosave read successionOpen). `past` - the window over a save of the past (a dead or retired
+   *  member's): the same choices, its title the past's own. The fall waits on the record until it is answered
+   *  (legacyHost family.pending), so a window that goes unanswered is raised again by the slow step. */
+  function openLegacySuccession(out, past = null) {
+    if (successionOpen()) return;
+    if ((modes?.mode ?? 'exterior') !== 'exterior') modes?.forceExitToExterior();
+    const fam = legacyHost?.family;
+    const fallen = out.fallen;
+    const choices = out.choices.map((p) => ({
+      key: `p${p.id}`, who: p, name: legacyFullName(p),
+      sub: `${legacyIdentity(p)} - ${p.characterId ? 'their journey picks up where they left it' : 'sets out from the family seat'}`,
+      act: `Carry on as ${p.given}`,
+    }));
+    if (out.newborn) choices.push({ key: 'newborn', who: null, name: `A child of ${fallen.given}`, sub: `Born of the blood, raised in ${legacyHouse(fam)} - a new heir comes of age`, act: 'Raise an heir' });
+    const retired = !fallen.died;
+    const final = retired ? `${legacyFullName(fallen)} retires to keep the house` : fallen.died.cause === 'years' ? `${legacyFullName(fallen)} has died of their years` : `${legacyFullName(fallen)} has fallen`;   // AUDIT LEGACY III F11d: where they keep it is the house's (household.js)
+    const lines = [
+      ...(past && past.id !== fallen.id ? [past.died ? LEGACY_TEXT.deadLoad(legacyFullName(past)) : LEGACY_TEXT.retiredLoad(legacyFullName(past))] : []),
+      // AUDIT LEGACY III F11c: the mod's "your descendant" only where a descendant is offered - a sibling or a parent is kin
+      retired ? `${fallen.given} has carried the house long enough. The mantle passes on.` : out.newborn ? LEGACY_TEXT.heir : choices.length ? LEGACY_TEXT.kin : LEGACY_TEXT.noHeir,
+      choices.length ? `${legacyHouse(fam, 'The')} goes on. Who carries the line now?` : `There is no one left of ${legacyHouse(fam)}. The line ends here, and its tree is kept in the Hall of Ancestors.`];
+    if (out.estate > 0 && choices.length) lines.push(`The estate - ${out.estate} gold - passes to whoever takes up the name.`);
+    const ov = createSuccessionOverlay({
+      title: final, lines, choices, faces: legacyFaces,
+      choose: (key) => {
+        const ok = key === 'newborn' ? legacyHost?.succeed({ newborn: true }) : legacyHost?.succeed({ personId: Number(key.slice(1)) });
+        return ok ? { ok: true } : { ok: false, why: 'That one cannot take up the name now.' };
+      },
+      end: { label: choices.length ? 'Let the line end' : 'The line ends', ask: 'Yes - let the line end', act: () => { legacyHost?.endLine(); releaseUnloadGuard(); endRunToTitleMenu(renderer); } },
+    });
+    if (ov) townTalk.showOverlay(ov);
+    else { legacyHost?.endLine(); endRunToTitleMenu(renderer); }   // no document: the classic death stands
+  }
+  /** LEGACY2: an Enduring elder passes the mantle - retired to the seat, alive and kept, and the Succession asked. The
+   *  pause is already down (the Family page's door, ui/enhancedMenu.js pauseFamily). */
+  function legacyPassMantle() {
+    const out = legacyHost?.passMantle() ?? null;
+    if (!out?.ok) return { ok: false, why: out?.why ?? 'Not now.' };
+    openLegacySuccession(out.outcome);
+    return { ok: true };
+  }
+  /** LEGACY1 + AUDIT LEGACY A2/A5: A SAVE OF THE PAST, loaded - a dead or retired member's. The line's waiting Succession
+   *  when there is one, else the one who carries the line now; while it stands nothing of this save is the line's. */
+  function openLegacyDeadLoad({ past, fall }) {
+    if (successionOpen()) return;
+    if (fall) { openLegacySuccession(fall, past); return; }
+    const fam = legacyHost?.family;
+    const cur = fam ? fam.people.find((p) => p.id === fam.currentId && !p.died && p.retired == null) : null;
+    const ov = createSuccessionOverlay({
+      title: past.died ? LEGACY_TEXT.deadLoad(legacyFullName(past)) : LEGACY_TEXT.retiredLoad(legacyFullName(past)),
+      lines: [cur ? `${legacyHouse(fam, 'The')} is carried by ${legacyFullName(cur)} now.` : `${legacyHouse(fam, 'The')} has ended. Its tree is kept in the Hall of Ancestors.`],
+      choices: cur ? [{ key: `p${cur.id}`, who: cur, name: legacyFullName(cur), sub: legacyIdentity(cur), act: `Play as ${cur.given}` }] : [],
+      faces: legacyFaces,
+      choose: (key) => ({ ok: !!legacyHost?.succeed({ personId: Number(key.slice(1)) }) }),
+      end: { label: 'Return to the menu', ask: 'Return to the menu', act: () => { releaseUnloadGuard(); exitToTitleMenu(); } },
+    });
+    if (ov) townTalk.showOverlay(ov);
+  }
+  const legacyFullName = (p) => (p.surname ? `${p.given} ${p.surname}` : p.given); const legacyHouse = (fam, the = 'the') => `${the} house${houseWord(fam?.surname) ? ` of ${houseWord(fam.surname)}` : ''}`;   // LEGACY-NAME: "the house of Sentinel", never "of of" (one line, so the cites below it hold)
+  const legacyIdentity = (p) => identityLine(p);   // AUDIT LEGACY III A12/F4/U6: the Family tab's own line - one wed in has no career of this house's (every spouse met read "Mage")
+  /** LEGACY5: the talk's rows for a Living World resident - their regard of the one played today, the one played's
+   *  Personality and Etiquette, the town's name (legacyHost.topicRows). */
+  function legacyTopicRows(person) {
+    const res = person?.living?.res;
+    if (!res || !legacyHost) return [];
+    const day = livingRegardDay();
+    return legacyHost.topicRows(res, {
+      regard: livingRelations.regard(res.id, day), personality: liveStat(playerEntity, 'personality'),
+      etiquette: skillValue(playerEntity, SKILLS.Etiquette), townName: _townOfMapId.get(res.town >>> 0)?.name ?? '',   // their own town's - the street's, a room's or a road's alike
+    });
+  }
+  /** LEGACY-HOME: ONE OF THE LINE, MET (townTalk's kin door) - their card and greeting; Play as them, the town's own
+   *  conversation (`talk`), or goodbye. Answers whether the meeting took the activation (not one of this line's: the
+   *  town's talk, as anyone's). */
+  function legacyMeetKin(person, talk) {
+    const kin = legacyHost?.kinOfResident(person?.living?.res) ?? null;
+    if (!kin) return false;
+    const resId = person.living.res.id;
+    const ov = createKinOverlay({
+      title: kin.name, lines: [kin.is, ...kin.lines], who: kin.person, name: kin.name, sub: legacyIdentity(kin.person),
+      act: LEGACY_TEXT.playAs(kin.person.given), why: kin.refusal, faces: legacyFaces,
+      play: () => legacyHost?.switchTo(kin.person.id, { here: true }) ?? { ok: false, why: LEGACY_TEXT.notSaved },   // a member never played is born where they were met
+      // AUDIT LEGACY II B6: the body may have gone on its way under the card (online the world's clock runs, and a walker
+      // gone indoors is let go and dressed as someone else) - talked to only while it is still them
+      talk: () => { if (person.living?.res?.id === resId) talk(); else townTalk.say(`${kin.person.given} has gone on their way.`); },
+    });
+    if (!ov) return false;
+    townTalk.showOverlay(ov);
+    return true;
+  }
+  /** A classic minute as the calendar says it: "14 Last Seed, 3E 405". */
+  function legacyDateText(minutes) {
+    const d = dateFromClassicMinutes(Math.max(0, Math.floor(minutes)));
+    return `${d.day + 1} ${MONTH_NAMES[d.month]}, 3E ${d.year}`;
+  }
+  let _legacyT = 0;
+  /** LEGACY1: Project Legacy's slow tick (once a second, every mode): the seat, the elder, the estate, a dead load. */
+  function legacyStep(dt) {
+    _legacyT -= dt;
+    if (_legacyT > 0 || !legacyHost) return;
+    _legacyT = 1;
+    const said = legacyHost.tick();
+    // AUDIT LEGACY A2: asked every second until it is shown - never dropped under a window that stood when it was first asked
+    if (!said || successionOpen() || (townTalk.overlayActive && !townTalk.overlayDone) || modes?.deathUp?.()) return;
+    if (said.past) openLegacyDeadLoad(said);
+    else if (said.fall) openLegacySuccession(said.fall);
+  }
   function respawnOnlinePlayer() {
     _rezSeen = null;
     _deadMark = null; _partyComposedAt = -Infinity;   // PCORPSE3   // RESURRECT1: armed fresh for the next death
@@ -13042,7 +13399,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // and 6pm regardless of travel type"). The two are separately
         // sourced - the racial arm off the compound race, the career
         // arm off the class's own CFG bit (the burn read both until
-        // VAMP-DAY left it the career's: passiveSpecials.js:126).
+        // VAMP-DAY left it the career's: passiveSpecials.js:"sinks?.hurt?.(SUN_DAMAGE_AMOUNT)").
         // VAMP-HOOD: the racial arm asks the hood (vampirism.js
         // racialSunAverse), so a hooded vampire lands in the day it
         // travelled into; the career's arm is its own and stands.
@@ -13163,7 +13520,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:8827), so exterior mode and a
+    // composer, dungeonContext.js:"damage = trunc(5 * (distance - 5))"), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -13409,6 +13766,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         },
       });
       for (const m of moved) console.log(`[arena] the online home ${m.from} moved to ${m.to}${m.made ? '' : ' (read again)'}`);
+      if (moved.length) legacyOnlineHomesRead();   // AUDIT LEGACY III W5: a home moved is the line's to learn again (the registry's own write is not its onWrote)
       return moved;
     } catch (e) {
       console.warn('[arena] the displaced online home could not be moved:', e?.message ?? e);
@@ -13469,10 +13827,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     const pins = pinsFrom(records);
     // the packs a pin lets in, on the door BEFORE the pins answer for them - a pin into a pack that will not load
     // is dropped, and its town stands as the mods loaded for the game serve it
-    let dropped = 0;
-    for (const pin of pins.values()) {
-      for (const v of [...pin.in]) if (!(await ensureWorldDataPack(v))) { pin.in.delete(v); dropped++; }
-    }
+    // QUEST-AUDIT II PIN-SLEEP: the towns whose pin this session cannot honour - a pack that will not load dropped from
+    // its pin and its town held back, its records asleep (layoutPins.js admitPinnedPacks, lifted so its law is run in a
+    // test - AUDIT QA2)
+    const { dropped, heldBack } = await admitPinnedPacks(pins, ensureWorldDataPack);
     // AUDIT WD3 B6: said, once a game - a house, a room or a quest whose town could not be stood as it was left (its
     // records sleep there: banking.js deedStands, systems/layoutPins.js recordStands)
     if (dropped && !_pinsDroppedSaid) {
@@ -13484,7 +13842,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     for (const [k, pin] of [...pins]) if (!pin.in.size && !pin.out.size) pins.delete(k);
     if (gen !== _pinsGen) return false;   // AUDIT WD3 R3: a later call (newer records) overtook this one while its packs loaded
-    const changed = setLayoutPins(pins);
+    const changed = setLayoutPins(pins, { heldBack, missing: worldDataPacksMissing() });   // QUEST-AUDIT II PIN-SLEEP: their records sleep (layoutPins.js recordHeldBack) - AUDIT QA2: and a record made in a layout whose pack did not load this session
     let rebuilt = 0;
     for (const key of changed) {
       const pixelKey = _layoutKeyPixel.get(key);
@@ -13876,7 +14234,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     let bundle;
     try {
       bundle = classicSaveToSnapshot(saveGames, {
-        spellsByIndex, online: isOnlinePage(),   // LEVEL-ONLINE: an online import is born on Oblivion's bar
+        spellsByIndex, online: isOnlinePage(),   // LEVEL-ONLINE: an online import is a new online character (the law's system)
         factionStore: townTalk.factionDict ? { dict: townTalk.factionDict } : null,
         resolveLocation: (regionIndex, locationIndex) => {
           const region = maps.getRegion(regionIndex);
@@ -14018,7 +14376,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (:619) and RETURNS, and it sits ABOVE the racial override's
     // CheckFastTravel at :624-626. It is a separate rung, not a clause
     // of the racial one: DFU reads Career.DamageFromSunlight (DFCareer.cs's
-    // own CFG bit, specialAdvantages.js:266 here) where CheckFastTravel
+    // own CFG bit, specialAdvantages.js:"secondary === 'fromSunlight'" here) where CheckFastTravel
     // reads the RacialOverrideEffect. Same localized key at both sites,
     // so the box says the same sentence.
     // LIVED1: online the day cannot be rested away - a rest moves the character's own clock, not the sky - so both
@@ -14675,7 +15033,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // map alone draws them: a player who chose DFU's own maps chose DFU's look.
       quests: () => (marksOn() ? questMapMarks(questTracker.views, questTracker.tracked()?.id ?? null, questPixel) : []),
       // BOUNTY1 (Mac: "board quests can be a green circle", then black - green is the party's): each held bounty's pixel, on both maps
-      bounties: () => bountyHost?.mapMarks() ?? [],
+      bounties: () => [...(bountyHost?.mapMarks() ?? []), ...(legacyHost?.mapMarks() ?? [])],   // LEGACY4: and where the house's fallen lie, ringed as a hunt is
       // RVN7c (bible/12-Enhanced-AI/Feud-Arc.md 18.3): each revenant lair heard of - a blood-red circle, on both maps
       revenants: () => revenantMapMarks(),
       // HOME-VENDOR: the trader's waypoint - its town's pixel, the house's owner and the town, on both maps (ui/vendorMapMark.js)
@@ -15101,20 +15459,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleAutomap: () => toggleExteriorAutomap(),
     openTravelMap: () => toggleTravelMap(),
     /** AUDIT 58 (f2/hosts): THE SHEATH PANEL'S DOOR - the eleventh
-     *  panel of the large HUD (ui/hudLarge.js:239), which until now
+     *  panel of the large HUD (ui/hudLarge.js:"key: 'spellbook',"), which until now
      *  answered in ONE host of four. HUDLarge.cs:477-484's
      *  SheathPanel_OnMouseClick calls
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:815) and
+     *  on. Here routeAction's arm is optional (ui/input.js:"here is the claim") and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:652), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:"export function routeKeyUp"), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // QS2: the diamond's three presses, beside the sheath panel's door and for
@@ -15316,7 +15674,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:269-290), and no host passed one - so
+    // held-keys Set (ui/input.js:"and the whole of DFU's"), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
@@ -15516,7 +15874,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // gates the position now, not just the presence.
         // WEAPON-VIS2: this ladder never calls routeKey (the comment
         // above the Escape arm says so directly), so routeKey's own
-        // `POLLED_ACTIONS.has(act)` decline (ui/input.js:774) never
+        // `POLLED_ACTIONS.has(act)` decline (ui/input.js:"if (POLLED_ACTIONS.has(act)) return") never
         // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
         // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
         // routeAction from BOTH here AND the frame's own poll below
@@ -15551,7 +15909,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // AUDIT 58 (f3/input) - THE ONE READER. This host builds the mode
   // machine unconditionally, and that machine used to register a
   // SECOND bindCursorToggle over the same module-global flag
-  // (player/pointerLock.js:89-329), so ONE Enter flipped it twice and
+  // (player/pointerLock.js:"let _cursorActive"), so ONE Enter flipped it twice and
   // `cursorActive()` could never rise here at all - the large HUD's
   // eleven panels were unreachable by mouse in this host, and the
   // second flip fired a releaseLook/requestLook pair inside one event.
@@ -15707,7 +16065,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // refused, F9 saying "saved"); the leave is the page's going (pagehide, whenPageGoes below)
     if (realmSession) return;   // the realm's: no slot
     const save = (saveName) => (modes ? modes?.quickSaveNow(saveName) : worldQuickSave(saveName));   // `?.` even inside the ternary: audit24 wave37's gate above the declaration is all-or-nothing
-    for (const saveName of exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() })) save(saveName);
+    for (const saveName of exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() })) save(saveName);   // AUDIT LEGACY B1: the Succession is a death up
   };
   /** REALM P0.5 (systems/onlineCheckpoint.js): THE CHARACTER SAVED AS IT PLAYS ONLINE - every slot the exit save above
    *  writes, quietly (no "Game saved.", no shot), every ONLINE_CHECKPOINT_MS (onlineFrame) and at each change a trade
@@ -15720,7 +16078,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     try {
       // REALM P1.3: a realm character's checkpoint is ONE, the service's - the composer's sink sends it, no slot is written
       if (realmSession) return realmCheckpoint({ sink });
-      const names = exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() });
+      // AUDIT LEGACY B1: the Succession is a death up
+      const names = exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() });
       for (const saveName of names) {
         if (modes) modes?.quickSaveNow(saveName, { quiet: true });   // `?.` inside the test: audit24 wave37's gate above the declaration is all-or-nothing
         else worldQuickSave(saveName, { quiet: true });
@@ -15770,18 +16129,81 @@ export async function bootWorld(canvas, renderer, params, status) {
     const io = realmIoNow();
     if (!io) { realmLost('signed-out'); return; }
     for (let i = 0; !playerSpawned && i < 240; i++) await new Promise((r) => { setTimeout(r, 250); });   // the world stands before it is saved
-    const made = await realmCreate(io, playerEntity.name || 'Traveller', realmSummaryOf(playerEntity));
+    // LEGACY7: the founder of a house is born as its first member - the line the realm's before the character is
+    const made = await realmCreateLegacy(io);
     if (!made.ok) { realmLost(made.error); return; }
+    const put = await realmFirstSave(io, made);
+    if (!put.ok) { realmLost(put.error); return; }
+    releaseUnloadGuard();
+    location.replace(`${location.pathname}${realmBootSearch(location.search, made.data.id, BOOT_DOOR_KEYS)}`);
+  }
+  /** LEGACY7: THE REALM'S CHARACTER MADE for the one in the world - as the person of Project Legacy's line they play,
+   *  when they play one (server-account/src/legacy.js: a living member no realm character has played) - its id the
+   *  realm's from here, in the entity and in the family's record (legacyHost.rebind). The line is written to the realm
+   *  first: the service reads the person off it. A refusal the network made is asked again, twice. */
+  async function realmCreateLegacy(io) {
+    await legacyRealmLine?.flush();
+    const fam = legacyHost?.family ?? null;
+    const me = legacyHost?.current() ?? null;
+    const born = fam && me && legacyOn() ? { lineage: fam.id, person: me.id } : null;
+    // AUDIT LEGACY III O2/P1: THE LINE STANDS AT THE REALM FIRST - the service reads the person off it. One the network
+    // kept is asked again, twice; one the realm refused is the reason the door says (its own word, never the birth's
+    // "they cannot take up the line" for a person the realm was never shown)
+    for (let i = 0; born && legacyRealmLine?.unwrittenOf(fam.id) && !legacyRealmLine.refusalOf(fam.id) && i < 2; i++) {
+      await new Promise((r) => { setTimeout(r, 2000 * (i + 1)); });
+      await legacyRealmLine.flush();
+    }
+    const unwritten = born ? legacyRealmLine?.unwrittenOf(fam.id) ?? null : null;
+    if (unwritten) return { ok: false, error: unwritten };
+    let made = null;
+    for (let i = 0; i < 3; i++) {
+      made = await realmCreate(io, playerEntity.name || 'Traveller', realmSummaryOf(playerEntity), born);
+      if (made.ok || !['offline', 'server'].includes(made.error)) break;
+      await new Promise((r) => { setTimeout(r, 2000 * (i + 1)); });
+    }
+    if (!made?.ok) return made ?? { ok: false, error: 'server' };
+    const was = playerEntity.characterId;
     playerEntity.characterId = made.data.id;   // the realm's id, never the client's
+    legacyHost?.rebind(was, made.data.id);
+    await legacyRealmLine?.flush();
+    return made;
+  }
+  /** REALM P1.3: A CHARACTER'S FIRST SAVE, the realm's checkpoint at sequence 1 (REALM-GZIP: packed when it said so). */
+  async function realmFirstSave(io, made) {
     let text = null;
     const sink = (snap) => { text = JSON.stringify(snap); };
     if (modes) modes?.quickSaveNow(QUICK_SAVE_NAME, { quiet: true, sink });
     else worldQuickSave(QUICK_SAVE_NAME, { quiet: true, sink });
-    if (!text) { realmLost('server'); return; }
-    const put = await realmPut(io, made.data.id, { lease: made.data.lease, seq: 1, summary: realmSummaryOf(playerEntity) }, text, { gzip: made.data.gzip === true });   // REALM-GZIP
-    if (!put.ok) { realmLost(put.error); return; }
+    if (!text) return { ok: false, error: 'server' };
+    return realmPut(io, made.data.id, { lease: made.data.lease, seq: 1, summary: realmSummaryOf(playerEntity) }, text, { gzip: made.data.gzip === true });
+  }
+  /** LEGACY7: AN HEIR (or a member played for the first time) BORN ONLINE - the realm's character made as their person,
+   *  and the birth's first save the realm's (legacyHost.onBorn waits on it: the birth stands only with its save); then
+   *  the realm's own boot. */
+  async function legacyRealmBirth(host) {
+    const io = realmIoNow();
+    if (!io) { realmLost('signed-out'); return; }
+    for (let i = 0; !playerSpawned && i < 240; i++) await new Promise((r) => { setTimeout(r, 250); });   // the world stands before it is saved
+    const made = await realmCreateLegacy(io);
+    if (!made.ok) { realmLost(made.error); return; }
+    let refused = 'server';
+    legacyFirstSave = () => realmFirstSave(io, made).then((r) => { if (!r.ok) refused = r.error; return !!r.ok; });
+    const ok = await Promise.resolve(host.onBorn()).finally(() => { legacyFirstSave = null; });
+    if (!ok) { realmLost(refused); return; }
+    await legacyRealmLine?.flush();
     releaseUnloadGuard();
     location.replace(`${location.pathname}${realmBootSearch(location.search, made.data.id, BOOT_DOOR_KEYS)}`);
+  }
+  /** LEGACY7: PROJECT LEGACY'S BOOT - a switch, a succession, a birth. Offline at once; online once the line is the
+   *  realm's and the session's last save has landed and its lease is given up (the next of the account joins after it). */
+  async function legacyBoot(search) {
+    if (legacyRealmLine) {
+      const wait = () => new Promise((r) => { setTimeout(r, REALM_EXIT_WAIT_MS); });
+      await Promise.race([legacyRealmLine.flush(), wait()]);
+      if (realmSession && !realmSession.lost) await Promise.race([realmSession.leave(), wait()]);
+    }
+    releaseUnloadGuard();
+    location.replace(`${location.pathname}${search}`);
   }
 
   addEventListener('mousemove', (e) => {
@@ -15815,7 +16237,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:254, "a right-click on a window is the window's...
+  // (dungeon.js:"latches this host used", "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -16459,7 +16881,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:11014-11078 -
+  // worldModes answers it in BOTH modes (worldModes.js:"v[0], v[1], e.button," -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -16512,6 +16934,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       onClose = () => {
         const pile = droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`);
         if (!pile) return;
+        silverFindAt('search', items);   // SILVER-FINDS: this search's find rolls its silver once (the stone searched again after its hours, again)
         const w = makeInventoryWindow({ onClose: () => droppedLoot.releaseEmptied(), loot: droppedLootHooks(pile) });
         if (w) townTalk.showOverlay(w);   // a refused pack is null - the find stays on the ground
       };
@@ -16682,7 +17105,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     isHouseOwned: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey),
     // HOME1: nor a player's online home - a quest must not send its player into a house its owner keeps shut. The towns this page has heard from (systems/onlineHomes.js); one not heard from yet answers no.
     isPlayerHome: (mapId, buildingKey) => !!onlineHomes?.homeAt(mapId, buildingKey),
-    townLayoutsKnown: () => !homeLayoutsOnline || _serverLayoutRecords !== null,   // QUESTOR-MOVED: a shared quest is mended on arrival only once the towns' layouts are known (applyLayoutPins' own gate, AUDIT WD3 S5)
+    townLayoutsKnown: () => !homeLayoutsOnline || _homeLayoutsApplied,   // QUESTOR-MOVED: a shared quest is mended on arrival only once the towns' layouts are known (applyLayoutPins' own gate, AUDIT WD3 S5) - AUDIT QA2: and STAND, the pins and their held-back towns set (a share landing while the packs were fetched was chosen again unpinned); the load's own re-seat mends one that landed before
     // Place's _getBuildingName bag - townTalk's ONE name bag, so the
     // quest's generated names and the talk directory's cannot drift.
     buildingNameOpts: () => townTalk.nameOpts?.() ?? {},
@@ -16979,11 +17402,11 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  all fixed forever. The port cloned first and re-expanded from
    *  source every time, which is the port being more correct than
    *  the game it is a port of. The answer pipeline's caller clones
-   *  BEFORE calling (answerPipeline.js:665, C#'s own `.Clone()` at
+   *  BEFORE calling (answerPipeline.js:"falls back to anyInfo.", C#'s own `.Clone()` at
    *  :3552), so the in-place pass is right for both. Also: C# calls
    *  this whether or not GetQuest found anything - the null-parent arm
    *  is a DFU forum-bug fix INSIDE ExpandQuestMessage, not a caller
-   *  guard, and expandQuestMessage carries it (questMacros.js:568). */
+   *  guard, and expandQuestMessage carries it (questMacros.js:"'%g1': (mcp) => call"). */
   const expandQuestTokens = (questID, tokens) => {
     expandQuestMessage(questBridge?.machine.getQuest(questID) ?? null, tokens, true);
     return tokensToString(tokens);
@@ -17747,7 +18170,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const baseQuestLog = questBridge.questLog.bind(questBridge);
     questBridge.questLog = () => {
       const log = baseQuestLog();
-      const extra = [...(bountyHost?.questLogEntries?.() ?? []), ...revenantHuntEntries(rumorHere())];   // RVN7c: and each hunt - a lair heard of, the way there from where I stand
+      const extra = [...(bountyHost?.questLogEntries?.() ?? []), ...revenantHuntEntries(rumorHere()), ...(legacyHost?.questLogEntries() ?? [])];   // LEGACY4: and the death quests   // RVN7c: and each hunt - a lair heard of, the way there from where I stand
       return extra.length ? { ...log, active: [...(log?.active ?? []), ...extra] } : log;
     };
   }
@@ -18184,7 +18607,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let sceneToOnline = campToWire;
   const ROOM_HOLD_MS = 500;   // AUDIT ONLINE D11: a room key holds this long before the socket moves - a cell edge is not a churn
   const ONLINE_LOOK_CHECK_MS = 1000;   // PROFILE2: how often my look is re-composed and compared with what the rooms were told
-  const ONLINE_MOVE_HOLD_MS = 250;   // ONLINE-MVFLICKER1: see the outgoing `mv` computation's own header - debounces a single stray zero-delta sample
+  const ONLINE_MOVE_HOLD_MS = SHOWN_MOVE_HOLD_MS;   // ONLINE-MVFLICKER1: see the outgoing `mv` computation's own header - debounces a single stray zero-delta sample. AUDIT 637 D7: the watcher's hold (net/online.js), one literal for both ends
   // ACC1d: ONE minter, shared by the presence session and every channel
   // link - it holds no token and caches nothing, so a shared minter is
   // still a FRESH token per socket, which is what the relay's spend-once
@@ -18725,6 +19148,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     };
     // DUEL1: A DUEL FRAME AT ME - the law decides (net/duelSession.js); `sub` the sender's account as the relay stamped it
     online.onDuel = (id, d, sub = null) => { duelMgr.onFrame(id, d, sub); };
+    online.onWed = (id, d, sub = null, sc = null) => { wedMgr.onFrame(id, d, sub, sc); };   // LEGACY7 part three: a wed frame at me - the wedding's law decides; AUDIT LEGACY III O1: `sc` their realm character as the relay stamped it
     online.onGate = (g) => gateLink?.word(g);   // WB3b: the court's room's word about its boss
     online.onSerpent = (w) => serpentLink?.word(w);   // SERPENT1: the sea serpent's cell's word (on my cell's socket or a halo's) - its fight, its swim, its blows, my receipt
     online.onRaid = (f, room) => raidRelayWord(f, room);   // RAID3: a town cell's word about its raid - the ledger, the cleanse, my receipt
@@ -19326,6 +19750,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       onOpen: () => surfaceOpen('profile'),
       onClose: () => { surfaceClose('profile'); _profileAsk = null; _profileSub = null; _profileView = null; },   // a card closed is a card no longer waited on
       onDuel: (peerId) => duelChallenge(peerId),   // DUEL1: the Challenge button (Mac: "When inspecting a player, they should be able to send an invite to duel")
+      onWed: (peerId) => wedPropose(peerId),   // LEGACY7 part three: the Propose button
     });
     // DUEL1: the challenge at me - the newest standing one, with Accept and Decline (the F-menu's rows are the other way)
     duelPrompt = createDuelPrompt({
@@ -19481,6 +19906,95 @@ export async function bootWorld(canvas, renderer, params, status) {
     vitals: () => [playerEntity.health, playerEntity.maxHealth],
   });
   duelMgr.onChange = () => { duelPrompt?.render(); repaintDuelProfile(); };
+
+  // ═══ LEGACY7 part three: TWO PLAYERS WED (bible/06-Systems/Legacy-Arc.md section 9; the design's "two players'
+  // characters may wed: both in the same temple, both asking the priest, the service records the union (each family
+  // names the other's member as spouse)") ═══════════════════════════════════════════════════════════════════════════
+  // The handshake is net/wedSession.js's, the union the account service's (server-account/src/legacy.js realmWed), the
+  // record the house's (scenes/legacyHost.js wedPlayer); this block connects them to this scene's socket, prompt and card.
+  /** Why I cannot wed now (a WED_WHY code), or null - the house's law, on a relay that carries the frame. */
+  // AUDIT LEGACY III W3: and never while lying dead - an Enduring death in the temple, its rise still to come, wed (the
+  // duel's own law, duelCan's 'dead'; a wedding has no word of its own for it, so 'busy')
+  const wedCan = () => (playerEntity.health <= 0 || modes?.deathUp?.() ? 'busy'
+    : online?.status === 'open' && online.wedOk ? (legacyHost?.wedRefusal() ?? 'house') : 'busy');
+  /** The proposal at me on the town's Yes/No box (the window it stands for, so a proposal taken back closes it). */
+  let _wedBox = null;
+  let _wedBoxPeer = null;
+  const wedAsk = (peerId) => {
+    // under another window: the card's button answers it - the street's, AUDIT LEGACY III W3: or the building's own (the
+    // temple's pause, its death, its windows - `modes.overlayHeld`), as a notice waits (showNotice)
+    if ((townTalk.overlayActive && !townTalk.overlayDone) || (modes?.overlayHeld ?? false) || (modes?.deathUp?.() ?? false)) return false;
+    const p = online?.peers.get(peerId);
+    const house = p?.house ? houseLine(p.house) : null;
+    _wedBoxPeer = peerId;
+    _wedBox = new YesNoBoxWindow({
+      rows: [`${peerName(peerId) ?? 'Someone'}${house ? `, ${house},` : ''} asks for your hand,`, 'here before the gods. Be wed?'],
+      onYes: () => { _wedBox = null; _wedBoxPeer = null; wedMgr.accept(peerId).then((r) => { if (!r.ok && r.why === 'gone') tradeSay('That proposal no longer stands.'); }); },
+      onNo: () => { _wedBox = null; _wedBoxPeer = null; wedMgr.decline(peerId); },
+    });
+    townTalk.showOverlay(_wedBox);
+    return true;
+  };
+  const wedUnask = (peerId) => {
+    if (_wedBoxPeer !== peerId || !_wedBox) return;
+    townTalk.closeOverlay(_wedBox);
+    _wedBox = null; _wedBoxPeer = null;
+  };
+  const wedMgr = createWedManager({
+    send: (d) => online?.sendWed(d) === true,
+    now: () => performance.now(),   // monotonic, as the duel's
+    say: tradeSay,
+    peerName: (id) => peerName(id),
+    selfId: () => online?.id ?? '',
+    can: wedCan,
+    peerCan: (id) => !!online?.peers.get(id)?.house,   // their row wears a house: the realm signed one into their token
+    half: (sid, partner, partnerChar, opts) => (realmSession && !realmSession.lost ? realmSession.wed(sid, partner, partnerChar, opts) : Promise.resolve({ ok: false, error: 'realm-only' })),
+    onPrompt: (id) => { wedAsk(id); },
+    onUnprompt: (id) => wedUnask(id),
+    onWed: (union) => { legacyHost?.wedPlayer(union); },
+    refusalText: (e) => realmRefusalText(e),
+  });
+  wedMgr.onChange = () => repaintDuelProfile();
+  /** The Inspect card's Propose button, as the law says it now - shown only to a realm character playing a house. */
+  const wedButtonFor = (peerId) => {
+    if (!online || !peerId || !realmSession || !legacyOn()) return null;
+    const label = 'Propose marriage';
+    if (!online.wedOk) return { label, enabled: false, why: 'The server cannot carry a wedding yet.' };
+    const st = wedMgr.stateFor(peerId);
+    if (st === 'incoming') return { label: 'Answer their proposal', enabled: true };
+    if (st === 'outgoing') return { label: 'Proposal sent', enabled: false, why: 'Waiting for their answer.' };
+    if (st === 'waiting') return { label: 'Before the altar', enabled: false, why: 'The temple\'s book is being written.' };
+    if (st === 'busy') return { label, enabled: false, why: 'Another proposal stands.' };
+    const no = wedCan();
+    if (no) return { label, enabled: false, why: wedMineText(no) };
+    if (!online.peers.get(peerId)?.house) return { label, enabled: false, why: wedWhyText('house') };
+    if (!online.reachesPeer(peerId)) return { label, enabled: false, why: 'No link to them.' };
+    return { label, enabled: true };
+  };
+  /** The card's press: their proposal answered on its box, or mine sent - the law asked again first. */
+  const wedPropose = (peerId) => {
+    if (wedMgr.stateFor(peerId) === 'incoming') { profileWin?.hide(); if (!wedAsk(peerId)) tradeSay('Close the window you have open, then answer.'); return; }
+    const r = wedMgr.request(peerId);
+    if (!r.ok) tradeSay(r.why === 'link' ? TRY_AGAIN_TEXT : r.why === 'sent' ? 'Your proposal stands - wait for their answer.' : wedMineText(r.why));
+    repaintDuelProfile();
+  };
+  /** LEGACY7 part three: the account's unions read again - a spouse of another house dead or gone is word that reaches
+   *  this house; asked at the boot and every UNIONS_READ_MS after, one at a time. */
+  const UNIONS_READ_MS = 10 * 60_000;
+  let _unionsAt = -Infinity;
+  let _unionsAsking = false;
+  const legacyUnionsRead = () => {
+    if (!_bootLoaded || !legacyRealmLine || !realmSession || realmSession.lost || _unionsAsking) return;   // the house stands first (afterBoot)
+    _unionsAsking = true;
+    _unionsAt = performance.now();
+    realmUnions(realmIoNow()).then((r) => { if (r.ok) legacyHost?.unionsHeard(r.unions); }).catch(() => {}).finally(() => { _unionsAsking = false; });
+  };
+  /** The wedding's frame: the handshake's clock, a proposal with a player whose row is gone dropped, the unions read. */
+  const wedFrame = () => {
+    wedMgr.tick();
+    for (const p of wedMgr.peers()) if (!online?.reachesPeer(p)) wedMgr.gone(p);
+    if (performance.now() - _unionsAt > UNIONS_READ_MS) legacyUnionsRead();
+  };
   registerDuelFell(() => duelMgr.fell());   // characters/playerEntity.js duelSpare: every duel-sourced blow's floor says it here
   /** THE DEFENDER: my opponent's blow, checked by the law (theirs, this duel's, past the count, once, in budget), placed
    *  (combat/duelCombat.js duelBlowPlausible - a blow from where they are not seen lands nothing) and resolved on MY
@@ -19792,7 +20306,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _profileView = profileRenown(v, online?.renownOf?.(peerId) ?? null);   // AUDIT RENOWN1 UI-3: the Renown as the session knows it now
     v = _profileView;
     const rec = _profileSub ? duelRecords.get(_profileSub) : null;
-    return { ...v, duel: duelButtonFor(peerId), duels: _profileSub ? profileDuelLine(rec) : null, gates: profileGateLine(rec) };   // WB5b: and the gates they closed, off the same answer
+    return { ...v, duel: duelButtonFor(peerId), wed: wedButtonFor(peerId), duels: _profileSub ? profileDuelLine(rec) : null, gates: profileGateLine(rec) };   // LEGACY7 part three: and the Propose button   // WB5b: and the gates they closed, off the same answer
   };
   const repaintDuelProfile = () => {
     const id = profileWin?.isOpen() ? profileWin.peerId() : null;
@@ -19906,6 +20420,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     verdictHeard: () => arenaGate.settle(),   // ARENA4b: an exhibition's verdict asked of its room settles the book as it comes
   });
+  /** AUDIT 625 P2: A BOUT BETWEEN PLAYERS IS A DUEL. While I fight in one on a relay's sand (its call to its end), the
+   *  duel's word stands (duelFrame: systems/sigil.js setSigilDueling) and every power that sleeps in a duel sleeps - the
+   *  sets, the loot's powers, the weapon's sigil. My opponent is a Daedra Lord's stand-in for the formulas (below), no
+   *  player, so the gates that refuse a blow at a player never saw one: a set's Constrict, a sigil's per cent, a
+   *  Legendary's thorns all bit in the ring, and the sets' shields stood. */
+  const arenaPvpLive = () => { const b = arenaOnline?.bout(), r = arenaBouts.relay(); return !!b && b.kind === 'pvp' && !!r?.me; };
   /** ARENA4: MY OPPONENT on a relay's sand, as a body my blows meet (scenes/dungeonContext.js arenaRivalBody): the one
    *  body the bout's room draws (the stands have none), its stand-in for the formulas - unarmoured, every blow's number
    *  the referee's to judge. Null outside a bout between players. */
@@ -19952,6 +20472,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     store: _spoilsStore,
     say: (text) => chatNotice(text),
     onSpoils: (entry) => grantSerpentSpoils(entry),
+    onMarks: (data) => { showHaul(claimHauls(data, 'serpent')); return marksBook?.claimLines(data, 'serpent') ?? null; },   // SERPENT-SET: the serpent's silver, the raids' own door
     onRecorded: (data) => {
       if (data?.renown?.character !== characterIdOf(playerEntity)) return;   // RENOWN-CHAR: the character that fought the serpent adopts its Renown, no other
       const a = renownAnswer({ ...data.renown, order: data.order ?? null }, data.renown.credited ?? 0, renownSaid);
@@ -19961,6 +20482,25 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (a.announce !== null) { renownSaid = a.announce; townTalk.say(`Your Renown is now ${a.announce}.`); }
     },
   }) : null;
+  // SILVER-FINDS (bible/06-Systems/Professions-Arc.md 10.5): A LOOT FIND - every host's loot door rolls its container once
+  // (systems/silverFinds.js: a body, a treasure pile, a search's find) and a find asks the marks book, whose service's
+  // dice strike it under the day's count. Each answered find its card where the feed stands (the world walked, nothing
+  // over it - a loot window open as the answer lands takes the feed down: AUDIT HAUL-CARDS A3), else its line in the
+  // chat. Online only: offline, and on the bench, nothing is found.
+  // WALLET1 (bible/06-Systems/Wallet.md): the wallet counts the account's silver - the marks book's balance, asked afresh
+  // as the wallet's sheet opens; online alone (offline the wallet says the silver is kept online)
+  if (marksBook) setWalletSilver(() => (marksBook.state.open === false ? false : marksBook.state.balance), () => marksBook.refresh());   // AUDIT 625 W5: an account that holds none says none, never the offline words
+  if (marksBook) {
+    setSilverFinder((kind) => {
+      marksBook.find(kind).then((finds) => {
+        for (const f of finds) {
+          if (!f.line) continue;
+          const stands = walkMode && !gamePaused() && pointerSurfaces.size === 0 && !travelView?.active;
+          if (!(stands && showHaul([findHaul(f.found, f.kind)]))) chatNotice(f.line);
+        }
+      }, (e) => console.warn('[silver] a find', e?.message ?? e));
+    });
+  }
   const gateLink = params.has('online') ? createGateLink({
     now: () => Date.now() + _sharedOffsetMs,
     say: (text) => setMidScreenText(text),
@@ -19976,7 +20516,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WB5: a spoil into the pack - the gold to the purse, an item to the items (the one door the spew, the gather and
    *  a crash's recovery all take). */
   const takeSpoil = (p) => { if (p.kind === 'gold') addGoldPieces(playerEntity, p.gold); else if (p.item) addItem(playerEntity.items, p.item); };
-  /** WB12c: a breach's spoil into the pack - and the first ember brings On the Burning Doors (systems/breachBook.js). */
+  /** WB12c: a breach's spoil into the pack - and the first ember brings On the Burning Doors (systems/breachBook.js).
+   *  SERPENT-SET: a serpent's hoard pays the gate's embers too, and takes its spoils by this door - a first ember won at
+   *  sea brings the book as a breach's does. */
   const takeGateSpoil = (p) => {
     takeSpoil(p);
     const book = p.kind === 'item' ? breachBookFor(p.item) : null;
@@ -20015,7 +20557,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SERPENT1: THE OLD COIL'S HOARD (systems/serpentSpoils.js) - the raids' door, under keys of its own: no floor, no word
    *  to the hub, the crash's records a save clears. Made online or not, as the pools are. */
   const serpentSpoils = createSpoilsPool({
-    ray: () => null, now: () => Date.now() + _sharedOffsetMs, take: takeSpoil, say: (text) => setMidScreenText(text),
+    ray: () => null, now: () => Date.now() + _sharedOffsetMs, take: takeGateSpoil, say: (text) => setMidScreenText(text),   // SERPENT-SET: its embers, the book with the first
     store: _spoilsStore, who: () => characterIdOf(playerEntity), keys: SERPENT_SPOILS_KEYS, recordsMax: SERPENT_SPOILS_RECORDS_MAX,
   });
   onSlotSaved((characterId) => { try { serpentSpoils.saved(characterId); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } });   // SERPENT1
@@ -20096,7 +20638,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _spoilsAskedFor = who;
     try { if (recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => spoilsPool.adopt(rec), inSave: _spoilsInSave })) setMidScreenText(SPOILS_TEXT.gathered); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); }   // AUDIT WBX S3: in the pack now - the next save clears it
     try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => raidSpoils.adopt(rec), key: RAID_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(RAID_SPOILS_TEXT.recovered); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); }   // RAID4b: a town's thanks, the same door
-    try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => serpentSpoils.adopt(rec), key: SERPENT_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SERPENT_SPOILS_TEXT.recovered); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); }   // SERPENT1: the Old Coil's hoard, the same door
+    try { if (recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => serpentSpoils.adopt(rec), key: SERPENT_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SERPENT_SPOILS_TEXT.recovered); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); }   // SERPENT1: the Old Coil's hoard, the same door; SERPENT-SET: its embers by the gate's
     _spoilsInSave = null;   // AUDIT RESCUE-SAVE A1: the boot's load alone - a load in the session is its own pack
   };
   // AUDIT ONLINE2 F3 (AUDIT RAID R8d): A LOAD IN THE SESSION IS A STAND-UP - the pack is the loaded save's, so the pools
@@ -20266,10 +20808,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     level: () => playerEntity.level ?? 1,
     boat: () => (navalOn() ? naval?.serpentBoat?.() ?? null : null),
     strike: (boat, hurt, o) => naval?.serpentStrike?.(boat, hurt, o),
-    // the venom's bite on my own body: a share of my health and points, the cry and the shake an element's blow is given
-    hurt: (pct, base) => {
-      if (!(playerEntity.health > 0)) return;
-      const n = Math.max(1, Math.round(pct * (playerEntity.maxHealth ?? 0) + base));
+    // the venom's bite on my own body: `n` points (serpentStrike.js venomBite of my health, at the pair's share - AUDIT 2
+    // XC4), the cry and the shake an element's blow is given
+    maxHealth: () => playerEntity.maxHealth ?? 0,
+    hurt: (n) => {
+      if (!(playerEntity.health > 0) || !(n > 0)) return;
       hurtPlayer(playerEntity, n);
       betterAmbience.weaponKick(0.5);
       playPlayerVoice(audio, playerPainVoice(playerEntity, n));
@@ -20657,7 +21200,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const duelFrame = () => {
     duelMgr.tick();
     const setsWere = setsDueling();
-    setSetsDueling(!!duelMgr.live);   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigilSets.js)
+    setSetsDueling(!!duelMgr.live || arenaPvpLive());   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigilSets.js); AUDIT 625 P2: and a bout between players
     if (setsDueling() !== setsWere) computeEntityMods(playerEntity);   // SET3: the stat tiers leave with the duel's first frame and return with its last
     // my ring rose or fell: the onlookers hear it on the next frame - in a CELL room, the only one whose foes frame carries
     // it (AUDIT DUEL1 C1: a duel ended in a dungeon left every one of that room's frames forced full)
@@ -20727,7 +21270,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const socialActText = (k, who) => (k === 'friend.request' ? `Friend request sent to ${who}`
     : k === 'party.invite' ? `Party invite sent to ${who}`
       : k === 'friend.remove' ? `${who} is no longer your friend` : 'Sent');
-  /** PARTY-REST1: RestWindow's own `mode` string ('loiter'|'timed'|'full', restWindow.js:691) to the wire's small
+  /** PARTY-REST1: RestWindow's own `mode` string ('loiter'|'timed'|'full', restWindow.js:"is the host's live") to the wire's small
    *  numbers (net/wire.js validPartyPose: 0/1/2) - the one place the three hosts' restState getters (worldModes.js,
    *  dungeonContext.js) and this host's own outdoor overlay converge, so the mapping is written once. */
   const partyRestModeCode = (mode) => (mode === 'timed' ? 1 : mode === 'full' ? 2 : 0);
@@ -21977,6 +22520,168 @@ export async function bootWorld(canvas, renderer, params, status) {
     } : null),
     posePixel: () => playerTravelPixel(),   // AUDIT 28 B8: the pixel my pose says (composePartyPose's)
   });
+  // LEGACY1-LEGACY3 (2026-10-05, bible/06-Systems/Legacy-Arc.md, Mac: "this is actually my DFU mod that I want to
+  // integrate"): PROJECT LEGACY in the world - scenes/legacyHost.js. Every read it makes of the world is here; it
+  // registers its own save record (modData.ProjectLegacy). THE FOUR HOSTS: this host owns the family - the street's
+  // death reset (the presenter above) and the modal hosts' (worldModes' interior and the dungeon context reset through
+  // `onlineRespawn`, below) both ask `legacyDeathReset`.
+  // FLAGGED (Legacy-Arc.md section 3): exterior.js, the fixed city, keeps DFU's death - no streamer to birth an heir into.
+  const legacyHere = () => {
+    const px = playerTravelPixel();
+    const r = maps.getRegionIndexAt(px.x, px.y);
+    const loc = locationIndex.get(`${px.x},${px.y}`) ?? null;
+    const mode = modes?.mode ?? 'exterior';
+    const pos = walkMode && playerSpawned ? [player.pos[0], player.pos[1], player.pos[2]] : [cam.pos[0], cam.pos[1], cam.pos[2]];
+    // LEGACY4: where the fallen lie - the dungeon by its location and its own floor position; outdoors by the native
+    // world coordinates (the save's own law: a floating origin never moves a fallen body)
+    const dl = mode === 'dungeon' ? modes?.dungeonCtx?.abyss?.location?.() ?? null : null;
+    return {
+      pixel: { x: px.x, y: px.y }, regionIndex: r, region: REGION_NAMES[r] ?? '', mode, loc: loc?.name ?? null, locationType: loc?.mapTableData?.locationType ?? null,
+      mapId: loc?.mapTableData?.mapId != null ? loc.mapTableData.mapId >>> 0 : null,   // LEGACY-HOME: the seat's town, as its residents know it
+      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex } : null,
+      pos: mode === 'dungeon' ? pos : null,
+      world: mode === 'exterior' ? state.worldCoords(pos) : null,
+    };
+  };
+  /** LEGACY4: is the player where these remains lie - in their dungeon, or within a stone's throw of where they fell
+   *  outdoors (in a building: anywhere on its town's pixel, in the street). */
+  const legacyAtPlace = (place) => {
+    if (!place || !playerSpawned) return false;
+    const h = legacyHere();
+    // AUDIT LEGACY H1: underground, where they fell - within a few paces of the fallen's own floor position (the dungeon's
+    // fixed coordinates), not anywhere in the dungeon
+    if (place.mode === 'dungeon') return h.mode === 'dungeon' && !!place.dungeon && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex
+      && (!place.pos || !h.pos || Math.hypot(h.pos[0] - place.pos[0], h.pos[1] - place.pos[1], h.pos[2] - place.pos[2]) <= LEGACY_REMAINS_NEAR_DUNGEON);
+    if (h.mode !== 'exterior' || h.pixel.x !== place.pixel?.x || h.pixel.y !== place.pixel?.y) return false;
+    if (place.mode !== 'exterior' || !place.world) return true;
+    return Math.hypot(h.world.x - place.world.x, h.world.z - place.world.z) <= LEGACY_REMAINS_NEAR;
+  };
+  /** LEGACY4 + AUDIT LEGACY H1/H6: THE REMAINS, OPENED - the inventory window over the remains' own list (the record's,
+   *  never a world pile: what the heir leaves stays with the remains for the next visit, and nothing is laid twice), in
+   *  whatever mode the heir stands in. The list's picture is the remains' world flat. Answers whether it opened. */
+  const legacyOpenRemains = (rec, items) => {
+    if (townTalk.overlayActive && !townTalk.overlayDone) return false;
+    const hooks = {
+      items: () => items, playerOwned: false, textureArchive: REMAINS_FLAT.archive, textureRecord: REMAINS_FLAT.record,
+      containerImage: () => CONTAINER_IMAGES.Corpse1, pos: [...(walkMode && playerSpawned ? player.pos : cam.pos)],
+    };
+    const mode = modes?.mode ?? 'exterior';
+    if (mode !== 'exterior') return !!modes?.openLootList?.(items, hooks);
+    const w = makeInventoryWindow({ loot: hooks });
+    if (w) townTalk.showOverlay(w);
+    return !!w;
+  };
+  /** AUDIT LEGACY: what the one played keeps - the pack, the wagon and the Materials Bag. */
+  const legacyCarried = () => [...(playerEntity.items ?? []), ...(playerEntity.wagonItems ?? []), ...(playerEntity.bagItems ?? [])];
+  /** LEGACY4: a place to lay the dead to rest - a temple's inside, or the family's seat. */
+  const legacyAtRest = () => {
+    if (!playerSpawned) return false;
+    const b = (modes?.mode ?? 'exterior') === 'interior' ? modes?.interiorBuilding : null;
+    if (b?.buildingType === TALK_BUILDING_TYPES.Temple) return true;
+    const seat = legacyHost?.family?.seat;
+    const h = legacyHere();
+    return !!seat && h.mode !== 'dungeon' && h.loc === seat.loc && h.region === seat.region;
+  };
+  const legacyFaces = createFaceLoader({ fetchBytes, palette });
+  legacyHost = createLegacyHost({
+    entity: playerEntity,
+    storage: () => appStorage(),
+    tab: () => tabStorage(),
+    on: () => legacyOn(),
+    online: () => isOnlinePage(),
+    now: () => Math.floor(playerTicker.classicMinutes),
+    own: () => Math.floor(playerTicker.ownMinutes),
+    here: legacyHere,
+    // the seat and a birth's town: a town is the one standing on the pixel - never a dungeon below it
+    town: (h) => (h && h.mode !== 'dungeon' && h.loc && isTownEntry({ locationType: h.locationType }) ? { region: h.region, loc: h.loc, ...(h.mapId != null ? { mapId: h.mapId } : {}) } : null),
+    nearestTown: (h) => {
+      if (!h) return null;
+      const hit = nearestTown(maps.getRegion(h.regionIndex), h.region, h.pixel) ?? nearestTownAnywhere(maps, REGION_NAMES, h.pixel);
+      return hit ? { region: hit.region, loc: hit.loc } : null;
+    },
+    gold: () => legacyGold(playerEntity),
+    say: (line) => townTalk.say(line),
+    boot: (search) => { legacyBoot(search); },
+    search: () => location.search,
+    loadCharacter: (cid) => {
+      // LEGACY7: online a member is a realm character of their own - joined through the realm's own boot (a tombstone's
+      // join is refused there: an older save is never played past a death)
+      if (legacyRealmLine) {
+        if (legacyRealmRoster && !legacyRealmRoster.has(String(cid))) return false;
+        legacyBoot(realmBootSearch(location.search, String(cid), BOOT_DOOR_KEYS));
+        return true;
+      }
+      const key = newestSaveOf(enumerateSaves().info, cid);
+      if (key < 0) return false;
+      releaseUnloadGuard();
+      location.replace(`${location.pathname}${loadSearch(location.search, key)}`);
+      return true;
+    },
+    saveNow: () => (legacyFirstSave ? legacyFirstSave() : !!(modes ? modes?.quickSaveNow(QUICK_SAVE_NAME, { quiet: true }) : worldQuickSave(QUICK_SAVE_NAME, { quiet: true }))),   // LEGACY7: an online birth's is the realm's first checkpoint (legacyRealmBirth)   // `?.` inside the arm: audit24 wave37's gate above the declaration; AUDIT LEGACY B6: answers whether it saved
+    inFight: () => areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? []), ...(modes?.dungeonCtx?.foes ?? [])]),
+    payEstate: (n) => legacyAddItem(playerEntity.items ??= [], letterOfCredit(n)),
+    giveItems: (items) => { for (const it of items) legacyAddItem(playerEntity.items ??= [], it); },   // AUDIT LEGACY: an elder's bequest, into the pack
+    killer: () => { const e = playerHarmMark(); return e ? (e.revenant?.name ?? e.displayName ?? (Number.isInteger(e.mobileType) ? enemyDisplayName(e.mobileType) : null)) : null; },   // LEGACY4: who struck the fallen down - a revenant by its own name
+    atPlace: legacyAtPlace,
+    openRemains: legacyOpenRemains,
+    carried: legacyCarried,
+    atRest: legacyAtRest,
+    // AUDIT LEGACY H8: answers whether the question was SHOWN - a rest asked under another window is asked again
+    askRest: (name, yes) => {
+      if (townTalk.overlayActive && !townTalk.overlayDone) return false;
+      townTalk.showOverlay(new YesNoBoxWindow({ rows: [`Lay ${name} to rest here?`], onYes: () => { yes(); computeEntityMods(playerEntity); }, onNo: () => {} }));
+      return true;
+    },
+    // LEGACY-HOME: the houses the one played holds (a deed that stands - banking.js deedStands), and the house they are in
+    heldHouses: () => (isOnlinePage() ? (realmSession ? _legacyOnlineHomes : null) : (playerEntity.houses ?? []).filter((h) => (h?.buildingKey | 0) > 0 && deedStands(h))),   // LEGACY7 part five: online, this realm character's online homes (null until read)
+    // LEGACY6: what the world remembers - the town's regard of the one played and its day, the towns' minute for the
+    // house's news, and the killer a fallen kinsman's mirror names, handed to the heir (revenant.js)
+    regards: () => livingRelations, regardDay: livingRegardDay, sky: () => skyMinutes(),
+    killerOf: (cid, ownAt) => revenantKillerOf(cid, ownAt), inheritFoe: (rec) => inheritRevenant(playerEntity, rec),
+    // LEGACY7: online, the realm's copy of the line follows each write, and a fall is the realm's tombstone
+    stored: (f) => { legacyRealmLine?.push(f); },
+    tombstone: (why) => (realmSession ? realmSession.die(why) : false),   // LEGACY7 part three: 'retired' keeps a union with another player's character
+    realmId: () => realmSession?.id ?? null,   // LEGACY7 part three: the realm character this tab plays (two players wed)
+    look: () => composeLook(playerEntity),   // LEGACY7 part four: what the one played wears - how the world draws them while another is played
+    houseHere: () => { const b = (modes?.mode ?? 'exterior') === 'interior' ? modes?.interiorBuilding : null; return b?.buildingKey > 0 && b.townMapId ? { mapId: b.townMapId >>> 0, buildingKey: b.buildingKey } : null; },
+    hasSave: (cid) => (legacyRealmLine ? !legacyRealmRoster || legacyRealmRoster.has(String(cid)) : newestSaveOf(enumerateSaves().info, cid) >= 0),   // LEGACY7: online, a living realm character of the account   // AUDIT LEGACY II A2/B1: a person's character stands only with a save of them
+    livingWorld: () => livingWorldOn(),   // AUDIT LEGACY II B5: the line stands only in the Living World's towns
+    // LEGACY5: the temple the one played stands in (its town's map id), and the wedding asked there - the name with it
+    templeOf: () => { const b = (modes?.mode ?? 'exterior') === 'interior' ? modes?.interiorBuilding : null; return b?.buildingType === TALK_BUILDING_TYPES.Temple ? (b.townMapId >>> 0) : null; },
+    askWed: (name, house, done) => {
+      if (townTalk.overlayActive && !townTalk.overlayDone) return false;
+      townTalk.showOverlay(new YesNoBoxWindow({ rows: [`Be wed to ${name} here, before the gods?`], onYes: () => {
+        townTalk.showOverlay(new YesNoBoxWindow({ rows: [`Will ${name.split(' ')[0]} take the name ${house}?`], onYes: () => done(true), onNo: () => done(false) }));
+      }, onNo: () => {} }));
+      return true;
+    },
+    takeItem: (it) => { for (const k of ['items', 'wagonItems', 'bagItems']) if (Array.isArray(playerEntity[k])) playerEntity[k] = playerEntity[k].filter((x) => x !== it); },   // LEGACY4: the remains given up at the rest, wherever they were kept
+  });
+  /** AUDIT LEGACY U4: an act the Family page asked for and the host refused after the pause went down - said on the HUD. */
+  const legacySaid = (r) => { if (!r?.ok && r?.why) townTalk.say(r.why); return r; };
+  // AUDIT LEGACY A1/B3: the death decided AT THE DOOR - every host's one damage door hears it before any screen rises
+  // (characters/playerEntity.js setDeathListener), so an F11 or a closed tab under the screen undoes no permadeath
+  setDeathListener('projectLegacy', () => legacyHost?.onDeath());
+  setFamilyProvider({
+    on: () => legacyOn(),
+    family: () => legacyHost?.family ?? null,
+    lived: () => legacyHost?.lived() ?? 0,
+    past: () => legacyHost?.past ?? null,   // AUDIT LEGACY III A17: the past played back - no sheet of the head's on its clock
+    faces: legacyFaces,
+    switchRefusal: (id) => legacyHost?.switchRefusal(id) ?? 'none',
+    switchTo: (id) => legacySaid(legacyHost?.switchTo(id) ?? { ok: false }),
+    mantleRefusal: () => legacyHost?.mantleRefusal() ?? 'none',   // AUDIT LEGACY U4: the card says why before the press
+    passMantle: () => legacySaid(legacyPassMantle()),
+    hall: () => listFamilies(appStorage()),
+    date: (m) => legacyDateText(m),
+    inWorld: () => legacySettings().familyInWorld && livingWorldOn(),   // LEGACY-HOME; AUDIT LEGACY II B5: in the Living World's towns alone
+    livingWorld: () => livingWorldOn(),
+    markHome: (h) => !!legacyHost?.markHome(h),
+    choice: () => playerEntity.legacyChoice ?? null,   // LEGACY-CHOICE: why a character has no house
+    online: () => isOnlinePage(),
+  });
+  if (params.has('legacyborn')) legacyHost.takeBorn(params.get('legacyborn'));   // LEGACY1: the waiting birth, before the new game's mod records are made
+  _legacyMade(legacyHost);
   // NOTICE1 (PROF0 10.1): THE NOTICE BOARD'S PRESS (scenes/worldModes.js activateBulletinBoard, after the bounty
   // board's). Online, a town's rumour board opens the Notice Board once the service has said it is open to this account
   // (BOARD_OPEN); until it has, and whenever it is not, the board is DFU's own - the rumour box - and the read that
@@ -23139,6 +23844,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     chatFrame();   // CHAT1: before the dead return, so the channels keep their heartbeat and their reconnect while the death screen is up (the panel itself is paused away like any HUD - AUDIT CHAT B7)
     tradeFrame();   // TRADE1: retries, timeouts, a peer gone or out of reach - before the dead return, as the chat's is
     duelFrame();   // DUEL1: the duel's law, and the ring my body is kept in - before the dead return, so a fall ends the duel
+    wedFrame();   // LEGACY7 part three: the wedding's clock, and the account's unions read again
     profileFrame();   // INSPECT1: the card's ask retried and its wait timed - the trade's own kind of work, beside it
     pageFrame();   // JOURNAL1: a page whose writer left the room goes with them
     mail?.poll();   // MAIL1: a look at the letterbox when one is due - before the dead return, as the chat's heartbeat is
@@ -23459,7 +24165,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  size - a speck at 330 m under the name that stood over it. Each is grown by the same law at its own feet; 1 off
    *  the view. */
   const peerGrow = (f) => { const e = travelView?.active ? travelView.eye : null; return e ? tvOwnGrow(Math.hypot(e[0] - f[0], e[1] - f[1], e[2] - f[2])) : 1; };
-  const drawPeerBodies = (proj, view, eye, face = null) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye, flashOf: peerFlashOf, grow: face ? peerGrow : null, up: face?.up ?? null }); peerWalkers?.drawLanterns(); };   // OW-PEERS: under the Overworld the bodies grown and leaned as the traveller's own   // HT-WAIST-BACK: the walkers' lanterns, each on its own tilted basis, beside the bodies - every mode's pass calls this after the player's own body (the exterior here, the dungeon and the interior through host.drawPeerBodies)
+  const drawPeerBodies = (proj, view, eye, face = null) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye, flashOf: peerFlashOf, grow: face ? peerGrow : null, up: face?.up ?? null }); peerWalkers?.drawLanterns(); (_mode() === 'interior' ? familyRoom : _mode() === 'exterior' ? familyStreet : null)?.draw(canvas, { proj, view, eye }); };   // LEGACY7 part four: and the line's own bodies, in the place they stood   // OW-PEERS: under the Overworld the bodies grown and leaned as the traveller's own   // HT-WAIST-BACK: the walkers' lanterns, each on its own tilted basis, beside the bodies - every mode's pass calls this after the player's own body (the exterior here, the dungeon and the interior through host.drawPeerBodies)
   /** INVIS-LOOK: the concealed peers' Morrowind bodies, translucent - blended with no depth write, so every mode's pass
    *  calls this AFTER its opaque world (net/peerBodies.js drawVeiled), with the camera its body pass took. */
   const drawVeiledPeerBodies = () => { peerBodies?.drawVeiled(); drawAuras(); nodeGlowPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); };   // WB9g: and the auras, after the opaque world as the veiled are; NODE-MARKS: and the nodes' glow
@@ -23750,6 +24456,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     onDungeonSpawned: () => { const p = playerTravelPixel(); _spawnSeen(`${p.x},${p.y}`); },   // OW6L: the one first-sight door
     onDungeonCleared: _noteSpawnCleared,
     spawnLedger: () => _spawnLedger,   // TTL1: so a save made INSIDE a dungeon carries the clocks too
+    legacyWillRise: () => legacyHost?.willRise() ?? false,   // AUDIT LEGACY B5: Project Legacy will raise this death - Privateer's Hold's start-marker arm takes it offline too
+    legacyRiseLine: () => { const o = legacyHost?.deathOutcome(); return o?.kind === 'rise' ? o.line : null; },   // ...and presents the outcome there: the toll's word
     dungeonOnline: () => onlineOn,   // AUDIT WORLD34 B2: online, the dungeon that gets built is the ROOM's - one layout (SD-ONLINE: the world's size for it)
     // D-ONLINE1: the death screen's door for the deaths this host does
     // not present itself (a dungeon's, a building interior's -
@@ -23757,7 +24465,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // live online play, so the caller falls back to endRunToTitleMenu
     // exactly as it always did offline.
     duelHolds: () => duelEnemyNear(),   // DUEL1: a live duel holds its duellist - no door out of the ring
-    onlineRespawn: () => { if (!(_deathWasOnline ?? _onlineWorldSession())) return false; respawnOnlinePlayer(); return true; },   // ONLINE-DEATH-FIX: a reset that beats the frame's backstop (Enter on the first frame) has no snapshot yet - ask the live answer rather than read null as offline
+    onlineRespawn: () => { if (legacyDeathReset()) return true; if (!(_deathWasOnline ?? _onlineWorldSession())) return false; respawnOnlinePlayer(); return true; },   // LEGACY1: Project Legacy asked first, in a building and underground too   // ONLINE-DEATH-FIX: a reset that beats the frame's backstop (Enter on the first frame) has no snapshot yet - ask the live answer rather than read null as offline
     exteriorSubmerged: () => !!dwPlayer?.submerged,   // DW-D: the sea's forged isPlayerSubmerged, for the router's avoid-death consult
     activateDir: () => _tapDir,   // TI1: the tap's ray for the modal ladders (eyeDir)
     activateLockOnly: () => _tapLockOnly,   // TS1: the stick-half tap - the modal ladders stop after the lock pick
@@ -24355,7 +25063,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:125, so the
+  // only reader of `load` in the whole tree is dungeon.js:"maps.load(mapsBytes, climateBytes, politicBytes)", so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -24393,6 +25101,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   _bootLoaded = true; if (testRoomOffline) townTalk.say(TEST_ROOM_OFFLINE_TEXT);   // HOTFIX 1003d: the boot's character loaded (moveArenaHomesOnline waits for it)   // AUDIT SET D4: said once the world stands, the character loaded
   if (realmRefused) townTalk.say(REALM_OFFLINE_TEXT);   // REALM P1.3: an online boot with no realm character plays offline, and says so
   if (realmBoot?.restored && realmBoot.missed) townTalk.say(REALM_RESTORED_TEXT);   // RESCUE-SAVE: the device's copy of a save the realm refused or never answered, played on (AUDIT A8: an ordinary close's, silently)
+  if (releveled) townTalk.say(LEVELING_CROSS_LINE.switched);   // LEVEL-ONLINE-3: the switch, said once the world stands
   for (const line of reclaimLines(realmGiven)) townTalk.say(line);   // RESTORE: what came back, said once the world stands
   for (const line of loanAmnestyLines(loansForgiven)) townTalk.say(line);   // LOAN-AMNESTY: said once the world stands
   for (const line of empireAccountLines(empireFolded)) townTalk.say(line);   // EMPIRE-ACCOUNT: said once the world stands
@@ -24401,6 +25110,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   if (!_loadedGame) mwViewNewGame((modes?.mode ?? 'exterior') !== 'exterior');
   if (!_loadedGame) hccRuntime.handleNewGame();   // HCC: StartGameBehaviour.OnNewGame [IL_98c0]
   if (!_loadedGame) newGameModSaveRecords();   // WA1: a new character starts from every mod's NewSaveData (systems/modSaveData.js - a recorded departure)
+  legacyHost?.afterBoot();   // LEGACY1 (D9): a loaded character with no family founded offline into its own answer or its Features tile's model - online never (LEGACY-CHOICE); a born or new one's is its own
+  if (legacyRealmLine) legacyOnlineHomesRead();   // LEGACY7 part five: the realm's homes of the one played, for the line's houses
   // E3 - THE CONSOLE. ExteriorAutomap.Start (:417) and
   // DaggerfallTravelMapWindow's ctor (:229) each register their own
   // console commands; both surfaces are THIS host's, so both
@@ -24947,7 +25658,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   const TV_SEA_MOORED_M = 60;    // my boat moored this near is boarded at a journey's start
   const TV_SEA_LAUNCH_M = 40;    // on a launch leg, water this near the traveller is where the boat goes in
   const TV_SEA_PROBE_S = 0.25;   // how often (real seconds) a launch leg looks for its water
-  const TV_SEA_AHEAD_M = 150;    // how far along the bow the helm looks for land
+  const TV_SEA_AHEAD_M = 150;    // how far along the bow the helm looks for land (AUDIT SHIPS A2: at the least - seaHelmLook)
+  const TV_SEA_LANE_M = 5;       // AUDIT SHIPS A2: the water kept either side of her beam on the mark's line
   const TV_SEA_ASHORE_M = 60;    // how far from the landed boat the traveller may step ashore
   const TV_SEA_BEACH_M = 10;     // a landfall's shore this near, the boat all but stopped: the landfall, beached or not
   const TV_SEA_NO_WAY_S = 180;   // game seconds a sea leg may go without coming 20 m nearer its mark before it stops
@@ -25097,16 +25809,17 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     csaCall(() => { boat = csaRuntime.LaunchFromParts(parts, () => playerEntity.items, spot.at, spot.dir, csaTerrainOf(csaPixelAt(spot.at[0], spot.at[2]))); });
     if (boat) csaCall(() => csaRuntime.StartSailing(boat));   // "You control the boat!"
   }
-  /** Metres along a flat direction from `p` to the first land (TV_SEA_AHEAD_M: none seen). */
-  function tvSeaLandAlong(p, dx, dz) {
-    for (let d = 5; d <= TV_SEA_AHEAD_M; d += 5) if (!tvSeaWaterAt(p[0] + dx * d, p[2] + dz * d)) return d;
+  /** Metres along a flat direction from `p` to the first land within `far` (TV_SEA_AHEAD_M; Infinity: none seen). */
+  function tvSeaLandAlong(p, dx, dz, far = TV_SEA_AHEAD_M) {
+    for (let d = 5; d <= far; d += 5) if (!tvSeaWaterAt(p[0] + dx * d, p[2] + dz * d)) return d;
     return Infinity;
   }
-  /** The hand with more water: land along 45 degrees each side of the bow, the farther side's (-1 left, 1 right). */
-  function tvSeaFreer(p, fw) {
+  /** The hand with more water: land along 45 degrees each side of the bow within `far`, the farther side's (-1 left,
+   *  1 right). */
+  function tvSeaFreer(p, fw, far) {
     const c = Math.SQRT1_2;
-    const right = tvSeaLandAlong(p, (fw[0] + fw[2]) * c, (fw[2] - fw[0]) * c);
-    const left = tvSeaLandAlong(p, (fw[0] - fw[2]) * c, (fw[2] + fw[0]) * c);
+    const right = tvSeaLandAlong(p, (fw[0] + fw[2]) * c, (fw[2] - fw[0]) * c, far);
+    const left = tvSeaLandAlong(p, (fw[0] - fw[2]) * c, (fw[2] + fw[0]) * c, far);
     return left > right ? -1 : 1;
   }
   /** At the landfall: the helm left by the mod's own key (the sails lowered, "You stop controlling the boat!"). */
@@ -25151,19 +25864,33 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const p = boat.GameObject.position, fw = csaQuatRotate(boat.GameObject.rotation, [0, 0, 1]);
     const v = s.velocityCurrent ?? [0, 0, 0];
     const landfall = kind === 'landfall';
-    const landAhead = tvSeaLandAlong(p, fw[0], fw[2]);
+    // AUDIT SHIPS A2: the water looked at as far as the hand needs to keep her off land (seaHelmLook - her way's reach),
+    // along her bow, along her whole beam and along the mark's own line - at TV_SEA_AHEAD_M a galleon at SAIL-FREE's way
+    // saw an islet too late to turn off it, and a centreline's look let a hull graze an islet's edge and stick there
+    const far = Math.max(TV_SEA_AHEAD_M, seaHelmLook(tvSea.helm, v[2]));
+    const landAhead = tvSeaLandAlong(p, fw[0], fw[2], far);
     if (landfall && (csaRuntime.IsBeached(boat) || (landAhead <= TV_SEA_BEACH_M && Math.abs(v[2]) < 0.6))) { tvSeaLand(boat); return; }
     if (!landfall && csaRuntime.IsBeached(boat)) { tvSeaStop(TRAVEL_VIEW_TEXT.aground); return; }
     const gs = dt * worldTimeScale();   // the game's seconds, as the boat's own clock runs
     const dist = Math.hypot(mark[0] - p[0], mark[2] - p[2]);
     if (dist < tvSea.best - 20) { tvSea.best = dist; tvSea.bestS = 0; } else if ((tvSea.bestS += gs) > TV_SEA_NO_WAY_S) { tvSeaStop(TRAVEL_VIEW_TEXT.noWayAtSea); return; }
-    const w = s.windVectorCurrent ?? [0, 0, 0], cargo = s.boatCargoMod;
+    const w = s.windVectorCurrent ?? [0, 0, 0];
+    // her lane: from her bow and either beam (her nodes - the points the runtime stops her on), and the lane she would
+    // sail to the mark - her beam's breadth and TV_SEA_LANE_M either side of its line
+    let lane = landAhead;
+    for (const j of [1, 3, 4]) { const n = boat.Nodes?.[j]; if (n) lane = Math.min(lane, tvSeaLandAlong(n.position, fw[0], fw[2], far)); }
+    let markAhead = Infinity;
+    if (!landfall && dist >= 1) {
+      const mx = (mark[0] - p[0]) / dist, mz = (mark[2] - p[2]) / dist, sb = boat.Nodes?.[3]?.position, pt = boat.Nodes?.[4]?.position;
+      const half = (sb && pt ? Math.hypot(sb[0] - pt[0], sb[2] - pt[2]) / 2 : 0) + TV_SEA_LANE_M;
+      for (const k of [-1, 0, 1]) markAhead = Math.min(markAhead, tvSeaLandAlong([p[0] + mz * half * k, p[1], p[2] - mx * half * k], mx, mz, Math.min(far, dist)));
+    }
     const cmd = seaHelmStep(tvSea.helm, {
       heading: seaHeadingOf(fw[0], fw[2]), bearing: seaHeadingOf(mark[0] - p[0], mark[2] - p[2]), wind: [w[0], w[2]],
       hasSails: boat.Sails.length > 0, squareOnly: seaSquareOnly(boat), sailsUp: s.sailPosition > 0, canSail: csaRuntime.CanSail(boat),
-      way: v[2], dt: gs, landfall, landAhead, freer: landAhead <= SEA_HELM.avoidM ? tvSeaFreer(p, fw) : 1,
-      crewed: !!boat.crewed, oarWay: CSA_HANDLING.moveSpeedOar * boat.modifierMoveSpeedOar * cargo,
-      sailWay: CSA_HANDLING.moveSpeedSail * boat.modifierMoveSpeedSail * cargo * Math.hypot(w[0], w[2]),
+      way: v[2], dt: gs, landfall, landAhead: lane, markAhead, freer: lane <= far ? tvSeaFreer(p, fw, far) : 1,
+      crewed: !!boat.crewed, oarWay: csaRuntime.oarWayOf(boat),
+      sailWay: csaRuntime.sailWayOf(boat), free: !!csaRuntime.helmResponsive(),   // SAIL-FREE: straight up to windward - AUDIT SHIPS A4: her sails' way, the runtime's own word
     });
     csaJourneyHelm.held.clear();
     if (cmd.turn > 0) csaJourneyHelm.held.add('MoveRight');
@@ -26456,7 +27183,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // alive (the D12 gate reads the screen). DFU's deathInProgress is no window: nothing can close it. Asked again here,
     // above every mode gate - the presenters already refuse a second screen over their own - and never while the world
     // moves (a load restores the save's health under its latch; a respawn heals first).
-    if (playerSpawned && playerEntity.health <= 0 && !worldMoveBusy() && !(townTalk.overlay instanceof DeathScreen) && !modes?.deathUp?.()) presentPlayerDeath(playerEntity);
+    // AUDIT LEGACY B1: and never while the Succession stands - it IS the death's screen, the fallen at zero under it by
+    // design; a death screen raised over it disposed it the next frame, and no Bloodline line could ever be carried on
+    if (playerSpawned && playerEntity.health <= 0 && !worldMoveBusy() && !(townTalk.overlay instanceof DeathScreen) && !modes?.deathUp?.() && !successionOpen()) presentPlayerDeath(playerEntity);
     // AUDIT DEEP X-1: A DOOR CUTS THE VIEW HERE - a door, a teleport, a load inside. Its own cut (`travelView.frame` reads
     // the host's mode) is in the exterior frame, below the mode's return, so indoors the view stood up until its heartbeat:
     // the readout over the room, the canvas's clicks picks, Escape its own, the traveller turned by the keys
@@ -26637,6 +27366,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       ambience.setPreset(presetForExterior(heardWeather(), isNight(minuteNow())));   // DISC9: the word the street last heard - the one truth Better Ambience's indoor rain reads too
       ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.rainPlaying() });
       if (livingRoads) livingRoads.clear();   // LW3: indoors, underground - the road's bodies freed with the open world they stood in
+      familyStreet?.clear();   // AUDIT LEGACY III W6: the line's street rigs too
       livingWays.frame(); livingMemoFresh();   // AUDIT-E2: the ways asked indoors too - a load made in a tavern or below asked once and never again
       livingDiversStep(now);   // LW6: underground, the companies diving here met
       livingRemainsStep(now);   // LW6b: ...and the dead the deep kept there
@@ -26667,6 +27397,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // purse earned inside held its notice until the street. The farms come down here (their sync's mode test).
       try { bountyHost?.tick(dt); } catch (e) { console.warn('[bounty] tick', e); }
       try { gatherHost?.tick(dt); } catch (e) { console.warn('[prof] tick', e); }   // PROF1: indoors too - no prompt, but the answers come in
+      try { legacyStep(dt); } catch (e) { console.warn('[legacy] tick', e); }   // LEGACY1: indoors and underground too
       _farmSyncT -= dt;
       if (_farmSyncT <= 0) { _farmSyncT = 0.5; try { bountyFarms?.sync(bountyHost?.farmsWanted() ?? []); } catch (e) { console.warn('[bounty] farms', e); } }
       foragingWait.tick();   // AUDIT 28 F2: Foraging's wait ticks in every mode - a wait left pending indoors held every quest's boxes until the street
@@ -26683,7 +27414,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:667, :675). So every HUD line raised in a modal
+      // (townTalk.js:"NextInteractionMode", townTalk.js:"reads the four modes"). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
@@ -27257,7 +27988,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const _act = activateFrame((latch.activate ??= createActivateGate()), {
           down: _activateDown,
           hasReadySpell: magic.spellArmed(),
-          touchSpell: magic.readied()?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:206)
+          touchSpell: magic.readied()?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:"ClassicTargetIndexToTargetType")
           hudBlocked: activeMouseOverLargeHUD(),
           paused: _overlayHeld,
         });
@@ -27465,6 +28196,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               // window and the frame runs on (worldModes' own negated take). test/ql_frame.test.js holds every return.
               if (pile || _fish) {
                 const _hooks = _fish ? dwFishLootHooks(_fish) : droppedLootHooks(pile);
+                // SILVER-FINDS (AUDIT 625 S2): a scene's own TREASURE container out here - World of Daggerfall's piles and
+                // casket, Deep Waters' chests (`container: true`) - rolls its find as an interior's and a dungeon's pile does,
+                // with something in it, once it OPENED (D6); each is unsaved (LoadID 0), minted afresh with its contents, so
+                // its object is its name. The player's own drops and a fish never
+                const _find = pile?.container === true && pile.items.length ? pile : null;
                 // QUICK-LOOT B4: the same door, on the player's own pile -
                 // the hooks this arm was already building for the window.
                 if (!quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards
@@ -27477,7 +28213,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
                     loot: _hooks,   // G5: DaggerfallLoot's own identity
                   });
                   if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
-                } else droppedLoot.releaseEmptied();   // AUDIT 68 S20: a take is its own window close - an emptied pile is freed
+                  if (w && _find) silverFindAt('pile', _find);
+                } else {
+                  if (_find) silverFindAt('pile', _find);
+                  droppedLoot.releaseEmptied();   // AUDIT 68 S20: a take is its own window close - an emptied pile is freed
+                }
               }
             }
             else modes.tryEnter().then((opened) => {
@@ -27595,6 +28335,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       peerWalkers?.offsetAll(r.offset);   // DISC23-B: and the walkers'
       if (_onlineLast) { _onlineLast[0] += r.offset[0]; _onlineLast[1] += r.offset[1]; _onlineLast[2] += r.offset[2]; }
       if (peerBodies) peerBodies.offsetAll(r.offset);   // MWBODY1 (AUDIT MWBODY B2): the bodies' feet follow the origin as the dolls do
+      familyStreet?.offsetAll(r.offset);   // LEGACY7 part four: and the line's in the street
     }
     if (r.pixelChanged) {
       // P1: PlayerGPS.Update (:329-339). The map pixel changed, so
@@ -27693,6 +28434,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       }
     }
     try { bountyHost?.tick(dt); } catch (e) { console.warn('[bounty] tick', e); }   // BOUNTY1: the hunts - packs stood and counted, a purse paid, a notice raised
+    try { legacyStep(dt); } catch (e) { console.warn('[legacy] tick', e); }   // LEGACY1: the seat, the elder, the estate, a dead load
     try { gatherHost?.tick(dt); } catch (e) { console.warn('[prof] tick', e); }   // PROF1: the patches, the prompt, the act, the answers
     // NOTICE1: the town the player stands in is read on arrival (a minute's cache, net/noticeBook.js) - so its boards'
     // count floats over them and its board opens as the Notice Board at the first press, not the second
@@ -28433,6 +29175,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const livePersonBatches = [];
     meterFor(renderer.gl)?.markCpu('people');   // PERF-CPU: the towns' own pools
     _livePersons.length = 0;   // T3b: rebuilt each frame in WORLD space   // PERF-TOWN1: the SAME array and the same entries, refilled
+    familyStreet?.begin();   // LEGACY7 part four: the line's own bodies, stood again this frame
     for (const p of built.values()) {
       if (!p.population) continue;
       const t = state.pixelTranslation(p.px, p.py);
@@ -28471,9 +29214,14 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const seat = town.seat(_livePersons.length);   // T3b: world-space activation target
         seat.person = person; seat.pos = batch.origin;
         _livePersons.push(seat);
+        // LEGACY7 part four: one of the line with a look stands in their own body - the walker stays their talk target
+        const kin = person.living?.res;
+        if (kin?.look && (familyStreet ??= makeFamilyBodies()).stand(kin, batch.origin, person.yaw, person.state === 'move')) continue;
         livePersonBatches.push(batch);
       }
     }
+    // AUDIT LEGACY III W4: held under a talk window, as the street is (the member met walked on the spot behind their card)
+    if (familyStreet) { familyStreet.end(townTalk.overlayActive ? 0 : dt, cam.pos); livePersonBatches.push(...familyStreet.batches()); }
     // LW3: THE ROADS - the living world's parties near, in file by day and about their fires by night (scenes/
     // livingRoads.js), on the ground and grown under the Overworld; the planner asked a few ways a frame
     livingWays.frame(); livingMemoFresh();   // LW3: a new network, new ways (AUDIT-B8: and the memo's bound)
@@ -28482,7 +29230,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       livingRoadsOf().frame(townTalk.overlayActive ? 0 : dt, cam.pos, { overworld: tvf ? { grow: tvf.grow, blend: tvf.blend } : null });
       livePersonBatches.push(...livingRoads.batches());
     } else if (livingRoads) livingRoads.clear();
-    if (_livingWatchTurned.length) livingWatchStep();   // LW7: a struck watchman's guard, watched
+    if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }   // LW7 / WATCH-FIX: the turned watch followed, mine and a peer's
     if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again - the room's residents freed (LW-FIX1: and an empty room's sounding)
     if (livingRemains) { livingRemains.clear(); livingRemains = null; }   // LW6b: ...and the deep's layer let go with its dungeon
     // G1: the guards drive + draw on the same flats' axis. WINFOE1
@@ -28911,11 +29659,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:783-788), so this seam ROUTES by pool exactly
+        // (cityGuards.js:"function handleAttackFromPlayer"), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1366). DFU makes no pool distinction:
+        // (cityGuards.js:"damageGuard(foe, 0, playerFeet, null)"). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.
@@ -29039,7 +29787,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:453-481) because neither reads ARENA2 - "a player whose
+    // (hud.js:"HUDCompass.DrawCompass") because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null

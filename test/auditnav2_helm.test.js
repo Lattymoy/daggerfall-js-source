@@ -8,7 +8,7 @@
 //   F15 - in irons reads her way through the water, not the sea's current (with the mod's default waves it never fired)
 //   F16 - the Overworld's crossing takes the Carrack wherever the responsive helm sails her
 //   F17 - under the travel view (a journey holds the helm) the panel is covered and the sail keys stand down
-//   F18 - the in-irons advice is the helm's own: the responsive rudder answers at rest, so put the helm over
+//   F18 - the in-irons advice is the helm's own: the mod's strikes sail and rows (SAIL-FREE: the responsive lies in none)
 //   F20 - helmWay.js's measured figures, like-for-like at 1/60 s frames, every one at its speed
 //   F31 - Interact, the readout's "E: hold fire", holds fire while the guns are laid; the host never grapples then
 import { test } from 'node:test';
@@ -122,12 +122,20 @@ test('AUDIT NAV2 F14 the Ship handling is taken once a helm session: a Carrack u
 
 // ── F15 ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('AUDIT NAV2 F15 in irons with the mod\'s own waves (Waves.Enable, its default): the sea\'s current rides in her velocity, half the wind - her way through the water is what is read, so a hull lying head to wind is told and the panel says so (mutants: the current counted)', () => {
+test('AUDIT NAV2 F15 in irons with the mod\'s own waves (Waves.Enable, its default): the sea\'s current rides in her velocity, half the wind - her way through the water is what is read, so a hull lying head to wind is told and the panel says so; under the responsive helm (SAIL-FREE) her own way ahead is her canvas\'s, up into the wind, and nothing is told (mutants: the current counted)', () => {
   for (const handling of ['classic', 'responsive']) {
     const h = helmOn(HULL.SmallShip, { handling, wind: [0, 0, -1.5], settings: { 'Waves.Enable': true } });   // blowing to her stern: dead ahead
     let told = null, t = 0;
     h.run(CSA.IRONS_TELL_S + 3, () => { t += 0.25; if (told == null && h.s.out.hud.some((x) => /^In irons/.test(x))) told = t; });
     assert.ok(Math.hypot(...h.s.rt.state.velocityCurrent) >= CSA.IRONS_TELL_WAY, `${handling}: the current rides in her velocity (${Math.hypot(...h.s.rt.state.velocityCurrent)} m/s)`);
+    if (handling === 'responsive') {
+      // PIN MOVED (SAIL-FREE, 2026-10-05, Mac's "No tacking, Black Flag"): her canvas draws in the wind's eye and drives
+      // her up into it - no irons to tell
+      assert.ok(h.s.rt.state.MoveVectorCurrent[2] > 10 * CSA.IRONS_TELL_WAY, `responsive: her own way ahead, into the wind (${h.s.rt.state.MoveVectorCurrent[2]})`);
+      assert.equal(told, null, 'responsive: nothing told');
+      assert.equal(h.s.rt.helmPanelState().inIrons, false, 'responsive: the panel says nothing');
+      continue;
+    }
     // PIN MOVED (GALLEON, 2026-10-01): her own way AHEAD nothing - the new galleon's gaff and staysail come aback in the
     // wind's eye (the mod's GetSailPower; her square canvas is stowed there by the default assist - AUDIT GALLEON T6) and
     // drive her astern, where the mod's lateens only stood idle
@@ -209,29 +217,34 @@ test('AUDIT NAV2 F17 the sail keys stand down under the travel view, as the turn
 
 // ── F18 ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('AUDIT NAV2 F18 the in-irons word is the helm\'s own: under the responsive helm her rudder answers at rest, so she is told to put the helm over first - and the helm alone brings her off the wind\'s eye; under the mod\'s own nothing turns a hull with no way, so she is told to strike sail and row; the panel\'s line says the same with the keys (mutants: the tell\'s old word, the panel not told, the line\'s old word)', () => {
+test('AUDIT NAV2 F18 the in-irons word is the helm\'s own: under the mod\'s own nothing turns a hull with no way, so she is told to strike sail and row, and the panel\'s line says so with the keys; under the responsive helm (SAIL-FREE) she is never in irons - her canvas drives her up into the wind\'s eye, and with no way at all (her canvas shot away) the wind is not what holds her: nothing told, the panel quiet - and the helm alone still brings her off the eye (mutants: the responsive helm in irons)', () => {
   for (const handling of ['classic', 'responsive']) {
     const h = helmOn(HULL.SmallShip, { handling, wind: [0, 0, -1.5] });
     h.run(CSA.IRONS_TELL_S + 1);
-    const want = handling === 'responsive' ? CSA.IRONS_HELM_TEXT : CSA.IRONS_TEXT;
-    assert.equal(typeof want, 'string', `${handling}: its word`);
-    assert.equal(h.s.out.hud.filter((x) => /^In irons/.test(x)).at(-1), want, `${handling}: told`);
-    assert.equal(h.s.rt.helmPanelState().inIrons, true);
-    assert.equal(h.s.rt.helmPanelState().responsive, handling === 'responsive', `${handling}: the panel told whose rudder she answers`);
-    // the advice is the truth: the helm alone
+    // PIN MOVED (SAIL-FREE, 2026-10-05, Mac's "No tacking, Black Flag"): the responsive helm's word ("put the helm over",
+    // IRONS_HELM_TEXT) went with its irons - she sails up into the wind's eye
+    assert.equal(h.s.out.hud.filter((x) => /^In irons/.test(x)).at(-1), handling === 'classic' ? CSA.IRONS_TEXT : undefined, `${handling}: told`);
+    assert.equal(h.s.rt.helmPanelState().inIrons, handling === 'classic', `${handling}: the panel`);
+    // the helm alone
     h.s.held.add('MoveRight');
     let off = null, t = 0;
     h.run(20, () => { t += 0.25; if (off == null && Math.abs(h.heading()) > CSA.IRONS_TELL_DEG) off = t; });
     if (handling === 'responsive') assert.ok(off != null && off < 15, `the helm over brings her ${CSA.IRONS_TELL_DEG} degrees off the eye (${off} s)`);
     else assert.equal(off, null, 'the mod\'s rudder waits on her way: she lies there');
   }
-  assert.match(CSA.IRONS_HELM_TEXT ?? '', /^In irons - the wind is dead ahead\. Put the helm over, or strike sail and row her round\.$/);
+  // no way at all under the responsive helm - her canvas shot away (the sea fight's wayScale) - lying head to wind
+  const bare = helmOn(HULL.SmallShip, { wind: [0, 0, -1.5] });
+  bare.s.deps.wayScale = () => 0;
+  bare.run(CSA.IRONS_TELL_S + 1);
+  assert.ok(bare.way() < CSA.IRONS_TELL_WAY && bare.s.rt.state.sailPosition > 0, `no way, her sails up (${bare.way()})`);
+  assert.equal(bare.s.out.hud.some((x) => /^In irons/.test(x)), false, 'the wind is not what holds her: no irons told');
+  assert.equal(bare.s.rt.helmPanelState().inIrons, false);
+  assert.equal('IRONS_HELM_TEXT' in CSA, false, 'no word left for a helm that lies in no irons');
   const keyOf = (a) => ({ BoatSailUp: 'UP', BoatSailDown: 'DOWN', TurnLeft: 'LEFT', TurnRight: 'RIGHT', MoveForwards: 'W', MoveBackwards: 'S' })[a] ?? '';
-  const irons = (responsive) => ({ hull: 2, hasSails: true, inIrons: true, responsive });
+  const irons = { hull: 2, hasSails: true, inIrons: true };
   // PIN MOVED (HELM-LADDER): one rung down strikes the last of her sail and puts her on her oars - its two keys, no row key
-  assert.equal(helmHint(irons(true), { keyOf, mouseFree: true }), 'In irons - put the helm over (LEFT RIGHT), or strike sail (S DOWN) and row her round');
-  assert.equal(helmHint(irons(false), { keyOf, mouseFree: true }), 'In irons - strike sail (S DOWN) and row her round', 'the mod\'s own helm: as it was');
-  assert.equal(helmHint(irons(true), { touch: true }), 'In irons - put the helm over, or strike sail and row her round', 'a finger: the words alone');
+  assert.equal(helmHint(irons, { keyOf, mouseFree: true }), 'In irons - strike sail (S DOWN) and row her round', 'the mod\'s own helm: as it was');
+  assert.equal(helmHint(irons, { touch: true }), 'In irons - strike sail and row her round', 'a finger: the words alone');
 });
 
 // ── F20 ─────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -281,7 +294,8 @@ test('AUDIT NAV2 F20 helmWay.js\'s measured figures are the runtime\'s, like-for
     near(r, m.rate, 0.06, `at ${v} m/s`);
     near(c, m.circle, 1, `its circle at ${v} m/s`);
   }
-  near(vFull, classic.top, 0.05, 'her full way is the one measured');
+  // PIN MOVED (SAIL-FREE, 2026-10-05): her full way is the responsive helm's own - SAIL-FREE's, where it was the mod's
+  near(vFull, quick.top, 0.05, 'her full way is the one measured');
   const [modFull] = stated(/0\.75 deg\/s at 1 m\/s, ([\d.]+) at her full way/);
   near(modFull, rudder('classic', classic.top).rate, 0.06, 'the mod\'s at her full way');
   const fromRest = (handling) => {

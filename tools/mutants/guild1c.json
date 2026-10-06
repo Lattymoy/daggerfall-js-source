@@ -362,11 +362,12 @@
   {
     "name": "GUILD1c-a-peers-tag-unread",
     "file": "src/net/online.js",
-    "old": "lv: readRenown(p), gt: readGuildTag(p), sub: subOf(p)",
-    "new": "lv: readRenown(p), sub: subOf(p)",
+    "old": "lv: readRenown(p), gt: readGuildTag(p), house: readHouse(p), sub: subOf(p)",
+    "new": "lv: readRenown(p), house: readHouse(p), sub: subOf(p)",
     "tests": [
       "test/guild1c.test.js"
-    ]
+    ],
+    "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
   {
     "name": "GUILD1c-a-guild-frame-ignored-for-a-peer",
@@ -389,11 +390,12 @@
   {
     "name": "GUILD1c-the-chat-badge-blind-to-the-tag",
     "file": "src/net/online.js",
-    "old": "return p ? { title: p.title ?? null, glyphs: Array.isArray(p.glyphs) ? p.glyphs : [], gt: p.gt ?? null } : null;",
-    "new": "return p ? { title: p.title ?? null, glyphs: Array.isArray(p.glyphs) ? p.glyphs : [] } : null;",
+    "old": "return p ? { title: p.title ?? null, glyphs: Array.isArray(p.glyphs) ? p.glyphs : [], gt: p.gt ?? null, ...(p.house ? { house: p.house } : {}) } : null;",
+    "new": "return p ? { title: p.title ?? null, glyphs: Array.isArray(p.glyphs) ? p.glyphs : [], ...(p.house ? { house: p.house } : {}) } : null;",
     "tests": [
       "test/guild1c.test.js"
-    ]
+    ],
+    "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
   {
     "name": "GUILD1c-every-look-hands-an-order",
@@ -461,11 +463,12 @@
   {
     "name": "GUILD1c-a-row-without-its-tag",
     "file": "src/net/roster.js",
-    "old": "...readBadge(from), gt: readGuildTag(from) });",
-    "new": "...readBadge(from) });",
+    "old": "...readBadge(from), gt: readGuildTag(from) };",
+    "new": "...readBadge(from) };",
     "tests": [
       "test/guild1c.test.js"
-    ]
+    ],
+    "note": "PERF-ON3 (re-aimed by content): the roster row is built once into its memo (`const row = {...}`) rather than pushed whole; the mutant still leaves the guild's tag off it."
   },
   {
     "name": "GUILD1c-my-own-row-untagged",

@@ -1,0 +1,663 @@
+[
+  {
+    "name": "AUDIT-SHIPS-A1-way-unread",
+    "file": "src/net/serpentBrain.js",
+    "old": "{ f.players[b.sub].seenAt = now; serpentWayOf(f.players[b.sub], b, now); }",
+    "new": "{ f.players[b.sub].seenAt = now; }",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-no-easing",
+    "file": "src/net/serpentBrain.js",
+    "old": "const k = Math.min(1, dt / SERPENT_WAY_EASE_MS);",
+    "new": "const k = 1;",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-turn-not-held",
+    "file": "src/net/serpentBrain.js",
+    "old": "if (v > 0.5 && Math.abs(w) > 1e-3) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-lead-unbounded",
+    "file": "src/net/serpentBrain.js",
+    "old": "const s = Math.max(0, Math.min(ms, SERPENT_LEAD_MAX_MS)) / 1000;",
+    "new": "const s = Math.max(0, ms) / 1000;",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-warp-learned",
+    "file": "src/net/serpentBrain.js",
+    "old": "if (p.skew || dt > SERPENT_WAY_STALE_MS || Math.hypot(vx, vz) > SERPENT_WAY_MAX_V) rest();",
+    "new": "if (p.skew || dt > SERPENT_WAY_STALE_MS) rest();",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-stale-learned",
+    "file": "src/net/serpentBrain.js",
+    "old": "if (p.skew || dt > SERPENT_WAY_STALE_MS || Math.hypot(vx, vz) > SERPENT_WAY_MAX_V) rest();",
+    "new": "if (p.skew || Math.hypot(vx, vz) > SERPENT_WAY_MAX_V) rest();",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-maw-unled",
+    "file": "src/net/serpentBrain.js",
+    "old": "(dashOf(A, headAt(f.legs, go), target && serpentLeadOf(f, target, serpentWindupOf(A))))",
+    "new": "(dashOf(A, headAt(f.legs, go), target))",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-coil-unled",
+    "file": "src/net/serpentBrain.js",
+    "old": "const aim = target ? serpentLeadOf(f, target, serpentWindupOf(A)) : { x: tx, z: tz };",
+    "new": "const aim = { x: tx, z: tz };",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-lash-unled",
+    "file": "src/net/serpentBrain.js",
+    "old": "const aim = target ? serpentLeadOf(f, target, A.windup) : { x: tx, z: tz };\n    yw = Math.atan2(aim.x - p.x, aim.z - p.z);",
+    "new": "const aim = { x: tx, z: tz };\n    yw = Math.atan2(aim.x - p.x, aim.z - p.z);",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-spit-unled",
+    "file": "src/net/serpentBrain.js",
+    "old": "const aim = target ? serpentLeadOf(f, target, A.windup) : { x: tx, z: tz };   // AUDIT SHIPS A1: where she will be",
+    "new": "const aim = { x: tx, z: tz };",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-ram-unled",
+    "file": "src/net/serpentBrain.js",
+    "old": "for (let k = 0; target && k < RAM_LEAD_STEPS; k++) {",
+    "new": "for (let k = 0; target && k < 0; k++) {",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-ram-led-once",
+    "file": "src/net/serpentBrain.js",
+    "old": "for (let k = 0; target && k < RAM_LEAD_STEPS; k++) {",
+    "new": "for (let k = 0; target && k < 1; k++) {",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-lead-cap-short",
+    "file": "src/net/serpentBrain.js",
+    "old": "export const SERPENT_LEAD_MAX_MS = 9000;",
+    "new": "export const SERPENT_LEAD_MAX_MS = 6000;",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-fits-unled",
+    "file": "src/net/serpentBrain.js",
+    "old": "const d = dashOf(A, headAt(f.legs, now + SERPENT_SAY_AHEAD_MS), serpentLeadOf(f, target, serpentWindupOf(A)));",
+    "new": "const d = dashOf(A, headAt(f.legs, now + SERPENT_SAY_AHEAD_MS), target);",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-surge-unled",
+    "file": "src/net/serpentBrain.js",
+    "old": "const target = serpentLeadOf(f, target0, SERPENT_SAY_AHEAD_MS + (dist(h.x, h.z, target0.x, target0.z) / closeV(f, target0)) * 1000);",
+    "new": "const target = target0;",
+    "tests": [
+      "test/auditships.test.js",
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-fixed-surge",
+    "file": "src/net/serpentBrain.js",
+    "old": "const go = now + SERPENT_SAY_AHEAD_MS, v = closeV(f, target), [ax, az] = closeAim(f, now, target);",
+    "new": "const go = now + SERPENT_SAY_AHEAD_MS, v = CLOSE_V, [ax, az] = closeAim(f, now, target);",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-gain-lost",
+    "file": "src/net/serpentBrain.js",
+    "old": "return Math.min(DASH_V, Math.max(CLOSE_V, Math.hypot(p?.vx ?? 0, p?.vz ?? 0) + CLOSE_GAIN_V));",
+    "new": "return Math.min(DASH_V, Math.max(CLOSE_V, Math.hypot(p?.vx ?? 0, p?.vz ?? 0)));",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-cap-lost",
+    "file": "src/net/serpentBrain.js",
+    "old": "return Math.min(DASH_V, Math.max(CLOSE_V, Math.hypot(p?.vx ?? 0, p?.vz ?? 0) + CLOSE_GAIN_V));",
+    "new": "return Math.max(CLOSE_V, Math.hypot(p?.vx ?? 0, p?.vz ?? 0) + CLOSE_GAIN_V);",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A1-relay-ts-dropped",
+    "file": "server/src/index.js",
+    "old": "...(Number.isFinite(b.pose.ts) ? { ts: b.pose.ts } : {}) });",
+    "new": "});",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C1-claim-counted",
+    "file": "src/net/serpentBrain.js",
+    "old": "f.ships = serpentShipsFighting(f);",
+    "new": "f.ships = here.filter((b) => f.players[b.sub].hl >= 0 && !f.players[b.sub].wreck).length;",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C1-retired-counted",
+    "file": "src/net/serpentBrain.js",
+    "old": "filter((p) => p.share > 0 && !p.retired).length;",
+    "new": "filter((p) => p.share > 0).length;",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C1-ratchet-aboard",
+    "file": "src/net/serpentBrain.js",
+    "old": "known.aboard = ref >= known.ref;",
+    "new": "known.aboard = true;",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C1-aboard-unread",
+    "file": "src/net/serpentBrain.js",
+    "old": "!p.wreck && !p.stale && p.aboard !== false && now - (p.seenAt",
+    "new": "!p.wreck && !p.stale && now - (p.seenAt",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C1-off-her-share-kept",
+    "file": "src/net/serpentBrain.js",
+    "old": "if (!known.aboard) retireSerpentShare(f, known);",
+    "new": "",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C1-rowboat-wreck-dropped",
+    "file": "src/net/serpentBrain.js",
+    "old": "  // AUDIT SHIPS C1: a rowboat's too (her share is none) - a wreck is no longer gone at, whatever she brought\n  if (!p || f.fell || f.gone) return false;",
+    "new": "  if (!p || f.fell || f.gone || p.share <= 0) return false;",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C1-claim-a-ship",
+    "file": "src/net/serpentBrain.js",
+    "old": "export const serpentOnShip = (p) => (p.on ?? p.hl) >= 0;",
+    "new": "export const serpentOnShip = (p) => p.hl >= 0;",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C1-on-unsaid",
+    "file": "src/net/serpentBrain.js",
+    "old": "    known.on = hull;\n",
+    "new": "",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C1-target-by-claim",
+    "file": "src/net/serpentBrain.js",
+    "old": "const ships = live.filter((b) => serpentOnShip(f.players[b.sub]));",
+    "new": "const ships = live.filter((b) => f.players[b.sub].hl >= 0);",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C1-client-change-unread",
+    "file": "src/scenes/serpentHost.js",
+    "old": "lastIn.day !== sw.day || (lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS) || ",
+    "new": "lastIn.day !== sw.day || ",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C2-unmarked",
+    "file": "server/src/index.js",
+    "old": "if (!(m.bv >= SERPENT_BRAIN_MIN)) { if (was) was[1].players[a.sub].stale = true; no('reload'); return; }",
+    "new": "if (!(m.bv >= SERPENT_BRAIN_MIN)) { no('reload'); return; }",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C2-words-heard",
+    "file": "server/src/index.js",
+    "old": "    if (f.players[a.sub]?.stale) return;   // AUDIT SHIPS C2: a game told to reload is not heard until it has\n",
+    "new": "",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C2-body-counted",
+    "file": "server/src/index.js",
+    "old": "if (!b.pose || !f.players[sub] || f.players[sub].stale) continue;",
+    "new": "if (!b.pose || !f.players[sub]) continue;",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C2-never-cleared",
+    "file": "server/src/index.js",
+    "old": "    if (was?.[1].players[a.sub]?.stale) delete was[1].players[a.sub].stale;\n",
+    "new": "",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-B1-short-taken-up",
+    "file": "src/net/serpentBrain.js",
+    "old": "if (!law && now - t0 <= SERPENT_DRAWN_MS) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/auditships.test.js",
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-B1-home-from-last-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "const from = Math.max(now + SERPENT_SAY_AHEAD_MS, L?.at ?? 0);",
+    "new": "const from = t0;",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-B1-home-the-wrong-way",
+    "file": "src/net/serpentBrain.js",
+    "old": "pushLeg(f, legFrom(f.legs, from, LEG.arc, CRUISE_V, ORBIT_R, h.x * Math.cos(h.yw) - h.z * Math.sin(h.yw) <= 0 ? 1 : -1), out);",
+    "new": "pushLeg(f, legFrom(f.legs, from, LEG.arc, CRUISE_V, ORBIT_R, h.x * Math.cos(h.yw) - h.z * Math.sin(h.yw) <= 0 ? -1 : 1), out);",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-B1-hello-arms-nothing",
+    "file": "server/src/index.js",
+    "old": "{ await this._serpentArm(Date.now()); break; }",
+    "new": "{ break; }",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-B3-heads-own-round",
+    "file": "src/net/serpentBrain.js",
+    "old": "const fit = maelTurnToFit(h1), len = fit.a * HUNT_TURN_R,",
+    "new": "const fit = { a: 0, sd: -1 }, len = fit.a * HUNT_TURN_R,",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-B3-left-only",
+    "file": "src/net/serpentBrain.js",
+    "old": "for (const sd of [-1, 1]) {",
+    "new": "for (const sd of [-1]) {",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D3-eye-right",
+    "file": "src/net/serpentBrain.js",
+    "old": "const [ex, ez] = keepIn(h1.x - Math.cos(h1.yw) * MAEL_ORBIT_R, h1.z + Math.sin(h1.yw) * MAEL_ORBIT_R, ARENA_R - MAEL_ORBIT_R);",
+    "new": "const [ex, ez] = keepIn(h1.x + Math.cos(h1.yw) * MAEL_ORBIT_R, h1.z - Math.sin(h1.yw) * MAEL_ORBIT_R, ARENA_R - MAEL_ORBIT_R);",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-B4-cruise-rise-kept",
+    "file": "src/net/serpentBrain.js",
+    "old": "if (slow <= CRUISE_V) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-throes-at-the-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "  const go = now + SERPENT_SAY_AHEAD_MS;\n  // AUDIT SERPENT S4/M1",
+    "new": "  const go = now;\n  // AUDIT SERPENT S4/M1",
+    "tests": [
+      "test/auditships.test.js",
+      "test/serpent1_law.test.js",
+      "test/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-sounding-at-the-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "const go = now + SERPENT_SAY_AHEAD_MS;   // AUDIT SHIPS B5: said ahead, as the kill's throes are",
+    "new": "const go = now;",
+    "tests": [
+      "test/auditships.test.js",
+      "test/serpent1_law.test.js",
+      "test/serpent1_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-roar-at-the-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "const go = now + SERPENT_SAY_AHEAD_MS, h1 = headAt(f.legs, go);\n    tg = [[h1.x, h1.z]];",
+    "new": "const go = now, h1 = headAt(f.legs, go);\n    tg = [[h1.x, h1.z]];",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-cry-at-the-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "pushLeg(f, legFrom(f.legs, now + SERPENT_SAY_AHEAD_MS, LEG.line, REAR_V), out);",
+    "new": "pushLeg(f, legFrom(f.legs, now, LEG.line, REAR_V), out);",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-pace-at-the-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "function steer(f, now, aim, v, out) {\n  const go = now + SERPENT_SAY_AHEAD_MS;",
+    "new": "function steer(f, now, aim, v, out) {\n  const go = now;",
+    "tests": [
+      "test/auditships.test.js",
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-ride-at-the-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "dive = Math.max(go, at - serpentWindupOf(A));",
+    "new": "dive = Math.max(now, at - serpentWindupOf(A));",
+    "tests": [
+      "test/auditships.test.js",
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-settled-at-the-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "A !== SERPENT_ATTACK_TABLE.mael) pushMode(f, now + SERPENT_SAY_AHEAD_MS, MODE.cruise, out);",
+    "new": "A !== SERPENT_ATTACK_TABLE.mael) pushMode(f, now, MODE.cruise, out);",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-rear-at-the-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "{ pushMode(f, now + SERPENT_SAY_AHEAD_MS, MODE.rear, out); f.rearAt = now; }",
+    "new": "{ pushMode(f, now, MODE.rear, out); f.rearAt = now; }",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-released-at-the-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "  f.coil.off = go;\n  pushLeg(f, legFrom(f.legs, go, LEG.line, v), out);",
+    "new": "  f.coil.off = now;\n  pushLeg(f, legFrom(f.legs, go, LEG.line, v), out);",
+    "tests": [
+      "test/auditships.test.js",
+      "test/serpent1_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-wound-from-landing",
+    "file": "src/net/serpentBody.js",
+    "old": "const on = smooth((t - (c.w > c.at ? c.w : c.at)) / COIL_BLEND_MS);",
+    "new": "const on = smooth((t - c.at) / COIL_BLEND_MS);",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-wound-unsaid",
+    "file": "src/net/serpentBrain.js",
+    "old": "w: now + SERPENT_SAY_AHEAD_MS, until: a.at + COIL_MS,",
+    "new": "until: a.at + COIL_MS,",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-wound-at-landing",
+    "file": "src/net/serpentBrain.js",
+    "old": "w: now + SERPENT_SAY_AHEAD_MS, until: a.at + COIL_MS,",
+    "new": "w: a.at, until: a.at + COIL_MS,",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-coil-frame-drops-w",
+    "file": "src/net/serpentBrain.js",
+    "old": "c.th, at: c.at, ...(Number.isFinite(c.w) ? { w: c.w } : {}), until: c.until, h: Math.ceil(c.h), m: c.m });",
+    "new": "c.th, at: c.at, until: c.until, h: Math.ceil(c.h), m: c.m });",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-wire-drops-w",
+    "file": "src/net/wire.js",
+    "old": "...(c.w !== undefined ? { w: c.w } : {}), until: c.until, off: c.off ?? 0,",
+    "new": "until: c.until, off: c.off ?? 0,",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-fold-drops-w",
+    "file": "src/net/serpentLink.js",
+    "old": "...(w.w !== undefined ? { w: w.w } : {}), until: w.until,",
+    "new": "until: w.until,",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-crush-said-at-the-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "out.push({ k: 'cr', i: f.coil.i, at: f.coil.off });",
+    "new": "out.push({ k: 'cr', i: f.coil.i, at: now });",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D2-break-said-at-the-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "out.push({ k: 'cb', i: f.coil.i, n: by, at: f.coil.off, su: f.stunUntil });",
+    "new": "out.push({ k: 'cb', i: f.coil.i, n: by, at: now, su: f.stunUntil });",
+    "tests": [
+      "test/auditships.test.js",
+      "test/serpent1_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-B6-way-clockwise",
+    "file": "src/net/serpentBrain.js",
+    "old": "{ x: target?.x ?? 0, z: target?.z ?? 0 }, COIL_R, -1), rise: 0 };",
+    "new": "{ x: target?.x ?? 0, z: target?.z ?? 0 }, COIL_R, 1), rise: 0 };",
+    "tests": [
+      "test/auditships.test.js",
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-B6-drawn-still",
+    "file": "src/net/serpentBody.js",
+    "old": "const th = w > 0 ? coilAngleAt(b.coil, t) : 0;",
+    "new": "const th = w > 0 ? b.coil.th : 0;",
+    "tests": [
+      "test/auditships.test.js",
+      "test/serpent1_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-B6-turned-past-off",
+    "file": "src/net/serpentBody.js",
+    "old": "const end = c.off > 0 ? Math.min(t, c.off) : t;",
+    "new": "const end = t;",
+    "tests": [
+      "test/auditships.test.js",
+      "test/serpent1_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-B7-old-fight-honoured",
+    "file": "src/net/serpentBrain.js",
+    "old": "if (!(f.bv >= SERPENT_BRAIN_V)) { f.bv = SERPENT_BRAIN_V; f.woke = 'law'; }",
+    "new": "",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-B7-unstamped",
+    "file": "src/net/serpentBrain.js",
+    "old": "v: 1, bv: SERPENT_BRAIN_V, day,",
+    "new": "v: 1, day,",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-B7-law-unread",
+    "file": "src/net/serpentBrain.js",
+    "old": "const law = f.woke === 'law';",
+    "new": "const law = false;",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C3-rounded-a-blow",
+    "file": "src/systems/serpentStrike.js",
+    "old": "if (k === 1 || !carry) return Math.round(x * k);",
+    "new": "return Math.round(x * k);",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C3-carry-dropped",
+    "file": "src/systems/serpentStrike.js",
+    "old": "  carry[key] = v - n;\n",
+    "new": "",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C3-host-uncarried",
+    "file": "src/scenes/serpentHost.js",
+    "old": "shipHurt(A, ship, share(), blows)",
+    "new": "shipHurt(A, ship, share())",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-C4-a-frame",
+    "file": "src/scenes/serpentHost.js",
+    "old": "if (t >= lastWake && t - lastWake < WAKE_MS) return;",
+    "new": "",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D3-stun-at-the-word",
+    "file": "src/net/serpentBrain.js",
+    "old": "const stun = stunned(f, at);",
+    "new": "const stun = stunned(f, now);",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D3-head-at-the-word",
+    "file": "src/net/serpentBrain.js",
+    "old": "headExposed(f, pts, at, stun)",
+    "new": "headExposed(f, pts, now, stun)",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D3-closing-on-a-wreck",
+    "file": "src/net/serpentBrain.js",
+    "old": "const t = here.find((b) => b.sub === c.s && !f.players[b.sub]?.wreck && (A !== SERPENT_ATTACK_TABLE.coil || serpentOnShip(f.players[b.sub]))) ?? null;",
+    "new": "const t = here.find((b) => b.sub === c.s && (A !== SERPENT_ATTACK_TABLE.coil || serpentOnShip(f.players[b.sub]))) ?? null;",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-D3-pruned-to-the-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "pruneLegs(f, now - SERPENT_HIT_LOOKBACK_MS[SERPENT_HIT_LOOKBACK_MS.length - 1]);",
+    "new": "pruneLegs(f, now);",
+    "tests": [
+      "test/auditships.test.js"
+    ]
+  }
+]

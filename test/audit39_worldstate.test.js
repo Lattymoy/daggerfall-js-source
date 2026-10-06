@@ -125,7 +125,7 @@ test('AUDIT 39r: the interior arrow that lands on the player flashes the screen'
 // ---------------------------------------------------------------------
 
 test('AUDIT 39 #152: no host hides drawHud behind the classic HUD art', () => {
-  // hud.js:453-478 runs playerDamageFlash and the enhanced DOM branch
+  // hud.js:"HUDCompass.DrawCompass" runs playerDamageFlash and the enhanced DOM branch
   // ABOVE its own `if (!art) return;` - "the enhanced HUD reads no
   // ARENA2, and a player whose HUD art failed to load still has
   // vitals". Three hosts wrapped the whole call in `if (hudArt)`, and
@@ -242,7 +242,7 @@ test('AUDIT 39 #158: the city watch sweeps on the same law', async () => {
 // coordinates. The pools now carry an epoch the sweep bumps.
 // ---------------------------------------------------------------------
 
-// the parked-fetchBytes harness of audit26_dungeonfoes.test.js:358 -
+// the parked-fetchBytes harness of audit26_dungeonfoes.test.js:"1, 'and stops being an".."assert.equal(here.corpse, false, 'the record is destroyed, not merely hidden');" -
 // one 74-byte CLASS*.CFG record, held until the pin lets it land
 const parkedCareer = () => {
   let land;
@@ -414,7 +414,7 @@ test('AUDIT 39 #159: the travel map refuses with enemies nearby, before the raci
 
 test('AUDIT 39 #130: the exterior host\'s attack TAP defers to a readied spell like its other three doors', () => {
   // WeaponManager.cs:244-263 hands the click to the ready spell before
-  // it handles any attack; touch.js:237 already promises the tap casts.
+  // it handles any attack; touch.js:"function setLockDot" already promises the tap casts.
   // TI1 (2026-09-05): the tap-to-attack button is gone - the touch
   // SWIPE is the attack now, and it carries the same gate in front of
   // the drag seam, held-edge only (a release must reach the rig).

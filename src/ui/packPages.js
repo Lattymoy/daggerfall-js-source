@@ -25,8 +25,13 @@
 //                which DFU counts as ingredients (they are) and a
 //                player looks for under valuables (they are that too)
 //   books        Books and Maps - the things you read
-//   valuables    Gems, Jewellery, Currency (letters of credit),
-//                Paintings, Deeds, Artifacts
+//   valuables    Gems, Jewellery, Currency, Paintings, Deeds,
+//                Artifacts, and the letter of credit - DFU's
+//                MiscItems 275, so its group alone sent it to misc
+//                until WALLET1 named it - and WALLET1's Wallet, which
+//                holds the currencies: while the pack holds a wallet,
+//                what it holds leaves the pages for its sheet
+//                (ui/enhancedInventory.js packModel)
 //   misc         the rest: the drugs, the jars and sacks, the torch
 //                and the bandage, the religious items, the soul trap,
 //                the recipe, the horse and the cart (which also keep
@@ -38,10 +43,11 @@
 // items leave the list, as FilterLocalItems drops them (U53).
 
 import { isEquipped } from '../systems/equip.js';
-import { isEnchanted } from '../systems/inventory.js';
+import { isEnchanted, LETTER_OF_CREDIT_TEMPLATE } from '../systems/inventory.js';
 import { isIngredientTemplate } from './nativeInventory.js';
 import { SPELLBOOK_TEMPLATE_INDEX } from '../systems/spellMaker.js';
 import { POTION_TEMPLATE_INDEX } from '../systems/loot.js';
+import { isWalletItem } from '../systems/walletItem.js';   // WALLET1: the wallet is a valuable
 
 /** The pages, in the order the spine shows them: [id, label]. */
 export const PACK_PAGES = Object.freeze([
@@ -71,7 +77,9 @@ export function pageOf(it) {
   if (g === 'Armor') return 'armor';
   if (CLOTHING.has(g)) return 'clothing';
   if (g === 'UselessItems1' && it.templateIndex === POTION_TEMPLATE_INDEX) return 'potions';
-  if (VALUABLES.has(g)) return 'valuables';   // before the ingredient test: a gem is both, and a player looks here
+  // WALLET1: the wallet and the letter of credit, though both are DFU's miscellany (UselessItems2; MiscItems 275) - the
+  // letter's group alone filed it under misc while this page's own words promised it here
+  if (VALUABLES.has(g) || isWalletItem(it) || (g === 'MiscItems' && it.templateIndex === LETTER_OF_CREDIT_TEMPLATE)) return 'valuables';   // before the ingredient test: a gem is both, and a player looks here
   if (isIngredientTemplate(it.templateIndex)) return 'ingredients';
   if (g === 'Books' || g === 'Maps') return 'books';
   return 'misc';

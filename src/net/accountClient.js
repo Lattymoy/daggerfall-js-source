@@ -42,7 +42,7 @@ import { AURAS } from './identityToken.js';   // WB9g: the auras that exist - a 
 import { LETTER_SUBJECT_MAX, LETTER_BODY_MAX, LETTER_LINES_MAX, LETTERS_SENT_MAX, LETTERS_PAIR_MAX } from './letterLaw.js';   // MAIL1: the letter's bounds, in the refusals' own sentences
 import { MUTE_RANGE_TEXT } from './moderation.js';   // AUDIT 68 S14-mute-range-text-duplicated: the mute's bound in the refusal's sentence, from its home
 import { HOME_CAP, RENT_ROOMS_MAX, RENT_HELD_MAX, RENT_DAYS_MAX } from './homeLaw.js';   // HOME1: the cap a refusal names; HOME-RENT: and the rooms'
-import { DECOR_CAP, DECOR_YARD_CAP } from './decorLaw.js';   // DECOR1: the cap its refusal names; HOME-YARD: a yard's
+import { DECOR_CAP, DECOR_YARD_CAP, DECOR_YARD_HIGH_WHY } from './decorLaw.js';   // DECOR1: the cap its refusal names; HOME-YARD: a yard's
 import { MARKS_MAX, MARKS_BANK, MARKS_MOVE_MAX } from './marksLaw.js';   // MARKS1: the bounds its refusals name
 import { NOTES_LIVE_MAX, NOTE_DAYS, NOTICE_DAYS_MAX } from './boardLaw.js';   // NOTICE1: the bounds its refusals name
 import { SIGN_WHY, SIEGE_WHY, ROYAL_WHY, FEALTY_WHY, SELLSWORD_FEE_MAX } from './townSeatLaw.js';   // SEAT2a: the rosters' refusals in the board's own words; the fee's bound
@@ -58,9 +58,11 @@ import { GUILD_VAULT_SLOTS, GUILD_VAULT_HALL_SLOTS } from './guildVaultLaw.js'; 
 import { MARKET_PRICE_MAX, MARKET_UNITS_MAX, MARKET_LISTINGS_MAX, MARKET_ORDERS_MAX, AUCTION_BID_MAX } from './marketLaw.js';   // PROF5: the bounds its refusals name
 import { GUILD_WRITS_MAX, GUILD_STORES_MAX, COMMISSIONS_MAX, COMMISSIONS_FOR_MAX, WRIT_POSTS_MAX, WRIT_OPS_MAX, GUILD_CONTRACTS_MAX, CONTRACT_PAY_MAX, CONTRACT_DEEDS_MAX } from './writLaw.js';   // PROF6: the bounds its refusals name; SILVER-WAYS: a contract's
 import { RENOWN_TRACKS_MAX } from './renown.js';   // RENOWN1: the tracks' bound, in its refusal's own sentence (RENOWN-CHAR: back with the tracks)
+import { SERPENT_EMBERS } from './serpentHoardLaw.js';   // AUDIT 625 P4: the embers this build's serpent hoard mints, said with its claim
 import { HERALDRY_CHANGE_DRAKES } from './heraldryLaw.js';   // GUILD1d: a change's cost, in its refusal's own sentence
 import { VENDOR_REFUSAL_WORDS } from './vendorLaw.js';   // HOME-VENDOR: a trader's refusals
 import { ARENA_TEXT } from '../systems/arenaText.js';   // ARENA4b: the arena's refusals, in its own frozen table
+import { jittered } from './backoff.js';   // STORM-SHED: a failed mint's hold, jittered as every book's wait is
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -230,6 +232,7 @@ export const REFUSALS = Object.freeze({
   // DECOR1: an online home's decor (server-account/src/decor.js)
   'decor-cap': `A home holds at most ${DECOR_CAP} pieces. Remove one to place another.`,
   'yard-cap': `A yard holds at most ${DECOR_YARD_CAP} pieces. Remove one to place another.`,   // HOME-YARD
+  'yard-high': DECOR_YARD_HIGH_WHY,   // YARD-HEIGHT (AUDIT Y3): the decorator's own sentence
   'decor-taken': 'Another piece already stands under that name. Place it again.',
   'decor-rate': 'You have placed and moved a great deal this hour. Try again later.',
   'no-decor': 'That piece is not in your home any more.',
@@ -275,6 +278,8 @@ export const REFUSALS = Object.freeze({
   'guild-marks-short': 'The treasury does not hold that much silver.',
   'guild-marks-full': `A guild's treasury holds at most ${MARKS_MAX.toLocaleString('en-US')} silver.`,
   'marks-rate': 'You have moved a great deal of silver this hour. Try again later.',
+  'bad-find': 'That find could not be read.',   // SILVER-FINDS: a loot find of no kind the service knows
+  'marks-young': 'Silver turns up in finds and gathering once your account is a week old.',   // AUDIT 625 S1: the witnesses' own age
   'not-developer': 'Only a developer may do that.',   // MARKS1's report, NOTICE1's notices, CUSTOMS-PASS's grant
   // SEAT1a: the seats' registry (server-account/src/townSeats.js)
   'seats-need-account': 'The seats are witnessed by registered accounts. Add a username to witness one.',
@@ -562,6 +567,19 @@ export const REFUSALS = Object.freeze({
   // AUDIT REALM2 S1: a first save the realm reads - a new character's, or customs' own
   'realm-birth': 'The realm takes a new character only as character creation makes one. Delete it and make it again.',
   'customs-allowance': 'That character carries more gold than customs lets in. Bring it online again.',
+  // LEGACY7: Project Legacy online (server-account/src/legacy.js) - a fallen character's tombstone, and a member's birth
+  dead: 'That character has fallen for good. Their house carries on - play one of its living members.',
+  'no-lineage': 'The realm does not hold that family yet. Save once, then try again.',
+  'lineage-person': 'That member of the family cannot take up the line - they have died, retired, wed into it, or are still a child.',
+  'lineage-played': 'That member of the family already has a character in the realm.',
+  'lineage-model': 'A family keeps the way of death it was founded with.',
+  'too-many-lineages': 'You have as many families as an account may hold online.',
+  'lineage-stale': 'Your family was changed on another device. This one takes those changes in and saves again.',
+  'wed-no-line': 'Only a character of a house (Project Legacy) can be wed in the realm.',
+  'wed-already': 'You are wed already.',
+  'wed-partner': 'They cannot be wed now - they are wed already, of no house, or no longer the one who stood with you.',   // AUDIT LEGACY III O1
+  'lineage-too-large': 'Your family\'s record has grown past what the realm keeps for one family.',   // AUDIT LEGACY III O2/P1
+  'wed-spent': 'That wedding was not yours to answer.',
   // AUDIT REALM2 S2: the online acts that cost gold are a realm character's
   'realm-only': 'Only an online character of the realm can do that.',
   // REALM P2.1: a trade's sid another pair settled (server-account/src/realmTrade.js)
@@ -842,6 +860,17 @@ export function forgetSession(storage) {
  *  than that in any room it opens; the token itself lives MAX_TTL_S (five minutes). */
 export const TOKEN_REUSE_MS = 60_000;
 
+/** STORM-SHED (2026-10-06 evening, the account service overloaded a second time - "D1 DB is overloaded"; decorations
+ *  missing): A FAILED MINT HOLDS THE PAGE'S NEXT ONE OFF. A room whose hello the relay refused for want of a token asks
+ *  again within BACKOFF_MAX_MS (net/online.js) - right for a busy room, ruinous for a busy service: every room of every
+ *  tab (the cell, its halos, the hub, the region channel) minted afresh every few seconds while the service failed, and
+ *  a mint is a dozen statements. A reconnect wave at 20:10 was 3,658 mints in five minutes where 470 is the pace, most of
+ *  them failed, and the failures asking again held the database down. So a failure holds the next mint off MINT_COOL_MS,
+ *  doubling with each failure in a row to MINT_COOL_MAX_MS, jittered (net/backoff.js) - a room asking meanwhile is
+ *  answered null at once with the failure's word - and a token lets it go. */
+export const MINT_COOL_MS = 2_000;
+export const MINT_COOL_MAX_MS = 60_000;
+
 /**
  * ACC1d: ONE TOKEN FOR ONE RELAY CONNECTION - NEVER TWICE INTO ONE ROOM.
  *
@@ -851,6 +880,12 @@ export const TOKEN_REUSE_MS = 60_000;
  * D4): a token held over and sent twice into one room is the exact frame
  * the relay refuses, and a player who reconnected would be refused their
  * own name - so a room this token has opened never gets it again.
+ * STORM-SHED: OPENED BY A HELLO, NEVER BY THE MINT - the session says so
+ * (`minter.opened(room, token)`) as its hello carries the token. A mint
+ * slower than the session's TOKEN_WAIT_MS sent its room's hello without
+ * one, yet the token was marked as that room's: the room's retry minted
+ * again, slower again under the load, and each client minted hundreds an
+ * hour while the database queued.
  *
  * SCALE2: AND ONE MINT A CONNECT, NOT ONE A SOCKET. Every socket minted
  * its own - the cell, up to three halos, the hub and the region channel,
@@ -892,23 +927,30 @@ export const TOKEN_REUSE_MS = 60_000;
  * SCALE2: the minter says WHY it answered null (`minter.lastWhy`: 'no-session', or the service's refusal word -
  * 'auth', 'rate', 'server', 'offline'...; null after a token), so a session can tell "sign in" from "try again".
  *
+ * STORM-SHED: a mint that failed holds the next one off (MINT_COOL_MS, doubling to MINT_COOL_MAX_MS, jittered) - every
+ * room asking meanwhile answered null at once with the failure's word, and `minter.coolMs()` how long it still holds, so
+ * a session's next hello waits for it (net/online.js). A token lets it go; another sign-in is never held by this one's.
+ *
  * @param {object} io
  * @param {(url: string, init: object) => Promise<any>} io.fetch
  * @param {any} io.storage  appStorage() in the app, a Map in a test
  * @param {((who: {name: string, kind: string, title: string|null, glyphs: string[], level: number|null, xp: number|null, guild?: string|null}) => void)|null} [io.onIssued]
  * @param {(() => string|null)|null} [io.character]
  * @param {(() => number)} [io.now]
- * @returns {((room?: string|null) => Promise<string|null>) & { lastWhy: string|null }}
+ * @param {(() => number)} [io.rand]  Math.random's shape - the cooldown's jitter
+ * @returns {((room?: string|null) => Promise<string|null>) & { lastWhy: string|null, coolMs: () => number, opened: (room: string|null, token: string) => void }}
  */
-export function accountTokenMinter({ fetch, storage, onIssued = null, character = null, now = () => Date.now() }) {
+export function accountTokenMinter({ fetch, storage, onIssued = null, character = null, now = () => Date.now(), rand = Math.random }) {
   /** @type {{ token: string, secret: string, character: string|null, at: number, rooms: Set<string> } | null} */
   let held = null;
   /** @type {Promise<string|null> | null} */
   let minting = null;
+  /** STORM-SHED: the mints held off after a failure - one sign-in's (its secret), until `until` on now()'s clock, the
+   *  failures in a row counted and the last one's word kept to answer with. */
+  let cool = { secret: /** @type {string|null} */ (null), fails: 0, until: -Infinity, why: /** @type {string|null} */ (null) };
   const reuse = (/** @type {string|null} */ room, /** @type {string} */ secret, /** @type {string|null} */ named) => {
     if (!held || room == null || held.rooms.has(room) || held.secret !== secret || held.character !== named) return null;
     if (!(now() - held.at < TOKEN_REUSE_MS)) return null;
-    held.rooms.add(room);
     return held.token;
   };
   const minter = Object.assign(async (/** @type {string|null} */ room = null) => {
@@ -925,13 +967,34 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
       const shared = reuse(room, session.secret, named);
       if (shared) { minter.lastWhy = null; return shared; }
     }
+    // STORM-SHED: a failure's hold, while it runs, answers every room at once with its word - nothing on the wire
+    if (cool.secret === session.secret && now() < cool.until) { minter.lastWhy = cool.why; return null; }
     const p = mintFresh(session, named).then((token) => {
-      if (token) held = { token, secret: session.secret, character: named, at: now(), rooms: new Set(room != null ? [room] : []) };
+      if (token) {
+        held = { token, secret: session.secret, character: named, at: now(), rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint
+        cool = { secret: null, fails: 0, until: -Infinity, why: null };
+      } else {
+        const fails = cool.secret === session.secret ? cool.fails + 1 : 1;
+        cool = { secret: session.secret, fails, until: now() + jittered(Math.min(MINT_COOL_MAX_MS, MINT_COOL_MS * 2 ** (fails - 1)), rand), why: minter.lastWhy };
+      }
       return token;
     });
     minting = p;
     try { return await p; } finally { if (minting === p) minting = null; }
-  }, { lastWhy: /** @type {string|null} */ (null) });
+  }, {
+    lastWhy: /** @type {string|null} */ (null),
+    /** STORM-SHED: a hello carried `token` into `room` (net/online.js) - the relay spends it there, so that room is minted
+     *  afresh from now on. Until a hello carries it, the room may be handed it again: a token that came after the
+     *  session's wait opened nothing, and marking it spent at the mint made that room's every retry mint again. */
+    opened: (/** @type {string|null} */ room, /** @type {string} */ token) => {
+      if (held && room != null && held.token === token) held.rooms.add(room);
+    },
+    /** STORM-SHED: how long this sign-in's next mint is still held off, ms (0 for none). */
+    coolMs: () => {
+      const session = storedSession(storage);
+      return session && cool.secret === session.secret ? Math.max(0, cool.until - now()) : 0;
+    },
+  });
 
   /** One mint on the wire - the identity adopted, or null with `lastWhy` said. */
   async function mintFresh(/** @type {any} */ session, /** @type {string|null} */ named) {
@@ -948,7 +1011,9 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
           // WB9g: the aura at my own feet (null for none) - absent from a service before acct38, which says nothing
           ...('aura' in answer.data ? { aura: typeof answer.data.aura === 'string' ? answer.data.aura : null } : {}),
           // SEASON1 part two: a Season's banner ribbon under my own name (null for none) - absent from a service before acct58
-          ...('ribbon' in answer.data ? { ribbon: Array.isArray(answer.data.ribbon) ? answer.data.ribbon : null } : {}) };
+          ...('ribbon' in answer.data ? { ribbon: Array.isArray(answer.data.ribbon) ? answer.data.ribbon : null } : {}),
+          // LEGACY7: the house my realm character wears (null for none) - absent from a service before acct87
+          ...('house' in answer.data ? { house: answer.data.house && typeof answer.data.house === 'object' ? answer.data.house : null } : {}) };
         adoptIdentity(storage, { ...who, secret: session.secret });   // AUDIT B4: into the session that asked
         // A THROW HERE IS THE HOST'S AND IS NOT THE PLAYER'S. The token
         // is good and the connection is the thing that matters; a
@@ -1056,7 +1121,9 @@ export function accountRaids({ fetch, storage }) {
 /** SERPENT1: a sea serpent's receipt the relay signed for this account, carried to the service with the character that
  *  fought it and this device's claim id (the hoard's key) - `{ recorded, slain, renown, spoils, order }`, or
  *  `{ recorded: false, why }` (`claimed`, `guest`). */
-export const claimSerpentReceipt = (io, receipt, character, name = null, cid = null) => call(io, '/v1/serpent/claim', { receipt, character, name, ...(cid ? { cid } : {}) });
+// AUDIT 625 P4: and the embers this build's hoard mints (systems/serpentSpoils.js serpentEmbers) - the row counts what the
+// claim says, so a build from before them, saying none, is counted none
+export const claimSerpentReceipt = (io, receipt, character, name = null, cid = null) => call(io, '/v1/serpent/claim', { receipt, character, name, ...(cid ? { cid } : {}), stones: SERPENT_EMBERS });
 
 /**
  * SERPENT1: THE SERPENTS' ONE CALL, bound to this device's stored session (the raids' own shape). With no session there
@@ -1115,9 +1182,12 @@ export function accountRenown({ fetch, storage }) {
 /** A POST through `call` on this device's stored session - `no-session` when there is none, never a throw. The homes'
  *  and the decor's doors (HOME1, DECOR1) both speak through it. */
 function sessionPost({ fetch, storage }) {
-  return async (path, body) => {
+  // AUDIT 625 S4: `as` - an act asked for ONE account (a find owed to it) goes under that account's session or not at
+  // all: the session is read once, and its account checked and its secret sent off that one reading, so another tab's
+  // sign-in can never send it under the account signed in since (`no-session`, and the act waits for its own)
+  return async (path, body, as = null) => {
     const s = storedSession(storage);
-    return s ? call({ fetch, base: serviceBase(storage), secret: s.secret }, path, body) : { ok: false, error: 'no-session' };
+    return s && (as == null || s.id === as) ? call({ fetch, base: serviceBase(storage), secret: s.secret }, path, body) : { ok: false, error: 'no-session' };
   };
 }
 
@@ -1229,9 +1299,9 @@ function waitedPost({ fetch, storage }, ms) {
 
 /**
  * MARKS1: MARKS (server-account/src/marks.js) through the one door - the balance, the Bank's exchange (Marks for gold,
- * never the other way), a guild's Marks treasury and the developers' report. Every act carries its own request id, so an
- * answer lost and asked again is answered again, never charged twice. Every answer is `call`'s shape; each is waited
- * for ACCOUNT_ACT_WAIT_MS at most. `account()` is the account this device is signed in as (AUDIT 28 M2: a kept sale is
+ * never the other way), a guild's Marks treasury, the developers' report and (SILVER-FINDS) a loot find. Every act
+ * carries its own request id, so an answer lost and asked again is answered again, never charged twice. Every answer is
+ * `call`'s shape; each is waited for ACCOUNT_ACT_WAIT_MS at most. `account()` is the account this device is signed in as (AUDIT 28 M2: a kept sale is
  * asked again only under the account that made it).
  */
 export function accountMarks({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
@@ -1243,6 +1313,7 @@ export function accountMarks({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     guildDeposit: (character, marks, rid) => post('/v1/marks/guild/deposit', { character, marks, rid }),
     guildWithdraw: (character, marks, rid) => post('/v1/marks/guild/withdraw', { character, marks, rid }),
     report: () => post('/v1/marks/report', {}),
+    find: (kind, rid, account = null) => post('/v1/marks/find', { kind, rid }, account),   // SILVER-FINDS: a loot find the device rolled - AUDIT 625 S4: under the account it was found by
   };
 }
 

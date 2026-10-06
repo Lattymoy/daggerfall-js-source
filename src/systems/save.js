@@ -33,6 +33,7 @@ import { seedBundleSeq, effectKindLoaded } from './effects.js';   // X10: the li
 import { repairLostCurses } from './curseRepair.js';   // CURSE-REPAIR1: a curse the round clock pruned, given back
 import { repairUnmintedConditions } from './conditionRepair.js';   // DISC21-A: a wearable minted with no condition, minted
 import { restackStones, nameEmbers, PORTAL_GIFT, givePortalGift } from './gateSpoils.js';   // SS1: Sigil Stones saved before they stacked, folded into one stack; WB12a: and named Deadlands Embers
+import { WALLET_GIFT, giveWalletGift } from './walletItem.js';   // WALLET1: a character from before the wallet is given one, once
 import './profTemplates.js';   // PROF2: the ores, ingots and stone a pack may hold, known to every scene a save loads in
 import './restItems.js';   // REST6: the seven rest supplies (1700-1706), known to every scene a save loads in
 import { repairRarityNames, repairRarityBases } from './lootRarity.js';   // DISC29-B: a Magic or Rare Roleplay & Realism: Items piece given back its make's word; RARITY-WEAR: a rolled wand worn as an Amulet
@@ -109,6 +110,10 @@ const ENTITY_FIELDS = [
   // carries the bar too, because Daggerfall has no engine-side level
   // progress counter for it to live in the way Morrowind does.
   'levelingSystem', 'levelProgress', 'levelRollUp',
+  // LEGACY-CHOICE: Project Legacy's answer, the same kind of fact - asked ONCE, at chargen, and the character's own: a
+  // model, or no lineage (systems/legacy/family.js NO_LINEAGE), which keeps them out of the system for good. A save
+  // written before it carries none, and reads as a character who was never asked.
+  'legacyChoice',
   // AUDIT 17h F1: the six BIOGRAPHY modifiers, which DFU persists
   // one-for-one (SerializablePlayer.cs:136-141, :305-310). Without
   // them a load reset every biography answer's lasting effect.
@@ -159,6 +164,9 @@ const ENTITY_FIELDS = [
   // against it, so a save that dropped it would let a reload pass a night at every rest. A save older than this field
   // restores undefined, which reads as "no night yet": the first rest is a night.
   'restNightAt',
+  // LEGACY4: Project Legacy's blessings - an ancestor laid to rest, their best skill on the one who laid them
+  // (systems/legacy/heirloom.js legacyFold). A save older than this field restores undefined: no blessing.
+  'legacyBlessings',
 ];
 
 /** PlayerEntity.skillsRecentlyRaised: TWO 32-bit masks over the 35
@@ -187,9 +195,9 @@ export const newSkillsRecentlyRaised = () => [0, 0];
  *  Masque of Clavicus buffed five social groups instead of eleven for
  *  the life of that character. Dropping the member costs nothing:
  *  enchantmentMagicRound clears the player's array at the head of
- *  every magic round (enchantments.js:862, DFU's ClearReactionMods at
+ *  every magic round (enchantments.js:"if (entity.isPlayer)", DFU's ClearReactionMods at
  *  PlayerEntity.cs:1567-1570) and the folds re-apply it in the same
- *  pass, off worldTick.js:401 - so a load lands DFU's own shape, the
+ *  pass, off worldTick.js:"damage sink so death".."nowMinutes: r + 1," - so a load lands DFU's own shape, the
  *  live mods left standing until the next DoMagicRound re-derives
  *  them eleven wide. An older snapshot's key is simply ignored (the
  *  restore loop skips what REP_ARRAYS does not name), so the envelope
@@ -319,7 +327,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // state and are not carried.
   snap.survival = entity.survival ? { ...entity.survival, notes: undefined } : null;
   // AUDIT 17e: pre-chargen the entity carries a flat NUMBER here
-  // (the stand-in entity's flat skills, characters/playerEntity.js:28)
+  // (the stand-in entity's flat skills, characters/playerEntity.js:"raceId: 1,")
   // - spreading it threw. RECORDED, and no divergence from
   // SerializablePlayer: the line below is the working guard, it
   // round-trips BOTH shapes, and restore reads back whichever it
@@ -375,6 +383,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   snap.boatCabinLink = readBankCabinLink(entity.boatCabinLink);
   if (entity.shipCrossed === true) snap.shipCrossed = true;   // RESTORE: a ship that came through customs, which the realm's bank never buys back (banking.js)
   snap.loanAmnesty = Number.isSafeInteger(entity.loanAmnesty) ? entity.loanAmnesty : LOAN_AMNESTY;
+  snap.walletGift = Number.isSafeInteger(entity.walletGift) ? entity.walletGift : WALLET_GIFT;   // WALLET1: whether this character has been given its wallet - one never restored from an older save is born with it (its kit's)
   snap.portalGift = Number.isSafeInteger(entity.portalGift) ? entity.portalGift : PORTAL_GIFT;   // PORTAL-GIFT: which gift this character has had - one never restored from an older save is born after it   // LOAN-AMNESTY: which amnesty this character has had - a character never restored from an older save is born after the last
   // TR4: SerializablePlayer.cs:180 - the BOARDING MEMORY is saved
   // beside the deed. Without it a save taken at sea loads with no way
@@ -741,6 +750,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   if (snap.shipCrossed === true) entity.shipCrossed = true; else delete entity.shipCrossed;   // RESTORE: its customs mark, or none
   entity.loanAmnesty = Number.isSafeInteger(snap.loanAmnesty) ? snap.loanAmnesty : 0;   // LOAN-AMNESTY: a save from before the first amnesty has had none
   entity.portalGift = Number.isSafeInteger(snap.portalGift) ? snap.portalGift : 0;   // PORTAL-GIFT: a save from before the gift has had none
+  entity.walletGift = Number.isSafeInteger(snap.walletGift) ? snap.walletGift : 0;   // WALLET1: a save from before the wallet has had none
   entity.boardShipPosition = snap.boardShipPosition ?? null;   // TR4 (:425)
   entity.anchorPosition = snap.anchorPosition ? { ...snap.anchorPosition } : null;   // TP-slice
   // A4: the three stragglers' restore arms (see the snapshot side).
@@ -810,6 +820,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
     if (n) console.info(`[save] SS1: ${n} Deadlands Ember record(s) folded into their stacks`);
   }
   givePortalGift(entity);   // PORTAL-GIFT: a character from before the gift is given its stones once - below the relinks and the fold, onto the pack's stack
+  giveWalletGift(entity);   // WALLET1: and a character from before the wallet, one - at the pack's end, below the relinks (no index above it moves)
   entity.activeEffects = (snap.activeEffects ?? []).filter((a) => !a.heldItem && !a.bundleDuel).filter((a) => effectKindLoaded(a.kind)).map(copyEffectEntry);   // E2: a stale pin in an old snapshot cannot re-link - drop it (DFU :2312); AUDIT DUEL1 B4: nor a duel's spell a save from before the filter kept; AUDIT PRE-MERGE 0928 S3: nor an effect of a mod not loaded (Come Sail Away's water walk)
   // DISC10-D/E V11: THE DREAM'S PUSH IS NOT SAVED. CustomSaveData_v1 keeps
   // the two PLAYED flags and the day (VampirismInfection.cs:221-251,

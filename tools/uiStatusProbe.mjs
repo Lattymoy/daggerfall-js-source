@@ -96,7 +96,7 @@ globalThis.__measure = () => {
   const d = devicePixelRatio;
   return {
     vw: innerWidth, vh: innerHeight,
-    stat: rect(stat), tight: !!stat?.classList.contains('tight'), side: !!stat?.classList.contains('side'), none: !!stat?.classList.contains('noroom'), rows: stat?.style.gridTemplateRows ?? '',
+    stat: rect(stat), tight: !!stat?.classList.contains('stat-tight'), side: !!stat?.classList.contains('stat-side'), none: !!stat?.classList.contains('stat-noroom'), rows: stat?.style.gridTemplateRows ?? '',
     short: matchMedia('(max-height: 500px)').matches,
     touch: [...document.querySelectorAll('.probe-touchbtn')].map(rect),
     tiles: cells.map((c) => {

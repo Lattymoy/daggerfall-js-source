@@ -74,8 +74,8 @@
   {
     "name": "LW8b-fill-deal",
     "file": "src/scenes/livingIndoors.js",
-    "old": "order: groups.flat(), tableOf };",
-    "new": "order: dealOf(b.key, spots.length), tableOf };",
+    "old": "order: groups.flat(), tableOf, beds };",
+    "new": "order: dealOf(b.key, spots.length), tableOf, beds };",
     "tests": [
       "test/lw8b_talk.test.js"
     ]
@@ -101,38 +101,42 @@
   {
     "name": "LW8b-circle-whole",
     "file": "src/scenes/livingIndoors.js",
-    "old": "return e ? [{ who: m.res, t0: e.t0, t1: e.t1 }] : [];",
-    "new": "return e ? [{ who: m.res, t0: -Infinity, t1: Infinity }] : [];",
+    "old": "        if (!co || co.ids !== ids) {",
+    "new": "        if (!co) {",
     "tests": [
-      "test/lw8b_talk.test.js"
-    ]
+      "test/lwfix1_review.test.js"
+    ],
+    "note": "LW-TALK (re-aimed by content): a table's company meets whatever their stays - the law now that a changed company meets anew (the third who sat down talked into the pair's deal)."
   },
   {
     "name": "LW8b-circle-key",
     "file": "src/scenes/livingIndoors.js",
-    "old": "spotCircles(`in:${b.key}:${ti}`, present,",
-    "new": "spotCircles(`in:${b.key}`, present,",
+    "old": "dealCircles(`in:${b.key}:${ti}:${co.since}`,",
+    "new": "dealCircles(`in:${b.key}`,",
     "tests": [
       "test/lw8b_talk.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW8b-no-circles",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        if (!beat) continue;\n        let dealt",
-    "new": "        if (true) continue;\n        let dealt",
+    "old": "        if (!beat || at.length < 2) { company.delete(ti); continue; }",
+    "new": "        if (true) { company.delete(ti); continue; }",
     "tests": [
       "test/lw8b_talk.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW8b-round-beat",
     "file": "src/scenes/livingIndoors.js",
-    "old": "spotCircles(`in:${b.key}:${ti}`, present, t, beat.roundMin);",
-    "new": "spotCircles(`in:${b.key}:${ti}`, present, t, beat.lineMin);",
+    "old": "        const round = Math.max(0, Math.floor((t - co.since) / beat.roundMin));",
+    "new": "        const round = Math.max(0, Math.floor((t - co.since) / beat.lineMin));",
     "tests": [
       "test/lw8b_talk.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW8b-room-unread",
@@ -146,11 +150,12 @@
   {
     "name": "LW8b-line-beat",
     "file": "src/scenes/livingIndoors.js",
-    "old": "          const line = circleLine(c, t, beat.lineMin, ctx);",
-    "new": "          const line = circleLine(c, t, beat.lineMin * 2, ctx);",
+    "old": "circleLine(c, t, beat.lineMin, ctx, scripts)",
+    "new": "circleLine(c, t, beat.lineMin * 2, ctx, scripts)",
     "tests": [
       "test/lw8b_talk.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW8b-reach",
@@ -164,29 +169,32 @@
   {
     "name": "LW8b-greet-circle",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        if (inCircle.has(id) || Math.hypot(p[0] - feet[0], p[2] - feet[2]) > GREET_RANGE) continue;",
-    "new": "        if (Math.hypot(p[0] - feet[0], p[2] - feet[2]) > GREET_RANGE) continue;",
+    "old": "        if (inCircle.has(id) || dist > GREET_RANGE) continue;",
+    "new": "        if (dist > GREET_RANGE) continue;",
     "tests": [
       "test/lw8b_talk.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW8b-greet-range",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        if (inCircle.has(id) || Math.hypot(p[0] - feet[0], p[2] - feet[2]) > GREET_RANGE) continue;",
+    "old": "        if (inCircle.has(id) || dist > GREET_RANGE) continue;",
     "new": "        if (inCircle.has(id)) continue;",
     "tests": [
       "test/lw8b_talk.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW8b-greet-rest",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        if (last != null && t >= last && t - last < GREET_REST_MIN) continue;",
+    "old": "        if (last && t >= last.t && t - last.t < GREET_REST_MIN && (last.said || !stopped)) continue;",
     "new": "        void 0;",
     "tests": [
       "test/lw8b_talk.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW8b-greet-stand",
@@ -209,20 +217,22 @@
   {
     "name": "LW8b-greet-asked",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        const text = b.town.greetingFor?.(s.res, t, false) ?? null;",
+    "old": "        const text = b.town.greetingFor?.(s.res, t, stopped) ?? null;",
     "new": "        const text = null;",
     "tests": [
       "test/lw8b_talk.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW8b-greet-stopped",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        const text = b.town.greetingFor?.(s.res, t, false) ?? null;",
+    "old": "        const text = b.town.greetingFor?.(s.res, t, stopped) ?? null;",
     "new": "        const text = b.town.greetingFor?.(s.res, t, true) ?? null;",
     "tests": [
       "test/lw8b_talk.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home - passing by, never asked as one stopped."
   },
   {
     "name": "LW8b-ctx-hour",
@@ -356,11 +366,12 @@
   {
     "name": "LW8b-room-street",
     "file": "src/systems/livingWorld/meetups.js",
-    "old": "road: ctx.road ?? null, room: ctx.room ?? null });",
-    "new": "road: ctx.road ?? null, room: null });",
+    "old": "road: ctx.road ?? null, room: ctx.room ?? null }), told };",
+    "new": "road: ctx.road ?? null, room: null }), told };",
     "tests": [
       "test/lw8b_talk.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW8b-host-hook",

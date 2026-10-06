@@ -235,10 +235,10 @@ test('the probe exterior host stands its boards too - the standing host rule', (
     "no mill in this host - the board opens on the location name alone, C#'s own empty arm");
   // ...AND THE NAME IS NOT FREE. The heading is PlayerGPS
   // .CurrentLocalizedLocationName (:721), which the arm reads off
-  // `buildingDirectory` (worldModes.js:2783) and off nothing else - so
+  // `buildingDirectory` (worldModes.js:"credit instead. B2") and off nothing else - so
   // a host that stands boards without handing one over opens the box
   // on a BLANK parchment, not "the location name alone": the head row
-  // composes empty and bulletinBoard.js:97 shifts the starter row off,
+  // composes empty and bulletinBoard.js:"if (rows.length && rows[0].text === '')" shifts the starter row off,
   // leaving one empty line. This host knows its own location outright.
   assert.match(e, /buildingDirectory: \(\) => \(\{[\s\S]{0,1200}?locationName: dfLocation\.name \?\? locationName,/,
     'the probe host hands the arm the location name it already holds');

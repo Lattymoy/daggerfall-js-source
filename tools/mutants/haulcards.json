@@ -93,11 +93,12 @@
   {
     "name": "HAUL-CARDS-claim-bar-off",
     "file": "src/ui/haulCards.js",
-    "old": "source: kind === 'raid' ? 'Town defended' : 'Breach closed', combat: true,",
-    "new": "source: kind === 'raid' ? 'Town defended' : 'Breach closed', combat: false,",
+    "old": "source: CLAIM_SOURCE[kind] ?? CLAIM_SOURCE.gate, combat: true,",
+    "new": "source: CLAIM_SOURCE[kind] ?? CLAIM_SOURCE.gate, combat: false,",
     "tests": [
       "test/haulcards.test.js"
-    ]
+    ],
+    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): a claim's source is CLAIM_SOURCE's (the serpent's beside the gate's and the raid's) - re-aimed by content."
   },
   {
     "name": "HAUL-CARDS-deed-an-account",
@@ -139,11 +140,12 @@
   {
     "name": "HAUL-CARDS-combat-fill",
     "file": "src/ui/haulCards.js",
-    "old": "{ text: 'Combat today', fill: Math.max(0, Math.min(1, l.earned / l.max)),",
-    "new": "{ text: 'Combat today', fill: 1,",
+    "old": "{ text: l.bar ?? COMBAT_BAR_TEXT, fill: Math.max(0, Math.min(1, l.earned / l.max)),",
+    "new": "{ text: l.bar ?? COMBAT_BAR_TEXT, fill: 1,",
     "tests": [
       "test/haulcards.test.js"
-    ]
+    ],
+    "note": "SILVER-FINDS (PIN MOVED): the bar's words are the card's own (`bar` - a find's day beside the combat's) - re-aimed by content."
   },
   {
     "name": "HAUL-CARDS-bump-xp-unsummed",

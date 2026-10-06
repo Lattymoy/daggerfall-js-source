@@ -70,7 +70,12 @@ greaves, the boots, the shield and the weapon.
   the line: `faint + (ascendant - faint) x stage / 4`, rounded as the number reads (whole points, whole per cents,
   whole seconds). So a set is felt from its first stage and is twice to three times that at its last.
 - **Asleep.** Offline, online before the page knows its Renown, and while the wearer is in a duel, every set sleeps:
-  no tier is awake, no number moves, no piece drinks. The card still shows what the set would do.
+  no tier is awake, no number moves, no piece drinks. The card still shows what the set would do. AUDIT 625 P2: a bout
+  between players on an arena's relay sand is a duel too - the opponent stands as a Daedra Lord's stand-in for the
+  formulas, no player, so the gates that refuse a blow at a player never saw one, and every set, the loot's powers and
+  the weapon's sigil woke in the ring. The duel's word is ONE now, kept by SIGIL1's door (`systems/sigil.js`
+  setSigilDueling; `systems/sigilSets.js` setSetsDueling and setsDueling its names here), raised by `scenes/world.js
+  duelFrame` for a duel and for a live bout between players (`arenaPvpLive`), and the weapon's own blow reads it.
 
 ## 3. The four sets of the world (SET3)
 
@@ -209,6 +214,36 @@ three raid sets' too: "Cheat death, then half damage 4s", "Kill marks next foe: 
 dashed tag - with the sentence under the pointer; the sigil in two rows. The Info box says it all: the Prince and the
 role, every sentence above, the sigil's notes. `01-Overview/Field-Bugs-2026-09-28c.md`.
 
+## 6c. The sea serpent's own set (SERPENT-SET, 2026-10-05)
+
+Mac: *"The serpent boss needs to use the currency from oblivion gate and have its own equipment rewards"*. One more
+Aetheric set, **Sethrakul's Coilscale** - the Old Coil, shed and worn - and its patron no Daedra: Satakal, the
+World-Skin the Redguards say sheds the world as a snake sheds its skin (`Sea-Serpent.md`). Nine fixed records of
+Ebony, the deep's own black - the seven body pieces, a kite shield and a ONE-HANDED Katana, so all nine are worn at
+once - each with three affixes at the Legendary band's MIDDLE (armour 16, an attribute 13, a resistance 43, a skill 25,
+weight 43, damage 30) and the Fang's blow the band's middle too (10): a world boss at sea, over a town's thanks (the
+floor) and under the gate's Warden (the top). One resistance of an element at most, and never frost - the 2-piece tier
+carries it - so no two pieces stack an element toward the saving throw's immunity (AUDIT FINAL's lesson on the
+Regalia). Nothing drops it but the serpent: a ship that DEALT Sethrakul its share finds a piece in its hoard a quarter
+of the time (the raids' own share), rolled after everything the hoard rolled before (`systems/serpentSpoils.js`,
+`systems/aetheric.js` `SERPENT_SET_PIECES`, `rollSerpentSetPiece`); a ship that stood, never. No world drop, shelf or
+Broker rolls one - a boss's own set earned where it is fought, as the raids' are.
+
+Sethrakul's Crest, the Coilscale Right and Left Pauldrons, The Old Coil's Hide, Constrictor's Grip, Undertow Greaves,
+Tide-Walker Boots, The Maelstrom's Eye (Kite Shield), Sethrakul's Fang (Katana).
+
+| pieces | ability | Faint -> Ascendant |
+|---|---|---|
+| 2 | **Sea-Scale** - frost resistance, Endurance | +10 -> +30; +2 -> +6 |
+| 4 | **Constrict** - each weapon blow of yours that LANDS on a foe tightens ITS coil: weapon damage to that foe a stack, up to five, held 6 s after the last blow on it; every foe holds its own coil (AUDIT 625 P3, Mac: "A coil per foe" - one coil had moved to whichever foe was struck last, so a sweep that met two never built it), a bow's blow counts, a coiled foe's death ends its own | +3% -> +8% a stack |
+| 6 | **Shed Skin** - a foe's blow that takes you under 35% of your health (from at or over it, still standing) sheds your skin: that share of your health returns at once; then it must recover. A killing blow, a fall or a spell sheds nothing - nor a killing blow a death save turned aside (AUDIT 625 P1: Unbroken, Divine Grace) | 10% -> 30%; recovers 240 -> 120 s |
+
+Shed Skin heals through the one heal a power gives (`systems/playerHeal.js` - LOOT4's leech and its heals moved there
+from `systems/lootPowers.js`, which reads the blow's law out of `systems/sigilSetPowers.js` and so may not be imported
+by it). The HUD's chip shows Shed Skin's recovery; its sound is a large splash, the old skin into the sea. The hoard
+pays the gate's currency too - a Deadlands Ember, every hoard (section 7's Broker and the insignia take it as a
+breach's; `Sea-Serpent.md` section 8).
+
 ## 7. The Sigil Broker - Sigil Stones buy the day's stock (SET7)
 
 A Daedra trader (the game has no Dremora sprite; a Daedra Seducer stands in) is held at each breach's faithful's
@@ -341,7 +376,8 @@ Every seam the powers read, each a no-op until registered:
   two gates (a Destruction effect, room in the magicka).
 - **The door** (`systems/playerDoor.js`): the running host's magic engine publishes its live foes (the town's
   defenders passed by), my feet, a hurt as mine through the foe's own sinks, and a spell on me - every frame it runs.
-- **The duel's word**: `scenes/world.js duelFrame` tells `setSetsDueling`.
+- **The duel's word**: `scenes/world.js duelFrame` tells `setSetsDueling` (AUDIT 625 P2: kept by `systems/sigil.js`
+  setSigilDueling, and raised for an arena's bout between players too).
 
 Pinned: `test/set2_seams.test.js` (8); `tools/mutants/set2.json` (20, all dead).
 
@@ -843,3 +879,30 @@ mutants all dead; the stream's law in `test/restsync.test.js` and `test/questpar
   oath-helm could carry top-of-band affixes. Its affixes are now the record's kinds in its order, none past the
   record's value (the Regalia's bounded by the band alone - its fire stood at the band's top until 322370d2, and a
   piece minted then is no forgery), and a weapon's blow the record's.
+
+### SERPENT-SET - the sea serpent's own set, and the gate's currency at sea (2026-10-05)
+
+Section 6c, whole; the hoard's half is `Sea-Serpent.md` section 8. The law (`systems/sigilSets.js` `coilscale`,
+Aetheric and naming no raiding party; `COIL_STACKS`, `COIL_SECONDS`, `SHED_BELOW`; `systems/sigil.js` names it after the
+raids' three), its three powers through SET2's seams (`systems/sigilSetPowers.js` - the fold for Sea-Scale; the strike
+listener tightening Constrict's coil, a bow's blow too, and the blow reading its stacks at the coiled foe alone (AUDIT
+625 P3: every foe its own coil - `coilStacksAt`); the kill ending a coiled foe's coil; the hurt listener for Shed Skin,
+beside the Wrath and never on a killing blow (AUDIT 625 P1: nor a saved one - the damage door's `saved`); the
+round's "ready again"; Shed Skin's chip), the nine records (`systems/aetheric.js` `SERPENT_SET_PIECES`,
+`SERPENT_SET_POWER`, `SERPENT_SET_CHANCE`, `rollSerpentSetPiece`; `AETHERIC_RECORDS` the Regalia, the raids' and then
+these, so the Test Room's ladder and the Codex take them with no word of their own), and the one heal a power gives
+moved below both power files (`systems/playerHeal.js`). The wire's check is the raid sets' (AUDIT SETS L6): a Coilscale
+piece's affixes its record's kinds in its order, none past its record's value. An older build cannot read the new set's
+sigil, and AUDIT SETS M2 already marks such a container unreadable rather than wiping it.
+
+THE FOUR HOSTS. The powers ride SET2's seams, which every host's combat already calls; the one host-side wiring is
+`scenes/world.js`'s - Shed Skin's splash in the sets' one voice (`setSetPowersVoice`, registered there for every mode
+of the streaming page: `scenes/worldModes.js`'s interiors and `scenes/dungeonContext.js`'s dungeons sound through it),
+and the serpent's hoard, its crash door and its claim's silver (the sea is the streaming world's alone).
+`scenes/exterior.js`, the offline town page, has no sea and registers no sets' voice - the sets are online gear.
+
+Pinned: `test/serpentset.test.js` (the law, the records, the drop, the hoard, the powers, the heal, the host) and
+`test/serpentset_service.test.js` (the embers on the row, the insignia's purse, the serpent's silver);
+`tools/mutants/serpentset.json` (48, all dead). The older pins it moved: SET1's and RAID4b's set lists, SET3's states and
+voice, SERPENT1's hoard list; their records re-aimed by content (SET1's order, SET3's bow and its two Wrath records -
+Shed Skin carries the same crossing and guard - LOOT4's three heal records, now `systems/playerHeal.js`'s).

@@ -36,12 +36,13 @@ import { interiorSceneName, LOOT_CONTAINER_TYPES } from './sceneCache.js';   // 
 import { BUILDING_KEY_0 } from './talkTopics.js';   // RESTORE: the no-key key a ship's room is filed under
 import { firstRestorable } from './saveSlots.js';   // RESTORE: the offline character a realm one came from, on this device
 import { deductGold } from './court.js';
-import { LEVELING_VIRTUE, newCharacterLevelingSystem } from './oblivionLeveling.js';   // LEVEL-ONLINE: a character crossing levels the Oblivion way
+import { LEVELING_CLASSIC, newCharacterLevelingSystem } from './oblivionLeveling.js';   // LEVEL-ONLINE-2: a character crossing levels the Daggerfall way
+import { levelUpSkillSumAnchor } from './advancement.js';   // LEVEL-ONLINE-2: ...from the start of the level it has
 import { isGoldPieces } from './inventory.js';
 // AUDIT REALM2 S1: the allowance and the measure live in the law the service reads too (net/realmGoldLaw.js), which holds
 // a customs character's first save to them - re-exported here, their home before it; AUDIT REALM2 T2, T3 and T5's
 // counting with them (every container, a boat's hold, a deed at what the realm's bank pays)
-import { REST_ITEM, REST_ITEMS_ONLINE } from './restItems.js';   // AUDIT REST-PARTY B4: the supplies stay offline while their online sources are shut
+import { REST_ITEM, restItemsOnline } from './restItems.js';   // AUDIT REST-PARTY B4: the supplies stay offline while their online sources are shut (REST-LOOT: open since 2026-10-05; the switch is the way back)
 import { liquidWorthOf, stashedItemLists, carriedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE } from '../net/realmGoldLaw.js';
 
 export { stashedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE };
@@ -98,11 +99,12 @@ export function applyCustoms(snap) {
     for (let i = list.length - 1; i >= 0; i--) if (emptied.has(list[i])) list.splice(i, 1);
   }
   // AUDIT REST-PARTY B4: REST6's supplies (1700-1706) stay behind while every online source of them is shut
-  // (restItems.js REST_ITEMS_ONLINE: the templates ship a release before any shelf, pile or trade carries one, so a
+  // (restItems.js restItemsOnline: the templates ship a release before any shelf, pile or trade carries one, so a
   // client a build behind never meets one) - customs is a door too, and an offline shelf's Bedroll walked in through it,
   // usable, droppable and tradeable online. The offline character keeps them: customs runs on the realm's copy.
+  // REST-LOOT (2026-10-05): the sources are open, so a character's own walk in; this stands behind the switch.
   let restKept = 0;
-  if (!REST_ITEMS_ONLINE) {
+  if (!restItemsOnline()) {
     const strip = (/** @type {any[]} */ list) => {
       let n = 0;
       for (let i = list.length - 1; i >= 0; i--) if (REST_ITEM_IDS.has(list[i]?.templateIndex)) { list.splice(i, 1); n++; }
@@ -142,22 +144,33 @@ export function applyCustoms(snap) {
 const REST_ITEM_IDS = new Set(Object.values(REST_ITEM));
 
 /**
- * LEVEL-ONLINE (2026-09-30, Mac: "Do not allow people to use daggerfall leveling in online. Characters currently using
- * it online can keep it."): A CHARACTER COMING IN IS A NEW ONLINE CHARACTER, so it crosses onto Oblivion's bar - the
- * one law a new character's system goes through (oblivionLeveling.js newCharacterLevelingSystem). It is run at the
- * Bring online door beside applyCustoms, not inside it - customs is the gold and the deeds, and its report keeps
- * saying only that (ui/enhancedMenu.js bringOnline/customsNow say this line first). The bar starts empty,
- * as a new character's does; the character's level, skills and any level-up already earned are kept (the Oblivion
- * window takes a pending one, which reads the same readyToLevelUp and pendingLevel). Customs runs on the realm's COPY,
- * so the offline character keeps Daggerfall's leveling offline; a character already online never passes here again.
- * Answers whether it switched.
+ * LEVEL-ONLINE (2026-09-30), REVERSED BY LEVEL-ONLINE-2 (2026-10-06, Mac: "Oblivion should be locked. Currently players
+ * are forced into oblivion"): A CHARACTER COMING IN IS A NEW ONLINE CHARACTER, so it crosses onto the online law's
+ * system - Daggerfall's - the one law a new character's system goes through (oblivionLeveling.js
+ * newCharacterLevelingSystem). It is run at the Bring online door beside applyCustoms, not inside it - customs is the
+ * gold and the deeds, and its report keeps saying only that (ui/enhancedMenu.js bringOnline/customsNow say this line
+ * first). An Oblivion character's bar is dropped and its skill sum re-anchored at the START of the level it has
+ * (advancement.js levelUpSkillSumAnchor) - Daggerfall's sum was never its measure, so read raw it could pay out
+ * several levels at once or owe them; a level-up already earned is kept (the anchor is the pending level's, and the
+ * Daggerfall window takes the same readyToLevelUp and pendingLevel). Customs runs on the realm's COPY, so the offline
+ * character keeps Oblivion's leveling offline. A Daggerfall character (or a save from before ORL1, which reads as
+ * one) crosses untouched. LEVEL-ONLINE-3 (2026-10-06, Mac: "Can we somehow switch people who have oblivion leveling
+ * online"): THE REALM BOOT runs it too (scenes/world.js `releveled`, beside the loan amnesty), so a character born
+ * online on Oblivion's bar under LEVEL-ONLINE is switched at its next join, its first checkpoint keeping it; once
+ * switched it reads as Daggerfall's and passes untouched. Answers whether it switched.
  * @param {any} snap
  */
 export function crossLeveling(snap) {
-  if (snap.levelingSystem === LEVELING_VIRTUE) return false;
-  snap.levelingSystem = newCharacterLevelingSystem(snap.levelingSystem, { online: true });
+  const system = newCharacterLevelingSystem(snap.levelingSystem, { online: true });
+  if ((snap.levelingSystem ?? LEVELING_CLASSIC) === system) return false;
+  snap.levelingSystem = system;
   snap.levelProgress = 0;
   snap.levelRollUp = 0;
+  const level = Number.isFinite(snap.level) ? snap.level : 1;
+  const target = snap.readyToLevelUp === true ? level + 1 : level;
+  if (Number.isFinite(snap.currentLevelUpSkillSum)) {
+    snap.startingLevelUpSkillSum = levelUpSkillSumAnchor(snap.currentLevelUpSkillSum, target);
+  }
   return true;
 }
 
@@ -258,10 +271,11 @@ export function reclaimLines(/** @type {{ houses: string[], ship: boolean, piece
   return [`Customs had kept back ${what}. ${back.houses.length + (back.ship ? 1 : 0) > 1 ? 'They are' : 'It is'} yours again, with every piece in ${back.houses.length + (back.ship ? 1 : 0) > 1 ? 'them' : 'it'}. The realm's bank does not buy back what came through customs.`];
 }
 
-/** LEVEL-ONLINE: the door's words for a Daggerfall-levelling character coming in. */
+/** LEVEL-ONLINE-2: the door's words for an Oblivion-levelling character coming in. */
 export const LEVELING_CROSS_LINE = Object.freeze({
-  before: 'Online characters level the Oblivion Remastered way: this character will level by the skill bar from here on.',
-  after: 'Online, this character levels the Oblivion Remastered way, by the skill bar.',
+  before: 'Online characters level the Daggerfall way: this character will level by its skills from here on, starting from its current level.',
+  after: 'Online, this character levels the Daggerfall way, by its skills.',
+  switched: 'Online characters now level the Daggerfall way: you will level by your skills from here on, starting from your current level.',
 });
 
 /** CUSTOMS-CARRY (2026-09-29): what the door promises before customs runs, whatever it finds - what crosses beside the

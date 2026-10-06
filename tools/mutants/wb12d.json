@@ -261,11 +261,12 @@
   {
     "name": "WB12d-the-purse-counting-rows",
     "file": "server-account/src/accounts.js",
-    "old": "'SELECT COALESCE(SUM(stones), 0) AS n FROM gate_kills WHERE account = ?1'",
-    "new": "'SELECT COUNT(*) AS n FROM gate_kills WHERE account = ?1'",
+    "old": "'((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) +",
+    "new": "'((SELECT COUNT(*) FROM gate_kills WHERE account = ?1) +",
     "tests": [
       "test/wb12d_rite_law.test.js"
-    ]
+    ],
+    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): the purse and the sale read one sum now (EMBERS_EARNED_SQL), a serpent's embers beside a breach's - re-aimed by content."
   },
   {
     "name": "WB12d-the-omen-without-the-rite",

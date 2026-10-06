@@ -416,6 +416,18 @@
   },
   {
    "file": "src/scenes/world.js",
+   "has": "known: knownCriminal(playerEntity, region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() })",
+   "clock": "event",
+   "why": "a banishment's term - the living watch's word (WATCH-KNOWS)"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "warnsFirst: () => livingWorldOn(), regionName: (r) => REGION_NAMES[r] ?? 'this region', worldNow: () => trustedWorldMinutes(),",
+   "clock": "event",
+   "why": "a banishment's term - no first offence warned to a banished one (WATCH-KNOWS)"
+  },
+  {
+   "file": "src/scenes/world.js",
    "has": "hour: () => Math.floor((((skyMinutes() % 1440) + 1440) % 1440) / 60),",
    "clock": "sky",
    "why": "the sound host's hour"
@@ -529,7 +541,8 @@
    "file": "src/scenes/world.js",
    "has": "now: () => Math.floor(playerTicker.classicMinutes),",
    "clock": "event",
-   "why": "the bounty boards' day"
+   "count": 2,
+   "why": "the bounty boards' day, and Project Legacy's stamps (a founding, a death, a rest)"
   },
   {
    "file": "src/scenes/world.js",
@@ -952,6 +965,18 @@
    "has": "day: () => Math.floor((skyMinutes() - 240) / 1440),",
    "clock": "sky",
    "why": "LW6: the living day a regard is noted on, met in the deep"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "const livingRegardDay = () => Math.floor((skyMinutes() - 240) / 1440);",
+   "clock": "sky",
+   "why": "LEGACY5/LEGACY6: the living day a regard is read and handed down on - the Living World's own day of the sky's minute"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "regards: () => livingRelations, regardDay: livingRegardDay, sky: () => skyMinutes(),",
+   "clock": "sky",
+   "why": "LEGACY6: the towns' minute the house's news is stamped and told by - the Living World's clock"
   },
   {
    "file": "src/scenes/world.js",

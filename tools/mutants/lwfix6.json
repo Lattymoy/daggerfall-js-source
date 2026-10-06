@@ -38,8 +38,8 @@
   {
     "name": "LW-FIX6-owned-unread",
     "file": "src/scenes/world.js",
-    "old": "const town = b && !modes?.interiorCtx?.ownedRoom ? livingTownOfMap(",
-    "new": "const town = b ? livingTownOfMap(",
+    "old": "        return modes?.interiorCtx?.ownedRoom ? null : { key: b.buildingKey, town };",
+    "new": "        return { key: b.buildingKey, town };",
     "tests": [
       "test/lwfix6_rooms.test.js"
     ]
@@ -92,29 +92,32 @@
   {
     "name": "LW-FIX6-empty-table",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        for (const ti of room.tableOf) if (ti >= 0 && !tables.has(ti)) roundCircles.set(ti, []);",
+    "old": "      for (const ti of [...company.keys()]) if (!tables.has(ti)) company.delete(ti);",
     "new": "        void 0;",
     "tests": [
       "test/lwfix6_rooms.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): a table emptied forgets its company - two who come to it meet anew, never in an old company's round."
   },
   {
     "name": "LW-FIX6-room-clock-back",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        if (last != null && t >= last && t - last < GREET_REST_MIN) continue;",
-    "new": "        if (last != null && t - last < GREET_REST_MIN) continue;",
+    "old": "last && t >= last.t && t - last.t < GREET_REST_MIN && (last.said || !stopped)",
+    "new": "last && t - last.t < GREET_REST_MIN && (last.said || !stopped)",
     "tests": [
       "test/lwfix6_rooms.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW-FIX6-street-clock-back",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    if (last != null && this._now >= last && this._now - last < GREET_REST_MIN) return;",
-    "new": "    if (last != null && this._now - last < GREET_REST_MIN) return;",
+    "old": "last && this._now >= last.t && this._now - last.t < GREET_REST_MIN",
+    "new": "last && this._now - last.t < GREET_REST_MIN",
     "tests": [
       "test/lwfix6_rooms.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW-FIX6-road-clock-back",

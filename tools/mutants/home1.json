@@ -179,8 +179,8 @@
   {
     "name": "HOME1-client-secret-in-the-body",
     "file": "src/net/accountClient.js",
-    "old": "return s ? call({ fetch, base: serviceBase(storage), secret: s.secret }, path, body) : { ok: false, error: 'no-session' };",
-    "new": "return s ? call({ fetch, base: serviceBase(storage) }, path, { ...body, secret: s.secret }) : { ok: false, error: 'no-session' };",
+    "old": "return s && (as == null || s.id === as) ? call({ fetch, base: serviceBase(storage), secret: s.secret }, path, body) : { ok: false, error: 'no-session' };",
+    "new": "return s && (as == null || s.id === as) ? call({ fetch, base: serviceBase(storage) }, path, { ...body, secret: s.secret }) : { ok: false, error: 'no-session' };",
     "tests": [
       "test/home1.test.js"
     ]
@@ -509,7 +509,7 @@
   {
     "name": "HOME1-a-quest-picks-a-home",
     "file": "src/systems/quest/place.js",
-    "old": "        if (world.isPlayerHome?.(location.mapTableData?.mapId, buildingKey)) continue;   // HOME1: nor a player's online home (a departure: DFU has one player)\n",
+    "old": "      if (world.isPlayerHome?.(location.mapTableData?.mapId, buildingKey)) continue;   // HOME1: nor a player's online home (a departure: DFU has one player)\n",
     "new": "",
     "tests": [
       "test/home1.test.js"

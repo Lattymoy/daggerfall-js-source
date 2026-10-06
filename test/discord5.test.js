@@ -210,8 +210,8 @@ test('HOTSLOT, driven: the enhanced spellbook slots a spell - Quickslot on the p
 
 test('HOTSLOT by source: the HUD\'s empty spell chip is a SOCKET (drawn dim, wearing its key, so a finger has a chip to fill), and the pane says hold', () => {
   const hud = rd('src/ui/enhancedHud.js');
-  assert.match(hud, /chip\.chip\.classList\.toggle\('empty', !sp\);\s*if \(!sp\) \{\s*chip\.chip\.classList\.remove\('readied', 'ghost', 'cycling'\);\s*chip\.name\.textContent = 'No spell';\s*quickTag\(chip, 'spellcap', tag\);\s*return;\s*\}/);
-  assert.match(rd('src/ui/enhancedStyle.js'), /\.hud-qspell\.empty \{ display: flex; opacity: 0\.55; \}/);
+  assert.match(hud, /chip\.chip\.classList\.toggle\('qspell-empty', !sp\);[^\n]*\s*if \(!sp\) \{\s*chip\.chip\.classList\.remove\('readied', 'ghost', 'cycling'\);\s*chip\.name\.textContent = 'No spell';\s*quickTag\(chip, 'spellcap', tag\);\s*return;\s*\}/);
+  assert.match(rd('src/ui/enhancedStyle.js'), /\.hud-qspell\.qspell-empty \{ display: flex; opacity: 0\.55; \}/);   // PIN MOVED (HUD-CLASS): the socket's own word - the bare 'empty' took the sheet's .empty component
   assert.match(rd('src/systems/inputActions.js'), /\['QuickSpell', 'Ready quickslot spell \(hold to cycle the book\) \/ hotbar slot 3'\]/, 'KB1: the label lives in the registry\'s groups');
 });
 
@@ -220,8 +220,9 @@ test('HOTSLOT by source: the HUD\'s empty spell chip is a SOCKET (drawn dim, wea
 test('LOOT-REGEN by source: the dungeon\'s quick-loot take is the room\'s word - what is left is said and stamped the moment the take lands, an emptied pile\'s flat is settled, and C6\'s window order stands untouched behind it', () => {
   const d = rd('src/scenes/dungeonContext.js');
   // LOOT-STACK: the quick take is a PRESS's (`!pileKeys` - a pile tab asks for that body's window), and the pile's
-  // tabs are laid on the hooks before C6's order, which stands untouched behind them
-  assert.match(d, /if \(!pileKeys && quickLootTake\(key, \{ items: \(\) => source \}, playerEntity, setMidScreenText, \{ getQuest: \(uid\) => opts\.questBridge\?\.machine\?\.getQuest\?\.\(uid\) \?\? null, took: showPickups \}\)\) \{[^\n]*\n\s*const _q = roomLootKey\(key\);[^\n]*\n\s*if \(_q\) publishLoot\(_q\);\s*if \(!source\.length\) onEmptied\?\.\(\);\s*return source\.length;\s*\}\s*const pile = kind === 'corpse' \? lootPile\(key, \{[\s\S]{0,400}?\}\) : null;\s*if \(pile\) lootHooks = \{ \.\.\.\(lootHooks \?\? \{\}\), pile \};\s*const _k = roomLootKey\(key\);[^\n]*\n\s*const _w = openInventory\(source, onEmptied, \{ lootHooks, lootKey: _k \}\);\s*if \(_w\) activeOverlay = _w;/);   // DISC10-E L3 re-aim: a refused pack (the door's null) is not written over the slot
+  // tabs are laid on the hooks before C6's order, which stands untouched behind them. PIN MOVED (AUDIT 625 D6): the take
+  // opened it - a body's or a pile's find rolls first thing in its arm
+  assert.match(d, /if \(!pileKeys && quickLootTake\(key, \{ items: \(\) => source \}, playerEntity, setMidScreenText, \{ getQuest: \(uid\) => opts\.questBridge\?\.machine\?\.getQuest\?\.\(uid\) \?\? null, took: showPickups \}\)\) \{[^\n]*\n\s*if \(_find\) silverFindAt\(_find\.kind, _find\.key\);[^\n]*\n\s*const _q = roomLootKey\(key\);[^\n]*\n\s*if \(_q\) publishLoot\(_q\);\s*if \(!source\.length\) onEmptied\?\.\(\);\s*return source\.length;\s*\}\s*const pile = kind === 'corpse' \? lootPile\(key, \{[\s\S]{0,400}?\}\) : null;\s*if \(pile\) lootHooks = \{ \.\.\.\(lootHooks \?\? \{\}\), pile \};\s*const _k = roomLootKey\(key\);[^\n]*\n\s*const _w = openInventory\(source, onEmptied, \{ lootHooks, lootKey: _k \}\);\s*if \(_w\) activeOverlay = _w;/);   // DISC10-E L3 re-aim: a refused pack (the door's null) is not written over the slot
   // publishLoot without `claim` is the whole word: the stamp, the record, the seen-set, the first-word memory push
   assert.match(d, /function publishLoot\(key, \{ claim = false \} = \{\}\) \{\s*const canon = lootKeyOf\(key\);\s*if \(!canon \|\| !lootHolder\(canon\)\) return false;\s*(?:if \(_lootUnreadable\.has\(canon\)\) return false;[^\n]*\n\s*)?if \(claim && _lootSeen\.has\(canon\)\) return false;/);   // AUDIT SETS M2: and never over a word this build cannot read
 });

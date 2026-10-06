@@ -114,7 +114,7 @@ test('MWA1 pins: the hosts build at every door a made character arrives through 
   assert.match(rig, /if \(measured\(\) == null\) await measure\(\)\.catch\(\(\) => 0\);\n\s+const res = await buildArmsFor\(entity\);/, 'AUDIT 65 XL-6: the store is measured before the face verdict, not parsed a dozen times');
   assert.match(rig, /if \(!entity\?\.chargenDone \|\| !\(dataCount\(\) > 0\) \|\| standing\(entity\)\) return null;/, 'the three gates, the last so a second door does not rebuild an arm that already stands FOR THIS ENTITY (MWA3: not merely a built one)');
   const w = read('src/scenes/world.js');
-  assert.equal((w.match(/autoBuildArms\(playerEntity\);/g) ?? []).length, 4, 'world: the rig, the wizard, the load, the classic load');
+  assert.equal((w.match(/autoBuildArms\(playerEntity\);/g) ?? []).length, 5, 'world: the rig, the wizard, the load, the classic load, a family member\'s birth (LEGACY1)');
   assert.match(w, /questInitAtGameStart\(\);\s+\/\/ Q4-v: OnStartGame for the new character\n\s+autoBuildArms\(playerEntity\);/, 'after the wizard');
   assert.match(w, /if \(!extras\) \{ townTalk\.say\('Save version mismatch\.'\); return; \}\n\s+autoBuildArms\(playerEntity\);/, 'after the restore');
   assert.match(read('src/scenes/exterior.js'), /\n  \}\);\n  autoBuildArms\(playerEntity\);/, 'exterior: after its rig');

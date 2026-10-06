@@ -385,7 +385,7 @@ that drops quest + conversation state, and four of the talk window's
 five pages. THE PATTERN WORTH NAMING: the port repeatedly translates a
 law correctly and never wires it - `systems/mysticism.js` carries the
 whole Mysticism school and only `silenceBlocksCast` has a production
-consumer; `test/mysticism.test.js:224` *asserts* the host does not call
+consumer; `test/mysticism.test.js:"ride along by construction".."const src = read(host);"` *asserts* the host does not call
 the rest. Exact counts where a surface was countable: quest actions 61
 of 82 (21 are `PendingTrigger` guards), the classic effect library 60
 of 82 keys landed (22 fall to `out.skipped++`), FormulaHelper ~80 of 97
@@ -764,7 +764,7 @@ FOURTH instance of the dungeon-host-falls-behind shape this week.
 
 (F3) THE MINUS KEY WAS UNREACHABLE, and had been since the stats
 screen shipped. `overlayAction` tests the typed-character class FIRST
-and the hyphen is a literal inside it (input.js:18), so `-` always
+and the hyphen is a literal inside it (input.js:"four hosts read that"), so `-` always
 arrives as `char:-`: a stat or skill point could be spent from the
 keyboard and never taken back. ('+' and '=' were never affected -
 neither is a typed character.) Both screens accept the typed hyphen
@@ -795,7 +795,7 @@ emit a negative zero.
 **2026-08-18 - AUDIT 17k, the parity pass over U16 + U17 + U18, and
 THE FIST CRASH.** Mac's report first: attacking with a fist crashed
 the game. Root-caused live (tools/fistProbe.mjs reproduced it at
-`dungeonContext.js:2768` before the fix): bare hands are a NULL weapon
+`dungeonContext.js:"the rest window had"` before the fix): bare hands are a NULL weapon
 since U8h bound the rig to `equip.slots[RightHand]` - and the DEFAULT
 state, because starting weapons land in the bag unequipped (DFU adds
 them via AddItem, never equips) - and the DUNGEON host read
@@ -1513,7 +1513,7 @@ and every enemy-side call passes 16. The data diet's whole fetch
 surface (literal + variable-name sites: HUD art, palette indirection
 incl. MAP.PAL/NIGHTSKY.COL, NITE images, TEXTURE templates) passes
 KEEP on both diets; SKY-on-lean is the designed gradient. (AUDIT 18
-correction: NIGHTSKY.COL really is fetched - scenes/shared.js:76 loads
+correction: NIGHTSKY.COL really is fetched - scenes/shared.js:"import { setPaintFile" loads
 it through `img.paletteName` - but MAP.PAL is NOT. Its only namer is
 ImgFile.paletteName for TMAP00I0.IMG, and the one loader of that file,
 chargenArt.js loadOne, draws it with the shared ART_PAL and never
@@ -1573,7 +1573,7 @@ out of it and hold for all future work:
      exists so evidence, not theory, drives the next fix.
 
 **2026-07-07 - the crash-class audit (no-undef joins the gate).** Mac's second live crash (Y1@407:239805) mapped through the
-deterministic bundle to characterSprite.js:104 calling trs() WITHOUT
+deterministic bundle to characterSprite.js:"AUDIT OW3 J6: the" calling trs() WITHOUT
 importing it - unbound since C8 E3d; vite emits unknown identifiers
 as presumed globals, so node --check, the build, and the headless
 suite all pass while the first real viewmodel frame throws

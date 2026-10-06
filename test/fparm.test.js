@@ -2291,7 +2291,7 @@ test('MW-D32: raceRecords reads RADT by hand-laid offsets - heights at 120, flag
 test('MW-D34: the third-person model matrix carries the measured chirality flip and adjustScale', () => {
   // MEASURED through the real composite (mwArmProbe L5b): the 3P body
   // rides drawRigSpriteBox into the world's mirrorProjectionX lens, and
-  // the port's world convention is left-handed (motor.js:973 - the
+  // the port's world convention is left-handed (motor.js:"let mx = (sin * cp * input.forward + cos * input.strafe)" - the
   // player's right is +X at yaw 0), so a right-handed NIF actor placed
   // with a pure rotation reads MIRRORED on screen. The -u on the local
   // side axis is the same basis adaptation the mirror gives every
@@ -3152,7 +3152,7 @@ test('PX27: the arm\u2019s REACH is swept over every clip, not the idle alone', 
   // back, and either can leave a box measured on a resting hand; the
   // far plane then cuts the swing off mid-arm.
   // AUDIT 39 moved this fixture off a Map. A source's `keys` is
-  // normalizeTextKeys' ARRAY of {time,text} (mwAnim.js:312), which is what
+  // normalizeTextKeys' ARRAY of {time,text} (mwAnim.js:"export function normalizeTextKeys"), which is what
   // clipReport hands fpArm; read with Map semantics the callback took
   // (element, index), no key ever carried ": ", and every sweep fell back
   // to the idle span - the very failure PX27 landed to fix.

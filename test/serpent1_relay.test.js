@@ -25,7 +25,7 @@ import {
 } from '../src/net/wire.js';
 import { serpentTimes, serpentBossOf, serpentSiteKey, SERPENT_BRAIN_V, SERPENT_DIVE_MS, SERPENT_NATIVE_PER_M } from '../src/net/serpentLaw.js';
 import {
-  SERPENT_ATTACK_BY_ID, SERPENT_TICK_MS, SERPENT_OPENING_MS, FAN_R, ADMIT_R, SHIP_REF, SERPENT_TTK_S, SERPENT_DAMAGE_CHART_MAX, serpentStateOf, ZONES,
+  SERPENT_ATTACK_BY_ID, SERPENT_TICK_MS, SERPENT_OPENING_MS, SERPENT_CLOSE_MS, FAN_R, ADMIT_R, SHIP_REF, SERPENT_TTK_S, SERPENT_DAMAGE_CHART_MAX, serpentStateOf, ZONES,
 } from '../src/net/serpentBrain.js';
 import { LEGS_KEPT, MODES_KEPT, MODE_NAMES } from '../src/net/serpentBody.js';
 import { relayVersionAtLeast } from './relayVersion.mjs';
@@ -106,10 +106,13 @@ test('SERPENT1 wire: the client says five things - `in` with its day, law, level
   assert.deepEqual(parseClient(JSON.stringify({ t: 'serpent', ...IN }), { hasHello: true }), { t: 'serpent', ...IN });
   assert.equal(parseClient(JSON.stringify({ t: 'serpent', ...IN }), { hasHello: false }).error, 'serpent before hello');
   assert.equal(parseClient(JSON.stringify({ t: 'serpent', k: 'hit', d: -1, z: 0 }), { hasHello: true }).error, 'bad serpent');
-  assert.equal(SERPENT_RELAY_MIN, 165);
+  // PIN MOVED (AUDIT 2 XC2, 2026-10-06): the first relay whose serpent this client fights is SERPENT3's own law's (world173 -
+  // world172 at the audit, renumbered past main's WATCH-FIX at the merge),
+  // no longer the first that keeps a fight (SERPENT1's world165) - it fought an older brain on a release day
+  assert.equal(SERPENT_RELAY_MIN, 173);
   assert.ok(relayVersionAtLeast(SERPENT_RELAY_MIN), 'the relay this tree builds holds a serpent');
-  assert.equal(RELAY_VERSION, 'world172');   // SUPER-DUNGEONS moved it on last (world172: the Super Dungeons arc, one version - SD-ONLINE first: a dungeon re-laid at the size the world gives it, small or medium, stands in a room of its own, so a page that lays it whole shares no stream and no memory with it; world171 on its branch, renumbered past CRYSTAL-FIST's world171 at the merge); CRYSTAL-FIST moved it on (world171: the Crystal Fist's title and glyph and the Crystal Resonance's aura join the token's vocabulary - a relay before it refuses Flylighter's token; world170 on its branch, renumbered past FEUD's world170 at the merge); FEUD moved it on (world170: the foe record's wind-ups, staggers and blow classes and a revenant's adaptations, weakness, last stand, band follower, blows and signature - TELL8, AUDIT TELL, RVN13 and FEUD WIRE, world162-world165 on its branch, renumbered past main's world169 at its merge); AUDIT ARENA-LADDER moved it on (world169: the arena ladder audit - elite champions, telegraphed blows, a judging floor and the attempt ticket - world167 on its branch, renumbered past SHADOW-CLOAK and SERAPH-WINGS at the merges); SERAPH-WINGS moved it on (world168: the Seraph Wings join the aura vocabulary of the token - a relay before it refuses the token of a developer wearing them); SHADOW-CLOAK moved it on (world167: the cloak's aura word on the token - world165 on its branch, renumbered past SERPENT1 and SERPENT2 at the merges); SERPENT2 moved it on (world166: the serpent herald)
-  assert.ok(relaySupportsSerpent('world165') && !relaySupportsSerpent('world164') && !relaySupportsSerpent(undefined));
+  assert.equal(RELAY_VERSION, 'world175');   // SUPER-DUNGEONS moved it on last (world175: the Super Dungeons arc, one version - SD-ONLINE first: a dungeon re-laid at the size the world gives it, small or medium, stands in a room of its own, so a page that lays it whole shares no stream and no memory with it; world171 on its branch, renumbered past CRYSTAL-FIST's world171 at one merge and past WATCH-FIX's world172, SERPENT3's world173 and LEGACY7's world174 at the next); LEGACY7 moved it on (world174: the house on the token and the row - world172 on its branch, renumbered past WATCH-FIX's world172 and SERPENT3's world173 at the merge); SERPENT3 moved it on (world173: the sea serpent brain swims every leg it shows - no leap - a slept fight taken up where it was and a blow judged where it struck; its law version 2; world171 on its branch, renumbered past CRYSTAL-FIST's world171 and WATCH-FIX's world172 at the merges); WATCH-FIX moved it on (world172: the foe record names the living-world resident a watchman stands for, `lr`); CRYSTAL-FIST moved it on (world171: the Crystal Fist's title and glyph and the Crystal Resonance's aura join the token's vocabulary - a relay before it refuses Flylighter's token; world170 on its branch, renumbered past FEUD's world170 at the merge); FEUD moved it on (world170: the foe record's wind-ups, staggers and blow classes and a revenant's adaptations, weakness, last stand, band follower, blows and signature - TELL8, AUDIT TELL, RVN13 and FEUD WIRE, world162-world165 on its branch, renumbered past main's world169 at its merge); AUDIT ARENA-LADDER moved it on (world169: the arena ladder audit - elite champions, telegraphed blows, a judging floor and the attempt ticket - world167 on its branch, renumbered past SHADOW-CLOAK and SERAPH-WINGS at the merges); SERAPH-WINGS moved it on (world168: the Seraph Wings join the aura vocabulary of the token - a relay before it refuses the token of a developer wearing them); SHADOW-CLOAK moved it on (world167: the cloak's aura word on the token - world165 on its branch, renumbered past SERPENT1 and SERPENT2 at the merges); SERPENT2 moved it on (world166: the serpent herald)
+  assert.ok(relaySupportsSerpent('world173') && !relaySupportsSerpent('world172') && !relaySupportsSerpent('world165') && !relaySupportsSerpent(undefined));
   let b = null, pass = 0;
   for (let i = 0; i < 40; i++) { const g = serpentGate(b, 1000); b = g.bucket; if (g.pass) pass++; }
   assert.equal(pass, SERPENT_HZ_MAX, 'the frames\' own bucket');
@@ -195,7 +198,8 @@ test('SERPENT1 relay: THE JOIN - `in` from a pose by its waters stands the fight
     assert.equal(r.store.get(FIGHT_AT).day, DAY, 'kept at once');
     assert.equal(words(b).length + words(c).length, 0, 'the state went to its asker alone');
     assert.equal(r.alarm.at, now() + SERPENT_TICK_MS, 'the beat armed');
-    await tick(Math.ceil(SERPENT_OPENING_MS / SERPENT_TICK_MS) + 24);
+    // PIN MOVED (SERPENT3): a Rising Maw or a coil chosen first is closed on at the surface (SERPENT_CLOSE_MS at most)
+    await tick(Math.ceil((SERPENT_OPENING_MS + SERPENT_CLOSE_MS) / SERPENT_TICK_MS) + 24);
     const heard = words(a).filter((m) => m.k !== 'st');
     assert.ok(heard.some((m) => m.k === 'atk'), 'it struck after its opening');
     assert.deepEqual(words(b).filter((m) => m.k !== 'st'), heard, 'the watcher on the headland heard every word');
@@ -231,8 +235,10 @@ test('SERPENT1 relay: THE REFUSALS - a game older than its law (`reload`), a day
     set(TT.sealAt + 1);
     const late = r.connect(); await r.hello(late, 'peer-0003', at(200, 0));
     await say(late, IN());
-    assert.deepEqual(words(late).map((m) => m.k), ['st', 'no']);
-    assert.equal(words(late)[1].m, 'the storm has closed its waters');
+    // PIN MOVED (SERPENT3): a fight not stepped since its birth (no beat in fifteen minutes) is taken up circling where
+    // it was before she is shown it (serpentBrain.js serpentResume) - its swim and its ride said first, to her too
+    assert.deepEqual(words(late).map((m) => m.k), ['sw', 'dv', 'st', 'no']);
+    assert.equal(words(late)[3].m, 'the storm has closed its waters');
     assert.ok(!fightIn(r).players['acct-peer-0003']);
   });
 });
@@ -376,7 +382,8 @@ test('SERPENT1 books: a serpent is worth RENOWN_SERPENT_QUESTS quests at the top
   assert.equal(first.recorded, true); assert.equal(first.slain, 1); assert.equal(first.spoils, true);
   assert.equal(first.renown.credited, renownSerpentXp(1));
   const again = await claimSerpent(ctx, m, { receipt: await serpentFor(m.id, priv, DAY, T0S + 1), character: CH, cid: CID2 }, pubKey);
-  assert.deepEqual(again, { recorded: false, why: 'claimed', slain: 1, spoils: false }, 'one a serpent, whatever receipt says it - and its hoard was the first device\'s');
+  // PIN MOVED (AUDIT 625 P4): a repeat says the row's embers - none here: the first claim said none (a build from before them)
+  assert.deepEqual(again, { recorded: false, why: 'claimed', slain: 1, spoils: false, stones: 0 }, 'one a serpent, whatever receipt says it - and its hoard was the first device\'s');
   assert.equal((await claimSerpent(ctx, m, { receipt: r, character: CH, cid: CID }, pubKey)).spoils, true, 'the same device asking again is answered the same');
   const next = await claimSerpent(ctx, m, { receipt: await serpentFor(m.id, priv, DAY + 2), character: CH, cid: CID }, pubKey);
   assert.equal(next.recorded, true); assert.equal(next.slain, 2, 'the next serpent counts');

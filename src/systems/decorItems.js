@@ -36,6 +36,7 @@ import { getMagicItemTemplates, ITEM_GROUP_NAME_BY_CLASS } from './loot.js';
 import { TEMPLATES, isMap } from './useItem.js';
 import { isSummoned } from './inventory.js';
 import { isBagItem } from '../net/bagLaw.js';   // AUDIT ONE-BAG 2: the Materials Bag stands as no piece
+import { isPackOnly } from './itemBound.js';   // AUDIT 625 W1: nor a pack-only piece (the Wallet)
 import { decorFlatLight } from './decorCatalogue.js';
 import { itemDyeColor, itemDyeTarget } from './itemDye.js';
 import { decorItemOf, decorIsMount, DECOR_ARCHIVE_MAX, DECOR_RECORD_MAX, DECOR_ARTIFACT_UNKNOWN } from '../net/decorLaw.js';
@@ -87,14 +88,16 @@ export function decorDescriptorOf(item) {
  * WHAT AN ITEM OF THE PLAYER'S OWN STANDS AS - `{ flat, light, item }`, its picture, the light it gives (a candle's,
  * a torch's - Daggerfall's own, as the catalogue's) and its descriptor - or null when it cannot stand: anything worn
  * (DFU's own pack list never shows it), a quest's item, a summoned one, a map (it is read, never kept), the groups
- * and items kept back above, and anything with no picture of its own.
+ * and items kept back above, the Materials Bag and a pack-only piece, and anything with no picture of its own.
  */
 export function decorStandOf(item) {
   if (!item || item.questItem || item.equipSlot != null || isSummoned(item) || isMap(item)) return null;
   if (DECOR_OWN_NEVER_GROUPS.has(item.group) || DECOR_OWN_KEPT_BACK.has(item.templateIndex)) return null;
   // AUDIT ONE-BAG 2: the Materials Bag is never set out - a piece leaves the pack with no transfer ladder (a loaded bag's list
-  // stranded) and comes back with none (a second bag, held beside one bought meanwhile)
-  if (isBagItem(item)) return null;
+  // stranded) and comes back with none (a second bag, held beside one bought meanwhile). AUDIT 625 W1: nor a PACK-ONLY
+  // piece (systems/itemBound.js isPackOnly - the Wallet's row): set down, it leaves the pack (scenes/decorTool.js
+  // commitOwn), and a wallet out of the pack leaves what it holds back on the pack's pages
+  if (isBagItem(item) || isPackOnly(item)) return null;
   const flat = decorItemFlat(item);
   const descriptor = flat ? decorDescriptorOf(item) : null;
   if (!flat || !descriptor) return null;

@@ -56,7 +56,7 @@
   {
     "name": "RAID4-track-bound",
     "file": "server-account/src/raids.js",
-    "old": "  const refused = `(NOT EXISTS (${track}) AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) >= ?9)`;",
+    "old": "  const refused = `(NOT EXISTS (${track}) AND ${renownHeldSql('?1')} >= ?9)`;",
     "new": "  const refused = `(0 AND ?9 > 0)`;",
     "tests": [
       "test/raid4_rewards.test.js",

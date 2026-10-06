@@ -1,0 +1,119 @@
+[
+  {
+    "name": "QA2-guild-rung-unread",
+    "file": "src/systems/quest/person.js",
+    "old": "      ?? (guild ? halls.find((b) => b.npcs.some(sameLook)) ?? halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);",
+    "new": "      ?? null;",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ]
+  },
+  {
+    "name": "QA2-guild-look-only",
+    "file": "src/systems/quest/person.js",
+    "old": "      ?? (guild ? halls.find((b) => b.npcs.some(sameLook)) ?? halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);",
+    "new": "      ?? (guild ? halls.find((b) => b.npcs.some(sameLook)) : null);",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ]
+  },
+  {
+    "name": "QA2-every-faction-a-guild",
+    "file": "src/systems/quest/person.js",
+    "old": "    const guild = hasGuildService(q.factionID);",
+    "new": "    const guild = true;",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ]
+  },
+  {
+    "name": "QA2-unseated-kept-on-move",
+    "file": "src/systems/quest/person.js",
+    "old": "      const { unseated: _was, ...site } = hall.siteDetails;",
+    "new": "      const site = hall.siteDetails;",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ]
+  },
+  {
+    "name": "QA2-hall-left-on-key",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (this.scope === Scopes.None) return this._unseat(held);",
+    "new": "    if (this.scope === Scopes.None) return false;",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ]
+  },
+  {
+    "name": "QA2-heldback-unread-site",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (recordHeldBack(held)) return this._unseat(held);",
+    "new": "",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ]
+  },
+  {
+    "name": "QA2-heldback-unread-questor",
+    "file": "src/systems/quest/person.js",
+    "old": "    if (recordHeldBack(q)) return false;",
+    "new": "",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ]
+  },
+  {
+    "name": "QA2-heldback-never-cleared",
+    "file": "src/systems/layoutPins.js",
+    "old": "  _heldBack = new Set(heldBack ?? []);",
+    "new": "  if (heldBack) _heldBack = new Set(heldBack);",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ]
+  },
+  {
+    "name": "QA2-heldback-unpassed",
+    "file": "src/scenes/world.js",
+    "old": "    const changed = setLayoutPins(pins, { heldBack, missing: worldDataPacksMissing() });",
+    "new": "    const changed = setLayoutPins(pins, { missing: worldDataPacksMissing() });",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ]
+  },
+  {
+    "name": "QA2-shared-die-unseeded",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!shareId || !this.parentQuest.hooks?.sharedCopy?.(this.parentQuest)) return this._reseatMovedSite(world);",
+    "new": "    if (true) return this._reseatMovedSite(world);",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ]
+  },
+  {
+    "name": "QA2-own-site-unkept",
+    "file": "src/systems/quest/machine.js",
+    "old": "    for (const r of quest.resources.values()) if (r.isPlace && sitesBefore.has(r.symbol?.name)) r.keepOwnSite?.(sitesBefore.get(r.symbol?.name));",
+    "new": "",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ]
+  },
+  {
+    "name": "QA2-partner-targets-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "      for (const s of sd.selectedMarker.targetResources) assignResourceToMarker(s, selectedMarker);\n",
+    "new": "",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ]
+  },
+  {
+    "name": "QA2-links-kept",
+    "file": "src/systems/quest/machine.js",
+    "old": "    // dozens of links per Place in the save, and every mount of its building walked them all\n    this.siteLinks = this.siteLinks.filter((link) => link.questUID !== quest.uid);",
+    "new": "    // dozens of links per Place in the save, and every mount of its building walked them all\n",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ]
+  }
+]

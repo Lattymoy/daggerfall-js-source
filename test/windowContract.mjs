@@ -75,7 +75,7 @@ export function hostSlots() {
 /** The enclosing function body of line `i`, by indentation.
  *
  *  THE SCOPE IS THE LAW, NOT A WINDOW SIZE. The first pass here used a
- *  fixed four-line lookback and so called `townTalk.js:1328`
+ *  fixed four-line lookback and so called `townTalk.js:"overlay.hover(v ? v[0] : -1, v ? v[1] : -1, e)"`
  *  `overlay.hover(...)` unguarded - its guard, `if (!overlay?.hover)
  *  return false`, sits eight lines up at the top of the same function.
  *  HARD2's D10 pin was re-aimed off a fixed 80-line window for exactly
@@ -93,7 +93,7 @@ export function enclosingScope(lines, i) {
 /** Is line `i` inside a `window.__…` debug probe rather than the
  *  play path? worldModes' inventory probes call `_remote`, `_pick`,
  *  `items`, `labels` and `enabled` straight off the slot, each behind
- *  a DUCK-TYPE test (`isInventory`, worldModes.js:10042) that this
+ *  a DUCK-TYPE test (`isInventory`, worldModes.js:"window.__itemMakerRemoveRow".."const w = interiorOverlay;") that this
  *  file's guard reader cannot see because the test names a parameter,
  *  not the slot. They are hooks the harness drives with a known window
  *  up, not arms the game calls on whatever is open, so they are not
@@ -117,12 +117,12 @@ export function inProbe(lines, i) {
  * there, so `?.` on the object saves nothing, and a missing method is
  * a TypeError thrown inside the host's own event handler - which is a
  * crash the player sees and no test does. A guarded call is the
- * window's own choice (`townTalk.js:499`: "OPTIONAL by design").
+ * window's own choice (`townTalk.js:"return false;   // STATUS-LIVE: the pause, not the slot - the"`: "OPTIONAL by design").
  *
  * @returns {{required: Map<string, string[]>, optional: Set<string>, probeOnly: Map<string, string[]>}}
  */
 export function hostArms() {
-  const required = new Map();   // arm -> ["townTalk.js:431", ...]
+  const required = new Map();   // arm -> ["townTalk.js:"if (overlay.isChoiceWindow)"", ...]
   const optional = new Set();
   const probeOnly = new Map();
   for (const { path, src, slots } of hostSlots()) {

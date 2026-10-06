@@ -6,10 +6,10 @@
 // (either exterior host) never created a character at all - they
 // played the pre-chargen placeholder entity (flat skills 30,
 // maxHealth 50, Warrior-shaped nothing; it is described at
-// characters/playerEntity.js:5). The dungeon kept its own copy of
+// characters/playerEntity.js:"through systems/chargenSession.js"). The dungeon kept its own copy of
 // the load/apply code, which is exactly the duplication the audit's
 // rules forbid, so both live here now. FIXED, not pending: world.js:
-// 126/:1364-1366 and exterior.js:198/:1421-1423 both import and run
+// 126/:1364-1366 and exterior.js:"createChargenFlow,"/exterior.js:"const questInitAtGameStart" both import and run
 // createChargenFlow + createChargenWindow from here, so a town boot
 // runs the wizard.
 //
@@ -41,7 +41,10 @@ import { bootstrapRegionPower } from './regionPower.js';   // AUDIT 26 F107   //
 // answer is spelled with.
 import { LevelingChoiceScreen } from '../ui/levelingChoice.js';
 import { oblivionLevelingEnabled, initVirtueLeveling, LEVELING_CLASSIC, newCharacterLevelingSystem } from './oblivionLeveling.js';
-import { isOnlinePage } from './onlineLane.js';   // LEVEL-ONLINE: Daggerfall's leveling is offline-only for a new character
+import { isOnlinePage } from './onlineLane.js';   // LEVEL-ONLINE-2: Oblivion's leveling is offline-only for a new character
+import { legacyOn } from './legacy/settings.js';   // LEGACY2: Project Legacy's question - the family's model
+import { legacyModelScreen } from '../ui/legacyModelChoice.js';
+import { isLegacyChoice } from './legacy/family.js';   // LEGACY-CHOICE: the answer kept on the character
 
 /** SPELLS.STD as an index -> spell map. AUDIT 17f: the exterior
  *  hosts ran chargen without one and called finishChargen with no
@@ -130,7 +133,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:276) early-returns for a
+  // updateEquippedArmorValues (equip.js:"StartEquippedItem,") early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -158,7 +161,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // a test, a headless run - and a question nobody is there to answer
   // must not be asked and must not be guessed at. Daggerfall's leveling
   // is what every ?class= character has always had.
-  // LEVEL-ONLINE: ...and online the port's law is Oblivion's (newCharacterLevelingSystem).
+  // LEVEL-ONLINE-2: ...and online too - Oblivion's is offline-only (newCharacterLevelingSystem).
   initVirtueLeveling(playerEntity, newCharacterLevelingSystem(LEVELING_CLASSIC, { online: isOnlinePage() }));
   console.log(`[chargen] ${CLASS_CAREERS[classIndex]}: HP ${playerEntity.maxHealth}, spells ${playerEntity.spells.length}`);
   return playerEntity;
@@ -198,7 +201,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:276) early-returns for a
+  // updateEquippedArmorValues (equip.js:"StartEquippedItem,") early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -286,9 +289,12 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
   // question wrote (createChargenWindow); a result that carries none -
   // a test's literal, a caller that built a flow by hand - is a classic
   // character, which is the port's own law and the safe default.
-  // LEVEL-ONLINE: an online character is born on Oblivion's bar whatever a result carries - the question offers
-  // Daggerfall's only offline, and this is the law's own door, not the screen's (a hand-built result goes through it too).
+  // LEVEL-ONLINE-2: an online character is born on Daggerfall's leveling whatever a result carries - the question offers
+  // Oblivion's only offline, and this is the law's own door, not the screen's (a hand-built result goes through it too).
   initVirtueLeveling(playerEntity, newCharacterLevelingSystem(result.levelingSystem ?? LEVELING_CLASSIC, { online: isOnlinePage() }));
+  // LEGACY-CHOICE: AND PROJECT LEGACY'S ANSWER, kept on the character as the leveling one is - a model, or no lineage,
+  // which keeps them out of the system for good (legacyHost.js found). A result the question was not put to carries none.
+  if (isLegacyChoice(result.legacyModel)) playerEntity.legacyChoice = result.legacyModel;
   return playerEntity;
 }
 
@@ -372,8 +378,8 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
   //
   // THE FOUR HOSTS RULE, answered here rather than three times over.
   // Three hosts run a new game and all three build their wizard
-  // through this function - world.js:6388, exterior.js:1477,
-  // dungeonContext.js:3284 - so the question is asked once, in the
+  // through this function - world.js:"came from hosts wiring these", exterior.js:"AUDIT 17i: ONE construction",
+  // dungeonContext.js:"const missing = (targetEntity.maxHealth ?? 0)".."questPoolOps.removeFoe(f);" - so the question is asked once, in the
   // seam, and not one of them learns a new word. THE FOURTH HOST,
   // scenes/worldModes.js, IS ACCOUNTED FOR AND ASKS NOTHING: a new game
   // never begins inside a building, that host runs no chargen at all
@@ -413,7 +419,7 @@ function chargenWizard(flow, { onDone, onCancel, hudScale = 2 } = {}) {
  *
  * `isChoiceWindow` is a GETTER for the same reason: the wizard wants
  * raw key codes and the question wants the shared overlayAction names,
- * and the hosts read that flag at routing time (townTalk.js:431,
+ * and the hosts read that flag at routing time (townTalk.js:"if (overlay.isChoiceWindow)",
  * worldModes.js's overlayIsNative), so one object can want both in
  * turn.
  *
@@ -423,28 +429,41 @@ function chargenWizard(flow, { onDone, onCancel, hudScale = 2 } = {}) {
  * applyHeadlessChargen (the `?class=` skip) sets it there.
  */
 function withLevelingChoice(flow, { onDone, onCancel, hudScale = 2 } = {}) {
-  // LEVEL-ONLINE: online the question is ALWAYS put, mod or no mod - Daggerfall's option shown and shut, Oblivion's
-  // the answer - so the player reads which system they are getting before the world, rather than finding out at
-  // their first level. Offline with the mod off, nothing changed: no question, Daggerfall's law.
+  // LEVEL-ONLINE: online the question is ALWAYS put, mod or no mod - Oblivion's option shown and shut (LEVEL-ONLINE-2),
+  // Daggerfall's the answer - so the player reads which system they are getting before the world, rather than finding
+  // out at their first level. Offline with the mod off, nothing changed: no question, Daggerfall's law.
   const online = isOnlinePage();
-  if (!oblivionLevelingEnabled() && !online) {
+  // LEGACY2 (bible/06-Systems/Legacy-Arc.md section 6): ...AND PROJECT LEGACY'S QUESTION AFTER IT - the family's model,
+  // Bloodline or Enduring, asked of the character who founds a house (legacyModelScreen). The same door, the same one
+  // overlay slot: the questions are STAGES of one window, put in turn, each answered once; the answers ride the result.
+  const asks = [];
+  if (oblivionLevelingEnabled() || online) asks.push((answer) => new LevelingChoiceScreen((id) => answer({ levelingSystem: id }), { online }));
+  if (legacyOn()) asks.push((answer) => legacyModelScreen((model) => answer({ legacyModel: model })));
+  const unasked = { levelingSystem: LEVELING_CLASSIC };
+  if (!asks.length) {
     return chargenWizard(flow, {
-      onCancel, hudScale, onDone: (r) => onDone?.({ ...r, levelingSystem: LEVELING_CLASSIC }),
+      onCancel, hudScale, onDone: (r) => onDone?.({ ...r, ...unasked }),
     });
   }
   let fired = false;
   let prompt = null;
+  let stage = 0;
+  let answers = { ...unasked };
+  let result = null;
+  const next = () => {
+    if (stage >= asks.length) { prompt = null; fired = true; onDone?.({ ...result, ...answers }); return; }
+    const i = stage++;
+    prompt = asks[i]((a) => { answers = { ...answers, ...a }; next(); });
+  };
   const inner = chargenWizard(flow, {
     hudScale,
     onCancel: () => { fired = true; onCancel?.(); },
     onDone: (r) => {
       // AUDIT 17f's law, one layer out: the wizard fires once, and the
-      // question it opens is built once with it.
-      if (prompt || fired) return;
-      prompt = new LevelingChoiceScreen((id) => {
-        fired = true;
-        onDone?.({ ...r, levelingSystem: id });
-      }, { online });
+      // questions it opens are built once with it.
+      if (result || fired) return;
+      result = r;
+      next();
     },
   });
   return {
@@ -471,11 +490,11 @@ function withLevelingChoice(flow, { onDone, onCancel, hudScale = 2 } = {}) {
       // font-less arm does exactly that ("never trap the motor"), and
       // the dungeon host's own chargen fallback is the shape a second
       // host could grow next. Swallowing the answer there would lose
-      // the finished character with it, so the question falls back to
-      // the same law every unasked path takes: Daggerfall's own.
-      // `_fired` makes this a no-op on every normal close and on cancel.
-      // LEVEL-ONLINE: the first OPEN answer - Daggerfall's offline, Oblivion's online (Daggerfall's is shut there).
-      prompt?.answer(prompt.defaultId);
+      // the finished character with it, so each question still up falls
+      // back to its default - the same law every unasked path takes.
+      // `fired` makes this a no-op on every normal close and on cancel.
+      // LEVEL-ONLINE: the first OPEN answer - Daggerfall's, offline and online (LEVEL-ONLINE-2: Oblivion's is shut there).
+      while (prompt && !fired) prompt.answer(prompt.defaultId);
       inner.dispose?.();
     },
   };
@@ -529,9 +548,9 @@ function classicChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
     // the port's only reading of it - without this the thumb could
     // latch on the press and then never move. Every host that runs
     // the wizard already routes a mousemove here: world.js and
-    // exterior.js through `townTalk.hover` (townTalk.js:1319-1330,
-    // the route itself :1328), dungeonContext.js through `overlayHover`
-    // (:9404), which dungeon.js:563 and worldModes.js:11133 both feed.
+    // exterior.js through `townTalk.hover` (townTalk.js:"function hover(e)",
+    // the route itself townTalk.js:"overlay.hover(v ? v[0] : -1, v ? v[1] : -1, e)"), dungeonContext.js through `overlayHover`
+    // (dungeonContext.js:"overlayHover(vx, vy, e = null)"), which dungeon.js:"ctx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1, e)" and worldModes.js:"dungeonCtx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1, e)" both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never
     // advances the flow, so no done check.

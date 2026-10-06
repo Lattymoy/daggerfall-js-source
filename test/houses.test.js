@@ -10,7 +10,7 @@
 //   - buildingLocks.isHouseOwned, whose contract has named the hook
 //     since R1 with nothing able to answer it, so your own front door
 //     was locked against you;
-//   - quest place.js:653, which skips a house you own when choosing a
+//   - quest place.js:"else if (buildingType === BT_ANY_HOUSE)", which skips a house you own when choosing a
 //     quest site, and defaulted false - so your own home stayed
 //     eligible.
 //
@@ -274,7 +274,7 @@ test('H1 DEFECT: a house on the market must carry its KEY - on REAL data', { ski
 
 test('H2: PurchaseHouse spends the purse FIRST and the account for the rest', () => {
   // :408-427, and the mechanism is DeductGoldAmount's return value:
-  // it answers the SHORTFALL, not nothing (court.js:240 ports it,
+  // it answers the SHORTFALL, not nothing (court.js:"PlayerEntity.cs:2294-2298" ports it,
   // letters of credit and all). So `accountGold -= deductGold(amount)`
   // subtracts exactly the remainder, and subtracts ZERO when the purse
   // covered it. Written any other way this double-charges, or lets the

@@ -20,11 +20,12 @@
   {
     "name": "REALM1-join-keeps-others",
     "file": "server-account/src/realm.js",
-    "old": "  if (!took.meta.changes) return { error: 'no-realm-character' };\n  await freeOthers({ db }, playerId, id);",
-    "new": "  if (!took.meta.changes) return { error: 'no-realm-character' };",
+    "old": "  await freeOthers({ db }, playerId, id);\n  const row = await db.prepare('SELECT seq, bytes, origin_id FROM realm_characters WHERE id = ? AND player = ?')",
+    "new": "  const row = await db.prepare('SELECT seq, bytes, origin_id FROM realm_characters WHERE id = ? AND player = ?')",
     "tests": [
       "test/realm1.test.js"
-    ]
+    ],
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the refusal above it names a tombstone now."
   },
   {
     "name": "REALM1-create-keeps-others",
@@ -38,11 +39,12 @@
   {
     "name": "REALM1-no-bound",
     "file": "server-account/src/realm.js",
-    "old": "' SELECT ?, ?, ?, ?, 0, 0, ?, ?, NULL, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ?) < ?',",
-    "new": "' SELECT ?, ?, ?, ?, 0, 0, ?, ?, NULL, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ?) < ? + 100',",
+    "old": "AND dead_at IS NULL) < ?',\n    ).bind(id, playerId, n,",
+    "new": "AND dead_at IS NULL) < ? + 100',\n    ).bind(id, playerId, n,",
     "tests": [
       "test/realm1.test.js"
-    ]
+    ],
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the bound counts the living, and a birth names its line and person."
   },
   {
     "name": "REALM1-customs-no-track",

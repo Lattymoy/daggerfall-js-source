@@ -1,0 +1,23 @@
+[
+  {
+    "name": "FB1006-WATCH-SWING-the-dead-dressed",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (g.dead) continue;   // WATCH-SWING: whatever the frame's doors did, after all of them",
+    "new": "",
+    "tests": ["test/fb1006_watchswing.test.js"]
+  },
+  {
+    "name": "FB1006-WATCH-SWING-the-killed-dressed",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (g.dead) continue;   // WATCH-SWING: whatever the frame's doors did, after all of them",
+    "new": "      if (g.dead && !g.corpse) continue;",
+    "tests": ["test/fb1006_watchswing.test.js"]
+  },
+  {
+    "name": "FB1006-WATCH-SWING-the-striker-undrawn",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      out.push(g.batch);",
+    "new": "",
+    "tests": ["test/fb1006_watchswing.test.js"]
+  }
+]

@@ -26,9 +26,10 @@ import { SKILLS } from '../src/systems/skills.js';
 const W = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
 const M = readFileSync(new URL('../src/scenes/worldModes.js', import.meta.url), 'utf8');
 const CHECK = /\n(    if \(playerSpawned && playerEntity\.health <= 0 [^\n]*presentPlayerDeath\(playerEntity\);)\n/.exec(W);
-/** The frame's check, lifted: one frame of it over the given world. */
-const frameCheck = (w) => new Function('playerSpawned', 'playerEntity', 'worldMoveBusy', 'townTalk', 'DeathScreen', 'modes', 'presentPlayerDeath', CHECK[1])(
-  w.spawned ?? true, w.entity, () => !!w.moving, w.townTalk, DeathScreen, w.modes, presentPlayerDeath);
+/** The frame's check, lifted: one frame of it over the given world. AUDIT LEGACY B1: `w.succession` - Project Legacy's
+ *  Succession standing, the death's own screen (ui/legacyDoor.js successionOpen). */
+const frameCheck = (w) => new Function('playerSpawned', 'playerEntity', 'worldMoveBusy', 'townTalk', 'DeathScreen', 'modes', 'presentPlayerDeath', 'successionOpen', CHECK[1])(
+  w.spawned ?? true, w.entity, () => !!w.moving, w.townTalk, DeathScreen, w.modes, presentPlayerDeath, () => !!w.succession);
 
 function diseasedPlayer() {
   const p = {
@@ -135,6 +136,7 @@ test('DEATH-KEPT the check\'s guards: it asks only for a player at zero, spawned
   assert.equal(run({ entity: { health: 0 }, townTalk: { overlay: new DeathScreen({ online: false }) } }), 0, 'townTalk\'s death screen up: never a second');
   assert.equal(run({ entity: { health: 0 }, modes: { deathUp: () => true } }), 0, 'the mode\'s death screen up: never a second');
   assert.equal(run({ entity: { health: 0 }, modes: null }), 1, 'no modal host: townTalk\'s slot is the whole question');
+  assert.equal(run({ entity: { health: 0 }, succession: true }), 0, 'AUDIT LEGACY B1: Project Legacy\'s Succession standing - the death\'s own screen: never a second over it');
   assert.equal(presentPlayerDeath({ health: 5 }), false);
   assert.equal(presentPlayerDeath({ health: 0 }), true);
   assert.equal(asked, 4, 'three frames asked, and the one direct ask of the dead');

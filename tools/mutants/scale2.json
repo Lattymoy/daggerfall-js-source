@@ -11,8 +11,8 @@
   {
     "name": "SCALE2-A-never-reused",
     "file": "src/net/accountClient.js",
-    "old": "    held.rooms.add(room);\n    return held.token;",
-    "new": "    return null;",
+    "old": "    if (!(now() - held.at < TOKEN_REUSE_MS)) return null;\n    return held.token;",
+    "new": "    if (!(now() - held.at < TOKEN_REUSE_MS)) return null;\n    return null;",
     "tests": [
       "test/scale2.test.js"
     ]

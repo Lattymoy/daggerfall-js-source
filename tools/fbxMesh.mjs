@@ -12,7 +12,7 @@
 //
 // ═══ WHAT IT BAKES INTO ═══════════════════════════════════════════
 //
-// THE SHAPE flattenNif ALREADY EMITS (src/formats/mwNifMesh.js:385-387:
+// THE SHAPE flattenNif ALREADY EMITS (src/formats/mwNifMesh.js:"skinned:boolean,":
 // positions / normals / uvs / colors / indices / material). Not a
 // second mesh format - the SAME one, because the Morrowind lane's whole
 // downstream (the arm's attach chain, the renderer's batch draw) is

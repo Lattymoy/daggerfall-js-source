@@ -634,8 +634,8 @@
   {
     "name": "NAV1H-the-share-unheld",
     "file": "src/systems/comeSailAway.js",
-    "old": "    const hurt = f(Math.max(0, Math.min(1, Number(deps.wayScale?.(state.sailPosition !== 0) ?? 1))));",
-    "new": "    const hurt = f(Number(deps.wayScale?.(state.sailPosition !== 0) ?? 1));",
+    "old": "const wayHurt = (underSail) => f(Math.max(0, Math.min(1, Number(deps.wayScale?.(underSail) ?? 1))));",
+    "new": "const wayHurt = (underSail) => f(Number(deps.wayScale?.(underSail) ?? 1));",
     "tests": [
       "test/csa_wind.test.js"
     ]
@@ -643,8 +643,8 @@
   {
     "name": "NAV1H-the-sail-flag-unread",
     "file": "src/systems/comeSailAway.js",
-    "old": "deps.wayScale?.(state.sailPosition !== 0)",
-    "new": "deps.wayScale?.(true)",
+    "old": "    const hurt = wayHurt(state.sailPosition !== 0);",
+    "new": "    const hurt = wayHurt(true);",
     "tests": [
       "test/csa_wind.test.js"
     ]
@@ -938,7 +938,7 @@
   {
     "name": "NAV1H-the-heave-unpressed",
     "file": "src/scenes/navalHost.js",
-    "old": "      if (fast) { startHeaveTo(fast); return true; }   // AUDIT NAV1: too fast to board her - heave to\n",
+    "old": "      if (fast) { startHeaveTo(fast, boat); return true; }   // AUDIT NAV1: too fast to board her - heave to\n",
     "new": "",
     "tests": [
       "test/navaudit_helm.test.js"
@@ -956,7 +956,7 @@
   {
     "name": "NAV1H-the-brake-unwired",
     "file": "src/scenes/navalHost.js",
-    "old": "  const brake = () => (enabled && heaveTo && myBoat() ? HEAVE_TO_DECEL : 0);",
+    "old": "  const brake = () => (enabled && heaveTo && myBoat() ? heaveTo.decel : 0);",
     "new": "  const brake = () => 0;",
     "tests": [
       "test/navaudit_helm.test.js"
@@ -1010,7 +1010,7 @@
   {
     "name": "NAV1H-the-brake-unread",
     "file": "src/systems/comeSailAway.js",
-    "old": "    return brake > 0 ? f(Math.min(20, brake)) : moveAccelOwn();",
+    "old": "    return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn();",
     "new": "    return moveAccelOwn();",
     "tests": [
       "test/csa_wind.test.js"
@@ -1019,7 +1019,7 @@
   {
     "name": "NAV1H-the-brake-unheld",
     "file": "src/systems/comeSailAway.js",
-    "old": "    return brake > 0 ? f(Math.min(20, brake)) : moveAccelOwn();",
+    "old": "    return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn();",
     "new": "    return brake > 0 ? f(brake) : moveAccelOwn();",
     "tests": [
       "test/csa_wind.test.js"

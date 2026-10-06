@@ -173,11 +173,12 @@
   {
     "name": "REALM-GZIP-the-birth-drops-the-word",
     "file": "src/scenes/world.js",
-    "old": "}, text, { gzip: made.data.gzip === true });   // REALM-GZIP",
-    "new": "}, text);   // REALM-GZIP",
+    "old": "  return realmPut(io, made.data.id, { lease: made.data.lease, seq: 1, summary: realmSummaryOf(playerEntity) }, text, { gzip: made.data.gzip === true });",
+    "new": "  return realmPut(io, made.data.id, { lease: made.data.lease, seq: 1, summary: realmSummaryOf(playerEntity) }, text);",
     "tests": [
       "test/realm_gzip.test.js"
-    ]
+    ],
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the first save is realmFirstSave's (realmBirth's and an online member's birth alike)."
   },
   {
     "name": "REALM-GZIP-customs-drops-the-word",

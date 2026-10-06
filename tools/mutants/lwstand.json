@@ -1,0 +1,138 @@
+[
+  {
+    "name": "LW-STAND-reach-dropped",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "  const r = reach - STREET_SLACK;",
+    "new": "  const r = 0;",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-beside-unread",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "    const x0 = Math.floor((Math.min(ax, bx) - reach) / C), x1 = Math.floor((Math.max(ax, bx) + reach) / C);",
+    "new": "    const x0 = Math.floor(Math.min(ax, bx) / C), x1 = Math.floor(Math.max(ax, bx) / C);",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-start-unread",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "        if (lo < hi && lo < first) first = lo;",
+    "new": "        if (lo < hi && lo > 0 && lo < first) first = lo;",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-bearings-unmapped",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "  if (open.length < STAND_BEARINGS) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-alone-drawn-in",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "  const { b, hold } = openBearing(spot, street, a, Math.ceil(r * 2) / 2);",
+    "new": "  const { b, hold } = openBearing(spot, street, a, ALONE_NEED_M);",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-circle-unturned",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "  for (let t = 0; t < 24 && !got; t++) {",
+    "new": "  for (let t = 0; t < 1 && !got; t++) {",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-member-north",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "    return { x: spot.x + Math.sin(b) * d, z: spot.z + Math.cos(b) * d, yaw: d < rc ? b : b + Math.PI };",
+    "new": "    return { x: spot.x + Math.sin(b) * d, z: spot.z + Math.cos(b) * d, yaw: 0 };",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-middle-closed",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "  const { b, hold } = openBearing(spot, street, a, CIRCLE_OUT + CIRCLE_APART);",
+    "new": "  const { b, hold } = openBearing(spot, street, a, 0);",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-host-unkept-alone",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "aloneStand(e.at, res.id, this._street);   // LW-STAND",
+    "new": "aloneStand(e.at, res.id);   // LW-STAND",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-host-unkept-circle",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      const laid = circlesStands(spot, now, this._street);",
+    "new": "      const laid = now.map((c) => circleStands(spot, c));",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-way-straight",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "              if (od > 0.05 && !this._street.clear(p.pos[0], p.pos[2], g.x, g.z)) { vx = ox; vz = oz; vd = od; }",
+    "new": "              if (od > 0.05 && false) { vx = ox; vz = oz; vd = od; }",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-stride-kept",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      else if (w.pending) { if (!row.visible) continue; p.moving = false; }",
+    "new": "      else if (w.pending) { if (!row.visible) continue; }",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-pause-unowed",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (stop || row.paused || fear) lag += dt * rate;",
+    "new": "      if (stop || fear) lag += dt * rate;",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-pause-unmarked",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      row.paused = !!w.pending && row.visible;\n",
+    "new": "",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-STAND-pause-sticky",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      row.paused = !!w.pending && row.visible;",
+    "new": "      row.paused = !!row.paused || (!!w.pending && row.visible);",
+    "tests": [
+      "test/lwstand_street.test.js"
+    ],
+    "note": "AUDIT LW-STAND: the pause kept after its walk is searched - every walker who paused owed minutes for good"
+  }
+]

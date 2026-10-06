@@ -178,9 +178,15 @@ export function onlineForcedSetting(section, key, search) {
   return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) && isOnlinePage(search) ? ONLINE_FORCED_SETTINGS[section][key] : undefined;
 }
 
-/** The forced value of a uiPrefs key on an online page, else undefined. */
+/** The forced value of a uiPrefs key on an online page, else undefined.
+ *  PERF-URL2 (2026-10-06, Mac: "I wanna look into how we can continue to improve performance, including for online"):
+ *  THE TABLE FIRST, as onlineForcedSetting above has asked it since AUDIT RETRO1 G2. getPref asks this on every read - hundreds a frame
+ *  - and the page test reads `location.search`, a DOM getter, before PERF-URL's memo can answer; the table forces a
+ *  handful of keys (the Features registry's own switches, RF4 - AUDIT 637 C5: not the mods'), so every other read paid the page for nothing
+ *  (measured in the real game, offline: 0.09 ms a frame of isOnlinePage under onlineForcedPref, beside the sea's own
+ *  forced switch). Two pure reads joined by `&&`: the same answer in either order. */
 export function onlineForcedPref(key, search) {
-  return isOnlinePage(search) && Object.hasOwn(ONLINE_FORCED_PREFS, key) ? ONLINE_FORCED_PREFS[key] : undefined;
+  return Object.hasOwn(ONLINE_FORCED_PREFS, key) && isOnlinePage(search) ? ONLINE_FORCED_PREFS[key] : undefined;
 }
 
 /**
@@ -445,6 +451,7 @@ export const ONLINE_PLAYERS_OWN_MODS = [
   'foraging',               // FORAGE1: my own tools, my own pack, my own quests - a use, a food, a fetch quest all run on my save
   'aquatic-sprites',        // AS1: 119 flats of scenery in three flooded dungeon blocks - no collider, no action, no marker; a peer without them walks the same rooms (the editor's seven sub-degree turns of a room model are under half a degree)
   'low-poly-trees',         // LPT1: how the wilderness's trees are DRAWN - a 3D tree or its far picture where the same flat stands; the tree's cover, its sway, its Logging node and its fall are the flat's own, so a peer without it walks the same wood
+  'project-legacy',         // LEGACY1: my own family - its record, its births and its deaths are my characters'; the heirloom is an item in my save, and its power is folded where it is worn
   'come-sail-away',         // CSA-A: a boat is a possession in my save, placed and sailed by me - HCC's wagon's shape: whose boat stands where is the player's own, and a peer only SEES me move (my pose); its wind is my machine's own roll (ComeSailAway.UpdateWind, UnityEngine.Random), as it is each DFU player's
 ];
 

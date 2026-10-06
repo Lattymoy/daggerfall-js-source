@@ -336,6 +336,14 @@ export const CREDITS = Object.freeze({
       link: 'https://www.nexusmods.com/daggerfallunity/mods/1374',
     }),
     Object.freeze({
+      title: 'Project Legacy',
+      version: '0.4.1',
+      author: 'Lattymoy, Gh\u00f0\u00a7\u2020 and Positronico',
+      what: 'Your family and its tree (LEGACY1-LEGACY4, LEGACY-HOME): an heir to carry your line on when you fall - a sibling, a child or a newborn of your blood, born with what the blood and the hearth hand down - and siblings to play between, in a Bloodline house where a death is final or an Enduring one where it costs years; the remains of the fallen and their heirloom, recovered and laid to rest; the family living in the world when you are not playing them, at the family home, met to be played. The pause window\u2019s Family tab, in the Enhanced Plus stone and brass.',
+      terms: 'The author\u2019s own - Mac is Lattymoy, the mod\u2019s first-named author, and gave his permission in handing it over. Read off the shipped assembly and rebuilt with every bug fixed - see vendor/project-legacy/README.md for the permission record.',
+      vendor: Object.freeze(['project-legacy']),
+    }),
+    Object.freeze({
       title: 'Aquatic Sprites',
       version: '1.0',
       author: 'Cliffworms',

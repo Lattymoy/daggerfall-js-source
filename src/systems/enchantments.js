@@ -160,7 +160,7 @@ export const isEnchantedItem = (item) => !!itemEnchantments(item);
 // ported" - and M4's catalogue is that sum's missing half, so it
 // closed here and stays closed: legacyEnchantmentValue (:222-238) is
 // the sum, over VALUE_COUNTS_BELOW (:179), spellEnchantPtCost (:214)
-// and the SoulBound/CastWhen arms, and systems/loot.js:296 prices
+// and the SoulBound/CastWhen arms, and systems/loot.js:"value: legacyEnchantmentValue" prices
 // every minted legacy item through it.
 //
 // THE BOUND IS THE ENUM'S OWN ORDER (:604-605): only
@@ -565,7 +565,7 @@ const REGISTRY = new Map([
    *  early return (:87-89) - AllTheTime carries no condition at all,
    *  so it degrades every fourth round wherever the wearer is. The
    *  order is the catalogue's own ('all the time', 'in sunlight',
-   *  'in holy places' - enchantmentCatalogue.js:80) and the one the
+   *  'in holy places' - enchantmentCatalogue.js:"costs: [-3000, -1500, -500]") and the one the
    *  soul-forced sets speak (Daedroth/FrostDaedra/Ghost/Wraith all
    *  force param 2 = InHolyPlaces). */
   [T.ItemDeteriorates, {
@@ -607,7 +607,7 @@ const REGISTRY = new Map([
    *  (:78-79, its first gate, before any param logic). Params
    *  (:132-136) are WheneverUsed = 0, UnlessUsedDaily = 1,
    *  UnlessUsedWeekly = 2 - the catalogue's own order
-   *  (enchantmentCatalogue.js:77 'Whenever used' / 'Unless used
+   *  (enchantmentCatalogue.js:"costs: [-4000, -500, -200]" 'Whenever used' / 'Unless used
    *  daily' / 'Unless used weekly'), and the one DaedraSeducer's
    *  forced set speaks (param 2 = UnlessUsedWeekly).
    *  WheneverUsed (0) bills the wearer 8 on a strike / 16 on a use

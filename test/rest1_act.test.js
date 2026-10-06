@@ -252,7 +252,7 @@ test('REST1 by source: every host that rests online names its rest point - the o
   assert.match(rd('src/scenes/world.js'), /restPoint: \(\) => \(_restFromBed \? \{ kind: 'bed', where: null \} : camps\.restPointAt\(/);
   assert.match(rd('src/scenes/worldModes.js'), /restPoint: \(\) => \{ const p = interiorRestPlaceHere\(\); return \{ kind:/);
   assert.match(rd('src/scenes/dungeonContext.js'), /restPoint: \(\) => \(_restFromBed \|\| bedInReach\(dungeonBeds, _fpFeet\) \? \{ kind: 'bed', where: null \} : _fpFeet \? camps\.restPointAt\(_fpFeet\) : null\)/);   // FIELD BUGS 2026-10-05 DUNGEON-BEDS: and a bed
-  assert.match(rd('src/systems/save.js'), /'restNightAt',\n\];/);
+  assert.match(rd('src/systems/save.js'), /\n  'restNightAt',\n/);   // in ENTITY_FIELDS (LEGACY4's blessings appended after it)
 });
 
 test('REST1 the Rested tile: a buff while the night interval runs, its real minutes at its foot, the campfire glyph; none once a night may pass', async () => {

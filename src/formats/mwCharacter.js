@@ -147,7 +147,7 @@ export function findNodeByName(nif, name) {
     // MW-D44 was landed to fix. flattenNif's identical early returns
     // are NOT this rule: they are justified there by "this flattener
     // produces DRAWABLES, and a hidden subgraph contributes none"
-    // (mwNifMesh.js:556-562), and carry an `includeHidden` escape
+    // (mwNifMesh.js:"RULE 58 (2): RootCollisionNode"), and carry an `includeHidden` escape
     // hatch besides. This function produces a NODE.
     //
     if (String(rec.name || '').toLowerCase() === want) { found = { rec, parents }; return; }

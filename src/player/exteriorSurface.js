@@ -43,7 +43,7 @@
 // .IsSwimming (:149-152) - is always false, and the only exterior
 // water state in the game is the OnExteriorWaterMethod below. The
 // port's hosts already leave player.swimming false outdoors
-// (shared.applyMotorEffectFlags, shared.js:1096), which is that law, and the
+// (shared.applyMotorEffectFlags, shared.js:"branch and never"), which is that law, and the
 // motor's `onExteriorWater` flag - declared by A6 with "Wave B's
 // exterior-water slice owns the model that raises it" - is this one.
 //
@@ -68,7 +68,7 @@
 // nothing), with the swim speed sitting unused in `speed`. XL-1 gave the motor DFU's second
 // member - `isPlayerSwimming`, a plain field beside `sunk` that _step
 // never reads - and the hosts write THAT, leaving
-// shared.applyMotorEffectFlags (shared.js:1096) to keep the motor's own
+// shared.applyMotorEffectFlags (shared.js:"branch and never") to keep the motor's own
 // flag false outdoors, which is :421 itself.
 //
 // THE HOST FLAG (PlayerEnterExit.IsPlayerSwimming): the fatigue band
@@ -131,7 +131,7 @@ export const RIDING_RAY_DISTANCE = 2.0;
  *  RIDING branch - which is why a player aboard their ship gets the
  *  long 2.0 distance and its 4.0-deep cast, the very case
  *  PlayerMotor's own comment (:499-502) is written for. The hosts pass
- *  the boolean (systems/transport.js:54), this file does not
+ *  the boolean (systems/transport.js:"export const isOnFoot"), this file does not
  *  re-derive it. */
 export const rayDistanceFor = (onFoot) => (onFoot ? WALKING_RAY_DISTANCE : RIDING_RAY_DISTANCE);
 

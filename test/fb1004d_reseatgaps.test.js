@@ -142,10 +142,10 @@ function* everyCity(maps) {
     for (let l = 0; l < reg.locationCount; l++) if (reg.mapTable[l].locationType === 0) yield { r, l, mapId: reg.mapTable[l].mapId };
   }
 }
-test('RESEAT-GAPS with ARENA2: the cities Beautiful Cities lays out with no weaponsmith - a `local weaponstore` site chosen in Daggerfall\'s own city is unseated there, never left on a stranger\'s key; in the cities that keep one, it is chosen again in a weaponsmith', { skip: SKIP }, async (t) => {
+test('RESEAT-GAPS with ARENA2: the cities Beautiful Cities lays out with no weaponsmith - a `local weaponstore` site chosen in Daggerfall\'s own city is never left on a stranger\'s key: PIN MOVED (QUEST-AUDIT II NEAR-SITE) - the mods took the city\'s weaponsmith, so it is taken in the weaponsmith of the nearest town that has one, never unseated while one stands; in the cities that keep one, it is chosen again in a weaponsmith of the city', { skip: SKIP }, async (t) => {
   const { maps, world, LP, keyOf: keyOfMap } = await openTowns({ mods: true });
   const log = console.log, warn = console.warn; console.log = () => {}; console.warn = () => {};
-  let unseated = 0, smiths = 0, cities = 0;
+  let unseated = 0, smiths = 0, near = 0, cities = 0;
   const probe = new Place({ uid: 1, resources: new Map(), hooks: {}, rolls: () => 0 });
   probe.symbol = { original: '_x_', name: 'x', clone() { return this; } };
   try {
@@ -167,15 +167,20 @@ test('RESEAT-GAPS with ARENA2: the cities Beautiful Cities lays out with no weap
         unseated++;
         assert.equal(place.siteDetails.buildingKey, 0, `${loc.name}: no stranger by the old key`);
         assert.equal(place.siteDetails.unseated.buildingKey, oldKey);
-        assert.equal(probe._collectQuestSitesOfBuildingType(w, modded, 13, 0).length, 0, `${loc.name}: unseated only where no weaponsmith stands`);
       } else {
-        smiths++;
+        const town = place.siteTown(w);
+        if (town.mapTableData.mapId === mapId) smiths++;
+        else {
+          near++;
+          assert.equal(probe._collectQuestSitesOfBuildingType(w, modded, 13, 0).length, 0, `${loc.name}: another town's only where the city holds none`);
+        }
         const k = place.siteDetails.buildingKey;
-        const tp = w.getBlock(maps.getRmbBlockName(modded, (k >> 16) & 0xff, (k >> 8) & 0xff)).rmbBlock.fldHeader.buildingDataList[k & 0xff].buildingType;
-        assert.equal(tp, 13, `${loc.name}: chosen again in a weaponsmith`);
+        const tp = w.getBlock(maps.getRmbBlockName(town, (k >> 16) & 0xff, (k >> 8) & 0xff)).rmbBlock.fldHeader.buildingDataList[k & 0xff].buildingType;
+        assert.equal(tp, 13, `${loc.name}: chosen again in a weaponsmith (${town.name})`);
       }
     }
   } finally { console.log = log; console.warn = warn; LP.setLayoutPins(new Map()); }
-  t.diagnostic(`${cities} cities with a weaponsmith in Daggerfall's layout: ${smiths} chosen again in one of Beautiful Cities', ${unseated} unseated (none stands)`);
-  assert.ok(unseated > 0 && smiths > 0, 'both arms met');
+  t.diagnostic(`${cities} cities with a weaponsmith in Daggerfall's layout: ${smiths} chosen again in one of Beautiful Cities', ${near} in the nearest town's, ${unseated} unseated`);
+  assert.ok(near > 0 && smiths > 0, 'both arms met');
+  assert.equal(unseated, 0, 'never unseated while a weaponsmith stands');
 });

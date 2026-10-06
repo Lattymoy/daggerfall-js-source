@@ -276,6 +276,10 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
   text-transform: uppercase; color: #efe8d6; text-shadow: 1px 1px 0 #050608, 2px 2px 0 rgba(0,0,0,0.5); }
 .lvl-lead { margin: 0 0 18px; text-align: center; font-size: 14px; color: #c9bfa4; text-shadow: 1px 1px 0 #050608; }
 .lvl-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+/* LEGACY-CHOICE: Project Legacy's online popup puts three answers - the window widens so the three stand in one row
+   (each tile no narrower than 210px), and a narrower screen wraps them as the grid does two */
+.lvl-shell .px-win.lvl-three { width: min(1000px, 100%); }
+.lvl-three .lvl-opts { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
 .lvl-opt { font: inherit; text-align: left; color: #d8cfae; cursor: pointer; display: flex; flex-direction: column; gap: 10px;
   padding: 14px 16px 12px; background: rgba(0,0,0,0.32); border: 2px solid;
   border-color: ${FRAME_TONES.stoneDark} ${FRAME_TONES.stoneMid} ${FRAME_TONES.stoneLit} ${FRAME_TONES.stoneDim};
@@ -283,13 +287,13 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
 .lvl-opt.is-on, .lvl-opt:focus-visible { outline: none; background: rgba(192,138,62,0.12);
   border-color: ${FRAME_TONES.brassHi} ${FRAME_TONES.brassLo} #5c3f1a ${FRAME_TONES.brass};
   box-shadow: 0 0 0 1px #050608, 0 0 14px rgba(243,207,134,0.18), inset 0 1px 0 rgba(255,244,210,0.18); }
-.lvl-opt-head { display: flex; align-items: baseline; gap: 10px; }
+.lvl-opt-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }   /* AUDIT LEGACY II U10: a long tag wraps under the title, never past the card */
 .lvl-key { flex: 0 0 auto; min-width: 22px; text-align: center; font-size: 12px; padding: 1px 4px; color: #a89f88;
   border: 1px solid rgba(125,116,96,0.55); }
 .lvl-opt.is-on .lvl-key { color: rgb(243,239,44); border-color: ${FRAME_TONES.brass}; }
 .lvl-opt-title { font-size: 18px; letter-spacing: 0.08em; text-transform: uppercase; color: #efe8d6; text-shadow: 1px 1px 0 #050608; }
 .lvl-opt.is-on .lvl-opt-title { color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); }
-.lvl-tag { margin-left: auto; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #9c937d; white-space: nowrap; }
+.lvl-tag { margin-left: auto; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #9c937d; white-space: normal; text-align: right; }
 .lvl-opt-body { margin: 0; font-size: 14px; line-height: 1.5; color: #c5bda2; text-shadow: 1px 1px 0 #050608; }
 .lvl-opt-foot { margin-top: auto; padding-top: 10px; border-top: 2px solid rgba(5,6,8,0.5); box-shadow: inset 0 1px 0 rgba(163,152,128,0.16);
   display: flex; justify-content: flex-end; }
@@ -1598,12 +1602,14 @@ ${PROF_STATION_CSS}`;
 export const ITEM_FRAME_CSS = `
 /* ── RARITY-UI: THE TIER ON THE ICON'S FRAME ── */
 ${rarityVarsCss()}
-/* the pack's grid (and the remote pane's): the tile IS the icon's frame */
-.pack-shell .pack-dock .itemrow[data-rarity] {
+/* the pack's grid (and the remote pane's): the tile IS the icon's frame - and AUDIT 625 W3, the wallet's sheet's, whose
+   pieces are the grid's own tiles */
+.pack-shell .walletpieces .itemrow[data-rarity], .pack-shell .pack-dock .itemrow[data-rarity] {
   border-color: var(--rar-hi) var(--rar-lo) var(--rar-lo) var(--rar-hi);
   background-image: radial-gradient(ellipse at 50% 115%, rgba(var(--rar-rgb),0.26), transparent 68%),
     linear-gradient(180deg, rgba(255,255,255,0.06) 0 2px, transparent 2px);
   box-shadow: 0 0 0 1px #050608, inset 0 0 0 1px rgba(var(--rar-rgb),0.3), inset 0 0 12px rgba(var(--rar-rgb),0.2); }
+.pack-shell .walletpieces .itemrow[data-rarity]:hover, .pack-shell .walletpieces .itemrow[data-rarity]:focus-visible,
 .pack-shell .pack-dock .itemrow[data-rarity]:hover, .pack-shell .pack-dock .itemrow[data-rarity]:focus-visible {
   border-color: var(--rar-hi);
   box-shadow: 0 0 0 1px #050608, 0 0 9px rgba(var(--rar-rgb),0.6), inset 0 0 0 1px rgba(var(--rar-rgb),0.45),
@@ -1611,17 +1617,17 @@ ${rarityVarsCss()}
 .pack-shell .pack-dock .itemrow[data-rarity].on { border-color: var(--rar-hi); outline-color: rgba(var(--rar-rgb),0.7);
   box-shadow: 0 0 0 1px #050608, 0 0 12px rgba(var(--rar-rgb),0.55), inset 0 0 16px rgba(var(--rar-rgb),0.32); }
 /* the tier's pips, bottom-left - the corner the key chip (top-left) and the count (bottom-right) leave free */
-.pack-shell .pack-dock .itemrow[data-rarity]::before { content: var(--rar-pips); position: absolute; left: 3px; bottom: 1px;
+.pack-shell .walletpieces .itemrow[data-rarity]::before, .pack-shell .pack-dock .itemrow[data-rarity]::before { content: var(--rar-pips); position: absolute; left: 3px; bottom: 1px;
   font-size: 8px; line-height: 1; letter-spacing: 1px; color: var(--rar); pointer-events: none;
   text-shadow: 1px 1px 0 #050608, 0 0 4px rgba(var(--rar-rgb),0.7); }
 /* UI1 (bible/10-UI/Slots-Hotbar-Status.md): THE SLOT IS THE FRAME, AND ONLY IT (Mac: "rarity outlines ... the
    UI/Hotbar border itself instead of it being an icon within an icon") - the sprite, fitted to the slot's 52px room
    (ui/iconFit.js), stands straight on the slot's own ground under the tier's border, in no second box. The stack's
    count takes the slot's last corner. */
-.pack-shell .pack-dock .itemrow .count { right: 4px; bottom: 3px; z-index: 2; font-size: 11px; line-height: 1; color: #efe8d6;
+.pack-shell .walletpieces .itemrow .count, .pack-shell .pack-dock .itemrow .count { right: 4px; bottom: 3px; z-index: 2; font-size: 11px; line-height: 1; color: #efe8d6;
   pointer-events: none; text-shadow: -1px 0 0 #050608, 1px 0 0 #050608, 0 -1px 0 #050608, 0 1px 0 #050608, 1px 1px 0 #050608; }
-.pack-shell .pack-dock .itemrow.hasbar .count { bottom: 7px; }
-.pack-shell .pack-dock .itemrow[data-locked] .count { right: 16px; }   /* the padlock keeps the corner (LOCK1) */
+.pack-shell .walletpieces .itemrow.hasbar .count, .pack-shell .pack-dock .itemrow.hasbar .count { bottom: 7px; }
+.pack-shell .walletpieces .itemrow[data-locked] .count, .pack-shell .pack-dock .itemrow[data-locked] .count { right: 16px; }   /* the padlock keeps the corner (LOCK1) */
 /* a LIST's row keeps its engraved rule - the icon inside it is the frame (the loot window, the shop, a player trade) */
 .pack-shell .loot-win .itemrow[data-rarity] .tile, .trade-shell .itemrow[data-rarity] .tile,
 .ptrade-shell .itemrow[data-rarity] .tile {
@@ -1682,7 +1688,7 @@ ${rarityVarsCss()}
    passing state painted on the same frame is said again here, at the tier's weight and after it: the reorder's
    insertion mark, the picked socket (and a socket as a drop target), the hotbar's strike, refusal and drop target,
    the refused drag. The state wins the moment it lasts; the tier's glow stays under it where there is room. */
-.pack-shell .pack-dock .itemrow[data-rarity].dragover {
+.pack-shell .walletpieces .itemrow[data-rarity].dragover, .pack-shell .pack-dock .itemrow[data-rarity].dragover {
   box-shadow: 0 0 0 1px #050608, inset 0 2px 0 #c08a3e, inset 0 0 12px rgba(var(--rar-rgb),0.2); }
 .pack-shell .wornsock[data-rarity].on { border-color: var(--rar-hi); outline-color: rgba(var(--rar-rgb),0.7);
   background-image: linear-gradient(180deg, rgba(243,207,134,0.14) 0 2px, rgba(192,138,62,0.08) 2px);
@@ -1768,7 +1774,7 @@ ${ARENA_WINDOW_CSS}
 .pack-shell .wear.broken, .trade-shell .wear.broken, .ptrade-shell .wear.broken { background: rgba(122,29,22,0.9); }
 .pack-shell .loot-win .itemrow .tile, .pack-shell .wornrow .tile, .trade-shell .itemrow .tile, .ptrade-shell .itemrow .tile { position: relative; }
 .pack-shell .loot-win .itemrow .wear, .pack-shell .wornrow .wear, .trade-shell .itemrow .wear, .ptrade-shell .itemrow .wear { left: 2px; right: 2px; bottom: 0; }
-.pack-shell .pack-dock .itemrow.hasbar[data-rarity]::before { bottom: 6px; }
+.pack-shell .walletpieces .itemrow.hasbar[data-rarity]::before, .pack-shell .pack-dock .itemrow.hasbar[data-rarity]::before { bottom: 6px; }
 /* ── LOCK1: THE PADLOCK ON A LOCKED PIECE (systems/itemLock.js) - bottom-right of a grid tile or a socket (above the
    wear bar's end when there is one; the key chip has the top-left), the top-left corner of a list's picture (the
    rune has its top-right). The card says it in words. */
@@ -1814,12 +1820,12 @@ body .dfpeer-btn.cancel:hover:not([disabled]) { background: none; color: var(--b
 /* The lane drew its presses borderless or on a 1px line, so the kit's bevel had no edge to paint: a 2px edge (width
    and style only - the kit owns the colour), taken out of the padding so each press keeps its size (the sheet is
    border-box). The touch skin's own paddings outweigh these and stand. */
-body .dfsocial-btn, body .dfsocial-close, body .dfprofile-close, body .dfprofile-duel, body .dfpage-btn, body .dfpeer-btn:not(.cancel),
+body .dfsocial-btn, body .dfsocial-close, body .dfprofile-close, body .dfprofile-duel, body .dfprofile-wed, body .dfpage-btn, body .dfpeer-btn:not(.cancel),
 body .dfduel-btn, body .dfdecor-btn, body .dfdecor-open { border-width: 2px; border-style: solid; }
 body .dfsocial-btn { padding: 2px 6px; }
 body .dfsocial-close { padding: 0 6px; }
 body .dfprofile-close, body .dfpage-btn { padding: 4px 10px; }
-body .dfprofile-duel { padding: 5px 11px; }
+body .dfprofile-duel, body .dfprofile-wed { padding: 5px 11px; }
 body .dfpeer-btn:not(.cancel) { padding: 4px 6px; }
 body .dfduel-btn { padding: 3px 11px; }
 body .dfdecor-btn { padding: 3px 13px; }

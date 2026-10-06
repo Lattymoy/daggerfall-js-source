@@ -455,10 +455,11 @@ export const HOTBAR_ARRANGE_CODE = 'JoystickAxis9Button0';
 /** The prompts for a window up under a live pad: [codes[], words] pairs. Pure, for the pin. `hotbar` is the bar's
  *  state under the window (PAD-ARRANGE): null (no bar to arrange), 'off', 'on' (raised), 'hand' (a slot or a new
  *  entry in hand) or 'handxb' (in hand, on the crossbar - the bumpers then pick the slot, never the tabs). */
-export function windowPrompts({ tabs = false, quick = false, uiBack = 'JoystickButton1', uiClick = 'JoystickButton0', hotbar = null } = {}) {
+export function windowPrompts({ tabs = false, quick = false, uiBack = 'JoystickButton1', uiClick = 'JoystickButton0', hotbar = null, back = true } = {}) {
   const rows = [[[uiClick], 'Select']];
   if (quick) rows.push([['JoystickButton2'], 'Equip / Use']);   // PADPLUS5
-  rows.push([['JoystickButton3'], 'Options'], [[uiBack], 'Back']);
+  rows.push([['JoystickButton3'], 'Options']);
+  if (back) rows.push([[uiBack], 'Back']);   // AUDIT LEGACY II U14: never over a window that has no way back (the Succession)
   if (hotbar === 'handxb') rows.push([['JoystickButton4', 'JoystickButton5'], 'Hold + a slot\'s button: put it there']);
   else if (tabs) rows.push([['JoystickButton4', 'JoystickButton5'], 'Tabs']);
   if (hotbar) rows.push([[HOTBAR_ARRANGE_CODE], hotbar === 'off' ? 'Arrange hotbar' : 'Hotbar done']);

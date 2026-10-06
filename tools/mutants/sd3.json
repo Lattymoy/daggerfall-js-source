@@ -32,12 +32,12 @@
   {
     "name": "SD3-the-gate-a-version-early",
     "file": "src/net/wire.js",
-    "old": "export const SD_RELAY_MIN = 172;",
-    "new": "export const SD_RELAY_MIN = 171;",
+    "old": "export const SD_RELAY_MIN = 175;",
+    "new": "export const SD_RELAY_MIN = 174;",
     "tests": [
       "test/sd3_relay.test.js"
     ],
-    "note": "CRYSTAL-FIST's relay closes the socket on `sd`."
+    "note": "LEGACY7's relay closes the socket on `sd`. THE SUPER DUNGEONS ARC's MERGE of main's #625-#649 (re-aimed by content): the arc's version is world175 now, past WATCH-FIX, SERPENT3 and LEGACY7 (world172 before, past CRYSTAL-FIST)."
   },
   {
     "name": "SD3-a-guest-counted",

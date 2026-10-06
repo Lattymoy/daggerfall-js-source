@@ -220,7 +220,7 @@ test('audit24 wave38: PlayerActivate\'s CorpseMarker arm - empty, arrows, and th
   // the list; DFU reaches it because :957 opens the window over the
   // corpse. The port's bulk take is the residue this file records, so
   // the door is spelled in takeCorpseLoot - without it a corpse's
-  // loot-table gold (loot.js:205) lands in the pack, where
+  // loot-table gold (systems/loot.js:"+ Math.floor(rolls() * (matrix.MaxGold + 1 - matrix.MinGold))") lands in the pack, where
   // court.goldAmount cannot see it and it is unspendable forever.
   say.length = 0;
   player.items = [];
@@ -229,7 +229,7 @@ test('audit24 wave38: PlayerActivate\'s CorpseMarker arm - empty, arrows, and th
   assert.equal(takeCorpseLoot(rich, player, s), 2, 'the pile still counts toward the line');
   assert.deepEqual(say, ['You take 2 items.']);
   assert.equal(player.items.some((it) => it.group === 'Currency'), false,
-    'the player\'s collection can NEVER hold Currency (inventory.js:51-59)');
+    'the player\'s collection can NEVER hold Currency (inventory.js:"E4 (2026-09-02) RETIRED")');
   assert.equal(player.items.length, 1);
   assert.equal(player.goldPieces, 550, 'playerEntity.GoldPieces += item.stackCount');
   assert.equal(goldAmount(player), 550, 'and it is spendable');
@@ -311,9 +311,9 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
 
   // ...and the ROUTER itself, RUN off the fixed-city host's own line.
   // Routing a `foeCorpse:` key into the watch pool is not a harmless
-  // miss: cityGuards.js:1400-1402 turns the key into
+  // miss: cityGuards.js:"const d = rayPersonDistance" turns the key into
   // `guards.find((g) => g.id === id)` over ids minted by
-  // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:199-383)
+  // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:"export function takeCorpseLoot")
   // tests only `corpseDisabled` and `entity.items` - never death - so
   // opening an encounter corpse would empty a LIVE watchman's pack.
   // AUDIT 65 MC-2 MADE THE ARM TWO RUNGS: the corpse now competes for

@@ -32,7 +32,7 @@
 //   GROUP BY route, status ORDER BY n DESC
 // ═══════════════════════════════════════════════════════════════════
 
-import { ROUTES, savePathOf, realmPathOf } from './service.js';
+import { ROUTES, savePathOf, realmPathOf, DB_ROOT } from './service.js';
 
 /** The route as a TEMPLATE: a served path as it stands, a save slot or a realm character's save by its shape - never
  *  the ids or the names they carry - and anything else one word, so the set of labels is bounded. */
@@ -46,10 +46,11 @@ export function routeLabel(/** @type {string} */ path) {
 
 /** D1 with its statements counted: a statement prepared is one, a batch counts each of its own (they were prepared
  *  already, and are not counted twice - `prepare` inside a batch's list is what counts them). Every other member is
- *  the binding's own. */
+ *  the binding's own. STORM-SHED: and DB_ROOT the binding itself, which outlives this request's Proxy. */
 export function countedDb(/** @type {any} */ db, /** @type {{ n: number }} */ tally) {
   return new Proxy(db, {
     get(target, key) {
+      if (key === DB_ROOT) return Reflect.get(target, DB_ROOT) ?? target;
       if (key === 'prepare') return (/** @type {any[]} */ ...args) => { tally.n += 1; return target.prepare(...args); };
       const v = Reflect.get(target, key);
       return typeof v === 'function' ? v.bind(target) : v;

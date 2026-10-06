@@ -257,11 +257,12 @@
   {
     "name": "PROF1-28-a-harvest-asked-twice-twice",
     "file": "server-account/src/professions.js",
-    "old": "  if (prior) return harvestAnswer(db, prior, nowS, { repeat: true });   // before the switch: a harvest made is a harvest answered",
+    "old": "  if (prior) return harvestAnswer(db, prior, nowS, { repeat: true, ...(await gatherMarksOf(ctx, player, env, rid)) });   // before the switch: a harvest made is a harvest answered",
     "new": "",
     "tests": [
       "test/prof1_service.test.js"
-    ]
+    ],
+    "note": "SILVER-FINDS (PIN MOVED): a harvest asked again says its find too (gatherMarksOf) - re-aimed by content."
   },
   {
     "name": "PROF1-29-yesterdays-node-counts",

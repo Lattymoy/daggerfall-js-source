@@ -1,0 +1,476 @@
+[
+  {
+    "name": "QA2A-door-name-cached",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  const dfBlock = blockFromJson(json, block, blockName);\n  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384",
+    "new": "  const dfBlock = blockFromJson(json, block);\n  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384",
+    "tests": [
+      "test/qa2_summoners.test.js"
+    ],
+    "note": "the cached path serves the block without the name the town lays it under: TEMPASA2 (its JSON says TEMPAS2) stands no summoner"
+  },
+  {
+    "name": "QA2A-door-name-pinned",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "    const dfBlock = blockFromJson(json, block, blockName);\n    if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);\n    curateBlockPeople(",
+    "new": "    const dfBlock = blockFromJson(json, block);\n    if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);\n    curateBlockPeople(",
+    "tests": [
+      "test/qa2_summoners.test.js"
+    ],
+    "note": "the pinned path likewise"
+  },
+  {
+    "name": "QA2A-summoner-json-name",
+    "file": "src/world/curatedPeople.js",
+    "old": "curatedSummonersOf(dfBlock?.servedName ?? dfBlock?.name, vendor)",
+    "new": "curatedSummonersOf(dfBlock?.name, vendor)",
+    "tests": [
+      "test/qa2_summoners.test.js"
+    ],
+    "note": "the summoner curation keyed on the name the JSON gives itself"
+  },
+  {
+    "name": "QA2A-marker-json-name",
+    "file": "src/systems/quest/markerCuration.js",
+    "old": "  const name = dfBlock?.servedName ?? dfBlock?.name;",
+    "new": "  const name = dfBlock?.name;",
+    "tests": [
+      "test/qa2_summoners.test.js",
+      "test/fb1004d_questmarkers.test.js"
+    ],
+    "note": "the marker curation likewise: a block laid as another that names itself a listed block takes its rows"
+  },
+  {
+    "name": "QA2A-pinned-curation",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "    curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);   // QUEST-AUDIT II TEMPLE-SUMMONER\n    return dfBlock;",
+    "new": "    return dfBlock;",
+    "tests": [
+      "test/qa2_summoners.test.js"
+    ],
+    "note": "a temple in a town a save pins stands no summoner"
+  },
+  {
+    "name": "QA2A-link-town-left",
+    "file": "src/systems/quest/machine.js",
+    "old": "Object.assign(link, linkSiteOf(place));   // AUDIT QA2: the whole site, its town with it",
+    "new": "link.buildingKey = place.siteDetails.buildingKey;",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "a site the re-seat moves to another town leaves its link on the old one"
+  },
+  {
+    "name": "QA2A-keep-standing",
+    "file": "src/systems/quest/place.js",
+    "old": "    const standing = keepSelected && !!next.selectedMarker?.flatPosition;",
+    "new": "    const standing = keepSelected;",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "the partner's targets ride DFU's spotless \"none\""
+  },
+  {
+    "name": "QA2A-keep-partner-stands",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!(held.buildingKey > 0) || recordStands(held)) return false;   // the partner's names a building here: theirs is the quest's",
+    "new": "    if (!(held.buildingKey > 0)) return false;",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "a copy keeps its own building though the partner's stands in its town"
+  },
+  {
+    "name": "QA2A-keep-same-town",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!(own.buildingKey > 0) || own.unseated || own.mapId !== held.mapId || !recordStands(own)) return false;",
+    "new": "    if (!(own.buildingKey > 0) || own.unseated || !recordStands(own)) return false;",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "an own site in another town kept"
+  },
+  {
+    "name": "QA2A-carry-numbered",
+    "file": "src/systems/quest/place.js",
+    "old": "        if (to[i]) { assignResourceToMarker(s, to[i]); continue; }",
+    "new": "",
+    "tests": [
+      "test/qa2_layouts.test.js",
+      "test/audit1003_wd.test.js",
+      "test/wd3_layoutPins.test.js"
+    ],
+    "note": "a numbered marker's targets onto the selected marker though the building has the marker"
+  },
+  {
+    "name": "QA2A-gate-setup",
+    "file": "src/systems/quest/place.js",
+    "old": "      const near = this._nearTowns && this._modsTookKind(world, location, asked.p2, asked.p3) ? this._nearTownSites(world, location, asked.p2, asked.p3) : null;",
+    "new": "      const near = this._nearTowns ? this._nearTownSites(world, location, asked.p2, asked.p3) : null;",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "NEAR-SITE wherever a mod lays the town"
+  },
+  {
+    "name": "QA2A-gate-reseat",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!found.length && this.scope === Scopes.Local && this._modsTookKind(world, location, p2, p3)) found = this._nearTownSites(world, location, p2, p3)?.found ?? [];",
+    "new": "    if (!found.length && this.scope === Scopes.Local) found = this._nearTownSites(world, location, p2, p3)?.found ?? [];",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "the re-seat takes another town where the mods took nothing"
+  },
+  {
+    "name": "QA2A-supply-compare",
+    "file": "src/systems/quest/place.js",
+    "old": "    return this._siteSupply(own, classicBlockGrid(own), p2, p3) > this._siteSupply(location, townBlockGrid(world, location), p2, p3);",
+    "new": "    return true;",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "the town's own layout never asked"
+  },
+  {
+    "name": "QA2A-supply-stamp",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!mapId || layoutStampOfMapId(mapId) === CLASSIC_LAYOUT) return false;\n    const own = world.maps?.readClassicLocation",
+    "new": "    if (!mapId) return false;\n    const own = world.maps?.readClassicLocation",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "a town no layout mod changes measured against its record: the port's own edits (ARENA1) open NEAR-SITE"
+  },
+  {
+    "name": "QA2A-supply-house-any",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (p2 >= BT_HOUSE1 && p2 <= BT_HOUSE6) kind = BT_ANY_HOUSE;",
+    "new": "    if (false) kind = BT_ANY_HOUSE;",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "a house kind counted as its own type, not as the any house its fallback takes"
+  },
+  {
+    "name": "QA2A-region-gate",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!this._modsTookKindFromRegion(world, regionIndex, requiredBuildingType)) return false;",
+    "new": "",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "NEAR-REGION for any region"
+  },
+  {
+    "name": "QA2A-region-served",
+    "file": "src/systems/quest/place.js",
+    "old": "    for (const i of towns) if (gives(world.maps.getLocation(regionIndex, i), (loc) => townBlockGrid(world, loc)) && ++now >= own) return false;",
+    "new": "",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "the region as it stands never counted"
+  },
+  {
+    "name": "QA2A-region-walk",
+    "file": "src/systems/quest/place.js",
+    "old": "      && this._siteSupply(loc, blocksOf(loc), this.p2, this.p3, 1) > 0;",
+    "new": ";",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "the region counted by its directories: Pothago and Menakat still list the weaponsmiths they do not lay"
+  },
+  {
+    "name": "QA2A-region-own-first",
+    "file": "src/systems/quest/place.js",
+    "old": "    for (const [r, i] of nearestOf([regionIndex])) if (this._tryTownLocation(world, r, i, requiredBuildingType)) return true;",
+    "new": "",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "the region's own towns not asked first"
+  },
+  {
+    "name": "QA2A-near-region-first",
+    "file": "src/systems/quest/place.js",
+    "old": "    towns.sort((a, b) => a[2] - b[2] || a[0] - b[0] || a[1] - b[1]);\n    for (const [r, i] of towns) {",
+    "new": "    towns.sort((a, b) => (a[0] !== location.regionIndex) - (b[0] !== location.regionIndex) || a[2] - b[2] || a[0] - b[0] || a[1] - b[1]);\n    for (const [r, i] of towns) {",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "the home region first, far as its town is"
+  },
+  {
+    "name": "QA2A-near-dungeons",
+    "file": "src/systems/quest/place.js",
+    "old": "        if (!entry || entry.mapId === mapId || this._isDungeonType(entry.locationType)) continue;",
+    "new": "        if (!entry || entry.mapId === mapId) continue;",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "a dungeon's buildings taken for a town's"
+  },
+  {
+    "name": "QA2A-near-origin-player",
+    "file": "src/systems/quest/place.js",
+    "old": "    const origin = mapTablePixel(location?.mapTableData);\n    if (!mapId || !origin) return null;",
+    "new": "    const origin = world.playerPixel?.() ?? mapTablePixel(location?.mapTableData);\n    if (!mapId || !origin) return null;",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "the re-seat measures from the player, not the site's town"
+  },
+  {
+    "name": "QA2A-home-first-ask",
+    "file": "src/systems/quest/person.js",
+    "old": "`Place ${symbolName} ${scopeString} ${buildingTypeString}`, { nearTowns: false });",
+    "new": "`Place ${symbolName} ${scopeString} ${buildingTypeString}`);",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "a person's first ask takes another town before Person.cs's house"
+  },
+  {
+    "name": "QA2A-home-reseat-house",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!found.length && this.scope === Scopes.Local && this.isPersonHome() && !(p2 === -1 && p3 === 1)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "the re-seat of a home skips Person.cs's house"
+  },
+  {
+    "name": "QA2A-remote-first-ask",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!result && this.p1 === 0 && this._nearTowns) result = this._nearRegionTownSite(world, this.p2);",
+    "new": "    if (!result && this.p1 === 0) result = this._nearRegionTownSite(world, this.p2);",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "a person's remote first ask takes another region before Person.cs's house"
+  },
+  {
+    "name": "QA2A-rung0",
+    "file": "src/systems/quest/person.js",
+    "old": "    const to = buildings.find((b) => b.buildingKey === q.buildingKey && b.npcs.some(ownself))\n      ?? buildings.find(",
+    "new": "    const to = buildings.find(",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "a questor standing on their own key moved, its hall unseated"
+  },
+  {
+    "name": "QA2A-guild-halls",
+    "file": "src/systems/quest/person.js",
+    "old": "    const halls = guild ? buildings.filter((b) => this._ofQuestGuild(world, b.factionId)) : buildings;",
+    "new": "    const halls = buildings;",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "a temple's quest-giver seated in another god's temple"
+  },
+  {
+    "name": "QA2A-guild-parent",
+    "file": "src/systems/quest/person.js",
+    "old": "    return factionId > 0 && (parentOf(factionId) === own || parentOf(own) === factionId);",
+    "new": "    return false;",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "the mods' Akatosh (26) not the Order of the Hour's (92)"
+  },
+  {
+    "name": "QA2A-missing-unread",
+    "file": "src/systems/layoutPins.js",
+    "old": "  for (const v of stampVendors(rec?.layout)) if (_missingVendors.has(v)) return true;\n",
+    "new": "",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "online, a record made in a layout whose pack failed is chosen again"
+  },
+  {
+    "name": "QA2A-heldback-any",
+    "file": "src/systems/layoutPins.js",
+    "old": "  if (_heldBack.has(key)) return true;",
+    "new": "  if (_heldBack.size > 0) return true;",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "one held-back town sleeps every town's records"
+  },
+  {
+    "name": "QA2A-admit-key",
+    "file": "src/systems/layoutPins.js",
+    "old": "    for (const v of [...pin.in]) if (!(await ensure(v))) { pin.in.delete(v); dropped++; heldBack.add(key); }",
+    "new": "    for (const v of [...pin.in]) if (!(await ensure(v))) { pin.in.delete(v); dropped++; heldBack.add(String(key)); }",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "the town held back by another key than the records ask"
+  },
+  {
+    "name": "QA2A-admit-drop",
+    "file": "src/systems/layoutPins.js",
+    "old": "    for (const v of [...pin.in]) if (!(await ensure(v))) { pin.in.delete(v); dropped++; heldBack.add(key); }",
+    "new": "    for (const v of [...pin.in]) if (!(await ensure(v))) { dropped++; heldBack.add(key); }",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "a pack that will not load left in its pin"
+  },
+  {
+    "name": "QA2A-world-missing",
+    "file": "src/scenes/world.js",
+    "old": "const changed = setLayoutPins(pins, { heldBack, missing: worldDataPacksMissing() });",
+    "new": "const changed = setLayoutPins(pins, { heldBack });",
+    "tests": [
+      "test/qa2_layouts.test.js",
+      "test/wd3_layoutPins.test.js"
+    ],
+    "note": "the host passes no missing packs"
+  },
+  {
+    "name": "QA2A-world-window",
+    "file": "src/scenes/world.js",
+    "old": "    townLayoutsKnown: () => !homeLayoutsOnline || _homeLayoutsApplied,",
+    "new": "    townLayoutsKnown: () => !homeLayoutsOnline || _serverLayoutRecords !== null,",
+    "tests": [
+      "test/fb1003b_questor.test.js"
+    ],
+    "note": "a share landing while the packs are fetched is chosen again unpinned"
+  },
+  {
+    "name": "QA2A-die-unshared",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!shareId || !this.parentQuest.hooks?.sharedCopy?.(this.parentQuest)) return this._reseatMovedSite(world);",
+    "new": "    if (!shareId) return this._reseatMovedSite(world);",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "a quest shared once draws the share's die alone for good"
+  },
+  {
+    "name": "QA2A-arrival-unshared",
+    "file": "src/systems/quest/machine.js",
+    "old": "    this.sharedQuestNames.add(quest.questName);   // AUDIT QA2: a shared copy from its arrival on - the arrival's re-seat draws the share's die (Place.reseatMovedSite)\n    this.quests.set(quest.uid, quest); this._reseatArrived(quest);   // QUESTOR-MOVED: a copy from before the town mods, mended on arrival (its links made after)\n",
+    "new": "    this.quests.set(quest.uid, quest); this._reseatArrived(quest);   // QUESTOR-MOVED: a copy from before the town mods, mended on arrival (its links made after)\n    this.sharedQuestNames.add(quest.questName);\n",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "the arrival re-seats before it is a shared copy: two members land apart"
+  },
+  {
+    "name": "QA2A-links-all-dropped",
+    "file": "src/systems/quest/machine.js",
+    "old": "    // dozens of links per Place in the save, and every mount of its building walked them all\n    this.siteLinks = this.siteLinks.filter((link) => link.questUID !== quest.uid);",
+    "new": "    // dozens of links per Place in the save, and every mount of its building walked them all\n    this.siteLinks = [];",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "a resync drops every quest's links, not its own"
+  },
+  {
+    "name": "QA2A-reseat-remote",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!found.length && this.scope === Scopes.Local && this._modsTookKind(world, location, p2, p3)) found = this._nearTownSites(world, location, p2, p3)?.found ?? [];",
+    "new": "    if (!found.length && this._modsTookKind(world, location, p2, p3)) found = this._nearTownSites(world, location, p2, p3)?.found ?? [];",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "a remote site the re-seat takes to another town by NEAR-SITE"
+  },
+  {
+    "name": "QA2A-near-house-precheck",
+    "file": "src/systems/quest/place.js",
+    "old": "    const named = p2 >= 0 && !(p2 >= BT_HOUSE1 && p2 <= BT_HOUSE6);",
+    "new": "    const named = p2 >= 0;",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "a house kind pre-checked by the directory: the nearest town's House1 passed over for a House2"
+  },
+  {
+    "name": "QA2A-guild-look-order",
+    "file": "src/systems/quest/person.js",
+    "old": "?? (guild ? halls.find((b) => b.npcs.some(sameLook)) ?? halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);",
+    "new": "?? (guild ? halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) ?? halls.find((b) => b.npcs.some(sameLook)) : null);",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "the guild rung asks the faction before the questor's own look"
+  },
+  {
+    "name": "QA2A-heldback-before-stands",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (recordStands(held)) return sd.unseated ? this._seatBack(held) : false;",
+    "new": "    if (recordHeldBack(held)) return this._unseat(held);\n    if (recordStands(held)) return sd.unseated ? this._seatBack(held) : false;",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "a record that stands in a held-back town unseated"
+  },
+  {
+    "name": "QA2A-die-per-place",
+    "file": "src/systems/quest/place.js",
+    "old": "this._die = () => seededFirst(stringHash(`${shareId}|reseat|${this.symbol?.name ?? ''}|${n++}`));",
+    "new": "this._die = () => seededFirst(stringHash(`${shareId}|reseat||${n++}`));",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "one die per share, every Place drawing the same"
+  },
+  {
+    "name": "QA2A-region-admission",
+    "file": "src/systems/quest/place.js",
+    "old": "    const wildcard = this.p2 === -1 && (this.p3 === 0 || this.p3 === 1);   // _tryTownLocation's two arms with no pre-check",
+    "new": "    const wildcard = this.p2 === -1;",
+    "tests": [
+      "test/qa2_nearsite.test.js"
+    ],
+    "note": "a `remote shop` no dart admits walks every town of the region"
+  },
+  {
+    "name": "QA2A-name-unseeded",
+    "file": "src/systems/quest/place.js",
+    "old": "      if (!shareId) return THE_NAMED_RESIDENCE.replace('%s', named());",
+    "new": "      return THE_NAMED_RESIDENCE.replace('%s', named());",
+    "tests": [
+      "test/qa2_layouts.test.js"
+    ],
+    "note": "two members seated in one house name it each by their own DFRandom"
+  },
+  {
+    "name": "QA2A-tool-clicks",
+    "file": "tools/templeSummoners.mjs",
+    "old": "&& takesNone(c);",
+    "new": ";",
+    "tests": [
+      "test/qa2_summoners.test.js"
+    ],
+    "note": "the summoner at the 1.5 m bound beside the priest again (gated on ARENA2_PATH with ARCH3D)"
+  },
+  {
+    "name": "QA2A-tool-floor",
+    "file": "tools/templeSummoners.mjs",
+    "old": "      const passes = (c) => Math.abs(c.y - floor) < 0.1 && rayVerdict(tris, c) === 'ok'",
+    "new": "      const passes = (c) => rayVerdict(tris, c) === 'ok'",
+    "tests": [
+      "test/qa2_summoners.test.js"
+    ],
+    "note": "off the priest's floor (gated on ARENA2_PATH with ARCH3D)"
+  },
+  {
+    "name": "QA2A-tool-classic-temples",
+    "file": "tools/templeSummoners.mjs",
+    "old": "if (/^TEMPAA[A-H]0\\.RMB$/.test(n))",
+    "new": "if (/^TEMPAA.0\\.RMB$/.test(n))",
+    "tests": [
+      "test/qa2_summoners.test.js"
+    ],
+    "note": "TEMPAA00, laid by no town, seeds the Stendarr rows (gated on ARENA2_PATH)"
+  }
+]

@@ -2,8 +2,8 @@
 // place). These initial values are the PRE-CHARGEN state only:
 // createCharacter (systems/chargen) rolls the real career the first
 // time a chargen-running context boots, and every host runs it
-// through systems/chargenSession.js - dungeonContext.js:2900,
-// world.js:6386, exterior.js:1481 and applyHeadlessChargen for the
+// through systems/chargenSession.js - dungeonContext.js:"GameManager.AreEnemiesNearby",
+// world.js:"dependency already", exterior.js:"createChargenFlow(fetchBytes)" and applyHeadlessChargen for the
 // test room (AUDIT 23).
 //
 // NOT A GAP (recorded): the stand-ins below - flat skills 30,
@@ -37,9 +37,9 @@ export const playerEntity = {
   // armor; equip subtracts material*5 - the classic law makes an
   // UNARMORED player far easier to hit than the old armor:0 scalar)
   armorValues: [100, 100, 100, 100, 100, 100, 100],
-  skills: 30,       // the header's stand-in, and a HANDLED shape: permanentSkillValue (skills.js:78) returns a numeric `skills` whole, so no reader ever indexes it
+  skills: 30,       // the header's stand-in, and a HANDLED shape: permanentSkillValue (skills.js:"if (typeof s === 'number')") returns a numeric `skills` whole, so no reader ever indexes it
   stats: { strength: 50, agility: 50, luck: 50 },
-  fatigue: 3200,    // (Str 50 + End 0) x 64 over the stand-in stats above - maxFatigue's own arithmetic (statMods.js:170), no dropped term; applyCharacter re-derives it from the rolled stats (S15)
+  fatigue: 3200,    // (Str 50 + End 0) x 64 over the stand-in stats above - maxFatigue's own arithmetic (statMods.js:"return (liveStat(entity, 'strength') + liveStat(entity, 'endurance'))"), no dropped term; applyCharacter re-derives it from the rolled stats (S15)
   items: [],        // the inventory (S2); gold rides as a Currency stack
   // THE ONE CONSTRUCTION SEAM, sixth occurrence (U24). DFU's
   // PlayerEntity is constructed WITH its skill-use counters, and
@@ -67,8 +67,8 @@ export const playerEntity = {
   // took the member back out, so the ABSENT state became reachable
   // after a boot load or a classic import and the eleven-wide
   // guarantee AUDIT 63 F6 bought had to come from the constructor
-  // instead. The three `??=` mints downstream (enchantments.js:691
-  // and :825, artifactEffects.js:151) and talk.js's
+  // instead. The three `??=` mints downstream (enchantments.js:"mods = (entity.reactionMods ??= new Array(SOCIAL_GROUP_COUNT).fill(0))"
+  // and :825, artifactEffects.js:"mods = (entity.reactionMods ??= new Array(SOCIAL_GROUP_COUNT).fill(0))") and talk.js's
   // ensureReactionState stay as the belt to this brace.
   reactionMods: new Array(SOCIAL_GROUP_COUNT).fill(0),
 
@@ -112,8 +112,28 @@ export function setDeathPresenter(fn) {
  *  door below consulted the saves, the shield and AvoidDeath on the transition, once. False (nothing asked) alive. */
 export function presentPlayerDeath(entity = playerEntity) {
   if (!(entity.health <= 0)) return false;
+  hearDeath(entity);
   _deathPresenter?.(entity);
   return true;
+}
+
+// AUDIT LEGACY (2026-10-05): THE DEATH'S LISTENERS - DFU's `PlayerEntity.OnDeath` event, which mods subscribe to (Project
+// Legacy's HandlePlayerDeath did). The presenter is ONE host's screen; a listener is a system that must know the death
+// THE MOMENT IT IS DECIDED, before any screen, mode exit or reload can intervene - Project Legacy records a permadeath
+// and pays Arkay's toll here (scenes/legacyHost.js onDeath), so an F11 under the screen or a closed tab cannot undo it.
+// Heard on the door's transition and on the DEATH-KEPT re-ask alike, so a death raised around the door is heard too;
+// a listener is therefore idempotent per death (the host's own latch). Keyed, so a host that mounts twice replaces.
+const _deathListeners = new Map();
+
+/** Hear every death of the player as it is decided: `fn(entity)`. A null `fn` removes `key`. */
+export function setDeathListener(key, fn) {
+  if (fn) _deathListeners.set(key, fn);
+  else _deathListeners.delete(key);
+}
+function hearDeath(entity) {
+  for (const [key, fn] of _deathListeners) {
+    try { fn(entity); } catch (e) { console.error(`[death] the ${key} listener failed:`, e?.message ?? e); }   // a listener never keeps the screen from rising
+  }
 }
 
 // AUDIT 26 F117: GuildManager.AvoidDeath, consulted by SetHealth at
@@ -230,7 +250,8 @@ export const duelSpare = (entity) => { _duelFell?.(entity); };
 //   - a DAMAGE MODIFIER: `fn(entity, dmg) -> dmg`, over the damage before the shield pool (Malacath's Unbroken halves);
 //   - a DEATH SAVE: `fn(entity, dmg) -> boolean`, asked when the damage would take a live player to zero - one that
 //     answers true leaves them at 1 instead, before the guild's avoid-death is asked (Malacath's Unbroken itself);
-//   - a HURT LISTENER: `fn(entity, { dmg, before, after })`, told after the damage lands (Ruhn's Wrath of the Warden).
+//   - a HURT LISTENER: `fn(entity, { dmg, before, after })`, told after the damage lands (Ruhn's Wrath of the Warden) -
+//     AUDIT 625 P1: and `saved: true` when a death save turned it aside, a killing blow told as what it did (to 1).
 // NONE of them is asked on a SetHealth(0) door (`bypassShield`: drowning and the exhaustion collapse mean death, not
 // damage) or on a duel's own blow (`spare`: the duel's floor is its law), and a veto or a shield that takes the whole
 // blow leaves them all untold.
@@ -266,8 +287,9 @@ function playerDeathSaved(entity, dmg) {
   for (const fn of _deathSaves.values()) { try { if (fn(entity, dmg) === true) return true; } catch { /* as above */ } }
   return false;
 }
-function tellHurt(entity, dmg, before, after) {
-  for (const fn of _hurtListeners.values()) { try { fn(entity, { dmg, before, after }); } catch { /* as above */ } }
+function tellHurt(entity, dmg, before, after, saved = false) {
+  const hurt = saved ? { dmg, before, after, saved: true } : { dmg, before, after };   // AUDIT 625 P1: a death turned aside says so
+  for (const fn of _hurtListeners.values()) { try { fn(entity, hurt); } catch { /* as above */ } }
 }
 
 /**
@@ -315,7 +337,7 @@ export function hurtPlayer(entity, dmg, { bypassShield = false, spare = null } =
     const was = entity.health;
     entity.health = 1;
     surfacePlayer();
-    tellHurt(entity, was - 1, was, 1);
+    tellHurt(entity, was - 1, was, 1, true);
     return false;
   }
   const before = entity.health;
@@ -337,6 +359,7 @@ export function hurtPlayer(entity, dmg, { bypassShield = false, spare = null } =
       surfacePlayer();
       return false;
     }
+    hearDeath(entity);   // AUDIT LEGACY: OnDeath's subscribers, before the screen
     _deathPresenter?.(entity);
     return true;
   }

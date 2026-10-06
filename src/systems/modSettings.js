@@ -1126,7 +1126,7 @@ export const MOD_SETTINGS = Object.freeze({
       // you to a destination and theres no travel". DEPARTURE FROM THE
       // MOD'S SHIPPED DEFAULT, on Mac's word, and it is the whole of that
       // report. IsPlayerControlledTravel is an AND over three toggles
-      // (travelPopUp.js:192): `(cautiousTravel || !speedCautious) &&
+      // (travelPopUp.js:"export function isPlayerControlledTravel"): `(cautiousTravel || !speedCautious) &&
       // (stopAtInnsTravel || !sleepModeInn) && !travelShip`. The popup
       // opens with `sleepModeInn = true` - classic Daggerfall's own
       // default, stopping at inns - so with this key false the second
@@ -1302,6 +1302,33 @@ export const MOD_SETTINGS = Object.freeze({
       'WagonAccess.InteriorAccessDistance': Object.freeze({ default: 50, min: 10, max: 100, description: 'Interior Wagon Access Distance. Sets how close your wagon must be parked to a building or dungeon entrance to access it from inside.' }),
       'Hotkeys.QuickMountDismount': Object.freeze({ default: 'Alpha5', text: true, description: 'Quick Mount / Dismount. Mounts your last-used horse or wagon using the same range and ownership rules as the Transport menu. Pressing it while riding dismounts immediately. Click it and press a key to rebind; \u2715 clears it (None).' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
       'Hotkeys.SummonTransport': Object.freeze({ default: 'Alpha6', text: true, description: 'Summon Horse & Wagon. Teleports owned transport to a nearby layout while outdoors. Click it and press a key to rebind; \u2715 clears it (None).' }),   // KB1: not read by the mod any more - the key is the registry's action (inputActions.js MOD_ACTIONS); a player's saved value is carried there once (migrateKeyBinds)
+    }),
+  }),
+  // LEGACY1 (2026-10-05, bible/06-Systems/Legacy-Arc.md, Mac: "this is actually my DFU mod that I want to integrate"):
+  // PROJECT LEGACY 0.4.1 (Lattymoy, Ghð§† and Positronico). The mod's own "Family" section, its names and descriptions
+  // as modsettings.json ships them (vendor/project-legacy/modsettings.json) - but B14: the mod shipped Max Siblings 0
+  // and Siblings Probability 0, so a fresh install never rolled a sibling; the port ships 2 and 50. Its "Input" section
+  // (the G key and the second key) is the keybinding registry's (KB1, inputActions.js MOD_ACTIONS: LegacyFamily). The
+  // "Legacy" section is the port's own: the model a family founded without the chargen's answer takes, Arkay's toll in
+  // an Enduring family, the heirloom's chance at a Bloodline death, and whether the family stands in the world
+  // (LEGACY-HOME). `Enabled` is the port's (MO1: on).
+  'project-legacy': Object.freeze({
+    title: 'Project Legacy',
+    author: 'Lattymoy, Gh\u00f0\u00a7\u2020 and Positronico',
+    keys: Object.freeze({
+      Enabled: Object.freeze({
+        default: true,
+        description: 'Your family and its tree, and an heir to carry your line on. A Bloodline house makes each death final; '
+          + 'an Enduring one makes it cost years.',
+      }),
+      'Family.Descendants': Object.freeze({ default: 0, options: Object.freeze(['Random Descendants', 'Always have descendants']), description: 'Descendants Generation Probability' }),
+      'Family.Max Siblings': Object.freeze({ default: 2, min: 0, max: 10, description: 'The number of siblings that can generate at the same time.' }),
+      'Family.Siblings Probability': Object.freeze({ default: 50, min: 0, max: 100, description: 'The probability to generate siblings on the game.' }),
+      'Legacy.Model': Object.freeze({ default: 0, options: Object.freeze(['Enduring', 'Bloodline']), description: 'The model a family takes when it is founded around a character made before this mod (a new character answers at creation). Enduring: a death costs years. Bloodline: a death is final.' }),
+      'Legacy.Toll': Object.freeze({ default: 1, options: Object.freeze(['Light', 'Standard', 'Heavy']), description: 'Arkay\u2019s toll in an Enduring family: the years a death takes - 4%, 6% or 10% of the lifespan.' }),
+      'Legacy.Heirloom Chance': Object.freeze({ default: 50, min: 0, max: 100, description: 'The chance a Bloodline death leaves an heirloom for the heir to recover.' }),
+      // LEGACY-HOME (Legacy-Arc section 10b; Mac: "itll be default on but can be toggled off").
+      'Legacy.Family In World': Object.freeze({ default: true, description: 'Your living family stands in the world when you are not playing them: at the family home (or in your seat\u2019s town, if the line holds no house), about their day. Speak with one to play as them.' }),
     }),
   }),
 });

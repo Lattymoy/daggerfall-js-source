@@ -137,7 +137,7 @@ export const DETECT_MARKER_ROWS = Object.freeze([5, 3, 1]);
 // entirely - which silently kills every Detect marker with no
 // alternative presentation, so a Large HUD player gets nothing from
 // a Detect spell but the spell-point bill. Neither gate is ported
-// because the port has no Large HUD (ui/pauseWindow.js:46 records
+// because the port has no Large HUD (ui/pauseWindow.js:"tick shows !LargeHUD." records
 // that) and its compass is unconditional; both become live the day
 // one ships.
 

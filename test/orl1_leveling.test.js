@@ -714,7 +714,7 @@ test('ORL1: the level-up window spends by the mod\'s law and commits through the
   w.input('minus');
   assert.equal(w.deltas.strength, 4);
   assert.equal(w.purse, 8);
-  w.input('char:-');   // the OTHER spelling of the same key (ui/input.js:378)
+  w.input('char:-');   // the OTHER spelling of the same key (ui/input.js:"(PollInput adds every held key in one sweep, :1806-1809)")
   assert.equal(w.deltas.strength, 3);
   // confirming with a purse left is refused, loudly, and changes nothing
   assert.equal(w.confirm(), false);
@@ -1055,9 +1055,16 @@ test('ORL1: the wizard\'s window stays OPEN on the question, and the answer reac
 
   w.input('ArrowDown');
   w.input('Enter');
+  // LEGACY2: Project Legacy ships on (MO1), so its question - the family's model - is the next stage of the same
+  // window: still not done, still no character handed over, until it too is answered
+  assert.equal(w.done, false, 'the model question follows the leveling one');
+  assert.equal(result, null);
+  assert.ok(w.levelingPrompt?.options?.some((o) => o.id === 'bloodline'), 'and it is Project Legacy\'s');
+  w.input('Enter');   // Enduring, the first
   assert.equal(w.done, true);
   assert.ok(result, 'the host is handed the character now');
   assert.equal(result.levelingSystem, LEVELING_VIRTUE, 'carrying the answer');
+  assert.equal(result.legacyModel, 'enduring', 'and the house\'s');
 
   // ...and finishChargen puts it on the entity beside the DFU anchor
   const e = { gender: 'male', race: 'Breton' };
@@ -1205,9 +1212,12 @@ test('ORL1: the mod ships ON, and a switched-off mod asks nobody', () => {
   assert.equal(oblivionLevelingEnabled(reader({ Enabled: false })), false);
   // ...and with it off the wizard's answer goes straight out, carrying
   // the port's own law rather than a question nobody was asked - OFFLINE (LEVEL-ONLINE: online the question is
-  // always put, Daggerfall's option shut).
-  assert.match(rd('src/systems/chargenSession.js'),
-    /if \(!oblivionLevelingEnabled\(\) && !online\) \{\n\s*return chargenWizard\(flow, \{\n\s*onCancel, hudScale, onDone: \(r\) => onDone\?\.\(\{ \.\.\.r, levelingSystem: LEVELING_CLASSIC \}\),/);
+  // always put, Oblivion's option shut - LEVEL-ONLINE-2).
+  // LEGACY2: the questions are a chain now (the leveling one, Project Legacy's model); with none asked the answer goes
+  // straight out carrying the classic system - and the leveling question is asked only with the mod on, or online
+  const src = rd('src/systems/chargenSession.js');
+  assert.match(src, /if \(oblivionLevelingEnabled\(\) \|\| online\) asks\.push\(/);
+  assert.match(src, /const unasked = \{ levelingSystem: LEVELING_CLASSIC \};\n\s*if \(!asks\.length\) \{\n\s*return chargenWizard\(flow, \{\n\s*onCancel, hudScale, onDone: \(r\) => onDone\?\.\(\{ \.\.\.r, \.\.\.unasked \}\),/);
 });
 
 test('ORL1: neither screen claims native geometry it has no source for', () => {

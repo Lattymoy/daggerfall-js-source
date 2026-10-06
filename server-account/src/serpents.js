@@ -9,7 +9,11 @@
 // serpentReceipt.js - `l1`, under the relay's GATE_SIGNING_KEY). This file
 // is where that receipt is honoured: counted once, and paid in Renown to
 // the character that fought it. Design: bible/11-Multiplayer/Sea-Serpent.md
-// section 8. The raids' claim (raids.js) rung for rung, without its silver.
+// section 8. The raids' claim (raids.js) rung for rung - SERPENT-SET (2026-10-05):
+// and its silver now, a combat strike under the day's cap (marks.js
+// serpentStrikeStatement), and the gate's currency on its row: the
+// embers its hoard paid (`stones`, migration 0083 - SERPENT_EMBERS), which
+// the insignia's purse counts as a breach's (accounts.js insigniaPurse).
 //
 // ═══ WHOSE WORD, AND WHAT BOUNDS IT ════════════════════════════════
 //
@@ -37,8 +41,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { verifySerpentReceipt } from '../../src/net/serpentReceipt.js';
+import { SERPENT_EMBERS } from '../../src/net/serpentHoardLaw.js';   // SERPENT-SET: the embers a receipt's hoard pays
 import { renownForXp, renownSerpentXp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
-import { renownCharacterOk, renownNameOf, renownTrackOf } from './renownTracks.js';
+import { renownCharacterOk, renownNameOf, renownTrackOf, renownHeldSql } from './renownTracks.js';
 
 /** A device's claim id - the key a serpent's hoard is given under (the raids' RAID_CID_RE). */
 export const SERPENT_CID_RE = /^[0-9a-f]{16}$/;
@@ -66,17 +71,24 @@ export async function serpentRecordOf({ db }, playerId) {
 /**
  * THE CLAIM: `receipt` verified with the relay's public half and naming `player` (the session's row, never the body's
  * word), counted once a (day, account), and paid to `character` - the character that fought it, which the client names
- * - in Renown (renownSerpentXp at the track's level before it, as much as the account's hour has left). Answers, each
- * with `spoils` (whether THIS claim is given the serpent's hoard):
- *   `{ recorded: true, slain, renown: { character, xp, level, credited, rose }, spoils }`,
- *   `{ recorded: false, why: 'claimed' | 'guest', slain, spoils }`, or
+ * - in Renown (renownSerpentXp at the track's level before it, as much as the account's hour has left). SERPENT-SET:
+ * the row carries the embers its hoard paid - AUDIT 625 P4: what the CLAIM says its build's hoard mints (`stones`, at
+ * most SERPENT_EMBERS; a build from before the embers says none, and is counted none - its pack was never given one,
+ * and the insignia's purse would have counted it) - and `strike(day, nonce, earned)` - marks.js
+ * serpentStrikeStatement, null where Marks are not this account's - strikes its silver in the row's own batch, by THIS
+ * claim's row alone. Answers, each with `spoils` (whether THIS claim is given the serpent's hoard):
+ *   `{ recorded: true, slain, renown: { character, xp, level, credited, rose }, spoils, stones, day, struck? }` (`day`
+ *   and `struck` the service's own - the route answers the strike as `marks`; AUDIT 625 P4: `stones` the row's embers,
+ *   as the gate's claim says its own - AUDIT WB12d A1),
+ *   `{ recorded: false, why: 'claimed', slain, spoils, stones }` (the row's), `{ recorded: false, why: 'guest', slain,
+ *   spoils }`, or
  *   `{ error }` - `no-gate-key`, `receipt` (`why` says which rung), `not-yours`, `renown-character`.
  * @param {{ db: any, nowS: number, subtle: SubtleCrypto, rand: (b: Uint8Array) => Uint8Array }} ctx
  * @param {{ id: string, handle?: string|null }} player
- * @param {{ receipt: unknown, character: unknown, name?: unknown, cid?: unknown }} body
+ * @param {{ receipt: unknown, character: unknown, name?: unknown, cid?: unknown, stones?: unknown }} body
  * @param {CryptoKey|null} publicKey
  */
-export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt, character, name = null, cid = null }, publicKey) {
+export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt, character, name = null, cid = null, stones = null }, publicKey, { strike = null } = {}) {
   if (!publicKey) return { error: 'no-gate-key' };
   const v = await verifySerpentReceipt(receipt, publicKey, { subtle, nowS });
   if (!v.ok) return { error: 'receipt', why: v.why };
@@ -93,19 +105,22 @@ export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt
   // AUDIT SERPENT (the books): a hand who stood the fight out is paid SERPENT_STOOD_RENOWN of what a ship that dealt is
   const xp = Math.floor(renownSerpentXp(before?.level ?? 1) * (c.x === 'stood' ? SERPENT_STOOD_RENOWN : 1));
   const nonce = hex(rand(new Uint8Array(8)));
+  // AUDIT 625 P4: the embers the claim says its build's hoard mints, never past the law's - none from a build before them
+  const embers = Number.isSafeInteger(stones) && stones > 0 ? Math.min(stones, SERPENT_EMBERS) : 0;
+  const stmt = strike?.(c.d, nonce, c.x) ?? null;   // SERPENT-SET: the serpent's silver, in this batch
   const mine = 'EXISTS (SELECT 1 FROM serpent_kills WHERE day = ?3 AND account = ?1 AND nonce = ?4)';
   const track = 'SELECT xp FROM renown_tracks WHERE player = ?1 AND char_id = ?2';
-  const refused = `(NOT EXISTS (${track}) AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) >= ?9)`;
+  const refused = `(NOT EXISTS (${track}) AND ${renownHeldSql('?1')} >= ?9)`;
   const want = `CASE WHEN ${refused} THEN 0 ELSE MIN(?5, MAX(0, ?6 - COALESCE((${track}), 0))) END`;
   const room = 'CASE WHEN renown_hour >= ?8 THEN MAX(0, ?7 - renown_hour_xp) ELSE ?7 END';
   const credit = `CASE WHEN ${mine} THEN MIN(${want}, ${room}) ELSE 0 END`;
   const res = await db.batch([
     // THE ROW, stamped with this claim's nonce - RETURNING it only when it was written
     db.prepare(
-      `INSERT OR IGNORE INTO serpent_kills (day, account, boss, hull, char_id, xp, nonce, at)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+      `INSERT OR IGNORE INTO serpent_kills (day, account, boss, hull, char_id, xp, nonce, at, stones)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
        RETURNING nonce`,
-    ).bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS),
+    ).bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, embers),
     // THE HOUR SPENT and THE CREDIT DECIDED - by THIS claim's row alone (raids.js's statement)
     db.prepare(
       `UPDATE players SET
@@ -126,7 +141,7 @@ export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt
        SELECT ?1, ?2, ?5, renown_last_credit, ?6, ?6 FROM players
        WHERE id = ?1 AND renown_last_credit > 0
          AND NOT EXISTS (SELECT 1 FROM renown_tracks WHERE player = ?1 AND char_id = ?2)
-         AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) < ?7
+         AND ${renownHeldSql('?1')} < ?7
          AND ${mine}`,
     ).bind(player.id, character, c.d, nonce, renownNameOf(name), nowS, RENOWN_TRACKS_MAX),
     // the row says what the claim PAID (the hour may have left less than the serpent is worth)
@@ -135,15 +150,22 @@ export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt
     db.prepare(track).bind(player.id, character),
     db.prepare('SELECT COUNT(*) AS n FROM serpent_kills WHERE account = ?1').bind(player.id),
     ...(hoard ? hoardOf(db, c.d, player.id, cid, nowS) : []),
+    // SERPENT-SET: THE SILVER, last - by THIS claim's row alone (marks.js CLAIM_GUARDS.serpent), once a (day, account)
+    ...(stmt ? [stmt] : []),
   ]);
   const [row, decided, , , , after, count] = res;
   const spoils = hoard ? hoardAnswer(res[8], cid) : false;
+  const struck = !!stmt && Number(res[res.length - 1]?.meta?.changes ?? 0) > 0;
   const slain = int(count?.results?.[0]?.n);
-  if (!row?.results?.length) return { recorded: false, why: 'claimed', slain, spoils };
+  if (!row?.results?.length) {
+    // AUDIT 625 P4: the row's own embers - written by the claim that counted it, whatever this ask says
+    const kept = await db.prepare('SELECT stones FROM serpent_kills WHERE day = ?1 AND account = ?2').bind(c.d, player.id).first();
+    return { recorded: false, why: 'claimed', slain, spoils, ...(Number.isSafeInteger(kept?.stones) ? { stones: kept.stones } : {}) };
+  }
   const total = after?.results?.length ? int(after.results[0].xp) : null;
   const was = before?.xp ?? 0;
   return {
-    recorded: true, slain, spoils,
+    recorded: true, slain, spoils, stones: embers, day: c.d, ...(stmt ? { struck } : {}),
     renown: total === null
       ? { character, xp: null, level: null, credited: 0, rose: false }   // no place for a new track: counted, paid nothing
       : { character, xp: total, level: renownForXp(total), credited: Math.max(0, int(decided?.results?.[0]?.credit)), rose: renownForXp(total) > renownForXp(was) },

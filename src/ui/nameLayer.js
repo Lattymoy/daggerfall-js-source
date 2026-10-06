@@ -49,6 +49,7 @@ import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, titlePaint, TITLE_PAINT
 import { graphemesOf } from '../systems/graphemes.js';   // EMOTE1's characters, which JOURNAL1's notebook break reads too
 import { renownText } from '../net/renown.js';   // RENOWN1: Renown, left of the name
 import { guildTagText } from '../net/guildLaw.js';   // GUILD1c: the guild's tag, right of the name
+import { houseLine } from '../net/houseLaw.js';   // LEGACY7: the house, under the name
 import { ribbonColours, heraldryOf, heraldryColourOf, heraldryKey } from '../net/heraldryLaw.js';   // SEASON1 part two: a Season's banner ribbon, under the name; HERALDRY-SHOWN: the tag's frame
 import { heraldrySwatchSrc } from './heraldrySwatch.js';   // HERALDRY-SHOWN (Seats-Arc 8.1): the guild's shield, in its tag's frame
 
@@ -189,6 +190,11 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
    exactly the label it wore before. */
 .dfname-guild { font-size: .82em; letter-spacing: .04em; color: #a9c4dd; }
 .dfname-guild:empty { display: none; }
+/* LEGACY7 - THE HOUSE, a line under the name: "☠ Ysolde II of House Hlaalu" (net/houseLaw.js houseLine), smaller
+   than the name and in an old parchment's tone so it reads as lineage - never the guild's steel or a title's colour.
+   Empty takes no room: a character of no line wears exactly the label it wore before. */
+.dfname-house { font-size: .72em; letter-spacing: .03em; color: #d8c79a; font-style: italic; white-space: nowrap; }
+.dfname-house:empty { display: none; }
 /* HERALDRY-SHOWN (Seats-Arc 8.1: "the frame of the guild tag") - A TAG WHOSE GUILD'S HERALDRY THE CLIENT KNOWS, FRAMED: a
    dark plate edged in the guild's border colour (written per peer), its shield (ui/heraldrySwatch.js) at the plate's left. */
 .dfname-guild.armed { padding: .06em .3em .04em 1.25em; border: 1px solid; border-radius: .12em;
@@ -299,9 +305,12 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
     // SEASON1 part two: a Season's banner ribbon, a sibling under the name row
     const ribbon = doc.createElement('div');
     ribbon.className = 'dfname-ribbon off';
-    node.append(bubble, title, tag, ribbon);
+    // LEGACY7: the house, a line under the name row ("☠ Ysolde II of House Hlaalu" - net/houseLaw.js houseLine)
+    const house = doc.createElement('div');
+    house.className = 'dfname-house';
+    node.append(bubble, title, tag, house, ribbon);
     root.append(node);
-    return { node, bubble, title, tag, lv, name, guild, glyphs, ribbon, worn: null, titled: null, inked: undefined, banded: '', armed: '' };   // HERALDRY-SHOWN: `armed`, the frame as written   // SEASON1 part two: `banded`, the ribbon as written   // SHADOW-FANG: `titled`, the title whose paint is on; AUDIT A10: `inked`, the name's colour as written
+    return { node, bubble, title, tag, lv, name, guild, glyphs, house, ribbon, worn: null, titled: null, inked: undefined, banded: '', armed: '' };   // HERALDRY-SHOWN: `armed`, the frame as written   // SEASON1 part two: `banded`, the ribbon as written   // SHADOW-FANG: `titled`, the title whose paint is on; AUDIT A10: `inked`, the name's colour as written
   };
 
   /** ACC3: the glyph run, REBUILT ONLY WHEN IT CHANGES. A glyph set is
@@ -375,7 +384,7 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
     /** AUDIT NAME1 F3: `viewport` is the world viewport's HEIGHT in CSS px and `hudScale` the player's own HUD
      *  scale (ui/enhancedHud.js enhancedHudScale). Both are taken by VALUE rather than through
      *  `scale(var(--hud-scale))`, because that variable is set on #enhanced-hud and this layer is a body sibling
-     *  of it - the damage numbers' own layer has the same problem and enhancedHud.js:975 solves it the same way,
+     *  of it - the damage numbers' own layer has the same problem and enhancedHud.js:"document.getElementById" solves it the same way,
      *  by writing the number where it is needed. Neither is passed on a probe host, and there the law is exactly
      *  the reference frame's: NAME_BASE_PX * the point's scale. */
     render({ points = [], log = null, covered = false, colorOf = null, viewport = null, hudScale = 1 } = {}) {
@@ -410,6 +419,7 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
         setText(tag.lv, renownText(p.lv) ?? '');   // RENOWN1: "12" in its box, or nothing
         setText(tag.name, p.name ?? '');
         setText(tag.guild, guildTagText(p.gt) ?? '');   // GUILD1c: "<HND>", or nothing
+        setText(tag.house, houseLine(p.house) ?? '');   // LEGACY7: "☠ Ysolde II of House Hlaalu", or nothing
         // HERALDRY-SHOWN (Seats-Arc 8.1): the tag framed in its guild's heraldry where the client knows it - written when
         // it CHANGES, as the ribbon is
         const arms = guildTagText(p.gt) && armsOf ? heraldryOf(armsOf(p.gt)) : null;

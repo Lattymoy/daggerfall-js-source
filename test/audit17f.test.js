@@ -11,6 +11,7 @@ import {
 } from '../src/systems/armorMaterials.js';
 import { armorArchive, morphologyOfRace, armorVariant, MATERIAL_FAMILY, playerArchiveFor } from '../src/characters/paperdollArt.js';
 import { assignStartingGear, STARTING_GOLD } from '../src/systems/startingGear.js';
+import { isWalletItem } from '../src/systems/walletItem.js';   // WALLET1: the port's own tail's wallet, set aside from DFU's bag
 import { GOLD_TEMPLATE, goldStack, itemWeight } from '../src/systems/inventory.js';
 import { addGold } from '../src/systems/court.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
@@ -108,7 +109,10 @@ test('17f F12: item names come from the TEMPLATE, not a hand copy', () => {
   // E4: the kit's last row used to be a 'Gold Pieces' stack. Gold is
   // PlayerEntity.GoldPieces now (ItemHelper.cs:1354's `+= 100`), so
   // the bag ends at the arrows and the purse is a number.
-  assert.deepEqual(e.items.map((i) => i.name),
+  // PIN MOVED (WALLET1): the port's own tail gives the wallet whatever the switches (startingGear.js addSurvivalProvisions)
+  // - it is the kit's last piece, and DFU's bag is the rest
+  assert.equal(e.items.at(-1)?.name, 'Wallet');
+  assert.deepEqual(e.items.filter((i) => !isWalletItem(i)).map((i) => i.name),
     ['Spellbook', 'Short Shirt', 'Casual Pants', 'Long Bow', 'Battle Axe', 'Arrow']);
   assert.equal(e.items.find((i) => i.name === 'Arrow').stackCount, 24);
   assert.equal(e.goldPieces, STARTING_GOLD);
@@ -153,6 +157,9 @@ function walkChargen(onDone) {
   // cursor starts on Daggerfall's own system, so this Enter is the walk
   // taking the default - which is the character every pin below already
   // expected to get.
+  key('Enter');
+  // LEGACY2: ...and PROJECT LEGACY'S QUESTION after it (the family's model - it ships on, MO1). Its cursor starts on
+  // Enduring, the answer that cannot cost a character, so this Enter is the walk taking that default too.
   key('Enter');
   return w;
 }

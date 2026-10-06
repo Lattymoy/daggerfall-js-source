@@ -119,8 +119,24 @@ async function succeed(db, guildId) {
     WHERE rowid = (SELECT rowid FROM guild_members WHERE guild_id = ? ORDER BY rank, joined_at, rowid LIMIT 1) AND rank <> ${GUILD_RANK_MASTER}`).bind(guildId).run();
 }
 
+/** AUDIT LEGACY III O5: A MEMBER DEAD FOR GOOD - a realm character's tombstone (legacy.js entomb: a Bloodline's fall, an
+ *  Enduring line's last death, an elder's retirement) leaves its guild as one who will never act again. Its row goes; a
+ *  guild it was master of is given one (succeed - the guild was stuck with a master nobody could succeed, its members'
+ *  acts asked of a dead hand); a guild it leaves empty goes when nothing keeps it (no gold, no Marks, nothing
+ *  guildKeepsSql names - a death cannot be refused as a leave is, so a guild still holding something stays, memberless,
+ *  as any memberless guild does). */
+export async function guildMemberDead(db, player, character) {
+  const row = await db.prepare('SELECT rowid AS rid, guild_id FROM guild_members WHERE player = ? AND char_id = ?').bind(player, character).first();
+  if (!row) return;
+  await db.prepare('DELETE FROM guild_members WHERE rowid = ?').bind(row.rid).run();
+  await succeed(db, row.guild_id);
+  await db.prepare(`DELETE FROM guilds WHERE id = ?1 AND treasury = 0 AND NOT EXISTS (SELECT 1 FROM guild_members WHERE guild_id = ?1)
+    AND NOT EXISTS (SELECT 1 FROM guild_marks WHERE guild_id = ?1 AND balance > 0) AND NOT ${guildKeepsSql('?1')}`).bind(row.guild_id).run();
+}
+
 /** The actor, its guild made whole first - or the word for why it cannot act. MARKS1: the Marks treasury's acts
- *  (marks.js) ask the same door. */
+ *  (marks.js) ask the same door. AUDIT LEGACY III O5: never a tombstone - a dead realm character acts no more; O12: the
+ *  service's one door asks it of every body that names a character (index.js, legacy.js isTombstone), this one's too. */
 export async function guildActorOf(db, player, character) { return actorOf(db, player, character); }
 async function actorOf(db, player, character) {
   if (accountKind(player) !== 'linked') return { error: 'guilds-need-account' };

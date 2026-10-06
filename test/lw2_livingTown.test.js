@@ -43,7 +43,7 @@ function run(t, seconds, at = SQUARE, stop = () => false, viewYaw = 0) {
   return seats;
 }
 
-test('LW2 the body: a ResidentWalker is a MobilePerson (every seam that takes a walker takes it) wearing the walker\'s billboard on a yaw of its own - the MoveAnims wheel through mobileOrientation, idle record 5 (the watch\'s 15), the frame reset at each change of state; it claims no grid tile (mutants: the wheel off the yaw, the guard\'s idle, the reset)', () => {
+test('LW2 the body: a ResidentWalker is a MobilePerson (every seam that takes a walker takes it) wearing the walker\'s billboard on a yaw of its own - the MoveAnims wheel through mobileOrientation, idle record 5 (the watch\'s 15) under the politeness gate (LW-TALK: standing otherwise, the way it faces - lwtalk_town.test.js), the frame reset at each change of state; it claims no grid tile (mutants: the wheel off the yaw, the guard\'s idle, the reset)', () => {
   const p = new ResidentWalker({}, { archive: 385, frameCount: () => 4, groundY: () => 0 });
   assert.ok(p instanceof MobilePerson);
   p.pos = [0, 0, 0]; p.yaw = 1.0; p.moving = true;
@@ -61,7 +61,7 @@ test('LW2 the body: a ResidentWalker is a MobilePerson (every seam that takes a 
   assert.equal(p.frame, 0);
   const g = new ResidentWalker({}, { archive: 399, guard: true, frameCount: () => 1, groundY: () => 0 });
   g.pos = [0, 0, 0];
-  assert.equal(g.update(0.1, eye, false).record, PERSON_GUARD_IDLE_RECORD);
+  assert.equal(g.update(0.1, eye, true).record, PERSON_GUARD_IDLE_RECORD);   // LW-TALK: PIN MOVED - the gate's (standing, the walk wheel's still frame)
   assert.doesNotThrow(() => p.release(), 'nothing on the grid to release');
 });
 
@@ -126,14 +126,16 @@ test('LW2 a walk: the body walks its day\'s path at the day\'s pace - never slow
   run(t, 1);
   const moved = Math.hypot(p.pos[0] - at0[0], p.pos[2] - at0[2]);
   assert.ok(moved > PERSON_MOVE_SPEED * 0.8 && moved < PERSON_MOVE_SPEED * WALK_FAST * 1.1, `a second's walk (${moved.toFixed(2)} m)`);
-  // the gate: stood for two seconds, it does not move and owes the minutes
+  // the gate: stood for two seconds, it does not move and owes the minutes - LW-SPREAD: PIN MOVED - the player stands
+  // beside it (the street's nearest: kept on it; at the square, a walker the street no longer kept went out of view)
   const before = [...p.pos];
-  run(t, 2, SQUARE, (q) => q === p);
+  const beside = [p.pos[0] + Math.sin(p.yaw) * 1.5, 0, p.pos[2] + Math.cos(p.yaw) * 1.5];
+  run(t, 2, beside, (q) => q === p);
   if (t.town.where(res, t.clock.t, false)?.e.kind === 'walk') {
     assert.ok(Math.hypot(p.pos[0] - before[0], p.pos[2] - before[2]) < 1e-6, 'held');
     const owed = t.town._lag.get(res.id);
     assert.ok(Math.abs(owed - 2 * RATE) < 1e-6, 'owes two seconds of the clock');
-    run(t, 1);
+    run(t, 1, beside);
     assert.ok(Math.abs(t.town._lag.get(res.id) - (2 * RATE - RATE * CATCH_UP)) < 1e-6, 'walks it off');
   }
   assert.equal(CATCH_UP, 0.35); assert.equal(WALK_FAST, 1.6); assert.equal(SNAP_M, 30);
@@ -148,8 +150,8 @@ test('LW2 coming onto the street: on ARRIVAL (the first frame, a jump of the clo
   t.town.maxPopulation = 3;
   run(t, 4);
   const seen = new Set(t.town.pool.filter((r) => r.visible && r.res).map((r) => r.res.id));
-  let checked = 0;
-  for (let f = 0; f < 30 * 40; f++) {
+  let checked = 0, waited = 0;
+  for (let f = 0; f < 30 * 160; f++) {   // LW-TALK: PIN MOVED - the street keeps a circle whole: under a tight cap the churn waits on a round's turn (two minutes)
     t.clock.t += RATE / 30;
     const seats = t.town.update(1 / 30, SQUARE, 0, SQUARE, true);
     const now = new Set();
@@ -162,9 +164,10 @@ test('LW2 coming onto the street: on ARRIVAL (the first frame, a jump of the clo
       checked++;
     }
     seen.clear(); for (const id of now) seen.add(id);
+    // LW-SPREAD: PIN MOVED - one wanted in plain sight, waiting to be unseen, counted through the churn (the square's
+    // morning is quieter: read at its last frame alone, nobody waited)
+    for (const r of t.town.pool) if (r.active && r.res && !r.visible && r.scheduleEnable && inSight(r.person)) waited++;
   }
-  let waited = 0;
-  for (const r of t.town.pool) if (r.active && r.res && !r.visible && r.scheduleEnable && inSight(r.person)) waited++;
   // a rest's jump of the clock is an arrival again, and so is the player's (a Recall)
   t.town.maxPopulation = maxPopulationFor(TOWN.blocks);
   t.clock.t += ARRIVAL_JUMP_MIN + 60;
@@ -270,7 +273,8 @@ test('LW2 the streaming host: where the row is on, the population block stands a
   const lines = w.slice(w.indexOf('function navalCrewLines('), w.indexOf('function livingLinePoints('));
   assert.match(lines, /livingLinePoints\(points, w, h, rect, proj, view, eye\);/);
   assert.ok(lines.indexOf('livingLinePoints(') < lines.indexOf('drawCrewLines('), 'merged before the one draw');
-  assert.match(w, /livingTalk: \{ refuses: \(person\) => person\?\.living\?\.town\?\.refuses\(person\) \?\? null, talked: \(person\) => person\?\.living\?\.town\?\.talked\(person\), caught: \(person\) => person\?\.living\?\.town\?\.caught\?\.\(person\) \},/);
+  // PIN MOVED (LEGACY-HOME): the doors gained `kin` - one of Project Legacy's line met before the words (test/legacyhome.test.js)
+  assert.match(w, /livingTalk: \{ refuses: \(person\) => person\?\.living\?\.town\?\.refuses\(person\) \?\? null, talked: \(person\) => person\?\.living\?\.town\?\.talked\(person\), caught: \(person\) => person\?\.living\?\.town\?\.caught\?\.\(person\),\n\s*kin: \(person, talk\) => legacyMeetKin\(person, talk\) \},/);
   const tt = rd('src/scenes/townTalk.js');
   const act = tt.slice(tt.indexOf('function activate(target, dist)'));
   assert.ok(act.indexOf('livingTalk?.refuses?.(target.person)') > 0 && act.indexOf('livingTalk?.refuses?.(target.person)') < act.indexOf('const eng0 = engine();'), 'the refusal before the conversation');

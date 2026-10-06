@@ -80,15 +80,16 @@
   {
     "name": "Q7-remember-no-reinsert",
     "file": "src/net/online.js",
-    "old": "    this._known.delete(id);\n    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, lv: p.lv ?? null, gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, sub: p.sub, look: p.look });",
-    "new": "    if (!this._known.has(id)) this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, lv: p.lv ?? null, gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, sub: p.sub, look: p.look });",
+    "old": "    this._known.delete(id);\n    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, lv: p.lv ?? null, gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub, look: p.look });",
+    "new": "    if (!this._known.has(id)) this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, lv: p.lv ?? null, gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub, look: p.look });",
     "tests": [
       "test/slam9.test.js",
       "test/slam6.test.js",
       "test/world6biiie.test.js",
       "test/auditworld6biiie.test.js",
       "test/online.test.js"
-    ]
+    ],
+    "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
   {
     "name": "Q8-no-membership-from-pose",

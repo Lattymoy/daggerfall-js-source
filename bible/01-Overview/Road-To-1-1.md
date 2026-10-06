@@ -108,9 +108,9 @@ in the wave reports.
   UpdateNpcPresence on pop, the toggle-binding close - and, on the same
   stack, the two recorded stages Wave A routed here: the courtroom
   backdrop, ONE window on CORT01I0 with every box of the trial pushed
-  over it (`ui/prisonScreen.js:64`, `scenes/arrestFlow.js:137`), and
+  over it (`ui/prisonScreen.js:"export const COURT_IMG"`, `scenes/arrestFlow.js:"---- ROAD-B B5: THE"`), and
   the prison screen's held-Back accelerator, DFU's raw Escape poll
-  rather than a binding (`ui/prisonScreen.js:70`). Both pinned by
+  rather than a binding (`ui/prisonScreen.js:"The held-Back accelerator"`). Both pinned by
   `test/roadb_court_backdrop.test.js` (10).
 
 ## Wave C - the two arcs - CLOSED 2026-09-02
@@ -144,9 +144,9 @@ rotation-sign inversion and the injected-vs-default water tint).
   tooltips, the two reveal-buildings console verbs.~~ **CLOSED: the
   plate arm and the tooltips at ROAD-D D5, the two console verbs at
   ROAD-E E3** - that header narrates both closures
-  (`ui/exteriorAutomapWindow.js:79` and `:100`). CORRECTED with the
+  (`ui/exteriorAutomapWindow.js:"ROAD-D D5 CLOSED"` and `ui/exteriorAutomapWindow.js:"ROAD-E E3 CLOSED"`). CORRECTED with the
   strike: the shipped tooltip table is TEN rects
-  (`ui/automapText.js:167`) - nine buttons and the compass PANEL - not
+  (`ui/automapText.js:"export const EXTERIOR_AUTOMAP_TOOLTIPS"`) - nine buttons and the compass PANEL - not
   eight; the header says TEN too.
 
 The whole of Waves B5, C and D - plus the bow salvage and the incident
@@ -213,25 +213,25 @@ What remains after Wave D and the closeout tail (the spell-hand port,
 `paused()` adopted by every host, six section C rows struck) was the 19
 flags of `Home.md`. Wave E retired SEVEN of them (E2, landing last, took the chargen picker's scroll-bar hit) - one lane apiece, each
 blind to the others until the squash: E6 took the spell hands' release
-frame (`combat/fpsSpellCasting.js:178`) and the clear-path term
-(`characters/enemyCasting.js:91`), closing section C's `playSound` row
-with them; E4 took gold-as-a-bag-stack (`systems/inventory.js:51`);
-E7 took `GetValue`'s empty-string arm (`systems/talkMacros.js:314`);
-E5 took the docked bar's occlusion (`ui/hudLarge.js:75`); and E1
+frame (`combat/fpsSpellCasting.js:"animation - and its"`) and the clear-path term
+(`characters/enemyCasting.js:"BEFORE the 1/40 roll"`), closing section C's `playSound` row
+with them; E4 took gold-as-a-bag-stack (`systems/inventory.js:"E4 (2026-09-02) RETIRED"`);
+E7 took `GetValue`'s empty-string arm (`systems/talkMacros.js:"ordering: the scan"`);
+E5 took the docked bar's occlusion (`ui/hudLarge.js:"THE DOCKED BAR SHRINKS"`); and E1
 narrowed while E3 closed the two console verbs
-(`ui/exteriorAutomapWindow.js:96` - the site id the flag list was
+(`ui/exteriorAutomapWindow.js:"rect and was being"` - the site id the flag list was
 measured on; the closure narrates at `:100` today) by building the
 console host they were waiting on. The SHIP LANDING then took a seventh
-(`scenes/world.js:12162`, the two ship pixels): the owner supplied the
+(`scenes/world.js:"A10 - THE EXTERIOR"`, the two ship pixels): the owner supplied the
 real MAPS.BSA, the pixels turned out to carry the two "Your Ship"
 locations rather than open sea, and the boarding became an ordinary
 location arrival. **ROAD-F then took three more**: GS1 closed the
-guild-service popup above ground (`scenes/worldModes.js:2821`) with the
+guild-service popup above ground (`scenes/worldModes.js:"longest-job queue"`) with the
 replace-mode mount door plus the sweep of the subtree under it, and GS2
-reworded `systems/skills.js:263` - a RETIREMENT RECORD whose only claim
+reworded `systems/skills.js:"AUDIT 18: the +10%"` - a RETIREMENT RECORD whose only claim
 on the list was that it wrote the marker down in the past tense.
 DR1 (2026-09-03) took another
-(`scenes/dungeonContext.js:3042`, the standalone dungeon host's two
+(`scenes/dungeonContext.js:"usingIdentifySpell:"`, the standalone dungeon host's two
 window seams) by BUILDING them: "a DFU original that does not exist"
 had been that flag's stated blocker, and it was a claim about the
 SCENE, not about the two windows - both of which have DFU originals
@@ -248,7 +248,7 @@ the same-interior move and the whole cross-context arm INSIDE the
 loaded pixel all ship). ARENA2 (2026-10-02) added one by name: the `?exterior` host runs no
 bout driver (`scenes/exterior.js`, the Arena's bouts are the world
 host's); ARENA-FIX (2026-10-02) wired that host's driver and closed it. AUDIT TELL (2026-10-04) added one by name: the
-dungeon stream carries none of the street record's `z`, `nm`, `yd`, `ex` or `sp` (`scenes/dungeonContext.js`). That leaves **9** open flags as
+dungeon stream carries none of the street record's `z`, `nm`, `yd`, `ex` or `sp` (`scenes/dungeonContext.js`). LEGACY1 (2026-10-05) added one by name: the fixed city keeps DFU's death - no streamer to birth an heir into (`scenes/world.js`, Legacy-Arc.md section 3). That leaves **10** open flags as
 of this wave - the count `node tools/regenOpenFlags.mjs --check`
 answers, and the only count this page may state - each with its
 blocker named at the site: no asset in the repo (the PlayerTorch

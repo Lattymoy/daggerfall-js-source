@@ -25,6 +25,7 @@ import { MAX_STAT_VALUE } from '../src/ui/chargen.js';
 import { SKILLS, SKILL_NAMES, setSkillRecentlyIncreased } from '../src/systems/skills.js';
 import { levelUpSkillSum, LEVELUP_SKILL_SUM_PER_LEVEL, LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX } from '../src/systems/advancement.js';
 import { sheetModel } from '../src/ui/enhancedCharSheet.js';
+import { citedLines } from '../tools/citeAnchor.mjs';   // CITE-ANCHOR: a cite names its line by a quote, resolved as the gate does
 import { damageModifier, magicResist } from '../src/combat/formulas.js';
 import { FATIGUE_MULTIPLIER } from '../src/systems/statMods.js';
 import { LevelUpScreen, MUST_DISTRIBUTE_BONUS_POINTS } from '../src/ui/charsheet.js';
@@ -477,13 +478,13 @@ test('LV1: every attribute has the port\'s OWN sentence, and no ARENA2 is read t
   // described a number that rides nothing. A blurb is a promise about
   // the code, so the code it points at has to be the code that runs.
   const v = src('src/ui/levelUpView.js');
-  assert.match(v, /systems\/spellcast\.js:158/, 'willpower names the saving throw that consumes MagicResist');
-  assert.match(v, /formulas\.js:309-310 statsToHit/, 'agility names the term inside the hit roll');
-  // derived, not a literal: the motor's own walkSpeed read, wherever it now stands (a literal went stale three times)
-  const walkAt = src('src/player/motor.js').split('\n').findIndex((l) => /this\.speed = walkSpeed\(this\.stats\.speed\);/.test(l)) + 1;
-  assert.ok(walkAt > 0, 'the motor still reads walkSpeed');
-  assert.match(v, new RegExp(`player/motor\\.js:${walkAt} walkSpeed`), 'speed names the motor that reads it');
-  assert.match(v, /unleveledLoot\.js:95/, 'luck names the rarity roll a player actually notices');
+  // CITE-ANCHOR: each sentence names its consumer by the consumer's own words, wherever it stands (a number into the
+  // motor went stale three times) - and the line it names is the one that reads the stat
+  const names = (target, re) => citedLines(v, target).some((c) => re.test(c.text ?? ''));
+  assert.ok(names('src/systems/spellcast.js', /saving \+= magicResist\(liveStat\(target, 'willpower'\)\)/), 'willpower names the saving throw that consumes MagicResist');
+  assert.ok(names('src/combat/formulas.js', /statsToHit/), 'agility names the term inside the hit roll');
+  assert.ok(names('src/player/motor.js', /this\.speed = walkSpeed\(this\.stats\.speed\);/), 'speed names the motor that reads it');
+  assert.ok(names('src/systems/unleveledLoot.js', /playerLuck/), 'luck names the rarity roll a player actually notices');
   assert.doesNotMatch(v, /toHitModifier = floor\(agility \/ 10\) - 5\.\n\s*agility:/,
     'and the sheet\'s display modifier is no longer offered as what rides a swing');
   // ...and no line promises a consequence this port does not apply:

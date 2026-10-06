@@ -59,11 +59,11 @@ async function risen(W) {
   return h;
 }
 
-test('SD3 the wire: the frame\'s one kind each way, projected; the record\'s law moved beside it (net/sdLaw.js re-exports it); the relay that keeps it - world172 (mutants: a slot of 0 believed; a pixel off the map; the record\'s s 0 fanned; the version gate a version early)', () => {
-  assert.equal(RELAY_VERSION, 'world172');
-  assert.equal(SD_RELAY_MIN, 172, 'the Super Dungeons arc\'s one version (world171 on its branch; main\'s CRYSTAL-FIST took it)');
+test('SD3 the wire: the frame\'s one kind each way, projected; the record\'s law moved beside it (net/sdLaw.js re-exports it); the relay that keeps it - world175 (mutants: a slot of 0 believed; a pixel off the map; the record\'s s 0 fanned; the version gate a version early)', () => {
+  assert.equal(RELAY_VERSION, 'world175');   // SUPER-DUNGEONS - world171 on its branch, then world172, renumbered past main's CRYSTAL-FIST, WATCH-FIX, SERPENT3 and LEGACY7 at the merges (PIN MOVED)
+  assert.equal(SD_RELAY_MIN, 175, 'the Super Dungeons arc\'s one version (world171 on its branch, then world172; main\'s CRYSTAL-FIST, WATCH-FIX, SERPENT3 and LEGACY7 took world171-world174)');
   assert.equal(relaySupportsSd(RELAY_VERSION), true);
-  assert.equal(relaySupportsSd('world171'), false, 'CRYSTAL-FIST\'s relay closes the socket on `sd`');
+  assert.equal(relaySupportsSd('world174'), false, 'LEGACY7\'s relay closes the socket on `sd`');
   for (const v of [undefined, null, '', 'world', 'world17x', 'acct172', 172]) assert.equal(relaySupportsSd(v), false, String(v));
   assert.deepEqual([...SD_KINDS], ['found']);
   assert.deepEqual([...SD_OUT_KINDS], ['ev']);

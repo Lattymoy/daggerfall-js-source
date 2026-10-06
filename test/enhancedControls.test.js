@@ -208,7 +208,7 @@ test('KB1: the pane draws the standard\'s groups - every action once, the two DF
   assert.equal(new Set(all).size, all.length, 'no action in two groups');
   assert.deepEqual([...all, ...HIDDEN_ACTIONS].sort(), [...ACTIONS].sort(), 'every action is in a group, or hidden');
   assert.deepEqual([...HIDDEN_ACTIONS], ['ToggleConsole', 'Slide'], 'hidden: DFU\'s console key (no console) and Slide (read by nothing in DFU either)');
-  assert.deepEqual(ACTION_GROUPS.filter((g) => g.mod).map((g) => g.mod), ['handheld-torches', 'eye-of-the-beholder', 'travel-options', 'horse-cart-and-cargo', 'come-sail-away']);   // CSA-D: the helm's two keys
+  assert.deepEqual(ACTION_GROUPS.filter((g) => g.mod).map((g) => g.mod), ['handheld-torches', 'eye-of-the-beholder', 'travel-options', 'horse-cart-and-cargo', 'come-sail-away', 'project-legacy']);   // CSA-D: the helm's two keys; LEGACY1: the family tree
   const torches = 'handheld-torches';
   const was = modSetting(torches, 'Enabled');
   try {
@@ -396,7 +396,7 @@ test('FIX-F: while a capture is armed EVERY other control is inert (:281 etc.)',
   // Defaults (:299), Continue (:321), CurrentBindings (:338), the
   // keybind button (:361) and the right-click remove (:372, ANDed
   // with the unbound refusal). The classic grid carries it in one
-  // line (ui/controlsWindow.js:388 `if (this.capture) return true;`);
+  // line (ui/controlsWindow.js:"keybindings not working" `if (this.capture) return true;`);
   // this face carries it as the `act` wrapper. Without it CONTINUE
   // saves and re-stages under a LIVE capture, and the Primary toggle
   // flips the dict the pending keystroke is about to be written into.

@@ -6,9 +6,9 @@
 // (ui/questJournal.js) and the history (ui/playerHistory.js) are
 // separate classic windows built at four sites between them:
 //
-//   ui/charSheetNav.js:53   the sheet's LOGBOOK button
-//   ui/charSheetNav.js:61   the sheet's HISTORY button
-//   scenes/world.js:6200    the world host's own logbook
+//   ui/charSheetNav.js:"? () => new QuestJournalWindow"   the sheet's LOGBOOK button
+//   ui/charSheetNav.js:"history: () => new"   the sheet's HISTORY button
+//   scenes/world.js:"on the entity; the"    the world host's own logbook
 //   scenes/dungeonContext.js the dungeon's
 //
 // The seam is the U52/U53/PX23 shape a sixth time. What is new is the

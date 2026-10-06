@@ -57,6 +57,8 @@ let _gridOf = () => null;               // a location key -> the block names its
 let _keyOfTown = () => null;            // (regionIndex, town name) -> its location key (the discovery store's town id)
 let _typeOf = () => null;               // a location key -> its MapTable LocationType, or null
 let _pins = new Map();                  // locationKey -> { out:Set, in:Set, stamp, why }
+let _heldBack = new Set();              // QUEST-AUDIT II PIN-SLEEP: locationKeys whose pin this session could not honour
+let _missingVendors = new Set();        // AUDIT QA2: the layout mods switched on whose packs did not load this session
 let _displaced = () => false;           // ARENA1: a record whose building the port itself took away (world/arenaCity.js)
 
 /** The hosts' half: which layout mods are loaded for the game (the latch) and their versions (the world-data loader,
@@ -208,6 +210,27 @@ export function stampLayout(rec, stamp) {
   else delete rec.layout;
   return rec;
 }
+/**
+ * QUEST-AUDIT II PIN-SLEEP: WHETHER A RECORD'S TOWN IS ONE WHOSE PIN THIS SESSION COULD NOT HONOUR - a pack the pin
+ * lets in did not load (offline, Replace Game Artwork off or a pack missing; online, a fetch that failed), so the town
+ * stands in a layout its records were not made in for this session only. Such a record SLEEPS: the house's deed does
+ * (banking.js deedStands), and the player is told (PINS_DROPPED_LINE). A quest's site was CHOSEN AGAIN instead and
+ * stamped with the layout the failed session stood (place.js reseatMovedSite) - a temporary failure rewritten into the
+ * save, which from then on pinned the town to that layout against the quest's other records (a guild contact met in the
+ * mod's hall could never be handed in again). The re-seat asks this first and leaves the record unseated, to be seated
+ * back the session its layout stands again. `rec`: { mapId, layout } or a questor's { mapID, layout }. AUDIT QA2: and a
+ * record whose own stamp names a layout mod switched on whose pack did not load this session (scenes/modWorldData.js
+ * worldDataPacksMissing) - online the room's pins name only its homes' towns, and a client whose pack fetch failed
+ * chose every other town's quest site again in Daggerfall's layout and stamped it so. A stamp names only the mods that
+ * change its town (layoutModTouches), so such a town stands apart this session wherever it is.
+ */
+export function recordHeldBack(rec) {
+  const key = layoutLocationKeyOfMapId(rec?.mapId ?? rec?.mapID ?? 0);
+  if (key == null) return false;
+  if (_heldBack.has(key)) return true;
+  for (const v of stampVendors(rec?.layout)) if (_missingVendors.has(v)) return true;
+  return false;
+}
 /** The location key of the town a map id names, or null - the hosts' resolver, shared. */
 export const layoutLocationKeyOfMapId = (mapId) => (mapId ? _keyOfMapId(mapId) ?? null : null);
 
@@ -244,8 +267,11 @@ export function pinsFrom(records) {
 }
 
 /** Install a save's pins. Answers the towns whose layout changed (pinned, released, or pinned otherwise) - the
- *  hosts read those locations again and rebuild them if they stand. */
-export function setLayoutPins(pins) {
+ *  hosts read those locations again and rebuild them if they stand. `heldBack`: the towns a pin asked a pack for that
+ *  would not load this session (world.js applyLayoutPins) - their records sleep (recordHeldBack). */
+export function setLayoutPins(pins, { heldBack = null, missing = null } = {}) {
+  _heldBack = new Set(heldBack ?? []);
+  _missingVendors = new Set(missing ?? []);
   const next = pins instanceof Map ? pins : new Map();
   const changed = new Set();
   const same = (a, b) => !!a && !!b && a.out.size === b.out.size && a.in.size === b.in.size && [...a.out].every((v) => b.out.has(v)) && [...a.in].every((v) => b.in.has(v));
@@ -253,6 +279,20 @@ export function setLayoutPins(pins) {
   for (const k of _pins.keys()) if (!next.has(k)) changed.add(k);
   _pins = next;
   return changed;
+}
+
+/** QUEST-AUDIT II PIN-SLEEP: each pin's packs put on the door (`ensure`: vendor -> whether its pack is on the door now -
+ *  scenes/modWorldData.js ensureWorldDataPack), BEFORE the pins answer for them - a pin into a pack that will not load is
+ *  dropped from its pin, and its town stands as the mods loaded for the game serve it, held back: its records sleep
+ *  (recordHeldBack). Lifted out of the world host's applyLayoutPins (AUDIT QA2: a closure no test runs, pinned by its
+ *  text). Answers { dropped, heldBack }. */
+export async function admitPinnedPacks(pins, ensure) {
+  let dropped = 0;
+  const heldBack = new Set();
+  for (const [key, pin] of pins) {
+    for (const v of [...pin.in]) if (!(await ensure(v))) { pin.in.delete(v); dropped++; heldBack.add(key); }
+  }
+  return { dropped, heldBack };
 }
 
 /** The layout mods some pin lets in though they are not loaded for the game - their packs must be on the door. */
@@ -297,6 +337,8 @@ export function layoutRecordsOf({ houses = [], rooms = [], sites = [], questors 
 /** Tests: back to no pins, no mods. */
 export function _resetLayoutPins() {
   _pins = new Map();
+  _heldBack = new Set();
+  _missingVendors = new Set();
   _typeOf = () => null;
   _vendorOn = () => false;
   _vendorVersion = () => '';

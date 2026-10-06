@@ -8,7 +8,7 @@
 // `pauseWhileOpened = false` and a clear background (:83-84), which is
 // a window that does not stop the game - the player keeps walking
 // underneath it. The port's overlay slot is the opposite: a townTalk
-// overlay HOLDS the motor and the world clock (scenes/world.js:24490,
+// overlay HOLDS the motor and the world clock (scenes/world.js:"window.__spawnEncounter".."const pf = walkMode && playerSpawned ? player.pos : cam.pos;",
 // `_overlayHeld`), which is exactly what a journey must not do. So this
 // panel lives on the HUD layer, drawn by the host's `drawHud` pass and
 // clicked through the host's pointer ladder beside the large HUD's own
@@ -84,8 +84,8 @@ export async function preloadTravelControlArt(deps = {}) {
       // so drawScreenQuad ran untextured and painted the whole 320x27
       // strip as one opaque white bar with the yellow text on top. The
       // port's idiom for a vendored PNG on a screen quad is
-      // handheldTorches.js:264 - toScreenOrder, then upload, then
-      // `{ tex, w, h }` (loadImg's own shape, ui/nativePanel.js:52-58).
+      // handheldTorches.js:"frame++;" - toScreenOrder, then upload, then
+      // `{ tex, w, h }` (loadImg's own shape, ui/nativePanel.js:"export async function loadImg").
       const px = toScreenOrder(await decodePng(bytes));
       const tex = deps.renderer?.uploadTexture?.('img', 'travelopts:TOcontrolUI', px, { mips: false, variant: '#travelopts' }) ?? null;
       strip = tex ? { tex, w: px.width, h: px.height, key: 'TOcontrolUI' } : null;

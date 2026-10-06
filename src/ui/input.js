@@ -603,7 +603,7 @@ export function overlayAction(e) {
   // `'-': 'minus'`, `r: 'reroll'`, `R: 'reroll'` that used to stand
   // here were unreachable and read as a promise the module could not
   // keep. A consumer that wants those keys reads 'char:-' / 'char:r' /
-  // 'char:R' beside its own action name, as ui/chargen.js:1863 already
+  // 'char:R' beside its own action name, as ui/chargen.js:"the cancel arm (:458-461)" already
   // did and ui/charsheet.js's LevelUpScreen now does. The branches are
   // deliberately NOT reordered: putting the table first would starve
   // every text field of '-', 'r' and 'R'. '+' and '=' are outside the
@@ -682,6 +682,13 @@ export function isDomControlTarget(t) {
   return !!t && (t.tagName === 'BUTTON' || t.tagName === 'SELECT' || t.tagName === 'SUMMARY' || (t.tagName === 'A' && !!t.href));
 }
 
+/** AUDIT LEGACY II U3: a Tab inside a DOM window that OWNS the keyboard's focus (its host marked `data-dom-focus` - the
+ *  pause window) is the browser's walk of it. Both hosts' overlay rungs prevented every key, so Tab moved nothing and
+ *  the Family tab's plates, its card's acts and every page's controls were a mouse's or a finger's alone. */
+export function isDomFocusWalk(e) {
+  return e?.key === 'Tab' && !!e.target?.closest?.('[data-dom-focus]');
+}
+
 /**
  * MAC-L3: THE BROWSER MENU, SHUT ONCE.
  *
@@ -727,6 +734,7 @@ export function routeKey(e, ctx, setPlayerPos = null, keys = null) {
   // overlay - a DOM field over the world (an enhanced prompt) is typed into with no overlay in the host's slot, and
   // every letter was an action (M the map, R the rest).
   if (isTextEntryTarget(e?.target)) return false;
+  if (ctx.uiOverlayActive && isDomFocusWalk(e)) return false;   // AUDIT LEGACY II U3: the window's own focus walk
   if (ctx.uiOverlayActive) {
     // U26: a NATIVE window keys off raw codes, exactly as townTalk's
     // seam has since G2 - the action map ('back'/'confirm'/'up') is
@@ -908,6 +916,9 @@ export function routeAction(action, ctx, setPlayerPos = null) {
     // openPauseFlow opens the enhanced pages for it), or says why not
     // HELM-KEYS' merge: the key shares the down arrow with less sail - at a helm it is the sails' alone (`sailing`)
     case 'Professions': return ctx.togglePause && ctx.sailing?.() !== true ? (ctx.togglePause({ at: 'professions', setPlayerPos }), true) : false;
+    // LEGACY3 (Mac: "implement it into the pause menu as a new tab"): Project Legacy's key opens the pause on its Family tab -
+    // on either skin (ui/pauseDoor.js openPauseFlow opens the enhanced pages for it). Its mod's switch is actionLive's.
+    case 'LegacyFamily': return ctx.togglePause ? (ctx.togglePause({ at: 'family', setPlayerPos }), true) : false;
     // GameManager.cs:550-553 - the CastSpell ACTION opens the
     // spellbook window; the cast itself is the attack click.
     case 'CastSpell': ctx.toggleSpellbook(); return true;

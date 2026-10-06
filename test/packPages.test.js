@@ -15,6 +15,7 @@ import { TABS, filterByTab } from '../src/ui/nativeInventory.js';
 import { GROUP_TEMPLATE_INDICES } from '../src/systems/itemTemplates.js';
 import { createPotion, POTION_TEMPLATE_INDEX } from '../src/systems/loot.js';
 import { SPELLBOOK_TEMPLATE_INDEX } from '../src/systems/spellMaker.js';
+import { letterOfCredit } from '../src/systems/inventory.js';   // WALLET1: the producer's own letter
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 
@@ -59,7 +60,11 @@ test('PX31: where things live - the pages a player looks for', () => {
   assert.equal(p('UselessItems1', 82), 'misc', 'a glass jar shares the potion\'s group and is not a potion');
   assert.equal(p('Gems', 0), 'valuables', 'a ruby is an ingredient to DFU and a valuable to a player');
   assert.equal(p('Jewellery', 135), 'valuables');
-  assert.equal(p('Currency', 276), 'valuables', 'a letter of credit');
+  assert.equal(p('Currency', 276), 'valuables', 'the Currency group (276 is DFU\'s Gold Pieces, were it ever an item - E4\'s counter)');
+  // PIN MOVED (WALLET1): the line above called itself "a letter of credit", a shape no producer mints - DFU's letter is
+  // MiscItems 275, and its group alone filed it under misc. The producer's own letter, here (TEST THE SHAPE THE PRODUCER MINTS)
+  assert.equal(pageOf(letterOfCredit(5000)), 'valuables', 'a letter of credit, as the bank and the counter mint it');
+  assert.equal(p('MiscItems', 276), 'misc', 'the letter\'s group alone is misc\'s');
   assert.equal(p('Deeds', 0), 'valuables', 'a deed reuses the gem indices and is not a gem');
   assert.equal(p('Paintings', 284), 'valuables');
   assert.equal(p('PlantIngredients1', 8), 'ingredients');
@@ -79,7 +84,9 @@ test('PX31: the pack draws the pages; the classic keeps DFU\'s four', () => {
   const src = read('src/ui/enhancedInventory.js');
   assert.match(src, /import \{ PACK_PAGES, PAGE_IDS, pageOf, filterByPage \} from '\.\/packPages\.js';/);
   assert.doesNotMatch(src.replace(/^\s*(\/\/|\*|\/\*).*$/gm, ''), /filterByTab\(|\bTABS\b/, 'the pack no longer reads the four (its prose may still name them)');
-  assert.match(src, /tabs: PACK_PAGES\.map\(\(\[tab, label\]\) => \(\{ tab, label, items: filterByPage\(items, tab\) \}\)\)/);
+  // PIN MOVED (WALLET1): the pages are drawn from the pack less what its wallet holds (`paged` - systems/walletItem.js)
+  assert.match(src, /tabs: PACK_PAGES\.map\(\(\[tab, label\]\) => \(\{ tab, label, items: filterByPage\(paged, tab\) \}\)\)/);
+  assert.match(src, /const paged = held\.size \? items\.filter\(\(it\) => !held\.has\(it\)\) : items;/);
   assert.match(src, /for \(const \{ tab: t, label, items: rows \} of model\.tabs\) \{\s*\n\s*const n = rows\.length;\s*\n(?:\s*\/\/[^\n]*\n)*\s*const b = el\('button', `packtab\$\{t === tab \? ' on' : ''\}\$\{n \? '' : ' tabempty'\}`, label\);/, 'each page by its label, dimmed when empty');
   assert.match(src, /tab = pageOf\(taken\);/, 'the page follows what arrived');
   const css = read('src/ui/enhancedStyle.js');

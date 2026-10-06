@@ -93,12 +93,12 @@
   {
     "name": "ACC3c-11-the-roster-trusts-the-relay",
     "file": "src/net/roster.js",
-    "old": "    rows.push({ id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from), gt: readGuildTag(from) });",
-    "new": "    rows.push({ id, name: sanitizeName(name), tag: tagOf(id), me, title: from?.title ?? null, glyphs: from?.glyphs ?? [], gt: readGuildTag(from) });",
+    "old": "      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, ...readBadge(from), gt: readGuildTag(from) };",
+    "new": "      const row = { id, name: sanitizeName(name), tag: tagOf(id), me, title: from?.title ?? null, glyphs: from?.glyphs ?? [], gt: readGuildTag(from) };",
     "tests": [
       "test/acc3wear.test.js"
     ],
-    "note": "A second spelling of the vocabulary check, and a weaker one: the relay only ever sends what a signature carried, so anything else is a relay that is older, newer or not ours - and an unchecked `title` is arbitrary text painted beside a name in a list."
+    "note": "A second spelling of the vocabulary check, and a weaker one: the relay only ever sends what a signature carried, so anything else is a relay that is older, newer or not ours - and an unchecked `title` is arbitrary text painted beside a name in a list. PERF-ON3 (re-aimed by content): the roster row is built once into its memo (`const row = {...}`) rather than pushed whole; the mutant still trusts the relay's title and glyphs."
   },
   {
     "name": "ACC3c-12-the-badge-left-out-of-the-repaint-key",

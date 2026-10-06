@@ -162,7 +162,7 @@ test('audit24 wave41: SetVolumeScale is lazy, and it leaves the attack sound sta
   const brig = new EnemySoundSource(BRIGAND, scripted(0));
   for (let i = 0; i < 10; i++) brig.tick(1, 1, () => { mutedCasts++; return true; });
   // AUDIT 58: `waitCounter >= 0` was VACUOUS - the field starts at 0
-  // (enemySounds.js:103), only ever takes `dt > 0 ? dt : 0` (:120) or a
+  // (enemySounds.js:"this.volumeScale = 1".."this.waitCounter = 0;"), only ever takes `dt > 0 ? dt : 0` (enemySounds.js:"this.waitCounter +=") or a
   // reset to 0 (:120), so it is non-negative by construction and the
   // assertion held even for a source whose clock never advanced at all,
   // which is exactly what its message claimed to exclude. scripted(0)

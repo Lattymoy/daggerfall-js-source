@@ -146,20 +146,22 @@
   {
     "name": "LW7-hand-unread",
     "file": "src/systems/livingWorld/lives.js",
-    "old": "  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? null;",
-    "new": "  const at = turns?.died?.get(key) ?? null;",
+    "old": "  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? turns?.killed?.get(key) ?? null;",
+    "new": "  const at = turns?.died?.get(key) ?? turns?.killed?.get(key) ?? null;",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-died-unread",
     "file": "src/systems/livingWorld/lives.js",
-    "old": "  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? null;",
-    "new": "  const at = turns?.slain?.get(key) ?? null;",
+    "old": "  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? turns?.killed?.get(key) ?? null;",
+    "new": "  const at = turns?.slain?.get(key) ?? turns?.killed?.get(key) ?? null;",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-hand-not-a-death",
@@ -263,11 +265,12 @@
   {
     "name": "LW7-slain-unseen-words",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "const newsPool = (item) => (item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']",
-    "new": "const newsPool = (item) => (item.kind === 'slain' ? SLAIN_NEWS.seen",
+    "old": "  : item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']",
+    "new": "  : item.kind === 'slain' ? SLAIN_NEWS.seen",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "LEGACY6 (PIN MOVED): re-aimed by content - the pool asks a kinsman's news first now (KIN_NEWS), so the slain arm opens its own line."
   },
   {
     "name": "LW7-died-words",
@@ -362,11 +365,12 @@
   {
     "name": "LW7-kin-home",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    return this.peopleOf(day).filter((r) => r.id !== res.id && r.home === res.home);",
+    "old": "    return this.peopleOf(day).filter((r) => r.id !== res.id && householdKeyOf(r) === hh);",
     "new": "    return this.peopleOf(day).filter((r) => r.id !== res.id);",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content."
   },
   {
     "name": "LW7-slain-unmade",
@@ -407,11 +411,12 @@
   {
     "name": "LW7-slain-left-standing",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    this._take(res);\n    return res.id;\n  }\n\n  /** LW7: one of the watch STRUCK",
-    "new": "    return res.id;\n  }\n\n  /** LW7: one of the watch STRUCK",
+    "old": "    this._lent.delete(res.id);   // WATCH-FIX: his guard cut down\n    this._take(res);",
+    "new": "    this._lent.delete(res.id);   // WATCH-FIX: his guard cut down",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "WATCH-DAY (re-aimed by content): WATCH-FIX set killed() between slain() and struck(), and the record's text - the take before the struck's comment - had moved onto killed()'s own take, where lw7_deeds cannot see it (it survived); aimed at slain()'s take again, and killed()'s has its own record (watchfix.json WATCH-FIX-killed-left-standing)."
   },
   {
     "name": "LW7-slain-other-town",
@@ -488,20 +493,22 @@
   {
     "name": "LW7-deed-census-name",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "        const who = h.who || this.residents.find((r) => placeKeyOf(r) === place)?.name || '';",
+    "old": "        const who = h.who || res?.name || '';",
     "new": "        const who = h.who || '';",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-deed-died-unread",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    for (const kind of /** @type {const} */ (['slain', 'died'])) {",
-    "new": "    for (const kind of /** @type {const} */ (['slain'])) {",
+    "old": "    for (const kind of /** @type {const} */ (['slain', 'died', 'killed'])) {",
+    "new": "    for (const kind of /** @type {const} */ (['slain', 'killed'])) {",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-deed-order",
@@ -560,11 +567,12 @@
   {
     "name": "LW7-dead-walk",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "      if (this.o.deadAt?.(res, t)) continue;   // LW7",
-    "new": "      void 0;   // LW7",
+    "old": "if (this._taken.get(res.id) === day || this.o.deadAt?.(res, t)) {",
+    "new": "if (this._taken.get(res.id) === day) {",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-road-slay-unmade",
@@ -650,11 +658,12 @@
   {
     "name": "LW7-host-dead-any",
     "file": "src/scenes/world.js",
-    "old": "    if (!turns.slain.size && !turns.died.size) return false;",
+    "old": "    if (!turns.slain.size && !turns.died.size && !turns.killed.size) return false;",
     "new": "    if (!turns.slain.size) return false;",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-host-dead-before",
@@ -668,8 +677,8 @@
   {
     "name": "LW7-host-slay-unseen",
     "file": "src/scenes/world.js",
-    "old": "{ t, seen, who: res.name }); };",
-    "new": "{ t, seen: false, who: res.name }); };",
+    "old": "{ t, seen, who: res.name });\n  };",
+    "new": "{ t, seen: false, who: res.name });\n  };",
     "tests": [
       "test/lw7_deeds.test.js"
     ]
@@ -731,11 +740,12 @@
   {
     "name": "LW7-host-town-options",
     "file": "src/scenes/world.js",
-    "old": "          holderOf: (res, day) => livingPlaceOf(res, livingCycleOf(res, day)).holder, deadAt: livingDeadAt, slay: livingSlay,",
+    "old": "          holderOf: (res, day) => (legacyHost?.holdsResident(res.id) ? null : livingPlaceOf(res, livingCycleOf(res, day)).holder), deadAt: livingDeadAt, slay: livingSlay,",
     "new": "          deadAt: livingDeadAt, slay: livingSlay,",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "LEGACY5 (PIN MOVED): re-aimed by content."
   },
   {
     "name": "LW7-host-sees-blind",
@@ -784,12 +794,15 @@
   },
   {
     "name": "LW7-host-watch-untracked",
-    "file": "src/scenes/world.js",
-    "old": "    if (town.struck(person)) _livingWatchTurned.push(",
-    "new": "    if (town.struck(person) && false) _livingWatchTurned.push(",
+    "file": "src/scenes/livingWatch.js",
+    "old": "    if (!g?.livingFrom || g.livingFollowed) continue;",
+    "new": "    if (!g?.livingFrom || g.livingFollowed || true) continue;",
     "tests": [
-      "test/lw7_deeds.test.js"
-    ]
+      "test/lw7_deeds.test.js",
+      "test/watchfix_watch.test.js",
+      "test/lwfix2_watch.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-host-trample",
@@ -803,11 +816,12 @@
   {
     "name": "LW7-host-watch-unstepped",
     "file": "src/scenes/world.js",
-    "old": "    if (_livingWatchTurned.length) livingWatchStep();",
-    "new": "    if (false) livingWatchStep();",
+    "old": "    if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }",
+    "new": "    if (livingWorldOn()) { livingPeerWatchStep(); }",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-host-road-unstruck",

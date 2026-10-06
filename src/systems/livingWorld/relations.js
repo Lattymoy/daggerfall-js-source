@@ -19,7 +19,8 @@
 // changed in it is theirs (lives.js, trouble.js read them over the dice).
 //
 // LW7: THE HAND DEATHS (`HAND_KINDS`) ride it too, each with its minute and the name they bore: a resident the player
-// struck down (`slain`, and whether it was seen) and one who died fighting at the player's side (`died`) - deaths the
+// struck down (`slain`, and whether it was seen), one who died fighting at the player's side (`died`) and - WATCH-FIX -
+// one of the watch another hand cut down in the player's town (`killed`: a beast, a fall, another player) - deaths the
 // road's dice never held, so the lives take the place from that minute (lives.js handDeath) and the road keeps the rest
 // of the day as it was; the town talks of them by name (livingTown.js deedNews).
 
@@ -41,7 +42,7 @@ export const TURN_KINDS = Object.freeze(['spared', 'fallen', 'won', 'lost']);
 export const TURNS_MAX = 200;
 /** LW7: the hand deaths - a turn with its minute, whether it was seen and the name (`{ t, seen, who }`), kept as the
  *  turns are. */
-export const HAND_KINDS = Object.freeze(['slain', 'died']);
+export const HAND_KINDS = Object.freeze(['slain', 'died', 'killed']);
 /** LW7: the longest name a hand death keeps. */
 export const HAND_NAME_MAX = 60;
 /** LW6b: the marks of what the living world has laid in this character's world - `laid`, the fallen of a dive left in
@@ -92,7 +93,7 @@ export function createRelations(record = null) {
   const tales = Object.fromEntries(TALE_KINDS.map((k) => [k, new Map()]));
   const nameOk = (who) => (typeof who === 'string' ? who.slice(0, HAND_NAME_MAX) : '');
   /** The turns as one read - the same sets and maps `turn` writes into. */
-  const allTurns = /** @type {{ spared: Set<string>, fallen: Set<string>, won: Set<string>, lost: Set<string>, slain: Map<string, Hand>, died: Map<string, Hand>, laid: Set<string>, home: Map<string, Hand> }} */ (/** @type {any} */ ({ ...turns, ...hands, ...marks, ...tales }));
+  const allTurns = /** @type {{ spared: Set<string>, fallen: Set<string>, won: Set<string>, lost: Set<string>, slain: Map<string, Hand>, died: Map<string, Hand>, killed: Map<string, Hand>, laid: Set<string>, home: Map<string, Hand> }} */ (/** @type {any} */ ({ ...turns, ...hands, ...marks, ...tales }));
   let turnsVersion = 0;
   const turnOk = (key) => typeof key === 'string' && key.length > 0 && key.length <= 80;
   if (record && typeof record === 'object' && record.v === 1 && record.turns && typeof record.turns === 'object') {
@@ -173,6 +174,21 @@ export function createRelations(record = null) {
       trim(day, id);
       return e.r;
     },
+    /**
+     * LEGACY6: a regard HANDED DOWN - a share of a parent's (systems/legacy/influence.js inheritRegards), added to what
+     * stands on `day`. No word is counted for it, and a stranger is met by it. Answers the new regard.
+     * @param {string} id @param {number} amount @param {number} day
+     */
+    inherit(id, amount, day) {
+      if (!ok(id) || !Number.isFinite(amount) || !amount) return 0;
+      /** @type {Regard} */
+      const e = map.get(id) ?? { r: 0, met: day, seen: day, talked: -1 };
+      e.r = clamp(eased(e, day) + amount);
+      e.seen = day;
+      map.set(id, e);
+      trim(day, id);
+      return e.r;
+    },
     /** The player saw `id` on `day` (the regard stops easing from today). @param {string} id @param {number} day */
     seen(id, day) { const e = map.get(id); if (e) { e.r = eased(e, day); e.seen = day; } },
     /**
@@ -181,7 +197,7 @@ export function createRelations(record = null) {
      * slain, whether it was `seen`. Answers whether it was new.
      * LW6b: or one of MARK_KINDS, a mark kept as a turn is.
      * LW6d: or one of TALE_KINDS, a tale with its minute and the name it tells of.
-     * @param {'spared'|'fallen'|'won'|'lost'|'slain'|'died'|'laid'|'home'} kind @param {string} key @param {{ t: number, seen?: boolean, who?: string }} [at]
+     * @param {'spared'|'fallen'|'won'|'lost'|'slain'|'died'|'killed'|'laid'|'home'} kind @param {string} key @param {{ t: number, seen?: boolean, who?: string }} [at]
      */
     turn(kind, key, at) {
       const tale = tales[kind];   // LW6d: a tale is kept as a hand death is - its minute, the name it tells of

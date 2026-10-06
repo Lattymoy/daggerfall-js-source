@@ -45,7 +45,7 @@
 // reload. Classic works that way because classic is a DOS program with
 // a fixed 320x200 screen. Neither reason survives here.
 //
-// This is ONE screen, under BOTH skins (main.js:131-256, FD1: the
+// This is ONE screen, under BOTH skins (main.js:"── THE FRONT DOOR", FD1: the
 // launcher and its settings window are deleted; the classic rail is
 // Begin, which leads into the splash and PICK03I0 exactly as before).
 // Every destination is a press away from every other, settings
@@ -150,6 +150,8 @@ import { vendorPageShown, VENDOR_PAGE_SECTIONS, drawVendorPage } from './vendorP
 import { REVENANT_PAGE_SECTIONS, revenantPageShown, drawRevenantsPage } from './revenantPage.js';
 import { COMPANION_PAGE_SECTIONS, companionPageShown, drawCompanionsPage, resetCompanionRoster } from './companionRoster.js';   // COMPANION-ROSTER: the sworn and the slots
 import { STABLE_PAGE_SECTIONS, stablePageShown, drawStablePage, resetHoldingsPages } from './holdingsPages.js';   // HOLDINGS: the horse and the wagon
+import { FAMILY_PAGE_SECTIONS, drawTreePage, drawHousePage, drawHallPage, resetFamilyPages, disarmFamilyPages, sheetHouse } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab; LEGACY-SHEET: the house on the Stats page
+import { legacyOn } from '../systems/legacy/settings.js';   // LEGACY3: ...drawn while the mod is on
 import { FLEET_PAGE_SECTIONS, fleetPageShown, drawFleetPage, resetFleetPage } from './fleetPage.js';   // HOLDINGS: the ships
 import { swornBodyOf } from '../systems/revenantCompanions.js';   // COMPANION-ROSTER: a sworn one's live health
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // REVENANT-PAGE: a revenant's kind   // REVENANT-PAGE: the foes that have earned your name
@@ -317,6 +319,7 @@ let bountyAbandonArmed = null;   // BOUNTY1: the bounty whose Abandon was presse
 let journalCleanArmed = null;   // JOURNAL-CLEAN: 'f:<index>' (Remove) | 'clear' (Clear archive) pressed once - the second press acts
 let questShowHidden = false;    // JOURNAL-CLEAN: the rail's "Show hidden" - whether the hidden quests are drawn, in their own section
 let statsSec = 'character'; // PX6: the Stats page's rail - character | attributes | skills | standing
+let famSec = 'tree';       // LEGACY3: the Family page's rail - tree | house | hall
 let holdSec = 'stable';     // HOLDINGS: the Holdings page's rail - stable | fleet | companions | revenants | stores
 let statsAllSkills = false; // PX6: the Miscellaneous disclosure, the sheet's own gesture
 let sysSec = 'save';        // PX7: the System page's rail - which pane fills the detail
@@ -855,7 +858,7 @@ function paneContinue(body) {
 // settings, because they are questions about the game you are about to
 // start and nowhere else. StartInDungeon in particular is the answer
 // to "do I begin in Privateer's Hold" - a new-game question wearing a
-// settings key's clothes (systems/settings.js:94-99).
+// settings key's clothes (systems/settings.js:"BG1: ShopQualityPresentation.").
 function paneNew(body) {
   const c = el('div', 'card');
   c.append(el('h3', null, 'A new character'));
@@ -1190,7 +1193,7 @@ function bringOnline(save) {
   const snap = realmIoNow() ? loadSlot(save.key) : null;
   if (!snap || typeof snap.characterId !== 'string' || !snap.characterId || snap.testRoom === true) return customsNow(save);
   const trial = JSON.parse(JSON.stringify(snap));
-  const leveling = crossLeveling(trial);   // LEVEL-ONLINE: a Daggerfall-levelling character comes in on Oblivion's bar - said first
+  const leveling = crossLeveling(trial);   // LEVEL-ONLINE-2: an Oblivion-levelling character comes in on Daggerfall's leveling - said first
   const preview = [...(leveling ? [LEVELING_CROSS_LINE.before] : []), ...customsLines(applyCustoms(trial), { before: true })];
   return ask(`Bring ${save.name} online?`, preview.join(' '), 'Bring online', () => { customsNow(save); });
 }
@@ -1205,7 +1208,7 @@ function customsNow(save) {
     if (typeof snap.characterId !== 'string' || !snap.characterId) return { ok: false, error: 'customs-load-once' };
     if (snap.testRoom === true) return { ok: false, error: 'test-room' };   // AUDIT SET D4's law: the room's characters play offline
     const copy = onlineCopyOf(snap, sharedClassicMinutes(Date.now()));   // AUDIT LIVED1 G: the world's stamps onto the shared clock, and the world's minute it joins at
-    const leveling = crossLeveling(copy);   // LEVEL-ONLINE: a new online character levels the Oblivion way (the offline one keeps its own)
+    const leveling = crossLeveling(copy);   // LEVEL-ONLINE-2: a new online character levels the Daggerfall way (the offline one keeps its own)
     const report = applyCustoms(copy);
     const made = await realmCustoms(io, snap.characterId, copy.name || save.name, realmSummaryOf(copy));
     if (!made.ok) return made;
@@ -1303,7 +1306,7 @@ function paneLoad(body) {
     actions: [
       // NO CONFIRM ON LOAD, in either mode. It discards unsaved play,
       // which is the shape AUDIT F3/F4 made confirm - but classic's
-      // own pause window loads on one press (pauseWindow.js:346-348)
+      // own pause window loads on one press (pauseWindow.js:"exterior host, whose".."this._closeWith();")
       // and so does F11, and inventing a prompt on exactly one of the
       // port's three load doors is a divergence, not a safety net.
       { label: 'Load', primary: true, disabled: !canLoad, onClick: () => { _pickedSaveKey = save.key; onAction('load'); } },
@@ -1396,7 +1399,7 @@ function transferCard(count) {
 
 // ── SAVE GAME (pause only) ───────────────────────────────────────
 // U51. Classic's SAVE button closes the window and then writes
-// (pauseWindow.js:319-321, `this._closeWith(); ... this.hooks.quickSave?.()`),
+// (pauseWindow.js:"window, so it relocks".."this._closeWith();", `this._closeWith(); ... this.hooks.quickSave?.()`),
 // and this does the same for a reason that is not only parity: the
 // port answers a write with a HUD LINE, and this screen is a fixed
 // opaque div over the whole canvas, so a save that left the door open
@@ -1469,7 +1472,7 @@ function paneSave(body) {
 
 // ── EXIT (pause only) ────────────────────────────────────────────
 // U51. Classic confirms on TEXT.RSC 1069 and then posts dfuiExitGame
-// (pauseWindow.js:223-226); in a browser Application.Quit means nothing,
+// (pauseWindow.js:"if (this._saveSettings) saveSettings();   // ConfirmExitBox"); in a browser Application.Quit means nothing,
 // so the port's door out has always been the front door - the same
 // unwind chargen's cancel and the death sequence use (Ledger A).
 //
@@ -1795,7 +1798,7 @@ function write(key, next) {
 }
 
 // ── MODS ─────────────────────────────────────────────────────────
-// There is NO mod system (Ledger C, Not planned - and settings.js:170
+// There is NO mod system (Ledger C, Not planned - and systems/settings.js:"UI4: the item info"
 // blocks four keys on exactly that ground). The section still exists,
 // because Mac's call was to set the menus up now, and because a rail
 // that quietly omits mods teaches the player they are impossible.
@@ -3602,9 +3605,13 @@ function appendPxFoot(home) {
 // ── PX3: THE PAUSE WINDOW ────────────────────────────────────────
 // HOLDINGS (2026-10-03, Mac: "Lets add a new tab to the pause menu as the stat page is starting to get bloated"): what the
 // player owns and who follows them moved off the Stats rail onto a tab of their own (pauseHoldings, below).
-const PAUSE_TABS = Object.freeze([['quests', 'Quests'], ['stats', 'Stats'], ['holdings', 'Holdings'], ['system', 'System']]);
+// LEGACY3 (2026-10-05, Mac: "implement it into the pause menu as a new tab"): Project Legacy's family - its tree, its house
+// and the Hall of Ancestors - on a tab of its own (pauseFamily, below; ui/familyPages.js).
+const PAUSE_TABS = Object.freeze([['quests', 'Quests'], ['stats', 'Stats'], ['holdings', 'Holdings'], ['family', 'Family'], ['system', 'System']]);
 /** HOLDINGS: every tab a landing may name (mountEnhancedMenu's `at`). */
 export const PAUSE_TAB_IDS = Object.freeze(PAUSE_TABS.map(([id]) => id));
+/** LEGACY3: a tab drawn now - the Family tab while Project Legacy is on (a landing on it with the mod off lands on System). */
+const pauseTabShown = (id) => id !== 'family' || legacyOn();
 // The token formattings that carry a journal line - questJournal's own
 // counted set (DaggerfallQuestJournalWindow.cs:658-662 via its :322).
 
@@ -3613,16 +3620,17 @@ function pauseWindow() {
   for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
 
   const tabs = el('div', 'px-tabs');
-  for (const [id, label] of PAUSE_TABS) {
+  if (!pauseTabShown(pauseTab)) pauseTab = 'system';
+  for (const [id, label] of PAUSE_TABS.filter(([id]) => pauseTabShown(id))) {
     const b = el('button', id === pauseTab ? 'on' : null);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
-    b.onclick = () => { if (id !== 'system') discardControlsStaging(); pauseTab = id; render(); };
+    b.onclick = () => { if (id !== 'system') discardControlsStaging(); disarmFamilyPages(); pauseTab = id; render(); };
     tabs.append(b);
   }
   win.append(tabs);
 
   const body = el('div', 'px-body');
-  ({ quests: pauseQuests, stats: pauseStats, holdings: pauseHoldings, system: pauseSystem })[pauseTab](body);
+  ({ quests: pauseQuests, stats: pauseStats, holdings: pauseHoldings, family: pauseFamily, system: pauseSystem })[pauseTab](body);
   win.append(body);
   return win;
 }
@@ -3666,6 +3674,31 @@ function pauseHoldings(body) {
     stores: (d) => drawStoresPage(d, render, kit),   // PROF1
   }[holdSec];
   draw?.(detail);
+  wrap.append(detail);
+  body.append(wrap);
+}
+
+// ── LEGACY3: THE FAMILY PAGE ────────────────────────────────────
+// The journal's bones once more (PX6's rail of pages, the chosen one on the right): Project Legacy's tree, its house
+// and the Hall of Ancestors (ui/familyPages.js). Every page says why when there is no family to show.
+function pauseFamily(body) {
+  const wrap = el('div', 'px-journal');
+  const rail = el('div', 'px-qrail');
+  if (!FAMILY_PAGE_SECTIONS.some(([id]) => id === famSec)) famSec = 'tree';
+  for (const [id, label] of FAMILY_PAGE_SECTIONS) {
+    const b = el('button', `px-qrow${id === famSec ? ' on' : ''}`);
+    b.append(el('span', 'px-c', '◆'), document.createTextNode(label));
+    b.onclick = () => { famSec = id; disarmFamilyPages(); render(); };   // AUDIT LEGACY U8: an armed act never waits for the way back
+    rail.append(b);
+  }
+  wrap.append(rail);
+  const detail = el('div', 'px-qdetail px-sys');
+  // an act that takes the player out of the game (a switch's load, a birth, the mantle's Succession): the pause goes down
+  // first, as the Fleet's doors do, and comes back if the act did nothing
+  // AUDIT LEGACY U4: a refused act is refused on the card before the press (switchRefusal, mantleRefusal); one refused
+  // after it (a save that would not take) is said on the HUD by the host, and the world resumes under it
+  const kit = { el, divider: pxDivider, door: (fn) => { onAction('handoff'); const r = fn(); if (!r?.ok) onAction('resume'); return r; } };
+  ({ tree: drawTreePage, house: drawHousePage, hall: drawHallPage })[famSec](detail, render, kit);
   wrap.append(detail);
   body.append(wrap);
 }
@@ -3750,7 +3783,7 @@ const STATS_SECTIONS = Object.freeze([
   ['effects', 'Effects'],   // BUFF-END: the spells on you, and an End on the ones that are yours to end
 ]);
 // The five NAMED social groups getReactionToPlayer reads
-// (formats/factionFile.js:23-27; talk.js seeds the array) - the enum
+// (formats/factionFile.js:"export const SOCIAL_GROUPS"; talk.js seeds the array) - the enum
 // slots past Underworld are DFU's own placeholders and stay unlisted.
 const SOCIAL_GROUP_NAMES = Object.freeze(['Commoners', 'Merchants', 'Scholars', 'Nobility', 'Underworld']);
 
@@ -3908,6 +3941,16 @@ function statsCharacter(detail, m) {
     g.append(r);
   }
   detail.append(g);
+  // LEGACY-SHEET (bible/06-Systems/Legacy-Arc.md section 11): THE HOUSE - the one played's own facts off their Family
+  // card (ui/familyPages.js sheetHouse): the model, the generation, and an Enduring house's age, toll and elder's word
+  const house = sheetHouse();
+  if (house) {
+    detail.append(pxDivider(house.title));
+    const h = el('div', 'px-statgrid');
+    for (const [label, v] of house.rows) { const r = el('div', 'px-stat'); r.append(el('span', 'k', label), el('span', 'v', v)); h.append(r); }
+    detail.append(h);
+    if (house.word) detail.append(el('p', 'px-note', house.word));
+  }
   // ARENA2: THE ARENA'S NAME FOR YOU (offline - systems/arenaLadder.js): the title of the highest tier whose champion you
   // beat, Grand Champion over all, and your record on its sand; said only once you have fought there
   if (m.arena) {
@@ -4277,7 +4320,7 @@ function armQuestTimer(span, key) {
 }
 
 /** The finished-quest header the notebook files:
- *  '<name> completed|ended at <date>:' (notebook.js:190-224). The name
+ *  '<name> completed|ended at <date>:' (notebook.js:"AddFinishedQuest(messages)"). The name
  *  and the verdict come back out of it; a headerless overflow entry
  *  (the notebook's own kept quirk) reads as a continuation. */
 
@@ -4385,7 +4428,7 @@ function pauseQuests(body) {
   // The ARCHIVE is not split by kind, and that is not an oversight:
   // the notebook's filed header keeps only the display name, so the
   // questName main/side is gone by the time a quest is filed
-  // (notebook.js:190-224). Three sections is the shape the DATA has.
+  // (notebook.js:"AddFinishedQuest(messages)"). Three sections is the shape the DATA has.
   const mains = active.filter((q) => q.main);
   const sides = active.filter((q) => !q.main);
   const section = (label, items, cls, first = false) => {
@@ -4897,6 +4940,8 @@ export function mountEnhancedMenu(host, {
   resetProfPages();   // PROF1: an armed change of specialisation never outlives the visit
   resetCompanionRoster();   // COMPANION-ROSTER: nor an armed Release
   holdSec = 'stable';   // HOLDINGS: the Holdings rail opens on its first page
+  famSec = 'tree';   // LEGACY3: the Family rail opens on the tree, centred on the one played
+  resetFamilyPages();
   resetHoldingsPages(); resetFleetPage();   // ...and an act's word, an open name field, an armed press never outlive the visit
   statsAllSkills = false;
   sysSec = 'save';
@@ -4911,6 +4956,7 @@ export function mountEnhancedMenu(host, {
   // HOLDINGS: the Professions page is the Stats rail's, the Stores page the Holdings rail's
   if (PROF_STATS_SECTIONS.some(([id]) => id === at)) { pauseTab = 'stats'; statsSec = at; }
   else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'holdings'; holdSec = at; }
+  else if (FAMILY_PAGE_SECTIONS.some(([id]) => id === at)) { pauseTab = 'family'; famSec = at; }   // LEGACY3: a Family page by name
   _eff = null;
   render();
   keyHandler = onKey;
@@ -4984,7 +5030,7 @@ export function runEnhancedMenu(doc = document) {
   return new Promise((resolve) => {
     const menu = mountEnhancedMenu(host, {
       onAction: (action) => {
-        // SAV4 shipped the save manager (systems/saveSlots.js:384
+        // SAV4 shipped the save manager (systems/saveSlots.js:"export function deleteSave"
         // deleteSave), and this file deletes through it at :387 behind
         // an ask() confirm. Nothing routes 'delete' out here - every
         // onAction call site names its own verb and RAIL_ACTS (:162) is

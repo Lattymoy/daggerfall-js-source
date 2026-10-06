@@ -154,7 +154,7 @@ import { NO_WATER_LEVEL } from '../world/deepWaterSwim.js';
 import { invertAffine } from '../world/prefabColliders.js';
 import { buildWaveMesh, stepWaveFrame, waveFrameTimeOf, isDayHour, WAVE_FRAME_COUNT, WAVE_SCALE } from './comeSailAwayWaves.js';
 import { MONTH_NAMES } from './gameDate.js';   // CSA-I: WorldTime.Now.MonthName, a marker's label
-import { HELM_WAY, CARGO_HOLD_MISSING, steerage, isResponsive } from './helmWay.js';   // HELM-WAY: the responsive helm
+import { HELM_WAY, CARGO_HOLD_MISSING, steerage, isResponsive, pointOfSail, seaWind, SAIL_FREE, sailFreeGain } from './helmWay.js';   // HELM-WAY: the responsive helm; SAIL-FREE: her way under sail
 import { MAP_MARKER_MODE_COLORS, mapRect, guiMouse, mapPixelUnder, guiRectContains, vector2IntDistance, markerLabel, dayOfMonthWithSuffix, mapOverlayDraws, csFloatString, COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_BLACK, DAGGERFALL_DEFAULT_SHADOW_POS } from './comeSailAwayMap.js';   // CSA-I: the position reading
 
 export const COME_SAIL_AWAY_VENDOR = 'come-sail-away';
@@ -303,14 +303,17 @@ export const PLACE_RAISED_TEXT = 'This water stands above the sea - place her on
  *  her way ahead under IRONS_TELL_WAY m/s (GALLEON: sternway too, her canvas aback) for IRONS_TELL_S running: the sails
  *  cannot draw and the mod's rudder cannot turn a hull that makes no way, so the helm is told once how she comes out
  *  (IRONS_TEXT) - and the panel says it while it lasts (helmPanelState). The dwell: a sail just raised, or a tack through
- *  the wind's eye, is not lying in irons. AUDIT NAV2 F18: the responsive helm's rudder answers at rest (HELM-WAY's
- *  steerage) - the helm alone brought the mod's galleon IRONS_TELL_DEG off the eye in some ten seconds, and brings the
- *  new galleon off in 6.4 (AUDIT GALLEON T6) - so it is told to put the helm over first (IRONS_HELM_TEXT). */
+ *  the wind's eye, is not lying in irons. SAIL-FREE (helmWay.js, 2026-10-05, Mac's "No tacking, Black Flag"): the mod's
+ *  helm alone - under the responsive helm her canvas draws in the wind's eye and drives her up into it, so she is never
+ *  in irons (AUDIT NAV2 F18's "put the helm over" word, IRONS_HELM_TEXT, was that helm's and went with it). */
 export const IRONS_TELL_DEG = 40;
 export const IRONS_TELL_WAY = 0.4;
+/** AUDIT NAV1/AUDIT 2 XA5 (2026-10-06): the most the port's `brake` seam takes her way off at (m/s^2) - the one bound the
+ *  sea fight's heave-to sizes its own brake by (scenes/navalHost.js heaveToDecel), where the runtime capped it at 20 and the
+ *  heave-to asked up to 47 in a storm, and its ship ran past the one she hove to beside. */
+export const CSA_BRAKE_MAX = 20;
 export const IRONS_TELL_S = 2;
 export const IRONS_TEXT = 'In irons - the wind is dead ahead. Strike sail and row her round.';
-export const IRONS_HELM_TEXT = 'In irons - the wind is dead ahead. Put the helm over, or strike sail and row her round.';
 /**
  * HELM-LADDER (2026-10-04, from the field: "WASD and Arrow keys should function the same when controlling. Allowing you
  * to lower and raise sails" - the throttle ladder chosen; DECLARED, the Port-Ledger's Come Sail Away row): THE HELM'S
@@ -326,6 +329,11 @@ export const IRONS_HELM_TEXT = 'In irons - the wind is dead ahead. Put the helm 
  */
 export const OAR_RUNG_TEXT = Object.freeze({ '-1': 'Oars: backing water.', 0: 'Oars: at rest.', 1: 'Oars: pulling ahead.' });
 export const OAR_ASTERN_TEXT = 'She is already backing water.';
+/** SAIL-FREE (the port's, DECLARED - helmWay.js): the crest of each kind's own curve in GetSailPower - the degrees
+ *  between the wind and a sail's forward at which it pulls its most: a lateen, a gaff and a staysail at SAIL_CREST_DEG
+ *  (each curve's peak, 135), a square sail (any other kind) running dead before it. */
+export const SAIL_CREST_DEG = 135;
+export const sailCrest = (b, sail) => (b.SailsLateen.includes(sail) || b.SailsGaff.includes(sail) || b.SailsStay.includes(sail) ? SAIL_CREST_DEG : 0);
 /** The C#'s field initializers (262-276): the oars' and the sails' speeds, accelerations and turns. */
 export const HANDLING = Object.freeze({
   moveSpeedOar: 2, moveSpeedSail: 2, moveAccelOar: 1, moveAccelSail: f(0.2),
@@ -549,6 +557,12 @@ export function createComeSailAwayRuntime(deps) {
     sailPosition: 0,
     /** HELM-LADDER: the oars' rung - -1 backing water, 0 at rest, 1 pulling ahead (the helm session's, never saved). */
     oarThrottle: 0,
+    /** AUDIT SHIPS A5: the way her CANVAS made (m/s) - AUDIT 2 XA7 (2026-10-06): its part of the way she carries,
+     *  gathered under canvas and lost in its share of whatever takes her way; a coast takes her rig's gain in that share
+     *  (coastAccel), and it is saved with her way. A flag of which arm drove her last (`wayBySail`), a ladder's step
+     *  through the oars' rung and a load each coasted a way her canvas made ungained (19.6 s to 2.5 m/s, not 12.0), and
+     *  a frame of sail over her oars' way coasted it all gained. */
+    sailWay: 0,
     MoveVectorCurrent: [0, 0, 0],
     MoveVectorTarget: [0, 0, 0],
     windVectorTarget: [0, 0, 1],
@@ -661,10 +675,14 @@ export function createComeSailAwayRuntime(deps) {
    *  port's seam - the mod has no hurt): the canvas a shot-up rig still sets under sail, a wreck's oars under oars. */
   function moveSpeed() {
     const b = cur();
-    const hurt = f(Math.max(0, Math.min(1, Number(deps.wayScale?.(state.sailPosition !== 0) ?? 1))));
-    if (state.sailPosition === 0) return f(f(f(f(HANDLING.moveSpeedOar * handlingMod('OarMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedOar)) * hurt);
-    return f(f(f(f(f(HANDLING.moveSpeedSail * handlingMod('SailMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b));
+    const hurt = wayHurt(state.sailPosition !== 0);
+    return state.sailPosition === 0 ? oarSpeed(b, hurt) : sailSpeed(b, hurt);
   }
+  /** The sea fight's share of her way under sail or under oars (`deps.wayScale`). */
+  const wayHurt = (underSail) => f(Math.max(0, Math.min(1, Number(deps.wayScale?.(underSail) ?? 1))));
+  /** moveSpeed's two arms - AUDIT SHIPS A4: each asked of her whichever she makes way by now (sailWayOf, oarWayOf). */
+  const oarSpeed = (b, hurt) => f(f(f(f(HANDLING.moveSpeedOar * handlingMod('OarMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedOar)) * hurt);
+  const sailSpeed = (b, hurt) => f(f(f(f(f(HANDLING.moveSpeedSail * handlingMod('SailMoveSpeed')) * state.boatCargoMod) * f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b));
   /** HOLDINGS (the port's own - bible/03-World/Holdings.md): her Rigging refit, her way under sail and its coming on
    *  (`deps.refit`, the Fleet's; the mod has none) - read where the rates are read, never written into the prefab's
    *  modifiers a variant's change walks again. Oars are her hands', never her rig's. */
@@ -679,23 +697,42 @@ export function createComeSailAwayRuntime(deps) {
   let helmHanded = null;
   const responsive = () => helmHanded ?? handed();
   /** moveAccel: the rate below - or, while the sea fight brakes her (AUDIT NAV1, the helm: a heave-to), its own
-   *  `brake` (m/s^2, the port's seam; the mod has none), whatever her own rate: a heave-to's brake is the sea fight's
-   *  number, not a multiple of a rate the Ship handling choice moves. */
+   *  `brake` (m/s^2, the port's seam; the mod has none), whatever her own rate, CSA_BRAKE_MAX at the most: a heave-to's
+   *  brake is the sea fight's number, not a multiple of a rate the Ship handling choice moves. */
   function moveAccel() {
     const brake = Number(deps.brake?.() ?? 0);
-    return brake > 0 ? f(Math.min(20, brake)) : moveAccelOwn();
+    return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn();
   }
   /** moveAccel (538-551): the oars' only while a key pulls them; with none held the sails' - a coast (kept). HELM-WAY:
    *  under the responsive helm the sails' way comes on at HELM_WAY.sailAccel of it and a coast at HELM_WAY.coast. */
   function moveAccelOwn() {
     const b = cur();
-    if (state.sailPosition === 0 && (state.oarThrottle !== 0 || (has('Run') && (has('MoveRight') || has('MoveLeft'))))) {   // HELM-LADDER: the oars' rung, not a held key
-      return f(f(f(HANDLING.moveAccelOar * handlingMod('OarMoveAcceleration')) * state.boatCargoMod) * f(b.modifierMoveAccelerationOar));
+    // HELM-LADDER: the oars' rung, not a held key - AUDIT SHIPS A5: and the autorun's pull, as the oars' own law asks it
+    // (UpdateSailing's arm, and the mod's autorun, which holds MoveForwards): the journey's oars came on at her coast's rate
+    if (state.sailPosition === 0 && (state.oarThrottle !== 0 || !!deps.input?.toggleAutorun || (has('Run') && (has('MoveRight') || has('MoveLeft'))))) {
+      const oar = f(f(f(HANDLING.moveAccelOar * handlingMod('OarMoveAcceleration')) * state.boatCargoMod) * f(b.modifierMoveAccelerationOar));
+      // AUDIT 2 XA1 (2026-10-06): under the responsive helm the oars' rate GATHERS way - a way above what they make (her
+      // canvas's: no oar made it) is lost no slower than her coast. One rate for both, a galleon struck and rowing took
+      // 48 s and 400 m to come down to her oars' way, four times her coast, and the journey's hand ran her aground on it
+      if (responsive() && vMagnitude(state.MoveVectorCurrent) > vMagnitude(state.velocityTarget ?? [0, 0, 0])) return Math.max(oar, coastAccel(b));
+      return oar;
     }
     if (state.sailPosition === 1) {
-      return f(f(f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * vMagnitude(state.windVectorCurrent)) * state.boatCargoMod) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.sailAccel : 1)) * rigOf(b));   // HOLDINGS: her Rigging
+      // SAIL-FREE: under the responsive helm her way comes on in the sea's bounded wind, the wind her way is reckoned in
+      const wind = responsive() ? f(seaWind(vMagnitude(state.windVectorCurrent))) : vMagnitude(state.windVectorCurrent);
+      const rate = f(f(f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * wind) * state.boatCargoMod) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.sailAccel : 1)) * rigOf(b));   // HOLDINGS: her Rigging
+      return responsive() ? f(rate * f(sailFreeGain(b))) : rate;   // SAIL-FREE: her way's gain - the same handling at her new way (AUDIT SHIPS A5: her rig's)
     }
-    return f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * state.boatCargoMod) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.coast : 1));
+    return coastAccel(b);
+  }
+  /** A COAST's rate (the sails' with none set) - SAIL-FREE: her way's gain, AUDIT SHIPS A5: on the way her canvas made
+   *  (AUDIT 2 XA7: in its share of her way - `sailWay`); a way her oars made, or a boat with no sails, is lost at
+   *  HELM-WAY's own rate (a rowboat's oars at rest stopped her in 2 s, not 3.3). */
+  function coastAccel(b) {
+    const coast = f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * state.boatCargoMod) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.coast : 1));
+    const way = vMagnitude(state.MoveVectorCurrent), share = way > 0 ? Math.min(1, state.sailWay / way) : 0;
+    if (!responsive() || !(share > 0)) return coast;
+    return share >= 1 ? f(coast * f(sailFreeGain(b))) : f(coast * f(1 + (sailFreeGain(b) - 1) * share));
   }
   /** turnSpeed (553-564). */
   function turnSpeed() {
@@ -906,6 +943,7 @@ export function createComeSailAwayRuntime(deps) {
     deps.hudText('You control the boat!');
     state.CurrentBoat = boat;
     state.oarThrottle = 0;   // HELM-LADDER: a helm taken with her oars at rest
+    state.sailWay = 0;   // AUDIT SHIPS A5: and no canvas of this helm's yet
     if (!deps.transport?.isFoot?.()) deps.transport?.setFoot?.();
     if (boat.crewed && !deps.ship?.owns?.()) {
       state.TemporaryShip = true;
@@ -1056,26 +1094,33 @@ export function createComeSailAwayRuntime(deps) {
   }
 
   // ── CSA-E: the sails (5216-5429) and Update's sail arm (4353-4410, 4481-4732) ──
-  const trimAuto = () => !!setting('SailingAssist.AutoTrimming', true);
+  // AUDIT SHIPS A6/D1 (2026-10-06): under the responsive helm her trim is the helm's own - every sail draws at its crest
+  // (SAIL-FREE canvasPull), so the booms are trimmed as the mod's assist trims them, to show it, and the manual trim,
+  // which moved nothing, is no control of hers (the panel's and the pad's - helmPanelState's `manualTrim`): AutoTrimming
+  // is the mod's own helm's choice
+  const trimAuto = () => responsive() || !!setting('SailingAssist.AutoTrimming', true);
   const trimAutoSquareUpwind = () => !!setting('SailingAssist.AutoStowSquareSails', true);
   /** Vector3.ProjectOnPlane(v, Vector3.up), and a Transform's forward. */
   const flat = (v) => vProjectOnPlane(v, V_UP);
   const forwardOf = (node) => quatRotate(node.rotation, V_FORWARD).map(f);
   /** GetSailPower (5216-5294): each sail up, by its kind and its angle to the wind - a lateen best off the wind and
    *  15% less (x0.85) on its bad tack, a gaff and a staysail on to 150 degrees and a square sail running before it -
-   *  scaled for a small or a large one. The hull's own angle to the sail is taken and dropped (kept). */
-  function GetSailPower() {
+   *  scaled for a small or a large one. The hull's own angle to the sail is taken and dropped (kept). SAIL-FREE (the
+   *  port's): `at(boat, sail)`, when handed, is the angle each sail is asked at in place of the wind's - canvasPull's,
+   *  its crest, where a lateen is on its good tack (the bad tack's 15% is a heading's, and SAIL-FREE's heading law is
+   *  pointOfSail alone: read off the wind, it laid the Large Boat's lone lateen 15% short on one tack, a tack's gain). */
+  function GetSailPower(at = null, all = false) {
     let num = 0;
     const b = state.CurrentBoat;
     if (b.Sails.length < 1) return num;
     for (const sail of b.Sails) {
-      if (animatorOf(sail).GetBool('Stowed')) continue;   // a sail without an Animator throws, as the C#'s does
+      if (!all && animatorOf(sail).GetBool('Stowed')) continue;   // a sail without an Animator throws, as the C#'s does - AUDIT SHIPS A4: `all`, every sail drawing (sailWayOf)
       let num2 = 0;
       vAngle(flat(forwardOf(b.GameObject)), flat(forwardOf(sail)));
-      const num3 = vAngle(flat(state.windVectorCurrent), flat(forwardOf(sail)));
+      const num3 = at ? at(b, sail) : vAngle(flat(state.windVectorCurrent), flat(forwardOf(sail)));
       if (b.SailsLateen.includes(sail)) {
         num2 = num3 <= 135 ? f(mathfLerp(50, 100, f(num3 / 135)) / 100) : !(num3 <= 165) ? 0 : f(mathfLerp(100, 50, f(f(num3 - 135) / 30)) / 100);
-        if (vSignedAngle(forwardOf(sail), state.windVectorCurrent, V_UP) > 0) num2 = f(num2 * f(0.85));
+        if (!at && vSignedAngle(forwardOf(sail), state.windVectorCurrent, V_UP) > 0) num2 = f(num2 * f(0.85));   // SAIL-FREE: at its crest, its good tack
         if (num2 < 0) num2 = f(num2 * f(0.5));
       } else if (b.SailsGaff.includes(sail)) {
         num2 = !(num3 <= 135) ? f(mathfLerpUnclamped(100, 0, f(f(num3 - 135) / 15)) / 100) : f(mathfLerpUnclamped(50, 100, f(num3 / 135)) / 100);
@@ -1093,6 +1138,31 @@ export function createComeSailAwayRuntime(deps) {
     }
     return num;
   }
+  /** SAIL-FREE (the port's, DECLARED - helmWay.js): HER CANVAS - each sail she has set asked at the crest of its own
+   *  curve (sailCrest), so the mod's own law, kind for kind and size for size, says what all her canvas pulls drawing at
+   *  once. Under the mod's law a mixed rig's square and fore-and-aft sails are at their best on different headings. */
+  const canvasPull = () => GetSailPower(sailCrest);
+  /** SAIL-FREE: HER DRIVE under the responsive helm - her canvas, by the point of sail (helmWay.js pointOfSail: best with
+   *  the wind on her quarter, about half dead into it, never astern - no tack), in the sea's bounded wind (seaWind), at
+   *  her pace (SAIL_FREE.pace). The mod's GetSailPower times the wind under Classic. */
+  function sailDrive(boat) { return freeDrive(canvasPull(), boat); }
+  /** SAIL-FREE: `canvas` drawing by the point of sail at her heading, in the sea's wind, at her pace (sailDrive's law). */
+  function freeDrive(canvas, boat) {
+    const offRun = Math.abs(vSignedAngle(flat(forwardOf(boat.GameObject)), flat(state.windVectorCurrent), V_UP));
+    return f(f(f(canvas * f(pointOfSail(offRun))) * f(seaWind(vMagnitude(state.windVectorCurrent)))) * f(SAIL_FREE.pace));
+  }
+  /** AUDIT SHIPS A4 (2026-10-06): HER WAY UNDER SAIL as she lies (m/s) - every sail she has drawing, at her heading in this
+   *  wind, at her pace under sail, whether they are set or not: SAIL-FREE's drive under the responsive helm (freeDrive),
+   *  the mod's GetSailPower times the wind under Classic. The Overworld's journey weighs a crew's oars against it
+   *  (seaHelm.js crewRows): it asked the mod's own formula of the raw wind, every sail at its best, so in a fog a SAIL-FREE
+   *  galleon's crew rowed her at 1 m/s where her sails made four. */
+  function sailWayOf(boat) {
+    if (!boat || boat !== state.CurrentBoat || boat.Sails.length < 1) return 0;
+    const drive = responsive() ? freeDrive(GetSailPower(sailCrest, true), boat) : f(GetSailPower(null, true) * vMagnitude(state.windVectorCurrent));
+    return f(drive * sailSpeed(boat, wayHurt(true)));
+  }
+  /** AUDIT SHIPS A4: her way under oars (m/s), her oars pulling whole - what sailWayOf is weighed against. */
+  const oarWayOf = (boat) => (boat && boat === state.CurrentBoat ? oarSpeed(boat, wayHurt(false)) : 0);
   /** ToggleSails (5296-5310). */
   function ToggleSails() {
     if (state.CurrentBoat.Sails.length < 1) deps.hudText('Boat does not have any sail.');
@@ -1118,7 +1188,9 @@ export function createComeSailAwayRuntime(deps) {
     const flag = Math.abs(vSignedAngle(flat(forwardOf(b.GameObject)), flat(state.windVectorCurrent), V_UP)) > 90;
     if (b.Sails.length > 0) {
       for (const sail of b.Sails) {
-        if (!b.SailsSquare.includes(sail) || !trimAutoSquareUpwind() || !flag) {
+        // SAIL-FREE (the port's, DECLARED): under the responsive helm her square canvas draws on every heading
+        // (helmWay.js), so the assist stows none of it upwind
+        if (!b.SailsSquare.includes(sail) || !trimAutoSquareUpwind() || !flag || responsive()) {
           const component = animatorOf(sail);
           if (component != null) stow(component, false);
         }
@@ -1210,7 +1282,8 @@ export function createComeSailAwayRuntime(deps) {
   }
   /** HELM-KEYS: whether her helm is in irons (IRONS_TELL_DEG, IRONS_TELL_WAY) - her sails up and the wind's eye dead ahead. */
   function inIrons(b) {
-    if (state.sailPosition === 0 || b.Sails.length < 1) return false;
+    // SAIL-FREE: under the responsive helm her canvas draws on every heading, the wind's eye too (sailDrive) - no irons
+    if (state.sailPosition === 0 || b.Sails.length < 1 || responsive()) return false;
     const toWind = Math.abs(vSignedAngle(flat(forwardOf(b.GameObject)), flat(state.windVectorCurrent), V_UP));   // the wind blows TO: 180 is dead into it
     // AUDIT NAV2 F15: her way THROUGH THE WATER - velocityCurrent carries the sea's current too (half the wind with the
     // waves on, the mod's default), which held a hull lying head to wind over IRONS_TELL_WAY: never told. GALLEON
@@ -1272,6 +1345,9 @@ export function createComeSailAwayRuntime(deps) {
       state.MoveVectorTarget = [0, 0, 0];
       ResetTimeScale();
     }
+    // SAIL-FREE (the port's, DECLARED): under the responsive helm her canvas draws on every heading - no sail luffs in the
+    // wind's eye, no square sail is laid aback or stowed upwind by the assist - as her way says it does (sailDrive)
+    const free = responsive();
     if (boat.Sails.length > 0) {
       const num6 = vSignedAngle(flat(forwardOf(boat.GameObject)), flat(state.windVectorCurrent), V_UP);
       const flag = Math.abs(num6) > 90;
@@ -1283,16 +1359,17 @@ export function createComeSailAwayRuntime(deps) {
         if (component != null) {
           let wind = component.GetFloat('Wind');
           const lateen = boat.SailsLateen.includes(sail);
-          if (!boat.SailsSquare.includes(sail) && ((!lateen && (num9 > 150 || num9 < -150)) || (lateen && (num9 > 165 || num9 < -165)))) {
+          if (!free && !boat.SailsSquare.includes(sail) && ((!lateen && (num9 > 150 || num9 < -150)) || (lateen && (num9 > 165 || num9 < -165)))) {
             const num10 = f(f(Math.sin(f(f(f(deps.time()) + num7) * 2))) * f(0.25));
             wind = mathfMoveTowards(wind, num10, dt());
           } else {
             const num11 = f((num8 >= 0 ? 1 : -1) * vMagnitude(state.windVectorCurrent));   // Mathf.Sign(num8) * magnitude
-            wind = !boat.SailsStay.includes(sail) ? mathfMoveTowards(wind, num11, dt()) : mathfMoveTowards(wind, num8, dt());
+            if (free) wind = mathfMoveTowards(wind, boat.SailsSquare.includes(sail) ? f(Math.abs(num11)) : num11, dt());
+            else wind = !boat.SailsStay.includes(sail) ? mathfMoveTowards(wind, num11, dt()) : mathfMoveTowards(wind, num8, dt());
           }
           component.SetFloat('Wind', wind);
         }
-        if (trimAutoSquareUpwind() && boat.SailsSquare.includes(sail) && component != null) {
+        if (!free && trimAutoSquareUpwind() && boat.SailsSquare.includes(sail) && component != null) {
           const bool = component.GetBool('Stowed');
           if (flag && !bool) stow(component, true);
           else if (!flag && bool) stow(component, false);
@@ -1308,8 +1385,9 @@ export function createComeSailAwayRuntime(deps) {
     // HELM-WAY: the responsive rudder answers her STEERAGE (helmWay.js) - at rest too, hardest at half her way - where
     // the mod's answers her way itself
     const way = vMagnitude(state.MoveVectorCurrent);
-    state.TurnTarget = f(num18 * f(f(f(responsive() ? steerage(way) : way) * f(boat.modifierRudder)) / 10));
-    state.MoveVectorTarget = vScale(V_FORWARD, num17);
+    state.TurnTarget = f(num18 * f(f(f(responsive() ? steerage(way / sailFreeGain(boat)) : way) * f(boat.modifierRudder)) / 10));   // SAIL-FREE: her way read at her gain (AUDIT SHIPS A5: her rig's)
+    // SAIL-FREE (the port's, DECLARED): under the responsive helm her drive is sailDrive's - the mod's own under Classic
+    state.MoveVectorTarget = vScale(V_FORWARD, free ? sailDrive(boat) : num17);
     if ((state.TurnTarget > 0 && !CanTurnRight(boat)) || (state.TurnTarget < 0 && !CanTurnLeft(boat))) {
       state.TurnTarget = 0 - num18;
       state.TurnCurrent = state.TurnTarget;
@@ -1388,7 +1466,7 @@ export function createComeSailAwayRuntime(deps) {
     // HELM-KEYS: in irons IRONS_TELL_S running, the helm told once how she comes out (again once she has been out of them)
     const irons = inIrons(boat);
     state.ironsFor = irons ? f(state.ironsFor + dt()) : 0;
-    if (state.ironsFor >= IRONS_TELL_S && !state.ironsTold) { state.ironsTold = true; deps.hudText(responsive() ? IRONS_HELM_TEXT : IRONS_TEXT); }   // AUDIT NAV2 F18: the responsive rudder answers at rest
+    if (state.ironsFor >= IRONS_TELL_S && !state.ironsTold) { state.ironsTold = true; deps.hudText(IRONS_TEXT); }   // SAIL-FREE: the mod's helm alone lies in irons
     else if (!irons) state.ironsTold = false;
     if (deps.input?.started?.(BOAT_ACTIONS.disembark) || deps.input?.started?.('Transport')) StopSailingDelayed();
     if (deps.input?.started?.(BOAT_ACTIONS.toggleLight)) setLights(boat, !boat.LightOn);
@@ -1432,7 +1510,13 @@ export function createComeSailAwayRuntime(deps) {
     }
     state.TurnCurrent = mathfMoveTowards(state.TurnCurrent, f(state.TurnTarget * turnSpeed()), f(turnAccel() * dt()));
     state.velocityTarget = vScale(state.MoveVectorTarget, moveSpeed());
+    // AUDIT 2 XA7: her canvas's way - gathered under canvas, lost in its share (and never more than the way she has: a
+    // bump or a grounding since took its share too)
+    const was = vMagnitude(state.MoveVectorCurrent);
+    state.sailWay = Math.min(state.sailWay, was);
     state.MoveVectorCurrent = vMoveTowards(state.MoveVectorCurrent, state.velocityTarget, f(moveAccel() * dt()));
+    const way = vMagnitude(state.MoveVectorCurrent);
+    state.sailWay = way < was ? state.sailWay * (way / was) : state.sailPosition === 1 ? state.sailWay + (way - was) : state.sailWay;
     // CSA-F: the wake (4737-4755) - played and the loops crossfaded to the fast one over the threshold, stopped and back
     // to the slow one under it, each while the loop it asks for is silent; its particles' life, size and drift
     const speed = vMagnitude(state.MoveVectorCurrent);
@@ -2950,6 +3034,7 @@ export function createComeSailAwayRuntime(deps) {
     data.sailPosition = state.sailPosition;
     data.moveVectorCurrent = v3(state.MoveVectorCurrent);
     data.moveVectorTarget = v3(state.MoveVectorTarget);
+    if (state.sailWay > 0) data.sailWay = state.sailWay;   // AUDIT 2 XA7 (the port's own): the way her canvas made, with her way
     data.windVector = v3(state.windVectorCurrent);
     if (state.PackedCargoes.size > 0) {
       data.packedCargoes = {};
@@ -3003,6 +3088,7 @@ export function createComeSailAwayRuntime(deps) {
       if (data.sailPosition > 0) RaiseSails();   // before the wind below is restored - the pre-load wind stows or not (kept)
       state.MoveVectorCurrent = arr3(data.moveVectorCurrent);
       state.MoveVectorTarget = arr3(data.moveVectorTarget);
+      state.sailWay = Math.min(Number(data.sailWay) || 0, vMagnitude(state.MoveVectorCurrent));   // AUDIT 2 XA7
     }
     state.windVectorCurrent = arr3(data.windVector);
     state.PackedCargoes = new Map();
@@ -3061,7 +3147,8 @@ export function createComeSailAwayRuntime(deps) {
         manualTrim: !trimAuto(), squareOnly: !foreAft,
         // HELM-KEYS: whether more sail can be made (a sail stowed that the arrows' step raises), and whether she lies in irons
         moreSail: boat.Sails.length > 0 && (state.sailPosition === 0 || (squareHandled(boat) && squareStowed(boat))), inIrons: inIrons(boat) && state.ironsFor >= IRONS_TELL_S,
-        responsive: responsive(),   // AUDIT NAV2 F18: whose rudder she answers - the in-irons line's advice
+        // HELM-SPEED (2026-10-06, Mac: "add a speed indicator for when you're sailing"): her way through the water (m/s)
+        way: vMagnitude(state.MoveVectorCurrent),
       };
     },
     /** AUDIT NAV2 F14 x F16: whether the helm is the responsive one (HELM-WAY) - this helm's word while one is taken,
@@ -3083,6 +3170,7 @@ export function createComeSailAwayRuntime(deps) {
     turnDoor,   // CSA-K: TriggerDoor's arm, for a door on another player's boat
     CanSail, IsBeached, IsNodeOnWater, CanTurnLeft, CanTurnRight, ResetTimeScale,
     LaunchFromParts, nodeReadingAt,   // OWS2: the Overworld's crossing - a launch aimed by the journey, and the node's law it probes with
+    sailWayOf, oarWayOf,   // AUDIT SHIPS A4: her way under sail as she lies, and under oars - the journey's hand weighs one against the other
     LaunchFromDeed,   // SHIP-CLAIM: a claimed prize's deed, her boat stood where she lies
     SummonBoat, LayUpBoat, laidUpHold,   // HOLDINGS: the Fleet page's summon and send away, and a laid-up hold
     activate, OnStartLoad, OnPreFastTravel, OnPostFastTravel, OnPlayerDeath, OnNewMagicRound,

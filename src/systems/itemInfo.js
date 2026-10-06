@@ -40,6 +40,7 @@ import { bookTitle } from './books.js';   // IM1: GetBookTitle's legacy-data arm
 import { dfRandPick } from '../formats/textRsc.js';   // ROAD-A7: GetRandomTokens' dfRand draw
 import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js';
 import { isRestItem, restItemLines } from './restItems.js'; import { isPortalStone, portalStoneLines } from './portalStone.js';   // REST6: the seven's cards; PORTAL1: and the Portal Stone's
+import { isWalletItem, WALLET_CARD_LINES } from './walletItem.js';   // WALLET1: the wallet's card
 import { isSurvivalItem, isCampingEquipment, isCampfireKit, isSkillet } from './survival/items.js';   // SURV5: the survival items' own info box
 import { isFood, foodOf, foodStage, foodSatiety, isWaterskin, waterIn, WATERSKIN_CAPACITY_KG, STAGE_WORDS } from './survival/food.js';   // ROAD-U: the identity DFU reads off the item's own record
 import { makerName, PROVENANCE_RE } from '../net/recipeLaw.js';   // AUDIT 30 C7: a maker's mark as the law writes it
@@ -89,7 +90,7 @@ export const potionRecipeTokens = () => [
  *  W3: this read the constant 0 with a "the port has no settings
  *  layer" note that U29 made stale - it reads the setting now, at the
  *  point of use as DFU does. `item.material` IS DFU's raw
- *  nativeMaterialValue (equip.js:149), so the `>=` compares hold. */
+ *  nativeMaterialValue (equip.js:"The port's ARMOR_MATERIAL"), so the `>=` compares hold. */
 export function armorShouldShowMaterial(item, setting = getInt('GUI', 'HelmAndShieldMaterialDisplay', 0, 3)) {
   // `artifact` is the classic FLAGS word's artifact bit: minted by
   // loot.js's createArtifact (SetArtifact's :617) and read straight
@@ -547,7 +548,17 @@ export function itemLongName(item, opts) {
  *  Bottle", a plant lost its (northern), a soul trap its soul, a quest
  *  letter its signoff. `material` is '' when the long name carries
  *  no prefix. */
-export function itemNameParts(item, { getQuest = null, differentiatePlantIngredients = true } = {}) {
+export function itemNameParts(item, opts = {}) {
+  const parts = namePartsOf(item, opts);
+  // AUDIT LEGACY H9: A PROJECT LEGACY HEIRLOOM CARRIES ITS HOUSE before the whole long name - "Hlaalu's Dwarven
+  // Longsword", the maker's mark's shape (PROF3) - or after it for a house named for its seat ("Dwarven Longsword of the
+  // house of Daggerfall"). Unidentified, the house is as unknown as the rest (systems/legacy/heirloom.js).
+  const house = item?.heirloom?.house;
+  if (typeof house !== 'string' || !house || !itemIsIdentified(item)) return parts;
+  const whole = parts.material ? `${parts.material} ${parts.name}` : parts.name;
+  return { name: house.startsWith('of ') ? `${whole} of the house ${house}` : `${house}'s ${whole}`, material: '' };
+}
+function namePartsOf(item, { getQuest = null, differentiatePlantIngredients = true } = {}) {
   const base = resolveItemName(item);
   if (!itemIsIdentified(item) || item?.artifact || item?.legendary || item?.aetheric) return { name: base, material: '' };   // LR2: a Legendary is named like an artifact - no material prefix; SET6: an Aetheric piece too ("Ruhn's Gatecleaver", never "Daedric Ruhn's...")
   if (differentiatePlantIngredients) {
@@ -693,6 +704,7 @@ export function survivalInfoTokens(item) {
   else if (isSkillet(item)) out.push({ text: 'Cooking at a campfire goes twice as fast.', center: true });
   else if (isRestItem(item)) for (const text of restItemLines(item)) out.push({ text, center: true });   // REST6
   else if (isPortalStone(item)) for (const text of portalStoneLines()) out.push({ text, center: true });   // PORTAL1
+  else if (isWalletItem(item)) for (const text of WALLET_CARD_LINES) out.push({ text, center: true });   // WALLET1
   return out;
 }
 
@@ -704,7 +716,7 @@ export function itemInfoRows(item, rows, macros = {}) {
   // BUILT tokens rather than a record id, so both bypass `rows(id)`.
   if (isPotionRecipe(item)) record = potionRecipeTokens();
   if (isSurvivalItem(item) || isRestItem(item)) record = survivalInfoTokens(item);
-  if (isPortalStone(item)) record = survivalInfoTokens(item);   // PORTAL1: the stone's card, built the same way   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
+  if (isPortalStone(item) || isWalletItem(item)) record = survivalInfoTokens(item);   // PORTAL1: the stone's card, built the same way; WALLET1: and the wallet's   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
   if (!painting && item?.group === 'Paintings' && _paintFile) {
     // ROAD-A7: every one of the painting reads is GetRandomTokens with
     // dfRand TRUE (InitPaintingInfo :65 and the four macro readers
@@ -836,7 +848,7 @@ export function itemStatRows(item) {
   // arrow, a helm or shield under HelmAndShieldMaterialDisplay - so the
   // panel never names a metal the pack withholds; push drops an empty.
   push('Material', itemNameParts(item).material);
-  const survival = isSurvivalItem(item) || isRestItem(item) || isPortalStone(item);   // REST6: the seven's lines too; PORTAL1: and the Portal Stone's
+  const survival = isSurvivalItem(item) || isRestItem(item) || isPortalStone(item) || isWalletItem(item);   // REST6: the seven's lines too; PORTAL1: and the Portal Stone's; WALLET1: and the wallet's
   if (survival) for (const t of survivalInfoTokens(item).slice(2)) push('', t.text);
   else if ((item.maxCondition ?? 0) > 0) push('Condition', `${conditionWord(item)} (${conditionPercentage(item)}%)`);
   // The weight is the STACK's, as `weightString` has it and as the

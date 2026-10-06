@@ -33,11 +33,11 @@ record was merged into the other; they are two different audits that
 briefly shared a name.
 
 **Why the findings are numbered from F3.** The tree cites `AUDIT 58 F3`,
-`F4` and `F5` by number **37 times across 14 files** - `src/world/terrainGenClient.js:147`,
-`src/world/terrainGenWorker.js:45`, `src/world/terrainHelper.js:2`,
-`src/world/roadsCache.js:17`, `src/scenes/world.js:198`,
-`src/formats/woodsFile.js:93`, `test/modsettings.test.js`,
-`test/audit58_terrainhelper.test.js`, `test/ledger.test.js:245`,
+`F4` and `F5` by number **37 times across 14 files** - `src/world/terrainGenClient.js:"rides his data too."`,
+`src/world/terrainGenWorker.js:"rides his data on"`, `src/world/terrainHelper.js:"AUDIT 58 F4 — TERRAINHELPER'S"`,
+`src/world/roadsCache.js:"for the height CONTENT"`, `src/scenes/world.js:"import { buildMapDict"`,
+`src/formats/woodsFile.js:"AUDIT 58 F4: write"`, `test/modsettings.test.js`,
+`test/audit58_terrainhelper.test.js`, `test/ledger.test.js:"Ledger cites the gamepad note at inputActions.js:${cite"`,
 `test/citedrift.test.js`, `Port-Ledger.md:82-83`, `Testing.md` - and
 there is no F1 or F2 anywhere. That is the collision fossilised: the
 first lane minted its numbers as a CONTINUATION of main's Audit-54.md
@@ -143,7 +143,7 @@ confirmed, 21 refuted.**
 
 **The road height smoother wrote the transposed heightmap index.** The
 port's heightmap is x-major with z fastest - `data[x * hDim + y]`
-(`src/world/terrainSampler.js:160`, DFU's `JobA.Idx(y, x, hDim)` at
+(`src/world/terrainSampler.js:"data[x * hDim + y] ="`, DFU's `JobA.Idx(y, x, hDim)` at
 `TerrainSampler.cs:123`) - and every consumer in the tree obeys it.
 `smoothRoadHeights` read its tile correctly at `tilemap[y * tDim + x]` and
 then wrote the four corner samples from `y * hDim + x`, the mirror. A
@@ -153,7 +153,7 @@ the audit's sharpest terrain finding is the record beside it -
 **`Audit-51.md` recorded a departure for exactly this transposition and
 recorded it on the wrong index**, on the tile read, where `y*tDim + x` IS
 the mod's own `Idx(x, y, tDim)` and there was nothing to correct. The
-correction is at `src/world/roadPainter.js:480` now, with the layout
+correction is at `src/world/roadPainter.js:"const tile = tilemap"` now, with the layout
 spelled out at `:273-281`, and the Audit-51 row says so.
 
 F3, F4 and F5 above are the rest of this band.
@@ -168,14 +168,14 @@ now has a name per host.
 readers asked one.** `interiorFoes` and `interiorGuards` are both live
 inside a building; the senses feed, the enchant pool and the rest refusal
 each walked only the first, so the indoor city watch was invisible to all
-three (`src/scenes/worldModes.js:1272-1366`). **The exterior host mounted no
+three (`src/scenes/worldModes.js:"const interiorFoePool"`). **The exterior host mounted no
 enchant ctx at all** - the session has ONE, and that host set none, so
 every enchantment payload that needs a foe idled in the host a player
 spends most of their time in (`setDefaultEnchantCtx` is imported at
-`src/scenes/exterior.js:73` now, and the pool it answers with is the
+`src/scenes/exterior.js:"import { setDefaultEnchantCtx"` now, and the pool it answers with is the
 live one). **`scenes/interior.js` registered a keydown listener and never
 called `swallowBrowserKey`**, so F5 inside a building reloaded the page
-and destroyed the session - against `src/ui/input.js:705-727`'s own law,
+and destroyed the session - against `src/ui/input.js:"hosts install it"`'s own law,
 "one list, because there is one keyboard, and every host has to use it."
 **The large HUD's sheath panel answered only in the dungeon**, three
 hosts inert. The interior ray had no quest-foe click arm, so `clicked foe`
@@ -224,7 +224,7 @@ mitigates in `DaggerfallEntity.DecreaseHealth`
 (`Assets/Scripts/Game/Entities/DaggerfallEntity.cs:312-328`), the base
 class every entity passes through, with DFU's own comment "from all
 sources"; the port consumed the pool only in `hurtPlayer`
-(`src/characters/playerEntity.js:302`) and the three foe doors subtracted
+(`src/characters/playerEntity.js:"dmg = damageShieldPool"`) and the three foe doors subtracted
 raw, so a Shield cast on a foe absorbed nothing. Beside it: `CastReadySpell`
 had grown a magicka-sufficiency refusal DFU does not have and re-priced
 the spell at click time, the six concealment effects lost DFU's
@@ -269,7 +269,7 @@ host, once by the mode machine it builds - and `bindCursorToggle` installs
 a listener per call over a module-global flag, so one Enter press flipped
 twice and netted zero. **Key combos never reached the keydown dispatch:**
 `actionOf(e, keys)` resolves a combo only when a held-keys Set is handed
-in (`src/ui/input.js:269-290`) and no production call site supplied one,
+in (`src/ui/input.js:"and the whole of"`) and no production call site supplied one,
 so every rebind to a combo was dead in every host. `townTalk`'s F1-F4
 interaction-mode branch sat ABOVE its own overlay gate, so the mode
 changed under an open window, and the four modes were dispatched off
@@ -279,7 +279,7 @@ hardcoded F1-F4 literals that the controls window could not rebind.
 
 **`cacheScene()` discarded `droppedPiles`.** `currentSceneState()` builds
 three fields, `restoreInteriorScene()` reads three back, and the store
-between them destructured two (`src/systems/sceneCache.js:161-165`), so
+between them destructured two (`src/systems/sceneCache.js:"scene - loot containers"`), so
 `restorePiles(undefined)` killed every live pile and restored nothing:
 interior dropped loot never cached, never rode the save, and was
 destroyed on every exit. **The Ledger recorded the opposite** - the
@@ -295,7 +295,7 @@ The audit's cleanest class, and the one a green suite is most blind to:
 DFU's five cast-sound constants are IDs (`EntityEffectManager.cs:44-48`)
 and `PlayOneShot((uint)castSoundID)` resolves them through
 `SoundReader.GetSoundIndex` -> `GetRecordIndex`; the port stored the same
-five numbers (`src/systems/enemySpells.js:69`) and handed them straight to
+five numbers (`src/systems/enemySpells.js:"export const SPELL_CAST_SOUND"`) and handed them straight to
 `playOneShot`/`play3d`, which index. RDB action sounds did the same
 (`RDBLayout.cs` resolves the ID once at layout), and quest `play sound`
 did too - and there the Ledger records the departure as "the index/clip
@@ -327,7 +327,7 @@ and cannot be seen to stop. Each was confirmed by running the mutant in
 an isolated mirror of the tree, not by reading the test.
 
 The two that matter most are in advancement. **The reflexes use-scale
-`>> 16`** (`src/systems/advancement.js:123`) was unpinned: change it and
+`>> 16`** (`src/systems/advancement.js:"a batch after the"`) was unpinned: change it and
 every skill in the game advances twice as fast, with the suite green.
 **`GetAdvancementMultiplier` is a 35-row DFU table pinned at four rows**,
 so Jumping and CriticalStrike floated free. Then `LootTables`' per-level
@@ -348,7 +348,7 @@ DFU's literal.
 Twelve confirmed, and they are the reason this audit's own numbering
 story exists. **`Audit-54.md` carried F1-F2 while F3, F4 and F5 were
 cited by number across `src/`, `test/`, the Ledger and the status page** -
-a reader chasing "AUDIT 54 F4" from `terrainHelper.js:2` reached a record
+a reader chasing "AUDIT 54 F4" from `terrainHelper.js:"AUDIT 58 F4 — TERRAINHELPER'S"` reached a record
 that had never heard of it. Six records cited `Audit-49.md` as the
 Road-to-1:1 campaign audit, which is `Audit-53.md`. **Home.md's index
 listed `Audit-48.md` twice under two unrelated audits**, and `Audit-49.md`
@@ -516,12 +516,12 @@ Left, deliberately, each recorded at its site or here:
   **G1's review closed the arm the lane missed**: an ARROW reaches a pool
   through two seams, and only `dealDamage` (inside `arrowFlight`'s own
   `dmg > 0` fork) had been wired - the unconditional `onAttackFromPlayer`
-  seam, which is where :630 actually lives (`arrowFlight.js:325`), still
+  seam, which is where :630 actually lives (`arrowFlight.js:"onAttackFromPlayer?.(foe, dmg)"`), still
   excluded the guards in all three hosts that resolve a player shaft. So
   a zero-damage arrow into a pacified watchman turned nobody while the
   identical SWING turned the area. `handleAttackFromPlayer` is on the
   pool's public surface now (as the encounter pool's has always been,
-  `exteriorFoes.js:2893`) and all three seams route by pool membership.
+  `exteriorFoes.js:"_owners.delete(from)"`) and all three seams route by pool membership.
 - ~~The indoor WATCH refuses the Wabbajack: DFU transforms any
   `EnemyEntity` and `Knight_CityWatch` is one, but the guard pool exposes
   no remove/spawn pair. The refusal and its reason are written into the

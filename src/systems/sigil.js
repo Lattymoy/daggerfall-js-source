@@ -100,8 +100,9 @@ export const SIGIL_STAGES = Object.freeze([
 /** A sigil drinks no more than its last stage asks. */
 export const SIGIL_XP_MAX = SIGIL_STAGES[SIGIL_STAGES.length - 1].xp;
 /** SET1: the sets a sigil may name (systems/sigilSets.js SIGIL_SETS, in its order) - the four of the world, then the
- *  gate boss's own, then (RAID4b) the three the raiding parties' raids pay: the knights', the bandits', the orcs'. */
-export const SIGIL_SET_IDS = Object.freeze(['malacath', 'dagon', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane']);
+ *  gate boss's own, then (RAID4b) the three the raiding parties' raids pay: the knights', the bandits', the orcs' - then
+ *  (SERPENT-SET) the sea serpent's own. */
+export const SIGIL_SET_IDS = Object.freeze(['malacath', 'dagon', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane', 'coilscale']);
 
 const partyOf = (n) => (Number.isFinite(n) ? Math.max(1, Math.min(PARTY_MAX, Math.floor(n))) : 1);
 /** A fight's size as a sigil records it: whole, 1..PARTY_MAX (SET4: a set piece's record takes it the same way). */
@@ -182,6 +183,13 @@ export function rollSigil(tier, party, rolls = Math.random) {
 // online), the Renown the page knows (renownAdopt - the token's word and the service's since). Never saved.
 let _online = false;
 let _renown = null;
+/** SET2's DUEL WORD (the host's - scenes/world.js duelFrame): the player stands in a duel - or, AUDIT 625 P2, in a bout
+ *  between players on a relay's sand, where the opponent is a Daedra Lord's stand-in for the formulas and no player, so
+ *  the gates that refuse a blow at a player never saw one. Every power that sleeps in a duel reads it here: the sets and
+ *  the loot's powers (sigilSets.js setsDueling) and the weapon's own blow below. */
+let _dueling = false;
+export function setSigilDueling(on) { _dueling = !!on; }
+export const sigilDueling = () => _dueling;
 /** The host's word: this session plays online (stamps are minted) or not. */
 export function setSigilOnline(on) { _online = !!on; if (!_online) _renown = null; }
 /** The host's word: the Renown the wielder has, null while unknown. Offline it is always null. */
@@ -220,10 +228,11 @@ let _carry = new WeakMap();
 /**
  * THE BLOW (entityMods registerWeaponBlowMod, read at the tail of FormulaHelper's weapon damage): my weapon's sigil on
  * my blow at a foe, online - its per cent of the whole blow, the fraction carried on the weapon. Nothing for a duel (a
- * player on either end), a peer's blow resolved here, a hand without a sigil, or a session with no Renown.
+ * player on either end - AUDIT 625 P2: or the duel's word, an arena bout's stand-in no player), a peer's blow resolved
+ * here, a hand without a sigil, or a session with no Renown.
  */
 export function sigilBlow(weapon, damage, attacker, target) {
-  if (!(damage > 0) || !weapon || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer) return damage;
+  if (!(damage > 0) || !weapon || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer || _dueling) return damage;
   const pct = sigilPercent(weapon.sigil, _renown);
   if (!(pct > 0)) return damage;
   const exact = (damage * pct) / 100 + (_carry.get(weapon) ?? 0);
@@ -300,4 +309,4 @@ export function sigilProgressText(v) {
 }
 
 /** Tests only: forget the session and every weapon's carried fraction. */
-export function _resetSigilForTests() { _online = false; _renown = null; _carry = new WeakMap(); }
+export function _resetSigilForTests() { _online = false; _renown = null; _dueling = false; _carry = new WeakMap(); }

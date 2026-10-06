@@ -4,7 +4,7 @@
 // The engine under the window has been ~95% ported since TK-v - the
 // tree assembles listTopicTellMeAbout / Person / Thing, the pipeline
 // answers every QuestionType - and the window mounted ONE of its five
-// pages (Where-is > Location) while nativeTalk.js:212 pended the rest
+// pages (Where-is > Location) while nativeTalk.js:"(:944-949), SetTalkModeWhereIs" pended the rest
 // as INTERIM no-ops. "Any news?", "Where am I?", quest topics and
 // work were computed and thrown away; every non-service static NPC
 // answered "You get no response." over a fully-computed greeting.
@@ -220,7 +220,10 @@ test('B7 seam gate: the static-NPC conversation opens the window instead of "You
   assert.match(town, /function openTalkWindow\(greeting, \{ npcSeed = 0, npcName = '', portrait = null, push = false, onClosed = null \} = \{\}\)/);
   // ROAD-D D10: the mobile arm carries its portrait too - always
   // CommonFaces, at SetPerson's record (TalkManager.cs:817).
-  assert.match(town, /openTalkWindow\(t\.text, \{\n\s*npcSeed: _talkNpc\?\._talkSeed \?\? 0, npcName: _talkNpc\?\.nameNPC \?\? '',\n\s*portrait: \{ archive: 'CommonFaces', record: _talkNpc\?\.personFaceRecordId \?\? 0 \},\n\s*\}\);/);
+  // PIN MOVED (LEGACY-HOME): both mobile doors take the portrait through `portraitOf` - TFAC00I0's record, or one of
+  // Project Legacy's line's own chargen head (test/legacyhome.test.js)
+  assert.match(town, /openTalkWindow\(t\.text, \{\n\s*npcSeed: _talkNpc\?\._talkSeed \?\? 0, npcName: _talkNpc\?\.nameNPC \?\? '',\n\s*portrait: portraitOf\(_talkNpc\),\n\s*\}\);/);
+  assert.match(town, /const portraitOf = \(person\) => person\?\.living\?\.res\?\.portrait \?\? \{ archive: 'CommonFaces', record: person\?\.personFaceRecordId \?\? 0 \};/);
   // and the Work answer rides the session's own pool flag
   assert.match(town, /workAvailable: eng\.session\?\.workAvailable \?\? false,/);
 });

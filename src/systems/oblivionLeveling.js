@@ -116,16 +116,17 @@ export function levelingSettings(r = null) {
   });
 }
 
-/** LEVEL-ONLINE (2026-09-30, Mac: "Do not allow people to use daggerfall leveling in online. Characters currently
- *  using it online can keep it."): THE ONE LAW for the system a NEW character is born with. Online, Daggerfall's
+/** LEVEL-ONLINE (2026-09-30), REVERSED BY LEVEL-ONLINE-2 (2026-10-06, Mac: "Oblivion should be locked. Currently
+ *  players are forced into oblivion"): THE ONE LAW for the system a NEW character is born with. Online, Oblivion's
  *  leveling is not offered - a character made (or imported from a classic save) on the online page levels the
- *  Oblivion way whatever was asked for; offline the request stands. It is applied where a character is BORN
- *  (finishChargen, the `?class=` skip, the classic-save import) and never where one is LOADED, so a character already
- *  levelling the Daggerfall way online keeps it: the save is the law (usesVirtueLeveling). */
-export const DAGGERFALL_LEVELING_OFFLINE_ONLY = true;
+ *  Daggerfall way whatever was asked for; offline the request stands. It is applied where a character is BORN
+ *  (finishChargen, the `?class=` skip, the classic-save import) and never where one is LOADED - an existing ONLINE
+ *  character is switched by realmCustoms.js crossLeveling at the realm boot (LEVEL-ONLINE-3), never by a load, so an
+ *  offline Oblivion character keeps its system: the save is the law offline (usesVirtueLeveling). */
+export const ONLINE_LEVELING_SYSTEM = LEVELING_CLASSIC;
 export function newCharacterLevelingSystem(requested, { online = false } = {}) {
   const want = requested === LEVELING_VIRTUE ? LEVELING_VIRTUE : LEVELING_CLASSIC;
-  return online && DAGGERFALL_LEVELING_OFFLINE_ONLY ? LEVELING_VIRTUE : want;
+  return online ? ONLINE_LEVELING_SYSTEM : want;
 }
 
 /** THE ONE READER of the character's answer. A save written before

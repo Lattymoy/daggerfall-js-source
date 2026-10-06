@@ -212,14 +212,14 @@ needs ARENA2, which the container lacks.
 **F26 (high, within the mod's lane): every seasonal tree, rock and
 plant drew UPSIDE-DOWN.** The port's texel convention is bottom-up:
 `getColor32` writes `dstRow = (height - 1 - y) * width`
-(`baseImageFile.js:143`, `BaseImageFile.cs:250`), `uploadTexture`
-uploads as-is with `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:3426`), and
+(`baseImageFile.js:"const headerLength".."const dstRow = (dstHeight - 1 - border - y) * dstWidth;"`, `BaseImageFile.cs:250`), `uploadTexture`
+uploads as-is with `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:"if (!this.charQuadProgram)".."uniform mat4 uProj, uView;"`), and
 `BB_VS` samples the quad's TOP at v=1, i.e. the LAST row
-(`renderer.js:450-452`). The seasonal record arrived in PNG raster
+(`renderer.js:"Textures are bottom-up"`). The seasonal record arrived in PNG raster
 order instead - `decodeTexture2D` flips Unity's bottom-up rows to
 top-down for its own consumers, and the loose arm is a canvas
-`getImageData` - and `world.js:4714` / `exterior.js` handed that
-straight to `uploadTexture` (the one upload site is `naturePicture.js:54`
+`getImageData` - and `world.js:"const { sib, proto"` / `exterior.js` handed that
+straight to `uploadTexture` (the one upload site is `naturePicture.js:"renderer.uploadTexture"`
 now - AUDIT 05b A12). So a seasonal flat drew mirrored against
 the classic flat uploaded five lines later in the same batch loop. In
 DFU there is nothing to reconcile: the mod's asset is a Unity
@@ -288,7 +288,7 @@ falsified.** The reader's header read "TOP ROW FIRST (Unity stores its
 rows bottom-up; **every consumer here wants the raster order a PNG
 decodes to**)". After F26 that parenthetical is false: the reader has
 exactly one consumer in `src/`
-(`seasonsIliacBayAssets.js:196`, `toColor32Order(tex.rgba())` - the helper itself moved to `formats/color32Order.js` at ROAD-H H4, where the M-TEX door takes it too) and it
+(`seasonsIliacBayAssets.js` line 196, `toColor32Order(tex.rgba())` - the helper itself moved to `formats/color32Order.js` at ROAD-H H4, where the M-TEX door takes it too) and it
 reverses every row straight back, so the composition is the identity
 on every `TextureFormat` arm. The comment was left claiming the
 opposite of what the delta did - the same class of defect F27 corrects
@@ -298,7 +298,7 @@ order is getColor32, pointing at the seasons door that converts, the
 way the door's own header already points back at the reader; the
 door's closing line drops "for their other consumers" with it, and so
 does F26's paragraph above. The BEHAVIOUR is untouched: the reader's
-row-order pin (`test/seasonsIliacBay.test.js:385-389`, which asserts
+row-order pin (`test/seasonsIliacBay.test.js:"flipped: the top"`, which asserts
 the top row of the image is the LAST row Unity stored) still holds and
 was rightly left alone by F26, and the end-to-end
 `texImage2D`-vs-`getColor32` pin is what fixes the order that reaches

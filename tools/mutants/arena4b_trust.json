@@ -101,11 +101,12 @@
   {
     "name": "ARENA4b-TRUST-NAMED-DROPPED",
     "file": "server/src/index.js",
-    "old": "gio: c.i, ar: c.ar, cl: c.cl };",
-    "new": "gio: c.i, ar: c.ar };",
+    "old": "gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci };",
+    "new": "gio: c.i, ar: c.ar, ...house, ci: c.ci };",
     "tests": [
       "test/arena4b_trust.test.js"
-    ]
+    ],
+    "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
   {
     "name": "ARENA4b-TRUST-BOUT-UNSIGNED",

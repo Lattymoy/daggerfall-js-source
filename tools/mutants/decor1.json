@@ -137,11 +137,12 @@
   {
     "name": "DECOR1-a-move-rewrites-what-it-is",
     "file": "server-account/src/decor.js",
-    "old": "UPDATE ${S.table} SET place = ? WHERE map_id = ? AND building_key = ? AND id = ? AND ${S.owns}`)\n    .bind(placeJson(pl), ",
-    "new": "UPDATE ${S.table} SET place = ?, model = 99999 WHERE map_id = ? AND building_key = ? AND id = ? AND ${S.owns}`)\n    .bind(placeJson(pl), ",
+    "old": "UPDATE ${S.table} SET place = ? WHERE map_id = ? AND building_key = ? AND id = ? AND yard = ? AND ${S.owns}`)\n    .bind(placeJson(pl), ",
+    "new": "UPDATE ${S.table} SET place = ?, model = 99999 WHERE map_id = ? AND building_key = ? AND id = ? AND yard = ? AND ${S.owns}`)\n    .bind(placeJson(pl), ",
     "tests": [
       "test/decor1.test.js"
-    ]
+    ],
+    "note": "AUDIT YARD-HEIGHT (PIN MOVED, re-aimed by content: one write of a piece at a time)."
   },
   {
     "name": "DECOR1-the-rate-unread",

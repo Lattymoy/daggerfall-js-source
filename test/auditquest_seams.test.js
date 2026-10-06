@@ -4,8 +4,8 @@
 // which of its contract members the host left unwired.
 //
 //   F1  THE WORD "LOUDLY" WAS WRITTEN OVER AN OPERATION THAT IS SILENT.
-//       `machine.js:78` - "absent = headless, every Place pends its site
-//       LOUDLY" - and `place.js:16`/`:148`/`:192`, `person.js:15` and
+//       `machine.js:"MapsFile/BlocksFile"` - "absent = headless, every Place pends its site
+//       LOUDLY" - and `place.js:"true - a FLAG, not"`/`place.js:"this.siteDetails = null"`/`place.js:"const valid = this.scope"`, `person.js:"true - a FLAG, the"` and
 //       the bridge's own header all said it. What happens is
 //       `sitePending = true`: a boolean. MEASURED against the real
 //       corpus: all 265 vendored quests start with no world seam, and
@@ -141,7 +141,7 @@ test('AUDIT-QUEST F1: no line claims LOUD over a silent assignment', () => {
   // THE GENERATIVE FORM OF F1. The word was written five times across
   // the quest system over `x = true` - a boolean. It is a good word and
   // the charter needs it, so it is kept for the places that really do
-  // raise something (`machine.js:253` and `questMacros.js:17` surface
+  // raise something (`machine.js:"- a missing seam"` and `questMacros.js:"shapes surface LOUDLY"` surface
   // C#'s own error shapes, and they throw). What it may not do again is
   // sit on a line whose whole effect is to set a flag.
   const bad = [];

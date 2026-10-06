@@ -141,11 +141,12 @@
   {
     "name": "KB1-a-typed-field-routes-with-no-overlay",
     "file": "src/ui/input.js",
-    "old": "  if (isTextEntryTarget(e?.target)) return false;\n  if (ctx.uiOverlayActive) {",
-    "new": "  if (ctx.uiOverlayActive) {\n    if (isTextEntryTarget(e?.target)) return false;",
+    "old": "  if (isTextEntryTarget(e?.target)) return false;\n  if (ctx.uiOverlayActive && isDomFocusWalk(e)) return false;   // AUDIT LEGACY II U3: the window's own focus walk\n  if (ctx.uiOverlayActive) {",
+    "new": "  if (ctx.uiOverlayActive && isDomFocusWalk(e)) return false;   // AUDIT LEGACY II U3: the window's own focus walk\n  if (ctx.uiOverlayActive) {\n    if (isTextEntryTarget(e?.target)) return false;",
     "tests": [
       "test/overlayTyping.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content."
   },
   {
     "name": "KB1-a-raw-E-back-in-a-host",

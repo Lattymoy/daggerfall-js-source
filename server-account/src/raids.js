@@ -51,7 +51,7 @@
 import { verifyRaidReceipt } from '../../src/net/raidReceipt.js';
 import { raidDayOfKey } from '../../src/net/raidLaw.js';
 import { renownForXp, renownRaidXp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
-import { renownCharacterOk, renownNameOf, renownTrackOf } from './renownTracks.js';
+import { renownCharacterOk, renownNameOf, renownTrackOf, renownHeldSql } from './renownTracks.js';
 
 /** The raids an account is counted for in one game day. */
 export const RAID_CLAIMS_DAY_MAX = 6;
@@ -123,7 +123,7 @@ export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, c
   const track = 'SELECT xp FROM renown_tracks WHERE player = ?1 AND char_id = ?2';
   // AUDIT RAID R5: WHAT THE TRACK CAN TAKE and WHAT THE HOUR HAS LEFT, as a report's (renownTracks.js) - and a new
   // character past the bound takes nothing (no track to hold it)
-  const refused = `(NOT EXISTS (${track}) AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) >= ?9)`;
+  const refused = `(NOT EXISTS (${track}) AND ${renownHeldSql('?1')} >= ?9)`;
   const want = `CASE WHEN ${refused} THEN 0 ELSE MIN(?5, MAX(0, ?6 - COALESCE((${track}), 0))) END`;
   const room = 'CASE WHEN renown_hour >= ?8 THEN MAX(0, ?7 - renown_hour_xp) ELSE ?7 END';
   const credit = `CASE WHEN ${mine} THEN MIN(${want}, ${room}) ELSE 0 END`;
@@ -156,7 +156,7 @@ export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, c
        SELECT ?1, ?2, ?5, renown_last_credit, ?6, ?6 FROM players
        WHERE id = ?1 AND renown_last_credit > 0
          AND NOT EXISTS (SELECT 1 FROM renown_tracks WHERE player = ?1 AND char_id = ?2)
-         AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) < ?7
+         AND ${renownHeldSql('?1')} < ?7
          AND ${mine}`,
     ).bind(player.id, character, c.w, nonce, renownNameOf(name), nowS, RENOWN_TRACKS_MAX),
     // the row says what the claim PAID (the hour may have left less than the raid is worth)

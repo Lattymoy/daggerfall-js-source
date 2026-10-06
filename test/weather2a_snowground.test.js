@@ -146,6 +146,6 @@ test('WEATHER2a the hosts: the arrival hands the sim its minute, the sky is hand
 test('WEATHER2a records: the arc page, the ledger row, Home\'s index and the testing row', () => {
   assert.match(rd('bible/07-Rendering/Weather-Arc.md'), /^## A - NO RAIN OVER SNOW \(WEATHER2a, 2026-09-14\)/m);
   assert.match(rd('bible/01-Overview/Port-Ledger.md'), /^\| \*\*NO RAIN OVER SNOW, ENHANCED LANE \(WEATHER2a, 2026-09-14\)\*\*/m);
-  assert.match(rd('bible/Home.md'), /`07-Rendering\/Weather-Arc\.md`/);
+  assert.match(rd('bible/01-Overview/Page-Index.md'), /`07-Rendering\/Weather-Arc\.md`/);   // PIN MOVED (WALLET1's merge of main, 2026-10-05): Home.md's page index moved, byte for byte, to its own page
   assert.match(rd('bible/09-Testing/Testing.md'), /^\| weather2a_snowground\.test\.js \| \d+ \| WEATHER2a/m);
 });

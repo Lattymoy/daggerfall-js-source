@@ -38,9 +38,15 @@ export const CSA_WIRE_BOATS_MAX = 8;
 export const CSA_WIRE_VARIANTS = 10;
 /** The sails a hull's bits can name (the Carrack's are the most). */
 export const CSA_WIRE_SAILS_MAX = 16;
-/** CSA-K: a way and a turn past these are no boat's - the Handling dials' tenfold on the fastest hull at the thirtyfold
- *  time scale stays well inside them (natives a second, degrees a second). */
-export const CSA_WIRE_SPEED_MAX = 64 * 1024;
+/** CSA-K: a way and a turn past these are no boat's (natives a second, degrees a second) - AUDIT 2 XA6 (2026-10-06): the
+ *  way sized from its real ceiling, SAIL-FREE's fastest (a Carrack on her quarter in the sea's strongest wind with her
+ *  Rigging at its best, 43.6 m/s) at the Handling dials' tenfold and the world's fastest time scale (timeScale.js
+ *  MAX_TIME_SCALE, a road journey's x100), in natives (SCENE_MAP_RATIO 40): 1.74M a second. It was 64k (that tenfold on
+ *  HELM-WAY's fastest at the thirtyfold scale) - 27.3 m/s of way at an open journey's x60 - and every reader dropped a
+ *  storm galleon's word whole, her boats gone from every screen and her passengers left on a frozen hull. The writer
+ *  holds her word to both (csaWireRecord), so no honest word is dropped for its way. The turn: an oar's 20 degrees a
+ *  second at that tenfold and x100 is 20,000. */
+export const CSA_WIRE_SPEED_MAX = 2 * 1024 * 1024;
 export const CSA_WIRE_TURN_MAX = 36000;
 const r2 = (v) => Math.round(v * 100) / 100;
 const r4 = (v) => Math.round(v * 10000) / 10000;
@@ -69,6 +75,10 @@ export function csaWireRecord(view, toWire = (p) => p) {
     const vel = finite3(v.velocity) ? v.velocity : null;
     const at = vel ? toWire([v.position[0] + vel[0], v.position[1] + vel[1], v.position[2] + vel[2]]) : p;
     const way = [r2(at[0] - p[0]), r2(at[2] - p[2]), Number.isFinite(v.turn) ? r2(v.turn) : 0];
+    // AUDIT 2 XA6: held to the door's bounds, her way's bearing kept - a word past them every reader drops whole
+    const sp = Math.hypot(way[0], way[1]);
+    if (sp > CSA_WIRE_SPEED_MAX) { const k = (CSA_WIRE_SPEED_MAX * 0.999) / sp; way[0] = r2(way[0] * k); way[1] = r2(way[1] * k); }
+    way[2] = Math.max(-CSA_WIRE_TURN_MAX, Math.min(CSA_WIRE_TURN_MAX, way[2]));
     if (way[0] || way[1] || way[2]) underWay = true;
     m.push(way);
     const name = typeof v.name === 'string' ? shipNameVerdict(v.name) : null;   // HOLDINGS: her name, as the ledger keeps it

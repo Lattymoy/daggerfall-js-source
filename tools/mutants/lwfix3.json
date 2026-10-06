@@ -52,24 +52,26 @@
   {
     "name": "LW-FIX3-beat-stay",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "        I('watch', beat[i % beat.length], t, rollInt(rng, MIN_STAY, MIN_STAY + 7), until, Infinity);",
-    "new": "        I('watch', beat[i % beat.length], t, rollInt(rng, 3, 8), until, Infinity);",
+    "old": "    const dur = rollInt(rng, PATROL_STOP_MIN, PATROL_STOP_MAX);",
+    "new": "    const dur = rollInt(rng, 3, 8);",
     "tests": [
       "test/lwfix3_town.test.js",
-      "test/lw2_livingTown.test.js"
-    ]
+      "test/lw2_livingTown.test.js",
+      "test/watchday_watch.test.js"
+    ],
+    "note": "WATCH-DAY (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW-FIX3-beat-bound",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      for (let i = 0, n = Math.ceil((until - from) / MIN_STAY); beat.length && t < until && i < n; i++) {",
-    "new": "      for (let i = 0, n = 64; beat.length && t < until && i < n; i++) {",
+    "old": "  for (let t = from, i = first; beat.length && t < until; i++) {",
+    "new": "  for (let t = from, i = first, n = 0; beat.length && t < until && n < 2; i++, n++) {",
     "tests": [
       "test/lwfix3_town.test.js",
-      "test/lw2_livingTown.test.js"
+      "test/lw2_livingTown.test.js",
+      "test/watchday_watch.test.js"
     ],
-    "equivalent": true,
-    "why": "the old bound: 64 stops of MIN_STAY to MIN_STAY + 7 minutes cover a ten-hour shift but on a draw of nearly every stop at its shortest - the shift's own bound makes it certain, and no pin can draw that day"
+    "note": "WATCH-DAY (re-aimed by content): the law in its new home - patrolStops counts no stops of its own, the shift's end ends the beat, so a bound that cuts it short dies (the old 64, past any shift's stops, was recorded equivalent)."
   },
   {
     "name": "LW-FIX3-trim-eased",

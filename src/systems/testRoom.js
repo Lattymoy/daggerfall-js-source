@@ -315,7 +315,7 @@ export function seedTestLoot(entity, rolls = Math.random) {
     for (const row of TEST_LOOT_BASES) put(applyRarity(base(row), tier, rolls));
   }
   for (const rec of LEGENDARIES) put(legendaryItem(rec));
-  for (const rec of AETHERIC_RECORDS) put(mintAetheric(rec));   // SET6: the rung above, never rolled - the Warden's own set, all nine places; RAID4b: and the raids' three, a town's thanks
+  for (const rec of AETHERIC_RECORDS) put(mintAetheric(rec));   // SET6: the rung above, never rolled - the Warden's own set, all nine places; RAID4b: and the raids' three, a town's thanks; SERPENT-SET: and the Old Coil's own
   // ...and the law itself, once each: what a Rare and a Legendary look
   // like on the floor, before the Mages Guild has been paid.
   put(applyRarity(base(TEST_LOOT_BASES[0]), 'rare', rolls), { identified: false });

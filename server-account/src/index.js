@@ -56,11 +56,12 @@
 //   POST /v1/duel/loss   { winner }       -> { recorded, wins, losses }
 //   POST /v1/duel/record { id }           -> { id, wins, losses, gates }
 // WB5b, the gates closed. The caller is the account the receipt names:
-//   POST /v1/serpent/claim { receipt, character, name?, cid? } -> { recorded, slain, renown, spoils, order }   (SERPENT1: a sea serpent's receipt)
+//   POST /v1/serpent/claim { receipt, character, name?, cid? } -> { recorded, slain, renown, spoils, order, marks? }   (SERPENT1: a sea serpent's receipt; SERPENT-SET: `marks` its silver where it recorded)
 //   POST /v1/gate/claim  { receipt, region?, character? } -> { recorded, stones, closed, seat? }   (WB12d: the row's embers, AUDIT WB12d A4; SEAT1b: `seat` the kill's influence)
 // MARKS1, Marks - an account's alone, behind MARKS_OPEN (marks.js); `rid` the act's own id:
 //   POST /v1/marks/balance {}                               -> { balance, today, bank }
 //   POST /v1/marks/exchange { marks, rid }                  -> { ok, marks, gold, balance, exchangedToday } | { repeat, ... }
+//   POST /v1/marks/find { kind, rid }                       -> { ok, struck, balance, today, why? } | { repeat, ... }   (SILVER-FINDS: a loot find)
 //   POST /v1/marks/guild/deposit { character, marks, rid }  -> { ok, marks, balance, guildMarks }
 //   POST /v1/marks/guild/withdraw { character, marks, rid } -> { ok, marks, balance, guildMarks }
 //   POST /v1/marks/report {}                                -> the week's report (a developer's)
@@ -158,7 +159,7 @@ import {
   duelRecordOf, reportDuelLoss, gateRecordOf, claimGate, legalRefusal,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES } from '../../src/net/identityToken.js';
+import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, savePathOf, realmPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining } from './service.js';
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
@@ -194,8 +195,8 @@ import { fundFort, readForts } from './seatForts.js';   // SEAT2b: a seat's fort
 /** SEAT1c: the account's row with the Charter titles it may wear laid on it (`seatTitles`, titles.js titlesHeld), while the
  *  seats are open to it - for the wardrobe's read and its write. */
 const withSeatTitles = async (ctx, player, env) => (seatsOpenFor(player, env) ? { ...player, seatTitles: await seatTitlesOf(ctx.db, player.id) } : player);
-import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsOf } from './decor.js';   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
-import { gateStrikeStatement, gateStrikeAnswer, raidStrikeStatement, combatStrikeAnswer, raidStrikeRid, deedStatements, deedAnswer, deedEvent, marksOf, marksCardOf, exchangeMarks, depositGuildMarks, withdrawGuildMarks, marksReport } from './marks.js';   // MARKS1: the server's currency; SILVER-WAYS: a raid's silver and a guild's deeds
+import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsKept, forgetYards } from './decor.js';   // YARD-SHED: a town's yards kept   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
+import { gateStrikeStatement, gateStrikeAnswer, raidStrikeStatement, combatStrikeAnswer, raidStrikeRid, deedStatements, deedAnswer, deedEvent, marksOf, marksCardOf, exchangeMarks, depositGuildMarks, withdrawGuildMarks, marksReport, serpentStrikeStatement, serpentStrikeAnswer, findMarks } from './marks.js';   // MARKS1: the server's currency; SILVER-WAYS: a raid's silver and a guild's deeds
 import { readBoard, pinNote, takeDownNote, reportNote, moderateNote, postNotice, removeNotice } from './board.js';   // NOTICE1: the Notice Board
 import { profState, profPixels, harvestNode, chooseSpec, withdrawStores, depositStores, smeltAtForge, craftAtAnvil, buyStock, listWrits, deliverWrit } from './professions.js';   // BAG1: a deposit   // PROF1: the professions; PROF2: the forge; PROF3: the anvil and the smith's stock
 import { brewAtStation, disenchantPiece } from './alchemy.js';   // PROF12: Alchemy's brew, Enchanting's disenchant
@@ -212,6 +213,7 @@ import {
 } from './realm.js';   // REALM P1: the realm's characters; ARENA4b: the level on a realm character's tile, the token's `cl`
 import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
+import { listLineages, putLineage, realmDie, realmHouseOf, realmWed, listUnions, LINEAGE_BODY_MAX, isTombstone } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
 import { measured } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine)
 import {
   patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook,
@@ -261,6 +263,10 @@ const REALM_STATUS = Object.freeze({
   'home-tenants': 409, 'home-rent-due': 409,   // HOME-RENT: and one renting rooms out waits for its tenants and collects its rent
   'home-vendor-stocked': 409,   // HOME-VENDOR: and one whose trader still sells
   'realm-birth': 403, 'customs-allowance': 403,   // AUDIT REALM2 S1: a first save the realm's law refuses
+  // LEGACY7 (legacy.js): a tombstone is gone for good; a line or person the birth cannot be; a line's model is its founder's
+  dead: 410, 'no-lineage': 404, 'lineage-person': 409, 'lineage-played': 409, 'lineage-model': 409, 'too-many-lineages': 409,
+  'wed-no-line': 409, 'wed-already': 409, 'wed-partner': 409, 'wed-spent': 409,   // LEGACY7 part three: a wedding the realm cannot make
+  'lineage-too-large': 413,   // AUDIT LEGACY III O2/P1: a line's record past its bound - its own word, never a malformed body's
 });
 /** CUSTOMS-PASS: a pass's refusals - a bad shape 400 (the default), a caller who is no developer 403, no such account
  *  404, a guest's name two accounts wear 409. */
@@ -297,10 +303,11 @@ const GUILD_STATUS = Object.freeze({
   // REALM P2.2: a realm character's record moves with the act - where it stands, and whether it can pay
   'realm-needed': 400, 'realm-gold': 409, lease: 409, seq: 409, 'no-realm-character': 404, 'no-data': 404, 'no-storage': 503,
 });
-/** MARKS1: each Marks refusal's status - not this account's (a guest, the switch, a rank, a developer's) 403, no
- *  guild 404, short or capped 409, the hour's acts spent 429, a bad shape 400 (the default). */
+/** MARKS1: each Marks refusal's status - not this account's (a guest, the switch, a rank, a developer's; AUDIT 625 S1:
+ *  the finds of an account not yet a week registered) 403, no guild 404, short or capped 409, the hour's acts spent
+ *  429, a bad shape 400 (the default). */
 const MARKS_STATUS = Object.freeze({
-  'marks-need-account': 403, 'marks-closed': 403, 'not-developer': 403, 'guild-rank': 403, 'guilds-need-account': 403,
+  'marks-need-account': 403, 'marks-closed': 403, 'marks-young': 403, 'not-developer': 403, 'guild-rank': 403, 'guilds-need-account': 403,
   'no-guild': 404,
   'marks-short': 409, 'marks-bank-cap': 409, 'marks-full': 409, 'guild-marks-short': 409, 'guild-marks-full': 409,
   'marks-rate': 429,
@@ -446,9 +453,11 @@ async function readCapped(request, max) {
   return out.buffer;
 }
 
+/** A JSON object body within `max` bytes - or null (not a JSON object), or undefined (past the bound: AUDIT LEGACY III
+ *  O2, which the line's route answers in its own word). Both refuse alike wherever a route asks only `!body`. */
 async function readBody(request, max = MAX_BODY_BYTES) {
   const bytes = await readCapped(request, max);
-  if (!bytes) return null;
+  if (!bytes) return undefined;
   const text = new TextDecoder().decode(bytes);
   if (!text) return {};
   try { const v = JSON.parse(text); return v && typeof v === 'object' && !Array.isArray(v) ? v : null; } catch { return null; }
@@ -619,9 +628,23 @@ const service = {
 
       // EVERY ROUTE BELOW NEEDS A SECRET, and resolving it is the same
       // one indexed lookup every time.
-      // REALM P2.1: a trade's half carries two offers of up to sixteen records each - the one JSON route past 4 KiB
-      const body = request.method === 'POST' ? await readBody(request, path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : MAX_BODY_BYTES) : {};
+      // REALM P2.1: a trade's half carries two offers of up to sixteen records each - a JSON route past 4 KiB. AUDIT LEGACY
+      // III O2/P1: and a line's record, to its own bound (legacy.js LINEAGE_BODY_MAX) - read at 4 KiB, a played founder's
+      // first save was refused, and the realm held the founding copy for good
+      const body = request.method === 'POST'
+        ? await readBody(request, path === '/v1/realm/lineage' ? LINEAGE_BODY_MAX : path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : MAX_BODY_BYTES) : {};
+      if (body === undefined && path === '/v1/realm/lineage') return no('lineage-too-large', 413, origin);
       if (!body) return no('body', 400, origin);
+      // YARD-SHED (2026-10-06, the service down - "D1 DB is overloaded. Requests queued for too long."): A TOWN'S YARDS NEED
+      // NO SESSION. Its answer is every caller's alike, any guest's to read (decor.js yardsKept), and the two reads a
+      // session costs were most of the database's day - so it is answered here, from the isolate's kept answer, bounded
+      // per address in this isolate's memory as a session's door is per account (no write to count it).
+      if (path === '/v1/homes/yards' && request.method === 'POST') {
+        const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+        if (overAccountRate(`yards:${ip}`, nowS, ACCOUNT_MAX, ACCOUNT_WINDOW_S)) return no('rate', 429, origin);
+        const r = await yardsKept(ctx, body.mapId, nowS);
+        return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
+      }
       // ═══ AUDIT-ACC F13: A CREDENTIAL DOES NOT GO IN A URL ══════
       //
       // This read `?secret=` on a GET, and the comment above defended
@@ -642,6 +665,15 @@ const service = {
       const secret = bearer ?? (request.method === 'POST' ? body.secret : null);
       const who = await resolveSession(ctx, secret);
       if (!who) return no('auth', 401, origin);
+
+      // AUDIT LEGACY III O12: A TOMBSTONE ACTS IN NOTHING. Every act a character does names it as the body's
+      // `character` - the professions, the Stores, the writs, the market, Renown, the guilds - and a fallen Bloodline
+      // character (an Enduring elder retired) is never played again (legacy.js), yet only the guilds' door asked (O5): a
+      // request naming the dead read its Stores and withdrew them into its heir's pack, and wrote its tracks after its
+      // death. Asked here, once, before any route - but the token's mint, which is no act: it vouches for the account,
+      // and mints a tombstone no realm character (REALM-DOOR's `rc` 0, no house, no `ci`), which the relay's door refuses;
+      // a page under its death screen still mints for the hub it stands in.
+      if (path !== '/v1/auth/token' && typeof body.character === 'string' && (await isTombstone(db, who.player.id, body.character))) return no('dead', 410, origin);
 
       // AUDIT-ACC F12: A CREDENTIAL IS NOT A LICENCE TO HAMMER. The
       // open routes were bounded per address and everything behind a
@@ -744,10 +776,18 @@ const service = {
         // ARENA4: AND THE ACCOUNT'S ARENA RATING this season, for a registered account - the hall queues by it (net/arenaLaw.js
         // pairQueue), off the signature, never a word of the client's. A guest's token carries none (a guest is not queued).
         const ar = who.player.handle ? (await arenaRatingOf(ctx, who.player.id, arenaSeasonOf(nowS))).rating : undefined;
-        const token = await mintToken(
-          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}) },
-          key, { subtle, nowS },
-        );
+        // LEGACY7 part two: AND THAT REALM CHARACTER'S HOUSE (legacy.js realmHouseOf: its line's surname, its given name, a
+        // Bloodline's mark, the generation's numeral) - off the line the service holds, never a word of the client's
+        const house = rc ? await realmHouseOf(ctx, who.player.id, body.character) : null;
+        // AUDIT LEGACY III O1: AND WHICH REALM CHARACTER (`ci`, beside a 1 alone) - the relay stamps it on a wedding's frames,
+        // so each half names the character its player saw. Kept when a house is left unsaid: the widest token without a
+        // house is under TOKEN_MAX_CHARS with it (test/auditlegacy3)
+        const signed = { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(rc ? { ci: body.character } : {}), ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}) };
+        let token = await mintToken(house ? { ...signed, ...house } : signed, key, { subtle, nowS });
+        // the token's own bounds (identityToken.js TOKEN_MAX_CHARS, and AUDIT LEGACY III O11 the relay hello's TOKEN_BODY_MAX):
+        // a house that would take it past either is left unsaid, never the rest
+        let houseWorn = house;
+        if (house && (token.length > TOKEN_MAX_CHARS || tokenBodyOf(token).length > TOKEN_BODY_MAX)) { token = await mintToken(signed, key, { subtle, nowS }); houseWorn = null; }
         return json({
           token,
           name: displayName(who.player),
@@ -762,6 +802,7 @@ const service = {
           guild: guild ? guild.gt : null,   // GUILD1c: the tag my own name wears, beside the token as the level is
           aura: wardrobe.au ?? null,   // WB9g: the aura at my own feet, beside the token as the title is
           ribbon: wardrobe.rb ?? null,   // SEASON1 part two: the ribbon under my own name, beside the token as the aura is
+          house: houseWorn ?? null,   // LEGACY7: the house my token wears, beside it as the ribbon is
           expiresAt: nowS + MAX_TTL_S,
         }, 200, origin);
       }
@@ -889,11 +930,17 @@ const service = {
         // signed it at the kill (src/net/serpentReceipt.js); the session says who is asking, never the body, and serpents.js
         // `claimSerpent` holds the rest - the signature, the account, one row a (day, account), the Renown, the device's
         // hoard. A level that ROSE comes back with a signed order, as a raid's does.
-        const r = await claimSerpent(ctx, who.player, { receipt: body.receipt, character: body.character, name: body.name ?? null, cid: body.cid ?? null }, await gatePublicKey(env, subtle));
+        // SERPENT-SET: and its silver, a combat strike in the row's own batch (marks.js serpentStrikeStatement - 40, a ship
+        // that stood half, under the day's combat cap with the gates and the raids), answered as `marks` where it recorded
+        const r = await claimSerpent(ctx, who.player, { receipt: body.receipt, character: body.character, name: body.name ?? null, cid: body.cid ?? null, stones: body.stones ?? null }, await gatePublicKey(env, subtle), {   // AUDIT 625 P4: the embers its build mints
+          strike: (d, nonce, earned) => serpentStrikeStatement(ctx, who.player, env, d, nonce, earned),
+        });
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
         const key = r.renown?.rose ? await signingKey(env, subtle) : null;   // a level that rose: its signed order, for the rooms
         const signed = key ? await mintRenownOrder({ s: who.player.id, lv: r.renown.level }, key, { subtle, nowS }) : null;
-        return json({ ...r, order: signed }, 200, origin);
+        const answer = { ...r };
+        delete answer.day; delete answer.struck;   // the service's own: the kill's day and whether the batch struck
+        return json({ ...answer, order: signed, ...(r.recorded ? { marks: await serpentStrikeAnswer(ctx, who.player, env, !!r.struck, r.day) } : {}) }, 200, origin);
       }
 
       if (path === '/v1/arena/claim' && request.method === 'POST') {
@@ -984,10 +1031,6 @@ const service = {
           const r = await decorOf(ctx, who.player, body);
           return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
         }
-        if (path === '/v1/homes/yards') {   // HOME-YARD: every yard of a town, read by anyone walking its streets
-          const r = await yardsOf(ctx, who.player, body);
-          return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
-        }
         if (path === '/v1/homes/rooms') {   // HOME-RENT: a home's rooms, read by anyone at its door
           const r = await roomsOf(ctx, who.player, body);
           return 'error' in r ? no(r.error, r.error === 'no-home' ? 404 : 400, origin) : json(r, 200, origin);
@@ -1002,6 +1045,7 @@ const service = {
             : path === '/v1/homes/decor/move' ? await moveDecor(hctx, who.player, body)
               : path === '/v1/homes/decor/hidden' ? await hideDecorBase(hctx, who.player, body)   // BASE-HIDE
                 : await removeDecor(hctx, who.player, body);
+          forgetYards(body?.mapId);   // YARD-SHED: the town's kept yards let go, whatever the write did
           if (!('error' in r)) return json(r, 200, origin);
           const said = realmNo(r);
           if (said) return said;
@@ -1117,6 +1161,7 @@ const service = {
         const act = {
           '/v1/marks/balance': () => marksOf(ctx, who.player, env),
           '/v1/marks/exchange': () => exchangeMarks(ctx, who.player, env, body),
+          '/v1/marks/find': () => findMarks(ctx, who.player, env, body),   // SILVER-FINDS: a loot find
           '/v1/marks/guild/deposit': () => depositGuildMarks(ctx, who.player, env, body),
           '/v1/marks/guild/withdraw': () => withdrawGuildMarks(ctx, who.player, env, body),
           '/v1/marks/report': () => marksReport(ctx, who.player, env),
@@ -1553,7 +1598,7 @@ const service = {
         // REALM-GZIP: every answer that hands a tab a lease says this service opens a packed save - a tab packs only then,
         // so a new build before its service is deployed (or after one rolled back) sends the text it always sent
         const leased = (/** @type {any} */ r) => answer(r.error ? r : { ...r, gzip: true });
-        if (path === '/v1/realm/create') return leased(await createRealm(rctx, me, { name: body.name, summary: body.summary }));
+        if (path === '/v1/realm/create') return leased(await createRealm(rctx, me, { name: body.name, summary: body.summary, lineage: body.lineage, person: body.person }));   // LEGACY7: born as a person of the account's own line
         if (path === '/v1/realm/customs') return leased(await customsRealm(rctx, me, { origin: body.origin, name: body.name, summary: body.summary }));   // AUDIT REALM L3-F2/F3: one guarded batch, and resumable
         if (path === '/v1/realm/join') return leased(await joinRealm(rctx, me, body.id));
         if (path === '/v1/realm/trade') {
@@ -1564,6 +1609,19 @@ const service = {
         }
         if (path === '/v1/realm/leave') return answer(await leaveRealm(rctx, me, { id: body.id, lease: body.lease }));
         if (path === '/v1/realm/undo') return answer(await undoRealm(rctx, me, body.id));   // HOUSE-LOSS: a customs that never landed, undone
+        // LEGACY7 (legacy.js): Project Legacy's lines - listed, written past their rev (a stale write answered with the
+        // stored record, to merge into), and a fallen character's tombstone under its lease
+        if (path === '/v1/realm/lineages') return json({ lineages: await listLineages(rctx, me) }, 200, origin);
+        if (path === '/v1/realm/lineage') {
+          const r = await putLineage(rctx, me, { id: body.id, record: body.record, base: body.base ?? null });   // AUDIT LEGACY III A2: the rev it was made from
+          if (r.error === 'lineage-stale') return json(r, 409, origin);
+          return answer(r);
+        }
+        if (path === '/v1/realm/die') return answer(await realmDie(rctx, me, { id: body.id, lease: body.lease, why: body.why }));   // LEGACY7 part three: 'retired' keeps a union
+        // LEGACY7 part three: a half of one wedding, and the account's unions
+        // AUDIT LEGACY III O1/O3: the other's character as the relay stamped it, and a half taken back
+        if (path === '/v1/realm/wed') return answer(await realmWed(rctx, me, { id: body.id, lease: body.lease, sid: body.sid, partner: body.partner, partnerChar: body.partnerChar, withdraw: body.withdraw === true }));
+        if (path === '/v1/realm/unions') return json({ unions: await listUnions(rctx, me) }, 200, origin);
         return answer(await deleteRealm(rctx, me, body.id));   // /v1/realm/delete - HOUSE-LOSS: which undoes one too, for a door that asks a delete
       }
 

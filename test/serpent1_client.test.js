@@ -317,7 +317,7 @@ function rig({ shipAt = [60, 0], acct = 'acct-0001' } = {}) {
     level: () => 20,
     boat: () => (ship.none ? null : { boat, hull: 4, root: [ship.at[0] + OFF[0], ship.at[1] + OFF[1]], pos: [ship.at[0] + OFF[0], 0, ship.at[1] + OFF[1]], yaw: ship.yaw, hl: 25, hw: 7, maxHull: 1200, maxSail: 600, atHelm: ship.atHelm, wrecked: ship.wrecked }),
     strike: (b, hurt, o) => strikes.push({ b, hurt, o }),
-    hurt: (pct, base, el) => hurts.push([pct, base, el]),
+    maxHealth: () => 100, hurt: (n, el) => hurts.push([n, el]),   // PIN MOVED (AUDIT 2 XC4): the bite in points
     say: (t) => says.push(t), mid: (t) => mids.push(t), sound: (k, p) => sounds.push([k, p]), fx: (k, p) => fx.push([k, p]),
   });
   // the cell's word as the relay fans it - its fight's site stamped on it (AUDIT SERPENT 2 F1)
@@ -480,7 +480,7 @@ test('SERPENT1 host: the whirl pulls my ship toward its heart and round; the ven
   const at = R.at() + 300;
   R.hear({ k: 'atk', i: 20, a: SERPENT_ATTACK_TABLE.spit.id, at, x: 0, z: 0, yw: 0, tg: [[60, 0]] });
   R.step(400); R.step(1000);
-  assert.ok(R.hurts.length >= 1 && R.hurts[0][2] === 'poison', 'it bit');
+  assert.ok(R.hurts.length >= 1 && R.hurts[0][1] === 'poison' && R.hurts[0][0] >= 1, 'it bit');
   const bar = R.host.bar();
   assert.equal(bar.name, 'Sethrakul');
   assert.equal(bar.phase, 1);
@@ -562,7 +562,7 @@ test('SERPENT1 hoard: the seed\'s own - the same seed, level and earning the sam
   assert.equal(s.pieces.length, 1);
   assert.ok(Math.abs(s.gold - a.gold * STOOD_GOLD) <= 1, 'the same seed\'s gold, its share');
   const list = serpentSpoilsList(12345, 20, 'dealt');
-  assert.deepEqual(list.map((p) => p.kind), ['item', 'item', 'gold']);
+  assert.deepEqual(list.map((p) => p.kind), ['item', 'item', 'item', 'gold']);   // PIN MOVED (SERPENT-SET): the gate's embers between the pieces and the gold
   assert.equal(serpentSpoilsDay(DAY), `serpent:${DAY}`);
   assert.notEqual(SERPENT_SPOILS_KEYS.store, RAID_SPOILS_KEYS.store);
   assert.notEqual(SERPENT_SPOILS_KEYS.day, RAID_SPOILS_KEYS.day);

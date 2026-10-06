@@ -1,0 +1,281 @@
+[
+  {
+    "name": "WATCH-DAY-strength-step",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  return b >= 2 ? Math.max(1, Math.min(6, 1 + Math.floor(b / 9))) : 0;",
+    "new": "  return b >= 2 ? Math.max(1, Math.min(6, 1 + Math.floor(b / 8))) : 0;",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-strength-cap",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  return b >= 2 ? Math.max(1, Math.min(6, 1 + Math.floor(b / 9))) : 0;",
+    "new": "  return b >= 2 ? Math.max(1, Math.min(5, 1 + Math.floor(b / 9))) : 0;",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-hamlet-watched",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  return b >= 2 ? Math.max(1, Math.min(6, 1 + Math.floor(b / 9))) : 0;",
+    "new": "  return Math.max(1, Math.min(6, 1 + Math.floor(b / 9)));",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-three-companies",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "export const WATCH_COMPANIES = 4;",
+    "new": "export const WATCH_COMPANIES = 3;",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-no-clothes",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "    ...(guard ? { civvies: tables.male[lwSeed(seed, 0x63697673) % tables.male.length] } : {}),",
+    "new": "    ...({}),",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-rotation-three",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const shift = (company + day) % WATCH_ROTATION;",
+    "new": "  const shift = (company + day) % 3;",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-company-halved",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const company = res.slot % WATCH_ROTATION, rank = Math.floor(res.slot / WATCH_ROTATION);",
+    "new": "  const company = res.slot % 2, rank = Math.floor(res.slot / WATCH_ROTATION);",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-posts-overmanned",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const posts = size >= 3 ? Math.min(exits.length, size - 2) : 0;",
+    "new": "  const posts = size >= 3 ? Math.min(exits.length, size - 1) : 0;",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-gates-never-turn",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    const turn = lwSeed(res.town, 0x706f7374, company, day) % exits.length;   // 'post'",
+    "new": "    const turn = 0;   // 'post'",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-no-pairs",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  return { shift, company, rank, kind: 'patrol', post: null, patrol: Math.floor(i / 2), pair: alone ? null : /** @type {0|1} */ (i % 2) };",
+    "new": "  return { shift, company, rank, kind: 'patrol', post: null, patrol: i, pair: null };",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-night-short",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "export const WATCH_SHIFTS = Object.freeze([Object.freeze([6, 14]), Object.freeze([14, 22]), Object.freeze([22, 30])]);",
+    "new": "export const WATCH_SHIFTS = Object.freeze([Object.freeze([6, 14]), Object.freeze([14, 22]), Object.freeze([22, 27])]);",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-no-hold",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    if (out.length) { const last = out[out.length - 1]; last.dur = until - last.from; }",
+    "new": "    void out;",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-no-tail",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const startOut = shift === 3 ? nightTail(res, places, day - 1, watchSize, mpm) : null;",
+    "new": "  const startOut = null;",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-start-home",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  let at = start?.at ?? home, atKind = start?.kind ?? 'home', cursor = D0;",
+    "new": "  let at = home, atKind = start?.kind ?? 'home', cursor = D0;",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-walk-unmarked",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "{ from: at, to, ...(atMark ?? {}), ...(arriveMark ?? {}), ...extra }",
+    "new": "{ from: at, to, ...extra }",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-change-in-street",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    if (!!atMark?.duty !== !!it.mark?.duty && at !== home) go(home, cursor);",
+    "new": "    void 0;",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-bed-cuts-watch",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    const homeBy = it.mark?.duty ? Infinity : bed - walkMinutes(it.at, home, mpm);",
+    "new": "    const homeBy = bed - walkMinutes(it.at, home, mpm);",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-late-from-supper",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    const watchBy = nw ? nw.from - walkMinutes(it.at, home, mpm) - walkMinutes(home, nw.at, mpm) : Infinity;",
+    "new": "    const watchBy = Infinity;",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-morning-at-home",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const walkIn = shift === 0 ? morningWalk(res, places, day, watchSize, mpm) : null;",
+    "new": "  const walkIn = null;",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-off-day-ends-home",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const walkOut = shift === 3 ? morningWalk(res, places, day + 1, watchSize, mpm) : null;",
+    "new": "  const walkOut = null;",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-walk-early-for-all",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  return t0 < day * DAY_MIN + DAY_START_MIN ? { from: home, to, t0, t1, kind: d.kind === 'post' ? 'post' : 'watch', mark: { duty: true, pair: d.pair } } : null;",
+    "new": "  return { from: home, to, t0, t1, kind: d.kind === 'post' ? 'post' : 'watch', mark: { duty: true, pair: d.pair } };",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-night-tail-anyone",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  if (!last?.duty) return null;",
+    "new": "  if (!last) return null;",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-beat-across-town",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const near = pool.map((sp) => ({ sp, d: gap(sp) })).sort((a, b) => a.d - b.d || (a.sp.key < b.sp.key ? -1 : a.sp.key > b.sp.key ? 1 : 0)).slice(0, n).map((x) => x.sp);",
+    "new": "  const near = pool.filter((_, k) => k % Math.max(1, Math.floor(pool.length / n)) === 0).slice(0, n);",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-post-not-out",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post']));",
+    "new": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch']));",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-changed-in-view",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (res.guard && p.guard !== !!w.e.duty && (!row.visible || allowChange))",
+    "new": "if (res.guard && p.guard !== !!w.e.duty)",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-never-out-of-uniform",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "p.setIdentity(w.e.duty ? res.archive : (res.civvies ?? res.archive), !!w.e.duty);",
+    "new": "p.setIdentity(res.archive, !!w.e.duty);",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-no-shoulder",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        const p = e.pair === 1 ? this._atShoulder(line, w.s) : pointOnLine(line, Math.max(0, w.s - this._fileOf(res, e) * FILE_M));",
+    "new": "        const p = pointOnLine(line, Math.max(0, w.s - this._fileOf(res, e) * FILE_M));",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-right-only",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    for (const side of [PAIR_SIDE_M, -PAIR_SIDE_M]) {",
+    "new": "    for (const side of [PAIR_SIDE_M]) {",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-never-behind",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const b = pointOnLine(line, Math.max(0, s - PAIR_BEHIND_M));",
+    "new": "    const b = pointOnLine(line, s);",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-post-faces-in",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "yaw: e.kind === 'post' && !inCircle ? e.at.yaw : st.yaw,",
+    "new": "yaw: st.yaw,",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  },
+  {
+    "name": "WATCH-DAY-room-uniform",
+    "file": "src/world/travellerSprites.js",
+    "old": "      const archive = flat ? flat.archive : look ? look.archive : (m.res.civvies ?? m.res.archive);",
+    "new": "      const archive = flat ? flat.archive : look ? look.archive : m.res.archive;",
+    "tests": [
+      "test/watchday_watch.test.js"
+    ]
+  }
+]

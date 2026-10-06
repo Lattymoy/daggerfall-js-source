@@ -3,15 +3,15 @@
 // known to the save; each answers one gap and none replaces the fire. The Bedroll (a rough rest point, a 10 s channel,
 // ten nights), the Ember Jar (a one-night fire, never picked up), Firewood (+3 to a Campfire), the Tonic (fatigue, the
 // sleep need), the Candle (a kneel for magicka), the Salts (an hour's wakefulness, the debt after), the Draught (the
-// next night a bed's). Online the shelves, piles and foes wait for REST_ITEMS_ONLINE - the templates ship a release
-// ahead (section 6's last rule); offline they come with Climates & Calories.
+// next night a bed's). Online the shelves, piles and foes waited for REST_ITEMS_ONLINE - the templates shipped a release
+// ahead (section 6's last rule) - and REST-LOOT (2026-10-05) turned it on; offline they come with Climates & Calories.
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   REST_ITEM, REST_ITEM_ROWS, REST_ITEMS_ONLINE, restItemsAvailable, createRestItem, restItemLines, useTonic, useSalts,
   useDraught, useCandle, litCandle, meditate, snuffCandle, draughtTaken, restItemsStock, rollRestLoot, REST_PILE_CHANCES,
-  REST_FOE_CHANCES, isDeepPileKey, REST_ITEM_TEXT, BEDROLL_CHANNEL_SECONDS, spendCharge,
+  REST_FOE_CHANCES, isDeepPileKey, REST_ITEM_TEXT, BEDROLL_CHANNEL_SECONDS, spendCharge, restItemsOnline, _setRestItemsOnlineForTests,
 } from '../src/systems/restItems.js';
 import { templateByIndex, itemUseHandler } from '../src/systems/itemTemplates.js';
 import { wakingHeld, landWakingDebt, survivalStatMods, newSurvival, WAKING_DEBT_HOURS } from '../src/systems/survival/needs.js';
@@ -43,23 +43,48 @@ test('REST6 the seven: 1700-1706 registered with their weights, charges and pric
   for (const t of Object.values(REST_ITEM)) assert.equal(typeof itemUseHandler(t), 'function', `${t} has its use`);
 });
 
-test('REST6 a release ahead: online no source mints one until REST_ITEMS_ONLINE; offline with Climates & Calories', () => {
-  assert.equal(REST_ITEMS_ONLINE, false);
-  assert.equal(restItemsAvailable(true), false);
-  _resetForTests(); setPref('survival', false);
-  assert.equal(restItemsAvailable(false), false, 'offline without the arc: none');
-  setPref('survival', true);
-  assert.equal(restItemsAvailable(false), true);
-  assert.deepEqual(restItemsStock('GeneralStore', 10, () => 0.99, { online: true }), [], 'online: an empty shelf');
-  const shelf = restItemsStock('GeneralStore', 10, () => 0.99, { online: false });
-  assert.deepEqual([...new Set(shelf.map((i) => i.templateIndex))], [REST_ITEM.EmberJar, REST_ITEM.Firewood, REST_ITEM.Tonic]);   // AUDIT REST II H14 (PIN MOVED): the Bedroll is online's alone
-  assert.deepEqual([...new Set(restItemsStock('Alchemist', 10, () => 0.99, { online: false }).map((i) => i.templateIndex))], [REST_ITEM.Tonic, REST_ITEM.Salts, REST_ITEM.Draught, REST_ITEM.Candle]);
-  assert.deepEqual(restItemsStock('Armorer', 10, () => 0.99, { online: false }), []);
-  const pile = rollRestLoot([], REST_PILE_CHANCES, () => 0.01, { online: false });
-  assert.deepEqual(pile.map((i) => i.templateIndex), [REST_ITEM.EmberJar, REST_ITEM.Tonic], 'a deep pile at its 4%');
-  assert.deepEqual(rollRestLoot([], REST_PILE_CHANCES, () => 0.05, { online: false }), [], 'and not above it');
-  assert.deepEqual(rollRestLoot([], REST_FOE_CHANCES, () => 0.01, { online: true }), [], 'online: no foe drops one yet');
+test('REST6 a release ahead: online no source mints one while the switch is shut; offline with Climates & Calories (REST-LOOT: the switch\'s way back, pinned shut)', () => {
+  _setRestItemsOnlineForTests(false);
+  try {
+    assert.equal(restItemsAvailable(true), false);
+    _resetForTests(); setPref('survival', false);
+    assert.equal(restItemsAvailable(false), false, 'offline without the arc: none');
+    setPref('survival', true);
+    assert.equal(restItemsAvailable(false), true);
+    assert.deepEqual(restItemsStock('GeneralStore', 10, () => 0.99, { online: true }), [], 'online: an empty shelf');
+    const shelf = restItemsStock('GeneralStore', 10, () => 0.99, { online: false });
+    assert.deepEqual([...new Set(shelf.map((i) => i.templateIndex))], [REST_ITEM.EmberJar, REST_ITEM.Firewood, REST_ITEM.Tonic]);   // AUDIT REST II H14 (PIN MOVED): the Bedroll is online's alone
+    assert.deepEqual([...new Set(restItemsStock('Alchemist', 10, () => 0.99, { online: false }).map((i) => i.templateIndex))], [REST_ITEM.Tonic, REST_ITEM.Salts, REST_ITEM.Draught, REST_ITEM.Candle]);
+    assert.deepEqual(restItemsStock('Armorer', 10, () => 0.99, { online: false }), []);
+    assert.deepEqual(rollRestLoot([], REST_FOE_CHANCES, () => 0, { online: true }), [], 'online: no foe drops one');
+    assert.deepEqual(rollRestLoot([], REST_PILE_CHANCES, () => 0, { online: true }), [], 'nor a pile');
+  } finally { _setRestItemsOnlineForTests(null); }
   assert.deepEqual(['J', 'O', 'I', 'P', '-'].map(isDeepPileKey), [true, true, false, false, false]);
+});
+
+test('REST-LOOT (2026-10-05, Mac: "the new resting items we added ... should be more common loot drops"): the switch on - online the shelf, the piles and the foes carry them; a pile six of the seven and a foe five, each at its own chance; the Bedroll the counter\'s alone (mutants: the switch shut; any chance moved; the Bedroll in the loot)', () => {
+  assert.equal(REST_ITEMS_ONLINE, true);
+  assert.equal(restItemsOnline(), true);
+  assert.equal(restItemsAvailable(true), true, 'online: every source open, whatever the tier');
+  _resetForTests(); setPref('survival', false);
+  assert.equal(restItemsAvailable(true), true, 'online even with Climates & Calories off');
+  assert.equal(restItemsAvailable(false), false, 'offline still the arc\'s');
+  setPref('survival', true);
+  assert.deepEqual([...new Set(restItemsStock('GeneralStore', 10, () => 0.99, { online: true }).map((i) => i.templateIndex))], [REST_ITEM.Bedroll, REST_ITEM.EmberJar, REST_ITEM.Firewood, REST_ITEM.Tonic], 'online the General Store\'s shelf, the Bedroll with it');
+  assert.deepEqual(REST_PILE_CHANCES, [[REST_ITEM.EmberJar, 6], [REST_ITEM.Tonic, 6], [REST_ITEM.Firewood, 4], [REST_ITEM.Candle, 2], [REST_ITEM.Salts, 2], [REST_ITEM.Draught, 2]]);
+  assert.deepEqual(REST_FOE_CHANCES, [[REST_ITEM.EmberJar, 3], [REST_ITEM.Tonic, 3], [REST_ITEM.Candle, 1], [REST_ITEM.Salts, 1], [REST_ITEM.Draught, 1]]);
+  for (const online of [true, false]) {
+    const tag = online ? 'online' : 'offline';
+    // a roll just under a chance lands it, at the chance it does not (rolls() * 100 < pct)
+    assert.deepEqual(rollRestLoot([], REST_PILE_CHANCES, () => 0.0199, { online }).map((i) => i.templateIndex), [REST_ITEM.EmberJar, REST_ITEM.Tonic, REST_ITEM.Firewood, REST_ITEM.Candle, REST_ITEM.Salts, REST_ITEM.Draught], `${tag}: a deep pile, every one under 2%`);
+    assert.deepEqual(rollRestLoot([], REST_PILE_CHANCES, () => 0.02, { online }).map((i) => i.templateIndex), [REST_ITEM.EmberJar, REST_ITEM.Tonic, REST_ITEM.Firewood], `${tag}: at 2% the charged three do not`);
+    assert.deepEqual(rollRestLoot([], REST_PILE_CHANCES, () => 0.04, { online }).map((i) => i.templateIndex), [REST_ITEM.EmberJar, REST_ITEM.Tonic], `${tag}: at 4% the fire's two alone`);
+    assert.deepEqual(rollRestLoot([], REST_PILE_CHANCES, () => 0.06, { online }), [], `${tag}: at 6% none`);
+    assert.deepEqual(rollRestLoot([], REST_FOE_CHANCES, () => 0.0099, { online }).map((i) => i.templateIndex), [REST_ITEM.EmberJar, REST_ITEM.Tonic, REST_ITEM.Candle, REST_ITEM.Salts, REST_ITEM.Draught], `${tag}: a foe, every one under 1%`);
+    assert.deepEqual(rollRestLoot([], REST_FOE_CHANCES, () => 0.01, { online }).map((i) => i.templateIndex), [REST_ITEM.EmberJar, REST_ITEM.Tonic], `${tag}: at 1% the fire's two alone`);
+    assert.deepEqual(rollRestLoot([], REST_FOE_CHANCES, () => 0.03, { online }), [], `${tag}: at 3% none`);
+  }
+  for (const list of [REST_PILE_CHANCES, REST_FOE_CHANCES]) assert.ok(!list.some(([t]) => t === REST_ITEM.Bedroll), 'the Bedroll is bought, never found');
 });
 
 test('REST6 the Tonic: forty percent of fatigue at once, and with Climates & Calories four hours off the sleep debt; one off the stack', () => {

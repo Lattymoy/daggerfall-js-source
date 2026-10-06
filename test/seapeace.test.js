@@ -150,18 +150,22 @@ test('SEA-PEACE the odds: a wary pirate takes a prize she outguns WARY_ODDS to o
 // wary brig's prize a Large Galley alone at her guns (a Large Boat's swivels she leaves be now: two men a ball)
 // PIN MOVED (GALLEON, 2026-10-01): the brig's five guns a side outgun no sound armed boat of mine - her prize my Small Ship
 // hurt to four fifths of her hull and alone at her guns (1.37 to one), never with her crew loading them (1.13)
+// PIN MOVED (GALLEON-WEIGHT, 2026-10-06): my galleon's five guns throw six guns' weight now (navalShips.js
+// playerBatteryWeight), so four fifths of her hull alone at her guns is 1.14 to one - under WARY_ODDS; her prize is my
+// Small Ship hurt to seven tenths (1.39), never with her crew loading them (1.16)
 test('SEA-PEACE the host sizes me up: my boat\'s power off her build and her hurts - single-handed without her crew - so a wary pirate leaves a sound Small Ship be and comes for a hurt one alone at her guns, never one with her crew aboard (mutants: the crewless boat at full rate, the hurt unread)', async () => {
   const big = await sea({ hull: HULL.SmallShip });
   big.boat.crewed = false;
   const c = big.host._contacts().find((x) => x.kind === 'player');
-  assert.deepEqual(c.power, fightingPower({ hull: HULL.SmallShip, hullHp: hullBuild(HULL.SmallShip).hullHp, crew: 24, crewed: false }), 'a boat without her crew loads single-handed');
+  // PIN MOVED (GALLEON-WEIGHT, 2026-10-06): my boat's measure says she is a player's - her galleon's broadside six guns' weight
+  assert.deepEqual(c.power, fightingPower({ hull: HULL.SmallShip, hullHp: hullBuild(HULL.SmallShip).hullHp, crew: 24, crewed: false, player: true }), 'a boat without her crew loads single-handed');
   big.boat.crewed = true;
-  assert.deepEqual(big.host._contacts().find((x) => x.kind === 'player').power, fightingPower({ hull: HULL.SmallShip, hullHp: hullBuild(HULL.SmallShip).hullHp, crew: 24 }));
+  assert.deepEqual(big.host._contacts().find((x) => x.kind === 'player').power, fightingPower({ hull: HULL.SmallShip, hullHp: hullBuild(HULL.SmallShip).hullHp, crew: 24, player: true }));
   const w = big.host._sea.get(big.host.spawnShip('pirateBrig', { range: 300, temper: 'wary' }));
   big.run(4);
   assert.equal(w.ship.mode, 'cruise', 'a stronger ship: she sails on');
   assert.equal(big.host.hostileNear(), false);
-  const hurt = (h) => h.host._myState(h.boat).damage.apply({ hull: Math.round(hullBuild(HULL.SmallShip).hullHp * 0.2), sail: 0, crew: 0 });
+  const hurt = (h) => h.host._myState(h.boat).damage.apply({ hull: Math.round(hullBuild(HULL.SmallShip).hullHp * 0.3), sail: 0, crew: 0 });
   const alone = await sea({ hull: HULL.SmallShip });
   alone.boat.crewed = false;
   hurt(alone);

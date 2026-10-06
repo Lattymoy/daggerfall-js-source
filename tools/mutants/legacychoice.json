@@ -1,0 +1,242 @@
+[
+  {
+    "name": "LEGACY-CHOICE-no-lineage-founds",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (chose === NO_LINEAGE) return null;\n",
+    "new": "",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: a character who answered no lineage founded a house anyway."
+  },
+  {
+    "name": "LEGACY-CHOICE-online-load-founds",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (atLoad && deps.online()) return null;\n",
+    "new": "",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: online, a character loaded with no house founded one (the old B4 law)."
+  },
+  {
+    "name": "LEGACY-CHOICE-answer-unread",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    const chose = model ?? deps.entity?.legacyChoice ?? null;",
+    "new": "    const chose = model ?? null;",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: the character's own answer never read at a load."
+  },
+  {
+    "name": "LEGACY-CHOICE-boot-is-a-birth",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    afterBoot: () => found(null, { atLoad: true }),",
+    "new": "    afterBoot: () => found(null),",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: the boot's call taken for a birth."
+  },
+  {
+    "name": "LEGACY-CHOICE-answer-not-kept",
+    "file": "src/systems/chargenSession.js",
+    "old": "  if (isLegacyChoice(result.legacyModel)) playerEntity.legacyChoice = result.legacyModel;\n",
+    "new": "",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: the answer never kept on the character."
+  },
+  {
+    "name": "LEGACY-CHOICE-any-answer-kept",
+    "file": "src/systems/chargenSession.js",
+    "old": "  if (isLegacyChoice(result.legacyModel)) playerEntity.legacyChoice = result.legacyModel;",
+    "new": "  if (result.legacyModel !== null) playerEntity.legacyChoice = result.legacyModel;",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: a result the question was not put to keeps a word."
+  },
+  {
+    "name": "LEGACY-CHOICE-not-saved",
+    "file": "src/systems/save.js",
+    "old": "  'legacyChoice',\n",
+    "new": "",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: the answer dropped by the save."
+  },
+  {
+    "name": "LEGACY-CHOICE-no-third-online",
+    "file": "src/ui/legacyModelChoice.js",
+    "old": "    ...(online ? [Object.freeze({ id: NO_LINEAGE,",
+    "new": "    ...(false ? [Object.freeze({ id: NO_LINEAGE,",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: online the question keeps its two."
+  },
+  {
+    "name": "LEGACY-CHOICE-third-offline",
+    "file": "src/ui/legacyModelChoice.js",
+    "old": "    ...(online ? [Object.freeze({ id: NO_LINEAGE,",
+    "new": "    ...(true ? [Object.freeze({ id: NO_LINEAGE,",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: offline the question grows a third."
+  },
+  {
+    "name": "LEGACY-CHOICE-flat-screen",
+    "file": "src/ui/legacyModelChoice.js",
+    "old": "  faceText: online ? LEGACY_CHOICE_FACE : LEGACY_MODEL_FACE, faceTags: LEGACY_MODEL_TAGS, stacked: online,",
+    "new": "  faceText: online ? LEGACY_CHOICE_FACE : LEGACY_MODEL_FACE, faceTags: LEGACY_MODEL_TAGS, stacked: false,",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: three answers on the fixed pitch - the third off the screen."
+  },
+  {
+    "name": "LEGACY-CHOICE-offline-words",
+    "file": "src/ui/legacyModelChoice.js",
+    "old": "  faceText: online ? LEGACY_CHOICE_FACE : LEGACY_MODEL_FACE, faceTags: LEGACY_MODEL_TAGS, stacked: online,",
+    "new": "  faceText: LEGACY_MODEL_FACE, faceTags: LEGACY_MODEL_TAGS, stacked: online,",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: the popup's words never its own online."
+  },
+  {
+    "name": "LEGACY-CHOICE-no-third-key",
+    "file": "src/ui/levelingChoice.js",
+    "old": "    'char:3': 'three', Digit3: 'three', Numpad3: 'three',   // LEGACY-CHOICE: the third answer online\n",
+    "new": "",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: no key answers the third."
+  },
+  {
+    "name": "LEGACY-CHOICE-third-key-unarmed",
+    "file": "src/ui/levelingChoice.js",
+    "old": "      case 'three': this.pickIndex(2, false); break;",
+    "new": "      case 'three': break;",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: the third key answers nothing."
+  },
+  {
+    "name": "LEGACY-CHOICE-up-is-down",
+    "file": "src/ui/levelingChoice.js",
+    "old": "const n = this.options.length, step = move === 'up' ? n - 1 : 1;",
+    "new": "const n = this.options.length, step = 1;",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: up moves down."
+  },
+  {
+    "name": "LEGACY-CHOICE-tops-unstacked",
+    "file": "src/ui/levelingChoice.js",
+    "old": "    this.tops = stacked ? stackedTops(this.options) : null;",
+    "new": "    this.tops = null;",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: a stacked screen laid on the fixed pitch."
+  },
+  {
+    "name": "LEGACY-CHOICE-narrow-popup",
+    "file": "src/ui/enhancedLevelingChoice.js",
+    "old": "owner.options.length >= 3 ? 'px-win lvl-win lvl-three' : 'px-win lvl-win'",
+    "new": "'px-win lvl-win'",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: the popup never widens for three."
+  },
+  {
+    "name": "LEGACY-CHOICE-no-lineage-unsaid",
+    "file": "src/ui/familyPages.js",
+    "old": "    : prov.choice?.() === NO_LINEAGE ? 'This character chose to live without a house. Make a new character to found one.'\n",
+    "new": "",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: the tab never says the character chose no house."
+  },
+  {
+    "name": "LEGACY-CHOICE-online-unsaid",
+    "file": "src/ui/familyPages.js",
+    "old": "      : prov.online?.() ? 'This character has no house - online, a house is founded only when a character is made. Make a new character to found one.'\n",
+    "new": "",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: the tab tells an online character an older one is founded at a load."
+  },
+  {
+    "name": "LEGACY-CHOICE-tab-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    choice: () => playerEntity.legacyChoice ?? null,   // LEGACY-CHOICE: why a character has no house\n",
+    "new": "",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: the tab never handed the character's answer."
+  },
+  {
+    "name": "LEGACY-CHOICE-third-tag-echoes-its-title",
+    "file": "src/ui/legacyModelChoice.js",
+    "old": "[NO_LINEAGE]: 'Classic' });",
+    "new": "[NO_LINEAGE]: 'No lineage' });",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE: the third tile's tag said its title over again (NO LINEAGE / NO LINEAGE) instead of what its death is."
+  },
+  {
+    "name": "LEGACY-POINTER-hover-under-the-face",
+    "file": "src/ui/levelingChoice.js",
+    "old": "    if (this._fired || this._faced) return;   // LEGACY-POINTER: the Plus face's tiles own the pointer",
+    "new": "    if (this._fired) return;   // LEGACY-POINTER: the Plus face's tiles own the pointer",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-POINTER: the hosts' window-level mousemove moved the Plus face's choice by the canvas face's rows (the field report)."
+  },
+  {
+    "name": "LEGACY-POINTER-click-under-the-face",
+    "file": "src/ui/levelingChoice.js",
+    "old": "    if (this._fired || this._faced) return false;",
+    "new": "    if (this._fired) return false;",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-POINTER: a canvas press answered by the canvas face's rows while the Plus face was up."
+  },
+  {
+    "name": "LEGACY-POINTER-face-never-noted",
+    "file": "src/ui/levelingChoice.js",
+    "old": "drawLevelingFace(this)) { this._faced = true; return; }",
+    "new": "drawLevelingFace(this)) { return; }",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-POINTER: the face drawn and never noted - the canvas seam kept the pointer under it."
+  },
+  {
+    "name": "LEGACY-POINTER-face-never-cleared",
+    "file": "src/ui/levelingChoice.js",
+    "old": "    this._faced = false;\n    if (!this._fired && isEnhanced()",
+    "new": "    if (!this._fired && isEnhanced()",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-POINTER: a question back on the canvas (the skin switched under it) never took the canvas pointer again."
+  }
+]

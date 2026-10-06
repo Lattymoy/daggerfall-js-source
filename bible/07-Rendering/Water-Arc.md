@@ -165,6 +165,13 @@ differed from the reference in 17% of draws by an ulp and moved the
 tile threshold itself for 1% of corners), the nature scatter's twin
 compare is float32, and `SCALED_OCEAN_ELEVATION` is the float
 `3.4f * 8` is in C# - one value of the ocean elevation in the port.
+LW-DRY (2026-10-05) gave the job's height and its water compare one
+home (`terrainTiles.js` `sampleHeight`, `isWaterHeight`), which the
+living world's dry ground reads as well (`world/dryGround.js`: a road
+party's camp, halt and fallen stand where no water shows); PIN MOVED:
+`terrain`. AUDIT LW-DRY (the same day): the nature scatter's three
+beach reads (`terrainNature.js`) still wrote the product out
+themselves - they read `sampleHeight` now, and `terrain` pins it.
 
 Two consequences to know. A location on a pixel where every sample
 clamps has its whole rect flattened to the clamp and stamped only
@@ -637,7 +644,7 @@ on that line.
 
 **The second half of the report stands as written and is NOT a bug.**
 "Sometimes water tiles will be on their own as 1 tile" is DFU's own,
-recorded at `world/terrainSurface.js:57-60`: `setLocationTiles` stores a
+recorded at `world/terrainSurface.js:"- 0 for the 0xFF"`: `setLocationTiles` stores a
 town ground tile that encodes as zero as the 0xFF sentinel, `convertTile`
 restores it to record 0, and record 0 IS water — so a town tile that
 happened to encode as zero reads as a one-tile pond to every consumer.
@@ -662,7 +669,7 @@ rather than trusted from memory: `Billboard.SetRDBResourceData` writes
 `WaterLevel = -8 * SoundIndex` (10000 for a zero) off a start marker's
 flat resource, `DaggerfallDungeon.FindMarkers` takes `StartMarkers[0]`
 for every block, and `RDBLayout.AddWater` stands a plane the size of the
-block at `level * -1 * GlobalScale`. That is `world/rdbLayout.js:474-480`
+block at `level * -1 * GlobalScale`. That is `world/rdbLayout.js:"let waterLevel ="`
 and the quad `scenes/dungeonContext.js` mints, line for line, and R7's
 corpus pins (32 of 187 blocks watered, Maorn's Guard's three levels)
 have held it since August. The "2 Water" the console prints is the count

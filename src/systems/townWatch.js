@@ -69,7 +69,8 @@ export const TOWN_WATCH_MAX_WAVES = 3;
  * (a peer's puppet is its owner's business, WORLD6b), hostile, not the
  * player's ally, not a quest's foe (a quest foe is kept out of every
  * other enemy's target list too, EnemySenses.cs:806-815), and HUNTING a
- * player or a standing defender - not a rat minding its own business at
+ * player, a standing defender or - WATCH-PROTECTS, the living world's
+ * lane - a townsperson alive (systems/livingWorld/quarry.js), not a rat minding its own business at
  * the edge of town - inside the town's widened rect (`inTownRect`, the
  * host's test). The defender half is the fight the watch came for: a
  * monster that turns from the player onto a defender is still that
@@ -83,7 +84,8 @@ export function isTownThreat(f, { inTownRect } = {}) {
   if (!f.ai.isHostile) return false;
   if (f.entity.team === 'PlayerAlly') return false;
   const t = f.ai.target;
-  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion != null && !t.dead)) return false;   // AUDIT CC-B6: a monster fighting a companion is still the fight
+  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion != null && !t.dead)   // AUDIT CC-B6: a monster fighting a companion is still the fight
+    && !(t?.civilian === true && (t.entity?.health ?? 0) > 0)) return false;   // WATCH-PROTECTS: and one hunting a townsperson of the living world
   return !!inTownRect?.(f);
 }
 
