@@ -95,7 +95,7 @@ rail's height, the beam); the table is what each carries, a side at a time:
 |---|---|---|
 | Rowboat | 96 / 0 / 0 | none - it rams, it does not fight |
 | Large Boat | 240 / 96 / 0 | 3 swivels a side, 1 on the bow |
-| Small Ship | 672 / 256 / 24 | 5 long guns a side (GALLEON: a gun a port of Mac's galleon - the mod's had 6), 2 chain-shot chasers, a fire barrel over the stern |
+| Small Ship | 672 / 256 / 24 | 5 long guns a side (GALLEON: a gun a port of Mac's galleon - the mod's had 6; GALLEON-WEIGHT: a player's throws the six guns' weight, below), 2 chain-shot chasers, a fire barrel over the stern |
 | Large Galley | 832 / 144 / 60 | 4 long guns a side, 3 great guns on the bow - and the ram (GALLEY_RAM) |
 | Carrack | 896 / 352 / 30 | 7 long guns a side, 2 chain-shot chasers, a fire barrel over the stern |
 
@@ -114,7 +114,8 @@ highest):
 | fire barrel | rolled over the stern | where it drifts (FLOAT_DRIFT of the wind) | BARREL_DROP_S (1.2 s), BARREL.stock aboard | 45 / 6 / 3, and always a fire - BARREL.burnPerSecond for BARREL.burn |
 
 TOUGHER-SHIPS (2026-10-03, below): the crew a ball takes is the gun's (`shotMen` - what the wire says) over
-SHIP_TOUGHNESS, on the ball's own roll (`ballMen`): a long gun's one man 0.625 of a man on the average.
+SHIP_TOUGHNESS, on the ball's own roll (`ballMen`): a long gun's one man 0.625 of a man on the average. CREW-HOLD
+(2026-10-06, below): a player's ship's over PLAYER_CREW_TOUGHNESS (3.2) - 0.3125.
 
 AUDIT NAV1 set the carriages' depression (-8 long, -6 great and chase, -10 swivel - a sloop alongside to grapple was
 out of every broadside's reach at -3) and made the great guns heavy (68 m/s to 15 degrees: from a galley's deck 263 m
@@ -1879,6 +1880,39 @@ law as the audit left it.
   toughness, and a pairing within COIN_TOSS (1.1) of even is a coin toss - it fails at seven of eight, not six (AUDIT
   T1). The galley's station outside her great guns' dead zone, which the duels pinned only by a stall none of the
   eight now makes, is pinned at its source (F24, a Large Boat lying still).
+
+## CREW-HOLD and GALLEON-WEIGHT (2026-10-06) - a player's crew that lasts, a galleon's broadside of six - DECLARED
+
+Mac: *"Crew depletes too fast"* and *"The galleon has less cannons, so it needs a buff to account for that"*. Daggerfall
+has no ships; both are the port's own. Pinned in `test/crewhold.test.js` (seven pins), its sixteen mutants all dead
+(`tools/mutants/crewhold.json`).
+
+- **Why the crew went first.** A ball takes its gun's men (`GUNS`: a long gun one, a swivel two, a great gun two) over
+  the crew's toughness, whatever the ball does to her timbers - and measured on `navalAI.js strikeTime`'s own terms a
+  player's crew went before her hull under every gun: a Pirate Brigantine's fire took a galleon's 24 men in 146 s and
+  her hull in 176, a Carrack's 30 in 182 s against 234, and a swivel boat's two men a ball (a Pirate Sloop's, a Coasting
+  Trader's - the Bay's commonest ships) a galleon's in 67 s, where her hull would last 451. The serpent's blows took
+  theirs whole, outside the toughness altogether (`serpentStrike.js` `shipHurt`'s `crew`).
+- **CREW-HOLD** (`navalShips.js` PLAYER_CREW_TOUGHNESS, twice SHIP_TOUGHNESS). Every blow on a player's ship takes its
+  men over her crew's toughness: a captain's ball (`navalHost.js landHit`, `shotDamage`'s `tough`), her fire's `wound`
+  (`navalDamage.js`, the damage's `player`), a galley's ram (`ramMen`'s `tough`) and the serpent's blow (`serpentStrike`,
+  `playerMen` - into the law at last). Now every ship of the line's fire leaves her crew standing when her hull is gone
+  (a brigantine's: her men in 292 s, her hull in 176; a Carrack's in 365 against 234); a swivel boat still thins a crew
+  first - its trade - at half the pace (a galleon's in 134 s). Her hull and canvas are as they were. The captains' crews
+  keep SHIP_TOUGHNESS: a captain's ship strikes by her men as she did, and every duel between them is as it was. The
+  wire is untouched - a blow says its men before the toughness, and her stander reckons them, as TOUGHER-SHIPS left it.
+- **GALLEON-WEIGHT** (`navalShips.js` playerBatteryWeight). Mac's galleon has a gun at each of her ten ports where the
+  mod's galleon carried six a side (MOD_SMALL_SHIP_BUILD), so a player's galleon's broadside lost a sixth with the model.
+  Each ball of it now strikes 6/5 as hard - its hull and canvas harm (`shotDamage`'s `weight`), never its men - and her
+  broadside lands what six long guns did (5 x 14 x 6/5 = 84 = 6 x 14). Her chasers and barrels, every other hull, and the
+  mod's own galleon standing in (six guns, weight 1) throw their own. The weight rides from her guns to each ball's hit on
+  every client (`navalHost.js fire` for mine, `fireFromWord` for a peer's own boat, `navalGunnery.js volleyLaunches`,
+  `navalShots.js`) and into the captains' reckoning of her fire (`strikeTime`, a player's FighterMeasure `player`) - so
+  a wary pirate sizes her up by it: she takes a player's galleon alone at her guns hurt to seven tenths of her hull now
+  (1.39 to one), where four fifths was enough before (1.14 with the weight, under WARY_ODDS; `seapeace` PIN MOVED). A
+  PLAYER'S alone: the captains' galleons (the Pirate Brigantine, the Merchant Galleon, the Navy Cutter) keep the
+  broadside every tuned duel was measured with (AUDIT NAV2 F25, Mac's bar) - weighting their hull too moved six of
+  the captains' tuned pins (F25, NAV-C's running and four of SEA-PEACE's).
 
 ## The tests
 

@@ -2,20 +2,22 @@
   {
     "name": "TOUGHER-SHIPS-the-men-untoughened",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "export const ballMen = (men, roll) => (men > 0 ? Math.floor(men / SHIP_TOUGHNESS + clamp(roll, 0, 0.999999)) : 0);",
-    "new": "export const ballMen = (men, roll) => (men > 0 ? Math.floor(men + clamp(roll, 0, 0.999999) * 0) : 0);",
+    "old": "export const ballMen = (men, roll, tough = SHIP_TOUGHNESS) => (men > 0 ? Math.floor(men / tough + clamp(roll, 0, 0.999999)) : 0);",
+    "new": "export const ballMen = (men, roll, tough = SHIP_TOUGHNESS) => (men > 0 ? Math.floor(men + clamp(roll, 0, 0.999999) * 0) : 0);",
     "tests": [
       "test/tougherships.test.js"
-    ]
+    ],
+    "note": "CREW-HOLD/GALLEON-WEIGHT (2026-10-06): re-aimed by content - the line gained the crew's toughness or the weight."
   },
   {
     "name": "TOUGHER-SHIPS-a-fire-untoughened",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "s.wound += 1 / SHIP_TOUGHNESS; }",
+    "old": "s.wound += 1 / (player ? PLAYER_CREW_TOUGHNESS : SHIP_TOUGHNESS); }",
     "new": "s.wound += 1; }",
     "tests": [
       "test/tougherships.test.js"
-    ]
+    ],
+    "note": "CREW-HOLD/GALLEON-WEIGHT (2026-10-06): re-aimed by content - the line gained the crew's toughness or the weight."
   },
   {
     "name": "TOUGHER-SHIPS-a-fire-let-go-when-out",
@@ -29,11 +31,12 @@
   {
     "name": "TOUGHER-SHIPS-the-ram-unrolled",
     "file": "src/scenes/navalHost.js",
-    "old": "export const ramMen = (dealt, roll) => ballMen(dealt / RAM_A_MAN, roll);",
-    "new": "export const ramMen = (dealt, roll) => Math.round(dealt / RAM_A_MAN / 1.6);",
+    "old": "export const ramMen = (dealt, roll, tough) => ballMen(dealt / RAM_A_MAN, roll, tough);",
+    "new": "export const ramMen = (dealt, roll, tough) => Math.round(dealt / RAM_A_MAN / 1.6);",
     "tests": [
       "test/tougherships.test.js"
-    ]
+    ],
+    "note": "CREW-HOLD/GALLEON-WEIGHT (2026-10-06): re-aimed by content - the line gained the crew's toughness or the weight."
   },
   {
     "name": "TOUGHER-SHIPS-the-stander-takes-the-word-whole",
