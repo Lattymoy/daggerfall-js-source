@@ -178,9 +178,15 @@ export function onlineForcedSetting(section, key, search) {
   return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) && isOnlinePage(search) ? ONLINE_FORCED_SETTINGS[section][key] : undefined;
 }
 
-/** The forced value of a uiPrefs key on an online page, else undefined. */
+/** The forced value of a uiPrefs key on an online page, else undefined.
+ *  PERF-URL2 (2026-10-06, Mac: "I wanna look into how we can continue to improve performance, including for online"):
+ *  THE TABLE FIRST, as onlineForcedSetting above has always asked it. getPref asks this on every read - hundreds a frame
+ *  - and the page test reads `location.search`, a DOM getter, before PERF-URL's memo can answer; the table forces a
+ *  handful of keys (the mods' switches the features register), so every other read paid the page for nothing
+ *  (measured in the real game, offline: 0.09 ms a frame of isOnlinePage under onlineForcedPref, beside the sea's own
+ *  forced switch). Two pure reads joined by `&&`: the same answer in either order. */
 export function onlineForcedPref(key, search) {
-  return isOnlinePage(search) && Object.hasOwn(ONLINE_FORCED_PREFS, key) ? ONLINE_FORCED_PREFS[key] : undefined;
+  return Object.hasOwn(ONLINE_FORCED_PREFS, key) && isOnlinePage(search) ? ONLINE_FORCED_PREFS[key] : undefined;
 }
 
 /**
