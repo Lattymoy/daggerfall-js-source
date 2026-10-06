@@ -357,6 +357,7 @@ export function questorCandidateBuildings(exteriorBuildings, blocks, {
         isNamedBuilding: isNamedBuildingType(data.buildingType),
         buildingName: generateBuildingName(data.nameSeed, data.buildingType,
           { ...nameOpts, factionId: data.factionId }),
+        factionId: data.factionId,   // AUDIT QA2: the hall's own faction - a questor's guild rung asks it (person.js reseatMovedQuestor)
         npcs,
       });
     }

@@ -55,7 +55,7 @@ import { cityFloorCentre, standsRail, SAND_R } from '../world/arenaFloor.js';   
 import { ARENA_TEXT } from '../systems/arenaText.js';   // ARENA1: the Daggerfall Bank's letter
 import { moveArenaRecords, arenaHomeFor, emptyArenaScene } from '../systems/arenaMove.js';   // ARENA1: a deed whose house the arena took, moved once; ARENA4b: and an online home, by its owner's client
 import { loadModWorldData, ensureWorldDataPack, worldDataPacksMissing } from './modWorldData.js';   // RR3b; WD3: a pack a save's pins let in
-import { configureLayoutPins, layoutRecordsOf, pinsFrom, setLayoutPins, stampLayout, layoutStampOfPixel, HOME_LAYOUTS_WAIT_MS, HOME_LAYOUTS_RETRIES, PINS_DROPPED_LINE } from '../systems/layoutPins.js';   // WD3: a town keeps the layout a save's things were made in
+import { configureLayoutPins, layoutRecordsOf, pinsFrom, setLayoutPins, admitPinnedPacks, stampLayout, layoutStampOfPixel, HOME_LAYOUTS_WAIT_MS, HOME_LAYOUTS_RETRIES, PINS_DROPPED_LINE } from '../systems/layoutPins.js';   // WD3: a town keeps the layout a save's things were made in
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES, CLIMATES, REGION_NAMES } from '../formats/mapsFile.js';   // SPAWNED-DUNGEONS1: the ocean gate and the synthesized location's region name
 import { questTracker } from '../ui/questTracker.js';   // GUIDE5: the quest the player follows - its places, marked
@@ -13530,10 +13530,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     const pins = pinsFrom(records);
     // the packs a pin lets in, on the door BEFORE the pins answer for them - a pin into a pack that will not load
     // is dropped, and its town stands as the mods loaded for the game serve it
-    let dropped = 0;
-    for (const pin of pins.values()) {
-      for (const v of [...pin.in]) if (!(await ensureWorldDataPack(v))) { pin.in.delete(v); dropped++; }
-    }
+    // QUEST-AUDIT II PIN-SLEEP: the towns whose pin this session cannot honour - a pack that will not load dropped from
+    // its pin and its town held back, its records asleep (layoutPins.js admitPinnedPacks, lifted so its law is run in a
+    // test - AUDIT QA2)
+    const { dropped, heldBack } = await admitPinnedPacks(pins, ensureWorldDataPack);
     // AUDIT WD3 B6: said, once a game - a house, a room or a quest whose town could not be stood as it was left (its
     // records sleep there: banking.js deedStands, systems/layoutPins.js recordStands)
     if (dropped && !_pinsDroppedSaid) {
@@ -13545,7 +13545,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     for (const [k, pin] of [...pins]) if (!pin.in.size && !pin.out.size) pins.delete(k);
     if (gen !== _pinsGen) return false;   // AUDIT WD3 R3: a later call (newer records) overtook this one while its packs loaded
-    const changed = setLayoutPins(pins);
+    const changed = setLayoutPins(pins, { heldBack, missing: worldDataPacksMissing() });   // QUEST-AUDIT II PIN-SLEEP: their records sleep (layoutPins.js recordHeldBack) - AUDIT QA2: and a record made in a layout whose pack did not load this session
     let rebuilt = 0;
     for (const key of changed) {
       const pixelKey = _layoutKeyPixel.get(key);
@@ -16732,7 +16732,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     isHouseOwned: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey),
     // HOME1: nor a player's online home - a quest must not send its player into a house its owner keeps shut. The towns this page has heard from (systems/onlineHomes.js); one not heard from yet answers no.
     isPlayerHome: (mapId, buildingKey) => !!onlineHomes?.homeAt(mapId, buildingKey),
-    townLayoutsKnown: () => !homeLayoutsOnline || _serverLayoutRecords !== null,   // QUESTOR-MOVED: a shared quest is mended on arrival only once the towns' layouts are known (applyLayoutPins' own gate, AUDIT WD3 S5)
+    townLayoutsKnown: () => !homeLayoutsOnline || _homeLayoutsApplied,   // QUESTOR-MOVED: a shared quest is mended on arrival only once the towns' layouts are known (applyLayoutPins' own gate, AUDIT WD3 S5) - AUDIT QA2: and STAND, the pins and their held-back towns set (a share landing while the packs were fetched was chosen again unpinned); the load's own re-seat mends one that landed before
     // Place's _getBuildingName bag - townTalk's ONE name bag, so the
     // quest's generated names and the talk directory's cannot drift.
     buildingNameOpts: () => townTalk.nameOpts?.() ?? {},
