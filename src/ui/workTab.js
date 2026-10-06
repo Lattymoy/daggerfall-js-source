@@ -18,6 +18,9 @@
 // forms' drafts are the writs' book's, so a stray tap or Escape throws none away (AUDIT 31 U12); every field is
 // labelled, and a button the reader cannot press says why (AUDIT 31 U2, U10).
 //
+// BOARD-UI (2026-10-06, Mac: "Reduce overusage of bloated text. Less AI like text"): the cards straight, the forms'
+// terms one short line each, a refusal's reason in a few words.
+//
 // SILVER-WAYS (2026-10-03, Mac: "Do it"): THIS REGION'S GUILD CONTRACTS beside them - a guild's pay to each defender of a
 // raid here, what is left of it, the time left; paid as the defender's raid is counted, never to its own Officers and
 // Guildmaster; Withdraw where the reader's rank may; and POST A CONTRACT (a Guildmaster's, or an Officer's within the one
@@ -180,9 +183,8 @@ export function createWorkTab(w, ui) {
   };
 
   // ─── A GUILD WRIT ──────────────────────────────────────────────────
-  function guildWritCard(x, i, data) {
+  function guildWritCard(x, data) {
     const li = el('li', `notice-card notice-writ seal-guild${x.state !== 'open' ? ' done' : ''}`);
-    li.style.setProperty('--tilt', `${((i * 41) % 5) - 2}deg`);
     li.append(el('span', 'notice-pin'), el('span', 'writ-kind', x.seat != null ? 'Seat writ' : 'Guild writ'));
     const flag = writBanner(x.guild?.heraldry);   // AUDIT-SEATS G11: its guild's banner
     if (flag) li.append(flag);
@@ -194,7 +196,7 @@ export function createWorkTab(w, ui) {
     const room = Number.isSafeInteger(x.room) ? x.room : Infinity;
     const most = Math.min(x.left, held, room);
     const bar = el('div', 'writ-take');
-    if (x.state === 'open' && !mayDeliver(data, x)) bar.append(el('span', 'work-none', 'Your guild\'s Officers and Guildmaster do not deliver to its writs.'));
+    if (x.state === 'open' && !mayDeliver(data, x)) bar.append(el('span', 'work-none', 'Officers and the Guildmaster do not deliver to their own guild\'s writs.'));
     else if (x.state === 'open' && most > 0) {
       const units = () => intOf(st.supply[x.id] ?? most, 1, most);
       const n = input('number', units(), `Units to deliver to ${guildName(x.guild)}`, `supply|${x.id}`);
@@ -210,20 +212,19 @@ export function createWorkTab(w, ui) {
     } else if (x.state === 'open') {
       // AUDIT BAG1: a carrying book's count is the Stores' and what is carried - said as such
       bar.append(el('span', 'work-none', held > 0 ? 'The guild\'s Stores can take no more of it.'
-        : w.carrying?.() ? 'You hold none of it - in your Stores, your Materials Bag or your pack.' : 'Your Stores hold none of it.'));
+        : w.carrying?.() ? 'You have none - in your Stores, Materials Bag or pack.' : 'Your Stores hold none of it.'));
     }
     bar.append(el('span', null, `${count(held)} ${w.carrying?.() ? 'held' : 'in your Stores'}`));
     if (x.may) bar.append(withdrawWrit(x));
     li.append(bar, el('span', 'notice-seal', ''));
     return li;
   }
-  const withdrawWrit = (x) => why(button('work-withdraw', 'Withdraw', () => act(() => w.writs.withdraw(x.id), 'Withdrawn. What was left of its pay is back in the guild\'s treasury.')),
+  const withdrawWrit = (x) => why(button('work-withdraw', 'Withdraw', () => act(() => w.writs.withdraw(x.id), 'Withdrawn. The unpaid silver is back in the guild\'s treasury.')),
     busyWhy());
 
   // ─── A GUILD CONTRACT (SILVER-WAYS) ────────────────────────────────
-  function contractCard(x, i, data) {
+  function contractCard(x, data) {
     const li = el('li', `notice-card notice-writ seal-guild${x.state !== 'open' ? ' done' : ''}`);
-    li.style.setProperty('--tilt', `${((i * 37) % 5) - 2}deg`);
     li.append(el('span', 'notice-pin'), el('span', 'writ-kind', 'Guild contract'));
     const flag = writBanner(x.guild?.heraldry);
     if (flag) li.append(flag);
@@ -232,19 +233,18 @@ export function createWorkTab(w, ui) {
     li.append(el('p', 'writ-left', writLeftText(x.expiresAt, ui.nowS())));
     const bar = el('div', 'writ-take');
     const own = data?.guild?.id === x.guild?.id && !contractPaidMay(data.guild.rank);
-    bar.append(el('span', 'work-none', own ? 'Your guild\'s Officers and Guildmaster are not paid by its contracts.'
-      : `Strike a raider here and stand in the town as it is cleansed: paid as your raid is counted, less ${marksText(saleTax(x.pay))} tax.`));
+    bar.append(el('span', 'work-none', own ? 'Officers and the Guildmaster are not paid by their own guild\'s contracts.'
+      : `Fight off a raid on a town here: paid when the raid is counted, less ${marksText(saleTax(x.pay))} tax.`));
     if (x.may) bar.append(withdrawContract(x));
     li.append(bar, el('span', 'notice-seal', ''));
     return li;
   }
-  const withdrawContract = (x) => why(button('work-withdraw', 'Withdraw', () => act(() => w.writs.withdrawContract(x.id), 'Withdrawn. What was left of its pay is back in the guild\'s treasury.')),
+  const withdrawContract = (x) => why(button('work-withdraw', 'Withdraw', () => act(() => w.writs.withdrawContract(x.id), 'Withdrawn. The unpaid silver is back in the guild\'s treasury.')),
     busyWhy());
 
   // ─── A COMMISSION (this board's region's) ──────────────────────────
-  function commissionCard(c, i) {
+  function commissionCard(c) {
     const li = el('li', `notice-card notice-writ seal-commission${c.state !== 'open' ? ' done' : ''}`);
-    li.style.setProperty('--tilt', `${((i * 29) % 5) - 2}deg`);
     li.append(el('span', 'notice-pin'), el('span', 'writ-kind', 'Commission'));
     li.append(el('p', 'writ-need', `For ${c.crafter ?? 'a crafter'} only: ${commissionPieceText(c)}`));
     li.append(el('p', 'writ-pay', `Pays ${marksText(c.pay)}${c.poster ? ` - from ${c.poster}` : ''}`));
@@ -263,8 +263,8 @@ export function createWorkTab(w, ui) {
     const pieces = w.pieces(c);
     if (!pieces.length) {
       // AUDIT 31 H8: one that answers it is in the pack but will not leave it - said, never "you carry none"
-      return [el('span', 'work-none', /** @type {any} */ (pieces).blocked > 0 ? 'Your piece that answers it is equipped, locked or bound - free it first.'
-        : 'You carry no piece of your make that answers it - unworn, and on no sale.')];
+      return [el('span', 'work-none', /** @type {any} */ (pieces).blocked > 0 ? 'Your piece for it is equipped, locked or bound - free it first.'
+        : 'You carry no unworn piece of your own make for it.')];
     }
     const picked = () => pieces.find((p) => p.item.provenance === st.pick[c.id]) ?? pieces[0];
     const label = (p) => (p.quality != null ? `${p.name} (${QUALITY_NAMES[p.quality]})` : p.name);
@@ -333,7 +333,7 @@ export function createWorkTab(w, ui) {
     const said = el('p', 'work-hint');
     said.setAttribute('aria-live', 'polite');
     const go = button('primary work-post', 'Post', () => act(() => w.writs.contract({ region: w.region, kind: 'raid', pay: f.pay, deeds: f.deeds }),
-      () => { st.form = null; return `Posted on the boards of ${w.regionName} for seven days.`; }));
+      () => { st.form = null; return `Posted in ${w.regionName} for 7 days.`; }));
     const standing = (data?.yoursContracts ?? []).length;
     const refresh = () => {
       const escrow = f.pay * f.deeds;
@@ -343,7 +343,7 @@ export function createWorkTab(w, ui) {
           : escrow > (g.marks ?? 0) ? `The guild's treasury holds only ${marksText(g.marks ?? 0)}.`
             : officer && !(g.budget > 0) ? 'The Guildmaster has set no writ budget for Officers this week.'
               : officer && escrow > (g.left ?? 0) ? `That is past your writ budget this week (${marksText(g.left ?? 0)} left).` : '');
-      said.textContent = `Pays each defender of a raid in ${w.regionName} as their raid is counted, less the 5% tax. Holds ${marksText(escrow)} from the guild's treasury (it holds ${marksText(g.marks ?? 0)}) until it is paid out, withdrawn or runs out in seven days. Your guild's Officers and Guildmaster are not paid by it.`
+      said.textContent = `Pays each defender of a raid in ${w.regionName}, less 5% tax. Holds ${marksText(escrow)} of the treasury's ${marksText(g.marks ?? 0)} for up to 7 days. Your own Officers and Guildmaster are not paid.`
         + (officer ? ` Your writ budget this week: ${marksText(g.left ?? 0)} of ${marksText(g.budget ?? 0)} left.` : '')
         + (reason && !busyWhy() ? ` ${reason}` : '');
       why(go, reason);
@@ -382,7 +382,7 @@ export function createWorkTab(w, ui) {
     const said = el('p', 'work-hint');
     said.setAttribute('aria-live', 'polite');
     const go = button('primary work-post', 'Post', () => act(() => w.writs.post({ region: w.region, material: f.material, units: f.units, pay: f.pay, ...(f.seat != null ? { seat: f.seat } : {}) }),
-      () => { st.form = null; return `Posted on the boards of ${w.regionName} for seven days.`; }));
+      () => { st.form = null; return `Posted in ${w.regionName} for 7 days.`; }));
     const standing = (data?.yours?.guildWrits ?? []).length;
     const refresh = () => {
       const escrow = f.units * f.pay;
@@ -393,7 +393,7 @@ export function createWorkTab(w, ui) {
           : escrow > (g.marks ?? 0) ? `The guild's treasury holds only ${marksText(g.marks ?? 0)}.`
             : officer && !(g.budget > 0) ? 'The Guildmaster has set no writ budget for Officers this week.'
               : officer && escrow > (g.left ?? 0) ? `That is past your writ budget this week (${marksText(g.left ?? 0)} left).` : '');
-      said.textContent = `Holds ${marksText(escrow)} from the guild's treasury (it holds ${marksText(g.marks ?? 0)}) until it is delivered, withdrawn or runs out in seven days. At most ${marksText(max())} each - half again the material's worth.`
+      said.textContent = `Holds ${marksText(escrow)} of the treasury's ${marksText(g.marks ?? 0)} for up to 7 days. At most ${marksText(max())} each.`
         + (officer ? ` Your writ budget this week: ${marksText(g.left ?? 0)} of ${marksText(g.budget ?? 0)} left.` : '')
         + (reason && !busyWhy() ? ` ${reason}` : '');
       why(go, reason);
@@ -437,7 +437,7 @@ export function createWorkTab(w, ui) {
               : !f.recipe ? 'Choose the piece.'
                 : mineOpen >= COMMISSIONS_MAX ? `You have ${COMMISSIONS_MAX} commissions posted already.`
                   : balance != null && f.pay > balance ? `You hold only ${marksText(balance)}.` : '');
-      said.textContent = `Holds ${marksText(f.pay)} for seven days; the crafter receives it less ${marksText(saleTax(f.pay))} tax, and only for a piece of their own make, unworn. At most ${COMMISSIONS_MAX} of yours stand at once.`
+      said.textContent = `Holds ${marksText(f.pay)} for 7 days. The crafter gets it, less ${marksText(saleTax(f.pay))} tax, for an unworn piece they made. Up to ${COMMISSIONS_MAX} at a time.`
         + (reason && !busyWhy() ? ` ${reason}` : '');
       why(go, reason);
     };
@@ -470,8 +470,7 @@ export function createWorkTab(w, ui) {
     cards(data) {
       if (data?.writsOpen !== true) return [];
       const gws = data?.guildWrits ?? [], cs = data?.commissions ?? [], gcs = data?.contracts ?? [];   // SILVER-WAYS: and its contracts
-      return [...gws.map((x, i) => guildWritCard(x, i, data)), ...gcs.map((x, i) => contractCard(x, gws.length + i, data)),
-        ...cs.map((c, i) => commissionCard(c, gws.length + gcs.length + i))];
+      return [...gws.map((x) => guildWritCard(x, data)), ...gcs.map((x) => contractCard(x, data)), ...cs.map((c) => commissionCard(c))];
     },
     /** "Yours", and the forms, under the grid - none while they are not this account's. */
     node(data) {

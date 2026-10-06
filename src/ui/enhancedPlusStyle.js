@@ -952,44 +952,56 @@ export const BOUNTY_CSS = `/* ── BOUNTY1: THE BOUNTY BOARD ── */
 }
 @media (pointer: coarse) { .bounty-post { min-height: 44px; } }`;
 /** NOTICE1 (PROF0 10.1): THE NOTICE BOARD (ui/noticeWindow.js) - a corkboard in the stone window: pinned parchment in a
- *  grid, each card tilted a hair, a pin at its head and a wax seal at its foot whose colour says who posted it (the
- *  town bone, the server red, a player amber, a guild steel, the bounty board black), opened large on a press. The kit
- *  dresses the window, the header and the presses (ui/enhancedFrame.js); this is the cork and the parchment. */
+ *  grid, a pin at each card's head and a wax seal at its foot whose colour says who posted it (the town bone, the server
+ *  red, a player amber, a guild steel, the bounty board black), opened large on a press. The kit dresses the window, the
+ *  header and the presses (ui/enhancedFrame.js); this is the cork and the parchment.
+ *  BOARD-UI (2026-10-06, Mac: "overhaul the notice boards to enhance readability"): the cards stand straight (a tilted
+ *  pixel face blurs), each as tall as its own words (a row stretched every card to its tallest), the type a step larger;
+ *  words that sit on the cork sit on a dark panel (`.notice-panel`); the tabs scroll sideways on a phone (the last two
+ *  ran off its edge), each with its count. */
 export const NOTICE_CSS = `/* ── NOTICE1: THE NOTICE BOARD ── */
 .notice-shell { position: fixed; inset: 0; z-index: 39; display: flex; align-items: center; justify-content: center;
   padding: 16px; background: rgba(0,0,0,0.46); font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; }
 .notice-win { width: min(1040px, 96vw); max-height: 92vh; display: flex; flex-direction: column; overflow: hidden;
   border: 2px solid; background: rgba(14,12,11,0.96); }
-.notice-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; padding: 12px 16px 8px; }
-.notice-title { flex: 1 1 300px; min-width: 0; }
-.notice-title h2 { margin: 0; font-size: 20px; letter-spacing: 0.12em; text-transform: uppercase; color: #efe0b8; text-shadow: 2px 2px 0 #050608; }
-.notice-sub { margin: 2px 0 0; font-size: 12px; color: #b9ab93; }
-.notice-word { margin: 4px 0 0; font-size: 12px; color: #e59a8e; }
+.notice-head { flex: none; display: flex; align-items: flex-start; gap: 10px 14px; padding: 12px 16px 8px; }
+.notice-title { flex: 1 1 auto; min-width: 0; }
+.notice-title h2 { margin: 0; font-size: 20px; letter-spacing: 0.12em; text-transform: uppercase; color: #efe0b8; text-shadow: 2px 2px 0 #050608;
+  overflow-wrap: anywhere; }
+.notice-sub { margin: 3px 0 0; font-size: 13px; color: #c9bba1; }
+.notice-word { margin: 4px 0 0; font-size: 13px; color: #f0a597; }
 .notice-word:empty { display: none; }
 .notice-word.ok { color: #9fe8b4; }
-.notice-headacts { display: flex; flex-wrap: wrap; gap: 8px; }
-.notice-tabs { display: flex; gap: 4px; padding: 0 16px; border-bottom: 2px solid rgba(5,6,8,0.6); }
-.notice-tab { padding: 6px 14px 5px; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: #b9ab93; }
+.notice-headacts { flex: none; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+/* the strip scrolls sideways, so it is no longer free to shrink: a tall tab's cork squeezed it to a sliver */
+.notice-tabs { flex: none; display: flex; gap: 2px; padding: 0 12px; border-bottom: 2px solid rgba(5,6,8,0.6); overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none; }
+.notice-tab { flex: none; padding: 8px 12px 6px; font-family: inherit; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase;
+  white-space: nowrap; color: #b9ab93; background: none; border: 0; }
 .notice-tab.on { color: #f3cf86; border-bottom: 2px solid #c08a3e; margin-bottom: -2px; }
+.notice-tabcount { margin-left: 6px; padding: 0 5px; font-size: 11px; letter-spacing: 0.04em; color: #fff4dc; background: #9b2d1f; }
 /* TOAST-SPLIT: the cork and the italic line are the board's own classes - .notice-body and .notice-hint are the HUD
    toasts' (ui/enhancedNotice.js), and a rule on either dressed both. */
 .notice-cork { padding: 14px 16px 16px; min-height: 0; overflow: auto;
   background: radial-gradient(circle at 20% 30%, rgba(0,0,0,0.18) 0 1px, transparent 2px) 0 0 / 7px 7px,
     radial-gradient(circle at 70% 60%, rgba(255,220,160,0.05) 0 1px, transparent 2px) 0 0 / 11px 11px,
     linear-gradient(160deg, #5b3f26, #47301c 60%, #3b2816); }
-.notice-grid { list-style: none; margin: 0; padding: 4px; display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
-.notice-card { position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 150px; padding: 18px 14px 26px;
-  cursor: pointer; transform: rotate(var(--tilt, 0deg)); color: #2a1f12;
+.notice-grid { list-style: none; margin: 0 0 16px; padding: 4px; display: grid; gap: 14px; align-items: start;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.notice-grid:last-child { margin-bottom: 0; }
+.notice-card { position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 110px; padding: 18px 14px 28px;
+  cursor: pointer; color: #2a1f12;
   background: linear-gradient(175deg, #efe2c2, #e2d1aa 70%, #d6c294); box-shadow: 3px 4px 0 rgba(5,6,8,0.45), inset 0 0 18px rgba(120,84,40,0.25); }
-.notice-card:hover, .notice-card:focus-visible { transform: rotate(0deg) scale(1.02); outline: 2px solid #f3cf86; }
-.notice-card h4 { margin: 0; font-family: inherit; font-size: 14px; color: #1d150b; }
-.notice-snippet { margin: 0; font-size: 12px; line-height: 1.45; white-space: pre-wrap; overflow: hidden; display: -webkit-box;
+.notice-card:hover, .notice-card:focus-visible { outline: 2px solid #f3cf86; outline-offset: 1px; }
+.notice-card h4 { margin: 0; font-family: inherit; font-size: 15px; line-height: 1.3; color: #1d150b; overflow-wrap: anywhere; }
+.notice-snippet { margin: 0; font-size: 13px; line-height: 1.5; white-space: pre-wrap; overflow: hidden; overflow-wrap: anywhere; display: -webkit-box;
   -webkit-line-clamp: 5; -webkit-box-orient: vertical; }
-.notice-foot { margin-top: auto; display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 11px; color: #5a4630; }
+.notice-foot { margin-top: auto; display: flex; justify-content: space-between; align-items: baseline; gap: 6px; padding-right: 22px;
+  font-size: 12px; color: #5a4630; }
 .notice-new { padding: 0 5px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #fff4dc; background: #9b2d1f; }
 .notice-pin { position: absolute; top: 5px; left: 50%; width: 10px; height: 10px; margin-left: -5px; border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #f5d9a0, #9a6a2a 60%, #3c2610); box-shadow: 1px 2px 0 rgba(0,0,0,0.5); }
-.notice-seal { position: absolute; right: 10px; bottom: 6px; width: 18px; height: 18px; border-radius: 50%;
+.notice-seal { position: absolute; right: 10px; bottom: 7px; width: 18px; height: 18px; border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35), transparent 45%), var(--seal, #b89b6a);
   box-shadow: 0 0 0 2px rgba(0,0,0,0.18); }
 .notice-card.seal-town, .notice-read.seal-town { --seal: #cbb892; }
@@ -998,52 +1010,89 @@ export const NOTICE_CSS = `/* ── NOTICE1: THE NOTICE BOARD ── */
 .notice-card.seal-guild, .notice-read.seal-guild { --seal: #4f6f8f; }
 .notice-card.seal-bounty, .notice-read.seal-bounty { --seal: #161311; }
 .notice-card.hidden { opacity: 0.6; }
-.notice-empty { grid-column: 1 / -1; padding: 12px; font-size: 13px; color: #e6dccb; font-style: italic; text-shadow: 1px 1px 0 #050608; }
+/* BOARD-UI: whatever stands on the cork itself stands on a dark panel - the cork's grain under bone ink read 3:1 */
+.notice-empty { grid-column: 1 / -1; margin: 0; padding: 10px 12px; font-size: 13px; line-height: 1.5; color: #e6dccb; font-style: italic;
+  background: rgba(12,10,8,0.72); border-left: 2px solid rgba(192,138,62,0.6); }
+.notice-panel { margin: 0 0 12px; padding: 10px 12px; font-size: 13px; line-height: 1.5; color: #e9e1cf;
+  background: rgba(12,10,8,0.8); border: 1px solid rgba(192,138,62,0.32); }
+.notice-panel > h3, .notice-panel > summary { margin: 0 0 8px; font-family: inherit; font-size: 12px; font-weight: normal; letter-spacing: 0.14em;
+  text-transform: uppercase; color: #f3cf86; }
+.notice-panel > summary { margin: 0; cursor: pointer; }
+.notice-panel[open] > summary { margin-bottom: 8px; }
+.notice-panel p { margin: 0 0 6px; }
+.notice-panel p:last-child { margin-bottom: 0; }
 .notice-read { position: relative; max-width: 640px; margin: 0 auto; padding: 22px 20px 18px; color: #2a1f12;
   background: linear-gradient(175deg, #efe2c2, #e2d1aa 70%, #d6c294); box-shadow: 4px 5px 0 rgba(5,6,8,0.45), inset 0 0 22px rgba(120,84,40,0.25); }
-.notice-read h3 { margin: 0 0 8px; font-family: inherit; font-size: 18px; color: #1d150b; }
+.notice-read h3 { margin: 0 0 8px; font-family: inherit; font-size: 18px; color: #1d150b; overflow-wrap: anywhere; }
 .notice-guild { margin: 0 0 8px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #34506c; }
-.notice-text { margin: 0 0 10px; font-size: 14px; line-height: 1.55; white-space: pre-wrap; }
-.notice-meta { margin: 0 0 10px; font-size: 12px; color: #5a4630; font-style: italic; }
-.notice-mod { margin: 0 0 10px; font-size: 11px; color: #8a2c1f; }
+.notice-text { margin: 0 0 12px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.notice-meta { margin: 0 0 12px; font-size: 12px; color: #5a4630; }
+.notice-mod { margin: 0 0 10px; font-size: 12px; color: #8a2c1f; }
 .notice-acts { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
-.notice-form { max-width: 640px; margin: 0 auto; padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 10px; color: #2a1f12;
+.notice-form { max-width: 640px; margin: 0 auto; padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 12px; color: #2a1f12;
   background: linear-gradient(175deg, #efe2c2, #e2d1aa 70%, #d6c294); box-shadow: 4px 5px 0 rgba(5,6,8,0.45); }
-.notice-field { display: flex; flex-direction: column; gap: 3px; }
+.notice-field { display: flex; flex-direction: column; gap: 4px; }
 .notice-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #5a4630; }
 .notice-input, .notice-textarea, .notice-select { font: inherit; font-size: 14px; color: #1d150b; background: rgba(255,250,236,0.7);
-  border: 1px solid #9c8358; padding: 6px 8px; }
+  border: 1px solid #9c8358; padding: 6px 8px; min-height: 32px; box-sizing: border-box; }
 .notice-textarea { resize: vertical; min-height: 120px; line-height: 1.45; }
 .notice-days { width: 6em; }
-.notice-count { align-self: flex-end; font-size: 11px; color: #5a4630; }
+.notice-count { align-self: flex-end; font-size: 12px; color: #5a4630; }
 .notice-tip { margin: 0; font-size: 12px; color: #5a4630; font-style: italic; }
-/* GUILD1e: the Guilds tab - a guild's own notes under its banner, and the town's recruitment posters */
-.notice-section { margin: 4px 4px 12px; display: flex; align-items: center; gap: 10px; font-size: 13px; letter-spacing: 0.1em;
-  text-transform: uppercase; color: #f3cf86; text-shadow: 1px 1px 0 #050608; }
-.notice-section + .notice-grid { margin-bottom: 18px; }
-.notice-banner { flex: none; width: 30px; height: auto; filter: drop-shadow(2px 3px 0 rgba(5,6,8,0.45)); }
-.notice-poster .notice-banner { width: 38px; align-self: center; }
+/* GUILD1e: the Guilds tab - a guild's own notes under its banner, and the town's recruitment posters. BOARD-UI: a section's
+   name over its own grid, ruled, so the Notices tab's two kinds and the Guilds tab's two lists read apart */
+.notice-section { margin: 4px 4px 10px; padding-bottom: 4px; display: flex; align-items: center; gap: 10px; font-family: inherit; font-size: 13px;
+  font-weight: normal; letter-spacing: 0.1em; text-transform: uppercase; color: #f3cf86; text-shadow: 1px 1px 0 #050608;
+  border-bottom: 1px solid rgba(243,207,134,0.25); }
+.notice-section .notice-sectioncount { margin-left: auto; font-size: 12px; letter-spacing: 0.04em; text-transform: none; color: #c9bba1; }
+.notice-banner { flex: none; width: 22px; height: auto; filter: drop-shadow(2px 3px 0 rgba(5,6,8,0.45)); }
+.notice-poster .notice-banner { width: 30px; align-self: center; }
 /* SEAT1b: the Seat tab - the week's clock, the standings (each guild under its banner, the reader's own marked), the
-   reader's own lines and the levers (ui/seatTab.js) */
-.notice-seat-week, .notice-seat-mine { margin: 4px 6px 10px; font-size: 13px; color: #e6dccb; text-shadow: 1px 1px 0 #050608; }
-.notice-standings { list-style: none; margin: 0 4px 14px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.notice-standing { display: flex; align-items: center; gap: 10px; padding: 6px 10px; font-size: 14px; color: #f3ead8;
-  background: rgba(5,6,8,0.35); text-shadow: 1px 1px 0 #050608; }
-.notice-standing.mine { outline: 1px solid rgba(243,239,44,0.55); }
-.notice-standing .notice-banner { width: 26px; }
-.notice-seat-levers { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 6px 4px 12px; }
+   reader's own lines and the levers (ui/seatTab.js). BOARD-UI: each part its own panel, under its own name */
+.notice-seat-week, .notice-seat-mine { margin: 0 0 6px; font-size: 13px; color: #e9e1cf; }
+.notice-standings { list-style: none; margin: 0 0 8px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.notice-standing { display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: center; gap: 2px 10px; padding: 6px 10px; font-size: 14px;
+  color: #f3ead8; background: rgba(255,255,255,0.04); border-left: 2px solid transparent; }
+.notice-standing.mine { border-left-color: #f3cf86; background: rgba(243,207,134,0.1); }
+.notice-standing .notice-banner { width: auto; height: 32px; grid-row: 1 / span 2; justify-self: center; }
+.notice-standing .seat-bar { grid-column: 2; height: 5px; background: rgba(5,6,8,0.7); }
+.notice-standing .seat-bar > i { display: block; height: 100%; background: linear-gradient(180deg, #f5dfa8 0 1px, #c08a3e 1px); }
+.notice-standing .seat-bar.past > i { background: linear-gradient(180deg, #b6f0c6 0 1px, #4f9a63 1px); }
+.notice-seat-levers { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 8px 0 4px; }
+.notice-seat-levers .notice-input { width: 7em; }
 .notice-seat-drakes { width: 7em; }
 /* SEAT1c: this week's battle, and the Chronicle */
-.notice-seat-battle { margin: 4px 6px 10px; font-size: 13px; color: #f3ef2c; text-shadow: 1px 1px 0 #050608; }
-.notice-chronicle { margin: 0 6px 14px 22px; padding: 0; font-size: 13px; color: #e6dccb; line-height: 1.45; text-shadow: 1px 1px 0 #050608; }
+.notice-seat-battle { margin: 0 0 6px; font-size: 14px; color: #f3e36a; }
+.notice-chronicle { margin: 0 0 8px; padding: 0 0 0 4px; list-style: none; font-size: 13px; color: #e6dccb; line-height: 1.5; }
+.notice-chronicle li { display: flex; align-items: baseline; gap: 8px; padding: 2px 0; }
+.seat-head { display: flex; align-items: center; gap: 12px; }
+.seat-head .notice-banner { width: auto; height: 56px; }
+.seat-head .seat-charter { margin: 0; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; color: #f3cf86; }
+.seat-phases { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; padding: 0; list-style: none; }
+.seat-phases li { padding: 2px 10px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: #9d9180; border: 1px solid rgba(192,138,62,0.25); }
+.seat-phases li.on { color: #1d150b; background: #f3cf86; border-color: #f3cf86; }
+.seat-guide ol { margin: 0; padding: 0 0 0 20px; }
+.seat-guide li { margin: 0 0 6px; }
+.seat-guide b { color: #f3cf86; font-weight: normal; }
+.seat-who { min-width: 0; }
+.seat-who p { margin: 0 0 4px; }
+.notice-standing .seat-nobanner { grid-row: 1 / span 2; }
+.notice-seat-towers { padding: 4px 10px; font-size: 13px; color: #e9e1cf; }
+.notice-seat-fight, .notice-seat-royal, .notice-seat-politics { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.notice-seat-fight p, .notice-seat-royal p, .notice-seat-politics p { margin: 0; }
+.notice-seat-politics { margin-top: 10px; }
+.notice-seat-works > .notice-seat-head { margin: 0 0 8px; font-family: inherit; font-size: 12px; font-weight: normal; letter-spacing: 0.14em;
+  text-transform: uppercase; color: #f3cf86; }
+.notice-seat-works-line, .notice-seat-works-stock { margin: 0 0 6px; }
+.notice-seat-works .act { margin: 0 0 8px; }
 @media (max-width: 720px) {
   .notice-shell { padding: 8px; }
   .notice-cork { padding: 10px; }
   .notice-grid { grid-template-columns: 1fr; }
+  .notice-head { flex-wrap: wrap; }
   .notice-title h2 { font-size: 17px; letter-spacing: 0.08em; }
 }
-@media (pointer: coarse) { .notice-card { min-height: 120px; } }
-@media (prefers-reduced-motion: reduce) { .notice-card { transform: none; } .notice-card:hover, .notice-card:focus-visible { transform: none; } }`;
+@media (pointer: coarse) { .notice-card { min-height: 96px; } .notice-tab { padding: 12px 12px 10px; } }`;
 /** ARENA3: THE ARENA WINDOW (ui/arenaWindow.js) - the Notice Board's kind: a stone window over the world, six pages under a
  *  tab bar, the cards panels, the presses the kit's. The banners' colours (`data-banner` red | blue) on the pennants, the
  *  fighters, the rows and the season's split bar; brass for the chosen and for what you have won. Its classes are `aw-`
@@ -1327,15 +1376,17 @@ body .aw-shell .aw-boutacts .act { min-width: 0; padding: 3px 12px; font-size: 1
  *  the day's chip under the compass and the rank's banner. The stone, the brass and the bone of the rest; the meters'
  *  still forms under the system's reduced motion. */
 export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
-.notice-tab { cursor: pointer; background: none; border: 0; font: inherit; }
+.notice-tab { cursor: pointer; }
 .notice-card.seal-court, .notice-read.seal-court { --seal: #6b3fa0; }
 .notice-writ { cursor: default; }
 .notice-writ .writ-kind { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: #5b3c86; }
-.notice-writ .writ-need { margin: 0; font-size: 15px; color: #1d150b; }
-.notice-writ .writ-pay, .notice-writ .writ-left { margin: 0; font-size: 12px; color: #4a3a25; }
-.notice-writ .writ-take { display: flex; align-items: center; gap: 8px; margin-top: auto; font-size: 11px; color: #5a4630; }
+.notice-writ .writ-need { margin: 0; font-size: 15px; line-height: 1.3; color: #1d150b; }
+.notice-writ .writ-pay, .notice-writ .writ-left { margin: 0; font-size: 13px; color: #4a3a25; }
+.notice-writ .writ-take { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 6px; font-size: 12px; color: #5a4630; }
 .notice-writ.done { opacity: 0.62; }
-.notice-worktoday { margin: 10px 0 0; font-size: 12px; letter-spacing: 0.08em; color: #e6dccb; text-shadow: 1px 1px 0 #050608; }
+/* BOARD-UI: the day's count over the cards, on its own dark strip */
+.notice-worktoday { margin: 0 4px 12px; padding: 6px 10px; font-size: 13px; letter-spacing: 0.04em; color: #e9e1cf;
+  background: rgba(12,10,8,0.72); border-left: 2px solid rgba(192,138,62,0.6); }
 .prof-cols { display: grid; grid-template-columns: minmax(180px, 0.9fr) 1.4fr; gap: 14px; }
 .prof-list { display: flex; flex-direction: column; gap: 4px; }
 .prof-row { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 4px 8px; text-align: left; font: inherit; font-size: 12px;
@@ -1506,33 +1557,57 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 .prof-grain { fill: none; stroke: #3b2a18; stroke-width: 1.6; vector-effect: non-scaling-stroke; }
 .prof-trail { fill: none; stroke: #f3cf86; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .prof-boardhead { fill: rgba(239,224,184,0.22); stroke: none; }
-/* ── PROF5: THE MARKET TAB ── */
-.market-body { display: flex; flex-direction: column; gap: 8px; }
-.market-views, .market-filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+/* ── PROF5: THE MARKET TAB ── BOARD-UI: Your silver on a strip at the top, the views in their parts (Buy, Sell), the
+   columns named over the rows, the type a step larger, the forms' fields under their names */
+.market-body { display: flex; flex-direction: column; gap: 10px; }
+.market-wallet { margin: 0; padding: 6px 10px; font-size: 13px; letter-spacing: 0.04em; color: #f3cf86;
+  background: rgba(12,10,8,0.72); border-left: 2px solid rgba(192,138,62,0.6); }
+.market-views { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: center; }
+.market-viewgroup { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
+.market-viewpart { margin-right: 4px; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #a89a84; }
+.market-filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .market-search { flex: 1 1 140px; min-width: 0; }
 .market-num { width: 5.5em; }
 .market-rows, .market-list { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
-.market-row { display: grid; grid-template-columns: minmax(0, 1.6fr) auto minmax(0, 1.4fr) auto 60px; gap: 2px 10px; align-items: center;
-  padding: 5px 8px; text-align: left; font: inherit; font-size: 12px; color: var(--bone, #e9e4d9); background: rgba(10,8,6,0.55);
-  border: 1px solid rgba(192,138,62,0.25); cursor: pointer; }
+.market-row, .market-listhead { display: grid; grid-template-columns: minmax(0, 1.6fr) auto minmax(0, 1.4fr) auto 60px; gap: 2px 12px; align-items: center;
+  padding: 6px 10px; text-align: left; font: inherit; font-size: 13px; }
+.market-row { color: var(--bone, #e9e4d9); background: rgba(10,8,6,0.62); border: 1px solid rgba(192,138,62,0.25); cursor: pointer; }
+.market-listhead { padding-top: 0; padding-bottom: 0; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #c9bba1; }
+.market-materialhead > :last-child { grid-column: 4 / span 2; }
 .market-row.on { border-color: var(--brass, #c08a3e); background: rgba(192,138,62,0.16); }
-.market-row b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.market-row b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: normal; color: #f3ead8; }
 .market-price { color: #f3cf86; white-space: nowrap; }
-.market-where, .market-quality, .market-units, .market-state { color: #b9ab93; font-size: 11px; }
-.market-median { color: #cdbd9f; font-size: 11px; white-space: nowrap; }
+.market-where, .market-quality, .market-units, .market-state { color: #c9bba1; font-size: 12px; }
+.market-median { color: #cdbd9f; font-size: 12px; white-space: nowrap; }
 .market-mine, .market-mod { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: #efe0b8; }
 .market-line { width: 60px; height: 16px; }
 .market-line polyline { fill: none; stroke: #f3cf86; stroke-width: 1.4; vector-effect: non-scaling-stroke; }
 .market-bar, .market-counterrow, .market-order, .market-listing, .market-histrow { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;
-  padding: 5px 8px; font-size: 12px; color: var(--bone, #e9e4d9); background: rgba(10,8,6,0.4); border-left: 2px solid var(--brass, #c08a3e); }
+  padding: 6px 10px; font-size: 13px; color: var(--bone, #e9e4d9); background: rgba(10,8,6,0.55); border-left: 2px solid var(--brass, #c08a3e); }
 .market-ask { flex: 1 1 200px; }
-.market-road, .market-counter, .market-listform, .market-orderform { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center;
-  padding: 6px 10px; background: rgba(10,8,6,0.5); border: 1px solid rgba(192,138,62,0.3); color: var(--bone, #e9e4d9); font-size: 12px; }
-.market-road h4, .market-counter h4, .market-listform h4, .market-orderform h4, .market-body > h4, .market-mine-view h4, .market-history h4 {
-  flex: 1 1 100%; margin: 0; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #efe0b8; }
-.market-roadline { flex: 1 1 100%; margin: 0; }
+.market-road, .market-counter, .market-listform, .market-orderform, .market-suppliers { display: flex; flex-direction: column; gap: 8px;
+  padding: 8px 12px; background: rgba(10,8,6,0.62); border: 1px solid rgba(192,138,62,0.3); color: var(--bone, #e9e4d9); font-size: 13px; }
+.market-road h4, .market-counter h4, .market-listform h4, .market-orderform h4, .market-body > h4, .market-mine-view h4, .market-history h4,
+.market-suppliers > summary { margin: 0; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: #efe0b8; }
+.market-mine-view, .market-history { display: flex; flex-direction: column; gap: 8px; }
+.market-mine-view > h4, .market-history > h4 { margin-top: 6px; }
+.market-roadline { margin: 0; }
+/* BOARD-UI: the suppliers' counters folded under one line; inside, each counter's rows in even columns */
+.market-suppliers > summary { cursor: pointer; }
+.market-suppliers .market-counter { padding: 0; background: none; border: 0; }
+.market-counter { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 6px; }
+.market-counter > h4, .market-counter > .notice-tip { grid-column: 1 / -1; }
+.market-counterrow { display: grid; grid-template-columns: minmax(0, 1fr) auto 4.5em auto; gap: 4px 10px; }
+.market-counterrow b { font-weight: normal; color: #f3ead8; overflow-wrap: anywhere; }
+/* BOARD-UI: a form's fields under their names, the press at the row's end */
+.market-fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px; }
+.market-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.market-field-wide { flex: 1 1 200px; }
+.market-field .notice-select { width: 100%; }
+/* in the field's column a select's own flex-basis (AUDIT 31 U14's 160px) is its HEIGHT - the field takes the row's basis */
+.market-field > * { flex: 0 0 auto; }
+.market-formnotes:empty { display: none; }
 .market-listing.state-sold, .market-listing.state-cancelled, .market-listing.state-expired, .market-listing.state-removed { opacity: 0.62; }
-.market-foot { margin: 4px 0 0; font-size: 12px; letter-spacing: 0.08em; color: #e6dccb; text-shadow: 1px 1px 0 #050608; }
 /* AUDIT 30 U5: a crafted row its own columns - its quality line the width the name gave up; at a phone's width two
    even columns, every cell able to shrink (the name drew 0px, the price over the road) */
 .market-piece { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.4fr) auto minmax(0, 1.4fr); }
@@ -1551,6 +1626,7 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 .notice-writ.seal-commission .writ-kind { color: #2f5a2b; }
 .notice-writ .writ-take { flex-wrap: wrap; }
 .notice-writ .work-num { width: 4.5em; }
+.notice-writ .writ-banner { width: auto; height: 40px; align-self: flex-start; }
 /* a card as narrow as its column - the Fill's select names a piece in full, and its longest name set the track's width */
 .notice-grid > .notice-writ { min-width: 0; }
 .notice-writ .work-select { max-width: 100%; min-width: 0; width: 100%; flex: 1 1 140px; text-overflow: ellipsis; }
@@ -1584,8 +1660,9 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 .work-fields .work-num, .notice-writ .work-num, .market-num { min-height: 32px; box-sizing: border-box; }
 .work-decline.armed { border-color: #b8563a; color: #f3cf86; }
 .notice-writ .work-label { flex: 1 1 140px; }
-/* AUDIT 31 U14: a List form's select as wide as its form - a piece's long name set the form's width past a phone's */
-.market-listform .notice-select, .market-orderform .notice-select { min-width: 0; max-width: 100%; flex: 1 1 160px; text-overflow: ellipsis; }
+/* AUDIT 31 U14: a List form's select as wide as its form - a piece's long name set the form's width past a phone's.
+   BOARD-UI: its width is its field's now (.market-field-wide) - a flex-basis here was the select's HEIGHT in the field */
+.market-listform .notice-select, .market-orderform .notice-select { min-width: 0; max-width: 100%; text-overflow: ellipsis; }
 .market-listform, .market-orderform, .market-mine-view { min-width: 0; max-width: 100%; }
 /* AUDIT 31 U3: an auction's standing bid wraps under its name at a phone's width - "opening 500 Drakes - no bids yet"
    was cut to "opening 500 Drakes - no" */
@@ -1593,7 +1670,11 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 /* a long maker's name cut the piece's own ("Silverthorn-of-the-Iliac's Mithril Longs...") - a Masterwork's name wraps */
 .market-auction b { white-space: normal; overflow-wrap: anywhere; }
 @media (max-width: 640px) { .market-row, .market-piece { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .market-row > b { grid-column: 1 / -1; }
-  .market-line { display: none; }
+  .market-line, .market-listhead { display: none; }
+  .market-counter { grid-template-columns: minmax(0, 1fr); }
+  .market-views { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+  .market-viewgroup { flex: none; flex-wrap: nowrap; }
+  .market-view { flex: none; white-space: nowrap; }
   .market-auction { grid-template-columns: minmax(0, 1fr); } .market-auction > * { grid-column: 1 / -1; }
   .market-row b { white-space: normal; overflow-wrap: anywhere; } }
 @media (prefers-reduced-motion: reduce) { .prof-glint { animation: none; } .prof-toast { transition: none; } }

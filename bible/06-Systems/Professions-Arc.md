@@ -772,8 +772,9 @@ etc".
   off, and the Notices tab pins one line under the rumour: "The town's bounties are posted on its Bounty Board." A
   board stood for a seat or hub (below) is a Notice Board. The Work tab's black Bounty seal is a WRIT (section 11),
   never a board's hunt; the two share a colour because both are a price on a beast's head.
-- **Online, a rumour board opens the Notice Board** - every board of a town that is not a bounty board, a lone board
-  included. DFU's reach gate still applies (256 classic units).
+- **Online, the town's one Notice Board** (ONE-BOARD, 10.11): of the boards BOUNTY1 did not take, the one nearest the
+  town's middle, a lone board included; the others stay DFU's rumour boards. DFU's reach gate still applies (256
+  classic units).
 - **Every seat and hub has one.** A seat or hub whose blocks place no board gets one: the same DFU model, drawn from
   the player's own ARENA2 at runtime, stood at an anchor derived from the town's layout - the market square (the open
   block nearest the town's centre), else beside the palace door. SEAT-COUNT counts them.
@@ -960,8 +961,9 @@ recruitment**, a **duel challenge**, or a **commission** (section 11; BUILT, PRO
 
 Mac: **"Go"**. What the design above left open, DECIDED here (the record's, at Mac's instruction), and what was found:
 
-- **Which boards.** Online, every board of a town that is not a bounty board opens the Notice Board - once the account
-  service has said the board is open to this account (`BOARD_OPEN`). Until it has, and offline, the board is DFU's
+- **Which boards.** Online, the town's Notice Board opens it - once the account service has said the board is open to
+  this account (`BOARD_OPEN`). ONE-BOARD (10.11): one board a town, the rumour board nearest its middle; NOTICE1 made
+  every board BOUNTY1 did not take one, and a town of three boards or more stood two. Until it has, and offline, the board is DFU's
   rumour box byte for byte (ROAD A9's pins hold). The town underfoot is read on arrival, so the first press knows.
 - **A board is its town's.** A note is pinned to the TOWN - its MAPS.BSA map id, unsigned (regionHubs.js's key) - so
   every rumour board in a town shows the same notes, and a board stood later for a hub is the same board.
@@ -1113,6 +1115,74 @@ and reproduced each finding before it was fixed (`test/marketaudit.test.js`, `to
   whether it is open). `MARKET-ANY-service-the-goods-family-unfiltered` is recorded equivalent - the Goods view's
   family is chosen in its query; the JS filter after it is belt-and-braces. `test/marketaudit2.test.js`,
   `tools/mutants/marketaudit2.json`.
+
+### 10.11 BOARD-UI - one Notice Board a town, and the board laid out to be read (2026-10-06)
+
+Mac: **"Some towns have double notice boards"**; **"We need to overhaul the notice boards to enhance readability,
+Including each of the tabs"**; **"Enhance the speed at which the notice board and market loads"**; **"Enhance
+organization of the market"**; **"Reduce overusage of bloated text. Less AI like text"**; **"Enhance the guild war tab
+of the board for better organization, instruction and readability"**.
+
+- **ONE-BOARD - the double boards.** FACT: BOUNTY1 takes every other board of a town by position (two give one, five
+  give two), and NOTICE1 made every board left a Notice Board - so a town of three boards or more stood two or three,
+  each with its "3 new", its mark on the town map and, at a seat, its pennant. Now one (`systems/bountyBoard.js`
+  noticeBoardIndex): of the boards BOUNTY1 left, the one nearest the town's middle (`townCentreOf`, the mean of its
+  buildings' places - the board the siege field already takes for its Market, `systems/siegeField.js`), the first by
+  position on a tie. The rest stay Daggerfall's rumour boards, as every board is offline; BOUNTY1's split is untouched.
+  Every seam reads it through one memo a pixel (`scenes/world.js` noticeBoardOf): the press, the count over the board,
+  the town underfoot, the town map (`ui/townMapMarks.js` townBoardRows takes the index), a seat's pennant
+  (`scenes/seatBanners.js` seatBannerAnchors' `notice`). It names itself "Notice Board" on hover while the board is open
+  to the account (`scenes/worldModes.js`), DFU's "Bulletin Board" otherwise. THE FOUR HOSTS: `world.js` WIRED (the
+  streets' boards, through `noticeBoardOf`); `worldModes.js` WIRED (the hover's name - the exterior ray it runs for the
+  streaming host); `exterior.js` keeps DFU's board, as NOTICE1 left it (no board book on the bench); `dungeonContext.js`
+  stands no board.
+- **Readable.** MEASURED in Chromium (`tools/noticeBoardProbe.mjs`, every tab at 1280x800 and 390x760): the tab strip
+  ran off a phone's edge ("VENDO..."), Guilds and Seat beyond reach - it scrolls sideways now (its scrollbar hidden the
+  Arena window's way, `scrollbar-width: none`, the one value CURSOR-EDGE allows) and never shrinks (once it scrolled, a
+  tall tab squeezed it to a sliver); the cards stand straight (a tilted pixel face blurs) and as tall as their own words
+  (a row stretched every Court writ to the guild writ's height); the words a step larger; words that sit on the cork sit
+  on a dark panel (`.notice-panel` - bone ink on the cork's grain read about 3:1). Each tab names its count: the
+  Notices' new since this device last read the board, the Work tab's writs open.
+- **The Notices tab** in two parts: "News" (the rumour, the bounty board's line, the gate, the server's notices), then
+  "Players' notes" under their count. **The Work tab**: "Court writs today" over the cards, not under the last.
+- **The Market** (Mac's "organization"): Your silver on a strip at the top (it stood under the last row); the views in
+  their parts - BUY (Materials, Crafted, Auctions, Goods), SELL (Orders - the buy orders to fill - and My listings), then
+  History (`ui/marketTab.js` MARKET_VIEW_GROUPS; the law's MARKET_VIEWS and the service's views untouched); the columns
+  named over the rows; the Weavers' and the Apothecaries' counters folded under one line, "Suppliers - fixed prices,
+  straight into your Stores" (the Apothecaries' sixteen stood under every Materials read), kept open across a redraw;
+  My listings in named parts (the List form, Your listings, auctions, bids, buy orders); each form's fields under their
+  names; the Vendors tab's columns named as the Market's (`ui/vendorTab.js`). FOUND: the List press wore `market-list`, the lists' own class, whose rule took its padding - a 36px sliver
+  since PROF5; and in a field a select took AUDIT 31 U14's 160px flex-basis as its height.
+- **Faster.** The window and its tabs are a lazy chunk fetched at the first press - on the deployed site a round trip
+  before anything drew. It is fetched ahead once the player stands in a town whose board is a Notice Board
+  (`ui/noticeDoor.js` prefetchNoticeBoard, asked as the town's board is read on arrival; a failed fetch is let go for
+  the press's own retry). The Market's first view is read as the board opens (`prefetch`), so its tab answers from the
+  book's minute's cache; its opening settle no longer holds the read back (a settle that moves anything lets the cache
+  go, and the read asks again - MARKET-AUDIT B2's door). The Seat tab asks its works beside the standings, never after
+  their answer.
+- **Fewer words.** Each tab's fixed words in one table (`BOARD_WORDS`, `MARKET_WORDS`, `SEAT_TAB_WORDS`, `VENDOR_TEXT`),
+  every one at most 120 characters, none naming the counting-house - "The counting-house is not answering. The market
+  cannot be read now." is "The market did not load."; a listing's paragraph of terms is one line, "Fee 1 silver, kept
+  if you cancel. Up for 72 hours on every board. If it all sells you get 1 silver, after 5% tax and the 6% Tithe."; the
+  forms' escrow lines and the writs', commissions' and contracts' refusals likewise. What a line must still say is kept:
+  a gold listing's "Goods bought with silver, and pieces made with them, sell only for silver." (the service's own
+  sentence, AUDIT PROF-541 R2-S3).
+- **The Seat tab - the guild war** (Mac's "organization, instruction and readability"): each part on its own panel
+  under its own name, in the order a reader asks them - the Charter (who holds it, since when, its Standing and trend,
+  the Tithe and Edict); This week (the phase on a strip - Muster, Reckoning, Turning - its clock, the Season, the Tide);
+  the week's battle; the standings, each challenger's bar toward what it needs (the claim at an unheld seat, past the
+  holder's defence at a held one; none on the holder's row - its influence is its defence); your guild (its pledge,
+  your part, the levers, Fealty and Pacts); the holder's orders (the Tithe and Edict, the battle window, the Charter
+  given up); the Works; HOW THE SEAT WAR WORKS, five steps folded under one line - Pledge, Earn, Claim, Siege, Hold -
+  every number in them the law's own (`ui/seatTab.js` seatGuide); and the Chronicle. Who sees each lever is unchanged.
+
+Code: the files above, `ui/workTab.js`, `ui/vendorTab.js`, `net/townSeatLaw.js` (the tab's own two lines) and
+`ui/enhancedPlusStyle.js` (NOTICE_CSS, PROF_CSS). Pins: `test/board_ui.test.js` (10); the pins whose words were cut
+moved with them, each marked PIN MOVED. Mutants: `tools/mutants/board_ui.json`, 34, all dead; twenty-five records
+re-aimed by content and judged again (24 dead, AUDIT31-tab-hint-add-late equivalent as recorded); and the 294 records
+over the code the slice touched judged whole - 291 dead, one equivalent as recorded, two survivors that survive on main
+the same (`shadowreach.json` world-peer-gate-still-skips and `perfon2.json` PERF-ON2-the-peers-are-submitted-uncut-again:
+the billboard cull's shadow arm, no board's), left to their own arcs. Probe: `node tools/noticeBoardProbe.mjs`.
 
 ## 11. Writs - the Work tab
 

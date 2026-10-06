@@ -410,8 +410,8 @@
   {
     "name": "AUDIT30-U16-the-listed-order",
     "file": "src/ui/marketTab.js",
-    "old": ".sort((a, b) => landed(a) - landed(b) || a.price - b.price);\n      const list = el('div', 'market-rows');\n      for (const r of rows) {\n        list.append(st.view === 'materials'",
-    "new": ".sort((a, b) => a.price - b.price);\n      const list = el('div', 'market-rows');\n      for (const r of rows) {\n        list.append(st.view === 'materials'",
+    "old": ".sort((a, b) => landed(a) - landed(b) || a.price - b.price);\n      const list = el('div', 'market-rows');\n      if (rows.length) list.append(st.view === 'materials'",
+    "new": ".sort((a, b) => a.price - b.price);\n      const list = el('div', 'market-rows');\n      if (rows.length) list.append(st.view === 'materials'",
     "tests": [
       "test/audit30_client.test.js"
     ]

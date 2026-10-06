@@ -1377,7 +1377,7 @@
   {
     "name": "PROF12-market-no-counter",
     "file": "src/ui/marketTab.js",
-    "old": "      if (st.view === 'materials' && (m.apothecaries ?? []).length) box.append(apothecariesNode());   // PROF12\n",
+    "old": "    if ((m.apothecaries ?? []).length) box.append(apothecariesNode());   // PROF12\n",
     "new": "",
     "tests": [
       "test/prof12_client.test.js"

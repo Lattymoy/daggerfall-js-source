@@ -872,8 +872,8 @@
   {
     "name": "PROF5-tab-fee-unsaid",
     "file": "src/ui/marketTab.js",
-    "old": "`Listing fee ${marksText(fee)}, kept if you cancel.",
-    "new": "`Listing fee kept if you cancel.",
+    "old": ": `Fee ${marksText(fee)}, kept if you cancel. Up for 72 hours",
+    "new": ": `Fee kept if you cancel. Up for 72 hours",
     "tests": [
       "test/prof5_client.test.js"
     ]
@@ -899,8 +899,8 @@
   {
     "name": "PROF5-tab-weavers-gone",
     "file": "src/ui/marketTab.js",
-    "old": "      if (st.view === 'materials') box.append(weaversNode());",
-    "new": "",
+    "old": "box.append(el('summary', null, MARKET_WORDS.suppliers), weaversNode());",
+    "new": "box.append(el('summary', null, MARKET_WORDS.suppliers));",
     "tests": [
       "test/prof5_client.test.js"
     ]

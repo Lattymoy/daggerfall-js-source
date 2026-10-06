@@ -240,7 +240,7 @@ import { readImmersiveTravelSettings, immersiveTravelLoaded, IT_POPUP } from '..
 import { createForagingWait } from './foragingWait.js';
 import { createMarksBook } from '../net/marksBook.js';   // MARKS1: the account's Marks - the balance, the Bank's sale, a guild's treasury   // FORAGE4: online, Foraging's quest time is a wait on the wait page
 import { createNoticeBook, parseNoteCommand, planNoteAnswer, NOTE_LETTER_LOST } from '../net/noticeBook.js';   // NOTICE1: this device's Notice Boards - a town's board read, a note pinned
-import { createNoticeOverlay, closeNoticeDoor, noticeDoorOpen } from '../ui/noticeDoor.js';   // NOTICE1: the board's window, through its one door
+import { createNoticeOverlay, closeNoticeDoor, noticeDoorOpen, prefetchNoticeBoard } from '../ui/noticeDoor.js';   // NOTICE1: the board's window, through its one door; BOARD-UI: its chunk fetched ahead
 import { createProfBook } from '../net/profBook.js';   // PROF1: this character's professions - its Stores, its day, its harvests kept until answered
 import { createMotherlodeBook } from '../net/motherlodeBook.js';   // PROF2b: the day's Motherlodes - read, warned of, their Watch receipts kept
 import { createProfHud } from '../ui/profHud.js';   // PROF1: the prompt, the act's meter, the toasts, the day's chip, the rank's banner
@@ -531,7 +531,7 @@ import { tabStorage } from '../systems/appStorage.js';   // LEGACY1: a birth cro
 import { MONTH_NAMES } from '../systems/gameDate.js';
 import { createBountyHost } from './bountyHost.js';   // BOUNTY1: the town's bounty boards - the hunts, their packs, their purse
 import { createBountyFarms, farmSpotLocal, pickFarm } from './bountyFarms.js';   // BOUNTY-FARM: a farm on a farm bounty's pixel, while it is held
-import { questBoardIndices, bountyDungeons } from '../systems/bountyBoard.js';   // BOUNTY1: which of a town's boards post bounties (half); RVN7: a revenant's lair, in the boards' ring
+import { questBoardIndices, noticeBoardIndex, bountyDungeons } from '../systems/bountyBoard.js';   // BOUNTY1: which of a town's boards post bounties (half); ONE-BOARD: which one is its Notice Board; RVN7: a revenant's lair, in the boards' ring
 import { createBountyOverlay, closeBountyDoor, bountyDoorOpen } from '../ui/bountyDoor.js';   // BOUNTY1: the board's window and the payday notice
 import { isQualifyingThreatState } from '../systems/horseFollow.js';   // HCC: CollectThreats' qualification, the mod's own five-term test
 import { totalWeight } from '../systems/inventory.js';   // HCC: PlayerEntity.WagonWeight
@@ -1323,6 +1323,9 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  boards are laid once, when it is built. (SEAT1a: declared above the boot's first build, which asks it for a seat
    *  town's banners - BOOT-TDZ2.) */
   const boardSplitOf = (p) => (p._boardSplit ??= questBoardIndices(p.boards ?? []));
+  /** ONE-BOARD (systems/bountyBoard.js noticeBoardIndex): the one board of a built pixel's that is its town's Notice Board
+   *  online - the rumour board nearest the town's middle - or -1; worked out once a pixel, as the split is. */
+  const noticeBoardOf = (p) => (p._noticeBoard ??= noticeBoardIndex(p.boards ?? [], boardSplitOf(p), townCentreOf(p.homeFrames)));
   // HOME1 (Mac: "allowing online players to purchase housing in any location"): the online homes - the account
   // service's registry as this page knows it, one town at a time (systems/onlineHomes.js). The mode machine's doors
   // read it and the quest's residence filter asks it; offline it does not exist and every door is Daggerfall's. Read
@@ -5123,7 +5126,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     const castleGate = seatTier === 'crown' ? castleEntranceOf(pixelDungeonDoors) : null;   // CASTLE-GATE: a crown city's castle entrance
     const seatAnchors = pixelBoardSplit ? seatBannerAnchors({
       frames: pixelHomeFrames, palaceKeys: seatPalaceKeys, castle: castleGate,
-      gates: pixelGates.map((g) => ({ local: g.local, box: g.entry?._box })), boards: pixelBoards, bounty: pixelBoardSplit,
+      gates: pixelGates.map((g) => ({ local: g.local, box: g.entry?._box })), boards: pixelBoards,
+      notice: noticeBoardIndex(pixelBoards, pixelBoardSplit, townCentreOf(pixelHomeFrames)),   // ONE-BOARD: the pennant over the town's one Notice Board
       centre: townCentreOf(pixelHomeFrames),
     }) : null;
     // FESTIVAL-STAGE (Seats-Arc 7.6): a Festival's more banners - its taverns' doors, the bounty boards - and a lantern
@@ -15202,9 +15206,8 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  then Daggerfall's rumour boards) or off a location. */
   const townBoardMarks = (p) => {
     if (!noticeBook || noticeBook.open !== true || !p?.boards?.length || !p.location) return [];
-    const bountyAt = boardSplitOf(p);
-    const town = noticeTownOf(p.px, p.py, bountyAt.size > 0);
-    return town ? townBoardRows(p, bountyAt, noticeBook.unseen(town.mapId)) : [];
+    const town = noticeTownOf(p.px, p.py, boardSplitOf(p).size > 0);
+    return town ? townBoardRows(p, noticeBoardOf(p), noticeBook.unseen(town.mapId)) : [];
   };
   /** SetCustomBuildingName (ExteriorAutomap.cs:867-899): the plate's
    *  double-click raises DFU's DaggerfallInputMessageBox over the open
@@ -22821,8 +22824,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const at = playerTravelPixel();
     const p = at ? built.get(`${at.x},${at.y}`) : null;
     if (!p?.boards?.length || !p.location) return null;
-    const bountyAt = boardSplitOf(p);
-    return bountyAt.size < p.boards.length ? noticeTownOf(p.px, p.py, bountyAt.size > 0) : null;
+    return noticeBoardOf(p) >= 0 ? noticeTownOf(p.px, p.py, boardSplitOf(p).size > 0) : null;
   };
   /** NOTICE1: HOW FAR the count over a board is read from, metres - across a town square, not across the town. */
   const NOTICE_COUNT_RANGE_M = 40;
@@ -22833,14 +22835,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     const out = [];
     for (const p of built.values()) {
       if (!p.boards?.length || !p.location) continue;
-      const bountyAt = boardSplitOf(p);
-      if (bountyAt.size >= p.boards.length) continue;
-      const town = noticeTownOf(p.px, p.py, bountyAt.size > 0);
+      const at = noticeBoardOf(p);
+      if (at < 0) continue;
+      const town = noticeTownOf(p.px, p.py, boardSplitOf(p).size > 0);
       const n = town ? noticeBook.unseen(town.mapId) : 0;
       if (!n) continue;
       const t = state.pixelTranslation(p.px, p.py);
       p.boards.forEach((b, i) => {
-        if (bountyAt.has(i)) return;
+        if (i !== at) return;
         const top = [(b.box[0] + b.box[3]) / 2 + t[0], b.box[4] + t[1] + 0.25, (b.box[2] + b.box[5]) / 2 + t[2]];
         if (eye && Math.hypot(top[0] - eye[0], top[2] - eye[2]) > NOTICE_COUNT_RANGE_M) return;
         const s = projectToScreen(top, w, h, proj, view, rect);
@@ -24859,14 +24861,16 @@ export async function bootWorld(canvas, renderer, params, status) {
         // BOUNTY1: half the town's boards post its bounties - every client picks the same half (questBoardIndices)
         const bountyAt = p.location ? boardSplitOf(p) : new Set();
         const noticeTown = noticeBook && p.location ? noticeTownOf(p.px, p.py, bountyAt.size > 0) : null;
+        const noticeAt = noticeTown ? noticeBoardOf(p) : -1;   // ONE-BOARD: one Notice Board a town
         p.boards.forEach((b, i) => {
           out.push({
             min: [b.box[0] + t[0], b.box[1] + t[1], b.box[2] + t[2]],
             max: [b.box[3] + t[0], b.box[4] + t[1], b.box[5] + t[2]],
             ...(bountyAt.has(i) ? { bounty: { px: p.px, py: p.py, name: p.location } } : {}),
-            // NOTICE1: every other board of a town is its Notice Board online - keyed by the town's map id (its
-            // MapTableData.MapId, unsigned: regionHubs' key), with whether a bounty board stands in the same town
-            ...(!bountyAt.has(i) && noticeTown ? { notice: noticeTown } : {}),
+            // NOTICE1: the town's Notice Board online - keyed by the town's map id (its MapTableData.MapId, unsigned:
+            // regionHubs' key), with whether a bounty board stands in the same town. ONE-BOARD: one board a town, the
+            // others Daggerfall's rumour boards
+            ...(i === noticeAt ? { notice: noticeTown, named: noticeBook.open === true } : {}),
           });
         });
       }
@@ -28344,7 +28348,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // NOTICE1: the town the player stands in is read on arrival (a minute's cache, net/noticeBook.js) - so its boards'
     // count floats over them and its board opens as the Notice Board at the first press, not the second
     _noticeReadT -= dt;
-    if (noticeBook && _noticeReadT <= 0) { _noticeReadT = 1; const town = noticeTownHere(); if (town) noticeBook.read(town.mapId); }
+    // BOARD-UI: and the board's window fetched ahead, so its first press waits on nothing
+    if (noticeBook && _noticeReadT <= 0) { _noticeReadT = 1; const town = noticeTownHere(); if (town) { noticeBook.read(town.mapId); if (noticeBook.open !== false) prefetchNoticeBoard(); } }
     _farmSyncT -= dt;
     if (_farmSyncT <= 0) { _farmSyncT = 0.5; try { bountyFarms?.sync(bountyHost?.farmsWanted() ?? []); } catch (e) { console.warn('[bounty] farms', e); } }   // BOUNTY-FARM: the farms brought in line with the bounties held
     pump();

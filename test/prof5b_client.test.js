@@ -192,7 +192,7 @@ test('PROF5b tab: Auctions - each Masterwork\'s standing bid, bids and end, wher
   kind.value = 'auction'; kind.onchange();
   const pick = [...root.querySelectorAll('select')].find((x) => x.getAttribute('aria-label') === 'Crafted piece');
   assert.deepEqual([...pick.querySelectorAll('option')].map((o) => o.textContent), ['Silverthorn\'s Mithril Longsword']);
-  assert.match(text(), new RegExp(`for ${AUCTION_S / 3600} hours; each bid must be 5% over the last, and a bid with less than 2 minutes left adds 2 more`));   // AUDIT 31 L4, L7: strictly less, the add its own number
+  assert.match(text(), new RegExp(`Runs ${AUCTION_S / 3600} hours on every board; each bid beats the last by 5%, and a bid in the last 2 minutes adds 2\\.`));   // AUDIT 31 L4, L7: strictly less, the add its own number; BOARD-UI (PIN MOVED)
   await buttons().find((b) => b.textContent === 'List').onclick();
   assert.deepEqual(calls.at(-1)[0], 'auction');
   assert.equal(calls.at(-1)[1].provenance, PV);

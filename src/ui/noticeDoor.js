@@ -14,6 +14,16 @@ export const noticeDoorOpen = () => !!_open && !_open.done;
 /** Shut it, if it is up. */
 export function closeNoticeDoor() { const was = noticeDoorOpen(); _open?.dispose(); return was; }
 
+/** BOARD-UI (2026-10-06, Mac: "Enhance the speed at which the notice board and market loads"): THE WINDOW'S CHUNK
+ *  FETCHED AHEAD - once, when the host finds the player in a town with a Notice Board - so the first press mounts at once
+ *  rather than waiting on the network for the window and its tabs. A failed fetch is let go: the press asks again,
+ *  through the one home's own retry (ui/enhancedChunk.js). */
+let _ahead = null;
+export function prefetchNoticeBoard(load = () => import('./noticeWindow.js')) {
+  _ahead ??= Promise.resolve().then(load).catch(() => { _ahead = null; return null; });
+  return _ahead;
+}
+
 /**
  * @param {any} deps the window's own deps (ui/noticeWindow.js mountNoticeBoard), less `onExit`; plus `onClose`
  * @returns {any} the overlay, or null with no document

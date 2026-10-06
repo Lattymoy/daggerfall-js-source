@@ -1,0 +1,310 @@
+[
+  {
+    "name": "ONE-BOARD-every-board-left",
+    "file": "src/systems/bountyBoard.js",
+    "old": "    if (bounty.has(i)) continue;\n    const d = Array.isArray(centre)",
+    "new": "    const d = Array.isArray(centre)",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BOARD-the-nearest-ignored",
+    "file": "src/systems/bountyBoard.js",
+    "old": "const d = Array.isArray(centre) ? Math.hypot((box[0] + box[3]) / 2 - centre[0], (box[2] + box[5]) / 2 - centre[1]) : 0;",
+    "new": "const d = 0;",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BOARD-the-tie-to-the-last",
+    "file": "src/systems/bountyBoard.js",
+    "old": "    if (d < near) { near = d; best = i; }",
+    "new": "    if (d <= near) { near = d; best = i; }",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BOARD-the-press-on-every-board-left",
+    "file": "src/scenes/world.js",
+    "old": "...(i === noticeAt ? { notice: noticeTown, named: noticeBook.open === true } : {}),",
+    "new": "...(!bountyAt.has(i) && noticeTown ? { notice: noticeTown, named: noticeBook.open === true } : {}),",
+    "tests": [
+      "test/board_ui.test.js",
+      "test/notice1.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BOARD-the-count-over-every-board",
+    "file": "src/scenes/world.js",
+    "old": "        if (i !== at) return;",
+    "new": "        if (i === -1) return;",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BOARD-the-memo-unshared",
+    "file": "src/scenes/world.js",
+    "old": "  const noticeBoardOf = (p) => (p._noticeBoard ??= noticeBoardIndex(p.boards ?? [], boardSplitOf(p), townCentreOf(p.homeFrames)));",
+    "new": "  const noticeBoardOf = (p) => (p._noticeBoard ??= noticeBoardIndex(p.boards ?? [], boardSplitOf(p), null));",
+    "tests": [
+      "test/board_ui.test.js",
+      "test/notice1.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BOARD-the-hover-unnamed",
+    "file": "src/scenes/worldModes.js",
+    "old": "bd?.named ? NOTICE_BOARD_TEXT : BULLETIN_BOARD_TEXT",
+    "new": "false ? NOTICE_BOARD_TEXT : BULLETIN_BOARD_TEXT",
+    "tests": [
+      "test/auditbounty1.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-tab-counts-the-old-notes",
+    "file": "src/ui/noticeWindow.js",
+    "old": "if (id === 'notices') return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).filter((c) => c.isNew).length || null;",
+    "new": "if (id === 'notices') return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).length || null;",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-tab-counts-every-writ",
+    "file": "src/ui/noticeWindow.js",
+    "old": "if (id === 'work' && writs) return (writs.writs ?? []).filter((w) => w.state === 'open').length",
+    "new": "if (id === 'work' && writs) return (writs.writs ?? []).length",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-day-at-the-foot",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    body.append(el('p', 'notice-worktoday', `Court writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));\n    const grid = el('ul', 'notice-grid');",
+    "new": "    const grid = el('ul', 'notice-grid');",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-news-unnamed",
+    "file": "src/ui/noticeWindow.js",
+    "old": "if (news.length) body.append(sectionHead(BOARD_WORDS.news), gridOf(news));",
+    "new": "if (news.length) body.append(gridOf(news));",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-notes-uncounted",
+    "file": "src/ui/noticeWindow.js",
+    "old": "body.append(sectionHead(BOARD_WORDS.notes, board ? notes.length : null));",
+    "new": "body.append(sectionHead(BOARD_WORDS.notes));",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-no-market-prefetch",
+    "file": "src/ui/noticeWindow.js",
+    "old": "  if (market && marketShown()) market.prefetch?.();\n",
+    "new": "",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-read-after-the-settle",
+    "file": "src/ui/marketTab.js",
+    "old": "    await Promise.all([load(false), settling]);",
+    "new": "    await settling; await load(false);",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-wallet-at-the-foot",
+    "file": "src/ui/marketTab.js",
+    "old": "    box.append(walletNode(), viewsNode());",
+    "new": "    box.append(viewsNode(), walletNode());",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-a-view-in-two-parts",
+    "file": "src/ui/marketTab.js",
+    "old": "(['Sell', Object.freeze(['orders', 'mine'])]),",
+    "new": "(['Sell', Object.freeze(['orders', 'mine', 'history'])]),",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-fold-forgets",
+    "file": "src/ui/marketTab.js",
+    "old": "    box.open = st.suppliersOpen === true;",
+    "new": "    box.open = false;",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-list-press-the-lists-class",
+    "file": "src/ui/marketTab.js",
+    "old": "const b = button('primary market-dolist', 'List', () => send());",
+    "new": "const b = button('primary market-list', 'List', () => send());",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-works-read-after",
+    "file": "src/ui/seatTab.js",
+    "old": "    const works = book.forts ? Promise.resolve().then(() => book.forts(seat.key)).catch(() => null) : null;\n    try { r = await book.standings(seat.key, { force }); } catch { r = { data: null, error: 'offline' }; }\n",
+    "new": "    try { r = await book.standings(seat.key, { force }); } catch { r = { data: null, error: 'offline' }; }\n    const works = book.forts ? Promise.resolve().then(() => book.forts(seat.key)).catch(() => null) : null;\n",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-battle-unnamed",
+    "file": "src/ui/seatTab.js",
+    "old": "const b = panel(SEAT_PANELS.battle, 'seat-battlepanel');",
+    "new": "const b = panel(null, 'seat-battlepanel');",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-strip-on-the-muster",
+    "file": "src/ui/seatTab.js",
+    "old": "const li = el('li', data.phase === id ? 'on' : null, name);",
+    "new": "const li = el('li', id === 'muster' ? 'on' : null, name);",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-bar-past-the-claim-alone",
+    "file": "src/ui/seatTab.js",
+    "old": "return Number.isFinite(data?.defence) ? Math.max(need, data.defence + 1) : need;",
+    "new": "return need;",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-holder-barred",
+    "file": "src/ui/seatTab.js",
+    "old": "      if (s.guild.id !== holderId) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-guide-a-palace-always",
+    "file": "src/ui/seatTab.js",
+    "old": "influence, for ${n(CLAIM_FEE[t])} silver from its treasury.",
+    "new": "influence, for ${n(CLAIM_FEE.palace)} silver from its treasury.",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-guide-unfolded",
+    "file": "src/ui/seatTab.js",
+    "old": "const guide = /** @type {any} */ (el('details', 'notice-panel seat-guide'));",
+    "new": "const guide = /** @type {any} */ (el('section', 'notice-panel seat-guide'));",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-chunk-at-every-ask",
+    "file": "src/ui/noticeDoor.js",
+    "old": "  _ahead ??= Promise.resolve().then(load)",
+    "new": "  _ahead = Promise.resolve().then(load)",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-a-failed-fetch-kept",
+    "file": "src/ui/noticeDoor.js",
+    "old": ".catch(() => { _ahead = null; return null; });",
+    "new": ".catch(() => null);",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-no-fetch-ahead",
+    "file": "src/scenes/world.js",
+    "old": " if (noticeBook.open !== false) prefetchNoticeBoard();",
+    "new": "",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-a-word-run-long",
+    "file": "src/ui/marketTab.js",
+    "old": "  slow: 'The market did not load.',",
+    "new": "  slow: 'The counting-house is not answering. The market cannot be read now - try again in a moment, or ask again from another board.',",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-strip-free-to-shrink",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "\n.notice-tabs { flex: none; display: flex;",
+    "new": "\n.notice-tabs { display: flex;",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-cards-stretched",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".notice-grid { list-style: none; margin: 0 0 16px; padding: 4px; display: grid; gap: 14px; align-items: start;",
+    "new": ".notice-grid { list-style: none; margin: 0 0 16px; padding: 4px; display: grid; gap: 14px;",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-tilt-back",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "  cursor: pointer; color: #2a1f12;\n",
+    "new": "  cursor: pointer; color: #2a1f12; transform: rotate(var(--tilt, 0deg));\n",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-select-tall",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "\n.market-field > * { flex: 0 0 auto; }",
+    "new": "\n.market-field > * { flex: 1 1 auto; }",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-vendors-unnamed",
+    "file": "src/ui/vendorTab.js",
+    "old": "      if (found.length) list.append(listHead(['Item', 'Condition', 'Price', 'Sold at']));\n",
+    "new": "",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  }
+]
