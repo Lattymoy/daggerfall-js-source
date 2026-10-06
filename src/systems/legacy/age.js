@@ -4,7 +4,7 @@
 //
 // A death in an Enduring family is not final, and it is not free: it costs YEARS. Every member has an age and a span
 // by their race; they are born at a quarter of it, they age as they live (their own clock, LIVED1 - a Daggerfall year
-// is twelve months of thirty days), and each death adds a toll - a share of the span (the Mods pane: 4%, 6%, 10%). At
+// is twelve months of thirty days), and each death adds a toll - a share of the span (its Features tile: 4%, 6%, 10%). At
 // three quarters of the span they are an ELDER; when the span is spent, the next death is their last, and the mantle
 // passes as it does in a Bloodline. Roughly a dozen deaths a generation at the Standard toll - so an Enduring line
 // still turns, at its own pace.
@@ -21,7 +21,7 @@ export const SPANS = Object.freeze({
 });
 export const spanOf = (race) => SPANS[race] ?? SPANS.Breton;
 
-/** Born at a quarter of the span (a human of 22, a high elf of 50) - the age an adult takes the road. */
+/** Born at a quarter of the span (a Redguard of 20, a Breton or a Nord of 23, a high elf of 50 - AUDIT LEGACY III F22) - the age an adult takes the road. */
 export const START_SHARE = 0.25;
 /** An ELDER from three quarters of the span. */
 export const ELDER_SHARE = 0.75;

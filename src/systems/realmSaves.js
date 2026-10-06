@@ -121,17 +121,21 @@ export const realmLineages = async (/** @type {any} */ io) => {
   return r.ok ? { ok: true, lineages: Array.isArray(r.data?.lineages) ? r.data.lineages : [] } : r;
 };
 /** LEGACY7: a line written past its rev - `{ ok, data: { rev } }`, or `{ ok: false, error: 'lineage-stale', data: { rev, record } }`
- *  (the stored record, to merge into and write again). */
-export const realmLineagePut = (/** @type {any} */ io, /** @type {string} */ id, /** @type {any} */ record) => realmAsk(io, '/v1/realm/lineage', { method: 'POST', json: { id, record } });
+ *  (the stored record, to merge into and write again). AUDIT LEGACY III A2: `base` the service's rev the record was made
+ *  from (the list's, the last write's, the stale answer's) - none for a line founded here. */
+export const realmLineagePut = (/** @type {any} */ io, /** @type {string} */ id, /** @type {any} */ record, /** @type {number|null} */ base = null) =>
+  realmAsk(io, '/v1/realm/lineage', { method: 'POST', json: base == null ? { id, record } : { id, record, base } });
 /** LEGACY7: THE TOMBSTONE - the playing tab's character fallen for good, under its lease. Part three: `why` 'retired' -
  *  an elder's mantle passed, which keeps a union with another player's character (a death ends it). */
 export const realmDie = (/** @type {any} */ io, /** @type {string} */ id, /** @type {string} */ lease, /** @type {'fell'|'retired'} */ why = 'fell') =>
   realmAsk(io, '/v1/realm/die', { method: 'POST', json: why === 'retired' ? { id, lease, why } : { id, lease } });
 /** LEGACY7 part three: MY HALF OF ONE WEDDING - my character under its lease, the handshake `sid`, the other's account
- *  as the relay stamped it: `{ ok, data: { wed: false } }` (mine waits for theirs), `{ ok, data: { wed: true, union } }`,
- *  or a refusal (server-account/src/legacy.js realmWed). */
-export const realmWedHalf = (/** @type {any} */ io, /** @type {string} */ id, /** @type {string} */ lease, /** @type {string} */ sid, /** @type {string} */ partner) =>
-  realmAsk(io, '/v1/realm/wed', { method: 'POST', json: { id, lease, sid, partner } });
+ *  and realm character as the relay stamped them (AUDIT LEGACY III O1): `{ ok, data: { wed: false } }` (mine waits for
+ *  theirs), `{ ok, data: { wed: true, union } }`, or a refusal (server-account/src/legacy.js realmWed). AUDIT LEGACY III
+ *  O3: `withdraw` takes it back - answered `wed: true` with the union when it stood first. */
+export const realmWedHalf = (/** @type {any} */ io, /** @type {string} */ id, /** @type {string} */ lease, /** @type {string} */ sid, /** @type {string} */ partner,
+  /** @type {string} */ partnerChar, { withdraw = false } = {}) =>
+  realmAsk(io, '/v1/realm/wed', { method: 'POST', json: { id, lease, sid, partner, partnerChar, ...(withdraw ? { withdraw: true } : {}) } });
 /** LEGACY7 part three: every union of the account's characters - `{ ok, unions: [{ sid, mine, partner, at, endedAt, endedWhy }] }`. */
 export const realmUnions = async (/** @type {any} */ io) => {
   const r = await realmAsk(io, '/v1/realm/unions', { method: 'POST', json: {} });
@@ -589,10 +593,10 @@ export function createRealmSession({
       return true;
     },
     /** LEGACY7 part three: THIS CHARACTER'S HALF OF ONE WEDDING (realmWedHalf), under this session's lease - `{ ok, wed,
-     *  union }` or `{ ok: false, error }`. A session that ended weds nobody. */
-    async wed(/** @type {string} */ sid, /** @type {string} */ partner) {
+     *  union }` or `{ ok: false, error }`. A session that ended weds nobody (and its halves end with its lease's life). */
+    async wed(/** @type {string} */ sid, /** @type {string} */ partner, /** @type {string} */ partnerChar, /** @type {{ withdraw?: boolean }} */ opts = {}) {
       if (lost) return { ok: false, error: lost };
-      const r = await realmWedHalf(io, id, lease, sid, partner);
+      const r = await realmWedHalf(io, id, lease, sid, partner, partnerChar, opts);
       return r.ok ? { ok: true, wed: r.data?.wed === true, union: r.data?.union ?? null } : { ok: false, error: r.error };
     },
     /** The session's end: what is waiting is sent first (unless the page is going - `keepalive` sends the leave alone,

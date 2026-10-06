@@ -17,13 +17,13 @@ import { SKILL_COUNT } from '../skills.js';
 import { firstName, surname as bankSurname, getNameBank, GENDERS } from '../../characters/nameHelper.js';
 import { getSeed, setSeed } from '../../formats/dfRandom.js';
 import { startAgeOf } from './age.js';
-import { readStanding, readNews } from './influence.js';   // LEGACY6
+import { readStanding, readNews, readHeard } from './influence.js';   // LEGACY6; AUDIT LEGACY III A8: a reader's heard news
 import { readHouse } from '../../net/houseLaw.js';   // LEGACY7 part three: a player spouse's house
 import { validLook } from '../../net/wire.js';   // LEGACY7 part four: a member's look, the hello's own recipe
 
 /** The save-data vendor - `modData.ProjectLegacy` (systems/modSaveData.js), the mod's IHasModSaveData. */
 export const LEGACY_VENDOR = 'ProjectLegacy';
-/** The Mods pane's vendor key (systems/modSettings.js) and the Features row's. */
+/** Project Legacy's settings' vendor key (systems/modSettings.js - its Features tile's dials) and the Features row's. */
 export const LEGACY_MOD = 'project-legacy';
 export const FAMILY_VERSION = 1;
 
@@ -31,7 +31,7 @@ export const FAMILY_VERSION = 1;
 export const MODELS = Object.freeze({ bloodline: 'bloodline', enduring: 'enduring' });
 export const isModel = (m) => m === MODELS.bloodline || m === MODELS.enduring;
 
-/** The Mods pane's Descendants choice, the mod's own two (modsettings.json "Family"/"Descendants"). */
+/** Its Features tile's Descendants choice, the mod's own two (modsettings.json "Family"/"Descendants"). */
 export const DESCENDANTS = Object.freeze({ random: 0, always: 1 });
 /** B14: the mod shipped Max Siblings 0 and Siblings Probability 0, so a fresh install never saw a sibling. */
 export const SIBLINGS_MAX_DEFAULT = 2;
@@ -175,7 +175,10 @@ function careerFields(entity) {
   return {
     careerIndex: idx,
     className: String(career?.name || CLASS_CAREERS[idx]),
-    career: career ? JSON.parse(JSON.stringify(career)) : null,
+    // AUDIT LEGACY III O10/P1: a stock career is its index's (its CLASS*.CFG is read fresh at a birth - bornResult); only
+    // a custom one is kept whole, as isCustomCareer and inheritCareer read it. Every played member carried six hundred
+    // bytes of a career the game ships
+    career: career && String(career.name ?? '') !== CLASS_CAREERS[idx] ? JSON.parse(JSON.stringify(career)) : null,
     groups: groupsOf(career),
   };
 }
@@ -254,15 +257,36 @@ export const isAlive = (p) => !!p && !p.died;
 export const parentsOf = (family, p) => (p?.parents ?? []).map((id) => personOf(family, id)).filter(Boolean);
 export const childrenOf = (family, p) => (p?.children ?? []).map((id) => personOf(family, id)).filter(Boolean);
 /** `GetSiblings`: anyone else sharing a parent - and for the founder's generation (no parents), the other parentless
- *  members of the founder's generation, as `GetLivingSiblings`' root arm reads them. */
+ *  members of the founder's generation, as `GetLivingSiblings`' root arm reads them. AUDIT LEGACY III U5: a member's
+ *  alone - a spouse wed in is parentless in the record too, and was handed the founder's brothers and sisters. */
 export function siblingsOf(family, p) {
   if (!p) return [];
-  if (!p.parents.length) return family.people.filter((o) => o.id !== p.id && !o.parents.length && o.kind === 'member' && o.gen === p.gen && o.spouse !== p.id);
+  if (!p.parents.length) {
+    if ((p.kind ?? 'member') !== 'member') return [];
+    return family.people.filter((o) => o.id !== p.id && !o.parents.length && o.kind === 'member' && o.gen === p.gen && o.spouse !== p.id);
+  }
   return family.people.filter((o) => o.id !== p.id && o.parents.some((id) => p.parents.includes(id)));
 }
 
 /** Bump the record's revision - the newer copy wins wherever two meet (the store and a save, the arc's section 3). */
 export function touch(family) { family.rev = (family.rev | 0) + 1; return family; }
+
+/**
+ * AUDIT LEGACY III O10/P1: THE RECORD KEPT LEAN - a dead member's standing (LEGACY6: what a child's first day inherits,
+ * the legacyHost.js onBorn share) once no child of theirs can take it any more: every child of theirs played or dead,
+ * and no Succession of theirs waiting (its newborn takes it). The dead kept theirs for good, a kilobyte and a half each.
+ * In place; answers whether anything went.
+ */
+export function leanRecord(family) {
+  let n = 0;
+  for (const p of family?.people ?? []) {
+    if (!p.died || !p.standing || family.pending?.fallenId === p.id) continue;
+    if (childrenOf(family, p).some((c) => !c.died && c.characterId == null)) continue;
+    p.standing = null;
+    n++;
+  }
+  return n > 0;
+}
 
 // ---- inheritance (the arc's section 5) --------------------------------------------------------------------------
 
@@ -310,22 +334,28 @@ export function hearthOf(parent) {
 /** THE ESTATE: a quarter of the gold the dead carried, at most ESTATE_MAX. */
 export const estateOf = (gold) => Math.min(ESTATE_MAX, Math.max(0, Math.floor((Number(gold) || 0) * ESTATE_SHARE)));
 
+/** The surname a child of `parent` is born to: the parent's own - a cadet branch's, after a lore change - else the
+ *  house's; '' for a house not named yet. */
+export const lineSurnameOf = (family, parent) => String(((parent?.kind ?? 'member') === 'member' ? parent?.surname : '') || family?.surname || '').trim();
+
 /**
- * The name of a child of `parent`: a first name from the child's race's bank, and the family's surname - or, one
- * time in ten, "a lore surname change" (`RandomizeCharacterData`'s HUD line, kept as `changed`).
+ * The name of a child of `parent`: a first name from the child's race's bank, and the line's surname - or, one time in
+ * ten, "a lore surname change" (`RandomizeCharacterData`'s HUD line, kept as `changed`). AUDIT LEGACY III A5/F1: THE
+ * LINE IS THE PARENT'S (the mod's `GetSurname(parent.Name)`, IL_355c-3563): a member who took a lore surname founds a
+ * cadet branch, and their children carry it on - the house's name came back on every one of them. A7: a child of a
+ * house not named yet carries none, and takes the house's name with it (nameAtSeat) - a bank surname each, never the
+ * house's when it came.
  */
-export function nameChild(family, raceKey, gender, rng = Math.random) {
+export function nameChild(family, raceKey, gender, rng = Math.random, parent = null) {
   const bank = getNameBank(raceKey);
   const g = gender === 'female' ? GENDERS.Female : GENDERS.Male;
+  const line = lineSurnameOf(family, parent);
   return withBankSeed(rng, () => {
     const given = firstName(bank, g) || 'Nameless';
     const keep = rng() < SURNAME_KEEP_CHANCE;
-    if (keep || !family.surname) {
-      const sur = family.surname || bankSurname(bank) || '';
-      return { given, surname: sur, changed: false };
-    }
+    if (keep || !line) return { given, surname: line, changed: false };
     const fresh = bankSurname(bank);
-    return fresh && fresh !== family.surname ? { given, surname: fresh, changed: true } : { given, surname: family.surname, changed: false };
+    return fresh && fresh !== line ? { given, surname: fresh, changed: true } : { given, surname: line, changed: false };
   });
 }
 
@@ -333,7 +363,7 @@ export function nameChild(family, raceKey, gender, rng = Math.random) {
  * A NEW MEMBER, born to `parentId` (and their spouse, when they have one): the mod's `CreateCharacter`, with B3-B8
  * removed. The person is a RECORD - their values are rolled at their birth through the construction seam
  * (`bornValues`, with the career's own CLASS*.CFG in hand). Appends to the record and links parent and child.
- * @returns {{ person: Person, changed: boolean }}
+ * @returns {{ person: Person, changed: boolean, from: string }} - `from` the line's surname a lore change left
  */
 export function addChild(family, parentId, { rng = Math.random, at = 0, settings = {} } = {}) {
   const parent = personOf(family, parentId);
@@ -346,7 +376,7 @@ export function addChild(family, parentId, { rng = Math.random, at = 0, settings
   p.startAge = startAgeOf(p.race);
   p.face = Math.floor(rng() * FACES_PER_RACE);   // B6: every person is born with a face
   Object.assign(p, inheritCareer(parent, rng));
-  const { given, surname, changed } = nameChild(family, p.race, p.gender, rng);
+  const { given, surname, changed } = nameChild(family, p.race, p.gender, rng, parent);
   p.given = given;
   p.surname = surname;
   p.blood = bloodOf(parent, other);
@@ -358,7 +388,7 @@ export function addChild(family, parentId, { rng = Math.random, at = 0, settings
   family.people.push(p);
   for (const par of [parent, other]) if (par && !par.children.includes(p.id)) par.children.push(p.id);
   touch(family);
-  return { person: p, changed };
+  return { person: p, changed, from: lineSurnameOf(family, parent) };
 }
 
 /** `CreateRandomSiblings`: with the setting's probability, one to the setting's maximum children of the same parent
@@ -427,6 +457,7 @@ export function recordDeath(family, id, { at = 0, cause = 'unknown', place = nul
   if (!p || p.died) return p;
   p.died = { at, cause: String(cause), place: place ?? null, by: by ?? null };
   delete p.look;   // LEGACY7 part four: the dead stand nowhere - what they wore is no one's to draw, and the record stays lean
+  delete p.heard;   // AUDIT LEGACY III A8: nor hear the towns
   touch(family);
   return p;
 }
@@ -488,16 +519,27 @@ export function readFamily(rec) {
     // LEGACY5: courtships, a wedding, children's clock, a minor, a spouse's own face - held to their shape
     p.courting = raw.courting && typeof raw.courting === 'object' && !Array.isArray(raw.courting)
       ? Object.fromEntries(Object.entries(raw.courting).filter(([k, c]) => typeof k === 'string' && c && typeof c === 'object')
-        .map(([k, c]) => [k, { name: String(c.name ?? ''), mapId: c.mapId | 0, town: String(c.town ?? ''), affection: Math.max(0, Math.min(100, c.affection | 0)), day: Number.isInteger(c.day) ? c.day : -1, betrothed: !!c.betrothed }]))
+        .map(([k, c]) => [k, {
+          name: String(c.name ?? ''), mapId: c.mapId | 0, town: String(c.town ?? ''), affection: Math.max(0, Math.min(100, c.affection | 0)), day: Number.isInteger(c.day) ? c.day : -1, betrothed: !!c.betrothed,
+          // AUDIT LEGACY III A4/P2: who the courtship is with, for the wedding that needs no town loaded (marriage.js
+          // court) - dropped here, every wedding after a load was a male Breton with no face
+          sex: c.sex === 'female' ? 'female' : 'male', race: RACE_KEYS.includes(c.race) ? c.race : '', face: Number.isInteger(c.face) && c.face >= 0 ? c.face : 0,
+        }]))
       : {};
     p.wedAt = Number.isFinite(raw.wedAt) ? raw.wedAt : null;
     p.childDay = Number.isInteger(raw.childDay) ? raw.childDay : null;
     p.minor = !!raw.minor;
     p.residentFace = Number.isInteger(raw.residentFace) ? raw.residentFace : null;
+    // AUDIT LEGACY III P5: when the member's own save last wrote them (the wall clock - store.js mergeFacts keeps the
+    // newer save's word on them), or 0 for never
+    p.savedAt = Number.isSafeInteger(raw.savedAt) && raw.savedAt > 0 ? raw.savedAt : 0;
     if (p.kind === 'resident') p.mapId = Number.isInteger(raw.mapId) ? raw.mapId : 0;   // LEGACY5: the town a spouse lives in
     // LEGACY-HOME: the house the member's newest save was made in (household.js homeOf), or none
     p.parked = raw.parked && Number.isInteger(raw.parked.mapId) && (raw.parked.buildingKey | 0) > 0 ? { mapId: raw.parked.mapId, buildingKey: raw.parked.buildingKey | 0 } : null;
     p.standing = readStanding(raw.standing);   // LEGACY6: what the world thought of them, as last saved (influence.js)
+    // AUDIT LEGACY III A8: when they first heard each piece of the house's news, on their own clock (influence.js hearNews)
+    const heard = readHeard(raw.heard);
+    if (heard) p.heard = heard; else delete p.heard;
     // LEGACY7 part three: another player's character wed in - the union they were wed by, held to its shape
     if (p.kind === 'player') p.realm = readUnion(raw.realm);
     else delete p.realm;

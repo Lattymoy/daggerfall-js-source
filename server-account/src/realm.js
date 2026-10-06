@@ -202,7 +202,7 @@ export async function createRealm({ db, rand, nowS }, playerId, { name, summary 
       + ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, NULL, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?',
     ).bind(id, playerId, n, realmSummaryOf(summary), lease, nowS, nowS, nowS, born ? lineage : null, born ? person : null, playerId, REALM_CHARACTERS_MAX).run();
   } catch (e) {
-    // LEGACY7: two tabs born as one person race to the unique index (migration 0083) - one wins
+    // LEGACY7: two tabs born as one person race to the unique index (migration 0084) - one wins
     if (born && /UNIQUE/i.test(String(/** @type {any} */ (e)?.message ?? e))) return { error: 'lineage-played' };
     throw e;
   }
@@ -614,6 +614,9 @@ export async function leaveRealm({ db }, /** @type {string} */ playerId, /** @ty
  *  The delete let it go with gold inside: a guild nobody is in, holding what its records paid in, until the next founder
  *  of its name or tag cleared it away, gold and all.
  *  HOUSE-LOSS: a customs character whose first save never landed is not deleted but UNDONE (undoCustoms, below).
+ *  AUDIT LEGACY III O7: A TOMBSTONE IS NEVER DELETED ('dead') - it is the realm's only word on a Bloodline's death, and
+ *  its row the person's claim (realm_characters_person): deleted, the death was gone and the person could be born again
+ *  once the line's record forgot it. It holds no roster slot and is never listed, so no door offers its delete.
  *  PROF-DELETE (2026-09-29, Mac's choice: "Goes with it; wait on trades"): AND ITS PROFESSIONS WITH IT - its Stores and
  *  its professions' tracks go in the same batch, as its Renown does; they stood under a dead id where nothing could
  *  reach them (MERGE 2's open question 3). What another player is part of waits: while the character has market
@@ -621,8 +624,9 @@ export async function leaveRealm({ db }, /** @type {string} */ playerId, /** @ty
  *  would be handed come to this character. The history (the ledger, the crafts, the sales) stays. */
 export async function deleteRealm({ db, bucket, nowS = Math.floor(Date.now() / 1000) }, /** @type {string} */ playerId, /** @type {unknown} */ id) {
   if (typeof id !== 'string' || !REALM_ID_RE.test(id)) return { error: 'body' };
-  const row = await db.prepare('SELECT obj, prev, bytes, origin_id FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  const row = await db.prepare('SELECT obj, prev, bytes, origin_id, dead_at FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
   if (!row) return { error: 'no-realm-character' };
+  if (row.dead_at != null) return { error: 'dead' };   // AUDIT LEGACY III O7
   if (row.origin_id && !(row.bytes > 0)) return undoCustoms({ db, bucket }, playerId, id, row.origin_id);
   const master = await db.prepare(`SELECT (SELECT COUNT(*) FROM guild_members o WHERE o.guild_id = m.guild_id) AS n,
     (SELECT treasury FROM guilds g WHERE g.id = m.guild_id) AS treasury,
@@ -754,8 +758,9 @@ async function undoCustoms({ db, bucket }, playerId, id, originId) {
  *  @param {any} ctx @param {string} playerId @param {unknown} id */
 export async function undoRealm({ db, bucket }, playerId, id) {
   if (typeof id !== 'string' || !REALM_ID_RE.test(id)) return { error: 'body' };
-  const row = await db.prepare('SELECT origin_id FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  const row = await db.prepare('SELECT origin_id, dead_at FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
   if (!row) return { error: 'no-realm-character' };
   if (!row.origin_id) return { error: 'body' };
+  if (row.dead_at != null) return { error: 'dead' };   // AUDIT LEGACY III O7: undone, a tombstone is deleted too
   return undoCustoms({ db, bucket }, playerId, id, row.origin_id);
 }

@@ -344,7 +344,7 @@ export const KIN_NEWS = Object.freeze({
   died: Object.freeze([
     Object.freeze(['Did you hear? {who} of House {house} is dead.', 'The house will feel that.']),
     Object.freeze(['They are burying {who} - or would be, if anyone could find the body.', 'House {house} has had a hard year.']),
-    Object.freeze(['{who}, gone. I saw them in the market not a week past.', 'Arkay keeps no calendar.']),   // LEGACY-NAME: {who} is the whole name - "{who} {house}" said the surname twice
+    Object.freeze(['{who}, gone. I saw them in the market not a week past.', 'Arkay keeps no calendar.']),   // LEGACY-NAME: "{who} {house}" read "Tlist Sentinel" for a seat's house ({who} the first name, meetups.js firstNameOf - AUDIT LEGACY III A16)
   ]),
   rested: Object.freeze([
     Object.freeze(['{who} was laid to rest at last. The family brought the bones home.', 'Good. A house should keep its dead.']),

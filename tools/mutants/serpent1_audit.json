@@ -1088,7 +1088,7 @@
   {
     "name": "AUDIT-SERPENT-D-books-new-track-unbounded",
     "file": "server-account/src/serpents.js",
-    "old": "         AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) < ?7\n         AND ${mine}`,",
+    "old": "         AND ${renownHeldSql('?1')} < ?7\n         AND ${mine}`,",
     "new": "         AND ${mine}`,",
     "tests": [
       "test/serpent1_law.test.js",

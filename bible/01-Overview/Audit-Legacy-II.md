@@ -13,7 +13,8 @@ store, save records and Living World town (scripts kept in each reviewer's scrat
 - **P - persistence, performance and the tests' truth** (measured; mutants written to find what no pin holds).
 
 Fifty-seven findings (A1-A10, B1-B6, H1-H5, U1-U14, P1-P8, F1-F14), several the same defect seen by two lenses. Every one was verified against the code before it was
-fixed, and is pinned by id in `test/auditlegacy2.test.js` (the host's own pins in `legacy1_family`, `legacy4_heirloom`,
+fixed, and every one but the record corrections the PR description and the docs carry (F6-F10, F13) is pinned by id in
+`test/auditlegacy2.test.js` (AUDIT LEGACY III F20 corrected this line: it said every one) (the host's own pins in `legacy1_family`, `legacy4_heirloom`,
 `legacyhome` and `auditlegacy` brought to the new laws, each with its PIN MOVED note). Mutation-proven:
 `tools/mutants/auditlegacy2.json` - 34 of 34 dead, after seven first-run survivors showed seven pins that held nothing
 and were strengthened; the eleven earlier records the fixes moved were re-aimed by content and all die (72 of 72).

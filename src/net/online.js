@@ -73,6 +73,7 @@ import { relaySupportsFoeInventory } from './wire.js';
 import { validStaffTeleportIn, validStaffTeleportOut, staffTeleportSupported } from './staffTeleport.js';
 import { layoutRoomKey } from '../world/interiorShared.js';   // WD3 (AUDIT WD3 B3): an interior's room is its layout's
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
+import { REALM_CHARACTER_RE } from './identityToken.js';   // AUDIT LEGACY III O1: a wed frame's stamped realm character, by the token's own shape
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
 import { isGateRoom } from './gateLaw.js';   // WB3: a gate's arena is one room of its own
@@ -251,6 +252,9 @@ export function lerpPose(from, to, t) {
 
 /** The distance between two poses on the ground. */
 const groundDist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+/** AUDIT LEGACY III O1: a wed frame's `sc` - the sender's realm character as the relay stamped it off their token (`ci`) -
+ *  or null (an older relay stamps none, and a wedding then waits on one that does). */
+const scOf = (m) => (typeof m?.sc === 'string' && REALM_CHARACTER_RE.test(m.sc) ? m.sc : null);
 
 // ═══ NET-SMOOTH (2026-10-04, Mac: "Sometimes other players rubberband, I want to continue to improve performance and
 // future proof for larger amounts of players") ════════════════════════════════════════════════════════════════════
@@ -528,7 +532,7 @@ export class OnlineSession {
     this._duelBucket = null;      // DUEL1: my own duel frames out - duelGate's law
     this._inDuelBuckets = new Map();   // DUEL1: the gate on duel frames coming in, per sender - the directed frames' shape (`_directedIn`)
     this.wedOk = false;           // LEGACY7 part three: the relay that welcomed this socket routes wed frames (relaySupportsWed) - an older one CLOSES the socket on one, so no proposal is sent through it
-    this.onWed = null;            // LEGACY7 part three: (id, data, sub) => void - a wed frame at ME, projected by the wire's validWedData; `sub` the sender's account as the RELAY verified it
+    this.onWed = null;            // LEGACY7 part three: (id, data, sub, sc) => void - a wed frame at ME, projected by the wire's validWedData; `sub` the sender's account as the RELAY verified it; AUDIT LEGACY III O1: `sc` their realm character, the token's `ci` (scOf)
     this._wedBucket = null;       // LEGACY7 part three: my own wed frames out - wedGate's law
     this._inWedBuckets = new Map();   // LEGACY7 part three: the gate on wed frames coming in, per sender (`_directedIn`)
     this.ownOk = false;           // OWN1: the relay that welcomed this socket carries a world room's own lane and routes an `own` hit to its owner (relaySupportsOwn) - an older one strikes the frame out, so nothing is sent down it
@@ -2365,7 +2369,7 @@ export class OnlineSession {
       // LEGACY7 part three: a wed frame the relay routed to me - the duel's law: on any socket I hold, never my own back,
       // gated coming in per sender, projected by the wire, addressed to ME, with the sender's account as the relay
       // verified it (the account service pairs the two halves of a wedding by it). The wedding's law decides the rest.
-      this._directedIn(m, now, 'wed', this._inWedBuckets, wedInGate, WED_IN_HZ_MAX, validWedData, (id, d) => this.onWed?.(id, d, subOf(m)));
+      this._directedIn(m, now, 'wed', this._inWedBuckets, wedInGate, WED_IN_HZ_MAX, validWedData, (id, d) => this.onWed?.(id, d, subOf(m), scOf(m)));
     } else if (m.t === 'arena') {
       // ARENA4: the arena's hall or a bout's room - on my own room's socket (the hall link is a socket of its own),
       // projected by the wire's own law; what it means is the arena's to decide (scenes/arenaOnline.js)

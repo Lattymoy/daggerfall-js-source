@@ -575,7 +575,8 @@ export const REFUSALS = Object.freeze({
   'lineage-stale': 'Your family was changed on another device. This one takes those changes in and saves again.',
   'wed-no-line': 'Only a character of a house (Project Legacy) can be wed in the realm.',
   'wed-already': 'You are wed already.',
-  'wed-partner': 'They cannot be wed now - they are wed already, or of no house.',
+  'wed-partner': 'They cannot be wed now - they are wed already, of no house, or no longer the one who stood with you.',   // AUDIT LEGACY III O1
+  'lineage-too-large': 'Your family\'s record has grown past what the realm keeps for one family.',   // AUDIT LEGACY III O2/P1
   'wed-spent': 'That wedding was not yours to answer.',
   // AUDIT REALM2 S2: the online acts that cost gold are a realm character's
   'realm-only': 'Only an online character of the realm can do that.',

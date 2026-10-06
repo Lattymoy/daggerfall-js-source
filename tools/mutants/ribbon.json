@@ -248,7 +248,7 @@
   {
     "name": "RIBBON-wi-token-bound",
     "file": "src/net/wire.js",
-    "old": "[A-Za-z0-9_-]{1,640}\\.",
+    "old": "[A-Za-z0-9_-]{1,800}\\.",
     "new": "[A-Za-z0-9_-]{1,512}\\.",
     "tests": [
       "test/shadowfang.test.js",
@@ -258,8 +258,8 @@
   {
     "name": "RIBBON-wi-token-bound-wide",
     "file": "src/net/wire.js",
-    "old": "[A-Za-z0-9_-]{1,640}\\.",
-    "new": "[A-Za-z0-9_-]{1,700}\\.",
+    "old": "[A-Za-z0-9_-]{1,800}\\.",
+    "new": "[A-Za-z0-9_-]{1,900}\\.",
     "tests": [
       "test/shadowfang.test.js",
       "test/acc1dclient.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "LEGACY7-stale-overwrites",
     "file": "server-account/src/legacy.js",
-    "old": "WHERE player = ? AND id = ? AND rev < ?')",
-    "new": "WHERE player = ? AND id = ? AND rev <= ? + 1000000')",
+    "old": "WHERE player = ? AND id = ? AND rev = ? AND rev < ?')",
+    "new": "WHERE player = ? AND id = ? AND (rev = ? OR 1) AND (rev < ? OR 1)')",
     "tests": [
       "test/legacy7_service.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LEGACY7-tomb-any-lease",
     "file": "server-account/src/legacy.js",
-    "old": "WHERE id = ? AND player = ? AND lease = ? AND dead_at IS NULL')\n    .bind(nowS, nowS, id, playerId, lease).run();",
-    "new": "WHERE id = ? AND player = ? AND (lease = ? OR 1) AND dead_at IS NULL')\n    .bind(nowS, nowS, id, playerId, lease).run();",
+    "old": "${lease == null ? '' : ' AND lease = ?'}",
+    "new": "${lease == null ? '' : ' AND (lease = ? OR 1)'}",
     "tests": [
       "test/legacy7_service.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LEGACY7-dead-checkpointed",
     "file": "server-account/src/realm.js",
-    "old": "  if (row.dead_at != null) return { error: 'dead' };",
-    "new": "",
+    "old": "if (row.dead_at != null) return { error: 'dead' };   // LEGACY7: the tombstone - nothing of the dead is written again",
+    "new": "// LEGACY7: the tombstone - nothing of the dead is written again",
     "tests": [
       "test/legacy7_service.test.js"
     ]
@@ -156,7 +156,7 @@
   {
     "name": "LEGACY7-birth-past-the-tomb",
     "file": "src/scenes/legacyHost.js",
-    "old": "    if (tomb) { const t = tomb; tomb = null; t.then((ok) => { if (ok) play(heir); }); return true; }\n",
+    "old": "    if (tomb) { const t = tomb; tomb = null; t.then((ok) => { if (ok) play(heir, null, { newborn }); }); return true; }\n",
     "new": "",
     "tests": [
       "test/legacy7_online.test.js"

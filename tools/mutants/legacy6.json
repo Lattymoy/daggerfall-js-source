@@ -65,8 +65,8 @@
   {
     "name": "LEGACY6-news-forever",
     "file": "src/systems/legacy/influence.js",
-    "old": "n.t <= t && t - n.t < HOUSE_NEWS_DAYS * DAY_MIN && ",
-    "new": "n.t <= t && ",
+    "old": "at(n) <= t && t - at(n) < HOUSE_NEWS_DAYS * DAY_MIN && ",
+    "new": "at(n) <= t && ",
     "tests": ["test/legacy6_influence.test.js"]
   },
   {

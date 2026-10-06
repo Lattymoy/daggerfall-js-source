@@ -19,6 +19,7 @@ import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { frameCss } from './enhancedFrame.js';
 import { isEnhancedPlus } from '../systems/uiSkin.js';
 import { scopeRules } from './brokerWindow.js';
+import { facePose } from '../systems/legacy/facePose.js';   // AUDIT LEGACY III P17: a person's portrait, asked one way
 
 export const SUCCESSION_STYLE_ID = 'legacy-succession-css';
 export const SUCCESSION_CSS = `
@@ -69,7 +70,7 @@ function face(faces, who) {
   const glyph = el('span', null, who?.gender === 'female' ? '♀' : '♂');
   box.append(glyph);
   if (faces && who) {
-    faces({ race: who.race, gender: who.gender, face: who.face }).then((img) => {
+    faces(facePose(who)).then((img) => {   // AUDIT LEGACY III P17: a spouse met wears the face the tree shows them with
       if (!img?.width || img.colors?.byteLength !== img.width * img.height * 4) return;
       const cv = /** @type {HTMLCanvasElement} */ (el('canvas'));
       const ctx = cv.getContext?.('2d');

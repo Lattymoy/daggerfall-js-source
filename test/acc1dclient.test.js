@@ -31,6 +31,7 @@ import { fileURLToPath } from 'node:url';
 
 import { OnlineSession, TOKEN_WAIT_MS } from '../src/net/online.js';
 import { parseClient, rosterFor, HELLO_WAIT_MS } from '../src/net/wire.js';
+import { TOKEN_BODY_MAX } from '../src/net/identityToken.js';   // AUDIT LEGACY III O11: the hello's body bound, named
 import { ChatLog } from '../src/net/chat.js';
 import { RELAY_GRAPH } from './relayversion.test.js';
 import { accountTokenMinter, mintIdentity, SESSION_KEY, DEFAULT_ACCOUNT_SERVICE } from '../src/net/accountClient.js';
@@ -267,9 +268,10 @@ test('ACC1d: the wire checks the token\'s SHAPE and nothing else - kept, absent,
   assert.equal('tok' in none, false, 'no token: the key is not invented');
   assert.equal(none.error, undefined);
   // SEASON1 part two (world149, PIN MOVED): the body's bound is 640 - a body one past it is the malformed one, and the
-  // old bound's 513 now rides through
-  assert.equal(hello({ tok: `v1.${'a'.repeat(640)}.bbb` }).tok, `v1.${'a'.repeat(640)}.bbb`);
-  for (const bad of ['', 'v1', 'v1.aaa', 'v1.aaa.bbb.ccc', 'v1.aa a.bbb', 'v1.aaa+bbb.ccc', `v1.${'a'.repeat(641)}.bbb`, `v1.aaa.${'b'.repeat(129)}`, `${'v'.repeat(9)}.aaa.bbb`]) {
+  // old bound's 513 now rides through. PIN MOVED again (AUDIT LEGACY III O11, world172): TOKEN_BODY_MAX, 800 - every
+  // claim and a house were 739, minted and then refused here
+  assert.equal(hello({ tok: `v1.${'a'.repeat(TOKEN_BODY_MAX)}.bbb` }).tok, `v1.${'a'.repeat(TOKEN_BODY_MAX)}.bbb`);
+  for (const bad of ['', 'v1', 'v1.aaa', 'v1.aaa.bbb.ccc', 'v1.aa a.bbb', 'v1.aaa+bbb.ccc', `v1.${'a'.repeat(TOKEN_BODY_MAX + 1)}.bbb`, `v1.aaa.${'b'.repeat(129)}`, `${'v'.repeat(9)}.aaa.bbb`]) {
     assert.equal(hello({ tok: bad }).error, 'bad token', `a malformed token is an error: ${JSON.stringify(bad.slice(0, 20))}`);
   }
   for (const bad of [null, 0, 1, true, {}, [], ['v1.a.b']]) {

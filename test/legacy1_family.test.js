@@ -314,7 +314,10 @@ test('LEGACY2: the model question offers Enduring first - Enter without reading 
   const on = legacyModelOptions({ online: true, tollShare: 0.06 });
   // PIN MOVED (LEGACY7): AUDIT LEGACY B4 shut Bloodline online until the realm kept lineages - it does now (the tombstone)
   assert.deepEqual(on.map((x) => [x.id, x.locked]), [[MODELS.enduring, false], [MODELS.bloodline, false]], 'LEGACY7: online Bloodline is open - the realm holds the line');
-  assert.match(on[1].lines[3], /the realm holds the line/);
+  // PIN MOVED (AUDIT LEGACY III U8): beside the line's end, never instead of it - the end holds online as off
+  assert.deepEqual([on[1].lines[3], o[1].lines[3]], ['With no one left, the line ends.', 'With no one left, the line ends.']);
+  assert.match(on[1].lines[4], /the realm holds the line/);
+  assert.equal(o[1].lines.length, 4, 'offline, the four lines as before');
 });
 
 test('LEGACY-KEY: the family tree is its own action with a free default, and the mod\'s keys are the registry\'s', () => {

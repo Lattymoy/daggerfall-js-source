@@ -118,6 +118,9 @@ export function bestSkillOf(person) {
 }
 /** The blessing a laying to rest gives: `{ of, name, skill, value }`. */
 export const blessingOf = (person, name) => ({ of: person.id | 0, name: String(name), skill: bestSkillOf(person) ?? 0, value: BLESSING_POINTS });
+/** AUDIT LEGACY III F11a: what the house's blessings give `skill` on `entity` now - the fold's own sum, to its cap. */
+export const blessedIn = (entity, skill) => Math.min(BLESSING_SKILL_MAX, (Array.isArray(entity?.legacyBlessings) ? entity.legacyBlessings : [])
+  .filter((b) => (b?.skill | 0) === (skill | 0)).reduce((n, b) => n + Math.max(0, Math.min(BLESSING_POINTS, b.value | 0)), 0));
 
 // ---- the folds -------------------------------------------------------------------------------------------------
 

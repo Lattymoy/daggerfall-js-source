@@ -40,16 +40,23 @@ const settle = async (n = 30) => { for (let i = 0; i < n; i++) await new Promise
 
 // ─── THE ACCOUNT SERVICE ────────────────────────────────────────────────────────────────────────────────────────
 
-/** A player of a house: an account, its line (one member - `given` of `surname`), and a realm character born as them. */
+/** Each account's realm character, as the relay's `sc` stamp names it to the other side (AUDIT LEGACY III O1). */
+const CHAR_OF = new Map();
+/** A player of a house: an account, its line (one member - `given` of `surname`), and a realm character born as them.
+ *  A half names the other's account and its character (the one this harness made for it - the relay's stamp). */
 async function houseOf(S, fam, surname, given, { gender = 'female', race = 'DarkElf', face = 3, model = 'bloodline', line = true } = {}) {
   const g = await S.guest();
   const call = (p, b) => S.call(p, b, g.secret);
   if (line) await call('/v1/realm/lineage', { id: fam, record: { v: 1, id: fam, surname, model, rev: 1, people: [{ id: 1, given, surname, gender, race, face }] } });
   const c = (await call('/v1/realm/create', line ? { name: `${given} ${surname}`, lineage: fam, person: 1 } : { name: `${given} ${surname}` })).body;
+  CHAR_OF.set(g.id, c.id);
   const who = { g, call, id: c.id, lease: c.lease };
-  who.half = (sid, partner, over = {}) => call('/v1/realm/wed', { id: who.id, lease: who.lease, sid, partner, ...over });
+  who.half = (sid, partner, over = {}) => call('/v1/realm/wed', { id: who.id, lease: who.lease, sid, partner, partnerChar: CHAR_OF.get(partner), ...over });
   /** The wedding manager's `half`, through the real route. */
-  who.halfFn = async (sid, partner) => { const r = await who.half(sid, partner); return r.status === 200 ? { ok: true, wed: r.body.wed === true, union: r.body.union ?? null } : { ok: false, error: r.body?.error }; };
+  who.halfFn = async (sid, partner, partnerChar, { withdraw = false } = {}) => {
+    const r = await who.half(sid, partner, { partnerChar, ...(withdraw ? { withdraw: true } : {}) });
+    return r.status === 200 ? { ok: true, wed: r.body.wed === true, union: r.body.union ?? null } : { ok: false, error: r.body?.error };
+  };
   return who;
 }
 const unionsOf = async (who) => (await who.call('/v1/realm/unions', {})).body.unions;
@@ -117,7 +124,9 @@ test('LEGACY7 part three the service\'s refusals: a character of no line weds no
   const g = await houseOf(S, 'fam-k8-hhhhhh', 'Indoril', 'Gilvas');
   assert.equal((await f.half('wedFell01', g.g.id)).body.wed, false);
   await f.call('/v1/realm/die', { id: f.id, lease: f.lease });
-  assert.deepEqual([(await g.half('wedFell01', f.g.id)).body.error, (await unionsOf(g)).length], ['wed-partner', 0], 'her half is a dead woman\'s word');
+  // PIN MOVED (AUDIT LEGACY III O5): her half went with her tombstone (legacy.js afterTomb) - his waits on nobody
+  assert.equal(S.env.DB._raw.prepare('SELECT COUNT(*) AS n FROM realm_wed_halves WHERE player = ?').get(f.g.id).n, 0, 'a dead woman\'s word is nobody\'s');
+  assert.deepEqual([(await g.half('wedFell01', f.g.id)).body, (await unionsOf(g)).length], [{ ok: true, wed: false }, 0]);
   // the shape
   for (const [sid, partner, over] of [['short', a.g.id, {}], ['wed-bad!x', a.g.id, {}], ['wedShape1', b.g.id, {}], ['wedShape1', 'x', {}], ['wedShape1', a.g.id, { id: 'nope' }], ['wedShape1', a.g.id, { lease: 'f' }]]) {
     assert.equal((await b.half(sid, partner, over)).status, 400, JSON.stringify([sid, partner === b.g.id ? 'self' : partner, over]));
@@ -144,7 +153,7 @@ test('LEGACY7 part three the service\'s refusals: a character of no line weds no
 test('LEGACY7 part three the union\'s end: a death ends it (died, by whose); a retirement keeps it - the elder lives on, wed; a delete ends it (gone); either may wed again', async () => {
   const S = await standService();
   const a = await houseOf(S, 'fam-k1-aaaaaa', 'Hlaalu', 'Ysolde');
-  const b = await houseOf(S, 'fam-k2-bbbbbb', 'Dres', 'Iszara');
+  const b = await houseOf(S, 'fam-k2-bbbbbb', 'Dres', 'Iszara', { model: 'enduring' });   // PIN MOVED (AUDIT LEGACY III O6): a retirement is an Enduring line's
   await a.half('wedEnd001', b.g.id);
   await b.half('wedEnd001', a.g.id);
   // a retirement keeps it
@@ -275,7 +284,7 @@ function pairOver(a, b, o = {}) {
       send: (d) => { if (s.lose && d.k === 'done') return true; q.push({ to: d.to, from: id, d }); return true; },
       now: () => t, say: (l) => s.said.push(l), peerName: (p) => (p === otherId ? other.name : null), selfId: () => id,
       can: () => s.can, peerCan: () => s.peerCan,
-      half: async (sid, partner) => { inflight++; try { return await me.halfFn(sid, partner); } finally { inflight--; } },
+      half: async (sid, partner, partnerChar, opts) => { inflight++; try { return await me.halfFn(sid, partner, partnerChar, opts); } finally { inflight--; } },
       onPrompt: (p) => s.prompts.push(p), onUnprompt: (p) => s.unprompts.push(p), onWed: (u, p) => s.wed.push({ u, p }),
       refusalText: (e) => `refused:${e}`, rand: o.rand,
     });
@@ -284,11 +293,12 @@ function pairOver(a, b, o = {}) {
   const A = side(a, b, 'peer-000a', 'peer-000b');
   const B = side(b, a, 'peer-000b', 'peer-000a');
   const subs = { 'peer-000a': a.g.id, 'peer-000b': b.g.id };
+  const scs = { 'peer-000a': a.id, 'peer-000b': b.id };   // AUDIT LEGACY III O1: and each one's realm character, as the relay stamps it
   const mgrs = { 'peer-000a': A, 'peer-000b': B };
   const deliverable = () => q.length > 0 && !!mgrs[q[0].to];
   const pump = async () => {
     for (let i = 0; i < 100_000; i++) {
-      while (deliverable()) { const f = q.shift(); mgrs[f.to].mgr.onFrame(f.from, f.d, subs[f.from]); }
+      while (deliverable()) { const f = q.shift(); mgrs[f.to].mgr.onFrame(f.from, f.d, subs[f.from], scs[f.from]); }
       await settle(1);
       if (!inflight && !deliverable()) { await settle(2); if (!inflight && !deliverable()) return; }
     }
@@ -413,7 +423,7 @@ test('LEGACY7 part three the handshake\'s edges: crossed proposals make one wedd
   await z.pump();
   assert.equal(z.B.mgr.stateFor('peer-000a'), 'incoming');
   // he never says yes at the service - a crafted yes on the wire
-  z.A.mgr.onFrame('peer-000b', { k: 'yes', to: 'peer-000a', s: askSid }, f.g.id);
+  z.A.mgr.onFrame('peer-000b', { k: 'yes', to: 'peer-000a', s: askSid }, f.g.id, f.id);   // the relay's stamps ride a crafted frame too
   await z.pump();
   assert.equal(z.A.wed.length, 0, 'nothing made');
   assert.ok(z.A.said.some((l) => /The wedding did not happen/.test(l)));
@@ -569,15 +579,16 @@ test('LEGACY7 part three the inspect card: the Propose button beside the Challen
   assert.equal(profileView({ name: 'Iszara', peer: {} }).wed, null);
   assert.deepEqual(profileView({ name: 'I', peer: {}, wed: { label: 'Propose marriage', enabled: true, why: 'x' } }).wed, { label: 'Propose marriage', enabled: true, why: null });
   const w = rd('src/scenes/world.js');
-  assert.match(w, /online\.onWed = \(id, d, sub = null\) => \{ wedMgr\.onFrame\(id, d, sub\); \};/);
+  // PIN MOVED (AUDIT LEGACY III O1): the relay's character stamp (`sc`) rides the frame to the wedding's law, and a half names it
+  assert.match(w, /online\.onWed = \(id, d, sub = null, sc = null\) => \{ wedMgr\.onFrame\(id, d, sub, sc\); \};/);
   assert.match(w, /onWed: \(peerId\) => wedPropose\(peerId\),/);
   assert.match(w, /wed: wedButtonFor\(peerId\),/);
-  assert.match(w, /half: \(sid, partner\) => \(realmSession && !realmSession\.lost \? realmSession\.wed\(sid, partner\)/);
+  assert.match(w, /half: \(sid, partner, partnerChar, opts\) => \(realmSession && !realmSession\.lost \? realmSession\.wed\(sid, partner, partnerChar, opts\)/);
   assert.match(w, /onWed: \(union\) => \{ legacyHost\?\.wedPlayer\(union\); \},/);
   assert.match(w, /peerCan: \(id\) => !!online\?\.peers\.get\(id\)\?\.house,/);
   assert.match(w, /wedFrame\(\);/);
   assert.match(w, /tombstone: \(why\) => \(realmSession \? realmSession\.die\(why\) : false\),/);
   assert.match(w, /realmId: \(\) => realmSession\?\.id \?\? null,/);
   assert.match(w, /realmUnions\(realmIoNow\(\)\)\.then\(\(r\) => \{ if \(r\.ok\) legacyHost\?\.unionsHeard\(r\.unions\); \}\)/);
-  assert.match(rd('server/src/index.js'), /this\._send\(tws, JSON\.stringify\(\{ t: 'wed', id: a\.id, \.\.\.\(typeof a\.sub === 'string' && a\.sub \? \{ sub: a\.sub \} : \{\}\), data: m\.data \}\)\);/);
+  assert.match(rd('server/src/index.js'), /this\._send\(tws, JSON\.stringify\(\{ t: 'wed', id: a\.id, \.\.\.\(typeof a\.sub === 'string' && a\.sub \? \{ sub: a\.sub \} : \{\}\), \.\.\.\(typeof a\.ci === 'string' && a\.ci \? \{ sc: a\.ci \} : \{\}\), data: m\.data \}\)\);/);
 });

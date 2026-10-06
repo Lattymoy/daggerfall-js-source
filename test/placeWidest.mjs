@@ -24,7 +24,7 @@ export const WIDE_PAGE = Object.freeze({ head: 'H'.repeat(PAGE_HEAD_MAX), lines:
 export const PARTY_POSE = { px: 100, py: 200, loc: 'Daggerfall', in: 0, h: 50, hm: 60, f: 1000, fm: 2000, m: 10, mm: 20, race: 'Nord', gender: 'male', face: 2 };
 
 /** Everything a place socket's attachment carries - what a wake must recompute, and nothing else. */
-export const PLACE_ATTACH_FIELDS = Object.freeze(['key', 'id', 'name', 'title', 'glyphs', 'sub', 'mu', 'lv', 'gi', 'gt', 'gm', 'hn', 'hc', 'hb', 'hg', 'gio', 'pose', 'since', 'turn', 'kept', 'worldSeen', 'finalUsed']);   // AUDIT RENOWN1 WIRE-4: `lv`, the Renown the token signed; GUILD1c: the guild it signed (`gi`, `gt`, `gm`) and when it was said (`gio`); LEGACY7: the house it signed (`hn`, `hc`, `hb`, `hg`)
+export const PLACE_ATTACH_FIELDS = Object.freeze(['key', 'id', 'name', 'title', 'glyphs', 'sub', 'mu', 'lv', 'gi', 'gt', 'gm', 'hn', 'hc', 'hb', 'hg', 'ci', 'gio', 'pose', 'since', 'turn', 'kept', 'worldSeen', 'finalUsed']);   // AUDIT RENOWN1 WIRE-4: `lv`, the Renown the token signed; GUILD1c: the guild it signed (`gi`, `gt`, `gm`) and when it was said (`gio`); LEGACY7: the house it signed (`hn`, `hc`, `hb`, `hg`); AUDIT LEGACY III O1: its realm character (`ci`), which the wed arm stamps
 /** Every meter a place socket's arms spend - the instance's. */
 export const PLACE_METER_FIELDS = Object.freeze([
   'bucket', 'drops', 'wbucket', 'wdrops', 'sbucket', 'sdrops', 'pbucket', 'pdrops', 'tradeBucket', 'tdrops', 'tbytes', 'tinbucket',
@@ -56,7 +56,7 @@ export async function widestPlace(tick) {
   const r = fakeRoom('interior:m4294967295.16777216');   // a map id at ten digits, the building key's 1<<24 sentinel
   const title = TITLES.reduce((x, y) => (y.length > x.length ? y : x));
   const widest = async (ws, n) => {
-    const tok = await r.token(long(n), { s: long(n, 's'), n: 'N'.repeat(NAME_MAX), t: title, g: [...GLYPHS], mu: Math.floor(Date.now() / 1000) + 3600, lv: 50, gi: `g${'z'.repeat(10)}`, gt: 'WWWW', gm: `m${'9'.repeat(15)}`, hn: 'H'.repeat(HOUSE_NAME_MAX), hc: 'G'.repeat(HOUSE_GIVEN_MAX), hb: 1, hg: HOUSE_GEN_MAX });   // AUDIT RENOWN1 WIRE-4: every RENOWN1 client's token carries a level; GUILD1c: and a guild, each at its shape's bound
+    const tok = await r.token(long(n), { s: long(n, 's'), n: 'N'.repeat(NAME_MAX), t: title, g: [...GLYPHS], mu: Math.floor(Date.now() / 1000) + 3600, lv: 50, gi: `g${'z'.repeat(10)}`, gt: 'WWWW', gm: `m${'9'.repeat(15)}`, hn: 'H'.repeat(HOUSE_NAME_MAX), hc: 'G'.repeat(HOUSE_GIVEN_MAX), hb: 1, hg: HOUSE_GEN_MAX, rc: 1, ci: `r${'f'.repeat(20)}` });   // AUDIT RENOWN1 WIRE-4: every RENOWN1 client's token carries a level; GUILD1c: and a guild, each at its shape's bound; AUDIT LEGACY III O1: and its realm character
     return r.hello(ws, long(n), WIDE_POSE, { tok, name: 'N'.repeat(NAME_MAX) });
   };
   const me = r.connect(); await widest(me, 0);   // the first hello: this world room's host

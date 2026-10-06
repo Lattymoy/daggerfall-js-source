@@ -11,7 +11,7 @@
   {
     "name": "LEGACY5-court-twice-a-day",
     "file": "src/systems/legacy/marriage.js",
-    "old": "  if (c.day === o.day) return { gained: 0, affection: c.affection, again: true };\n",
+    "old": "  if (c.day >= o.day) return { gained: 0, affection: c.affection, again: true };\n",
     "new": "",
     "tests": [
       "test/legacy5_marriage.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "LEGACY5-other-courtships-kept",
     "file": "src/systems/legacy/marriage.js",
-    "old": "  member.courting = {};\n  s.mapId",
-    "new": "  s.mapId",
+    "old": "  member.courting = {};\n  for (const p of family.people) if (p.courting?.[s.residentId]) delete p.courting[s.residentId];   // A1",
+    "new": "  for (const p of family.people) if (p.courting?.[s.residentId]) delete p.courting[s.residentId];   // A1",
     "tests": [
       "test/legacy5_marriage.test.js"
     ]

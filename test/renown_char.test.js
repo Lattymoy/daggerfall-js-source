@@ -241,7 +241,10 @@ test('RENOWN-CHAR the migration (0035), over the real migrations: each track its
   ], 'the realm\'s names, and the report the account last took');
   assert.deepEqual(raw.prepare('SELECT * FROM renown_accounts ORDER BY player').all().map((x) => ({ ...x })), accountsBefore, 'renown_accounts stays as it stood - history');
   assert.equal(raw.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE name = 'renown_char_seed'").get().n, 0, 'its working table gone');
-  // THE REPORT IN FLIGHT across the deploy, sent again under the id the account last took: a repeat on any track
+  // THE REPORT IN FLIGHT across the deploy, sent again under the id the account last took: a repeat on any track.
+  // PIN MOVED (AUDIT LEGACY III O5): today's door asks the realm's tombstones (0084 - a fallen character's track holds no
+  // place), so the deploy it arrives with is every migration since, as a deploy applies them
+  migrate(raw, MIGRATIONS.slice(at + 1));
   for (const character of ['char-main', 'char-alt2', 'r0000000000000000000a']) {
     const again = await reportRenownXp({ db, nowS: T0 }, A, { character, xp: 50, rid: rid('d') });
     assert.deepEqual([again.credited, again.repeat], [0, true], `${character}: answered, never paid twice`);

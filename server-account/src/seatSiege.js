@@ -23,6 +23,7 @@
 // EVERY CLOCK IS AN ARGUMENT, as in accounts.js.
 // ═════════════════════════════════════════════════════════════════════
 import { accountKind, displayName, overRate } from './accounts.js';
+import { renownHeldSql } from './renownTracks.js';   // AUDIT LEGACY III O5: the bound counts the living's tracks
 import { CHAR_ID_RE } from './service.js';   // AUDIT SEATS-3 A3: an Honours character in the saves' shape
 import { seatsOpenFor, confirmedSeats } from './townSeats.js';
 import { fortifierAt, fortsCaptureWithSave, fortTierAt, siegewrightAt, fortsLapsedStatements, fortsDueStatements, fortsGuildFallStatements, fortsRestoredStatements } from './seatForts.js';   // SEAT2b: a capture's drop, a Fortifier's save; part two (b): the works a siege fights behind   // VOID: a capture's works given back   // AUDIT 529 V2: and its fallen projects
@@ -378,7 +379,7 @@ export async function claimSiege({ db, nowS, subtle }, player, env, { receipt, c
       db.prepare(`INSERT INTO renown_tracks (player, char_id, name, xp, last_rid, created_at, updated_at)
         SELECT ?3, ?8, ?9, MIN(?5, ?6), NULL, ?7, ?7 WHERE ${mine}
           AND NOT EXISTS (SELECT 1 FROM renown_tracks WHERE player = ?3 AND char_id = ?8)
-          AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?3) < ?10`)
+          AND ${renownHeldSql('?3')} < ?10`)
         .bind(c.sw, c.sk, player.id, rid, RENOWN_XP_MAX, give.xp, nowS, character, displayName(player), RENOWN_TRACKS_MAX),
     );
   }

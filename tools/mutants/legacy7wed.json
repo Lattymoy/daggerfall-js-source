@@ -38,8 +38,8 @@
   {
     "name": "LEGACY7W-wed-over-a-union",
     "file": "server-account/src/legacy.js",
-    "old": "    + ' WHERE NOT EXISTS (SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND (a_char IN (?, ?) OR b_char IN (?, ?)))',",
-    "new": "    + ' WHERE NOT EXISTS (SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND 0 AND (a_char IN (?, ?) OR b_char IN (?, ?)))',",
+    "old": "    + ' WHERE NOT EXISTS (SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND (a_char IN (?, ?) OR b_char IN (?, ?)))'",
+    "new": "    + ' WHERE NOT EXISTS (SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND 0 AND (a_char IN (?, ?) OR b_char IN (?, ?)))'",
     "tests": [
       "test/legacy7_wed.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LEGACY7W-mine-wed-unchecked",
     "file": "server-account/src/legacy.js",
-    "old": "  if (await openUnionOf(db, id)) return { error: 'wed-already' };\n",
-    "new": "",
+    "old": "  if (!me.lineage_id) return { error: 'wed-no-line' };\n  if (await openUnionOf(db, id)) return { error: 'wed-already' };\n",
+    "new": "  if (!me.lineage_id) return { error: 'wed-no-line' };\n",
     "tests": [
       "test/legacy7_wed.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "LEGACY7W-death-keeps-union",
     "file": "server-account/src/legacy.js",
-    "old": "  if (why === 'fell') await endUnionsOf(db, id, nowS, 'died').run();   // LEGACY7 part three: a union ends with the death\n",
+    "old": "  if (why === 'fell') await endUnionsOf(db, id, atS, 'died').run();\n",
     "new": "",
     "tests": [
       "test/legacy7_wed.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "LEGACY7W-retirement-ends-union",
     "file": "server-account/src/legacy.js",
-    "old": "  if (why === 'fell') await endUnionsOf(db, id, nowS, 'died').run();",
-    "new": "  await endUnionsOf(db, id, nowS, 'died').run();",
+    "old": "  if (why === 'fell') await endUnionsOf(db, id, atS, 'died').run();",
+    "new": "  await endUnionsOf(db, id, atS, 'died').run();",
     "tests": [
       "test/legacy7_wed.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LEGACY7W-retry-forgets",
     "file": "server-account/src/legacy.js",
-    "old": "    if (why === 'fell') await endUnionsOf(db, id, row.dead_at, 'died').run();",
-    "new": "    if (false) await endUnionsOf(db, id, row.dead_at, 'died').run();",
+    "old": "    if (!(why === 'fell' && row.dead_why === 'retired' && (await fellRetired(db, playerId, id, nowS)))) {",
+    "new": "    if (!(false && (await fellRetired(db, playerId, id, nowS)))) {",
     "tests": [
       "test/legacy7_wed.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "LEGACY7W-relay-unstamped",
     "file": "server/src/index.js",
-    "old": "      this._send(tws, JSON.stringify({ t: 'wed', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data: m.data }));",
-    "new": "      this._send(tws, JSON.stringify({ t: 'wed', id: a.id, data: m.data }));",
+    "old": "      this._send(tws, JSON.stringify({ t: 'wed', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), ...(typeof a.ci === 'string' && a.ci ? { sc: a.ci } : {}), data: m.data }));",
+    "new": "      this._send(tws, JSON.stringify({ t: 'wed', id: a.id, ...(typeof a.ci === 'string' && a.ci ? { sc: a.ci } : {}), data: m.data }));",
     "tests": [
       "test/legacy7_wed.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "LEGACY7W-session-unstamped",
     "file": "src/net/online.js",
-    "old": "validWedData, (id, d) => this.onWed?.(id, d, subOf(m)));",
-    "new": "validWedData, (id, d) => this.onWed?.(id, d, null));",
+    "old": "validWedData, (id, d) => this.onWed?.(id, d, subOf(m), scOf(m)));",
+    "new": "validWedData, (id, d) => this.onWed?.(id, d, null, scOf(m)));",
     "tests": [
       "test/legacy7_wed.test.js"
     ]
@@ -290,7 +290,7 @@
   {
     "name": "LEGACY7W-yes-without-half",
     "file": "src/net/wedSession.js",
-    "old": "      try { r = await half(a.s, a.sub); } catch { r = { ok: false, error: 'offline' }; }",
+    "old": "      try { r = await half(a.s, a.sub, a.sc); } catch { r = { ok: false, error: 'offline' }; }",
     "new": "      r = { ok: true, wed: false };",
     "tests": [
       "test/legacy7_wed.test.js"
@@ -479,8 +479,8 @@
   {
     "name": "LEGACY7W-wedding-not-a-fact",
     "file": "src/systems/legacy/store.js",
-    "old": "    if (p.spouse == null && o.spouse != null) {",
-    "new": "    if (false) {",
+    "old": "    if (!p || o.spouse == null || p.spouse === o.spouse) continue;",
+    "new": "    if (true) continue;",
     "tests": [
       "test/legacy7_wed.test.js"
     ]
@@ -542,7 +542,7 @@
   {
     "name": "LEGACY7W-world-unheard",
     "file": "src/scenes/world.js",
-    "old": "    online.onWed = (id, d, sub = null) => { wedMgr.onFrame(id, d, sub); };",
+    "old": "    online.onWed = (id, d, sub = null, sc = null) => { wedMgr.onFrame(id, d, sub, sc); };",
     "new": "    online.onWed = null;",
     "tests": [
       "test/legacy7_wed.test.js"

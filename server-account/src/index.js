@@ -159,7 +159,7 @@ import {
   duelRecordOf, reportDuelLoss, gateRecordOf, claimGate, legalRefusal,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, TOKEN_MAX_CHARS } from '../../src/net/identityToken.js';
+import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, TOKEN_MAX_CHARS, TOKEN_BODY_MAX, tokenBodyOf } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, savePathOf, realmPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining } from './service.js';
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
@@ -213,7 +213,7 @@ import {
 } from './realm.js';   // REALM P1: the realm's characters; ARENA4b: the level on a realm character's tile, the token's `cl`
 import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
-import { listLineages, putLineage, realmDie, realmHouseOf, realmWed, listUnions } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
+import { listLineages, putLineage, realmDie, realmHouseOf, realmWed, listUnions, LINEAGE_BODY_MAX } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
 import { measured } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine)
 import {
   patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook,
@@ -266,6 +266,7 @@ const REALM_STATUS = Object.freeze({
   // LEGACY7 (legacy.js): a tombstone is gone for good; a line or person the birth cannot be; a line's model is its founder's
   dead: 410, 'no-lineage': 404, 'lineage-person': 409, 'lineage-played': 409, 'lineage-model': 409, 'too-many-lineages': 409,
   'wed-no-line': 409, 'wed-already': 409, 'wed-partner': 409, 'wed-spent': 409,   // LEGACY7 part three: a wedding the realm cannot make
+  'lineage-too-large': 413,   // AUDIT LEGACY III O2/P1: a line's record past its bound - its own word, never a malformed body's
 });
 /** CUSTOMS-PASS: a pass's refusals - a bad shape 400 (the default), a caller who is no developer 403, no such account
  *  404, a guest's name two accounts wear 409. */
@@ -281,6 +282,7 @@ const GUILD_STATUS = Object.freeze({
   'guild-writ-escrow': 409,   // AUDIT 31 A15: a closed writ's escrow waiting on a full treasury
   'guild-contracts': 409,   // AUDIT SILVER-WAYS B3: a guild with a contract standing does not go (its siblings' conflict, never a bad request)
   'guild-rate': 429,
+  dead: 410,   // AUDIT LEGACY III O5: a tombstone acts in no guild
   // GUILD1d (Seats-Arc 8): the hall - a building somebody owns, the guild's one hall already held, none held, one moved
   // under its sale, a guild kept from going by it; and the heraldry - the same again, changed meanwhile, the Drakes short
   'home-taken': 409, 'guild-hall-have': 409, 'guild-hall-moved': 409, 'guild-hall': 409, 'guild-hall-none': 404, 'home-rate': 429,
@@ -452,9 +454,11 @@ async function readCapped(request, max) {
   return out.buffer;
 }
 
+/** A JSON object body within `max` bytes - or null (not a JSON object), or undefined (past the bound: AUDIT LEGACY III
+ *  O2, which the line's route answers in its own word). Both refuse alike wherever a route asks only `!body`. */
 async function readBody(request, max = MAX_BODY_BYTES) {
   const bytes = await readCapped(request, max);
-  if (!bytes) return null;
+  if (!bytes) return undefined;
   const text = new TextDecoder().decode(bytes);
   if (!text) return {};
   try { const v = JSON.parse(text); return v && typeof v === 'object' && !Array.isArray(v) ? v : null; } catch { return null; }
@@ -625,8 +629,12 @@ const service = {
 
       // EVERY ROUTE BELOW NEEDS A SECRET, and resolving it is the same
       // one indexed lookup every time.
-      // REALM P2.1: a trade's half carries two offers of up to sixteen records each - the one JSON route past 4 KiB
-      const body = request.method === 'POST' ? await readBody(request, path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : MAX_BODY_BYTES) : {};
+      // REALM P2.1: a trade's half carries two offers of up to sixteen records each - a JSON route past 4 KiB. AUDIT LEGACY
+      // III O2/P1: and a line's record, to its own bound (legacy.js LINEAGE_BODY_MAX) - read at 4 KiB, a played founder's
+      // first save was refused, and the realm held the founding copy for good
+      const body = request.method === 'POST'
+        ? await readBody(request, path === '/v1/realm/lineage' ? LINEAGE_BODY_MAX : path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : MAX_BODY_BYTES) : {};
+      if (body === undefined && path === '/v1/realm/lineage') return no('lineage-too-large', 413, origin);
       if (!body) return no('body', 400, origin);
       // ═══ AUDIT-ACC F13: A CREDENTIAL DOES NOT GO IN A URL ══════
       //
@@ -753,11 +761,15 @@ const service = {
         // LEGACY7 part two: AND THAT REALM CHARACTER'S HOUSE (legacy.js realmHouseOf: its line's surname, its given name, a
         // Bloodline's mark, the generation's numeral) - off the line the service holds, never a word of the client's
         const house = rc ? await realmHouseOf(ctx, who.player.id, body.character) : null;
-        const signed = { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}) };
+        // AUDIT LEGACY III O1: AND WHICH REALM CHARACTER (`ci`, beside a 1 alone) - the relay stamps it on a wedding's frames,
+        // so each half names the character its player saw. Kept when a house is left unsaid: the widest token without a
+        // house is under TOKEN_MAX_CHARS with it (test/auditlegacy3)
+        const signed = { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(rc ? { ci: body.character } : {}), ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}) };
         let token = await mintToken(house ? { ...signed, ...house } : signed, key, { subtle, nowS });
-        // the token's own bound (identityToken.js TOKEN_MAX_CHARS): a house that would take it past is left unsaid, never the rest
+        // the token's own bounds (identityToken.js TOKEN_MAX_CHARS, and AUDIT LEGACY III O11 the relay hello's TOKEN_BODY_MAX):
+        // a house that would take it past either is left unsaid, never the rest
         let houseWorn = house;
-        if (house && token.length > TOKEN_MAX_CHARS) { token = await mintToken(signed, key, { subtle, nowS }); houseWorn = null; }
+        if (house && (token.length > TOKEN_MAX_CHARS || tokenBodyOf(token).length > TOKEN_BODY_MAX)) { token = await mintToken(signed, key, { subtle, nowS }); houseWorn = null; }
         return json({
           token,
           name: displayName(who.player),
@@ -1586,13 +1598,14 @@ const service = {
         // stored record, to merge into), and a fallen character's tombstone under its lease
         if (path === '/v1/realm/lineages') return json({ lineages: await listLineages(rctx, me) }, 200, origin);
         if (path === '/v1/realm/lineage') {
-          const r = await putLineage(rctx, me, { id: body.id, record: body.record });
+          const r = await putLineage(rctx, me, { id: body.id, record: body.record, base: body.base ?? null });   // AUDIT LEGACY III A2: the rev it was made from
           if (r.error === 'lineage-stale') return json(r, 409, origin);
           return answer(r);
         }
         if (path === '/v1/realm/die') return answer(await realmDie(rctx, me, { id: body.id, lease: body.lease, why: body.why }));   // LEGACY7 part three: 'retired' keeps a union
         // LEGACY7 part three: a half of one wedding, and the account's unions
-        if (path === '/v1/realm/wed') return answer(await realmWed(rctx, me, { id: body.id, lease: body.lease, sid: body.sid, partner: body.partner }));
+        // AUDIT LEGACY III O1/O3: the other's character as the relay stamped it, and a half taken back
+        if (path === '/v1/realm/wed') return answer(await realmWed(rctx, me, { id: body.id, lease: body.lease, sid: body.sid, partner: body.partner, partnerChar: body.partnerChar, withdraw: body.withdraw === true }));
         if (path === '/v1/realm/unions') return json({ unions: await listUnions(rctx, me) }, 200, origin);
         return answer(await deleteRealm(rctx, me, body.id));   // /v1/realm/delete - HOUSE-LOSS: which undoes one too, for a door that asks a delete
       }

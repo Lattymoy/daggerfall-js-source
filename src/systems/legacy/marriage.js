@@ -10,7 +10,7 @@
 //  - THE WEDDING: a proposal taken, the two are wed at the temple of the resident's town - its door asks, once a visit.
 //    The spouse is a person of the house (`kind: 'resident'`), keeping their own name, face and day for life (the
 //    Living World's law: a resident's identity is for life).
-//  - CHILDREN: while both live, every CHILD_DAYS days of the world's clock, CHILD_CHANCE of a child, at most
+//  - CHILDREN: while both live, every CHILD_DAYS days of the member's own clock, CHILD_CHANCE of a child, at most
 //    CHILDREN_MAX - each a member of the house, a minor until the mantle passes to them (they come of age in the
 //    telling, section 10's departure), born through family.js addChild from both parents.
 import { FRIEND_AT } from '../livingWorld/relations.js';
@@ -29,6 +29,8 @@ export const CHILDREN_MAX = 6;
 export const DAY_MINUTES = 1440;
 
 export const TOPIC = Object.freeze({ court: 'court', propose: 'propose', wedding: 'wedding', family: 'family' });
+/** The children a couple may have, in words (CHILDREN_MAX at most). */
+const COUNT_WORDS = Object.freeze(['none', 'one', 'two', 'three', 'four', 'five', 'six']);
 const LABEL = Object.freeze({ court: 'Courtship', propose: 'Marriage', wedding: 'Our wedding', family: 'Our family' });
 
 /** The world's day of a clock reading (minutes). */
@@ -49,6 +51,8 @@ export const courtable = (res) => !!res && res.roll === 'h' && !res.guard && !re
 
 /** Is this resident one of the house already - a member's spouse? */
 export const residentInHouse = (family, residentId) => (family?.people ?? []).some((p) => p.kind === 'resident' && p.residentId === residentId);
+/** AUDIT LEGACY III A1: is this resident betrothed to another member of the house than `member`? */
+export const betrothedElsewhere = (family, member, residentId) => (family?.people ?? []).some((p) => p !== member && isAlive(p) && p.courting?.[residentId]?.betrothed);
 
 /** The member's living spouse, or null. */
 export function spouseOf(family, member) {
@@ -59,7 +63,8 @@ export function spouseOf(family, member) {
 /**
  * THE TOPICS a resident offers the one played, in order (none at all when there is nothing between them):
  * their spouse's "Our family"; a betrothed's "Our wedding"; "Marriage" once affection is full; "Courtship" for a friend
- * or a courtship already begun. Never while the member is wed to another, never for a resident another member wed.
+ * or a courtship already begun. Never while the member is wed to another, never for a resident another member wed -
+ * AUDIT LEGACY III A1: nor one another member is betrothed to (a sibling courted them on to a second wedding).
  * @param {any} family @param {any} member @param {{ id: string, name: string }} res @param {number} regard
  */
 export function topicsFor(family, member, res, regard) {
@@ -67,7 +72,7 @@ export function topicsFor(family, member, res, regard) {
   if (!courtable(res) && !residentInHouse(family, res.id)) return [];
   const spouse = spouseOf(family, member);
   if (spouse) return spouse.residentId === res.id ? [TOPIC.family] : [];
-  if (residentInHouse(family, res.id)) return [];
+  if (residentInHouse(family, res.id) || betrothedElsewhere(family, member, res.id)) return [];
   const c = member.courting?.[res.id];
   if (c?.betrothed) return [TOPIC.wedding];
   if (c && c.affection >= AFFECTION_MAX) return [TOPIC.propose];
@@ -93,7 +98,8 @@ export function courtGain({ personality = 50, etiquette = 0, tone = 1, roll = 0.
 
 /**
  * COURTSHIP: once a day, the day's affection. Answers `{ gained, affection, again }` - `again` when this day's was
- * already given (nothing gained).
+ * already given (nothing gained). AUDIT LEGACY III P7: a day PAST the last one courted - an older save loaded rewinds
+ * the own clock, never the courtship (the store's), and its days were courted over again.
  * @param {any} member @param {{ id: string, name: string, town: number, sex?: string, race?: string, face?: number }} res
  * @param {{ day: number, townName?: string, personality?: number, etiquette?: number, tone?: number, roll?: number }} o
  */
@@ -102,7 +108,7 @@ export function court(member, res, o) {
   // the resident as they are - their identity is for life (the Living World's law), so the wedding needs no town loaded
   const c = (courts[res.id] ??= { name: String(res.name), mapId: res.town | 0, town: String(o.townName ?? ''), affection: 0, day: -1, betrothed: false,
     sex: res.sex === 'female' ? 'female' : 'male', race: String(res.race ?? ''), face: res.face | 0 });
-  if (c.day === o.day) return { gained: 0, affection: c.affection, again: true };
+  if (c.day >= o.day) return { gained: 0, affection: c.affection, again: true };
   const gained = Math.min(AFFECTION_MAX - c.affection, courtGain(o));
   c.affection += gained;
   c.day = o.day;
@@ -130,11 +136,15 @@ export function forgetCourtship(member, residentId) {
 
 /**
  * THE WEDDING: the resident made a person of the house (`kind: 'resident'`, their census id, their own name and face
- * for life), wed to the member; every other courtship of the member ends. Answers the spouse.
+ * for life), wed to the member; every other courtship of the member ends. AUDIT LEGACY III A1: never a resident who is
+ * one of the house already (null) - and every member's courtship of them ends with it: a sibling betrothed to the same
+ * townsperson wed them a second time, one census id two spouses. Born on no day of this house's (A11: the card said
+ * their wedding day). Answers the spouse, or null.
  * @param {any} family @param {any} member
  * @param {{ id: string, name: string, sex?: string, race?: string, face?: number, mapId?: number, town?: number }} res @param {number} at
  */
 export function wed(family, member, res, at, { takeName = false } = {}) {
+  if (residentInHouse(family, String(res.id))) return null;
   const s = newPerson(family.nextId++);
   const [given, own] = splitName(res.name);
   const surname = takeName ? family.surname : own;
@@ -146,12 +156,12 @@ export function wed(family, member, res, at, { takeName = false } = {}) {
   s.race = RACE_KEYS.includes(/** @type {any} */ (res.race)) ? res.race : 'Breton';
   s.residentFace = res.face ?? null;
   s.gen = member.gen | 0;
-  s.born = at;
   s.spouse = member.id;
   s.wedAt = at;
   member.spouse = s.id;
   member.wedAt = at;
   member.courting = {};
+  for (const p of family.people) if (p.courting?.[s.residentId]) delete p.courting[s.residentId];   // A1
   s.mapId = res.mapId ?? res.town ?? 0;   // the town they live in - their census house is there, and their day
   family.people.push(s);
   touch(family);
@@ -186,7 +196,6 @@ export function wedPlayer(family, member, card, sid, at) {
   s.race = RACE_KEYS.includes(/** @type {any} */ (card.race)) ? /** @type {string} */ (card.race) : 'Breton';
   s.face = Number.isInteger(card.face) && /** @type {number} */ (card.face) >= 0 ? /** @type {number} */ (card.face) : 0;
   s.gen = member.gen | 0;
-  s.born = at;
   s.spouse = member.id;
   s.wedAt = at;
   s.realm = { sid: String(sid), player: String(card.player ?? ''), char: String(card.char ?? ''), house };
@@ -216,12 +225,16 @@ export const childrenTogether = (family, member, spouse) => (family?.people ?? [
 /**
  * A CHILD, perhaps: every CHILD_DAYS days since the wedding (or the last child's day), CHILD_CHANCE of one while both
  * live, at most CHILDREN_MAX. Answers the child, or null. The child is a minor member - never played until the mantle.
+ * The days are the member's OWN clock's (`day`). AUDIT LEGACY III P6: a union heard while its member was away (another
+ * of the house played) set no day of theirs, and the count fell back to the wedding's minute - another page's world
+ * clock: the member's first played day starts it now.
  * @param {any} family @param {any} member @param {{ day: number, rng: () => number, at: number, settings?: any }} o
  */
 export function childStep(family, member, { day, rng, at, settings = {} }) {
   const spouse = spouseOf(family, member);
   if (!spouse || !isAlive(member)) return null;
-  const from = member.childDay ?? dayOf(member.wedAt ?? 0);
+  if (member.childDay == null) { member.childDay = day; touch(family); return null; }
+  const from = member.childDay;
   if (day - from < CHILD_DAYS) return null;
   member.childDay = from + CHILD_DAYS * Math.floor((day - from) / CHILD_DAYS);
   touch(family);
@@ -239,9 +252,12 @@ export const MARRIAGE_TEXT = Object.freeze({
       : affection >= 34 ? `${name} smiles. "I like your company. Come and find me again."`
         : `${name} looks at you a long moment. "You're kind. We'll see."`),
   again: (name) => `${name} smiles. "You've had my day already. Tomorrow."`,
-  accepted: (name, town) => `${name} says yes. "Ask the priest at the temple${town ? ` in ${town}` : ''}, and we'll be wed."`,
-  wedding: (town) => `"The priest at the temple${town ? ` in ${town}` : ''} is waiting on us."`,
-  family: (n) => (n ? `"The ${n === 1 ? 'little one is' : `${n} children are`} well. Come home when you can."` : '"All is well at home. Come back to me safe."'),
+  // AUDIT LEGACY III F3: the temple's door asks the wedding (the priest is DFU's own static NPC, whose talk is the
+  // engine's - section 8), so the words send the player through it, never to a priest who asks nothing
+  accepted: (name, town) => `${name} says yes. "Meet me at the temple${town ? ` in ${town}` : ''}, and we'll be wed."`,
+  wedding: (town) => `"The temple${town ? ` in ${town}` : ''} is waiting on us - walk in, and we'll be wed."`,
+  // F11b: a count in words, as speech says it
+  family: (n) => (n ? `"The ${n === 1 ? 'little one is' : `${COUNT_WORDS[n] ?? 'many'} children are`} well. Come home when you can."` : '"All is well at home. Come back to me safe."'),
   ask: (name) => `Be wed to ${name} here, before the gods?`,
   wed: (name, house) => `You and ${name} are wed. ${name} is of the house${houseWord(house) ? ` of ${houseWord(house)}` : ''} now.`,
   child: (name, spouse) => `A child is born to you and ${spouse}: ${name}.`,

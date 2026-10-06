@@ -47,7 +47,7 @@
   {
     "name": "LEGACY7H-world-unnamed",
     "file": "src/scenes/world.js",
-    "old": "        location: [...livingTownsIndex().values()].find((t) => (t.mapId >>> 0) === (h.mapId >>> 0))?.name ?? '',",
+    "old": "        location: _townOfMapId.get(h.mapId >>> 0)?.name ?? '',",
     "new": "        location: '',",
     "tests": [
       "test/legacy7_homes.test.js"

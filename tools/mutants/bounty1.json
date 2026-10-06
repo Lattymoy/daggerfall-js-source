@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-BOUNTY1-B1-the-notice-stands-over-an-indoor-window",
     "file": "src/scenes/world.js",
-    "old": "if ((townTalk.overlayActive && !townTalk.overlayDone) || (modes?.overlayHeld ?? false) || (modes?.deathUp?.() ?? false)) return false;",
-    "new": "if ((townTalk.overlayActive && !townTalk.overlayDone) || (modes?.deathUp?.() ?? false)) return false;",
+    "old": "      // stacks (`modes.overlayHeld`): a mate's clear lands while a shop or the pack is open, and must not stand over it\n      if ((townTalk.overlayActive && !townTalk.overlayDone) || (modes?.overlayHeld ?? false) || (modes?.deathUp?.() ?? false)) return false;",
+    "new": "      // stacks (`modes.overlayHeld`): a mate's clear lands while a shop or the pack is open, and must not stand over it\n      if ((townTalk.overlayActive && !townTalk.overlayDone) || (modes?.deathUp?.() ?? false)) return false;",
     "tests": [
       "test/auditbounty1.test.js"
     ]

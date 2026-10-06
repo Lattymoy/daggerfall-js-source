@@ -19,53 +19,73 @@
 export function layoutTree(family) {
   const people = family?.people ?? [];
   const byId = new Map(people.map((p) => [p.id, p]));
-  /** The unit a person stands in: themself, and a spouse beside them (a member's spouse who married in). */
-  const spouseOf = (p) => (p?.spouse != null && byId.has(p.spouse) ? byId.get(p.spouse) : null);
+  const isMember = (p) => (p?.kind ?? 'member') === 'member';
+  /** AUDIT LEGACY III A14/U4: EVERY SPOUSE A MEMBER HAS HAD stands in their unit - the one wed now, and each before (a
+   *  spouse who died, a union the realm ended): the unit read the member's current spouse alone, so a member wed twice
+   *  had the first marriage's children hung under the second spouse, and the first spouse cut off at the row's far end
+   *  (a player's character a root of its own). One wed in by their link to the member, or as the other parent of a
+   *  child of theirs; another member only by both their links. Oldest wedding first. */
+  const spouseMemo = new Map();
+  const spousesOf = (p) => {
+    if (spouseMemo.has(p.id)) return spouseMemo.get(p.id);
+    const out = new Set();
+    for (const q of people) if (q.id !== p.id && q.spouse === p.id && (!isMember(q) || p.spouse === q.id)) out.add(q);
+    if (p.spouse != null && byId.has(p.spouse)) out.add(byId.get(p.spouse));
+    for (const id of p.children ?? []) {
+      for (const pid of byId.get(id)?.parents ?? []) { const q = byId.get(pid); if (q && q.id !== p.id && !isMember(q)) out.add(q); }
+    }
+    const list = [...out].sort((a, b) => (Number(a.wedAt) || 0) - (Number(b.wedAt) || 0) || a.id - b.id);
+    spouseMemo.set(p.id, list);
+    return list;
+  };
   const placed = new Map();   // id -> { x, y }
   const nodes = [];
   const couples = [];
   const families = [];
-  const childrenOfUnit = (p, s) => {
-    const ids = new Set([...(p.children ?? []), ...(s?.children ?? [])]);
-    return [...ids].map((id) => byId.get(id)).filter((c) => c && !placed.has(c.id) && (c.parents ?? []).includes(p.id)).sort((a, b) => a.id - b.id);
-  };
+  /** The children that hang under p's unit: those whose FIRST parent is p (a child of two members hangs once). */
+  const kidsOf = (p) => [...new Set(p.children ?? [])].map((id) => byId.get(id)).filter((c) => c && (c.parents ?? [])[0] === p.id).sort((a, b) => a.id - b.id);
   const widthMemo = new Map();
-  /** Slots the unit rooted at p needs: its own (1 or 2), or its children's sum, whichever is wider. */
+  /** Slots the unit rooted at p needs: its own (the member and each spouse), or its children's sum, whichever is wider. */
   function width(p, seen = new Set()) {
     if (widthMemo.has(p.id)) return widthMemo.get(p.id);
     if (seen.has(p.id)) return 1;
     seen.add(p.id);
-    const s = spouseOf(p);
-    const own = s ? 2 : 1;
-    const kids = [...new Set([...(p.children ?? []), ...(s?.children ?? [])])].map((id) => byId.get(id)).filter((c) => c && (c.parents ?? [])[0] === p.id);
-    const sum = kids.reduce((n, c) => n + width(c, seen), 0);
+    const own = 1 + spousesOf(p).length;
+    const sum = kidsOf(p).reduce((n, c) => n + width(c, seen), 0);
     const w = Math.max(own, sum);
     widthMemo.set(p.id, w);
     return w;
   }
   function place(p, x0) {
     if (placed.has(p.id)) return 0;
-    const s = spouseOf(p);
+    const ss = spousesOf(p).filter((s) => !placed.has(s.id));
     const w = width(p);
-    const own = s && !placed.has(s.id) ? 2 : 1;
+    const own = 1 + ss.length;
     const left = x0 + (w - own) / 2;
-    placed.set(p.id, { x: left, y: p.gen });
-    nodes.push({ id: p.id, x: left, y: p.gen });
-    if (own === 2) {
-      placed.set(s.id, { x: left + 1, y: p.gen });
-      nodes.push({ id: s.id, x: left + 1, y: p.gen });
-      couples.push({ a: p.id, b: s.id });
+    // the earlier spouses on the left, the member, the last wed on the right - each couple's line its own
+    let at = left;
+    for (const q of [...ss.slice(0, -1), p, ...ss.slice(-1)]) { placed.set(q.id, { x: at, y: p.gen }); nodes.push({ id: q.id, x: at, y: p.gen }); at += 1; }
+    for (const q of ss) couples.push({ a: p.id, b: q.id });
+    // each child under the couple its own parents name - every marriage's children beneath it, in the weddings' order
+    const kids = kidsOf(p).filter((c) => !placed.has(c.id));
+    const order = [...spousesOf(p).map((q) => q.id), null];
+    const groups = new Map(order.map((k) => [k, []]));
+    for (const c of kids) {
+      const other = (c.parents ?? []).find((id) => id !== p.id) ?? null;
+      if (!groups.has(other)) groups.set(other, []);
+      groups.get(other).push(c);
     }
-    // children: only those whose FIRST parent is p hang under p's unit (a child of two members hangs once)
-    const kids = childrenOfUnit(p, s).filter((c) => (c.parents ?? [])[0] === p.id);
     let cx = x0;
-    for (const c of kids) { place(c, cx); cx += width(c); }
-    if (kids.length) families.push({ parents: own === 2 ? [p.id, s.id] : [p.id], children: kids.map((c) => c.id) });
+    for (const [other, list] of groups) {
+      if (!list.length) continue;
+      for (const c of list) { place(c, cx); cx += width(c); }
+      families.push({ parents: other != null ? [p.id, other] : [p.id], children: list.map((c) => c.id) });
+    }
     return w;
   }
-  // the roots: members with no recorded parent who are not a spouse who married in (`resident` - they hang beside
-  // their spouse's plate), the founder's line first. AUDIT LEGACY II F14: a dead `&& false` clause dropped
-  const roots = people.filter((p) => !(p.parents ?? []).length && p.kind !== 'resident')
+  // the roots: members with no recorded parent - one wed in hangs beside their spouse's plate (never a root of their
+  // own), the founder's line first. AUDIT LEGACY II F14: a dead `&& false` clause dropped
+  const roots = people.filter((p) => !(p.parents ?? []).length && isMember(p))
     .sort((a, b) => a.gen - b.gen || a.id - b.id);
   let x = 0;
   for (const r of roots) { if (placed.has(r.id)) continue; x += place(r, x); }

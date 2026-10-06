@@ -275,7 +275,7 @@ export function nameIsIssuable(name) {
 /**
  * The claims, as they ride. Short keys because this travels in a hello
  * on every connection and the payload is base64 on top.
- * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, au?: string, ar?: number, cl?: number, hn?: string, hc?: string, hb?: 1, hg?: number}} Claims
+ * @typedef {{s: string, n: string, k: 'guest'|'linked', i: number, e: number, t?: string, g?: string[], mu?: number, lv?: number, gi?: string, gt?: string, gm?: string, rc?: 0|1, ci?: string, au?: string, ar?: number, cl?: number, hn?: string, hc?: string, hb?: 1, hg?: number}} Claims
  *   s  the account id          n  the display name
  *   k  guest or linked         i  issued at, epoch seconds
  *   e  expires at, epoch seconds
@@ -289,6 +289,10 @@ export function nameIsIssuable(name) {
  *   rc 1 when the character the client named at the mint is one of
  *      the account's realm characters, else 0; absent from a service
  *      before REALM-DOOR (the relay refuses a 0)
+ *   ci that realm character's id (REALM_CHARACTER_RE), beside an `rc` of
+ *      1 alone (AUDIT LEGACY III O1): the relay stamps it on a wedding's
+ *      frames beside `sub`, so each half names the CHARACTER its player
+ *      saw - never the other client's word about which one it is
  *   au the aura WORN, absent for none (WB9g)
  *   gx the glyphs the player has TAKEN OFF - each one in `g`, absent for
  *      none (GLYPH-WEAR). Paint alone: `g` stays what is true and what
@@ -320,6 +324,8 @@ export const characterLevelIssuable = (cl) => Number.isSafeInteger(cl) && cl >= 
  *  this token can carry (ACC0: the existing account is ADOPTED, never
  *  replaced). */
 export const ID_RE = /^[A-Za-z0-9_-]{4,40}$/;
+/** A realm character's id, as the account service mints it (server-account/src/realm.js mintRealmId, REALM_ID_RE). */
+export const REALM_CHARACTER_RE = /^r[0-9a-f]{20}$/;
 
 /** GUILD1c: A CHARACTER'S GUILD ON A SIGNED SET - its id, its tag and its member row (the roster's `m<rowid>`), ALL
  *  THREE OR NONE: a token minted for a character in no guild, or by a service before GUILD1c, carries none. Each a
@@ -376,6 +382,8 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
   // REALM-DOOR: the realm's word on the named character - exactly 0 or 1, never a truthy stand-in; absent from a service
   // before it, which the relay admits as it always did (the two Workers deploy on their own)
   if (c.rc !== undefined && c.rc !== 0 && c.rc !== 1) return false;
+  // AUDIT LEGACY III O1: the realm character itself - beside the realm's yes alone, and of the realm's own id's shape
+  if (c.ci !== undefined && !(c.rc === 1 && typeof c.ci === 'string' && REALM_CHARACTER_RE.test(c.ci))) return false;
   // ARENA4: the account's arena rating this season (net/arenaLaw.js - the hall queues by it): absent from a service before
   // it and from a guest's token; present, a whole number on the rating's scale
   if (c.ar !== undefined && !(Number.isSafeInteger(c.ar) && c.ar >= ARENA_RATING_MIN && c.ar <= ARENA_RATING_MAX)) return false;
@@ -392,12 +400,19 @@ export function claimsValid(c, { maxTtlS = MAX_TTL_S } = {}) {
 /** The longest token a verifier reads (LEGACY7: named, so the minter asks it too - a house that would take a token past
  *  it is left unsaid rather than the whole token refused at the relay). */
 export const TOKEN_MAX_CHARS = 1024;
+/** AUDIT LEGACY III O11: THE LONGEST BODY the relay's hello takes (net/wire.js TOKEN_RE, pinned equal) - the minter asks
+ *  it beside TOKEN_MAX_CHARS. The wire's 640 was the tighter of the two and the minter never asked it: every optional
+ *  claim at once was 639 characters of body, so a house (LEGACY7) carried such a token to 739 - minted, and refused at
+ *  every hello as 'bad token'. Every claim, a house at its bounds and the realm character (`ci`) are 778. */
+export const TOKEN_BODY_MAX = 800;
+/** A token's body, the part between its version and its signature. */
+export const tokenBodyOf = (/** @type {string} */ token) => String(token ?? '').split('.')[1] ?? '';
 
 /**
  * MINT. The account service's half - it holds the private key and
  * nothing else does.
  *
- * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, au?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, hn?:string, hc?:string, hb?:1, hg?:number}} who
+ * @param {{s:string, n:string, k:'guest'|'linked', t?:string, ts?:number[], g?:string[], mu?:number, lv?:number, gi?:string, gt?:string, gm?:string, rc?:0|1, ci?:string, au?:string, rb?:number[], gx?:string[], ar?:number, cl?:number, hn?:string, hc?:string, hb?:1, hg?:number}} who
  * @param {CryptoKey} privateKey  an Ed25519 private key
  * @param {{subtle: SubtleCrypto, nowS: number, ttlS?: number}} env
  * @returns {Promise<string>}
@@ -416,6 +431,7 @@ export async function mintToken(who, privateKey, { subtle, nowS, ttlS = MAX_TTL_
   // GUILD1c: only while that character is in a guild - all three, and a partial set is refused below, not trimmed
   if (who?.gi !== undefined || who?.gt !== undefined || who?.gm !== undefined) Object.assign(claims, { gi: who.gi, gt: who.gt, gm: who.gm });
   if (who?.rc !== undefined) claims.rc = who.rc;   // REALM-DOOR: a 0 is said, never dropped as falsy - it is the relay's refusal
+  if (who?.ci !== undefined) claims.ci = who.ci;   // AUDIT LEGACY III O1: only with the realm's yes - a 0, or none named, the bytes as before
   if (who?.au !== undefined) claims.au = who.au;   // WB9g: only while an aura is worn - a player wearing none mints the bytes they always did
   if (who?.rb !== undefined) claims.rb = who.rb;   // SEASON1 part two: only while a Season's ribbon is worn - none, the bytes as before
   if (who?.gx !== undefined && who.gx.length) claims.gx = who.gx;   // GLYPH-WEAR: only while a glyph is taken off - a player hiding none mints the bytes they always did

@@ -1304,7 +1304,8 @@ export class Room {
     // SEAT1c: `ts`, a seat title's claim; GLYPH-WEAR: `gx`, the glyphs taken off - `badged` leaves them out of every row, `glyphs` stays whole for the rights
     // LEGACY7 part two: and the house - `hn`, `hc`, `hb`, `hg`, the line the realm character is of (stamped by `badged`)
     const house = c.hn ? { hn: c.hn, ...(c.hc ? { hc: c.hc } : {}), ...(c.hb ? { hb: c.hb } : {}), ...(c.hg ? { hg: c.hg } : {}) } : {};
-    return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, rb: c.rb, mu, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house };   // ARENA4: the season's rating, the hall's queue's   // ARENA4b: `cl` the character's level, a ladder fighter's vitality's
+    // AUDIT LEGACY III O1: and the realm character itself - `ci`, beside the realm's yes alone (identityToken.js claimsValid)
+    return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, rb: c.rb, mu, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci };   // ARENA4: the season's rating, the hall's queue's   // ARENA4b: `cl` the character's level, a ladder fighter's vitality's
   }
 
   /** The verifying key, imported once. Shared by the hello and by
@@ -1485,7 +1486,7 @@ export class Room {
       // AUDIT PRE-MERGE 1003b R4: a private session's floor is shown to its members - a socket that is none yet is shown
       // the sand when its join makes it one (`_sessionShow`)
       const shown = isArenaPrivateRoom(a.key) ? { shown: (await this._sessionOf())?.members?.[who.subject] ? 1 : 0 } : {};
-      if (!this._setAttach(ws, { ...a, ...placed, ...shown, id: m.id, name: who.name, title: who.title, ...(who.ts ? { ts: who.ts } : {}), glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.rb ? { rb: who.rb } : {}), lv: who.lv, ...guild, ...(who.hn ? { hn: who.hn, hc: who.hc, hb: who.hb, hg: who.hg } : {}), gio: who.gio, sub: who.subject, ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu, pose: chat ? null : m.pose, since: replaced?.since ?? now, ...arena, ...charLv })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried
+      if (!this._setAttach(ws, { ...a, ...placed, ...shown, id: m.id, name: who.name, title: who.title, ...(who.ts ? { ts: who.ts } : {}), glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.rb ? { rb: who.rb } : {}), lv: who.lv, ...guild, ...(who.hn ? { hn: who.hn, hc: who.hc, hb: who.hb, hg: who.hg } : {}), ...(who.ci && !chat && !isSocialRoom(a.key) ? { ci: who.ci } : {}), gio: who.gio, sub: who.subject, ...(siegeSide ? { sd: siegeSide } : {}), mu: who.mu, pose: chat ? null : m.pose, since: replaced?.since ?? now, ...arena, ...charLv })) { this._refuse(ws, 'hello too large'); return; }   // MOD1: `sub` the verified account (what a mute names), `mu` until when it may not talk   // RENOWN1: `lv` the Renown level the token carried
       // SRV-N: `v` rides EVERY welcome, a channel's included. A player in the enhanced skin holds a presence socket
       // and one chat socket per tab; whichever reconnects first after a hand deploy is the one that notices, and the
       // client's detector (net/updateNotice.js) is a Set so the rest of them say nothing. SLAM13 (AUDIT SLAM A5): and
@@ -1849,10 +1850,12 @@ export class Room {
       // LEGACY7 part three: ONE DIRECTED FRAME, the duel arm's own routing - a proposal, its answer, its end or the
       // union's word, from a hello'd socket in a PLACE room (a wedding is two people in one temple; a channel or the hub
       // is nowhere to stand) on the wed bucket, to the socket `to` names in this room and to it alone, the sender's id
-      // AND its verified account (`sub`, off the identity token) stamped on it: each side names the other's account to
-      // the account service by that stamp (server-account/src/legacy.js realmWed), so who wed whom is never a client's
-      // own word. The relay reads none of the rest (wire.js validWedData checked the shape). A frame at my own id is
-      // junk; a peer that is gone is not (a leave races a frame, and the proposal lapses on it).
+      // AND its verified account (`sub`, off the identity token) AND realm character (`sc`, the token's `ci` - AUDIT
+      // LEGACY III O1: the character the other player saw, which a half names as the account is named) stamped on it:
+      // each side names the other's account and character to the account service by those stamps
+      // (server-account/src/legacy.js realmWed), so who wed whom is never a client's own word. The relay reads none of
+      // the rest (wire.js validWedData checked the shape - a `sc` a client wrote is never in its projection). A frame at
+      // my own id is junk; a peer that is gone is not (a leave races a frame, and the proposal lapses on it).
       const now = Date.now();
       a = this._meterWed(ws, a, now); if (!a) return;
       if (isChatRoom(a.key) || isSocialRoom(a.key)) return;
@@ -1863,7 +1866,7 @@ export class Room {
       const [tws] = target;
       // the funnel onto the destination, per sender - the duel's shape on slots of its own at the wedding's rate
       if (!this._senderFunnel(tws, a.id, now, 'wein', WED_HZ_MAX)) return;
-      this._send(tws, JSON.stringify({ t: 'wed', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data: m.data }));
+      this._send(tws, JSON.stringify({ t: 'wed', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), ...(typeof a.ci === 'string' && a.ci ? { sc: a.ci } : {}), data: m.data }));
       return;
     }
     if (m.t === 'page') {

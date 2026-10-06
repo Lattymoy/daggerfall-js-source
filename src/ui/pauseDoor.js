@@ -273,10 +273,36 @@ function enhancedPauseOverlay(show, base) {
   // that clear).
   host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';
   document.body.append(host);
+  // AUDIT LEGACY III U1: A HELD KEY PRESSES NOTHING HERE EITHER - the Succession's own rule (ui/legacySuccession.js,
+  // AUDIT LEGACY II U1). The browser presses a focused button at every repeat of Enter or Space, and the Family tab's
+  // arm-then-confirm acts keep the focus on the armed button (AUDIT LEGACY II U6): "Play as" and "Pass the mantle"
+  // armed and fired on one held press. Every other ask-twice act of this window is covered by the same line.
+  host.addEventListener?.('keydown', (e) => {
+    if (e.repeat && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+  // AUDIT LEGACY III U2: THE KEYBOARD COMES INTO THE WINDOW. Opened, the focus stood on the page's body, where every Tab
+  // was the game's (AUDIT LEGACY II U3's walk asks the focus to be inside already): a Tab from outside lands on the
+  // window's first control (its last, back), and the window takes the focus as it mounts (focusIn, below).
+  const tabIn = (/** @type {KeyboardEvent} */ e) => {
+    if (fired) { document.removeEventListener?.('keydown', tabIn, true); return; }   // the window went (close, or a load that failed): gone with it
+    if (e.key !== 'Tab' || host.contains?.(/** @type {any} */ (document.activeElement))) return;
+    const all = [...(host.querySelectorAll?.('button:not([disabled]), [href], select, input, [tabindex]:not([tabindex="-1"])') ?? [])];
+    const to = e.shiftKey ? all.at(-1) : all[0];
+    if (!to) return;
+    e.preventDefault();
+    /** @type {any} */ (to).focus?.({ preventScroll: true });
+  };
+  document.addEventListener?.('keydown', tabIn, true);
+  /** The window's own place for the keyboard: its lit tab, else its first control. */
+  const focusIn = () => {
+    const to = host.querySelector?.('.px-tabs button.on') ?? host.querySelector?.('button:not([disabled])');
+    /** @type {any} */ (to)?.focus?.({ preventScroll: true });
+  };
 
   const close = () => {
     if (fired) return;
     dropAscend();   // ASCEND-ANYTIME: whatever is on top of this window goes with it
+    document.removeEventListener?.('keydown', tabIn, true);
     view?.unmount();
     view = null;
     host.remove();
@@ -369,6 +395,7 @@ function enhancedPauseOverlay(show, base) {
       const { mountEnhancedMenu } = mod;
       seams = mod;
       view = mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: hooks.at ?? null });
+      focusIn();   // AUDIT LEGACY III U2
     },
     alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'pause',
   });

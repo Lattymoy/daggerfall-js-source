@@ -96,8 +96,8 @@
   {
     "name": "LEGACY-HOME-kin-slain-not-stored",
     "file": "src/scenes/legacyHost.js",
-    "old": "    recordDeath(family, p.id, { at: deps.now(), cause: 'slain', place: deps.here(), by: me ? fullNameOf(me.given, me.surname) : null });\n    store();",
-    "new": "    recordDeath(family, p.id, { at: deps.now(), cause: 'slain', place: deps.here(), by: me ? fullNameOf(me.given, me.surname) : null });",
+    "old": "    tellNews('died', fullNameOf(p.given, p.surname), deps.here()?.mapId);   // AUDIT LEGACY III A13/F17: a member's death is news\n    store();\n",
+    "new": "    tellNews('died', fullNameOf(p.given, p.surname), deps.here()?.mapId);   // AUDIT LEGACY III A13/F17: a member's death is news\n",
     "tests": [
       "test/legacyhome.test.js"
     ]

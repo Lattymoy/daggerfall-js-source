@@ -26,6 +26,7 @@ import { STAT_KEYS_ORDER } from '../systems/statMods.js';
 import { homeOf, familyHome, sameHouse } from '../systems/legacy/household.js';   // LEGACY-HOME: where each of the line lives
 import { houseLine } from '../net/houseLaw.js';   // LEGACY7 part three: a player spouse's own house on their card
 import { houseWord } from '../systems/legacy/houseName.js';   // LEGACY-NAME: a seat's house said once
+import { facePose } from '../systems/legacy/facePose.js';   // AUDIT LEGACY III P17: a person's portrait, asked one way
 
 export const FAMILY_PAGE_SECTIONS = Object.freeze([
   Object.freeze(['tree', 'Family Tree']), Object.freeze(['house', 'The House']), Object.freeze(['hall', 'Hall of Ancestors']),
@@ -47,6 +48,7 @@ export const TREE_ZOOM_STEP = 1.12;
  * @property {() => boolean} on   Project Legacy is on
  * @property {() => any} family   the family played (systems/legacy/family.js), or null
  * @property {() => number} lived   the played member's own minutes lived
+ * @property {() => any} [past]   AUDIT LEGACY III A17: the past played back (a dead or retired member's save), or null
  * @property {(pose:any) => Promise<{width:number, height:number, colors:Uint8Array}|null>} [faces]   a portrait
  * @property {(id:number) => string|null} switchRefusal   why playing `id` is refused, or null
  * @property {() => string|null} [mantleRefusal]   AUDIT LEGACY U4: why the played elder may not pass the mantle now, or null
@@ -123,6 +125,11 @@ export const FAMILY_CSS = `
 .px-sys .fam-hallrow { padding: 7px 10px 8px; border-width: 2px; border-style: solid; box-sizing: border-box; text-align: left; }
 .px-sys .fam-hallrow .fam-makehome { margin-top: 6px; }
 @media (max-width: 720px) { .px-sys .fam-wrap { flex-direction: column; align-items: stretch; } .px-sys .fam-card { max-width: none; flex-basis: auto; max-height: none; } }
+/* AUDIT LEGACY III U3: STACKED BY THE PANE, never the viewport alone - beside the pause rail the detail pane is 380-550px
+   wide from a 721px window up, and the card beside the tree left it a keyhole (74px at 721, its Zoom in clipped out of
+   reach). Under 560px of pane the card goes below the tree, which keeps the whole width */
+.px-sys .fam-page { container: fampage / inline-size; }
+@container fampage (max-width: 560px) { .px-sys .fam-wrap { flex-direction: column; align-items: stretch; } .px-sys .fam-card { max-width: none; flex-basis: auto; max-height: none; } }
 `;
 export function ensureFamilyStyle(doc = typeof document === 'undefined' ? null : document) {
   if (!doc?.getElementById || doc.getElementById(FAMILY_STYLE_ID)) return;
@@ -167,11 +174,16 @@ export function personChips(family, p, livedNow) {
 
 /** A person's age as their card says it: an Enduring house's living against their span ("34 of 90"), anyone's at their
  *  death ("71 at death"); null where the house counts no years (a Bloodline's living - the span is the Enduring
- *  model's, section 6). The card and the character sheet (sheetHouse) read this one line. Pure. */
+ *  model's, section 6). The card and the character sheet (sheetHouse) read this one line. Pure. AUDIT LEGACY III
+ *  A11/F10/U7: the BLOOD's years alone, and a grown one's - the house keeps no years of one wed in (every spouse read
+ *  twenty for life), nor of a child not yet of age (a newborn read "23 of 90"). */
 export function ageWord(family, p, lived) {
+  if ((p.kind ?? 'member') !== 'member' || (p.minor && !p.died)) return null;
   if (p.died) return `${ageOf(p, lived)} at death`;
   return family.model === MODELS.enduring ? `${ageOf(p, lived)} of ${spanOf(p.race)}` : null;
 }
+/** AUDIT LEGACY III U9: where a person's life ended, by how - a fall is "Fell at", a death of years "Died at". */
+const endedAtLabel = (cause) => (cause === 'fell' || cause === 'slain' ? 'Fell at' : 'Died at');
 
 /** The elder's word on the character sheet - the card's Elder chip and its Pass the mantle, and the span spent that
  *  tollLine said at the last rise. */
@@ -190,6 +202,7 @@ export const SHEET_HOUSE_TEXT = Object.freeze({
  */
 export function sheetHouse(prov = _provider) {
   if (!prov?.on?.()) return null;
+  if (prov.past?.()) return null;   // AUDIT LEGACY III A17: the past played back is no one's sheet - the head's facts on its clock
   const family = prov.family?.() ?? null;
   const p = family ? currentOf(family) : null;
   if (!p || p.died) return null;
@@ -238,7 +251,8 @@ function faceBox(el, p, cls = 'fam-face') {
   box.append(glyph);
   const faces = _provider?.faces;
   if (faces && p) {
-    faces({ race: p.race, gender: p.gender, face: p.face }).then((img) => {
+    // AUDIT LEGACY III P17: a townsperson wed in wears their own face (systems/legacy/facePose.js)
+    faces(facePose(p)).then((img) => {
       if (!img?.width || img.colors?.byteLength !== img.width * img.height * 4) return;
       const cv = /** @type {HTMLCanvasElement} */ (el('canvas'));
       const ctx = cv.getContext?.('2d');
@@ -289,7 +303,8 @@ export function drawTreePage(detail, rerender, { el, divider, door = (fn) => fn(
   const top = (id) => at.get(id).y * TREE_ROW_H;
   const mid = (id) => at.get(id).y * TREE_ROW_H + TREE_NODE_H / 2;
   const path = (d, cls = '') => { if (!doc?.createElementNS) return; const p = doc.createElementNS(svgNs, 'path'); p.setAttribute('d', d); if (cls) p.setAttribute('class', cls); svg.append(p); };
-  for (const c of layout.couples) path(`M ${centreX(c.a) + TREE_NODE_W / 2} ${mid(c.a)} H ${centreX(c.b) - TREE_NODE_W / 2}`, 'wed');
+  // a couple's line from the left plate's edge to the right's - an earlier spouse stands left of the member (tree.js)
+  for (const c of layout.couples) { const [l, r] = centreX(c.a) <= centreX(c.b) ? [c.a, c.b] : [c.b, c.a]; path(`M ${centreX(l) + TREE_NODE_W / 2} ${mid(l)} H ${centreX(r) - TREE_NODE_W / 2}`, 'wed'); }
   for (const f of layout.families) {
     const px = f.parents.reduce((s, id) => s + centreX(id), 0) / f.parents.length;
     const py = top(f.parents[0]) + TREE_NODE_H;
@@ -381,7 +396,9 @@ export function drawTreePage(detail, rerender, { el, divider, door = (fn) => fn(
     tool('◎', 'Centre on the one you play', () => { _sel = family.currentId; _pan = null; rerender(); }));
   view.append(tools);
   wrap.append(view, personCard(el, family, personOf(family, _sel), livedNow, rerender, door));
-  detail.append(wrap);
+  const page = el('div', 'fam-page');   // AUDIT LEGACY III U3: the pane the stacking reads (FAMILY_CSS's @container)
+  page.append(wrap);
+  detail.append(page);
   // the first frame lays the pan once the view has a size
   const lay = () => { ensurePan(); apply(); };
   if (typeof requestAnimationFrame === 'function') requestAnimationFrame(lay); else lay();
@@ -407,8 +424,8 @@ function personCard(el, family, p, livedNow, rerender, door) {
   const age = ageWord(family, p, lived);
   if (age) fact('Age', age);
   if (_provider?.date && p.born) fact('Born', _provider.date(p.born));
-  if (p.died && _provider?.date) fact('Died', _provider.date(p.died.at));
-  if (p.died?.place?.loc) fact('Fell at', String(p.died.place.loc));
+  if (p.died && _provider?.date && p.died.cause !== 'gone') fact('Died', _provider.date(p.died.at));   // U7: one gone from the realm died on no day of ours
+  if (p.died?.place?.loc) fact(endedAtLabel(p.died.cause), String(p.died.place.loc));
   if (family.model === MODELS.enduring && (p.toll | 0) > 0) fact('Arkay’s toll', `${p.toll} years`);
   const lives = _provider?.inWorld?.() === false ? null : livesLine(family, p);   // AUDIT LEGACY II B5: never a home the world does not show
   if (lives) fact('Lives', lives);
@@ -465,12 +482,12 @@ function personCard(el, family, p, livedNow, rerender, door) {
     const armed = _armed === 'mantle';
     const b = el('button', `act${armed ? ' primary' : ''}`, armed ? 'Yes - pass the mantle' : 'Pass the mantle');
     b.setAttribute('data-focus', 'fam-act-mantle');   // AUDIT LEGACY II U6
-    b.title = `${p.given} retires to the family seat, and you choose who carries the line on.`;
+    b.title = `${p.given} retires to keep the house, and you choose who carries the line on.`;   // AUDIT LEGACY III F11d: never "to the seat" - where they keep it is the house's (household.js)
     // AUDIT LEGACY U4: why not, said on the card before the press - pressed, the act takes the pause down first
     const why = _provider?.mantleRefusal?.() ?? null;
     if (why && why !== 'none') { /** @type {any} */ (b).disabled = true; b.title = why; card.append(el('p', 'fam-why', why)); }
     b.onclick = () => {
-      if (!armed) { _armed = 'mantle'; _said = { ok: true, text: `${p.given} will retire to the family seat for good. Press again to choose who carries the line on.` }; rerender(); return; }
+      if (!armed) { _armed = 'mantle'; _said = { ok: true, text: `${p.given} will retire for good, to keep the house. Press again to choose who carries the line on.` }; rerender(); return; }
       _armed = null;
       const r = door(() => _provider.passMantle());
       _said = r.ok ? null : { ok: false, text: r.why ?? 'Not now.' };
@@ -519,8 +536,10 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
   fact('Model', modelWord(family.model));
   fact('Seat', family.seat?.loc ? `${family.seat.loc}, ${family.seat.region}` : 'none yet - the first town you stand in');
   fact('Generations', String(1 + family.people.reduce((m, p) => Math.max(m, p.gen | 0), 0)));
+  // AUDIT LEGACY III A15/U9: both counts the blood's - the Fallen counted every spouse, and a player's character gone
+  // from the realm, beside a Living that counted the blood alone
   fact('Living', String(family.people.filter((p) => isAlive(p) && p.kind === 'member').length));
-  fact('Fallen', String(family.people.filter((p) => p.died).length));
+  fact('Fallen', String(fallenOfHouse(family).length));
   if (me) fact('Head of the house', fullNameOf(me.given, me.surname));
   if (prov.date && family.founded) fact('Founded', prov.date(family.founded));
   detail.append(g, el('p', 'px-note', modelLine(family.model)));
@@ -558,19 +577,25 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
   if (prov.livingWorld && !prov.livingWorld()) detail.append(el('p', 'px-note', 'Your family lives in the Living World\'s towns - turn on the Living World (Features, the enhanced screens) to meet them there.'));
   else if (prov.inWorld && !prov.inWorld()) detail.append(el('p', 'px-note', 'Your family keeps out of sight: "Family In World" is off in Project Legacy\'s settings.'));
   else detail.append(el('p', 'px-note', 'Your family lives in the world while you play another of them. Speak with one to play as them.'));
-  const fallen = family.people.filter((p) => p.died).sort((a, b) => (b.died.at ?? 0) - (a.died.at ?? 0));
+  // the house's dead - the blood's, and a spouse's beside them (wed in: said so); one gone from the realm is no death
+  const fallen = family.people.filter((p) => p.died && p.died.cause !== 'gone').sort((a, b) => (b.died.at ?? 0) - (a.died.at ?? 0));
   if (fallen.length) {
     detail.append(el('p', 'fam-h', 'The fallen'));
     const list = el('div', 'fam-hall');
     for (const p of fallen) {
       const row = el('div', 'fam-hallrow');
-      row.append(el('div', 'fam-kin', `${fullNameOf(p.given, p.surname)} - ${identityLine(p)}`),
-        el('div', 'fam-sub', [p.died.cause === 'years' ? 'died of their years' : p.died.cause === 'slain' ? `was slain${p.died.by ? ` by ${p.died.by}` : ''}` : p.died.cause === 'gone' ? 'is gone from the realm' : 'fell', p.died.place?.loc ? `at ${p.died.place.loc}` : '', prov.date ? `on ${prov.date(p.died.at)}` : ''].filter(Boolean).join(' ')));
+      // AUDIT LEGACY III F6: a fall names what struck them down, as the journal does (the revenant's name, died.by)
+      const how = p.died.cause === 'years' ? 'died of their years' : p.died.cause === 'slain' ? `was slain${p.died.by ? ` by ${p.died.by}` : ''}` : `fell${p.died.by ? ` to ${p.died.by}` : ''}`;
+      row.append(el('div', 'fam-kin', `${fullNameOf(p.given, p.surname)} - ${identityLine(p)}${p.kind === 'member' ? '' : ' (wed into the house)'}`),
+        el('div', 'fam-sub', [how, p.died.place?.loc ? `at ${p.died.place.loc}` : '', prov.date ? `on ${prov.date(p.died.at)}` : ''].filter(Boolean).join(' ')));
       list.append(row);
     }
     detail.append(list);
   }
 }
+
+/** The house's fallen as its pages count them: the blood's dead (AUDIT LEGACY III A15). */
+export const fallenOfHouse = (family) => (family?.people ?? []).filter((p) => p.died && p.kind === 'member');
 
 /** THE HALL OF ANCESTORS PAGE: every family this browser keeps. */
 export function drawHallPage(detail, rerender, { el, divider } = /** @type {any} */ ({})) {
@@ -586,7 +611,7 @@ export function drawHallPage(detail, rerender, { el, divider } = /** @type {any}
     const gens = 1 + f.people.reduce((m, p) => Math.max(m, p.gen | 0), 0);
     const head = currentOf(f);
     row.append(el('div', 'fam-kin', `${houseTitle(f.surname)}${f.id === playing ? ' (yours)' : ''}`),
-      el('div', 'fam-sub', `${modelWord(f.model)} - ${gens} ${gens === 1 ? 'generation' : 'generations'}, ${f.people.length} remembered, ${f.people.filter((p) => p.died).length} fallen`),
+      el('div', 'fam-sub', `${modelWord(f.model)} - ${gens} ${gens === 1 ? 'generation' : 'generations'}, ${f.people.length} remembered, ${fallenOfHouse(f).length} fallen`),
       el('div', 'fam-sub', f.ended != null ? `The line ended${prov.date ? ` on ${prov.date(f.ended)}` : ''}.` : head ? `Carried by ${fullNameOf(head.given, head.surname)}.` : ''));
     list.append(row);
   }

@@ -40,7 +40,11 @@ test('LEGACY7 a line: founded, written only past its rev - a stale write answere
   assert.equal(stale.body.error, 'lineage-stale');
   assert.equal(stale.body.rev, 3);
   assert.deepEqual(stale.body.record.people, [{ id: 1 }], 'the stored one, to merge into');
-  assert.deepEqual((await call('/v1/realm/lineage', { id: FAM, record: record(5, [{ id: 1 }, { id: 2 }]) })).body, { ok: true, rev: 5 });
+  // PIN MOVED (AUDIT LEGACY III A2): a write lands only on the copy it was made from (`base`) - past the stored rev alone
+  // is a copy that ran its own counter past a write it never read
+  assert.equal((await call('/v1/realm/lineage', { id: FAM, record: record(9, [{ id: 1 }, { id: 2 }]) })).body.error, 'lineage-stale', 'ahead, but made from nothing it read');
+  assert.equal((await call('/v1/realm/lineage', { id: FAM, record: record(9, [{ id: 1 }, { id: 2 }]), base: 2 })).body.error, 'lineage-stale', 'made from an older copy');
+  assert.deepEqual((await call('/v1/realm/lineage', { id: FAM, record: record(5, [{ id: 1 }, { id: 2 }]), base: 3 })).body, { ok: true, rev: 5 });
   const listed = (await call('/v1/realm/lineages', {})).body.lineages;
   assert.equal(listed.length, 1);
   assert.deepEqual([listed[0].id, listed[0].surname, listed[0].model, listed[0].rev, listed[0].record.people.length], [FAM, 'Hlaalu', 'bloodline', 5, 2]);

@@ -520,7 +520,7 @@ import { isFamilyRes } from '../systems/legacy/household.js';   // LEGACY-HOME: 
 import { legacyOn, legacySettings } from '../systems/legacy/settings.js';
 import { listFamilies, newestSaveOf } from '../systems/legacy/store.js';
 import { nearestTown, nearestTownAnywhere, isTownEntry, loadSearch } from '../systems/legacy/places.js';
-import { setFamilyProvider, raceWord } from '../ui/familyPages.js';   // LEGACY3: the pause window's Family tab
+import { setFamilyProvider, raceWord, identityLine } from '../ui/familyPages.js';   // LEGACY3: the pause window's Family tab
 import { createSuccessionOverlay, successionOpen, createKinOverlay } from '../ui/legacyDoor.js';   // LEGACY3: who carries the line on - AUDIT LEGACY: and the death's own screen while it stands
 import { createFaceLoader } from '../ui/partyPanel.js';   // LEGACY3: a member's portrait, the party HUD's own door
 import { goldPiecesOf as legacyGold, addItem as legacyAddItem, letterOfCredit } from '../systems/inventory.js';   // LEGACY1: the estate
@@ -927,7 +927,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // LEGACY7 (bible/06-Systems/Legacy-Arc.md section 9): ONLINE, PROJECT LEGACY'S LINES ARE THE REALM'S - read into the
   // device's store before any save is restored (a death another device wrote stands here), written after each of the
   // device's writes; and the account's living realm characters, the question "is there a save of this member?" online
-  const legacyRealmLine = params.has('online') && (realmBoot || realmNew) ? createRealmLine({ io: realmIoNow, storage: () => appStorage() }) : null;
+  // AUDIT LEGACY III O2/P1: a line the realm refuses for the record's own sake is said, once (realmLine.js onRefused)
+  const legacyRealmLine = params.has('online') && (realmBoot || realmNew)
+    ? createRealmLine({ io: realmIoNow, storage: () => appStorage(), onRefused: (id, error) => { townTalk.say(LEGACY_TEXT.lineRefused(realmRefusalText(error))); } }) : null;
   /** @type {Set<string> | null} the living realm characters' ids - null unknown (unread: every id is taken to stand) */
   let legacyRealmRoster = null;
   if (legacyRealmLine) {
@@ -1308,7 +1310,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // SEAT1a (Seats-Arc 3.1): every location with a Palace a seat, the three capitals crowns - over the SAME rows, the
   // game's own (a mod's rows never count), so every client derives the same seats (systems/townSeats.js). Online alone.
   const townSeats = deriveTownSeats(_hubRows, { regionNameOf: (r) => maps.getRegionName(r), isHub: (k) => regionHubs.byMapId.has(k) });
-  _hubRows.length = 0;
+  // AUDIT LEGACY III W1: the rows are kept for the Living World's two indices (livingTownsIndex, livingDungeonsIndex -
+  // built at their first ask, far below) and let go once both stand: emptied here, at the boot, every index was empty -
+  // no town for the roads (LW3), no dungeon for the deep (LW6), no town name for an online home of the line
   setSeatTitlePlaces((key) => seatAtMapId(townSeats, key));   // SEAT1c: a seat title worded off the seats this client derived
   /** AUDIT 28 H8: which of a built pixel's boards are bounty boards (systems/bountyBoard.js questBoardIndices), worked out
    *  once a pixel - the count over the boards and the press's targets asked it every frame, a sort each time. A pixel's
@@ -1327,14 +1331,18 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the boot and after each home of mine changed (the registry's `onWrote`); the house's save takes the last read - null
    *  until one landed, which learns nothing and drops nothing (legacyHost.js syncHousesNow). */
   let _legacyOnlineHomes = null;
+  /** AUDIT LEGACY III W5: the read asked last - an older answer landing after it changes nothing (_pinsGen's law). */
+  let _legacyHomesGen = 0;
   function legacyOnlineHomesRead() {
     if (!homesApi || !realmSession) return;
     const me = realmSession.id;
+    const gen = ++_legacyHomesGen;
     homesApi.mine().then((r) => {
-      if (!r?.ok || !Array.isArray(r.data?.homes)) return;
+      if (gen !== _legacyHomesGen || !r?.ok || !Array.isArray(r.data?.homes)) return;
       _legacyOnlineHomes = r.data.homes.filter((h) => h?.character === me).map((h) => ({
         regionIndex: h.region | 0, mapId: h.mapId >>> 0, buildingKey: h.buildingKey | 0,
-        location: [...livingTownsIndex().values()].find((t) => (t.mapId >>> 0) === (h.mapId >>> 0))?.name ?? '',
+        // AUDIT LEGACY III W1: named off the boot's own complete table, the town's by its map id
+        location: _townOfMapId.get(h.mapId >>> 0)?.name ?? '',
       }));
     }).catch(() => {});
   }
@@ -2250,6 +2258,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // or none), asked once a pair in ONE direction (the lower map id first, the other its reverse) so every client walks
   // the same way, a few a frame. A traveller's trip of a cycle never changes, so the book keeps every one it has made.
   let _livingTowns = null;
+  /** AUDIT LEGACY III W1: the game's rows let go once both indices that read them stand. */
+  const releaseHubRows = () => { if (_livingTowns && _livingDungeons) _hubRows.length = 0; };
   const livingTownsIndex = () => {
     if (_livingTowns) return _livingTowns;
     _livingTowns = new Map();
@@ -2264,6 +2274,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         port: hasPort(md.mapId),
       });
     }
+    releaseHubRows();
     return _livingTowns;
   };
   // LW6: THE DUNGEONS an adventurer dives - the game's own rows of a dungeon's kind (a labyrinth, a keep, a ruin, a
@@ -2280,6 +2291,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const d = { mapId: md.mapId >>> 0, name: String(loc.name ?? ''), px: p.x, py: p.y, type: md.locationType, region: loc.regionIndex, blocks: 1, dungeon: true, dungeonType: md.dungeonType ?? 0 };
       _livingDungeons.set(p.y * 1000 + p.x, d); _livingDungeonById.set(d.mapId, d);
     }
+    releaseHubRows();
     return _livingDungeons;
   };
   const _livingDungeonsNear = new Map();
@@ -12857,10 +12869,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     }));
     if (out.newborn) choices.push({ key: 'newborn', who: null, name: `A child of ${fallen.given}`, sub: `Born of the blood, raised in ${legacyHouse(fam)} - a new heir comes of age`, act: 'Raise an heir' });
     const retired = !fallen.died;
-    const final = retired ? `${legacyFullName(fallen)} retires to the family seat` : fallen.died.cause === 'years' ? `${legacyFullName(fallen)} has died of their years` : `${legacyFullName(fallen)} has fallen`;
+    const final = retired ? `${legacyFullName(fallen)} retires to keep the house` : fallen.died.cause === 'years' ? `${legacyFullName(fallen)} has died of their years` : `${legacyFullName(fallen)} has fallen`;   // AUDIT LEGACY III F11d: where they keep it is the house's (household.js)
     const lines = [
       ...(past && past.id !== fallen.id ? [past.died ? LEGACY_TEXT.deadLoad(legacyFullName(past)) : LEGACY_TEXT.retiredLoad(legacyFullName(past))] : []),
-      retired ? `${fallen.given} has carried the house long enough. The mantle passes on.` : choices.length ? LEGACY_TEXT.heir : LEGACY_TEXT.noHeir,
+      // AUDIT LEGACY III F11c: the mod's "your descendant" only where a descendant is offered - a sibling or a parent is kin
+      retired ? `${fallen.given} has carried the house long enough. The mantle passes on.` : out.newborn ? LEGACY_TEXT.heir : choices.length ? LEGACY_TEXT.kin : LEGACY_TEXT.noHeir,
       choices.length ? `${legacyHouse(fam, 'The')} goes on. Who carries the line now?` : `There is no one left of ${legacyHouse(fam)}. The line ends here, and its tree is kept in the Hall of Ancestors.`];
     if (out.estate > 0 && choices.length) lines.push(`The estate - ${out.estate} gold - passes to whoever takes up the name.`);
     const ov = createSuccessionOverlay({
@@ -12900,7 +12913,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (ov) townTalk.showOverlay(ov);
   }
   const legacyFullName = (p) => (p.surname ? `${p.given} ${p.surname}` : p.given); const legacyHouse = (fam, the = 'the') => `${the} house${houseWord(fam?.surname) ? ` of ${houseWord(fam.surname)}` : ''}`;   // LEGACY-NAME: "the house of Sentinel", never "of of" (one line, so the cites below it hold)
-  const legacyIdentity = (p) => `${raceWord(p.race)} ${p.className}${p.characterId ? `, level ${p.level}` : ''}`;
+  const legacyIdentity = (p) => identityLine(p);   // AUDIT LEGACY III A12/F4/U6: the Family tab's own line - one wed in has no career of this house's (every spouse met read "Mage")
   /** LEGACY5: the talk's rows for a Living World resident - their regard of the one played today, the one played's
    *  Personality and Etiquette, the town's name (legacyHost.topicRows). */
   function legacyTopicRows(person) {
@@ -13622,6 +13635,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         },
       });
       for (const m of moved) console.log(`[arena] the online home ${m.from} moved to ${m.to}${m.made ? '' : ' (read again)'}`);
+      if (moved.length) legacyOnlineHomesRead();   // AUDIT LEGACY III W5: a home moved is the line's to learn again (the registry's own write is not its onWrote)
       return moved;
     } catch (e) {
       console.warn('[arena] the displaced online home could not be moved:', e?.message ?? e);
@@ -15989,6 +16003,15 @@ export async function bootWorld(canvas, renderer, params, status) {
     const fam = legacyHost?.family ?? null;
     const me = legacyHost?.current() ?? null;
     const born = fam && me && legacyOn() ? { lineage: fam.id, person: me.id } : null;
+    // AUDIT LEGACY III O2/P1: THE LINE STANDS AT THE REALM FIRST - the service reads the person off it. One the network
+    // kept is asked again, twice; one the realm refused is the reason the door says (its own word, never the birth's
+    // "they cannot take up the line" for a person the realm was never shown)
+    for (let i = 0; born && legacyRealmLine?.unwrittenOf(fam.id) && !legacyRealmLine.refusalOf(fam.id) && i < 2; i++) {
+      await new Promise((r) => { setTimeout(r, 2000 * (i + 1)); });
+      await legacyRealmLine.flush();
+    }
+    const unwritten = born ? legacyRealmLine?.unwrittenOf(fam.id) ?? null : null;
+    if (unwritten) return { ok: false, error: unwritten };
     let made = null;
     for (let i = 0; i < 3; i++) {
       made = await realmCreate(io, playerEntity.name || 'Traveller', realmSummaryOf(playerEntity), born);
@@ -18982,7 +19005,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     };
     // DUEL1: A DUEL FRAME AT ME - the law decides (net/duelSession.js); `sub` the sender's account as the relay stamped it
     online.onDuel = (id, d, sub = null) => { duelMgr.onFrame(id, d, sub); };
-    online.onWed = (id, d, sub = null) => { wedMgr.onFrame(id, d, sub); };   // LEGACY7 part three: a wed frame at me - the wedding's law decides
+    online.onWed = (id, d, sub = null, sc = null) => { wedMgr.onFrame(id, d, sub, sc); };   // LEGACY7 part three: a wed frame at me - the wedding's law decides; AUDIT LEGACY III O1: `sc` their realm character as the relay stamped it
     online.onGate = (g) => gateLink?.word(g);   // WB3b: the court's room's word about its boss
     online.onSerpent = (w) => serpentLink?.word(w);   // SERPENT1: the sea serpent's cell's word (on my cell's socket or a halo's) - its fight, its swim, its blows, my receipt
     online.onRaid = (f, room) => raidRelayWord(f, room);   // RAID3: a town cell's word about its raid - the ledger, the cleanse, my receipt
@@ -19746,12 +19769,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   // The handshake is net/wedSession.js's, the union the account service's (server-account/src/legacy.js realmWed), the
   // record the house's (scenes/legacyHost.js wedPlayer); this block connects them to this scene's socket, prompt and card.
   /** Why I cannot wed now (a WED_WHY code), or null - the house's law, on a relay that carries the frame. */
-  const wedCan = () => (online?.status === 'open' && online.wedOk ? (legacyHost?.wedRefusal() ?? 'house') : 'busy');
+  // AUDIT LEGACY III W3: and never while lying dead - an Enduring death in the temple, its rise still to come, wed (the
+  // duel's own law, duelCan's 'dead'; a wedding has no word of its own for it, so 'busy')
+  const wedCan = () => (playerEntity.health <= 0 || modes?.deathUp?.() ? 'busy'
+    : online?.status === 'open' && online.wedOk ? (legacyHost?.wedRefusal() ?? 'house') : 'busy');
   /** The proposal at me on the town's Yes/No box (the window it stands for, so a proposal taken back closes it). */
   let _wedBox = null;
   let _wedBoxPeer = null;
   const wedAsk = (peerId) => {
-    if (townTalk.overlayActive && !townTalk.overlayDone) return false;   // under another window: the card's button answers it
+    // under another window: the card's button answers it - the street's, AUDIT LEGACY III W3: or the building's own (the
+    // temple's pause, its death, its windows - `modes.overlayHeld`), as a notice waits (showNotice)
+    if ((townTalk.overlayActive && !townTalk.overlayDone) || (modes?.overlayHeld ?? false) || (modes?.deathUp?.() ?? false)) return false;
     const p = online?.peers.get(peerId);
     const house = p?.house ? houseLine(p.house) : null;
     _wedBoxPeer = peerId;
@@ -19776,7 +19804,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     selfId: () => online?.id ?? '',
     can: wedCan,
     peerCan: (id) => !!online?.peers.get(id)?.house,   // their row wears a house: the realm signed one into their token
-    half: (sid, partner) => (realmSession && !realmSession.lost ? realmSession.wed(sid, partner) : Promise.resolve({ ok: false, error: 'realm-only' })),
+    half: (sid, partner, partnerChar, opts) => (realmSession && !realmSession.lost ? realmSession.wed(sid, partner, partnerChar, opts) : Promise.resolve({ ok: false, error: 'realm-only' })),
     onPrompt: (id) => { wedAsk(id); },
     onUnprompt: (id) => wedUnask(id),
     onWed: (union) => { legacyHost?.wedPlayer(union); },
@@ -22442,6 +22470,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     on: () => legacyOn(),
     family: () => legacyHost?.family ?? null,
     lived: () => legacyHost?.lived() ?? 0,
+    past: () => legacyHost?.past ?? null,   // AUDIT LEGACY III A17: the past played back - no sheet of the head's on its clock
     faces: legacyFaces,
     switchRefusal: (id) => legacyHost?.switchRefusal(id) ?? 'none',
     switchTo: (id) => legacySaid(legacyHost?.switchTo(id) ?? { ok: false }),
@@ -27119,6 +27148,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       ambience.setPreset(presetForExterior(heardWeather(), isNight(minuteNow())));   // DISC9: the word the street last heard - the one truth Better Ambience's indoor rain reads too
       ambience.update(dt, { inside: true, underground: modes.mode === 'dungeon', indoorRainSource: betterAmbience.rainPlaying() });
       if (livingRoads) livingRoads.clear();   // LW3: indoors, underground - the road's bodies freed with the open world they stood in
+      familyStreet?.clear();   // AUDIT LEGACY III W6: the line's street rigs too
       livingWays.frame(); livingMemoFresh();   // AUDIT-E2: the ways asked indoors too - a load made in a tavern or below asked once and never again
       livingDiversStep(now);   // LW6: underground, the companies diving here met
       livingRemainsStep(now);   // LW6b: ...and the dead the deep kept there
@@ -28970,7 +29000,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         livePersonBatches.push(batch);
       }
     }
-    if (familyStreet) { familyStreet.end(dt, cam.pos); livePersonBatches.push(...familyStreet.batches()); }
+    // AUDIT LEGACY III W4: held under a talk window, as the street is (the member met walked on the spot behind their card)
+    if (familyStreet) { familyStreet.end(townTalk.overlayActive ? 0 : dt, cam.pos); livePersonBatches.push(...familyStreet.batches()); }
     // LW3: THE ROADS - the living world's parties near, in file by day and about their fires by night (scenes/
     // livingRoads.js), on the ground and grown under the Overworld; the planner asked a few ways a frame
     livingWays.frame(); livingMemoFresh();   // LW3: a new network, new ways (AUDIT-B8: and the memo's bound)

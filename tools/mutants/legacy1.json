@@ -138,8 +138,8 @@
   {
     "name": "LEGACY3-U5-tree-flat",
     "file": "src/systems/legacy/tree.js",
-    "old": "    placed.set(p.id, { x: left, y: p.gen });\n    nodes.push({ id: p.id, x: left, y: p.gen });",
-    "new": "    placed.set(p.id, { x: left, y: 0 });\n    nodes.push({ id: p.id, x: left, y: 0 });",
+    "old": "{ placed.set(q.id, { x: at, y: p.gen }); nodes.push({ id: q.id, x: at, y: p.gen }); at += 1; }",
+    "new": "{ placed.set(q.id, { x: at, y: 0 }); nodes.push({ id: q.id, x: at, y: 0 }); at += 1; }",
     "tests": [
       "test/legacy1_family.test.js"
     ]

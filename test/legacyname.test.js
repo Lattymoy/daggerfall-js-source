@@ -3,8 +3,10 @@
 // surname is the founder's (their name's last word, or 'of <seat>' when they have none)". It was applied only AT THE
 // FOUNDING, and a new character founds in Privateer's Hold, where no town stands: the seat was noted at the first town and
 // the house stayed nameless for good - "The House of " on every page, no house under the name online, its siblings with
-// no surname. And a seat's house said itself twice ("The House of of Sentinel"); the town's news doubled a member's
-// surname ("Ysolde Hlaalu Hlaalu, gone.").
+// no surname. And a seat's house said itself twice ("The House of of Sentinel"); the town's news said "{who} {house}",
+// which read "Tlist Sentinel" for a seat's house. AUDIT LEGACY III A16/F2: this header said the news doubled a member's
+// surname ("Ysolde Hlaalu Hlaalu, gone.") - no town ever said it: the renderer fills `{who}` with the FIRST name
+// (systems/livingWorld/meetups.js, `firstNameOf`, since LW4).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -15,7 +17,7 @@ import { mergeFacts } from '../src/systems/legacy/store.js';
 import { newsFor, noteNews } from '../src/systems/legacy/influence.js';
 import { heirloomLine } from '../src/systems/legacy/heirloom.js';
 import { MARRIAGE_TEXT } from '../src/systems/legacy/marriage.js';
-import { KIN_NEWS, fillLine } from '../src/systems/livingWorld/lines.js';
+import { KIN_NEWS, fillLine, firstNameOf } from '../src/systems/livingWorld/lines.js';
 import { sheetHouse, houseTitle } from '../src/ui/familyPages.js';
 import { _resetModSaveData } from '../src/systems/modSaveData.js';
 import { setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
@@ -105,11 +107,14 @@ test('LEGACY-NAME the words: a seat\'s house says itself once - the pages, the s
   noteNews(f, 'died', 'Janome of Sentinel', 10, SENTINEL.mapId);
   const [item] = newsFor(f, SENTINEL.mapId, 20);
   assert.equal(item.house, 'Sentinel', 'the news says House Sentinel, never House of Sentinel');
-  // no line of the house's news says the member's surname twice: {who} is the whole name
+  // no line of the house's news says "{who} {house}" - "Tlist Sentinel" for a seat's house. PIN MOVED (AUDIT LEGACY III
+  // A16/F2): `{who}` is filled as the renderer fills it, with the member's FIRST name (meetups.js firstNameOf) - this pin
+  // filled the whole name, which no town passes, and the record called the old line a doubled surname
   for (const [kind, scripts] of Object.entries(KIN_NEWS)) {
     for (const s of scripts) for (const line of s) assert.doesNotMatch(line, /\{who\} \{house\}/, `${kind}: "${line}"`);
   }
-  assert.equal(fillLine(KIN_NEWS.died[2][0], { who: 'Ysolde Hlaalu', house: 'Hlaalu' }), 'Ysolde Hlaalu, gone. I saw them in the market not a week past.');
+  assert.equal(fillLine(KIN_NEWS.died[2][0], { who: firstNameOf('Ysolde Hlaalu'), house: 'Hlaalu' }), 'Ysolde, gone. I saw them in the market not a week past.');
+  assert.match(rd('src/systems/livingWorld/meetups.js'), /who: told \? firstNameOf\(told\.item\.who\) : null/, 'the renderer\'s own fill');
   // the pages read the one title (by source - drawn in test/legacysheet and test/legacy3_familytab)
   const pages = rd('src/ui/familyPages.js');
   assert.doesNotMatch(pages, /House of \$\{(family|f)\.surname\}/, 'no page says the raw surname after "House of"');

@@ -150,7 +150,7 @@ test('LEGACY7 the host online: a tombstone refused is said, and asked again befo
   assert.equal(w.booted.length, 1, 'heard: carried on');
 });
 
-test('LEGACY7 the host online: a character founded at a load (no chargen answer) is Enduring whatever the Mods pane says - never a permadeath they did not choose', () => {
+test('LEGACY7 the host online: a character founded at a load (no chargen answer) is Enduring whatever its Features tile says - never a permadeath they did not choose', () => {
   _resetModSaveData();
   _resetModSettings();
   setModSetting(LEGACY_MOD, 'Legacy.Model', 1);
@@ -163,7 +163,7 @@ test('LEGACY7 the host online: a character founded at a load (no chargen answer)
   const on = mk(true);
   assert.equal(on.found().model, MODELS.enduring, 'online: Enduring');
   const off = mk(false);
-  assert.equal(off.found().model, MODELS.bloodline, 'offline: the Mods pane\'s (D9)');
+  assert.equal(off.found().model, MODELS.bloodline, 'offline: its Features tile\'s (D9)');
   _resetModSettings();
 });
 

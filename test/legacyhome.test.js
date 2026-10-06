@@ -294,7 +294,7 @@ test('LEGACY-HOME: a save made in a house of the line PARKS the member there; on
   assert.equal(homeOf(f, f.people[0]), null);
 });
 
-test('LEGACY-HOME: met in the world - who they are, their greeting, and why Play as is refused (a fight, online, a retired elder)', () => {
+test('LEGACY-HOME: met in the world - who they are, their greeting, and why Play as is refused (a fight, a retired elder - AUDIT LEGACY III F13: online it is open)', () => {
   _resetModSettings();
   const { host, w } = homeWorld();
   const f = host.family;

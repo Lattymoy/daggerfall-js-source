@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS lineages (
 ALTER TABLE realm_characters ADD COLUMN lineage_id TEXT;
 ALTER TABLE realm_characters ADD COLUMN person_id INTEGER;
 ALTER TABLE realm_characters ADD COLUMN dead_at INTEGER;
+-- AUDIT LEGACY III O6: and why ('fell' or 'retired') - the first stamp's word, which a retry keeps
+ALTER TABLE realm_characters ADD COLUMN dead_why TEXT;
 
 CREATE UNIQUE INDEX IF NOT EXISTS realm_characters_person ON realm_characters (player, lineage_id, person_id) WHERE lineage_id IS NOT NULL;
 
@@ -59,13 +61,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS realm_characters_person ON realm_characters (p
 -- person's sex, race and face off their own line) is kept as it stood at
 -- the wedding - what the other's house records of them, even after a
 -- delete. A half older than legacy.js WED_HALF_LIFE_S is nobody's word
--- any more.
+-- any more. AUDIT LEGACY III O1: a half names the other's CHARACTER too
+-- (`partner_char`, the relay's verified stamp of the one the player saw),
+-- and the union is made only when each half names the other's.
 CREATE TABLE IF NOT EXISTS realm_wed_halves (
-  sid     TEXT    NOT NULL,
-  player  TEXT    NOT NULL,
-  char_id TEXT    NOT NULL,
-  partner TEXT    NOT NULL,
-  at      INTEGER NOT NULL,
+  sid          TEXT    NOT NULL,
+  player       TEXT    NOT NULL,
+  char_id      TEXT    NOT NULL,
+  partner      TEXT    NOT NULL,
+  partner_char TEXT    NOT NULL,
+  at           INTEGER NOT NULL,
   PRIMARY KEY (sid, player)
 );
 CREATE TABLE IF NOT EXISTS realm_unions (
@@ -83,3 +88,6 @@ CREATE TABLE IF NOT EXISTS realm_unions (
 );
 CREATE INDEX IF NOT EXISTS realm_unions_a ON realm_unions (a_char);
 CREATE INDEX IF NOT EXISTS realm_unions_b ON realm_unions (b_char);
+-- AUDIT LEGACY III O9: an account's unions are read at every boot and every ten minutes - by its two sides' accounts
+CREATE INDEX IF NOT EXISTS realm_unions_ap ON realm_unions (a_player, wed_at);
+CREATE INDEX IF NOT EXISTS realm_unions_bp ON realm_unions (b_player, wed_at);

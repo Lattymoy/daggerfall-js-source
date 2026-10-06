@@ -101,8 +101,8 @@
   {
     "name": "ARENA4b-TRUST-NAMED-DROPPED",
     "file": "server/src/index.js",
-    "old": "gio: c.i, ar: c.ar, cl: c.cl, ...house };",
-    "new": "gio: c.i, ar: c.ar, ...house };",
+    "old": "gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci };",
+    "new": "gio: c.i, ar: c.ar, ...house, ci: c.ci };",
     "tests": [
       "test/arena4b_trust.test.js"
     ],

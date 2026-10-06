@@ -4,10 +4,13 @@
 // integration with permadeath (Bloodline) or non-permadeath (Enduring)".
 //
 // THE LINE (`lineages`, migration 0084): a family an account founded online, its record the client's JSON - the family
-// law is the client's (src/systems/legacy/), and the service keeps the copy every device reads. A write lands only past
-// the stored `rev`; a stale one is answered with the stored record, which the client merges its facts into (store.js
-// mergeFacts: a death is only ever added) and writes again. The service reads a record for two things alone - the
-// person a new realm character is born as, and nothing else.
+// law is the client's (src/systems/legacy/), and the service keeps the copy every device reads. A write lands only on
+// the copy it was made from (`base`, the stored rev the device last read - AUDIT LEGACY III A2, the realm's half) and
+// past it; a stale one is answered with the stored record, which the client merges its facts into (store.js
+// mergeFacts: a death is only ever added) and writes again. The service reads a record for what it must answer itself:
+// the person a new realm character is born as, the house a realm character wears (the mint's token, the roster's tile, a
+// wedding's card) - and the deaths a write adds (AUDIT LEGACY III W2: a member of the line whose realm character still
+// stood is tombstoned by the write that first says it).
 //
 // THE TOMBSTONE (`realm_characters.dead_at`): a Bloodline's death - or an Enduring line's last, its years spent - is
 // stamped here under the playing tab's lease. From then the character is never joined, checkpointed or traded again
@@ -21,12 +24,19 @@
 
 import { houseOfRecord } from '../../src/net/houseLaw.js';   // LEGACY7 part two: the house a member wears online
 import { checkName } from '../../src/net/nameFilter.js';   // ...through the name filter, as a guild's name is
-import { ID_RE } from '../../src/net/identityToken.js';   // LEGACY7 part three: the other's account, by the token's own shape
+import { ID_RE, REALM_CHARACTER_RE } from '../../src/net/identityToken.js';   // LEGACY7 part three: the other's account, by the token's own shape; AUDIT LEGACY III O1: and its realm character
+import { guildMemberDead } from './guilds.js';   // AUDIT LEGACY III O5: a tombstone's guild seat handed on
 
 /** A family's id, as the client mints it (src/systems/legacy/family.js mintFamilyId). */
 export const LINEAGE_ID_RE = /^fam-[0-9a-z]{1,12}-[0-9a-z]{6}$/;
-/** A record's bound, in bytes - a family of generations with its remains and news fits in a fraction of it. */
+/** A record's bound, in bytes. A played member costs some four kilobytes (their standing, their look, their career);
+ *  a line of a dozen generations, its spouses and children, fits in it (AUDIT LEGACY III P1 measured it). */
 export const LINEAGE_MAX_BYTES = 128 * 1024;
+/** AUDIT LEGACY III O2/P1: THE LINEAGE ROUTE'S OWN BODY BOUND - a record at its bound and the write's envelope. Every
+ *  other JSON route reads 4 KiB (service.js MAX_BODY_BYTES), and the line's route read the same: a played founder's
+ *  first save passed it, and from then the realm held the founding copy for good (every write refused 'body', its
+ *  heirs never born online). */
+export const LINEAGE_BODY_MAX = LINEAGE_MAX_BYTES + 1024;
 /** The people a record may hold. */
 export const LINEAGE_PEOPLE_MAX = 400;
 /** The lines an account may hold online. */
@@ -35,8 +45,8 @@ export const LINEAGES_MAX = 40;
 export const LINEAGE_SURNAME_MAX = 60;
 export const LINEAGE_MODELS = Object.freeze(['bloodline', 'enduring']);
 
-/** A record as the service keeps it: a JSON object of the family's shape for `id` - or null. */
-export function lineageRecordOf(/** @type {unknown} */ record, /** @type {string} */ id) {
+/** A record's shape and its size in bytes, whatever the size - or null. */
+function recordShapeOf(/** @type {unknown} */ record, /** @type {string} */ id) {
   if (!record || typeof record !== 'object' || Array.isArray(record)) return null;
   const r = /** @type {any} */ (record);
   if (r.v !== 1 || r.id !== id || !Number.isSafeInteger(r.rev) || r.rev < 1) return null;
@@ -44,7 +54,12 @@ export function lineageRecordOf(/** @type {unknown} */ record, /** @type {string
   if (typeof r.surname !== 'string' || r.surname.length > LINEAGE_SURNAME_MAX || !LINEAGE_MODELS.includes(r.model)) return null;
   if (!r.people.every((p) => p && typeof p === 'object' && Number.isSafeInteger(p.id) && p.id >= 0)) return null;
   const text = JSON.stringify(r);
-  return new TextEncoder().encode(text).byteLength <= LINEAGE_MAX_BYTES ? { text, rev: r.rev, surname: r.surname, model: r.model } : null;
+  return { text, rev: r.rev, surname: r.surname, model: r.model, bytes: new TextEncoder().encode(text).byteLength };
+}
+/** A record as the service keeps it: a JSON object of the family's shape for `id`, within its bound - or null. */
+export function lineageRecordOf(/** @type {unknown} */ record, /** @type {string} */ id) {
+  const r = recordShapeOf(record, id);
+  return r && r.bytes <= LINEAGE_MAX_BYTES ? { text: r.text, rev: r.rev, surname: r.surname, model: r.model } : null;
 }
 
 const parsed = (/** @type {string} */ text) => { try { return JSON.parse(text); } catch { return null; } };
@@ -65,7 +80,7 @@ export function houseOn(/** @type {string} */ recordText, /** @type {unknown} */
  * @param {any} ctx @param {string} playerId @param {unknown} id
  */
 export async function realmHouseOf({ db }, playerId, id) {
-  if (typeof id !== 'string' || !/^r[0-9a-f]{20}$/.test(id)) return null;
+  if (typeof id !== 'string' || !REALM_CHARACTER_RE.test(id)) return null;
   const row = await db.prepare('SELECT r.person_id AS person, l.record AS record FROM realm_characters r JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id'
     + ' WHERE r.id = ? AND r.player = ? AND r.dead_at IS NULL').bind(id, playerId).first();
   return row ? houseOn(row.record, row.person) : null;
@@ -79,33 +94,76 @@ export async function listLineages({ db }, /** @type {string} */ playerId) {
 }
 
 /**
- * A LINE WRITTEN - founded, or a newer record of one. Lands only past the stored rev (asked IN the write); a line past
- * LINEAGES_MAX is refused, never one already held. Answers `{ ok, rev }`, `{ error: 'lineage-stale', rev, record }` (the stored
- * one, to merge into and write again), or `{ error }`: 'body', 'too-many-lineages'. The model is the founder's, for
- * good: a record that says another is refused ('lineage-model').
- * @param {any} ctx @param {string} playerId @param {{ id: unknown, record: unknown }} at
+ * A LINE WRITTEN - founded, or a newer record of one. AUDIT LEGACY III A2 (the realm's half): lands only on the copy it
+ * was made from - `base`, the stored rev the device last read (the list's, its last write's, or the stale answer's) -
+ * and past it, both asked IN the write. A copy made from an older one is stale whatever its own rev says: a device that
+ * touched its copy twice ran its counter past the stored one without ever reading it, and "past the stored rev" alone
+ * wrote it over a death another device had just written. A write with no `base` founds the line, or is stale. A line
+ * past LINEAGES_MAX is refused, never one already held. Answers `{ ok, rev }`, `{ error: 'lineage-stale', rev, record }`
+ * (the stored one, to merge into and write again on its rev), or `{ error }`: 'body', 'lineage-too-large' (AUDIT LEGACY
+ * III O2/P1: a record past LINEAGE_MAX_BYTES - its own word, never the shape's 'body'), 'too-many-lineages'. The model
+ * is the founder's, for good: a record that says another is refused ('lineage-model'). A write that adds a death to the
+ * line tombstones that member's realm character (W2, entombLineDead).
+ * @param {any} ctx @param {string} playerId @param {{ id: unknown, record: unknown, base?: unknown }} at
  */
-export async function putLineage({ db, nowS }, playerId, { id, record }) {
+export async function putLineage({ db, nowS }, playerId, { id, record, base = null }) {
   if (!playerId || typeof id !== 'string' || !LINEAGE_ID_RE.test(id)) return { error: 'body' };
-  const rec = lineageRecordOf(record, id);
+  const rec = recordShapeOf(record, id);
   if (!rec) return { error: 'body' };
+  if (rec.bytes > LINEAGE_MAX_BYTES) return { error: 'lineage-too-large' };
+  if (base !== null && !(Number.isSafeInteger(base) && /** @type {number} */ (base) >= 0)) return { error: 'body' };
   const had = await db.prepare('SELECT rev, model, record FROM lineages WHERE player = ? AND id = ?').bind(playerId, id).first();
   if (had) {
     if (had.model !== rec.model) return { error: 'lineage-model' };
-    const moved = await db.prepare('UPDATE lineages SET record = ?, rev = ?, surname = ?, updated_at = ? WHERE player = ? AND id = ? AND rev < ?')
-      .bind(rec.text, rec.rev, rec.surname, nowS, playerId, id, rec.rev).run();
-    if (moved.meta.changes) return { ok: true, rev: rec.rev };
-    const now = await db.prepare('SELECT rev, record FROM lineages WHERE player = ? AND id = ?').bind(playerId, id).first();
-    return { error: 'lineage-stale', rev: now?.rev ?? had.rev, record: parsed(now?.record ?? had.record) };
+    const moved = await db.prepare('UPDATE lineages SET record = ?, rev = ?, surname = ?, updated_at = ? WHERE player = ? AND id = ? AND rev = ? AND rev < ?')
+      .bind(rec.text, rec.rev, rec.surname, nowS, playerId, id, base ?? -1, rec.rev).run();
+    if (moved.meta.changes) {
+      await entombLineDead({ db, nowS }, playerId, id, had.record, /** @type {any} */ (record));
+      return { ok: true, rev: rec.rev };
+    }
+    return staleLine(db, playerId, id, rec.model);
   }
   const wrote = await db.prepare(
     'INSERT OR IGNORE INTO lineages (player, id, surname, model, record, rev, created_at, updated_at)'
     + ' SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM lineages WHERE player = ?) < ?',
   ).bind(playerId, id, rec.surname, rec.model, rec.text, rec.rev, nowS, nowS, playerId, LINEAGES_MAX).run();
-  if (wrote.meta.changes) return { ok: true, rev: rec.rev };
-  // a race founded it between the read and the write - written again as a newer record would be
-  return (await db.prepare('SELECT 1 FROM lineages WHERE player = ? AND id = ?').bind(playerId, id).first())
-    ? putLineage({ db, nowS }, playerId, { id, record }) : { error: 'too-many-lineages' };
+  if (wrote.meta.changes) {
+    await entombLineDead({ db, nowS }, playerId, id, null, /** @type {any} */ (record));
+    return { ok: true, rev: rec.rev };
+  }
+  // a race founded it between the read and the write - the founding is another device's: stale, to merge and write again
+  return (await staleLine(db, playerId, id, rec.model)) ?? { error: 'too-many-lineages' };
+}
+
+/** The stored line, answered to a write that was not made from it - or null when there is none. */
+async function staleLine(/** @type {any} */ db, /** @type {string} */ playerId, /** @type {string} */ id, /** @type {string} */ model) {
+  const now = await db.prepare('SELECT rev, model, record FROM lineages WHERE player = ? AND id = ?').bind(playerId, id).first();
+  if (!now) return null;
+  return now.model !== model ? { error: 'lineage-model' } : { error: 'lineage-stale', rev: now.rev, record: parsed(now.record) };
+}
+
+/**
+ * AUDIT LEGACY III W2: THE LINE'S OWN WORD ON ITS DEAD. A death the line records of a member whose realm character
+ * still stands - struck down in the street by the one played (legacyHost.js kinSlain), where no tab of theirs held a
+ * lease to say it - is the realm's too: the write that first carries it tombstones their character (entomb: the union
+ * ended, the guild seat handed on), as a retirement in an Enduring line retires theirs. The character is the one the
+ * realm bound to that person at its birth (`lineage_id`, `person_id` - never the record's own word on who played them),
+ * this account's own, once (`dead_at IS NULL`); a death is never taken back (mergeFacts).
+ * @param {any} ctx @param {string} playerId @param {string} lineageId @param {string|null} oldText @param {any} record
+ */
+async function entombLineDead({ db, nowS }, playerId, lineageId, oldText, record) {
+  const before = new Map(((oldText ? parsed(oldText) : null)?.people ?? []).map((/** @type {any} */ p) => [p?.id, p]));
+  for (const p of record?.people ?? []) {
+    const why = p?.died ? 'fell' : p?.retired != null && record.model === 'enduring' ? 'retired' : null;
+    if (!why) continue;
+    const was = before.get(p.id);
+    if (was && (why === 'fell' ? !!was.died : was.retired != null)) continue;   // the stored copy said it already
+    const row = await db.prepare('SELECT id, dead_at, dead_why FROM realm_characters WHERE player = ? AND lineage_id = ? AND person_id = ?')
+      .bind(playerId, lineageId, p.id).first();
+    if (!row) continue;
+    if (row.dead_at == null) await entomb(db, playerId, row.id, nowS, why);
+    else if (why === 'fell' && row.dead_why === 'retired') await fellRetired(db, playerId, row.id, nowS);
+  }
 }
 
 /**
@@ -128,36 +186,84 @@ export async function lineageBirthRefusal(db, playerId, lineage, person) {
 
 /**
  * THE TOMBSTONE: the playing tab's character is dead for good - stamped under its lease, which goes with it. A second
- * stamp is the first's (idempotent: a retry whose answer was lost). `why` - 'fell' (a death, the default) or 'retired'
- * (an Enduring elder's mantle passed: never played again, but alive at the seat). LEGACY7 part three: a death ends the
- * character's union with another player's (ended 'died'); a retirement keeps it - the elder lives on, wed. Answers
- * `{ ok, deadAt }` or `{ error }`: 'body', 'no-realm-character', 'lease'.
+ * stamp is the first's (idempotent: a retry whose answer was lost - finishing what it may have left undone, by the
+ * first stamp's word). `why` - 'fell' (a death, the default) or 'retired' (an Enduring elder's mantle passed: never
+ * played again, but alive at the seat). AUDIT LEGACY III O6: a retirement is an ENDURING line's alone - the service
+ * holds the line's model, and a Bloodline's fall said 'retired' kept its union standing with a widow(er) the realm knew
+ * was widowed, who could never wed again. LEGACY7 part three: a death ends the character's union with another player's
+ * (ended 'died'); a retirement keeps it - the elder lives on, wed. Answers `{ ok, deadAt }` or `{ error }`: 'body',
+ * 'no-realm-character', 'lease'.
  * @param {any} ctx @param {string} playerId @param {{ id: unknown, lease: unknown, why?: unknown }} at
  */
 export async function realmDie({ db, nowS }, playerId, { id, lease, why = 'fell' }) {
-  if (typeof id !== 'string' || !/^r[0-9a-f]{20}$/.test(id) || typeof lease !== 'string' || !/^[0-9a-f]{32}$/.test(lease)) return { error: 'body' };
+  if (typeof id !== 'string' || !REALM_CHARACTER_RE.test(id) || typeof lease !== 'string' || !/^[0-9a-f]{32}$/.test(lease)) return { error: 'body' };
   if (why !== 'fell' && why !== 'retired') return { error: 'body' };
-  const row = await db.prepare('SELECT lease, dead_at FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  const row = await db.prepare('SELECT r.dead_at AS dead_at, r.dead_why AS dead_why, l.model AS model FROM realm_characters r'
+    + ' LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? AND r.player = ?').bind(id, playerId).first();
   if (!row) return { error: 'no-realm-character' };
+  if (why === 'retired' && row.model !== 'enduring') return { error: 'body' };
   if (row.dead_at != null) {
-    if (why === 'fell') await endUnionsOf(db, id, row.dead_at, 'died').run();   // a retry finishes what a lost answer may have left undone
+    // a death after a retirement is a death (the one way the word moves - fellRetired); anything else, the first word's
+    if (!(why === 'fell' && row.dead_why === 'retired' && (await fellRetired(db, playerId, id, nowS)))) {
+      await afterTomb(db, playerId, id, row.dead_at, row.dead_why === 'retired' ? 'retired' : 'fell');
+    }
     return { ok: true, deadAt: row.dead_at };
   }
-  const took = await db.prepare('UPDATE realm_characters SET dead_at = ?, lease = NULL, updated_at = ? WHERE id = ? AND player = ? AND lease = ? AND dead_at IS NULL')
-    .bind(nowS, nowS, id, playerId, lease).run();
-  if (!took.meta.changes) return { error: 'lease' };
-  if (why === 'fell') await endUnionsOf(db, id, nowS, 'died').run();   // LEGACY7 part three: a union ends with the death
+  if (!(await entomb(db, playerId, id, nowS, why, lease))) return { error: 'lease' };
   return { ok: true, deadAt: nowS };
+}
+
+/**
+ * AUDIT LEGACY III O5/W2: THE TOMBSTONE STAMPED - one routine for the playing tab's death (realmDie, under its lease)
+ * and the line's own word on its dead (entombLineDead, a member nobody was playing). The row takes its death, why
+ * (O6: the first stamp's word, which a retry keeps) and loses its lease; then afterTomb. Answers whether this call
+ * stamped it.
+ * @param {any} db @param {string} playerId @param {string} id @param {number} nowS @param {'fell'|'retired'} why
+ * @param {string|null} [lease] the playing tab's - none for the line's word
+ */
+async function entomb(db, playerId, id, nowS, why, lease = null) {
+  const took = await db.prepare(`UPDATE realm_characters SET dead_at = ?, dead_why = ?, lease = NULL, updated_at = ? WHERE id = ? AND player = ? AND dead_at IS NULL${lease == null ? '' : ' AND lease = ?'}`)
+    .bind(nowS, why, nowS, id, playerId, ...(lease == null ? [] : [lease])).run();
+  if (!took.meta.changes) return false;
+  await afterTomb(db, playerId, id, nowS, why);
+  return true;
+}
+
+/** A RETIRED ELDER'S DEATH, after: the tombstone's word moves from 'retired' to 'fell' - the one way it ever moves, a
+ *  death added - and the union kept for the living elder ends with them. Answers whether it moved. */
+async function fellRetired(/** @type {any} */ db, /** @type {string} */ playerId, /** @type {string} */ id, /** @type {number} */ nowS) {
+  const moved = await db.prepare("UPDATE realm_characters SET dead_why = 'fell', updated_at = ? WHERE id = ? AND player = ? AND dead_why = 'retired'").bind(nowS, id, playerId).run();
+  if (!moved.meta.changes) return false;
+  await afterTomb(db, playerId, id, nowS, 'fell');
+  return true;
+}
+
+/**
+ * WHAT A TOMBSTONE TAKES WITH IT - each its own write, each idempotent, so a retry of the stamp finishes what a lost
+ * answer left undone. A death ends the character's union ('died'; a retirement keeps it). AUDIT LEGACY III O5: its
+ * guild place goes and its seat is handed on (guilds.js guildMemberDead) - a fallen master stayed master for good, the
+ * guild never succeeded, the dead's account still acting as one; its half of a wedding is nobody's word any more. Its
+ * Renown track stays, the line's story, but no longer holds a place (renownTracks.js renownHeldSql).
+ * @param {any} db @param {string} playerId @param {string} id @param {number} atS @param {'fell'|'retired'} why
+ */
+async function afterTomb(db, playerId, id, atS, why) {
+  if (why === 'fell') await endUnionsOf(db, id, atS, 'died').run();
+  await guildMemberDead(db, playerId, id);
+  await db.prepare('DELETE FROM realm_wed_halves WHERE player = ? AND char_id = ?').bind(playerId, id).run();
 }
 
 // ═══ LEGACY7 part three: TWO PLAYERS WED ═══════════════════════════════════════════════════════════════════════════════
 //
 // Two realm characters of Project Legacy lines, standing in one temple, wed by both their words: each client posts its
 // HALF of one wedding (`sid`, the handshake the two agreed on the relay's `wed` frame - net/wire.js validWedData),
-// naming its own character under its playing lease and the other's ACCOUNT (the relay's verified `sub`, never a client's
-// word about who the other is). The union is made only when both halves are here and each names the other - and only
-// for two living characters of lines, each wed to nobody. Each side's CARD is kept on the union as it stood at the
-// wedding - what the other's house records of them. It ends with either's death or delete; a retirement keeps it.
+// naming its own character under its playing lease and the other's ACCOUNT and CHARACTER (the relay's verified `sub`
+// and `sc` - the account and the realm character the identity token vouches for - never a client's word about who the
+// other is). The union is made only when both halves are here and each names the other, character for character - and
+// only for two living characters of lines, each wed to nobody. AUDIT LEGACY III O1: a half named the other's account
+// alone, so after a yes the other's account could lease another of its characters and post with that one - wed to a
+// character the player never saw, and with no way out but a death. Each side's CARD is kept on the union as it stood
+// at the wedding - what the other's house records of them. It ends with either's death or delete; a retirement keeps
+// it. AUDIT LEGACY III O3: a half is taken back (`withdraw`) whenever its player is told the wedding did not happen.
 
 /** A wedding's handshake id - the duel's alphabet (net/wire.js validWedData). */
 export const WED_SID_RE = /^[A-Za-z0-9]{6,16}$/;
@@ -167,9 +273,12 @@ export const WED_HALF_LIFE_S = 300;
 export const WED_FACE_MAX = 999;
 
 /**
- * A SIDE'S CARD at the wedding - what the other's house keeps of them: the realm character's name, its house (the
- * mint's law, through the name filter - houseOn), and the person's sex, race and face off their own line's record, each
- * held to its shape. Null when no such character is the account's.
+ * A SIDE'S CARD at the wedding - what the other's house keeps of them: the realm character's name and its house, each
+ * through the name filter (houseOn - the mint's law), and the person's sex, race and face off their own line's record,
+ * each held to its shape. AUDIT LEGACY III O4: the name too - a realm character's name is its own account's, shown to
+ * nobody, and the card made it another player's spouse's name on their tree, their HUD and their towns' news ("Admin",
+ * the house's own given name the filter had dropped). A name any word of which the filter refuses goes as none.
+ * Null when no such character is the account's.
  * @param {any} db @param {string} playerId @param {string} charId
  */
 export async function wedCardOf(db, playerId, charId) {
@@ -177,8 +286,10 @@ export async function wedCardOf(db, playerId, charId) {
     + ' LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? AND r.player = ?').bind(charId, playerId).first();
   if (!row) return null;
   const p = (parsed(row.record ?? '')?.people ?? []).find((/** @type {any} */ x) => x?.id === row.person) ?? {};
+  const name = String(row.name ?? '').trim();
   return {
-    name: String(row.name ?? ''),
+    // each word through the filter, as the house's given name is (houseOn): the partner's tree shows a given name alone
+    name: name && name.split(/\s+/).every((w) => checkName(w).ok) ? name : '',
     house: row.record ? houseOn(row.record, row.person) : null,
     gender: p.gender === 'female' ? 'female' : 'male',
     race: typeof p.race === 'string' && /^[A-Za-z][A-Za-z ]{0,23}$/.test(p.race) ? p.race : null,
@@ -206,17 +317,33 @@ const openUnionOf = (/** @type {any} */ db, /** @type {string} */ charId) =>
   db.prepare('SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND (a_char = ? OR b_char = ?)').bind(charId, charId).first();
 
 /**
- * A HALF OF ONE WEDDING: my character `id` under `lease`, the handshake `sid`, the other's account `partner`. Answers
- * `{ ok, wed: false }` (mine waits for theirs), `{ ok, wed: true, union }` (both are here - the union stands, or stood
- * already for this sid), or `{ error }`: 'body', 'no-realm-character', 'dead', 'lease', 'wed-no-line' (a character of no
- * line weds no one), 'wed-already' (mine is wed), 'wed-partner' (theirs cannot be), 'wed-spent' (another pair's sid).
- * @param {any} ctx @param {string} playerId @param {{ id: unknown, lease: unknown, sid: unknown, partner: unknown }} at
+ * A HALF OF ONE WEDDING: my character `id` under `lease`, the handshake `sid`, the other's account `partner` and
+ * character `partnerChar` (the relay's stamps of the one my player saw). Answers `{ ok, wed: false }` (mine waits for
+ * theirs), `{ ok, wed: true, union }` (both are here - the union stands, or stood already for this sid), or `{ error }`:
+ * 'body', 'no-realm-character', 'dead', 'lease', 'wed-no-line' (a character of no line weds no one), 'wed-already' (mine
+ * is wed), 'wed-partner' (theirs cannot be - dead, of no line, wed, or not the character mine names: O1), 'wed-spent'
+ * (another pair's sid, or my half for it says otherwise). A half is written once: posted again (a retry whose answer
+ * was lost) it keeps its first `at` - AUDIT LEGACY III O3: a re-post refreshed it, so a yes outlived what its player was
+ * told by another five minutes each time. `withdraw` takes my half back - the wedding did not happen, whatever comes
+ * after - and answers the union when it stood first (`wed: true`, so a late word is never lost); it asks no lease (it
+ * is the account's own word, about its own half).
+ * @param {any} ctx @param {string} playerId
+ * @param {{ id: unknown, lease: unknown, sid: unknown, partner: unknown, partnerChar?: unknown, withdraw?: unknown }} at
  */
-export async function realmWed({ db, nowS }, playerId, { id, lease, sid, partner }) {
-  if (typeof id !== 'string' || !/^r[0-9a-f]{20}$/.test(id) || typeof lease !== 'string' || !/^[0-9a-f]{32}$/.test(lease)) return { error: 'body' };
+export async function realmWed({ db, nowS }, playerId, { id, lease, sid, partner, partnerChar, withdraw = false }) {
+  if (typeof id !== 'string' || !REALM_CHARACTER_RE.test(id) || typeof lease !== 'string' || !/^[0-9a-f]{32}$/.test(lease)) return { error: 'body' };
   if (typeof sid !== 'string' || !WED_SID_RE.test(sid) || typeof partner !== 'string' || !ID_RE.test(partner) || partner === playerId) return { error: 'body' };
+  if (typeof partnerChar !== 'string' || !REALM_CHARACTER_RE.test(partnerChar) || typeof withdraw !== 'boolean') return { error: 'body' };
+  const mineOf = (/** @type {any} */ u) => (u.a_player === playerId && u.a_char === id) || (u.b_player === playerId && u.b_char === id);
+  if (withdraw) {
+    // taken back, then the union looked for: theirs is made only while mine stands (asked IN its write, below), so
+    // either it stood before this delete and is answered, or it never will be
+    await db.prepare('DELETE FROM realm_wed_halves WHERE sid = ? AND player = ?').bind(sid, playerId).run();
+    const u = await db.prepare('SELECT * FROM realm_unions WHERE sid = ?').bind(sid).first();
+    return u && mineOf(u) ? { ok: true, wed: true, union: unionView(u, playerId) } : { ok: true, wed: false };
+  }
   const had = await db.prepare('SELECT * FROM realm_unions WHERE sid = ?').bind(sid).first();
-  if (had) return (had.a_player === playerId && had.a_char === id) || (had.b_player === playerId && had.b_char === id) ? { ok: true, wed: true, union: unionView(had, playerId) } : { error: 'wed-spent' };
+  if (had) return mineOf(had) ? { ok: true, wed: true, union: unionView(had, playerId) } : { error: 'wed-spent' };
   const me = await db.prepare('SELECT lease, dead_at, lineage_id FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
   if (!me) return { error: 'no-realm-character' };
   if (me.dead_at != null) return { error: 'dead' };
@@ -227,27 +354,42 @@ export async function realmWed({ db, nowS }, playerId, { id, lease, sid, partner
   // an account is in one wedding at a time (its client answers one proposal at a time): its other halves are words it
   // took back, so the table holds at most one row an account
   await db.prepare('DELETE FROM realm_wed_halves WHERE at < ? OR (player = ? AND sid != ?)').bind(nowS - WED_HALF_LIFE_S, playerId, sid).run();
-  await db.prepare('INSERT OR REPLACE INTO realm_wed_halves (sid, player, char_id, partner, at) VALUES (?, ?, ?, ?, ?)').bind(sid, playerId, id, partner, nowS).run();
-  const other = await db.prepare('SELECT char_id FROM realm_wed_halves WHERE sid = ? AND player = ? AND partner = ?').bind(sid, partner, playerId).first();
+  await db.prepare('INSERT INTO realm_wed_halves (sid, player, char_id, partner, partner_char, at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT (sid, player) DO NOTHING')
+    .bind(sid, playerId, id, partner, partnerChar, nowS).run();
+  const own = await db.prepare('SELECT char_id, partner, partner_char FROM realm_wed_halves WHERE sid = ? AND player = ?').bind(sid, playerId).first();
+  if (!own || own.char_id !== id || own.partner !== partner || own.partner_char !== partnerChar) return { error: 'wed-spent' };
+  const other = await db.prepare('SELECT char_id, partner_char FROM realm_wed_halves WHERE sid = ? AND player = ? AND partner = ?').bind(sid, partner, playerId).first();
   if (!other) return { ok: true, wed: false };
+  // AUDIT LEGACY III O1: CHARACTER FOR CHARACTER - theirs is the one mine names, and theirs names mine
+  if (other.char_id !== partnerChar || other.partner_char !== id) return { error: 'wed-partner' };
   const them = await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL AND lineage_id IS NOT NULL').bind(other.char_id, partner).first();
   if (!them) return { error: 'wed-partner' };
   const [theirCard, myCard] = await Promise.all([wedCardOf(db, partner, other.char_id), wedCardOf(db, playerId, id)]);
-  // the union, asked IN the write: two halves posting at once race to one row (the sid's key), and neither character may
-  // be wed meanwhile - theirs since their half was written, or mine in a race
+  // the union, asked IN the write: two halves posting at once race to one row (the sid's key), neither character may be
+  // wed meanwhile - theirs since their half was written, or mine in a race - and their half still stands (O3: a half
+  // taken back meanwhile makes nothing)
   await db.prepare(
     'INSERT OR IGNORE INTO realm_unions (sid, a_player, a_char, b_player, b_char, a_card, b_card, wed_at) SELECT ?, ?, ?, ?, ?, ?, ?, ?'
-    + ' WHERE NOT EXISTS (SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND (a_char IN (?, ?) OR b_char IN (?, ?)))',
-  ).bind(sid, partner, other.char_id, playerId, id, JSON.stringify(theirCard), JSON.stringify(myCard), nowS, id, other.char_id, id, other.char_id).run();
+    + ' WHERE NOT EXISTS (SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND (a_char IN (?, ?) OR b_char IN (?, ?)))'
+    + ' AND EXISTS (SELECT 1 FROM realm_wed_halves WHERE sid = ? AND player = ? AND char_id = ? AND partner_char = ?)',
+  ).bind(sid, partner, other.char_id, playerId, id, JSON.stringify(theirCard), JSON.stringify(myCard), nowS, id, other.char_id, id, other.char_id,
+    sid, partner, other.char_id, id).run();
   const now = await db.prepare('SELECT * FROM realm_unions WHERE sid = ?').bind(sid).first();
-  if (!now) return { error: (await openUnionOf(db, id)) ? 'wed-already' : 'wed-partner' };
+  if (!now) {
+    if (await openUnionOf(db, id)) return { error: 'wed-already' };
+    // their half gone between the read and the write - taken back: no word of theirs, as if it never came
+    return (await db.prepare('SELECT 1 FROM realm_wed_halves WHERE sid = ? AND player = ?').bind(sid, partner).first()) ? { error: 'wed-partner' } : { ok: true, wed: false };
+  }
   await db.prepare('DELETE FROM realm_wed_halves WHERE sid = ?').bind(sid).run();
   return { ok: true, wed: true, union: unionView(now, playerId) };
 }
 
-/** Every union of this account's characters, the newest first. */
+/** Every union of this account's characters, the latest word first - AUDIT LEGACY III O8: by when each last changed (an
+ *  end, or the wedding), so the newest things a house has to hear lead the fifty: listed newest-wed first, a union
+ *  older than fifty others was never listed again, and its end never reached the house. */
 export async function listUnions({ db }, /** @type {string} */ playerId) {
-  const r = await db.prepare('SELECT * FROM realm_unions WHERE a_player = ? OR b_player = ? ORDER BY wed_at DESC LIMIT 50').bind(playerId, playerId).all();
+  const r = await db.prepare('SELECT * FROM realm_unions WHERE a_player = ? OR b_player = ? ORDER BY COALESCE(ended_at, wed_at) DESC, wed_at DESC LIMIT 50')
+    .bind(playerId, playerId).all();
   return (r?.results ?? []).map((/** @type {any} */ u) => unionView(u, playerId));
 }
 

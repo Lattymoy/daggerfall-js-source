@@ -110,12 +110,19 @@ export function inheritRegards(relations, parent, day) {
   return n;
 }
 
+/** AUDIT LEGACY III P17: the news in ONE order - its minute, then its kind, its name, its town - so two copies that hold
+ *  the same news keep the same NEWS_MAX at the cap (two items of one minute were kept by whichever copy merged first). */
+const newsOrder = (/** @type {News} */ a, /** @type {News} */ b) => a.t - b.t || (a.k < b.k ? -1 : a.k > b.k ? 1 : 0)
+  || (a.who < b.who ? -1 : a.who > b.who ? 1 : 0) || (a.m ?? -1) - (b.m ?? -1);
+/** One piece of news, as a reader's `heard` names it. */
+export const newsKey = (/** @type {News} */ n) => `${n.k}|${n.t}|${n.who}`;
+
 /** The house's news read back - kinds known, names bounded, the newest NEWS_MAX. @returns {News[]} */
 export function readNews(raw) {
   if (!Array.isArray(raw)) return [];
   return raw.filter((n) => n && NEWS_KINDS.includes(n.k) && typeof n.who === 'string' && n.who && Number.isFinite(Number(n.t)))
     .map((n) => ({ k: n.k, who: n.who.slice(0, NAME_MAX), t: Number(n.t), m: Number.isInteger(n.m) ? n.m >>> 0 : null }))
-    .sort((a, b) => a.t - b.t).slice(-NEWS_MAX);
+    .sort(newsOrder).slice(-NEWS_MAX);
 }
 
 /**
@@ -137,21 +144,61 @@ export function noteNews(family, kind, who, t, mapId) {
 export function mergeNews(a, b) {
   const out = readNews(a);
   for (const n of readNews(b)) if (!out.some((x) => x.k === n.k && x.who === n.who && x.t === n.t)) out.push(n);
-  return out.sort((x, y) => x.t - y.t).slice(-NEWS_MAX);
+  return out.sort(newsOrder).slice(-NEWS_MAX);
+}
+
+/**
+ * AUDIT LEGACY III A8: WHEN THE ONE PLAYED HEARD each piece of the house's news, on their own world's clock (`t`) - into
+ * `reader.heard`, the house's news alone (what the towns no longer tell is forgotten). News of their own clock's past
+ * was heard as it happened (its own minute - online the towns' clock is one, and this is it); news their clock has not
+ * reached - stamped on another member's world, offline, where every member keeps their own (a born heir's starts at the
+ * game's first day) - is heard now. It lay in the heir's future: their towns said nothing of the parent's death at the
+ * birth, and told it as fresh two hundred days on. Answers whether anything was heard.
+ * @param {any} family @param {any} reader @param {number} t
+ */
+export function hearNews(family, reader, t) {
+  if (!reader || !Number.isFinite(t)) return false;
+  const news = family?.news ?? [];
+  const was = reader.heard && typeof reader.heard === 'object' ? reader.heard : {};
+  /** @type {Record<string, number>} */
+  const heard = {};
+  let fresh = false;
+  for (const n of news) {
+    const k = newsKey(n);
+    if (Number.isFinite(was[k])) heard[k] = was[k];
+    else { heard[k] = Math.floor(Math.min(n.t, t)); fresh = true; }
+  }
+  const dropped = Object.keys(was).some((k) => !(k in heard));
+  if (fresh || dropped || !reader.heard) reader.heard = heard;
+  return fresh || dropped;
+}
+/** A reader's `heard` read back: news keys to minutes, at most NEWS_MAX of them - or none. */
+export function readHeard(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const out = Object.entries(raw).filter(([k, v]) => typeof k === 'string' && k.length <= NAME_MAX + 40 && Number.isFinite(v)).slice(-NEWS_MAX);
+  return out.length ? Object.fromEntries(out.map(([k, v]) => [k, Math.floor(Number(v))])) : null;
+}
+/** Two copies' `heard` of one reader as one: each the earlier hearing. */
+export function mergeHeard(a, b) {
+  const out = { ...(readHeard(a) ?? {}) };
+  for (const [k, v] of Object.entries(readHeard(b) ?? {})) if (!(k in out) || v < out[k]) out[k] = v;
+  return Object.keys(out).length ? out : null;
 }
 
 /**
  * WHAT A TOWN SAYS OF THE HOUSE at minute `t`: each piece of news of the last HOUSE_NEWS_DAYS that happened in it, or of any
  * kind when it is the family's seat - in the shape the town's news takes (livingTown.js lineCtx), `kin` its own words,
- * `house` the family's name.
- * @param {any} family @param {number} mapId @param {number} t
+ * `house` the family's name. AUDIT LEGACY III A8: the week runs from when the READER first heard it (`heard`, their own
+ * clock's - hearNews), else from its own minute.
+ * @param {any} family @param {number} mapId @param {number} t @param {Record<string, number>|null} [heard]
  * @returns {{ kind: string, kin: true, who: string, house: string, foe: string, place: string, t: number, seen: true }[]}
  */
-export function newsFor(family, mapId, t) {
+export function newsFor(family, mapId, t, heard = null) {
   if (!family?.news?.length || !Number.isFinite(t)) return [];
   const here = Number(mapId) >>> 0;
   const seat = family.seat?.mapId != null && (family.seat.mapId >>> 0) === here;
-  return family.news.filter((n) => n.t <= t && t - n.t < HOUSE_NEWS_DAYS * DAY_MIN && (seat || (n.m != null && n.m === here)))
-    .map((n) => ({ kind: n.k, kin: /** @type {true} */ (true), who: n.who, house: houseWord(family.surname), foe: '', place: '', t: n.t, seen: /** @type {true} */ (true) }))
+  const at = (/** @type {News} */ n) => (heard && Number.isFinite(heard[newsKey(n)]) ? heard[newsKey(n)] : n.t);
+  return family.news.filter((n) => at(n) <= t && t - at(n) < HOUSE_NEWS_DAYS * DAY_MIN && (seat || (n.m != null && n.m === here)))
+    .map((n) => ({ kind: n.k, kin: /** @type {true} */ (true), who: n.who, house: houseWord(family.surname), foe: '', place: '', t: at(n), seen: /** @type {true} */ (true) }))
     .sort((a, b) => b.t - a.t);
 }

@@ -163,6 +163,9 @@ const ancestorsOf = (family, p, depth) => {
  * WHAT `other` IS TO `viewer`: 'father' | 'mother' | 'son' | 'daughter' | 'brother' | 'sister' | 'grandfather' |
  * 'grandmother' | 'grandson' | 'granddaughter' | 'uncle' | 'aunt' | 'nephew' | 'niece' | 'husband' | 'wife' | 'cousin'
  * | 'kin'. The founder's generation, parentless, are siblings of one another (family.js siblingsOf's own root arm).
+ * AUDIT LEGACY III A10/F8/U5: blood words are the blood's - one wed in (a spouse, the parent of no one here) is the
+ * house's 'kin' to everyone but their own spouse and children: parentless in the record, they were the founder's
+ * brother or sister, or every sibling's cousin.
  */
 export function kinOf(family, viewer, other, depth = 0) {
   if (!viewer || !other || viewer.id === other.id || depth > 1) return 'kin';   // AUDIT LEGACY II A9: bounded - a damaged record's cycle never recurses
@@ -173,6 +176,7 @@ export function kinOf(family, viewer, other, depth = 0) {
   if (up.get(other.id) === 2) return m ? 'grandmother' : 'grandfather';
   if (down.get(viewer.id) === 1) return m ? 'daughter' : 'son';
   if (down.get(viewer.id) === 2) return m ? 'granddaughter' : 'grandson';
+  if ((viewer.kind ?? 'member') !== 'member' || (other.kind ?? 'member') !== 'member') return 'kin';   // an in-law
   const shared = viewer.parents.some((id) => other.parents.includes(id))
     || (!viewer.parents.length && !other.parents.length && viewer.gen === other.gen);
   if (shared) return m ? 'sister' : 'brother';

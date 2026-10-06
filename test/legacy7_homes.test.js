@@ -86,7 +86,8 @@ test('LEGACY7 part five the world host reads this realm character\'s homes - nam
   const w = rd('src/scenes/world.js');
   assert.match(w, /createOnlineHomes\(\{ api: homesApi, character: \(\) => characterIdOf\(playerEntity\), onWrote: \(\) => legacyOnlineHomesRead\(\) \}\)/);
   assert.match(w, /_legacyOnlineHomes = r\.data\.homes\.filter\(\(h\) => h\?\.character === me\)\.map\(\(h\) => \(\{/);
-  assert.match(w, /location: \[\.\.\.livingTownsIndex\(\)\.values\(\)\]\.find\(\(t\) => \(t\.mapId >>> 0\) === \(h\.mapId >>> 0\)\)\?\.name \?\? '',/);
+  // PIN MOVED (AUDIT LEGACY III W1): named off the boot's own complete table - the Living World's index read rows the boot had emptied
+  assert.match(w, /location: _townOfMapId\.get\(h\.mapId >>> 0\)\?\.name \?\? '',/);
   assert.match(w, /heldHouses: \(\) => \(isOnlinePage\(\) \? \(realmSession \? _legacyOnlineHomes : null\) : \(playerEntity\.houses \?\? \[\]\)\.filter\(\(h\) => \(h\?\.buildingKey \| 0\) > 0 && deedStands\(h\)\)\),/);
   assert.match(w, /if \(legacyRealmLine\) legacyOnlineHomesRead\(\);/);
   assert.match(rd('src/scenes/legacyHost.js'), /const held = deps\.heldHouses\?\.\(\) \?\? null;\n\s*if \(held == null\) return false;\n\s*return syncHouses\(family, p\.id, held\);/);

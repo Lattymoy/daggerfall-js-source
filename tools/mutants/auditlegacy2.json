@@ -20,7 +20,7 @@
   {
     "name": "AUDIT-LEGACY-II-A2-birth-kept-without-save",
     "file": "src/scenes/legacyHost.js",
-    "old": "      family = readFamily(was);\n      deps.say(LEGACY_TEXT.notBorn(p.given));",
+    "old": "      family = readFamily(was);\n      noteSeen(family, seen);   // the copy as it was, made from the store as that one was\n      deps.say(LEGACY_TEXT.notBorn(p.given));",
     "new": "      store();\n      deps.say(LEGACY_TEXT.notBorn(p.given));",
     "tests": [
       "test/auditlegacy2.test.js"
@@ -176,8 +176,8 @@
   {
     "name": "AUDIT-LEGACY-II-A4-stale-write-refused",
     "file": "src/systems/legacy/store.js",
-    "old": "    if (was && was.rev >= family.rev) {\n      mergeFacts(family, was);",
-    "new": "    if (was && was.rev > family.rev) return false;\n    if (was && was.rev >= family.rev) {\n      mergeFacts(family, was);",
+    "old": "    if (was && (base != null ? was.rev !== base : was.rev >= family.rev)) {\n      mergeFacts(family, was);",
+    "new": "    if (was && (base != null ? was.rev !== base : was.rev >= family.rev)) return false;\n    if (was && (base != null ? was.rev !== base : was.rev >= family.rev)) {\n      mergeFacts(family, was);",
     "tests": [
       "test/auditlegacy2.test.js"
     ]
