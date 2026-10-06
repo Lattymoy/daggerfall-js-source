@@ -15,6 +15,10 @@
 // LW4: THE ROAD'S TROUBLE, SEEN. A body can STRIKE (an armed member or a foe, the unit's own attack on the edge the
 // roads hand it), stand as no talk target (a foe: `talk: false`), or be a FLAT - a still picture (`flat: { archive,
 // record }`: the fallen, on the class corpse's own record) on the same batch law.
+//
+// LW-LOOKS: A RESIDENT'S STILL PICTURE (systems/livingWorld/looks.js - a courtier at home in the palace) is a flat too,
+// and a talk target in the street's shape as any resident is (the fallen, `talk: false`, none); its frames animated on
+// the game's own billboard clock (render/flatAnimation.js FlatAnim) as Daggerfall's still people are.
 // ═══════════════════════════════════════════════════════════════════
 import { MobileUnit } from '../characters/mobileUnit.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
@@ -22,6 +26,7 @@ import { ResidentWalker } from '../characters/residentWalker.js';
 import { mobileBillboardSize } from './rmbFlats.js';
 import { bandSpriteReach, stepBandAlpha, BAND_SPRITE_FAR_M } from './bandSprites.js';
 import { lwSeed, textSeed } from '../systems/livingWorld/seed.js';
+import { FlatAnim } from '../render/flatAnimation.js';
 
 /** Under the Overworld a body past this (m) is not drawn - the bands' own far edge, the same fade. */
 export const TRAVELLER_FAR_M = BAND_SPRITE_FAR_M;
@@ -65,10 +70,15 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
     bodies.delete(key);
   }
 
-  /** A body for a resident: armed in their class's sprite where they have one, else their own outfit. */
-  function make(res, tex, look, flat = null) {
-    if (flat) return { res, archive: flat.archive, tex, unit: null, walker: null, person: null, flat, batch: null, alpha: 0 };
+  /** A body for a resident: armed in their class's sprite where they have one, else their own outfit - LW-LOOKS: or their
+   *  still picture, a talk target where it is one (`talk`). */
+  function make(res, tex, look, flat = null, talk = true) {
     const talkSeed = lwSeed(textSeed(res.id), 0x74616c6b) & 0x7fffffff;   // 'talk': the town's own seed for them
+    if (flat) {
+      const person = talk ? { nameNPC: res.name, personFaceRecordId: res.face, _talkSeed: talkSeed, living: { id: res.id, res, town: living },
+        pos: [0, 0, 0], facingYaw: 0, guard: false, archive: flat.archive, pickpocketAttempted: false } : null;
+      return { res, archive: flat.archive, tex, unit: null, walker: null, person, flat, anim: new FlatAnim(flat.archive, Math.max(1, tex.getFrameCount?.(flat.record) ?? 1)), batch: null, alpha: 0 };
+    }
     if (look) {
       const unit = new MobileUnit(look.mobileType, look.basics, (rec) => tex.getFrameCount(rec), Math.random, res.sex ?? 'male');
       const person = { nameNPC: res.name, personFaceRecordId: res.face, _talkSeed: talkSeed, living: { id: res.id, res, town: living },
@@ -104,9 +114,9 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
       if (!tex || typeof tex.then === 'function') continue;   // loading, or no art: not yet
       seen.add(m.key);
       let b = bodies.get(m.key);
-      if (!b || b.res.id !== m.res.id || b.archive !== archive || !!b.flat !== !!flat) {
+      if (!b || b.res.id !== m.res.id || b.archive !== archive || !!b.flat !== !!flat || (flat && b.flat.record !== flat.record)) {
         if (b) drop(m.key);
-        b = make(m.res, tex, look, flat);
+        b = make(m.res, tex, look, flat, m.talk !== false);
         bodies.set(m.key, b);
       }
       const target = ground ? 1 : bandSpriteReach(m.distM) * Math.max(0, Math.min(1, fade));
@@ -114,7 +124,10 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
       if (b.alpha < ALPHA_MIN) continue;
       const f = m.feet;
       let out;
-      if (b.flat) out = { record: b.flat.record, frame: 0, flip: false };
+      if (b.flat) {
+        out = { record: b.flat.record, frame: b.anim ? b.anim.tick(dt) : 0, flip: false };
+        if (b.person) { b.person.pos = f; b.person.facingYaw = m.yaw; }
+      }
       else if (b.unit) {
         out = b.unit.update(dt, { moving: !!m.moving, striking: !!m.striking }, m.yaw, f, eye && eye.length === 3 ? eye : f);
         b.person.pos = f; b.person.facingYaw = m.yaw;

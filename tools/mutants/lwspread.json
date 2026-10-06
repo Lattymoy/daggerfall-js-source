@@ -1,0 +1,236 @@
+[
+  {
+    "name": "LW-SPREAD-squares-gap",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "      if (squares.some((s) => Math.hypot(s.cell[0] - c.x, s.cell[1] - c.y) < SQUARE_GAP)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-squares-open",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "        if (open >= SQUARE_OPEN * bestOpen) near.push({ x: cx, y, open, d });",
+    "new": "        near.push({ x: cx, y, open, d });",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-squares-reach",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "    for (let y = Math.max(SQUARE_WINDOW, sy - SQUARE_REACH); y <= Math.min(H - 1 - SQUARE_WINDOW, sy + SQUARE_REACH); y++) {\n      for (let cx = Math.max(SQUARE_WINDOW, sx - SQUARE_REACH); cx <= Math.min(W - 1 - SQUARE_WINDOW, sx + SQUARE_REACH); cx++) {\n        const d = Math.hypot(cx - sx, y - sy);\n        if (d > SQUARE_REACH || net[y * W + cx] !== netId) continue;",
+    "new": "    for (let y = SQUARE_WINDOW; y <= H - 1 - SQUARE_WINDOW; y++) {\n      for (let cx = SQUARE_WINDOW; cx <= W - 1 - SQUARE_WINDOW; cx++) {\n        const d = Math.hypot(cx - sx, y - sy);\n        if (net[y * W + cx] !== netId) continue;",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-squares-line",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "      if (!netLine(net, netId, W, square, [c.x, c.y])) continue;\n",
+    "new": "",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-squares-cap",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "      if (squares.length >= SQUARE_POINTS) break;\n",
+    "new": "",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-corners-gap",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "      if (taken.some((t) => Math.hypot(t[0] - c.x, t[1] - c.y) < CORNER_GAP)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-corners-taken",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "      taken.push([c.x, c.y]);\n",
+    "new": "",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-corners-open",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "        if (top && top.open >= CORNER_OPEN * bestOpen) best.push(top);",
+    "new": "        if (top) best.push(top);",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-corners-margin",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "        for (let y = Math.max(SQUARE_WINDOW, by * BLOCK_CELLS + CORNER_MARGIN); y < Math.min(H - SQUARE_WINDOW, (by + 1) * BLOCK_CELLS - CORNER_MARGIN); y++) {\n          for (let x = Math.max(SQUARE_WINDOW, bx * BLOCK_CELLS + CORNER_MARGIN); x < Math.min(W - SQUARE_WINDOW, (bx + 1) * BLOCK_CELLS - CORNER_MARGIN); x++) {",
+    "new": "        for (let y = Math.max(SQUARE_WINDOW, by * BLOCK_CELLS); y < Math.min(H - SQUARE_WINDOW, (by + 1) * BLOCK_CELLS); y++) {\n          for (let x = Math.max(SQUARE_WINDOW, bx * BLOCK_CELLS); x < Math.min(W - SQUARE_WINDOW, (bx + 1) * BLOCK_CELLS); x++) {",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-corners-block",
+    "file": "src/systems/livingWorld/places.js",
+    "old": "        for (let y = Math.max(SQUARE_WINDOW, by * BLOCK_CELLS + CORNER_MARGIN); y < Math.min(H - SQUARE_WINDOW, (by + 1) * BLOCK_CELLS - CORNER_MARGIN); y++) {\n          for (let x = Math.max(SQUARE_WINDOW, bx * BLOCK_CELLS + CORNER_MARGIN); x < Math.min(W - SQUARE_WINDOW, (bx + 1) * BLOCK_CELLS - CORNER_MARGIN); x++) {",
+    "new": "        for (let y = SQUARE_WINDOW; y < H - SQUARE_WINDOW; y++) {\n          for (let x = SQUARE_WINDOW; x < W - SQUARE_WINDOW; x++) {",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-squareOf-first",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  return pts.length ? pts[lwSeed(res.town, res.roll.charCodeAt(0), res.slot, 0x73717561) % pts.length] : null;",
+    "new": "  return pts.length ? pts[0] : null;",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-square-everyones",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const s1 = places.square && rng() < SQUARE_LIKE ? sq : own(near(social, SOCIAL_NEAR));",
+    "new": "  const s1 = places.square && rng() < 0.6 ? sq : own(near(social, SOCIAL_NEAR));",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-own-unread",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const own = (/** @type {Spot|null} */ s) => (s?.kind === 'square' ? sq : s);",
+    "new": "  const own = (/** @type {Spot|null} */ s) => s;",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-corners-unread",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const social = byNear([...places.social, ...(places.corners ?? [])]);",
+    "new": "  const social = byNear(places.social);",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-near",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "export const SOCIAL_NEAR = 3;",
+    "new": "export const SOCIAL_NEAR = 2;",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-market-unspread",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  const market = byNear([...places.market, ...(places.squares ?? [])]);",
+    "new": "  const market = byNear(places.market);",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-corners-unranked",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    const spots = [...new Set([...places.doors.values(), ...places.social, ...(places.corners ?? []), ...(places.squares ?? []), ...places.market])]",
+    "new": "    const spots = [...new Set([...places.doors.values(), ...places.social, ...places.market])]",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-square-not-own",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "if (at) intents.push({ kind, at: at.kind === 'square' && !mark?.duty ? fav.square : at, from,",
+    "new": "if (at) intents.push({ kind, at, from,",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-watch-own",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "at: at.kind === 'square' && !mark?.duty ? fav.square : at, from,",
+    "new": "at: at.kind === 'square' ? fav.square : at, from,",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-stall-square",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      if (rng() < 0.5) I('stall', rng() < 0.5 ? places.square ?? fav.market : fav.market, h(13), rollInt(rng, 60, 150));",
+    "new": "      if (rng() < 0.5) I('stall', rng() < 0.5 ? places.square ?? fav.market : places.square ?? fav.market, h(13), rollInt(rng, 60, 150));",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-fisher-square",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      if (job === 'fisher') I('stall', rng() < 0.5 ? places.square ?? fav.market : fav.market, h(14), rollInt(rng, 60, 90));",
+    "new": "      if (job === 'fisher') I('stall', rng() < 0.5 ? places.square ?? fav.market : places.square ?? fav.market, h(14), rollInt(rng, 60, 90));",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-corners-unstrolled",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    const spots = [...places.social, ...(places.corners ?? []), ...places.market];",
+    "new": "    const spots = [...places.social, ...places.market];",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-evening-hour",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "    const from = at + rollInt(rng, 0, EVENING_SPREAD_MIN);",
+    "new": "    const from = at + rollInt(rng, 0, EVENING_SPREAD_MIN) * 0;",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-market-hour",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "h(MARKET_HOURS[0] + rng() * (MARKET_HOURS[1] - MARKET_HOURS[0]))",
+    "new": "h(8.5 + rng())",
+    "tests": [
+      "test/lwspread_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-hold-side",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    let want = row.halt ? cur : 0;",
+    "new": "    let want = 0;",
+    "tests": [
+      "test/lwspace_street.test.js"
+    ]
+  },
+  {
+    "name": "LW-SPREAD-held-walking",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        else if (stop) p.moving = false;   // held by the politeness gate: where it stands, still (DFU's walker idles on the spot) - LW-SPREAD's audit: a body trailing its walk's point walked up to it while held\n",
+    "new": "",
+    "tests": [
+      "test/lwspace_street.test.js"
+    ]
+  }
+]

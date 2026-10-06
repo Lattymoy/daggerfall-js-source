@@ -183,7 +183,7 @@ function makeTown(minute, fx = synthTown()) {
 }
 const SQUARE = [96 * 1.6 + 0.8, 0, 96 * 1.6 + 0.8];
 
-test('LW-STAND the town: every resident at a stay through the day stands where the town puts them on the street (one alone about their spot, the circles at it) - the town hands its stands its own street (mutants: the host\'s stands unkept, alone and in a circle)', () => {
+test('LW-STAND the town: every resident at a stay through the day stands where the town puts them on the street (one alone about their spot, the circles at it) - the town hands its stands its own street; and one the census has not dealt (a reader ahead of its beat, or before its first - LW-SPACE: those alone stand where its beat placed them, `_aloneAt`, and the pass below read none other) stands about the spot by their own stand, on the street too (mutants: the host\'s stands unkept, alone and in a circle)', () => {
   const day = 100;
   const { town, nav } = makeTown(day * DAY_MIN + 8 * 60);
   const on = streetOf(nav, town.places);
@@ -199,7 +199,7 @@ test('LW-STAND the town: every resident at a stay through the day stands where t
       const c = town._inCircle.get(res.id);
       if (c && c.spot === w.e.at) {
         circled++;
-        const drawn = circleStands(w.e.at, c.circle)[c.index];
+        const drawn = circleStands(w.e.at, c.circle)[c.circle.members.findIndex((m) => m.id === res.id)];   // LW-SPACE: PIN MOVED - a member's place is the round's laying's (`place`)
         if (!on(drawn.x, drawn.z)) circleOff++;
       } else if (!on(aloneStand(w.e.at, res.id).x, aloneStand(w.e.at, res.id).z)) aloneOff++;
       assert.ok(on(w.x, w.z), `${res.id} at ${w.e.at.key}, minute ${m}${c ? ' in a circle' : ''}: on the street`);
@@ -207,6 +207,21 @@ test('LW-STAND the town: every resident at a stay through the day stands where t
   }
   assert.ok(stays > 300 && circled > 100, `a day of stays (${stays}), in circles (${circled})`);
   assert.ok(aloneOff > 0 && circleOff > 0, `drawn by geometry alone some stood off the street (alone ${aloneOff}, in a circle ${circleOff}) - else this pins nothing`);
+  // LW-SPACE: PIN MOVED - the stands the census has not dealt, read off a town whose census never ran
+  const undealt = makeTown(day * DAY_MIN + 8 * 60).town;
+  let read = 0, readOff = 0;
+  for (let m = 6 * 60; m < 23 * 60; m += 20) {
+    const t = day * DAY_MIN + m;
+    for (const res of undealt.residents) {
+      const w = undealt.where(res, t, false);
+      if (!w || w.pending || w.e.kind === 'walk' || !isOutdoor(w.e)) continue;
+      read++;
+      const own = aloneStand(w.e.at, res.id);
+      if (!on(own.x, own.z)) readOff++;
+      assert.ok(on(w.x, w.z), `${res.id} at ${w.e.at.key}, minute ${m}, undealt: on the street`);
+    }
+  }
+  assert.ok(undealt._aloneAt.size === 0 && read > 300 && readOff > 0, `undealt, ${read} stays, by geometry alone ${readOff} off the street - else this pins nothing`);
 });
 
 test('LW-STAND the pause: a resident in view whose next walk is not searched yet stands where they are, idle - never walking on the spot into whatever they face - and the pause\'s minutes are owed as the politeness gate\'s are: the walk searched, they walk it on from where they stood, never cut straight across to where its clock had got to; and the pause ends there, its minutes walked off (mutants: the stride kept; the pause unowed; the pause kept after the walk is searched)', () => {

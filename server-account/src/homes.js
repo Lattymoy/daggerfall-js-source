@@ -34,7 +34,7 @@
 // nobody's - one word, `no-home`, for both.
 // ═══════════════════════════════════════════════════════════════════
 import { accountKind, displayName, overRate } from './accounts.js';
-import { CHAR_ID_RE } from './service.js';
+import { CHAR_ID_RE, DB_ROOT } from './service.js';
 import { prepareRealmRecord, realmActFirst, realmAtOf, recordMovedOf, mustChange, dropObjects, dropIfUnnamed, REALM_ID_RE, getRealmBlob, realmSaveTextOf } from './realm.js';   // REALM P2.2b; AUDIT REALM L1-F2: the record asked first; AUDIT REALM2 S3: a landed batch's object kept; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed read off the record
 import { payFromSave, creditSave } from '../../src/net/realmGoldLaw.js';   // REALM P2.2b: the wallet's own order, over the record
 import {
@@ -440,6 +440,30 @@ export async function homeLayouts({ db }) {
     WHERE NOT EXISTS (SELECT 1 FROM homes o WHERE o.map_id = h.map_id AND (o.bought_at < h.bought_at OR (o.bought_at = h.bought_at AND o.building_key < h.building_key)))
     ORDER BY h.map_id LIMIT ?`).bind(HOME_LAYOUTS_MAX).all();
   return { towns: results.map((r) => [r.map_id, homeLayoutOk(r.layout) ? r.layout ?? null : null]) };
+}
+
+/** STORM-SHED 2 (2026-10-06, the account database's follow-ups): THE TOWNS' LAYOUTS, READ AGAIN ONLY ONCE A TOWN'S HOMES
+ *  MOVED. The answer is every caller's alike, read at every online boot - a guest's too - and asked again every 24 s
+ *  while it is not heard (world.js askHomeLayoutsAgain), and each read scanned every home with a NOT EXISTS beside each; while the
+ *  database was overloaded no client heard it, so no yard or room was asked, and players reloaded into another boot's
+ *  asks. `homes_gen` (migration 0086) is moved by the database itself - its triggers, on every home made, gone, or moved
+ *  to another town, building, purchase time or layout - so this isolate keeps the answer of the generation it read, and
+ *  an ask is that one row: never a minute behind a claim, and none of the writes that move a town's homes - a claim, a
+ *  deed held, a hall, an arena move, a sale, a character's or an account's deletion (its cascade fires them too) - has
+ *  to remember to say so. A generation read before the answer is the one it is kept under, so a write
+ *  between the two reads is read again at the next ask. Keyed by the database binding (DB_ROOT). */
+const layoutsKept = new WeakMap(), layoutsAsking = new WeakMap();
+export async function homeLayoutsKept(ctx) {
+  const root = ctx.db?.[DB_ROOT] ?? ctx.db;
+  const gen = Number((await ctx.db.prepare('SELECT gen FROM homes_gen WHERE id = 1').first())?.gen ?? -1);
+  const kept = layoutsKept.get(root);
+  if (kept && kept.gen === gen) return kept.answer;
+  const asking = layoutsAsking.get(root);
+  if (asking && asking.gen === gen) return asking.ask;
+  const ask = homeLayouts(ctx).then((answer) => { layoutsKept.set(root, { gen, answer }); return answer; })
+    .finally(() => { if (layoutsAsking.get(root)?.ask === ask) layoutsAsking.delete(root); });
+  layoutsAsking.set(root, { gen, ask });
+  return ask;
 }
 
 // ═══ ARENA4b (2026-10-03) - A HOME THE ARENA DISPLACED, MOVED ════════════════════════════════════════════════════════

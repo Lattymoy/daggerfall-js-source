@@ -307,7 +307,8 @@ test('LW1 favourites: a resident keeps to the same two social spots, tavern, tem
   const f1 = favourites(r, places, home);
   assert.equal(f1.tavern, places.doors.get(1000));
   assert.equal(f1.temple, places.doors.get(1001));
-  assert.ok(f1.social.length >= 1 && f1.social.every((s) => places.social.includes(s)));
+  // LW-SPREAD: PIN MOVED - a social favourite is a social spot, a corner of the town, or the resident's own point of the square
+  assert.ok(f1.social.length >= 1 && f1.social.every((s) => places.social.includes(s) || places.corners.includes(s) || places.squares.includes(s)));
 });
 
 test('LW1 meetings: the residents at a spot for the WHOLE of a round pair off in an order drawn from the spot, the round and their ids - two by two, the odd three together, one alone none; a circle\'s script (LW-TALK: an exchange\'s, lwtalk_town.test.js) a line every CREW_LINE_S of the clock, its opener first, then the other, then quiet; the circles stand about the spot, CIRCLE_APART apart, facing in (mutants: a late arrival counted, the trio, the beat, the speaker\'s turn)', () => {

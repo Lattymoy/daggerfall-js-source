@@ -1,0 +1,263 @@
+[
+  {
+    "name": "LW-LODGE-breakfast",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "  if (lodger) { const at = intents.length; I('tavern', home,",
+    "new": "  if (false) { const at = intents.length; I('tavern', home,",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-staff",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": " && res.work !== home.building;",
+    "new": "",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-visitor-supper-inn",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      I('tavern', lodger ? home : fav.tavern, h(18), rollInt(rng, 180, 300),",
+    "new": "      I('tavern', fav.tavern, h(18), rollInt(rng, 180, 300),",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-visitor-going-up",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "I('tavern', lodger ? home : fav.tavern, h(18), rollInt(rng, 180, 300), lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined);",
+    "new": "I('tavern', lodger ? home : fav.tavern, h(18), rollInt(rng, 180, 300), undefined);",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-adventurer-supper-inn",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "      I('tavern', lodger ? home : fav.tavern, h(18.5), rollInt(rng, 180, 300),",
+    "new": "      I('tavern', fav.tavern, h(18.5), rollInt(rng, 180, 300),",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-adventurer-going-up",
+    "file": "src/systems/livingWorld/dayPlan.js",
+    "old": "I('tavern', lodger ? home : fav.tavern, h(18.5), rollInt(rng, 180, 300), lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined);",
+    "new": "I('tavern', lodger ? home : fav.tavern, h(18.5), rollInt(rng, 180, 300), undefined);",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-lodgers-staff",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (res.work === key) continue;\n      const lodged",
+    "new": "      const lodged",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-lodgers-visitors",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const lodged = this._crewOf.has(res.id) || roads?.visitorOf.has(res.id) ? this._lodging(res) :",
+    "new": "const lodged = false ? this._lodging(res) :",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-lodgers-tavern",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (this.places.types.get(key) !== BUILDING_TYPES.Tavern) return [];\n    const roads = this._roadsOf(day);",
+    "new": "    const roads = this._roadsOf(day);",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-bed-unread",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  const bedFor = (/** @type {{ res: any, e?: any }} */ x) => (x.e?.kind === 'home' ? bedOf.get(x.res.id) ?? -1 : -1);",
+    "new": "  const bedFor = (/** @type {{ res: any, e?: any }} */ x) => (x.e?.kind === 'home' ? -1 : -1);",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-beds-unsounded",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        const beds = collider ? (deps.beds?.() ?? []).map((m) => bedStand(m, collider, deps.floorAt)) : [];",
+    "new": "        const beds = [];",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-table",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        if (s.walk || s.bed >= 0) continue;   // LW-LODGE: one in their room at no table",
+    "new": "        if (s.walk) continue;   // LW-LODGE: one in their room at no table",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-stir",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        if (s.bed >= 0) continue;   // LW-LODGE: in their room\n",
+    "new": "",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-rented-unread",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        bedOf = bedsOf(lodgers.map((r) => r.id), room.beds.length, b.key, deps.rented?.() ?? -1);",
+    "new": "        bedOf = bedsOf(lodgers.map((r) => r.id), room.beds.length, b.key, -1);",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-going-up-unseen",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      for (const [id, s] of [...stood]) if ((!want.has(id) || (want.get(id) ?? -1) !== s.bed) && unseen(placeOf(s))) stood.delete(id);",
+    "new": "      for (const [id, s] of [...stood]) if (!want.has(id) && unseen(placeOf(s))) stood.delete(id);",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-deal-draw",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "    let i = lwSeed(textSeed(id), key >>> 0, 0x626564) % beds;   // 'bed'",
+    "new": "    let i = lwSeed(textSeed(id), 0x626564) % beds;   // 'bed'",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-deal-probe",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "    while (taken.has(i)) i = (i + 1) % beds;\n    taken.add(i);\n    out.set(id, i);",
+    "new": "    taken.add(i);\n    out.set(id, i);",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-deal-rented",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  const who = rented >= 0 ? [...out].find(([, b]) => b === rented)?.[0] : undefined;",
+    "new": "  const who = undefined;",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-deal-rehoused",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "    for (let k = 1; k < beds; k++) { const i = (rented + k) % beds; if (!taken.has(i)) { out.set(who, i); break; } }\n",
+    "new": "",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-stand-step",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  for (const dist of BED_STEP_M) {\n    for (let i = 0; i < BED_FAN; i++) {\n      const a = (i / BED_FAN) * Math.PI * 2;\n      const q = [at[0], at[1] + 0.05, at[2]];",
+    "new": "  for (const dist of [0.3]) {\n    for (let i = 0; i < BED_FAN; i++) {\n      const a = (i / BED_FAN) * Math.PI * 2;\n      const q = [at[0], at[1] + 0.05, at[2]];",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-stand-stopped",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (Math.hypot(q[0] - at[0], q[2] - at[2]) < dist * 0.75) continue;   // stopped short against a wall\n",
+    "new": "",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-stand-floor",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      if (dy > BED_LEVEL_M || dy < -BED_DROP_M) continue;   // higher, or down a stair\n",
+    "new": "",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-stand-down",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  const pick = ways.find((w) => w.dy < -BED_LEVEL_M) ?? ways.find((w) => Math.abs(w.dy) <= BED_LEVEL_M);",
+    "new": "  const pick = ways.find((w) => Math.abs(w.dy) <= BED_LEVEL_M) ?? ways.find((w) => w.dy < -BED_LEVEL_M);",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-stand-facing",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "  return pick ? { feet: pick.feet, yaw: Math.atan2(at[0] - pick.feet[0], at[2] - pick.feet[2]) } : { feet: at, yaw: 0 };",
+    "new": "  return pick ? { feet: pick.feet, yaw: 0 } : { feet: at, yaw: 0 };",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-host-beds",
+    "file": "src/scenes/worldModes.js",
+    "old": "    get interiorBeds() { return interiorRestMarkers().map((m) => [m.x, m.y, m.z]); },",
+    "new": "    get interiorBeds() { return []; },",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-host-rented",
+    "file": "src/scenes/worldModes.js",
+    "old": "      return room ? room.allocatedBedIndex ?? -1 : -1;",
+    "new": "      return -1;",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-world-beds",
+    "file": "src/scenes/world.js",
+    "old": "      beds: () => modes?.interiorBeds ?? [],   // LW-LODGE: the tavern's rooms for its lodgers...\n",
+    "new": "",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-world-rented",
+    "file": "src/scenes/world.js",
+    "old": "      rented: () => modes?.rentedBedHere ?? -1,   // ...but the one the player rents\n",
+    "new": "",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  },
+  {
+    "name": "LW-LODGE-stand-walls",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      try { collider.move(q, Math.sin(a) * dist, 0, Math.cos(a) * dist, 1.8); } catch { continue; }\n      if (Math.hypot(q[0] - at[0], q[2] - at[2]) < dist * 0.75) continue;",
+    "new": "      q[0] += Math.sin(a) * dist; q[2] += Math.cos(a) * dist;\n      if (Math.hypot(q[0] - at[0], q[2] - at[2]) < dist * 0.75) continue;",
+    "tests": [
+      "test/lwlodge_tavern.test.js"
+    ]
+  }
+]
