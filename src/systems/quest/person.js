@@ -33,8 +33,9 @@ import { factionsTable, placesTable } from './tables.js';
 import { raceFromFactionRace, factionRaceFromRace, ZERO_NPC_DATA } from '../../characters/staticNpc.js';
 import { raceById } from '../races.js';
 import { Place, SITE_TYPES, townBlockGrid } from './place.js';
-import { stampLayout, layoutStampOfMapId, recordStands } from '../layoutPins.js';   // WD3 (AUDIT WD3 S3): a questor's building keeps its town's layout
+import { stampLayout, layoutStampOfMapId, recordStands, recordHeldBack } from '../layoutPins.js';   // WD3 (AUDIT WD3 S3): a questor's building keeps its town's layout
 import { questorCandidateBuildings } from '../talkTopics.js';   // QUESTOR-MOVED: the town's buildings and their people, as the questor pool reads them
+import { hasGuildService } from '../guildServices.js';   // QUEST-AUDIT II HOUSE-HALL: a guild's questor known by its service
 import { FACTION_TYPES } from '../../formats/factionFile.js';
 import { getNameBankOfRegion, fullName, GENDERS } from '../../characters/nameHelper.js';
 import { srand } from '../../formats/dfRandom.js';
@@ -390,7 +391,8 @@ export class Person extends QuestResource {
    * (online, a quest taken before the town mods; offline, a pack that could not be loaded; Daggerfall city's arena cell)
    * those numbers name nobody, `clicked npc` never fires, and the quest can never be handed in. The questor is seated
    * again in the town as it stands: in the building the journal names (`__qgiver_`, the hall's own name), else the first
-   * named building holding one of the questor's faction and look; on the person there of that faction and look, else of
+   * named building holding one of the questor's faction and look, else - a guild's questor (QUEST-AUDIT II HOUSE-HALL) -
+   * the first building of any kind holding one of that faction, its look first; on the person there of that faction and look, else of
    * that faction, else the first. The people and their identities are the questor pool's walk (talkTopics.js
    * questorCandidateBuildings - SetLayoutData's own law, so the record is the one a click on them mints). No roll: two
    * party members' copies are mended alike. The Person keeps its own name and seed (the journal's, the quest's words);
@@ -399,6 +401,7 @@ export class Person extends QuestResource {
   reseatMovedQuestor(world) {
     const q = this.questorData;
     if (!this.isQuestor || !(q?.buildingKey > 0) || recordStands({ mapId: q.mapID, buildingKey: q.buildingKey, layout: q.layout })) return false;   // the struct spells it mapID; recordStands reads mapId
+    if (recordHeldBack(q)) return false;   // QUEST-AUDIT II PIN-SLEEP: a town standing apart for this session only - the questor's record sleeps, never rewritten
     const hall = this.homePlaceSymbol ? this.parentQuest.getPlace(this.homePlaceSymbol) : null;
     const location = hall?.siteTown(world) ?? null;
     if (!location) return false;
@@ -409,14 +412,24 @@ export class Person extends QuestResource {
       raceOfCurrentRegion: () => q.race,   // a factionless person is of the questor's race - the region's they were met in
     });
     const sameLook = (n) => n.factionID === q.factionID && n.billboardArchiveIndex === q.billboardArchiveIndex && n.billboardRecordIndex === q.billboardRecordIndex;
+    // QUEST-AUDIT II HOUSE-HALL: a GUILD's questor - one whose faction is a guild service (guildServices.js NPC_SERVICE:
+    // the Thieves Guild's 804, the Dark Brotherhood's 807, a temple's or an order's quest-giver) - is found by that
+    // service wherever it stands, its own look first. Both rungs above ask a NAMED building, and every Thieves Guild and
+    // Dark Brotherhood hall is a House2: their contacts were never seated again, so a contract taken in one layout of
+    // the town could not be handed in once it stood in the other (the town mods lay ~80% of the halls' people anew)
+    const guild = hasGuildService(q.factionID);
     const to = buildings.find((b) => b.isNamedBuilding && b.buildingName === hall.siteDetails.buildingName && b.npcs.length)
-      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.some(sameLook));
+      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.some(sameLook))
+      ?? (guild ? buildings.find((b) => b.npcs.some(sameLook)) ?? buildings.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);
     if (!to) return false;
     const npc = { ...(to.npcs.find(sameLook) ?? to.npcs.find((n) => n.factionID === q.factionID) ?? to.npcs[0]) };
     delete npc.isChild;   // the pool's verdict, no NPCData field
     this.questorData = stampLayout(npc, layoutStampOfMapId(q.mapID));
     if (hall.siteDetails.siteType === SITE_TYPES.Building) {
-      hall.siteDetails = stampLayout({ ...hall.siteDetails, buildingKey: to.buildingKey, buildingName: to.buildingName }, layoutStampOfMapId(hall.siteDetails.mapId));
+      // QUEST-AUDIT II: seated anew, the hall is no longer an unseated one (place.js _unseat) - its old record would seat
+      // it back alone the day its old layout stood, the questor left in this one
+      const { unseated: _was, ...site } = hall.siteDetails;
+      hall.siteDetails = stampLayout({ ...site, buildingKey: to.buildingKey, buildingName: to.buildingName }, layoutStampOfMapId(site.mapId));
     }
     return true;
   }

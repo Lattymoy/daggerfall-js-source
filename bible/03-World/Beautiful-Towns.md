@@ -178,6 +178,25 @@ Alchemist); a party member's copy is mended as it arrives (a share, a resync),
 once the towns' layouts are known. A town with no such building keeps the
 record as it was.
 
+QUEST-AUDIT II (`01-Overview/Quest-Audit-II.md`) closed four holes of this and
+reworked one law. A GUILD's questor - a guild-service faction, the Thieves
+Guild's and the Dark Brotherhood's contacts in their House2 halls among them -
+is seated by that service in any building, and a hall whose questor stands
+nowhere is unseated, never left on its key (HOUSE-HALL). A town whose pin a
+pack could not honour this session leaves its quests' records asleep -
+unseated, their stamps kept - as its deed sleeps (PIN-SLEEP; they were chosen
+again and stamped with the failed session's layout, which then pinned the town
+for good). A party member's copy keeps its own building where the partner's
+names none in its town, and a shared copy chooses again by one die per share
+and Place (SHARED-SEAT); a resync makes each site link once (SITE-LINKS). And
+in a town a layout mod changes, a quest's local site with no free building of
+its kind is taken in the nearest town that has one, a remote one a mod-laid
+region cannot give in the nearest town of another region (NEAR-SITE,
+NEAR-REGION) - the 574 (town, quest) pairs, the Kynareth temples and the manors
+the audit found failing all start. Beautiful Villages' temples stand their
+deity's Daedra summoner again, at a floor spot measured over the player's
+geometry (TEMPLE-SUMMONER, `world/curatedPeople.js`).
+
 Every claim SAYS its town's layout, Daggerfall's own as `null`; a claim that
 names none is a build from before the town mods, and is refused (426
 `home-update`, "This game is out of date. Reload it to buy a home."). A refusal

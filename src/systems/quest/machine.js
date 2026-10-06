@@ -1346,7 +1346,12 @@ export class QuestMachine {
       if (r.isClock && r.clockFinished) { const tk = quest.getTask?.(r.symbol); finishedBefore.set(r.symbol?.name, tk ? { triggered: tk.triggered, prev: tk.prevTriggered } : null); }
     }
     { let t = 0; for (const task of quest.tasks.values()) { let a = 0; for (const action of task.actions) { if (action.typeName === 'CreateFoe') wavesBefore.set(`${t}:${a}`, { last: action.lastSpawnTime, tick: action._lastTick, raised: action._lastRaised, count: action.spawnCounter }); a++; } t++; } }
+    // QUEST-AUDIT II SHARED-SEAT: and a Place's BUILDING is this world's where the partner's names none here (their town
+    // stood in another layout) - kept below, the partner's assignments carried onto it (Place.keepOwnSite)
+    const sitesBefore = new Map();
+    for (const r of quest.resources.values()) if (r.isPlace && r.siteDetails) sitesBefore.set(r.symbol?.name, structuredClone(r.siteDetails));
     quest.restoreSaveData({ ...questData, uid }, this._saveResolvers());
+    for (const r of quest.resources.values()) if (r.isPlace && sitesBefore.has(r.symbol?.name)) r.keepOwnSite?.(sitesBefore.get(r.symbol?.name));
     for (const r of quest.resources.values()) {
       if (r.isClock && !r.clockFinished && finishedBefore.has(r.symbol?.name)) {
         r.clockEnabled = false; r.clockFinished = true; r.remainingTimeInSeconds = 0;
@@ -1393,6 +1398,10 @@ export class QuestMachine {
       t++;
     }
     this._reseatArrived(quest);   // QUESTOR-MOVED: a partner's copy from before the town mods, mended as it lands
+    // QUEST-AUDIT II SITE-LINKS: each Place's link made AGAIN, never once more - the copy's own link from its accept (or
+    // the last resync) went on standing beside a new one at every resync, so a quest shared for an evening carried
+    // dozens of links per Place in the save, and every mount of its building walked them all
+    this.siteLinks = this.siteLinks.filter((link) => link.questUID !== quest.uid);
     for (const resource of quest.resources.values()) {
       if (resource.isPlace && resource.siteDetails) this.createSiteLink(quest, resource.symbol);
     }

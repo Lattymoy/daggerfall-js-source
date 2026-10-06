@@ -394,7 +394,7 @@ untouched. The four hosts: the door asks the pins on every location and block re
 34 has a dungeon). `test/fb1004d_templehome.test.js` (4); `tools/mutants/fb1004d_templehome.json` (4, all dead);
 `wd3_layoutPins`' row pin re-aimed.
 
-Recorded, not changed: the destinations that moved (5), and a questor met in a house is not re-seated (6).
+Recorded, not changed: the destinations that moved (5). A questor met in a house is seated again since QUEST-AUDIT II HOUSE-HALL, and the destinations a town no longer holds are taken in the nearest town that does since NEAR-SITE (`01-Overview/Quest-Audit-II.md`).
 
 
 ## Integration

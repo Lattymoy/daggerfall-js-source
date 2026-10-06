@@ -2,8 +2,8 @@
   {
     "name": "RESEAT-DECLARED-reads-the-written-p2",
     "file": "src/systems/quest/place.js",
-    "old": "    const { p2, p3 } = this.declaredSiteLaw();\n    const { found } = this._searchTownSites(world, location, p2, p3);",
-    "new": "    const { p2, p3 } = this;\n    const { found } = this._searchTownSites(world, location, p2, p3);",
+    "old": "    const { p2, p3 } = this.declaredSiteLaw();\n    let { found } = this._searchTownSites(world, location, p2, p3);",
+    "new": "    const { p2, p3 } = this;\n    let { found } = this._searchTownSites(world, location, p2, p3);",
     "tests": [
       "test/fb1004d_reseatdeclared.test.js"
     ],

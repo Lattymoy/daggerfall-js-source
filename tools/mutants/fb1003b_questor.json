@@ -38,8 +38,8 @@
   {
     "name": "QUESTOR-MOVED-hall-look-rung-dropped",
     "file": "src/systems/quest/person.js",
-    "old": "\n      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.some(sameLook));",
-    "new": ";",
+    "old": "\n      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.some(sameLook))\n      ?? (guild",
+    "new": "\n      ?? (guild",
     "tests": [
       "test/fb1003b_questor.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "QUESTOR-MOVED-unnamed-building-taken",
     "file": "src/systems/quest/person.js",
-    "old": "      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.some(sameLook));",
-    "new": "      ?? buildings.find((b) => b.npcs.some(sameLook));",
+    "old": "      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.some(sameLook))\n      ?? (guild",
+    "new": "      ?? buildings.find((b) => b.npcs.some(sameLook))\n      ?? (guild",
     "tests": [
       "test/fb1003b_questor.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "QUESTOR-MOVED-hall-look-rung-any-people",
     "file": "src/systems/quest/person.js",
-    "old": "      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.some(sameLook));",
-    "new": "      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.length > 0);",
+    "old": "      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.some(sameLook))\n      ?? (guild",
+    "new": "      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.length > 0)\n      ?? (guild",
     "tests": [
       "test/fb1003b_questor.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "QUESTOR-MOVED-hall-left-behind",
     "file": "src/systems/quest/person.js",
-    "old": "      hall.siteDetails = stampLayout({ ...hall.siteDetails, buildingKey: to.buildingKey, buildingName: to.buildingName }, layoutStampOfMapId(hall.siteDetails.mapId));\n",
+    "old": "      hall.siteDetails = stampLayout({ ...site, buildingKey: to.buildingKey, buildingName: to.buildingName }, layoutStampOfMapId(site.mapId));\n",
     "new": "",
     "tests": [
       "test/fb1003b_questor.test.js"
@@ -110,7 +110,7 @@
   {
     "name": "QUESTOR-MOVED-hall-unstamped",
     "file": "src/systems/quest/person.js",
-    "old": "buildingName: to.buildingName }, layoutStampOfMapId(hall.siteDetails.mapId));",
+    "old": "buildingName: to.buildingName }, layoutStampOfMapId(site.mapId));",
     "new": "buildingName: to.buildingName }, '');",
     "tests": [
       "test/fb1003b_questor.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "QUESTOR-MOVED-scopes-none-guard-dropped",
     "file": "src/systems/quest/place.js",
-    "old": "    if (this.scope === Scopes.None) return false;   // QUESTOR-MOVED",
-    "new": "    // QUESTOR-MOVED",
+    "old": "    if (this.scope === Scopes.None) return this._unseat(held);",
+    "new": "",
     "tests": [
       "test/fb1003b_questor.test.js"
     ]

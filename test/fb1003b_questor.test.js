@@ -248,9 +248,12 @@ test('QUESTOR-MOVED: a town with no building to seat the questor in keeps the re
       { type: ALCHEMIST, markers: true, people: [person({ x: 1, z: 1, position: 50, factionID: 0, look: { archive: 182, record: 5 } })] },
       { type: LIBRARY, people: [person({ x: 5, z: 5, position: 1100, factionID: 0, look: { archive: 182, record: 7 } })] },
     ]);
-    assert.equal(m.reseatMovedSites(t.world), 0, 'nothing moved');
+    // PIN MOVED (QUEST-AUDIT II HOUSE-HALL): the hall is UNSEATED, never left on a key its layout no longer names (here
+    // the library again by chance; in the Thieves Guild's town a stranger's house) - its record kept, never the apothecary
+    assert.equal(m.reseatMovedSites(t.world), 1, 'the hall unseated, nothing chosen again');
     assert.deepEqual(four(qg.questorData), four(classicClick), 'the questor\'s record as it was');
-    assert.deepEqual([hall.siteDetails.buildingKey, hall.siteDetails.buildingName], [makeBuildingKey(0, 0, 1), libName], 'the hall is not the apothecary');
+    assert.deepEqual([hall.siteDetails.buildingKey, hall.siteDetails.buildingName], [0, libName], 'the hall names no building, its name kept');
+    assert.equal(hall.siteDetails.unseated.buildingKey, makeBuildingKey(0, 0, 1), 'its record kept - and never the apothecary\'s');
   } finally { _resetLayoutPins(); }
 });
 

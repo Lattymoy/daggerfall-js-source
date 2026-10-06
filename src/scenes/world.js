@@ -13441,9 +13441,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     const pins = pinsFrom(records);
     // the packs a pin lets in, on the door BEFORE the pins answer for them - a pin into a pack that will not load
     // is dropped, and its town stands as the mods loaded for the game serve it
-    let dropped = 0;
-    for (const pin of pins.values()) {
-      for (const v of [...pin.in]) if (!(await ensureWorldDataPack(v))) { pin.in.delete(v); dropped++; }
+    let dropped = 0; const heldBack = new Set();   // QUEST-AUDIT II PIN-SLEEP: the towns whose pin this session cannot honour
+    for (const [key, pin] of pins) {
+      for (const v of [...pin.in]) if (!(await ensureWorldDataPack(v))) { pin.in.delete(v); dropped++; heldBack.add(key); }
     }
     // AUDIT WD3 B6: said, once a game - a house, a room or a quest whose town could not be stood as it was left (its
     // records sleep there: banking.js deedStands, systems/layoutPins.js recordStands)
@@ -13456,7 +13456,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     for (const [k, pin] of [...pins]) if (!pin.in.size && !pin.out.size) pins.delete(k);
     if (gen !== _pinsGen) return false;   // AUDIT WD3 R3: a later call (newer records) overtook this one while its packs loaded
-    const changed = setLayoutPins(pins);
+    const changed = setLayoutPins(pins, { heldBack });   // QUEST-AUDIT II PIN-SLEEP: their records sleep (layoutPins.js recordHeldBack)
     let rebuilt = 0;
     for (const key of changed) {
       const pixelKey = _layoutKeyPixel.get(key);
