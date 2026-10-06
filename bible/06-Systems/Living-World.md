@@ -100,13 +100,15 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
   trades are dealt to the houses' people in a seeded order, a trade left over lives where it works, the people left
   over take the town's common work by its size (labourers, farmers - the villages' own -, a port's fishers, crafters,
   homemakers, a city's beggars); `CENSUS_MAX` 260, the common hands trimmed first. `townCensus` gives the watch the
-  palace and every traveller a house (an adventurer the tavern a quarter of the time). Identity is `mintResident`'s:
+  palace and every traveller a house (an adventurer the tavern a quarter of the time) - LW-WALLS: of the buildings whose
+  doors open onto the town's street, where the town knows them. Identity is `mintResident`'s:
   the climate's people (`raceOfPeople`), half female, an outfit of `PERSON_TEXTURES`, a face of
   `PERSON_FACE_RECORDS` + 0..23, a name on the region's bank (`residentName`), the watch GUARD_TEXTURE male outfit 0
   (RandomiseNPC's arms, every part); a temper (lark, day, owl) weighted by the job, three leanings (company, piety,
   drink), a class for the armed (an adventurer any of the eighteen, a sellsword the fighting seven, a courier the
   light three) and a level.
-- **`places.js`.** The street net is the grid's largest four-neighbour walkable component (`streetNet`). A door's
+- **`places.js`.** The street net is the four-neighbour walkable component (`streetNet`'s labels) the most of the
+  town's buildings open onto (`doorsNet`, LW-WALLS - not the grid's largest: a walled city's fields are). A door's
   cell: out along its normal 0.9-4 m until the net takes a foot, then the other way (a model's normal can face in),
   then the nearest net cell within four. Social spots `SOCIAL_OUT` cells before the tavern, temple, guild hall and
   palace, market spots `MARKET_OUT` before the shops, a dock before a Ship; the square the net cell by the middle with
@@ -1265,6 +1267,61 @@ departure (Port-Ledger WATCH-PROTECTS) - classic play keeps DFU's street.
   (`livingQuarry` is the exterior's alone). `scenes/dungeonContext.js` - no town.
 - **Pinned** by `test/watchprotects_watch.test.js` (who hunts; the one blow; the watch comes; the street runs, cornered,
   chased; the frightened silent; the run's body; struck down; the hosts) and `tools/mutants/watchprotects.json`.
+
+## LW-WALLS - the city behind its walls (2026-10-06)
+
+The field (MD-Geist on the Discord: "In Ripmarket (Daggerfall Province) the last few days there have been 0 NPC's
+walking around in the city...Tested on clear days and rainy no change"), and the ask that brought it: "Seems like with
+living world, a lot of towns are unpopulated". Measured on the game's own data: the streaming host's build of each town
+replayed in Node (`layoutLocation`, the navgrid off each block's automap and ground, every model's static doors in the
+location frame, the buildings' summaries - the population block's own text, pinned) and its living town run on it.
+
+- **The cause** (`places.js townPlaces`). The town's street net was the grid's LARGEST walkable component (LW1). A
+  walled city's wall is covered navgrid cells, and so is each of its gates: the gate model's automap footprint closes
+  the passage (DFU's own walkers, spawned about the player, never need to cross it). So the streets inside the walls and
+  the fields about them are two components, and the fields are the larger in 407 of the game's 410 cities - Ripmarket
+  (6x7 blocks): 77,611 cells of field to its streets' 57,539. The town was laid on the fields: 4 of Ripmarket's 369
+  buildings with a door had their spot on the net, every one of its 305 people was homed off it, and a home off the net
+  is home all day (`dayPlan`'s "a home off the net: always in") - a street with nobody on it at every hour, in every
+  city of the game but its three greatest (Daggerfall, Wayrest and Sentinel, 8x8, whose streets are the larger). The
+  hamlets and villages have no walls (one hamlet parts in two - below).
+- **The street the doors open onto** (`places.js doorsNet`). The town's street net is the walkable component the most of
+  its buildings open onto - each building once, by any of its doors, each door found by its own law on any walkable cell
+  (`doorCell`: out along its normal, the other way where the normal faces in, else the nearest within DOOR_RING); the
+  larger on a tie, then the first labelled; a town whose doors reach no street keeps the largest. Ripmarket's street is
+  its streets: every one of its 369 buildings with a door has its spot, its square stands at its middle, and its four
+  exits stand in its four gates' passages on the inside of each gate (the gate's footprint ends the street there; each
+  exit within four cells of its gate model) - where travellers go out and the watch keeps its posts. At midday its
+  street is full to DFU's cap (48). Over the game's 410 cities, at least 99% of each one's buildings with a door have
+  their spot, and at least 80% of its people are homed on its street (97% of them all). Measured against the street
+  that would give the most buildings their spot (each door counted for every component its law reaches), the vote
+  gives as many in every one of the game's 9,373 populated places, and never fewer than the largest did.
+- **The watch lives on the street** (`census.js townCensus` `opens`; `livingTown.js`). The watch lived at the palace,
+  and in 14 of the game's 322 cities with a palace (Sentinel among them) the palace stands in grounds of its own,
+  walled, its gate closed: its door opens onto its grounds alone, and the whole watch - sixteen to twenty-four - stayed
+  home with it (WATCH-DAY's shifts, posts and patrols walked by nobody); elsewhere a watchman whose house had no door on
+  the street stayed home (756 of the 22,716 in every populated place). The living town numbers its people knowing its
+  street: the watch's and every traveller's home is a building whose door opens onto it - the palace where it does, else
+  a house (the slot's own pick among those), an adventurer's tavern among those too. None of the 22,716 is homed off it
+  now. A household keeps the house it is minted from: its slot is its identity, the key its regard is saved under.
+- **Left.** A building whose doors open off the street keeps its people in (LW1's rule, kept): a palace's court in its
+  walled grounds, and the households the census mints in the doorless houses of a graveyard's or a palace's block (a
+  House5 with no door - 45 of Cerettunia's 298); to bring them out the census would mint other slots and re-key every
+  character's regard, which is Mac's call. A farmstead's house stands deep in its own automap lot (Old Bazsa's Farm: a
+  25x18-cell footprint, its doors six cells and more inside it, past DOOR_REACH_M and DOOR_RING): in 189 of the game's
+  1,841 farmsteads no door reaches the street, and the family keeps in where DFU's walkers would wander - the same rule,
+  not changed here. A hamlet its own ground parts in two (Cathing, 2x3: 7,533 cells and 7,342) walks the half the more
+  of its buildings open onto (37 of 70: 76 of its 135 people homed on its street, 56 before); the other half keeps in.
+- **The four hosts.** `scenes/world.js` - WIRED: the living town it stands (LW2) lays its street on the doors' component
+  and numbers its people knowing it - no host change. `scenes/exterior.js` - FLAGGED as LW2 has it: the fixed-city page
+  keeps DFU's pool. `scenes/worldModes.js` - through the town (LW8): a room's people are the same census's.
+  `scenes/dungeonContext.js` - no town.
+- **Pinned** by `test/lwwalls_city.test.js` (the doors' street - smaller or not, a building once, the ties, no doors;
+  the synthetic walled city, `test/lwTown.mjs walledTown`, its streets and fields, doors, gates and square, its street
+  by day and the farmhouse in its fields; the watch at doors onto the street; the host's build replayed word for word;
+  and, where ARENA2_PATH names the data, Ripmarket and every one of the game's 410 cities) and
+  `tools/mutants/lwwalls.json` (13, all dead without the game's data). PIN MOVED: `tools/mutants/lw1.json`
+  LW1-normal-never-reversed and LW1-net-unread re-aimed by content (`doorCell`).
 
 ## The four hosts
 

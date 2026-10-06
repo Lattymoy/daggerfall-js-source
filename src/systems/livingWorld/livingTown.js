@@ -222,7 +222,7 @@ export class LivingTown {
     /** LW-STAND: the street a person stands and walks on - never in a wall nor over the water (places.js streetGeometry:
      *  the stands about a spot, the way to one) */
     this._street = streetGeometry(this.nav, this.places);
-    this.residents = townCensus(o.town, o.buildings);
+    this.residents = townCensus(o.town, o.buildings, new Set(this.places.doors.keys()));   // LW-WALLS: the watch's and a traveller's home on the street
     /** WATCH-DAY: the town's watch a shift (census.js) - its companies' duties (dayPlan.js watchDuty) */
     this._watchSize = watchShiftSize(o.town);
     this.maxPopulation = maxPopulationFor(o.town.blocks);

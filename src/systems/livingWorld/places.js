@@ -4,15 +4,18 @@
 // (world/cityNavigation.js) and its buildings' types.
 //
 //  - A DOOR is the walkable cell just before it: out along the door's normal until the ground takes a foot (the other
-//    way where the model's normal faces in - a footprint is never street), else the nearest walkable cell about it - and always on the town's one connected street net (the grid's largest walkable
-//    component), so every door can be walked to from every other. A building whose doors stand off the net (a fenced
-//    yard, a tower in the water) keeps none: its people stay in.
+//    way where the model's normal faces in - a footprint is never street), else the nearest walkable cell about it - and
+//    always on the town's one connected street net, so every door can be walked to from every other. A building whose
+//    doors stand off the net (a fenced yard, a tower in the water) keeps none: its people stay in.
+//  - THE STREET NET is the walkable component (four-neighbour) the most of the town's buildings open onto (`doorsNet`) -
+//    not the grid's largest: a walled city's wall and gates are covered cells, so its streets and the fields outside its
+//    walls are two components, and the fields are the larger in 407 of the game's 410 cities.
 //  - THE SQUARE is the most open ground near the town's middle (the walkable cells about a cell, sampled on a stride).
 //  - SOCIAL SPOTS stand a few paces before the taverns, temples, guild halls and the palace, and the square is one;
 //    MARKET SPOTS before the shops; the DOCK is a Ship building's door where the town has one.
 //  - THE EXITS are, for each side of the grid, the street-net cell nearest that edge: on the border itself in an open
-//    town, at the gate in a walled one (the wall is a covered cell, the gate the street's only way through) - and where
-//    the net reaches no edge at all, the farthest it reaches toward it.
+//    town, in the gate's passage in a walled one (the gate's own footprint ends the street there) - and where the net
+//    reaches no edge at all, the farthest it reaches toward it.
 //
 // PURE: the doors, the grid and the types in; plain records out.
 import { NAV_CELL, HALF_CELL } from '../../world/cityNavigation.js';
@@ -74,12 +77,12 @@ export function streetNet(nav) {
 }
 
 /**
- * The street-net cell nearest a location-frame point within `ring` cells (Chebyshev rings outward, the nearest by
- * distance within the first ring holding one), or null.
- * @param {{ width: number, height: number }} nav @param {Int32Array} net @param {number} netId
+ * The cell `ok` takes (by its index in the grid) nearest a location-frame point within `ring` cells (Chebyshev rings
+ * outward, the nearest by distance within the first ring holding one), or null.
+ * @param {{ width: number, height: number }} nav @param {(i: number) => boolean} ok
  * @param {number} x @param {number} z @param {number} ring
  */
-export function nearestNetCell(nav, net, netId, x, z, ring) {
+function nearestCell(nav, ok, x, z, ring) {
   const W = nav.width, H = nav.height;
   const gx = Math.floor(x / NAV_CELL), gy = Math.floor(z / NAV_CELL);
   for (let r = 0; r <= ring; r++) {
@@ -88,7 +91,7 @@ export function nearestNetCell(nav, net, netId, x, z, ring) {
       for (let dx = -r; dx <= r; dx++) {
         if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
         const cx = gx + dx, cy = gy + dy;
-        if (cx < 0 || cy < 0 || cx >= W || cy >= H || net[cy * W + cx] !== netId) continue;
+        if (cx < 0 || cy < 0 || cx >= W || cy >= H || !ok(cy * W + cx)) continue;
         const d = Math.hypot(cx * NAV_CELL + HALF_CELL - x, cy * NAV_CELL + HALF_CELL - z);
         if (d < bestD) { bestD = d; best = [cx, cy]; }
       }
@@ -96,6 +99,75 @@ export function nearestNetCell(nav, net, netId, x, z, ring) {
     if (best) return best;
   }
   return null;
+}
+
+/**
+ * The street-net cell nearest a location-frame point within `ring` cells, or null.
+ * @param {{ width: number, height: number }} nav @param {Int32Array} net @param {number} netId
+ * @param {number} x @param {number} z @param {number} ring
+ */
+export function nearestNetCell(nav, net, netId, x, z, ring) {
+  return nearestCell(nav, (i) => net[i] === netId, x, z, ring);
+}
+
+/**
+ * The cell a door opens onto, of those `ok` takes: out along its normal (DOOR_REACH_M) to the first - the other way
+ * where a model's normal faces in (a footprint is never street) - else the nearest within DOOR_RING of a point 1.6 m
+ * out; with the normal it was found along. Null where none is.
+ * @param {{ width: number, height: number }} nav @param {{ x: number, z: number, nx: number, nz: number }} d
+ * @param {(i: number) => boolean} ok
+ * @returns {{ cell: number[], nx: number, nz: number } | null}
+ */
+function doorCell(nav, d, ok) {
+  const W = nav.width, H = nav.height;
+  const nl = Math.hypot(d.nx, d.nz) || 1;
+  const nx = d.nx / nl, nz = d.nz / nl;
+  for (const sign of [1, -1]) {
+    for (const m of DOOR_REACH_M) {
+      const cx = Math.floor((d.x + sign * nx * m) / NAV_CELL), cy = Math.floor((d.z + sign * nz * m) / NAV_CELL);
+      if (cx >= 0 && cy >= 0 && cx < W && cy < H && ok(cy * W + cx)) return { cell: [cx, cy], nx: nx * sign, nz: nz * sign };
+    }
+  }
+  const cell = nearestCell(nav, ok, d.x + nx * 1.6, d.z + nz * 1.6, DOOR_RING);
+  return cell ? { cell, nx, nz } : null;
+}
+
+/**
+ * FIELD (2026-10-06, MD-Geist: "In Ripmarket (Daggerfall Province) the last few days there have been 0 NPC's walking
+ * around in the city"): THE TOWN'S STREET NET IS THE ONE ITS DOORS OPEN ONTO - of the grid's walkable components
+ * (`streets`, streetNet's labels), the one the most of the town's buildings open onto (each building once, by any of its
+ * doors - doorCell on any walkable cell), the larger on a tie, then the first labelled; a town whose doors reach none
+ * (no doors) keeps the largest. The largest was taken for the town's own, and a walled city's wall and gates are covered
+ * cells (the gate model's automap footprint closes its passage; DFU's walkers, spawned about the player, never cross it):
+ * its streets inside the walls and the fields about them are two components, and the fields are the larger in 407 of
+ * the game's 410 cities (Ripmarket's 77,611 cells to its streets' 57,539) - every door off the net, every one of its 305
+ * people at home all day, a street with nobody on it at every hour.
+ * @param {{ width: number, height: number }} nav
+ * @param {readonly { key: number, x: number, z: number, nx: number, nz: number }[]} doors - location frame
+ * @param {{ label: Int32Array, id: number }} streets
+ * @returns {number} the component's label
+ */
+export function doorsNet(nav, doors, streets) {
+  const { label } = streets;
+  /** @type {Map<number, Set<number>>} each component's buildings */
+  const opens = new Map();
+  for (const d of doors) {
+    const at = doorCell(nav, d, (i) => label[i] > 0);
+    if (!at) continue;
+    const id = label[at.cell[1] * nav.width + at.cell[0]];
+    const keys = opens.get(id) ?? new Set();
+    keys.add(d.key);
+    opens.set(id, keys);
+  }
+  if (!opens.size) return streets.id;
+  const size = new Map([...opens.keys()].map((id) => [id, 0]));
+  for (let i = 0; i < label.length; i++) { const n = size.get(label[i]); if (n !== undefined) size.set(label[i], n + 1); }
+  let best = 0, bestKeys = -1, bestSize = -1;
+  for (const [id, keys] of [...opens].sort((a, b) => a[0] - b[0])) {
+    const n = /** @type {number} */ (size.get(id));
+    if (keys.size > bestKeys || (keys.size === bestKeys && n > bestSize)) { best = id; bestKeys = keys.size; bestSize = n; }
+  }
+  return best;
 }
 
 const centre = (c) => [c[0] * NAV_CELL + HALF_CELL, c[1] * NAV_CELL + HALF_CELL];
@@ -191,32 +263,22 @@ export function harbourDock(nav, places, x, z) {
  * @returns {Places}
  */
 export function townPlaces(nav, doors, buildings) {
-  const { label: net, id: netId } = streetNet(nav);
   const W = nav.width, H = nav.height;
   const types = new Map((buildings ?? []).map((b) => [b.key, b.type]));
-  const onNet = (c) => c && c[0] >= 0 && c[1] >= 0 && c[0] < W && c[1] < H && net[c[1] * W + c[0]] === netId;
+  const ordered = [...(doors ?? [])].filter((d) => Number.isFinite(d.x) && Number.isFinite(d.z)).sort((a, b) => a.key - b.key || a.x - b.x || a.z - b.z);
+  const streets = streetNet(nav);
+  const net = streets.label, netId = doorsNet(nav, ordered, streets);   // FIELD 2026-10-06: the street its doors open onto
   /** @type {Map<number, Spot>} */
   const doorSpots = new Map();
   /** @type {Map<number, { x: number, z: number, nx: number, nz: number }>} */
   const doorOf = new Map();
-  for (const d of [...(doors ?? [])].sort((a, b) => a.key - b.key || a.x - b.x || a.z - b.z)) {
-    if (doorSpots.has(d.key) || !Number.isFinite(d.x) || !Number.isFinite(d.z)) continue;
-    const nl = Math.hypot(d.nx, d.nz) || 1;
-    let nx = d.nx / nl, nz = d.nz / nl;
-    let cell = null;
-    // out along the normal - and, a model's normal facing in (the building's footprint is no street), the other way
-    for (const sign of [1, -1]) {
-      for (const m of DOOR_REACH_M) {
-        const c = [Math.floor((d.x + sign * nx * m) / NAV_CELL), Math.floor((d.z + sign * nz * m) / NAV_CELL)];
-        if (onNet(c)) { cell = c; break; }
-      }
-      if (cell) { nx *= sign; nz *= sign; break; }
-    }
-    cell ??= nearestNetCell(nav, net, netId, d.x + nx * 1.6, d.z + nz * 1.6, DOOR_RING);
-    if (!cell) continue;
-    const [x, z] = centre(cell);
-    doorSpots.set(d.key, { key: `d${d.key}`, kind: 'door', cell, x, z, yaw: yawTo(x, z, d.x, d.z), building: d.key });
-    doorOf.set(d.key, { x: d.x, z: d.z, nx, nz });
+  for (const d of ordered) {
+    if (doorSpots.has(d.key)) continue;
+    const at = doorCell(nav, d, (i) => net[i] === netId);
+    if (!at) continue;
+    const [x, z] = centre(at.cell);
+    doorSpots.set(d.key, { key: `d${d.key}`, kind: 'door', cell: at.cell, x, z, yaw: yawTo(x, z, d.x, d.z), building: d.key });
+    doorOf.set(d.key, { x: d.x, z: d.z, nx: at.nx, nz: at.nz });
   }
   /** A spot `out` cells before a building's door, on the net (else the door's own cell). */
   const before = (key, out, kind) => {

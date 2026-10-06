@@ -252,14 +252,19 @@ export function householdCensus(town, buildings) {
 /**
  * THE TOWN - its households, its watch and its travellers, every traveller and every one of the watch given a home:
  * a house of the town (the slot's own pick, so the same house for every reader), the palace for the watch where there
- * is one, the tavern for an adventurer with no house to go to.
- * @param {LwTown} town @param {readonly LwBuilding[]} buildings @returns {Resident[]}
+ * is one, the tavern for an adventurer with no house to go to. LW-WALLS: `opens` the buildings whose doors open onto
+ * the town's street (places.js - the keys of its door spots), where the town knows them: the watch's and a traveller's
+ * home is one of those - the palace inside its own walled grounds (a separate street, its gate a covered cell, in 14 of
+ * the game's 322 cities with a palace) kept the whole watch in, and a doorless house its watchman. A household keeps the
+ * house it is minted from (its slot is its identity).
+ * @param {LwTown} town @param {readonly LwBuilding[]} buildings @param {ReadonlySet<number>|null} [opens] @returns {Resident[]}
  */
-export function townCensus(town, buildings) {
+export function townCensus(town, buildings, opens = null) {
   const households = householdCensus(town, buildings);
-  const houses = (buildings ?? []).filter((b) => b && isHome(b.type)).map((b) => b.key).sort((a, b) => a - b);
-  const palace = (buildings ?? []).find((b) => b?.type === BUILDING_TYPES.Palace)?.key ?? null;
-  const tavern = (buildings ?? []).filter((b) => b?.type === BUILDING_TYPES.Tavern).map((b) => b.key).sort((a, b) => a - b);
+  const open = (/** @type {LwBuilding} */ b) => !opens || opens.has(b.key);
+  const houses = (buildings ?? []).filter((b) => b && isHome(b.type) && open(b)).map((b) => b.key).sort((a, b) => a - b);
+  const palace = (buildings ?? []).find((b) => b?.type === BUILDING_TYPES.Palace && open(b))?.key ?? null;
+  const tavern = (buildings ?? []).filter((b) => b?.type === BUILDING_TYPES.Tavern && open(b)).map((b) => b.key).sort((a, b) => a - b);
   const homeOf = (r) => {
     const pick = lwSeed(r.town, r.roll.charCodeAt(0), r.slot, 0x686d);   // 'hm'
     if (r.guard && palace != null) return palace;
