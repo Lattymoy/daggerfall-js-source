@@ -194,6 +194,63 @@ test('LEGACY-CHOICE the popup: on Enhanced Plus the online question wears the Pl
   assert.equal(LEGACY_CHOICE_TEXT.lines.length, 2, 'the classic face\'s two lines over the options');
 });
 
+test('LEGACY-POINTER (FIELD 2026-10-06, Mac: "moving the mouse up and down switches between the options instead of letting you hover and select"): while the Plus face is up its tiles own the pointer - the canvas seam the hosts route every mousemove and click through moves nothing and answers nothing', () => {
+  _setLevelingFaceClockForTests(() => null, () => {});
+  // the hosts' mousemove listener is on the WINDOW (world.js, exterior.js), so it fires over the popup too and hands the
+  // screen the pointer in the CANVAS face's native units - rows the popup does not draw (its tiles stand side by side)
+  withPage('?skin=enhanced&online', (doc) => {
+    const got = [];
+    const q = legacyModelScreen((m) => got.push(m));
+    q.draw(recorder(), CANVAS, FONT);
+    assert.equal(levelingFaceOwner(), q, 'the popup is up');
+    const tiles = find(doc.getElementById(LEVELING_FACE_ID), 'lvl-opt');
+    tiles[2].onpointerenter();
+    assert.equal(q.cursor, 2, 'the tile under the pointer is the one chosen');
+    for (let i = 0; i < 3; i++) {
+      q.hover(160, q.tops[i] + 2);
+      assert.equal(q.cursor, 2, `a move over the canvas face's row ${i} leaves the popup's choice alone`);
+    }
+    q.draw(recorder(), CANVAS, FONT);
+    assert.ok(tiles[2].className.includes('is-on') && !tiles[0].className.includes('is-on') && !tiles[1].className.includes('is-on'), 'and the popup shows the tile the pointer is on');
+    assert.equal(q.click(160, q.tops[0] + 2), false, 'a canvas press answers nothing while the popup is up');
+    assert.deepEqual(got, []);
+    tiles[2].onclick();
+    assert.deepEqual(got, [NO_LINEAGE], 'the tile pressed is the answer');
+  }, { doc: true });
+  // the leveling question wears the same face, and the same seam
+  withPage('?skin=enhanced', (doc) => {
+    const q = new LevelingChoiceScreen(() => {});
+    q.draw(recorder(), CANVAS, FONT);
+    const tiles = find(doc.getElementById(LEVELING_FACE_ID), 'lvl-opt');
+    tiles[1].onpointerenter();
+    q.hover(160, q.topOf(0) + 2);
+    assert.equal(q.cursor, 1, 'the leveling popup too');
+    q.answer(q.defaultId);
+  }, { doc: true });
+  // the face is the LAST FRAME's: a question that comes back to the canvas (the skin switched under it) takes the canvas
+  // pointer again
+  withPage('?skin=enhanced&online', () => {
+    const q = legacyModelScreen(() => {});
+    q.draw(recorder(), CANVAS, FONT);
+    assert.equal(levelingFaceOwner(), q);
+    globalThis.location = { search: '?skin=classic&online' };
+    q.draw(recorder(), CANVAS, FONT);
+    q.hover(160, q.tops[2] + 2);
+    assert.equal(q.cursor, 2, 'the canvas face drew last, so its rows are the pointer\'s');
+    q.answer(q.defaultId);
+  }, { doc: true });
+  // the classic skin draws the canvas face, and the canvas seam is its pointer, as ever
+  withPage('?skin=classic&online', () => {
+    const got = [];
+    const q = legacyModelScreen((m) => got.push(m));
+    q.draw(recorder(), CANVAS, FONT);
+    q.hover(160, q.tops[1] + 2);
+    assert.equal(q.cursor, 1, 'the hover follows the canvas rows the classic face draws');
+    assert.equal(q.click(160, q.tops[2] + 2), true);
+    assert.deepEqual(got, [NO_LINEAGE]);
+  });
+});
+
 // ---- the answer, kept --------------------------------------------------------------------------------------------
 
 const career = {

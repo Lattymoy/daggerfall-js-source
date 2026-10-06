@@ -213,6 +213,15 @@ finishChargen`, `test/legacychoice.test.js`, `tools/mutants/legacychoice.json`):
   permadeath, Permadeath and Classic (the leveling question's word for the game as it always was), keys 1, 2 and 3,
   up and down each a direction; on the classic skin the same three stacked by their own heights within the 200.
   Offline it keeps its two: the mod's own switch in Features does the third for every character there.
+- LEGACY-POINTER (FIELD 2026-10-06, Mac: "moving the mouse up and down switches between the options instead of letting
+  you hover and select"): WHILE THE POPUP IS UP ITS TILES OWN THE POINTER. Every host hands the slot's occupant each
+  mousemove from a listener on the WINDOW (world.js, exterior.js, worldModes.js, dungeon.js - the dungeon context's
+  `overlayHover` is the fourth host's door), so the screen's canvas seam (`LevelingChoiceScreen.hover`/`click`) fired
+  over the popup too and moved the choice by the classic face's ROWS, which the popup does not draw - its tiles stand
+  side by side. The screen now notes the face it drew last frame (`_faced`, ui/yesNoBox.js's `_carded`) and its canvas
+  seam stands down under the popup; the tiles' own pointerenter and click are the pointer. The leveling question wears
+  the same screen and had the same fault. Clicks were never wrong: the popup's shell (`.px-home`, fixed, inset 0)
+  covers the canvas, so no canvas press reached it.
 - THE ANSWER IS THE CHARACTER'S (`entity.legacyChoice`, saved beside the leveling answer): one who answered no lineage
   founds no house - at their birth or at any load, in either lane (a copy keeps it).
 - ONLINE A HOUSE IS FOUNDED AT A CHARACTER'S BIRTH ALONE: the boot's own call (`afterBoot`, `atLoad`) founds nobody
