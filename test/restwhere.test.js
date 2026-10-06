@@ -409,8 +409,11 @@ test('rest: the ?town page is the FOURTH host, and it runs the SAME laws as the 
   // The crime rides the verdict rather than being named by the host:
   // canRest mints it, the host relays whatever it was handed.
   assert.match(ed.value('commitCrime'), /setCrimeCommitted\(playerEntity, crime\);/);   // V4: through the one setter (SuppressCrime)
-  assert.deepEqual(modulesMatching(/CRIMES\.Vagrancy/), [],
+  // WATCH-KNOWS: PIN MOVED - standing.js names the crime among the minor offences the living watch warns a first offender
+  // for (WARNABLE_CRIMES): a reading of the crime CanRest minted, never a charge of its own
+  assert.deepEqual(modulesMatching(/CRIMES\.Vagrancy/).filter((f) => f !== 'systems/standing.js'), [],
     'no host names the crime itself - CanRest answers it');
+  assert.doesNotMatch(stripComments(src('systems/standing.js')), /(?:setCrimeCommitted\([^)]*|crimeCommitted\s*=\s*)CRIMES\.Vagrancy/, 'the standing book charges nothing');
   // ...and the dispatch above it is the same three questions too.
   assert.equal(scan(e, 'restDecision({').body, scan(w, 'restDecision({').body);
 

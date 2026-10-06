@@ -70,8 +70,9 @@ export const COURIER_CLASSES = Object.freeze([MOBILE_TYPES.Acrobat, MOBILE_TYPES
  * @typedef {{ id: string, town: number, slot: number, roll: 'h'|'t'|'w', name: string, gender: number, sex: 'male'|'female',
  *   race: string, variant: number, archive: number, face: number, guard: boolean, job: string, home: number|null,
  *   work: number|null, temper: 0|1|2, social: number, pious: number, drink: number, cls: number|null, level: number,
- *   faction: number }} Resident - `gender` GENDERS' number (the walkers' own field), `sex` the class sprites' word;
- *   `temper` 0 a lark, 1 the day's own, 2 a night owl; `cls` the class sprite beyond the walls (null: none)
+ *   faction: number, civvies?: number }} Resident - `gender` GENDERS' number (the walkers' own field), `sex` the class
+ *   sprites' word; `temper` 0 a lark, 1 the day's own, 2 a night owl; `cls` the class sprite beyond the walls (null:
+ *   none); WATCH-DAY `civvies` one of the watch's own clothes, off duty
  */
 
 /** A resident's name: FullName on the bank, on the resident's own seed - DFU's global stream put back as it stood
@@ -126,6 +127,9 @@ export function mintResident(town, roll, slot, job, at = {}) {
     name: residentName(seed ^ 0x5eed1e55, getNameBankOfRegion(town.region ?? -1), gender),
     gender, sex: female ? 'female' : 'male', race, variant,
     archive: guard ? GUARD_TEXTURE : set[variant], face, guard, job,
+    // WATCH-DAY: a watchman's own clothes, for off duty - one of his people's outfits, drawn on its own stream so the
+    // rest of him is as he was
+    ...(guard ? { civvies: tables.male[lwSeed(seed, 0x63697673) % tables.male.length] } : {}),
     home: at.home ?? null, work: at.work ?? null, temper, social, pious, drink, cls, level, faction: at.faction ?? 0,
   };
 }
@@ -145,11 +149,18 @@ export function travellerCounts(town) {
   };
 }
 
-/** The watch a town of `blocks` keeps: none in a hamlet, two to twelve in a town. @param {LwTown} town */
-export const townWatchCount = (town) => {
+/** WATCH-DAY: the watch's companies - one to each day of its rotation (dayPlan.js watchDuty: the day's shift, the
+ *  evening's, the night's, the day off). */
+export const WATCH_COMPANIES = 4;
+/** WATCH-DAY: the watch a shift in a town of `blocks` - none in a hamlet; one in a village (a lone patrol), a pair from
+ *  nine blocks, and a gate's post for each nine more, to six (a pair and four gates). @param {LwTown} town */
+export const watchShiftSize = (town) => {
   const b = Math.max(1, town.blocks | 0);
-  return b >= 4 ? Math.max(2, Math.min(12, 1 + Math.floor(b / 4))) : (b >= 2 ? 1 : 0);
+  return b >= 2 ? Math.max(1, Math.min(6, 1 + Math.floor(b / 9))) : 0;
 };
+/** The watch a town of `blocks` keeps: none in a hamlet; WATCH-DAY: four companies of its strength a shift (four to
+ *  twenty-four - the first cut kept two to twelve on two shifts, and nobody kept the night). @param {LwTown} town */
+export const townWatchCount = (town) => WATCH_COMPANIES * watchShiftSize(town);
 
 /**
  * THE TRAVELLERS - minted from the town's MAPS row alone (so a caravan seen on a road far from its town is the same

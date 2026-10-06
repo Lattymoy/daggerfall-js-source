@@ -24,7 +24,11 @@
 //    for them: the minutes they stood are owed, and walked off at CATCH_UP faster until they are back on their day.
 //  - WHAT THEY SAY (`speech()`): a circle's line at this minute (pure: every reader hears it), and a word to the player
 //    passing close - by name from a friend, a cold one from an enemy (relations.js).
-//  - A RESIDENT TAKEN off the street - converted to the watch, trampled - is gone for the rest of the day.
+//  - A RESIDENT TAKEN off the street - trampled - is gone for the rest of the day. WATCH-FIX: one the watch's conversion
+//    took is LENT to the guard stood in their place (`lend` - scenes/livingWatch.js follows it): off the street while it
+//    stands, and at its end back to their day (`back`), or - one of the watch cut down - slain by the player's own blow,
+//    else KILLED (`killed`: dead for good, nobody's regard moved). Another player's watch stands for residents here too
+//    (WATCH1's records name them, `peerLend`): off this street while it does.
 //  - LW3, THE ROADS IN TOWN (`o.tripsOf`): a traveller of this town on a trip has its away window (geared at home, out
 //    to the exit facing the road, home again - dayPlan.js schedule), and walks it ARMED in their class's sprite
 //    (`o.armOf`, ResidentWalker.arm); a party of another town staying here is a VISITOR - in by the exit facing the road
@@ -38,13 +42,13 @@
 //    talks of it for NEWS_DAYS (`deedNews`): one of its own struck down - and, seen, by whom.
 import { POP_VISIBLE_RANGE, POP_RECYCLE_DISTANCE, maxPopulationFor } from '../townPopulation.js';
 import { PERSON_MOVE_SPEED } from '../../characters/mobilePerson.js';
-import { townPlaces, exitToward, harbourDock } from './places.js';
-import { townCensus, isHome } from './census.js';
+import { townPlaces, exitToward, harbourDock, streetGeometry } from './places.js';
+import { townCensus, isHome, watchShiftSize } from './census.js';
 import { dayPlan, entryAt, isOutdoor, DAY_START_MIN, DAY_MIN } from './dayPlan.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { createPathBook, pointOnLine } from './townPaths.js';
-import { spotCircles, circleLine, circleStands, aloneStand, ROUND_S, lineMinutes } from './meetups.js';
-import { LIVING_GREETINGS, LIVING_KEEPSAKE, fillLine, firstNameOf } from './lines.js';
+import { spotCircles, circleLine, circleStands, aloneStand, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M } from './meetups.js';
+import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, watchBand, fillLine, firstNameOf } from './lines.js';
 import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
 import { placeKeyOf } from './lives.js';
@@ -68,6 +72,23 @@ export const CATCH_UP = 0.35;
 export const SNAP_M = 30;
 /** A walk begun this many of the clock's minutes ago from a door is a coming-out (seen at any range). */
 export const DOOR_POP_MIN = 2;
+/** WATCH-PROTECTS: how near a hostile monster sends one on the street running (m) - a few strides of it. */
+export const PANIC_M = 10;
+/** WATCH-PROTECTS: a townsperson running from one (m/s) - twice their walk. */
+export const FLEE_SPEED = PERSON_MOVE_SPEED * 2;
+/** WATCH-PROTECTS: how near one who ran keeps clear of the monster (m) - standing, never walking their day back to it
+ *  while it stands within this of them. */
+export const FLEE_WARY_M = PANIC_M * 2;
+/** WATCH-PROTECTS: how long one who ran keeps clear once the monster is beyond FLEE_WARY_M (real seconds), standing,
+ *  before their day takes them up again. */
+export const FLEE_HOLD_S = 4;
+/** WATCH-PROTECTS: the farthest one runs from where they took fright (m) - then they cower: inside SNAP_M of their day,
+ *  so it takes them up again on foot, never with a jump. */
+export const FLEE_FAR_M = 20;
+/** WATCH-DAY: how far the second of a patrol's pair walks beside the first (m), and behind him where the street will
+ *  not hold him beside. */
+export const PAIR_SIDE_M = 0.9;
+export const PAIR_BEHIND_M = 1.2;
 /** How near the player passes for a word (m), how far lines are heard (m), and a resident's word's rest (minutes). */
 export const GREET_RANGE = 3.2;
 export const LINE_RANGE = 24;
@@ -103,6 +124,36 @@ export function walkGap(e, p) {
   const gz = Math.max(Math.min(a.z, b.z) - p[2], 0, p[2] - Math.max(a.z, b.z));
   return Math.hypot(gx, gz);
 }
+/** LW-TALK: how much nearer a talking circle counts than its nearest one (m) - the ring the ones alone at a spot stand in
+ *  (meetups.js ALONE_FAR_M), which its circles stand beyond: counted level with them, not behind them all. Nearest alone,
+ *  the busiest square at six in the evening kept the ones alone about it and fell silent (10.5 lines a minute, 63% of
+ *  its seconds silent; with the ring counted, 24 and 33%). */
+export const TALK_PULL_M = ALONE_FAR_M;
+/**
+ * LW-TALK: WHO THE STREET KEEPS - the wanted ([{ res, d }], d the metres off the player), each with the circle they
+ * stand in (`circleOf(id)`, else alone): a circle's people come on together, nearest first - a unit as near as its
+ * nearest one, a circle TALK_PULL_M nearer - while the whole of it fits the cap, or wait together. Nearest first is the
+ * street's one order (LW2's): put first, those already on the street held every row from the nearer (a walk passing
+ * beside the player never came on, nor a watchman back from his guard), and those in the player's sight let one go who
+ * stood just behind him.
+ * @param {{ res: Resident, d: number }[]} wanted @param {(id: string) => any} circleOf @param {number} cap
+ * @returns {Set<Resident>}
+ */
+export function keepUnits(wanted, circleOf, cap) {
+  /** @type {Map<any, { res: Resident[], d: number }>} */
+  const units = new Map();
+  for (const w of wanted) {
+    const c = circleOf(w.res.id);
+    const key = c ?? w.res, d = c ? w.d - TALK_PULL_M : w.d;
+    const u = units.get(key);
+    if (u) { u.res.push(w.res); u.d = Math.min(u.d, d); } else units.set(key, { res: [w.res], d });
+  }
+  const keep = new Set();
+  for (const u of [...units.values()].sort((a, b) => a.d - b.d || (a.res[0].id < b.res[0].id ? -1 : 1))) {
+    if (keep.size + u.res.length <= cap) for (const r of u.res) keep.add(r);
+  }
+  return keep;
+}
 /** How long a word to the player stands (real seconds). */
 export const GREET_S = 3.4;
 /** A resident's line stands this high over their feet (m) - a townsperson's billboard and a little. */
@@ -118,7 +169,8 @@ export const DEED_KNOWN_MIN = 60;
 /**
  * @typedef {import('./census.js').Resident} Resident
  * @typedef {import('./dayPlan.js').Entry} Entry
- * @typedef {{ person: any, active: boolean, scheduleEnable: boolean, scheduleRecycle: boolean, visible: boolean, res: Resident|null, mine: boolean, arrival: boolean }} Row
+ * @typedef {{ person: any, active: boolean, scheduleEnable: boolean, scheduleRecycle: boolean, visible: boolean, res: Resident|null, mine: boolean, arrival: boolean, paused?: boolean, flee?: { at: number[], left: number, from: number[] } | null }} Row - LW-STAND `paused`: in view on a walk not
+ *   yet searched (its minutes owed, as the politeness gate's); WATCH-PROTECTS `flee`: running from a monster (`_fright`)
  */
 
 export class LivingTown {
@@ -134,7 +186,7 @@ export class LivingTown {
    *   relations?: () => (ReturnType<typeof import('./relations.js').createRelations> | null),
    *   playerName?: () => string, weather?: () => (string|null), townName?: string, regionName?: string,
    *   tripsOf?: (day: number) => ({ away: Map<string, { t0: number, t1: number, yaw: number, armed: boolean, dock?: boolean }[]>, visitors: { res: Resident, inT: number, outT: number, yaw: number, trip?: any, dock?: boolean }[],
-   *     holders?: Map<string, Resident|null>, news?: { kind: string, who: string, foe: string, place: string }[] } | undefined),
+   *     holders?: Map<string, Resident|null>, news?: { kind: string, who: string, foe: string, place: string }[], places?: string[] } | undefined),
    *   armOf?: (res: Resident) => ({ mobileType: number, basics: any, archive: number, frameCount: (record: number) => number, sex?: 'male'|'female' } | null),
    *   ashore?: (res: Resident) => ('home'|'sea'|'abroad'|null),
    *   crews?: () => { res: Resident, inT: number, outT: number, berth?: { lane: { key: string }, k: number } }[],
@@ -142,12 +194,15 @@ export class LivingTown {
    *   holderOf?: (res: Resident, day: number) => (Resident|null),
    *   deadAt?: (res: Resident, t: number) => boolean,
    *   slay?: (res: Resident, t: number, seen: boolean) => void,
+   *   killed?: (res: Resident, t: number) => void,
    *   sees?: (from: number[], to: number[]) => boolean,
+   *   legalStanding?: (region: number) => ({ rep: number, known: boolean } | null),
    *   keepsakes?: () => readonly any[],
    *   takeKeepsake?: (item: any) => void,
+   *   dangers?: () => (readonly number[][] | null),
    * }} o - LW6c: `keepsakes()` what the player carries (a keepsake carried home), `takeKeepsake(item)` it handed over.
    *   `tripsOf(day)` the roads' word on the town for a day (trips.js through the host's book: who of it is away
-   *   when, who of elsewhere stays here), undefined while its ways are still being asked; `armOf(res)` a resident's
+   *   when, who of elsewhere stays here; LW-TALK `places` the towns its roads and news name, its talk's {place}), undefined while its ways are still being asked; `armOf(res)` a resident's
    *   class sprite once its art is loaded, else null - `clock` the sky's minute (worldTick.js skyMinutes); `rate` the clock's minutes a real second now (a
    *   journey's scale in it); `mpm` the walking pace in the clock's metres a minute (LW0 decision 3). LW5: `ashore(res)`
    *   where one of its sailors is by their packet's clock (portCrews.js - at sea or abroad, in no street of this town);
@@ -155,14 +210,21 @@ export class LivingTown {
    *   minutes); `harbour()` the harbour's berth in the location's frame (the dock of a port with no Ship building).
    *   LW7: `holderOf(res, day)` who holds a townsperson's place on a day (lives.js - the census's own, a newcomer after a
    *   death, null while it stands empty; a traveller's come with the roads' word); `deadAt(res, t)` whether a hand took
-   *   a resident by the minute; `slay(res, t, seen)` the player struck one down (the host makes the turn); `sees(a, b)`
+   *   a resident by the minute; `slay(res, t, seen)` the player struck one down (the host makes the turn); WATCH-FIX
+   *   `killed(res, t)` one killed by another hand (the host makes the turn `killed`); WATCH-KNOWS `legalStanding(region)` the
+   *   player's standing with a region's law - its number and whether its watch knows them for a criminal; `sees(a, b)`
    *   a clear line between two points of the location frame (none given: always)
    */
   constructor(nav, o) {
     this.nav = nav;
     this.o = o;
     this.places = townPlaces(nav, o.doors, o.buildings);
+    /** LW-STAND: the street a person stands and walks on - never in a wall nor over the water (places.js streetGeometry:
+     *  the stands about a spot, the way to one) */
+    this._street = streetGeometry(this.nav, this.places);
     this.residents = townCensus(o.town, o.buildings);
+    /** WATCH-DAY: the town's watch a shift (census.js) - its companies' duties (dayPlan.js watchDuty) */
+    this._watchSize = watchShiftSize(o.town);
     this.maxPopulation = maxPopulationFor(o.town.blocks);
     /** @type {Row[]} */
     this.pool = [];
@@ -172,12 +234,19 @@ export class LivingTown {
     this._timer = Infinity;
     /** @type {Map<string, number>} the residents taken off the street, and the day */
     this._taken = new Map();
+    /** WATCH-FIX: the residents lent to the watch - a guard of it stands for them (`lend`) @type {Set<string>} */
+    this._lent = new Set();
+    /** WATCH-FIX: the residents another player's watch stands for here (`peerLend`) @type {ReadonlySet<string>} */
+    this._peerLent = new Set();
     /** @type {Map<string, number>} the minutes each is behind its day */
     this._lag = new Map();
     /** @type {Map<string, { circle: any, index: number, spot: any }>} this tick's circles, by member */
     this._inCircle = new Map();
-    /** @type {Map<string, number>} when each last spoke to the player (the clock's minute) */
+    /** @type {Map<string, { t: number, said: boolean }>} when each last came by the player (the clock's minute), and
+     *  whether they spoke (LW-TALK: one who kept quiet speaks when the player stops before them) */
     this._greeted = new Map();
+    /** LW-TALK: each exchange's script as it began (meetups.js exchangeScript) @type {Map<string, any>} */
+    this._scripts = new Map();
     /** @type {{ person: any, text: string, until: number }[]} the words to the player standing */
     this._greetings = [];
     this._now = 0;
@@ -257,7 +326,7 @@ export class LivingTown {
         plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, visitor: true, home: this._lodging(res), away });
       } else {
         const away = (roads?.away.get(res.id) ?? []).map((w) => ({ t0: w.t0, t1: w.t1, exit: w.dock ? (this.dockSpot() ?? exitToward(this.places, w.yaw)) : exitToward(this.places, w.yaw), armed: w.armed }));   // LW5b: a passage leaves by the dock
-        plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away });
+        plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away, watch: this._watchSize });
       }
       e = { day, plan, roads: !!roads };
       this._plans.set(res.id, e);
@@ -273,7 +342,7 @@ export class LivingTown {
     const got = this.o.tripsOf(day);
     if (!got) return null;
     this._roads = { day, away: got.away, visitorOf: new Map(got.visitors.map((v) => [v.res.id, v])), visitors: got.visitors.map((v) => v.res),
-      holders: got.holders ?? null, news: got.news ?? null };   // LW4: who holds each traveller's place today; the town's news of the road
+      holders: got.holders ?? null, news: got.news ?? null, places: got.places ?? null };   // LW4: who holds each traveller's place today; the town's news of the road; LW-TALK: its towns
     this._people = null;
     for (const [id, e] of this._plans) if (e.day === day && !e.roads) this._plans.delete(id);   // planned before the roads were known: again
     return this._roads;
@@ -322,7 +391,7 @@ export class LivingTown {
     const house = isHome(this.places.types.get(key) ?? -1);
     const out = [];
     for (const res of this.peopleOf(day).concat(this._crewsNow())) {
-      if (this._taken.get(res.id) === day || this._gone(res) || this.o.deadAt?.(res, t)) continue;
+      if (this._taken.get(res.id) === day || this._away(res) || this._gone(res) || this.o.deadAt?.(res, t)) continue;   // WATCH-FIX: nor one with the watch
       const at = this.entryOf(res, t);
       const e = at?.e;
       if (!e || e.kind === 'walk' || isOutdoor(e) || e.at?.building !== key) continue;
@@ -372,7 +441,7 @@ export class LivingTown {
       if (line === null) return null;
       const w = this._walked(e, line, t);
       if (w.s < line.len) {
-        const p = pointOnLine(line, w.s);
+        const p = e.pair === 1 ? this._atShoulder(line, w.s) : pointOnLine(line, w.s);   // WATCH-DAY: the second of a pair
         return { x: p.x, z: p.z, yaw: p.yaw, moving: true, e, fromDoor: e.from.kind === 'door' && (t - e.t0) < DOOR_POP_MIN };
       }
       if (!after || !isOutdoor(after) || after.kind === 'walk') return null;   // arrived: in through the door, out of the gate
@@ -380,8 +449,25 @@ export class LivingTown {
     }
     if (!isOutdoor(e)) return null;
     const c = this._inCircle.get(res.id);
-    const st = c && c.spot === e.at ? circleStands(e.at, c.circle)[c.index] : aloneStand(e.at, res.id);
-    return { x: st.x, z: st.z, yaw: st.yaw, moving: false, e };
+    const inCircle = !!c && c.spot === e.at;
+    const st = inCircle ? circleStands(e.at, c.circle, this._street)[c.index] : aloneStand(e.at, res.id, this._street);   // LW-STAND
+    return { x: st.x, z: st.z, yaw: e.kind === 'post' && !inCircle ? e.at.yaw : st.yaw, moving: false, e };   // WATCH-DAY: a post keeps the road
+  }
+
+  /**
+   * WATCH-DAY: the second of a patrol's pair walks at the first's shoulder - PAIR_SIDE_M to his right where the street
+   * holds it, to his left where only that does, else a pace behind him on the way. @param {any} line @param {number} s
+   * @returns {{ x: number, z: number, yaw: number }}
+   */
+  _atShoulder(line, s) {
+    const p = pointOnLine(line, s);
+    const rx = Math.cos(p.yaw), rz = -Math.sin(p.yaw);   // the walker's right, his forward (sin, cos)
+    for (const side of [PAIR_SIDE_M, -PAIR_SIDE_M]) {
+      const x = p.x + rx * side, z = p.z + rz * side;
+      if (this._street.holds(x, z)) return { x, z, yaw: p.yaw };
+    }
+    const b = pointOnLine(line, Math.max(0, s - PAIR_BEHIND_M));
+    return { x: b.x, z: b.z, yaw: p.yaw };
   }
 
   _rowOf(res) { return this.pool.find((r) => r.res === res) ?? null; }
@@ -389,7 +475,7 @@ export class LivingTown {
   _freeRow() {
     for (const r of this.pool) if (!r.active && !r.res) return r;
     if (this.pool.length >= this.maxPopulation) return null;
-    const row = { person: this.o.makePerson(this.residents[0]?.archive ?? 0, false), active: false, scheduleEnable: false, scheduleRecycle: false, visible: false, res: null, mine: true, arrival: false };
+    const row = { person: this.o.makePerson(this.residents[0]?.archive ?? 0, false), active: false, scheduleEnable: false, scheduleRecycle: false, visible: false, res: null, mine: true, arrival: false, paused: false };
     this.pool.push(row);
     return row;
   }
@@ -408,7 +494,7 @@ export class LivingTown {
   }
 
   _free(row) {
-    row.active = false; row.scheduleEnable = false; row.scheduleRecycle = false; row.visible = false; row.arrival = false;
+    row.active = false; row.scheduleEnable = false; row.scheduleRecycle = false; row.visible = false; row.arrival = false; row.paused = false; row.flee = null;
     if (row.res) this._lag.delete(row.res.id);
     row.res = null;
     if (row.person) row.person.living = null;
@@ -417,34 +503,152 @@ export class LivingTown {
   /** A resident taken off the street for the day. @param {Resident} res */
   _take(res) { this._taken.set(res.id, this.dayOf(this._now)); }
 
+  /** WATCH-FIX: a resident with the watch - a guard of it stands for them, this player's or another's. @param {Resident} res */
+  _away(res) { return this._lent.has(res.id) || this._peerLent.has(res.id); }
+
+  /**
+   * WATCH-FIX: A RESIDENT LENT TO THE WATCH - the conversion stood a guard in their place (scenes/livingWatch.js follows
+   * it): off the street while it stands (the body free at once), never taken for the day - the conversion's own take
+   * (the street disabled the row) undone.
+   * @param {Resident} res
+   */
+  lend(res) {
+    this._lent.add(res.id);
+    this._taken.delete(res.id);
+    for (const r of this.pool) if (r.res?.id === res.id) this._free(r);
+  }
+
+  /** WATCH-FIX: today's resident by id - one of its people (a newcomer by their generation's id), a visitor, a crew's
+   *  hand ashore - or null. A guard a load restored names whom he stands for by it alone. @param {string} id */
+  residentOf(id) {
+    const day = this.dayOf(this._liveMinute());
+    return this.peopleOf(day).find((r) => r.id === id) ?? [...this._crewOf.values()].find((c) => c.res.id === id)?.res ?? null;
+  }
+
+  /** WATCH-FIX: the guard gone with no body - the resident back to their day (the census stands them where it has them,
+   *  as any resident wanted: out of the player's sight). @param {Resident} res */
+  back(res) { this._lent.delete(res.id); }
+
+  /**
+   * WATCH-FIX: THE RESIDENTS ANOTHER PLAYER'S WATCH STANDS FOR HERE - its records name them (WATCH1's `lr`): off this
+   * street while it does, as one's own lent (the body free at once - the peer's guard stands where they stood), back
+   * when its record goes. The world is shared; who their guard fought is its owner's.
+   * @param {ReadonlySet<string>} ids
+   */
+  peerLend(ids) {
+    this._peerLent = ids;
+    if (ids.size) for (const r of this.pool) if (r.res && ids.has(r.res.id)) this._free(r);
+  }
+
   _inView(dx, dz, viewYaw) { return dx * Math.sin(viewYaw) + dz * Math.cos(viewYaw) > 0; }
+
+  /** DFU's hiding: whether a body `dx`, `dz` off the player is out of their sight - beyond POP_VISIBLE_RANGE or behind
+   *  them - where a row may come on or go (in sight it does neither). */
+  _hidden(dx, dz, viewYaw) { return Math.hypot(dx, dz) > POP_VISIBLE_RANGE || !this._inView(dx, dz, viewYaw); }
+
+  /** WATCH-PROTECTS: what frightens one on the street this frame - the nearest hostile monster (`dangers`, the host's,
+   *  [x, z] in the location frame): within PANIC_M, run from; once they ran, kept clear of standing while it is within
+   *  FLEE_WARY_M of them (walked back, their day took them to it and they ran again), and for FLEE_HOLD_S after; null
+   *  when nothing does. No farther than FLEE_FAR_M from where it began, they cower.
+   *  @param {Row} row @param {any} p @param {readonly number[][] | null} dangers @param {number} dt */
+  _fright(row, p, dangers, dt) {
+    let near = null, best = Infinity;
+    for (const d of dangers ?? []) { const m = Math.hypot(d[0] - p.pos[0], d[1] - p.pos[2]); if (m < best) { best = m; near = d; } }
+    const run = best < PANIC_M;
+    if (run || (row.flee && best < FLEE_WARY_M)) row.flee = { at: near, left: FLEE_HOLD_S, from: row.flee?.from ?? [p.pos[0], p.pos[2]] };
+    else if (row.flee && (row.flee.left -= dt) <= 0) row.flee = null;
+    if (!row.flee) return null;
+    const far = Math.hypot(p.pos[0] - row.flee.from[0], p.pos[2] - row.flee.from[1]) >= FLEE_FAR_M;
+    return { at: row.flee.at, run: run && !far };
+  }
+
+  /** WATCH-PROTECTS: a frame of running from `fear.at` - straight away from it where the street holds the stride, else
+   *  turned a little at a time, to a quarter turn either way; cornered, or done running, they stand.
+   *  @param {any} p @param {{ at: number[], run: boolean }} fear @param {number} dt */
+  _run(p, fear, dt) {
+    p.moving = false;
+    if (!fear.run) return;
+    const away = Math.atan2(p.pos[0] - fear.at[0], p.pos[2] - fear.at[1]), stride = FLEE_SPEED * dt;
+    for (const turn of [0, 0.4, -0.4, 0.8, -0.8, 1.2, -1.2, Math.PI / 2, -Math.PI / 2]) {
+      const a = away + turn, x = p.pos[0] + Math.sin(a) * stride, z = p.pos[2] + Math.cos(a) * stride;
+      if (!this._street.clear(p.pos[0], p.pos[2], x, z)) continue;
+      p.pos[0] = x; p.pos[2] = z; p.pos[1] = p.groundY(x, z); p.yaw = a; p.moving = true;
+      p.pace = FLEE_SPEED / PERSON_MOVE_SPEED;   // their legs at the run's cadence (residentWalker.js pace)
+      return;
+    }
+  }
 
   /** The census read: who is wanted on the street now, and the circles at the spots. */
   _tick(playerPos, viewYaw) {
     const t = this._now;
     const day = this.dayOf(t);
-    // a row the street disabled itself (the watch's conversion copies the pool's free inline): that resident is taken
+    // a row the street disabled itself (the watch's conversion copies the pool's free inline): that resident is taken -
+    // WATCH-FIX: and a guard of the watch's standing for them undoes it (`lend`, which frees the row itself when it comes first)
     for (const r of this.pool) if (r.res && !r.active) { this._take(r.res); this._free(r); }
+    const roundMin = ROUND_S * this._baseRate();
+    /** LW-TALK: every stay at a spot that runs into the last two rounds - the deal is the plans', so every reader deals
+     *  alike: one gone from this street alone (taken, struck down) is dealt, and left out after (`absent`); before, the
+     *  spot dealt without them, and every pair after them changed on that reader alone */
     /** @type {Map<string, { who: Resident, t0: number, t1: number }[]>} */
     const presence = new Map();
     /** @type {Map<string, any>} */
     const spotOf = new Map();
+    const absent = new Set();
+    /** LW-TALK: the census's own on this street, each read for where they stand once the beat's circles are dealt */
+    const alive = [];
     const wanted = [];
     /** @type {{ res: Resident, gap: number }[]} */
     const pending = [];
     if (this.o.harbour && !this.places.dock.length && !this._harbourDock) this.dockSpot();   // LW5: the harbour sounded since
     for (const res of [...this.peopleOf(day), ...this._crewsNow()]) {
-      if (this._taken.get(res.id) === day) continue;
+      if (this._away(res)) continue;   // WATCH-FIX: with the watch - a guard stands for them
       if (this._gone(res)) continue;   // LW5: aboard, or ashore at the far port
-      if (this.o.deadAt?.(res, t)) continue;   // LW7: struck down - dead from that minute
+      const plan = this.planOf(res, day);
+      for (let i = Math.max(0, entryAt(plan, t)); i >= 0 && plan[i].t1 > t - 2 * roundMin; i--) {
+        const e = plan[i];
+        if (e.t0 > t || e.kind === 'walk' || !isOutdoor(e)) continue;
+        const list = presence.get(e.at.key) ?? [];
+        list.push({ who: res, t0: e.t0, t1: e.t1 });
+        presence.set(e.at.key, list);
+        spotOf.set(e.at.key, e.at);
+      }
+      if (this._taken.get(res.id) === day || this.o.deadAt?.(res, t)) {   // LW7: struck down - dead from that minute
+        absent.add(res.id);
+        const row = this._rowOf(res);
+        if (row) this._free(row);   // LW-TALK: and off the street at once, in the player's sight or not - marked to go, the
+        continue;                   // dead stood where the player looked till he looked away, unless the host disabled them
+      }
+      alive.push(res);
+    }
+    // the circles at every spot two or more stand at (the whole census's, so every reader's circles agree) - LW-TALK: each
+    // circle's talk waits for its people to gather, from where the last round stood them (their place in it, else their
+    // own about the spot) to their place in this one, at the walking pace (`from`)
+    this._inCircle.clear();
+    for (const [key, list] of presence) {
+      if (list.length < 2) continue;
+      const spot = spotOf.get(key);
+      const now = spotCircles(key, list, t, roundMin);
+      if (!now.length) continue;
+      /** @type {Map<string, { x: number, z: number }>} */
+      const stood = new Map();
+      for (const c of spotCircles(key, list, now[0].start - 1e-6, roundMin)) circleStands(spot, c, this._street).forEach((st, i) => stood.set(c.members[i].id, st));
+      for (const dealt of now) {
+        const places = circleStands(spot, dealt, this._street);
+        let far = 0;
+        dealt.members.forEach((m, i) => { const was = stood.get(m.id) ?? aloneStand(spot, m.id, this._street); far = Math.max(far, Math.hypot(places[i].x - was.x, places[i].z - was.z)); });
+        const from = dealt.start + (far / PERSON_MOVE_SPEED + GATHER_BEAT_S) * this._baseRate();
+        const members = dealt.members.filter((m) => !absent.has(m.id));
+        if (members.length < 2) continue;   // left alone on this street: their own counsel
+        const circle = { ...dealt, members, from };
+        members.forEach((m, index) => this._inCircle.set(m.id, { circle, index, spot }));
+      }
+    }
+    // LW-TALK: WHERE EACH ONE STANDS IS READ BY THIS BEAT'S DEAL, dealt above - read before it, an arrival stood the street
+    // by the last scene's circles (or none: each one about their own stand) and moved it a beat later, every one dealt
+    // into a circle walking off to their place in it as the player came
+    for (const res of alive) {
       const at = this.entryOf(res, t);
       if (!at) continue;
-      if (at.e.kind !== 'walk' && isOutdoor(at.e)) {
-        const list = presence.get(at.e.at.key) ?? [];
-        list.push({ who: res, t0: at.e.t0, t1: at.e.t1 });
-        presence.set(at.e.at.key, list);
-        spotOf.set(at.e.at.key, at.e.at);
-      }
       const w = this.where(res, t, false);
       if (!w) continue;
       if (w.pending) { const gap = walkGap(w.e, playerPos); if (gap < LIVING_RANGE + WALK_STRAY_M) pending.push({ res, gap }); continue; }
@@ -466,16 +670,9 @@ export class LivingTown {
         if (d < LIVING_RANGE) wanted.push({ res, d });
       }
     }
-    wanted.sort((a, b) => a.d - b.d || (a.res.id < b.res.id ? -1 : 1));
-    const keep = new Set(wanted.slice(0, this.maxPopulation).map((w) => w.res));
-    // the circles at every spot two or more stand at (the whole census's, so every reader's circles agree)
-    const roundMin = ROUND_S * this._baseRate();
-    this._inCircle.clear();
-    for (const [key, list] of presence) {
-      if (list.length < 2) continue;
-      const spot = spotOf.get(key);
-      for (const circle of spotCircles(key, list, t, roundMin)) circle.members.forEach((m, index) => this._inCircle.set(m.id, { circle, index, spot }));
-    }
+    // LW-TALK: THE STREET KEEPS A CIRCLE WHOLE (keepUnits) - its people come on together, nearest first, or wait together
+    // (the nearest were taken one by one, and at a busy square 44 of 64 lines went to a partner the street had not stood)
+    const keep = keepUnits(wanted, (id) => this._inCircle.get(id)?.circle, this.maxPopulation);
     // the street: a row whose resident is no longer wanted goes when unseen; one wanted again stays
     for (const r of this.pool) if (r.active && r.res) r.scheduleRecycle = !keep.has(r.res);
     // the wanted not yet on the street come on
@@ -527,13 +724,19 @@ export class LivingTown {
     out.length = 0;
     const seats = this._rows;
     this._onStreet = true;   // LW-PERF: the street's own walks asked first
+    const dangers = this.o.dangers?.() ?? null;   // WATCH-PROTECTS: the hostile monsters about (the host's, this frame)
     for (const row of this.pool) {
       if (!row.active || !row.res) continue;
       const res = row.res, p = row.person;
-      const stop = row.visible && dt > 0 ? !!wantsToStopFn(p) : false;
-      // the politeness gate's minutes, owed and walked off
+      // WATCH-PROTECTS: one a monster comes near runs from it - their day held while they run, owed as the gate's
+      // minutes, and taken up again from where they ran to; frightened, they stop for nobody (the politeness gate is a
+      // walk's), and a frame the clock stands still (a talk window open) keeps the fright as it was
+      const fear = row.visible ? this._fright(row, p, dangers, dt) : null;
+      const stop = row.visible && dt > 0 && !fear ? !!wantsToStopFn(p) : false;
+      p.pace = 1;
+      // the politeness gate's minutes, owed and walked off - LW-STAND: and a pause's, on a walk not yet searched
       let lag = this._lag.get(res.id) ?? 0;
-      if (stop) lag += dt * rate;
+      if (stop || row.paused || fear) lag += dt * rate;
       else if (lag > 0) lag = Math.max(0, lag - dt * rate * CATCH_UP);
       const w = this.where(res, this._now - lag, true);
       if (!w) { this._free(row); continue; }   // indoors: in through the door, out through the gate
@@ -542,23 +745,39 @@ export class LivingTown {
       if (armed !== !!p.armed && typeof p.arm === 'function') { if (!armed) p.arm(null); else { const look = this.o.armOf?.(res) ?? null; if (look) p.arm(look); } }
       if (w.e.kind !== 'walk') lag = 0;   // standing at a spot owes nothing
       if (lag > 0) this._lag.set(res.id, lag); else this._lag.delete(res.id);
-      if (w.pending) { if (!row.visible) continue; }
+      // LW-STAND (field, 2026-10-05): a walk not yet searched is a pause where they stand - before, the body kept the
+      // stride it had (on its way to its stand) and walked on the spot, into whatever it faced, till the path came; and
+      // its minutes are owed (`paused`, above): searched, the walk is walked from where they stood, never cut straight
+      // across, through whatever stood between, to where its clock had got to
+      row.paused = !!w.pending && row.visible;
+      if (fear) this._run(p, fear, dt);
+      else if (w.pending) { if (!row.visible) continue; p.moving = false; }
       else {
         const dx0 = w.x - p.pos[0], dz0 = w.z - p.pos[2];
         const d = Math.hypot(dx0, dz0);
         const step = PERSON_MOVE_SPEED * WALK_FAST * dt * scale;
         if (!row.visible || d > Math.max(SNAP_M, step * 3)) { p.pos[0] = w.x; p.pos[2] = w.z; p.yaw = w.yaw; p.moving = w.moving; }
         else if (d > 0.05) {
-          const k = Math.min(1, step / d);
-          p.pos[0] += dx0 * k; p.pos[2] += dz0 * k;
-          p.yaw = w.moving ? w.yaw : Math.atan2(dx0, dz0);
+          // LW-STAND: a stand is walked to over the street - by its spot when the straight way is not (every stand at a
+          // spot is seen from it, meetups.js): a new round's place across a corner, or across a fountain, from the last
+          let vx = dx0, vz = dz0, vd = d;
+          if (!w.moving) {
+            const ox = w.e.at.x - p.pos[0], oz = w.e.at.z - p.pos[2], od = Math.hypot(ox, oz);
+            if (od > 0.05 && !this._street.clear(p.pos[0], p.pos[2], w.x, w.z)) { vx = ox; vz = oz; vd = od; }
+          }
+          const k = Math.min(1, step / vd);
+          p.pos[0] += vx * k; p.pos[2] += vz * k;
+          p.yaw = w.moving ? w.yaw : Math.atan2(vx, vz);
           p.moving = true;
         } else { p.pos[0] = w.x; p.pos[2] = w.z; p.yaw = w.yaw; p.moving = w.moving; }
         p.pos[1] = p.groundY(p.pos[0], p.pos[2]);
       }
       const dx = p.pos[0] - playerPos[0], dz = p.pos[2] - playerPos[2];
       const dist = Math.hypot(dx, dz);
-      const allowChange = dist > POP_VISIBLE_RANGE || !this._inView(dx, dz, viewYaw);
+      const allowChange = this._hidden(dx, dz, viewYaw);
+      // WATCH-DAY: one of the watch wears the uniform on duty and his own clothes off it - changed where nobody sees it
+      // (a body not yet stood, or out of the player's sight): never in view
+      if (res.guard && p.guard !== !!w.e.duty && (!row.visible || allowChange)) p.setIdentity(w.e.duty ? res.archive : (res.civvies ?? res.archive), !!w.e.duty);
       if (row.scheduleRecycle && allowChange) { this._free(row); continue; }
       if (row.scheduleEnable && !w.pending && (allowChange || w.fromDoor || (row.arrival && standing))) { row.scheduleEnable = false; row.visible = true; row.arrival = false; }
       if (!row.visible) continue;
@@ -566,20 +785,22 @@ export class LivingTown {
       const seat = seats[out.length] ??= { person: null, out: null };
       seat.person = p; seat.out = frameOut;
       out.push(seat);
-      if (dt > 0) this._greet(res, p, dist, stop);
+      if (dt > 0 && !fear) this._greet(res, p, dist, stop);   // WATCH-PROTECTS: the frightened greet nobody
     }
     this._onStreet = false;
     this._paths.run();   // LW-PERF: the frame's searching on what the asking left of its cells
     return out;
   }
 
-  /** A word to the player passing close, at most once in GREET_REST_MIN of the clock. */
+  /** A word to the player passing close, at most once in GREET_REST_MIN of the clock - LW-TALK: and one who kept quiet
+   *  as the player came by speaks when the player stops before them (the rest was taken by the quiet pass, so the stop
+   *  that rule waits for never came: not one of 298 quiet strangers spoke, held before the player). */
   _greet(res, person, dist, stopped) {
     if (dist > GREET_RANGE || this._inCircle.has(res.id)) return;
     const last = this._greeted.get(res.id);
-    if (last != null && this._now >= last && this._now - last < GREET_REST_MIN) return;   // AUDIT-E6: a clock gone back (a load) forgets the rest
-    this._greeted.set(res.id, this._now);
+    if (last && this._now >= last.t && this._now - last.t < GREET_REST_MIN && (last.said || !stopped)) return;   // AUDIT-E6: a clock gone back (a load) forgets the rest
     const text = this.greetingFor(res, this._now, stopped);
+    this._greeted.set(res.id, { t: this._now, said: text != null });
     if (text == null) return;
     this._greetings = this._greetings.filter((g) => g.person !== person && g.until > this._realNow);
     this._greetings.push({ person, text, until: this._realNow + GREET_S });
@@ -595,12 +816,18 @@ export class LivingTown {
     const rel = this.o.relations?.() ?? null;
     const day = this.dayOf(t);
     const standing = rel ? rel.standing(res.id, day) : 'neutral';
-    const pool = standing === 'friend' ? LIVING_GREETINGS.friend : standing === 'enemy' || standing === 'hostile' ? LIVING_GREETINGS.enemy
+    const cold = standing === 'enemy' || standing === 'hostile';
+    // WATCH-KNOWS: one of the watch on duty speaks for the law - the player's standing with the town's region, not his own
+    // regard (one with a grudge of his own stays cold)
+    const law = !cold && res.guard && this.entryOf(res, t)?.e.duty ? this.o.legalStanding?.(this.o.town.region) ?? null : null;
+    const pool = law ? WATCH_GREETINGS[watchBand(law.rep, law.known)] : standing === 'friend' ? LIVING_GREETINGS.friend : cold ? LIVING_GREETINGS.enemy
       : rel?.known(res.id) ? LIVING_GREETINGS.known : LIVING_GREETINGS.stranger;
-    // a stranger says something only now and then (and always when the player stops before them)
-    if (pool === LIVING_GREETINGS.stranger && !stopped && (lwSeed(textSeed(res.id), Math.floor(t)) % 4) !== 0) return null;
+    // a stranger says something only now and then (and always when the player stops before them) - WATCH-KNOWS: and the
+    // watch to a common citizen
+    const seldom = pool === LIVING_GREETINGS.stranger || pool === WATCH_GREETINGS.citizen;
+    if (seldom && !stopped && (lwSeed(textSeed(res.id), Math.floor(t)) % 4) !== 0) return null;
     rel?.seen(res.id, day);
-    return fillLine(pool[lwSeed(textSeed(res.id), Math.floor(t / 7)) % pool.length], { player: this.o.playerName?.() ?? '' });
+    return fillLine(pool[lwSeed(textSeed(res.id), Math.floor(t / 7)) % pool.length], { player: this.o.playerName?.() ?? '', town: this.o.townName ?? '' });
   }
 
   /**
@@ -614,14 +841,20 @@ export class LivingTown {
     const lineMin = lineMinutes(this._baseRate());
     const ctx = this.lineCtx(this._now);
     this._greetings = this._greetings.filter((g) => g.until > this._realNow);
+    if (this._scripts.size > 4096) this._scripts.clear();
+    /** LW-TALK: a circle's line is said aloud to a circle that stands together on this street - every one of them stood
+     *  and at their place (22-84% of the first cut's lines were said while their circle was still walking together, or
+     *  to one the street had not stood) - WATCH-PROTECTS: and none of them frightened (`flee`): scattered from a monster,
+     *  standing clear of it, the circle is silent */
+    const standing = new Set(this.pool.filter((r) => r.visible && r.res && !r.person.moving && !r.flee).map((r) => r.res.id));
     for (const row of this.pool) {
-      if (!row.visible || !row.res) continue;
+      if (!row.visible || !row.res || row.flee) continue;   // WATCH-PROTECTS: the frightened say nothing
       const p = row.person;
       if (Math.hypot(p.pos[0] - eye[0], p.pos[2] - eye[2]) > range) continue;
       const c = this._inCircle.get(row.res.id);
       if (c) {
-        const line = circleLine(c.circle, this._now, lineMin, ctx);
-        if (line && line.who.id === row.res.id) out.push({ person: p, text: line.text, kind: /** @type {'talk'} */ ('talk') });
+        const line = circleLine(c.circle, this._now, lineMin, ctx, this._scripts);
+        if (line && line.who.id === row.res.id && c.circle.members.every((m) => standing.has(m.id))) out.push({ person: p, text: line.text, kind: /** @type {'talk'} */ ('talk') });
         continue;
       }
       const g = this._greetings.find((x) => x.person === p);
@@ -634,12 +867,12 @@ export class LivingTown {
    * What the town's talk knows at minute `t`: the town, the region, the weather, the hour, the road's news (LW4) and the
    * deeds' beside it (LW7), the character's name for a deed's. The street's circles' (`speech`) and LW8b's rooms'.
    * @param {number} t
-   * @returns {{ town?: string, region?: string, weather: string|null, hour: number, news: any[]|null, player?: string }}
+   * @returns {{ town?: string, region?: string, weather: string|null, hour: number, news: any[]|null, places: readonly string[]|null, player?: string }}
    */
   lineCtx(t) {
     const hour = Math.floor((((t % DAY_MIN) + DAY_MIN) % DAY_MIN) / 60);
-    /** @type {{ town?: string, region?: string, weather: string|null, hour: number, news: any[]|null, player?: string }} */
-    const ctx = { town: this.o.townName, region: this.o.regionName, weather: this.o.weather?.() ?? null, hour, news: this._roads?.news ?? null };   // LW4: the road's news
+    /** @type {{ town?: string, region?: string, weather: string|null, hour: number, news: any[]|null, places: readonly string[]|null, player?: string }} */
+    const ctx = { town: this.o.townName, region: this.o.regionName, weather: this.o.weather?.() ?? null, hour, news: this._roads?.news ?? null, places: this._roads?.places ?? null };   // LW4: the road's news; LW-TALK: its towns
     const deeds = this.deedNews(t);   // LW7: the deeds' news beside the road's, and the character's name for it
     if (deeds.length) ctx.news = [...(ctx.news ?? []), ...deeds];
     ctx.player = this.o.playerName?.() ?? '';
@@ -734,6 +967,21 @@ export class LivingTown {
     this.o.slay?.(res, this._now, seen.length > 0);
     for (const kin of this.kinOf(res)) rel?.note(kin.id, 'slain', day);
     for (const w of seen) rel?.note(w.id, 'crime', day);
+    this._lent.delete(res.id);   // WATCH-FIX: his guard cut down
+    this._take(res);
+    return res.id;
+  }
+
+  /**
+   * WATCH-FIX: A BODY'S RESIDENT KILLED BY ANOTHER HAND than the player's - one of the watch whose guard a beast, a fall,
+   * a reflected blow or another player cut down: dead for good from this minute (`o.killed` - the hand death `killed`,
+   * which empties the place as any), and nobody's regard of the player moved. Answers the resident's id, or null.
+   */
+  killed(person) {
+    const res = person?.living?.res;
+    if (!res || person.living.town !== this) return null;
+    this.o.killed?.(res, this._now);
+    this._lent.delete(res.id);
     this._take(res);
     return res.id;
   }
@@ -762,22 +1010,24 @@ export class LivingTown {
 
   /**
    * LW7: WHAT THE TOWN SAYS OF THE DEEDS - each of its own the player struck down (`slain`), known DEED_KNOWN_MIN after,
-   * for NEWS_DAYS: `who` their name, `seen` whether anyone saw whose hand it was; and each who died fighting at the
-   * player's side (`died`). The character's own, read over the town's pure news (relations.js turns).
-   * @returns {{ kind: string, who: string, foe: string, place: string, t: number, seen: boolean }[]}
+   * for NEWS_DAYS: `who` their name, `seen` whether anyone saw whose hand it was; each who died fighting at the
+   * player's side (`died`); WATCH-FIX: each another hand cut down in its street (`killed`), `watch` one of the watch's.
+   * The character's own, read over the town's pure news (relations.js turns).
+   * @returns {{ kind: string, who: string, foe: string, place: string, t: number, seen: boolean, watch?: boolean }[]}
    */
   deedNews(t = this._now) {
     const turns = this.o.relations?.()?.turns?.();
-    if (!turns || (!turns.slain?.size && !turns.died?.size && !turns.home?.size)) return [];
+    if (!turns || (!turns.slain?.size && !turns.died?.size && !turns.killed?.size && !turns.home?.size)) return [];
     const prefix = `L${this.o.town.mapId >>> 0}.`;
     const out = [];
-    for (const kind of /** @type {const} */ (['slain', 'died'])) {
+    for (const kind of /** @type {const} */ (['slain', 'died', 'killed'])) {   // WATCH-FIX: and one of the watch another hand cut down
       for (const [key, h] of turns[kind] ?? []) {
         const known = h.t + DEED_KNOWN_MIN;
         if (!key.startsWith(prefix) || !(known <= t && t - known < NEWS_DAYS * DAY_MIN)) continue;
         const place = key.slice(0, key.lastIndexOf('@'));
-        const who = h.who || this.residents.find((r) => placeKeyOf(r) === place)?.name || '';
-        if (who) out.push({ kind, who, foe: '', place: '', t: known, seen: !!h.seen });
+        const res = this.residents.find((r) => placeKeyOf(r) === place);
+        const who = h.who || res?.name || '';
+        if (who) out.push({ kind, who, foe: '', place: '', t: known, seen: !!h.seen, watch: !!res?.guard });   // WATCH-FIX: one of the watch's, told as one
       }
     }
     // LW6d: the tales - a keepsake of one of its own carried home, told by the name of the one it was

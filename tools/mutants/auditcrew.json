@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-CC-B6-watch-leaves",
     "file": "src/systems/townWatch.js",
-    "old": " && !(t?.companion != null && !t.dead)) return false;",
-    "new": ") return false;",
+    "old": " && !(t?.companion != null && !t.dead)   // AUDIT CC-B6",
+    "new": "   // AUDIT CC-B6",
     "tests": [
       "test/auditcrew.test.js",
       "test/crewcompanions.test.js"

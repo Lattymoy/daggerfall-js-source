@@ -947,17 +947,17 @@ still push CLASSIC canvas windows as children under the DOM, and so
 does the pack's USE arm.
 
     THE SPELLBOOK       FIVE construction sites across FOUR hosts:
-                        worldModes.js:2610 (the factory) and :1904 (a
+                        worldModes.js:2612 (the factory) and :1904 (a
                         HAND-ROLLED second one, 342 lines below it in
                         the same file),
-                        dungeonContext.js:1408, world.js:5715,
-                        exterior.js:2840. It is the only window TWO
+                        dungeonContext.js:1408, world.js:5726,
+                        exterior.js:2841. It is the only window TWO
                         enhanced screens already push - the sheet's
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
     THE LOGBOOK         THREE sites: charSheetNav.js:53,
-    / NOTEBOOK          world.js:14865, dungeonContext.js:9281. A seam
+    / NOTEBOOK          world.js:14948, dungeonContext.js:9281. A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:61), and it reads
                         only the entity's backStory. The small one.
@@ -8793,7 +8793,7 @@ same answer: `ui/spellbookDoor.js`, with each host handing it only
 what that host knows.
 
 THE "HAND-ROLLED DUPLICATE" WAS NOT ONE. The board recorded
-worldModes.js:3584 as a second book built by hand 342 lines below the
+worldModes.js:3586 as a second book built by hand 342 lines below the
 factory. Read closely it is the SPELL MERCHANT'S SHOP - buyMode, with
 `offered`, the building's quality, the shop name, the haggling skills
 and the classic clock. A different question with different deps, and
@@ -8876,7 +8876,7 @@ mutations, 4 dead.
 
 PX24 (Mac: "with the logbook and history, I want them as one detailed
 UI"): THE CHRONICLE. Two classic windows built at four sites -
-questJournal.js from charSheetNav:53, world.js:6176 and
+questJournal.js from charSheetNav:53, world.js:6187 and
 dungeonContext.js, playerHistory.js from charSheetNav:61 - become ONE
 seam (ui/chronicleDoor.js, the U52/U53/PX23 shape a sixth time) and,
 on the enhanced skin, ONE WINDOW.
@@ -9503,7 +9503,7 @@ and firing THAT twice is a second PopToHUD.
 
 ### Why only two of the four hosts crashed
 
-`worldModes.js:8790` and `dungeonContext.js:2270` answer the same
+`worldModes.js:8792` and `dungeonContext.js:2270` answer the same
 `onClose` by nulling their slot and never disposing - nothing to
 re-enter. Only the two hosts that come through `townTalk.closeOverlay`
 dispose. **The four-hosts rule caught this one by accident**: the two
@@ -10756,9 +10756,9 @@ re-resolved the `exterior.js` half of a three-file sentence and left the
 `ExteriorAutomapWindow` construction, `:4101` on a `locationName:`
 field). Both halves are now read by `test/citedrift.test.js` - the
 existing entries only ever captured the exterior number, which is how
-the other half went stale unnoticed. (The rest cite named `world.js:15327`,
+the other half went stale unnoticed. (The rest cite named `world.js:15410`,
 the first of the host's TWO identical `act === 'Rest'` arms; ROAD-H H5
-deleted the second and the cite is `world.js:15333` now.)
+deleted the second and the cite is `world.js:15416` now.)
 
 ## AUDIT 62 F24/F25 - THE SENTINEL SWEEP WAS TWO WINDOWS SHORT (2026-09-07)
 
@@ -15657,9 +15657,9 @@ whether an entry MATCHES and asserts nothing.
 Following it out was worse than the symptom. Five Ledger rows cite a
 PAIR - `` `world.js:N`, `exterior.js:M` `` - and the table captured `M`
 alone. So `M` was re-resolved at every wave for a year and `N` was never
-read: `world.js:12318` named a line that is 8950, `:2015` one that is
+read: `world.js:12401` named a line that is 8950, `:2018` one that is
 1215, `:1094` one that is 2194, `:3903` one that is 3066, `:3920` one
-that is 8907. `world.js:12020-12057` and `dungeonContext.js:2073` were
+that is 8907. `world.js:12103-12140` and `dungeonContext.js:2073` were
 stale the same way. Seven numbers re-resolved BY CONTENT, every
 uncaptured half de-baked to `\d+`, and eight new entries added so every
 number in a pair is captured. The half nobody reads cannot rot in
@@ -18383,7 +18383,7 @@ Five players, five root causes, one commit. The torch's two are recorded in `06-
 
 **TORCH-BIND, the Continue half (teuton: "Keybind changes do not stick?"; The Frog: "if you scroll up after rebinding, there should be a Continue or Confirm button ... it needs some streamlining").** Rebinds are staged and applied only on Continue, in the head card, 53 rows above the Quickslot and Mouse rows a player binds last, and every walk-away discards - so a player who bound a key at the foot and pressed Escape lost it and read "does not stick". The staging law stands (DFU's OnPop applies on leave; the enhanced pane says what it does in its own copy): the head card is `position: sticky` now, so Continue is in view while the list scrolls, and a second Continue closes the list in a foot card, the same `applyAndSave`. Pin: `test/discord5.test.js` mounts the pane - two Continues, the foot one saves.
 
-**HOTSLOT (!Simple: "Cant change Hotslot spell").** The spell slot had ONE writer a player could reach: a 350 ms HOLD of the quick-spell key, said nowhere - the pane row read "Ready quickslot spell", the chip wore the bare key. A press readies the book's first spell and a second press unreadies it, so from the chair the key was a toggle stuck on spell one. On a phone it was a dead end: the chip that takes the hold was `display: none` until the slot was filled, and only the hold fills it. Four changes: the enhanced spellbook slots a spell - a Quickslot / Unslot button beside Ready, the pair the pack gives a consumable (`quickslotActs`); the empty chip is a SOCKET (drawn dim as "No spell", wearing its key, so the key is seen and a finger has a chip to fill - departure 4's law for the diamond's cells); the pane row says "(hold to cycle the book)"; and `spellCandidates` answers one entry per index - a bought stock spell, a classic import and the vampire/lycanthrope gifts each push a record without asking, and `findIndex` on a doubled book always landed on the first copy, the cycle stuck on one spell. The classic skin keeps the hold. Pins: `test/discord5.test.js` mounts the enhanced book over a DOM fake and slots, re-slots and unslots; the doubled book walks every spell; the socket and the label by source. `test/qs2_inputs.test.js` re-aimed to the label.
+**HOTSLOT (!Simple: "Cant change Hotslot spell").** The spell slot had ONE writer a player could reach: a 350 ms HOLD of the quick-spell key, said nowhere - the pane row read "Ready quickslot spell", the chip wore the bare key. A press readies the book's first spell and a second press unreadies it, so from the chair the key was a toggle stuck on spell one. On a phone it was a dead end: the chip that takes the hold was `display: none` until the slot was filled, and only the hold fills it. Four changes: the enhanced spellbook slots a spell - a Quickslot / Unslot button beside Ready, the pair the pack gives a consumable (`quickslotActs`); the empty chip is a SOCKET (`qspell-empty` since HUD-CLASS, below; drawn dim as "No spell", wearing its key, so the key is seen and a finger has a chip to fill - departure 4's law for the diamond's cells); the pane row says "(hold to cycle the book)"; and `spellCandidates` answers one entry per index - a bought stock spell, a classic import and the vampire/lycanthrope gifts each push a record without asking, and `findIndex` on a doubled book always landed on the first copy, the cycle stuck on one spell. The classic skin keeps the hold. Pins: `test/discord5.test.js` mounts the enhanced book over a DOM fake and slots, re-slots and unslots; the doubled book walks every spell; the socket and the label by source. `test/qs2_inputs.test.js` re-aimed to the label.
 
 Not verified in a browser: none of the five is reproducible headless. `tools/mutants/discord5.json`: 20 records, 20 dead.
 
@@ -18993,3 +18993,33 @@ and both skins' debuffs, under the Enhanced AI switch:
 
 Pins: `test/tell9_screen.test.js` (9); `tools/foeTelegraphProbe.mjs` (the contrast off a real frame).
 
+
+## HUD-CLASS - every class the HUD writes is its own (2026-10-05, the field fixes' audit)
+
+POISE-BOX (field, the owner's screenshot - "enemies seem to have this black transparent bar"; `12-Enhanced-AI/Feud-Arc.md`,
+TELL9's record): the poise track's idle state wore the bare word `empty`, and the windows' sheet (`ui/enhancedStyle.js`)
+names its components with bare words - `.empty` (the "nothing here" box: a dashed border, 26 px of padding, 16 px under
+it), `.side` (a column on the `--ink` ground). Every module under `src/ui` may lay a sheet in the one game document, so a
+HUD element wearing one of those words wears the component. The audit found three more, each measured in Chromium on the
+real HUD over the real sheets, and each gone with the word made the widget's own:
+
+- **The status widget beside the diamond** (`ui/enhancedHud.js`; `side` to `stat-side`, and `tight` and `noroom` to
+  `stat-tight` and `stat-noroom` with it): the `.side` column's `--ink` ground stood a dark box behind the tiles - a
+  phone on its side, or a laptop with the chat open, in the diamond quickslot style.
+- **The empty spell socket** (HOTSLOT; `empty` to `qspell-empty`): `.empty`'s 16 px margin under it - the caption 41 px
+  tall where it is 25, everything above it lifted 16 px, on every character with no quick spell.
+- **An empty gun battery** (`ui/navalHud.js`; `empty` to `gun-empty`): the same margin under the plate - its row
+  36.3 px to 52.3 px, the battery rose 116.8 px to 132.8 px.
+
+The pin reads RULES and WRITES, never source text (`test/sheetRules.mjs`). The sheets: every string the UI's modules
+export that reads as CSS, evaluated - 65 of them, a selector built from a list read as built (the layout editor's,
+`ui/hudLayout.js HUD_LAYOUT_CSS`, exported for it) - and the literals of the ones no module exports, read by a walker
+that takes a text as CSS only when the whole of it is. The writes: every class word the HUD's two modules write
+(`classList`, `className`, `setAttribute('class')`, markup) - a helper's at its callers, a callback's through its host -
+and each word the data chooses named with what its producer mints: a status tile's kind, a bitten span's frame, a
+plate's chip, the target card's state, a ship's faction, a crew line's word. `test/hudclass_sheets.test.js` (4): no rule
+from outside the HUD styles a class the HUD writes - and, given the field's bare words back, it finds `.side` and
+`.empty`; `tools/mutants/hudclass.json` (12 dead). POISE-BOX's own pin (`tell9_screen`) reads the same rules now: it had
+read source text, where a JS read like `b.empty` stood as a selector. PIN MOVED: `ui3_status`, `discord5`, `nav_f_ui`,
+`tools/uiStatusProbe.mjs`; re-aimed: `tools/mutants/ui3.json` UI3-never-beside and UI3-never-stepped-aside,
+`tools/mutants/discord5.json` D5-HOTSLOT-empty-chip-hidden.

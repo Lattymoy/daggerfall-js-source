@@ -137,7 +137,7 @@
   {
     "name": "FOREST1-beach-line",
     "file": "src/world/terrainNature.js",
-    "old": "if (Math.fround(heightmapData[hy + hx * hDim] * MAX_TERRAIN_HEIGHT) < SCALED_BEACH_ELEVATION) continue;\n\n      const wood",
+    "old": "if (sampleHeight(heightmapData[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) continue;\n\n      const wood",
     "new": "const wood",
     "tests": [
       "test/forest1.test.js"

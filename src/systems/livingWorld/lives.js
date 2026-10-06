@@ -21,6 +21,7 @@
 // in it is theirs.
 //
 // LW7: THE HAND DEATHS. A holder the player struck down (`slain`), or who died fighting at the player's side (`died`),
+// or - WATCH-FIX - one of the watch another hand cut down in the player's town (`killed`),
 // is dead from THAT MINUTE (`handDeath`) - a death the road's dice never held: it empties the place as any death does
 // (and a turn the character made always counts - it was made on a holder they met), but it is not the road's (`dies`
 // stays the dice's and the fights' own), so the cycle's trip and its trouble stand as they were.
@@ -35,8 +36,8 @@ const FATE = 0x46415445;   // 'FATE'
 
 /**
  * @typedef {{ spared?: Set<string>|null, fallen?: Set<string>|null, slain?: Map<string, { t: number }>|null,
- *   died?: Map<string, { t: number }>|null }} Turns - a character's own turns of fate, `<place>@<cycle>`; LW7 the hand
- *   deaths, each with its minute
+ *   died?: Map<string, { t: number }>|null, killed?: Map<string, { t: number }>|null }} Turns - a character's own turns
+ *   of fate, `<place>@<cycle>`; LW7 the hand deaths, each with its minute (WATCH-FIX: `killed`)
  */
 
 /** A resident's place: the census's id, whichever generation holds it (`L<map>.t<slot>`). @param {{ id: string }} res */
@@ -45,10 +46,11 @@ export const placeKeyOf = (res) => String(res.id).replace(/~\d+$/, '');
 export const turnKey = (res, k) => `${placeKeyOf(res)}@${k}`;
 
 /** LW7: the minute a slot's holder died in cycle `k` by a HAND - struck down by the player (`slain`), or fighting at
- *  their side (`died`) - or null. @param {any} res @param {number} k @param {Turns} [turns] */
+ *  their side (`died`), or (WATCH-FIX) cut down by another in the player's town (`killed`) - or null.
+ *  @param {any} res @param {number} k @param {Turns} [turns] */
 export function handDeath(res, k, turns) {
   const key = turnKey(res, k);
-  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? null;
+  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? turns?.killed?.get(key) ?? null;
   return at ? at.t : null;
 }
 

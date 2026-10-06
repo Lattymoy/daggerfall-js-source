@@ -128,20 +128,22 @@
   {
     "name": "LW8c-talking",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        if (talking.has(id) || realNow < s.next) continue;",
+    "old": "        if (staying.has(id) || realNow < s.next) continue;",
     "new": "        if (realNow < s.next) continue;",
     "tests": [
       "test/lw8c_astir.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW8c-wait",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        if (talking.has(id) || realNow < s.next) continue;",
-    "new": "        if (talking.has(id)) continue;",
+    "old": "        if (staying.has(id) || realNow < s.next) continue;",
+    "new": "        if (staying.has(id)) continue;",
     "tests": [
       "test/lw8c_astir.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW8c-claim",
@@ -182,10 +184,11 @@
   {
     "name": "LW8c-talkers-kept",
     "file": "src/scenes/livingIndoors.js",
-    "old": "if (c.talks) talking.add(m.id); }",
+    "old": "if (on) staying.add(m.id); }",
     "new": "}",
     "tests": [
       "test/lw8c_astir.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   }
 ]

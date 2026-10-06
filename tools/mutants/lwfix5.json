@@ -134,24 +134,26 @@
   {
     "name": "LW-FIX5-watch-dead-found",
     "file": "src/scenes/livingWatch.js",
-    "old": "    w.guard ??= guards.find((g) => g.livingFrom === w.from) ?? null;",
-    "new": "    w.guard ??= guards.find((g) => g.livingFrom === w.from || g.dead) ?? null;",
+    "old": "    g.livingFollowed = true;   // followed once, whatever its end - a body lying in the list is never a second deed",
+    "new": "    void 0;   // followed once, whatever its end - a body lying in the list is never a second deed",
     "tests": [
       "test/lwfix5_deep.test.js",
       "test/lwfix2_watch.test.js",
       "test/lw6c_keepsake.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW-FIX5-swing-body",
     "file": "src/scenes/cityGuards.js",
-    "old": "    if (stood && best.person?.living) stood.livingFrom = best.person.living;",
-    "new": "    if (stood && best.person) stood.livingFrom = best.person;",
+    "old": "      if (p.person?.living) g.livingFrom = p.person.living;",
+    "new": "      if (p.person) g.livingFrom = p.person;",
     "tests": [
       "test/lwfix5_deep.test.js",
       "test/lwfix2_watch.test.js",
       "test/lw6c_keepsake.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW-FIX5-trample-body",

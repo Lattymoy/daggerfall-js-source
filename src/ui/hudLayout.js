@@ -97,17 +97,15 @@ const lenVarOf = (p) => (typeof p?.len === 'string' ? p.len : '--hml');
 /** Scale and length limits. */
 const SCALE_MIN = 0.5, SCALE_MAX = 2.5, LEN_MIN = 0.4, LEN_MAX = 3;
 
-function injectStyle(doc) {
-  if (doc.getElementById(STYLE_ID)) return;
-  const st = doc.createElement('style');
-  st.id = STYLE_ID;
-  const moved = HUD_PIECES.flatMap((p) => p.sel.split(',').map((x) => `${x.trim()}[data-hm]`)).join(',\n');
-  st.textContent = `
+const MOVED = HUD_PIECES.flatMap((p) => p.sel.split(',').map((x) => `${x.trim()}[data-hm]`)).join(',\n');
+/** The editor's sheet, built once from the pieces - exported as the other sheets are, so a pin reads the rules the
+ *  game injects (HUD-CLASS, test/sheetRules.mjs). */
+export const HUD_LAYOUT_CSS = `
 /* a piece's own place and size never pass to a piece inside it (a bar in the vitals, the buffs in the quick block) */
 @property --hmx { syntax: '<length>'; inherits: false; initial-value: 0px; }
 @property --hmy { syntax: '<length>'; inherits: false; initial-value: 0px; }
 @property --hms { syntax: '<number>'; inherits: false; initial-value: 1; }
-${moved} { translate: var(--hmx, 0px) var(--hmy, 0px); scale: var(--hms, 1); }
+${MOVED} { translate: var(--hmx, 0px) var(--hmy, 0px); scale: var(--hms, 1); }
 /* MOVED-NOTICE (FIELD BUGS 2026-10-03, SylviaB: "it momentarily spawns in its original location and slides in from the
    side ... changing it to a fade in/out at the updated location"): a slide is from the EDGE the sheet stands the stack
    on - moved off it, a notice or a revenant's card fades in and out where it stands (the sheets' own opacity
@@ -186,6 +184,11 @@ ${moved} { translate: var(--hmx, 0px) var(--hmy, 0px); scale: var(--hms, 1); }
 #${BANNER_ID} button { font: inherit; color: #0e1013; background: #c08a3e; border: 0; padding: 4px 10px; cursor: pointer; }
 #${BANNER_ID} button.ghost { background: transparent; color: #d8cfae; border: 1px solid #8b8578; }
 `;
+function injectStyle(doc) {
+  if (doc.getElementById(STYLE_ID)) return;
+  const st = doc.createElement('style');
+  st.id = STYLE_ID;
+  st.textContent = HUD_LAYOUT_CSS;
   (doc.head ?? doc.body).append(st);
 }
 

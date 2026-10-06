@@ -163,8 +163,8 @@
   {
     "name": "D5-HOTSLOT-empty-chip-hidden",
     "file": "src/ui/enhancedHud.js",
-    "old": "  chip.chip.classList.toggle('empty', !sp);",
-    "new": "  chip.chip.classList.toggle('empty', false);",
+    "old": "  chip.chip.classList.toggle('qspell-empty', !sp);",
+    "new": "  chip.chip.classList.toggle('qspell-empty', false);",
     "tests": [
       "test/discord5.test.js"
     ]
