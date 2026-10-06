@@ -178,7 +178,7 @@ test('LW-SPREAD the day: whatever takes one to the square takes them to their ow
         const home = visitor ? tavern : r.home != null ? places.doors.get(r.home) ?? null : null;
         const plan = dayPlan(r, places, day, { mpm: MPM, visitor, home });
         const f = favourites(r, places, home);
-        for (const e of plan) {
+        for (const [n, e] of plan.entries()) {
           if (!e.at || e.kind === 'walk') continue;
           if (e.duty) {   // the watch's beat: its stops the patrol's - the two of a pair at one stop, the square's own spot
             assert.ok(e.at === places.square || !places.squares.includes(e.at), `${r.id}: the watch at the square's own spot (${e.at.key})`);
@@ -193,7 +193,9 @@ test('LW-SPREAD the day: whatever takes one to the square takes them to their ow
           if (e.at.kind === 'corner' && e.kind === 'market') count('a stroll by a corner');
           if (visitor || rec.port) continue;
           if (e.kind === 'social' && e.t0 >= D0 + 14 * 60 && e.t0 < D0 + 16 * 60 && r.job === 'crafter') eveningOut.push(e.t0 - D0 - 14 * 60);   // a crafter's evening from six - their day's only talk (but a lark's stroll)
-          if (e.kind === 'market' && r.job === 'homemaker' && e.t0 < D0 + 7 * 60 && e.t1 - e.t0 >= 45) marketAt.push(e.t0 - D0);   // the morning's (a lark's stroll at first light stops a quarter-hour at a market too)
+          // the morning's, walked to from home on its hour - awake at home, then out (a lark's stroll at first light goes on
+          // to the market and waits for it there; one who wakes late is late to it)
+          if (e.kind === 'market' && r.job === 'homemaker' && e.t0 < D0 + 7 * 60 && e.t1 - e.t0 >= 45 && plan[n - 1]?.kind === 'walk' && plan[n - 1].from === home && plan[n - 2]?.kind === 'home') marketAt.push(e.t0 - D0);
         }
       }
     }

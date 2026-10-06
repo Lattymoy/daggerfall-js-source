@@ -278,7 +278,9 @@ test('LW-TALK on the street: a circle\'s talk waits for its people to gather - f
     s.at = [s.at[0] + 18, 0, s.at[2] + 18]; s.eye = [s.at[0], 1.6, s.at[2]];
     for (let i = 0; i < 12; i++) step(s);
     const fresh = s.town.pool.filter((r) => r.active && r.res && !was.has(r.res.id)).length;
-    assert.ok(fresh >= 4, `out of sight, their rows to the nearer (${fresh})`);
+    // LW-ERRANDS: PIN MOVED - two and more (four before: more of the evening indoors now, at the guilds and the shops;
+    // the street held first, none)
+    assert.ok(fresh >= 2, `out of sight, their rows to the nearer (${fresh})`);
   }
   // the deal before the read: the census reads where each one stands by this beat's circles - read before them, an
   // arrival stood the street by the last scene's (none: each one about their own stand) and let 12 of the 24 it stood

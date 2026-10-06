@@ -12,7 +12,8 @@ import { synthTown } from './lwTown.mjs';
 import { livingMap } from './lwRoads.mjs';
 import { townPathSearch, findTownPath, createPathBook, stepCost, PATH_QUEUE_MAX } from '../src/systems/livingWorld/townPaths.js';
 import { LivingTown, PATH_CELLS, ARRIVAL_PATH_CELLS, ARRIVAL_SHOW_S, LIVING_RANGE } from '../src/systems/livingWorld/livingTown.js';
-import { favourites, dayPlan, DAY_MIN, SQUARE_LIKE, SOCIAL_NEAR } from '../src/systems/livingWorld/dayPlan.js';
+import { favourites, dayPlan, DAY_MIN, SQUARE_LIKE, SOCIAL_NEAR, ORDER_FACTIONS, GUILD_OF_TRADE, MAGES_GUILD, FIGHTERS_GUILD } from '../src/systems/livingWorld/dayPlan.js';
+import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
 import { townPlaces, streetNet } from '../src/systems/livingWorld/places.js';
 import { townCensus, hasShopJob } from '../src/systems/livingWorld/census.js';
 import { townTrips, partiesNear, remainsNear, partiesOfTown, remainsOfTown, memoTrip, cycleOf, formCaravans, paceScale, CALENDAR_MPM, NATIVE_PIXEL, TRIP_REACH_PX, TRIP_CHANCE } from '../src/systems/livingWorld/trips.js';
@@ -260,9 +261,20 @@ function refFavourites(res, places, home) {
   const s1 = places.square && rng() < SQUARE_LIKE ? sq : own(near(social, SOCIAL_NEAR));
   const s2 = own(near(social.filter((s) => own(s) !== s1), SOCIAL_NEAR)) ?? s1;
   const market = [...places.market, ...places.squares]; if (home) market.sort(by(home));
+  // LW-ERRANDS: PIN MOVED - their own guild's hall, the nearest of it to home (no draw: the market's draw is the guild's old)
+  const hall = (test) => { const out = []; for (const [key, spot] of places.doors) if (places.types.get(key) === BUILDING_TYPES.GuildHall && test(places.factions.get(key))) out.push(spot); if (home) out.sort(by(home)); return out[0] ?? null; };
+  const guildOf = () => {
+    if (res.job === 'guildsman') return res.work != null ? places.doors.get(res.work) ?? null : null;
+    const order = hall((f) => ORDER_FACTIONS.has(f));
+    if (res.job === 'courtier') return order;
+    if (res.cls === MOBILE_TYPES.Knight && order) return order;
+    const g = (res.work != null ? GUILD_OF_TRADE.get(places.types.get(res.work)) : undefined)
+      ?? (res.cls >= MOBILE_TYPES.Mage && res.cls <= MOBILE_TYPES.Nightblade ? MAGES_GUILD : res.cls >= MOBILE_TYPES.Monk && res.cls <= MOBILE_TYPES.Knight ? FIGHTERS_GUILD : null);
+    return g == null ? null : hall((f) => f === g);
+  };
   return {
     social: [s1, s2].filter(Boolean), tavern: near(doorsOf((t) => t === BUILDING_TYPES.Tavern)), temple: near(doorsOf((t) => t === BUILDING_TYPES.Temple)),
-    guild: near(doorsOf((t) => t === BUILDING_TYPES.GuildHall)), market: own(near(market, SOCIAL_NEAR)), shops: doorsOf(hasShopJob), square: sq,
+    guild: guildOf(), market: own(near(market, SOCIAL_NEAR)), shops: doorsOf(hasShopJob), square: sq,
   };
 }
 const keysOf = (fav) => JSON.stringify(fav, (k, v) => (v && typeof v === 'object' && 'key' in v && 'cell' in v ? v.key : v));

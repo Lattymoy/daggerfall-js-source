@@ -60,8 +60,9 @@ const SOCIAL_TYPES = new Set([BUILDING_TYPES.Tavern, BUILDING_TYPES.Temple, BUIL
  *   town's corner a 'corner' - `yaw` the way one faces standing there (a door: in
  *   toward it; a spot: toward its building; an exit: out of town)
  * @typedef {{ doors: Map<number, Spot>, square: Spot|null, squares: Spot[], corners: Spot[], social: Spot[], market: Spot[], dock: Spot[], exits: Spot[],
- *   types: Map<number, number>, net: Int32Array, netId: number }} Places - LW-SPREAD `squares` the square's points (the
- *   square's own spot first; none without a square), `corners` the town's corners
+ *   types: Map<number, number>, factions: Map<number, number>, net: Int32Array, netId: number }} Places - LW-SPREAD
+ *   `squares` the square's points (the square's own spot first; none without a square), `corners` the town's corners;
+ *   LW-ERRANDS `factions` each building's faction (its summary's factionId: a guild hall's guild, a temple's god)
  */
 
 /**
@@ -280,12 +281,13 @@ export function harbourDock(nav, places, x, z) {
  * @param {{ width: number, height: number, weightAt: (gx: number, gy: number) => number }} nav
  * @param {readonly { key: number, x: number, z: number, nx: number, nz: number }[]} doors - location frame; the normal
  *   points out of the building
- * @param {readonly { key: number, type: number }[]} buildings
+ * @param {readonly { key: number, type: number, factionId?: number }[]} buildings
  * @returns {Places}
  */
 export function townPlaces(nav, doors, buildings) {
   const W = nav.width, H = nav.height;
   const types = new Map((buildings ?? []).map((b) => [b.key, b.type]));
+  const factions = new Map((buildings ?? []).map((b) => [b.key, b.factionId ?? 0]));
   const ordered = [...(doors ?? [])].filter((d) => Number.isFinite(d.x) && Number.isFinite(d.z)).sort((a, b) => a.key - b.key || a.x - b.x || a.z - b.z);
   const streets = streetNet(nav);
   const net = streets.label, netId = doorsNet(nav, ordered, streets);   // FIELD 2026-10-06: the street its doors open onto
@@ -423,7 +425,7 @@ export function townPlaces(nav, doors, buildings) {
     const yaw = side === 'n' ? 0 : side === 's' ? Math.PI : side === 'e' ? Math.PI / 2 : -Math.PI / 2;
     exits.push(/** @type {Spot} */ ({ key: `x${side}`, kind: 'exit', cell: best, x, z, yaw, side }));
   }
-  return { doors: doorSpots, square: squareSpot, squares, corners, social, market, dock, exits, types, net, netId };
+  return { doors: doorSpots, square: squareSpot, squares, corners, social, market, dock, exits, types, factions, net, netId };
 }
 
 /** LW-SPREAD: whether every cell the straight line from cell `a` to cell `b` crosses (their middles, sampled a quarter

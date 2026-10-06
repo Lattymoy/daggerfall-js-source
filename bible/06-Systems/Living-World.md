@@ -1469,6 +1469,59 @@ its root (`test/lwspread_town.test.js`, `tools/mutants/lwspread.json`).
   LW-STAND-host-unkept-alone: those alone stand where the census's beat placed them, and `lwstand_street` read no other
   stand; a town whose census never ran is read too).
 
+## LW-ERRANDS - the town goes into its guild halls and its shops (2026-10-06)
+
+Mac: "NPCs should also utilize going into guilds, shops, etc". Measured on the game's own towns (each one's day by its
+plans, the visits a day into a building not one's home nor one's work): a guild hall saw its own two members and a
+sellsword's or an adventurer's hour - one of the two halls nearest their home, whatever its guild (a sorcerer at the
+Fighters Guild, Daggerfall's knightly halls eight a day of them) - and nobody else, 10-12 a day in a city of three
+hundred; an errand went into one of the four shops nearest home, or stood at a market, half and half, whatever the
+trade - a city's banks saw 1-6 a day, its library 0-4. Two causes, each fixed at its root (`test/lwerrands_town.test.js`,
+`tools/mutants/lwerrands.json`).
+
+- **Nobody belonged to a guild.** A resident keeps a guild now by their trade or their class (`dayPlan.js guildHallOf`,
+  GUILD_OF_TRADE, `isMageClass`, `isWarriorClass`; `places.js` `factions` - each building's summary's factionId). A hall's
+  own members their hall; a courtier and a knight a knightly order (any of the ten, `guildVariants.js` ORDERS - a knight
+  where none stands the Fighters Guild); the people of a bookseller's, a library and an alchemist's, and Daggerfall's
+  mage classes, the Mages Guild; the people of an armourer's and a weaponsmith's, and the warrior classes, the Fighters
+  Guild (the eighteen classes stand in three runs of six, MOBILE_TYPES 128-133, 134-139, 140-145 - the thief's guilds
+  keep no hall on the street). Their hall is the nearest to home of the town's halls of their guild; none where the town
+  has none. A member keeps two days of the week at it - their own, three apart (`guildDay`, the seed's) - after the
+  day's work (six) or, a courtier, the afternoon (half past four), an hour or two; a sellsword and an adventurer go to
+  their own guild's hall each day as before, where it stands.
+- **An errand had no business.** What each trade's errands are for (`ERRAND_NEEDS`): a household's stores (the general
+  store, the clothier, the alchemist's remedies), a keeper's and a smith's bank (the takings) and stock, a scholar's
+  library and bookseller, a courtier's jeweller and clothier, a merchant's bank and pawnbroker, a visitor's wares. An
+  errand goes into a shop two times in three (ERRAND_SHOP_SHARE; the market the rest), and its shop is of a kind the
+  trade needs ERRAND_NEED_SHARE (0.6) of the time - by its weight among the kinds the town keeps, the nearer of its two
+  nearest home - else one of the four shops nearest home (`errandShop`; the first cut's every errand). A merchant's two
+  afternoon shops and a visitor's are theirs too.
+- **Measured** (before / after; each town's day by its plans, as `test/lwerrands_town.test.js` reads it):
+
+  | | into the guild halls | of them a knightly hall's | into the banks | into the shops |
+  |---|---|---|---|---|
+  | Daggerfall (8x8) | 12 / 18 | 8 / 2 | 2 / 7 | 45 / 56 |
+  | Ripmarket (6x7) | 10 / 11 | 5 / 2 | 6 / 9 | 80 / 88 |
+  | Tuntale (6x7) | 10 / 14 | 0 / 0 | 1 / 5 | 63 / 83 |
+
+  Every guild hall's visitors are now its own guild's people - the Mages Guild's 2, 1 and 6 a day before, 9, 3 and 10
+  after; the knightly halls lost the sellswords and adventurers who were only passing nearest. The library is a scholar's
+  errand and stays a quiet place (0-4 a day).
+- **The four hosts.** LW-ERRANDS is the living town's plan (`dayPlan.js`, `places.js`): `scenes/world.js` runs the plans
+  it lays (no host change); `scenes/worldModes.js` - the rooms show whoever their plans put inside (LW8, untouched: the
+  guild halls, the banks and the shops now see their visitors); `scenes/exterior.js` - FLAGGED as LW2 has it;
+  `scenes/dungeonContext.js` - no town.
+- **Pinned** by `test/lwerrands_town.test.js` (the factions; a resident's guild - by trade, by class, by hand, the nearest
+  hall, none without one; the guild's days; the evenings - kept at their hour, never a hall's own members, the
+  travellers' own guild; an errand's shop - by need at its weights and its share, the nearer two, the browse; the day's
+  errands - into a shop two in three, every shop one `errandShop` can give; and, where ARENA2_PATH names the data,
+  Daggerfall, Ripmarket and Tuntale) and `tools/mutants/lwerrands.json` (23, all dead); the 158 records of the lists
+  whose files or pins LW-ERRANDS touched re-judged, all dead. PIN MOVED: `lwfix3_town` (the
+  walks coming near at two in the afternoon - at half past eight two walkers were near), `lwtalk_town` (out of sight, two
+  rows and more to the nearer - more of the evening indoors), `lwperf_cost` (the favourites written the slow way: the
+  guild their own, no draw), `lwspread_town` (the homemaker's market read where they walk to it from home on its hour - a
+  lark's stroll goes on to the market and waits there).
+
 ## The four hosts
 
 - `scenes/world.js` - WIRED (LW2 the towns, LW3 the roads and the Overworld).
