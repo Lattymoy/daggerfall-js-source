@@ -63,11 +63,11 @@ test('REST8 (TIMEFREE\'s reading): a clock whose end loses the quest, costs a st
   assert.equal(kind(parse('O0B00Y11'), 'S.01'), 'deadline', 'the heist is paid only `when ... not _S.01_` - its end shuts the reward');
   assert.equal(kind(parse('S0000008'), 'brisiennafirstletter'), 'delay');
   assert.equal(kind(parse('_TUTOR__'), 'page1'), 'delay', 'the tutorial\'s pages');
-  assert.equal(kind(parse('N0B20Y02'), 'S.12'), 'delay', 'the trance ends (`hide npc`)');
+  assert.equal(kind(parse('N0B20Y02'), 'S.12'), 'deadline', 'GUARD-WINDOW (FIELD BUGS 2026-10-06c): the reading calls it the trance ending (`hide npc`) - by hand it is the guard, three hours played, the attack inside it');
 });
 
 test('REST8 (TIMEFREE\'s table): the penalties the reading cannot see are deadlines by hand - the cure quests\' hunters, the monster\'s escape, the mark leaving, Brisienna\'s month (AUDIT TIMEFREE T6), the scholar and the guard who leave (AUDIT REST-PARTY D2), Barenziah\'s chapter before the theft and the drugs\' drop (AUDIT REST II Q2: a time limit the text sets); read as delays they would come two minutes in; B0B81Y02\'s artifact hunt is the one the reading calls a deadline, in the table for the run-time half (AUDIT REST-PARTY D1) (mutants: the table emptied, an entry dropped)', () => {
-  assert.deepEqual(Object.keys(ONLINE_DEADLINES).sort(), ['$CUREVAM', '$CUREWER', 'B0B71Y03', 'B0B81Y02', 'K0C00Y07', 'K0C30Y03', 'M0B11Y18', 'N0B00Y17', 'O0B00Y12', 'S0000011', 'U0C00Y00', '_BRISIEN']);   // AUDIT REST III D2: the ransom and the daughter, by their text
+  assert.deepEqual(Object.keys(ONLINE_DEADLINES).sort(), ['$CUREVAM', '$CUREWER', 'B0B71Y03', 'B0B81Y02', 'K0C00Y07', 'K0C30Y03', 'M0B11Y18', 'N0B00Y17', 'N0B20Y02', 'O0B00Y12', 'S0000011', 'U0C00Y00', '_BRISIEN']);   // AUDIT REST III D2: the ransom and the daughter, by their text
   // AUDIT REST-PARTY D1: read a deadline already; its entry keeps it one through the knight's reward (isDeadline's
   // closing on a success skips the table - test/auditrestparty_quests.test.js ticks it)
   const READ_AS_DEADLINES = ['B0B81Y02:S.30'];
@@ -89,7 +89,7 @@ test('REST8 (TIMEFREE\'s split): every vendored clock is read, and the split sta
     try { q = parse(f.replace('.txt', '')); } catch { continue; }
     for (const r of q?.resources.values() ?? []) if (r.isClock) { if (r.isDeadline) deadlines++; else delays++; }
   }
-  assert.deepEqual({ deadlines, delays }, { deadlines: 271, delays: 128 });   // AUDIT TIMEFREE: 279/120 before T1-T6, 262/137 after; REST8 R1: K0C00Y02's gold, S0000502's tower (264/135); AUDIT REST-PARTY D2: N0B00Y17's scholar, K0C30Y03's guard (266/133; B0B81Y02's hunt, D1, was a deadline already); AUDIT REST II: R0C11Y03's return (Q1, the closings table retired), S0000011's chapter and O0B00Y12's drop (Q2, by hand) (269/130); AUDIT REST III D2: K0C00Y07's ransom and B0B71Y03's daughter, by their text
+  assert.deepEqual({ deadlines, delays }, { deadlines: 272, delays: 127 });   // GUARD-WINDOW (FIELD BUGS 2026-10-06c): N0B20Y02's guard (272/127); AUDIT TIMEFREE: 279/120 before T1-T6, 262/137 after; REST8 R1: K0C00Y02's gold, S0000502's tower (264/135); AUDIT REST-PARTY D2: N0B00Y17's scholar, K0C30Y03's guard (266/133; B0B81Y02's hunt, D1, was a deadline already); AUDIT REST II: R0C11Y03's return (Q1, the closings table retired), S0000011's chapter and O0B00Y12's drop (Q2, by hand) (269/130); AUDIT REST III D2: K0C00Y07's ransom and B0B71Y03's daughter, by their text
 });
 
 test('REST8: online a DEADLINE runs on played time - a rest spends none of it, the hours played spend it one step a frame, and it runs out and fires as DFU\'s; a DELAY lands on the short wait; offline both are DFU\'s raw gap (mutants: the deadline cut too, the wait never cut, the cut offline)', () => {
@@ -150,7 +150,7 @@ test('REST8: online a DEADLINE runs on played time - a rest spends none of it, t
   assert.ok(full >= 31 * DAY_S);
 });
 
-test('REST8: every vendored clock, ticked online past the short wait - all 128 delays have landed and not one of the 271 deadlines is cut (AUDIT REST-PARTY D2\'s two, AUDIT REST II\'s three and AUDIT REST III\'s two among them), each charged the time played and no more; offline none is cut (the edge: a deadline read as a delay would fire its end two minutes in) (mutants: the deadline cut too, the wait never cut)', () => {
+test('REST8: every vendored clock, ticked online past the short wait - all 127 delays have landed and not one of the 272 deadlines is cut (AUDIT REST-PARTY D2\'s two, AUDIT REST II\'s three, AUDIT REST III\'s two and GUARD-WINDOW\'s one among them), each charged the time played and no more; offline none is cut (the edge: a deadline read as a delay would fire its end two minutes in) (mutants: the deadline cut too, the wait never cut)', () => {
   const PLAY = ONLINE_DELAY_SECONDS + 60;   // twenty-five minutes, inside one played step
   const tally = { deadlines: 0, delays: 0, offline: 0 };
   const wrong = [];
@@ -191,7 +191,7 @@ test('REST8: every vendored clock, ticked online past the short wait - all 128 d
     }
   } finally { console.warn = warn; }
   assert.deepEqual(wrong, []);
-  assert.deepEqual(tally, { deadlines: 271, delays: 128, offline: 399 }, 'the whole corpus, both lanes');
+  assert.deepEqual(tally, { deadlines: 272, delays: 127, offline: 399 }, 'the whole corpus, both lanes');
 });
 
 test('REST8: online a DELAY\'s day count reads "a few" - "come back in a few days" - and a DEADLINE keeps its number, online and off (mutants: the count kept for a delay, "a few" for a deadline)', () => {

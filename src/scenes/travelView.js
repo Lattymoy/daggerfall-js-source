@@ -196,7 +196,9 @@ export function travelViewLine({ place = null, near = null, region = '' } = {}) 
  * @param {(p:number[]) => {x:number,y:number,front:boolean}} [deps.project] - a world point to the screen, this frame
  * @param {(x:number, y:number, e:any) => void} [deps.onPick] - TV2: a click on the ground (viewport pixels)
  * @param {(key:string, e?:any) => void} [deps.onMark] - TV2: a click on a mark that takes one (a place's plate); OW-ATTACK: with the press
- * @param {() => Array<{key:string, at:number[], label?:string, sub?:string, kind?:string, pick?:boolean, edge?:boolean, badge?:any, color?:string, kin?:string|null, lv?:number|null, dist?:number, hub?:boolean, tip?:(() => any)|null}>} [deps.marks] - TV2/TV3/TV5: the
+ * @param {(x:number, y:number, key:string|null, e?:any) => void} [deps.onContext] - WAYPOINTS: a right click (viewport
+ *   pixels, and the pickable mark under it or null)
+ * @param {() => Array<{key:string, at:number[], label?:string, sub?:string, kind?:string, pick?:boolean, edge?:boolean, badge?:any, color?:string, kin?:string|null, lv?:number|null, dist?:number, hub?:boolean, tip?:(() => any)|null, wpKind?:string, followed?:boolean}>} [deps.marks] - TV2/TV3/TV5: the
  *   keyed marks the readout draws, at WORLD points (projected here, through the frame's own matrices)
  * @param {() => number[][]} [deps.route] - TV2: the journey's way, world points from the feet on
  * @param {() => string} [deps.trip] - TV2: the journey in words
@@ -204,6 +206,8 @@ export function travelViewLine({ place = null, near = null, region = '' } = {}) 
  * @param {{show:Function, hide:Function, update:Function, pickAt?:(x:number, y:number) => string|null}} [deps.hud] -
  *   ui/travelViewHud.js (PERF-TV: `pickAt`, the pickable mark drawn under a click)
  * @param {() => void} [deps.openMap] - OW-BLOCK: the block's Map button
+ * @param {(id:string) => void} [deps.onWaypointGo] - WAYPOINTS: a followed waypoint's Go
+ * @param {() => Record<string,string>|null} [deps.followDist] - WAYPOINTS: each followed waypoint's distance, in words
  * @param {(t:string) => void} [deps.say]
  * @param {boolean} [deps.touch]
  * @param {any} [deps.win] - the event target listeners go on (the window)
@@ -284,6 +288,12 @@ export function createTravelView(deps) {
       // place's) journey, never the ground's pick
       const key = deps.hud?.pickAt?.(e.clientX, e.clientY) ?? null;
       if (key) deps.onMark?.(key, e); else deps.onPick?.(e.clientX, e.clientY, e);   // OW-ATTACK: the press with the mark (an enemy's single click is the ground's)
+    }
+    // WAYPOINTS (2026-10-06, the player: "with right mouseclick context menu"): a RIGHT press that never moved is the
+    // waypoint menu's - on a mark (a flag: its own menu) or on the land (add one there). A right DRAG still orbits.
+    if (p && p.id === e.pointerId && !p.moved && p.button === 2 && state === 'up' && e.type !== 'pointercancel') {
+      const key = deps.hud?.pickAt?.(e.clientX, e.clientY) ?? null;
+      deps.onContext?.(e.clientX, e.clientY, key, e);
     }
   }
   function onMouse(e) {   // the host's window mousedown/mouseup (the swing, Mouse0) - the canvas's are the view's
@@ -386,7 +396,7 @@ export function createTravelView(deps) {
       deps.freeCursor?.(true);
     }
     listen(true);
-    deps.hud?.show({ onReturn: () => exit('button'), onMap: () => deps.openMap?.() });   // OW-BLOCK: the block's Map
+    deps.hud?.show({ onReturn: () => exit('button'), onMap: () => deps.openMap?.(), onWaypointGo: (id) => deps.onWaypointGo?.(id) });   // OW-BLOCK: the block's Map; WAYPOINTS: a followed row's Go
     rearm();
     return true;
   }
@@ -493,12 +503,14 @@ export function createTravelView(deps) {
     for (const m of deps.marks?.() ?? []) {
       const at = proj(m.at);
       marks.push({ key: m.key, x: at?.x ?? 0, y: at?.y ?? 0, front: !!at?.front, label: m.label, sub: m.sub, kind: m.kind, pick: !!m.pick, edge: !!m.edge, ...(m.color ? { color: m.color } : {}), badge: m.badge ?? null,
-        ...(m.kin ? { kin: m.kin } : {}), ...(m.lv != null ? { lv: m.lv } : {}), ...(Number.isFinite(m.dist) ? { dist: m.dist } : {}), ...(m.hub ? { hub: true } : {}), ...(m.tip ? { tip: m.tip } : {}) });   // AUDIT NAMES N2-1: and the player's badge - dropped here, every marker was a bare name; AUDIT GATHER-OW: and a group's colour (every diamond was brass); FIELD BUGS 2026-10-04e: OW-KIN's kin, OW-WHO's Renown, OW-NODE-KM's distance, OW-HUBS' wheel and SEAT-TIP's card - each field the readout reads is carried, or it is dropped here
+        ...(m.kin ? { kin: m.kin } : {}), ...(m.lv != null ? { lv: m.lv } : {}), ...(Number.isFinite(m.dist) ? { dist: m.dist } : {}), ...(m.hub ? { hub: true } : {}), ...(m.tip ? { tip: m.tip } : {}),
+        ...(m.wpKind ? { wpKind: m.wpKind } : {}), ...(m.followed ? { followed: true } : {}) });   // AUDIT NAMES N2-1: and the player's badge - dropped here, every marker was a bare name; AUDIT GATHER-OW: and a group's colour (every diamond was brass); FIELD BUGS 2026-10-04e: OW-KIN's kin, OW-WHO's Renown, OW-NODE-KM's distance, OW-HUBS' wheel and SEAT-TIP's card - each field the readout reads is carried, or it is dropped here; WAYPOINTS: a flag's kind and whether it is followed
     }
     deps.hud.update({
       feet: f, heading: lastHeading, yaw: camera?.yaw ?? 0, where: deps.where?.() ?? '',
       touch: !!deps.touch, fade: t, marks, keys: hintKeys,
       route: (deps.route?.() ?? []).map(proj), trip: deps.trip?.() ?? '',
+      followDist: deps.followDist?.() ?? null,   // WAYPOINTS: the followed list's distances
     });
   }
 

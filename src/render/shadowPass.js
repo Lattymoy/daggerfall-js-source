@@ -62,6 +62,7 @@ import { aabbOutside } from './frustum.js';   // SHADOW-REACH: a host's box agai
 import { getPref } from '../systems/uiPrefs.js';
 import { AIR_TUNING } from './airPass.js';   // FLICKER-FIX: the calmer eye
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { appStorage } from '../systems/appStorage.js';   // CACHE-OFF: the device's switch, through the one storage seam
 import { BAYER_GLSL, DISSOLVE_GLSL } from './orderedDither.js';   // AUDIT BAY A12: a fading ship's shadow dissolves with her
 
 /** The sun map: two cascades of this size, as a depth texture array. */
@@ -374,14 +375,26 @@ export const SHADOW_LO_UNIT = 8;
 export const SHADOW_LO_STEP = 8;
 /** DISC15: every light the caster table can name. */
 export const SHADOW_LO_MAX = SHADOW_CASTER_TABLE;
+/** EMPTY-HOLD: how many frames in a row with no caster recorded keep the last frame's maps before they are cleared. */
+export const SHADOW_EMPTY_HOLD = 30;
 /** DISC15: how many lo maps a frame redraws for a changed static set (a door that came to rest) - a new light's map
  *  is drawn at once, whatever this says. */
 export const SHADOW_LO_REBUILDS = 2;
 /** FLICKER-FIX: the lo tier's rebuilds a frame under Steady shadows - a stale lo map settles in a third of the frames. */
 export const SHADOW_LO_REBUILDS_STEADY = 6;
 /** SC1: the door - `?shadowcache=off` replays every caster at the cadence, as before. */
-export function shadowCacheOn(search = globalThis.location?.search ?? '') {
-  return pageParam('shadowcache', search) !== 'off';   // PERF-URL
+export function shadowCacheOn(search = globalThis.location?.search ?? '', store = appStorage()) {
+  // CACHE-OFF (2026-10-06, the player: with the cache "it still flicker but not with ... &shadowcache=off" - every shadow
+  // in the tavern blinking, on every card, Enhanced Lighting alone): the cache is OFF unless asked ON - by the address
+  // (`shadowcache=on`), the device (localStorage `dfjs.shadowCache` = 'on') or the Enhanced Lighting option "Shadow cache"
+  // (prefs `shadowCache`, off by default); `shadowcache=off` still wins
+  const q = pageParam('shadowcache', search);
+  if (q === 'on') return true;
+  if (q === 'off') return false;
+  try { if (store?.getItem?.('dfjs.shadowCache') === 'on') return true; } catch { /* no storage */ }
+  // the Enhanced Lighting row's "Shadow cache" part - off by default; asked only of the page's own search (getPref reads
+  // that one, so a door handed another search is answered by it alone - PERF-URL's one parse)
+  return search === (globalThis.location?.search ?? '') && getPref('shadowCache') === true;
 }
 /** SC1: are two spheres touching - a record's against a lantern's reach. */
 export function spheresTouch(ax, ay, az, ar, bx, by, bz, br) {
@@ -1371,7 +1384,18 @@ export class ShadowPass {
       const placeChanged = b._shSeen === true && !(Math.abs(b._shOx - ox) <= SHADOW_STILL_EPS && Math.abs(b._shOy - oy) <= SHADOW_STILL_EPS && Math.abs(b._shOz - oz) <= SHADOW_STILL_EPS);
       const lookChanged = b._shSeen === true && !(b._shFrame === fr && b._shRec === rec && b._shFlip === flip);
       if (placeChanged || lookChanged) b._shMovedAt = this.frameNo;
-      const moving = b._dyn === true || b.selfCard === true || (b._shMovedAt != null && this.frameNo - b._shMovedAt < SHADOW_DYNAMIC_HOLD);   // built dynamic, the player's own card (DISC24-C), moved now, or within the hold
+      // IDLER-STICKY (2026-10-06, the player's log: two townsfolk flats, 455-5 and 386-5, in and out of the static set on
+      // their idle's beat - 180 frames still, 60 animating - and every turn rebuilt nine lamps' static caches and the lo
+      // maps around them at once: the whole room's shadows blinked): a flat whose LOOK changes where it stands (an idle,
+      // a 211 prop) animates again and again, so it is a mover for good - its shadow drawn with the movers', never
+      // baked, never the reason a static cache rebuilds. A walker that stops is still the hold's alone, as before.
+      // IDLER-STICKY II (the player's next log: the same two, still in and out - they HAVE an origin, so the first cut's
+      // `o == null` never held, and their idle swap nudges the origin a hair, so `!placeChanged` would not either): ANY
+      // look change marks the batch for good - A PERSON or a prop (an NPC, a foe, a peer, a 211 prop; not a wood's
+      // placements, not a swaying plant) - is marked the first time its look changes and stays a mover: it never enters
+      // or leaves the static caches again (one that never animates stays cached, as SC1 keeps it)
+      if (lookChanged && b._dyn !== true && b.selfCard !== true && !b._place && !(b.sway > 0)) b._shIdler = true;
+      const moving = b._dyn === true || b.selfCard === true || b._shIdler === true || (b._shMovedAt != null && this.frameNo - b._shMovedAt < SHADOW_DYNAMIC_HOLD);   // built dynamic, the player's own card (DISC24-C), moved now, or within the hold
       const dyn = moving || swaying;
       // DISC29-E: ANIMATING IN PLACE - a mover only because its silhouette changes where it stands (an idling mage, a
       // 211 prop): never built dynamic, never the player's card, never swaying. The lo tier keeps it (REPLAY_LO) - the
@@ -1409,12 +1433,29 @@ export class ShadowPass {
     // shadows - at a third of the rate the eye took ten seconds to open into a dark room and held a candle's glare
     // as long; with the card's stacked silhouettes gone (SHADOW_SELF_LAMPS) there is little left for it to calm
     AIR_TUNING.calm = SHADOW_TUNING.calmForce ?? !!getPref('calmEye');
+    const heldKind = this.kind;   // EMPTY-HOLD: the kind the held maps were drawn for
     this.kind = shadowKind(f.sunScale, f.lightDir);
     this.frameNo++;
     this.stats.cascadesDrawn = 0; this.stats.facesDrawn = 0; this.stats.staticFaces = 0; this.stats.dynFaces = 0; this.stats.blits = 0; this.stats.cachedSlots = 0;   // SC1
     this.stats.loSlots = 0; this.stats.loFaces = 0;   // DISC15
+    // EMPTY-HOLD (2026-10-06, the player: "everything blinked at once ... it only happens with enhanced lighting on", on
+    // every card): a frame that recorded NO caster (a hitch, a room's memory restored, a chunk swapped mid-frame) cleared
+    // every lamp's map and forgot every slot - the whole room's shadows off for a frame and every cube redrawn on the
+    // next. A short run of empty frames now keeps the last frame's maps and their uniforms untouched (the maps are
+    // still in their layers); only a run past SHADOW_EMPTY_HOLD frames - the scene really without casters - clears
+    if (this.count === 0) {
+      this._emptyRun = (this._emptyRun ?? 0) + 1;
+      // the same sky, and no door between (the renderer's `cut`: the first frame through a door drops the other side's
+      // records - DISC15's door - and its maps must go with them, never be held into the room or out into the street)
+      if (!f.cut && this._emptyRun <= SHADOW_EMPTY_HOLD && this._hadMaps && heldKind !== null && heldKind === this.kind) {
+        if (SHADOW_TUNING.debug) console.log(`[shadow] f${this.frameNo} empty frame held (${this._emptyRun}/${SHADOW_EMPTY_HOLD})`);
+        return;
+      }
+      this.sunParams[3] = 0; this.pointParams.fill(0); this.shadowIndex.fill(-1); this.casterOf.fill(-1); this.casters = 0;
+      this.kind = null; this._hadMaps = false; this._slotLight.fill(NaN); this._sunDrawn.fill(0); return;   // AUDIT 68 S17-far-cascade-shift: no sun map is held past a run that drew none
+    }
+    this._emptyRun = 0; this._hadMaps = true;
     this.sunParams[3] = 0; this.pointParams.fill(0); this.shadowIndex.fill(-1); this.casterOf.fill(-1); this.casters = 0;
-    if (this.count === 0) { this.kind = null; this._slotLight.fill(NaN); this._sunDrawn.fill(0); return; }   // AUDIT 68 S17-far-cascade-shift: no sun map is held past a frame that drew none
     gl.disable(gl.CULL_FACE);   // the light's projection is not the mirrored one: winding is not the world's, and both faces of an open model must cast
     gl.enable(gl.DEPTH_TEST);
     gl.depthMask(true);
@@ -1614,6 +1655,39 @@ export class ShadowPass {
         + ` selfLamps=${st.selfLamps} calmEye=${AIR_TUNING.calm}`);   // STEADY-BALANCE
     }
     this._dbgSet = now;
+    if (st.staticFaces > 0 || st.loFaces > 0) this._debugStaticDiff();   // STATIC-WHO: what changed in the static set
+  }
+  /**
+   * STATIC-WHO (2026-10-06, the player's log: the static caches rebuilt on a beat - 60 frames, then 180 - with no lamp
+   * changed): the static set the signatures fold (the same filters), keyed by identity and place; on a rebuild frame the
+   * entries that came and went are named - the record's kind, its archive and record (a flat) or its mesh's name, its
+   * place, and the flags that move a batch in and out of the set (conceal, _shDyn, _dead).
+   */
+  _debugStaticDiff() {
+    const now = new Map();
+    for (let i = 0; i < this.count; i++) {
+      const r = this.records[i];
+      if (r.kind === REC_BB) {
+        for (const b of r.batches) {
+          if (!b?.vao || b._dead || b._shDyn || b.noShadow || b.conceal || b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) continue;
+          const at = `${Math.round((b._shOx ?? 0) * 64)},${Math.round((b._shOz ?? 0) * 64)}`;
+          now.set(`bb${shId(b)}@${at}`, `flat ${b.archive ?? '?'}-${b.record ?? '?'} n=${b.count ?? b.instances ?? '?'} at ${at} rec#${i}${r.dynamic ? ' (dyn record)' : ''}`);
+        }
+        continue;
+      }
+      if (r.dynamic) continue;
+      const m = r.kind === REC_TERRAIN ? r.surface : r.mesh;
+      if (!m?.vao || m._dead) continue;
+      const at = `${r.matrix[12].toFixed(2)},${r.matrix[13].toFixed(2)},${r.matrix[14].toFixed(2)}`;
+      now.set(`m${shId(m)}@${at}`, `${r.kind === REC_TERRAIN ? 'terrain' : 'mesh'} ${m.name ?? m.label ?? m.key ?? ''} id${shId(m)} at ${at} rec#${i}`);
+    }
+    const prev = this._dbgStatic;
+    this._dbgStatic = now;
+    if (!prev) return;
+    const came = [...now.keys()].filter((k) => !prev.has(k)).map((k) => now.get(k));
+    const went = [...prev.keys()].filter((k) => !now.has(k)).map((k) => prev.get(k));
+    if (!came.length && !went.length) { console.log(`[shadow] f${this.frameNo} static set unchanged (${now.size}) - a rebuild for another reason (a lamp's reach, its far)`); return; }
+    console.log(`[shadow] f${this.frameNo} STATIC CHANGE (${now.size}) came ${came.length}: ${came.slice(0, 6).join(' ; ') || '-'} | went ${went.length}: ${went.slice(0, 6).join(' ; ') || '-'}`);
   }
   /** SC1: the static signature of a lantern's reach - every static record (and static batch) whose sphere touches
    *  the light's, folded by identity and position, order-free. An unbounded record touches everything.

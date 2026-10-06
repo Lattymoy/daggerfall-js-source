@@ -43,6 +43,14 @@ import { wheelPath } from './carriageWheel.js';   // OW-HUBS: a carriage town's 
 import { placeTip, readTip, tipKey, SEAT_TIP_TEXT_MAX } from './eventMapMarks.js';   // SEAT-TIP: the held map's card, at the pointer here too
 import { tickHudLayout } from './hudLayout.js';   // HUD-MOVE: the Overworld's block and the travel bar move too
 import { travelPathMode, setTravelPathMode, onTravelPathMode, TRAVEL_PATH_MODES, TRAVEL_PATH_TEXT } from '../systems/travelPathMode.js';   // OW-PATH: the Roads / Free switch
+import { buildPaceControls } from './travelPaceControls.js';   // PACE-DIALS: the travel speed dials, journey or none
+import {
+  WAYPOINT_KINDS, WAYPOINT_TEXT, listWaypoints, followedWaypointIds, setWaypointFollowed, waypointKindsShown, toggleWaypointKind,
+  onWaypoints, waypointCss,
+} from '../systems/mapWaypoints.js';   // WAYPOINTS: the switches, the followed list and its dropdown
+import { paintWaypointFlag, flagBox } from './waypointFlags.js';   // WAYPOINTS: the small flags
+import { closeWaypointMenu } from './waypointMenu.js';   // WAYPOINTS: the Overworld's menu goes down with the view
+import { appStorage } from '../systems/appStorage.js';   // WAYPOINTS: the filter block's folded state, kept on the device
 
 export const TRAVEL_VIEW_HUD_ID = 'travel-view';
 /** The name on the screen (the code's is TRAVEL VIEW: "overworld" is the streaming world's own word in the tree). */
@@ -247,7 +255,13 @@ function build(doc, hooks) {
   tools.append(modes, idleMap);
   const foot = el('div', 'tview-foot');
   foot.append(back);
-  // OW-FILTER: THE CORNER'S SWITCHES - one per group of marks, a dot in the mark's own colour and how many there are
+  // PACE-DIALS (2026-10-06, the player: "Those options should also be available when the player stands still on the
+  // overworld map"): the travel speed dials, in the block whether a journey runs or not (the docked journey bar's own
+  // copy is hidden under the view - one set on the screen)
+  const pace = buildPaceControls(doc, 'tview');
+  // OW-FILTER: THE CORNER'S SWITCHES - one per group of marks, a dot in the mark's own colour and how many there are.
+  // FILTERS-LEFT (2026-10-06, the player: "move the filters for the overworld to the left bottom side"): they stand in a
+  // block of their own in the bottom-LEFT corner now (`side`), apart from the right's journey block
   const filters = el('div', 'tview-filters');
   filters.setAttribute?.('role', 'group');
   filters.setAttribute?.('aria-label', 'Overworld filters');
@@ -287,9 +301,46 @@ function build(doc, hooks) {
   nodeBtn.title = TV_WHO_TEXT.nodeTip;
   nodeBtn.onclick = (e) => { e.preventDefault(); cycleTravelViewNodeKm(); };
   filters.append(renownBtn, nodeBtn);
+  // WAYPOINTS (2026-10-06, the player: "add the waypoints you want to mark (to follow) to the filter list on the overworld
+  // map with a dropdown menu"): a switch per kind (Personal, Party, Guild - the held map's key reads the same ones), the
+  // dropdown that follows one, and the followed list - each its flag's colour, its name, how far, Go and unfollow
+  filters.append(el('div', 'tview-label', WAYPOINT_TEXT.title));
+  const wpBtns = {};
+  for (const k of WAYPOINT_KINDS) {
+    const b = el('button', 'tview-filter');
+    b.type = 'button';
+    b.dataset && (b.dataset.wpkind = k);
+    const num = el('span', 'tview-fnum', '0');
+    b.append(el('span', `tview-fdot tview-fdot-wp-${k}`), el('span', 'tview-fword', WAYPOINT_TEXT[k]), num);
+    b.onclick = (e) => { e.preventDefault(); toggleWaypointKind(k); };
+    wpBtns[k] = { b, num };
+    filters.append(b);
+  }
+  // PLUS-PICK (2026-10-06, the player: "the buttons do not look the same as enhanced ui plus"): the dropdown is the kit's
+  // own - a switch like the others that unfolds the waypoints as switches under it (a browser <select> wears no stone)
+  const wpPick = /** @type {HTMLButtonElement} */ (el('button', 'tview-filter tview-cycle tview-cycle-wide tview-wp-pick on'));
+  wpPick.type = 'button';
+  wpPick.title = 'Choose a waypoint to follow - it stays at the screen\'s edge with its distance';
+  const wpPop = el('div', 'tview-wp-pop');
+  wpPop.style.display = 'none';
+  wpPick.onclick = (e) => { e.preventDefault(); if (wpPick.disabled) return; wpPop.style.display = wpPop.style.display === 'none' ? '' : 'none'; paintPickWord(); furniture.at = -Infinity; };
+  const wpList = el('div', 'tview-wp-list');
+  filters.append(wpPick, wpPop, wpList);
+  // FILTERS-LEFT: the block, its head (a fold), the switches under it
+  const side = el('div', 'tview-side');
+  side.setAttribute?.('role', 'group');
+  side.setAttribute?.('aria-label', 'Overworld filters');
+  const sideHead = el('button', 'tview-side-head');
+  sideHead.type = 'button';
+  const sideFold = el('span', 'tview-side-fold', '▾');
+  sideHead.append(el('span', 'tview-side-title', 'Map filters'), sideFold);
+  sideHead.onclick = (e) => { e.preventDefault(); setSideFolded(!sideFolded()); };
+  side.append(sideHead, filters);
+  side.addEventListener?.('mousedown', (e) => e.stopPropagation?.());
+  side.addEventListener?.('mouseup', (e) => e.stopPropagation?.());
   // SEAT-TIP: the card a hovered plate answers with (a seat's: who holds it, this week's battle) - the held map's look
   const tip = el('div', 'hmtip tview-tip');
-  bar.append(head, dock, tools, filters, foot);   // OW-BLOCK: top to bottom
+  bar.append(head, dock, pace.root, tools, foot);   // OW-BLOCK: top to bottom (FILTERS-LEFT: the filters their own block)
   // AUDIT TV B8: a press on the readout (Return, a plate) is the readout's - the host's window mousedown counts any
   // press as Mouse0 (the swing, the activation), so it stops here
   // PERF-TV: a label drawn before the plates' web font arrived would stay in the fallback face - the label images are
@@ -299,9 +350,9 @@ function build(doc, hooks) {
   r.addEventListener?.('mousedown', own);
   r.addEventListener?.('mouseup', own);
   if (route) r.append(route);
-  r.append(canvas, you, bar, said, tip);
+  r.append(canvas, you, bar, side, said, tip);
   doc.body.append(r);
-  return { root: r, parts: { you, ring, chev, canvas, bar, where, trip, hint, back, route, casing, line, said, modes, modeBtns, dock, idle, idleMap, filters, filterBtns, filterNums, whoBtns, renownBtn, nodeBtn, tip } };
+  return { root: r, parts: { you, ring, chev, canvas, bar, where, trip, hint, back, route, casing, line, said, modes, modeBtns, dock, idle, idleMap, filters, filterBtns, filterNums, whoBtns, renownBtn, nodeBtn, tip, pace, side, sideHead, sideFold, wpBtns, wpPick, wpPop, wpList } };
 }
 
 /**
@@ -316,9 +367,13 @@ export function showTravelViewHud(hooks = {}, doc = globalThis.document) {
     resetMarks();   // PERF-TV: a new canvas holds nothing
     stopModes?.(); stopModes = onTravelPathMode(paintModes);
     stopFilters?.(); stopFilters = onTravelViewFilters((f) => { paintFilters(f); canvasSig = []; });
+    stopWaypoints?.(); stopWaypoints = onWaypoints(() => { paintWaypoints(); canvasSig = []; });   // WAYPOINTS
   }
+  wpHooks = hooks;   // WAYPOINTS: the followed list's Go
   paintModes(travelPathMode());
   paintFilters(travelViewFilters());
+  paintWaypoints();
+  paintSideFold();
   tickHudLayout(doc);   // HUD-MOVE
   parts.back.onclick = (e) => { e.preventDefault(); hooks.onReturn?.(); };
   parts.idleMap.onclick = (e) => { e.preventDefault(); hooks.onMap?.(); };
@@ -388,6 +443,8 @@ export function showTravelViewConfirm({ rows = [], yes = 'Yes', no = 'No', onYes
 }
 
 export function hideTravelViewHud() {
+  if (sideMoved?.style) { sideMoved.style.translate = ''; sideMoved = null; }   // SIDE-CORNER: the buffs back where they stand
+  closeWaypointMenu('overworld');   // WAYPOINTS: the view's own right-click menu goes with it
   hideTravelViewConfirm(false);   // OW-CONFIRM: the view gone, the question with it - unanswered is no
   undock();   // OW-DECK: a journey that runs on outlives the view - its bar goes home to the top of the screen
   unpublishBlock(root?.ownerDocument);   // OW-NOTICES: the notices back to their own place
@@ -404,6 +461,8 @@ export function disposeTravelViewHud() {
   unpublishBlock(root?.ownerDocument);
   stopModes?.(); stopModes = null;
   stopFilters?.(); stopFilters = null;
+  stopWaypoints?.(); stopWaypoints = null;   // WAYPOINTS
+  parts?.pace?.dispose?.();   // PACE-DIALS
   listenPointer(parts?.canvas?.ownerDocument?.defaultView, false);
   setHover(null);
   tipShown = '';   // SEAT-TIP: the card goes with the root
@@ -432,6 +491,123 @@ function paintFilters(f) {
   }
   if (parts?.renownBtn) parts.renownBtn.textContent = TV_WHO_TEXT.renown(w.renown);
   if (parts?.nodeBtn) parts.nodeBtn.textContent = TV_WHO_TEXT.nodeKm(w.nodeKm);
+}
+
+/** SIDE-CORNER: the HUD piece stepped aside for the filter block, put back as the view goes. */
+let sideMoved = null;
+/** WAYPOINTS: the switches, the dropdown and the followed list - drawn again when the store says it changed. */
+let stopWaypoints = null;
+let wpHooks = {};
+/** The followed list's distances, by id - written by the frame (updateTravelViewHud's `followDist`). */
+let wpDist = {};
+function paintWaypoints() {
+  if (!parts?.wpBtns) return;
+  const shown = waypointKindsShown();
+  const all = listWaypoints();
+  for (const k of WAYPOINT_KINDS) {
+    const { b, num } = parts.wpBtns[k];
+    const on = shown[k] !== false;
+    b.className = on ? 'tview-filter on' : 'tview-filter';
+    b.setAttribute?.('aria-pressed', on ? 'true' : 'false');
+    b.title = WAYPOINT_TEXT.tip(WAYPOINT_TEXT[k], on);
+    num.textContent = String(all.filter((w) => w.kind === k).length);
+  }
+  const doc = parts.wpPick.ownerDocument;
+  const follow = followedWaypointIds();
+  // the dropdown: every waypoint not followed yet, each a switch in its flag's colour
+  const pop = parts.wpPop;
+  pop.replaceChildren?.();
+  const open = all.filter((w) => !follow.includes(w.id));
+  for (const w of open) {
+    const b = doc.createElement('button');
+    b.type = 'button';
+    b.className = 'tview-filter on tview-wp-opt';
+    const dot = doc.createElement('span');
+    dot.className = `tview-wp-flag tview-wp-flag-${w.kind}`;
+    dot.style.background = waypointCss(w.color);
+    const word = doc.createElement('span');
+    word.className = 'tview-fword';
+    word.textContent = w.name;
+    const kind = doc.createElement('span');
+    kind.className = 'tview-fnum';
+    kind.textContent = WAYPOINT_TEXT[w.kind];
+    b.append(dot, word, kind);
+    b.title = `Follow ${w.name}${!w.mine && w.by ? ` (by ${w.by})` : ''}`;
+    b.onclick = (e) => { e.preventDefault(); pop.style.display = 'none'; setWaypointFollowed(w.id, true); };
+    pop.append(b);
+  }
+  parts.wpPick.disabled = open.length === 0;
+  if (!open.length) pop.style.display = 'none';
+  paintPickWord();
+  // the followed list
+  const list = parts.wpList;
+  list.replaceChildren?.();
+  for (const id of follow) {
+    const w = all.find((x) => x.id === id);
+    if (!w) continue;
+    const row = doc.createElement('div');
+    row.className = 'tview-wp-row';
+    row.dataset && (row.dataset.wp = id);
+    const dot = doc.createElement('span');
+    dot.className = `tview-wp-flag tview-wp-flag-${w.kind}`;
+    dot.style.background = waypointCss(w.color);
+    const name = doc.createElement('span');
+    name.className = 'tview-wp-name';
+    name.textContent = w.name;
+    name.title = `${WAYPOINT_TEXT.kindWord[w.kind]}${!w.mine && w.by ? ` by ${w.by}` : ''} - right-click its flag to rename it`;
+    const dist = doc.createElement('span');
+    dist.className = 'tview-wp-dist';
+    dist.textContent = wpDist[id] ?? '';
+    const go = doc.createElement('button');
+    go.type = 'button'; go.className = 'tview-mode tview-wp-go'; go.textContent = 'Go'; go.title = `Travel to ${w.name}`;
+    go.onclick = (e) => { e.preventDefault(); wpHooks.onWaypointGo?.(id); };
+    const x = doc.createElement('button');
+    x.type = 'button'; x.className = 'tview-mode tview-wp-x'; x.textContent = '×'; x.title = 'Stop following';
+    x.onclick = (e) => { e.preventDefault(); setWaypointFollowed(id, false); };
+    row.append(dot, name, dist, go, x);
+    list.append(row);
+  }
+  list.style.display = list.childNodes?.length ? '' : 'none';
+  furniture.at = -Infinity;   // the block's height may have changed
+}
+/** PLUS-PICK: the dropdown's own words - what it offers, and whether it is open. */
+function paintPickWord() {
+  const pick = parts?.wpPick;
+  if (!pick) return;
+  const any = listWaypoints().length > 0;
+  const open = parts.wpPop.style.display !== 'none';
+  pick.textContent = !any ? WAYPOINT_TEXT.none : pick.disabled ? 'All waypoints followed' : `${WAYPOINT_TEXT.follow} ${open ? '▴' : '▾'}`;
+  pick.className = `tview-filter tview-cycle tview-cycle-wide tview-wp-pick${pick.disabled ? '' : ' on'}`;
+}
+/** WAYPOINTS: a frame's distances written into the followed rows - only where one changed. */
+function paintWaypointDist(dist) {
+  wpDist = dist ?? {};
+  for (const row of parts?.wpList?.children ?? []) {
+    const id = row.dataset?.wp, d = row.querySelector?.('.tview-wp-dist');
+    const t = wpDist[id] ?? '';
+    if (d && d.textContent !== t) d.textContent = t;
+  }
+}
+/** FILTERS-LEFT: the block folded to its head, kept on the device. */
+const SIDE_FOLD_KEY = 'dfjs.overworld.filtersFolded';
+let sideFoldedNow = null;
+function sideFolded() {
+  if (sideFoldedNow == null) { try { sideFoldedNow = appStorage()?.getItem(SIDE_FOLD_KEY) === '1'; } catch { sideFoldedNow = false; } }
+  return sideFoldedNow;
+}
+function setSideFolded(on) {
+  sideFoldedNow = !!on;
+  try { appStorage()?.setItem(SIDE_FOLD_KEY, on ? '1' : '0'); } catch { /* the session's */ }
+  paintSideFold();
+}
+function paintSideFold() {
+  if (!parts?.side) return;
+  const f = sideFolded();
+  parts.side.className = f ? 'tview-side folded' : 'tview-side';
+  parts.sideFold.textContent = f ? '▸' : '▾';
+  parts.sideHead.title = f ? 'Show the filters' : 'Fold the filters away';
+  parts.sideHead.setAttribute?.('aria-expanded', f ? 'false' : 'true');
+  furniture.at = -Infinity;
 }
 /** SEAT-TIP: the hovered mark's card at the pointer, or none. `tip` is the mark's card or a function that makes it
  *  (a seat's, asked only of the plate under the pointer); its words written only when they change, its box measured
@@ -528,7 +704,7 @@ function listenPointer(win, on) {
 /**
  * One frame's readout.
  * @param {{ feet: {x:number,y:number,front:boolean}|null, heading: number|null, yaw: number, where: string, keys?: {move?:string, out?:string}|null,
- *   touch?: boolean, fade?: number, trip?: string, route?: Array<{x:number,y:number,front:boolean}|null>,
+ *   touch?: boolean, fade?: number, trip?: string, route?: Array<{x:number,y:number,front:boolean}|null>, followDist?: Record<string,string>|null,
  *   marks?: Array<{key:string, x:number, y:number, front:boolean, label?:string, sub?:string, kind?:string, pick?:boolean, edge?:boolean}> }} f
  *   `feet` the projected feet, `heading` the chevron's degrees (null keeps the last), `yaw` the camera's heading,
  *   `fade` 0..1 how far risen (the readout comes in with the camera and goes with it); TV2: `trip` the journey's line,
@@ -567,6 +743,7 @@ export function updateTravelViewHud(f) {
   const counts = countGroups(all);
   for (const g of TV_FILTER_GROUPS) put(parts.filterNums?.[g], `fn-${g}`, String(counts[g]));
   const fl = travelViewFilters();
+  if (f.followDist) paintWaypointDist(f.followDist);   // WAYPOINTS: how far each followed one is
   drawMarks(all.filter((m) => markShown(m, fl)), vw, vh, dpr, f.feet?.front ? f.feet : null);   // OW-CROWD: my mark, the badges' nearness (off the picture, its middle)
 }
 
@@ -650,6 +827,7 @@ const lookOf = (m) => {
   if (k === 'bounty') return k;   // BOUNTY-OVERWORLD: a held bounty's hunt
   if (k === 'gather') return k;   // GATHER-OW: a profession's group of nodes
   if (k === 'wayfarer') return k;   // LW3: the living world's parties on the road
+  if (k === 'waypoint') return k;   // WAYPOINTS: a flag
   return k === 'place' || k === 'far' || k === 'dest' || k === 'target' || k === 'party' || k === 'lair' || k === 'band' || k === 'raider' || k === 'camp' ? k : 'traveller';
 };
 /** OW-THEME (2026-09-28, Mac: "The overworld ui needs to follow enhanced ui theme"): the plates' stone - the Enhanced
@@ -903,7 +1081,7 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
   showMarkTip(hover ? placed.find((q) => q.m.key === hover)?.m.tip ?? null : null, pointer, vw, vh);   // SEAT-TIP: a seat's card while its plate is under the pointer
   // the picture this frame would draw: unchanged (a camera at rest), the canvas already shows it
   const sig = [bw, bh, hover ?? ''];
-  for (const q of placed) sig.push(q.m.key, q.x, q.y, q.held ? Math.round(q.held.angle) : 999, q.m.label ?? '', q.m.sub ?? '', q.m.kind ?? '', q.bk, q.fade ? 1 : 0, q.m.kin ?? '', q.m.hub ? 1 : 0);   // OW-KIN, OW-HUBS
+  for (const q of placed) sig.push(q.m.key, q.x, q.y, q.held ? Math.round(q.held.angle) : 999, q.m.label ?? '', q.m.sub ?? '', q.m.kind ?? '', q.bk, q.fade ? 1 : 0, q.m.kin ?? '', q.m.hub ? 1 : 0, q.m.color ?? '');   // OW-KIN, OW-HUBS; WAYPOINTS: a flag's colour
   for (const q of placed) if (q.m.pick) nextHits.push({ key: q.m.key, ...pickBox(q, vw) });   // BOUNTY-SNAP: a bounty's on its ring alone
   hits = nextHits;
   sayPlaces(placed);
@@ -919,7 +1097,7 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
   for (const q of placed) {
     const { m, held, x, y, look } = q;
     g.globalAlpha = q.fade ? TV_UNDER_HUD_ALPHA : 1;   // OW-EDGES: faint where it would lie over the compass or the hotbar
-    const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party' ? C.party : look === 'traveller' ? C.traveller : look === 'lair' ? C.lair : look === 'band' ? C.band : look === 'raider' ? C.raider : look === 'camp' ? C.camp : look === 'bounty' ? C.bounty : look === 'wayfarer' ? (/\bfight\b/.test(m.kind ?? '') ? C.band : C.wayfarer) : C.brass;   // OWS3: a raider in the cinnabar; OW6: a camp in the ember; LW3: a party on the road in its dust (LW4: beset, in the bands' red)
+    const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party' ? C.party : look === 'traveller' ? C.traveller : look === 'lair' ? C.lair : look === 'band' ? C.band : look === 'raider' ? C.raider : look === 'camp' ? C.camp : look === 'bounty' ? C.bounty : look === 'waypoint' ? waypointCss(m.color) : look === 'wayfarer' ? (/\bfight\b/.test(m.kind ?? '') ? C.band : C.wayfarer) : C.brass;   // OWS3: a raider in the cinnabar; OW6: a camp in the ember; LW3: a party on the road in its dust (LW4: beset, in the bands' red)
     g.fillStyle = color; g.strokeStyle = '#000'; g.lineWidth = 1;
     if (held) {   // the arrow, turned the way it lies (0 up, clockwise)
       g.save(); g.translate(x, y); g.rotate((held.angle * Math.PI) / 180);
@@ -927,6 +1105,8 @@ function drawMarks(marks, vw, vh, dpr, feet = null) {
       // AUDIT DEEP2 E5: a NOTCHED head - a near-equilateral triangle read the same turned a third either way
       g.beginPath(); g.moveTo(0, -10); g.lineTo(7, 7); g.lineTo(0, 2); g.lineTo(-7, 7); g.closePath(); g.fill(); g.stroke();
       g.restore();
+    } else if (look === 'waypoint') {   // WAYPOINTS: a small flag in its colour (a party's pip, a guild's bar)
+      paintWaypointFlag(g, x, y, { color: m.color, kind: m.wpKind, followed: !!m.followed, hover: m.key === hover });
     } else if (look === 'target') {
       g.beginPath(); g.arc(x, y, 8, 0, Math.PI * 2); g.lineWidth = 2; g.strokeStyle = C.brass; g.stroke();
     } else if (isShipKind(m)) {
@@ -1082,7 +1262,7 @@ const SIDE_REACH = 120;
 /** AUDIT DEEP2 E1/E2: the view's block's own foot (px, the style sheet's `bottom`) and its air over what it clears. */
 const BAR_FOOT = 18, BAR_AIR = 8;
 const furniture = { top: TV_EDGE_MARGIN, foot: TV_EDGE_MARGIN, lTop: TV_EDGE_MARGIN, lFoot: TV_EDGE_MARGIN, rTop: TV_EDGE_MARGIN,
-  rFoot: TV_EDGE_MARGIN, topLo: TV_EDGE_MARGIN, topHi: 0, footLo: TV_EDGE_MARGIN, footHi: 0, bar: BAR_FOOT, at: -Infinity, vw: 0, vh: 0,
+  rFoot: TV_EDGE_MARGIN, topLo: TV_EDGE_MARGIN, topHi: 0, footLo: TV_EDGE_MARGIN, footHi: 0, bar: BAR_FOOT, side: BAR_FOOT, at: -Infinity, vw: 0, vh: 0,
   topNotch: [], footNotch: [], notice: null };
 /**
  * OW-EDGES (2026-09-29, the player: "all the markers floating around can be more to the screen edges, respect the hotbar
@@ -1179,6 +1359,24 @@ function measureFurniture(doc, vw, vh) {
       publishBlock(doc, 'top', br.top, br.bottom);
     }
   }
+  // FILTERS-LEFT: the filter block in the bottom-left corner, lifted as the right's block is - over whatever stands under
+  // its span in the foot half (the quick slots, a phone's buttons, the right's block on a narrow screen), never past the
+  // screen's middle - then a piece the marks keep clear of like the rest
+  // SIDE-CORNER (2026-10-06, the player: "the whole filter block is not properly in the left corner ... if there are
+  // issues with the buffs ... just place them next right to the filter block"): the block STAYS in the corner (the sheet's
+  // left and bottom, never lifted); the HUD's quick-slot block and its buffs, when they stand in its way, step to its right
+  // while the view is up (`translate`, so the HUD's own place and the layout editor's move are left as they are)
+  const side = parts?.side, sr = side?.getBoundingClientRect?.();
+  const quick = doc?.querySelector?.('.hud .hud-quick');
+  if (quick?.style) {
+    quick.style.translate = '';
+    const qr = quick.getBoundingClientRect?.();
+    if (sr && sr.width > 0 && qr && qr.width > 0 && qr.left < sr.right && qr.right > sr.left && qr.bottom > sr.top && qr.top < sr.bottom) {
+      quick.style.translate = `${Math.round(sr.right + BAR_AIR - qr.left)}px 0`;
+      sideMoved = quick;
+    }
+  }
+  if (sr && sr.width > 0 && sr.height > 0) rects.push({ left: sr.left, right: sr.right, top: sr.top, bottom: sr.bottom, width: sr.width, height: sr.height });
   for (const r of rects) {
     let upper = r.bottom <= vh / 2, lower = r.top >= vh / 2;
     // OW-EDGES: a tall piece across the middle is the edge's it stands on - the Overworld's block rises from the foot past
@@ -1307,6 +1505,10 @@ export const BOUNTY_SNAP_PX = 10;
 /** The box a pickable mark takes a click in: a bounty's ring alone, every other mark its markBox. */
 function pickBox(q, vw) {
   if (q.look === 'bounty') return { x0: q.x - BOUNTY_SNAP_PX, x1: q.x + BOUNTY_SNAP_PX, y0: q.y - BOUNTY_SNAP_PX, y1: q.y + BOUNTY_SNAP_PX };
+  if (q.look === 'waypoint' && !q.held) {   // WAYPOINTS: the flag over its foot and the name under it
+    const f = flagBox(q.x, q.y), b = markBox(q, vw);
+    return { x0: Math.min(f.x0, b.x0), x1: Math.max(f.x1, b.x1), y0: f.y0, y1: b.y1 };
+  }
   return markBox(q, vw);
 }
 function markBox(q, vw) {

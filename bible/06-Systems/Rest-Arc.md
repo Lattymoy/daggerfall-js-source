@@ -414,9 +414,9 @@ QCLOCK-WORLD's clock, online only - the gate is the quest hooks' `sharedClock`, 
   the audits below add), the "at once" clocks (`declaredAtOnce`), the run-time half (`isDeadline`: a task-started
   deadline closes on the short wait once the quest is a success, unless started after it - `startedAfterSuccess`,
   saved). Restored line for line from commits a075cbdd6 and 6611f0188, every hand-audited classification kept but the
-  two R1 corrects: 264 deadlines, 135 delays over the 399 vendored clocks as REST8 built it - 271 and 128 now (AUDIT
-  REST-PARTY D2, AUDIT REST II Q1/Q2 and AUDIT REST III D2, below) - and the main quest's deadlines listed and pinned (31
-  as built: the audit's 30 and S0000502's tower; 32 with AUDIT REST II's S0000011).
+  two R1 corrects: 264 deadlines, 135 delays over the 399 vendored clocks as REST8 built it - 272 and 127 now (AUDIT
+  REST-PARTY D2, AUDIT REST II Q1/Q2, AUDIT REST III D2 and GUARD-WINDOW, below) - and the main quest's deadlines listed
+  and pinned (31 as built: the audit's 30 and S0000502's tower; 32 with AUDIT REST II's S0000011).
 - **R1 - two deadlines the audit read as delays.** T3 reads `end quest` by what the end ALONE sets off, but the reward
   that clears it was read over the whole conditional reach. Two clocks fell between: K0C00Y02's gold ("you only have
   =2mondung_ days": `when _2mondung_ and not _mggold_` ends it unpaid; the pay needs a brick returned first - TIMEFREE's
@@ -981,3 +981,9 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   roller off the pose, and the others wait on its night and sleep it, or break with its ambush.
 - 2026-10-05: REST-LOOT (As built; `Loot-Arc.md` section 19): `REST_ITEMS_ONLINE` on - the seven online from the
   shelves, the piles and the foes - and their loot wider and commoner.
+- 2026-10-06: GUARD-WINDOW (FIELD BUGS 2026-10-06c, `01-Overview/Field-Bugs-2026-10-06c.md`; Aru: "the three hours
+  passed, the mage disappeared, but no enemies showed up"): N0B20Y02's `_S.12_` - the three-hour guard of "Protect an
+  Honored Mage", which section 8's reading and AUDIT REST II's sweep called a delay - is a deadline by hand
+  (ONLINE_DEADLINES): a window to act, and the Nightblades' 55-minute interval is longer than the 24-minute cut. 272
+  deadlines and 127 delays. `test/fb1006c_guardwindow.test.js`; `test/rest8_questwaits.test.js` and
+  `test/auditrest2_quests.test.js` moved with it.
