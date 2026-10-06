@@ -40,7 +40,7 @@ const IDENT_TRANSFORM = Object.freeze({ rotation: [1, 0, 0, 0, 1, 0, 0, 0, 1], t
  * the rigid path's mirror (rule 13) and BoneOffset (rule 14) folded into the inverse bind so the result lands where
  * the rigid path draws the part.
  */
-export function sourceSkin(batch, { attachRef = null, mirrored = false, boneOffset = null } = {}) {
+export function sourceSkin(batch, { attachRef = null, mirrored = false, boneOffset = null, attachName = '' } = {}) {
   if (batch.skinned && batch.skin) return batch;
   const n = batch.positions.length / 3;
   const a = Float32Array.from([mirrored ? -1 : 1, 0, 0, 0, 1, 0, 0, 0, 1]);
@@ -50,7 +50,9 @@ export function sourceSkin(batch, { attachRef = null, mirrored = false, boneOffs
     skinned: true,
     skin: {
       skeletonRoot: GRAPH_ROOT, rootBone: GRAPH_ROOT, transform: IDENT_TRANSFORM, shapeTransform: null,
-      bones: [{ ref: attachRef, name: '', invBind: { a, t }, indices: Array.from({ length: n }, (_, i) => i), weights: new Array(n).fill(1) }],
+      // MW-STEEL1: the attach bone's NAME rides with its ref, so a garment skinned from this part can be worn on
+      // another skeleton (rebindSkin) - a skinned part's bones carry theirs already
+      bones: [{ ref: attachRef, name: String(attachName || '').toLowerCase(), invBind: { a, t }, indices: Array.from({ length: n }, (_, i) => i), weights: new Array(n).fill(1) }],
     },
   };
 }
@@ -81,6 +83,98 @@ export function liftBatch(batch, lift) {
   const positions = Float32Array.from(batch.positions);
   for (let i = 2; i < positions.length; i += 3) positions[i] += lift;
   return { ...batch, positions };
+}
+
+/** MW-STEEL1: the axis-aligned bounds of a set of position arrays, or null when they hold no vertex. */
+export function positionBounds(arrays) {
+  const min = [Infinity, Infinity, Infinity]; const max = [-Infinity, -Infinity, -Infinity];
+  for (const a of arrays) {
+    for (let i = 0; i + 2 < a.length; i += 3) for (let k = 0; k < 3; k++) { min[k] = Math.min(min[k], a[i + k]); max[k] = Math.max(max[k], a[i + k]); }
+  }
+  return Number.isFinite(min[0]) ? { min, max } : null;
+}
+
+const FEATURE = Object.freeze({
+  min: (b, k) => b.min[k],
+  max: (b, k) => b.max[k],
+  centre: (b, k) => (b.min[k] + b.max[k]) / 2,
+});
+const AXES = Object.freeze(['x', 'y', 'z']);
+
+/**
+ * MW-STEEL1 (2026-10-06): THE SHIFT that keeps a garment where its scene put it RELATIVE TO THE BODY IT WAS FITTED ON.
+ * MW-BRIG3's lift met a garment's own top to the top of the part it hides, because the brigandine's scene carried no
+ * body to measure; Mac's steel-plate scene does (its Breton head and neck - ownArmorModels.js STEEL_PLATE_SCENE), so a
+ * piece keeps its relation to THAT body instead of to its own edges: a collar that rises up the neck stays risen.
+ *
+ * `rules` is a list of `{ to, x, y, z, scene }`. `to` names a body slot, and `anchors` maps each slot to its parts as
+ * skins (sourceSkin); each is skinned in `ctx`'s pose (the rest pose the transfer is solved in - never read raw, a
+ * retail part being authored part-local, MW-D21) and their bounds taken. For each axis the rule names ('min', 'max',
+ * 'centre'), the garment moves by the wearer's feature less the scene's: `scene` is that part's bounds in the
+ * modeller's scene, or 'self' - the garment's own bounds, for a part the scene did not carry (a boot's sole stands
+ * where the foot's does). A later rule's axis overrides an earlier one's. A pure translation - the modeller's shape to
+ * the last vertex. A rule whose part the wearer lacks moves nothing; null when no rule found its part.
+ * Returns `{ shift: [dx, dy, dz], by: [{ to, axes }] }`.
+ */
+export function fitShift(garments, anchors, rules, ctx) {
+  const own = positionBounds(garments.map((g) => g.positions));
+  if (!own) return null;
+  const shift = [0, 0, 0];
+  const by = [];
+  for (const rule of rules ?? []) {
+    const parts = anchors.get(rule.to) ?? [];
+    const skinned = parts.map((a) => {
+      const p = new Float32Array(a.positions.length);
+      ctx.skinBatch(a, ctx.skeleton, ctx.pose, ctx.mats, p, null);
+      return p;
+    });
+    const wearer = positionBounds(skinned);
+    if (!wearer) continue;
+    const scene = rule.scene === 'self' ? own : rule.scene;
+    const axes = [];
+    AXES.forEach((ax, k) => {
+      const feature = FEATURE[rule[ax]];
+      if (!feature) return;
+      shift[k] = feature(wearer, k) - feature(scene, k);
+      axes.push(ax);
+    });
+    if (axes.length) by.push({ to: rule.to, axes });
+  }
+  return by.length ? { shift, by } : null;
+}
+
+/** MW-STEEL1: the garment batch moved by `shift`, on a copy: the bound batch is never written. */
+export function shiftBatch(batch, shift) {
+  const positions = Float32Array.from(batch.positions);
+  for (let i = 0; i + 2 < positions.length; i += 3) for (let k = 0; k < 3; k++) positions[i + k] += shift[k];
+  return { ...batch, positions };
+}
+
+/**
+ * MW-STEEL1: A SKIN SOLVED ON ONE SKELETON, WORN ON ANOTHER. A transferred garment's skin is bone-relative - each
+ * influence an inverse bind against a bone named in it, in graph space (bindPart's GRAPH_ROOT) - so the same batch is
+ * drawn on any skeleton carrying those bones, posed by that skeleton's own animation. Each bone's ref is looked up by
+ * its NAME in `skeleton`; a name it lacks is a null ref, skipped in the blend as rule 40 skips a missing bone, and
+ * returned so the caller can say so. The first person wears its gauntlets this way: solved on the third-person
+ * skeleton the plate was fitted on (a T-pose, as Mac's scene is), drawn on the first-person one.
+ */
+export function rebindSkin(batch, skeleton) {
+  const missing = [];
+  const bones = batch.skin.bones.map((b) => {
+    const ref = b.name ? skeleton.byName.get(b.name) : undefined;
+    if (ref === undefined) { missing.push(b.name || '(unnamed)'); return { ...b, ref: null }; }
+    return { ...b, ref };
+  });
+  return { batch: { ...batch, skin: { ...batch.skin, bones } }, missing };
+}
+
+/** MW-STEEL1: the side a bone stands on by its name - Morrowind's own spellings, "Bip01 L Forearm" and "Left
+ *  Forearm" - or null for one on the midline (the pelvis, the spine, the head). */
+export function boneSide(name) {
+  const n = ` ${String(name || '').toLowerCase()} `;
+  if (/ left | l /.test(n)) return 'left';
+  if (/ right | r /.test(n)) return 'right';
+  return null;
 }
 
 /** Every vertex's influences, as [boneIndex, weight] pairs, read off the skin's per-bone lists. */
@@ -140,8 +234,15 @@ function measureAffines(src, js, { skeleton, pose, mats, skinBatch }) {
  *
  * A triangle goes to the source nearest the majority of its corners, and each corner copies the nearest vertex OF
  * THAT SOURCE, so a triangle is never split across two skins. `ctx` is { skeleton, pose, mats, skinBatch }.
+ *
+ * MW-STEEL1: `side` ('right' or 'left') keeps a sided garment to its own side of the body: a right greave copies no
+ * vertex of the left thigh, which the inner face of a thigh piece can lie nearer to - copied, it would stretch a
+ * triangle between the legs at every stride. A body vertex's side is its HEAVIEST bone's (boneSide - "Bip01 L Thigh",
+ * "Left Upper Leg"), never where it stands, so it holds in any rest; a vertex whose heaviest bone is neither side's (the
+ * pelvis, the spine) serves both. A garment vertex with nothing on its side anywhere falls back to the whole body
+ * rather than to nothing.
  */
-export function transferSkin(garment, sources, ctx) {
+export function transferSkin(garment, sources, ctx, { side = null } = {}) {
   if (!sources.length) return [];
   const src = sources.map((batch) => {
     const n = batch.positions.length / 3;
@@ -151,19 +252,36 @@ export function transferSkin(garment, sources, ctx) {
   });
   const G = garment.positions;
   const gn = G.length / 3;
-  const nearestIn = (s, v) => {
+  // MW-STEEL1: each source vertex's side, by its heaviest bone - only asked of a sided garment
+  const other = side === 'right' ? 'left' : side === 'left' ? 'right' : null;
+  if (other) {
+    for (const x of src) {
+      x.side = x.infl.map((list) => {
+        let best = null; let bw = -Infinity;
+        for (const [bi, w] of list) if (w > bw) { bw = w; best = bi; }
+        return best === null ? null : boneSide(x.batch.skin.bones[best].name);
+      });
+    }
+  }
+  const sideOk = other ? (s, j) => src[s].side[j] !== other : null;
+  const nearestIn = (s, v, ok = sideOk) => {
     const { p, n } = src[s];
     const x = G[v * 3], y = G[v * 3 + 1], z = G[v * 3 + 2];
     let best = -1; let bd = Infinity;
     for (let j = 0; j < n; j++) {
+      if (ok && !ok(s, j)) continue;
       const dx = p[j * 3] - x, dy = p[j * 3 + 1] - y, dz = p[j * 3 + 2] - z;
       const d = dx * dx + dy * dy + dz * dz;
       if (d < bd) { bd = d; best = j; }
     }
     return { j: best, d: bd };
   };
+  // A garment vertex no source can serve on its side is served by the whole body - never by nothing.
+  const sided = sideOk ? new Uint8Array(gn) : null;
+  if (sided) for (let v = 0; v < gn; v++) sided[v] = src.some((_, s) => nearestIn(s, v).j >= 0) ? 1 : 0;
+  const nearestFor = (s, v) => nearestIn(s, v, sided && !sided[v] ? null : sideOk);
   const cache = new Map();
-  const nearest = (s, v) => { const k = s * gn + v; let r = cache.get(k); if (!r) { r = nearestIn(s, v); cache.set(k, r); } return r; };
+  const nearest = (s, v) => { const k = s * gn + v; let r = cache.get(k); if (!r) { r = nearestFor(s, v); cache.set(k, r); } return r; };
   const overall = (v) => { let bs = 0; let bd = Infinity; for (let s = 0; s < src.length; s++) { const r = nearest(s, v); if (r.d < bd) { bd = r.d; bs = s; } } return bs; };
 
   const subs = src.map(() => ({ map: new Map(), verts: [], indices: [] }));

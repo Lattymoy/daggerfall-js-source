@@ -253,24 +253,41 @@ export function writeNif(records, roots = [0]) {
  * Morrowind part.
  */
 export function meshToNif(mesh, { texture = null, node = null, keepV = false } = {}) {
-  if (!mesh?.positions?.length) throw new Error('this mesh has no positions');
-  if (!mesh.indices?.length) throw new Error('this mesh has no triangles');
-  // V GOES DOWN in a NIF. See the header.
-  const uvs = mesh.uvs
-    ? mesh.uvs.map((v, i) => (i % 2 === 1 && !keepV ? 1 - v : v))
-    : null;
-  const records = [
-    // 0: the root. Rule 34 wipes its transform in the parser anyway.
-    { type: 'NiNode', name: node ?? mesh.name ?? 'Root', children: [1] },
-    // 1: the shape. NAMELESS - see the header's MW-D6 note.
-    { type: 'NiTriShape', name: '', data: 2, properties: [3, 4, 5] },
-    { type: 'NiTriShapeData', positions: mesh.positions, normals: mesh.normals, uvs, indices: mesh.indices },
-    { type: 'NiMaterialProperty', name: `${mesh.name ?? 'mesh'}Material` },
-    { type: 'NiTexturingProperty', textures: [texture ? { source: 6 } : null] },
-    { type: 'NiStencilProperty', drawMode: 3 },       // rule 65: Both
-  ];
-  if (texture) records.push({ type: 'NiSourceTexture', fileName: texture });
-  else records[4].textures = [null];
+  return meshesToNif([{ mesh, texture }], { node, keepV });
+}
+
+/**
+ * MW-STEEL1: SEVERAL baked meshes as ONE part, each shape with its own
+ * texture - the closed steel helm is a shell and a visor painted from two
+ * pictures, and a part is one file. Every shape is written exactly as
+ * meshToNif writes its one (nameless, its own material, texturing and
+ * stencil, its own source), in order under the one root, so a single
+ * mesh is the same records, the same indices and the same bytes it
+ * always was.
+ */
+export function meshesToNif(shapes, { node = null, keepV = false } = {}) {
+  if (!shapes?.length) throw new Error('no meshes to write');
+  // 0: the root. Rule 34 wipes its transform in the parser anyway.
+  const records = [{ type: 'NiNode', name: node ?? shapes[0].mesh?.name ?? 'Root', children: [] }];
+  for (const { mesh, texture = null } of shapes) {
+    if (!mesh?.positions?.length) throw new Error('this mesh has no positions');
+    if (!mesh.indices?.length) throw new Error('this mesh has no triangles');
+    // V GOES DOWN in a NIF. See the header.
+    const uvs = mesh.uvs
+      ? mesh.uvs.map((v, i) => (i % 2 === 1 && !keepV ? 1 - v : v))
+      : null;
+    const at = records.length;
+    records[0].children.push(at);
+    records.push(
+      // the shape. NAMELESS - see the header's MW-D6 note.
+      { type: 'NiTriShape', name: '', data: at + 1, properties: [at + 2, at + 3, at + 4] },
+      { type: 'NiTriShapeData', positions: mesh.positions, normals: mesh.normals, uvs, indices: mesh.indices },
+      { type: 'NiMaterialProperty', name: `${mesh.name ?? 'mesh'}Material` },
+      { type: 'NiTexturingProperty', textures: [texture ? { source: at + 5 } : null] },
+      { type: 'NiStencilProperty', drawMode: 3 },       // rule 65: Both
+    );
+    if (texture) records.push({ type: 'NiSourceTexture', fileName: texture });
+  }
   return writeNif(records, [0]);
 }
 
