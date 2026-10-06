@@ -1522,6 +1522,51 @@ trade - a city's banks saw 1-6 a day, its library 0-4. Two causes, each fixed at
   guild their own, no draw), `lwspread_town` (the homemaker's market read where they walk to it from home on its hour - a
   lark's stroll goes on to the market and waits there).
 
+## LW-LODGE - a lodger has a room (2026-10-06)
+
+Mac: NPCs should "use tavern rooms" - and, asked how, "Lodgers in their rooms": a visiting traveller, a ship's crew
+ashore, or an adventurer who lives at the tavern has a room by one of its beds; they are seen there in the evening before
+bed and in the morning before going out, and hidden while asleep; the common room gets them at supper and breakfast; a
+room the player rents is never given to a lodger. Before, one up at home in a tavern stood in its common room with its
+drinkers (LW8: every one inside on the ground floor's sounded spots), their evening's tavern was the nearer of the two
+nearest their home (their own or the next), and they had no breakfast.
+
+- **The lodger's day** (`dayPlan.js isLodger`, LODGE_BREAKFAST_MIN, LODGE_UP_MIN). A lodger is one whose home is a
+  tavern's door and who is not its staff. They breakfast in its common room 15-45 minutes after waking (twenty minutes to
+  forty), before anything of the day (up in their room before it, and after it till they go out - the schedule's own
+  stay at home); they sup at their own tavern in the evening (a visitor's and an adventurer's evening there), till 20-60
+  minutes before bed at the latest, and go up to their room till bed; asleep there. The staff - the innkeeper and the
+  servers, who live where they work - are no lodgers.
+- **The rooms** (`livingTown.js lodgersAt`; `scenes/livingIndoors.js bedsOf`, `bedStand`, BED_STEP_M, BED_FAN,
+  BED_LEVEL_M, BED_DROP_M). A tavern's lodgers today are its visitors and a packet's hands lodged there (`_lodging`) and
+  those of the town whose home is its door, its staff aside, in the order of their ids - no other building has any (a
+  house's household is its own). Its beds (its Rest markers - RentRoom's own list) are dealt to them: each, in that order,
+  the bed their id and the tavern draw, or the next free after it; where they outnumber the beds the first are housed.
+  The deal is every reader's alike, but the bed of the room the player rents there (`findRentedRoom`'s
+  `allocatedBedIndex`) is no lodger's - the one it fell to takes the first bed after it nobody has, else the common
+  room; the rest keep theirs. A lodger whose day has them up at home there stands by their bed - a step out from it the
+  nearest way the room's collider lets them walk, down off a solid bed onto the floor (never down a stair, never
+  higher), facing it - at no table, never stirring; at breakfast and supper (their day's tavern) they are in the common
+  room with the rest, and one gone up or come down changes place where the player is not looking (LW8's law).
+- **The game's taverns.** Its 290 tavern interiors carry 890 beds: 3.1 a tavern - two in 138 of them, five to seven in
+  81, one in 26, none in 6; 462 of them at the height of the way in, 322 a floor up, 106 two floors up.
+- **The four hosts.** `scenes/worldModes.js` - WIRED: the building host answers the room's beds (`interiorBeds`, its
+  Rest markers) and the bed of the room the player rents there (`rentedBedHere`); `scenes/world.js` - WIRED: it hands
+  them to the room's residents (`beds`, `rented`); `scenes/exterior.js` - FLAGGED as LW2 has it (no living town);
+  `scenes/dungeonContext.js` - no town.
+- **Pinned** by `test/lwlodge_tavern.test.js` (the lodger's day - breakfast, supper at their own, up before bed, a
+  visitor and an adventurer homed there, never the staff; who lodges where; the rooms dealt and the rented one; by their
+  bed in a mock room with a bed in it - off it, a corner's, a closet's, a bed on the floor, a stair; in the tavern - by
+  the bed, no table, no stirring, the rented bed, the going up; the hosts) and `tools/mutants/lwlodge.json` (29, all
+  dead). PIN MOVED: `tools/mutants/lw8.json` LW8-unarmed and LW8-walls (the latter now one site: `bedStand` walks the
+  room as `soundRoom` does), `lw8b.json` LW8b-fill-deal and `lwfix1.json` LW-FIX1-walker-place re-aimed by content. The
+  356 records of the lists on the files LW-LODGE touched (`dayPlan.js`, `livingTown.js`, `livingIndoors.js`) re-judged:
+  354 dead, one equivalent as recorded, and `lwspace.json` LW-SPACE-host-since-the-stay alive - since LW-SPREAD (judged
+  at each commit: dead at LW-SPACE's, alive from LW-SPREAD's), whose spread days run no two stays at one spot together in
+  the hours its pin read; LW-SPREAD's re-judge had left LW-SPACE's own list out. Its law is pinned by hand now
+  (`lwspace_street` bound since: a stall then the talk at one spot, one come between), and the branch's four lists -
+  `lwspace`, `lwspread`, `lwerrands`, `lwlodge` - judged whole on its tree: 99 of 99 dead.
+
 ## The four hosts
 
 - `scenes/world.js` - WIRED (LW2 the towns, LW3 the roads and the Overworld).

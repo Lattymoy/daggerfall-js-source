@@ -394,6 +394,24 @@ export class LivingTown {
     return this._roads;
   }
 
+  /**
+   * LW-LODGE: WHO LODGES AT A TAVERN today - a visitor and a hand of a packet lying here (their lodging, `_lodging`), and
+   * one of the town whose home is its rooms (an adventurer with no house) - its own staff aside; in the order of their
+   * ids. Every reader's alike: the tavern's rooms are dealt to them (scenes/livingIndoors.js `bedsOf`).
+   * @param {number} key @param {number} day @returns {Resident[]}
+   */
+  lodgersAt(key, day) {
+    if (this.places.types.get(key) !== BUILDING_TYPES.Tavern) return [];
+    const roads = this._roadsOf(day);
+    const out = [];
+    for (const res of this.peopleOf(day).concat(this._crewsNow())) {
+      if (res.work === key) continue;
+      const lodged = this._crewOf.has(res.id) || roads?.visitorOf.has(res.id) ? this._lodging(res) : (res.home != null ? this.places.doors.get(res.home) ?? null : null);
+      if (lodged?.building === key) out.push(res);
+    }
+    return out.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  }
+
   /** A visitor's lodging: one of the town's taverns, by their id (none: the square). */
   _lodging(res) {
     const taverns = [...this.places.doors.entries()].filter(([k]) => this.places.types.get(k) === BUILDING_TYPES.Tavern).map(([, s]) => s);

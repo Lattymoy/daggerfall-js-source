@@ -141,8 +141,8 @@
   {
     "name": "LW8-walls",
     "file": "src/scenes/livingIndoors.js",
-    "old": "      try { collider.move(q, Math.sin(a) * dist, 0, Math.cos(a) * dist, 1.8); } catch { continue; }",
-    "new": "      q[0] += Math.sin(a) * dist; q[2] += Math.cos(a) * dist;",
+    "old": "      try { collider.move(q, Math.sin(a) * dist, 0, Math.cos(a) * dist, 1.8); } catch { continue; }\n      const y = floorAt(q[0], q[1] + 0.5, q[2]);\n      if (y == null || !Number.isFinite(y) || Math.abs(y - origin[1]) > 1.2) continue;",
+    "new": "      q[0] += Math.sin(a) * dist; q[2] += Math.cos(a) * dist;\n      const y = floorAt(q[0], q[1] + 0.5, q[2]);\n      if (y == null || !Number.isFinite(y) || Math.abs(y - origin[1]) > 1.2) continue;",
     "tests": [
       "test/lw8_indoors.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "LW8-unarmed",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        stood.set(res.id, { res: { ...res, cls: null }, spot, next:",
-    "new": "        stood.set(res.id, { res, spot, next:",
+    "old": "        stood.set(res.id, { res: { ...res, cls: null }, spot, bed: -1, next:",
+    "new": "        stood.set(res.id, { res, spot, bed: -1, next:",
     "tests": [
       "test/lw8_indoors.test.js"
     ]

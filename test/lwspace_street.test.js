@@ -158,6 +158,38 @@ test('LW-SPACE the town: at every spot through the day, each one alone stands SP
   assert.ok(kept > 500 && came > 10, `standing alone, kept (${kept}), as others came (${came})`);
 });
 
+test('LW-SPACE bound since: one whose stays at a spot run one into the next (a stall, then the talk) is bound for it since they set out for the first - one who came between takes no place of theirs; laid by hand, two whose own places meet (LW-LODGE\'s re-judge: since LW-SPREAD no day of the town\'s ran two stays at one spot together in the hours the pin above reads, and the mutant lived) (mutants: since the stay)', () => {
+  const day = 100, D = day * DAY_MIN;
+  const { town } = makeTown(D + 10 * 60);
+  const spot = town.places.social[1];
+  const street = town._street;
+  // two whose own places at the spot stand within SPACE_M of each other - the later-bound the lower id, so the id breaks
+  // no tie of theirs
+  let a = null, b = null;
+  for (let i = 0; i < 300 && !a; i++) {
+    for (let k = 0; k < i && !a; k++) {
+      const x = `L24680.${9300 + i}`, y = `L24680.${9300 + k}`;
+      const p = aloneStand(spot, x, street), q = aloneStand(spot, y, street);
+      if (Math.hypot(p.x - q.x, p.z - q.z) < SPACE_M) { a = x; b = y; }
+    }
+  }
+  assert.ok(a && b && b < a, 'two whose own places meet');
+  const A = { ...town.residents[0], id: /** @type {string} */ (a) }, B = { ...town.residents[1], id: /** @type {string} */ (b) };
+  const from = town.places.square;
+  const walk = (t0, t1) => ({ kind: 'walk', at: spot, from, to: spot, t0, t1 });
+  const plan = (/** @type {any[]} */ es) => [{ kind: 'sleep', at: null, t0: D + 240, t1: es[0].t0 }, ...es, { kind: 'sleep', at: null, t0: es[es.length - 1].t1, t1: D + 1680 }];
+  // A: there by ten, a stall till eleven, then the talk till noon; B: there by half past ten, the talk till noon
+  town._plans.set(A.id, { day, plan: plan([walk(D + 590, D + 600), { kind: 'stall', at: spot, t0: D + 600, t1: D + 660 }, { kind: 'social', at: spot, t0: D + 660, t1: D + 720 }]), roads: true, home: A.home });
+  town._plans.set(B.id, { day, plan: plan([walk(D + 620, D + 630), { kind: 'social', at: spot, t0: D + 630, t1: D + 720 }]), roads: true, home: B.home });
+  town._planGen++;
+  town._spaceAlone([A, B], D + 690);
+  const own = aloneStand(spot, A.id, street);
+  const ga = /** @type {any} */ (town._aloneAt.get(A.id)), gb = /** @type {any} */ (town._aloneAt.get(B.id));
+  assert.ok(ga && gb, 'both placed');
+  assert.ok(Math.hypot(ga.x - own.x, ga.z - own.z) < 1e-9, 'the first bound - since ten, through the stall to the talk - at their own place');
+  assert.ok(Math.hypot(ga.x - gb.x, ga.z - gb.z) >= SPACE_M - 1e-6, 'the one who came between about them');
+});
+
 test('LW-SPACE circlesStands: a round\'s circles at a spot laid together - each at its own places where they keep SPACE_M from every circle before it, else about the nearest middle whose places do, turned to fit; every place on the street and seen from the spot, a circle\'s people CIRCLE_APART apart facing their middle; drawn one by one, a lane\'s circles stood inside each other (mutants: the circles unlaid, the street unread)', () => {
   const built = closeTown();
   const places = townPlaces(built.nav, built.doors, built.buildings);

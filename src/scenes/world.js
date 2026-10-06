@@ -2676,6 +2676,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       staticFeet: () => (modes?.interiorCtx?.people ?? []).filter((p) => p.active !== false).map((p) => [p.x, p.y, p.z]).concat(modes?.interiorQuestFeet?.() ?? []),   // AUDIT-E7: and the quest's people
       clock: skyMinutes,
       ready: () => !_loading && !modes?.transitioning,
+      beds: () => modes?.interiorBeds ?? [],   // LW-LODGE: the tavern's rooms for its lodgers...
+      rented: () => modes?.rentedBedHere ?? -1,   // ...but the one the player rents
     });
     livingIndoors.frame(dt, player.pos, cam.yaw, cam.pos);
   };

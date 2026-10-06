@@ -347,6 +347,15 @@ export const ERRAND_NEEDS = Object.freeze({
 export const ERRAND_NEED_SHARE = 0.6;
 export const ERRAND_SHOP_SHARE = 2 / 3;
 
+/** LW-LODGE: one who lodges at a tavern - their home its door, and not its own staff (a visitor, a hand of a packet
+ *  lying here, one of the town with no house but its rooms). @param {Resident} res @param {Places} places
+ *  @param {Spot|null} home */
+export const isLodger = (res, places, home) => !!home && home.building != null && places.types.get(home.building) === BUILDING_TYPES.Tavern && res.work !== home.building;
+/** LW-LODGE: a lodger's breakfast in the common room - minutes after waking, and how long - and how long before bed they
+ *  go up to their room from the evening's supper there. */
+export const LODGE_BREAKFAST_MIN = Object.freeze([15, 45]);
+export const LODGE_UP_MIN = Object.freeze([20, 60]);
+
 /** LW-ERRANDS: the shop an errand of `job` takes one into, of `shops` (the shops nearest home, the nearest first): of a
  *  kind ERRAND_NEEDS gives the trade and the town keeps, ERRAND_NEED_SHARE of the time, by weight, the nearer of its two
  *  nearest; else one of the four nearest. @param {string} job @param {Places} places @param {readonly Spot[]} shops
@@ -447,6 +456,7 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
     else I('market', fav.market, from, rollInt(rng, 20, 40));
   };
   const job = visitor ? 'visitor' : res.job;
+  const lodger = isLodger(res, places, home);
   switch (job) {
     case 'keeper': case 'smith': case 'clerk': case 'scholar': case 'helper': case 'guildsman': {
       if (rng() < 0.25) errand(wake + 30);
@@ -569,7 +579,7 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
       if (outfitters.length && rng() < 0.6) I('shop', outfitters[Math.floor(rng() * Math.min(3, outfitters.length))], h(10), rollInt(rng, 30, 60));
       I('guild', fav.guild, h(11.5), 60);
       I('social', places.square ?? fav.social[0] ?? null, h(14), rollInt(rng, 60, 120));
-      I('tavern', fav.tavern, h(18.5), rollInt(rng, 180, 300));
+      I('tavern', lodger ? home : fav.tavern, h(18.5), rollInt(rng, 180, 300), lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined);   // LW-LODGE: a lodger sups at their own, and goes up before bed
       break;
     }
     case 'pilgrim': {
@@ -585,13 +595,15 @@ export function dayPlan(res, places, day, { mpm, away = [], visitor = false, hom
       if (fav.shops.length) I('shop', errandShop(job, places, fav.shops, rng), h(10.5), rollInt(rng, 30, 60));   // LW-ERRANDS: a visitor's wares
       if (res.pious > 0.5) I('temple', fav.temple, h(13), rollInt(rng, 30, 45));
       I('social', places.square ?? fav.social[0] ?? null, h(15), rollInt(rng, 45, 90));
-      I('tavern', fav.tavern, h(18), rollInt(rng, 180, 300));
+      I('tavern', lodger ? home : fav.tavern, h(18), rollInt(rng, 180, 300), lodger ? bed - rollInt(rng, LODGE_UP_MIN[0], LODGE_UP_MIN[1]) : undefined);   // LW-LODGE: a lodger sups at their own, and goes up before bed
       break;
     }
     default: evening();
   }
   // the larks and the restless take a turn about the town before the day's business (a stroll at first light)
   if (res.temper === 0 && res.social > 0.6 && job !== 'guard' && job !== 'farmer' && job !== 'fisher') { const at = intents.length; stroll(wake + 20); intents.unshift(...intents.splice(at)); }
+  // LW-LODGE: a lodger breakfasts in the common room before anything (up in their room before it and after it)
+  if (lodger) { const at = intents.length; I('tavern', home, wake + rollInt(rng, LODGE_BREAKFAST_MIN[0], LODGE_BREAKFAST_MIN[1]), rollInt(rng, 20, 40)); intents.unshift(...intents.splice(at)); }
   const start = startOut ? { at: startOut.at, kind: startOut.kind, mark: { duty: true, pair: startOut.pair } } : walkIn ? { at: walkIn.to, kind: walkIn.kind, mark: walkIn.mark, walk: walkIn } : null;
   return schedule(intents, { D0, D1, wake, bed, home, mpm, away, start, end: walkOut });
 }
