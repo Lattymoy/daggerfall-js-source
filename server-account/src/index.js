@@ -159,7 +159,7 @@ import {
   duelRecordOf, reportDuelLoss, gateRecordOf, claimGate, legalRefusal,
   ACCOUNT_MAX, ACCOUNT_WINDOW_S,
 } from './accounts.js';
-import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES } from '../../src/net/identityToken.js';
+import { mintToken, mintOrder, mintRenownOrder, mintGuildOrder, mintGuildOutOrder, MAX_TTL_S, TOKEN_V, ID_RE, SEAT_TITLES, TOKEN_MAX_CHARS } from '../../src/net/identityToken.js';
 import { ACCOUNT_VERSION, MAX_BODY_BYTES, ROUTES, OPEN_ROUTES, PATREON_OPEN_ROUTES, savePathOf, realmPathOf, SAVE_MAX_BYTES, SHOT_MAX_BYTES, maintaining } from './service.js';
 import { listSaves, putCard, putBlob, getBlob, deleteSave, saveCardOf } from './saves.js';
 import { signingKey, gatePublicKey } from './signing.js';
@@ -213,7 +213,7 @@ import {
 } from './realm.js';   // REALM P1: the realm's characters; ARENA4b: the level on a realm character's tile, the token's `cl`
 import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
-import { listLineages, putLineage, realmDie } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
+import { listLineages, putLineage, realmDie, realmHouseOf } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
 import { measured } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine)
 import {
   patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook,
@@ -749,10 +749,14 @@ const service = {
         // ARENA4: AND THE ACCOUNT'S ARENA RATING this season, for a registered account - the hall queues by it (net/arenaLaw.js
         // pairQueue), off the signature, never a word of the client's. A guest's token carries none (a guest is not queued).
         const ar = who.player.handle ? (await arenaRatingOf(ctx, who.player.id, arenaSeasonOf(nowS))).rating : undefined;
-        const token = await mintToken(
-          { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}) },
-          key, { subtle, nowS },
-        );
+        // LEGACY7 part two: AND THAT REALM CHARACTER'S HOUSE (legacy.js realmHouseOf: its line's surname, its given name, a
+        // Bloodline's mark, the generation's numeral) - off the line the service holds, never a word of the client's
+        const house = rc ? await realmHouseOf(ctx, who.player.id, body.character) : null;
+        const signed = { s: who.player.id, n: displayName(who.player), k: accountKind(who.player), ...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(ar !== undefined ? { ar } : {}), ...(cl != null ? { cl } : {}) };
+        let token = await mintToken(house ? { ...signed, ...house } : signed, key, { subtle, nowS });
+        // the token's own bound (identityToken.js TOKEN_MAX_CHARS): a house that would take it past is left unsaid, never the rest
+        let houseWorn = house;
+        if (house && token.length > TOKEN_MAX_CHARS) { token = await mintToken(signed, key, { subtle, nowS }); houseWorn = null; }
         return json({
           token,
           name: displayName(who.player),
@@ -767,6 +771,7 @@ const service = {
           guild: guild ? guild.gt : null,   // GUILD1c: the tag my own name wears, beside the token as the level is
           aura: wardrobe.au ?? null,   // WB9g: the aura at my own feet, beside the token as the title is
           ribbon: wardrobe.rb ?? null,   // SEASON1 part two: the ribbon under my own name, beside the token as the aura is
+          house: houseWorn ?? null,   // LEGACY7: the house my token wears, beside it as the ribbon is
           expiresAt: nowS + MAX_TTL_S,
         }, 200, origin);
       }

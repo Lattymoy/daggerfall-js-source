@@ -572,6 +572,7 @@ export const REFUSALS = Object.freeze({
   'lineage-played': 'That member of the family already has a character in the realm.',
   'lineage-model': 'A family keeps the way of death it was founded with.',
   'too-many-lineages': 'You have as many families as an account may hold online.',
+  stale: 'Your family was changed on another device. This one takes those changes in and saves again.',
   // AUDIT REALM2 S2: the online acts that cost gold are a realm character's
   'realm-only': 'Only an online character of the realm can do that.',
   // REALM P2.1: a trade's sid another pair settled (server-account/src/realmTrade.js)
@@ -958,7 +959,9 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
           // WB9g: the aura at my own feet (null for none) - absent from a service before acct38, which says nothing
           ...('aura' in answer.data ? { aura: typeof answer.data.aura === 'string' ? answer.data.aura : null } : {}),
           // SEASON1 part two: a Season's banner ribbon under my own name (null for none) - absent from a service before acct58
-          ...('ribbon' in answer.data ? { ribbon: Array.isArray(answer.data.ribbon) ? answer.data.ribbon : null } : {}) };
+          ...('ribbon' in answer.data ? { ribbon: Array.isArray(answer.data.ribbon) ? answer.data.ribbon : null } : {}),
+          // LEGACY7: the house my realm character wears (null for none) - absent from a service before acct85
+          ...('house' in answer.data ? { house: answer.data.house && typeof answer.data.house === 'object' ? answer.data.house : null } : {}) };
         adoptIdentity(storage, { ...who, secret: session.secret });   // AUDIT B4: into the session that asked
         // A THROW HERE IS THE HOST'S AND IS NOT THE PLAYER'S. The token
         // is good and the connection is the thing that matters; a

@@ -52,6 +52,8 @@ import { storedSession, serviceBase, forgetSession, accountRefusalText } from '.
 import { realmTradeRefusalText } from '../net/realmTradeLaw.js';   // REALM P2.1: a trade the realm settles
 import { REALM_DOOR_WORD } from '../net/wire.js';   // REALM-DOOR: the relay's word for a token that names no realm character
 import { gzipText, gunzipText, saveTextOf, canGzip, canGunzip } from '../net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
+import { houseLine } from '../net/houseLaw.js';   // LEGACY7: the house on the roster's tile
+
 
 /**
  * The service, as this device can reach it - or null when nobody is signed in (cloudSaves.js cloudIo's shape).
@@ -645,6 +647,7 @@ export function realmRowAsSave(row, { dateText = () => null } = {}) {
     hour: null,
     saveName: row?.customs ? 'Brought in' : 'Online',
     unfinished: !(row?.bytes > 0),
+    house: houseLine(row?.house) ?? null,   // LEGACY7: the house the realm reads off its line - "☠ Ysolde II of House Hlaalu"
   };
 }
 

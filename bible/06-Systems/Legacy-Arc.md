@@ -264,9 +264,9 @@ mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed onl
 
 ## 9. ONLINE
 
-*LEGACY7 - the line, the tombstone and the member's birth built (`server-account/src/legacy.js`, migration
+*LEGACY7 - the line, the tombstone, the member's birth and the house name built (`server-account/src/legacy.js`, migration
 `0084_legacy.sql`, acct85; `systems/legacy/realmLine.js`; `test/legacy7_service.test.js`, `test/legacy7_online.test.js`,
-`tools/mutants/legacy7.json`). The house name and two players wed are the slice's second and third parts.*
+`tools/mutants/legacy7.json`). Two players wed is the slice's third part.*
 
 - **The model is the family's**, chosen at the founder's online chargen - Bloodline open online (AUDIT LEGACY B4 shut it
   while a permadeath had no authority there; the tombstone is that authority), said on its card: "Online, the realm
@@ -296,8 +296,15 @@ mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed onl
   LEGACY7 an online founder kept the client's id in the record while the realm named the character anew, so its saves
   were refused into the record and its next load founded a second house.
 - **Enduring online** is the offline law: the toll, the rise, the elder's mantle.
-- **A house name online** (LEGACY7 part two): "<name> of House <surname>" on the roster card, the inspect card and over
-  the head (the generation in Roman numerals after a member's name when two share it - "Ysolde Hlaalu II").
+- **A house name online** (LEGACY7 part two, `net/houseLaw.js`; world172, acct85; `test/legacy7_house.test.js`,
+  `tools/mutants/legacy7house.json`): the account service reads a realm character's house off its line and signs it
+  into the identity token beside the guild's tag - `hn` the surname, `hc` the member's given name, `hb` a Bloodline,
+  `hg` the generation's numeral from the second of a name ("Ysolde II") - through the name filter (the house is shown
+  to everyone, as an account's name is), never for a tombstone, and left unsaid rather than past the token's bound
+  (`TOKEN_MAX_CHARS`). The relay stamps it on every row beside the Renown (`badged`), and one line is drawn under the
+  name over the head, on the inspect card and on the roster's tile: "☠ Ysolde II of House Hlaalu" (the skull a
+  Bloodline's; a seat's house - "of Sentinel" - reads as itself). **Departure (recorded):** the name over the head
+  online is the account's, so the member's given name rides the house's line rather than replacing it.
 - **Two players wed** (LEGACY7 part three).
 
 ## 10. WORLD INFLUENCE
@@ -435,5 +442,5 @@ than standing still.
 | AUDIT LEGACY | the five-lens audit of LEGACY1-4 (`01-Overview/Audit-Legacy.md`) - the two authorities, the death at the door | built |
 | LEGACY5 | courting, marriage, children, surnames' cadet branches | built |
 | LEGACY6 | world influence: the inherited standing and regard, the towns' talk, the killer remembered | built |
-| LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth (built); the house name, two players wed (parts two and three) | in progress |
+| LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name (built); two players wed (part three) | in progress |
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |

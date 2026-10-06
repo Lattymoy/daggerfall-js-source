@@ -83,11 +83,12 @@
   {
     "name": "LEGACY7-dead-listed",
     "file": "server-account/src/realm.js",
-    "old": "    + ' WHERE player = ? AND dead_at IS NULL ORDER BY updated_at DESC LIMIT ?',",
-    "new": "    + ' WHERE player = ? ORDER BY updated_at DESC LIMIT ?',",
+    "old": "    + ' WHERE r.player = ? AND r.dead_at IS NULL ORDER BY r.updated_at DESC LIMIT ?',",
+    "new": "    + ' WHERE r.player = ? ORDER BY r.updated_at DESC LIMIT ?',",
     "tests": [
       "test/legacy7_service.test.js"
-    ]
+    ],
+    "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
   {
     "name": "LEGACY7-dead-hold-a-slot",

@@ -30,6 +30,7 @@ import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { duelRecordText } from '../net/duelRecord.js';   // DUEL1: the duelling record's words, the account card's own
 import { renownText } from '../net/renown.js';   // RENOWN1: Renown, left of the name
 import { guildTagText } from '../net/guildLaw.js';   // GUILD1c: the guild's tag, right of the name
+import { houseLine } from '../net/houseLaw.js';   // LEGACY7: the house, under the name
 
 export const PROFILE_STYLE_ID = 'dagger-profile-style';
 
@@ -133,6 +134,7 @@ export function profileView({ name = null, peer = null, look = null, card = null
     level: renownText(lv),
     levelTitle: renownText(lv) ? `Renown ${lv}` : null,
     guild: guildTagText(peer?.gt),   // GUILD1c: the tag the relay stamped off their signed token - "<HND>", or null
+    house: houseLine(peer?.house),   // LEGACY7: the house the relay stamped - "☠ Ysolde II of House Hlaalu", or null
     title: titleBadge(peer),
     glyphs: glyphBadges(peer),
     line: [card ? `Level ${card.level}` : null, race, klass].filter(Boolean).join(' '),
@@ -174,6 +176,8 @@ ${PIXELIFY_FIVE_FACE}
   text-align: center; font-variant-numeric: tabular-nums; color: #f2c46b;
   background: rgba(242, 196, 107, .1); border: 1px solid rgba(242, 196, 107, .8); }
 .dfprofile-renown:empty { display: none; }
+/* LEGACY7: the house under the name - the name layer's own parchment */
+.dfprofile-house { font-size: 12px; letter-spacing: .03em; color: #d8c79a; font-style: italic; margin-top: 2px; }
 /* GUILD1c: the guild's tag right of the name, before the glyphs - the name layer's own steel */
 .dfprofile-guild { flex: none; font-size: 13px; letter-spacing: .04em; color: #a9c4dd; }
 .dfprofile-line { font-size: 13px; color: var(--dim, #9a9486); line-height: 1.4; }
@@ -242,6 +246,7 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
     if (v.guild) nm.append(el('span', 'dfprofile-guild', v.guild));   // GUILD1c: right of the name, before the glyphs
     for (const g of v.glyphs) { const svg = glyphSvgNode(doc, g, 'dfprofile-glyph'); if (!svg) break; nm.append(svg); }
     head.append(nm);
+    if (v.house) head.append(el('div', 'dfprofile-house', v.house));   // LEGACY7: under the name, as over the head
     if (v.line) head.append(el('div', 'dfprofile-line', v.line));
     if (v.duels) head.append(el('div', 'dfprofile-line dfprofile-duels', v.duels));   // DUEL1: their duelling record
     if (v.gates) head.append(el('div', 'dfprofile-line dfprofile-gates', v.gates));   // WB5b: the gates they closed

@@ -107,7 +107,7 @@ test('WB9g the token and the wire: a token may carry the aura worn (`au`), absen
   assert.equal(readAura(null), null);
   // the relay: the hello's verified identity carries it, and the attached row it is stamped from carries it on
   const relay = rd('server/src/index.js');
-  assert.match(relay, /return \{ name: c\.n, kind: c\.k, subject: c\.s, title: c\.t, ts: c\.ts, glyphs: c\.g, gx: c\.gx, au: c\.au, rb: c\.rb, mu, lv: c\.lv, \.\.\.guild, gio: c\.i, ar: c\.ar, cl: c\.cl \};/, 'off the signature (SEASON1 part two, PIN MOVED: a Season\'s banner ribbon beside it; ARENA4, PIN MOVED: the season\'s rating after it; ARENA4b, PIN MOVED: the character\'s level after that)');
+  assert.match(relay, /return \{ name: c\.n, kind: c\.k, subject: c\.s, title: c\.t, ts: c\.ts, glyphs: c\.g, gx: c\.gx, au: c\.au, rb: c\.rb, mu, lv: c\.lv, \.\.\.guild, gio: c\.i, ar: c\.ar, cl: c\.cl, \.\.\.house \};/, 'off the signature (LEGACY7, PIN MOVED: the house after it; SEASON1 part two, PIN MOVED: a Season\'s banner ribbon beside it; ARENA4, PIN MOVED: the season\'s rating after it; ARENA4b, PIN MOVED: the character\'s level after that)');
   assert.match(relay, /this\._setAttach\(ws, \{ \.\.\.a, \.\.\.placed, \.\.\.shown, id: m\.id, name: who\.name, title: who\.title, \.\.\.\(who\.ts \? \{ ts: who\.ts \} : \{\}\), glyphs: who\.glyphs, gx: who\.gx, au: who\.au, \.\.\.\(who\.rb \? \{ rb: who\.rb \} : \{\}\), lv: who\.lv,/, 'onto the socket\'s row (SEAT1c: a seat title\'s claim beside the title; AUDIT PRE-MERGE 1003b, PIN MOVED: an arena floor\'s place carried across a reconnect and a session\'s shown mark ahead of it)');
 });
 

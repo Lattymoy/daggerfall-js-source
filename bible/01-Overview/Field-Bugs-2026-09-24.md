@@ -981,7 +981,7 @@ else saw Daggerfall's pixel werewolf. A transformed rider was worse: the
 rider layer ran first and drew a person on a horse (112382 + the rider's
 set), where the player saw their beast.
 
-The wire was never at fault. `wb` goes out on its edge (`wire.js:1340`),
+The wire was never at fault. `wb` goes out on its edge (`wire.js:1341`),
 through the door (`:1287`) and the easing (`online.js:238`), from the sender
 at `world.js:23651`.
 
@@ -1101,7 +1101,7 @@ pins stand.
 
 **The portrait.** `fpArm.figure()` draws the enhanced inventory's model
 figure (`enhancedInventory.js:1728`), which is shown in a 110:184 cell with
-object-fit: contain (`enhancedStyle.js:4543`). It framed `meshBounds` over
+object-fit: contain (`enhancedStyle.js:4544`). It framed `meshBounds` over
 EVERY piece, then hid the unlit torch, the arrow off the string and the
 empty holster twin, so gear it did not show still moved the frame. Its width
 was the box's azimuth-safe diagonal, so a longsword pointing at the viewer,

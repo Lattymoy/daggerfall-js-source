@@ -40,7 +40,7 @@ test('RVN13 THE MASK AND THE INDEX: a bit for each adaptation, read back in its 
   assert.equal(Wire.FOE_ADAPT_MASK_MAX, 2 ** F.ADAPTATIONS.length - 1);
   assert.equal(Wire.FOE_ADAPT_MAX, F.ADAPT_MAX);
   assert.equal(Wire.FOE_WEAK_MAX, F.WEAKNESSES.length - 1);
-  assert.equal(Wire.RELAY_VERSION, 'world171');   // CRYSTAL-FIST moved it on last (world171: the Crystal Fist's title and glyph and the Crystal Resonance's aura join the token's vocabulary - world170 on its branch, renumbered past FEUD's at the merge); FEUD WIRE moved it on (world164 was RVN13's, world165 FEUD WIRE's on the branch); FEUD's merge of main renumbered the arc's relay to world170 - PIN MOVED
+  assert.equal(Wire.RELAY_VERSION, 'world172');   // LEGACY7 moved it on last (world172: the house on the token and the row); CRYSTAL-FIST moved it on (world171: the Crystal Fist's title and glyph and the Crystal Resonance's aura join the token's vocabulary - world170 on its branch, renumbered past FEUD's at the merge); FEUD WIRE moved it on (world164 was RVN13's, world165 FEUD WIRE's on the branch); FEUD's merge of main renumbered the arc's relay to world170 - PIN MOVED
 });
 
 test('RVN13 THE RECORD\'S LAW: `ad` a mask of one to three, `wq` an index, `p2` 1, `rt` a foe\'s number - each refused whole outside its law; none when none (mutants: each bound dropped)', () => {

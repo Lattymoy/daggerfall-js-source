@@ -19,6 +19,9 @@
 // played online one character a person, and a fallen member's place is never taken by a new character of theirs.
 // ═══════════════════════════════════════════════════════════════════
 
+import { houseOfRecord } from '../../src/net/houseLaw.js';   // LEGACY7 part two: the house a member wears online
+import { checkName } from '../../src/net/nameFilter.js';   // ...through the name filter, as a guild's name is
+
 /** A family's id, as the client mints it (src/systems/legacy/family.js mintFamilyId). */
 export const LINEAGE_ID_RE = /^fam-[0-9a-z]{1,12}-[0-9a-z]{6}$/;
 /** A record's bound, in bytes - a family of generations with its remains and news fits in a fraction of it. */
@@ -44,6 +47,28 @@ export function lineageRecordOf(/** @type {unknown} */ record, /** @type {string
 }
 
 const parsed = (/** @type {string} */ text) => { try { return JSON.parse(text); } catch { return null; } };
+
+/** LEGACY7 part two: a line's record (its stored text) read for a member's house - the filter's law as the mint's. */
+export function houseOn(/** @type {string} */ recordText, /** @type {unknown} */ personId) {
+  const h = Number.isSafeInteger(personId) ? houseOfRecord(parsed(recordText), /** @type {number} */ (personId)) : null;
+  if (!h || !checkName(h.hn).ok) return null;
+  if (h.hc && !checkName(h.hc).ok) { delete h.hc; delete h.hg; }
+  return h;
+}
+
+/**
+ * LEGACY7 part two: THE HOUSE OF A REALM CHARACTER - what the identity mint signs beside the guild's tag
+ * (src/net/houseLaw.js): its line's surname, the member's given name, a Bloodline's mark, the generation's numeral.
+ * Null for a character of no line, a tombstone, another account's - and for a name the name filter refuses (the house
+ * is shown to every player, as an account's name is: net/nameFilter.js, the chat's and a player's own law).
+ * @param {any} ctx @param {string} playerId @param {unknown} id
+ */
+export async function realmHouseOf({ db }, playerId, id) {
+  if (typeof id !== 'string' || !/^r[0-9a-f]{20}$/.test(id)) return null;
+  const row = await db.prepare('SELECT r.person_id AS person, l.record AS record FROM realm_characters r JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id'
+    + ' WHERE r.id = ? AND r.player = ? AND r.dead_at IS NULL').bind(id, playerId).first();
+  return row ? houseOn(row.record, row.person) : null;
+}
 
 /** Every line this account holds online, the newest written first: `{ id, surname, model, rev, record }`. */
 export async function listLineages({ db }, /** @type {string} */ playerId) {

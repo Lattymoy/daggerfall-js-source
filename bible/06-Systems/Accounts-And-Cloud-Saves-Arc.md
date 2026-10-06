@@ -5212,6 +5212,10 @@ Mac: "online integration with permadeath (Bloodline) or non-permadeath (Enduring
 - **`realm_characters.dead_at`** - THE TOMBSTONE (`/v1/realm/die`, under the lease): never joined again (`dead`, 410),
   checkpointed or traded; refused at the relay's door (`realmCharacterHeld`); off the roster, and no slot held
   (`REALM_CHARACTERS_MAX` counts the living in `createRealm`, `customsRealm` and `customsRefusal`).
-- **Deploy**: the migration and the service (acct85) BEFORE the site - the new site founds and tombstones at the
+- **The house on the token** (LEGACY7 part two): the identity mint signs a realm character's house (`hn`, `hc`, `hb`,
+  `hg` - `src/net/houseLaw.js`, `legacy.js realmHouseOf`) through the name filter, never a tombstone's, and leaves it
+  unsaid rather than take a token past `TOKEN_MAX_CHARS`; `/v1/realm` lists each tile's house. The relay (world172)
+  stamps it on every row.
+- **Deploy**: the relay (world172) first, then the migration and the service (acct85), then the site - the new site founds and tombstones at the
   service. No relay change.
 

@@ -304,6 +304,7 @@ select, input, textarea { font: inherit; }
 .svwho { grid-column: 2; grid-row: 1; min-width: 0; }
 .svwho h3 { font-family: var(--display); font-weight: 400; font-size: 21px; margin: 0 0 2px; overflow-wrap: anywhere; }
 .svsub { color: var(--bone); font-size: 13px; margin: 0 0 2px; }
+.svhouse { color: #d8c79a; font-size: 12px; font-style: italic; margin: 0 0 2px; overflow-wrap: anywhere; }   /* LEGACY7: the house on the roster's tile */
 .svwhen { color: var(--dim); font-size: 12px; margin: 0 0 10px; }
 .svwho .stats { gap: 4px 14px; margin: 0; }
 

@@ -49,7 +49,7 @@ import { isGuestShaped, isHandleShaped } from '../../src/net/handleShape.js';   
 import { isDeveloper } from './titles.js';   // CUSTOMS-PASS: a developer grants one
 import { displayName } from './accounts.js';
 import { saveTextOf, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save read packed or plain
-import { lineageBirthRefusal } from './legacy.js';   // LEGACY7: a realm character born as a person of the account's own line
+import { lineageBirthRefusal, houseOn } from './legacy.js';   // LEGACY7: a realm character born as a person of the account's own line
 
 /** Realm characters an ACCOUNT may hold. A new one past it is refused; nothing is ever deleted to make room. */
 export const REALM_CHARACTERS_MAX = 6;
@@ -127,6 +127,7 @@ const view = (/** @type {any} */ r, /** @type {number} */ nowS) => {
     customs: !!r.origin_id,
     createdAt: r.created_at, updatedAt: r.updated_at,
     lineage: r.lineage_id ?? null, person: r.person_id ?? null,   // LEGACY7: the line and the person it plays (legacy.js)
+    house: r.line ? houseOn(r.line, r.person_id) : null,   // LEGACY7 part two: its house, for the tile (net/houseLaw.js)
   };
 };
 
@@ -134,8 +135,9 @@ const view = (/** @type {any} */ r, /** @type {number} */ nowS) => {
  *  (legacy.js realmDie) is played no more and holds no slot; its family's record keeps it (the Hall). */
 export async function listRealm({ db, nowS }, /** @type {string} */ playerId) {
   const r = await db.prepare(
-    'SELECT id, name, summary, seq, bytes, lease, lease_at, origin_id, created_at, updated_at, lineage_id, person_id FROM realm_characters'
-    + ' WHERE player = ? AND dead_at IS NULL ORDER BY updated_at DESC LIMIT ?',
+    'SELECT r.id, r.name, r.summary, r.seq, r.bytes, r.lease, r.lease_at, r.origin_id, r.created_at, r.updated_at, r.lineage_id, r.person_id, l.record AS line'
+    + ' FROM realm_characters r LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id'
+    + ' WHERE r.player = ? AND r.dead_at IS NULL ORDER BY r.updated_at DESC LIMIT ?',
   ).bind(playerId, REALM_CHARACTERS_MAX).all();
   return (r?.results ?? []).map((row) => view(row, nowS));
 }
