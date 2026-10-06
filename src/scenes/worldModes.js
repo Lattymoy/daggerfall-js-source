@@ -159,6 +159,7 @@ import { raceWinner } from '../player/activationRace.js';   // WORLD-HOVER: the 
 import { worldHoverFrame, hideWorldPlaque, destroyWorldPlaque } from '../ui/worldPlaque.js';   // WORLD-HOVER: the one seam each host calls, and the hide door for the branches that return above it
 import { quickLootTake, quickLootSpend, plaqueActionFor } from '../systems/quickLoot.js'; import { showPickups } from '../ui/pickupFeed.js';   // QUICK-LOOT B4: the take, through the window's own door; HOME2: the verb the plaque lit over a door; PICKUP-FEED: what a take moved, as cards (the take's `took`)
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
+import { silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS (AUDIT 625 S2): an interior's treasure pile rolls its find too
 import { staticDoorName, npcHoverName, questResourceName, questStandItem, worldTooltipsOn, hideInteractTooltip,
   houseContainerName, houseContainerHover, actionName, actionDoorName, lootPileName,
   BOOKSHELF_TEXT, SHOP_SHELF_TEXT, LADDER_TEXT, BULLETIN_BOARD_TEXT, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js'; import { questFoeSubs } from '../systems/questFoeLine.js';   // WORLD-HOVER: the mod's ladder for the families THIS host stands; QUEST-FOE-LINE: a quest's foe says whose it is   // WORLD-HOVER: the mod's ladder for the families THIS host stands
@@ -553,7 +554,7 @@ export function createWorldModes(host) {
    *
    * AUDIT-WH H5. Three hover arms wrote `.Name` - the C# property, as
    * the mod's own source spells it (.cs:764, :725, :777) - and the
-   * record these hosts mint spells it `name` (exterior.js:4090 hands
+   * record these hosts mint spells it `name` (exterior.js:4091 hands
    * `dfLocation`, world.js hands `_questLoc()`; both are the port's
    * location record). `.Name` on it is `undefined`, so all three arms
    * fell to `''`, and `staticDoorName` answers NULL on an empty
@@ -1361,8 +1362,8 @@ export function createWorldModes(host) {
    *  This host owned two pools and ran NO fan-out at all - no
    *  runMagicRoundsFor, so no tickActiveEffects and no updatePoisons
    *  (worldTick.js:393-394), and no killIfAnyLiveStatZero. Both pools
-   *  READ the effect list every frame (exteriorFoes.js:1496-1499 and
-   *  cityGuards.js:1054-1062 each take `entityIsParalyzed` +
+   *  READ the effect list every frame (exteriorFoes.js:1499-1502 and
+   *  cityGuards.js:1056-1064 each take `entityIsParalyzed` +
    *  `applyEnemyMotorEffectFlags`), and nothing ever ended one: a
    *  Continuous Damage bundle on a foe in a shop never took a round,
    *  a poison inflicted at this host's own onInflictPoison never
@@ -1723,10 +1724,10 @@ export function createWorldModes(host) {
    *  billboard is CENTRE-anchored, so the base ends up ON the marker
    *  inside a building and half a height BELOW it inside a dungeon.
    *  This port's billboard shader is BOTTOM-anchored (position = base,
-   *  the C11 law dungeonContext.js:2462 states), so the same visual
+   *  the C11 law dungeonContext.js:2464 states), so the same visual
    *  result needs the shift on the DUNGEON side - which is exactly the
    *  shift the dungeon's own RDB flats already take
-   *  (dungeonContext.js:2346, `y - size.h / 2`), and which a building's
+   *  (dungeonContext.js:2348, `y - size.h / 2`), and which a building's
    *  flats correctly do not (interiorContext.js passes its centers
    *  straight through).
    *
@@ -7429,9 +7430,11 @@ export function createWorldModes(host) {
         // (world.js openBodyLoot's law: quick loot takes on a press only).
         const openBodyLoot = (lootKey, pileKeys = null) => {
           bodyPool(lootKey)?.takeLoot(lootKey, (l) => say(l), (loot) => {
-            if (!pileKeys && quickLootTake(lootKey, loot, playerEntity, (l) => say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) return;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards
+            if (!pileKeys && quickLootTake(lootKey, loot, playerEntity, (l) => say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards
             const pile = lootPile(lootKey, { keys: pileKeys, describe: (k) => bodyPool(k)?.pileBody(k) ?? null, open: openBodyLoot });
-            mountInterior(interiorInventory({ loot: pile ? { ...loot, pile } : loot }));
+            const w = interiorInventory({ loot: pile ? { ...loot, pile } : loot });
+            mountInterior(w);
+            return !!w;   // AUDIT 625 D6: whether it OPENED (a refused pack is null) - the corpse door rolls a body's silver on it
           });
         };
         openBodyLoot(key);
@@ -7457,9 +7460,22 @@ export function createWorldModes(host) {
         // answers null for one the window already emptied.
         if (pile) {
           const _hooks = droppedLootHooks(pile);   // G5
+          // SILVER-FINDS (AUDIT 625 S2): a TREASURE pile - the scene's own container (`container: true`: a tavern's, a
+          // guild hall's, DFU's RandomTreasure markers - interiorContext.js seedInteriorTreasure), never one the player
+          // dropped - rolls its find at its door as the dungeon's pile does, with something in it, by its own name (its
+          // town, its building and its marker: `treasure:<i>` alone is every tavern's) - and only once it OPENED (D6):
+          // a window that stood, or the quick door's take
+          const _find = pile.container === true && pile.items.length
+            ? (pile.containerKey ? `int:${homeTownOf(interiorBuilding)}:${interiorBuilding?.buildingKey ?? ''}:${pile.containerKey}` : pile) : null;
           // QUICK-LOOT B4: the same door, on the player's own pile.
-          if (!quickLootTake(key, _hooks, playerEntity, (l) => say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) mountInterior(interiorInventory({ loot: _hooks }));   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards
-          else interiorDropped.releaseEmptied();   // AUDIT 68 S20-frame-return-kills-loop: the take is its own window close (the world hosts' law)
+          if (!quickLootTake(key, _hooks, playerEntity, (l) => say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards
+            const w = interiorInventory({ loot: _hooks });
+            mountInterior(w);
+            if (w && _find) silverFindAt('pile', _find);   // a refused pack (null) opened nothing
+          } else {
+            if (_find) silverFindAt('pile', _find);
+            interiorDropped.releaseEmptied();   // AUDIT 68 S20-frame-return-kills-loop: the take is its own window close (the world hosts' law)
+          }
         }
         return true;
       }
@@ -8145,7 +8161,7 @@ export function createWorldModes(host) {
           hudMessageSink: (t) => questBridge?.notebook?.addMessage(t),
           // MAC1 J: and the relock the dungeon's pause door needs, on
           // the same threading - the context owns no canvas of its own
-          // (dungeonContext.js:8707), so the OUTER host's one rides in.
+          // (dungeonContext.js:8726), so the OUTER host's one rides in.
           // This is the most-played pause door of the six: world.js
           // gates its own Escape ladder on exterior mode, so underground
           // the key falls to routeKey -> ui/input.js:855 -> the
@@ -9395,7 +9411,7 @@ export function createWorldModes(host) {
           // AUDIT 39r: and the FLASH, which this arm was copied without.
           // An arrow reaches the player through BowDamage ->
           // ApplyDamageToPlayer -> SendDamageToPlayer, the same door as
-          // a blow (world.js:17621's own wave-46 note); the interior
+          // a blow (world.js:17628's own wave-46 note); the interior
           // MELEE hit already flashes inside exteriorFoes, so only this
           // arm - which applies its own damage - was missing it.
           flashPlayerDamage(dmg);   // BA1: RemoveHealth carries the amount
@@ -9430,10 +9446,10 @@ export function createWorldModes(host) {
         // AUDIT 58: WeaponManager.cs:630 after the damage fork - a
         // zero-damage shaft still enrages its mark and the room.
         // ROAD-G G1 (review): the interior WATCH carries the pair now
-        // (cityGuards.js:783-788), so this seam splits by pool exactly
+        // (cityGuards.js:784-789), so this seam splits by pool exactly
         // as `dealDamage` above it does rather than dropping the
         // non-encounter half - the zero-damage SWING already reaches
-        // that door (cityGuards.js:1366) and the shaft owes the same.
+        // that door (cityGuards.js:1368) and the shaft owes the same.
         onAttackFromPlayer: (f) => (f._encounter
           ? interiorFoes?.attackFromPlayer(f, player.pos, 'arrow')   // AUDIT WORLD6b-iii(e) A2: the pool's one door, the shaft's kind on it
           : interiorGuards?.handleAttackFromPlayer(f, player.pos)),
@@ -10341,7 +10357,7 @@ export function createWorldModes(host) {
   addEventListener('mousedown', (e) => {
     // AUDIT-MACK F2: THIS HOST DOES NOT FEED THE HELD SET, and MAC-K1
     // briefly made it. `keys` is not this host's - it arrives on the
-    // host bag (`exterior.js:4152`, `world.js`'s twin), and the OUTER
+    // host bag (`exterior.js:4153`, `world.js`'s twin), and the OUTER
     // host's own mousedown writes `keys.add(mouseCode(e.button))`
     // UNGATED, before any mode test, on a listener that is never
     // removed. So the three button codes were already in the Set while
@@ -12141,9 +12157,9 @@ export function createWorldModes(host) {
      *  .cs:175-176 writes `weaponDrawn`/`usingLeftHand` off it,
      *  :420-421 restores them onto it. The port has FOUR PlayerWeapons
      *  (world.js's, this file's `interiorWeapon` :538, dungeonContext's
-     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3692-3714), and IS1 routed the inside-a-building save to
+     *  and exterior.js's - which this seam does not reach: that host has no save path at all, its charter exterior.js:3693-3715), and IS1 routed the inside-a-building save to
      *  the WORLD host's composer - which reads its own exterior rig
-     *  unconditionally (world.js:13327). So an F9 pressed in a shop
+     *  unconditionally (world.js:13333). So an F9 pressed in a shop
      *  recorded the street's sheath and hand, and the load wrote them
      *  back into the street's rig; the rig actually in the player's
      *  hands was in no envelope at all.
@@ -12182,7 +12198,7 @@ export function createWorldModes(host) {
       if (interiorOverlay instanceof DeathScreen) { interiorOverlay.restoreView(); interiorOverlay = null; }
     },
     /** The restore half - and NOT gated on the mode, deliberately.
-     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:13690)
+     *  worldQuickLoad calls forceExitToExterior FIRST (world.js:13696)
      *  and only re-enters the building at :4217, so the mode at apply
      *  time is whatever the LOAD landed in, not whatever the SAVE was
      *  taken in: an outdoor save loaded while the player was indoors
@@ -12192,8 +12208,8 @@ export function createWorldModes(host) {
      *
      *  FLAG ONLY and presence-gated - both laws now stated once, in
      *  combat/playerWeapon.js's applyWeaponPose, with the citation.
-     *  HARD2c: this used to spell them out, and named `world.js:12092`
-     *  and `dungeonContext.js:8719` for its two sibling copies - lines
+     *  HARD2c: this used to spell them out, and named `world.js:12098`
+     *  and `dungeonContext.js:8738` for its two sibling copies - lines
      *  that had moved to :4418 and :5457. Three copies of a two-line
      *  law, and even the comment pointing between them had gone stale. */
     applyWeaponPose(pose) {

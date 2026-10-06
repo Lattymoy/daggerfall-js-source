@@ -47,15 +47,16 @@ test('SILVER-WAYS the lines: a counted claim says its strike, a guild deed it co
     'A deed for The Hound: three of its members stood together. 25 silver struck to its treasury.',
     'The Silver Hand pays you 38 silver under its contract.',
   ]);
-  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'raid'), ['No silver for this town. The counting-houses strike 150 silver a day for breaches closed and towns defended.']);
-  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'gate'), ['No silver for this breach. The counting-houses strike 150 silver a day for breaches closed and towns defended.']);
+  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'raid'), ['No silver for this town. The counting-houses strike 150 silver a day for breaches closed, towns defended and serpents slain.']);
+  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'gate'), ['No silver for this breach. The counting-houses strike 150 silver a day for breaches closed, towns defended and serpents slain.']);
+  assert.deepEqual(b.claimLines({ marks: { struck: 0, balance: 150, why: 'cap' } }, 'serpent'), ['No silver for this serpent. The counting-houses strike 150 silver a day for breaches closed, towns defended and serpents slain.'], 'SERPENT-SET: a serpent\'s capped line names the serpent');
   assert.deepEqual(b.claimLines({ marks: { struck: 50, balance: 50 }, deed: null }), ['50 silver struck to your account. You hold 50 silver.']);
   assert.deepEqual(b.claimLines({ recorded: true }), [], 'a service from before them');
   assert.deepEqual(b.claimLines(null), []);
   assert.equal(b.state.balance, 50, 'the balance the last strike answered');
   b.claimLines({ marks: { struck: 30, balance: 80, combat: { earned: 130, max: 150 } } }, 'raid');
   assert.deepEqual([b.state.today.combat, b.state.today.combatMax], [130, 150], 'the day\'s combat silver as the strike said it');
-  assert.match(src('src/ui/enhancedPorts.js'), /\['From gates and raids today', `\$\{\(w\.hooks\.marks\.today\(\)\?\.combat \?\? 0\)\} of \$\{w\.hooks\.marks\.today\(\)\?\.combatMax \?\? MARKS_COMBAT\.perDay\}`\],/, 'the Bank\'s card says it');
+  assert.match(src('src/ui/enhancedPorts.js'), /\['From gates, raids and serpents today', `\$\{\(w\.hooks\.marks\.today\(\)\?\.combat \?\? 0\)\} of \$\{w\.hooks\.marks\.today\(\)\?\.combatMax \?\? MARKS_COMBAT\.perDay\}`\],/, 'the Bank\'s card says it (PIN MOVED, SERPENT-SET: the serpents\' under the same cap, named)');
   assert.equal(MARKS_TEXT.contract(12, null), 'A guild pays you 12 silver under its contract.');
 });
 

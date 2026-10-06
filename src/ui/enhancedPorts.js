@@ -20,7 +20,7 @@ import { serviceLabel } from '../systems/guildServiceFlow.js';
 import { GUILD_RECTS, PANEL_X as GUILD_X, PANEL_Y as GUILD_Y, REFORGE_ROW } from './guildServiceWindow.js';
 import { COVEN_RECTS, COVEN_PANEL_X, COVEN_PANEL_Y } from './covenWindow.js';
 import { BANK_RECTS, BANK_PANEL_X, BANK_PANEL_Y, MARKS_ENTRY } from './bankWindow.js';
-import { MARKS_BANK, MARKS_COMBAT, marksText } from '../net/marksLaw.js';   // MARKS1: the Bank's Marks, online; SILVER-WAYS: the day's combat cap
+import { MARKS_BANK, MARKS_COMBAT, MARKS_FAUCETS, marksText } from '../net/marksLaw.js';   // MARKS1: the Bank's Marks, online; SILVER-WAYS: the day's combat cap; SILVER-FINDS: the finds' days
 import { TRANSACTION_TYPE, goldRegion, EMPIRE_ACCOUNT_REGION } from '../systems/banking.js';   // EMPIRE-ACCOUNT: online, the one account
 import { REGION_NAMES } from '../formats/mapsFile.js';   // BANK-REGION: the account's region, by the index its row reads
 import { PURCHASE_RECTS, PURCHASE_PANEL_X, PURCHASE_PANEL_Y } from './bankPurchaseWindow.js';
@@ -129,7 +129,9 @@ const bank = {
           { type: 'stats', items: [
             ['Silver held', marksText(w.hooks.marks.balance() ?? 0)],
             ['Sold today', `${(w.hooks.marks.today()?.exchanged ?? 0)} of ${MARKS_BANK.perDay}`],
-            ['From gates and raids today', `${(w.hooks.marks.today()?.combat ?? 0)} of ${w.hooks.marks.today()?.combatMax ?? MARKS_COMBAT.perDay}`],   // SILVER-WAYS
+            ['From gates, raids and serpents today', `${(w.hooks.marks.today()?.combat ?? 0)} of ${w.hooks.marks.today()?.combatMax ?? MARKS_COMBAT.perDay}`],   // SILVER-WAYS; SERPENT-SET: the serpents' under the same cap
+            ['Found in loot today', `${(w.hooks.marks.today()?.found ?? 0)} of ${w.hooks.marks.today()?.findMax ?? MARKS_FAUCETS.find.perDay}`],   // SILVER-FINDS
+            ['Found gathering today', `${(w.hooks.marks.today()?.gathered ?? 0)} of ${w.hooks.marks.today()?.gatherMax ?? MARKS_FAUCETS.gather.perDay}`],
             ['The Bank pays', `${MARKS_BANK.goldPerMark} gold for each silver`],
           ] },
           { type: 'actions', layout: 'column', items: [

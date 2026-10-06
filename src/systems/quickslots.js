@@ -43,6 +43,7 @@
 // stop - so the swap takes the same snapshot-and-bill the window
 // takes, around the one equip it makes.
 import { isPotion, isDrug, isLightSource, useItem, USE_PENDING } from './useItem.js';   // ...and the ladder's own stand-ins for a host that handed no hook
+import { walletContents, walletLines, refreshWalletSilver } from './walletItem.js';   // WALLET1: the wallet pressed says what it holds
 import { equipItem, equipTableOf, EQUIP_SLOTS, isBrokenItem, isForbiddenEquip, isEquipped, unequipSlot, oneEquipAct,
   getItemHands, ITEM_HANDS, getEquipSlot,   // UI2: the equip table's own answer - which pieces a slot of the body takes
   equipDelaySnapshot, billEquipDelayOnClose, ITEM_BROKEN_TEXT_ID, FORBIDDEN_EQUIPMENT_TEXT_ID } from './equip.js';
@@ -104,7 +105,7 @@ const state = { c1: null, c2: null, swap: null };
  *  INDEX - a SPELLS.STD record number, or the negative one a made spell
  *  mints (systems/spellMaker.js:234-252) - and that index is already
  *  this port's name for "which spell": it is what the save writes
- *  (systems/save.js:391), what a restore reads back, and what
+ *  (systems/save.js:393), what a restore reads back, and what
  *  `setReadiedByIndex` resolves a readied spell by. So the slot keeps
  *  the same key the rest of the port keeps, and a book that changed
  *  under it (a spell sold, a made spell deleted) leaves a GHOST that
@@ -367,6 +368,14 @@ function useQuickslotNow(slot, { entity = null, items = null, hooks = {}, say = 
   }
   if (res?.kind === 'openPortal' && typeof hooks.openPortal === 'function') {   // PORTAL1: the host's travel map, or its refusal in words
     if (hooks.openPortal(res.item ?? r.item, pack) === false) return { kind: 'refused', name: r.name, result: res };
+    return { kind: 'used', name: r.name, result: res };
+  }
+  // WALLET1: the wallet says what it holds on the HUD's line - a slot has no window to open its sheet in; AUDIT 625 W5:
+  // and asks the account's silver afresh for the next press, as the classic box asks it for the next look (a line
+  // cannot be redrawn) - it never asked, so a book no other door had asked left every press without a figure
+  if (res?.kind === 'wallet') {
+    say?.(walletLines(walletContents(pack, entity)).slice(1).join(' · '));
+    refreshWalletSilver();
     return { kind: 'used', name: r.name, result: res };
   }
   if ((res?.kind === 'book' || res?.kind === 'spellbook' || res?.kind === 'pitchCamp' || res?.kind === 'placeFire' || res?.kind === 'openPortal') && USE_PENDING[res.kind]) {
@@ -881,7 +890,7 @@ export function quickslotSaveData() {
   const out = {};
   for (const s of QUICKSLOTS) out[s] = state[s] ? { key: state[s].key, name: state[s].name } : null;
   // QS6: the spell slot rides the same block, keyed the way save.js
-  // already keys a spell - by index (systems/save.js:391).
+  // already keys a spell - by index (systems/save.js:393).
   out.spell = spellState ? { index: spellState.index, name: spellState.name } : null;
   // HB1: and the hotbar, on the same block - ten entries, each an item
   // kind or a spell index, exactly as the slots above key them.

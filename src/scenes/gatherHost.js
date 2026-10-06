@@ -249,6 +249,7 @@ export function aimAt(eyePos, at, view) {
  *   plaque?: () => boolean, lit?: (key: string) => any, choose?: (rows: string[], pick: (i: number) => void) => boolean,
  *   step?: (n: number) => boolean, settled?: (pos: number[]) => boolean,
  *   pointer?: (want: 'cursor'|'look') => ((() => void) | null), haul?: (entries: any[]) => boolean,
+ *   marks?: { findLine: (found: any, kind: string) => (string|null) } | null,
  * }} deps `active` - the streaming world's exterior, walking, nothing over it (the host's); `activeDungeon` - a dungeon
  *   entered, walking, nothing over it; `nowMs` the shared clock. PROF-MENU: `plaque` - the loot plaque stands (it names
  *   the node, so no prompt does); `lit(key)` - the row the plaque has lit over that key (quickLoot.js plaqueActionFor);
@@ -257,7 +258,8 @@ export function aimAt(eyePos, at, view) {
  *   on a settlement's ground as the acts' check reads it (FORAGE0 14.3: the place's pixel's town, farm, temple, tavern or
  *   wealthy home, its footprint and a block round it), where no node of the ground (a kind with a `where`) stands.
  *   `pointer(want)` - HERB-CURSOR: the mouse an act needs (ACT_POINTER), asked as it starts; answers its release, called
- *   as it ends, or null
+ *   as it ends, or null. `marks` - SILVER-FINDS: the marks book (net/marksBook.js), a harvest's find said and its
+ *   balance kept
  */
 export function createGatherHost(deps) {
   const { book, hud, kinds } = deps;
@@ -608,6 +610,10 @@ export function createGatherHost(deps) {
       // PACK-OVER (FIELD BUGS 2026-10-04): goods minted past the pack's weight - the card counts them, the line beside it says the weight
       // AUDIT PACK-OVER C: once in OVER_SAID_MS - a pump settling five kept harvests said it five times and pushed a rank's rise out
       if (hauled && d.carry === true && (d.put?.over ?? 0) > 0 && deps.nowMs() - overSaidAt >= OVER_SAID_MS) { overSaidAt = deps.nowMs(); hud.toast(BAG_WORDS.overWeight); }
+      // SILVER-FINDS: a harvest's find (the service's dice in it - a Motherlode's `marks` is its strike, its kind's own to
+      // say): its card stood beside the goods' (harvestHauls), else its line; the balance kept either way (the marks book)
+      const found = !d.motherlode && d.marks ? deps.marks?.findLine?.(d.marks, 'gather') ?? null : null;
+      if (found && !hauled) hud.toast(found);
       const after = d.track?.rank ?? before;
       if (after > before) {
         hud.toast(`${professionName(profession)} ${before} -> ${after}`);

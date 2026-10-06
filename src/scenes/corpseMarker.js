@@ -64,6 +64,7 @@ import { SOUND } from '../systems/soundClips.js';
 import { lootRarityOn, bestRarity, RARITIES } from '../systems/lootRarity.js';   // LR3: the drop chime asks the body's best tier
 import { CORPSE_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
 import { enemyDisplayName } from '../characters/enemyBasics.js';
+import { silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS: a body opened holds silver now and then
 
 /** ItemTemplates Arrow - the auto-pickup arm keys on it. */
 export const ARROW_TEMPLATE_INDEX = 131;
@@ -328,6 +329,10 @@ export const corpseLootHooks = (entry) => ({
  *  the one after the take - so the player who loots a body and
  *  activates it again is told it has no treasure, and only then does it
  *  stop being a target. Disabling on the take would eat that line. */
+/** :948-952's test - one item, and it is arrows: a body DFU empties into the pack with no window. AUDIT 625 S7: one law
+ *  for every reader - this door's, and a peer's grant (exteriorFoes.js), whose arrows alone roll no silver either. */
+export const arrowsOnly = (items) => Array.isArray(items) && items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX;
+
 function corpsePrelude(entry, playerEntity, say) {
   if (!entry || entry.corpseDisabled) return 0;
   const items = entry.entity?.items;
@@ -339,7 +344,7 @@ function corpsePrelude(entry, playerEntity, say) {
     return 0;
   }
   // :948-952 - one item and it is arrows: taken whole, no window.
-  if (items.length === 1 && items[0]?.templateIndex === ARROW_TEMPLATE_INDEX) {
+  if (arrowsOnly(items)) {
     playerEntity.items = playerEntity.items || [];
     addItem(playerEntity.items, items[0]);
     items.length = 0;
@@ -373,6 +378,14 @@ function corpsePrelude(entry, playerEntity, say) {
  *
  * Returns the number of items the body holds, so a caller's "did
  * anything happen" test still reads.
+ *
+ * SILVER-FINDS: a body opened with treasure in it - the window, or the
+ * quick loot the host's door takes through - rolls its silver once
+ * (systems/silverFinds.js); an empty body, a body of arrows and a body
+ * left shut roll none. AUDIT 625 D6: OPENED is the door's own answer -
+ * `true` for a window that mounted or a quick take; a pack the host
+ * refused (a werebeast's - GetSuppressInventory) is no open, and rolls
+ * nothing.
  */
 export function openCorpseLoot(entry, { playerEntity, say = () => {}, openWindow = null } = {}) {
   const answered = corpsePrelude(entry, playerEntity, say);
@@ -382,7 +395,7 @@ export function openCorpseLoot(entry, { playerEntity, say = () => {}, openWindow
     console.warn('[corpse] no inventory door - the body stays shut rather than emptying itself');
     return items.length;
   }
-  openWindow(corpseLootHooks(entry));
+  if (openWindow(corpseLootHooks(entry)) === true) silverFindAt('corpse', entry);
   return items.length;
 }
 

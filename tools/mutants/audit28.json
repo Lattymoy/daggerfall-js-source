@@ -102,8 +102,8 @@
   {
     "name": "AUDIT28-M10-the-report-counts-account-days",
     "file": "server-account/src/marks.js",
-    "old": "SELECT COUNT(DISTINCT dst_id) AS n, COUNT(*) AS d",
-    "new": "SELECT COUNT(*) AS n, COUNT(*) AS d",
+    "old": "const combatCapped = await db.prepare(`SELECT COUNT(DISTINCT dst_id) AS n, COUNT(*) AS d",
+    "new": "const combatCapped = await db.prepare(`SELECT COUNT(*) AS n, COUNT(*) AS d",
     "tests": [
       "test/audit28_marks.test.js"
     ]

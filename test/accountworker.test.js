@@ -171,7 +171,7 @@ test('ACC1b: the migration is the real schema, and applying it twice changes not
   // request, made and cleared inside its own batch (PIN MOVED)
   // SERPENT1 added two (0081 - 0078 then 0079 on its branch, past main's FOUNDER4, KNIGHT-HOUSE and HOME-VENDOR at the merges, PIN MOVED): `serpent_kills` (one row a sea serpent and account - the kill counted, the character paid)
   // and `serpent_spoils` (one row a serpent and account - the device whose claim was given the hoard)
-  // LEGACY7 added one (0083): `lineages` (one row a family an account founded online - its record, its rev), and on
+  // LEGACY7 added one (0084 - 0083 on its branch, renumbered past SERPENT-SET at the merge): `lineages` (one row a family an account founded online - its record, its rev), and on
   // `realm_characters` the line and person a character plays and its tombstone (`dead_at`)
   // AUDIT ARENA-LADDER added one (0082): `arena_attempts` (one row an attempt at a ladder bout, its id the ticket the relay
   // signs - an attempt never claimed is forfeit at the next), and `arena_pve.voided`, a column (a won row a loss broke the run of)

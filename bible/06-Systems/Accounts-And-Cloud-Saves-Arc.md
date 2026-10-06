@@ -5196,11 +5196,11 @@ make the aura misallign".
 - Left, said: not seen in a running game client - the test drives the real sprite body and the real peer layers frame
   by frame, no GPU; the wings still stand on a rider at the saddle's rest pose (no shoulders read off a horse's frame).
 
-## LEGACY7 — Project Legacy's lines and the tombstone (2026-10-06, acct84)
+## LEGACY7 — Project Legacy's lines and the tombstone (2026-10-06, acct85 - acct84 on its branch, renumbered past SERPENT-SET at the merge of main)
 
 Mac: "online integration with permadeath (Bloodline) or non-permadeath (Enduring)". The record is
 `06-Systems/Legacy-Arc.md` section 9; the service's half is `server-account/src/legacy.js` and migration
-`0083_legacy.sql`.
+`0084_legacy.sql` (0083 on its branch).
 
 - **`lineages`**: one row a family an account founded online - its id (`fam-...`, the client's), surname, model (the
   founder's, for good: `lineage-model`), record (bounded, `LINEAGE_MAX_BYTES`) and `rev`. `/v1/realm/lineages` lists
@@ -5212,6 +5212,6 @@ Mac: "online integration with permadeath (Bloodline) or non-permadeath (Enduring
 - **`realm_characters.dead_at`** - THE TOMBSTONE (`/v1/realm/die`, under the lease): never joined again (`dead`, 410),
   checkpointed or traded; refused at the relay's door (`realmCharacterHeld`); off the roster, and no slot held
   (`REALM_CHARACTERS_MAX` counts the living in `createRealm`, `customsRealm` and `customsRefusal`).
-- **Deploy**: the migration and the service (acct84) BEFORE the site - the new site founds and tombstones at the
+- **Deploy**: the migration and the service (acct85) BEFORE the site - the new site founds and tombstones at the
   service. No relay change.
 

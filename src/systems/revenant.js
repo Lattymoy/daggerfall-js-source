@@ -61,6 +61,7 @@ import { goldStack, isSummoned, isGoldPieces, addItem, addGoldPieces } from './i
 import { unequipItem, equipTableOf, EQUIP_SLOTS } from './equip.js';   // RVN8: what it takes, off the hand that held it
 import { isLocked } from './itemLock.js';   // RVN8: LOCK1's promise - a locked piece stays yours
 import { isBagItem } from '../net/bagLaw.js';   // RVN8: never the Materials Bag
+import { isPackOnly } from './itemBound.js';   // AUDIT 625 W2: nor a pack-only piece (the Wallet)
 import { itemLongName } from './itemInfo.js';   // RVN8: the piece by the name the pack shows
 import { itemValueOf } from './itemTemplates.js';   // RVN8: the most valuable
 import { enemyDisplayName, ENEMY_BASICS } from '../characters/enemyBasics.js';
@@ -669,9 +670,11 @@ let _lastSlew = null;
 /** AUDIT FEUD: a rise where I fell (a party member's Resurrect) - no respawn, so its killer takes nothing then or later. */
 export function forgetLastSlew() { _lastSlew = null; }
 /** RVN8 (19): may it take `item` - never a quest item, a summoned piece, the Materials Bag, gold, or a locked piece
- *  (LOCK1's promise, "A LOCKED PIECE STAYS YOURS"). */
+ *  (LOCK1's promise, "A LOCKED PIECE STAYS YOURS"); AUDIT 625 W2: nor a PACK-ONLY piece (systems/itemBound.js - the
+ *  Wallet's row): what it takes leaves the pack for its record, one that escapes keeps it, and a character is given its
+ *  wallet once. */
 export const revenantMayTake = (item) => !!item && typeof item === 'object' && Number.isInteger(item.templateIndex)
-  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isLocked(item);
+  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isPackOnly(item) && !isLocked(item);
 /** AUDIT FEUD: a piece it took, named after "your", "my" or "lovely" - the name the pack shows, its own article gone
  *  (a legendary's "The Glenmoril Bow": "your Glenmoril Bow", never "your The ..."). */
 export const takenName = (item) => String(itemLongName(item) ?? '').replace(/^the\s+/i, '');

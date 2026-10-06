@@ -3,7 +3,7 @@
 // LEGACY7 (2026-10-06; bible/06-Systems/Legacy-Arc.md section 9) - PROJECT LEGACY ONLINE, SERVICE SIDE. Mac: "online
 // integration with permadeath (Bloodline) or non-permadeath (Enduring)".
 //
-// THE LINE (`lineages`, migration 0083): a family an account founded online, its record the client's JSON - the family
+// THE LINE (`lineages`, migration 0084): a family an account founded online, its record the client's JSON - the family
 // law is the client's (src/systems/legacy/), and the service keeps the copy every device reads. A write lands only past
 // the stored `rev`; a stale one is answered with the stored record, which the client merges its facts into (store.js
 // mergeFacts: a death is only ever added) and writes again. The service reads a record for two things alone - the

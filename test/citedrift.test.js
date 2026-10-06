@@ -566,7 +566,7 @@ const SOURCE_CITES = [
   // the line goes red at the citation instead of at a reader.
   ['src/characters/playerEntity.js', /exterior\.js:(\d+) and applyHeadlessChargen/,
     EX, /createChargenFlow\(fetchBytes\)\.then/],
-  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:10273\)/,
+  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:10278\)/,
     EX, /^ {4}say: \(l\) => townTalk\.say\(l\),$/],
   ['src/scenes/dungeonContext.js', /exterior\.js:(\d+) and worldModes\.js:\d+/,
     EX, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(/],
@@ -678,10 +678,10 @@ const SOURCE_CITES = [
   // to a comment in input.js's header (525) while the Rest arm moved to 813.
   ['src/ui/restWindow.js', /exterior\.js:\d+, ui\/input\.js:(\d+)\)/,
     'src/ui/input.js', /case 'Rest': return ctx\.toggleRest \? \(ctx\.toggleRest\(\), true\) : false;/],   // KB1: the arm answers its door
-  ['test/daychange.test.js', /exterior\.js:(\d+), world\.js:4027/, EX, /playerTicker\.advance\(60\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:9353/,
+  ['test/daychange.test.js', /exterior\.js:(\d+), world\.js:4031/, EX, /playerTicker\.advance\(60\);/],
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:9357/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:9353/,
+  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:9357/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
   ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-\d+/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
@@ -692,15 +692,15 @@ const SOURCE_CITES = [
   ['test/roade_up_seam.test.js', /exterior\.js:\d+\/:(\d+)/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return true; \}/],
   ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
-  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:4023`/, EX, /playerTicker\.advance\(60\);/],
+  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:4027`/, EX, /playerTicker\.advance\(60\);/],
   ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-\d+\)/,
     EX, /addEventListener\('keydown', \(e\) => \{/],
   ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
   // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
-  // four of the five had been stale for waves (`worldModes.js:8924` for a line
-  // that is 5921, `world.js:24803` for 8836, `interior.js:326` for 329,
+  // four of the five had been stale for waves (`worldModes.js:8940` for a line
+  // that is 5921, `world.js:24838` for 8836, `interior.js:326` for 329,
   // `dungeon.js:988` for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\)( \+ climbFeel\.fovRad\(\))?,/],   // CLIMB4: the climb's kick on the lens
@@ -722,7 +722,7 @@ const SOURCE_CITES = [
   // PAIRS never checked. Five Ledger rows cite `world.js:N`, `exterior.js:M`
   // and this table captured M alone - so M was resolved at every wave and N
   // was never read at all. All five N's were stale by thousands of lines
-  // (`world.js:12393` for a line that is 8950; `:2035` for 1215; `:4484` for
+  // (`world.js:12399` for a line that is 8950; `:2039` for 1215; `:4488` for
   // 2194; `:3903` for 3066; `:3920` for 8907), and citeMerge rewrote one of
   // them INSIDE THE PICK REGEX at the QS6 merge - which is WM3's hazard
   // exactly: a literal in the pick decides whether the entry matches at all,
@@ -974,8 +974,8 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:1032-936`, `world.js:16772-16677`,
-// `worldModes.js:1587 against :1354`. Forty of them came out as ranges
+// multi-number citation: `cityGuards.js:1034-938`, `world.js:16779-16683`,
+// `worldModes.js:1588 against :1355`. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.
 //
@@ -1005,6 +1005,31 @@ test('CD7: no citation into a port file names a range that runs backwards', () =
     });
   }
   assert.deepEqual(backwards, [], 'a citation names a range whose end precedes its start');
+});
+
+// CD7b (AUDIT 625 D3, 2026-10-05): A RANGE IS WRITTEN WITH AN ASCII
+// HYPHEN. citeShift and citeMerge read a range as `A-B`, and CD7 above
+// reads the same, so a range set with a typographic dash (a hyphen, a
+// non-breaking hyphen, a figure, en or em dash, a minus) is a cite of
+// `A` alone to all three: every shift moved its head and left its tail,
+// and CD7 never saw the backwards range that made. Settings-Screen-Spec
+// set its sixteen ranges with U+2011 - eight had run backwards (the
+// settings store's 89 to 81, the renderer's 4378 to 4053), and PR #625's
+// own shift made a ninth (the settings pin's 35 to 35 became 36 to 35).
+// The sixteen were re-resolved and set in ASCII.
+// MUTANT: set any range's hyphen back to U+2011 and this goes red.
+test('CD7b: no citation names a range with a typographic dash - the tools that keep cites read an ASCII hyphen', () => {
+  const DASHED = /:\d+[‐-―−]\d+/g;
+  const walk = (dir) => readdirSync(join(root, dir), { withFileTypes: true }).flatMap((e) => {
+    if (e.name === 'node_modules' || e.name.startsWith('.')) return [];
+    const rel = `${dir}/${e.name}`;
+    return e.isDirectory() ? walk(rel) : (/\.(js|mjs|md)$/.test(e.name) ? [rel] : []);
+  });
+  const dashed = [];
+  for (const rel of ['src', 'test', 'tools', 'bible'].flatMap(walk)) {
+    lines(rel).forEach((l, i) => { for (const m of l.matchAll(DASHED)) dashed.push(`${rel}:${i + 1}: ${m[0]}`); });
+  }
+  assert.deepEqual(dashed, [], 'a range set with a typographic dash - write it A-B');
 });
 
 // ═══ CD8: the cites the ROAD-G G4 REVIEW re-resolved ═══

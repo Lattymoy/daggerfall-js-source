@@ -60,6 +60,7 @@ test('LOOT-GONE1 + QL-FRAME1: the ground-pile arm in both hosts is worldModes\' 
     assert.match(arm, /if \(!quickLootTake\(dropKey, _hooks, playerEntity, [^\n]*\)\) \{\s*(?:\/\/[^\n]*\n\s*)*const w = makeInventoryWindow\(\{/, `${f}: the window only for a press quick-loot did not handle`);
     assert.doesNotMatch(code, /\breturn\b/, `${f}: nothing in the arm leaves the frame`);
   }
-  // worldModes' twin, the shape both hosts took
-  assert.match(rd('src/scenes/worldModes.js'), /if \(pile\) \{\s*const _hooks = droppedLootHooks\(pile\);[^\n]*\n[^\n]*\n\s*if \(!quickLootTake\(key, _hooks,/);
+  // worldModes' twin, the shape both hosts took - PIN MOVED (AUDIT 625 S2): its treasure pile's find (`_find`) named
+  // between the hooks and the take
+  assert.match(rd('src/scenes/worldModes.js'), /if \(pile\) \{\s*const _hooks = droppedLootHooks\(pile\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*const _find = [^;]*;\n[^\n]*\n\s*if \(!quickLootTake\(key, _hooks,/);
 });

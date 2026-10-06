@@ -114,11 +114,92 @@ test('FOE-CAP: three at most, gold folded and kept, a quest item never dropped, 
   assert.equal(e.items.length, 4);   // promoted after its spawn: titled by its death
 });
 
-test('FOE-CAP: the plain ladder - white the rule, blue rare, yellow very rare, orange almost never', () => {
+test('FOE-CAP: the plain ladder - white the rule, blue rare, yellow very rare, orange almost never (LOOT-EASE: a quarter more blue, half again the yellow and the orange)', () => {
   const plain = rarityChances({ tier: 8, weights: PLAIN_FOE_RARITY_WEIGHTS });
-  assert.deepEqual(plain, { magic: 72, rare: 10.4, legendary: 0.5 });
+  assert.deepEqual(plain, { magic: 90, rare: 15.6, legendary: 0.75 });
+  assert.deepEqual(rarityChances({ tier: 0, weights: PLAIN_FOE_RARITY_WEIGHTS }), { magic: 50, rare: 6, legendary: 0.15 }, 'the floor');
+  assert.deepEqual(rarityChances({ tier: 8, luck: 70, weights: PLAIN_FOE_RARITY_WEIGHTS }), { magic: 130, rare: 38, legendary: 3 }, 'luck to the ceilings: yellow 3.8%, orange 0.3%');
+  assert.deepEqual(PLAIN_FOE_RARITY_WEIGHTS, {
+    magic: { base: 50, perTier: 5, cap: 190 }, rare: { base: 6, perTier: 1.2, cap: 38 }, legendary: { base: 0.15, perTier: 0.075, cap: 3 },
+  });
   const old = rarityChances({ tier: 8 });
   assert.deepEqual(old, { magic: 220, rare: 63, legendary: 10.6 });
+  for (const t of [0, 5, 10, 17]) {
+    const p = rarityChances({ tier: t, weights: PLAIN_FOE_RARITY_WEIGHTS }), f = rarityChances({ tier: t });
+    assert.ok(p.magic <= f.magic / 2 && p.rare <= f.rare / 2 && p.legendary <= f.legendary / 4, `tier ${t}: at most half the whole ladder's blue and yellow, a quarter its orange`);
+  }
+});
+
+test('CAP-SUPPLIES (LOOT-EASE): a full body keeps a Magic-or-better piece first, then a supply - a potion, a rest supply - before a Common piece of gear, however dear (mutants: the supply rank dropped; a supply over a Magic piece; the rest items never registered)', async () => {
+  const { POTION_TEMPLATE_INDEX } = await import('../src/systems/loot.js');
+  const { createRestItem, REST_ITEM } = await import('../src/systems/restItems.js');   // registers the seven as supplies
+  const { isLootSupply } = await import('../src/systems/foeLootCap.js');
+  const potion = { name: 'potion', group: 'UselessItems1', templateIndex: POTION_TEMPLATE_INDEX, potionRecipeKey: 4975678, value: 50 };
+  const tonic = { ...createRestItem(REST_ITEM.Tonic), name: 'tonic' };
+  const steel = { name: 'steel', group: 'Weapons', templateIndex: 120, material: 1, value: 360 };
+  const blue = { name: 'blue', group: 'Weapons', templateIndex: 113, material: 0, value: 30, rarity: 'magic' };
+  assert.deepEqual([potion, tonic, steel, blue].map(isLootSupply), [true, true, false, false]);
+  const a = [steel, goldStack(5), potion, { name: 'boots', group: 'Armor', value: 400 }];
+  capLootList(a, 3);
+  assert.deepEqual(a.map((i) => (isGoldPieces(i) ? 'gold' : i.name)), ['gold', 'potion', 'boots'], 'the potion over the steel blade; the dearer Common after it');
+  const b = [steel, tonic, goldStack(5), blue, potion];
+  capLootList(b, 3);
+  assert.deepEqual(b.map((i) => (isGoldPieces(i) ? 'gold' : i.name)), ['gold', 'blue', 'potion'], 'the Magic piece first, then the dearer supply');
+});
+
+test('KIT-ROLL (LOOT-EASE): a foe\'s dropped kit rolls the plain ladder at its death - never at the spawn; once; marked for the drought; a piece its spawn\'s roll rolled never; off, nothing (mutants: the ladder never read; the drought\'s mark dropped; the plain ladder lost; the carried piece rolled twice). PIN MOVED (AUDIT 625 L1-L3): the kit is what the spawn\'s roll left unmarked - so the carried piece is the producer\'s, marked `untaken` - laddered as a copy, and every foe\'s rolls (Mac: "The plain ladder"); test/audit625_loot.test.js pins the three', async () => {
+  const { rollCorpseKit } = await import('../src/systems/foeLootCap.js');
+  const { setPref, _resetForTests } = await import('../src/systems/uiPrefs.js');
+  const { createWeapon } = await import('../src/combat/enemyEquipment.js');
+  const { rarityOf } = await import('../src/systems/lootRarity.js');
+  _resetForTests(); setPref('lootRarity', true);
+  const body = (mark = {}) => {
+    const sword = createWeapon(120, 1);   // a Steel Longsword in its hand
+    const loose = { ...createWeapon(118, 0), untaken: true };   // an Iron Broadsword it carries, never worn - as the spawn's roll leaves it, marked
+    return { e: { mobileType: 144, level: 8, lootCap: 3, items: [goldStack(4), sword, loose], equip: { slots: [sword] }, ...mark }, sword, loose };
+  };
+  const { e, loose } = body();
+  const won = rollCorpseKit(e, { rolls: () => 0 });
+  assert.equal(won.length, 1, 'the worn piece rolls - a roll of 0 is the best tier its ladder gives');
+  assert.equal(e.items[1], won[0], 'its laddered copy in the body');
+  assert.notEqual(rarityOf(won[0]), 'common');
+  assert.equal(won[0].untaken, true, 'marked: its take counts for the drought');
+  assert.equal(rarityOf(loose), 'common', 'a carried piece is the spawn door\'s, never this one\'s');
+  const tier = won[0].rarity;
+  assert.deepEqual(rollCorpseKit(e, { rolls: () => 0 }), [], 'once');
+  assert.equal(e.items[1].rarity, tier);
+  // the PLAIN ladder: a roll of 0.0899 is under its tier-8 Magic (90 per mille) and over its Rare (15.6); 0.09 is white
+  const m = body(); rollCorpseKit(m.e, { rolls: () => 0.0899 });
+  assert.equal(m.e.items[1].rarity, 'magic');
+  const w = body(); rollCorpseKit(w.e, { rolls: () => 0.09 });
+  assert.equal(rarityOf(w.e.items[1]), 'common', 'white over the plain Magic threshold - the whole ladder\'s (220) would have made it blue');
+  assert.equal(w.e.items[1].untaken, true, 'a white roll is a roll');
+  assert.deepEqual(rollCorpseKit(w.e, { rolls: () => 0 }), [], 'and never again - a second door rolls it no better');
+  assert.equal(rarityOf(w.e.items[1]), 'common');
+  setPref('lootRarity', false);
+  const off = body();
+  assert.deepEqual(rollCorpseKit(off.e, { rolls: () => 0 }), [], 'off: DFU exactly');
+  assert.equal(off.e.items[1].untaken, undefined);
+  _resetForTests();
+});
+
+test('KIT-ROLL: every body door a plain foe dies through rolls its kit before anything reads the body\'s tiers - the dungeon\'s kill, a joiner\'s copy and an arrival\'s, the street\'s kill and the watch\'s; the spawn never does (mutants: any door\'s call dropped or put after the sigils)', () => {
+  const doors = [
+    ['src/scenes/dungeonContext.js', /rollCorpseKit\(foe\.entity, \{ luck: liveStat\(playerEntity, 'luck'\) \}\);[^\n]*\n\s*spawnCorpse\(foe\);\s*playRareDrop\(audio, foe\.ai\.feet, foe\.entity\.items\);[^\n]*\n\s*stampWonWeapons\(foe\.entity\.items/],
+    ['src/scenes/dungeonContext.js', /if \(r\.d === 1 && !f\.dead\) \{ rollCorpseKit\(f\.entity, [^}]*\}\); addCorpseFood\([^;]*; stampWonWeapons\(f\.entity\.items/],
+    ['src/scenes/dungeonContext.js', /if \(wire && sf\.dead && !f\.dead && sf\.items == null\) \{ rollCorpseKit\(f\.entity, [^}]*\}\); addCorpseFood\([^;]*; stampWonWeapons\(f\.entity\.items/],
+    ['src/scenes/exteriorFoes.js', /rollCorpseKit\(f\.entity, \{ rolls, luck: liveStat\(playerEntity, 'luck'\) \}\);[^\n]*\n\s*stampWonWeapons\(f\.entity\.items/],
+    ['src/scenes/cityGuards.js', /rollCorpseKit\(g\.entity, \{ rolls: rand, luck: liveStat\(playerEntity, 'luck'\) \}\);[^\n]*\n\s*stampWonWeapons\(g\.entity\.items/],
+  ];
+  for (const [f, re] of doors) assert.match(readFileSync(f, 'utf8'), re, f);
+  // and every body's sigil stamp in a foe pool has the kit roll before it - a new door cannot forget it
+  for (const f of ['src/scenes/dungeonContext.js', 'src/scenes/exteriorFoes.js', 'src/scenes/cityGuards.js']) {
+    const src = readFileSync(f, 'utf8');
+    const stamps = [...src.matchAll(/stampWonWeapons\((\w+)\.entity\.items/g)];
+    const kits = [...src.matchAll(/rollCorpseKit\((\w+)\.entity,/g)];
+    assert.equal(kits.length, stamps.length, `${f}: a kit roll for every body's stamp`);
+  }
+  assert.doesNotMatch(readFileSync('src/scenes/hostCombat.js', 'utf8'), /rollCorpseKit/, 'never at the spawn: the foe would fight with it');
 });
 
 test('SEARCH1-PARTY: two foes a player, a search is the room\'s container, and a crowd says so', () => {

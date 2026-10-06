@@ -240,7 +240,7 @@
  {
   "name": "AUDITRESTPARTY-B4-customs-lets-them-in",
   "file": "src/systems/realmCustoms.js",
-  "old": "  if (!REST_ITEMS_ONLINE) {",
+  "old": "  if (!restItemsOnline()) {",
   "new": "  if (false) {",
   "tests": [
    "test/auditrestparty_camps.test.js"

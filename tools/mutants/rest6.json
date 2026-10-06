@@ -1,9 +1,9 @@
 [
  {
-  "name": "REST6-the-switch-on-a-release-early",
+  "name": "REST6-the-switch-shut-again",
   "file": "src/systems/restItems.js",
-  "old": "export const REST_ITEMS_ONLINE = false;",
-  "new": "export const REST_ITEMS_ONLINE = true;",
+  "old": "export const REST_ITEMS_ONLINE = true;",
+  "new": "export const REST_ITEMS_ONLINE = false;",
   "tests": [
    "test/rest6_consumables.test.js"
   ]
@@ -11,8 +11,8 @@
  {
   "name": "REST6-offline-without-the-arc",
   "file": "src/systems/restItems.js",
-  "old": "(online ? REST_ITEMS_ONLINE : survivalOn())",
-  "new": "(online ? REST_ITEMS_ONLINE : true)",
+  "old": "(online ? restItemsOnline() : survivalOn())",
+  "new": "(online ? restItemsOnline() : true)",
   "tests": [
    "test/rest6_consumables.test.js"
   ]

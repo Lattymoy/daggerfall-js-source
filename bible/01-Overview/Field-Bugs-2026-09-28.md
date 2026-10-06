@@ -267,7 +267,7 @@ own map name and the lockpick record kept, a house the player owns never renamed
 - Mutants: `tools/mutants/disc28.json` (48 dead). Re-aimed: `jail_hit.json` (6), `auditdisc19.json` (four S4 records),
   `auditparty8.json` (AP-quest-echo), `auditsqueeze.json` (ASQ-S1).
 - Citations: `tools/citeShift.mjs --base fe95d9592 --apply --struck`, once (264 moved); the worldModes DiscoverBuilding
-  note re-aimed by hand to `discovery.js:93`; `Hardening.md:642` quotes a past mismatch as history and stands.
+  note re-aimed by hand to `discovery.js:93`; `Hardening.md:646` quotes a past mismatch as history and stands.
 
 ## AUDIT (2026-09-28, before the merge)
 

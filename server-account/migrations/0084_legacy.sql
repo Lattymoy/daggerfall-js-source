@@ -1,9 +1,9 @@
--- LEGACY7 (2026-10-06) - PROJECT LEGACY ONLINE: THE SERVICE HOLDS THE LINE.
+-- LEGACY7 (2026-10-06; 0083 on its branch, renumbered past SERPENT-SET's 0083_serpent_embers at its merge of main) - PROJECT LEGACY ONLINE: THE SERVICE HOLDS THE LINE.
 --
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
 -- Applied exactly once through the `d1_migrations` ledger, which the
--- deploy runs (ACC1-CI). Deploy this service (acct84) BEFORE the site:
+-- deploy runs (ACC1-CI). Deploy this service (acct85) BEFORE the site:
 -- the new site founds an online house at the service and tombstones a
 -- Bloodline's fallen there.
 --

@@ -1598,12 +1598,14 @@ ${PROF_STATION_CSS}`;
 export const ITEM_FRAME_CSS = `
 /* ── RARITY-UI: THE TIER ON THE ICON'S FRAME ── */
 ${rarityVarsCss()}
-/* the pack's grid (and the remote pane's): the tile IS the icon's frame */
-.pack-shell .pack-dock .itemrow[data-rarity] {
+/* the pack's grid (and the remote pane's): the tile IS the icon's frame - and AUDIT 625 W3, the wallet's sheet's, whose
+   pieces are the grid's own tiles */
+.pack-shell .walletpieces .itemrow[data-rarity], .pack-shell .pack-dock .itemrow[data-rarity] {
   border-color: var(--rar-hi) var(--rar-lo) var(--rar-lo) var(--rar-hi);
   background-image: radial-gradient(ellipse at 50% 115%, rgba(var(--rar-rgb),0.26), transparent 68%),
     linear-gradient(180deg, rgba(255,255,255,0.06) 0 2px, transparent 2px);
   box-shadow: 0 0 0 1px #050608, inset 0 0 0 1px rgba(var(--rar-rgb),0.3), inset 0 0 12px rgba(var(--rar-rgb),0.2); }
+.pack-shell .walletpieces .itemrow[data-rarity]:hover, .pack-shell .walletpieces .itemrow[data-rarity]:focus-visible,
 .pack-shell .pack-dock .itemrow[data-rarity]:hover, .pack-shell .pack-dock .itemrow[data-rarity]:focus-visible {
   border-color: var(--rar-hi);
   box-shadow: 0 0 0 1px #050608, 0 0 9px rgba(var(--rar-rgb),0.6), inset 0 0 0 1px rgba(var(--rar-rgb),0.45),
@@ -1611,17 +1613,17 @@ ${rarityVarsCss()}
 .pack-shell .pack-dock .itemrow[data-rarity].on { border-color: var(--rar-hi); outline-color: rgba(var(--rar-rgb),0.7);
   box-shadow: 0 0 0 1px #050608, 0 0 12px rgba(var(--rar-rgb),0.55), inset 0 0 16px rgba(var(--rar-rgb),0.32); }
 /* the tier's pips, bottom-left - the corner the key chip (top-left) and the count (bottom-right) leave free */
-.pack-shell .pack-dock .itemrow[data-rarity]::before { content: var(--rar-pips); position: absolute; left: 3px; bottom: 1px;
+.pack-shell .walletpieces .itemrow[data-rarity]::before, .pack-shell .pack-dock .itemrow[data-rarity]::before { content: var(--rar-pips); position: absolute; left: 3px; bottom: 1px;
   font-size: 8px; line-height: 1; letter-spacing: 1px; color: var(--rar); pointer-events: none;
   text-shadow: 1px 1px 0 #050608, 0 0 4px rgba(var(--rar-rgb),0.7); }
 /* UI1 (bible/10-UI/Slots-Hotbar-Status.md): THE SLOT IS THE FRAME, AND ONLY IT (Mac: "rarity outlines ... the
    UI/Hotbar border itself instead of it being an icon within an icon") - the sprite, fitted to the slot's 52px room
    (ui/iconFit.js), stands straight on the slot's own ground under the tier's border, in no second box. The stack's
    count takes the slot's last corner. */
-.pack-shell .pack-dock .itemrow .count { right: 4px; bottom: 3px; z-index: 2; font-size: 11px; line-height: 1; color: #efe8d6;
+.pack-shell .walletpieces .itemrow .count, .pack-shell .pack-dock .itemrow .count { right: 4px; bottom: 3px; z-index: 2; font-size: 11px; line-height: 1; color: #efe8d6;
   pointer-events: none; text-shadow: -1px 0 0 #050608, 1px 0 0 #050608, 0 -1px 0 #050608, 0 1px 0 #050608, 1px 1px 0 #050608; }
-.pack-shell .pack-dock .itemrow.hasbar .count { bottom: 7px; }
-.pack-shell .pack-dock .itemrow[data-locked] .count { right: 16px; }   /* the padlock keeps the corner (LOCK1) */
+.pack-shell .walletpieces .itemrow.hasbar .count, .pack-shell .pack-dock .itemrow.hasbar .count { bottom: 7px; }
+.pack-shell .walletpieces .itemrow[data-locked] .count, .pack-shell .pack-dock .itemrow[data-locked] .count { right: 16px; }   /* the padlock keeps the corner (LOCK1) */
 /* a LIST's row keeps its engraved rule - the icon inside it is the frame (the loot window, the shop, a player trade) */
 .pack-shell .loot-win .itemrow[data-rarity] .tile, .trade-shell .itemrow[data-rarity] .tile,
 .ptrade-shell .itemrow[data-rarity] .tile {
@@ -1682,7 +1684,7 @@ ${rarityVarsCss()}
    passing state painted on the same frame is said again here, at the tier's weight and after it: the reorder's
    insertion mark, the picked socket (and a socket as a drop target), the hotbar's strike, refusal and drop target,
    the refused drag. The state wins the moment it lasts; the tier's glow stays under it where there is room. */
-.pack-shell .pack-dock .itemrow[data-rarity].dragover {
+.pack-shell .walletpieces .itemrow[data-rarity].dragover, .pack-shell .pack-dock .itemrow[data-rarity].dragover {
   box-shadow: 0 0 0 1px #050608, inset 0 2px 0 #c08a3e, inset 0 0 12px rgba(var(--rar-rgb),0.2); }
 .pack-shell .wornsock[data-rarity].on { border-color: var(--rar-hi); outline-color: rgba(var(--rar-rgb),0.7);
   background-image: linear-gradient(180deg, rgba(243,207,134,0.14) 0 2px, rgba(192,138,62,0.08) 2px);
@@ -1768,7 +1770,7 @@ ${ARENA_WINDOW_CSS}
 .pack-shell .wear.broken, .trade-shell .wear.broken, .ptrade-shell .wear.broken { background: rgba(122,29,22,0.9); }
 .pack-shell .loot-win .itemrow .tile, .pack-shell .wornrow .tile, .trade-shell .itemrow .tile, .ptrade-shell .itemrow .tile { position: relative; }
 .pack-shell .loot-win .itemrow .wear, .pack-shell .wornrow .wear, .trade-shell .itemrow .wear, .ptrade-shell .itemrow .wear { left: 2px; right: 2px; bottom: 0; }
-.pack-shell .pack-dock .itemrow.hasbar[data-rarity]::before { bottom: 6px; }
+.pack-shell .walletpieces .itemrow.hasbar[data-rarity]::before, .pack-shell .pack-dock .itemrow.hasbar[data-rarity]::before { bottom: 6px; }
 /* ── LOCK1: THE PADLOCK ON A LOCKED PIECE (systems/itemLock.js) - bottom-right of a grid tile or a socket (above the
    wear bar's end when there is one; the key chip has the top-left), the top-left corner of a list's picture (the
    rune has its top-right). The card says it in words. */

@@ -1,6 +1,6 @@
 // LEGACY7 (2026-10-06, bible/06-Systems/Legacy-Arc.md section 9; Mac: "online integration with permadeath (Bloodline)
 // or non-permadeath (Enduring)"): PROJECT LEGACY ONLINE, SERVICE SIDE - the REAL Worker over the REAL migrations
-// (test/accountDb.mjs): an account's lines (server-account/src/legacy.js, migration 0083), written only past their rev;
+// (test/accountDb.mjs): an account's lines (server-account/src/legacy.js, migration 0084), written only past their rev;
 // a realm character born as a living member of the account's own line, never one another played; and the tombstone - a
 // fallen character never joined, checkpointed or counted against the roster again.
 import { test } from 'node:test';
@@ -28,7 +28,7 @@ async function stand() {
 
 test('LEGACY7 the routes: the lines, a line written, the tombstone - behind a session, and the service moved on', () => {
   for (const r of ['/v1/realm/lineages', '/v1/realm/lineage', '/v1/realm/die']) assert.ok(ROUTES.has(r), r);
-  assert.equal(ACCOUNT_VERSION, 'acct84');
+  assert.equal(ACCOUNT_VERSION, 'acct85');
 });
 
 test('LEGACY7 a line: founded, written only past its rev - a stale write answered with the stored record to merge into - its model the founder\'s for good', async () => {

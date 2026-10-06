@@ -69,12 +69,14 @@ export function serpentRecordText(rec) {
  *   nowS?: () => (number|null), nowMs?: () => number, say?: (text: string) => void,
  *   onRecorded?: (data: any, entry: { r: string, ch: string, nm: string|null, lv: number, cid: string }) => void,
  *   onSpoils?: (entry: { r: string, ch: string, nm: string|null, lv: number, cid: string }, data: any) => (void|Promise<any>),
+ *   onMarks?: (data: any) => (string|string[]|null),
  *   me?: () => (string|null), cid?: () => string,
  * }} deps `claim` is net/accountClient.js accountSerpents' - `{ ok, data }` or `{ ok: false, error, why? }`, never a
  *   throw; `me` the signed-in account's id; `onRecorded` hears each counted receipt's answer (its Renown and order);
- *   `onSpoils` each receipt whose hoard the service gave THIS claim - awaited, its receipt settled only once it is given
+ *   `onSpoils` each receipt whose hoard the service gave THIS claim - awaited, its receipt settled only once it is given;
+ *   `onMarks` (SERPENT-SET) each counted receipt's silver, the lines it answers said as the raids' are
  */
-export function createSerpentClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, onRecorded = () => {}, onSpoils = () => {}, me = () => null, cid = mintCid }) {
+export function createSerpentClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, onRecorded = () => {}, onSpoils = () => {}, onMarks = () => null, me = () => null, cid = mintCid }) {
   let busy = false, again = false, lastAt = -Infinity;
   let lastMe, meAt = -Infinity;
   const settled = new Set(), guestSaid = new Set();
@@ -116,6 +118,10 @@ export function createSerpentClaims({ claim, store = null, nowS = () => Math.flo
           const n = Number.isSafeInteger(answer.data.slain) ? answer.data.slain : null;
           const xp = Number.isSafeInteger(answer.data.renown?.credited) ? answer.data.renown.credited : 0;
           if (n != null) say(SERPENT_CLAIM_TEXT.recorded(n, xp, serpentBossById(live(e.r)?.b)));
+          // SERPENT-SET: the serpent's silver - the host's lines for it (the raids' own door)
+          let lines = null;
+          try { lines = onMarks(answer.data); } catch (err) { console.warn('[serpent] silver lines', err?.message ?? err); }
+          for (const line of Array.isArray(lines) ? lines : [lines]) if (typeof line === 'string' && line) say(line);
           hear(onRecorded, answer.data, e);
         } else if (answer?.ok && answer.data?.why === 'guest' && !guestSaid.has(e.r)) {
           guestSaid.add(e.r);

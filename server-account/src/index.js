@@ -56,11 +56,12 @@
 //   POST /v1/duel/loss   { winner }       -> { recorded, wins, losses }
 //   POST /v1/duel/record { id }           -> { id, wins, losses, gates }
 // WB5b, the gates closed. The caller is the account the receipt names:
-//   POST /v1/serpent/claim { receipt, character, name?, cid? } -> { recorded, slain, renown, spoils, order }   (SERPENT1: a sea serpent's receipt)
+//   POST /v1/serpent/claim { receipt, character, name?, cid? } -> { recorded, slain, renown, spoils, order, marks? }   (SERPENT1: a sea serpent's receipt; SERPENT-SET: `marks` its silver where it recorded)
 //   POST /v1/gate/claim  { receipt, region?, character? } -> { recorded, stones, closed, seat? }   (WB12d: the row's embers, AUDIT WB12d A4; SEAT1b: `seat` the kill's influence)
 // MARKS1, Marks - an account's alone, behind MARKS_OPEN (marks.js); `rid` the act's own id:
 //   POST /v1/marks/balance {}                               -> { balance, today, bank }
 //   POST /v1/marks/exchange { marks, rid }                  -> { ok, marks, gold, balance, exchangedToday } | { repeat, ... }
+//   POST /v1/marks/find { kind, rid }                       -> { ok, struck, balance, today, why? } | { repeat, ... }   (SILVER-FINDS: a loot find)
 //   POST /v1/marks/guild/deposit { character, marks, rid }  -> { ok, marks, balance, guildMarks }
 //   POST /v1/marks/guild/withdraw { character, marks, rid } -> { ok, marks, balance, guildMarks }
 //   POST /v1/marks/report {}                                -> the week's report (a developer's)
@@ -195,7 +196,7 @@ import { fundFort, readForts } from './seatForts.js';   // SEAT2b: a seat's fort
  *  seats are open to it - for the wardrobe's read and its write. */
 const withSeatTitles = async (ctx, player, env) => (seatsOpenFor(player, env) ? { ...player, seatTitles: await seatTitlesOf(ctx.db, player.id) } : player);
 import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsOf } from './decor.js';   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
-import { gateStrikeStatement, gateStrikeAnswer, raidStrikeStatement, combatStrikeAnswer, raidStrikeRid, deedStatements, deedAnswer, deedEvent, marksOf, marksCardOf, exchangeMarks, depositGuildMarks, withdrawGuildMarks, marksReport } from './marks.js';   // MARKS1: the server's currency; SILVER-WAYS: a raid's silver and a guild's deeds
+import { gateStrikeStatement, gateStrikeAnswer, raidStrikeStatement, combatStrikeAnswer, raidStrikeRid, deedStatements, deedAnswer, deedEvent, marksOf, marksCardOf, exchangeMarks, depositGuildMarks, withdrawGuildMarks, marksReport, serpentStrikeStatement, serpentStrikeAnswer, findMarks } from './marks.js';   // MARKS1: the server's currency; SILVER-WAYS: a raid's silver and a guild's deeds
 import { readBoard, pinNote, takeDownNote, reportNote, moderateNote, postNotice, removeNotice } from './board.js';   // NOTICE1: the Notice Board
 import { profState, profPixels, harvestNode, chooseSpec, withdrawStores, depositStores, smeltAtForge, craftAtAnvil, buyStock, listWrits, deliverWrit } from './professions.js';   // BAG1: a deposit   // PROF1: the professions; PROF2: the forge; PROF3: the anvil and the smith's stock
 import { brewAtStation, disenchantPiece } from './alchemy.js';   // PROF12: Alchemy's brew, Enchanting's disenchant
@@ -300,10 +301,11 @@ const GUILD_STATUS = Object.freeze({
   // REALM P2.2: a realm character's record moves with the act - where it stands, and whether it can pay
   'realm-needed': 400, 'realm-gold': 409, lease: 409, seq: 409, 'no-realm-character': 404, 'no-data': 404, 'no-storage': 503,
 });
-/** MARKS1: each Marks refusal's status - not this account's (a guest, the switch, a rank, a developer's) 403, no
- *  guild 404, short or capped 409, the hour's acts spent 429, a bad shape 400 (the default). */
+/** MARKS1: each Marks refusal's status - not this account's (a guest, the switch, a rank, a developer's; AUDIT 625 S1:
+ *  the finds of an account not yet a week registered) 403, no guild 404, short or capped 409, the hour's acts spent
+ *  429, a bad shape 400 (the default). */
 const MARKS_STATUS = Object.freeze({
-  'marks-need-account': 403, 'marks-closed': 403, 'not-developer': 403, 'guild-rank': 403, 'guilds-need-account': 403,
+  'marks-need-account': 403, 'marks-closed': 403, 'marks-young': 403, 'not-developer': 403, 'guild-rank': 403, 'guilds-need-account': 403,
   'no-guild': 404,
   'marks-short': 409, 'marks-bank-cap': 409, 'marks-full': 409, 'guild-marks-short': 409, 'guild-marks-full': 409,
   'marks-rate': 429,
@@ -892,11 +894,17 @@ const service = {
         // signed it at the kill (src/net/serpentReceipt.js); the session says who is asking, never the body, and serpents.js
         // `claimSerpent` holds the rest - the signature, the account, one row a (day, account), the Renown, the device's
         // hoard. A level that ROSE comes back with a signed order, as a raid's does.
-        const r = await claimSerpent(ctx, who.player, { receipt: body.receipt, character: body.character, name: body.name ?? null, cid: body.cid ?? null }, await gatePublicKey(env, subtle));
+        // SERPENT-SET: and its silver, a combat strike in the row's own batch (marks.js serpentStrikeStatement - 40, a ship
+        // that stood half, under the day's combat cap with the gates and the raids), answered as `marks` where it recorded
+        const r = await claimSerpent(ctx, who.player, { receipt: body.receipt, character: body.character, name: body.name ?? null, cid: body.cid ?? null, stones: body.stones ?? null }, await gatePublicKey(env, subtle), {   // AUDIT 625 P4: the embers its build mints
+          strike: (d, nonce, earned) => serpentStrikeStatement(ctx, who.player, env, d, nonce, earned),
+        });
         if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);
         const key = r.renown?.rose ? await signingKey(env, subtle) : null;   // a level that rose: its signed order, for the rooms
         const signed = key ? await mintRenownOrder({ s: who.player.id, lv: r.renown.level }, key, { subtle, nowS }) : null;
-        return json({ ...r, order: signed }, 200, origin);
+        const answer = { ...r };
+        delete answer.day; delete answer.struck;   // the service's own: the kill's day and whether the batch struck
+        return json({ ...answer, order: signed, ...(r.recorded ? { marks: await serpentStrikeAnswer(ctx, who.player, env, !!r.struck, r.day) } : {}) }, 200, origin);
       }
 
       if (path === '/v1/arena/claim' && request.method === 'POST') {
@@ -1120,6 +1128,7 @@ const service = {
         const act = {
           '/v1/marks/balance': () => marksOf(ctx, who.player, env),
           '/v1/marks/exchange': () => exchangeMarks(ctx, who.player, env, body),
+          '/v1/marks/find': () => findMarks(ctx, who.player, env, body),   // SILVER-FINDS: a loot find
           '/v1/marks/guild/deposit': () => depositGuildMarks(ctx, who.player, env, body),
           '/v1/marks/guild/withdraw': () => withdrawGuildMarks(ctx, who.player, env, body),
           '/v1/marks/report': () => marksReport(ctx, who.player, env),
