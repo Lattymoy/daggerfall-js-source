@@ -78,7 +78,7 @@
   {
     "name": "AUDIT-SERPENT-S4-fall-cx",
     "file": "src/net/serpentBrain.js",
-    "old": "f.coil.why = 'fell'; out.push({ k: 'cx', i: f.coil.i, at: now });",
+    "old": "f.coil.why = 'fell'; out.push({ k: 'cx', i: f.coil.i, at: go });",
     "new": "f.coil.why = 'fell';",
     "tests": [
       "test/serpent1_audit.test.js"
@@ -87,8 +87,8 @@
   {
     "name": "AUDIT-SERPENT-M2-throes-said",
     "file": "src/net/serpentBrain.js",
-    "old": "pushMode(f, now, MODE.dying, out);",
-    "new": "pushMode(f, now, MODE.dying, null);",
+    "old": "pushMode(f, go, MODE.dying, out);",
+    "new": "pushMode(f, go, MODE.dying, null);",
     "tests": [
       "test/serpent1_audit.test.js"
     ]
@@ -96,7 +96,7 @@
   {
     "name": "AUDIT-SERPENT-S4-sound-cx",
     "file": "src/net/serpentBrain.js",
-    "old": "f.coil.why = 'gone'; out.push({ k: 'cx', i: f.coil.i, at: now });",
+    "old": "f.coil.why = 'gone'; out.push({ k: 'cx', i: f.coil.i, at: go });",
     "new": "f.coil.why = 'gone';",
     "tests": [
       "test/serpent1_audit.test.js"
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-SERPENT-B7-ships-afloat",
     "file": "src/net/serpentBrain.js",
-    "old": "f.players[b.sub].hl >= 0 && !f.players[b.sub].wreck).length;",
-    "new": "f.players[b.sub].hl >= 0).length;",
+    "old": "export const serpentShareWanted = (p, now) => !p.wreck && p.aboard !== false",
+    "new": "export const serpentShareWanted = (p, now) => p.aboard !== false",
     "tests": [
       "test/serpent1_audit.test.js"
     ]
@@ -245,10 +245,11 @@
   {
     "name": "AUDIT-SERPENT-S2-stray-once",
     "file": "src/net/serpentBrain.js",
-    "old": "if (f.fell || f.gone || !(now - t0 > SERPENT_SLEEP_MS)) return out;",
+    "old": "if (f.fell || f.gone || (!law && !(now - t0 > SERPENT_SLEEP_MS))) return out;",
     "new": "if (f.fell || f.gone) return out;",
     "tests": [
-      "test/serpent1_audit.test.js"
+      "test/serpent1_audit.test.js",
+      "test/auditships.test.js"
     ],
     "note": "SERPENT3 (re-aimed by content): the stray's surfacing is gone - its once is the resume's now (serpentBrain.js serpentResume), a slept fight taken up once, never every beat"
   },
@@ -459,8 +460,8 @@
   {
     "name": "AUDIT-SERPENT-M3-wake-3d",
     "file": "src/scenes/serpentHost.js",
-    "old": "const [x, z] = scene(head[0], head[1]); deps.fx?.('wake', [x, deps.seaY(), z], 1);",
-    "new": "const [x, z] = scene(head[0], head[1]); deps.fx?.('wake', [x, z], 1);",
+    "old": "deps.fx?.('wake', [x, deps.seaY(), z], 1);",
+    "new": "deps.fx?.('wake', [x, z], 1);",
     "tests": [
       "test/serpent1_auditclient.test.js"
     ]

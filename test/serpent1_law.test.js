@@ -16,7 +16,7 @@ import {
 } from '../src/net/serpentLaw.js';
 import { gateTimes, GATE_COLLAPSE_MS, gameDayAt, PIXEL_M as GATE_PIXEL_M } from '../src/net/gateLaw.js';
 import {
-  LEG, MODE, legAt, legFrom, headAt, spinePoint, bodyAt, depthAt, depthOf, modeAt, coilPoint, coilWeight, anyExposed,
+  LEG, MODE, legAt, legFrom, headAt, spinePoint, bodyAt, depthAt, depthOf, modeAt, coilPoint, coilWeight, anyExposed, coilAngleAt, DRIFT_V,
   headExposed, nearestExposed, segmentBox, segExposed, radiusAt, SEG_N, SEG_LEN, BODY_LEN, DEEP_Y, MODE_BLEND_MS, COIL_BLEND_MS,
   COIL_R, BREACH_Y, REAR_Y,
 } from '../src/net/serpentBody.js';
@@ -26,6 +26,7 @@ import {
   SERPENT_HIT_CAP_X, SERPENT_HIT_HZ_MAX, HEAD_X, STUN_X, ZONES, SERPENT_PHASE_AT, SERPENT_SHIELD_MS, SERPENT_ATTACK_TABLE, SERPENT_ATTACK_BY_ID, SERPENT_PHASE_TURN, SERPENT_OPENING_MS,
   ENGAGE_R, GUN_REACH_M, SERPENT_POSE_SLACK, COIL_MS, COIL_ESC_MS, SERPENT_STUN_MS, COIL_TEAM_S, COIL_HP_MIN, SERPENT_RECEIPT_SHARE, SERPENT_STOOD_SHARE,
   SERPENT_FIGHTERS_MAX, SERPENT_ABSENT_RETIRE_MS, ARENA_R, MAEL_ORBIT_R, RAM_V, ramLen, BREACH_LEAD_MS, SERPENT_COIL_PASS, SERPENT_STAND_R, SERPENT_IDLE_RETIRE_MS, SERPENT_TARGET_R, serpentWreck, serpentShareWanted, COIL_WORD_EARLY_MS, serpentAtkFrame,
+  SERPENT_SAY_AHEAD_MS,   // AUDIT SHIPS B5: an end's swim said ahead
 } from '../src/net/serpentBrain.js';
 import { HULL, HULL_BUILDS, GUNS } from '../src/systems/naval/navalShips.js';
 import { orientedBox, segmentBoxEntry } from '../src/systems/naval/navalBallistics.js';
@@ -208,7 +209,11 @@ test('SERPENT1 body: the coil - the head looming over her deck, the loop round h
   const b = { legs, modes: [{ at: 0, m: MODE.coil }], coil: c };
   const pts = bodyAt(b, 1000 + COIL_BLEND_MS);
   assert.equal(pts.length, SEG_N + 1);
-  assert.ok(Math.abs(pts[5].x - coilPoint(c, 35).x) < 1e-9, 'wound on, the body IS the coil');
+  // PIN MOVED (AUDIT SHIPS B6, 2026-10-06): the coil drawn turns with its head (coilAngleAt) - DRIFT_V round COIL_R since
+  // it wound on, counter-clockwise, held where it lets go
+  assert.ok(Math.abs(pts[5].x - coilPoint(c, 35, coilAngleAt(c, 1000 + COIL_BLEND_MS)).x) < 1e-9, 'wound on, the body IS the coil');
+  assert.ok(Math.abs(coilAngleAt(c, 1000 + COIL_BLEND_MS) - (c.th - (DRIFT_V * COIL_BLEND_MS) / 1000 / COIL_R)) < 1e-12, 'turned with its head');
+  assert.equal(coilAngleAt(off, 9000), coilAngleAt(off, 5000), 'held where it let go');
   assert.ok(headExposed(b, pts, 1000 + COIL_BLEND_MS));
   // sounded, the path's body under the coil - nothing of it on the surface a second serpent beside her
   const under = bodyAt({ legs, modes: [{ at: 0, m: MODE.coil }], coil: null }, 5000);
@@ -443,7 +448,9 @@ test('SERPENT1 brain: A COIL BROKEN by the ships\' fire lets go and lies SERPENT
   const hp = f.hp;
   let t = T0 + 700, broke = null;
   while (!broke && t < T0 + 20_000) { for (const o of applySerpentHit(f, 's2', 40, ZONES.coil, { x: 150, z: 0 }, t)) if (o.k === 'cb') broke = o; t += 300; }
-  assert.ok(broke && broke.n === 'P2' && broke.su === broke.at + SERPENT_STUN_MS);
+  // PIN MOVED (AUDIT SHIPS D2, 2026-10-06): stunned from the break, its letting go said SERPENT_SAY_AHEAD_MS on (the
+  // word's moment is the coil's `off`, which every screen unwinds it from)
+  assert.ok(broke && broke.n === 'P2' && broke.su === broke.at - SERPENT_SAY_AHEAD_MS + SERPENT_STUN_MS);
   // AUDIT SERPENT T3: the coil's health first - and SERPENT_COIL_PASS of every blow on it off its own
   assert.ok(Math.abs(f.hp - (hp - f.players.s2.cd * SERPENT_COIL_PASS)) < 1e-6, `the coil's fire passes through (${hp} -> ${f.hp})`);
   assert.ok(f.players.s2.cd > 0 && f.players.s2.cd === f.players.s2.dealt);
@@ -485,7 +492,8 @@ test('SERPENT1 brain: THE END - the kill stamps its fall once with its three bes
   const out = stepSerpentBrain(g, SOUND, [body('s1', 30, 0)], rng);
   assert.equal(out.at(-1).k, 'gone');
   assert.ok(g.gone && !g.fell && !serpentEarned(g, 's1'));
-  assert.equal(depthAt(g.modes, 0, SOUND + MODE_BLEND_MS), DEEP_Y, 'gone into the deep');
+  // PIN MOVED (AUDIT SHIPS B5, 2026-10-06): its dive said SERPENT_SAY_AHEAD_MS on, as every turn of its swim is
+  assert.equal(depthAt(g.modes, 0, SOUND + SERPENT_SAY_AHEAD_MS + MODE_BLEND_MS), DEEP_Y, 'gone into the deep');
 });
 
 test('SERPENT1 brain: a share leaves with its fighter (SERPENT_ABSENT_RETIRE_MS away) and comes back at the fraction it stands at; threat picks the ship that dealt most; a hand is never picked while a ship is at the fight (mutants: the share kept; a hand picked first)', () => {

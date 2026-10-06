@@ -1595,6 +1595,13 @@ export class Room {
         const now = Date.now(), sub = this._attach(ws)?.sub;
         const parks = (await this._parkList(now)).filter((e) => e.sub !== sub).map((e) => this._parkPublic(e));
         if (!this._send(ws, JSON.stringify({ t: 'parks', now, data: parks }))) return;
+        // AUDIT SHIPS B1: a serpent fight this socket hears is beaten again at once - the beat is armed by a serpent word
+        // and kept while someone hears the fight, so a fighter back from a dropped socket left it asleep until her next
+        // word, and the sleep's resume drew her serpent somewhere else
+        try {
+          const fights = await this._serpentFights(), b = this._attach(ws);
+          for (const [id, f] of fights) if (b && !f.fell && !f.gone && this._serpentHears(id, f, b)) { await this._serpentArm(Date.now()); break; }
+        } catch (e) { console.warn('[serpent] hello arm failed', e?.message ?? e); }
       }
       if (unseen) return;   // HOTFIX 1003f: a floor's hello said as anyone's - a private session's stranger's to nobody (a member's join says it: `_sessionShow`)
       const join = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, look: m.look, pose: this._drawn({ sub: who.subject, pose: m.pose }, a.key).pose }, who));   // AUDIT-SEATS T2: and a spectator's join stands it nowhere
@@ -4060,13 +4067,14 @@ export class Room {
     return by;
   }
   /** A fight's bodies about its waters now: one a fighter (its NEWEST socket speaks for it - AUDIT SOC B9's law, the
-   *  roll call's own _siegeSockets), where its last pose stands in the site frame, and whether that pose says it died. */
+   *  roll call's own _siegeSockets), where its last pose stands in the site frame, whether that pose says it died, and
+   *  when its sender said it (`ts` - AUDIT SHIPS A1: the serpent leads its marks by the way she makes between them). */
   _serpentBodies(f) {
     const out = [];
     for (const [sub, [, b]] of this._siegeSockets()) {
-      if (!b.pose || !f.players[sub]) continue;
+      if (!b.pose || !f.players[sub] || f.players[sub].stale) continue;   // AUDIT SHIPS C2: nor gone at
       const c = this._serpentFrameOf(f, b.pose);
-      out.push({ sub, x: c.x, z: c.z, dead: !!b.pose.dd });
+      out.push({ sub, x: c.x, z: c.z, dead: !!b.pose.dd, ...(Number.isFinite(b.pose.ts) ? { ts: b.pose.ts } : {}) });   // AUDIT SHIPS A1: the pose's send time - the brain reads her way off it
     }
     return out;
   }
@@ -4133,6 +4141,7 @@ export class Room {
     const by = this._serpentFightBy(fights, a.sub);
     if (!by) return;
     const [id, f] = by;
+    if (f.players[a.sub]?.stale) return;   // AUDIT SHIPS C2: a game told to reload is not heard until it has
     this._serpentFan(fights, id, f, serpentBrain.serpentResume(f, now));   // SERPENT3: judged on a fight taken up, never one asleep
     if (m.k === 'hit') {
       const pose = a.pose && !a.pose.dd ? this._serpentFrameOf(f, a.pose) : null;   // the dead strike nothing
@@ -4157,7 +4166,12 @@ export class Room {
     const id = serpentFightId(m.d, serpentSiteKey(m.sx, m.sz));
     let f = fights.get(id) ?? null;
     if (f?.rc?.[a.sub]) this._send(ws, JSON.stringify({ t: 'serpent', k: 'rcpt', r: f.rc[a.sub] }));
-    if (!(m.bv >= SERPENT_BRAIN_MIN)) { no('reload'); return; }
+    // AUDIT SHIPS C2: a game before the brain's law is told to reload - and until it says an `in` on the law, the account
+    // is not heard nor gone at in the fight it is in (a fight read back across the relay's deploy kept its fighters, whose
+    // old tabs drew the new law's whirl at the heart and took a pair's blows whole, and fought on)
+    const was = this._serpentFightBy(fights, a.sub);
+    if (!(m.bv >= SERPENT_BRAIN_MIN)) { if (was) was[1].players[a.sub].stale = true; no('reload'); return; }
+    if (was?.[1].players[a.sub]?.stale) delete was[1].players[a.sub].stale;
     if (m.d !== t.day || !serpentHolds(t.day, now)) { if (!f?.rc?.[a.sub]) no('the serpent is gone'); return; }
     if (cellRoomOfWire(m.sx, m.sz) !== a.key) { this._junk(ws); return; }
     if (!a.pose || a.pose.dd) return;

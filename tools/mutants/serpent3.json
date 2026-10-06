@@ -74,7 +74,7 @@
   {
     "name": "SERPENT3-coil-not-dashed",
     "file": "src/net/serpentBrain.js",
-    "old": "if (A === SERPENT_ATTACK_TABLE.coil) return { way: wayOnto(h, h.yw, HUNT_TURN_R, { x: target?.x ?? 0, z: target?.z ?? 0 }, COIL_R, 1), rise: 0 };",
+    "old": "if (A === SERPENT_ATTACK_TABLE.coil) return { way: wayOnto(h, h.yw, HUNT_TURN_R, { x: target?.x ?? 0, z: target?.z ?? 0 }, COIL_R, -1), rise: 0 };",
     "new": "if (A === SERPENT_ATTACK_TABLE.coil) return { way: null, rise: 0 };",
     "tests": [
       "test/serpent3.test.js"
@@ -83,10 +83,11 @@
   {
     "name": "SERPENT3-coil-round-the-wrong-way",
     "file": "src/net/serpentBrain.js",
-    "old": "pushLeg(f, legFrom(f.legs, on, LEG.arc, DRIFT_V, COIL_R, 1), out);",
-    "new": "pushLeg(f, legFrom(f.legs, on, LEG.arc, DRIFT_V, COIL_R, -1), out);",
+    "old": "pushLeg(f, legFrom(f.legs, on, LEG.arc, DRIFT_V, COIL_R, -1), out);",
+    "new": "pushLeg(f, legFrom(f.legs, on, LEG.arc, DRIFT_V, COIL_R, 1), out);",
     "tests": [
-      "test/serpent3.test.js"
+      "test/serpent3.test.js",
+      "test/auditships.test.js"
     ]
   },
   {
@@ -160,8 +161,8 @@
   {
     "name": "SERPENT3-stretch-swum-under",
     "file": "src/net/serpentBrain.js",
-    "old": "const dive = Math.max(now, at - serpentWindupOf(A));",
-    "new": "const dive = now;",
+    "old": "const go = now + SERPENT_SAY_AHEAD_MS, dive = Math.max(go, at - serpentWindupOf(A));",
+    "new": "const go = now + SERPENT_SAY_AHEAD_MS, dive = go;",
     "tests": [
       "test/serpent3.test.js"
     ]
@@ -187,7 +188,7 @@
   {
     "name": "SERPENT3-closing-at-cruise",
     "file": "src/net/serpentBrain.js",
-    "old": "steer(f, now, closeAim(f, now, target), CLOSE_V, out, HUNT_TURN_R);",
+    "old": "steer(f, now, closeAim(f, now, target), closeV(f, target), out, HUNT_TURN_R);",
     "new": "steer(f, now, closeAim(f, now, target), CRUISE_V, out, HUNT_TURN_R);",
     "tests": [
       "test/serpent3.test.js"
@@ -196,8 +197,8 @@
   {
     "name": "SERPENT3-closing-on-the-cruising-turn",
     "file": "src/net/serpentBrain.js",
-    "old": "steer(f, now, closeAim(f, now, target), CLOSE_V, out, HUNT_TURN_R);",
-    "new": "steer(f, now, closeAim(f, now, target), CLOSE_V, out);",
+    "old": "steer(f, now, closeAim(f, now, target), closeV(f, target), out, HUNT_TURN_R);",
+    "new": "steer(f, now, closeAim(f, now, target), closeV(f, target), out);",
     "tests": [
       "test/serpent3.test.js"
     ]
@@ -296,7 +297,7 @@
   {
     "name": "SERPENT3-pair-blow-unread",
     "file": "src/scenes/serpentHost.js",
-    "old": "deps.strike?.(ship.boat, shipHurt(A, ship, share()),",
+    "old": "deps.strike?.(ship.boat, shipHurt(A, ship, share(), blows),",
     "new": "deps.strike?.(ship.boat, shipHurt(A, ship),",
     "tests": [
       "test/serpent3.test.js"
@@ -314,7 +315,7 @@
   {
     "name": "SERPENT3-pair-crush-unread",
     "file": "src/scenes/serpentHost.js",
-    "old": "crushHurt(ship, share())",
+    "old": "crushHurt(ship, share(), blows)",
     "new": "crushHurt(ship)",
     "tests": [
       "test/serpent3.test.js"
@@ -341,8 +342,8 @@
   {
     "name": "SERPENT3-pair-crush-law",
     "file": "src/systems/serpentStrike.js",
-    "old": "export const crushHurt = (whole, k = 1) => shipHurt(CRUSH, whole, k);",
-    "new": "export const crushHurt = (whole, k = 1) => shipHurt(CRUSH, whole);",
+    "old": "export const crushHurt = (whole, k = 1, carry = null) => shipHurt(CRUSH, whole, k, carry);",
+    "new": "export const crushHurt = (whole, k = 1, carry = null) => shipHurt(CRUSH, whole);",
     "tests": [
       "test/serpent3.test.js"
     ]
@@ -395,17 +396,8 @@
   {
     "name": "SERPENT3-wake-on-the-surface",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (s.fell || s.gone || modeAt(s.modes, t) !== MODE.deep || (s.atk && ramHead(s.atk, t))) return;",
-    "new": "if (s.fell || s.gone || (s.atk && ramHead(s.atk, t))) return;",
-    "tests": [
-      "test/serpent3.test.js"
-    ]
-  },
-  {
-    "name": "SERPENT3-wake-ram-doubled",
-    "file": "src/scenes/serpentHost.js",
-    "old": "if (s.fell || s.gone || modeAt(s.modes, t) !== MODE.deep || (s.atk && ramHead(s.atk, t))) return;",
-    "new": "if (s.fell || s.gone || modeAt(s.modes, t) !== MODE.deep) return;",
+    "old": "if (s.fell || s.gone || modeAt(s.modes, t) !== MODE.deep) return;",
+    "new": "if (s.fell || s.gone) return;",
     "tests": [
       "test/serpent3.test.js"
     ]

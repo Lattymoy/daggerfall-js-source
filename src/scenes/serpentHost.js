@@ -30,10 +30,10 @@
 //
 // Not a DFU member. Ledger A (SERPENT1).
 import { bodyAt, segmentBox, segExposed, headExposed, coilWeight, SEG_N, MODE, modeAt, headAt, legIndexAt } from '../net/serpentBody.js';
-import { SERPENT_ATTACK_BY_ID, SERPENT_ATTACK_TABLE, ADMIT_R, FAN_R, ENGAGE_R, SERPENT_POOL_TICK_MS, ZONES, SERPENT_PHASE_NAMES, MAEL_R, SERPENT_SHIELD_MS, CRUISE_V, refOf } from '../net/serpentBrain.js';
+import { SERPENT_ATTACK_BY_ID, SERPENT_ATTACK_TABLE, ADMIT_R, FAN_R, ENGAGE_R, SERPENT_POOL_TICK_MS, ZONES, SERPENT_PHASE_NAMES, MAEL_R, SERPENT_SHIELD_MS, CRUISE_V, refOf, SERPENT_DRAWN_MS } from '../net/serpentBrain.js';
 import { serpentBossById, serpentCountdown, serpentCountdownWords, serpentSwims, SERPENT_BRAIN_V, SERPENT_DIVE_MS } from '../net/serpentLaw.js';
 import { cellRoomOfWire } from '../net/wire.js';
-import { shapeMeets, shipHurt, crushHurt, gripHurt, grindHurt, shoveOf, shoveLeft, maelPull, globAt, poolOf, poolBites, ramHead, fleetShare, SHOVE_S } from '../systems/serpentStrike.js';
+import { shapeMeets, shipHurt, crushHurt, gripHurt, grindHurt, shoveOf, shoveLeft, maelPull, globAt, poolOf, poolBites, fleetShare, SHOVE_S } from '../systems/serpentStrike.js';
 
 /** How often an `in` is said again while I am within its waters' sight (a reconnect, a halo come up, a share back). */
 export const IN_RESEND_MS = 20_000;
@@ -53,7 +53,9 @@ export const COIL_LOST_MS = 4000;
 export const COIL_WORD_WAIT_MS = 2500;
 /** AUDIT SERPENT M5: a fight alive whose cell has said nothing this long is left (a socket lost, a relay gone quiet) -
  *  never drawn on for ever; the `in` asks for it again. Its beat says a whole state every SERPENT_STATE_SEND_MS. */
-export const SERPENT_HEARD_MS = 12_000;
+export const SERPENT_HEARD_MS = SERPENT_DRAWN_MS;   // AUDIT SHIPS B1: one span - the relay takes up a sleep past it alone
+/** AUDIT SHIPS C4: a wake's splashes come at most this often (ms of the fight's clock) - wakeAt. */
+export const WAKE_MS = 150;
 /** AUDIT SERPENT 2 F4: an attack's landing is judged on my ship within this of its moment (ms) - past it, this machine
  *  saw it late (a ship sailing in on a state whose blow had landed, a frame stalled) and where she is now is not where
  *  she was: it is played for its venom alone. Its words come seconds before it lands, so a live screen judges it within
@@ -68,7 +70,7 @@ export const segmentOfTarget = (id) => (typeof id === 'string' && id.startsWith(
 /** @param {any} deps */
 export function createSerpentHost(deps) {
   const now = () => deps.now();
-  let lastIn = { day: null, at: -Infinity };
+  let lastIn = { day: null, at: -Infinity, hl: null };
   let pending = new Map();   // zone -> damage gathered
   let pendingAt = -Infinity;
   const resolved = new Set();   // attack numbers judged here
@@ -87,6 +89,8 @@ export function createSerpentHost(deps) {
   let live = null;
   let memDay = null;   // the day the memory above is of
   let wreckSaid = null;   // my wreck's word as last said this day (1 wrecked, 0 afloat), null none yet
+  let blows = { hull: 0, sail: 0, crew: 0 };   // AUDIT SHIPS C3: the pair's share of its blows and crush, carried
+  let lastWake = -Infinity;   // AUDIT SHIPS C4: the last wake's splash (the fight's clock)
   let meNow = null;   // my account, read once a frame (AUDIT SERPENT L5)
 
   const mine = () => meNow;
@@ -97,6 +101,7 @@ export function createSerpentHost(deps) {
     memDay = day;
     resolved.clear(); seen.clear(); crushed = 0; lastCoil = null; lastPhase = null; lastFell = null; lastGone = null;
     held = null; pools = []; shove = null; pending = new Map(); wreckSaid = null;
+    blows = { hull: 0, sail: 0, crew: 0 }; lastWake = -Infinity;
   }
   /** The fight's frame: the cell's site when it has said one, the omen's until then. */
   const siteOf = (sw) => { const s = deps.link.state(); return s.day === sw.day && s.sx ? { sx: s.sx, sz: s.sz } : { sx: sw.site.sx, sz: sw.site.sz }; };
@@ -127,11 +132,13 @@ export function createSerpentHost(deps) {
     if (!deps.online?.ready?.(cell)) return;
     const s = deps.link.state();
     const answered = s.day === sw.day;
-    const due = lastIn.day !== sw.day || t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);
-    if (!due || Math.hypot(me[0], me[1]) > ADMIT_R) return;
     const b = deps.boat?.();
     const hl = b ? b.hull : -1;   // AUDIT SERPENT B4/H2: my own ship's, at her helm or on her deck
-    if (deps.online.send({ k: 'in', d: sw.day, bv: SERPENT_BRAIN_V, lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), hl, sx: sw.site.sx, sz: sw.site.sz }, cell)) lastIn = { day: sw.day, at: t };
+    // AUDIT SHIPS C1: said again at once when the ship I stand on changes - aboard my own or not is what keeps my share
+    // in its health (serpentBrain.js aboard), and twenty seconds of a share that is not fighting is twenty seconds wrong
+    const due = lastIn.day !== sw.day || lastIn.hl !== hl || t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);
+    if (!due || Math.hypot(me[0], me[1]) > ADMIT_R) return;
+    if (deps.online.send({ k: 'in', d: sw.day, bv: SERPENT_BRAIN_V, lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), hl, sx: sw.site.sx, sz: sw.site.sz }, cell)) lastIn = { day: sw.day, at: t, hl };
   }
   /** The gathered balls said, a word a zone. */
   function flushHits(t, sw) {
@@ -159,7 +166,7 @@ export function createSerpentHost(deps) {
   const share = () => fleetShare(deps.link.state().n);
   /** My ship struck by attack `a` (a word of the cell's): her hurt, her throw, the line. */
   function strikeMe(a, A, ship, t) {
-    deps.strike?.(ship.boat, shipHurt(A, ship, share()), { shake: A.hull >= 0.18 ? 2.6 : 1.8, line: `${A.name}!` });
+    deps.strike?.(ship.boat, shipHurt(A, ship, share(), blows), { shake: A.hull >= 0.18 ? 2.6 : 1.8, line: `${A.name}!` });   // AUDIT SHIPS C3: carried
     const v = shoveOf(a, ship);
     if (v[0] || v[1]) shove = { v, at: t };
   }
@@ -181,9 +188,7 @@ export function createSerpentHost(deps) {
       const ship = myShip();
       if (ship && shapeMeets(a, ship, t)) { resolved.add(a.i); strikeMe(a, A, ship, t); return; }
       if (t > a.at + A.active) resolved.add(a.i);
-      const head = ramHead(a, t);
-      if (head) { const [x, z] = scene(head[0], head[1]); deps.fx?.('wake', [x, deps.seaY(), z], 1); }   // AUDIT SERPENT M3: a point in the scene, its height the sea's
-      return;
+      return;   // AUDIT SHIPS C4: its wake is its dash's (dashWake) - here, it stopped where the ram struck my ship
     }
     if (t < a.at) return;
     resolved.add(a.i);
@@ -218,14 +223,23 @@ export function createSerpentHost(deps) {
     }
   }
   /** SERPENT3: ITS DASH UNDER THE SEA, SEEN ON IT - the bow wave over its head while it swims sounded faster than it
-   *  cruises (a Rising Maw's dash, a coil's, the whirl's own swim; the ram's run has its own off its lane - ramHead), so a
-   *  ship sees it come where its jumps showed nothing until it was there. */
+   *  cruises (a Rising Maw's dash, a coil's, the whirl's own swim - AUDIT SHIPS C4: and the ram's run down its lane, whose
+   *  wake was its judging's and stopped where it struck my ship), so a ship sees it come where its jumps showed nothing
+   *  until it was there. */
   function dashWake(s, t) {
-    if (s.fell || s.gone || modeAt(s.modes, t) !== MODE.deep || (s.atk && ramHead(s.atk, t))) return;
+    if (s.fell || s.gone || modeAt(s.modes, t) !== MODE.deep) return;
     const L = s.legs[legIndexAt(s.legs, t)];
     if (!L || !(L.v > CRUISE_V)) return;
     const h = headAt(s.legs, t);
     const [x, z] = scene(h.x, h.z);
+    wakeAt(x, z, t);
+  }
+  /** AUDIT SHIPS C4: a wake's splash at most every WAKE_MS of the fight's clock - never one a frame (a splash is a dozen
+   *  particles; one a frame was 780 a second at 60 fps and 1,874 at 144, the sea's whole PARTICLE_BUDGET while it dashed,
+   *  and the budget evicts the guns' spray and foam first). AUDIT SERPENT M3: a point in the scene, its height the sea's. */
+  function wakeAt(x, z, t) {
+    if (t >= lastWake && t - lastWake < WAKE_MS) return;
+    lastWake = t;
     deps.fx?.('wake', [x, deps.seaY(), z], 1);
   }
   /** A word's cue as it is begun (its sound from where it will land). */
@@ -287,7 +301,7 @@ export function createSerpentHost(deps) {
     if (t > c.until + COIL_LOST_MS) { held = null; return; }   // its end never heard (a socket lost mid-coil): she is let go
     if (s.crushed && s.crushed === c.off && crushed !== c.i) {
       crushed = c.i;
-      deps.strike?.(ship.boat, crushHurt(ship, share()), { shake: 3, line: 'The coils crush your hull!' });
+      deps.strike?.(ship.boat, crushHurt(ship, share(), blows), { shake: 3, line: 'The coils crush your hull!' });
     }
     if (c.off > 0) { held = null; return; }
     const dtS = Math.max(0, (t - gripAt) / 1000);

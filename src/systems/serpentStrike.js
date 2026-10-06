@@ -62,13 +62,23 @@ export function ramHead(atk, t) {
  */
 export const SERPENT_PAIR_SHARE = 2 / 3;
 export const fleetShare = (n) => (n === 2 ? SERPENT_PAIR_SHARE : 1);
+/** AUDIT SHIPS C3 (2026-10-06): a hurt `x` at the fleet's share `k`, in whole points - CARRIED blow to blow on her own
+ *  `carry` (updated in place: the nearest whole taken, the remainder kept either way), so a pair's hurt over a fight is
+ *  two thirds of the whole's. Rounded a blow at a time, a one-man blow (a spit, a roar) still took the whole man and a
+ *  two-man one (a lash, a Maw) took one. The whole (`k` 1) is rounded as it always was. */
+function shared(x, k, carry, key) {
+  if (k === 1 || !carry) return Math.round(x * k);
+  const v = x * k + (carry[key] ?? 0), n = Math.round(v);
+  carry[key] = v - n;
+  return n;
+}
 /** WHAT A BLOW DOES TO HER: `hull` of her whole hull and `base` more, `sail` of her canvas, `crew` men - her whole her
- *  refits' (`whole` - {maxHull, maxSail}), times the fleet's share `k` (fleetShare). The damage model's own hurt shape
- *  (navalDamage.js apply). */
-export const shipHurt = (A, whole, k = 1) => ({ hull: Math.round((A.hull * whole.maxHull + A.base) * k), sail: Math.round(A.sail * whole.maxSail * k), crew: Math.round((A.crew | 0) * k) });
+ *  refits' (`whole` - {maxHull, maxSail}), times the fleet's share `k` (fleetShare), carried on `carry` (shared). The
+ *  damage model's own hurt shape (navalDamage.js apply). */
+export const shipHurt = (A, whole, k = 1, carry = null) => ({ hull: shared(A.hull * whole.maxHull + A.base, k, carry, 'hull'), sail: shared(A.sail * whole.maxSail, k, carry, 'sail'), crew: shared(A.crew | 0, k, carry, 'crew') });
 /** The coil's crush at its end, and its grip for `dtS` seconds (whole points carried on the ship's own fraction -
  *  `carry`, the grip's remainder - so a grip of 3.4 a second is 3.4 a second, not 3); each times the fleet's share `k`. */
-export const crushHurt = (whole, k = 1) => shipHurt(CRUSH, whole, k);
+export const crushHurt = (whole, k = 1, carry = null) => shipHurt(CRUSH, whole, k, carry);
 export function gripHurt(whole, dtS, carry = { hull: 0, crew: 0 }, k = 1) {
   const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k, crew = carry.crew + GRIP.crew * dtS * k;
   const out = { hull: Math.floor(hull), sail: 0, crew: Math.floor(crew) };

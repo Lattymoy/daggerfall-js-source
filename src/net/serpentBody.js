@@ -225,34 +225,49 @@ export const COIL_HEAD_IN = 0.45;
  *  into the sea. */
 export const COIL_NECK = 22;
 export const COIL_TURN = 0.92;
+/** Adrift (m/s): its throes, and its head going round a coil's ring - the brain's own (serpentBrain.js re-exports it). */
+export const DRIFT_V = 3;
+/**
+ * AUDIT SHIPS B6 (2026-10-06): THE COIL TURNS WITH ITS HEAD - the bearing from her its head is at `t`: the bearing it began
+ * at (`th`), gone round counter-clockwise at DRIFT_V on COIL_R since it wound on (the brain's own swim round its ring),
+ * held where it was let go (`off`). Drawn at `th` alone, the coil lay still while its head went round its ring - 190
+ * degrees by a full coil's end - and the body slid across the ring as it let go.
+ */
+export function coilAngleAt(c, t) {
+  const end = c.off > 0 ? Math.min(t, c.off) : t;
+  return c.th - (DRIFT_V * Math.max(0, end - c.at)) / 1000 / COIL_R;
+}
 /**
  * The coil's point `s` behind the snout - a coil `{x, z, th}` (its ship's place in the site frame and the bearing from
  * her it began at): the head looming over her deck, the neck down to her waterline, the loop round her at it, the tail
- * trailing off and down. `{x, y, z}`.
+ * trailing off and down. `{x, y, z}`. AUDIT SHIPS B6: `th` the bearing its head is at now (coilAngleAt).
  */
-export function coilPoint(c, s) {
+export function coilPoint(c, s, th = c.th) {
   const loopLen = COIL_TURN * 2 * Math.PI * COIL_R;
   if (s <= COIL_NECK) {
     const k = s / COIL_NECK;
-    const hx = c.x + Math.sin(c.th) * COIL_R * COIL_HEAD_IN, hz = c.z + Math.cos(c.th) * COIL_R * COIL_HEAD_IN;
-    const lx = c.x + Math.sin(c.th) * COIL_R, lz = c.z + Math.cos(c.th) * COIL_R;
+    const hx = c.x + Math.sin(th) * COIL_R * COIL_HEAD_IN, hz = c.z + Math.cos(th) * COIL_R * COIL_HEAD_IN;
+    const lx = c.x + Math.sin(th) * COIL_R, lz = c.z + Math.cos(th) * COIL_R;
     return { x: hx + (lx - hx) * k, y: COIL_HEAD_Y + (2.2 - COIL_HEAD_Y) * smooth(k), z: hz + (lz - hz) * k };
   }
   if (s <= COIL_NECK + loopLen) {
-    const a = c.th + (s - COIL_NECK) / COIL_R;
+    const a = th + (s - COIL_NECK) / COIL_R;
     const k = (s - COIL_NECK) / loopLen;
     return { x: c.x + Math.sin(a) * COIL_R, y: 2.2 - 3.2 * k, z: c.z + Math.cos(a) * COIL_R };
   }
   // the tail off the loop's end, along its tangent, down into the sea
-  const a = c.th + loopLen / COIL_R, rest = s - COIL_NECK - loopLen;
+  const a = th + loopLen / COIL_R, rest = s - COIL_NECK - loopLen;
   const ex = c.x + Math.sin(a) * COIL_R, ez = c.z + Math.cos(a) * COIL_R;
   return { x: ex + Math.cos(a) * rest, y: -1 - rest * 0.4, z: ez - Math.sin(a) * rest };
 }
 /** How much of the body the coil holds at `t` (0..1): wound on from its `at`, off from its `off` (its breaking, its
- *  crush or its slipping - 0 while it holds) - null coil, none. */
+ *  crush or its slipping - 0 while it holds) - null coil, none. AUDIT SHIPS D2 (2026-10-06): wound on from `w` when it
+ *  says one - the moment every screen holds its word (the relay winds it at the beat after its landing, and says it
+ *  SERPENT_SAY_AHEAD_MS on): eased from its landing, which no screen had heard of yet, a screen 150 ms behind snapped
+ *  its head 2 m up as the word came. Its clock (`at` - its hold, its turn round her, its end) is its landing's still. */
 export function coilWeight(c, t) {
   if (!c) return 0;
-  const on = smooth((t - c.at) / COIL_BLEND_MS);
+  const on = smooth((t - (c.w > c.at ? c.w : c.at)) / COIL_BLEND_MS);
   return c.off > 0 && t >= c.off ? on * (1 - smooth((t - c.off) / COIL_BLEND_MS)) : on;
 }
 
@@ -266,11 +281,12 @@ export function coilWeight(c, t) {
  */
 export function bodyAt(b, t, out = []) {
   const w = coilWeight(b.coil, t);
+  const th = w > 0 ? coilAngleAt(b.coil, t) : 0;   // AUDIT SHIPS B6: the coil as its head has gone round it
   for (let i = 0; i <= SEG_N; i++) {
     const s = i * SEG_LEN;
     const p = spinePoint(b.legs, t, s);
     let x = p.x, z = p.z, y = depthAt(b.modes, s, t);
-    if (w > 0) { const c = coilPoint(b.coil, s); x += (c.x - x) * w; y += (c.y - y) * w; z += (c.z - z) * w; }
+    if (w > 0) { const c = coilPoint(b.coil, s, th); x += (c.x - x) * w; y += (c.y - y) * w; z += (c.z - z) * w; }
     const o = out[i] ?? (out[i] = { x: 0, y: 0, z: 0, yw: 0, r: 0 });
     o.x = x; o.y = y; o.z = z; o.yw = p.yw; o.r = radiusAt(s);
   }

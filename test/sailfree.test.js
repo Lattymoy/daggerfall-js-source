@@ -100,7 +100,9 @@ test('SAIL-FREE the sea\'s wind: the captains\' bounded share of the rated wind 
   assert.deepEqual([...WIND_SHARE], [0.3, 2]);
   near(seaWind(1.5), 1.5, 1e-12, 'the rated wind');
   near(seaWind(0.15), 0.45, 1e-12, 'a fog\'s tenth: 0.3 of the rated');
-  near(seaWind(2), 2, 1e-12, 'UpdateWind\'s strongest: itself');
+  // AUDIT SHIPS D8 (2026-10-06): UpdateWind's strongest is a thunderstorm's 4 m/s (1-2 in sun, x1.5 in rain, x2 in thunder)
+  near(seaWind(2), 2, 1e-12, 'a fair day\'s strongest: itself');
+  near(seaWind(4), 3, 1e-12, 'a thunderstorm\'s strongest: twice the rated');
   near(seaWind(9), 3, 1e-12, 'twice the rated at most');
   assert.equal(seaWind(0), 0, 'indoors: none');
   assert.equal(AI.WIND_RATED, WIND_RATED);
@@ -196,6 +198,13 @@ test('SAIL-FREE the Overworld journey sails her straight for a mark to windward:
       assert.equal(Math.abs(mods.course), squareOnly ? SEA_HELM.noGoSquare : SEA_HELM.noGoFore, `the mod's: a tack ${bearing} off the eye`);
     }
   }
+  // AUDIT SHIPS D7 (2026-10-06): and the mod's lane - her tack held while the mark's bearing swings within laneDeg past the
+  // wind's eye, about past it; under `free` no tack is ever held
+  const st = createSeaHelm(), fr = createSeaHelm();
+  assert.equal(seaHelmStep(st, q(false, 10)).course, SEA_HELM.noGoFore, 'her tack to the mark\'s side');
+  assert.equal(seaHelmStep(st, q(false, -(SEA_HELM.laneDeg - 1))).course, SEA_HELM.noGoFore, 'within the lane: held');
+  assert.equal(seaHelmStep(st, q(false, -(SEA_HELM.laneDeg + 1))).course, -SEA_HELM.noGoFore, 'past it: about');
+  for (const b of [10, -(SEA_HELM.laneDeg - 1), -(SEA_HELM.laneDeg + 1)]) { assert.equal(seaHelmStep(fr, q(true, b)).course, b); assert.equal(fr.tack, 0, 'free: no tack held'); }
   const i = WORLD.indexOf('sailWay: CSA_HANDLING.moveSpeedSail');
   assert.ok(i >= 0, 'the world asks the journey');
   assert.match(WORLD.slice(i, WORLD.indexOf('\n', i)), /, free: !!csaRuntime\.helmResponsive\(\),/, 'and tells it the helm she has');

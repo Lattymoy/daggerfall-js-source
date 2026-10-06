@@ -112,7 +112,7 @@
   {
     "name": "SERPENT1-relay-old-law",
     "file": "server/src/index.js",
-    "old": "if (!(m.bv >= SERPENT_BRAIN_MIN)) { no('reload'); return; }",
+    "old": "if (!(m.bv >= SERPENT_BRAIN_MIN)) { if (was) was[1].players[a.sub].stale = true; no('reload'); return; }",
     "new": "",
     "tests": [
       "test/serpent1_relay.test.js"
@@ -248,7 +248,7 @@
   {
     "name": "SERPENT1-host-in-every-frame",
     "file": "src/scenes/serpentHost.js",
-    "old": "const due = lastIn.day !== sw.day || t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
+    "old": "const due = lastIn.day !== sw.day || lastIn.hl !== hl || t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
     "new": "const due = true;",
     "tests": [
       "test/serpent1_client.test.js"

@@ -12,6 +12,7 @@ import {
   pickSerpentTarget, serpentWreck, serpentShareWanted, serpentAtkFrame, SHIP_REF, SERPENT_TTK_S, SERPENT_ATTACK_TABLE, SERPENT_ATTACK_BY_ID, ZONES,
   ENGAGE_R, SERPENT_STAND_R, SERPENT_TARGET_R, SERPENT_IDLE_RETIRE_MS, SERPENT_ABSENT_RETIRE_MS, SERPENT_RECEIPT_SHARE, SERPENT_STOOD_SHARE,
   SERPENT_PHASE_AT, SERPENT_TICK_MS, ORBIT_R, CRUISE_V, SERPENT_SLEEP_MS, COIL_ESC_MS, SERPENT_COIL_PASS,
+  SERPENT_SAY_AHEAD_MS, DEEP_V,   // AUDIT SHIPS B5: an end's swim said ahead
 } from '../src/net/serpentBrain.js';
 import { LEG, MODE, bodyAt, headAt, modeAt, supersede } from '../src/net/serpentBody.js';
 import { createSerpentLink, foldSerpent, SERPENT_STATE_EMPTY } from '../src/net/serpentLink.js';
@@ -101,7 +102,11 @@ test('AUDIT SERPENT S2: a kill while a ram\'s run is still to come, and the soun
     assert.ok(inOrder(L.state().legs) && inOrder(L.state().modes), 'the client\'s in order');
     assert.deepEqual(L.state().legs, f.legs, 'one track');
     assert.deepEqual(L.state().modes, f.modes.slice(-L.state().modes.length), 'one ride');
-    assert.ok(!f.legs.some((l) => l.at > now) && !f.modes.some((m) => m.at > now), 'nothing still to come after its end');
+    // PIN MOVED (AUDIT SHIPS B5, 2026-10-06): nothing still to come after its end but its own throes or dive, said
+    // SERPENT_SAY_AHEAD_MS on - what was to come let go AT the end (holdNow), so no screen draws a turn it never took
+    const after = (xs) => xs.filter((x) => x.at > now);
+    assert.deepEqual(after(f.legs).map((l) => l.at), [now + SERPENT_SAY_AHEAD_MS], `nothing still to come after its end but its own swim (${end})`);
+    assert.ok(after(f.modes).every((m) => m.at === now + SERPENT_SAY_AHEAD_MS && m.m === (end === 'fell' ? MODE.dying : MODE.deep)), 'and its own ride');
   }
 });
 
@@ -186,7 +191,8 @@ test('AUDIT SERPENT S4/M1/M2: the kill and the sounding let a holding coil go an
   const out = applySerpentHit(f, 's2', 50, ZONES.body, { x: 150, z: 0 }, T0 + 500);
   const kinds = out.map((w) => w.k);
   assert.ok(kinds.includes('cx') && kinds.includes('dv') && kinds.includes('sw') && kinds.at(-1) === 'fell', `the words at the fall: ${kinds}`);
-  assert.equal(out.find((w) => w.k === 'dv').m, MODE.dying);
+  // PIN MOVED (AUDIT SHIPS B5, 2026-10-06): its throes said SERPENT_SAY_AHEAD_MS on, what was to come let go at the kill
+  assert.ok(out.some((w) => w.k === 'dv' && w.m === MODE.dying && w.at === T0 + 500 + SERPENT_SAY_AHEAD_MS), 'its throes said ahead');
   for (const w of out) L = foldSerpent(L, w, T0 + 500);
   assert.ok(L.coil.off > 0, 'let go');
   // the fell word alone (a hub's, a lost cx) lets go too
@@ -195,7 +201,11 @@ test('AUDIT SERPENT S4/M1/M2: the kill and the sounding let a holding coil go an
   // the sounding
   const g = coilHeldFight();
   const gone = stepSerpentBrain(g, SOUND + 10, [], seeded(1));
-  assert.deepEqual(gone.filter((w) => ['cx', 'dv', 'sw', 'gone'].includes(w.k)).map((w) => w.k), ['cx', 'dv', 'sw', 'gone']);
+  // PIN MOVED (AUDIT SHIPS B5): the coil let go first and the gone last, its dive said SERPENT_SAY_AHEAD_MS on
+  const ends = gone.filter((w) => ['cx', 'dv', 'sw', 'gone'].includes(w.k));
+  assert.deepEqual([ends[0].k, ends.at(-1).k], ['cx', 'gone']);
+  assert.ok(ends.some((w) => w.k === 'dv' && w.m === MODE.deep && w.at === SOUND + 10 + SERPENT_SAY_AHEAD_MS), 'its dive said ahead');
+  assert.ok(ends.some((w) => w.k === 'sw' && w.l.at === SOUND + 10 + SERPENT_SAY_AHEAD_MS && w.l.v === DEEP_V), 'and its swim down');
 });
 function coilHeldFight() {
   const { f, rng, bodies } = coilBegun();

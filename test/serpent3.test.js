@@ -12,9 +12,9 @@ import { readFileSync } from 'node:fs';
 import {
   newSerpentFight, joinSerpentFight, stepSerpentBrain, applySerpentHit, serpentStateOf, serpentResume, closeAim, wayOnto, wayLen, dashFits,
   SERPENT_ATTACK_TABLE, SERPENT_ATTACK_BY_ID, SERPENT_PHASE_AT, SERPENT_TICK_MS, ZONES, ARENA_R, TURN_R, HUNT_TURN_R, MAEL_ORBIT_R, CRUISE_V,
-  DRIFT_V, RAM_V, DASH_V, CLOSE_V, SERPENT_CLOSE_MS, SERPENT_SLEEP_MS, SERPENT_SAY_AHEAD_MS, SERPENT_HIT_LOOKBACK_MS, serpentWrapYaw,
+  DRIFT_V, RAM_V, DASH_V, CLOSE_V, SERPENT_CLOSE_MS, SERPENT_SLEEP_MS, SERPENT_DRAWN_MS, SERPENT_SAY_AHEAD_MS, CRUSH, GRIP, MAEL_GRIND, SERPENT_HIT_LOOKBACK_MS, serpentWrapYaw,
 } from '../src/net/serpentBrain.js';
-import { LEG, MODE, COIL_R, headAt, bodyAt, modeAt, anyExposed, legIndexAt } from '../src/net/serpentBody.js';
+import { LEG, MODE, COIL_R, headAt, bodyAt, modeAt, anyExposed, legIndexAt, sameLeg } from '../src/net/serpentBody.js';
 import { createSerpentLink } from '../src/net/serpentLink.js';
 import { createSerpentHost } from '../src/scenes/serpentHost.js';
 import { fleetShare, shipHurt, crushHurt, gripHurt, grindHurt, SERPENT_PAIR_SHARE } from '../src/systems/serpentStrike.js';
@@ -107,11 +107,15 @@ test('SERPENT3 every screen draws the relay\'s body as it swims: a client foldin
       }
       while (inbox.length && inbox[0].due <= t) hear(inbox.shift().w);
       const h = headAt(link.state().legs, t);
-      if (prev) worst = Math.max(worst, Math.hypot(h.x - prev.x, h.z - prev.z));
+      // PIN MOVED (AUDIT SHIPS D2, 2026-10-06): its step against the relay's own head's that frame - the old bound, 2.5 m a
+      // frame, passed a closing surge's change of pace said at the beat (1.4 m over the relay's own step at 150 ms)
+      const r0 = headAt(f.legs, t - 50), r1 = headAt(f.legs, t);
+      if (prev) worst = Math.max(worst, Math.hypot(h.x - prev.x, h.z - prev.z) - Math.hypot(r1.x - r0.x, r1.z - r0.z));
       prev = h;
     }
   }
-  assert.ok(worst <= 2.5, `the head a client draws never snaps (${worst.toFixed(2)} m in a 50 ms frame at most; its dash swims ${(DASH_V * 0.05).toFixed(2)})`);
+  // AUDIT SHIPS D2: every turn of its own said ahead, its turns' own few centimetres are all a lagging screen sees
+  assert.ok(worst <= 0.05, `the head a client draws never snaps (${worst.toFixed(3)} m over the relay's own step in a 50 ms frame at most)`);
 });
 
 // ═══ THE DASHES, SAID AS THEY BEGIN ════════════════════════════════════════════════════════════════════════════════
@@ -140,16 +144,25 @@ test('SERPENT3 the Rising Maw: closed on at the surface - no word of it while it
   assert.equal(atk.at - begun, A.windup, 'its own wind-up');
   const burst = headAt(f.legs, atk.at);
   near(Math.hypot(burst.x - atk.tg[0][0], burst.z - atk.tg[0][1]), 0, 0.05, 'it bursts where its word says');
+  // AUDIT SHIPS D7 (2026-10-06): and every screen, folding the words it was said, bursts it there - `tg` is made of the
+  // relay's own track, so the relay's head at its landing could not but meet it
+  const screen = createSerpentLink({ now: () => begun, site: () => ({ day: 363, sx: 0, sz: 0 }) });
+  screen.word(validSerpentOut(serpentStateOf(surfaced(fightOf([HULL.Carrack])))));
+  for (const b of beats) for (const w of b.said) screen.word(validSerpentOut(w.k === 'st' ? w : { ...w, sx: 0, sz: 0 }));
+  const drawn = headAt(screen.state().legs, atk.at);
+  near(Math.hypot(drawn.x - atk.tg[0][0], drawn.z - atk.tg[0][1]), 0, 0.05, 'every screen bursts it where its word says');
   near(Math.hypot(atk.tg[0][0] - 120, atk.tg[0][1]), 0, 0.05, 'under her');
   const dash = beats.at(-1).said.filter((w) => w.k === 'sw');
   assert.ok(dash.length >= 2 && dash.every((w) => w.l.at >= begun + SERPENT_SAY_AHEAD_MS && w.l.v <= DASH_V), 'its dash said in the beat, a breath ahead, at DASH_V at most');
   const rides = beats.at(-1).said.filter((w) => w.k === 'dv').map((w) => [w.at - begun, w.m]);
-  assert.deepEqual(rides, [[0, MODE.deep], [A.windup, MODE.breach]], 'it sounds, and its burst is said with it');
+  // PIN MOVED (AUDIT SHIPS D2, 2026-10-06): it sounds SERPENT_SAY_AHEAD_MS on, with its dash - sounded at the beat, a
+  // screen 150 ms behind snapped its head down
+  assert.deepEqual(rides, [[SERPENT_SAY_AHEAD_MS, MODE.deep], [A.windup, MODE.breach]], 'it sounds with its dash, and its burst is said with it');
   const after = run(f, begun + SERPENT_TICK_MS, atk.at + A.active, [body('s1', 120, 0)], seeded(9));
   assert.ok(after.every((b) => !b.said.some((w) => w.k === 'sw' || w.k === 'dv')), 'nothing of its swim or its ride said late');
 });
 
-test('SERPENT3 the coil: dashed for under the sea onto the round it closes about her, tangent - its head at the landing COIL_R from her and going round her clockwise at DRIFT_V, as the coil lies - all said as it began (the coil\'s ride too); the coil\'s bearing its head\'s at the landing; its winding says no swim (it leapt the head onto the ring there) (mutants: the leap back; the round the wrong way; the bearing the beat\'s)', () => {
+test('SERPENT3 the coil: dashed for under the sea onto the round it closes about her, tangent - its head at the landing COIL_R from her and going round her counter-clockwise at DRIFT_V, as the coil lies (AUDIT SHIPS B6 - PIN MOVED) - all said as it began (the coil\'s ride too); the coil\'s bearing its head\'s at the landing; its winding says no swim (it leapt the head onto the ring there) (mutants: the leap back; the round the wrong way; the bearing the beat\'s)', () => {
   const f = surfaced(fightOf([HULL.Carrack]));
   f.phase = 2;
   f.pending = 'coil';
@@ -160,13 +173,17 @@ test('SERPENT3 the coil: dashed for under the sea onto the round it closes about
   assert.ok(atk && atk.a === SERPENT_ATTACK_TABLE.coil.id, 'the coil begun on her');
   assert.equal(atk.at - beats.at(-1).t, SERPENT_ATTACK_TABLE.coil.windup, 'its own wind-up');
   const round = beats.at(-1).said.filter((w) => w.k === 'sw').at(-1).l;
-  assert.deepEqual([round.k, round.r, round.sd, round.v], [LEG.arc, COIL_R, 1, DRIFT_V], 'round her at DRIFT_V, clockwise');
+  // PIN MOVED (AUDIT SHIPS B6, 2026-10-06): counter-clockwise - serpentBody.js coilPoint lays the body clockwise of its
+  // head, which swims the other way; clockwise, the track's body lay across the ring from the coil's
+  assert.deepEqual([round.k, round.r, round.sd, round.v], [LEG.arc, COIL_R, -1, DRIFT_V], 'round her at DRIFT_V, counter-clockwise');
   assert.ok(round.at <= atk.at, 'on it by the landing');
+  // AUDIT SHIPS D7: dashed for under the sea - sounded from its dash's start to its landing
+  for (let t = beats.at(-1).t + SERPENT_SAY_AHEAD_MS; t < atk.at; t += 250) assert.equal(modeAt(f.modes, t), MODE.deep, `under the sea at +${t - beats.at(-1).t} ms`);
   assert.ok(beats.at(-1).said.some((w) => w.k === 'dv' && w.at === atk.at && w.m === MODE.coil), 'the coil\'s ride said with it');
   const h = headAt(f.legs, atk.at);
   near(Math.hypot(h.x - ship.x, h.z - ship.z), COIL_R, 0.1, 'its head on the round at the landing');
   const bearing = Math.atan2(h.x - ship.x, h.z - ship.z);
-  near(Math.abs(serpentWrapYaw(h.yw - (bearing + Math.PI / 2))), 0, 0.01, 'going round her, tangent');
+  near(Math.abs(serpentWrapYaw(h.yw - (bearing - Math.PI / 2))), 0, 0.01, 'going round her, tangent');   // PIN MOVED (AUDIT SHIPS B6): the other way
   const wound = run(f, beats.at(-1).t + SERPENT_TICK_MS, atk.at + 300, [ship], seeded(5));
   const coil = wound.flatMap((b) => b.said).find((w) => w.k === 'coil');
   assert.ok(coil, 'wound');
@@ -272,21 +289,28 @@ test('SERPENT3 closing: a ship lying inside the round it would turn on to face h
 // ═══ A FIGHT TAKEN UP ══════════════════════════════════════════════════════════════════════════════════════════════
 
 test('SERPENT3 a fight taken up after its room slept: the attack it had in flight landed on empty waters - let go, never landed later; a coil holding a ship keeps its round and its clock; asked by the relay before a word is judged - a blow on a fight whose head swam on two minutes is judged on it taken up where it was, where it was refused for the water (mutants: the attack kept; the coil let go; the word judged on the fight asleep)', async () => {
-  const f = surfaced(fightOf([HULL.Carrack]));
-  const beats = run(f, T0, T0 + 30_000, [body('s1', 90, 60)], seeded(5), (said) => said.some((w) => w.k === 'atk'));
-  const atk = beats.at(-1).said.find((w) => w.k === 'atk');
+  // AUDIT SHIPS D7 (2026-10-06): a Rising Maw in flight, its dash and its burst said to come - "never landed later" was
+  // read off a new attack's word, which never carries an old one's number
+  const { f, beats, begun, atk } = breachOn();
   assert.ok(f.atk && f.atk.i === atk.i);
-  const slept = beats.at(-1).t + SERPENT_SLEEP_MS + 1000;
+  const toCome = beats.at(-1).said.filter((w) => w.k === 'sw' && w.l.at > begun).map((w) => w.l);
+  assert.ok(toCome.length >= 2, 'its dash said to come');
+  // PIN MOVED (AUDIT SHIPS B1, 2026-10-06): a sleep past SERPENT_DRAWN_MS - no screen still draws it; a shorter one takes
+  // nothing up (test/auditships.test.js)
+  const slept = begun + SERPENT_DRAWN_MS + 1000;
   serpentResume(f, slept);
   assert.equal(f.atk, null, 'let go');
-  const later = run(f, slept + SERPENT_TICK_MS, slept + 3000, [body('s1', 90, 60)], seeded(6)).flatMap((b) => b.said);
-  assert.ok(!later.some((w) => w.k === 'atk' && w.i === atk.i), 'never landed later');
+  assert.ok(toCome.every((l) => !f.legs.some((x) => sameLeg(x, l))), 'its dash to come swum no more');
+  assert.ok(!f.modes.some((m) => m.at === atk.at && m.m === MODE.breach), 'its burst to come ridden no more');
+  run(f, slept + SERPENT_TICK_MS, slept + 3000, [body('s1', 120, 0)], seeded(6));
+  assert.ok(Math.hypot(headAt(f.legs, atk.at).x - atk.tg[0][0], headAt(f.legs, atk.at).z - atk.tg[0][1]) > SERPENT_ATTACK_TABLE.breach.r, 'never burst at her');
   // a coil holding a ship keeps its round
   const c = surfaced(fightOf([HULL.Carrack]));
   c.coil = { i: 4, s: 's1', x: 0, z: 0, th: 0, at: T0 - 1000, until: T0 + 20_000, off: 0, h: 60, m: 60, held: true, why: null };
   const legs = JSON.stringify(c.legs);
-  assert.deepEqual(serpentResume(c, T0 + SERPENT_SLEEP_MS + 1), [], 'nothing said');
+  assert.deepEqual(serpentResume(c, T0 + SERPENT_DRAWN_MS + 1), [], 'nothing said');   // PIN MOVED (AUDIT SHIPS B1): taken up past SERPENT_DRAWN_MS
   assert.equal(JSON.stringify(c.legs), legs, 'its round kept');
+  assert.deepEqual([c.coil.at, c.coil.until, c.coil.off, c.coil.held], [T0 - 1000, T0 + 20_000, 0, true], 'its clock kept, holding her');   // AUDIT SHIPS D7: its title's clock
   // the relay: a blow on a slept fight
   const DAY = 363, TT = serpentTimes(DAY), PX = 205, PY = 214;
   const SX = (PX + 0.5) * PIXEL_UNITS, SZ = (499 - PY + 0.5) * PIXEL_UNITS, CELL = cellRoomOfWire(SX, SZ);
@@ -339,11 +363,12 @@ test('SERPENT3 a pair\'s share (Mac: "Two or more ships"): with exactly two ship
   const A = SERPENT_ATTACK_TABLE.ram;
   assert.deepEqual(shipHurt(A, whole, 2 / 3), { hull: Math.round((A.hull * 1200 + A.base) * 2 / 3), sail: Math.round(A.sail * 600 * 2 / 3), crew: Math.round(A.crew * 2 / 3) });
   assert.deepEqual(shipHurt(A, whole), shipHurt(A, whole, 1));
-  assert.ok(crushHurt(whole, 2 / 3).hull < crushHurt(whole).hull);
-  assert.ok(gripHurt(whole, 10, undefined, 2 / 3).hurt.hull < gripHurt(whole, 10).hurt.hull);
-  assert.ok(grindHurt(whole, 10, 0, 2 / 3).hurt.hull < grindHurt(whole, 10).hurt.hull);
+  // AUDIT SHIPS D7 (2026-10-06): each at exactly the share - "less than" passed a share squared or halved
+  assert.deepEqual(crushHurt(whole, 2 / 3), { hull: Math.round((CRUSH.hull * 1200 + CRUSH.base) * 2 / 3), sail: Math.round(CRUSH.sail * 600 * 2 / 3), crew: Math.round(CRUSH.crew * 2 / 3) });
+  assert.equal(gripHurt(whole, 10, undefined, 2 / 3).hurt.hull, Math.floor((GRIP.hull * 1200 + GRIP.base) * 10 * 2 / 3));
+  assert.equal(grindHurt(whole, 10, 0, 2 / 3).hurt.hull, Math.floor((MAEL_GRIND.hull * 1200 + MAEL_GRIND.base) * 10 * 2 / 3));
   const hostSrc = readFileSync(new URL('../src/scenes/serpentHost.js', import.meta.url), 'utf8');
-  assert.match(hostSrc, /crushHurt\(ship, share\(\)\)/, 'the crush at the share');
+  assert.match(hostSrc, /crushHurt\(ship, share\(\), blows\)/, 'the crush at the share');   // PIN MOVED (AUDIT SHIPS C3): carried
   assert.match(hostSrc, /gripHurt\(ship, Math\.min\(1, dtS\), grip, share\(\)\)/, 'the grip at the share');
   assert.match(hostSrc, /grindHurt\(ship, dtS, grind, share\(\)\)/, 'the grind at the share');
   assert.match(hostSrc, /const share = \(\) => fleetShare\(deps\.link\.state\(\)\.n\);/, 'off the relay\'s count');
