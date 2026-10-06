@@ -11,8 +11,8 @@
   {
     "name": "RVN8-takes-quest",
     "file": "src/systems/revenant.js",
-    "old": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isLocked(item);",
-    "new": "  && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isLocked(item);",
+    "old": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isPackOnly(item) && !isLocked(item);",
+    "new": "  && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isPackOnly(item) && !isLocked(item);",
     "tests": [
       "test/rvn8_took.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RVN8-takes-summoned",
     "file": "src/systems/revenant.js",
-    "old": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isLocked(item);",
-    "new": "  && !item.questItem && !isGoldPieces(item) && !isBagItem(item) && !isLocked(item);",
+    "old": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isPackOnly(item) && !isLocked(item);",
+    "new": "  && !item.questItem && !isGoldPieces(item) && !isBagItem(item) && !isPackOnly(item) && !isLocked(item);",
     "tests": [
       "test/rvn8_took.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RVN8-takes-gold",
     "file": "src/systems/revenant.js",
-    "old": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isLocked(item);",
-    "new": "  && !item.questItem && !isSummoned(item) && !isBagItem(item) && !isLocked(item);",
+    "old": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isPackOnly(item) && !isLocked(item);",
+    "new": "  && !item.questItem && !isSummoned(item) && !isBagItem(item) && !isPackOnly(item) && !isLocked(item);",
     "tests": [
       "test/rvn8_took.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RVN8-takes-bag",
     "file": "src/systems/revenant.js",
-    "old": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isLocked(item);",
-    "new": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isLocked(item);",
+    "old": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isBagItem(item) && !isPackOnly(item) && !isLocked(item);",
+    "new": "  && !item.questItem && !isSummoned(item) && !isGoldPieces(item) && !isPackOnly(item) && !isLocked(item);",
     "tests": [
       "test/rvn8_took.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RVN8-takes-locked",
     "file": "src/systems/revenant.js",
-    "old": "!isBagItem(item) && !isLocked(item);",
-    "new": "!isBagItem(item);",
+    "old": "!isPackOnly(item) && !isLocked(item);",
+    "new": "!isPackOnly(item);",
     "tests": [
       "test/rvn8_took.test.js"
     ]

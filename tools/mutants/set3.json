@@ -254,11 +254,12 @@
   {
     "name": "SET3-a-bow-cleaving",
     "file": "src/systems/sigilSetPowers.js",
-    "old": "if (!(damage > 0) || !weapon || ranged(weapon)) return;",
-    "new": "if (!(damage > 0) || !weapon) return;",
+    "old": "  coiled(attacker, target);\n  if (ranged(weapon)) return;\n  const v = tierOf(attacker, 'ruhn', 1);",
+    "new": "  coiled(attacker, target);\n  const v = tierOf(attacker, 'ruhn', 1);",
     "tests": [
       "test/set3_powers.test.js"
-    ]
+    ],
+    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): Constrict's coil tightens before the bow's turn-back, which is Cleave's alone - re-aimed by content."
   },
   {
     "name": "SET3-the-whole-blow-cleaved",
@@ -326,11 +327,12 @@
   {
     "name": "SET3-any-blow-under-the-line",
     "file": "src/systems/sigilSetPowers.js",
-    "old": "if (!(before >= line && after < line)) return;",
-    "new": "if (!(after < line)) return;",
+    "old": "  const line = max * WRATH_BELOW;\n  if (!(before >= line && after < line)) return;",
+    "new": "  const line = max * WRATH_BELOW;\n  if (!(after < line)) return;",
     "tests": [
       "test/set3_powers.test.js"
-    ]
+    ],
+    "note": "SERPENT-SET (MUT-AIM): Shed Skin carries the same crossing - aimed at the Wrath's by its own line above."
   },
   {
     "name": "SET3-the-nova-past-its-reach",
@@ -362,11 +364,12 @@
   {
     "name": "SET3-a-killing-blow-waking-it",
     "file": "src/systems/sigilSetPowers.js",
-    "old": "if (!v || !(max > 0) || !(after > 0)) return;",
-    "new": "if (!v || !(max > 0)) return;",
+    "old": "  const v = tierOf(entity, 'ruhn', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0)) return;",
+    "new": "  const v = tierOf(entity, 'ruhn', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0)) return;",
     "tests": [
       "test/set3_powers.test.js"
-    ]
+    ],
+    "note": "SERPENT-SET (MUT-AIM): Shed Skin carries the same guard - aimed at the Wrath's by its tier read above."
   },
   {
     "name": "SET3-eventide-no-recovery",

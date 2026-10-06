@@ -4417,7 +4417,7 @@ room exists.
 
 **The boundary that makes that safe is `_layoutFoes`** - the dungeon
 host's index of where the layout's own run ends. Every foe past it "is
-this player's own" (`dungeonContext.js:1507`, AUDIT WORLD B2): a quest
+this player's own" (`dungeonContext.js:1509`, AUDIT WORLD B2): a quest
 foe is minted above it, never streamed, never puppet-ised by the room's
 authority switch, and never touched by a joiner's stream. So a joiner's
 quest foe really does spawn and really can be killed by the player whose
@@ -4786,7 +4786,7 @@ with a marked top-left pixel on its last row).
 
 *"During online play, certain enemies cant be damaged."*
 
-`src/scenes/worldModes.js:8126` read, on one physical line:
+`src/scenes/worldModes.js:8142` read, on one physical line:
 
 ```js
 useMagicItem: (item) => host.useMagicItem?.(item),   // HT1: the torch keys onFoeHit: (hit) => host.onFoeHit?.(hit),   // WORLD2: a puppet's blow goes to the host
@@ -4801,7 +4801,7 @@ appended its own note to the end of the line that already carried
 **Why that is an invulnerable enemy.** Online, a joiner applies no local
 damage to a layout foe - `damageFoe`'s non-authority arm hands the blow
 to the room's host through `opts.onFoeHit?.(...)` and RETURNS
-(`dungeonContext.js:6055`). With the property missing that call is a
+(`dungeonContext.js:6071`). With the property missing that call is a
 no-op on `undefined`: no damage, no frame, no warning, nothing on the
 console. Every layout foe in every online dungeon absorbed every blow
 from everyone but the room's authority, for eight slices, in silence.
@@ -4928,7 +4928,7 @@ arrival, that is not rare. The blow is dropped instead.
   foe's maul, and your own Daedroth all do literally nothing to a
   puppet. The first two are WORLD2's law on purpose; the third is a gap
   in it.
-- **A foe's blast on a puppet is credited to ME.** `world.js:10262` and
+- **A foe's blast on a puppet is credited to ME.** `world.js:10267` and
   `:2925` pass `foeSinks: (f) => enchantFoeSinks(f)`, dropping the
   provenance argument `applySpellToFoe` hands them (`hostMagic.js:646`)
   - the same shape AUDIT WORLD6b-iii(a) B2 fixed one layer down.
@@ -10635,7 +10635,9 @@ scaled by it: a forged level would be paid more for every honest receipt.
   (`combatStrike` - 20 of a raid at 130), never nothing for a few short. The gate's strike is the same statement
   (marks.js combatStrikeStatement - `gate:<day>` as ever); a Daedric Incursion's second half is the gate line's own
   amount, outside the cap. The card's day: `today.combat` and `combatMax` (`gateMax` retired - no client read it). The
-  weekly report counts the accounts at the combat cap (`capped.combat`, where `capped.gate` stood).
+  weekly report counts the accounts at the combat cap (`capped.combat`, where `capped.gate` stood). SERPENT-SET
+  (2026-10-05): a sea serpent slain strikes under the same cap - 40, a ship that stood 20 (`MARKS_COMBAT.kinds` gate,
+  raid, serpent; `11-Multiplayer/Sea-Serpent.md` section 8) - and the capped lines and cards name the serpents.
 - **GUILD DEEDS** - the `guild-deed` faucet, into a guild's treasury, never an account's: when three of a guild's
   accounts - each claiming with a character seven days in the guild - have claimed the same raid (`raid:<key>`) or gate
   (`gate:<game day>`), 25 silver; once an event a guild (the line `deed:<event>`, the guild its actor), at most four a
@@ -13081,7 +13083,9 @@ The record is `06-Systems/Professions-Arc.md` 10.5 (PROF0); this is what the fir
 
 **Why.** Online gold is the save's ("The GOLD is the client's, the economy being the save's" - GUILD1), so anything
 paid in purse gold can be paid by a client that never had it. A Mark is held by the account service alone and struck
-only for an act a server witnessed: the one thing a modified client cannot print.
+only for an act a server witnessed: the one thing a modified client cannot print. (SILVER-FINDS, 2026-10-05, at Mac's
+call: two faucets bounded by the UTC day instead - a gathering's find and a loot find, the service's dice the amount -
+`06-Systems/Professions-Arc.md` 10.5.)
 
 - **The law** (`src/net/marksLaw.js`, both ends): a balance holds 10,000,000; the faucets and their caps - MARKS1's one,
   the gate's receipt, 50 a gate and two a UTC day (the gate's own law allows twelve a real day); the Bank's exchange,

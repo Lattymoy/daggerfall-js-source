@@ -542,7 +542,7 @@ test('BA1: the four hosts gate the classic stride through the one gate, drive th
   // the records
   assert.ok(existsSync(join(root, 'bible/06-Systems/Better-Ambience.md')));
   assert.match(rd('bible/01-Overview/Active-Arcs.md'), /06-Systems\/Better-Ambience\.md/);
-  assert.match(rd('bible/Home.md'), /06-Systems\/Better-Ambience\.md/);
+  assert.match(rd('bible/01-Overview/Page-Index.md'), /06-Systems\/Better-Ambience\.md/);   // PIN MOVED (WALLET1's merge of main, 2026-10-05): Home.md's page index moved, byte for byte, to its own page
   assert.match(rd('bible/09-Testing/Testing.md'), /ba1_betterambience\.test\.js/);
   const m = /(\d+) modules\s*\n?\s*live under\s*\n?\s*`src\/systems\/`/.exec(rd('bible/06-Systems/Systems.md'));
   assert.equal(Number(m[1]), readdirSync(join(root, 'src/systems')).filter((f) => f.endsWith('.js')).length, 'Systems.md counts src/systems/ live - BA1 put two modules in that count');

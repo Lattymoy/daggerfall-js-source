@@ -438,8 +438,8 @@
   {
     "name": "PICKUP-FEED-world-body-take-passes-none",
     "file": "src/scenes/world.js",
-    "old": ", took: showPickups })) return;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
-    "new": " })) return;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
+    "old": ", took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
+    "new": " })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
     "tests": [
       "test/pickupfeed.test.js"
     ]
@@ -456,8 +456,8 @@
   {
     "name": "PICKUP-FEED-exterior-body-take-passes-none",
     "file": "src/scenes/exterior.js",
-    "old": ", took: showPickups })) return;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
-    "new": " })) return;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
+    "old": ", took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
+    "new": " })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
     "tests": [
       "test/pickupfeed.test.js"
     ]
@@ -474,8 +474,8 @@
   {
     "name": "PICKUP-FEED-worldModes-body-take-passes-none",
     "file": "src/scenes/worldModes.js",
-    "old": ", took: showPickups })) return;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
-    "new": " })) return;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
+    "old": ", took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
+    "new": " })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards",
     "tests": [
       "test/pickupfeed.test.js"
     ]
@@ -483,8 +483,8 @@
   {
     "name": "PICKUP-FEED-worldModes-pile-take-passes-none",
     "file": "src/scenes/worldModes.js",
-    "old": ", took: showPickups })) mountInterior(interiorInventory({ loot: _hooks }));",
-    "new": " })) mountInterior(interiorInventory({ loot: _hooks }));",
+    "old": ", took: showPickups })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards",
+    "new": " })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards",
     "tests": [
       "test/pickupfeed.test.js"
     ]
