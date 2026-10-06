@@ -331,7 +331,7 @@ test('WATCH-FIX the town\'s side: `killed` a hand death of its own kind - the li
 });
 
 test('WATCH-FIX online: the watch\'s record names the resident its watchman stands for (`lr`, the census\'s id - world172), a reader\'s town takes him off its street while the record stands and has him back when it goes (mutants: the wire\'s word, the writer, the reader, the town\'s skip, its free, the host\'s set)', () => {
-  assert.equal(RELAY_VERSION, 'world173');   // PIN MOVED (SERPENT3's merge of main): the `lr` came with WATCH-FIX's world172; SERPENT3 moved it on (world173, the sea serpent brain - world171 on its branch, renumbered past CRYSTAL-FIST's and WATCH-FIX's at the merges)
+  assert.equal(RELAY_VERSION, 'world174');   // PIN MOVED (SERPENT3's merge of main): the `lr` came with WATCH-FIX's world172; SERPENT3 moved it on (world173, the sea serpent brain - world171 on its branch, renumbered past CRYSTAL-FIST's and WATCH-FIX's at the merges); PIN MOVED (Project Legacy's merge of main): LEGACY7 after it (world174, the house on the token and the row - world172 on its branch, renumbered past WATCH-FIX's and SERPENT3's at the merge)
   for (const r of townCensus(TOWN, synthTown().buildings)) assert.ok(LIVING_ID_RE.test(r.id), `${r.id}: every id the census mints rides`);
   assert.ok(LIVING_ID_RE.test(mintResident(TOWN, 't', 3, 'merchant', { gen: 170 }).id), 'a newcomer\'s too');
   assert.deepEqual(validFoeRecord({ i: 3, t: 146, lr: 'L12345.w0' }), { i: 3, t: 146, lr: 'L12345.w0' });

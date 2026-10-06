@@ -304,6 +304,7 @@ select, input, textarea { font: inherit; }
 .svwho { grid-column: 2; grid-row: 1; min-width: 0; }
 .svwho h3 { font-family: var(--display); font-weight: 400; font-size: 21px; margin: 0 0 2px; overflow-wrap: anywhere; }
 .svsub { color: var(--bone); font-size: 13px; margin: 0 0 2px; }
+.svhouse { color: #d8c79a; font-size: 12px; font-style: italic; margin: 0 0 2px; overflow-wrap: anywhere; }   /* LEGACY7: the house on the roster's tile */
 .svwhen { color: var(--dim); font-size: 12px; margin: 0 0 10px; }
 .svwho .stats { gap: 4px 14px; margin: 0; }
 
@@ -1793,9 +1794,11 @@ ${badgeCss()}
    its host clips: under ~720 px both end tabs were cut); tighter under 900 px and 660 px, wrapped as a last resort, never cut */
 .px-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;
   border-bottom: 2px solid rgba(125,116,96,0.55); padding: 6px 8px 2px; }
-.px-tabs button { font: inherit; font-size: 20px; letter-spacing: 0.16em; text-indent: 0.16em;
+/* AUDIT LEGACY U5: five tabs (Project Legacy's Family) - the spacing a step tighter, so the five stand on one row in the
+   window's 920 px; the narrower steps below are unchanged */
+.px-tabs button { font: inherit; font-size: 20px; letter-spacing: 0.12em; text-indent: 0.12em;
   text-transform: uppercase; color: #d8cfae; background: none; border: 0; cursor: pointer;
-  min-height: 44px; padding: 6px 18px; display: flex; align-items: center; gap: 12px;
+  min-height: 44px; padding: 6px 12px; display: flex; align-items: center; gap: 8px;
   text-shadow: 2px 2px 0 rgba(0,0,0,0.8); transition: none; }
 .px-tabs button .px-c { font-size: 15px; color: rgb(243,239,44); visibility: hidden;
   text-shadow: 2px 2px 0 rgb(93,77,12); }
@@ -2097,6 +2100,15 @@ ${badgeCss()}
 @media (max-width: 660px) {
   .px-tabs button { font-size: 15px; letter-spacing: 0.06em; text-indent: 0.06em; padding: 6px 6px; gap: 0; }
   .px-tabs button .px-c { display: none; }
+}
+/* AUDIT LEGACY II U9: five tabs (Project Legacy's Family) on a phone held upright and a small tablet - a step tighter
+   again, so the strip stands on one row from 320 px; wrapped still as the last resort, never cut */
+@media (max-width: 780px) and (min-width: 661px) {
+  .px-tabs button { font-size: 16px; letter-spacing: 0.06em; text-indent: 0.06em; padding: 6px 8px; gap: 4px; }
+}
+@media (max-width: 420px) {
+  .px-tabs { gap: 2px; padding: 6px 4px 2px; }
+  .px-tabs button { font-size: 13px; letter-spacing: 0.02em; text-indent: 0.02em; padding: 6px 4px; }
 }
 @media (max-width: 480px) {
   .px-win { width: 100vw; height: calc(100dvh - 48px); border-left: 0; border-right: 0; }

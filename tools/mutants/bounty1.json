@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-BOUNTY1-B1-the-notice-stands-over-an-indoor-window",
     "file": "src/scenes/world.js",
-    "old": "if ((townTalk.overlayActive && !townTalk.overlayDone) || (modes?.overlayHeld ?? false) || (modes?.deathUp?.() ?? false)) return false;",
-    "new": "if ((townTalk.overlayActive && !townTalk.overlayDone) || (modes?.deathUp?.() ?? false)) return false;",
+    "old": "      // stacks (`modes.overlayHeld`): a mate's clear lands while a shop or the pack is open, and must not stand over it\n      if ((townTalk.overlayActive && !townTalk.overlayDone) || (modes?.overlayHeld ?? false) || (modes?.deathUp?.() ?? false)) return false;",
+    "new": "      // stacks (`modes.overlayHeld`): a mate's clear lands while a shop or the pack is open, and must not stand over it\n      if ((townTalk.overlayActive && !townTalk.overlayDone) || (modes?.deathUp?.() ?? false)) return false;",
     "tests": [
       "test/auditbounty1.test.js"
     ]
@@ -226,13 +226,14 @@
   {
     "name": "DEATH-PENALTY-5-privateers-hold-is-free",
     "file": "src/scenes/worldModes.js",
-    "old": "                const goldLost = applyDeathPenalty(playerEntity);   // DEATH-PENALTY: Privateer's Hold",
+    "old": "                const goldLost = online ? applyDeathPenalty(playerEntity) : 0;   // DEATH-PENALTY: Privateer's Hold",
     "new": "                const goldLost = 0;   // DEATH-PENALTY: Privateer's Hold",
     "tests": [
       "test/deathpenalty.test.js",
       "test/donline1_respawn.test.js",
       "test/risestuck.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
   },
   {
     "name": "DEATH-PENALTY-6-times-a-tenth",

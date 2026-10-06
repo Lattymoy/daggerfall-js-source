@@ -548,7 +548,17 @@ export function itemLongName(item, opts) {
  *  Bottle", a plant lost its (northern), a soul trap its soul, a quest
  *  letter its signoff. `material` is '' when the long name carries
  *  no prefix. */
-export function itemNameParts(item, { getQuest = null, differentiatePlantIngredients = true } = {}) {
+export function itemNameParts(item, opts = {}) {
+  const parts = namePartsOf(item, opts);
+  // AUDIT LEGACY H9: A PROJECT LEGACY HEIRLOOM CARRIES ITS HOUSE before the whole long name - "Hlaalu's Dwarven
+  // Longsword", the maker's mark's shape (PROF3) - or after it for a house named for its seat ("Dwarven Longsword of the
+  // house of Daggerfall"). Unidentified, the house is as unknown as the rest (systems/legacy/heirloom.js).
+  const house = item?.heirloom?.house;
+  if (typeof house !== 'string' || !house || !itemIsIdentified(item)) return parts;
+  const whole = parts.material ? `${parts.material} ${parts.name}` : parts.name;
+  return { name: house.startsWith('of ') ? `${whole} of the house ${house}` : `${house}'s ${whole}`, material: '' };
+}
+function namePartsOf(item, { getQuest = null, differentiatePlantIngredients = true } = {}) {
   const base = resolveItemName(item);
   if (!itemIsIdentified(item) || item?.artifact || item?.legendary || item?.aetheric) return { name: base, material: '' };   // LR2: a Legendary is named like an artifact - no material prefix; SET6: an Aetheric piece too ("Ruhn's Gatecleaver", never "Daedric Ruhn's...")
   if (differentiatePlantIngredients) {

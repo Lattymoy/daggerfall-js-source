@@ -235,7 +235,7 @@ export const initialOf = (save) => (String(save?.name ?? '').trim()[0] ?? '?').t
  * @param {Document} doc
  * @param {{name?: string, race?: string, career?: string, level?: number, health?: number,
  *          maxHealth?: number, gold?: number|null, when?: string|null, hour?: string|null,
- *          saveName?: string}} save  one row of the pane's own save list - every field
+ *          saveName?: string, house?: string|null}} save  one row of the pane's own save list - every field
  *        optional, because a card can come from an older build (saveSlots.js's
  *        `SaveInfo` typedef says the same about its own, for the same reason)
  * @param {object} [opts]
@@ -284,6 +284,7 @@ export function saveTile(doc, save, { actions = [], cloud = null, face = null, c
   top.append(el('h3', null, save?.name || 'Unnamed'));
   if (save?.saveName) top.append(el('span', 'svslot', save.saveName));
   who.append(top);
+  if (save?.house) who.append(el('p', 'svhouse', save.house));   // LEGACY7: the house, under the name (net/houseLaw.js houseLine)
   const line = tileLine(save);
   if (line) who.append(el('p', 'svsub', line));
   const when = tileWhen(save);

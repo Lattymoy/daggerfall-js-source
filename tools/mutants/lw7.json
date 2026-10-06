@@ -265,11 +265,12 @@
   {
     "name": "LW7-slain-unseen-words",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "const newsPool = (item) => (item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']",
-    "new": "const newsPool = (item) => (item.kind === 'slain' ? SLAIN_NEWS.seen",
+    "old": "  : item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']",
+    "new": "  : item.kind === 'slain' ? SLAIN_NEWS.seen",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "LEGACY6 (PIN MOVED): re-aimed by content - the pool asks a kinsman's news first now (KIN_NEWS), so the slain arm opens its own line."
   },
   {
     "name": "LW7-died-words",
@@ -364,11 +365,12 @@
   {
     "name": "LW7-kin-home",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    return this.peopleOf(day).filter((r) => r.id !== res.id && r.home === res.home);",
+    "old": "    return this.peopleOf(day).filter((r) => r.id !== res.id && householdKeyOf(r) === hh);",
     "new": "    return this.peopleOf(day).filter((r) => r.id !== res.id);",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content."
   },
   {
     "name": "LW7-slain-unmade",
@@ -675,8 +677,8 @@
   {
     "name": "LW7-host-slay-unseen",
     "file": "src/scenes/world.js",
-    "old": "{ t, seen, who: res.name }); };",
-    "new": "{ t, seen: false, who: res.name }); };",
+    "old": "{ t, seen, who: res.name });\n  };",
+    "new": "{ t, seen: false, who: res.name });\n  };",
     "tests": [
       "test/lw7_deeds.test.js"
     ]
@@ -738,11 +740,12 @@
   {
     "name": "LW7-host-town-options",
     "file": "src/scenes/world.js",
-    "old": "          holderOf: (res, day) => livingPlaceOf(res, livingCycleOf(res, day)).holder, deadAt: livingDeadAt, slay: livingSlay,",
+    "old": "          holderOf: (res, day) => (legacyHost?.holdsResident(res.id) ? null : livingPlaceOf(res, livingCycleOf(res, day)).holder), deadAt: livingDeadAt, slay: livingSlay,",
     "new": "          deadAt: livingDeadAt, slay: livingSlay,",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "LEGACY5 (PIN MOVED): re-aimed by content."
   },
   {
     "name": "LW7-host-sees-blind",

@@ -47,8 +47,8 @@
   {
     "name": "RENOWN-CHAR-a-writ-track-past-the-bound",
     "file": "server-account/src/professions.js",
-    "old": "        AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) < ?8`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX, RENOWN_TRACKS_MAX),",
-    "new": "        AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) < ?8 + 1`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX, RENOWN_TRACKS_MAX),",
+    "old": "        AND ${renownHeldSql('?1')} < ?8`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX, RENOWN_TRACKS_MAX),",
+    "new": "        AND ${renownHeldSql('?1')} < ?8 + 1`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX, RENOWN_TRACKS_MAX),",
     "tests": [
       "test/prof1_service.test.js"
     ]

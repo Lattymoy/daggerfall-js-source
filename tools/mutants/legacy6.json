@@ -1,0 +1,163 @@
+[
+  {
+    "name": "LEGACY6-standing-unwritten",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    p.standing = memberStanding(deps.entity, deps.regards?.() ?? null, deps.regardDay?.() ?? 0);\n",
+    "new": "",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-legal-unclamped",
+    "file": "src/systems/legacy/influence.js",
+    "old": "    if (Number.isFinite(n) && n !== 0 && /^\\d+$/.test(k)) legal[k] = clamp(n, LEGAL_REP_MIN, LEGAL_REP_MAX);",
+    "new": "    if (Number.isFinite(n) && n !== 0 && /^\\d+$/.test(k)) legal[k] = n;",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-factions-unbounded",
+    "file": "src/systems/legacy/influence.js",
+    "old": "factions: Object.fromEntries(top(facs, FACTIONS_KEPT))",
+    "new": "factions: Object.fromEntries(facs)",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-regard-floor-gone",
+    "file": "src/systems/legacy/influence.js",
+    "old": ".filter(([, r]) => Math.abs(Number(r)) >= REGARD_FLOOR)",
+    "new": ".filter(([, r]) => Number(r) !== 0)",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-share-over-nothing",
+    "file": "src/systems/legacy/influence.js",
+    "old": "    const d = Math.trunc((v - own) * STANDING_SHARE);",
+    "new": "    const d = Math.trunc(v * STANDING_SHARE);",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-faction-walked",
+    "file": "src/systems/legacy/influence.js",
+    "old": "    if (d && changeReputation(store, Number(id), d, false)) n++;",
+    "new": "    if (d && changeReputation(store, Number(id), d * 4, false)) n++;",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-regard-whole",
+    "file": "src/systems/legacy/influence.js",
+    "old": "    const d = Math.trunc(r * REGARD_SHARE);",
+    "new": "    const d = Math.trunc(r);",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-inherit-counts-a-word",
+    "file": "src/systems/livingWorld/relations.js",
+    "old": "      const e = map.get(id) ?? { r: 0, met: day, seen: day, talked: -1 };\n      e.r = clamp(eased(e, day) + amount);",
+    "new": "      const e = map.get(id) ?? { r: 0, met: day, seen: day, talked: day };\n      e.r = clamp(eased(e, day) + amount);",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-news-twice",
+    "file": "src/systems/legacy/influence.js",
+    "old": "  if (list.some((x) => x.k === n.k && x.who === n.who && x.t === n.t)) return false;\n",
+    "new": "",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-news-forever",
+    "file": "src/systems/legacy/influence.js",
+    "old": "at(n) <= t && t - at(n) < HOUSE_NEWS_DAYS * DAY_MIN && ",
+    "new": "at(n) <= t && ",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-seat-deaf",
+    "file": "src/systems/legacy/influence.js",
+    "old": "(seat || (n.m != null && n.m === here))",
+    "new": "(n.m != null && n.m === here)",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-news-unmerged",
+    "file": "src/systems/legacy/store.js",
+    "old": "  mine.news = mergeNews(mine.news, other.news);",
+    "new": "  mine.news = mergeNews(mine.news, []);",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-news-unread",
+    "file": "src/systems/legacy/family.js",
+    "old": "    news: readNews(rec.news),",
+    "new": "    news: [],",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-kin-words-the-roads",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "const newsPool = (item) => (item.kin ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS} */ (item.kind)]",
+    "new": "const newsPool = (item) => (false ? KIN_NEWS[/** @type {keyof typeof KIN_NEWS} */ (item.kind)]",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-town-deaf",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (kin.length) ctx.news = [...(ctx.news ?? []), ...kin];\n",
+    "new": "",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-killer-any-day",
+    "file": "src/systems/revenant.js",
+    "old": "Math.abs(d.at - ownAt) <= KILL_NEAR_MINUTES && ",
+    "new": "",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-slain-still-hunts",
+    "file": "src/systems/revenant.js",
+    "old": "    if (raw.gone || raw.defeated || raw.sworn) continue;",
+    "new": "    if (raw.gone) continue;",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-handed-twice",
+    "file": "src/systems/revenant.js",
+    "old": "  if (kept.some((x) => x?.id === r.id) || (_state.mirrorId === id && _state.list.some((x) => x.id === r.id))) return false;\n",
+    "new": "",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-heir-unhunted",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    huntHeir(heir, personOf(family, pend.fallenId));\n",
+    "new": "",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-death-untold",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    tellNews('died', fullNameOf(p.given, p.surname), d.place?.mapId);\n",
+    "new": "",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-born-without-share",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    inheritStanding(deps.entity, bornShare?.standing ?? null);\n",
+    "new": "",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-seed-anyone",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!bornShare || !p || p.id !== bornShare.personId || !playedHere(p)) return 0;",
+    "new": "    if (!p) return 0;",
+    "tests": ["test/legacy6_influence.test.js"]
+  },
+  {
+    "name": "LEGACY6-new-game-forgets",
+    "file": "src/scenes/world.js",
+    "old": "    newGame: () => { livingRelations = createRelations(); legacyHost?.seedRegards(livingRelations); },",
+    "new": "    newGame: () => { livingRelations = createRelations(); },",
+    "tests": ["test/legacy6_influence.test.js"]
+  }
+]

@@ -52,6 +52,8 @@ import { storedSession, serviceBase, forgetSession, accountRefusalText } from '.
 import { realmTradeRefusalText } from '../net/realmTradeLaw.js';   // REALM P2.1: a trade the realm settles
 import { REALM_DOOR_WORD } from '../net/wire.js';   // REALM-DOOR: the relay's word for a token that names no realm character
 import { gzipText, gunzipText, saveTextOf, canGzip, canGunzip } from '../net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
+import { houseLine } from '../net/houseLaw.js';   // LEGACY7: the house on the roster's tile
+
 
 /**
  * The service, as this device can reach it - or null when nobody is signed in (cloudSaves.js cloudIo's shape).
@@ -91,7 +93,7 @@ async function realmAsk(io, path, { method = 'GET', json = null, raw = null, hea
     try { data = await res.json(); } catch { data = null; }
     const error = typeof data?.error === 'string' ? data.error : 'server';
     if (error === 'auth') forgetSession(io.storage);   // accountClient.js's law: only `auth` signs out
-    return { ok: false, error, status: res.status, ...(Number.isSafeInteger(data?.seq) ? { seq: data.seq } : {}) };
+    return { ok: false, error, status: res.status, ...(Number.isSafeInteger(data?.seq) ? { seq: data.seq } : {}), ...(error === 'lineage-stale' && data ? { data } : {}) };   // LEGACY7: a stale line's stored record, to merge into
   }
   if (type.includes('json')) {
     try { return { ok: true, data: await res.json() }; } catch { return { ok: false, error: 'server' }; }
@@ -109,8 +111,36 @@ export const realmList = async (/** @type {any} */ io) => {
   const r = await realmAsk(io, '/v1/realm');
   return r.ok ? { ok: true, characters: Array.isArray(r.data?.characters) ? r.data.characters : [], max: r.data?.max ?? 0 } : r;
 };
-/** A character born online: `{ ok, data: { id, lease, seq, gzip } }` - `gzip` the service's word that it opens a packed save. */
-export const realmCreate = (/** @type {any} */ io, /** @type {string} */ name, /** @type {any} */ summary = null) => realmAsk(io, '/v1/realm/create', { method: 'POST', json: { name, summary } });
+/** A character born online: `{ ok, data: { id, lease, seq, gzip } }` - `gzip` the service's word that it opens a packed save.
+ *  LEGACY7: `born` - `{ lineage, person }`, born as that living member of the account's own line (Project Legacy). */
+export const realmCreate = (/** @type {any} */ io, /** @type {string} */ name, /** @type {any} */ summary = null, /** @type {{ lineage: string, person: number } | null} */ born = null) =>
+  realmAsk(io, '/v1/realm/create', { method: 'POST', json: born ? { name, summary, lineage: born.lineage, person: born.person } : { name, summary } });
+/** LEGACY7: the account's Project Legacy lines - `{ ok, lineages: [{ id, surname, model, rev, record }] }`. */
+export const realmLineages = async (/** @type {any} */ io) => {
+  const r = await realmAsk(io, '/v1/realm/lineages', { method: 'POST', json: {} });
+  return r.ok ? { ok: true, lineages: Array.isArray(r.data?.lineages) ? r.data.lineages : [] } : r;
+};
+/** LEGACY7: a line written past its rev - `{ ok, data: { rev } }`, or `{ ok: false, error: 'lineage-stale', data: { rev, record } }`
+ *  (the stored record, to merge into and write again). AUDIT LEGACY III A2: `base` the service's rev the record was made
+ *  from (the list's, the last write's, the stale answer's) - none for a line founded here. */
+export const realmLineagePut = (/** @type {any} */ io, /** @type {string} */ id, /** @type {any} */ record, /** @type {number|null} */ base = null) =>
+  realmAsk(io, '/v1/realm/lineage', { method: 'POST', json: base == null ? { id, record } : { id, record, base } });
+/** LEGACY7: THE TOMBSTONE - the playing tab's character fallen for good, under its lease. Part three: `why` 'retired' -
+ *  an elder's mantle passed, which keeps a union with another player's character (a death ends it). */
+export const realmDie = (/** @type {any} */ io, /** @type {string} */ id, /** @type {string} */ lease, /** @type {'fell'|'retired'} */ why = 'fell') =>
+  realmAsk(io, '/v1/realm/die', { method: 'POST', json: why === 'retired' ? { id, lease, why } : { id, lease } });
+/** LEGACY7 part three: MY HALF OF ONE WEDDING - my character under its lease, the handshake `sid`, the other's account
+ *  and realm character as the relay stamped them (AUDIT LEGACY III O1): `{ ok, data: { wed: false } }` (mine waits for
+ *  theirs), `{ ok, data: { wed: true, union } }`, or a refusal (server-account/src/legacy.js realmWed). AUDIT LEGACY III
+ *  O3: `withdraw` takes it back - answered `wed: true` with the union when it stood first. */
+export const realmWedHalf = (/** @type {any} */ io, /** @type {string} */ id, /** @type {string} */ lease, /** @type {string} */ sid, /** @type {string} */ partner,
+  /** @type {string} */ partnerChar, { withdraw = false } = {}) =>
+  realmAsk(io, '/v1/realm/wed', { method: 'POST', json: { id, lease, sid, partner, partnerChar, ...(withdraw ? { withdraw: true } : {}) } });
+/** LEGACY7 part three: every union of the account's characters - `{ ok, unions: [{ sid, mine, partner, at, endedAt, endedWhy }] }`. */
+export const realmUnions = async (/** @type {any} */ io) => {
+  const r = await realmAsk(io, '/v1/realm/unions', { method: 'POST', json: {} });
+  return r.ok ? { ok: true, unions: Array.isArray(r.data?.unions) ? r.data.unions : [] } : r;
+};
 /** An offline character brought in through customs, once: `{ ok, data: { id, lease, seq, gzip } }`. */
 export const realmCustoms = (/** @type {any} */ io, /** @type {string} */ origin, /** @type {string} */ name, /** @type {any} */ summary = null) => realmAsk(io, '/v1/realm/customs', { method: 'POST', json: { origin, name, summary } });
 /** A join: a new lease - `{ ok, data: { id, lease, seq, bytes, gzip } }`. */
@@ -547,6 +577,28 @@ export function createRealmSession({
     /** AUDIT REALM L2-F6: THE TAB CANNOT HOLD WHAT THE REALM NOW HOLDS (a settle whose goods this game refuses): the
      *  session ends as a lost answer does - to the door, where a join reads the record - never a checkpoint over it. */
     abandon(/** @type {string} */ error = 'unknown') { lose(error); },
+    /** LEGACY7: THE CHARACTER FELL FOR GOOD (Project Legacy) - its tombstone under this session's lease
+     *  (server-account/src/legacy.js realmDie). The session ends with it, quietly - nothing of the dead is written
+     *  again, and the page stays for the Succession. Answers whether the realm took it (a refusal - unheard, offline -
+     *  leaves the session as it was, to be asked again). Part three: `why` 'retired' for an elder's mantle passed. */
+    async die(/** @type {'fell'|'retired'} */ why = 'fell') {
+      if (lost && lost !== 'dead') return false;
+      if (lost === 'dead') return true;
+      if (running) { try { await running; } catch { /* the last put's answer does not matter now */ } }
+      const r = await realmDie(io, id, lease, why);
+      if (!r.ok) return false;
+      lost = 'dead';
+      pending = null;
+      dropUnsent(storage, id);   // RESCUE-SAVE: no copy of the dead is offered again
+      return true;
+    },
+    /** LEGACY7 part three: THIS CHARACTER'S HALF OF ONE WEDDING (realmWedHalf), under this session's lease - `{ ok, wed,
+     *  union }` or `{ ok: false, error }`. A session that ended weds nobody (and its halves end with its lease's life). */
+    async wed(/** @type {string} */ sid, /** @type {string} */ partner, /** @type {string} */ partnerChar, /** @type {{ withdraw?: boolean }} */ opts = {}) {
+      if (lost) return { ok: false, error: lost };
+      const r = await realmWedHalf(io, id, lease, sid, partner, partnerChar, opts);
+      return r.ok ? { ok: true, wed: r.data?.wed === true, union: r.data?.union ?? null } : { ok: false, error: r.error };
+    },
     /** The session's end: what is waiting is sent first (unless the page is going - `keepalive` sends the leave alone,
      *  which a browser can finish after the page is gone), then the lease given up. */
     async leave({ keepalive = false } = {}) {
@@ -618,6 +670,7 @@ export function realmRowAsSave(row, { dateText = () => null } = {}) {
     hour: null,
     saveName: row?.customs ? 'Brought in' : 'Online',
     unfinished: !(row?.bytes > 0),
+    house: houseLine(row?.house) ?? null,   // LEGACY7: the house the realm reads off its line - "☠ Ysolde II of House Hlaalu"
   };
 }
 

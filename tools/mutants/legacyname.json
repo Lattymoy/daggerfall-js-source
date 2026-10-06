@@ -1,0 +1,191 @@
+[
+  {
+    "name": "LEGACYNAME-never-at-the-seat",
+    "file": "src/scenes/legacyHost.js",
+    "old": "if (t) { family.seat = t; const named = nameAtSeat(family); touch(family);",
+    "new": "if (t) { family.seat = t; const named = false; touch(family);",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-named-unsaid",
+    "file": "src/scenes/legacyHost.js",
+    "old": " if (named) deps.say(LEGACY_TEXT.named(family.surname)); }",
+    "new": " }",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-founding-unnamed",
+    "file": "src/systems/legacy/family.js",
+    "old": "  nameAtSeat(family);   // a founder with no surname of their own: the house is the seat's\n",
+    "new": "",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-renames-a-named-house",
+    "file": "src/systems/legacy/family.js",
+    "old": "  if (!family || String(family.surname ?? '').trim() || !family.seat?.loc) return false;",
+    "new": "  if (!family || !family.seat?.loc) return false;",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-the-blood-keeps-no-name",
+    "file": "src/systems/legacy/family.js",
+    "old": "  for (const p of family.people ?? []) if ((p.kind ?? 'member') === 'member' && !String(p.surname ?? '').trim()) p.surname = sur;\n",
+    "new": "",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-a-spouse-renamed",
+    "file": "src/systems/legacy/family.js",
+    "old": "if ((p.kind ?? 'member') === 'member' && !String(p.surname ?? '').trim()) p.surname = sur;",
+    "new": "if (!String(p.surname ?? '').trim()) p.surname = sur;",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-merge-forgets-the-name",
+    "file": "src/systems/legacy/store.js",
+    "old": "  nameAtSeat(mine);   // LEGACY-NAME: a nameless house is named with the seat it learned - here, from the copy that saw it\n",
+    "new": "",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-houseWord-raw",
+    "file": "src/systems/legacy/houseName.js",
+    "old": "export const houseWord = (surname) => String(surname ?? '').trim().replace(/^of\\s+/i, '');",
+    "new": "export const houseWord = (surname) => String(surname ?? '').trim();",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-founded-blank",
+    "file": "src/scenes/legacyHost.js",
+    "old": "  founded: (sur, model) => `${houseWord(sur) ? `The house of ${houseWord(sur)}` : 'Your house'} is founded",
+    "new": "  founded: (sur, model) => `The house of ${sur} is founded",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-ended-of-of",
+    "file": "src/scenes/legacyHost.js",
+    "old": "  ended: (sur) => `${houseWord(sur) ? `The house of ${houseWord(sur)}` : 'Your house'} goes on.`,",
+    "new": "  ended: (sur) => `The house of ${sur} goes on.`,",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-heirloom-of-of",
+    "file": "src/systems/legacy/heirloom.js",
+    "old": "  const house = houseWord(it.heirloom.house);",
+    "new": "  const house = it.heirloom.house;",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-wed-of-of",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "is of the house${houseWord(house) ? ` of ${houseWord(house)}` : ''} now.`,",
+    "new": "is of the house of ${house} now.`,",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-news-of-of",
+    "file": "src/systems/legacy/influence.js",
+    "old": "house: houseWord(family.surname), foe: ''",
+    "new": "house: family.surname ?? '', foe: ''",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-news-doubles-the-surname",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "    Object.freeze(['{who}, gone. I saw them in the market not a week past.', 'Arkay keeps no calendar.']),",
+    "new": "    Object.freeze(['{who} {house}, gone. I saw them in the market not a week past.', 'Arkay keeps no calendar.']),",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-title-of-of",
+    "file": "src/ui/familyPages.js",
+    "old": "export const houseTitle = (surname) => (houseWord(surname) ? `The House of ${houseWord(surname)}` : 'The House');",
+    "new": "export const houseTitle = (surname) => (surname ? `The House of ${surname}` : 'The House');",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-house-page-raw",
+    "file": "src/ui/familyPages.js",
+    "old": "  detail.append(divider(houseTitle(family?.surname)));",
+    "new": "  detail.append(divider(family ? `The House of ${family.surname}` : 'The House'));",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-card-raw",
+    "file": "src/ui/familyPages.js",
+    "old": "`Generation ${p.gen + 1} of the house${houseWord(family.surname) ? ` of ${houseWord(family.surname)}` : ''}`",
+    "new": "`Generation ${p.gen + 1} of the house of ${family.surname}`",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-surname-at-the-last-word",
+    "file": "src/systems/legacy/family.js",
+    "old": "  if (of > 0) return parts.slice(of).join(' ');\n",
+    "new": "",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-given-at-the-last-word",
+    "file": "src/systems/legacy/family.js",
+    "old": "  if (of > 0) return parts.slice(0, of).join(' ');\n",
+    "new": "",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-succession-raw-house",
+    "file": "src/scenes/world.js",
+    "old": "const legacyHouse = (fam, the = 'the') => `${the} house${houseWord(fam?.surname) ? ` of ${houseWord(fam.surname)}` : ''}`;",
+    "new": "const legacyHouse = (fam, the = 'the') => `${the} house of ${fam?.surname ?? ''}`;",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  },
+  {
+    "name": "LEGACYNAME-succession-heir-raw",
+    "file": "src/scenes/world.js",
+    "old": "sub: `Born of the blood, raised in ${legacyHouse(fam)} - a new heir comes of age`",
+    "new": "sub: `Born of the blood, raised in the house of ${fam?.surname ?? ''} - a new heir comes of age`",
+    "tests": [
+      "test/legacyname.test.js"
+    ]
+  }
+]

@@ -156,7 +156,7 @@ export function stirPlace(room, standing, id, spot, stirs, walkable) {
 /**
  * @param {{
  *   sprites: ReturnType<typeof import('../world/travellerSprites.js').createTravellerSprites>,
- *   building: () => ({ key: number, town: any } | null),
+ *   building: () => ({ key: number, town: any, only?: (res: any) => boolean } | null),
  *   collider: () => any,
  *   floorAt: (x: number, y: number, z: number) => (number|null),
  *   origin: () => (number[] | null),
@@ -164,7 +164,8 @@ export function stirPlace(room, standing, id, spot, stirs, walkable) {
  *   waysIn?: () => number[][],
  *   clock: () => number,
  *   ready?: () => boolean,
- * }} deps - `building()` the building the player is in and its town's LivingTown (null: none, or not a living town's);
+ * }} deps - `building()` the building the player is in and its town's LivingTown (null: none, or not a living town's),
+ *   and (LEGACY-HOME) `only(res)` the residents it holds when it is not the census's to fill - a family's house: its own;
  *   `origin()` where the player came in (feet, the room's frame); `floorAt` the room's floor under a point;
  *   `staticFeet()` the building's static people standing; `waysIn()` every door's landing (AUDIT-E4); `ready()` whether
  *   the room is whole (nothing loading)
@@ -268,7 +269,7 @@ export function createLivingIndoors(deps) {
       realNow += dt;
       if (timer >= INDOOR_TICK_S) {
         timer = 0;
-        inside = b.town.insideAt(b.key, deps.clock()).slice(0, INDOOR_MAX);
+        inside = b.town.insideAt(b.key, deps.clock()).filter((x) => !b.only || b.only(x.res)).slice(0, INDOOR_MAX);   // LEGACY-HOME: a family's house holds its own
       }
       // comings and goings: at once on the way in, else where the player is not looking (or far)
       const unseen = (p) => {

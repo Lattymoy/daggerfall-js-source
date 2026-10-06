@@ -255,7 +255,7 @@ function laneTown() {
 }
 const EAST = Math.PI / 2, WEST = -Math.PI / 2;
 
-test('LW-SPACE the step aside: a walker steps round one standing on its line - the nearest way aside that keeps SPACE_M and that the street holds, the right before the left - and back to its line once by; two coming at each other on one line both keep right and pass apart; of two going one way inside each other the higher id steps round and the lower keeps its line; one walking up to its stand steps aside for nobody within DODGE_SETTLE_M of it, and one the politeness gate holds stands (mutants: the step unread, the left before the right, the follower unread, the stand unread, the hold unread)', () => {
+test('LW-SPACE the step aside: a walker steps round one standing on its line - the nearest way aside that keeps SPACE_M and that the street holds, the right before the left - and back to its line once by; two coming at each other on one line both keep right and pass apart; of two going one way inside each other the higher id steps round and the lower keeps its line; one walking up to its stand steps aside for nobody within DODGE_SETTLE_M of it, and one the politeness gate holds stands; a wall on its right, round to its left (mutants: the step unread, the left before the right, the follower unread, the stand unread, the hold unread, the trail unread, the street unread)', () => {
   const { town, z0, x0, body, street } = laneTown();
   // one standing on the line three metres ahead: walked past at the walking pace, the body where its step aside puts it
   // each frame - stepped round to its right (east-going: its right is -z), and back on its line once by
@@ -275,6 +275,20 @@ test('LW-SPACE the step aside: a walker steps round one standing on its line - t
   assert.ok(maxSide >= SPACE_M - 1e-6, `to its right (${maxSide.toFixed(2)} m)`);
   assert.ok(onStreet, 'every step on the street');
   assert.ok(Math.abs(walker.person.pos[2] - z0) < 1e-9 && walker.side === 0, `back on its line once by (${(walker.person.pos[2] - z0).toFixed(2)})`);
+
+  // a wall on its right (the street's southern edge a hand off its body): it steps round to its left, the right not
+  // held, and passes apart
+  const edge = 24 * NAV_CELL + 0.4 + 0.05;   // the body's middle a hand inside the street's southern edge
+  const hugger = body('L1.120', x0, edge, EAST, true);
+  town.pool = [hugger, body('L1.920', x0 + 3, edge, 0, false)];
+  let nearestWall = Infinity;
+  for (let i = 0; i < 5 * 30; i++) {
+    const g = town._dodge(/** @type {any} */ (hugger), hugger.person, { x: x0 + PERSON_MOVE_SPEED * i / 30, z: edge, yaw: EAST, moving: true }, 1 / 30);
+    hugger.person.pos = [g.x, 0, g.z];
+    nearestWall = Math.min(nearestWall, Math.hypot(g.x - (x0 + 3), g.z - edge));
+    assert.ok(street.holds(g.x, g.z), 'on the street');
+  }
+  assert.ok(nearestWall >= SPACE_M - 1e-6, `round to its left, the right a wall: never nearer than ${nearestWall.toFixed(2)} m`);
 
   // a body trailing its day's place (behind it on its line, as a walker catching its walk up does): whoever stands between
   // the two is in its way as much as one ahead of the place

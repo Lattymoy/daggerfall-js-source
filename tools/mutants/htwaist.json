@@ -597,12 +597,13 @@
   {
     "name": "HT-WAIST-BACK-the-host-never-draws-them",
     "file": "src/scenes/world.js",
-    "old": " peerWalkers?.drawLanterns(); };",
-    "new": " };",
+    "old": " peerWalkers?.drawLanterns(); (_mode()",
+    "new": " (_mode()",
     "tests": [
       "test/htwaistback.test.js",
       "test/mwbody1.test.js"
-    ]
+    ],
+    "note": " LEGACY7 part four (PIN MOVED): re-aimed by content - the hook draws the line's own bodies after the lanterns now."
   },
   {
     "name": "HT-WAIST-BACK-the-art-asked-every-frame",

@@ -73,13 +73,14 @@ import { relaySupportsFoeInventory } from './wire.js';
 import { validStaffTeleportIn, validStaffTeleportOut, staffTeleportSupported } from './staffTeleport.js';
 import { layoutRoomKey } from '../world/interiorShared.js';   // WD3 (AUDIT WD3 B3): an interior's room is its layout's
 import { tabStorage } from '../systems/appStorage.js';   // the tab's own storage - the seam, never the browser's own (a PIN)
+import { REALM_CHARACTER_RE } from './identityToken.js';   // AUDIT LEGACY III O1: a wed frame's stamped realm character, by the token's own shape
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 
 import { isGateRoom } from './gateLaw.js';   // WB3: a gate's arena is one room of its own
 import { isBattleRoom, isRoyalRoom } from './siegeRef.js';   // SEAT2a part four: a siege's battle is one room of its own   // CROWN1 part two: and a Royal Tourney's
 import { privateInteriorOf } from './privateInterior.js';   // NET-SMOOTH: an owned interior's poses are MapsFile's frame
 import { isArenaRoom, validArenaIn } from './arenaLaw.js';   // ARENA4: the arena's hall and its bouts
-import { poseChanged, POSE_TS_MOD, poseTsDiff, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, readAura, readRibbon, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsDuel, readRenown, renownGate, relaySupportsRenown, RENOWN_ORDER_KEEP_MS, RENOWN_RESEND_MS, lookGate, relaySupportsLook, relaySupportsPartyTravel, relaySupportsRestOpt, relaySupportsEvent, relayKnowsLiveEvent, eventGate, validLiveEvent, LIVE_EVENTS, isSocialRoom, validGateIn, validGateOut, gateGate, relaySupportsGate, relaySupportsOwn, relaySupportsGateSpent, relaySupportsGateSite, relaySupportsGateHeal, gatePlaceWire, readGuildTag, relaySupportsGuild, GUILD_ORDER_KEEP_MS, guildChatInGate, GUILD_CHAT_ROOM_HZ_MAX, validRaidIn, validRaidOut, raidGate, relaySupportsRaid, validRaidTownsIn, isRegionRoom, validTravellerMark, validTravellerFrame, relaySupportsTravellers, travInGate, TRAV_SEND_MIN_MS, TRAV_WELCOME_MAX, TRAV_STALE_MS, relaySupportsPartyWalk, relaySupportsPartyLead, relaySupportsPartyMap, validAmapFrame, amapBody, AMAP_SEND_MS, AMAP_HUB_MIN_MS, validSiegeIn, validSiegeOut, siegeGate, relayFightsBattles, relayRunsRoyal, validRiteIn, validRiteOut, riteGate, relaySupportsRite, arenaGate, relaySupportsArena, readArenaOut } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
+import { poseChanged, POSE_TS_MOD, poseTsDiff, SOCKETS_MAX, WORLD_CELL, RANGE_PIXELS, PIXEL_UNITS, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, WORLD_FRAME_MAX, worldFrameMaxFor, isCellRoom, hitOwnerOf, validPose, validLook, sanitizeName, readBadge, readAura, readRibbon, sanitizeChat, chatGate, redGate, dmGate, relaySupportsDm, muteGate, subOf, mutedUntilOf, worldRoom, inRange, relayUrl, isWorldRoom, isChatRoom, foesGate, FOES_FRAME_MAX, MAX_FRAME_BYTES, hitGate, actGate, actFrameFits, whoGate, WHO_RETRY_MS, HEARTBEAT_MS, PING_MS, relayVersionOf, chatInGate, CHAT_ROOM_HZ_MAX, socialGate, partyGate, validPartyPose, validSocialFrame, validPartyFrame, PARTY_SEND_MS, validSocialAct, socialInGate, noteInGate, partyInGate, SOCIAL_IN_HZ_MAX, NOTE_IN_HZ_MAX, INBOUND_FRAME_MAX, questInGate, validQuestFrame, QUEST_SEND_MS, QUEST_HUB_MIN_MS, PARTY_MAX, tokenGate, validTradeData, tradeGate, tradeInGate, validCastData, castGate, castInGate, CAST_FRAME_MAX, CAST_IN_HZ_MAX, relaySupportsCast, TRADE_IN_HZ_MAX, relaySupportsTrade, TRADE_FRAME_MAX, parkGate, relaySupportsPark, PARK_CELL_MAX, PARK_KEY_RE, PARK_TTL_MS, relaySupportsChannels, CHAT_LINE_CHANNELS, partyChatInGate, PARTY_CHAT_ROOM_HZ_MAX, relaySupportsRoll, rollGate, validRollSpec, validRoll, relaySupportsEmote, validCardData, cardGate, cardInGate, CARD_FRAME_MAX, CARD_IN_HZ_MAX, relaySupportsCard, validPageData, pageGate, pageInGate, PAGE_FRAME_MAX, PAGE_IN_HZ_MAX, relaySupportsPage, validDuelData, duelGate, duelInGate, DUEL_FRAME_MAX, DUEL_IN_HZ_MAX, relaySupportsDuel, validWedData, wedGate, wedInGate, WED_FRAME_MAX, WED_IN_HZ_MAX, relaySupportsWed, readRenown, renownGate, relaySupportsRenown, RENOWN_ORDER_KEEP_MS, RENOWN_RESEND_MS, lookGate, relaySupportsLook, relaySupportsPartyTravel, relaySupportsRestOpt, relaySupportsEvent, relayKnowsLiveEvent, eventGate, validLiveEvent, LIVE_EVENTS, isSocialRoom, validGateIn, validGateOut, gateGate, relaySupportsGate, relaySupportsOwn, relaySupportsGateSpent, relaySupportsGateSite, relaySupportsGateHeal, gatePlaceWire, readGuildTag, readHouse, relaySupportsGuild, GUILD_ORDER_KEEP_MS, guildChatInGate, GUILD_CHAT_ROOM_HZ_MAX, validRaidIn, validRaidOut, raidGate, relaySupportsRaid, validRaidTownsIn, isRegionRoom, validTravellerMark, validTravellerFrame, relaySupportsTravellers, travInGate, TRAV_SEND_MIN_MS, TRAV_WELCOME_MAX, TRAV_STALE_MS, relaySupportsPartyWalk, relaySupportsPartyLead, relaySupportsPartyMap, validAmapFrame, amapBody, AMAP_SEND_MS, AMAP_HUB_MIN_MS, validSiegeIn, validSiegeOut, siegeGate, relayFightsBattles, relayRunsRoyal, validRiteIn, validRiteOut, riteGate, relaySupportsRite, arenaGate, relaySupportsArena, readArenaOut } from './wire.js';   // SOC2: the hub's law, at home; AUDIT SOC B3/B11/B20: the act's projection, the inbound gates, the inbound bound
 import { RAID_TOWNS_CHUNK } from './raidLaw.js';   // RAID-ROLL: the towns table's pieces
 import { owGate, validOwIn, validOwOut, relaySupportsOverworld, OW_WORD_IDS_MAX, OW_WORD_ROWS_MAX } from './wire.js';
 import { validSerpentIn, validSerpentOut, serpentGate, relaySupportsSerpent, relaySupportsSerpentSite } from './wire.js';   // SERPENT1: the sea serpent's frame, both ways   // OW6L: the overworld ledger's frame, both ways
@@ -260,6 +261,9 @@ export function lerpPose(from, to, t) {
 
 /** The distance between two poses on the ground. */
 const groundDist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+/** AUDIT LEGACY III O1: a wed frame's `sc` - the sender's realm character as the relay stamped it off their token (`ci`) -
+ *  or null (an older relay stamps none, and a wedding then waits on one that does). */
+const scOf = (m) => (typeof m?.sc === 'string' && REALM_CHARACTER_RE.test(m.sc) ? m.sc : null);
 
 // ═══ NET-SMOOTH (2026-10-04, Mac: "Sometimes other players rubberband, I want to continue to improve performance and
 // future proof for larger amounts of players") ════════════════════════════════════════════════════════════════════
@@ -543,6 +547,10 @@ export class OnlineSession {
     this.onDuel = null;           // DUEL1: (id, data, sub) => void - a duel frame at ME, projected by the wire's validDuelData; `sub` the sender's account as the RELAY verified it (null from a relay that stamps none)
     this._duelBucket = null;      // DUEL1: my own duel frames out - duelGate's law
     this._inDuelBuckets = new Map();   // DUEL1: the gate on duel frames coming in, per sender - the directed frames' shape (`_directedIn`)
+    this.wedOk = false;           // LEGACY7 part three: the relay that welcomed this socket routes wed frames (relaySupportsWed) - an older one CLOSES the socket on one, so no proposal is sent through it
+    this.onWed = null;            // LEGACY7 part three: (id, data, sub, sc) => void - a wed frame at ME, projected by the wire's validWedData; `sub` the sender's account as the RELAY verified it; AUDIT LEGACY III O1: `sc` their realm character, the token's `ci` (scOf)
+    this._wedBucket = null;       // LEGACY7 part three: my own wed frames out - wedGate's law
+    this._inWedBuckets = new Map();   // LEGACY7 part three: the gate on wed frames coming in, per sender (`_directedIn`)
     this.ownOk = false;           // OWN1: the relay that welcomed this socket carries a world room's own lane and routes an `own` hit to its owner (relaySupportsOwn) - an older one strikes the frame out, so nothing is sent down it
     this.gateSpentOk = false;     // AUDIT WBX S1: the relay that welcomed this socket hears a `spent` on its hub (relaySupportsGateSpent)
     this.gateSiteOk = false;      // DISCORD-GATES: and a `site` (relaySupportsGateSite)
@@ -796,7 +804,7 @@ export class OnlineSession {
     // bodies stood, its foes trusted) and `recall`: `_askRound` walks it as it walks a stranger, the relay's join
     // answers with the look it holds now, and `_refresh` clears the flag. One ask per re-stood peer, at the who gate.
     const knew = told ? null : this._known.get(id);
-    const made = this._peer(knew ? { ...p, name: knew.name, title: knew.title, glyphs: knew.glyphs, lv: knew.lv, gt: knew.gt, au: knew.au, rb: knew.rb, sub: knew.sub, look: knew.look } : p, now);   // GUILD1c: the tag it was introduced with; WB9g: and the aura
+    const made = this._peer(knew ? { ...p, name: knew.name, title: knew.title, glyphs: knew.glyphs, lv: knew.lv, gt: knew.gt, au: knew.au, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub, look: knew.look } : p, now);   // LEGACY7: and the house   // GUILD1c: the tag it was introduced with; WB9g: and the aura
     made.told = told || !!knew;
     made.recall = !told && !!knew;
     if (told) this._remember(id, made);
@@ -812,7 +820,7 @@ export class OnlineSession {
    *  forgets by staleness, not by first sight. */
   _remember(id, p) {
     this._known.delete(id);
-    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, lv: p.lv ?? null, gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, sub: p.sub, look: p.look });   // GUILD1c: and the guild's tag   // MOD1: the account too, so a re-stood peer can still be named by /mute   // RENOWN1: and the level
+    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, lv: p.lv ?? null, gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub, look: p.look });   // LEGACY7: and the house   // GUILD1c: and the guild's tag   // MOD1: the account too, so a re-stood peer can still be named by /mute   // RENOWN1: and the level
     if (this._known.size > KNOWN_MAX) this._known.delete(this._known.keys().next().value);
   }
   _held(id) { for (const s of this._rooms.values()) if (s.has(id)) return true; return false; }
@@ -1215,6 +1223,24 @@ export class OnlineSession {
     if (s.length > DUEL_FRAME_MAX) return false;   // the relay's own door on a duel frame - over it the relay closes the socket
     try { ws.send(s); } catch { return false; }
     this._duelBucket = gate.bucket; this.stats.sent++; this.stats.duels = (this.stats.duels ?? 0) + 1;
+    return true;
+  }
+
+  /** LEGACY7 part three: one wed frame out - a proposal, its answer, its end or the union's word - to the player through
+   *  the socket that reports them, through the wire's own projection first, WED_HZ_MAX a second, never at a relay that
+   *  would close the socket for it. TRUE MEANS THE FRAME LEFT THE SOCKET; false is refused to the caller - the
+   *  wedding's own law (net/wedSession.js) owns its timeouts. */
+  sendWed(data) {
+    const d = validWedData(data);
+    if (!d || d.to === this.id || !this.wedOk) return false;
+    const ws = this._socketFor(d.to);
+    if (!ws) return false;
+    const gate = wedGate(this._wedBucket, this._now());
+    if (!gate.pass) return false;
+    const s = JSON.stringify({ t: 'wed', data: d });
+    if (s.length > WED_FRAME_MAX) return false;   // the relay's own door on a wed frame
+    try { ws.send(s); } catch { return false; }
+    this._wedBucket = gate.bucket; this.stats.sent++;
     return true;
   }
 
@@ -1712,8 +1738,9 @@ export class OnlineSession {
    *  SEAT1c: and my seat title's claim (`ts`), read back beside the title it fits.
    *  SEASON1 part two: and my Season's banner ribbon (`ribbon`), through the wire's own reader - an answer from a service
    *  before it says nothing.
-   *  @param {{ name?: string, title?: string|null, glyphs?: string[], level?: number|null, guild?: string|null, aura?: string|null, ts?: number[]|null, ribbon?: number[]|null }} [who] */
-  adoptIdentity({ name, title, glyphs, level, guild, aura, ts, ribbon } = {}) {
+   *  LEGACY7: and my house (`house`, net/houseLaw.js), through the law's own reader - likewise.
+   *  @param {{ name?: string, title?: string|null, glyphs?: string[], level?: number|null, guild?: string|null, aura?: string|null, ts?: number[]|null, ribbon?: number[]|null, house?: any }} [who] */
+  adoptIdentity({ name, title, glyphs, level, guild, aura, ts, ribbon, house } = {}) {
     let changed = false;
     if (typeof name === 'string' && name) {
       const n = sanitizeName(name);
@@ -1728,6 +1755,7 @@ export class OnlineSession {
     if (guild !== undefined) { const gt = readGuildTag({ gt: guild }); if (gt !== (this.gt ?? null)) { this.gt = gt; changed = true; } }   // GUILD1c: an answer from a service before it says nothing
     if (aura !== undefined) { const au = readAura({ au: aura }); if (au !== (this.au ?? null)) { this.au = au; changed = true; } }   // WB9g: likewise
     if (ribbon !== undefined) { const rb = readRibbon({ rb: ribbon }); if (rb?.join('/') !== this.rb?.join('/')) { this.rb = rb; changed = true; } }   // SEASON1 part two: likewise
+    if (house !== undefined) { const h = readHouse(house); if (JSON.stringify(h) !== JSON.stringify(this.house ?? null)) { this.house = h; changed = true; } }   // LEGACY7: likewise
     return changed;
   }
   /** SEASON1 part two (Seats-Arc 9.1): THE BANNER RIBBON A PLAYER WEARS, BY ID - mine, or a peer's in a room or introduced
@@ -1876,13 +1904,14 @@ export class OnlineSession {
    *  whose author this session never met wears no badge rather than a guessed one. The chat panel asks through the
    *  host (ui/chatPanel.js `badgeOf`), the way it asks the social picture for a name's colour.
    *  @param {string|null|undefined} id
-   *  @returns {{ title: string|null, glyphs: string[], gt: string|null }|null} */
+   *  LEGACY7: and the house (net/houseLaw.js - `{ hn, hc?, hb?, hg? }`), absent for none.
+   *  @returns {{ title: string|null, glyphs: string[], gt: string|null, house?: any }|null} */
   badgeOf(id) {
     if (id == null) return null;
     // GUILD1c: and the guild's tag, beside the name in a chat line as it is over a head
-    if (id === this.id) return { title: this.title ?? null, glyphs: Array.isArray(this.glyphs) ? this.glyphs : [], gt: this.gt ?? null };
+    if (id === this.id) return { title: this.title ?? null, glyphs: Array.isArray(this.glyphs) ? this.glyphs : [], gt: this.gt ?? null, ...(this.house ? { house: this.house } : {}) };
     const p = this.peers.get(id) ?? this._known.get(id);
-    return p ? { title: p.title ?? null, glyphs: Array.isArray(p.glyphs) ? p.glyphs : [], gt: p.gt ?? null } : null;
+    return p ? { title: p.title ?? null, glyphs: Array.isArray(p.glyphs) ? p.glyphs : [], gt: p.gt ?? null, ...(p.house ? { house: p.house } : {}) } : null;
   }
 
   /** RED1: THE SERVER'S OWN LINE OUT. Mac: "a red text system (kind of
@@ -2214,6 +2243,7 @@ export class OnlineSession {
       if (primary) this.cardOk = relaySupportsCard(relayV);   // INSPECT1
       if (primary) this.pageOk = relaySupportsPage(relayV);   // JOURNAL1
       if (primary) this.duelOk = relaySupportsDuel(relayV);   // DUEL1
+      if (primary) this.wedOk = relaySupportsWed(relayV);   // LEGACY7 part three
       if (primary) this.gateOk = relaySupportsGate(relayV);   // WB3
       if (primary) { this.siegeOk = relayFightsBattles(relayV); this.royalOk = relayRunsRoyal(relayV); }   // SEAT2a part four   // CROWN1 part two
       if (primary) this.arenaOk = relaySupportsArena(relayV);   // ARENA4
@@ -2351,6 +2381,11 @@ export class OnlineSession {
       // (the directed frames' law), projected by the wire, addressed to ME, with the sender's account as the relay verified
       // it. The duel's law decides what it means; nothing is read from it here.
       this._directedIn(m, now, 'duel', this._inDuelBuckets, duelInGate, DUEL_IN_HZ_MAX, validDuelData, (id, d) => this.onDuel?.(id, d, subOf(m)));
+    } else if (m.t === 'wed') {
+      // LEGACY7 part three: a wed frame the relay routed to me - the duel's law: on any socket I hold, never my own back,
+      // gated coming in per sender, projected by the wire, addressed to ME, with the sender's account as the relay
+      // verified it (the account service pairs the two halves of a wedding by it). The wedding's law decides the rest.
+      this._directedIn(m, now, 'wed', this._inWedBuckets, wedInGate, WED_IN_HZ_MAX, validWedData, (id, d) => this.onWed?.(id, d, subOf(m), scOf(m)));
     } else if (m.t === 'arena') {
       // ARENA4: the arena's hall or a bout's room - on my own room's socket (the hall link is a socket of its own),
       // projected by the wire's own law; what it means is the arena's to decide (scenes/arenaOnline.js)
@@ -2694,7 +2729,7 @@ export class OnlineSession {
     // answers a title or null and a list or empty, so nothing below
     // ever has to tell "absent" from "none".
     const { title, glyphs, ts = null } = readBadge(p);   // SEAT1c: and a seat title's claim
-    return { id: p.id, name: sanitizeName(p.name), title, ts, glyphs, au: readAura(p), rb: readRibbon(p), lv: readRenown(p), gt: readGuildTag(p), sub: subOf(p), look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };   // GUILD1c: `gt` the guild tag the relay stamped   // MOD1: `sub` the relay-verified account, what /mute names   // RENOWN1: `lv` the level the relay stamped
+    return { id: p.id, name: sanitizeName(p.name), title, ts, glyphs, au: readAura(p), rb: readRibbon(p), lv: readRenown(p), gt: readGuildTag(p), house: readHouse(p), sub: subOf(p), look: validLook(p.look), told: true, pose, from: pose, at: now, seenAt: now, shown: pose ? { ...pose } : null };   // GUILD1c: `gt` the guild tag the relay stamped   // MOD1: `sub` the relay-verified account, what /mute names   // RENOWN1: `lv` the level the relay stamped
   }
 
   /** A known peer said hello again: its name and look are the new ones, its pose arrives as any other. */
@@ -2709,6 +2744,7 @@ export class OnlineSession {
     p.gt = readGuildTag(m);   // GUILD1c: and the newest hello's guild tag, including none
     p.au = readAura(m);   // WB9g: and the newest hello's aura, including none - one taken off is gone at the next hello
     p.rb = readRibbon(m);   // SEASON1 part two: and the newest hello's ribbon, including none - a Season's end takes it off
+    p.house = readHouse(m);   // LEGACY7: and the newest hello's house, including none (a member played now of another line)
     if (subOf(m)) p.sub = subOf(m);   // MOD1: a place room's hello names no account; a channel's does - keep the one we were told
     this._remember(p.id, p);   // SLAM9: and it is kept, so a blip cannot un-introduce it
     const pose = validPose(m.pose);

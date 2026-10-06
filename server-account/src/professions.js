@@ -39,6 +39,7 @@
 // EVERY CLOCK IS AN ARGUMENT, as in accounts.js.
 // ═══════════════════════════════════════════════════════════════════
 import { accountKind, mintId, overRate } from './accounts.js';
+import { renownHeldSql } from './renownTracks.js';   // AUDIT LEGACY III O5: the bound counts the living's tracks
 import { isDeveloper } from './titles.js';
 import { marksOpenFor, balanceOf, gatherStrikeStatement, gatherStrikeRid, findLineAnswer } from './marks.js';   // SILVER-FINDS: a harvest's find
 import { dice } from './unitRoll.js';   // SILVER-FINDS: the service's dice, below this file and marks.js (which needs them too)
@@ -1396,7 +1397,7 @@ export async function deliverWrit(ctx, player, env, { character, id, rid } = {})
     db.prepare(`INSERT INTO renown_tracks (player, char_id, name, xp, last_rid, created_at, updated_at)
       SELECT ?1, ?2, NULL, MIN(?7, renown), NULL, ?3, ?3 FROM writs WHERE id = ?5 AND n = ?6 AND renown > 0
         AND NOT EXISTS (SELECT 1 FROM renown_tracks WHERE player = ?1 AND char_id = ?2)
-        AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) < ?8`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX, RENOWN_TRACKS_MAX),
+        AND ${renownHeldSql('?1')} < ?8`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX, RENOWN_TRACKS_MAX),
   ]);
   const now = await db.prepare('SELECT * FROM writs WHERE id = ?').bind(id).first();
   if (now?.n === nonce) {

@@ -566,6 +566,19 @@ export const REFUSALS = Object.freeze({
   // AUDIT REALM2 S1: a first save the realm reads - a new character's, or customs' own
   'realm-birth': 'The realm takes a new character only as character creation makes one. Delete it and make it again.',
   'customs-allowance': 'That character carries more gold than customs lets in. Bring it online again.',
+  // LEGACY7: Project Legacy online (server-account/src/legacy.js) - a fallen character's tombstone, and a member's birth
+  dead: 'That character has fallen for good. Their house carries on - play one of its living members.',
+  'no-lineage': 'The realm does not hold that family yet. Save once, then try again.',
+  'lineage-person': 'That member of the family cannot take up the line - they have died, retired, wed into it, or are still a child.',
+  'lineage-played': 'That member of the family already has a character in the realm.',
+  'lineage-model': 'A family keeps the way of death it was founded with.',
+  'too-many-lineages': 'You have as many families as an account may hold online.',
+  'lineage-stale': 'Your family was changed on another device. This one takes those changes in and saves again.',
+  'wed-no-line': 'Only a character of a house (Project Legacy) can be wed in the realm.',
+  'wed-already': 'You are wed already.',
+  'wed-partner': 'They cannot be wed now - they are wed already, of no house, or no longer the one who stood with you.',   // AUDIT LEGACY III O1
+  'lineage-too-large': 'Your family\'s record has grown past what the realm keeps for one family.',   // AUDIT LEGACY III O2/P1
+  'wed-spent': 'That wedding was not yours to answer.',
   // AUDIT REALM2 S2: the online acts that cost gold are a realm character's
   'realm-only': 'Only an online character of the realm can do that.',
   // REALM P2.1: a trade's sid another pair settled (server-account/src/realmTrade.js)
@@ -952,7 +965,9 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
           // WB9g: the aura at my own feet (null for none) - absent from a service before acct38, which says nothing
           ...('aura' in answer.data ? { aura: typeof answer.data.aura === 'string' ? answer.data.aura : null } : {}),
           // SEASON1 part two: a Season's banner ribbon under my own name (null for none) - absent from a service before acct58
-          ...('ribbon' in answer.data ? { ribbon: Array.isArray(answer.data.ribbon) ? answer.data.ribbon : null } : {}) };
+          ...('ribbon' in answer.data ? { ribbon: Array.isArray(answer.data.ribbon) ? answer.data.ribbon : null } : {}),
+          // LEGACY7: the house my realm character wears (null for none) - absent from a service before acct87
+          ...('house' in answer.data ? { house: answer.data.house && typeof answer.data.house === 'object' ? answer.data.house : null } : {}) };
         adoptIdentity(storage, { ...who, secret: session.secret });   // AUDIT B4: into the session that asked
         // A THROW HERE IS THE HOST'S AND IS NOT THE PLAYER'S. The token
         // is good and the connection is the thing that matters; a

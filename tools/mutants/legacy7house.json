@@ -1,0 +1,128 @@
+[
+  {
+    "name": "LEGACY7-house-any-claim",
+    "file": "src/net/houseLaw.js",
+    "old": "  if (!houseNameOk(c.hn)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_house.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-given-without-house",
+    "file": "src/net/houseLaw.js",
+    "old": "  if (c?.hn === undefined) return c?.hc === undefined && c?.hb === undefined && c?.hg === undefined;",
+    "new": "  if (c?.hn === undefined) return true;",
+    "tests": [
+      "test/legacy7_house.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-numeral-from-one",
+    "file": "src/net/houseLaw.js",
+    "old": "before > 0 && houseGivenOk(given) ? { hg:",
+    "new": "before >= 0 && houseGivenOk(given) ? { hg:",
+    "tests": [
+      "test/legacy7_house.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-numeral-counts-the-wed",
+    "file": "src/net/houseLaw.js",
+    "old": "x.id < p.id && (x.kind ?? 'member') === 'member' &&",
+    "new": "x.id < p.id &&",
+    "tests": [
+      "test/legacy7_house.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-no-skull",
+    "file": "src/net/houseLaw.js",
+    "old": "return `${h.hb === 1 ? `${BLOODLINE_MARK} ` : ''}${who}${house}`;",
+    "new": "return `${who}${house}`;",
+    "tests": [
+      "test/legacy7_house.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-seat-as-house",
+    "file": "src/net/houseLaw.js",
+    "old": "  const house = /^of /i.test(h.hn) ? h.hn : `of House ${h.hn}`;",
+    "new": "  const house = `of House ${h.hn}`;",
+    "tests": [
+      "test/legacy7_house.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-token-unchecked",
+    "file": "src/net/identityToken.js",
+    "old": "  if (!houseClaimOk(c)) return false;   // LEGACY7",
+    "new": "  if (false) return false;   // LEGACY7",
+    "tests": [
+      "test/legacy7_house.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-token-unsigned",
+    "file": "src/net/identityToken.js",
+    "old": "  if (who?.hn !== undefined) { claims.hn = who.hn;",
+    "new": "  if (false) { claims.hn = who.hn;",
+    "tests": [
+      "test/legacy7_house.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-row-unstamped",
+    "file": "src/net/wire.js",
+    "old": "  if (house) Object.assign(row, house);",
+    "new": "",
+    "tests": [
+      "test/legacy7_house.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-mint-no-house",
+    "file": "server-account/src/index.js",
+    "old": "        const house = rc ? await realmHouseOf(ctx, who.player.id, body.character) : null;",
+    "new": "        const house = null;",
+    "tests": [
+      "test/legacy7_house.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-house-unfiltered",
+    "file": "server-account/src/legacy.js",
+    "old": "  if (!h || !checkName(h.hn).ok) return null;\n  if (h.hc",
+    "new": "  if (!h) return null;\n  if (h.hc",
+    "tests": [
+      "test/legacy7_house.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-tomb-wears-house",
+    "file": "server-account/src/legacy.js",
+    "old": "    + ' WHERE r.id = ? AND r.player = ? AND r.dead_at IS NULL').bind(id, playerId).first();",
+    "new": "    + ' WHERE r.id = ? AND r.player = ?').bind(id, playerId).first();",
+    "tests": [
+      "test/legacy7_house.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-tile-no-house",
+    "file": "server-account/src/realm.js",
+    "old": "    house: r.line ? houseOn(r.line, r.person_id) : null,",
+    "new": "    house: null,",
+    "tests": [
+      "test/legacy7_house.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-card-no-house",
+    "file": "src/ui/profileWindow.js",
+    "old": "    house: houseLine(peer?.house),",
+    "new": "    house: null,",
+    "tests": [
+      "test/legacy7_house.test.js"
+    ]
+  }
+]

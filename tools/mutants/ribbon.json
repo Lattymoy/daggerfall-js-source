@@ -248,7 +248,7 @@
   {
     "name": "RIBBON-wi-token-bound",
     "file": "src/net/wire.js",
-    "old": "[A-Za-z0-9_-]{1,640}\\.",
+    "old": "[A-Za-z0-9_-]{1,800}\\.",
     "new": "[A-Za-z0-9_-]{1,512}\\.",
     "tests": [
       "test/shadowfang.test.js",
@@ -258,8 +258,8 @@
   {
     "name": "RIBBON-wi-token-bound-wide",
     "file": "src/net/wire.js",
-    "old": "[A-Za-z0-9_-]{1,640}\\.",
-    "new": "[A-Za-z0-9_-]{1,700}\\.",
+    "old": "[A-Za-z0-9_-]{1,800}\\.",
+    "new": "[A-Za-z0-9_-]{1,900}\\.",
     "tests": [
       "test/shadowfang.test.js",
       "test/acc1dclient.test.js"
@@ -322,29 +322,32 @@
   {
     "name": "RIBBON-on-memory",
     "file": "src/net/online.js",
-    "old": "gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, sub: p.sub",
-    "new": "gt: p.gt ?? null, au: p.au ?? null, sub: p.sub",
+    "old": "gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
+    "new": "gt: p.gt ?? null, au: p.au ?? null, house: p.house ?? null, sub: p.sub",
     "tests": [
       "test/season1_ribbon.test.js"
-    ]
+    ],
+    "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
   {
     "name": "RIBBON-on-restood",
     "file": "src/net/online.js",
-    "old": "gt: knew.gt, au: knew.au, rb: knew.rb, sub: knew.sub",
-    "new": "gt: knew.gt, au: knew.au, sub: knew.sub",
+    "old": "gt: knew.gt, au: knew.au, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
+    "new": "gt: knew.gt, au: knew.au, ...(knew.house ?? {}), sub: knew.sub",
     "tests": [
       "test/season1_ribbon.test.js"
-    ]
+    ],
+    "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
   {
     "name": "RIBBON-ac-pass",
     "file": "src/net/accountClient.js",
-    "old": "...('ribbon' in answer.data ? { ribbon: Array.isArray(answer.data.ribbon) ? answer.data.ribbon : null } : {}) };",
-    "new": "...({ ribbon: Array.isArray(answer.data.ribbon) ? answer.data.ribbon : null }) };",
+    "old": "...('ribbon' in answer.data ? { ribbon: Array.isArray(answer.data.ribbon) ? answer.data.ribbon : null } : {}),",
+    "new": "...({ ribbon: Array.isArray(answer.data.ribbon) ? answer.data.ribbon : null }),",
     "tests": [
       "test/season1_ribbon.test.js"
-    ]
+    ],
+    "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
   {
     "name": "RIBBON-rp-point",
@@ -430,10 +433,11 @@
   {
     "name": "RIBBON-nl-order",
     "file": "src/ui/nameLayer.js",
-    "old": "    node.append(bubble, title, tag, ribbon);",
-    "new": "    node.append(bubble, title, ribbon, tag);",
+    "old": "    node.append(bubble, title, tag, house, ribbon);",
+    "new": "    node.append(bubble, title, ribbon, tag, house);",
     "tests": [
       "test/season1_ribbon.test.js"
-    ]
+    ],
+    "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   }
 ]

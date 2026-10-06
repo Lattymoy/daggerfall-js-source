@@ -56,6 +56,7 @@ import { createCharSheetWindow } from './charSheetDoor.js';   // ASCEND-ANYTIME:
 import { playerEntity } from '../characters/playerEntity.js';   // the shared entity the Stats page already reads (enhancedMenu's sheetModel)
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1: which bar the Ascension reads
 import { profPagesShown, PROF_PAGE_SECTIONS } from './profPages.js';   // CLASSIC-PAGES: the professions' two pages, on either skin
+import { FAMILY_PAGE_SECTIONS } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab, on either skin
 import { hudText } from '../systems/notify.js';
 import {
   openClassicPauseFlow,
@@ -179,6 +180,8 @@ export function pauseMenuAct(hooks, close) {
 export const PROF_PAGES_CLOSED_LINE = 'Your professions are kept online: your Professions and Stores open while you play online.';
 /** Whether a door's landing page is one of the professions' own (the Professions key's, a station's). */
 export const profPageAt = (at) => PROF_PAGE_SECTIONS.some(([id]) => id === at);
+/** LEGACY3: whether a door's landing is the Family tab or one of its pages. */
+export const familyPageAt = (at) => at === 'family' || FAMILY_PAGE_SECTIONS.some(([id]) => id === at);
 
 /**
  * PX26: `hooks.at` names the page the enhanced window opens ON -
@@ -198,6 +201,9 @@ export function openPauseFlow(show, hooks = {}) {
     if (!profPagesShown()) { hudText(PROF_PAGES_CLOSED_LINE); return null; }
     if (typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
   }
+  // LEGACY3: Project Legacy's Family tab (its key, the death's Succession) - the classic pause has no tabs, so the family's
+  // pages open the enhanced pause on either skin, as the professions' do
+  if (familyPageAt(hooks.at) && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
   // `document` is the second half of the test for the reason
   // chargenSession's fork gives: a node test drives these hosts
   // headless, has no document, and must keep the canvas window rather
@@ -255,6 +261,7 @@ function enhancedPauseOverlay(show, base) {
 
   const host = document.createElement('div');
   host.id = 'enhanced-pause';
+  host.setAttribute?.('data-dom-focus', '');   // AUDIT LEGACY II U3: Tab walks its controls (ui/input.js isDomFocusWalk)
   // z-index 13: above the front door (12), below the wizard (14).
   // PX4 (Mac): TRANSLUCENT - the classic pause has always drawn its
   // panel over the live frame in the same overlay slot, so the frame
@@ -266,10 +273,36 @@ function enhancedPauseOverlay(show, base) {
   // that clear).
   host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';
   document.body.append(host);
+  // AUDIT LEGACY III U1: A HELD KEY PRESSES NOTHING HERE EITHER - the Succession's own rule (ui/legacySuccession.js,
+  // AUDIT LEGACY II U1). The browser presses a focused button at every repeat of Enter or Space, and the Family tab's
+  // arm-then-confirm acts keep the focus on the armed button (AUDIT LEGACY II U6): "Play as" and "Pass the mantle"
+  // armed and fired on one held press. Every other ask-twice act of this window is covered by the same line.
+  host.addEventListener?.('keydown', (e) => {
+    if (e.repeat && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+  // AUDIT LEGACY III U2: THE KEYBOARD COMES INTO THE WINDOW. Opened, the focus stood on the page's body, where every Tab
+  // was the game's (AUDIT LEGACY II U3's walk asks the focus to be inside already): a Tab from outside lands on the
+  // window's first control (its last, back), and the window takes the focus as it mounts (focusIn, below).
+  const tabIn = (/** @type {KeyboardEvent} */ e) => {
+    if (fired) { document.removeEventListener?.('keydown', tabIn, true); return; }   // the window went (close, or a load that failed): gone with it
+    if (e.key !== 'Tab' || host.contains?.(/** @type {any} */ (document.activeElement))) return;
+    const all = [...(host.querySelectorAll?.('button:not([disabled]), [href], select, input, [tabindex]:not([tabindex="-1"])') ?? [])];
+    const to = e.shiftKey ? all.at(-1) : all[0];
+    if (!to) return;
+    e.preventDefault();
+    /** @type {any} */ (to).focus?.({ preventScroll: true });
+  };
+  document.addEventListener?.('keydown', tabIn, true);
+  /** The window's own place for the keyboard: its lit tab, else its first control. */
+  const focusIn = () => {
+    const to = host.querySelector?.('.px-tabs button.on') ?? host.querySelector?.('button:not([disabled])');
+    /** @type {any} */ (to)?.focus?.({ preventScroll: true });
+  };
 
   const close = () => {
     if (fired) return;
     dropAscend();   // ASCEND-ANYTIME: whatever is on top of this window goes with it
+    document.removeEventListener?.('keydown', tabIn, true);
     view?.unmount();
     view = null;
     host.remove();
@@ -362,6 +395,7 @@ function enhancedPauseOverlay(show, base) {
       const { mountEnhancedMenu } = mod;
       seams = mod;
       view = mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: hooks.at ?? null });
+      focusIn();   // AUDIT LEGACY III U2
     },
     alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'pause',
   });

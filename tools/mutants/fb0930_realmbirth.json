@@ -38,11 +38,12 @@
   {
     "name": "REALM-BIRTH-the-door-keys-ride",
     "file": "src/scenes/world.js",
-    "old": "realmBootSearch(location.search, made.data.id, BOOT_DOOR_KEYS)}`);",
-    "new": "realmBootSearch(location.search, made.data.id, [])}`);",
+    "old": "realmBootSearch(location.search, made.data.id, BOOT_DOOR_KEYS)}`);\n  }\n  /** LEGACY7: THE REALM'S CHARACTER MADE",
+    "new": "realmBootSearch(location.search, made.data.id, [])}`);\n  }\n  /** LEGACY7: THE REALM'S CHARACTER MADE",
     "tests": [
       "test/fb0930_realmbirth.test.js"
-    ]
+    ],
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the birth's boot has a twin in legacyRealmBirth; this one is realmBirth's."
   },
   {
     "name": "REALM-BIRTH-the-door-drifts",

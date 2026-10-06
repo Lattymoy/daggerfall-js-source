@@ -218,7 +218,8 @@ test('LW8 the hosts: the building\'s press offers a resident in the room before 
   assert.match(w, /livingBillboards: \(\) => \(livingIndoors\?\.batches\(\) \?\? \[\]\),/);
   assert.match(w, /livingPersonsAct: \(eye, dir, nearer\) => !!livingIndoors\?\.size && townTalk\.tryActivate\(eye, dir, livingIndoors\.seats\(\), nearer\),/);
   assert.match(w, /if \(!livingWorldOn\(\) \|\| _mode\(\) !== 'interior'\) \{ if \(livingIndoors\?\.size \|\| livingIndoors\?\.spots\(\)\.length\) livingIndoors\.clear\(\); return; \}/);   // LW-FIX1: an empty room too
-  assert.match(w, /building: \(\) => \{ const b = modes\?\.interiorBuilding; const town = b && !modes\?\.interiorCtx\?\.ownedRoom \? livingTownOfMap\(b\.townMapId \?\? 0\) : null; return b && town \? \{ key: b\.buildingKey, town \} : null; \},/);   // AUDIT-E1: never a player's own room
+  // PIN MOVED (LEGACY-HOME): a house of Project Legacy's family holds the line only (test/legacyhome.test.js); every other room of the player's, none
+  assert.match(w, /building: \(\) => \{\n\s*const b = modes\?\.interiorBuilding;\n\s*const town = b \? livingTownOfMap\(b\.townMapId \?\? 0\) : null;\n\s*if \(!b \|\| !town\) return null;\n[^\n]*\n[^\n]*isFamilyHouse[^\n]*\n\s*return modes\?\.interiorCtx\?\.ownedRoom \? null : \{ key: b\.buildingKey, town \};   \/\/ AUDIT-E1: never a player's own room\n\s*\},/);
   assert.match(w, /floorAt: \(x, y, z\) => \{ const d = modes\?\.interiorCollider\?\.raycast\(\[x, y, z\], \[0, -1, 0\], 3\); return Number\.isFinite\(d\) \? y - d : null; \},/);
   assert.match(w, /staticFeet: \(\) => \(modes\?\.interiorCtx\?\.people \?\? \[\]\)\.filter\(\(p\) => p\.active !== false\)\.map\(\(p\) => \[p\.x, p\.y, p\.z\]\)\.concat\(modes\?\.interiorQuestFeet\?\.\(\) \?\? \[\]\),/);   // AUDIT-E7: and the quest's
   assert.match(w, /if \(p\.population instanceof LivingTown && \(p\.population\.o\.town\.mapId >>> 0\) === \(mapId >>> 0\)\) return p\.population;/);

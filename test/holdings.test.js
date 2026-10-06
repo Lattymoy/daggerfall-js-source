@@ -44,10 +44,10 @@ globalThis.document = undefined;
 // ── the tab ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 test('HOLDINGS the pause window has a fourth tab, Holdings, between Stats and System; a landing may name it (every tab one list - PAUSE_TAB_IDS - the landing and the strip read alike)', () => {
-  assert.match(MENU, /const PAUSE_TABS = Object\.freeze\(\[\['quests', 'Quests'\], \['stats', 'Stats'\], \['holdings', 'Holdings'\], \['system', 'System'\]\]\);/);
+  assert.match(MENU, /const PAUSE_TABS = Object\.freeze\(\[\['quests', 'Quests'\], \['stats', 'Stats'\], \['holdings', 'Holdings'\], \['family', 'Family'\], \['system', 'System'\]\]\);/);   // LEGACY3: the Family tab between Holdings and System
   assert.match(MENU, /export const PAUSE_TAB_IDS = Object\.freeze\(PAUSE_TABS\.map\(\(\[id\]\) => id\)\);/);
   assert.match(MENU, /if \(PAUSE_TAB_IDS\.includes\(at\)\) pauseTab = at;/);
-  assert.match(MENU, /\(\{ quests: pauseQuests, stats: pauseStats, holdings: pauseHoldings, system: pauseSystem \}\)\[pauseTab\]\(body\);/);
+  assert.match(MENU, /\(\{ quests: pauseQuests, stats: pauseStats, holdings: pauseHoldings, family: pauseFamily, system: pauseSystem \}\)\[pauseTab\]\(body\);/);
 });
 
 test('HOLDINGS the Stats rail is the character sheet again - its six pages and the Professions online; the Holdings rail takes the Stable, the Fleet, the Companions, the Revenants and the Stores, each while it has a thing to show', () => {

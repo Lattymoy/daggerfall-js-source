@@ -52,13 +52,13 @@ test('CG2: a DOM text field owns its key - the dungeon route neither routes nor 
   // talkPaused()` now - a box the game is not stopped for lets the key
   // through to the world - and the field's step-aside is still the
   // FIRST statement inside it, which is what this pin is about.
-  assert.match(tt, /function keydown\(e, keys = null\) \{[^\n]*\n(\s*\/\/[^\n]*\n)*\s*if \(overlay && talkPaused\(\)\) \{\s*\n(\s*\/\/[^\n]*\n)*\s*if \(isTextEntryTarget\(e\.target\)\) return true;\s*\n(?:(\s*\/\/[^\n]*\n)*\s*if \(\(e\.key === 'Enter' \|\| e\.key === ' '\) && isDomControlTarget\(e\.target\)\) return true;\s*\n)?\s*e\.preventDefault\(\);/, 'the field\'s key steps out before the preventDefault, consumed for the host (and, AUDIT 28 H11, a DOM window\'s button\'s Enter and Space)');
-  assert.match(tt, /import \{ overlayAction, actionsOf, isTextEntryTarget(?:, isDomControlTarget)? \} from '\.\.\/ui\/input\.js';/);   // UXB1-S: every action a shared key carries
+  assert.match(tt, /function keydown\(e, keys = null\) \{[^\n]*\n(\s*\/\/[^\n]*\n)*\s*if \(overlay && talkPaused\(\)\) \{\s*\n(\s*\/\/[^\n]*\n)*\s*if \(isTextEntryTarget\(e\.target\)\) return true;\s*\n(?:(\s*\/\/[^\n]*\n)*\s*if \(\(e\.key === 'Enter' \|\| e\.key === ' '\) && isDomControlTarget\(e\.target\)\) return true;\s*\n)?(?:\s*if \(isDomFocusWalk\(e\)\) return true;[^\n]*\n)?\s*e\.preventDefault\(\);/, 'the field\'s key steps out before the preventDefault, consumed for the host (and, AUDIT 28 H11, a DOM window\'s button\'s Enter and Space; PIN MOVED, AUDIT LEGACY II U3: and a DOM window\'s own Tab walk)');
+  assert.match(tt, /import \{ overlayAction, actionsOf, isTextEntryTarget(?:, isDomControlTarget)?(?:, isDomFocusWalk)? \} from '\.\.\/ui\/input\.js';/);   // UXB1-S: every action a shared key carries
   // the dungeon host preventDefaults on true, which is why routeKey answers false for a field
   assert.match(read('src/scenes/dungeon.js'), /if \(routeKey\(e, ctx, placeLoadedPlayer, keys\)\) e\.preventDefault\(\);/);   // AUDIT 27h S2: the applier drops the autorun latch too
   // KB1: the field's step-aside stands ABOVE the overlay branch now - a DOM field over the world with no overlay in
   // the slot is typed into too, and every letter was an action
-  assert.match(read('src/ui/input.js'), /export function routeKey\(e, ctx, setPlayerPos = null, keys = null\) \{\s*\n(\s*\/\/[^\n]*\n)*\s*if \(isTextEntryTarget\(e\?\.target\)\) return false;\s*\n\s*if \(ctx\.uiOverlayActive\) \{/);
+  assert.match(read('src/ui/input.js'), /export function routeKey\(e, ctx, setPlayerPos = null, keys = null\) \{\s*\n(\s*\/\/[^\n]*\n)*\s*if \(isTextEntryTarget\(e\?\.target\)\) return false;\s*\n(?:\s*if \(ctx\.uiOverlayActive && isDomFocusWalk\(e\)\) return false;[^\n]*\n)?\s*if \(ctx\.uiOverlayActive\) \{/);   // PIN MOVED (AUDIT LEGACY II U3): a DOM window's own Tab walk, after the field's
   assert.equal(routeKey({ code: 'KeyM', key: 'm', target: { tagName: 'INPUT' } }, { uiOverlayActive: false, toggleAutomap: () => calls.push(['map']) }, null, new Set()), false, 'no overlay: a field\'s M is typed, not the map');
   assert.equal(calls.length, 1, 'and the map did not open');
   // the wizard's own capture listener uses the one definition and lets the field's key bubble

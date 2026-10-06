@@ -22,8 +22,8 @@
   {
     "name": "MERGE2-writ-renown-first-track-never-made",
     "file": "server-account/src/professions.js",
-    "old": "        AND NOT EXISTS (SELECT 1 FROM renown_tracks WHERE player = ?1 AND char_id = ?2)\n        AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) < ?8`)",
-    "new": "        AND 0\n        AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) < ?8`)",
+    "old": "        AND NOT EXISTS (SELECT 1 FROM renown_tracks WHERE player = ?1 AND char_id = ?2)\n        AND ${renownHeldSql('?1')} < ?8`)",
+    "new": "        AND 0\n        AND ${renownHeldSql('?1')} < ?8`)",
     "tests": [
       "test/prof1_service.test.js"
     ],

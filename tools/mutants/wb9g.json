@@ -288,20 +288,22 @@
   {
     "name": "WB9g-the-memory-loses-it",
     "file": "src/net/online.js",
-    "old": "gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, sub: p.sub",
-    "new": "gt: p.gt ?? null, rb: p.rb ?? null, sub: p.sub",
+    "old": "gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
+    "new": "gt: p.gt ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
     "tests": [
       "test/wb9g_insignia.test.js"
-    ]
+    ],
+    "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
   {
     "name": "WB9g-the-re-stood-peer-bare",
     "file": "src/net/online.js",
-    "old": "gt: knew.gt, au: knew.au, rb: knew.rb, sub: knew.sub",
-    "new": "gt: knew.gt, rb: knew.rb, sub: knew.sub",
+    "old": "gt: knew.gt, au: knew.au, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
+    "new": "gt: knew.gt, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
     "tests": [
       "test/wb9g_insignia.test.js"
-    ]
+    ],
+    "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
   {
     "name": "WB9g-my-own-aura-never-adopted",

@@ -5195,3 +5195,41 @@ make the aura misallign".
   content in `seraphwings.json` (5), `shadowcloak.json` (2), `climb5.json` and `auditclimbarc.json`.
 - Left, said: not seen in a running game client - the test drives the real sprite body and the real peer layers frame
   by frame, no GPU; the wings still stand on a rider at the saddle's rest pose (no shoulders read off a horse's frame).
+
+## LEGACY7 — Project Legacy's lines and the tombstone (2026-10-06, acct87 - acct84 on its branch, renumbered past SERPENT-SET's acct84, then YARD-SHED's acct85, then YARD-HEIGHT's acct86 at the merges of main)
+
+Mac: "online integration with permadeath (Bloodline) or non-permadeath (Enduring)". The record is
+`06-Systems/Legacy-Arc.md` section 9; the service's half is `server-account/src/legacy.js` and migration
+`0084_legacy.sql` (0083 on its branch).
+
+- **`lineages`**: one row a family an account founded online - its id (`fam-...`, the client's), surname, model (the
+  founder's, for good: `lineage-model`), record (bounded, `LINEAGE_MAX_BYTES`) and `rev`. `/v1/realm/lineages` lists
+  them; `/v1/realm/lineage` writes one only past its rev, a stale write answered 409 with the stored record to merge
+  into. At most `LINEAGES_MAX` an account.
+- **`realm_characters.lineage_id`, `person_id`**: a character born with `{ lineage, person }` (`/v1/realm/create`) is
+  that living member of the account's own line, named for good; never one another character played (`lineage-played`,
+  a unique index behind it). A birth whose first save never landed is resumed, as customs' is.
+- **`realm_characters.dead_at`** - THE TOMBSTONE (`/v1/realm/die`, under the lease): never joined again (`dead`, 410),
+  checkpointed or traded; refused at the relay's door (`realmCharacterHeld`); off the roster, and no slot held
+  (`REALM_CHARACTERS_MAX` counts the living in `createRealm`, `customsRealm` and `customsRefusal`). AUDIT LEGACY III
+  O12: it acts in nothing - `index.js` asks `legacy.js isTombstone` of every body that names a `character`, before any
+  route (`dead`, 410), the token's mint alone excepted (no act: it mints a tombstone `rc` 0).
+- **The house on the token** (LEGACY7 part two): the identity mint signs a realm character's house (`hn`, `hc`, `hb`,
+  `hg` - `src/net/houseLaw.js`, `legacy.js realmHouseOf`) through the name filter, never a tombstone's, and leaves it
+  unsaid rather than take a token past `TOKEN_MAX_CHARS`; `/v1/realm` lists each tile's house. The relay (world174)
+  stamps it on every row.
+- **Two players wed** (LEGACY7 part three): `/v1/realm/wed` takes one HALF of a wedding - the caller's realm character
+  under its lease, the handshake `sid` the two clients agreed on the relay's `wed` frame, and the other's account as the
+  relay stamped it (`partner`, never the caller's own) - into `realm_wed_halves`; the second half naming the first's
+  account makes the union (`realm_unions`, one row a sid, asked IN the write so a race makes one and neither character
+  is wed meanwhile), each side's card kept as it stood (`a_card`, `b_card`: the realm name, the house through the name
+  filter, sex, race and face off the line). A half lives `WED_HALF_LIFE_S` (five minutes), and an account holds one at a time (a second takes its first back - one
+  row an account). Refused: `wed-no-line` (a
+  character of no line), `wed-already`, `wed-partner` (theirs dead, of no line, or wed meanwhile), `wed-spent` (another
+  pair's sid) - 409 each - and `dead`, `lease`, `body`. A union ends with either's tombstone (`died`) or delete
+  (`gone`), `ended_by` whose; `/v1/realm/die` takes `why: 'retired'` for an elder's mantle passed, which keeps it.
+  `/v1/realm/unions` lists the account's unions, each from its own side.
+- **Deploy**: the relay (world174 - the house's stamp and the `wed` frame; world172 on its branch, renumbered past
+  main's WATCH-FIX and SERPENT3 at the merge) first, then the migration and the service (acct87), then the site - the
+  new site founds, tombstones and weds at the service.
+
