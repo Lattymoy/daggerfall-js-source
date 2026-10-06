@@ -1,8 +1,8 @@
 // S3d: STARTING EQUIPMENT - ItemHelper.AssignStartingGear verbatim
 // (ItemHelper.cs:1277-1364, MIT Daggerfall Workshop). This retires
 // the iron-dagger stand-in seedStartingEquipment used to hand out
-// (equip.js:340), which survives only as the PRE-CHARGEN fallback its
-// two hosts gate it to - world.js:6153 and exterior.js:1375 seed it
+// (equip.js:"export function seedStartingEquipment"), which survives only as the PRE-CHARGEN fallback its
+// two hosts gate it to - world.js:"if (playerEntity.chargenDone)" and exterior.js:"if (playerEntity.chargenDone)" seed it
 // solely for an entity that never ran chargen. A new character now
 // begins dressed, with a spellbook, their CLASS's weapon, and 100
 // gold, exactly as classic does.

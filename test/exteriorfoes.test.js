@@ -58,7 +58,7 @@ test('exteriorfoes: the pool laws - cull AFTER fresh senses, the alert raise, th
 
 test('exteriorfoes: the world host - the cadence loop, the travel reset, the facade and the melee order', () => {
   const s = src('world.js');
-  const i = s.indexOf('function runEncounterTick');
+  const i = s.search(/^[ \t]*function runEncounterTick\(/m);   // CITE-ANCHOR: the declaration, not a comment's anchor that quotes it
   assert.ok(i > 0);
   // ROAD-B WIDENED THIS WINDOW. It was a character count (i + 1800),
   // which is not a claim about anything - PlayerEntity.Update:513-516's
@@ -133,7 +133,7 @@ test('exteriorfoes X4: the PLAYER-side rolls are UNIFORM - DFRandom bytes never 
 test('exteriorfoes: the FIXED-CITY host carries the catch-up loop too, both hosts skip the roll while swimming, and the watch transforms', () => {
   const e = src('exterior.js');
   const w = src('world.js');
-  const i = e.indexOf('function runEncounterTick');
+  const i = e.search(/^[ \t]*function runEncounterTick\(/m);   // CITE-ANCHOR: the declaration, not a comment's anchor that quotes it
   assert.ok(i > 0, 'PlayerEntity.Update:479-525 has a caller on the ?town route');
   const fn = e.slice(i, e.indexOf('\n  }\n', i));
   assert.ok(fn.includes('intermittentEnemySpawn({'), 'the classic catch-up loop rolls per elapsed minute');
@@ -153,7 +153,7 @@ test('exteriorfoes: the FIXED-CITY host carries the catch-up loop too, both host
   // the HOST flag - outdoors levitateMotor.IsSwimming (`player.swimming`) is
   // cleared every frame by :421 and this arm would never fire off it.
   assert.ok(fn.includes('const hit = player.isPlayerSwimming ? null : intermittentEnemySpawn({'), 'the fixed city skips the roll while swimming');
-  const wi = w.indexOf('function runEncounterTick');
+  const wi = w.search(/^[ \t]*function runEncounterTick\(/m);   // CITE-ANCHOR: the declaration, not a comment's anchor that quotes it
   const wfn = w.slice(wi, w.indexOf('\n  }\n', wi));
   assert.ok(wfn.includes('const hit = (!spawns || (walkMode && playerSpawned && player.isPlayerSwimming)) ? null : intermittentEnemySpawn({'), 'the world host skips it too');   // AUDIT LIVED1b P1: and a mirror's night asks no wanderer
   // the placement: DFU's own ring with the arm's band, a FLYING foe lifted 1.5

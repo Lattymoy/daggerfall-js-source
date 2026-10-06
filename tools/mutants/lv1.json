@@ -185,8 +185,8 @@
   {
     "name": "willpower-cites-the-display-instead-of-the-consumer",
     "file": "src/ui/levelUpView.js",
-    "old": "  // systems/spellcast.js:158 - `saving += magicResist(liveStat(target,",
-    "new": "  // systems/quest/questMacros.js:543 - `saving += magicResist(liveStat(target,",
+    "old": "  // systems/spellcast.js:\"saving += magicResist(liveStat(target, 'willpower'))\" - `saving += magicResist(liveStat(target,",
+    "new": "  // systems/quest/questMacros.js:\"return e ? String(Math.floor(liveStat(e, 'willpower') / 10))\" - `saving += magicResist(liveStat(target,",
     "tests": [
       "test/enhancedLevelUp.test.js"
     ],

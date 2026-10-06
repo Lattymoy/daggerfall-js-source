@@ -163,7 +163,7 @@ export const TOWN_MARK_HALF = 6;
  *   `autoMapData` is an FLD-header grid, and every FLD grid in the port
  *   is read with its row index REVERSED - `buildGroundTilemap` takes
  *   `groundTiles[x][15 - y]` for "row 0 nearest Z=0"
- *   (world/rmbLayout.js:302), which is the same law at 16 rows that
+ *   (world/rmbLayout.js:"GroundTiles[x][15 - y] source"), which is the same law at 16 rows that
  *   ExteriorAutomap.cs:1481 is at 64. Copying `data[y * 64 + x]`
  *   straight into row y laid every block's bytes MIRRORED north-south
  *   against the anchors, the quest rings and the player's own caret -
@@ -201,7 +201,7 @@ export function townBytes(gridW, gridH, blocks) {
     // EM-BUG3: the block's row in SHEET space. `(gridH-1-b.y)` is the
     // block flip and the source row `y` then goes in unreversed, which
     // together are `H-1-anchorRow` - the shipped window's own
-    // composition (exteriorAutomapWindow.js:303-304), derived above.
+    // composition (exteriorAutomapWindow.js:"colors[(h - 1 - worldRow) * w + b.x * BLOCK_PX + x]"), derived above.
     const by = (gh - 1 - (b.y ?? 0)) * BLOCK_PX;
     if (bx < 0 || by < 0 || bx + BLOCK_PX > w || by + BLOCK_PX > h) continue;   // a block off its own grid
     for (let y = 0; y < BLOCK_PX; y++) {

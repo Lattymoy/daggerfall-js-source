@@ -119,7 +119,7 @@ export function overworldTint(climate, byte) {
 
 /**
  * The relief. `heightBytes` is WOODS' own row-major buffer
- * (y * width + x - woodsFile.js:99's layout law); `climateAt(x, y)`
+ * (y * width + x - woodsFile.js:"return this.heightMapBuffer"'s layout law); `climateAt(x, y)`
  * answers the raw CLIMATE.PAK value at a map pixel (the +1 PAK column
  * shift is the CALLER's - hand maps.getClimateIndex, which owns it).
  *

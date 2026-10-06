@@ -151,7 +151,7 @@ import {
   exteriorRotate, exteriorRotateAroundPlayerPos, exteriorDragPan, getLocationBorderPos,
 } from './automapCamera.js';
 import { rasterizeTopDown, rasterizeDisc } from './meshStamp.js';
-import { drawCompassStrip } from './hud.js';   // ONE HOME for the strip (hud.js:453-454)
+import { drawCompassStrip } from './hud.js';   // ONE HOME for the strip (hud.js:"HUDCompass.DrawCompass")
 import { drawToolTipBox } from './toolTip.js';
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { registerCommand } from '../systems/consoleCommands.js';   // E3: the console command database
@@ -175,7 +175,7 @@ export const MARKER_TILE_SCALE = WORLD_MAP_TERRAIN_DIM * GLOBAL_SCALE;   // 819.
 /** refWidth/refHeight (:1396-1397): blockSize x numMaxBlocks x layoutMultiplier. */
 export const MARKER_REF_SPAN = BLOCK_PX * EXT_NUM_MAX_BLOCKS * EXT_LAYOUT_MULTIPLIER;   // 512
 /** the custom-location offsets (:1391-1395). DFLocation.HasCustomLocationPosition
- *  (DFLocation.cs:87-97, ported at world/locationLayout.js:30) picks out 1x1
+ *  (DFLocation.cs:87-97, ported at world/locationLayout.js:"export function hasCustomLocationPosition") picks out 1x1
  *  locations whose block 0 carries the CUST prefix; those are laid out
  *  differently, and DFU corrects the marker by hand.
  *
@@ -247,7 +247,7 @@ let _yawDeg = 0;
  *  OnPush (:481-540, whose only reset arm is ResetCameraPosition plus
  *  the zoom) nor OnPop (:545-563) touches either one. The port builds
  *  a NEW window per open, so both live at module scope here - the same
- *  law automapWindow.js:325-334 already states for the dungeon map. */
+ *  law automapWindow.js:"── THE PERSISTENT" already states for the dungeon map. */
 let _viewMode = VIEW_MODES[0];
 let _background = 'original';
 let _texVer = 0;   // module-level, the A1 lesson: versioned keys never collide across instances
@@ -537,8 +537,8 @@ export class ExteriorAutomapWindow {
   constructor(deps) {
     this.deps = deps;
     this.done = false;
-    // The raw-code seam townTalk.js:416 forks on, the same one the
-    // dungeon window takes (automapWindow.js:497) - it is that fork's
+    // The raw-code seam townTalk.js:"letter ('KeyS' -> 's')" forks on, the same one the
+    // dungeon window takes (automapWindow.js:"'AutomapZoomIn',") - it is that fork's
     // switch, not a semantic claim about choice windows, and without it
     // ui/input.js's cooked alphabet cannot spell an arrow, an F-key,
     // PageUp/Down, a keypad key or ANY modifier, which is nine tenths

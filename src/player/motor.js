@@ -809,7 +809,7 @@ export class PlayerMotor {
    *
    *  `pos` stays the simulation truth everywhere else - the collider,
    *  the rays, activation - exactly as `eye` stays it for first
-   *  person. The focal's ceiling probe (mwCamera.js:233-243) rides
+   *  person. The focal's ceiling probe (mwCamera.js:"found. A pillar is") rides
    *  this too and still clears: the filter is never more than
    *  STEP_OFFSET off the raw height and only ever trails heights the
    *  capsule itself just occupied. */
@@ -1296,7 +1296,7 @@ export class PlayerMotor {
       //
       // The pass condition is `!Number.isFinite(dist)`, not a
       // comparison against the distance: collider.sphereCast
-      // (collider.js:1336) returns Infinity ONLY on a clear sweep and a
+      // (collider.js:"let groundKey = null") returns Infinity ONLY on a clear sweep and a
       // finite dist (0 on a start-overlap) for any hit, which is
       // exactly Unity's boolean. One accepted deviation: Unity's
       // SphereCast ignores colliders overlapping the START sphere, so a

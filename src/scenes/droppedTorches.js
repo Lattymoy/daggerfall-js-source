@@ -396,7 +396,7 @@ export function createDroppedTorches({
       // AUDIT 66 F10: and NOT scaled by PlayerTorchLightScale - the mod
       // multiplies this range by it (0x1bb3), but the port's own lane
       // holds that setting inert for exactly this reason
-      // (playerTorch.js:56-59: "it is a 0..1 BRIGHTNESS ... mapping a
+      // (playerTorch.js:"this lane ships that": "it is a 0..1 BRIGHTNESS ... mapping a
       // brightness slider onto a radius would be a worse lie"). One
       // decision, one place; the dep the hosts never passed is gone.
       out.push({ x: d.pos[0], y: d.pos[1] + Math.abs(d.size?.h ?? 0) / 2 + LIGHT_ABOVE_BILLBOARD, z: d.pos[2], range: 1 + (t?.capacityOrTarget ?? 0) * (d.time / full) });

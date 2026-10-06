@@ -1152,7 +1152,7 @@ test('D5 the residence-with-active-quest plate arm: ExteriorAutomap.cs:693-709\'
   assert.equal(residenceQuestName({ getAllActiveQuestIds: () => [] }, 100, 42), '', 'no active quests: string.Empty');
 
   // ---- and the WIRE, through the port's real IsBuildingQuestResource
-  // (systems/topicTree.js:394-419) and the real discovery store ----
+  // (systems/topicTree.js:"isBuildingQuestResource(mapID, buildingKey)") and the real discovery store ----
   _resetForTests(); _resetZoomForTests();
   restoreDiscovery(null);
   try {

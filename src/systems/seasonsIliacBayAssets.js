@@ -160,14 +160,14 @@ async function seasonsBundle() {
 // AUDIT 62 F26: rows reversed - a top-down RGBA raster (what a PNG
 // decodes to, and what `decodeTexture2D` hands back) in the port's
 // COLOR32 ORDER: row 0 is the picture's BOTTOM row, exactly what
-// `BaseImageFile.getColor32` produces (baseImageFile.js:143,
+// `BaseImageFile.getColor32` produces (baseImageFile.js:"const headerLength".."const dstRow = (dstHeight - 1 - border - y) * dstWidth;",
 // BaseImageFile.cs:250) and what `renderer.uploadTexture` uploads
-// as-is with UNPACK_FLIP_Y_WEBGL off (renderer.js:4101).
+// as-is with UNPACK_FLIP_Y_WEBGL off (renderer.js:"(BaseImageFile.cs:257-260)").
 // In DFU the mod's asset is a Unity Texture2D, whose pixels are
 // bottom-up like every Texture2D the classic reader builds, so its
 // flats and the classic ones agree; here the seasonal record entered
 // through a PNG-order door and every seasonal tree, rock and plant
-// drew vertically mirrored under BB_VS (renderer.js:421-452, v=0 =
+// drew vertically mirrored under BB_VS (renderer.js:"+ uUp * ((cn.y + 0.5) * uSize.y)", v=0 =
 // image bottom). The flip belongs at THIS door: `decodeTexture2D` and
 // `decodePng` keep the PNG raster order each states as its contract,
 // and the port's upload order is reached here, once, per texture.

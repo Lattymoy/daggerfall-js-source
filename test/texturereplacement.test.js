@@ -118,7 +118,7 @@ test('texture: decode-ahead fills the SYNC cache, per archive', async () => {
   assert.deepEqual({ width: got.width, height: got.height }, { width: 2, height: 2 });
   assert.ok(got.colors && got.colors.length === 16, 'a color32, not a decoded PNG');
   // ...and in getColor32's order, row 0 the picture's BOTTOM row
-  // (baseImageFile.js:143 / BaseImageFile.cs:250; TextureReader.cs:266
+  // (baseImageFile.js:"const headerLength".."const dstRow = (dstHeight - 1 - border - y) * dstWidth;" / BaseImageFile.cs:250; TextureReader.cs:266
   // hands GetColor32 straight to SetPixels32, so DFU never converts).
   assert.deepEqual([...got.colors], [3, 3, 3, 255, 4, 4, 4, 255, 1, 1, 1, 255, 2, 2, 2, 255],
     'the door reverses the decoded rows');

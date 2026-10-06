@@ -11,21 +11,21 @@ called a bug.
 ## Cleared - checked and found sound
 
 **The marching squares do not erase the roads.** `assignTiles`
-(terrainTiles.js:207) skips any non-zero tile, not just the 0xFF
+(terrainTiles.js:"if (tilemapData[index] !== 0)") skips any non-zero tile, not just the 0xFF
 location tiles - so tile 46 written before it survives it. This was the
 audit's first suspect because DFU's job carries the same guard and a
 port that had narrowed it to 0xFF would paint roads and then erase
 them, with every pin green.
 
 **The rotate and flip bits are honoured.** `convertTilemap`
-(terrainSurface.js:7-15) folds bits 6 and 7 the DFU way. The painter's
+(terrainSurface.js:"tile byte [flip, rotate, 6-bit record]") folds bits 6 and 7 the DFU way. The painter's
 64/128 addends land in the renderer.
 
 **One seam reaches every pixel.** `generatePixelTerrain` has one
 caller, `TerrainGenClient`, constructed once in world.js. The four-hosts
 rule is satisfied by there being one host that streams terrain.
 
-**North is row 127.** terrainSampler.js:171-172 states the continuity
+**North is row 127.** terrainSampler.js:"x=0 of pixel px equals" states the continuity
 law, the painter cites it, the pin drives N alone and reads row 127.
 
 **The line is held.** No byte of Hazelnut's data is in the tree; the

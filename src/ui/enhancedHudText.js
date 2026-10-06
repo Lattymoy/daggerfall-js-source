@@ -47,10 +47,10 @@
 // online panels and the touch layer beside them. The NATIVE WINDOWS
 // are still drawn on the canvas in the 1996 bitmap face under this
 // skin, and that is a slice of its own rather than an oversight:
-// ui/deathScreen.js:183-185, ui/restWindow.js:974, ui/saveWindow.js:641+
-// (shadowText, eight sites), ui/travelPopUp.js:820,
-// ui/questJournal.js:628-629, ui/messageBox.js:501/:504 and
-// ui/actionText.js:45/:145 (every ActionTextBox's parchment on the
+// ui/deathScreen.js:"font, t, (canvas.width - measureText(font.fnt, t) * s)", ui/restWindow.js:"rows = this.endLines", ui/saveWindow.js:"font, prompt, m,"+
+// (shadowText, eight sites), ui/travelPopUp.js:"font, r.text ?? r",
+// ui/questJournal.js:"font, line, m.ox + (lx + 1)", ui/messageBox.js:"for (const c of r.cells)"/ui/messageBox.js:"font, r.text, m," and
+// ui/actionText.js:"drawText(renderer, font, l, x + 12 * s, ty, s, TEXT)"/ui/actionText.js:"if (drawMessageBox(renderer, m, font, box, opts))" (every ActionTextBox's parchment on the
 // classic skin). Each of those is a native window whose every drawn
 // element cites a DFU rect (THE NATIVE-WINDOW RULE), so the face
 // cannot change without the metrics changing with it. (FONT3, 2026-10-02: that list is history - five of the seven

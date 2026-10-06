@@ -105,7 +105,8 @@ test('AUDIT DISC28 TM-1: an absence pays the recovery half only - a Fighters Gui
  *  `{ ... } = {}` or an arrow in it has braces of its own), then the body's braces, both past comments and strings
  *  (audit27h.test.js's literal reader, taken one step further). */
 function fnText(text, name) {
-  const i = text.indexOf(`function ${name}(`);
+  const at = new RegExp(`^[ \\t]*(?:export |async )*(function ${name}\\()`, 'm').exec(text);   // CITE-ANCHOR: the declaration, not a comment's anchor that quotes it
+  const i = at ? at.index + at[0].length - at[1].length : -1;
   assert.ok(i >= 0, `could not find function ${name}`);
   const skip = (k) => {   // the index of the last character of a comment or a string opening at k, else k
     const c = text[k];

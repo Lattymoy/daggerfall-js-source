@@ -241,7 +241,7 @@ export class ArrowFlight {
  *
  * WAVE D: four bodies became FOUR CALLERS. dungeonContext.js's
  * `m.fromPlayer` block - the arm this function was extracted FROM -
- * now calls it (dungeonContext.js:3670), so the copy that survived
+ * now calls it (dungeonContext.js:"if (!mf.drawn) continue"), so the copy that survived
  * the extraction is gone. It was not a harmless copy: it still
  * splashed at the arrow tip, the exact bug AUDIT 39r/R16 fixed here.
  * DaggerfallMissile.cs:681-687 routes an arrow into
@@ -267,7 +267,7 @@ export class ArrowFlight {
  * controller.center (AdjustControllerHeight, BOTTOM justification),
  * never the transform - so `hitTransform.position` is the idle sprite's
  * CENTRE, feet + idleH/2, which is the motor's `centreOffset`
- * (enemyAnchor.js:74-83). The header used to claim the feet were the
+ * (enemyAnchor.js:"The inverse: DFU's"). The header used to claim the feet were the
  * transform origin and bled every struck foe half a sprite low. It is
  * still not bloodCentre, which is the melee-miss centre+height/8 point
  * EnemyAttack.cs:326-328 builds when there is no contact point at all.

@@ -961,13 +961,13 @@ into plan units.
 The report: *"Werewolf morrowind sprite not showing online"*.
 
 **What the player sees.** A transformed player with no Morrowind body is
-drawn in third person by Eye Of The Beholder's billboard (`mwView.js:119`
+drawn in third person by Eye Of The Beholder's billboard (`mwView.js:"export function eotbLane"`
 `eotbLane`, `:334`). Its table rule puts the transformed form first, riding
-included (`eotbBillboard.js:354` `chooseTable`, `:360`), and it draws the
+included (`eotbBillboard.js:"export function chooseTable"` `chooseTable`, `eotbBillboard.js:"if (transformed)"`), and it draws the
 mod's lycan archives: 112380 for the werewolf, 112381 for the wereboar
-(`eotbBillboard.js:75` `lycanArchive`, `:142` `tableArchive`). That art is a
+(`eotbBillboard.js:"export const lycanArchive"` `lycanArchive`, `eotbBillboard.js:"export const tableArchive"` `tableArchive`). That art is a
 hunched, dark-furred, Bloodmoon-style beast, and it is the "Morrowind sprite"
-of the report. The Morrowind rig has no werewolf body (`fpArm.js:222`), so
+of the report. The Morrowind rig has no werewolf body (`fpArm.js:"Rule 6's table, as"`), so
 this is the only Morrowind-looking werewolf in the port. (WEREWOLF1, 2026-09-26, imported Bloodmoon's:
 `04-Characters/Werewolf-Body.md`.)
 
@@ -981,9 +981,9 @@ else saw Daggerfall's pixel werewolf. A transformed rider was worse: the
 rider layer ran first and drew a person on a horse (112382 + the rider's
 set), where the player saw their beast.
 
-The wire was never at fault. `wb` goes out on its edge (`wire.js:1347`),
-through the door (`:1287`) and the easing (`online.js:238`), from the sender
-at `world.js:23315`.
+The wire was never at fault. `wb` goes out on its edge (`wire.js:"|| (a.lh | 0) !=="`),
+through the door (`:1287`) and the easing (`online.js:"...(to.wb ? { wb: to.wb } : {})"`), from the sender
+at `world.js:"=> { try { return modSetting('eye-of-the-beholder', 'Graphics.OnHorse')"`.
 
 **Fix.** `peerRiders.js` takes a peer whose pose says `wb`, as it takes a
 rider:
@@ -994,17 +994,17 @@ rider:
 - The frame clock is the saddle's for a mounted beast and EOTB's `speedMod`
   run halving on foot.
 - A new swing count plays `AttackMeleeLycan` once, forward, at LYCAN_TICK,
-  as the local body's `playLycanAttack` does (`eotbBody.js:530`). The count
+  as the local body's `playLycanAttack` does (`eotbBody.js:"function playLycanAttack"`). The count
   first seen is no swing.
 
 The hand-off is RIDE's: `isRiding` is true only once the art is up, so while
 it loads or has failed, and in a build without it, DISC12's enemy sprite
 still stands for them. A beast is never nothing.
 
-The modal passes (`worldModes.js:9262` the dungeon, `:9473` the interior)
+The modal passes (`worldModes.js:"...dungeonCtx.campBatches"` the dungeon, `worldModes.js:"// ONLINE1: the peers on the interior's"` the interior)
 draw only `host.extraBillboards`. That was `remotePlayers.batches()` alone,
 so a beast drawn by the rider layer would have been nothing indoors and
-underground. It hands over both layers' batches now (`world.js:23625`). A
+underground. It hands over both layers' batches now (`world.js:"PARTY-REST19: shared"`). A
 rider never reaches those passes: a door dismounts. The eye the layer turns
 its sprites to (`cam.pos`) is live in every mode, because worldModes shares
 world.js's `cam` and sets it each modal frame.
@@ -1012,7 +1012,7 @@ world.js's `cam` and sets it each modal frame.
 **The local body, beside it.** `eotbBody.js` asked for every sprite with
 the mod's settings (`cfg`), which never carry the form. So a wereboar saw the
 werewolf on themselves, while the others now draw the boar. The draw and the
-placement take the live form now (`lookNow`, `eotbBody.js:387`). The preload
+placement take the live form now (`lookNow`, `eotbBody.js:"const lookNow = ()"`). The preload
 fetches the live form's lycan set, and fetches it again when the form
 changes (`:270`, `:713`).
 
@@ -1033,7 +1033,7 @@ The report: *"Equipping a bow enlarges your character"*.
 **What the player sees.** In third person the Morrowind body is not drawn
 into the world directly. It is rendered as a true-size ortho picture, which
 is then drawn on an upright quad facing the camera
-(`characterSprite.js:70` `drawRigSpriteBox`). Because the picture is true
+(`characterSprite.js:"export function drawRigSpriteBox"` `drawRigSpriteBox`). Because the picture is true
 size, where the quad stands decides how big the body looks on screen: a
 quad set back from the camera draws the body smaller. So the same body
 looked a different size depending on what was in its hand. With a longsword
@@ -1057,27 +1057,27 @@ the scene the picture takes in:
 - `drawRigSpriteBox` takes an optional `anchor`. The picture is taken along
   the eye's ray to the anchor, still centred on the box so the gear stays in
   it. The quad stands where the anchor's own image lands on the anchor
-  (`characterSprite.js:125` `landAnchor`). Every point then draws at a place
+  (`characterSprite.js:"export function landAnchor"` `landAnchor`). Every point then draws at a place
   that does not depend on the box. The voxel rigs pass no anchor and draw as
   they did.
-- `drawThird` (`fpArm.js:5041`) anchors on the actor's own axis (MW x = y =
+- `drawThird` (`fpArm.js:"{ proj, view, eye"`) anchors on the actor's own axis (MW x = y =
   0, where the root stands at `feet`), at the body's mid-height. That
-  height is read off the drawn ranges less `CARRIED_SLOTS` (`fpArm.js:724`:
+  height is read off the drawn ranges less `CARRIED_SLOTS` (`fpArm.js:"export const CARRIED_SLOTS"`:
   the hand's weapon and round, the torch, the held sheet, Weapon Sheathing's
   three), so gear moves neither coordinate.
-- The box is folded only over the ranges the pass draws (`fpArm.js:734`
-  `visibleRangeBounds`), off a box kept per range (`fpArm.js:708`
+- The box is folded only over the ranges the pass draws (`fpArm.js:"export function visibleRangeBounds"`
+  `visibleRangeBounds`), off a box kept per range (`fpArm.js:"export function foldRangeBoxes"`
   `foldRangeBoxes`, refolded at every upload, `:3090`).
 
 **Hosts.** Every Morrowind body in the port goes through `drawThird`. The
-local player's goes through `mwView.mwViewDrawBody` (`mwView.js:447`,
-`:463`), which four files call: `world.js:28087`, `exterior.js:5509`,
-`worldModes.js:9250` and `:9362` (the dungeon and the interior passes),
-and `dungeon.js:1110`. `dungeonContext.js`, the fourth motor host, builds
+local player's goes through `mwView.mwViewDrawBody` (`mwView.js:"export function mwViewDrawBody"`,
+`:463`), which four files call: `world.js:"{ proj, view, eye:"`, `exterior.js:"{ proj, view, eye"`,
+`worldModes.js:"renderer.everyLightCasts();   // LA-SHADOW3".."mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones"` and `worldModes.js:"if (!overlayHeld) interiorCtx.automapTick?.(dt, cam.pos, fwd)".."mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones"` (the dungeon and the interior passes),
+and `dungeon.js:"if (walkMode) mwViewDrawBody"`. `dungeonContext.js`, the fourth motor host, builds
 the dungeon for those hosts and draws no body of its own. The other players'
-bodies go through `peerBodies.js:705` (`PeerBodies.draw`, and INVIS-LOOK's `drawVeiled`, by `_drawBodies`). The open world
-calls it at `world.js:28088`, and the modal passes reach it through
-`host.drawPeerBodies` (`worldModes.js:9251`, `:9363`). The fix therefore
+bodies go through `peerBodies.js:"{ proj, view, eye, feet"` (`PeerBodies.draw`, and INVIS-LOOK's `drawVeiled`, by `_drawBodies`). The open world
+calls it at `world.js:"drawPeerBodies(proj, view, mwv.eye, tvf ? tvFace : null)"`, and the modal passes reach it through
+`host.drawPeerBodies` (`worldModes.js:"renderer.everyLightCasts();   // LA-SHADOW3".."host.drawPeerBodies?.({ proj, view, eye: mwv.eye });   // MWBODY1: the others' bodies, after the player's own"`, `worldModes.js:"if (!overlayHeld) interiorCtx.automapTick?.(dt, cam.pos, fwd)".."host.drawPeerBodies?.({ proj, view, eye: mwv.eye });   // MWBODY1: the others' bodies, after the player's own"`). The fix therefore
 sits in one place and reaches every host.
 
 The pins are `test/prbow1_bow.test.js`: seven tests, all failing on the
@@ -1092,7 +1092,7 @@ every posed frame, for every body (the local player's and each peer's). It
 ran straight after `poseAssembly` had already walked every one of them for
 `assembly.bounds`. That is the same kind of repeated walk AUDIT MWBODY A4
 removed. The per-piece boxes are now folded inside `poseAssembly`'s own walk
-(`mwFirstPerson.js:1828` `foldPieceBounds`, called at `:2490`). Each piece
+(`mwFirstPerson.js:"export function foldPieceBounds"` `foldPieceBounds`, called at `mwFirstPerson.js:"assembly.bounds ="`). Each piece
 keeps one box, rewritten each pose. A range copies its piece's six numbers,
 and only a piece no pose has touched yet (a part bound since the last pose)
 is folded off its positions. The fold's results are unchanged:
@@ -1100,8 +1100,8 @@ is folded off its positions. The fold's results are unchanged:
 pins stand.
 
 **The portrait.** `fpArm.figure()` draws the enhanced inventory's model
-figure (`enhancedInventory.js:1727`), which is shown in a 110:184 cell with
-object-fit: contain (`enhancedStyle.js:4534`). It framed `meshBounds` over
+figure (`enhancedInventory.js:"try { px = armMod.figure"`), which is shown in a 110:184 cell with
+object-fit: contain (`enhancedStyle.js:"CARRIES THE SPRITE'S"`). It framed `meshBounds` over
 EVERY piece, then hid the unlit torch, the arrow off the string and the
 empty holster twin, so gear it did not show still moved the frame. Its width
 was the box's azimuth-safe diagonal, so a longsword pointing at the viewer,

@@ -173,7 +173,7 @@ export function bakeSoup(positions, indices, { floor, anchor, anchors = null, ag
 /**
  * Bake. `anchor` is where the agents live - the player's entry - and it
  * is REQUIRED: his buildRegions elects the component that holds it and
- * drops the rest (project-final/main.js:300 bakes anchored, always).
+ * drops the rest (project-final/main.js:233 bakes anchored, always).
  * @returns {{ chf, cols, agent, stats }}
  */
 export function bakeNavFromCollider(collider, { anchor, anchors = null, agent = SOUP_AGENT, buckets = null, exclude = null } = {}) {

@@ -121,8 +121,8 @@
   {
     "name": "AUDITREST2-Q-Q5-quest-arc-pair-back",
     "file": "bible/06-Systems/Quest-Arc.md",
-    "old": "(`actions.js:2812`/`:2819`)",
-    "new": "(`actions.js:2811`/`:2818`)",
+    "old": "(`actions.js:\"= parentQuest?.hooks?.world?.getClassicSpellEffects?.(action.spellID)\"`/`actions.js:\"CastSpellDo could not find\"..\"this.setComplete();   // C#: the TEMPLATE completes - kept\"`)",
+    "new": "(`actions.js:\"action.spellID =\"`/`actions.js:\"CastSpellDo could not find\"`)",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, its audit pass): the cites moved with the lines they name (citeShift), the rot one line back as before",
     "tests": [
       "test/auditrest2_quests.test.js"
@@ -131,8 +131,8 @@
   {
     "name": "AUDITREST2-Q-Q5-questguards-pair-back",
     "file": "test/questguards.test.js",
-    "old": "(actions.js:2812/:2819) and the task",
-    "new": "(actions.js:2811/:2818) and the task",
+    "old": "(actions.js:\"= parentQuest?.hooks?.world?.getClassicSpellEffects?.(action.spellID)\"/actions.js:\"CastSpellDo could not find\"..\"this.setComplete();   // C#: the TEMPLATE completes - kept\") and the task",
+    "new": "(actions.js:\"action.spellID =\"/actions.js:\"CastSpellDo could not find\") and the task",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, its audit pass): the cites moved with the lines they name (citeShift), the rot one line back as before",
     "tests": [
       "test/auditrest2_quests.test.js"
@@ -141,8 +141,8 @@
   {
     "name": "AUDITREST2-Q-Q5-qx1-pair-back",
     "file": "test/qx1_exterior_host.test.js",
-    "old": "(actions.js:2812/:2819 - no effects",
-    "new": "(actions.js:2811/:2818 - no effects",
+    "old": "(actions.js:\"= parentQuest?.hooks?.world?.getClassicSpellEffects?.(action.spellID)\"/actions.js:\"CastSpellDo could not find\"..\"this.setComplete();   // C#: the TEMPLATE completes - kept\" - no effects",
+    "new": "(actions.js:\"action.spellID =\"/actions.js:\"CastSpellDo could not find\" - no effects",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, its audit pass): the cites moved with the lines they name (citeShift), the rot one line back as before",
     "tests": [
       "test/auditrest2_quests.test.js"
@@ -151,8 +151,8 @@
   {
     "name": "AUDITREST2-Q-Q5-qx1-doors-back",
     "file": "test/qx1_exterior_host.test.js",
-    "old": "(actions.js:2758 - C# subscribes",
-    "new": "(actions.js:2757 - C# subscribes",
+    "old": "(actions.js:\"machine's notifyNewReadySpell/notifyCastReadySpell\" - C# subscribes",
+    "new": "(actions.js:\"So the latch is ported\" - C# subscribes",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, its audit pass): the cites moved with the lines they name (citeShift), the rot one line back as before",
     "tests": [
       "test/auditrest2_quests.test.js"
@@ -161,8 +161,8 @@
   {
     "name": "AUDITREST2-Q-Q5-exterior-doors-back",
     "file": "src/scenes/exterior.js",
-    "old": "// actions.js:2758). This host",
-    "new": "// actions.js:2757). This host",
+    "old": "// actions.js:\"machine's notifyNewReadySpell/notifyCastReadySpell\"). This host",
+    "new": "// actions.js:\"So the latch is ported\"). This host",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, its audit pass): the cites moved with the lines they name (citeShift), the rot one line back as before",
     "tests": [
       "test/auditrest2_quests.test.js"
@@ -171,8 +171,8 @@
   {
     "name": "AUDITREST2-Q-Q5-encounters-range-back",
     "file": "src/systems/encounters.js",
-    "old": "systems/quest/actions.js:2353-2375 here.",
-    "new": "systems/quest/actions.js:2352-2374 here.",
+    "old": "systems/quest/actions.js:\"this.pendingFoes = world.createFoeGameObjects\" here.",
+    "new": "systems/quest/actions.js:\"CreatePendingFoeSpawn\" here.",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, its audit pass): the cites moved with the lines they name (citeShift), the rot one line back as before",
     "tests": [
       "test/auditrest2_quests.test.js"
