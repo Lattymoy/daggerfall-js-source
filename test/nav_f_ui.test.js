@@ -208,7 +208,7 @@ test('NAV-F the readout is ONE node made on the first word and UPDATED, never re
   assert.equal(port.className, 'dfnaval-gun port');
   assert.equal(byClass(port, 'dfnaval-gun-fill')[0].style.height, '25%');
   assert.equal(byClass(root, 'starboard').find((n) => n.className.startsWith('dfnaval-gun')).className, 'dfnaval-gun starboard ready active');
-  assert.equal(byClass(root, 'stern').find((n) => n.className.startsWith('dfnaval-gun')).className, 'dfnaval-gun stern empty');
+  assert.equal(byClass(root, 'stern').find((n) => n.className.startsWith('dfnaval-gun')).className, 'dfnaval-gun stern gun-empty');   // PIN MOVED (HUD-CLASS): the battery's own word - the bare 'empty' took the enhanced sheet's .empty component
   // the next word updates the same nodes
   drawNavalHud(helm({ ship: { ...helm().ship, name: 'Carrack', hull: 0.2 }, aim: { side: 'port', range: 100, max: 180, hot: true } }), { keys: KEYS });
   assert.equal(byClass(body, 'dfnaval-hud').length, 1, 'one node');

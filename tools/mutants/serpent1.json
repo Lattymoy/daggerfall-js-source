@@ -193,12 +193,12 @@
   {
     "name": "SERPENT1-wire-relay-min",
     "file": "src/net/wire.js",
-    "old": "export const SERPENT_RELAY_MIN = 172;",
-    "new": "export const SERPENT_RELAY_MIN = 171;",
+    "old": "export const SERPENT_RELAY_MIN = 173;",
+    "new": "export const SERPENT_RELAY_MIN = 172;",
     "tests": [
       "test/serpent1_relay.test.js"
     ],
-    "note": "PIN MOVED at the merge of main's #598 and #599: the first serpent relay is world164 (world162 on its branch, past PRIMARCH and SUNBABY1). PIN MOVED again at the merge of main's #600-#604: world165, past PARTY-LEAD's world164 - the mutant one below it, so a relay that closes the socket on the frame is never offered it."
+    "note": "PIN MOVED at the merge of main's #598 and #599: the first serpent relay is world164 (world162 on its branch, past PRIMARCH and SUNBABY1). PIN MOVED again at the merge of main's #600-#604: world165, past PARTY-LEAD's world164 - the mutant one below it, so a relay that closes the socket on the frame is never offered it. AUDIT SHIPS 2 XC2 (re-aimed by content): world172, SERPENT3's own brain - a relay with an older brain is never offered the fight; PIN MOVED at SERPENT3's merge of main: world173, past WATCH-FIX's world172."
   },
   {
     "name": "SERPENT1-renown-serpent-worth",

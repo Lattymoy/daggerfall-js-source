@@ -29,7 +29,7 @@ function makeTown(extra = {}) {
 
 test('LW6d the character\'s record: a tale (`home`, a keepsake carried home) kept with its minute and the name it tells of, once, beside - not among - the hand deaths; written into the save only once there is one, and read back (mutants: the kind, the minute, the name, the once, the save, the read)', () => {
   assert.deepEqual([...TALE_KINDS], ['home']);
-  assert.deepEqual([...HAND_KINDS], ['slain', 'died'], 'the hand deaths as they were');
+  assert.deepEqual([...HAND_KINDS], ['slain', 'died', 'killed'], 'the hand deaths as they were - WATCH-FIX: PIN MOVED, and one of the watch another hand cut down');
   assert.deepEqual([...MARK_KINDS], ['laid']);
   const rel = createRelations();
   rel.turn('spared', 'L5.t2@3');

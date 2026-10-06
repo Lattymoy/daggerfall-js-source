@@ -108,7 +108,7 @@ each dies again against a stronger pin:
 
 | ID | Sev | Finding | Fix |
 |---|---|---|---|
-| N1 | low | The coil's winding on and its letting go were said at the beat (a crush snapped a screen 150 ms behind 0.8 m on and 0.24 m up). | The coil frame's `w` says when its winding is drawn from, SERPENT_SAY_AHEAD_MS on, and its `off` is said ahead with every word of its letting go. A new field on the wire (`spCoil` checks it), inside `world172`, which is not yet deployed. |
+| N1 | low | The coil's winding on and its letting go were said at the beat (a crush snapped a screen 150 ms behind 0.8 m on and 0.24 m up). | The coil frame's `w` says when its winding is drawn from, SERPENT_SAY_AHEAD_MS on, and its `off` is said ahead with every word of its letting go. A new field on the wire (`spCoil` checks it), inside `world173` (`world172` at the audit, renumbered past main's WATCH-FIX at the merge), which is not yet deployed. |
 | N2 | low | The ram's lane was led once, by the time to where she stood, and the lead was capped at 6 s, shorter than a ram's word to the end of its run (8.5 s). | Led again by its run's own time to her (RAM_LEAD_STEPS), at most SERPENT_LEAD_MAX_MS (9 s). |
 | N3 | low | The ram's wake stopped where the ram struck my ship. It was the judging's wake, and `dashWake` left the ram's run out. | One emitter: the run's wake is its dash's and runs on past a ship it struck. |
 
@@ -143,7 +143,8 @@ each dies again against a stronger pin:
 
 There is no GPU and no browser in this container. The wake's pacing, the coil drawn turning with its head, and the
 trim's absence from the panel were driven through their hosts and the DOM harness, not seen. The relay's hello beat and
-its reload gate were driven through fake rooms, not a deployed relay: `world172` is not yet deployed.
+its reload gate were driven through fake rooms, not a deployed relay: `world173` (`world172` at the audit, renumbered past
+main's WATCH-FIX at the merge) is not yet deployed.
 
 ## The second round (AUDIT SHIPS 2)
 

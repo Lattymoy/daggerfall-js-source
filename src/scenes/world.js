@@ -106,11 +106,14 @@ import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { LivingTown, LINE_HEAD_M as LIVING_HEAD_M } from '../systems/livingWorld/livingTown.js';   // LW2: the living world's streets - residents with days, where DFU's pool stood
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';
+import { makeQuarry } from '../systems/livingWorld/quarry.js';   // WATCH-PROTECTS: a townsperson as a monster's quarry
+import { knownCriminal } from '../systems/standing.js';   // WATCH-KNOWS: the living watch's word by the law - one whose face it knows
 import { createRelations, LIVING_WORLD_VENDOR } from '../systems/livingWorld/relations.js';   // LW2: how the living world regards this character (modData `LivingWorld`)
 import { ResidentWalker } from '../characters/residentWalker.js';
 import { firstNameOf } from '../systems/livingWorld/lines.js';
 import { travellerRoster, mintResident } from '../systems/livingWorld/census.js';   // LW3: a town's travellers, off its MAPS row alone; LW4: a newcomer to a place the road emptied
-import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths
+import { townTrips, visitorsOf as tripVisitorsOf, awayOf as tripAwayOf, placeCycle, setsOut, newsOf, paceScale, NEWS_DAYS, diversAt, cycleOf, handsOn, nativeDry } from '../systems/livingWorld/trips.js';   // LW3: the roads, pure; LW4: the places' cycles, the town's news; LW7: a townsperson's cycle, a trip's hand deaths; LW-DRY: the ground a party stops on
+import { createDryGround } from '../world/dryGround.js';   // LW-DRY: the height map's own dry ground, every client's alike
 import { placeAt, turnKey } from '../systems/livingWorld/lives.js';   // LW4: who holds a traveller's place
 import { peoplePage } from '../systems/livingWorld/people.js';   // LW7c: the chronicle's People page
 import { troubleOf, troubledTrip } from '../systems/livingWorld/trouble.js';   // LW4: trouble on the road
@@ -574,7 +577,7 @@ import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
-import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, WORLD_REPUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
+import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, WORLD_REPUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS, SHOWN_MOVE_HOLD_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory; AUDIT 637 D7: the move hold, one law both ends
 import { createSeatLock, SEAT_NOTICE, SEAT_MID_TEXT, PLAY_HERE_LABEL } from '../net/oneSeat.js';   // ONE-SEAT: one tab of a player online - the browser's arm, beside the hub's
 import { readAccount, buyInsignia, equipTitle, equipAura, adoptIdentity as adoptSessionIdentity } from '../net/accountClient.js';   // WB9g: the Broker's insignia - the account's wardrobe, its sale and its wearing, and my own screen's word of it
 import { ownAura } from '../systems/ownGlyphs.js';   // WB9g: the aura at my own feet - the service's last word, kept on the stored session
@@ -2261,12 +2264,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   const livingRouteOf = (a, b) => livingWays.wayOf(a, b);
   const _livingRosters = new Map();
+  /** @type {((nx: number, nz: number) => boolean) | null} */
+  let _livingDry = null;
   const livingTripWorld = {
     townsNear: livingTownsNear,
     routeOf: livingRouteOf,
     rosterOf: (t) => { let r = _livingRosters.get(t.mapId); if (!r) { r = travellerRoster(t); _livingRosters.set(t.mapId, r); } return r; },
     templeTown: (t) => t.type === LOCATION_TYPES.ReligionTemple || t.blocks >= 9,
     dungeonsNear: livingDungeonsNear,   // LW6: an adventurer's dives
+    dryAt: (nx, nz) => (_livingDry ??= nativeDry(createDryGround(woods)))(nx, nz),   // LW-DRY: a party's camp, halt and fallen on dry ground
   };
   const _livingTripMemo = new Map();
   let _livingWaysSeen = 0;
@@ -2316,12 +2322,13 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  down at `t` (the turn at their place and cycle, with whether it was seen and the name they bore). */
   const livingDeadAt = (res, t) => {
     const turns = livingRelations.turns();
-    if (!turns.slain.size && !turns.died.size) return false;
+    if (!turns.slain.size && !turns.died.size && !turns.killed.size) return false;   // WATCH-FIX: and one of the watch another hand killed
     const h = livingPlaceOf(res, livingCycleOf(res, Math.floor((t - 240) / 1440))).hand;
     return h != null && h <= t;
   };
   const livingSlay = (res, t, seen) => { livingRelations.turn('slain', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, seen, who: res.name }); };
   const livingDied = (res, t) => { livingRelations.turn('died', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, who: res.name }); };   // LW7b: at the player's side
+  const livingKilled = (res, t) => { livingRelations.turn('killed', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, who: res.name }); };   // WATCH-FIX: by another hand, in the player's town
   /** A traveller's place on a trip, at the trip's own cycle (their town's roster's, by their slot). */
   const livingTripPlace = (res, trip) => {
     const town = livingTownOfId(res.town);
@@ -2381,7 +2388,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (let d = 0; d <= NEWS_DAYS; d++) { const tr = townTrips(town, noon - d * 1440, livingTripWorld, o); if (tr) told.push(...tr); }
     const won = livingRelations.turns().won;
     const news = newsOf(told, noon).map((n) => ({ ...n, foe: n.foe != null ? livingFoeWord(n.foe, 2) : '', helped: won.has(n.enc) }));   // LW7: a fight the player turned
-    return { away, visitors, holders, news };
+    // LW-TALK: the towns of its road - where its people's trips of these days were bound - for its talk's {place}
+    const places = [...new Set([...trips, ...told].map((tr) => tr.to?.name).filter(Boolean))].sort();
+    return { away, visitors, holders, news, places };
   };
   // LW5: THE BAY'S SAILORS (systems/livingWorld/portCrews.js) - a port's sailors the crews of the packets calling at it,
   // each where her clock has her (the shared one the naval host stands and steers her by, raidNowMs): aboard under way,
@@ -4652,7 +4661,9 @@ export async function bootWorld(canvas, renderer, params, status) {
           tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf,   // LW3: its travellers away and armed, its visitors
           ashore: (res) => livingAshore(livingTown, res), crews: () => livingCrews(livingTown),   // LW5: its sailors by their ships' clock; the crews lying here
           // LW7: a townsperson's place by the lives, a hand's death, the player's, and the town's own lines of sight
-          holderOf: (res, day) => livingPlaceOf(res, livingCycleOf(res, day)).holder, deadAt: livingDeadAt, slay: livingSlay,
+          holderOf: (res, day) => livingPlaceOf(res, livingCycleOf(res, day)).holder, deadAt: livingDeadAt, slay: livingSlay, killed: livingKilled,   // WATCH-FIX: one of the watch another hand cut down
+          legalStanding: (region) => ({ rep: legalRepOf(playerEntity, region), known: knownCriminal(playerEntity, region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() }) }),   // WATCH-KNOWS: the watch's word by the law
+          dangers: () => livingDangers(px, py, locOrigin),   // WATCH-PROTECTS: the monsters its people run from
           sees: (a, b) => {
             const tr = state.pixelTranslation(px, py);
             const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], len = Math.hypot(d[0], d[1], d[2]);
@@ -9268,6 +9279,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     raidHere: () => raidDefendingHere(),   // RAID-GUARDS: a raid on in this town spares its defenders every blow of the player's
     levelBonus: () => seatEdicts.guardLevelBonus(Math.floor(skyMinutes())),   // SEAT1d: a Curfew's night watch - AUDIT SEATS-3 E1: the sky's night (TIME1), the one the town sees
     fightHere: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),   // PROTECT-FIGHT: under the protection, a fight spares the street's walkers
+    oneVoice: () => livingWorldOn(), windowUp: () => townTalk.overlayActive,   // HALT-ONE: the living watch calls as one, and nobody under a window (cityGuards.js)
     say: (l) => townTalk.say(l),   // C-slice: equipment breaks speak
     currentMinute: () => Math.floor(playerTicker.ownMinutes),   // AUDIT 23 (hosts-3): the poison clock
     currentPixelKey: () => `${playerTravelPixel().x},${playerTravelPixel().y}`,   // TrackLooseObject's stamp - the pile seam's key, one shape
@@ -9306,6 +9318,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // X-slice: the encounter-foe pool - S32's above-ground arms go
   // LIVE. Same damage door shape as the guards; no crime machinery.
   const exteriorFoes = createExteriorFoes({
+    oneVoice: () => livingWorldOn(),   // HALT-ONE: a peer's watchman calls on his owner's client, not here
     inLocation: () => _musicInLocationRect(),   // SOFTCAP5: only the wilderness scales its foes (towns and cities never)
     skyMinute: () => Math.floor(skyMinutes()),   // TIME1: the wilds' night is the sky's
     renderer, collider, fetchBytes, getTexture, uploadRecordFrame, playerEntity, audio, hitEffects, groundStands: (x, z) => Number.isFinite(heightAt(x, z)),   // FALL-HOLD: a foe over a pixel not built is held, not stepped
@@ -9720,6 +9733,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and minted the watch outside the wall.
   const _guardPool = () => ((modes?.mode ?? 'exterior') !== 'exterior' ? [] : _livePersons.map(({ person, pos }) => ({
     pos, fwdYaw: person.facingYaw, guard: person.guard, person,   // LW7: whom a swing takes (livingStruckPool)
+    live: ((living) => () => _streetHolds(person, living))(person.living),   // WATCH-FIX: still on the street, as read (cityGuards.js turnNpc)
     disable: () => {
       for (const p of built.values()) {
         const it = p.population?.pool.find((i) => i.person === person);
@@ -9727,21 +9741,59 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
     },
   })));
+  /** WATCH-FIX: a walker read into a pool still on the street - its row active and (the living town's) dressed as the same
+   *  resident it was read as; the conversion never turns one another arm took, nor a body since dressed as another. */
+  const _streetHolds = (person, living) => {
+    for (const p of built.values()) {
+      const it = p.population?.pool.find((i) => i.person === person);
+      if (it) return !!it.active && (person.living ?? null) === (living ?? null);
+    }
+    return false;
+  };
   // LW7 (bible/06-Systems/Living-World.md "LW7"): THE DEEDS AT THE STREET'S SEAMS. A resident a swing or the trample takes
   // (DFU's one-hit civilian, the watch's conversion) is the living world's deed first: one of the watch STRUCK - the
-  // assault that turns them on the player; the guard it stands carries them, and cut down, they are slain for good -
-  // anyone else STRUCK DOWN (their town's: their own and the witnesses turned, the lives take the place)
+  // assault that turns them on the player (the guard stood in his place is followed: livingWatchStep) - anyone else
+  // STRUCK DOWN (their town's: their own and the witnesses turned, the lives take the place)
   const _livingWatchTurned = [];
   const livingDeedOf = (person, near = null) => {
     const town = livingWorldOn() ? person?.living?.town : null;
     if (!town?.slain) return;
     if (!person.guard) { town.slain(person); return; }
-    if (town.struck(person)) _livingWatchTurned.push({ res: person.living.res, from: person.living, town, at: [...person.pos], guard: null, waited: 0 });   // LW-FIX2: his guard found by the mark the conversion puts on it (scenes/livingWatch.js)
+    town.struck(person);
   };
   const livingStruckPool = (pool) => (livingWorldOn() ? pool.map((e) => ({ ...e, disable: () => { livingDeedOf(e.person, e.pos); e.disable(); } })) : pool);
-  /** LW7: each turned watchman's guard found and watched (scenes/livingWatch.js - LW-FIX2: by the conversion's own mark on
-   *  it, and cut down the town's whole deed, `slain`): gone with the crime, or never stood, let be. */
-  const livingWatchStep = () => watchStep(_livingWatchTurned, cityGuards.guards);
+  /** WATCH-FIX: a resident by id among the towns stood (a guard a load restored knows whom he stands for by it alone). */
+  const livingResidentOf = (id) => {
+    for (const p of built.values()) {
+      const town = p.population;
+      const res = town?.residentOf?.(id) ?? null;
+      if (res) return { town, res };
+    }
+    return null;
+  };
+  /** WATCH-FIX: a world point in a living town's own frame (where a guard of its fell, for its witnesses), or null. */
+  const livingLocalOf = (town, feet) => {
+    if (!feet) return null;
+    for (const p of built.values()) {
+      if (p.population !== town) continue;
+      const t = state.pixelTranslation(p.px, p.py);
+      return [feet[0] - t[0] - p.locOrigin[0], feet[1] - t[1], feet[2] - t[2] - p.locOrigin[2]];
+    }
+    return null;
+  };
+  /** LW7 / WATCH-FIX: every guard of the watch's that stands for a resident - the conversion's mark on it, whichever arm
+   *  stood it (a swing, the trample, the crime response, the minute's sweep, the town watch's summons, a load) - followed
+   *  to its end (scenes/livingWatch.js): the resident lent to it meanwhile, then back to their day, or slain by the
+   *  player's own blow, or killed by another hand. */
+  const livingWatchStep = () => watchStep(_livingWatchTurned, cityGuards.guards, { resolve: livingResidentOf, localOf: livingLocalOf });
+  /** WATCH-FIX: THE RESIDENTS ANOTHER PLAYER'S WATCH STANDS FOR HERE - its puppets' `livingId` (WATCH1's records, `lr`),
+   *  each town told, so a resident is never on its street beside his own guard. One set, refilled each frame. */
+  const _livingPeerWatch = new Set();
+  const livingPeerWatchStep = () => {
+    _livingPeerWatch.clear();
+    for (const f of exteriorFoes.foes) if (f.puppet && typeof f.livingId === 'string') _livingPeerWatch.add(f.livingId);
+    for (const p of built.values()) p.population?.peerLend?.(_livingPeerWatch);
+  };
   /** LW7: a swing that met no one in the street, at the road's travellers - the body on the ray within reach (no wall
    *  before it), DFU's one-hit civilian (WeaponManager.cs:504-521, less the watch: there is none on the road): struck
    *  down for good (the roads' deed), the blood, the Brotherhood's five and the racial override's hit. */
@@ -9839,6 +9891,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l),
     playSound: (clip) => audio.playOneShot(clip, 1),
     watchFlees: () => cityGuards.frighten(walkMode && playerSpawned ? player.pos : cam.pos) + (modes?.frightenWatch?.() ?? 0),   // the feet the street's pool is driven against (the frame's update)
+    // WATCH-KNOWS: the living world's watch warns a first minor offence in a region (systems/standing.js warningDue)
+    warnsFirst: () => livingWorldOn(), regionName: (r) => REGION_NAMES[r] ?? 'this region', worldNow: () => trustedWorldMinutes(),
   });
   // REP1: THE WATCH STOPS A KNOWN CRIMINAL IT SEES - on the street, a guard's clear line, once in two game hours per
   // region, never in the grace an answered law gives (scenes/standingHost.js; the law's terms: systems/standing.js).
@@ -10378,7 +10432,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and dungeonContext.js:3262 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:7283
+  // that context through modes.dungeonCtx - so worldModes.js:7285
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -10474,11 +10528,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:583-588) never looks the record up in `foes`, and
+    // (exteriorFoes.js:588-593) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1669-1687) gives it -
+    // got exactly what removeGuard (cityGuards.js:1762-1780) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:1047) and spliced out at the end of it (:1266).
+    // (cityGuards.js:1123) and spliced out at the end of it (:1359).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -10993,6 +11047,34 @@ export async function bootWorld(canvas, renderer, params, status) {
   // none of them: above ground a foe's Continuous Damage never took a
   // round, its poison never fired, and a paralysed foe stayed paralysed.
   subscribeFoePools(playerTicker, [() => cityGuards.guards, () => exteriorFoes.foes], foeSinks);
+  // WATCH-PROTECTS: THE STREET'S PEOPLE AS A MONSTER'S QUARRY (systems/livingWorld/quarry.js) - the living world's
+  // townspeople on the street, none of the watch, each a body at their world feet that a hostile monster fighting hand to
+  // hand may hunt (characters/enemyTargets.js huntsCivilians); struck, killed by another hand (livingTown.js killed)
+  const _quarryOf = new WeakMap();
+  const livingQuarry = () => {
+    if (!livingWorldOn() || _mode() !== 'exterior') return [];
+    const out = [];
+    for (const seat of _livePersons) {
+      const p = seat.person, living = p?.living;
+      if (!living?.town || p.guard) continue;
+      let q = _quarryOf.get(p);
+      if (!q || q.living !== living) { q = makeQuarry(p, (body) => body.living.town.killed(body.person)); _quarryOf.set(p, q); }   // a row dressed anew: another body
+      if (q.entity.health <= 0) continue;
+      q.ai.feet[0] = seat.pos[0]; q.ai.feet[1] = seat.pos[1]; q.ai.feet[2] = seat.pos[2]; q.ai.yaw = p.yaw;
+      out.push(q);
+    }
+    return out;
+  };
+  // WATCH-PROTECTS: the monsters a town's people run from (livingTown.js PANIC_M) - this host's foes, alive, hostile, and
+  // neither the player's ally nor a companion, at their feet in the location frame of the town at px, py
+  const livingDangers = (px, py, locOrigin) => {
+    const tr = state.pixelTranslation(px, py), out = [];
+    for (const f of exteriorFoes.foes) {
+      if (f.dead || !f.ai?.isHostile || f.companion != null || f.entity?.team === 'PlayerAlly') continue;
+      out.push([f.ai.feet[0] - locOrigin[0] - tr[0], f.ai.feet[2] - locOrigin[2] - tr[2]]);
+    }
+    return out;
+  };
   /** AUDIT 24 (wave 36): the senses context every foe pool owes its
    *  foes, built ONCE per frame for all of them. This host used to pass
    *  `{ playerInvisible }` alone, which left Chameleon and Shade inert,
@@ -11011,7 +11093,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // DFU's database yields only ACTIVE behaviours. Passing the
     // getter (not the array) keeps one live view per frame with no
     // pool importing the other.
-    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes].filter((f) => !f.dead && !f.puppet),   // AUDIT WORLD6b B8: a puppet is nobody's target here - it lands no blow and takes none of mine (a foe hunting a peer is 6b-ii's)
+    // WATCH-PROTECTS: and the street's people, the living world's (livingQuarry, above)
+    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes, ...livingQuarry()].filter((f) => !f.dead && !f.puppet),   // AUDIT WORLD6b B8: a puppet is nobody's target here - it lands no blow and takes none of mine (a foe hunting a peer is 6b-ii's)
     playerEntity,
     wildUnaware: (f) => wildGated(f),   // WILD-ALERT: a wilderness foe that has not noticed a fast traveller leaves them off its list
   });
@@ -16425,7 +16508,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:11005-11069 -
+  // worldModes answers it in BOTH modes (worldModes.js:11007-11071 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -18151,7 +18234,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let sceneToOnline = campToWire;
   const ROOM_HOLD_MS = 500;   // AUDIT ONLINE D11: a room key holds this long before the socket moves - a cell edge is not a churn
   const ONLINE_LOOK_CHECK_MS = 1000;   // PROFILE2: how often my look is re-composed and compared with what the rooms were told
-  const ONLINE_MOVE_HOLD_MS = 250;   // ONLINE-MVFLICKER1: see the outgoing `mv` computation's own header - debounces a single stray zero-delta sample
+  const ONLINE_MOVE_HOLD_MS = SHOWN_MOVE_HOLD_MS;   // ONLINE-MVFLICKER1: see the outgoing `mv` computation's own header - debounces a single stray zero-delta sample. AUDIT 637 D7: the watcher's hold (net/online.js), one literal for both ends
   // ACC1d: ONE minter, shared by the presence session and every channel
   // link - it holds no token and caches nothing, so a shared minter is
   // still a FRESH token per socket, which is what the relay's spend-once
@@ -28446,7 +28529,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       livingRoadsOf().frame(townTalk.overlayActive ? 0 : dt, cam.pos, { overworld: tvf ? { grow: tvf.grow, blend: tvf.blend } : null });
       livePersonBatches.push(...livingRoads.batches());
     } else if (livingRoads) livingRoads.clear();
-    if (_livingWatchTurned.length) livingWatchStep();   // LW7: a struck watchman's guard, watched
+    if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }   // LW7 / WATCH-FIX: the turned watch followed, mine and a peer's
     if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again - the room's residents freed (LW-FIX1: and an empty room's sounding)
     if (livingRemains) { livingRemains.clear(); livingRemains = null; }   // LW6b: ...and the deep's layer let go with its dungeon
     // G1: the guards drive + draw on the same flats' axis. WINFOE1
@@ -28875,11 +28958,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:784-789), so this seam ROUTES by pool exactly
+        // (cityGuards.js:857-862), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1387). DFU makes no pool distinction:
+        // (cityGuards.js:1480). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.

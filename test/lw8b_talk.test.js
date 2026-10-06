@@ -15,13 +15,13 @@ import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { createRelations } from '../src/systems/livingWorld/relations.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
-import { spotCircles, circleLine, ROUND_S, lineMinutes } from '../src/systems/livingWorld/meetups.js';
+import { dealCircles, circleLine, ROUND_S, GATHER_BEAT_S, lineMinutes } from '../src/systems/livingWorld/meetups.js';   // LW-TALK: PIN MOVED - a table's company dealt
 import {
   ROOM_TALKS, roomKindOf, pickScript, fillLine, TOKEN_FALLBACK, LIVING_GREETINGS,
-  TOWN_TALKS, JOB_TALKS, WEATHER_TALKS, EVENING_TALKS, NIGHT_TALKS, ROAD_TALKS, CAMP_TALKS,
+  TOWN_TALKS, JOB_TALKS, WEATHER_TALKS, EVENING_TALKS, NIGHT_TALKS, ROAD_TALKS, CAMP_TALKS, MORNING_TALKS, DAY_TALKS,
 } from '../src/systems/livingWorld/lines.js';
 import { seededRng } from '../src/systems/wind.js';
-import { createLivingIndoors, tablesOf, TABLE_M, TABLE_MAX } from '../src/scenes/livingIndoors.js';
+import { createLivingIndoors, tablesOf, TABLE_M, TABLE_MAX, INDOOR_TICK_S } from '../src/scenes/livingIndoors.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const RATE = CLASSIC_MINUTES_PER_SECOND;
@@ -122,62 +122,74 @@ test('LW8b standing together: the room fills table by table - the first in stand
   assert.ok(Math.abs(lone.synced[0].yaw - Math.atan2(c[0] - lone.synced[0].feet[0], c[1] - lone.synced[0].feet[2])) < 1e-9, 'alone: into the room');
 });
 
-test('LW8b the room\'s circles and words: two at a table the whole round meet as the street\'s circle on the table\'s own key - on the street\'s share, beat and words, the room\'s own among them (the tavern\'s); one come in mid-round meets none that round; a quiet round nothing; what is heard is within LINE_RANGE (mutants: the circle, the whole round, the key, the room, the beat, the reach)', () => {
+test('LW8b the room\'s circles and words: two at a table meet as the street\'s circle - LW-TALK: PIN MOVED - from the minute their company sat down as it is (dealCircles on the table\'s key and that minute), a round at a time while it stays; its talk the street\'s exchanges, beat and words, the room\'s own among them (the tavern\'s); one who comes begins the company anew, its talk a beat after (the first cut stood them mute to the next round); what is heard is within LINE_RANGE (mutants: the circle, the company, the key, the room, the beat, the reach)', () => {
   const T0 = 100 * DAY_MIN + 1200;
   const res = [RES(1, 'smith'), RES(2, 'farmer')];
   const rig = talkRig({ inside: res.map(ALL_DAY), clock: T0 });
   rig.layer.frame(0.016, [0, 0, 0], 0, [0, 1.6, 0]);
   const [a] = rig.layer.stood();
-  const present = rig.layer.stood().map((s) => ({ who: s.res, t0: 0, t1: 1e9 }));
-  const key = `in:7000:${a.table}`;
+  /** the company's circle at minute `t`, sat down at `since` */
+  const circleAt = (t, since, who) => {
+    const round = Math.floor((t - since) / BEAT.roundMin), start = since + round * BEAT.roundMin;
+    return dealCircles(`in:7000:${a.table}:${since}`, who, round, start, start + BEAT.roundMin, GATHER_BEAT_S * BEAT.roundMin / ROUND_S)[0];
+  };
+  const who = rig.layer.stood().map((s) => s.res);
+  const memo = new Map(), plainMemo = new Map();
   let said = 0, quiet = 0, roomWords = 0;
-  for (let round = 0; round < 80; round++) {
-    for (let beat = 0; beat < 3; beat++) {
-      const t = T0 + round * BEAT.roundMin + (beat + 0.5) * BEAT.lineMin;
-      rig.st.clock = t;
-      rig.layer.frame(0.016, [0, 0, 0], 0, [0, 1.6, 0]);
-      const [circle] = spotCircles(key, present, t, BEAT.roundMin);
-      assert.ok(circle, 'the table\'s circle');
-      const want = circleLine(circle, t, BEAT.lineMin, { ...CTX(t), room: 'tavern' });
-      const got = rig.layer.speech([0, 1.6, 0]);
-      if (!want) { assert.deepEqual(got, [], 'a quiet round, or the script said'); quiet++; continue; }
-      assert.equal(got.length, 1);
-      assert.equal(got[0].text, want.text, 'the street\'s words on the table\'s key');
-      assert.equal(got[0].person.living.id, want.who.id, 'over its speaker');
-      said++;
-      const plain = circleLine(circle, t, BEAT.lineMin, { ...CTX(t), room: null });
-      if (plain?.text !== want.text) roomWords++;
-    }
-  }
-  assert.ok(said > 40 && quiet > 10, `said ${said}, quiet ${quiet}`);
-  assert.ok(roomWords > 10, `the room's own words (${roomWords})`);
-  // heard within LINE_RANGE of the eye
-  for (let round = 0; ; round++) {
-    const t = T0 + round * BEAT.roundMin + 0.5 * BEAT.lineMin;
+  for (let i = 0; i < 2400; i++) {
+    const t = T0 + i * 0.5 * BEAT.lineMin;
     rig.st.clock = t;
+    rig.layer.frame(0.016, [0, 0, 0], 0, [0, 1.6, 0]);
+    const circle = circleAt(t, T0, who);
+    assert.ok(circle, 'the table\'s circle');
+    const want = circleLine(circle, t, BEAT.lineMin, { ...CTX(t), room: 'tavern' }, memo);
+    const got = rig.layer.speech([0, 1.6, 0]);
+    if (!want) { assert.deepEqual(got, [], 'gathering, between exchanges, a quiet spell'); quiet++; continue; }
+    assert.equal(got.length, 1);
+    assert.equal(got[0].text, want.text, 'the street\'s words on the company\'s key');
+    assert.equal(got[0].person.living.id, want.who.id, 'over its speaker');
+    said++;
+    const plain = circleLine(circle, t, BEAT.lineMin, { ...CTX(t), room: null }, plainMemo);
+    if (plain?.text !== want.text) roomWords++;
+  }
+  assert.ok(said > 300 && quiet > 300, `said ${said}, quiet ${quiet}`);
+  assert.ok(roomWords > 60, `the room's own words (${roomWords})`);
+  // heard within LINE_RANGE of the eye
+  for (let i = 2400; ; i++) {
+    rig.st.clock = T0 + i * 0.5 * BEAT.lineMin;
     rig.layer.frame(0.016, [0, 0, 0], 0, [0, 1.6, 0]);
     if (!rig.layer.speech([0, 1.6, 0]).length) continue;
     assert.deepEqual(rig.layer.speech([LINE_RANGE + 12, 1.6, 0]), [], 'out of earshot');
     break;
   }
-  // one come in mid-round: no circle that round - and the next whole round, one
-  const late = talkRig({ inside: [ALL_DAY(res[0]), { res: res[1], t0: T0 + 1, t1: 1e9 }], clock: T0 });
+  // one who comes begins the company anew - its talk a gather's beat after, never mid-script
+  const late = talkRig({ inside: [ALL_DAY(res[0])], clock: T0 });
   late.layer.frame(0.016, [0, 0, 0], 0, [0, 1.6, 0]);
-  for (let beat = 0; beat < 3; beat++) {
-    late.st.clock = T0 + (beat + 0.5) * BEAT.lineMin;
+  const T1 = T0 + 7 * BEAT.lineMin;
+  late.st.clock = T1;
+  late.st.inside = res.map(ALL_DAY);
+  for (const yaw of [0, Math.PI, Math.PI / 2, -Math.PI / 2]) if (late.layer.stood().length < 2) { late.layer.frame(INDOOR_TICK_S, [0, 0, 0], yaw, [0, 1.6, 0]); }   // where the player is not looking
+  const both = late.layer.stood().map((s) => s.res);
+  assert.equal(late.layer.stood()[0].table, late.layer.stood()[1].table, 'at one table');
+  let first = null;
+  for (let i = 0; i < 400 && first == null; i++) {
+    late.st.clock = T1 + i * 0.25 * BEAT.lineMin;
     late.layer.frame(0.016, [0, 0, 0], 0, [0, 1.6, 0]);
-    assert.deepEqual(late.layer.speech([0, 1.6, 0]), [], 'not there the whole round: no circle');
+    if (late.layer.speech([0, 1.6, 0]).length) first = late.st.clock;
   }
+  assert.ok(first != null && first >= T1 + GATHER_BEAT_S * BEAT.roundMin / ROUND_S, 'talking from the company\'s sitting, a beat after');
+  const k0 = circleAt(first, T1, both);
+  assert.deepEqual(late.layer.speech([0, 1.6, 0]).map((l) => l.text), [circleLine(k0, first, BEAT.lineMin, { ...CTX(first), room: 'tavern' }).text], 'its first line, from the first');
   // a building of no room's kind: the town's talk alone
   assert.equal(roomKindOf(BUILDING_TYPES.Ship), null);
   const ship = talkRig({ inside: res.map(ALL_DAY), clock: T0, type: BUILDING_TYPES.Ship });
   ship.layer.frame(0.016, [0, 0, 0], 0, [0, 1.6, 0]);
-  for (let round = 0; round < 40; round++) {
-    const t = T0 + round * BEAT.roundMin + 0.5 * BEAT.lineMin;
+  const shipMemo = new Map();
+  for (let i = 0; i < 600; i++) {
+    const t = T0 + i * 0.5 * BEAT.lineMin;
     ship.st.clock = t;
     ship.layer.frame(0.016, [0, 0, 0], 0, [0, 1.6, 0]);
-    const [circle] = spotCircles(key, present, t, BEAT.roundMin);
-    const want = circleLine(circle, t, BEAT.lineMin, { ...CTX(t), room: null });
+    const want = circleLine(circleAt(t, T0, ship.layer.stood().map((s) => s.res)), t, BEAT.lineMin, { ...CTX(t), room: null }, shipMemo);
     assert.deepEqual(ship.layer.speech([0, 1.6, 0]).map((l) => l.text), want ? [want.text] : []);
   }
 });
@@ -283,13 +295,16 @@ test('LW8b the room\'s own words: each room\'s scripts two or three lines in the
   assert.ok(share > 0.6 && share < 0.73, `the tavern's two shares of three (${share.toFixed(3)})`);
   assert.equal(inRoom('tavern', { room: 'tavern', road: 'walk' }), 0, 'the road keeps its own talk');
   assert.equal(inRoom('tavern', { room: 'temple' }), 0, 'each room its own');
-  // the street unchanged: every script it drew before
+  // the street unchanged: every script it drew before - LW-TALK: PIN MOVED - its morning's and its day's pools beside
+  // them, and a trade's once
   const before = (seed, { jobs = [], weather = null, hour = 12, road = null } = {}) => {
     const rng = seededRng(seed);
     const pools = road === 'camp' ? [CAMP_TALKS, CAMP_TALKS, CAMP_TALKS] : road === 'walk' ? [ROAD_TALKS, ROAD_TALKS, ROAD_TALKS] : [TOWN_TALKS, TOWN_TALKS];
-    for (const j of jobs) { const p = JOB_TALKS[j]; if (p) pools.push(p); }
+    for (const j of new Set(jobs)) { const p = JOB_TALKS[j]; if (p) pools.push(p); }
     const w = weather ? WEATHER_TALKS[weather] : null;
     if (w) pools.push(w);
+    if (!road && hour >= 5 && hour < 11) pools.push(MORNING_TALKS);
+    if (!road && hour >= 8 && hour < 18) pools.push(DAY_TALKS);
     if (!road && hour >= 18 && hour < 23) pools.push(EVENING_TALKS);
     if (!road && (hour >= 23 || hour < 5)) pools.push(NIGHT_TALKS, NIGHT_TALKS);
     const pool = pools[Math.floor(rng() * pools.length)];

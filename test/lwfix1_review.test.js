@@ -15,7 +15,7 @@ import { createRelations } from '../src/systems/livingWorld/relations.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 import { mintKeepsake } from '../src/systems/livingWorld/keepsake.js';
 import { createLivingIndoors, INDOOR_STIR_S, INDOOR_SEEN_M } from '../src/scenes/livingIndoors.js';
-import { ROUND_S, lineMinutes, spotCircles, circleLine } from '../src/systems/livingWorld/meetups.js';
+import { ROUND_S, GATHER_BEAT_S, SLOT_LINES, lineMinutes, dealCircles, circleSlots, slotSpoken, exchangeScript, circleLine } from '../src/systems/livingWorld/meetups.js';   // LW-TALK: PIN MOVED - a table's company
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -94,40 +94,75 @@ test('LW-FIX1 a walker whose day ends mid-walk goes where they are unseen - judg
   assert.equal(r.layer.size, 0, 'looked away from: gone');
 });
 
-test('LW-FIX1 a table\'s talk is the round\'s as it began: one who sits down mid-round joins the next round\'s talk, never re-dealing this one; a circle one of whom goes falls silent till the next round (mutants: the round\'s deal, the gone)', () => {
+test('LW-FIX1 a table\'s talk is never re-dealt mid-script - LW-TALK: PIN MOVED - one who sits down while its exchange is on waits for its last line, the company there talking it out, and the new company meets after it; a circle one of whom goes falls silent at once (mutants: the round\'s deal, the gone)', () => {
   const r = rig({ inside: [RES(1), RES(2)] });
   r.layer.frame(0.016, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
   const [a, b] = r.layer.stood();
   assert.equal(a.table, b.table);
-  const pair = [a, b].map((s) => ({ who: s.res, t0: 0, t1: 1e12 }));
-  // a round the pair talks, a line due mid-round
-  let t = r.st.clock;
-  while (!spotCircles(`in:7000:${a.table}`, pair, t, r.BEAT.roundMin)[0]?.talks) t += r.BEAT.roundMin;
-  const round0 = Math.floor(t / r.BEAT.roundMin) * r.BEAT.roundMin;
-  r.st.clock = round0 + 0.1;
+  const since = r.st.clock;
+  const pairCircle = (t) => { const round = Math.floor((t - since) / r.BEAT.roundMin), start = since + round * r.BEAT.roundMin; return dealCircles(`in:7000:${a.table}:${since}`, [a.res, b.res], round, start, start + r.BEAT.roundMin, GATHER_BEAT_S * r.BEAT.roundMin / ROUND_S)[0]; };
+  // the pair's first spoken exchange, a line said and more to come
+  const c0 = pairCircle(since);
+  const slots = circleSlots(c0, r.BEAT.lineMin);
+  const k = slots.findIndex((_, i) => slotSpoken(c0, i) && exchangeScript(c0, i, r.BEAT.lineMin, {}, null).script.length >= 3);
+  const s0 = slots[k];
+  r.st.clock = s0 + 0.5 * r.BEAT.lineMin;
   r.layer.frame(0.016, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
-  const circle = spotCircles(`in:7000:${a.table}`, pair, round0 + 0.1, r.BEAT.roundMin)[0];
-  // a third sits down mid-round (at their table if it has room): the pair's talk runs on as dealt
+  // a third sits down at their table mid-exchange: the pair talk it out
   r.st.inside = [RES(1), RES(2), RES(3)];
   r.layer.frame(1, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
-  for (let i = 1; i < 3; i++) {
-    const tm = round0 + (i + 0.5) * r.BEAT.lineMin;
-    if (tm >= round0 + r.BEAT.roundMin) break;
+  assert.equal(r.layer.stood().filter((x) => x.table === a.table).length, 3, 'the third at their table');
+  const ctx = { weather: null, hour: 20, news: null, room: 'tavern' };
+  for (let i = 1; i < SLOT_LINES; i++) {
+    const tm = s0 + (i + 0.5) * r.BEAT.lineMin;
     r.st.clock = tm;
     r.layer.frame(0.016, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
-    const want = circleLine(circle, tm, r.BEAT.lineMin, { weather: null, hour: 20, news: null, room: 'tavern' });
+    const want = circleLine(c0, tm, r.BEAT.lineMin, ctx);
     assert.deepEqual(r.layer.speech([0, 1.6, -4.6]).map((l) => l.text), want ? [want.text] : [], 'the pair\'s talk, as dealt');
   }
-  // one of the pair goes mid-round (the player looking away): the circle silent till the next round
+  // after its last line, the three's company meets - its talk from its own first line
+  const met = s0 + SLOT_LINES * r.BEAT.lineMin;
+  const trio = dealCircles(`in:7000:${a.table}:${met}`, r.layer.stood().filter((x) => x.table === a.table).map((x) => x.res), 0, met, met + r.BEAT.roundMin, GATHER_BEAT_S * r.BEAT.roundMin / ROUND_S)[0];
+  assert.equal(trio.members.length, 3);
+  let heard = 0;
+  for (let tm = met; tm < met + r.BEAT.roundMin && heard < 3; tm += 0.25 * r.BEAT.lineMin) {
+    r.st.clock = tm;
+    r.layer.frame(0.016, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
+    const want = circleLine(trio, tm, r.BEAT.lineMin, ctx);
+    assert.deepEqual(r.layer.speech([0, 1.6, -4.6]).map((l) => l.text), want ? [want.text] : [], 'the three\'s talk');
+    if (want) heard++;
+  }
+  assert.ok(heard > 0, 'the three talking');
+  // one of the three goes mid-exchange: the two left never carry the three's talk - theirs meets anew, at once
+  const t3 = r.layer.stood().filter((x) => x.table === a.table);
+  const trioK = circleSlots(trio, r.BEAT.lineMin).findIndex((_, i) => slotSpoken(trio, i));
+  const ts = circleSlots(trio, r.BEAT.lineMin)[trioK] + 0.5 * r.BEAT.lineMin;
+  r.st.clock = ts;
+  r.layer.frame(0.016, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
+  const leaver = t3.find((x) => x.res.id !== circleLine(trio, ts, r.BEAT.lineMin, ctx).who.id).res.id;
+  r.st.inside = [RES(1), RES(2), RES(3)].filter((x) => x.id !== leaver);
+  r.layer.frame(1, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
+  const two = r.layer.stood().filter((x) => x.table === a.table).map((x) => x.res);
+  assert.equal(two.length, 2, 'two left at the table');
+  const left = r.st.clock;
+  const theirs = dealCircles(`in:7000:${a.table}:${left}`, two, 0, left, left + r.BEAT.roundMin, GATHER_BEAT_S * r.BEAT.roundMin / ROUND_S)[0];
+  for (let i = 1; i < SLOT_LINES; i++) {
+    const tm = ts + i * r.BEAT.lineMin;
+    r.st.clock = tm;
+    r.layer.frame(0.016, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
+    const want = circleLine(theirs, tm, r.BEAT.lineMin, ctx);
+    assert.deepEqual(r.layer.speech([0, 1.6, -4.6]).map((l) => l.text), want ? [want.text] : [], 'the two\'s own talk, never the three\'s carried');
+  }
+  // one of the pair goes mid-exchange (the player looking away): the circle silent at once
   const solo = rig({ inside: [RES(1), RES(2)] });
   solo.layer.frame(0.016, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
-  solo.st.clock = round0 + 0.1;
+  solo.st.clock = s0 + 0.5 * solo.BEAT.lineMin;
   solo.layer.frame(0.016, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
   solo.st.inside = [RES(1)];
   solo.layer.frame(1, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
   assert.equal(solo.layer.size, 1);
   for (let i = 0; i < 3; i++) {
-    solo.st.clock = round0 + (i + 0.5) * solo.BEAT.lineMin;
+    solo.st.clock = s0 + (i + 1.5) * solo.BEAT.lineMin;
     solo.layer.frame(0.016, [0, 0, -4.6], Math.PI, [0, 1.6, -4.6]);
     assert.deepEqual(solo.layer.speech([0, 1.6, -4.6]), [], 'silent');
   }

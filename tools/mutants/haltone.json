@@ -1,0 +1,138 @@
+[
+  {
+    "name": "HALT-ONE-gap",
+    "file": "src/characters/enemySounds.js",
+    "old": "if (quiet || !callers.length || this.since < HALT_GAP_S) return null;",
+    "new": "if (quiet || !callers.length) return null;",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE (2026-10-05, Mac: \"reduce the HALT noise\"): the one voice without its gap - every frame a call"
+  },
+  {
+    "name": "HALT-ONE-nearest",
+    "file": "src/characters/enemySounds.js",
+    "old": "for (const c of callers) if (c.dist < near.dist) near = c;",
+    "new": "for (const c of callers) if (c.dist > near.dist) near = c;",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: the farthest watchman calls, not the nearest"
+  },
+  {
+    "name": "HALT-ONE-window",
+    "file": "src/characters/enemySounds.js",
+    "old": "if (quiet || !callers.length || this.since < HALT_GAP_S) return null;",
+    "new": "if (!callers.length || this.since < HALT_GAP_S) return null;",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: the call under a window"
+  },
+  {
+    "name": "HALT-ONE-end",
+    "file": "src/characters/enemySounds.js",
+    "old": "  end() { this.since = Infinity; }",
+    "new": "  end() { }",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: an incident's end forgotten - the next watch waits out the last one's gap"
+  },
+  {
+    "name": "HALT-ONE-lane-unread",
+    "file": "src/scenes/cityGuards.js",
+    "old": "    const one = !!oneVoice();",
+    "new": "    const one = false;",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: the living lane unread - every watchman his own clock again"
+  },
+  {
+    "name": "HALT-ONE-anyone-calls",
+    "file": "src/scenes/cityGuards.js",
+    "old": "        if (d < ATTRACT_RADIUS && watchStands(g)) calling.push({ g, dist: d });",
+    "new": "        if (d < ATTRACT_RADIUS) calling.push({ g, dist: d });",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: a defender, a pacified or a running watchman calling"
+  },
+  {
+    "name": "HALT-ONE-radius-unread",
+    "file": "src/scenes/cityGuards.js",
+    "old": "        if (d < ATTRACT_RADIUS && watchStands(g)) calling.push({ g, dist: d });",
+    "new": "        if (watchStands(g)) calling.push({ g, dist: d });",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: a watchman anywhere in the town calling"
+  },
+  {
+    "name": "HALT-ONE-window-unread",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      const c = voice.tick(dt, calling, { quiet: !!windowUp() });",
+    "new": "      const c = voice.tick(dt, calling, { quiet: false });",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: the watch calling under the surrender box"
+  },
+  {
+    "name": "HALT-ONE-end-unread",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      if (!anyWatchStanding()) voice.end();",
+    "new": "",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: the pool never ends an incident"
+  },
+  {
+    "name": "HALT-ONE-wall-unread",
+    "file": "src/scenes/cityGuards.js",
+    "old": "volume: enemySoundOccluded(collider, c.g.ai.feet, playerFeet) ? OCCLUDED_VOLUME_SCALE : 1 }",
+    "new": "volume: 1 }",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: the call through a wall at full volume"
+  },
+  {
+    "name": "HALT-ONE-tells-unmarked",
+    "file": "src/scenes/cityGuards.js",
+    "old": "      g.quietVoice = one;",
+    "new": "",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: the pool never marks its watchmen - their tells the Halt still"
+  },
+  {
+    "name": "HALT-ONE-stagger",
+    "file": "src/scenes/hostCombat.js",
+    "old": "(f.mobileType === KNIGHT_CITY_WATCH && !f.quietVoice)",
+    "new": "f.mobileType === KNIGHT_CITY_WATCH",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: the living watch's stagger a Halt"
+  },
+  {
+    "name": "HALT-ONE-windup",
+    "file": "src/scenes/hostCombat.js",
+    "old": "      if (ignoreHumanSounds(f.mobileType) || f.quietVoice) play(SOUND.SwingMediumPitch,",
+    "new": "      if (ignoreHumanSounds(f.mobileType)) play(SOUND.SwingMediumPitch,",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: the living watch's wind-up a Halt"
+  },
+  {
+    "name": "HALT-ONE-peer-calls",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (!f.quietVoice) tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt,",
+    "new": "        tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt,",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: a peer's watchman calling here too"
+  },
+  {
+    "name": "HALT-ONE-siege-halt",
+    "file": "src/scenes/siegeNpcs.js",
+    "old": "play(b.look.mobile === KNIGHT_CITY_WATCH ? E?.moveSound : E?.barkSound, feet, 0.8);",
+    "new": "play(E?.barkSound, feet, 0.8);",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: the siege's Town Guard cries Halt at every wound"
+  },
+  {
+    "name": "HALT-ONE-host-street",
+    "file": "src/scenes/world.js",
+    "old": "    oneVoice: () => livingWorldOn(), windowUp: () => townTalk.overlayActive,   // HALT-ONE: the living watch calls as one, and nobody under a window (cityGuards.js)\n",
+    "new": "",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: the street's watch never told the lane"
+  },
+  {
+    "name": "HALT-ONE-host-building",
+    "file": "src/scenes/worldModes.js",
+    "old": "      oneVoice: () => livingWorldOn(), windowUp: () => !!townTalk?.overlayActive,",
+    "new": "",
+    "tests": ["test/haltone_watch.test.js"],
+    "note": "HALT-ONE: a building's watch never told the lane"
+  }
+]

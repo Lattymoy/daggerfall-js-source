@@ -24,7 +24,7 @@
 //    (online) shows no foes of the roads' own - the peer's come through the stream.
 import { partiesOfTown, partyAt, wayAt, membersAt, remainsOfTown, NATIVE_PER_M, NATIVE_PIXEL, TRIP_REACH_PX } from '../systems/livingWorld/trips.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
-import { circleLine, lineMinutes, ROUND_S, TALK_SHARE } from '../systems/livingWorld/meetups.js';
+import { circleLine, lineMinutes, ROUND_S } from '../systems/livingWorld/meetups.js';
 import { ROAD_GREETINGS, fillLine, firstNameOf } from '../systems/livingWorld/lines.js';
 import { lwSeed, textSeed } from '../systems/livingWorld/seed.js';
 import { DAY_MIN, DAY_START_MIN } from '../systems/livingWorld/dayPlan.js';
@@ -114,7 +114,9 @@ export function foePlaces(trip, at) {
 export function partyPlaces(trip, at) {
   const out = [];
   const n = trip.party.length;
-  if (at.camp) {
+  // AUDIT LW-DRY: a halted party, its fight done, stands in its ring too - before, in file along the way with the
+  // walk's stride, walking on the spot for the rest of the halt (its file's tail past the dry ground the stop stood on)
+  if (at.camp || at.halt) {
     for (let i = 0; i < n; i++) {
       const a = (i / n) * Math.PI * 2 + (lwSeed(textSeed(trip.id), 0x63616d70) % 628) / 100;   // 'camp': the ring turned its own way
       const x = /** @type {number} */ (at.x) + Math.sin(a) * CAMP_RING_N, z = /** @type {number} */ (at.z) + Math.cos(a) * CAMP_RING_N;
@@ -326,7 +328,7 @@ export function createLivingRoads(deps) {
       const seed = lwSeed(textSeed(p.trip.id), round);
       const members = membersAt(p.trip, t);
       if (members.length < 2) continue;
-      const circle = { members, seed, start: round * roundMin, end: (round + 1) * roundMin, talks: (seed % 1000) / 1000 < TALK_SHARE, index: 0 };
+      const circle = { members, seed, start: round * roundMin, end: (round + 1) * roundMin, index: 0 };   // LW-TALK: its exchanges from the round's start (a party walks together: nobody gathers)
       const line = circleLine(circle, t, lineMin, { place: p.trip.to?.name, weather: deps.weather?.() ?? null, hour: Math.floor((((t % DAY_MIN) + DAY_MIN) % DAY_MIN) / 60), road: at.camp ? 'camp' : 'walk' });
       if (!line) continue;
       const b = deps.sprites.bodyOf(line.who.id);

@@ -129,8 +129,8 @@
   {
     "name": "QUIET-street-puppet-unpassed",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "        tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity), companion: f.companion != null });\n        // WORLD6b-ii",
-    "new": "        tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });\n        // WORLD6b-ii",
+    "old": "        if (!f.quietVoice) tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity), companion: f.companion != null });\n        // WORLD6b-ii",
+    "new": "        if (!f.quietVoice) tickEnemySound(f.sounds, f.ai.feet, playerFeet, dt, { audio, collider, hearing: acuteHearingMultiplier(playerEntity) });\n        // WORLD6b-ii",
     "tests": [
       "test/fb1004b_companions.test.js"
     ]

@@ -81,10 +81,10 @@ test('WEEDS1: the lantern replays are untouched, and that is the point of passin
   // point replays pass no texel, so they get the floor alone - exactly
   // what they had before.
   const sp = read('src/render/shadowPass.js');
-  assert.match(sp, /replay\(f, vp, lightPos, recordBasis = false, minRadius = 0, texel = 0, filter = REPLAY_ALL, self = true\)/, 'the texel is an argument with a zero default (SC1: and the filter after it, every record by default; DISC24-C: and the self card\'s word after that)');
+  assert.match(sp, /replay\(f, vp, lightPos, recordBasis = false, minRadius = 0, texel = 0, filter = REPLAY_ALL, self = true, cand = null\)/, 'the texel is an argument with a zero default (SC1: and the filter after it, every record by default; DISC24-C: and the self card\'s word after that; PERF-SHADOW1: and a lantern\'s candidates last, none by default)');
   assert.match(sp, /const minFlatH = texel > 0 \? Math\.max\(SHADOW_FLAT_MIN_HEIGHT, texel \* SHADOW_FLAT_MIN_TEXELS\) : SHADOW_FLAT_MIN_HEIGHT;/,
     'no texel means the floor, unchanged');
-  assert.match(sp, /this\.replay\(f, this\.faceVP\[face\], pos, false, 0, 0, REPLAY_ALL, selfNear\)/, 'and the point replay passes none (a zero)');   // DISC29-E: the self card's word is its own rank
+  assert.match(sp, /this\.replay\(f, this\.faceVP\[face\], pos, false, 0, 0, REPLAY_ALL, selfNear, cand\)/, 'and the point replay passes none (a zero)');   // DISC29-E: the self card's word is its own rank; PERF-SHADOW1: the lantern's candidates after it
   // the sun cascades pass their own
   assert.match(sp, /this\.replay\(f, this\.sunVP\[c\], null, false, SHADOW_CASCADE_MIN_RADIUS_TEXELS \* sunTexelWorld\(c, k\), sunTexelWorld\(c, k\)\)/);
   // a lantern's texel really is far finer than a far cascade's, which is

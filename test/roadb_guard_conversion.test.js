@@ -41,11 +41,15 @@ test('ROAD-B: the standing-watch gate is HowManyEnemiesOfType\'s two live terms'
 });
 
 test('ROAD-B: the conversion is gated, unranged, uncapped, and disables the mobile it replaces', () => {
-  const fn = between(GUARDS, 'async function makeNpcGuardsIntoEnemies(', 'function angleDeg(');
+  const fn = between(GUARDS, 'function makeNpcGuardsIntoEnemies(', 'function angleDeg(');
   assert.match(fn, /if \(!anyWatchStanding\(\)\) return 0;/, ':766 - nothing happens with no watch out');
   assert.match(fn, /if \(!p\.guard\) continue;/, 'only guard NPCs convert (:782)');
-  assert.match(fn, /spawnGuardAt\(p\.pos, p\.fwdYaw, playerFeet \?\? null\)/, 'at its own position and facing (:784)');
-  assert.match(fn, /p\.disable\(\);/, 'and classic disables the NPC it came from (:785)');
+  // WATCH-FIX: PIN MOVED - through the one conversion law (turnNpc), which stands the guard at the walker's own position
+  // and facing (:784) and disables the NPC it came from (:785)
+  assert.match(fn, /await turnNpc\(p, playerFeet \?\? null\)/, 'the one law');
+  const law = between(GUARDS, 'async function turnNpc(', '    } finally {');
+  assert.match(law, /spawnGuardAt\(p\.pos, p\.fwdYaw, attackerFeet, opts\)/, 'at its own position and facing (:784)');
+  assert.match(law, /p\.disable\(\);/, 'and classic disables the NPC it came from (:785)');
   // The two things SpawnCityGuards has that this deliberately does not.
   assert.ok(!fn.includes('GUARD_NPC_SPAWN_RANGE'), 'no 77.5 range test - that is SpawnCityGuards\' law');
   assert.ok(!fn.includes('MAX_ACTIVE_GUARD_SPAWNS'), 'and no cap either');

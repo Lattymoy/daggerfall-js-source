@@ -176,7 +176,7 @@ more than there are tiles); a longer list wraps into the next column rather than
 above holds one row or none - a phone on its side, where the diamond reaches the top; the chat opened tall on a
 laptop; an escort's face down to the caption - the widget stands BESIDE the diamond instead, from under what stands
 above to the diamond's foot; where neither holds a tile (the chat open over the whole left edge of a phone on its side)
-it steps aside until there is room again. Its columns stop short of the screen's middle, where the reticle is; what
+it steps aside until there is room again (the widget's own classes say which - `stat-side`, `stat-tight`, `stat-noroom`; as the bare `side` it wore the windows' `.side` column, a dark box behind its tiles - HUD-CLASS, `UI-Arc.md`). Its columns stop short of the screen's middle, where the reticle is; what
 does not fit folds into one more tile, "+N" (the Status box and the sheet say them all). The names go where there is no
 room for them: on a phone, on a short screen, in a band under three rows, past two columns, and beside the diamond. A
 short screen (a phone on its side) draws smaller tiles: 28px, the picture at one and a half (the diamond shrinks there

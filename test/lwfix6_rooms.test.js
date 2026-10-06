@@ -19,7 +19,7 @@ import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 import { partiesNear, CALENDAR_MPM } from '../src/systems/livingWorld/trips.js';
 import { createLivingIndoors, soundRoom, INDOOR_CLEAR_M, INDOOR_DOOR_M } from '../src/scenes/livingIndoors.js';
 import { createLivingRoads, ROAD_GREET_REST_MIN, ROAD_GREET_S } from '../src/scenes/livingRoads.js';
-import { ROUND_S, lineMinutes, spotCircles, circleLine } from '../src/systems/livingWorld/meetups.js';
+import { ROUND_S, GATHER_BEAT_S, lineMinutes, dealCircles, circleSlots, exchangeAt, circleLine } from '../src/systems/livingWorld/meetups.js';   // LW-TALK: PIN MOVED - a table's company
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { ROAD_GREETINGS } from '../src/systems/livingWorld/lines.js';
 
@@ -114,45 +114,49 @@ test('LW-FIX6 the room laid out from the landing of the building\'s first door, 
   assert.notDeepEqual(placed([4, 0, 3], null).at, door.at, 'from the feet: another door, another room');
 });
 
-test('LW-FIX6 a table nobody stands at as the round begins deals nothing that round - two who come to it mid-round (in their stay since before the round, stood once the player looked away) talk from the next round, never beginning mid-script (mutant: the empty table dealt)', () => {
-  const dry = rig({ inside: [RES(1), RES(2)] });
-  dry.layer.frame(0.016, DOOR, 0, [0, 1.6, -4.6]);
-  const [a, b] = dry.layer.stood();
-  assert.equal(a.table, b.table, 'the pair at one table');
-  const pair = [a, b].map((s) => ({ who: s.res, t0: 0, t1: 1e12 }));
-  const key = `in:7000:${a.table}`, R = dry.BEAT.roundMin;
-  // a round the pair would talk - and the next too
-  let t = dry.st.clock;
-  while (!(spotCircles(key, pair, t, R)[0]?.talks && spotCircles(key, pair, t + R, R)[0]?.talks)) t += R;
-  const round0 = Math.floor(t / R) * R;
-  const r = rig({ inside: [], clock: round0 + 0.1 });
-  r.layer.frame(0.016, DOOR, 0, [0, 1.6, -4.6]);   // in as the round runs: nobody at any table
+test('LW-FIX6 two who come to an empty table never begin mid-script - LW-TALK: PIN MOVED - they meet from the minute they stood together (the first cut stood them mute to the next round), their talk from its own first line, a gather\'s beat after (mutant: the empty table dealt)', () => {
+  const T = 100 * DAY_MIN + 1200;
+  const r = rig({ inside: [], clock: T });
+  r.layer.frame(0.016, DOOR, 0, [0, 1.6, -4.6]);   // in: nobody at any table
+  r.st.clock = T + 5;
   r.st.inside = [RES(1), RES(2)];
-  r.layer.frame(1, DOOR, Math.PI, [0, 1.6, -4.6]);   // the player looks away: the pair stood, mid-round
-  assert.deepEqual(r.layer.stood().map((s) => s.table), [a.table, a.table], 'at the table empty as the round began');
-  let heard = 0;
-  for (let i = 0; i < 4; i++) {
-    const tm = round0 + (i + 0.5) * r.BEAT.lineMin;
-    if (tm >= round0 + R) break;
+  r.layer.frame(1, DOOR, Math.PI, [0, 1.6, -4.6]);   // the player looks away: the pair stood
+  const [a, b] = r.layer.stood();
+  assert.equal(a.table, b.table, 'the pair at one table');
+  const since = T + 5;
+  const circle = dealCircles(`in:7000:${a.table}:${since}`, [a.res, b.res], 0, since, since + r.BEAT.roundMin, GATHER_BEAT_S * r.BEAT.roundMin / ROUND_S)[0];
+  const ctx = { weather: null, hour: 20, news: null, room: 'tavern' };
+  let first = null, said = 0;
+  for (let tm = since; tm < since + r.BEAT.roundMin; tm += 0.25 * r.BEAT.lineMin) {
     r.st.clock = tm;
     r.layer.frame(0.016, DOOR, Math.PI, [0, 1.6, -4.6]);
-    if (circleLine(spotCircles(key, pair, tm, R)[0], tm, r.BEAT.lineMin, { weather: null, hour: 20, news: null, room: 'tavern' })) heard++;
-    assert.deepEqual(r.layer.speech([0, 1.6, -4.6]), [], 'silent till the next round');
+    const want = circleLine(circle, tm, r.BEAT.lineMin, ctx);
+    assert.deepEqual(r.layer.speech([0, 1.6, -4.6]).map((l) => l.text), want ? [want.text] : [], 'their talk, from its first line');
+    if (want) { said++; first ??= want; }
   }
-  assert.ok(heard > 0, 'a round they would have talked mid-script');
-  // the next round: dealt as it begins, their talk
-  const next = spotCircles(key, pair, round0 + R + 0.1, R)[0];
-  let said = 0;
-  for (let i = 0; i < 4; i++) {
-    const tm = round0 + R + (i + 0.5) * r.BEAT.lineMin;
-    if (tm >= round0 + 2 * R) break;
+  assert.ok(said > 0 && first.index === 0, 'heard, from a first line');
+  assert.ok(exchangeAt(circle, since, r.BEAT.lineMin) == null, 'a gather\'s beat first');
+  // the table emptied forgets its company: the two come back to it mid-way through the old one's exchange - they meet
+  // anew, their talk from its first line, never the old round's mid-script
+  const gone = since + r.BEAT.roundMin + 3;
+  r.st.clock = gone;
+  r.st.inside = [];
+  r.layer.frame(1, DOOR, Math.PI, [0, 1.6, -4.6]);
+  assert.equal(r.layer.size, 0, 'the table empty');
+  const old = dealCircles(`in:7000:${a.table}:${since}`, [a.res, b.res], 1, since + r.BEAT.roundMin, since + 2 * r.BEAT.roundMin, GATHER_BEAT_S * r.BEAT.roundMin / ROUND_S)[0];
+  const oldSlots = circleSlots(old, r.BEAT.lineMin);
+  const back = oldSlots.find((x) => x > gone) + 1.5 * r.BEAT.lineMin;   // the old company's exchange under way
+  r.st.clock = back;
+  r.st.inside = [RES(1), RES(2)];
+  r.layer.frame(1, DOOR, Math.PI, [0, 1.6, -4.6]);
+  assert.equal(r.layer.stood().filter((x) => x.table === a.table).length, 2, 'back at their table');
+  const anew = dealCircles(`in:7000:${a.table}:${back}`, [a.res, b.res], 0, back, back + r.BEAT.roundMin, GATHER_BEAT_S * r.BEAT.roundMin / ROUND_S)[0];
+  for (let tm = back; tm < back + 3 * r.BEAT.lineMin; tm += 0.25 * r.BEAT.lineMin) {
     r.st.clock = tm;
     r.layer.frame(0.016, DOOR, Math.PI, [0, 1.6, -4.6]);
-    const want = circleLine(next, tm, r.BEAT.lineMin, { weather: null, hour: 20, news: null, room: 'tavern' });
-    assert.deepEqual(r.layer.speech([0, 1.6, -4.6]).map((l) => l.text), want ? [want.text] : [], 'the next round\'s talk');
-    if (want) said++;
+    const want = circleLine(anew, tm, r.BEAT.lineMin, ctx);
+    assert.deepEqual(r.layer.speech([0, 1.6, -4.6]).map((l) => l.text), want ? [want.text] : [], 'met anew');
   }
-  assert.ok(said > 0, 'heard');
 });
 
 test('LW-FIX6 a greeting\'s rest is kept by the clock as it runs - a clock gone back (a load of an earlier save) forgets it: the room\'s, the street\'s and the road\'s word said again at once, never held till the clock passes the old one (mutants: each rest\'s clock)', () => {

@@ -316,7 +316,10 @@ export const SHADOW_SWAY_EVERY = 4;
  *  shadow map (with dynamic shadows) for the lo map (static only) from one frame to the next, and (b) lifts the lo
  *  tier's rebuild budget. Costs GPU time; turn off Settings > Features > Steady shadows (or from the console,
  *  window.__DF_SHADOW_TUNING.override = false; null hands it back to the row) to get EL8's schedule back. */
-export const SHADOW_TUNING = { steady: true, override: null, debug: false, debugForce: null, selfLamps: null, calmForce: null };
+export const SHADOW_TUNING = { steady: true, override: null, debug: false, debugForce: null, selfLamps: null, calmForce: null, facePrepass: true };
+// PERF-SHADOW1: `facePrepass` false walks every lantern face and dynamic scan over every record, as before the pre-pass
+// (_casterCandidates) - the pins' oracle and an A/B's off arm (console: window.__DF_SHADOW_TUNING.facePrepass = false).
+// AUDIT 637 B8: declared here, where the console finds it.
 /** STEADY-BALANCE (2026-10-04, Discord: "shadows too dark and too light where they should be normal ... light of candles too
  *  bright ... it fixed the flickering tho"): THE PLAYER'S OWN CARD CASTS INTO THE TWO LAMPS NEAREST IT AGAIN, steady or not.
  *  FLICKER-FIX had cast it into EVERY lamp with a full map under Steady shadows (twelve): in first person the card
@@ -863,6 +866,43 @@ void main() {
 const DYN_NONE = 0, DYN_SWAY = 1, DYN_MOVER = 2;
 const REC_MESH = 0, REC_TERRAIN = 1, REC_BB = 2, REC_CHAR = 3;   // EL7: the character rigs cast
 const REPLAY_ALL = 0, REPLAY_STATIC = 1, REPLAY_DYNAMIC = 2, REPLAY_LO = 3;   // SC1: what a replay draws; DISC29-E: the lo tier's - the still, and a flat that only animates where it stands
+/** PERF-SHADOW1 (2026-10-06): how far past a lantern's shadow `far` the centre of a sphere of radius r may stand, on any
+ *  axis, and still be taken by one of its cube's six faces - in units of r. Each face is a 90-degree perspective
+ *  (pointFaceMatrices): its far plane takes a centre to far + r along the face's axis, and its four sides - planes
+ *  through the light at 45 degrees - take one to (along) + r sqrt 2 <= far + r (1 + sqrt 2) across it; the near plane
+ *  bounds only from behind. A sphere past far + r (1 + sqrt 2) on some axis is taken by NO face's sphereInPlanes. */
+export const CUBE_REACH = 1 + Math.SQRT2;
+/** PERF-SHADOW1: the reach CUBE_REACH grants a sphere of radius r past the far. AUDIT 637 B6: a radius below zero - a
+ *  sphere the planes take only well inside them - reaches far + r along a face's axis, which is the farther of its far
+ *  plane's bound and its sides' (r (1 + sqrt 2) is the nearer for a negative r). One home for the cube's reach: the
+ *  sphere walk and a placed batch's quads (_candidateQuads) both take it. */
+export const cubeReach = (r) => (r > 0 ? r * CUBE_REACH : r);
+/** AUDIT 637 B1: the far plane's float32 rounding, per world unit of far and of the light's place. A face's far plane is
+ *  row 3 less row 2 of its float32 view-projection (frustumPlanes): two entries near 1 whose difference is the plane's
+ *  normal, 2 near / (far - near). spherePlanes divides by that normal, so a rounding of an entry (2^-24) moves the
+ *  plane by (far - near) / (2 near) of it - at the far plane, and over the light's own place. Three such roundings
+ *  (the product's, the subtraction's, the normal's) and a margin: 4 x 2^-24 / near. */
+export const CUBE_F32_FAR = (4 * 2 ** -24) / SHADOW_POINT_NEAR;
+/** PERF-SHADOW1: the slack the cube keeps over that bound - the faces' planes are float32 and the light is a world
+ *  place, so a margin over the rounding of both (a pre-pass that is ever the narrower test would drop a draw). Measured
+ *  with the real planes: past the exact bound by up to 1.3e-3 for a lantern 30 km from the origin.
+ *  AUDIT 637 B1: that was the side planes', for fars to 36 - the far plane's grows with far x (far + the place)
+ *  (CUBE_F32_FAR): 2.75e-3 past the bound for a lantern of far 96 at the origin, where this gave 2e-3, and the pre-pass
+ *  dropped a draw a face made. Lights reach to SHADOW_CASTER_MAX_RANGE. */
+export const cubeSlack = (px, py, pz, far) => {
+  const s = Math.abs(px) + Math.abs(py) + Math.abs(pz) + far;
+  return 1e-3 + 1e-5 * s + CUBE_F32_FAR * far * s;
+};
+/** PERF-SHADOW1: can a sphere [x, y, z, r] reach the cube of lantern `k` in `lim` (x, y, z, far, slack a lantern)? A
+ *  NaN anywhere answers yes, as the faces' sphereInPlanes does (a NaN in any term of a plane's sum compares false, so
+ *  no plane culls it): Math.max carries a NaN on any axis into the one compare, where a test axis by axis would cull
+ *  a sphere NaN on one axis by another. AUDIT 637 B5: and so does a centre off at infinity - a face's plane meets it as
+ *  0 x Infinity or Infinity - Infinity, a NaN, and culls nothing with that plane - so it is kept, as some face takes it. */
+export const cubeKeeps = (lim, k, x, y, z, r) => {
+  const o = k * 5, R = lim[o + 3] + cubeReach(r) + lim[o + 4];
+  const d = Math.max(Math.abs(x - lim[o]), Math.abs(y - lim[o + 1]), Math.abs(z - lim[o + 2]));
+  return !(d > R) || d === Infinity;
+};
 
 /**
  * The pass: the maps, the depth programs, the record pool, the replay.
@@ -942,6 +982,9 @@ export class ShadowPass {
     this.kind = null;
     /** per-frame counts, for a probe */
     this.stats = { records: 0, sunDraws: 0, pointDraws: 0, culled: 0, cascadesDrawn: 0, facesDrawn: 0, staticFaces: 0, dynFaces: 0, blits: 0, cachedSlots: 0, loSlots: 0, loFaces: 0, selfLamps: 0 };   // SC1: the faces split, the blits, the slots served from the cache; DISC15: the lo tier's slots and faces
+    // AUDIT 637 B7: `culled` counts what a replay's own tests culled. A lantern face walks its candidates alone (PERF-SHADOW1),
+    // so what it cannot reach it never asks - and never counts: the perf meter's `culled` is the sun's, the air's and the
+    // faces' own culls of what the cube kept, smaller than it read before the pre-pass for the same frame.
     this._planes = new Float32Array(24);   // EL5: the replay's frustum
     this._bSphere = new Float64Array(4);   // AUDIT 68 S16-batch-sphere-dup: batchSphere's scratch for the SC1 scans
     this._selfAt = new Float64Array(3);    // DISC29-E: where the player's own card stands this frame (_selfCardAt)
@@ -960,6 +1003,16 @@ export class ShadowPass {
     this._farOf = new Float64Array(SHADOW_POINT_CASTERS);   // LA-SHADOW4: each rank's far this frame
     this._sigOne = new Float64Array(4);
     this._sigOneOut = new Int32Array(2);
+    // PERF-SHADOW1: each ranked lantern's candidates this frame (_casterCandidates) - the records that can reach its
+    // cube (indices, in record order) and, of a billboard list, the flats that can (`bb`, a list a candidate) - with the
+    // lanterns' (x, y, z, far, slack), per lantern the slot the record in hand holds in its list (-1: none yet), and
+    // per lantern 1 while its lists hold a placed batch its quads have not been asked of (_candidateQuads)
+    this._cands = Array.from({ length: SHADOW_POINT_CASTERS }, () => ({ n: 0, hw: 0, rec: new Int32Array(64), bb: [] }));   // AUDIT 637 B4: `hw` the most slots filled since discard
+    this._candOf = new Array(SHADOW_POINT_CASTERS).fill(null);
+    this._candLim = new Float64Array(5 * SHADOW_POINT_CASTERS);
+    this._candOpen = new Int32Array(SHADOW_POINT_CASTERS);
+    this._candQuads = new Uint8Array(SHADOW_POINT_CASTERS);
+    this._candWalked = false;   // AUDIT 637 B3: this frame's walk made (render clears it; _candFor makes it on the first ask)
     this._sunPlanes = SHADOW_CASCADES.map(() => new Float32Array(24));   // SHADOW-REACH: the cascades' frusta, for the hosts' reach test
     this._sunPlanesFrame = -1;
     this._shiftGen = 0;                 // AUDIT SC1: the floating origin's generation (shiftOrigin)
@@ -1341,6 +1394,9 @@ export class ShadowPass {
     for (let i = 0; i < this.count; i++) { const r = this.records[i]; r.mesh = null; r.surface = null; r.batches = null; r.texRemap = null; }
     this.count = 0;
     this._selfCard = null;
+    // AUDIT 637 B4: and the lanterns' candidate lists, as far as they were ever filled - a list holds batches, and one
+    // kept past the frame kept a destroyed batch's placement grid (or a dungeon's, into the daylight) with it
+    for (const c of this._cands) { for (let j = 0; j < c.hw; j++) { const l = c.bb[j]; if (l) l.length = 0; } c.n = 0; c.hw = 0; }
   }
 
 
@@ -1422,6 +1478,14 @@ export class ShadowPass {
       const same = samePlace(sl, o, L, i * 4);   // AUDIT FLICKER P3
       farOf[rank] = same ? heldShadowFar(sl[o + 3], L[i * 4 + 3]) : shadowFarFor(L[i * 4 + 3]);
     }
+    // PERF-SHADOW1: one walk, every lantern's six faces (_candFor). AUDIT 637 B3: made by the first lantern that walks
+    // this frame - a face it draws, or its dynamic scan in a frame with a dynamic record - never up front: a still town
+    // whose maps were all cached walked every record and flat against every lantern for lists nobody read (0.31 -> 0.78
+    // ms a frame, twelve lanterns over 2,000 flats). And with no dynamic record in the frame no lantern's dynamic scan
+    // can answer anything but none (each of its arms asks a record's `dynamic` first), so none is asked.
+    this._candWalked = false;
+    let anyDyn = false;
+    for (let i = 0; i < this.count; i++) if (this.records[i].dynamic) { anyDyn = true; break; }
     if (this.cacheOn && casters.length) {
       // PERF-EXT3: every ranked caster's static signature in ONE walk, before the loop that reads them - with the
       // pos and the shadow's far the loop takes (below), so a signature is the one its own walk would have folded
@@ -1466,12 +1530,14 @@ export class ShadowPass {
       if (!this.cacheOn) {
         // the old path whole: every caster in range, static or not, into the live layers at the cadence
         if (changed || due || selfMoved) {
+          const cand = this._candFor(rank, L, casters, farOf);   // PERF-SHADOW1: this lantern's candidates (null: its faces walk everything)
+          if (cand) this._candidateQuads(rank);   // PERF-SHADOW1: the quads asked by a lantern that draws, once a frame
           pointFaceMatrices(pos, far, this.faceVP);
           for (let face = 0; face < 6; face++) {
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.pointFbos[k * 6 + face]);
             gl.viewport(0, 0, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE);
             gl.clear(gl.DEPTH_BUFFER_BIT);
-            this.stats.pointDraws += this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_ALL, selfNear);
+            this.stats.pointDraws += this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_ALL, selfNear, cand);
           }
           this.stats.facesDrawn += 6;
           this._slotSelf[k] = selfWant;
@@ -1483,26 +1549,30 @@ export class ShadowPass {
         const staticStale = changed || !this._slotCached[k] || this._slotSig[k * 2] !== sigHash || this._slotSig[k * 2 + 1] !== sigCount;
         let matrices = false;
         if (staticStale) {
+          const cand = this._candFor(rank, L, casters, farOf);
+          if (cand) this._candidateQuads(rank);   // PERF-SHADOW1
           pointFaceMatrices(pos, far, this.faceVP); matrices = true;
           for (let face = 0; face < 6; face++) {
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.cacheFbos[k * 6 + face]);
             gl.viewport(0, 0, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE);
             gl.clear(gl.DEPTH_BUFFER_BIT);
-            this.stats.pointDraws += this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_STATIC);
+            this.stats.pointDraws += this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_STATIC, true, cand);
           }
           this.stats.facesDrawn += 6; this.stats.staticFaces += 6;
           this._slotCached[k] = 1; this._slotSig[k * 2] = sigHash; this._slotSig[k * 2 + 1] = sigCount;
         } else this.stats.cachedSlots++;
         // the dynamics on top: the cache blitted into the live layers, then the moving casters alone, at the cadence
-        const dynNear = this._dynamicNear(pos, far, f.isSpectral, selfNear);   // 0 none, 1 sway alone, 2 a mover
+        const dynNear = anyDyn ? this._dynamicNear(pos, far, f.isSpectral, selfNear, this._candFor(rank, L, casters, farOf)) : DYN_NONE;   // 0 none, 1 sway alone, 2 a mover
         const dueDyn = dynNear === DYN_SWAY ? (SHADOW_TUNING.steady || (this.frameNo + k) % SHADOW_SWAY_EVERY === 0) : due;   // AUDIT REACH: a swaying wood redraws on the sway's own cadence
         if (dynNear && (dueDyn || staticStale || !this._slotLiveDyn[k] || selfMoved)) {
+          const cand = this._candFor(rank, L, casters, farOf);
+          if (cand) this._candidateQuads(rank);   // PERF-SHADOW1 (a no-op when the static faces asked it above)
           this._blitSlot(k);
           if (!matrices) pointFaceMatrices(pos, far, this.faceVP);
           for (let face = 0; face < 6; face++) {
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.pointFbos[k * 6 + face]);
             gl.viewport(0, 0, SHADOW_POINT_SIZE, SHADOW_POINT_SIZE);
-            this.stats.pointDraws += this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_DYNAMIC, selfNear);
+            this.stats.pointDraws += this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_DYNAMIC, selfNear, cand);
           }
           this.stats.facesDrawn += 6; this.stats.dynFaces += 6;
           this._slotLiveDyn[k] = 1; this._slotSelf[k] = selfWant;
@@ -1623,18 +1693,137 @@ export class ShadowPass {
     out[0] = c[0]; out[1] = c[1]; out[2] = c[2];
     return out;
   }
+  /**
+   * PERF-SHADOW1 (2026-10-06, Mac: "I wanna look into how we can continue to improve performance, including for
+   * online"): A LANTERN'S SIX FACES SHARE ONE WALK. Every face replay walked every record and every flat of the frame -
+   * the filter chain, batchSphere, the planes, and a pixel-wide wood's placements - and so did _dynamicNear, once a
+   * lantern: under Steady shadows (FLICKER-FIX, on by default) every lantern with a mover or a swaying tree near it
+   * redraws its six dynamic faces EVERY frame, so a windy town of twelve lanterns walked the whole record list some
+   * eighty times a frame to draw what stood within a few metres of each (measured in the real game, Knightstale at
+   * 15:00 on this container's CPU: the shadow pass 7.2 ms of the world host's 16.1 ms of JavaScript a frame, 5.3 of it
+   * the replays and the dynamic scans).
+   *
+   * Now ONE walk a frame finds, for every ranked lantern, the records - and of a billboard list the flats - whose
+   * sphere CAN reach its cube: a sphere taken by none of the six faces is past far + r (1 + sqrt 2) on some axis
+   * (CUBE_REACH). A lantern about to draw then asks its placed batches of their quads, once (_candidateQuads). The
+   * faces and _dynamicNear walk only the candidates, in the records' own order, and each still asks every question it
+   * asked before - so a face draws exactly what it drew: the candidates are a superset of what any face takes, nothing
+   * else is skipped, and the order of what is drawn is the order it was drawn in. The walk reads no batch's placements
+   * (the PERF-EXT review: a still room drawn whole asks none a frame). A lantern whose place or far is not a finite
+   * number gets no candidates (null: its faces walk everything, as before), and neither does a pass with
+   * SHADOW_TUNING.facePrepass false. Fills this._candOf[rank] for each ranked caster and answers it.
+   * @param {ArrayLike<number>} L @param {ArrayLike<number>} casters @param {ArrayLike<number>} farOf
+   */
+  _casterCandidates(L, casters, farOf) {
+    this._candWalked = true;
+    const out = this._candOf, lim = this._candLim, open = this._candOpen, quads = this._candQuads;
+    const nC = casters.length;
+    let live = 0;
+    for (let k = 0; k < nC; k++) {
+      const i = casters[k], x = L[i * 4], y = L[i * 4 + 1], z = L[i * 4 + 2], far = farOf[k];
+      const o = k * 5;
+      lim[o] = x; lim[o + 1] = y; lim[o + 2] = z; lim[o + 3] = far; lim[o + 4] = cubeSlack(x, y, z, far);
+      const ok = SHADOW_TUNING.facePrepass !== false && Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z) && Number.isFinite(far);
+      out[k] = ok ? this._cands[k] : null;
+      quads[k] = 0;
+      if (ok) { this._cands[k].n = 0; live++; }
+    }
+    for (let k = nC; k < out.length; k++) out[k] = null;
+    if (!live) return out;
+    const add = (k, i) => {
+      const c = out[k];
+      if (c.n === c.rec.length) { const g = new Int32Array(c.rec.length * 2); g.set(c.rec); c.rec = g; }
+      c.rec[c.n] = i;
+      return c.n++;
+    };
+    const sp = this._bSphere;
+    for (let i = 0; i < this.count; i++) {
+      const r = this.records[i];
+      if (r.kind !== REC_BB) {
+        const sx = r.sphere[0], sy = r.sphere[1], sz = r.sphere[2], sr = r.sphere[3];
+        for (let k = 0; k < nC; k++) if (out[k] && (!r.bounded || cubeKeeps(lim, k, sx, sy, sz, sr))) add(k, i);
+        continue;
+      }
+      for (let k = 0; k < nC; k++) open[k] = -1;
+      for (const b of r.batches) {
+        if (!b) continue;   // the replay's first question drops it too
+        const c = batchSphere(b, sp);   // none: every face takes it (and one with a NaN in it cubeKeeps keeps)
+        for (let k = 0; k < nC; k++) {
+          if (!out[k] || (c && !cubeKeeps(lim, k, c[0], c[1], c[2], c[3]))) continue;
+          if (b._place) quads[k] = 1;   // its quads asked if this lantern draws (_candidateQuads)
+          let j = open[k];
+          if (j < 0) { j = add(k, i); open[k] = j; const bb = out[k].bb; if (bb[j]) bb[j].length = 0; else bb[j] = []; }
+          out[k].bb[j].push(b);
+        }
+      }
+    }
+    for (let k = 0; k < nC; k++) { const c = out[k]; if (c && c.n > c.hw) c.hw = c.n; }   // AUDIT 637 B4: as far as discard() must empty
+    return out;
+  }
+  /** AUDIT 637 B3: lantern `rank`'s candidates - the walk (_casterCandidates) made by the first lantern that asks this
+   *  frame, for all of them; null when its faces walk everything. */
+  _candFor(rank, L, casters, farOf) {
+    if (!this._candWalked) this._casterCandidates(L, casters, farOf);
+    return this._candOf[rank];
+  }
+  /**
+   * PERF-SHADOW1: a lantern's placed batches asked of their QUADS - once a frame, and only by a lantern about to draw
+   * a face. A placed batch (PERF-EXT1's pixel-wide wood) passes the sphere walk for every lantern in its pixel; one of
+   * whose quads (radius `rad`) none stands within far + cubeReach(rad) of the light on every axis - placementsInCube's
+   * own box (far + rad) grown to the cube's reach and the slack - is taken by no face, and leaves this lantern's lists (a
+   * record left with no flat leaves them too, its order kept). One whose sphere or radius is not a number stays, as no
+   * face's planes cull it. A lantern that draws nothing this frame asks nothing (a still room drawn whole reads no
+   * placement), and one whose lists hold no placed batch has nothing to ask.
+   * @param {number} rank
+   */
+  _candidateQuads(rank) {
+    const cand = this._candOf[rank];
+    if (!cand || !this._candQuads[rank]) return;
+    this._candQuads[rank] = 0;
+    const lim = this._candLim, o = rank * 5, sp = this._bSphere;
+    const rec = cand.rec, bb = cand.bb;
+    let w = 0;
+    for (let j = 0; j < cand.n; j++) {
+      const r = this.records[rec[j]];
+      if (r.kind === REC_BB) {
+        const list = bb[j];
+        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]);   // the record's wind, for its quads' lean (quadRadius)
+        let m = 0;
+        for (let t = 0; t < list.length; t++) {
+          const b = list[t];
+          if (b._place) {
+            const c = batchSphere(b, sp);
+            if (c && c[0] === c[0] && c[1] === c[1] && c[2] === c[2] && c[3] === c[3]) {
+              const rad = quadRadius(wl, b);
+              if (rad === rad && !placementsInCube(b, rad, lim[o], lim[o + 1], lim[o + 2], lim[o + 3] + cubeReach(rad) - rad + lim[o + 4])) continue;   // AUDIT 637: the cube's own reach (placementsInCube adds the radius itself)
+            }
+          }
+          list[m++] = b;
+        }
+        list.length = m;
+        if (m === 0) continue;
+      }
+      if (w !== j) { rec[w] = rec[j]; const t = bb[w]; bb[w] = bb[j]; bb[j] = t; }   // a swap: every slot keeps a list of its own
+      w++;
+    }
+    cand.n = w;
+  }
   /** SC1: is any dynamic caster in the lantern's reach.
    *  AUDIT SC1: a dynamic the replay would not DRAW is no reason to replay - the first cut counted a moving flame
    *  (SHADOW_LIGHT_FLATS), a no-cast archive, a flat under SHADOW_FLAT_MIN_HEIGHT and a ghost, and paid the blit and six
    *  faces at the cadence to draw nothing; the skips are the replay's own (its point-light arm, texel 0). */
-  _dynamicNear(pos, far, isSpectral, self = true) {
+  _dynamicNear(pos, far, isSpectral, self = true, cand = null) {
     let near = DYN_NONE;   // AUDIT REACH: a swaying flat alone is DYN_SWAY - the slow cadence; any mover is DYN_MOVER
-    for (let i = 0; i < this.count; i++) {
-      const r = this.records[i];
+    // PERF-SHADOW1: the lantern's candidates when it has them - a superset of every item this scan takes (a sphere
+    // touching the far sphere is inside the grown cube, a quad in placementsInCube's cube is in the grown one), and
+    // the answer is the set's (a mover anywhere in it, else a sway), whatever order it is met in
+    const nRec = cand ? cand.n : this.count;
+    for (let j = 0; j < nRec; j++) {
+      const r = this.records[cand ? cand.rec[j] : j];
       if (r.kind === REC_BB) {
         if (!r.dynamic) continue;
         const wl = Math.hypot(r.flatWind[0], r.flatWind[1]);
-        for (const b of r.batches) {
+        for (const b of (cand ? cand.bb[j] : r.batches)) {
           if (!b?._shDyn || !b.vao || b._dead || b.noShadow || b.conceal) continue;
           if (b.selfCard && !self) continue;   // DISC24-C: the player's own card is no reason to redraw a map it will not be drawn into
           if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive)) continue;
@@ -1685,7 +1874,7 @@ export class ShadowPass {
    *    shadowCastingMode 2), so walking round a lamp swung the silhouette through a half turn. It casts in the basis it
    *    was drawn with.
    */
-  replay(f, vp, lightPos, recordBasis = false, minRadius = 0, texel = 0, filter = REPLAY_ALL, self = true) {
+  replay(f, vp, lightPos, recordBasis = false, minRadius = 0, texel = 0, filter = REPLAY_ALL, self = true, cand = null) {
     // WEEDS1: the height a FLAT must have to cast into this replay - the
     // global floor, or four of this cascade's texels, whichever is more.
     // A replay with no texel (the lanterns, the camera's depth image) gets
@@ -1697,8 +1886,11 @@ export class ShadowPass {
     let draws = 0;
     let bound = null;
     const use = (prog) => { if (bound !== prog) { gl.useProgram(prog.p); gl.uniformMatrix4fv(prog.proj, false, vp); gl.uniformMatrix4fv(prog.view, false, this._identityView); bound = prog; } };
-    for (let i = 0; i < this.count; i++) {
-      const r = this.records[i];
+    // PERF-SHADOW1: a lantern's face walks its candidates (_casterCandidates) - every record, and every flat of a list,
+    // that this face could take, in their own order - and asks each the questions below exactly as before
+    const nRec = cand ? cand.n : this.count;
+    for (let j = 0; j < nRec; j++) {
+      const r = this.records[cand ? cand.rec[j] : j];
       if (filter !== REPLAY_ALL && r.kind !== REC_BB && (filter === REPLAY_STATIC || filter === REPLAY_LO) === r.dynamic) continue;   // SC1: the static replay skips the movers, the dynamic one the still (DISC29-E: the lo tier's is a static one)
       if (r.kind !== REC_BB && !recordVisible(planes, r)) { this.stats.culled++; continue; }
       if (minRadius > 0 && r.kind !== REC_BB && r.kind !== REC_CHAR && r.bounded && r.sphere && r.sphere[3] < minRadius) { this.stats.culled++; continue; }   // F5: a small solid or terrain piece; a rig is a person
@@ -1790,7 +1982,7 @@ export class ShadowPass {
         // Reset per record, beside the sway's and the texture's.
         let lastW = NaN, lastH = NaN, lastOx = NaN, lastOy = NaN, lastOz = NaN;
         const wl = Math.hypot(r.flatWind[0], r.flatWind[1]);   // PERF-EXT1: the record's wind, for its quads' lean
-        for (const b of r.batches) {
+        for (const b of (cand ? cand.bb[j] : r.batches)) {
           if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive)) continue;   // a concealed foe and a ghost cast nothing
           if (filter === REPLAY_LO ? (b._shDyn && !b._shAnim) : (filter !== REPLAY_ALL && (filter === REPLAY_STATIC) === !!b._shDyn)) continue;   // SC1: by the batch's own word; DISC29-E: the lo tier takes a flat that animates in place
           if (lightPos && b.archive === SHADOW_LIGHT_FLATS) continue;   // EL6: a flame is the lantern, not its occluder

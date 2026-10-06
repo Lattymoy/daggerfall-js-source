@@ -1,0 +1,385 @@
+[
+  {
+    "name": "LW-TALK-round-short",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "export const ROUND_S = 120;",
+    "new": "export const ROUND_S = 40;",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-no-phase",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "  const phase = ((textSeed(spotKey) >>> 7) % 1000) / 1000 * roundMin;",
+    "new": "  const phase = 0;",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-no-beat",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "round, start, end, GATHER_BEAT_S * roundMin / ROUND_S);",
+    "new": "round, start, end, 0);",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-talk-at-start",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "for (let s = (circle.from ?? circle.start) + drawIn(",
+    "new": "for (let s = circle.start + drawIn(",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-no-open",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "drawIn(circle.seed, OPEN_S, 0x6f70656e) * perS",
+    "new": "0",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-pause-fixed",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "drawIn(circle.seed, PAUSE_S, 0x70617573, slots.length) * perS",
+    "new": "PAUSE_S[0] * perS",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-no-close",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "close = circle.end - CLOSE_S * perS;",
+    "new": "close = circle.end;",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-all-spoken",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "export const slotSpoken = (circle, k) => (lwSeed(circle.seed, k, 0x73706b6e) % 1000) / 1000 < TALK_SHARE;",
+    "new": "export const slotSpoken = (circle, k) => true;",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-opener-fixed",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "const who = circle.members[(at.k + (index % 2 ? 1 + ((index - 1) >> 1) % (n - 1) : 0)) % n];",
+    "new": "const who = circle.members[(index % 2 ? 1 + ((index - 1) >> 1) % (n - 1) : 0) % n];",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-round-robin",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "const who = circle.members[(at.k + (index % 2 ? 1 + ((index - 1) >> 1) % (n - 1) : 0)) % n];",
+    "new": "const who = circle.members[(at.k + index) % n];",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-repeat",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "    if (got.script !== last) break;",
+    "new": "    break;",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-repeat-over-quiet",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "  while (j >= 0 && !slotSpoken(circle, j)) j--;",
+    "new": "  void 0;",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-no-memo",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "  if (kept) return kept;\n  const slots = circleSlots(circle, lineMin);",
+    "new": "  void kept;\n  const slots = circleSlots(circle, lineMin);",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-readers-hour",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "  const hour = Math.floor((((s % 1440) + 1440) % 1440) / 60);",
+    "new": "  const hour = ctx.hour ?? 12;",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-place-unfilled",
+    "file": "src/systems/livingWorld/meetups.js",
+    "old": "(ctx.places?.length ? ctx.places[lwSeed(circle.seed, k, 0x706c6163) % ctx.places.length] : ctx.place)",
+    "new": "(ctx.place)",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-morning-any-hour",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  if (!road && !own && hour >= 5 && hour < 11) pools.push(MORNING_TALKS);",
+    "new": "  if (!road && !own) pools.push(MORNING_TALKS);",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-day-in-rooms",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  if (!road && !own && hour >= 8 && hour < 18) pools.push(DAY_TALKS);",
+    "new": "  if (!road && hour >= 8 && hour < 18) pools.push(DAY_TALKS);",
+    "tests": [
+      "test/lwtalk_town.test.js",
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-trade-twice",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  for (const j of new Set(jobs)) {",
+    "new": "  for (const j of jobs) {",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-no-gather",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        const from = dealt.start + (far / PERSON_MOVE_SPEED + GATHER_BEAT_S) * this._baseRate();",
+    "new": "        const from = dealt.start;",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-said-to-air",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": " && c.circle.members.every((m) => standing.has(m.id))",
+    "new": "",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-deal-from-street",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (this._away(res)) continue;   // WATCH-FIX: with the watch - a guard stands for them\n      if (this._gone(res)) continue;   // LW5: aboard, or ashore at the far port\n      const plan = this.planOf(res, day);",
+    "new": "      if (this._away(res) || this._taken.get(res.id) === day) continue;   // WATCH-FIX: with the watch - a guard stands for them\n      if (this._gone(res)) continue;   // LW5: aboard, or ashore at the far port\n      const plan = this.planOf(res, day);",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-not-dropped",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        const members = dealt.members.filter((m) => !absent.has(m.id));",
+    "new": "        const members = dealt.members;",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-units-off",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const key = c ?? w.res, d = c ? w.d - TALK_PULL_M : w.d;",
+    "new": "    const key = w.res, d = w.d;",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ],
+    "note": "Re-aimed by content into keepUnits: one by one, the nearest were taken and at a busy square 44 of 64 lines went to a partner the street had not stood."
+  },
+  {
+    "name": "LW-TALK-keep-unsorted",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "[...units.values()].sort((a, b) => a.d - b.d || (a.res[0].id < b.res[0].id ? -1 : 1))",
+    "new": "[...units.values()]",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ],
+    "note": "Nearest first - in the order they were read, a nearer unit waited for a farther one."
+  },
+  {
+    "name": "LW-TALK-keep-far-member",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "u.d = Math.min(u.d, d);",
+    "new": "u.d = Math.max(u.d, d);",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ],
+    "note": "A unit is as near as its nearest one."
+  },
+  {
+    "name": "LW-TALK-keep-tie",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": " || (a.res[0].id < b.res[0].id ? -1 : 1)))",
+    "new": "))",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ],
+    "note": "A tie by id - else by the order they were read in."
+  },
+  {
+    "name": "LW-TALK-keep-overfull",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (keep.size + u.res.length <= cap)",
+    "new": "if (keep.size + u.res.length < cap)",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ],
+    "note": "A unit that fills the cap exactly comes on."
+  },
+  {
+    "name": "LW-TALK-keep-partial",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (keep.size + u.res.length <= cap) for (const r of u.res) keep.add(r);",
+    "new": "for (const r of u.res) if (keep.size < cap) keep.add(r);",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ],
+    "note": "A circle whole, or waiting whole - never cut by the cap."
+  },
+  {
+    "name": "LW-TALK-keep-street-first",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const keep = keepUnits(wanted, (id) => this._inCircle.get(id)?.circle, this.maxPopulation);",
+    "new": "const keep = keepUnits(wanted.map((w) => ({ res: w.res, d: this._rowOf(w.res)?.visible ? -1 : w.d })), (id) => this._inCircle.get(id)?.circle, this.maxPopulation);",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ],
+    "note": "The regression a first cut made: those already on the street put first held every row from the nearer (a walk passing beside the player never came on, nor a watchman back from his guard)."
+  },
+  {
+    "name": "LW-TALK-keep-no-pull",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "d = c ? w.d - TALK_PULL_M : w.d;",
+    "new": "d = w.d;",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ],
+    "note": "A circle counts the ring of the ones alone nearer: without it the busiest square kept the ones alone about it and fell silent (10.5 lines a minute, 63% of its seconds)."
+  },
+  {
+    "name": "LW-TALK-dead-stand",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        if (row) this._free(row);   // LW-TALK: and off the street at once, in the player's sight or not - marked to go, the",
+    "new": "        void row;   // the dead marked to go",
+    "tests": [
+      "test/lw7_deeds.test.js"
+    ],
+    "note": "The taken and the dead off the street at once - marked to go, one struck down stood where the player looked till he looked away."
+  },
+  {
+    "name": "LW-TALK-hidden-no-range",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "return Math.hypot(dx, dz) > POP_VISIBLE_RANGE || !this._inView(dx, dz, viewYaw);",
+    "new": "return !this._inView(dx, dz, viewYaw);",
+    "tests": [
+      "test/lw2_livingTown.test.js",
+      "test/lwtalk_town.test.js"
+    ],
+    "note": "DFU's hiding: beyond POP_VISIBLE_RANGE a body is out of sight whichever way the player faces."
+  },
+  {
+    "name": "LW-TALK-hidden-no-view",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "return Math.hypot(dx, dz) > POP_VISIBLE_RANGE || !this._inView(dx, dz, viewYaw);",
+    "new": "return Math.hypot(dx, dz) > POP_VISIBLE_RANGE;",
+    "tests": [
+      "test/lw2_livingTown.test.js",
+      "test/lwtalk_town.test.js"
+    ],
+    "note": "DFU's hiding: behind the player a body is out of sight however near."
+  },
+  {
+    "name": "LW-TALK-quiet-rest",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (last && this._now >= last.t && this._now - last.t < GREET_REST_MIN && (last.said || !stopped)) return;",
+    "new": "if (last && this._now >= last.t && this._now - last.t < GREET_REST_MIN) return;",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-room-no-first-round",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "          const on = t - co.since < beat.roundMin || exchangeAt(c, t, beat.lineMin) != null;",
+    "new": "          const on = exchangeAt(c, t, beat.lineMin) != null;",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-room-mid-talk",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "          const on = t - co.since < beat.roundMin || exchangeAt(c, t, beat.lineMin) != null;",
+    "new": "          const on = t - co.since < beat.roundMin;",
+    "tests": [
+      "test/lw8c_astir.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-room-street-round",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "since: was ? was.s + SLOT_LINES * beat.lineMin : t,",
+    "new": "since: was ? was.s + SLOT_LINES * beat.lineMin : 0,",
+    "tests": [
+      "test/lw8b_talk.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-room-stopped",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        const stopped = still && dist <= PERSON_IDLE_DISTANCE;",
+    "new": "        const stopped = false;",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-idle-for-all",
+    "file": "src/characters/residentWalker.js",
+    "old": "    const st = wantsToStop ? 'idle' : this.moving ? 'move' : 'stand';",
+    "new": "    const st = this.moving && !wantsToStop ? 'move' : 'idle';",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-stand-cycles",
+    "file": "src/characters/residentWalker.js",
+    "old": "st === 'stand' ? Math.min(STAND_FRAME, n - 1) : this.frame % n",
+    "new": "this.frame % n",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-TALK-no-places",
+    "file": "src/scenes/world.js",
+    "old": "    return { away, visitors, holders, news, places };",
+    "new": "    return { away, visitors, holders, news };",
+    "tests": [
+      "test/lwtalk_town.test.js"
+    ]
+  }
+]

@@ -474,8 +474,8 @@ After the kill the bar holds a moment and fades.
 
 ## 11. Versions and deploy order
 
-- **SERPENT3's relay: `world172`** (section 15; `world171` on its branch, renumbered past main's CRYSTAL-FIST at the
-  merge). The brain swims every leg it shows and judges a blow where the body lay when it struck; its law's version is 2
+- **SERPENT3's relay: `world173`** (section 15; `world171` on its branch, renumbered past main's CRYSTAL-FIST and
+  WATCH-FIX at the merges). The brain swims every leg it shows and judges a blow where the body lay when it struck; its law's version is 2
   (`SERPENT_BRAIN_MIN`), so a game before it is told to reload. No frame changes shape, and nothing else in the order
   moves: deploy the relay with the client.
 - **SERPENT2's relay: `world166`** (section 14). The `serpent` frame's `site` word, said to the hub alone, and
@@ -707,7 +707,7 @@ win every time, in ten to eleven and a half minutes. At 50% a lone ship wins fro
 26.5, nine at 31.8 (Mac's call, open - `01-Overview/Audit-Ships.md`). At 25% a lone ship never wins, a pair at most
 three in twelve, three up to six and five six to eleven.
 
-**The relay:** `world172` (section 11). **Pins:** `test/serpent3.test.js` (12) and the SERPENT1 and AUDIT SERPENT pins it
+**The relay:** `world173` (section 11). **Pins:** `test/serpent3.test.js` (12) and the SERPENT1 and AUDIT SERPENT pins it
 moved - the stray's surfacing for the resume's, the Maelstrom at the heart, a late ship's words, the first strike's
 time; `tools/mutants/serpent3.json` (45, all dead - its ram's-doubled-wake record went with the ram's own wake, AUDIT
 SHIPS C4). AUDIT SHIPS (`01-Overview/Audit-Ships.md`): `test/auditships.test.js` (20) and

@@ -15,6 +15,7 @@
 import { SIEGE_NPC } from '../net/siegeRef.js';
 import { siegeNpcShown } from '../net/siegeLink.js';
 import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // HALT-ONE: the Town Guard's hurt cry is no Halt
 import { stateAnims, HURT_ANIMS, HURT_ANIM_SPEED, PRIMARY_ATTACK_ANIM_SPEED } from '../characters/mobileUnit.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { bossFrame } from '../world/gateBoss.js';
@@ -22,7 +23,7 @@ import { bossFrame } from '../world/gateBoss.js';
 /** Who each kind is: its mobile (its sprite and its sounds - enemyBasics.js), its name, how much taller it is drawn. The
  *  rebels take three faces by their number, so an uprising is no row of twins. */
 export const SIEGE_NPC_LOOKS = Object.freeze({
-  guard: Object.freeze({ mobiles: Object.freeze([146]), name: 'Town Guard', scale: 1 }),
+  guard: Object.freeze({ mobiles: Object.freeze([KNIGHT_CITY_WATCH]), name: 'Town Guard', scale: 1 }),
   rebel: Object.freeze({ mobiles: Object.freeze([136, 143, 138]), name: 'Rebel', scale: 1 }),
   captain: Object.freeze({ mobiles: Object.freeze([144]), name: 'Rebel Captain', scale: 1.2 }),
 });
@@ -121,7 +122,7 @@ export function createSiegeNpcs({ renderer = null, getTexture = null, uploadReco
         if (!feet) { b.shown = false; continue; }
         const E = ENEMY_BASICS[b.look.mobile];
         if (n.atk && n.atk !== b.atk) play(E?.attackSound, feet);
-        if (n.hurtAt !== b.hurtAt && Number.isFinite(n.hurtAt)) play(E?.barkSound, feet, 0.8);
+        if (n.hurtAt !== b.hurtAt && Number.isFinite(n.hurtAt)) play(b.look.mobile === KNIGHT_CITY_WATCH ? E?.moveSound : E?.barkSound, feet, 0.8);   // HALT-ONE: a beast's hurt is its bark; the watch's bark is "Halt!", so a Town Guard hurt cries his move voice instead
         if (n.down && !b.down) play(15, feet);   // systems/soundClips.js SOUND.BodyFall
         b.atk = n.atk; b.hurtAt = n.hurtAt; b.down = n.down;
         if (Math.hypot(n.tx - x, n.tz - z) > 1) b.yaw = Math.atan2(n.tx - x, n.tz - z);

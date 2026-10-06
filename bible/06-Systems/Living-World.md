@@ -117,9 +117,11 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
   function - a share of a sea lane - and one name for two pushed audit24's one-home ratchet past 30); `createPathBook`
   keeps 768 walks and spends a frame's search budget - LW-PERF: a frame's CELLS (`cells`), the walks
   asked queued and searched in slices (`townPathSearch`, the same answer whole or sliced).
-- **`dayPlan.js`.** The living day 04:00-04:00 (`DAY_START_MIN`), every minute covered once. Wake and bed by temper
+- **`dayPlan.js`.** The living day 04:00-04:00 (`DAY_START_MIN`), every minute covered once (WATCH-DAY: a day's
+  watchman's walk out across the turn, `morningWalk`, the one entry both days carry). Wake and bed by temper
   (a lark 05-06 and 20-21, the day 06-07:30 and 21:30-23, an owl 08-10 and 00:30-02); the watch by shift
-  (`(slot + day) mod 3`: 06-16, 14-24, a day off). The jobs' days as the code says them, the favourites (`favourites`:
+  (WATCH-DAY: `(slot + day) mod 4` - 06-14, 14-22, 22-06 over the day's turn, a day off; the first cut's `mod 3` kept
+  06-16, 14-24 and nobody the night). The jobs' days as the code says them, the favourites (`favourites`:
   two social spots, a tavern, a temple, a guild and a market, near home, the seed's alone) set where; a stroll (two
   short stops) for the sociable; a lark's turn about town at first light. `schedule` lays them: each begins when the
   walk allows and not before its hour, nor more than its slack after; a stay ends by its `until`, by the walk home
@@ -128,12 +130,15 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
   at six is left at six; the LW1 pins found the helper who stayed on); an away window (trips.js, LW3) is geared for at home `GEAR_MIN` where the traveller goes armed, walked out to
   arrive as it opens and home as it closes, each walk ARMED. A walk's minutes: the cells' Manhattan distance x
   `WALK_DETOUR` + `WALK_EXTRA_M`, over the pace.
-- **`meetups.js`.** Rounds of `ROUND_S` (40 real seconds) laid on the clock; whoever stands at a spot for a WHOLE round
-  pairs off on an order drawn from the spot, the round and their ids (the odd three together); `TALK_SHARE` of circles
-  talk; a line each `CREW_LINE_S` of the clock, the first member first; `circleStands` round the spot on the golden
-  angle, `CIRCLE_APART` apart, facing in.
+- **`meetups.js`.** Rounds of `ROUND_S` (LW-TALK: 120 real seconds, each spot's on a phase of its own - the first cut's
+  40 on one minute everywhere) laid on the clock; whoever stands at a spot for a WHOLE round pairs off on an order drawn
+  from the spot, the round and their ids (the odd three together - `dealCircles`); LW-TALK: a circle's talk waits for its
+  people to gather (`from`) and runs in exchanges (`circleSlots`, `exchangeAt`), `TALK_SHARE` of them spoken, a line each
+  `CREW_LINE_S` of the clock, a dialogue between the exchange's opener and the rest; `circleStands` round the spot on the
+  golden angle, `CIRCLE_APART` apart, facing in.
 - **`lines.js`.** Original words in the crew's two-and-three-line shape: the town's talk, the trades', the weather's,
-  the evening's and the night's; tokens with fallbacks; LIVING_GREETINGS by regard.
+  the morning's, the day's (LW-TALK, the street's), the evening's and the night's; tokens with fallbacks; LIVING_GREETINGS
+  by regard.
 - **`relations.js`.** A regard per resident (-100..100), a stranger 0: a word +3 once a day, a polite word +1, a gift
   +8, help +20, a life saved +35, a blow -45, a crime -15, one of theirs slain -60, a blunt word -6; friend at 40, enemy
   at -40, hostile at -70; eased toward zero half a point a day unseen and never across; 600 kept; the save's record
@@ -602,10 +607,12 @@ conversations with each other ... much like the crew on board ships" - LW8 stood
   deal, each spot not yet at a table opens one and takes the nearest of the rest within `TABLE_M` (2.2 m) of every one
   already at it, to `TABLE_MAX` (3). The room fills TABLE BY TABLE (the tables in the deal, each its spots in turn), so
   those inside stand in twos and threes; those at a table face its middle, one alone faces the room.
-- **The circles.** Each round of the street's (`ROUND_S`, laid on the town's clock: `talkBeat`) those at a table its
-  whole round (their stays at the building's door) meet as the street's circles do - `spotCircles` on the table's own
-  key (`in:<building>:<table>`), the street's `TALK_SHARE` of them talking, a line each `CREW_LINE_S` of the clock, the
-  first speaker first. One come in mid-round meets none till the next.
+- **The circles.** LW-TALK: a table's company - those standing at it - meets from the minute it sat down as it is, a
+  round of the street's at a time (`ROUND_S`, on the town's clock: `talkBeat`) while it stays the same, dealt as the
+  street's circles are (`dealCircles` on `in:<building>:<table>:<the minute>`) and talking in the street's exchanges.
+  One who comes while an exchange is on waits for its last line (the company there carries it); one who goes ends the
+  talk at once. (The first cut dealt the tables on the street's own round by their stays: one come in mid-round met
+  nobody till the next.)
 - **The words.** The street's own (`circleLine`: the town's talk, the trades', the weather's, the evening's and the
   night's, the town's news of the road and of the deeds - `lineCtx`, at the room's minute), and the ROOM'S OWN beside
   them (`ROOM_TALKS` by the building's kind, `roomKindOf`: the tavern's, the temple's, a shop's - any shop, the bank, the
@@ -651,7 +658,8 @@ defects; each is fixed and pinned (`test/lwfix1_review.test.js`, `tools/mutants/
   in plain view.
 - **A table's talk is the round's as it began**: each table's circles are dealt once a round (`roundCircles`) - one who
   sits down mid-round joins the next round's talk, and a circle one of whom goes falls silent till the next round;
-  never a conversation re-dealt mid-script.
+  never a conversation re-dealt mid-script. (LW-TALK: the law kept by the company - one who sits down mid-exchange
+  waits for its last line, and the new company meets after it.)
 - **The player's own dead**: the deep passes by a `slain` or `died` diver (the pool's corpse) as it does the fallen
   beside the player; and the books are made again below when a turn is made there (`livingTurnsFresh`, for the
   remains and the divers alike) - before, a diver slain below was laid again as the deep's once their company left.
@@ -851,6 +859,412 @@ ARENA2 - its numbers are the CPU's, comparable before and after). Pinned by `tes
   where the old read stands: the skip it pins (`LW-FIX4-remains-drawn`) was never met - it waits for the read that
   lays them, and asks the road first that they lie there. Both dead now (and the 79 records naming either file). PIN
   MOVED: `lw1_livingWorld`, `lwfix4_turns`.
+
+## LW-STAND - the street's own (2026-10-05)
+
+Mac, from play: "I also noticed sometimes NPC's will get stuck over bodies of water, or be stuck running into walls".
+Three causes in the town, each fixed and pinned (`test/lwstand_street.test.js`, `tools/mutants/lwstand.json`, 15
+dead); the audit the same day (the last item) re-cut how a stand is found.
+
+- **The street** (`places.js` `streetGeometry`, STAND_REACH_M). The street net's cells - a building's footprint and the
+  water are none (`world/cityNavigation.js`), nor is the grid's outside - and a body the square of STAND_REACH_M
+  (0.4 m) about its middle. A body stands where the square overlaps no cell off the net (`holds`); a straight way holds
+  it where the square swept along it overlaps none (`clear`, and `reach`: how far along the way it does) - the off-net
+  cells grown by the reach, against the way. Exact, so any part of a way the street holds it holds too. Pure in the
+  grid: every reader's alike.
+- **A stand is on the street** (`meetups.js` `aloneStand`, `circleStands`, `circleMiddle`, `openBearing`). The places
+  about a spot - one alone 1 to 3.5 m out on a bearing of their own (ALONE_NEED_M, ALONE_FAR_M), each circle's middle
+  further out as the circles number, a circle's places CIRCLE_APART/2 (0.625 m) about its middle - were drawn by
+  geometry alone, and a spot stands a few cells before a door, or (LW5) at a port's dock on the water's edge: a stand
+  fell in the building's wall or over the harbour, and the walker walked straight into it and stood there all its stay
+  (a fisher's 450 minutes at the dock). Drawn so, at the law test's spot on the street's edge (a dock's, 6 m before a
+  door; 120 alone and the circles 0 to 5 of two and of three, 150 stands) 67 to 72 of the 150 fell off the street; at
+  the close-built town's own spots, 734 of 1650. Now a spot's open ground is sounded once: how far the street holds a
+  body along each of STAND_BEARINGS (64) bearings, out to STAND_SOUND_M (16 m). A stand drawn on bearing `a` stands on
+  the bearings that hold it - one alone their own distance (to the half-metre over), a circle its middle and a place
+  beyond it - its share of the whole circle kept, so the people about a spot by a wall spread over its open half as they
+  would over the whole circle; as far out as its own place and that bearing hold (STAND_MARGIN_M short of where it
+  stops), facing the spot. A circle's middle stands so, and the circle is turned about it a twelfth of a half-turn at a
+  time till every place in it is held and seen from the spot over open street, its people a pace apart facing the
+  middle; with nowhere about it to turn, they stand along the way out to it, facing in. A spot open all round keeps every
+  stand as drawn. Kept per spot: the street never changes under a town.
+- **The way to a stand is over the street** (`livingTown.js`, the frame's approach). A body walks its last metres to
+  its stand straight - from its walk's end, or from last round's place when the circles change partners. Where the
+  street does not hold the straight way (`clear`: a new place round a building's corner, across a fountain) it walks
+  toward the spot, and on from wherever the way opens.
+- **A walk not yet searched is a pause** (`livingTown.js` `row.paused`). LW-PERF searches walks in slices: a resident
+  in view whose next walk was not searched yet kept the stride it had and walked on the spot, into whatever it faced,
+  till the path came - a second or more in a great city, longer while the queue is full. They stand, idle (the watch's
+  own idle), and the pause's minutes are owed as the politeness gate's are, walked off at CATCH_UP: searched, the walk
+  is walked from where they stood, never cut straight across, through whatever stood between, to where its clock had
+  got to.
+- **Measured and left.** The pinned close-built town's day (`lwstand_street`'s last test: its residents at 08:00,
+  13:00 and 18:00, twelve seconds of frames each, the player where two streets cross): before, 34.4% of the
+  body-frames in view stood off the street and 11.2% inside a building (20.5% and none at 08:00, 49.1% and 25.4% at
+  13:00, 33.7% and 8.4% at 18:00); now none, at every hour. A walker catching up with its walk's point (the frame's
+  straight approach) trails it by under 2.5 m. The street is the navgrid's, as DFU's walkers read it: what stands on a
+  walkable cell without being on the grid is still walked through. Not the town's: the classic lane's pool (DFU's own
+  walkers, kept 1:1).
+- **AUDIT (2026-10-05).** The first cut sounded each stand out from its anchor along its own line, a quarter-metre
+  (STAND_STEP_M) at a time, with four probes on a body's axes. A body stood over a building's corner the probes
+  missed; samples a quarter-metre apart found shut a way they had passed as open, and a walker stepped on the spot
+  between the two answers; and every stand whose line met a wall was pulled in toward the spot, so the many whose lines
+  met the same wall stood on one another at its foot, and a circle's places on one another on its middle, facing north.
+  With 30 alone and the circles 0 to 5 at a spot, the close-built town's spots stood 79 to 89 pairs of stands within
+  half a metre of each other (26 to 29 within 0.1 m) and the edge spot 104 to 123; now 16 to 22 and 14, none within
+  0.1 m (drawn over the whole circle, 8). At the close-built town's square (400 alone and the circles 0 to 15 of two
+  and of three, 480 stands), 12 stands were never reached from the spot and 37 of 2995 ways from stand to stand never
+  arrived, walked as the frame walks them; now every one, every step on the street. The exact street and the open
+  bearings are the audit's. Mutants: 15 dead, the audit's 8 among them; the first cut's step-unread, end-only,
+  middle-unkept, middle-unread and member-unseen retired with the soundings they aimed at; `tools/mutants/lw1.json`
+  LW1-stand-apart re-aimed.
+
+## LW-DRY - a party stops on dry ground (2026-10-05)
+
+The same report's other half, on the roads ("stuck over bodies of water"). Pinned by `test/lwdry_ground.test.js` and
+`tools/mutants/lwdry.json` (24 dead); PIN MOVED: `terrain` (WATER1's compare, its one home). The audit the same day
+(the last item) re-cut the night and the trouble.
+
+- **The cause.** A way is the planner's straight legs between its pixels' centres (`trips.js wayOf`), and the
+  planner's water is a whole pixel's (`travelRoute.js` - a pixel whose WOODS byte is the sea's; the ends never asked).
+  A pixel's ground is the kernel's interpolation with its own byte at its south-east corner, so by a coast a leg runs
+  over the sea's edge - and nothing asked the ground where a party stopped: night camped it there for twelve hours,
+  trouble fought it there (LW4b's foes stood in the water) and its fallen lay there a day. The feet are the scene's
+  ground (`tvSceneOf`): on the seabed Deep Waters carves, or on the sea's clamp.
+- **The ground** (`world/dryGround.js createDryGround`). The terrain cell under a point is dry when its four corners
+  are - each the pixel's own sample (the sampler's kernel, `terrainSampler.js sampleKernel`, the samples the pixel is
+  built from) above the tile job's water (`terrainTiles.js sampleHeight`, `isWaterHeight` - WATER1's float32 compare,
+  one home now, the nature scatter's beach reads among its readers): no water shows on its tile. Pure in the height
+  map, every client's alike. Read in the ways' own frame (`trips.js nativeDry`): x east, z north from the map's
+  southern edge, a pixel's row 499 less.
+- **A stop on dry ground** (`trips.js dryStop`, STOP_RING_N, DRY_STEP_N). A stop's middle and a ring of 5 m about it -
+  past the widest ring the roads stand (a beset party's foes, `livingRoads.js FOE_RING_N`) - must stand dry; a stop
+  that does not is sounded on along its way 2 m at a time to the first place that does. None before its leg's end: the
+  leg's end, the town's own ground it was walking to.
+- **The night** (`trips.js partyAt`). A leg is walked by day, 07:00 to 19:00. Where the day's walk stands at nightfall
+  is sounded for the night's camp; a party on a wet stretch walks on at its pace to that dry ground and camps there, and
+  the next nightfall is sounded from where the party then stands - at the camp, or still on its way to it - so a night's
+  walk on is never undone. At first light it waits at the camp till the day's walk comes up to it, and walks on with
+  it; a leg begun before first light (an adventurer sets out from 06:00) is a night's walk until then. One place a
+  minute a leg: never a jump.
+- **The trouble** (`trouble.js troubleOf`) is met on dry ground too: a stretch of the walk at the first dry place on
+  from where it falls, met when the party walks up to it (`partyAt`'s own minute); none before the leg's end, at the
+  end as the party comes to its town. A camp's is met at the camp night made - and its fallen lie there. A halted party
+  stands idle in its ring (`livingRoads.js partyPlaces`, as a camp does), and the halt's minutes are owed from its start,
+  walked off at HALT_CATCH_UP.
+- **Measured.** At LW-DRY, the synthetic map with a wet band across its ways: 1440 camped minutes and 75 halted
+  minutes in the water over twelve days with the ground unread, none read. Since the audit (below), on seven wet
+  grounds offline and online, no jump and no stop in the water while dry ground lies ahead on its leg.
+- **Left.** A location's flattening is not read (the ground beside a town is the kernel's), nor the Rivers and Streams
+  mod's water, which a player switches on for themselves and would put the parties of two players in two places. A
+  party walking a wet stretch still walks it - a ford, by day - and one whose leg runs wet to its end camps at the end,
+  its town's own ground.
+- **The four hosts.** `scenes/world.js` - WIRED: the trips' world's `dryAt` (`nativeDry(createDryGround(woods))`).
+  `scenes/exterior.js` - FLAGGED: no roads (one location). `scenes/worldModes.js` and `scenes/dungeonContext.js` - no
+  roads are stood there; the remains and companies they show are the same trips', read through the host.
+- **AUDIT (2026-10-05).** The first cut sounded the night's camp afresh each nightfall from where the day's walk would
+  be, and waited the morning out there. A wet stretch longer than a night's walk at online's pace (half the calendar's)
+  put the party at the far camp at first light and back on its day's walk at dusk (422 m and 419 m); a camp's trouble
+  at 23:00 stood the party at the camp before it had walked there (288 m, and 33 m back as it ended); a leg begun before
+  07:00 on wet ground leapt to its camp at first light (246 m); a halt's minutes owed from its end jumped the party at a
+  halt that ended near dusk; and the sounding's 8 m stepped over dry ground too narrow to find. On the audit's harness -
+  the synthetic map under seven wet grounds (a band; one wider than four hours' walk; one wider than a day's; wet about
+  every town; the destination's half; a narrow dry islet in a wide band; a band along a way's own row), twelve days
+  offline and online, every minute of every trip that touches one - the first cut jumped up to 189 times a run, the
+  longest 1237 paces, and camped 2880 minutes in the water with dry ground ahead on its leg (1440 at the islet); now,
+  in all fourteen runs, no jump and none. The nature scatter's three beach reads (`terrainNature.js`) wrote WATER1's
+  product out themselves, so its "one home" was two; they read `sampleHeight` now (`terrain` pins it). Mutants: 24
+  dead, the audit's 8 among them; the first cut's morning-jump and morning-camp-behind retired with the morning they
+  aimed at; `tools/mutants/forest1.json` FOREST1-beach-line re-aimed.
+
+## HALT-ONE - the watch calls as one (2026-10-05)
+
+Mac: "with the living world we take it further and improve the guards and also reduce the HALT noise" - and asked how
+often the watch should call, "Once, then rarely". A recorded departure from DFU (Port-Ledger), the living watch's lane
+alone (`livingWorldOn`: the enhanced skin with the Features row on); the classic lane keeps DFU's cadence, pinned
+call for call.
+
+- **The cause** (DFU-faithful, `characters/enemySounds.js`, EnemySounds.cs:78-100, 196-226). Every watchman within
+  16 m of the player sounds his attract clock every 3 to 9 seconds, the bark 80% of the time - and the city watch's
+  bark is "Halt!" (clip 456). Eight a minute a watchman, hostile or not; a crime's five, forty a minute; a squad
+  arriving after its walk, four at once on one frame. The port added more mouths: the town's defenders (DISC19-F) and a
+  raid's, who stand with the player; another player's watch riding the stream (WATCH1); the watch kept moving under
+  the surrender box (WINFOE1); TELL1's stagger and TELL2's wind-up, both the bark pitched down; the siege's Town Guard,
+  the bark at every wound.
+- **The one voice** (`enemySounds.js WatchVoice`, HALT_GAP_S 15; `scenes/cityGuards.js` `oneVoice`, `windowUp`). A
+  watchman standing after the player (`watchStands` - HowManyEnemiesOfType's own two terms: not a defender, not
+  pacified or charmed, not running) inside the attract radius is a caller; his own clock is left still. The first of
+  them calls at once; then the nearest calling, no sooner than 15 s after the last call - five watchmen, eight calls in
+  two minutes where their clocks gave some eighty. Nobody calls under a window; the incident over (no watchman
+  standing after the player) the next is met by its first call at once. The call is DFU's own play: at the caller's
+  feet a metre up, a quarter through a wall (SetVolumeScale), linear to the attract radius.
+- **The rest of the noise.** A defender, a pacified, running or walking-away watchman: silent. A watchman's stagger
+  and wind-up are a person's (`hostCombat.js windupFeedback`, `tellCues`: the low swing, as every class enemy's) - never
+  the Halt. Another player's watchman calls on his owner's client, where he hunts; here he is silent
+  (`exteriorFoes.js`, `quietVoice`). The siege's Town Guard (`siegeNpcs.js`, the port's own) cries his move voice
+  when hurt.
+- **The four hosts.** `scenes/world.js` - WIRED (the street's watch: the lane and the window; the street's foe pool:
+  the lane, for a peer's watchman). `scenes/worldModes.js` - WIRED (a building's watch, called in by a crime indoors).
+  `scenes/exterior.js` - FLAGGED: the fixed-city page has no living town, and keeps DFU's watch. `scenes/dungeonContext.js`
+  - no watch stands there.
+- **Pinned** by `test/haltone_watch.test.js` (the voice; the real pool driven frame by frame against DFU's cadence; who
+  calls; the incident and the wall; the tells; beyond the pool; the hosts) and `tools/mutants/haltone.json`.
+
+
+## WATCH-FIX - the watch's own bugs (2026-10-05)
+
+Mac: "improve the guards" - and every bug the investigation found in the watch fixed before the merge. Four, each at
+its root; the classic lane's DFU watch is untouched but for the race (DFU's own order restored in both lanes).
+
+- **A false slain** (`scenes/livingWatch.js`). The turned watch read ANY `dead` guard as a kill - and the crime
+  watch walking off when the crime clears is `dead` with no body (`cityGuards.js`, DFU's despawn), as is a watchman
+  run off by a beast or taken by a spell. So striking a watchman and paying the fine slew him by the player's hand:
+  the palace household turned against the player and every witness counted a crime (`walkAwaySlain`, the
+  investigation's: watchman `L12345.w0` slain, the courtiers and two of the watch at -75). The pin modelled the
+  gone guard as `dead: false`, so the suite passed. Now the guard's END decides: a body the player's own blow made
+  (`killedBy`, minted where a guard dies - DFU's `source == Player`, DaggerfallEntityBehaviour.cs:203) is the town's
+  deed, `slain`; a body any other hand made (a beast, a fall, a reflected blow, another player) is one of the watch
+  KILLED - dead for good, nobody's regard of the player moved (`livingTown.js killed`, the host's hand death
+  `killed` - `relations.js HAND_KINDS`, read by `lives.js handDeath`, told by `lines.js KILLED_NEWS`, the watch's
+  words or the town's); no body at all is BACK to his day.
+- **The identity lost** (`cityGuards.js turnNpc`). Only the swing and the trample marked the guard they stood with
+  its resident; the crime response's arms, the minute's sweep (MakeNPCGuardsIntoEnemiesIfGuardsSpawned) and the town
+  watch's summons stood an anonymous Knight_CityWatch and the street took the resident for the day - cut down, he
+  walked his beat the next morning. Every conversion is ONE LAW now - SpawnCityGuard then SetActive(false), the guard
+  marked with the resident's identity as it was turned (`livingFrom`; AUDIT-C6's identity record) - and the host
+  follows every marked guard, whichever arm stood it (`livingWatchStep`): the resident is LENT to it
+  (`livingTown.js lend`: off the street, never taken for the day - the census's own take of the disabled row undone,
+  whichever comes first), and comes back (`back`) when it walks away, the census standing him where his day has him
+  out of the player's sight. One the witness arm took who is not of the watch (DFU's quirk: every walker after a
+  guard has seen) stepped aside - his guard's end is never his death. A load keeps the mark by id (the snapshot's
+  `living`, found again by `residentOf`; never found in WATCH_WAIT beats, let be).
+- **The cap race** (`cityGuards.js inTurn`, `claimed`, the pool's `live()`). DFU's crime response is one synchronous
+  member: the cap read (HowManyEnemiesOfType <= maxActiveGuardSpawns), then every guard stood. Here every stand awaits
+  (CLASS18.CFG, a cold archive), so two calls interleaved: the second read the cap before the first's guards landed,
+  and walked the same street turning the same walkers again - six watchmen out of three. The crime response, the
+  sweep and the summons take turns now (a call whose world was swept while it waited stands nobody), a walker is
+  claimed across the await (the swing's conversion and an arm's never turn him twice), and one the street already
+  gave up (`live()`: the row inactive, or - the living town's - dressed since as another resident) is never turned.
+- **Online, two of him** (`exteriorFoes.js`, `net/wire.js` LIVING_ID_RE, RELAY_VERSION world172). Another player's
+  watchman rode the stream (WATCH1) while the resident he was walked the reader's street. The watch's record names him
+  now (`lr`, the census's id); the reader's puppet carries it (`livingId`) and the host hands every town the set
+  (`livingPeerWatchStep`, `livingTown.js peerLend`): off its street while the record stands, his row freed at once
+  (the peer's guard stands where he stood), back when it goes. A relay before world172 drops the field, and the
+  reader sees him twice, as before. Who the peer's guard fought, and whether he fell, is its owner's (LW0 decision 6).
+- **The four hosts.** `scenes/world.js` - WIRED (the street's pool's `live()` and identity read; the follower every
+  frame in the lane, its `resolve` and `localOf`; the town's `killed`; the peer's watch). `scenes/exterior.js` -
+  WIRED for the race alone (its pool's `live()`; the fixed-city page has no living town). `scenes/worldModes.js` - no
+  conversion: a building's watch comes through its door, its pool empty (PlayerEntity.cs:653-654).
+  `scenes/dungeonContext.js` - no watch stands there.
+- **Pinned** by `test/watchfix_watch.test.js` (the race on the real pool; the one law and whose hand; a load; the
+  walk-away; the ends; a load's resident; the town's side; online; the hosts) and `tools/mutants/watchfix.json`.
+  PIN MOVED: `lwfix2_watch`, `lwfix5_deep`, `lw7_deeds` (the first cut's model, `dead` read as a kill, and its
+  wiring), and every relay pin to world172.
+
+## WATCH-DAY - the watch keeps the town round the clock (2026-10-05)
+
+Mac: "improve the guards" - asked which, the night watch, gate posts and pairs ("gate post per exit for shift, rest
+patrol in pairs, uniform only on duty"). The first cut kept two shifts (06-16, 14-24) and a day off on a two-to-twelve
+watch: from midnight to six nobody was on watch (the investigation's: none outdoors 01-03h); every watchman walked his
+own beat of four to six spots drawn from the whole town alone - no posts, and two shared a stop in under 3% of the
+samples; and off duty he walked the evening still in uniform and still a guard to the crime response and the watch's
+stop, so at five in the evening more "guards" walked the street than mid-shift.
+
+- **The watch** (`census.js` WATCH_COMPANIES, `watchShiftSize`, `townWatchCount`). Four companies, one to each day of the
+  rotation, each of the town's strength a shift: none in a hamlet, one in a village, a pair from nine blocks and a
+  gate's post for each nine more, to six (a pair and four gates) - four to twenty-four in all. Each watchman has his own
+  clothes (`civvies`, one of his people's outfits, drawn on a stream of its own so the rest of him is as he was).
+- **The duty** (`dayPlan.js` WATCH_SHIFTS, WATCH_ROTATION, `watchDuty`). A watchman's shift is a shift later each day:
+  the day's 06-14, the evening's 14-22, the night's 22-06, then a day off - never a shift begun inside eight hours of
+  the last one's end. The slots that share a residue are a company and stand every watch together. Its first two PATROL
+  as a pair, one alone where the company is one; the rest are POSTED at the town's gates, one to an exit, the gate each
+  keeps turning by the day; more than the gates patrol as a second pair.
+- **The patrol** (`patrolBeat`, `patrolStops`). A patrol walks a district: four to six spots (exits, social spots,
+  markets) nearest an anchor it draws, as a ring about their middle - the first cut's stops lay across the whole town,
+  and in a great city a leg ran past an hour of the clock, so the beat ran out of reachable stops hours before its
+  shift's end. Its stops are laid on the clock from the shift's start, so the two of a pair are at the same stop at the
+  same minute wherever they live, and the last is held to the shift's end (two stops are never further apart than the
+  walk home and back and `HOME_GAP`, so the long gap's rule never sends a patrol home mid-beat). On the street the second of a pair walks at the first's shoulder (`livingTown.js _atShoulder`, PAIR_SIDE_M to his
+  right where the street holds it, to his left, else PAIR_BEHIND_M behind); at a stop the two stand together as any two
+  met there do (meetups.js).
+- **The post** (`'post'`, OUTDOOR). A gate's watchman stands it all shift, facing out of town (the exit's own yaw) when
+  he stands alone.
+- **The night over the day's turn** (`nightTail`, `schedule`'s `start`). The night runs past 04:00: the night's plan
+  holds its post or its patrol's last stop to the turn, and the next day's begins THERE - read off the night's own plan
+  (the first cut replayed the night's stops apart from it, and a man its clock had put elsewhere began the morning at a
+  post he had left) - keeps the watch to six, walks home and sleeps the morning; up in the afternoon, the evening his,
+  abed early for the morning's shift. A night watchman wakes late and keeps his afternoon before it. A town with no
+  spots for a beat has nobody on watch at the turn: the morning begins at home.
+- **The watch's clock** (`schedule`, `morningWalk`). Every watchman is on his post or his patrol's first stop by his
+  shift's hour and keeps it to its end. Whatever his bedtime: a duty stay is never cut by the walk home before bed (the
+  first cut's was, and on the synthetic town of eight blocks by eight - a walk across it near three hours - ten days
+  cut 66 shifts short, and 34 times the night's man walked home before the turn while the next day began him at his
+  post: a jump across the town). An evening off ends in time to change at home and walk out to the watch on its hour
+  (a supper had the night's man late). And in a great city the day's watchman whose walk out is longer than the two
+  hours from the turn to six leaves before the turn: his day off ends on the walk and his day begins on it, the one
+  entry both days carry, so the town draws it unbroken across 04:00 (the first cut began him at his door at the turn,
+  and half the day's watch came on up to 53 minutes late, the gate empty since the night's man went home at six).
+- **The uniform on duty** (`duty`, the plan's marks; `livingTown.js` update; `travellerSprites.js`). The walk out, the
+  watch or the post and the walk home carry `duty`; nothing else does, and a change of duty goes by home - into the
+  uniform and out of it indoors (a stay at the same spot read as the watch had kept one man in uniform to the evening).
+  The street dresses one of the watch by it - GUARD_TEXTURE and the guard's flag on duty, his own clothes off it - and
+  never in the player's sight (a body not yet stood, or out of view); so off duty he is nobody the crime response turns
+  or the watch's stop asks after. A room draws him in his own clothes.
+- **The four hosts.** WATCH-DAY is the living world's core (`census.js`, `dayPlan.js`, `livingTown.js`) and the rooms'
+  drawing (`world/travellerSprites.js`): `scenes/world.js` stands the street that dresses him; `scenes/worldModes.js`
+  the rooms (LW8, through the sprites); `scenes/exterior.js` - the fixed-city page has no living town;
+  `scenes/dungeonContext.js` - no watch stands there.
+- **Pinned** by `test/watchday_watch.test.js` (the strength; the duty; round the clock; the night over the turn; the pair;
+  the uniform; the post; a great city) and `tools/mutants/watchday.json`. PIN MOVED: `lw1_livingWorld` (the census's watch, the
+  shifts), `lwfix3_town` (the beat to the shift's end), `watchfix_watch` (the census full, a returning resident comes on
+  as the player turns; his patrol's mate a witness).
+## LW-TALK - the town's people face one another and talk together (2026-10-06)
+
+Mac: "I want to ensure everything is working with NPCs actually interacting with each other, talking, etc" - and asked
+how two who talk should stand, "Turn them". The investigation measured the first cut on the synthetic towns, the
+street and the rooms, and ranked what the player saw.
+
+- **The facing** (`characters/residentWalker.js`, STAND_FRAME). DFU's idle record is one front view: every talker in a
+  circle faced the camera, never the one they talked to (88,358 of 88,358 standing frames on the street, every frame
+  indoors), and the watch at his post faced the street. A resident standing keeps the way they face - the walk wheel's
+  record for their yaw against the camera, held on its STAND_FRAME (the walk sprite's still frame), flipped as the wheel
+  is; the idle record is the politeness gate's alone, DFU's own use of it (one who stops for the player turns to face
+  them). The living world's lane only (the classic walkers are DFU's own); Mac to confirm the frame in the game.
+- **A round is a meeting** (`meetups.js` ROUND_S, `spotRound`, `dealCircles`). Two minutes, each spot's on a phase of
+  its own: the first cut's 40 s re-dealt a busy square three times a minute (76-92% of its people had a new partner
+  every round, walking up to 30 m to reach them) and every spot on the same minute (ten lines in one frame, then half a
+  minute of silence - 73-82% of the day's seconds silent at the square).
+- **The gathering** (`livingTown.js` `_tick`, `from`). A circle's talk waits for its people: from where the last round
+  stood them (their place in its circle, else their own about the spot) to their place in this one, the farthest of
+  them at the walking pace, and GATHER_BEAT_S after. The deal and the walk are the plans' alone, so every reader
+  gathers alike. (22-84% of the first cut's lines, by hour and town, were said while their circle was still walking
+  together.)
+- **The exchanges** (`circleSlots`, `exchangeAt`, `slotSpoken`, `exchangeScript`). A meeting talks in exchanges: a script
+  a slot of SLOT_LINES lines' time, the first OPEN_S into the talk, each next PAUSE_S after the last - each circle's own
+  draws - none begun that the round's end would cut (CLOSE_S); TALK_SHARE of the slots spoken, the rest quiet spells
+  (the first cut stood whole circles quiet a whole round). A script is a DIALOGUE: the slot's opener, turning slot by
+  slot, says its even lines and the others answer in turn - a third line is the opener's (in a trio, the third answers
+  the fourth). It is drawn as its exchange begins - the hour it began, the opener's trade first - and kept to its end
+  (the reader's `memo`: a change of weather mid-script swapped it 916 times in 2000), and never the script the circle
+  said last.
+- **Said aloud together** (`livingTown.js speech`, the street's keep, `keepUnits`). A circle's line is said aloud only
+  while every one of it stands at their place on this street, and the street keeps a circle whole - its people come on
+  together, nearest first, or wait together (at a busy square 58 of 77 lines went to a partner the street had not
+  stood, 44 of them for the cap). A circle counts TALK_PULL_M nearer than its nearest one - the ring the ones alone at a
+  spot stand in (meetups.js ALONE_FAR_M), beyond which its circles stand: nearest alone, the busiest square at six in the
+  evening kept the ones alone about it and fell silent (10.5 lines a minute, 63% of its seconds). Nothing else orders
+  it: put first, those already on the street held every row from the nearer (a walk passing beside the player never
+  came on, nor a watchman back from his guard - LW-FIX3's, LW-PERF's, LW2's and WATCH-FIX's pins), and those in the
+  player's sight let one go who stood just behind him (WATCH-DAY's). The census deals the circles before it reads where
+  anyone stands - read before them, an arrival stood the street by the last scene's circles and let half of it go a beat
+  later (12 of the 24 at the synthetic square at six) - and the taken and the dead leave the street at once, in the
+  player's sight or not (marked to go, one struck down stood where the player looked till he looked away). DFU's hiding
+  has one home (`_hidden`). Where the cap and the hiding law (nobody comes on in plain sight) leave one of a circle off
+  the street, the circle stands silent; on the synthetic towns 70-100% of the lines due near the player are heard - the
+  least at the close-built town at six in the evening, its cap of 24 under the square's crowd.
+- **Every reader deals alike.** The deal is the plans': one taken off this street alone (the trample) or struck down
+  here is dealt and left out after - their partner to their own counsel, the spot's other circles as every reader has
+  them (the first cut dealt the street's own, and one gone re-paired the whole spot on that reader, round after round).
+- **The rooms** (`scenes/livingIndoors.js`). A table's company meets from the minute it sat down as it is (see LW8b);
+  one who comes while an exchange is on waits for its last line; its people stay put while an exchange is on and
+  through their first round together (one in a quiet circle got up mid-talk; a temple's two parted the moment their
+  talk ended, one three-line talk in three quarters of an hour).
+- **The word to the player** (`livingTown.js _greet`, the rooms'). One who kept quiet as the player came by speaks when
+  the player stops before them: the quiet pass took the rest, so the stop that rule waits for never came (0 of 298
+  strangers held before the player spoke). A word said rests GREET_REST_MIN. In a room a stop is the player standing still
+  within the street's idle distance (the first cut never asked).
+- **The words** (`lines.js`). {place} is a town of the town's road - its trips' towns, the host's word (`places`), the
+  exchange's draw (eight scripts always said "the next town"). The morning's greeting and the day's talk keep their
+  hours, on the street ("Morning" was heard at six in the evening, and by the night watch); a trade's pool is the
+  trade's once however many share it, and the commonest trades have six scripts (two homemakers drew their one script
+  half the time: "The baker's bread is getting smaller." opened a fifth of the town's talk, "Hauled stone since dawn."
+  a sixth); the morning's, the day's, the evening's and the night's pools wide enough that no opener is three in a
+  hundred of a day's. A third line that undid its question is the asker's comeback now.
+- **The road's parties** (`scenes/livingRoads.js`) talk in exchanges from their round's start (nobody gathers: a party
+  walks together).
+- **The four hosts.** `scenes/world.js` - WIRED (the street's town; the towns of the road for {place}).
+  `scenes/worldModes.js` - WIRED (the rooms, through `livingIndoors.js`). `scenes/exterior.js` - FLAGGED as LW2 has it:
+  the fixed-city page keeps DFU's walkers. `scenes/dungeonContext.js` - no town.
+- **Pinned** by `test/lwtalk_town.test.js` (the facing; the meeting; the exchanges; the street; every reader alike; the
+  word to the player; the words; the hosts) and `tools/mutants/lwtalk.json`. PIN MOVED: `lw1_livingWorld` (the meeting's
+  phase and exchanges), `lw2_livingTown` (the gate's idle record; the churn under a cap waits on a round's turn),
+  `lw3_roads` (an armed traveller standing: the class sprite's idle, the outfit's own on the wheel),
+  `lw4_trouble` (the news told in an exchange; the talk's context; the host's word), `lw7_deeds` (the deed told in an
+  exchange), `lw8b_talk` (a table's company; the street's words reference), `lw8c_astir` (a room of no talk has no
+  beat; a company stays put), `lwfix1_review` (never re-dealt mid-script, by the company), `lwfix6_rooms` (an empty
+  table's two meet at once), `lwstand_street` (a body paused on its walk stands on the wheel's still frame).
+
+## WATCH-KNOWS - the watch knows you (2026-10-06)
+
+Mac: "improve the guards" - asked, "The watch knows you": guards greet or warn the player by their legal standing, and a
+first minor offence draws a "Hold!" warning before an arrest. The investigation found no greeting that read a legal
+standing (the REP1 stop was the only time the watch spoke by it, and only to a known criminal): a watchman on duty
+greeted the player with the street's stranger lines, and the watch came for a pocket picked as for a murder - the
+arrest box at its first blow. The living world's lane only (`livingWorldOn`); a recorded departure (Port-Ledger
+WATCH-KNOWS) - classic play keeps DFU's watch.
+
+- **The watch's word** (`lines.js` WATCH_GREETINGS, `watchBand`; `livingTown.js greetingFor`). One of the watch on duty
+  speaks for the law: the player's standing with the town's region (the host's `legalStanding(region)` - its number,
+  and whether its watch knows them, standing.js knownCriminal), not his own regard. Above 40 honoured, by name; above
+  10 respected; 0 to 10 a common citizen - moved along, now and then, as a stranger speaks; below 0 watched; a known
+  criminal (under -10, or banished) told the watch knows their face, whatever the number says (the REP1 stop still asks
+  them every two hours). One with a grudge of his own stays cold; off duty, or indoors, a townsman.
+- **The first minor offence** (`standing.js` WARNABLE_CRIMES, `warningDue`, `noteWarning`; `arrestFlow.js onGuardHit`). A
+  door tried, a trespass, a night in the street, a pocket picked - the court's least (BASE_PENALTY 100-300, none marked or
+  banishable). The watch comes as ever; its first blow, for a minor crime the character was never warned for in this
+  region and no known criminal, is withheld, and the box is a word: "Hold! {crime} is against the law of {region}. This
+  once, you have a warning. The next time, it is the court." The crime is charged as the box would have (`chargeOnce` -
+  the law's notice says what it cost), the warning noted in the standing book (`warned`, saved with it), and the crime
+  let go - the watch walks off with it (cityGuards.js's crime-clear law). The next minor offence in the region, a worse
+  crime, a known criminal, a beast (WERE-FRIGHT's own box) and a chase the box already asked in are the box's.
+- **The four hosts.** `scenes/world.js` - WIRED (the living town's `legalStanding`; the arrest flow's `warnsFirst` -
+  `livingWorldOn` - the region's name and the world's calendar a banishment runs on). `scenes/worldModes.js` - WIRED (a
+  building's watch strikes through the host's arrest flow). `scenes/exterior.js` - FLAGGED as LW2 has it: the
+  fixed-city page keeps DFU's watch (its arrest flow hands no `warnsFirst`). `scenes/dungeonContext.js` - no town.
+- **Pinned** by `test/watchknows_watch.test.js` (the word by the law; the first offence warned; the hosts) and
+  `tools/mutants/watchknows.json`.
+
+## WATCH-PROTECTS - the watch protects the town's people (2026-10-06)
+
+Mac: "improve the guards" - asked, "The watch protects people": a monster attacking townspeople draws the watch to
+defend them. The investigation found no townsperson a monster could attack: DFU's enemy senses weigh other enemies and
+the player alone ("Civilian Mobile NPCs are not handled here", EnemySenses.cs:739-741), and the port's target machine
+with them (`enemyTargets.js getTargets`) - a wolf in the square walked through the crowd to the player, and the town's
+people stood on beside its fight; the watch's defenders came to a monster hunting the player or one of themselves
+(DISC19-F, `townWatch.js isTownThreat`). The living world's lane only (`livingWorldOn`), on the street; a recorded
+departure (Port-Ledger WATCH-PROTECTS) - classic play keeps DFU's street.
+
+- **The quarry** (`quarry.js` makeQuarry; `world.js livingQuarry`). Each of the living town's people on the street, none
+  of the watch, stands for the target machine as a body of their own at their feet - a `civilian`, QUARRY_HEIGHT tall,
+  one health - in the shared candidate list beside the foes and the watchmen; the dead let go.
+- **Who hunts them** (`enemyTargets.js huntsCivilians`). A hostile monster that fights hand to hand - never the watch,
+  an ally, a companion or a quest's foe; never a class (a man with a blade is no monster); never an archer or a caster,
+  whose arrow or spell meets foes and players alone (nothing on the street would stop one). The machine weighs a
+  townsperson for it alone, as near as the player and no likelier: no team's chain, and no "has no target" weight (a
+  townsperson never has one) - whatever the infighting setting.
+- **One blow** (`QUARRY_BLOW`; `exteriorFoes.js`'s non-player arm). The first blow a monster lands strikes a townsperson
+  down, whatever it would deal - as the player's first does in DFU (WeaponManager.cs:500-509, `cityGuards.js
+  resolveCivilianHit`); its sound and blood as any blow's. The town is told by `killed` - another hand: nobody's regard
+  of the player moves (LW7) - and the body leaves the street at once.
+- **The watch comes** (`townWatch.js isTownThreat`). A monster hunting a townsperson alive is the town's threat as one
+  hunting the player is: the watch's defenders come to it after the arrival's countdown (DISC19-F); one struck down is no
+  fight to come to.
+- **The street runs** (`livingTown.js _fright`, `_run`; the host's `dangers` - its foes alive and hostile, no ally or
+  companion, in the town's frame). One on the street a hostile monster comes within PANIC_M (10 m) of runs straight from
+  it at FLEE_SPEED - twice their walk, their legs at the run's cadence (`residentWalker.js pace`) - along a wall where the
+  street will not hold the straight way, never through it; no farther than FLEE_FAR_M (20 m) from where they took fright
+  (inside SNAP_M, so their day takes them up again on foot, never with a jump), and there they cower. Their day is held
+  while they run - its minutes owed, as the politeness gate's - and taken up from where they ran to; they keep clear,
+  standing, while the monster stands within FLEE_WARY_M (20 m - never their day back to it), and FLEE_HOLD_S (4 s) after
+  it is gone. Frightened, they stop for nobody (the politeness gate is a walk's), greet nobody (a word said unseen would
+  rest them past it) and say nothing - a word up before the fright goes with it, and a circle with any of it frightened
+  is silent; a frame the clock stands still (a talk window open) keeps the fright as it was.
+- **The four hosts.** `scenes/world.js` - WIRED (the street's people in the shared candidate list, `livingQuarry`; the
+  street's `dangers`, `livingDangers`). `scenes/exterior.js` - FLAGGED as LW2 has it: the fixed-city page keeps DFU's
+  street (no quarry, no dangers). `scenes/worldModes.js` - none: indoors the street's people are nobody's quarry
+  (`livingQuarry` is the exterior's alone). `scenes/dungeonContext.js` - no town.
+- **Pinned** by `test/watchprotects_watch.test.js` (who hunts; the one blow; the watch comes; the street runs, cornered,
+  chased; the frightened silent; the run's body; struck down; the hosts) and `tools/mutants/watchprotects.json`.
 
 ## The four hosts
 
