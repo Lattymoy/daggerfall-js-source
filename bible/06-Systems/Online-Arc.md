@@ -10439,7 +10439,8 @@ the house, unpaid, as the deleted character's own do. THE FOUR HOSTS: an online 
 stands there). `acct90`; deploy BEFORE the site - a new client offers the account's other characters what an old service
 refuses (`no-home`). No relay change. Pinned: `test/account_homes.test.js` (7); PIN MOVED in `test/home1.test.js`,
 `test/decor1.test.js`, `test/basehide.test.js`, `test/guild_yard.test.js`, `test/homeprice.test.js`,
-`test/auditrealm.test.js`, `test/legacy7_homes.test.js`, `test/profdelete.test.js`, `test/renown_char.test.js` and the
+`test/auditrealm.test.js`, `test/legacy7_homes.test.js`, `test/auditlegacy3.test.js` (W1: the line's online homes
+the account's), `test/profdelete.test.js`, `test/renown_char.test.js` and the
 version's pins. `tools/mutants/account_homes.json` (28); eight records whose mutant had BECOME the law retired
 (DECOR1-any-character-owns, AUDIT-GUILD-YARD-OWNS-home-any-character, AUDIT-REALM-L1F3-another-characters-house-sold,
 HOME-CROSSED-another-characters-house-said-crossed, HOME1-claim-repeat-any-character, HOME1-own-by-account,

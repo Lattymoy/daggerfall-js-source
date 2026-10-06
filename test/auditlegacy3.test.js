@@ -1781,14 +1781,16 @@ test('AUDIT LEGACY III W1: THE LIVING WORLD\'S INDICES READ THE GAME\'S ROWS, AN
     assert.equal(idx[order[1]]().size, 1, `${order[1]} second: built from the rows too`);
     assert.equal(rows.length, 0, 'let go once both stand');
   }
-  // a home of mine, as the line is handed it
+  // a home of the account, as the line is handed it - ACCOUNT-HOMES (2026-10-06, PIN MOVED: "mine alone", this realm
+  // character's rows, before): a home is its account's, every member's, so every row of the account's list is the line's
   const read = liftWorld(/^  let _legacyOnlineHomes = null;$/, /^  }$/);
   const mk = new Function('homesApi', 'realmSession', '_townOfMapId', `${read}\nreturn { read: legacyOnlineHomesRead, get homes() { return _legacyOnlineHomes; } };`);
-  const w = mk({ mine: async () => ({ ok: true, data: { homes: [{ mapId: 5001, buildingKey: 66051, region: 17, character: 'r-me' }, { mapId: 5002, buildingKey: 7, region: 17, character: 'r-other' }] } }) },
-    { id: 'r-me' }, new Map([[5001, { name: 'Gothway Garden' }]]));
+  const w = mk({ mine: async () => ({ ok: true, data: { homes: [{ mapId: 5001, buildingKey: 66051, region: 17, character: 'r-me' }, { mapId: 5002, buildingKey: 7, region: 17, character: 'r-other' }, null] } }) },
+    { id: 'r-me' }, new Map([[5001, { name: 'Gothway Garden' }], [5002, { name: 'Ripmarket' }]]));
   w.read();
   await new Promise((r) => { setImmediate(r); });
-  assert.deepEqual(w.homes, [{ regionIndex: 17, mapId: 5001, buildingKey: 66051, location: 'Gothway Garden' }], 'named, and mine alone');
+  assert.deepEqual(w.homes, [{ regionIndex: 17, mapId: 5001, buildingKey: 66051, location: 'Gothway Garden' }, { regionIndex: 17, mapId: 5002, buildingKey: 7, location: 'Ripmarket' }],
+    'named, and the account\'s - the other character\'s home the line\'s too, a row that is no home none');
 });
 
 test('AUDIT LEGACY III W5: THE ONLINE HOMES READ - THE LAST ASKED WINS, and a home the arena moved is read again: two reads after two writes could land in either order, and the older answer (a home since sold) was handed to the next save', async () => {

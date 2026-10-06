@@ -281,7 +281,8 @@
     "old": "_legacyOnlineHomes = r.data.homes.filter((h) => h && typeof h === 'object').map((h) => ({",
     "new": "_legacyOnlineHomes = r.data.homes.filter((h) => h && typeof h === 'object' && h.character === realmSession.id).map((h) => ({",
     "tests": [
-      "test/legacy7_homes.test.js"
+      "test/legacy7_homes.test.js",
+      "test/auditlegacy3.test.js"
     ],
     "note": "the line's online houses the buying character's alone (it replaces LEGACY7H-world-any-characters-homes, which mutated TO this law)."
   }

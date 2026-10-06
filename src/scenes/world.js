@@ -25049,7 +25049,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   if (!_loadedGame) hccRuntime.handleNewGame();   // HCC: StartGameBehaviour.OnNewGame [IL_98c0]
   if (!_loadedGame) newGameModSaveRecords();   // WA1: a new character starts from every mod's NewSaveData (systems/modSaveData.js - a recorded departure)
   legacyHost?.afterBoot();   // LEGACY1 (D9): a loaded character with no family founded offline into its own answer or its Features tile's model - online never (LEGACY-CHOICE); a born or new one's is its own
-  if (legacyRealmLine) legacyOnlineHomesRead();   // LEGACY7 part five: the realm's homes of the one played, for the line's houses
+  if (legacyRealmLine) legacyOnlineHomesRead();   // LEGACY7 part five: the account's online homes (ACCOUNT-HOMES), for the line's houses
   // E3 - THE CONSOLE. ExteriorAutomap.Start (:417) and
   // DaggerfallTravelMapWindow's ctor (:229) each register their own
   // console commands; both surfaces are THIS host's, so both
