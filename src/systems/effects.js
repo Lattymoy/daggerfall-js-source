@@ -889,7 +889,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     if (isParalyze(e) && isEntityImmuneToParalysis(target)) continue;
     // DFU requires a CASTER ENTITY on the bundle (:505) and
     // BundleType == Spell - repeated on ALL THREE gates (:509, :521,
-    // :525). D9: the enchantment arc arrived (enchantments.js:285
+    // :525). D9: the enchantment arc arrived (enchantments.js:"entity.level ?? 1"
     // routes CastWhenHeld through this same applySpell with caster
     // `{ entity }` and ctx.heldItem set), so the caster check alone
     // stopped being the whole gate: a HeldMagicItem bundle is
@@ -1518,7 +1518,7 @@ export function applySpell(spell, casterLevel, target, sinks, rolls = Math.rando
     //
     // The "until attacked" half already exists here - every foe damage
     // door re-hostiles a pacified target (MakeEnemyHostileToAttacker),
-    // which enemyMotor.js:478 has anticipated by name since the
+    // which enemyMotor.js:"this.checkingClockwise = false" has anticipated by name since the
     // C-slice.
     //
     // Chance-only, no magnitude, TargetFlags_Other - so it takes the

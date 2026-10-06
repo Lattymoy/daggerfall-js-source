@@ -175,7 +175,7 @@ daggerfall aesthetic."*
 
 **The aesthetic is not a search term.** Every classic effect is raw
 unsigned 8-bit mono at 11025 Hz — `DAGGER.SND`'s parameters, stated at
-`src/formats/sndFile.js:3` — and that grit and that missing top octave
+`src/formats/sndFile.js:"Each BSA record is"` — and that grit and that missing top octave
 are what the ear reads as this game. A 48kHz shotgun sample sits on
 top of this world rather than in it. So the search looks for a good
 *recording* and `tools/sndify.mjs` makes it Daggerfall's:

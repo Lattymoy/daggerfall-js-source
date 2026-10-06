@@ -168,7 +168,7 @@ test('F050: every dungeon foe gets its spell list at BUILD time (EnemyEntity.cs:
 // =====================================================================
 
 test('F051: the ?dungeon fly-cam is gated on the OVERLAY, not on the imported input helper', () => {
-  // `held` at dungeon.js:55 is the input helper - a function, always
+  // `held` at dungeon.js:"RAY_DISTANCE, TOO_FAR_AWAY_TEXT" is the input helper - a function, always
   // truthy - so `} else if (!held) {` was a branch that could not run:
   // with ?dungeon&fly or ?shot, WASD never moved the camera. The gate
   // was a local overlay boolean once, renamed overlayHeld at :353.
@@ -212,7 +212,7 @@ test('F218: applyWorld destroys the live foes past the snapshot (SerializableSta
   // that by construction (exteriorFoes.restoreWorld goes through
   // spawnFoe); this host patches in place, so it has to lower the latch
   // by hand - or a failed pickpocket in a dungeon could never be
-  // retried, falsifying the law mobileEnemyActivate.js:44-47 states in
+  // retried, falsifying the law mobileEnemyActivate.js:"The flag is per-foe" states in
   // its own header. A PRE-PASS over the whole live pool, because the
   // per-record loop only ever visits the indices the record carries.
   assert.match(XF, /spawnFoe\(sf\.mobileType, feet,/, 'the exterior pool RE-MINTS on restore, so its latch dies with the pool');   // PIN MOVED (SEALED-SAVE, FIELD BUGS 2026-10-05c): its feet the saved ones, or the moved marker's
@@ -272,7 +272,7 @@ test('F036: the world host runs those rolls in the catch-up loop and calls Spawn
   // (in town the watch about every hundred real seconds for a bad name, no guard anywhere near), and a guard who SEES a
   // known criminal stops them (scenes/standingHost.js, test/rep1_watchstop.test.js). The loop rolls nothing for a name;
   // the roll's own law above is DFU's record (encounters.js keeps it, with no production caller).
-  const i = WORLD.indexOf('function runEncounterTick');
+  const i = WORLD.search(/^[ \t]*function runEncounterTick\(/m);   // CITE-ANCHOR: the declaration, not a comment's anchor that quotes it
   const fn = WORLD.slice(i, WORLD.indexOf('\n  }\n', i));
   assert.ok(i > 0, 'the port of PlayerEntity.Update:486-511 was found');
   assert.ok(!fn.includes('passiveGuardSpawns('), 'the loop rolls no levy');

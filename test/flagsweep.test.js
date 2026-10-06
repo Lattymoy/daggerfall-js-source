@@ -11,7 +11,7 @@
 // judgement call; it is DELEGATING, and the delegation is checkable:
 // the named file must carry a flag. world.js sent the reader to a
 // flag in systems/healthStatus.js that ST1 had shipped away, and
-// world.js:5843 sent them to one in dungeonContext.js that had never
+// world.js line 5843 sent them to one in dungeonContext.js that had never
 // been written at all - which is the worse of the two, because the
 // work is real and the ledger could not see it.
 import { test } from 'node:test';
@@ -163,7 +163,7 @@ test('FS1: the melee/arrow clauses are retired, and the tree contradicts them', 
   // alone, and the fixed-city host took the same three-pool swing
   // verbatim; replacing its encounter arm with four comment lines (so
   // no cite could move) left the swing as watch -> civilians with the
-  // shipped comment still claiming world.js:28669's order, green.
+  // shipped comment still claiming world.js:"proj, view, new Float32Array(mwv.eye), undefined".."renderer.markForeignPass();"'s order, green.
   for (const [file, foeTargets] of [
     ['src/scenes/world.js', /foeTargets: \[\.\.\.\[\.\.\.exteriorFoes\.foes, \.\.\.cityGuards\.guards\]/],   // DUEL1: the pools, then my duel opponent's body
     ['src/scenes/exterior.js', /foeTargets: exteriorFoePool\(\)\.filter\(\(t\) => !t\.dead && t\.ai\)/],
@@ -204,7 +204,7 @@ test('FS1: the enchant ctx is MOUNTED by every host that owes it', () => {
   // createWorldModes, which passes `enchantCtx: false` on the premise
   // that an outer host owns the mount - so the dungeons and shops
   // entered from ?exterior inherited the hole. The predicate is "every
-  // host that can hold an enchanted item" (hostEnchant.js:1-2), not
+  // host that can hold an enchanted item" (hostEnchant.js:"THE HOST ENCHANT"), not
   // "the two that happen to mount it".
   const callers = SRC.filter((f) => f !== 'src/systems/enchantments.js'
     && /setDefaultEnchantCtx\(/.test(TEXT.get(f)));
@@ -230,7 +230,7 @@ test('FS1: the enchant ctx is MOUNTED by every host that owes it', () => {
   // it went on asserting "setDefaultEnchantCtx has exactly one caller
   // in the tree" - and "the flag now exists where the work does",
   // pointing at a flag this wave retired - after the second mount
-  // shipped. dungeonContext.js:2877 and hostEnchant.js:8 both say
+  // shipped. dungeonContext.js:"PlayerEntity.cs:396-400" and hostEnchant.js:"?dungeon host mounted" both say
   // "had"; the sentence a reader meets first must too.
   assert.equal(/setDefaultEnchantCtx has\n\s*\/\/ exactly one caller/.test(world), false,
     'the E2 header states the one-caller claim as HISTORY, not as present fact');

@@ -6,10 +6,10 @@
 // (either exterior host) never created a character at all - they
 // played the pre-chargen placeholder entity (flat skills 30,
 // maxHealth 50, Warrior-shaped nothing; it is described at
-// characters/playerEntity.js:5). The dungeon kept its own copy of
+// characters/playerEntity.js:"through systems/chargenSession.js"). The dungeon kept its own copy of
 // the load/apply code, which is exactly the duplication the audit's
 // rules forbid, so both live here now. FIXED, not pending: world.js:
-// 126/:1364-1366 and exterior.js:198/:1421-1423 both import and run
+// 126/:1364-1366 and exterior.js:"createChargenFlow,"/exterior.js:"const questInitAtGameStart" both import and run
 // createChargenFlow + createChargenWindow from here, so a town boot
 // runs the wizard.
 //
@@ -130,7 +130,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:276) early-returns for a
+  // updateEquippedArmorValues (equip.js:"StartEquippedItem,") early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -198,7 +198,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
   // DFU character carries the array from the first frame.
   //
   // The null was a lazy-rebuild trick that never fired:
-  // updateEquippedArmorValues (equip.js:276) early-returns for a
+  // updateEquippedArmorValues (equip.js:"StartEquippedItem,") early-returns for a
   // non-Armor, non-footwear item BEFORE it reaches armorValuesOf, and
   // the starting kit is a shirt and pants. So the array stayed null
   // until the first armour equip or a save-and-reload, and
@@ -372,8 +372,8 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
   //
   // THE FOUR HOSTS RULE, answered here rather than three times over.
   // Three hosts run a new game and all three build their wizard
-  // through this function - world.js:6375, exterior.js:1477,
-  // dungeonContext.js:3281 - so the question is asked once, in the
+  // through this function - world.js:"came from hosts wiring these", exterior.js:"AUDIT 17i: ONE construction",
+  // dungeonContext.js:"const missing = (targetEntity.maxHealth ?? 0)".."questPoolOps.removeFoe(f);" - so the question is asked once, in the
   // seam, and not one of them learns a new word. THE FOURTH HOST,
   // scenes/worldModes.js, IS ACCOUNTED FOR AND ASKS NOTHING: a new game
   // never begins inside a building, that host runs no chargen at all
@@ -413,7 +413,7 @@ function chargenWizard(flow, { onDone, onCancel, hudScale = 2 } = {}) {
  *
  * `isChoiceWindow` is a GETTER for the same reason: the wizard wants
  * raw key codes and the question wants the shared overlayAction names,
- * and the hosts read that flag at routing time (townTalk.js:430,
+ * and the hosts read that flag at routing time (townTalk.js:"if (overlay.isChoiceWindow)",
  * worldModes.js's overlayIsNative), so one object can want both in
  * turn.
  *
@@ -529,9 +529,9 @@ function classicChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {}) {
     // the port's only reading of it - without this the thumb could
     // latch on the press and then never move. Every host that runs
     // the wizard already routes a mousemove here: world.js and
-    // exterior.js through `townTalk.hover` (townTalk.js:1318-1329,
+    // exterior.js through `townTalk.hover` (townTalk.js:"function hover(e)",
     // the route itself :1327), dungeonContext.js through `overlayHover`
-    // (:9280), which dungeon.js:562 and worldModes.js:11126 both feed.
+    // (:9280), which dungeon.js:"ctx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1, e)" and worldModes.js:"dungeonCtx.overlayHover?.(v ? v[0] : -1, v ? v[1] : -1, e)" both feed.
     // (ROAD-G G4 review: all four were stale - re-resolved by content,
     // against the same six routes G4-11 sweeps.) Hovering never
     // advances the flow, so no done check.

@@ -1534,7 +1534,7 @@ function stow(item) {
   // 26 F156: planStore answers `{ ok: true, map: true }` for a
   // MiscItems.Map - the reveal runs, the paper is consumed, nothing
   // lands in the destination. The classic window routes it
-  // (nativeInventory.js:990) and this one did not, so dragging a
+  // (nativeInventory.js:"if (mode === 'equip' && this.hooks.entity)") and this one did not, so dragging a
   // treasure map out of the pack dropped the paper on the floor and
   // revealed nothing.
   if (plan.map) { use(item, deps.items?.() ?? []); return; }
@@ -1544,7 +1544,7 @@ function stow(item) {
   if (amount == null) { notice = HOW_MANY_ITEMS(plan.amount); render(); return; }
   // MAC-O6: the same cue this window's `take()` gained - storing (selling,
   // banking, dropping into a wagon or a pile) is a transfer too, and
-  // planStore already hands back the sound (itemTransfer.js:289), unread
+  // planStore already hands back the sound (itemTransfer.js:"if (capacity.gone || canHold <= 0)"), unread
   // until now.
   audio.playOneShot(plan.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // SND1: a take always sounds - the click, or the gold
   // PX24 (Mac: an action taken closes the tooltip): the transfer
@@ -1553,7 +1553,7 @@ function stow(item) {
   // again on the other side, and a tip that stays open after every
   // press is the quirk being fixed.
   // AUDIT INV2 B-F1: THE ENTITY AND THE PROVENANCE RIDE, as they do at
-  // the classic window's own call (nativeInventory.js:996). Without them
+  // the classic window's own call (nativeInventory.js:"{ ...plan, amount }, this.hooks.items"). Without them
   // `clearLightSourceOnLeave` - AUDIT 26 F157's first statement inside
   // applyTransfer - is a no-op, so a LIT TORCH dropped on the ground
   // went on lighting the player from where it lay. INV2 made that a
@@ -1582,7 +1582,7 @@ function take(item) {
   });
   if (!plan.ok) return refuse(plan.refusal);
   // AUDIT INV2 B-F2: the map is an interception in EITHER direction
-  // (itemTransfer.js:311, "F156: either direction") - taking one off a
+  // (itemTransfer.js:"and is written anyway", "F156: either direction") - taking one off a
   // pile reveals and consumes it, exactly as stowing one does. The
   // classic window routes both; this one routed neither.
   if (plan.map) { use(item, remoteTarget(deps, sessionState())); return; }
@@ -1590,7 +1590,7 @@ function take(item) {
   if (amount == null) { notice = HOW_MANY_ITEMS(plan.amount); render(); return; }
   // MAC-O6 (report: "looting gold/items makes no sound"): DoTransferItem's
   // own cue (:1569 gold's clink, :1583 everything else), which the classic
-  // window plays (nativeInventory.js:1016) and this one never did - the ONLY
+  // window plays (nativeInventory.js:"if (equipItem(this.hooks.entity, it) !== null)".."return;") and this one never did - the ONLY
   // difference between the two windows' calls to planTake/applyTransfer was
   // that this one dropped `plan.sound` on the floor. Played here, ahead of
   // the gold interception below, exactly as DFU's own PlayOneShot sits

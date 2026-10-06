@@ -359,7 +359,7 @@ test('audit18 items: every minted shop/loot row carries the template ItemName', 
 });
 
 // ---------------------------------------------------------------
-// 10. RETIRING A FLAG DELETES THE SENTENCE. inventory.js:12 claimed
+// 10. RETIRING A FLAG DELETES THE SENTENCE. inventory.js line 12 claimed
 //     "Armor material weight pends S2b (FLAGGED - leather/chain/plate
 //     multipliers)" while the file implemented all three 130 lines
 //     below, and bible/Home.md's Open-flags ledger carried the row.

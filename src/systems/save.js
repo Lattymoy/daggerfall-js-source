@@ -188,9 +188,9 @@ export const newSkillsRecentlyRaised = () => [0, 0];
  *  Masque of Clavicus buffed five social groups instead of eleven for
  *  the life of that character. Dropping the member costs nothing:
  *  enchantmentMagicRound clears the player's array at the head of
- *  every magic round (enchantments.js:862, DFU's ClearReactionMods at
+ *  every magic round (enchantments.js:"if (entity.isPlayer)", DFU's ClearReactionMods at
  *  PlayerEntity.cs:1567-1570) and the folds re-apply it in the same
- *  pass, off worldTick.js:401 - so a load lands DFU's own shape, the
+ *  pass, off worldTick.js:"damage sink so death".."nowMinutes: r + 1," - so a load lands DFU's own shape, the
  *  live mods left standing until the next DoMagicRound re-derives
  *  them eleven wide. An older snapshot's key is simply ignored (the
  *  restore loop skips what REP_ARRAYS does not name), so the envelope
@@ -320,7 +320,7 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // state and are not carried.
   snap.survival = entity.survival ? { ...entity.survival, notes: undefined } : null;
   // AUDIT 17e: pre-chargen the entity carries a flat NUMBER here
-  // (the stand-in entity's flat skills, characters/playerEntity.js:28)
+  // (the stand-in entity's flat skills, characters/playerEntity.js:"raceId: 1,")
   // - spreading it threw. RECORDED, and no divergence from
   // SerializablePlayer: the line below is the working guard, it
   // round-trips BOTH shapes, and restore reads back whichever it

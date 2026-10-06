@@ -26,7 +26,7 @@
 //   6. FormulaHelper.cs:1131-1132 - the 20% condition-damage floor roll.
 //      The drives were 0.99 and 0.1, which agree for every threshold
 //      from 11 to 99.
-//   7. automapModel.js:48 - AABB_TOLERANCE, the containment skin. Its one
+//   7. automapModel.js:"export const AABB_TOLERANCE" - AABB_TOLERANCE, the containment skin. Its one
 //      test computed its reference answer with the same symbol.
 //   8. FormulaHelper.cs:779 - `Random.Range(min, max + 1)` in hand to
 //      hand. Every drive was roll 0, where `min` comes back either way.
@@ -281,7 +281,7 @@ test('AUDIT 58: the condition-damage floor roll is exactly 20%', () => {
 
 // ── 7: the automap containment skin ───────────────────────────────────
 test('AUDIT 58: AABB_TOLERANCE is 0.05, and the skin decides which model a probe credits', () => {
-  // automapModel.js:48. DFU has no analogue constant - it resolves a
+  // automapModel.js:"export const AABB_TOLERANCE". DFU has no analogue constant - it resolves a
   // reveal by `hit.collider` - so the port's skin has neither a
   // reference anchor nor, until now, a pin: its one test computed its
   // reference answer with the same symbol on both sides, and a tenfold
@@ -329,7 +329,7 @@ test('AUDIT 58: ApplyRegionalPriceAdjustment has its OWN floor of 1 (FormulaHelp
   assert.equal(calculateCost(1, 12, 250), 2, 'PRICE_ADJUSTMENT_MIN, the worst case');
   // and the live wire that reaches it: CalculateItemRepairCost hands
   // CalculateCost a base of exactly 1 for any item worth <= 10 gold
-  // (repairService.js:60-65), so without the floor a cheap repair in a
+  // (repairService.js:"if (condition === max)"), so without the floor a cheap repair in a
   // cheap province is FREE.
   assert.equal(calculateItemRepairCost(5, 10, 0, 100, { priceAdjustment: 750 }), 2);
 });
@@ -355,12 +355,12 @@ test('AUDIT 58: the 112-day faction drift does NOT fan out (PlayerEntity.cs:2239
   // the TWO-argument overload, and PersistentFactionData.cs:390 declares
   // `bool ChangeReputation(int factionID, int amount, bool propagate = false)`.
   // So the faction half of the drift is a single clamped write, not a
-  // walk. Adding `, true` at court.js:228-229 survived the whole suite,
+  // walk. Adding `, true` at court.js:"if (f.rep < 0) changeReputation" survived the whole suite,
   // because the only fixture on that arm was a ONE-record dict with no
   // hierarchy: a propagating walk over it has nowhere to go. This one is
   // a root with two children, which is exactly what a walk would move -
   // propagateReputationChange gives a `parent === 0` root the FULL
-  // amount (factionRep.js:183-192).
+  // amount (factionRep.js:"export function propagateReputationChange").
   const rec = (id, o) => Object.assign({
     id, parent: 0, type: 0, name: 'f' + id, rep: 0, ally1: 0, ally2: 0, ally3: 0,
     enemy1: 0, enemy2: 0, enemy3: 0, sgroup: 0, ggroup: 0, children: null,

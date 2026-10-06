@@ -222,9 +222,9 @@ export const CURE_BASE_COST_PER_DISEASE = 250;
  *  after infection" stamp, and becomingVampireOrWerebeast below reads
  *  it off the ENTITY exactly as DFU reads it off playerEntity (:57-59)
  *  rather than taking it from a host. The field arrives from the
- *  classic import (formats/characterRecord.js:183, offset 0x1f3 ->
- *  classicSave.js:203/:810) and round-trips through the save envelope
- *  (save.js:520 out, :587 back). It
+ *  classic import (formats/characterRecord.js:"d.timeToBecomeVampireOrWerebeast", offset 0x1f3 ->
+ *  classicSave.js:"hasStartedInitialVampireQuest:"/classicSave.js:"constant round, so") and round-trips through the save envelope
+ *  (save.js:"snap.regionConditions =" out, save.js:"if (!store || !snap?.ids)" back). It
  *  reaches a character only through AssignCharacter (PlayerEntity.cs
  *  :856), i.e. a classic import - the port's own infections are
  *  disease effects, which a cure takes last since FIELD BUGS 29h

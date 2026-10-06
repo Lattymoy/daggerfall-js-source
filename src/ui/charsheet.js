@@ -148,9 +148,9 @@ export class LevelUpScreen {
     else if (action === 'plus') { audio.playOneShot(SOUND.ButtonClick, 1); const r = statUp(this.working[key], this.pool); this.working[key] = r.working; this.pool = r.pool; }   // freeEdit spinner (StatsRollout.cs:255)
     // AUDIT 58 (f3/input): + 'char:-'. This screen carries no
     // isChoiceWindow, so both hosts hand it overlayAction's answer
-    // (scenes/townTalk.js's keyed arm and ui/input.js:607-608) - and
+    // (scenes/townTalk.js's keyed arm and ui/input.js:"did and ui/charsheet.js's") - and
     // overlayAction can never answer 'minus', because its typed-
-    // character branch (ui/input.js:386) owns the hyphen. The bare
+    // character branch (ui/input.js:"pollLatch(b, down)") owns the hyphen. The bare
     // 'minus' arm stays: the SPINNER click (:405) and the sheet's own
     // code table (:196) both still produce it. Without this, a
     // level-up point could be spent from the keyboard and never taken
@@ -239,7 +239,7 @@ export const STATS_ROLLOUT_SPINNER = Object.freeze({ x: 176, y: 6, w: 15, h: 20,
  *  freeEdit OFF, so a moved stat draws green here. */
 export const STAT_MODIFIED_COLOR = Object.freeze([0, 1, 0, 1]);
 /** SelectStat + the spinner's two arrows, in both key vocabularies -
- *  the overlayAction names (ui/input.js:393-394) and the raw e.code a
+ *  the overlayAction names (ui/input.js:"Shift, and this press") and the raw e.code a
  *  "native" window is handed. */
 const ROLLOUT_ACTIONS = Object.freeze({
   up: 'up', ArrowUp: 'up', down: 'down', ArrowDown: 'down',
@@ -747,7 +747,7 @@ export class CharSheet {
     // increased above, default when they agree. The port drew all
     // eight at the shadow-text default, so the at-a-glance warning DFU
     // gives after a disease or a drain spell was absent. `stats` IS
-    // the permanent map here (statMods.js:32 clamps permanent + mods).
+    // the permanent map here (statMods.js:"= Mathf.Clamp(permanent + mods, 0, maxValue)" clamps permanent + mods).
     STAT_KEYS_ORDER.forEach((k, i) => {
       // While levelling the sheet's own stat labels go EMPTY (:412)
       // and the mounted rollout fills the same panels with its working

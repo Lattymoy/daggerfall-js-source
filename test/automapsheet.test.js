@@ -152,7 +152,7 @@ test('EM3: only what was REVEALED is outlined, and only what was WALKED is washe
 
 test('EM3: INSIDE A BUILDING every revealed row is a visited row - DFU\'s always-colour law', () => {
   // AutomapModel.cs:46-72, the case the shipped 3D window keeps at
-  // automapWindow.js:1222: a building has no prior-run tier at all.
+  // automapWindow.js:"ROAD-C c2/S9: INSIDE": a building has no prior-run tier at all.
   const r = () => rec(['a', 'b'], []);    // revealed, NOTHING walked this run
   const dungeon = createAutomapSheet({ record: r, model: () => model(), insideBuilding: false });
   const shop = createAutomapSheet({ record: r, model: () => model(), insideBuilding: true });

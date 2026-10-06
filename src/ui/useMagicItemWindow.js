@@ -4,8 +4,8 @@
 // item with a CastWhenUsed legacy enchantment, or any potion - and
 // picking one uses it.
 //
-// The port had the door and not the room: input.js:816 routes the
-// action to `ctx.openUseMagicItem`, hudLarge.js:158 gives the large
+// The port had the door and not the room: input.js:"the ReadyWeapon comment" routes the
+// action to `ctx.openUseMagicItem`, hudLarge.js:"import { racialOverrideHeadArt }" gives the large
 // HUD's button its rect, inputActions.js binds KeyU - and no host
 // implemented the method, so a bound key did nothing. The anti-lie law
 // says a deferred feature shows as deferred; a live binding that

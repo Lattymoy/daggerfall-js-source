@@ -3,7 +3,7 @@
 // match the daggerfall aesthetic").
 //
 // THE AESTHETIC IS NOT A SEARCH TERM. Daggerfall's effects are raw
-// unsigned 8-bit mono at 11025 Hz (src/formats/sndFile.js:3) and that
+// unsigned 8-bit mono at 11025 Hz (src/formats/sndFile.js:"Each BSA record is") and that
 // is what the ear reads as this game - so the search looks for a good
 // RECORDING and tools/sndify.mjs makes it Daggerfall's. What the
 // queries below are tuned for is the weapon in the art: a big

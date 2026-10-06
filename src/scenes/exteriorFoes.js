@@ -546,7 +546,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       f.uid = _nextUid++;   // AUDIT WORLD6b B15: the corpse loot's stable key (an index names another body once anything ahead is spliced)
       // AUDIT FOES FOE8: the level this body was BUILT at, which is not always the
       // level it ended up with - makeEnemyEntity adds Range(3,7) to a Knight_CityWatch it builds fresh (a PUPPET hands the streamed level in as final - AUDIT WATCH1 A5 - so for it builtLevel and entity.level agree); a fresh watchman's is
-      // inside the constructor (enemyEntity.js:116, DFU's own). The stream's `l` is the
+      // inside the constructor (enemyEntity.js:"AUDIT WATCH1 A5: a", DFU's own). The stream's `l` is the
       // owner's BUILD level, so comparing it against entity.level found a mismatch on
       // every record and tore the puppet down and rebuilt it five times a second, for
       // ever. The record's own word is what the record's word is compared to.

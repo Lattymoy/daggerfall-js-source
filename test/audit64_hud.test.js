@@ -376,7 +376,7 @@ test('AUDIT 64 F35: the stack answers it - one null previousWindow anywhere cuts
   // now (systems/notify.js), so the exception is PASSED as an option
   // rather than minted at the site - and the seam's spelling of
   // DaggerfallAction's null is `false`, which this stack reads
-  // identically (`=== true`, windowStack.js:65). Pinned both ways:
+  // identically (`=== true`, windowStack.js:"export const paintsPreviousWindow"). Pinned both ways:
   // the value behaves, and the site still asks for it.
   assert.equal(paintsPreviousWindow(new ActionTextBox(['x'], { previousWindow: false })), false);
   assert.match(src('scenes/dungeonContext.js'),

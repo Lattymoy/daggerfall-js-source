@@ -122,7 +122,7 @@ test('CD1: Ledger A row TB1 exists, in section A, STRUCK by the classic-modals c
   // closed the sentence with "(Ledger A: VersionInfo strings are DFU's
   // identity, not this port's)" - a live departure claiming an approval
   // nobody had written: section A carried no version row at all, and
-  // doctrine.test.js:384 skips the file because it shouts no DEPARTURE
+  // doctrine.test.js:"alternate enemy health" skips the file because it shouts no DEPARTURE
   // token. The row exists now and, like TB1, is cited BY NAME.
   const verRows = rows.filter((r) => /THE PAUSE WINDOW'S VERSION LINE IS THE PORT'S OWN BUILD TAG/.test(r.s));
   assert.equal(verRows.length, 1, 'section A carries exactly one pause-window version row');
@@ -398,7 +398,7 @@ test('CD2: both status pages state the open-flag count Home.md actually holds', 
   const roadText = read(ROAD);
   for (const site of ['combat/fpsSpellCasting.js:178', 'characters/enemyCasting.js:91',
     'systems/inventory.js:51', 'systems/talkMacros.js:314', 'ui/hudLarge.js:75',
-    'ui/exteriorAutomapWindow.js:96']) {
+    'ui/exteriorAutomapWindow.js:98']) {
     assert.ok(roadText.includes(site), `Road-To-1-1.md does not name the retired flag ${site}`);
   }
 });
@@ -699,9 +699,9 @@ const SOURCE_CITES = [
   // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
-  // four of the five had been stale for waves (`worldModes.js:8936` for a line
-  // that is 5921, `world.js:24498` for 8836, `interior.js:326` for 329,
-  // `dungeon.js:988` for 959). Every one is captured now, against the
+  // four of the five had been stale for waves (`worldModes.js` line 8936 for a line
+  // that is 5921, `world.js` 24498 for 8836, `interior.js` 326 for 329,
+  // `dungeon.js` 988 for 959). Every one is captured now, against the
   // projection each host really builds.
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\)( \+ climbFeel\.fovRad\(\))?,/],   // CLIMB4: the climb's kick on the lens
   ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:\d+`, `dungeon\.js:(\d+)`/, 'src/scenes/dungeon.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\)( \+ climbFeel\.fovRad\(\))?, largeHudWorldAspect/],
@@ -722,7 +722,7 @@ const SOURCE_CITES = [
   // PAIRS never checked. Five Ledger rows cite `world.js:N`, `exterior.js:M`
   // and this table captured M alone - so M was resolved at every wave and N
   // was never read at all. All five N's were stale by thousands of lines
-  // (`world.js:12401` for a line that is 8950; `:2018` for 1215; `:4448` for
+  // (`world.js` line 12401 for a line that is 8950; `:2018` for 1215; `:4448` for
   // 2194; `:3903` for 3066; `:3920` for 8907), and citeMerge rewrote one of
   // them INSIDE THE PICK REGEX at the QS6 merge - which is WM3's hazard
   // exactly: a literal in the pick decides whether the entry matches at all,
@@ -760,7 +760,7 @@ const SOURCE_CITES = [
   // ROAD-G G1 (review): BOTH ends, because the half-shifted range is
   // exactly the defect this file exists to catch - the leading number
   // was re-resolved and the trailing one left where it was, leaving a
-  // range that cannot exist (`exterior.js:1840-1492`).
+  // range that cannot exist (exterior.js's lines 1840-1492).
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-\d+` build `createDetectFeed`/,
     EX, /const detectFeed = createDetectFeed\(playerEntity, \{/],
   ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:\d+-(\d+)` build `createDetectFeed`/,
@@ -974,8 +974,8 @@ test('CD6: every `src/` line Port-Status cites is the line it describes', () => 
 //
 // The G1 lane re-resolved ~180 `:NNN` cites after moving code in four
 // hosts, and the pass advanced only the LEADING number of every
-// multi-number citation: `cityGuards.js:1108-1012`, `world.js:16599-16503`,
-// `worldModes.js:1590 against :1356`. Forty of them came out as ranges
+// multi-number citation: cityGuards.js's 1108-1012, world.js's 16599-16503,
+// worldModes.js's 1590 against 1356. Forty of them came out as ranges
 // that cannot exist, and every pin in this file was green throughout,
 // because each one resolves a single number a human chose to list.
 //
@@ -1034,8 +1034,8 @@ test('CD7b: no citation names a range with a typographic dash - the tools that k
 
 // ═══ CD8: the cites the ROAD-G G4 REVIEW re-resolved ═══
 //
-// G4 swept `ui/listPicker.js:262` - a line the E-group's edits had
-// moved - to `:291` at four sites, and :291 is `this.syncScrollBar();`.
+// G4 swept listPicker.js's line 262 - a line the E-group's edits had
+// moved - to 291 at four sites, and 291 was `this.syncScrollBar();`.
 // The sentence at every one of those sites names the port's ONE reading
 // of `InputManager.GetMouseButton(0)`, which is the line AFTER it. The
 // same slice left three `ui/listPicker.js` cites standing in the Ledger

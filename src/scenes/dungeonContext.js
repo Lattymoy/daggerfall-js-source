@@ -312,7 +312,7 @@ const q3 = (v) => Math.round(v * 1000) / 1000; const GENDER_BIT = ['male', 'fema
 const HIT_POS_MAX = 1e6;
 // AUDIT FOES FOE5: the most damage one peer's blow may claim. The host TRUSTS the number (it never recomputes - the
 // striker's own calc is the game's), so without a bound any joiner could one-shot every foe in the room and empty it
-// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:2908); the dungeon
+// through the kill door. The exterior twin has carried this bound since WORLD6b (exteriorFoes.js:"_owners.delete(from)"); the dungeon
 // had none. Past anything a legal swing, shaft or blast can roll.
 const HIT_DMG_MAX = 10000;
 /** REST-SYNC: a joiner's ask is answered - or given up on - inside this long: its rest breaks once, at the next hour. */
@@ -2304,12 +2304,12 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the journal's Messages page through the same host sink.
   //
   // EVERY ALLOCATION HAS AN OWNER: `hudText` is this context's own, but
-  // `midScreenText` is a MODULE SINGLETON (ui/midScreenText.js:183) -
+  // `midScreenText` is a MODULE SINGLETON (ui/midScreenText.js:"export const midScreenText") -
   // the one label the outer host shares - so the seam is BORROWED, not
   // owned, and destroy() hands it back (the _prevPassiveHost idiom this
   // file already uses for its other process-global seams). A bare null
   // would not do: on ?world and ?exterior the previous holder is the
-  // host's own townTalk sink (world.js:17668 / exterior.js:3984), set
+  // host's own townTalk sink (world.js:"const it = items" / exterior.js:"has its own caller below"), set
   // once at boot and never again, so nulling on the way out of the
   // first dungeon would silently un-file every mid-screen label above
   // ground for the rest of the session - MC-1's own bug, re-opened.
@@ -2413,7 +2413,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // popup does not.
     // ENH-NOTICE3: through the one door, with that exception PASSED
     // rather than re-minted - `previousWindow: false` is the port's
-    // spelling of DaggerfallAction's null (ui/windowStack.js:65 reads
+    // spelling of DaggerfallAction's null (ui/windowStack.js:"export const paintsPreviousWindow" reads
     // it `=== true`, so false and null paint the same nothing). The
     // routing does not move: this context's presenter stands at
     // priority 20 while the dungeon is live, and its mount IS
@@ -2968,7 +2968,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   //
   // FS1 - SHIPPED (wave D, THE FOUR HOSTS RULE): THE ENCHANT CTX IS
   // MOUNTED HERE NOW, below the engine it casts through.
-  // setDefaultEnchantCtx (systems/enchantments.js:257) used to have
+  // setDefaultEnchantCtx (systems/enchantments.js:"export function setDefaultEnchantCtx") used to have
   // exactly ONE caller in the tree, scenes/world.js, so in the
   // standalone ?dungeon host every item-enchantment arm that needs a
   // host ran against no ctx at all: CastWhenUsed's CasterOnly assign
@@ -2987,7 +2987,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // copied mount would have diverged the first time an arm grew.
   /** DR1: THE TWO SPELL WINDOWS THIS HOST MOUNTS NOW, and the one door
    *  they go through. `mountSpellWindow` is worldModes'
-   *  mountSpellWindow DUNGEON ARM (worldModes.js:1464,
+   *  mountSpellWindow DUNGEON ARM (worldModes.js:"by PlayerActivate.TransitionInterior",
    *  `dungeonCtx?.showOverlay(win)`) resolved to what it actually
    *  calls here - this file's own pushDungeonWindow, which IS
    *  UserInterfaceManager.PushWindow. So a spell window raised over an
@@ -2997,8 +2997,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  There is no closeSpellWindow twin, for the same reason worldModes
    *  makes its dungeon arm a deliberate no-op (:857): both windows
    *  raise `done` from inside their own pick/cancel/close
-   *  (ListPickerWindow._pick/_cancel, ui/listPicker.js:206/:215;
-   *  NativeTradeWindow's close, ui/nativeTrade.js:687), and
+   *  (ListPickerWindow._pick/_cancel, ui/listPicker.js:"ListBox.ScrollIndex's"/ui/listPicker.js:"window. DaggerfallListPickerWindow's";
+   *  NativeTradeWindow's close, ui/nativeTrade.js:"while (this.basket.length)".."const now = this.hooks.nowMinutes?.() ?? 0;"), and
    *  tickOverlay drains the slot and reconciles the stack. A second
    *  clear here would only race that drain. */
   const mountSpellWindow = (win) => pushDungeonWindow(win);
@@ -3019,7 +3019,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *    isBeingRepaired - Buy and Repair only (remoteList :256-259,
    *      _takeItemFromRepair :388, _clear :430)
    *    accepts/enchanted - localListAccepts' Sell and SellMagic arms
-   *      (tradeModes.js:444-446); Identify returns true unfiltered
+   *      (tradeModes.js:"if (mode === 'Sell')"); Identify returns true unfiltered
    *    weight - sellProceeds, on the Sell confirm alone (:490)
    *    priceCtx - read by tradeCost's PAID Identify arm (:263-265) and
    *      by _modeAction's ShowTradePopup ELSE (:456-466). Neither can
@@ -3375,7 +3375,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // systems/chargenSession.js FS-slice - SHIPPED (wave D). This
       // host held the RAW flow as its own overlay and drew it
       // directly, so it could not reach the skin fork that lives in
-      // createChargenWindow (chargenSession.js:368) - THE ONE
+      // createChargenWindow (chargenSession.js:"export function createChargenWindow") - THE ONE
       // CONSTRUCTION SEAM AUDIT 17i split out precisely so no host
       // would wire chargen by hand a fourth time. It is through that
       // door now, which is also where the fire-once law, the shared
@@ -3542,7 +3542,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // NEXT updateMissiles pass to fill. But the push lands in a
     // MICROTASK - this is async and its one caller does not await it -
     // and both hosts draw dynamicDraws BEFORE they call drawFoes
-    // (dungeon.js:1129 against :1159; worldModes.js:8706 against :8726).   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
+    // (dungeon.js:"musicDirector.update" against dungeon.js:"weapon overlay -"; worldModes.js:"which is exactly DFU's" against worldModes.js:"player.waterSurfaceY =").   // QS6: both pairs' SECOND half was stale before this slice - they named neither `drawFoes` call, and a positional bump would have moved a wrong number by the right offset; re-resolved by content
     // So the very next frame drew the arrow with a NULL matrix, and
     // `uniformMatrix4fv(uModel, false, null)` throws - Float32List is
     // a non-nullable WebIDL union. Firing a bow killed the frame loop,
@@ -4455,8 +4455,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
               // AUDIT 39 (#64) / THE FOUR HOSTS RULE - SHIPPED (wave D):
               // this host was the FOURTH BODY of the player-arrow law
               // and is now the fourth CALLER. combat/arrowFlight.js's
-              // playerArrowHitFoe is the one copy world.js:28933,
-              // exterior.js:5651 and worldModes.js:9432 already ran;
+              // playerArrowHitFoe is the one copy world.js:"onPlayerArrowHitFoe",
+              // exterior.js:"onPlayerArrowHitFoe" and worldModes.js:"onPlayerArrowHitFoe" already ran;
               // the flag said the divergence would bite and it already
               // had. This copy splashed at the ARROW TIP
               // (`[m.pos[0], m.pos[1], m.pos[2]]`) on the claim that
@@ -5350,7 +5350,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const i = data.i | 0, dmg = Number(data.dmg);
     const xs = data.xs === 1;   // REST-SYNC: a shared encounter, by the room's number - not a layout index
     const f = xs ? (_sharedById.get(i) ?? null) : foes[i];
-    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:2908). The number is a peer's
+    // AUDIT FOES FOE5: BOUNDED, as the exterior twin's applyHit is (exteriorFoes.js:"_owners.delete(from)"). The number is a peer's
     // word and the host trusts it without recomputing, so an unbounded one let any joiner one-shot every foe in the
     // room - and, through the kill door, empty it. 10000 is past anything a legal swing, shaft or blast can roll.
     if (!f || (!xs && i >= _layoutFoes) || f.dead || !Number.isFinite(dmg) || dmg < 0 || dmg > HIT_DMG_MAX) return false;
@@ -5814,7 +5814,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // startingHealth (entity.MaxHealth, :109), currentFatigue
         // (:111) and the instanced effect bundles (:120, restored
         // :222). Without maxHealth a rebuild-then-restore load
-        // re-rolled it (enemyEntity.js:121) and restored health could
+        // re-rolled it (enemyEntity.js:"maxHealth = rollEnemyClassMaxHealth") and restored health could
         // sit above the new max; without activeEffects a paralyzed
         // boss woke and a burning foe stopped burning on load.
         // AUDIT WORLD B4: the species. Two players' random flats differ by level (dungeonEnemies.js bands the pick
@@ -5944,11 +5944,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // InstantiatePrefab's a fresh GameObject per saved record, so
     // EnemyEntity's `PickpocketByPlayerAttempted` default is the loaded
     // truth for every enemy. The re-minting pools match that by
-    // construction (exteriorFoes.js:2243's restoreWorld goes through
+    // construction (exteriorFoes.js:"(t.hurtFromFoe ? t.hurtFromFoe(d, dir, f) : damageFoe(t, d, null, dir))".."audio, hitEffects,"'s restoreWorld goes through
     // spawnFoe), but this host patches the LIVE foes in place, so a
     // same-dungeon reload kept a raised latch and a failed pickpocket
     // could never be retried - falsifying the law
-    // player/mobileEnemyActivate.js:44-47 states in its own header.
+    // player/mobileEnemyActivate.js:"The flag is per-foe" states in its own header.
     // A PRE-PASS over the WHOLE live pool, not a line in the loop
     // below: that loop visits only the indices the record carries.
     for (const f of foes) if (f?.entity) f.entity.pickpocketAttempted = false;
@@ -6725,7 +6725,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // The three-argument door is the IMPORT (hurtEntity, :26), not
         // this file's one-argument hurtPlayer wrapper (:1030) that
         // shadows its name: called through the wrapper the entity
-        // arrived as `dmg`, playerEntity.js:120's `!(dmg > 0)` guard read
+        // arrived as `dmg`, playerEntity.js:"the zero crossing"'s `!(dmg > 0)` guard read
         // NaN and returned, and dungeon drowning never dealt a point.
         // bypassShield because SetHealth(0) is a kill, not damage.
         hurtEntity(playerEntity, playerEntity.health, { bypassShield: true });   // SetHealth(0): drowned
@@ -8369,13 +8369,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         currentLocationName: opts.questLocationName,
         quickSave: () => ctx.quickSave?.(),
         // MAC1 J: the pointer comes back INSIDE the resume gesture
-        // (ui/pauseDoor.js:143-167). THIS CONTEXT OWNS NO CANVAS OF ITS
-        // OWN (:4701), so the relock arrives from whichever dungeon host
-        // mounted it - the way hudMessageSink is threaded (:1349) - and
+        // (ui/pauseDoor.js:"return (action) =>"). THIS CONTEXT OWNS NO CANVAS OF ITS
+        // OWN (dungeonContext.js:"(dungeon.js's tail)"), so the relock arrives from whichever dungeon host
+        // mounted it - the way hudMessageSink is threaded (dungeonContext.js:"hudText.onMessage") - and
         // both of them hand it in: dungeon.js's opts bag and
         // worldModes' (the world-hosted crawl, which is where the
         // classic start into Privateer's Hold lives, and which is the
-        // pause door ui/input.js:847 reaches underground).
+        // pause door ui/input.js:"THE ACTION LADDER" reaches underground).
         relock: () => opts.relock?.(),
         // the LOAD arm needs the host's position applier, exactly as
         // routeKey's own QuickLoad case passes it
@@ -8595,7 +8595,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // through the overlay as 'back' (ends a running rest)": that route
     // was never real. ROAD-B B5 built the real one. With a window up,
     // overlayAction turns any single character into `char:<k>`, so
-    // KeyR arrives as 'char:r', and ui/restWindow.js:373-375 runs A8's
+    // KeyR arrives as 'char:r', and ui/restWindow.js:"flags above are unguarded" runs A8's
     // normalizeCode inverse to turn it back into 'KeyR' - DFU's
     // toggleClosedBinding - so a second Rest press ends a running rest
     // or closes the selection page (:302-315), which is
@@ -8923,7 +8923,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // CHARGEN WIZARD sitting on top of it - and playing through the
       // wizard runs finishChargen, overwriting the character that was
       // just loaded. The context mounts chargen at build time
-      // (dungeonContext.js:891) and dungeon.js calls quickLoad after,
+      // (dungeonContext.js:"AUDIT 29 C3: the rays") and dungeon.js calls quickLoad after,
       // so the wizard is ALWAYS up on this path.
       // NOTE: activeOverlay is cleared but chargenWindow is NOT nulled.
       // Later sites test `activeOverlay === chargenWindow`, and with
@@ -9153,7 +9153,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // FS-slice (wave D): the race screen's back-out used to be
       // POLLED here off `chargenFlow.cancelled`. The window owns it
       // now and fires onCancel from the very input that sets the flag
-      // (chargenSession.js:514), which is the shape the other hosts
+      // (chargenSession.js:"wizard (the flow flags it; the host unwinds)".."if (flow.cancelled) { _fired = true; onCancel?.(); return; }"), which is the shape the other hosts
       // have always had - and the enhanced skin, whose DOM view never
       // reaches this host's input seam at all, could never have been
       // cancelled by a poll on a flow the host was not driving.

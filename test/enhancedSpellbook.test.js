@@ -77,7 +77,7 @@ test('PX23 book: it borrows every law and invents none', () => {
   assert.ok(rows[0].effects[0].group.length > 0);
   // ...and the source of the naming is the classic book's own module.
   const book = read('src/ui/enhancedSpellbook.js');
-  assert.match(book, /from '\.\.\/systems\/spellEffects\.js'/, 'the same effectByKey spellbookWindow.js:120 uses');
+  assert.match(book, /from '\.\.\/systems\/spellEffects\.js'/, 'the same effectByKey spellbookWindow.js:"effectByKey, spellBookDescriptionId" uses');
   assert.match(book, /spellEffects, spellPointCost, EFFECT_NOT_FOUND,/, 'the laws are imported, not rewritten');
   assert.doesNotMatch(book, /tag === 'lycanthrope'|tag === 'vampire'/, 'the tags are constants, never typed');
 });
@@ -199,7 +199,7 @@ test('PX23b: an effect carries magnitude, duration and chance - and the first dr
 });
 
 test('PX23b: the two icons the classic only shows on HOVER are printed as words', () => {
-  // spellbookWindow.js:399/402 pushes TARGET_DESCRIPTIONS and
+  // spellbookWindow.js:"this.tip.show(TARGET_DESCRIPTIONS[spell.rangeType] ?? null, vx, vy)"/spellbookWindow.js:"this.tip.show(ELEMENT_DESCRIPTIONS[spell.element] ?? null, vx, vy)" pushes TARGET_DESCRIPTIONS and
   // ELEMENT_DESCRIPTIONS into a tooltip. This window draws no icons -
   // it reads no ARENA2 - so it prints what they mean, which is more
   // than the classic tells you at a glance.

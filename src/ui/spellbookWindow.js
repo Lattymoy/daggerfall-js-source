@@ -74,7 +74,7 @@
 // and SetSpell writes it back into the player's slot - the shared
 // SPELLS.STD record is untouched. The port's records are objects
 // shared by every caster, so confirmRename copies explicitly and
-// marks the copy `custom`, which is exactly the flag save.js:406
+// marks the copy `custom`, which is exactly the flag save.js:"...(entity.spells ?? [])"
 // already reads to store a whole record instead of a bare index.
 // U4's "rename needs per-entity copies + name persistence first" is
 // answered: it has both.
@@ -425,7 +425,7 @@ export class SpellbookWindow {
     this._tipHover(x, y, vx, vy);
     // ROAD-G G4: THE THUMB DRAG (VerticalScrollBar.Update, :101-130).
     // `e.buttons & 1` is the port's read of GetMouseButton(0) - the
-    // same read `listPicker.js:295` makes - and the host's mousemove
+    // same read `listPicker.js:"if (vy >= 0 && this.scrollBar.update(!!(e?.buttons & 1), vy))"` makes - and the host's mousemove
     // is the frame. The drag continues wherever the cursor goes,
     // including off the bar and off the panel, because DFU polls a
     // POSITION and a held button, not a component the pointer is over.
@@ -527,7 +527,7 @@ export class SpellbookWindow {
    *  spellings of "no subtype": a SPELLS.STD record reads it as a
    *  SIGNED byte and stores -1, while a spell built in the maker
    *  copies the catalog's 255. Every other consumer normalizes the
-   *  same way (systems/effects.js:169's classicSub, spellcost.js:130)
+   *  same way (systems/effects.js:"i.e. ANY of the six"'s classicSub, spellcost.js:"return EFFECT_COST_TABLE")
    *  and the effect table is keyed on 255, so a Free Action off the
    *  file would otherwise print "Effect not found" in the book. */
   effectLabels(slot) {
@@ -661,7 +661,7 @@ export class SpellbookWindow {
    *  copy, and SetSpell writes it into the player's slot - the shared
    *  SPELLS.STD record is never touched. The port's records are
    *  objects shared by every caster, so the copy has to be explicit,
-   *  and it is marked `custom` so save.js:406 stores the whole record
+   *  and it is marked `custom` so save.js:"...(entity.spells ?? [])" stores the whole record
    *  instead of the bare index it would otherwise write (which would
    *  reload the ORIGINAL name). That retires the U4 ledger's rename
    *  row: renaming is real and it persists. */
@@ -804,8 +804,8 @@ export class SpellbookWindow {
 
   /** AUDIT 65 UI-1: THE HOSTS OWN THE THIRD AND FOURTH SLOTS. Every
    *  host that holds an overlay slot dispatches
-   *  `click(vx, vy, right, middle)` - `scenes/townTalk.js:1274`,
-   *  `scenes/worldModes.js:11083`, `scenes/dungeonContext.js:9108` - so
+   *  `click(vx, vy, right, middle)` - `scenes/townTalk.js:"else overlay.click?.(v[0], v[1], e.button === 2, e.button === 1)"`,
+   *  `scenes/worldModes.js:"return handled;"`, `scenes/dungeonContext.js:"and the drain in"` - so
    *  a clock threaded positionally here arrived as `e.button === 2`, a
    *  BOOLEAN. `false ?? Date.now()` keeps the `false`, `false != null`
    *  is true and `false - false === 0 < 300`, which made EVERY second
@@ -1105,7 +1105,7 @@ export class SpellbookWindow {
 /** ROAD-D2 closed this file's thumb note. The "Resources sprite the
  *  port has no reader for" was stale: ROAD-A7 carried vScrollThumb
  *  Top/Body/Bottom into the repo as their fifteen literal bytes
- *  (ui/verticalScrollBar.js:56-58), so the book's thumb is DFU's own
+ *  (ui/verticalScrollBar.js:"export const THUMB_TOP_ROW"), so the book's thumb is DFU's own
  *  art - a 77 left edge, a 186 body under a 223 highlight, an all-77
  *  foot, each strip StretchToFill across the 7-wide rail - drawn by
  *  drawScrollThumb, and the local 10px floor and the flat brass

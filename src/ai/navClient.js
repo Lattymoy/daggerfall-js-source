@@ -84,7 +84,7 @@ export class NavClient {
         // AUDIT 59 F1: THE WORKER NEVER SHIPPED. Vite bundles a module
         // worker only from the literal spelling `new Worker(new
         // URL('./x.js', import.meta.url), { type: 'module' })` - the
-        // same rule terrainGenClient.js:10 records for the terrain
+        // same rule terrainGenClient.js:"Worker(new URL(...))" records for the terrain
         // worker. `new WorkerCtor(...)` is not that spelling, so the
         // production build carried no nav worker chunk at all: the URL
         // 404'd, onerror rejected the pending bake, the catch below

@@ -792,7 +792,7 @@ export class NPCSession {
  *      portrait for a specific faction".
  *
  *  `flatFaceIndex(archive, record)` is FlatsFile.GetFlatData's
- *  faceIndex (formats/flatsFile.js:84 returns -1 when the flat is
+ *  faceIndex (formats/flatsFile.js:"The TFAC00I0.RCI" returns -1 when the flat is
  *  absent, which is this function's not-found arm). */
 export const OOPS_PORTRAIT_RECORD = 410;
 export function portraitIndexFromStaticNPCBillboard(data, { factionData = null, flatFaceIndex = null } = {}) {

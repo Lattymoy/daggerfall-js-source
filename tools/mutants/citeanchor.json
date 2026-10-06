@@ -1,0 +1,472 @@
+[
+  {
+    "name": "CITEANCHOR-quote-min-halved",
+    "file": "tools/citeAnchor.mjs",
+    "old": "export const QUOTE_MIN = 16;",
+    "new": "export const QUOTE_MIN = 8;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A quote shorter than the minimum names its line by a fragment a change elsewhere can repeat."
+  },
+  {
+    "name": "CITEANCHOR-edge-no-whitespace",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  return /\\s/.test(raw[e]) || (/[\\w$]/.test(raw[e - 1])",
+    "new": "  return (/[\\w$]/.test(raw[e - 1])",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "Without the whitespace edge, a quote can only end at a bracket."
+  },
+  {
+    "name": "CITEANCHOR-edge-no-callee",
+    "file": "tools/citeAnchor.mjs",
+    "old": "/[([)\\]},;:]/.test(raw[e])",
+    "new": "/[)\\]},;:]/.test(raw[e])",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A callee before its call is an edge (`export function seam`)."
+  },
+  {
+    "name": "CITEANCHOR-edge-no-close",
+    "file": "tools/citeAnchor.mjs",
+    "old": " || (/[)\\]]/.test(raw[e - 1]) && !/[\\w$]/.test(raw[e]));",
+    "new": ";",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A closing bracket before what follows it is an edge."
+  },
+  {
+    "name": "CITEANCHOR-edge-inside-tokens",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  return /\\s/.test(raw[e]) || (/[\\w$]/.test(raw[e - 1])",
+    "new": "  return !(/[\\w$]/.test(raw[e - 1]) && /[\\w$]/.test(raw[e])) || (/[\\w$]/.test(raw[e - 1])",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "The old rule: a quote may end inside an operator or a path (`nothingText: () =`)."
+  },
+  {
+    "name": "CITEANCHOR-balance-open-left",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  return paren === 0 && square === 0 && brace === 0;",
+    "new": "  return paren >= 0 && square >= 0 && brace === 0;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A quote that leaves a bracket open carried FOE1's scanner past its call."
+  },
+  {
+    "name": "CITEANCHOR-no-avoid",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  return (avoid != null ? quoteRun(fileText, lines, n, forbid, avoid, braces) : null) ?? quoteRun(fileText, lines, n, forbid, null, braces);",
+    "new": "  return quoteRun(fileText, lines, n, forbid, null, braces);",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A quote of world.js written into exterior.js's comments was the first copy a test's indexOf met."
+  },
+  {
+    "name": "CITEANCHOR-standing-always-once",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  return hay.indexOf(needle, a + 1) < 0 ? 1 : 2;",
+    "new": "  return 1;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A quote that stands twice names no line."
+  },
+  {
+    "name": "CITEANCHOR-after-twin-ignored",
+    "file": "tools/citeAnchor.mjs",
+    "old": "if (afterText(lines[j - 1], line) === line) { if (j === n) return { quote: q, line }; break; }",
+    "new": "if (afterText(lines[j - 1], line) === line && j === n) return { quote: q, line };",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "An after-form whose twin stands between names the twin."
+  },
+  {
+    "name": "CITEANCHOR-resolve-ambiguous-passes",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  if (fileText.indexOf(quote, at + 1) >= 0) return { error: 'ambiguous' };\n",
+    "new": "",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A quote that stands twice resolves to its first copy, silently."
+  },
+  {
+    "name": "CITEANCHOR-no-mask",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  if (!text.includes(':\"')) return text;",
+    "new": "  return text;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A file that cites its own line counts its quote twice, and the anchor stops resolving."
+  },
+  {
+    "name": "CITEANCHOR-row-takes-a-pipe",
+    "file": "tools/citeAnchor.mjs",
+    "old": "${/^\\s*\\|/.test(line) ? '|\\\\|' : ''}",
+    "new": "",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A `|` in a table row's quote splits the cell."
+  },
+  {
+    "name": "CITEANCHOR-span-not-carried",
+    "file": "tools/citeAnchor.mjs",
+    "old": "    const inSpan = ((open ? 1 : 0) + (line.slice(0, col).match(/`/g) ?? []).length) % 2 === 1;",
+    "new": "    const inSpan = ((line.slice(0, col).match(/`/g) ?? []).length) % 2 === 1;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A span opened on the line above holds the cite; read per line, a `*` lands in prose."
+  },
+  {
+    "name": "CITEANCHOR-blank-keeps-span",
+    "file": "tools/citeAnchor.mjs",
+    "old": "    if (!l.trim()) { out.push(false); open = false; continue; }",
+    "new": "    if (!l.trim()) { out.push(open); continue; }",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A blank line ends a paragraph and any span in it."
+  },
+  {
+    "name": "CITEANCHOR-fence-not-code",
+    "file": "tools/citeAnchor.mjs",
+    "old": "    if (/^\\s*```/.test(l)) { out.push(true); fence = !fence; open = false; continue; }\n    if (fence) { out.push(true); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A fenced block is code."
+  },
+  {
+    "name": "CITEANCHOR-strike-unpaired-not-held",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  if (at.length % 2) return null;\n",
+    "new": "",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A strike opened on another line pairs wrongly with this one: the whole line is held."
+  },
+  {
+    "name": "CITEANCHOR-strike-whole-line",
+    "file": "tools/citeAnchor.mjs",
+    "old": "    const struckAt = (col) => spans === null || spans.some(([a, b]) => col >= a && col < b);",
+    "new": "    const struckAt = () => spans === null || spans.length > 0;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "The old rule: a closed Ledger row's live closing note held as a record."
+  },
+  {
+    "name": "CITEANCHOR-strike-ignored",
+    "file": "tools/citeAnchor.mjs",
+    "old": "    const struckAt = (col) => spans === null || spans.some(([a, b]) => col >= a && col < b);",
+    "new": "    const struckAt = () => false;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A struck record re-resolved - Port-Status's struck law broken."
+  },
+  {
+    "name": "CITEANCHOR-nudge-reach-one",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  for (let k = n + 1; k <= n + 3; k++) if (takes(k)) return { n: k, nudged: true };",
+    "new": "  for (let k = n + 1; k <= n + 1; k++) if (takes(k)) return { n: k, nudged: true };",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A doc block's close names what it documents, a few lines on."
+  },
+  {
+    "name": "CITEANCHOR-chain-glued",
+    "file": "tools/citeAnchor.mjs",
+    "old": "        if (before === false && it.sep.startsWith('/')) { push({ to: null, status: 'chain', file: r.file, n: it.n }); continue; }",
+    "new": "",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A slash's continuation after a number left standing reads as that number's directory."
+  },
+  {
+    "name": "CITEANCHOR-settle-writes-null",
+    "file": "tools/citeAnchor.mjs",
+    "old": "      const to = next == null ? a.text : m[1] + next;",
+    "new": "      const to = m[1] + next;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A line its own cites leave unquotable writes `null` where the cite stood."
+  },
+  {
+    "name": "CITEANCHOR-launcher-not-foreign",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  ['bible/10-UI/Settings-Screen-Spec.md', 'launcher.js'],\n",
+    "new": "",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "The spec's retired launcher's numbers read as app/launcher/launcher.js's lines."
+  },
+  {
+    "name": "CITEANCHOR-relay-not-held",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  const held = relay?.has(docPath) ? 'relay' : null;",
+    "new": "  const held = null;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A relay file's cites rewritten: every byte there is a relay law (SLAM8)."
+  },
+  {
+    "name": "CITEANCHOR-continuation-slash-is-root",
+    "file": "tools/citeAnchor.mjs",
+    "old": "    const p = spelled.replace(/^\\/+/, '').replace(/^(\\.\\.?\\/)+/, '');",
+    "new": "    const p = spelled.replace(/^(\\.\\.?\\/)+/, '');",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A continuation's slash read as a root: `/world.js` resolves to nothing."
+  },
+  {
+    "name": "CITEANCHOR-unclear-no-dfu",
+    "file": "tools/citeAnchor.mjs",
+    "old": "export const OTHER_CODE = /\\bDFU\\b|\\bC#|\\b[A-Z][a-z]+(?:[A-Z][a-z0-9]*)+\\b/;",
+    "new": "export const OTHER_CODE = /\\bC#|\\b[A-Z][a-z]+(?:[A-Z][a-z0-9]*)+\\b/;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "DFU named before a bare continuation no longer holds it (\"DFU plays it first (:12)\"): the C# line is anchored into our file."
+  },
+  {
+    "name": "CITEANCHOR-unclear-no-csharp",
+    "file": "tools/citeAnchor.mjs",
+    "old": "export const OTHER_CODE = /\\bDFU\\b|\\bC#|\\b[A-Z][a-z]+(?:[A-Z][a-z0-9]*)+\\b/;",
+    "new": "export const OTHER_CODE = /\\bDFU\\b|\\b[A-Z][a-z]+(?:[A-Z][a-z0-9]*)+\\b/;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "C# named before a bare continuation no longer holds it."
+  },
+  {
+    "name": "CITEANCHOR-unclear-no-pascal",
+    "file": "tools/citeAnchor.mjs",
+    "old": "export const OTHER_CODE = /\\bDFU\\b|\\bC#|\\b[A-Z][a-z]+(?:[A-Z][a-z0-9]*)+\\b/;",
+    "new": "export const OTHER_CODE = /\\bDFU\\b|\\bC#/;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A PascalCase name (StaticNPC.SetRuntimeData, MinDamage) before a bare continuation no longer holds it: DFU's line is anchored into our file, as Port-Ledger 815/817/927 were."
+  },
+  {
+    "name": "CITEANCHOR-unclear-one-hump",
+    "file": "tools/citeAnchor.mjs",
+    "old": "export const OTHER_CODE = /\\bDFU\\b|\\bC#|\\b[A-Z][a-z]+(?:[A-Z][a-z0-9]*)+\\b/;",
+    "new": "export const OTHER_CODE = /\\bDFU\\b|\\bC#|\\b[A-Z][a-z]+\\b/;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "Any capitalised word counts as a code name: a sentence that starts \"The\" holds the head's own continuation."
+  },
+  {
+    "name": "CITEANCHOR-unclear-other-file-ignored",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  for (const m of between.matchAll(NAMED_FILE)) if (m[1] !== own) return false;\n",
+    "new": "",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A file of ours named in prose no longer holds the continuation after it: verticalScrollBar.js's lines go to the head's file (Port-Ledger 702)."
+  },
+  {
+    "name": "CITEANCHOR-unclear-own-file-counts",
+    "file": "tools/citeAnchor.mjs",
+    "old": "if (m[1] !== own) return false;",
+    "new": "return false;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "The head's own file named again in its prose holds its own continuation."
+  },
+  {
+    "name": "CITEANCHOR-unclear-unwired",
+    "file": "tools/citeAnchor.mjs",
+    "old": "        if (!headOwns(l.slice(from, it.col), r.file)) { push({ to: null, status: 'unclear', file: r.file, n: it.n }); continue; }   // a head's own slice is empty\n",
+    "new": "",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "The plan never asks whether the head owns its continuation: every C# line after one of ours is anchored into our file."
+  },
+  {
+    "name": "CITEANCHOR-after-no-indented-form",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  for (const line of raw === t ? [t] : [t, raw]) {",
+    "new": "  for (const line of [t]) {",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A close brace past its inner twin takes no after-form: the outer block's `  }` falls to the range's next line, as AUDIT REST II Q5's spawn tick did."
+  },
+  {
+    "name": "CITEANCHOR-after-always-trimmed",
+    "file": "tools/citeAnchor.mjs",
+    "old": "const afterText = (line, after) => (/^\\s/.test(after) ? line.trimEnd() : line.trim());",
+    "new": "const afterText = (line, after) => line.trim();",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "An indented after-form resolves trimmed: `..\"  }\"` names the inner twin's `    }`."
+  },
+  {
+    "name": "CITEANCHOR-brace-uncounted",
+    "file": "tools/citeAnchor.mjs",
+    "old": "    else if (braces && c === '{') brace++;\n    else if (braces && c === '}' && --brace < 0) return false;\n",
+    "new": "",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A comment's anchor carries a brace a scanner counts: BOOT-TDZ2 read `..\"}\"` in buildPixelNow's comment as the function's end."
+  },
+  {
+    "name": "CITEANCHOR-brace-close-first",
+    "file": "tools/citeAnchor.mjs",
+    "old": "    else if (braces && c === '}' && --brace < 0) return false;",
+    "new": "    else if (braces && c === '}') brace--;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A close before its open (`} else {`) dips a scanner's depth to the function's own level mid-body - the scan ends there."
+  },
+  {
+    "name": "CITEANCHOR-brace-open-left",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  return paren === 0 && square === 0 && brace === 0;",
+    "new": "  return paren === 0 && square === 0 && brace >= 0;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A quote that leaves a `{` open (`if (x) {`) carries a scanner past the function's end."
+  },
+  {
+    "name": "CITEANCHOR-head-whole-with-brace",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  const whole = braces && !open && raw[end - 1] === '{' ? raw.slice(0, end - 1).trimEnd().length : end;",
+    "new": "  const whole = end;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A block's head shorter than the minimum (`if (people) {`) is whole without its brace; without that it is nudged off its own line."
+  },
+  {
+    "name": "CITEANCHOR-opener-quote-balanced",
+    "file": "tools/citeAnchor.mjs",
+    "old": "(open ? balanced(q + '}', true) : balanced(q, braces))",
+    "new": "balanced(q, braces)",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "The opener's quote must hold the brace its after-form's line closes, or the anchor is a lone `}` to a scanner."
+  },
+  {
+    "name": "CITEANCHOR-opener-any-indent",
+    "file": "tools/citeAnchor.mjs",
+    "old": "      else if (l[c] === '{' && --depth === 0) return /^\\s*/.exec(l)[0] === indent ? k : null;",
+    "new": "      else if (l[c] === '{' && --depth === 0) return k;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A brace in a string miscounts the upward match: the opener found then stands at another indentation, and the anchor names another block's close."
+  },
+  {
+    "name": "CITEANCHOR-chain-not-walked",
+    "file": "tools/citeAnchor.mjs",
+    "old": "k = lines[k - 1].trim().startsWith('}') ? openerOf(lines, k) : null",
+    "new": "k = null",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "The close of an if/else chain whose last link (`} else {`) cannot be quoted takes no anchor, though the link before it can name it."
+  },
+  {
+    "name": "CITEANCHOR-closer-any-line",
+    "file": "tools/citeAnchor.mjs",
+    "old": "    if (!balanced('{' + t, true)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A line that leaves a brace open (`} else {`) is named after its opener - the anchor then leaves that brace open."
+  },
+  {
+    "name": "CITEANCHOR-head-not-nudged",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  if (!BARE.test(t) && !(braces && opensBlock(t))) return { n: null };",
+    "new": "  if (!BARE.test(t)) return { n: null };",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A block's head whose only quote holds its brace (`_confirmExit() {`, whose name stands in its calls) is left a number, for a person, though its block's first line names it."
+  },
+  {
+    "name": "CITEANCHOR-opensblock-net",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  return d > low;",
+    "new": "  return d > 0;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A line that closes one block and opens the next (`} else {`) opens a block too: its head is nudged like any other."
+  },
+  {
+    "name": "CITEANCHOR-takes-braces-free",
+    "file": "tools/citeAnchor.mjs",
+    "old": "quoteFor(text, lines, k, forbid, null, braces) != null",
+    "new": "quoteFor(text, lines, k, forbid) != null",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "Whether a line takes an anchor is judged by the rule it will be written under: a head that only takes one with its brace is not passed over."
+  },
+  {
+    "name": "CITEANCHOR-braces-unwired-plan",
+    "file": "tools/citeAnchor.mjs",
+    "old": "  const braces = bracesAt(docPath);",
+    "new": "  const braces = false;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "The conversion writes a code comment's anchors with their braces unbalanced."
+  },
+  {
+    "name": "CITEANCHOR-braces-unwired-settle",
+    "file": "tools/citeAnchor.mjs",
+    "old": ", a.file === a.doc ? null : maskAnchors(texts.get(a.doc)), bracesAt(a.doc));",
+    "new": ", a.file === a.doc ? null : maskAnchors(texts.get(a.doc)));",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "The settle pass re-quotes a code comment's anchor with its braces unbalanced."
+  },
+  {
+    "name": "CITEANCHOR-braces-in-markdown",
+    "file": "tools/citeAnchor.mjs",
+    "old": "export const bracesAt = (docPath) => !/\\.md$/.test(docPath);",
+    "new": "export const bracesAt = (docPath) => true;",
+    "tests": [
+      "test/citeanchor.test.js"
+    ],
+    "note": "A Markdown doc's anchors lose the block heads and closes their braces would name."
+  }
+]

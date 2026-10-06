@@ -71,8 +71,8 @@ const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; 
 test('audit58 pins2: DefaultTerrainSampler\'s scale constants against DFU\'s literals', () => {
   // DefaultTerrainSampler.cs:25-31, typed out rather than derived. The
   // suite's four existing users of SCALED_OCEAN_ELEVATION all compute
-  // their expectation FROM it (terrain.test.js:163, farring.test.js:28,
-  // overworldmap.test.js:95, distantland.test.js:93), so the sea floor
+  // their expectation FROM it (terrain.test.js:"const oceanNorm =", farring.test.js:"SCALED_OCEAN_ELEVATION *",
+  // overworldmap.test.js:95, distantland.test.js:"if (h < SCALED_OCEAN_ELEVATION)"), so the sea floor
   // could move to any value at all and every one of them stayed green.
   assert.equal(BASE_HEIGHT_SCALE, 8, 'baseHeightScale = 8f (:25)');
   assert.equal(MAX_TERRAIN_HEIGHT, 1539, 'maxTerrainHeight = 1539f (:31)');
