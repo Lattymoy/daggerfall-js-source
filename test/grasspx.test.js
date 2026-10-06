@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildTuftSheet, buildTuftMips, downsampleCoverage, coverageOf, layTuft, paintTuft, toneAt, toneByte, isHighlightRow, mulberry32, pixelGrass,
   PX_VARIANTS, PX_TUFT_W, PX_TUFT_H, PX_TONES, PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT, PX_TUFT_MARGIN, PX_BLADE_MIN, PX_HIGHLIGHT_MIN, tuftMarginFor, bladeMinFor, highlightMinFor } from '../src/render/grassPixelArt.js';
-import { LAB_GRASS_HEAD, GAME_GRASS_FIELD, LAB_GRASS_VS, LAB_GRASS_FS, GAME_GRASS_VS, GAME_GRASS_FS, GRASSPX_VS_EDITS, GRASSFOG_VS_EDITS, GRASSFOG_FS_EDITS, GRASSPX_FS_EDITS, GRASSLIT_VS_EDITS, GRASSLIT_FS_EDITS, applyGrassEdits, LabGrassRenderer, GRASS_CELL } from '../src/render/labGrass.js';
+import { LAB_GRASS_HEAD, GAME_GRASS_FIELD, LAB_GRASS_VS, LAB_GRASS_FS, GAME_GRASS_VS, GAME_GRASS_FS, GRASSPX_VS_EDITS, GRASSFOG_VS_EDITS, GRASSFOG_FS_EDITS, GRASSPX_FS_EDITS, GRASSLIT_VS_EDITS, GRASSLIT_FS_EDITS, GRASSMEADOW_VS_EDITS, GRASSMEADOW_FS_EDITS, applyGrassEdits, LabGrassRenderer, GRASS_CELL } from '../src/render/labGrass.js';
 import { FEATURES, FEATURE_PREF_DEFAULTS } from '../src/systems/features.js';
 import { perspective, mirrorProjectionX, lookAt } from '../src/world/mat4.js';
 
@@ -165,9 +165,9 @@ test('GRASS AUDIT 1: the rim has somewhere to land - the highlight is the top tw
 test('GRASS-PX: the compiled stages are the lab\'s text under the declared edits, each landing exactly once, and the lab\'s text is untouched', () => {
   assert.equal(GRASSPX_VS_EDITS.length, 4, 'GRASS-PX3: the two sway edits are gone - the wind is the lab\'s in both styles'); assert.equal(GRASSPX_FS_EDITS.length, 6);
   // DISC20-A: and then the fog's edits, over the pixel style's (the fog is not snapped to a ramp rung)
-  // GRASS-LIT: the fourth list, after the fog's
-  assert.equal(GAME_GRASS_VS, applyGrassEdits(applyGrassEdits(applyGrassEdits(LAB_GRASS_VS, GRASSPX_VS_EDITS), GRASSFOG_VS_EDITS), GRASSLIT_VS_EDITS));
-  assert.equal(GAME_GRASS_FS, applyGrassEdits(applyGrassEdits(applyGrassEdits(LAB_GRASS_FS, GRASSPX_FS_EDITS), GRASSFOG_FS_EDITS), GRASSLIT_FS_EDITS));
+  // GRASS-LIT: the fourth list, after the fog's; MEADOW1: the fifth, the meadow's, last
+  assert.equal(GAME_GRASS_VS, applyGrassEdits(applyGrassEdits(applyGrassEdits(applyGrassEdits(LAB_GRASS_VS, GRASSPX_VS_EDITS), GRASSFOG_VS_EDITS), GRASSLIT_VS_EDITS), GRASSMEADOW_VS_EDITS));
+  assert.equal(GAME_GRASS_FS, applyGrassEdits(applyGrassEdits(applyGrassEdits(applyGrassEdits(LAB_GRASS_FS, GRASSPX_FS_EDITS), GRASSFOG_FS_EDITS), GRASSLIT_FS_EDITS), GRASSMEADOW_FS_EDITS));
   for (const [lab, edits] of [[LAB_GRASS_VS, GRASSPX_VS_EDITS], [LAB_GRASS_FS, GRASSPX_FS_EDITS]]) {
     for (const e of edits) {
       assert.equal(lab.split(e.from).length - 1, 1, `the lab carries the line once: ${e.why}`);
@@ -297,7 +297,7 @@ test('GRASS-PX: the renderer compiles the game\'s stages, uploads the sheet with
   assert.ok(!calls.some((c) => c[0] === 'bindTexture' && c[2] === r.pxSheet) && !calls.some((c) => c[0] === 'activeTexture' && c[1] === C.TEXTURE4), 'the smooth style never touches unit 4');
   calls.length = 0; r.draw(new Float32Array(16), new Float32Array(16), new Float32Array(3), 0, light, wind);
   assert.equal(calls.find((c) => c[0] === 'uniform1f' && c[1] === 'uPixel')[2], 0, 'a draw that names no style is the lab\'s');
-  assert.equal(uploads('junk').uPixel, 1, 'a stored value that is no tier is the row\'s default, pixel - the same fallback the pane draws');
+  assert.equal(uploads('junk').uPixel, 1, 'a stored value that is no tier is the row\'s default, the meadow (MEADOW1) - a pixel style, the same fallback the pane draws');
   assert.deepEqual([px.uPxVariants, px.uPxSteps, px.uPxTintBands, px.uPxSheet], [PX_VARIANTS, PX_RAMP_STEPS, PX_TINT_BANDS, 4]);
   assert.deepEqual([PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT], [8, 4, 2]);
   // AUDIT 68 S16-grass-set-broken-dead: the lab's one-scatter path is gone; the slot path's one-quad tuft is GRASS-PX2's below
@@ -320,13 +320,14 @@ test('GRASS-PX: the row, its default, and the host reading it live', () => {
   const row = FEATURES.find((f) => f.id === 'grass');
   assert.equal(row.control.key, 'grassDensity', 'the bar is the density');
   const part = row.control.parts.find((pt) => pt.key === 'grassStyle');
-  assert.deepEqual({ ...part, tiers: part.tiers.map((t) => [...t]) }, { key: 'grassStyle', label: 'Style', tiers: [['pixel', 'Pixel'], ['smooth', 'Smooth']] });
-  assert.deepEqual({ ...row.control.also.find((a) => a.key === 'grassStyle') }, { store: 'prefs', key: 'grassStyle', initial: 'pixel', online: 'player' });
+  // MEADOW1: the owner's meadow is the first tier and the default; the pixel tufts and the lab's blade stay a choice away
+  assert.deepEqual({ ...part, tiers: part.tiers.map((t) => [...t]) }, { key: 'grassStyle', label: 'Style', tiers: [['meadow', 'Meadow'], ['pixel', 'Pixel'], ['smooth', 'Smooth']] });
+  assert.deepEqual({ ...row.control.also.find((a) => a.key === 'grassStyle') }, { store: 'prefs', key: 'grassStyle', initial: 'meadow', online: 'player' });
   assert.equal(row.group, 'sight'); assert.deepEqual([...row.kinds], ['enhanced']); assert.match(row.effect, /the style at once\.$/);
   assert.ok(row.note.includes('in the enhanced outdoors'), 'GRASS AUDIT 1: the row says what it is inert without');
-  assert.ok(world.includes('vertsPerBlade: labGrass._oneQuad ? labGrass.vertsFar : labGrass.verts'), 'GRASS AUDIT 1: the stats say which blade the frame drew');
-  assert.equal(FEATURE_PREF_DEFAULTS.grassStyle, 'pixel', 'the shelf\'s default is the row\'s');
-  assert.deepEqual(['pixel', 'smooth', undefined, 'junk'].map(pixelGrass), [true, false, true, true]);
+  assert.ok(world.includes('vertsPerBlade: labGrass._meadow ? labGrass.vertsCards : labGrass._oneQuad ? labGrass.vertsFar : labGrass.verts'), 'GRASS AUDIT 1: the stats say which blade the frame drew (MEADOW1: or which cards)');
+  assert.equal(FEATURE_PREF_DEFAULTS.grassStyle, 'meadow', 'the shelf\'s default is the row\'s');
+  assert.deepEqual(['pixel', 'smooth', undefined, 'junk', 'meadow'].map(pixelGrass), [true, false, true, true, true], 'MEADOW1: the meadow is a pixel style');
   const at = world.indexOf('labGrass.draw(proj, view, new Float32Array(cam.pos), now / 1000,');
   assert.ok(at > 0);
   const call = world.slice(at, world.indexOf(');', at) + 2);

@@ -28,6 +28,8 @@
 import { frustumPlanes, aabbOutside } from './frustum.js';   // PERF2: the field draws only the cells in view
 import { smoothstep } from '../systems/mathf.js';   // GRASS2: the host's blade budget is a bound on the shader's fade, so the two must be the SAME curve
 import { buildTuftMips, buildTuftSheet, pixelGrass, PX_RAMP_STEPS, PX_TINT_BANDS, PX_BLADES_PER_TUFT } from './grassPixelArt.js';   // GRASS-PX: the tuft sheet and the pixel style's numbers
+import { meadowGrass, buildMeadowMips, meadowCardCorners, MEADOW_SLOTS, MEADOW_CARDS, MEADOW_CARDS_FAR, MEADOW_NEAR_AT, MEADOW_BLADES_PER_TUFT, MEADOW_VARIANTS, MEADOW_LUSH, MEADOW_SHARES, MEADOW_PATCH_SCALE,
+  MEADOW_FACE, meadowArtGround, MEADOW_SHIFT, MEADOW_GREEN_EDGE, MEADOW_RAMP_STEPS, MEADOW_MAX_SCALE, MEADOW_REACH, MEADOW_BUSH, MEADOW_FLOWERS, MEADOW_DRY, MEADOW_SHORT, MEADOW_TALL } from './grassMeadow.js';   // MEADOW1: the owner's sprites on crossed cards
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { FOG_GLSL } from './fogGlsl.js';   // AUDIT 68 S17-fog-glsl-dup: fogFactorAt's one home - the terrain's own text, not a tenth copy
 import { CLOUD_SHADOW_GLSL } from './cloudShadow.js';   // GRASS-LIT: the deck's shadow, the reader the terrain takes
@@ -732,10 +734,113 @@ export const GRASSLIT_FS_EDITS = Object.freeze([
   }),
 ]);
 
+// ═══════════════════════════════════════════════════════════════════
+// MEADOW1 (2026-10-06, Mac: "These are 4 textures I want to blend into our grass system, all with varying sizes so its
+// not monotonous everywhere" - and a bush - "instead of billboarding, these should have a sort of low poly look to
+// them, like the trees"): THE OWNER'S SPRITES ON CROSSED CARDS, the fifth list of declared edits, laid last. The
+// meadow is a pixel style (uPixel 1: a hard alpha, the dithered fade, a share of each cell) that wears the owner's
+// atlas on the sheet's unit, and three things in it are its own, behind `uArt`: which sprite a blade wears and how big
+// its card is, the cards themselves - fixed in the world at the tuft's own yaw, each lit by its own face - and the
+// texel being the colour. The law and its numbers are render/grassMeadow.js's; the GLSL below is written from them.
+// ═══════════════════════════════════════════════════════════════════
+
+/** a JS number as a GLSL float literal - a whole number keeps its point */
+const glf = (v) => (Number.isInteger(v) ? v.toFixed(1) : String(v));
+/** a per-variant value chosen by `mVar`, as a ternary ladder (a const array indexed at runtime is the kind of thing a
+ *  driver gets wrong - GRASS-PX's bayer4 says why) */
+const byVariant = (key) => MEADOW_VARIANTS.slice(0, -1).map((v, i) => `mVar < ${glf(i + 0.5)} ? ${glf(v[key])} : `).join('') + glf(MEADOW_VARIANTS.at(-1)[key]);
+const share = (pair) => `mix(${glf(pair[0])}, ${glf(pair[1])}, mLush)`;
+export const GRASSMEADOW_VS_EDITS = Object.freeze([
+  Object.freeze({
+    why: 'the card a vertex stands on - the meadow\'s corner arrays carry its turn; the blade arrays leave the attribute unset, which reads 0',
+    from: '// GRASS5: u8 ground.rgb, phase\n',
+    to: '// GRASS5: u8 ground.rgb, phase\n'
+      + 'layout(location=3) in float aCard;       // MEADOW1: the card\'s turn, a share of a half-turn, +1 when mirrored (render/grassMeadow.js meadowCardCorners)\n',
+  }),
+  Object.freeze({
+    why: 'the switch: the owner\'s art on crossed cards',
+    from: 'uniform float uPixel, uPxVariants;',
+    to: 'uniform float uArt;                  // MEADOW1: 1 in the meadow - the owner\'s sprites on crossed cards\n'
+      + 'uniform float uPixel, uPxVariants;',
+  }),
+  Object.freeze({
+    why: 'which sprite, how big its card, and which way its cards face - before the sway, the quad and the root read the height',
+    from: '  float h = max(0.0, trueH - snowSurf);\n',
+    to: '  float h = max(0.0, trueH - snowSurf);\n'
+      + '  // MEADOW1: WHICH SPRITE, HOW BIG, AND WHICH WAY. The width byte is a uniform random the sprite styles never draw a\n'
+      + '  // width with (their quad is the sprite\'s); the patch is the tint GRASS6 bakes. The card\'s side is the blade\'s height\n'
+      + '  // times its sprite\'s scale and the patch\'s, and everything below that reads the height reads the card\'s.\n'
+      + '  float mVar = 0.0, mStiff = 1.0, mU = aCorner.x; vec2 mDir = vec2(1.0, 0.0);\n'
+      + '  if (uArt > 0.5) {\n'
+      + `    float mLush = smoothstep(${glf(MEADOW_LUSH[0])}, ${glf(MEADOW_LUSH[1])}, aInst2.z);\n`
+      + `    float mB = ${share(MEADOW_SHARES.bush)}, mF = ${share(MEADOW_SHARES.flowers)}, mD = ${share(MEADOW_SHARES.dry)};\n`
+      + '    float mR = aPB.w;\n'
+      + `    mVar = mR < mB ? ${glf(MEADOW_BUSH)} : (mR < mB + mF ? ${glf(MEADOW_FLOWERS)} : (mR < mB + mF + mD ? ${glf(MEADOW_DRY)}`
+      + ` : ((mR - mB - mF - mD) / (1.0 - mB - mF - mD) < ${share(MEADOW_SHARES.short)} ? ${glf(MEADOW_SHORT)} : ${glf(MEADOW_TALL)})));\n`
+      + `    h *= (${byVariant('scale')}) * mix(${glf(MEADOW_PATCH_SCALE[0])}, ${glf(MEADOW_PATCH_SCALE[1])}, mLush);\n`
+      + `    mStiff = ${byVariant('stiff')};\n`
+      + '    float mYaw = hash(root * 0.37);   // the tuft\'s own turn, fixed in the world - the pixel style\'s hash, which picks its tuft\n'
+      + '    float mA = (mYaw + fract(aCard)) * 3.141592653589793;   // the card\'s turn off the tuft\'s\n'
+      + '    mDir = vec2(cos(mA), sin(mA));\n'
+      + '    if ((fract(mYaw * 8.0) >= 0.5) != (aCard >= 1.0)) mU = 1.0 - mU;   // mirrored, by tuft and by every other card\n'
+      + '  }\n',
+  }),
+  Object.freeze({
+    why: 'the card: square (the sprite\'s texels are), at the tuft\'s own yaw and fixed in the world - no billboard - swaying by the lab\'s lean, a bush a third as far',
+    from: ', h * 0.5, uPixel);   // GRASS-PX; GRASS AUDIT 1: the width is the height\'s, per blade\n',
+    to: ', h * 0.5, uPixel);   // GRASS-PX; GRASS AUDIT 1: the width is the height\'s, per blade\n'
+      + '  if (uArt > 0.5) p.xz = root + lean * (vT*vT) * h * mStiff + mDir * (aCorner.x - 0.5) * h;   // MEADOW1: the card\n',
+  }),
+  Object.freeze({
+    why: 'the sprite the law picked, mirrored by tuft and by card',
+    from: 'scaled to keep its float32 fract honest\n',
+    to: 'scaled to keep its float32 fract honest\n'
+      + '  if (uArt > 0.5) { vVar = mVar; vUV.x = mU; }   // MEADOW1\n',
+  }),
+  Object.freeze({
+    why: 'each card shaded by its own face - the side the eye sees - by the low-poly trees\' own face law, on the sun\'s light and the moon\'s: a low sun picks the facets out',
+    from: 'vMoonLam = max(dot(nrm, normalize(uMoonDir)), 0.0);   // WIND4\n',
+    to: 'vMoonLam = max(dot(nrm, normalize(uMoonDir)), 0.0);   // WIND4\n'
+      + '  if (uArt > 0.5) {   // MEADOW1: THE CARD\'S FACE, as a low-poly tree\'s (render/renderer.js BB_VS): its light times a shade of\n'
+      + '    // its face against the light, never under half - the blade\'s own lambert about the ground stays under it\n'
+      + '    vec2 mN = vec2(-mDir.y, mDir.x); if (dot(mN, uEye.xz - root) < 0.0) mN = -mN;\n'
+      + `    vLam *= clamp(${glf(MEADOW_FACE.base)} + ${glf(MEADOW_FACE.span)} * dot(vec3(mN.x, 0.0, mN.y), normalize(uSunDir)), ${glf(MEADOW_FACE.floor)}, 1.0);\n`
+      + `    vMoonLam *= clamp(${glf(MEADOW_FACE.base)} + ${glf(MEADOW_FACE.span)} * dot(vec3(mN.x, 0.0, mN.y), normalize(uMoonDir)), ${glf(MEADOW_FACE.floor)}, 1.0);\n`
+      + '  }\n',
+  }),
+]);
+export const GRASSMEADOW_FS_EDITS = Object.freeze([
+  Object.freeze({
+    why: 'the switch, and the ground the owner\'s colours were drawn for',
+    from: 'uniform vec3 uGrassTone[4];',
+    to: 'uniform float uArt; uniform vec3 uArtGround;   // MEADOW1: the owner\'s art, and the ground its colours are drawn for (meadowArtGround)\n'
+      + 'uniform vec3 uGrassTone[4];',
+  }),
+  Object.freeze({
+    why: 'the sprite\'s own colour, kept from the sample',
+    from: '  float t = vT; float pxTone = 0.0; float pxBlade = 0.0;\n',
+    to: '  float t = vT; float pxTone = 0.0; float pxBlade = 0.0;\n'
+      + '  vec3 art = vec3(0.0);   // MEADOW1: the owner\'s colour\n',
+  }),
+  Object.freeze({
+    why: 'in the meadow the texel IS the colour, and the sward\'s shade climbs the card',
+    from: 't = px.g; pxBlade = px.b;\n',
+    to: 't = px.g; pxBlade = px.b;\n'
+      + '    if (uArt > 0.5) { art = px.rgb; t = vUV.y; pxTone = 0.0; }   // MEADOW1: no tone, so no rim texel\n',
+  }),
+  Object.freeze({
+    why: 'the owner\'s colours, moved by the ground they stand on - the tile\'s mean over the ground they are drawn for (his green at the lane\'s middle tone), per channel, held to a span; a texel takes that hue as far as it is green, and a petal or a dry stalk only its brightness',
+    from: 'three flat tones, and the tuft\'s blades a shade apart\n',
+    to: 'three flat tones, and the tuft\'s blades a shade apart\n'
+      + `  if (uArt > 0.5) { vec3 mS = clamp(vGround / uArtGround, ${glf(MEADOW_SHIFT[0])}, ${glf(MEADOW_SHIFT[1])}); `
+      + `c = art * mix(vec3(dot(mS, vec3(0.299, 0.587, 0.114))), mS, clamp((art.g - max(art.r, art.b)) * ${glf(MEADOW_GREEN_EDGE)}, 0.0, 1.0)); }   // MEADOW1: his green, the tile's own; his petals his own\n`,
+  }),
+]);
+
 /** what the game compiles: the lab's stages under the pixel style's edits, then the fog's (DISC20-A), then the
- *  ground's colour and light (GRASS-LIT) */
-export const GAME_GRASS_VS = applyGrassEdits(applyGrassEdits(applyGrassEdits(LAB_GRASS_VS, GRASSPX_VS_EDITS), GRASSFOG_VS_EDITS), GRASSLIT_VS_EDITS);
-export const GAME_GRASS_FS = applyGrassEdits(applyGrassEdits(applyGrassEdits(LAB_GRASS_FS, GRASSPX_FS_EDITS), GRASSFOG_FS_EDITS), GRASSLIT_FS_EDITS);
+ *  ground's colour and light (GRASS-LIT), then the meadow's (MEADOW1) */
+export const GAME_GRASS_VS = applyGrassEdits(applyGrassEdits(applyGrassEdits(applyGrassEdits(LAB_GRASS_VS, GRASSPX_VS_EDITS), GRASSFOG_VS_EDITS), GRASSLIT_VS_EDITS), GRASSMEADOW_VS_EDITS);
+export const GAME_GRASS_FS = applyGrassEdits(applyGrassEdits(applyGrassEdits(applyGrassEdits(LAB_GRASS_FS, GRASSPX_FS_EDITS), GRASSFOG_FS_EDITS), GRASSLIT_FS_EDITS), GRASSMEADOW_FS_EDITS);
 
 /**
  * GRASS-LIT: THE FRAGMENT'S COLOUR IN JS, term for term (the smooth style, at a blade's height `t`, no patch tint,
@@ -1634,6 +1739,7 @@ export class LabGrassRenderer {
     this.u = {};
     for (const n of ['uVP', 'uTime', 'uWind', 'uRange', 'uEye', 'uSunDir', 'uWindDir', 'uSnowFull', 'uSlotN', 'uCellFrame', 'uBladeScale', 'uCellSize', 'uGField', 'uGFieldOrigin', 'uGFieldM', 'uSnowGlobal', 'uWindV', 'uAmb', 'uSunCol', 'uDim', 'uSunScale', 'uMoonDir', 'uMoonScale', 'uMoonCol',
       'uPixel', 'uPxVariants', 'uPxSteps', 'uPxTintBands', 'uPxSheet',   // GRASS-PX: the pixel style's five (GRASS-PX3 took the sway's two)
+      'uArt', 'uArtGround',   // MEADOW1: the meadow's switch and the ground its art was drawn for
       'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uDwFog',   // DISC20-A: the terrain's fog; DW-C: and the sea's
       'uLane', 'uELExposure', 'uAdapt', 'uIndirect', 'uIndirectColor', 'uCloudShadowMap', 'uCloudShadowRect', 'uGrassTone',   // GRASS-LIT: the lane, the eye, the player's light, the deck
       'uPointCount', 'uPointLights', 'uPointColors', 'uPointIdx']) this.u[n] = gl.getUniformLocation(prog, n);   // GRASS-LIT2: the lanterns; AUDIT A1: a cell's
@@ -1648,6 +1754,9 @@ export class LabGrassRenderer {
     this.tones = new Float32Array(GRASS_TONES.flat());
     /** GRASS-LIT2: and on the classic lane (GRASS_TONES_CLASSIC) */
     this.tonesClassic = new Float32Array(GRASS_TONES_CLASSIC.flat());
+    /** MEADOW1: the ground the owner's art is drawn for on each lane - his green at the lane's middle tone */
+    this.artGround = new Float32Array(meadowArtGround(GRASS_TONES[1]));
+    this.artGroundClassic = new Float32Array(meadowArtGround(GRASS_TONES_CLASSIC[1]));
     // AUDIT GRASS-LIT2 A1: a cell's lantern list, its distances, and the list last uploaded
     this._cellIdx = new Int32Array(GRASS_CELL_LIGHTS); this._cellDist = new Float64Array(GRASS_CELL_LIGHTS);
     this._cellLast = new Int32Array(GRASS_CELL_LIGHTS); this._cellN = -1; this._pn = 0; this._pts = null;
@@ -1668,14 +1777,16 @@ export class LabGrassRenderer {
       Object.freeze({ loc: 2, type: gl.UNSIGNED_BYTE, bytes: 4 }),
       Object.freeze({ loc: 4, type: gl.UNSIGNED_BYTE, bytes: 4 }),
     ]);
-    /** one vertex array over a corner buffer of `segments` quads */
-    const buildVao = (segments) => {
+    /** one vertex array over a corner buffer - labBladeCorners' quads, two floats a vertex; MEADOW1: or the meadow's
+     *  cards (`cards`), three floats a vertex, the third the card's turn on attribute 3 */
+    const buildVao = (corners, cards = false) => {
       const vao = gl.createVertexArray();
       gl.bindVertexArray(vao);
       const cb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, cb);
-      const corners = labBladeCorners(segments);
       gl.bufferData(gl.ARRAY_BUFFER, corners, gl.STATIC_DRAW);
-      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+      const stride = cards ? 12 : 0;
+      gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, stride, 0);
+      if (cards) { gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 1, gl.FLOAT, false, stride, 8); }
       // GRASS5: NORMALIZED integer attributes - the GPU does the unpack,
       // so the shader reads floats in 0..1 and the decode is two
       // multiply-adds rather than a fetch per field.
@@ -1686,12 +1797,15 @@ export class LabGrassRenderer {
         gl.vertexAttribDivisor(L.loc, 1);
       }
       gl.bindVertexArray(null);
-      return { vao, verts: corners.length / 2, cb };
+      return { vao, verts: corners.length / (cards ? 3 : 2), cb };
     };
-    const near = buildVao(5), far = buildVao(GRASS_FAR_SEGMENTS);
+    const near = buildVao(labBladeCorners(5)), far = buildVao(labBladeCorners(GRASS_FAR_SEGMENTS));
+    const cards = buildVao(meadowCardCorners(MEADOW_CARDS), true), cardsFar = buildVao(meadowCardCorners(MEADOW_CARDS_FAR), true);   // MEADOW1: the tuft's cards, near and far
     this.vao = near.vao; this.verts = near.verts;
     this.vaoFar = far.vao; this.vertsFar = far.verts;
-    this._cornerBufs = [near.cb, far.cb];
+    this.vaoCards = cards.vao; this.vertsCards = cards.verts;   // MEADOW1
+    this.vaoCardsFar = cardsFar.vao; this.vertsCardsFar = cardsFar.verts;
+    this._cornerBufs = [near.cb, far.cb, cards.cb, cardsFar.cb];
     gl.bindVertexArray(null);
     // the field the lab's grass reads: nothing, so the snow and wet terms are zero
     this.zeroField = gl.createTexture();
@@ -1708,22 +1822,32 @@ export class LabGrassRenderer {
     // stop at 3 and its reserved units start at 11, and the host marks
     // the grass a foreign pass after every draw, so nothing counts on 4
     // holding across it.
-    this.pxSheet = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);
     const mips = buildTuftMips(tuft ? buildTuftSheet({ w: tuft.w, h: tuft.h }) : undefined);   // GRASS-PX4
     this.pxVariants = mips[0].variants;
-    for (let i = 0; i < mips.length; i++) gl.texImage2D(gl.TEXTURE_2D, i, gl.RGBA, mips[i].width, mips[i].height, 0, gl.RGBA, gl.UNSIGNED_BYTE, mips[i].data);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.bindTexture(gl.TEXTURE_2D, null);
+    this.pxSheet = this._sheet(mips);
+    // MEADOW1: THE OWNER'S ATLAS, up the same way - its own coverage chain (render/grassMeadow.js buildMeadowMips),
+    // bound on the sheet's unit when the meadow draws
+    this.meadowSheet = this._sheet(buildMeadowMips());
     this.count = 0;
     this._vp = new Float32Array(16);
     this._planes = new Float32Array(24);   // PERF2
     this.slotBox = null;                    // PERF2: per slot, the cell's world box, or null while empty
     this.slotCount = null;                  // GRASS2: per slot, the blades that actually STOOD - the rest of the slot is pad
     this.drawn = { slots: 0, blades: 0, kept: 0 };   // PERF2: what the last draw actually submitted; GRASS2: and how much of it was not pad
+  }
+
+  /** GRASS-PX: a sheet and its hand-built chain on a texture of its own - every level uploaded, NEAREST both ways,
+   *  clamped (the constructor says why). MEADOW1: the meadow's atlas goes up through the same door. */
+  _sheet(mips) {
+    const gl = this.gl, tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    for (let i = 0; i < mips.length; i++) gl.texImage2D(gl.TEXTURE_2D, i, gl.RGBA, mips[i].width, mips[i].height, 0, gl.RGBA, gl.UNSIGNED_BYTE, mips[i].data);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    return tex;
   }
 
   /** GR5: size the buffers for `slots` cells of `perCell` blades each,
@@ -1766,13 +1890,23 @@ export class LabGrassRenderer {
     // roots, y from the lowest root to the tallest tip (a leaning blade
     // reaches no higher than its height, so height is the bound).
     let x0 = Infinity, z0 = Infinity, y0 = Infinity, x1 = -Infinity, z1 = -Infinity, y1 = -Infinity;
+    // MEADOW1: the tallest blade of this cell, and the top of its tallest card - measured on the height the GPU DECODES,
+    // which the lane holds to the law's own span (packHeightSlope), whatever the placer handed in
+    const hLaw = heightFloor(this.height) + heightSpan(this.height);
+    let hMax = 0, yTop = -Infinity;
     const n = Math.min(placed.count ?? p, p);
     for (let i = 0; i < n; i++) {
       const x = placed.inst[i * 4], z = placed.inst[i * 4 + 1], h = placed.inst[i * 4 + 2], y = placed.rootY[i];
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (z < z0) z0 = z; if (z > z1) z1 = z;
       if (y < y0) y0 = y; if (y + h > y1) y1 = y + h;
+      const hd = Math.min(h, hLaw);
+      if (hd > hMax) hMax = hd; if (y + hd * MEADOW_MAX_SCALE > yTop) yTop = y + hd * MEADOW_MAX_SCALE;
     }
-    if (this.slotBox) this.slotBox[slot] = n > 0 ? [x0, y0, z0, x1, y1, z1] : null;
+    // MEADOW1: THE BOX HOLDS THE MEADOW'S CARDS, which stand taller and reach wider than any blade - a bush's card is
+    // MEADOW_MAX_SCALE of its blade up and MEADOW_REACH of it out - so no cell is culled while a card of it is in view.
+    // The decode frame below is still the blades' own bounds.
+    const reach = hMax * MEADOW_REACH;
+    if (this.slotBox) this.slotBox[slot] = n > 0 ? [x0 - reach, y0, z0 - reach, x1 + reach, Math.max(y1, yTop), z1 + reach] : null;
     if (this.slotCount) this.slotCount[slot] = n;   // GRASS2: what this cell actually grew
 
     // GRASS5: THE PACK, and the only place a blade crosses to the GPU.
@@ -1887,22 +2021,28 @@ export class LabGrassRenderer {
     // program never recompiles; the sheet rides unit 4 (see the constructor)
     const pixel = pixelGrass(style);
     gl.uniform1f(u.uPixel, pixel ? 1 : 0);
+    // MEADOW1: the meadow is a pixel style - a hard alpha, the dithered fade, a share of each cell - wearing the owner's
+    // atlas, and the switch for what is its own (the law, the cards, the colour) is a uniform too: the row flips live
+    const meadow = meadowGrass(style);
+    gl.uniform1f(u.uArt, meadow ? 1 : 0);
     // GRASS-PX2: THE TUFT IS ONE QUAD. The lab's near blade is five
     // stacked quads so that it can CURVE; the sprite carries its own
     // curve, so in the pixel style every cell draws the one-quad blade
     // the far cells already use - a fifth of the vertices on the near
     // cells, which hold most of the blades that survive the fade.
     this._oneQuad = pixel;
+    this._meadow = meadow;   // MEADOW1: ...and the meadow draws its cards in the quad's place (_drawVisibleSlots)
     // The numbers go up in EVERY style: a step count of zero is a divide
     // by zero in the pixel arm of a mix(), and mix(lab, NaN, 0.0) is NaN
     // - the whole field vanished the moment these were gated (GRASS
     // AUDIT 1 found that by drawing it). Only the sheet's bind is the
     // pixel style's own, so the smooth style never touches unit 4.
-    gl.uniform1f(u.uPxVariants, this.pxVariants);
-    gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);
+    // MEADOW1: the meadow's atlas has MEADOW_SLOTS cells, and its art is banded only finely (MEADOW_RAMP_STEPS)
+    gl.uniform1f(u.uPxVariants, meadow ? MEADOW_SLOTS : this.pxVariants);
+    gl.uniform1f(u.uPxSteps, meadow ? MEADOW_RAMP_STEPS : PX_RAMP_STEPS);
     gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);
     if (pixel) {
-      gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);
+      gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, meadow ? this.meadowSheet : this.pxSheet);
       gl.uniform1i(u.uPxSheet, 4);
       gl.activeTexture(gl.TEXTURE0);
     } else gl.uniform1i(u.uPxSheet, 4);   // AUDIT RETRO1 B1: the smooth style reads the sampler too (the mix at 0) - left on unit 0 it read whatever was bound there, and a frame image still bound there is a WebGL feedback loop; unit 4, which this style never binds
@@ -1921,6 +2061,7 @@ export class LabGrassRenderer {
     gl.uniform1f(u.uDim, light.dim ?? 1);
     gl.uniform1f(u.uLane, lane ? 1 : 0);
     gl.uniform3fv(u.uGrassTone, lane ? this.tones : this.tonesClassic);   // GRASS-LIT2: each lane its own
+    gl.uniform3fv(u.uArtGround, lane ? this.artGround : this.artGroundClassic);   // MEADOW1: and the meadow's art its own ground
     gl.uniform1f(u.uELExposure, light.exposure ?? EL_EXPOSURE);
     gl.activeTexture(gl.TEXTURE0 + GRASS_ADAPT_UNIT);   // the far ring's unit for the eye; a frame with no air pass reads a 1
     gl.bindTexture(gl.TEXTURE_2D, light.adaptTex ?? this._adaptOne());
@@ -2012,8 +2153,9 @@ export class LabGrassRenderer {
   _drawVisibleSlots(vp, eye, range) {
     const gl = this.gl; const p = this.perCell;
     const planes = frustumPlanes(vp, this._planes);
-    let slots = 0, blades = 0, kept = 0, verts_ = 0, farSlots = 0, wasFar = false;
+    let slots = 0, blades = 0, kept = 0, verts_ = 0, farSlots = 0, cardSlots = 0, cardsFarSlots = 0;
     gl.bindVertexArray(this.vao);   // GRASS2: the near array is the one the caller bound; the loop tracks it from here
+    let wasVao = this.vao;   // MEADOW1: which array is bound - the blade's, the far blade's, or the meadow's near or far cards
     for (let slot = 0; slot < this.slotBox.length; slot++) {
       const box = this.slotBox[slot];
       if (!box) continue;
@@ -2055,8 +2197,9 @@ export class LabGrassRenderer {
       // GRASS AUDIT 1: a tuft stands in for two of the lab's blades, so
       // the pixel style submits HALF the cell - the placer's order is
       // random, so the first half is a uniform half - and the fade law
-      // runs over that half, the way it ran over the whole.
-      const m = this._oneQuad ? Math.ceil(n / PX_BLADES_PER_TUFT) : n;
+      // runs over that half, the way it ran over the whole. MEADOW1: a
+      // meadow sprite is a whole tuft, and stands for MEADOW_BLADES_PER_TUFT.
+      const m = this._oneQuad ? Math.ceil(n / (this._meadow ? MEADOW_BLADES_PER_TUFT : PX_BLADES_PER_TUFT)) : n;
       const budget = Math.min(m, Math.ceil(m * fade * 1.15));
       if (budget <= 0) continue;
       gl.uniform1f(this.u.uSlotN, m);   // the fraction is over the CELL (or its half), not over the prefix
@@ -2070,16 +2213,22 @@ export class LabGrassRenderer {
       // blade's - one bind for six thousand blades rather than a branch
       // inside every one of them.
       const far = this._oneQuad || dn > range * GRASS_FAR_AT;   // GRASS-PX2: the pixel style is one quad everywhere
-      if (far !== wasFar) { gl.bindVertexArray(far ? this.vaoFar : this.vao); wasFar = far; }
-      const verts = far ? this.vertsFar : this.verts;
+      // MEADOW1: the meadow's cards at every distance - three near, two past MEADOW_NEAR_AT of the range, the far
+      // blade's law one level up: a cell's, by its nearest point
+      const cardsFar = dn > range * MEADOW_NEAR_AT;
+      const vao = this._meadow ? (cardsFar ? this.vaoCardsFar : this.vaoCards) : (far ? this.vaoFar : this.vao);
+      if (vao !== wasVao) { gl.bindVertexArray(vao); wasVao = vao; }
+      const verts = this._meadow ? (cardsFar ? this.vertsCardsFar : this.vertsCards) : (far ? this.vertsFar : this.verts);
       if (this._pn > 0) this._cellLights(box);   // AUDIT GRASS-LIT2 A1
       this._point(slot);
       gl.drawArraysInstanced(gl.TRIANGLES, 0, verts, budget);
-      slots++; blades += budget; kept += n; verts_ += verts * budget; if (far) farSlots++;
+      slots++; blades += budget; kept += n; verts_ += verts * budget;
+      if (this._meadow) { cardSlots++; if (cardsFar) cardsFarSlots++; } else if (far) farSlots++;
     }
     this.drawn.slots = slots; this.drawn.blades = blades; this.drawn.kept = kept;
     this.drawn.slotCapacity = slots * p;   // GRASS2: what the same frame cost before the pad came off
     this.drawn.verts = verts_; this.drawn.farSlots = farSlots;   // GRASS2: the vertex work, counted rather than inferred from one blade shape
+    this.drawn.cardSlots = cardSlots; this.drawn.cardsFarSlots = cardsFarSlots;   // MEADOW1: the slots drawn on the meadow's cards, and of them on its far two
   }
 
   /** AUDIT GRASS-LIT2 A1: THE CELL'S LANTERNS. The frame's lights whose reach meets the cell's box (its roots' lowest to
@@ -2126,8 +2275,11 @@ export class LabGrassRenderer {
     for (const b of this._cornerBufs ?? []) gl.deleteBuffer(b);
     gl.deleteVertexArray(this.vao);
     if (this.vaoFar) gl.deleteVertexArray(this.vaoFar);
+    if (this.vaoCards) gl.deleteVertexArray(this.vaoCards);   // MEADOW1 (their corner buffers are the last two of _cornerBufs)
+    if (this.vaoCardsFar) gl.deleteVertexArray(this.vaoCardsFar);
     gl.deleteTexture(this.zeroField);
     gl.deleteTexture(this.pxSheet);   // GRASS-PX
+    gl.deleteTexture(this.meadowSheet);   // MEADOW1
     gl.deleteProgram(this.program);
   }
 }

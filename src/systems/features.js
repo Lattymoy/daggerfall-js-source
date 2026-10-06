@@ -460,14 +460,14 @@ export const FEATURES = Object.freeze([
     group: 'sight',
     title: 'Grass',
     note: 'How much grass grows in the enhanced outdoors. Grass is the heaviest thing outdoors, so try Half '
-      + 'first if the game runs slow. Pixel grass is hand-drawn tufts that match the trees and people; Smooth '
-      + 'is softer, shaded blades.',
+      + 'first if the game runs slow. Meadow is hand-drawn tufts, flowers and bushes that stand like the trees; '
+      + 'Pixel is finer tufts in the ground\'s colours; Smooth is softer, shaded blades.',
     effect: 'The amount takes effect when the world next loads; the style at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
       store: 'prefs', key: 'grassDensity', initial: 1, online: 'player', tiers: Object.freeze([[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]),   // PERF1: a fraction of the lab's 1.2 million blades; a dial, the player's online
-      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'grassStyle', initial: 'pixel', online: 'player' })]),   // GRASS-PX: a uniform in the one grass program, so it flips live
-      parts: Object.freeze([Object.freeze({ key: 'grassStyle', label: 'Style', tiers: Object.freeze([['pixel', 'Pixel'], ['smooth', 'Smooth']]) })]),
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'grassStyle', initial: 'meadow', online: 'player' })]),   // GRASS-PX: a uniform in the one grass program, so it flips live; MEADOW1: the meadow the default
+      parts: Object.freeze([Object.freeze({ key: 'grassStyle', label: 'Style', tiers: Object.freeze([['meadow', 'Meadow'], ['pixel', 'Pixel'], ['smooth', 'Smooth']]) })]),
     }),
   }),
   Object.freeze({

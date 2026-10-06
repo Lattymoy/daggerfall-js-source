@@ -205,7 +205,7 @@ test('GRASS-LIT2: the vertex stage still fits the vectors WebGL2 promises every 
     for (const v of names.split(',')) vectors += Number(v.match(/\[(\d+)\]/)?.[1] ?? 1) * (type === 'mat4' ? 4 : 1);
   }
   assert.ok(vectors <= 256, `${vectors} vectors at most`);
-  assert.equal(vectors, 220, 'the count the docs quote');   // FLICKER-FIX: 212 with eight casters - uPointShadowParams and uShadowIndex are twelve now (+8)
+  assert.equal(vectors, 221, 'the count the docs quote');   // FLICKER-FIX: 212 with eight casters - uPointShadowParams and uShadowIndex are twelve now (+8); MEADOW1: 221, the meadow's switch (+1)
   // the two const face tables are 12 more if a driver keeps a dynamically indexed const array in uniform storage
   assert.ok(vectors + 12 <= 256);
   assert.ok(GAME_GRASS_VS.includes(`uniform vec4 uPointLights[${GRASS_MAX_LIGHTS}];`) && GAME_GRASS_VS.includes(`uniform vec3 uPointColors[${GRASS_MAX_LIGHTS}];`));

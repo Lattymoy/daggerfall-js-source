@@ -29403,7 +29403,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       };
       if (!labGrassField) labGrassField = createGrassField(labGrass, { keep, ground, slope, density: grassDensity });   // PERF1: the pref's fraction of the lab's field
       labGrassField.update(ex, ez, keep, ground, slope);
-      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, vertsPerBlade: labGrass._oneQuad ? labGrass.vertsFar : labGrass.verts, nearPixels: nearPieces().length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0,   // GRASS AUDIT 1: `verts` below is the near blade's; `vertsPerBlade` is the frame's. PERF-URL: `cells` and `slots` had been swallowed by this comment - the hook answered without them
+      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, vertsPerBlade: labGrass._meadow ? labGrass.vertsCards : labGrass._oneQuad ? labGrass.vertsFar : labGrass.verts, nearPixels: nearPieces().length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0,   // GRASS AUDIT 1: `verts` below is the near blade's; `vertsPerBlade` is the frame's (MEADOW1: a near tuft's cards in the meadow). PERF-URL: `cells` and `slots` had been swallowed by this comment - the hook answered without them
         perCell: labGrass.perCell, range: LAB_GRASS.range, height: LAB_GRASS.height, verts: labGrass.verts,
         // GRASS2: what the field HOLDS, against what a slot-sized draw
         // would have submitted - the pad, measured rather than assumed.

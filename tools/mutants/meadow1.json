@@ -1,0 +1,273 @@
+[
+ {
+  "name": "MEADOW1-a-soft-edge-let-through",
+  "file": "tools/bakeMeadow.mjs",
+  "old": "      if (a !== 0 && a !== 255) throw new Error(",
+  "new": "      if (false) throw new Error(",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-sprite-upside-down",
+  "file": "src/render/grassMeadow.js",
+  "old": "      const row = s.rows[s.height - 1 - Math.floor(y / k)];",
+  "new": "      const row = s.rows[Math.floor(y / k)];",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-mean-over-air",
+  "file": "src/render/grassMeadow.js",
+  "old": "      if (n) { out[o] = Math.round(r / n); out[o + 1] = Math.round(g / n); out[o + 2] = Math.round(b / n); }",
+  "new": "      if (n) { out[o] = Math.round(r / 4); out[o + 1] = Math.round(g / 4); out[o + 2] = Math.round(b / 4); }",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-per-sprite-floor-gone",
+  "file": "src/render/grassMeadow.js",
+  "old": "    const keep = Math.min(mine.length, Math.max(1, Math.round(targets[v] * cw * h2)));",
+  "new": "    const keep = Math.min(mine.length, Math.round(targets[v] * cw * h2));",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-one-coverage-for-every-sprite",
+  "file": "src/render/grassMeadow.js",
+  "old": "  const targets = slotCoverage(atlas, slots);",
+  "new": "  const targets = slotCoverage(atlas, slots).map(() => 0.3);",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-patch-scale-dropped",
+  "file": "src/render/labGrass.js",
+  "old": "* mix(${glf(MEADOW_PATCH_SCALE[0])}, ${glf(MEADOW_PATCH_SCALE[1])}, mLush);",
+  "new": ";",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-bush-as-stiff-as-grass",
+  "file": "src/render/labGrass.js",
+  "old": "mStiff = ${byVariant('stiff')};",
+  "new": "mStiff = 1.0;",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-flowers-gather-in-the-poor-patch",
+  "file": "src/render/grassMeadow.js",
+  "old": "  flowers: Object.freeze([0.01, 0.14]),",
+  "new": "  flowers: Object.freeze([0.14, 0.01]),",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-vertex-stage-still-picks-the-hash-tuft",
+  "file": "src/render/labGrass.js",
+  "old": "if (uArt > 0.5) { vVar = mVar; vUV.x = mU; }",
+  "new": "if (uArt > 0.5) { vUV.x = mU; }",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-quad-turned-to-the-eye",
+  "file": "src/render/labGrass.js",
+  "old": "p.xz = root + lean * (vT*vT) * h * mStiff + mDir * (aCorner.x - 0.5) * h;",
+  "new": "p.xz = root + lean * (vT*vT) * h * mStiff + side * (aCorner.x - 0.5) * h;",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-mirror-flag-lost",
+  "file": "src/render/labGrass.js",
+  "old": "!= (aCard >= 1.0)) mU = 1.0 - mU;",
+  "new": "!= false) mU = 1.0 - mU;",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-corner-carries-no-mirror",
+  "file": "src/render/grassMeadow.js",
+  "old": "    const t = k / cards + (k % 2);",
+  "new": "    const t = k / cards;",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-two-cards-near",
+  "file": "src/render/grassMeadow.js",
+  "old": "export const MEADOW_CARDS = 3;",
+  "new": "export const MEADOW_CARDS = 2;",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-face-law-dropped",
+  "file": "src/render/labGrass.js",
+  "old": "`    vLam *= clamp(",
+  "new": "`    vLam *= 1.0 + 0.0 * clamp(",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-face-not-turned-to-the-eye",
+  "file": "src/render/labGrass.js",
+  "old": " if (dot(mN, uEye.xz - root) < 0.0) mN = -mN;",
+  "new": "",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-art-unmoved",
+  "file": "src/render/labGrass.js",
+  "old": "c = art * mix(vec3(dot(mS, vec3(0.299, 0.587, 0.114))), mS,",
+  "new": "c = art * mix(vec3(1.0), vec3(1.0),",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-every-texel-the-greens-hue",
+  "file": "src/render/labGrass.js",
+  "old": "clamp((art.g - max(art.r, art.b)) * ${glf(MEADOW_GREEN_EDGE)}, 0.0, 1.0)",
+  "new": "1.0",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-green-anchored-to-nothing",
+  "file": "src/render/grassMeadow.js",
+  "old": "export const meadowArtGround = (tone) => MEADOW_GREEN.map((v, i) => v / tone[i]);",
+  "new": "export const meadowArtGround = (tone) => MEADOW_GREEN.map((v) => v);",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-switch-never-on",
+  "file": "src/render/labGrass.js",
+  "old": "    gl.uniform1f(u.uArt, meadow ? 1 : 0);",
+  "new": "    gl.uniform1f(u.uArt, 0);",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-one-ground-for-both-lanes",
+  "file": "src/render/labGrass.js",
+  "old": "gl.uniform3fv(u.uArtGround, lane ? this.artGround : this.artGroundClassic);",
+  "new": "gl.uniform3fv(u.uArtGround, this.artGround);",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-meadow-takes-the-pixel-ramp",
+  "file": "src/render/labGrass.js",
+  "old": "gl.uniform1f(u.uPxSteps, meadow ? MEADOW_RAMP_STEPS : PX_RAMP_STEPS);",
+  "new": "gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-meadow-wears-the-pixel-sheet",
+  "file": "src/render/labGrass.js",
+  "old": "gl.bindTexture(gl.TEXTURE_2D, meadow ? this.meadowSheet : this.pxSheet);",
+  "new": "gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-atlas-leaked",
+  "file": "src/render/labGrass.js",
+  "old": "    gl.deleteTexture(this.meadowSheet);   // MEADOW1",
+  "new": "",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-no-far-cards",
+  "file": "src/render/labGrass.js",
+  "old": "      const cardsFar = dn > range * MEADOW_NEAR_AT;",
+  "new": "      const cardsFar = false;",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-box-reaches-no-wider-than-a-root",
+  "file": "src/render/labGrass.js",
+  "old": "    const reach = hMax * MEADOW_REACH;",
+  "new": "    const reach = 0;",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-box-as-tall-as-a-blade",
+  "file": "src/render/labGrass.js",
+  "old": "if (y + hd * MEADOW_MAX_SCALE > yTop) yTop = y + hd * MEADOW_MAX_SCALE;",
+  "new": "if (y + hd > yTop) yTop = y + hd;",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-reach-off-a-height-the-lane-cannot-hold",
+  "file": "src/render/labGrass.js",
+  "old": "      const hd = Math.min(h, hLaw);",
+  "new": "      const hd = h;",
+  "tests": [
+   "test/grassmeadow.test.js",
+   "test/perf2.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-every-blade-a-tuft",
+  "file": "src/render/grassMeadow.js",
+  "old": "export const MEADOW_BLADES_PER_TUFT = 3;",
+  "new": "export const MEADOW_BLADES_PER_TUFT = 1;",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-pixel-word-reads-as-the-meadow",
+  "file": "src/render/grassMeadow.js",
+  "old": "export const meadowGrass = (style) => style !== 'smooth' && style !== 'pixel';",
+  "new": "export const meadowGrass = (style) => style !== 'smooth';",
+  "tests": [
+   "test/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "MEADOW1-the-row-offers-no-meadow",
+  "file": "src/systems/features.js",
+  "old": "tiers: Object.freeze([['meadow', 'Meadow'], ['pixel', 'Pixel'], ['smooth', 'Smooth']])",
+  "new": "tiers: Object.freeze([['pixel', 'Pixel'], ['smooth', 'Smooth']])",
+  "tests": [
+   "test/grasspx.test.js"
+  ]
+ }
+]
