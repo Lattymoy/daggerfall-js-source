@@ -191,11 +191,12 @@
   {
     "name": "LEGACY7W-relay-min-off",
     "file": "src/net/wire.js",
-    "old": "export const WED_RELAY_MIN = 172;",
-    "new": "export const WED_RELAY_MIN = 171;",
+    "old": "export const WED_RELAY_MIN = 174;",
+    "new": "export const WED_RELAY_MIN = 173;",
     "tests": [
       "test/legacy7_wed.test.js"
-    ]
+    ],
+    "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #637, #636 AND #634 (PIN MOVED): world174 - world172 on the branch, renumbered past main's WATCH-FIX (world172) and SERPENT3 (world173); the relay before it, SERPENT3's, is the mutant."
   },
   {
     "name": "LEGACY7W-parsed-before-hello",

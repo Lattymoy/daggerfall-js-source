@@ -5214,7 +5214,7 @@ Mac: "online integration with permadeath (Bloodline) or non-permadeath (Enduring
   (`REALM_CHARACTERS_MAX` counts the living in `createRealm`, `customsRealm` and `customsRefusal`).
 - **The house on the token** (LEGACY7 part two): the identity mint signs a realm character's house (`hn`, `hc`, `hb`,
   `hg` - `src/net/houseLaw.js`, `legacy.js realmHouseOf`) through the name filter, never a tombstone's, and leaves it
-  unsaid rather than take a token past `TOKEN_MAX_CHARS`; `/v1/realm` lists each tile's house. The relay (world172)
+  unsaid rather than take a token past `TOKEN_MAX_CHARS`; `/v1/realm` lists each tile's house. The relay (world174)
   stamps it on every row.
 - **Two players wed** (LEGACY7 part three): `/v1/realm/wed` takes one HALF of a wedding - the caller's realm character
   under its lease, the handshake `sid` the two clients agreed on the relay's `wed` frame, and the other's account as the
@@ -5227,6 +5227,7 @@ Mac: "online integration with permadeath (Bloodline) or non-permadeath (Enduring
   pair's sid) - 409 each - and `dead`, `lease`, `body`. A union ends with either's tombstone (`died`) or delete
   (`gone`), `ended_by` whose; `/v1/realm/die` takes `why: 'retired'` for an elder's mantle passed, which keeps it.
   `/v1/realm/unions` lists the account's unions, each from its own side.
-- **Deploy**: the relay (world172 - the house's stamp and the `wed` frame) first, then the migration and the service
-  (acct85), then the site - the new site founds, tombstones and weds at the service.
+- **Deploy**: the relay (world174 - the house's stamp and the `wed` frame; world172 on its branch, renumbered past
+  main's WATCH-FIX and SERPENT3 at the merge) first, then the migration and the service (acct85), then the site - the
+  new site founds, tombstones and weds at the service.
 

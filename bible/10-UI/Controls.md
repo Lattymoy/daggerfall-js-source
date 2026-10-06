@@ -128,7 +128,9 @@ binds") - THE ARROWS ARE THE HELM (DECLARED, the Port-Ledger's HELM-KEYS row):
   comes down one (`systems/comeSailAway.js ladderUp, ladderDown`): the oars backing water, at rest, pulling ahead, then
   her sails and, where the square sails are the player's own (the assist's AutoStowSquareSails off, a hull with both
   kinds), all her canvas - More sail and Less sail's steps above the oars. The oars keep their rung with no key held. A
-  step with nowhere to go says so. End still toggles all her canvas, the brackets still trim.
+  step with nowhere to go says so. End still toggles all her canvas, the brackets still trim - under the mod's own
+  helm (AUDIT SHIPS A6/D1, 2026-10-06: under the Responsive one her trim is the helm's own, every sail drawing at its
+  crest - SAIL-FREE - so the brackets move nothing there and the panel and the pad offer no trim).
 - **Left and right steer**: at a helm DFU's `TurnLeft` and `TurnRight` - the arrows - are the RUDDER's, as A and D are
   (`inputActions.js HELM_RUDDER_ACTIONS`, read through the mod's own input seam, its rudder's swing too), and the
   keyboard look does not turn the view with them there. One action, one meaning - a turn - read by whoever the hands
@@ -141,8 +143,8 @@ binds") - THE ARROWS ARE THE HELM (DECLARED, the Port-Ledger's HELM-KEYS row):
 - **The helm panel teaches them**: its line under the name is the helm's hand at a glance - her oars and her sails on
   W, S and the arrows, the rudder on A, D and the turn keys, as bound now - and its sails' button is the toggle (End). IN IRONS (her sails up, her bow within IRONS_TELL_DEG of the wind's eye, her way ahead through the water under
   IRONS_TELL_WAY - sternway counts, never the sea's current: AUDIT NAV2 F15) the helm is told once how she comes out -
-  under the Classic helm strike sail and row her round, under the Responsive one put the helm over first (AUDIT NAV2
-  F18) - and the panel's line says it, with the keys, while it lasts. AUDIT NAV2 F17: while an Overworld journey holds
+  strike sail and row her round - and the panel's line says it, with the keys, while it lasts: the Classic helm's alone,
+  the Responsive one's canvas driving her up into the wind's eye (SAIL-FREE, `03-World/Come-Sail-Away.md`). AUDIT NAV2 F17: while an Overworld journey holds
   the helm (the travel view up) the panel is covered and the arrows' More sail and Less sail, and the sail toggle, stand
   down - the journey sets her sails, and the turn keys were already the view's there.
 

@@ -371,10 +371,10 @@ test('AUDIT TELL U3/U4/U5: the poise word centred under the track, the quest car
   const css = rd('src/ui/enhancedStyle.js');
   assert.match(css, /\.hud-poiseword \{ position: absolute; left: 50%; top: calc\(100% \+ 3px\); transform: translateX\(-50%\);/);
   assert.match(css, /body:has\(\.hud-foe\.on\.blade\.poised\) \.qtrack \{ --qt-clear: calc\(18px \+ 28px \* var\(--hud-scale, 1\) \+ 30px \+ 104px \* var\(--hud-scale, 1\)\); \}/);
-  assert.match(css, /\.hud-foepoise\.staggered\.flash \.hud-poisefill \{ animation: hud-poise-flash/);
+  assert.match(css, /\.hud-foepoise\.poise-staggered\.poise-flash \.hud-poisefill \{ animation: hud-poise-flash/);   // PIN MOVED (POISE-BOX): the state classes are the track's own
   const hud = rd('src/ui/enhancedHud.js');
   assert.match(hud, /const flash = pk === 'staggered' && last\.foePoiseRef === ref && last\.foePoise !== 'staggered';/);
-  assert.match(hud, /parts\.foePoise\.className = `hud-foepoise\$\{p \? ` \$\{p\.state\}` : ''\}\$\{flash \? ' flash' : ''\}`;/);
+  assert.match(hud, /parts\.foePoise\.className = `hud-foepoise\$\{p \? ` poise-\$\{p\.state\}` : ''\}\$\{flash \? ' poise-flash' : ''\}`;/);
   assert.match(rd('src/ui/questTracker.js'), /\$\{foe\?\.classList\?\.contains\?\.\('poised'\) \? '\|poised' : ''\}`;/);
 });
 

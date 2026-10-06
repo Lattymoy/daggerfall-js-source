@@ -106,6 +106,20 @@ export const fightsOurSide = (targetAi, self) => {
   const t = targetAi?.target ?? null;
   return t != null && (isPlayerTarget(t) || t.companion != null || t === self);
 };
+/**
+ * WATCH-PROTECTS: whether a foe hunts the living world's townspeople (a `civilian` body, systems/livingWorld/quarry.js):
+ * a hostile monster that fights hand to hand. Never the watch, an ally, a companion or a quest's foe; never a class
+ * (a man with a blade is no monster, and the city's own watch is one); never an archer or a caster, whose shot nothing
+ * on the street would stop (arrows and spells meet foes and players alone). DFU weighs no civilian at all
+ * (EnemySenses.cs:739-741) - the living world's lane alone hands one in.
+ */
+export function huntsCivilians(self) {
+  if (!self?.ai?.isHostile || self.isQuestFoe || self.companion != null) return false;
+  const team = self.entity?.team, mobile = mobileTeamOf(self.entity);
+  if (team === 'PlayerAlly' || mobile === 'PlayerAlly' || mobile === 'CityWatch' || self.entity?.isClass) return false;
+  if (self.caster || (self.entity?.spells?.length ?? 0) > 0) return false;
+  return !self.mobile?.basics?.hasRangedAttack1;
+}
 export function targetPriority(targetHasNoTarget, seen, distance) {
   let p = 0;
   if (targetHasNoTarget) p += 5;
@@ -202,10 +216,14 @@ export function getTargets(self, candidates, playerFeet, {
     // REVENANT-FATE: a beaten revenant on its knees, judged or burning, and COMPANION-PORTAL's body stepping through its
     // portal, are nobody's foe - nothing can reach them, so nothing hunts them
     if (!isPlayer && (c.yielded || c.executing || c.sparing || c.leaving)) continue;
+    // WATCH-PROTECTS: a townsperson is quarry for a hostile monster alone (huntsCivilians), and no team's - the chain
+    // below weighs foes and players
+    const civilian = !isPlayer && c.civilian === true;
+    if (civilian && !huntsCivilians(self)) continue;
     // ARENA2: THE BOUT TEAM - a bout's pair skips the chain below; anyone else meets no fighter, and no fighter meets them
     const bout = boutGate(self, c, isPlayer, playerBout);
     if (bout === false) continue;
-    if (bout !== true) {
+    if (bout !== true && !civilian) {
     // NoTarget mode (:776-777): the BASICS team here
     if ((noTargetMode || !ai.isHostile || selfMobileTeam === 'PlayerAlly' || self.companion != null) && isPlayer) continue;   // AUDIT CC-B2: a companion never the player's foe, whatever his team reads
     if (dropLocal && isLocalPlayerTarget(c)) continue;   // AUDIT-F5: a wilderness foe unaware of a fast traveller (scenes/exteriorFoes.js) - them alone
@@ -261,7 +279,8 @@ export function getTargets(self, candidates, playerFeet, {
     // Neither visible nor in the area around the player (:824-825) -
     // foe candidates only; the player has no senses.
     if (targetAi && !targetAi.wouldBeSpawned && !see) continue;
-    let priority = targetPriority(targetAi ? (targetAi.target ?? null) === null : false, see, distance);
+    // WATCH-PROTECTS: a townsperson has no foe of their own, and is no likelier quarry for it than the player beside them
+    let priority = targetPriority(targetAi && !civilian ? (targetAi.target ?? null) === null : false, see, distance);
     if (self.companion != null && fightsOurSide(targetAi, self)) priority += COMPANION_ASSIST_PRIORITY;   // ASSIST (FIELD BUGS 2026-10-05c)
     if (priority > highestPriority) {
       secondHighestPriority = highestPriority;

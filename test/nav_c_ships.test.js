@@ -219,11 +219,15 @@ test('NAV-C a captain at sea: with no enemy she cruises for a waypoint on open w
 
 test('NAV-C how she fights: a broadside ship turns her side to an enemy off the bow, a galley her stem - her great guns laid on the lead (mutants: the tactic ignored, the side\'s sign)', () => {
   const at = [100 * Math.sin(20 * NAVAL_DEG), 0, 100 * Math.cos(20 * NAVAL_DEG)];   // 100 m, 20 degrees to starboard
-  const brig = createSeaShip({ id: 'b', seed: 1, classId: 'pirateBrig', pos: [0, 0, 0], yaw: 0 });
+  // SEA-EASE (PIN MOVED): both bold - seeds 1 and 2 draw wary, and a wary pirate never takes a boat she cannot size up:
+  // both CRUISED, and the turns read here were their waypoints'
+  const brig = createSeaShip({ id: 'b', seed: 1, classId: 'pirateBrig', pos: [0, 0, 0], yaw: 0, temper: 'bold' });
   stepCaptain(brig, world({ contacts: [player(at)] }));
+  assert.deepEqual([brig.mode, brig.present?.side], ['engage', 'starboard']);
   assert.ok(brig.turnNow < 0, `the brigantine wears to present her starboard side (${brig.turnNow})`);
-  const galley = createSeaShip({ id: 'g', seed: 2, classId: 'pirateGalley', pos: [0, 0, 0], yaw: 0 });
+  const galley = createSeaShip({ id: 'g', seed: 2, classId: 'pirateGalley', pos: [0, 0, 0], yaw: 0, temper: 'bold' });
   stepCaptain(galley, world({ contacts: [player(at)] }));
+  assert.deepEqual([galley.mode, galley.present], ['engage', null], 'over her stem: no side shown');
   assert.ok(galley.turnNow > 0, `the galley turns her bow on him (${galley.turnNow})`);
   // under oars a galley never makes less than OARS_FLOOR of her best, even in irons
   const irons = createSeaShip({ id: 'i', seed: 3, classId: 'navyGalley', pos: [0, 0, 0], yaw: Math.PI });

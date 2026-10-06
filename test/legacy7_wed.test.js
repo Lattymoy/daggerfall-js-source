@@ -248,7 +248,7 @@ test('LEGACY7 part three the session: a wed frame goes only to a relay that rout
     quiet(() => ws.receive({ t: 'welcome', id: 'aaaa-0001', peers: [{ id: 'peer-0002', name: 'Bran', p: { x: 2, y: 0, z: 1, yaw: 0 } }], host: 'aaaa-0001', world: null, v: relayV }));
     return { s, ws, got, out: () => ws.sent.map((x) => JSON.parse(x)).filter((x) => x.t === 'wed'), tick: (ms) => { t += ms; } };
   };
-  const old = rig('world171');
+  const old = rig('world173');   // the relay before LEGACY7's (world174): main's SERPENT3 - WATCH-FIX and SERPENT3 took world172 and world173 first
   assert.equal(old.s.wedOk, false);
   assert.equal(old.s.sendWed({ to: 'peer-0002', s: S, k: 'ask' }), false, 'never at a relay that would close the socket for it');
   const { s, ws, got, out, tick } = rig(RELAY_VERSION);

@@ -46,7 +46,7 @@ test('ARENA5 a brawl at the gate is a crime like any other: the driver\'s crime 
     assert.match(s, /const _guardPool = \(\) => \(\(modes\?\.mode \?\? 'exterior'\) !== 'exterior' \? \[\] : _livePersons\.map\(/, `${f}: the pool is the street's walkers`);
   }
   const G = read('src/scenes/cityGuards.js');
-  const spawnCity = G.slice(G.indexOf('  async function spawnCityGuards('), G.indexOf('    // Non-immediate: witnesses.'));
+  const spawnCity = G.slice(G.indexOf('  async function spawnCityGuardsNow('), G.indexOf('    // Non-immediate: witnesses.'));   // WATCH-FIX: PIN MOVED - the member's body, behind the crime response's turn (spawnCityGuards)
   assert.ok(spawnCity.length > 1000);
   assert.doesNotMatch(spawnCity, /arena|Arena|ARENA|inArenaCell|cell/, 'the watch\'s spawn has no place gate but DFU\'s');
   assert.match(spawnCity, /if \(_ee\?\.isPlayerInsideDungeon\) return;/, 'DFU\'s own: underground, nothing');

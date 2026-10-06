@@ -1,0 +1,362 @@
+[
+  {
+    "name": "WATCH-PROTECTS-hunt-not-hostile",
+    "file": "src/characters/enemyTargets.js",
+    "old": "  if (!self?.ai?.isHostile || self.isQuestFoe || self.companion != null) return false;",
+    "new": "  if (self.isQuestFoe || self.companion != null) return false;",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "Not hostile: no hunter."
+  },
+  {
+    "name": "WATCH-PROTECTS-hunt-quest",
+    "file": "src/characters/enemyTargets.js",
+    "old": "  if (!self?.ai?.isHostile || self.isQuestFoe || self.companion != null) return false;",
+    "new": "  if (!self?.ai?.isHostile || self.companion != null) return false;",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "A quest's foe hunts nobody but the player."
+  },
+  {
+    "name": "WATCH-PROTECTS-hunt-companion",
+    "file": "src/characters/enemyTargets.js",
+    "old": "  if (!self?.ai?.isHostile || self.isQuestFoe || self.companion != null) return false;",
+    "new": "  if (!self?.ai?.isHostile || self.isQuestFoe) return false;",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "A companion never."
+  },
+  {
+    "name": "WATCH-PROTECTS-hunt-watch",
+    "file": "src/characters/enemyTargets.js",
+    "old": "mobile === 'PlayerAlly' || mobile === 'CityWatch' || self.entity?.isClass) return false;",
+    "new": "mobile === 'PlayerAlly' || self.entity?.isClass) return false;",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "The watch never."
+  },
+  {
+    "name": "WATCH-PROTECTS-hunt-ally",
+    "file": "src/characters/enemyTargets.js",
+    "old": "  if (team === 'PlayerAlly' || mobile === 'PlayerAlly' ||",
+    "new": "  if (",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "An ally never."
+  },
+  {
+    "name": "WATCH-PROTECTS-hunt-class",
+    "file": "src/characters/enemyTargets.js",
+    "old": " || mobile === 'CityWatch' || self.entity?.isClass) return false;",
+    "new": " || mobile === 'CityWatch') return false;",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "A class is no monster."
+  },
+  {
+    "name": "WATCH-PROTECTS-hunt-caster",
+    "file": "src/characters/enemyTargets.js",
+    "old": "  if (self.caster || (self.entity?.spells?.length ?? 0) > 0) return false;\n",
+    "new": "",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "A caster's shot nothing on the street stops."
+  },
+  {
+    "name": "WATCH-PROTECTS-hunt-archer",
+    "file": "src/characters/enemyTargets.js",
+    "old": "  return !self.mobile?.basics?.hasRangedAttack1;\n}",
+    "new": "  return true;\n}",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "An archer's shot nothing on the street stops."
+  },
+  {
+    "name": "WATCH-PROTECTS-anyone-hunts",
+    "file": "src/characters/enemyTargets.js",
+    "old": "    if (civilian && !huntsCivilians(self)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "The machine weighs a townsperson for a hunter alone."
+  },
+  {
+    "name": "WATCH-PROTECTS-team-chain",
+    "file": "src/characters/enemyTargets.js",
+    "old": "    if (bout !== true && !civilian) {",
+    "new": "    if (bout !== true) {",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "A townsperson is no team's: the chain weighs foes and players."
+  },
+  {
+    "name": "WATCH-PROTECTS-likelier",
+    "file": "src/characters/enemyTargets.js",
+    "old": "targetPriority(targetAi && !civilian ? (targetAi.target ?? null) === null : false, see, distance);",
+    "new": "targetPriority(targetAi ? (targetAi.target ?? null) === null : false, see, distance);",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "No likelier quarry than the player beside them."
+  },
+  {
+    "name": "WATCH-PROTECTS-blow-dealt",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "calculateAttackDamage: _foeTarget.civilian ? QUARRY_BLOW : calculateAttackDamage,",
+    "new": "calculateAttackDamage,",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "One landed blow: the formula weighs an armoured body a townsperson does not have."
+  },
+  {
+    "name": "WATCH-PROTECTS-blow-twice",
+    "file": "src/systems/livingWorld/quarry.js",
+    "old": "      if (q.entity.health <= 0) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "Struck down once."
+  },
+  {
+    "name": "WATCH-PROTECTS-body-lives",
+    "file": "src/systems/livingWorld/quarry.js",
+    "old": "      q.entity.health = 0;   // the target machine lets go",
+    "new": "      void 0;   // the target machine lets go",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "At no health the machine lets go."
+  },
+  {
+    "name": "WATCH-PROTECTS-unheard",
+    "file": "src/systems/livingWorld/quarry.js",
+    "old": "      struck(q, striker);\n",
+    "new": "",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "The host told."
+  },
+  {
+    "name": "WATCH-PROTECTS-threat",
+    "file": "src/systems/townWatch.js",
+    "old": "    && !(t?.civilian === true && (t.entity?.health ?? 0) > 0)) return false;",
+    "new": "    ) return false;",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "A monster hunting a townsperson is the watch's fight."
+  },
+  {
+    "name": "WATCH-PROTECTS-threat-dead",
+    "file": "src/systems/townWatch.js",
+    "old": "!(t?.civilian === true && (t.entity?.health ?? 0) > 0)",
+    "new": "!(t?.civilian === true)",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "One struck down is no fight to come to."
+  },
+  {
+    "name": "WATCH-PROTECTS-panic-reach",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "export const PANIC_M = 10;",
+    "new": "export const PANIC_M = 4;",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "Ten metres."
+  },
+  {
+    "name": "WATCH-PROTECTS-run-pace",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "export const FLEE_SPEED = PERSON_MOVE_SPEED * 2;",
+    "new": "export const FLEE_SPEED = PERSON_MOVE_SPEED;",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "At a run."
+  },
+  {
+    "name": "WATCH-PROTECTS-run-toward",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "const away = Math.atan2(p.pos[0] - fear.at[0], p.pos[2] - fear.at[1])",
+    "new": "const away = Math.atan2(fear.at[0] - p.pos[0], fear.at[1] - p.pos[2])",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "Away from it."
+  },
+  {
+    "name": "WATCH-PROTECTS-run-offstreet",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (!this._street.clear(p.pos[0], p.pos[2], x, z)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "On the street."
+  },
+  {
+    "name": "WATCH-PROTECTS-unwary",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (run || (row.flee && best < FLEE_WARY_M)) row.flee",
+    "new": "    if (run) row.flee",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "Kept clear while it stands near: walked back, their day took them to it."
+  },
+  {
+    "name": "WATCH-PROTECTS-no-hold",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    else if (row.flee && (row.flee.left -= dt) <= 0) row.flee = null;",
+    "new": "    else if (row.flee) row.flee = null;",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "Standing clear a while after it is gone."
+  },
+  {
+    "name": "WATCH-PROTECTS-too-far",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    return { at: row.flee.at, run: run && !far };",
+    "new": "    return { at: row.flee.at, run };",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "They cower within reach of their day."
+  },
+  {
+    "name": "WATCH-PROTECTS-not-owed",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "if (stop || row.paused || fear) lag += dt * rate;",
+    "new": "if (stop || row.paused) lag += dt * rate;",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "The walk's minutes owed while they run."
+  },
+  {
+    "name": "WATCH-PROTECTS-day-runs",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (fear) this._run(p, fear, dt);\n      else if (w.pending)",
+    "new": "      if (w.pending)",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "The run in place of their day's step."
+  },
+  {
+    "name": "WATCH-PROTECTS-still-frame",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      const fear = row.visible ? this._fright(row, p, dangers, dt) : null;",
+    "new": "      const fear = row.visible && dt > 0 ? this._fright(row, p, dangers, dt) : null;",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "A frame the clock stands still keeps the fright: never their day's walk back toward it."
+  },
+  {
+    "name": "WATCH-PROTECTS-gate-afraid",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      const stop = row.visible && dt > 0 && !fear ? !!wantsToStopFn(p) : false;",
+    "new": "      const stop = row.visible && dt > 0 ? !!wantsToStopFn(p) : false;",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "The politeness gate is a walk's: the frightened stop for nobody."
+  },
+  {
+    "name": "WATCH-PROTECTS-pace-kept",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      p.pace = 1;\n",
+    "new": "",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "The walk's cadence again after the run."
+  },
+  {
+    "name": "WATCH-PROTECTS-run-cadence",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      p.pace = FLEE_SPEED / PERSON_MOVE_SPEED;   // their legs at the run's cadence (residentWalker.js pace)\n",
+    "new": "",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "Their legs at the run's cadence."
+  },
+  {
+    "name": "WATCH-PROTECTS-greets-afraid",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (dt > 0 && !fear) this._greet(res, p, dist, stop);",
+    "new": "      if (dt > 0) this._greet(res, p, dist, stop);",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "The frightened greet nobody: a word said unseen rests them past it."
+  },
+  {
+    "name": "WATCH-PROTECTS-circle-afraid",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "!r.person.moving && !r.flee).map",
+    "new": "!r.person.moving).map",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "A circle with any of it frightened is silent."
+  },
+  {
+    "name": "WATCH-PROTECTS-speaks-afraid",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (!row.visible || !row.res || row.flee) continue;",
+    "new": "      if (!row.visible || !row.res) continue;",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "The frightened say nothing: a word said before the fright goes with it."
+  },
+  {
+    "name": "WATCH-PROTECTS-walker-pace",
+    "file": "src/characters/residentWalker.js",
+    "old": "PERSON_MOVE_FPS * this.pace;",
+    "new": "PERSON_MOVE_FPS;",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "The walker's frames at its pace."
+  },
+  {
+    "name": "WATCH-PROTECTS-host-quarry",
+    "file": "src/scenes/world.js",
+    "old": "    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes, ...livingQuarry()].filter(",
+    "new": "    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes].filter(",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "The street's people handed in."
+  },
+  {
+    "name": "WATCH-PROTECTS-host-dangers",
+    "file": "src/scenes/world.js",
+    "old": "          dangers: () => livingDangers(px, py, locOrigin),",
+    "new": "          dangers: () => null,",
+    "tests": [
+      "test/watchprotects_watch.test.js"
+    ],
+    "note": "The monsters handed to the street."
+  }
+]

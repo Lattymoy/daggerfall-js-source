@@ -46,17 +46,18 @@ export const PARDON_BASE_PRICE = 2500;
 /** A bounty contract finished for a region's board: its law thinks two points better of the hunter. */
 export const CONTRACT_LEGAL_GAIN = 2;
 
-/** The character's standing book - the watch's clocks and the prices paid, per region (saved: save.js). */
+/** The character's standing book - the watch's clocks and the prices paid, per region (saved: save.js); WATCH-KNOWS: and
+ *  the minute the watch warned them for a first minor offence. */
 export function standingOf(player) {
   if (!player.standing || typeof player.standing !== 'object') player.standing = {};
   const s = player.standing;
-  for (const k of ['challengeAt', 'graceUntil', 'penance', 'pardons']) if (!s[k] || typeof s[k] !== 'object') s[k] = {};
+  for (const k of ['challengeAt', 'graceUntil', 'penance', 'pardons', 'warned']) if (!s[k] || typeof s[k] !== 'object') s[k] = {};
   return s;
 }
-/** The save's copy: four plain maps. A pre-REP save restores empty. */
+/** The save's copy: five plain maps. A pre-REP save restores empty; a pre-WATCH-KNOWS one, never warned. */
 export function snapshotStanding(player) {
   const s = standingOf(player);
-  return { challengeAt: { ...s.challengeAt }, graceUntil: { ...s.graceUntil }, penance: { ...s.penance }, pardons: { ...s.pardons } };
+  return { challengeAt: { ...s.challengeAt }, graceUntil: { ...s.graceUntil }, penance: { ...s.penance }, pardons: { ...s.pardons }, warned: { ...s.warned } };
 }
 export function restoreStanding(player, snap) {
   player.standing = {};
@@ -66,6 +67,7 @@ export function restoreStanding(player, snap) {
   Object.assign(s.graceUntil, num(snap?.graceUntil));
   Object.assign(s.penance, num(snap?.penance));
   Object.assign(s.pardons, num(snap?.pardons));
+  Object.assign(s.warned, num(snap?.warned));
   return s;
 }
 
@@ -143,6 +145,21 @@ export function challengeFine(player, regionIndex, { ownNow = 0, worldNow = ownN
   const fine = 40 * Math.trunc(amount / 40);
   return isBanished(player, regionIndex, worldNow) ? fine * 2 : fine;
 }
+
+// ---- WATCH-KNOWS: a first minor offence warned -------------------------------------------------------------------
+
+/** WATCH-KNOWS: the minor offences the living world's watch warns a first offender for rather than arrests - a door tried,
+ *  a trespass, a night in the street, a pocket picked: the court's least (BASE_PENALTY 100-300), none marked or
+ *  banishable, the Thieves Guild's own petty three among them (court.js guildRescue). */
+export const WARNABLE_CRIMES = Object.freeze([CRIMES.Attempted_Breaking_And_Entering, CRIMES.Trespassing, CRIMES.Vagrancy, CRIMES.Pickpocketing]);
+/** Whether the watch warns rather than arrests for `crime` in a region: a minor offence, the character's first warned
+ *  there, and no known criminal (whose face the watch knows - REP1). */
+export function warningDue(player, regionIndex, crime, { ownNow = 0, worldNow = ownNow } = {}) {
+  if (!WARNABLE_CRIMES.includes(crime)) return false;
+  if (knownCriminal(player, regionIndex, { ownNow, worldNow })) return false;
+  return !Number.isFinite(standingOf(player).warned[regionIndex]);
+}
+export function noteWarning(player, regionIndex, ownNow) { standingOf(player).warned[regionIndex] = ownNow; }
 
 // ---- REP4: the road back ----------------------------------------------------------------------------------------
 

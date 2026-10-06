@@ -17,7 +17,7 @@ import {
 import { mintResident, travellerRoster } from '../src/systems/livingWorld/census.js';
 import { createRelations, TURN_KINDS, TURNS_MAX } from '../src/systems/livingWorld/relations.js';
 import { ROAD_NEWS, NEWS_SHARE, newsScript, foeWord, fillLine } from '../src/systems/livingWorld/lines.js';
-import { circleLine } from '../src/systems/livingWorld/meetups.js';
+import { circleLine, circleSlots, slotSpoken, exchangeScript } from '../src/systems/livingWorld/meetups.js';   // LW-TALK: PIN MOVED - the news told in an exchange
 import { DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { lwRoll, lwRng, lwSeed } from '../src/systems/livingWorld/seed.js';
 import { seededRng } from '../src/systems/wind.js';
@@ -317,12 +317,23 @@ test('LW4 what the town says: its own parties\' troubles, known from when they w
   while (!newsScript(seed, news)) seed++;
   const s = newsScript(seed, news);
   assert.ok(ROAD_NEWS.fell.includes(s.script));
+  // LW-TALK: PIN MOVED - the news told in an exchange, on the exchange's own draw (meetups.js exchangeScript), its opener
+  // the slot's
   const members = [{ id: 'm1', name: 'Cal Ash', job: 'smith' }, { id: 'm2', name: 'Dee Oak', job: 'baker' }];
-  const circle = { members, seed, start: 0, end: 100, talks: true, index: 0 };
-  const line = circleLine(circle, 0, 2, { news, town: 'Here' });
-  assert.equal(line.text, fillLine(s.script[0], { who: 'Bo', foe: 'Orcs', place: 'Far', a: 'Cal', b: 'Dee', town: 'Here' }), 'the news\'s first line, its tokens filled');
-  const road = circleLine(circle, 0, 2, { news, road: 'walk' });
-  assert.ok(!Object.values(ROAD_NEWS).flat().some((sc) => fillLine(sc[0], { who: 'Bo', foe: 'Orcs', place: 'Far', a: 'Cal', b: 'Dee' }) === road?.text), 'a party on the road tells none');
+  let circle = null, k = -1, tells = null;
+  for (let sd = 0; sd < 4000 && !tells; sd++) {
+    const c = { members, seed: sd, start: 0, end: 200, from: 0, index: 0 };
+    const kk = circleSlots(c, 2).findIndex((_, i) => slotSpoken(c, i));
+    const got = kk < 0 ? null : exchangeScript(c, kk, 2, { news, town: 'Here' }, null);
+    if (got?.told) { circle = c; k = kk; tells = got; }
+  }
+  assert.ok(ROAD_NEWS.fell.includes(tells.script), 'the news\'s own script, by its end');
+  const at = circleSlots(circle, 2)[k];
+  const [a, b] = k % 2 ? ['Dee', 'Cal'] : ['Cal', 'Dee'];
+  const line = circleLine(circle, at, 2, { news, town: 'Here' });
+  assert.equal(line.text, fillLine(tells.script[0], { who: 'Bo', foe: 'Orcs', place: 'Far', a, b, town: 'Here' }), 'the news\'s first line, its tokens filled');
+  const road = circleLine(circle, at, 2, { news, road: 'walk' });
+  assert.ok(!Object.values(ROAD_NEWS).flat().some((sc) => fillLine(sc[0], { who: 'Bo', foe: 'Orcs', place: 'Far', a, b }) === road?.text), 'a party on the road tells none');
   assert.deepEqual(['Orc', 'Harpy', 'Werewolf', 'Frost Daedra', 'Lich'].map((x) => foeWord(x, 3)), ['Orcs', 'Harpies', 'Werewolves', 'Frost Daedra', 'Liches']);
   assert.deepEqual([foeWord('Imp', 1), foeWord('Giant', 1)], ['an Imp', 'a Giant']);
 });
@@ -347,7 +358,7 @@ test('LW4 the town reads the lives: each traveller\'s place as its holder that d
   assert.ok(people.includes(c), 'the census\'s own resident while they hold it');
   assert.equal(town.peopleOf(5), people, 'kept for the day');
   assert.deepEqual(town._roads.news, roads.news, 'the day\'s news for the meetings');
-  assert.match(rd('src/systems/livingWorld/livingTown.js'), /const ctx = \{ town: this\.o\.townName, region: this\.o\.regionName, weather: this\.o\.weather\?\.\(\) \?\? null, hour, news: this\._roads\?\.news \?\? null \};/);
+  assert.match(rd('src/systems/livingWorld/livingTown.js'), /const ctx = \{ town: this\.o\.townName, region: this\.o\.regionName, weather: this\.o\.weather\?\.\(\) \?\? null, hour, news: this\._roads\?\.news \?\? null, places: this\._roads\?\.places \?\? null \};/);   // LW-TALK: PIN MOVED - and the towns of its road
 });
 
 test('LW4 the road shows its trouble: a beset party in its ring FIGHT_RING_N facing out (the unarmed within), its foes at FOE_RING_N facing in - no talk targets - each fighter striking on its own STRIKE_S beat; no word from a fighter; the fallen lie a day where they fell on their class corpse\'s picture; the Overworld\'s mark `wayfarer fight`, "beset by" what besets it; the sprites strike, keep foes out of the talk, draw the fallen still (mutants: the rings, the foes\' talk, the beat, the corpse, the mark)', () => {
@@ -427,7 +438,7 @@ test('LW4 the streaming host: the trouble\'s world (the climate at the place, th
   assert.match(w, /livingTurnsFresh\(\);   \/\/ LW4: a turn of fate made, or a save loaded/);
   assert.match(w, /const h = pl\.holder && pl\.dies && setsOut\(pl\.holder, town, k, livingTripWorld, o\) === false \? null : pl\.holder;/);
   assert.match(w, /if \(w\.length\) away\.set\(h\.id, w\);/);
-  assert.match(w, /return \{ away, visitors, holders, news \};/);
+  assert.match(w, /return \{ away, visitors, holders, news, places \};/);   // LW-TALK: PIN MOVED - the towns of its road
   assert.match(w, /foeName: livingFoeWord,/);
   assert.match(rd('src/ui/travelViewHud.js'), /look === 'wayfarer' \? \(\/\\bfight\\b\/\.test\(m\.kind \?\? ''\) \? C\.band : C\.wayfarer\)/);
   // the pace the trouble reads the lives at is the trips' own

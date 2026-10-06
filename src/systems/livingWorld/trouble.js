@@ -20,7 +20,7 @@
 // where it stood, and never comes to the town it set out for.
 import { lwRng, textSeed } from './seed.js';
 import { DAY_MIN } from './dayPlan.js';
-import { WALK_TO_H, whenWalked, wayAt, NATIVE_PIXEL } from './trips.js';
+import { WALK_TO_H, whenWalked, wayAt, dryStop, partyAt, NATIVE_PIXEL } from './trips.js';
 
 /** A day's walking's chance of trouble, on middling ground. */
 export const RISK_PER_DAY = 0.09;
@@ -87,7 +87,22 @@ export function troubleOf(trip, world) {
   const dayEnd = Math.floor(firstLight / DAY_MIN) * DAY_MIN + WALK_TO_H * 60;
   const firstDay = Math.max(0, dayEnd - firstLight);
   if (rng() < CAMP_SHARE && firstDay > 0 && firstDay < walkMin) { wm = firstDay; t0 = dayEnd + 4 * 60; camp = true; }
-  const s = leg === 'out' ? trip.trim0 + trip.pace * wm : trip.way.len - trip.trim1 - trip.pace * wm;
+  let s = leg === 'out' ? trip.trim0 + trip.pace * wm : trip.way.len - trip.trim1 - trip.pace * wm;
+  if (trip.way.dry) {
+    // LW-DRY: met on dry ground - a party on a wet stretch then (a ford by day, its walk on to the night's camp) is met at
+    // the first dry ground on from it, as it comes to it (trips.js partyAt: the ground between its day's walk and where
+    // it is, ahead of it, is all wet - it gets ahead only walking on to the first dry - so that ground is its camp).
+    // AUDIT LW-DRY: before, a camp's trouble kept its eleven o'clock on a camp not reached yet, and the party jumped to
+    // it and back
+    const dir = leg === 'out' ? 1 : -1;
+    const end = leg === 'out' ? trip.outT1 : trip.backT1;
+    const dry = dryStop(trip.way, s, dir, trip.trim0, trip.way.len - trip.trim1);
+    if (dry !== s) {
+      s = dry;
+      for (t0 = Math.ceil(t0); t0 < end; t0++) { const a = partyAt(trip, t0); if (a.s != null && dir * (a.s - s) >= 0) break; }
+      t0 = Math.min(t0, end);   // the leg's end: met as it comes to its town
+    }
+  }
   const p = wayAt(trip.way, s);
   const px = Math.floor(p.x / NATIVE_PIXEL), py = 499 - Math.floor(p.z / NATIVE_PIXEL);
   const armed = trip.party.filter((m) => m.cls != null);

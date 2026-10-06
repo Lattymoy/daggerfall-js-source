@@ -17,7 +17,7 @@ import { createLegacyHost, LEGACY_TEXT } from '../src/scenes/legacyHost.js';
 import { modSaveRecords, _resetModSaveData } from '../src/systems/modSaveData.js';
 import { setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
 import { KIN_NEWS, newsScript, fillLine, TOKEN_FALLBACK } from '../src/systems/livingWorld/lines.js';
-import { circleLine } from '../src/systems/livingWorld/meetups.js';
+import { circleLine, circleSlots, slotSpoken, exchangeScript } from '../src/systems/livingWorld/meetups.js';
 import { killerOf, inheritRevenant, revenantsFor, REVENANT_STORE_PREFIX, REVENANT_RETURN_MIN_MINUTES, _resetRevenantForTests } from '../src/systems/revenant.js';
 import { LivingTown } from '../src/systems/livingWorld/livingTown.js';
 import { ResidentWalker } from '../src/characters/residentWalker.js';
@@ -110,13 +110,18 @@ test('LEGACY6 the towns\' words: a kinsman\'s news has its own lines, by name an
   assert.ok(KIN_NEWS.wed.includes(told.script), 'the house\'s own words, never the road\'s');
   for (const k of ['died', 'rested', 'wed', 'born']) assert.ok(KIN_NEWS[k].length >= 2, k);
   assert.equal(fillLine('House {house}', {}), `House ${TOKEN_FALLBACK.house}`, 'never a brace on the screen');
-  const circle = { talks: true, start: 0, end: 1e9, members: [{ name: 'Ana Two', job: 'crafter' }, { name: 'Bo Three', job: 'crafter' }] };
+  // a meeting says it - LW-TALK (main's #630, at Project Legacy's merge of it): PIN MOVED - told in an exchange, on the
+  // exchange's own draw (meetups.js exchangeScript), its first line the slot's opener's; the old circle of a billion
+  // minutes laid its exchanges' slots past the array's bound
+  const members = [{ id: 'a2', name: 'Ana Two', job: 'crafter' }, { id: 'b3', name: 'Bo Three', job: 'crafter' }];
   let line = null;
-  for (let seed = 0; seed < 400 && !line; seed++) {
-    const got = circleLine({ ...circle, seed }, 0, 1, { news: [item], player: 'Ysolde' });
-    if (got && /Hlaalu/.test(got.text)) line = got.text;
+  for (let seed = 0; seed < 4000 && !line; seed++) {
+    const c = { members, seed, start: 0, end: 200, from: 0, index: 0 };
+    const k = circleSlots(c, 2).findIndex((_, i) => slotSpoken(c, i));
+    const got = k < 0 ? null : exchangeScript(c, k, 2, { news: [item], player: 'Ysolde' }, null);
+    if (got?.told && KIN_NEWS.wed.includes(got.script)) line = circleLine(c, circleSlots(c, 2)[k], 2, { news: [item], player: 'Ysolde' })?.text ?? null;
   }
-  assert.ok(line && /Aldo/.test(line) && !/\{/.test(line), `a meeting says it: ${line}`);
+  assert.ok(line && /Aldo/.test(line) && /Hlaalu/.test(line) && !/\{/.test(line), `a meeting says it, by name and by house: ${line}`);
   // a town tells it: the host's news in its talk's context, beside the road's
   const { nav, buildings, doors } = synthTown();
   const t = new LivingTown(nav, {

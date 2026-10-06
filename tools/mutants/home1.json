@@ -509,7 +509,7 @@
   {
     "name": "HOME1-a-quest-picks-a-home",
     "file": "src/systems/quest/place.js",
-    "old": "        if (world.isPlayerHome?.(location.mapTableData?.mapId, buildingKey)) continue;   // HOME1: nor a player's online home (a departure: DFU has one player)\n",
+    "old": "      if (world.isPlayerHome?.(location.mapTableData?.mapId, buildingKey)) continue;   // HOME1: nor a player's online home (a departure: DFU has one player)\n",
     "new": "",
     "tests": [
       "test/home1.test.js"

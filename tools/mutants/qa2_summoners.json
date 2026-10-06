@@ -1,0 +1,58 @@
+[
+  {
+    "name": "QA2-summoner-door-unasked",
+    "file": "src/formats/worldDataReplacement.js",
+    "old": "  curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);\n  cacheBlock(blockKey, dfBlock);",
+    "new": "  cacheBlock(blockKey, dfBlock);",
+    "tests": ["test/qa2_summoners.test.js"]
+  },
+  {
+    "name": "QA2-summoner-vendor-gate",
+    "file": "src/world/curatedPeople.js",
+    "old": "export const curatedSummonersOf = (name, vendor) => (vendor === TEMPLE_SUMMONER_VENDOR ? BY_BLOCK.get(name) ?? [] : []);",
+    "new": "export const curatedSummonersOf = (name, vendor) => (BY_BLOCK.get(name) ?? []);",
+    "tests": ["test/qa2_summoners.test.js"]
+  },
+  {
+    "name": "QA2-summoner-deity-gate",
+    "file": "src/world/curatedPeople.js",
+    "old": "    if (!interior || data?.factionId !== r.deity) continue;",
+    "new": "    if (!interior) continue;",
+    "tests": ["test/qa2_summoners.test.js"]
+  },
+  {
+    "name": "QA2-summoner-own-gate",
+    "file": "src/world/curatedPeople.js",
+    "old": "    if (people.some((p) => SUMMONER_FACTIONS.includes(p.factionID))) continue;",
+    "new": "",
+    "tests": ["test/qa2_summoners.test.js"]
+  },
+  {
+    "name": "QA2-summoner-count-unkept",
+    "file": "src/world/curatedPeople.js",
+    "old": "    if (interior.header) interior.header.numPeopleRecords = people.length;",
+    "new": "",
+    "tests": ["test/qa2_summoners.test.js"]
+  },
+  {
+    "name": "QA2-summoner-picture-key",
+    "file": "src/world/curatedPeople.js",
+    "old": "    people.push({ ...p, textureBitfield: ((p.textureArchive << 7) | (p.textureRecord & 0x7f)) & 0xffff });",
+    "new": "    people.push({ ...p });",
+    "tests": ["test/qa2_summoners.test.js"]
+  },
+  {
+    "name": "QA2-summoner-row-faction",
+    "file": "src/world/curatedPeople.js",
+    "old": "  row('TEMPASH0.RMB', 11, 35, { position: 36089, xPos: -92, yPos: 0, zPos: 122, factionID: 498,",
+    "new": "  row('TEMPASH0.RMB', 11, 35, { position: 36089, xPos: -92, yPos: 0, zPos: 122, factionID: 492,",
+    "tests": ["test/qa2_summoners.test.js"]
+  },
+  {
+    "name": "QA2-summoner-list",
+    "file": "src/world/curatedPeople.js",
+    "old": "  .filter(([id, kind]) => kind === 'DaedraSummoning' && Number(id) !== MAGES_GUILD_SUMMONER).map(([id]) => Number(id)));",
+    "new": "  .filter(([, kind]) => kind === 'DaedraSummoning').map(([id]) => Number(id)));",
+    "tests": ["test/qa2_summoners.test.js"]
+  }
+]

@@ -30,6 +30,7 @@ import { LOCATION_TYPES, DUNGEON_TYPES, getWorldClimateSettings, REGION_NAMES } 
 import { BLOCK_TYPES, RDB_RESOURCE_TYPES } from './blocksFile.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { setWorldDataDoor } from './worldDataDoor.js';
+import { curateBlockPeople } from '../world/curatedPeople.js';   // QUEST-AUDIT II TEMPLE-SUMMONER: the temples' summoners, at the one door
 
 export const AUTO_MAP_DATA_SIZE = 64 * 64;   // :45
 const NO_REPLACEMENT = Symbol('noReplacement');   // the C#'s noReplacementRegion/Location/Block/Building sentinels
@@ -435,8 +436,9 @@ export function getDFBlockReplacementData(block, blockName) {
   if (pinnedHere(pinLocationKey(), blockReplacementFilename(blockName, variant))) {
     const json = tryGetAsset(blockReplacementFilename(blockName, variant));
     if (!json) return null;
-    const dfBlock = blockFromJson(json, block);
+    const dfBlock = blockFromJson(json, block, blockName);
     if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);
+    curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);   // QUEST-AUDIT II TEMPLE-SUMMONER
     return dfBlock;
   }
   const cached = blocks.get(blockKey);
@@ -448,8 +450,10 @@ export function getDFBlockReplacementData(block, blockName) {
   }
   // WD1 (Aquatic Sprites' three wet blocks): the whole DFBlock, RdbBlock and RdiBlock included (:363-369) - the
   // AUDIT-RR2 G14 refusal of RDB/RDI files is lifted now that the converters below read both halves
-  const dfBlock = blockFromJson(json, block);
+  const dfBlock = blockFromJson(json, block, blockName);
   if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384 - RMB blocks only
+  // QUEST-AUDIT II TEMPLE-SUMMONER: a Beautiful Villages temple stands its deity's Daedra summoner (world/curatedPeople.js)
+  curateBlockPeople(dfBlock, liveAsset(blockReplacementFilename(blockName, variant))?.vendor);
   cacheBlock(blockKey, dfBlock);
   console.log(`[worlddata] Found DFBlock override: ${blockName} (index: ${block})`);
   return dfBlock;
@@ -636,12 +640,12 @@ export function groundDataFromJson(g) {
  *  dfBlock.Index = block). An RMB's FLD header takes its positions from
  *  the subrecords (the JSON carries them there) and its record counts
  *  from the arrays; an RDB or RDI file serves its own half (WD1). */
-export function blockFromJson(json, index) {
+export function blockFromJson(json, index, servedName = json.Name ?? '') {   // AUDIT QA2 B1: `servedName`, the name the door served it under
   const name = json.Name ?? '';
   const type = enumOf(BLOCK_TYPES, json.Type, name.endsWith('.RMB') ? BLOCK_TYPES.Rmb : name.endsWith('.RDB') ? BLOCK_TYPES.Rdb : name.endsWith('.RDI') ? BLOCK_TYPES.Rdi : BLOCK_TYPES.Unknown);
   if (type === BLOCK_TYPES.Rdb || type === BLOCK_TYPES.Rdi) {
     return {
-      position: json.Position ?? 0, index, name, type, fromWorldData: true,   // WD3: served from a mod's JSON, not BLOCKS.BSA
+      position: json.Position ?? 0, index, name, servedName, type, fromWorldData: true,   // WD3: served from a mod's JSON, not BLOCKS.BSA
       rmbBlock: null,
       rdbBlock: type === BLOCK_TYPES.Rdb ? rdbBlockFromJson(json.RdbBlock ?? {}) : null,
       rdiBlock: type === BLOCK_TYPES.Rdi ? { data: json.RdiBlock?.Data ? Uint8Array.from(json.RdiBlock.Data) : null } : null,
@@ -660,7 +664,7 @@ export function blockFromJson(json, index) {
     index,
     name,
     type,
-    fromWorldData: true,   // WD3: served from a mod's JSON, not BLOCKS.BSA (world/rmbLayout.js: its own mills, not Kamer's)
+    fromWorldData: true, servedName,   // WD3: served from a mod's JSON, not BLOCKS.BSA (world/rmbLayout.js: its own mills, not Kamer's); AUDIT QA2 B1: and under the name the town lays - a pack's JSON names itself (TEMPASA2's says TEMPAS2.RMB), and the port's curations key on the town's
     rmbBlock: {
       fldHeader: {
         numBlockDataRecords: subRecords.length, numMisc3dObjectRecords: misc3d.length, numMiscFlatObjectRecords: miscFlat.length,

@@ -334,6 +334,24 @@ test('LEGACY-HOME: a kin STRUCK DOWN by the one played dies in the record - by w
   assert.equal(host.kinSlain(res), false, 'once');
 });
 
+test('PROJECT LEGACY\'S MERGE OF WATCH-PROTECTS (main\'s #630): a kin a BEAST OF THE STREET kills dies in the record - fallen, by no hand of the house, the town told - and stands no more; the one played is never theirs', () => {
+  _resetModSettings();
+  const { host, w, storage } = homeWorld();
+  const f = host.family;
+  const child = addChild(f, 1, { rng: familyRng(5) }).person;
+  host.tick();
+  const res = host.residentsOf(5001, () => 42)[0];
+  assert.equal(host.kinKilled({ id: res.id, legacy: { familyId: f.id, personId: f.currentId } }), false, 'the one played dies at their own door');
+  assert.equal(host.kinKilled(res), true);
+  assert.equal(child.died.cause, 'fell');
+  assert.equal(child.died.by, null, 'nobody the house knows');
+  assert.equal(loadFamily(storage, f.id).people.find((p) => p.id === child.id).died.cause, 'fell', 'a world fact: the store\'s');
+  assert.deepEqual(f.news.map((n) => [n.k, n.who]), [['died', `${child.given} ${child.surname}`]], 'a member\'s death is news');
+  assert.equal(w.said.at(-1), LEGACY_TEXT.kinKilled(`${child.given} ${child.surname}`));
+  assert.deepEqual(host.residentsOf(5001, () => 42), [], 'never back with the next day\'s people');
+  assert.equal(host.kinKilled(res), false, 'once');
+});
+
 test('LEGACY-HOME: the House page marks the family home; the card says where each lives', () => {
   _resetModSettings();
   const { host, w, storage } = homeWorld();
@@ -396,6 +414,9 @@ test('LEGACY-HOME wiring: the town\'s extra people are the host\'s; a family hou
   assert.match(w, /return modes\?\.interiorCtx\?\.ownedRoom \? null : \{ key: b\.buildingKey, town \};/, 'AUDIT-E1 stands for every other room of the player\'s');
   assert.match(w, /if \(isFamilyRes\(res\)\) return false;   \/\/ LEGACY-HOME/);
   assert.match(w, /if \(isFamilyRes\(res\)\) \{ legacyHost\?\.kinSlain\(res\); return; \}/);
+  // PROJECT LEGACY'S MERGE OF WATCH-PROTECTS: one of the line a beast killed is the record's too, and a townsperson's
+  // death by another hand ends their courtship as one struck down does
+  assert.match(w, /const livingKilled = \(res, t\) => \{[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(isFamilyRes\(res\)\) \{ legacyHost\?\.kinKilled\(res\); return; \}\n\s*legacyHost\?\.residentDied\(res\.id\);[^\n]*\n\s*livingRelations\.turn\('killed', /);
   assert.match(w, /kin: \(person, talk\) => legacyMeetKin\(person, talk\) \}/);
   // PIN MOVED (LEGACY7 part five): offline the deeds as before; online the realm character's homes (test/legacy7_homes)
   assert.match(w, /heldHouses: \(\) => \(isOnlinePage\(\) \? \(realmSession \? _legacyOnlineHomes : null\) : \(playerEntity\.houses \?\? \[\]\)\.filter\(\(h\) => \(h\?\.buildingKey \| 0\) > 0 && deedStands\(h\)\)\),/);

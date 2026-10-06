@@ -329,7 +329,7 @@ test('ACC1a: PURE, and both ends can import it', async () => {
   // colours (SEASON1 part two, PIN MOVED: a Season's banner ribbon - heraldryLaw.js imports nothing), and - SEAT2b part two
   // (b), PIN MOVED: a siege pass's works - siegeRef.js's worksOf (it imports nothing, and the relay bundles it already),
   // and - LEGACY7 part two, PIN MOVED: a house's claims - houseLaw.js's houseClaimOk (it imports nothing; the relay bundles
-  // it too, world172), and nothing else
+  // it too, world174 - world172 on its branch), and nothing else
   const imports = [...text.matchAll(/from\s+'(\.[^']+)'/g)].map((m) => m[1]);
   assert.deepEqual(imports, ['./wire.js', './guildLaw.js', './heraldryLaw.js', './siegeRef.js', './houseLaw.js'], 'a new import here is a new file in the relay\'s bundle');
 });

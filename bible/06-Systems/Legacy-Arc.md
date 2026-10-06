@@ -228,7 +228,8 @@ line's own law now, Bloodline open at the founder's chargen.
   heirloom attuned (its generation counted), and the tree's card of the fallen marked "At peace" (else "Lies
   unclaimed" or "Carried home"). Unclaimed remains lie for good (they are the family's, not the world's). Every final
   death leaves remains and its quest, wherever it happened - but one: a member struck down by the one played (section
-  10b) leaves no remains and no quest (AUDIT LEGACY II F3 recorded the exception). A rest lays what was left with the
+  10b) leaves no remains and no quest (AUDIT LEGACY II F3 recorded the exception), nor does one a beast kills in the
+  street (the merge of main's #630: theirs is a death of the record, not a fall of the one played). A rest lays what was left with the
   remains to rest with them (AUDIT LEGACY II P6: a rested row keeps no lists).
 - **The claim (AUDIT LEGACY II).** A list is CLAIMED by the member who changes it (opened and left as it lies, it is
   nobody's - H5); the claim is the store's, a world fact, and a rewind of the claimant's own save restores the list
@@ -295,8 +296,8 @@ mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed onl
 *LEGACY7 - built: the line, the tombstone, the member's birth and the house name (`server-account/src/legacy.js`,
 migration `0084_legacy.sql`, acct85; `systems/legacy/realmLine.js`; `test/legacy7_service.test.js`,
 `test/legacy7_online.test.js`, `tools/mutants/legacy7.json`), and two players wed (part three: `net/wedSession.js`, the
-`wed` frame of world172, `server-account/src/legacy.js` realmWed; `test/legacy7_wed.test.js`,
-`tools/mutants/legacy7wed.json`).*
+`wed` frame of world174 (world172 on its branch, renumbered past main's WATCH-FIX and SERPENT3 at the merge),
+`server-account/src/legacy.js` realmWed; `test/legacy7_wed.test.js`, `tools/mutants/legacy7wed.json`).*
 
 - **The model is the family's**, chosen at the founder's online chargen - Bloodline open online (AUDIT LEGACY B4 shut it
   while a permadeath had no authority there; the tombstone is that authority), said on its card: "Online, the realm
@@ -327,7 +328,7 @@ migration `0084_legacy.sql`, acct85; `systems/legacy/realmLine.js`; `test/legacy
   LEGACY7 an online founder kept the client's id in the record while the realm named the character anew, so its saves
   were refused into the record and its next load founded a second house.
 - **Enduring online** is the offline law: the toll, the rise, the elder's mantle.
-- **A house name online** (LEGACY7 part two, `net/houseLaw.js`; world172, acct85; `test/legacy7_house.test.js`,
+- **A house name online** (LEGACY7 part two, `net/houseLaw.js`; world174, acct85; `test/legacy7_house.test.js`,
   `tools/mutants/legacy7house.json`): the account service reads a realm character's house off its line and signs it
   into the identity token beside the guild's tag - `hn` the surname, `hc` the member's given name, `hb` a Bloodline,
   `hg` the generation's numeral from the second of a name ("Ysolde II") - through the name filter (the house is shown
@@ -404,7 +405,7 @@ save from the family's dates. The years are the family's fiction, the world's cl
 ## 10b. THE BLOODLINE IN THE WORLD (LEGACY-HOME)
 
 *Built: LEGACY-HOME. The law is `systems/legacy/household.js`; the host's half `scenes/legacyHost.js` (`residentsOf`,
-`kinOfResident`, `kinSlain`, `isFamilyHouse`, `markHome`); the wiring `scenes/world.js`; pinned in
+`kinOfResident`, `kinSlain`, `kinKilled`, `isFamilyHouse`, `markHome`); the wiring `scenes/world.js`; pinned in
 `test/legacyhome.test.js`, mutation-proven in `tools/mutants/legacyhome.json`.*
 
 Mac (2026-10-05): "I think your bloodline should be visible when not playing, and if a house is owned should live in the
@@ -460,6 +461,12 @@ than standing still.
 - **Struck down.** One of the line killed by the one played (the town's one-hit civilian, LW7) dies IN THE RECORD -
   `died` with cause `slain` and by whose hand, a world fact, the store's (AUDIT LEGACY's first authority) - said on the
   HUD, and stands no more; never a death in the town's lives (`livingDeadAt`/`livingSlay` pass them to the host).
+- **Killed in the street** (PROJECT LEGACY'S MERGE OF MAIN'S #630: WATCH-PROTECTS lets a beast hunt the town's people,
+  and its first landed blow kills). One of the line a beast kills dies IN THE RECORD the same way - `died` with cause
+  `fell`, by no hand of the house (`kinKilled`), the store's, the towns' news, said on the HUD - and never takes the
+  census's turn (`livingKilled` passes them to the host first: a turn of the lives' named a census place not theirs,
+  and the record, alive still, stood them again with the next day's people). A townsperson killed so ends their
+  courtship, as one struck down does. Neither death lays remains or a quest: those are the one played's (section 4).
 - **Online** (LEGACY7 part five, `test/legacy7_homes.test.js`, `tools/mutants/legacy7homes.json`): the realm keeps the
   line, so a realm character's ONLINE HOMES (HOME1, `systems/onlineHomes.js` - a home is a realm character's) are its
   houses, learned with the save as a deed is offline: the world reads this realm character's rows of the account's

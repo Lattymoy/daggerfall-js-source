@@ -37,9 +37,17 @@
 // company, else to a free place of the room's - within INDOOR_WALK_M, along a line the room's own collider lets them
 // walk (never through a wall or a table), at INDOOR_WALK_SPEED, facing the way they go; the place they make for is
 // theirs from the moment they set out. Between tables they are at none (no circle, no table to face).
+//
+// LW-TALK (2026-10-06): A TABLE'S COMPANY MEETS FROM THE MINUTE IT SAT DOWN AS IT IS - its rounds run from then while it
+// stays the same (the first cut dealt the tables on the street's round, so two who met mid-round stood mute to the next,
+// and every table in the room spoke on the same second); one who comes while an exchange is on waits for its last line;
+// its people stay put while an exchange is on and through their first round together (one in a quiet circle got up
+// mid-talk, and a temple's two parted the moment their talk ended); and one who kept quiet as the player came by
+// speaks when the player stops before them.
 // ═══════════════════════════════════════════════════════════════════
 import { WITNESS_M, GREET_RANGE, GREET_REST_MIN, GREET_S, LINE_RANGE } from '../systems/livingWorld/livingTown.js';
-import { spotCircles, circleLine } from '../systems/livingWorld/meetups.js';
+import { dealCircles, circleLine, exchangeAt, ROUND_S, GATHER_BEAT_S, SLOT_LINES } from '../systems/livingWorld/meetups.js';
+import { PERSON_IDLE_DISTANCE } from '../characters/mobilePerson.js';
 import { roomKindOf } from '../systems/livingWorld/lines.js';
 import { lwSeed, textSeed } from '../systems/livingWorld/seed.js';
 
@@ -179,17 +187,20 @@ export function createLivingIndoors(deps) {
   /** @type {any[]} */
   let circles = [];
   const inCircle = new Set();
-  /** LW8c: the members of a talking circle (they stay put) */
-  const talking = new Set();
-  /** LW-FIX1: the round the tables' circles were dealt for, and each table's circles as the round began */
-  let roomRound = /** @type {number|null} */ (null);
-  /** @type {Map<number, any[]>} */
-  const roundCircles = new Map();
+  /** LW8c: who stays put - LW-TALK: a circle's people while an exchange is on, and through their first round together */
+  const staying = new Set();
+  /** LW-TALK: each table's company - who stands at it, the minute it sat down as it is (or met, after the exchange it
+   *  came in on), the circle it carries till then, and its own @type {Map<number, { ids: string, since: number, carry: any, circle: any }>} */
+  const company = new Map();
+  /** LW-TALK: each exchange's script as it began (meetups.js exchangeScript) @type {Map<string, any>} */
+  const scripts = new Map();
   /** @type {Map<string, { text: string, until: number }>} */
   const words = new Map();
-  /** @type {Map<string, number>} */
+  /** @type {Map<string, { t: number, said: boolean }>} */
   const greeted = new Map();
   let realNow = 0;
+  /** LW-TALK: the player's feet at the last frame (standing still before one: a stop) @type {number[]|null} */
+  let lastFeet = null;
 
   /** The building's own deal of its spots: a seeded order, the same for every reader. */
   const dealOf = (key, n) => {
@@ -209,10 +220,11 @@ export function createLivingIndoors(deps) {
     list.length = 0;
     circles = [];
     inCircle.clear();
-    talking.clear();
-    roomRound = null;
-    roundCircles.clear();
+    staying.clear();
+    company.clear();
+    scripts.clear();
     words.clear();
+    lastFeet = null;
   }
 
   /** The first free spot in the building's deal. */
@@ -284,7 +296,7 @@ export function createLivingIndoors(deps) {
           if (s.walk.t >= s.walk.dur) { s.walk = null; s.next = realNow + stirWait(id, s.stirs); }
           continue;
         }
-        if (talking.has(id) || realNow < s.next) continue;
+        if (staying.has(id) || realNow < s.next) continue;
         s.stirs++;
         const to = stirPlace(room, [...stood].map(([oid, x]) => ({ id: oid, spot: x.spot, walking: !!x.walk })), id, s.spot, s.stirs, walkable);
         if (to < 0) { s.next = realNow + stirWait(id, s.stirs); continue; }
@@ -317,48 +329,57 @@ export function createLivingIndoors(deps) {
         list.push({ key: `in:${id}`, res: s.res, feet: p, yaw: Math.atan2(toward[0] - p[0], toward[2] - p[2]), moving: false, distM: Math.hypot(p[0] - feet[0], p[2] - feet[2]) });
       }
       deps.sprites.sync(list, { dt, eye, ground: true });
-      // LW8b: the tables' circles this round - those at a table the whole of it, on the street's rule (meetups.js)
+      // LW8b: the tables' circles - LW-TALK: a table's company meets from the minute it sat down as it is, a round at a
+      // time while it stays the same (one who leaves ends it, one who comes begins another); its talk begins a beat after
       const t = deps.clock();
       const beat = b.town.talkBeat?.();
-      const stays = new Map(inside.map((x) => [x.res.id, x.e]));
       circles = [];
       inCircle.clear();
-      talking.clear();
-      // LW-FIX1: a table's circles are the round's as it began - one who comes mid-round joins the next, and a circle one
-      // of whom goes is silent till then (never a talk re-dealt mid-script)
-      const round = beat ? Math.floor(t / beat.roundMin) : null;
-      if (round !== roomRound) {
-        roomRound = round;
-        roundCircles.clear();
-        // AUDIT-E5: a table nobody stands at as the round begins deals nothing this round - two who sit down at it
-        // mid-round talk from the next (dealt now, they began mid-script)
-        for (const ti of room.tableOf) if (ti >= 0 && !tables.has(ti)) roundCircles.set(ti, []);
-      }
+      staying.clear();
+      for (const ti of [...company.keys()]) if (!tables.has(ti)) company.delete(ti);
       for (const [ti, at] of tables) {
-        if (!beat) continue;
-        let dealt = roundCircles.get(ti);
-        if (dealt === undefined) {
-          const present = at.flatMap((m) => { const e = stays.get(m.id); return e ? [{ who: m.res, t0: e.t0, t1: e.t1 }] : []; });
-          dealt = at.length < 2 ? [] : spotCircles(`in:${b.key}:${ti}`, present, t, beat.roundMin);
-          roundCircles.set(ti, dealt);
+        if (!beat || at.length < 2) { company.delete(ti); continue; }
+        const ids = at.map((m) => m.id).sort().join(',');
+        let co = company.get(ti);
+        if (!co || co.ids !== ids) {
+          // one come to a table mid-exchange waits for it: the company there talks it out, and the new one meets after its
+          // last line (LW-FIX1's law - a talk never re-dealt mid-script); one gone, the talk is over at once
+          const was = co?.circle && co.circle.members.every((m) => at.some((x) => x.id === m.id)) ? exchangeAt(co.circle, t, beat.lineMin) : null;
+          company.set(ti, co = { ids, since: was ? was.s + SLOT_LINES * beat.lineMin : t, carry: was ? co.circle : null, circle: null });
         }
-        for (const c of dealt) {
-          if (!c.members.every((m) => at.some((x) => x.id === m.id))) continue;   // one of them gone: silent till the next round
+        if (co.carry && t < co.since) {
+          circles.push(co.carry);
+          for (const m of co.carry.members) { inCircle.add(m.id); staying.add(m.id); }
+          continue;
+        }
+        co.carry = null;
+        const round = Math.max(0, Math.floor((t - co.since) / beat.roundMin));
+        const start = co.since + round * beat.roundMin;
+        co.circle = null;
+        for (const c of dealCircles(`in:${b.key}:${ti}:${co.since}`, at.map((m) => m.res), round, start, start + beat.roundMin, GATHER_BEAT_S * beat.roundMin / ROUND_S)) {
           circles.push(c);
-          for (const m of c.members) { inCircle.add(m.id); if (c.talks) talking.add(m.id); }   // LW8c: who stays put
+          co.circle ??= c;
+          const on = t - co.since < beat.roundMin || exchangeAt(c, t, beat.lineMin) != null;
+          for (const m of c.members) { inCircle.add(m.id); if (on) staying.add(m.id); }   // LW8c: who stays put
         }
       }
-      // LW8b: the street's word for the player passing close - one in no circle, once in GREET_REST_MIN of the clock
+      // LW8b: the street's word for the player passing close - one in no circle, once in GREET_REST_MIN of the clock;
+      // LW-TALK: one who kept quiet as the player came by speaks when the player stops before them (stands still within
+      // the street's idle distance - the first cut never asked, and a quiet stranger here never spoke)
+      const still = lastFeet != null && Math.hypot(feet[0] - lastFeet[0], feet[2] - lastFeet[2]) < 1e-3;
+      lastFeet = [feet[0], feet[1], feet[2]];
       for (const [id, s] of stood) {
         const p = placeOf(s);
-        if (inCircle.has(id) || Math.hypot(p[0] - feet[0], p[2] - feet[2]) > GREET_RANGE) continue;
+        const dist = Math.hypot(p[0] - feet[0], p[2] - feet[2]);
+        if (inCircle.has(id) || dist > GREET_RANGE) continue;
+        const stopped = still && dist <= PERSON_IDLE_DISTANCE;
         const last = greeted.get(id);
-        if (last != null && t >= last && t - last < GREET_REST_MIN) continue;   // AUDIT-E6: a clock gone back (a load) forgets the rest
-        greeted.set(id, t);
-        const text = b.town.greetingFor?.(s.res, t, false) ?? null;
+        if (last && t >= last.t && t - last.t < GREET_REST_MIN && (last.said || !stopped)) continue;   // AUDIT-E6: a clock gone back (a load) forgets the rest
+        const text = b.town.greetingFor?.(s.res, t, stopped) ?? null;
+        greeted.set(id, { t, said: text != null });
         if (text != null) words.set(id, { text, until: realNow + GREET_S });
       }
-      if (greeted.size > 512) for (const [id, at] of greeted) if (t - at >= GREET_REST_MIN) greeted.delete(id);
+      if (greeted.size > 512) for (const [id, at] of greeted) if (t - at.t >= GREET_REST_MIN) greeted.delete(id);
     },
     /**
      * LW8b: what is being said in the room this moment - each talking circle's line over its speaker (the street's
@@ -379,8 +400,9 @@ export function createLivingIndoors(deps) {
       if (circles.length) {
         const beat = b.town.talkBeat();
         const ctx = { ...b.town.lineCtx(t), room: roomKindOf(b.town.typeOf(b.key)) };
+        if (scripts.size > 2048) scripts.clear();
         for (const c of circles) {
-          const line = circleLine(c, t, beat.lineMin, ctx);
+          const line = circleLine(c, t, beat.lineMin, ctx, scripts);
           const seat = line ? heard(line.who.id) : null;
           if (line && seat) out.push({ person: seat.person, text: line.text, kind: /** @type {'talk'} */ ('talk') });
         }

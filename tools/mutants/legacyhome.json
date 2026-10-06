@@ -157,5 +157,95 @@
     "tests": [
       "test/legacyhome.test.js"
     ]
+  },
+  {
+    "name": "LEGACY-HOME-kin-killed-by-the-house",
+    "file": "src/scenes/legacyHost.js",
+    "old": "recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: null });",
+    "new": "recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: current() ? fullNameOf(current().given, current().surname) : null });",
+    "tests": [
+      "test/legacyhome.test.js"
+    ],
+    "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): a beast's kill blamed on the one played."
+  },
+  {
+    "name": "LEGACY-HOME-kin-killed-slain",
+    "file": "src/scenes/legacyHost.js",
+    "old": "recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: null });",
+    "new": "recordDeath(family, p.id, { at: deps.now(), cause: 'slain', place: deps.here(), by: null });",
+    "tests": [
+      "test/legacyhome.test.js"
+    ],
+    "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): a beast's kill read as one struck down."
+  },
+  {
+    "name": "LEGACY-HOME-kin-killed-untold",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    tellNews('died', fullNameOf(p.given, p.surname), deps.here()?.mapId);\n    store();\n    deps.say(LEGACY_TEXT.kinKilled(",
+    "new": "    store();\n    deps.say(LEGACY_TEXT.kinKilled(",
+    "tests": [
+      "test/legacyhome.test.js"
+    ],
+    "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): the death no town's news."
+  },
+  {
+    "name": "LEGACY-HOME-kin-killed-not-stored",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    store();\n    deps.say(LEGACY_TEXT.kinKilled(",
+    "new": "    deps.say(LEGACY_TEXT.kinKilled(",
+    "tests": [
+      "test/legacyhome.test.js"
+    ],
+    "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): the death never the store's world fact."
+  },
+  {
+    "name": "LEGACY-HOME-kin-killed-twice",
+    "file": "src/scenes/legacyHost.js",
+    "old": "if (!p || !isAlive(p) || p.id === family.currentId) return false;\n    recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: null });",
+    "new": "if (!p) return false;\n    recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: null });",
+    "tests": [
+      "test/legacyhome.test.js"
+    ],
+    "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): the dead die again."
+  },
+  {
+    "name": "LEGACY-HOME-kin-killed-the-one-played",
+    "file": "src/scenes/legacyHost.js",
+    "old": "if (!p || !isAlive(p) || p.id === family.currentId) return false;\n    recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: null });",
+    "new": "if (!p || !isAlive(p)) return false;\n    recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: null });",
+    "tests": [
+      "test/legacyhome.test.js"
+    ],
+    "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): the one played killed through a resident's tag."
+  },
+  {
+    "name": "LEGACY-HOME-kin-killed-unexported",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    kinSlain,\n    kinKilled,\n",
+    "new": "    kinSlain,\n",
+    "tests": [
+      "test/legacyhome.test.js"
+    ],
+    "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): the host offers the world no door for it."
+  },
+  {
+    "name": "LEGACY-HOME-kin-killed-census-turn",
+    "file": "src/scenes/world.js",
+    "old": "    if (isFamilyRes(res)) { legacyHost?.kinKilled(res); return; }\n    legacyHost?.residentDied(res.id);   // LEGACY5: a courtship of theirs ends\n    livingRelations.turn('killed'",
+    "new": "    legacyHost?.residentDied(res.id);   // LEGACY5: a courtship of theirs ends\n    livingRelations.turn('killed'",
+    "tests": [
+      "test/legacyhome.test.js"
+    ],
+    "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): one of the line a beast killed taken for the census's."
+  },
+  {
+    "name": "LEGACY-HOME-killed-courtship-kept",
+    "file": "src/scenes/world.js",
+    "old": "    if (isFamilyRes(res)) { legacyHost?.kinKilled(res); return; }\n    legacyHost?.residentDied(res.id);   // LEGACY5: a courtship of theirs ends\n    livingRelations.turn('killed'",
+    "new": "    if (isFamilyRes(res)) { legacyHost?.kinKilled(res); return; }\n    livingRelations.turn('killed'",
+    "tests": [
+      "test/legacyhome.test.js"
+    ],
+    "note": "PROJECT LEGACY'S MERGE OF MAIN'S #630, #634, #636 AND #637 (WATCH-PROTECTS: a beast of the street kills one of the town's people): a courted townsperson a beast killed is courted still."
   }
 ]

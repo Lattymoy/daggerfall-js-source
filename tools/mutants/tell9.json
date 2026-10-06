@@ -448,5 +448,25 @@
     "tests": [
       "test/tell9_screen.test.js"
     ]
+  },
+  {
+    "name": "POISE-BOX-bare-states",
+    "file": "src/ui/enhancedHud.js",
+    "old": "` poise-${p.state}`",
+    "new": "` ${p.state}`",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ],
+    "note": "POISE-BOX (field, 2026-10-05): the state classes bare - the idle track takes the sheet's .empty component and stands 54px tall"
+  },
+  {
+    "name": "POISE-BOX-bare-flash",
+    "file": "src/ui/enhancedHud.js",
+    "old": "' poise-flash'",
+    "new": "' flash'",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ],
+    "note": "POISE-BOX: the flash class bare - one generic .flash rule away from the same box"
   }
 ]

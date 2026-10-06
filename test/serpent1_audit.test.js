@@ -11,9 +11,10 @@ import {
   newSerpentFight, joinSerpentFight, applySerpentHit, stepSerpentBrain, serpentStateOf, serpentEarned, serpentEarnedBy, coilWord, coilHolds,
   pickSerpentTarget, serpentWreck, serpentShareWanted, serpentAtkFrame, SHIP_REF, SERPENT_TTK_S, SERPENT_ATTACK_TABLE, SERPENT_ATTACK_BY_ID, ZONES,
   ENGAGE_R, SERPENT_STAND_R, SERPENT_TARGET_R, SERPENT_IDLE_RETIRE_MS, SERPENT_ABSENT_RETIRE_MS, SERPENT_RECEIPT_SHARE, SERPENT_STOOD_SHARE,
-  SERPENT_PHASE_AT, SERPENT_TICK_MS, ARENA_R, STRAY_M, COIL_ESC_MS, SERPENT_COIL_PASS,
+  SERPENT_PHASE_AT, SERPENT_TICK_MS, ORBIT_R, CRUISE_V, SERPENT_SLEEP_MS, COIL_ESC_MS, SERPENT_COIL_PASS,
+  SERPENT_SAY_AHEAD_MS, DEEP_V,   // AUDIT SHIPS B5: an end's swim said ahead
 } from '../src/net/serpentBrain.js';
-import { LEG, MODE, bodyAt, headAt, supersede } from '../src/net/serpentBody.js';
+import { LEG, MODE, bodyAt, headAt, modeAt, supersede } from '../src/net/serpentBody.js';
 import { createSerpentLink, foldSerpent, SERPENT_STATE_EMPTY } from '../src/net/serpentLink.js';
 import { validSerpentOut } from '../src/net/wire.js';
 import { HULL } from '../src/systems/naval/navalShips.js';
@@ -50,7 +51,7 @@ function clientOf(f, now) {
 
 // ═══ ONE TIMELINE (S2) ═══════════════════════════════════════════════════════════════════════════════════
 
-test('AUDIT SERPENT S2: a word said now supersedes every leg or mode still to come - on the relay as it pushes and on every client as it folds - so the body a client draws is the body the relay judges, beat by beat, through fights, wakes and turns (mutants: the rule dropped on either side; the stray surfacing asked again each beat; a turn unsaying an attack in flight)', () => {
+test('AUDIT SERPENT S2: a word said now supersedes every leg or mode still to come - on the relay as it pushes and on every client as it folds - so the body a client draws is the body the relay judges, beat by beat, through fights, wakes and turns (mutants: the rule dropped on either side; a turn unsaying an attack in flight)', () => {
   assert.deepEqual(supersede([{ at: 1 }, { at: 5 }, { at: 3 }, { at: 9 }], 4), [{ at: 1 }, { at: 3 }]);
   let worstD = 0, sorted = true, beats = 0;
   for (let seed = 1; seed <= 10; seed++) {
@@ -59,10 +60,10 @@ test('AUDIT SERPENT S2: a word said now supersedes every leg or mode still to co
     let now = T0;
     const { L, fold } = clientOf(f, () => now);
     fold([serpentStateOf(f)]);
-    // ships sailing rings about the waters, some out past the serpent's reach (the stray surfacing's wake)
+    // ships sailing rings about the waters, some out past the serpent's reach
     const orbit = [300, 650, 1050, 480].map((r, i) => ({ r, a: dice() * 6.28, w: (0.02 + dice() * 0.05) * (i % 2 ? -1 : 1) }));
     for (let n = 0; n < 1600; n++) {
-      if (seed % 3 === 0 && n === 700) now += 3 * 60_000;   // a room asleep: it wakes with its head far out
+      if (seed % 3 === 0 && n === 700) now += 3 * 60_000;   // a room asleep: SERPENT3 takes it up where it was (serpentResume)
       now += SERPENT_TICK_MS;
       const bodies = orbit.map((o, i) => body(acct(i), Math.sin(o.a + o.w * n * 0.25) * o.r, Math.cos(o.a + o.w * n * 0.25) * o.r));
       fold(stepSerpentBrain(f, now, bodies, rng));
@@ -78,50 +79,72 @@ test('AUDIT SERPENT S2: a word said now supersedes every leg or mode still to co
   assert.ok(worstD < 0.01, `every client's body is the relay's (${worstD.toFixed(3)} m apart at worst)`);
 });
 
-test('AUDIT SERPENT S2: a kill while a breach\'s jump is still to come, and the sounding while a surfacing\'s rise is - the relay\'s legs and modes and the client\'s stay in time order and the same, the words to come superseded (mutants: the rule dropped from either side\'s legs or modes)', () => {
-  for (const wake of [false, true]) {
+test('AUDIT SERPENT S2: a kill while a ram\'s run is still to come, and the sounding while a Rising Maw\'s burst is (it rides the deep already: its word said for what it drops) - the relay\'s legs and modes and the client\'s stay in time order and the same, the words to come superseded (PIN MOVED, SERPENT3: a breach\'s jump and a woken room\'s surfacing were the words to come; every attack\'s swim is said as it begins now) (mutants: the rule dropped from either side\'s legs or modes; a mode said away unsaid)', () => {
+  for (const [end, want] of [['fell', SERPENT_ATTACK_TABLE.ram.id], ['gone', SERPENT_ATTACK_TABLE.breach.id]]) {
     const f = surfaced(fightOf([HULL.Carrack], acct));
     const rng = seeded(11);
     const b = [body(acct(0), 120, 0)];
     let now = T0;
     const { L, fold } = clientOf(f, () => now);
     fold([serpentStateOf(f)]);
-    if (wake) {   // a room asleep: the head far out, its surfacing's jump and rise still to come
-      f.legs = [{ k: LEG.line, at: T0 - 120_000, x: 0, z: 0, yw: 0, v: 11 }];
-      f.modes = [{ at: T0 - 120_000, m: MODE.cruise }];
-      fold([serpentStateOf(f)]);
-      fold(stepSerpentBrain(f, now, b, rng));
-    } else {
-      let breach = null;
-      while (now < T0 + 60_000 && !breach) { now += SERPENT_TICK_MS; const ws = stepSerpentBrain(f, now, b, rng); fold(ws); breach = ws.find((w) => w.k === 'atk' && w.a === SERPENT_ATTACK_TABLE.breach.id); }
-      assert.ok(breach);
-    }
-    assert.ok(f.legs.at(-1).at > now || f.modes.at(-1).at > now, 'something still to come');
+    let begun = null;
+    while (now < T0 + 300_000 && !begun) { now += SERPENT_TICK_MS; const ws = stepSerpentBrain(f, now, b, rng); fold(ws); begun = ws.find((w) => w.k === 'atk' && w.a === want); }
+    assert.ok(begun, `${end}: its ${SERPENT_ATTACK_BY_ID[want].key} begun`);
+    // the Maw sounded mid-dash, under the sea already, its burst still to come: the sounding's word is the ride it
+    // rides - it changes the track only by what it drops, and is said so every client drops it too
+    if (end === 'gone') { now += 1000; fold(stepSerpentBrain(f, now, b, rng)); assert.equal(modeAt(f.modes, now), MODE.deep, 'under the sea'); }
+    assert.ok(f.legs.at(-1).at > now && f.modes.at(-1).at > now, 'its swim and its ride still to come');
     now += 10;
-    if (wake) { f.soundAt = now; fold(stepSerpentBrain(f, now, b, rng)); assert.ok(f.gone, 'sounded'); }
-    else { f.hp = 1; f.shieldUntil = 0; fold(applySerpentHit(f, acct(0), 50, ZONES.body, b[0], now)); assert.ok(f.fell, 'slain in its dive\'s first moment'); }
+    const go = now + SERPENT_SAY_AHEAD_MS, before = (xs) => xs.filter((x) => x.at > now && x.at < go).map((x) => ({ ...x }));
+    const legsSaid = before(f.legs), modesSaid = before(f.modes);
+    // PIN MOVED (AUDIT 2 XB2, 2026-10-06): its ride said at its turn, SERPENT_SAY_AHEAD_MS on, though it rides it already
+    if (end === 'gone') { f.soundAt = now; const said = stepSerpentBrain(f, now, b, rng); fold(said); assert.ok(f.gone, 'sounded'); assert.ok(said.some((w) => w.k === 'dv' && w.at === go && w.m === MODE.deep), 'its ride said, though it rides it already'); }
+    else { f.hp = 1; f.shieldUntil = 0; fold(applySerpentHit(f, acct(0), 50, ZONES.body, b[0], now)); assert.ok(f.fell, 'slain as its dash begins'); }
     const inOrder = (xs) => xs.every((x, i) => !i || xs[i - 1].at <= x.at);
-    assert.ok(inOrder(f.legs) && inOrder(f.modes), `the relay's in order (${wake ? 'surfacing' : 'breach'})`);
+    assert.ok(inOrder(f.legs) && inOrder(f.modes), `the relay's in order (${end})`);
     assert.ok(inOrder(L.state().legs) && inOrder(L.state().modes), 'the client\'s in order');
-    assert.deepEqual(L.state().legs, f.legs, 'one track');
+    // PIN MOVED (AUDIT 2 XB2, 2026-10-06): the client's track the relay's from its first leg on - the relay keeps the legs a
+    // blow is judged back on a second longer (AUDIT SHIPS D3), as it keeps its modes
+    assert.deepEqual(L.state().legs, f.legs.slice(-L.state().legs.length), 'one track');
     assert.deepEqual(L.state().modes, f.modes.slice(-L.state().modes.length), 'one ride');
-    assert.ok(!f.legs.some((l) => l.at > now) && !f.modes.some((m) => m.at > now), 'nothing still to come after its end');
+    // PIN MOVED (AUDIT SHIPS B5, 2026-10-06): nothing still to come after its end but its own throes or dive, said
+    // SERPENT_SAY_AHEAD_MS on. PIN MOVED (AUDIT 2 XB2, 2026-10-06): and what was said to come before then, swum as it was
+    // said - let go AT the end (holdNow), the swim a screen a wire's time behind had begun was unsaid
+    const after = (xs) => xs.filter((x) => x.at >= go);
+    assert.deepEqual(after(f.legs).map((l) => l.at), [go], `nothing still to come after its end but its own swim (${end})`);
+    const ride = end === 'fell' ? MODE.dying : MODE.deep;
+    assert.ok(after(f.modes).every((m) => m.at === go && m.m === ride) && modeAt(f.modes, go) === ride, 'and its own ride');
+    assert.deepEqual(before(f.legs), legsSaid, `what was to come before its turn swum as it was said (${end})`);
+    assert.deepEqual(before(f.modes), modesSaid, 'and ridden');
+    if (end === 'fell') assert.ok(legsSaid.length, 'its run\'s wind-up was to come before its turn');
   }
 });
 
-test('AUDIT SERPENT S2: a room that wakes with its head swum far out surfaces it ONCE - one jump, one dive and one rise said, however many beats pass before the jump comes (mutant: asked again every beat)', () => {
+test('AUDIT SERPENT S2: a room that wakes takes its fight up ONCE - PIN MOVED (SERPENT3): no longer a surfacing leapt back inside its waters, but one round laid from its last beat where its head was (serpentResume), however many beats pass after; its head never leaps and never swam on (mutants: asked again every beat; the head left to swim on)', () => {
   const f = fightOf([HULL.Carrack]);
-  f.legs = [{ k: LEG.line, at: T0 - 120_000, x: 0, z: 0, yw: 0, v: 11 }];   // swum north for two minutes: 1.3 km out
+  f.legs = [{ k: LEG.line, at: T0 - 120_000, x: 0, z: 0, yw: 0, v: 11 }];   // two minutes' swim north from the heart...
   f.modes = [{ at: T0 - 120_000, m: MODE.cruise }];
   f.openUntil = T0; f.nextAt = T0 + 60_000;
-  const far = headAt(f.legs, T0);
-  assert.ok(Math.hypot(far.x, far.z) > ARENA_R + STRAY_M, 'far out');
+  f.lastTickAt = T0 - 120_000 + 1;   // ...with no beat since its first moment: nobody heard it
+  assert.ok(T0 - f.lastTickAt > SERPENT_SLEEP_MS);
+  const t0 = f.lastTickAt, was = headAt(f.legs, t0);
   const words = [];
-  for (let t = T0; t <= T0 + 4000; t += SERPENT_TICK_MS) words.push(...stepSerpentBrain(f, t, [], seeded(1)));
-  assert.equal(words.filter((w) => w.k === 'sw' && w.l.j).length, 1, 'one surfacing');
-  assert.equal(words.filter((w) => w.k === 'dv').length, 2, 'one dive, one rise');
+  for (let t = T0; t <= T0 + 4000; t += SERPENT_TICK_MS) {
+    const said = stepSerpentBrain(f, t, [], seeded(1));
+    // once: no beat after it lays a leg back before its own moment - only the taking up does
+    if (t > T0) assert.ok(said.every((w) => w.k !== 'sw' || w.l.at >= t), `a leg laid back in time at ${t - T0} ms`);
+    words.push(...said);
+  }
+  const laid = words.filter((w) => w.k === 'sw' && w.l.at < T0);
+  assert.equal(laid.length, 1, 'one round, from its last beat');
+  assert.equal(laid[0].l.k, LEG.arc);
+  assert.equal(laid[0].l.r, ORBIT_R);
+  assert.ok(!words.some((w) => w.k === 'sw' && w.l.j), 'no leap');
+  let maxStep = 0, prev = headAt(f.legs, t0);
+  for (let t = t0; t <= T0 + 4000; t += 50) { const h = headAt(f.legs, t); maxStep = Math.max(maxStep, Math.hypot(h.x - prev.x, h.z - prev.z)); prev = h; }
+  assert.ok(maxStep <= CRUISE_V * 0.05 + 0.01, `its head swims the whole way (${maxStep.toFixed(2)} m in 50 ms at most)`);
   const h = headAt(f.legs, T0 + 4000);
-  assert.ok(Math.hypot(h.x, h.z) <= ARENA_R, 'inside its waters');
+  assert.ok(Math.hypot(h.x - was.x, h.z - was.z) <= 2 * ORBIT_R + CRUISE_V * 4.5, 'about where its last beat left it');
 });
 
 test('AUDIT SERPENT S2: a phase crossed mid-attack lets the attack land as it was said - its ward at once, its turn after (mutant: the attack in flight dropped and the turn begun over it)', () => {
@@ -178,7 +201,8 @@ test('AUDIT SERPENT S4/M1/M2: the kill and the sounding let a holding coil go an
   const out = applySerpentHit(f, 's2', 50, ZONES.body, { x: 150, z: 0 }, T0 + 500);
   const kinds = out.map((w) => w.k);
   assert.ok(kinds.includes('cx') && kinds.includes('dv') && kinds.includes('sw') && kinds.at(-1) === 'fell', `the words at the fall: ${kinds}`);
-  assert.equal(out.find((w) => w.k === 'dv').m, MODE.dying);
+  // PIN MOVED (AUDIT SHIPS B5, 2026-10-06): its throes said SERPENT_SAY_AHEAD_MS on, what was to come let go at the kill
+  assert.ok(out.some((w) => w.k === 'dv' && w.m === MODE.dying && w.at === T0 + 500 + SERPENT_SAY_AHEAD_MS), 'its throes said ahead');
   for (const w of out) L = foldSerpent(L, w, T0 + 500);
   assert.ok(L.coil.off > 0, 'let go');
   // the fell word alone (a hub's, a lost cx) lets go too
@@ -187,7 +211,11 @@ test('AUDIT SERPENT S4/M1/M2: the kill and the sounding let a holding coil go an
   // the sounding
   const g = coilHeldFight();
   const gone = stepSerpentBrain(g, SOUND + 10, [], seeded(1));
-  assert.deepEqual(gone.filter((w) => ['cx', 'dv', 'sw', 'gone'].includes(w.k)).map((w) => w.k), ['cx', 'dv', 'sw', 'gone']);
+  // PIN MOVED (AUDIT SHIPS B5): the coil let go first and the gone last, its dive said SERPENT_SAY_AHEAD_MS on
+  const ends = gone.filter((w) => ['cx', 'dv', 'sw', 'gone'].includes(w.k));
+  assert.deepEqual([ends[0].k, ends.at(-1).k], ['cx', 'gone']);
+  assert.ok(ends.some((w) => w.k === 'dv' && w.m === MODE.deep && w.at === SOUND + 10 + SERPENT_SAY_AHEAD_MS), 'its dive said ahead');
+  assert.ok(ends.some((w) => w.k === 'sw' && w.l.at === SOUND + 10 + SERPENT_SAY_AHEAD_MS && w.l.v === DEEP_V), 'and its swim down');
 });
 function coilHeldFight() {
   const { f, rng, bodies } = coilBegun();

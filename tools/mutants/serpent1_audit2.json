@@ -114,8 +114,8 @@
   {
     "name": "AUDIT-SERPENT-2-F8-every-fight-written",
     "file": "server/src/index.js",
-    "old": "        if (stepped) await this._serpentSave(id, f, now, !!f.gone);",
-    "new": "        await this._serpentSave(id, f, now, false);",
+    "old": "        if (f.fell && !f.said) await this._serpentFall(id, f, now);",
+    "new": "        await this._serpentSave(id, f, now, false);\n        if (f.fell && !f.said) await this._serpentFall(id, f, now);",
     "tests": [
       "test/serpent1_audit2.test.js"
     ],
@@ -124,8 +124,8 @@
   {
     "name": "AUDIT-SERPENT-2-F8-sounding-unwritten",
     "file": "server/src/index.js",
-    "old": "if (stepped) await this._serpentSave(id, f, now, !!f.gone);",
-    "new": "if (stepped) await this._serpentSave(id, f, now, false);",
+    "old": "await this._serpentSave(id, f, now, serpentBrain.serpentSaysTrack(said));",
+    "new": "await this._serpentSave(id, f, now, false);",
     "tests": [
       "test/serpent1_audit2.test.js"
     ],

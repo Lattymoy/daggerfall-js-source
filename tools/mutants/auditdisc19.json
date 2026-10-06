@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-DISC19-W1-fight-with-defender-is-quiet",
     "file": "src/systems/townWatch.js",
-    "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion != null && !t.dead)) return false;",
-    "new": "  if (!isPlayerTarget(t) && !(t?.companion != null && !t.dead)) return false;",
+    "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion",
+    "new": "  if (!isPlayerTarget(t) && !(t?.companion",
     "tests": [
       "test/auditdisc19.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-DISC19-W2-defender-counts-as-watch",
     "file": "src/scenes/cityGuards.js",
-    "old": "    !g.dead && !g.defender && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly');",
-    "new": "    !g.dead && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly');",
+    "old": "    return !g.dead && !g.defender && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly';",
+    "new": "    return !g.dead && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly';",
     "tests": [
       "test/auditdisc19.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-DISC19-W5-in-flight-uncounted",
     "file": "src/scenes/cityGuards.js",
-    "old": " + spawning.filter((p) => p.defender).length;",
-    "new": ";",
+    "old": " + spawning.filter((p) => p.defender).length + _summonsWaiting;",
+    "new": " + _summonsWaiting;",
     "tests": [
       "test/auditdisc19.test.js"
     ]
@@ -263,11 +263,12 @@
   {
     "name": "AUDIT-DISC19-summon-no-range",
     "file": "src/scenes/cityGuards.js",
-    "old": "      if (Math.hypot(p.pos[0] - playerFeet[0], p.pos[1] - playerFeet[1], p.pos[2] - playerFeet[2]) > GUARD_NPC_SPAWN_RANGE) continue;\n      const g = await spawnGuardAt(p.pos, p.fwdYaw, null, { defender: true",
-    "new": "      const g = await spawnGuardAt(p.pos, p.fwdYaw, null, { defender: true",
+    "old": "      if (Math.hypot(p.pos[0] - playerFeet[0], p.pos[1] - playerFeet[1], p.pos[2] - playerFeet[2]) > GUARD_NPC_SPAWN_RANGE) continue;\n      const g = await turnNpc(p, null, { defender: true",
+    "new": "      const g = await turnNpc(p, null, { defender: true",
     "tests": [
       "test/auditdisc19.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "AUDIT-DISC19-summon-band-three",

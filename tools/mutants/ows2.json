@@ -155,8 +155,8 @@
   {
     "name": "OWS2-helm-square-close",
     "file": "src/systems/seaHelm.js",
-    "old": "const noGo = q.squareOnly ? H.noGoSquare : H.noGoFore;",
-    "new": "const noGo = H.noGoFore;",
+    "old": "q.squareOnly ? H.noGoSquare : H.noGoFore;",
+    "new": "H.noGoFore;",
     "tests": [
       "test/ows2_crossing.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "OWS2-helm-calm-sails",
     "file": "src/systems/seaHelm.js",
-    "old": "q.hasSails && windLen >= H.calm",
-    "new": "q.hasSails && windLen >= 0",
+    "old": "(q.free ? windLen > 0 : windLen >= H.calm)",
+    "new": "(q.free ? windLen > 0 : windLen >= 0)",
     "tests": [
       "test/ows2_crossing.test.js"
     ]

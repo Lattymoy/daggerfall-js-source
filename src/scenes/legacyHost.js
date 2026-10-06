@@ -84,6 +84,7 @@ export const LEGACY_TEXT = Object.freeze({
   attuned: (item, gen) => `${item} remembers the hand that carried it home (generation ${gen}).`,
   ended: (sur) => `${houseWord(sur) ? `The house of ${houseWord(sur)}` : 'Your house'} goes on.`,
   kinSlain: (name) => `${name} is dead by your hand. The house will remember it.`,   // LEGACY-HOME
+  kinKilled: (name) => `${name} has been killed. The house mourns.`,   // a beast of the street (WATCH-PROTECTS)
   playAs: (name) => `Play as ${name}`,
   notNow: 'Not now - the house has another matter to settle first.',
   notStored: 'Your family\'s record could not be written - the browser\'s storage refused it. Free some space (old saves); it will be tried again.',   // AUDIT LEGACY II P1
@@ -1114,6 +1115,18 @@ export function createLegacyHost(deps) {
     deps.say(LEGACY_TEXT.kinSlain(fullNameOf(p.given, p.surname)));
     return true;
   }
+  /** A member KILLED BY ANOTHER HAND than the one played's - a beast of the street (WATCH-PROTECTS: livingTown.js killed,
+   *  through the quarry's blow): dead in the record as the store's world fact, fallen to nobody named, the town told -
+   *  never the census's turn (they were never its). Answers whether one of the line died. */
+  function kinKilled(res) {
+    const p = personOfResident(res);
+    if (!p || !isAlive(p) || p.id === family.currentId) return false;
+    recordDeath(family, p.id, { at: deps.now(), cause: 'fell', place: deps.here(), by: null });
+    tellNews('died', fullNameOf(p.given, p.surname), deps.here()?.mapId);
+    store();
+    deps.say(LEGACY_TEXT.kinKilled(fullNameOf(p.given, p.surname)));
+    return true;
+  }
   /** A family resident spoken to: who they are, how they greet the one played, and why Play as is refused (or null). */
   function kinOfResident(res) {
     const p = personOfResident(res);
@@ -1145,6 +1158,7 @@ export function createLegacyHost(deps) {
     weddingNow: (rid) => { const p = current(); const c = p?.courting?.[rid]; return p && c ? weddingNow(p, rid, c, false) : null; },
     kinOfResident,
     kinSlain,
+    kinKilled,
     isFamilyHouse,
     markHome,
     familyHome: () => familyHome(family),

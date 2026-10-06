@@ -268,7 +268,7 @@ test('ACC1d: the wire checks the token\'s SHAPE and nothing else - kept, absent,
   assert.equal('tok' in none, false, 'no token: the key is not invented');
   assert.equal(none.error, undefined);
   // SEASON1 part two (world149, PIN MOVED): the body's bound is 640 - a body one past it is the malformed one, and the
-  // old bound's 513 now rides through. PIN MOVED again (AUDIT LEGACY III O11, world172): TOKEN_BODY_MAX, 800 - every
+  // old bound's 513 now rides through. PIN MOVED again (AUDIT LEGACY III O11, world174 - world172 on its branch): TOKEN_BODY_MAX, 800 - every
   // claim and a house were 739, minted and then refused here
   assert.equal(hello({ tok: `v1.${'a'.repeat(TOKEN_BODY_MAX)}.bbb` }).tok, `v1.${'a'.repeat(TOKEN_BODY_MAX)}.bbb`);
   for (const bad of ['', 'v1', 'v1.aaa', 'v1.aaa.bbb.ccc', 'v1.aa a.bbb', 'v1.aaa+bbb.ccc', `v1.${'a'.repeat(TOKEN_BODY_MAX + 1)}.bbb`, `v1.aaa.${'b'.repeat(129)}`, `${'v'.repeat(9)}.aaa.bbb`]) {

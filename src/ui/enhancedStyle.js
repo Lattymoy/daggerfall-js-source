@@ -2942,23 +2942,25 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
    outside one; amber, filling toward its poise; red and HATCHED for iron (never by colour alone); a white flash at a
    break, "Staggered"; "Open" through an overreach. AUDIT TELL U3: the word stands centred UNDER the track (beside it, it
    ran past the bar's right under a narrow screen's quest card), and the card clears it (the --qt-clear rules below).
-   U4: the flash plays on THIS foe's break alone (its flash class, enhancedHud.js) - never on a bar turned onto a staggered one. */
+   U4: the flash plays on THIS foe's break alone (its flash class, enhancedHud.js) - never on a bar turned onto a staggered one.
+   POISE-BOX (field, 2026-10-05): every state class is the track's own, poise-<state> and poise-flash - the bare word
+   'empty' took the sheet's .empty component above (a dashed box, 26px of padding), and the idle track stood 54px tall. */
 .hud-foepoise { display: none; position: relative; width: min(280px, 40vw); height: 6px;
   background: rgba(10,12,17,0.6); border: 1px solid rgba(125,116,96,0.45); }
 .hud-foe.poised .hud-foepoise { display: block; }
 .hud-poisefill { display: block; height: 100%; width: 0; background: transparent; }
-.hud-foepoise.windup .hud-poisefill { background: #e0a43a; }
-.hud-foepoise.iron .hud-poisefill { background: repeating-linear-gradient(135deg, #d8342c 0 4px, #7a1410 4px 6px); }
-.hud-foepoise.staggered .hud-poisefill { background: #fff; }
-.hud-foepoise.staggered.flash .hud-poisefill { animation: hud-poise-flash 0.45s ease-out; }
-.hud-foepoise.open { border-color: rgba(241,192,79,0.9); }
+.hud-foepoise.poise-windup .hud-poisefill { background: #e0a43a; }
+.hud-foepoise.poise-iron .hud-poisefill { background: repeating-linear-gradient(135deg, #d8342c 0 4px, #7a1410 4px 6px); }
+.hud-foepoise.poise-staggered .hud-poisefill { background: #fff; }
+.hud-foepoise.poise-staggered.poise-flash .hud-poisefill { animation: hud-poise-flash 0.45s ease-out; }
+.hud-foepoise.poise-open { border-color: rgba(241,192,79,0.9); }
 .hud-poiseword { position: absolute; left: 50%; top: calc(100% + 3px); transform: translateX(-50%); white-space: nowrap; line-height: 13px;
   font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; }
-.hud-foepoise.iron .hud-poiseword { color: #ff6a5a; }
-.hud-foepoise.staggered .hud-poiseword { color: #fff; }
-.hud-foepoise.open .hud-poiseword { color: #f1c04f; }
+.hud-foepoise.poise-iron .hud-poiseword { color: #ff6a5a; }
+.hud-foepoise.poise-staggered .hud-poiseword { color: #fff; }
+.hud-foepoise.poise-open .hud-poiseword { color: #f1c04f; }
 @keyframes hud-poise-flash { 0% { box-shadow: 0 0 10px 3px rgba(255,255,255,0.9); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
-@media (prefers-reduced-motion: reduce) { .hud-foepoise.staggered.flash .hud-poisefill { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .hud-foepoise.poise-staggered.poise-flash .hud-poisefill { animation: none; } }
 
 /* THE VITALS. Magicka, health, fatigue - the reference's own order and
    DFU's own three, each with its number beside it. */
@@ -3092,7 +3094,7 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
 .hud-qspell { display: none; align-items: center; gap: 6px; padding: 3px 10px;
   max-width: 100%; background: rgba(10,12,17,0.6); border: 2px solid rgba(125,116,96,0.55); }
 .hud-qspell.on { display: flex; }
-.hud-qspell.empty { display: flex; opacity: 0.55; }   /* HOTSLOT: the empty socket, dim, wearing its key */
+.hud-qspell.qspell-empty { display: flex; opacity: 0.55; }   /* HOTSLOT: the empty socket, dim, wearing its key */
 .hud-qspell .hud-qstag { position: static; transform: none; background: none; border: 0;
   min-width: 0; height: auto; padding: 0; color: #9c937d; }
 .hud-qspname { font-size: 13px; color: #d8cfae; text-shadow: 2px 2px 0 rgba(10,12,17,0.9);
@@ -3237,9 +3239,9 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
 /* NO BAND ABOVE THE CAPTION (a phone on its side, where the diamond reaches the top; the chat opened tall on a laptop):
    the widget stands BESIDE the diamond instead - out of the block's column, clear of the right tag in the block's own
    padding, from the caption's top or from under what stands above where that reaches lower (the HUD writes its \`top\`
-   and its rows off the diamond's height - hudStatus.js statSide) - icons alone (.tight). */
-.hud-stat.side { position: absolute; left: 100%; top: 0; margin: 0 0 0 8px; }
-.hud-stat.noroom { display: none; }   /* no band above and none beside: it steps aside rather than stand over anything */
+   and its rows off the diamond's height - hudStatus.js statSide) - icons alone (.stat-tight). HUD-CLASS: each state is the widget's own word, stat-<state> - as the bare 'side' it took the windows' .side column above (its --ink ground). */
+.hud-stat.stat-side { position: absolute; left: 100%; top: 0; margin: 0 0 0 8px; }
+.hud-stat.stat-noroom { display: none; }   /* no band above and none beside: it steps aside rather than stand over anything */
 .hst-cell { --hst-hi: #c2b79a; --hst-lo: #3a352a; display: flex; align-items: center; gap: 8px; min-width: 0; }
 .hst-tile { position: relative; flex: 0 0 auto; width: 36px; height: 36px; display: grid; place-items: center;
   border: 2px solid; border-color: var(--hst-hi) var(--hst-lo) var(--hst-lo) var(--hst-hi);
@@ -3276,8 +3278,8 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
   .hst-cell.blink .hst-pic { animation: none; }
   .hst-cell.blink .hst-tile { border-color: rgb(243,239,44) rgb(93,77,12) rgb(93,77,12) rgb(243,239,44); }
 }
-/* THE NAMES GO where there is no room for them: a phone, a short screen, a band under three rows (.tight) */
-.hud-stat.tight .hst-name { display: none; }
+/* THE NAMES GO where there is no room for them: a phone, a short screen, a band under three rows (.stat-tight) */
+.hud-stat.stat-tight .hst-name { display: none; }
 @media (max-width: 640px), (max-height: 500px) { .hud-stat .hst-name { display: none; } }
 /* A SHORT SCREEN (a phone on its side, where the diamond reaches the top): smaller tiles - the picture at one and a half,
    closer together - the numbers hudStatus.js STAT_METRICS.short counts its rows in */
