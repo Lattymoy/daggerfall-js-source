@@ -108,5 +108,145 @@
       "test/audit637_runinplace.test.js",
       "test/runinplace.test.js"
     ]
+  },
+  {
+    "name": "AUDIT637-A1a-the-panel-short-circuit-gone",
+    "file": "src/ui/chatPanel.js",
+    "old": "    if (rows === whoRowsSeen && total === whoTotalSeen && label === whoLabelSeen && menuFor === whoMenuSeen) return;\n",
+    "new": "",
+    "tests": [
+      "test/audit637_roster.test.js",
+      "test/perfon3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-A1b-the-list-seen-never-recorded",
+    "file": "src/ui/chatPanel.js",
+    "old": "    whoRowsSeen = rows; whoTotalSeen = total;",
+    "new": "    whoTotalSeen = total;",
+    "tests": [
+      "test/audit637_roster.test.js",
+      "test/perfon3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-A2-a-non-array-input-never-a-change",
+    "file": "src/net/roster.js",
+    "old": "  if (!Array.isArray(kept) || !Array.isArray(now)) return Object.is(kept, now);",
+    "new": "  if (!Array.isArray(kept) || !Array.isArray(now)) return true;",
+    "tests": [
+      "test/audit637_roster.test.js",
+      "test/perfon3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-A3a-punctuation-ignored",
+    "file": "src/net/roster.js",
+    "old": "export const NAME_ORDER = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });",
+    "new": "export const NAME_ORDER = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base', ignorePunctuation: true });",
+    "tests": [
+      "test/audit637_roster.test.js",
+      "test/perfon3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-A3b-a-fixed-locale",
+    "file": "src/net/roster.js",
+    "old": "export const NAME_ORDER = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });",
+    "new": "export const NAME_ORDER = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });",
+    "tests": [
+      "test/audit637_roster.test.js",
+      "test/perfon3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-A5a-the-whole-memo-cleared",
+    "file": "src/net/roster.js",
+    "old": "  if (_rowMemo.size > ROW_MEMO_MAX) for (const [k, m] of _rowMemo) if (m.call < call - 1) _rowMemo.delete(k);   // AUDIT 637 A5",
+    "new": "  if (_rowMemo.size > ROW_MEMO_MAX) _rowMemo.clear();   // AUDIT 637 A5",
+    "tests": [
+      "test/audit637_roster.test.js",
+      "test/perfon3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-A5b-nothing-let-go",
+    "file": "src/net/roster.js",
+    "old": "  if (_rowMemo.size > ROW_MEMO_MAX) for (const [k, m] of _rowMemo) if (m.call < call - 1) _rowMemo.delete(k);   // AUDIT 637 A5",
+    "new": "",
+    "tests": [
+      "test/audit637_roster.test.js",
+      "test/perfon3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-A5c-the-last-asks-rows-let-go-too",
+    "file": "src/net/roster.js",
+    "old": "if (m.call < call - 1) _rowMemo.delete(k);",
+    "new": "if (m.call < call) _rowMemo.delete(k);",
+    "tests": [
+      "test/audit637_roster.test.js",
+      "test/perfon3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-A6-the-listing-committed-before-its-answer",
+    "file": "src/net/roster.js",
+    "old": "    const out = Object.freeze(rows.slice().sort(byNameThenTag).slice(0, ROSTER_ROWS_MAX));   // AUDIT 637 A6: the answer first, then the state that names it\n    _scratchIn = _lastIn;   // the old input becomes the next call's scratch; this call's list is kept as the new input\n    _lastIn = rows;\n    _lastOut = out;",
+    "new": "    _scratchIn = _lastIn;   // the old input becomes the next call's scratch; this call's list is kept as the new input\n    _lastIn = rows;\n    _lastOut = Object.freeze(rows.slice().sort(byNameThenTag).slice(0, ROSTER_ROWS_MAX));",
+    "tests": [
+      "test/audit637_roster.test.js",
+      "test/perfon3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-A7-the-elements-compared-with-not-equal",
+    "file": "src/net/roster.js",
+    "old": "  for (let i = 0; i < kept.length; i++) if (!Object.is(kept[i], now[i])) return false;",
+    "new": "  for (let i = 0; i < kept.length; i++) if (kept[i] !== now[i]) return false;",
+    "tests": [
+      "test/audit637_roster.test.js",
+      "test/perfon3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-A9a-the-row-left-open",
+    "file": "src/net/roster.js",
+    "old": "      freezeRow(row);   // AUDIT 637 A9\n",
+    "new": "",
+    "tests": [
+      "test/audit637_roster.test.js",
+      "test/perfon3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-A9b-its-arrays-left-open",
+    "file": "src/net/roster.js",
+    "old": "const freezeRow = (row) => { Object.freeze(row.glyphs); if (row.ts) Object.freeze(row.ts); return Object.freeze(row); };",
+    "new": "const freezeRow = (row) => Object.freeze(row);",
+    "tests": [
+      "test/audit637_roster.test.js",
+      "test/perfon3.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-A11a-localeCompare-with-options-back",
+    "file": "src/ui/socialPanel.js",
+    "old": "    || NAME_ORDER.compare(String(a.name), String(b.name))",
+    "new": "    || String(a.name).localeCompare(String(b.name), undefined, { numeric: true, sensitivity: 'base' })",
+    "tests": [
+      "test/audit637_roster.test.js",
+      "test/soc3_socialpanel.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-A11b-the-name-clause-turned",
+    "file": "src/ui/socialPanel.js",
+    "old": "    || NAME_ORDER.compare(String(a.name), String(b.name))",
+    "new": "    || NAME_ORDER.compare(String(b.name), String(a.name))",
+    "tests": [
+      "test/audit637_roster.test.js",
+      "test/soc3_socialpanel.test.js"
+    ]
   }
 ]
