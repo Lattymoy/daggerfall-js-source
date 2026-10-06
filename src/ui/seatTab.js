@@ -82,7 +82,7 @@ export function seatGuide(seat) {
   const n = (x) => Number(x).toLocaleString('en-US');
   return [
     ['Pledge', `In the Muster, a guild's Officers or Guildmaster pledge it to one seat a region, in up to ${SEAT_PLEDGE_REGIONS_MAX} regions. Pledges lock at the Reckoning, Friday 18:00 UTC.`],
-    ['Earn', `Members 7 days in the guild earn influence in the seat's region: walking the town (the Watch), Oblivion Gate kills, a home in the town, Renown, seat writs and Tribute. One account counts for at most ${n(ACCOUNT_SEAT_WEEK_CAP)} a week at a seat.`],
+    ['Earn', `Members 7 days in the guild earn influence in the seat's region: walking the town (the Watch), closing Dagon's Breaches, a home in the town, Renown, seat writs and Tribute. One account counts for at most ${n(ACCOUNT_SEAT_WEEK_CAP)} a week at a seat.`],
     ['Claim', `At the Turning, Sunday 18:00 UTC, an unheld Charter goes to the top guild with ${n(CLAIM_THRESHOLD[t])} influence, for ${n(CLAIM_FEE[t])} silver from its treasury. Two guilds within ${Math.round(CONTESTED_MARGIN * 100)}% of each other meet in a Tourney for it.`],
     ['Siege', `A held Charter is challenged by beating the holder's defence with at least ${n(CLAIM_THRESHOLD[t])}: the strongest challenger wins a Right of Siege, fought in the holder's battle window. Sign for your side on this tab.`],
     ['Hold', 'The holder sets the Tithe and an Edict and pays upkeep each week. Keeping the town raises its Standing; a Standing of nought brings revolt.'],

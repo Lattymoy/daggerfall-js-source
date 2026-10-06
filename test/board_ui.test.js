@@ -14,7 +14,7 @@ import { mountNoticeBoard, BOARD_WORDS, GUILD_BOARD_EMPTY } from '../src/ui/noti
 import { createMarketTab, MARKET_VIEW_GROUPS, MARKET_WORDS } from '../src/ui/marketTab.js';
 import { seatGuide, SEAT_PANELS, SEAT_TAB_WORDS } from '../src/ui/seatTab.js';
 import { VENDOR_TEXT, createVendorTab } from '../src/ui/vendorTab.js';
-import { prefetchNoticeBoard } from '../src/ui/noticeDoor.js';
+import { WARM_CHUNKS } from '../src/ui/enhancedChunk.js';
 import { createMarketBook } from '../src/net/marketBook.js';
 import { MARKET_VIEWS } from '../src/net/marketLaw.js';
 import { CLAIM_THRESHOLD, CLAIM_FEE, ACCOUNT_SEAT_WEEK_CAP, SEAT_PLEDGE_REGIONS_MAX } from '../src/net/townSeatLaw.js';
@@ -70,7 +70,7 @@ test('ONE-BOARD the hosts: the press, the count over the board, the town the pla
   assert.match(src('src/scenes/worldModes.js'), /const NOTICE_BOARD_TEXT = 'Notice Board';/);
 });
 
-test('BOARD-UI the Notices tab: the town\'s and the server\'s word under "News", then the players\' notes under their count; the tab names how many are new since this device last read the board (mutants: one grid; the count unsaid; the old notes counted)', async () => {
+test('BOARD-UI the Notices tab: the town\'s and the server\'s word under "News", then the players\' notes under their count; the tab names how many are new since this device last read the board (mutants: one grid; the count unsaid; the old notes counted; the read said twice)', async () => {
   const board = { notes: [{ id: 'a', subject: 'Party', body: 'x', from: 'Ann', at: T - 10 }, { id: 'b', subject: 'Old', body: 'y', from: 'Bo', at: T - 5000 }],
     notices: [{ id: 's', subject: 'Restart', body: 'z', from: 'Mac', at: T - 20 }], me: { canPin: true, live: 0, max: 3 } };
   const host = document.createElement('div');
@@ -87,6 +87,12 @@ test('BOARD-UI the Notices tab: the town\'s and the server\'s word under "News",
   mountNoticeBoard(host2, { town: { name: 'Anticlere', mapId: 1 }, book: bookOf({ ...EMPTY, me: { canPin: true, live: 0, max: 3 } }), nowS: () => T });
   await tick();
   assert.match(host2.textContent, new RegExp(`${BOARD_WORDS.notes}0${BOARD_WORDS.noNotes} Pin the first\\.`));
+  // a read under way: said once, in the window's head - never again under the notes
+  const host3 = document.createElement('div');
+  const v3 = mountNoticeBoard(host3, { town: { name: 'Anticlere', mapId: 1 }, book: { ...bookOf(EMPTY), read: () => new Promise(() => {}) }, nowS: () => T });
+  await tick();
+  assert.equal(host3.textContent.split(BOARD_WORDS.reading).length - 1, 1, `"${BOARD_WORDS.reading}" said once`);
+  v3.unmount();
 });
 
 test('BOARD-UI the Work tab: the day\'s count stands over the cards, not under the last; the tab names the writs open to take (mutants: the day back at the foot; every writ counted)', async () => {
@@ -219,20 +225,11 @@ test('BOARD-UI the Seat tab: its parts each on a panel under its name, in order 
   assert.match(steps[3][1], new RegExp(`at least ${n(CLAIM_THRESHOLD.palace)}: the strongest challenger wins a Right of Siege`));
 });
 
-test('BOARD-UI the board\'s chunk fetched ahead: asked once however often the host asks, asked again after a failed fetch; the host asks as it reads the town\'s board on arrival (mutants: asked at every ask; a failure kept)', async () => {
-  let failed = 0;
-  const failing = () => { failed++; return Promise.reject(new Error('404')); };
-  assert.equal(await prefetchNoticeBoard(failing), null);
-  await prefetchNoticeBoard(failing);
-  assert.equal(failed, 2, 'a failed fetch is let go - the next ask fetches again');
-  let fetched = 0;
-  const ok = () => { fetched++; return Promise.resolve({ mountNoticeBoard }); };
-  const a = prefetchNoticeBoard(ok), b = prefetchNoticeBoard(ok);
-  assert.equal(a, b);
-  await a;
-  await prefetchNoticeBoard(ok);
-  assert.equal(fetched, 1, 'once');
-  assert.match(src('src/scenes/world.js'), /if \(town\) \{ noticeBook\.read\(town\.mapId\); if \(noticeBook\.open !== false\) prefetchNoticeBoard\(\); \}/);
+test('BOARD-UI the board\'s chunk warmed: the Notice Board\'s window - its tabs with it - is one of the chunks the one home fetches in idle time once the world boots (ui/enhancedChunk.js WARM_CHUNKS), so the first press finds it in the module map; no door fetches a chunk on its own (MENU1) (mutant: left out of the warm)', async () => {
+  const warm = WARM_CHUNKS.filter((f) => String(f).includes('noticeWindow.js'));
+  assert.equal(warm.length, 1, 'warmed, once');
+  assert.equal((await warm[0]()).mountNoticeBoard, mountNoticeBoard, 'the very module the door mounts');
+  assert.match(src('src/ui/noticeDoor.js'), /load: \(\) => import\('\.\/noticeWindow\.js'\)/, 'the door still loads it through the one home');
 });
 
 test('BOARD-UI the words: every fixed word of the board\'s tabs short, and none says "counting-house" - the service by its in-world name in every refusal was the board\'s commonest line (mutants: a line run long)', () => {

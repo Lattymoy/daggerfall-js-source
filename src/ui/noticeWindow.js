@@ -557,7 +557,6 @@ export function mountNoticeBoard(host, deps) {
       // AUDIT 28 N11: a board closed to this account says so - the next press is DFU's own sign again
       grid.append(el('li', 'notice-empty', error === 'board-closed' || error === 'no-session' || error === 'auth' ? BOARD_WORDS.closed : BOARD_WORDS.slow));
     }
-    else if (!board && busy) grid.append(el('li', 'notice-empty', BOARD_WORDS.reading));
     else if (board && !notes.length) grid.append(el('li', 'notice-empty', `${BOARD_WORDS.noNotes}${me().canPin ? ' Pin the first.' : ''}`));
     body.append(grid);
     return body;

@@ -1144,22 +1144,25 @@ of the board for better organization, instruction and readability"**.
   on a dark panel (`.notice-panel` - bone ink on the cork's grain read about 3:1). Each tab names its count: the
   Notices' new since this device last read the board, the Work tab's writs open.
 - **The Notices tab** in two parts: "News" (the rumour, the bounty board's line, the gate, the server's notices), then
-  "Players' notes" under their count. **The Work tab**: "Court writs today" over the cards, not under the last.
+  "Players' notes" under their count; a read under way is said once, in the window's head. **The Work tab**: "Court
+  writs today" over the cards, not under the last.
 - **The Market** (Mac's "organization"): Your silver on a strip at the top (it stood under the last row); the views in
   their parts - BUY (Materials, Crafted, Auctions, Goods), SELL (Orders - the buy orders to fill - and My listings), then
   History (`ui/marketTab.js` MARKET_VIEW_GROUPS; the law's MARKET_VIEWS and the service's views untouched); the columns
   named over the rows; the Weavers' and the Apothecaries' counters folded under one line, "Suppliers - fixed prices,
   straight into your Stores" (the Apothecaries' sixteen stood under every Materials read), kept open across a redraw;
   My listings in named parts (the List form, Your listings, auctions, bids, buy orders); each form's fields under their
-  names; the Vendors tab's columns named as the Market's (`ui/vendorTab.js`). FOUND: the List press wore `market-list`, the lists' own class, whose rule took its padding - a 36px sliver
-  since PROF5; and in a field a select took AUDIT 31 U14's 160px flex-basis as its height.
+  names; the Vendors tab's columns named as the Market's (`ui/vendorTab.js`). FOUND: the List press wore
+  `market-list`, the lists' own class, whose rule took its padding - a 36px sliver since PROF5; and in a field a select
+  took AUDIT 31 U14's 160px flex-basis as its height.
 - **Faster.** The window and its tabs are a lazy chunk fetched at the first press - on the deployed site a round trip
-  before anything drew. It is fetched ahead once the player stands in a town whose board is a Notice Board
-  (`ui/noticeDoor.js` prefetchNoticeBoard, asked as the town's board is read on arrival; a failed fetch is let go for
-  the press's own retry). The Market's first view is read as the board opens (`prefetch`), so its tab answers from the
-  book's minute's cache; its opening settle no longer holds the read back (a settle that moves anything lets the cache
-  go, and a read it overtook asks again - AUDIT 30 C6, `net/marketBook.js` read). The Seat tab asks its works beside the standings, never after
-  their answer.
+  before anything drew. It is one of the chunks the one home warms in idle time once the world boots
+  (`ui/enhancedChunk.js` WARM_CHUNKS, MENU1-WARM), so the first press finds it in the module map; the door still mounts
+  it through `mountEnhancedChunk` (MENU1: no door fetches a chunk on its own - the whole suite caught a fetch-ahead of
+  the door's own on this branch). The Market's first view is read as the board opens (`prefetch`), so its tab answers
+  from the book's minute's cache; its opening settle no longer holds the read back (a settle that moves anything lets
+  the cache go, and a read it overtook asks again - AUDIT 30 C6, `net/marketBook.js` read). The Seat tab asks its works
+  beside the standings, never after their answer.
 - **Fewer words.** Each tab's fixed words in one table (`BOARD_WORDS`, `MARKET_WORDS`, `SEAT_TAB_WORDS`, `VENDOR_TEXT`),
   every one at most 120 characters, none naming the counting-house - "The counting-house is not answering. The market
   cannot be read now." is "The market did not load."; a listing's paragraph of terms is one line, "Fee 1 silver, kept
@@ -1178,7 +1181,7 @@ of the board for better organization, instruction and readability"**.
 
 Code: the files above, `ui/workTab.js`, `ui/vendorTab.js`, `net/townSeatLaw.js` (the tab's own two lines) and
 `ui/enhancedPlusStyle.js` (NOTICE_CSS, PROF_CSS). Pins: `test/board_ui.test.js` (10); the pins whose words were cut
-moved with them, each marked PIN MOVED. Mutants: `tools/mutants/board_ui.json`, 34, all dead; twenty-five records
+moved with them, each marked PIN MOVED. Mutants: `tools/mutants/board_ui.json`, 33, all dead; twenty-five records
 re-aimed by content and judged again (24 dead, AUDIT31-tab-hint-add-late equivalent as recorded); and the 294 records
 over the code the slice touched judged whole - 291 dead, one equivalent as recorded, two survivors that survive on main
 the same (`shadowreach.json` world-peer-gate-still-skips and `perfon2.json` PERF-ON2-the-peers-are-submitted-uncut-again:

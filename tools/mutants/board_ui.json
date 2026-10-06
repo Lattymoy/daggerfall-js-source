@@ -227,33 +227,6 @@
     ]
   },
   {
-    "name": "BOARD-UI-the-chunk-at-every-ask",
-    "file": "src/ui/noticeDoor.js",
-    "old": "  _ahead ??= Promise.resolve().then(load)",
-    "new": "  _ahead = Promise.resolve().then(load)",
-    "tests": [
-      "test/board_ui.test.js"
-    ]
-  },
-  {
-    "name": "BOARD-UI-a-failed-fetch-kept",
-    "file": "src/ui/noticeDoor.js",
-    "old": ".catch(() => { _ahead = null; return null; });",
-    "new": ".catch(() => null);",
-    "tests": [
-      "test/board_ui.test.js"
-    ]
-  },
-  {
-    "name": "BOARD-UI-no-fetch-ahead",
-    "file": "src/scenes/world.js",
-    "old": " if (noticeBook.open !== false) prefetchNoticeBoard();",
-    "new": "",
-    "tests": [
-      "test/board_ui.test.js"
-    ]
-  },
-  {
     "name": "BOARD-UI-a-word-run-long",
     "file": "src/ui/marketTab.js",
     "old": "  slow: 'The market did not load.',",
@@ -303,6 +276,24 @@
     "file": "src/ui/vendorTab.js",
     "old": "      if (found.length) list.append(listHead(['Item', 'Condition', 'Price', 'Sold at']));\n",
     "new": "",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-board-left-cold",
+    "file": "src/ui/enhancedChunk.js",
+    "old": "  () => import('./noticeWindow.js'),   // BOARD-UI: a town's Notice Board - online's, its tabs (the Market, the Work, the Seat) with it\n",
+    "new": "",
+    "tests": [
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "BOARD-UI-the-read-said-twice",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    else if (board && !notes.length) grid.append(",
+    "new": "    else if (!board && busy) grid.append(el('li', 'notice-empty', BOARD_WORDS.reading));\n    else if (board && !notes.length) grid.append(",
     "tests": [
       "test/board_ui.test.js"
     ]
