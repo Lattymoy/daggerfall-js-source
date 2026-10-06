@@ -397,7 +397,8 @@ test('LEGACY-HOME wiring: the town\'s extra people are the host\'s; a family hou
   assert.match(w, /if \(isFamilyRes\(res\)\) return false;   \/\/ LEGACY-HOME/);
   assert.match(w, /if \(isFamilyRes\(res\)\) \{ legacyHost\?\.kinSlain\(res\); return; \}/);
   assert.match(w, /kin: \(person, talk\) => legacyMeetKin\(person, talk\) \}/);
-  assert.match(w, /heldHouses: \(\) => \(playerEntity\.houses \?\? \[\]\)\.filter\(\(h\) => \(h\?\.buildingKey \| 0\) > 0 && deedStands\(h\)\),/);
+  // PIN MOVED (LEGACY7 part five): offline the deeds as before; online the realm character's homes (test/legacy7_homes)
+  assert.match(w, /heldHouses: \(\) => \(isOnlinePage\(\) \? \(realmSession \? _legacyOnlineHomes : null\) : \(playerEntity\.houses \?\? \[\]\)\.filter\(\(h\) => \(h\?\.buildingKey \| 0\) > 0 && deedStands\(h\)\)\),/);
   assert.match(w, /play: \(\) => legacyHost\?\.switchTo\(kin\.person\.id, \{ here: true \}\)/);
   const t = rd('src/scenes/townTalk.js');
   const i = t.indexOf('if (livingTalk?.kin?.(target.person, () => converse(target))) return;');
