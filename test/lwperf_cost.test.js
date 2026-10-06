@@ -12,7 +12,8 @@ import { synthTown } from './lwTown.mjs';
 import { livingMap } from './lwRoads.mjs';
 import { townPathSearch, findTownPath, createPathBook, stepCost, PATH_QUEUE_MAX } from '../src/systems/livingWorld/townPaths.js';
 import { LivingTown, PATH_CELLS, ARRIVAL_PATH_CELLS, ARRIVAL_SHOW_S, LIVING_RANGE } from '../src/systems/livingWorld/livingTown.js';
-import { favourites, dayPlan, DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
+import { favourites, dayPlan, DAY_MIN, SQUARE_LIKE, SOCIAL_NEAR, ORDER_FACTIONS, GUILD_OF_TRADE, MAGES_GUILD, FIGHTERS_GUILD } from '../src/systems/livingWorld/dayPlan.js';
+import { MOBILE_TYPES } from '../src/characters/mobileTypes.js';
 import { townPlaces, streetNet } from '../src/systems/livingWorld/places.js';
 import { townCensus, hasShopJob } from '../src/systems/livingWorld/census.js';
 import { townTrips, partiesNear, remainsNear, partiesOfTown, remainsOfTown, memoTrip, cycleOf, formCaravans, paceScale, CALENDAR_MPM, NATIVE_PIXEL, TRIP_REACH_PX, TRIP_CHANCE } from '../src/systems/livingWorld/trips.js';
@@ -22,7 +23,7 @@ import { PERSON_MOVE_SPEED } from '../src/characters/mobilePerson.js';
 import { POP_VISIBLE_RANGE } from '../src/systems/townPopulation.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
-import { lwRng } from '../src/systems/livingWorld/seed.js';
+import { lwRng, lwSeed } from '../src/systems/livingWorld/seed.js';
 
 const RATE = CLASSIC_MINUTES_PER_SECOND;
 const MPM = PERSON_MOVE_SPEED / RATE;
@@ -177,9 +178,11 @@ function townAt(blocks, minute) {
   return { town, clock };
 }
 
-test('LW-PERF the town\'s frames: each frame\'s searching held to its cells - ARRIVAL_PATH_CELLS while the street is stood on the way in (ARRIVAL_SHOW_S), PATH_CELLS after - and the street still filled: every resident out of doors near the player by their day on it within 2.5 s of the morning\'s way in; the street\'s own walks asked before the census\'s; one whose walk still waits is wanted only once it is searched (mutants: the cells, the window, the soon, the run, the waiting wanted)', () => {
+test('LW-PERF the town\'s frames: each frame\'s searching held to its cells - ARRIVAL_PATH_CELLS while the street is stood on the way in (ARRIVAL_SHOW_S), PATH_CELLS after - and the street still filled: every resident out of doors near the player by their day on it within 2.5 s of the afternoon\'s way in; the street\'s own walks asked before the census\'s; one whose walk still waits is wanted only once it is searched (mutants: the cells, the window, the soon, the run, the waiting wanted)', () => {
   assert.deepEqual([PATH_CELLS, ARRIVAL_PATH_CELLS, ARRIVAL_SHOW_S], [8000, 24000, 1.5]);
-  const minute = 100 * DAY_MIN + 8.5 * 60, at = [200, 0, 120];
+  // LW-SPREAD: PIN MOVED - the way in at two in the afternoon: the morning's market is spread over three hours now, and at
+  // half past eight eight of the town were near, their walks searched inside PATH_CELLS; at two, sixteen
+  const minute = 100 * DAY_MIN + 14 * 60, at = [200, 0, 120];
   const live = townAt(6, minute), truth = townAt(6, minute);
   const firsts = [];
   const want = live.town._paths.want;
@@ -194,6 +197,14 @@ test('LW-PERF the town\'s frames: each frame\'s searching held to its cells - AR
     assert.ok(live.town._paths.spent() <= cap, `frame ${i}: ${live.town._paths.spent()} cells, its budget ${cap}`);
     if (firsts.includes(true)) streetAsked = true;
     if (tick && firsts.includes(false)) censusAsked = true;
+    // one whose walk still waits is wanted only once it is searched - every frame (LW-SPREAD: PIN MOVED - read at the
+    // last frame alone: the morning's walks all searched by then, one wanted off its walk's start had stood out of the
+    // street's reach in the frames before)
+    for (const r of live.town.pool) {
+      if (!r.active || !r.res) continue;
+      const w = live.town.where(r.res, live.clock.t, false);
+      assert.ok(!w || Math.hypot(w.x - at[0], w.z - at[2]) < LIVING_RANGE + 5, `frame ${i}: ${r.res.id} within the street's reach`);
+    }
   }
   assert.ok(streetAsked && censusAsked, 'the street asks first, the census after');
   const t = live.clock.t;
@@ -205,15 +216,10 @@ test('LW-PERF the town\'s frames: each frame\'s searching held to its cells - AR
   }
   assert.ok(near.length >= 6, `the morning's people near (${near.length})`);
   assert.deepEqual(near.filter((id) => !rows.has(id)), [], 'each on the street within 2.5 s');
-  for (const r of live.town.pool) {
-    if (!r.active || !r.res) continue;
-    const w = live.town.where(r.res, t, false);
-    assert.ok(!w || Math.hypot(w.x - at[0], w.z - at[2]) < LIVING_RANGE + 5, `${r.res.id} within the street's reach`);
-  }
 });
 
 test('LW-PERF the arrival\'s window: in ARRIVAL_SHOW_S of the way in the street is stood as the day has it - a resident found then comes on where the player sees; after it, one whose walk came late comes on only unseen (beyond POP_VISIBLE_RANGE or behind the view) or out of a door (mutants: the window, its length)', () => {
-  const minute = 100 * DAY_MIN + 8.5 * 60, at = [300, 0, 300];
+  const minute = 100 * DAY_MIN + 8 * 60, at = [300, 0, 300];   // LW-SPREAD: PIN MOVED - the street's morning at eight (its market from 07:30 to 10:30 now, a half-past-eight's comings few)
   const { town, clock } = townAt(8, minute);
   const was = new Map();
   let inViewInWindow = 0, after = 0;
@@ -239,19 +245,36 @@ test('LW-PERF the arrival\'s window: in ARRIVAL_SHOW_S of the way in the street 
   assert.ok(after > 0, 'and more came on after, unseen');
 });
 
-/** THE FAVOURITES BEFORE LW-PERF (dayPlan.js as it stood): every door scanned and sorted, keys compared as text. */
+/** THE FAVOURITES BEFORE LW-PERF (dayPlan.js as it stood): every door scanned and sorted, keys compared as text.
+ *  LW-SPREAD: PIN MOVED - the law LW-SPREAD made (two social spots of the SOCIAL_NEAR nearest home, the town's corners
+ *  among them, the square their own point and from anywhere for SQUARE_LIKE of the town; the market of the SOCIAL_NEAR
+ *  shops' fronts and points of the square nearest home, the square their own point), written the slow way still. */
 function refFavourites(res, places, home) {
   const rng = lwRng(res.town, res.roll.charCodeAt(0), res.slot, 0x666176);
-  const near = (list) => (list.length ? list[Math.floor(rng() * Math.min(list.length, 2))] : null);
+  const near = (list, n = 2) => (list.length ? list[Math.floor(rng() * Math.min(list.length, n))] : null);
   const by = (from) => (a, b) => (Math.abs(a.cell[0] - from.cell[0]) + Math.abs(a.cell[1] - from.cell[1])) - (Math.abs(b.cell[0] - from.cell[0]) + Math.abs(b.cell[1] - from.cell[1])) || a.key.localeCompare(b.key);
   const doorsOf = (test) => { const out = []; for (const [key, spot] of places.doors) if (test(places.types.get(key))) out.push(spot); if (home) out.sort(by(home)); return out; };
-  const social = [...places.social]; if (home) social.sort(by(home));
-  const s1 = places.square && rng() < 0.6 ? places.square : near(social);
-  const s2 = near(social.filter((s) => s !== s1)) ?? s1;
-  const market = [...places.market]; if (home) market.sort(by(home));
+  const pts = places.squares.length ? places.squares : [places.square];
+  const sq = pts[lwSeed(res.town, res.roll.charCodeAt(0), res.slot, 0x73717561) % pts.length];
+  const own = (s) => (s?.kind === 'square' ? sq : s);
+  const social = [...places.social, ...places.corners]; if (home) social.sort(by(home));
+  const s1 = places.square && rng() < SQUARE_LIKE ? sq : own(near(social, SOCIAL_NEAR));
+  const s2 = own(near(social.filter((s) => own(s) !== s1), SOCIAL_NEAR)) ?? s1;
+  const market = [...places.market, ...places.squares]; if (home) market.sort(by(home));
+  // LW-ERRANDS: PIN MOVED - their own guild's hall, the nearest of it to home (no draw: the market's draw is the guild's old)
+  const hall = (test) => { const out = []; for (const [key, spot] of places.doors) if (places.types.get(key) === BUILDING_TYPES.GuildHall && test(places.factions.get(key))) out.push(spot); if (home) out.sort(by(home)); return out[0] ?? null; };
+  const guildOf = () => {
+    if (res.job === 'guildsman') return res.work != null ? places.doors.get(res.work) ?? null : null;
+    const order = hall((f) => ORDER_FACTIONS.has(f));
+    if (res.job === 'courtier') return order;
+    if (res.cls === MOBILE_TYPES.Knight && order) return order;
+    const g = (res.work != null ? GUILD_OF_TRADE.get(places.types.get(res.work)) : undefined)
+      ?? (res.cls >= MOBILE_TYPES.Mage && res.cls <= MOBILE_TYPES.Nightblade ? MAGES_GUILD : res.cls >= MOBILE_TYPES.Monk && res.cls <= MOBILE_TYPES.Knight ? FIGHTERS_GUILD : null);
+    return g == null ? null : hall((f) => f === g);
+  };
   return {
     social: [s1, s2].filter(Boolean), tavern: near(doorsOf((t) => t === BUILDING_TYPES.Tavern)), temple: near(doorsOf((t) => t === BUILDING_TYPES.Temple)),
-    guild: near(doorsOf((t) => t === BUILDING_TYPES.GuildHall)), market: near(market) ?? places.square, shops: doorsOf(hasShopJob),
+    guild: guildOf(), market: own(near(market, SOCIAL_NEAR)), shops: doorsOf(hasShopJob), square: sq,
   };
 }
 const keysOf = (fav) => JSON.stringify(fav, (k, v) => (v && typeof v === 'object' && 'key' in v && 'cell' in v ? v.key : v));

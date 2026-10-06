@@ -17,7 +17,7 @@ import { ResidentWalker, STAND_FRAME } from '../src/characters/residentWalker.js
 import { PERSON_IDLE_RECORD, PERSON_GUARD_IDLE_RECORD, MOVE_RECORDS, MOVE_FLIPS, PERSON_MOVE_SPEED, PERSON_IDLE_DISTANCE } from '../src/characters/mobilePerson.js';
 import { mobileOrientation } from '../src/characters/mobileUnit.js';
 import {
-  spotRound, spotCircles, dealCircles, circleSlots, exchangeAt, slotSpoken, exchangeScript, circleLine, circleStands, aloneStand,
+  spotRound, spotCircles, dealCircles, circleSlots, exchangeAt, slotSpoken, exchangeScript, circleLine, circleStands, circlesStands, aloneStand,
   lineMinutes, ROUND_S, GATHER_BEAT_S, OPEN_S, PAUSE_S, SLOT_LINES, CLOSE_S, TALK_SHARE, ALONE_FAR_M,
 } from '../src/systems/livingWorld/meetups.js';
 import { pickScript, MORNING_TALKS, DAY_TALKS, JOB_TALKS, TOKEN_FALLBACK } from '../src/systems/livingWorld/lines.js';
@@ -232,8 +232,11 @@ test('LW-TALK on the street: a circle\'s talk waits for its people to gather - f
     for (const res of t.town.peopleOf(t.town.dayOf(t.town._now))) for (const e of t.town.planOf(res, t.town.dayOf(t.town._now))) if (e.kind !== 'walk' && isOutdoor(e) && e.at === spot && e.t0 <= t.town._now) list.push({ who: res, t0: e.t0, t1: e.t1 });
     const now = spotCircles(spot.key, list, t.town._now, roundMin).find((x) => x.seed === c.circle.seed);
     const was = new Map();
-    for (const x of spotCircles(spot.key, list, now.start - 1e-6, roundMin)) circleStands(spot, x, t.town._street).forEach((st, i) => was.set(x.members[i].id, st));
-    const places = circleStands(spot, now, t.town._street);
+    // LW-SPACE: PIN MOVED - a round's circles at a spot are laid together (meetups.js circlesStands), none on another
+    const before = spotCircles(spot.key, list, now.start - 1e-6, roundMin);
+    circlesStands(spot, before, t.town._street).forEach((ps, ci) => ps.forEach((st, i) => was.set(before[ci].members[i].id, st)));
+    const all = spotCircles(spot.key, list, t.town._now, roundMin);
+    const places = circlesStands(spot, all, t.town._street)[all.findIndex((x) => x.seed === now.seed)];
     const far = Math.max(...now.members.map((mm, i) => { const a = was.get(mm.id) ?? aloneStand(spot, mm.id, t.town._street); return Math.hypot(places[i].x - a.x, places[i].z - a.z); }));
     assert.ok(Math.abs(c.circle.from - (now.start + (far / PERSON_MOVE_SPEED + GATHER_BEAT_S) * RATE)) < 1e-9, 'gathered at the walking pace');
     gathered++;
@@ -268,20 +271,30 @@ test('LW-TALK on the street: a circle\'s talk waits for its people to gather - f
   }
   // stepped past them (no arrival), out of the player's sight: their rows to the nearer
   {
-    const s = makeTown(closeTown(), CLOSE, 100 * DAY_MIN + 18 * 60);
+    const s = makeTown(closeTown(), CLOSE, 100 * DAY_MIN + 19.5 * 60);   // LW-SPREAD: PIN MOVED - the evening goes out from six to a quarter past seven now
     s.town.maxPopulation = 8;
     run(s, 0.5);
     const was = new Set(s.town.pool.filter((r) => r.visible && r.res).map((r) => r.res.id));
     s.at = [s.at[0] + 18, 0, s.at[2] + 18]; s.eye = [s.at[0], 1.6, s.at[2]];
     for (let i = 0; i < 12; i++) step(s);
     const fresh = s.town.pool.filter((r) => r.active && r.res && !was.has(r.res.id)).length;
-    assert.ok(fresh >= 4, `out of sight, their rows to the nearer (${fresh})`);
+    // LW-ERRANDS: PIN MOVED - two and more (four before: more of the evening indoors now, at the guilds and the shops;
+    // the street held first, none)
+    assert.ok(fresh >= 2, `out of sight, their rows to the nearer (${fresh})`);
   }
   // the deal before the read: the census reads where each one stands by this beat's circles - read before them, an
   // arrival stood the street by the last scene's (none: each one about their own stand) and let 12 of the 24 it stood
   // go a beat later, dealt into circles farther off
   {
-    const s = makeTown(synthTown(), SYNTH, 100 * DAY_MIN + 18 * 60);
+    // LW-SPREAD: PIN MOVED - the evening at half past seven (out from six to a quarter past seven now), and every walk of
+    // its next second searched before the way in: the evening's walks out, searched a slice a frame (LW-PERF), came
+    // nearer a beat later and let the farthest circles go - the searching's, not the deal's
+    const s = makeTown(synthTown(), SYNTH, 100 * DAY_MIN + 19.5 * 60);
+    for (const r of s.town.peopleOf(s.town.dayOf(s.clock.t))) {
+      for (const ahead of [0, 0.2, 0.4]) {
+        for (let k = 0; k < 400 && s.town.where(r, s.clock.t + ahead, true)?.pending; k++) { s.town._paths.cells(1e9); s.town._paths.budget(1e9); s.town._paths.run(); }
+      }
+    }
     step(s);
     const first = s.town.pool.filter((r) => r.active && r.res).map((r) => r.res.id);
     for (let i = 0; i < 9; i++) step(s);
@@ -301,7 +314,7 @@ test('LW-TALK on the street: a circle\'s talk waits for its people to gather - f
 });
 
 test('LW-TALK every reader deals alike: the deal is the plans\' - one taken off this street alone (the trample) is dealt and left out after, the spot\'s other circles as every reader has them, their partner left to their own counsel; two readers come at different minutes keep the same circles, gatherings and words (mutants: the deal from the street, the drop)', () => {
-  const a = makeTown(synthTown(), SYNTH, 100 * DAY_MIN + 18 * 60);
+  const a = makeTown(synthTown(), SYNTH, 100 * DAY_MIN + 10 * 60);   // LW-SPREAD: PIN MOVED - the morning's market (from half past seven to half past ten): the evening's people are over the town's spots now
   run(a, 30);
   const b = makeTown(synthTown(), SYNTH, a.clock.t);
   for (let i = 0; i < 30 * 20; i++) { step(a); b.clock.t = a.clock.t; b.town.update(1 / 30, b.at, Math.PI, b.eye, true, () => false); }
