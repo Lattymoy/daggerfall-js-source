@@ -11850,6 +11850,14 @@ export function createWorldModes(host) {
     // M2: the cast engine's mode-aware raycast reads the INTERIOR's
     // collider while a building is mounted.
     get interiorCollider() { return interiorCtx?.collider ?? null; },
+    /** LW-LODGE: the room's beds - its Rest markers (feet), RentRoom's own list - and the index among them of the bed of
+     *  the room the player rents here (-1 none): the living world deals the rest to the tavern's lodgers. */
+    get interiorBeds() { return interiorRestMarkers().map((m) => [m.x, m.y, m.z]); },
+    get rentedBedHere() {
+      const b = interiorBuilding;
+      const room = b ? findRentedRoom(playerEntity.rentedRooms ?? [], questSceneCtx?.()?.mapId ?? 0, b.buildingKey ?? 0, b.buildingType === BUILDING_TYPES.Tavern) : null;
+      return room ? room.allocatedBedIndex ?? -1 : -1;
+    },
     /** AUDIT 19 / 1:1: what THIS host contributes to the music context.
      *  The outer host owns the clock, the weather and the location; the
      *  mode host owns whether the player is inside, in a dungeon, and

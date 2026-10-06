@@ -83,8 +83,8 @@
   {
     "name": "LW-STAND-host-unkept-circle",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "circleStands(e.at, c.circle, this._street)[c.index]",
-    "new": "circleStands(e.at, c.circle)[c.index]",
+    "old": "      const laid = circlesStands(spot, now, this._street);",
+    "new": "      const laid = now.map((c) => circleStands(spot, c));",
     "tests": [
       "test/lwstand_street.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LW-STAND-way-straight",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "            if (od > 0.05 && !this._street.clear(p.pos[0], p.pos[2], w.x, w.z)) { vx = ox; vz = oz; vd = od; }",
-    "new": "            if (od > 0.05 && false) { vx = ox; vz = oz; vd = od; }",
+    "old": "              if (od > 0.05 && !this._street.clear(p.pos[0], p.pos[2], g.x, g.z)) { vx = ox; vz = oz; vd = od; }",
+    "new": "              if (od > 0.05 && false) { vx = ox; vz = oz; vd = od; }",
     "tests": [
       "test/lwstand_street.test.js"
     ]

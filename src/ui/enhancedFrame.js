@@ -66,7 +66,7 @@ export const FRAME_ROLES = {
     '.travelpanel-bar',
     // OW-THEME (2026-09-28, Mac: "The overworld ui needs to follow enhanced ui theme"): the Overworld's bar - the
     // journey bar's own carved stone and brass, in the theme's ground
-    '.tview-bar', '.tview-confirm',   // OW-BLOCK: the Overworld's block (its filters are inside it); OW-CONFIRM: its question
+    '.tview-bar', '.tview-side', '.tview-confirm', '#wp-menu', '#travel-pace-box',   // OW-BLOCK: the Overworld's block; FILTERS-LEFT: its filters, their own block at the bottom left; OW-CONFIRM: its question; WAYPOINTS: the right-click menu; PACE-DIALS: the other skins' dials
     // CSA-L: the helm's bar (ui/enhancedHelm.js) - the journey bar's kind, under the compass where it stands
     '.helmpanel-bar',
     // PLUS-MAP: the 3D dungeon map's control bar - the journey bar's carved stone, the same fittings
@@ -149,6 +149,10 @@ export const FRAME_ROLES = {
     '.travelpanel-act',
     // OW-THEME: the Overworld's Return; OW-PATH: and its Roads / Free switch
     '.tview-back', '.tview-mode', '.tview-filter', '.tview-map',
+    // PACE-DIALS: the speed dials' steps (the Overworld's block, the journey bar, the other skins' box); WAYPOINTS: the
+    // followed rows' Go and unfollow, the right-click menu's presses, its kinds and its swatches
+    '.tview-pace-step', '.travelpanel-pace-step', '.pbox-pace-step', '.tview-wp-go', '.tview-wp-x',
+    '#wp-menu .wpm-btn', '#wp-menu .wpm-kind',
     // CSA-L: the helm's presses - the sails, the trim, the lanterns, the time, the position, leaving
     '.helmpanel-btn',
     // PLUS-MAP: the 3D map's turn, tilt, floor and view buttons
@@ -191,13 +195,16 @@ export const FRAME_ROLES = {
     '.shell .dcard code', '.px-setwrap .dcard code', '.px-meter', '.shell .swatch', '.px-setwrap .swatch',
     // PLUS8: the journey bar's time readout - the x100 sits in a socket (RATE-LAW: its two presses are gone)
     '.travelpanel-accel',
+    // PACE-DIALS: the speed dials' rate, in the same socket
+    '.tview-pace-num', '.travelpanel-pace-num', '.pbox-pace-num',
     // OW-THEME: the Overworld's compass - its needle sunk in a socket, as the journey bar's clock is
     '.tview-compass',
     // PLUS-DRESS: the page's leaf, the decorator's list, preview, thumbnails and search, the party's portraits
     'body .dfpage-leaf', 'body .dfdecor-list', 'body .dfdecor-preview', 'body .dfdecor-thumb', 'body .dfdecor-search', 'body .dfparty-face',
     'body .dfnaval-holdlist'],   // NAV-F: a taken ship's hold, sunk into her window
   input: ['.shell .ft-search', '.wizard .namebox', '.sb-shell .sb-rename input', '.cr-shell .cr-compose input', '.hmsearch input',
-    'body .dfsocial-field', 'body .dfchat-input', 'body .dfdecor-search'],
+    'body .dfsocial-field', 'body .dfchat-input', 'body .dfdecor-search',
+    '.tview-wp-pick', '#wp-menu input.wpm-name'],   // WAYPOINTS: the follow dropdown and the menu's name
   meterFill: ['.px-fill'],
   header: ['.port-host .port-head', '.px-win .px-tabs', '.talk-head', '.sb-shell .sb-top', '.cr-shell .sb-top', '.trade-shell .sb-top',
     'body .broker-head',   // SET7: the Broker's header - who, the purse, the turn of the day
@@ -479,6 +486,7 @@ ${list(r.wingFlip)} { -webkit-mask-image: linear-gradient(90deg, #000, transpare
 /* THE HUD'S OTHER TRACKS (target, breath) wear the vitals' frame */
 .hud-track { border-color: ${RAISED}; background-color: rgba(8,9,12,0.85);
   box-shadow: ${RING}, 2px 2px 0 1px rgba(0,0,0,0.45); }
+.hud-foe .hud-track { box-shadow: ${RING}; }   /* FOE-SHADOW (2026-10-06, the player: "dont let the foe health bar have 2 shadows"): the ring alone */
 .hud-foe .hud-fill { background: linear-gradient(180deg, #f2a597 0 1px, #c8483a 1px calc(100% - 1px), #7a2019 calc(100% - 1px)); }
 .hud-breath .hud-fill { box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -1px 0 rgba(0,0,0,0.35); }
 .hud-compass { border-bottom-color: ${T.stoneLit}; box-shadow: 0 2px 0 rgba(5,6,8,0.55); }

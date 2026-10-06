@@ -316,6 +316,7 @@ export const SHEET_MEMBERS = Object.freeze([
   'mount',         // () => void - claim the shared chrome
   'unmount',       // () => void - give it back
   'homeView',      // (limits) => view|null - where this sheet rests; null = fit
+  'context',       // (clientX, clientY) => boolean - the right click; true when the sheet took it (WAYPOINTS: the bay's menu)
 ]);
 
 /** Does this object answer the whole contract? Used by the window's own

@@ -30,8 +30,8 @@
   {
     "name": "LW-FIX1-walker-place",
     "file": "src/scenes/livingIndoors.js",
-    "old": "if (!want.has(id) && unseen(placeOf(s))) stood.delete(id);",
-    "new": "if (!want.has(id) && unseen(room.spots[s.spot])) stood.delete(id);",
+    "old": "&& unseen(placeOf(s))) stood.delete(id);",
+    "new": "&& unseen(room.spots[s.spot])) stood.delete(id);",
     "tests": [
       "test/lwfix1_review.test.js"
     ]

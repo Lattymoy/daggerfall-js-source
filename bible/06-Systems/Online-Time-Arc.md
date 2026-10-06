@@ -401,8 +401,8 @@ night is a raise, which 6.3c charges nothing. So 6.3b's reading comes back for i
   =towertime_ days"), which ended unpaid two minutes in under 6.3b's reading, are deadlines: 264 and 135 as REST8 built
   it, the main quest's deadlines 31. AUDIT REST-PARTY D2's two by hand made it 266 and 133 (D1's artifact hunt was a
   deadline already - its entry is for the run-time half), AUDIT REST II's three 269 and 130, and AUDIT REST III's two
-  (K0C00Y07's ransom and B0B71Y03's daughter, dead clocks read by their text) 271 and 128, the main quest's deadlines
-  32, listed and pinned.
+  (K0C00Y07's ransom and B0B71Y03's daughter, dead clocks read by their text) 271 and 128, and GUARD-WINDOW's one
+  (N0B20Y02's three-hour guard, a window to act) 272 and 127, the main quest's deadlines 32, listed and pinned.
 - **Online a delay lands on the short wait** (`Clock.waitsShort`): its remainder is cut once to `ONLINE_DELAY_SECONDS`
   (24 minutes of the character's clock) and then charged as 6.3c charges any clock - the lived step, never a raise -
   so it lands after about two real minutes of play, and a night spends none of it. Its `=x_` count reads "a few"; the
@@ -418,8 +418,9 @@ night is a raise, which 6.3c charges nothing. So 6.3b's reading comes back for i
   `daily from` windows on the sky; spawn intervals, QAE RaiseTime and TrainPc's hours as pacing.
 - **The edge**: a deadline read as a delay fires its end two minutes in, as under 6.3b; a delay read as a deadline only
   waits its played days now (6.3b froze it). The pins guard the first: `test/rest8_questwaits.test.js` (6.3b's file,
-  re-aimed - every vendored clock ticked past the short wait online: all 128 delays land, not one of the 271 deadlines
-  is cut; 264 and 135 as REST8 built it, then AUDIT REST-PARTY D2's two, AUDIT REST II's three and AUDIT REST III's two) and `test/rest8_audit_timefree.test.js` (AUDIT TIMEFREE's, and R1's). Campaigns `tools/mutants/rest8.json`
+  re-aimed - every vendored clock ticked past the short wait online: all 127 delays land, not one of the 272 deadlines
+  is cut; 264 and 135 as REST8 built it, then AUDIT REST-PARTY D2's two, AUDIT REST II's three, AUDIT REST III's two
+  and GUARD-WINDOW's one) and `test/rest8_audit_timefree.test.js` (AUDIT TIMEFREE's, and R1's). Campaigns `tools/mutants/rest8.json`
   (22) and `tools/mutants/rest8_audit_timefree.json` (14), all dead.
 - **AUDIT REST II (2026-10-03) - THE RULE, decided:** a clock the quest's own text presents to the player as a TIME
   LIMIT - a window to act, to return, to fetch something before it is lost - is a deadline, kept at its days of played
@@ -699,3 +700,7 @@ terms; 9 is new and not built.
   text sets a limit, read "a few days" online - deadlines by hand, 271 and 128; a held bounty's day moves with the lane
   (Bring online lapsed a ledger of this build's bounties on the first tick). `test/auditrest3.test.js`,
   `tools/mutants/auditrest3.json`.
+- 2026-10-06: GUARD-WINDOW (FIELD BUGS 2026-10-06c, `01-Overview/Field-Bugs-2026-10-06c.md`): N0B20Y02's three-hour
+  guard is a deadline by hand - read as a delay, it was cut to the 24-minute short wait and the mage was hidden before
+  the attack its 55-minute interval sends; a guard who stepped out in those two real minutes lost the attack for good.
+  272 and 127. `test/fb1006c_guardwindow.test.js`, `tools/mutants/fb1006c.json`.

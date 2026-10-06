@@ -317,7 +317,16 @@ export function clockIsDeadline(quest, clock) {
  *  ransom must be paid in =2ransom_ days or they will kill _victim_") and B0B71Y03's `_finddaughter_` ("within
  *  =finddaughter_ days and I will tell you"). Both are dead clocks (started, read by nothing - the quest's real limit
  *  is another clock), so nothing ended early; but online their text read "a few days" beside a deadline that kept its
- *  number. A time limit the text sets keeps its days. 271 and 128. */
+ *  number. A time limit the text sets keeps its days.
+ *  GUARD-WINDOW (FIELD BUGS 2026-10-06c, Aru on Discord: "the three hours passed, the mage disappeared, but no enemies
+ *  showed up, so now I can't complete it"): a WINDOW TO ACT the reading calls a wait - N0B20Y02's `_S.12_` ("I must
+ *  guard %g2 for 3 hours starting immediately"). Its end only hides the sleeping mage, and the reward waits on it
+ *  (`when _S.03_ and _S.12_`), so it reads as "a reward after a wait"; but the three hours are the guard itself: `until
+ *  _S.12_ performed: pc at _magesguild_ set _S.01_`, and `_S.01_` sends the three Nightblades once, at a random point in
+ *  their first 55 minutes. Cut to the short wait the guard lasted 24 minutes - the mage was gone before the attack more
+ *  often than not, and a guard who stepped out of the hall in those two real minutes had `_S.01_` cleared by the `pc at`
+ *  for good (it is never set again once the window shuts): the killers never came and the quest could not be finished.
+ *  A deadline, it keeps its three hours, played. 272 and 127. */
 export const ONLINE_DEADLINES = Object.freeze({
   $CUREWER: Object.freeze(['huntstart']),
   $CUREVAM: Object.freeze(['huntstart']),
@@ -331,6 +340,7 @@ export const ONLINE_DEADLINES = Object.freeze({
   O0B00Y12: Object.freeze(['S.01']),   // AUDIT REST II Q2: the drop, "as soon as possible"
   K0C00Y07: Object.freeze(['2ransom']),   // AUDIT REST III D2: "The ransom must be paid in =2ransom_ days or they will kill _victim_"
   B0B71Y03: Object.freeze(['finddaughter']),   // AUDIT REST III D2: "within =finddaughter_ days and I will tell you"
+  N0B20Y02: Object.freeze(['S.12']),   // GUARD-WINDOW (FIELD BUGS 2026-10-06c): "I must guard %g2 for 3 hours" - the attack comes inside it
 });
 
 /** REST8: whether the quest's DELAYS take the short wait - online (the shared clock standing), the quest's own word.
