@@ -44,15 +44,15 @@
   {
     "name": "QA2-summoner-row-faction",
     "file": "src/world/curatedPeople.js",
-    "old": "  row('TEMPASH0.RMB', 11, 35, { position: 36089, xPos: -102, yPos: 0, zPos: -68, factionID: 498,",
-    "new": "  row('TEMPASH0.RMB', 11, 35, { position: 36089, xPos: -102, yPos: 0, zPos: -68, factionID: 492,",
+    "old": "  row('TEMPASH0.RMB', 11, 35, { position: 36089, xPos: -92, yPos: 0, zPos: 122, factionID: 498,",
+    "new": "  row('TEMPASH0.RMB', 11, 35, { position: 36089, xPos: -92, yPos: 0, zPos: 122, factionID: 492,",
     "tests": ["test/qa2_summoners.test.js"]
   },
   {
     "name": "QA2-summoner-list",
     "file": "src/world/curatedPeople.js",
-    "old": "export const SUMMONER_FACTIONS = Object.freeze([456, 464, 470, 475, 482, 488, 492, 498]);",
-    "new": "export const SUMMONER_FACTIONS = Object.freeze([456, 464, 470, 475, 482, 488, 492, 498, 66]);",
+    "old": "  .filter(([id, kind]) => kind === 'DaedraSummoning' && Number(id) !== MAGES_GUILD_SUMMONER).map(([id]) => Number(id)));",
+    "new": "  .filter(([, kind]) => kind === 'DaedraSummoning').map(([id]) => Number(id)));",
     "tests": ["test/qa2_summoners.test.js"]
   }
 ]

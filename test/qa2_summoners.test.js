@@ -9,29 +9,31 @@ import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { existsSync } from 'node:fs';
 import {
-  registerWorldDataAsset, installWorldDataReplacement, bindWorldDataBlocks, _resetWorldDataReplacement, getDFBlockReplacementData,
+  registerWorldDataAsset, installWorldDataReplacement, bindWorldDataBlocks, _resetWorldDataReplacement, getDFBlockReplacementData, setLayoutPinOracle,
 } from '../src/formats/worldDataReplacement.js';
 import { blockToDfuJson } from '../src/formats/worldDataJson.js';
 import { setValue, resetToDefaults } from '../src/systems/settings.js';
 import { clearWorldDataVariants } from '../src/systems/worldDataVariants.js';
-import { _resetLayoutPins } from '../src/systems/layoutPins.js';
+import { _resetLayoutPins, pinAt } from '../src/systems/layoutPins.js';
 import { CURATED_TEMPLE_SUMMONERS, SUMMONER_FACTIONS, TEMPLE_SUMMONER_VENDOR, curateBlockPeople } from '../src/world/curatedPeople.js';
 import { NPC_SERVICE, npcServiceKind } from '../src/systems/guildServices.js';
 import { collectInteriorPeople } from '../src/characters/interiorPeople.js';
+import { CURATED_QUEST_MARKERS, curatedMarkerSpot } from '../src/systems/quest/markerCuration.js';
 import { tinyRmb, fakeBlocks } from './wd3Fakes.mjs';
 
 const BV = 'beautiful-villages', BC = 'beautiful-cities';
 const KYNARETH = 35, PRIEST = 240, KYNARETH_SUMMONER = 498;
 const person = (factionID, x, position) => ({ Position: position, XPos: x, YPos: 0, ZPos: 10, TextureArchive: 182, TextureRecord: 20, FactionID: factionID, Flags: 1 });
-/** Beautiful Villages' TEMPASH0 as the door serves it: record 11 its Kynareth temple, its priest and no summoner. */
-function templeJson(name = 'TEMPASH0.RMB', { deity = KYNARETH, people = [person(PRIEST, 5, 3853)] } = {}) {
-  const j = blockToDfuJson(tinyRmb(7, name));
+/** Beautiful Villages' TEMPASH0 as the door serves it: record 11 its Kynareth temple, its priest and no summoner. `self`
+ *  is the name the JSON gives itself - the pack's own `Name`, which is not always the file's (TEMPASA2's says TEMPAS2). */
+function templeJson(name = 'TEMPASH0.RMB', { deity = KYNARETH, people = [person(PRIEST, 5, 3853)], record = 11, self = name } = {}) {
+  const j = blockToDfuJson(tinyRmb(7, self));
   const sub = j.RmbBlock.SubRecords[1];
-  while (j.RmbBlock.SubRecords.length < 12) j.RmbBlock.SubRecords.push(structuredClone(sub));
-  while (j.RmbBlock.FldHeader.BuildingDataList.length < 12) j.RmbBlock.FldHeader.BuildingDataList.push(structuredClone(j.RmbBlock.FldHeader.BuildingDataList[0]));
-  Object.assign(j.RmbBlock.FldHeader.BuildingDataList[11], { BuildingType: 'Temple', FactionId: deity });
-  j.RmbBlock.SubRecords[11].Interior.BlockPeopleRecords = people;
-  j.RmbBlock.SubRecords[11].Interior.Header.NumPeopleRecords = people.length;
+  while (j.RmbBlock.SubRecords.length <= record) j.RmbBlock.SubRecords.push(structuredClone(sub));
+  while (j.RmbBlock.FldHeader.BuildingDataList.length <= record) j.RmbBlock.FldHeader.BuildingDataList.push(structuredClone(j.RmbBlock.FldHeader.BuildingDataList[0]));
+  Object.assign(j.RmbBlock.FldHeader.BuildingDataList[record], { BuildingType: 'Temple', FactionId: deity });
+  j.RmbBlock.SubRecords[record].Interior.BlockPeopleRecords = people;
+  j.RmbBlock.SubRecords[record].Interior.Header.NumPeopleRecords = people.length;
   return j;
 }
 function door(t) {
@@ -61,6 +63,18 @@ test('QUEST-AUDIT II TEMPLE-SUMMONER: a Beautiful Villages Kynareth temple the d
   } finally { _resetWorldDataReplacement(); resetToDefaults(); }
 });
 
+test('AUDIT QA2 TEMPLE-SUMMONER: a temple in a town a save pins to Beautiful Villages - served fresh by the door\'s pinned path at every ask, never from its cache - stands its summoner too, once each time, under the name the town lays (mutants: the pinned path\'s call dropped, its name unpassed)', (t) => {
+  door(t);
+  try {
+    registerWorldDataAsset('TEMPASH0.RMB.json', templeJson('TEMPASH0.RMB', { self: 'TEMPASHX.RMB' }), null, { priority: 10, vendor: BV });   // its JSON naming itself otherwise (AUDIT QA2 B1)
+    setLayoutPinOracle(() => ({ in: new Set([BV]), out: new Set() }));   // a pin letting the pack in wherever it is asked
+    const first = getDFBlockReplacementData(7, 'TEMPASH0.RMB'), again = getDFBlockReplacementData(7, 'TEMPASH0.RMB');
+    assert.notEqual(first, again, 'served fresh: the pinned path');
+    assert.deepEqual([summonersIn(first).length, summonersIn(again).length], [1, 1]);
+    assert.equal(summonersIn(first)[0].factionID, KYNARETH_SUMMONER);
+  } finally { setLayoutPinOracle(pinAt); _resetWorldDataReplacement(); resetToDefaults(); }
+});
+
 test('QUEST-AUDIT II TEMPLE-SUMMONER: only the listed pack\'s listed temple of the listed deity, holding no summoner of its own - another pack\'s file of the name, a record of another deity, a temple that stands one already, and Daggerfall\'s own blocks are as they were (mutants: the vendor gate, the deity gate, the own-summoner gate)', (t) => {
   door(t);
   try {
@@ -80,7 +94,32 @@ test('QUEST-AUDIT II TEMPLE-SUMMONER: only the listed pack\'s listed temple of t
   } finally { _resetWorldDataReplacement(); resetToDefaults(); }
 });
 
-test('QUEST-AUDIT II TEMPLE-SUMMONER: the rows are the 24 designs of Beautiful Villages, each a temple record of its own block, each Daggerfall\'s summoner of its deity, each with a record position no other row of the design repeats; the summoners are DaedraSummoning\'s temple factions exactly (mutants: a row\'s faction, the list)', () => {
+test('AUDIT QA2 B1: the port\'s curations key on the name the town lays - the door\'s - and not on the name a pack\'s JSON gives itself. Beautiful Villages\' TEMPASA2.RMB.json says "Name": "TEMPAS2.RMB" (the author\'s typo, the only temple so), and its Arkay temple stood no summoner in 46 towns; laid as TEMPASA2 it stands TEMPASA2\'s, and a JSON naming itself as a listed block but laid as another takes none - the quest-marker curation alike (mutants: the door\'s name unpassed on either path; each curation reading the JSON\'s name)', (t) => {
+  door(t);
+  try {
+    const ARKAY = 21, ARKAY_SUMMONER = 456;
+    const row = CURATED_TEMPLE_SUMMONERS.find((r) => r.block === 'TEMPASA2.RMB');
+    registerWorldDataAsset('TEMPASA2.RMB.json', templeJson('TEMPASA2.RMB', { deity: ARKAY, record: row.record, self: 'TEMPAS2.RMB' }), null, { priority: 10, vendor: BV });
+    const b = getDFBlockReplacementData(9, 'TEMPASA2.RMB');
+    assert.equal(b.name, 'TEMPAS2.RMB', 'the block keeps the name its JSON gives itself, as DFU\'s does');
+    const s = summonersIn(b, row.record);
+    assert.deepEqual(s.map((p) => [p.factionID, p.rawX, p.rawY, p.rawZ, p.position]), [[ARKAY_SUMMONER, row.person.xPos, row.person.yPos, row.person.zPos, row.person.position]], 'TEMPASA2\'s summoner, at its spot');
+    // a file laid as another block that names itself TEMPASA2 (the class of Beautiful Villages' FARMBA10-13, which name
+    // themselves FARMAA10-13): not TEMPASA2's
+    registerWorldDataAsset('TEMPASX2.RMB.json', templeJson('TEMPASX2.RMB', { deity: ARKAY, record: row.record, self: 'TEMPASA2.RMB' }), null, { priority: 10, vendor: BV });
+    assert.equal(summonersIn(getDFBlockReplacementData(10, 'TEMPASX2.RMB'), row.record).length, 0, 'a block laid as TEMPASX2');
+    // the quest-marker curation: TEMPASH0 #4's stairs marker moves in the block laid as TEMPASH0 whatever it calls itself
+    const d = CURATED_QUEST_MARKERS.find((c) => c.where.some(([v, blk]) => v === BV && blk === 'TEMPASH0.RMB'));
+    const [, , rec] = d.where.find(([v, blk]) => v === BV && blk === 'TEMPASH0.RMB');
+    const [m] = d.markers;
+    registerWorldDataAsset('TEMPASH0.RMB.json', templeJson('TEMPASH0.RMB', { self: 'TEMPASHX.RMB' }), null, { priority: 10, vendor: BV });
+    assert.deepEqual(curatedMarkerSpot(getDFBlockReplacementData(7, 'TEMPASH0.RMB'), rec, m.record, ...m.at), m.to, 'laid as TEMPASH0, named TEMPASHX');
+    registerWorldDataAsset('TEMPASHX.RMB.json', templeJson('TEMPASHX.RMB', { self: 'TEMPASH0.RMB' }), null, { priority: 10, vendor: BV });
+    assert.equal(curatedMarkerSpot(getDFBlockReplacementData(11, 'TEMPASHX.RMB'), rec, m.record, ...m.at), null, 'laid as TEMPASHX, named TEMPASH0');
+  } finally { _resetWorldDataReplacement(); resetToDefaults(); }
+});
+
+test('QUEST-AUDIT II TEMPLE-SUMMONER: the rows are the 24 designs of Beautiful Villages, one row a temple record of its own block, each Daggerfall\'s summoner of its deity; the summoners are DaedraSummoning\'s temple factions exactly, read from its table (the rows\' spots and name seeds are the measurement\'s, held by the gated test below) (mutants: a row\'s faction, the list)', () => {
   assert.equal(CURATED_TEMPLE_SUMMONERS.length, 24);
   assert.equal(new Set(CURATED_TEMPLE_SUMMONERS.map((r) => `${r.block}#${r.record}`)).size, 24, 'one row a design');
   assert.ok(CURATED_TEMPLE_SUMMONERS.every((r) => r.vendor === TEMPLE_SUMMONER_VENDOR && /^TEMP[AB]S..\.RMB$/.test(r.block)));
@@ -100,4 +139,14 @@ test('QUEST-AUDIT II TEMPLE-SUMMONER, gated on ARENA2_PATH (with ARCH3D): the ro
   let rows;
   try { rows = await measureSummoners(await openTownData(ARENA2)); } finally { console.log = log; }
   assert.deepEqual(rows, CURATED_TEMPLE_SUMMONERS.map(({ block, record, deity, person: p }) => ({ block, record, deity, person: { ...p } })));
+  // AUDIT QA2 B1, in the producer's own shape: every row's temple, served by the door from the vendored pack as a town
+  // lays it (TEMPASA2's JSON names itself TEMPAS2.RMB), stands exactly its summoner, at its spot, under a name seed no
+  // other person of the room holds
+  for (const r of CURATED_TEMPLE_SUMMONERS) {
+    const b = getDFBlockReplacementData(-1, r.block);
+    const people = collectInteriorPeople(b.rmbBlock.subRecords[r.record]);
+    const s = people.filter((p) => SUMMONER_FACTIONS.includes(p.factionID));
+    assert.deepEqual(s.map((p) => [p.factionID, p.rawX, p.rawY, p.rawZ, p.position]), [[r.person.factionID, r.person.xPos, r.person.yPos, r.person.zPos, r.person.position]], `${r.block} #${r.record}`);
+    assert.equal(people.filter((p) => p.position === r.person.position).length, 1, `${r.block}: its name seed its own`);
+  }
 });

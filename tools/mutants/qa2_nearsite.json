@@ -2,29 +2,29 @@
   {
     "name": "QA2-near-mod-gate-dropped",
     "file": "src/systems/quest/place.js",
-    "old": "    if (!mapId || layoutStampOfMapId(mapId) === CLASSIC_LAYOUT) return null;",
-    "new": "    if (!mapId) return null;",
+    "old": "    if (!mapId || layoutStampOfMapId(mapId) === CLASSIC_LAYOUT) return false;\n    const own = world.maps?.readClassicLocation",
+    "new": "    if (!mapId) return false;\n    const own = world.maps?.readClassicLocation",
     "tests": ["test/qa2_nearsite.test.js"]
   },
   {
     "name": "QA2-near-unsorted",
     "file": "src/systems/quest/place.js",
-    "old": "      towns.sort((a, b) => a[2] - b[2] || a[0] - b[0] || a[1] - b[1]);\n      for (const [r, i] of towns) {\n        const near = world.maps.getLocation(r, i);",
-    "new": "      for (const [r, i] of towns) {\n        const near = world.maps.getLocation(r, i);",
+    "old": "    towns.sort((a, b) => a[2] - b[2] || a[0] - b[0] || a[1] - b[1]);\n    for (const [r, i] of towns) {\n      const near = world.maps.getLocation(r, i);",
+    "new": "    for (const [r, i] of towns) {\n      const near = world.maps.getLocation(r, i);",
     "tests": ["test/qa2_nearsite.test.js"]
   },
   {
     "name": "QA2-near-setup-unread",
     "file": "src/systems/quest/place.js",
-    "old": "      const near = this._nearTownSites(world, location, asked.p2, asked.p3);   // QUEST-AUDIT II NEAR-SITE",
+    "old": "      const near = this._nearTowns && this._modsTookKind(world, location, asked.p2, asked.p3) ? this._nearTownSites(world, location, asked.p2, asked.p3) : null;",
     "new": "      const near = null;",
     "tests": ["test/qa2_nearsite.test.js"]
   },
   {
     "name": "QA2-near-precheck-dropped",
     "file": "src/systems/quest/place.js",
-    "old": "        if (!near?.loaded || (named && !this._hasBuildingType(near, p2))) continue;",
-    "new": "        if (!near?.loaded) continue;",
+    "old": "      if (!near?.loaded || (named && !this._hasBuildingType(near, p2))) continue;",
+    "new": "      if (!near?.loaded) continue;",
     "tests": ["test/qa2_nearsite.test.js"]
   },
   {
@@ -37,35 +37,35 @@
   {
     "name": "QA2-near-other-regions-dropped",
     "file": "src/systems/quest/place.js",
-    "old": "    return nearestOf([regionIndex]) ?? nearestOf(others);",
-    "new": "    return nearestOf([regionIndex]);",
+    "old": "    for (let r = 0; r < (world.maps?.regionCount ?? 0); r++) {\n      const regionData = world.maps.getRegion?.(r);",
+    "new": "    for (const r of [location.regionIndex]) {\n      const regionData = world.maps.getRegion?.(r);",
     "tests": ["test/qa2_nearsite.test.js"]
   },
   {
     "name": "QA2-near-reseat-unread",
     "file": "src/systems/quest/place.js",
-    "old": "    if (!found.length && this.scope === Scopes.Local) found = this._nearTownSites(world, location, p2, p3)?.found ?? [];",
+    "old": "    if (!found.length && this.scope === Scopes.Local && this._modsTookKind(world, location, p2, p3)) found = this._nearTownSites(world, location, p2, p3)?.found ?? [];",
     "new": "",
     "tests": ["test/qa2_nearsite.test.js"]
   },
   {
     "name": "QA2-region-gate-dropped",
     "file": "src/systems/quest/place.js",
-    "old": "    if (!home || !home.mapTable.some((e) => e && !this._isDungeonType(e.locationType) && layoutStampOfMapId(e.mapId) !== CLASSIC_LAYOUT)) return false;",
-    "new": "    if (!home) return false;",
+    "old": "    if (!this._modsTookKindFromRegion(world, regionIndex, requiredBuildingType)) return false;",
+    "new": "",
     "tests": ["test/qa2_nearsite.test.js"]
   },
   {
     "name": "QA2-region-unsorted",
     "file": "src/systems/quest/place.js",
-    "old": "    towns.sort((a, b) => a[2] - b[2] || a[0] - b[0] || a[1] - b[1]);\n    for (const [r, i] of towns) if (this._tryTownLocation(world, r, i, requiredBuildingType)) return true;",
-    "new": "    for (const [r, i] of towns) if (this._tryTownLocation(world, r, i, requiredBuildingType)) return true;",
+    "old": "      return towns.sort((a, b) => a[2] - b[2] || a[0] - b[0] || a[1] - b[1]);",
+    "new": "      return towns;",
     "tests": ["test/qa2_nearsite.test.js"]
   },
   {
     "name": "QA2-region-unread",
     "file": "src/systems/quest/place.js",
-    "old": "    if (!result && this.p1 === 0) result = this._nearRegionTownSite(world, this.p2);   // QUEST-AUDIT II NEAR-REGION",
+    "old": "    if (!result && this.p1 === 0 && this._nearTowns) result = this._nearRegionTownSite(world, this.p2);   // QUEST-AUDIT II NEAR-REGION (AUDIT QA2: never a person's first ask)",
     "new": "",
     "tests": ["test/qa2_nearsite.test.js"]
   }

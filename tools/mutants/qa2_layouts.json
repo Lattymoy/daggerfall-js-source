@@ -2,7 +2,7 @@
   {
     "name": "QA2-guild-rung-unread",
     "file": "src/systems/quest/person.js",
-    "old": "      ?? (guild ? buildings.find((b) => b.npcs.some(sameLook)) ?? buildings.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);",
+    "old": "      ?? (guild ? halls.find((b) => b.npcs.some(sameLook)) ?? halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);",
     "new": "      ?? null;",
     "tests": [
       "test/qa2_layouts.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "QA2-guild-look-only",
     "file": "src/systems/quest/person.js",
-    "old": "      ?? (guild ? buildings.find((b) => b.npcs.some(sameLook)) ?? buildings.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);",
-    "new": "      ?? (guild ? buildings.find((b) => b.npcs.some(sameLook)) : null);",
+    "old": "      ?? (guild ? halls.find((b) => b.npcs.some(sameLook)) ?? halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);",
+    "new": "      ?? (guild ? halls.find((b) => b.npcs.some(sameLook)) : null);",
     "tests": [
       "test/qa2_layouts.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "QA2-heldback-unpassed",
     "file": "src/scenes/world.js",
-    "old": "    const changed = setLayoutPins(pins, { heldBack });",
-    "new": "    const changed = setLayoutPins(pins);",
+    "old": "    const changed = setLayoutPins(pins, { heldBack, missing: worldDataPacksMissing() });",
+    "new": "    const changed = setLayoutPins(pins, { missing: worldDataPacksMissing() });",
     "tests": [
       "test/qa2_layouts.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "QA2-shared-die-unseeded",
     "file": "src/systems/quest/place.js",
-    "old": "    if (!shareId) return this._reseatMovedSite(world);",
-    "new": "    if (shareId || !shareId) return this._reseatMovedSite(world);",
+    "old": "    if (!shareId || !this.parentQuest.hooks?.sharedCopy?.(this.parentQuest)) return this._reseatMovedSite(world);",
+    "new": "    if (true) return this._reseatMovedSite(world);",
     "tests": [
       "test/qa2_layouts.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "QA2-partner-targets-dropped",
     "file": "src/systems/quest/place.js",
-    "old": "    for (const s of sd.selectedMarker?.targetResources ?? []) onSelected(s);",
+    "old": "      for (const s of sd.selectedMarker.targetResources) assignResourceToMarker(s, selectedMarker);\n",
     "new": "",
     "tests": [
       "test/qa2_layouts.test.js"

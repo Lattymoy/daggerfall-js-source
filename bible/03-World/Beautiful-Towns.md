@@ -159,43 +159,52 @@ places could not be shown as you left them") is honoured, never misread
 handed over at any smith of its town; a rented room is honoured at any inn of
 its town; a save or a Recall anchor made inside stands the player outside
 rather than through a stranger's door; a quest's building site is chosen again
-in the town as it stands, by the place's DECLARED P2/P3 and DFU's own house
-fallback (FIELD BUGS 2026-10-04d RESEAT-DECLARED: the fallback's stored p2 of -1
-had read as "any building", a house turned into a tavern or a shop), keeping
-what was assigned to it (`Place.reseatMovedSite`, `QuestMachine.reseatMovedSites`),
-and a site no building of its kind stands for is UNSEATED - its key none, its
-record kept - until its town stands in its layout again or a building of its
-kind is chosen at a later load, never left on a stranger's building (RESEAT-GAPS);
-and a questor
-met indoors is seated again in it (FIELD BUGS 2026-10-03b QUESTOR-MOVED,
-`Person.reseatMovedQuestor`) - in the building the journal names as the town
-now stands, else the first named building holding one of their faction and
-look, on the person there of that faction and look, else of that faction - with
-no roll, so a party's copies agree. The questor keeps their name and the NPC
+in the town as it stands (one whose town's pin a pack could not honour this
+session sleeps instead - QUEST-AUDIT II PIN-SLEEP, below), by the place's
+DECLARED P2/P3 and DFU's own house fallback (FIELD BUGS 2026-10-04d
+RESEAT-DECLARED: the fallback's stored p2 of -1 had read as "any building", a
+house turned into a tavern or a shop), keeping what was assigned to it
+(`Place.reseatMovedSite`, `QuestMachine.reseatMovedSites`), and a site no
+building of its kind stands for is UNSEATED - its key none, its record kept -
+until its town stands in its layout again or a building of its kind is chosen
+at a later load, never left on a stranger's building (RESEAT-GAPS; a local site
+whose kind the mods took from the town is taken in the nearest town that has
+one, QUEST-AUDIT II NEAR-SITE); and a questor met indoors is seated again in it
+(FIELD BUGS 2026-10-03b QUESTOR-MOVED, `Person.reseatMovedQuestor`) - on their
+own person where they still stand on their own key (QUEST-AUDIT II), else in the
+building the journal names as the town now stands, else the first named
+building holding one of their faction and look, on the person there of that
+faction and look, else of that faction - with no roll, so a party's copies
+agree. The questor keeps their name and the NPC
 answers to it (`movedQuestorName`, the interior's one name derivation); their
 hall moves with them, never by a Place's own P2/P3 (its P2 of 0 read as
 Alchemist); a party member's copy is mended as it arrives (a share, a resync),
-once the towns' layouts are known. A town with no such building keeps the
-record as it was.
+once the towns' layouts are known and their pins stand. A town with no such
+building keeps the record as it was, and the questor's hall is unseated
+(QUEST-AUDIT II HOUSE-HALL).
 
-QUEST-AUDIT II (`01-Overview/Quest-Audit-II.md`) closed four holes of this and
-reworked one law. A GUILD's questor - a guild-service faction, the Thieves
-Guild's and the Dark Brotherhood's contacts in their House2 halls among them -
-is seated by that service in any building, and a hall whose questor stands
-nowhere is unseated, never left on its key (HOUSE-HALL). A town whose pin a
-pack could not honour this session leaves its quests' records asleep -
-unseated, their stamps kept - as its deed sleeps (PIN-SLEEP; they were chosen
-again and stamped with the failed session's layout, which then pinned the town
-for good). A party member's copy keeps its own building where the partner's
-names none in its town, and a shared copy chooses again by one die per share
-and Place (SHARED-SEAT); a resync makes each site link once (SITE-LINKS). And
-in a town a layout mod changes, a quest's local site with no free building of
-its kind is taken in the nearest town that has one, a remote one a mod-laid
-region cannot give in the nearest town of another region (NEAR-SITE,
-NEAR-REGION) - the 574 (town, quest) pairs, the Kynareth temples and the manors
-the audit found failing all start. Beautiful Villages' temples stand their
-deity's Daedra summoner again, at a floor spot measured over the player's
-geometry (TEMPLE-SUMMONER, `world/curatedPeople.js`).
+QUEST-AUDIT II (`01-Overview/Quest-Audit-II.md`, with its AUDIT QA2) closed
+four holes of this and reworked one law. A GUILD's questor - a guild-service
+faction, the Thieves Guild's and the Dark Brotherhood's contacts in their House2
+halls among them - is seated by that service in any building of the quest's own
+guild, and a hall whose questor stands nowhere is unseated, never left on its
+key (HOUSE-HALL). A town whose pin a pack could not honour this session leaves
+its quests' records asleep - unseated, their stamps kept - as its deed sleeps,
+and so does any record made in a layout whose pack did not load (PIN-SLEEP; they
+were chosen again and stamped with the failed session's layout, which then
+pinned the town for good). A party member's copy keeps its own building where
+the partner's names none in its town, and a copy kept in step chooses again by
+one die per share and Place (SHARED-SEAT); a resync makes each site link once,
+and a re-seat moves it whole (SITE-LINKS). And where the mods TOOK a kind from a
+town - its own layout held more of it than the mods' does - a quest's local site
+with no free building of it is taken in the nearest town that has one; a remote
+one, where the mods took the kind from the region, in the region's own towns
+first, then the nearest town of another region (NEAR-SITE, NEAR-REGION); a town
+or region the mods took nothing from keeps DFU's law - the 574 (town, quest)
+pairs, the Kynareth temples and the manors' houses the audit found failing all
+start. Beautiful Villages' temples stand their deity's Daedra summoner again, at
+a floor spot measured over the player's geometry where it takes no click meant
+for another (TEMPLE-SUMMONER, `world/curatedPeople.js`).
 
 Every claim SAYS its town's layout, Daggerfall's own as `null`; a claim that
 names none is a build from before the town mods, and is refused (426

@@ -394,7 +394,7 @@ untouched. The four hosts: the door asks the pins on every location and block re
 34 has a dungeon). `test/fb1004d_templehome.test.js` (4); `tools/mutants/fb1004d_templehome.json` (4, all dead);
 `wd3_layoutPins`' row pin re-aimed.
 
-Recorded, not changed: the destinations that moved (5). A questor met in a house is seated again since QUEST-AUDIT II HOUSE-HALL, and the destinations a town no longer holds are taken in the nearest town that does since NEAR-SITE (`01-Overview/Quest-Audit-II.md`).
+Recorded, not changed here: the destinations that moved (5) - changed since by QUEST-AUDIT II (`01-Overview/Quest-Audit-II.md`): a local destination a town's own layout held and the mods' no longer does is taken in the nearest town that has one (NEAR-SITE), and Pothago's L0B60Y10 in the region's own towns, else the nearest town of another region (NEAR-REGION); a questor met in a house is seated again where their own person still stands on their own key, and a guild's contact (a Thieves Guild or Dark Brotherhood House2 hall) in a hall of their guild (HOUSE-HALL) - a commoner who no longer stands is not, and their hall is unseated.
 
 
 ## Integration

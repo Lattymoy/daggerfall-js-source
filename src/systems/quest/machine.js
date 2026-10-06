@@ -1176,11 +1176,11 @@ export class QuestMachine {
     // AUDIT 68 S29-share-topics: StartQuest's talk registration, in its place (before the live table) - a received
     // quest's people and places had no 'tell me about'/'where is', and its `dialog link` actions found no quest
     this.deps.addQuestTopics?.(quest);
+    this.sharedQuestNames.add(quest.questName);   // AUDIT QA2: a shared copy from its arrival on - the arrival's re-seat draws the share's die (Place.reseatMovedSite)
     this.quests.set(quest.uid, quest); this._reseatArrived(quest);   // QUESTOR-MOVED: a copy from before the town mods, mended on arrival (its links made after)
     for (const resource of quest.resources.values()) {
       if (resource.isPlace && resource.siteDetails) this.createSiteLink(quest, resource.symbol);
     }
-    this.sharedQuestNames.add(quest.questName);
     this._rearmNewlyCompletedEffects(quest, null);
     return quest;
   }
@@ -1580,14 +1580,7 @@ export class QuestMachine {
   createSiteLink(parentQuest, placeSymbol) {
     const place = parentQuest.getPlace(placeSymbol);
     if (!place) throw new Error(`Attempted to add SiteLink for invalid Place symbol ${placeSymbol?.name}`);
-    this.addSiteLink({
-      questUID: parentQuest.uid,
-      placeSymbol: placeSymbol.clone(),
-      siteType: place.siteDetails?.siteType,
-      mapId: place.siteDetails?.mapId,
-      buildingKey: place.siteDetails?.buildingKey ?? 0,
-      magicNumberIndex: place.siteDetails?.magicNumberIndex ?? 0,
-    });
+    this.addSiteLink({ questUID: parentQuest.uid, placeSymbol: placeSymbol.clone(), ...linkSiteOf(place) });
   }
 
   /** GetAllActiveQuestSites (QuestMachine.cs:769): every Place's site
@@ -1621,7 +1614,7 @@ export class QuestMachine {
     let moved = 0;
     const follow = (place) => {
       for (const link of this.siteLinks) {
-        if (link.questUID === quest.uid && link.placeSymbol?.name === place.symbol?.name) link.buildingKey = place.siteDetails.buildingKey;
+        if (link.questUID === quest.uid && link.placeSymbol?.name === place.symbol?.name) Object.assign(link, linkSiteOf(place));   // AUDIT QA2: the whole site, its town with it
       }
     };
     for (const resource of quest.resources.values()) {
@@ -1744,3 +1737,14 @@ export class QuestMachine {
     }
   }
 }
+
+/** A site link's half that is its Place's site (CreateSiteLink, QuestMachine.cs:1757) - ONE derivation, for the link made
+ *  and for the link a re-seat moves (AUDIT QA2: the re-seat copied the building key alone, and once NEAR-SITE could move a
+ *  site to another town its link stayed on the old one - the mount stood the quest's person or thing in a stranger's
+ *  building there and never in the site's, and Repair, finding a link, left it). */
+export const linkSiteOf = (place) => ({
+  siteType: place.siteDetails?.siteType,
+  mapId: place.siteDetails?.mapId,
+  buildingKey: place.siteDetails?.buildingKey ?? 0,
+  magicNumberIndex: place.siteDetails?.magicNumberIndex ?? 0,
+});

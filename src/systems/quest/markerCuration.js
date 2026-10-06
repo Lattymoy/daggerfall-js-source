@@ -232,9 +232,10 @@ const same = (a, x, y, z) => a[0] === x && a[1] === y && a[2] === z;
  *  Only a block a town pack serves (the door's `fromWorldData`) under a name the listed pack carries, and a marker of
  *  that record at that very position: Daggerfall's own blocks, and any other interior, are as they were. */
 export function curatedMarkerSpot(dfBlock, recordIndex, textureRecord, xPos, yPos, zPos) {
-  if (!dfBlock?.fromWorldData || !dfBlock.name) return null;
-  for (const { vendor, markers } of BY_BUILDING.get(`${dfBlock.name}#${recordIndex}`) ?? []) {
-    if (!worldDataVendorCarries(vendor, blockReplacementFilename(dfBlock.name))) continue;
+  const name = dfBlock?.servedName ?? dfBlock?.name;   // AUDIT QA2 B1: the name the town lays (the door's), not the JSON's own
+  if (!dfBlock?.fromWorldData || !name) return null;
+  for (const { vendor, markers } of BY_BUILDING.get(`${name}#${recordIndex}`) ?? []) {
+    if (!worldDataVendorCarries(vendor, blockReplacementFilename(name))) continue;
     const m = markers.find((k) => k.record === textureRecord && same(k.at, xPos, yPos, zPos));
     if (m) return [...m.to];
   }

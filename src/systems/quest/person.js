@@ -412,17 +412,27 @@ export class Person extends QuestResource {
       raceOfCurrentRegion: () => q.race,   // a factionless person is of the questor's race - the region's they were met in
     });
     const sameLook = (n) => n.factionID === q.factionID && n.billboardArchiveIndex === q.billboardArchiveIndex && n.billboardRecordIndex === q.billboardRecordIndex;
+    // AUDIT QA2: the record's OWN person (QuestMachine.IsNPCDataEqual's four fields) standing on its own key is the
+    // questor, whatever the town's stamp says - a building the mods kept as Daggerfall laid it. Every rung below moved
+    // such a questor: a residence's commoner had its hall unseated (place.js, Scopes.None) and its house shut to it
+    // (624 of 807 sampled); a contact in a town of two halls of its guild went to the other hall; rung 2 took 181 of the
+    // 807 into a named building holding someone of the same look
+    const ownself = (n) => n.hash === q.hash && n.nameSeed === q.nameSeed && n.buildingKey === q.buildingKey && n.mapID === q.mapID;
     // QUEST-AUDIT II HOUSE-HALL: a GUILD's questor - one whose faction is a guild service (guildServices.js NPC_SERVICE:
     // the Thieves Guild's 804, the Dark Brotherhood's 807, a temple's or an order's quest-giver) - is found by that
     // service wherever it stands, its own look first. Both rungs above ask a NAMED building, and every Thieves Guild and
     // Dark Brotherhood hall is a House2: their contacts were never seated again, so a contract taken in one layout of
-    // the town could not be handed in once it stood in the other (the town mods lay ~80% of the halls' people anew)
+    // the town could not be handed in once it stood in the other (the town mods lay ~80% of the halls' people anew).
+    // AUDIT QA2: and only in a hall of the quest's own guild (_ofQuestGuild) - a temple's quest-giver (240) stands in
+    // every god's temple, and an Akatosh priest was seated in Kynareth's, the town's Akatosh temple standing
     const guild = hasGuildService(q.factionID);
-    const to = buildings.find((b) => b.isNamedBuilding && b.buildingName === hall.siteDetails.buildingName && b.npcs.length)
-      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.some(sameLook))
-      ?? (guild ? buildings.find((b) => b.npcs.some(sameLook)) ?? buildings.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);
+    const halls = guild ? buildings.filter((b) => this._ofQuestGuild(world, b.factionId)) : buildings;
+    const to = buildings.find((b) => b.buildingKey === q.buildingKey && b.npcs.some(ownself))
+      ?? buildings.find((b) => b.isNamedBuilding && b.buildingName === hall.siteDetails.buildingName && b.npcs.length)
+      ?? halls.find((b) => b.isNamedBuilding && b.npcs.some(sameLook))
+      ?? (guild ? halls.find((b) => b.npcs.some(sameLook)) ?? halls.find((b) => b.npcs.some((n) => n.factionID === q.factionID)) : null);
     if (!to) return false;
-    const npc = { ...(to.npcs.find(sameLook) ?? to.npcs.find((n) => n.factionID === q.factionID) ?? to.npcs[0]) };
+    const npc = { ...(to.npcs.find(ownself) ?? to.npcs.find(sameLook) ?? to.npcs.find((n) => n.factionID === q.factionID) ?? to.npcs[0]) };
     delete npc.isChild;   // the pool's verdict, no NPCData field
     this.questorData = stampLayout(npc, layoutStampOfMapId(q.mapID));
     if (hall.siteDetails.siteType === SITE_TYPES.Building) {
@@ -432,6 +442,17 @@ export class Person extends QuestResource {
       hall.siteDetails = stampLayout({ ...site, buildingKey: to.buildingKey, buildingName: to.buildingName }, layoutStampOfMapId(site.mapId));
     }
     return true;
+  }
+
+  /** AUDIT QA2: is a building of this quest's own guild - its faction the quest's (GetFactionIdForGuild: a holy or
+   *  knightly order's quest takes its hall's faction, every other guild's its guild's), or that faction's parent or child
+   *  in FACTION.TXT (Daggerfall's Akatosh temples are the Order of the Hour, 92, under Akatosh, 26, which the town mods'
+   *  temples carry)? A quest of no faction asks nothing. */
+  _ofQuestGuild(world, factionId) {
+    const own = this.parentQuest?.factionId ?? 0;
+    if (!(own > 0) || factionId === own) return true;
+    const parentOf = (id) => world.getFactionData?.(id)?.parent ?? null;
+    return factionId > 0 && (parentOf(factionId) === own || parentOf(own) === factionId);
   }
 
   /** GetCareerFactionID (Person.cs:1019-1085): Quests-Factions p2
@@ -624,7 +645,8 @@ export class Person extends QuestResource {
 
     let homePlace;
     try {
-      homePlace = new Place(this.parentQuest, `Place ${symbolName} ${scopeString} ${buildingTypeString}`);
+      // AUDIT QA2: the first ask takes no other town (NEAR-SITE, NEAR-REGION) - Person.cs's own fallback, a house, comes first
+      homePlace = new Place(this.parentQuest, `Place ${symbolName} ${scopeString} ${buildingTypeString}`, { nearTowns: false });
     } catch {
       homePlace = new Place(this.parentQuest, `Place ${symbolName} ${scopeString} ${HOUSE}`);
     }

@@ -300,7 +300,9 @@ test('QUESTOR-MOVED: "me and my friend" - a party member\'s copy taken before th
 });
 
 test('QUESTOR-MOVED: the hosts - the world\'s quest seam says when its towns\' layouts are known (applyLayoutPins\' own gate); the interior\'s one name derivation asks for a moved questor\'s name first (mutants: the seam always known; the name preference dropped)', () => {
-  assert.match(src('src/scenes/world.js'), /\n {4}townLayoutsKnown: \(\) => !homeLayoutsOnline \|\| _serverLayoutRecords !== null,/);
+  // PIN MOVED (AUDIT QA2): known AND standing - the pins and their held-back towns set (_homeLayoutsApplied), not the
+  // service's word alone: a share landing while the packs were fetched was chosen again unpinned
+  assert.match(src('src/scenes/world.js'), /\n {4}townLayoutsKnown: \(\) => !homeLayoutsOnline \|\| _homeLayoutsApplied,/);
   assert.match(src('src/scenes/world.js'), /const reseated = homeLayoutsOnline && _serverLayoutRecords === null \? 0 : \(questBridge\?\.machine\?\.reseatMovedSites\?\.\(\) \?\? 0\);/, 'the load\'s gate it mirrors');
   assert.match(src('src/scenes/worldModes.js'), /return questBridge\?\.machine\?\.movedQuestorName\?\.\(npcData\) \?\? staticNpcName\(npcData, /);
 });

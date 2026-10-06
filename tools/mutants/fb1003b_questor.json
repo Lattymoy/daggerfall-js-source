@@ -38,7 +38,7 @@
   {
     "name": "QUESTOR-MOVED-hall-look-rung-dropped",
     "file": "src/systems/quest/person.js",
-    "old": "\n      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.some(sameLook))\n      ?? (guild",
+    "old": "\n      ?? halls.find((b) => b.isNamedBuilding && b.npcs.some(sameLook))\n      ?? (guild",
     "new": "\n      ?? (guild",
     "tests": [
       "test/fb1003b_questor.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "QUESTOR-MOVED-unnamed-building-taken",
     "file": "src/systems/quest/person.js",
-    "old": "      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.some(sameLook))\n      ?? (guild",
-    "new": "      ?? buildings.find((b) => b.npcs.some(sameLook))\n      ?? (guild",
+    "old": "      ?? halls.find((b) => b.isNamedBuilding && b.npcs.some(sameLook))\n      ?? (guild",
+    "new": "      ?? halls.find((b) => b.npcs.some(sameLook))\n      ?? (guild",
     "tests": [
       "test/fb1003b_questor.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "QUESTOR-MOVED-hall-look-rung-any-people",
     "file": "src/systems/quest/person.js",
-    "old": "      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.some(sameLook))\n      ?? (guild",
-    "new": "      ?? buildings.find((b) => b.isNamedBuilding && b.npcs.length > 0)\n      ?? (guild",
+    "old": "      ?? halls.find((b) => b.isNamedBuilding && b.npcs.some(sameLook))\n      ?? (guild",
+    "new": "      ?? halls.find((b) => b.isNamedBuilding && b.npcs.length > 0)\n      ?? (guild",
     "tests": [
       "test/fb1003b_questor.test.js"
     ]
@@ -182,7 +182,7 @@
   {
     "name": "QUESTOR-MOVED-seam-always-known",
     "file": "src/scenes/world.js",
-    "old": "townLayoutsKnown: () => !homeLayoutsOnline || _serverLayoutRecords !== null,",
+    "old": "townLayoutsKnown: () => !homeLayoutsOnline || _homeLayoutsApplied,",
     "new": "townLayoutsKnown: () => true,",
     "tests": [
       "test/fb1003b_questor.test.js"

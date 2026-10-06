@@ -33,7 +33,9 @@ import { curatedMarkerSpot, curateSiteMarkers } from './markerCuration.js';   //
 import { questReachOn, questReachPixels, nearbyIndices, indicesWithin, mapTablePixel, mapPixelDistance } from './questReach.js';   // NEARBY-QUESTS
 import { longitudeLatitudeToMapPixel } from '../../formats/mapsFile.js';
 import { stringHash } from '../../formats/netRuntime.js';   // QUEST-AUDIT II SHARED-SEAT: a shared copy's re-seat, seeded (a leaf)
+import { getSeed, setSeed } from '../../formats/dfRandom.js';   // AUDIT QA2: a shared re-seat's residence name, seeded and the state put back
 import { seededFirst } from '../wind.js';   // QUEST-AUDIT II SHARED-SEAT: the port's one seeded die (imports nothing)
+import { boundWorldDataBlocks } from '../../formats/worldDataReplacement.js';   // AUDIT QA2: Daggerfall's own blocks (BLOCKS.BSA, past the door) - what the mods took away
 
 export const Scopes = Object.freeze({ None: 'none', Local: 'local', Remote: 'remote', Fixed: 'fixed' });
 
@@ -142,13 +144,14 @@ const DECL = [
 ];
 
 export class Place extends QuestResource {
-  constructor(parentQuest, line = null) {
+  constructor(parentQuest, line = null, { nearTowns = true } = {}) {
     super(parentQuest);
     this.scope = Scopes.None;
     this.name = '';
     this.p1 = 0; this.p2 = 0; this.p3 = 0;
     this.siteDetails = null;
     this._die = null;   // QUEST-AUDIT II SHARED-SEAT: set only for the length of a shared copy's re-seat
+    this._nearTowns = nearTowns;   // AUDIT QA2: false for a person's first ask of a home (person.js) - Person.cs's own fallback, a house, comes first
     this.sitePending = true;   // no world seam -> the binding PENDS. AUDIT-QUEST F1: this line used to say
                                // it pended "LOUDLY"; setting a boolean is the definition of quiet, and 262
                                // of the 265 vendored quests started headless with nothing in the log at all.
@@ -238,7 +241,7 @@ export class Place extends QuestResource {
     // would not load) each chose again by its own roll - the site, and what stood in it, moved to another building at
     // every resync. The same envelope over the same town now lands in the same building and on the same marker.
     const shareId = this.parentQuest?.shareId;
-    if (!shareId) return this._reseatMovedSite(world);
+    if (!shareId || !this.parentQuest.hooks?.sharedCopy?.(this.parentQuest)) return this._reseatMovedSite(world);   // AUDIT QA2: a copy kept in step now (actions.js PickOneOf's gate) - a shareId is saved for good
     let n = 0;
     this._die = () => seededFirst(stringHash(`${shareId}|reseat|${this.symbol?.name ?? ''}|${n++}`));
     try { return this._reseatMovedSite(world); } finally { this._die = null; }
@@ -265,10 +268,17 @@ export class Place extends QuestResource {
     if (!location) return false;
     // FIELD BUGS 2026-10-04d RESEAT-DECLARED: by the place's DECLARED P2/P3 and its own house fallback - never the -1
     // that fallback wrote into it, which read as `random` and moved a House1 site into a tavern or a shop
-    const { p2, p3 } = this.declaredSiteLaw();
+    let { p2, p3 } = this.declaredSiteLaw();
     let { found } = this._searchTownSites(world, location, p2, p3);
-    // QUEST-AUDIT II NEAR-SITE: a LOCAL site whose town the mods lay without a building of its kind left - the nearest town's
-    if (!found.length && this.scope === Scopes.Local) found = this._nearTownSites(world, location, p2, p3)?.found ?? [];
+    // AUDIT QA2: a person's home asked by its group's building (Person.cs's first ask) takes Person.cs's own fallback, a
+    // house of its town, before any other town
+    if (!found.length && this.scope === Scopes.Local && this.isPersonHome() && !(p2 === -1 && p3 === 1)) {
+      [p2, p3] = [-1, 1];   // Quests-Places' `house`
+      ({ found } = this._searchTownSites(world, location, p2, p3));
+    }
+    // QUEST-AUDIT II NEAR-SITE: a LOCAL site whose town the mods took its kind from - the nearest town's (AUDIT QA2: only
+    // what the mods took away, _modsTookKind)
+    if (!found.length && this.scope === Scopes.Local && this._modsTookKind(world, location, p2, p3)) found = this._nearTownSites(world, location, p2, p3)?.found ?? [];
     // AUDIT PRE-MERGE 1003 WD2: a building with no marker to carry them to is none (_collectQuestSitesOfBuildingType never offers one)
     const next = found.length ? this._carryAssignments(held, found[this._range(found.length)]) : null;
     if (!next) return this._unseat(held);
@@ -313,14 +323,19 @@ export class Place extends QuestResource {
    * marker N". So the selected marker is one of `next`'s own, of the old one's type (the other where it has none, as
    * _getSiteMarker falls back), given the old one's targets; each numbered marker's targets go to the same index of the
    * new list, or onto the selected marker where the new building has no such marker. Answers `next` so assigned, or null
-   * for a building with no marker (_collectQuestSitesOfBuildingType never offers one).
+   * for a building with no marker (_collectQuestSitesOfBuildingType never offers one). `keepSelected` (SHARED-SEAT's
+   * keepOwnSite: `next` is this copy's own site, the building it already stands in) keeps `next`'s selected marker where
+   * it stands at a spot - AUDIT QA2: and only there; DFU's "none selected" has no spot, and the partner's targets put on it
+   * stood nowhere (the interior mount read its flatPosition and threw).
    */
-  _carryAssignments(sd, next) {
+  _carryAssignments(sd, next, { keepSelected = false } = {}) {
     const fresh = (list) => (list ?? []).map((m) => ({ ...m, targetResources: null }));
     const spawn = fresh(next.questSpawnMarkers), item = fresh(next.questItemMarkers);
     if (!validateQuestMarkers(spawn, item)) return null;
     let selectedMarker = { ...next.selectedMarker, targetResources: null };
+    const standing = keepSelected && !!next.selectedMarker?.flatPosition;
     const select = (type) => {
+      if (standing) { selectedMarker.targetResources ??= []; return; }
       const own = type === MARKER_TYPES.QuestItem ? item : spawn;
       const pool = own.length ? own : (own === item ? spawn : item);
       selectedMarker = { ...pool[this._range(pool.length)], targetResources: [] };
@@ -347,8 +362,9 @@ export class Place extends QuestResource {
    * (a client whose pack would not load), the site they send names another building here, and choosing it again moved
    * the quest's building - and what the player may already have found standing in it - at every resync. Here the
    * building stays this copy's (`own`, the site as it stood before the resync, in the same town) and what the quest
-   * assigned comes from the partner: the selected marker keeps its spot and takes the partner's targets, each numbered
-   * marker's go to the same index (onto the selected marker where this building has no such marker). No roll. Answers
+   * assigned comes from the partner (_carryAssignments, keepSelected): the selected marker keeps its spot and takes the
+   * partner's targets - one of this building's own is chosen where this copy had selected none yet (AUDIT QA2) - and each
+   * numbered marker's go to the same index (onto the selected marker where this building has no such marker). Answers
    * whether the site was kept; false leaves the partner's for the re-seat, as before.
    */
   keepOwnSite(own) {
@@ -357,17 +373,9 @@ export class Place extends QuestResource {
     const held = sd.unseated ? { ...sd, ...sd.unseated } : sd;
     if (!(held.buildingKey > 0) || recordStands(held)) return false;   // the partner's names a building here: theirs is the quest's
     if (!(own.buildingKey > 0) || own.unseated || own.mapId !== held.mapId || !recordStands(own)) return false;
-    const fresh = (list) => (list ?? []).map((m) => ({ ...m, targetResources: null }));
-    const spawn = fresh(own.questSpawnMarkers), item = fresh(own.questItemMarkers);
-    const selectedMarker = { ...own.selectedMarker, targetResources: null };
-    const onSelected = (s) => { selectedMarker.targetResources ??= []; assignResourceToMarker(s, selectedMarker); };
-    for (const s of sd.selectedMarker?.targetResources ?? []) onSelected(s);
-    const carry = (from, to) => (from ?? []).forEach((m, i) => {
-      for (const s of m?.targetResources ?? []) { if (to[i]) assignResourceToMarker(s, to[i]); else onSelected(s); }
-    });
-    carry(sd.questSpawnMarkers, spawn);
-    carry(sd.questItemMarkers, item);
-    this.siteDetails = { ...own, questUID: sd.questUID ?? own.questUID, questSpawnMarkers: spawn.length ? spawn : null, questItemMarkers: item.length ? item : null, selectedMarker };
+    const kept = this._carryAssignments(sd, own, { keepSelected: true });
+    if (!kept) return false;
+    this.siteDetails = { ...kept, questUID: sd.questUID ?? own.questUID };
     return true;
   }
 
@@ -389,7 +397,9 @@ export class Place extends QuestResource {
     // House-type fallback: there should almost always be a local house - and DFU writes it into the place (Place.cs:735)
     if (houseFallback) this.p2 = -1;
     if (!foundSites.length) {
-      const near = this._nearTownSites(world, location, asked.p2, asked.p3);   // QUEST-AUDIT II NEAR-SITE
+      // QUEST-AUDIT II NEAR-SITE - AUDIT QA2: only where the mods took the kind away (_modsTookKind), and never for a
+      // person's first ask of a home, whose own fallback is a house here (person.js)
+      const near = this._nearTowns && this._modsTookKind(world, location, asked.p2, asked.p3) ? this._nearTownSites(world, location, asked.p2, asked.p3) : null;
       if (near) {
         this.p2 = near.houseFallback ? -1 : asked.p2;
         this.siteDetails = near.found[this._range(near.found.length)];
@@ -406,47 +416,82 @@ export class Place extends QuestResource {
    * villages and three houses in its Kynareth temples, Beautiful Cities drops the only weaponsmith, pawnshop or apothecary
    * of a city, and a quest whose local sites outnumber them (two taverns - A0C00Y12, A0C01Y13; five houses - A0C00Y16; a
    * second apothecary - A0C0XY04; a weaponsmith - N0C00Y10) threw, and its questor answered "You're too late" in that town
-   * every time. In a town a layout mod lays (its stamp, layoutPins.js layoutStampOfMapId: only a mod that CHANGES the town
-   * counts), a local site that finds no building of its kind - none, or every one already a quest's - is taken in the
-   * NEAREST town of the region that has one, by the travel reckoning's distance (questReach.js mapPixelDistance), the
-   * same search there (its house fallback with it); where the region has none at all (Beautiful Cities' Pothago and
-   * Menakat, the region's only weaponsmiths), in the nearest town of another region. The quest's words name that town
-   * (its macros read the site) and its clocks measure the trip to it. Daggerfall's own towns keep DFU's law exactly: a
-   * town the mods do not change throws as Place.cs does. Answers `{ found, houseFallback }` in the nearest town that has
-   * sites, or null.
+   * every time. Where the mods took the kind away (_modsTookKind - AUDIT QA2: the town's own layout held more than the
+   * mods' holds; nowhere else), a local site that finds no building of its kind - none, or every one already a quest's -
+   * is taken in the NEAREST town that has one, by the travel reckoning's distance (questReach.js mapPixelDistance) and in
+   * any region (AUDIT QA2: a region-first order sent an apothecary 126 pixels off past one 6 pixels over the border), by
+   * the same search there (its house fallback with it) and the MAPS directory pre-check for a named kind as DFU's remote
+   * search reads it. The quest's words that name a site's town name that town (its macros read the site; a word naming
+   * the building alone says no town) and its travel-armed clocks measure the trip to it. Answers `{ found, houseFallback }`
+   * in the nearest town that has sites, or null.
    */
   _nearTownSites(world, location, p2, p3) {
     const mapId = location?.mapTableData?.mapId;
-    if (!mapId || layoutStampOfMapId(mapId) === CLASSIC_LAYOUT) return null;
-    const regionIndex = location.regionIndex ?? world.currentRegionIndex?.();
-    const origin = mapTablePixel(location.mapTableData);
-    if (!origin) return null;
+    const origin = mapTablePixel(location?.mapTableData);
+    if (!mapId || !origin) return null;
     // the MAPS directory pre-check for a named kind that is no house (SelectRemoteTownSite's, :838-843): a town whose
     // directory has none is passed over unwalked
     const named = p2 >= 0 && !(p2 >= BT_HOUSE1 && p2 <= BT_HOUSE6);
-    const nearestOf = (regions) => {
-      const towns = [];
-      for (const r of regions) {
-        const regionData = world.maps?.getRegion?.(r);
-        for (let i = 0; i < (regionData?.locationCount ?? 0); i++) {
-          const entry = regionData.mapTable[i];
-          if (!entry || entry.mapId === mapId || this._isDungeonType(entry.locationType)) continue;
-          const px = mapTablePixel(entry);
-          if (px) towns.push([r, i, mapPixelDistance(px, origin)]);
-        }
+    const towns = [];
+    for (let r = 0; r < (world.maps?.regionCount ?? 0); r++) {
+      const regionData = world.maps.getRegion?.(r);
+      for (let i = 0; i < (regionData?.locationCount ?? 0); i++) {
+        const entry = regionData.mapTable[i];
+        if (!entry || entry.mapId === mapId || this._isDungeonType(entry.locationType)) continue;
+        const px = mapTablePixel(entry);
+        if (px) towns.push([r, i, mapPixelDistance(px, origin)]);
       }
-      towns.sort((a, b) => a[2] - b[2] || a[0] - b[0] || a[1] - b[1]);
-      for (const [r, i] of towns) {
-        const near = world.maps.getLocation(r, i);
-        if (!near?.loaded || (named && !this._hasBuildingType(near, p2))) continue;
-        const { found, houseFallback } = this._searchTownSites(world, near, p2, p3);
-        if (found.length) return { found, houseFallback };
-      }
-      return null;
-    };
-    const others = [];
-    for (let r = 0; r < (world.maps?.regionCount ?? 0); r++) if (r !== regionIndex) others.push(r);
-    return nearestOf([regionIndex]) ?? nearestOf(others);
+    }
+    towns.sort((a, b) => a[2] - b[2] || a[0] - b[0] || a[1] - b[1]);
+    for (const [r, i] of towns) {
+      const near = world.maps.getLocation(r, i);
+      if (!near?.loaded || (named && !this._hasBuildingType(near, p2))) continue;
+      const { found, houseFallback } = this._searchTownSites(world, near, p2, p3);
+      if (found.length) return { found, houseFallback };
+    }
+    return null;
+  }
+
+  /**
+   * AUDIT QA2: DID THE TOWN MODS TAKE THIS KIND AWAY FROM THE TOWN? NEAR-SITE answered every town a layout mod lays, and
+   * 3,058 of the 3,059 tavern-less towns the mods lay had no tavern in Daggerfall's own layout either: their commoners
+   * offered A0C00Y10's duel "at _inn_ in ___giver_" with the inn in another town and its 6- and 12-hour clocks, and a
+   * questor in a village no library ever stood in sent its friend to another town's. A quest DFU never offers there is
+   * not one the mods broke. True where the town stands a layout the mods changed (its stamp) and that layout holds FEWER
+   * buildings a search of p2/p3 could offer (_siteSupply: the kind, a house kind as any house - its fallback - the guild
+   * hall's faction, quest markers; before any quest or owner takes one) than Daggerfall's own layout of the town held -
+   * its MAPS.BSA record and BLOCKS.BSA's blocks. A town with no record of its own to measure (a spawned clone, a host
+   * without MAPS.BSA) keeps DFU's law.
+   */
+  _modsTookKind(world, location, p2, p3) {
+    const mapId = location?.mapTableData?.mapId;
+    if (!mapId || layoutStampOfMapId(mapId) === CLASSIC_LAYOUT) return false;
+    const own = world.maps?.readClassicLocation?.(location.regionIndex, location.locationIndex);
+    if (!own?.loaded || !own.exterior?.exteriorData) return false;
+    return this._siteSupply(own, classicBlockGrid(own), p2, p3) > this._siteSupply(location, townBlockGrid(world, location), p2, p3);
+  }
+
+  /** AUDIT QA2: how many buildings of a town's `blocks` a search of p2/p3 could ever offer (_searchTownSites' kinds, a
+   *  house kind as any house), by CollectQuestSitesOfBuildingType's law that no quest or owner changes - counted no
+   *  further than `atLeast`. */
+  _siteSupply(location, blocks, p2, p3, atLeast = Infinity) {
+    let kind = p2;
+    if (p2 >= BT_HOUSE1 && p2 <= BT_HOUSE6) kind = BT_ANY_HOUSE;
+    else if (p2 === -1 && p3 === 0) kind = BT_ALL_VALID;
+    else if (p2 === -1 && p3 === 1) kind = BT_ANY_HOUSE;
+    else if (p2 === -1 && p3 === 2) kind = BT_ANY_SHOP;
+    let n = 0;
+    for (const { b, i } of this._townBuildingsOfType(location, blocks, kind, p3)) {
+      const { questSpawnMarkers, questItemMarkers } = this._enumerateBuildingQuestMarkers(b.dfBlock, i);
+      if (validateQuestMarkers(questSpawnMarkers, questItemMarkers) && ++n >= atLeast) break;
+    }
+    return n;
+  }
+
+  /** AUDIT QA2: is this place a home a Person of its quest was given (Person.cs's `_<person>_home_`)? */
+  isPersonHome() {
+    for (const r of this.parentQuest?.resources?.values() ?? []) if (r.isPerson && r.homePlaceSymbol?.name === this.symbol?.name) return true;
+    return false;
   }
 
   /** SetupLocalSite's search (Place.cs:717-736) in one town, by `p2`/`p3`: the wildcard sets, else the building type -
@@ -486,7 +531,7 @@ export class Place extends QuestResource {
     }
     // A missing numbered dungeon type retries as any dungeon
     if (!result && this.p1 === 1) result = this._selectRemoteDungeonSite(world, -1);
-    if (!result && this.p1 === 0) result = this._nearRegionTownSite(world, this.p2);   // QUEST-AUDIT II NEAR-REGION
+    if (!result && this.p1 === 0 && this._nearTowns) result = this._nearRegionTownSite(world, this.p2);   // QUEST-AUDIT II NEAR-REGION (AUDIT QA2: never a person's first ask)
     if (!result) {
       throw new Error(`Search failed to locate matching remote site for Place ${this.symbol.original} in region ${world.currentRegionName?.() ?? world.currentRegionIndex?.()}. Resource source: '${line}'`);
     }
@@ -547,33 +592,71 @@ export class Place extends QuestResource {
    * QUEST-AUDIT II NEAR-REGION (the owner: "Rework so quests can work"): A REGION THE TOWN MODS LEFT WITHOUT A KIND OF
    * BUILDING. Beautiful Cities lays Pothago and Menakat without a weaponsmith, the region's only two, so the Dark
    * Brotherhood's L0B60Y10 (`remote weaponstore`) threw at all four of the region's halls: DFU's remote site is the
-   * questor's region's alone (SelectRemoteTownSite), and its 500 darts found none. Where the region holds a town a layout
-   * mod lays and its search found no site, the site is taken in the NEAREST town of another region that has one (the
-   * travel reckoning's distance from the player's pixel), by the same landing a dart makes (`_tryTownLocation`: the
-   * directory pre-check, the block walk, the markers). A region the mods leave as Daggerfall laid it keeps DFU's law.
-   * Answers whether a site was set.
+   * questor's region's alone (SelectRemoteTownSite), and its 500 darts found none. Where the mods took the kind from the
+   * region (_modsTookKindFromRegion - AUDIT QA2: fewer of its towns' directories name it than in Daggerfall's own layout;
+   * a region that never held it, Isle of Balfiera's palace for the main quest's courier among them, keeps DFU's law), the
+   * site is taken in the region's own towns nearest first (AUDIT QA2: the darts can miss the few towns the mods left),
+   * and only then in the nearest town of another region - the travel reckoning's distance from the player's pixel - by
+   * the same landing a dart makes (`_tryTownLocation`: the directory pre-check, the block walk, the markers). Answers
+   * whether a site was set.
    */
   _nearRegionTownSite(world, requiredBuildingType) {
     const regionIndex = world.currentRegionIndex?.();
-    const home = world.maps?.getRegion?.(regionIndex);
-    if (!home || !home.mapTable.some((e) => e && !this._isDungeonType(e.locationType) && layoutStampOfMapId(e.mapId) !== CLASSIC_LAYOUT)) return false;
+    if (!this._modsTookKindFromRegion(world, regionIndex, requiredBuildingType)) return false;
     let origin = world.playerPixel?.() ?? null;
     if (!origin) origin = mapTablePixel(world.currentLocation?.()?.mapTableData);
     if (!origin || !Number.isFinite(origin.x) || !Number.isFinite(origin.y)) return false;
-    const towns = [];
-    for (let r = 0; r < (world.maps.regionCount ?? 0); r++) {
-      if (r === regionIndex) continue;
-      const region = world.maps.getRegion(r);
-      for (let i = 0; i < (region?.locationCount ?? 0); i++) {
-        const entry = region.mapTable[i];
-        if (!entry || this._isDungeonType(entry.locationType)) continue;
-        const px = mapTablePixel(entry);
-        if (px) towns.push([r, i, mapPixelDistance(px, origin)]);
+    const playerLocationIndex = world.currentLocationIndex?.() ?? -1;
+    const nearestOf = (regions) => {
+      const towns = [];
+      for (const r of regions) {
+        const region = world.maps.getRegion(r);
+        for (let i = 0; i < (region?.locationCount ?? 0); i++) {
+          const entry = region.mapTable[i];
+          if (!entry || this._isDungeonType(entry.locationType) || (r === regionIndex && i === playerLocationIndex)) continue;
+          const px = mapTablePixel(entry);
+          if (px) towns.push([r, i, mapPixelDistance(px, origin)]);
+        }
       }
-    }
-    towns.sort((a, b) => a[2] - b[2] || a[0] - b[0] || a[1] - b[1]);
-    for (const [r, i] of towns) if (this._tryTownLocation(world, r, i, requiredBuildingType)) return true;
+      return towns.sort((a, b) => a[2] - b[2] || a[0] - b[0] || a[1] - b[1]);
+    };
+    for (const [r, i] of nearestOf([regionIndex])) if (this._tryTownLocation(world, r, i, requiredBuildingType)) return true;
+    const others = [];
+    for (let r = 0; r < (world.maps.regionCount ?? 0); r++) if (r !== regionIndex) others.push(r);
+    for (const [r, i] of nearestOf(others)) if (this._tryTownLocation(world, r, i, requiredBuildingType)) return true;
     return false;
+  }
+
+  /**
+   * AUDIT QA2: DID THE TOWN MODS TAKE THIS KIND FROM THE REGION? NEAR-REGION answered every region holding one town a
+   * layout mod lays - 43 of the 44 - and so 45 (region, kind) pairs no town of the region held in Daggerfall's own layout
+   * either: the main quest's courier (S0000012, `remote palace`) went from Isle of Balfiera's hamlets to another region,
+   * where DFU's own law fails it. True where fewer of the region's towns (the player's own and the dungeons aside, as the
+   * darts set them aside) can give the site as the region stands now than in Daggerfall's own records of them
+   * (MapsFile.readClassicLocation over BLOCKS.BSA): a town GIVES it where the search a dart makes would find one - the
+   * MAPS directory's pre-check for a named kind that is no house (`_tryTownLocation`'s), then the block walk's law and
+   * markers (_siteSupply). Never the directory alone: Beautiful Cities' Pothago and Menakat still LIST their weaponsmiths,
+   * and lay none a quest can use.
+   */
+  _modsTookKindFromRegion(world, regionIndex, requiredBuildingType) {
+    const region = world.maps?.getRegion?.(regionIndex);
+    if (!region || !world.maps.readClassicLocation) return false;
+    const playerLocationIndex = world.currentLocationIndex?.() ?? -1;
+    const wildcard = this.p2 === -1 && (this.p3 === 0 || this.p3 === 1);   // _tryTownLocation's two arms with no pre-check
+    const gives = (loc, blocksOf) => !!loc?.loaded && !!loc.exterior?.exteriorData
+      && (wildcard || this._hasBuildingType(loc, requiredBuildingType))
+      && this._siteSupply(loc, blocksOf(loc), this.p2, this.p3, 1) > 0;
+    const towns = [];
+    for (let i = 0; i < region.locationCount; i++) {
+      const entry = region.mapTable[i];
+      if (entry && i !== playerLocationIndex && !this._isDungeonType(entry.locationType)) towns.push(i);
+    }
+    let own = 0;
+    for (const i of towns) if (gives(world.maps.readClassicLocation(regionIndex, i), classicBlockGrid)) own++;
+    if (!own) return false;
+    let now = 0;
+    for (const i of towns) if (gives(world.maps.getLocation(regionIndex, i), (loc) => townBlockGrid(world, loc)) && ++now >= own) return false;
+    return true;
   }
 
   /** One dart's landing (SelectRemoteTownSite's loop body from the location load on, lifted verbatim so the darts and
@@ -787,9 +870,38 @@ export class Place extends QuestResource {
     const activeQuestSites = this.parentQuest?.hooks?.getAllActiveQuestSites?.() ?? [];
     const parentQuestPlaces = [...(this.parentQuest?.resources.values() ?? [])].filter((r) => r.isPlace && r !== this);
 
-    const blocks = townBlockGrid(world, location);
-    const merged = mergeNamedBuildings(location.exterior.buildings, blocks.filter((b) => b.dfBlock), { locationIndex: location.locationIndex ?? 0 });   // AUDIT-RR F34: the replacement seed is NameSeed + LocationIndex here too (RMBLayout.cs:669)
+    for (const { b, i, summary, buildingKey } of this._townBuildingsOfType(location, townBlockGrid(world, location), buildingType, guildHallFaction)) {
+      if (world.isHouseOwned?.(buildingKey)) continue;
+      if (world.isPlayerHome?.(location.mapTableData?.mapId, buildingKey)) continue;   // HOME1: nor a player's online home (a departure: DFU has one player)
+      if (this._isBuildingAssigned(activeQuestSites, parentQuestPlaces, location, summary, buildingKey)) continue;
 
+      const { questSpawnMarkers, questItemMarkers } = this._enumerateBuildingQuestMarkers(b.dfBlock, i);
+      if (!validateQuestMarkers(questSpawnMarkers, questItemMarkers)) continue;
+
+      foundSites.push({
+        questUID: this.parentQuest?.uid ?? 0,
+        siteType: SITE_TYPES.Building,
+        mapId: location.mapTableData.mapId,
+        locationId: location.exterior.exteriorData.locationId,
+        regionIndex: location.regionIndex,
+        regionName: location.regionName,
+        locationName: location.name,
+        buildingKey,
+        buildingName: this._getBuildingName(world, summary.buildingType, location, summary, buildingKey),
+        magicNumberIndex: 0,
+        questSpawnMarkers, questItemMarkers,
+        selectedMarker: { targetResources: null },
+      });
+    }
+    return foundSites;
+  }
+
+  /** CollectQuestSitesOfBuildingType's walk (Place.cs:1335-1392) over a town's `blocks` (townBlockGrid's shape): each
+   *  building of the kind asked that the law no quest or owner changes admits - the guild hall's faction, never the Dark
+   *  Brotherhood's or the Thieves Guild's - as { b, i, summary, buildingKey }. The search asks the rest (the owners, the
+   *  quests, the markers); AUDIT QA2's supply the markers alone. */
+  *_townBuildingsOfType(location, blocks, buildingType, guildHallFaction) {
+    const merged = mergeNamedBuildings(location.exterior.buildings, blocks.filter((b) => b.dfBlock), { locationIndex: location.locationIndex ?? 0 });   // AUDIT-RR F34: the replacement seed is NameSeed + LocationIndex here too (RMBLayout.cs:669)
     for (const b of blocks) {
       if (!b.dfBlock) continue;
       const list = merged.get(b) ?? [];
@@ -801,35 +913,12 @@ export class Place extends QuestResource {
         else if (buildingType === BT_ANY_HOUSE) wildcardFound = VALID_HOUSE_TYPES.includes(summary.buildingType);
         else if (buildingType === BT_ANY_SHOP) wildcardFound = VALID_SHOP_TYPES.includes(summary.buildingType);
         if (summary.buildingType !== buildingType && !wildcardFound) continue;
-
-        const buildingKey = makeBuildingKey(b.x, b.y, i);
-        if (world.isHouseOwned?.(buildingKey)) continue;
-        if (world.isPlayerHome?.(location.mapTableData?.mapId, buildingKey)) continue;   // HOME1: nor a player's online home (a departure: DFU has one player)
         if (summary.buildingType === BT_GUILDHALL
           && !(guildHallFaction === 0 || summary.factionId === guildHallFaction)) continue;
         if (summary.factionId === DARK_BROTHERHOOD_FACTION || summary.factionId === THIEVES_GUILD_FACTION) continue;
-        if (this._isBuildingAssigned(activeQuestSites, parentQuestPlaces, location, summary, buildingKey)) continue;
-
-        const { questSpawnMarkers, questItemMarkers } = this._enumerateBuildingQuestMarkers(b.dfBlock, i);
-        if (!validateQuestMarkers(questSpawnMarkers, questItemMarkers)) continue;
-
-        foundSites.push({
-          questUID: this.parentQuest?.uid ?? 0,
-          siteType: SITE_TYPES.Building,
-          mapId: location.mapTableData.mapId,
-          locationId: location.exterior.exteriorData.locationId,
-          regionIndex: location.regionIndex,
-          regionName: location.regionName,
-          locationName: location.name,
-          buildingKey,
-          buildingName: this._getBuildingName(world, summary.buildingType, location, summary),
-          magicNumberIndex: 0,
-          questSpawnMarkers, questItemMarkers,
-          selectedMarker: { targetResources: null },
-        });
+        yield { b, i, summary, buildingKey: makeBuildingKey(b.x, b.y, i) };
       }
     }
-    return foundSites;
   }
 
   _isBuildingAssigned(activeQuestSites, parentQuestPlaces, location, summary, buildingKey) {
@@ -858,12 +947,21 @@ export class Place extends QuestResource {
    *  ("The %s Residence"); Redguards have a single name - and C#'s
    *  fallback rolls Range(0, 1), which is ALWAYS 0/Male (quirk kept);
    *  everything else reads the fixed building name. */
-  _getBuildingName(world, buildingType, location, summary) {
+  _getBuildingName(world, buildingType, location, summary, buildingKey = 0) {
     if (isResidence(buildingType)) {
       const bank = getNameBankOfRegion(location.regionIndex);
-      let name = surname(bank);
-      if (!name) name = firstName(bank, [GENDERS.Male, GENDERS.Female][this._range(1)] ?? GENDERS.Male);
-      return THE_NAMED_RESIDENCE.replace('%s', name);
+      const named = () => {
+        let name = surname(bank);
+        if (!name) name = firstName(bank, [GENDERS.Male, GENDERS.Female][this._range(1)] ?? GENDERS.Male);
+        return name;
+      };
+      // AUDIT QA2: a shared copy's re-seat draws the house's name from the share and the building - DFRandom's one
+      // state is each member's own, and two copies seated in one house named it twice; the state is put back after
+      const shareId = this._die ? this.parentQuest?.shareId : null;
+      if (!shareId) return THE_NAMED_RESIDENCE.replace('%s', named());
+      const was = getSeed();
+      setSeed(stringHash(`${shareId}|residence|${location.mapTableData?.mapId ?? 0}|${buildingKey}`));
+      try { return THE_NAMED_RESIDENCE.replace('%s', named()); } finally { setSeed(was); }
     }
     return generateBuildingName(summary.nameSeed, summary.buildingType,
       { ...(world.buildingNameOpts?.() ?? {}), locationName: location.name, regionName: location.regionName, factionId: summary.factionId });
@@ -1173,6 +1271,24 @@ export class Place extends QuestResource {
 /** The town's RMB grid as CollectQuestSitesOfBuildingType's block loop walks it: `{ dfBlock, x, y }` for each cell in
  *  row order, `dfBlock` null where the world holds no block of the name. The one walk - the site collector's and a moved
  *  questor's (person.js reseatMovedQuestor). */
+/** AUDIT QA2: a town as Daggerfall laid it - its MAPS.BSA record's block names (read straight: the door's note of the
+ *  town about to be laid, MapsFile.getRmbBlockName's, is not this) over BLOCKS.BSA's own blocks (the door's bound
+ *  BlocksFile, read past the door) - in townBlockGrid's shape. A block BLOCKS.BSA does not hold is none. */
+export function classicBlockGrid(location) {
+  const { width, height, blockNames } = location.exterior.exteriorData;
+  const bsa = boundWorldDataBlocks();
+  const read = new Map();
+  const blockOf = (name) => {
+    if (!read.has(name)) { const i = bsa?.getBlockIndex?.(name) ?? -1; read.set(name, i >= 0 ? bsa.readClassicBlock?.(i) ?? null : null); }
+    return read.get(name);
+  };
+  const blocks = [];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) blocks.push({ dfBlock: blockOf(blockNames[y * width + x]), x, y });
+  }
+  return blocks;
+}
+
 export function townBlockGrid(world, location) {
   const width = location.exterior.exteriorData.width;
   const height = location.exterior.exteriorData.height;
