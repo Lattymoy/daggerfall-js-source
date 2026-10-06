@@ -198,5 +198,45 @@
       "test/legacychoice.test.js"
     ],
     "note": "LEGACY-CHOICE: the third tile's tag said its title over again (NO LINEAGE / NO LINEAGE) instead of what its death is."
+  },
+  {
+    "name": "LEGACY-POINTER-hover-under-the-face",
+    "file": "src/ui/levelingChoice.js",
+    "old": "    if (this._fired || this._faced) return;   // LEGACY-POINTER: the Plus face's tiles own the pointer",
+    "new": "    if (this._fired) return;   // LEGACY-POINTER: the Plus face's tiles own the pointer",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-POINTER: the hosts' window-level mousemove moved the Plus face's choice by the canvas face's rows (the field report)."
+  },
+  {
+    "name": "LEGACY-POINTER-click-under-the-face",
+    "file": "src/ui/levelingChoice.js",
+    "old": "    if (this._fired || this._faced) return false;",
+    "new": "    if (this._fired) return false;",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-POINTER: a canvas press answered by the canvas face's rows while the Plus face was up."
+  },
+  {
+    "name": "LEGACY-POINTER-face-never-noted",
+    "file": "src/ui/levelingChoice.js",
+    "old": "drawLevelingFace(this)) { this._faced = true; return; }",
+    "new": "drawLevelingFace(this)) { return; }",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-POINTER: the face drawn and never noted - the canvas seam kept the pointer under it."
+  },
+  {
+    "name": "LEGACY-POINTER-face-never-cleared",
+    "file": "src/ui/levelingChoice.js",
+    "old": "    this._faced = false;\n    if (!this._fired && isEnhanced()",
+    "new": "    if (!this._fired && isEnhanced()",
+    "tests": [
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-POINTER: a question back on the canvas (the skin switched under it) never took the canvas pointer again."
   }
 ]

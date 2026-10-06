@@ -171,6 +171,8 @@ export class LevelingChoiceScreen {
     this.faceText = faceText;
     this.faceTags = faceTags;
     this._fired = false;
+    /** LEGACY-POINTER: the Plus face drew last frame - its tiles take the pointer (ui/yesNoBox.js's `_carded`). */
+    this._faced = false;
     this.cursor = this.defaultIndex;   // LEVEL-ONLINE: never parked on a shut option
     this.done = false;
     /** The hosts route by action name, not raw key codes, for this
@@ -265,9 +267,20 @@ export class LevelingChoiceScreen {
    *
    * A click on an option picks it AND answers, which is the one-press
    * behaviour every other picker in the wizard has.
+   *
+   * LEGACY-POINTER (FIELD 2026-10-06, Mac: "moving the mouse up and down
+   * switches between the options instead of letting you hover and
+   * select"): THIS SEAM IS THE CANVAS FACE'S POINTER, AND ONLY ITS. The
+   * hosts hand it every mousemove from a listener on the WINDOW
+   * (world.js, exterior.js), so it fired over the Plus face as well and
+   * mapped the pointer onto the canvas face's ROWS - which the Plus face
+   * does not draw (its tiles stand side by side) - and the highlight
+   * followed rows nobody could see. While the face is up its tiles own
+   * the pointer (ui/enhancedLevelingChoice.js: pointerenter and click),
+   * as ui/yesNoBox.js's card owns its presses.
    */
   click(vx, vy) {
-    if (this._fired) return false;
+    if (this._fired || this._faced) return false;
     const i = choiceAtNative(vx, vy, this.options, this.tops);
     if (i < 0) return false;
     return this.pickIndex(i);
@@ -275,7 +288,7 @@ export class LevelingChoiceScreen {
 
   /** ...and the highlight follows the pointer, as the wizard's lists do. */
   hover(vx, vy) {
-    if (this._fired) return;
+    if (this._fired || this._faced) return;   // LEGACY-POINTER: the Plus face's tiles own the pointer
     const i = choiceAtNative(vx, vy, this.options, this.tops);
     if (i >= 0) this.hoverIndex(i);
   }
@@ -306,7 +319,8 @@ export class LevelingChoiceScreen {
   draw(renderer, canvas, font) {
     // LEVEL-PLUS: on the Enhanced Plus skin the question wears the Plus window (ui/enhancedLevelingChoice.js); the
     // canvas below is the classic skin's, and the fallback for a host with no document.
-    if (!this._fired && isEnhanced() && typeof document !== 'undefined' && drawLevelingFace(this)) return;
+    this._faced = false;
+    if (!this._fired && isEnhanced() && typeof document !== 'undefined' && drawLevelingFace(this)) { this._faced = true; return; }
     const m = nativeMetrics(canvas);
     const s = m.s;
     renderer.drawScreenQuad(null, { x: 0, y: 0, w: canvas.width, h: canvas.height },
