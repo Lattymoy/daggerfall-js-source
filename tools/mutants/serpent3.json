@@ -1,0 +1,414 @@
+[
+  {
+    "name": "SERPENT3-maw-no-dash",
+    "file": "src/net/serpentBrain.js",
+    "old": "const way = wayOnto(h, h.yw, HUNT_TURN_R, { x: px, z: pz });",
+    "new": "const way = null;",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-maw-dash-at-the-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "const go = now + SERPENT_SAY_AHEAD_MS;\n    const { way, rise }",
+    "new": "const go = now;\n    const { way, rise }",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-maw-burst-said-late",
+    "file": "src/net/serpentBrain.js",
+    "old": "rides.push({ at, m: MODE.breach });",
+    "new": "",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-maw-way-the-wrong-side",
+    "file": "src/net/serpentBrain.js",
+    "old": "const ys = Math.atan2(dx, dz) - Math.asin(Math.max(-1, Math.min(1, k / d)));",
+    "new": "const ys = Math.atan2(dx, dz) + Math.asin(Math.max(-1, Math.min(1, k / d)));",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-ram-turned-at-the-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "const go = now + SERPENT_SAY_AHEAD_MS, h1 = headAt(f.legs, go);\n    at = go + serpentWindupOf(A);",
+    "new": "const go = now, h1 = headAt(f.legs, go);\n    at = go + serpentWindupOf(A);",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-ram-run-left-to-its-beat",
+    "file": "src/net/serpentBrain.js",
+    "old": "pushLeg(f, { k: LEG.line, at, x: tg[0][0], z: tg[0][1], yw, v: RAM_V }, out);",
+    "new": "",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-ram-rising-left",
+    "file": "src/net/serpentBrain.js",
+    "old": "pushLeg(f, { k: LEG.line, at: at + A.active, x: tg[1][0], z: tg[1][1], yw, v: CRUISE_V }, out);",
+    "new": "",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-ram-breach-unsaid",
+    "file": "src/net/serpentBrain.js",
+    "old": "rides.push({ at: at + A.active, m: MODE.breach });",
+    "new": "",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-coil-not-dashed",
+    "file": "src/net/serpentBrain.js",
+    "old": "if (A === SERPENT_ATTACK_TABLE.coil) return { way: wayOnto(h, h.yw, HUNT_TURN_R, { x: target?.x ?? 0, z: target?.z ?? 0 }, COIL_R, -1), rise: 0 };",
+    "new": "if (A === SERPENT_ATTACK_TABLE.coil) return { way: null, rise: 0 };",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-coil-round-the-wrong-way",
+    "file": "src/net/serpentBrain.js",
+    "old": "pushLeg(f, legFrom(f.legs, on, LEG.arc, DRIFT_V, COIL_R, -1), out);",
+    "new": "pushLeg(f, legFrom(f.legs, on, LEG.arc, DRIFT_V, COIL_R, 1), out);",
+    "tests": [
+      "test/serpent3.test.js",
+      "test/auditships.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-coil-bearing-the-beats",
+    "file": "src/net/serpentBrain.js",
+    "old": "const h = headAt(f.legs, a.at);   // SERPENT3",
+    "new": "const h = headAt(f.legs, now);   // SERPENT3",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-coil-ride-unsaid",
+    "file": "src/net/serpentBrain.js",
+    "old": "rides.push({ at, m: MODE.coil });",
+    "new": "",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-whirl-eye-at-the-heart",
+    "file": "src/net/serpentBrain.js",
+    "old": "tg = [[round.x + round.sd * round.r * Math.cos(round.yw), round.z - round.sd * round.r * Math.sin(round.yw)]];",
+    "new": "tg = [[0, 0]];",
+    "tests": [
+      "test/serpent3.test.js",
+      "test/serpent1_law.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-whirl-eye-unbounded",
+    "file": "src/net/serpentBrain.js",
+    "old": "MAEL_ORBIT_R, h1.z + Math.sin(h1.yw) * MAEL_ORBIT_R, ARENA_R - MAEL_ORBIT_R);",
+    "new": "MAEL_ORBIT_R, h1.z + Math.sin(h1.yw) * MAEL_ORBIT_R, Infinity);",
+    "tests": [
+      "test/serpent3.test.js",
+      "test/serpent1_law.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-whirl-round-the-wrong-way",
+    "file": "src/net/serpentBrain.js",
+    "old": "pushLeg(f, legFrom(f.legs, on, LEG.arc, CRUISE_V, MAEL_ORBIT_R, -1), out);",
+    "new": "pushLeg(f, legFrom(f.legs, on, LEG.arc, CRUISE_V, MAEL_ORBIT_R, 1), out);",
+    "tests": [
+      "test/serpent3.test.js",
+      "test/serpent1_law.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-whirl-rear-unsaid",
+    "file": "src/net/serpentBrain.js",
+    "old": "rides.push({ at, m: MODE.rear });",
+    "new": "",
+    "tests": [
+      "test/serpent3.test.js",
+      "test/serpent1_law.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-whirl-formed-at-the-heart",
+    "file": "src/net/serpentBrain.js",
+    "old": "const x = r2(a.tg[0][0]), z = r2(a.tg[0][1]);   // as its word said it (serpentAtkFrame)",
+    "new": "const x = 0, z = 0;   // as its word said it (serpentAtkFrame)",
+    "tests": [
+      "test/serpent3.test.js",
+      "test/serpent1_law.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-stretch-swum-under",
+    "file": "src/net/serpentBrain.js",
+    "old": "const go = now + SERPENT_SAY_AHEAD_MS, dive = Math.max(go, at - serpentWindupOf(A));",
+    "new": "const go = now + SERPENT_SAY_AHEAD_MS, dive = go;",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-dash-past-DASH_V",
+    "file": "src/net/serpentBrain.js",
+    "old": "Math.max(SWIM_MIN_V, Math.min(DASH_V, len / Math.max(1e-3, ms / 1000)))",
+    "new": "Math.max(SWIM_MIN_V, len / Math.max(1e-3, ms / 1000))",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-no-closing",
+    "file": "src/net/serpentBrain.js",
+    "old": "if (!target || dashFits(f, A, now, target)) { f.closing = null; begin(f, A, now, target, rng, out); return; }",
+    "new": "{ f.closing = null; begin(f, A, now, target, rng, out); return; }",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-closing-at-cruise",
+    "file": "src/net/serpentBrain.js",
+    "old": "const go = now + SERPENT_SAY_AHEAD_MS, v = closeV(f, target), [ax, az] = closeAim(f, now, target);",
+    "new": "const go = now + SERPENT_SAY_AHEAD_MS, v = CRUISE_V, [ax, az] = closeAim(f, now, target);",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-closing-on-the-cruising-turn",
+    "file": "src/net/serpentBrain.js",
+    "old": "  const h = headAt(f.legs, go), way = wayOnto(h, h.yw, HUNT_TURN_R, { x: ax, z: az });\n  const turn = way && way.turn * way.r >= 0.05 ? (way.turn * way.r * 1000) / v : 0;\n  if (turn) pushLeg(f, legFrom(f.legs, go, LEG.arc, v, HUNT_TURN_R, way.s1), out);",
+    "new": "  const h = headAt(f.legs, go), way = wayOnto(h, h.yw, TURN_R, { x: ax, z: az });\n  const turn = way && way.turn * way.r >= 0.05 ? (way.turn * way.r * 1000) / v : 0;\n  if (turn) pushLeg(f, legFrom(f.legs, go, LEG.arc, v, TURN_R, way.s1), out);",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-closing-turned-at-inside",
+    "file": "src/net/serpentBrain.js",
+    "old": "if (Math.abs(err) > STEER_STRAIGHT && Math.hypot(target.x - cx, target.z - cz) < HUNT_TURN_R) return",
+    "new": "if (false) return",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-closing-never-let-go",
+    "file": "src/net/serpentBrain.js",
+    "old": "if (t && now - c.at < SERPENT_CLOSE_MS) {",
+    "new": "if (t) {",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-resume-never-asked",
+    "file": "src/net/serpentBrain.js",
+    "old": "const out = serpentResume(f, now);   // SERPENT3",
+    "new": "const out = [];   // SERPENT3",
+    "tests": [
+      "test/serpent1_audit.test.js",
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-resume-keeps-the-attack",
+    "file": "src/net/serpentBrain.js",
+    "old": "if (f.atk) { f.atk = null; f.target = null; f.nextAt = Math.max(f.nextAt, now + SERPENT_BREATH_MS); }\n  f.closing = null;",
+    "new": "f.closing = null;",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-resume-lets-the-coil-go",
+    "file": "src/net/serpentBrain.js",
+    "old": "  if (coilHolds(f, now)) { if (law) coilRound(f, f.coil, now, out); return out; }\n  if (f.atk) { f.atk = null;",
+    "new": "  if (f.atk) { f.atk = null;",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-resume-at-the-relay-in",
+    "file": "server/src/index.js",
+    "old": "else await this._serpentSay(fights, id, f, serpentBrain.serpentResume(f, now), now);",
+    "new": "else await this._serpentSay(fights, id, f, [], now);",
+    "tests": [
+      "test/serpent1_relay.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-resume-at-the-relay-word",
+    "file": "server/src/index.js",
+    "old": "await this._serpentSay(fights, id, f, serpentBrain.serpentResume(f, now), now);   // SERPENT3: judged",
+    "new": "await this._serpentSay(fights, id, f, [], now);   // SERPENT3: judged",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-lookback-none",
+    "file": "src/net/serpentBrain.js",
+    "old": "export const SERPENT_HIT_LOOKBACK_MS = Object.freeze([0, 500, 1000]);",
+    "new": "export const SERPENT_HIT_LOOKBACK_MS = Object.freeze([0]);",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-lookback-short",
+    "file": "src/net/serpentBrain.js",
+    "old": "export const SERPENT_HIT_LOOKBACK_MS = Object.freeze([0, 500, 1000]);",
+    "new": "export const SERPENT_HIT_LOOKBACK_MS = Object.freeze([0, 500]);",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-pair-a-lone-ship-eased",
+    "file": "src/systems/serpentStrike.js",
+    "old": "export const fleetShare = (n) => (n === 2 ? SERPENT_PAIR_SHARE : 1);",
+    "new": "export const fleetShare = (n) => (n <= 2 ? SERPENT_PAIR_SHARE : 1);",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-pair-blow-unread",
+    "file": "src/scenes/serpentHost.js",
+    "old": "deps.strike?.(ship.boat, shipHurt(A, ship, share(), blows),",
+    "new": "deps.strike?.(ship.boat, shipHurt(A, ship),",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-pair-venom-unread",
+    "file": "src/scenes/serpentHost.js",
+    "old": "const n = venomHurt(venomBite(p, deps.maxHealth?.() ?? 0), share(), blows);",
+    "new": "const n = venomHurt(venomBite(p, deps.maxHealth?.() ?? 0), 1, blows);",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-pair-crush-unread",
+    "file": "src/scenes/serpentHost.js",
+    "old": "crushHurt(ship, share(), blows)",
+    "new": "crushHurt(ship)",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-pair-grip-unread",
+    "file": "src/scenes/serpentHost.js",
+    "old": "gripHurt(ship, Math.min(1, dtS), grip, share())",
+    "new": "gripHurt(ship, Math.min(1, dtS), grip)",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-pair-grind-unread",
+    "file": "src/scenes/serpentHost.js",
+    "old": "grindHurt(ship, dtS, grind, share())",
+    "new": "grindHurt(ship, dtS, grind)",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-pair-crush-law",
+    "file": "src/systems/serpentStrike.js",
+    "old": "export const crushHurt = (whole, k = 1, carry = null) => shipHurt(CRUSH, whole, k, carry);",
+    "new": "export const crushHurt = (whole, k = 1, carry = null) => shipHurt(CRUSH, whole);",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-pair-grip-law",
+    "file": "src/systems/serpentStrike.js",
+    "old": "const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k, crew",
+    "new": "const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS, crew",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-pair-grind-law",
+    "file": "src/systems/serpentStrike.js",
+    "old": "const hull = carry + (MAEL_GRIND.hull * whole.maxHull + MAEL_GRIND.base) * dtS * k;",
+    "new": "const hull = carry + (MAEL_GRIND.hull * whole.maxHull + MAEL_GRIND.base) * dtS;",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-old-law-kept",
+    "file": "src/net/serpentLaw.js",
+    "old": "export const SERPENT_BRAIN_MIN = 2;",
+    "new": "export const SERPENT_BRAIN_MIN = 1;",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-whirl-telegraph-at-the-heart",
+    "file": "src/scenes/serpentHost.js",
+    "old": "const eye = a.tg?.[0] ? scene(a.tg[0][0], a.tg[0][1]) : scene(0, 0);",
+    "new": "const eye = scene(0, 0);",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-wake-while-slow",
+    "file": "src/scenes/serpentHost.js",
+    "old": "if (!L || !(L.v > CRUISE_V)) return;",
+    "new": "if (!L || !(L.v > 0)) return;",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-wake-on-the-surface",
+    "file": "src/scenes/serpentHost.js",
+    "old": "    if (modeAt(s.modes, t) !== MODE.deep) return;\n",
+    "new": "",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT3-no-wake",
+    "file": "src/scenes/serpentHost.js",
+    "old": "      dashWake(s, t);\n",
+    "new": "",
+    "tests": [
+      "test/serpent3.test.js"
+    ]
+  }
+]

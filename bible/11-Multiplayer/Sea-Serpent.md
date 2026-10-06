@@ -120,8 +120,8 @@ and a client folds its own site's alone (AUDIT SERPENT S1, AUDIT SERPENT 2 F1). 
 `net/serpentBody.js`, shared by the relay and every client, so both draw the same serpent from the same words.
 
 - **The head runs LEGS**: lines and arcs at a constant speed (`legAt`, `headAt`). An arc's centre lies `r` to its
-  side (`sd` is +1 for a right turn, -1 for a left). A jump leg (`j`) starts a fresh track: the coil's wind and the
-  maelstrom's orbit.
+  side (`sd` is +1 for a right turn, -1 for a left). A jump leg (`j`) starts a fresh track: its rising's alone - since
+  SERPENT3 (section 15) every other leg is swum from where the last left its head.
 - **The body follows the head's track** back by arclength (`spinePoint`). It has `SEG_N` (24) segments of `SEG_LEN`
   (7 m), 168 m in all, with radii tapering from the head to a tail fin (`radiusAt`).
 - **How it rides the sea** is a mode, each change blended over `MODE_BLEND_MS` (1.5 s):
@@ -139,8 +139,9 @@ and a client folds its own site's alone (AUDIT SERPENT S1, AUDIT SERPENT 2 F1). 
 - The relay keeps the legs and modes still to come, and of those past the ones the body still lies along: legs are
   pruned by time and capped at `LEGS_KEPT` × 2, modes capped at `MODES_KEPT`.
 - **The timeline's one rule** (AUDIT SERPENT S2, `supersede`): a leg or a mode said at a moment removes every one
-  still to come after it, on the relay as it pushes and in every client's fold. A kill during a breach's wind-up, or a
-  dive during a surfacing, is then one track everywhere, and the body every screen draws is the one the relay judges.
+  still to come after it, on the relay as it pushes and in every client's fold. A kill during a Rising Maw's dash, or a
+  sounding during a ram's run, is then one track everywhere, and the body every screen draws is the one the relay
+  judges.
 
 ## 5. Its blows - judged on the struck ship
 
@@ -152,18 +153,21 @@ law, which the naval fight already keeps.
 |---|---|---|---|---|
 | Tail Lash | 1 | sector, 85 m, 120 degrees | 2.6 s | 6% of her hull + 6, canvas, two men; a throw |
 | Breaching Ram | 1 | lane, 18 m wide | 3.6 s | dives, then runs its lane at `RAM_V` (34 m/s); 14% + 12, three men; a throw across the lane - the heaviest, the one a helm can sail out of; chosen at a ship within 170 m, its lane's reach (`ramReach`, 171 m - AUDIT SERPENT 2 F7) |
-| Rising Maw | 1 | disc, 20 m | 3.2 s | dives, and bursts up under its mark, running in on it the last `BREACH_LEAD_MS` (1.2 s); 7% + 8, two men; a throw |
+| Rising Maw | 1 | disc, 20 m | 3.2 s | closed on at the surface, then dives and dashes under the sea for its mark (SERPENT3, section 15) and bursts up under it, running in on it the last `BREACH_LEAD_MS` (1.2 s); 7% + 8, two men; a throw |
 | Venom Spit | 1 | disc, 13 m | 2.6 s | a glob flies `SPIT_FLIGHT_MS`; 1.5% + 2 and a man; a venom pool stays 9 s and bites anyone standing in it (2% of their health + 1, each second) |
 | Constrict | 2 | ring, 36 m | 4.8 s | the coil (below) |
 | Abyssal Roar | 3 | rings, 22 to 120 m | 2.8 s | safe close in under its jaws; 5% + 5, a man, and the canvas torn |
+| Satakal's Call | the turn to 2 | none | 2.6 s | its cry as it turns |
+| The Maelstrom | the turn to 3 | none | 5 s | the whirl forms (below) |
 
 These are AUDIT SERPENT T1's numbers (Mac chose the validated rebalance). At the first numbers a ship it focused was
 wrecked in 36-80 s and no fleet of eight won at the gunnery measured. At these, simulated against the relay's own brain
 at `SERPENT_TTK_S` 180: at 38% of balls striking, five or eight ships win every time in about 13.5 minutes and three
 ships half the time; at 60%, every fleet of three or more wins in six to seven minutes. One ship alone never wins - it
-is a fight to meet up for.
-| Satakal's Call | the turn to 2 | none | 2.6 s | its cry as it turns |
-| The Maelstrom | the turn to 3 | none | 5 s | the whirl forms (below) |
+is a fight to meet up for. SERPENT3 (section 15) simulated it again on the brain as it then stood - with AUDIT SERPENT
+F7's shorter ram, which these numbers were not re-simulated with (it left ships 170-240 m off to the breach and the
+spit) - and found a pair never winning and three galleons one fight in twenty-four at 38%; it took away the
+teleporting Rising Maw that did most of the hurt and gave a pair its share: at 38% a pair wins nine to twelve fights in twelve, a lone ship none.
 
 **A blow's hurt is a share of HER whole hull and canvas, with points on top** (`shipHurt`, TOUGHER-SHIPS' law), so a
 small boat feels the points more than a carrack does. Braced, her hull and canvas take `BRACE_TAKEN` (half) of it, as
@@ -209,8 +213,9 @@ next beat and the wire), and lets her go if it never does. A coil whose end is n
 
 ### The maelstrom
 
-At 33% the whirl forms at its waters' heart (`maelPull`). Its waters are laid on the sea as it winds up, five
-seconds' warning (T8). Over `MAEL_GROW_MS` (4 s) it grows to pull every ship within `MAEL_R` (230 m) toward its heart,
+At 33% the whirl forms where it swims (SERPENT3, section 15 - at its waters' heart before): its eye `MAEL_ORBIT_R` to
+its left, drawn in so its round lies inside its waters, said in its word (`maelPull` pulls about it). Its waters are
+laid on the sea where its eye forms as it winds up, five seconds' warning (T8). Over `MAEL_GROW_MS` (4 s) it grows to pull every ship within `MAEL_R` (230 m) toward its heart,
 at 1 m/s at its edge rising to 3.8 m/s near the eye, and round it at up to `MAEL_SWIRL` (4 m/s). In the eye
 (`MAEL_EYE_R`, 40 m) it grinds her hull (1.2% + 1 a second). The serpent circles the eye reared, at `MAEL_ORBIT_R`
 (85 m), and roars from it. The pull rides the `drift` seam. Her own helm still answers: at the first pull a rowboat or a
@@ -303,7 +308,9 @@ nothing with guns it does not have.
   always picked over a hand. It goes only at what it can reach - within `SERPENT_TARGET_R` (600 m) of its waters - and
   never at a wreck (E1/T2).
 - It orbits its target, its aim kept within `ARENA_R` (420 m) of its waters (its head swims on past that, up to about
-  550 m out). Swum far out, it surfaces again once.
+  550 m out). A Rising Maw or a coil chosen at a ship beyond the dash its own wind-up swims is closed on at the surface
+  first, and a fight whose room slept is taken up circling where it was (SERPENT3, section 15 - it surfaced, leapt,
+  once).
 - It never uses an attack more than twice running, and leaves out the last one while another is open.
 - At 66% and 33% it stands warded for `SERPENT_SHIELD_MS` (4 s) and takes its turn (`SERPENT_PHASE_TURN`), once an
   attack in flight has landed as every screen was told it would (S2):
@@ -467,6 +474,10 @@ After the kill the bar holds a moment and fades.
 
 ## 11. Versions and deploy order
 
+- **SERPENT3's relay: `world173`** (section 15; `world171` on its branch, renumbered past main's CRYSTAL-FIST and
+  WATCH-FIX at the merges). The brain swims every leg it shows and judges a blow where the body lay when it struck; its law's version is 2
+  (`SERPENT_BRAIN_MIN`), so a game before it is told to reload. No frame changes shape, and nothing else in the order
+  moves: deploy the relay with the client.
 - **SERPENT2's relay: `world166`** (section 14). The `serpent` frame's `site` word, said to the hub alone, and
   `net/serpentHerald.js` in the bundle. A relay before it closes the socket on the kind, so a client says it only to a
   relay that welcomed it with 166 or later (`serpentSiteOk`). Nothing else in the order moves: the service is untouched.
@@ -524,6 +535,8 @@ After the kill the bar holds a moment and fades.
 - AUDIT 625's (`01-Overview/Audit-625.md`): `test/audit625_serpent.test.js` (6 - Shed Skin and a saved death, the duel's
   one word and an arena bout between players, a coil per foe, the claim's embers, the powers on minted pieces, the
   card's source and the embers' tier) and the AUDIT 625 records of `tools/mutants/audit625.json`, all dead.
+- SERPENT3's: `test/serpent3.test.js` (12 - section 15) and `tools/mutants/serpent3.json` (46), all dead; five records of
+  `serpent1.json` and `serpent1_audit.json` re-aimed by content (the stray's once is the resume's now).
 
 ## 14. The herald and the timers (SERPENT2, 2026-10-04)
 
@@ -571,6 +584,134 @@ every `HERALD_RETRY_MS`. A post Discord does not take is posted again `HERALD_RE
 The bells arm the hub's alarm from the first hello (`_serpentHeraldArm`). The alarm's beat runs the gate's herald,
 then the serpent's. Each keeps its own state (`herald`, `sherald`) and its own site record (`gatesite`,
 `serpentsite`). With no webhook nothing is posted and nothing of the herald's is kept.
+
+## 15. It never leaps (SERPENT3, 2026-10-05)
+
+Mac: *"the serpent world boss teleports. Nobody has beat it yet."* Mac's call for who can beat it: *"Two or more ships"* -
+its blows ease when fewer than three ships fight it, so a pair has a real chance; one ship alone still cannot.
+
+**It teleported, on purpose.** Four moves of the brain placed its head somewhere new and laid the whole 168 m body
+behind it in one frame, seen through the water (the submerged body is drawn darkened, not hidden): the Rising Maw (a
+median 195 m), the coil's winding (120-180 m, up to a kilometre), the Maelstrom's turn (230-480 m, onto its round at the
+waters' heart) and the stray's surfacing (a median 384 m, whenever its head passed 620 m out - ships fighting from the
+edge of its waters did it). In twenty simulated fights, 2.3 a minute; a client a wire's time behind saw them as its only
+great snaps, beside the ram's run said a beat late (8.7 m). (Those counts are SERPENT3's own scratch harness, which never
+reached the tree. AUDIT SHIPS D12 re-ran the S1 pin's harness on the base and found the same order: 1.55 leaps a minute,
+a Maw's median 259 m, a coil's up to 869 m.)
+
+**Why nobody beat it.** The teleporting Maw was the fight: a breach under a 42 m hull 3.2 s after it was cast, wherever
+she was within 320 m, cannot be sailed out of. In a combat simulation against the relay's own brain (galleons circling
+its waters and firing, every attack judged by the struck machine's own law - `tools/serpentFleetSim.mjs`, run with
+`--root` on the base, 4ceb14a6) it did most of the hurt, and fleets of three or fewer won none of 144 fights at the
+gunnery measured (25-38% of balls striking), at the old ways and the new (8 and 13.3 m/s). SERPENT3's scratch copy of
+that harness had found one win in the 144, three galleons at 38% (AUDIT SERPENT T1's "three ships half the time"
+predates F7's shorter ram - section 5). Its jumps wasted volleys in flight too, and the relay judged a blow by the body
+at its word's arrival - a gathering and a wire after the ball struck.
+
+**The law** (`net/serpentBrain.js` - DECLARED; `net/serpentBody.js`'s legs unchanged):
+- **No leap.** Every leg is swum from where the last left its head (`legFrom`); the rising's first leg is its only `j`.
+- **The dash.** A Rising Maw dashes for its mark under the sea and a coil for the round it closes about her - a turn of
+  `HUNT_TURN_R` (30 m) and a straight (`wayOnto`, Dubins's), at `DASH_V` (the ram's run, 34 m/s) at most: the Maw's last
+  `BREACH_LEAD_MS` swum up at `CRUISE_V`, bursting where its word says - a way its wind-up could swim at a cruise is swum
+  at the one pace that fills the wind-up, rise and all (AUDIT SHIPS B4: risen early, its head rode on past her mark, and
+  a Maw at a ship 8 m ahead burst 27 m past her); the coil meeting its round tangent and going round her
+  counter-clockwise at `DRIFT_V`, as the coil lies, its bearing its head's at the landing, and the coil drawn turning
+  with its head (`serpentBody.js` `coilAngleAt`), held where it lets go (AUDIT SHIPS B6: going round clockwise, its body
+  lay across the ring from the coil's and swept over her ship as the coil wound on, and again as it let go).
+- **It leads its marks** (AUDIT SHIPS A1 - `serpentWayOf`, `serpentLeadOf`). Each ship's way and turn are read off her
+  own poses' send times (the pose's `ts`, which the relay hands on - never the wire's timing), eased over
+  `SERPENT_WAY_EASE_MS`, at rest past `SERPENT_WAY_STALE_MS` without a pose or past `SERPENT_WAY_MAX_V` (a warp). A
+  Rising Maw, a coil, a spit and the tail's sweep are aimed where she will be as they land, along the round she sails,
+  never led past `SERPENT_LEAD_MAX_MS` (9 s); the ram's lane where its run will meet her (led again by its run's own
+  time, `RAM_LEAD_STEPS`). Aimed where she stood, a ship under SAIL-FREE's full sail had sailed out of every mark before
+  it landed, and a lone galleon won every fight from 15.5 m/s. A helm that turns or slows as the telegraph shows still
+  sails out of it: that is a telegraph's use.
+- **Closing.** A Maw or a coil chosen at a ship beyond the dash its own wind-up swims (`dashFits`) is not begun: it surges
+  at her ON THE SURFACE at `closeV` - `CLOSE_GAIN_V` (8 m/s) over her own way, `CLOSE_V` (20 m/s) at the least and
+  `DASH_V` at most - on `HUNT_TURN_R`, where the guns reach it, aimed where its surge will meet her, and begins it the
+  beat she lies within it, its telegraph its own length; she outsails it `SERPENT_CLOSE_MS` (12 s) and it chooses again.
+  (AUDIT SHIPS A1/D5: at a fixed 20 m/s - "the galleon's best is 16", true in the rated wind alone - SAIL-FREE's ships
+  outsailed every surge: a Carrack circles at 21.2 m/s in a 2 m/s wind, and in a storm a ship makes twice her rated
+  best.) A ship inside the round it would turn on to face her is run past, straight, until she can be turned onto
+  (`closeAim`) - on its cruising turn it circled a still ship and never faced her. A wind-up left to wait for a long dash
+  gave every moving ship ten seconds to sail clear: in the simulation a lone galleon won ten fights in twelve.
+- **A wind-up stretched, never shortened.** A swim longer than its attack's wind-up (the whirl's, its eye drawn in from
+  far out) makes it wait - swum on the surface; it sounds for its own wind-up alone.
+- **The Maelstrom forms where it swims** - its eye `MAEL_ORBIT_R` to its left, as the whirl turns, drawn in so its round
+  lies inside its waters - and it swims onto that round and circles it, rearing as it forms. Drawn in so near that no
+  turn and straight meets it, it turns on `HUNT_TURN_R`, to whichever side turns it less, until the round to its left
+  lies in its waters (`maelTurnToFit` - AUDIT SHIPS B3: the round about its head where it stood lay out of them on a
+  seventh of the third phase's turns, its eye up to 437 m out).
+- **Said ahead.** Every attack's whole swim and ride are said in the beat that begins it - the ram's turn, crawl, run
+  and rising, the Maw's dash and burst, the coil's dash and round, the whirl's round and rearing - and a dash or the
+  ram's turn begins `SERPENT_SAY_AHEAD_MS` (500 ms) after it is said, its head keeping its way meanwhile, so every screen
+  holds the word before the head takes it. AUDIT SHIPS B5/D2: so is every other turn of its own - a change of pace, the
+  cry's and the roar's rearing, an attack's ride, the coil's winding on (the coil frame's `w`) and its letting go
+  (`off`), the kill's throes and the sounding's dive. Said at the beat, they snapped a screen 150 ms behind: 3.6 m on a
+  kill mid-dash, 1.4 m on a closing surge, 8.5 m up or down on a ride. AUDIT SHIPS 2 (2026-10-06): and every leg of its
+  steering, judged from where its head will be then; its closing surge is swum as its dashes are (`closeOn` - a turn of
+  `HUNT_TURN_R` and a straight at where it meets her, laid again only when its straight no longer runs at her, where
+  steered as it cruises it swung 30 degrees each side of her every 1.25 s); and an end (the throes, the dive, a coil's
+  letting go) is laid from its own moment alone - nothing said before it unsaid, since a blow is judged between beats
+  (B5's `holdNow` held the swim from the blow and unsaid a dash a lagging screen had begun, 3.2 m at 250 ms). A screen
+  any wire's time short of `SERPENT_SAY_AHEAD_MS` behind the relay draws its head where the relay does, to the
+  millimetre (measured at 150, 250 and 450 ms over whole fights, ships at 26.5 m/s).
+- **One centre** (AUDIT SHIPS 2). Her word `held` moves a coil onto her hull's middle; its head's round is laid again
+  about that centre where the coil drawn has gone round to (`coilRound`), from once the coil holds the whole body, so
+  its track moves out of sight - and so is an older law's coil across the relay's deploy. Kept round the mark, the
+  body lurched up to 42 m as it unwound.
+- **Kept before it is said** (AUDIT SHIPS 2). The relay checkpoints a fight before it says any word that lays its track
+  (`serpentSaysTrack`), so a relay restarted wakes it no earlier than its screens hold it (it snapped heads up to 106 m).
+- **A slept fight taken up** (`serpentResume`). A fight not stepped for `SERPENT_SLEEP_MS` (5 s) - the relay beats one
+  only while someone hears it - circles where its head was from its last beat (a round of `ORBIT_R` toward its waters'
+  heart), cruising; the attack it had in flight landed on empty waters; a coil holding a ship keeps its round and its
+  clock. Every beat asks it first, and the relay before a joiner's state (`_serpentIn`) and before a word is judged
+  (`_serpentFrame`). AUDIT SHIPS B1: a sleep no longer than `SERPENT_DRAWN_MS` (12 s - every screen keeps a fight it no
+  longer hears that long) stands as it was said - its attack lands as told and its track is untouched, and a head swum
+  out of its waters meanwhile turns home from when its word can reach them. Taken up from its last beat, a dropped
+  socket's return threw every screen still drawing it back by up to 148 m. A socket's hello beats its fight again (the
+  beat was armed by a serpent word alone). AUDIT SHIPS B7: a fight checkpointed by an older law (a relay deployed
+  mid-fight) is stamped (`bv`) and taken up at once, as one long asleep.
+- **A blow judged when it struck** (`SERPENT_HIT_LOOKBACK_MS`: 0, 500 and 1000): the body asked at the word's moment and
+  back as far as a second - a volley's gathering (`HIT_GATHER_MS`) and the wire - at the latest some of it stood above
+  the sea within her guns' reach; its stun and its head's rearing read there too. The relay keeps that second more of
+  its track.
+- **A pair's share** (`systems/serpentStrike.js` `fleetShare`, `SERPENT_PAIR_SHARE` 2/3): with exactly two ships
+  fighting it (the state's `n`) every blow, crush, grip, grind and venom bite lands at two thirds on the struck machine -
+  each of a pair takes what each of three would - carried blow to blow in whole points (AUDIT SHIPS C3: rounded a blow at
+  a time, a one-man spit took its man every time; carried, thirty spits take twenty). A lone ship, and three or more,
+  take the whole: a lone ship eased too (the option's "fewer than three") wins eleven fights in twelve at 50% gunnery on
+  a galleon at 17.7 m/s, where Mac's "one ship alone still can't" holds it to none. AUDIT SHIPS C1: the ships fighting it
+  are the shares in its health (`serpentShipsFighting` - a warship's share: afloat, at the fight, her guns heard and her
+  captain aboard her). It counted every account at the fight whose hull claim, which only grows, was a hull: a lone
+  galleon with a rowboat by, or with a friend riding her deck who had sighted it from their own ship, was "a pair" and
+  took two thirds, and a true pair with a rowboat by was three and lost its share. A hand off her own ship is no ship and
+  is never coiled (`serpentOnShip` - the hull her latest `in` says), a rowboat's wreck is a wreck, and the client says its
+  `in` the moment the ship it stands on changes.
+- **On the client** the whirl's waters are laid where its word says it forms, and a bow wave rides over its head while it
+  dashes under the sea (`dashWake`: sounded, faster than it cruises - the ram's run down its lane among them, running on
+  past a ship it struck), a splash at most every `WAKE_MS` (150 ms) of the fight's clock (AUDIT SHIPS C4: one a frame
+  held the particle budget full, and the guns' spray was evicted first).
+- **Its law's version 2** (`net/serpentLaw.js` `SERPENT_BRAIN_V`, `SERPENT_BRAIN_MIN`): a game before it - one that draws
+  the whirl at the heart and takes a pair's blows whole - is told to reload, and is not heard, nor gone at, until it has
+  (AUDIT SHIPS C2: told, it fought on).
+
+**Measured after** (AUDIT SHIPS: the balance by `node tools/serpentFleetSim.mjs --grid`, twelve seeded fights a cell;
+the rest held by `test/serpent3.test.js` and `test/auditships.test.js`): no leap in any fight; every Maw and coil cast at
+its own wind-up, bursting on its mark and closing on its round. SAIL-FREE's ships circle at 0.819 of their best: a
+galleon at 13.3 m/s in the rated wind and 17.7 in a 2 m/s one, a Carrack at 15.9 and 21.2, and in the sea's strongest
+wind a galleon at 26.5 and a Carrack at 31.8. At 38% of balls striking (AUDIT SERPENT's measured gunnery) a lone galleon
+never wins at any way up to 26.5 m/s, and wins two fights in twelve at a Carrack's 31.8 in a storm. A pair wins six in
+twelve at the old 8 m/s, ten at 13.3 (two without its share), eleven at 15.9 and every one from 17.7. Three and five
+win every time, in ten to eleven and a half minutes. At 50% a lone ship wins from 21.2 m/s: two in twelve, four at
+26.5, nine at 31.8 (Mac's call, open - `01-Overview/Audit-Ships.md`). At 25% a lone ship never wins, a pair at most
+three in twelve, three up to six and five six to eleven.
+
+**The relay:** `world173` (section 11). **Pins:** `test/serpent3.test.js` (12) and the SERPENT1 and AUDIT SERPENT pins it
+moved - the stray's surfacing for the resume's, the Maelstrom at the heart, a late ship's words, the first strike's
+time; `tools/mutants/serpent3.json` (45, all dead - its ram's-doubled-wake record went with the ram's own wake, AUDIT
+SHIPS C4). AUDIT SHIPS (`01-Overview/Audit-Ships.md`): `test/auditships.test.js` (20) and
+`tools/mutants/auditships.json` (73, all dead).
 
 See also: `World-Bosses.md` (the gate, whose law this follows at sea), `03-World/Naval-Combat.md` (the guns, the
 hull and the seams it reaches).

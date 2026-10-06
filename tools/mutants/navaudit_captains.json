@@ -1,7 +1,7 @@
 [
   {
     "name": "NAV1-the-old-wind-curve",
-    "file": "src/systems/naval/navalAI.js",
+    "file": "src/systems/helmWay.js",
     "old": "export const windShare = (windLen) => clamp(windLen / WIND_RATED, WIND_SHARE[0], WIND_SHARE[1]);",
     "new": "export const windShare = (windLen) => clamp(0.55 + 0.3 * windLen, 0.4, 1.3);",
     "tests": [

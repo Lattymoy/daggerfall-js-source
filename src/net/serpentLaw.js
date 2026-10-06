@@ -204,6 +204,8 @@ export function slainLine({ near, boss, top }) {
 }
 
 /** The brain's law version a client fights by: the relay refuses an `in` below SERPENT_BRAIN_MIN in words that say
- *  reload (the gate's GATE-RELOAD law), so a tab loaded before a deploy is never judged by attacks it cannot draw. */
-export const SERPENT_BRAIN_V = 1;
-export const SERPENT_BRAIN_MIN = 1;
+ *  reload (the gate's GATE-RELOAD law), so a tab loaded before a deploy is never judged by attacks it cannot draw.
+ *  SERPENT3 (2): its Maelstrom forms where it swims (a tab before it drew the whirl's wind-up at the waters' heart) and a
+ *  pair's blows land at serpentStrike.js SERPENT_PAIR_SHARE (one before it took them whole). */
+export const SERPENT_BRAIN_V = 2;
+export const SERPENT_BRAIN_MIN = 2;

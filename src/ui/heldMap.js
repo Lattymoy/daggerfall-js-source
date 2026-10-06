@@ -2239,7 +2239,7 @@ export class HeldMapWindow {
     // info on the panel it stays display:none and the ROOT keeps
     // `hmmodal` on its own: the words moved, the modality did not, and
     // an empty .hmbox would paint a bordered blank over the bay
-    // (ui/enhancedStyle.js:1730 - the frame is the box's, not its
+    // (ui/enhancedStyle.js:"display: none; position: absolute; left" - the frame is the box's, not its
     // children's).
     const open = modal && !(this._info && onPanel);
     box.classList.toggle('open', open);
@@ -3293,7 +3293,7 @@ export class HeldMapWindow {
     //   - the ship refusal (_toggleOpt below) is one of
     //     TravelOptionsPopUp.cs:168-180's three message boxes, which the
     //     classic twin still draws as a buttonless parchment
-    //     (ui/travelPopUp.js:744-751, `this.top` with no MB_BUTTONS)
+    //     (ui/travelPopUp.js:"if (this.top === 'itPush' || this.top === 'itBox') return", `this.top` with no MB_BUTTONS)
     //   - "not enough gold" (_confirmDiseased below) is
     //     DaggerfallTravelPopUp.cs:394-406, showNotEnoughGoldPopup,
     //     `messageBox.ClickAnywhereToClose = true` over TEXT.RSC 454

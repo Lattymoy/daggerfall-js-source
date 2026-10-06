@@ -17,10 +17,10 @@ here (the MW lane's, listed for completeness).
 
 THE JITTER IS THE MOTOR, NOT THE FLOATS. The port carries DFU's
 floating origin verbatim (streamingWorld.js, fuzz-pinned in
-streaming.test.js:139 - `|pixelTranslation(current)| < 1e-6` over
+streaming.test.js:"2000-step fuzz holds" - `|pixelTranslation(current)| < 1e-6` over
 2000 steps); worst-case uploaded coordinates are ~3276 units, f32 ulp
 0.24mm. What judders is TIME: motor.js runs a fixed 1/60 accumulator
-(the mobile-hotfix shape, motor.js:61-77) with NO render-time
+(the mobile-hotfix shape, motor.js:"HOTFIX 2026-08-17") with NO render-time
 interpolation - the eye advances 0, 1 or 2 steps per rendered frame
 while the look filter, the head bob and the nod are all render-rate
 smooth. Perfectly smooth rotation over stepped translation is the
@@ -33,26 +33,26 @@ matrix/draw path (GC spikes riding the beat).
 
 FOUND ON THE WAY, both real: a recenter injects 819.2 units into
 footsteps' stride accumulator (a spurious footstep at every map-pixel
-crossing, footsteps.js:166), and `_playerStill` reads one moving
-frame per crossing (world.js:16656-16658).
+crossing, footsteps.js:"if (this.ignoreLostGrounding)".."const clip = this.alternate ? set[1] : set[0];"), and `_playerStill` reads one moving
+frame per crossing (world.js:"getLocationByName:").
 
-frame per crossing (world.js:27959-27984).
+frame per crossing (world.js:"INDIRECT_LIGHT_COLOR[0]").
 
 THE DISTANCE IS FOG-BOUND, NOT STREAM-BOUND. Linear fog ends at 2400
-units (weather.js:50-57, DFU's own number) while the default 7x7
+units (weather.js:"export const FOG_SETTINGS", DFU's own number) while the default 7x7
 stream reaches 2867 - so everything a higher Land View Distance buys
 is drawn fully fogged. No LOD exists: every pixel is 32,768 triangles
 at every distance, ~1.6M/frame, unculled. The travel map already
 builds a one-vertex-per-map-pixel relief of the whole province
 (overworldModel.js) - the natural far-land raw material, later.
 Chunk-edge normals degenerate to one-sided differences (no ghost
-rows, terrainSurface.js:307-310): a permanent lighting lattice at every
+rows, terrainSurface.js:"EV4 grew two optional"): a permanent lighting lattice at every
 819.2-unit seam, visible at grazing sun.
 
 THERE IS NO CULLING AND NO MEASUREMENT. Zero frustum tests anywhere;
 ~1045 drawMesh calls in a city with per-call useProgram + per-submesh
 double texture binds and a template-string key allocated per submesh
-per frame (renderer.js:3800 - thousands of strings/frame, the single
+per frame (renderer.js:"q.r = color[0]; q.g" - thousands of strings/frame, the single
 largest GC source). No FPS counter, no draw counter; the proven
 measurement pattern is window.__renderer + probe monkeypatching
 (hudCrosshairProbe), exposed today by the dungeon host alone.
@@ -70,19 +70,19 @@ tint term without a vertex-format change across ~20 call sites.
 
 ## Hard constraints (the tripwires, so no slice trips them)
 
-- Source-text pins count GLSL substrings (perlightcolors.test.js:127,
+- Source-text pins count GLSL substrings (perlightcolors.test.js:"all four fragment",
   handedness, the fparm studio borrow) and audit18_bible_docs pins
   Rendering.md's literal "directional light 0.45 + 0.55*diffuse" -
   shader math changes move the doc in the same commit.
-- `_clockLit` (renderer.js:1119) is a regression latch: set once,
+- `_clockLit` (renderer.js:"the first person") is a regression latch: set once,
   never cleared. Flats' tint path must keep it.
 - No sRGB anywhere; lighting happens on palette bytes; the enhanced
   sky's posterise pass and NEAREST/REPEAT cutout laws stay.
 - The CPU/GPU cloud twin is pinned line-for-line
-  (enhancedSky.test.js:310); a light term reading the cloud field
+  (enhancedSky.test.js:"shadow: the sun dims"); a light term reading the cloud field
   reads THAT field.
-- streaming.test.js:181 pins the literal text of world.js's
-  StreamingWorldState construction line; terrain.test.js:144 pins
+- streaming.test.js:"the grid radius is" pins the literal text of world.js's
+  StreamingWorldState construction line; terrain.test.js:"sampler pins - Daggerfall" pins
   generateSamples to 1e-6 - LOD work stays in buildTerrainGrid /
   buildTerrainIndices, which have no direct pins.
 - Character meshes draw with culling OFF (inconsistent winding); a
@@ -90,7 +90,7 @@ tint term without a vertex-format change across ~20 call sites.
 - Three passes change programs behind the renderer's back (both
   skies, precipitation); any GL state shadowing resets at beginFrame
   and at those seams, or it recreates the recorded R9 bug.
-- The motor's fixed step is pinned (audit18_player.test.js:79,
+- The motor's fixed step is pinned (audit18_player.test.js:"1/120 < FIXED_DT",
   motorStairs, enemymotor) - SIMULATION pins, not presentation.
   Interpolation adds a read-side accessor and changes no step.
 

@@ -90,7 +90,7 @@ test('audit24 lifetimes: a city guard frees its batch on both death paths, and t
   // per-frame walk over `guards` paid for them. DFU destroys the
   // walk-away watch outright (EnemyEntity.cs:184-191) and keeps only
   // the killed body. So the key is the guard's own id now, and the
-  // prune is the encounter pool's (exteriorFoes.js:1646).
+  // prune is the encounter pool's (exteriorFoes.js:"A5 - DaedraSeducerMobileBehaviour.Update").
   // AUDIT-WH H2 moved the spelling, not the law: the id function is
   // one const now, read by the corpse lens AND by the live-foe
   // producer the plaque races, so a guard and the body it becomes
@@ -209,9 +209,9 @@ test('audit24: preventNormalizingReputations is set by the prison jump and clear
 test('audit24: the three quest settings are LIVE reads, not hardcoded falses', async () => {
   // Every one had a live consumer and a launcher toggle, so the player
   // could flip a switch that reached nothing: adult quests were
-  // filtered out whatever ChildGuard said (questLists.js:203), the
-  // guild list-box arm was unreachable (offerFlow.js:156), and the
-  // journal's clocks never counted down (clock.js:457). The settings
+  // filtered out whatever ChildGuard said (questLists.js:"|| (quest.minReq >= 10 && quest.minReq <= rep)"), the
+  // guild list-box arm was unreachable (offerFlow.js:"NONMEMBER, rank ="), and the
+  // journal's clocks never counted down (clock.js:"if (macroType !== 5)"). The settings
   // tier map's own both-ways gate now covers them; this pins the
   // BEHAVIOUR the tier map cannot see.
   const { setValue, _resetForTests } = await import('../src/systems/settings.js');

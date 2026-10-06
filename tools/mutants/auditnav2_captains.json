@@ -237,11 +237,12 @@
   {
     "name": "AUDIT-NAV2-F25-the-low-hull-unholed",
     "file": "src/systems/naval/navalAI.js",
-    "old": "    hull += hits * g.hull * (1 + HOLED_BONUS * Math.min(1, WATERLINE_BAND / hullBuild(b.hull).top));",
-    "new": "    hull += hits * g.hull;",
+    "old": "    hull += hits * g.hull * w * (1 + HOLED_BONUS * Math.min(1, WATERLINE_BAND / hullBuild(b.hull).top));",
+    "new": "    hull += hits * g.hull * w;",
     "tests": [
       "test/auditnav2_captains.test.js"
-    ]
+    ],
+    "note": "CREW-HOLD/GALLEON-WEIGHT (2026-10-06): re-aimed by content - the line gained the crew's toughness or the weight."
   },
   {
     "name": "AUDIT-NAV2-F25-flight-at-the-wary-odds",
@@ -256,11 +257,12 @@
   {
     "name": "AUDIT-NAV2-F25-a-bare-number-unsized",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  return c.hull == null ? null : fightingPower({ hull: c.hull, hullHp: hullBuild(c.hull).hullHp, hullShare: c.hullShare ?? 1 });",
+    "old": "  return c.hull == null ? null : fightingPower({ hull: c.hull, hullHp: hullBuild(c.hull).hullHp, hullShare: c.hullShare ?? 1, player: true });",
     "new": "  return null;",
     "tests": [
       "test/auditnav2_captains.test.js"
-    ]
+    ],
+    "note": "CREW-HOLD/GALLEON-WEIGHT (2026-10-06): re-aimed by content - the line gained the crew's toughness or the weight."
   },
   {
     "name": "AUDIT-NAV2-F25-a-players-galley-without-her-great-guns",

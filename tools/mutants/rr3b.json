@@ -92,8 +92,8 @@
   {
     "name": "RR3b-11-the-json-block-keeps-its-own-index",
     "file": "src/formats/worldDataReplacement.js",
-    "old": "  const dfBlock = blockFromJson(json, block);\n  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384",
-    "new": "  const dfBlock = blockFromJson(json, json.Index ?? block);\n  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384",
+    "old": "  const dfBlock = blockFromJson(json, block, blockName);\n  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384",
+    "new": "  const dfBlock = blockFromJson(json, json.Index ?? block, blockName);\n  if (blockName.endsWith('.RMB')) replaceRmbBlockBuildingData(blockName, block, dfBlock);   // :382-384",
     "tests": [
       "test/rr3b_worlddata.test.js"
     ]

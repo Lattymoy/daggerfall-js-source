@@ -1595,6 +1595,13 @@ export class Room {
         const now = Date.now(), sub = this._attach(ws)?.sub;
         const parks = (await this._parkList(now)).filter((e) => e.sub !== sub).map((e) => this._parkPublic(e));
         if (!this._send(ws, JSON.stringify({ t: 'parks', now, data: parks }))) return;
+        // AUDIT SHIPS B1: a serpent fight this socket hears is beaten again at once - the beat is armed by a serpent word
+        // and kept while someone hears the fight, so a fighter back from a dropped socket left it asleep until her next
+        // word, and the sleep's resume drew her serpent somewhere else
+        try {
+          const fights = await this._serpentFights(), b = this._attach(ws);
+          for (const [id, f] of fights) if (b && !f.fell && !f.gone && this._serpentHears(id, f, b)) { await this._serpentArm(Date.now()); break; }
+        } catch (e) { console.warn('[serpent] hello arm failed', e?.message ?? e); }
       }
       if (unseen) return;   // HOTFIX 1003f: a floor's hello said as anyone's - a private session's stranger's to nobody (a member's join says it: `_sessionShow`)
       const join = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, look: m.look, pose: this._drawn({ sub: who.subject, pose: m.pose }, a.key).pose }, who));   // AUDIT-SEATS T2: and a spectator's join stands it nowhere
@@ -4060,13 +4067,14 @@ export class Room {
     return by;
   }
   /** A fight's bodies about its waters now: one a fighter (its NEWEST socket speaks for it - AUDIT SOC B9's law, the
-   *  roll call's own _siegeSockets), where its last pose stands in the site frame, and whether that pose says it died. */
+   *  roll call's own _siegeSockets), where its last pose stands in the site frame, whether that pose says it died, and
+   *  when its sender said it (`ts` - AUDIT SHIPS A1: the serpent leads its marks by the way she makes between them). */
   _serpentBodies(f) {
     const out = [];
     for (const [sub, [, b]] of this._siegeSockets()) {
-      if (!b.pose || !f.players[sub]) continue;
+      if (!b.pose || !f.players[sub] || f.players[sub].stale) continue;   // AUDIT SHIPS C2: nor gone at
       const c = this._serpentFrameOf(f, b.pose);
-      out.push({ sub, x: c.x, z: c.z, dead: !!b.pose.dd });
+      out.push({ sub, x: c.x, z: c.z, dead: !!b.pose.dd, ...(Number.isFinite(b.pose.ts) ? { ts: b.pose.ts } : {}) });   // AUDIT SHIPS A1: the pose's send time - the brain reads her way off it
     }
     return out;
   }
@@ -4090,7 +4098,14 @@ export class Room {
     const outs = frames.map((fr) => JSON.stringify({ t: 'serpent', ...fr, sx: f.sx, sz: f.sz }));
     for (const [ws, b] of [...this._all()]) if (this._serpentHears(id, f, b)) for (const o of outs) if (!this._send(ws, o)) break;
   }
-  /** A fight to storage - every CHECKPOINT_MS from the beat, at once on a join and on the kill. */
+  /** AUDIT 2 XB6 (2026-10-06): a fight's words said - the fight kept first when one lays what every screen draws
+   *  (serpentBrain.js serpentSaysTrack), so a relay restarted wakes it no earlier than any screen holds it. */
+  async _serpentSay(fights, id, f, frames, now) {
+    if (serpentBrain.serpentSaysTrack(frames)) await this._serpentSave(id, f, now, true);
+    this._serpentFan(fights, id, f, frames);
+  }
+  /** A fight to storage - every CHECKPOINT_MS from the beat, at once on a join, on the kill and before a word that lays its
+   *  track (_serpentSay). */
   async _serpentSave(id, f, now, force) {
     if (!force && now - (this._serpentSavedAt.get(id) ?? 0) < serpentBrain.SERPENT_CHECKPOINT_MS) return;
     this._serpentSavedAt.set(id, now);
@@ -4133,13 +4148,15 @@ export class Room {
     const by = this._serpentFightBy(fights, a.sub);
     if (!by) return;
     const [id, f] = by;
+    if (f.players[a.sub]?.stale) return;   // AUDIT SHIPS C2: a game told to reload is not heard until it has
+    await this._serpentSay(fights, id, f, serpentBrain.serpentResume(f, now), now);   // SERPENT3: judged on a fight taken up, never one asleep
     if (m.k === 'hit') {
       const pose = a.pose && !a.pose.dd ? this._serpentFrameOf(f, a.pose) : null;   // the dead strike nothing
       // the kill is said by _serpentFall alone, its receipts minted and kept first (AUDIT WB A10's law) - never the brain's word of it here
-      this._serpentFan(fights, id, f, serpentBrain.applySerpentHit(f, a.sub, m.d, m.z, pose, now).filter((o) => o.k !== 'fell'));
+      await this._serpentSay(fights, id, f, serpentBrain.applySerpentHit(f, a.sub, m.d, m.z, pose, now).filter((o) => o.k !== 'fell'), now);
       if (f.fell && !f.said) { await this._serpentFall(id, f, now); return; }
-    } else if (m.k === 'wr') serpentBrain.serpentWreck(f, a.sub, m.w, now);
-    else this._serpentFan(fights, id, f, serpentBrain.coilWord(f, a.sub, m.k, m.i, m.x, m.z, now));
+    } else if (m.k === 'wr') { const out = []; serpentBrain.serpentWreck(f, a.sub, m.w, now, out); await this._serpentSay(fights, id, f, out, now); }   // AUDIT 2 XC5: a coil holding her lets her go
+    else await this._serpentSay(fights, id, f, serpentBrain.coilWord(f, a.sub, m.k, m.i, m.x, m.z, now), now);
     if (!f.fell && !f.gone) await this._serpentArm(now);
   }
   /**
@@ -4156,7 +4173,12 @@ export class Room {
     const id = serpentFightId(m.d, serpentSiteKey(m.sx, m.sz));
     let f = fights.get(id) ?? null;
     if (f?.rc?.[a.sub]) this._send(ws, JSON.stringify({ t: 'serpent', k: 'rcpt', r: f.rc[a.sub] }));
-    if (!(m.bv >= SERPENT_BRAIN_MIN)) { no('reload'); return; }
+    // AUDIT SHIPS C2: a game before the brain's law is told to reload - and until it says an `in` on the law, the account
+    // is not heard nor gone at in the fight it is in (a fight read back across the relay's deploy kept its fighters, whose
+    // old tabs drew the new law's whirl at the heart and took a pair's blows whole, and fought on)
+    const was = this._serpentFightBy(fights, a.sub);
+    if (!(m.bv >= SERPENT_BRAIN_MIN)) { if (was) was[1].players[a.sub].stale = true; no('reload'); return; }
+    if (was?.[1].players[a.sub]?.stale) delete was[1].players[a.sub].stale;
     if (m.d !== t.day || !serpentHolds(t.day, now)) { if (!f?.rc?.[a.sub]) no('the serpent is gone'); return; }
     if (cellRoomOfWire(m.sx, m.sz) !== a.key) { this._junk(ws); return; }
     if (!a.pose || a.pose.dd) return;
@@ -4176,6 +4198,8 @@ export class Room {
       await this._serpentIndex(fights);
       born = true;
     }
+    // SERPENT3: a fight its room let sleep (nobody heard it) taken up circling where it was before anyone is told it
+    else await this._serpentSay(fights, id, f, serpentBrain.serpentResume(f, now), now);
     this._setAttach(ws, { ...(this._all().get(ws) ?? a), sps: id, spd: t.day });
     const present = new Set();
     for (const [, sock] of this._all()) if (sock.id && sock.sub) present.add(sock.sub);   // the accounts about the cell now - a full fight frees a seat no one holds
@@ -4208,10 +4232,15 @@ export class Room {
         // AUDIT SERPENT 2 F8: a fight checkpointed as it is stepped (its sounding at once) - a slain or sounded one is
         // still, its kill and its hub's answer saved as they come; every kept one was written again every 2 s
         const stepped = !f.fell && !f.gone;
-        if (stepped) this._serpentFan(fights, id, f, serpentBrain.stepSerpentBrain(f, now, this._serpentBodies(f), rand01));
+        if (stepped) {
+          const said = serpentBrain.stepSerpentBrain(f, now, this._serpentBodies(f), rand01);
+          // AUDIT 2 XB6 (2026-10-06): kept before it is said when a word lays its track (_serpentSay's law, the beat's
+          // own checkpoint with it - written once; its sounding's `gone` is one, so it is written at once)
+          await this._serpentSave(id, f, now, serpentBrain.serpentSaysTrack(said));
+          this._serpentFan(fights, id, f, said);
+        }
         if (f.fell && !f.said) await this._serpentFall(id, f, now);
         else if (f.said && !f.told) await this._serpentTellHubOnce(id, f, now);
-        if (stepped) await this._serpentSave(id, f, now, !!f.gone);
       } catch (e) { console.warn('[serpent] beat failed', e?.message ?? e); }
       const heard = [...this._all()].some(([, b]) => this._serpentHears(id, f, b));
       if (f.said && !f.told) at = Math.min(at, now + SERPENT_TELL_RETRY_MS);

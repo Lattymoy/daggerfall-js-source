@@ -176,8 +176,8 @@
   {
     "name": "CSAK-peers-snap-threshold",
     "file": "src/scenes/comeSailAwayPeers.js",
-    "old": "> CSA_PEER_SNAP_M * CSA_PEER_SNAP_M;",
-    "new": "> CSA_PEER_SNAP_M * CSA_PEER_SNAP_M * 100;",
+    "old": "(target[2] - shown[2]) ** 2 > snap * snap;",
+    "new": "(target[2] - shown[2]) ** 2 > snap * snap * 100;",
     "tests": [
       "test/csa_together.test.js"
     ]

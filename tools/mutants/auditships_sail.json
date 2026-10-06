@@ -1,0 +1,223 @@
+[
+  {
+    "name": "AUDIT-SHIPS-A2-a-fixed-reach",
+    "file": "src/systems/seaHelm.js",
+    "old": "export const seaHelmReach = (way) => Math.max(SEA_HELM.avoidM, Math.max(0, way) * SEA_HELM.avoidS);",
+    "new": "export const seaHelmReach = (way) => SEA_HELM.avoidM;",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A2-the-reach-let-go",
+    "file": "src/systems/seaHelm.js",
+    "old": "export const seaHelmLook = (st, way) => Math.max(seaHelmReach(way), st?.reach ?? 0);",
+    "new": "export const seaHelmLook = (st, way) => seaHelmReach(way);",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A2-turned-straight-back",
+    "file": "src/systems/seaHelm.js",
+    "old": "  else if (blocked) course = foldDeg(q.heading);\n",
+    "new": "",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A2-the-look-a-fixed-150",
+    "file": "src/scenes/world.js",
+    "old": "const far = Math.max(TV_SEA_AHEAD_M, seaHelmLook(tvSea.helm, v[2]));",
+    "new": "const far = TV_SEA_AHEAD_M;",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A2-her-beam-unlooked",
+    "file": "src/scenes/world.js",
+    "old": "for (const j of [1, 3, 4]) { const n = boat.Nodes?.[j]; if (n) lane = Math.min(lane, tvSeaLandAlong(n.position, fw[0], fw[2], far)); }",
+    "new": "",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A2-the-mark-lane-a-line",
+    "file": "src/scenes/world.js",
+    "old": "for (const k of [-1, 0, 1]) markAhead = Math.min(markAhead,",
+    "new": "for (const k of [0]) markAhead = Math.min(markAhead,",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A2-the-mark-unlooked",
+    "file": "src/scenes/world.js",
+    "old": "way: v[2], dt: gs, landfall, landAhead: lane, markAhead, freer:",
+    "new": "way: v[2], dt: gs, landfall, landAhead: lane, markAhead: Infinity, freer:",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A3-the-fixed-brake",
+    "file": "src/scenes/navalHost.js",
+    "old": "export const heaveToDecel = (v) => Math.min(CSA_BRAKE_MAX, Math.max(HEAVE_TO_DECEL, (v * v - BOARD_SPEED * BOARD_SPEED) / (2 * HEAVE_TO_M)));",
+    "new": "export const heaveToDecel = (v) => HEAVE_TO_DECEL + 0 * v;",
+    "tests": [
+      "test/auditships_sail.test.js",
+      "test/navaudit_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A3-the-host-brake-fixed",
+    "file": "src/scenes/navalHost.js",
+    "old": "const brake = () => (enabled && heaveTo && myBoat() ? heaveTo.decel : 0);",
+    "new": "const brake = () => (enabled && heaveTo && myBoat() ? HEAVE_TO_DECEL : 0);",
+    "tests": [
+      "test/navaudit_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A3-her-way-unread",
+    "file": "src/scenes/navalHost.js",
+    "old": "if (fast) { startHeaveTo(fast, boat); return true; }",
+    "new": "if (fast) { startHeaveTo(fast); return true; }",
+    "tests": [
+      "test/navaudit_helm.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A4-the-calm-under-sail-free",
+    "file": "src/systems/seaHelm.js",
+    "old": "(q.free ? windLen > 0 : windLen >= H.calm)",
+    "new": "windLen >= H.calm",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A4-her-set-sails-alone",
+    "file": "src/systems/comeSailAway.js",
+    "old": "const drive = responsive() ? freeDrive(GetSailPower(sailCrest, true), boat)",
+    "new": "const drive = responsive() ? freeDrive(GetSailPower(sailCrest), boat)",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A4-the-world-unasked",
+    "file": "src/scenes/world.js",
+    "old": "sailWay: csaRuntime.sailWayOf(boat), free:",
+    "new": "sailWay: 0, free:",
+    "tests": [
+      "test/auditships_sail.test.js",
+      "test/sailfree.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A5-one-gain-for-all",
+    "file": "src/systems/helmWay.js",
+    "old": "export const sailFreeGain = (b) => SAIL_FREE_GAINS[b?.hull]?.[b?.variant ?? 0] ?? SAIL_FREE_GAINS[b?.hull]?.[0] ?? 1;",
+    "new": "export const sailFreeGain = (b) => SAIL_FREE.gain;",
+    "tests": [
+      "test/auditships_sail.test.js",
+      "test/helmway.test.js",
+      "test/auditnav2_captains.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A5-the-rate-the-galleons",
+    "file": "src/systems/comeSailAway.js",
+    "old": "return responsive() ? f(rate * f(sailFreeGain(b))) : rate;",
+    "new": "return responsive() ? f(rate * f(SAIL_FREE.gain)) : rate;",
+    "tests": [
+      "test/auditnav2_captains.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A5-the-rudder-the-galleons",
+    "file": "src/systems/comeSailAway.js",
+    "old": "steerage(way / sailFreeGain(boat))",
+    "new": "steerage(way / SAIL_FREE.gain)",
+    "tests": [
+      "test/helmway.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A5-a-table-entry-off",
+    "file": "src/systems/helmWay.js",
+    "old": "1: Object.freeze([1.065, 1.159, 2.071, 1.190, 1.233, 1.212, 2.131]),",
+    "new": "1: Object.freeze([1.065, 1.159, 2.071, 1.190, 1.233, 1.212, 1.643]),",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A5-the-gain-on-every-coast",
+    "file": "src/systems/comeSailAway.js",
+    "old": "if (!responsive() || !(share > 0)) return coast;",
+    "new": "if (!responsive()) return coast;",
+    "tests": [
+      "test/auditships_sail.test.js",
+      "test/helmway.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A5-the-oars-never-say",
+    "file": "src/systems/comeSailAway.js",
+    "old": "state.sailWay = way < was ? state.sailWay * (way / was) : state.sailPosition === 1 ? state.sailWay + (way - was) : state.sailWay;",
+    "new": "state.sailWay = way < was ? state.sailWay * (way / was) : state.sailWay + (way - was);",
+    "tests": [
+      "test/helmway.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A5-the-autorun-not-the-oars",
+    "file": "src/systems/comeSailAway.js",
+    "old": "(state.oarThrottle !== 0 || !!deps.input?.toggleAutorun || (has('Run')",
+    "new": "(state.oarThrottle !== 0 || (has('Run')",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A6-the-trim-the-players",
+    "file": "src/systems/comeSailAway.js",
+    "old": "const trimAuto = () => responsive() || !!setting('SailingAssist.AutoTrimming', true);",
+    "new": "const trimAuto = () => !!setting('SailingAssist.AutoTrimming', true);",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A7-the-fixed-snap",
+    "file": "src/scenes/comeSailAwayPeers.js",
+    "old": "export const peerSnapM = (v) => Math.max(CSA_PEER_SNAP_M, Math.hypot(v?.[0] ?? 0, v?.[2] ?? 0) * CSA_PEER_SNAP_S);",
+    "new": "export const peerSnapM = (v) => CSA_PEER_SNAP_M;",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A7-the-ease-fixed",
+    "file": "src/scenes/comeSailAwayPeers.js",
+    "old": "const snap = peerSnapM(sceneWay(w, toScene));",
+    "new": "const snap = CSA_PEER_SNAP_M;",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SHIPS-A7-a-passenger-dropped",
+    "file": "src/scenes/comeSailAwayPeers.js",
+    "old": "> peerSnapM(sceneWay(l.boats[i], l.toScene)) ** 2) continue;",
+    "new": "> CSA_PEER_SNAP_M * CSA_PEER_SNAP_M) continue;",
+    "tests": [
+      "test/auditships_sail.test.js"
+    ]
+  }
+]

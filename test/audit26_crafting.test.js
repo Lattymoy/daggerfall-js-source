@@ -37,7 +37,7 @@ const recorder = () => ({
   uploadTexture: () => 'tex',
   drawScreenQuad(tex, rect, uv, color) { this.quads.push({ tex, ...rect, uv, color }); },
 });
-/** The port's drawSpy idiom (test/spellbookwindow.test.js:54-64):
+/** The port's drawSpy idiom (test/spellbookwindow.test.js:"function spyFont"):
  *  drawText asks glyphWidth for every drawn character, so the painted
  *  STRINGS come back through the font. Spaces are skipped by drawText,
  *  so the tape is the printable characters only. */

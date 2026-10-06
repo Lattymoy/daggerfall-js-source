@@ -69,7 +69,7 @@ test('Weapon Widget\u2019s Bob sways the gun while walking and barely breathes w
   const standing = span(labMotion({ walking: false }));
   assert.ok(walking > 10, `the walk sways the sprite (${walking.toFixed(1)}px)`);
   assert.ok(standing > 0 && standing < walking / 3, `BobWhileIdle is a tenth of a stride, not a stride (${standing.toFixed(1)}px)`);
-  // the motor's frame is the rig's own shape (weaponRig.js:1578-1586)
+  // the motor's frame is the rig's own shape (weaponRig.js:"(the first-person arms have no hip to hang it on)")
   const m = labMotion({ walking: true, running: true });
   assert.ok(m.speedRatio > 1 && m.baseSpeed > 0 && m.localVel[2] > 0, 'running is faster than the walk base, and it is forward motion');
   assert.equal(labMotion({ walking: false }).standing, true);
@@ -215,7 +215,7 @@ test('the sounds are Daggerfall\u2019s own format, and every clip the lab offers
   for (const n of names) {
     const b = readFileSync(`${dir}/${n}.wav`);
     const dv = new DataView(b.buffer, b.byteOffset, b.byteLength);
-    // DAGGER.SND's parameters, src/formats/sndFile.js:3 - 11025Hz,
+    // DAGGER.SND's parameters, src/formats/sndFile.js:"Each BSA record is" - 11025Hz,
     // unsigned 8-bit, mono. The bake is the whole aesthetic claim and
     // this is where it stops being a claim.
     assert.equal(b.toString('latin1', 0, 4), 'RIFF', `${n} is a RIFF file`);

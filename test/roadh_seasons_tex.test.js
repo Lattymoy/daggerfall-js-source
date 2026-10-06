@@ -18,8 +18,8 @@
 //
 // H4 THE TEXTURE-REPLACEMENT SWAP. A user texture pack's PNG decodes
 // through the DOM to `{ width, height, data }`, TOP row first; the
-// upload path reads `color32.colors` (renderer.js:3463) and every
-// texture it uploads is BOTTOM-up (getColor32, baseImageFile.js:143 /
+// upload path reads `color32.colors` (renderer.js:"// WW3: the shape's") and every
+// texture it uploads is BOTTOM-up (getColor32, baseImageFile.js:"const headerLength".."const dstRow = (dstHeight - 1 - border - y) * dstWidth;" /
 // BaseImageFile.cs:250, with UNPACK_FLIP_Y_WEBGL off). So the first
 // swapped record a pack covered threw on `undefined.buffer`, and would
 // have drawn upside-down once named. DFU has neither problem for one

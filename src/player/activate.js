@@ -162,7 +162,7 @@ export function objectAabb(o) {
  * the Update ladder itself and is SILENT - `if (ActionCheck(hit, out
  * action) && hit.distance <= DefaultActivationDistance)` (:380-383),
  * no else, no line - so it keeps the narrow pre-gate exactly as it is.
- * isActionDoorObject (world/actionSystem.js:106) is the port's spelling
+ * isActionDoorObject (world/actionSystem.js:"export const isActionDoorObject") is the port's spelling
  * of that GetComponent<DaggerfallActionDoor> everywhere else.
  *
  * @param {Map<string, object>} objects - ActionSystem.objects
@@ -381,7 +381,7 @@ export function pickActivatable(eye, dir, targets, collider) {
  * `distance` is widened to RAY_DISTANCE so it can WIN the pick
  * therefore carries its real `reach` beside it, and the ladder speaks
  * the refusal when the winner came back out of reach. This is the
- * bulletin board's idiom (scenes/worldModes.js:6380-6393) given a
+ * bulletin board's idiom (scenes/worldModes.js:"had one. The click") given a
  * field, not a second pick: one ray, one winner, the gate downstream.
  * Targets that were never widened answer `reach === distance`, which
  * the pre-gate has already enforced, so they can never refuse.

@@ -133,7 +133,7 @@ export function createTownSheet(deps = {}) {
 
   /**
    * WHICH BUILDINGS GET A NAME, and what that name is. The shipped
-   * town map's own ladder (ui/exteriorAutomapWindow.js:1070-1116),
+   * town map's own ladder (ui/exteriorAutomapWindow.js:"- a plate with an".."const rect = this.panelRect(m);"),
    * kept whole because it is the DISCOVERY law rather than a
    * presentation choice.
    */

@@ -18,6 +18,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { QuestMachine } from '../src/systems/quest/machine.js';
+import { resolveAnchor, maskAnchors } from '../tools/citeAnchor.mjs';   // CITE-ANCHOR: a cite names its line by a quote
 import { loadQuestTables } from '../src/systems/quest/tables.js';
 import { Symbol as QS } from '../src/systems/quest/symbol.js';
 import * as clockModule from '../src/systems/quest/clock.js';
@@ -309,29 +310,37 @@ test('AUDIT REST II Q3: the host - a ledger the never-lapse build wrote, held th
 
 test('AUDIT REST II Q4/Q5: no text says a deadline stays frozen online (REST8 has no freeze: it stays a deadline, on played time); the cites into quest/actions.js name their lines - getClassicSpellEffects and the template\'s setComplete, the ready-spell doors, CreateFoe\'s spawn (mutants: a cite put back)', () => {
   for (const f of ['src/systems/quest/clock.js', 'test/fb1003_bodyguard.test.js']) assert.doesNotMatch(rd(f), /stays? frozen/, `${f}: no "stays frozen"`);
-  const actions = rd('src/systems/quest/actions.js').split('\n');
+  const raw = rd('src/systems/quest/actions.js'), actions = raw.split('\n');
   const at = (n) => actions[n - 1] ?? '';
+  // CITE-ANCHOR: each cite names its line by a quote; the pin reads the line the quote names
+  const line = (q, after) => resolveAnchor(maskAnchors(raw), actions, q, after ?? null).line ?? 0;
+  const A = String.raw`"([^"]+)"(?:\.\."([^"]+)")?`;
   const cites = [
-    ['bible/06-Systems/Quest-Arc.md', /`actions\.js:(\d+)`\/`:(\d+)`/],
-    ['test/questguards.test.js', /actions\.js:(\d+)\/:(\d+)\) and the task can never fire/],
-    ['test/qx1_exterior_host.test.js', /actions\.js:(\d+)\/:(\d+) - no effects/],
-    ['src/scenes/exterior.js', /actions\.js:(\d+)\/:(\d+)\)/],
+    ['bible/06-Systems/Quest-Arc.md', new RegExp(String.raw`\`actions\.js:${A}\`\/\`actions\.js:${A}\``)],
+    ['test/questguards.test.js', new RegExp(String.raw`actions\.js:${A}\/actions\.js:${A}\) and the task can never fire`)],
+    ['test/qx1_exterior_host.test.js', new RegExp(String.raw`actions\.js:${A}\/actions\.js:${A} - no effects`)],
+    ['src/scenes/exterior.js', new RegExp(String.raw`actions\.js:${A}\/actions\.js:${A}\)`)],
   ];
   for (const [f, re] of cites) {
     const m = re.exec(rd(f));
     assert.ok(m, `${f} cites the pair`);
-    assert.match(at(Number(m[1])), /getClassicSpellEffects/, `${f}: :${m[1]} is the effects lookup`);
-    assert.match(at(Number(m[2])), /this\.setComplete\(\);\s+\/\/ C#: the TEMPLATE completes/, `${f}: :${m[2]} is the template's complete`);
+    assert.match(at(line(m[1], m[2])), /getClassicSpellEffects/, `${f}: "${m[1]}" is the effects lookup`);
+    assert.match(at(line(m[3], m[4])), /this\.setComplete\(\);\s+\/\/ C#: the TEMPLATE completes/, `${f}: "${m[3]}" is the template's complete`);
   }
-  for (const [f, re] of [['src/scenes/exterior.js', /\/\/ actions\.js:(\d+)\)\. This host/], ['test/qx1_exterior_host.test.js', /\(actions\.js:(\d+) - C# subscribes/]]) {
+  for (const [f, re] of [['src/scenes/exterior.js', new RegExp(String.raw`\/\/ actions\.js:${A}\)\. This host`)], ['test/qx1_exterior_host.test.js', new RegExp(String.raw`\(actions\.js:${A} - C# subscribes`)]]) {
     const m = re.exec(rd(f));
     assert.ok(m, `${f} cites the doors`);
-    assert.match(at(Number(m[1])), /notifyNewReadySpell\/notifyCastReadySpell doors/, `${f}: :${m[1]} is the ready-spell doors`);
+    assert.match(at(line(m[1], m[2])), /notifyNewReadySpell\/notifyCastReadySpell doors/, `${f}: "${m[1]}" is the ready-spell doors`);
   }
-  const m = /systems\/quest\/actions\.js:(\d+)-(\d+) here\./.exec(rd('src/systems/encounters.js'));
+  // the range CreateFoe's spawn is placed in, named by its first line: CreatePendingFoeSpawn, which calls
+  // CreateFoeGameObjects and, when they fail, completes and throws - as first written (1af82c5672). The shifts since had
+  // carried the range's start onto the close of the tick above it, and this pin held that close; CITE-ANCHOR re-aimed
+  // the cite. In encounters.js's comment the method's head may be named at its first line (the brace rule's nudge).
+  const m = new RegExp(String.raw`systems\/quest\/actions\.js:${A} here\.`).exec(rd('src/systems/encounters.js'));
   assert.ok(m, 'encounters.js cites CreateFoe\'s range');
-  assert.equal(at(Number(m[1])), '  }', 'encounters.js: the range opens on the close of the tick that places the spawn');
-  assert.match(at(Number(m[1]) - 2), /world\.raiseOnEncounterEvent/);
-  assert.match(at(Number(m[2]) - 1), /this\.setComplete\(\);/, '...and closes on CreatePendingFoeSpawn\'s throw');
-  assert.match(at(Number(m[2])), /create foe attempted to create/);
+  const open = line(m[1], m[2]);
+  assert.match(at(open), /_createPendingFoeSpawn\(world, foe\) \{|this\.pendingFoes = world\.createFoeGameObjects\(/, 'encounters.js: the range opens on CreatePendingFoeSpawn, which calls CreateFoeGameObjects');
+  const thrown = actions.findIndex((l, i) => i >= open && /create foe attempted to create/.test(l)) + 1;
+  assert.ok(thrown > open && thrown - open <= 10, '...and the range runs to its throw');
+  assert.match(at(thrown - 1), /this\.setComplete\(\);/, '...which follows its complete');
 });

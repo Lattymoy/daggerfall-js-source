@@ -348,7 +348,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     // AUDIT 24 (the seven-slice sweep): a LIVE read, not a hardcoded
     // false. DaggerfallUnity.Settings.PlayerNudity is a real setting
     // the port already stores and the launcher already renders as a
-    // toggle - and questLists.js:203 gates adult quests on it, so
+    // toggle - and questLists.js:"|| (quest.minReq >= 10 && quest.minReq <= rep)" gates adult quests on it, so
     // flipping it did nothing at all. A GETTER because C# reads the
     // setting at the point of use, and the consumer reads
     // `deps.playerNudity` as a value.
@@ -359,7 +359,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
     isPlayerInsideCastle: () => ctx.isPlayerInsideCastle?.() ?? false,
     removeNpcQuestor: (seed) => ctx.removeNpcQuestor?.(seed),
     getGuildFactionId: (g) => ctx.getGuildFactionId?.(g) ?? 0,
-    // likewise: offerFlow.js:156 branches on this and the launcher
+    // likewise: offerFlow.js:"NONMEMBER, rank =" branches on this and the launcher
     // offers it, so the list-box arm was unreachable. Defaults off,
     // which is the classic random draw.
     get guildQuestListBox() { return getBool('Enhancements', 'GuildQuestListBox'); },
@@ -460,7 +460,7 @@ export function createQuestBridge(ctx, { label = 'host' } = {}) {
      * (and, GUIDE1, the step each was written at), and the TIGHTEST
      * RUNNING clock on the quest's resources (Clock carries
      * `remainingTimeInSeconds` in game seconds beside
-     * `clockEnabled`/`clockFinished`, quest/clock.js:352-354 - AUDIT REST
+     * `clockEnabled`/`clockFinished`, quest/clock.js:"this.startingTimeInSeconds = 0".."this.remainingTimeInSeconds = 0;" - AUDIT REST
      * III D6: the fields, where an off-by-one and a comment line stood). The
      * archive is the notebook's filed entries; `ended` the completed
      * quests the machine still holds, with their verdict.

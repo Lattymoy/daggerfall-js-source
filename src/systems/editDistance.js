@@ -33,7 +33,7 @@
 //       the CURRENT CULTURE's order. That order is only observable
 //       once the heap starts DROPPING, which it really does: the
 //       window passes ntop = 1000 and Daggerfall alone holds 1331
-//       locations (test/maps.test.js:190), so the drop path is live
+//       locations (test/maps.test.js:"assert.equal(region.locationCount, 1331)"), so the drop path is live
 //       in the biggest regions. It moves only the TAIL, because the
 //       heap always drops its current minimum and MatchesCutOff
 //       keeps the head - but it is not dead code, and a debugger

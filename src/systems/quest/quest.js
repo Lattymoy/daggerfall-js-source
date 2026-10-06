@@ -48,7 +48,7 @@ export function chunkMessageTokens(tokens, chunkSize = 22) {
     currentChunk.push(token);
     // C# also counts JustifyLeft. The port's quest-message layer never
     // mints one - loadMessage produces exactly Nothing / Text /
-    // JustifyCenter (message.js:22-26) - and Formatting has no such
+    // JustifyCenter (message.js:"export const Formatting") - and Formatting has no such
     // member, so naming it here would compare against `undefined` and
     // count every token that carries no formatting at all.
     if (token.formatting === Formatting.JustifyCenter

@@ -21,6 +21,7 @@ import { mulberry32 } from '../src/combat/bloodArt.js';
 import { HOSTILE_NEAR_M, RAM_SPEED, SHIP_FADE_S } from '../src/scenes/navalHost.js';
 import { FIELD_QUIET_S } from '../src/systems/naval/navalYard.js';
 import { HANDLING } from '../src/systems/comeSailAway.js';
+import { sailFreeGain } from '../src/systems/helmWay.js';
 import { sea } from './navalSea.mjs';
 import { scene } from './csaScene.mjs';
 
@@ -421,24 +422,28 @@ test('AUDIT NAV2 F27 a quarry is in the fight while she is chased: a merchantman
 
 // ── F28: the heavy hulls' way ────────────────────────────────────────────────────────────────────────────────────────
 
-test('AUDIT NAV2 F28 every hull\'s way comes and goes at the player\'s own rates: a captain gathers way as the player\'s hull of her kind does under the responsive helm at the rated wind, and loses it at that hull\'s coast - the Carrack as quick as a Small Ship, the Large Galley half as quick both ways (mutants: the old heavy half, the coast one rate)', () => {
+test('AUDIT NAV2 F28 every hull\'s way comes and goes at the player\'s own rates: a captain gathers way as the player\'s hull of her kind does under the responsive helm at the rated wind, and loses it at that hull\'s coast (SAIL-FREE\'s gain on the player\'s own way aside) - the Carrack as quick as a Small Ship, the Large Galley half as quick both ways (mutants: the old heavy half, the coast one rate)', () => {
   for (const [classId, hull] of [['pirateSloop', HULL.LargeBoat], ['pirateBrig', HULL.SmallShip], ['navyGalley', HULL.LargeGalley], ['pirateFlagship', HULL.Carrack]]) {
     const sc = scene();
     sc.deps.handling = () => 'responsive';
-    sc.helm(sc.place(hull, 0));
+    const boat = sc.helm(sc.place(hull, 0));
     sc.rt.RaiseSails();
     sc.rt.state.windVectorCurrent = [WIND_RATED, 0, 0];
     sc.rt.state.windVectorTarget = [WIND_RATED, 0, 0];
+    sc.frame();   // PIN MOVED (AUDIT SHIPS A5, 2026-10-06): her canvas drives her a beat - the coast's gain is a way it made
     const gain = sc.rt.properties.moveAccel();
     sc.rt.state.sailPosition = 0;
     const coast = sc.rt.properties.moveAccel();
     const s = ship(classId, { yaw: 90 * DEG });
     s.course = [1e6, 0];   // a course held
     stepCaptain(s, world({ dt: 0.1, wind: [0, 0, WIND_RATED] }));
-    near(s.speed / 0.1, gain, 0.06, `hull ${hull}: gathering way`);
+    // PIN MOVED (SAIL-FREE, 2026-10-05): the player's rates carry SAIL-FREE's gain with her way (helmWay.js) - hers alone;
+    // a captain sails at HELM-WAY's pace, so hers are the player's over it: each to her own way in the same time
+    // PIN MOVED (AUDIT SHIPS A5, 2026-10-06): her rig's own gain (sailFreeGain), the galleon's SAIL_FREE.gain hers alone
+    near(s.speed / 0.1, gain / sailFreeGain(boat), 0.06, `hull ${hull}: gathering way`);
     s.speed = 30;
     stepCaptain(s, world({ dt: 0.1, wind: [0, 0, WIND_RATED] }));
-    near((30 - s.speed) / 0.1, coast, 1e-6, `hull ${hull}: losing it`);
+    near((30 - s.speed) / 0.1, coast / sailFreeGain(boat), 1e-6, `hull ${hull}: losing it`);
   }
   assert.ok(ACCEL > 0 && DECEL > 0 && HANDLING.moveAccelSail > 0);
 });

@@ -30,7 +30,7 @@
 //   43x10 button pinned Right/Middle - so the button sits at
 //   (+42, +2.5) inside the row and the label's right edge at +40
 //   (:173-213). These are EXACTLY the six actions DFU leaves off the
-//   classic grid (ui/controlsWindow.js:8-12 records that omission as
+//   classic grid (ui/controlsWindow.js:"- NINE GROUPS of" records that omission as
 //   DFU's own quirk, kept) - this window is where DFU rebinds them.
 // - FOUR SLIDERS (:123-132), each a 70x45 panel: a centred label at
 //   y=0 and the trough at (0,6), 70x4, with the indicator 2 past its
@@ -126,7 +126,7 @@ import { getBool, getFloat, getInt, setValue, saveSettings, effectiveSettings } 
 // MeleeAttackDetection is the ONE of this window's ten keys tiered
 // `stored` - the port has no melee-detection branch to consume it - so
 // it is read through effectiveSettings, the settings menu's own
-// display surface, exactly as ui/pauseWindow.js:146-148 reads its
+// display surface, exactly as ui/pauseWindow.js:"does; the effect" reads its
 // three stored-tier controls. The tier doctrine reserves the typed
 // getters for LIVE keys, and settings.test.js enforces it. The CLAMP
 // GetInt(0,1) would have applied (SettingsManager.cs:516) is applied

@@ -420,7 +420,7 @@ test('A10 CLOSEOUT: PlayerGPS freezes its map pixel underground (StreamingWorld.
   //
   // The port converted the player's DUNGEON-LOCAL feet through the
   // streamer's exterior origin instead. RDB block origins are signed
-  // (dungeonLayout.js:75-76, RDB_SIDE = 51.2), so the arithmetic below
+  // (dungeonLayout.js:"const originX = block.x", RDB_SIDE = 51.2), so the arithmetic below
   // is not a corner case: walking one block west or south of the start
   // slides the pixel, and Privateer's Hold - the first dungeon in the
   // game - has blocks at -51.2 on both axes.

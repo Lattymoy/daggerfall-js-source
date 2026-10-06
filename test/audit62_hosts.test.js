@@ -117,7 +117,8 @@ test('AUDIT 62 F11: the NPC-guard conversion sweep is EXTERIOR only in both host
   // player stood in a shop.
   for (const h of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = src(h);
-    const fn = s.slice(s.indexOf('function runEncounterTick'), s.indexOf('\n  }\n', s.indexOf('function runEncounterTick')));
+    const at = s.search(/^[ \t]*function runEncounterTick\(/m);   // CITE-ANCHOR: the declaration, not a comment's anchor that quotes it
+    const fn = s.slice(at, s.indexOf('\n  }\n', at));
     assert.ok(fn.includes("if (_m === 'exterior') cityGuards.makeNpcGuardsIntoEnemies("), `${h}: the sweep is exterior-only`);
     assert.equal(/_m !== 'dungeon'/.test(fn), false, `${h}: the "not a dungeon" gate is gone`);
   }

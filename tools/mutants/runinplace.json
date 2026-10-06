@@ -1,0 +1,47 @@
+[
+  {
+    "name": "RUN-IN-PLACE-a-the-stand-removed",
+    "file": "src/net/online.js",
+    "old": "      else if (s.mv && now - p.drawnAt >= SHOWN_MOVE_HOLD_MS) s.mv = 0;",
+    "new": "",
+    "tests": [
+      "test/runinplace.test.js"
+    ]
+  },
+  {
+    "name": "RUN-IN-PLACE-b-the-hold-ten-times-as-long",
+    "file": "src/net/online.js",
+    "old": "export const SHOWN_MOVE_HOLD_MS = 250;",
+    "new": "export const SHOWN_MOVE_HOLD_MS = 2500;",
+    "tests": [
+      "test/runinplace.test.js"
+    ]
+  },
+  {
+    "name": "RUN-IN-PLACE-c-the-hold-at-nothing",
+    "file": "src/net/online.js",
+    "old": "now - p.drawnAt >= SHOWN_MOVE_HOLD_MS) s.mv = 0;",
+    "new": "now - p.drawnAt >= 0) s.mv = 0;",
+    "tests": [
+      "test/runinplace.test.js"
+    ]
+  },
+  {
+    "name": "RUN-IN-PLACE-d-the-first-step-not-read-as-one",
+    "file": "src/net/online.js",
+    "old": "      if (!was || s.x !== was.x || s.y !== was.y || s.z !== was.z) p.drawnAt = now;",
+    "new": "      if (!was) p.drawnAt = now;",
+    "tests": [
+      "test/runinplace.test.js"
+    ]
+  },
+  {
+    "name": "RUN-IN-PLACE-e-a-coordinate-the-walk-moves-in-not-read",
+    "file": "src/net/online.js",
+    "old": "      if (!was || s.x !== was.x || s.y !== was.y || s.z !== was.z) p.drawnAt = now;",
+    "new": "      if (!was || s.y !== was.y || s.z !== was.z) p.drawnAt = now;",
+    "tests": [
+      "test/runinplace.test.js"
+    ]
+  }
+]

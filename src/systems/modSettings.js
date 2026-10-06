@@ -1126,7 +1126,7 @@ export const MOD_SETTINGS = Object.freeze({
       // you to a destination and theres no travel". DEPARTURE FROM THE
       // MOD'S SHIPPED DEFAULT, on Mac's word, and it is the whole of that
       // report. IsPlayerControlledTravel is an AND over three toggles
-      // (travelPopUp.js:192): `(cautiousTravel || !speedCautious) &&
+      // (travelPopUp.js:"export function isPlayerControlledTravel"): `(cautiousTravel || !speedCautious) &&
       // (stopAtInnsTravel || !sleepModeInn) && !travelShip`. The popup
       // opens with `sleepModeInn = true` - classic Daggerfall's own
       // default, stopping at inns - so with this key false the second

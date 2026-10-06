@@ -129,11 +129,15 @@ test('TEMPLE-HOME, the list against the vendored pack (no game data): the locati
 
 // ---- the player's own temples ----
 
-/** Whether a quest person's local home (AssignHomeTown's `Place _x_home_ local house`) is placed in `loc`. */
+/** Where a quest person's local home (AssignHomeTown's `Place _x_home_ local house`) asked in `loc` is placed: 'here',
+ *  'near' (QUEST-AUDIT II NEAR-SITE - another town's house, where the mods took the town's), or null where it throws. */
 function homePlaced(t, loc) {
   const world = { ...t.world(loc), currentLocation: () => loc };
   const say = console.log, warn = console.warn; console.log = () => {}; console.warn = () => {};
-  try { new Place({ uid: 3, resources: new Map(), hooks: { world }, rolls: () => 0.3 }, 'Place _contact_home_ local house'); return true; } catch { return false; } finally { console.log = say; console.warn = warn; }
+  try {
+    const home = new Place({ uid: 3, resources: new Map(), hooks: { world }, rolls: () => 0.3 }, 'Place _contact_home_ local house');
+    return home.siteDetails.mapId === loc.mapTableData.mapId ? 'here' : 'near';
+  } catch { return null; } finally { console.log = say; console.warn = warn; }
 }
 /** The temple quest `name` asked of the temple's questor in `loc` (the player inside, the questor clicked) with the
  *  draws `rolls`: the quest, or null where its parse failed. */
@@ -151,7 +155,7 @@ function askTemple(t, loc, name, rolls) {
   try { return machine.parseQuestForLists(questScript(name), 0, { rolls }); } catch { return null; } finally { console.log = say; console.warn = warn; }
 }
 
-test('TEMPLE-HOME, gated on ARENA2_PATH: with both packs on, each of the 34 stands Daggerfall\'s own temple (TEMPAAA0), where a person\'s local home is placed and C0B00Y01 and C0B00Y03 are always made; a save pinning the mod back in stands its TEMPASA2, where the home finds no house and the two fail as the audit found - and every other temple of the world has a house under the mods', { skip: SKIP }, async () => {
+test('TEMPLE-HOME, gated on ARENA2_PATH: with both packs on, each of the 34 stands Daggerfall\'s own temple (TEMPAAA0), where a person\'s local home is placed and C0B00Y01 and C0B00Y03 are always made; a save pinning the mod back in stands its TEMPASA2, which holds no house - PIN MOVED (QUEST-AUDIT II NEAR-SITE): the mods took the temple\'s houses, so the home and the two quests\' houses are taken in the nearest towns, and the two are always made where the audit found them fail - and every other temple of the world has a house of its own under the mods', { skip: SKIP }, async () => {
   const say = console.log; console.log = () => {};
   let t;
   try { t = await openTowns({ mods: true }); } finally { console.log = say; }
@@ -162,24 +166,24 @@ test('TEMPLE-HOME, gated on ARENA2_PATH: with both packs on, each of the 34 stan
     const loc = locOf(key);
     assert.equal(loc.mapTableData.locationType, 5, `${loc.name}: a ReligionTemple`);
     assert.deepEqual(loc.exterior.exteriorData.blockNames, ['TEMPAAA0.RMB'], `${loc.name}: Daggerfall's own temple`);
-    assert.equal(homePlaced(t, loc), true, `${loc.name}: a local home`);
+    assert.equal(homePlaced(t, loc), 'here', `${loc.name}: a local home`);
     for (const q of QUESTS) for (let i = 1; i <= DRAWS; i++) if (!askTemple(t, loc, q, seeded(i * 7919 + key))) failed.ours[q]++;
     t.LP.setLayoutPins(new Map([[key, { out: new Set(), in: new Set([BV]), stamp: STAMP, why: 'quest' }]]));
     const modded = locOf(key);
     assert.deepEqual(modded.exterior.exteriorData.blockNames, ['TEMPASA2.RMB'], `${loc.name}: the save's pin stands the mod's temple`);
-    assert.equal(homePlaced(t, modded), false, `${loc.name}: no house for a local home there`);
+    assert.equal(homePlaced(t, modded), 'near', `${loc.name}: no house for a local home there - the nearest town's`);
     for (const q of QUESTS) for (let i = 1; i <= DRAWS; i++) if (!askTemple(t, modded, q, seeded(i * 7919 + key))) failed.mods[q]++;
     t.LP.setLayoutPins(new Map());
   }
   const asked = ALONE.length * DRAWS;
   assert.deepEqual(failed.ours, { C0B00Y01: 0, C0B00Y03: 0 }, `never failing in Daggerfall's temples (${asked} asks each)`);
-  assert.ok(failed.mods.C0B00Y01 > asked * 0.8, `C0B00Y01 in the mod's temple: ${failed.mods.C0B00Y01} of ${asked} failed (15 in 16 expected)`);
-  assert.ok(failed.mods.C0B00Y03 > asked * 0.3 && failed.mods.C0B00Y03 < asked * 0.7, `C0B00Y03 in the mod's temple: ${failed.mods.C0B00Y03} of ${asked} failed (1 in 2 expected)`);
+  // PIN MOVED (QUEST-AUDIT II NEAR-SITE): 15 in 16 and 1 in 2 of these failed before
+  assert.deepEqual(failed.mods, { C0B00Y01: 0, C0B00Y03: 0 }, `never failing in the mod's temple either (${asked} asks each)`);
   // no other temple of the world is left without a house by the mods
   const bare = [];
   for (const { r, l, loc: other } of everyLocation(t.maps)) {
     if (other?.mapTableData?.locationType !== 5 || ALONE.includes(makeLocationKey(r, l))) continue;
-    if (!homePlaced(t, other)) bare.push(other.name);
+    if (homePlaced(t, other) !== 'here') bare.push(other.name);
   }
   assert.deepEqual(bare, []);
 });

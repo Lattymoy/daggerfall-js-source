@@ -65,11 +65,12 @@
   {
     "name": "AUDIT-NAV2-F2-uncrewed-sized-crewed",
     "file": "src/scenes/navalHost.js",
-    "old": "crew, crewed: !(p.boat && !p.boat.crewed) });",
-    "new": "crew, crewed: true });",
+    "old": "crew, crewed: !(p.boat && !p.boat.crewed), player: true });",
+    "new": "crew, crewed: true, player: true });",
     "tests": [
       "test/auditnav2_online.test.js"
-    ]
+    ],
+    "note": "CREW-HOLD/GALLEON-WEIGHT (2026-10-06): re-aimed by content - the line gained the crew's toughness or the weight."
   },
   {
     "name": "AUDIT-NAV2-F2-crew-unread",

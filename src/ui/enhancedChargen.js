@@ -1664,13 +1664,13 @@ function releaseLock() {
  *
  * ChargenFlow times exactly one thing: the constellation CEL an
  * answered question lights, which locks the questions screen until
- * CEL_OnAnimEnd releases it (chargen.js:607-613, :600-608). The
+ * CEL_OnAnimEnd releases it (ui/chargen.js:"Input is LOCKED while", ui/chargen.js:"AnswerAndPlayAnim (:310-354)"). The
  * CLASSIC screen paints that chart and its host ticks the flow every
  * frame, so the lock is the animation you are watching. This view
  * paints no chart and its overlay ticks nothing, so the same lock is
  * three to seven seconds of dead buttons over a picture nobody drew.
  *
- * The seam is injectable for exactly this reason (chargen.js:251-255,
+ * The seam is injectable for exactly this reason (ui/chargen.js:"this.describeClass =",
  * "so the headless suite drives an animation with no renderer"), and
  * a start that reports 0 is the flow's own signal to run the anim-end
  * body AT ONCE - the same path a host with no art takes. Nothing else

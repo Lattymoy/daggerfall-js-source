@@ -2,8 +2,8 @@
   {
     "name": "QUEST-MARKERS-classic-block-curated",
     "file": "src/systems/quest/markerCuration.js",
-    "old": "  if (!dfBlock?.fromWorldData || !dfBlock.name) return null;",
-    "new": "  if (!dfBlock?.name) return null;",
+    "old": "  if (!dfBlock?.fromWorldData || !name) return null;",
+    "new": "  if (!name) return null;",
     "tests": [
       "test/fb1004d_questmarkers.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "QUEST-MARKERS-any-pack-carries",
     "file": "src/systems/quest/markerCuration.js",
-    "old": "    if (!worldDataVendorCarries(vendor, blockReplacementFilename(dfBlock.name))) continue;",
-    "new": "    if (!blockReplacementFilename(dfBlock.name)) continue;",
+    "old": "    if (!worldDataVendorCarries(vendor, blockReplacementFilename(name))) continue;",
+    "new": "    if (!blockReplacementFilename(name)) continue;",
     "tests": [
       "test/fb1004d_questmarkers.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "QUEST-MARKERS-any-building-of-the-block",
     "file": "src/systems/quest/markerCuration.js",
-    "old": "  for (const { vendor, markers } of BY_BUILDING.get(`${dfBlock.name}#${recordIndex}`) ?? []) {",
-    "new": "  for (const { vendor, markers } of BY_BUILDING.get(`${dfBlock.name}#0`) ?? []) {",
+    "old": "  for (const { vendor, markers } of BY_BUILDING.get(`${name}#${recordIndex}`) ?? []) {",
+    "new": "  for (const { vendor, markers } of BY_BUILDING.get(`${name}#0`) ?? []) {",
     "tests": [
       "test/fb1004d_questmarkers.test.js"
     ],

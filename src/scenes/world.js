@@ -55,7 +55,7 @@ import { cityFloorCentre, standsRail, SAND_R } from '../world/arenaFloor.js';   
 import { ARENA_TEXT } from '../systems/arenaText.js';   // ARENA1: the Daggerfall Bank's letter
 import { moveArenaRecords, arenaHomeFor, emptyArenaScene } from '../systems/arenaMove.js';   // ARENA1: a deed whose house the arena took, moved once; ARENA4b: and an online home, by its owner's client
 import { loadModWorldData, ensureWorldDataPack, worldDataPacksMissing } from './modWorldData.js';   // RR3b; WD3: a pack a save's pins let in
-import { configureLayoutPins, layoutRecordsOf, pinsFrom, setLayoutPins, stampLayout, layoutStampOfPixel, HOME_LAYOUTS_WAIT_MS, HOME_LAYOUTS_RETRIES, PINS_DROPPED_LINE } from '../systems/layoutPins.js';   // WD3: a town keeps the layout a save's things were made in
+import { configureLayoutPins, layoutRecordsOf, pinsFrom, setLayoutPins, admitPinnedPacks, stampLayout, layoutStampOfPixel, HOME_LAYOUTS_WAIT_MS, HOME_LAYOUTS_RETRIES, PINS_DROPPED_LINE } from '../systems/layoutPins.js';   // WD3: a town keeps the layout a save's things were made in
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES, CLIMATES, REGION_NAMES } from '../formats/mapsFile.js';   // SPAWNED-DUNGEONS1: the ocean gate and the synthesized location's region name
 import { questTracker } from '../ui/questTracker.js';   // GUIDE5: the quest the player follows - its places, marked
@@ -359,7 +359,7 @@ import { markShown, travellerKin } from '../systems/travelViewFilters.js';   // 
 import { travelPathMode, travelPathUsesRoads, pickTakesPlace, fineMoveHeld, TRAVEL_PATH_TEXT } from '../systems/travelPathMode.js';   // OW-PATH: roads or free, and the snap to a town
 import { groundHit, canvasPoint, classifyPick } from '../player/travelPick.js';   // TV2: the click's ground
 import { planRoute, routeLegs, roadShare, crossesWater, dryLine, SEA_KINDS } from '../systems/travelRoute.js';   // TV2: the way by the roads; OWS2: and over the water
-import { createSeaHelm, seaHelmStep, headingOf as seaHeadingOf, squareOnly as seaSquareOnly, SEA_HELM } from '../systems/seaHelm.js';   // OWS2: the journey's hand on the helm
+import { createSeaHelm, seaHelmStep, seaHelmLook, headingOf as seaHeadingOf, squareOnly as seaSquareOnly } from '../systems/seaHelm.js';   // OWS2: the journey's hand on the helm
 import { createLoadGovernor, unbuiltAround } from '../systems/travelGovernor.js';   // TV2: "Cap it to what loads cleanly"
 import { createWildAlert, noticeChance, WILD_MARK, WILD_MARK_S } from '../systems/wildAlert.js';   // WILD-ALERT: the wilderness notices a fast traveller on a stealth check
 import { drawWildMarks, WILD_MARK_RANGE } from '../ui/wildMarks.js';   // WILD-ALERT: the "!" over an alerted foe
@@ -479,7 +479,7 @@ import { createSailingCabinLink } from '../net/sailingCabinLink.js';
 import { capsuleFits } from '../player/parkour.js';
 import { TRIGGER_MODEL as CSA_TRIGGER_MODEL, setLights as csaSetLights, HULL_NAMES as CSA_HULL_NAMES, nodeOf as csaNodeOf, AUDIO_CLIPS as CSA_AUDIO_CLIPS, colliderBoundsInChildren as csaColliderBoundsInChildren, animatorOf as csaAnimatorOf, meshLocalBounds as csaMeshLocalBounds } from '../systems/comeSailAwayBoat.js';   // CSA-B: the probe's lanterns; CSA-D: the plaque's word for a boat; CSA-G: the loops' objects and the five clips; CSA-J: Eye of the Beholder's Collider.bounds
 import { travelMapPicture, TRAVEL_MAP_IMG, LINE_TEXTURE as CSA_LINE_TEXTURE } from '../systems/comeSailAwayMap.js';   // CSA-I: the position reading's picture and lines
-import { createComeSailAwayRuntime, comeSailAwayCarrier, WATER_WALKING_SILENT, COME_SAIL_AWAY_VENDOR, CONSOLE as CSA_CONSOLE, NO_WATER_LEVEL, NICE_BOAT_TEXT as CSA_NICE_BOAT_TEXT, activationModelOf as csaActivationModelOf, customModelOf as csaCustomModelOf, ACTIVATION_DISTANCE as CSA_ACTIVATION_DISTANCE, windWidgetFrameCount as csaWindWidgetFrameCount, BOAT_ACTIONS as CSA_BOAT_ACTIONS, HANDLING as CSA_HANDLING, hullFromMessage as csaHullFromMessage, tileMapIndexAtPosition as csaTileMapIndexAtPosition } from '../systems/comeSailAway.js';   // NAV-H: the tile a sea ship floats on
+import { createComeSailAwayRuntime, comeSailAwayCarrier, WATER_WALKING_SILENT, COME_SAIL_AWAY_VENDOR, CONSOLE as CSA_CONSOLE, NO_WATER_LEVEL, NICE_BOAT_TEXT as CSA_NICE_BOAT_TEXT, activationModelOf as csaActivationModelOf, customModelOf as csaCustomModelOf, ACTIVATION_DISTANCE as CSA_ACTIVATION_DISTANCE, windWidgetFrameCount as csaWindWidgetFrameCount, BOAT_ACTIONS as CSA_BOAT_ACTIONS, hullFromMessage as csaHullFromMessage, tileMapIndexAtPosition as csaTileMapIndexAtPosition } from '../systems/comeSailAway.js';   // NAV-H: the tile a sea ship floats on
 import { windWidgetFrameUrl as csaWindWidgetFrameUrl, waveDerivedUrl as csaWaveDerivedUrl, wavePaintUrl as csaWavePaintUrl, soundUrl as csaSoundUrl } from '../systems/comeSailAwayModels.js';   // CSA-E: the wind widget's pictures; CSA-F: the waves' recipes and paints
 import { WAVE_FRAME_COUNT as CSA_WAVE_FRAME_COUNT, waveDitherOf as csaWaveDitherOf } from '../systems/comeSailAwayWaves.js';   // CSA-F
 import { ComeSailAwayRenderer, softParticleTexture as csaSoftParticleTexture } from '../render/comeSailAwayRender.js';   // CSA-F: the waves' and the particles' passes
@@ -577,7 +577,7 @@ import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
-import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, WORLD_REPUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
+import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, WORLD_REPUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS, SHOWN_MOVE_HOLD_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory; AUDIT 637 D7: the move hold, one law both ends
 import { createSeatLock, SEAT_NOTICE, SEAT_MID_TEXT, PLAY_HERE_LABEL } from '../net/oneSeat.js';   // ONE-SEAT: one tab of a player online - the browser's arm, beside the hub's
 import { readAccount, buyInsignia, equipTitle, equipAura, adoptIdentity as adoptSessionIdentity } from '../net/accountClient.js';   // WB9g: the Broker's insignia - the account's wardrobe, its sale and its wearing, and my own screen's word of it
 import { ownAura } from '../systems/ownGlyphs.js';   // WB9g: the aura at my own feet - the service's last word, kept on the stored session
@@ -3035,7 +3035,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // (x, z) and the 49-entry scan (with a fresh translation array per
   // entry, inside the collider's substeps) collapses to one Map.get.
   // The invariant it leans on - the current pixel's frame sits at the
-  // origin under compensation - is the one streaming.test.js:139 fuzz
+  // origin under compensation - is the one streaming.test.js:"2000-step fuzz holds" fuzz
   // pins over 2000 crossings.
   const _htT = [0, 0, 0];
   /** @param {boolean} [terrainOnly] - DW-D: a carved cell's seafloor is no DaggerfallTerrain (DeepWaterFloorMesh), so
@@ -4011,12 +4011,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  AUDIT-FIELD F7: A FLOOR, NOT THE WHOLE DISTANCE. The first cut
    *  called 64 "more than the fastest accelerated step", which is true
    *  of a fixed physics STEP and false of a FRAME: the motor moves
-   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1495),
+   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:"if (!this.levitating)"),
    *  and the frame that hitches is exactly the frame in which the
    *  streamer is behind. A horse at the shipped default limit of sixty
    *  covers ~65 units in a 10 fps frame and ~120 at the mod's ceiling of
    *  a hundred - past a 64-unit probe, off the built world, and once the
-   *  motor is airborne `airControl` is false (motor.js:3174) so zeroing
+   *  motor is airborne `airControl` is false (motor.js:"a Jump-buffed player") so zeroing
    *  the drive on the NEXT frame no longer steers: the fall is already
    *  paid for. `travelLookahead` measures the frame that is about to
    *  run instead, and keeps 64 as its floor. */
@@ -4950,7 +4950,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 26 (F019): the pixel's street StaticNPCs - identity inputs
     // + the billboard extent the activation ray needs, resolved the
     // way the interior host resolves its people's
-    // (interiorContext.js:445-466). FLATS.CFG is awaited because
+    // (interiorContext.js:"const standPerson"). FLATS.CFG is awaited because
     // SetLayoutData's exterior overload reads it for the gender
     // (StaticNPC.cs:185-194); loadFlats never throws and is warmed with
     // the scene, so this is a coalesced wait. The list rides the pixel,
@@ -5808,7 +5808,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Mac's word, and the whole of it: `resting` is not a fatigue knob,
     // it is the needs' one word for "sat still", and other laws read
     // it. It held the bare-skin block's naked-cold and sunburn ticks
-    // and the byFire exposure damage (needs.js:544, :520) - the health
+    // and the byFire exposure damage (needs.js:"&& !vampire && !ctx.beastForm", needs.js:"if (!resting || !env.byFire)") - the health
     // Mac wants ticking. One flag, several laws; the journey takes the
     // world as it finds it.
     //
@@ -10429,10 +10429,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:3262 mounts the same one, gated on
+  // and dungeonContext.js:"if (opts.enchantCtx !== false)" mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:7285
+  // that context through modes.dungeonCtx - so worldModes.js:"carries no mode qualifier"
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -10462,7 +10462,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // artifact affinity scans saw an empty room. Nothing threw and
   // nothing was logged - the enchantment simply had no effect where
   // the fighting is. The one ctx in play is this mount: no host passes
-  // an enchantCtx at the strike site (formulas.js:522 defaults it
+  // an enchantCtx at the strike site (formulas.js:"why the player arm" defaults it
   // null), so mergeCtx folds this default under every dispatch.
   // The law itself is in shared.js, tested on its own - which pool is
   // live, and whose sinks a record from it must go through. This host
@@ -10528,11 +10528,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:588-593) never looks the record up in `foes`, and
+    // (exteriorFoes.js:"if (f.companion != null) _fullNext") never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1762-1780) gives it -
+    // got exactly what removeGuard (cityGuards.js:"function removeGuard") gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:1123) and spliced out at the end of it (:1359).
+    // (cityGuards.js:"spaceFoes(guards, collider, foeFrameDt(dt))".."if (g.dead) continue;") and spliced out at the end of it (cityGuards.js:"for (let i = guards.length - 1; i >= 0; i--)").
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -11734,12 +11734,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  area / if (...IsPlayerInsideDungeon) return;" - so WorldX/WorldZ,
    *  and with them CurrentMapPixel, hold the entrance's values for as
    *  long as the player is down there. A dungeon's local frame is its
-   *  own (RDB block origins are SIGNED, dungeonLayout.js:75-76), so
+   *  own (RDB block origins are SIGNED, dungeonLayout.js:"const originX = block.x"), so
    *  converting the player's dungeon feet through the streamer's
    *  exterior origin slides the pixel a step west on any negative local
    *  x and a step south on any negative local z - one block off the
    *  start of Privateer's Hold is enough. That is what made Recall's
-   *  IsSameInterior dungeon arm (teleportAnchor.js:169-172) unable to
+   *  IsSameInterior dungeon arm (teleportAnchor.js:"if (here.insideDungeon && ctx === WORLD_CONTEXT.Dungeon)") unable to
    *  answer true against an anchor set in the room the player is
    *  standing in: setRecallAnchor already took the streamer's pixel
    *  (:2777) and this read did not. The streamer is frozen while a mode
@@ -11779,7 +11779,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *
    *  A terrain tile is 2 x WorldMapTileDim = 256 world units - the same
    *  step locationWorldRect walks when it shifts a pixel corner by the
-   *  location's tile origin (streamingWorld.js:60-61). Tile ROWS rise
+   *  location's tile origin (streamingWorld.js:"const minX = origin.x"). Tile ROWS rise
    *  with z, which is why row 127 is north and row 0 south, derived
    *  from generateTileData.
    *
@@ -13103,7 +13103,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // and 6pm regardless of travel type"). The two are separately
         // sourced - the racial arm off the compound race, the career
         // arm off the class's own CFG bit (the burn read both until
-        // VAMP-DAY left it the career's: passiveSpecials.js:126).
+        // VAMP-DAY left it the career's: passiveSpecials.js:"sinks?.hurt?.(SUN_DAMAGE_AMOUNT)").
         // VAMP-HOOD: the racial arm asks the hood (vampirism.js
         // racialSunAverse), so a hooded vampire lands in the day it
         // travelled into; the career's arm is its own and stands.
@@ -13224,7 +13224,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:8710), so exterior mode and a
+    // composer, dungeonContext.js:"damage = trunc(5 * (distance - 5))"), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -13530,10 +13530,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     const pins = pinsFrom(records);
     // the packs a pin lets in, on the door BEFORE the pins answer for them - a pin into a pack that will not load
     // is dropped, and its town stands as the mods loaded for the game serve it
-    let dropped = 0;
-    for (const pin of pins.values()) {
-      for (const v of [...pin.in]) if (!(await ensureWorldDataPack(v))) { pin.in.delete(v); dropped++; }
-    }
+    // QUEST-AUDIT II PIN-SLEEP: the towns whose pin this session cannot honour - a pack that will not load dropped from
+    // its pin and its town held back, its records asleep (layoutPins.js admitPinnedPacks, lifted so its law is run in a
+    // test - AUDIT QA2)
+    const { dropped, heldBack } = await admitPinnedPacks(pins, ensureWorldDataPack);
     // AUDIT WD3 B6: said, once a game - a house, a room or a quest whose town could not be stood as it was left (its
     // records sleep there: banking.js deedStands, systems/layoutPins.js recordStands)
     if (dropped && !_pinsDroppedSaid) {
@@ -13545,7 +13545,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     for (const [k, pin] of [...pins]) if (!pin.in.size && !pin.out.size) pins.delete(k);
     if (gen !== _pinsGen) return false;   // AUDIT WD3 R3: a later call (newer records) overtook this one while its packs loaded
-    const changed = setLayoutPins(pins);
+    const changed = setLayoutPins(pins, { heldBack, missing: worldDataPacksMissing() });   // QUEST-AUDIT II PIN-SLEEP: their records sleep (layoutPins.js recordHeldBack) - AUDIT QA2: and a record made in a layout whose pack did not load this session
     let rebuilt = 0;
     for (const key of changed) {
       const pixelKey = _layoutKeyPixel.get(key);
@@ -14079,7 +14079,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (:619) and RETURNS, and it sits ABOVE the racial override's
     // CheckFastTravel at :624-626. It is a separate rung, not a clause
     // of the racial one: DFU reads Career.DamageFromSunlight (DFCareer.cs's
-    // own CFG bit, specialAdvantages.js:266 here) where CheckFastTravel
+    // own CFG bit, specialAdvantages.js:"secondary === 'fromSunlight'" here) where CheckFastTravel
     // reads the RacialOverrideEffect. Same localized key at both sites,
     // so the box says the same sentence.
     // LIVED1: online the day cannot be rested away - a rest moves the character's own clock, not the sky - so both
@@ -15150,20 +15150,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleAutomap: () => toggleExteriorAutomap(),
     openTravelMap: () => toggleTravelMap(),
     /** AUDIT 58 (f2/hosts): THE SHEATH PANEL'S DOOR - the eleventh
-     *  panel of the large HUD (ui/hudLarge.js:239), which until now
+     *  panel of the large HUD (ui/hudLarge.js:"key: 'spellbook',"), which until now
      *  answered in ONE host of four. HUDLarge.cs:477-484's
      *  SheathPanel_OnMouseClick calls
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:815) and
+     *  on. Here routeAction's arm is optional (ui/input.js:"here is the claim") and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:652), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:"export function routeKeyUp"), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // QS2: the diamond's three presses, beside the sheath panel's door and for
@@ -15365,7 +15365,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:269-290), and no host passed one - so
+    // held-keys Set (ui/input.js:"and the whole of DFU's"), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
@@ -15565,7 +15565,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // gates the position now, not just the presence.
         // WEAPON-VIS2: this ladder never calls routeKey (the comment
         // above the Escape arm says so directly), so routeKey's own
-        // `POLLED_ACTIONS.has(act)` decline (ui/input.js:774) never
+        // `POLLED_ACTIONS.has(act)` decline (ui/input.js:"if (POLLED_ACTIONS.has(act)) return") never
         // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
         // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
         // routeAction from BOTH here AND the frame's own poll below
@@ -15600,7 +15600,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // AUDIT 58 (f3/input) - THE ONE READER. This host builds the mode
   // machine unconditionally, and that machine used to register a
   // SECOND bindCursorToggle over the same module-global flag
-  // (player/pointerLock.js:89-329), so ONE Enter flipped it twice and
+  // (player/pointerLock.js:"let _cursorActive"), so ONE Enter flipped it twice and
   // `cursorActive()` could never rise here at all - the large HUD's
   // eleven panels were unreachable by mouse in this host, and the
   // second flip fired a releaseLook/requestLook pair inside one event.
@@ -15864,7 +15864,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:254, "a right-click on a window is the window's...
+  // (dungeon.js:"latches this host used", "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -16508,7 +16508,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:11007-11071 -
+  // worldModes answers it in BOTH modes (worldModes.js:"v[0], v[1], e.button," -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -16732,7 +16732,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     isHouseOwned: (buildingKey) => isHouseOwned(playerEntity.houses ?? [], _questRegionIndex(), buildingKey),
     // HOME1: nor a player's online home - a quest must not send its player into a house its owner keeps shut. The towns this page has heard from (systems/onlineHomes.js); one not heard from yet answers no.
     isPlayerHome: (mapId, buildingKey) => !!onlineHomes?.homeAt(mapId, buildingKey),
-    townLayoutsKnown: () => !homeLayoutsOnline || _serverLayoutRecords !== null,   // QUESTOR-MOVED: a shared quest is mended on arrival only once the towns' layouts are known (applyLayoutPins' own gate, AUDIT WD3 S5)
+    townLayoutsKnown: () => !homeLayoutsOnline || _homeLayoutsApplied,   // QUESTOR-MOVED: a shared quest is mended on arrival only once the towns' layouts are known (applyLayoutPins' own gate, AUDIT WD3 S5) - AUDIT QA2: and STAND, the pins and their held-back towns set (a share landing while the packs were fetched was chosen again unpinned); the load's own re-seat mends one that landed before
     // Place's _getBuildingName bag - townTalk's ONE name bag, so the
     // quest's generated names and the talk directory's cannot drift.
     buildingNameOpts: () => townTalk.nameOpts?.() ?? {},
@@ -17029,11 +17029,11 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  all fixed forever. The port cloned first and re-expanded from
    *  source every time, which is the port being more correct than
    *  the game it is a port of. The answer pipeline's caller clones
-   *  BEFORE calling (answerPipeline.js:665, C#'s own `.Clone()` at
+   *  BEFORE calling (answerPipeline.js:"falls back to anyInfo.", C#'s own `.Clone()` at
    *  :3552), so the in-place pass is right for both. Also: C# calls
    *  this whether or not GetQuest found anything - the null-parent arm
    *  is a DFU forum-bug fix INSIDE ExpandQuestMessage, not a caller
-   *  guard, and expandQuestMessage carries it (questMacros.js:568). */
+   *  guard, and expandQuestMessage carries it (questMacros.js:"'%g1': (mcp) => call"). */
   const expandQuestTokens = (questID, tokens) => {
     expandQuestMessage(questBridge?.machine.getQuest(questID) ?? null, tokens, true);
     return tokensToString(tokens);
@@ -18234,7 +18234,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let sceneToOnline = campToWire;
   const ROOM_HOLD_MS = 500;   // AUDIT ONLINE D11: a room key holds this long before the socket moves - a cell edge is not a churn
   const ONLINE_LOOK_CHECK_MS = 1000;   // PROFILE2: how often my look is re-composed and compared with what the rooms were told
-  const ONLINE_MOVE_HOLD_MS = 250;   // ONLINE-MVFLICKER1: see the outgoing `mv` computation's own header - debounces a single stray zero-delta sample
+  const ONLINE_MOVE_HOLD_MS = SHOWN_MOVE_HOLD_MS;   // ONLINE-MVFLICKER1: see the outgoing `mv` computation's own header - debounces a single stray zero-delta sample. AUDIT 637 D7: the watcher's hold (net/online.js), one literal for both ends
   // ACC1d: ONE minter, shared by the presence session and every channel
   // link - it holds no token and caches nothing, so a shared minter is
   // still a FRESH token per socket, which is what the relay's spend-once
@@ -20343,10 +20343,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     level: () => playerEntity.level ?? 1,
     boat: () => (navalOn() ? naval?.serpentBoat?.() ?? null : null),
     strike: (boat, hurt, o) => naval?.serpentStrike?.(boat, hurt, o),
-    // the venom's bite on my own body: a share of my health and points, the cry and the shake an element's blow is given
-    hurt: (pct, base) => {
-      if (!(playerEntity.health > 0)) return;
-      const n = Math.max(1, Math.round(pct * (playerEntity.maxHealth ?? 0) + base));
+    // the venom's bite on my own body: `n` points (serpentStrike.js venomBite of my health, at the pair's share - AUDIT 2
+    // XC4), the cry and the shake an element's blow is given
+    maxHealth: () => playerEntity.maxHealth ?? 0,
+    hurt: (n) => {
+      if (!(playerEntity.health > 0) || !(n > 0)) return;
       hurtPlayer(playerEntity, n);
       betterAmbience.weaponKick(0.5);
       playPlayerVoice(audio, playerPainVoice(playerEntity, n));
@@ -20753,7 +20754,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const socialActText = (k, who) => (k === 'friend.request' ? `Friend request sent to ${who}`
     : k === 'party.invite' ? `Party invite sent to ${who}`
       : k === 'friend.remove' ? `${who} is no longer your friend` : 'Sent');
-  /** PARTY-REST1: RestWindow's own `mode` string ('loiter'|'timed'|'full', restWindow.js:691) to the wire's small
+  /** PARTY-REST1: RestWindow's own `mode` string ('loiter'|'timed'|'full', restWindow.js:"is the host's live") to the wire's small
    *  numbers (net/wire.js validPartyPose: 0/1/2) - the one place the three hosts' restState getters (worldModes.js,
    *  dungeonContext.js) and this host's own outdoor overlay converge, so the mapping is written once. */
   const partyRestModeCode = (mode) => (mode === 'timed' ? 1 : mode === 'full' ? 2 : 0);
@@ -24380,7 +24381,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:125, so the
+  // only reader of `load` in the whole tree is dungeon.js:"maps.load(mapsBytes, climateBytes, politicBytes)", so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -24972,7 +24973,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   const TV_SEA_MOORED_M = 60;    // my boat moored this near is boarded at a journey's start
   const TV_SEA_LAUNCH_M = 40;    // on a launch leg, water this near the traveller is where the boat goes in
   const TV_SEA_PROBE_S = 0.25;   // how often (real seconds) a launch leg looks for its water
-  const TV_SEA_AHEAD_M = 150;    // how far along the bow the helm looks for land
+  const TV_SEA_AHEAD_M = 150;    // how far along the bow the helm looks for land (AUDIT SHIPS A2: at the least - seaHelmLook)
+  const TV_SEA_LANE_M = 5;       // AUDIT SHIPS A2: the water kept either side of her beam on the mark's line
   const TV_SEA_ASHORE_M = 60;    // how far from the landed boat the traveller may step ashore
   const TV_SEA_BEACH_M = 10;     // a landfall's shore this near, the boat all but stopped: the landfall, beached or not
   const TV_SEA_NO_WAY_S = 180;   // game seconds a sea leg may go without coming 20 m nearer its mark before it stops
@@ -25122,16 +25124,17 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     csaCall(() => { boat = csaRuntime.LaunchFromParts(parts, () => playerEntity.items, spot.at, spot.dir, csaTerrainOf(csaPixelAt(spot.at[0], spot.at[2]))); });
     if (boat) csaCall(() => csaRuntime.StartSailing(boat));   // "You control the boat!"
   }
-  /** Metres along a flat direction from `p` to the first land (TV_SEA_AHEAD_M: none seen). */
-  function tvSeaLandAlong(p, dx, dz) {
-    for (let d = 5; d <= TV_SEA_AHEAD_M; d += 5) if (!tvSeaWaterAt(p[0] + dx * d, p[2] + dz * d)) return d;
+  /** Metres along a flat direction from `p` to the first land within `far` (TV_SEA_AHEAD_M; Infinity: none seen). */
+  function tvSeaLandAlong(p, dx, dz, far = TV_SEA_AHEAD_M) {
+    for (let d = 5; d <= far; d += 5) if (!tvSeaWaterAt(p[0] + dx * d, p[2] + dz * d)) return d;
     return Infinity;
   }
-  /** The hand with more water: land along 45 degrees each side of the bow, the farther side's (-1 left, 1 right). */
-  function tvSeaFreer(p, fw) {
+  /** The hand with more water: land along 45 degrees each side of the bow within `far`, the farther side's (-1 left,
+   *  1 right). */
+  function tvSeaFreer(p, fw, far) {
     const c = Math.SQRT1_2;
-    const right = tvSeaLandAlong(p, (fw[0] + fw[2]) * c, (fw[2] - fw[0]) * c);
-    const left = tvSeaLandAlong(p, (fw[0] - fw[2]) * c, (fw[2] + fw[0]) * c);
+    const right = tvSeaLandAlong(p, (fw[0] + fw[2]) * c, (fw[2] - fw[0]) * c, far);
+    const left = tvSeaLandAlong(p, (fw[0] - fw[2]) * c, (fw[2] + fw[0]) * c, far);
     return left > right ? -1 : 1;
   }
   /** At the landfall: the helm left by the mod's own key (the sails lowered, "You stop controlling the boat!"). */
@@ -25176,19 +25179,33 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const p = boat.GameObject.position, fw = csaQuatRotate(boat.GameObject.rotation, [0, 0, 1]);
     const v = s.velocityCurrent ?? [0, 0, 0];
     const landfall = kind === 'landfall';
-    const landAhead = tvSeaLandAlong(p, fw[0], fw[2]);
+    // AUDIT SHIPS A2: the water looked at as far as the hand needs to keep her off land (seaHelmLook - her way's reach),
+    // along her bow, along her whole beam and along the mark's own line - at TV_SEA_AHEAD_M a galleon at SAIL-FREE's way
+    // saw an islet too late to turn off it, and a centreline's look let a hull graze an islet's edge and stick there
+    const far = Math.max(TV_SEA_AHEAD_M, seaHelmLook(tvSea.helm, v[2]));
+    const landAhead = tvSeaLandAlong(p, fw[0], fw[2], far);
     if (landfall && (csaRuntime.IsBeached(boat) || (landAhead <= TV_SEA_BEACH_M && Math.abs(v[2]) < 0.6))) { tvSeaLand(boat); return; }
     if (!landfall && csaRuntime.IsBeached(boat)) { tvSeaStop(TRAVEL_VIEW_TEXT.aground); return; }
     const gs = dt * worldTimeScale();   // the game's seconds, as the boat's own clock runs
     const dist = Math.hypot(mark[0] - p[0], mark[2] - p[2]);
     if (dist < tvSea.best - 20) { tvSea.best = dist; tvSea.bestS = 0; } else if ((tvSea.bestS += gs) > TV_SEA_NO_WAY_S) { tvSeaStop(TRAVEL_VIEW_TEXT.noWayAtSea); return; }
-    const w = s.windVectorCurrent ?? [0, 0, 0], cargo = s.boatCargoMod;
+    const w = s.windVectorCurrent ?? [0, 0, 0];
+    // her lane: from her bow and either beam (her nodes - the points the runtime stops her on), and the lane she would
+    // sail to the mark - her beam's breadth and TV_SEA_LANE_M either side of its line
+    let lane = landAhead;
+    for (const j of [1, 3, 4]) { const n = boat.Nodes?.[j]; if (n) lane = Math.min(lane, tvSeaLandAlong(n.position, fw[0], fw[2], far)); }
+    let markAhead = Infinity;
+    if (!landfall && dist >= 1) {
+      const mx = (mark[0] - p[0]) / dist, mz = (mark[2] - p[2]) / dist, sb = boat.Nodes?.[3]?.position, pt = boat.Nodes?.[4]?.position;
+      const half = (sb && pt ? Math.hypot(sb[0] - pt[0], sb[2] - pt[2]) / 2 : 0) + TV_SEA_LANE_M;
+      for (const k of [-1, 0, 1]) markAhead = Math.min(markAhead, tvSeaLandAlong([p[0] + mz * half * k, p[1], p[2] - mx * half * k], mx, mz, Math.min(far, dist)));
+    }
     const cmd = seaHelmStep(tvSea.helm, {
       heading: seaHeadingOf(fw[0], fw[2]), bearing: seaHeadingOf(mark[0] - p[0], mark[2] - p[2]), wind: [w[0], w[2]],
       hasSails: boat.Sails.length > 0, squareOnly: seaSquareOnly(boat), sailsUp: s.sailPosition > 0, canSail: csaRuntime.CanSail(boat),
-      way: v[2], dt: gs, landfall, landAhead, freer: landAhead <= SEA_HELM.avoidM ? tvSeaFreer(p, fw) : 1,
-      crewed: !!boat.crewed, oarWay: CSA_HANDLING.moveSpeedOar * boat.modifierMoveSpeedOar * cargo,
-      sailWay: CSA_HANDLING.moveSpeedSail * boat.modifierMoveSpeedSail * cargo * Math.hypot(w[0], w[2]),
+      way: v[2], dt: gs, landfall, landAhead: lane, markAhead, freer: lane <= far ? tvSeaFreer(p, fw, far) : 1,
+      crewed: !!boat.crewed, oarWay: csaRuntime.oarWayOf(boat),
+      sailWay: csaRuntime.sailWayOf(boat), free: !!csaRuntime.helmResponsive(),   // SAIL-FREE: straight up to windward - AUDIT SHIPS A4: her sails' way, the runtime's own word
     });
     csaJourneyHelm.held.clear();
     if (cmd.turn > 0) csaJourneyHelm.held.add('MoveRight');
@@ -26706,7 +26723,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:666, :674). So every HUD line raised in a modal
+      // (townTalk.js:"NextInteractionMode", townTalk.js:"reads the four modes"). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
@@ -27280,7 +27297,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const _act = activateFrame((latch.activate ??= createActivateGate()), {
           down: _activateDown,
           hasReadySpell: magic.spellArmed(),
-          touchSpell: magic.readied()?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:206)
+          touchSpell: magic.readied()?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:"ClassicTargetIndexToTargetType")
           hudBlocked: activeMouseOverLargeHUD(),
           paused: _overlayHeld,
         });
@@ -28941,11 +28958,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:857-862), so this seam ROUTES by pool exactly
+        // (cityGuards.js:"function handleAttackFromPlayer"), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1480). DFU makes no pool distinction:
+        // (cityGuards.js:"damageGuard(foe, 0, playerFeet, null)"). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.
@@ -29069,7 +29086,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:453-481) because neither reads ARENA2 - "a player whose
+    // (hud.js:"HUDCompass.DrawCompass") because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null

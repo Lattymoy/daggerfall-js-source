@@ -192,7 +192,7 @@ test('AUDIT 64 F18/F19: fast travel and the guild teleport carry DFU\'s repositi
 // ── F20 / F21: Career.DamageFromSunlight, twice ──────────────────────
 
 /** A custom class carrying the "Damage / From Sunlight" disadvantage -
- *  specialAdvantages.js:266's own write, mirroring
+ *  specialAdvantages.js:"secondary === 'fromSunlight'"'s own write, mirroring
  *  CreateCharSpecialAdvantageWindow's pick. No racial override. */
 const sunCareer = () => ({ abilityFlagsAndSpellPointsBitfield: SPECIAL_ABILITY_BITS.sunDamage });
 
@@ -216,7 +216,7 @@ test('AUDIT 64 F20: the arrival clamp\'s SECOND arm is the CAREER flag', () => {
 
   // The PRODUCER, at the one caller of arrivalClampMinutes: DFU's
   // disjunction, the same one the per-round burn spelled until VAMP-DAY
-  // took its racial arm (passiveSpecials.js:126 reads the career alone;
+  // took its racial arm (passiveSpecials.js:"sinks?.hurt?.(SUN_DAMAGE_AMOUNT)" reads the career alone;
   // the travel rules still read both). VAMP-HOOD (2026-09-29): the racial
   // arm is the flag under a bare head - vampirism.js racialSunAverse -
   // and the career's beside it is DFU's as ever.

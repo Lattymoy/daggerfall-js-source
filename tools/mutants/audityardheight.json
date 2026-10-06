@@ -1,0 +1,142 @@
+[
+  {
+    "name": "AUDIT-Y1-no-wait",
+    "file": "src/scenes/decorTool.js",
+    "old": "    later(() => { writeTurn(piece.id, n); }, DECOR_TURN_SETTLE_MS);\n",
+    "new": "    later(() => { writeTurn(piece.id, n); }, 0);\n",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "a write a press again"
+  },
+  {
+    "name": "AUDIT-Y1-every-timer-writes",
+    "file": "src/scenes/decorTool.js",
+    "old": "      if (!t || t.n !== n) return;   // a later press's own wait writes it - or a move wrote it\n",
+    "new": "      if (!t) return;   // a later press's own wait writes it - or a move wrote it\n",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "each press's wait writes, not the last"
+  },
+  {
+    "name": "AUDIT-Y1-presses-during-lost",
+    "file": "src/scenes/decorTool.js",
+    "old": "      t.held = stood;\n      if (t.n !== n) return;   // pressed meanwhile: that press's own wait writes it\n      turnsOwed.delete(id);\n",
+    "new": "      t.held = stood;\n      turnsOwed.delete(id);\n",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "the presses made while a write was answered never written"
+  },
+  {
+    "name": "AUDIT-Y1-written-from-the-press",
+    "file": "src/scenes/decorTool.js",
+    "old": "      const want = decorPieceOf({ ...(standing() ?? t.held), rot: t.rot });\n",
+    "new": "      const want = decorPieceOf({ ...t.held, rot: t.rot });\n",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "a light lit meanwhile written back out"
+  },
+  {
+    "name": "AUDIT-Y1-refusal-undoes-all",
+    "file": "src/scenes/decorTool.js",
+    "old": "        if (now) pool.put(decorPieceOf({ ...now, rot: t.held.rot }) ?? t.held);   // refused: turned back as it was\n",
+    "new": "        if (now) pool.put(t.held);   // refused: turned back as it was\n",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "a refused turn undoes the light put out after it"
+  },
+  {
+    "name": "AUDIT-Y1-refusal-stands",
+    "file": "src/scenes/decorTool.js",
+    "old": "        if (now) pool.put(decorPieceOf({ ...now, rot: t.held.rot }) ?? t.held);   // refused: turned back as it was\n",
+    "new": "",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "a refused turn shown as if written"
+  },
+  {
+    "name": "AUDIT-Y2-removed-written",
+    "file": "src/scenes/decorTool.js",
+    "old": "      if (deps.visit?.() === t.visit && !standing()) { turnsOwed.delete(id); return; }   // removed meanwhile\n",
+    "new": "",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "a removed piece's turn written - the service's refusal said for nothing"
+  },
+  {
+    "name": "AUDIT-Y5-turn-unqueued",
+    "file": "src/scenes/decorTool.js",
+    "old": "  function writeTurn(id, n) {\n    return pieceWrite(id, async () => {",
+    "new": "  function writeTurn(id, n) {\n    return (async (fn) => fn())(async () => {",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "the turn sent while the station is still answered - the station written out"
+  },
+  {
+    "name": "AUDIT-Y5-light-unqueued",
+    "file": "src/scenes/decorTool.js",
+    "old": "    // AUDIT Y5: after the piece's write before it, on the piece as it then stands\n    return pieceWrite(piece.id, async () => {",
+    "new": "    // AUDIT Y5: after the piece's write before it, on the piece as it then stands\n    return (async (fn) => fn())(async () => {",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "the light sent while the turn is still answered"
+  },
+  {
+    "name": "AUDIT-Y5-removal-unqueued",
+    "file": "src/scenes/decorTool.js",
+    "old": "  function removePiece(piece) { return pieceWrite(piece.id, () => removeNow(piece)); }",
+    "new": "  function removePiece(piece) { return removeNow(piece); }",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "the removal sent while the turn is still answered"
+  },
+  {
+    "name": "AUDIT-Y5-move-leaves-the-turn",
+    "file": "src/scenes/decorTool.js",
+    "old": "        turnsOwed.delete(was.id);\n        if (deps.visit?.() === visit) pool.put(stood);\n",
+    "new": "        if (deps.visit?.() === visit) pool.put(stood);\n",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "the turn owed from the panel written over the move"
+  },
+  {
+    "name": "AUDIT-Y6-picture-stepped",
+    "file": "src/scenes/decorTool.js",
+    "old": "? Math.sign(deg) * 180 : deg;",
+    "new": "? deg : deg;",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "a picture turned fifteen degrees nobody sees"
+  },
+  {
+    "name": "AUDIT-Y6-tree-flipped",
+    "file": "src/scenes/decorTool.js",
+    "old": "    const by = cur.model == null && axis === 0 && !isNatureArchive(cur.flat?.[0]) ? Math.sign(deg) * 180 : deg;",
+    "new": "    const by = cur.model == null && axis === 0 ? Math.sign(deg) * 180 : deg;",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "a yard's tree flipped, never turned"
+  },
+  {
+    "name": "AUDIT-Y7-write-unbound",
+    "file": "server-account/src/decor.js",
+    "old": "WHERE map_id = ? AND building_key = ? AND id = ? AND yard = ? AND ${S.owns}`)\n    .bind(placeJson(pl), mapId, buildingKey, id, row.yard, mapId,",
+    "new": "WHERE map_id = ? AND building_key = ? AND id = ? AND ${S.owns}`)\n    .bind(placeJson(pl), mapId, buildingKey, id, mapId,",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "a room's place written onto a yard's row placed again under its id"
+  }
+]

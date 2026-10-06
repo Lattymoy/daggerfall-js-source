@@ -1176,11 +1176,11 @@ export class QuestMachine {
     // AUDIT 68 S29-share-topics: StartQuest's talk registration, in its place (before the live table) - a received
     // quest's people and places had no 'tell me about'/'where is', and its `dialog link` actions found no quest
     this.deps.addQuestTopics?.(quest);
+    this.sharedQuestNames.add(quest.questName);   // AUDIT QA2: a shared copy from its arrival on - the arrival's re-seat draws the share's die (Place.reseatMovedSite)
     this.quests.set(quest.uid, quest); this._reseatArrived(quest);   // QUESTOR-MOVED: a copy from before the town mods, mended on arrival (its links made after)
     for (const resource of quest.resources.values()) {
       if (resource.isPlace && resource.siteDetails) this.createSiteLink(quest, resource.symbol);
     }
-    this.sharedQuestNames.add(quest.questName);
     this._rearmNewlyCompletedEffects(quest, null);
     return quest;
   }
@@ -1346,7 +1346,12 @@ export class QuestMachine {
       if (r.isClock && r.clockFinished) { const tk = quest.getTask?.(r.symbol); finishedBefore.set(r.symbol?.name, tk ? { triggered: tk.triggered, prev: tk.prevTriggered } : null); }
     }
     { let t = 0; for (const task of quest.tasks.values()) { let a = 0; for (const action of task.actions) { if (action.typeName === 'CreateFoe') wavesBefore.set(`${t}:${a}`, { last: action.lastSpawnTime, tick: action._lastTick, raised: action._lastRaised, count: action.spawnCounter }); a++; } t++; } }
+    // QUEST-AUDIT II SHARED-SEAT: and a Place's BUILDING is this world's where the partner's names none here (their town
+    // stood in another layout) - kept below, the partner's assignments carried onto it (Place.keepOwnSite)
+    const sitesBefore = new Map();
+    for (const r of quest.resources.values()) if (r.isPlace && r.siteDetails) sitesBefore.set(r.symbol?.name, structuredClone(r.siteDetails));
     quest.restoreSaveData({ ...questData, uid }, this._saveResolvers());
+    for (const r of quest.resources.values()) if (r.isPlace && sitesBefore.has(r.symbol?.name)) r.keepOwnSite?.(sitesBefore.get(r.symbol?.name));
     for (const r of quest.resources.values()) {
       if (r.isClock && !r.clockFinished && finishedBefore.has(r.symbol?.name)) {
         r.clockEnabled = false; r.clockFinished = true; r.remainingTimeInSeconds = 0;
@@ -1393,6 +1398,10 @@ export class QuestMachine {
       t++;
     }
     this._reseatArrived(quest);   // QUESTOR-MOVED: a partner's copy from before the town mods, mended as it lands
+    // QUEST-AUDIT II SITE-LINKS: each Place's link made AGAIN, never once more - the copy's own link from its accept (or
+    // the last resync) went on standing beside a new one at every resync, so a quest shared for an evening carried
+    // dozens of links per Place in the save, and every mount of its building walked them all
+    this.siteLinks = this.siteLinks.filter((link) => link.questUID !== quest.uid);
     for (const resource of quest.resources.values()) {
       if (resource.isPlace && resource.siteDetails) this.createSiteLink(quest, resource.symbol);
     }
@@ -1571,14 +1580,7 @@ export class QuestMachine {
   createSiteLink(parentQuest, placeSymbol) {
     const place = parentQuest.getPlace(placeSymbol);
     if (!place) throw new Error(`Attempted to add SiteLink for invalid Place symbol ${placeSymbol?.name}`);
-    this.addSiteLink({
-      questUID: parentQuest.uid,
-      placeSymbol: placeSymbol.clone(),
-      siteType: place.siteDetails?.siteType,
-      mapId: place.siteDetails?.mapId,
-      buildingKey: place.siteDetails?.buildingKey ?? 0,
-      magicNumberIndex: place.siteDetails?.magicNumberIndex ?? 0,
-    });
+    this.addSiteLink({ questUID: parentQuest.uid, placeSymbol: placeSymbol.clone(), ...linkSiteOf(place) });
   }
 
   /** GetAllActiveQuestSites (QuestMachine.cs:769): every Place's site
@@ -1612,7 +1614,7 @@ export class QuestMachine {
     let moved = 0;
     const follow = (place) => {
       for (const link of this.siteLinks) {
-        if (link.questUID === quest.uid && link.placeSymbol?.name === place.symbol?.name) link.buildingKey = place.siteDetails.buildingKey;
+        if (link.questUID === quest.uid && link.placeSymbol?.name === place.symbol?.name) Object.assign(link, linkSiteOf(place));   // AUDIT QA2: the whole site, its town with it
       }
     };
     for (const resource of quest.resources.values()) {
@@ -1698,7 +1700,7 @@ export class QuestMachine {
    *  faction ("This effectively shuts down several named NPCs during
    *  main quest") - and TalkManager.cs does not contain the word
    *  Listener at all. The port already ships that reader, at
-   *  src/scenes/worldModes.js:3203. A pending marker over shipped work
+   *  src/scenes/worldModes.js:"if (questBridge?.machine.factionListeners.has(pn.factionID))". A pending marker over shipped work
    *  is worse than no marker: it sends the next reader looking for
    *  work that is done, in a file that never had it. */
   addFactionListener(factionID, owner) {
@@ -1735,3 +1737,14 @@ export class QuestMachine {
     }
   }
 }
+
+/** A site link's half that is its Place's site (CreateSiteLink, QuestMachine.cs:1757) - ONE derivation, for the link made
+ *  and for the link a re-seat moves (AUDIT QA2: the re-seat copied the building key alone, and once NEAR-SITE could move a
+ *  site to another town its link stayed on the old one - the mount stood the quest's person or thing in a stranger's
+ *  building there and never in the site's, and Repair, finding a link, left it). */
+export const linkSiteOf = (place) => ({
+  siteType: place.siteDetails?.siteType,
+  mapId: place.siteDetails?.mapId,
+  buildingKey: place.siteDetails?.buildingKey ?? 0,
+  magicNumberIndex: place.siteDetails?.magicNumberIndex ?? 0,
+});

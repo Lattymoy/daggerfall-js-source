@@ -2117,7 +2117,7 @@ export function bindPartsInto(assembly, parts) {
         // MW-D7: the piece KEEPS its batch, and `positions` is its own
         // buffer - never an alias of batch.positions, which poseAssembly
         // reads every frame. Aliasing them is the runaway the viewer
-        // documents at mwViewer.js:430-436.
+        // documents at mwViewer.js:"Skinned batches are".
         pieces.push({ slot: part.slot, bone, kind: 'skinned', mirrored: false,
           batch, source: null, attachRef: null,
           // MW-D11: the UVs and the material ride WITH the piece. They
@@ -2978,7 +2978,7 @@ export function clipSweepTimes(sources, idleState, { perClip = 9 } = {}) {
   const spans = [];
   for (const so of sources ?? []) {
     // A source's keys are normalizeTextKeys' ARRAY of {time,text} - the
-    // port's one text-key shape (mwAnim.js:312), handed over by clipReport.
+    // port's one text-key shape (mwAnim.js:"export function normalizeTextKeys"), handed over by clipReport.
     const keys = so?.keys;
     if (!Array.isArray(keys)) continue;
     const starts = new Map();

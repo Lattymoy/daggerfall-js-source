@@ -15,8 +15,8 @@ import { createSerpentLink, foldSerpent, SERPENT_STATE_EMPTY, SERPENT_NO_TEXT } 
 import { mintSerpentReceipt } from '../src/net/serpentReceipt.js';
 import { importReceiptKey } from '../src/net/gateReceipt.js';
 import { validSerpentOut, cellRoomOfWire, PIXEL_UNITS, SERPENT_NO_WORDS } from '../src/net/wire.js';
-import { bodyAt, segExposed } from '../src/net/serpentBody.js';
-import { newSerpentFight, joinSerpentFight, serpentStateOf, SERPENT_ATTACK_TABLE, ZONES, MAEL_R, ramLen } from '../src/net/serpentBrain.js';
+import { bodyAt, segExposed, LEG, MODE } from '../src/net/serpentBody.js';
+import { newSerpentFight, joinSerpentFight, serpentStateOf, SERPENT_ATTACK_TABLE, ZONES, MAEL_R, ramLen, RAM_V } from '../src/net/serpentBrain.js';
 import { shapeMeets } from '../src/systems/serpentStrike.js';
 import { createSerpentOmen } from '../src/systems/serpentOmen.js';
 import { createSerpentHost, HIT_GATHER_MS, SERPENT_HEARD_MS, LEAD_DT_MS } from '../src/scenes/serpentHost.js';
@@ -159,6 +159,11 @@ test('AUDIT SERPENT B2/B5/T4/T8/M3: MOVE for a ship anywhere down a ram\'s lane 
   R.step(3000);
   const at = R.at() + 2500;
   R.hear({ k: 'atk', i: 5, a: SERPENT_ATTACK_TABLE.ram.id, at, x: 60, z: -120, yw: 0, tg: [[60, -120], [60, -120 + ramLen()]] });
+  // PIN MOVED (AUDIT SHIPS C4, 2026-10-06): the ram's wake is its dash's (scenes/serpentHost.js dashWake), over its head as
+  // it runs down its lane - its run and its sounding said with its word, as the relay says them (serpentBrain.js begin);
+  // it was its judging's, and stopped where the ram struck my ship
+  R.hear({ k: 'sw', l: { k: LEG.line, at, x: 60, z: -120, yw: 0, v: RAM_V } });
+  R.hear({ k: 'dv', at: at - SERPENT_ATTACK_TABLE.ram.windup, m: MODE.deep });
   R.step(10);
   assert.ok(!shapeMeets({ a: SERPENT_ATTACK_TABLE.ram.id, at, tg: [[60, -120], [60, -120 + ramLen()]] }, { x: 60, z: 0, yw: 0, hl: 25, hw: 7 }, at), 'its head not at her as it lands');
   assert.equal(R.host.bar().atk.aimed, true, 'MOVE - she lies 120 m down its lane');
@@ -286,7 +291,8 @@ test('AUDIT SERPENT M4/S1/L4/D2/D6/D5 and L2/B6/T4: the world\'s wiring and the 
   assert.match(w, /const level = spoilsLevel\(entry\.ch === characterIdOf\(playerEntity\) \? playerEntity\.level \?\? 1 : Number\(entry\.lv\) \|\| c\.l \|\| 1, c\.l\);/);
   assert.match(w, /return spoilsLock\(\(\) => serpentSpoils\.grant\(/);
   assert.match(n, /if \(segmentOfTarget\(e\.target\) != null\) \{ t\.hits\+\+; t\.ended\+\+; \}/);
-  assert.match(n, /const k = st\.guns\.braced \? BRACE_TAKEN : 1;\n\s+const change = st\.damage\.apply\(k < 1 \? \{ \.\.\.hurt, hull: Math\.round\(\(hurt\.hull \?\? 0\) \* k\), sail: Math\.round\(\(hurt\.sail \?\? 0\) \* k\) \} : hurt, clock\);/);
+  // PIN MOVED (CREW-HOLD, 2026-10-06): its men over a player's crew's toughness (playerMen), the brace still halving hull and sail
+  assert.match(n, /const k = st\.guns\.braced \? BRACE_TAKEN : 1;\n[^\n]*\n\s+const men = playerMen\(hurt\.crew \?\? 0, random\(\)\);\n\s+const change = st\.damage\.apply\(\{ \.\.\.hurt, crew: men, \.\.\.\(k < 1 \? \{ hull: Math\.round\(\(hurt\.hull \?\? 0\) \* k\), sail: Math\.round\(\(hurt\.sail \?\? 0\) \* k\) \} : \{\}\) \}, clock\);/);
   assert.match(n, /const v = best\.e \? velocityOf\(best\.e\.ship\) : best\.v;/);
   assert.match(n, /ships\.push\(\{ e: SERPENT_AIM, v: t\.v \?\? \[0, 0, 0\]/);
   assert.match(src('src/net/online.js'), /isSocialRoom\(room\) \? r\.k === 'fell' \|\| r\.k === 'rcpt' : isCellRoom\(room\)/, 'the hub hands a receipt (S5)');

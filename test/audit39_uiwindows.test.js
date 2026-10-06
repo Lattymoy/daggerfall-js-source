@@ -208,7 +208,7 @@ test('F145: the travel map prices the trip AFTER the guild blessing', () => {
   // GuildManager.FastTravel, THEN CalculateTripCost, so the Temple of
   // Akatosh's rank shortens the fare and the days as well as the
   // journey (Temple.cs:430-436). The classic popup already folds it at
-  // ui/travelPopUp.js:264; the enhanced map skipped the middle step.
+  // ui/travelPopUp.js:"this.hasShip = own".."this.sleepModeInn = true;"; the enhanced map skipped the middle step.
   const s = src('ui/heldMap.js');   // MAP1: the held map, the relief map's successor
   assert.match(s, /import \{ guildFastTravel \} from '\.\.\/systems\/guildVariants\.js';/);
   const trip = s.slice(s.indexOf('_refreshTrip() {'), s.indexOf('_toggleOpt(key) {'));

@@ -54,20 +54,47 @@ export function ramHead(atk, t) {
   return [ax + (bx - ax) * k, az + (bz - az) * k];
 }
 
+/**
+ * SERPENT3 - A PAIR'S SHARE (2026-10-05, Mac's call: "Two or more ships" - "its blows scale down when fewer than three
+ * ships fight it, so a pair has a real chance; one ship alone still can't"): with exactly two ships fighting it (`n`,
+ * the relay's count - serpentBrain.js serpentShipsFighting, the shares in its health: AUDIT SHIPS C1) every blow, grip,
+ * crush, grind and venom bite lands at SERPENT_PAIR_SHARE - each of a pair takes what each of three would; a lone ship,
+ * and three or more, the whole.
+ */
+export const SERPENT_PAIR_SHARE = 2 / 3;
+export const fleetShare = (n) => (n === 2 ? SERPENT_PAIR_SHARE : 1);
+/** AUDIT SHIPS C3 (2026-10-06): a hurt `x` at the fleet's share `k`, in whole points - CARRIED blow to blow on her own
+ *  `carry` (updated in place: the nearest whole taken, the remainder kept either way), so a pair's hurt over a fight is
+ *  two thirds of the whole's. Rounded a blow at a time, a one-man blow (a spit, a roar) still took the whole man and a
+ *  two-man one (a lash, a Maw) took one. The whole (`k` 1) is rounded as it always was. */
+function shared(x, k, carry, key) {
+  if (k === 1 || !carry) return Math.round(x * k);
+  const v = x * k + (carry[key] ?? 0), n = Math.round(v);
+  carry[key] = v - n;
+  return n;
+}
 /** WHAT A BLOW DOES TO HER: `hull` of her whole hull and `base` more, `sail` of her canvas, `crew` men - her whole her
- *  refits' (`whole` - {maxHull, maxSail}). The damage model's own hurt shape (navalDamage.js apply). */
-export const shipHurt = (A, whole) => ({ hull: Math.round(A.hull * whole.maxHull + A.base), sail: Math.round(A.sail * whole.maxSail), crew: A.crew | 0 });
+ *  refits' (`whole` - {maxHull, maxSail}), times the fleet's share `k` (fleetShare), carried on `carry` (shared). The
+ *  damage model's own hurt shape (navalDamage.js apply). */
+export const shipHurt = (A, whole, k = 1, carry = null) => ({ hull: shared(A.hull * whole.maxHull + A.base, k, carry, 'hull'), sail: shared(A.sail * whole.maxSail, k, carry, 'sail'), crew: shared(A.crew | 0, k, carry, 'crew') });
 /** The coil's crush at its end, and its grip for `dtS` seconds (whole points carried on the ship's own fraction -
- *  `carry`, the grip's remainder - so a grip of 3.4 a second is 3.4 a second, not 3). */
-export const crushHurt = (whole) => shipHurt(CRUSH, whole);
-export function gripHurt(whole, dtS, carry = { hull: 0, crew: 0 }) {
-  const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS, crew = carry.crew + GRIP.crew * dtS;
+ *  `carry`, the grip's remainder - so a grip of 3.4 a second is 3.4 a second, not 3); each times the fleet's share `k`. */
+export const crushHurt = (whole, k = 1, carry = null) => shipHurt(CRUSH, whole, k, carry);
+/** The venom's whole bite on a body of `maxHealth` (points): `pool.pct` of it and `pool.base` more, never under 1 (it was
+ *  world.js's own line, the hurt's law beside its shape here). */
+export const venomBite = (pool, maxHealth) => Math.max(1, Math.round(pool.pct * Math.max(0, maxHealth) + pool.base));
+/** AUDIT 2 XC4 (2026-10-06): the venom's bite at the fleet's share `k` - the whole bite rounded as it always was, then
+ *  shared and CARRIED on her own carry (`venom`) as every blow is (shared): handed on as pct x k and base x k and rounded
+ *  a bite at a time, a pair took the whole of a 1-point bite and a half of a 2-point one. 0 - nothing bites. */
+export const venomHurt = (whole, k = 1, carry = null) => shared(whole, k, carry, 'venom');
+export function gripHurt(whole, dtS, carry = { hull: 0, crew: 0 }, k = 1) {
+  const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k, crew = carry.crew + GRIP.crew * dtS * k;
   const out = { hull: Math.floor(hull), sail: 0, crew: Math.floor(crew) };
   return { hurt: out, carry: { hull: hull - out.hull, crew: crew - out.crew } };
 }
-/** The maelstrom's eye grinding her for `dtS` seconds (the grip's carry law). */
-export function grindHurt(whole, dtS, carry = 0) {
-  const hull = carry + (MAEL_GRIND.hull * whole.maxHull + MAEL_GRIND.base) * dtS;
+/** The maelstrom's eye grinding her for `dtS` seconds (the grip's carry law), times the fleet's share `k`. */
+export function grindHurt(whole, dtS, carry = 0, k = 1) {
+  const hull = carry + (MAEL_GRIND.hull * whole.maxHull + MAEL_GRIND.base) * dtS * k;
   return { hurt: { hull: Math.floor(hull), sail: 0, crew: 0 }, carry: hull - Math.floor(hull) };
 }
 
