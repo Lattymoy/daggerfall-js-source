@@ -312,8 +312,9 @@ test('LEGACY2: the model question offers Enduring first - Enter without reading 
   assert.match(o[0].lines[1], /Arkay takes 6% of a lifespan/);
   assert.match(legacyModelOptions({ online: false, tollShare: 0.1 })[0].lines[1], /Arkay takes 10% of a lifespan/, 'AUDIT LEGACY U7: the toll a death will charge, not the Standard\'s');
   const on = legacyModelOptions({ online: true, tollShare: 0.06 });
-  assert.deepEqual(on.map((x) => [x.id, x.locked]), [[MODELS.enduring, false], [MODELS.bloodline, true]], 'AUDIT LEGACY B4: online Bloodline is shut until the realm keeps lineages');
-  assert.match(on[1].lockNote, /Enduring until the realm keeps its lineages/);
+  // PIN MOVED (LEGACY7): AUDIT LEGACY B4 shut Bloodline online until the realm kept lineages - it does now (the tombstone)
+  assert.deepEqual(on.map((x) => [x.id, x.locked]), [[MODELS.enduring, false], [MODELS.bloodline, false]], 'LEGACY7: online Bloodline is open - the realm holds the line');
+  assert.match(on[1].lines[3], /the realm holds the line/);
 });
 
 test('LEGACY-KEY: the family tree is its own action with a free default, and the mod\'s keys are the registry\'s', () => {

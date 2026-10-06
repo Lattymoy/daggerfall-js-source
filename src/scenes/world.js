@@ -625,8 +625,9 @@ import { GROUP_ROLL_RADIUS } from '../systems/campEncounters.js';   // PSCALE1: 
 import {
   realmIo, openRealmBoot, createRealmSession, realmSummaryOf, setRealmNotice, realmCreate, realmPut, realmBootSearch, realmRefusalText,
   sayRealmSave, REALM_OFFLINE_TEXT, REALM_EXIT_WAIT_MS, whenPageHides, whenPageGoes, realmTradeEscrow, realmGoldAct, realmDoorShut,
-  REALM_RESTORED_TEXT, realmSaveWithHeld,
+  REALM_RESTORED_TEXT, realmSaveWithHeld, realmList,
 } from '../systems/realmSaves.js';   // REALM P1.3: an online character is the realm's - joined, loaded and checkpointed through the service
+import { createRealmLine } from '../systems/legacy/realmLine.js';   // LEGACY7: online, Project Legacy's lines are the realm's
 import { reclaimFromDevice, reclaimLines } from '../systems/realmCustoms.js';   // RESTORE: what customs once kept back, given back at the boot
 import { appStorage } from '../systems/appStorage.js';   // ACC1d: where that session lives - the app's store, not the tab's (a second tab is the same player)
 import { skyClassicMinutes, wallMsForSkyMinutes, skyMinutesPerMsAt } from '../net/skyLaw.js';   // TIME1: the sky's own clock, installed beside the event clock
@@ -918,6 +919,18 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  checkpoint (the composers' sink, scenes/shared.js realmSaveSink), and its end - another tab joined it, it was
    *  deleted, the account signed out - takes the player to the door with the reason. */
   const realmSession = realmBoot ? createRealmSession({ io: realmIoNow(), id: params.get('realm'), lease: realmBoot.lease, seq: realmBoot.seq, gzip: realmBoot.gzip, onLost: (why) => realmLost(why) }) : null;   // REALM-GZIP: packed when the join said so
+  // LEGACY7 (bible/06-Systems/Legacy-Arc.md section 9): ONLINE, PROJECT LEGACY'S LINES ARE THE REALM'S - read into the
+  // device's store before any save is restored (a death another device wrote stands here), written after each of the
+  // device's writes; and the account's living realm characters, the question "is there a save of this member?" online
+  const legacyRealmLine = params.has('online') && (realmBoot || realmNew) ? createRealmLine({ io: realmIoNow, storage: () => appStorage() }) : null;
+  /** @type {Set<string> | null} the living realm characters' ids - null unknown (unread: every id is taken to stand) */
+  let legacyRealmRoster = null;
+  if (legacyRealmLine) {
+    status('Reading the family');
+    await legacyRealmLine.pull().catch((e) => console.warn('[legacy] the realm\'s lines were not read', e));
+    const listed = await realmList(realmIoNow()).catch(() => null);
+    if (listed?.ok) legacyRealmRoster = new Set(listed.characters.map((c) => String(c.id)));
+  }
   // REALM P1.3: a realm checkpoint that LANDS is a save that lands - the gate's spoils it was composed holding are then
   // safe on the service, and their device record goes (scenes/spoilsPool.js saved, as onSlotSaved tells it for a slot).
   // Without it no realm save ever cleared them, and every boot handed the same spoils back. The hooks are the spoils
@@ -2113,6 +2126,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   let livingRelations = createRelations();   // LW2: how the living world regards this character - the save's `LivingWorld` record
   const LEGACY_REMAINS_NEAR = 60 * 40;   // LEGACY4: 60 m in native world units (40 to the metre) - near enough to find the fallen's remains
   const LEGACY_REMAINS_NEAR_DUNGEON = 6;   // AUDIT LEGACY H1: underground, six paces in the scene's metres (the wagon's own access reach is five)
+  /** LEGACY7: an online birth's first save - the realm's checkpoint, answered later (legacyRealmBirth) - or null. */
+  let legacyFirstSave = null;
   let legacyHost = null;   // LEGACY1: Project Legacy's family (scenes/legacyHost.js) - made beside the bounty boards, read by the death resets above it
   let _legacyMade = () => {};
   /** LEGACY1: the host, once made - a birth's chargen (`?legacyborn=`) waits for it, since the flow's files can land first. */
@@ -6391,6 +6406,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       surfacePlayer();
       questInitAtGameStart();
       autoBuildArms(playerEntity);
+      if (realmNew) { legacyRealmBirth(host).catch((e) => { console.error('[legacy] the online birth failed', e); realmLost('server'); }); return; }   // LEGACY7: born into the realm
       host.onBorn();
       // AUDIT LEGACY B7: the born member is saved (onBorn) - this page is that save's now, so a reload loads them
       const key = newestSaveOf(enumerateSaves().info, String(playerEntity.characterId ?? ''));
@@ -15923,18 +15939,72 @@ export async function bootWorld(canvas, renderer, params, status) {
     const io = realmIoNow();
     if (!io) { realmLost('signed-out'); return; }
     for (let i = 0; !playerSpawned && i < 240; i++) await new Promise((r) => { setTimeout(r, 250); });   // the world stands before it is saved
-    const made = await realmCreate(io, playerEntity.name || 'Traveller', realmSummaryOf(playerEntity));
+    // LEGACY7: the founder of a house is born as its first member - the line the realm's before the character is
+    const made = await realmCreateLegacy(io);
     if (!made.ok) { realmLost(made.error); return; }
+    const put = await realmFirstSave(io, made);
+    if (!put.ok) { realmLost(put.error); return; }
+    releaseUnloadGuard();
+    location.replace(`${location.pathname}${realmBootSearch(location.search, made.data.id, BOOT_DOOR_KEYS)}`);
+  }
+  /** LEGACY7: THE REALM'S CHARACTER MADE for the one in the world - as the person of Project Legacy's line they play,
+   *  when they play one (server-account/src/legacy.js: a living member no realm character has played) - its id the
+   *  realm's from here, in the entity and in the family's record (legacyHost.rebind). The line is written to the realm
+   *  first: the service reads the person off it. A refusal the network made is asked again, twice. */
+  async function realmCreateLegacy(io) {
+    await legacyRealmLine?.flush();
+    const fam = legacyHost?.family ?? null;
+    const me = legacyHost?.current() ?? null;
+    const born = fam && me && legacyOn() ? { lineage: fam.id, person: me.id } : null;
+    let made = null;
+    for (let i = 0; i < 3; i++) {
+      made = await realmCreate(io, playerEntity.name || 'Traveller', realmSummaryOf(playerEntity), born);
+      if (made.ok || !['offline', 'server'].includes(made.error)) break;
+      await new Promise((r) => { setTimeout(r, 2000 * (i + 1)); });
+    }
+    if (!made?.ok) return made ?? { ok: false, error: 'server' };
+    const was = playerEntity.characterId;
     playerEntity.characterId = made.data.id;   // the realm's id, never the client's
+    legacyHost?.rebind(was, made.data.id);
+    await legacyRealmLine?.flush();
+    return made;
+  }
+  /** REALM P1.3: A CHARACTER'S FIRST SAVE, the realm's checkpoint at sequence 1 (REALM-GZIP: packed when it said so). */
+  async function realmFirstSave(io, made) {
     let text = null;
     const sink = (snap) => { text = JSON.stringify(snap); };
     if (modes) modes?.quickSaveNow(QUICK_SAVE_NAME, { quiet: true, sink });
     else worldQuickSave(QUICK_SAVE_NAME, { quiet: true, sink });
-    if (!text) { realmLost('server'); return; }
-    const put = await realmPut(io, made.data.id, { lease: made.data.lease, seq: 1, summary: realmSummaryOf(playerEntity) }, text, { gzip: made.data.gzip === true });   // REALM-GZIP
-    if (!put.ok) { realmLost(put.error); return; }
+    if (!text) return { ok: false, error: 'server' };
+    return realmPut(io, made.data.id, { lease: made.data.lease, seq: 1, summary: realmSummaryOf(playerEntity) }, text, { gzip: made.data.gzip === true });
+  }
+  /** LEGACY7: AN HEIR (or a member played for the first time) BORN ONLINE - the realm's character made as their person,
+   *  and the birth's first save the realm's (legacyHost.onBorn waits on it: the birth stands only with its save); then
+   *  the realm's own boot. */
+  async function legacyRealmBirth(host) {
+    const io = realmIoNow();
+    if (!io) { realmLost('signed-out'); return; }
+    for (let i = 0; !playerSpawned && i < 240; i++) await new Promise((r) => { setTimeout(r, 250); });   // the world stands before it is saved
+    const made = await realmCreateLegacy(io);
+    if (!made.ok) { realmLost(made.error); return; }
+    let refused = 'server';
+    legacyFirstSave = () => realmFirstSave(io, made).then((r) => { if (!r.ok) refused = r.error; return !!r.ok; });
+    const ok = await Promise.resolve(host.onBorn()).finally(() => { legacyFirstSave = null; });
+    if (!ok) { realmLost(refused); return; }
+    await legacyRealmLine?.flush();
     releaseUnloadGuard();
     location.replace(`${location.pathname}${realmBootSearch(location.search, made.data.id, BOOT_DOOR_KEYS)}`);
+  }
+  /** LEGACY7: PROJECT LEGACY'S BOOT - a switch, a succession, a birth. Offline at once; online once the line is the
+   *  realm's and the session's last save has landed and its lease is given up (the next of the account joins after it). */
+  async function legacyBoot(search) {
+    if (legacyRealmLine) {
+      const wait = () => new Promise((r) => { setTimeout(r, REALM_EXIT_WAIT_MS); });
+      await Promise.race([legacyRealmLine.flush(), wait()]);
+      if (realmSession && !realmSession.lost) await Promise.race([realmSession.leave(), wait()]);
+    }
+    releaseUnloadGuard();
+    location.replace(`${location.pathname}${search}`);
   }
 
   addEventListener('mousemove', (e) => {
@@ -22159,16 +22229,23 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     gold: () => legacyGold(playerEntity),
     say: (line) => townTalk.say(line),
-    boot: (search) => { releaseUnloadGuard(); location.replace(`${location.pathname}${search}`); },
+    boot: (search) => { legacyBoot(search); },
     search: () => location.search,
     loadCharacter: (cid) => {
+      // LEGACY7: online a member is a realm character of their own - joined through the realm's own boot (a tombstone's
+      // join is refused there: an older save is never played past a death)
+      if (legacyRealmLine) {
+        if (legacyRealmRoster && !legacyRealmRoster.has(String(cid))) return false;
+        legacyBoot(realmBootSearch(location.search, String(cid), BOOT_DOOR_KEYS));
+        return true;
+      }
       const key = newestSaveOf(enumerateSaves().info, cid);
       if (key < 0) return false;
       releaseUnloadGuard();
       location.replace(`${location.pathname}${loadSearch(location.search, key)}`);
       return true;
     },
-    saveNow: () => !!(modes ? modes?.quickSaveNow(QUICK_SAVE_NAME, { quiet: true }) : worldQuickSave(QUICK_SAVE_NAME, { quiet: true })),   // `?.` inside the arm: audit24 wave37's gate above the declaration; AUDIT LEGACY B6: answers whether it saved
+    saveNow: () => (legacyFirstSave ? legacyFirstSave() : !!(modes ? modes?.quickSaveNow(QUICK_SAVE_NAME, { quiet: true }) : worldQuickSave(QUICK_SAVE_NAME, { quiet: true }))),   // LEGACY7: an online birth's is the realm's first checkpoint (legacyRealmBirth)   // `?.` inside the arm: audit24 wave37's gate above the declaration; AUDIT LEGACY B6: answers whether it saved
     inFight: () => areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? []), ...(modes?.dungeonCtx?.foes ?? [])]),
     payEstate: (n) => legacyAddItem(playerEntity.items ??= [], letterOfCredit(n)),
     giveItems: (items) => { for (const it of items) legacyAddItem(playerEntity.items ??= [], it); },   // AUDIT LEGACY: an elder's bequest, into the pack
@@ -22189,8 +22266,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // house's news, and the killer a fallen kinsman's mirror names, handed to the heir (revenant.js)
     regards: () => livingRelations, regardDay: livingRegardDay, sky: () => skyMinutes(),
     killerOf: (cid, ownAt) => revenantKillerOf(cid, ownAt), inheritFoe: (rec) => inheritRevenant(playerEntity, rec),
+    // LEGACY7: online, the realm's copy of the line follows each write, and a fall is the realm's tombstone
+    stored: (f) => { legacyRealmLine?.push(f); },
+    tombstone: () => (realmSession ? realmSession.die() : false),
     houseHere: () => { const b = (modes?.mode ?? 'exterior') === 'interior' ? modes?.interiorBuilding : null; return b?.buildingKey > 0 && b.townMapId ? { mapId: b.townMapId >>> 0, buildingKey: b.buildingKey } : null; },
-    hasSave: (cid) => newestSaveOf(enumerateSaves().info, cid) >= 0,   // AUDIT LEGACY II A2/B1: a person's character stands only with a save of them
+    hasSave: (cid) => (legacyRealmLine ? !legacyRealmRoster || legacyRealmRoster.has(String(cid)) : newestSaveOf(enumerateSaves().info, cid) >= 0),   // LEGACY7: online, a living realm character of the account   // AUDIT LEGACY II A2/B1: a person's character stands only with a save of them
     livingWorld: () => livingWorldOn(),   // AUDIT LEGACY II B5: the line stands only in the Living World's towns
     // LEGACY5: the temple the one played stands in (its town's map id), and the wedding asked there - the name with it
     templeOf: () => { const b = (modes?.mode ?? 'exterior') === 'interior' ? modes?.interiorBuilding : null; return b?.buildingType === TALK_BUILDING_TYPES.Temple ? (b.townMapId >>> 0) : null; },

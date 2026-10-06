@@ -66,8 +66,8 @@ export const LEGACY_TEXT = Object.freeze({
   deadLoad: (name) => `${name} is dead. Their story is the past.`,
   retiredLoad: (name) => `${name} has passed the mantle on. Their story is the past.`,
   fight: 'Not while you are in a fight.',
-  online: 'Online, your family is changed from the Family window between journeys.',
-  onlineSpent: (name) => `Arkay waits for ${name}. Online, a life's last breath waits on the realm's lineage - pass the mantle when you next play offline.`,
+  // LEGACY7: the realm's tombstone refused or unheard - the fall stands on the record; the realm is asked again
+  unTombed: 'The realm did not hear of this death yet. It will be told again before anyone carries on.',
   pending: 'The house waits on its Succession.',
   notSaved: 'Your journey could not be saved here - not now.',
   estate: (n) => `The estate left you a letter of credit for ${n} gold.`,
@@ -142,11 +142,14 @@ export function mergeFamily(stored, saved, cid) {
  *   templeOf?:() => (number|null), askWed?:(name:string, house:string, done:(takeName:boolean) => void) => boolean,
  *   regards?:() => any, regardDay?:() => number, sky?:() => number,
  *   killerOf?:(characterId:string, ownAt:number) => any, inheritFoe?:(rec:any) => boolean,
+ *   stored?:(family:any) => void, tombstone?:() => (boolean|Promise<boolean>),
  * }} deps - AUDIT LEGACY II: `hasSave(cid)` whether a save of that character stands (a person's id stands only with one);
  *   `livingWorld()` whether the Living World runs (the line stands only in its towns). LEGACY6: `regards()` the Living
  *   World's relations of the one played and `regardDay()` their day; `sky()` the towns' minute (the house's news is
  *   stamped by it); `killerOf(cid, ownAt)` the revenant that ended a character (revenant.js killerOf) and
- *   `inheritFoe(rec)` it handed to the one played (inheritRevenant)
+ *   `inheritFoe(rec)` it handed to the one played (inheritRevenant). LEGACY7: `stored(family)` each write of the device's,
+ *   which online the realm's copy follows (systems/legacy/realmLine.js); `tombstone()` the playing realm character
+ *   fallen for good (realmSaves.js session die)
  */
 export function createLegacyHost(deps) {
   const rng = deps.rng ?? Math.random;
@@ -178,6 +181,7 @@ export function createLegacyHost(deps) {
     if (f === family) unstored = !ok;
     if (!ok && !unstoredSaid) { unstoredSaid = true; deps.say(LEGACY_TEXT.notStored); }
     if (ok) unstoredSaid = false;
+    if (ok && f === family) deps.stored?.(family);   // LEGACY7: online, the realm's copy is written after the device's (systems/legacy/realmLine.js)
     return ok;
   };
   const current = () => currentOf(family);
@@ -267,16 +271,17 @@ export function createLegacyHost(deps) {
     store();
   }
 
-  /** FOUND the family around the character being played - a new character's answer, or the Mods pane's model. Online
-   *  a house is Enduring until the realm keeps lineages (LEGACY7): a Bloodline's permadeath has no authority there. */
+  /** FOUND the family around the character being played - a new character's answer, or the Mods pane's model. LEGACY7:
+   *  online too - the realm keeps the line and a Bloodline's tombstone (server-account/src/legacy.js). */
   function found(model = null) {
     if (family || past || !deps.on() || !deps.entity?.chargenDone) return family;
     const known = familyOfCharacter(cidOf());
     if (known) { adopt(known); return family; }   // the store knows this character's house - never a second
     const s = legacySettings();
-    const asked = model ?? deps.entity?.legacyModel ?? s.model;
-    const m = deps.online() ? MODELS.enduring : asked;
-    family = foundFamily(deps.entity, { model: m, seat: deps.town(deps.here()), at: deps.now(), rng, settings: s });
+    // online a character founded at a LOAD (made before this arc - no chargen answer) is Enduring whatever the Mods pane
+    // says: a player never wakes into a permadeath the realm holds that they did not choose (AUDIT LEGACY B4's law, kept)
+    const asked = model ?? deps.entity?.legacyModel ?? (deps.online() ? MODELS.enduring : s.model);
+    family = foundFamily(deps.entity, { model: asked, seat: deps.town(deps.here()), at: deps.now(), rng, settings: s });
     const p = current();
     p.bornOwn = Math.floor(deps.own() ?? 0);
     rollSiblings(family, p.id, { rng, at: deps.now(), settings: s });   // SaveCurrentCharacter(firstTime) -> CreateRandomSiblings
@@ -359,17 +364,12 @@ export function createLegacyHost(deps) {
     if (!family || !p || !deps.on() || past || family.pending || !isAlive(p) || p.retired != null || !deps.entity?.chargenDone) return null;
     writeCurrent();
     const d = { at: deps.now(), place: deps.here(), gold: deps.gold(), by: deps.killer?.() ?? null, cause: 'fell' };
-    const online = deps.online();
     if (family.model === MODELS.enduring) {
-      if (online && isSpent(p, p.lived)) { outcome = { kind: 'rise', line: LEGACY_TEXT.onlineSpent(p.given) }; return outcome; }
       const paid = payToll(p, legacySettings().tollShare, p.lived);
       touch(family);
       store();
       if (!paid.final) { outcome = { kind: 'rise', line: tollLine(p.given, paid) }; return outcome; }
       d.cause = 'years';
-    } else if (online) {
-      outcome = { kind: 'none' };
-      return outcome;
     }
     recordDeath(family, p.id, { at: d.at, cause: d.cause, place: d.place, by: d.by });
     tellNews('died', fullNameOf(p.given, p.surname), d.place?.mapId);
@@ -377,8 +377,19 @@ export function createLegacyHost(deps) {
     family.pending = { fallenId: p.id, at: d.at, estate: estateOf(d.gold), bequest: [] };
     touch(family);
     store();
+    entomb();
     outcome = fallOutcome();
     return outcome;
+  }
+  /** LEGACY7: ONLINE, A FALL IS THE REALM'S TOMBSTONE (server-account/src/legacy.js realmDie) - and an elder's
+   *  retirement, the other way a member is never played again - asked at the door, and
+   *  again before anyone carries on (`succeed` waits on it): a character whose death the realm never heard could be
+   *  joined again from an older save. */
+  let tomb = null;
+  function entomb() {
+    if (!deps.online() || !deps.tombstone) return null;
+    tomb = Promise.resolve(deps.tombstone()).then((ok) => { if (!ok) { tomb = null; deps.say(LEGACY_TEXT.unTombed); } return !!ok; }, () => { tomb = null; deps.say(LEGACY_TEXT.unTombed); return false; });
+    return tomb;
   }
 
   /**
@@ -553,10 +564,12 @@ export function createLegacyHost(deps) {
   /**
    * THE SUCCESSION'S CHOICE: `{ personId }` a living member, or `{ newborn: true }` a child of the fallen - the waiting
    * fall's (`family.pending`): its estate and bequest go to whoever takes the mantle. A member already played is
-   * LOADED; one never played is BORN. Answers whether the boot was asked. Online, never (LEGACY7).
+   * LOADED; one never played is BORN. Answers whether the boot was asked. LEGACY7: online too - the boot waits on the
+   * realm's tombstone of the fallen (and on the line's write, the world host's boot) first.
    */
   function succeed(choice) {
-    if (!family || deps.online()) return false;
+    if (!family) return false;
+    if (deps.online() && family.pending && !tomb) entomb();   // a tombstone refused or unheard at the door, asked again
     const s = legacySettings();
     const fallenId = family.pending?.fallenId ?? family.currentId;
     let heir = null;
@@ -578,6 +591,7 @@ export function createLegacyHost(deps) {
     touch(family);
     store();
     if (lore) deps.say(lore);
+    if (tomb) { const t = tomb; tomb = null; t.then((ok) => { if (ok) play(heir); }); return true; }
     return play(heir);
   }
 
@@ -602,13 +616,13 @@ export function createLegacyHost(deps) {
 
   // ---- the switch (FamilyLegacyInformationPanel's double-click, SwitchCharacterManager) -----------------------------
 
-  /** Why a switch to `id` is refused, or null. S3: never mid-fight; online, never (the realm's birth law - LEGACY7). */
+  /** Why a switch to `id` is refused, or null. S3: never mid-fight. LEGACY7: online too - a member is the realm's
+   *  character of their own (born at the service as that person, joined as any realm character is). */
   function switchRefusal(id) {
     const t = personOf(family, id);
     if (!family || past || !t || !isAlive(t) || t.kind !== 'member' || t.id === family.currentId || t.retired != null) return 'none';
     if (family.pending) return LEGACY_TEXT.pending;
     if (t.minor) return LEGACY_TEXT.minor(t.given);   // LEGACY5: a child is played only once the mantle passes to them
-    if (deps.online()) return LEGACY_TEXT.online;
     if (deps.inFight()) return LEGACY_TEXT.fight;
     return null;
   }
@@ -632,7 +646,6 @@ export function createLegacyHost(deps) {
     if (!family || past || !p || !deps.on() || family.model !== MODELS.enduring) return 'Only an Enduring house passes its mantle.';
     if (family.pending) return LEGACY_TEXT.pending;
     if (!isElder(p, lived())) return `${p.given} is not yet an elder of the house.`;
-    if (deps.online()) return LEGACY_TEXT.online;
     if (deps.inFight()) return LEGACY_TEXT.fight;
     return null;
   }
@@ -658,6 +671,7 @@ export function createLegacyHost(deps) {
       return { ok: false, why: LEGACY_TEXT.notSaved };
     }
     store();
+    entomb();   // LEGACY7: online, a retired elder's character is the realm's tombstone too - never played again
     past = p;   // the elder's own world stands under the Succession; nothing more is theirs to write
     return { ok: true, outcome: fallOutcome() };
   }
@@ -738,9 +752,26 @@ export function createLegacyHost(deps) {
     const loc = deps.town(here)?.loc ?? family.seat?.loc ?? '';
     deps.say(LEGACY_TEXT.born(fullNameOf(p.given, p.surname), loc || 'the Bay'));
     payEstateOf(p, { write: false });
-    if (deps.saveNow()) { store(); clearBirth(deps.tab()); return; }
-    family = readFamily(was);
-    deps.say(LEGACY_TEXT.notBorn(p.given));
+    const landed = (ok) => {
+      if (ok) { store(); clearBirth(deps.tab()); return true; }
+      family = readFamily(was);
+      deps.say(LEGACY_TEXT.notBorn(p.given));
+      return false;
+    };
+    // LEGACY7: online the first save is the realm's checkpoint, answered later - the birth stands with it all the same
+    const saved = deps.saveNow();
+    return saved && typeof /** @type {any} */ (saved).then === 'function' ? Promise.resolve(saved).then((ok) => landed(!!ok), () => landed(false)) : landed(!!saved);
+  }
+  /** LEGACY7: THE REALM NAMED THE CHARACTER (scenes/world.js realmBirth: its id is the service's, never the client's) -
+   *  the person played under `was` is played under `now` from here, so the record and the save agree on who they are
+   *  (a founder born online kept the client's id, and their next load founded a second house). */
+  function rebind(was, now) {
+    const p = family && was ? family.people.find((x) => x.characterId === String(was)) : null;
+    if (!p || !now || p.characterId === String(now)) return false;
+    p.characterId = String(now);
+    touch(family);
+    store();
+    return true;
   }
 
   // ---- the frame ---------------------------------------------------------------------------------------------------
@@ -1028,5 +1059,6 @@ export function createLegacyHost(deps) {
     tick,
     newsFor,
     seedRegards,
+    rebind,
   };
 }

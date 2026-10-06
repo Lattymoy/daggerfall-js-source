@@ -562,6 +562,13 @@ export const REFUSALS = Object.freeze({
   // AUDIT REALM2 S1: a first save the realm reads - a new character's, or customs' own
   'realm-birth': 'The realm takes a new character only as character creation makes one. Delete it and make it again.',
   'customs-allowance': 'That character carries more gold than customs lets in. Bring it online again.',
+  // LEGACY7: Project Legacy online (server-account/src/legacy.js) - a fallen character's tombstone, and a member's birth
+  dead: 'That character has fallen for good. Their house carries on - play one of its living members.',
+  'no-lineage': 'The realm does not hold that family yet. Save once, then try again.',
+  'lineage-person': 'That member of the family cannot take up the line - they have died, retired, wed into it, or are still a child.',
+  'lineage-played': 'That member of the family already has a character in the realm.',
+  'lineage-model': 'A family keeps the way of death it was founded with.',
+  'too-many-lineages': 'You have as many families as an account may hold online.',
   // AUDIT REALM2 S2: the online acts that cost gold are a realm character's
   'realm-only': 'Only an online character of the realm can do that.',
   // REALM P2.1: a trade's sid another pair settled (server-account/src/realmTrade.js)

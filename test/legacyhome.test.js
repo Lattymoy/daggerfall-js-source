@@ -310,7 +310,7 @@ test('LEGACY-HOME: met in the world - who they are, their greeting, and why Play
   assert.equal(host.kinOfResident(res).refusal, LEGACY_TEXT.fight);
   w.fight = false;
   w.online = true;
-  assert.equal(host.kinOfResident(res).refusal, LEGACY_TEXT.online);
+  assert.equal(host.kinOfResident(res).refusal, null, 'PIN MOVED (LEGACY7): online too - a member is a realm character of their own');
   w.online = false;
   child.retired = 50;
   assert.equal(host.kinOfResident(res).refusal, LEGACY_TEXT.retiredKin(child.given));

@@ -91,7 +91,7 @@ async function realmAsk(io, path, { method = 'GET', json = null, raw = null, hea
     try { data = await res.json(); } catch { data = null; }
     const error = typeof data?.error === 'string' ? data.error : 'server';
     if (error === 'auth') forgetSession(io.storage);   // accountClient.js's law: only `auth` signs out
-    return { ok: false, error, status: res.status, ...(Number.isSafeInteger(data?.seq) ? { seq: data.seq } : {}) };
+    return { ok: false, error, status: res.status, ...(Number.isSafeInteger(data?.seq) ? { seq: data.seq } : {}), ...(error === 'stale' && data ? { data } : {}) };   // LEGACY7: a stale line's stored record, to merge into
   }
   if (type.includes('json')) {
     try { return { ok: true, data: await res.json() }; } catch { return { ok: false, error: 'server' }; }
@@ -109,8 +109,20 @@ export const realmList = async (/** @type {any} */ io) => {
   const r = await realmAsk(io, '/v1/realm');
   return r.ok ? { ok: true, characters: Array.isArray(r.data?.characters) ? r.data.characters : [], max: r.data?.max ?? 0 } : r;
 };
-/** A character born online: `{ ok, data: { id, lease, seq, gzip } }` - `gzip` the service's word that it opens a packed save. */
-export const realmCreate = (/** @type {any} */ io, /** @type {string} */ name, /** @type {any} */ summary = null) => realmAsk(io, '/v1/realm/create', { method: 'POST', json: { name, summary } });
+/** A character born online: `{ ok, data: { id, lease, seq, gzip } }` - `gzip` the service's word that it opens a packed save.
+ *  LEGACY7: `born` - `{ lineage, person }`, born as that living member of the account's own line (Project Legacy). */
+export const realmCreate = (/** @type {any} */ io, /** @type {string} */ name, /** @type {any} */ summary = null, /** @type {{ lineage: string, person: number } | null} */ born = null) =>
+  realmAsk(io, '/v1/realm/create', { method: 'POST', json: born ? { name, summary, lineage: born.lineage, person: born.person } : { name, summary } });
+/** LEGACY7: the account's Project Legacy lines - `{ ok, lineages: [{ id, surname, model, rev, record }] }`. */
+export const realmLineages = async (/** @type {any} */ io) => {
+  const r = await realmAsk(io, '/v1/realm/lineages', { method: 'POST', json: {} });
+  return r.ok ? { ok: true, lineages: Array.isArray(r.data?.lineages) ? r.data.lineages : [] } : r;
+};
+/** LEGACY7: a line written past its rev - `{ ok, data: { rev } }`, or `{ ok: false, error: 'stale', data: { rev, record } }`
+ *  (the stored record, to merge into and write again). */
+export const realmLineagePut = (/** @type {any} */ io, /** @type {string} */ id, /** @type {any} */ record) => realmAsk(io, '/v1/realm/lineage', { method: 'POST', json: { id, record } });
+/** LEGACY7: THE TOMBSTONE - the playing tab's character fallen for good, under its lease. */
+export const realmDie = (/** @type {any} */ io, /** @type {string} */ id, /** @type {string} */ lease) => realmAsk(io, '/v1/realm/die', { method: 'POST', json: { id, lease } });
 /** An offline character brought in through customs, once: `{ ok, data: { id, lease, seq, gzip } }`. */
 export const realmCustoms = (/** @type {any} */ io, /** @type {string} */ origin, /** @type {string} */ name, /** @type {any} */ summary = null) => realmAsk(io, '/v1/realm/customs', { method: 'POST', json: { origin, name, summary } });
 /** A join: a new lease - `{ ok, data: { id, lease, seq, bytes, gzip } }`. */
@@ -547,6 +559,21 @@ export function createRealmSession({
     /** AUDIT REALM L2-F6: THE TAB CANNOT HOLD WHAT THE REALM NOW HOLDS (a settle whose goods this game refuses): the
      *  session ends as a lost answer does - to the door, where a join reads the record - never a checkpoint over it. */
     abandon(/** @type {string} */ error = 'unknown') { lose(error); },
+    /** LEGACY7: THE CHARACTER FELL FOR GOOD (Project Legacy) - its tombstone under this session's lease
+     *  (server-account/src/legacy.js realmDie). The session ends with it, quietly - nothing of the dead is written
+     *  again, and the page stays for the Succession. Answers whether the realm took it (a refusal - unheard, offline -
+     *  leaves the session as it was, to be asked again). */
+    async die() {
+      if (lost && lost !== 'dead') return false;
+      if (lost === 'dead') return true;
+      if (running) { try { await running; } catch { /* the last put's answer does not matter now */ } }
+      const r = await realmDie(io, id, lease);
+      if (!r.ok) return false;
+      lost = 'dead';
+      pending = null;
+      dropUnsent(storage, id);   // RESCUE-SAVE: no copy of the dead is offered again
+      return true;
+    },
     /** The session's end: what is waiting is sent first (unless the page is going - `keepalive` sends the leave alone,
      *  which a browser can finish after the page is gone), then the lease given up. */
     async leave({ keepalive = false } = {}) {

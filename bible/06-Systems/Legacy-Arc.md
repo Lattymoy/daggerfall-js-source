@@ -107,8 +107,8 @@ S1. So in the port:
   AUDIT LEGACY II: a WRITE never loses a fact the store holds - a copy not ahead of the store's (another tab's, an older
   save's) takes the store's facts in first, deaths only ever added (`store.js storeFamily`/`mergeFacts`, A4), and a
   write the storage refuses is said and tried again at every tick (P1). A record with no person for the character
-  played is not theirs and is let go (H1). Online (LEGACY7, not built) the account service will hold the lineage
-  (section 9).
+  played is not theirs and is let go (H1). Online (LEGACY7) the account service holds the lineage, the device's store
+  its cache (section 9).
 - **The fixed city keeps DFU's death** (FLAGGED, `scenes/world.js`): `?exterior`, a dev route, streams no world for an
   heir to be born into.
 - **A person is played by being loaded.** Switching to a member who has been played loads their newest save; to one
@@ -188,9 +188,9 @@ paid to whoever takes the mantle, no quest), a fallen elder's lying with their r
 **Offline with Project Legacy off** nothing changes: DFU's death and its title menu. **Online without a family** (a
 character made before this arc): the character is founded into an Enduring family at its next load, which changes
 nothing about its death but the toll - a player never wakes into permadeath they did not choose. **Online until LEGACY7**
-(AUDIT LEGACY B4): a house is Enduring (the question shows Bloodline shut), an offline Bloodline played online dies the
-room's death, a spent Enduring life rises at the last breath, and no Succession is answered - permadeath has no
-authority online until the realm keeps the lineage and its tombstone (section 9).
+(AUDIT LEGACY B4) a house was Enduring, an offline Bloodline played online died the room's death, and no Succession was
+answered - permadeath had no authority there. LEGACY7 gave it one, the realm's tombstone (section 9): online is the
+line's own law now, Bloodline open at the founder's chargen.
 
 ## 7. HEIRLOOMS AND THE DEATH QUEST
 
@@ -264,22 +264,41 @@ mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed onl
 
 ## 9. ONLINE
 
-*LEGACY7's - NOT BUILT yet: the design this section states is the plan, in the present tense of the slice that builds it.*
+*LEGACY7 - the line, the tombstone and the member's birth built (`server-account/src/legacy.js`, migration
+`0083_legacy.sql`, acct84; `systems/legacy/realmLine.js`; `test/legacy7_service.test.js`, `test/legacy7_online.test.js`,
+`tools/mutants/legacy7.json`). The house name and two players wed are the slice's second and third parts.*
 
-- **The model is the family's**, chosen at the founder's online chargen. Enduring is the default; Bloodline is marked
-  on the online roster and over the player's name (a small skull beside the house name).
-- **The service holds the line** (`server-account/src/legacy.js`, migration `0083_legacy.sql`): a `lineages` row per
-  family (owner, surname, model, the family's record, its `rev`), and on each realm character its `lineage_id`, its
-  `person_id` and `dead_at`. The family's record is read with the roster and written with a checkpoint (`rev` checked);
-  the save's copy is ignored online.
-- **A Bloodline death is a tombstone.** The client's death sends `POST /v1/realm/die`; the service stamps `dead_at`,
-  and from then refuses that character's join and checkpoint: an older save cannot be reloaded past a death, which is
-  the whole of permadeath's authority. The tombstone frees the character's roster slot (the dead do not count against
-  `REALM_CHARACTERS_MAX`); its name, level and family stay readable in the Hall.
-- **The heir's birth** is `realmCreate` with `{ lineage, person }`: the service checks the person is a living member
-  of the caller's lineage not already played, and the first save is held to the birth law as every birth is (level 1,
-  liquid wealth at most 10,000 - the estate fits under it by construction, section 5).
-- **Enduring online** is today's respawn with the toll added; nothing new is asked of the service but the record.
+- **The model is the family's**, chosen at the founder's online chargen - Bloodline open online (AUDIT LEGACY B4 shut it
+  while a permadeath had no authority there; the tombstone is that authority), said on its card: "Online, the realm
+  holds the line: on every device."
+- **The service holds the line** (`lineages`: an account's family by its own id - its surname, its model for good, its
+  record and `rev`). A write lands only past the stored rev; a stale one is answered with the stored record, which the
+  client merges its facts into (`store.js mergeFacts`: a death only ever added) and writes again, one past both. Every
+  online boot reads the account's lines into the device's store before any save is restored (a death another device
+  wrote stands there), and each write of the device's is followed by the realm's (`realmLine.js push`); a switch, a
+  succession and a birth wait for it (`flush`) before the page goes.
+- **A Bloodline death is a tombstone** (`POST /v1/realm/die`, under the playing session's lease - `realmSaves.js` session
+  `die`): the service stamps `dead_at` and drops the lease, and from then refuses the character's join (`dead`, 410),
+  checkpoint and trade, and the relay's door (`realmCharacterHeld`): an older save cannot be reloaded past a death, which
+  is the whole of permadeath's authority. An Enduring line's last death (its span spent) and an elder's retirement are
+  tombstones too - a member never played again. The tombstone frees the roster slot (`REALM_CHARACTERS_MAX` counts the
+  living) and leaves the roster; the family's record keeps them (the Hall). The page stays for the Succession; the
+  heir's boot waits on the realm's word (a tombstone refused is said - "The realm did not hear of this death yet" -
+  and asked again before anyone carries on).
+- **A member's birth** is `realmCreate` with `{ lineage, person }`: the service checks the person is a living member of
+  the caller's own line (never dead, retired, wed in or a minor) that no realm character has played (`lineage-played`;
+  a unique index behind it), and names them on the row for good. A birth whose first save never landed is taken up
+  again - the same row, a new lease. The first save is held to the birth law as every birth is (level 1, liquid wealth
+  at most 10,000 - the estate fits under it by construction, section 5); the host's `onBorn` waits on it (the birth
+  stands only with its save, AUDIT LEGACY II A2). A member already played is joined as any realm character is.
+- **The founder** is born the same way: the line written to the realm, then the character made as its first person,
+  and the realm's id rebound into the record (`legacyHost.rebind`). **A bug found here, fixed at its root:** before
+  LEGACY7 an online founder kept the client's id in the record while the realm named the character anew, so its saves
+  were refused into the record and its next load founded a second house.
+- **Enduring online** is the offline law: the toll, the rise, the elder's mantle.
+- **A house name online** (LEGACY7 part two): "<name> of House <surname>" on the roster card, the inspect card and over
+  the head (the generation in Roman numerals after a member's name when two share it - "Ysolde Hlaalu II").
+- **Two players wed** (LEGACY7 part three).
 
 ## 10. WORLD INFLUENCE
 
@@ -364,9 +383,9 @@ than standing still.
 - **Struck down.** One of the line killed by the one played (the town's one-hit civilian, LW7) dies IN THE RECORD -
   `died` with cause `slain` and by whose hand, a world fact, the store's (AUDIT LEGACY's first authority) - said on the
   HUD, and stands no more; never a death in the town's lives (`livingDeadAt`/`livingSlay` pass them to the host).
-- **Online** (until LEGACY7): the realm's homes are the account service's (`systems/onlineHomes.js`), not yet the line's
-  (AUDIT LEGACY II F2/B4: the host learns no house online), so online the family stands in its seat's town; they are
-  this player's own residents, seen by them alone; Play as is refused online. A character copied between the lanes (the
+- **Online**: the realm's homes are the account service's (`systems/onlineHomes.js`), not the line's (AUDIT LEGACY II
+  F2/B4: the host learns no house online), so online the family stands in its seat's town; they are this player's own
+  residents, seen by them alone. LEGACY7: Play as is open online - a member is a realm character of their own. A character copied between the lanes (the
   realm's customs, Copy to offline) is a new character of no house: both doors drop the record (AUDIT LEGACY II H1).
 - **The Living World.** The line stands only in the Living World's towns (AUDIT LEGACY II B5): with it off (the classic
   screens, or the Features row), nobody of the line stands anywhere, the card says no home, and the House page says
@@ -389,7 +408,7 @@ than standing still.
     plate pressed opens **the card** - face, age and span, Arkay's toll, the blood and the hearth, the eight stats and
     the career's skills by name once played, parents, spouse, siblings and children as links, its chips (played,
     fallen, died of years, at peace / lies unclaimed / carried home, retired, elder, has an heir, not yet played) and
-    the acts: Play as (a switch: saved first, never mid-fight, never online until LEGACY7) and, for an elder, Pass the
+    the acts: Play as (a switch: saved first, never mid-fight; online, through the realm - LEGACY7) and, for an elder, Pass the
     mantle - each refused on the card before the press, with its reason.
   - **The house**: its model, its seat, its generations, the living and the fallen (how and where each fell), and
     (LEGACY-HOME) its homes, the family home among them, the player's to choose (section 10b).
@@ -416,5 +435,5 @@ than standing still.
 | AUDIT LEGACY | the five-lens audit of LEGACY1-4 (`01-Overview/Audit-Legacy.md`) - the two authorities, the death at the door | built |
 | LEGACY5 | courting, marriage, children, surnames' cadet branches | built |
 | LEGACY6 | world influence: the inherited standing and regard, the towns' talk, the killer remembered | built |
-| LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name, two players wed | not built |
+| LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth (built); the house name, two players wed (parts two and three) | in progress |
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |

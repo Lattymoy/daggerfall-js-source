@@ -467,7 +467,8 @@ test('AUDIT LEGACY II B5/B6: the line stands only where the Living World runs; t
   assert.match(src, /livingWorld: \(\) => livingWorldOn\(\),   \/\/ AUDIT LEGACY II B5/);
   assert.match(src, /inWorld: \(\) => legacySettings\(\)\.familyInWorld && livingWorldOn\(\),/);
   assert.match(src, /talk: \(\) => \{ if \(person\.living\?\.res\?\.id === resId\) talk\(\); else townTalk\.say\(`\$\{kin\.person\.given\} has gone on their way\.`\); \},/, 'B6');
-  assert.match(src, /hasSave: \(cid\) => newestSaveOf\(enumerateSaves\(\)\.info, cid\) >= 0,/, 'A2/B1: the game\'s saves are the host\'s word');
+  // PIN MOVED (LEGACY7): online the realm's living characters are the word (a tombstone is none)
+  assert.match(src, /hasSave: \(cid\) => \(legacyRealmLine \? !legacyRealmRoster \|\| legacyRealmRoster\.has\(String\(cid\)\) : newestSaveOf\(enumerateSaves\(\)\.info, cid\) >= 0\),/, 'A2/B1: the game\'s saves are the host\'s word');
 });
 
 // ---- lens P: persistence and the tests' truth ----------------------------------------------------------------------

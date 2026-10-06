@@ -20,11 +20,12 @@
   {
     "name": "AUDIT-LEGACY-II-A2-birth-kept-without-save",
     "file": "src/scenes/legacyHost.js",
-    "old": "    family = readFamily(was);\n    deps.say(LEGACY_TEXT.notBorn(p.given));",
-    "new": "    store();\n    deps.say(LEGACY_TEXT.notBorn(p.given));",
+    "old": "      family = readFamily(was);\n      deps.say(LEGACY_TEXT.notBorn(p.given));",
+    "new": "      store();\n      deps.say(LEGACY_TEXT.notBorn(p.given));",
     "tests": [
       "test/auditlegacy2.test.js"
-    ]
+    ],
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the refusal's arm is `landed`'s now (an online birth's first save answers later)."
   },
   {
     "name": "AUDIT-LEGACY-II-A2-birth-door-refuses-saveless",

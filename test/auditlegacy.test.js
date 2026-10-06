@@ -167,7 +167,9 @@ test('AUDIT LEGACY A4/B7: a fall waits on the record - a closed tab or a failed 
   assert.match(src, /if \(!r\) \{ legacyBirthFailed\('no birth waits for this address'\); return; \}/);
   assert.match(src, /\}\)\.catch\(\(e\) => legacyBirthFailed\(e\?\.message \?\? String\(e\)\)\);/);
   // PIN MOVED (AUDIT LEGACY II A2): the birth stands only with its save - and the handoff is answered then
-  assert.match(rd('src/scenes/legacyHost.js'), /payEstateOf\(p, \{ write: false \}\);\n\s+if \(deps\.saveNow\(\)\) \{ store\(\); clearBirth\(deps\.tab\(\)\); return; \}/, 'the born member saved at birth, the handoff answered then');
+  // PIN MOVED (LEGACY7): the save may answer later (an online birth's first save is the realm's checkpoint) - the birth
+  // stands with it all the same, and the handoff is answered then
+  assert.match(rd('src/scenes/legacyHost.js'), /payEstateOf\(p, \{ write: false \}\);\n\s+const landed = \(ok\) => \{\n\s+if \(ok\) \{ store\(\); clearBirth\(deps\.tab\(\)\); return true; \}/, 'the born member saved at birth, the handoff answered then');
 });
 
 test('AUDIT LEGACY A6/H3: TWO AUTHORITIES - a death is the store\'s, what a character was given is their save\'s: a reload rewinds a grant with the bag, never a death', () => {
@@ -216,22 +218,22 @@ test('AUDIT LEGACY A8: a living member of an ended line plays on - the line goes
 
 // ---- online ----------------------------------------------------------------------------------------------------------
 
-test('AUDIT LEGACY B4/F1: ONLINE until the realm keeps lineages - a house is Enduring, a Bloodline death is the room\'s, a spent life rises, no Succession is answered', () => {
+test('AUDIT LEGACY B4/F1 (PIN MOVED, LEGACY7): online a house is founded as asked, a Bloodline death falls, a spent life ends, and the Succession is answered - the realm keeps the line now', () => {
+  // AUDIT LEGACY B4/F1 held online to Enduring while a permadeath had no authority there; LEGACY7 gave it the realm's
+  // tombstone (server-account/src/legacy.js; test/legacy7_online.test.js drives it), and online is the line's own law
   const w = world({ online: true });
-  assert.equal(w.host.family.model, MODELS.enduring, 'founded Enduring whatever was asked');
+  assert.equal(w.host.family.model, MODELS.bloodline, 'founded as asked');
   const b = world();
   b.online = true;
-  assert.equal(b.host.deathOutcome().kind, 'none', 'an offline Bloodline played online: the room\'s respawn stands');
-  assert.ok(!b.host.family.people[0].died);
+  assert.equal(b.host.deathOutcome().kind, 'fall', 'a Bloodline death online is final');
+  assert.ok(b.host.family.people[0].died);
   const e = world({ model: MODELS.enduring, online: true });
   e.host.current().toll = 999;
   const out = e.host.deathOutcome();
-  assert.equal(out.kind, 'rise');
-  assert.match(out.line, /Online, a life's last breath waits on the realm's lineage/);
-  const s = world();
-  s.host.deathOutcome();
-  s.online = true;
-  assert.equal(s.host.succeed({ newborn: true }), false, 'no birth online');
+  assert.equal(out.kind, 'fall', 'a spent life ends online too');
+  assert.equal(e.host.family.people[0].died.cause, 'years');
+  b.saveOk = true;
+  assert.equal(b.host.succeed({ newborn: true }), true, 'a birth online - into the realm');
 });
 
 // ---- the host's other doors -------------------------------------------------------------------------------------------

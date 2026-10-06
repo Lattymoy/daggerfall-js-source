@@ -21,12 +21,12 @@ export const LEGACY_MODEL_FACE = Object.freeze({
 });
 export const LEGACY_MODEL_TAGS = Object.freeze({ [MODELS.enduring]: 'Not permadeath', [MODELS.bloodline]: 'Permadeath' });
 
-/** Bloodline's word online, shut: its permadeath has no authority until the realm keeps lineages (LEGACY7). */
-export const BLOODLINE_ONLINE_NOTE = 'Online, a house is Enduring until the realm keeps its lineages.';
+/** LEGACY7: Bloodline's word online - the realm holds the line, so the death is final on every device. */
+export const BLOODLINE_ONLINE_LINE = 'Online, the realm holds the line: on every device.';
 
 /** The two answers, Enduring first. AUDIT LEGACY U7: the toll said is the one a death will charge - the Mods pane's
- *  Legacy.Toll as it stands. AUDIT LEGACY B4/F1: ONLINE, Bloodline is shown and SHUT (the leveling question's own
- *  LEVEL-ONLINE shape) - a permadeath the realm cannot hold is no permadeath. */
+ *  Legacy.Toll as it stands. AUDIT LEGACY B4/F1 shut Bloodline online while a permadeath had no authority there;
+ *  LEGACY7 gave it one (the realm's tombstone, server-account/src/legacy.js), and it is open online, said so. */
 export function legacyModelOptions({ online = isOnlinePage(), tollShare = legacySettings().tollShare } = {}) {
   const pct = Math.round(tollShare * 100);
   return Object.freeze([
@@ -36,11 +36,11 @@ export function legacyModelOptions({ online = isOnlinePage(), tollShare = legacy
       'and when the span is spent the mantle passes on',
       'to an heir. Elders may pass it on at any time.',
     ]) }),
-    Object.freeze({ id: MODELS.bloodline, title: 'Bloodline', locked: !!online, lockNote: online ? BLOODLINE_ONLINE_NOTE : null, lines: Object.freeze([
+    Object.freeze({ id: MODELS.bloodline, title: 'Bloodline', locked: false, lockNote: null, lines: Object.freeze([
       'A death is final. Your heir takes your place -',
       'a sibling, a child, or a newborn of your blood -',
       'and may recover what you lost from your remains.',
-      'With no one left, the line ends.',
+      online ? BLOODLINE_ONLINE_LINE : 'With no one left, the line ends.',
     ]) }),
   ]);
 }

@@ -55,11 +55,13 @@ export function nearestTownAnywhere(maps, regionNames, pixel) {
 
 /** The boot's address for a birth: the page's own search with the load doors dropped and the birth's added - and the
  *  world host's scene door (`?world`, main.js), so the reload goes straight to the world as realmBootSearch's does: the
- *  front door would clear the menu's keys and ask again, and the birth would be lost behind it. */
+ *  front door would clear the menu's keys and ask again, and the birth would be lost behind it. LEGACY7: an online page's
+ *  birth is the realm's (`realmnew`), as any character born online is. */
 export function birthSearch(search, personId, place) {
   const p = new URLSearchParams(search);
   for (const k of ['load', 'loadkey', 'classicload', 'classic', 'class', 'test', 'realm', 'realmnew', 'spawn', 'legacyborn']) p.delete(k);
   p.set('world', '1');
+  if (p.has('online')) p.set('realmnew', '1');   // LEGACY7: online, a member is born into the realm (scenes/world.js legacyRealmBirth)
   p.set('legacyborn', String(personId));
   if (place?.region) p.set('region', place.region);
   if (place?.loc) p.set('loc', place.loc);

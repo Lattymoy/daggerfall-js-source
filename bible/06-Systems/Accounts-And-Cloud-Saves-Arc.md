@@ -5195,3 +5195,23 @@ make the aura misallign".
   content in `seraphwings.json` (5), `shadowcloak.json` (2), `climb5.json` and `auditclimbarc.json`.
 - Left, said: not seen in a running game client - the test drives the real sprite body and the real peer layers frame
   by frame, no GPU; the wings still stand on a rider at the saddle's rest pose (no shoulders read off a horse's frame).
+
+## LEGACY7 — Project Legacy's lines and the tombstone (2026-10-06, acct84)
+
+Mac: "online integration with permadeath (Bloodline) or non-permadeath (Enduring)". The record is
+`06-Systems/Legacy-Arc.md` section 9; the service's half is `server-account/src/legacy.js` and migration
+`0083_legacy.sql`.
+
+- **`lineages`**: one row a family an account founded online - its id (`fam-...`, the client's), surname, model (the
+  founder's, for good: `lineage-model`), record (bounded, `LINEAGE_MAX_BYTES`) and `rev`. `/v1/realm/lineages` lists
+  them; `/v1/realm/lineage` writes one only past its rev, a stale write answered 409 with the stored record to merge
+  into. At most `LINEAGES_MAX` an account.
+- **`realm_characters.lineage_id`, `person_id`**: a character born with `{ lineage, person }` (`/v1/realm/create`) is
+  that living member of the account's own line, named for good; never one another character played (`lineage-played`,
+  a unique index behind it). A birth whose first save never landed is resumed, as customs' is.
+- **`realm_characters.dead_at`** - THE TOMBSTONE (`/v1/realm/die`, under the lease): never joined again (`dead`, 410),
+  checkpointed or traded; refused at the relay's door (`realmCharacterHeld`); off the roster, and no slot held
+  (`REALM_CHARACTERS_MAX` counts the living in `createRealm`, `customsRealm` and `customsRefusal`).
+- **Deploy**: the migration and the service (acct84) BEFORE the site - the new site founds and tombstones at the
+  service. No relay change.
+

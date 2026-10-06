@@ -1,0 +1,200 @@
+[
+  {
+    "name": "LEGACY7-stale-overwrites",
+    "file": "server-account/src/legacy.js",
+    "old": "WHERE player = ? AND id = ? AND rev < ?')",
+    "new": "WHERE player = ? AND id = ? AND rev <= ? + 1000000')",
+    "tests": [
+      "test/legacy7_service.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-model-rewritten",
+    "file": "server-account/src/legacy.js",
+    "old": "    if (had.model !== rec.model) return { error: 'lineage-model' };\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_service.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-lines-unbounded",
+    "file": "server-account/src/legacy.js",
+    "old": "WHERE (SELECT COUNT(*) FROM lineages WHERE player = ?) < ?',",
+    "new": "WHERE (SELECT COUNT(*) FROM lineages WHERE player = ?) < ? + 1000',",
+    "tests": [
+      "test/legacy7_service.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-dead-born-again",
+    "file": "server-account/src/legacy.js",
+    "old": "  if (!p || p.died || p.retired != null || (p.kind ?? 'member') !== 'member' || p.minor) return { error: 'lineage-person' };",
+    "new": "  if (!p || p.retired != null || (p.kind ?? 'member') !== 'member' || p.minor) return { error: 'lineage-person' };",
+    "tests": [
+      "test/legacy7_service.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-person-twice",
+    "file": "server-account/src/legacy.js",
+    "old": "  return played ? { error: 'lineage-played' } : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/legacy7_service.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-tomb-any-lease",
+    "file": "server-account/src/legacy.js",
+    "old": "WHERE id = ? AND player = ? AND lease = ? AND dead_at IS NULL')\n    .bind(nowS, nowS, id, playerId, lease).run();",
+    "new": "WHERE id = ? AND player = ? AND (lease = ? OR 1) AND dead_at IS NULL')\n    .bind(nowS, nowS, id, playerId, lease).run();",
+    "tests": [
+      "test/legacy7_service.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-dead-joined",
+    "file": "server-account/src/realm.js",
+    "old": "'UPDATE realm_characters SET lease = ?, lease_at = ? WHERE id = ? AND player = ? AND dead_at IS NULL'",
+    "new": "'UPDATE realm_characters SET lease = ?, lease_at = ? WHERE id = ? AND player = ?'",
+    "tests": [
+      "test/legacy7_service.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-dead-checkpointed",
+    "file": "server-account/src/realm.js",
+    "old": "  if (row.dead_at != null) return { error: 'dead' };",
+    "new": "",
+    "tests": [
+      "test/legacy7_service.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-dead-held-at-the-door",
+    "file": "server-account/src/realm.js",
+    "old": "'SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL').bind(id, playerId).first());   // LEGACY7: never a tombstone",
+    "new": "'SELECT 1 FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first());   // LEGACY7: never a tombstone",
+    "tests": [
+      "test/legacy7_service.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-dead-listed",
+    "file": "server-account/src/realm.js",
+    "old": "    + ' WHERE player = ? AND dead_at IS NULL ORDER BY updated_at DESC LIMIT ?',",
+    "new": "    + ' WHERE player = ? ORDER BY updated_at DESC LIMIT ?',",
+    "tests": [
+      "test/legacy7_service.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-dead-hold-a-slot",
+    "file": "server-account/src/realm.js",
+    "old": "WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?',\n    ).bind(id, playerId, n, realmSummaryOf(summary), lease, nowS, nowS, nowS, born ? lineage : null",
+    "new": "WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ?) < ?',\n    ).bind(id, playerId, n, realmSummaryOf(summary), lease, nowS, nowS, nowS, born ? lineage : null",
+    "tests": [
+      "test/legacy7_service.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-birth-unresumed",
+    "file": "server-account/src/realm.js",
+    "old": "    if (had && !(had.bytes > 0) && had.dead_at == null) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/legacy7_service.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-stale-unmerged",
+    "file": "src/systems/legacy/realmLine.js",
+    "old": "          const merged = mergeLines(record, r.data.record);",
+    "new": "          const merged = readFamily(record);",
+    "tests": [
+      "test/legacy7_online.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-pull-overwrites",
+    "file": "src/systems/legacy/realmLine.js",
+    "old": "  mergeFacts(base, other);\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_online.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-die-loses",
+    "file": "src/systems/realmSaves.js",
+    "old": "      lost = 'dead';\n      pending = null;",
+    "new": "      lose('dead');\n      pending = null;",
+    "tests": [
+      "test/legacy7_online.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-founded-enduring",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    family = foundFamily(deps.entity, { model: asked,",
+    "new": "    family = foundFamily(deps.entity, { model: deps.online() ? MODELS.enduring : asked,",
+    "tests": [
+      "test/legacy7_online.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-fall-untombed",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    store();\n    entomb();\n    outcome = fallOutcome();",
+    "new": "    store();\n    outcome = fallOutcome();",
+    "tests": [
+      "test/legacy7_online.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-birth-past-the-tomb",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (tomb) { const t = tomb; tomb = null; t.then((ok) => { if (ok) play(heir); }); return true; }\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_online.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-retired-untombed",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    entomb();   // LEGACY7: online, a retired elder's character is the realm's tombstone too - never played again\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_online.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-born-before-the-answer",
+    "file": "src/scenes/legacyHost.js",
+    "old": "      if (ok) { store(); clearBirth(deps.tab()); return true; }",
+    "new": "      if (true) { store(); clearBirth(deps.tab()); return true; }",
+    "tests": [
+      "test/legacy7_online.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-never-rebound",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    p.characterId = String(now);\n    touch(family);",
+    "new": "    touch(family);",
+    "tests": [
+      "test/legacy7_online.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7-born-offline-online",
+    "file": "src/systems/legacy/places.js",
+    "old": "  if (p.has('online')) p.set('realmnew', '1');",
+    "new": "",
+    "tests": [
+      "test/legacy7_online.test.js"
+    ]
+  }
+]

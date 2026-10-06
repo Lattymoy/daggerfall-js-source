@@ -156,12 +156,12 @@
   {
     "name": "LEGACY1-S3-switch-mid-fight",
     "file": "src/scenes/legacyHost.js",
-    "old": "    if (deps.online()) return LEGACY_TEXT.online;\n    if (deps.inFight()) return LEGACY_TEXT.fight;\n    return null;\n  }\n  /** Save the one played",
-    "new": "    if (deps.online()) return LEGACY_TEXT.online;\n    return null;\n  }\n  /** Save the one played",
+    "old": "    if (t.minor) return LEGACY_TEXT.minor(t.given);   // LEGACY5: a child is played only once the mantle passes to them\n    if (deps.inFight()) return LEGACY_TEXT.fight;\n    return null;",
+    "new": "    if (t.minor) return LEGACY_TEXT.minor(t.given);   // LEGACY5: a child is played only once the mantle passes to them\n    return null;",
     "tests": [
       "test/legacy1_family.test.js"
     ],
-    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
+    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content.  LEGACY7 (PIN MOVED): re-aimed by content - the online refusal went (a switch is open online)."
   },
   {
     "name": "LEGACY1-street-reset-skips-legacy",
@@ -220,11 +220,12 @@
   {
     "name": "LEGACY1-birth-behind-the-front-door",
     "file": "src/systems/legacy/places.js",
-    "old": "  p.set('world', '1');\n  p.set('legacyborn', String(personId));",
-    "new": "  p.set('legacyborn', String(personId));",
+    "old": "  p.set('world', '1');\n  if (p.has('online')) p.set('realmnew', '1');",
+    "new": "  if (p.has('online')) p.set('realmnew', '1');",
     "tests": [
       "test/legacy1_family.test.js"
-    ]
+    ],
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the birth's address gained the realm's word online beside the world's."
   },
   {
     "name": "LEGACY1-load-behind-the-front-door",
