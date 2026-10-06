@@ -27,7 +27,7 @@ const NEW = {
   window: ['body .dfdecor-card'],
   panel: ['body .dfpage-card', 'body .dfpeer-card', 'body .dfsocial-toast', 'body .dfduel-toast', 'body .dfdecor-bar'],
   panelAccent: ['body .dfsocial-toast', 'body .dfdecor-bar'],
-  button: ['body .dfpage-btn', 'body .dfpeer-btn:not(.cancel)', 'body .dfduel-btn', 'body .dfprofile-duel', 'body .dfdecor-btn', 'body .dfdecor-open'],
+  button: ['body .dfpage-btn', 'body .dfpeer-btn:not(.cancel)', 'body .dfduel-btn', 'body .dfprofile-duel', 'body .dfdecor-btn', 'body .dfdecor-open', 'body .dfprofile-wed'],   // LEGACY7 part three: Propose
   primary: ['body .dfdecor-place'],
   warn: ['body .dfsocial-btn.warn', 'body .dfprofile-duel'],
   tile: ['body .dfdecor-chip'],
@@ -52,7 +52,7 @@ test('PLUS-DRESS the roles: the journal page, the F-menu, the decorator (a whole
     }
   }
   const rounded = [
-    ['dfsocial', 'toast'], ['dfsocial', 'badge'], ['dfsocial', 'letter'], ['dfprofile', 'renown'], ['dfprofile', 'duel'],
+    ['dfsocial', 'toast'], ['dfsocial', 'badge'], ['dfsocial', 'letter'], ['dfprofile', 'renown'], ['dfprofile', 'duel'], ['dfprofile', 'wed'],
     ['dfpage', 'card'], ['dfpage', 'leaf'], ['dfpage', 'btn'], ['dfpeer', 'card'], ['dfpeer', 'btn'], ['dfduel', 'toast'], ['dfduel', 'btn'],
     ['dfdecor', 'card'], ['dfdecor', 'open'], ['dfdecor', 'search'], ['dfdecor', 'chip'], ['dfdecor', 'list'], ['dfdecor', 'thumb'],
     ['dfdecor', 'preview'], ['dfdecor', 'btn'], ['dfdecor', 'bar'],
@@ -93,7 +93,7 @@ test('PLUS-DRESS what a role cannot say: the words stay bone under the kit\'s ho
     const border = /border: (\d+)px/.exec(r.body)?.[1] ?? (/border: 0/.test(r.body) ? '0' : null);
     return { pad, border: Number(border) };
   };
-  for (const [prefix, cls] of [['dfsocial', 'btn'], ['dfsocial', 'close'], ['dfprofile', 'close'], ['dfprofile', 'duel'], ['dfpage', 'btn'],
+  for (const [prefix, cls] of [['dfsocial', 'btn'], ['dfsocial', 'close'], ['dfprofile', 'close'], ['dfprofile', 'duel'], ['dfprofile', 'wed'], ['dfpage', 'btn'],
     ['dfpeer', 'btn'], ['dfduel', 'btn'], ['dfdecor', 'btn'], ['dfdecor', 'open']]) {
     const sel = cls === 'btn' && prefix === 'dfpeer' ? 'body .dfpeer-btn:not(.cancel)' : `body .${prefix}-${cls}`;
     assert.equal(bodyOf(sel, 'border-width'), '2px', sel);

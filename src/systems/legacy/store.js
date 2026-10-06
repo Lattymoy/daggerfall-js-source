@@ -68,6 +68,9 @@ export function mergeFacts(mine, other) {
     p.lived = Math.max(p.lived | 0, o.lived | 0);
     if (!p.characterId && o.characterId) p.characterId = o.characterId;
     if (!p.standing && o.standing) p.standing = JSON.parse(JSON.stringify(o.standing));   // LEGACY6: a standing either copy saved
+    // LEGACY7 part three: a wedding is a fact as a death is - a spouse either copy recorded stands (a stale write's base
+    // took the person in above, and lost the member's word that they were wed)
+    if (p.spouse == null && o.spouse != null) { p.spouse = o.spouse; p.wedAt = o.wedAt ?? p.wedAt ?? null; if (p.childDay == null && o.childDay != null) p.childDay = o.childDay; }
     for (const c of o.children ?? []) if (!p.children.includes(c)) p.children.push(c);
   }
   for (const r of other.remains ?? []) if (!(mine.remains ??= []).some((x) => x.id === r.id)) mine.remains.push(JSON.parse(JSON.stringify(r)));

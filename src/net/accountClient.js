@@ -573,6 +573,10 @@ export const REFUSALS = Object.freeze({
   'lineage-model': 'A family keeps the way of death it was founded with.',
   'too-many-lineages': 'You have as many families as an account may hold online.',
   'lineage-stale': 'Your family was changed on another device. This one takes those changes in and saves again.',
+  'wed-no-line': 'Only a character of a house (Project Legacy) can be wed in the realm.',
+  'wed-already': 'You are wed already.',
+  'wed-partner': 'They cannot be wed now - they are wed already, or of no house.',
+  'wed-spent': 'That wedding was not yours to answer.',
   // AUDIT REALM2 S2: the online acts that cost gold are a realm character's
   'realm-only': 'Only an online character of the realm can do that.',
   // REALM P2.1: a trade's sid another pair settled (server-account/src/realmTrade.js)

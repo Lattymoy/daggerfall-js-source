@@ -121,7 +121,7 @@ export function profileRenown(v, lv) {
   if (!v || !text || v.level === text) return v;
   return { ...v, level: text, levelTitle: `Renown ${lv}` };
 }
-export function profileView({ name = null, peer = null, look = null, card = null, state = 'asking', duel = null, record = null } = {}) {
+export function profileView({ name = null, peer = null, look = null, card = null, state = 'asking', duel = null, record = null, wed = null } = {}) {
   const who = (typeof name === 'string' && name) ? name : 'Someone';
   const worn = card?.look ?? look ?? null;
   const race = typeof worn?.race === 'string' ? raceDisplayName(worn.race) : null;
@@ -148,6 +148,8 @@ export function profileView({ name = null, peer = null, look = null, card = null
     // - null: no button, offline or on a relay that cannot carry a duel), and their record's line - the account
     // service's count, read by the account the relay stamped on their card (net/duelRecord.js), never the card's word
     duel: duel && typeof duel.label === 'string' ? { label: duel.label, enabled: !!duel.enabled, why: duel.enabled ? null : (duel.why ?? null) } : null,
+    // LEGACY7 part three: the Propose button's state as the house's law says it - the duel's shape (null: no button)
+    wed: wed && typeof wed.label === 'string' ? { label: wed.label, enabled: !!wed.enabled, why: wed.enabled ? null : (wed.why ?? null) } : null,
     duels: profileDuelLine(record),
     gates: profileGateLine(record),
     raids: profileRaidLine(record),   // RAID4
@@ -201,6 +203,10 @@ ${PIXELIFY_FIVE_FACE}
   border-radius: 3px; font: inherit; font-size: 14px; padding: 6px 12px; cursor: pointer; text-align: center; }
 .dfprofile-duel:hover:not([disabled]) { background: #b8483f; color: var(--ink, #0e1013); }
 .dfprofile-duel[disabled] { opacity: .55; cursor: default; }
+.dfprofile-wed { min-width: 120px; min-height: 44px; background: #2e2a1e; color: var(--bone, #e9e4d9); border: 1px solid #8a7440;
+  border-radius: 3px; font: inherit; font-size: 14px; padding: 6px 12px; cursor: pointer; text-align: center; }
+.dfprofile-wed:hover:not([disabled]) { background: var(--brass, #c08a3e); color: var(--ink, #0e1013); }
+.dfprofile-wed[disabled] { opacity: .55; cursor: default; }
 .dfprofile-why { font-size: 12px; color: var(--dim, #9a9486); text-align: center; }
 /* a phone's width: the sheet above what they wear, not beside it - and the name a size down, so the widest a name can
    be (NAME_MAX of the face's widest letter) stands on one line with its glyphs; breaking inside it is the last resort */
@@ -219,7 +225,7 @@ export function injectProfileStyle(doc = document) {
  * The card over the document. `canOpen()` is the host's word on whether a surface may stand (the F-menu's gate),
  * `onOpen`/`onClose` its pointer door, `above()` whether a surface stands over this one (then Escape is not ours).
  */
-export function createProfileWindow({ canOpen = () => true, onOpen = null, onClose = null, above = () => false, onDuel = null, doc = document, win = globalThis } = {}) {
+export function createProfileWindow({ canOpen = () => true, onOpen = null, onClose = null, above = () => false, onDuel = null, onWed = null, doc = document, win = globalThis } = {}) {
   injectProfileStyle(doc);
   const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
   const root = el('div', 'dfprofile');
@@ -280,16 +286,29 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
     close.type = 'button';
     close.addEventListener('click', () => { hide(); });
     // DUEL1: the challenge beside Close - the host's word on whether one can go now (v.duel), its reason under a
-    // disabled one; the press is the host's (`onDuel`), which re-asks the duel law before anything is sent
-    if (v.duel && onDuel) {
+    // disabled one; the press is the host's (`onDuel`), which re-asks the duel law before anything is sent.
+    // LEGACY7 part three: and the proposal beside it, the same shape (v.wed, `onWed`)
+    const duelOn = !!(v.duel && onDuel), wedOn = !!(v.wed && onWed);
+    if (duelOn || wedOn) {
       const actions = el('div', 'dfprofile-actions');
-      const duel = el('button', 'dfprofile-duel', v.duel.label);
-      duel.type = 'button';
-      if (!v.duel.enabled) duel.disabled = true;
-      duel.addEventListener('click', () => { if (v.duel.enabled && shownPeer) onDuel(shownPeer); });
-      actions.append(duel, close);
+      if (duelOn) {
+        const duel = el('button', 'dfprofile-duel', v.duel.label);
+        duel.type = 'button';
+        if (!v.duel.enabled) duel.disabled = true;
+        duel.addEventListener('click', () => { if (v.duel.enabled && shownPeer) onDuel(shownPeer); });
+        actions.append(duel);
+      }
+      if (wedOn) {
+        const wed = el('button', 'dfprofile-wed', v.wed.label);
+        wed.type = 'button';
+        if (!v.wed.enabled) wed.disabled = true;
+        wed.addEventListener('click', () => { if (v.wed.enabled && shownPeer) onWed(shownPeer); });
+        actions.append(wed);
+      }
+      actions.append(close);
       card.append(actions);
-      if (v.duel.why) card.append(el('div', 'dfprofile-why', v.duel.why));
+      if (duelOn && v.duel.why) card.append(el('div', 'dfprofile-why', v.duel.why));
+      if (wedOn && v.wed.why) card.append(el('div', 'dfprofile-why', v.wed.why));
     } else card.append(close);
   };
 

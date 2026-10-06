@@ -1816,12 +1816,12 @@ body .dfpeer-btn.cancel:hover:not([disabled]) { background: none; color: var(--b
 /* The lane drew its presses borderless or on a 1px line, so the kit's bevel had no edge to paint: a 2px edge (width
    and style only - the kit owns the colour), taken out of the padding so each press keeps its size (the sheet is
    border-box). The touch skin's own paddings outweigh these and stand. */
-body .dfsocial-btn, body .dfsocial-close, body .dfprofile-close, body .dfprofile-duel, body .dfpage-btn, body .dfpeer-btn:not(.cancel),
+body .dfsocial-btn, body .dfsocial-close, body .dfprofile-close, body .dfprofile-duel, body .dfprofile-wed, body .dfpage-btn, body .dfpeer-btn:not(.cancel),
 body .dfduel-btn, body .dfdecor-btn, body .dfdecor-open { border-width: 2px; border-style: solid; }
 body .dfsocial-btn { padding: 2px 6px; }
 body .dfsocial-close { padding: 0 6px; }
 body .dfprofile-close, body .dfpage-btn { padding: 4px 10px; }
-body .dfprofile-duel { padding: 5px 11px; }
+body .dfprofile-duel, body .dfprofile-wed { padding: 5px 11px; }
 body .dfpeer-btn:not(.cancel) { padding: 4px 6px; }
 body .dfduel-btn { padding: 3px 11px; }
 body .dfdecor-btn { padding: 3px 13px; }

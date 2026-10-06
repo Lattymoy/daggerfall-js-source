@@ -213,7 +213,7 @@ import {
 } from './realm.js';   // REALM P1: the realm's characters; ARENA4b: the level on a realm character's tile, the token's `cl`
 import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
-import { listLineages, putLineage, realmDie, realmHouseOf } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
+import { listLineages, putLineage, realmDie, realmHouseOf, realmWed, listUnions } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
 import { measured } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine)
 import {
   patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook,
@@ -265,6 +265,7 @@ const REALM_STATUS = Object.freeze({
   'realm-birth': 403, 'customs-allowance': 403,   // AUDIT REALM2 S1: a first save the realm's law refuses
   // LEGACY7 (legacy.js): a tombstone is gone for good; a line or person the birth cannot be; a line's model is its founder's
   dead: 410, 'no-lineage': 404, 'lineage-person': 409, 'lineage-played': 409, 'lineage-model': 409, 'too-many-lineages': 409,
+  'wed-no-line': 409, 'wed-already': 409, 'wed-partner': 409, 'wed-spent': 409,   // LEGACY7 part three: a wedding the realm cannot make
 });
 /** CUSTOMS-PASS: a pass's refusals - a bad shape 400 (the default), a caller who is no developer 403, no such account
  *  404, a guest's name two accounts wear 409. */
@@ -1589,7 +1590,10 @@ const service = {
           if (r.error === 'lineage-stale') return json(r, 409, origin);
           return answer(r);
         }
-        if (path === '/v1/realm/die') return answer(await realmDie(rctx, me, { id: body.id, lease: body.lease }));
+        if (path === '/v1/realm/die') return answer(await realmDie(rctx, me, { id: body.id, lease: body.lease, why: body.why }));   // LEGACY7 part three: 'retired' keeps a union
+        // LEGACY7 part three: a half of one wedding, and the account's unions
+        if (path === '/v1/realm/wed') return answer(await realmWed(rctx, me, { id: body.id, lease: body.lease, sid: body.sid, partner: body.partner }));
+        if (path === '/v1/realm/unions') return json({ unions: await listUnions(rctx, me) }, 200, origin);
         return answer(await deleteRealm(rctx, me, body.id));   // /v1/realm/delete - HOUSE-LOSS: which undoes one too, for a door that asks a delete
       }
 

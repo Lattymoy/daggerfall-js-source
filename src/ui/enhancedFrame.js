@@ -155,6 +155,7 @@ export const FRAME_ROLES = {
     '.hmroot .hmtool',
     // PLUS-DRESS: the page's, the F-menu's (its Cancel stays a line of text), the duel's and the decorator's
     'body .dfpage-btn', 'body .dfpeer-btn:not(.cancel)', 'body .dfduel-btn', 'body .dfprofile-duel', 'body .dfdecor-btn', 'body .dfdecor-open',
+    'body .dfprofile-wed',   // LEGACY7 part three: the inspect card's Propose
     'body .dfnaval-btn'],   // NAV-F: the plunder window's presses
   primary: ['.lv-ok', '.hmroot .act:not(.hmtool)', 'body .dfdecor-place', 'body .bounty-shell .act.primary', 'body .lgs-shell .act.primary', 'body .notice-shell .act.primary',
     'body .aw-shell .act.primary',   // ARENA3: Fight and the wager placed - what the window is for   // BOUNTY1: Take bounty and Take the reward in brass   // PLUS-MAP: the map's tools are plain stone   // PLUS-DRESS: Place is what the decorator is for
@@ -243,7 +244,7 @@ export const FRAME_ROLES = {
   square: ['body .dfsocial', 'body .dfprofile-card', 'body .dfchat-box', 'body .dfsocial-btn', 'body .dfsocial-close',
     'body .dfprofile-close', 'body .dfsocial-field', 'body .dfchat-input',
     // PLUS-DRESS: and everything the lane grew since
-    'body .dfsocial-toast', 'body .dfsocial-badge', 'body .dfsocial-letter', 'body .dfprofile-renown', 'body .dfprofile-duel',
+    'body .dfsocial-toast', 'body .dfsocial-badge', 'body .dfsocial-letter', 'body .dfprofile-renown', 'body .dfprofile-duel', 'body .dfprofile-wed',
     'body .dfpage-card', 'body .dfpage-leaf', 'body .dfpage-btn', 'body .dfpeer-card', 'body .dfpeer-btn',
     'body .dfduel-toast', 'body .dfduel-btn', 'body .dfdecor-card', 'body .dfdecor-open', 'body .dfdecor-search', 'body .dfdecor-chip',
     'body .dfdecor-list', 'body .dfdecor-thumb', 'body .dfdecor-preview', 'body .dfdecor-btn', 'body .dfdecor-bar'],

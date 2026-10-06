@@ -49,7 +49,7 @@ import { isGuestShaped, isHandleShaped } from '../../src/net/handleShape.js';   
 import { isDeveloper } from './titles.js';   // CUSTOMS-PASS: a developer grants one
 import { displayName } from './accounts.js';
 import { saveTextOf, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save read packed or plain
-import { lineageBirthRefusal, houseOn } from './legacy.js';   // LEGACY7: a realm character born as a person of the account's own line
+import { lineageBirthRefusal, houseOn, endUnionsOf } from './legacy.js';   // LEGACY7: a realm character born as a person of the account's own line
 
 /** Realm characters an ACCOUNT may hold. A new one past it is refused; nothing is ever deleted to make room. */
 export const REALM_CHARACTERS_MAX = 6;
@@ -663,6 +663,8 @@ export async function deleteRealm({ db, bucket, nowS = Math.floor(Date.now() / 1
     db.prepare('DELETE FROM prof_unbruised WHERE player = ? AND char_id = ?').bind(playerId, id),   // AUDIT PROF-541 B5: the unbruised count goes with the Stores it counts
     db.prepare('DELETE FROM prof_carried WHERE player = ? AND char_id = ?').bind(playerId, id),   // BAG1: and what it was counted as carrying
     db.prepare('DELETE FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId),
+    endUnionsOf(db, id, nowS, 'gone'),   // LEGACY7 part three: a union ends with the character
+    db.prepare('DELETE FROM realm_wed_halves WHERE char_id = ?').bind(id),
   ]);
   return { ok: true };
 }

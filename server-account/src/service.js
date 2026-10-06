@@ -263,6 +263,8 @@ export const ROUTES = new Set([
   '/v1/realm/undo',
   // LEGACY7: Project Legacy's lines (legacy.js) - listed, written past their rev - and a fallen character's tombstone
   '/v1/realm/lineages', '/v1/realm/lineage', '/v1/realm/die',
+  // LEGACY7 part three: a half of one wedding between two players' characters, and the account's unions
+  '/v1/realm/wed', '/v1/realm/unions',
   // PATREON-LINK: a patron's own Patreon, linked (patreon.js) - Patreon sends the player back to the callback, the
   // confirm is their yes, the webhook is Patreon's word on a member; the unlink is the account's, behind a session.
   '/v1/patreon/callback', '/v1/patreon/confirm', '/v1/patreon/webhook', '/v1/patreon/unlink',

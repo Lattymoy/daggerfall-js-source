@@ -264,9 +264,11 @@ mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed onl
 
 ## 9. ONLINE
 
-*LEGACY7 - the line, the tombstone, the member's birth and the house name built (`server-account/src/legacy.js`, migration
-`0084_legacy.sql`, acct85; `systems/legacy/realmLine.js`; `test/legacy7_service.test.js`, `test/legacy7_online.test.js`,
-`tools/mutants/legacy7.json`). Two players wed is the slice's third part.*
+*LEGACY7 - built: the line, the tombstone, the member's birth and the house name (`server-account/src/legacy.js`,
+migration `0084_legacy.sql`, acct85; `systems/legacy/realmLine.js`; `test/legacy7_service.test.js`,
+`test/legacy7_online.test.js`, `tools/mutants/legacy7.json`), and two players wed (part three: `net/wedSession.js`, the
+`wed` frame of world172, `server-account/src/legacy.js` realmWed; `test/legacy7_wed.test.js`,
+`tools/mutants/legacy7wed.json`).*
 
 - **The model is the family's**, chosen at the founder's online chargen - Bloodline open online (AUDIT LEGACY B4 shut it
   while a permadeath had no authority there; the tombstone is that authority), said on its card: "Online, the realm
@@ -305,7 +307,31 @@ mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed onl
   name over the head, on the inspect card and on the roster's tile: "☠ Ysolde II of House Hlaalu" (the skull a
   Bloodline's; a seat's house - "of Sentinel" - reads as itself). **Departure (recorded):** the name over the head
   online is the account's, so the member's given name rides the house's line rather than replacing it.
-- **Two players wed** (LEGACY7 part three).
+- **Two players wed** (LEGACY7 part three - the design's "both in the same temple, both asking the priest, the service
+  records the union (each family names the other's member as spouse)"). Two players, each a realm character of a house
+  (alive, of the blood, of age, wed to nobody, no Succession waiting, out of a fight), standing in one temple: one
+  presses **Propose marriage** on the other's Inspect card; the other's Yes/No box asks ("Ysolde, ☠ Ysolde II of House
+  Hlaalu, asks for your hand, here before the gods. Be wed?"). The handshake is one directed frame, `wed` (`net/wire.js`
+  validWedData: `ask`, `yes`, `no` with its reason, `done`), routed as a duel's to the one player it names in a place
+  room, the sender's VERIFIED account stamped on it by the relay. **The union is the account service's**
+  (`POST /v1/realm/wed`, `realm_unions`): each side posts its HALF of one wedding under its playing lease, naming the
+  other's account as the relay stamped it - the asked side first, then its yes, then the asker's half - and only both
+  halves, each naming the other, make it; a half is nobody's word after five minutes (`WED_HALF_LIFE_S`), and an
+  account is in one wedding at a time (a second half takes its first back). So no frame
+  makes a union: a crafted yes with no half behind it makes nothing. The service keeps each side's CARD as it stood at
+  the wedding (the realm name, the house through the name filter, the person's sex, race and face off their own line),
+  and each house records the other's member from it as the spouse (`marriage.js wedPlayer`, `kind: 'player'`, `realm`
+  the union): their own name and house for life - the union names them, it does not take them in, so no name is asked -
+  never played here, never carrying the mantle, never standing in this house's world (they walk their own). Children
+  come on the member's own clock while they live, as with any spouse - each house raises its own. **The union ends**
+  with either's death (a tombstone, `died`) or delete (`gone`), said by whose; an elder's retirement keeps it (the
+  tombstone says `retired`: they live on, wed). Each online boot, and every ten minutes after, reads the account's
+  unions (`/v1/realm/unions`, `legacyHost.unionsHeard`): a wedding made while this device was away is recorded, and the
+  other's death or departure reaches the house ("Word reaches you: Iszara Dres is dead.") - the member may wed again.
+  A wedding is a fact as a death is when two copies of the line merge (`store.js mergeFacts`).
+  **Departures (recorded):** the design's "both asking the priest" is the Inspect card's proposal and the other's
+  prompt, inside a temple - the priest is DFU's static NPC, as section 8 says; and each house raises its own children
+  of the union (two records, two clocks - the realm keeps no shared child).
 
 ## 10. WORLD INFLUENCE
 
@@ -442,5 +468,5 @@ than standing still.
 | AUDIT LEGACY | the five-lens audit of LEGACY1-4 (`01-Overview/Audit-Legacy.md`) - the two authorities, the death at the door | built |
 | LEGACY5 | courting, marriage, children, surnames' cadet branches | built |
 | LEGACY6 | world influence: the inherited standing and regard, the towns' talk, the killer remembered | built |
-| LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name (built); two players wed (part three) | in progress |
+| LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name; two players wed (part three) | built |
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |

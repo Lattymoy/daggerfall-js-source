@@ -5216,6 +5216,17 @@ Mac: "online integration with permadeath (Bloodline) or non-permadeath (Enduring
   `hg` - `src/net/houseLaw.js`, `legacy.js realmHouseOf`) through the name filter, never a tombstone's, and leaves it
   unsaid rather than take a token past `TOKEN_MAX_CHARS`; `/v1/realm` lists each tile's house. The relay (world172)
   stamps it on every row.
-- **Deploy**: the relay (world172) first, then the migration and the service (acct85), then the site - the new site founds and tombstones at the
-  service. No relay change.
+- **Two players wed** (LEGACY7 part three): `/v1/realm/wed` takes one HALF of a wedding - the caller's realm character
+  under its lease, the handshake `sid` the two clients agreed on the relay's `wed` frame, and the other's account as the
+  relay stamped it (`partner`, never the caller's own) - into `realm_wed_halves`; the second half naming the first's
+  account makes the union (`realm_unions`, one row a sid, asked IN the write so a race makes one and neither character
+  is wed meanwhile), each side's card kept as it stood (`a_card`, `b_card`: the realm name, the house through the name
+  filter, sex, race and face off the line). A half lives `WED_HALF_LIFE_S` (five minutes), and an account holds one at a time (a second takes its first back - one
+  row an account). Refused: `wed-no-line` (a
+  character of no line), `wed-already`, `wed-partner` (theirs dead, of no line, or wed meanwhile), `wed-spent` (another
+  pair's sid) - 409 each - and `dead`, `lease`, `body`. A union ends with either's tombstone (`died`) or delete
+  (`gone`), `ended_by` whose; `/v1/realm/die` takes `why: 'retired'` for an elder's mantle passed, which keeps it.
+  `/v1/realm/unions` lists the account's unions, each from its own side.
+- **Deploy**: the relay (world172 - the house's stamp and the `wed` frame) first, then the migration and the service
+  (acct85), then the site - the new site founds, tombstones and weds at the service.
 

@@ -16,6 +16,7 @@
 import { FRIEND_AT } from '../livingWorld/relations.js';
 import { RACE_KEYS } from '../races.js';
 import { personOf, isAlive, touch, newPerson, addChild, fullNameOf } from './family.js';
+import { readHouse } from '../../net/houseLaw.js';   // LEGACY7 part three: the other player's house, held to its law
 
 export const AFFECTION_MAX = 100;
 /** A day's courtship: the base, a point per twenty of Personality and of Etiquette, the tone's (Polite, Normal, Blunt). */
@@ -156,6 +157,58 @@ export function wed(family, member, res, at, { takeName = false } = {}) {
   return s;
 }
 
+// ═══ LEGACY7 part three: TWO PLAYERS WED ═══════════════════════════════════════════════════════════════════════════
+//
+// Online, a member may wed ANOTHER PLAYER'S realm character of a house (net/wedSession.js; the account service makes
+// the union - server-account/src/legacy.js realmWed). Each house records the other's member as the spouse
+// (`kind: 'player'`): their own name and house for life - the union names them, it does not take them in - and their
+// sex, race and face off their own line (the service's card). Never played here, never carrying the mantle, never
+// standing in this house's world (they walk their own); children come on the member's own clock while they live, as
+// with any spouse (childStep).
+
+/**
+ * THE OTHER PLAYER'S CHARACTER, wed to the member: a person of this house's record of `kind: 'player'`, `realm` the
+ * union (its sid, the other's account and realm character, their house as the service read it). Every courtship of the
+ * member ends, as at any wedding. Answers the spouse.
+ * @param {any} family @param {any} member
+ * @param {{ player: string, char: string, name?: string, house?: any, gender?: string, race?: string|null, face?: number }} card
+ * @param {string} sid @param {number} at
+ */
+export function wedPlayer(family, member, card, sid, at) {
+  const s = newPerson(family.nextId++);
+  const [given, own] = splitName(card.name);
+  const house = readHouse(card.house);
+  s.kind = 'player';
+  s.given = house?.hc ?? given;
+  s.surname = house?.hn ?? own;
+  s.gender = card.gender === 'female' ? 'female' : 'male';
+  s.race = RACE_KEYS.includes(/** @type {any} */ (card.race)) ? /** @type {string} */ (card.race) : 'Breton';
+  s.face = Number.isInteger(card.face) && /** @type {number} */ (card.face) >= 0 ? /** @type {number} */ (card.face) : 0;
+  s.gen = member.gen | 0;
+  s.born = at;
+  s.spouse = member.id;
+  s.wedAt = at;
+  s.realm = { sid: String(sid), player: String(card.player ?? ''), char: String(card.char ?? ''), house };
+  member.spouse = s.id;
+  member.wedAt = at;
+  member.courting = {};
+  family.people.push(s);
+  touch(family);
+  return s;
+}
+
+/** The person of this house a union (by its sid) recorded, or null. */
+export const unionSpouse = (family, sid) => (family?.people ?? []).find((p) => p.kind === 'player' && p.realm?.sid === sid) ?? null;
+
+/** A union the realm ended - the other player's character dead ('died', cause 'fell') or gone from the realm ('gone',
+ *  deleted): in this house's record they are dead, and the member may wed again. Answers whether it changed anything. */
+export function playerSpouseLost(family, spouse, at, why) {
+  if (!spouse || spouse.kind !== 'player' || spouse.died) return false;
+  spouse.died = { at, cause: why === 'gone' ? 'gone' : 'fell', place: null, by: null };
+  touch(family);
+  return true;
+}
+
 /** The children the two have had together. */
 export const childrenTogether = (family, member, spouse) => (family?.people ?? []).filter((p) => p.parents.includes(member.id) && p.parents.includes(spouse.id)).length;
 
@@ -192,6 +245,9 @@ export const MARRIAGE_TEXT = Object.freeze({
   wed: (name, house) => `You and ${name} are wed. ${name} is of the house of ${house} now.`,
   child: (name, spouse) => `A child is born to you and ${spouse}: ${name}.`,
   lost: (name) => `Word reaches you: ${name} is dead.`,
+  // LEGACY7 part three: two players wed
+  wedPlayer: (name) => `You and ${name} are wed, before the gods. Each of you keeps your own house.`,
+  gone: (name) => `Word reaches you: ${name} has gone from the realm.`,
 });
 
 /** The child's announcement, by the family's names. */

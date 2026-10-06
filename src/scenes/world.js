@@ -627,7 +627,7 @@ import { GROUP_ROLL_RADIUS } from '../systems/campEncounters.js';   // PSCALE1: 
 import {
   realmIo, openRealmBoot, createRealmSession, realmSummaryOf, setRealmNotice, realmCreate, realmPut, realmBootSearch, realmRefusalText,
   sayRealmSave, REALM_OFFLINE_TEXT, REALM_EXIT_WAIT_MS, whenPageHides, whenPageGoes, realmTradeEscrow, realmGoldAct, realmDoorShut,
-  REALM_RESTORED_TEXT, realmSaveWithHeld, realmList,
+  REALM_RESTORED_TEXT, realmSaveWithHeld, realmList, realmUnions,
 } from '../systems/realmSaves.js';   // REALM P1.3: an online character is the realm's - joined, loaded and checkpointed through the service
 import { createRealmLine } from '../systems/legacy/realmLine.js';   // LEGACY7: online, Project Legacy's lines are the realm's
 import { reclaimFromDevice, reclaimLines } from '../systems/realmCustoms.js';   // RESTORE: what customs once kept back, given back at the boot
@@ -682,6 +682,8 @@ import { createPeerMenuReader } from '../systems/peerMenuBind.js';   // PEERMENU
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
 import { createProfileWindow, profileView, profileDuelLine, profileRenown, profileGateLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duelSession.js';   // DUEL1: the duel's state machine (pure)
+import { createWedManager, wedWhyText, wedMineText } from '../net/wedSession.js';   // LEGACY7 part three: two players wed - the handshake's state machine (pure)
+import { houseLine } from '../net/houseLaw.js';   // LEGACY7 part three: the house a proposal comes from, on its prompt
 import { createDuelRecords, duelUncountedText } from '../net/duelRecord.js';   // DUEL1: the Inspect card's duelling record, asked and kept
 import { createDuelPrompt } from '../ui/duelPrompt.js';   // DUEL1: the challenge, as the challenged player sees it
 import { DuelWallRenderer } from '../render/duelWall.js';   // DUEL1: the ring's holographic wall
@@ -18955,6 +18957,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     };
     // DUEL1: A DUEL FRAME AT ME - the law decides (net/duelSession.js); `sub` the sender's account as the relay stamped it
     online.onDuel = (id, d, sub = null) => { duelMgr.onFrame(id, d, sub); };
+    online.onWed = (id, d, sub = null) => { wedMgr.onFrame(id, d, sub); };   // LEGACY7 part three: a wed frame at me - the wedding's law decides
     online.onGate = (g) => gateLink?.word(g);   // WB3b: the court's room's word about its boss
     online.onSerpent = (w) => serpentLink?.word(w);   // SERPENT1: the sea serpent's cell's word (on my cell's socket or a halo's) - its fight, its swim, its blows, my receipt
     online.onRaid = (f, room) => raidRelayWord(f, room);   // RAID3: a town cell's word about its raid - the ledger, the cleanse, my receipt
@@ -19555,6 +19558,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       onOpen: () => surfaceOpen('profile'),
       onClose: () => { surfaceClose('profile'); _profileAsk = null; _profileSub = null; _profileView = null; },   // a card closed is a card no longer waited on
       onDuel: (peerId) => duelChallenge(peerId),   // DUEL1: the Challenge button (Mac: "When inspecting a player, they should be able to send an invite to duel")
+      onWed: (peerId) => wedPropose(peerId),   // LEGACY7 part three: the Propose button
     });
     // DUEL1: the challenge at me - the newest standing one, with Accept and Decline (the F-menu's rows are the other way)
     duelPrompt = createDuelPrompt({
@@ -19710,6 +19714,90 @@ export async function bootWorld(canvas, renderer, params, status) {
     vitals: () => [playerEntity.health, playerEntity.maxHealth],
   });
   duelMgr.onChange = () => { duelPrompt?.render(); repaintDuelProfile(); };
+
+  // ═══ LEGACY7 part three: TWO PLAYERS WED (bible/06-Systems/Legacy-Arc.md section 9; the design's "two players'
+  // characters may wed: both in the same temple, both asking the priest, the service records the union (each family
+  // names the other's member as spouse)") ═══════════════════════════════════════════════════════════════════════════
+  // The handshake is net/wedSession.js's, the union the account service's (server-account/src/legacy.js realmWed), the
+  // record the house's (scenes/legacyHost.js wedPlayer); this block connects them to this scene's socket, prompt and card.
+  /** Why I cannot wed now (a WED_WHY code), or null - the house's law, on a relay that carries the frame. */
+  const wedCan = () => (online?.status === 'open' && online.wedOk ? (legacyHost?.wedRefusal() ?? 'house') : 'busy');
+  /** The proposal at me on the town's Yes/No box (the window it stands for, so a proposal taken back closes it). */
+  let _wedBox = null;
+  let _wedBoxPeer = null;
+  const wedAsk = (peerId) => {
+    if (townTalk.overlayActive && !townTalk.overlayDone) return false;   // under another window: the card's button answers it
+    const p = online?.peers.get(peerId);
+    const house = p?.house ? houseLine(p.house) : null;
+    _wedBoxPeer = peerId;
+    _wedBox = new YesNoBoxWindow({
+      rows: [`${peerName(peerId) ?? 'Someone'}${house ? `, ${house},` : ''} asks for your hand,`, 'here before the gods. Be wed?'],
+      onYes: () => { _wedBox = null; _wedBoxPeer = null; wedMgr.accept(peerId).then((r) => { if (!r.ok && r.why === 'gone') tradeSay('That proposal no longer stands.'); }); },
+      onNo: () => { _wedBox = null; _wedBoxPeer = null; wedMgr.decline(peerId); },
+    });
+    townTalk.showOverlay(_wedBox);
+    return true;
+  };
+  const wedUnask = (peerId) => {
+    if (_wedBoxPeer !== peerId || !_wedBox) return;
+    townTalk.closeOverlay(_wedBox);
+    _wedBox = null; _wedBoxPeer = null;
+  };
+  const wedMgr = createWedManager({
+    send: (d) => online?.sendWed(d) === true,
+    now: () => performance.now(),   // monotonic, as the duel's
+    say: tradeSay,
+    peerName: (id) => peerName(id),
+    selfId: () => online?.id ?? '',
+    can: wedCan,
+    peerCan: (id) => !!online?.peers.get(id)?.house,   // their row wears a house: the realm signed one into their token
+    half: (sid, partner) => (realmSession && !realmSession.lost ? realmSession.wed(sid, partner) : Promise.resolve({ ok: false, error: 'realm-only' })),
+    onPrompt: (id) => { wedAsk(id); },
+    onUnprompt: (id) => wedUnask(id),
+    onWed: (union) => { legacyHost?.wedPlayer(union); },
+    refusalText: (e) => realmRefusalText(e),
+  });
+  wedMgr.onChange = () => repaintDuelProfile();
+  /** The Inspect card's Propose button, as the law says it now - shown only to a realm character playing a house. */
+  const wedButtonFor = (peerId) => {
+    if (!online || !peerId || !realmSession || !legacyOn()) return null;
+    const label = 'Propose marriage';
+    if (!online.wedOk) return { label, enabled: false, why: 'The server cannot carry a wedding yet.' };
+    const st = wedMgr.stateFor(peerId);
+    if (st === 'incoming') return { label: 'Answer their proposal', enabled: true };
+    if (st === 'outgoing') return { label: 'Proposal sent', enabled: false, why: 'Waiting for their answer.' };
+    if (st === 'waiting') return { label: 'Before the altar', enabled: false, why: 'The temple\'s book is being written.' };
+    if (st === 'busy') return { label, enabled: false, why: 'Another proposal stands.' };
+    const no = wedCan();
+    if (no) return { label, enabled: false, why: wedMineText(no) };
+    if (!online.peers.get(peerId)?.house) return { label, enabled: false, why: wedWhyText('house') };
+    if (!online.reachesPeer(peerId)) return { label, enabled: false, why: 'No link to them.' };
+    return { label, enabled: true };
+  };
+  /** The card's press: their proposal answered on its box, or mine sent - the law asked again first. */
+  const wedPropose = (peerId) => {
+    if (wedMgr.stateFor(peerId) === 'incoming') { profileWin?.hide(); if (!wedAsk(peerId)) tradeSay('Close the window you have open, then answer.'); return; }
+    const r = wedMgr.request(peerId);
+    if (!r.ok) tradeSay(r.why === 'link' ? TRY_AGAIN_TEXT : r.why === 'sent' ? 'Your proposal stands - wait for their answer.' : wedMineText(r.why));
+    repaintDuelProfile();
+  };
+  /** LEGACY7 part three: the account's unions read again - a spouse of another house dead or gone is word that reaches
+   *  this house; asked at the boot and every UNIONS_READ_MS after, one at a time. */
+  const UNIONS_READ_MS = 10 * 60_000;
+  let _unionsAt = -Infinity;
+  let _unionsAsking = false;
+  const legacyUnionsRead = () => {
+    if (!_bootLoaded || !legacyRealmLine || !realmSession || realmSession.lost || _unionsAsking) return;   // the house stands first (afterBoot)
+    _unionsAsking = true;
+    _unionsAt = performance.now();
+    realmUnions(realmIoNow()).then((r) => { if (r.ok) legacyHost?.unionsHeard(r.unions); }).catch(() => {}).finally(() => { _unionsAsking = false; });
+  };
+  /** The wedding's frame: the handshake's clock, a proposal with a player whose row is gone dropped, the unions read. */
+  const wedFrame = () => {
+    wedMgr.tick();
+    for (const p of wedMgr.peers()) if (!online?.reachesPeer(p)) wedMgr.gone(p);
+    if (performance.now() - _unionsAt > UNIONS_READ_MS) legacyUnionsRead();
+  };
   registerDuelFell(() => duelMgr.fell());   // characters/playerEntity.js duelSpare: every duel-sourced blow's floor says it here
   /** THE DEFENDER: my opponent's blow, checked by the law (theirs, this duel's, past the count, once, in budget), placed
    *  (combat/duelCombat.js duelBlowPlausible - a blow from where they are not seen lands nothing) and resolved on MY
@@ -20021,7 +20109,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _profileView = profileRenown(v, online?.renownOf?.(peerId) ?? null);   // AUDIT RENOWN1 UI-3: the Renown as the session knows it now
     v = _profileView;
     const rec = _profileSub ? duelRecords.get(_profileSub) : null;
-    return { ...v, duel: duelButtonFor(peerId), duels: _profileSub ? profileDuelLine(rec) : null, gates: profileGateLine(rec) };   // WB5b: and the gates they closed, off the same answer
+    return { ...v, duel: duelButtonFor(peerId), wed: wedButtonFor(peerId), duels: _profileSub ? profileDuelLine(rec) : null, gates: profileGateLine(rec) };   // LEGACY7 part three: and the Propose button   // WB5b: and the gates they closed, off the same answer
   };
   const repaintDuelProfile = () => {
     const id = profileWin?.isOpen() ? profileWin.peerId() : null;
@@ -22303,7 +22391,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     killerOf: (cid, ownAt) => revenantKillerOf(cid, ownAt), inheritFoe: (rec) => inheritRevenant(playerEntity, rec),
     // LEGACY7: online, the realm's copy of the line follows each write, and a fall is the realm's tombstone
     stored: (f) => { legacyRealmLine?.push(f); },
-    tombstone: () => (realmSession ? realmSession.die() : false),
+    tombstone: (why) => (realmSession ? realmSession.die(why) : false),   // LEGACY7 part three: 'retired' keeps a union with another player's character
+    realmId: () => realmSession?.id ?? null,   // LEGACY7 part three: the realm character this tab plays (two players wed)
     houseHere: () => { const b = (modes?.mode ?? 'exterior') === 'interior' ? modes?.interiorBuilding : null; return b?.buildingKey > 0 && b.townMapId ? { mapId: b.townMapId >>> 0, buildingKey: b.buildingKey } : null; },
     hasSave: (cid) => (legacyRealmLine ? !legacyRealmRoster || legacyRealmRoster.has(String(cid)) : newestSaveOf(enumerateSaves().info, cid) >= 0),   // LEGACY7: online, a living realm character of the account   // AUDIT LEGACY II A2/B1: a person's character stands only with a save of them
     livingWorld: () => livingWorldOn(),   // AUDIT LEGACY II B5: the line stands only in the Living World's towns
@@ -23502,6 +23591,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     chatFrame();   // CHAT1: before the dead return, so the channels keep their heartbeat and their reconnect while the death screen is up (the panel itself is paused away like any HUD - AUDIT CHAT B7)
     tradeFrame();   // TRADE1: retries, timeouts, a peer gone or out of reach - before the dead return, as the chat's is
     duelFrame();   // DUEL1: the duel's law, and the ring my body is kept in - before the dead return, so a fall ends the duel
+    wedFrame();   // LEGACY7 part three: the wedding's clock, and the account's unions read again
     profileFrame();   // INSPECT1: the card's ask retried and its wait timed - the trade's own kind of work, beside it
     pageFrame();   // JOURNAL1: a page whose writer left the room goes with them
     mail?.poll();   // MAIL1: a look at the letterbox when one is due - before the dead return, as the chat's heartbeat is

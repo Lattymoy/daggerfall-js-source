@@ -103,7 +103,8 @@ export function roomSigner(env, now = () => Date.now()) {
     if (who.rb !== undefined) claims.rb = who.rb;   // SEASON1 part two: a Season's banner ribbon
     if (who.ar !== undefined) claims.ar = who.ar;   // ARENA4: the season's arena rating the service signed in
     if (who.cl !== undefined) claims.cl = who.cl;   // ARENA4b: the named character's level the service signed in
-    const key = `${claims.s}|${claims.n}|${claims.k}|${claims.t ?? ''}|${(claims.ts ?? []).join('/')}|${(claims.g ?? []).join('+')}|${claims.mu ?? ''}|${claims.lv ?? ''}|${claims.gi ?? ''}|${claims.gm ?? ''}|${claims.rc ?? ''}|${claims.au ?? ''}|${(claims.rb ?? []).join('/')}|${claims.ar ?? ''}|${claims.cl ?? ''}`;
+    for (const k of ['hn', 'hc', 'hb', 'hg']) if (who[k] !== undefined) claims[k] = who[k];   // LEGACY7: the realm character's house the service signed in
+    const key = `${claims.s}|${claims.n}|${claims.k}|${claims.t ?? ''}|${(claims.ts ?? []).join('/')}|${(claims.g ?? []).join('+')}|${claims.mu ?? ''}|${claims.lv ?? ''}|${claims.gi ?? ''}|${claims.gm ?? ''}|${claims.rc ?? ''}|${claims.au ?? ''}|${(claims.rb ?? []).join('/')}|${claims.ar ?? ''}|${claims.cl ?? ''}|${claims.hn ?? ''}|${claims.hc ?? ''}|${claims.hb ?? ''}|${claims.hg ?? ''}`;
     const nowS = Math.floor(now() / 1000);
     const kept = lastI.get(key) ?? { last: undefined, used: new Set() };
     let i = nowS - 1;

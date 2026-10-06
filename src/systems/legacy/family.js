@@ -18,6 +18,7 @@ import { firstName, surname as bankSurname, getNameBank, GENDERS } from '../../c
 import { getSeed, setSeed } from '../../formats/dfRandom.js';
 import { startAgeOf } from './age.js';
 import { readStanding, readNews } from './influence.js';   // LEGACY6
+import { readHouse } from '../../net/houseLaw.js';   // LEGACY7 part three: a player spouse's house
 
 /** The save-data vendor - `modData.ProjectLegacy` (systems/modSaveData.js), the mod's IHasModSaveData. */
 export const LEGACY_VENDOR = 'ProjectLegacy';
@@ -102,12 +103,13 @@ export const fullNameOf = (given, sur) => (sur ? `${given} ${sur}` : given);
  *   stats:Record<string,number>|null, skills:number[]|null, groups:{primary:number[], major:number[], minor:number[]},
  *   blood:Record<string,number>, hearth:Record<string,number>, estate:number,
  *   parents:number[], children:number[], spouse:number|null, born:number, died:Death|null,
- *   heir:boolean|null, characterId:string|null, leveling:string|null, kind:'member'|'resident', residentId:string|null,
+ *   heir:boolean|null, characterId:string|null, leveling:string|null, kind:'member'|'resident'|'player', residentId:string|null,
  *   startAge:number, toll:number, bornOwn:number, lived:number, retired:number|null, bequest?:any[],
  *   parked?:{mapId:number, buildingKey:number}|null, courting?:Record<string, any>, wedAt?:number|null,
  *   childDay?:number|null, minor?:boolean, residentFace?:number|null, mapId?:number,
- *   standing?:import('./influence.js').Standing|null
- * }} Person
+ *   standing?:import('./influence.js').Standing|null,
+ *   realm?:{ sid:string, player:string, char:string, house:any }|null
+ * }} Person - LEGACY7 part three: `kind: 'player'` another player's realm character wed to a member, `realm` the union
  * @typedef {{ v:number, id:string, surname:string, model:string, seat:{region:string, loc:string, mapId?:number}|null, rev:number,
  *   nextId:number, currentId:number, founded:number, ended:number|null, people:Person[], remains:any[], settings?:any,
  *   pending:Pending|null, houses?:any[], home?:{mapId:number, buildingKey:number}|null,
@@ -468,6 +470,9 @@ export function readFamily(rec) {
     // LEGACY-HOME: the house the member's newest save was made in (household.js homeOf), or none
     p.parked = raw.parked && Number.isInteger(raw.parked.mapId) && (raw.parked.buildingKey | 0) > 0 ? { mapId: raw.parked.mapId, buildingKey: raw.parked.buildingKey | 0 } : null;
     p.standing = readStanding(raw.standing);   // LEGACY6: what the world thought of them, as last saved (influence.js)
+    // LEGACY7 part three: another player's character wed in - the union they were wed by, held to its shape
+    if (p.kind === 'player') p.realm = readUnion(raw.realm);
+    else delete p.realm;
     people.push(p);
   }
   if (!people.length) return null;
@@ -491,6 +496,13 @@ export function readFamily(rec) {
     home: rec.home && Number.isInteger(rec.home.mapId) ? { mapId: rec.home.mapId, buildingKey: rec.home.buildingKey | 0 } : null,
     news: readNews(rec.news),   // LEGACY6: what the house's towns talk of (influence.js)
   };
+}
+
+/** LEGACY7 part three: a player spouse's union as the record keeps it - its sid (the wire's handshake alphabet), the
+ *  other's account and realm character, their house (net/houseLaw.js) - or null. */
+function readUnion(u) {
+  if (!u || typeof u !== 'object' || typeof u.sid !== 'string' || !/^[A-Za-z0-9]{6,16}$/.test(u.sid)) return null;
+  return { sid: u.sid, player: String(u.player ?? '').slice(0, 40), char: String(u.char ?? '').slice(0, 21), house: readHouse(u.house) };
 }
 
 /** The states remains pass through: lying where the fallen fell (their list the record's own), carried by the heir,

@@ -46,7 +46,7 @@ import { syncHouses, householdOf, residentOf, familyResOf, kinGreeting, setFamil
 import { goldStack } from '../systems/inventory.js';
 import {
   topicsFor, topicLabel, topicQuestion, court, propose, betrothalOf, wed, childStep, childLine, spouseOf, childrenTogether,
-  splitName, dayOf as courtDayOf, MARRIAGE_TEXT, TOPIC,
+  splitName, dayOf as courtDayOf, MARRIAGE_TEXT, TOPIC, wedPlayer, unionSpouse, playerSpouseLost,
 } from '../systems/legacy/marriage.js';
 import { memberStanding, inheritStanding, inheritRegards, noteNews, newsFor as houseNewsFor } from '../systems/legacy/influence.js';
 
@@ -142,14 +142,16 @@ export function mergeFamily(stored, saved, cid) {
  *   templeOf?:() => (number|null), askWed?:(name:string, house:string, done:(takeName:boolean) => void) => boolean,
  *   regards?:() => any, regardDay?:() => number, sky?:() => number,
  *   killerOf?:(characterId:string, ownAt:number) => any, inheritFoe?:(rec:any) => boolean,
- *   stored?:(family:any) => void, tombstone?:() => (boolean|Promise<boolean>),
+ *   stored?:(family:any) => void, tombstone?:(why?:'fell'|'retired') => (boolean|Promise<boolean>),
+ *   realmId?:() => (string|null),
  * }} deps - AUDIT LEGACY II: `hasSave(cid)` whether a save of that character stands (a person's id stands only with one);
  *   `livingWorld()` whether the Living World runs (the line stands only in its towns). LEGACY6: `regards()` the Living
  *   World's relations of the one played and `regardDay()` their day; `sky()` the towns' minute (the house's news is
  *   stamped by it); `killerOf(cid, ownAt)` the revenant that ended a character (revenant.js killerOf) and
  *   `inheritFoe(rec)` it handed to the one played (inheritRevenant). LEGACY7: `stored(family)` each write of the device's,
  *   which online the realm's copy follows (systems/legacy/realmLine.js); `tombstone()` the playing realm character
- *   fallen for good (realmSaves.js session die)
+ *   fallen for good (realmSaves.js session die) - `why` 'retired' for an elder's mantle passed; part three: `realmId()` the
+ *   realm character this tab plays (two players wed: wedRefusal)
  */
 export function createLegacyHost(deps) {
   const rng = deps.rng ?? Math.random;
@@ -388,7 +390,10 @@ export function createLegacyHost(deps) {
   let tomb = null;
   function entomb() {
     if (!deps.online() || !deps.tombstone) return null;
-    tomb = Promise.resolve(deps.tombstone()).then((ok) => { if (!ok) { tomb = null; deps.say(LEGACY_TEXT.unTombed); } return !!ok; }, () => { tomb = null; deps.say(LEGACY_TEXT.unTombed); return false; });
+    // LEGACY7 part three: an elder's retirement says so - the realm keeps their union with another player's character
+    const fallen = personOf(family, family?.pending?.fallenId);
+    const why = fallen && !fallen.died && fallen.retired != null ? 'retired' : 'fell';
+    tomb = Promise.resolve(deps.tombstone(why)).then((ok) => { if (!ok) { tomb = null; deps.say(LEGACY_TEXT.unTombed); } return !!ok; }, () => { tomb = null; deps.say(LEGACY_TEXT.unTombed); return false; });
     return tomb;
   }
 
@@ -890,6 +895,59 @@ export function createLegacyHost(deps) {
     if (ended) { touch(family); store(); }
     return ended;
   }
+
+  // ---- LEGACY7 part three: two players wed ---------------------------------------------------------------------------
+
+  /** Why the one played cannot wed another player's character now - a code the wire carries (net/wire.js WED_WHY) - or
+   *  null: online, the realm character of this house's one played (`realmId`), alive, of the blood, of age, wed to
+   *  nobody, no fall waiting on its Succession, out of a fight, standing in a temple. */
+  function wedRefusal() {
+    const p = current();
+    const rid = deps.realmId?.() ?? null;
+    if (!family || past || !p || !deps.on() || !deps.online() || !rid || p.characterId !== String(rid)) return 'house';
+    if (family.pending || !isAlive(p) || p.retired != null || p.kind !== 'member' || p.minor || deps.inFight()) return 'busy';
+    if (spouseOf(family, p)) return 'wed';
+    if (deps.templeOf?.() == null) return 'temple';
+    return null;
+  }
+  /**
+   * A UNION THE REALM MADE (net/wedSession.js onWed, or a boot's read of the account's unions): the other player's
+   * character recorded as the spouse of the member the union names (`union.mine`, their realm character) - once a union
+   * (by its sid), never over a living spouse. Said unless `quiet`. Answers the spouse, or null.
+   * @param {any} union @param {{ quiet?: boolean }} [o]
+   */
+  function wedPlayerHeard(union, { quiet = false } = {}) {
+    if (!family || !deps.on() || past || !union || typeof union.sid !== 'string' || !union.partner) return null;
+    const had = unionSpouse(family, union.sid);
+    if (had) return had;
+    const m = (family.people ?? []).find((x) => x.kind === 'member' && x.characterId != null && x.characterId === String(union.mine));
+    if (!m || !isAlive(m) || spouseOf(family, m)) return null;
+    const s = wedPlayer(family, m, union.partner, union.sid, deps.now());
+    if (m.id === family.currentId) m.childDay = ownDay();
+    tellNews('wed', fullNameOf(s.given, s.surname), deps.templeOf?.() ?? null);
+    touch(family);
+    store();
+    if (!quiet) deps.say(MARRIAGE_TEXT.wedPlayer(fullNameOf(s.given, s.surname)));
+    return s;
+  }
+  /** THE ACCOUNT'S UNIONS as the realm says them (a boot's read - realmSaves.js realmUnions): each union of this house's
+   *  members recorded, and each the OTHER's death or delete ended (`endedBy` 'partner') ended in the record - the member
+   *  may wed again. A union ended by this house's own member's death needs nothing: that death is this record's own.
+   *  Answers how many changed. */
+  function unionsHeard(unions) {
+    if (!family || !deps.on() || past || !Array.isArray(unions)) return 0;
+    let n = 0;
+    for (const u of unions) {
+      if (!u || typeof u.sid !== 'string') continue;
+      let s = unionSpouse(family, u.sid);
+      if (!s && (s = wedPlayerHeard(u, { quiet: u.endedAt != null }))) n++;
+      if (!s || u.endedAt == null || u.endedBy !== 'partner' || !playerSpouseLost(family, s, deps.now(), u.endedWhy)) continue;
+      n++;
+      if (s.spouse === family.currentId) deps.say((u.endedWhy === 'gone' ? MARRIAGE_TEXT.gone : MARRIAGE_TEXT.lost)(fullNameOf(s.given, s.surname)));
+    }
+    if (n) store();
+    return n;
+  }
   // ---- LEGACY6: what the world remembers ---------------------------------------------------------------------------
 
   /** What the town `mapId` says of the house at the town's minute `t` (livingTown.js familyNews). */
@@ -1060,5 +1118,8 @@ export function createLegacyHost(deps) {
     newsFor,
     seedRegards,
     rebind,
+    wedRefusal,
+    wedPlayer: wedPlayerHeard,
+    unionsHeard,
   };
 }

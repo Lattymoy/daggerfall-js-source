@@ -21,6 +21,7 @@
 
 import { houseOfRecord } from '../../src/net/houseLaw.js';   // LEGACY7 part two: the house a member wears online
 import { checkName } from '../../src/net/nameFilter.js';   // ...through the name filter, as a guild's name is
+import { ID_RE } from '../../src/net/identityToken.js';   // LEGACY7 part three: the other's account, by the token's own shape
 
 /** A family's id, as the client mints it (src/systems/legacy/family.js mintFamilyId). */
 export const LINEAGE_ID_RE = /^fam-[0-9a-z]{1,12}-[0-9a-z]{6}$/;
@@ -127,17 +128,130 @@ export async function lineageBirthRefusal(db, playerId, lineage, person) {
 
 /**
  * THE TOMBSTONE: the playing tab's character is dead for good - stamped under its lease, which goes with it. A second
- * stamp is the first's (idempotent: a retry whose answer was lost). Answers `{ ok, deadAt }` or `{ error }`: 'body',
- * 'no-realm-character', 'lease'.
- * @param {any} ctx @param {string} playerId @param {{ id: unknown, lease: unknown }} at
+ * stamp is the first's (idempotent: a retry whose answer was lost). `why` - 'fell' (a death, the default) or 'retired'
+ * (an Enduring elder's mantle passed: never played again, but alive at the seat). LEGACY7 part three: a death ends the
+ * character's union with another player's (ended 'died'); a retirement keeps it - the elder lives on, wed. Answers
+ * `{ ok, deadAt }` or `{ error }`: 'body', 'no-realm-character', 'lease'.
+ * @param {any} ctx @param {string} playerId @param {{ id: unknown, lease: unknown, why?: unknown }} at
  */
-export async function realmDie({ db, nowS }, playerId, { id, lease }) {
+export async function realmDie({ db, nowS }, playerId, { id, lease, why = 'fell' }) {
   if (typeof id !== 'string' || !/^r[0-9a-f]{20}$/.test(id) || typeof lease !== 'string' || !/^[0-9a-f]{32}$/.test(lease)) return { error: 'body' };
+  if (why !== 'fell' && why !== 'retired') return { error: 'body' };
   const row = await db.prepare('SELECT lease, dead_at FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
   if (!row) return { error: 'no-realm-character' };
-  if (row.dead_at != null) return { ok: true, deadAt: row.dead_at };
+  if (row.dead_at != null) {
+    if (why === 'fell') await endUnionsOf(db, id, row.dead_at, 'died').run();   // a retry finishes what a lost answer may have left undone
+    return { ok: true, deadAt: row.dead_at };
+  }
   const took = await db.prepare('UPDATE realm_characters SET dead_at = ?, lease = NULL, updated_at = ? WHERE id = ? AND player = ? AND lease = ? AND dead_at IS NULL')
     .bind(nowS, nowS, id, playerId, lease).run();
   if (!took.meta.changes) return { error: 'lease' };
+  if (why === 'fell') await endUnionsOf(db, id, nowS, 'died').run();   // LEGACY7 part three: a union ends with the death
   return { ok: true, deadAt: nowS };
 }
+
+// ═══ LEGACY7 part three: TWO PLAYERS WED ═══════════════════════════════════════════════════════════════════════════════
+//
+// Two realm characters of Project Legacy lines, standing in one temple, wed by both their words: each client posts its
+// HALF of one wedding (`sid`, the handshake the two agreed on the relay's `wed` frame - net/wire.js validWedData),
+// naming its own character under its playing lease and the other's ACCOUNT (the relay's verified `sub`, never a client's
+// word about who the other is). The union is made only when both halves are here and each names the other - and only
+// for two living characters of lines, each wed to nobody. Each side's CARD is kept on the union as it stood at the
+// wedding - what the other's house records of them. It ends with either's death or delete; a retirement keeps it.
+
+/** A wedding's handshake id - the duel's alphabet (net/wire.js validWedData). */
+export const WED_SID_RE = /^[A-Za-z0-9]{6,16}$/;
+/** How long a half waits for its other: a proposal answered within five minutes, or not at all. */
+export const WED_HALF_LIFE_S = 300;
+/** The bound on a face index on a card (the port's faces are a handful a race; any honest record is far under it). */
+export const WED_FACE_MAX = 999;
+
+/**
+ * A SIDE'S CARD at the wedding - what the other's house keeps of them: the realm character's name, its house (the
+ * mint's law, through the name filter - houseOn), and the person's sex, race and face off their own line's record, each
+ * held to its shape. Null when no such character is the account's.
+ * @param {any} db @param {string} playerId @param {string} charId
+ */
+export async function wedCardOf(db, playerId, charId) {
+  const row = await db.prepare('SELECT r.name AS name, r.person_id AS person, l.record AS record FROM realm_characters r'
+    + ' LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? AND r.player = ?').bind(charId, playerId).first();
+  if (!row) return null;
+  const p = (parsed(row.record ?? '')?.people ?? []).find((/** @type {any} */ x) => x?.id === row.person) ?? {};
+  return {
+    name: String(row.name ?? ''),
+    house: row.record ? houseOn(row.record, row.person) : null,
+    gender: p.gender === 'female' ? 'female' : 'male',
+    race: typeof p.race === 'string' && /^[A-Za-z][A-Za-z ]{0,23}$/.test(p.race) ? p.race : null,
+    face: Number.isSafeInteger(p.face) && p.face >= 0 && p.face <= WED_FACE_MAX ? p.face : 0,
+  };
+}
+
+/** A union as one side sees it: its own character, the other's account, character and card, when, and whether it
+ *  ended - when, why ('died' or 'gone') and by whose ('mine' or 'partner'). */
+const unionView = (/** @type {any} */ u, /** @type {string} */ playerId) => {
+  const mine = u.a_player === playerId;
+  const myChar = mine ? u.a_char : u.b_char;
+  const card = parsed((mine ? u.b_card : u.a_card) ?? '') ?? {};
+  return {
+    sid: u.sid, mine: myChar,
+    partner: {
+      player: mine ? u.b_player : u.a_player, char: mine ? u.b_char : u.a_char,
+      name: String(card.name ?? ''), house: card.house ?? null, gender: card.gender === 'female' ? 'female' : 'male', race: card.race ?? null, face: card.face ?? 0,
+    },
+    at: u.wed_at, endedAt: u.ended_at ?? null, endedWhy: u.ended_why ?? null,
+    endedBy: u.ended_at == null ? null : u.ended_by === myChar ? 'mine' : 'partner',
+  };
+};
+const openUnionOf = (/** @type {any} */ db, /** @type {string} */ charId) =>
+  db.prepare('SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND (a_char = ? OR b_char = ?)').bind(charId, charId).first();
+
+/**
+ * A HALF OF ONE WEDDING: my character `id` under `lease`, the handshake `sid`, the other's account `partner`. Answers
+ * `{ ok, wed: false }` (mine waits for theirs), `{ ok, wed: true, union }` (both are here - the union stands, or stood
+ * already for this sid), or `{ error }`: 'body', 'no-realm-character', 'dead', 'lease', 'wed-no-line' (a character of no
+ * line weds no one), 'wed-already' (mine is wed), 'wed-partner' (theirs cannot be), 'wed-spent' (another pair's sid).
+ * @param {any} ctx @param {string} playerId @param {{ id: unknown, lease: unknown, sid: unknown, partner: unknown }} at
+ */
+export async function realmWed({ db, nowS }, playerId, { id, lease, sid, partner }) {
+  if (typeof id !== 'string' || !/^r[0-9a-f]{20}$/.test(id) || typeof lease !== 'string' || !/^[0-9a-f]{32}$/.test(lease)) return { error: 'body' };
+  if (typeof sid !== 'string' || !WED_SID_RE.test(sid) || typeof partner !== 'string' || !ID_RE.test(partner) || partner === playerId) return { error: 'body' };
+  const had = await db.prepare('SELECT * FROM realm_unions WHERE sid = ?').bind(sid).first();
+  if (had) return (had.a_player === playerId && had.a_char === id) || (had.b_player === playerId && had.b_char === id) ? { ok: true, wed: true, union: unionView(had, playerId) } : { error: 'wed-spent' };
+  const me = await db.prepare('SELECT lease, dead_at, lineage_id FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  if (!me) return { error: 'no-realm-character' };
+  if (me.dead_at != null) return { error: 'dead' };
+  if (me.lease !== lease) return { error: 'lease' };
+  if (!me.lineage_id) return { error: 'wed-no-line' };
+  if (await openUnionOf(db, id)) return { error: 'wed-already' };
+  // a half older than its life is nobody's word any more - swept before mine is written and theirs is looked for; and
+  // an account is in one wedding at a time (its client answers one proposal at a time): its other halves are words it
+  // took back, so the table holds at most one row an account
+  await db.prepare('DELETE FROM realm_wed_halves WHERE at < ? OR (player = ? AND sid != ?)').bind(nowS - WED_HALF_LIFE_S, playerId, sid).run();
+  await db.prepare('INSERT OR REPLACE INTO realm_wed_halves (sid, player, char_id, partner, at) VALUES (?, ?, ?, ?, ?)').bind(sid, playerId, id, partner, nowS).run();
+  const other = await db.prepare('SELECT char_id FROM realm_wed_halves WHERE sid = ? AND player = ? AND partner = ?').bind(sid, partner, playerId).first();
+  if (!other) return { ok: true, wed: false };
+  const them = await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL AND lineage_id IS NOT NULL').bind(other.char_id, partner).first();
+  if (!them) return { error: 'wed-partner' };
+  const [theirCard, myCard] = await Promise.all([wedCardOf(db, partner, other.char_id), wedCardOf(db, playerId, id)]);
+  // the union, asked IN the write: two halves posting at once race to one row (the sid's key), and neither character may
+  // be wed meanwhile - theirs since their half was written, or mine in a race
+  await db.prepare(
+    'INSERT OR IGNORE INTO realm_unions (sid, a_player, a_char, b_player, b_char, a_card, b_card, wed_at) SELECT ?, ?, ?, ?, ?, ?, ?, ?'
+    + ' WHERE NOT EXISTS (SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND (a_char IN (?, ?) OR b_char IN (?, ?)))',
+  ).bind(sid, partner, other.char_id, playerId, id, JSON.stringify(theirCard), JSON.stringify(myCard), nowS, id, other.char_id, id, other.char_id).run();
+  const now = await db.prepare('SELECT * FROM realm_unions WHERE sid = ?').bind(sid).first();
+  if (!now) return { error: (await openUnionOf(db, id)) ? 'wed-already' : 'wed-partner' };
+  await db.prepare('DELETE FROM realm_wed_halves WHERE sid = ?').bind(sid).run();
+  return { ok: true, wed: true, union: unionView(now, playerId) };
+}
+
+/** Every union of this account's characters, the newest first. */
+export async function listUnions({ db }, /** @type {string} */ playerId) {
+  const r = await db.prepare('SELECT * FROM realm_unions WHERE a_player = ? OR b_player = ? ORDER BY wed_at DESC LIMIT 50').bind(playerId, playerId).all();
+  return (r?.results ?? []).map((/** @type {any} */ u) => unionView(u, playerId));
+}
+
+/** A character's unions ended - its death ('died') or its delete ('gone'), and by whose. A statement, for the caller's
+ *  own write. */
+export const endUnionsOf = (/** @type {any} */ db, /** @type {string} */ id, /** @type {number} */ nowS, /** @type {'died'|'gone'} */ why) =>
+  db.prepare('UPDATE realm_unions SET ended_at = ?, ended_why = ?, ended_by = ? WHERE ended_at IS NULL AND (a_char = ? OR b_char = ?)').bind(nowS, why, id, id, id);

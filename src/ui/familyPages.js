@@ -22,6 +22,7 @@ import { ageOf, spanOf, isElder } from '../systems/legacy/age.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { STAT_KEYS_ORDER } from '../systems/statMods.js';
 import { homeOf, familyHome, sameHouse } from '../systems/legacy/household.js';   // LEGACY-HOME: where each of the line lives
+import { houseLine } from '../net/houseLaw.js';   // LEGACY7 part three: a player spouse's own house on their card
 
 export const FAMILY_PAGE_SECTIONS = Object.freeze([
   Object.freeze(['tree', 'Family Tree']), Object.freeze(['house', 'The House']), Object.freeze(['hall', 'Hall of Ancestors']),
@@ -141,7 +142,7 @@ export const modelLine = (m) => (m === MODELS.bloodline
 export function personChips(family, p, livedNow) {
   const out = [];
   if (!p) return out;
-  if (p.died) out.push({ cls: 'dead', text: p.died.cause === 'years' ? 'Died of years' : 'Fallen' });
+  if (p.died) out.push({ cls: 'dead', text: p.died.cause === 'years' ? 'Died of years' : p.died.cause === 'gone' ? 'Gone from the realm' : 'Fallen' });   // LEGACY7 part three: a player spouse's character deleted
   // AUDIT LEGACY H9: the death quest on the tree - laid to rest, or still lying where they fell
   const rest = p.died ? (family.remains ?? []).find((r) => r.of === p.id) : null;
   if (rest?.state === 'rested') out.push({ cls: '', text: 'At peace' });
@@ -150,6 +151,7 @@ export function personChips(family, p, livedNow) {
   else if (p.retired != null) out.push({ cls: 'elder', text: 'Retired' });
   if (!p.died && family.model === MODELS.enduring && isElder(p, p.id === family.currentId ? livedNow : p.lived)) out.push({ cls: 'elder', text: 'Elder' });
   if (p.kind === 'resident') out.push({ cls: '', text: 'Wed into the house' });
+  if (p.kind === 'player') out.push({ cls: '', text: 'Wed from another house' });   // LEGACY7 part three: another player's character
   if (!p.died && p.minor) out.push({ cls: '', text: 'A child' });   // LEGACY5: played once the mantle passes to them
   if (!p.died && p.characterId == null && p.id !== family.currentId && p.kind === 'member') out.push({ cls: 'blood', text: 'Not yet played' });
   // U2: the heir answer (B12), drawn - a Bloodline member who would leave a newborn heir
@@ -157,8 +159,12 @@ export function personChips(family, p, livedNow) {
   return out;
 }
 
-/** The card's identity line: "Dark Elf Nightblade, level 7". */
-export const identityLine = (p) => `${raceWord(p.race)} ${p.className}${p.characterId || p.level > 1 ? `, level ${p.level}` : ''}`;
+/** The card's identity line: "Dark Elf Nightblade, level 7". A spouse who married in has no career of this house's
+ *  record (a townsperson's trade is the census's; another player's character is theirs) - their race alone, and
+ *  LEGACY7 part three's player spouse their own house: "Dark Elf - ☠ Ysolde II of House Hlaalu". */
+export const identityLine = (p) => ((p.kind ?? 'member') !== 'member'
+  ? `${raceWord(p.race)}${p.kind === 'player' && houseLine(p.realm?.house) ? ` - ${houseLine(p.realm.house)}` : ''}`
+  : `${raceWord(p.race)} ${p.className}${p.characterId || p.level > 1 ? `, level ${p.level}` : ''}`);
 
 // ---- the tree's view (pan and zoom, pure) -----------------------------------------------------------------------
 
@@ -430,6 +436,7 @@ function personCard(el, family, p, livedNow, rerender, door) {
 
 /** LEGACY-HOME: where one of the line lives, in words - or null (the dead, the one played, one wed in). */
 export function livesLine(family, p) {
+  if (isAlive(p) && p.kind === 'player') return 'With their own house, wherever its road leads';   // LEGACY7 part three: another player's character walks their own world
   if (!isAlive(p) || p.kind !== 'member' || p.id === family.currentId) return null;
   const home = homeOf(family, p);
   if (!home) return 'On their own journey';
@@ -510,7 +517,7 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
     for (const p of fallen) {
       const row = el('div', 'fam-hallrow');
       row.append(el('div', 'fam-kin', `${fullNameOf(p.given, p.surname)} - ${identityLine(p)}`),
-        el('div', 'fam-sub', [p.died.cause === 'years' ? 'died of their years' : p.died.cause === 'slain' ? `was slain${p.died.by ? ` by ${p.died.by}` : ''}` : 'fell', p.died.place?.loc ? `at ${p.died.place.loc}` : '', prov.date ? `on ${prov.date(p.died.at)}` : ''].filter(Boolean).join(' ')));
+        el('div', 'fam-sub', [p.died.cause === 'years' ? 'died of their years' : p.died.cause === 'slain' ? `was slain${p.died.by ? ` by ${p.died.by}` : ''}` : p.died.cause === 'gone' ? 'is gone from the realm' : 'fell', p.died.place?.loc ? `at ${p.died.place.loc}` : '', prov.date ? `on ${prov.date(p.died.at)}` : ''].filter(Boolean).join(' ')));
       list.append(row);
     }
     detail.append(list);

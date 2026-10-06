@@ -1,0 +1,551 @@
+[
+  {
+    "name": "LEGACY7W-partner-not-named",
+    "file": "server-account/src/legacy.js",
+    "old": "WHERE sid = ? AND player = ? AND partner = ?').bind(sid, partner, playerId)",
+    "new": "WHERE sid = ? AND player = ? AND partner != ?').bind(sid, partner, playerId)",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-half-never-lapses",
+    "file": "server-account/src/legacy.js",
+    "old": ".bind(nowS - WED_HALF_LIFE_S, playerId, sid).run();",
+    "new": ".bind(0, playerId, sid).run();",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-many-halves",
+    "file": "server-account/src/legacy.js",
+    "old": ".bind(nowS - WED_HALF_LIFE_S, playerId, sid).run();",
+    "new": ".bind(nowS - WED_HALF_LIFE_S, '', sid).run();",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-partner-dead-or-lineless",
+    "file": "server-account/src/legacy.js",
+    "old": "  if (!them) return { error: 'wed-partner' };\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-wed-over-a-union",
+    "file": "server-account/src/legacy.js",
+    "old": "    + ' WHERE NOT EXISTS (SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND (a_char IN (?, ?) OR b_char IN (?, ?)))',",
+    "new": "    + ' WHERE NOT EXISTS (SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND 0 AND (a_char IN (?, ?) OR b_char IN (?, ?)))',",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-mine-wed-unchecked",
+    "file": "server-account/src/legacy.js",
+    "old": "  if (await openUnionOf(db, id)) return { error: 'wed-already' };\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-no-line-weds",
+    "file": "server-account/src/legacy.js",
+    "old": "  if (!me.lineage_id) return { error: 'wed-no-line' };\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-lease-unchecked",
+    "file": "server-account/src/legacy.js",
+    "old": "  if (me.lease !== lease) return { error: 'lease' };\n  if (!me.lineage_id)",
+    "new": "  if (!me.lineage_id)",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-dead-weds",
+    "file": "server-account/src/legacy.js",
+    "old": "  if (me.dead_at != null) return { error: 'dead' };\n  if (me.lease !== lease)",
+    "new": "  if (me.lease !== lease)",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-sid-anyones",
+    "file": "server-account/src/legacy.js",
+    "old": "? { ok: true, wed: true, union: unionView(had, playerId) } : { error: 'wed-spent' };",
+    "new": "? { ok: true, wed: true, union: unionView(had, playerId) } : { ok: true, wed: true, union: unionView(had, playerId) };",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-self-wed",
+    "file": "server-account/src/legacy.js",
+    "old": " || !ID_RE.test(partner) || partner === playerId) return { error: 'body' };",
+    "new": " || !ID_RE.test(partner)) return { error: 'body' };",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-death-keeps-union",
+    "file": "server-account/src/legacy.js",
+    "old": "  if (why === 'fell') await endUnionsOf(db, id, nowS, 'died').run();   // LEGACY7 part three: a union ends with the death\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-retirement-ends-union",
+    "file": "server-account/src/legacy.js",
+    "old": "  if (why === 'fell') await endUnionsOf(db, id, nowS, 'died').run();",
+    "new": "  await endUnionsOf(db, id, nowS, 'died').run();",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-retry-forgets",
+    "file": "server-account/src/legacy.js",
+    "old": "    if (why === 'fell') await endUnionsOf(db, id, row.dead_at, 'died').run();",
+    "new": "    if (false) await endUnionsOf(db, id, row.dead_at, 'died').run();",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-why-unchecked",
+    "file": "server-account/src/legacy.js",
+    "old": "  if (why !== 'fell' && why !== 'retired') return { error: 'body' };\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-delete-keeps-union",
+    "file": "server-account/src/realm.js",
+    "old": "    endUnionsOf(db, id, nowS, 'gone'),",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-ended-by-anyone",
+    "file": "server-account/src/legacy.js",
+    "old": "    endedBy: u.ended_at == null ? null : u.ended_by === myChar ? 'mine' : 'partner',",
+    "new": "    endedBy: u.ended_at == null ? null : 'partner',",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-card-race-unread",
+    "file": "server-account/src/legacy.js",
+    "old": "    race: typeof p.race === 'string' && /^[A-Za-z][A-Za-z ]{0,23}$/.test(p.race) ? p.race : null,",
+    "new": "    race: null,",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-cards-swapped",
+    "file": "server-account/src/legacy.js",
+    "old": "JSON.stringify(theirCard), JSON.stringify(myCard), nowS,",
+    "new": "JSON.stringify(myCard), JSON.stringify(theirCard), nowS,",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-house-unfiltered-card",
+    "file": "server-account/src/legacy.js",
+    "old": "    house: row.record ? houseOn(row.record, row.person) : null,",
+    "new": "    house: null,",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-why-on-any-kind",
+    "file": "src/net/wire.js",
+    "old": "    if (d.k !== 'no' || typeof d.why !== 'string' || !WED_WHY.includes(d.why)) return null;",
+    "new": "    if (typeof d.why !== 'string' || !WED_WHY.includes(d.why)) return null;",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-relay-min-off",
+    "file": "src/net/wire.js",
+    "old": "export const WED_RELAY_MIN = 172;",
+    "new": "export const WED_RELAY_MIN = 171;",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-parsed-before-hello",
+    "file": "src/net/wire.js",
+    "old": "    if (!hasHello) return { error: 'wed before hello' };\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-frame-unbounded",
+    "file": "src/net/wire.js",
+    "old": "    if (text.length > WED_FRAME_MAX) return { error: 'frame too large' };\n    const data = validWedData(m.data);",
+    "new": "    const data = validWedData(m.data);",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-sid-any-shape",
+    "file": "src/net/wire.js",
+    "old": "  const s = typeof d.s === 'string' && DUEL_SID_RE.test(d.s) ? d.s : null;\n  if (!to || !s) return null;\n  const out = { to, k: d.k, s };\n  if (d.why !== undefined) {",
+    "new": "  const s = typeof d.s === 'string' ? d.s : null;\n  if (!to || !s) return null;\n  const out = { to, k: d.k, s };\n  if (d.why !== undefined) {",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-relay-unstamped",
+    "file": "server/src/index.js",
+    "old": "      this._send(tws, JSON.stringify({ t: 'wed', id: a.id, ...(typeof a.sub === 'string' && a.sub ? { sub: a.sub } : {}), data: m.data }));",
+    "new": "      this._send(tws, JSON.stringify({ t: 'wed', id: a.id, data: m.data }));",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-relay-shared-funnel",
+    "file": "server/src/index.js",
+    "old": "      if (!this._senderFunnel(tws, a.id, now, 'wein', WED_HZ_MAX)) return;",
+    "new": "      if (!this._senderFunnel(tws, a.id, now)) return;",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-relay-in-channels",
+    "file": "server/src/index.js",
+    "old": "      a = this._meterWed(ws, a, now); if (!a) return;\n      if (isChatRoom(a.key) || isSocialRoom(a.key)) return;\n",
+    "new": "      a = this._meterWed(ws, a, now); if (!a) return;\n",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-relay-self-ok",
+    "file": "server/src/index.js",
+    "old": "      a = this._meterWed(ws, a, now); if (!a) return;\n      if (isChatRoom(a.key) || isSocialRoom(a.key)) return;\n      const to = m.data.to;\n      if (to === a.id) { this._junk(ws); return; }\n",
+    "new": "      a = this._meterWed(ws, a, now); if (!a) return;\n      if (isChatRoom(a.key) || isSocialRoom(a.key)) return;\n      const to = m.data.to;\n",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-session-any-relay",
+    "file": "src/net/online.js",
+    "old": "    if (!d || d.to === this.id || !this.wedOk) return false;",
+    "new": "    if (!d || d.to === this.id) return false;",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-session-unstamped",
+    "file": "src/net/online.js",
+    "old": "validWedData, (id, d) => this.onWed?.(id, d, subOf(m)));",
+    "new": "validWedData, (id, d) => this.onWed?.(id, d, null));",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-session-unprojected",
+    "file": "src/net/online.js",
+    "old": "    const d = validWedData(data);\n    if (!d || d.to === this.id || !this.wedOk) return false;",
+    "new": "    const d = data;\n    if (!d || d.to === this.id || !this.wedOk) return false;",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-yes-without-half",
+    "file": "src/net/wedSession.js",
+    "old": "      try { r = await half(a.s, a.sub); } catch { r = { ok: false, error: 'offline' }; }",
+    "new": "      r = { ok: true, wed: false };",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-done-unheard",
+    "file": "src/net/wedSession.js",
+    "old": "          waiting.asked = true;\n          void askAgain(waiting);\n          return;",
+    "new": "          return;",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-reask-prompts",
+    "file": "src/net/wedSession.js",
+    "old": "          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < WED_REASK_MS) { answer(from, { k: 'no', to: from, s: d.s, why: 'declined' }); return; }\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-crossed-both-take-up",
+    "file": "src/net/wedSession.js",
+    "old": "            if (from < selfId()) { outgoing = null;",
+    "new": "            if (true) { outgoing = null;",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-lost-done-forgotten",
+    "file": "src/net/wedSession.js",
+    "old": "      if (waiting && !waiting.posting && !waiting.asked && t - waiting.at > WED_DONE_WAIT_MS) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-crafted-yes-silent",
+    "file": "src/net/wedSession.js",
+    "old": "            if (r?.ok && r.wed) { wedNow(r.union, from); once({ k: 'done', to: from, s }); }",
+    "new": "            if (r?.ok) { wedNow(r.union, from); once({ k: 'done', to: from, s }); }",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-busy-prompts-again",
+    "file": "src/net/wedSession.js",
+    "old": "          if (waiting || closing) { if ((waiting ?? closing)?.peer !== from) answer(from, { k: 'no', to: from, s: d.s, why: 'busy' }); return; }\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-lapse-silent",
+    "file": "src/net/wedSession.js",
+    "old": "        once({ k: 'no', to: outgoing.peer, s: outgoing.s, why: 'timeout' });\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-withdraw-silent",
+    "file": "src/net/wedSession.js",
+    "old": "      once({ k: 'no', to: outgoing.peer, s: outgoing.s, why: 'cancelled' });\n      outgoing = null;\n      changed();\n      return { ok: true };",
+    "new": "      outgoing = null;\n      changed();\n      return { ok: true };",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-house-never-asked",
+    "file": "src/net/wedSession.js",
+    "old": "      if (!peerCan(peer)) return { ok: false, why: 'house' };\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-asked-side-reason-lost",
+    "file": "src/net/wedSession.js",
+    "old": "          if (no) { answer(from, { k: 'no', to: from, s: d.s, why: no }); return; }\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-wed-anywhere",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (deps.templeOf?.() == null) return 'temple';\n    return null;\n  }",
+    "new": "    return null;\n  }",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-other-realm-character",
+    "file": "src/scenes/legacyHost.js",
+    "old": " || !rid || p.characterId !== String(rid)) return 'house';",
+    "new": " || !rid) return 'house';",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-wed-twice",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (spouseOf(family, p)) return 'wed';\n    if (deps.templeOf?.() == null) return 'temple';",
+    "new": "    if (deps.templeOf?.() == null) return 'temple';",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-union-twice",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (had) return had;\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-mine-ended-kills-spouse",
+    "file": "src/scenes/legacyHost.js",
+    "old": " || u.endedBy !== 'partner' || !playerSpouseLost(",
+    "new": " || !playerSpouseLost(",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-retired-as-fell",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    const why = fallen && !fallen.died && fallen.retired != null ? 'retired' : 'fell';",
+    "new": "    const why = 'fell';",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-gone-as-died",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "  spouse.died = { at, cause: why === 'gone' ? 'gone' : 'fell', place: null, by: null };",
+    "new": "  spouse.died = { at, cause: 'fell', place: null, by: null };",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-player-takes-the-name",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "  s.surname = house?.hn ?? own;",
+    "new": "  s.surname = family.surname;",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-union-unrecorded",
+    "file": "src/systems/legacy/marriage.js",
+    "old": "  s.realm = { sid: String(sid), player: String(card.player ?? ''), char: String(card.char ?? ''), house };",
+    "new": "  s.realm = null;",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-union-shapeless",
+    "file": "src/systems/legacy/family.js",
+    "old": "    if (p.kind === 'player') p.realm = readUnion(raw.realm);",
+    "new": "    if (p.kind === 'player') p.realm = raw.realm ?? null;",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-wedding-not-a-fact",
+    "file": "src/systems/legacy/store.js",
+    "old": "    if (p.spouse == null && o.spouse != null) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-no-chip",
+    "file": "src/ui/familyPages.js",
+    "old": "  if (p.kind === 'player') out.push({ cls: '', text: 'Wed from another house' });",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-gone-fallen",
+    "file": "src/ui/familyPages.js",
+    "old": ": p.died.cause === 'gone' ? 'Gone from the realm' : 'Fallen' });",
+    "new": ": 'Fallen' });",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-identity-career",
+    "file": "src/ui/familyPages.js",
+    "old": "export const identityLine = (p) => ((p.kind ?? 'member') !== 'member'",
+    "new": "export const identityLine = (p) => (false",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-no-propose",
+    "file": "src/ui/profileWindow.js",
+    "old": "    wed: wed && typeof wed.label === 'string' ? { label: wed.label, enabled: !!wed.enabled, why: wed.enabled ? null : (wed.why ?? null) } : null,",
+    "new": "    wed: null,",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-tomb-no-why",
+    "file": "src/systems/realmSaves.js",
+    "old": "      const r = await realmDie(io, id, lease, why);",
+    "new": "      const r = await realmDie(io, id, lease);",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-world-no-frame",
+    "file": "src/scenes/world.js",
+    "old": "    wedFrame();   // LEGACY7 part three: the wedding's clock, and the account's unions read again\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7W-world-unheard",
+    "file": "src/scenes/world.js",
+    "old": "    online.onWed = (id, d, sub = null) => { wedMgr.onFrame(id, d, sub); };",
+    "new": "    online.onWed = null;",
+    "tests": [
+      "test/legacy7_wed.test.js"
+    ]
+  }
+]

@@ -123,8 +123,20 @@ export const realmLineages = async (/** @type {any} */ io) => {
 /** LEGACY7: a line written past its rev - `{ ok, data: { rev } }`, or `{ ok: false, error: 'lineage-stale', data: { rev, record } }`
  *  (the stored record, to merge into and write again). */
 export const realmLineagePut = (/** @type {any} */ io, /** @type {string} */ id, /** @type {any} */ record) => realmAsk(io, '/v1/realm/lineage', { method: 'POST', json: { id, record } });
-/** LEGACY7: THE TOMBSTONE - the playing tab's character fallen for good, under its lease. */
-export const realmDie = (/** @type {any} */ io, /** @type {string} */ id, /** @type {string} */ lease) => realmAsk(io, '/v1/realm/die', { method: 'POST', json: { id, lease } });
+/** LEGACY7: THE TOMBSTONE - the playing tab's character fallen for good, under its lease. Part three: `why` 'retired' -
+ *  an elder's mantle passed, which keeps a union with another player's character (a death ends it). */
+export const realmDie = (/** @type {any} */ io, /** @type {string} */ id, /** @type {string} */ lease, /** @type {'fell'|'retired'} */ why = 'fell') =>
+  realmAsk(io, '/v1/realm/die', { method: 'POST', json: why === 'retired' ? { id, lease, why } : { id, lease } });
+/** LEGACY7 part three: MY HALF OF ONE WEDDING - my character under its lease, the handshake `sid`, the other's account
+ *  as the relay stamped it: `{ ok, data: { wed: false } }` (mine waits for theirs), `{ ok, data: { wed: true, union } }`,
+ *  or a refusal (server-account/src/legacy.js realmWed). */
+export const realmWedHalf = (/** @type {any} */ io, /** @type {string} */ id, /** @type {string} */ lease, /** @type {string} */ sid, /** @type {string} */ partner) =>
+  realmAsk(io, '/v1/realm/wed', { method: 'POST', json: { id, lease, sid, partner } });
+/** LEGACY7 part three: every union of the account's characters - `{ ok, unions: [{ sid, mine, partner, at, endedAt, endedWhy }] }`. */
+export const realmUnions = async (/** @type {any} */ io) => {
+  const r = await realmAsk(io, '/v1/realm/unions', { method: 'POST', json: {} });
+  return r.ok ? { ok: true, unions: Array.isArray(r.data?.unions) ? r.data.unions : [] } : r;
+};
 /** An offline character brought in through customs, once: `{ ok, data: { id, lease, seq, gzip } }`. */
 export const realmCustoms = (/** @type {any} */ io, /** @type {string} */ origin, /** @type {string} */ name, /** @type {any} */ summary = null) => realmAsk(io, '/v1/realm/customs', { method: 'POST', json: { origin, name, summary } });
 /** A join: a new lease - `{ ok, data: { id, lease, seq, bytes, gzip } }`. */
@@ -564,17 +576,24 @@ export function createRealmSession({
     /** LEGACY7: THE CHARACTER FELL FOR GOOD (Project Legacy) - its tombstone under this session's lease
      *  (server-account/src/legacy.js realmDie). The session ends with it, quietly - nothing of the dead is written
      *  again, and the page stays for the Succession. Answers whether the realm took it (a refusal - unheard, offline -
-     *  leaves the session as it was, to be asked again). */
-    async die() {
+     *  leaves the session as it was, to be asked again). Part three: `why` 'retired' for an elder's mantle passed. */
+    async die(/** @type {'fell'|'retired'} */ why = 'fell') {
       if (lost && lost !== 'dead') return false;
       if (lost === 'dead') return true;
       if (running) { try { await running; } catch { /* the last put's answer does not matter now */ } }
-      const r = await realmDie(io, id, lease);
+      const r = await realmDie(io, id, lease, why);
       if (!r.ok) return false;
       lost = 'dead';
       pending = null;
       dropUnsent(storage, id);   // RESCUE-SAVE: no copy of the dead is offered again
       return true;
+    },
+    /** LEGACY7 part three: THIS CHARACTER'S HALF OF ONE WEDDING (realmWedHalf), under this session's lease - `{ ok, wed,
+     *  union }` or `{ ok: false, error }`. A session that ended weds nobody. */
+    async wed(/** @type {string} */ sid, /** @type {string} */ partner) {
+      if (lost) return { ok: false, error: lost };
+      const r = await realmWedHalf(io, id, lease, sid, partner);
+      return r.ok ? { ok: true, wed: r.data?.wed === true, union: r.data?.union ?? null } : { ok: false, error: r.error };
     },
     /** The session's end: what is waiting is sent first (unless the page is going - `keepalive` sends the leave alone,
      *  which a browser can finish after the page is gone), then the lease given up. */
