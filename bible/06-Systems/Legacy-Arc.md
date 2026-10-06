@@ -398,13 +398,19 @@ than standing still.
   and the town by day), found in the street and in the house (LW8's rooms). A HOUSE OF THE FAMILY'S holds the line and
   no one else (the census's people of that building are not shown inside it, the one played's own house included); every
   other room of the player's own stays empty, as AUDIT-E1 has it.
-- **How they are drawn.** In the street, in the town's own outfits - DFU's walkers have three tables (Breton, Nord,
-  Redguard) and every townsperson of Daggerfall wears one; the member's race picks the nearer table (the elves and the
-  Bretons the Breton, the beast folk the Redguard), the same one every day. **Departure (recorded):** the design asked for
-  their own race and kit, the way an online peer is drawn; the street's walkers are the census's billboards, and a peer's
-  composite body is the realm's renderer - that is LEGACY7's to bring, with the realm. In the talk window they wear
-  THEIR OWN FACE: the chargen head they were made with (`raceArt(race, sex).heads`, record `face`; `ui/nativeTalk.js`
-  takes a FACE*.CIF as the portrait's archive).
+- **How they are drawn.** IN THEIR OWN BODY (LEGACY7 part four, `world/familyBodies.js`; `test/legacy7_body.test.js`,
+  `tools/mutants/legacy7body.json`), as the design asked: a member whose newest save wrote down their LOOK - what they
+  wore, the hello's own recipe (`family.js memberLook`: race, sex, face, class, the worn kit's doll fields; written at
+  every write of the one played, dropped at a death) - is drawn in the street and in a room as an online peer is drawn
+  on this screen: a Morrowind body where this client stands those (the enhanced lane with the data), else their class's
+  sprite or their paperdoll as the 'Other players' card says - by layers of the line's own (`net/remotePlayers.js`,
+  `net/peerBodies.js`), with no sound: a townsperson's steps are the town's. The street's walker and the room's seat
+  stay their talk target; only the picture moves. A member never played has no look and wears the town's outfit - DFU's
+  walkers have three tables (Breton, Nord, Redguard), and the member's race picks the nearer (the elves and the Bretons
+  the Breton, the beast folk the Redguard), the same one every day. **Departure (recorded):** the look keeps no Eye Of
+  The Beholder set (`eo`) - that is how a player chose to be seen online, not how the house remembers its own. In the
+  talk window they wear THEIR OWN FACE: the chargen head they were made with (`raceArt(race, sex).heads`, record
+  `face`; `ui/nativeTalk.js` takes a FACE*.CIF as the portrait's archive).
 - **Talking to them.** The talk door meets them first (`townTalk.js` `livingTalk.kin`, after the refusals and the
   household's moment): the Succession's window with one card (`ui/legacyDoor.js` `createKinOverlay`) - what they are to
   the one played ("Your sister.", `kinLine`), their greeting by kinship ("Mother! You're home.", `kinGreeting`) and how

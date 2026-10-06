@@ -683,6 +683,7 @@ import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMe
 import { createProfileWindow, profileView, profileDuelLine, profileRenown, profileGateLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duelSession.js';   // DUEL1: the duel's state machine (pure)
 import { createWedManager, wedWhyText, wedMineText } from '../net/wedSession.js';   // LEGACY7 part three: two players wed - the handshake's state machine (pure)
+import { createFamilyBodies, familyRoomSprites } from '../world/familyBodies.js';   // LEGACY7 part four: the line drawn in its own body, as an online peer is
 import { houseLine } from '../net/houseLaw.js';   // LEGACY7 part three: the house a proposal comes from, on its prompt
 import { createDuelRecords, duelUncountedText } from '../net/duelRecord.js';   // DUEL1: the Inspect card's duelling record, asked and kept
 import { createDuelPrompt } from '../ui/duelPrompt.js';   // DUEL1: the challenge, as the challenged player sees it
@@ -2592,6 +2593,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   // in, stood in its room and talked to through the street's own ray; their regard hears it through the room's own door
   // (a caught hand seen by those in the room)
   let livingIndoors = null;
+  /** LEGACY7 part four: THE LINE IN ITS OWN BODY (world/familyBodies.js) - a member whose newest save wrote down their
+   *  look drawn as an online peer is, by layers of the line's own for each place (the street's, a room's): a RemotePlayers
+   *  with no sound - a townsperson's steps are the town's - and a PeerBodies behind the enhanced lane's own gate. */
+  let familyStreet = null, familyRoom = null;
+  const makeFamilyBodies = () => createFamilyBodies({
+    dolls: new RemotePlayers({ renderer, deps: { fetchBytes, palette, getTexture, uploadRecordFrame } }),
+    bodies: new PeerBodies({ renderer, enabled: () => isEnhanced() && morrowindDataCount() > 0, generation: morrowindDataGeneration, collider: () => collider }),
+  });
   const _livingIndoorsDoor = {
     refuses: (p) => livingIndoors?.town()?.refuses(p) ?? null,
     talked: (p) => livingIndoors?.town()?.talked(p) ?? null,
@@ -2606,7 +2615,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const livingIndoorsStep = (dt) => {
     if (!livingWorldOn() || _mode() !== 'interior') { if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear(); return; }   // LW-FIX1: a room with nobody in it let go too (a house asleep) - the next way in sounds it again
     livingIndoors ??= createLivingIndoors({
-      sprites: createTravellerSprites({ renderer, getTexture, uploadRecordFrame, living: _livingIndoorsDoor }),
+      sprites: familyRoomSprites(createTravellerSprites({ renderer, getTexture, uploadRecordFrame, living: _livingIndoorsDoor }), (familyRoom ??= makeFamilyBodies()), _livingIndoorsDoor),   // LEGACY7 part four: the line in its own body, the rest as before
       building: () => {
         const b = modes?.interiorBuilding;
         const town = b ? livingTownOfMap(b.townMapId ?? 0) : null;
@@ -22393,6 +22402,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     stored: (f) => { legacyRealmLine?.push(f); },
     tombstone: (why) => (realmSession ? realmSession.die(why) : false),   // LEGACY7 part three: 'retired' keeps a union with another player's character
     realmId: () => realmSession?.id ?? null,   // LEGACY7 part three: the realm character this tab plays (two players wed)
+    look: () => composeLook(playerEntity),   // LEGACY7 part four: what the one played wears - how the world draws them while another is played
     houseHere: () => { const b = (modes?.mode ?? 'exterior') === 'interior' ? modes?.interiorBuilding : null; return b?.buildingKey > 0 && b.townMapId ? { mapId: b.townMapId >>> 0, buildingKey: b.buildingKey } : null; },
     hasSave: (cid) => (legacyRealmLine ? !legacyRealmRoster || legacyRealmRoster.has(String(cid)) : newestSaveOf(enumerateSaves().info, cid) >= 0),   // LEGACY7: online, a living realm character of the account   // AUDIT LEGACY II A2/B1: a person's character stands only with a save of them
     livingWorld: () => livingWorldOn(),   // AUDIT LEGACY II B5: the line stands only in the Living World's towns
@@ -23911,7 +23921,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  size - a speck at 330 m under the name that stood over it. Each is grown by the same law at its own feet; 1 off
    *  the view. */
   const peerGrow = (f) => { const e = travelView?.active ? travelView.eye : null; return e ? tvOwnGrow(Math.hypot(e[0] - f[0], e[1] - f[1], e[2] - f[2])) : 1; };
-  const drawPeerBodies = (proj, view, eye, face = null) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye, flashOf: peerFlashOf, grow: face ? peerGrow : null, up: face?.up ?? null }); peerWalkers?.drawLanterns(); };   // OW-PEERS: under the Overworld the bodies grown and leaned as the traveller's own   // HT-WAIST-BACK: the walkers' lanterns, each on its own tilted basis, beside the bodies - every mode's pass calls this after the player's own body (the exterior here, the dungeon and the interior through host.drawPeerBodies)
+  const drawPeerBodies = (proj, view, eye, face = null) => { if (peerBodies) peerBodies.draw(canvas, { proj, view, eye, flashOf: peerFlashOf, grow: face ? peerGrow : null, up: face?.up ?? null }); peerWalkers?.drawLanterns(); (_mode() === 'interior' ? familyRoom : _mode() === 'exterior' ? familyStreet : null)?.draw(canvas, { proj, view, eye }); };   // LEGACY7 part four: and the line's own bodies, in the place they stood   // OW-PEERS: under the Overworld the bodies grown and leaned as the traveller's own   // HT-WAIST-BACK: the walkers' lanterns, each on its own tilted basis, beside the bodies - every mode's pass calls this after the player's own body (the exterior here, the dungeon and the interior through host.drawPeerBodies)
   /** INVIS-LOOK: the concealed peers' Morrowind bodies, translucent - blended with no depth write, so every mode's pass
    *  calls this AFTER its opaque world (net/peerBodies.js drawVeiled), with the camera its body pass took. */
   const drawVeiledPeerBodies = () => { peerBodies?.drawVeiled(); drawAuras(); nodeGlowPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); };   // WB9g: and the auras, after the opaque world as the veiled are; NODE-MARKS: and the nodes' glow
@@ -28060,6 +28070,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       peerWalkers?.offsetAll(r.offset);   // DISC23-B: and the walkers'
       if (_onlineLast) { _onlineLast[0] += r.offset[0]; _onlineLast[1] += r.offset[1]; _onlineLast[2] += r.offset[2]; }
       if (peerBodies) peerBodies.offsetAll(r.offset);   // MWBODY1 (AUDIT MWBODY B2): the bodies' feet follow the origin as the dolls do
+      familyStreet?.offsetAll(r.offset);   // LEGACY7 part four: and the line's in the street
     }
     if (r.pixelChanged) {
       // P1: PlayerGPS.Update (:329-339). The map pixel changed, so
@@ -28897,6 +28908,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const livePersonBatches = [];
     meterFor(renderer.gl)?.markCpu('people');   // PERF-CPU: the towns' own pools
     _livePersons.length = 0;   // T3b: rebuilt each frame in WORLD space   // PERF-TOWN1: the SAME array and the same entries, refilled
+    familyStreet?.begin();   // LEGACY7 part four: the line's own bodies, stood again this frame
     for (const p of built.values()) {
       if (!p.population) continue;
       const t = state.pixelTranslation(p.px, p.py);
@@ -28935,9 +28947,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const seat = town.seat(_livePersons.length);   // T3b: world-space activation target
         seat.person = person; seat.pos = batch.origin;
         _livePersons.push(seat);
+        // LEGACY7 part four: one of the line with a look stands in their own body - the walker stays their talk target
+        const kin = person.living?.res;
+        if (kin?.look && (familyStreet ??= makeFamilyBodies()).stand(kin, batch.origin, person.yaw, person.state === 'move')) continue;
         livePersonBatches.push(batch);
       }
     }
+    if (familyStreet) { familyStreet.end(dt, cam.pos); livePersonBatches.push(...familyStreet.batches()); }
     // LW3: THE ROADS - the living world's parties near, in file by day and about their fires by night (scenes/
     // livingRoads.js), on the ground and grown under the Overworld; the planner asked a few ways a frame
     livingWays.frame(); livingMemoFresh();   // LW3: a new network, new ways (AUDIT-B8: and the memo's bound)

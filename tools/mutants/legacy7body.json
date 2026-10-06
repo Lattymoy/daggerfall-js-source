@@ -1,0 +1,218 @@
+[
+  {
+    "name": "LEGACY7B-eo-kept",
+    "file": "src/systems/legacy/family.js",
+    "old": "  delete v.eo;\n  return v;",
+    "new": "  return v;",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-look-unread",
+    "file": "src/systems/legacy/family.js",
+    "old": "    if (raw.look !== undefined && raw.look !== null) { const look = memberLook(raw.look); if (look) p.look = look; else delete p.look; }\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-dead-keep-their-look",
+    "file": "src/systems/legacy/family.js",
+    "old": "  delete p.look;   // LEGACY7 part four",
+    "new": "  // LEGACY7 part four",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-look-unwritten",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (look) p.look = look;\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-look-unprojected",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    const look = deps.look ? memberLook(deps.look()) : null;",
+    "new": "    const look = deps.look ? deps.look() : null;",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-look-not-in-sig",
+    "file": "src/scenes/legacyHost.js",
+    "old": ", p.level | 0, p.look ? JSON.stringify(p.look) : ''].join('|');",
+    "new": ", p.level | 0].join('|');",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-resident-unclad",
+    "file": "src/systems/legacy/household.js",
+    "old": "    look: p.look ?? null,   // LEGACY7 part four",
+    "new": "    look: null,   // LEGACY7 part four",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-every-resident-stands",
+    "file": "src/world/familyBodies.js",
+    "old": "      if (!res?.look || !feet) return false;",
+    "new": "      if (!feet) return false;",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-sprite-beside-body",
+    "file": "src/world/familyBodies.js",
+    "old": "bodyHeight: (/** @type {string} */ id) => bodies?.heightOf(id) ?? 0, dt, eye",
+    "new": "bodyHeight: () => 0, dt, eye",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-never-walks",
+    "file": "src/world/familyBodies.js",
+    "old": "mv: moving ? 1 : 0 });",
+    "new": "mv: 0 });",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-yaw-unchecked",
+    "file": "src/world/familyBodies.js",
+    "old": "yaw: Number.isFinite(yaw) ? yaw : 0,",
+    "new": "yaw,",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-origin-left",
+    "file": "src/world/familyBodies.js",
+    "old": "      for (const b of dolls.batches()) { b.origin[0] += o[0]; b.origin[1] += o[1]; b.origin[2] += o[2]; }\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-bodies-left",
+    "file": "src/world/familyBodies.js",
+    "old": "      bodies?.offsetAll(o);\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-clear-keeps",
+    "file": "src/world/familyBodies.js",
+    "old": "    clear() { peers.length = 0; dolls.sync([], sceneOf); bodies?.destroy(); },",
+    "new": "    clear() { peers.length = 0; bodies?.destroy(); },",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-bodies-unasked",
+    "file": "src/world/familyBodies.js",
+    "old": "      bodies?.sync(peers, sceneOf, dt, eye);\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-seat-anew-each-frame",
+    "file": "src/world/familyBodies.js",
+    "old": "    if (!p || p.living.res !== res) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-seat-outlives",
+    "file": "src/world/familyBodies.js",
+    "old": "      for (const key of [...persons.keys()]) if (!here.has(key)) persons.delete(key);\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-room-draws-them-twice",
+    "file": "src/world/familyBodies.js",
+    "old": "      sprites.sync(rest, o);",
+    "new": "      sprites.sync(list, o);",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-room-seats-lost",
+    "file": "src/world/familyBodies.js",
+    "old": "    persons: () => [...sprites.persons(), ...seats],",
+    "new": "    persons: () => sprites.persons(),",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-room-kin-undrawn",
+    "file": "src/world/familyBodies.js",
+    "old": "    batches: () => [...sprites.batches(), ...family.batches()],",
+    "new": "    batches: () => sprites.batches(),",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-world-billboard-too",
+    "file": "src/scenes/world.js",
+    "old": ".stand(kin, batch.origin, person.yaw, person.state === 'move')) continue;",
+    "new": ".stand(kin, batch.origin, person.yaw, person.state === 'move')) { /* drawn twice */ }",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-world-undrawn",
+    "file": "src/scenes/world.js",
+    "old": " (_mode() === 'interior' ? familyRoom : _mode() === 'exterior' ? familyStreet : null)?.draw(canvas, { proj, view, eye });",
+    "new": "",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-world-unfollowed",
+    "file": "src/scenes/world.js",
+    "old": "      familyStreet?.offsetAll(r.offset);   // LEGACY7 part four",
+    "new": "      // LEGACY7 part four",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7B-world-no-look",
+    "file": "src/scenes/world.js",
+    "old": "    look: () => composeLook(playerEntity),   // LEGACY7 part four",
+    "new": "    // LEGACY7 part four",
+    "tests": [
+      "test/legacy7_body.test.js"
+    ]
+  }
+]

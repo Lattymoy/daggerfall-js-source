@@ -31,7 +31,7 @@
 import {
   LEGACY_VENDOR, MODELS, foundFamily, readFamily, personOf, currentOf, writePlayer, recordDeath, successors,
   newbornAllowed, addChild, rollSiblings, setCurrent, endFamily, touch, estateOf, bornValues, fullNameOf, isCustomCareer,
-  isAlive,
+  isAlive, memberLook,
 } from '../systems/legacy/family.js';
 import { loadFamily, storeFamily, leaveBirth, readBirth, clearBirth, listFamilies } from '../systems/legacy/store.js';
 import { birthSearch } from '../systems/legacy/places.js';
@@ -143,7 +143,7 @@ export function mergeFamily(stored, saved, cid) {
  *   regards?:() => any, regardDay?:() => number, sky?:() => number,
  *   killerOf?:(characterId:string, ownAt:number) => any, inheritFoe?:(rec:any) => boolean,
  *   stored?:(family:any) => void, tombstone?:(why?:'fell'|'retired') => (boolean|Promise<boolean>),
- *   realmId?:() => (string|null),
+ *   realmId?:() => (string|null), look?:() => any,
  * }} deps - AUDIT LEGACY II: `hasSave(cid)` whether a save of that character stands (a person's id stands only with one);
  *   `livingWorld()` whether the Living World runs (the line stands only in its towns). LEGACY6: `regards()` the Living
  *   World's relations of the one played and `regardDay()` their day; `sky()` the towns' minute (the house's news is
@@ -151,7 +151,8 @@ export function mergeFamily(stored, saved, cid) {
  *   `inheritFoe(rec)` it handed to the one played (inheritRevenant). LEGACY7: `stored(family)` each write of the device's,
  *   which online the realm's copy follows (systems/legacy/realmLine.js); `tombstone()` the playing realm character
  *   fallen for good (realmSaves.js session die) - `why` 'retired' for an elder's mantle passed; part three: `realmId()` the
- *   realm character this tab plays (two players wed: wedRefusal)
+ *   realm character this tab plays (two players wed: wedRefusal); part four: `look()` what the one played wears (the
+ *   hello's recipe, net/remotePlayers.js composeLook), written on them at every write
  */
 export function createLegacyHost(deps) {
   const rng = deps.rng ?? Math.random;
@@ -202,6 +203,9 @@ export function createLegacyHost(deps) {
     p.lived = lived();
     // LEGACY6: what the world thinks of them - the law, the guilds, the town's regard (influence.js) - for a child's share
     p.standing = memberStanding(deps.entity, deps.regards?.() ?? null, deps.regardDay?.() ?? 0);
+    // LEGACY7 part four: what they wear - how the world draws them while another is played (world/familyBodies.js)
+    const look = deps.look ? memberLook(deps.look()) : null;
+    if (look) p.look = look;
     if (!saving) return;
     // LEGACY-HOME + AUDIT LEGACY II A6: the houses the one played holds are the line's - a deed is the character's own,
     // so the line learns it with the save that holds it (an unsaved purchase or sale moved the line, and another
@@ -981,7 +985,7 @@ export function createLegacyHost(deps) {
   const residentsKept = new Map();
   /** @type {Map<string, { sig: string, res: any }>} */
   const residentOfKept = new Map();
-  const residentSig = (p, key) => [p.id, key, p.given, p.surname, p.gender, p.race, p.face | 0, p.careerIndex, isCustomCareer(p), p.level | 0].join('|');
+  const residentSig = (p, key) => [p.id, key, p.given, p.surname, p.gender, p.race, p.face | 0, p.careerIndex, isCustomCareer(p), p.level | 0, p.look ? JSON.stringify(p.look) : ''].join('|');   // LEGACY7 part four: and what they wear
   function residentsOf(mapId, lend = null, censusOf = null) {
     const id = mapId >>> 0;
     const spouses = spousesOf(id, censusOf);

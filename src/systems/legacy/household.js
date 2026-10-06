@@ -142,6 +142,7 @@ export function residentOf(family, p, home) {
     legacy: { familyId: family.id, personId: p.id },
     household: `F${family.id}`,   // AUDIT LEGACY II B2: their own household, never the census house they may be lent (livingTown.js householdKeyOf)
     portrait: { archive: raceArt(p.race, sex).heads, record: Math.max(0, Math.min(FACES_PER_RACE - 1, p.face | 0)) },   // their own chargen head in the talk window (ui/nativeTalk.js setNpcPortrait)
+    look: p.look ?? null,   // LEGACY7 part four: what they wore at their newest save - drawn in it, as an online peer is (world/familyBodies.js); none, the town's outfit
   };
 }
 

@@ -19,6 +19,7 @@ import { getSeed, setSeed } from '../../formats/dfRandom.js';
 import { startAgeOf } from './age.js';
 import { readStanding, readNews } from './influence.js';   // LEGACY6
 import { readHouse } from '../../net/houseLaw.js';   // LEGACY7 part three: a player spouse's house
+import { validLook } from '../../net/wire.js';   // LEGACY7 part four: a member's look, the hello's own recipe
 
 /** The save-data vendor - `modData.ProjectLegacy` (systems/modSaveData.js), the mod's IHasModSaveData. */
 export const LEGACY_VENDOR = 'ProjectLegacy';
@@ -108,8 +109,9 @@ export const fullNameOf = (given, sur) => (sur ? `${given} ${sur}` : given);
  *   parked?:{mapId:number, buildingKey:number}|null, courting?:Record<string, any>, wedAt?:number|null,
  *   childDay?:number|null, minor?:boolean, residentFace?:number|null, mapId?:number,
  *   standing?:import('./influence.js').Standing|null,
- *   realm?:{ sid:string, player:string, char:string, house:any }|null
- * }} Person - LEGACY7 part three: `kind: 'player'` another player's realm character wed to a member, `realm` the union
+ *   realm?:{ sid:string, player:string, char:string, house:any }|null, look?:any
+ * }} Person - LEGACY7 part three: `kind: 'player'` another player's realm character wed to a member, `realm` the union.
+ *   LEGACY7 part four: `look` what the member wore at their newest save (memberLook) - how the world draws them
  * @typedef {{ v:number, id:string, surname:string, model:string, seat:{region:string, loc:string, mapId?:number}|null, rev:number,
  *   nextId:number, currentId:number, founded:number, ended:number|null, people:Person[], remains:any[], settings?:any,
  *   pending:Pending|null, houses?:any[], home?:{mapId:number, buildingKey:number}|null,
@@ -399,6 +401,7 @@ export function recordDeath(family, id, { at = 0, cause = 'unknown', place = nul
   const p = personOf(family, id);
   if (!p || p.died) return p;
   p.died = { at, cause: String(cause), place: place ?? null, by: by ?? null };
+  delete p.look;   // LEGACY7 part four: the dead stand nowhere - what they wore is no one's to draw, and the record stays lean
   touch(family);
   return p;
 }
@@ -473,6 +476,8 @@ export function readFamily(rec) {
     // LEGACY7 part three: another player's character wed in - the union they were wed by, held to its shape
     if (p.kind === 'player') p.realm = readUnion(raw.realm);
     else delete p.realm;
+    // LEGACY7 part four: what they wore at their newest save, held to the hello's law - or nothing (never played)
+    if (raw.look !== undefined && raw.look !== null) { const look = memberLook(raw.look); if (look) p.look = look; else delete p.look; }
     people.push(p);
   }
   if (!people.length) return null;
@@ -496,6 +501,20 @@ export function readFamily(rec) {
     home: rec.home && Number.isInteger(rec.home.mapId) ? { mapId: rec.home.mapId, buildingKey: rec.home.buildingKey | 0 } : null,
     news: readNews(rec.news),   // LEGACY6: what the house's towns talk of (influence.js)
   };
+}
+
+/**
+ * LEGACY7 part four: A MEMBER'S LOOK as the record keeps it - the one played's look at a save (net/remotePlayers.js
+ * composeLook, the hello's recipe), held to the hello's own law (net/wire.js validLook) - race, sex, face, class and the
+ * worn kit's doll fields - with no Eye Of The Beholder set (`eo`): that is how a player chose to be seen, not how the
+ * house remembers its own. Null for nothing that is a look.
+ * @param {any} look
+ */
+export function memberLook(look) {
+  const v = validLook(look);
+  if (!v) return null;
+  delete v.eo;
+  return v;
 }
 
 /** LEGACY7 part three: a player spouse's union as the record keeps it - its sid (the wire's handshake alphabet), the
