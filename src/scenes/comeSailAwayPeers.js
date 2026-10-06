@@ -39,6 +39,12 @@ import { FOES_FULL_MS } from '../net/online.js';
 export const CSA_PEER_TURN_RATE = 12;
 /** A step past this is a teleport and snaps (the team's law, horseCartWire.js easeToward) - and carries nobody (CSA-K). */
 export const CSA_PEER_SNAP_M = 20;
+/** AUDIT SHIPS A7 (2026-10-06, Mac: "Audit everything"): ...or past what her word's way runs in this long (s), if farther
+ *  (peerSnapM) - a hitch of a wire's seconds is no teleport at any way: at SAIL-FREE's ways a fixed 20 m snapped a
+ *  Carrack at 19 m/s after a 1.75 s hitch (and put her passengers off), where HELM-WAY's 10 m/s took 3 s. */
+export const CSA_PEER_SNAP_S = 2.5;
+/** AUDIT SHIPS A7: the step (m) past which a boat whose word says way `v` (the scene's, m/s) snaps. */
+export const peerSnapM = (v) => Math.max(CSA_PEER_SNAP_M, Math.hypot(v?.[0] ?? 0, v?.[2] ?? 0) * CSA_PEER_SNAP_S);
 /** CSA-K: how long a word's way leads the boat past its arrival (three frames' worth of words: a late one leads no
  *  further - the boat holds where the way took it until the next word). */
 export const CSA_PEER_LEAD_MAX = 0.6;
@@ -118,7 +124,7 @@ export function createComeSailAwayPeers({ pool, selfId = () => null, log = conso
         if (had[j].hull !== l.boats[i].hull) continue;
         if (l.boats[i].uid && had[j].boat.uid && l.boats[i].uid !== had[j].boat.uid) continue;
         const d = dist2(had[j].wire, l.boats[i].position);
-        if (keepAboard(had[j].boat) && dist2(had[j].boat.GameObject.position, l.toScene(l.boats[i].position)) > CSA_PEER_SNAP_M * CSA_PEER_SNAP_M) continue;
+        if (keepAboard(had[j].boat) && dist2(had[j].boat.GameObject.position, l.toScene(l.boats[i].position)) > peerSnapM(sceneWay(l.boats[i], l.toScene)) ** 2) continue;
         pairs.push([d, had[j].slot === i ? 0 : 1, i, j]);
       }
     }
@@ -176,8 +182,9 @@ export function createComeSailAwayPeers({ pool, selfId = () => null, log = conso
       const a = toScene(w.position), b = toScene([w.position[0] + v[0] * grow, w.position[1], w.position[2] + v[2] * grow]);
       shown = [shown[0] + b[0] - a[0], shown[1] + b[1] - a[1], shown[2] + b[2] - a[2]];
     }
-    const jumped = !shown || (target[0] - shown[0]) ** 2 + (target[1] - shown[1]) ** 2 + (target[2] - shown[2]) ** 2 > CSA_PEER_SNAP_M * CSA_PEER_SNAP_M;
-    const position = easeToward(shown, target, dt, undefined, CSA_PEER_SNAP_M);
+    const snap = peerSnapM(sceneWay(w, toScene));   // AUDIT SHIPS A7: by her way
+    const jumped = !shown || (target[0] - shown[0]) ** 2 + (target[1] - shown[1]) ** 2 + (target[2] - shown[2]) ** 2 > snap * snap;
+    const position = easeToward(shown, target, dt, undefined, snap);
     const turnTo = turn ? quatMultiply(w.rotation, quatAngleAxis(turn * lead, V_UP)) : w.rotation;   // Rotate(up * turn) in the boat's own frame, as the helm turns it
     let turned = s.turn;
     if (turned && turn && grow > 0) turned = quatMultiply(turned, quatAngleAxis(turn * grow, V_UP));

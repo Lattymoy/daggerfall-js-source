@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import {
   ENGAGE_RANGE, DISENGAGE, CHASE_GIVE_UP_S, SPARE_S, GRAPPLE_STILL_S, GRAPPLE_GAP, GRAPPLE_CREW, BOARD_SAILS, WRECK_SPARE_S, ACCEL, DECEL,
   WIND_RATED, WIND_SHARE, CLOSE_HAULED, TACK_MIN_S, TACK_FLIP, TURN_TAU, TURN_FLOOR, OARS_TURN, TURN_SPEED_LOSS, HEEL_MAX,
-  AVOID_SHIP_SWING, AVOID_HOLD_S, NAV_EVERY_S, SCAN_STEP, PURSUIT_LEAD_S, RANGE_BEND, WEAR_BELOW, TACK_FROM, IRONS_DEG, PAYOFF_TURN,
+  AVOID_SHIP_SWING, AVOID_HOLD_S, NAV_EVERY_S, SCAN_STEP, PURSUIT_LEAD_S, RANGE_BEND, WEAR_BELOW, TACK_FROM, TACK_CARRY, IRONS_DEG, PAYOFF_TURN,
   WAYPOINT_REACHED, ADRIFT_SPEED, AGROUND_WAY, SIDE_HOLD_S, AVOID_HEAD_ON, SWEEP_RANGE, SWEEP_WAY, SWEEP_TURN, GRAPPLE_STILL,
   createSeaShip, stepCaptain, windShare, windFactor, maxTurnRate, turnRateAt, turnRadius, hullLength, courseClear, avoidLand, tackCourse, sailable,
   trafficCourse, intercept, hullGap, broadsideReach, velocityOf,
@@ -164,6 +164,30 @@ test('AUDIT NAV1 M2 through the eye: a ship with way and already near the wind T
   for (let t = 0; t < 60; t += w.dt) { stepCaptain(t0, w); if (through == null && Math.abs(t0.yaw - 140 * DEG) < 10 * DEG) through = t; }
   assert.ok(through != null && through < 25, `through the eye at ${through?.toFixed(1)} s`);
   assert.ok(t0.speed > 2, `with way on (${t0.speed.toFixed(2)})`);
+  // the carry is what carries her when her way is nearly gone in the eye: put about on the least way she tacks with
+  // (WEAR_BELOW of her pace, 3.42 m/s), her steerage there (HELM-WAY) falls under it - t0 keeps 1.4 m/s through the eye,
+  // whose steerage (7.5 deg/s) beats the carry's 7.2, so t0 alone cannot tell
+  const c0 = ship('pirateBrig', { yaw: -140 * DEG }); c0.speed = 3.5;
+  c0.course = [Math.sin(140 * DEG) * 5000, Math.cos(140 * DEG) * 5000];
+  stepCaptain(c0, w);
+  assert.equal(c0.turnWay?.kind, 'tack');
+  const rateIn = c0.turnWay.rate;
+  let eye = null, was = c0.yaw;
+  for (let t = 0; t < 20 && !eye; t += w.dt) {
+    const way = c0.speed;
+    stepCaptain(c0, w);
+    if (was < 0 && c0.yaw > 0) eye = { way, rate: Math.abs(c0.yawRate) };   // her bow across the wind's eye (PI)
+    was = c0.yaw;
+  }
+  assert.ok(eye && turnRateAt(c0, eye.way) < TACK_CARRY * rateIn - DEG, `in the eye her steerage (${eye && (turnRateAt(c0, eye.way) / DEG).toFixed(2)} deg/s) is under the carry`);
+  near(eye.rate, TACK_CARRY * rateIn, 1e-9, 'through the eye at TACK_CARRY of the rate she went in with');
+  // lying head to wind at rest the wind on her backed canvas swings her at PAYOFF_TURN - over her steerage's floor at
+  // rest (HULL_HELM x steerFloor, 2.25 deg/s; TURN_FLOOR's 1 is under both since HELM-WAY, so the floor below cannot tell)
+  const p0 = ship('pirateBrig', { yaw: Math.PI });
+  p0.course = [0, -5000];
+  stepCaptain(p0, w);
+  near(Math.abs(p0.yawRate), PAYOFF_TURN * DEG * (1 - Math.exp(-w.dt / TURN_TAU[HULL.SmallShip])), 1e-12, 'her helm over toward PAYOFF_TURN');
+  assert.ok(PAYOFF_TURN > HULL_HELM[HULL.SmallShip] * HELM_WAY.steerFloor);
   // lying head to wind at rest she pays off and gathers way
   const i0 = ship('pirateBrig', { yaw: Math.PI });
   i0.course = [0, -5000];
@@ -261,6 +285,14 @@ test('AUDIT NAV1 M7 never on the land: a stem or shoulder that would stand on la
   for (let t = 0; t < 25; t += w.dt) { stepCaptain(g, w); stem = Math.max(stem, g.pos[2] + Math.cos(g.yaw) * b.bowZ); }
   assert.ok(stem <= 100 + 1e-6, `she creeps to the shoreline and no further (${stem.toFixed(2)})`);
   assert.ok(Math.abs(wrapTo(g.yaw)) > 60 * DEG, `warped off it in 25 s (${(g.yaw / DEG).toFixed(0)})`);
+  // the warp's own rate: aground she keeps AGROUND_WAY of her best (2.3 m/s, her steerage 9 deg/s), so g cannot tell it -
+  // lying still and boxed in (a pond too small for any course, the wind on her beam, so not in irons) she is warped round
+  // at PAYOFF_TURN, over her steerage's floor at rest, and holds no tack or wear
+  const still = ship('pirateBrig', { yaw: 0 });
+  stepCaptain(still, world({ wind: [1.5, 0, 0], isWater: (x, z) => Math.hypot(x + 45, z) < 80 }));
+  assert.ok(still.avoid.heading != null, 'boxed in');
+  near(Math.abs(still.yawRate), PAYOFF_TURN * DEG * (1 - Math.exp(-0.1 / TURN_TAU[HULL.SmallShip])), 1e-12, 'warped round at PAYOFF_TURN');
+  assert.equal(still.turnWay, null, 'no tack or wear held while she is warped');
 });
 
 // ── the chase ──────────────────────────────────────────────────────────────────────────────────────────────────────

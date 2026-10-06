@@ -84,7 +84,7 @@ test('FEUD WIRE THE LAW: `rb` a whole per mille from x1 to x4 (the writer\'s bou
   assert.deepEqual({ ...F.BLOWS_WIRE }, { PER: 1000, MIN: 1000, MAX: 4000 });
   assert.equal(Wire.FOE_BLOWS_MIN, F.BLOWS_WIRE.MIN);
   assert.equal(Wire.FOE_BLOWS_MAX, F.BLOWS_WIRE.MAX);
-  assert.equal(Wire.RELAY_VERSION, 'world172');   // WATCH-FIX moved it on last (world172: the foe record names the living-world resident a watchman stands for, `lr`); CRYSTAL-FIST moved it on (world171: the Crystal Fist's title and glyph and the Crystal Resonance's aura join the token's vocabulary - world170 on its branch, renumbered past FEUD's at the merge); PIN MOVED (FEUD's merge of main): world165 on the branch, renumbered past main's world169
+  assert.equal(Wire.RELAY_VERSION, 'world173');   // SERPENT3 moved it on last (world173: the sea serpent brain swims every leg it shows - no leap - a slept fight taken up where it was and a blow judged where it struck; its law version 2; world171 on its branch, renumbered past CRYSTAL-FIST's world171 and WATCH-FIX's world172 at the merges); WATCH-FIX moved it on (world172: the foe record names the living-world resident a watchman stands for, `lr`); CRYSTAL-FIST moved it on (world171: the Crystal Fist's title and glyph and the Crystal Resonance's aura join the token's vocabulary - world170 on its branch, renumbered past FEUD's at the merge); PIN MOVED (FEUD's merge of main): world165 on the branch, renumbered past main's world169
   const v = (extra) => Wire.validFoeRecord({ i: 4, ...extra });
   for (const rb of [1000, 1430, 4000]) assert.deepEqual(v({ rb }), { i: 4, rb });
   for (const rb of [999, 4001, 1430.5, '1430', null]) assert.equal(v({ rb }), null, `rb ${rb}`);

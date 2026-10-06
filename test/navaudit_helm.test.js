@@ -12,7 +12,8 @@ import { HULL, batteryOf, hullBuild } from '../src/systems/naval/navalShips.js';
 import { SHIP_STATES, BRACE_TAKEN, BARE_POLES, WRECKED_OARS, STRUCK_AT } from '../src/systems/naval/navalDamage.js';
 import { BOARD_RANGE, BOARD_SPEED } from '../src/systems/naval/navalBoarding.js';
 import { NAVAL_DEG, shotPosition, segmentBoxEntry } from '../src/systems/naval/navalBallistics.js';
-import { hullBoxOf, rigBoxesOf, AIM_CAM_OUT, AIM_CAM_UP, AIM_CAM_AFT, AIM_CAM_TAU, AIM_CAM_CLEAR, RAM_REACH, RAM_MEMORY_S, RAM_DAMAGE, RAM_RECOIL, BOW_RECOIL, GALLEY_RAM, RAM_SPEED, RAM_COOLDOWN_S, HEAVE_TO_DECEL, HEAVE_TO_S, COMPASS_SHIP_RANGE, PLAYER_SKILL, PLAYER_SKILL_THIN } from '../src/scenes/navalHost.js';
+import { hullBoxOf, rigBoxesOf, AIM_CAM_OUT, AIM_CAM_UP, AIM_CAM_AFT, AIM_CAM_TAU, AIM_CAM_CLEAR, RAM_REACH, RAM_MEMORY_S, RAM_DAMAGE, RAM_RECOIL, BOW_RECOIL, GALLEY_RAM, RAM_SPEED, RAM_COOLDOWN_S, HEAVE_TO_DECEL, HEAVE_TO_S, HEAVE_TO_M, heaveToDecel, heaveToRun, COMPASS_SHIP_RANGE, PLAYER_SKILL, PLAYER_SKILL_THIN } from '../src/scenes/navalHost.js';
+import { CSA_BRAKE_MAX } from '../src/systems/comeSailAway.js';
 import { drawShipCompassMarks, SHIP_MARK_COLORS, compassMarkerLerp, DETECT_MARKER_W, DETECT_MARKER_H } from '../src/ui/hud.js';
 import { navalHudText, drawNavalHud, destroyNavalHud, navalTouchBrace, NAVAL_BRACE_H, NAVAL_HUD_CSS } from '../src/ui/navalHud.js';
 import { NavalRenderer, NAVAL_STRIDE, aimTone, AIM_TONES, AIM_POST_HALF_W, AIM_POST_HALF_H, AIM_STRIKE_HALF, flatAcross } from '../src/render/navalRender.js';
@@ -832,6 +833,14 @@ test('AUDIT NAV1 H16 heave to: a struck ship in reach with the helm too fast to 
   assert.equal(h.host.brake(), HEAVE_TO_DECEL, 'still heaving to');
   frames(h, [[h.e, at]], 4);
   assert.equal(h.host.brake(), 0, 'past HEAVE_TO_S');
+  // AUDIT SHIPS A3 (2026-10-06): a heave-to at SAIL-FREE's way brakes by it - her way off within HEAVE_TO_M
+  h.runtime.state.velocityCurrent = [0, 0, 16];
+  frames(h, [[h.e, at]]);
+  assert.equal(h.host.activate(), true);
+  assert.ok(Math.abs(h.host.brake() - heaveToDecel(16)) < 1e-9 && heaveToDecel(16) > HEAVE_TO_DECEL, `the brake her way needs (${h.host.brake()})`);
+  frames(h, [[h.e, at]], Math.floor(HEAVE_TO_S * 10) + 4);
+  assert.equal(h.host.brake(), 0, 'past HEAVE_TO_S');
+  h.runtime.state.velocityCurrent = [0, 0, 6];
   // she is gone from the struck: the heave-to with her
   h.host.activate();
   assert.equal(h.host.brake(), HEAVE_TO_DECEL);
@@ -840,6 +849,29 @@ test('AUDIT NAV1 H16 heave to: a struck ship in reach with the helm too fast to 
   assert.equal(h.host.brake(), 0, 'nothing to heave to for');
   // the world hands the brake to Come Sail Away
   assert.match(src('scenes/world.js'), /brake: \(\) => naval\?\.brake\(\) \?\? 0,/);
+});
+
+test('AUDIT SHIPS 2 XA5 a heave-to is offered by where it leaves her (heaveToRun at heaveToDecel, never past the runtime\'s CSA_BRAKE_MAX): a storm\'s Carrack on her quarter at 38.9 m/s, a struck ship abeam 16 m off her side, runs 37.7 m before her way is off - out of BOARD_RANGE of her, so no heave-to is offered; coming up on her from astern she is offered it while it leaves her alongside, and it does; offered whenever she was in reach, the brake asked 47 m/s^2, got 20, and she ended 34 m off (mutants: offered where she is; the brake past the runtime\'s bound)', async () => {
+  assert.ok(heaveToDecel(38.9) <= CSA_BRAKE_MAX && heaveToDecel(28) < CSA_BRAKE_MAX, 'never past the runtime\'s bound');
+  near(heaveToRun(38.9), (38.9 ** 2 - BOARD_SPEED ** 2) / (2 * CSA_BRAKE_MAX), 1e-9);
+  assert.ok(heaveToRun(38.9) > 37 && heaveToRun(16) === HEAVE_TO_M, 'a storm\'s way runs past HEAVE_TO_M; a fair day\'s stops within it');
+  const h = await helm();
+  const at = struckAbeam(h);
+  h.runtime.state.sailPosition = 1;
+  h.runtime.LowerSails = () => { h.runtime.state.sailPosition = 0; };
+  h.runtime.state.velocityCurrent = [0, 0, 38.9];
+  frames(h, [[h.e, at]]);
+  assert.equal(h.host.hudModel().board, null, 'abeam at a storm\'s way: no heave-to - it would leave her out of reach');
+  assert.equal(h.host.activate(), false);
+  assert.equal(h.host.brake(), 0);
+  // coming up on her from astern: offered where the heave-to leaves her beside her
+  const astern = { pos: [at.pos[0], 0, at.pos[2] + heaveToRun(38.9)], yaw: 0 };
+  frames(h, [[h.e, astern]]);
+  assert.equal(h.host.hudModel().board?.kind, 'heave', 'offered as she comes up on her');
+  assert.equal(h.host.activate(), true);
+  near(h.host.brake(), CSA_BRAKE_MAX, 1e-9, 'at the runtime\'s bound');
+  const beams = hullBuild(HULL.SmallShip).beam * 2;
+  assert.ok(Math.hypot(astern.pos[0], astern.pos[2] - heaveToRun(38.9)) - beams <= BOARD_RANGE, 'and it leaves her in reach of her');
 });
 
 test('AUDIT NAV1 H17 the sea\'s ships on the compass: within COMPASS_SHIP_RANGE, afloat or struck, each marked by what she is to me - hostile, a ship, struck - on the classic box a triangle turned up (never the party\'s or a Detect\'s) in SHIP_MARK_COLORS, on the enhanced strip a pooled mark; none going down, none far, none with the arc off (mutants: the range unread, the kinds merged, the marks never drawn, the triangle the party\'s)', async () => {

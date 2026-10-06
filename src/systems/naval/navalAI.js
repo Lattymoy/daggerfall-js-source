@@ -87,7 +87,7 @@ import { createGunDeck, aimSolution, reloadSeconds } from './navalGunnery.js';
 import { NAVAL_DEG, rangeAt, SHOT_GRAVITY } from './navalBallistics.js';
 import { BERTH_GAP } from './navalBoarding.js';
 import { wrapAngle } from '../../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
-import { steerage, HULL_HELM, HELM_WAY } from '../helmWay.js';   // HELM-WAY: the player's own helm, the captains' too
+import { steerage, HULL_HELM, HELM_WAY, WIND_RATED, WIND_SHARE, windShare } from '../helmWay.js';   // HELM-WAY: the player's own helm, the captains' too; SAIL-FREE: and the wind's share, one home
 import { stepErrand, MOOR_EASE_S } from './shipLife.js';   // SHIP-LIFE: a ship going somewhere
 import { nightSight } from './shipWatch.js';   // SHIP-WATCH: by night a lit ship is seen far, a dark one close
 
@@ -217,8 +217,8 @@ export const WRECK_SPARE_S = 30;
 /** A navy hunts a player whose notoriety in its crown has reached this (0..100, NAV-D). */
 export const NAVY_HUNTS = 50;
 /** The way a ship gains and loses (m/s^2), a heavy hull half as quick to gain it - she carries her way through a tack.
- *  HELM-WAY: the player's responsive helm's own (a Small Ship gathers 1.05 at the rated wind and coasts off at 0.6) -
- *  the captains' were 0.35 and 0.25, a brig 22 s to her way. */
+ *  HELM-WAY: the player's responsive helm's own (a Small Ship gathers 1.05 at the rated wind and coasts off at 0.6;
+ *  SAIL-FREE's gain on both is the player's alone) - the captains' were 0.35 and 0.25, a brig 22 s to her way. */
 export const ACCEL = 1;
 export const DECEL = 0.6;
 /** How long a blow keeps a ship provoked by who struck it (s). */
@@ -247,9 +247,9 @@ export const RUN_ON_S = 60;
 /** The temper's own salt on her seed (never the name's stream, navalShips.js shipNames). */
 const TEMPER_SALT = 0x7e3a9e1d;
 /** The wind the classes' speeds are rated at - Come Sail Away's Random.Range(1, 2), its middle - and the bounds of the
- *  share a stronger or lighter wind makes of them. */
-export const WIND_RATED = 1.5;
-export const WIND_SHARE = Object.freeze([0.3, 2]);
+ *  share a stronger or lighter wind makes of them, and that share (`windShare`). SAIL-FREE: one home, helmWay.js - the
+ *  player's own helm sails by the same bounded wind under the responsive helm. */
+export { WIND_RATED, WIND_SHARE, windShare };
 /** Close-hauled: the nearest a ship points to the wind's eye, as its angle off the run (degrees; 135 is 45 off). */
 export const CLOSE_HAULED = 135;
 /** A tack is held at least TACK_MIN_S (s); she comes about when the place she beats for bears TACK_FLIP (degrees) past
@@ -344,9 +344,6 @@ export function windFactor(offRun) {
   if (d <= 150) return lerp(0.7, 0.35, (d - 135) / 15);
   return lerp(0.35, 0.08, (d - 150) / 30);
 }
-
-/** The share of her rated way a wind of strength `windLen` gives (Come Sail Away's way is linear in it). */
-export const windShare = (windLen) => clamp(windLen / WIND_RATED, WIND_SHARE[0], WIND_SHARE[1]);
 
 /**
  * A new ship at sea. `spec` - `{ id, seed, classId, variant, pos, yaw, names, owner, temper, errand }`; the class decides

@@ -73,8 +73,12 @@ carries its row instead. It stands on three things the port already had:
   BOARD_SPEED - the grapples fly, she is hauled alongside, and you go over her rail. On foot (swimming up, or from a
   deck alongside) the same press within FOOT_BOARD_M of her side with the look on her. The target card and the plate's
   hint say the key ("Colours struck - E: board her"). Too fast beside her, the same press HEAVES TO (AUDIT NAV1): the
-  sails struck and her way taken off at HEAVE_TO_ACCEL times her own rate until she is under BOARD_SPEED, HEAVE_TO_S at
-  most ("Colours struck - E: heave to", then "heaving to").
+  sails struck and her way taken off at Come Sail Away's `brake` - HEAVE_TO_DECEL (HELM-WAY), or at a way past HELM-WAY's
+  what brings her under BOARD_SPEED within HEAVE_TO_M (AUDIT SHIPS A3, `heaveToDecel`) - until she is under BOARD_SPEED,
+  HEAVE_TO_S at most ("Colours struck - E: heave to", then "heaving to"). AUDIT SHIPS 2 XA5 (2026-10-06): the brake never
+  past the runtime's own bound (comeSailAway.js `CSA_BRAKE_MAX`, 20 m/s^2), and the heave-to offered by where it leaves
+  her (`heaveToRun`): a storm's way runs past HEAVE_TO_M, so it is offered as she comes up on a struck ship, not as she
+  passes her (offered beside her, a Carrack at 38.9 m/s ended 34 m off, out of BOARD_RANGE).
 - **Taken, she opens**: the plunder window - her hold, one thing to take from her, and her fate. Shut it and she lies
   taken where she is; Interact opens her again.
 - **The sea at a glance** (AUDIT NAV1): a tag stands over each ship in sight out to NAVAL_TAG_RANGE - her name, what
@@ -665,7 +669,8 @@ sea is sailed at the lowest Ships at sea among the players who share it (Online,
 - **Come Sail Away's way and its sails take the sea fight's word** (AUDIT NAV1): the mod has no hurt, so the port's
   runtime asks the naval host three things it never asked - `wayScale` (its moveSpeed times the host's share: the canvas
   a shot-up rig still sets, a wreck's oars, nothing while she heaves to), `sailRefused` (RaiseSails refused with that
-  line, before the mod's own obstruction) and `accelScale` (its moveAccel times HEAVE_TO_ACCEL while she heaves to).
+  line, before the mod's own obstruction) and a heave-to's brake (`accelScale`, its moveAccel times HEAVE_TO_ACCEL -
+  HELM-WAY made it `brake`, HEAVE_TO_DECEL m/s^2 whatever her own rate, and AUDIT SHIPS A3 sized it to her way).
 - **Warm Ashes' LeaveShip asks a gate first** (above).
 - **A pirate flagship starts `WAQ_SHIP_ATTACK_PIRATE`**, which the mod registers and never starts.
 - **The player's boat is wrecked, never sunk.**
@@ -990,7 +995,8 @@ helm (`systems/helmWay.js`, one law):
   none, so the cutter had no man to take her. Timber without hands keeps her struck; hands back, she fights. A
   player's boat never strikes - the player works her guns.
 - The heave-to brakes at its own HEAVE_TO_DECEL (m/s^2, Come Sail Away's `brake`), never a multiple of a rate the Ship
-  handling moves.
+  handling moves - AUDIT SHIPS A3 (2026-10-06): at the least; at a way past HELM-WAY's, the brake that brings her under
+  BOARD_SPEED within HEAVE_TO_M (`heaveToDecel` - SAIL-FREE's full way had run a Carrack 93 m on at the fixed brake).
 
 Pins: `test/helmway.test.js` (8); the captains' turn (M5), the lookout, the land, the broadside onto the land, the
 sweeps' pace, the raider's day sight, the chasers' stern chase, the fire's long guns and the navy's hearing re-aimed

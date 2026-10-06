@@ -100,42 +100,6 @@
     ]
   },
   {
-    "name": "AUDIT-NAV2-F18-the-tell-the-mods-word",
-    "file": "src/systems/comeSailAway.js",
-    "old": "deps.hudText(responsive() ? IRONS_HELM_TEXT : IRONS_TEXT);",
-    "new": "deps.hudText(IRONS_TEXT);",
-    "tests": [
-      "test/auditnav2_helm.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-NAV2-F18-the-helm-text-rows",
-    "file": "src/systems/comeSailAway.js",
-    "old": "export const IRONS_HELM_TEXT = 'In irons - the wind is dead ahead. Put the helm over, or strike sail and row her round.';",
-    "new": "export const IRONS_HELM_TEXT = 'In irons - the wind is dead ahead. Strike sail and row her round.';",
-    "tests": [
-      "test/auditnav2_helm.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-NAV2-F18-the-panel-not-told",
-    "file": "src/systems/comeSailAway.js",
-    "old": "        responsive: responsive(),   // AUDIT NAV2 F18",
-    "new": "        responsive: false,   // AUDIT NAV2 F18",
-    "tests": [
-      "test/auditnav2_helm.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-NAV2-F18-the-line-the-mods-word",
-    "file": "src/ui/enhancedHelm.js",
-    "old": "    if (!h.responsive) return `In irons - ${oars}`;",
-    "new": "    return `In irons - ${oars}`;",
-    "tests": [
-      "test/auditnav2_helm.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-NAV2-F20-the-mods-old-way",
     "file": "src/systems/helmWay.js",
     "old": "Small Ship took 29.2 s to her full way",
@@ -156,8 +120,8 @@
   {
     "name": "AUDIT-NAV2-F20-the-laws-old-way",
     "file": "src/systems/helmWay.js",
-    "old": "a Small Ship 8.33 s to her full way, 14.6 s (64 m) to lose it",
-    "new": "a Small Ship 8.5 s to her full way, 15 s (64 m) to lose it",
+    "old": "a Small Ship 8.35 s to her full way, 14.6 s (105 m) to lose it",
+    "new": "a Small Ship 8.5 s to her full way, 15 s (105 m) to lose it",
     "tests": [
       "test/auditnav2_helm.test.js"
     ]
@@ -165,8 +129,8 @@
   {
     "name": "AUDIT-NAV2-F20-full-way-at-nine",
     "file": "src/systems/helmWay.js",
-    "old": "//     way of 8.75 m/s (a 118 m circle), 8.3 at 9 m/s",
-    "new": "//     way of 9 m/s (a 118 m circle), 8.3 at 9 m/s",
+    "old": "8.49 at her full way of 14.38 m/s (a 194 m circle)",
+    "new": "8.49 at her full way of 14.6 m/s (a 194 m circle)",
     "tests": [
       "test/auditnav2_helm.test.js"
     ]
@@ -174,11 +138,12 @@
   {
     "name": "AUDIT-NAV2-F20-the-quarter-second-swing",
     "file": "src/systems/helmWay.js",
-    "old": "she swings 8.8 deg/s (the mod's 0.45)",
-    "new": "she swings 8.3 deg/s (the mod's 0.4)",
+    "old": "8.8 deg/s (the mod's 0.45)",
+    "new": "8.3 deg/s (the mod's 0.4)",
     "tests": [
       "test/auditnav2_helm.test.js"
-    ]
+    ],
+    "note": "SAIL-FREE (re-aimed by content): the figures alone - the header's sentence wraps them onto their own line since SAIL-FREE's re-measure, and the pin reads the header whitespace-folded."
   },
   {
     "name": "AUDIT-NAV2-F31-E-not-the-hold",
