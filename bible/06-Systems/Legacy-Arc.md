@@ -313,8 +313,11 @@ migration `0084_legacy.sql`, acct86; `systems/legacy/realmLine.js`; `test/legacy
   `die`): the service stamps `dead_at` and drops the lease, and from then refuses the character's join (`dead`, 410),
   checkpoint and trade, and the relay's door (`realmCharacterHeld`): an older save cannot be reloaded past a death, which
   is the whole of permadeath's authority. An Enduring line's last death (its span spent) and an elder's retirement are
-  tombstones too - a member never played again. The tombstone frees the roster slot (`REALM_CHARACTERS_MAX` counts the
-  living) and leaves the roster; the family's record keeps them (the Hall). The page stays for the Succession; the
+  tombstones too - a member never played again. A tombstone ACTS IN NOTHING (AUDIT LEGACY III O12): the service's one
+  door refuses every body naming one of the account's tombstones (`dead`, 410) before any route - its professions, its
+  Stores (a request naming the fallen had withdrawn them into the heir's pack), the market, Renown, the guilds; the
+  token's mint alone is no act, and mints it no realm character (`rc` 0). The tombstone frees the roster slot
+  (`REALM_CHARACTERS_MAX` counts the living) and leaves the roster; the family's record keeps them (the Hall). The page stays for the Succession; the
   heir's boot waits on the realm's word (a tombstone refused is said - "The realm did not hear of this death yet" -
   and asked again before anyone carries on).
 - **A member's birth** is `realmCreate` with `{ lineage, person }`: the service checks the person is a living member of

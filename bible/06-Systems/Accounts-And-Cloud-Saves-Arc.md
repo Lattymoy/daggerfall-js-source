@@ -5211,7 +5211,9 @@ Mac: "online integration with permadeath (Bloodline) or non-permadeath (Enduring
   a unique index behind it). A birth whose first save never landed is resumed, as customs' is.
 - **`realm_characters.dead_at`** - THE TOMBSTONE (`/v1/realm/die`, under the lease): never joined again (`dead`, 410),
   checkpointed or traded; refused at the relay's door (`realmCharacterHeld`); off the roster, and no slot held
-  (`REALM_CHARACTERS_MAX` counts the living in `createRealm`, `customsRealm` and `customsRefusal`).
+  (`REALM_CHARACTERS_MAX` counts the living in `createRealm`, `customsRealm` and `customsRefusal`). AUDIT LEGACY III
+  O12: it acts in nothing - `index.js` asks `legacy.js isTombstone` of every body that names a `character`, before any
+  route (`dead`, 410), the token's mint alone excepted (no act: it mints a tombstone `rc` 0).
 - **The house on the token** (LEGACY7 part two): the identity mint signs a realm character's house (`hn`, `hc`, `hb`,
   `hg` - `src/net/houseLaw.js`, `legacy.js realmHouseOf`) through the name filter, never a tombstone's, and leaves it
   unsaid rather than take a token past `TOKEN_MAX_CHARS`; `/v1/realm` lists each tile's house. The relay (world174)

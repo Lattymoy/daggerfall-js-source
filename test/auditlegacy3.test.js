@@ -191,6 +191,53 @@ test('AUDIT LEGACY III O11: THE TOKEN\'S BODY BOUND IS ONE - the relay\'s hello 
   assert.match(rd('server-account/src/index.js'), /rc, \.\.\.\(rc \? \{ ci: body\.character \} : \{\}\),/);
 });
 
+test('AUDIT LEGACY III O12: A TOMBSTONE ACTS IN NOTHING - its last open item, driven: a fallen Bloodline character\'s Stores were read and WITHDRAWN into the heir\'s pack by a request that named it, its tracks written after its death (only the guilds\' door asked, O5). Every act naming one of the account\'s tombstones is refused at the service\'s one door - an Enduring elder retired too - the heir acts, the token still mints (rc 0), and another account learns nothing of whose character is dead', async () => {
+  const S = await standService({ PROFESSIONS_OPEN: 'on', MARKS_OPEN: 'on' });
+  const raw = S.env.DB._raw;
+  const mac = await S.registered('Mac');
+  const call = (p, b, who = mac) => S.call(p, b, who.secret);
+  const lineOf = async (fam, model) => assert.equal((await call('/v1/realm/lineage', { id: fam, record: { v: 1, id: fam, surname: 'Hlaalu', model, rev: 1, people: ysolde } })).status, 200);
+  const born = async (fam, person) => { const c = await call('/v1/realm/create', { name: `${ysolde[person - 1].given} Hlaalu`, lineage: fam, person }); assert.equal(c.status, 200, JSON.stringify(c.body)); return c.body; };
+  await lineOf('fam-o12-aaaaaa', 'bloodline');
+  const fallen = await born('fam-o12-aaaaaa', 1);
+  const heir = await born('fam-o12-aaaaaa', 2);
+  raw.prepare("INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, 'p1:19', 'own', 5)").run(mac.id, fallen.id);
+  const stores = () => raw.prepare('SELECT origin, qty FROM prof_stores WHERE char_id = ?').all(fallen.id).map((r) => [r.origin, Number(r.qty)]);
+  const carried = () => raw.prepare('SELECT COUNT(*) AS n FROM prof_carried WHERE char_id = ?').get(fallen.id).n;
+  assert.equal((await call('/v1/prof/state', { character: fallen.id })).status, 200, 'alive, it acts');
+  const lease = (await call('/v1/realm/join', { id: fallen.id })).body.lease;   // one account plays one character: the heir's birth took it
+  assert.equal((await call('/v1/realm/die', { id: fallen.id, lease })).status, 200, 'it falls for good');
+  const asks = [
+    ['/v1/prof/state', {}],
+    ['/v1/stores/withdraw', { material: 'p1:19', qty: 2, rid: 'aaaaaaaaaaaaaa12', carry: true, held: 0, seen: 0 }],
+    ['/v1/prof/harvest', { node: 'n1', kind: 'ore', rid: 'aaaaaaaaaaaaab12' }],
+    ['/v1/market/read', { view: 'mine' }],
+    ['/v1/renown/xp', { xp: 50, rid: '00000000000000c1' }],
+    ['/v1/guilds/invite', { handle: 'nobody' }],
+  ];
+  for (const [path, body] of asks) {
+    const r = await call(path, { character: fallen.id, ...body });
+    assert.deepEqual([r.status, r.body.error], [410, 'dead'], `${path}: a tombstone acts in nothing`);
+  }
+  assert.deepEqual(stores(), [['own', 5]], 'its Stores as it left them');
+  assert.equal(carried(), 0, 'nothing of theirs in anyone\'s pack');
+  assert.equal((await call('/v1/prof/state', { character: heir.id })).status, 200, 'the heir acts');
+  const token = await call('/v1/auth/token', { character: fallen.id });
+  assert.equal(token.status, 200, 'the mint is no act - a page under its death screen still mints');
+  assert.equal(JSON.parse(Buffer.from(token.body.token.split('.')[1], 'base64url').toString()).rc, 0, 'and vouches for no realm character (REALM-DOOR)');
+  // an Enduring elder's retirement is a tombstone too: never played again
+  await lineOf('fam-o12-eeeeee', 'enduring');
+  const elder = await born('fam-o12-eeeeee', 1);
+  assert.equal((await call('/v1/realm/die', { id: elder.id, lease: elder.lease, why: 'retired' })).status, 200);
+  assert.deepEqual([(await call('/v1/prof/state', { character: elder.id })).status], [410]);
+  // another account naming this account's dead character hears nothing of it: its own rows under the name, as ever
+  const bran = await S.registered('Bran');
+  assert.equal((await call('/v1/prof/state', { character: fallen.id }, bran)).status, 200, 'no word of whose character is dead');
+  // one door, before every route
+  const src = rd('server-account/src/index.js');
+  assert.ok(src.indexOf('isTombstone(db, who.player.id, body.character)') < src.indexOf("if (path === '/v1/auth/token' && request.method === 'POST')"), 'asked before the first route');
+});
+
 test('AUDIT LEGACY III O3: A YES IS TAKEN BACK, AND NEVER OUTLIVES ITS WORD - the service: a half is written once (posted again it keeps its first `at`), `withdraw` takes it back (answered the union when it stood first), and the other\'s half is the union only while it stands (asked IN the write)', async () => {
   const S = await standService();
   const A = await accountOf(S, 'fam-o3-aaaaaa', 'Hlaalu', ysolde);

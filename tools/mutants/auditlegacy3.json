@@ -1554,12 +1554,13 @@
   },
   {
     "name": "AUDIT-LEGACY-III-O5-the-dead-act-in-a-guild",
-    "file": "server-account/src/guilds.js",
-    "old": "  if (await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NOT NULL').bind(character, player.id).first()) return { error: 'dead' };\n",
+    "file": "server-account/src/index.js",
+    "old": "      if (path !== '/v1/auth/token' && typeof body.character === 'string' && (await isTombstone(db, who.player.id, body.character))) return no('dead', 410, origin);\n",
     "new": "",
     "tests": [
       "test/auditlegacy3.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (O12): the guild's own question moved to the service's one door, which every character's act walks through - the guilds' included; removed, a tombstone invites again."
   },
   {
     "name": "AUDIT-LEGACY-III-O5-a-tombs-track-holds-a-place",
@@ -1573,11 +1574,12 @@
   {
     "name": "AUDIT-LEGACY-III-O5-dead-a-guild-word-unsaid",
     "file": "server-account/src/index.js",
-    "old": "  dead: 410,   // AUDIT LEGACY III O5: a tombstone acts in no guild\n",
-    "new": "",
+    "old": "(await isTombstone(db, who.player.id, body.character))) return no('dead', 410, origin);",
+    "new": "(await isTombstone(db, who.player.id, body.character))) return no('dead', 403, origin);",
     "tests": [
       "test/auditlegacy3.test.js"
-    ]
+    ],
+    "note": "PIN MOVED (O12): the guild's 410 is the service's one door's own now - GUILD_STATUS's `dead` went with the guild's own question; a tombstone is gone (410), never forbidden."
   },
   {
     "name": "AUDIT-LEGACY-III-O6-a-bloodline-retires",
@@ -1803,5 +1805,45 @@
     "tests": [
       "test/auditlegacy3.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-LEGACY-III-O12-the-living-refused",
+    "file": "server-account/src/legacy.js",
+    "old": "SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NOT NULL').bind(character, playerId).first());",
+    "new": "SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NULL').bind(character, playerId).first());",
+    "tests": [
+      "test/auditlegacy3.test.js"
+    ],
+    "note": "AUDIT LEGACY III O12 (its last open item, driven against the real Worker): the question turned: the living refused, the dead let act."
+  },
+  {
+    "name": "AUDIT-LEGACY-III-O12-anyones-tombstone",
+    "file": "server-account/src/legacy.js",
+    "old": "SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NOT NULL').bind(character, playerId).first());",
+    "new": "SELECT 1 FROM realm_characters WHERE id = ? AND dead_at IS NOT NULL').bind(character).first());",
+    "tests": [
+      "test/auditlegacy3.test.js"
+    ],
+    "note": "AUDIT LEGACY III O12 (its last open item, driven against the real Worker): any account's tombstone - another account learns whose character is dead."
+  },
+  {
+    "name": "AUDIT-LEGACY-III-O12-the-mint-refused",
+    "file": "server-account/src/index.js",
+    "old": "      if (path !== '/v1/auth/token' && typeof body.character === 'string' && (await isTombstone(",
+    "new": "      if (typeof body.character === 'string' && (await isTombstone(",
+    "tests": [
+      "test/auditlegacy3.test.js"
+    ],
+    "note": "AUDIT LEGACY III O12 (its last open item, driven against the real Worker): the token mint taken for an act - a page under its death screen mints nothing."
+  },
+  {
+    "name": "AUDIT-LEGACY-III-O12-the-dead-word",
+    "file": "server-account/src/index.js",
+    "old": "(await isTombstone(db, who.player.id, body.character))) return no('dead', 410, origin);",
+    "new": "(await isTombstone(db, who.player.id, body.character))) return no('body', 400, origin);",
+    "tests": [
+      "test/auditlegacy3.test.js"
+    ],
+    "note": "AUDIT LEGACY III O12 (its last open item, driven against the real Worker): the refusal a malformed body, never the tombstone."
   }
 ]

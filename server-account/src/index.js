@@ -213,7 +213,7 @@ import {
 } from './realm.js';   // REALM P1: the realm's characters; ARENA4b: the level on a realm character's tile, the token's `cl`
 import { isGzip, gzipSizeOf, gunzipText, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save rides packed
 import { tradeRealm, REALM_TRADE_BODY_MAX } from './realmTrade.js';   // REALM P2.1: a trade, settled here
-import { listLineages, putLineage, realmDie, realmHouseOf, realmWed, listUnions, LINEAGE_BODY_MAX } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
+import { listLineages, putLineage, realmDie, realmHouseOf, realmWed, listUnions, LINEAGE_BODY_MAX, isTombstone } from './legacy.js';   // LEGACY7: Project Legacy's lines and the tombstone
 import { measured } from './metrics.js';   // SCALE1: every request counted (Workers Analytics Engine)
 import {
   patreonLinkOn, openPatreon, sealPatreon, patreonExchange, patreonIdentity, linkPatreon, unlinkPatreon, patreonWebhook,
@@ -282,7 +282,6 @@ const GUILD_STATUS = Object.freeze({
   'guild-writ-escrow': 409,   // AUDIT 31 A15: a closed writ's escrow waiting on a full treasury
   'guild-contracts': 409,   // AUDIT SILVER-WAYS B3: a guild with a contract standing does not go (its siblings' conflict, never a bad request)
   'guild-rate': 429,
-  dead: 410,   // AUDIT LEGACY III O5: a tombstone acts in no guild
   // GUILD1d (Seats-Arc 8): the hall - a building somebody owns, the guild's one hall already held, none held, one moved
   // under its sale, a guild kept from going by it; and the heraldry - the same again, changed meanwhile, the Drakes short
   'home-taken': 409, 'guild-hall-have': 409, 'guild-hall-moved': 409, 'guild-hall': 409, 'guild-hall-none': 404, 'home-rate': 429,
@@ -666,6 +665,15 @@ const service = {
       const secret = bearer ?? (request.method === 'POST' ? body.secret : null);
       const who = await resolveSession(ctx, secret);
       if (!who) return no('auth', 401, origin);
+
+      // AUDIT LEGACY III O12: A TOMBSTONE ACTS IN NOTHING. Every act a character does names it as the body's
+      // `character` - the professions, the Stores, the writs, the market, Renown, the guilds - and a fallen Bloodline
+      // character (an Enduring elder retired) is never played again (legacy.js), yet only the guilds' door asked (O5): a
+      // request naming the dead read its Stores and withdrew them into its heir's pack, and wrote its tracks after its
+      // death. Asked here, once, before any route - but the token's mint, which is no act: it vouches for the account,
+      // and mints a tombstone no realm character (REALM-DOOR's `rc` 0, no house, no `ci`), which the relay's door refuses;
+      // a page under its death screen still mints for the hub it stands in.
+      if (path !== '/v1/auth/token' && typeof body.character === 'string' && (await isTombstone(db, who.player.id, body.character))) return no('dead', 410, origin);
 
       // AUDIT-ACC F12: A CREDENTIAL IS NOT A LICENCE TO HAMMER. The
       // open routes were bounded per address and everything behind a

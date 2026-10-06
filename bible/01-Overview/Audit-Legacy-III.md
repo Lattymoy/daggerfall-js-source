@@ -16,13 +16,13 @@ and run, Chromium for the windows; the fidelity lens re-read Mac's 0.4.1 DLL's I
   survived, 47 of them real gaps);
 - **F - fidelity and the records** (the mod's IL; every doc claim and patch note against the code).
 
-Eighty-three findings by id (A1-A17, O1-O11, W1-W7, U1-U9, P1-P17, F1-F22), several the same defect seen by two or
+Eighty-four findings by id (A1-A17, O1-O12, W1-W7, U1-U9, P1-P17, F1-F22), several the same defect seen by two or
 three lenses - each pinned once, under its first id: U4 = A14, U5 = A10 = F8, U6 = A12 = F4, U7 = A11 = F10, P1 = O2,
 P2 = A4, P3 = A3, P4 = A6, F1 = A5, F2 = A16, F9 = A9, W7 = F13; lens A's own unconfirmed U1-U3 were confirmed and are
 A17, A2's realm half and P6. Every one was verified against the code before it was fixed, and every finding but the
-record corrections (A16, F2, F5, F7, F12-F20, F22) is pinned by id in `test/auditlegacy3.test.js` (50 tests; the older
-pins the fixes moved carry their PIN MOVED notes). Mutation-proven: `tools/mutants/auditlegacy3.json` - 200 records,
-198 dead and 2 equivalent as recorded (each with its reason), after eight first-run survivors showed eight pins that
+record corrections (A16, F2, F5, F7, F12-F20, F22) is pinned by id in `test/auditlegacy3.test.js` (51 tests; the older
+pins the fixes moved carry their PIN MOVED notes). Mutation-proven: `tools/mutants/auditlegacy3.json` - 204 records,
+202 dead and 2 equivalent as recorded (each with its reason), after eight first-run survivors showed eight pins that
 held nothing and were sharpened; the 35 earlier records the fixes moved (32 whose text changed, 3 the fixes gave a
 second site) were re-aimed by content and all die (35 of 35).
 
@@ -92,6 +92,7 @@ second site) were re-aimed by content and all die (35 of 35).
 | O7 | Low | **A tombstone could be deleted or undone**, and the person born again. | Neither. |
 | O8/O9 | Low | **Unions listed newest-wed first, fifty**; every read scanned the table. | The latest word first; read by its own indexes. |
 | O10 | Low | **The dead kept their standing for good**; every played member a stock career whole. | `leanRecord` lets a dead member's standing go once no child can take it; a stock career is its index's. |
+| O12 | Medium | **A tombstone's Stores went to its heir** - the record's last unconfirmed item, driven against the real Worker before the audit closed: a request naming a fallen Bloodline character read its Stores and WITHDREW them into the heir's pack, and wrote its tracks after its death; only the guilds' door asked (O5). | The service's one door asks it of every body that names a `character` (`index.js`, `legacy.js isTombstone`): one of the account's tombstones - an Enduring elder retired too - acts in nothing, refused `dead` (410) before any route; the token's mint alone is no act (it mints a tombstone no realm character, REALM-DOOR's `rc` 0); another account is told nothing; the guilds' own question folded into the door (O5's two records moved with it). |
 | O11 | Low (latent) | **The mint and the relay's hello read two token bounds** - a house carried a token past the wire's 640, refused at every hello. | `TOKEN_BODY_MAX`, one bound, both. |
 | W5 | Low | **The online homes read was unordered**, and a home the arena moved was never read again. | The last asked wins; a moved home read again. |
 | W6 | Low | **The street's family layer was never released** indoors. | Cleared with the roads. |
@@ -119,15 +120,13 @@ second site) were re-aimed by content and all die (35 of 35).
 - **A spouse of another player's house never stands in this world** - they walk their own (section 9).
 - **The adopt's `noteSeen`** is redundant with the store's own renewal at the adopt's write; it is kept as the plain
   statement of what the copy was made from, and has no record of its own.
-- **Two of the 200 records are equivalent, as recorded**: the person's kind (a resident always carries its census id, a
+- **Two of the 204 records are equivalent, as recorded**: the person's kind (a resident always carries its census id, a
   player its union's sid) and the wedding manager's own once (the house records a union once a sid whoever hands it on).
 
 ## Unconfirmed
 
 - **"of <town>" house names for long town names** against the house name's 24 characters - needs the game's location
   table, which is not in the repository.
-- **The professions' and market's character-named routes ask no tombstone** - a dead character's Stores might be
-  reachable by its heir. A seeded drive is owed before this audit closes.
 - **What only a screen shows** (no ARENA2 here): whether the Morrowind rig visibly strides at speed nought under a
   window (W4's body half), and how the Yes/No box stacks over the building's DOM pause window (W3) - the keyboard's
   routing is confirmed by source.

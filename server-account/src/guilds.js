@@ -135,12 +135,12 @@ export async function guildMemberDead(db, player, character) {
 }
 
 /** The actor, its guild made whole first - or the word for why it cannot act. MARKS1: the Marks treasury's acts
- *  (marks.js) ask the same door. AUDIT LEGACY III O5: never a tombstone - a dead realm character acts no more. */
+ *  (marks.js) ask the same door. AUDIT LEGACY III O5: never a tombstone - a dead realm character acts no more; O12: the
+ *  service's one door asks it of every body that names a character (index.js, legacy.js isTombstone), this one's too. */
 export async function guildActorOf(db, player, character) { return actorOf(db, player, character); }
 async function actorOf(db, player, character) {
   if (accountKind(player) !== 'linked') return { error: 'guilds-need-account' };
   if (!charOk(character)) return { error: 'guild-character' };
-  if (await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NOT NULL').bind(character, player.id).first()) return { error: 'dead' };
   const first = await memberRow(db, player.id, character);
   if (!first) return { error: 'no-guild' };
   await succeed(db, first.guild_id);

@@ -185,6 +185,17 @@ export async function lineageBirthRefusal(db, playerId, lineage, person) {
 }
 
 /**
+ * AUDIT LEGACY III O12: WHETHER `character` IS ONE OF THIS ACCOUNT'S TOMBSTONES - a realm character of `playerId`'s that
+ * fell, or an Enduring line's elder retired. The service's one door asks it of every body that names a `character`
+ * (index.js): the dead act in nothing. Another account's character is never this account's tombstone, so the door
+ * says nothing of anyone else's.
+ * @param {any} db @param {string} playerId @param {string} character
+ */
+export async function isTombstone(db, playerId, character) {
+  return !!(await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NOT NULL').bind(character, playerId).first());
+}
+
+/**
  * THE TOMBSTONE: the playing tab's character is dead for good - stamped under its lease, which goes with it. A second
  * stamp is the first's (idempotent: a retry whose answer was lost - finishing what it may have left undone, by the
  * first stamp's word). `why` - 'fell' (a death, the default) or 'retired' (an Enduring elder's mantle passed: never
