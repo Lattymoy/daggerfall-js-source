@@ -141,16 +141,23 @@ export async function buyHall(ctx, player, body = {}) {
  * and the deed share of what the treasury paid (homeLaw.js homeSaleRefund) with half of what records paid for its pieces
  * paid back into the treasury - into what records paid in - in the same batch, both or neither. The batch holds the
  * hall and its pieces as they were read, so a piece placed between the read and the sale is never sold unpaid.
+ * GUILD-HALL-SALE (2026-10-06, asked: "Guild houses should be able to be sold, like regular houses"): sold at its own
+ * door too, as a home is - the door names the building it sells (`mapId`, `buildingKey`), and a guild's hall that
+ * stands anywhere else is not the one its guildmaster was shown (`guild-hall-moved`: look again). The Guild tab's sale
+ * names none and sells the guild's one hall, as before.
  * @param {{db: any, nowS: number}} ctx
  */
-export async function sellHall(ctx, player, { character } = {}) {
+export async function sellHall(ctx, player, { character, mapId = null, buildingKey = null } = {}) {
   const { db, nowS } = ctx;
   const a = await guildActorOf(db, player, character);
   if ('error' in a) return a;
   if (!hallMay(a.me.rank, 'hall')) return { error: 'guild-rank' };
+  const atDoor = mapId != null || buildingKey != null;
+  if (atDoor && (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey))) return { error: 'bad-home' };
   const gid = a.me.guild_id;
   const h = await db.prepare('SELECT * FROM homes WHERE guild_id = ?').bind(gid).first();
   if (!h) return { error: 'guild-hall-none' };
+  if (atDoor && (h.map_id !== mapId || h.building_key !== buildingKey)) return { error: 'guild-hall-moved' };
   if (await overRate({ db, nowS }, `guild:${player.id}`, GUILD_OPS_MAX, GUILD_OPS_WINDOW_S)) return { error: 'guild-rate' };
   const p = await piecesBackOf(db, h.map_id, h.building_key);
   const refund = homeSaleRefund(Math.max(0, Number(h.paid) || 0));

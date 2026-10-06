@@ -295,6 +295,7 @@ import {
   HALL_VERB, homeHallBuyRow, hallNextEntry, hallBoughtLine, hallShortLine, hallOldGoldLine, HALL_CHEST_SHUT, hallEntryTurnable,   // GUILD1d: a guild's hall; AUDIT PROF-541 R2-H1: its door's gate
   HALL_CHEST_TITLE, HALL_DROP_TEXT, HALL_VISITOR_MAGIC_TEXT, hallOfferLabel,   // AUDIT GUILD1d: the chest's name, a hall's floor and magic, the offer's hall
   HALL_BOARD_TITLE, hallBoardShutLine, HALL_BOARD_COLD,   // GUILD1e: the board in a hall
+  hallSellable, hallManaged, hallOwnerLines, hallSaleLines, hallSoldLine,   // GUILD-HALL-SALE: a hall sold at its door, as a home is
   HALL_OF_RECORDS_TEXT, HALL_OF_RECORDS_SHUT,   // SEASON1 part three: a seat's Hall of Records
   homeDoorName,   // FIELD BUGS 2026-09-30b HOME-PLAQUE: a nameless house with verbs is a Residence
   homeClaimLayout,   // AUDIT PRE-MERGE 1003 WD1: a hall is bought in its town's layout, as a home is
@@ -869,7 +870,7 @@ export function createWorldModes(host) {
   const visitorDropRefusal = () => (mode === 'interior' && privateVisitRoom ? HOME_VISITOR_DROP_TEXT : interiorHome && !interiorHome.own && mode === 'interior' ? (interiorHome.hall ? HALL_DROP_TEXT : HOME_VISITOR_DROP_TEXT) : null);   // private visits keep no personal cache; refuse drops through the existing visitor gate
   /** HOME-MAGIC (2026-09-27, Discord: "Players can use magic in player non owned houses"): a VISITOR casts nothing in
    *  someone else's online home - no spell readied or fired, no item's spell - HOUSE-DROP's own test of who is a
-   *  visitor (a character of the same account included: a home is one character's). The owner's own home, an offline
+   *  visitor (ACCOUNT-HOMES: never a character of the owner's account - a home is its account's). The owner's own home, an offline
    *  house and every other building are as they were. Asked by the cast engine through the host (`castRefusal`). */
   const HOME_VISITOR_MAGIC_TEXT = 'You cannot cast spells in another\'s home.';
   // AUDIT GUILD1d A7 (decided): a hall's MEMBER casts in it - the hall is the guild's, as a home is its owner's; anyone
@@ -1437,7 +1438,8 @@ export function createWorldModes(host) {
   // HOME1: the online home the entered building IS, read once at its door and held for the visit - the storage's
   // scene (currentInteriorScene), the bed, the room and the cupboards all ask this answer, never a later one (a
   // town's answer landing mid-visit must not move my things to another scene). Null offline and for any building no
-  // player owns; `own` when it is this character's.
+  // player owns; `own` when it is this account's (ACCOUNT-HOMES: whichever of its characters plays - each keeps its own
+  // things in the home's scene of its own save).
   let interiorHome = null;
   /** SEAT-HALL (Seats-Arc 7.2: "the palace interior is the holder's guild hall"): the visit's palace, where it is a palace
    *  seat's - `{ key, name, member, keeper }` (host.seatHall.here: the holder's guild's name; whether this character is of
@@ -6274,6 +6276,50 @@ export function createWorldModes(host) {
       })
       .catch((e) => console.error(e));
   }
+  // ═══ GUILD-HALL-SALE — A HALL SOLD AT ITS DOOR, AS A HOME IS (systems/onlineHomes.js hallSellable) ═══════════════════
+  // Asked: "Guild houses should be able to be sold, like regular houses". The hall's sale stood on the Guild tab alone;
+  // its door lists "Sell it" to whom the service lets sell it (`hallSell` - its guildmaster), on the plaque and in Info's
+  // menu as an owner's home lists it, asks first at what it pays the treasury, and sells THIS building (net/guildBook.js
+  // sellHall's door - the service refuses a hall standing anywhere else). No purse moves: the treasury takes the sale.
+  /** THE HALL'S MENU at its door (Info): go in, who may enter, sell it - each as the service lets this character. */
+  function openHallMenu(bd, home, hit, entries) {
+    townTalk?.showOverlay?.(new ChoiceWindow({
+      lines: hallOwnerLines(home),
+      options: [
+        { code: 'KeyG', label: 'G - go in', action: homeOnward(hit, entries) },
+        ...(hallEntryTurnable(home) ? [{ code: 'KeyW', label: 'W - who may enter', action: () => turnHallEntry(bd, home) }] : []),
+        ...(hallSellable(home) ? [{ code: 'KeyS', label: 'S - sell it', action: () => openHallSale(bd, home) }] : []),
+        { code: 'Escape', label: 'Esc - close', action: () => {} },
+      ],
+    }));
+  }
+  /** Sell it back - asked first, at what the sale pays the treasury (the service's own sum, its pieces' half in words). */
+  function openHallSale(bd, home) {
+    townTalk?.showOverlay?.(new ChoiceWindow({
+      lines: hallSaleLines(home),
+      options: [
+        { code: 'KeyY', label: 'Y - yes', action: () => sellHallAt(bd, home) },
+        { code: 'KeyN', label: 'N - no', action: () => {} },
+      ],
+    }));
+  }
+  /** The halls whose sale is out - one at a time a house (AUDIT GUILD1d A8's law for the buy); the first answer speaks. */
+  const _hallSelling = new Set();
+  /** THE SALE: this building, from the treasury's side of the service (halls.js sellHall); the town read again. */
+  function sellHallAt(bd, home) {
+    const id = homeIdOf(bd);
+    if (_hallSelling.has(id)) return;
+    _hallSelling.add(id);
+    const mapId = homeTownOf(bd);
+    const name = home?.hall?.name ?? 'your guild';
+    Promise.resolve(host.guildHall?.sell?.({ mapId, buildingKey: bd.buildingKey }) ?? { ok: false, error: 'no-guild' })
+      .then((r) => {
+        if (r?.ok || r?.error === 'guild-hall-moved' || r?.error === 'guild-hall-none') host.onlineHomes?.ensure?.(mapId, { force: true });   // sold - or not this guild's hall as the door had it: the door reads it again
+        townTalk?.say?.(r?.ok ? hallSoldLine(name, r.data?.back) : accountRefusalText(r?.error ?? 'server'));
+      })
+      .catch((e) => console.error(e))
+      .finally(() => { _hallSelling.delete(id); });
+  }
 
   /** BuildingIsUnlocked's ONE evaluation (PlayerActivate.cs:358): DFU
    *  computes it once off the hit BuildingSummary and hands the same
@@ -6463,13 +6509,15 @@ export function createWorldModes(host) {
             if (verb === HOME_VERB.sell && door === 'own') { openHomeSale(bd); return true; }
             if (verb === HALL_VERB.buy && price) { pressHallBuy(bd, price); return true; }   // GUILD1d: the house bought as the guild's hall
             if (verb === HALL_VERB.entry && hallEntryTurnable(home)) { turnHallEntry(bd, home); return true; }   // GUILD1d: who may walk into the hall; AUDIT PROF-541 G2: as the service lets set it (R2-H1: the row's own gate)
+            if (verb === HALL_VERB.sell && hallSellable(home)) { openHallSale(bd, home); return true; }   // GUILD-HALL-SALE: sold at its door, as the service lets sell it
           }
           // ...and where the plaque listed none (a touch screen, World Tooltips off), the click's own ask - HOME-OFFER's
           // prompt: a house's offer in any mode but Steal, once a session per house (Info always asks); my home's menu
           // in Info
           if (verb == null) {
-            const prompt = homeDoorPrompt({ door, mode, price, declined: _homeDeclined.has(homeIdOf(bd)), asked: homeAsked, isBash });
+            const prompt = homeDoorPrompt({ door, mode, price, declined: _homeDeclined.has(homeIdOf(bd)), asked: homeAsked, isBash, hallMenu: hallManaged(home) });
             if (prompt === 'menu') { openHomeOwnerMenu(bd, home, hit, entries); return true; }
+            if (prompt === 'hall-menu') { openHallMenu(bd, home, hit, entries); return true; }   // GUILD-HALL-SALE: a hall I may turn or sell, its menu in Info
             if (prompt === 'offer') { openHomeOffer(bd, price, hit, entries); return true; }
           }
           homeOpen = door !== 'none';

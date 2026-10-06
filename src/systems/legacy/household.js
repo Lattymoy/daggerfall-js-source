@@ -51,17 +51,21 @@ export const sameHouse = (a, b) => !!a && !!b && houseKey(a) === houseKey(b);
 /**
  * THE FAMILY'S HOUSES, as the one played holds them now: their own rows replaced by what they hold (a deed bought,
  * sold or slept away - banking.js deedStands - changes the line's houses with it), every other member's kept. Answers
- * whether anything changed.
+ * whether anything changed. ACCOUNT-HOMES: `whole` - what is held is the line's every house (online, the account's
+ * homes), and nothing another member learned is kept past it.
  * @param {any} family @param {number} personId @param {{ regionIndex:number, mapId:number, buildingKey:number, location?:string }[]} held
+ * @param {{ whole?: boolean }} [opts]
  */
-export function syncHouses(family, personId, held) {
+export function syncHouses(family, personId, held, { whole = false } = {}) {
   const mine = (held ?? []).filter((h) => (h?.buildingKey | 0) > 0 && (h?.mapId | 0) !== 0)
     .map((h) => ({ regionIndex: h.regionIndex | 0, mapId: h.mapId | 0, buildingKey: h.buildingKey | 0, location: String(h.location ?? ''), by: personId }));
   // AUDIT LEGACY II A5: the rows keep their places - one sold leaves its place, one bought joins at the end. Rebuilt
   // with the one played's rows last, "the first house" (the family home with none marked and none in the seat) was
   // always another member's, and the line moved house at every switch
+  // ACCOUNT-HOMES (2026-10-06): `whole` - the held are every house of the line (online: the account's homes, each every
+  // member's), so a row any member learned goes once it is not among them (another character of the account sold it)
   const was = family.houses ?? [];
-  const next = was.filter((h) => h.by !== personId || mine.some((m) => sameHouse(m, h)));
+  const next = was.filter((h) => (!whole && h.by !== personId) || mine.some((m) => sameHouse(m, h)));
   for (const m of mine) if (!next.some((h) => sameHouse(h, m))) next.push(m);
   if (JSON.stringify(next) === JSON.stringify(was)) return false;
   family.houses = next;

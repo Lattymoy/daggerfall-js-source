@@ -1,469 +1,1025 @@
 [
-  { "name": "AUDITSEATS-C1-away-leaves", "file": "src/net/siegeSession.js",
+  {
+    "name": "AUDITSEATS-C1-away-leaves",
+    "file": "src/net/siegeSession.js",
     "old": "      else if (now - s.awayAt >= BATTLE_AWAY_MS) { api.leave({ words: SIEGE_SESSION_TEXT.away(",
     "new": "      else if (false) { api.leave({ words: SIEGE_SESSION_TEXT.away(",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-away-resets", "file": "src/net/siegeSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-away-resets",
+    "file": "src/net/siegeSession.js",
     "old": "      if (here(s.seat)) s.awayAt = null;",
     "new": "      if (here(s.seat)) {}",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-terminal", "file": "src/net/siegeSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-terminal",
+    "file": "src/net/siegeSession.js",
     "old": "      if (online.terminal) { api.leave({ words: SIEGE_SESSION_TEXT.closed }); return; }",
     "new": "      if (false) { api.leave({ words: SIEGE_SESSION_TEXT.closed }); return; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-hud-room", "file": "src/net/siegeSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-hud-room",
+    "file": "src/net/siegeSession.js",
     "old": "      if (online.room !== s.room) { s.sentIn = false; hud?.hide(); return; }",
     "new": "      if (online.room !== s.room) { s.sentIn = false; return; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-leave-answers", "file": "src/net/siegeSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-leave-answers",
+    "file": "src/net/siegeSession.js",
     "old": "      if (!quiet) say(words);\n      return true;",
     "new": "      if (!quiet) say(words);\n      return false;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-royal-away", "file": "src/net/royalSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-royal-away",
+    "file": "src/net/royalSession.js",
     "old": "      else if (now - s.awayAt >= BATTLE_AWAY_MS) { api.leave({ words: ROYAL_SESSION_TEXT.away(",
     "new": "      else if (false) { api.leave({ words: ROYAL_SESSION_TEXT.away(",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-royal-terminal", "file": "src/net/royalSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-royal-terminal",
+    "file": "src/net/royalSession.js",
     "old": "      if (online.terminal) { api.leave({ words: ROYAL_SESSION_TEXT.closed }); return; }",
     "new": "      if (false) { api.leave({ words: ROYAL_SESSION_TEXT.closed }); return; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-royal-hud-room", "file": "src/net/royalSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-royal-hud-room",
+    "file": "src/net/royalSession.js",
     "old": "      if (online.room !== s.room) { s.sentIn = false; hud?.hide(); return; }",
     "new": "      if (online.room !== s.room) { s.sentIn = false; return; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-royal-leave-answers", "file": "src/net/royalSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-royal-leave-answers",
+    "file": "src/net/royalSession.js",
     "old": "      if (!quiet) say(words);\n      return true;",
     "new": "      if (!quiet) say(words);\n      return false;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-leave-command", "file": "src/net/siegeSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-leave-command",
+    "file": "src/net/siegeSession.js",
     "old": "/^\\/leave$/i.test(",
     "new": "/^\\/leave/i.test(",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-hud-leave", "file": "src/ui/siegeHud.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-hud-leave",
+    "file": "src/ui/siegeHud.js",
     "old": "    parts.leave.addEventListener?.('click', () => onLeave?.());",
     "new": "    parts.leave.addEventListener?.('click', () => {});",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-hud-close", "file": "src/ui/siegeHud.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-hud-close",
+    "file": "src/ui/siegeHud.js",
     "old": "    parts.close.addEventListener?.('click', () => onLeave?.());",
     "new": "    parts.close.addEventListener?.('click', () => {});",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-hud-leave-swap", "file": "src/ui/siegeHud.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-hud-leave-swap",
+    "file": "src/ui/siegeHud.js",
     "old": "parts.leave.style.display = m.card ? 'none' : '';",
     "new": "parts.leave.style.display = '';",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-world-one-door", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-world-one-door",
+    "file": "src/scenes/world.js",
     "old": "const leaveBattle = () => !!(siegeSession?.leave() || royalSession?.leave());",
     "new": "const leaveBattle = () => !!(siegeSession?.leave());",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-world-dead", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-world-dead",
+    "file": "src/scenes/world.js",
     "old": "{ leaveBattle(); _watchedFrom = null; }",
     "new": "{ _watchedFrom = null; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-world-no-frame", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-world-no-frame",
+    "file": "src/scenes/world.js",
     "old": "sand */ siegeHud?.hide(); /*",
     "new": "sand */ /*",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-world-here", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-world-here",
+    "file": "src/scenes/world.js",
     "old": "relayOk: () => online.siegeOk,\n        nowMs: battleNowMs, here: (seat) => atSeat(seat) });",
     "new": "relayOk: () => online.siegeOk,\n        nowMs: battleNowMs });",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-world-at-seat", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-world-at-seat",
+    "file": "src/scenes/world.js",
     "old": "return Math.abs(p.x - seat.pixel[0]) <= 1 && Math.abs(p.y - seat.pixel[1]) <= 1;",
     "new": "return Math.abs(p.x - seat.pixel[0]) <= 1;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C1-world-chat", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C1-world-chat",
+    "file": "src/scenes/world.js",
     "old": "          if (!leaveBattle()) chatLog.push(tabId, { text: BATTLE_NONE_TEXT, system: true });",
     "new": "          leaveBattle();",
-    "tests": ["test/audit_seats_client.test.js"] },
-
-  { "name": "AUDITSEATS-C2-leave-own-mint", "file": "src/net/siegeSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C2-leave-own-mint",
+    "file": "src/net/siegeSession.js",
     "old": "      if (mint && online.mintSiegePass === mint) online.mintSiegePass = null;",
     "new": "      online.mintSiegePass = null;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C2-enter-old-mint", "file": "src/net/siegeSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C2-enter-old-mint",
+    "file": "src/net/siegeSession.js",
     "old": "      if (s?.mint && online.mintSiegePass === s.mint) online.mintSiegePass = null;",
     "new": "      void 0;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C2-royal-leave-own-mint", "file": "src/net/royalSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C2-royal-leave-own-mint",
+    "file": "src/net/royalSession.js",
     "old": "      if (mint && online.mintSiegePass === mint) online.mintSiegePass = null;",
     "new": "      online.mintSiegePass = null;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C2-royal-enter-old-mint", "file": "src/net/royalSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C2-royal-enter-old-mint",
+    "file": "src/net/royalSession.js",
     "old": "      if (s?.mint && online.mintSiegePass === s.mint) online.mintSiegePass = null;",
     "new": "      void 0;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C2-world-siege-door", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C2-world-siege-door",
+    "file": "src/scenes/world.js",
     "old": "    if (field) royalSession?.leave();   // AUDIT-SEATS C2",
     "new": "    if (false) royalSession?.leave();   // AUDIT-SEATS C2",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C2-world-royal-door", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C2-world-royal-door",
+    "file": "src/scenes/world.js",
     "old": "    if (field) siegeSession?.leave();   // AUDIT-SEATS C2",
     "new": "    if (false) siegeSession?.leave();   // AUDIT-SEATS C2",
-    "tests": ["test/audit_seats_client.test.js"] },
-
-  { "name": "AUDITSEATS-C3-doubling", "file": "src/net/siegeSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C3-doubling",
+    "file": "src/net/siegeSession.js",
     "old": "first * 2 ** Math.max(0, n - 1)",
     "new": "first",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C3-ceiling", "file": "src/net/siegeSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C3-ceiling",
+    "file": "src/net/siegeSession.js",
     "old": "Math.min(PASS_RETRY_MAX_MS, first",
     "new": "Math.min(Infinity, first",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C3-said-once", "file": "src/net/siegeSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C3-said-once",
+    "file": "src/net/siegeSession.js",
     "old": "if (s.tries === 1) say(r.text); return; }",
     "new": "say(r.text); return; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C3-royal-said-once", "file": "src/net/royalSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C3-royal-said-once",
+    "file": "src/net/royalSession.js",
     "old": "if (s.tries === 1) say(r.text); return; }",
     "new": "say(r.text); return; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C3-royal-backoff", "file": "src/net/royalSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C3-royal-backoff",
+    "file": "src/net/royalSession.js",
     "old": "s.retryAt = nowMs() + passRetryMs(s.tries, ROYAL_PASS_RETRY_MS);",
     "new": "s.retryAt = nowMs() + ROYAL_PASS_RETRY_MS;",
-    "tests": ["test/audit_seats_client.test.js"] },
-
-  { "name": "AUDITSEATS-C4-still-there", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C4-still-there",
+    "file": "src/scenes/world.js",
     "old": "const stillAt = (mapId) => _wasInLocationRect && _musicLoc?.mapTableData?.mapId === mapId;",
     "new": "const stillAt = (mapId) => _wasInLocationRect;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C4-still-there-asked", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C4-still-there-asked",
+    "file": "src/scenes/world.js",
     "old": "            if (!stillAt(mapId)) return;",
     "new": "            void 0;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C4-waits", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C4-waits",
+    "file": "src/scenes/world.js",
     "old": "if (seatBook) seatBook.read().then(arrive, arrive); else Promise.resolve().then(arrive);",
     "new": "seatBook?.read(); arrive();",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C4-start-read", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C4-start-read",
+    "file": "src/scenes/world.js",
     "old": "      seatBook.read();   // AUDIT-SEATS C4: the seats read as the session starts",
     "new": "      void 0;   // AUDIT-SEATS C4",
-    "tests": ["test/audit_seats_client.test.js"] },
-
-  { "name": "AUDITSEATS-C5-due-busy", "file": "src/net/siegeClaims.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C5-due-busy",
+    "file": "src/net/siegeClaims.js",
     "old": "due: () => !busy && kept.length > 0",
     "new": "due: () => kept.length > 0",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C5-due-kept", "file": "src/net/siegeClaims.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C5-due-kept",
+    "file": "src/net/siegeClaims.js",
     "old": "!busy && kept.length > 0 && nowMs()",
     "new": "!busy && nowMs()",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C5-due-retry", "file": "src/net/siegeClaims.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C5-due-retry",
+    "file": "src/net/siegeClaims.js",
     "old": "nowMs() - offeredAt >= SIEGE_CLAIM_RETRY_MS,",
     "new": "nowMs() - offeredAt >= 0,",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C5-world-siege-offer", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C5-world-siege-offer",
+    "file": "src/scenes/world.js",
     "old": "    if (siegeClaims?.due()) siegeClaims.offer();",
     "new": "    void 0;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C5-world-royal-offer", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C5-world-royal-offer",
+    "file": "src/scenes/world.js",
     "old": "    if (royalClaims?.due()) royalClaims.offer();",
     "new": "    void 0;",
-    "tests": ["test/audit_seats_client.test.js"] },
-
-  { "name": "AUDITSEATS-C6-shared-clock", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C6-shared-clock",
+    "file": "src/scenes/world.js",
     "old": "const battleNowMs = () => Date.now() + _sharedOffsetMs;",
     "new": "const battleNowMs = () => Date.now();",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C6-royal-clock", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C6-royal-clock",
+    "file": "src/scenes/world.js",
     "old": "name: (id) => peerName(id) ?? '', nowMs: battleNowMs, here:",
     "new": "name: (id) => peerName(id) ?? '', here:",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C6-claims-clock", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C6-claims-clock",
+    "file": "src/scenes/world.js",
     "old": "storage: appStorage(), nowMs: battleNowMs });",
     "new": "storage: appStorage() });",
-    "tests": ["test/audit_seats_client.test.js"] },
-
-  { "name": "AUDITSEATS-C7-every-answer", "file": "src/net/siegeClaims.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C7-every-answer",
+    "file": "src/net/siegeClaims.js",
     "old": "          onClaimed?.(a, r);   // AUDIT-SEATS C7",
     "new": "          if (a?.ok) onClaimed?.(a, r);   // AUDIT-SEATS C7",
-    "tests": ["test/audit_seats_client.test.js", "test/seat2a_siege_play.test.js"] },
-  { "name": "AUDITSEATS-C7-refusal-words", "file": "src/net/siegeSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js",
+      "test/seat2a_siege_play.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C7-refusal-words",
+    "file": "src/net/siegeSession.js",
     "old": "s.honours = answer?.ok === false ? siegeClaimRefusal(answer) : (",
     "new": "s.honours = answer?.ok === false ? null : (",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C7-this-receipt", "file": "src/net/siegeSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C7-this-receipt",
+    "file": "src/net/siegeSession.js",
     "old": "      if (!s || (receipt != null && s.state.receipt != null && receipt !== s.state.receipt)) return;",
     "new": "      if (!s) return;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C7-honour-line-words", "file": "src/net/siegeLink.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C7-honour-line-words",
+    "file": "src/net/siegeLink.js",
     "old": "  if (typeof honours === 'string') return honours;\n",
     "new": "",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C7-refusal-fallback", "file": "src/net/siegeLink.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C7-refusal-fallback",
+    "file": "src/net/siegeLink.js",
     "old": "?? SIEGE_CLAIM_REFUSED.receipt;",
     "new": "?? null;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C7-world-receipt", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C7-world-receipt",
+    "file": "src/scenes/world.js",
     "old": "onClaimed: (a, r) => siegeSession?.claimed(a, r)",
     "new": "onClaimed: (a) => siegeSession?.claimed(a)",
-    "tests": ["test/audit_seats_client.test.js"] },
-
-  { "name": "AUDITSEATS-C8-words", "file": "src/ui/seatTab.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C8-words",
+    "file": "src/ui/seatTab.js",
     "old": "const sideWords = f.kind === 'tourney' ? ['first contender', 'second contender'] : ['attackers', 'defenders'];",
     "new": "const sideWords = label.map((l) => l.toLowerCase());",
-    "tests": ["test/audit_seats_client.test.js"] },
-
-  { "name": "AUDITSEATS-C9-queue", "file": "src/ui/seatTab.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C9-queue",
+    "file": "src/ui/seatTab.js",
     "old": "    if (loading) { queued = !!(queued || force); return; }",
     "new": "    if (loading) return;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C9-queue-force", "file": "src/ui/seatTab.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C9-queue-force",
+    "file": "src/ui/seatTab.js",
     "old": "queued = !!(queued || force);",
     "new": "queued = false;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C9-queue-runs", "file": "src/ui/seatTab.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C9-queue-runs",
+    "file": "src/ui/seatTab.js",
     "old": "    if (queued !== null) { const again = queued; queued = null; load(again); return; }",
     "new": "    if (queued !== null) { queued = null; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C9-generation-kept", "file": "src/net/townSeatBook.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C9-generation-kept",
+    "file": "src/net/townSeatBook.js",
     "old": "if (r?.ok) { if (gen === standingsAt.gen) standingsAt.set(key",
     "new": "if (r?.ok) { if (true) standingsAt.set(key",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C9-generation-moves", "file": "src/net/townSeatBook.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C9-generation-moves",
+    "file": "src/net/townSeatBook.js",
     "old": "  clear() { this.gen++; super.clear(); }",
     "new": "  clear() { super.clear(); }",
-    "tests": ["test/audit_seats_client.test.js"] },
-
-  { "name": "AUDITSEATS-C10-closed-settles", "file": "src/net/townSeatBook.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C10-closed-settles",
+    "file": "src/net/townSeatBook.js",
     "old": "['bad-watch', 'seats-need-account', 'seats-closed']",
     "new": "['bad-watch', 'seats-need-account']",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C10-session-keeps", "file": "src/net/townSeatBook.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C10-session-keeps",
+    "file": "src/net/townSeatBook.js",
     "old": "const settled = r?.ok || WATCH_SETTLED.includes(r?.error);",
     "new": "const settled = r?.ok || WATCH_SETTLED.includes(r?.error) || SHUT.includes(r?.error);",
-    "tests": ["test/audit_seats_client.test.js", "test/seat1b_client.test.js"] },
-
-  { "name": "AUDITSEATS-C11-once", "file": "src/scenes/worldModes.js",
+    "tests": [
+      "test/audit_seats_client.test.js",
+      "test/seat1b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C11-once",
+    "file": "src/scenes/worldModes.js",
     "old": "    if (recordsReading) return;\n    recordsReading = true;\n    Promise.resolve(host.hallOfRecords.read(homeTownOf(b)))",
     "new": "    Promise.resolve(host.hallOfRecords.read(homeTownOf(b)))",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C11-over-a-window", "file": "src/scenes/worldModes.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C11-over-a-window",
+    "file": "src/scenes/worldModes.js",
     "old": "if (interiorBuilding !== b || interiorOverlay) { dropRecords(w); return; }",
     "new": "if (interiorBuilding !== b) { dropRecords(w); return; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C11-castle-over-a-window", "file": "src/scenes/worldModes.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C11-castle-over-a-window",
+    "file": "src/scenes/worldModes.js",
     "old": "|| dungeonCtx?.overlayWindow?.()) { dropRecords(w); return; }",
     "new": ") { dropRecords(w); return; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C11-disposed", "file": "src/scenes/worldModes.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C11-disposed",
+    "file": "src/scenes/worldModes.js",
     "old": "const dropRecords = (w) => { try { w?.dispose?.(); }",
     "new": "const dropRecords = (w) => { try { void w; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-
-  { "name": "AUDITSEATS-C12-due-open", "file": "src/net/townSeatBook.js",
-    "old": "      if (watchBusy || open !== true) return false;\n      const list = watchHeld()",
-    "new": "      if (watchBusy) return false;\n      const list = watchHeld()",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C12-due-worth", "file": "src/net/townSeatBook.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C12-due-open",
+    "file": "src/net/townSeatBook.js",
+    "old": "      if (watchBusy || open !== true || nowMs() < watchRetryAt) return false;   // STORM-SHED: a failed claim's wait\n      const list = watchHeld()",
+    "new": "      if (watchBusy || nowMs() < watchRetryAt) return false;   // STORM-SHED: a failed claim's wait\n      const list = watchHeld()",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ],
+    "note": "STORM-SHED (PIN MOVED, found red on main by the drift gate at ACCOUNT-HOMES): re-aimed by content - the due's test gained the failed claim's wait."
+  },
+  {
+    "name": "AUDITSEATS-C12-due-worth",
+    "file": "src/net/townSeatBook.js",
     "old": "(n >= SEAT_WATCH_CLAIM_MAX ||",
     "new": "(false ||",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C12-due-ten-minutes", "file": "src/net/townSeatBook.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C12-due-ten-minutes",
+    "file": "src/net/townSeatBook.js",
     "old": "- oldest * 1000 >= SEAT_WATCH_CLAIM_EVERY_MS);",
     "new": "- oldest * 1000 >= 0);",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C12-world-due", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C12-world-due",
+    "file": "src/scenes/world.js",
     "old": "if (seatBook?.claimWatchDue()) seatBook.claimWatch();",
     "new": "seatBook?.claimWatch();",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C12-ribbon-cache", "file": "src/net/remotePlayers.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C12-ribbon-cache",
+    "file": "src/net/remotePlayers.js",
     "old": "if (t === undefined) { t = ribbonRgba(rb); _ribbonTints.set(k, t); }",
     "new": "t = ribbonRgba(rb);",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C12-ribbon-key", "file": "src/net/remotePlayers.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C12-ribbon-key",
+    "file": "src/net/remotePlayers.js",
     "old": "rb[0] * 256 + rb[1] : -1;",
     "new": "rb[0] + rb[1] : -1;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C12-banners-kept", "file": "src/scenes/seatBanners.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C12-banners-kept",
+    "file": "src/scenes/seatBanners.js",
     "old": "      if (outs.length <= BANNERS_MAX) return outs;",
     "new": "      if (outs.length <= BANNERS_MAX) return outs.slice();",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C12-banners-refilled", "file": "src/scenes/seatBanners.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C12-banners-refilled",
+    "file": "src/scenes/seatBanners.js",
     "old": "top[0] = t[0] + b.a.top[0]; top[1] = t[1] + b.a.top[1];",
     "new": "top[0] = t[0] + b.a.top[0]; top[1] = b.a.top[1];",
-    "tests": ["test/audit_seats_client.test.js", "test/seat1a_client.test.js"] },
-
-  { "name": "AUDITSEATS-C13-timer", "file": "src/ui/seatTab.js",
+    "tests": [
+      "test/audit_seats_client.test.js",
+      "test/seat1a_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C13-timer",
+    "file": "src/ui/seatTab.js",
     "old": "    disarm = setTimeout(() => { disarm = null; if (!ui.alive || ui.alive()) ui.rerender(); }, SEAT_RELINQUISH_ARM_MS);",
     "new": "    disarm = null;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-C13-armed-press", "file": "src/ui/seatTab.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-C13-armed-press",
+    "file": "src/ui/seatTab.js",
     "old": "ui.rerender(); disarmLater(); return null; }",
     "new": "ui.rerender(); return null; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-
-  { "name": "AUDITSEATS-G1-joined", "file": "src/net/siegeHerald.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-joined",
+    "file": "src/net/siegeHerald.js",
     "old": "  if (!(nowMs < startMs)) return -1;",
     "new": "  if (false) return -1;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G1-turning", "file": "src/net/siegeHerald.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-turning",
+    "file": "src/net/siegeHerald.js",
     "old": "['turning', seatWeekStartMs(week)]",
     "new": "['turning', seatWeekStartMs(week + 1)]",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G1-day", "file": "src/net/siegeHerald.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-day",
+    "file": "src/net/siegeHerald.js",
     "old": "['day', startMs - SIEGE_HERALD_BEFORE_MS.day]",
     "new": "['day', startMs - 2 * SIEGE_HERALD_BEFORE_MS.day]",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G1-hour", "file": "src/net/siegeHerald.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-hour",
+    "file": "src/net/siegeHerald.js",
     "old": "['hour', startMs - SIEGE_HERALD_BEFORE_MS.hour]",
     "new": "['hour', startMs - 2 * SIEGE_HERALD_BEFORE_MS.hour]",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G1-five", "file": "src/net/siegeHerald.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-five",
+    "file": "src/net/siegeHerald.js",
     "old": "['five', startMs - SIEGE_HERALD_BEFORE_MS.five]",
     "new": "['five', startMs - 1]",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G1-once", "file": "src/net/siegeHerald.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-once",
+    "file": "src/net/siegeHerald.js",
     "old": "if (due < 0 || (said.get(id) ?? -1) >= due) continue;",
     "new": "if (due < 0) continue;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G1-no-chat-yet", "file": "src/net/siegeHerald.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-no-chat-yet",
+    "file": "src/net/siegeHerald.js",
     "old": "if (say(e.line, heraldMarks(e.week, e.startMs)[due][1]) === false) continue;",
     "new": "say(e.line, heraldMarks(e.week, e.startMs)[due][1]);",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G1-derivation", "file": "src/net/siegeHerald.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-derivation",
+    "file": "src/net/siegeHerald.js",
     "old": "if (!name || known.get(s.key)?.week === week) continue;",
     "new": "if (known.get(s.key)?.week === week) continue;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G1-once-a-week-read", "file": "src/net/siegeHerald.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-once-a-week-read",
+    "file": "src/net/siegeHerald.js",
     "old": "if (!name || known.get(s.key)?.week === week) continue;",
     "new": "if (!name) continue;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G1-void", "file": "src/net/siegeHerald.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-void",
+    "file": "src/net/siegeHerald.js",
     "old": " || f.state === 'void') return;",
     "new": ") return;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G1-list-start", "file": "src/net/siegeHerald.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-list-start",
+    "file": "src/net/siegeHerald.js",
     "old": "if (Number.isFinite(b.startsAt)) { fill(",
     "new": "if (false) { fill(",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G1-dropped", "file": "src/net/siegeHerald.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-dropped",
+    "file": "src/net/siegeHerald.js",
     "old": "for (const key of [...known.keys()]) if (!named.has(key)) known.delete(key);",
     "new": "void named;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G1-a-second", "file": "src/net/siegeHerald.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-a-second",
+    "file": "src/net/siegeHerald.js",
     "old": "      if (now - lookedAt < SIEGE_HERALD_TICK_MS) return;",
     "new": "      void 0;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G1-seconds", "file": "src/net/siegeHerald.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-seconds",
+    "file": "src/net/siegeHerald.js",
     "old": "battleAnnouncement({ ...f, startsAt: f.startsAt * 1000 }, seatName)",
     "new": "battleAnnouncement(f, seatName)",
-    "tests": ["test/audit_seats_client.test.js", "test/seat2a_client.test.js"] },
-  { "name": "AUDITSEATS-G1-world-tick", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js",
+      "test/seat2a_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G1-world-tick",
+    "file": "src/scenes/world.js",
     "old": "    siegeHerald?.tick();",
     "new": "    void 0;",
-    "tests": ["test/audit_seats_client.test.js"] },
-
-  { "name": "AUDITSEATS-G4-flight", "file": "src/scenes/shared.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G4-flight",
+    "file": "src/scenes/shared.js",
     "old": "|| staffFly() || freeFlight();",
     "new": "|| staffFly();",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G4-flight-throws", "file": "src/characters/playerEntity.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G4-flight-throws",
+    "file": "src/characters/playerEntity.js",
     "old": "try { return !!_freeFlight?.(); } catch { return false; }",
     "new": "try { return !!_freeFlight?.(); } catch { return true; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G4-world-flight", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G4-world-flight",
+    "file": "src/scenes/world.js",
     "old": "registerFreeFlight(() => spectatingHere());",
     "new": "registerFreeFlight(() => false);",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G4-world-watch", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G4-world-watch",
+    "file": "src/scenes/world.js",
     "old": "return !!b?.active() && b.side() === 'watch' && !!online?.room",
     "new": "return !!b?.active() && !!online?.room",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G4-world-return", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G4-world-return",
+    "file": "src/scenes/world.js",
     "old": "player.velY = 0; player.falling = false; player.fallStart = player.pos[1];\n    }\n    _watchedFrom = null;",
     "new": "player.velY = 0;\n    }\n    _watchedFrom = null;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G4-world-street", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G4-world-street",
+    "file": "src/scenes/world.js",
     "old": "    if ((modes?.mode ?? 'exterior') === 'exterior') {\n      const q = campToScene(_watchedFrom);",
     "new": "    if (true) {\n      const q = campToScene(_watchedFrom);",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G4-world-frame", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G4-world-frame",
+    "file": "src/scenes/world.js",
     "old": "    spectatorFrame();   // AUDIT-SEATS G4",
     "new": "    void 0;   // AUDIT-SEATS G4",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G4-world-death", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G4-world-death",
+    "file": "src/scenes/world.js",
     "old": "{ leaveBattle(); _watchedFrom = null; }",
     "new": "{ leaveBattle(); }",
-    "tests": ["test/audit_seats_client.test.js"] },
-
-  { "name": "AUDITSEATS-G5-shaft", "file": "src/combat/siegeCombat.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-shaft",
+    "file": "src/combat/siegeCombat.js",
     "old": "(by === 'arrow' ? SIEGE_HIT.Shaft : SIEGE_HIT.Melee)",
     "new": "(SIEGE_HIT.Melee)",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-clamp-heal", "file": "src/combat/siegeCombat.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-clamp-heal",
+    "file": "src/combat/siegeCombat.js",
     "old": "heal ? SIEGE_CASTS.healMax : SIEGE_CASTS.damageMax",
     "new": "SIEGE_CASTS.damageMax",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-gift-no-save", "file": "src/combat/siegeCombat.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-gift-no-save",
+    "file": "src/combat/siegeCombat.js",
     "old": "run({ ...sp, rangeType: 0, effects: healing }",
     "new": "run({ ...sp, effects: healing }",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-stand-in-kept", "file": "src/combat/siegeCombat.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-stand-in-kept",
+    "file": "src/combat/siegeCombat.js",
     "old": "finally { if (standIn) standIn.activeEffects = []; }",
     "new": "finally { void 0; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-harm-counted", "file": "src/combat/siegeCombat.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-harm-counted",
+    "file": "src/combat/siegeCombat.js",
     "old": "if (into === 'harm') harm += v; else heal += v;",
     "new": "if (into === 'harm') heal += v; else heal += v;",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-barred", "file": "src/combat/siegeCombat.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-barred",
+    "file": "src/combat/siegeCombat.js",
     "old": "Object.freeze([43, 14])",
     "new": "Object.freeze([43])",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-engine-click", "file": "src/scenes/hostMagic.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-engine-click",
+    "file": "src/scenes/hostMagic.js",
     "old": "    if (wardedHere(sp)) return false;   // AUDIT-SEATS G5: a spell readied before a battle is not fired in its wards\n",
     "new": "",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-engine-ready", "file": "src/scenes/hostMagic.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-engine-ready",
+    "file": "src/scenes/hostMagic.js",
     "old": "    if (wardedHere(sp)) return false;   // AUDIT-SEATS G5: a battle's wards, before it costs anything\n",
     "new": "",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-engine-item", "file": "src/scenes/hostMagic.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-engine-item",
+    "file": "src/scenes/hostMagic.js",
     "old": "    if (wardedHere(spell)) return null;   // AUDIT-SEATS G5: and a battle's wards turn it\n",
     "new": "",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-engine-marks", "file": "src/scenes/hostMagic.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-engine-marks",
+    "file": "src/scenes/hostMagic.js",
     "old": "for (const m of Array.isArray(q) ? q : [q]) {",
     "new": "for (const m of [q]) {",
-    "tests": ["test/audit_seats_client.test.js", "test/duel_combat.test.js"] },
-  { "name": "AUDITSEATS-G5-levitate-ward", "file": "src/scenes/shared.js",
+    "tests": [
+      "test/audit_seats_client.test.js",
+      "test/duel_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-levitate-ward",
+    "file": "src/scenes/shared.js",
     "old": "hasActiveEffect(entity, 'levitate') && !levitateWarded() || staffFly()",
     "new": "hasActiveEffect(entity, 'levitate') || staffFly()",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-levitate-ward-throws", "file": "src/characters/playerEntity.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-levitate-ward-throws",
+    "file": "src/characters/playerEntity.js",
     "old": "try { return !!_levitateWard?.(); } catch { return false; }",
     "new": "try { return !!_levitateWard?.(); } catch { return true; }",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-mates-standing", "file": "src/net/siegeSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-mates-standing",
+    "file": "src/net/siegeSession.js",
     "old": "s.state.roll[id].side === s.side && !s.state.roll[id].down)",
     "new": "s.state.roll[id].side === s.side)",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-mates-not-me", "file": "src/net/siegeSession.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-mates-not-me",
+    "file": "src/net/siegeSession.js",
     "old": "filter((id) => id !== online.id && s.state.roll[id].side",
     "new": "filter((id) => s.state.roll[id].side",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-world-ward", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-world-ward",
+    "file": "src/scenes/world.js",
     "old": "registerLevitateWard(() => inSiegeRoom());",
     "new": "registerLevitateWard(() => false);",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-world-saddle", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-world-saddle",
+    "file": "src/scenes/world.js",
     "old": "if (inSiegeRoom() && isRiding(player.transportMode)) {",
     "new": "if (false && isRiding(player.transportMode)) {",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-world-heal", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-world-heal",
+    "file": "src/scenes/world.js",
     "old": "siegeHealOut(id, frame) || !!online?.sendCast?.(frame)",
     "new": "!!online?.sendCast?.(frame)",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-world-shaft-to", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-world-shaft-to",
+    "file": "src/scenes/world.js",
     "old": "weaponRig.playerWeapon?.lastDrawMs ?? 0, t.id) : playerArrowHitFoe",
     "new": "weaponRig.playerWeapon?.lastDrawMs ?? 0) : playerArrowHitFoe",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-world-kind", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-world-kind",
+    "file": "src/scenes/world.js",
     "old": "d: r.dmg, r: siegeBlowKind(by) });",
     "new": "d: r.dmg, r: 0 });",
-    "tests": ["test/audit_seats_client.test.js"] },
-  { "name": "AUDITSEATS-G5-world-wards-room", "file": "src/scenes/world.js",
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDITSEATS-G5-world-wards-room",
+    "file": "src/scenes/world.js",
     "old": "(inSiegeRoom() && siegeSpellBarred(sp) ?",
     "new": "(siegeSpellBarred(sp) ?",
-    "tests": ["test/audit_seats_client.test.js"] }
+    "tests": [
+      "test/audit_seats_client.test.js"
+    ]
+  }
 ]

@@ -203,7 +203,7 @@ export const REFUSALS = Object.freeze({
   'home-update': 'This game is out of date. Reload it to buy a home.',   // WD3 (AUDIT WD3 B2): a build from before the town mods
   'home-towns': 'The towns could not be loaded as the other players here see them. Reload the game to buy a home.',   // WD3 (AUDIT WD3 B1): a town mod's pack did not load
   'home-layout': 'The town records here are still being read. Try again in a moment.',   // WD3: the town is built again as the room's (scenes/world.js hearHomeLayouts)
-  'home-cap': `A character can own at most ${HOME_CAP} homes. Sell one to buy another.`,
+  'home-cap': `A character can buy at most ${HOME_CAP} homes. Sell one it bought to buy another.`,   // ACCOUNT-HOMES: the account owns them all; the cap counts what each character bought
   'home-rate': 'You have bought and sold a lot of homes this hour. Try again later.',
   'no-home': 'That home is not yours any more.',
   'bad-home': 'The account service could not tell which building that is.',
@@ -1274,7 +1274,7 @@ export function accountGuilds({ fetch, storage }) {
     // after the first burns Drakes, and a change asked twice is one line)
     // AUDIT PRE-MERGE 1003 WD1: a hall is a home - the layout its town stands in, always said (null: Daggerfall's), as a claim
     hallBuy: ({ character, mapId, buildingKey, region, price, layout = null }) => post('/v1/guilds/hall/buy', { character, mapId, buildingKey, region, price, layout: layout || null }),
-    hallSell: (character) => post('/v1/guilds/hall/sell', { character }),
+    hallSell: (character, at = null) => post('/v1/guilds/hall/sell', { character, ...(at ? { mapId: at.mapId, buildingKey: at.buildingKey } : {}) }),   // GUILD-HALL-SALE: at its door, the door's building
     hallEntry: (character, entry) => post('/v1/guilds/hall/entry', { character, entry }),
     heraldry: (character, heraldry, rid = null) => post('/v1/guilds/heraldry', { character, heraldry, ...(rid ? { rid } : {}) }),
     // GUILD2 (bible/11-Multiplayer/Guild-Overhaul.md): a new name for a price; the vault - read, a piece put in and taken

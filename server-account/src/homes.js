@@ -27,7 +27,19 @@
 // or one character's two claims racing for its last place, cannot both
 // land. What did not land is read back afterwards only to NAME the
 // refusal. A claim sent again because its answer was lost finds the
-// building already the same character's, and is answered as a claim.
+// building already the account's, and is answered as a claim.
+//
+// ═══ THE ACCOUNT'S, BOUGHT BY ONE OF ITS CHARACTERS ════════════════
+//
+// ACCOUNT-HOMES (2026-10-06, asked: "House ownership should be account
+// bound, not character bound"): a home is its ACCOUNT's - every
+// character of it walks in, keeps it, furnishes it, rents it out and may
+// sell it, the gold of each act its own record's. `char_id` is the
+// character that BOUGHT it: its cap counts it (HOME_CAP), and its
+// delete takes it (realm.js deleteRealm - asked: "Deleted characters
+// should remove their houses from online"). A deed the realm gave
+// (KNIGHT-HOUSE, below) stays its knight's alone: Daggerfall's house in
+// that one save.
 //
 // Every write names the owner in its WHERE (`AND player = ?`), so a
 // building that is somebody else's is exactly as absent as one that is
@@ -59,9 +71,9 @@ const homeOf = (row) => ({
 });
 
 /** HOME-PRICE: WHAT SELLING A REALM CHARACTER'S OWN HOME PAYS, as realmRelease pays it - `{ refund }`, the deed share of
- *  what its record `paid`, or `{ crossed: true }` for one no record paid for (HOME-CROSSED: no sale). Told only to that
- *  character (AUDIT HOME-PRICE L3: a home from before the realm, or another character's of the account, is no sale this
- *  character's door can make - realmRelease's DELETE names the acting record). */
+ *  what its record `paid`, or `{ crossed: true }` for one no record paid for (HOME-CROSSED: no sale). Told to the
+ *  account's realm characters alone (AUDIT HOME-PRICE L3; ACCOUNT-HOMES: any of them may sell it now - a home from
+ *  before the realm is still no sale, `crossed`). */
 const realmSaleOf = (row) => (Number(row.paid) > 0 ? { refund: homeSaleRefund(Number(row.paid)) } : { crossed: true });
 
 /** THE CLAIM'S ONE WRITE: the house the character's, while it is nobody's and the character holds fewer than its cap.
@@ -77,6 +89,12 @@ const claimStatement = (db, player, { mapId, buildingKey, region, character, pri
       AND NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND NOT (${LAYOUT_MATCH_SQL}))`)
   .bind(mapId, buildingKey, player.id, character, displayName(player), region, HOME_ENTRY_DEFAULT, price, nowS, paid, mapId, mapId, layout, player.id, character, HOME_CAP, mapId, ...layoutMatchBinds(layout));
 
+/** ACCOUNT-HOMES (2026-10-06): whether a home's row is the caller's account's own, for `character` to act on - any home
+ *  of the account, whichever of its characters bought it; a deed the realm gave, its knight's alone; never a guild's hall
+ *  (its row's account is only the guildmaster's who bought it). decor.js OWNS is this rule in SQL. */
+export const heldByAccount = (row, player, character) => !!row && row.player === player.id && row.guild_id == null
+  && (Number(row.deed) !== 1 || row.char_id === character);
+
 /**
  * REALM P2.2b: A REALM CHARACTER'S CLAIM - the house and the record's payment in ONE batch, the price off the record by
  * the wallet's own order (the region's account last), or neither. Where the record stands is asked before it, by
@@ -89,7 +107,8 @@ async function realmClaim(ctx, player, at, claim) {
   const held = await db.prepare('SELECT * FROM homes WHERE map_id = ? AND building_key = ?').bind(claim.mapId, claim.buildingKey).first();
   // AUDIT HOME-PRICE C2: a claim answered as mine already says what its sale pays (or that it is crossed) - the client's
   // row is written from this answer, and the price is not what was paid for a home customs carried in
-  if (held) return held.player === player.id && held.char_id === claim.character ? { ok: true, repeat: true, home: homeOf(held), ...realmSaleOf(held), realm: { seq: at.seq } } : { error: 'home-taken' };
+  // ACCOUNT-HOMES: the account's already, whichever character bought it (a deed the realm gave is its knight's alone)
+  if (held) return heldByAccount(held, player, claim.character) ? { ok: true, repeat: true, home: homeOf(held), ...realmSaleOf(held), realm: { seq: at.seq } } : { error: 'home-taken' };
   // WD3 (AUDIT WD3 O1): A TOWN THAT HOLDS HOMES KEEPS ITS LAYOUT, and a building key names a building only in one layout -
   // a claim made in another (a client that has not heard the towns' layouts, an old build) names another building, so it
   // is refused, never stored under the town's layout; the answer says which layout the town keeps
@@ -230,22 +249,23 @@ const realmDecorBackStatement = (db, mapId, buildingKey) => db.prepare(`SELECT C
  * deed share of what the house cost (homeLaw.js homeSaleRefund) and half of what its placed pieces cost, into the
  * record's Empire account (realmGoldLaw.js creditSave - EMPIRE-ACCOUNT), as the client's sale pays. The record asked
  * first, as a claim asks it.
- * AUDIT REALM L1-F3: THE CHARACTER'S OWN HOUSE, AND ONLY WHAT A RECORD PAID FOR IT. The sale read any house of the
- * account and credited its client-named price - a claim at the ten-million cap by a character no record stands behind,
- * sold by the realm character's record, made 8,500,000; a house customs carried in from before the realm, the same. The
- * house must be this character's - the batch's DELETE names it, so another character's house moves nothing and the sale
- * is refused - and what comes back is the deed share of `paid` (migration 0020) and half of what records paid for its
- * pieces: a house no record paid for comes back as a house, never as gold. The answer says what the record got
- * (`refund`), which the client takes - never its own sum of a price.
+ * AUDIT REALM L1-F3: ONLY WHAT A RECORD PAID FOR IT. The sale read any house of the account and credited its
+ * client-named price - a claim at the ten-million cap by a character no record stands behind, sold by the realm
+ * character's record, made 8,500,000; a house customs carried in from before the realm, the same. What comes back is the
+ * deed share of `paid` (migration 0020) and half of what records paid for its pieces: a house no record paid for comes
+ * back as a house, never as gold (HOME-CROSSED). The answer says what the record got (`refund`), which the client takes -
+ * never its own sum of a price. ACCOUNT-HOMES (2026-10-06): the house is the ACCOUNT's, so any of its realm characters
+ * sells it, the gold into that character's record - L1-F3's other guard, "the house must be this character's", is
+ * retired with the character's ownership; the batch's DELETE still names the account, the row as read and no deed.
  */
 async function realmRelease(ctx, player, at, home) {
   const { db, bucket } = ctx;
   if (!home) return { error: 'no-home' };
   // HOME-CROSSED (FIELD BUGS 2026-09-30, Seanobi's "Sold House for 600 K, Got Nothing Back"): A HOUSE NO RECORD PAID FOR
   // STAYS A HOUSE. Customs carried it in (CUSTOMS-CARRY) and its deed share of nothing was paid while the house and its
-  // pieces went - RESTORE's law for a deed (Mac: "Keep all, can't sell"), a home's now: never bought back online. (Another
-  // character's house is still the batch's own refusal, `no-home`.)
-  if (home.char_id === at.id && !(Number(home.paid) > 0)) return { error: 'home-crossed' };
+  // pieces went - RESTORE's law for a deed (Mac: "Keep all, can't sell"), a home's now: never bought back online.
+  // ACCOUNT-HOMES: whichever of the account's characters asks - one from before the realm included
+  if (!(Number(home.paid) > 0)) return { error: 'home-crossed' };
   const d = await realmDecorBackStatement(db, home.map_id, home.building_key).first();
   const decorCount = Number(d?.n) || 0, decorBack = Math.max(0, Number(d?.back) || 0);
   const refund = homeSaleRefund(Math.max(0, Number(home.paid) || 0));
@@ -256,7 +276,8 @@ async function realmRelease(ctx, player, at, home) {
   try {
     await db.batch([
       ...prep.steps,
-      db.prepare('DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ? AND paid = ? AND rent_due = ?').bind(home.map_id, home.building_key, player.id, at.id, home.paid, home.rent_due ?? 0),   // HOME-RENT: a rent landing between the read and the sale is never lost
+      // ACCOUNT-HOMES: the account's (any of its characters sells it), the row as read - never a hall or a deed
+      db.prepare('DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND deed = 0 AND paid = ? AND rent_due = ?').bind(home.map_id, home.building_key, player.id, home.paid, home.rent_due ?? 0),   // HOME-RENT: a rent landing between the read and the sale is never lost
       mustChange(db),
     ]);
   } catch {
@@ -268,7 +289,8 @@ async function realmRelease(ctx, player, at, home) {
 }
 
 /**
- * GIVE ONE UP: the caller's own, whichever character holds it. Answers what it was bought for (the client pays back
+ * GIVE ONE UP: the caller's own, whichever character bought it (ACCOUNT-HOMES: any of the account's sells it - a deed's
+ * hold is given up only as its deed sells, `deed`). Answers what it was bought for (the client pays back
  * Daggerfall's share of it) and, DECOR1e, how many placed pieces went with it and half of what they cost. A realm
  * character's home - or any sale that names a record - pays back into the record, in the release's own batch (REALM
  * P2.2b).
@@ -289,7 +311,9 @@ export async function releaseHome(ctx, player, { mapId, buildingKey, realm = nul
     const moved = await recordMovedOf(db, player.id, at);   // AUDIT REALM L1-F2: where the record stands, before the house is looked for
     if (moved) return moved;
   }
-  // GUILD1d: a guild's hall is no account's to sell - its row's `player` is only its anchor (halls.js sellHall sells it)
+  // GUILD1d: a guild's hall is no account's to sell - its row's `player` is only its anchor (halls.js sellHall sells it).
+  // A deed's hold is never sold as a home either (above: given up as its deed sells) - no record paid for it, so the
+  // realm's sale answers `home-crossed`, and both DELETEs below name `deed = 0`
   const home = await db.prepare('SELECT * FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL').bind(mapId, buildingKey, player.id).first();
   // HOME-RENT: a home another player is renting a room in is not sold from under them - their days were paid for
   if (home && Number((await db.prepare(`SELECT COUNT(*) AS n FROM home_rooms WHERE map_id = ? AND building_key = ? AND tenant IS NOT NULL AND until > ?`)
@@ -306,7 +330,7 @@ export async function releaseHome(ctx, player, { mapId, buildingKey, realm = nul
   // caller's; a record that is not JSON is no piece and counts nothing.
   const [pieces, gone] = await db.batch([
     decorBackStatement(db, mapId, buildingKey),
-    db.prepare('DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL RETURNING price')
+    db.prepare('DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND deed = 0 RETURNING price')
       .bind(mapId, buildingKey, player.id),
   ]);
   const row = gone?.results?.[0];
@@ -329,7 +353,8 @@ export async function setHomeEntry({ db }, player, { mapId, buildingKey, entry }
 
 /**
  * HOME-LOOK (2026-09-30): HOW A HOME LOOKS OUTSIDE, as its owner paints it (net/homeLaw.js homeLookOf) - the owner's
- * character's alone, free, a decorator's write against the hour's (decor.js's own count). `look` null paints it back
+ * alone (ACCOUNT-HOMES: any character of the account, decor.js OWNS), free, a decorator's write against the hour's
+ * (decor.js's own count). `look` null paints it back
  * the town's own. Every client reads it with the town's homes.
  * GUILD-YARD (Seats-Arc 8.2): a guild's hall is painted by its keepers - its Officers and its guildmaster, a realm
  * character each (decor.js OWNS, the rule its rooms' pieces are placed by) - free, as a home's is; a member below them,
@@ -353,9 +378,10 @@ const lookOfRow = (h) => { const look = h.look ? homeLookOf(h.look) : null; retu
 /**
  * A TOWN'S HOMES, for everyone standing in it - guests too: whose each is (the handle the relay signs), who may walk
  * in, and which are the caller's own. Never another account's price, never another account's character. HOME-PRICE: the
- * named character's own home says what selling it pays back (`refund`, realmRelease's deed share of what its record
- * `paid`) and the rent held on it (`rentDue`), so the door asks the sale at what it will pay - and no other home says
- * either (AUDIT HOME-PRICE L3: a home from before the realm, or another character's, is no sale this door can make).
+ * caller's own home says what selling it pays back (`refund`, realmRelease's deed share of what its record `paid`) and
+ * the rent held on it (`rentDue`), so the door asks the sale at what it will pay - to a realm character of the account
+ * alone (AUDIT HOME-PRICE L3; ACCOUNT-HOMES: any of them, the home being the account's), and a home no record paid for
+ * says `crossed` instead (no sale). GUILD-HALL-SALE: a hall says what its sale pays the treasury to whom may sell it.
  * @param {{db: any}} ctx
  */
 export async function homesInTown({ db, nowS = Math.floor(Date.now() / 1000) }, player, { mapId, character = null } = {}, { seats = false } = {}) {
@@ -375,7 +401,7 @@ export async function homesInTown({ db, nowS = Math.floor(Date.now() / 1000) }, 
       (SELECT MAX(r.until) FROM home_rooms r WHERE r.map_id = h.map_id AND r.building_key = h.building_key AND r.tenant = ?2 AND r.tenant_char = ?3 AND r.until > ?1) AS tenancy,
       (SELECT m.rank FROM guild_members m WHERE m.guild_id = h.guild_id AND m.player = ?2 AND m.char_id = ?3) AS my_rank,
       (h.guild_id IS NULL AND h.entry = 'guild' AND EXISTS (SELECT 1 FROM guild_members a JOIN guild_members b ON b.guild_id = a.guild_id
-        WHERE a.player = h.player AND a.char_id = h.char_id AND b.player = ?2 AND b.char_id = ?3)) AS guildmate,
+        WHERE a.player = h.player AND b.player = ?2 AND b.char_id = ?3)) AS guildmate,
       EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = ?3 AND rc.player = ?2) AS me_realm
     FROM homes h LEFT JOIN guilds g ON g.id = h.guild_id WHERE h.map_id = ?4 ORDER BY h.building_key LIMIT ?5`).bind(nowS, player.id, me, mapId, HOME_TOWN_MAX).all();
   return {
@@ -396,23 +422,29 @@ export async function homesInTown({ db, nowS = Math.floor(Date.now() / 1000) }, 
           // AUDIT PROF-541 G2: who may say who walks in, as setHallEntry asks it (halls.js) - the rank alone, any character;
           // `keeper`'s realm clause took the door's "Who may enter" from a local Officer the service would have answered
           ...(rank != null && hallMay(rank, 'hallEntry') ? { hallEntry: true } : {}),
+          // GUILD-HALL-SALE (2026-10-06, asked: "Guild houses should be able to be sold, like regular houses"): who may sell
+          // it at its door, as sellHall asks it - the rank alone - and the deed share of what the treasury paid, which the
+          // sale pays back into it (with half of what records paid for its pieces, which the door says in words)
+          ...(rank != null && hallMay(rank, 'hall') ? { hallSell: true, refund: homeSaleRefund(Math.max(0, Number(h.paid) || 0)) } : {}),
           ...lookOfRow(h),   // GUILD-YARD: how its keepers painted it, to everyone
         };
       }
       const mine = h.player === player.id;
-      // HOME-CROSSED: my own realm character's house no record paid for is `crossed` - its door asks no price
-      const realmHome = REALM_ID_RE.test(String(h.char_id));
-      const crossed = mine && realmHome && !(Number(h.paid) > 0);
-      // HOME-PRICE: what its sale pays back, as realmRelease pays it, to the character named - the only one whose door
-      // can sell it (AUDIT HOME-PRICE L3); and (C3) the rent held on it, which the sale pays with it
-      const sale = mine && realmHome && !crossed && h.char_id === me ? { ...realmSaleOf(h), ...(Number(h.rent_due) > 0 ? { rentDue: Number(h.rent_due) } : {}) } : {};
+      const deedRow = Number(h.deed) === 1;
+      // HOME-CROSSED: my own house no record paid for is `crossed` - its door asks no price. ACCOUNT-HOMES: any of the
+      // account's (one from before the realm is every character's now, and no record paid for it either) - never a deed's
+      const crossed = mine && !deedRow && !(Number(h.paid) > 0);
+      // HOME-PRICE: what its sale pays back, as realmRelease pays it, and (C3) the rent held on it, which the sale pays with
+      // it - to the character named when it is a realm character of the account (AUDIT HOME-PRICE L3; ACCOUNT-HOMES: any of
+      // them sells the account's home)
+      const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ? { ...realmSaleOf(h), ...(Number(h.rent_due) > 0 ? { rentDue: Number(h.rent_due) } : {}) } : {};
       return {
         buildingKey: h.building_key, owner: h.owner_name, entry: open && !mine ? 'public' : h.entry, mine, ...(mine ? { character: h.char_id } : {}), ...(crossed ? { crossed } : {}),
         ...sale,
         ...(Number(h.vacant) > 0 ? { rent: { vacant: Number(h.vacant), from: Number(h.rent_from) } } : {}),
         ...(Number.isSafeInteger(h.tenancy) && h.tenancy > nowS ? { tenant: h.tenancy } : {}),
         ...lookOfRow(h),   // HOME-LOOK: how its owner painted it
-        ...(h.guildmate === 1 ? { guildmate: true } : {}),   // GUILD1d: the named character is in the owner's character's guild
+        ...(h.guildmate === 1 ? { guildmate: true } : {}),   // GUILD1d: the named character is in the guild of one of the owner's characters (ACCOUNT-HOMES: any of the account's)
         ...(h.deed === 1 ? { deed: true } : {}),   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held, never bought
       };
     }),
@@ -480,8 +512,9 @@ export const HOME_MOVES_MAX = 16;
 const moveOf = (m) => ({ mapId: m.map_id, from: m.old_key, to: m.new_key, refund: Math.max(0, Number(m.refund) || 0), movedAt: m.moved_at, ...(m.hall === 1 ? { hall: true } : {}) });
 
 /**
- * ARENA4b: MOVE A HOME OUT OF THE ARENA'S CELL. `from` a home of the caller's in Daggerfall's cell (4,3) - its character's
- * own (`character` the row's), or a hall it keeps (decor.js OWNS, the one rule) - and `to` the house its client picked.
+ * ARENA4b: MOVE A HOME OUT OF THE ARENA'S CELL. `from` a home of the caller's in Daggerfall's cell (4,3) - its account's
+ * own (ACCOUNT-HOMES; its client moves it as the character that bought it, whose save holds the old scene), or a hall it
+ * keeps (decor.js OWNS, the one rule) - and `to` the house its client picked.
  * A realm character's move names its record (`realm`) when the pieces' refund comes onto it, and the record is asked
  * first (realm.js realmActFirst). Answers `{ ok, from, to, refund, pieces, items, tenancies, withdrawn, hidden, hall?,
  * realm? }` - `repeat` when this move was made already (the first move's own row answers) - or `{ error }`: `bad-home`,

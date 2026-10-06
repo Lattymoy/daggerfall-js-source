@@ -15,15 +15,18 @@
 // A HOME is a building in a town, named by the town's unsigned map id
 // and the building's key there (talkTopics.js makeBuildingKey - every
 // client builds the same key for the same town, and a key alone is
-// unique only inside its town). It belongs to one CHARACTER of one
-// registered account; its door names the account's handle, the name
-// the relay signs over a head, never the character's.
+// unique only inside its town). It belongs to one registered ACCOUNT -
+// ACCOUNT-HOMES (2026-10-06): every character of it owns it - and was
+// bought by one of its characters, whose cap counts it and whose delete
+// takes it; its door names the account's handle, the name the relay
+// signs over a head, never a character's.
 // ═══════════════════════════════════════════════════════════════════
 
-/** How many town homes one character may hold (PLOT1's homesteads will count apart). */
+/** How many town homes one character may BUY (PLOT1's homesteads will count apart). ACCOUNT-HOMES: its account owns them
+ *  all, each character's purchases counted against its own cap. */
 export const HOME_CAP = 3;
 /** Who may walk in, as the owner sets it: the owner alone, the owner's party, anyone - and (GUILD1d, Seats-Arc 8.2) the
- *  owner's character's guild. */
+ *  owner's guild (ACCOUNT-HOMES: the guild of any of the owner's characters). */
 export const HOME_ENTRIES = Object.freeze(['private', 'party', 'public', 'guild']);
 /** A home bought is its owner's alone until they say otherwise. */
 export const HOME_ENTRY_DEFAULT = 'private';
@@ -116,8 +119,8 @@ const sameName = (a, b) => typeof a === 'string' && typeof b === 'string' && a.l
  * owns (its own law stands - DFU's locks). The owner always; anyone when public; when party, a player whose party
  * holds the owner - `partyNames` are the handles the relay signed over the party's heads. HOME-RENT: and a tenant
  * (`tenant`, when the playing character's tenancy there still runs), whoever else may. GUILD1d: when guild, a player
- * whose character is in the owner's character's guild (`guildmate`); a hall (`hall`), its members and, when public,
- * anyone.
+ * whose character is in the guild of one of the owner's characters (`guildmate`); a hall (`hall`), its members and,
+ * when public, anyone.
  */
 export function homeMayEnter(home, { partyNames = [], nowS = Math.floor(Date.now() / 1000) } = {}) {
   if (!home) return true;
@@ -128,7 +131,7 @@ export function homeMayEnter(home, { partyNames = [], nowS = Math.floor(Date.now
   if (rentDaysLeft(home.tenant, nowS) > 0) return true;   // HOME-RENT: a room rented in it, still running - the tenant walks in whoever else may (AUDIT: until its end, not until the town is read again)
   if (home.entry === 'public') return true;
   if (home.entry === 'party') return (partyNames ?? []).some((n) => sameName(n, home.owner));
-  if (home.entry === 'guild') return home.guildmate === true;   // GUILD1d: the playing character shares the owner's character's guild (the service's word)
+  if (home.entry === 'guild') return home.guildmate === true;   // GUILD1d: the playing character shares a guild with one of the owner's characters (the service's word)
   return false;
 }
 

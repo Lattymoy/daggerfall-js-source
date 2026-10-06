@@ -9376,7 +9376,8 @@ took: three town homes a character, no upkeep.
 - **The registry** (`server-account/src/homes.js` over `migrations/0010_homes.sql`, its shapes `src/net/homeLaw.js`,
   which the client reads too). A home is a building in a town: the town's unsigned map id and the building's key
   there, the table's primary key - so a building is nobody's or one character's, never two, server-wide. It belongs
-  to one CHARACTER (the id its save carries, as Renown's tracks key on) of one REGISTERED account - a guest's device
+  to one CHARACTER (the id its save carries, as Renown's tracks key on) of one REGISTERED account (ACCOUNT-HOMES,
+  2026-10-06, below: to the ACCOUNT now, every character of it - `char_id` the one that bought it) - a guest's device
   can be lost with its browser, and a home held by an account nobody can sign back into would be a building gone
   from the world - and its door names the account's handle, never the character. The claim is ONE statement that
   lands only while the building is nobody's and the character holds fewer than HOME_CAP (3), so two claims racing
@@ -9390,7 +9391,8 @@ took: three town homes a character, no upkeep.
   (`scenes/world.js`, the location rect's entry, beside HUB1's arrival line) and by any door of it, believed for a
   minute; an unanswered ask keeps what was known and waits ten seconds before the next; a door waits at most 2.5
   seconds for a town it has never heard from and then goes on under Daggerfall's law. `own` is read against the
-  character playing now; the account's other characters may always walk in, but a home is not theirs.
+  character playing now; the account's other characters may always walk in, but a home is not theirs (ACCOUNT-HOMES,
+  2026-10-06, below: it is - `own` is the account's, a deed the realm gave excepted).
 - **Where the service's list decides.** Online, a building it names is that player's home; one it does not name -
   or a town not heard from yet - stands under Daggerfall's own law, and that includes this character's own OFFLINE
   house: it is a house the server never hears of, not one taken away, so it keeps its storage and its bed, and anyone
@@ -9507,7 +9509,8 @@ changes to a placed piece.
 - **The store** (`server-account/src/decor.js` over `migrations/0011_home_decor.sql`). An online home's pieces live
   on the account service so every visitor walks into the room its owner furnished. Any session reads a home's
   pieces, a guest's too; placing, moving and removing are the owning CHARACTER's alone (the account and the
-  character, named in each write's own WHERE, so another's piece is as absent as none), one piece a write (a body far
+  character, named in each write's own WHERE, so another's piece is as absent as none - ACCOUNT-HOMES, 2026-10-06: the
+  owning ACCOUNT's, any character of it on its own record), one piece a write (a body far
   inside the service's 4 KiB however full the room, and two of the owner's tabs cannot overwrite each other), 600
   writes an hour. A placement lands only while the home holds fewer than 200; one sent again after a lost answer is
   answered as the placement. WHAT a piece is lives in its own columns and no move touches them - a move cannot turn a
@@ -9967,7 +9970,8 @@ home's alone - they are about other players.
   days, renewed from the tenancy's end and never more than thirty days ahead; a character holds at most three rooms.
 - **The service** (`server-account/src/rent.js` over `migrations/0037_home_rooms.sql` - `home_rooms`,
   `homes.rent_due`; routes `/v1/homes/rooms`, `/rooms/offer`, `/rooms/withdraw`, `/rooms/rent`, `/rooms/collect`).
-  OFFER and WITHDRAW are the owner's character's alone (decor.js's own OWNS in every WHERE); a room withdrawn keeps a
+  OFFER and WITHDRAW are the owner's character's alone (decor.js's own OWNS in every WHERE - ACCOUNT-HOMES, 2026-10-06:
+  any character of the owner's account, as is COLLECT, into its own record); a room withdrawn keeps a
   running tenant until the days run out, a free one goes. RENT is another registered account's REALM character: its
   record pays the days' price by the wallet's own order (the home's region's account last) in ONE batch with the room's
   tenancy and the rent held on the home, the record asked first (realmActFirst), so a rent sent again after a lost
@@ -10009,7 +10013,8 @@ home's alone - they are about other players.
   keeps it), a window is the set's record 3, a roof or a door the style chosen. A record the archive lacks is left to
   the town's (texRemap.js's prune, for its reason).
 - **The service** (`homes.js` setHomeLook over `migrations/0038_home_look.sql` - `homes.look`; `/v1/homes/look`): the
-  owner's character's alone, free, a decorator's write against the hour; the town answer carries each home's look.
+  owner's character's alone (ACCOUNT-HOMES, 2026-10-06: any character of the owner's account - decor.js OWNS), free, a
+  decorator's write against the hour; the town answer carries each home's look.
 - **Drawn** (`scenes/world.js`): a town's pixel asks its homes before its buildings are merged (a moment -
   HOME_LOOK_BUILD_WAIT_MS), and a player's home stands OUT of the pixel's static batch with its own texture table (the
   pixel's climate swaps and its look over them - a new table each time, since the renderer caches a sub-mesh's texture
@@ -10300,7 +10305,8 @@ and `test/decor2b.test.js` (the sale's line, the tap under a flight) and the ACC
   figure is offered, and one placed stands, flies and is pictured as its clothed stand-in (`01-Overview/Field-Bugs-2026-10-05b.md`).
 - **The service** (`server-account/src/market.js` over `migrations/0080_home_vendors.sql` - `market_listings.vendor_map`,
   `vendor_id`; routes `/v1/market/vendor`, `/vendors`, `/myvendors`). A listing named at a trader is the owner's
-  character's own trader (`vendor-not-yours`), in the HOME's region whatever the client says; it is filtered out of the
+  character's own trader (`vendor-not-yours` - ACCOUNT-HOMES, 2026-10-06: a trader of a home of the seller's account,
+  any character of it, its stock that character's), in the HOME's region whatever the client says; it is filtered out of the
   goods view, so no regional board shows it. A buy of a trader's piece must name its own stall (`vendor-only`,
   `vendor-not-here`) and the stall must still stand (`vendor-gone`). A stocked trader is neither removed nor unmade
   (`decor.js` vendorStocked, `vendor-stocked`) and its house is not sold (`homes.js`, `home-vendor-stocked`). The
@@ -10316,6 +10322,115 @@ and `test/decor2b.test.js` (the sale's line, the tap under a flight) and the ACC
   window's Character rail under the Professions (Mac: "add a Vendor tab under professions (not in)") holds my traders,
   their stock, what they sold and the takings, collected into the account of the region I stand in.
 - **Pinned** in `test/homevendor_service.test.js` and `test/homevendor_ui.test.js`; `tools/mutants/homevendor.json`.
+
+### ACCOUNT-HOMES - a home is its account's; a deleted character's homes go (2026-10-06)
+
+Asked, in one message of four: "Deleted characters should remove their houses from online", "House ownership should
+be account bound, not character bound", "Guild houses should be able to be sold, like regular houses"
+(GUILD-HALL-SALE, below) and the Family tab (`06-Systems/Legacy-Arc.md` FAMILY-TAB).
+
+**A home is its ACCOUNT's** (the second). HOME1 made a home one CHARACTER's: its account's other characters walked in
+as visitors and could neither keep it, furnish it, let it nor sell it - and a Bloodline's fallen founder's house was
+nobody's to use again. Now:
+
+- **The service** - one rule, `server-account/src/decor.js` OWNS (which `homes.js` setHomeLook and arenaMoveHome ask),
+  and `rent.js`'s own beside it: a home is its `player`'s, whichever of the account's characters writes. Every write
+  still names a character - the one whose record pays or is paid. So the account's other character furnishes the room
+  and the yard, takes the furniture out, paints the outside, offers and withdraws rooms and collects their rent into
+  its own record, stocks the home's trader (`market.js` listGood; the listings are that character's goods, read on its
+  own Vendor page), sets who may enter (it always could), and sells it (`homes.js` realmRelease: the deed share of what
+  records paid, into THAT character's record). AUDIT REALM L1-F3's other half - "the house must be this character's"
+  - is retired with the character's ownership; the sale's DELETE names the account, the row as read, no hall and no
+  deed, and pays only what records paid. A home no record paid for - customs carried it in, or it stood before the
+  realm - is `home-crossed` to every character of the account (no sale), and the town's answer says `crossed` to them
+  all; a home's sum (`refund`, `rentDue`) is said to any realm character of the account a read names (AUDIT HOME-PRICE
+  L3 said it to the buyer alone). Another character's claim of a house the account holds is answered as the claim
+  (`repeat`, nothing paid).
+- **What stays the buyer's.** `char_id` is the character that BOUGHT the home: HOME_CAP (3) still counts what each
+  character bought (`home-cap`: "A character can buy at most 3 homes. Sell one it bought to buy another."), and its
+  delete takes them (below). DECIDED, not asked: the cap stays a character's as the ownership moves - an account's
+  cap of three would have shut the door on every account that holds more today.
+- **What stays apart.** A deed the realm gave (KNIGHT-HOUSE) is Daggerfall's house in its knight's own save - its
+  knight's alone: the account's other characters walk in and own nothing of it (OWNS' `deed = 0 OR char_id`, the
+  client's `own`). A guild's hall is never its guildmaster's account's: rent.js's rule and the trader's name
+  `guild_id IS NULL`, now that no character id shuts out a hall's mark. A tenancy is its tenant character's still -
+  renting owns nothing. The arena's move (ARENA4b) is still made by the character that bought the home, whose save
+  holds the old scene and whose letter it is.
+- **The guild entry.** A home opened to "My guild" opens to the guild of ANY of the owner's characters (`guildmate`,
+  `homes.js` and `market.js`'s traders) - a fallen founder's guild place goes with its death (AUDIT LEGACY III O5), and
+  the heir's guild is the house's. Seat influence still counts a home for its buyer's guild (`seatInfluence.js`): one
+  home, one guild's count.
+- **The client** (`src/systems/onlineHomes.js` homeAt): `own` is `mine` - every character of the account owns the home
+  (the door at any hour and the owner's menu, the bed, the storage, the decorator, the rooms, the trader's owner's
+  view, the sale), a deed the realm gave excepted. Storage stays a save's (HOME1: what a home holds lives in its
+  owner's own save) - each character keeps its own things in the home's scene of its OWN save, never another's.
+- **The sweep** (`onlineHomes.js` homesGoneFrom, `scenes/world.js` sweepHomesGoneOnline): any character of the account
+  may sell a home, or take it with its delete, while another is away. So once a boot, once the world stands and the
+  account's homes are read (`/v1/homes/mine`), each home this save keeps things in that the account no longer holds
+  gives this character's OWN things that stood in it back (DECOR2a's "Back to pack", as the seller's own come back at
+  the sale) and its scene is let go - what else was left inside is lost with the house, as the sale says. A home
+  bought while the list was read is spared (the registry's own `own`); one in the arena's cell is ARENA4b's to move
+  (Known limit: a character other than the buyer keeps its own things in a home the arena then moves - they wait in
+  its save's old scene). A list that does not come sweeps nothing.
+- **Project Legacy** (`06-Systems/Legacy-Arc.md` 10b, LEGACY7 part five): online the line's houses are the account's
+  homes - every member's - learned WHOLE (`systems/legacy/household.js` syncHouses `whole`, world.js
+  `heldHousesWhole`): a home another character sold leaves the line at the next save, where a member's own rows alone
+  moved before.
+
+**A deleted character's homes go** (the first). A realm character's delete already took the homes it bought in its own
+batch (AUDIT REALM L1-F7). What had slipped:
+
+- **Homes held for nobody** (`server-account/migrations/0086_account_homes.sql`): a home whose buyer is a realm id no
+  realm character stands on any more - a delete that never reached it - is released, once, with its pieces, its hidden
+  furniture and its rooms (the cascade). A tombstone's homes stand (a Bloodline's fallen is no delete: its account,
+  its heir's, holds them), as do an offline id's from before the realm and a guild's hall. Realm-Arc's Left open ("a
+  home or guild place under an origin whose realm character was since DELETED still stands under the dead id") is its
+  account's again now - owned by its realm characters, crossed.
+- **The delete waits for another character's goods** (`realm.js` HOME_VENDOR_STOCK_SQL, `home-vendor-stocked`): any
+  character of the account may stock the trader of a home the deleted one bought, and the delete takes that trader - so
+  it waits while those goods stand there, as a sale waits.
+- **Its towns' yards** (`index.js`): the delete lets its homes' towns' kept yards go, as a decor write does (YARD-SHED
+  forgetYards) - a yard gone stood thirty seconds in an isolate's kept answer.
+- **The door** (`ui/enhancedMenu.js`): "... the homes it bought and its guild place with it (a home is your account's:
+  your other characters lose it too)."
+
+DECIDED: the homes go whatever another character of the account placed in them - a piece another paid for goes with
+the house, unpaid, as the deleted character's own do. THE FOUR HOSTS: an online home is the streaming world's alone -
+`scenes/world.js` builds the registry and sweeps, `scenes/worldModes.js` (the interiors) reads `own`;
+`scenes/exterior.js` (the fixed city) and `scenes/dungeonContext.js` build no registry (FLAGGED by name: no online home
+stands there). `acct89`; deploy BEFORE the site - a new client offers the account's other characters what an old service
+refuses (`no-home`). No relay change. Pinned: `test/account_homes.test.js` (7); PIN MOVED in `test/home1.test.js`,
+`test/decor1.test.js`, `test/basehide.test.js`, `test/guild_yard.test.js`, `test/homeprice.test.js`,
+`test/auditrealm.test.js`, `test/legacy7_homes.test.js`, `test/profdelete.test.js`, `test/renown_char.test.js` and the
+version's pins. `tools/mutants/account_homes.json` (28); eight records whose mutant had BECOME the law retired
+(DECOR1-any-character-owns, AUDIT-GUILD-YARD-OWNS-home-any-character, AUDIT-REALM-L1F3-another-characters-house-sold,
+HOME-CROSSED-another-characters-house-said-crossed, HOME1-claim-repeat-any-character, HOME1-own-by-account,
+AUDIT-HOME-PRICE-L3-a-home-from-before-told, LEGACY7H-world-any-characters-homes), each replaced by one of the new law;
+the rest re-aimed by content. AUDIT-REALM-L1F3-the-pieces-client-cost, alive on main since HOME-CROSSED's refusal took
+its pin (a house from before the realm sold with a piece no record paid for), is pinned again by the other character's
+sale - a piece from before the realm in it pays nothing back.
+
+### GUILD-HALL-SALE - a guild's hall sold at its door, as a home is (2026-10-06)
+
+Asked: "Guild houses should be able to be sold, like regular houses". GUILD1d's hall was sold from the Guild tab alone
+(its Overview, the guildmaster's two presses); a home sells at its own door - the plaque's "Sell it", Info's menu.
+Now a hall does too.
+
+- **The service** (`homes.js` homesInTown, `halls.js` sellHall): the town's answer tells whom the service lets sell the
+  hall (`hallSell` - sellHall's rank, its guildmaster) and the deed share of what the treasury paid (`refund`); every
+  other rank learns neither. `sellHall` takes the door's building (`mapId`, `buildingKey`): a guild's hall standing
+  anywhere else is `guild-hall-moved` and nothing is sold (a door read before the hall was sold and another bought);
+  a building no key names is `bad-home`. The Guild tab's sale names none and sells the guild's one hall, as before.
+- **The door** (`systems/onlineHomes.js` HALL_VERB.sell, hallSellable, hallManaged, hallSaleLines; `scenes/worldModes.js`
+  openHallMenu, openHallSale, sellHallAt): the hall's plaque lists "Sell it" to its guildmaster under "Go in" and "Who
+  may enter"; in Info a hall its reader may turn or sell is that reader's menu (G go in, W who may enter, S sell it), as
+  an owner's home is theirs - a plain member's press walks in. The sale asks first ("Sell the hall of <guild> for N
+  gold, and half of what its placed pieces cost?" - the treasury takes it, the vault stays the guild's) and sells
+  through the guild book (`net/guildBook.js` sellHall's door; `scenes/world.js` guildHall.sell), the town read again. No
+  purse moves.
+
+`acct89`; no relay change. Pinned: `test/hallsale.test.js` (4); PIN MOVED in `test/guild1d_service.test.js` (the
+guildmaster's town answer). `tools/mutants/hallsale.json` (12).
 
 ## GUILD1 (2026-09-25, Mac: "future ownership for online guilds"; asked, founding takes "Gold and Renown", a guild is joined "Per character", its ranks are "Four, renamed by the guildmaster", and the treasury is the "Guildmaster only" to take from) - a guild the players found, and the service keeps
 

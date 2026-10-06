@@ -57,11 +57,12 @@
   {
     "name": "GUILD1d-old-lane-sells-a-hall",
     "file": "server-account/src/homes.js",
-    "old": "AND player = ? AND guild_id IS NULL RETURNING price",
-    "new": "AND player = ? RETURNING price",
+    "old": "AND player = ? AND guild_id IS NULL AND deed = 0 RETURNING price",
+    "new": "AND player = ? AND deed = 0 RETURNING price",
     "tests": [
       "test/guild1d_service.test.js"
-    ]
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - a deed's hold is never sold down it either."
   },
   {
     "name": "GUILD1d-anchor-opens-a-hall",
@@ -198,11 +199,12 @@
   {
     "name": "GUILD1d-guildmate-for-a-stranger",
     "file": "server-account/src/homes.js",
-    "old": "WHERE a.player = h.player AND a.char_id = h.char_id AND b.player = ?2 AND b.char_id = ?3)) AS guildmate",
-    "new": "WHERE a.player = h.player AND a.char_id = h.char_id)) AS guildmate",
+    "old": "WHERE a.player = h.player AND b.player = ?2 AND b.char_id = ?3)) AS guildmate",
+    "new": "WHERE a.player = h.player)) AS guildmate",
     "tests": [
       "test/guild1d_service.test.js"
-    ]
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the guild of any of the owner's characters."
   },
   {
     "name": "GUILD1d-owns-any-member",

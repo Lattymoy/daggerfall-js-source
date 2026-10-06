@@ -299,16 +299,6 @@
     ]
   },
   {
-    "name": "AUDIT-GUILD-YARD-OWNS-home-any-character",
-    "file": "server-account/src/decor.js",
-    "old": "WHERE (h.guild_id IS NULL AND h.player = k.p AND h.char_id = k.c)",
-    "new": "WHERE (h.guild_id IS NULL AND h.player = k.p)",
-    "tests": [
-      "test/guild_yard.test.js",
-      "test/homelook.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-GUILD-YARD-the-hall-word-for-every-yard",
     "file": "server-account/src/decor.js",
     "old": "    : barred && (S.seat",

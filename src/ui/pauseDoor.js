@@ -56,7 +56,7 @@ import { createCharSheetWindow } from './charSheetDoor.js';   // ASCEND-ANYTIME:
 import { playerEntity } from '../characters/playerEntity.js';   // the shared entity the Stats page already reads (enhancedMenu's sheetModel)
 import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1: which bar the Ascension reads
 import { profPagesShown, PROF_PAGE_SECTIONS } from './profPages.js';   // CLASSIC-PAGES: the professions' two pages, on either skin
-import { FAMILY_PAGE_SECTIONS } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab, on either skin
+import { FAMILY_PAGE_SECTIONS, familyTabShown, familyProvider, noFamilyLine } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab, on either skin; FAMILY-TAB: and only where the game is played with it
 import { hudText } from '../systems/notify.js';
 import {
   openClassicPauseFlow,
@@ -203,7 +203,12 @@ export function openPauseFlow(show, hooks = {}) {
   }
   // LEGACY3: Project Legacy's Family tab (its key, the death's Succession) - the classic pause has no tabs, so the family's
   // pages open the enhanced pause on either skin, as the professions' do
-  if (familyPageAt(hooks.at) && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
+  if (familyPageAt(hooks.at)) {
+    // FAMILY-TAB (2026-10-06): a game played without Project Legacy has no Family tab - the key says why (the pages' own
+    // words) and opens nothing, as a professions door with no pages does
+    if (!familyTabShown()) { hudText(noFamilyLine(familyProvider())); return null; }
+    if (typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
+  }
   // `document` is the second half of the test for the reason
   // chargenSession's fork gives: a node test drives these hosts
   // headless, has no document, and must keep the canvas window rather

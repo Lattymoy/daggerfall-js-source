@@ -129,38 +129,34 @@
   {
     "name": "AUDIT-HOME-PRICE-L3-the-character-unasked",
     "file": "server-account/src/homes.js",
-    "old": "const sale = mine && realmHome && !crossed && h.char_id === me ?",
-    "new": "const sale = mine && realmHome && !crossed ?",
+    "old": "const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ?",
+    "new": "const sale = mine && !deedRow && !crossed ?",
     "tests": [
-      "test/homeprice.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-HOME-PRICE-L3-a-home-from-before-told",
-    "file": "server-account/src/homes.js",
-    "old": "const sale = mine && realmHome && !crossed && h.char_id === me ?",
-    "new": "const sale = mine && !crossed && h.char_id === me ?",
-    "tests": [
-      "test/homeprice.test.js"
-    ]
+      "test/homeprice.test.js",
+      "test/home1.test.js"
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the sum told to a realm character of the account (any of them), never to a read naming none."
   },
   {
     "name": "HOME-PRICE-the-refund-told-another",
     "file": "server-account/src/homes.js",
-    "old": "const sale = mine && realmHome && !crossed && h.char_id === me ?",
-    "new": "const sale = realmHome && !crossed && h.char_id === me ?",
+    "old": "const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ?",
+    "new": "const sale = !deedRow && !crossed && Number(h.me_realm) === 1 ?",
     "tests": [
-      "test/homeprice.test.js"
-    ]
+      "test/homeprice.test.js",
+      "test/account_homes.test.js"
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - another account's own realm character named."
   },
   {
     "name": "HOME-PRICE-a-crossed-house-refunded",
     "file": "server-account/src/homes.js",
-    "old": "const sale = mine && realmHome && !crossed && h.char_id === me ? { ...realmSaleOf(h),",
-    "new": "const sale = mine && realmHome && h.char_id === me ? { refund: homeSaleRefund(Number(h.paid) || 0),",
+    "old": "const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ? { ...realmSaleOf(h),",
+    "new": "const sale = mine && !deedRow && Number(h.me_realm) === 1 ? { refund: homeSaleRefund(Number(h.paid) || 0),",
     "tests": [
       "test/homeprice.test.js"
-    ]
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content."
   },
   {
     "name": "AUDIT-HOME-PRICE-C3-the-rent-unsaid",

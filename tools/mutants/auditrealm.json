@@ -229,15 +229,6 @@
     ]
   },
   {
-    "name": "AUDIT-REALM-L1F3-another-characters-house-sold",
-    "file": "server-account/src/homes.js",
-    "old": "AND char_id = ? AND paid = ? AND rent_due = ?').bind(home.map_id, home.building_key, player.id, at.id, home.paid, home.rent_due ?? 0),",
-    "new": "AND paid = ? AND rent_due = ?').bind(home.map_id, home.building_key, player.id, home.paid, home.rent_due ?? 0),",
-    "tests": [
-      "test/auditrealm.test.js"
-    ]
-  },
-  {
     "name": "AUDIT-REALM-L1F3-the-price-refunded",
     "file": "server-account/src/homes.js",
     "old": "  const refund = homeSaleRefund(Math.max(0, Number(home.paid) || 0));",
@@ -263,8 +254,10 @@
     "old": "THEN paid / 2 ELSE 0 END), 0) AS back",
     "new": "THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
     "tests": [
-      "test/auditrealm.test.js"
-    ]
+      "test/auditrealm.test.js",
+      "test/account_homes.test.js"
+    ],
+    "note": "ACCOUNT-HOMES (2026-10-06): HOME-CROSSED moved the pin that killed this (a house from before the realm, a piece no record paid for, sold) to a refusal before the pieces are summed - test/account_homes.test.js's sale by the character that did not buy the house holds such a piece, and pays nothing back for it"
   },
   {
     "name": "AUDIT-REALM-L1F3-the-old-treasury-withdrawn",

@@ -944,6 +944,12 @@ when it is taken out or shrunk, goes into the guild's treasury (`hall-piece`), n
 its yard with its rooms (one sum of its pieces, half back with the deed share) and the yard goes with it. DECIDED: a
 seat's palace stands no yard still (`hall-yard`, a palace's word now). No migration (`acct65`).
 
+BUILT (GUILD-HALL-SALE, 2026-10-06, asked: "Guild houses should be able to be sold, like regular houses";
+`06-Systems/Online-Arc.md` GUILD-HALL-SALE): the hall is sold at its own door too, as a home is - "Sell it" on its plaque
+and in Info's menu, to its guildmaster alone (the town's answer, `hallSell`), asked first at what it pays the treasury;
+the service holds the sale to the building the door names (`guild-hall-moved` anywhere else). The Guild tab's sale
+stands.
+
 BUILT (GUILD1e, 2026-09-30; `06-Systems/Online-Arc.md` GUILD1e): the private guild board - a guild's own notes, its
 members' alone, read and pinned on the Guilds tab of every Notice Board and at the board in its hall: Daggerfall's own
 board model, which the decorator offers in a hall alone. Any member pins; the Officers and the guildmaster take down

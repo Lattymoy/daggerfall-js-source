@@ -1,0 +1,288 @@
+[
+  {
+    "name": "ACCOUNT-HOMES-OWNS-the-buyer-again",
+    "file": "server-account/src/decor.js",
+    "old": "WHERE (h.guild_id IS NULL AND h.player = k.p AND (h.deed = 0 OR h.char_id = k.c))",
+    "new": "WHERE (h.guild_id IS NULL AND h.player = k.p AND h.char_id = k.c)",
+    "tests": [
+      "test/decor1.test.js",
+      "test/account_homes.test.js",
+      "test/basehide.test.js",
+      "test/guild_yard.test.js"
+    ],
+    "note": "a home the buying character's alone again: the account's other character furnishes, hides and paints nothing (it replaces DECOR1-any-character-owns and AUDIT-GUILD-YARD-OWNS-home-any-character, which mutated TO this law)."
+  },
+  {
+    "name": "ACCOUNT-HOMES-OWNS-a-deed-the-accounts",
+    "file": "server-account/src/decor.js",
+    "old": "WHERE (h.guild_id IS NULL AND h.player = k.p AND (h.deed = 0 OR h.char_id = k.c))",
+    "new": "WHERE (h.guild_id IS NULL AND h.player = k.p)",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "a deed the realm gave owned by the account's other characters - Daggerfall's house in one save furnished and painted from another."
+  },
+  {
+    "name": "ACCOUNT-HOMES-rent-the-buyer-again",
+    "file": "server-account/src/rent.js",
+    "old": "const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND (deed = 0 OR char_id = ?))';",
+    "new": "const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND char_id = ?)';",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "a room let by the buying character alone."
+  },
+  {
+    "name": "ACCOUNT-HOMES-rent-a-hall-the-accounts",
+    "file": "server-account/src/rent.js",
+    "old": "const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND (deed = 0 OR char_id = ?))';",
+    "new": "const OWNS = 'EXISTS (SELECT 1 FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND (deed = 0 OR char_id = ?))';",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "a guild's hall's rooms let by its guildmaster's account (the character named excluded a hall before)."
+  },
+  {
+    "name": "ACCOUNT-HOMES-collect-the-buyer-again",
+    "file": "server-account/src/rent.js",
+    "old": "  const home = await db.prepare(`SELECT rent_due, region FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND (deed = 0 OR char_id = ?)`)",
+    "new": "  const home = await db.prepare(`SELECT rent_due, region FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND char_id = ?`)",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "the rent collected by the buying character alone."
+  },
+  {
+    "name": "ACCOUNT-HOMES-vendor-the-buyer-again",
+    "file": "server-account/src/market.js",
+    "old": "WHERE ${VENDOR_STANDS_SQL} AND h.player = ?3 AND h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4)",
+    "new": "WHERE ${VENDOR_STANDS_SQL} AND h.player = ?3 AND h.char_id = ?4",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "a home's trader stocked by the buying character alone (vendor-not-yours)."
+  },
+  {
+    "name": "ACCOUNT-HOMES-vendor-insert-the-buyer-again",
+    "file": "server-account/src/market.js",
+    "old": "AND h.player = ?1 AND h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?2)))",
+    "new": "AND h.player = ?1 AND h.char_id = ?2))",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "the listing's own guard the buying character's alone."
+  },
+  {
+    "name": "ACCOUNT-HOMES-sale-the-buyer-again",
+    "file": "server-account/src/homes.js",
+    "old": "'DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND deed = 0 AND paid = ? AND rent_due = ?').bind(home.map_id, home.building_key, player.id, home.paid, home.rent_due ?? 0)",
+    "new": "'DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ? AND paid = ? AND rent_due = ?').bind(home.map_id, home.building_key, player.id, at.id, home.paid, home.rent_due ?? 0)",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "the sale the buying character's alone again (AUDIT REALM L1-F3's retired guard; it replaces AUDIT-REALM-L1F3-another-characters-house-sold)."
+  },
+  {
+    "name": "ACCOUNT-HOMES-sum-the-buyer-again",
+    "file": "server-account/src/homes.js",
+    "old": "const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ?",
+    "new": "const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 && h.char_id === me ?",
+    "tests": [
+      "test/account_homes.test.js",
+      "test/homeprice.test.js"
+    ],
+    "note": "the sale's sum told to the buying character alone (it replaces AUDIT-HOME-PRICE-L3-a-home-from-before-told)."
+  },
+  {
+    "name": "ACCOUNT-HOMES-crossed-the-realms-alone",
+    "file": "server-account/src/homes.js",
+    "old": "      const crossed = mine && !deedRow && !(Number(h.paid) > 0);",
+    "new": "      const crossed = mine && !deedRow && !(Number(h.paid) > 0) && REALM_ID_RE.test(String(h.char_id));",
+    "tests": [
+      "test/homeprice.test.js",
+      "test/account_homes.test.js"
+    ],
+    "note": "a home from before the realm not crossed - its door would ask a price no sale pays (it replaces HOME-CROSSED-another-characters-house-said-crossed)."
+  },
+  {
+    "name": "ACCOUNT-HOMES-repeat-the-buyer-again",
+    "file": "server-account/src/homes.js",
+    "old": "  && (Number(row.deed) !== 1 || row.char_id === character);",
+    "new": "  && row.char_id === character;",
+    "tests": [
+      "test/home1.test.js"
+    ],
+    "note": "the account's other character's claim of the account's own house refused as taken (it replaces HOME1-claim-repeat-any-character)."
+  },
+  {
+    "name": "ACCOUNT-HOMES-repeat-any-account",
+    "file": "server-account/src/homes.js",
+    "old": "export const heldByAccount = (row, player, character) => !!row && row.player === player.id && row.guild_id == null",
+    "new": "export const heldByAccount = (row, player, character) => !!row && row.guild_id == null",
+    "tests": [
+      "test/home1.test.js"
+    ],
+    "note": "another account's claim answered as its own."
+  },
+  {
+    "name": "ACCOUNT-HOMES-guildmate-the-buyers",
+    "file": "server-account/src/homes.js",
+    "old": "        WHERE a.player = h.player AND b.player = ?2 AND b.char_id = ?3)) AS guildmate,",
+    "new": "        WHERE a.player = h.player AND a.char_id = h.char_id AND b.player = ?2 AND b.char_id = ?3)) AS guildmate,",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "a home's guild the buying character's alone again."
+  },
+  {
+    "name": "ACCOUNT-HOMES-own-the-buyer-again",
+    "file": "src/systems/onlineHomes.js",
+    "old": "    const own = row.mine && !row.deed;",
+    "new": "    const own = row.mine && typeof me === 'string' && row.character === me && !row.deed;",
+    "tests": [
+      "test/home1.test.js",
+      "test/account_homes.test.js"
+    ],
+    "note": "the client's own the buying character's alone (it replaces HOME1-own-by-account, which mutated TO this law)."
+  },
+  {
+    "name": "ACCOUNT-HOMES-own-a-deed",
+    "file": "src/systems/onlineHomes.js",
+    "old": "    const own = row.mine && !row.deed;",
+    "new": "    const own = row.mine;",
+    "tests": [
+      "test/home1.test.js"
+    ],
+    "note": "a deed the realm gave another character of the account owned by this one."
+  },
+  {
+    "name": "ACCOUNT-HOMES-delete-stock-unasked",
+    "file": "server-account/src/realm.js",
+    "old": "  if (Number((await db.prepare(HOME_VENDOR_STOCK_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'home-vendor-stocked' };\n",
+    "new": "",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "a delete taking a home whose trader another character stocked - its goods for sale at a trader gone."
+  },
+  {
+    "name": "ACCOUNT-HOMES-delete-yards-kept",
+    "file": "server-account/src/index.js",
+    "old": "        if (deleted.ok) for (const t of goneTowns) forgetYards(t);\n",
+    "new": "",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "a deleted character's homes' yards standing in the isolate's kept answer."
+  },
+  {
+    "name": "ACCOUNT-HOMES-migration-shape-unread",
+    "file": "server-account/migrations/0086_account_homes.sql",
+    "old": "    AND length(char_id) = 21 AND substr(char_id, 1, 1) = 'r' AND substr(char_id, 2) NOT GLOB '*[^0-9a-f]*'\n",
+    "new": "",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "every home no realm character stands on released - an offline id's from before the realm among them."
+  },
+  {
+    "name": "ACCOUNT-HOMES-migration-row-unasked",
+    "file": "server-account/migrations/0086_account_homes.sql",
+    "old": "    AND NOT EXISTS (SELECT 1 FROM realm_characters r WHERE r.id = homes.char_id);",
+    "new": ";",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "every realm character's home released, the living's and the fallen's."
+  },
+  {
+    "name": "ACCOUNT-HOMES-sweep-held-unread",
+    "file": "src/systems/onlineHomes.js",
+    "old": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || homeInArenaCell(at.mapId, at.buildingKey) || ownNow(at.mapId, at.buildingKey)) continue;",
+    "new": "    if (!at || homeInArenaCell(at.mapId, at.buildingKey) || ownNow(at.mapId, at.buildingKey)) continue;",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "a home the account holds swept."
+  },
+  {
+    "name": "ACCOUNT-HOMES-sweep-arena-unskipped",
+    "file": "src/systems/onlineHomes.js",
+    "old": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || homeInArenaCell(at.mapId, at.buildingKey) || ownNow(at.mapId, at.buildingKey)) continue;",
+    "new": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || ownNow(at.mapId, at.buildingKey)) continue;",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "a home ARENA4b moves swept from under its move (its new house's crate kept by the old scene's mark)."
+  },
+  {
+    "name": "ACCOUNT-HOMES-sweep-ownNow-unread",
+    "file": "src/systems/onlineHomes.js",
+    "old": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || homeInArenaCell(at.mapId, at.buildingKey) || ownNow(at.mapId, at.buildingKey)) continue;",
+    "new": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || homeInArenaCell(at.mapId, at.buildingKey)) continue;",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "a home bought while the list was read swept."
+  },
+  {
+    "name": "ACCOUNT-HOMES-sweep-mark-kept",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  for (const name of gone) removePermanentScene(cache, name);\n",
+    "new": "",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "a gone home's scene kept for good."
+  },
+  {
+    "name": "ACCOUNT-HOMES-sweep-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      void sweepHomesGoneOnline();",
+    "new": "      void 0;",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "the world never sweeping."
+  },
+  {
+    "name": "ACCOUNT-HOMES-sweep-ownNow-unwired",
+    "file": "src/scenes/world.js",
+    "old": "r.data.homes, { ownNow: (m, k) => !!onlineHomes?.homeAt(m, k)?.own });",
+    "new": "r.data.homes, {});",
+    "tests": [
+      "test/account_homes.test.js"
+    ],
+    "note": "the world's sweep sparing nothing bought while it read."
+  },
+  {
+    "name": "ACCOUNT-HOMES-line-never-whole",
+    "file": "src/scenes/world.js",
+    "old": "    heldHousesWhole: () => isOnlinePage(),",
+    "new": "    heldHousesWhole: () => false,",
+    "tests": [
+      "test/legacy7_homes.test.js"
+    ],
+    "note": "online the line keeps a home another character of the account sold."
+  },
+  {
+    "name": "ACCOUNT-HOMES-line-whole-unread",
+    "file": "src/systems/legacy/household.js",
+    "old": "  const next = was.filter((h) => (!whole && h.by !== personId) || mine.some((m) => sameHouse(m, h)));",
+    "new": "  const next = was.filter((h) => h.by !== personId || mine.some((m) => sameHouse(m, h)));",
+    "tests": [
+      "test/legacy7_homes.test.js"
+    ],
+    "note": "the law ignoring `whole`."
+  },
+  {
+    "name": "ACCOUNT-HOMES-line-the-buyers-again",
+    "file": "src/scenes/world.js",
+    "old": "_legacyOnlineHomes = r.data.homes.filter((h) => h && typeof h === 'object').map((h) => ({",
+    "new": "_legacyOnlineHomes = r.data.homes.filter((h) => h && typeof h === 'object' && h.character === realmSession.id).map((h) => ({",
+    "tests": [
+      "test/legacy7_homes.test.js"
+    ],
+    "note": "the line's online houses the buying character's alone (it replaces LEGACY7H-world-any-characters-homes, which mutated TO this law)."
+  }
+]

@@ -430,18 +430,27 @@ test('AUDIT PROF-541 G2 the hall\'s door "Who may enter" follows what the servic
   assert.match(src('src/scenes/worldModes.js'), /if \(verb === HALL_VERB\.entry && hallEntryTurnable\(home\)\) \{ turnHallEntry\(bd, home\); return true; \}/, 'the press as the row');
 });
 
-test('AUDIT GUILD-YARD a home\'s outside is its CHARACTER\'s: another character of the same account paints nothing of it, nor places in its yard (mutants: OWNS\'s home any character of the account)', async (t) => {
+// ACCOUNT-HOMES (2026-10-06, asked: "House ownership should be account bound, not character bound"; PIN MOVED - this was
+// AUDIT GUILD-YARD's "a home's outside is its CHARACTER's: another character of the same account paints nothing of it, nor
+// places in its yard"): the outside is the ACCOUNT's, as the rooms are - one rule, decor.js OWNS.
+test('ACCOUNT-HOMES a home\'s outside is its ACCOUNT\'s: another character of the same account paints it and places in its yard, on its own record; another account\'s character neither (mutants: OWNS\'s home the buying character\'s again; OWNS\'s home any account\'s)', async (t) => {
   t.mock.method(Date, 'now', () => T0 * 1000);
   const svc = await standService();
   const owner = await svc.registered('Olga');
   const o = await svc.seatHome(owner, { mapId: 7, buildingKey: 310, region: 17, price: 5000 });
   assert.equal(o.status, 200, JSON.stringify(o.body));
   const other = await seatRealm(svc.env, owner.secret, 'Olga Two', { name: 'Olga Two', level: 5, goldPieces: 50_000, items: [] });
-  const paint = (character) => svc.call('/v1/homes/look', { mapId: 7, buildingKey: 310, character, look: LOOK }, owner.secret);
-  assert.equal((await paint(other.id)).body.error, 'no-home', 'the account\'s other character');
+  const paint = (character, secret = owner.secret) => svc.call('/v1/homes/look', { mapId: 7, buildingKey: 310, character, look: LOOK }, secret);
+  assert.equal((await paint(other.id)).status, 200, 'the account\'s other character paints it');
   const yard = await svc.call('/v1/homes/decor/place', { mapId: 7, buildingKey: 310, character: other.id, realm: other.at(), yard: true, piece: piece() }, owner.secret);
-  assert.equal(yard.body.error, 'no-home', JSON.stringify(yard.body));
-  assert.equal((await paint(o.character)).status, 200, 'its own character paints it');
+  assert.deepEqual([yard.status, yard.body.gold], [200, -120], `and places in its yard, paid on its own record: ${JSON.stringify(yard.body)}`);
+  assert.equal((await paint(o.character)).status, 200, 'its buying character paints it as before');
+  // another account's character: as absent as none
+  const stan = await svc.registered('Stan');
+  const s = await seatRealm(svc.env, stan.secret, 'Stan', { name: 'Stan', level: 5, goldPieces: 50_000, items: [] });
+  assert.equal((await paint(s.id, stan.secret)).body.error, 'no-home', 'another account paints nothing of it');
+  const theirs = await svc.call('/v1/homes/decor/place', { mapId: 7, buildingKey: 310, character: s.id, realm: s.at(), yard: true, piece: piece({ id: 'yard2' }) }, stan.secret);
+  assert.equal(theirs.body.error, 'no-home', JSON.stringify(theirs.body));
 });
 
 test('AUDIT GUILD-YARD the hall\'s yard in the hall\'s words: the decorator\'s panel names it the guild\'s yard (its `where`, through the tool\'s room), a piece in the hall\'s footprint is "inside the hall" and a full yard is the hall\'s - never "your house", "your yard"; a home\'s keep their own; the service\'s refusals of a hall\'s yard its own (no-home, yard-cap), `hall-yard` a palace\'s alone (mutants: the tool\'s `where` plain; the hall\'s words lost - the lot\'s, the bar\'s; the hall\'s word for every yard refusal; AUDIT PROF-541 G3: the ghost\'s bar\'s hall lost; the commit\'s cap unasked)', async (t) => {

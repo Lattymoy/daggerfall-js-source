@@ -41,20 +41,12 @@
   {
     "name": "HOME1-claim-repeat-refused",
     "file": "server-account/src/homes.js",
-    "old": "held.char_id === claim.character ? { ok: true, repeat: true,",
-    "new": "held.char_id === claim.character && false ? { ok: true, repeat: true,",
+    "old": "heldByAccount(held, player, claim.character) ? { ok: true, repeat: true,",
+    "new": "heldByAccount(held, player, claim.character) && false ? { ok: true, repeat: true,",
     "tests": [
       "test/home1.test.js"
-    ]
-  },
-  {
-    "name": "HOME1-claim-repeat-any-character",
-    "file": "server-account/src/homes.js",
-    "old": "held.player === player.id && held.char_id === claim.character ?",
-    "new": "held.player === player.id ?",
-    "tests": [
-      "test/home1.test.js"
-    ]
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the account's already."
   },
   {
     "name": "HOME1-claim-rate-unread",
@@ -69,11 +61,12 @@
   {
     "name": "HOME1-release-anyones",
     "file": "server-account/src/homes.js",
-    "old": "DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL RETURNING price",
-    "new": "DELETE FROM homes WHERE map_id = ? AND building_key = ? AND ? IS NOT NULL AND guild_id IS NULL RETURNING price",
+    "old": "DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND guild_id IS NULL AND deed = 0 RETURNING price",
+    "new": "DELETE FROM homes WHERE map_id = ? AND building_key = ? AND ? IS NOT NULL AND guild_id IS NULL AND deed = 0 RETURNING price",
     "tests": [
       "test/home1.test.js"
-    ]
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content."
   },
   {
     "name": "HOME1-entry-anyones",
@@ -274,16 +267,6 @@
     "tests": [
       "test/home1.test.js"
     ]
-  },
-  {
-    "name": "HOME1-own-by-account",
-    "file": "src/systems/onlineHomes.js",
-    "old": "const own = row.mine && typeof me === 'string' && row.character === me;",
-    "new": "const own = row.mine;",
-    "tests": [
-      "test/home1.test.js"
-    ],
-    "note": "FIELD BUGS 2026-10-04d KNIGHT-HOUSE (PIN MOVED, re-aimed by content): homeAt names `own` before the deed's question."
   },
   {
     "name": "HOME1-the-claims-character",

@@ -155,10 +155,11 @@
   {
     "name": "PROF-DELETE-the-dialogs-old-word",
     "file": "src/ui/enhancedMenu.js",
-    "old": "- its Renown, its professions and their Stores, its home and its guild place with it.",
-    "new": "- its Renown, its home and its guild place with it.",
+    "old": "- its Renown, its professions and their Stores, the homes it bought and its guild place with it",
+    "new": "- its Renown, the homes it bought and its guild place with it",
     "tests": [
       "test/profdelete.test.js"
-    ]
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the door names the homes it bought, a home being the account's."
   }
 ]

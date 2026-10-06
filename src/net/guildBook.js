@@ -415,10 +415,13 @@ export class GuildBook {
   async buyHall({ mapId, buildingKey, region, price, layout = null }) {
     return this._hallTold(mapId, await this._act((c) => this.door.hallBuy({ character: c, mapId, buildingKey, region, price, layout })));
   }
-  /** SELL THE HALL - the deed share and its pieces' half into the treasury. */
-  async sellHall() {
-    const mapId = this.guild?.hall?.mapId ?? null;
-    return this._hallTold(mapId, await this._act((c) => this.door.hallSell(c)));
+  /** SELL THE HALL - the deed share and its pieces' half into the treasury. GUILD-HALL-SALE: at its door (`mapId`,
+   *  `buildingKey` - the building the door names, which the service holds the sale to); from the Guild tab, the guild's
+   *  one hall. */
+  async sellHall({ mapId = null, buildingKey = null } = {}) {
+    const at = Number.isSafeInteger(mapId) && Number.isSafeInteger(buildingKey) ? { mapId, buildingKey } : null;
+    const town = at ? at.mapId : this.guild?.hall?.mapId ?? null;
+    return this._hallTold(town, await this._act((c) => (at ? this.door.hallSell(c, at) : this.door.hallSell(c))));
   }
   /** WHO MAY WALK INTO THE HALL - its members or anyone. */
   async setHallEntry(entry) {

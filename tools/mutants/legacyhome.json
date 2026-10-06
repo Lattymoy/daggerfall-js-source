@@ -29,12 +29,12 @@
   {
     "name": "LEGACY-HOME-sync-drops-others",
     "file": "src/systems/legacy/household.js",
-    "old": "  const next = was.filter((h) => h.by !== personId || mine.some((m) => sameHouse(m, h)));",
+    "old": "  const next = was.filter((h) => (!whole && h.by !== personId) || mine.some((m) => sameHouse(m, h)));",
     "new": "  const next = was.filter((h) => h.by === personId && mine.some((m) => sameHouse(m, h)));",
     "tests": [
       "test/legacyhome.test.js"
     ],
-    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
+    "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content - the law it guards now stands at this line. ACCOUNT-HOMES (PIN MOVED): re-aimed by content."
   },
   {
     "name": "LEGACY-HOME-census-job",

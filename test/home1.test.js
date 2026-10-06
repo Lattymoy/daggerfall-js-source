@@ -139,8 +139,13 @@ test('HOME1 the service: a town\'s homes are any session\'s to read (a guest\'s 
   const again = await buy(aldric, A);
   assert.deepEqual([again.status, again.body.repeat, again.body.home.character], [200, true, A.id], 'a claim sent again after a lost answer is answered as the claim');
   const A2 = await seatRealm(env, aldric, 'Aldric Two', RICH('Aldric Two'));   // the account's other character
-  const otherChar = await buy(aldric, A2);
-  assert.deepEqual([otherChar.status, otherChar.body.error], [409, 'home-taken'], 'the same account\'s other character does not get it twice');
+  // ACCOUNT-HOMES (2026-10-06): the house is the ACCOUNT's already - another of its characters asking is answered as the
+  // claim, the house still its buyer's purchase, and its own record pays nothing
+  const at2 = await realmJoinAt(env, aldric, A2.id);
+  const otherChar = await call('POST', '/v1/homes/claim', home({ character: A2.id, realm: at2 }), aldric);
+  assert.deepEqual([otherChar.status, otherChar.body.repeat, otherChar.body.home.character], [200, true, A.id], 'the same account\'s other character: the account\'s already, answered as the claim');
+  assert.equal(A2.at().seq, at2.seq, 'and its record pays nothing for it');
+  assert.equal(env.DB._raw.prepare('SELECT COUNT(*) AS n FROM homes WHERE map_id = ? AND building_key = ?').get(home().mapId, home().buildingKey).n, 1, 'one row - never a second owner');
   // the town, as each sees it
   const asMara = (await call('POST', '/v1/homes/town', { mapId: home().mapId }, mara)).body.homes;
   assert.deepEqual(asMara, [{ buildingKey: home().buildingKey, owner: 'Aldric', entry: 'private', mine: false }], 'the handle on the door, never a character or a price');
@@ -293,7 +298,7 @@ function fakeHomesApi(homesByTown = new Map()) {
 }
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
-test('HOME1 the client\'s registry: a town is asked once while its answer is out, believed for its time and asked again after; an unanswered ask keeps what was known and waits before the next; a home is `own` only to the character that bought it; a claim, a sale and an entry show at once and are read back from the service; a taken claim reads the town again; a door never waits on a slow town past its bound (mutants: two asks in flight, the time unread, a failure forgetting the town, own by account, the claim\'s character, no read-back)', async () => {
+test('HOME1 the client\'s registry: a town is asked once while its answer is out, believed for its time and asked again after; an unanswered ask keeps what was known and waits before the next; a home is `own` to every character of its account (ACCOUNT-HOMES), a deed the realm gave to its knight alone; a claim, a sale and an entry show at once and are read back from the service; a taken claim reads the town again; a door never waits on a slow town past its bound (mutants: two asks in flight, the time unread, a failure forgetting the town, own by the buying character again, a deed owned by the account, the claim\'s character, no read-back)', async () => {
   let now = 1_000_000;
   let me = 'char-aldric';
   const T = 206728581;
@@ -303,6 +308,7 @@ test('HOME1 the client\'s registry: a town is asked once while its answer is out
     { buildingKey: 7, owner: 'Mara', entry: 'party', mine: false },
     { buildingKey: 0, owner: 'Bad', entry: 'public', mine: false },
     { buildingKey: 8, owner: 'Odd', entry: 'friends', mine: false },   // GUILD1d (re-aimed by content): `guild` is an entry now
+    { buildingKey: 9, owner: 'Aldric', entry: 'private', mine: true, character: 'char-other', deed: true },   // KNIGHT-HOUSE: a deed the realm gave char-other
   ]]]));
   const homes = createOnlineHomes({ api, character: () => me, now: () => now });
   assert.equal(homes.known(T), false);
@@ -313,13 +319,15 @@ test('HOME1 the client\'s registry: a town is asked once while its answer is out
   assert.equal(api.calls.filter((c) => c[0] === 'town').length, 1, 'one ask in flight - and a signed id is the same town');
   assert.ok(homes.version() > v0);
   assert.equal(homes.homeAt(T, 5).own, true);
-  assert.equal(homes.homeAt(T, 6).own, false, 'my account\'s other character\'s home is not this character\'s');
+  assert.equal(homes.homeAt(T, 6).own, true, 'ACCOUNT-HOMES: the home my account\'s other character bought is mine too - a home is its account\'s');
   assert.equal(homes.homeAt(T, 6).mine, true);
+  assert.deepEqual([homes.homeAt(T, 9).own, homes.homeAt(T, 9).mine], [false, true], 'a deed the realm gave another of my characters is its knight\'s alone: I walk in, and own nothing of it');
   assert.equal(homes.homeAt(T, 7).own, false);
   assert.equal(homes.homeAt(T, 0), null, 'a malformed row is not believed');
   assert.equal(homes.homeAt(T, 8).entry, 'private', 'an entry the client does not know reads as the owner\'s alone');
   me = 'char-other';
-  assert.equal(homes.homeAt(T, 6).own, true, 'own is read against the character playing NOW');
+  assert.equal(homes.homeAt(T, 6).own, true, 'own is read against the character playing NOW - whichever of the account\'s');
+  assert.equal(homes.homeAt(T, 9), null, 'to its knight a deed\'s hold is no online home: Daggerfall\'s house, off its save');
   me = 'char-aldric';
   await homes.ensure(T);
   assert.equal(api.calls.filter((c) => c[0] === 'town').length, 1, 'fresh: not asked again');
@@ -450,7 +458,8 @@ test('HOME1 the wiring by source: the home answers at the door BEFORE Daggerfall
   assert.ok(door.indexOf("if (door === 'locked')") < door.indexOf('exteriorOpenSpellFor(playerEntity)'));
   // HOME2 moved the Info-only offer: the plaque's verbs first; where it lists none, HOME-OFFER's prompt says which
   // press asks (test/homeoffer.test.js, test/home2.test.js hold the rest) and the door does what it says
-  assert.match(door, /if \(verb == null\) \{\s*const prompt = homeDoorPrompt\(\{ door, mode, price, declined: _homeDeclined\.has\(homeIdOf\(bd\)\), asked: homeAsked, isBash \}\);\s*if \(prompt === 'menu'\) \{ openHomeOwnerMenu\(bd, home, hit, entries\); return true; \}\s*if \(prompt === 'offer'\) \{ openHomeOffer\(bd, price, hit, entries\); return true; \}/);
+  // GUILD-HALL-SALE: and a hall's managers' menu (its door's own prompt - test/hallsale.test.js)
+  assert.match(door, /if \(verb == null\) \{\s*const prompt = homeDoorPrompt\(\{ door, mode, price, declined: _homeDeclined\.has\(homeIdOf\(bd\)\), asked: homeAsked, isBash, hallMenu: hallManaged\(home\) \}\);\s*if \(prompt === 'menu'\) \{ openHomeOwnerMenu\(bd, home, hit, entries\); return true; \}\s*if \(prompt === 'hall-menu'\) \{ openHallMenu\(bd, home, hit, entries\); return true; \}[^\n]*\n\s*if \(prompt === 'offer'\) \{ openHomeOffer\(bd, price, hit, entries\); return true; \}/);
   assert.match(m, /const homeOnward = \(hit, entries\) => \(\) => \{ activateStaticDoor\(hit, entries, false, \{ homeAsked: true \}\)/, 'No and Go in come back to the door, past the menu');
   assert.match(m, /houseOwned: home !== null \|\| isHouseOwned\(/, 'no greeting from residents a home does not have');
   assert.match(m, /interiorHome = home;   \/\/ HOME1/);

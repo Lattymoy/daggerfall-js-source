@@ -48,7 +48,7 @@ test('HOME-OFFER by source: the door asks what the prompt says in the mode the p
   const m = rd('src/scenes/worldModes.js');
   // (the merge with HOME2: the prompt answers where the plaque lit no verb, in the mode read once for both)
   assert.match(m, /const mode = getInteractionMode\(\);\n\s*const price = door === 'none' \? homeOfferPrice\(bd\) : 0;/);
-  assert.match(m, /const prompt = homeDoorPrompt\(\{ door, mode, price, declined: _homeDeclined\.has\(homeIdOf\(bd\)\), asked: homeAsked, isBash \}\);/);
+  assert.match(m, /const prompt = homeDoorPrompt\(\{ door, mode, price, declined: _homeDeclined\.has\(homeIdOf\(bd\)\), asked: homeAsked, isBash, hallMenu: hallManaged\(home\) \}\);/);   // GUILD-HALL-SALE: and a hall I may turn or sell
   assert.match(m, /const _homeDeclined = new Set\(\);/);
   assert.match(m, /const homeIdOf = \(bd\) => `\$\{homeTownOf\(bd\)\}:\$\{bd\?\.buildingKey\}`;/, 'a house is its own town\'s building');
   const offer = m.slice(m.indexOf('function openHomeOffer('), m.indexOf('\n  }\n', m.indexOf('function openHomeOffer(')));

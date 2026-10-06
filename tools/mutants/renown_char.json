@@ -157,10 +157,11 @@
   {
     "name": "RENOWN-CHAR-the-dialogs-old-word",
     "file": "src/ui/enhancedMenu.js",
-    "old": "- its Renown, its professions and their Stores, its home and its guild place with it. A copy you made offline stays.",
-    "new": "- its home and its guild place with it. Your Renown belongs to your account and stays, as does a copy you made offline.",
+    "old": "- its Renown, its professions and their Stores, the homes it bought and its guild place with it (a home is your account\\'s: your other characters lose it too). A copy you made offline stays.",
+    "new": "- the homes it bought and its guild place with it (a home is your account\\'s: your other characters lose it too). Your Renown belongs to your account and stays, as does a copy you made offline.",
     "tests": [
       "test/renown_char.test.js"
-    ]
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the door names the homes it bought, a home being the account's."
   }
 ]

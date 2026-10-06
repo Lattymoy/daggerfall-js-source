@@ -211,11 +211,12 @@
   {
     "name": "LEGACY3-family-tab-whatever-the-switch",
     "file": "src/ui/enhancedMenu.js",
-    "old": "const pauseTabShown = (id) => id !== 'family' || legacyOn();",
+    "old": "const pauseTabShown = (id) => id !== 'family' || familyTabShown();",
     "new": "const pauseTabShown = (id) => true;",
     "tests": [
       "test/legacy3_familytab.test.js"
-    ]
+    ],
+    "note": "FAMILY-TAB (PIN MOVED): re-aimed by content - the tab's gate is familyTabShown now (the mod on and a house for the game played), its predicate pinned in tools/mutants/familytab.json."
   },
   {
     "name": "LEGACY1-birth-behind-the-front-door",

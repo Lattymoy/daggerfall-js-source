@@ -11,11 +11,12 @@
   {
     "name": "SCALE2-A-never-reused",
     "file": "src/net/accountClient.js",
-    "old": "    held.rooms.add(room);\n    return held.token;",
-    "new": "    return null;",
+    "old": "      if (held && room != null && held.token === token) held.rooms.add(room);",
+    "new": "      if (held && room != null && held.token === token) void room;",
     "tests": [
       "test/scale2.test.js"
-    ]
+    ],
+    "note": "STORM-SHED (PIN MOVED, found red on main by the drift gate at ACCOUNT-HOMES): re-aimed by content - a room is marked spent when a hello carries its token there (minter.opened), never at the mint."
   },
   {
     "name": "SCALE2-A-reused-past-its-minute",
