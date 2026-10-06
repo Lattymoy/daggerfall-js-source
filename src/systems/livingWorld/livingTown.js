@@ -43,7 +43,7 @@
 import { POP_VISIBLE_RANGE, POP_RECYCLE_DISTANCE, maxPopulationFor } from '../townPopulation.js';
 import { PERSON_MOVE_SPEED } from '../../characters/mobilePerson.js';
 import { townPlaces, exitToward, harbourDock, streetGeometry } from './places.js';
-import { townCensus, isHome } from './census.js';
+import { townCensus, isHome, watchShiftSize } from './census.js';
 import { dayPlan, entryAt, isOutdoor, DAY_START_MIN, DAY_MIN } from './dayPlan.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { createPathBook, pointOnLine } from './townPaths.js';
@@ -72,6 +72,10 @@ export const CATCH_UP = 0.35;
 export const SNAP_M = 30;
 /** A walk begun this many of the clock's minutes ago from a door is a coming-out (seen at any range). */
 export const DOOR_POP_MIN = 2;
+/** WATCH-DAY: how far the second of a patrol's pair walks beside the first (m), and behind him where the street will
+ *  not hold him beside. */
+export const PAIR_SIDE_M = 0.9;
+export const PAIR_BEHIND_M = 1.2;
 /** How near the player passes for a word (m), how far lines are heard (m), and a resident's word's rest (minutes). */
 export const GREET_RANGE = 3.2;
 export const LINE_RANGE = 24;
@@ -173,6 +177,8 @@ export class LivingTown {
      *  the stands about a spot, the way to one) */
     this._street = streetGeometry(this.nav, this.places);
     this.residents = townCensus(o.town, o.buildings);
+    /** WATCH-DAY: the town's watch a shift (census.js) - its companies' duties (dayPlan.js watchDuty) */
+    this._watchSize = watchShiftSize(o.town);
     this.maxPopulation = maxPopulationFor(o.town.blocks);
     /** @type {Row[]} */
     this.pool = [];
@@ -271,7 +277,7 @@ export class LivingTown {
         plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, visitor: true, home: this._lodging(res), away });
       } else {
         const away = (roads?.away.get(res.id) ?? []).map((w) => ({ t0: w.t0, t1: w.t1, exit: w.dock ? (this.dockSpot() ?? exitToward(this.places, w.yaw)) : exitToward(this.places, w.yaw), armed: w.armed }));   // LW5b: a passage leaves by the dock
-        plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away });
+        plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away, watch: this._watchSize });
       }
       e = { day, plan, roads: !!roads };
       this._plans.set(res.id, e);
@@ -386,7 +392,7 @@ export class LivingTown {
       if (line === null) return null;
       const w = this._walked(e, line, t);
       if (w.s < line.len) {
-        const p = pointOnLine(line, w.s);
+        const p = e.pair === 1 ? this._atShoulder(line, w.s) : pointOnLine(line, w.s);   // WATCH-DAY: the second of a pair
         return { x: p.x, z: p.z, yaw: p.yaw, moving: true, e, fromDoor: e.from.kind === 'door' && (t - e.t0) < DOOR_POP_MIN };
       }
       if (!after || !isOutdoor(after) || after.kind === 'walk') return null;   // arrived: in through the door, out of the gate
@@ -394,8 +400,25 @@ export class LivingTown {
     }
     if (!isOutdoor(e)) return null;
     const c = this._inCircle.get(res.id);
-    const st = c && c.spot === e.at ? circleStands(e.at, c.circle, this._street)[c.index] : aloneStand(e.at, res.id, this._street);   // LW-STAND
-    return { x: st.x, z: st.z, yaw: st.yaw, moving: false, e };
+    const inCircle = !!c && c.spot === e.at;
+    const st = inCircle ? circleStands(e.at, c.circle, this._street)[c.index] : aloneStand(e.at, res.id, this._street);   // LW-STAND
+    return { x: st.x, z: st.z, yaw: e.kind === 'post' && !inCircle ? e.at.yaw : st.yaw, moving: false, e };   // WATCH-DAY: a post keeps the road
+  }
+
+  /**
+   * WATCH-DAY: the second of a patrol's pair walks at the first's shoulder - PAIR_SIDE_M to his right where the street
+   * holds it, to his left where only that does, else a pace behind him on the way. @param {any} line @param {number} s
+   * @returns {{ x: number, z: number, yaw: number }}
+   */
+  _atShoulder(line, s) {
+    const p = pointOnLine(line, s);
+    const rx = Math.cos(p.yaw), rz = -Math.sin(p.yaw);   // the walker's right, his forward (sin, cos)
+    for (const side of [PAIR_SIDE_M, -PAIR_SIDE_M]) {
+      const x = p.x + rx * side, z = p.z + rz * side;
+      if (this._street.holds(x, z)) return { x, z, yaw: p.yaw };
+    }
+    const b = pointOnLine(line, Math.max(0, s - PAIR_BEHIND_M));
+    return { x: b.x, z: b.z, yaw: p.yaw };
   }
 
   _rowOf(res) { return this.pool.find((r) => r.res === res) ?? null; }
@@ -624,6 +647,9 @@ export class LivingTown {
       const dx = p.pos[0] - playerPos[0], dz = p.pos[2] - playerPos[2];
       const dist = Math.hypot(dx, dz);
       const allowChange = dist > POP_VISIBLE_RANGE || !this._inView(dx, dz, viewYaw);
+      // WATCH-DAY: one of the watch wears the uniform on duty and his own clothes off it - changed where nobody sees it
+      // (a body not yet stood, or out of the player's sight): never in view
+      if (res.guard && p.guard !== !!w.e.duty && (!row.visible || allowChange)) p.setIdentity(w.e.duty ? res.archive : (res.civvies ?? res.archive), !!w.e.duty);
       if (row.scheduleRecycle && allowChange) { this._free(row); continue; }
       if (row.scheduleEnable && !w.pending && (allowChange || w.fromDoor || (row.arrival && standing))) { row.scheduleEnable = false; row.visible = true; row.arrival = false; }
       if (!row.visible) continue;

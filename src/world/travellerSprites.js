@@ -75,10 +75,11 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
         pos: [0, 0, 0], facingYaw: 0, guard: false, archive: look.archive, pickpocketAttempted: false };
       return { res, archive: look.archive, tex, unit, walker: null, person, flat: null, batch: null, alpha: 0 };
     }
-    const walker = new ResidentWalker({}, { archive: res.archive, frameCount: (rec) => tex.getFrameCount(rec), groundY: () => 0 });
+    const archive = res.civvies ?? res.archive;   // WATCH-DAY: one of the watch here is off duty, in his own clothes (sync's own read)
+    const walker = new ResidentWalker({}, { archive, frameCount: (rec) => tex.getFrameCount(rec), groundY: () => 0 });
     walker.nameNPC = res.name; walker.personFaceRecordId = res.face; walker._talkSeed = talkSeed;
     walker.living = { id: res.id, res, town: living };
-    return { res, archive: res.archive, tex, unit: null, walker, person: walker, flat: null, batch: null, alpha: 0 };
+    return { res, archive, tex, unit: null, walker, person: walker, flat: null, batch: null, alpha: 0 };
   }
 
   /**
@@ -98,7 +99,7 @@ export function createTravellerSprites({ renderer, getTexture, uploadRecordFrame
       if (!m?.feet || !m.res) continue;
       const flat = m.flat ?? null;
       const look = flat ? null : classLookOf(m.res);
-      const archive = flat ? flat.archive : look ? look.archive : m.res.archive;
+      const archive = flat ? flat.archive : look ? look.archive : (m.res.civvies ?? m.res.archive);   // WATCH-DAY: a watchman off duty in his own clothes
       const tex = texOf(archive);
       if (!tex || typeof tex.then === 'function') continue;   // loading, or no art: not yet
       seen.add(m.key);

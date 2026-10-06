@@ -10,7 +10,7 @@ import { synthTown } from './lwTown.mjs';
 import { LivingTown, LIVING_RANGE, CENSUS_PATHS, WALK_STRAY_M, walkGap } from '../src/systems/livingWorld/livingTown.js';
 import { ResidentWalker } from '../src/characters/residentWalker.js';
 import { PERSON_MOVE_SPEED } from '../src/characters/mobilePerson.js';
-import { DAY_MIN, MIN_STAY, schedule, walkMinutes, dayPlan, guardBeat } from '../src/systems/livingWorld/dayPlan.js';
+import { DAY_MIN, MIN_STAY, schedule, walkMinutes, dayPlan, watchDuty, patrolBeat, WATCH_SHIFTS } from '../src/systems/livingWorld/dayPlan.js';   // WATCH-DAY: PIN MOVED
 import { townPlaces } from '../src/systems/livingWorld/places.js';
 import { townCensus } from '../src/systems/livingWorld/census.js';
 import { createRelations, RELATIONS_MAX, EVENTS } from '../src/systems/livingWorld/relations.js';
@@ -73,20 +73,22 @@ test('LW-FIX3 the watch\'s beat: each stop a stay\'s length at the least (MIN_ST
   const { nav, buildings, doors } = synthTown();
   const places = townPlaces(nav, doors, buildings);
   const census = townCensus({ mapId: 12345, blocks: 9, region: 17, people: 3, port: false }, buildings);
+  // WATCH-DAY: PIN MOVED - the watch's three shifts (the night's run past the day's turn, held to it), each patrol's beat
+  // its own district; the last stop held to the shift's end, so the beat is walked to it
   let shifts = 0;
   for (const g of census.filter((r) => r.job === 'guard')) {
     for (const day of [100, 101, 102]) {
-      const shift = (g.slot + day) % 3;
-      if (shift === 2) continue;
+      const duty = watchDuty(g, places, day, 1);
+      if (duty.shift === 3) continue;
       shifts++;
-      const [from, until] = shift === 0 ? [6 * 60, 16 * 60] : [14 * 60, 24 * 60];
-      const D = day * DAY_MIN;
-      const watches = dayPlan(g, places, day, { mpm: MPM }).filter((e) => e.kind === 'watch');
+      const [from, until] = WATCH_SHIFTS[duty.shift].map((h) => h * 60);
+      const D = day * DAY_MIN, end = Math.min(until, 28 * 60);   // the night's held to the day's turn
+      const watches = dayPlan(g, places, day, { mpm: MPM }).filter((e) => e.kind === 'watch' && e.t0 >= D + 6 * 60);
       assert.ok(watches.every((w) => w.t1 - w.t0 >= MIN_STAY), `${g.id} day ${day}: no stop under a stay`);
       assert.ok(watches[0].t0 - D < from + 30, `${g.id} day ${day}: on the beat from the shift's start`);
-      assert.ok(watches[watches.length - 1].t1 - D > until - 30, `${g.id} day ${day}: walked to the shift's end (${(watches[watches.length - 1].t1 - D) / 60})`);
+      assert.equal(watches[watches.length - 1].t1 - D, end, `${g.id} day ${day}: walked to the shift's end`);
       const posts = new Set(watches.map((w) => w.at));
-      assert.equal(posts.size, guardBeat(g, places, day).length, 'every post of the beat');
+      assert.equal(posts.size, patrolBeat(places, g.town, duty.company, duty.patrol, day, duty.shift).length, 'every stop of the beat');
     }
   }
   assert.ok(shifts >= 4);

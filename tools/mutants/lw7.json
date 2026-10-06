@@ -409,11 +409,12 @@
   {
     "name": "LW7-slain-left-standing",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    this._take(res);\n    return res.id;\n  }\n\n  /** LW7: one of the watch STRUCK",
-    "new": "    return res.id;\n  }\n\n  /** LW7: one of the watch STRUCK",
+    "old": "    this._lent.delete(res.id);   // WATCH-FIX: his guard cut down\n    this._take(res);",
+    "new": "    this._lent.delete(res.id);   // WATCH-FIX: his guard cut down",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "WATCH-DAY (re-aimed by content): WATCH-FIX set killed() between slain() and struck(), and the record's text - the take before the struck's comment - had moved onto killed()'s own take, where lw7_deeds cannot see it (it survived); aimed at slain()'s take again, and killed()'s has its own record (watchfix.json WATCH-FIX-killed-left-standing)."
   },
   {
     "name": "LW7-slain-other-town",

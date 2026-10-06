@@ -117,9 +117,11 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
   function - a share of a sea lane - and one name for two pushed audit24's one-home ratchet past 30); `createPathBook`
   keeps 768 walks and spends a frame's search budget - LW-PERF: a frame's CELLS (`cells`), the walks
   asked queued and searched in slices (`townPathSearch`, the same answer whole or sliced).
-- **`dayPlan.js`.** The living day 04:00-04:00 (`DAY_START_MIN`), every minute covered once. Wake and bed by temper
+- **`dayPlan.js`.** The living day 04:00-04:00 (`DAY_START_MIN`), every minute covered once (WATCH-DAY: a day's
+  watchman's walk out across the turn, `morningWalk`, the one entry both days carry). Wake and bed by temper
   (a lark 05-06 and 20-21, the day 06-07:30 and 21:30-23, an owl 08-10 and 00:30-02); the watch by shift
-  (`(slot + day) mod 3`: 06-16, 14-24, a day off). The jobs' days as the code says them, the favourites (`favourites`:
+  (WATCH-DAY: `(slot + day) mod 4` - 06-14, 14-22, 22-06 over the day's turn, a day off; the first cut's `mod 3` kept
+  06-16, 14-24 and nobody the night). The jobs' days as the code says them, the favourites (`favourites`:
   two social spots, a tavern, a temple, a guild and a market, near home, the seed's alone) set where; a stroll (two
   short stops) for the sociable; a lark's turn about town at first light. `schedule` lays them: each begins when the
   walk allows and not before its hour, nor more than its slack after; a stay ends by its `until`, by the walk home
@@ -1052,6 +1054,64 @@ its root; the classic lane's DFU watch is untouched but for the race (DFU's own 
   walk-away; the ends; a load's resident; the town's side; online; the hosts) and `tools/mutants/watchfix.json`.
   PIN MOVED: `lwfix2_watch`, `lwfix5_deep`, `lw7_deeds` (the first cut's model, `dead` read as a kill, and its
   wiring), and every relay pin to world172.
+
+## WATCH-DAY - the watch keeps the town round the clock (2026-10-05)
+
+Mac: "improve the guards" - asked which, the night watch, gate posts and pairs ("gate post per exit for shift, rest
+patrol in pairs, uniform only on duty"). The first cut kept two shifts (06-16, 14-24) and a day off on a two-to-twelve
+watch: from midnight to six nobody was on watch (the investigation's: none outdoors 01-03h); every watchman walked his
+own beat of four to six spots drawn from the whole town alone - no posts, and two shared a stop in under 3% of the
+samples; and off duty he walked the evening still in uniform and still a guard to the crime response and the watch's
+stop, so at five in the evening more "guards" walked the street than mid-shift.
+
+- **The watch** (`census.js` WATCH_COMPANIES, `watchShiftSize`, `townWatchCount`). Four companies, one to each day of the
+  rotation, each of the town's strength a shift: none in a hamlet, one in a village, a pair from nine blocks and a
+  gate's post for each nine more, to six (a pair and four gates) - four to twenty-four in all. Each watchman has his own
+  clothes (`civvies`, one of his people's outfits, drawn on a stream of its own so the rest of him is as he was).
+- **The duty** (`dayPlan.js` WATCH_SHIFTS, WATCH_ROTATION, `watchDuty`). A watchman's shift is a shift later each day:
+  the day's 06-14, the evening's 14-22, the night's 22-06, then a day off - never a shift begun inside eight hours of
+  the last one's end. The slots that share a residue are a company and stand every watch together. Its first two PATROL
+  as a pair, one alone where the company is one; the rest are POSTED at the town's gates, one to an exit, the gate each
+  keeps turning by the day; more than the gates patrol as a second pair.
+- **The patrol** (`patrolBeat`, `patrolStops`). A patrol walks a district: four to six spots (exits, social spots,
+  markets) nearest an anchor it draws, as a ring about their middle - the first cut's stops lay across the whole town,
+  and in a great city a leg ran past an hour of the clock, so the beat ran out of reachable stops hours before its
+  shift's end. Its stops are laid on the clock from the shift's start, so the two of a pair are at the same stop at the
+  same minute wherever they live, and the last is held to the shift's end (two stops are never further apart than the
+  walk home and back and `HOME_GAP`, so the long gap's rule never sends a patrol home mid-beat). On the street the second of a pair walks at the first's shoulder (`livingTown.js _atShoulder`, PAIR_SIDE_M to his
+  right where the street holds it, to his left, else PAIR_BEHIND_M behind); at a stop the two stand together as any two
+  met there do (meetups.js).
+- **The post** (`'post'`, OUTDOOR). A gate's watchman stands it all shift, facing out of town (the exit's own yaw) when
+  he stands alone.
+- **The night over the day's turn** (`nightTail`, `schedule`'s `start`). The night runs past 04:00: the night's plan
+  holds its post or its patrol's last stop to the turn, and the next day's begins THERE - read off the night's own plan
+  (the first cut replayed the night's stops apart from it, and a man its clock had put elsewhere began the morning at a
+  post he had left) - keeps the watch to six, walks home and sleeps the morning; up in the afternoon, the evening his,
+  abed early for the morning's shift. A night watchman wakes late and keeps his afternoon before it. A town with no
+  spots for a beat has nobody on watch at the turn: the morning begins at home.
+- **The watch's clock** (`schedule`, `morningWalk`). Every watchman is on his post or his patrol's first stop by his
+  shift's hour and keeps it to its end. Whatever his bedtime: a duty stay is never cut by the walk home before bed (the
+  first cut's was, and on the synthetic town of eight blocks by eight - a walk across it near three hours - ten days
+  cut 66 shifts short, and 34 times the night's man walked home before the turn while the next day began him at his
+  post: a jump across the town). An evening off ends in time to change at home and walk out to the watch on its hour
+  (a supper had the night's man late). And in a great city the day's watchman whose walk out is longer than the two
+  hours from the turn to six leaves before the turn: his day off ends on the walk and his day begins on it, the one
+  entry both days carry, so the town draws it unbroken across 04:00 (the first cut began him at his door at the turn,
+  and half the day's watch came on up to 53 minutes late, the gate empty since the night's man went home at six).
+- **The uniform on duty** (`duty`, the plan's marks; `livingTown.js` update; `travellerSprites.js`). The walk out, the
+  watch or the post and the walk home carry `duty`; nothing else does, and a change of duty goes by home - into the
+  uniform and out of it indoors (a stay at the same spot read as the watch had kept one man in uniform to the evening).
+  The street dresses one of the watch by it - GUARD_TEXTURE and the guard's flag on duty, his own clothes off it - and
+  never in the player's sight (a body not yet stood, or out of view); so off duty he is nobody the crime response turns
+  or the watch's stop asks after. A room draws him in his own clothes.
+- **The four hosts.** WATCH-DAY is the living world's core (`census.js`, `dayPlan.js`, `livingTown.js`) and the rooms'
+  drawing (`world/travellerSprites.js`): `scenes/world.js` stands the street that dresses him; `scenes/worldModes.js`
+  the rooms (LW8, through the sprites); `scenes/exterior.js` - the fixed-city page has no living town;
+  `scenes/dungeonContext.js` - no watch stands there.
+- **Pinned** by `test/watchday_watch.test.js` (the strength; the duty; round the clock; the night over the turn; the pair;
+  the uniform; the post; a great city) and `tools/mutants/watchday.json`. PIN MOVED: `lw1_livingWorld` (the census's watch, the
+  shifts), `lwfix3_town` (the beat to the shift's end), `watchfix_watch` (the census full, a returning resident comes on
+  as the player turns; his patrol's mate a witness).
 ## The four hosts
 
 - `scenes/world.js` - WIRED (LW2 the towns, LW3 the roads and the Overworld).

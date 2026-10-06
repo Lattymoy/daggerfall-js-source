@@ -83,20 +83,22 @@
   {
     "name": "LW1-watch-cap",
     "file": "src/systems/livingWorld/census.js",
-    "old": "  return b >= 4 ? Math.max(2, Math.min(12, 1 + Math.floor(b / 4))) : (b >= 2 ? 1 : 0);",
-    "new": "  return b >= 4 ? Math.max(2, Math.min(11, 1 + Math.floor(b / 4))) : (b >= 2 ? 1 : 0);",
+    "old": "  return b >= 2 ? Math.max(1, Math.min(6, 1 + Math.floor(b / 9))) : 0;",
+    "new": "  return b >= 2 ? Math.max(1, Math.min(7, 1 + Math.floor(b / 9))) : 0;",
     "tests": [
       "test/lw1_livingWorld.test.js"
-    ]
+    ],
+    "note": "WATCH-DAY (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW1-watch-hamlet",
     "file": "src/systems/livingWorld/census.js",
-    "old": "  return b >= 4 ? Math.max(2, Math.min(12, 1 + Math.floor(b / 4))) : (b >= 2 ? 1 : 0);",
-    "new": "  return b >= 4 ? Math.max(2, Math.min(12, 1 + Math.floor(b / 4))) : (b >= 1 ? 1 : 0);",
+    "old": "  return b >= 2 ? Math.max(1, Math.min(6, 1 + Math.floor(b / 9))) : 0;",
+    "new": "  return b >= 1 ? Math.max(1, Math.min(6, 1 + Math.floor(b / 9))) : 0;",
     "tests": [
       "test/lw1_livingWorld.test.js"
-    ]
+    ],
+    "note": "WATCH-DAY (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW1-guard-female",
@@ -317,20 +319,23 @@
   {
     "name": "LW1-fields-seen",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch']));",
-    "new": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'fields']));",
+    "old": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post']));",
+    "new": "export const OUTDOOR = Object.freeze(new Set(['walk', 'market', 'social', 'stall', 'beg', 'dock', 'watch', 'post', 'fields']));",
     "tests": [
       "test/lw1_livingWorld.test.js"
-    ]
+    ],
+    "note": "WATCH-DAY (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW1-shift-law",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "  const shift = res.job === 'guard' && !visitor ? (res.slot + day) % 3 : -1;",
-    "new": "  const shift = res.job === 'guard' && !visitor ? (res.slot + day) % 2 : -1;",
+    "old": "  const shift = res.job === 'guard' && !visitor ? watchDuty(res, places, day, watchSize).shift : -1;",
+    "new": "  const shift = res.job === 'guard' && !visitor ? (res.slot + day) % 3 : -1;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
-    ]
+      "test/lw1_livingWorld.test.js",
+      "test/watchday_watch.test.js"
+    ],
+    "note": "WATCH-DAY (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW1-gap-not-home",
@@ -344,11 +349,12 @@
   {
     "name": "LW1-lingers",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "      else go(/** @type {Spot} */ (it.at), cursor + walkMinutes(at, it.at, mpm), {}, it.kind);",
+    "old": "      else go(/** @type {Spot} */ (it.at), cursor + walkMinutes(at, it.at, mpm), {}, it.kind, it.mark ?? null);",
     "new": "      else void 0;",
     "tests": [
       "test/lw1_livingWorld.test.js"
-    ]
+    ],
+    "note": "WATCH-DAY (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW1-no-gear",
@@ -380,11 +386,12 @@
   {
     "name": "LW1-walk-from-nowhere",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "    if (m > 0) { fill(Math.max(cursor, by - m)); push('walk', to, cursor, cursor + m, { from: at, to, ...extra }); cursor += m; }",
-    "new": "    if (m > 0) { fill(Math.max(cursor, by - m)); push('walk', to, cursor, cursor + m, { from: to, to, ...extra }); cursor += m; }",
+    "old": "    if (m > 0) { fill(Math.max(cursor, by - m)); push('walk', to, cursor, cursor + m, { from: at, to, ...(atMark ?? {}), ...(arriveMark ?? {}), ...extra }); cursor += m; }",
+    "new": "    if (m > 0) { fill(Math.max(cursor, by - m)); push('walk', to, cursor, cursor + m, { from: to, to, ...(atMark ?? {}), ...(arriveMark ?? {}), ...extra }); cursor += m; }",
     "tests": [
       "test/lw1_livingWorld.test.js"
-    ]
+    ],
+    "note": "WATCH-DAY (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW1-favourites-daily",

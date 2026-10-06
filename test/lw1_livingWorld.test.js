@@ -17,7 +17,7 @@ import {
 } from '../src/systems/livingWorld/census.js';
 import { townPlaces, streetNet, exitToward, exitNearest, SOCIAL_OUT, MARKET_OUT } from '../src/systems/livingWorld/places.js';
 import { findTownPath, pathLine, pointOnLine, stepCost, createPathBook } from '../src/systems/livingWorld/townPaths.js';
-import { dayPlan, entryAt, isOutdoor, walkMinutes, schedule, guardBeat, favourites, DAY_START_MIN, DAY_MIN, MIN_STAY, GEAR_MIN, HOME_GAP, WALK_DETOUR, WALK_EXTRA_M } from '../src/systems/livingWorld/dayPlan.js';
+import { dayPlan, entryAt, isOutdoor, walkMinutes, schedule, watchDuty, patrolBeat, WATCH_SHIFTS, favourites, DAY_START_MIN, DAY_MIN, MIN_STAY, GEAR_MIN, HOME_GAP, WALK_DETOUR, WALK_EXTRA_M } from '../src/systems/livingWorld/dayPlan.js';   // WATCH-DAY: PIN MOVED - the watch's duty and its patrol's beat
 import { spotCircles, circleLine, circleStands, aloneStand, lineMinutes, ROUND_S, TALK_SHARE, CIRCLE_APART } from '../src/systems/livingWorld/meetups.js';
 import { fillLine, firstNameOf, pickScript, TOWN_TALKS, JOB_TALKS, LIVING_GREETINGS, TOKEN_FALLBACK } from '../src/systems/livingWorld/lines.js';
 import { createRelations, regardStanding, EVENTS, FRIEND_AT, ENEMY_AT, HOSTILE_AT, EASE_PER_DAY, RELATIONS_MAX, LIVING_WORLD_VENDOR } from '../src/systems/livingWorld/relations.js';
@@ -39,18 +39,18 @@ test('LW1 seeds: the port\'s one mix under the living world\'s salt (hash32), mu
   assert.equal(textSeed('a'), Math.imul(0x811c9dc5 ^ 97, 0x01000193) >>> 0);
 });
 
-test('LW1 census: the travellers a town keeps by its size and its port (merchants from two blocks, sellswords from nine, adventurers from four, sailors at a port, pilgrims from two, couriers from sixteen, a pedlar everywhere and one more each six blocks to six - LW3); the watch two to twelve in a town, one in a hamlet of two, none in one (mutants: each threshold and clamp)', () => {
+test('LW1 census: the travellers a town keeps by its size and its port (merchants from two blocks, sellswords from nine, adventurers from four, sailors at a port, pilgrims from two, couriers from sixteen, a pedlar everywhere and one more each six blocks to six - LW3); the watch four companies of its strength a shift - none in a hamlet of one, four from two blocks, eight from nine, to twenty-four (WATCH-DAY: PIN MOVED) (mutants: each threshold and clamp)', () => {
   const rows = [[1, false], [2, false], [4, false], [8, false], [9, false], [16, true], [36, false], [64, true]].map(([blocks, port]) => [travellerCounts({ mapId: 1, blocks, port }), townWatchCount({ mapId: 1, blocks })]);
   assert.deepEqual(rows, [
     [{ merchant: 0, mercenary: 0, adventurer: 0, sailor: 0, pilgrim: 0, courier: 0, pedlar: 1 }, 0],
-    [{ merchant: 1, mercenary: 0, adventurer: 0, sailor: 0, pilgrim: 1, courier: 0, pedlar: 1 }, 1],
-    [{ merchant: 1, mercenary: 0, adventurer: 1, sailor: 0, pilgrim: 1, courier: 0, pedlar: 1 }, 2],
-    [{ merchant: 2, mercenary: 0, adventurer: 1, sailor: 0, pilgrim: 1, courier: 0, pedlar: 2 }, 3],
-    [{ merchant: 2, mercenary: 1, adventurer: 1, sailor: 0, pilgrim: 1, courier: 0, pedlar: 2 }, 3],
-    [{ merchant: 3, mercenary: 2, adventurer: 2, sailor: 3, pilgrim: 2, courier: 1, pedlar: 3 }, 5],
-    [{ merchant: 5, mercenary: 4, adventurer: 4, sailor: 0, pilgrim: 2, courier: 2, pedlar: 6 }, 10],
-    [{ merchant: 5, mercenary: 6, adventurer: 6, sailor: 6, pilgrim: 2, courier: 2, pedlar: 6 }, 12],
-  ]);
+    [{ merchant: 1, mercenary: 0, adventurer: 0, sailor: 0, pilgrim: 1, courier: 0, pedlar: 1 }, 4],
+    [{ merchant: 1, mercenary: 0, adventurer: 1, sailor: 0, pilgrim: 1, courier: 0, pedlar: 1 }, 4],
+    [{ merchant: 2, mercenary: 0, adventurer: 1, sailor: 0, pilgrim: 1, courier: 0, pedlar: 2 }, 4],
+    [{ merchant: 2, mercenary: 1, adventurer: 1, sailor: 0, pilgrim: 1, courier: 0, pedlar: 2 }, 8],
+    [{ merchant: 3, mercenary: 2, adventurer: 2, sailor: 3, pilgrim: 2, courier: 1, pedlar: 3 }, 8],
+    [{ merchant: 5, mercenary: 4, adventurer: 4, sailor: 0, pilgrim: 2, courier: 2, pedlar: 6 }, 20],
+    [{ merchant: 5, mercenary: 6, adventurer: 6, sailor: 6, pilgrim: 2, courier: 2, pedlar: 6 }, 24],
+  ]);   // WATCH-DAY: PIN MOVED - the watch four companies of its strength a shift (watchday_watch.test.js)
 });
 
 test('LW1 census: a resident is a DFU townsperson drawn once - the climate\'s people for the billboard, one of the four outfits of their sex, the talk portrait PERSON_FACE_RECORDS[race][sex][outfit] + 0..23, the region\'s name bank; the watch rides GUARD_TEXTURE, male, outfit 0; the armed carry their job\'s class; ids are the town\'s and the slot\'s; the same for every reader and DFRandom\'s stream put back as it stood (mutants: a re-roll per call, the guard\'s sex, the face law, the stream left moved)', () => {
@@ -75,7 +75,7 @@ test('LW1 census: a resident is a DFU townsperson drawn once - the climate\'s pe
     else assert.equal(r.cls, null);
   }
   const watch = watchRoster(town);
-  assert.equal(watch.length, 5);
+  assert.equal(watch.length, 8, 'WATCH-DAY: PIN MOVED - four companies of a pair (sixteen blocks)');
   for (const g of watch) {
     assert.equal(g.archive, GUARD_TEXTURE); assert.equal(g.guard, true); assert.equal(g.sex, 'male'); assert.equal(g.variant, 0);
     assert.match(g.id, /^L777\.w\d$/);
@@ -195,7 +195,7 @@ test('LW1 the day turns at 04:00 (DAY_START_MIN) and runs 1440 minutes (mutants:
   assert.deepEqual([DAY_START_MIN, DAY_MIN], [240, 1440]);
 });
 
-test('LW1 the day: every resident\'s day covers 04:00 to 04:00 once, entry to entry; a walk leaves from where they were and a stay is reached by a walk; the keeper keeps the shop 08:00-18:00, the innkeeper serves at the tavern from 11:00 to bed, the farmer is in the fields 06:00-17:00, the watch walks its beat by shift ((slot + day) mod 3) and only the beat is outdoors; the same day for every reader (mutants: a gap, a jump, the keeper\'s hours, the farmer\'s fields indoors, the shift law)', () => {
+test('LW1 the day: every resident\'s day covers 04:00 to 04:00 once, entry to entry; a walk leaves from where they were and a stay is reached by a walk; the keeper keeps the shop 08:00-18:00, the innkeeper serves at the tavern from 11:00 to bed, the farmer is in the fields 06:00-17:00, the watch walks its beat by its shift (WATCH-DAY: watchDuty, `(slot + day) mod 4`) and only the beat is outdoors; the same day for every reader (mutants: a gap, a jump, the keeper\'s hours, the farmer\'s fields indoors, the shift law)', () => {
   const { nav, buildings, doors } = synthTown();
   const places = townPlaces(nav, doors, buildings);
   const census = townCensus(TOWN, buildings);
@@ -248,16 +248,17 @@ test('LW1 the day: every resident\'s day covers 04:00 to 04:00 once, entry to en
   const fields = fp.find((e) => e.kind === 'fields');
   assert.deepEqual([fields.t0 - D, fields.at.kind, isOutdoor(fields)], [6 * 60, 'exit', false], 'in the fields at six, out of town, unseen');
   assert.ok(fields.t1 - D >= 17 * 60 && fields.t1 - D < 18 * 60, 'till five (and the walk to the evening\'s spot after)');
+  // WATCH-DAY: PIN MOVED - the watch's three shifts and its day off, a patrol on its own beat (test/watchday_watch.test.js)
   for (const g of census.filter((r) => r.job === 'guard')) {
     for (const day of [100, 101, 102]) {
       const gp = dayPlan(g, places, day, { mpm: MPM });
-      const watches = gp.filter((e) => e.kind === 'watch');
-      const shift = (g.slot + day) % 3;
-      if (shift === 2) { assert.equal(watches.length, 0, 'a rest day'); continue; }
+      const watches = gp.filter((e) => e.kind === 'watch' && e.t0 >= day * DAY_MIN + 6 * 60);   // not the night's tail, before six
+      const duty = watchDuty(g, places, day, 1);
+      if (duty.shift === 3) { assert.equal(watches.length, 0, 'a rest day (after the night\'s tail)'); continue; }
       assert.ok(watches.length >= 3, 'the beat walked');
-      const [from, until] = shift === 0 ? [6 * 60, 16 * 60] : [14 * 60, 24 * 60];
-      assert.ok(watches[0].t0 >= day * DAY_MIN + from && watches[watches.length - 1].t1 <= day * DAY_MIN + until, 'within the shift');
-      const beat = guardBeat(g, places, day);
+      const [from, until] = WATCH_SHIFTS[duty.shift];
+      assert.ok(watches[0].t0 >= day * DAY_MIN + from * 60 && watches[watches.length - 1].t1 <= day * DAY_MIN + until * 60, 'within the shift');
+      const beat = patrolBeat(places, g.town, duty.company, duty.patrol, day, duty.shift);
       assert.ok(watches.every((w) => beat.includes(w.at)));
     }
   }

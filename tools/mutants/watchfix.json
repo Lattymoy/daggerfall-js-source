@@ -332,5 +332,15 @@
       "test/watchfix_watch.test.js",
       "test/auditdisc19.test.js"
     ]
+  },
+  {
+    "name": "WATCH-FIX-killed-left-standing",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    this._lent.delete(res.id);\n    this._take(res);\n    return res.id;\n  }\n\n  /** LW7: one of the watch STRUCK",
+    "new": "    this._lent.delete(res.id);\n    return res.id;\n  }\n\n  /** LW7: one of the watch STRUCK",
+    "tests": [
+      "test/watchfix_watch.test.js"
+    ],
+    "note": "WATCH-DAY: killed()'s take, which LW7-slain-left-standing's text had drifted onto - the killed gone for the day."
   }
 ]

@@ -177,7 +177,7 @@ function makeTown(extra = {}) {
   return { town, clock, rel, kills, slays };
 }
 /** Run `seconds` at 30 frames a second, the player at `at`. */
-function run(t, seconds, at) { for (let i = 0; i < Math.round(seconds * 30); i++) { t.clock.t += RATE / 30; t.town.update(1 / 30, at, 0, at, true); } }
+function run(t, seconds, at, yaw = 0) { for (let i = 0; i < Math.round(seconds * 30); i++) { t.clock.t += RATE / 30; t.town.update(1 / 30, at, yaw, at, true); } }
 /** One of the watch on the street with the player beside him: his resident, his row, where the player stands. */
 function watchmanOnStreet(t) {
   const day = t.town.dayOf(t.clock.t);
@@ -217,7 +217,7 @@ test('WATCH-FIX the walk-away: a watchman the crime turned is LENT to his guard 
   guards.length = 0;   // spliced (no corpse)
   assert.equal(turned.length, 0);
   assert.equal(t.town._lent.has(res.id), false);
-  run(t, 8, at);   // a full street: he comes on as a row frees out of the player's sight (the census's own rule)
+  run(t, 8, at, Math.PI);   // a full street: he comes on as a row frees out of the player's sight (the census's own rule) - the player turned
   assert.ok(onStreet(t, res), 'back on his beat');
   assert.deepEqual([t.slays, t.kills], [[], []], 'nobody slain, nobody killed');
   for (const kin of t.town.kinOf(res)) assert.equal(t.rel.regard(kin.id, t.town.dayOf(t.clock.t)), 0, `${kin.id}: nothing turned`);
@@ -232,7 +232,7 @@ test('WATCH-FIX the walk-away: a watchman the crime turned is LENT to his guard 
   assert.equal(t2.town._taken.has(g2.res.id), false, 'lent first: the census never takes him');
   guard2.dead = true;
   watchStep(turned2, []);
-  run(t2, 8, g2.at);
+  run(t2, 8, g2.at, Math.PI);
   assert.ok(onStreet(t2, g2.res), 'and back');
 });
 
@@ -249,7 +249,10 @@ test('WATCH-FIX the ends: the player\'s own blow SLAYS him (the town\'s deed, on
   for (let i = 0; i < 5; i++) watchStep(turned, guards);   // the body lies in the list, beat after beat
   assert.equal(t.slays.length, 1, 'slain once');
   assert.equal(t.slays[0].id, res.id);
-  for (const kin of t.town.kinOf(res)) assert.equal(t.rel.regard(kin.id, day), EVENTS.slain, `${kin.id}: his household turned, once`);
+  for (const kin of t.town.kinOf(res)) {   // his household turned, once - and one who saw it (his patrol's mate beside him) counts the crime too
+    const r = t.rel.regard(kin.id, day);
+    assert.ok(r === EVENTS.slain || r === EVENTS.slain + EVENTS.crime, `${kin.id}: his household turned, once (${r})`);
+  }
   run(t, 2, at);
   assert.equal(onStreet(t, res), false, 'dead: never back');
   // another hand
@@ -347,7 +350,7 @@ test('WATCH-FIX online: the watch\'s record names the resident its watchman stan
   run(t, 2, at);
   assert.equal(onStreet(t, res), false, 'and kept off while the record stands');
   t.town.peerLend(new Set());
-  run(t, 8, at);
+  run(t, 8, at, Math.PI);
   assert.ok(onStreet(t, res), 'the record gone: back on his beat');
   assert.equal(t.town._taken.has(res.id), false, 'never taken');
 });
