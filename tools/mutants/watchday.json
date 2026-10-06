@@ -236,8 +236,8 @@
   {
     "name": "WATCH-DAY-no-shoulder",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "        const p = e.pair === 1 ? this._atShoulder(line, w.s) : pointOnLine(line, w.s);   // WATCH-DAY: the second of a pair",
-    "new": "        const p = pointOnLine(line, w.s);   // WATCH-DAY: the second of a pair",
+    "old": "        const p = e.pair === 1 ? this._atShoulder(line, w.s) : pointOnLine(line, Math.max(0, w.s - this._fileOf(res, e) * FILE_M));",
+    "new": "        const p = pointOnLine(line, Math.max(0, w.s - this._fileOf(res, e) * FILE_M));",
     "tests": [
       "test/watchday_watch.test.js"
     ]

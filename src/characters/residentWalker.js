@@ -56,7 +56,8 @@ export class ResidentWalker extends MobilePerson {
   /** The facing the watch's conversion and a guard's spawn read (G1). */
   get facingYaw() { return this.yaw; }
 
-  /** Nothing on the grid to claim: a resident walks the path its day laid, through the others as DFU's walkers pass. */
+  /** Nothing on the grid to claim: a resident walks the path its day laid - LW-SPACE: and steps aside for the others
+   *  (livingTown.js `_dodge`; DFU's walkers keep apart by the tiles they claim, `_setTarget`). */
   release() {}
 
   /** A resident's own outfit (the body is dressed as another resident - livingTown.js `_dress`). @param {number} archive @param {boolean} guard */

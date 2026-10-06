@@ -199,7 +199,7 @@ test('LW-STAND the town: every resident at a stay through the day stands where t
       const c = town._inCircle.get(res.id);
       if (c && c.spot === w.e.at) {
         circled++;
-        const drawn = circleStands(w.e.at, c.circle)[c.index];
+        const drawn = circleStands(w.e.at, c.circle)[c.circle.members.findIndex((m) => m.id === res.id)];   // LW-SPACE: PIN MOVED - a member's place is the round's laying's (`place`)
         if (!on(drawn.x, drawn.z)) circleOff++;
       } else if (!on(aloneStand(w.e.at, res.id).x, aloneStand(w.e.at, res.id).z)) aloneOff++;
       assert.ok(on(w.x, w.z), `${res.id} at ${w.e.at.key}, minute ${m}${c ? ' in a circle' : ''}: on the street`);

@@ -17,7 +17,7 @@ import { ResidentWalker, STAND_FRAME } from '../src/characters/residentWalker.js
 import { PERSON_IDLE_RECORD, PERSON_GUARD_IDLE_RECORD, MOVE_RECORDS, MOVE_FLIPS, PERSON_MOVE_SPEED, PERSON_IDLE_DISTANCE } from '../src/characters/mobilePerson.js';
 import { mobileOrientation } from '../src/characters/mobileUnit.js';
 import {
-  spotRound, spotCircles, dealCircles, circleSlots, exchangeAt, slotSpoken, exchangeScript, circleLine, circleStands, aloneStand,
+  spotRound, spotCircles, dealCircles, circleSlots, exchangeAt, slotSpoken, exchangeScript, circleLine, circleStands, circlesStands, aloneStand,
   lineMinutes, ROUND_S, GATHER_BEAT_S, OPEN_S, PAUSE_S, SLOT_LINES, CLOSE_S, TALK_SHARE, ALONE_FAR_M,
 } from '../src/systems/livingWorld/meetups.js';
 import { pickScript, MORNING_TALKS, DAY_TALKS, JOB_TALKS, TOKEN_FALLBACK } from '../src/systems/livingWorld/lines.js';
@@ -232,8 +232,11 @@ test('LW-TALK on the street: a circle\'s talk waits for its people to gather - f
     for (const res of t.town.peopleOf(t.town.dayOf(t.town._now))) for (const e of t.town.planOf(res, t.town.dayOf(t.town._now))) if (e.kind !== 'walk' && isOutdoor(e) && e.at === spot && e.t0 <= t.town._now) list.push({ who: res, t0: e.t0, t1: e.t1 });
     const now = spotCircles(spot.key, list, t.town._now, roundMin).find((x) => x.seed === c.circle.seed);
     const was = new Map();
-    for (const x of spotCircles(spot.key, list, now.start - 1e-6, roundMin)) circleStands(spot, x, t.town._street).forEach((st, i) => was.set(x.members[i].id, st));
-    const places = circleStands(spot, now, t.town._street);
+    // LW-SPACE: PIN MOVED - a round's circles at a spot are laid together (meetups.js circlesStands), none on another
+    const before = spotCircles(spot.key, list, now.start - 1e-6, roundMin);
+    circlesStands(spot, before, t.town._street).forEach((ps, ci) => ps.forEach((st, i) => was.set(before[ci].members[i].id, st)));
+    const all = spotCircles(spot.key, list, t.town._now, roundMin);
+    const places = circlesStands(spot, all, t.town._street)[all.findIndex((x) => x.seed === now.seed)];
     const far = Math.max(...now.members.map((mm, i) => { const a = was.get(mm.id) ?? aloneStand(spot, mm.id, t.town._street); return Math.hypot(places[i].x - a.x, places[i].z - a.z); }));
     assert.ok(Math.abs(c.circle.from - (now.start + (far / PERSON_MOVE_SPEED + GATHER_BEAT_S) * RATE)) < 1e-9, 'gathered at the walking pace');
     gathered++;

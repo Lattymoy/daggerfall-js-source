@@ -23,7 +23,9 @@
 //
 // WHERE THEY STAND (`circleStands`): each circle about a point of the spot - the circles round the spot's centre on
 // the golden angle, outward as they number - its people facing in toward one another; one alone stands at a place of
-// their own about the spot.
+// their own about the spot. LW-SPACE (2026-10-06, Mac: "I notice NPCs and walk stuck inside each other"): NONE ON
+// ANOTHER - a round's circles at a spot laid together (`circlesStands`), and those alone at it each SPACE_M from every
+// place taken before them (`aloneStands`).
 import { CREW_LINE_S } from '../naval/crewLife.js';   // the crew's beat: one export, read here
 import { lwSeed, textSeed } from './seed.js';
 import { pickScript, fillLine, firstNameOf, newsScript } from './lines.js';
@@ -304,6 +306,111 @@ export function aloneStand(spot, id, street = null) {
   const got = { x: spot.x + Math.sin(b) * rr, z: spot.z + Math.cos(b) * rr, yaw: b + Math.PI };
   kept.set(key, got);
   return got;
+}
+
+/** LW-SPACE: how far apart two people standing at a spot keep (m) - a body's breadth (places.js STAND_REACH_M either side
+ *  of its middle) and a hand more; a circle's own stand CIRCLE_APART apart. */
+export const SPACE_M = 0.9;
+/** LW-SPACE: the steps one alone's place is looked for in about the spot when their own is taken (m out or in, and m of
+ *  arc), and the farthest out it is looked for (m). */
+export const SPACE_STEP_M = 0.45;
+export const SPACE_FAR_M = 12;
+
+/**
+ * LW-SPACE: THE PLACES OF THOSE ALONE AT A SPOT, none on another nor on a circle - each one's own place (`aloneStand`)
+ * where it keeps SPACE_M from every place already taken (`taken`: the circles' people, and those alone before them in
+ * `ids`' order - the earliest come first, so one already standing keeps their place as others come); else the nearest
+ * place about the spot that does - at their own distance out and then a step nearer and farther by turns, on their own
+ * bearing and then a step of arc either way by turns - held by the street and seen from the spot (`street.clear` from
+ * it, as every stand at a spot is). The many alone at a busy spot stood on one another at their own places (drawn by
+ * geometry, a bearing and a distance off their id: the birthday problem), and on the circles about it. None keeps the
+ * space within SPACE_FAR_M: their own place. Pure: the spot, the street and who stands there - every reader alike.
+ * @param {{ x: number, z: number, key?: string }} spot @param {readonly string[]} ids
+ * @param {readonly { x: number, z: number }[]} taken @param {import('./places.js').Street} street
+ * @returns {Map<string, { x: number, z: number, yaw: number }>}
+ */
+export function aloneStands(spot, ids, taken, street) {
+  /** @type {Map<string, { x: number, z: number, yaw: number }>} */
+  const out = new Map();
+  const placed = [...taken];
+  const free = (/** @type {number} */ x, /** @type {number} */ z) => placed.every((p) => Math.hypot(p.x - x, p.z - z) >= SPACE_M - 1e-6);
+  for (const id of ids) {
+    const own = aloneStand(spot, id, street);
+    let got = free(own.x, own.z) ? own : null;
+    const r0 = Math.hypot(own.x - spot.x, own.z - spot.z), b0 = Math.atan2(own.x - spot.x, own.z - spot.z);
+    for (let k = 0; !got && k <= 2 * SPACE_FAR_M / SPACE_STEP_M; k++) {
+      const r = r0 + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * SPACE_STEP_M;
+      if (r < ALONE_NEED_M || r > SPACE_FAR_M) continue;
+      const turns = Math.floor(Math.PI * r / SPACE_STEP_M);
+      for (let j = 0; !got && j <= 2 * turns; j++) {
+        const b = b0 + (j % 2 ? 1 : -1) * Math.ceil(j / 2) * (SPACE_STEP_M / r);
+        const x = spot.x + Math.sin(b) * r, z = spot.z + Math.cos(b) * r;
+        if (free(x, z) && street.clear(spot.x, spot.z, x, z)) got = { x, z, yaw: b + Math.PI };
+      }
+    }
+    got ??= own;
+    out.set(id, got);
+    placed.push(got);
+  }
+  return out;
+}
+
+/** LW-SPACE: the turns a circle moved off its own middle tries about the new one (a twelfth of a half-turn at a time,
+ *  either way by turns, as `circleStands` turns it to fit). */
+const SPACE_TURNS = Object.freeze([0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6].map((k) => k * Math.PI / 12));
+
+/**
+ * LW-SPACE: THE CIRCLES OF A ROUND AT A SPOT, none on another - each circle at its own places (`circleStands`) where
+ * every one of them keeps SPACE_M from every place a circle before it in the deal's order took; else about the nearest
+ * middle whose places do - from its own middle a step out or in and a step of arc either way by turns, each tried turned
+ * about it as `circleStands` turns one to fit - every place on the street and seen from the spot, its people a pace
+ * apart facing their middle. Drawn one by one off the spot's bearings, two circles in a lane (whose few open bearings
+ * every circle there is turned onto) stood inside each other. None found within SPACE_FAR_M, its own. Read-only: kept
+ * per spot and the round's circles' sizes (where a circle stands is its index and its size alone). Pure.
+ * @param {{ x: number, z: number, key?: string }} spot @param {readonly { index: number, members: readonly any[] }[]} circles
+ * @param {import('./places.js').Street} street
+ * @returns {readonly (readonly { x: number, z: number, yaw: number }[])[]}
+ */
+export function circlesStands(spot, circles, street) {
+  const kept = keptOf(street).stands;
+  const key = `${spotKeyOf(spot)}|L${circles.map((c) => `${c.index}.${c.members.length}`).join(',')}`;
+  const known = kept.get(key);
+  if (known) return known;
+  /** @type {{ x: number, z: number }[]} */
+  const placed = [];
+  const free = (/** @type {number} */ x, /** @type {number} */ z) => placed.every((p) => Math.hypot(p.x - x, p.z - z) >= SPACE_M - 1e-6);
+  const out = circles.map((c) => {
+    let got = /** @type {readonly { x: number, z: number, yaw: number }[] | null} */ (circleStands(spot, c, street));
+    if (!got.every((p) => free(p.x, p.z))) {
+      const own = got, mid = circleMiddle(spot, c, street), n = c.members.length, half = CIRCLE_APART / 2;
+      const r0 = Math.hypot(mid.x - spot.x, mid.z - spot.z), b0 = Math.atan2(mid.x - spot.x, mid.z - spot.z);
+      got = null;
+      for (let k = 0; !got && k <= 2 * SPACE_FAR_M / SPACE_STEP_M; k++) {
+        const r = r0 + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * SPACE_STEP_M;
+        if (r < half + ALONE_NEED_M || r > SPACE_FAR_M) continue;
+        const arcs = Math.floor(Math.PI * r / SPACE_STEP_M);
+        for (let j = 0; !got && j <= 2 * arcs; j++) {
+          const b = b0 + (j % 2 ? 1 : -1) * Math.ceil(j / 2) * (SPACE_STEP_M / r);
+          const cx = spot.x + Math.sin(b) * r, cz = spot.z + Math.cos(b) * r;
+          for (const turn of SPACE_TURNS) {
+            const places = [];
+            for (let i = 0; i < n; i++) {
+              const bb = b + (i / n) * Math.PI * 2 + turn;
+              const x = cx + Math.sin(bb) * half, z = cz + Math.cos(bb) * half;
+              if (!free(x, z) || !street.clear(spot.x, spot.z, x, z)) break;
+              places.push({ x, z, yaw: Math.atan2(cx - x, cz - z) });
+            }
+            if (places.length === n) { got = places; break; }
+          }
+        }
+      }
+      got ??= own;
+    }
+    placed.push(...got);
+    return got;
+  });
+  kept.set(key, out);
+  return out;
 }
 
 /** AUDIT LW-STAND: the bearings a spot's open ground is sounded along, the farthest it is sounded (m), how short of

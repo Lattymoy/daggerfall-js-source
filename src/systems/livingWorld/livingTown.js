@@ -11,7 +11,9 @@
 //  - WHERE EXACTLY. A walk is the grid's A* path (townPaths.js, searched in slices), walked at the day's pace and
 //    never slower (a path longer than the plan guessed is walked faster, to WALK_FAST times the pace, and arrives late
 //    past that - the stay after it starts when they arrive). A stay at a spot is a place about it: in a circle with
-//    the others met there (meetups.js), else a place of their own.
+//    the others met there (meetups.js), else a place of their own. LW-SPACE: nobody inside another - those alone at a
+//    spot placed apart (`_spaceAlone`), a company leaving one place together in file (`_fileOf`), and a walker steps
+//    aside for whoever is in its way (`_dodge`).
 //  - POP-IN IS HIDDEN, DFU'S WAY: a resident wanted comes onto the street beyond POP_VISIBLE_RANGE or behind the
 //    player's half of the view (PopulationManager's own rule) - or out of a door, which is a coming-out and needs no
 //    hiding. One walking into a door is gone through it at once; one only out of range goes when unseen. BUT ON
@@ -47,7 +49,7 @@ import { townCensus, isHome, watchShiftSize } from './census.js';
 import { dayPlan, entryAt, isOutdoor, DAY_START_MIN, DAY_MIN } from './dayPlan.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { createPathBook, pointOnLine } from './townPaths.js';
-import { spotCircles, circleLine, circleStands, aloneStand, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M } from './meetups.js';
+import { spotCircles, circleLine, circlesStands, aloneStand, aloneStands, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M, SPACE_M } from './meetups.js';
 import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, watchBand, fillLine, firstNameOf } from './lines.js';
 import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
@@ -116,6 +118,22 @@ export const CENSUS_PATHS = 4;
  *  a block at most (the synthetic town's straying, measured: 16 m). */
 export const WALK_STRAY_M = 48;
 
+/** LW-SPACE: walks from one place begun within this many of the clock's minutes of each other are a company leaving
+ *  together - a shop's two at noon, a table's drinkers at the hour: they walk it IN FILE, each FILE_M behind the one
+ *  before (the first on its line). On one line at one pace they walked inside each other the whole way. */
+export const FILE_MIN = 0.25;
+export const FILE_M = 1.2;
+/** LW-SPACE: A WALKER STEPS ASIDE for one in its way - how far ahead it looks (m), the ways aside it may take (m to its
+ *  right; the nearest to where it walks first, the right before the left), and how fast it steps (m a real second). */
+export const DODGE_AHEAD_M = 2.4;
+export const DODGE_SIDES = Object.freeze([0, 0.45, -0.45, 0.9, -0.9, 1.35, -1.35]);
+export const DODGE_SPEED = 1;
+/** LW-SPACE: a body walking up to its stand this near it (m) steps aside for nobody - it is there. */
+export const DODGE_SETTLE_M = 0.6;
+/** LW-SPACE: a hair's slack on SPACE_M (m) - a way aside exactly SPACE_M from one in it keeps the space, whichever side the
+ *  sums round to. */
+const SPACE_EPS = 1e-6;
+
 /** AUDIT-G1: the gap (m) from `p` to the box a walk's two ends make - no nearer can its path pass, but by WALK_STRAY_M.
  *  @param {{ from?: { x: number, z: number }, to?: { x: number, z: number } }} e @param {number[]} p */
 export function walkGap(e, p) {
@@ -169,8 +187,10 @@ export const DEED_KNOWN_MIN = 60;
 /**
  * @typedef {import('./census.js').Resident} Resident
  * @typedef {import('./dayPlan.js').Entry} Entry
- * @typedef {{ person: any, active: boolean, scheduleEnable: boolean, scheduleRecycle: boolean, visible: boolean, res: Resident|null, mine: boolean, arrival: boolean, paused?: boolean, flee?: { at: number[], left: number, from: number[] } | null }} Row - LW-STAND `paused`: in view on a walk not
- *   yet searched (its minutes owed, as the politeness gate's); WATCH-PROTECTS `flee`: running from a monster (`_fright`)
+ * @typedef {{ person: any, active: boolean, scheduleEnable: boolean, scheduleRecycle: boolean, visible: boolean, res: Resident|null, mine: boolean, arrival: boolean, paused?: boolean, flee?: { at: number[], left: number, from: number[] } | null, side?: number, halt?: boolean }} Row - LW-STAND `paused`: in view on a walk not
+ *   yet searched (its minutes owed, as the politeness gate's); WATCH-PROTECTS `flee`: running from a monster (`_fright`);
+ *   LW-SPACE `side` how far to its right a walker has stepped aside (`_dodge`), `halt` held where it stands this frame (the
+ *   politeness gate, a pause)
  */
 
 export class LivingTown {
@@ -240,8 +260,18 @@ export class LivingTown {
     this._peerLent = new Set();
     /** @type {Map<string, number>} the minutes each is behind its day */
     this._lag = new Map();
-    /** @type {Map<string, { circle: any, index: number, spot: any }>} this tick's circles, by member */
+    /** @type {Map<string, { circle: any, place: { x: number, z: number, yaw: number }, spot: any }>} this tick's circles, by member - LW-SPACE
+     *  `place` where they stand in it (the round's circles laid together, meetups.js circlesStands) */
     this._inCircle = new Map();
+    /** LW-SPACE: this beat's places of those alone at a spot (meetups.js aloneStands), by id @type {Map<string, { spot: any, x: number, z: number, yaw: number }>} */
+    this._aloneAt = new Map();
+    /** LW-SPACE: each spot's last allocation, kept while the same people stand there @type {Map<string, { sig: string, got: Map<string, { x: number, z: number, yaw: number }> }>} */
+    this._aloneKeep = new Map();
+    /** LW-SPACE: a count of the plans made (a company's file is read again when one changes), and each day's walks by
+     *  where they leave from @type {number} */
+    this._planGen = 0;
+    /** @type {{ day: number, gen: number, from: Map<string, { t0: number, id: string, e: Entry }[]> } | null} */
+    this._departures = null;
     /** @type {Map<string, { t: number, said: boolean }>} when each last came by the player (the clock's minute), and
      *  whether they spoke (LW-TALK: one who kept quiet speaks when the player stops before them) */
     this._greeted = new Map();
@@ -316,6 +346,7 @@ export class LivingTown {
         const away = [{ t0: D0 - DAY_MIN, t1: crew.inT, exit: dock, armed: false }, { t0: crew.outT, t1: D0 + 2 * DAY_MIN, exit: dock, armed: false }];
         plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, visitor: true, home: this._lodging(res), away });
         e = { day, plan, roads: true, inT: crew.inT };
+        this._planGen++;
         this._plans.set(res.id, e);
         return e.plan;
       }
@@ -329,6 +360,7 @@ export class LivingTown {
         plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away, watch: this._watchSize });
       }
       e = { day, plan, roads: !!roads };
+      this._planGen++;
       this._plans.set(res.id, e);
     }
     return e.plan;
@@ -441,7 +473,8 @@ export class LivingTown {
       if (line === null) return null;
       const w = this._walked(e, line, t);
       if (w.s < line.len) {
-        const p = e.pair === 1 ? this._atShoulder(line, w.s) : pointOnLine(line, w.s);   // WATCH-DAY: the second of a pair
+        // WATCH-DAY: the second of a pair at the first's shoulder; LW-SPACE: one of a company leaving together in file
+        const p = e.pair === 1 ? this._atShoulder(line, w.s) : pointOnLine(line, Math.max(0, w.s - this._fileOf(res, e) * FILE_M));
         return { x: p.x, z: p.z, yaw: p.yaw, moving: true, e, fromDoor: e.from.kind === 'door' && (t - e.t0) < DOOR_POP_MIN };
       }
       if (!after || !isOutdoor(after) || after.kind === 'walk') return null;   // arrived: in through the door, out of the gate
@@ -450,7 +483,8 @@ export class LivingTown {
     if (!isOutdoor(e)) return null;
     const c = this._inCircle.get(res.id);
     const inCircle = !!c && c.spot === e.at;
-    const st = inCircle ? circleStands(e.at, c.circle, this._street)[c.index] : aloneStand(e.at, res.id, this._street);   // LW-STAND
+    const alone = inCircle ? null : this._aloneAt.get(res.id);   // LW-SPACE: their place at the spot this beat
+    const st = inCircle ? c.place : alone && alone.spot === e.at ? alone : aloneStand(e.at, res.id, this._street);   // LW-STAND
     return { x: st.x, z: st.z, yaw: e.kind === 'post' && !inCircle ? e.at.yaw : st.yaw, moving: false, e };   // WATCH-DAY: a post keeps the road
   }
 
@@ -468,6 +502,44 @@ export class LivingTown {
     }
     const b = pointOnLine(line, Math.max(0, s - PAIR_BEHIND_M));
     return { x: b.x, z: b.z, yaw: p.yaw };
+  }
+
+  /**
+   * LW-SPACE: A COMPANY LEAVING TOGETHER WALKS IN FILE - one's place in it: how many walks left the same place before
+   * this one (`e`) within FILE_MIN of each other, one after another, the earlier first and on a tie the lower id (a
+   * patrol's pair walks its own way - at the shoulder - and is none of it: its walks are in no company, `_walksFrom`).
+   * Read off the day's whole census and its visitors, so every reader's company is the same. 0 alone, or the first.
+   * @param {Resident} res @param {Entry} e @returns {number}
+   */
+  _fileOf(res, e) {
+    if (!e.from) return 0;
+    const list = this._walksFrom(this.dayOf(e.t0)).get(e.from.key);
+    if (!list) return 0;
+    let i = list.findIndex((w) => w.e === e || (w.id === res.id && w.t0 === e.t0));
+    if (i < 0) return 0;
+    let k = 0;
+    while (i > 0 && list[i].t0 - list[i - 1].t0 <= FILE_MIN) { i--; k++; }
+    return k;
+  }
+
+  /** LW-SPACE: the day's walks by where they leave from, each list in order (the earlier first, then the lower id) -
+   *  made again when a plan does. @param {number} day */
+  _walksFrom(day) {
+    const d = this._departures;
+    if (d && d.day === day && d.gen === this._planGen) return d.from;
+    /** @type {Map<string, { t0: number, id: string, e: Entry }[]>} */
+    const from = new Map();
+    for (const res of [...this.peopleOf(day), ...[...this._crewOf.values()].map((c) => c.res)]) {
+      for (const e of this.planOf(res, day)) {
+        if (e.kind !== 'walk' || e.pair != null || !e.from) continue;
+        const list = from.get(e.from.key) ?? [];
+        list.push({ t0: e.t0, id: res.id, e });
+        from.set(e.from.key, list);
+      }
+    }
+    for (const list of from.values()) list.sort((a, b) => a.t0 - b.t0 || (a.id < b.id ? -1 : 1));
+    this._departures = { day, gen: this._planGen, from };
+    return from;
   }
 
   _rowOf(res) { return this.pool.find((r) => r.res === res) ?? null; }
@@ -494,7 +566,7 @@ export class LivingTown {
   }
 
   _free(row) {
-    row.active = false; row.scheduleEnable = false; row.scheduleRecycle = false; row.visible = false; row.arrival = false; row.paused = false; row.flee = null;
+    row.active = false; row.scheduleEnable = false; row.scheduleRecycle = false; row.visible = false; row.arrival = false; row.paused = false; row.flee = null; row.side = 0; row.halt = false;
     if (row.res) this._lag.delete(row.res.id);
     row.res = null;
     if (row.person) row.person.living = null;
@@ -596,6 +668,8 @@ export class LivingTown {
     const absent = new Set();
     /** LW-TALK: the census's own on this street, each read for where they stand once the beat's circles are dealt */
     const alive = [];
+    /** LW-SPACE: everyone the plans stand in this town now, the struck down too (their place is dealt, and left empty) */
+    const everyone = [];
     const wanted = [];
     /** @type {{ res: Resident, gap: number }[]} */
     const pending = [];
@@ -603,6 +677,7 @@ export class LivingTown {
     for (const res of [...this.peopleOf(day), ...this._crewsNow()]) {
       if (this._away(res)) continue;   // WATCH-FIX: with the watch - a guard stands for them
       if (this._gone(res)) continue;   // LW5: aboard, or ashore at the far port
+      everyone.push(res);
       const plan = this.planOf(res, day);
       for (let i = Math.max(0, entryAt(plan, t)); i >= 0 && plan[i].t1 > t - 2 * roundMin; i--) {
         const e = plan[i];
@@ -631,18 +706,21 @@ export class LivingTown {
       if (!now.length) continue;
       /** @type {Map<string, { x: number, z: number }>} */
       const stood = new Map();
-      for (const c of spotCircles(key, list, now[0].start - 1e-6, roundMin)) circleStands(spot, c, this._street).forEach((st, i) => stood.set(c.members[i].id, st));
-      for (const dealt of now) {
-        const places = circleStands(spot, dealt, this._street);
+      const before = spotCircles(key, list, now[0].start - 1e-6, roundMin);
+      circlesStands(spot, before, this._street).forEach((places, ci) => places.forEach((st, i) => stood.set(before[ci].members[i].id, st)));   // LW-SPACE: the round's circles laid together
+      const laid = circlesStands(spot, now, this._street);
+      for (const [ci, dealt] of now.entries()) {
+        const places = laid[ci];
         let far = 0;
         dealt.members.forEach((m, i) => { const was = stood.get(m.id) ?? aloneStand(spot, m.id, this._street); far = Math.max(far, Math.hypot(places[i].x - was.x, places[i].z - was.z)); });
         const from = dealt.start + (far / PERSON_MOVE_SPEED + GATHER_BEAT_S) * this._baseRate();
         const members = dealt.members.filter((m) => !absent.has(m.id));
         if (members.length < 2) continue;   // left alone on this street: their own counsel
         const circle = { ...dealt, members, from };
-        members.forEach((m, index) => this._inCircle.set(m.id, { circle, index, spot }));
+        dealt.members.forEach((m, i) => { if (!absent.has(m.id)) this._inCircle.set(m.id, { circle, place: places[i], spot }); });   // LW-SPACE: their place in the round's laying - the deal's, every reader's
       }
     }
+    this._spaceAlone(everyone, t);
     // LW-TALK: WHERE EACH ONE STANDS IS READ BY THIS BEAT'S DEAL, dealt above - read before it, an arrival stood the street
     // by the last scene's circles (or none: each one about their own stand) and moved it a beat later, every one dealt
     // into a circle walking off to their place in it as the player came
@@ -685,6 +763,56 @@ export class LivingTown {
       row.active = true; row.scheduleEnable = true; row.visible = false; row.scheduleRecycle = false;
       row.arrival = this._standing();   // stood with the street on arrival: seen as soon as it has its place (LW-PERF: while it is being stood)
     }
+  }
+
+  /**
+   * LW-SPACE: THE PLACES OF THOSE ALONE AT EACH SPOT THIS BEAT (meetups.js aloneStands) - by the plans alone, so every
+   * reader places alike: one whose stay holds them at a spot and no circle does, and one on their way to a stay there (a
+   * walk brings one early, or late: their place is kept for them, never found on arriving - the paths a reader has
+   * searched are its own); the first bound for it first - since they set out for it, or their stays there began (a stall,
+   * then the talk, at one spot are one stand) - then the lower id, so no newcomer takes the place of one already there or
+   * on their way. The circles' places are taken before
+   * them. Kept while the same people stand there with the same circles.
+   * @param {readonly Resident[]} everyone @param {number} t
+   */
+  _spaceAlone(everyone, t) {
+    /** @type {Map<string, { spot: any, who: { id: string, t0: number }[] }>} */
+    const at = new Map();
+    for (const res of everyone) {
+      const plan = this.planOf(res, this.dayOf(t)), i = entryAt(plan, t);
+      if (i < 0) continue;
+      const e = plan[i].kind === 'walk' ? plan[i + 1] : plan[i];   // on their way there: their place kept for them as they come
+      if (!e) continue;
+      if (e.kind === 'walk' || !isOutdoor(e) || !e.at) continue;
+      if (this._inCircle.get(res.id)?.spot === e.at) continue;
+      // bound for it since they set out for it (the walk there), through every stay there since (a stall, then the talk)
+      let j = i;
+      if (plan[j].kind !== 'walk') {
+        while (j > 0 && plan[j - 1].at === e.at && plan[j - 1].kind !== 'walk') j--;
+        if (j > 0 && plan[j - 1].kind === 'walk' && plan[j - 1].to === e.at) j--;
+      }
+      const since = plan[j].t0;
+      const k = e.at.key, list = at.get(k) ?? { spot: e.at, who: [] };
+      list.who.push({ id: res.id, t0: since });
+      at.set(k, list);
+    }
+    /** @type {Map<string, { x: number, z: number }[]>} the circles' places at each spot */
+    const circled = new Map();
+    for (const c of this._inCircle.values()) {
+      const k = c.spot.key, list = circled.get(k) ?? [];
+      list.push(c.place);
+      circled.set(k, list);
+    }
+    this._aloneAt.clear();
+    for (const [k, { spot, who }] of at) {
+      who.sort((a, b) => a.t0 - b.t0 || (a.id < b.id ? -1 : 1));
+      const ids = who.map((w) => w.id), taken = circled.get(k) ?? [];
+      const sig = `${ids.join(',')}|${taken.map((p) => `${p.x.toFixed(2)},${p.z.toFixed(2)}`).join(';')}`;
+      let kept = this._aloneKeep.get(k);
+      if (!kept || kept.sig !== sig) this._aloneKeep.set(k, kept = { sig, got: aloneStands(spot, ids, taken, this._street) });
+      for (const [id, st] of kept.got) this._aloneAt.set(id, { spot, ...st });
+    }
+    for (const k of this._aloneKeep.keys()) if (!at.has(k)) this._aloneKeep.delete(k);
   }
 
   /** LW-FIX2: the clock's minute now - the street's own while it stands (`_now`, read each frame), the clock's own when
@@ -750,26 +878,31 @@ export class LivingTown {
       // its minutes are owed (`paused`, above): searched, the walk is walked from where they stood, never cut straight
       // across, through whatever stood between, to where its clock had got to
       row.paused = !!w.pending && row.visible;
+      row.halt = stop || row.paused;   // LW-SPACE: held where it stands - one the others step round
       if (fear) this._run(p, fear, dt);
       else if (w.pending) { if (!row.visible) continue; p.moving = false; }
       else {
-        const dx0 = w.x - p.pos[0], dz0 = w.z - p.pos[2];
-        const d = Math.hypot(dx0, dz0);
+        const d0 = Math.hypot(w.x - p.pos[0], w.z - p.pos[2]);
         const step = PERSON_MOVE_SPEED * WALK_FAST * dt * scale;
-        if (!row.visible || d > Math.max(SNAP_M, step * 3)) { p.pos[0] = w.x; p.pos[2] = w.z; p.yaw = w.yaw; p.moving = w.moving; }
-        else if (d > 0.05) {
-          // LW-STAND: a stand is walked to over the street - by its spot when the straight way is not (every stand at a
-          // spot is seen from it, meetups.js): a new round's place across a corner, or across a fountain, from the last
-          let vx = dx0, vz = dz0, vd = d;
-          if (!w.moving) {
-            const ox = w.e.at.x - p.pos[0], oz = w.e.at.z - p.pos[2], od = Math.hypot(ox, oz);
-            if (od > 0.05 && !this._street.clear(p.pos[0], p.pos[2], w.x, w.z)) { vx = ox; vz = oz; vd = od; }
-          }
-          const k = Math.min(1, step / vd);
-          p.pos[0] += vx * k; p.pos[2] += vz * k;
-          p.yaw = w.moving ? w.yaw : Math.atan2(vx, vz);
-          p.moving = true;
-        } else { p.pos[0] = w.x; p.pos[2] = w.z; p.yaw = w.yaw; p.moving = w.moving; }
+        if (!row.visible || d0 > Math.max(SNAP_M, step * 3)) { p.pos[0] = w.x; p.pos[2] = w.z; p.yaw = w.yaw; p.moving = w.moving; row.side = 0; }
+        else {
+          const g = this._dodge(row, p, w, dt);   // LW-SPACE: where they walk this frame, stepped aside for whoever is in the way
+          const dx0 = g.x - p.pos[0], dz0 = g.z - p.pos[2];
+          const d = Math.hypot(dx0, dz0);
+          if (d > 0.05) {
+            // LW-STAND: a stand is walked to over the street - by its spot when the straight way is not (every stand at a
+            // spot is seen from it, meetups.js): a new round's place across a corner, or across a fountain, from the last
+            let vx = dx0, vz = dz0, vd = d;
+            if (!w.moving) {
+              const ox = w.e.at.x - p.pos[0], oz = w.e.at.z - p.pos[2], od = Math.hypot(ox, oz);
+              if (od > 0.05 && !this._street.clear(p.pos[0], p.pos[2], g.x, g.z)) { vx = ox; vz = oz; vd = od; }
+            }
+            const k = Math.min(1, step / vd);
+            p.pos[0] += vx * k; p.pos[2] += vz * k;
+            p.yaw = w.moving ? w.yaw : Math.atan2(vx, vz);
+            p.moving = true;
+          } else { p.pos[0] = g.x; p.pos[2] = g.z; p.yaw = w.yaw; p.moving = w.moving; }
+        }
         p.pos[1] = p.groundY(p.pos[0], p.pos[2]);
       }
       const dx = p.pos[0] - playerPos[0], dz = p.pos[2] - playerPos[2];
@@ -790,6 +923,54 @@ export class LivingTown {
     this._onStreet = false;
     this._paths.run();   // LW-PERF: the frame's searching on what the asking left of its cells
     return out;
+  }
+
+  /**
+   * LW-SPACE: A WALKER STEPS ASIDE - where its day has it this frame (`w`), moved to its right or left (`row.side`) for
+   * whoever is in its way: one standing (in a circle, alone, held by the politeness gate), or one coming the other way or
+   * across within DODGE_AHEAD_M ahead of it (or between it and that place, where the body trails it), or one going its own
+   * way that it is inside of (the lower id keeps its line,
+   * the other steps round). Aside to the nearest of DODGE_SIDES that keeps SPACE_M from every one of them and that the
+   * street holds - the right before the left, so two coming at each other both keep right - stepped to at DODGE_SPEED,
+   * and back to its line once the way is clear. A walker walking up to its stand steps aside till it is DODGE_SETTLE_M
+   * off it, never after (it is there); one the politeness gate holds stands. DFU's walkers keep off one another by the
+   * tiles they claim (MobilePersonMotor.cs SetTargetPosition, CityNavigation's Occupied flag); a resident claims none - its
+   * day lays its walk - and the town's people walked inside one another. The day is the plans' (every reader's alike);
+   * the step aside, a few hands' breadth, is this reader's street.
+   * @param {Row} row @param {any} p @param {{ x: number, z: number, yaw: number, moving: boolean }} w @param {number} dt
+   * @returns {{ x: number, z: number }}
+   */
+  _dodge(row, p, w, dt) {
+    const tx = w.x, tz = w.z;
+    const toX = tx - p.pos[0], toZ = tz - p.pos[2];
+    const yaw = w.moving ? w.yaw : Math.atan2(toX, toZ);
+    const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);   // its way and its right
+    const cur = row.side ?? 0;
+    let want = 0;
+    if (!row.halt && (w.moving || Math.hypot(toX, toZ) > DODGE_SETTLE_M)) {
+      const far = Math.max(...DODGE_SIDES) + SPACE_M;
+      const back = Math.min(0, -toX * fx - toZ * fz) - SPACE_M;   // the body may trail its day's place: whoever stands between counts
+      /** @type {number[]} how far to its right each one in its way stands */
+      const inWay = [];
+      for (const o of this.pool) {
+        if (o === row || !o.active || !o.visible || !o.res) continue;
+        const q = o.person, dx = q.pos[0] - tx, dz = q.pos[2] - tz;
+        const a = dx * fx + dz * fz, s = dx * rx + dz * rz;
+        if (a < back || a > DODGE_AHEAD_M || Math.abs(s) > far) continue;
+        if (q.moving && !o.halt && Math.sin(q.yaw) * fx + Math.cos(q.yaw) * fz > 0.7 && (a > SPACE_M || o.res.id > row.res.id)) continue;   // going its way: ahead, or its to step round
+        inWay.push(s);
+      }
+      if (inWay.length) {
+        want = cur;
+        for (const c of [...DODGE_SIDES].sort((a, b) => Math.abs(a - cur) - Math.abs(b - cur) || b - a)) {
+          if (inWay.every((s) => Math.abs(s - c) >= SPACE_M - SPACE_EPS) && this._street.holds(tx + rx * c, tz + rz * c)) { want = c; break; }
+        }
+      }
+    }
+    let side = cur + Math.max(-DODGE_SPEED * dt, Math.min(DODGE_SPEED * dt, want - cur));
+    if (side !== 0 && !this._street.holds(tx + rx * side, tz + rz * side)) side = 0;
+    row.side = side;
+    return { x: tx + rx * side, z: tz + rz * side };
   }
 
   /** A word to the player passing close, at most once in GREET_REST_MIN of the clock - LW-TALK: and one who kept quiet

@@ -29,8 +29,8 @@
   {
     "name": "LW2-facing-dropped",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "        if (!row.visible || d > Math.max(SNAP_M, step * 3)) { p.pos[0] = w.x; p.pos[2] = w.z; p.yaw = w.yaw; p.moving = w.moving; }",
-    "new": "        if (!row.visible || d > Math.max(SNAP_M, step * 3)) { p.pos[0] = w.x; p.pos[2] = w.z; p.moving = w.moving; }",
+    "old": "if (!row.visible || d0 > Math.max(SNAP_M, step * 3)) { p.pos[0] = w.x; p.pos[2] = w.z; p.yaw = w.yaw; p.moving = w.moving; row.side = 0; }",
+    "new": "if (!row.visible || d0 > Math.max(SNAP_M, step * 3)) { p.pos[0] = w.x; p.pos[2] = w.z; p.moving = w.moving; row.side = 0; }",
     "tests": [
       "test/lw2_livingTown.test.js"
     ]

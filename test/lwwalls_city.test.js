@@ -10,9 +10,9 @@
 // walledTown) everywhere; the game's own cities where ARENA2_PATH names the data, built as the streaming host builds them.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { walledTown } from './lwTown.mjs';
+import { skipReal, hostTown, cities } from './lwRealTown.mjs';
 import { streetNet, townPlaces, doorsNet } from '../src/systems/livingWorld/places.js';
 import { townCensus, isHome } from '../src/systems/livingWorld/census.js';
 import { LivingTown } from '../src/systems/livingWorld/livingTown.js';
@@ -23,18 +23,6 @@ import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 import { maxPopulationFor } from '../src/systems/townPopulation.js';
 import { CityNavigation, NAV_CELL } from '../src/world/cityNavigation.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
-import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, LOCATION_TYPES } from '../src/formats/mapsFile.js';
-import { BlocksFile } from '../src/formats/blocksFile.js';
-import { Arch3dFile } from '../src/formats/arch3dFile.js';
-import { layoutLocation } from '../src/world/locationLayout.js';
-import { isCityGate } from '../src/world/rmbLayout.js';
-import { dfMeshToModel } from '../src/world/meshReader.js';
-import { patchSeams } from '../src/world/arch3dSeams.js';
-import { getStaticDoors } from '../src/world/staticDoors.js';
-import { buildingSummaries } from '../src/world/buildingSummaries.js';
-import { makeBuildingKey } from '../src/systems/talkTopics.js';
-import { trs, multiply } from '../src/world/mat4.js';
-import { hasPort } from '../src/systems/travelPorts.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const RATE = CLASSIC_MINUTES_PER_SECOND;
@@ -150,7 +138,7 @@ test('LW-WALLS the watch lives where a door opens onto the street: a palace wall
   assert.ok(out.length >= 2, `the day's watch out on its duty (${out.length})`);
 });
 
-test('LW-WALLS the game\'s own walled cities are read here as the streaming host reads them - its location laid out, its navgrid, its doors\' law into the location frame and its buildings (the replay below, scenes/world.js\'s population block, word for word)', () => {
+test('LW-WALLS the game\'s own walled cities are read here as the streaming host reads them - its location laid out, its navgrid, its doors\' law into the location frame and its buildings (test/lwRealTown.mjs\'s replay, scenes/world.js\'s population block, word for word)', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /const loc = layoutLocation\(dfLocation, maps, blocks, \{ enhanced: isEnhanced\(\), windmills: windmillsOn\(\) \}\);/);
   assert.match(w, /const originMatrix = trs\(\n\s+locLocal\[0\] \+ b\.originX, locLocal\[1\], locLocal\[2\] \+ b\.originZ, 0, 0, 0\);/);
@@ -161,81 +149,6 @@ test('LW-WALLS the game\'s own walled cities are read here as the streaming host
   assert.match(w, /buildings: buildingSummaries\(dfLocation\.exterior\?\.buildings \?\? \[\], loc\.blocks, \{ locationIndex: dfLocation\.locationIndex \?\? 0, locationName: dfLocation\.name \}\)\n\s+\.map\(\(b\) => \(\{ key: b\.buildingKey, type: b\.buildingType, quality: b\.quality, factionId: b\.factionId \}\)\),/);
   assert.match(w, /people: getWorldClimateSettings\(maps\.getClimateIndex\(p\.x, p\.y\)\)\?\.people, blocks: Math\.max\(1, \(ed\?\.width \?\? 1\) \* \(ed\?\.height \?\? 1\)\),\n\s+port: hasPort\(md\.mapId\),/);
 });
-
-const ARENA2 = process.env.ARENA2_PATH;
-const skipReal = !ARENA2 || !existsSync(ARENA2) ? 'ARENA2_PATH not set or missing - real-data validation skipped' : false;
-
-/** The game's data, read once: the maps, the blocks, and each model as the pipeline mints it (its seams closed). */
-let _game = null;
-function game() {
-  if (_game) return _game;
-  const bytes = (n) => new Uint8Array(readFileSync(join(/** @type {string} */ (ARENA2), n)));
-  const maps = new MapsFile(); maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK'));
-  const blocks = new BlocksFile(); blocks.load(bytes('BLOCKS.BSA'));
-  const arch = new Arch3dFile(); arch.load(bytes('ARCH3D.BSA'));
-  const models = new Map();
-  const modelOf = (id) => {
-    if (!models.has(id)) { const i = arch.getRecordIndex(id); models.set(id, i === -1 ? null : dfMeshToModel(patchSeams(id, arch.getMesh(i)), () => ({ width: 64, height: 64 }))); }
-    return models.get(id);
-  };
-  _game = { maps, blocks, modelOf };
-  return _game;
-}
-
-/** A town as the streaming host builds its living town (the population block, pinned above), on the enhanced skin with
- *  its water and its mills (the living world's lane, each on by default): the location frame is the location's own
- *  origin. And where its city gates stand, in navgrid cells. */
-function hostTown(dfLocation) {
-  const { maps, blocks, modelOf } = game();
-  const md = dfLocation.mapTableData;
-  const p = longitudeLatitudeToMapPixel(md.longitude, md.latitude);
-  const loc = layoutLocation(dfLocation, maps, blocks, { enhanced: true, windmills: true });
-  const nav = new CityNavigation(loc.width, loc.height);
-  for (const b of loc.blocks) {
-    const srcTiles = b.dfBlock.rmbBlock.fldHeader.groundData.groundTiles;
-    nav.setBlockData(b.x, b.y, b.dfBlock.rmbBlock.fldHeader.autoMapData, (tx, ty) => srcTiles[tx][ty].textureRecord, { enhancedWater: true });
-  }
-  const doors = [], gates = [];
-  for (const b of loc.blocks) {
-    const originMatrix = trs(b.originX, 0, b.originZ, 0, 0, 0);
-    for (const placed of b.layout.models) {
-      const local = multiply(originMatrix, placed.matrix);
-      if (isCityGate(placed.modelIdNum)) gates.push([Math.floor(local[12] / NAV_CELL), Math.floor(local[14] / NAV_CELL)]);
-      const cpu = modelOf(placed.modelIdNum);
-      if (!cpu?.doors?.length) continue;
-      for (const door of getStaticDoors(cpu, b.dfBlock.index, placed.recordIndex, local)) {
-        const m = door.matrix, c = door.centre, n = door.normal;
-        doors.push({
-          key: makeBuildingKey(b.x, b.y, placed.recordIndex),
-          x: m[0] * c.x + m[4] * c.y + m[8] * c.z + m[12], z: m[2] * c.x + m[6] * c.y + m[10] * c.z + m[14],
-          nx: m[0] * n.x + m[4] * n.y + m[8] * n.z, nz: m[2] * n.x + m[6] * n.y + m[10] * n.z,
-        });
-      }
-    }
-  }
-  const buildings = buildingSummaries(dfLocation.exterior?.buildings ?? [], loc.blocks, { locationIndex: dfLocation.locationIndex ?? 0, locationName: dfLocation.name })
-    .map((b) => ({ key: b.buildingKey, type: b.buildingType, quality: b.quality, factionId: b.factionId }));
-  const town = {
-    mapId: md.mapId >>> 0, name: String(dfLocation.name ?? ''), px: p.x, py: p.y, type: md.locationType, region: dfLocation.regionIndex,
-    people: getWorldClimateSettings(maps.getClimateIndex(p.x, p.y))?.people, blocks: Math.max(1, loc.width * loc.height), port: hasPort(md.mapId),
-  };
-  return { nav, doors, buildings, town, gates };
-}
-
-/** Every city of the game's own rows (a mod's appended rows never). */
-function cities() {
-  const { maps } = game();
-  const out = [];
-  for (let r = 0; r < maps.regionCount; r++) {
-    const region = maps.getRegion(r);
-    if (!region) continue;
-    for (let l = 0; l < Math.min(maps.baseLocationCount(r), region.locationCount); l++) {
-      const loc = maps.getLocation(r, l);
-      if (loc?.exterior?.exteriorData && loc.mapTableData?.locationType === LOCATION_TYPES.TownCity) out.push(loc);
-    }
-  }
-  return out;
-}
 
 test('LW-WALLS the game\'s own cities (ARENA2): Ripmarket, the report\'s - its fields larger than its streets, every building with a door its spot on its streets, an exit at each of its four gates, and its street at midday full to DFU\'s cap, every one on it inside the walls; and every one of the game\'s 410 cities, 407 of them with fields the larger: nearly every building with a door its spot (99%), most of its people homed on its street, and the whole watch (mutants: the largest kept, the vote on the largest, the census unwired)', { skip: skipReal }, () => {
   const all = cities();

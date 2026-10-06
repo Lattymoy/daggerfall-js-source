@@ -1323,6 +1323,78 @@ location frame, the buildings' summaries - the population block's own text, pinn
   `tools/mutants/lwwalls.json` (13, all dead without the game's data). PIN MOVED: `tools/mutants/lw1.json`
   LW1-normal-never-reversed and LW1-net-unread re-aimed by content (`doorCell`).
 
+## LW-SPACE - nobody inside another (2026-10-06)
+
+Mac: "I notice NPCs and walk stuck inside each other". Measured on the game's own towns (the streaming host's build
+replayed in Node, as LW-WALLS reads it, and each living town run on it with the player at the square - the table
+below): at midday and in the evening 12-54% of the bodies in view stood within half a metre of another, and pairs
+walked inside each other for seconds on end. DFU's walkers keep off one another by the tiles they
+claim (`mobilePerson.js _setTarget`, CityNavigation's Occupied flag, MobilePersonMotor.cs SetTargetPosition); a
+resident claims none (LW2: its day lays its walk), and nothing else kept them apart. Three causes, each fixed at its
+root (`test/lwspace_street.test.js`, `tools/mutants/lwspace.json`).
+
+- **Those alone at a spot** (`meetups.js aloneStands`, SPACE_M, SPACE_STEP_M, SPACE_FAR_M; `livingTown.js _spaceAlone`).
+  One alone stood at a place drawn off their id - a bearing and a distance, 1 to 3.5 m out (LW-STAND) - so at a busy
+  spot many stood on one another (the birthday problem: forty alone at the synthetic square, 25 pairs within SPACE_M),
+  and on the circles about it. Now each one alone stands at their own place where it keeps SPACE_M (0.9 m: a body's
+  breadth and a hand) from every place already taken - the round's circles', and those alone there before them - else
+  at the nearest free place about the spot (their own distance and then a step nearer and farther, their own bearing
+  and then a step of arc either way), on the street and seen from the spot. By the plans alone, every reader alike: one
+  whose stay holds them there and no circle does, and one on their way to a stay there (their place kept for them as
+  they come - an early arrival on a reader that had searched its path stood unplaced a beat); the first bound for it
+  first (since they set out for it, through every stay there since - a stall, then the talk), so no newcomer takes the
+  place of one already there or on their way.
+- **The round's circles laid together** (`meetups.js circlesStands`). Each circle was drawn by itself onto the spot's
+  open bearings (LW-STAND), and in a lane, whose few open bearings every circle is turned onto, two circles stood inside
+  each other (the close-built town's crossing at six: a pair of places within half a metre a frame). A round's circles
+  at a spot are laid together, in the deal's order: each at its own places where every one keeps SPACE_M from the
+  circles before it, else about the nearest middle whose places do, turned to fit - on the street, seen from the spot,
+  a pace apart facing their middle. A member's place is the laying's (`_inCircle`'s `place`), the gathering's walk
+  (LW-TALK `from`) read off it.
+- **A company leaving together walks in file** (`livingTown.js _fileOf`, `_walksFrom`, FILE_MIN, FILE_M). A shop's two at
+  noon, a table's drinkers on the hour, a household out at its evening: walks from one place begun within FILE_MIN
+  (a quarter of the clock's minute) of each other walked one A* line at one pace, inside each other the whole way (the
+  game's towns at one: up to 7.9 pairs a frame of the walking). They walk it in file, each FILE_M (1.2 m) behind the
+  one before - the earlier first, on a tie the lower id - read off the day's whole census and its visitors (every
+  reader's company is the same). A patrol's pair walks its own way (WATCH-DAY: at the shoulder) and is in no company.
+- **A walker steps aside** (`livingTown.js _dodge`, DODGE_AHEAD_M, DODGE_SIDES, DODGE_SPEED, DODGE_SETTLE_M; the row's
+  `side` and `halt`). For whoever is in its way - one standing (a circle, one alone, one the politeness gate holds), one
+  coming the other way or across within DODGE_AHEAD_M ahead (or between its body and its day's place, which a walker
+  catching up trails), or one going its way that it is inside of (the lower id keeps its line, the other steps round) -
+  it steps to the nearest of DODGE_SIDES (up to 1.35 m either side) that keeps SPACE_M from all of them and that the
+  street holds, the right before the left (two coming at each other both keep right), at DODGE_SPEED, and back to its
+  line once the way is clear. One walking up to its stand steps aside till DODGE_SETTLE_M off it; one held stands.
+  Drawn only: the day is the plans' (every reader's alike), the step aside - a few hands' breadth - this reader's street.
+- **Measured** (`tools/livingCrowdProbe.mjs` - each town as the streaming host builds it, `test/lwRealTown.mjs`, run
+  twenty seconds a frame at a time with the player at its square; the share of the body-frames in view within half a
+  metre of another, before / after):
+
+  | | 08:00 | 13:00 | 18:00 |
+  |---|---|---|---|
+  | Ripmarket (6x7) | 7.1% / 0.1% | 29.9% / 0.0% | 30.8% / 3.0% |
+  | Wayrest (8x8) | 0.2% / 0.0% | 27.4% / 0.1% | 16.1% / 0.4% |
+  | Daggerfall (8x8) | 6.4% / 0.0% | 19.5% / 0.4% | 12.0% / 0.2% |
+  | Tuntale (6x7) | 1.9% / 0.4% | 14.8% / 0.0% | 25.6% / 0.8% |
+  | Bubyrydata (4x3) | 0.2% / 0.0% | 54.2% / 0.0% | 29.2% / 0.0% |
+
+  Two inside each other a second and more: 1-11 pairs a run before, none after. The rest is walkers through a crowd
+  with no way round it - Ripmarket's square at six, forty-three of the town about one point (LW-SPREAD's). The
+  synthetic towns' day at eight, one and six: 34.7% of the open town's body-frames and 51.5% of the close-built town's
+  before, none and 0.2% after (the close-built town's walkers 0.6%, 3.1% without the step aside).
+- **The four hosts.** LW-SPACE is the living town's core (`meetups.js`, `livingTown.js`): `scenes/world.js` stands the
+  street it runs (no host change); `scenes/worldModes.js` - the rooms keep their own places (LW8, `livingIndoors.js`
+  INDOOR_APART_M, never on one another); `scenes/exterior.js` - FLAGGED as LW2 has it: the fixed-city page keeps DFU's
+  walkers, who claim their tiles; `scenes/dungeonContext.js` - no town.
+- **Pinned** by `test/lwspace_street.test.js` (the alone places' law; the town's day - apart, alike on two readers, kept
+  as others come; the circles laid together, and those alone about them, in the close-built town's lanes; in file and
+  its chain; the step aside - round one standing, two coming at each other, two going one way, the trail, the stand and
+  the hold; the street through the day; and, where ARENA2_PATH names the data, Ripmarket, Wayrest and Daggerfall at one
+  and six) and `tools/mutants/lwspace.json` (21, all dead). `test/lwRealTown.mjs` is LW-WALLS's replay of the
+  streaming host's build, moved out of its test for the probe and the pins that read the game's towns. PIN MOVED: `lwstand_street`
+  (a circle member's place the laying's), `lwtalk_town` (the gathering's walk off the laying); `tools/mutants/lw2.json`
+  LW2-facing-dropped, `lwstand.json` LW-STAND-host-unkept-circle and LW-STAND-way-straight, `lwtalk.json`
+  LW-TALK-deal-from-street and `watchday.json` WATCH-DAY-no-shoulder re-aimed by content (5, all dead).
+
 ## The four hosts
 
 - `scenes/world.js` - WIRED (LW2 the towns, LW3 the roads and the Overworld).
