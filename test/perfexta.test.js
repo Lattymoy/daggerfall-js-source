@@ -168,9 +168,9 @@ test('PERF-EXT1: EVERY BATCH A REPLAY SKIPS BY ITS PLACEMENTS RASTERISES NOTHING
   // every replay the pass makes: its matrix, its light, its texel and filter, and the batches it drew
   const reps = [];
   const replay = sp.replay.bind(sp);
-  sp.replay = (f, vp, lightPos, recordBasis, minRadius, texel, filter, self) => {
+  sp.replay = (f, vp, lightPos, recordBasis, minRadius, texel, filter, self, ...rest) => {   // AUDIT 637 D5: and whatever follows (PERF-SHADOW1's candidates) - dropped, every lantern face walked everything
     const at = g.draws.length, right = [...sp._right];
-    const n = replay(f, vp, lightPos, recordBasis, minRadius, texel, filter, self);
+    const n = replay(f, vp, lightPos, recordBasis, minRadius, texel, filter, self, ...rest);
     const drawn = new Set(g.draws.slice(at).filter((d) => d[0] === sp.programs.bb.p && vaoOf.has(d[1])).map((d) => vaoOf.get(d[1])));
     reps.push({ vp: Float64Array.from(vp), light: lightPos ? [...lightPos] : null, texel, filter, drawn, right });
     return n;

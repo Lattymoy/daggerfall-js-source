@@ -44,6 +44,7 @@ import { isTextEntryTarget, swallowBrowserKey } from './input.js';   // DISC25-E
 import { isTouchDevice } from './touch.js';
 import { PARTY_MAX } from '../net/wire.js';
 import { lastOnlineText, PARTY_GREEN_CSS, FRIEND_CSS } from '../net/social.js';
+import { NAME_ORDER } from '../net/roster.js';   // AUDIT 637 A11: the roster's name order, one collator
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
 import { accountRefusalText, handleShapeOk, HANDLE_MAX_LEN } from '../net/accountClient.js';   // MAIL1: the service's sentences, and a handle's shape
 import { letterAgeText, replySubject } from '../net/mail.js';   // MAIL1: the box the Letters tab draws
@@ -362,7 +363,7 @@ export function partyPoseText(p) {
  *
  * "see if they are online/last online" is the question this list exists to answer, and the friend a player is
  * looking for is almost always one they could talk to right now - so presence is the first clause and the rest of
- * the list is a directory under it. The name clause is net/roster.js's exactly (case-insensitive and numeric, so
+ * the list is a directory under it. The name clause is net/roster.js's exactly - its NAME_ORDER (case-insensitive and numeric, so
  * `bob` sits with `Bob` and `Player10` after `Player9`), and the account id is the last tie-break, because two
  * friends may share a name and a list that reshuffles when a presence frame lands is the defect that clause
  * prevents.
@@ -372,7 +373,7 @@ export function partyPoseText(p) {
 export function friendOrder(friends) {
   const rows = friends?.values ? [...friends.values()] : [...(friends ?? [])];
   return rows.sort((a, b) => (b.online ? 1 : 0) - (a.online ? 1 : 0)
-    || String(a.name).localeCompare(String(b.name), undefined, { numeric: true, sensitivity: 'base' })
+    || NAME_ORDER.compare(String(a.name), String(b.name))   // AUDIT 637 A11: localeCompare with options built a collator a comparison
     || (a.acct < b.acct ? -1 : a.acct > b.acct ? 1 : 0));
 }
 

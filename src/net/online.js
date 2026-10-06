@@ -151,6 +151,15 @@ export const DEFAULT_SERVER = 'wss://daggerfall-online.mackcothran.workers.dev';
 // last pose; SLAM8/13 pin the ratio (a standing peer is heard at least three times before it could vanish), and a
 // literal here went quietly wrong the day the heartbeat moved. Four heartbeats, the margin the 20000/5000 pair had.
 export const PEER_TIMEOUT_MS = 4 * HEARTBEAT_MS;
+/** RUN-IN-PLACE (2026-10-06, Mac: "theres a lot of player desync online, including players appearing to run in
+ *  place"): how long a peer drawn standing still may go on reading as moving. A body walks off its drawn pose's `mv`
+ *  (net/peerClimb.js peerMoving, every on-foot renderer and the footsteps), and the play-out (`tick`) stands a peer at
+ *  the end of its path whenever the next pose is late - a sender's hitch, a tab put in the background, a reconnect, a
+ *  stall on the line - with the last pose's `mv` still on it: the body ran and stepped in place, for as long as
+ *  PEER_TIMEOUT_MS when the poses stopped for good. The sender's own law (scenes/world.js ONLINE_MOVE_HOLD_MS, 250):
+ *  moving reads true this long after the last frame that MOVED, so a gap shorter than the hold never restarts a stride
+ *  (ONLINE-MVFLICKER1) and a longer one stands the body still. */
+export const SHOWN_MOVE_HOLD_MS = 250;
 /** SCALE2: a hello refused for its missing token is asked again - unless it had none because this device holds no
  *  sign-in ('no-session') or the service refused the one it holds ('auth'): signing in is the way back from those. */
 export const tokenRetryable = (/** @type {string|null|undefined} */ why) => typeof why === 'string' && why !== 'no-session' && why !== 'auth';
@@ -298,7 +307,14 @@ export const snapUnitsFor = (key) => (nativePoseRoom(key) ? SNAP_WORLD_UNITS : S
 export const CADENCE_SAMPLES = 5;
 /** NET-SMOOTH 4: a silence longer than this is a pause (the peer stood still, or its line stalled), not a rate. Twice
  *  GAP_MAX_MS, because GAP_MAX_MS is itself a real rate - the relay's far tier at a crowd's pace is one pose a second
- *  exactly, and its jitter carries some intervals past it; between the two an interval counts as GAP_MAX_MS. */
+ *  exactly, and its jitter carries some intervals past it; between the two an interval counts as GAP_MAX_MS.
+ *  AUDIT 637 C2: an ARRIVAL interval (NET-SMOOTH's, `_arrive`) does - the line's jitter is in it. A TIMED interval
+ *  (SCALE2b's, `_arriveTimed`) is the sender's own spacing with no jitter in it, and counts as itself: the sender's gate
+ *  (`sendPose`) rounds every interval up to its own frames, so the far tier's one in POSE_FAR_SHARE is 1,000 ms only
+ *  from a sender whose frames divide its interval - 1,067 from one at 15 fps, 1,200 at 10, 1,333 at 12. Counted as
+ *  GAP_MAX_MS, the play-out walked a second of it and stood the rest, and steered its cursor a second behind poses
+ *  that came a third of a second later: such a peer stood 350-570 ms at every pose, which RUN-IN-PLACE drew as a
+ *  stride started over 43-48 times a minute and the code before it as running on the spot. */
 export const PAUSE_MS = 2 * GAP_MAX_MS;
 /** NET-SMOOTH 4: the bounds on the play-out rate - at most twice the peer's pace to catch up (SLAM10's own bound on a
  *  catch-up), at least three quarters of it while the cushion fills. */
@@ -2766,7 +2782,9 @@ export class OnlineSession {
    *     backlog, a promotion to the near tier), at most PLAY_RATE_MAX; ahead, never under PLAY_RATE_MIN.
    *  A standing peer's silence is not walked: a pose after a still one starts its move one interval before its send
    *  time, and a moving one's segment is at most GAP_MAX_MS - the time before it stands at the last waypoint, and a
-   *  cursor waiting at the end of the path is moved across that dead time rather than racing it. */
+   *  cursor waiting at the end of the path is moved across that dead time rather than racing it. AUDIT 637 C2: or at
+   *  most the peer's own interval, where that is the longer - a far peer from a slow sender keeps intervals past
+   *  GAP_MAX_MS while it walks (PAUSE_MS), and standing out the difference at every pose is not what it did. */
   _arriveTimed(p, pose, now, room, intro) {
     if (!p.timed) {   // first timed pose, or back from untimed ones: the walk starts over from where the peer is drawn
       p.timed = true; p.path = null; p.cadence = []; p.offs = []; p.tsU = null; p.movedU = null;
@@ -2785,7 +2803,7 @@ export class OnlineSession {
     if (p.pose && !poseChanged(p.pose, pose)) { p.seenAt = now; return; }   // C6: the same pose, said again
     const dt = p.movedU != null ? u - p.movedU : null;   // the interval the SENDER kept - no jitter in it
     if (dt != null && dt >= GAP_MIN_MS && dt <= PAUSE_MS) {
-      p.cadence.push(Math.min(GAP_MAX_MS, dt));
+      p.cadence.push(dt);   // AUDIT 637 C2: the sender's own interval, whole (PAUSE_MS)
       if (p.cadence.length > CADENCE_SAMPLES) p.cadence.shift();
       p.gap = cadenceOf(p.cadence);
     }
@@ -2801,7 +2819,7 @@ export class OnlineSession {
     const cadence = p.gap ?? 1000 / POSE_HZ;
     if (!p.path?.length) { p.path = [{ pose: { ...shown }, c: u - cadence }]; p.cur = u - cadence; p.playAt = now; }
     const end = p.path[p.path.length - 1].c, at = Math.max(u, end + 1);
-    const longest = wasMoving ? GAP_MAX_MS : cadence;
+    const longest = wasMoving ? Math.max(GAP_MAX_MS, cadence) : cadence;   // AUDIT 637 C2: a moving peer's own interval is walked whole
     if (at - end > longest) p.path.push({ pose: { ...p.path[p.path.length - 1].pose }, c: at - longest });   // stood there till then
     const startsAt = p.path[p.path.length - 1].c;
     p.path.push({ pose: { ...pose }, c: at });
@@ -2868,7 +2886,16 @@ export class OnlineSession {
       // already passed let go; a peer with none yet stands at its pose.
       if (!p.path?.length) { p.path = [{ pose: { ...(p.shown ?? p.pose) }, c: 0 }]; p.cur = 0; p.rate = 1; p.playAt = now; }
       this._play(p, now);
-      p.shown = poseAlong(p.path, p.cur);
+      const was = p.drawn, s = poseAlong(p.path, p.cur);
+      // RUN-IN-PLACE: THE BODY WALKS WHILE IT IS DRAWN WALKING - a drawn place that has not moved for SHOWN_MOVE_HOLD_MS
+      // reads standing, whatever the last pose said; the first drawn step after reads the pose's own `mv` again.
+      // AUDIT 637 C1: measured against the place THIS law last drew (`drawn`), never `shown` - an introduction (`_peer`)
+      // and a snap write `shown` themselves, so a peer first drawn at its introduction's pose never started the clock
+      // and ran in place for the whole PEER_TIMEOUT_MS, and a snap's new place read as no step at all. The clock starts
+      // at the first frame this law draws a peer, and a snap is a step.
+      if (!was || s.x !== was.x || s.y !== was.y || s.z !== was.z) p.drawnAt = now;
+      else if (s.mv && now - p.drawnAt >= SHOWN_MOVE_HOLD_MS) s.mv = 0;   // AUDIT 637 C3: the sender's own edge (world.js: moving while now < moved + the hold)
+      p.shown = p.drawn = s;
     }
   }
 
