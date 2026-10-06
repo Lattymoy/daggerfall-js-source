@@ -2418,8 +2418,8 @@ beside them. Then the same shape turned up everywhere else:
 | `worldModes.js:9354` | the dungeon's flats, camps, torches and peers |
 | `worldModes.js:9562` | the interior's flats and peers |
 | `worldModes.js:9568-9636` | blood, torches, drops, foes, guards - **five separate uncut calls** |
-| `exterior.js:5680`, `world.js:28208` | the spell missiles |
-| `exterior.js:5760` | the fixed city's townspeople |
+| `exterior.js:5681`, `world.js:28248` | the spell missiles |
+| `exterior.js:5761` | the fixed city's townspeople |
 | `interior.js:387`, `dungeon.js:1115` | the flats, the camps, the torches |
 
 Seven call sites, and an eighth waiting to be written next year. **Fixing

@@ -97,22 +97,24 @@ test('LW-FIX5 the host: the remains laid with their key and asked their count; t
   assert.match(w, /items\.push\(goldStack\(5 \+ Math\.floor\(rolls\(\) \* 20 \* level\)\)\);/);
 });
 
-test('LW-FIX5 the turned watch is followed by the struck body\'s IDENTITY as it was struck - the town\'s pool dresses its bodies again, and a dead guard still wearing an old body\'s mark is never the next watchman\'s; the conversions mark with it (mutants: the body for the mark, each conversion)', () => {
+test('LW-FIX5 the turned watch is followed by the struck body\'s IDENTITY as it was struck - the town\'s pool dresses its bodies again, and a dead guard still wearing an old body\'s mark is never the next watchman\'s; the conversions mark with it - WATCH-FIX: PIN MOVED, each guard followed once through its own mark (test/watchfix_watch.test.js) (mutants: the body for the mark, each conversion, the follow once)', () => {
   const slays = [];
-  const town = { slain: (p) => slays.push(p.living.id) };
-  const body = {};   // one pooled body, dressed twice
-  const first = { id: 'L1.w1' }, second = { id: 'L1.w2' };
-  const old = { livingFrom: first, dead: true };   // the first watchman's guard, cut down and lying
-  const fresh = { livingFrom: second, dead: false };
-  const turned = [{ res: second, from: second, town, at: [0, 0, 0], guard: null, waited: 0 }];
-  void body;
-  watchStep(turned, [old, fresh]);
+  const town = { slain: (p) => slays.push(p.living.id), lend: () => {}, back: () => {}, killed: () => {} };
+  const first = { id: 'L1.w1', guard: true }, second = { id: 'L1.w2', guard: true };
+  const old = { livingFrom: { id: first.id, res: first, town }, dead: false, corpse: false };   // the first watchman's guard
+  const turned = [];
+  watchStep(turned, [old]);
+  old.dead = true; old.corpse = true; old.killedBy = 'player';   // cut down, and lying
+  watchStep(turned, [old]);
+  assert.deepEqual(slays, ['L1.w1']);
+  const fresh = { livingFrom: { id: second.id, res: second, town }, dead: false, corpse: false };   // the body dressed again, turned again
+  for (let i = 0; i < 3; i++) watchStep(turned, [old, fresh]);
+  assert.equal(turned.length, 1, 'the fresh guard alone followed');
   assert.equal(turned[0].guard, fresh, 'his own guard, never the old body\'s dead one');
-  assert.deepEqual(slays, [], 'nobody slain for the old guard');
-  fresh.dead = true;
+  assert.deepEqual(slays, ['L1.w1'], 'nobody slain again for the old guard');
+  fresh.dead = true; fresh.corpse = true; fresh.killedBy = 'player';
   watchStep(turned, [old, fresh]);
-  assert.deepEqual(slays, ['L1.w2']);
-  assert.match(rd('src/scenes/cityGuards.js'), /if \(stood && best\.person\?\.living\) stood\.livingFrom = best\.person\.living;/);
+  assert.deepEqual(slays, ['L1.w1', 'L1.w2']);
+  assert.match(rd('src/scenes/cityGuards.js'), /if \(p\.person\?\.living\) g\.livingFrom = p\.person\.living;/);
   assert.match(rd('src/systems/rrRidingHost.js'), /const from = person\.living \?\? null;[^\n]*\n[^\n]*g\.livingFrom = from;/);
-  assert.match(rd('src/scenes/world.js'), /_livingWatchTurned\.push\(\{ res: person\.living\.res, from: person\.living, town, at: \[\.\.\.person\.pos\], guard: null, waited: 0 \}\);/);
 });

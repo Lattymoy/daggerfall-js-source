@@ -24,7 +24,11 @@
 //    for them: the minutes they stood are owed, and walked off at CATCH_UP faster until they are back on their day.
 //  - WHAT THEY SAY (`speech()`): a circle's line at this minute (pure: every reader hears it), and a word to the player
 //    passing close - by name from a friend, a cold one from an enemy (relations.js).
-//  - A RESIDENT TAKEN off the street - converted to the watch, trampled - is gone for the rest of the day.
+//  - A RESIDENT TAKEN off the street - trampled - is gone for the rest of the day. WATCH-FIX: one the watch's conversion
+//    took is LENT to the guard stood in their place (`lend` - scenes/livingWatch.js follows it): off the street while it
+//    stands, and at its end back to their day (`back`), or - one of the watch cut down - slain by the player's own blow,
+//    else KILLED (`killed`: dead for good, nobody's regard moved). Another player's watch stands for residents here too
+//    (WATCH1's records name them, `peerLend`): off this street while it does.
 //  - LW3, THE ROADS IN TOWN (`o.tripsOf`): a traveller of this town on a trip has its away window (geared at home, out
 //    to the exit facing the road, home again - dayPlan.js schedule), and walks it ARMED in their class's sprite
 //    (`o.armOf`, ResidentWalker.arm); a party of another town staying here is a VISITOR - in by the exit facing the road
@@ -143,6 +147,7 @@ export class LivingTown {
    *   holderOf?: (res: Resident, day: number) => (Resident|null),
    *   deadAt?: (res: Resident, t: number) => boolean,
    *   slay?: (res: Resident, t: number, seen: boolean) => void,
+   *   killed?: (res: Resident, t: number) => void,
    *   sees?: (from: number[], to: number[]) => boolean,
    *   keepsakes?: () => readonly any[],
    *   takeKeepsake?: (item: any) => void,
@@ -156,7 +161,8 @@ export class LivingTown {
    *   minutes); `harbour()` the harbour's berth in the location's frame (the dock of a port with no Ship building).
    *   LW7: `holderOf(res, day)` who holds a townsperson's place on a day (lives.js - the census's own, a newcomer after a
    *   death, null while it stands empty; a traveller's come with the roads' word); `deadAt(res, t)` whether a hand took
-   *   a resident by the minute; `slay(res, t, seen)` the player struck one down (the host makes the turn); `sees(a, b)`
+   *   a resident by the minute; `slay(res, t, seen)` the player struck one down (the host makes the turn); WATCH-FIX
+   *   `killed(res, t)` one killed by another hand (the host makes the turn `killed`); `sees(a, b)`
    *   a clear line between two points of the location frame (none given: always)
    */
   constructor(nav, o) {
@@ -176,6 +182,10 @@ export class LivingTown {
     this._timer = Infinity;
     /** @type {Map<string, number>} the residents taken off the street, and the day */
     this._taken = new Map();
+    /** WATCH-FIX: the residents lent to the watch - a guard of it stands for them (`lend`) @type {Set<string>} */
+    this._lent = new Set();
+    /** WATCH-FIX: the residents another player's watch stands for here (`peerLend`) @type {ReadonlySet<string>} */
+    this._peerLent = new Set();
     /** @type {Map<string, number>} the minutes each is behind its day */
     this._lag = new Map();
     /** @type {Map<string, { circle: any, index: number, spot: any }>} this tick's circles, by member */
@@ -326,7 +336,7 @@ export class LivingTown {
     const house = isHome(this.places.types.get(key) ?? -1);
     const out = [];
     for (const res of this.peopleOf(day).concat(this._crewsNow())) {
-      if (this._taken.get(res.id) === day || this._gone(res) || this.o.deadAt?.(res, t)) continue;
+      if (this._taken.get(res.id) === day || this._away(res) || this._gone(res) || this.o.deadAt?.(res, t)) continue;   // WATCH-FIX: nor one with the watch
       const at = this.entryOf(res, t);
       const e = at?.e;
       if (!e || e.kind === 'walk' || isOutdoor(e) || e.at?.building !== key) continue;
@@ -421,13 +431,51 @@ export class LivingTown {
   /** A resident taken off the street for the day. @param {Resident} res */
   _take(res) { this._taken.set(res.id, this.dayOf(this._now)); }
 
+  /** WATCH-FIX: a resident with the watch - a guard of it stands for them, this player's or another's. @param {Resident} res */
+  _away(res) { return this._lent.has(res.id) || this._peerLent.has(res.id); }
+
+  /**
+   * WATCH-FIX: A RESIDENT LENT TO THE WATCH - the conversion stood a guard in their place (scenes/livingWatch.js follows
+   * it): off the street while it stands (the body free at once), never taken for the day - the conversion's own take
+   * (the street disabled the row) undone.
+   * @param {Resident} res
+   */
+  lend(res) {
+    this._lent.add(res.id);
+    this._taken.delete(res.id);
+    for (const r of this.pool) if (r.res?.id === res.id) this._free(r);
+  }
+
+  /** WATCH-FIX: today's resident by id - one of its people (a newcomer by their generation's id), a visitor, a crew's
+   *  hand ashore - or null. A guard a load restored names whom he stands for by it alone. @param {string} id */
+  residentOf(id) {
+    const day = this.dayOf(this._liveMinute());
+    return this.peopleOf(day).find((r) => r.id === id) ?? [...this._crewOf.values()].find((c) => c.res.id === id)?.res ?? null;
+  }
+
+  /** WATCH-FIX: the guard gone with no body - the resident back to their day (the census stands them where it has them,
+   *  as any resident wanted: out of the player's sight). @param {Resident} res */
+  back(res) { this._lent.delete(res.id); }
+
+  /**
+   * WATCH-FIX: THE RESIDENTS ANOTHER PLAYER'S WATCH STANDS FOR HERE - its records name them (WATCH1's `lr`): off this
+   * street while it does, as one's own lent (the body free at once - the peer's guard stands where they stood), back
+   * when its record goes. The world is shared; who their guard fought is its owner's.
+   * @param {ReadonlySet<string>} ids
+   */
+  peerLend(ids) {
+    this._peerLent = ids;
+    if (ids.size) for (const r of this.pool) if (r.res && ids.has(r.res.id)) this._free(r);
+  }
+
   _inView(dx, dz, viewYaw) { return dx * Math.sin(viewYaw) + dz * Math.cos(viewYaw) > 0; }
 
   /** The census read: who is wanted on the street now, and the circles at the spots. */
   _tick(playerPos, viewYaw) {
     const t = this._now;
     const day = this.dayOf(t);
-    // a row the street disabled itself (the watch's conversion copies the pool's free inline): that resident is taken
+    // a row the street disabled itself (the watch's conversion copies the pool's free inline): that resident is taken -
+    // WATCH-FIX: and a guard of the watch's standing for them undoes it (`lend`, which frees the row itself when it comes first)
     for (const r of this.pool) if (r.res && !r.active) { this._take(r.res); this._free(r); }
     /** @type {Map<string, { who: Resident, t0: number, t1: number }[]>} */
     const presence = new Map();
@@ -439,6 +487,7 @@ export class LivingTown {
     if (this.o.harbour && !this.places.dock.length && !this._harbourDock) this.dockSpot();   // LW5: the harbour sounded since
     for (const res of [...this.peopleOf(day), ...this._crewsNow()]) {
       if (this._taken.get(res.id) === day) continue;
+      if (this._away(res)) continue;   // WATCH-FIX: with the watch - a guard stands for them
       if (this._gone(res)) continue;   // LW5: aboard, or ashore at the far port
       if (this.o.deadAt?.(res, t)) continue;   // LW7: struck down - dead from that minute
       const at = this.entryOf(res, t);
@@ -750,6 +799,21 @@ export class LivingTown {
     this.o.slay?.(res, this._now, seen.length > 0);
     for (const kin of this.kinOf(res)) rel?.note(kin.id, 'slain', day);
     for (const w of seen) rel?.note(w.id, 'crime', day);
+    this._lent.delete(res.id);   // WATCH-FIX: his guard cut down
+    this._take(res);
+    return res.id;
+  }
+
+  /**
+   * WATCH-FIX: A BODY'S RESIDENT KILLED BY ANOTHER HAND than the player's - one of the watch whose guard a beast, a fall,
+   * a reflected blow or another player cut down: dead for good from this minute (`o.killed` - the hand death `killed`,
+   * which empties the place as any), and nobody's regard of the player moved. Answers the resident's id, or null.
+   */
+  killed(person) {
+    const res = person?.living?.res;
+    if (!res || person.living.town !== this) return null;
+    this.o.killed?.(res, this._now);
+    this._lent.delete(res.id);
     this._take(res);
     return res.id;
   }
@@ -778,22 +842,24 @@ export class LivingTown {
 
   /**
    * LW7: WHAT THE TOWN SAYS OF THE DEEDS - each of its own the player struck down (`slain`), known DEED_KNOWN_MIN after,
-   * for NEWS_DAYS: `who` their name, `seen` whether anyone saw whose hand it was; and each who died fighting at the
-   * player's side (`died`). The character's own, read over the town's pure news (relations.js turns).
-   * @returns {{ kind: string, who: string, foe: string, place: string, t: number, seen: boolean }[]}
+   * for NEWS_DAYS: `who` their name, `seen` whether anyone saw whose hand it was; each who died fighting at the
+   * player's side (`died`); WATCH-FIX: each another hand cut down in its street (`killed`), `watch` one of the watch's.
+   * The character's own, read over the town's pure news (relations.js turns).
+   * @returns {{ kind: string, who: string, foe: string, place: string, t: number, seen: boolean, watch?: boolean }[]}
    */
   deedNews(t = this._now) {
     const turns = this.o.relations?.()?.turns?.();
-    if (!turns || (!turns.slain?.size && !turns.died?.size && !turns.home?.size)) return [];
+    if (!turns || (!turns.slain?.size && !turns.died?.size && !turns.killed?.size && !turns.home?.size)) return [];
     const prefix = `L${this.o.town.mapId >>> 0}.`;
     const out = [];
-    for (const kind of /** @type {const} */ (['slain', 'died'])) {
+    for (const kind of /** @type {const} */ (['slain', 'died', 'killed'])) {   // WATCH-FIX: and one of the watch another hand cut down
       for (const [key, h] of turns[kind] ?? []) {
         const known = h.t + DEED_KNOWN_MIN;
         if (!key.startsWith(prefix) || !(known <= t && t - known < NEWS_DAYS * DAY_MIN)) continue;
         const place = key.slice(0, key.lastIndexOf('@'));
-        const who = h.who || this.residents.find((r) => placeKeyOf(r) === place)?.name || '';
-        if (who) out.push({ kind, who, foe: '', place: '', t: known, seen: !!h.seen });
+        const res = this.residents.find((r) => placeKeyOf(r) === place);
+        const who = h.who || res?.name || '';
+        if (who) out.push({ kind, who, foe: '', place: '', t: known, seen: !!h.seen, watch: !!res?.guard });   // WATCH-FIX: one of the watch's, told as one
       }
     }
     // LW6d: the tales - a keepsake of one of its own carried home, told by the name of the one it was

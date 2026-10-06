@@ -146,20 +146,22 @@
   {
     "name": "LW7-hand-unread",
     "file": "src/systems/livingWorld/lives.js",
-    "old": "  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? null;",
-    "new": "  const at = turns?.died?.get(key) ?? null;",
+    "old": "  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? turns?.killed?.get(key) ?? null;",
+    "new": "  const at = turns?.died?.get(key) ?? turns?.killed?.get(key) ?? null;",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-died-unread",
     "file": "src/systems/livingWorld/lives.js",
-    "old": "  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? null;",
-    "new": "  const at = turns?.slain?.get(key) ?? null;",
+    "old": "  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? turns?.killed?.get(key) ?? null;",
+    "new": "  const at = turns?.slain?.get(key) ?? turns?.killed?.get(key) ?? null;",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-hand-not-a-death",
@@ -488,20 +490,22 @@
   {
     "name": "LW7-deed-census-name",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "        const who = h.who || this.residents.find((r) => placeKeyOf(r) === place)?.name || '';",
+    "old": "        const who = h.who || res?.name || '';",
     "new": "        const who = h.who || '';",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-deed-died-unread",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    for (const kind of /** @type {const} */ (['slain', 'died'])) {",
-    "new": "    for (const kind of /** @type {const} */ (['slain'])) {",
+    "old": "    for (const kind of /** @type {const} */ (['slain', 'died', 'killed'])) {",
+    "new": "    for (const kind of /** @type {const} */ (['slain', 'killed'])) {",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-deed-order",
@@ -650,11 +654,12 @@
   {
     "name": "LW7-host-dead-any",
     "file": "src/scenes/world.js",
-    "old": "    if (!turns.slain.size && !turns.died.size) return false;",
+    "old": "    if (!turns.slain.size && !turns.died.size && !turns.killed.size) return false;",
     "new": "    if (!turns.slain.size) return false;",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-host-dead-before",
@@ -784,12 +789,15 @@
   },
   {
     "name": "LW7-host-watch-untracked",
-    "file": "src/scenes/world.js",
-    "old": "    if (town.struck(person)) _livingWatchTurned.push(",
-    "new": "    if (town.struck(person) && false) _livingWatchTurned.push(",
+    "file": "src/scenes/livingWatch.js",
+    "old": "    if (!g?.livingFrom || g.livingFollowed) continue;",
+    "new": "    if (!g?.livingFrom || g.livingFollowed || true) continue;",
     "tests": [
-      "test/lw7_deeds.test.js"
-    ]
+      "test/lw7_deeds.test.js",
+      "test/watchfix_watch.test.js",
+      "test/lwfix2_watch.test.js"
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-host-trample",
@@ -803,11 +811,12 @@
   {
     "name": "LW7-host-watch-unstepped",
     "file": "src/scenes/world.js",
-    "old": "    if (_livingWatchTurned.length) livingWatchStep();",
-    "new": "    if (false) livingWatchStep();",
+    "old": "    if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }",
+    "new": "    if (livingWorldOn()) { livingPeerWatchStep(); }",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-host-road-unstruck",

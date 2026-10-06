@@ -314,6 +314,18 @@ export const DIED_NEWS = Object.freeze([
   Object.freeze(['{who} died fighting beside {player}, they say.', 'There are worse ways to go.']),
   Object.freeze(['Have you heard? {who} fell at {player}\'s side.', 'Then {player} owes {who} a debt that can\'t be paid.']),
 ]);
+/** WATCH-FIX: of one of its own another hand cut down in the street - a beast, a fall, a stranger (`killed`): one of the
+ *  watch's, and anyone else's. */
+export const KILLED_NEWS = Object.freeze({
+  watch: Object.freeze([
+    Object.freeze(['{who} of the watch is dead. Killed in the street, they say.', 'Doing his duty. Gods keep him.']),
+    Object.freeze(['Did you hear? The watch lost {who}.', 'In our own streets. What is the world coming to?']),
+  ]),
+  town: Object.freeze([
+    Object.freeze(['{who} was killed in the street, they say.', 'Here? Gods. Bar your door tonight.']),
+    Object.freeze(['Did you hear about {who}?', 'I heard. Nobody is safe out there any more.']),
+  ]),
+});
 /** LW6d: of a keepsake of one of its own the deep kept, carried home by the player - `{who}` the one it was. */
 export const HOME_NEWS = Object.freeze([
   Object.freeze(['Did you hear? {player} brought {who}\'s keepsake up out of the deep.', 'Home to the family? Gods bless them.']),
@@ -340,11 +352,12 @@ export const SEA_NEWS = Object.freeze({
 /** Of a meeting with news to tell, the share that tells it. */
 export const NEWS_SHARE = 0.4;
 
-/** LW7: a news item's words - a deed's (struck down by the player, seen or not; died at their side), a fight the player
- *  turned, a passage by sea's (LW5b), a dive's (LW6), the road's.
- *  @param {{ kind: string, dive?: boolean, helped?: boolean, seen?: boolean, sea?: boolean }} item */
+/** LW7: a news item's words - a deed's (struck down by the player, seen or not; died at their side; WATCH-FIX: one of
+ *  the watch another hand killed), a fight the player turned, a passage by sea's (LW5b), a dive's (LW6), the road's.
+ *  @param {{ kind: string, dive?: boolean, helped?: boolean, seen?: boolean, sea?: boolean, watch?: boolean }} item */
 const newsPool = (item) => (item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']
   : item.kind === 'died' ? DIED_NEWS
+  : item.kind === 'killed' ? KILLED_NEWS[item.watch ? 'watch' : 'town']
   : item.kind === 'home' ? HOME_NEWS   // LW6d: a keepsake carried home
     : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)] ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]
       : item.sea ? SEA_NEWS[/** @type {keyof typeof SEA_NEWS} */ (item.kind)]   // LW5b: the sea's own words

@@ -1002,6 +1002,56 @@ call for call.
 - **Pinned** by `test/haltone_watch.test.js` (the voice; the real pool driven frame by frame against DFU's cadence; who
   calls; the incident and the wall; the tells; beyond the pool; the hosts) and `tools/mutants/haltone.json`.
 
+
+## WATCH-FIX - the watch's own bugs (2026-10-05)
+
+Mac: "improve the guards" - and every bug the investigation found in the watch fixed before the merge. Four, each at
+its root; the classic lane's DFU watch is untouched but for the race (DFU's own order restored in both lanes).
+
+- **A false slain** (`scenes/livingWatch.js`). The turned watch read ANY `dead` guard as a kill - and the crime
+  watch walking off when the crime clears is `dead` with no body (`cityGuards.js`, DFU's despawn), as is a watchman
+  run off by a beast or taken by a spell. So striking a watchman and paying the fine slew him by the player's hand:
+  the palace household turned against the player and every witness counted a crime (`walkAwaySlain`, the
+  investigation's: watchman `L12345.w0` slain, the courtiers and two of the watch at -75). The pin modelled the
+  gone guard as `dead: false`, so the suite passed. Now the guard's END decides: a body the player's own blow made
+  (`killedBy`, minted where a guard dies - DFU's `source == Player`, DaggerfallEntityBehaviour.cs:203) is the town's
+  deed, `slain`; a body any other hand made (a beast, a fall, a reflected blow, another player) is one of the watch
+  KILLED - dead for good, nobody's regard of the player moved (`livingTown.js killed`, the host's hand death
+  `killed` - `relations.js HAND_KINDS`, read by `lives.js handDeath`, told by `lines.js KILLED_NEWS`, the watch's
+  words or the town's); no body at all is BACK to his day.
+- **The identity lost** (`cityGuards.js turnNpc`). Only the swing and the trample marked the guard they stood with
+  its resident; the crime response's arms, the minute's sweep (MakeNPCGuardsIntoEnemiesIfGuardsSpawned) and the town
+  watch's summons stood an anonymous Knight_CityWatch and the street took the resident for the day - cut down, he
+  walked his beat the next morning. Every conversion is ONE LAW now - SpawnCityGuard then SetActive(false), the guard
+  marked with the resident's identity as it was turned (`livingFrom`; AUDIT-C6's identity record) - and the host
+  follows every marked guard, whichever arm stood it (`livingWatchStep`): the resident is LENT to it
+  (`livingTown.js lend`: off the street, never taken for the day - the census's own take of the disabled row undone,
+  whichever comes first), and comes back (`back`) when it walks away, the census standing him where his day has him
+  out of the player's sight. One the witness arm took who is not of the watch (DFU's quirk: every walker after a
+  guard has seen) stepped aside - his guard's end is never his death. A load keeps the mark by id (the snapshot's
+  `living`, found again by `residentOf`; never found in WATCH_WAIT beats, let be).
+- **The cap race** (`cityGuards.js inTurn`, `claimed`, the pool's `live()`). DFU's crime response is one synchronous
+  member: the cap read (HowManyEnemiesOfType <= maxActiveGuardSpawns), then every guard stood. Here every stand awaits
+  (CLASS18.CFG, a cold archive), so two calls interleaved: the second read the cap before the first's guards landed,
+  and walked the same street turning the same walkers again - six watchmen out of three. The crime response, the
+  sweep and the summons take turns now (a call whose world was swept while it waited stands nobody), a walker is
+  claimed across the await (the swing's conversion and an arm's never turn him twice), and one the street already
+  gave up (`live()`: the row inactive, or - the living town's - dressed since as another resident) is never turned.
+- **Online, two of him** (`exteriorFoes.js`, `net/wire.js` LIVING_ID_RE, RELAY_VERSION world172). Another player's
+  watchman rode the stream (WATCH1) while the resident he was walked the reader's street. The watch's record names him
+  now (`lr`, the census's id); the reader's puppet carries it (`livingId`) and the host hands every town the set
+  (`livingPeerWatchStep`, `livingTown.js peerLend`): off its street while the record stands, his row freed at once
+  (the peer's guard stands where he stood), back when it goes. A relay before world172 drops the field, and the
+  reader sees him twice, as before. Who the peer's guard fought, and whether he fell, is its owner's (LW0 decision 6).
+- **The four hosts.** `scenes/world.js` - WIRED (the street's pool's `live()` and identity read; the follower every
+  frame in the lane, its `resolve` and `localOf`; the town's `killed`; the peer's watch). `scenes/exterior.js` -
+  WIRED for the race alone (its pool's `live()`; the fixed-city page has no living town). `scenes/worldModes.js` - no
+  conversion: a building's watch comes through its door, its pool empty (PlayerEntity.cs:653-654).
+  `scenes/dungeonContext.js` - no watch stands there.
+- **Pinned** by `test/watchfix_watch.test.js` (the race on the real pool; the one law and whose hand; a load; the
+  walk-away; the ends; a load's resident; the town's side; online; the hosts) and `tools/mutants/watchfix.json`.
+  PIN MOVED: `lwfix2_watch`, `lwfix5_deep`, `lw7_deeds` (the first cut's model, `dead` read as a kill, and its
+  wiring), and every relay pin to world172.
 ## The four hosts
 
 - `scenes/world.js` - WIRED (LW2 the towns, LW3 the roads and the Overworld).

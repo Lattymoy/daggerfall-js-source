@@ -2316,12 +2316,13 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  down at `t` (the turn at their place and cycle, with whether it was seen and the name they bore). */
   const livingDeadAt = (res, t) => {
     const turns = livingRelations.turns();
-    if (!turns.slain.size && !turns.died.size) return false;
+    if (!turns.slain.size && !turns.died.size && !turns.killed.size) return false;   // WATCH-FIX: and one of the watch another hand killed
     const h = livingPlaceOf(res, livingCycleOf(res, Math.floor((t - 240) / 1440))).hand;
     return h != null && h <= t;
   };
   const livingSlay = (res, t, seen) => { livingRelations.turn('slain', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, seen, who: res.name }); };
   const livingDied = (res, t) => { livingRelations.turn('died', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, who: res.name }); };   // LW7b: at the player's side
+  const livingKilled = (res, t) => { livingRelations.turn('killed', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))), { t, who: res.name }); };   // WATCH-FIX: by another hand, in the player's town
   /** A traveller's place on a trip, at the trip's own cycle (their town's roster's, by their slot). */
   const livingTripPlace = (res, trip) => {
     const town = livingTownOfId(res.town);
@@ -4652,7 +4653,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf,   // LW3: its travellers away and armed, its visitors
           ashore: (res) => livingAshore(livingTown, res), crews: () => livingCrews(livingTown),   // LW5: its sailors by their ships' clock; the crews lying here
           // LW7: a townsperson's place by the lives, a hand's death, the player's, and the town's own lines of sight
-          holderOf: (res, day) => livingPlaceOf(res, livingCycleOf(res, day)).holder, deadAt: livingDeadAt, slay: livingSlay,
+          holderOf: (res, day) => livingPlaceOf(res, livingCycleOf(res, day)).holder, deadAt: livingDeadAt, slay: livingSlay, killed: livingKilled,   // WATCH-FIX: one of the watch another hand cut down
           sees: (a, b) => {
             const tr = state.pixelTranslation(px, py);
             const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], len = Math.hypot(d[0], d[1], d[2]);
@@ -9722,6 +9723,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and minted the watch outside the wall.
   const _guardPool = () => ((modes?.mode ?? 'exterior') !== 'exterior' ? [] : _livePersons.map(({ person, pos }) => ({
     pos, fwdYaw: person.facingYaw, guard: person.guard, person,   // LW7: whom a swing takes (livingStruckPool)
+    live: ((living) => () => _streetHolds(person, living))(person.living),   // WATCH-FIX: still on the street, as read (cityGuards.js turnNpc)
     disable: () => {
       for (const p of built.values()) {
         const it = p.population?.pool.find((i) => i.person === person);
@@ -9729,21 +9731,59 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
     },
   })));
+  /** WATCH-FIX: a walker read into a pool still on the street - its row active and (the living town's) dressed as the same
+   *  resident it was read as; the conversion never turns one another arm took, nor a body since dressed as another. */
+  const _streetHolds = (person, living) => {
+    for (const p of built.values()) {
+      const it = p.population?.pool.find((i) => i.person === person);
+      if (it) return !!it.active && (person.living ?? null) === (living ?? null);
+    }
+    return false;
+  };
   // LW7 (bible/06-Systems/Living-World.md "LW7"): THE DEEDS AT THE STREET'S SEAMS. A resident a swing or the trample takes
   // (DFU's one-hit civilian, the watch's conversion) is the living world's deed first: one of the watch STRUCK - the
-  // assault that turns them on the player; the guard it stands carries them, and cut down, they are slain for good -
-  // anyone else STRUCK DOWN (their town's: their own and the witnesses turned, the lives take the place)
+  // assault that turns them on the player (the guard stood in his place is followed: livingWatchStep) - anyone else
+  // STRUCK DOWN (their town's: their own and the witnesses turned, the lives take the place)
   const _livingWatchTurned = [];
   const livingDeedOf = (person, near = null) => {
     const town = livingWorldOn() ? person?.living?.town : null;
     if (!town?.slain) return;
     if (!person.guard) { town.slain(person); return; }
-    if (town.struck(person)) _livingWatchTurned.push({ res: person.living.res, from: person.living, town, at: [...person.pos], guard: null, waited: 0 });   // LW-FIX2: his guard found by the mark the conversion puts on it (scenes/livingWatch.js)
+    town.struck(person);
   };
   const livingStruckPool = (pool) => (livingWorldOn() ? pool.map((e) => ({ ...e, disable: () => { livingDeedOf(e.person, e.pos); e.disable(); } })) : pool);
-  /** LW7: each turned watchman's guard found and watched (scenes/livingWatch.js - LW-FIX2: by the conversion's own mark on
-   *  it, and cut down the town's whole deed, `slain`): gone with the crime, or never stood, let be. */
-  const livingWatchStep = () => watchStep(_livingWatchTurned, cityGuards.guards);
+  /** WATCH-FIX: a resident by id among the towns stood (a guard a load restored knows whom he stands for by it alone). */
+  const livingResidentOf = (id) => {
+    for (const p of built.values()) {
+      const town = p.population;
+      const res = town?.residentOf?.(id) ?? null;
+      if (res) return { town, res };
+    }
+    return null;
+  };
+  /** WATCH-FIX: a world point in a living town's own frame (where a guard of its fell, for its witnesses), or null. */
+  const livingLocalOf = (town, feet) => {
+    if (!feet) return null;
+    for (const p of built.values()) {
+      if (p.population !== town) continue;
+      const t = state.pixelTranslation(p.px, p.py);
+      return [feet[0] - t[0] - p.locOrigin[0], feet[1] - t[1], feet[2] - t[2] - p.locOrigin[2]];
+    }
+    return null;
+  };
+  /** LW7 / WATCH-FIX: every guard of the watch's that stands for a resident - the conversion's mark on it, whichever arm
+   *  stood it (a swing, the trample, the crime response, the minute's sweep, the town watch's summons, a load) - followed
+   *  to its end (scenes/livingWatch.js): the resident lent to it meanwhile, then back to their day, or slain by the
+   *  player's own blow, or killed by another hand. */
+  const livingWatchStep = () => watchStep(_livingWatchTurned, cityGuards.guards, { resolve: livingResidentOf, localOf: livingLocalOf });
+  /** WATCH-FIX: THE RESIDENTS ANOTHER PLAYER'S WATCH STANDS FOR HERE - its puppets' `livingId` (WATCH1's records, `lr`),
+   *  each town told, so a resident is never on its street beside his own guard. One set, refilled each frame. */
+  const _livingPeerWatch = new Set();
+  const livingPeerWatchStep = () => {
+    _livingPeerWatch.clear();
+    for (const f of exteriorFoes.foes) if (f.puppet && typeof f.livingId === 'string') _livingPeerWatch.add(f.livingId);
+    for (const p of built.values()) p.population?.peerLend?.(_livingPeerWatch);
+  };
   /** LW7: a swing that met no one in the street, at the road's travellers - the body on the ray within reach (no wall
    *  before it), DFU's one-hit civilian (WeaponManager.cs:504-521, less the watch: there is none on the road): struck
    *  down for good (the roads' deed), the blood, the Brotherhood's five and the racial override's hit. */
@@ -10477,9 +10517,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // encounter pool's remover for both. That was not a leak: removeFoe
     // (exteriorFoes.js:585-590) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1679-1697) gives it -
+    // got exactly what removeGuard (cityGuards.js:1741-1759) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:1060) and spliced out at the end of it (:1276).
+    // (cityGuards.js:1122) and spliced out at the end of it (:1338).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -28391,7 +28431,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       livingRoadsOf().frame(townTalk.overlayActive ? 0 : dt, cam.pos, { overworld: tvf ? { grow: tvf.grow, blend: tvf.blend } : null });
       livePersonBatches.push(...livingRoads.batches());
     } else if (livingRoads) livingRoads.clear();
-    if (_livingWatchTurned.length) livingWatchStep();   // LW7: a struck watchman's guard, watched
+    if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }   // LW7 / WATCH-FIX: the turned watch followed, mine and a peer's
     if (livingIndoors?.size || livingIndoors?.spots().length) livingIndoors.clear();   // LW8: the street again - the room's residents freed (LW-FIX1: and an empty room's sounding)
     if (livingRemains) { livingRemains.clear(); livingRemains = null; }   // LW6b: ...and the deep's layer let go with its dungeon
     // G1: the guards drive + draw on the same flats' axis. WINFOE1
@@ -28820,11 +28860,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:795-800), so this seam ROUTES by pool exactly
+        // (cityGuards.js:856-861), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1397). DFU makes no pool distinction:
+        // (cityGuards.js:1459). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.
