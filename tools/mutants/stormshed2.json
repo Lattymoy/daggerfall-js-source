@@ -1,0 +1,306 @@
+[
+  {
+    "name": "STORMSHED2-A-claim-uncounted",
+    "file": "server-account/src/arena.js",
+    "old": "      if (rated) { try { await storeArenaChampion(ctx, season, nowS); } catch { /* the bout is recorded; the #1 is counted again by its age */ } }\n",
+    "new": "",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "a rated bout lands and the kept #1 is not counted"
+  },
+  {
+    "name": "STORMSHED2-A-count-fails-claim",
+    "file": "server-account/src/arena.js",
+    "old": "      if (rated) { try { await storeArenaChampion(ctx, season, nowS); } catch { /* the bout is recorded; the #1 is counted again by its age */ } }",
+    "new": "      if (rated) await storeArenaChampion(ctx, season, nowS);",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "a board count that failed fails a bout already recorded"
+  },
+  {
+    "name": "STORMSHED2-A-kept-unread",
+    "file": "server-account/src/arena.js",
+    "old": "  const id = kept && nowS - Number(kept.at) < ARENA_CHAMPION_STORED_S ? kept.player ?? null : await storeArenaChampion(ctx, season, nowS);",
+    "new": "  const id = await storeArenaChampion(ctx, season, nowS);",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "every Worker counts the board again each minute"
+  },
+  {
+    "name": "STORMSHED2-A-never-recounted",
+    "file": "server-account/src/arena.js",
+    "old": "kept && nowS - Number(kept.at) < ARENA_CHAMPION_STORED_S ? kept.player",
+    "new": "kept ? kept.player",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "the kept #1 is never counted again (an account deleted holds the laurel from nobody for good)"
+  },
+  {
+    "name": "STORMSHED2-A-stored-unwritten",
+    "file": "server-account/src/arena.js",
+    "old": "    ON CONFLICT (season) DO UPDATE SET player = excluded.player, at = excluded.at`).bind(season, id, nowS).run();",
+    "new": "    ON CONFLICT (season) DO NOTHING`).bind(season, id, nowS).run();",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "the season's first count stands for good"
+  },
+  {
+    "name": "STORMSHED2-B-b-side-unread",
+    "file": "server-account/src/arena.js",
+    "old": "      FROM arena_pvp WHERE b = ${p} AND season = ${s} AND rated = 1 AND a IS NOT ${p}`;",
+    "new": "      FROM arena_pvp WHERE 0`;",
+    "tests": [
+      "test/stormshed2.test.js",
+      "test/arena4_service.test.js",
+      "test/audit1003_server.test.js",
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "a bout fought as side 1 never counted"
+  },
+  {
+    "name": "STORMSHED2-B-a-side-unread",
+    "file": "server-account/src/arena.js",
+    "old": "      FROM arena_pvp WHERE a = ${p} AND season = ${s} AND rated = 1\n",
+    "new": "      FROM arena_pvp WHERE 0\n",
+    "tests": [
+      "test/stormshed2.test.js",
+      "test/arena4_service.test.js",
+      "test/audit1003_server.test.js",
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "a bout fought as side 0 never counted"
+  },
+  {
+    "name": "STORMSHED2-B-scan-back",
+    "file": "server-account/src/arena.js",
+    "old": "      FROM arena_pvp WHERE a = ${p} AND season = ${s} AND rated = 1\n",
+    "new": "      FROM arena_pvp WHERE +a = ${p} AND season = ${s} AND rated = 1\n",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "side 0's bouts walked off the season's every bout"
+  },
+  {
+    "name": "STORMSHED2-B-self-twice",
+    "file": "server-account/src/arena.js",
+    "old": " AND rated = 1 AND a IS NOT ${p}`;",
+    "new": " AND rated = 1`;",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "a row whose two sides are one account counted twice"
+  },
+  {
+    "name": "STORMSHED2-B-last-oldest",
+    "file": "server-account/src/arena.js",
+    "old": "  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_BOUTS_SQL('?2', '?1')}) ORDER BY at DESC, k DESC LIMIT 1) AS last,",
+    "new": "  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_BOUTS_SQL('?2', '?1')}) ORDER BY at ASC, k DESC LIMIT 1) AS last,",
+    "tests": [
+      "test/stormshed2.test.js",
+      "test/arena4_service.test.js",
+      "test/audit1003_server.test.js",
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "the rating read is the season's first bout's, not its last"
+  },
+  {
+    "name": "STORMSHED2-B-last-tie-row",
+    "file": "server-account/src/arena.js",
+    "old": "  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_BOUTS_SQL('?2', '?1')}) ORDER BY at DESC, k DESC LIMIT 1) AS last,",
+    "new": "  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_BOUTS_SQL('?2', '?1')}) ORDER BY at DESC, k ASC LIMIT 1) AS last,",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "of two bouts of one second, the first written read as the last"
+  },
+  {
+    "name": "STORMSHED2-B-claim-guard-oldest",
+    "file": "server-account/src/arena.js",
+    "old": "    FROM (SELECT r FROM (${MY_BOUTS_SQL(p, '?2')}) ORDER BY at DESC, k DESC LIMIT 1)), ${ARENA_ELO_START})`;",
+    "new": "    FROM (SELECT r FROM (${MY_BOUTS_SQL(p, '?2')}) ORDER BY at ASC, k DESC LIMIT 1)), ${ARENA_ELO_START})`;",
+    "tests": [
+      "test/stormshed2.test.js",
+      "test/arena4_service.test.js",
+      "test/audit1003_server.test.js",
+      "test/arenaladder_audit.test.js"
+    ],
+    "note": "the claim's own WHERE compares the season's first rating: every claim after an account's first is busy"
+  },
+  {
+    "name": "STORMSHED2-B-grand-index-unwritten",
+    "file": "server-account/migrations/0086_storm_shed_2.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_arena_pve_player_grand ON arena_pve (player, tier, step, won);\n",
+    "new": "",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "a Grand Champion's row walked through every ladder bout of the account"
+  },
+  {
+    "name": "STORMSHED2-C-gen-unasked",
+    "file": "server-account/src/homes.js",
+    "old": "  if (kept && kept.gen === gen) return kept.answer;",
+    "new": "  if (kept) return kept.answer;",
+    "tests": [
+      "test/stormshed2.test.js",
+      "test/audit1003_wd.test.js",
+      "test/wd3_online.test.js"
+    ],
+    "note": "the layouts read once an isolate, a home claimed never seen"
+  },
+  {
+    "name": "STORMSHED2-C-unshared",
+    "file": "server-account/src/homes.js",
+    "old": "  if (asking && asking.gen === gen) return asking.ask;\n",
+    "new": "",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "every boot of one moment scans the homes"
+  },
+  {
+    "name": "STORMSHED2-C-kept-any-gen",
+    "file": "server-account/src/homes.js",
+    "old": "  if (asking && asking.gen === gen) return asking.ask;",
+    "new": "  if (asking) return asking.ask;",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "an ask of a newer generation answered by an older one's read"
+  },
+  {
+    "name": "STORMSHED2-C-made-unmoved",
+    "file": "server-account/migrations/0086_storm_shed_2.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS homes_gen_made AFTER INSERT ON homes\nBEGIN",
+    "new": "CREATE TRIGGER IF NOT EXISTS homes_gen_made AFTER INSERT ON homes WHEN 0\nBEGIN",
+    "tests": [
+      "test/stormshed2.test.js",
+      "test/audit1003_wd.test.js"
+    ],
+    "note": "a home claimed: the towns' layouts never read again"
+  },
+  {
+    "name": "STORMSHED2-C-gone-unmoved",
+    "file": "server-account/migrations/0086_storm_shed_2.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS homes_gen_gone AFTER DELETE ON homes\nBEGIN",
+    "new": "CREATE TRIGGER IF NOT EXISTS homes_gen_gone AFTER DELETE ON homes WHEN 0\nBEGIN",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "a town's last home gone: the town still told its layout"
+  },
+  {
+    "name": "STORMSHED2-C-layout-unmoved",
+    "file": "server-account/migrations/0086_storm_shed_2.sql",
+    "old": "AFTER UPDATE OF map_id, building_key, bought_at, layout ON homes",
+    "new": "AFTER UPDATE OF map_id, building_key, bought_at ON homes",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "a home moved to another layout: the town told the old one"
+  },
+  {
+    "name": "STORMSHED2-C-every-column",
+    "file": "server-account/migrations/0086_storm_shed_2.sql",
+    "old": "AFTER UPDATE OF map_id, building_key, bought_at, layout ON homes",
+    "new": "AFTER UPDATE ON homes",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "a door opened or a rent moved reads every home again"
+  },
+  {
+    "name": "STORMSHED2-C-route-unkept",
+    "file": "server-account/src/index.js",
+    "old": "        if (path === '/v1/homes/layouts') return json(await homeLayoutsKept(ctx), 200, origin);",
+    "new": "        if (path === '/v1/homes/layouts') return json(await (await import('./homes.js')).homeLayouts(ctx), 200, origin);",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "the route scans every home at every boot"
+  },
+  {
+    "name": "STORMSHED2-C-kept-per-request",
+    "file": "server-account/src/homes.js",
+    "old": "  const root = ctx.db?.[DB_ROOT] ?? ctx.db;\n  const gen = Number(",
+    "new": "  const root = ctx.db;\n  const gen = Number(",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "kept per request's database wrapper - every request reads afresh"
+  },
+  {
+    "name": "STORMSHED2-D-every-save-stored",
+    "file": "src/scenes/legacyHost.js",
+    "old": "      if (storedBody != null && lineBody() === storedBody && loadFamily(",
+    "new": "      if (false && storedBody != null && lineBody() === storedBody && loadFamily(",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "every checkpoint writes the line to the realm and is never idle"
+  },
+  {
+    "name": "STORMSHED2-D-stamps-kept",
+    "file": "src/scenes/legacyHost.js",
+    "old": "        if (was && stamps) for (const k of /** @type {const} */ (['savedAt', 'lived'])) { if (stamps[k] === undefined) delete was[k]; else was[k] = stamps[k]; }\n",
+    "new": "",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "an idle save's record moves by the clock's stamps"
+  },
+  {
+    "name": "STORMSHED2-D-store-rev-unasked",
+    "file": "src/scenes/legacyHost.js",
+    "old": " && lineBody() === storedBody && loadFamily(deps.storage(), family.id)?.rev === seenRevOf(family)) {",
+    "new": " && lineBody() === storedBody) {",
+    "tests": [
+      "test/stormshed2.test.js",
+      "test/legacyhome.test.js",
+      "test/legacy7_online.test.js",
+      "test/auditlegacy3.test.js"
+    ],
+    "note": "another tab's write since never taken in by an idle save"
+  },
+  {
+    "name": "STORMSHED2-D-refused-as-written",
+    "file": "src/scenes/legacyHost.js",
+    "old": "storedBody = ok ? lineBody() : null; }",
+    "new": "storedBody = lineBody(); }",
+    "tests": [
+      "test/stormshed2.test.js",
+      "test/legacyhome.test.js",
+      "test/legacy7_online.test.js",
+      "test/auditlegacy3.test.js"
+    ],
+    "note": "a write the storage refused counted as stored: the next idle save makes none"
+  },
+  {
+    "name": "STORMSHED2-D-realm-unasked",
+    "file": "src/scenes/legacyHost.js",
+    "old": "        deps.stored?.(family);\n        return JSON.parse(JSON.stringify(family));\n      }",
+    "new": "        return JSON.parse(JSON.stringify(family));\n      }",
+    "tests": [
+      "test/stormshed2.test.js",
+      "test/legacyhome.test.js",
+      "test/legacy7_online.test.js",
+      "test/auditlegacy3.test.js"
+    ],
+    "note": "a realm write the network dropped waits for the next change"
+  },
+  {
+    "name": "STORMSHED2-D-body-whole",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    return JSON.stringify(family, function (k, v) { return (this === family && k === 'rev') || (p && this === p && (k === 'savedAt' || k === 'lived')) ? undefined : v; });",
+    "new": "    return JSON.stringify(family);",
+    "tests": [
+      "test/stormshed2.test.js"
+    ],
+    "note": "the body measured with the clock's stamps in it - every save stored"
+  }
+]

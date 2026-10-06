@@ -12,7 +12,8 @@
 > (264 and 135; the main quest's 31 - 266 and 133 since AUDIT REST-PARTY D2, whose two deadlines by hand moved the
 > count - D1's artifact hunt was a deadline already; 269 and 130, the main quest's 32, since AUDIT REST II; 271 and 128
 > since AUDIT REST III's two dead clocks read by their text, below and
-> `06-Systems/Rest-Arc.md`). Online a delay lands on the short wait, and a
+> `06-Systems/Rest-Arc.md`; 272 and 127 since GUARD-WINDOW, N0B20Y02's three-hour guard read as the window it is,
+> `01-Overview/Field-Bugs-2026-10-06c.md`). Online a delay lands on the short wait, and a
 > deadline is no longer frozen - it runs on QCLOCK-WORLD's played time and fires as DFU's. So T7 (the frozen guard) is
 > retired with the freeze, and the run-time half (T1, T5) now decides whether a task-started deadline closes on the
 > short wait or keeps its played days. The seams below that read "no clock online" are a delay's now: a deadline keeps

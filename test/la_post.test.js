@@ -558,7 +558,7 @@ test('LA-POST6: the march\'s previous frame is a frame this one follows - the fl
   // by source: the wiring where the renderer knows
   const rs = read('src/render/renderer.js');
   assert.match(rs, /shadowOriginShift\(offset\) \{ this\._shadowPass\?\.shiftOrigin\(offset\); this\._air\?\.shiftOrigin\(offset\); this\._frameStamp\+\+; \}/);   // LA-AUDIT C1: and the stamp
-  assert.match(rs, /if \(this\._everyLightNow !== this\._everyLightPrev\) sp\.discard\(\);[^\n]*\n\s+if \(this\._everyLightNow !== this\._everyLightPrev\) \{ this\._air\?\.invalidatePrev\(\); \} this\._everyLightPrev = this\._everyLightNow;/, 'the door, both ways, before the edge is spent');
+  assert.match(rs, /const cut = this\._everyLightNow !== this\._everyLightPrev;[^\n]*\n\s+if \(cut\) sp\.discard\(\);[^\n]*\n\s+if \(this\._everyLightNow !== this\._everyLightPrev\) \{ this\._air\?\.invalidatePrev\(\); \} this\._everyLightPrev = this\._everyLightNow;/, 'the door, both ways, before the edge is spent');   // PIN MOVED (EMPTY-HOLD, 2026-10-06): the replay's discard reads the door's edge where EMPTY-HOLD named it, `cut` - the same edge, still read before it is spent
   assert.ok(calls.length > 0);
 });
 

@@ -293,13 +293,14 @@ test('EDGE-FURNITURE readout: marks behind the camera stand ABOVE the bar with t
     assert.ok(at('far:ahead').y0 + 24 >= panel.bottom + 12, `ahead: its arrow below the panel (${at('far:ahead').y0 + 24})`);
     const side = at('far:side');
     assert.ok(!over(side.x0, side.y0, side.x1, side.y1, bar), `the side's low mark keeps its label off the bar (${JSON.stringify(side)})`);
-    assert.ok(settled > 0 && settled <= 8 && rectReads.n === settled, `thirty frames: measured on the first two, then not again (${settled}, then ${rectReads.n} box reads)`);
+    // FILTERS-LEFT (2026-10-06): a measure reads the filters' own block too - five boxes where it read four
+    assert.ok(settled > 0 && settled <= 10 && rectReads.n === settled, `thirty frames: measured on the first two, then not again (${settled}, then ${rectReads.n} box reads)`);
     hud.updateTravelViewHud({ ...f, trip: 'To Ripwych, by the road' }); hud.updateTravelViewHud({ ...f, trip: 'To Ripwych, by the road' });
-    assert.equal(rectReads.n - settled, 4, 'a journey\'s line in the bar (a taller bar): measured again the next frame');
+    assert.equal(rectReads.n - settled, 5, 'a journey\'s line in the bar (a taller bar): measured again the next frame');
     hud.hideTravelViewHud(); hud.showTravelViewHud({}, doc);
     const before = rectReads.n;
     hud.updateTravelViewHud(f);
-    assert.equal(rectReads.n - before, 4, 'shown again: measured again at once - the bar, its Return and the two pieces');
+    assert.equal(rectReads.n - before, 5, 'shown again: measured again at once - the bar, its Return, the two pieces and the filters\' block');
   } finally { hud.disposeTravelViewHud(); }
   // the pieces it measures are the HUD's own - a class renamed in the style sheet would leave a mark under it unseen
   const h = rd('src/ui/travelViewHud.js'), css = rd('src/ui/enhancedStyle.js');
