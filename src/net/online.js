@@ -151,6 +151,15 @@ export const DEFAULT_SERVER = 'wss://daggerfall-online.mackcothran.workers.dev';
 // last pose; SLAM8/13 pin the ratio (a standing peer is heard at least three times before it could vanish), and a
 // literal here went quietly wrong the day the heartbeat moved. Four heartbeats, the margin the 20000/5000 pair had.
 export const PEER_TIMEOUT_MS = 4 * HEARTBEAT_MS;
+/** RUN-IN-PLACE (2026-10-06, Mac: "theres a lot of player desync online, including players appearing to run in
+ *  place"): how long a peer drawn standing still may go on reading as moving. A body walks off its drawn pose's `mv`
+ *  (net/peerClimb.js peerMoving, every on-foot renderer and the footsteps), and the play-out (`tick`) stands a peer at
+ *  the end of its path whenever the next pose is late - a sender's hitch, a tab put in the background, a reconnect, a
+ *  stall on the line - with the last pose's `mv` still on it: the body ran and stepped in place, for as long as
+ *  PEER_TIMEOUT_MS when the poses stopped for good. The sender's own law (scenes/world.js ONLINE_MOVE_HOLD_MS, 250):
+ *  moving reads true this long after the last frame that MOVED, so a gap shorter than the hold never restarts a stride
+ *  (ONLINE-MVFLICKER1) and a longer one stands the body still. */
+export const SHOWN_MOVE_HOLD_MS = 250;
 /** SCALE2: a hello refused for its missing token is asked again - unless it had none because this device holds no
  *  sign-in ('no-session') or the service refused the one it holds ('auth'): signing in is the way back from those. */
 export const tokenRetryable = (/** @type {string|null|undefined} */ why) => typeof why === 'string' && why !== 'no-session' && why !== 'auth';
@@ -2868,7 +2877,12 @@ export class OnlineSession {
       // already passed let go; a peer with none yet stands at its pose.
       if (!p.path?.length) { p.path = [{ pose: { ...(p.shown ?? p.pose) }, c: 0 }]; p.cur = 0; p.rate = 1; p.playAt = now; }
       this._play(p, now);
-      p.shown = poseAlong(p.path, p.cur);
+      const was = p.shown, s = poseAlong(p.path, p.cur);
+      // RUN-IN-PLACE: THE BODY WALKS WHILE IT IS DRAWN WALKING - a drawn place that has not moved for SHOWN_MOVE_HOLD_MS
+      // reads standing, whatever the last pose said; the first drawn step after reads the pose's own `mv` again
+      if (!was || s.x !== was.x || s.y !== was.y || s.z !== was.z) p.drawnAt = now;
+      else if (s.mv && now - (p.drawnAt ?? now) > SHOWN_MOVE_HOLD_MS) s.mv = 0;
+      p.shown = s;
     }
   }
 
