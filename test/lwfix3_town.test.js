@@ -38,7 +38,9 @@ test('LW-FIX3 the walks coming near: a walk not searched yet that may pass near 
   assert.equal(walkGap(e, [130, 0, 20]), 30, 'beside it');
   assert.equal(walkGap(e, [-30, 0, -40]), 50, 'off its corner');
   assert.equal(walkGap({ from: e.to, to: e.from }, [130, 0, 20]), 30, 'either way');
-  const minute = 100 * DAY_MIN + 8.5 * 60, at = [200, 0, 120];   // the morning's going to work
+  // LW-ERRANDS: PIN MOVED - the afternoon's errands at two (the morning's going to work at half past eight is two walkers
+  // near the player now: the errands are into the shops a trade has need of, the market spread over three hours)
+  const minute = 100 * DAY_MIN + 14 * 60, at = [200, 0, 120];
   const live = bigTown(minute), truth = bigTown(minute);
   for (let i = 0; i < 120; i++) { live.clock.t += RATE / 30; live.town.update(1 / 30, at, 0, at, true); }
   const t = live.clock.t;

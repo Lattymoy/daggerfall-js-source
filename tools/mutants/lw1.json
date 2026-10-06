@@ -184,8 +184,8 @@
   {
     "name": "LW1-normal-never-reversed",
     "file": "src/systems/livingWorld/places.js",
-    "old": "    for (const sign of [1, -1]) {",
-    "new": "    for (const sign of [1]) {",
+    "old": "  for (const sign of [1, -1]) {",
+    "new": "  for (const sign of [1]) {",
     "tests": [
       "test/lw1_livingWorld.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "LW1-net-unread",
     "file": "src/systems/livingWorld/places.js",
-    "old": "  const onNet = (c) => c && c[0] >= 0 && c[1] >= 0 && c[0] < W && c[1] < H && net[c[1] * W + c[0]] === netId;",
-    "new": "  const onNet = (c) => c && c[0] >= 0 && c[1] >= 0 && c[0] < W && c[1] < H;",
+    "old": "const at = doorCell(nav, d, (i) => net[i] === netId);",
+    "new": "const at = doorCell(nav, d, () => true);",
     "tests": [
       "test/lw1_livingWorld.test.js"
     ]
