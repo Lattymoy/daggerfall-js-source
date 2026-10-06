@@ -3,7 +3,7 @@
 // walks in, keeps it, furnishes and paints it, rents its rooms out and collects the rent, stocks its trader and sells it -
 // the gold of each act its own record's; the character that BOUGHT it is still the one its cap counts and its delete
 // takes; a deed the realm gave (KNIGHT-HOUSE) stays its knight's; a guild's hall is never its guildmaster's account's.
-// Driven through the real Worker over node:sqlite with every migration applied (test/accountDb.mjs); migration 0086 on a
+// Driven through the real Worker over node:sqlite with every migration applied (test/accountDb.mjs); migration 0087 on a
 // database built to the migration before it; the client's sweep of the homes a save keeps things in that its account
 // holds no more; the hosts by source. bible/06-Systems/Online-Arc.md ACCOUNT-HOMES.
 import './chargenDom.mjs';
@@ -165,9 +165,9 @@ test('ACCOUNT-HOMES the trader and the delete: the other character stocks the tr
   assert.ok(raw.prepare('SELECT 1 FROM realm_characters WHERE id = ?').get(A2.id), 'the other character stands');
 });
 
-test('ACCOUNT-HOMES migration 0086: the homes of realm characters already gone are released with their pieces; a tombstone\'s, an offline id\'s, a living character\'s and a guild\'s hall stand (mutants: the realm id\'s shape unread; a row standing on it unasked)', () => {
+test('ACCOUNT-HOMES migration 0087: the homes of realm characters already gone are released with their pieces; a tombstone\'s, an offline id\'s, a living character\'s and a guild\'s hall stand (mutants: the realm id\'s shape unread; a row standing on it unasked)', () => {
   const files = readdirSync(new URL('../server-account/migrations', import.meta.url)).filter((f) => f.endsWith('.sql')).sort();
-  const at = files.indexOf('0086_account_homes.sql');
+  const at = files.indexOf('0087_account_homes.sql');
   assert.ok(at > 0, 'the migration is there');
   const db = new DatabaseSync(':memory:');
   db.exec('PRAGMA foreign_keys = ON');
@@ -180,7 +180,7 @@ test('ACCOUNT-HOMES migration 0086: the homes of realm characters already gone a
   const home = (key, charId, guild = null) => db.prepare("INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at, guild_id) VALUES (77, ?, 'p1', ?, 'Fox', 17, 'private', 1000, 1, ?)").run(key, charId, guild);
   home(1, LIVE); home(2, DEAD); home(3, GONE); home(4, 'char-old'); home(5, 'guild:g1', 'g1'); home(6, 'R00000000000000000003');
   db.prepare(`INSERT INTO home_decor (map_id, building_key, id, model, place, placed_at) VALUES (77, 3, 'd1', 41000, '{}', 1)`).run();
-  db.exec(src('server-account/migrations/0086_account_homes.sql'));
+  db.exec(src('server-account/migrations/0087_account_homes.sql'));
   assert.deepEqual(db.prepare('SELECT building_key FROM homes ORDER BY building_key').all().map((r) => r.building_key), [1, 2, 4, 5, 6], 'the home whose realm character is gone, alone');
   assert.equal(db.prepare('SELECT COUNT(*) AS n FROM home_decor').get().n, 0, 'its pieces with it');
 });

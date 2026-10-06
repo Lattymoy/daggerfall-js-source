@@ -194,10 +194,20 @@ export function createLegacyHost(deps) {
    *  lands, and said once. Answers whether it wrote. */
   let unstored = false;
   let unstoredSaid = false;
+  /** STORM-SHED 2: the line as the device's store last took it from this page, the played member's stamps and the rev
+   *  left out (lineBody) - null until a write lands, and after one the storage refused. A save that would write the
+   *  same, over a store nobody wrote since, writes nothing (getSaveData). */
+  let storedBody = /** @type {string|null} */ (null);
+  /** STORM-SHED 2: the line's record without what every save moves - its rev, and the played member's `savedAt` and
+   *  `lived` (the clock's, as the save's own clocks are). */
+  const lineBody = () => {
+    const p = current();
+    return JSON.stringify(family, function (k, v) { return (this === family && k === 'rev') || (p && this === p && (k === 'savedAt' || k === 'lived')) ? undefined : v; });
+  };
   const store = (f = family) => {
     if (!f) return true;
     const ok = storeFamily(deps.storage(), f);
-    if (f === family) unstored = !ok;
+    if (f === family) { unstored = !ok; storedBody = ok ? lineBody() : null; }   // STORM-SHED 2: as written - another tab's facts merged in
     if (!ok && !unstoredSaid) { unstoredSaid = true; deps.say(LEGACY_TEXT.notStored); }
     if (ok) unstoredSaid = false;
     // LEGACY7: online, the realm's copy is written after the device's (systems/legacy/realmLine.js). AUDIT LEGACY III P8:
@@ -262,8 +272,24 @@ export function createLegacyHost(deps) {
     newSaveData: () => null,
     getSaveData: () => {
       if (!family) return null;
+      // STORM-SHED 2 (2026-10-06, the account database's follow-ups): A SAVE THAT CHANGES NOTHING LEAVES THE LINE AS IT
+      // WAS. Every save stamped the played member (`savedAt`, `lived` - the clock's) and moved the line's rev, so the
+      // record was never the one the realm held: online, every two-minute checkpoint wrote the line again
+      // (/v1/realm/lineage, up to 128 KiB), and the checkpoint itself - which carries the record - was never idle
+      // (realmSaves.js idleKeyOf). Measured against what the store last took from this page, never against the line
+      // before this save (a write that changed the line and left its storing to the next save - a death recorded - is
+      // stored by it), and only while the store still holds that write: another tab's since is merged in as before.
+      // The clock's stamps ride the next save that changes anything, as the save's own clocks do; the realm's copy is
+      // asked again (realmLine.js push: none when it landed, the dropped write's retry when it did not).
+      const was = current();
+      const stamps = was ? { savedAt: was.savedAt, lived: was.lived } : null;
       writeCurrent({ saving: true });   // never the past's (its own guard): the past's save carries the line as it stands
       if (!past && current() && playedHere(current())) claimTouched();   // a list changed since the last tick is claimed by the save that holds it
+      if (storedBody != null && lineBody() === storedBody && loadFamily(deps.storage(), family.id)?.rev === seenRevOf(family)) {
+        if (was && stamps) for (const k of /** @type {const} */ (['savedAt', 'lived'])) { if (stamps[k] === undefined) delete was[k]; else was[k] = stamps[k]; }
+        deps.stored?.(family);
+        return JSON.parse(JSON.stringify(family));
+      }
       touch(family);
       store();
       return JSON.parse(JSON.stringify(family));

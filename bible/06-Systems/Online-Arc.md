@@ -10145,6 +10145,44 @@ with repros against the committed tree - Y5 to Y8. FOUND, each fixed and pinned 
   well past a house's eaves. A cap on a piece's top would need a rule by kind (nature pieces apart). Left as asked:
   "How high above the ground may a yard piece stand?" - 4 m.
 
+### STORM-SHED 2 - the reads the overload measured, made small where they start (2026-10-06, late evening)
+
+STORM-SHED's numbers named four costs it left standing (its "Not done here, measured", below). Each is cut at its root:
+
+- **The season's #1** (`server-account/src/arena.js` storeArenaChampion and championNow; migration 0086
+  `arena_champions`). The token's laurel counted the whole board (BOARD_SQL) in every isolate every minute - 109 million
+  of the database's 760 million rows a day, for one name only a rated bout moves. The board is now counted when a rated
+  bout lands (the claim, after its INSERT; a count that fails leaves the bout recorded) and kept for every Worker. A
+  reader takes the kept word while it is younger than ARENA_CHAMPION_STORED_S (600 s) and counts again past that,
+  which bounds whatever else moves the board: an account deleted sets the kept `player` NULL, and nobody wears the
+  laurel until the next count. The isolate's own minute (ARENA_CHAMPION_CACHE_S) still stands in front.
+- **An account's rating** (`arenaRatingOf` and MY_BOUTS_SQL; the claim's RATING_NOW_SQL). `a = ?2 OR b = ?2`, planned
+  on idx_arena_pvp_season, walked the season's every rated bout - twice, on every registered account's token. One read
+  now takes each side off its own index (idx_arena_pvp_a, idx_arena_pvp_b) as a UNION ALL, and answers exactly what
+  the old reads answered: a seeded 300-bout season compared row for row, two bouts of one second included. A row whose
+  two sides are one account is read once - the receipt law refuses such a row, and the read keeps the old count. A
+  Grand Champion's row, asked on the same token, walked every ladder bout the account fought; `idx_arena_pve_player_grand`
+  finds it.
+- **The towns' layouts** (`server-account/src/homes.js` homeLayoutsKept; migration 0086 `homes_gen` and its three
+  triggers). Every online boot - and every 24 s while unheard - scanned every home with a NOT EXISTS beside each, and
+  the yards and rooms wait on its answer. The database itself moves `homes_gen` on every home made, gone, or moved to
+  another town, building, purchase time or layout - the four columns the answer reads. An isolate keeps the answer of
+  the generation it read, so an ask is one row: never behind a claim, and none of the writes that move a town's homes
+  has to remember to say so. The generation is read before its answer, so a write between the two is read again at the
+  next ask. Asks of one generation share one read, and an ask of a newer one never takes an older read. Keyed by the
+  binding (`DB_ROOT`), as STORM-SHED's seat rows are.
+- **A Project Legacy save that changed nothing** (`src/scenes/legacyHost.js` getSaveData). Every save stamped the played
+  member (`savedAt`, `lived`) and moved the line's rev, so the record was never one the realm already held: every
+  two-minute checkpoint wrote the line to the realm (/v1/realm/lineage, up to 128 KiB), and the checkpoint carrying it
+  was never idle (realmSaves.js idleKeyOf). A save now writes nothing when the line - without those stamps and its rev
+  - is what the device's store last took from this page, and the store still holds that write. Another tab's write
+  since is merged in, as every save did. A write the storage refused is made again, and so is one the realm dropped
+  (realmLine.js push asks again, and makes none once it landed). The clock's stamps ride the next save that changes
+  anything; a death, a switch and a retirement write them fresh, and the page reads the played member's minutes live.
+- acct89 with migration 0086 (the deploy applies it before the Worker). The legacy save ships with the site. No relay
+  change, so merging drops nobody. Pinned in `test/stormshed2.test.js` (5); `tools/mutants/stormshed2.json` 28 of 28
+  dead.
+
 ### STORM-SHED - a failed or slow ask never asked faster; the reads it multiplied made cheap (2026-10-06 evening)
 
 The account service overloaded again the evening after YARD-SHED: `D1_ERROR: D1 DB is overloaded. Requests queued for
@@ -10178,7 +10216,7 @@ The fix, at both ends:
   rows are the isolate's, not a request's. Migration 0085 indexes a character's harvests by player, character and day.
 - No relay change: merging drops nobody. Pinned in `test/stormshed.test.js` (11); `tools/mutants/stormshed.json` 27 of
   27 dead.
-- **Not done here, measured:** the season's #1 (BOARD_SQL, about 1,037 rows) read by each isolate each minute for the
+- **Not done here, measured** (STORM-SHED 2, above, cut each at its root): the season's #1 (BOARD_SQL, about 1,037 rows) read by each isolate each minute for the
   mint's laurel - 109 million of the database's 760 million rows a day; `arenaRatingOf`'s two reads on every registered
   mint walk the season's rated bouts (the `a = ?2 OR b = ?2`); `/v1/homes/layouts` scans every home on each boot and
   retries every 24 s while unheard, and decorations wait on it; and a Project Legacy save posts its line's record on
@@ -10380,7 +10418,7 @@ nobody's to use again. Now:
 **A deleted character's homes go** (the first). A realm character's delete already took the homes it bought in its own
 batch (AUDIT REALM L1-F7). What had slipped:
 
-- **Homes held for nobody** (`server-account/migrations/0086_account_homes.sql`): a home whose buyer is a realm id no
+- **Homes held for nobody** (`server-account/migrations/0087_account_homes.sql`): a home whose buyer is a realm id no
   realm character stands on any more - a delete that never reached it - is released, once, with its pieces, its hidden
   furniture and its rooms (the cascade). A tombstone's homes stand (a Bloodline's fallen is no delete: its account,
   its heir's, holds them), as do an offline id's from before the realm and a guild's hall. Realm-Arc's Left open ("a
@@ -10398,7 +10436,7 @@ DECIDED: the homes go whatever another character of the account placed in them -
 the house, unpaid, as the deleted character's own do. THE FOUR HOSTS: an online home is the streaming world's alone -
 `scenes/world.js` builds the registry and sweeps, `scenes/worldModes.js` (the interiors) reads `own`;
 `scenes/exterior.js` (the fixed city) and `scenes/dungeonContext.js` build no registry (FLAGGED by name: no online home
-stands there). `acct89`; deploy BEFORE the site - a new client offers the account's other characters what an old service
+stands there). `acct90`; deploy BEFORE the site - a new client offers the account's other characters what an old service
 refuses (`no-home`). No relay change. Pinned: `test/account_homes.test.js` (7); PIN MOVED in `test/home1.test.js`,
 `test/decor1.test.js`, `test/basehide.test.js`, `test/guild_yard.test.js`, `test/homeprice.test.js`,
 `test/auditrealm.test.js`, `test/legacy7_homes.test.js`, `test/profdelete.test.js`, `test/renown_char.test.js` and the
@@ -10429,7 +10467,7 @@ Now a hall does too.
   through the guild book (`net/guildBook.js` sellHall's door; `scenes/world.js` guildHall.sell), the town read again. No
   purse moves.
 
-`acct89`; no relay change. Pinned: `test/hallsale.test.js` (4); PIN MOVED in `test/guild1d_service.test.js` (the
+`acct90`; no relay change. Pinned: `test/hallsale.test.js` (4); PIN MOVED in `test/guild1d_service.test.js` (the
 guildmaster's town answer). `tools/mutants/hallsale.json` (12).
 
 ## GUILD1 (2026-09-25, Mac: "future ownership for online guilds"; asked, founding takes "Gold and Renown", a guild is joined "Per character", its ranks are "Four, renamed by the guildmaster", and the treasury is the "Guildmaster only" to take from) - a guild the players found, and the service keeps

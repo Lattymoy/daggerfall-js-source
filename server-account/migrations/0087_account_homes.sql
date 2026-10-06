@@ -4,7 +4,7 @@
 --   npx wrangler d1 migrations apply daggerfall-accounts --remote
 --
 -- Applied exactly once through the `d1_migrations` ledger, which the
--- deploy runs (ACC1-CI). Deploy this service (acct89) BEFORE the site;
+-- deploy runs (ACC1-CI). Deploy this service (acct90) BEFORE the site;
 -- no relay change. Rows only: no table changes shape.
 --
 -- A home is its ACCOUNT's now (server-account/src/homes.js), and `char_id`
