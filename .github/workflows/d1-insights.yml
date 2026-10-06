@@ -1,0 +1,36 @@
+# ONE-OFF DIAGNOSTICS (2026-10-06, the account service's outage; the owner: "I ALLOW IT"): read-only - which queries
+# spend the accounts database's time, its size and load, and the account Worker's live errors for 45 s. Removed once read.
+name: d1-insights (one-off, read-only)
+on:
+  push:
+    branches: [ccr-210e4583-pgxpvj]
+    paths: [".github/workflows/d1-insights.yml"]
+permissions:
+  contents: read
+jobs:
+  insights:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: a27adccb38c8e8b82fa32e5736274a94
+      WRANGLER: npx --yes wrangler@4
+      DB_NAME: daggerfall-accounts
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: the database (size, tables, last 24 h of reads and writes)
+        run: $WRANGLER d1 info "$DB_NAME" --json || true
+      - name: the queries by total time, last day
+        run: $WRANGLER d1 insights "$DB_NAME" --timePeriod 1d --sort-by time --sort-type sum --limit 15 --json || true
+      - name: the queries by count, last day
+        run: $WRANGLER d1 insights "$DB_NAME" --timePeriod 1d --sort-by count --sort-type sum --limit 15 --json || true
+      - name: the queries by average time, last day
+        run: $WRANGLER d1 insights "$DB_NAME" --timePeriod 1d --sort-by time --sort-type avg --limit 10 --json || true
+      - name: the account Worker's live errors (45 s)
+        run: |
+          timeout 45 $WRANGLER tail daggerfall-accounts --format json --status error > tail.json 2>tail.err || true
+          echo "events: $(grep -c '"outcome"' tail.json || true)"
+          head -c 20000 tail.json || true
+          echo; tail -n 20 tail.err || true
