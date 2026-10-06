@@ -12,7 +12,7 @@
 //
 // Storage is handed in (systems/appStorage.js appStorage / tabStorage), so this is headless-testable; every read and
 // write is shielded, because storage throws under some privacy modes and a family must never cost the player a game.
-import { readFamily, FAMILY_VERSION } from './family.js';
+import { readFamily, FAMILY_VERSION, nameAtSeat } from './family.js';
 import { mergeNews } from './influence.js';   // LEGACY6
 
 export const FAMILY_KEY_PREFIX = 'dagger.legacy.family.';
@@ -80,6 +80,7 @@ export function mergeFacts(mine, other) {
   }
   if (!mine.pending && other.pending && knew.get(other.pending.fallenId) === false) mine.pending = JSON.parse(JSON.stringify(other.pending));
   if (!mine.seat && other.seat) mine.seat = { ...other.seat };
+  nameAtSeat(mine);   // LEGACY-NAME: a nameless house is named with the seat it learned - here, from the copy that saw it
   if (!mine.home && other.home) mine.home = { ...other.home };
   mine.news = mergeNews(mine.news, other.news);   // LEGACY6: what the towns heard is never unheard
   mine.nextId = Math.max(mine.nextId | 0, other.nextId | 0, ...mine.people.map((p) => p.id + 1));

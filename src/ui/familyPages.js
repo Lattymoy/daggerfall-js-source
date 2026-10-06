@@ -25,6 +25,7 @@ import { SKILL_NAMES } from '../systems/skills.js';
 import { STAT_KEYS_ORDER } from '../systems/statMods.js';
 import { homeOf, familyHome, sameHouse } from '../systems/legacy/household.js';   // LEGACY-HOME: where each of the line lives
 import { houseLine } from '../net/houseLaw.js';   // LEGACY7 part three: a player spouse's own house on their card
+import { houseWord } from '../systems/legacy/houseName.js';   // LEGACY-NAME: a seat's house said once
 
 export const FAMILY_PAGE_SECTIONS = Object.freeze([
   Object.freeze(['tree', 'Family Tree']), Object.freeze(['house', 'The House']), Object.freeze(['hall', 'Hall of Ancestors']),
@@ -136,6 +137,9 @@ export function ensureFamilyStyle(doc = typeof document === 'undefined' ? null :
 const RACE_WORDS = Object.freeze({ Breton: 'Breton', Redguard: 'Redguard', Nord: 'Nord', DarkElf: 'Dark Elf', HighElf: 'High Elf', WoodElf: 'Wood Elf', Khajiit: 'Khajiit', Argonian: 'Argonian' });
 export const raceWord = (race) => RACE_WORDS[race] ?? String(race ?? '');
 export const modelWord = (m) => (m === MODELS.bloodline ? 'Bloodline' : 'Enduring');
+/** LEGACY-NAME: a house's title - "The House of Hlaalu", a seat's house "The House of Sentinel" (never "of of"), and
+ *  "The House" while it has no name yet (founded where no town stands, its seat still to come). */
+export const houseTitle = (surname) => (houseWord(surname) ? `The House of ${houseWord(surname)}` : 'The House');
 export const modelLine = (m) => (m === MODELS.bloodline
   ? 'A Bloodline: every death is final. When one of the house falls, the mantle passes to another of the blood - or the line ends.'
   : 'An Enduring line: a death is not the end, but it costs years. When a life’s span is spent, the mantle passes on.');
@@ -199,7 +203,7 @@ export function sheetHouse(prov = _provider) {
     if ((p.toll | 0) > 0) rows.push(['Arkay’s toll', `${p.toll} years`]);
     word = isSpent(p, lived) ? SHEET_HOUSE_TEXT.spent : isElder(p, lived) ? SHEET_HOUSE_TEXT.elder : null;
   }
-  return { title: `The House of ${family.surname}`, rows, word };
+  return { title: houseTitle(family.surname), rows, word };
 }
 
 /** The card's identity line: "Dark Elf Nightblade, level 7". A spouse who married in has no career of this house's
@@ -317,7 +321,7 @@ export function drawTreePage(detail, rerender, { el, divider, door = (fn) => fn(
   }
   view.append(stage);
   view.setAttribute('role', 'group');
-  view.setAttribute('aria-label', `The tree of the house of ${family.surname}`);
+  view.setAttribute('aria-label', `The family tree${houseWord(family.surname) ? ` of the house of ${houseWord(family.surname)}` : ''}`);
   // AUDIT LEGACY II U4: the browser scrolls a clipped box to show a plate the keyboard reaches - the pan never knew, and
   // the tools went out of sight with no way back. The box never scrolls; a plate the keyboard reaches is panned to
   view.onscroll = () => { if (view.scrollLeft || view.scrollTop) { view.scrollLeft = 0; view.scrollTop = 0; } };
@@ -392,7 +396,7 @@ function personCard(el, family, p, livedNow, rerender, door) {
   const top = el('div', 'fam-top');
   const who = el('div');
   who.append(el('h3', null, fullNameOf(p.given, p.surname)), el('div', 'fam-sub', identityLine(p)));
-  if (p.kind === 'member') who.append(el('div', 'fam-sub', `Generation ${p.gen + 1} of the house of ${family.surname}`));
+  if (p.kind === 'member') who.append(el('div', 'fam-sub', `Generation ${p.gen + 1} of the house${houseWord(family.surname) ? ` of ${houseWord(family.surname)}` : ''}`));
   top.append(faceBox(el, p), who);
   card.append(top);
   const chips = el('div', 'fam-chips');
@@ -507,7 +511,7 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
   ensureFamilyStyle();
   const prov = _provider;
   const family = prov?.on?.() ? prov.family() : null;
-  detail.append(divider(family ? `The House of ${family.surname}` : 'The House'));
+  detail.append(divider(houseTitle(family?.surname)));
   if (!family) { detail.append(el('p', 'px-note', noFamilyLine(prov))); return; }
   const me = currentOf(family);
   const g = el('div', 'fam-grid');
@@ -581,7 +585,7 @@ export function drawHallPage(detail, rerender, { el, divider } = /** @type {any}
     const row = el('div', 'fam-hallrow');
     const gens = 1 + f.people.reduce((m, p) => Math.max(m, p.gen | 0), 0);
     const head = currentOf(f);
-    row.append(el('div', 'fam-kin', `The House of ${f.surname}${f.id === playing ? ' (yours)' : ''}`),
+    row.append(el('div', 'fam-kin', `${houseTitle(f.surname)}${f.id === playing ? ' (yours)' : ''}`),
       el('div', 'fam-sub', `${modelWord(f.model)} - ${gens} ${gens === 1 ? 'generation' : 'generations'}, ${f.people.length} remembered, ${f.people.filter((p) => p.died).length} fallen`),
       el('div', 'fam-sub', f.ended != null ? `The line ended${prov.date ? ` on ${prov.date(f.ended)}` : ''}.` : head ? `Carried by ${fullNameOf(head.given, head.surname)}.` : ''));
     list.append(row);

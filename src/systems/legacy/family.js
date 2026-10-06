@@ -81,14 +81,23 @@ function withBankSeed(rng, fn) {
   try { return fn(); } finally { setSeed(was); }
 }
 
-/** The last word of a full name - `GetSurname` (`fullName.Split(' ')`, the last part when there are two or more). */
+/** LEGACY-NAME: where a name's "of <seat>" begins - a seat's house's surname is all of it ("Tlist of Gothway Garden");
+ *  -1 when the name carries none (never its first word, never its last). */
+const seatOfAt = (parts) => { const i = parts.indexOf('of', 1); return i > 0 && i < parts.length - 1 ? i : -1; };
+/** The last word of a full name - `GetSurname` (`fullName.Split(' ')`, the last part when there are two or more) - or,
+ *  for a member of a seat's house, its "of <seat>" whole (LEGACY-NAME: a member born "Tlist of Sentinel" and played
+ *  kept "Sentinel" for a surname and "Tlist of" for a name). */
 export function surnameOf(fullName) {
   const parts = String(fullName ?? '').trim().split(/\s+/).filter(Boolean);
+  const of = seatOfAt(parts);
+  if (of > 0) return parts.slice(of).join(' ');
   return parts.length > 1 ? parts[parts.length - 1] : '';
 }
 /** The given name - every word but the surname's (a one-word name is all given). */
 export function givenOf(fullName) {
   const parts = String(fullName ?? '').trim().split(/\s+/).filter(Boolean);
+  const of = seatOfAt(parts);
+  if (of > 0) return parts.slice(0, of).join(' ');
   return parts.length > 1 ? parts.slice(0, -1).join(' ') : (parts[0] ?? '');
 }
 /** A person's whole name: given + surname, the surname left off when there is none. */
@@ -207,15 +216,31 @@ export function foundFamily(entity, { model = MODELS.enduring, seat = null, at =
   founder.born = at;
   founder.startAge = startAgeOf(founder.race);
   founder.heir = heirAnswer(settings, rng);
-  const sur = founder.surname || (seat?.loc ? `of ${seat.loc}` : '');
-  founder.surname = sur;
+  founder.surname = founder.surname || '';
   /** @type {Family} */
   const family = {
-    v: FAMILY_VERSION, id: id ?? mintFamilyId(Date.now(), rng), surname: sur, model: isModel(model) ? model : MODELS.enduring,
+    v: FAMILY_VERSION, id: id ?? mintFamilyId(Date.now(), rng), surname: founder.surname, model: isModel(model) ? model : MODELS.enduring,
     seat: seat ? { region: String(seat.region), loc: String(seat.loc), ...(Number.isInteger(seat.mapId) ? { mapId: seat.mapId } : {}) } : null,
     rev: 1, nextId: 2, currentId: 1, founded: at, ended: null, people: [founder], remains: [], pending: null, houses: [], home: null,
   };
+  nameAtSeat(family);   // a founder with no surname of their own: the house is the seat's
   return family;
+}
+
+/**
+ * LEGACY-NAME - THE HOUSE NAMED FOR ITS SEAT (section 5's naming): a founder with no surname of their own founds a house
+ * named for its seat ("of Sentinel"). The seat is the first town the house stands in, and a new character founds in
+ * Privateer's Hold, where none stands - so a house founded nameless is named when its seat is noted (the host's tick),
+ * or when a copy that knows the seat merges in (store.js mergeFacts); every member of the blood born under the nameless
+ * house takes the name (a spouse keeps their own). A house with a name, or with no seat yet, is left as it is.
+ * Answers whether it named the house.
+ */
+export function nameAtSeat(family) {
+  if (!family || String(family.surname ?? '').trim() || !family.seat?.loc) return false;
+  const sur = `of ${family.seat.loc}`;
+  family.surname = sur;
+  for (const p of family.people ?? []) if ((p.kind ?? 'member') === 'member' && !String(p.surname ?? '').trim()) p.surname = sur;
+  return true;
 }
 
 /** B12: the heir answer, rolled once per person at birth - "Always" is true, "Random" the mod's 50%. */

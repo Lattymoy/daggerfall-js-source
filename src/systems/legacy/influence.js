@@ -14,6 +14,7 @@
 //    the town where they happened and in the family's seat - by name and by house.
 import { LEGAL_REP_MIN, LEGAL_REP_MAX } from '../court.js';
 import { changeReputation } from '../factionRep.js';
+import { houseWord } from './houseName.js';   // LEGACY-NAME: "House Sentinel", never "House of Sentinel"
 
 export const STANDING_SHARE = 0.25;
 export const REGARD_SHARE = 0.5;
@@ -151,6 +152,6 @@ export function newsFor(family, mapId, t) {
   const here = Number(mapId) >>> 0;
   const seat = family.seat?.mapId != null && (family.seat.mapId >>> 0) === here;
   return family.news.filter((n) => n.t <= t && t - n.t < HOUSE_NEWS_DAYS * DAY_MIN && (seat || (n.m != null && n.m === here)))
-    .map((n) => ({ kind: n.k, kin: /** @type {true} */ (true), who: n.who, house: family.surname ?? '', foe: '', place: '', t: n.t, seen: /** @type {true} */ (true) }))
+    .map((n) => ({ kind: n.k, kin: /** @type {true} */ (true), who: n.who, house: houseWord(family.surname), foe: '', place: '', t: n.t, seen: /** @type {true} */ (true) }))
     .sort((a, b) => b.t - a.t);
 }

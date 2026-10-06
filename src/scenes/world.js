@@ -684,7 +684,7 @@ import { createProfileWindow, profileView, profileDuelLine, profileRenown, profi
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duelSession.js';   // DUEL1: the duel's state machine (pure)
 import { createWedManager, wedWhyText, wedMineText } from '../net/wedSession.js';   // LEGACY7 part three: two players wed - the handshake's state machine (pure)
 import { createFamilyBodies, familyRoomSprites } from '../world/familyBodies.js';   // LEGACY7 part four: the line drawn in its own body, as an online peer is
-import { houseLine } from '../net/houseLaw.js';   // LEGACY7 part three: the house a proposal comes from, on its prompt
+import { houseLine } from '../net/houseLaw.js'; import { houseWord } from '../systems/legacy/houseName.js';   // LEGACY7 part three: the house a proposal comes from, on its prompt; LEGACY-NAME: a seat's house said once
 import { createDuelRecords, duelUncountedText } from '../net/duelRecord.js';   // DUEL1: the Inspect card's duelling record, asked and kept
 import { createDuelPrompt } from '../ui/duelPrompt.js';   // DUEL1: the challenge, as the challenged player sees it
 import { DuelWallRenderer } from '../render/duelWall.js';   // DUEL1: the ring's holographic wall
@@ -12855,13 +12855,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       sub: `${legacyIdentity(p)} - ${p.characterId ? 'their journey picks up where they left it' : 'sets out from the family seat'}`,
       act: `Carry on as ${p.given}`,
     }));
-    if (out.newborn) choices.push({ key: 'newborn', who: null, name: `A child of ${fallen.given}`, sub: `Born of the blood, raised in the house of ${fam?.surname ?? ''} - a new heir comes of age`, act: 'Raise an heir' });
+    if (out.newborn) choices.push({ key: 'newborn', who: null, name: `A child of ${fallen.given}`, sub: `Born of the blood, raised in ${legacyHouse(fam)} - a new heir comes of age`, act: 'Raise an heir' });
     const retired = !fallen.died;
     const final = retired ? `${legacyFullName(fallen)} retires to the family seat` : fallen.died.cause === 'years' ? `${legacyFullName(fallen)} has died of their years` : `${legacyFullName(fallen)} has fallen`;
     const lines = [
       ...(past && past.id !== fallen.id ? [past.died ? LEGACY_TEXT.deadLoad(legacyFullName(past)) : LEGACY_TEXT.retiredLoad(legacyFullName(past))] : []),
       retired ? `${fallen.given} has carried the house long enough. The mantle passes on.` : choices.length ? LEGACY_TEXT.heir : LEGACY_TEXT.noHeir,
-      choices.length ? `The house of ${fam?.surname ?? ''} goes on. Who carries the line now?` : `There is no one left of the house of ${fam?.surname ?? ''}. The line ends here, and its tree is kept in the Hall of Ancestors.`];
+      choices.length ? `${legacyHouse(fam, 'The')} goes on. Who carries the line now?` : `There is no one left of ${legacyHouse(fam)}. The line ends here, and its tree is kept in the Hall of Ancestors.`];
     if (out.estate > 0 && choices.length) lines.push(`The estate - ${out.estate} gold - passes to whoever takes up the name.`);
     const ov = createSuccessionOverlay({
       title: final, lines, choices, faces: legacyFaces,
@@ -12891,7 +12891,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const cur = fam ? fam.people.find((p) => p.id === fam.currentId && !p.died && p.retired == null) : null;
     const ov = createSuccessionOverlay({
       title: past.died ? LEGACY_TEXT.deadLoad(legacyFullName(past)) : LEGACY_TEXT.retiredLoad(legacyFullName(past)),
-      lines: [cur ? `The house of ${fam.surname} is carried by ${legacyFullName(cur)} now.` : `The house of ${fam?.surname ?? ''} has ended. Its tree is kept in the Hall of Ancestors.`],
+      lines: [cur ? `${legacyHouse(fam, 'The')} is carried by ${legacyFullName(cur)} now.` : `${legacyHouse(fam, 'The')} has ended. Its tree is kept in the Hall of Ancestors.`],
       choices: cur ? [{ key: `p${cur.id}`, who: cur, name: legacyFullName(cur), sub: legacyIdentity(cur), act: `Play as ${cur.given}` }] : [],
       faces: legacyFaces,
       choose: (key) => ({ ok: !!legacyHost?.succeed({ personId: Number(key.slice(1)) }) }),
@@ -12899,7 +12899,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     if (ov) townTalk.showOverlay(ov);
   }
-  const legacyFullName = (p) => (p.surname ? `${p.given} ${p.surname}` : p.given);
+  const legacyFullName = (p) => (p.surname ? `${p.given} ${p.surname}` : p.given); const legacyHouse = (fam, the = 'the') => `${the} house${houseWord(fam?.surname) ? ` of ${houseWord(fam.surname)}` : ''}`;   // LEGACY-NAME: "the house of Sentinel", never "of of" (one line, so the cites below it hold)
   const legacyIdentity = (p) => `${raceWord(p.race)} ${p.className}${p.characterId ? `, level ${p.level}` : ''}`;
   /** LEGACY5: the talk's rows for a Living World resident - their regard of the one played today, the one played's
    *  Personality and Etiquette, the town's name (legacyHost.topicRows). */

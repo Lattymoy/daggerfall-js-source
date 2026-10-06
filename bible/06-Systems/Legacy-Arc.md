@@ -261,6 +261,16 @@ mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed onl
 - **Surnames.** The family's surname is the founder's (their name's last word, or "of <seat>" when they have none). A
   spouse takes it if the player answers yes at the wedding; children always carry it - except for the mod's lore
   change, which founds a cadet branch under the new name on the same tree (section 5's naming).
+  **LEGACY-NAME (2026-10-06):** "of <seat>" was applied at the founding alone, and a new character founds in Privateer's
+  Hold, where no town stands - its seat came at the first town and the house stayed nameless for good ("The House of "
+  on every page, no house under the name online, siblings with no surname). A nameless house is named when its seat is
+  noted, or when a copy that knows the seat merges in, the members of the blood with it - a spouse keeps their own
+  (`family.js nameAtSeat`; the host's tick, `store.js mergeFacts`) - and the HUD says so ("Your house takes its seat's
+  name: the house of Sentinel."). A seat's house says itself once - "The House of
+  Sentinel", never "of of" (`systems/legacy/houseName.js houseWord`, the pages' `houseTitle`, the host's, the Succession's, the
+  heirloom's, the wedding's and the towns' words) - and a member born "Tlist of Sentinel" keeps "of Sentinel" whole when
+  played (`surnameOf`/`givenOf`). The towns' news no longer says a member's surname twice ("Ysolde Hlaalu Hlaalu, gone.").
+  Pinned in `test/legacyname.test.js`, mutation-proven in `tools/mutants/legacyname.json`.
 
 ## 9. ONLINE
 
@@ -494,4 +504,5 @@ than standing still.
 | LEGACY6 | world influence: the inherited standing and regard, the towns' talk, the killer remembered | built |
 | LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name; two players wed (part three); the line in its own body (part four) and in its online homes (part five) | built |
 | LEGACY-SHEET | the house on the character sheet: the model, the generation, an Enduring house's age, toll and elder's word (section 11) | built |
+| LEGACY-NAME | a house founded nameless named at its seat; a seat's house said once; the news's doubled surname (section 8) | built |
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |

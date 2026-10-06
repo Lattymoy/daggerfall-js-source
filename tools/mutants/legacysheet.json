@@ -119,7 +119,7 @@
   {
     "name": "LEGACYSHEET-untitled",
     "file": "src/ui/familyPages.js",
-    "old": "  return { title: `The House of ${family.surname}`, rows, word };",
+    "old": "  return { title: houseTitle(family.surname), rows, word };",
     "new": "  return { title: 'The House', rows, word };",
     "tests": [
       "test/legacysheet.test.js"

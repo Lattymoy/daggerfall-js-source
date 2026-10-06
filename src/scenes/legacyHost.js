@@ -31,8 +31,9 @@
 import {
   LEGACY_VENDOR, MODELS, foundFamily, readFamily, personOf, currentOf, writePlayer, recordDeath, successors,
   newbornAllowed, addChild, rollSiblings, setCurrent, endFamily, touch, estateOf, bornValues, fullNameOf, isCustomCareer,
-  isAlive, memberLook,
+  isAlive, memberLook, nameAtSeat,
 } from '../systems/legacy/family.js';
+import { houseWord } from '../systems/legacy/houseName.js';   // LEGACY-NAME: "the house of Sentinel", never "of of"
 import { loadFamily, storeFamily, leaveBirth, readBirth, clearBirth, listFamilies } from '../systems/legacy/store.js';
 import { birthSearch } from '../systems/legacy/places.js';
 import { payToll, tollLine, ageOf, isElder, isSpent } from '../systems/legacy/age.js';
@@ -55,8 +56,9 @@ export const BORN_REFLEXES = 2;
 
 /** The words. One home, so the windows and the HUD say one thing. */
 export const LEGACY_TEXT = Object.freeze({
-  founded: (sur, model) => `The house of ${sur || 'your name'} is founded - ${model === MODELS.bloodline ? 'a Bloodline: a death is final' : 'an Enduring line: a death costs years'}.`,
+  founded: (sur, model) => `${houseWord(sur) ? `The house of ${houseWord(sur)}` : 'Your house'} is founded - ${model === MODELS.bloodline ? 'a Bloodline: a death is final' : 'an Enduring line: a death costs years'}.`,   // LEGACY-NAME: named at its seat, or not yet
   seat: (loc) => `${loc} is your family's seat.`,
+  named: (sur) => `Your house takes its seat's name: the house of ${houseWord(sur)}.`,   // LEGACY-NAME: a house founded nameless, named
   elder: (name, age) => `${name} is ${age} - an elder of the house now. The years ahead are fewer than those behind.`,
   born: (name, loc) => `${name} takes up the family's name in ${loc}.`,
   hunted: (foe, given) => `${foe}, who ended ${given}, will come for the house's heir.`,
@@ -77,7 +79,7 @@ export const LEGACY_TEXT = Object.freeze({
   remainsReturned: (name) => `The remains of ${name} are no longer with you. They lie where ${name} fell.`,
   rested: (name, skill) => `${name} is laid to rest. Their blessing stays with you: +3 ${skill}.`,
   attuned: (item, gen) => `${item} remembers the hand that carried it home (generation ${gen}).`,
-  ended: (sur) => `The house of ${sur} goes on.`,
+  ended: (sur) => `${houseWord(sur) ? `The house of ${houseWord(sur)}` : 'Your house'} goes on.`,
   kinSlain: (name) => `${name} is dead by your hand. The house will remember it.`,   // LEGACY-HOME
   playAs: (name) => `Play as ${name}`,
   notNow: 'Not now - the house has another matter to settle first.',
@@ -731,7 +733,7 @@ export function createLegacyHost(deps) {
       name: fullNameOf(p.given, p.surname), gender: p.gender, race: p.race, raceId: p.raceId, faceIndex: p.face,
       careerIndex: p.careerIndex, career, stats: values.stats, skills: values.skills, isCustom: custom, customReps: null,
       biographyEffects: [], reflexes: BORN_REFLEXES, factionDict,
-      backStory: [parent ? `Child of ${fullNameOf(parent.given, parent.surname)}, of the house of ${family.surname}.` : `Of the house of ${family.surname}.`],
+      backStory: [`${parent ? `Child of ${fullNameOf(parent.given, parent.surname)}, of` : 'Of'} the house${houseWord(family.surname) ? ` of ${houseWord(family.surname)}` : ''}.`],   // LEGACY-NAME
       levelingSystem: p.leveling ?? LEVELING_CLASSIC,
     };
   }
@@ -807,7 +809,7 @@ export function createLegacyHost(deps) {
     if (!p || !isAlive(p) || !playedHere(p)) return null;   // AUDIT LEGACY II A1: nothing of the one handed the line, on a page not theirs
     if (!family.seat) {
       const t = deps.town(deps.here());
-      if (t) { family.seat = t; touch(family); store(); deps.say(LEGACY_TEXT.seat(t.loc)); }
+      if (t) { family.seat = t; const named = nameAtSeat(family); touch(family); store(); deps.say(LEGACY_TEXT.seat(t.loc)); if (named) deps.say(LEGACY_TEXT.named(family.surname)); }   // LEGACY-NAME: a nameless house takes its seat's name
     } else if (family.seat.mapId == null) {
       // LEGACY-HOME: a seat noted before it carried its town's map id learns it the next time the house stands there
       const t = deps.town(deps.here());

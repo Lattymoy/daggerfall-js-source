@@ -23,6 +23,7 @@ import { armorBodyParts } from '../equip.js';
 import { SKILL_COUNT } from '../skills.js';
 import { rarityOf } from '../lootRarity.js';
 import { isSummoned } from '../inventory.js';
+import { houseWord } from './houseName.js';   // LEGACY-NAME: a seat's house says itself once
 
 export const HEIRLOOM_GEN_MAX = 5;
 /** A weapon's damage per generation, percent; armour's points per generation on its parts. */
@@ -156,5 +157,6 @@ registerWeaponDamageMod(LEGACY_FOLD, heirloomWeaponDamage);
 export function heirloomLine(it) {
   if (!isHeirloom(it)) return null;
   const g = it.heirloom.gen | 0;
-  return `Heirloom of the house of ${it.heirloom.house}, first borne by ${it.heirloom.from} - ${g ? `carried home ${g} ${g === 1 ? 'time' : 'times'}` : 'not yet carried home'}.`;
+  const house = houseWord(it.heirloom.house);
+  return `Heirloom of the house${house ? ` of ${house}` : ''}, first borne by ${it.heirloom.from} - ${g ? `carried home ${g} ${g === 1 ? 'time' : 'times'}` : 'not yet carried home'}.`;
 }

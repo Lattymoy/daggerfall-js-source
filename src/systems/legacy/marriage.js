@@ -17,6 +17,7 @@ import { FRIEND_AT } from '../livingWorld/relations.js';
 import { RACE_KEYS } from '../races.js';
 import { personOf, isAlive, touch, newPerson, addChild, fullNameOf } from './family.js';
 import { readHouse } from '../../net/houseLaw.js';   // LEGACY7 part three: the other player's house, held to its law
+import { houseWord } from './houseName.js';   // LEGACY-NAME: a seat's house said once
 
 export const AFFECTION_MAX = 100;
 /** A day's courtship: the base, a point per twenty of Personality and of Etiquette, the tone's (Polite, Normal, Blunt). */
@@ -242,7 +243,7 @@ export const MARRIAGE_TEXT = Object.freeze({
   wedding: (town) => `"The priest at the temple${town ? ` in ${town}` : ''} is waiting on us."`,
   family: (n) => (n ? `"The ${n === 1 ? 'little one is' : `${n} children are`} well. Come home when you can."` : '"All is well at home. Come back to me safe."'),
   ask: (name) => `Be wed to ${name} here, before the gods?`,
-  wed: (name, house) => `You and ${name} are wed. ${name} is of the house of ${house} now.`,
+  wed: (name, house) => `You and ${name} are wed. ${name} is of the house${houseWord(house) ? ` of ${houseWord(house)}` : ''} now.`,
   child: (name, spouse) => `A child is born to you and ${spouse}: ${name}.`,
   lost: (name) => `Word reaches you: ${name} is dead.`,
   // LEGACY7 part three: two players wed
