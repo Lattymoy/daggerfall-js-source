@@ -386,13 +386,24 @@ is nothing to port here and nothing to correct against - it is simply
 true of this port that the two systems do not pace skills identically
 at the same level, and the settings are where a player tunes it.
 
-**Online forces every mod on.** `onlineForcedModSetting` returns true
-for any vendor's `Enabled` on an online page (OL1). For this mod that
-means every online player is ASKED the question at creation and cannot
-decline being asked. They can still answer "Daggerfall", so no online
-character is forced onto the mod's rules - but the question appears.
-**This is a lane rule nobody has ruled on for a leveling system, and it
-is Mac's to rule on.**
+**Online, a new character levels the Daggerfall way.** Ruled twice by
+Mac. LEVEL-ONLINE (2026-09-30: "Do not allow people to use daggerfall
+leveling in online") shut Daggerfall's option online; LEVEL-ONLINE-2
+(2026-10-06: "Oblivion should be locked. Currently players are forced
+into oblivion") reversed it. The law is `ONLINE_LEVELING_SYSTEM`
+(`LEVELING_CLASSIC`), applied by `newCharacterLevelingSystem` at every
+door a character is BORN through: finishChargen, the `?class=` skip and
+the classic-save import. Online the question is still always put, so the
+player reads it before the world: Daggerfall's option open, Oblivion's
+shown SHUT with 'Offline characters only'. Offline both are open. No LOAD
+path re-decides the system, so a character already levelling the
+Oblivion way online keeps it - the save is the law. An offline Oblivion
+character brought online (`crossLeveling`, realmCustoms.js) crosses onto
+Daggerfall's leveling on the realm's copy: its bar is dropped and its
+skill sum re-anchored at the start of the level it has
+(`levelUpSkillSumAnchor`, advancement.js), so the sum built under the bar
+pays out no levels at once and owes none; a level-up already earned stays
+owed.
 
 **One level per commit.** The commit does `level += 1`, never a jump, as
 the Daggerfall path does. A roll-over large enough to fill the next bar
@@ -560,7 +571,8 @@ figures above are the pin's own. ORL1's fix review.)
 ## OPEN, FOR MAC
 
 1. **The author's name and the permission record** (the README's line).
-2. **The online lane** asking every online character the question.
+2. ~~**The online lane** asking every online character the question.~~
+   Ruled: LEVEL-ONLINE-2 (above) - asked, with Daggerfall's the only open answer.
 3. **The tier mapping's defaults** - primary and major both at 8 is the
    structural match; a ladder (8/6/4/2) is the other reading, and it is
    a settings change, not a code change.

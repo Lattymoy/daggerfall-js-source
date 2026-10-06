@@ -1193,7 +1193,7 @@ function bringOnline(save) {
   const snap = realmIoNow() ? loadSlot(save.key) : null;
   if (!snap || typeof snap.characterId !== 'string' || !snap.characterId || snap.testRoom === true) return customsNow(save);
   const trial = JSON.parse(JSON.stringify(snap));
-  const leveling = crossLeveling(trial);   // LEVEL-ONLINE: a Daggerfall-levelling character comes in on Oblivion's bar - said first
+  const leveling = crossLeveling(trial);   // LEVEL-ONLINE-2: an Oblivion-levelling character comes in on Daggerfall's leveling - said first
   const preview = [...(leveling ? [LEVELING_CROSS_LINE.before] : []), ...customsLines(applyCustoms(trial), { before: true })];
   return ask(`Bring ${save.name} online?`, preview.join(' '), 'Bring online', () => { customsNow(save); });
 }
@@ -1208,7 +1208,7 @@ function customsNow(save) {
     if (typeof snap.characterId !== 'string' || !snap.characterId) return { ok: false, error: 'customs-load-once' };
     if (snap.testRoom === true) return { ok: false, error: 'test-room' };   // AUDIT SET D4's law: the room's characters play offline
     const copy = onlineCopyOf(snap, sharedClassicMinutes(Date.now()));   // AUDIT LIVED1 G: the world's stamps onto the shared clock, and the world's minute it joins at
-    const leveling = crossLeveling(copy);   // LEVEL-ONLINE: a new online character levels the Oblivion way (the offline one keeps its own)
+    const leveling = crossLeveling(copy);   // LEVEL-ONLINE-2: a new online character levels the Daggerfall way (the offline one keeps its own)
     const report = applyCustoms(copy);
     const made = await realmCustoms(io, snap.characterId, copy.name || save.name, realmSummaryOf(copy));
     if (!made.ok) return made;
