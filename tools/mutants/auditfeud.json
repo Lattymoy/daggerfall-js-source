@@ -372,11 +372,12 @@
   {
     "name": "AF-H2-no-theft",
     "file": "src/scenes/worldModes.js",
-    "old": "                const took = revenantTakes(playerEntity, { online: true });",
+    "old": "                const took = online ? revenantTakes(playerEntity, { online: true }) : null;",
     "new": "                const took = null;",
     "tests": [
       "test/auditfeud.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
   },
   {
     "name": "AF-H2-unsaid",

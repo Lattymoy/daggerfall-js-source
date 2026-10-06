@@ -42,6 +42,9 @@ import { bootstrapRegionPower } from './regionPower.js';   // AUDIT 26 F107   //
 import { LevelingChoiceScreen } from '../ui/levelingChoice.js';
 import { oblivionLevelingEnabled, initVirtueLeveling, LEVELING_CLASSIC, newCharacterLevelingSystem } from './oblivionLeveling.js';
 import { isOnlinePage } from './onlineLane.js';   // LEVEL-ONLINE: Daggerfall's leveling is offline-only for a new character
+import { legacyOn } from './legacy/settings.js';   // LEGACY2: Project Legacy's question - the family's model
+import { legacyModelScreen } from '../ui/legacyModelChoice.js';
+import { isLegacyChoice } from './legacy/family.js';   // LEGACY-CHOICE: the answer kept on the character
 
 /** SPELLS.STD as an index -> spell map. AUDIT 17f: the exterior
  *  hosts ran chargen without one and called finishChargen with no
@@ -289,6 +292,9 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
   // LEVEL-ONLINE: an online character is born on Oblivion's bar whatever a result carries - the question offers
   // Daggerfall's only offline, and this is the law's own door, not the screen's (a hand-built result goes through it too).
   initVirtueLeveling(playerEntity, newCharacterLevelingSystem(result.levelingSystem ?? LEVELING_CLASSIC, { online: isOnlinePage() }));
+  // LEGACY-CHOICE: AND PROJECT LEGACY'S ANSWER, kept on the character as the leveling one is - a model, or no lineage,
+  // which keeps them out of the system for good (legacyHost.js found). A result the question was not put to carries none.
+  if (isLegacyChoice(result.legacyModel)) playerEntity.legacyChoice = result.legacyModel;
   return playerEntity;
 }
 
@@ -427,24 +433,37 @@ function withLevelingChoice(flow, { onDone, onCancel, hudScale = 2 } = {}) {
   // the answer - so the player reads which system they are getting before the world, rather than finding out at
   // their first level. Offline with the mod off, nothing changed: no question, Daggerfall's law.
   const online = isOnlinePage();
-  if (!oblivionLevelingEnabled() && !online) {
+  // LEGACY2 (bible/06-Systems/Legacy-Arc.md section 6): ...AND PROJECT LEGACY'S QUESTION AFTER IT - the family's model,
+  // Bloodline or Enduring, asked of the character who founds a house (legacyModelScreen). The same door, the same one
+  // overlay slot: the questions are STAGES of one window, put in turn, each answered once; the answers ride the result.
+  const asks = [];
+  if (oblivionLevelingEnabled() || online) asks.push((answer) => new LevelingChoiceScreen((id) => answer({ levelingSystem: id }), { online }));
+  if (legacyOn()) asks.push((answer) => legacyModelScreen((model) => answer({ legacyModel: model })));
+  const unasked = { levelingSystem: LEVELING_CLASSIC };
+  if (!asks.length) {
     return chargenWizard(flow, {
-      onCancel, hudScale, onDone: (r) => onDone?.({ ...r, levelingSystem: LEVELING_CLASSIC }),
+      onCancel, hudScale, onDone: (r) => onDone?.({ ...r, ...unasked }),
     });
   }
   let fired = false;
   let prompt = null;
+  let stage = 0;
+  let answers = { ...unasked };
+  let result = null;
+  const next = () => {
+    if (stage >= asks.length) { prompt = null; fired = true; onDone?.({ ...result, ...answers }); return; }
+    const i = stage++;
+    prompt = asks[i]((a) => { answers = { ...answers, ...a }; next(); });
+  };
   const inner = chargenWizard(flow, {
     hudScale,
     onCancel: () => { fired = true; onCancel?.(); },
     onDone: (r) => {
       // AUDIT 17f's law, one layer out: the wizard fires once, and the
-      // question it opens is built once with it.
-      if (prompt || fired) return;
-      prompt = new LevelingChoiceScreen((id) => {
-        fired = true;
-        onDone?.({ ...r, levelingSystem: id });
-      }, { online });
+      // questions it opens are built once with it.
+      if (result || fired) return;
+      result = r;
+      next();
     },
   });
   return {
@@ -471,11 +490,11 @@ function withLevelingChoice(flow, { onDone, onCancel, hudScale = 2 } = {}) {
       // font-less arm does exactly that ("never trap the motor"), and
       // the dungeon host's own chargen fallback is the shape a second
       // host could grow next. Swallowing the answer there would lose
-      // the finished character with it, so the question falls back to
-      // the same law every unasked path takes: Daggerfall's own.
-      // `_fired` makes this a no-op on every normal close and on cancel.
+      // the finished character with it, so each question still up falls
+      // back to its default - the same law every unasked path takes.
+      // `fired` makes this a no-op on every normal close and on cancel.
       // LEVEL-ONLINE: the first OPEN answer - Daggerfall's offline, Oblivion's online (Daggerfall's is shut there).
-      prompt?.answer(prompt.defaultId);
+      while (prompt && !fired) prompt.answer(prompt.defaultId);
       inner.dispose?.();
     },
   };

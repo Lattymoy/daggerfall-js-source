@@ -162,6 +162,7 @@ export function circleLine(circle, t, lineMin, ctx = {}, memo = null) {
     town: ctx.town, region: ctx.region, place: told ? told.item.place : placeOf(circle, at.k, ctx),
     a: firstNameOf(circle.members[at.k % n].name), b: firstNameOf(circle.members[(at.k + 1) % n].name),
     who: told ? firstNameOf(told.item.who) : null, foe: told ? told.item.foe : null, player: ctx.player,   // LW7: a deed's, a fight's turner
+    house: told?.item.house ?? null,   // LEGACY6: the house a kinsman's news is of
   });
   return { who, text, index, k: at.k };
 }

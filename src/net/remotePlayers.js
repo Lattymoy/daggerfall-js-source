@@ -1162,6 +1162,7 @@ export class RemotePlayers {
       out.push({ id: e.peer.id, name: e.peer.name ?? '', x: s.x, y: s.y,
         title: e.peer.title ?? null, glyphs: Array.isArray(e.peer.glyphs) ? e.peer.glyphs : [], lv: e.peer.lv ?? null, gt: e.peer.gt ?? null,   // GUILD1c: and the guild's tag, the relay's stamp
         rb: e.peer.rb ?? null,   // SEASON1 part two: and a Season's banner ribbon, the relay's stamp - under the name in both faces
+        house: e.peer.house ?? null,   // LEGACY7: and the house, the relay's stamp - a line under the name
         scale: nameScaleFor(s.depth) * lens, depth: s.depth, lens });
     }
     return out;

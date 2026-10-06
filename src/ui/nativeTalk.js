@@ -331,6 +331,10 @@ export function talkStripSource(name, arts = { base: _art, categories: _categori
 // and a missing record costs the portrait (warned once), never the
 // conversation.
 export const PORTRAIT_ARCHIVE = Object.freeze({ CommonFaces: 'TFAC00I0.RCI', SpecialFaces: 'FACES.CIF' });
+/** LEGACY-HOME: a race's chargen heads (systems/races.js raceArt `heads`, FACE<nn>I0.CIF - CreateCharFaceSelect's own
+ *  ten records) named as the archive itself - one of Project Legacy's family, spoken to, wears the face they were made
+ *  with, the one the player chose for them at their birth. */
+const HEADS_FILE = /^FACE\d\dI0\.CIF$/;
 export const PORTRAIT_RECT = Object.freeze([119, 65, 64, 64]);
 
 let _portraitDeps = null;
@@ -355,7 +359,7 @@ function _loadPortraitFile(file) {
 
 /** SetNPCPortrait(FacePortraitArchive, recordId) (:360-385). */
 export function setNpcPortrait(archive, recordId) {
-  const file = PORTRAIT_ARCHIVE[archive] ?? PORTRAIT_ARCHIVE.CommonFaces;
+  const file = PORTRAIT_ARCHIVE[archive] ?? (HEADS_FILE.test(String(archive)) ? String(archive) : PORTRAIT_ARCHIVE.CommonFaces);
   const key = `${file}#${recordId}`;
   _portraitKey = key;
   _portrait = _portraitTex.get(key) ?? null;

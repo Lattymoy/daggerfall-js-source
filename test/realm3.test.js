@@ -205,9 +205,15 @@ test('REALM P1.3 by source: the boot joins before any save is read, never a slot
   assert.match(w, /setBeforeTitleExit\(async \(\) => \{ if \(!realmSession\.lost\) \{ try \{ duelLeaveNow\(\); \} catch \{ \/\* no duel was built: nothing to end \*\/ \} onlineCheckpoint\(\); await Promise\.race\(\[realmSession\.leave\(\), new Promise\(\(r\) => \{ setTimeout\(r, REALM_EXIT_WAIT_MS\); \}\)\]\); \} \}\);/, 'the last checkpoint and the leave, five seconds at most');
   assert.match(w, /function realmLost\(why\) \{\s*\n\s*setRealmNotice\(globalThis\.sessionStorage, realmRefusalText\(why\)\);\s*\n\s*exitToTitleMenu\(\);/);
   assert.match(w, /if \(realmNew\) realmBirth\(\)/, 'born after chargen');
+  // PIN MOVED (LEGACY7): the make and the first save are realmCreateLegacy's and realmFirstSave's (Project Legacy's
+  // founder born as the person of its line) - the birth calls them in the same order
   const birth = w.slice(w.indexOf('async function realmBirth()'));
-  const order = ['realmCreate(io,', 'playerEntity.characterId = made.data.id;', 'realmPut(io, made.data.id, { lease: made.data.lease, seq: 1,', 'location.replace(`${location.pathname}${realmBootSearch(location.search, made.data.id, BOOT_DOOR_KEYS)}`);'].map((t) => birth.indexOf(t));
-  assert.ok(order.every((at, i) => at > 0 && (i === 0 || at > order[i - 1])), 'made, the realm\'s id, saved at 1, then booted from the realm');
+  const order = ['const made = await realmCreateLegacy(io);', 'const put = await realmFirstSave(io, made);', 'location.replace(`${location.pathname}${realmBootSearch(location.search, made.data.id, BOOT_DOOR_KEYS)}`);'].map((t) => birth.indexOf(t));
+  assert.ok(order.every((at, i) => at > 0 && (i === 0 || at > order[i - 1])), 'made, saved at 1, then booted from the realm');
+  const make = w.slice(w.indexOf('async function realmCreateLegacy(io)'));
+  const made = ['made = await realmCreate(io,', 'playerEntity.characterId = made.data.id;', 'legacyHost?.rebind(was, made.data.id);'].map((t) => make.indexOf(t));
+  assert.ok(made.every((at, i) => at > 0 && (i === 0 || at > made[i - 1])), 'made, then the realm\'s id - in the entity and the family\'s record');
+  assert.match(w.slice(w.indexOf('async function realmFirstSave(io, made)')), /^async function realmFirstSave\(io, made\) \{[\s\S]*?return realmPut\(io, made\.data\.id, \{ lease: made\.data\.lease, seq: 1,/, 'saved at 1');
   for (const f of ['src/scenes/world.js', 'src/scenes/dungeonContext.js']) {
     assert.match(src(f), /const into = sink \?\? realmSaveSink\(\);[^\n]*\n\s*if \(into\) \{ const said = into\(snap\); if \(!quiet\) sayRealmSave\(said, [^\n]*\); return true; \}[^\n]*\n\s*const r = saveSlot\(/, `${f}: a realm character's save never reaches a slot (AUDIT REALM2 C2: its word the realm's answer)`);
   }

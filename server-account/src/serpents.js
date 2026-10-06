@@ -43,7 +43,7 @@
 import { verifySerpentReceipt } from '../../src/net/serpentReceipt.js';
 import { SERPENT_EMBERS } from '../../src/net/serpentHoardLaw.js';   // SERPENT-SET: the embers a receipt's hoard pays
 import { renownForXp, renownSerpentXp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
-import { renownCharacterOk, renownNameOf, renownTrackOf } from './renownTracks.js';
+import { renownCharacterOk, renownNameOf, renownTrackOf, renownHeldSql } from './renownTracks.js';
 
 /** A device's claim id - the key a serpent's hoard is given under (the raids' RAID_CID_RE). */
 export const SERPENT_CID_RE = /^[0-9a-f]{16}$/;
@@ -110,7 +110,7 @@ export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt
   const stmt = strike?.(c.d, nonce, c.x) ?? null;   // SERPENT-SET: the serpent's silver, in this batch
   const mine = 'EXISTS (SELECT 1 FROM serpent_kills WHERE day = ?3 AND account = ?1 AND nonce = ?4)';
   const track = 'SELECT xp FROM renown_tracks WHERE player = ?1 AND char_id = ?2';
-  const refused = `(NOT EXISTS (${track}) AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) >= ?9)`;
+  const refused = `(NOT EXISTS (${track}) AND ${renownHeldSql('?1')} >= ?9)`;
   const want = `CASE WHEN ${refused} THEN 0 ELSE MIN(?5, MAX(0, ?6 - COALESCE((${track}), 0))) END`;
   const room = 'CASE WHEN renown_hour >= ?8 THEN MAX(0, ?7 - renown_hour_xp) ELSE ?7 END';
   const credit = `CASE WHEN ${mine} THEN MIN(${want}, ${room}) ELSE 0 END`;
@@ -141,7 +141,7 @@ export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt
        SELECT ?1, ?2, ?5, renown_last_credit, ?6, ?6 FROM players
        WHERE id = ?1 AND renown_last_credit > 0
          AND NOT EXISTS (SELECT 1 FROM renown_tracks WHERE player = ?1 AND char_id = ?2)
-         AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) < ?7
+         AND ${renownHeldSql('?1')} < ?7
          AND ${mine}`,
     ).bind(player.id, character, c.d, nonce, renownNameOf(name), nowS, RENOWN_TRACKS_MAX),
     // the row says what the claim PAID (the hour may have left less than the serpent is worth)

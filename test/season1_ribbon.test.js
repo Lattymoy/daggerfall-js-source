@@ -215,7 +215,7 @@ test('SEASON1 THE BANNER RIBBON ON THE PAGE: the mint\'s answer hands mine to th
   const layer = createNameLayer({ doc, now: () => 1000 });
   const at = (rb) => { layer.render({ points: [{ ...pt, id: 'peer-0001', x: 400, y: 300, rb }] }); return layer.tagFor('peer-0001'); };
   let t = at([0, 2]);
-  assert.deepEqual(t.node.children.map((c) => c.className), ['dfname-bubble off', 'dfname-title', 'dfname-tag', 'dfname-ribbon'], 'under the name row');
+  assert.deepEqual(t.node.children.map((c) => c.className), ['dfname-bubble off', 'dfname-title', 'dfname-tag', 'dfname-house', 'dfname-ribbon'], 'under the name row (LEGACY7, PIN MOVED: the house\'s line between the name row and the ribbon)');
   assert.deepEqual([t.ribbon.style.background, t.ribbon.style.borderBottomColor], ['#3b6fd8', '#d4a017']);
   t.ribbon.style.background = 'rgb(59, 111, 216)';   // a browser reads it back normalised
   t = at([0, 2]);

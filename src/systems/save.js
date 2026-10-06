@@ -110,6 +110,10 @@ const ENTITY_FIELDS = [
   // carries the bar too, because Daggerfall has no engine-side level
   // progress counter for it to live in the way Morrowind does.
   'levelingSystem', 'levelProgress', 'levelRollUp',
+  // LEGACY-CHOICE: Project Legacy's answer, the same kind of fact - asked ONCE, at chargen, and the character's own: a
+  // model, or no lineage (systems/legacy/family.js NO_LINEAGE), which keeps them out of the system for good. A save
+  // written before it carries none, and reads as a character who was never asked.
+  'legacyChoice',
   // AUDIT 17h F1: the six BIOGRAPHY modifiers, which DFU persists
   // one-for-one (SerializablePlayer.cs:136-141, :305-310). Without
   // them a load reset every biography answer's lasting effect.
@@ -160,6 +164,9 @@ const ENTITY_FIELDS = [
   // against it, so a save that dropped it would let a reload pass a night at every rest. A save older than this field
   // restores undefined, which reads as "no night yet": the first rest is a night.
   'restNightAt',
+  // LEGACY4: Project Legacy's blessings - an ancestor laid to rest, their best skill on the one who laid them
+  // (systems/legacy/heirloom.js legacyFold). A save older than this field restores undefined: no blessing.
+  'legacyBlessings',
 ];
 
 /** PlayerEntity.skillsRecentlyRaised: TWO 32-bit masks over the 35

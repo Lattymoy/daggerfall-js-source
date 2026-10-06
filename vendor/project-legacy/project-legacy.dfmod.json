@@ -1,0 +1,28 @@
+{
+    "ModTitle": "Project Legacy",
+    "ModVersion": "0.4.1",
+    "ModAuthor": "Lattymoy, Gh\u00f0\u00a7\u2020 and Positronico",
+    "DFUnity_Version": "1.1.1",
+    "ModDescription": "You can play with your descendants!",
+    "GUID": "a3cbfd81-bd91-485c-a3bc-171251ef7ac8",
+    "Files": [
+        "Assets/Game/Mods/Project Legacy/modsettings.json",
+        "Assets/Game/Mods/Project Legacy/Scripts/Project_Legacy.cs",
+        "Assets/Game/Mods/Project Legacy/Scripts/Data/Project_Legacy_Data.cs",
+        "Assets/Game/Mods/Project Legacy/Scripts/Data/CharacterData.cs",
+        "Assets/Game/Mods/Project Legacy/Scripts/Data/SkillsData.cs",
+        "Assets/Game/Mods/Project Legacy/Scripts/Data/StatsData.cs",
+        "Assets/Game/Mods/Project Legacy/Scripts/SaveCharacterManager.cs",
+        "Assets/Game/Mods/Project Legacy/Scripts/CreateCharacterManager.cs",
+        "Assets/Game/Mods/Project Legacy/Scripts/UI/FamilyLegacyWindow.cs",
+        "Assets/Game/Mods/Project Legacy/Scripts/UI/FamilyLegacyInformationPanel.cs",
+        "Assets/Game/Mods/Project Legacy/Artwork/PJLFTPNSKP.png",
+        "Assets/Game/Mods/Project Legacy/Artwork/PJLFT.png",
+        "Assets/Game/Mods/Project Legacy/Artwork/SCLTLK.PNG",
+        "Assets/Game/Mods/Project Legacy/Artwork/PJLFTPNP.png",
+        "Assets/Game/Mods/Project Legacy/Artwork/PJLFTFrame.png",
+        "Assets/Game/Mods/Project Legacy/Artwork/PJLFTBG.png",
+        "Assets/Game/Mods/Project Legacy/Artwork/PJLFTPN.png",
+        "Assets/Game/Mods/Project Legacy/Scripts/SwitchCharacterManager.cs"
+    ]
+}

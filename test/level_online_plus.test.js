@@ -115,10 +115,11 @@ test('LEVEL-ONLINE: the online question cannot answer Daggerfall - not by key, d
   const off = new LevelingChoiceScreen(() => {});
   assert.equal(off.cursor, 0);
   assert.equal(off.defaultId, LEVELING_CLASSIC);
-  // the door answers a torn-down question with the OPEN default, not a literal Daggerfall
-  assert.match(read('src/systems/chargenSession.js'), /prompt\?\.answer\(prompt\.defaultId\);/);
+  // the door answers a torn-down question with the OPEN default, not a literal Daggerfall (LEGACY2: each question
+  // still up in turn - the chain's)
+  assert.match(read('src/systems/chargenSession.js'), /while \(prompt && !fired\) prompt\.answer\(prompt\.defaultId\);/);
   // and online the question is always put, the mod on or off
-  assert.match(read('src/systems/chargenSession.js'), /const online = isOnlinePage\(\);\n\s+if \(!oblivionLevelingEnabled\(\) && !online\) \{/);
+  assert.match(read('src/systems/chargenSession.js'), /const online = isOnlinePage\(\);\n[\s\S]{0,600}?\n\s+if \(oblivionLevelingEnabled\(\) \|\| online\) asks\.push\(\(answer\) => new LevelingChoiceScreen\(/);
 });
 
 test('LEVEL-PLUS: on Enhanced Plus the question wears the Plus window - the shell, the frame, a tile per system', () => {

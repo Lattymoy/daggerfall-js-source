@@ -2,11 +2,12 @@
   {
     "name": "DEATH-KEPT-the-check-gone-from-the-frame",
     "file": "src/scenes/world.js",
-    "old": "    if (playerSpawned && playerEntity.health <= 0 && !worldMoveBusy() && !(townTalk.overlay instanceof DeathScreen) && !modes?.deathUp?.()) presentPlayerDeath(playerEntity);",
+    "old": "    if (playerSpawned && playerEntity.health <= 0 && !worldMoveBusy() && !(townTalk.overlay instanceof DeathScreen) && !modes?.deathUp?.() && !successionOpen()) presentPlayerDeath(playerEntity);",
     "new": "",
     "tests": [
       "test/fb0930b_deathkept.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
   },
   {
     "name": "DEATH-KEPT-the-living-asked",
@@ -38,37 +39,41 @@
   {
     "name": "DEATH-KEPT-townTalk-screen-unread",
     "file": "src/scenes/world.js",
-    "old": "!worldMoveBusy() && !(townTalk.overlay instanceof DeathScreen) && !modes?.deathUp?.()) presentPlayerDeath(playerEntity);",
-    "new": "!worldMoveBusy() && !modes?.deathUp?.()) presentPlayerDeath(playerEntity);",
+    "old": "!worldMoveBusy() && !(townTalk.overlay instanceof DeathScreen) && !modes?.deathUp?.() && !successionOpen()) presentPlayerDeath(playerEntity);",
+    "new": "!worldMoveBusy() && !modes?.deathUp?.() && !successionOpen()) presentPlayerDeath(playerEntity);",
     "tests": [
       "test/fb0930b_deathkept.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
   },
   {
     "name": "DEATH-KEPT-the-mode-screen-unread",
     "file": "src/scenes/world.js",
-    "old": "!(townTalk.overlay instanceof DeathScreen) && !modes?.deathUp?.()) presentPlayerDeath(playerEntity);",
-    "new": "!(townTalk.overlay instanceof DeathScreen)) presentPlayerDeath(playerEntity);",
+    "old": "!(townTalk.overlay instanceof DeathScreen) && !modes?.deathUp?.() && !successionOpen()) presentPlayerDeath(playerEntity);",
+    "new": "!(townTalk.overlay instanceof DeathScreen) && !successionOpen()) presentPlayerDeath(playerEntity);",
     "tests": [
       "test/fb0930b_deathkept.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
   },
   {
     "name": "DEATH-KEPT-the-living-asked-directly",
     "file": "src/characters/playerEntity.js",
-    "old": "  if (!(entity.health <= 0)) return false;\n  _deathPresenter?.(entity);",
-    "new": "  _deathPresenter?.(entity);",
+    "old": "  if (!(entity.health <= 0)) return false;\n  hearDeath(entity);\n  _deathPresenter?.(entity);",
+    "new": "  hearDeath(entity);\n  _deathPresenter?.(entity);",
     "tests": [
       "test/fb0930b_deathkept.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
   },
   {
     "name": "DEATH-KEPT-the-presenter-never-asked",
     "file": "src/characters/playerEntity.js",
-    "old": "  if (!(entity.health <= 0)) return false;\n  _deathPresenter?.(entity);",
-    "new": "  if (!(entity.health <= 0)) return false;",
+    "old": "  if (!(entity.health <= 0)) return false;\n  hearDeath(entity);\n  _deathPresenter?.(entity);",
+    "new": "  if (!(entity.health <= 0)) return false;\n  hearDeath(entity);",
     "tests": [
       "test/fb0930b_deathkept.test.js"
-    ]
+    ],
+    "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
   }
 ]

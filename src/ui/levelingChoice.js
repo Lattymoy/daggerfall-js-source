@@ -124,24 +124,51 @@ export const choiceHeight = (opt) =>
 export const choiceTop = (i) => CHOICE_TOP + i * CHOICE_PITCH;
 
 /** The option a native-coordinate point falls on, or -1. `options` is the
- *  live list, because the blocks are as tall as their own text. */
-export function choiceAtNative(vx, vy, options = []) {
+ *  live list, because the blocks are as tall as their own text; `tops`
+ *  where each block starts (LEGACY-CHOICE: a stacked screen's own), the
+ *  fixed pitch's by default. */
+export function choiceAtNative(vx, vy, options = [], tops = null) {
   if (vx < CHOICE_X0 || vx > CHOICE_X1) return -1;
   for (let i = 0; i < options.length; i++) {
-    const top = choiceTop(i);
+    const top = tops ? tops[i] : choiceTop(i);
     if (vy >= top && vy < top + choiceHeight(options[i])) return i;
   }
   return -1;
 }
 
+/** LEGACY-CHOICE: the gap between two stacked blocks - three answers and the footer within the 200 (the footer its 10). */
+export const CHOICE_STACK_GAP = 3;
+/** LEGACY-CHOICE: WHERE EACH BLOCK STARTS ON A STACKED SCREEN - each under the last by its own height and the gap, so
+ *  three answers fit the 200 the fixed pitch spends on two - and, one past the last, where the footer stands. The
+ *  draw and the hit test read this one table, as they read the fixed pitch's. */
+export function stackedTops(options = []) {
+  const tops = [CHOICE_TOP];
+  for (let i = 0; i < options.length; i++) tops.push(tops[i] + choiceHeight(options[i]) + CHOICE_STACK_GAP);
+  return tops;
+}
+/** The keys a screen of `n` answers names ('1 or 2', '1, 2 or 3'). */
+export const choiceKeysWord = (n) => (n <= 1 ? '1' : `${Array.from({ length: n - 1 }, (_, i) => i + 1).join(', ')} or ${n}`);
+
+/** The classic face's three lines above the options. */
+export const LEVELING_SCREEN_TEXT = Object.freeze({ title: 'HOW WILL YOU GROW?', lines: Object.freeze(['Choose how this character will level.', 'It cannot be changed later.']) });
+
 export class LevelingChoiceScreen {
   /** @param {(id: string) => void} onAnswer */
-  constructor(onAnswer, { settings = null, online = false } = {}) {
+  /** LEGACY2: `options`, `text` and the Plus face's `faceText` / `faceTags` let another one-time question of a new
+   *  character (ui/legacyModelChoice.js, Project Legacy's model) wear this same screen - its cursor, its one answer,
+   *  its keys and clicks, and both faces - rather than a copy of it. Without them it is the leveling question. */
+  constructor(onAnswer, { settings = null, online = false, options = null, text = null, faceText = null, faceTags = null, stacked = false } = {}) {
     this._onAnswer = onAnswer;
     /** Read ONCE, when the question is built - a player cannot move a
      *  slider while this screen is up, and re-reading per frame would
      *  make the words change under them. */
-    this.options = levelingOptions(settings, { online });
+    this.options = options ?? levelingOptions(settings, { online });
+    /** LEGACY-CHOICE: a stacked screen's own block tops (stackedTops), one past the last its footer's; null keeps the
+     *  fixed pitch (the leveling question's two). */
+    this.tops = stacked ? stackedTops(this.options) : null;
+    this.text = text ?? LEVELING_SCREEN_TEXT;
+    this.faceText = faceText;
+    this.faceTags = faceTags;
     this._fired = false;
     this.cursor = this.defaultIndex;   // LEVEL-ONLINE: never parked on a shut option
     this.done = false;
@@ -193,20 +220,25 @@ export class LevelingChoiceScreen {
    *  walking the whole wizard with codes must not fall off a cliff at
    *  the last screen (test/audit17f.test.js's walk does exactly that). */
   static ACTIONS = Object.freeze({
-    up: 'up', ArrowUp: 'up', down: 'up', ArrowDown: 'up',   // two options: either direction moves between them
+    // LEGACY-CHOICE: each way its own - with two options either moves between them, with three they are a direction
+    up: 'up', ArrowUp: 'up', down: 'down', ArrowDown: 'down',
     confirm: 'confirm', Enter: 'confirm', NumpadEnter: 'confirm', KeyE: 'confirm',
     'char:1': 'one', Digit1: 'one', Numpad1: 'one',
     'char:2': 'two', Digit2: 'two', Numpad2: 'two',
+    'char:3': 'three', Digit3: 'three', Numpad3: 'three',   // LEGACY-CHOICE: the third answer online
   });
 
   input(action) {
     if (this._fired) return;
-    switch (LevelingChoiceScreen.ACTIONS[action]) {
-      case 'up': {
+    const move = LevelingChoiceScreen.ACTIONS[action];
+    switch (move) {
+      case 'up':
+      case 'down': {
         // LEVEL-ONLINE: the move skips a shut option (with one open option, the cursor stays on it)
+        const n = this.options.length, step = move === 'up' ? n - 1 : 1;
         let next = this.cursor;
-        for (let k = 0; k < this.options.length; k++) {
-          next = (next + 1) % this.options.length;
+        for (let k = 0; k < n; k++) {
+          next = (next + step) % n;
           if (!this.options[next].locked) break;
         }
         if (next !== this.cursor) { this.cursor = next; audio.playOneShot(SOUND.ButtonClick, 1); }
@@ -214,6 +246,7 @@ export class LevelingChoiceScreen {
       }
       case 'one': this.pickIndex(0, false); break;
       case 'two': this.pickIndex(1, false); break;
+      case 'three': this.pickIndex(2, false); break;   // a screen of two has no third: refused as no option
       case 'confirm': this.pickIndex(this.cursor, false); break;
       default: break;   // every other key is inert: this screen has no way out but an answer
     }
@@ -234,7 +267,7 @@ export class LevelingChoiceScreen {
    */
   click(vx, vy) {
     if (this._fired) return false;
-    const i = choiceAtNative(vx, vy, this.options);
+    const i = choiceAtNative(vx, vy, this.options, this.tops);
     if (i < 0) return false;
     return this.pickIndex(i);
   }
@@ -242,9 +275,12 @@ export class LevelingChoiceScreen {
   /** ...and the highlight follows the pointer, as the wizard's lists do. */
   hover(vx, vy) {
     if (this._fired) return;
-    const i = choiceAtNative(vx, vy, this.options);
+    const i = choiceAtNative(vx, vy, this.options, this.tops);
     if (i >= 0) this.hoverIndex(i);
   }
+
+  /** Where block `i` starts on this screen - its stacked top, else the fixed pitch's (`i` one past the last: the foot). */
+  topOf(i) { return this.tops ? this.tops[i] : choiceTop(i); }
 
   /**
    * THE PICTURE IS PAINTED WHERE THE HIT TEST LOOKS, which it was not.
@@ -283,13 +319,13 @@ export class LevelingChoiceScreen {
     const centre = (text, y, colour) =>
       at(text, (NATIVE_W - measureText(font.fnt, text)) / 2, y, colour);
 
-    centre('HOW WILL YOU GROW?', 12, gold);
-    centre('Choose how this character will level.', 24, dim);
-    centre('It cannot be changed later.', 34, dim);
+    centre(this.text.title, 12, gold);
+    centre(this.text.lines[0], 24, dim);
+    centre(this.text.lines[1], 34, dim);
 
     this.options.forEach((opt, i) => {
       const on = i === this.cursor;
-      let y = choiceTop(i);                    // the same table the hit test reads
+      let y = this.topOf(i);                   // the same table the hit test reads
       at(`${on ? '>' : ' '} ${i + 1}. ${opt.title}${opt.locked ? ` - ${opt.lockNote}` : ''}`, 20, y, opt.locked ? dim : on ? hot : white);   // LEVEL-ONLINE: a shut option says why
       y += CHOICE_TITLE_H;
       for (const line of opt.lines) {
@@ -298,7 +334,7 @@ export class LevelingChoiceScreen {
       }
     });
 
-    const foot = choiceTop(this.options.length) + 2;
-    centre('click one, or up/down and ENTER, or press 1 or 2', foot, dim);
+    const foot = this.topOf(this.options.length) + 2;
+    centre(`click one, or up/down and ENTER, or press ${choiceKeysWord(this.options.length)}`, foot, dim);
   }
 }

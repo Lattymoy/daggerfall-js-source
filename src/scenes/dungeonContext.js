@@ -9757,6 +9757,15 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (_w && _find) silverFindAt(_find.kind, _find.key);   // AUDIT 625 D6: the window stood
       return source.length;
     },
+    /** AUDIT LEGACY H1: A LIST THE CALLER OWNS, opened as a container here - Project Legacy's remains (scenes/legacyHost.js):
+     *  the window takes from `items` itself and nothing is laid in the room, so what is left stays the caller's. `hooks`
+     *  the container's identity (its picture). Answers whether it opened. */
+    openLootList(items, hooks = null) {
+      if (activeOverlay && !activeOverlay.done) return false;
+      const w = openInventory(items, null, { lootHooks: hooks });
+      if (w) activeOverlay = w;
+      return !!w;
+    },
     /** RW1: GivePc's reward container (GivePc.cs:167-171) - a dropped
      *  pile at the player's feet, "CreateDroppedLootContainer(
      *  PlayerObject, ...)" in this host's own vocabulary. Answers the

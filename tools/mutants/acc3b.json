@@ -104,12 +104,12 @@
   {
     "name": "ACC3b-11-the-remembered-introduction-loses-the-badge",
     "file": "src/net/online.js",
-    "old": "    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, lv: p.lv ?? null, gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, sub: p.sub, look: p.look });",
-    "new": "    this._known.set(id, { name: p.name, lv: p.lv ?? null, gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, sub: p.sub, look: p.look });",
+    "old": "    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, lv: p.lv ?? null, gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub, look: p.look });",
+    "new": "    this._known.set(id, { name: p.name, lv: p.lv ?? null, gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub, look: p.look });",
     "tests": [
       "test/acc3badge.test.js"
     ],
-    "note": "SLAM9's remembered introduction is what stands a peer as themselves across a socket blip - it keeps the name and the look for exactly that reason. Without the badge a blip strips every title in the room until each peer is introduced again."
+    "note": "SLAM9's remembered introduction is what stands a peer as themselves across a socket blip - it keeps the name and the look for exactly that reason. Without the badge a blip strips every title in the room until each peer is introduced again. LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
   {
     "name": "ACC3b-12-the-glyph-run-rebuilt-every-frame",

@@ -82,13 +82,15 @@ export const FRAME_ROLES = {
     'body .bounty-win',
     // NOTICE1: the Notice Board - the cork sits inside the same carved frame
     'body .notice-win',
-    'body .aw-win'],   // ARENA3: the Arena window - the Notice Board's carved frame
+    'body .aw-win',   // ARENA3: the Arena window - the Notice Board's carved frame
+    'body .lgs-win'],   // LEGACY3: the Succession - who carries the line on
   // the talk panel is a .px-win whose own ground rule outweighs .px-win's
   windowGround: ['.talk-shell .talk-panel'],
   // REVENANT-PAGE / COMPANION-ROSTER: a row is a card, never a press (the 2026-10-02 audit: the tile's hover and its sink);
   // HOLDINGS: a horse's, a wagon's, a ship's card and a refit's - cards, never presses. AUDIT HOLDINGS C1: each note on a
   // line of its own - one written mid-line made every selector after it a comment
-  panel: ['body .rvncard', '.pack-shell .fate-confirm', '.px-sys .rvn-row', '.px-sys .cmp-row', '.px-sys .hld-row', '.px-sys .hld-refit', '.port-host .port-card', '.pack-shell .statflip-back', '.pack-shell .packdetail .card', '.pack-shell .card', '.hmcard', '.px-sys .card', '.px-sys .dcard',
+  panel: ['body .rvncard', '.pack-shell .fate-confirm', '.px-sys .rvn-row', '.px-sys .cmp-row', '.px-sys .hld-row', '.px-sys .hld-refit', '.px-sys .fam-node', '.px-sys .fam-card', '.px-sys .fam-hallrow', 'body .lgs-card',   // LEGACY3: a person's plate, their card, a house in the Hall
+     '.port-host .port-card', '.pack-shell .statflip-back', '.pack-shell .packdetail .card', '.pack-shell .card', '.hmcard', '.px-sys .card', '.px-sys .dcard',
     '.shell .card', '.shell .dcard', '.notice', '.inputbox', '.lv-note', '.cr-shell .cr-entry',
     '.cr-shell .cr-sharebox', '.shell .ft-rail', '.shell .look-panel',
     // PLUS3: the trade counter's item-detail readout and the trade/tavern confirm boxes - the same
@@ -127,6 +129,7 @@ export const FRAME_ROLES = {
     'body .dfsocial-btn', 'body .dfsocial-close', 'body .dfprofile-close', '.dlg-shell .dlg-btn',
     'body .broker-shell .act',   // SET7: the Broker's Buy and Close
     'body .bounty-shell .act',   // BOUNTY1: Take, Give up, Share, Close, Take the reward
+    'body .lgs-shell .act',   // LEGACY3: the Succession's choices and the line's end
     'body .notice-shell .act',   // NOTICE1: Pin a note, Pin it up, Report, Take it down, Close
     'body .aw-shell .act',   // ARENA3: the Arena window's tabs, Watch, Wager, Fight, the stakes, Close
     'body .arena-shout',   // ARENA4b: the stands' Cheer and Boo under the versus bar (ui/arenaHud.js)
@@ -152,8 +155,9 @@ export const FRAME_ROLES = {
     '.hmroot .hmtool',
     // PLUS-DRESS: the page's, the F-menu's (its Cancel stays a line of text), the duel's and the decorator's
     'body .dfpage-btn', 'body .dfpeer-btn:not(.cancel)', 'body .dfduel-btn', 'body .dfprofile-duel', 'body .dfdecor-btn', 'body .dfdecor-open',
+    'body .dfprofile-wed',   // LEGACY7 part three: the inspect card's Propose
     'body .dfnaval-btn'],   // NAV-F: the plunder window's presses
-  primary: ['.lv-ok', '.hmroot .act:not(.hmtool)', 'body .dfdecor-place', 'body .bounty-shell .act.primary', 'body .notice-shell .act.primary',
+  primary: ['.lv-ok', '.hmroot .act:not(.hmtool)', 'body .dfdecor-place', 'body .bounty-shell .act.primary', 'body .lgs-shell .act.primary', 'body .notice-shell .act.primary',
     'body .aw-shell .act.primary',   // ARENA3: Fight and the wager placed - what the window is for   // BOUNTY1: Take bounty and Take the reward in brass   // PLUS-MAP: the map's tools are plain stone   // PLUS-DRESS: Place is what the decorator is for
     'body .dfnaval-take'],   // NAV-F: Take all (and a raid's Sail on) - what the plunder window is for
   // PLUS-DRESS: a press that COSTS something - leave or disband a guild, remove a member, challenge a player - the
@@ -173,13 +177,15 @@ export const FRAME_ROLES = {
     'body .dfdecor-chip',   // PLUS-DRESS: the decorator's filters and modes - pickable cells, the chosen one brass
     'body .dfnaval-choice'],   // NAV-F: the captor's three choices - the one taken brass
   // HOLDINGS: where a holding is (`.hld-state`)
-  chip: ['body .rvncard-rank', '.px-sys .rvn-rank', '.px-sys .hld-state', 'body .rvncard-mood', '.px-sys .rvn-mood', '.pack-shell .fate-mood', '.px-sys .cmp-rank', '.px-sys .cmp-mood', '.hud-qspell', '.pack-shell .sf-tile', '.pack-shell .sf-pill', '.hud-qstag', '.hud-readied', '.lv-note-key',   // (UI3: the effect and need chips are the status widget's tiles now)
+  chip: ['body .rvncard-rank', '.px-sys .rvn-rank', '.px-sys .hld-state', '.px-sys .fam-chip',   // LEGACY3: a person's state
+     'body .rvncard-mood', '.px-sys .rvn-mood', '.pack-shell .fate-mood', '.px-sys .cmp-rank', '.px-sys .cmp-mood', '.hud-qspell', '.pack-shell .sf-tile', '.pack-shell .sf-pill', '.hud-qstag', '.hud-readied', '.lv-note-key',   // (UI3: the effect and need chips are the status widget's tiles now)
     '.shell .subbtn .count', '.hb .hb-caption',
     'body .dfnaval-chip', 'body .dfnaval-gun',   // NAV-F: the plate's fire/brace chips and the battery rose - readouts, never pressed
     'body .arena-timer', 'body .arena-tag',
     'body .aw-chip'],   // ARENA3: the Arena window's titles, banners, laurels, odds and states - readouts   // ARENA2: the bout's clock and the crowd's darling/villain marks - readouts
   // HOLDINGS: a holding's picture, a name's field (`.hld-art`, `.hld-field`)
-  well: ['body .rvncard-face', '.px-sys .rvn-face', '.px-sys .hld-art', '.px-sys .hld-field', '.pack-shell .fate-face', '.px-sys .cmp-face', '.px-sys .cmp-slot', '.trade-shell .packcol', '.pack-shell .sf-sec', '.shell .ft-search', '.shell .ft-tile-drawer',   // FT18: the Features search and a tile's opened drawer
+  well: ['body .rvncard-face', '.px-sys .rvn-face', '.px-sys .hld-art', '.px-sys .hld-field', '.px-sys .fam-view', '.px-sys .fam-card .fam-face', 'body .lgs-face',   // LEGACY3: the tree's ground, the card's portrait
+     '.pack-shell .fate-face', '.px-sys .cmp-face', '.px-sys .cmp-slot', '.trade-shell .packcol', '.pack-shell .sf-sec', '.shell .ft-search', '.shell .ft-tile-drawer',   // FT18: the Features search and a tile's opened drawer
     '.port-host .port-field', '.port-host .port-canvas', '.port-host .port-picture img', '.port-host .port-pictureword', '.wizard .namebox', '.sb-shell .sb-rename input', '.cr-shell .cr-compose input', '.hmsearch input',
     '.talk-face', '.pack-shell .figure-doll', '.pack-shell .wornmap-doll.noart', '.shell .look-pic',
     '.shell .dcard code', '.px-setwrap .dcard code', '.px-meter', '.shell .swatch', '.px-setwrap .swatch',
@@ -238,7 +244,7 @@ export const FRAME_ROLES = {
   square: ['body .dfsocial', 'body .dfprofile-card', 'body .dfchat-box', 'body .dfsocial-btn', 'body .dfsocial-close',
     'body .dfprofile-close', 'body .dfsocial-field', 'body .dfchat-input',
     // PLUS-DRESS: and everything the lane grew since
-    'body .dfsocial-toast', 'body .dfsocial-badge', 'body .dfsocial-letter', 'body .dfprofile-renown', 'body .dfprofile-duel',
+    'body .dfsocial-toast', 'body .dfsocial-badge', 'body .dfsocial-letter', 'body .dfprofile-renown', 'body .dfprofile-duel', 'body .dfprofile-wed',
     'body .dfpage-card', 'body .dfpage-leaf', 'body .dfpage-btn', 'body .dfpeer-card', 'body .dfpeer-btn',
     'body .dfduel-toast', 'body .dfduel-btn', 'body .dfdecor-card', 'body .dfdecor-open', 'body .dfdecor-search', 'body .dfdecor-chip',
     'body .dfdecor-list', 'body .dfdecor-thumb', 'body .dfdecor-preview', 'body .dfdecor-btn', 'body .dfdecor-bar'],

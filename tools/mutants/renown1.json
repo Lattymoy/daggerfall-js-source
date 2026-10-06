@@ -83,8 +83,8 @@
   {
     "name": "RENOWN1-tracks-unbounded",
     "file": "server-account/src/renownTracks.js",
-    "old": "  const refused = `(NOT EXISTS (${track}) AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) >= ?7)`;",
-    "new": "  const refused = `(NOT EXISTS (${track}) AND (SELECT COUNT(*) FROM renown_tracks WHERE player = ?1) > ?7)`;",
+    "old": "  const refused = `(NOT EXISTS (${track}) AND ${held} >= ?7)`;",
+    "new": "  const refused = `(NOT EXISTS (${track}) AND ${held} > ?7)`;",
     "tests": [
       "test/renown1.test.js"
     ]

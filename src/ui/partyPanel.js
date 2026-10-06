@@ -290,6 +290,8 @@ export function vitalsText(v, max) {
  * It is a seam rather than a hard call so the panel can be driven with no WebGL, no data files and no browser: a
  * test injects `faceLoader` and the bitmap-to-ImageData step is the only part left to prove (test/soc4_partyhud).
  */
+/** The talk's common faces (DaggerfallTalkWindow's CommonFaces archive). */
+export const COMMON_FACES_FILE = 'TFAC00I0.RCI';
 export function createFaceLoader({ fetchBytes, palette } = {}) {
   const files = new Map();   // name -> Promise<CifRciFile>
   const load = (name) => {
@@ -302,6 +304,14 @@ export function createFaceLoader({ fetchBytes, palette } = {}) {
   };
   return async (pose) => {
     if (!fetchBytes || !palette) return null;
+    // AUDIT LEGACY III P17: a townsperson's own face - the talk window's CommonFaces record, the one the census gave them
+    // for life (COMMON_FACES_FILE: ui/nativeTalk.js PORTRAIT_ARCHIVE.CommonFaces, pinned equal - never imported, so the
+    // party HUD stays light)
+    if (Number.isInteger(pose?.common) && pose.common >= 0) {
+      const cif = await load(COMMON_FACES_FILE);
+      const bmp = cif.getDFBitmap(pose.common, 0);
+      return bmp ? bitmapToColor32(bmp, palette) : null;
+    }
     const art = raceArt(pose?.race ?? 'Breton', pose?.gender === 'female' ? 'female' : 'male');
     const record = Math.max(0, Math.min(FACES_PER_RACE - 1, (pose?.face ?? 0) | 0));
     const cif = await load(art.heads);

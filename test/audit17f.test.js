@@ -158,6 +158,9 @@ function walkChargen(onDone) {
   // taking the default - which is the character every pin below already
   // expected to get.
   key('Enter');
+  // LEGACY2: ...and PROJECT LEGACY'S QUESTION after it (the family's model - it ships on, MO1). Its cursor starts on
+  // Enduring, the answer that cannot cost a character, so this Enter is the walk taking that default too.
+  key('Enter');
   return w;
 }
 

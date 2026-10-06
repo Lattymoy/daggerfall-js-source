@@ -386,11 +386,12 @@
   {
     "name": "AUDIT-REALM-L3F2-customs-without-the-bound",
     "file": "server-account/src/realm.js",
-    "old": "        + ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ?) < ?'\n",
-    "new": "        + ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ?) < ? + 100'\n",
+    "old": "        + ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ?'\n",
+    "new": "        + ' SELECT ?, ?, ?, ?, 0, 0, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM realm_characters WHERE player = ? AND dead_at IS NULL) < ? + 100'\n",
     "tests": [
       "test/realm1.test.js"
-    ]
+    ],
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - the bound counts the living (a tombstone holds no slot)."
   },
   {
     "name": "AUDIT-REALM-L3F2-a-spent-census-says-never",

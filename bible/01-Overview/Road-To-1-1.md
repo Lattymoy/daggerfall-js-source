@@ -248,7 +248,7 @@ the same-interior move and the whole cross-context arm INSIDE the
 loaded pixel all ship). ARENA2 (2026-10-02) added one by name: the `?exterior` host runs no
 bout driver (`scenes/exterior.js`, the Arena's bouts are the world
 host's); ARENA-FIX (2026-10-02) wired that host's driver and closed it. AUDIT TELL (2026-10-04) added one by name: the
-dungeon stream carries none of the street record's `z`, `nm`, `yd`, `ex` or `sp` (`scenes/dungeonContext.js`). That leaves **9** open flags as
+dungeon stream carries none of the street record's `z`, `nm`, `yd`, `ex` or `sp` (`scenes/dungeonContext.js`). LEGACY1 (2026-10-05) added one by name: the fixed city keeps DFU's death - no streamer to birth an heir into (`scenes/world.js`, Legacy-Arc.md section 3). That leaves **10** open flags as
 of this wave - the count `node tools/regenOpenFlags.mjs --check`
 answers, and the only count this page may state - each with its
 blocker named at the site: no asset in the repo (the PlayerTorch

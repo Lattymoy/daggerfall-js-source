@@ -1,0 +1,62 @@
+{
+    "Version": null,
+    "Sections": [
+        {
+            "Name": "Input",
+            "Description": "",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": "G",
+                    "Name": "Key Input",
+                    "Description": "The key to show the family tree.",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TextKey"
+                },
+                {
+                    "Value": "",
+                    "Name": "Second Key Input",
+                    "Description": "Second key if you want to use multi-key, for example, for a controller with limited buttons.",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.TextKey"
+                }
+            ]
+        },
+        {
+            "Name": "Family",
+            "Description": "Generation Family Options",
+            "IsAdvanced": true,
+            "Keys": [
+                {
+                    "Options": [
+                        "Random Descendants",
+                        "Always have descendants"
+                    ],
+                    "Value": 0,
+                    "Name": "Descendants",
+                    "Description": "Descendants Generation Probability",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Min": 0,
+                    "Max": 10,
+                    "Value": 0,
+                    "Name": "Max Siblings",
+                    "Description": "The number of siblings that can generate at the same time.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Min": 0,
+                    "Max": 100,
+                    "Value": 0,
+                    "Name": "Siblings Probability",
+                    "Description": "The probability to generate siblings on the game.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                }
+
+
+            ]
+        }
+    ]
+}

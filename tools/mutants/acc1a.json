@@ -94,11 +94,12 @@
   {
     "name": "ACC1a-11-an-oversized-token-reaches-webcrypto",
     "file": "src/net/identityToken.js",
-    "old": "  if (typeof token !== 'string' || token.length > 1024) return { ok: false, why: 'shape' };",
+    "old": "  if (typeof token !== 'string' || token.length > TOKEN_MAX_CHARS) return { ok: false, why: 'shape' };",
     "new": "  if (typeof token !== 'string') return { ok: false, why: 'shape' };",
     "tests": [
       "test/identitytoken.test.js"
-    ]
+    ],
+    "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
   {
     "name": "ACC1a-12-a-bad-token-throws-instead-of-refusing",

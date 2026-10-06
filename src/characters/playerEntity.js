@@ -112,8 +112,28 @@ export function setDeathPresenter(fn) {
  *  door below consulted the saves, the shield and AvoidDeath on the transition, once. False (nothing asked) alive. */
 export function presentPlayerDeath(entity = playerEntity) {
   if (!(entity.health <= 0)) return false;
+  hearDeath(entity);
   _deathPresenter?.(entity);
   return true;
+}
+
+// AUDIT LEGACY (2026-10-05): THE DEATH'S LISTENERS - DFU's `PlayerEntity.OnDeath` event, which mods subscribe to (Project
+// Legacy's HandlePlayerDeath did). The presenter is ONE host's screen; a listener is a system that must know the death
+// THE MOMENT IT IS DECIDED, before any screen, mode exit or reload can intervene - Project Legacy records a permadeath
+// and pays Arkay's toll here (scenes/legacyHost.js onDeath), so an F11 under the screen or a closed tab cannot undo it.
+// Heard on the door's transition and on the DEATH-KEPT re-ask alike, so a death raised around the door is heard too;
+// a listener is therefore idempotent per death (the host's own latch). Keyed, so a host that mounts twice replaces.
+const _deathListeners = new Map();
+
+/** Hear every death of the player as it is decided: `fn(entity)`. A null `fn` removes `key`. */
+export function setDeathListener(key, fn) {
+  if (fn) _deathListeners.set(key, fn);
+  else _deathListeners.delete(key);
+}
+function hearDeath(entity) {
+  for (const [key, fn] of _deathListeners) {
+    try { fn(entity); } catch (e) { console.error(`[death] the ${key} listener failed:`, e?.message ?? e); }   // a listener never keeps the screen from rising
+  }
 }
 
 // AUDIT 26 F117: GuildManager.AvoidDeath, consulted by SetHealth at
@@ -339,6 +359,7 @@ export function hurtPlayer(entity, dmg, { bypassShield = false, spare = null } =
       surfacePlayer();
       return false;
     }
+    hearDeath(entity);   // AUDIT LEGACY: OnDeath's subscribers, before the screen
     _deathPresenter?.(entity);
     return true;
   }

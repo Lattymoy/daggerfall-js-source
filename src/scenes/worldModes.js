@@ -8033,7 +8033,11 @@ export function createWorldModes(host) {
             const px = mt && Number.isFinite(mt.longitude) && Number.isFinite(mt.latitude)
               ? longitudeLatitudeToMapPixel(mt.longitude, mt.latitude) : null;
             const isPrivateersHold = !!px && px.x === getInt('Startup', 'StartCellX') && px.y === getInt('Startup', 'StartCellY');
-            if (isPrivateersHold && (host.dungeonOnline?.() ?? false)) {
+            // AUDIT LEGACY B5: an offline death Project Legacy will raise is a respawn too - here, at the start marker,
+            // never a city or temple a fresh character has not walked to (D-ONLINE2's own reason)
+            const legacyRise = host.legacyWillRise?.() ?? false;
+            const online = host.dungeonOnline?.() ?? false;
+            if (isPrivateersHold && (online || legacyRise)) {
               // preferEnterMarker: true - the SAME marker a fresh classic
               // start opens on (dungeon.js/tryEnterDungeon's own default),
               // which is what "where you started" means for this one dungeon.
@@ -8043,12 +8047,14 @@ export function createWorldModes(host) {
                 player.stopAutorun();   // AUDIT 27h S2: SEA-RISE's law for every rise
                 reviveForPlay(playerEntity, { force: true });   // DEATHLOOP1: the drains go with the heal
                 surfacePlayer();
-                const goldLost = applyDeathPenalty(playerEntity);   // DEATH-PENALTY: Privateer's Hold is an online death like any other
+                const goldLost = online ? applyDeathPenalty(playerEntity) : 0;   // DEATH-PENALTY: Privateer's Hold is an online death like any other; offline there is none
                 endPlayerFights();   // AUDIT FEUD (RVN10): the death ended every fight
-                const took = revenantTakes(playerEntity, { online: true });   // AUDIT FEUD (RVN8, Feud-Arc.md 19): its killer's theft, once a death - the world host's respawn's own
+                const took = online ? revenantTakes(playerEntity, { online: true }) : null;   // AUDIT FEUD (RVN8, Feud-Arc.md 19): its killer's theft, once a death - the world host's respawn's own
+                const rise = legacyRise ? host.legacyRiseLine?.() ?? null : null;   // AUDIT LEGACY B5: the toll's word, the outcome presented
                 ctx.clearDeathOverlay?.();
                 if (goldLost > 0) say(deathPenaltyText(goldLost));
                 if (took?.line) say(took.line);
+                if (rise) say(rise);
                 return true;
               }
             }
@@ -12102,6 +12108,16 @@ export function createWorldModes(host) {
      *  interior arm it was missing. The dungeon mints through its own
      *  pool and answers the open thunk; the interior mints through
      *  ITS pool now; exterior alone falls through to the world host. */
+    /** AUDIT LEGACY H1: a list the caller owns, opened as a container on this mode's ground - Project Legacy's remains;
+     *  nothing is laid in the world (scenes/world.js legacyOpenRemains). Answers whether it opened. */
+    openLootList(items, hooks) {
+      if (mode === 'dungeon') return !!dungeonCtx?.openLootList?.(items, hooks);
+      if (mode !== 'interior' || !interiorCtx) return false;
+      if (interiorOverlay && !interiorOverlay.done) return false;
+      const w = interiorInventory({ loot: hooks });
+      mountInterior(w);
+      return !!w;
+    },
     mintRewardPile(dfItem) {
       if (mode === 'dungeon' && dungeonCtx?.offerRewardLoot) return dungeonCtx.offerRewardLoot(dfItem);
       if (mode === 'interior' && interiorCtx) {

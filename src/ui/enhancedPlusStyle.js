@@ -276,6 +276,10 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
   text-transform: uppercase; color: #efe8d6; text-shadow: 1px 1px 0 #050608, 2px 2px 0 rgba(0,0,0,0.5); }
 .lvl-lead { margin: 0 0 18px; text-align: center; font-size: 14px; color: #c9bfa4; text-shadow: 1px 1px 0 #050608; }
 .lvl-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+/* LEGACY-CHOICE: Project Legacy's online popup puts three answers - the window widens so the three stand in one row
+   (each tile no narrower than 210px), and a narrower screen wraps them as the grid does two */
+.lvl-shell .px-win.lvl-three { width: min(1000px, 100%); }
+.lvl-three .lvl-opts { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
 .lvl-opt { font: inherit; text-align: left; color: #d8cfae; cursor: pointer; display: flex; flex-direction: column; gap: 10px;
   padding: 14px 16px 12px; background: rgba(0,0,0,0.32); border: 2px solid;
   border-color: ${FRAME_TONES.stoneDark} ${FRAME_TONES.stoneMid} ${FRAME_TONES.stoneLit} ${FRAME_TONES.stoneDim};
@@ -283,13 +287,13 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
 .lvl-opt.is-on, .lvl-opt:focus-visible { outline: none; background: rgba(192,138,62,0.12);
   border-color: ${FRAME_TONES.brassHi} ${FRAME_TONES.brassLo} #5c3f1a ${FRAME_TONES.brass};
   box-shadow: 0 0 0 1px #050608, 0 0 14px rgba(243,207,134,0.18), inset 0 1px 0 rgba(255,244,210,0.18); }
-.lvl-opt-head { display: flex; align-items: baseline; gap: 10px; }
+.lvl-opt-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }   /* AUDIT LEGACY II U10: a long tag wraps under the title, never past the card */
 .lvl-key { flex: 0 0 auto; min-width: 22px; text-align: center; font-size: 12px; padding: 1px 4px; color: #a89f88;
   border: 1px solid rgba(125,116,96,0.55); }
 .lvl-opt.is-on .lvl-key { color: rgb(243,239,44); border-color: ${FRAME_TONES.brass}; }
 .lvl-opt-title { font-size: 18px; letter-spacing: 0.08em; text-transform: uppercase; color: #efe8d6; text-shadow: 1px 1px 0 #050608; }
 .lvl-opt.is-on .lvl-opt-title { color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); }
-.lvl-tag { margin-left: auto; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #9c937d; white-space: nowrap; }
+.lvl-tag { margin-left: auto; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: #9c937d; white-space: normal; text-align: right; }
 .lvl-opt-body { margin: 0; font-size: 14px; line-height: 1.5; color: #c5bda2; text-shadow: 1px 1px 0 #050608; }
 .lvl-opt-foot { margin-top: auto; padding-top: 10px; border-top: 2px solid rgba(5,6,8,0.5); box-shadow: inset 0 1px 0 rgba(163,152,128,0.16);
   display: flex; justify-content: flex-end; }
@@ -1816,12 +1820,12 @@ body .dfpeer-btn.cancel:hover:not([disabled]) { background: none; color: var(--b
 /* The lane drew its presses borderless or on a 1px line, so the kit's bevel had no edge to paint: a 2px edge (width
    and style only - the kit owns the colour), taken out of the padding so each press keeps its size (the sheet is
    border-box). The touch skin's own paddings outweigh these and stand. */
-body .dfsocial-btn, body .dfsocial-close, body .dfprofile-close, body .dfprofile-duel, body .dfpage-btn, body .dfpeer-btn:not(.cancel),
+body .dfsocial-btn, body .dfsocial-close, body .dfprofile-close, body .dfprofile-duel, body .dfprofile-wed, body .dfpage-btn, body .dfpeer-btn:not(.cancel),
 body .dfduel-btn, body .dfdecor-btn, body .dfdecor-open { border-width: 2px; border-style: solid; }
 body .dfsocial-btn { padding: 2px 6px; }
 body .dfsocial-close { padding: 0 6px; }
 body .dfprofile-close, body .dfpage-btn { padding: 4px 10px; }
-body .dfprofile-duel { padding: 5px 11px; }
+body .dfprofile-duel, body .dfprofile-wed { padding: 5px 11px; }
 body .dfpeer-btn:not(.cancel) { padding: 4px 6px; }
 body .dfduel-btn { padding: 3px 11px; }
 body .dfdecor-btn { padding: 3px 13px; }

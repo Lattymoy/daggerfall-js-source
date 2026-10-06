@@ -374,7 +374,7 @@ test('SOC4: the names over the bodies - drawNames takes the party colour as its 
   // is still the first thing on it. The badge is a fact about the PEER
   // and rides the point; the colour is the social picture's knowledge
   // and is asked for by id - which is the difference this pin is for.
-  assert.match(src, /out\.push\(\{ id: e\.peer\.id, name: e\.peer\.name \?\? '', x: s\.x, y: s\.y,\n\s*title: [^\n]*\n\s*rb: e\.peer\.rb \?\? null,[^\n]*\n\s*scale: nameScaleFor\(s\.depth\) \* lens, depth: s\.depth, lens \}\);/, 'the point carries the id (SEASON1 part two, PIN MOVED: a Season\'s banner ribbon on its own line before the scale)');
+  assert.match(src, /out\.push\(\{ id: e\.peer\.id, name: e\.peer\.name \?\? '', x: s\.x, y: s\.y,\n\s*title: [^\n]*\n\s*rb: e\.peer\.rb \?\? null,[^\n]*\n\s*house: e\.peer\.house \?\? null,[^\n]*\n\s*scale: nameScaleFor\(s\.depth\) \* lens, depth: s\.depth, lens \}\);/, 'the point carries the id (SEASON1 part two, PIN MOVED: a Season\'s banner ribbon on its own line before the scale; LEGACY7, PIN MOVED: the house on its own line after it)');
 });
 
 // ── THE HOST ──────────────────────────────────────────────────────────────────────────────────────

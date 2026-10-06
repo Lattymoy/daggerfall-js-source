@@ -90,9 +90,13 @@ function placeOf(host, el) {
 /** @param {any} host @param {any} k */
 function giveFocus(host, k) {
   let n = k.key ? [...host.querySelectorAll('*')].find((x) => x.getAttribute?.('data-focus') === k.key) ?? null : null;
-  if (!n) n = [...host.querySelectorAll(k.tag)].find((x) => placeOf(host, x) === k.place) ?? null;
-  // a button is its words: at its place, or - the page's shape moved - the one that says them
-  if (k.words != null && (!n || n.textContent !== k.words)) n = [...host.querySelectorAll(k.tag)].find((x) => x.textContent === k.words) ?? null;
+  // AUDIT LEGACY II U6: a control found by its KEY is it, whatever it says now - an armed act's words change ("Play as"
+  // becomes "Yes - play as"), and the words' check below threw the keyed button away and dropped the focus to the page
+  if (!n) {
+    n = [...host.querySelectorAll(k.tag)].find((x) => placeOf(host, x) === k.place) ?? null;
+    // a button is its words: at its place, or - the page's shape moved - the one that says them
+    if (k.words != null && (!n || n.textContent !== k.words)) n = [...host.querySelectorAll(k.tag)].find((x) => x.textContent === k.words) ?? null;
+  }
   if (!n || n.disabled) return;
   try { n.focus({ preventScroll: true }); } catch { n.focus?.(); }
   if (k.at) { try { n.setSelectionRange(k.at[0], k.at[1]); } catch { /* none to set */ } }

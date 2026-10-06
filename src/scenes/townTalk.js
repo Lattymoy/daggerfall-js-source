@@ -43,7 +43,7 @@ import { TalkWindow } from '../ui/talkWindow.js';
 import { hudScale } from '../ui/hud.js';
 import { hudRenderEnabled } from '../ui/hudShortcuts.js';   // AUDIT 64 F37: DaggerfallHUD's Draw override covers popupText too
 import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: the HUD's OTHER text surface, and its notebook tail
-import { overlayAction, actionsOf, isTextEntryTarget, isDomControlTarget } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code; CG2: a DOM field's key is the field's
+import { overlayAction, actionsOf, isTextEntryTarget, isDomControlTarget, isDomFocusWalk } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code; CG2: a DOM field's key is the field's
 import { makeWindowStack, pauseWhileOpen, hidesHud } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
 import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
 import {
@@ -137,7 +137,7 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, questBuildingSource = null, livingTalk = null, livingTone = null }) {   // LW2: `livingTalk` the living world's doors - { refuses(person) -> text|null, talked(person), caught(person) } (bible/06-Systems/Living-World.md); LW7: `livingTone(person, tone)` a question's tone   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, questBuildingSource = null, livingTalk = null, livingTone = null, legacyTopics = null }) {   // LW2: `livingTalk` the living world's doors - { refuses(person) -> text|null, talked(person), caught(person) } (bible/06-Systems/Living-World.md); LEGACY-HOME: `kin(person, talk)` true when one of the player's line took the activation (`talk` the conversation, should they ask for it); LW7: `livingTone(person, tone)` a question's tone   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
   // RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT.
   //
   // This took a plain number, and the world host had no choice but to
@@ -407,6 +407,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // AUDIT 28 H11: Enter or Space on a DOM window's own button is the browser's press of it - the payday notice's
       // "Take the reward", the boards' every act - never prevented under the window that drew it
       if ((e.key === 'Enter' || e.key === ' ') && isDomControlTarget(e.target)) return true;
+      if (isDomFocusWalk(e)) return true;   // AUDIT LEGACY II U3: Tab walks a DOM window that owns the focus
       e.preventDefault();
       // E says goodbye too - the touch layer's E button opens AND
       // closes talk (desktop-consistent; Esc/Enter unchanged). Choice
@@ -770,6 +771,18 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // body's town's: livingTown.js moment, the room's door): their words on the parchment, the conversation another time
     const moment = target.person?.living?.town?.moment?.(target.person) ?? null;
     if (moment) { showOverlay(new ActionTextBox(moment)); return; }
+    // LEGACY-HOME: one of the player's own line (Project Legacy's family in the world, systems/legacy/household.js) is
+    // met before the words - Play as them, the town's own conversation (`talk`, below), or goodbye: the host's window
+    if (livingTalk?.kin?.(target.person, () => converse(target))) return;
+    converse(target);
+  }
+
+  /** LEGACY-HOME: a mobile's portrait - a resident's own (one of the line: the chargen head they were made with), else
+   *  TalkManager.cs:817's: a mobile ALWAYS portraits from TFAC00I0.RCI, at the record SetPerson minted for it. */
+  const portraitOf = (person) => person?.living?.res?.portrait ?? { archive: 'CommonFaces', record: person?.personFaceRecordId ?? 0 };
+
+  /** The conversation itself, once nothing stands before it (the activation's gates above). */
+  function converse(target) {
     const eng0 = engine();
     if (eng0?.session) {
       // T3c: the NPC keeps a stable per-person seed for the
@@ -798,7 +811,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         npcSeed: target.person._talkSeed, npcName: target.person.nameNPC ?? '',
         // TalkManager.cs:817 - a mobile ALWAYS portraits from
         // TFAC00I0.RCI, at the record SetPerson minted for it.
-        portrait: { archive: 'CommonFaces', record: target.person.personFaceRecordId ?? 0 },
+        portrait: portraitOf(target.person),
       });
       return;
     }
@@ -836,7 +849,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // through the verbatim hit rects; the keyed chain is the fallback)
     openTalkWindow(t.text, {
       npcSeed: _talkNpc?._talkSeed ?? 0, npcName: _talkNpc?.nameNPC ?? '',
-      portrait: { archive: 'CommonFaces', record: _talkNpc?.personFaceRecordId ?? 0 },
+      portrait: portraitOf(_talkNpc),
     });
   }
 
@@ -888,7 +901,13 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         // whole reason they were blockers is that the tree computed
         // all of this and the window threw it away. Null when no
         // engine is mounted: the window keeps the consumed no-op.
-        tellMeAboutTopics: () => treeFlatTopics(engine()?.tree?.listTopicTellMeAbout),
+        // LEGACY5: Project Legacy's own rows first - a resident courted, a proposal, the wedding, the family - the port's,
+        // answered by the host and never through the engine's pipeline (`legacy`)
+        tellMeAboutTopics: () => {
+          const own = _toneTarget ? (legacyTopics?.(_toneTarget) ?? []) : [];
+          const tree = treeFlatTopics(engine()?.tree?.listTopicTellMeAbout);
+          return own.length ? [...own, ...(tree ?? [])] : tree;
+        },
         peopleTopics: () => treeFlatTopics(engine()?.tree?.listTopicPerson),
         thingsTopics: () => treeFlatTopics(engine()?.tree?.listTopicThing),
         workQuestion: () => (eng?.pipeline ? eng.pipeline.getQuestionText(workListItem(), tone) : null),
@@ -900,6 +919,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         })),
         answer: (row) => {
           _toneHeard();   // LW7: the question's tone, in a resident's regard
+          if (row.legacy) return row.legacy.answer(tone);   // LEGACY5: the host's answer
           if (row.listItem) return eng.pipeline.getAnswerText(row.listItem, { npcSeed });
           const a = answerText(row); _questionsAsked++; return a;   // AUDIT 17e F13, moved to DFU's own site
         },
@@ -908,7 +928,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         // shipped selection model), and DFU's GetQuestionText has
         // never touched numQuestionsAsked - GetAnswerText does, which
         // is where the engine path already had it.
-        question: (row) => (row.listItem
+        question: (row) => (row.legacy ? row.legacy.question(tone) : row.listItem
           ? eng.pipeline.getQuestionText(row.listItem, tone)
           : questionText(row)),
         tone: () => tone,

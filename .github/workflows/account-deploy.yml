@@ -50,6 +50,7 @@ on:
       - "src/net/handleShape.js"
       - "src/net/letterLaw.js"
       - "src/net/nameFilter.js"
+      - "src/net/houseLaw.js"
       - "src/net/moderation.js"
       - "src/net/playClock.js"
       - "src/net/renown.js"
