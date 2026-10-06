@@ -422,9 +422,16 @@ than standing still.
 - **Struck down.** One of the line killed by the one played (the town's one-hit civilian, LW7) dies IN THE RECORD -
   `died` with cause `slain` and by whose hand, a world fact, the store's (AUDIT LEGACY's first authority) - said on the
   HUD, and stands no more; never a death in the town's lives (`livingDeadAt`/`livingSlay` pass them to the host).
-- **Online**: the realm's homes are the account service's (`systems/onlineHomes.js`), not the line's (AUDIT LEGACY II
-  F2/B4: the host learns no house online), so online the family stands in its seat's town; they are this player's own
-  residents, seen by them alone. LEGACY7: Play as is open online - a member is a realm character of their own. A character copied between the lanes (the
+- **Online** (LEGACY7 part five, `test/legacy7_homes.test.js`, `tools/mutants/legacy7homes.json`): the realm keeps the
+  line, so a realm character's ONLINE HOMES (HOME1, `systems/onlineHomes.js` - a home is a realm character's) are its
+  houses, learned with the save as a deed is offline: the world reads this realm character's rows of the account's
+  homes (`/v1/homes/mine`, each named by its town) at the boot and after each home of mine is bought, sold or changed
+  (the registry's `onWrote`), and hands them to the house; a list not read yet learns nothing and drops nothing. So the
+  line lives in its online homes as offline in its deeds - parked there, the family home among them - seen by this
+  player alone (the Living World is each client's own). **AUDIT LEGACY II F2/B4 moved by its own slice:** that audit
+  found the realm's homes learned against the arc's word that they were the account service's, and shut them out; the
+  realm holding the line is what makes them the line's. Play as is open online - a member is a realm character of their
+  own. A character copied between the lanes (the
   realm's customs, Copy to offline) is a new character of no house: both doors drop the record (AUDIT LEGACY II H1).
 - **The Living World.** The line stands only in the Living World's towns (AUDIT LEGACY II B5): with it off (the classic
   screens, or the Features row), nobody of the line stands anywhere, the card says no home, and the House page says

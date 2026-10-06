@@ -1,0 +1,83 @@
+[
+  {
+    "name": "LEGACY7H-online-learns-nothing",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    const held = deps.heldHouses?.() ?? null;",
+    "new": "    const held = deps.online() ? null : deps.heldHouses?.() ?? null;",
+    "tests": [
+      "test/legacy7_homes.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7H-unread-drops",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (held == null) return false;\n    return syncHouses(family, p.id, held);",
+    "new": "    return syncHouses(family, p.id, held ?? []);",
+    "tests": [
+      "test/legacy7_homes.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7H-registry-silent",
+    "file": "src/systems/onlineHomes.js",
+    "old": "    try { onWrote?.(id, buildingKey); } catch { /* a listener's fault is never the registry's */ }\n",
+    "new": "",
+    "tests": [
+      "test/legacy7_homes.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7H-listener-breaks-claim",
+    "file": "src/systems/onlineHomes.js",
+    "old": "    try { onWrote?.(id, buildingKey); } catch { /* a listener's fault is never the registry's */ }",
+    "new": "    onWrote?.(id, buildingKey);",
+    "tests": [
+      "test/legacy7_homes.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7H-world-any-characters-homes",
+    "file": "src/scenes/world.js",
+    "old": ".filter((h) => h?.character === me).map((h) => ({",
+    "new": ".map((h) => ({",
+    "tests": [
+      "test/legacy7_homes.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7H-world-unnamed",
+    "file": "src/scenes/world.js",
+    "old": "        location: [...livingTownsIndex().values()].find((t) => (t.mapId >>> 0) === (h.mapId >>> 0))?.name ?? '',",
+    "new": "        location: '',",
+    "tests": [
+      "test/legacy7_homes.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7H-world-offline-deeds-online",
+    "file": "src/scenes/world.js",
+    "old": "heldHouses: () => (isOnlinePage() ? (realmSession ? _legacyOnlineHomes : null) : (playerEntity.houses",
+    "new": "heldHouses: () => ((playerEntity.houses",
+    "tests": [
+      "test/legacy7_homes.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7H-world-never-read",
+    "file": "src/scenes/world.js",
+    "old": "  if (legacyRealmLine) legacyOnlineHomesRead();   // LEGACY7 part five",
+    "new": "  // LEGACY7 part five",
+    "tests": [
+      "test/legacy7_homes.test.js"
+    ]
+  },
+  {
+    "name": "LEGACY7H-world-not-told",
+    "file": "src/scenes/world.js",
+    "old": ", onWrote: () => legacyOnlineHomesRead() }) : null;",
+    "new": " }) : null;",
+    "tests": [
+      "test/legacy7_homes.test.js"
+    ]
+  }
+]

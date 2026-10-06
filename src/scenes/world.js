@@ -1321,7 +1321,23 @@ export async function bootWorld(canvas, renderer, params, status) {
   // off `params`: `onlineOn` is declared far below, and a quest can be set up before it is.
   // HOME-RENT: the service's homes door itself, for a home's rooms - read at its door, rented, offered, collected
   const homesApi = params.has('online') ? accountHomes({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }) : null;
-  const onlineHomes = homesApi ? createOnlineHomes({ api: homesApi, character: () => characterIdOf(playerEntity) }) : null;
+  const onlineHomes = homesApi ? createOnlineHomes({ api: homesApi, character: () => characterIdOf(playerEntity), onWrote: () => legacyOnlineHomesRead() }) : null;   // LEGACY7 part five: a home of mine bought, sold or changed - the line's to learn again
+  /** LEGACY7 part five: ONLINE, THE LINE'S HOUSES ARE ITS MEMBERS' ONLINE HOMES (Legacy-Arc 10b) - this realm character's
+   *  rows of the account's homes (/v1/homes/mine; HOME1: a home is a realm character's), each named by its town. Read at
+   *  the boot and after each home of mine changed (the registry's `onWrote`); the house's save takes the last read - null
+   *  until one landed, which learns nothing and drops nothing (legacyHost.js syncHousesNow). */
+  let _legacyOnlineHomes = null;
+  function legacyOnlineHomesRead() {
+    if (!homesApi || !realmSession) return;
+    const me = realmSession.id;
+    homesApi.mine().then((r) => {
+      if (!r?.ok || !Array.isArray(r.data?.homes)) return;
+      _legacyOnlineHomes = r.data.homes.filter((h) => h?.character === me).map((h) => ({
+        regionIndex: h.region | 0, mapId: h.mapId >>> 0, buildingKey: h.buildingKey | 0,
+        location: [...livingTownsIndex().values()].find((t) => (t.mapId >>> 0) === (h.mapId >>> 0))?.name ?? '',
+      }));
+    }).catch(() => {});
+  }
   // WD3: THE TOWNS THAT HOLD AN ONLINE HOME, AND THE LAYOUT EACH WAS BOUGHT IN (net/homeLaw.js) - asked now, beside the
   // boot's own loading, and answered into the layout pins before the first town stands (below, at the first build), so
   // every client of the room stands a home's town as its homes were bought in it. An answer that does not come is asked
@@ -22393,7 +22409,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       return true;
     },
     // LEGACY-HOME: the houses the one played holds (a deed that stands - banking.js deedStands), and the house they are in
-    heldHouses: () => (playerEntity.houses ?? []).filter((h) => (h?.buildingKey | 0) > 0 && deedStands(h)),
+    heldHouses: () => (isOnlinePage() ? (realmSession ? _legacyOnlineHomes : null) : (playerEntity.houses ?? []).filter((h) => (h?.buildingKey | 0) > 0 && deedStands(h))),   // LEGACY7 part five: online, this realm character's online homes (null until read)
     // LEGACY6: what the world remembers - the town's regard of the one played and its day, the towns' minute for the
     // house's news, and the killer a fallen kinsman's mirror names, handed to the heir (revenant.js)
     regards: () => livingRelations, regardDay: livingRegardDay, sky: () => skyMinutes(),
@@ -24866,6 +24882,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   if (!_loadedGame) hccRuntime.handleNewGame();   // HCC: StartGameBehaviour.OnNewGame [IL_98c0]
   if (!_loadedGame) newGameModSaveRecords();   // WA1: a new character starts from every mod's NewSaveData (systems/modSaveData.js - a recorded departure)
   legacyHost?.afterBoot();   // LEGACY1 (D9): a loaded character with no family founded into the Mods pane's model; a born or new one's is its own
+  if (legacyRealmLine) legacyOnlineHomesRead();   // LEGACY7 part five: the realm's homes of the one played, for the line's houses
   // E3 - THE CONSOLE. ExteriorAutomap.Start (:417) and
   // DaggerfallTravelMapWindow's ctor (:229) each register their own
   // console commands; both surfaces are THIS host's, so both

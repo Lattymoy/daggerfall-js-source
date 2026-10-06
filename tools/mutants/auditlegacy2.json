@@ -120,11 +120,13 @@
   {
     "name": "AUDIT-LEGACY-II-F2-realm-homes-the-lines",
     "file": "src/scenes/legacyHost.js",
-    "old": "    if (!deps.heldHouses || deps.online()) return false;",
-    "new": "    if (!deps.heldHouses) return false;",
+    "old": "    if (held == null) return false;\n    return syncHouses(family, p.id, held);",
+    "new": "    return syncHouses(family, p.id, held);",
     "tests": [
-      "test/auditlegacy2.test.js"
-    ]
+      "test/auditlegacy2.test.js",
+      "test/legacy7_homes.test.js"
+    ],
+    "note": "LEGACY7 part five (PIN MOVED, the law changed by its own slice - Legacy-Arc 10b): online the realm's homes ARE the line's now (the realm keeps the line), so the record guards what F2/B4 left standing: a list the world has not read yet (null) learns nothing and DROPS nothing - without the guard an unread list emptied the member's houses at the next save."
   },
   {
     "name": "AUDIT-LEGACY-II-A7-parked-by-a-rise",

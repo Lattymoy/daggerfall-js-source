@@ -276,12 +276,20 @@ test('AUDIT LEGACY II A6/A7/F2/B4: the line learns a deed and where a member sta
   modSaveRecords();
   assert.deepEqual(f.houses.map((h) => h.location), ['Gothway Garden'], 'the save holds the deed: the line\'s');
   assert.deepEqual(f.people[0].parked, { mapId: HOUSE_A.mapId, buildingKey: HOUSE_A.buildingKey }, 'and the save says where they stand');
-  // online, the realm's homes are the account service's (Legacy-Arc 10b)
+  // F2/B4 (AUDIT LEGACY II): online the line learned whatever the host handed it, against the arc. LEGACY7 part five
+  // (PIN MOVED, the law changed by its own slice - Legacy-Arc 10b): the realm keeps the line now, and online the world
+  // hands this realm character's online homes - learned with the save as a deed is offline; a list not read yet (null)
+  // learns nothing and drops nothing (test/legacy7_homes.test.js holds the online law whole)
   const o = world({ model: MODELS.enduring });
   o.online = true;
-  o.held = [HOUSE_B];
+  o.held = null;
   modSaveRecords();
-  assert.deepEqual(o.host.family.houses, [], 'F2/B4: no realm home becomes the line\'s');
+  assert.deepEqual(o.host.family.houses, [], 'F2/B4: the realm\'s homes not read yet - nothing is learned');
+  o.held = [HOUSE_B];
+  o.host.tick();
+  assert.deepEqual(o.host.family.houses, [], 'A6 online: never a tick');
+  modSaveRecords();
+  assert.deepEqual(o.host.family.houses.map((h) => h.location), ['Sentinel'], 'the save learns the realm\'s home');
 });
 
 test('AUDIT LEGACY II A8/P3: the line\'s residents are the same objects while nothing they are made of changes - a save, a rev, a reload; new when they change', () => {

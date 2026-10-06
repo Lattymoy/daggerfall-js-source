@@ -209,18 +209,21 @@ export function createLegacyHost(deps) {
     if (!saving) return;
     // LEGACY-HOME + AUDIT LEGACY II A6: the houses the one played holds are the line's - a deed is the character's own,
     // so the line learns it with the save that holds it (an unsaved purchase or sale moved the line, and another
-    // member's load found it in a house that member's save does not own). Online, the realm's homes are the account
-    // service's, not the line's (Legacy-Arc 10b, until LEGACY7).
+    // member's load found it in a house that member's save does not own). LEGACY7 part five: online too - the realm
+    // keeps the line, and a realm character's online homes are its houses (Legacy-Arc 10b; the world hands which)
     syncHousesNow(p);
     // where this save is made - in one of the family's houses the member is PARKED there, and stands in it while
     // another is played; anywhere else they are on their own journey (systems/legacy/household.js homeOf)
     const here = deps.houseHere?.() ?? null;
     p.parked = here && (family.houses ?? []).some((h) => sameHouse(h, here)) ? { mapId: here.mapId, buildingKey: here.buildingKey } : null;
   }
-  /** The played member's held houses into the line's (offline only). Answers whether they changed. */
+  /** The played member's held houses into the line's - offline their deeds, online their online homes (the world hands
+   *  which). Null held is not known yet (online: the realm's homes not read): nothing learned, nothing dropped. Answers
+   *  whether they changed. */
   function syncHousesNow(p) {
-    if (!deps.heldHouses || deps.online()) return false;
-    return syncHouses(family, p.id, deps.heldHouses());
+    const held = deps.heldHouses?.() ?? null;
+    if (held == null) return false;
+    return syncHouses(family, p.id, held);
   }
   /** AUDIT LEGACY II A1: whether the character in the world IS the one the record plays - after a choice hands the line
    *  to another (the Succession, a switch) the page runs on under the old character until the boot lands, and the slow
