@@ -75,6 +75,13 @@ export const LEVELUP_SKILL_SUM_PER_LEVEL = 15;
 export const calculatePlayerLevel = (startingSum, currentSum) =>
   Math.floor((currentSum - startingSum + 28) / LEVELUP_SKILL_SUM_PER_LEVEL);
 
+/** LEVEL-ONLINE-2: the port's own inverse of calculatePlayerLevel - the starting sum that puts a character with
+ *  `currentSum` at the very START of `level` (calculatePlayerLevel answers `level`, and no sum is yet banked toward the
+ *  next). What a character switched ONTO Daggerfall's leveling is anchored at, so the sum its skills built under
+ *  another system neither pays out levels at once nor owes any. */
+export const levelUpSkillSumAnchor = (currentSum, level) =>
+  currentSum + 28 - level * LEVELUP_SKILL_SUM_PER_LEVEL;
+
 /** sum(primary) + sum(major) - lowest major + highest minor - one home in skills.js, re-exported for this file's importers. */
 export { levelUpSkillSum };
 

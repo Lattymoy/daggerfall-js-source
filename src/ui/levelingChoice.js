@@ -37,12 +37,12 @@ import {
   LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX, LEVELUP_SKILL_SUM_PER_LEVEL,
 } from '../systems/advancement.js';
 import {
-  LEVELING_CLASSIC, LEVELING_VIRTUE, levelingSettings, LEVELUP_TOTAL,
+  LEVELING_CLASSIC, LEVELING_VIRTUE, levelingSettings, LEVELUP_TOTAL, ONLINE_LEVELING_SYSTEM,
 } from '../systems/oblivionLeveling.js';
 import { isEnhanced } from '../systems/uiSkin.js';   // LEVEL-PLUS: the Enhanced Plus face
 import { drawLevelingFace, releaseLevelingFace } from './enhancedLevelingChoice.js';
 
-/** LEVEL-ONLINE: why Daggerfall's option is shut on the online page (oblivionLeveling.js newCharacterLevelingSystem). */
+/** LEVEL-ONLINE-2: why Oblivion's option is shut on the online page (oblivionLeveling.js newCharacterLevelingSystem). */
 export const LEVELING_OFFLINE_ONLY_NOTE = 'Offline characters only';
 
 /**
@@ -60,17 +60,18 @@ export const LEVELING_OFFLINE_ONLY_NOTE = 'Offline characters only';
  */
 export function levelingOptions(s = null, { online = false } = {}) {
   const set = s ?? levelingSettings();
-  // LEVEL-ONLINE: online, Daggerfall's leveling is shown but SHUT - a new online character levels Oblivion's way
-  // (the law is newCharacterLevelingSystem at finishChargen; this is only the screen saying so before it happens).
+  // LEVEL-ONLINE-2: online, every system but ONLINE_LEVELING_SYSTEM is shown but SHUT - a new online character levels
+  // Daggerfall's way (the law is newCharacterLevelingSystem at finishChargen; this is only the screen saying so first).
   const shut = { locked: true, lockNote: LEVELING_OFFLINE_ONLY_NOTE };
   const open = { locked: false, lockNote: null };
+  const gate = (id) => (online && id !== ONLINE_LEVELING_SYSTEM ? shut : open);
   const purse = set.attributePoints;
   const virtues = purse === 1 ? '1 virtue' : `${purse} virtues`;
   return Object.freeze([
     Object.freeze({
       id: LEVELING_CLASSIC,
       title: 'Daggerfall',
-      ...(online ? shut : open),
+      ...gate(LEVELING_CLASSIC),
       lines: Object.freeze([
         'Level with your skills, as Daggerfall does.',
         'Primary, major and minor skills make a sum;',
@@ -81,7 +82,7 @@ export function levelingOptions(s = null, { online = false } = {}) {
     Object.freeze({
       id: LEVELING_VIRTUE,
       title: 'Oblivion Remastered',
-      ...open,
+      ...gate(LEVELING_VIRTUE),
       lines: Object.freeze([
         'Level with a bar, as Oblivion Remastered.',
         'Every skill you raise fills it, your best',

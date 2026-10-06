@@ -1212,7 +1212,7 @@ test('ORL1: the mod ships ON, and a switched-off mod asks nobody', () => {
   assert.equal(oblivionLevelingEnabled(reader({ Enabled: false })), false);
   // ...and with it off the wizard's answer goes straight out, carrying
   // the port's own law rather than a question nobody was asked - OFFLINE (LEVEL-ONLINE: online the question is
-  // always put, Daggerfall's option shut).
+  // always put, Oblivion's option shut - LEVEL-ONLINE-2).
   // LEGACY2: the questions are a chain now (the leveling one, Project Legacy's model); with none asked the answer goes
   // straight out carrying the classic system - and the leveling question is asked only with the mod on, or online
   const src = rd('src/systems/chargenSession.js');

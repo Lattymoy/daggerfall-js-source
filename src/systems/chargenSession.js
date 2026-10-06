@@ -41,7 +41,7 @@ import { bootstrapRegionPower } from './regionPower.js';   // AUDIT 26 F107   //
 // answer is spelled with.
 import { LevelingChoiceScreen } from '../ui/levelingChoice.js';
 import { oblivionLevelingEnabled, initVirtueLeveling, LEVELING_CLASSIC, newCharacterLevelingSystem } from './oblivionLeveling.js';
-import { isOnlinePage } from './onlineLane.js';   // LEVEL-ONLINE: Daggerfall's leveling is offline-only for a new character
+import { isOnlinePage } from './onlineLane.js';   // LEVEL-ONLINE-2: Oblivion's leveling is offline-only for a new character
 import { legacyOn } from './legacy/settings.js';   // LEGACY2: Project Legacy's question - the family's model
 import { legacyModelScreen } from '../ui/legacyModelChoice.js';
 import { isLegacyChoice } from './legacy/family.js';   // LEGACY-CHOICE: the answer kept on the character
@@ -161,7 +161,7 @@ export async function applyHeadlessChargen(playerEntity, classIndex, { fetchByte
   // a test, a headless run - and a question nobody is there to answer
   // must not be asked and must not be guessed at. Daggerfall's leveling
   // is what every ?class= character has always had.
-  // LEVEL-ONLINE: ...and online the port's law is Oblivion's (newCharacterLevelingSystem).
+  // LEVEL-ONLINE-2: ...and online too - Oblivion's is offline-only (newCharacterLevelingSystem).
   initVirtueLeveling(playerEntity, newCharacterLevelingSystem(LEVELING_CLASSIC, { online: isOnlinePage() }));
   console.log(`[chargen] ${CLASS_CAREERS[classIndex]}: HP ${playerEntity.maxHealth}, spells ${playerEntity.spells.length}`);
   return playerEntity;
@@ -289,8 +289,8 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
   // question wrote (createChargenWindow); a result that carries none -
   // a test's literal, a caller that built a flow by hand - is a classic
   // character, which is the port's own law and the safe default.
-  // LEVEL-ONLINE: an online character is born on Oblivion's bar whatever a result carries - the question offers
-  // Daggerfall's only offline, and this is the law's own door, not the screen's (a hand-built result goes through it too).
+  // LEVEL-ONLINE-2: an online character is born on Daggerfall's leveling whatever a result carries - the question offers
+  // Oblivion's only offline, and this is the law's own door, not the screen's (a hand-built result goes through it too).
   initVirtueLeveling(playerEntity, newCharacterLevelingSystem(result.levelingSystem ?? LEVELING_CLASSIC, { online: isOnlinePage() }));
   // LEGACY-CHOICE: AND PROJECT LEGACY'S ANSWER, kept on the character as the leveling one is - a model, or no lineage,
   // which keeps them out of the system for good (legacyHost.js found). A result the question was not put to carries none.
@@ -429,9 +429,9 @@ function chargenWizard(flow, { onDone, onCancel, hudScale = 2 } = {}) {
  * applyHeadlessChargen (the `?class=` skip) sets it there.
  */
 function withLevelingChoice(flow, { onDone, onCancel, hudScale = 2 } = {}) {
-  // LEVEL-ONLINE: online the question is ALWAYS put, mod or no mod - Daggerfall's option shown and shut, Oblivion's
-  // the answer - so the player reads which system they are getting before the world, rather than finding out at
-  // their first level. Offline with the mod off, nothing changed: no question, Daggerfall's law.
+  // LEVEL-ONLINE: online the question is ALWAYS put, mod or no mod - Oblivion's option shown and shut (LEVEL-ONLINE-2),
+  // Daggerfall's the answer - so the player reads which system they are getting before the world, rather than finding
+  // out at their first level. Offline with the mod off, nothing changed: no question, Daggerfall's law.
   const online = isOnlinePage();
   // LEGACY2 (bible/06-Systems/Legacy-Arc.md section 6): ...AND PROJECT LEGACY'S QUESTION AFTER IT - the family's model,
   // Bloodline or Enduring, asked of the character who founds a house (legacyModelScreen). The same door, the same one
@@ -493,7 +493,7 @@ function withLevelingChoice(flow, { onDone, onCancel, hudScale = 2 } = {}) {
       // the finished character with it, so each question still up falls
       // back to its default - the same law every unasked path takes.
       // `fired` makes this a no-op on every normal close and on cancel.
-      // LEVEL-ONLINE: the first OPEN answer - Daggerfall's offline, Oblivion's online (Daggerfall's is shut there).
+      // LEVEL-ONLINE: the first OPEN answer - Daggerfall's, offline and online (LEVEL-ONLINE-2: Oblivion's is shut there).
       while (prompt && !fired) prompt.answer(prompt.defaultId);
       inner.dispose?.();
     },

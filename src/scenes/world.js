@@ -14193,7 +14193,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     let bundle;
     try {
       bundle = classicSaveToSnapshot(saveGames, {
-        spellsByIndex, online: isOnlinePage(),   // LEVEL-ONLINE: an online import is born on Oblivion's bar
+        spellsByIndex, online: isOnlinePage(),   // LEVEL-ONLINE: an online import is a new online character (the law's system)
         factionStore: townTalk.factionDict ? { dict: townTalk.factionDict } : null,
         resolveLocation: (regionIndex, locationIndex) => {
           const region = maps.getRegion(regionIndex);
