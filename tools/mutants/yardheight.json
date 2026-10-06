@@ -1,0 +1,152 @@
+[
+  {
+    "name": "YARD-HEIGHT-bound",
+    "file": "src/net/decorLaw.js",
+    "old": "export const DECOR_YARD_HIGH = 4;",
+    "new": "export const DECOR_YARD_HIGH = 48;",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "the old climb back: the lot's widest bound"
+  },
+  {
+    "name": "YARD-HEIGHT-comparison",
+    "file": "src/net/decorLaw.js",
+    "old": "Number(pl.pos[1]) <= DECOR_YARD_HIGH;",
+    "new": "Number(pl.pos[1]) < DECOR_YARD_HIGH;",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "the bound itself refused"
+  },
+  {
+    "name": "YARD-HEIGHT-place-unguarded",
+    "file": "server-account/src/decor.js",
+    "old": "  if (yard === true && sent && !decorYardHighOk(sent)) return { error: 'yard-high' };",
+    "new": "  if (false && sent && !decorYardHighOk(sent)) return { error: 'yard-high' };",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "a tower's piece placed"
+  },
+  {
+    "name": "YARD-HEIGHT-room-capped",
+    "file": "server-account/src/decor.js",
+    "old": "  if (yard === true && sent && !decorYardHighOk(sent)) return { error: 'yard-high' };",
+    "new": "  if (sent && !decorYardHighOk(sent)) return { error: 'yard-high' };",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "a room's high shelf refused"
+  },
+  {
+    "name": "YARD-HEIGHT-move-unguarded",
+    "file": "server-account/src/decor.js",
+    "old": "  if (row.yard === 1 && !decorYardHighOk(pl)) return { error: 'yard-high' };",
+    "new": "  if (false && !decorYardHighOk(pl)) return { error: 'yard-high' };",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "a yard's piece moved up into a tower"
+  },
+  {
+    "name": "YARD-HEIGHT-client-unasked",
+    "file": "src/scenes/homeYards.js",
+    "old": "  if (!(Number(pos[1]) <= DECOR_YARD_HIGH)) return YARD_TOO_HIGH;",
+    "new": "",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "the decorator lets a tower's piece be placed, the service alone refusing it"
+  },
+  {
+    "name": "DECOR-TURN-direction",
+    "file": "src/ui/decorPanel.js",
+    "old": "turnBtn('Turn left', -1), turnRightBtn = turnBtn('Turn right', 1);",
+    "new": "turnBtn('Turn left', 1), turnRightBtn = turnBtn('Turn right', 1);",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "both buttons turn one way"
+  },
+  {
+    "name": "DECOR-TURN-door-turned",
+    "file": "src/ui/decorPanel.js",
+    "old": "    turnLeftBtn.disabled = turnRightBtn.disabled = !it || door;",
+    "new": "    turnLeftBtn.disabled = turnRightBtn.disabled = !it;",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "a door turned off its doorway's hinge"
+  },
+  {
+    "name": "DECOR-TURN-axis",
+    "file": "src/scenes/decorTool.js",
+    "old": "        const axis = decorIsMount(cur) ? 2 : 0;",
+    "new": "        const axis = decorIsMount(cur) ? 2 : 1;",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "every piece tipped, not turned"
+  },
+  {
+    "name": "DECOR-TURN-unwrapped",
+    "file": "src/scenes/decorTool.js",
+    "old": "(i === axis ? wrapTurn(Math.round((v + by) * 10) / 10) : v)",
+    "new": "(i === axis ? Math.round((v + by) * 10) / 10 : v)",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "past half a turn the law refuses the piece"
+  },
+  {
+    "name": "DECOR-TURN-a-write-a-press",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (turnBusy.has(piece.id)) return true;   // gathered into the next turn\n",
+    "new": "",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "a write a press, each over the one before"
+  },
+  {
+    "name": "DECOR-TURN-gathered-lost",
+    "file": "src/scenes/decorTool.js",
+    "old": "      for (let by = turnOwed.get(piece.id) ?? 0; by; by = turnOwed.get(piece.id) ?? 0) {",
+    "new": "      for (let by = turnOwed.get(piece.id) ?? 0; by; by = 0) {",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "the presses during a write thrown away"
+  },
+  {
+    "name": "DECOR-TURN-refusal-stood",
+    "file": "src/scenes/decorTool.js",
+    "old": "        const stood = await writeChange(r, next);\n        if (!stood) break;\n        if (deps.visit?.() === visit) pool.put(stood);\n        turned = true;",
+    "new": "        const stood = (await writeChange(r, next)) ?? next;\n        if (deps.visit?.() === visit) pool.put(stood);\n        turned = true;",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "a refused turn stands anyway"
+  },
+  {
+    "name": "DECOR-TURN-lot-unasked",
+    "file": "src/scenes/decorTool.js",
+    "old": "        if (why) { deps.say?.(why); break; }",
+    "new": "        if (why && false) { deps.say?.(why); break; }",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "a yard's piece turned onto the house"
+  },
+  {
+    "name": "DECOR-TURN-unwired",
+    "file": "src/scenes/decorTool.js",
+    "old": "      onTurn: (piece, dir) => { turnPlaced(piece, dir * DECOR_TURN_STEP); },   // DECOR-TURN\n",
+    "new": "",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "the buttons turn nothing"
+  }
+]

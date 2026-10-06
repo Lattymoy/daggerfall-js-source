@@ -10066,6 +10066,30 @@ home's alone - they are about other players.
 - Known limits: the lot is a box round the footprint (a building turned off the grid has a wider lot); yard pieces are
   not activation targets; the street's wandering folk are not steered round them.
 
+### YARD-HEIGHT and DECOR-TURN - a yard's piece stands at most 4 m up; a placed piece turned where it stands (2026-10-06)
+
+Mac: "limit the height at which players can build, along with adding the ability to rotate objects on the ground.
+People currently can build towers that seem out of place." Mac's calls: 4 m, and "Turn placed pieces" (a piece already
+placed turned in place, never picked up).
+
+- **YARD-HEIGHT.** A yard's piece stood on whatever the eye met, the piece below included, and the owner's own lift
+  added DECOR_RAISE_MAX (3 m) to each, so a stack climbed as far as the lot's own bound, DECOR_YARD_POS_MAX (48 m).
+  Now its place stands at most DECOR_YARD_HIGH (`net/decorLaw.js`, 4 m) over the ground - its `pos` height, from the
+  building's own origin, which stands on the town's ground (`scenes/world.js` homeFrames). Refused at both ends by the
+  one law (decorYardHighOk): the decorator says why before it asks (`scenes/homeYards.js` yardWhyNot - after the lot's
+  own reasons, so a roof is still "the house"), and the service refuses a yard's piece placed or moved past it
+  (`server-account/src/decor.js` placeDecor and moveDecor, `yard-high`, worded in `net/accountClient.js`). A room's
+  pieces are never asked. A piece standing from before it stays where it stands, read as ever, until its owner moves it
+  down or removes it; turned or moved, it must stand within the bound. acct86.
+- **DECOR-TURN.** The panel's "In this room" (and "In this yard") view has Turn left and Turn right beside Move
+  (`ui/decorPanel.js`): the chosen piece turned DECOR_TURN_STEP (15 degrees) about its upright where it stands - a hung
+  one spun on its wall, as its placing turns it - free, the panel staying up (`scenes/decorTool.js` turnPlaced). It is a
+  move of its turn alone, through the account service first in an online home; presses while the service answers
+  gather into one turn after it, on the piece as it then stands. A yard's piece turned onto the house, a road or
+  another's ground is refused in the lot's own words, as its placing would be. A door is turned by its doorway (Move),
+  never here.
+- Pinned in `test/yardheight.test.js` (6); `tools/mutants/yardheight.json` 15 of 15 dead.
+
 ### YARD-SHED - a town's yards asked within reach, kept by the service, needing no session (2026-10-06)
 
 The account service went down for everyone on 2026-10-06: every database call failed with `D1_ERROR: D1 DB is

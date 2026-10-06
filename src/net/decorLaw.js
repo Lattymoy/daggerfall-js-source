@@ -330,6 +330,17 @@ export function decorHiddenOf(raw) {
 export const DECOR_YARD_CAP = 60;
 /** How far from the building's origin a yard's piece may stand, on each axis, metres - past any lot. */
 export const DECOR_YARD_POS_MAX = 48;
+/**
+ * YARD-HEIGHT (2026-10-06, Mac: "limit the height at which players can build ... People currently can build towers that
+ * seem out of place"; Mac's call: 4 m): HOW HIGH A YARD'S PIECE MAY STAND - its base at most this far over the ground,
+ * metres. A town stands on a flat block, so its ground is the building's own origin's height (the yard's `pos` is from
+ * it). A fence with a lantern on it, a cart, a crate on a crate - never a tower: each piece stood on the one below
+ * climbed as far as DECOR_YARD_POS_MAX. A piece placed or moved past it is refused at both ends (decorYardHighOk -
+ * scenes/homeYards.js yardWhyNot, server-account/src/decor.js); one standing from before it is read as it stands.
+ */
+export const DECOR_YARD_HIGH = 4;
+/** YARD-HEIGHT: whether a yard piece's place stands within DECOR_YARD_HIGH of the ground. */
+export const decorYardHighOk = (pl) => Array.isArray(pl?.pos) && Number(pl.pos[1]) <= DECOR_YARD_HIGH;
 /** The most pieces one town's yards answer at once. */
 export const DECOR_YARDS_TOWN_MAX = 2_000;
 

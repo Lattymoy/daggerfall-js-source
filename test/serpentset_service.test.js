@@ -152,8 +152,8 @@ test('SERPENT-SET the switch and the guest: no silver while it is shut, nor for 
 });
 
 test('SERPENT-SET the deploy: acct84 in the Worker and its config (PIN MOVED: acct83 on its branch, renumbered past CRYSTAL-FIST\'s acct83 at its merge of main); the account deploy watches the hoard\'s law; the RELAY never reads it - its version untouched, its graph without it (mutants: the version unmoved; the deploy blind to the law)', () => {
-  assert.equal(ACCOUNT_VERSION, 'acct85');
-  assert.match(src('server-account/wrangler.toml'), /^ACCOUNT_VERSION = "acct85"$/m);
+  assert.equal(ACCOUNT_VERSION, 'acct86');
+  assert.match(src('server-account/wrangler.toml'), /^ACCOUNT_VERSION = "acct86"$/m);
   assert.match(src('.github/workflows/account-deploy.yml'), /^\s+- "src\/net\/serpentHoardLaw\.js"$/m);
   assert.match(src('server-account/src/serpents.js'), /import \{ SERPENT_EMBERS \} from '\.\.\/\.\.\/src\/net\/serpentHoardLaw\.js';/);
   assert.doesNotMatch(src('src/net/serpentLaw.js'), /SERPENT_EMBERS/, 'never in the relay\'s serpent law');

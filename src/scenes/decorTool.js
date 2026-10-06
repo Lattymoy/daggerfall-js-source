@@ -86,7 +86,7 @@ import { createDecorDoorways, decorDoorwaysFree, decorDoorwayAimed, decorDoorFit
 import { writeDecalQuad, clearDecalQuad, DECAL_FLOATS } from '../combat/bloodDecals.js';   // HOME-DOORS: the doorways' marks, on the decal pass
 import { rentRoomsView, rentAnchorOfRoom } from '../systems/homeRent.js';   // HOME-RENT: the owner's rooms, offered to rent
 import { goldSum, EMPIRE_ACCOUNT_WORDS } from '../systems/homeWords.js';   // AUDIT HOME-PRICE E4: the rent's sums and account, as the door says them
-import { createDecorPlacer, DECOR_TURN_STEP, DECOR_TURN_FINE, DECOR_RAISE_STEP, DECOR_RAISE_FINE } from '../systems/decorPlacer.js';
+import { createDecorPlacer, DECOR_TURN_STEP, DECOR_TURN_FINE, DECOR_RAISE_STEP, DECOR_RAISE_FINE, wrapTurn } from '../systems/decorPlacer.js';
 import { createDecorButton, createDecorPanel, createDecorBar, decorWhyNot } from '../ui/decorPanel.js';
 import { DECOR_CAP, DECOR_PRICE_PER_METRE, DECOR_HIDDEN_CAP, decorPrice, decorPieceOf, decorRefund, decorRescale, mintDecorId, DECOR_STATIONS, DECOR_STATION_FEES, DECOR_STATION_NAMES } from '../net/decorLaw.js';
 import { decorKey, DECOR_KINDS, decorFlatLight, modelKind, flatKind, decorRoomEntries } from '../systems/decorCatalogue.js';
@@ -456,6 +456,7 @@ export function createDecorTool(deps) {
       onMove: (piece) => beginPlacing(entryOf(piece), piece),
       onRemove: (piece) => { removePiece(piece); },
       onToggle: (piece, what) => { togglePiece(piece, what); },
+      onTurn: (piece, dir) => { turnPlaced(piece, dir * DECOR_TURN_STEP); },   // DECOR-TURN
       onBase: (keys, out) => { setBase(keys, out); },   // BASE-HIDE
       onRoom: (id) => { roomPick = id; if (panel?.isOpen()) panel.update(view()); },   // DECOR-ROOMS
       onRent: (what, row, price) => { rentAct(what, row, price); },   // HOME-RENT
@@ -1203,6 +1204,47 @@ export function createDecorTool(deps) {
     if (deps.visit?.() === visit) pool.put(stood);
     return true;
   }
+
+  /**
+   * DECOR-TURN (2026-10-06, Mac: "adding the ability to rotate objects on the ground" - a placed piece turned where it
+   * stands, never picked up): A PLACED PIECE TURNED BY `deg` about its upright - a hung one spun on its wall, as its
+   * placing turns it (systems/decorPlacer.js) - free, its place else as it stands. A door is turned by its doorway (its
+   * Move), never here. A yard's piece turned onto the house, a road or another's ground - or one standing higher than a
+   * yard's may - is refused as its placing would be (whyNotHere). Presses while the account service answers one turn
+   * gather into the next, on the piece as it then stands - never one write a press, nor a turn written over a newer.
+   */
+  async function turnPlaced(piece, deg) {
+    const r = deps.room?.();
+    if (!r || decorIsDoor(piece) || !Number.isFinite(deg)) return false;
+    turnOwed.set(piece.id, (turnOwed.get(piece.id) ?? 0) + deg);
+    if (turnBusy.has(piece.id)) return true;   // gathered into the next turn
+    turnBusy.add(piece.id);
+    let turned = false;
+    try {
+      for (let by = turnOwed.get(piece.id) ?? 0; by; by = turnOwed.get(piece.id) ?? 0) {
+        turnOwed.delete(piece.id);
+        const cur = pool.list().find((p) => p.id === piece.id);
+        if (!cur) break;
+        const axis = decorIsMount(cur) ? 2 : 0;   // DECOR2c: a hung one's turn is its spin on the surface
+        const next = decorPieceOf({ ...cur, rot: cur.rot.map((v, i) => (i === axis ? wrapTurn(Math.round((v + by) * 10) / 10) : v)) });
+        if (!next) break;
+        const why = whyNotHere({ piece: next, radius: ensureScan().radiusOf(entryOf(next)) ?? null });
+        if (why) { deps.say?.(why); break; }
+        const visit = deps.visit?.();
+        const stood = await writeChange(r, next);
+        if (!stood) break;
+        if (deps.visit?.() === visit) pool.put(stood);
+        turned = true;
+      }
+    } finally {
+      turnBusy.delete(piece.id);
+      turnOwed.delete(piece.id);
+    }
+    return turned;
+  }
+  /** DECOR-TURN: the pieces being turned right now, and the turn each owes past the one being written. */
+  const turnBusy = new Set();
+  const turnOwed = new Map();
 
   /** HOME-STATIONS: a piece a station cannot be made in for want of gold. */
   const decorStationGoldLine = (kind) => `${DECOR_STATION_NAMES[kind]}: ${DECOR_STATION_FEES[kind].toLocaleString('en-US')} gold, and you have not that much.`;
