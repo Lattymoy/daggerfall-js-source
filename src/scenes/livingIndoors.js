@@ -38,6 +38,13 @@
 // walk (never through a wall or a table), at INDOOR_WALK_SPEED, facing the way they go; the place they make for is
 // theirs from the moment they set out. Between tables they are at none (no circle, no table to face).
 //
+// LW-LODGE (2026-10-06, Mac: NPCs should "use tavern rooms"; "Lodgers in their rooms"): A LODGER HAS A ROOM - one who
+// lodges at a tavern (livingTown.js lodgersAt: a visitor, a ship's hand ashore, one of the town whose home is its rooms)
+// is dealt one of its beds (`bedsOf`: their id and the tavern's draw it, never the bed of the room the player rents), and
+// is seen by it (`bedStand`) while their day has them up in it - before breakfast and after it, before bed (dayPlan.js);
+// at breakfast and at supper they are in the common room with the rest, asleep in none. A lodger in their room is at no
+// table and does not stir.
+//
 // LW-TALK (2026-10-06): A TABLE'S COMPANY MEETS FROM THE MINUTE IT SAT DOWN AS IT IS - its rounds run from then while it
 // stays the same (the first cut dealt the tables on the street's round, so two who met mid-round stood mute to the next,
 // and every table in the room spoke on the same second); one who comes while an exchange is on waits for its last line;
@@ -50,6 +57,8 @@ import { dealCircles, circleLine, exchangeAt, ROUND_S, GATHER_BEAT_S, SLOT_LINES
 import { PERSON_IDLE_DISTANCE } from '../characters/mobilePerson.js';
 import { roomKindOf } from '../systems/livingWorld/lines.js';
 import { lwSeed, textSeed } from '../systems/livingWorld/seed.js';
+import { townClassOf, stillFlatOf } from '../systems/livingWorld/looks.js';
+import { BUILDING_TYPES } from '../world/buildingNames.js';
 
 /** Who is inside is read this often (real seconds). */
 export const INDOOR_TICK_S = 1;
@@ -67,6 +76,13 @@ export const INDOOR_SEEN_M = 14;
 /** LW8b: spots this near one another share a table (m), and the most at one. */
 export const TABLE_M = 2.2;
 export const TABLE_MAX = 3;
+/** LW-LODGE: how far beside their bed a lodger stands (m, the nearer first) and the ways about it tried. */
+export const BED_STEP_M = Object.freeze([0.9, 1.3]);
+export const BED_FAN = 8;
+/** LW-LODGE: a way off the bed is down by more than BED_LEVEL_M (less is level - the floor the marker stands on), and by
+ *  no more than BED_DROP_M (a bed's height - more is a stair, another floor). */
+export const BED_LEVEL_M = 0.2;
+export const BED_DROP_M = 1;
 /** LW8c: how long one stays put before they stir (real seconds, their own between these), how far they cross (m), and
  *  their pace across the room (m a second). */
 export const INDOOR_STIR_S = Object.freeze([30, 90]);
@@ -98,6 +114,65 @@ export function soundRoom(origin, collider, floorAt, keepClear = [], waysIn = []
     }
   }
   return spots;
+}
+
+/**
+ * LW-LODGE: WHERE A LODGER STANDS BY THEIR BED - from the bed (its Rest marker: where the player is laid to sleep, the
+ * surface under it its top where the bed is solid), a step out (BED_STEP_M) the nearest of BED_FAN ways the collider lets
+ * them walk (never through a wall, never stopped short against one): down off the bed onto the floor where any way comes
+ * down (within BED_DROP_M - a bed's height, never a stair's), else at the bed's own height (the marker on the floor); never
+ * higher. Facing the bed. The bed's own place where no way serves. Pure over the collider.
+ * @param {readonly number[]} bed @param {{ move: (feet: number[], dx: number, dy: number, dz: number, height: number) => any }} collider
+ * @param {(x: number, y: number, z: number) => (number|null)} floorAt
+ * @returns {{ feet: number[], yaw: number }}
+ */
+export function bedStand(bed, collider, floorAt) {
+  const y0 = floorAt(bed[0], bed[1] + 1, bed[2]);
+  const at = [bed[0], y0 ?? bed[1], bed[2]];
+  /** @type {{ feet: number[], dy: number }[]} */
+  const ways = [];
+  for (const dist of BED_STEP_M) {
+    for (let i = 0; i < BED_FAN; i++) {
+      const a = (i / BED_FAN) * Math.PI * 2;
+      const q = [at[0], at[1] + 0.05, at[2]];
+      try { collider.move(q, Math.sin(a) * dist, 0, Math.cos(a) * dist, 1.8); } catch { continue; }
+      if (Math.hypot(q[0] - at[0], q[2] - at[2]) < dist * 0.75) continue;   // stopped short against a wall
+      const y = floorAt(q[0], q[1] + 0.5, q[2]);
+      if (y == null || !Number.isFinite(y)) continue;
+      const dy = y - at[1];
+      if (dy > BED_LEVEL_M || dy < -BED_DROP_M) continue;   // higher, or down a stair
+      ways.push({ feet: [q[0], y, q[2]], dy });
+    }
+  }
+  const pick = ways.find((w) => w.dy < -BED_LEVEL_M) ?? ways.find((w) => Math.abs(w.dy) <= BED_LEVEL_M);
+  return pick ? { feet: pick.feet, yaw: Math.atan2(at[0] - pick.feet[0], at[2] - pick.feet[2]) } : { feet: at, yaw: 0 };
+}
+
+/**
+ * LW-LODGE: THE TAVERN'S ROOMS DEALT TO ITS LODGERS - each, in the order of their ids (`ids`, the day's lodgers), the bed
+ * their id and the tavern's key draw, or the next free after it; more lodgers than beds, the rest have none (they are in
+ * the common room). Every reader's deal alike - but the bed of the room the player rents here (`rented`, its index; -1
+ * none) is no lodger's: the one it fell to takes the first bed after it nobody has, else none; the rest keep theirs.
+ * @param {readonly string[]} ids @param {number} beds @param {number} key @param {number} [rented]
+ * @returns {Map<string, number>}
+ */
+export function bedsOf(ids, beds, key, rented = -1) {
+  /** @type {Map<string, number>} */
+  const out = new Map();
+  const taken = new Set();
+  for (const id of ids) {
+    if (taken.size >= beds) break;
+    let i = lwSeed(textSeed(id), key >>> 0, 0x626564) % beds;   // 'bed'
+    while (taken.has(i)) i = (i + 1) % beds;
+    taken.add(i);
+    out.set(id, i);
+  }
+  const who = rented >= 0 ? [...out].find(([, b]) => b === rented)?.[0] : undefined;
+  if (who != null) {
+    out.delete(who);
+    for (let k = 1; k < beds; k++) { const i = (rented + k) % beds; if (!taken.has(i)) { out.set(who, i); break; } }
+  }
+  return out;
 }
 
 /**
@@ -164,20 +239,28 @@ export function stirPlace(room, standing, id, spot, stirs, walkable) {
  *   waysIn?: () => number[][],
  *   clock: () => number,
  *   ready?: () => boolean,
+ *   beds?: () => number[][],
+ *   rented?: () => number,
  * }} deps - `building()` the building the player is in and its town's LivingTown (null: none, or not a living town's),
  *   and (LEGACY-HOME) `only(res)` the residents it holds when it is not the census's to fill - a family's house: its own;
  *   `origin()` where the player came in (feet, the room's frame); `floorAt` the room's floor under a point;
  *   `staticFeet()` the building's static people standing; `waysIn()` every door's landing (AUDIT-E4); `ready()` whether
- *   the room is whole (nothing loading)
+ *   the room is whole (nothing loading); LW-LODGE `beds()` its beds (the Rest markers, feet), `rented()` the index among
+ *   them of the bed of the room the player rents here (-1 none)
  */
 export function createLivingIndoors(deps) {
-  /** @type {{ key: number, spots: number[][], centre: number[], order: number[], tableOf: number[] } | null} */
+  /** @type {{ key: number, spots: number[][], centre: number[], order: number[], tableOf: number[], beds: { feet: number[], yaw: number }[] } | null} */
   let room = null;
-  /** @type {Map<string, { res: any, spot: number, next: number, stirs: number, walk: { from: number[], to: number[], t: number, dur: number } | null }>}
-   *  who stands where - LW8c: when each next stirs (real seconds), how often they have, and a walk under way */
+  /** @type {Map<string, { res: any, spot: number, bed: number, next: number, stirs: number, walk: { from: number[], to: number[], t: number, dur: number } | null, flat?: { archive: number, record: number } | null }>}
+   *  who stands where - LW8c: when each next stirs (real seconds), how often they have, and a walk under way; LW-LODGE: a
+   *  lodger up in their room at their bed (-1: in the common room, at `spot`); LW-LOOKS: the still picture one stands as */
   const stood = new Map();
   /** @type {{ res: any, e?: any }[]} who the day has inside, at the last read */
   let inside = [];
+  /** LW-LODGE: the bed each of the day's lodgers has here @type {Map<string, number>} */
+  let bedOf = new Map();
+  /** The table each one stands at this frame (LW-LODGE: none in their room) @type {Map<string, number>} */
+  const tableAt = new Map();
   let timer = Infinity;
   let arriving = true;
   /** @type {any[]} */
@@ -218,6 +301,8 @@ export function createLivingIndoors(deps) {
     timer = Infinity;
     arriving = true;
     list.length = 0;
+    bedOf = new Map();
+    tableAt.clear();
     circles = [];
     inCircle.clear();
     staying.clear();
@@ -263,34 +348,48 @@ export function createLivingIndoors(deps) {
         const groups = tablesOf(spots, dealOf(b.key, spots.length));
         const tableOf = new Array(spots.length).fill(-1);
         groups.forEach((tb, ti) => { for (const i of tb) tableOf[i] = ti; });
-        room = { key: b.key, spots, centre: [cx, origin[1], cz], order: groups.flat(), tableOf };
+        // LW-LODGE: where a lodger stands by each of the room's beds
+        const beds = collider ? (deps.beds?.() ?? []).map((m) => bedStand(m, collider, deps.floorAt)) : [];
+        room = { key: b.key, spots, centre: [cx, origin[1], cz], order: groups.flat(), tableOf, beds };
       }
       timer += dt;
       realNow += dt;
       if (timer >= INDOOR_TICK_S) {
         timer = 0;
         inside = b.town.insideAt(b.key, deps.clock()).filter((x) => !b.only || b.only(x.res)).slice(0, INDOOR_MAX);   // LEGACY-HOME: a family's house holds its own
+        // LW-LODGE: the day's lodgers here dealt the room's beds (none but at a tavern)
+        const lodgers = room.beds.length ? b.town.lodgersAt?.(b.key, b.town.dayOf(deps.clock())) ?? [] : [];
+        bedOf = bedsOf(lodgers.map((r) => r.id), room.beds.length, b.key, deps.rented?.() ?? -1);
       }
       // comings and goings: at once on the way in, else where the player is not looking (or far)
       const unseen = (p) => {
         const dx = p[0] - feet[0], dz = p[2] - feet[2];
         return arriving || Math.hypot(dx, dz) > INDOOR_SEEN_M || dx * Math.sin(viewYaw) + dz * Math.cos(viewYaw) <= 0;
       };
-      /** LW8c: where one is now - on a walk, along it. */
-      const placeOf = (s) => (s.walk ? [s.walk.from[0] + (s.walk.to[0] - s.walk.from[0]) * (s.walk.t / s.walk.dur), s.walk.to[1], s.walk.from[2] + (s.walk.to[2] - s.walk.from[2]) * (s.walk.t / s.walk.dur)] : room.spots[s.spot]);
-      const want = new Set(inside.map((x) => x.res.id));
-      for (const [id, s] of [...stood]) if (!want.has(id) && unseen(placeOf(s))) stood.delete(id);   // LW-FIX1: one walking judged where they are, not where they make for
-      for (const { res } of inside) {
+      /** LW8c: where one is now - on a walk, along it; LW-LODGE: one in their room, by their bed. */
+      const placeOf = (s) => (s.bed >= 0 ? room.beds[s.bed].feet : s.walk ? [s.walk.from[0] + (s.walk.to[0] - s.walk.from[0]) * (s.walk.t / s.walk.dur), s.walk.to[1], s.walk.from[2] + (s.walk.to[2] - s.walk.from[2]) * (s.walk.t / s.walk.dur)] : room.spots[s.spot]);
+      /** LW-LODGE: the bed one inside is at - a lodger up in their room (their day's `home` here), else none (-1) */
+      const bedFor = (/** @type {{ res: any, e?: any }} */ x) => (x.e?.kind === 'home' ? bedOf.get(x.res.id) ?? -1 : -1);
+      const want = new Map(inside.map((x) => [x.res.id, bedFor(x)]));
+      // one gone - or gone up to their room, or down from it (where they stand is another place): when unseen where they are
+      for (const [id, s] of [...stood]) if ((!want.has(id) || (want.get(id) ?? -1) !== s.bed) && unseen(placeOf(s))) stood.delete(id);   // LW-FIX1: one walking judged where they are, not where they make for
+      for (const x of inside) {
+        const res = x.res;
         if (stood.has(res.id)) continue;
+        const bed = bedFor(x);
+        if (bed >= 0) {
+          if (unseen(room.beds[bed].feet)) stood.set(res.id, { res: { ...res, cls: townClassOf(res) }, spot: -1, bed, next: realNow + stirWait(res.id, 0), stirs: 0, walk: null });
+          continue;
+        }
         const spot = freeSpot();
         if (spot < 0) break;
         if (!unseen(room.spots[spot])) continue;
-        stood.set(res.id, { res: { ...res, cls: null }, spot, next: realNow + stirWait(res.id, 0), stirs: 0, walk: null });   // indoors no one is armed
+        stood.set(res.id, { res: { ...res, cls: townClassOf(res) }, spot, bed: -1, next: realNow + stirWait(res.id, 0), stirs: 0, walk: null });   // indoors no one is armed - LW-LOOKS: but one whose calling is a class's wears it
       }
-      arriving = false;
       // LW8c: the room astir - one in no talking circle (the last frame's) whose wait is up makes for another place; a
       // walk under way goes on
       for (const [id, s] of stood) {
+        if (s.bed >= 0) continue;   // LW-LODGE: in their room
         if (s.walk) {
           s.walk.t += dt;
           if (s.walk.t >= s.walk.dur) { s.walk = null; s.next = realNow + stirWait(id, s.stirs); }
@@ -307,28 +406,15 @@ export function createLivingIndoors(deps) {
       // LW8b: who stands at each table; those at one face its middle, one alone the room (LW8c: one walking at none)
       /** @type {Map<number, { id: string, res: any, spot: number }[]>} */
       const tables = new Map();
+      tableAt.clear();
       for (const [id, s] of stood) {
-        if (s.walk) continue;
+        if (s.walk || s.bed >= 0) continue;   // LW-LODGE: one in their room at no table
         const ti = room.tableOf[s.spot];
         const at = tables.get(ti) ?? [];
         at.push({ id, res: s.res, spot: s.spot });
         tables.set(ti, at);
+        tableAt.set(id, ti);
       }
-      list.length = 0;
-      for (const [id, s] of stood) {
-        if (s.walk) {
-          const p = placeOf(s);
-          list.push({ key: `in:${id}`, res: s.res, feet: p, yaw: Math.atan2(s.walk.to[0] - s.walk.from[0], s.walk.to[2] - s.walk.from[2]), moving: true, distM: Math.hypot(p[0] - feet[0], p[2] - feet[2]) });
-          continue;
-        }
-        const p = room.spots[s.spot];
-        const mates = tables.get(room.tableOf[s.spot]) ?? [];
-        const toward = mates.length > 1
-          ? [mates.reduce((a, m) => a + room.spots[m.spot][0], 0) / mates.length, 0, mates.reduce((a, m) => a + room.spots[m.spot][2], 0) / mates.length]
-          : room.centre;
-        list.push({ key: `in:${id}`, res: s.res, feet: p, yaw: Math.atan2(toward[0] - p[0], toward[2] - p[2]), moving: false, distM: Math.hypot(p[0] - feet[0], p[2] - feet[2]) });
-      }
-      deps.sprites.sync(list, { dt, eye, ground: true });
       // LW8b: the tables' circles - LW-TALK: a table's company meets from the minute it sat down as it is, a round at a
       // time while it stays the same (one who leaves ends it, one who comes begins another); its talk begins a beat after
       const t = deps.clock();
@@ -363,6 +449,36 @@ export function createLivingIndoors(deps) {
           for (const m of c.members) { inCircle.add(m.id); if (on) staying.add(m.id); }   // LW8c: who stays put
         }
       }
+      // LW-LOOKS: the palace's courtiers keeping their place alone (in no circle - this frame's, dealt above: on the way in
+      // too - nor crossing the room) stand as Daggerfall's still pictures of the court, stood as on the way in or where the
+      // player is not looking; themselves at once in a circle or on their way
+      const court = b.town.typeOf?.(b.key) === BUILDING_TYPES.Palace;
+      for (const [id, s] of stood) {
+        const want = court && s.res.job === 'courtier' && s.bed < 0 && !s.walk && !inCircle.has(id) ? stillFlatOf(s.res, 'court') : null;
+        if ((want?.archive ?? -1) === (s.flat?.archive ?? -1) && (want?.record ?? -1) === (s.flat?.record ?? -1)) continue;
+        if (!want || unseen(placeOf(s))) s.flat = want;
+      }
+      arriving = false;
+      list.length = 0;
+      for (const [id, s] of stood) {
+        if (s.bed >= 0) {   // LW-LODGE: by their bed, facing it
+          const st = room.beds[s.bed];
+          list.push({ key: `in:${id}`, res: s.res, feet: st.feet, yaw: st.yaw, moving: false, distM: Math.hypot(st.feet[0] - feet[0], st.feet[2] - feet[2]) });
+          continue;
+        }
+        if (s.walk) {
+          const p = placeOf(s);
+          list.push({ key: `in:${id}`, res: s.res, feet: p, yaw: Math.atan2(s.walk.to[0] - s.walk.from[0], s.walk.to[2] - s.walk.from[2]), moving: true, distM: Math.hypot(p[0] - feet[0], p[2] - feet[2]) });
+          continue;
+        }
+        const p = room.spots[s.spot];
+        const mates = tables.get(room.tableOf[s.spot]) ?? [];
+        const toward = mates.length > 1
+          ? [mates.reduce((a, m) => a + room.spots[m.spot][0], 0) / mates.length, 0, mates.reduce((a, m) => a + room.spots[m.spot][2], 0) / mates.length]
+          : room.centre;
+        list.push({ key: `in:${id}`, res: s.res, feet: p, yaw: Math.atan2(toward[0] - p[0], toward[2] - p[2]), moving: false, distM: Math.hypot(p[0] - feet[0], p[2] - feet[2]), flat: s.flat ?? null });
+      }
+      deps.sprites.sync(list, { dt, eye, ground: true });
       // LW8b: the street's word for the player passing close - one in no circle, once in GREET_REST_MIN of the clock;
       // LW-TALK: one who kept quiet as the player came by speaks when the player stops before them (stands still within
       // the street's idle distance - the first cut never asked, and a quiet stranger here never spoke)
@@ -441,7 +557,9 @@ export function createLivingIndoors(deps) {
       return id;
     },
     /** Who stands where, and at which table (the probes; the pins). */
-    stood: () => [...stood.entries()].map(([id, s]) => ({ id, res: s.res, at: room?.spots[s.spot] ?? null, table: room?.tableOf[s.spot] ?? -1, walking: !!s.walk })),
+    stood: () => [...stood.entries()].map(([id, s]) => ({ id, res: s.res, at: s.bed >= 0 ? room?.beds[s.bed].feet ?? null : room?.spots[s.spot] ?? null, table: tableAt.has(id) ? tableAt.get(id) : s.bed >= 0 ? -1 : room?.tableOf[s.spot] ?? -1, walking: !!s.walk, bed: s.bed, flat: s.flat ?? null })),
+    /** LW-LODGE: where a lodger stands by each of the room's beds (the probes; the pins). */
+    beds: () => room?.beds ?? [],
     /** The room's spots (the probes; the pins). */
     spots: () => room?.spots ?? [],
     clear,

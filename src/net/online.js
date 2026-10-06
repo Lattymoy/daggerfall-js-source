@@ -1539,6 +1539,9 @@ export class OnlineSession {
       }
       if (this._roomOf(ws) == null && !this._promote(ws, room)) return;   // AURA-LIVE: a replacement takes its place now, its hello ready
       const frame = this._helloFrame();
+      // STORM-SHED: the token opens this room NOW - the minter's word for which rooms it has spent itself in. A token that
+      // came after TOKEN_WAIT_MS opened nothing (this hello went without it), so the room's next socket is handed it
+      if (frame.tok) this.mintToken?.opened?.(room, frame.tok);
       const hello = JSON.stringify(frame);
       if (room === this.room) {
         this.status = 'open'; this.error = null;   // SLAM12: `_backoff` is reset by the WELCOME (`_receive`), not here - see there
@@ -1578,6 +1581,7 @@ export class OnlineSession {
         h.ws = null; h.status = 'closed';
         if (code === CLOSE_BUSY || noToken) h.backoff = Math.max(h.backoff, BACKOFF_MAX_MS / 2);
         h.retryAt = this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(BACKOFF_MIN_MS, h.backoff - BACKOFF_MIN_MS); h.backoff = Math.min(BACKOFF_MAX_MS, h.backoff * 2);   // SLAM2: jittered
+        if (noToken) h.retryAt = this._afterMintHold(h.retryAt);   // STORM-SHED: not before the page's next mint may be asked
         return;
       }
       this._ws = null;
@@ -1591,7 +1595,7 @@ export class OnlineSession {
       // was slow (a relay deploy reconnects every player at once, and every socket asks it for a token) or had a bad
       // minute: the relay refused the tokenless hello and this close was terminal - the player offline until they
       // changed room. Only a missing sign-in ('no-session') or one the service stopped honouring ('auth') is final.
-      if (code === CLOSE_POLICY && tokenRetryable(this._tokenless.get(ws))) { this.status = 'closed'; this.error = 'waiting for the account service'; this._backoff = Math.max(this._backoff, BACKOFF_MAX_MS / 2); this._scheduleRetry(); return; }
+      if (code === CLOSE_POLICY && tokenRetryable(this._tokenless.get(ws))) { this.status = 'closed'; this.error = 'waiting for the account service'; this._backoff = Math.max(this._backoff, BACKOFF_MAX_MS / 2); this._scheduleRetry(); this._retryAt = this._afterMintHold(this._retryAt); return; }   // STORM-SHED: not before the page's next mint may be asked
       if (code === CLOSE_POLICY) { this.terminal = true; this.terminalAt = this._now(); this.status = 'error'; this.error = this.error ?? 'the relay refused a frame'; this._endHalo(); this._forgetRoom(this.room); return; }
       if (code === CLOSE_BUSY) { this.status = 'closed'; this.error = 'the room is busy'; this._backoff = Math.max(this._backoff, BACKOFF_MAX_MS / 2); this._scheduleRetry(); return; }   // full or gated: back off hard, then try again
       this.status = 'closed';
@@ -1637,6 +1641,15 @@ export class OnlineSession {
     const span = Math.max(BACKOFF_MIN_MS, this._backoff - BACKOFF_MIN_MS);
     this._retryAt = this._now() + BACKOFF_MIN_MS + this._rand() * span;
     this._backoff = Math.min(BACKOFF_MAX_MS, this._backoff * 2);
+  }
+
+  /** STORM-SHED: A ROOM REFUSED FOR WANT OF A TOKEN ASKS AGAIN ONLY ONCE A TOKEN MAY BE ASKED FOR. The page's minter holds
+   *  its next mint off after a failure (its `coolMs()`), and a hello said before that hold runs out goes without a token
+   *  and is refused again - so a retry at `at` waits until it ends, spread over BACKOFF_MIN_MS. Answers the later time;
+   *  no retry (null) stays none. */
+  _afterMintHold(at) {
+    const hold = Number(this.mintToken?.coolMs?.() ?? 0);
+    return at != null && hold > 0 ? Math.max(at, this._now() + hold + this._rand() * BACKOFF_MIN_MS) : at;
   }
 
   _send(o) {

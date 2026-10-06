@@ -223,7 +223,7 @@ export async function claimWatch({ db, nowS, subtle }, player, env, { character,
   if (!seatsOpenFor(player, env)) return { error: 'seats-closed' };
   if (!Array.isArray(receipts) || receipts.length < 1 || receipts.length > SEAT_WATCH_CLAIM_MAX) return { error: 'bad-watch' };
   if (!publicKey) return { error: 'no-gate-key' };
-  const seats = await confirmedSeats(db, nowS);
+  const seats = await confirmedSeats(db, nowS, { kept: true });   // STORM-SHED: the isolate's kept witness rows
   const byPixel = new Map([...seats.values()].map((s) => [`${s.pixel[0]},${s.pixel[1]}`, s]));
   const week = weekAt(nowS);
   let counted = 0;

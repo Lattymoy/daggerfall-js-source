@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { synthTown, closeTown } from './lwTown.mjs';
 import { townPlaces, streetGeometry } from '../src/systems/livingWorld/places.js';
 import { townCensus, watchRoster, watchShiftSize, townWatchCount, mintResident, WATCH_COMPANIES } from '../src/systems/livingWorld/census.js';
-import { dayPlan, entryAt, watchDuty, patrolBeat, nightTail, morningWalk, walkMinutes, WATCH_SHIFTS, WATCH_ROTATION, DAY_MIN, DAY_START_MIN, isOutdoor } from '../src/systems/livingWorld/dayPlan.js';
+import { dayPlan, entryAt, watchDuty, patrolBeat, nightTail, morningWalk, walkMinutes, schedule, MIN_STAY, WATCH_SHIFTS, WATCH_ROTATION, DAY_MIN, DAY_START_MIN, isOutdoor } from '../src/systems/livingWorld/dayPlan.js';
 import { LivingTown, PAIR_SIDE_M, PAIR_BEHIND_M, WALK_FAST } from '../src/systems/livingWorld/livingTown.js';
 import { ResidentWalker } from '../src/characters/residentWalker.js';
 import { PERSON_MOVE_SPEED } from '../src/characters/mobilePerson.js';
@@ -255,7 +255,7 @@ test('WATCH-DAY the post keeps the road: one posted alone at a gate stands facin
 });
 
 
-test('WATCH-DAY in a great city (eight blocks by eight, a walk across it near three hours): the watch keeps every shift from its hour to its end - on his post or his patrol\'s first stop by the shift\'s start, kept to its end whatever his bedtime (the first cut left the evening\'s and the night\'s watch by the walk home before bed: the night\'s last stop never kept, and the morning began at a post its man had left), the evening off left in time to change at home and walk out; a day\'s watchman whose walk out is longer than the two hours from the turn to six leaves before the turn - his day off ends on the walk and his day begins on it; every watchman\'s day runs on from the last, at the turn as anywhere, and the town draws the walk across 04:00 unbroken (mutants: the bedtime cutting the watch, the supper making it late, the morning begun at home, the day off ended at home, the walk out early for all)', () => {
+test('WATCH-DAY in a great city (eight blocks by eight, a walk across it near three hours): the watch keeps every shift from its hour to its end - on his post or his patrol\'s first stop by the shift\'s start, kept to its end whatever his bedtime (the first cut left the evening\'s and the night\'s watch by the walk home before bed: the night\'s last stop never kept, and the morning began at a post its man had left), the evening off left in time to change at home and walk out (the next pin: LW-SPREAD\'s suppers near home, none here runs into the walk out); a day\'s watchman whose walk out is longer than the two hours from the turn to six leaves before the turn - his day off ends on the walk and his day begins on it; every watchman\'s day runs on from the last, at the turn as anywhere, and the town draws the walk across 04:00 unbroken (mutants: the bedtime cutting the watch, the morning begun at home, the day off ended at home, the walk out early for all)', () => {
   const tw = townOf(64, { blocksW: 8, blocksH: 8 });
   const far = Math.max(...tw.watch.map((w) => Math.max(...tw.places.exits.map((x) => walkMinutes(tw.places.doors.get(w.home), x, MPM)))));
   assert.ok(far > 150, `walks of near three hours (${far} minutes)`);
@@ -296,4 +296,21 @@ test('WATCH-DAY in a great city (eight blocks by eight, a walk across it near th
     if (prev) assert.ok(Math.hypot(p.x - prev.x, p.z - prev.z) <= MPM * WALK_FAST * 0.25 + 1e-6, 'unbroken');
     prev = p;
   }
+});
+
+test('WATCH-DAY the supper before the night\'s watch (LW-SPREAD: PIN MOVED - the great city\'s suppers are near home now, and none there ran into the walk out): off duty, a stay ends in time to change at home and walk out to the watch on its hour - a supper across the town from home, the post across it the other way: the supper cut at the watch\'s hour less the walk home and the walk out, the watch kept from its hour (mutants: the supper making it late)', () => {
+  const day = 100, at = (/** @type {number} */ hh) => day * DAY_MIN + hh * 60;
+  const home = { key: 'h', kind: 'door', cell: [0, 0], x: 0, z: 0, yaw: 0 };
+  const supper = { key: 's', kind: 'social', cell: [300, 0], x: 480, z: 0, yaw: 0 };
+  const post = { key: 'x', kind: 'exit', cell: [0, 400], x: 0, z: 640, yaw: 0 };
+  const D0 = day * DAY_MIN + DAY_START_MIN, D1 = D0 + DAY_MIN;
+  const plan = schedule([{ kind: 'social', at: supper, from: at(17.5), dur: 75 }, { kind: 'post', at: post, from: at(22), dur: 8 * 60, until: at(30), slack: Infinity, mark: { duty: true, pair: null } }],
+    { D0, D1, wake: at(13), bed: at(30), home, mpm: MPM, away: [] });
+  const by = at(22) - walkMinutes(supper, home, MPM) - walkMinutes(home, post, MPM);
+  assert.ok(by > at(17.5) + MIN_STAY && by < at(17.5) + 75, 'a supper that would run into the walk out');
+  const s = plan.find((e) => e.kind === 'social'), p = plan.find((e) => e.kind === 'post');
+  assert.equal(s?.t1, by, 'the supper left in time to change at home and walk out');
+  assert.equal(p?.t0, at(22), 'on watch on the hour');
+  const i = plan.findIndex((e) => e === s);
+  assert.deepEqual(plan.slice(i + 1, i + 3).map((e) => [e.kind, e.from?.key, e.to?.key, !!e.duty]), [['walk', 's', 'h', false], ['walk', 'h', 'x', true]], 'by way of home, into the uniform there');
 });

@@ -2680,6 +2680,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       staticFeet: () => (modes?.interiorCtx?.people ?? []).filter((p) => p.active !== false).map((p) => [p.x, p.y, p.z]).concat(modes?.interiorQuestFeet?.() ?? []),   // AUDIT-E7: and the quest's people
       clock: skyMinutes,
       ready: () => !_loading && !modes?.transitioning,
+      beds: () => modes?.interiorBeds ?? [],   // LW-LODGE: the tavern's rooms for its lodgers...
+      rented: () => modes?.rentedBedHere ?? -1,   // ...but the one the player rents
     });
     livingIndoors.frame(dt, player.pos, cam.yaw, cam.pos);
   };
@@ -2695,6 +2697,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       return null;
     }
     return { ...look, frameCount: (rec) => tex.getFrameCount(rec), sex: res.sex };
+  };
+  /** LW-LOOKS: a still picture a resident stands as (an NPC flat - looks.js) - its art loaded into the people's own texture
+   *  table as a class's is, and its record's frames; null until it is. */
+  const livingFlatOf = (flat) => {
+    const tex = personTex.get(flat.archive);
+    if (!tex) {
+      if (!_livingClassLoading.has(flat.archive)) { _livingClassLoading.add(flat.archive); getTexture(flat.archive).then((t) => { if (t) personTex.set(flat.archive, t); }).catch(() => {}); }
+      return null;
+    }
+    return { archive: flat.archive, record: flat.record, frameCount: Math.max(1, tex.getFrameCount(flat.record)) };
   };
   // the person's town on the road: the roads' layer answers a refusal and notes a word (townTalk's `livingTalk` door)
   const _livingRoadsDoor = { refuses: (p) => livingRoads?.refuses(p) ?? null, talked: (p) => livingRoads?.talked(p) ?? null, caught: (p) => livingRoads?.caught(p) ?? null, roadside: true };
@@ -4759,7 +4771,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           suppressSpawns: () => racialSuppressPopulationSpawns(playerEntity),   // V4: the transformed lycanthrope empties the streets - here they stay in
           relations: () => livingRelations, playerName: () => playerEntity.name ?? '', weather: () => weather,
           townName: dfLocation.name, regionName: dfLocation.regionName ?? '',
-          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf,   // LW3: its travellers away and armed, its visitors
+          tripsOf: (day) => livingTripsOf(livingTown, day), armOf: livingArmOf, flatOf: livingFlatOf,   // LW3: its travellers away and armed, its visitors - LW-LOOKS: its still pictures
           familyNews: (t) => legacyHost?.newsFor(livingTown.mapId, t) ?? null,   // LEGACY6: what the town says of the line
           extraPeople: (day, town) => legacyHost?.residentsOf(livingTown.mapId, (seed) => town.homeFor(seed), (id) => town.residents.find((r) => r.id === id) ?? null) ?? null,   // LEGACY-HOME: Project Legacy's line, at home here (LEGACY5: a spouse, the census's own)
           ashore: (res) => livingAshore(livingTown, res), crews: () => livingCrews(livingTown),   // LW5: its sailors by their ships' clock; the crews lying here
