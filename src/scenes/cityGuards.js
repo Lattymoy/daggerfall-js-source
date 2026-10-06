@@ -1043,7 +1043,6 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       }
     }
     spaceFoes(guards, collider, foeFrameDt(dt));   // FOE-SPACING: two watchmen in one spot are pushed apart (characters/foeSpacing.js)
-    const out = [];
     for (const g of guards) {
       if (g.dead) continue;
       // AUDIT 24 (wave 32): PARALYSIS. This pool passed the literal `false`
@@ -1216,6 +1215,26 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         const v = enemyAttackVoice(g);
         if (v && v.clip >= 0) audio?.play3d?.(v.clip, gmid, 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
       }
+    }
+    // FIELD BUGS 2026-10-06 (WATCH-SWING): THE DRAW READS THE FRAME'S
+    // END. It sat at the bottom of the drive above, and a watchman read
+    // alive at the top of his iteration could be dead by the bottom of
+    // it - killed by HIS OWN BLOW, through his own door. The blow's
+    // struck tail (calculateAttackDamage's: the Ring of Namira bouncing
+    // it back) and the host's hurt seam (the player's damage door:
+    // Spite of the Spurned, the loot's thorns) land through damageGuard,
+    // whose kill frees his live batch and nulls it, and the loop went on
+    // to dress it: "Cannot set properties of null (setting 'conceal')",
+    // the frame loop's CRASH. The same interleave kept a batch in the
+    // list that a later watchman's blow had freed (the Warden's Nova
+    // strikes every foe around the player), and the foe arm's
+    // `continue` skipped a striker's draw for the frame. So the list is
+    // built here, from every watchman still standing once all of them
+    // have acted - the encounter pool's order (exteriorFoes.js
+    // batches(), read after its update has driven every foe).
+    const out = [];
+    for (const g of guards) {
+      if (g.dead) continue;   // WATCH-SWING: whatever the frame's doors did, after all of them
       // A5 - EntityConcealmentBehaviour.Update/MakeConcealed (:36-43,
       // :56-62): a NON-PLAYER entity whose IsMagicallyConcealed is
       // true has its renderer disabled. The watchman keeps acting; it
