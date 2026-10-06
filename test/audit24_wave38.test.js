@@ -311,7 +311,7 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
 
   // ...and the ROUTER itself, RUN off the fixed-city host's own line.
   // Routing a `foeCorpse:` key into the watch pool is not a harmless
-  // miss: cityGuards.js:1402-1404 turns the key into
+  // miss: cityGuards.js:1421-1423 turns the key into
   // `guards.find((g) => g.id === id)` over ids minted by
   // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:200-396)
   // tests only `corpseDisabled` and `entity.items` - never death - so
