@@ -221,8 +221,8 @@ export const GROUND_KEY = '__ground__';
  *
  * Both of those arms take their subject only when it is STRICTLY
  * nearer than its rival (`hit.distance < nearerThan`,
- * mobileEnemyActivate.js:213; `bestDist < nearerThan`,
- * townTalk.js:703), and the person's rival leaves the persons out
+ * mobileEnemyActivate.js:"if (!(hit.distance < (deps.nearerThan ?? Infinity)))"; `bestDist < nearerThan`,
+ * townTalk.js:"street with SILENCE"), and the person's rival leaves the persons out
  * while the foe's does not. Written out as one tie order that is
  * exactly what those two strict tests produce: everything in a target
  * list beats a person, a person beats a foe, and a foe loses every

@@ -359,7 +359,7 @@ test('audit18 items: every minted shop/loot row carries the template ItemName', 
 });
 
 // ---------------------------------------------------------------
-// 10. RETIRING A FLAG DELETES THE SENTENCE. inventory.js:12 claimed
+// 10. RETIRING A FLAG DELETES THE SENTENCE. inventory.js line 12 claimed
 //     "Armor material weight pends S2b (FLAGGED - leather/chain/plate
 //     multipliers)" while the file implemented all three 130 lines
 //     below, and bible/Home.md's Open-flags ledger carried the row.
@@ -379,6 +379,7 @@ test('audit18 items: the retired flags are gone from source and from Home.md', (
   assert.ok(!shop.includes('dye/variant paperdoll pends'), 'shopStock.js still claims the clothing dye/variant pends');
 
   const home = readFileSync(join(ROOT, 'bible/Home.md'), 'utf8');
-  assert.equal(home.split('\n').filter((l) => /src\/systems\/inventory\.js:12/.test(l)).length, 0);
+  // the retired row named its site by number; an entry names its file now (CITE-ANCHOR), and its words the flag
+  assert.equal(home.split('\n').filter((l) => /^- `src\/systems\/inventory\.js` - /.test(l) && /S2b/.test(l)).length, 0);
   assert.equal(home.split('\n').filter((l) => /weight pends S2b/.test(l)).length, 0);
 });

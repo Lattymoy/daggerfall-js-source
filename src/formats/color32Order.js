@@ -3,10 +3,10 @@
 // Every texture that reaches the GL here is in getColor32 order: row 0
 // of the buffer is the picture's BOTTOM row. `BaseImageFile.getColor32`
 // writes `dstRow = (dstHeight - 1 - border - y) * dstWidth`
-// (baseImageFile.js:143, BaseImageFile.cs:250), `renderer.uploadTexture`
+// (baseImageFile.js:"const headerLength".."const dstRow = (dstHeight - 1 - border - y) * dstWidth;", BaseImageFile.cs:250), `renderer.uploadTexture`
 // uploads that buffer as-is with UNPACK_FLIP_Y_WEBGL off
-// (renderer.js:4101), and BB_VS samples the quad's TOP at v=1, i.e. the
-// LAST row (renderer.js:421-452). In Daggerfall Unity there is nothing
+// (renderer.js:"(BaseImageFile.cs:257-260)"), and BB_VS samples the quad's TOP at v=1, i.e. the
+// LAST row (renderer.js:"+ uUp * ((cn.y + 0.5) * uSize.y)"). In Daggerfall Unity there is nothing
 // to convert: `GetColor32` feeds `Texture2D.SetPixels32`
 // (TextureReader.cs:266) and a Unity Texture2D is bottom-up, so every
 // texture the game draws - classic, modded or replaced - is stored the
@@ -45,7 +45,7 @@ export function toColor32Order(image) {
  * The same conversion, handed back in the shape the upload path reads:
  * `{ colors, width, height }`, which is what `getColor32` returns and
  * what `uploadTexture`/`uploadEmissionTexture` take `asBytes` of
- * (renderer.js:4140, :5084). A decoded PNG's `{ width, height, data }`
+ * (renderer.js:"// WW3: the shape's", renderer.js:"// AUDIT 19 F7: the"). A decoded PNG's `{ width, height, data }`
  * is NOT that shape - `color32.colors` would be `undefined` and
  * `asBytes` would throw on the first swapped record.
  * @param {{width:number,height:number,data:Uint8Array}} image

@@ -409,8 +409,8 @@
   {
     "name": "SURVTIERS3-the-kit-cite-startingGear-rots",
     "file": "src/systems/equip.js",
-    "old": "systems/startingGear.js:76 assignStartingGear",
-    "new": "systems/startingGear.js:70 assignStartingGear",
+    "old": "systems/startingGear.js:\"export function assignStartingGear\" assignStartingGear",
+    "new": "systems/startingGear.js:\"const mint = (item)\" assignStartingGear",
     "tests": [
       "test/citedrift.test.js"
     ],
@@ -419,8 +419,8 @@
   {
     "name": "SURVTIERS3-the-kit-cite-headless-chargen-rots",
     "file": "src/systems/equip.js",
-    "old": "chargenSession.js:145 (?class= headless)",
-    "new": "chargenSession.js:143 (?class= headless)",
+    "old": "chargenSession.js:\"assignStartingEquipment(playerEntity, { classIndex })\" (?class= headless)",
+    "new": "chargenSession.js:\"S3d: the same kit\"..\"// Enemies essentially could not hit a new character.\" (?class= headless)",
     "tests": [
       "test/citedrift.test.js"
     ],
@@ -429,8 +429,8 @@
   {
     "name": "SURVTIERS3-the-kit-cite-wizard-rots",
     "file": "src/systems/equip.js",
-    "old": "(?class= headless) and :238 (the wizard)",
-    "new": "(?class= headless) and :226 (the wizard)",
+    "old": "chargenSession.js:\"classIndex: result.careerIndex\" (the wizard)",
+    "new": "chargenSession.js:\"AssignCharacter seeds\"..\"// biography effect adds to them.\" (the wizard)",
     "tests": [
       "test/citedrift.test.js"
     ],
@@ -439,8 +439,8 @@
   {
     "name": "SURVTIERS3-the-kit-cite-world-seed-rots",
     "file": "src/systems/equip.js",
-    "old": "(world.js:6254, exterior.js:1375)",
-    "new": "(world.js:6253, exterior.js:1375)",
+    "old": "(world.js:\"if (playerEntity.chargenDone)\", exterior.js:\"if (playerEntity.chargenDone)\")",
+    "new": "(world.js:\"shape of the seam\", exterior.js:\"if (playerEntity.chargenDone)\")",
     "tests": [
       "test/citedrift.test.js"
     ],
@@ -449,8 +449,8 @@
   {
     "name": "SURVTIERS3-the-gear-cite-equip-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "// (equip.js:340), which survives",
-    "new": "// (equip.js:307), which survives",
+    "old": "// (equip.js:\"export function seedStartingEquipment\"), which survives",
+    "new": "// (equip.js:\"which the restore\"..\"return slots;\"), which survives",
     "tests": [
       "test/citedrift.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "SURVTIERS3-the-gear-cite-world-seed-rots",
     "file": "src/systems/startingGear.js",
-    "old": "world.js:6254 and exterior.js:1375 seed it",
-    "new": "world.js:6253 and exterior.js:1375 seed it",
+    "old": "world.js:\"if (playerEntity.chargenDone)\" and exterior.js:\"if (playerEntity.chargenDone)\" seed it",
+    "new": "world.js:\"shape of the seam\" and exterior.js:\"if (playerEntity.chargenDone)\" seed it",
     "tests": [
       "test/citedrift.test.js"
     ],
@@ -468,8 +468,8 @@
   {
     "name": "SURVTIERS3-the-exterior-cite-equip-guard-rots",
     "file": "src/scenes/exterior.js",
-    "old": "early-returns (equip.js:341).",
-    "new": "early-returns (equip.js:306).",
+    "old": "early-returns (equip.js:\"if (entity.equip || (entity.items ?? []).length)\").",
+    "new": "early-returns (equip.js:\"which the restore runs\"..\"for (const fn of _equipListeners) fn(entity);\").",
     "tests": [
       "test/citedrift.test.js"
     ]
@@ -477,8 +477,8 @@
   {
     "name": "SURVTIERS3-the-rest-window-cite-input-rots",
     "file": "src/ui/restWindow.js",
-    "old": "exterior.js:3398, ui/input.js:933)",
-    "new": "exterior.js:3398, ui/input.js:533)",
+    "old": "exterior.js:\"if (act === 'Rest')\", ui/input.js:\"case 'Rest': return\")",
+    "new": "exterior.js:\"if (act === 'Rest')\", ui/input.js:\"export function swingButton\")",
     "tests": [
       "test/citedrift.test.js"
     ],

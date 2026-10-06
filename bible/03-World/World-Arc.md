@@ -2516,7 +2516,7 @@ a local reset once per subrecord INSIDE `AddModels`
 a fresh `buildingsOut` (`:819-820`) — so every grid cell gets its own
 full `StaticBuilding` array. The port kept ONE location-wide `Set`, keyed
 `${b.dfBlock.index}:${placed.recordIndex}`. `dfBlock.index` is the
-BLOCKS.BSA record index (`src/formats/blocksFile.js:208-209` stamps it,
+BLOCKS.BSA record index (`src/formats/blocksFile.js:"if (this.autoDiscard && this._lastBlock !== -1)".."position: this._bsa.getRecordPosition(block),"` stamps it,
 and `locationLayout.js` resolves every cell through
 `getBlockByName` -> `getBlock(index)`, so two cells holding the same block
 name share the object outright) — and RMB blocks repeat constantly in a

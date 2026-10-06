@@ -15,8 +15,11 @@
 //   - one entry per FLAGGED/INTERIM line under src/, both ways, exactly -
 //     except a marker that is part of an identifier or sits inside a quoted
 //     span, neither of which is a flag (IN1);
-//   - each entry reads `- \`src/path:LINE\` - <the source line, trimmed,
-//     with a leading "// " removed>`.
+//   - each entry reads `- \`src/path\` - <the source line, trimmed, with a
+//     leading "// " removed>`. CITE-ANCHOR: the flag's own words name its
+//     line, so the entry carries no number - a line number was a claim about
+//     every line above the flag, and any edit above one rewrote this list on
+//     two branches at once.
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -44,7 +47,7 @@ for (const f of walk('src', '.js').sort()) {
   const lines = src.split('\n');
   // IN1: the rule lives in tools/flagSites.mjs, which the AUDIT 18
   // guard imports too - two copies of it is two rules the day one moves.
-  for (const n of flagLines(src)) entries.push(`- \`${f}:${n}\` - ${quoteFor(lines[n - 1])}`);
+  for (const n of flagLines(src)) entries.push(`- \`${f}\` - ${quoteFor(lines[n - 1])}`);
 }
 
 const home = readFileSync(HOME, 'utf8');

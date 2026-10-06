@@ -118,6 +118,29 @@ INTERIM/FLAGGED site, remove the old sentence - do not append the
 retiring one beneath it. The open-flags list is grep-regenerated
 and lifts stale half-sentences out of their retiring context.
 
+A CITE NAMES WHAT IT POINTS AT (CITE-ANCHOR, 2026-10-06; Mac, "Im so
+fucking tired of conflicts"). A cite into our own code is an anchor:
+`world.js:"const livingQuarry = () =>"` is the one line of world.js that
+holds that text; a line too common to quote is named after the quotable
+line above it, `world.js:"if (modes.frame(dt, now)) {".."}"` (with its
+indentation, `.."  }"`, past an inner block's twin). Never a line
+number: `world.js:N` was a claim about every line above N, so every
+change to a host rewrote the docs that cited below it, and two branches
+that touched one conflicted on the same doc lines. Write a number and
+`npm run cites -- --apply` converts it (tools/citeAnchor.mjs);
+test/citeanchor.test.js resolves every anchor (CA1) and refuses a live
+number (CA2). Records keep their numbers: struck text is the
+measurement's, a renumbering told as history is written as plain
+numbers (`world.js line 6142`), not as a cite, and a line the code no
+longer has is a record of where it stood (`teleportPopUp.js` line 87 at
+0fc1d9e92). A C# line beside one of ours names its file
+(`StaticNPC.cs:309`) or says it is C# (`(C# :309)`): a bare `(:N)` after
+a cite reads as a line of the cite's own file, so citeShift moved C#
+numbers as if they were ours, and the conversion's review found them.
+After prose that names other code - DFU or C# by name, a PascalCase name,
+another file of ours - the tool holds a bare `(:N)` for its writer to
+spell out (headOwns).
+
 A SLICE CLOSES ITS LEDGER ROW (2026-08-19). Port-Ledger section C
 is not a memo, it is a CLAIM that something is unported - so a
 stale row is worse than a missing one: it sends the next slice off
@@ -231,23 +254,29 @@ every citation's quoted text must sit on the cited line, and every
 FLAGGED/INTERIM site in `src/` must appear here. A slice that moves a
 flagged site turns that test red until the list is regenerated.
 
+CITE-ANCHOR (2026-10-06): the entries carry no line numbers. An entry
+names its file and quotes its flag, and the quote is the address -
+test/audit18_bible_docs.test.js matches each entry to a line of its file
+that reads so, and the flags in `src/` to the entries both ways, counted.
+A number here was a claim about every line above the flag: any edit above
+one rewrote this list, and two branches that both made one conflicted on it.
+
 AUDIT 18 (combat) RETIRED the racial/proficiency half of
 playerWeapon.js's INTERIM sentence and DELETED it: chargen writes the
 DFU-numbered raceId, so CalculateRacialModifiers is ported and LIVE
 (formulas.js). What still pends there is CalculateProficiencyModifiers
-alone, flagged at its new site inside calculateAttackDamage. The
-combat line numbers below are refreshed with it.
+alone, flagged at its new site inside calculateAttackDamage.
 
-- `src/combat/fpsSpellCasting.js:101` - * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
-- `src/net/professionLaw.js:404` - *  metal's, and a twig's picture is neither's (unverified without the player's data - FLAGGED to Mac's eye). */
-- `src/scenes/dungeonContext.js:4770` - FLAGGED (bible/12-Enhanced-AI/Feud-Arc.md 10.1, section 32): this stream carries none of the street record's z, nm, yd, ex or sp - FEUD adds its own fields alone (RVN13: so no band follower's rt either)
-- `src/scenes/exterior.js:2508` - TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE: a jump to an anchor on ANOTHER map pixel. Teleport.cs:145-163 respawns at the anchor's world position, which is StreamingWorld's job (scenes/world.js's `_teleportToPixel`, the door `teleportPrompt -> teleportTo` opens); `?exterior` loads ONE fixed city and runs no streamer, so there is no arrival to build - and it says so instead of eating the cast, the way the standalone dungeon says so about its two windows.
-- `src/scenes/seatBanners.js:32` - and dungeonContext.js stand no street; exterior.js (the bench) FLAGGED -
-- `src/scenes/world.js:22423` - FLAGGED (Legacy-Arc.md section 3): exterior.js, the fixed city, keeps DFU's death - no streamer to birth an heir into.
-- `src/systems/playerTorch.js:12` - arm is FLAGGED here rather than guessed - see the note below.
-- `src/systems/playerTorch.js:51` - FLAGGED (blocked on data this reference tree does not carry): the
-- `src/ui/enhancedMenu.js:4717` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
-- `src/ui/pauseWindow.js:65` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
+- `src/combat/fpsSpellCasting.js` - * FLAGGED: TextureReplacement.TryImportCifRci (:179) - the loose-file
+- `src/net/professionLaw.js` - *  metal's, and a twig's picture is neither's (unverified without the player's data - FLAGGED to Mac's eye). */
+- `src/scenes/dungeonContext.js` - FLAGGED (bible/12-Enhanced-AI/Feud-Arc.md 10.1, section 32): this stream carries none of the street record's z, nm, yd, ex or sp - FEUD adds its own fields alone (RVN13: so no band follower's rt either)
+- `src/scenes/exterior.js` - TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE: a jump to an anchor on ANOTHER map pixel. Teleport.cs:145-163 respawns at the anchor's world position, which is StreamingWorld's job (scenes/world.js's `_teleportToPixel`, the door `teleportPrompt -> teleportTo` opens); `?exterior` loads ONE fixed city and runs no streamer, so there is no arrival to build - and it says so instead of eating the cast, the way the standalone dungeon says so about its two windows.
+- `src/scenes/seatBanners.js` - and dungeonContext.js stand no street; exterior.js (the bench) FLAGGED -
+- `src/scenes/world.js` - FLAGGED (Legacy-Arc.md section 3): exterior.js, the fixed city, keeps DFU's death - no streamer to birth an heir into.
+- `src/systems/playerTorch.js` - arm is FLAGGED here rather than guessed - see the note below.
+- `src/systems/playerTorch.js` - FLAGGED (blocked on data this reference tree does not carry): the
+- `src/ui/enhancedMenu.js` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
+- `src/ui/pauseWindow.js` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 
 ## Audits
 

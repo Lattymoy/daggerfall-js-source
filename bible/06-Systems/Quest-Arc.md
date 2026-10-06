@@ -721,7 +721,7 @@ Ignoring') - permanent by parity, recorded in the coverage pin.
   faction-listener slot (addFactionListener first-claim-wins /
   removeFactionListener at dispose; PlayerActivate.StaticNPCClick
   reads the map - :1534, the only consumer in the DFU tree, and
-  wired at src/scenes/worldModes.js:697). activeFactionPersons walks NON-COMPLETE quests only -
+  wired at src/scenes/worldModes.js:"(:769-772). The port"). activeFactionPersons walks NON-COMPLETE quests only -
   completed quests must not lock an NPC out (QuestMachine.cs:1085).
   The non-individual parse throw carries the TEMPLATE-SetComplete
   quirk; its sibling's does not.
@@ -1427,10 +1427,10 @@ triage: 25 kills at fails=5+ (one at fails=7 - the `| 0` int32 rail
 broke three pins at once), 2 survivors at the baseline 4, both
 PROVEN equivalents:
 
-- questBridge.js:76 `rawZ ?? 0 -> ?? 1`: the hash's only read of
+- questBridge.js line 76 `rawZ ?? 0 -> ?? 1`: the hash's only read of
   rawZ is `z >> 2`, and `1 >> 2 === 0 === 0 >> 2` - for any record
   LACKING rawZ the mutated default is arithmetically invisible.
-- questBridge.js:85 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
+- questBridge.js line 85 `(pn.flags ?? 0) -> (?? 1)` in the gender arm:
   gender reads bit 5 alone, and `1 & 32 === 0 === 0 & 32` - Male
   either way, every path.
 
@@ -1458,7 +1458,7 @@ spamming the same questor does not re-pulse the task. DFU makes you go
 click someone else and come back.
 
 The port carries `lastNPCClicked` as an NPCData-shaped OBJECT LITERAL,
-and both hosts mint a fresh one at every click - worldModes.js:1500's
+and both hosts mint a fresh one at every click - worldModes.js:"return questBridge?.machine?.movedQuestorName?.(npcData)"'s
 quest-flat arm builds `{ hash, flags, factionID, nameSeed, gender,
 buildingKey, mapID }` inline, and questBridge.clickNpc runs
 `staticNpcData(pn, sceneCtx)`. So `lastClicked === this.clickMemory`
@@ -2337,7 +2337,7 @@ that moved King Gothryd to a tavern takes his palace copy off the
 board, never ran: both copies stood, both drawn, both clickable.
 
 *A PORTED FUNCTION WITH NO CALLER IS A COMMENT.* The tests were green
-because the tests called it themselves. `questscene.test.js:520`
+because the tests called it themselves. `questscene.test.js:"away disables the"`
 drives every arm of it faithfully, and the arc's own coverage sweep
 counted those lines as covered. A fixture that reaches a line the
 game cannot reach is the same failure as a fixture that cannot reach
@@ -2813,12 +2813,12 @@ banker and guild clerk in Daggerfall reached `TalkManager` with an
 empty name. Two things read it:
 
 - the greeting says the NPC's name once reaction is above zero, and
-  "stranger" below it (`townTalk.js:569`). Every static NPC in the
+  "stranger" below it (`townTalk.js:"ROAD-B B5 FIXED THE"`). Every static NPC in the
   game stayed a stranger no matter how well liked.
 - `topicTree`'s same-building-static test (`:558`) matches a topic
   caption against that name, so it never matched.
 
-Mobile townspeople had names the whole time (`townPopulation.js:70`).
+Mobile townspeople had names the whole time (`townPopulation.js:"from the region's"`).
 Only the ones you can actually talk to were anonymous. *A PORTED
 FUNCTION WITH NO CALLER IS A COMMENT* - the second time in five waves,
 and this one had a workaround written to keep it plausible.
@@ -2899,7 +2899,7 @@ correct than the game it is a port of, which is the one thing this arc
 has never allowed. Expanding in place now. (The caller-side
 `if (quest)` went too - C# calls `ExpandQuestMessage` whether or not
 `GetQuest` found anything, and the null-parent bail is a forum-bug fix
-*inside* the helper, which `questMacros.js:548` already carries.)
+*inside* the helper, which `questMacros.js:"- and the port read"` already carries.)
 
 **Three nits with teeth.**
 
@@ -2907,7 +2907,7 @@ has never allowed. Expanding in place now. (The caller-side
 `PlayerActivate.StaticNPCClick:1534`. `TalkManager.cs` does not
 contain the word `Listener`. Three port comments named TalkManager as
 the reader and marked the wiring `(Q4 wires)` - over a reader the port
-already ships, at `worldModes.js:697`. A pending marker over shipped
+already ships, at `worldModes.js:"(:769-772). The port"`. A pending marker over shipped
 work is worse than no marker at all: it sends the next reader looking
 for work that is done, in a file that never had it. Four sites
 corrected, the bible's copy included.
@@ -3065,7 +3065,7 @@ That is the ninth catch of *a pin that restates the port instead of the
 source* - except this one restated a misreading of the source, which is
 a worse failure and one only a second reader was ever going to find.
 The port carries `mapNameLookup` already, built first-wins at
-`mapsFile.js:499`, so the fix is to use it. Two names differing only in
+`mapsFile.js:"getRegionIndex(NAME) (:297)"`, so the fix is to use it. Two names differing only in
 CASE still take the last, because the `ToLower` compare matches both
 while the dictionary keys stay exact-case - so the lookup is
 per-iteration, not hoisted.
@@ -4868,7 +4868,7 @@ found `mode !== 'exterior'`, fell through, and turned the camera. So
 you swung and the view swung with you - every time, in every building
 and every dungeon reached from the town.
 
-`dungeon.js:289`, the standalone host, has always had the right shape:
+`dungeon.js:"playerFeet: player.pos"`, the standalone host, has always had the right shape:
 attack, then `return`, with no mode in the test at all. It has no modal
 sibling to share the drag with, which is precisely why it never needed
 one - and why the difference between the three files never looked like
@@ -5480,7 +5480,7 @@ lesson one host over.
 **What did NOT ship:** PlayerEntity.Update's per-minute *intermittent
 spawn* roll (:486-492) still has no caller on this route. It is not
 this pool's dependency — it is a loop that carries the passive-guard
-spawns and the NPC-guard conversion with it (world.js:9369-9477) — and
+spawns and the NPC-guard conversion with it (world.js:"is rebuilt every") — and
 it is named at the mount so the absence reads as a fact.
 
 **(c) The find-place seam's absence, narrowed to one sentence.**
@@ -5499,17 +5499,17 @@ knows its one city outright.
 This host owns a cast engine of its own, and `worldModes` takes *that
 instance* for the interior mode, so it covers the shops entered from
 `?exterior` too. It passed neither of `EntityEffectManager`'s two
-ready-spell events (`hostMagic.js:112-113`), and those two doors are the
+ready-spell events (`hostMagic.js:"onNewReadySpell ="`), and those two doors are the
 *only* route into the machine's `CastSpellDo` / `CastEffectDo` latches
-(`machine.js:935`/`:918`; C# subscribes them in the action's
+(`machine.js:"LATCHES this on the"`/`machine.js:"PlayerEnterExit.OnTransitionExterior"`; C# subscribes them in the action's
 constructor). Every `cast X spell do` and `cast X effect do` on this
 whole route could therefore never latch and never fire. The pair the
-other two engine-owning hosts wire (`world.js:10006-10007`,
-`dungeonContext.js:3025-3026`) is wired here now, and with it
+other two engine-owning hosts wire (`world.js:"held-Escape accelerator"`,
+`dungeonContext.js:"by _modeAction's"`) is wired here now, and with it
 `CastSpellDo`'s two world reads — `getClassicSpellEffects` and the
-byte-folded `spellHasMatchForClassicEffect` (`world.js:16821-16824`),
+byte-folded `spellHasMatchForClassicEffect` (`world.js:"convention its People/Courts"`),
 absent which the action self-completes at *parse*
-(`actions.js:2812`/`:2819`) and the task can never arm at all.
+(`actions.js:"= parentQuest?.hooks?.world?.getClassicSpellEffects?.(action.spellID)"`/`actions.js:"CastSpellDo could not find".."this.setComplete();   // C#: the TEMPLATE completes - kept"`) and the task can never arm at all.
 
 Pins: 5 in `test/qx1_exterior_host.test.js` (the placement law RUN over
 the real `placeFoeFreely` with a stubbed world — the FOV cone bounded on
@@ -5645,7 +5645,7 @@ filed under key 0 for the sweep to reach.
 
 `place.js` now writes `buildingName: null` at those three sites and
 `quest.js` falls back to `null`, which also puts the two quest-side
-seams back in agreement — `topicTree.js:432` (TalkManager.cs:2958) had
+seams back in agreement — `topicTree.js:"if (resource.symbol?.name !== resourceName)".."this.deps.undiscoverBuilding?.(resource.siteDetails.buildingKey, resource.siteDetails.buildingName);"` (TalkManager.cs:2958) had
 always forwarded the raw field.
 
 Two seams downstream take the null and were checked against C# rather
@@ -5808,7 +5808,7 @@ MAP - and the three findings it produced, all paid in the same commit.
 
 ### F1 - "LOUDLY" was written over an operation that is silent
 
-`machine.js:78` stated the headless charter: *"absent = headless, every
+`machine.js:"MapsFile/BlocksFile instances"` stated the headless charter: *"absent = headless, every
 Place pends its site **LOUDLY** and the corpus gate stands."* The same
 word sat in `place.js` three times, in `person.js`, and twice in
 `foe.js`, and the bridge's header compressed it to *"absent members idle
@@ -6141,7 +6141,7 @@ worth more than the clean result above.
 **Pin 2 asserted a structurally impossible failure.** It looked for a
 `null` in `task.actions` as the sign of a quest line no template
 claimed. Nothing ever puts one there: `Task._readTaskLines`
-(`task.js:192-201`) pushes only truthy actions and pends the raw text
+(`task.js:"const factory = this.parentQuest?.actionFactory"`) pushes only truthy actions and pends the raw text
 of anything else on `pendingActionLines`. The pin could not have failed
 under any mutation, and the mutant that narrowed `Say`'s pattern walked
 straight past it.

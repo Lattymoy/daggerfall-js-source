@@ -143,7 +143,7 @@ whenever there is no bake, no route, or the classic detour is running.
 
 The follow laws are project-final's at 8ba9100 - enemyShared.js
 `repathToward` and `stuckWatch` re-homed on `this`, enemyMelee.js
-htClose's `WP_REACH` advance, main.js:336 `navWalkable`, enemy.js:402
+htClose's `WP_REACH` advance, main.js:236 `navWalkable`, enemy.js:402
 `PATH_BUDGET_PER_FRAME` - constants and comments verbatim, pinned.
 The host chooses the motor by the pref at both construction sites,
 hands it the bake as a THUNK (a foe built before the bake lands is
@@ -339,7 +339,7 @@ loudest on the one machine it was written for. Its body was written with
 the soup bake (DEGENERATE-BAKE ROOT, below): Privateer's Hold and the
 field dungeon laid out through the host's own loader - each model built
 as the pipeline builds it, fed `collider.addMesh('dungeon', ...)` as
-`dungeonContext.js:752` feeds it - baked through the host's own call,
+`dungeonContext.js:"collider.addMesh('dungeon', cpu.positions, cpu.indices, matrix)"` feeds it - baked through the host's own call,
 then a route from the entry to a far hall with every waypoint on a
 floor, and the layout's foes on the mesh. It skips without the archives.
 

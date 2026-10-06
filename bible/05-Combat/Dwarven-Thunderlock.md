@@ -753,7 +753,7 @@ the orb is, so the two answers cannot drift apart.
 **One residual, named rather than half-fixed:** the multiplayer wire
 carries a hit's `kind` (`'arrow'`), not its weapon, so a peer-owned
 puppet struck by a Thunderlock still gains a shaft on its owner's
-client (`exteriorFoes.js:2866`, `dungeonContext.js:5379`, both gated on
+client (`exteriorFoes.js:"crafted stream minted"`, `dungeonContext.js:"const inReach = (v)"`, both gated on
 `data.ar === 1`). Fixing it means widening the hit packet, which is a
 protocol change and not this slice's.
 
@@ -1111,7 +1111,7 @@ is its Blender source.
 
 `tools/fbxRead.mjs` reads the binary FBX container; `tools/fbxMesh.mjs`
 bakes one Geometry/Model pair into **the shape `flattenNif` already
-emits** (`src/formats/mwNifMesh.js:385-387` — positions / normals /
+emits** (`src/formats/mwNifMesh.js:"@returns {{name:string"` — positions / normals /
 uvs / colors / indices / material). Not a second mesh format: the same
 one, so the Morrowind lane's whole downstream needs no new consumer.
 
@@ -1409,7 +1409,7 @@ hand and the butt 5.1 behind it.
 
 This is the one that "it attaches to the right bone" hides completely.
 `resolveWeaponParts` returned `MW_WEAPON_TYPE.None`, and
-`animWeaponType` turns None into **HandToHand** (`fpArm.js:336`) —
+`animWeaponType` turns None into **HandToHand** (`fpArm.js:"return mwType ==="`) —
 correct for empty hands, absurd for a man holding a dwemer firearm. The
 rig played unarmed stances and the gun went along for the ride:
 `composeWeaponGroup` returned no group at all, `weaponShortGroup` the

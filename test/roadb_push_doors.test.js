@@ -133,7 +133,7 @@ test('B5: DaggerfallAction ShowText and ShowTextWithInput push', () => {
   // further down the file and pinned nothing of ShowText at all.
   // Pinned on the action seam's own body this time, with DFU's null
   // previousWindow (Internal/DaggerfallAction.cs:536) carried through
-  // the seam as the port's `false` (ui/windowStack.js:65 reads it
+  // the seam as the port's `false` (ui/windowStack.js:"export const paintsPreviousWindow" reads it
   // `=== true`).
   const showText = dc.slice(dc.indexOf('actions.onShowText = (id) => {'), dc.indexOf('actions.onShowTextInput = (id, submit) => {'));
   assert.match(showText, /messageBox\(lines, \{ previousWindow: false \}\);/, 'ShowText');

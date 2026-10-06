@@ -2,11 +2,11 @@
 // Spymaster's greeting (MIT, Daggerfall Workshop). Two of the four
 // service destinations still unbuilt at G6, and the only two that
 // need no window of their own. All four have shipped since - the
-// third is ReceiveHouse, below (:105-151, H1) - and DR2 closed the
+// third is ReceiveHouse, below (knightlyGifts.js:"H1 - ReceiveHouse", H1) - and DR2 closed the
 // twentieth, so guildServiceFlow.js's SERVICE_DESTINATION now names a
 // window for every arm of DoGuildService's switch. This file's three
-// are routed at worldModes.js:4349 (Spymaster), :3510 (ReceiveArmor)
-// and :2732 (ReceiveHouse).
+// are routed at worldModes.js:"if (destination === 'guildServiceSpymaster')" (Spymaster), worldModes.js:"if (destination === 'guildServiceReceiveArmor')" (ReceiveArmor)
+// and worldModes.js:"if (destination === 'guildServiceReceiveHouse')" (ReceiveHouse).
 //
 // THE ARMOUR IS ONCE PER RANK, and the bookkeeping is a BITFIELD on
 // the membership rather than a counter: `armorMask = ArmorFlagStart
@@ -52,8 +52,8 @@
 // DEMOTION, DFU refuses the lower rank's gift because the load
 // already marked it claimed, and the port used to offer it again.
 // The one door is restoreKnightlyOrderFlags below, run by save.js's
-// restoreMembershipBook (save.js:76) from restorePlayer's single load
-// door (save.js:897-898) - RestoreMembershipData's own per-guild
+// restoreMembershipBook (save.js:"const out = copyMembershipBook") from restorePlayer's single load
+// door (save.js:"which C#'s deserializer") - RestoreMembershipData's own per-guild
 // RestoreGuildData call, GuildManager.cs:332.
 
 import { ARMOR_MATERIAL } from './armorMaterials.js';
@@ -146,7 +146,7 @@ export const ALREADY_GIVEN_HOUSE = 'You have already received your house.';
  * H1 - ReceiveHouse (:222-252). SHIPPED HERE: the last of the service
  * destinations that needs no window of its own - the four-refusal
  * ladder is receiveHouseDecision below and the flag write is
- * claimHouse, wired at worldModes.js:4598-4602 through
+ * claimHouse, wired at worldModes.js:"The popup yields" through
  * SERVICE_DESTINATION.ReceiveHouse. It is also the only path in the
  * game that grants a house without DaggerfallBankPurchasePopUp -
  * a 436-line window that renders the building's own 3D model beside a

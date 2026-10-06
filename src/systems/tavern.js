@@ -213,12 +213,12 @@ export function eatOrDrink(index, { gold = 0, gameMinutes = 0, online = undefine
 }
 
 // The three clauses that stood here are all closed:
-//  - (RETIRED by TK-iv: the TALK button. tavernWindow.js:371, and the
-//    KeyT arm at :343, fire hooks.onTalk; worldModes.js:4475 supplies
+//  - (RETIRED by TK-iv: the TALK button. tavernWindow.js:"if (inRect(TAVERN_RECTS.talk, vx, vy))", and the
+//    KeyT arm at :343, fire hooks.onTalk; worldModes.js:"SURV5: the mod's" supplies
 //    it as openStaticNpc(pn, { forceTalk: true }), which reaches
-//    npcSession.talkToStaticNPC at worldModes.js:3337 - TalkManager.
+//    npcSession.talkToStaticNPC at worldModes.js:"F016: the bank is" - TalkManager.
 //    TalkToStaticNPC (TalkManager.cs:752-770). The guild popup's TALK
-//    button shares that door at worldModes.js:4582, popupTalkToStaticNpc.)
+//    button shares that door at worldModes.js:"DaggerfallMerchantRepairPopupWindow.cs:146", popupTalkToStaticNpc.)
 //  - (RETIRED by P1: AddPermanentScene (:246) keeps a rented room's
 //    interior loaded across a save. The port now has a permanent-scene
 //    set, and rentRoom names the scene it should hold.)

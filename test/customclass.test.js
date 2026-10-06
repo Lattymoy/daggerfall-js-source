@@ -596,7 +596,7 @@ test('U20a: the rep window\'s balance is its own FIELD, 0 until a bar is clicked
 
 test('U20a follow-up: the MINUS key reaches the stat and skill spinners', () => {
   // overlayAction tests the typed-character class FIRST and the
-  // hyphen is a literal inside it (input.js:18), so '-' always
+  // hyphen is a literal inside it (input.js:"if (e.key.length === 1 && /[a-zA-Z0-9 '-]/.test(e.key))"), so '-' always
   // arrives as 'char:-'. The stats screen's `minus` arm was
   // unreachable from a keyboard: a point could be spent and never
   // taken back except by clicking.
@@ -701,8 +701,8 @@ test('ROAD-E2: the reset is what lets an unbalanced builder out of the exit gate
 test('ROAD-E2: the wizard window hands the KeyboardEvent to the flow', () => {
   // The action string alone cannot carry a modifier - Ctrl-U and a
   // bare u are both 'char:u' through the shared overlay table
-  // (ui/input.js:378-394). Both hosts' key seams already pass the
-  // event (townTalk.js:425 `overlay.input(e.code, e)`,
+  // (ui/input.js:"(PollInput adds every held key in one sweep, :1806-1809)"). Both hosts' key seams already pass the
+  // event (townTalk.js:"nothing else, which" `overlay.input(e.code, e)`,
   // dungeonContext.js `overlayInput(action, e)`), so the window must
   // pass it on.
   const f = readyBuilder();

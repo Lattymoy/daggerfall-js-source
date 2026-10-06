@@ -9,7 +9,7 @@
 // its overlay gate before the frame body - so while the quest arc's
 // boot boxes are up the town does not tick AT ALL, nobody walks, and
 // the 60x5s poll below runs out against a frozen world. firstHourProbe
-// learned this the same way (tools/firstHourProbe.mjs:245-256, :427-432)
+// learned this the same way (tools/firstHourProbe.mjs:"...and then READ", tools/firstHourProbe.mjs:"Drain the quest arc's")
 // and drains them the way a player does; this is that drain. Escape
 // first because the boxes here are read-and-dismiss, Enter after in
 // case one wants a button.
@@ -23,7 +23,7 @@ page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 page.on('console', (m) => { if (m.type() === 'error') console.log('[console]', m.text().slice(0, 200)); });
 // T2: `class=16` SKIPS THE CHARGEN WIZARD. Without it the wizard holds
 // townTalk's overlay slot and townTalk.keydown - FIRST in this host's
-// keydown ladder (exterior.js:3227-3229) - swallows every
+// keydown ladder (exterior.js:"if (e.code === 'Escape') backButtonHeld = true") - swallows every
 // page.keyboard.press below, so this probe pressed its keys into a
 // character-creation screen it never knew was up.
 await page.goto('http://localhost:5199/play/?shot&world&play&tod=12:00&class=16');
@@ -35,7 +35,7 @@ const waitFrames = async (n) => {
 const press = async (code) => { await page.keyboard.down(code); await waitFrames(3); await page.keyboard.up(code); await waitFrames(2); };
 const talk = async () => JSON.parse(await page.evaluate(() => window.__talk()));
 
-// The drain. `overlay` is townTalk's live slot (townTalk.js:1533), so
+// The drain. `overlay` is townTalk's live slot (townTalk.js:"mode: getInteractionMode"), so
 // this asks the host what is up rather than guessing at names.
 let drained = 0;
 for (let i = 0, quiet = 0; i < 30 && quiet < 2; i++) {
@@ -67,7 +67,7 @@ console.log('greeting:', JSON.stringify(greet));
 if (!greet.overlay) { console.log('NO TALK WINDOW'); process.exit(1); }
 // E8: the assertions read the LIVE window's own state, which the
 // native talk window carries and the keyed one does not - topicMode
-// walks none -> categories -> buildings (ui/nativeTalk.js:351, :388-393).
+// walks none -> categories -> buildings (ui/nativeTalk.js:"_portraitDeps.fetchBytes", ui/nativeTalk.js:"this._category = it").
 await press('KeyW');
 const cats = await talk();
 console.log('categories:', JSON.stringify({ mode: cats.topicMode, count: cats.topicCount }));

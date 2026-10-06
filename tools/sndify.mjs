@@ -1,7 +1,7 @@
 // THE DAGGERFALL BAKE: any sound, in the game's own format.
 //
 // DAGGER.SND holds every classic effect as RAW UNSIGNED 8-BIT MONO PCM
-// AT 11025 Hz - src/formats/sndFile.js:3 states it, SndFile.cs is where
+// AT 11025 Hz - src/formats/sndFile.js:"Each BSA record is" states it, SndFile.cs is where
 // it came from, and that is the whole of the "Daggerfall aesthetic" as
 // far as a sound file is concerned. A 48kHz 16-bit stereo shotgun
 // dropped into this game does not sound like this game; the same

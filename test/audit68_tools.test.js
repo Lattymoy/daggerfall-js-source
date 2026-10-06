@@ -283,7 +283,7 @@ test('AUDIT 68 X5-regenopenflags-dies-at-zero: the open-flags list empties, stay
   const d = tree(t, ['tools/regenOpenFlags.mjs', 'tools/flagSites.mjs']);
   mkdirSync(join(d, 'bible'));
   mkdirSync(join(d, 'src/zq'), { recursive: true });
-  writeFileSync(join(d, 'bible/Home.md'), '# H\n\n## Open flags\n\nprose\n\n- `src/zq/zqold.js:1` - FLAGGED: old\n\n## Next\n');
+  writeFileSync(join(d, 'bible/Home.md'), '# H\n\n## Open flags\n\nprose\n\n- `src/zq/zqold.js` - FLAGGED: old\n\n## Next\n');
   writeFileSync(join(d, 'src/zq/zqold.js'), '// retired\n');
   const regen = (...a) => node([join(d, 'tools/regenOpenFlags.mjs'), ...a]);
   assert.equal(regen().status, 0);
@@ -292,5 +292,5 @@ test('AUDIT 68 X5-regenopenflags-dies-at-zero: the open-flags list empties, stay
   assert.equal(check.status, 0, `the empty list the tool wrote is one it can read (${check.stderr})`);
   writeFileSync(join(d, 'src/zq/zqnew.js'), '// FLAGGED: new one\n');
   assert.equal(regen().status, 0);
-  assert.equal(readFileSync(join(d, 'bible/Home.md'), 'utf8'), '# H\n\n## Open flags\n\nprose\n\n- `src/zq/zqnew.js:1` - FLAGGED: new one\n\n## Next\n');
+  assert.equal(readFileSync(join(d, 'bible/Home.md'), 'utf8'), '# H\n\n## Open flags\n\nprose\n\n- `src/zq/zqnew.js` - FLAGGED: new one\n\n## Next\n');
 });

@@ -422,7 +422,7 @@ The 0.2 s flash duration is set at `BLBSkybox.cs:183`
 (`lightningFlash.flashDuration = 0.2f;` inside the lightning-effect
 setup), not `:184` - `:184` is the blank line before the setup's
 `Debug.Log`. The lane's new pin cited `:184` twice while the production
-comment beside it (`src/systems/dynamicSkies.js:745`) already read
+comment beside it (`src/systems/dynamicSkies.js:"this.flashDuration ="`) already read
 `:183`; the two test cites and the Testing.md row are corrected to `:183`
 and now agree with the port. No behaviour and no other cite moved: the
 five `LightningFlash.cs` lines (`:52`, `:55`, `:61`, `:77`, `:79`)

@@ -121,7 +121,7 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
   // off, so its timer arm stands unchanged - which is why the two hosts
   // no longer share this pin.
   {
-    const i = w.indexOf('function runEncounterTick(');
+    const i = w.search(/^[ \t]*function runEncounterTick\(/m);   // CITE-ANCHOR: the declaration, not a comment's anchor that quotes it
     const fn = w.slice(i, w.indexOf('\n  }\n', i));
     assert.doesNotMatch(fn, /getPref\('wildernessCamps'\)/, 'world.js: no camp gate left in the per-minute tick');
     assert.doesNotMatch(fn, /const campHit = rollCampEncounter\(/, 'world.js: no live timer roll left in the per-minute tick');
@@ -129,7 +129,7 @@ test('CAMP1 by source: both exterior hosts roll it after the single roll comes b
   assert.doesNotMatch(w, /import \{ rollCampEncounter,/, 'world.js: the unused timer entry point is dropped from the import');
   assert.match(w, /import \{ rollCampEncountersOnChunkLoad, amGroupRollOwner, campAnchorSpot, CAMP_SIGHT_RADIUS \} from '\.\.\/systems\/campEncounters\.js';/, 'world.js: only the chunk-load twin, the ownership guard and the far anchor are imported now (BOUNTY1\'s pack spacing and shout come in with TV7\'s band import since the merge of main)');
   for (const [name, h] of [['exterior.js', e]]) {
-    const i = h.indexOf('function runEncounterTick(');
+    const i = h.search(/^[ \t]*function runEncounterTick\(/m);   // CITE-ANCHOR: the declaration, not a comment's anchor that quotes it
     const fn = h.slice(i, h.indexOf('\n  }\n', i));
     assert.ok(fn.indexOf('_standEncounterFoe(hit, playerFeet)') < fn.indexOf("getPref('wildernessCamps') !== false"), `${name}: the group roll sits AFTER the single roll's break, so the two never both fire on one minute`);
     // TIME1: and the sky beside the minute - the camp's day and night are the sky's, the minute the character's own
@@ -208,7 +208,7 @@ test('CAMP1 by source: the group roll is skipped while resting - camps/packs onl
   // exterior.js keeps the timer, so it keeps the gate.
   for (const host of ['src/scenes/exterior.js']) {
     const h = read(host);
-    const i = h.indexOf('function runEncounterTick(');
+    const i = h.search(/^[ \t]*function runEncounterTick\(/m);   // CITE-ANCHOR: the declaration, not a comment's anchor that quotes it
     assert.match(h.slice(i, i + 200), /function runEncounterTick\(playerFeet, isResting = false\) \{/, `${host}: the tick knows whether it's servicing a rest`);
     const fn = h.slice(i, h.indexOf('\n  }\n', i));
     assert.match(fn, /if \(!isResting && getPref\('wildernessCamps'\)/, `${host}: the camp/pack roll is gated off during rest`);

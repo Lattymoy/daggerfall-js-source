@@ -316,7 +316,7 @@ test('MAC1 I: the render eye pays a grounded step out over STEP_SMOOTH_TAU; the 
 test('AUDIT 65 XL-4: the third-person focal rides the SMOOTHED feet, and no host hands mwView player.pos', () => {
   // MAC1 I low-passed the render EYE and EV1 interpolated it, but the
   // Morrowind camera builds its third-person focal out of `feet`
-  // alone (mwCamera.js:224-259) and every host handed it the raw
+  // alone (mwCamera.js:"in some interiors") and every host handed it the raw
   // stepped `player.pos` - so BOTH fixes were bypassed the moment the
   // player scrolled out of his own head, in all four hosts. feetAt is
   // eyeAt's positional half; the hosts pass that instead.
@@ -355,7 +355,7 @@ test('AUDIT 65 XL-4: the third-person focal rides the SMOOTHED feet, and no host
   };
   assert.ok(stepZ(1 / 144, (m) => m.feetAt()) < stepZ(1 / 144, (m) => m.pos) * 0.6,
     'at 144 Hz the render feet translate smoothly where the stepped feet quantise');
-  // The focal's own ceiling probe (mwCamera.js:233-243) casts from
+  // The focal's own ceiling probe (mwCamera.js:"found. A pillar is") casts from
   // this height, so the filter may never run away from the capsule
   // the collider actually keeps under the ceiling: it is clamped to
   // STEP_OFFSET and in practice stays well inside it.
@@ -502,7 +502,7 @@ test('MAC1 J: the pause door relocks the pointer inside the resume gesture, and 
     // and the ARM is what gets built and asked.
     assert.match(text, /openPauseFlow\(\(w\) => townTalk\.showOverlay\(w\), \{\n\s*at: pauseAt,[^\n]*\n\s*\.\.\.pauseDoorHooks\(\),/, `${file}: the door spreads its bag`);
     const hooks = mountLiteral(text, 'const pauseDoorHooks = () => (', { opts: {}, requestLook: s.requestLook, canvas: `CANVAS-${file}` });
-    assert.equal(typeof hooks.relock, 'function', `${file}: its own pause door hands pauseDoor.js:163 a relock`);
+    assert.equal(typeof hooks.relock, 'function', `${file}: its own pause door hands pauseDoor.js:"if (action !== 'exit')" a relock`);
     hooks.relock();
     assert.deepEqual(s.seen, [`CANVAS-${file}`], `${file}: ...and it relocks THIS host's canvas`);
   }

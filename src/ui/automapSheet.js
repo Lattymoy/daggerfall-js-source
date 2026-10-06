@@ -27,7 +27,7 @@
 // the tint lands cell for cell inside the wall (automapFloors' own
 // note). Inside a BUILDING every revealed row counts as visited, which
 // is DFU's own law (AutomapModel.cs:46-72, the always-colour case the
-// shipped window keeps at automapWindow.js:1222).
+// shipped window keeps at automapWindow.js:"ROAD-C c2/S9: INSIDE").
 //
 // THE SPACE. The held window's pan and zoom clamp a map that starts at
 // (0,0), and a dungeon does not - it sits wherever its blocks were laid.

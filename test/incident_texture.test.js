@@ -25,7 +25,7 @@
 // imgFile.js's exported PALETTIZED_FILENAMES, judges each LOAD SITE
 // rather than the file, and sweeps BOTH directions - because a fresh
 // DFPalette handed to a NON-palettized IMG is the mirror defect: the
-// constructor fills all 256 entries with (255,0,0) (dfPalette.js:4)
+// constructor fills all 256 entries with (255,0,0) (dfPalette.js:"- Palette initialised")
 // and nothing ever writes it, so that art draws solid red.
 
 import { test } from 'node:test';
@@ -108,7 +108,7 @@ test('incident: the prison preload paints PRIS00I0 out of a palette of its OWN -
   });
 
   // THE OBSERVATION, and it is of the palette OBJECT the loader got.
-  // ImgFile._readPalette (imgFile.js:203-217) writes the embedded
+  // ImgFile._readPalette (imgFile.js:"Some IMG files contain") writes the embedded
   // palette INTO whatever instance it was handed: had the preload
   // forwarded `deps.palette`, this buffer would now hold PRIS00I0's
   // colours. It is byte-identical, so the object handed down was a
@@ -254,7 +254,7 @@ test('incident: every palettized-IMG load site in src/ mints its own palette - a
 
   // DIRECTION 2, the complement - and it is not symmetry for its own
   // sake. Every other IMG carries a real `paletteName` (ART_PAL.COL and
-  // friends, imgFile.js:79-90) that the host has already loaded, and
+  // friends, imgFile.js:"get isPalettized") that the host has already loaded, and
   // `_readPalette` early-returns for it: a fresh DFPalette substituted
   // there is never written by anything, so all 256 entries stay at the
   // constructor's (255,0,0) and the art draws as a solid red panel.
@@ -262,6 +262,6 @@ test('incident: every palettized-IMG load site in src/ mints its own palette - a
   // PRIS00I0 one function above it.
   for (const x of sites.filter((y) => !y.isPal)) {
     assert.ok(!x.fresh,
-      `${x.f}:${x.line} loads ${x.name}, which is NOT one of the six palettized IMGs, on a freshly minted DFPalette - nothing ever writes it, so the art paints all-red (dfPalette.js:12-18). It takes the host's shared palette, as DFU's LoadPalette(imgFile.PaletteName) does`);
+      `${x.f}:${x.line} loads ${x.name}, which is NOT one of the six palettized IMGs, on a freshly minted DFPalette - nothing ever writes it, so the art paints all-red (dfPalette.js:"export class DFPalette"). It takes the host's shared palette, as DFU's LoadPalette(imgFile.PaletteName) does`);
   }
 });

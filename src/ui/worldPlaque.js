@@ -506,7 +506,7 @@ export function worldHoverFrame({
   if (!dom && !classic) { hideWorldPlaque(); return null; }   // (the hide folds the highlight away too: AUDIT DISC7 A8)
   if (classic) blankDom();
   // `cursorActive` is the crosshair's OWN first statement (there is no
-  // reticle while a window is up, hudCrosshair.js:117) and so it is the
+  // reticle while a window is up, hudCrosshair.js:"ROAD-E E5 - HUDCrosshair.Update's") and so it is the
   // plaque's. In the dungeon this was an accident of scheduling - the
   // driver only ran with no overlay up - and an accident is not a law.
   if (cursorActive || !eye || !dir || !collider) { foldQuickLoot(null); setClassicLootFrame(null); if (dom) showWorldPlaque(null); return null; }

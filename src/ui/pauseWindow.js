@@ -176,15 +176,15 @@ export class PauseOptionsWindow {
     this.top = null;              // 'exit' | 'note' - the stacked box
     this._noteRows = null;
     this._box = null;             // laid out at draw (the U23 shape)
-    // The automap windows' latch (automapWindow.js:559,
+    // The automap windows' latch (automapWindow.js:"this.automapBinding =".."this.isCloseWindowDeferred = false;",
     // DaggerfallAutomapWindow.cs:703-713's `isCloseWindowDeferred`), and
     // this window needs it for the reason those two do: DFU opens the
     // pause screen on `ActionComplete(Actions.Escape)` -
     // GameManager.cs:515-518, and ActionComplete is the RELEASE edge
     // (InputManager.cs:634-637) - so its opening release is spent before
     // the window exists and :186's bare `GetKeyUp` is safe there. Every
-    // host here opens on the key DOWN (world.js:15801, exterior.js:3406,
-    // ui/input.js:598) and then routes that same key's release into the
+    // host here opens on the key DOWN (world.js:"if (act === 'Escape' && pauseDoorReady())", exterior.js:"if (act === 'Escape' && pauseDoorReady())",
+    // ui/input.js:"export function overlayAction") and then routes that same key's release into the
     // window it just mounted, so the release door closes only a window
     // whose own press it saw.
     this.isCloseWindowDeferred = false;
@@ -264,7 +264,7 @@ export class PauseOptionsWindow {
     this.isCloseWindowDeferred = false;
     this._click();   // ContinueButton's sound, which this port's two close doors share
     this._closeWith();
-    // MAC1 J, the classic twin (ui/pauseDoor.js:144-168): the close runs
+    // MAC1 J, the classic twin (ui/pauseDoor.js:"return (action) =>"): the close runs
     // inside this click/keyup, the activation requestPointerLock needs.
     this.hooks.relock?.();
   }
@@ -281,7 +281,7 @@ export class PauseOptionsWindow {
     if (inRect(R.continue, vx, vy)) {
       this._click();
       this._closeWith();
-      // MAC1 J, the classic twin (ui/pauseDoor.js:144-168): the close runs
+      // MAC1 J, the classic twin (ui/pauseDoor.js:"return (action) =>"): the close runs
       // inside this click/keyup, the activation requestPointerLock needs.
       // On the RESUME exits, never on the shared `_closeWith`: the SAVE
       // and LOAD arms below travel it to OPEN the slot window, and the
@@ -510,7 +510,7 @@ export function openClassicPauseFlow(show, hooks = {}) {
     // MAC1 J: a COMPLETED save or load drains the whole stack back to
     // the HUD, inside the slot window's own click - so this exit is a
     // resume too, and the enhanced twin relocks on exactly it
-    // (ui/pauseDoor.js:163 fires for 'save' and 'load', not 'exit').
+    // (ui/pauseDoor.js:"if (action !== 'exit')" fires for 'save' and 'load', not 'exit').
     popToHUD: push ? () => { win?._closeWith(); hooks.relock?.(); } : null,
     ...extra,
   });
