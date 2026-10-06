@@ -55,7 +55,11 @@ blue rare, yellow very rare, orange almost impossible, Elite Dungeons excepted.
 `systems/foeLootCap.js`: a plain foe (no elite, champion, revenant, named or world-boss mark, and not a boss by
 `corpseSource`) is stamped `lootCap` at `spawnEnemyLoot` - 3, or 5 in an Elite Dungeon - capped there and again after
 every OnEnemyDeath handler (`raiseEnemyDeath`). Gold is folded into one stack and kept, a quest's items are never
-dropped, the rest kept best first. Outside an Elite Dungeon it rolls `PLAIN_FOE_RARITY_WEIGHTS`.
+dropped, the rest kept best first: a Magic-or-better piece by its tier, then a supply - a potion, a rest supply - then
+the rest, the dearer first within each (CAP-SUPPLIES, LOOT-EASE). Outside an Elite Dungeon it rolls
+`PLAIN_FOE_RARITY_WEIGHTS` - since LOOT-EASE (2026-10-05, `Loot-Arc.md` section 19) blue 5% + 0.5 a tier (19% at most),
+yellow 0.6% + 0.12 (3.8%), orange 0.015% + 0.0075 (0.3%) - and at its death its dropped kit rolls the same ladder
+(KIT-ROLL, `rollCorpseKit`: LR4 never ladders what a foe wears, and a plain humanoid's gear was all kit, all Common).
 
 ## CHAMP-LOOT
 

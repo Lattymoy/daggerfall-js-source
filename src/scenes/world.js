@@ -376,6 +376,8 @@ import { travellerMarkOf, travellerWorldOf, travellerDue, createTravellerBook, i
 import { RainCurtainsRenderer, curtainsOf, CURTAIN_FOOT_MARGIN_M } from '../render/rainCurtains.js';   // TV4: the weather's curtains, stood in the world for the view
 import { RANGE_PIXELS as TV_BODY_RANGE } from '../net/wire.js';   // TV3: within the pose range a traveller is their body, not a mark
 import { quickLootWheel, quickLootTake, quickLootArm, plaqueActionFor, plaqueActionSelection, plaqueLightFirst, plaqueStep } from '../systems/quickLoot.js'; import { showPickups, showHaul } from '../ui/pickupFeed.js'; import { claimHauls } from '../ui/haulCards.js';   // QUICK-LOOT B4: the wheel, the take, and the two keys that arm what the next activate means; PICKUP-FEED: what a take moved, as cards (the take's `took`)
+import { findHaul } from '../ui/haulCards.js'; import { setSilverFinder, silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS: a loot find's card; the finder every host's loot door asks, and a headstone's find
+import { setWalletSilver } from '../systems/walletItem.js';   // WALLET1: the wallet counts the account's silver
 import { lootPile } from '../player/lootStack.js';   // LOOT-STACK: the pile under the reticle, as the loot window's tabs
 import { composeContents } from '../systems/worldHover.js';   // WORLD-HOVER: the contents ladder's one law (AUDIT-WH H3)
 import { mobilePersonName, lootPileName } from '../systems/worldTooltips.js';   // WORLD-HOVER H2: MobilePersonNPC.NameNPC (.cs:299-302); M5: a dropped pile's word (.cs:534-548), outdoors too
@@ -960,6 +962,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     else if (name === 'eventide') audio.playOneShotId(SPELL_CAST_SOUND[4], 1);
     else if (name === 'mark') audio.playOneShot(SOUND.DrawWeapon, 1);   // RAID4b: No Escape - a blade drawn for the next of them
     else if (name === 'ward') audio.playOneShot(SOUND.EquipMaceOrHammer, 1);   // RAID4b: Iron Hide - iron closing over you
+    else if (name === 'shed') audio.playOneShot(SOUND.SplashLarge, 1);   // SERPENT-SET: Shed Skin - the old skin into the sea
   } });
   // A1: THE TEXTURE SEASON IS THE CALENDAR'S, NOT A URL PARAM.
   // Every production site in the reference reads the world clock -
@@ -1318,7 +1321,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   // MARKS1 (PROF0 10.5): the account's Marks as this page knows them - the balance, the Bank's sale carried to its end
   // (a sale whose answer was lost is kept and settled), a guild's Marks moved (net/marksBook.js). Online only.
   const marksBook = params.has('online')
-    ? createMarksBook({ door: accountMarks({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), store: { get: (k) => _spoilsStore.get(k), set: (k, v) => _spoilsStore.set(k, v) }, character: () => characterIdOf(playerEntity) })   // AUDIT WB A6's one store, reached at bank time (it is made below)
+    ? createMarksBook({ door: accountMarks({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), store: { get: (k) => _spoilsStore.get(k), set: (k, v) => _spoilsStore.set(k, v) }, character: () => characterIdOf(playerEntity),   // AUDIT WB A6's one store, reached at bank time (it is made below)
+      nowMs: () => Date.now() + _sharedOffsetMs })   // SILVER-FINDS: the day's finds counted by the shared clock
     : null;
   // NOTICE1 (PROF0 10.1): this device's Notice Boards - each town's board read through a minute's cache, what has been
   // read of it (the count over the board is the rest), a note pinned with its own request id (net/noticeBook.js).
@@ -9946,6 +9950,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         built: () => built, pixelTranslation: (x, y, out) => state.pixelTranslation(x, y, out),
         pixelInfo: (x, y) => { try { return { climate: maps.getClimateIndex(x, y), region: maps.getRegionIndexAt(x, y) }; } catch { return null; } }, settled: (pos) => { const wc = state.worldCoords(pos), p = worldCoordToMapPixel(wc.x, wc.z), loc = locationIndex.get(`${p.x},${p.y}`); return !!loc?.exterior?.exteriorData && isPlayerInTown(loc.mapTableData?.locationType, { mustBeInLocationRect: true, mustBeOutside: true, inLocationRect: isInLocationRect(wc.x, wc.z, locationWorldRect(loc, p.x, p.y)), inside: false }); },   // SETTLE-STAND: the acts' own settlement check (Foraging's 'town'), asked of a node's place
         nowMs: () => Date.now() + _sharedOffsetMs, haul: (entries) => showHaul(entries),   // HAUL-CARDS: a harvest's goods and XP as one card (the enhanced skin's)
+        marks: marksBook,   // SILVER-FINDS: a harvest's find said, its balance kept
         eye: () => ({ pos: cam.pos, dir: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)] }),
         // AUDIT 29 C1: a node seen - the eye's ray to it through the place's collider (the street's, or the dungeon's own)
         clear: (from, to, underground) => {
@@ -10370,10 +10375,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:3260 mounts the same one, gated on
+  // and dungeonContext.js:3262 mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:7282
+  // that context through modes.dungeonCtx - so worldModes.js:7283
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -10469,11 +10474,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:581-586) never looks the record up in `foes`, and
+    // (exteriorFoes.js:583-588) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1648-1666) gives it -
+    // got exactly what removeGuard (cityGuards.js:1669-1687) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:1046) and spliced out at the end of it (:1245).
+    // (cityGuards.js:1047) and spliced out at the end of it (:1266).
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -11169,10 +11174,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   const openBodyLoot = (lootKey, pileKeys = null) => {
     bodyPool(lootKey).takeLoot(lootKey, (l) => townTalk.say(l),
       inventoryDoorReady() ? (loot) => {
-        if (!pileKeys && quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) return;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards
+        if (!pileKeys && quickLootTake(lootKey, loot, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards
         const pile = lootPile(lootKey, { keys: pileKeys, describe: (k) => bodyPool(k).pileBody(k), open: openBodyLoot });
         const w = makeInventoryWindow({ loot: pile ? { ...loot, pile } : loot });
         if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
+        return !!w;   // AUDIT 625 D6: whether it OPENED - the corpse door rolls a body's silver on this answer alone
       } : null);
   };
   // U42: the CLASSIC spellbook. PlayerEntity.GetSpells() is the
@@ -13135,7 +13141,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:8691), so exterior mode and a
+    // composer, dungeonContext.js:8710), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -16419,7 +16425,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:10989-11053 -
+  // worldModes answers it in BOTH modes (worldModes.js:11005-11069 -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -16472,6 +16478,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       onClose = () => {
         const pile = droppedLoot.dropPile(items, dropFeet(), `${playerTravelPixel().x},${playerTravelPixel().y}`);
         if (!pile) return;
+        silverFindAt('search', items);   // SILVER-FINDS: this search's find rolls its silver once (the stone searched again after its hours, again)
         const w = makeInventoryWindow({ onClose: () => droppedLoot.releaseEmptied(), loot: droppedLootHooks(pile) });
         if (w) townTalk.showOverlay(w);   // a refused pack is null - the find stays on the ground
       };
@@ -19865,6 +19872,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     verdictHeard: () => arenaGate.settle(),   // ARENA4b: an exhibition's verdict asked of its room settles the book as it comes
   });
+  /** AUDIT 625 P2: A BOUT BETWEEN PLAYERS IS A DUEL. While I fight in one on a relay's sand (its call to its end), the
+   *  duel's word stands (duelFrame: systems/sigil.js setSigilDueling) and every power that sleeps in a duel sleeps - the
+   *  sets, the loot's powers, the weapon's sigil. My opponent is a Daedra Lord's stand-in for the formulas (below), no
+   *  player, so the gates that refuse a blow at a player never saw one: a set's Constrict, a sigil's per cent, a
+   *  Legendary's thorns all bit in the ring, and the sets' shields stood. */
+  const arenaPvpLive = () => { const b = arenaOnline?.bout(), r = arenaBouts.relay(); return !!b && b.kind === 'pvp' && !!r?.me; };
   /** ARENA4: MY OPPONENT on a relay's sand, as a body my blows meet (scenes/dungeonContext.js arenaRivalBody): the one
    *  body the bout's room draws (the stands have none), its stand-in for the formulas - unarmoured, every blow's number
    *  the referee's to judge. Null outside a bout between players. */
@@ -19911,6 +19924,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     store: _spoilsStore,
     say: (text) => chatNotice(text),
     onSpoils: (entry) => grantSerpentSpoils(entry),
+    onMarks: (data) => { showHaul(claimHauls(data, 'serpent')); return marksBook?.claimLines(data, 'serpent') ?? null; },   // SERPENT-SET: the serpent's silver, the raids' own door
     onRecorded: (data) => {
       if (data?.renown?.character !== characterIdOf(playerEntity)) return;   // RENOWN-CHAR: the character that fought the serpent adopts its Renown, no other
       const a = renownAnswer({ ...data.renown, order: data.order ?? null }, data.renown.credited ?? 0, renownSaid);
@@ -19920,6 +19934,25 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (a.announce !== null) { renownSaid = a.announce; townTalk.say(`Your Renown is now ${a.announce}.`); }
     },
   }) : null;
+  // SILVER-FINDS (bible/06-Systems/Professions-Arc.md 10.5): A LOOT FIND - every host's loot door rolls its container once
+  // (systems/silverFinds.js: a body, a treasure pile, a search's find) and a find asks the marks book, whose service's
+  // dice strike it under the day's count. Each answered find its card where the feed stands (the world walked, nothing
+  // over it - a loot window open as the answer lands takes the feed down: AUDIT HAUL-CARDS A3), else its line in the
+  // chat. Online only: offline, and on the bench, nothing is found.
+  // WALLET1 (bible/06-Systems/Wallet.md): the wallet counts the account's silver - the marks book's balance, asked afresh
+  // as the wallet's sheet opens; online alone (offline the wallet says the silver is kept online)
+  if (marksBook) setWalletSilver(() => (marksBook.state.open === false ? false : marksBook.state.balance), () => marksBook.refresh());   // AUDIT 625 W5: an account that holds none says none, never the offline words
+  if (marksBook) {
+    setSilverFinder((kind) => {
+      marksBook.find(kind).then((finds) => {
+        for (const f of finds) {
+          if (!f.line) continue;
+          const stands = walkMode && !gamePaused() && pointerSurfaces.size === 0 && !travelView?.active;
+          if (!(stands && showHaul([findHaul(f.found, f.kind)]))) chatNotice(f.line);
+        }
+      }, (e) => console.warn('[silver] a find', e?.message ?? e));
+    });
+  }
   const gateLink = params.has('online') ? createGateLink({
     now: () => Date.now() + _sharedOffsetMs,
     say: (text) => setMidScreenText(text),
@@ -19935,7 +19968,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WB5: a spoil into the pack - the gold to the purse, an item to the items (the one door the spew, the gather and
    *  a crash's recovery all take). */
   const takeSpoil = (p) => { if (p.kind === 'gold') addGoldPieces(playerEntity, p.gold); else if (p.item) addItem(playerEntity.items, p.item); };
-  /** WB12c: a breach's spoil into the pack - and the first ember brings On the Burning Doors (systems/breachBook.js). */
+  /** WB12c: a breach's spoil into the pack - and the first ember brings On the Burning Doors (systems/breachBook.js).
+   *  SERPENT-SET: a serpent's hoard pays the gate's embers too, and takes its spoils by this door - a first ember won at
+   *  sea brings the book as a breach's does. */
   const takeGateSpoil = (p) => {
     takeSpoil(p);
     const book = p.kind === 'item' ? breachBookFor(p.item) : null;
@@ -19974,7 +20009,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SERPENT1: THE OLD COIL'S HOARD (systems/serpentSpoils.js) - the raids' door, under keys of its own: no floor, no word
    *  to the hub, the crash's records a save clears. Made online or not, as the pools are. */
   const serpentSpoils = createSpoilsPool({
-    ray: () => null, now: () => Date.now() + _sharedOffsetMs, take: takeSpoil, say: (text) => setMidScreenText(text),
+    ray: () => null, now: () => Date.now() + _sharedOffsetMs, take: takeGateSpoil, say: (text) => setMidScreenText(text),   // SERPENT-SET: its embers, the book with the first
     store: _spoilsStore, who: () => characterIdOf(playerEntity), keys: SERPENT_SPOILS_KEYS, recordsMax: SERPENT_SPOILS_RECORDS_MAX,
   });
   onSlotSaved((characterId) => { try { serpentSpoils.saved(characterId); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } });   // SERPENT1
@@ -20055,7 +20090,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _spoilsAskedFor = who;
     try { if (recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => spoilsPool.adopt(rec), inSave: _spoilsInSave })) setMidScreenText(SPOILS_TEXT.gathered); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); }   // AUDIT WBX S3: in the pack now - the next save clears it
     try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => raidSpoils.adopt(rec), key: RAID_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(RAID_SPOILS_TEXT.recovered); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); }   // RAID4b: a town's thanks, the same door
-    try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => serpentSpoils.adopt(rec), key: SERPENT_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SERPENT_SPOILS_TEXT.recovered); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); }   // SERPENT1: the Old Coil's hoard, the same door
+    try { if (recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => serpentSpoils.adopt(rec), key: SERPENT_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SERPENT_SPOILS_TEXT.recovered); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); }   // SERPENT1: the Old Coil's hoard, the same door; SERPENT-SET: its embers by the gate's
     _spoilsInSave = null;   // AUDIT RESCUE-SAVE A1: the boot's load alone - a load in the session is its own pack
   };
   // AUDIT ONLINE2 F3 (AUDIT RAID R8d): A LOAD IN THE SESSION IS A STAND-UP - the pack is the loaded save's, so the pools
@@ -20565,7 +20600,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const duelFrame = () => {
     duelMgr.tick();
     const setsWere = setsDueling();
-    setSetsDueling(!!duelMgr.live);   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigilSets.js)
+    setSetsDueling(!!duelMgr.live || arenaPvpLive());   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigilSets.js); AUDIT 625 P2: and a bout between players
     if (setsDueling() !== setsWere) computeEntityMods(playerEntity);   // SET3: the stat tiers leave with the duel's first frame and return with its last
     // my ring rose or fell: the onlookers hear it on the next frame - in a CELL room, the only one whose foes frame carries
     // it (AUDIT DUEL1 C1: a duel ended in a dungeon left every one of that room's frames forced full)
@@ -27370,6 +27405,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
               // window and the frame runs on (worldModes' own negated take). test/ql_frame.test.js holds every return.
               if (pile || _fish) {
                 const _hooks = _fish ? dwFishLootHooks(_fish) : droppedLootHooks(pile);
+                // SILVER-FINDS (AUDIT 625 S2): a scene's own TREASURE container out here - World of Daggerfall's piles and
+                // casket, Deep Waters' chests (`container: true`) - rolls its find as an interior's and a dungeon's pile does,
+                // with something in it, once it OPENED (D6); each is unsaved (LoadID 0), minted afresh with its contents, so
+                // its object is its name. The player's own drops and a fish never
+                const _find = pile?.container === true && pile.items.length ? pile : null;
                 // QUICK-LOOT B4: the same door, on the player's own pile -
                 // the hooks this arm was already building for the window.
                 if (!quickLootTake(dropKey, _hooks, playerEntity, (l) => townTalk.say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) {   // AUDIT QL-WEIGHT1; PICKUP-FEED: the cards
@@ -27382,7 +27422,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
                     loot: _hooks,   // G5: DaggerfallLoot's own identity
                   });
                   if (w) townTalk.showOverlay(w);   // DISC10-E L3: a refused pack is null
-                } else droppedLoot.releaseEmptied();   // AUDIT 68 S20: a take is its own window close - an emptied pile is freed
+                  if (w && _find) silverFindAt('pile', _find);
+                } else {
+                  if (_find) silverFindAt('pile', _find);
+                  droppedLoot.releaseEmptied();   // AUDIT 68 S20: a take is its own window close - an emptied pile is freed
+                }
               }
             }
             else modes.tryEnter().then((opened) => {
@@ -28814,11 +28858,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:783-788), so this seam ROUTES by pool exactly
+        // (cityGuards.js:784-789), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1366). DFU makes no pool distinction:
+        // (cityGuards.js:1387). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.

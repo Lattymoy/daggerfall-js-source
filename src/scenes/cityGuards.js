@@ -94,6 +94,7 @@ import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { getBool } from '../systems/settings.js';   // AUDIT DISC19: MeleeAttackFriendlyProtection, which the defenders' cross-pool sparing is
 import { rayPersonDistance } from './townTalk.js';
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, corpseEntryFor, corpseContents, openCorpseLoot, pileBody, sayEnemyDied, raiseEnemyDeath } from './corpseMarker.js';
+import { rollCorpseKit } from '../systems/foeLootCap.js';   // KIT-ROLL: a plain foe's kit, laddered at its death by every body door
 import { liveFoeTargets, liveFoeFor } from '../player/activate.js';   // WORLD-HOVER H2: the LIVE bodies, in the shape the hover's one seam takes
 import { corpseName, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:526); H2: and a LIVE one's, when it is not hostile (.cs:304-312)
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // GetLocalizedEnemyName, the index law in one place
@@ -168,7 +169,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
   // with no Y test. The default keeps the two street pools as they were.
   playerInside = false,
   // ROAD-G G1: GameManager.MakeEnemiesHostile over the HOST's whole
-  // area, the encounter pool's dep to the line (exteriorFoes.js:233).
+  // area, the encounter pool's dep to the line (exteriorFoes.js:235).
   // DaggerfallEntityBehaviour.cs:255-258 fires it when a NON-hostile
   // enemy is struck by the player, and Knight_CityWatch is an
   // EnemyClass - one of the two EntityTypes that walk (:250). This
@@ -760,7 +761,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
    *  which arrowFlight.js calls unconditionally (arrowFlight.js:325)
    *  because `dealDamage` is inside its own `dmg > 0` fork - so the
    *  door is PUBLIC (the returned surface below), exactly as the
-   *  encounter pool's is (exteriorFoes.js:3075). */
+   *  encounter pool's is (exteriorFoes.js:3080). */
   function handleAttackFromPlayer(g, playerFeet = null) {
     if (!g?.ai) return;
     // DISC19-F (AUDIT DISC19): A BLOW ON A DEFENDER IS ASSAULT. The
@@ -857,6 +858,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       // already taking this pool's own `rand`. One kill in eight grew
       // two items nobody could predict, and the guard's rations ignored
       // the luck DFU rolls them against. Every pool hands both now.
+      rollCorpseKit(g.entity, { rolls: rand, luck: liveStat(playerEntity, 'luck') });   // KIT-ROLL: a watchman's kit on the plain ladder, before the sigils and the chime read the body (a peer's kill, or a DEFENDER's death by a monster or a fall, left it bare above - AUDIT 625 L7)
       stampWonWeapons(g.entity.items, 1, { rolls: rand });   // SIGIL1: a body's Magic+ weapons won online may carry a sigil (the watch is never a party's fight)
       raiseEnemyDeath(g.entity, { rolls: rand, luck: liveStat(playerEntity, 'luck') });
       // G4 (HandleAttackFromSource, verbatim): killing the city watch
@@ -1041,7 +1043,6 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
       }
     }
     spaceFoes(guards, collider, foeFrameDt(dt));   // FOE-SPACING: two watchmen in one spot are pushed apart (characters/foeSpacing.js)
-    const out = [];
     for (const g of guards) {
       if (g.dead) continue;
       // AUDIT 24 (wave 32): PARALYSIS. This pool passed the literal `false`
@@ -1214,6 +1215,26 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
         const v = enemyAttackVoice(g);
         if (v && v.clip >= 0) audio?.play3d?.(v.clip, gmid, 1, { maxDistance: 16, pitch: 1 + v.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
       }
+    }
+    // FIELD BUGS 2026-10-06 (WATCH-SWING): THE DRAW READS THE FRAME'S
+    // END. It sat at the bottom of the drive above, and a watchman read
+    // alive at the top of his iteration could be dead by the bottom of
+    // it - killed by HIS OWN BLOW, through his own door. The blow's
+    // struck tail (calculateAttackDamage's: the Ring of Namira bouncing
+    // it back) and the host's hurt seam (the player's damage door:
+    // Spite of the Spurned, the loot's thorns) land through damageGuard,
+    // whose kill frees his live batch and nulls it, and the loop went on
+    // to dress it: "Cannot set properties of null (setting 'conceal')",
+    // the frame loop's CRASH. The same interleave kept a batch in the
+    // list that a later watchman's blow had freed (the Warden's Nova
+    // strikes every foe around the player), and the foe arm's
+    // `continue` skipped a striker's draw for the frame. So the list is
+    // built here, from every watchman still standing once all of them
+    // have acted - the encounter pool's order (exteriorFoes.js
+    // batches(), read after its update has driven every foe).
+    const out = [];
+    for (const g of guards) {
+      if (g.dead) continue;   // WATCH-SWING: whatever the frame's doors did, after all of them
       // A5 - EntityConcealmentBehaviour.Update/MakeConcealed (:36-43,
       // :56-62): a NON-PLAYER entity whose IsMagicallyConcealed is
       // true has its renderer disabled. The watchman keeps acting; it

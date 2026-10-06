@@ -413,11 +413,14 @@ export async function equipGlyph({ db, nowS }, player, env, glyph, on) {
   return { ok: true, ...wardrobeOf({ ...player, glyphs_off }, env, nowS) };
 }
 
+/** SERPENT-SET: every ember account ?1's kills paid, in SQL - its gates' rows' `stones` and (migration 0083) its serpents'
+ *  (SERPENT_EMBERS a receipt): the gate's currency is a serpent's hoard's too, and the purse below counts both. */
+const EMBERS_EARNED_SQL = '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM serpent_kills WHERE account = ?1))';
 /** WB9g: what the account's own closed gates could still pay for - one Sigil Stone a gate closed (gate_kills, WB5b),
  *  less what its insignia already cost (`insignia_spent`). Never below 0. WB12d: a row's own `stones` - two with the
- *  faithful's rite broken, one for the rite alone (migration 0066). */
+ *  faithful's rite broken, one for the rite alone (migration 0066). SERPENT-SET: and a serpent's (EMBERS_EARNED_SQL). */
 export async function insigniaPurse({ db }, player) {
-  const r = await db.prepare('SELECT COALESCE(SUM(stones), 0) AS n FROM gate_kills WHERE account = ?1').bind(player.id).first();
+  const r = await db.prepare(`SELECT ${EMBERS_EARNED_SQL} AS n`).bind(player.id).first();
   const spent = Number.isSafeInteger(player?.insignia_spent) ? player.insignia_spent : 0;
   return Math.max(0, Number(r?.n ?? 0) - spent);
 }
@@ -445,7 +448,7 @@ export async function buyInsignia({ db, nowS }, player, env, id) {
        insignia_spent = insignia_spent + ?3, last_seen = ?4
      WHERE id = ?1
        AND (' ' || COALESCE(insignia, '') || ' ') NOT LIKE ('% ' || ?2 || ' %')
-       AND (SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) - insignia_spent >= ?3
+       AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3
      RETURNING insignia, insignia_spent`,
   ).bind(player.id, offer.id, offer.price, nowS).first();
   if (!row) {

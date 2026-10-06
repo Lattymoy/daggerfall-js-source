@@ -54,6 +54,19 @@
 // its top: a boss's set over a town's thanks), and a weapon's blow at
 // the Legendary band's floor too. EVERY RECORD NAMES ITS MAKE, and the
 // wire's check (validSetMarks) holds each to its own.
+//
+// ═══ SERPENT-SET: THE OLD COIL'S OWN (2026-10-05) ═════════════════
+//
+// Mac: "The serpent boss needs to use the currency from oblivion gate
+// and have its own equipment rewards". One more Aetheric set,
+// Sethrakul's Coilscale (systems/sigilSets.js 'coilscale'): nine fixed
+// records of Ebony - the deep's own black - a one-handed Katana and a
+// shield among them. Its affixes and its blow stand at the Legendary
+// band's MIDDLE: a world boss at sea, over a town's thanks and under
+// the gate's Warden. A ship that dealt the serpent its share finds a
+// piece in its hoard SERPENT_SET_CHANCE of the time
+// (systems/serpentSpoils.js), rolled after everything the hoard rolled
+// before; no drop, shelf or Broker carries it, as no raid set's is.
 // ═══════════════════════════════════════════════════════════════════
 
 import { setItemFields, mintCondition, itemBaseValue } from './itemTemplates.js';
@@ -178,8 +191,40 @@ export const RAID_SET_PIECES = Object.freeze([
   orcs('mace', 'The Tuskbreaker', 'Weapons', 124, [a('damage'), a('stat', 'strength'), a('skill', SKILLS.BluntWeapon)],
     'Flanged with Orcish steel. It has broken more tusks than any smith can count.'),
 ]);
-/** EVERY AETHERIC RECORD - the Regalia, then the raiding parties' - and the one every reader asks. */
-export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES]);
+// ── SERPENT-SET: the Old Coil's own ────────────────────────────────
+/** SERPENT-SET: the Coilscale's numbers - the Legendary band's MIDDLE, per affix kind (over a town's thanks at its floor,
+ *  under the gate's Warden at its top: a world boss at sea), and a weapon's blow the band's middle too. */
+const mid = (id) => Math.round((AFFIX_RANGES[id].legendary[0] + AFFIX_RANGES[id].legendary[1]) / 2);
+export const SERPENT_SET_POWER = Math.round((SIGIL_BANDS.legendary[0] + SIGIL_BANDS.legendary[1]) / 2);
+const m = (id, param) => (param === undefined ? { id, value: mid(id) } : { id, param, value: mid(id) });
+const coil = (key, name, group, templateIndex, affixes, lore) => record(`coilscale-${key}`, name, group, templateIndex, 'coilscale', 'Ebony', SERPENT_SET_POWER, affixes, lore);
+/** SERPENT-SET: SETHRAKUL'S COILSCALE, nine in the places' order (the body, the shield, the weapon) - Ebony, the deep's own
+ *  black; a one-handed Katana, so the shield is worn with it and all nine places fill at once. One resistance of an
+ *  element at most, and never frost (Sea-Scale's tier carries it): no two pieces stack an element toward the saving
+ *  throw's immunity (the Regalia's AUDIT FINAL lesson). */
+export const SERPENT_SET_PIECES = Object.freeze([
+  coil('crest', "Sethrakul's Crest", 'Armor', 107, [m('armor'), m('stat', 'willpower'), m('resist', 'shock')],
+    'Cut from the crest the Old Coil raised before it struck. It still rises in a storm.'),
+  coil('right-pauldron', 'Coilscale Right Pauldron', 'Armor', 106, [m('armor'), m('stat', 'strength'), m('skill', SKILLS.Swimming)],
+    'Each scale is the size of a hand, and no two lie the same way.'),
+  coil('left-pauldron', 'Coilscale Left Pauldron', 'Armor', 105, [m('armor'), m('stat', 'endurance'), m('resist', 'poison')],
+    'The venom that pooled under it dried to a green glaze.'),
+  coil('hide', "The Old Coil's Hide", 'Armor', 102, [m('armor'), m('stat', 'endurance'), m('stat', 'willpower')],
+    'A ring of the serpent\'s shed skin, turned to plate by the sea.'),
+  coil('grip', "Constrictor's Grip", 'Armor', 103, [m('armor'), m('stat', 'strength'), m('skill', SKILLS.LongBlade)],
+    'They close slowly, and they do not open again until it is over.'),
+  coil('greaves', 'Undertow Greaves', 'Armor', 104, [m('armor'), m('stat', 'agility'), m('weight')],
+    'Heavy as the deep, and they never drag.'),
+  coil('boots', 'Tide-Walker Boots', 'Armor', 108, [m('armor'), m('stat', 'speed'), m('skill', SKILLS.Running)],
+    'Sailors say the one who wears them walks out of any wreck.'),
+  coil('shield', "The Maelstrom's Eye", 'Armor', 111, [m('armor'), m('stat', 'endurance'), m('resist', 'magic')],
+    'A whorl of scales at its boss turns a blade as the maelstrom turns a ship.'),
+  coil('fang', "Sethrakul's Fang", 'Weapons', 121, [m('damage'), m('stat', 'agility'), m('skill', SKILLS.LongBlade)],
+    'A fang of the Old Coil, ground to an edge by a Hammerfell smith who would not say how.'),
+]);
+/** EVERY AETHERIC RECORD - the Regalia, then the raiding parties', then (SERPENT-SET) the Old Coil's - and the one every
+ *  reader asks. */
+export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES]);
 export const aethericById = (id) => AETHERIC_RECORDS.find((r) => r.id === id) ?? null;
 registerAethericLore((item) => aethericById(item?.aetheric)?.lore ?? null);   // the card's last line, as a Legendary's
 /** A record's make as the item wears it: its material's id in its group's table. */
@@ -273,4 +318,15 @@ export function rollRaidSetPiece(party, rolls = Math.random) {
   const recs = raidSetPieces(party);
   if (!recs.length || !(rolls() < RAID_SET_CHANCE)) return null;
   return mintAetheric(recs[Math.min(recs.length - 1, Math.floor(rolls() * recs.length))]);
+}
+
+/** SERPENT-SET: the share of a hoard - a ship that DEALT Sethrakul its share - that carries a piece of the Coilscale: a
+ *  town's thanks' own share (RAID_SET_CHANCE), the set being the serpent's alone (no drop, shelf or Broker carries it). */
+export const SERPENT_SET_CHANCE = RAID_SET_CHANCE;
+/** SERPENT-SET, THE HOARD'S LAST ROLL (systems/serpentSpoils.js, after everything it rolled before - every earlier
+ *  hoard stays what it was for its seed): null most times; else one Coilscale piece, the same seed choosing which. One
+ *  roll when nothing drops, two when a piece does. */
+export function rollSerpentSetPiece(rolls = Math.random) {
+  if (!(rolls() < SERPENT_SET_CHANCE)) return null;
+  return mintAetheric(SERPENT_SET_PIECES[Math.min(SERPENT_SET_PIECES.length - 1, Math.floor(rolls() * SERPENT_SET_PIECES.length))]);
 }

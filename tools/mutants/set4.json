@@ -74,8 +74,8 @@
   {
     "name": "SET4-the-sets-rank-read-after-the-weapon-drank",
     "file": "src/systems/sigilSets.js",
-    "old": "  const was = new Map([...worn].map(([id, pieces]) => [id, lowestRank(pieces)]));\n  // AUDIT SET D8: a set's weapon sleeps with its set in a duel (section 2: \"no piece drinks\"); a plain sigil weapon\n  // drinks as SIGIL1 says\n  const rank = setIdOf(held) && _dueling ? null : drinkSigil(held, xp);\n",
-    "new": "  const rank = setIdOf(held) && _dueling ? null : drinkSigil(held, xp);\n  const was = new Map([...worn].map(([id, pieces]) => [id, lowestRank(pieces)]));\n",
+    "old": "  const was = new Map([...worn].map(([id, pieces]) => [id, lowestRank(pieces)]));\n  // AUDIT SET D8: a set's weapon sleeps with its set in a duel (section 2: \"no piece drinks\"); a plain sigil weapon\n  // drinks as SIGIL1 says\n  const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, xp);\n",
+    "new": "  const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, xp);\n  const was = new Map([...worn].map(([id, pieces]) => [id, lowestRank(pieces)]));\n",
     "tests": [
       "test/set4_drops_growth.test.js"
     ]
@@ -191,7 +191,7 @@
   {
     "name": "SET4-a-sets-weapon-drinking-in-a-duel",
     "file": "src/systems/sigilSets.js",
-    "old": "const rank = setIdOf(held) && _dueling ? null : drinkSigil(held, xp);",
+    "old": "const rank = setIdOf(held) && sigilDueling() ? null : drinkSigil(held, xp);",
     "new": "const rank = drinkSigil(held, xp);",
     "tests": [
       "test/set4_drops_growth.test.js"

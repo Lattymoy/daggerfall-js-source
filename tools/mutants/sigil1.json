@@ -182,8 +182,8 @@
   {
     "name": "SIGIL1-player-target-taken",
     "file": "src/systems/sigil.js",
-    "old": "attacker.peer || !target || target.isPlayer) return damage;",
-    "new": "attacker.peer || !target) return damage;",
+    "old": "attacker.peer || !target || target.isPlayer || _dueling) return damage;",
+    "new": "attacker.peer || !target || _dueling) return damage;",
     "tests": [
       "test/sigil1.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "SIGIL1-dungeon-joiner-count-unread",
     "file": "src/scenes/dungeonContext.js",
-    "old": "stampWonWeapons(f.entity.items, f._fightN ?? 1); }",
-    "new": "stampWonWeapons(f.entity.items, 1); }",
+    "old": "stampWonWeapons(f.entity.items, f._fightN ?? 1); capFoeLoot(f.entity); }",
+    "new": "stampWonWeapons(f.entity.items, 1); capFoeLoot(f.entity); }",
     "tests": [
       "test/sigil1.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "SIGIL1-dungeon-arrival-unwired",
     "file": "src/scenes/dungeonContext.js",
-    "old": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(f.entity.items, 1); }",
-    "new": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); }",
+    "old": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(f.entity.items, 1); capFoeLoot(f.entity); }",
+    "new": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); capFoeLoot(f.entity); }",
     "tests": [
       "test/sigil1.test.js"
     ]

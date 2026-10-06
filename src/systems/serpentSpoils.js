@@ -15,6 +15,14 @@
 // SERPENT_SPOILS_SOURCE; for one that STOOD, the Magic-or-better piece alone. Every piece KNOWN, the ladder's last pass
 // last of all (LOOT2).
 //
+// SERPENT-SET (2026-10-05, Mac: "The serpent boss needs to use the currency from oblivion gate and have its own
+// equipment rewards"): THE GATE'S CURRENCY AND THE SERPENT'S OWN SET. Every hoard carries SERPENT_EMBERS Deadlands Embers
+// (net/serpentHoardLaw.js - a ship that dealt and one that stood alike, the gate's own law: an ember a receipt), minted as the
+// gate mints them (systems/gateSpoils.js sigilStone) and counted on the kill's row by the account service, so the Broker
+// and the insignia take them as a breach's. A ship that DEALT finds a piece of Sethrakul's Coilscale SERPENT_SET_CHANCE
+// of the time (systems/aetheric.js rollSerpentSetPiece) - rolled after the ladder's last pass, so every hoard rolled
+// before it is what it was for its seed; the ember takes no roll at all.
+//
 // GIVEN WHEN THE SERVICE SAYS SO (net/serpentClaims.js onSpoils - the raids' AUDIT RAID R4 law: the account service's
 // hoard row is written once a serpent and account, so a second browser or a phone is answered no), straight into the
 // pack through a spoils pool of its own keys (SERPENT_SPOILS_KEYS); from the grant until a save holds them the pieces
@@ -22,8 +30,10 @@
 //
 // Not a DFU member. Ledger A (SERPENT1).
 import { seededRng } from './wind.js';
-import { spoilsBase, magicOrBetter } from './gateSpoils.js';
+import { spoilsBase, magicOrBetter, sigilStone } from './gateSpoils.js';
 import { applyRarity, lastPass } from './lootRarity.js';
+import { rollSerpentSetPiece } from './aetheric.js';   // SERPENT-SET: the Old Coil's own
+import { SERPENT_EMBERS } from '../net/serpentHoardLaw.js';   // SERPENT-SET: the gate's currency
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it) - two thirds of a gate boss's. */
 export const SERPENT_SPOILS_GOLD_PER_LEVEL = 160;
@@ -56,9 +66,15 @@ function graded(item, tier, rolls) {
   return { item, tier: item.rarity ?? tier };
 }
 
+/** SERPENT-SET: the hoard's embers - one stack of SERPENT_EMBERS Deadlands Embers, minted as the gate's (no roll taken). */
+export function serpentEmbers() {
+  return SERPENT_EMBERS > 0 ? Object.assign(sigilStone(), { stackCount: SERPENT_EMBERS }) : null;
+}
+
 /**
- * THE HOARD for one player: `{ gold, pieces: [{ item, tier }] }` - the Rare-or-better piece first. The same seed, level,
- * earning and world answer the same hoard.
+ * THE HOARD for one player: `{ gold, pieces: [{ item, tier }], embers }` - the Rare-or-better piece first, SERPENT-SET's
+ * Coilscale piece (when one drops) last; `embers` the stack of the gate's currency every hoard carries. The same seed,
+ * level, earning and world answer the same hoard.
  * @param {number} seed the receipt's `c` @param {number} level the level it fought at @param {string} earned the receipt's `x`
  */
 export function rollSerpentSpoils(seed, level, earned = 'dealt') {
@@ -70,11 +86,20 @@ export function rollSerpentSpoils(seed, level, earned = 'dealt') {
   if (dealt) pieces.push(graded(spoilsBase(lv, rolls), rolls() < SERPENT_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));
   pieces.push(graded(spoilsBase(lv, rolls), magicOrBetter(rolls, SERPENT_SPOILS_SOURCE), rolls));
   lastPass(pieces.map((p) => p.item), rolls);
-  return { gold, pieces };
+  // SERPENT-SET: the Old Coil's own set, a dealer's alone - rolled LAST, so every hoard before it is what it was
+  const coil = dealt ? rollSerpentSetPiece(rolls) : null;
+  if (coil) pieces.push({ item: coil, tier: coil.rarity });
+  return { gold, pieces, embers: serpentEmbers() };
 }
 
-/** The hoard as the spoils pool hands it over (scenes/spoilsPool.js's pieces): each item, then the gold. Pure. */
+/** The hoard as the spoils pool hands it over (scenes/spoilsPool.js's pieces): each item, then (SERPENT-SET) the embers,
+ *  then the gold - the gate's own order. The embers wear the gate's glow tier (scenes/spoilsPool.js SIGIL_TIER), which
+ *  only the crash's record keeps here: the hoard has no floor. Pure. */
 export function serpentSpoilsList(seed, level, earned) {
   const s = rollSerpentSpoils(seed, level, earned);
-  return [...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier })), { kind: 'gold', gold: s.gold, tier: 'common' }];
+  return [
+    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier })),
+    ...(s.embers ? [{ kind: 'item', item: s.embers, tier: 'artifact' }] : []),
+    { kind: 'gold', gold: s.gold, tier: 'common' },
+  ];
 }

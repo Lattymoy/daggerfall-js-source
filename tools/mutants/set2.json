@@ -173,7 +173,7 @@
   {
     "name": "SET2-the-duel-unsaid",
     "file": "src/scenes/world.js",
-    "old": "    setSetsDueling(!!duelMgr.live);   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigilSets.js)\n",
+    "old": "    setSetsDueling(!!duelMgr.live || arenaPvpLive());   // SET2: a duel (its countdown too) - every set sleeps while it stands (systems/sigilSets.js); AUDIT 625 P2: and a bout between players\n",
     "new": "",
     "tests": [
       "test/set2_seams.test.js"

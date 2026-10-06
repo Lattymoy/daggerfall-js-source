@@ -179,8 +179,8 @@
   {
     "name": "HOME1-client-secret-in-the-body",
     "file": "src/net/accountClient.js",
-    "old": "return s ? call({ fetch, base: serviceBase(storage), secret: s.secret }, path, body) : { ok: false, error: 'no-session' };",
-    "new": "return s ? call({ fetch, base: serviceBase(storage) }, path, { ...body, secret: s.secret }) : { ok: false, error: 'no-session' };",
+    "old": "return s && (as == null || s.id === as) ? call({ fetch, base: serviceBase(storage), secret: s.secret }, path, body) : { ok: false, error: 'no-session' };",
+    "new": "return s && (as == null || s.id === as) ? call({ fetch, base: serviceBase(storage) }, path, { ...body, secret: s.secret }) : { ok: false, error: 'no-session' };",
     "tests": [
       "test/home1.test.js"
     ]

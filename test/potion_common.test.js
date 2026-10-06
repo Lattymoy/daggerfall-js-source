@@ -3,6 +3,8 @@
 // twentieth of DFU's random potion - 0.15% of looting foes, 0.2% of J-O piles - and no ordinary shop sold one. Beside
 // that random potion (kept): a looting foe carries one 6 times in 100, a J-O pile holds one 12 times in 100, and an
 // alchemist's and a general store's shelf stock a few a day, counted by the shop's quality and drawn from no roll.
+// MAGICKA-COMMON (LOOT-EASE, 2026-10-05, Mac: "majicka potions should be more common loot drops, same with health
+// pots"): the healing potion 10 in 100 a foe and 18 a pile, and the Potion of Restore Power beside it, 6 and 10.
 import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,6 +12,7 @@ import { readFileSync } from 'node:fs';
 
 import {
   HEALING_RECIPE_KEY, HEALING_ENEMY_CHANCE, HEALING_PILE_CHANCE, mintHealingPotion, healingShelfCount, installHealingSupply,
+  MAGICKA_RECIPE_KEY, MAGICKA_ENEMY_CHANCE, MAGICKA_PILE_CHANCE, mintMagickaPotion,
 } from '../src/systems/healingSupply.js';
 import { CLASSIC_RECIPE_KEYS, POTION_TEMPLATE_INDEX, addEnemyLootExtras, addPileLootExtras } from '../src/systems/loot.js';
 import { potionRecipeByKey } from '../src/systems/potions.js';
@@ -26,6 +29,8 @@ const at = (v) => () => v;
 /** A scripted roll stream: each draw the next value, the last repeated. */
 const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
 const kits = (items) => items.filter((it) => it.fieldKit === true).length;
+const magicka = (items) => items.filter((it) => it.group === 'UselessItems1' && it.potionRecipeKey === MAGICKA_RECIPE_KEY)
+  .reduce((n, it) => n + (it.stackCount ?? 1), 0);
 
 test('POTION-COMMON: the potion is DFU\'s own Potion of Healing - the "healing" recipe, classicRecipeKeys[2], a bottle worth its recipe\'s 50 (mutants: another recipe\'s key)', () => {
   assert.equal(HEALING_RECIPE_KEY, CLASSIC_RECIPE_KEYS[2]);
@@ -55,17 +60,38 @@ test('POTION-COMMON: an alchemist stocks 2 + a fifth of its quality a day, a gen
   assert.equal((wm.match(/stockShopShelf\(/g) ?? []).length, 3, 'the shelf, the counter and the probe - no fourth door');
 });
 
-test('POTION-COMMON: a J-O pile holds one 12 times in 100 and no other pile ever; a looting foe carries one 6 times in 100 and a foe with no loot table never (mutants: either chance at 0; every pile)', () => {
-  assert.equal(HEALING_PILE_CHANCE, 12);
-  assert.equal(HEALING_ENEMY_CHANCE, 6);
+test('POTION-COMMON: a J-O pile holds one 18 times in 100 and no other pile ever; a looting foe carries one 10 times in 100 and a foe with no loot table never (LOOT-EASE: 12 and 6 raised; mutants: either chance at 0 or back; every pile)', () => {
+  assert.equal(HEALING_PILE_CHANCE, 18);
+  assert.equal(HEALING_ENEMY_CHANCE, 10);
   for (const key of ['J', 'O']) {
-    assert.equal(healing(addPileLootExtras([], key, at(0.11), { online: false })), 1, `${key}: 11 under 12`);
-    assert.equal(healing(addPileLootExtras([], key, at(0.13), { online: false })), 0, `${key}: 13 is not`);
+    assert.equal(healing(addPileLootExtras([], key, at(0.17), { online: false })), 1, `${key}: 17 under 18`);
+    assert.equal(healing(addPileLootExtras([], key, at(0.18), { online: false })), 0, `${key}: 18 is not`);
   }
   for (const key of ['A', 'I', 'P']) assert.equal(healing(addPileLootExtras([], key, at(0), { online: false })), 0, `${key}: never - J to O alone`);
-  assert.equal(healing(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.05))), 1, '5 under 6');
-  assert.equal(healing(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.07))), 0, '7 is not');
+  assert.equal(healing(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.09))), 1, '9 under 10');
+  assert.equal(healing(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.1))), 0, '10 is not');
   assert.equal(healing(addEnemyLootExtras([], { lootTableKey: '-', mapChance: 0 }, at(0))), 0, 'no loot table, no potion');
+});
+
+test('MAGICKA-COMMON (LOOT-EASE, 2026-10-05): DFU\'s own Potion of Restore Power - classicRecipeKeys[4], a bottle worth 75 - in a J-O pile 10 times in 100 and on a looting foe 6, never elsewhere, its draw after the healing potion\'s (mutants: another recipe\'s key; either chance moved; the draw first; the extras\' install dropping it)', () => {
+  assert.equal(MAGICKA_RECIPE_KEY, CLASSIC_RECIPE_KEYS[4]);
+  assert.equal(potionRecipeByKey(MAGICKA_RECIPE_KEY)?.name, 'restorePower');
+  const p = mintMagickaPotion();
+  assert.deepEqual([p.group, p.templateIndex, p.potionRecipeKey, p.value], ['UselessItems1', POTION_TEMPLATE_INDEX, MAGICKA_RECIPE_KEY, 75]);
+  assert.deepEqual([MAGICKA_PILE_CHANCE, MAGICKA_ENEMY_CHANCE], [10, 6]);
+  for (const key of ['J', 'O']) {
+    assert.equal(magicka(addPileLootExtras([], key, at(0.09), { online: false })), 1, `${key}: 9 under 10`);
+    assert.equal(magicka(addPileLootExtras([], key, at(0.1), { online: false })), 0, `${key}: 10 is not`);
+  }
+  for (const key of ['A', 'I', 'P']) assert.equal(magicka(addPileLootExtras([], key, at(0), { online: false })), 0, `${key}: never - J to O alone`);
+  assert.equal(magicka(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.05))), 1, '5 under 6');
+  assert.equal(magicka(addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, at(0.06))), 0, '6 is not');
+  assert.equal(magicka(addEnemyLootExtras([], { lootTableKey: '-', mapChance: 0 }, at(0))), 0, 'no loot table, no potion');
+  // the order: DFU's trio, the field kit, the healing potion, then this one - a foe's sixth draw is the magicka potion's
+  const foe = addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, seq(0.99, 0.99, 0.99, 0.99, 0.5, 0.01));
+  assert.deepEqual([healing(foe), magicka(foe)], [0, 1], 'the healing potion\'s draw missed, the magicka potion\'s landed');
+  const foe2 = addEnemyLootExtras([], { lootTableKey: 'B', mapChance: 0 }, seq(0.99, 0.99, 0.99, 0.99, 0.01, 0.5));
+  assert.deepEqual([healing(foe2), magicka(foe2)], [1, 0], 'and the other way');
 });
 
 test('POTION-COMMON: every host installs it, after the smithing install so a field kit\'s roll still comes first (mutants: the install dropped)', () => {

@@ -56,6 +56,7 @@ import { setsDueling } from './sigilSets.js';
 import { addGoldPieces } from './inventory.js';
 import { isNight } from '../world/worldClock.js';
 import { hudText } from './notify.js';
+import { healMine, _resetPlayerHealForTests } from './playerHeal.js';   // SERPENT-SET: the one heal a power gives, below this file and the sets'
 import { weaponSkillUsed } from '../characters/weapons.js';
 import { SKILLS } from './skills.js';
 import { friendlyProtected } from '../combat/playerWeapon.js';
@@ -99,19 +100,8 @@ export function elementShare(target, element) {
 // ── the session's memory ───────────────────────────────────────────
 /** @type {WeakMap<object, number>} */
 let _carry = new WeakMap();   // a weapon's (or my fists') per-cent fraction, carried to its next blow
-let _healOwed = 0;            // the leech's fraction, carried to the next heal
-/** Heal MY entity by `amount` - the fraction carried, never past its maximum, never a body. */
-export function healMine(entity, amount) {
-  if (!entity || !(entity.health > 0) || !(amount > 0)) return 0;
-  const exact = amount + _healOwed;
-  const whole = Math.floor(exact + 1e-9);
-  _healOwed = exact - whole;
-  if (whole <= 0) return 0;
-  const max = Number.isFinite(entity.maxHealth) ? entity.maxHealth : entity.health + whole;
-  const before = entity.health;
-  entity.health = Math.min(max, entity.health + whole);
-  return entity.health - before;
-}
+// SERPENT-SET: the heal (and the leech's fraction it carries) is systems/playerHeal.js's - the serpent's Shed Skin heals
+// through it too, and sigilSetPowers.js, which this file reads the blow's law out of, may not import this file
 /** A per-cent share of a blow, the fraction carried on its weapon (the sets' own law, sigilSetPowers.js setBlow). */
 function shareOf(key, damage, pct) {
   const exact = (damage * pct) / 100 + (_carry.get(key) ?? 0);
@@ -468,7 +458,7 @@ export function lootHudChips(entity, now = _now()) {
 
 /** Tests only: every carry and power fresh, a clock and a chance of their own (seconds, [0, 1)). */
 export function _resetLootPowersForTests() {
-  _carry = new WeakMap(); _healOwed = 0; _manaOwed = 0; _s = freshState(); _hexed = new WeakMap(); _struck = new WeakSet();
+  _carry = new WeakMap(); _resetPlayerHealForTests(); _manaOwed = 0; _s = freshState(); _hexed = new WeakMap(); _struck = new WeakSet();
   _say = (line) => { hudText(line); };
 }
 export function _setLootPowersClockForTests(fn) { _now = typeof fn === 'function' ? fn : () => performance.now() / 1000; }

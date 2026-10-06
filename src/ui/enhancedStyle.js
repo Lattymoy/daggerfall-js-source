@@ -4205,6 +4205,8 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
    the rest a tagged-template call - the octal lesson's sibling). */
 .pack-shell .pack-dock .packcol { padding: 8px 10px; display: flex; flex-wrap: wrap;
   gap: 6px; align-content: flex-start; }
+/* AUDIT 625 W3: the wallet's sheet holds its pieces as the dock's own tiles, wrapped as the dock wraps them */
+.pack-shell .walletsheet .walletpieces { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 0 2px; }
 /* PX22: the tab strip is ALSO a .packcol and inherited that 8px; it
    carries its tabs and nothing else, so 0 vertical padding - the 16px
    is the difference between one row of tiles and two at 660px. */

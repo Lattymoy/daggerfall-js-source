@@ -58,6 +58,7 @@ import { GUILD_VAULT_SLOTS, GUILD_VAULT_HALL_SLOTS } from './guildVaultLaw.js'; 
 import { MARKET_PRICE_MAX, MARKET_UNITS_MAX, MARKET_LISTINGS_MAX, MARKET_ORDERS_MAX, AUCTION_BID_MAX } from './marketLaw.js';   // PROF5: the bounds its refusals name
 import { GUILD_WRITS_MAX, GUILD_STORES_MAX, COMMISSIONS_MAX, COMMISSIONS_FOR_MAX, WRIT_POSTS_MAX, WRIT_OPS_MAX, GUILD_CONTRACTS_MAX, CONTRACT_PAY_MAX, CONTRACT_DEEDS_MAX } from './writLaw.js';   // PROF6: the bounds its refusals name; SILVER-WAYS: a contract's
 import { RENOWN_TRACKS_MAX } from './renown.js';   // RENOWN1: the tracks' bound, in its refusal's own sentence (RENOWN-CHAR: back with the tracks)
+import { SERPENT_EMBERS } from './serpentHoardLaw.js';   // AUDIT 625 P4: the embers this build's serpent hoard mints, said with its claim
 import { HERALDRY_CHANGE_DRAKES } from './heraldryLaw.js';   // GUILD1d: a change's cost, in its refusal's own sentence
 import { VENDOR_REFUSAL_WORDS } from './vendorLaw.js';   // HOME-VENDOR: a trader's refusals
 import { ARENA_TEXT } from '../systems/arenaText.js';   // ARENA4b: the arena's refusals, in its own frozen table
@@ -275,6 +276,8 @@ export const REFUSALS = Object.freeze({
   'guild-marks-short': 'The treasury does not hold that much silver.',
   'guild-marks-full': `A guild's treasury holds at most ${MARKS_MAX.toLocaleString('en-US')} silver.`,
   'marks-rate': 'You have moved a great deal of silver this hour. Try again later.',
+  'bad-find': 'That find could not be read.',   // SILVER-FINDS: a loot find of no kind the service knows
+  'marks-young': 'Silver turns up in finds and gathering once your account is a week old.',   // AUDIT 625 S1: the witnesses' own age
   'not-developer': 'Only a developer may do that.',   // MARKS1's report, NOTICE1's notices, CUSTOMS-PASS's grant
   // SEAT1a: the seats' registry (server-account/src/townSeats.js)
   'seats-need-account': 'The seats are witnessed by registered accounts. Add a username to witness one.',
@@ -1056,7 +1059,9 @@ export function accountRaids({ fetch, storage }) {
 /** SERPENT1: a sea serpent's receipt the relay signed for this account, carried to the service with the character that
  *  fought it and this device's claim id (the hoard's key) - `{ recorded, slain, renown, spoils, order }`, or
  *  `{ recorded: false, why }` (`claimed`, `guest`). */
-export const claimSerpentReceipt = (io, receipt, character, name = null, cid = null) => call(io, '/v1/serpent/claim', { receipt, character, name, ...(cid ? { cid } : {}) });
+// AUDIT 625 P4: and the embers this build's hoard mints (systems/serpentSpoils.js serpentEmbers) - the row counts what the
+// claim says, so a build from before them, saying none, is counted none
+export const claimSerpentReceipt = (io, receipt, character, name = null, cid = null) => call(io, '/v1/serpent/claim', { receipt, character, name, ...(cid ? { cid } : {}), stones: SERPENT_EMBERS });
 
 /**
  * SERPENT1: THE SERPENTS' ONE CALL, bound to this device's stored session (the raids' own shape). With no session there
@@ -1115,9 +1120,12 @@ export function accountRenown({ fetch, storage }) {
 /** A POST through `call` on this device's stored session - `no-session` when there is none, never a throw. The homes'
  *  and the decor's doors (HOME1, DECOR1) both speak through it. */
 function sessionPost({ fetch, storage }) {
-  return async (path, body) => {
+  // AUDIT 625 S4: `as` - an act asked for ONE account (a find owed to it) goes under that account's session or not at
+  // all: the session is read once, and its account checked and its secret sent off that one reading, so another tab's
+  // sign-in can never send it under the account signed in since (`no-session`, and the act waits for its own)
+  return async (path, body, as = null) => {
     const s = storedSession(storage);
-    return s ? call({ fetch, base: serviceBase(storage), secret: s.secret }, path, body) : { ok: false, error: 'no-session' };
+    return s && (as == null || s.id === as) ? call({ fetch, base: serviceBase(storage), secret: s.secret }, path, body) : { ok: false, error: 'no-session' };
   };
 }
 
@@ -1229,9 +1237,9 @@ function waitedPost({ fetch, storage }, ms) {
 
 /**
  * MARKS1: MARKS (server-account/src/marks.js) through the one door - the balance, the Bank's exchange (Marks for gold,
- * never the other way), a guild's Marks treasury and the developers' report. Every act carries its own request id, so an
- * answer lost and asked again is answered again, never charged twice. Every answer is `call`'s shape; each is waited
- * for ACCOUNT_ACT_WAIT_MS at most. `account()` is the account this device is signed in as (AUDIT 28 M2: a kept sale is
+ * never the other way), a guild's Marks treasury, the developers' report and (SILVER-FINDS) a loot find. Every act
+ * carries its own request id, so an answer lost and asked again is answered again, never charged twice. Every answer is
+ * `call`'s shape; each is waited for ACCOUNT_ACT_WAIT_MS at most. `account()` is the account this device is signed in as (AUDIT 28 M2: a kept sale is
  * asked again only under the account that made it).
  */
 export function accountMarks({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
@@ -1243,6 +1251,7 @@ export function accountMarks({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     guildDeposit: (character, marks, rid) => post('/v1/marks/guild/deposit', { character, marks, rid }),
     guildWithdraw: (character, marks, rid) => post('/v1/marks/guild/withdraw', { character, marks, rid }),
     report: () => post('/v1/marks/report', {}),
+    find: (kind, rid, account = null) => post('/v1/marks/find', { kind, rid }, account),   // SILVER-FINDS: a loot find the device rolled - AUDIT 625 S4: under the account it was found by
   };
 }
 

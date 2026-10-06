@@ -158,7 +158,7 @@ test('SET2 the damage door: a registered modifier over the damage before the shi
     const p = me(); p.health = 10;
     assert.equal(hurtPlayer(p, 30), false, 'no death');
     assert.equal(p.health, 1, 'left at one');
-    assert.deepEqual(told.splice(0), [{ dmg: 9, before: 10, after: 1 }], 'told as what it did');
+    assert.deepEqual(told.splice(0), [{ dmg: 9, before: 10, after: 1, saved: true }], 'told as what it did');   // PIN MOVED (AUDIT 625 P1): and that a save turned it aside
     const q = me(); q.health = 40; hurtPlayer(q, 10);
     assert.equal(asked, 1, 'asked only of a blow that would kill');
     const r = me(); r.health = 10; hurtPlayer(r, 30, { bypassShield: true });
@@ -247,5 +247,6 @@ test('SET2 the door and the duel: the running host publishes its door every fram
   assert.match(hm, /hurtFoe: \(t, n\) => \{ if \(t && !t\.dead && n > 0\) foeSinks\(t, true\)\?\.hurt\?\.\(Math\.round\(n\), \{ fromPlayer: true \}\); \}/, 'a hurt is mine, through the foe\'s own sinks');
   assert.match(hm, /castOnPlayer: \(bundle\) => \{ if \(bundle\) applySpellToPlayer\(bundle, effectiveLevel\(playerEntity\) \?\? 1, null, \{ bypassSavingThrows: true, bypassChance: true \}\); \}/);
   assert.match(hm, /foes: \(\) => playerTargets\(\)\.filter/, 'the foes MY harm may reach - the defenders passed by');
-  assert.match(strip(read('src/scenes/world.js')), /const duelFrame = \(\) => \{\s*duelMgr\.tick\(\);\s*const setsWere = setsDueling\(\);\s*setSetsDueling\(!!duelMgr\.live\);/);
+  // PIN MOVED (AUDIT 625 P2): and a live bout between players on a relay's sand is a duel too
+  assert.match(strip(read('src/scenes/world.js')), /const duelFrame = \(\) => \{\s*duelMgr\.tick\(\);\s*const setsWere = setsDueling\(\);\s*setSetsDueling\(!!duelMgr\.live \|\| arenaPvpLive\(\)\);/);
 });
