@@ -103,8 +103,8 @@ Laws the patches CHANGED, the pins re-aimed with their reasons: the RATE-LAW fil
 to1_travelOptions, tv_wasd, ow6_slowdown - each drives the lanes' law at the dial's top, x100 set on a road, which is
 what they pin: which ground the journey stands on); AUDIT REACH B3 (a record's or a flip's change is a move - and now a
 look change sticks, a walk does not); AUDIT 68 S17 (an empty RUN past the hold clears and the returning sun draws its far
-cascade at once; one empty frame is held); AUDIT FLICKER R4 (the door's edge named once, `cut` - the replay's discard
-and the hold's refusal read the same one); TELL9 (the empty track is no track); EDGE-FURNITURE (a measure reads the
+cascade at once; one empty frame is held); AUDIT FLICKER R4 and LA-POST6 (the door's edge named once, `cut` -
+the replay's discard and the hold's refusal read the same one, before the edge is spent); TELL9 (the empty track is no track); EDGE-FURNITURE (a measure reads the
 filters' block too: five boxes where it read four); MAP-KEY (the key's FILTER rows); CHAT1 and GUILD1c (the hub's line);
 DEEP2 (the menu holds the keys); TV2 (the click's own ray, read at the click's site - the menu casts the same one); EL1
 (the row's new part); HARD3 (the batch's fields); FONT3 (the floor's sheets); and the arc pages' module counts AUDIT18
