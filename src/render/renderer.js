@@ -508,7 +508,7 @@ export function bbVertexShader(ext = null) {
 }
 
 import { createClusterSpace, buildLightClusters, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_X, CLUSTER_Y, CLUSTER_NEAR, CLUSTER_Z_SCALE, CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT } from './lightClusters.js';   // LC1: the lantern loop's grid
-import { ShadowPass, SHADOW_GLSL, SHADOW_VIEW_SCALE } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
+import { ShadowPass, SHADOW_GLSL, SHADOW_VIEW_SCALE, shadowCacheOn } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
 import { boundsOf, spherePlanes, batchVisible, batchSphere, ZERO_ORIGIN, placementGrid, quadHalfDiagonal } from './bounds.js';   // PERF-EXT1: and a batch's placement grid; the review: and the half-diagonal's one home
 import { billboardKey, sortByKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: the batch's texture key - one home with the two replays; LA-COST2: and the cutout pass's sort by it
 import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
@@ -1336,6 +1336,16 @@ export function buildWireIndices(triIndices, subMeshes) {
   return { indices, ranges };
 }
 
+
+/**
+ * CACHE-OFF (2026-10-06, the player: every shadow in the tavern blinking with the shadow cache, on every card, and none
+ * with `&shadowcache=off`): the renderer's own default is the page's one door (shadowPass.js shadowCacheOn - OFF unless
+ * asked on); outside a page (the pins' fake GL in node) the cache stays on, so SC1's pins still drive its path.
+ */
+export function shadowCacheDefault() {
+  return typeof document === 'undefined' ? true : shadowCacheOn();
+}
+
 export class Renderer {
   // HARD3: two fields this class mints LAZILY, with `??=` at their point
   // of use, and so never declares anywhere a reader or a checker can see
@@ -1353,6 +1363,9 @@ export class Renderer {
     const gl = canvas.getContext('webgl2', { antialias: false });
     if (!gl) throw new Error('WebGL2 required');
     this.gl = gl;
+    // CACHE-OFF: no shadow-cache blits unless asked (the whole-room shadow blink)
+    this._shadowCacheWanted = shadowCacheDefault();
+    console.info(`[shadow] cache ${this._shadowCacheWanted ? 'ON (the shadowcache override)' : 'off - direct shadow draws (default; &shadowcache=on to compare)'}`);
 
     // EL1: THE WORLD PROGRAM SET - mesh, character, billboard, terrain -
     // is BUILT as a unit and INSTALLED as a unit, because the Enhanced
@@ -2616,12 +2629,13 @@ export class Renderer {
     // stand until the room's static set moved. So that frame drops them: with no records nothing casts (the lamps
     // unshadowed, once), and the room's own, recorded below, are replayed from the next frame on.
     const everyLight = this._everyLightNow;
-    if (this._everyLightNow !== this._everyLightPrev) sp.discard();   // AUDIT FLICKER R4: a door crossed EITHER way - the street's first frame replayed the room's records into its cascades (the room stands in world coordinates at its building), and the far cascade held them a frame more
+    const cut = this._everyLightNow !== this._everyLightPrev;   // EMPTY-HOLD: a door crossed is a cut - nothing of the other side is held over it
+    if (cut) sp.discard();   // AUDIT FLICKER R4: a door crossed EITHER way - the street's first frame replayed the room's records into its cascades (the room stands in world coordinates at its building), and the far cascade held them a frame more
     if (this._everyLightNow !== this._everyLightPrev) { this._air?.invalidatePrev(); } this._everyLightPrev = this._everyLightNow; this._everyLightNow = false;   // LA-POST6: a door crossed either way is a cut - the air's contact march has no previous frame of this room (its prepare is below)
     sp.render({
       eye: this._shadowEye(), lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1; TV1: the cascades about the focus
       cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,   // AUDIT DEEP R-3: and grown to the travel view's picture - AUDIT DEEP2 D7: once it is half risen (at the head the near cascade went from 1.2 cm texels to 4.7 in one frame, and back at the fall's end)
-      textures: this.textures, isSpectral: isSpectralArchive, bindVao, everyLight,
+      textures: this.textures, isSpectral: isSpectralArchive, bindVao, everyLight, cut,
     });
     if (this._air) {
       const count = this._pointLights.length / 4;
@@ -5206,6 +5220,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     // which a far picture stands for).
     // DISC29-E: the shadow record's `_shAnim` (a flat animating in place, which the lo tier keeps) - a boolean, born
     // undefined as `_shMovedAt` (AUDIT PRE-MERGE 0929 E1: `_shPlacedAt`, the stillness it was once judged by, is gone).
+    // IDLER-STICKY: `_shIdler`, a flat whose look changed where it stands - a mover for good (shadowPass.js), born undefined.
     return {
       vao, indexCount: count * 6, archive, record, size, buffers: [vb, ib], origin: null, frame: null, bounds, _quads: count, _dyn: !!dynamic,
       _scales: scales ?? null, lptProto: undefined, farH: undefined,
@@ -5214,7 +5229,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       _bbKey: undefined, _bbKeyId: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,
       _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,
       _shRec: undefined, _shFlip: undefined, _shDyn: undefined, _shSway: undefined, _shMovedAt: undefined, _shId: undefined,
-      _shAnim: undefined,
+      _shAnim: undefined, _shIdler: undefined,
     };
   }
 

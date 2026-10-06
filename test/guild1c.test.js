@@ -618,7 +618,7 @@ test('GUILD1c the faces: "<HND>" right of the name, before the glyphs - over a h
 
 test('GUILD1c the host: the hub\'s guild lines land on the Guild tab by the relay\'s own routing word; the tab rides the hub, is on the bar while the hub knows my tag, and says why it cannot talk; the book\'s orders go down every socket I hold and a removal to the hub alone; a room taking my guild off makes the book look again (mutants: a guild line on the World tab; the out order sent to the world rooms; the Guild tab shown in no guild)', () => {
   const w = src('src/scenes/world.js');
-  assert.match(w, /link\.onChat = \(line\) => chatLog\.push\(tab\.room === SOCIAL_ROOM && \(line\.ch === 'party' \|\| line\.ch === 'guild'\) \? line\.ch : tab\.id, line\);/);
+  assert.match(w, /link\.onChat = \(line\) => \(tab\.room === SOCIAL_ROOM && \(line\.ch === 'party' \|\| line\.ch === 'guild'\) && receiveWaypointLine\(line\)\) \|\| chatLog\.push\(tab\.room === SOCIAL_ROOM && \(line\.ch === 'party' \|\| line\.ch === 'guild'\) \? line\.ch : tab\.id, line\);/);   // WAYPOINTS: a waypoint line is taken before the log
   assert.match(w, /link\.onRoll = \(line\) => chatLog\.push\(tab\.room === SOCIAL_ROOM && \(line\.ch === 'party' \|\| line\.ch === 'guild'\) \? line\.ch : tab\.id, line\);/);
   assert.match(w, /chatLog\.setShown\('guild', !!myGuildTag\(\)\);/);
   assert.match(w, /const myGuildTag = \(\) => socialLink\(\)\?\.gt \?\? null;/);

@@ -216,7 +216,7 @@ const SWEPT = {
   'R0C11Y26:S.03': 'delay',           // "_hooker_'s admirer apparently came calling before I did"
   'R0C11Y28:1stparton': 'delay',      // "I got to _bookstore_ too late" - the Slayer's quest is written for it
   'R0C11Y28:2ndparton': 'delay',
-  'N0B20Y02:S.12': 'delay',           // the trance ends
+  'N0B20Y02:S.12': 'deadline',        // GUARD-WINDOW (FIELD BUGS 2026-10-06c): NOT the trance's end - the guard itself, "I must guard %g2 for 3 hours": the attack comes inside it (ONLINE_DEADLINES, by hand)
   'K0C0XY01:S.06': 'delay',           // the rescued mercenary walks home ("I know my way home from here")
   'K0C30Y03:S.27': 'delay',           // the map and the letter handed over
   'S0000006:S.04': 'delay',           // Greklith's beasts after the robe

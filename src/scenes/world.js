@@ -355,6 +355,10 @@ import { keysHeading, axesToward, tvOwnGrow } from '../player/travelCamera.js'; 
 import { createTravelView, TV_MOVE_ACTIONS, TRAVEL_VIEW_TEXT, travelViewLine, travelTripLine, travelWalkRate, shipPassageRows } from './travelView.js';   // TV1: the travel view (bible/06-Systems/Travel-View.md) - the raised eye, its input and its ways out
 import { showTravelViewHud, hideTravelViewHud, updateTravelViewHud, travelViewHudPickAt, showTravelViewConfirm, hideTravelViewConfirm, travelViewConfirmOpen, setTravelViewArmsOf } from '../ui/travelViewHud.js';   // TV1: its readout; AUDIT HERALDRY H4: the tag's arms
 import { createBandSprites } from '../world/bandSprites.js';   // OW-FOES: the bands as their monsters, faded in near
+import { shownWaypoints, isWaypointFollowed, waypointById, mapPointToNative, nativeToMapPoint, receiveWaypointLine, setWaypointSender, syncWaypointGroups } from '../systems/mapWaypoints.js';   // WAYPOINTS: the flags on the Overworld, their wire on the hub's party and guild channels
+import { openWaypointMenu, waypointMenuOpen } from '../ui/waypointMenu.js';   // WAYPOINTS: the right-click menu
+import { onTravelPace, setPaceGround } from '../systems/travelPace.js';   // PACE-DIALS: a dial turned under a running journey; the road rule's ground
+import { showPaceBox, hidePaceBox } from '../ui/travelPaceControls.js';   // PACE-DIALS: the other skins' dials, while a journey runs
 import { markShown, travellerKin } from '../systems/travelViewFilters.js';   // OW-FILTER: a hidden group's sprites hidden with its marks
 import { travelPathMode, travelPathUsesRoads, pickTakesPlace, fineMoveHeld, TRAVEL_PATH_TEXT } from '../systems/travelPathMode.js';   // OW-PATH: roads or free, and the snap to a town
 import { groundHit, canvasPoint, classifyPick } from '../player/travelPick.js';   // TV2: the click's ground
@@ -2786,6 +2790,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let tvFind = { at: null, dg: -1, n: -1, list: [] };   // AUDIT OW5 D1: the find's own, uncapped (above its readers: BOOT-TDZ - a load empties it)
   const _tvBountyHold = new Map();   // BOUNTY-OVERWORLD: each held bounty's kept scene point, by bounty id
   const _tvVendorHold = {};   // HOME-VENDOR: the trader's waypoint's kept scene point (tvSceneKept's holder)
+  const _tvWaypointHold = new Map();   // WAYPOINTS: each flag's kept scene point (tvSceneKept's holders), by its id
   const _tvPartyHold = new Map();   // AUDIT OW5 P6: each party member's kept scene point (PERF-TV's own holder), by account
   const TV_FIND_REACH = 4;   // AUDIT OW5 D1: map pixels about the traveller's that a kilometre from the feet can reach
   let tvBandSeen = { at: null, life: -1, list: [] };   // TV7: the bands about the traveller, this life's (above its readers: BOOT-TDZ)
@@ -15012,6 +15017,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // join or leave - both skins read it on their own refresh. The
       // host says WHERE and WHO; neither map is told what a party is.
       party: () => partyMarkers(),
+      waypointCtx: () => waypointCtx(),   // WAYPOINTS: who I am on a shared waypoint, and which kinds I can share
       travellers: () => travellerBook.live(Date.now()).filter((t) => !social?.inMyParty(social.accountOfPeer(t.id))).map((t) => ({ id: t.id, name: t.name, ...t.p, ship: isShipMark(t.p), kin: travellerKin({ friend: !!social?.isFriendPeer(t.id), gt: t.gt }, myGuildTag()), lv: t.lv ?? null })),   // OW-KIN / OW-WHO: who they are to me, and their Renown   // OWS1: one at sea drawn as a ship   // TV3: the region's travellers, as the view draws them - AUDIT DEEP T3-9: bar my party, whom the map already rings as theirs
       // WB1: THE OBLIVION GATE'S RING - a function for the party's reason (the countdown moves while the map stands
       // open); null offline and while no gate is marked, and both maps draw nothing
@@ -18370,6 +18376,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   const guildGone = () => { guildBook?.refresh(); };
   /** GUILD1c: my guild's tag as the hub knows it - the Guild tab's word on whether I am in one. */
   const myGuildTag = () => socialLink()?.gt ?? null;
+  /** WAYPOINTS (2026-10-06): who I am on a waypoint I share, and which kinds I can share now - a party's while I stand in
+   *  one, a guild's while I wear a guild's tag (both maps' right-click menu asks). */
+  function waypointCtx() {
+    return {
+      by: online?.name ?? playerEntity?.name ?? '',
+      canKind: { party: (social?.party?.members?.length ?? 0) > 1, guild: !!myGuildTag() },
+    };
+  }
+  // WAYPOINTS: a shared waypoint rides the hub's own party and guild channels (CHAT-CHAN, GUILD1c) - asked at the moment
+  // of the send, so a hub link made or remade later is the one that carries it
+  setWaypointSender((ch, text) => socialLink()?.sendChat(text, { ch }) ?? false);
   /** GUILD1c: the Guild tab on a relay from before the guild's channel - the World link's welcome said so. */
   const guildOld = () => { const world = chatLinks?.get('world'); return world?.status === 'open' && !world.guildOk; };
   /** SOC3 (Mac: "invite friends or other individuals"): what a click on a chat ROSTER ROW offers for that peer. The
@@ -19274,7 +19291,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (const tab of chatLog.tabs) {
       if (!tab.link) continue;   // CHAT-CHAN: the Party and Local tabs ride the hub's link and the presence session's room
       const link = new OnlineSession({ url: online.url, name: online.name, look: online.look, id: online.id, secret: online.secret, presence: false });
-      link.onChat = (line) => chatLog.push(tab.room === SOCIAL_ROOM && (line.ch === 'party' || line.ch === 'guild') ? line.ch : tab.id, line);   // CHAT-CHAN: the hub's party lines to the Party tab - by the relay's own routing word, heard only on the hub; GUILD1c: and a guild's to the Guild tab
+      link.onChat = (line) => (tab.room === SOCIAL_ROOM && (line.ch === 'party' || line.ch === 'guild') && receiveWaypointLine(line)) || chatLog.push(tab.room === SOCIAL_ROOM && (line.ch === 'party' || line.ch === 'guild') ? line.ch : tab.id, line);   // CHAT-CHAN: the hub's party lines to the Party tab - by the relay's own routing word, heard only on the hub; GUILD1c: and a guild's to the Guild tab; WAYPOINTS: a party's or a guild's waypoint line is the maps', never a line of chat
       link.onRoll = (line) => chatLog.push(tab.room === SOCIAL_ROOM && (line.ch === 'party' || line.ch === 'guild') ? line.ch : tab.id, line);   // DICE1: a roll lands where a line would
       // RED1: the SERVER's own line, and it lands on the log with the
       // flag set HERE - from the frame type the relay used, never from
@@ -25991,6 +26008,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     _tvAttack = null;   // OW-ATTACK: a journey elsewhere lets the attack go
     // AUDIT DEEP2 B-1: the journey's own flag - its place again, from where the traveller stands (a stop's resume)
     if (key.startsWith('bounty:')) { travelViewBountyWalk(key.slice(7)); return; }   // BOUNTY-SNAP: a bounty's ring - a walk to its hunt
+    if (key.startsWith('wp:')) { travelViewWaypointWalk(key.slice(3)); return; }   // WAYPOINTS: a flag - a walk to it
     if (key === 'dest') { const summary = tvTripLive() ? tvTrip.plan?.summary : null; if (summary && travelViewCanGo()) travelViewRouteTo(summary); return; }
     if (key.startsWith('spawn:')) { travelViewSpawnWalk(key); return; }   // AUDIT OW3 D1: a spawn's plate - a walk to its door
     const plate = tvPlates.list.find((p) => p.key === key) ?? tvFar.list.find((p) => p.key === key) ?? tvDng.list.find((p) => p.key === key && p.summary);   // TV5: a far place's plate is the same journey
@@ -26134,6 +26152,46 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       return travelViewWalkTo([house[0] + (feet[0] - house[0]) * k, house[1], house[2] + (feet[2] - house[2]) * k], pix);
     }
     return travelViewWalkTo(tvSceneOf(s.x, s.z, 0), pix);
+  }
+  /** WAYPOINTS: a walk to a waypoint's point (a flag's click, a followed row's Go, the menu's Travel here). */
+  function travelViewWaypointWalk(id) {
+    const w = waypointById(id);
+    if (!w || !travelView?.active || !travelViewCanGo()) return false;
+    const n = mapPointToNative(w.mx, w.my);
+    return travelViewWalkTo(tvSceneOf(n.x, n.z, 0), worldCoordToMapPixel(n.x, n.z));
+  }
+  /** WAYPOINTS: each followed waypoint's distance, in the far places' own words - the block's followed list. */
+  function travelViewFollowDist() {
+    const here = state.worldCoords(player.pos), out = {};
+    for (const w of shownWaypoints()) {
+      if (!isWaypointFollowed(w.id)) continue;
+      const n = mapPointToNative(w.mx, w.my);
+      out[w.id] = farDistanceText((Math.hypot(n.x - here.x, n.z - here.z) / 32768) * PIXEL_KM);
+    }
+    return out;
+  }
+  /**
+   * WAYPOINTS (2026-10-06, the player: "with right mouseclick context menu"): A RIGHT CLICK ON THE OVERWORLD. On a flag,
+   * that waypoint's menu (rename, colour, follow, travel, share, remove); on the land, the menu that adds one there - the
+   * ground under the pointer by the pick's own ray. Any other mark's right click is the land under it.
+   */
+  function onTravelViewContext(clientX, clientY, key) {
+    if (travelViewConfirmOpen()) { hideTravelViewConfirm(false); return; }
+    const ctx = waypointCtx();
+    const say = (t) => { if (t) tvSay(t, 4); };
+    if (key?.startsWith('wp:') && waypointById(key.slice(3))) {
+      openWaypointMenu({ x: clientX, y: clientY, id: key.slice(3), by: ctx.by, canKind: ctx.canKind, onNote: say, owner: 'overworld',
+        onTravel: (w) => travelViewWaypointWalk(w.id) });
+      return;
+    }
+    if (!travelView?.eye || !_lastProj || !_lastView) return;
+    const [sx, sy] = canvasPoint(clientX, clientY, canvas.getBoundingClientRect());
+    const dir = rayDirFromScreen(sx, sy, canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, travelView.eye, worldViewportRect(canvas.clientWidth, canvas.clientHeight));
+    if (!dir) return;
+    const hit = groundHit(travelView.eye, dir, (x, z) => heightAt(x, z));
+    if (!hit.point) { tvSay(TRAVEL_VIEW_TEXT.far); return; }
+    const n = state.worldCoords(hit.point);
+    openWaypointMenu({ x: clientX, y: clientY, point: nativeToMapPoint(n.x, n.z), by: ctx.by, canKind: ctx.canKind, onNote: say, owner: 'overworld' });
   }
   function travelViewSpawnWalk(key) {
     const g = travelViewDungeons().find((p) => p.key === key && p.found);
@@ -26531,6 +26589,23 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const km = (Math.hypot(x - here.x, z - here.z) / 32768) * PIXEL_KM;
         marks.push({ key: `vendor:${wp.map}:${wp.buildingKey}`, at: tvSceneKept(_tvVendorHold, x, z, TV_PLACE_LIFT), label: `Trader: ${wp.owner || 'a'}'s house`, sub: `${t.name} · ${farDistanceText(km)}`, kind: 'target', edge: true });
       }
+    }
+    // WAYPOINTS (2026-10-06): THE FLAGS - every waypoint the switches show, a small flag in its colour where it lies; a
+    // FOLLOWED one held at the screen's edge with its distance, as a bounty is (the rest only where they are in view).
+    // A click on one is a walk to it; a right-click its menu (onTravelViewContext)
+    {
+      const keep = new Set();
+      for (const w of shownWaypoints()) {
+        const n = mapPointToNative(w.mx, w.my);
+        let h = _tvWaypointHold.get(w.id);
+        if (!h) { h = {}; _tvWaypointHold.set(w.id, h); }
+        keep.add(w.id);
+        const followed = isWaypointFollowed(w.id);
+        const km = (Math.hypot(n.x - here.x, n.z - here.z) / 32768) * PIXEL_KM;
+        marks.push({ key: `wp:${w.id}`, at: tvSceneKept(h, n.x, n.z, 0), label: w.name, ...(followed ? { sub: farDistanceText(km) } : {}),
+          kind: `waypoint ${w.kind}`, color: w.color, wpKind: w.kind, followed, edge: followed, pick: true });
+      }
+      for (const id of [..._tvWaypointHold.keys()]) if (!keep.has(id)) _tvWaypointHold.delete(id);
     }
     // AUDIT DEEP2 B-1: THE JOURNEY'S END IS NEVER OFF THE SCREEN UNSEEN - held at the edge as a far place is (a far town's
     // plate gave way to a flag drawn above the picture, and the destination was gone for the whole journey), a place's
@@ -27031,7 +27106,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     openMap: () => toggleTravelMap(),   // OW-BLOCK: the Overworld block's Map, journey or none
     onLower: (why) => { if ((why === 'button' || why === 'escape' || why === 'key') && travelOptions?.isTravelActive && tvOwnsJourneys()) travelOptions.messages.pauseTravel(); },
     windowUp: () => gamePaused() || (modes?.modalWindowUp?.() ?? false),
-    overlayUp: () => overlayOpen() || travelViewConfirmOpen(),   // AUDIT DEEP2 A3: an enhanced overlay (the Tab dial) has the keys while it is up; OW-CONFIRM: and the view's own question
+    overlayUp: () => overlayOpen() || travelViewConfirmOpen() || waypointMenuOpen(),   // AUDIT DEEP2 A3: an enhanced overlay (the Tab dial) has the keys while it is up; OW-CONFIRM: and the view's own question; WAYPOINTS: and its right-click menu (Escape is the menu's own)
     danger: () => duelEnemyNear() || areEnemiesNearby(wildSeen(exteriorFoePool())),   // the travel map's own refusal, and the Travel Options journey's stop (AUDIT DEEP2 A9/B-4: a live duel too, DUEL1's); WILD-ALERT: never a foe that has not noticed a fast traveller
     actionsOf: (e) => actionsOf(e, keys),
     movementHeld: () => TV_MOVE_ACTIONS.some((a) => held(keys, a)),
@@ -27047,6 +27122,9 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     alive: () => frameAlive(_frameToken),   // the heartbeat's question: a loop a later boot killed is left quietly
     onPick: (x, y, e) => onTravelViewPick(x, y, e),   // TV2; OW-PATH: the event, for the fine-move key
     onMark: (key, e) => onTravelViewMark(key, e),   // OW-ATTACK: the press, for an enemy's single click
+    onContext: (x, y, key) => onTravelViewContext(x, y, key),   // WAYPOINTS: the right click's menu
+    onWaypointGo: (id) => travelViewWaypointWalk(id),   // WAYPOINTS: a followed row's Go
+    followDist: () => travelViewFollowDist(),   // WAYPOINTS: the followed rows' distances
     marks: travelViewMarks,
     route: travelViewRoute,
     trip: () => (tvWalking ? TRAVEL_VIEW_TEXT.travelling(tvWalking, tvHeld) : tvTripLive() ? tvTrip.line : ''),   // TV-WASD: the keys' travel says its speed - AUDIT OW5 G3: first, as it runs only with no journey driving (a stopped route kept for the Resume read "To X, by the road" over it)
@@ -27059,6 +27137,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   });
   const lookGate = makeLookGate(canvas);
   _worldKeysLive = true;   // KEY-BOOT: past the boot's last await - every binding the key ladder reads stands now
+  // PACE-DIALS (2026-10-06): a dial turned while a journey runs - its ground's rate asked of the clock again at once (the
+  // governor still holds it under, as ever); a loop a later boot killed stops hearing (its token is the claim below,
+  // read when a dial turns - as the travel view's `alive` reads it)
+  const _stopPace = onTravelPace(() => { if (!frameAlive(_frameToken)) { _stopPace(); return; } travelOptions?.reapplyRate?.(); });
   const _frameToken = claimFrame();   // P0: this session owns the loop until someone claims after it
   status(null);   // FB0930-TITLE: the boot is done - the window loses its last loading step
   function frame(now) {
@@ -29877,7 +29959,17 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       deps: travelJunctionMap.deps,
     } : { on: false };
     if (travelControlUI?.isShowing) travelControlUI.tick(dt);   // :165-179 - the message's clock is Time.unscaledTime, which this dt is
+    // PACE-DIALS (2026-10-06, the player: "100x should be only setable when on a road and it has to go to 60 instantly
+    // again when leaving the road"): THE ROAD RULE'S GROUND, every frame a journey or the Overworld runs - the journey's
+    // own word (its leg, its lane), or the feet's under the view; leaving a road takes a dial at x100 to x60 at once
+    // (systems/travelPace.js), whichever skin is worn, online or off
+    // GROUP-LEAVE (2026-10-06): the party and guild I stand in, told to the waypoints while the hub is open - leaving one
+    // (or being removed, or joining another) takes its waypoints off both maps; a dropped link removes nothing
+    if (socialLink()?.status === 'open' && social) syncWaypointGroups({ party: social.party?.id ?? null, guild: myGuildTag() });
+    if (travelControlUI?.isShowing) setPaceGround(!!travelControlUI.onRoad);
+    else if (travelView?.state === 'up') setPaceGround(travellerOnRoad());
     if (isEnhanced() && typeof document !== 'undefined') {
+      hidePaceBox();   // PACE-DIALS: the enhanced skins carry their own dials (the journey bar, the Overworld's block)
       if (travelControlUI?.isShowing || _junctionUp) {
         drawEnhancedTravelControl({
           showing: !!travelControlUI?.isShowing,
@@ -29903,6 +29995,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         });
       } else hideEnhancedTravelControl();
     } else {
+      // PACE-DIALS: every other skin - the dials' own box while a journey runs, under the same rule
+      if (travelControlUI?.isShowing && typeof document !== 'undefined') showPaceBox(); else hidePaceBox();
       if (travelControlUI?.isShowing) travelControlUI.draw(renderer, canvas, townTalk.font);
       if (travelJunctionMap) {
         travelJunctionMap.enabled = _junctionUp;

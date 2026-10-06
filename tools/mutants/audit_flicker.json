@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-FLICKER-R4-one-edge-only",
     "file": "src/render/renderer.js",
-    "old": "    if (this._everyLightNow !== this._everyLightPrev) sp.discard();",
-    "new": "    if (this._everyLightNow && !this._everyLightPrev) sp.discard();",
+    "old": "    const cut = this._everyLightNow !== this._everyLightPrev;",
+    "new": "    const cut = this._everyLightNow && !this._everyLightPrev;",
     "tests": [
       "test/audit_flicker.test.js",
       "test/la_post.test.js"

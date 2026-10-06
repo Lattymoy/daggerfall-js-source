@@ -407,6 +407,7 @@ export function createTownSheet(deps = {}) {
     tick() { /* the plates are rebuilt off the view, on demand */ },
     mount() { /* the town claims none of the world map's chrome */ },
     unmount() { },
+    context() { return false; },   // WAYPOINTS: a waypoint is the bay's - a street takes none
 
     /** At rest the whole town is on the sheet, centred on the player. */
     homeView(limits) {
