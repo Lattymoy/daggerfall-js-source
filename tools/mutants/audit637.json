@@ -1,0 +1,112 @@
+[
+  {
+    "name": "AUDIT637-C1a-the-place-compared-with-shown-again",
+    "file": "src/net/online.js",
+    "old": "      const was = p.drawn, s = poseAlong(p.path, p.cur);",
+    "new": "      const was = p.shown, s = poseAlong(p.path, p.cur);",
+    "tests": [
+      "test/audit637_runinplace.test.js",
+      "test/runinplace.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-C1b-the-drawn-place-never-recorded",
+    "file": "src/net/online.js",
+    "old": "      p.shown = p.drawn = s;",
+    "new": "      p.shown = s;",
+    "tests": [
+      "test/audit637_runinplace.test.js",
+      "test/runinplace.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-C3a-the-edge-one-frame-late",
+    "file": "src/net/online.js",
+    "old": "now - p.drawnAt >= SHOWN_MOVE_HOLD_MS) s.mv = 0;",
+    "new": "now - p.drawnAt > SHOWN_MOVE_HOLD_MS) s.mv = 0;",
+    "tests": [
+      "test/audit637_runinplace.test.js",
+      "test/runinplace.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-C3b-the-hold-halved-at-its-use",
+    "file": "src/net/online.js",
+    "old": "now - p.drawnAt >= SHOWN_MOVE_HOLD_MS) s.mv = 0;",
+    "new": "now - p.drawnAt >= SHOWN_MOVE_HOLD_MS / 2) s.mv = 0;",
+    "tests": [
+      "test/audit637_runinplace.test.js",
+      "test/runinplace.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-C3c-only-a-walker-stood",
+    "file": "src/net/online.js",
+    "old": "      else if (s.mv && now - p.drawnAt",
+    "new": "      else if (s.mv === 1 && now - p.drawnAt",
+    "tests": [
+      "test/audit637_runinplace.test.js",
+      "test/runinplace.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-C3d-z-not-read",
+    "file": "src/net/online.js",
+    "old": " || s.y !== was.y || s.z !== was.z) p.drawnAt = now;",
+    "new": " || s.y !== was.y) p.drawnAt = now;",
+    "tests": [
+      "test/audit637_runinplace.test.js",
+      "test/runinplace.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-C3e-y-not-read",
+    "file": "src/net/online.js",
+    "old": " || s.y !== was.y || s.z !== was.z) p.drawnAt = now;",
+    "new": " || s.z !== was.z) p.drawnAt = now;",
+    "tests": [
+      "test/audit637_runinplace.test.js",
+      "test/runinplace.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-C3f-the-first-frame-read-off-a-place-not-there",
+    "file": "src/net/online.js",
+    "old": "      if (!was || s.x !== was.x",
+    "new": "      if (s.x !== was.x",
+    "tests": [
+      "test/audit637_runinplace.test.js",
+      "test/runinplace.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-C2a-the-timed-interval-clamped-again",
+    "file": "src/net/online.js",
+    "old": "      p.cadence.push(dt);   // AUDIT 637 C2",
+    "new": "      p.cadence.push(Math.min(GAP_MAX_MS, dt));   // AUDIT 637 C2",
+    "tests": [
+      "test/audit637_runinplace.test.js",
+      "test/runinplace.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-C2b-the-own-interval-not-walked-whole",
+    "file": "src/net/online.js",
+    "old": "    const longest = wasMoving ? Math.max(GAP_MAX_MS, cadence) : cadence;",
+    "new": "    const longest = wasMoving ? GAP_MAX_MS : cadence;",
+    "tests": [
+      "test/audit637_runinplace.test.js",
+      "test/runinplace.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-C2c-every-moving-interval-walked-whole",
+    "file": "src/net/online.js",
+    "old": "    const longest = wasMoving ? Math.max(GAP_MAX_MS, cadence) : cadence;",
+    "new": "    const longest = wasMoving ? Infinity : cadence;",
+    "tests": [
+      "test/audit637_runinplace.test.js",
+      "test/runinplace.test.js"
+    ]
+  }
+]

@@ -95,7 +95,7 @@ test(`RUN-IN-PLACE untimed (NET-SMOOTH): ${GAP}`, () => quiet(() => shortGapKeep
 
 test('RUN-IN-PLACE: one home - the drawn pose the play-out makes is the one every on-foot body and the footsteps stride off (peerMoving reads its `mv`), and the hold is the sender\'s own; a body standing in its peer\'s silence is still drawn until PEER_TIMEOUT_MS, as before', () => {
   const src = readFileSync(new URL('../src/net/online.js', import.meta.url), 'utf8');
-  assert.match(src, /const was = p\.shown, s = poseAlong\(p\.path, p\.cur\);/, 'the drawn pose is made in tick');
+  assert.match(src, /const was = p\.drawn, s = poseAlong\(p\.path, p\.cur\);/, 'the drawn pose is made in tick (AUDIT 637 C1: against the place the law last drew)');
   const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
   assert.equal(Number(/const ONLINE_MOVE_HOLD_MS = (\d+);/.exec(world)?.[1]), SHOWN_MOVE_HOLD_MS, 'the sender\'s hold and the watcher\'s are one length');
   const climb = readFileSync(new URL('../src/net/peerClimb.js', import.meta.url), 'utf8');
