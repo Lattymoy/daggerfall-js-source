@@ -113,6 +113,7 @@ import { QUEST_MARK_CSS } from './questMarks.js'; import { nodeMarkCss } from '.
 import { WAY_MARK_CSS, WAY_BODY_CSS } from '../systems/wayOut.js';   // WAYOUT1: the way out's mark
 import { BOAT_GLYPH_URL } from './boatMarks.js';   // BOAT-MARK: my boats on the strip, a sail over a hull
 import { SERPENT_RING_MAP_CSS } from './serpentMapMark.js';   // SERPENT1: the sea serpent on the strip, in its ring's green
+import { SD_RING_MAP_CSS } from './sdMapMark.js';   // SD2c: the Super dungeon on the strip, in its ring's brass
 
 /**
  * PX30c (Mac: "is there anyway I can adjust the sizing?"): THE HUD'S
@@ -283,6 +284,26 @@ function drawSerpentMark(sp, playerXZ, heading01) {
   if (!sp || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
   if (node.style.display === 'none') node.style.display = '';
   const at = Math.min(1, Math.max(0, compassMarkerLerp(sp, playerXZ, heading01)));
+  const l = `${(at * 100).toFixed(1)}%`;
+  if (node.style.left !== l) node.style.left = l;
+}
+
+// SD2c: THE SUPER DUNGEON'S MARK - a found Hollow's door, a round mark in its ring's brass (ui/sdMapMark.js) - a place, not
+// the gate's or the serpent's diamond - while the player stands within SD_COMPASS_M of it outside (scenes/world.js
+// sdCompassMark); the gate's bearing law, hidden never removed.
+const sdMarkCss = () => 'position:absolute;top:50%;width:9px;height:9px;margin:-5px 0 0 -5px;border-radius:50%;box-sizing:border-box;'
+  + `border:2px solid ${SD_RING_MAP_CSS};background:rgba(10,12,17,0.65);box-shadow:0 0 6px 2px rgba(232,178,74,0.7);pointer-events:none`;
+function drawSdMark(sd, playerXZ, heading01) {
+  if (!parts.sdMark) {
+    const node = el('i', 'hud-sd');
+    node.style.cssText = sdMarkCss();
+    parts.compass.append(node);
+    parts.sdMark = node;
+  }
+  const node = parts.sdMark;
+  if (!sd || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }
+  if (node.style.display === 'none') node.style.display = '';
+  const at = Math.min(1, Math.max(0, compassMarkerLerp(sd, playerXZ, heading01)));
   const l = `${(at * 100).toFixed(1)}%`;
   if (node.style.left !== l) node.style.left = l;
 }
@@ -854,7 +875,7 @@ function build(doc) {
   cells.main.cell.addEventListener('pointerdown', tap(() => { liveOpts.quickSwitchHand?.(); }));
 
   doc.body.append(root);
-  return { root, bottom, compass, marks, detectMarks: [], partyMarks: [], shipMarks: [], nodeMarks: [], boatMarks: [], gateMark: null, serpentMark: null, questMark: null, wayOutMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, foePoise, foePoiseFill, foePoiseWord, magicka, health, fatigue,
+  return { root, bottom, compass, marks, detectMarks: [], partyMarks: [], shipMarks: [], nodeMarks: [], boatMarks: [], gateMark: null, serpentMark: null, sdMark: null, questMark: null, wayOutMark: null, foe, foeName, foeFill, foeGhost, foeChunks, foeBladeFull, foePoise, foePoiseFill, foePoiseWord, magicka, health, fatigue,
     stat, quickCap: cap, quickDiamond: diamond, top,   // UI3: the status widget, the caption it stands on, the diamond it may stand beside and the top block over it (its band is measured from them)
     renown, renownBox, renownFill, renownGhost, renownNum,
     breath, breathFill, grip, gripFill, readied, reticle, cross, centreWord, cornerWord,
@@ -999,6 +1020,7 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
   drawDetectMarkers(opts.detected ?? null, opts.playerXZ ?? null, heading01);
   drawGateMark(opts.gate ?? null, opts.playerXZ ?? null, heading01);   // WB1
   drawSerpentMark(opts.serpent ?? null, opts.playerXZ ?? null, heading01);   // SERPENT1
+  drawSdMark(opts.sd ?? null, opts.playerXZ ?? null, heading01);   // SD2c
   drawQuestMark(opts.quest ?? null, opts.playerXZ ?? null, heading01);   // GUIDE5
   drawWayOutMark(opts.wayOut ?? null, opts.playerXZ ?? null, heading01);   // WAYOUT1
   drawPartyMarks(opts.party ?? null, opts.playerXZ ?? null, heading01);   // COMPASS-PARTY

@@ -425,11 +425,12 @@
   {
     "name": "SERPENT2-timers-kind-missing",
     "file": "src/ui/enhancedTimers.js",
-    "old": "['gate', 'serpent', 'raid', 'battle', 'seat', 'reset']",
-    "new": "['gate', 'raid', 'battle', 'seat', 'reset']",
+    "old": "['gate', 'serpent', 'super', 'raid', 'battle', 'seat', 'reset']",
+    "new": "['gate', 'super', 'raid', 'battle', 'seat', 'reset']",
     "tests": [
       "test/serpent2_herald.test.js"
-    ]
+    ],
+    "note": "SD2c (re-aimed by content): the Super dungeon's kind stands after the serpent's."
   },
   {
     "name": "SERPENT2-timers-colour-missing",

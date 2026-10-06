@@ -40,6 +40,7 @@ import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the Plus shee
 import { pageHas } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { paceControlsCss } from './travelPaceControls.js';   // PACE-DIALS: the Overworld block's speed dials
 import { SERPENT_RING_MAP_CSS } from './serpentMapMark.js';   // SERPENT-TIMERS: the sea serpent's row marked in its waters' own colour
+import { SD_RING_MAP_CSS } from './sdMapMark.js';   // SD2c: the Super dungeon's row in its omen's brass
 import { SUPPORT_MARKS_CSS } from './supportAsks.js';   // SUPPORT1: the asks' marks - the door's icons and the website's corner, one drawing
 
 /**
@@ -2417,7 +2418,7 @@ ${SUPPORT_MARKS_CSS}
 .px-timerswin .tm-row { display: flex; align-items: center; gap: 12px; padding: 9px 10px 9px 14px; position: relative;
   border-bottom: 1px solid rgba(125,116,96,0.25); }
 .px-timerswin .tm-row::before { content: '\\25c6'; position: absolute; left: 0; top: 12px; font-size: 9px; color: var(--tm-kind, #9c937d); }
-.px-timerswin .tm-gate { --tm-kind: #e2554c; } .px-timerswin .tm-serpent { --tm-kind: ${SERPENT_RING_MAP_CSS}; } .px-timerswin .tm-raid { --tm-kind: #f2c46b; } .px-timerswin .tm-battle { --tm-kind: #d98074; }
+.px-timerswin .tm-gate { --tm-kind: #e2554c; } .px-timerswin .tm-serpent { --tm-kind: ${SERPENT_RING_MAP_CSS}; } .px-timerswin .tm-super { --tm-kind: ${SD_RING_MAP_CSS}; } .px-timerswin .tm-raid { --tm-kind: #f2c46b; } .px-timerswin .tm-battle { --tm-kind: #d98074; }
 .px-timerswin .tm-seat { --tm-kind: #c08a3e; } .px-timerswin .tm-reset { --tm-kind: #85a8a1; }
 .px-timerswin .tm-row.live { background: rgba(192,138,62,0.08); }
 .px-timerswin .tm-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }

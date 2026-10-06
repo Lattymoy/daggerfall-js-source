@@ -16,6 +16,7 @@
 import { sdPhase, sdStands, sdFoundLine, sdFellLine, sdFadeLine, SD_FOUND_NEAR_M, SD_FOUND_RESEND_MS } from '../net/sdLaw.js';
 import { findSdSite, pickSdTemplate, sdHollowLocation } from '../systems/sdSite.js';
 import { worldRoom } from '../net/wire.js';
+import { sdMapMark, sdOmenLight, sdRumor } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of
 
 /** A line the scan has not been able to place yet is said with the region's name after this long, never lost. */
 export const SD_LINE_WAIT_MS = 30_000;
@@ -128,5 +129,16 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
     isHollow: (loc) => !!loc?.superTier && Number.isSafeInteger(loc?.sdSlot),
     /** The phase of the record now (relay clock). */
     phase: () => sdPhase(rec, now()),
+    /** SD2c: the held map's ring while the Hollow is news - found, or collapsing after the kill (systems/sdOmen.js
+     *  sdMapMark) - or null: a Hollow that has only risen is a find. */
+    mapMark: () => sdMapMark(rec, stood && memo && memo.s === stood.s ? memo : null, now()),
+    /** SD2c: the omen's column over the Hollow standing now - `{ hollow, light }`, its light 0..1 (sdOmenLight) - or null. */
+    omen() {
+      const h = stood && memo && memo.s === stood.s && rec?.s === stood.s ? memo : null;
+      const light = h ? sdOmenLight(rec, now()) : 0;
+      return light > 0 ? { hollow: h, light } : null;
+    },
+    /** SD2c: "Any news?" asked at `here` (my map pixel) - the taverns' word of the Hollow in its city, or null (sdRumor). */
+    rumor: (here, session, o) => sdRumor(rec, stood && memo && memo.s === stood.s ? memo : null, now(), here, session, o),
   };
 }

@@ -945,11 +945,12 @@
   {
     "name": "PROF5-host-no-market",
     "file": "src/scenes/world.js",
-    "old": "      gate: () => noticeGateCard(), answer: (note) => answerNote(note), work, market,\n",
-    "new": "      gate: () => noticeGateCard(), answer: (note) => answerNote(note), work,\n",
+    "old": "      gate: () => noticeGateCard(), sd: () => noticeSdCard(), answer: (note) => answerNote(note), work, market,\n",
+    "new": "      gate: () => noticeGateCard(), sd: () => noticeSdCard(), answer: (note) => answerNote(note), work,\n",
     "tests": [
       "test/prof5_client.test.js"
-    ]
+    ],
+    "note": "SD2c (re-aimed by content): a found Super dungeon's note stands beside the gate's on the line."
   },
   {
     "name": "PROF5-host-worn-listed",

@@ -598,3 +598,44 @@ the hubs'); `test/ow6_ledger.test.js`'s lifted ledger block is handed the index 
 MOVED); `tools/citeShift.mjs` moved world.js's cites a slice down (173), CD4's gated struck cites by hand (8), and
 `tools/mutants/survtiers3.json`'s two cite records re-aimed by content.
 Next: the omen, the marks and the Timers row (SD2c); a save inside a Hollow and the cast-out at its end (SD2d).
+
+### SD2c - shipped 2026-10-06 (the Hollow seen and heard of)
+
+Section 4, whole but the sighting line (TIER1's, which a Hollow already takes as a spawned dungeon). `systems/sdOmen.js`,
+pure over the hub's record and the Hollow the host stood, the relay's clock handed:
+
+- **The omen.** A column of brass-gold light over the Hollow's pixel from its rise to its end (`sdOmenLight`: kindled over
+  SD_OMEN_KINDLE_MS from the record's `at`, whole while it stands, out over SD_OMEN_FADE_MS before it is gone - `until`
+  unbeaten, `fellAt + SD_COLLAPSE_MS` after the kill), seen from SD_OMEN_PX (12) map pixels round, Chebyshev
+  (`sdOmenSeen`), outside alone. `render/sdOmenPass.js` draws it: the gate's beacon - its shaders and its column, which
+  `render/gatePass.js` exports - built again under its own program in its own colour (SD_OMEN_COLOR, brass, never the
+  gate's red), so the gate's module is untouched (SERPENT1's rule). Its foot is the built ground under the Hollow's
+  centre, or on a pixel not built yet the terrain sampler's own kernel there (GATE-SEEN's law, its own memo).
+- **The taverns.** "Any news?" asked in the city it stands by (the player's pixel the city's, `sdSite.js pixelOfLoc` -
+  exported for it), while it has risen or been found, one time in SD_RUMOR_CHANCE: *"They say the air goes
+  brass-coloured past the walls of <city> at dusk, and a bell rings where there is no bell."* (`sdRumor`) - the person's
+  one answer spent as the mill's own and the revenant's are, asked before both (the world host's getNewsOrRumors).
+- **Once found, news.** The held map's ring on its own pixel (`sdMapMark`, SD_RING_R - a place now, not an area; the
+  gate's mark's shape, read by `ui/gateMapMark.js readGateMark` and painted by `ui/inkMap.js paintGateRing` in
+  `ui/sdMapMark.js`'s brass, its legend "Super Dungeon", its card its name, its city, its finder and its state); the
+  compass's round brass mark inside SD_COMPASS_M (1 km) of its centre, outside (`ui/enhancedHud.js drawSdMark`); the
+  Timers window's `super` row - "<name> stands", counting to its fading, then "<name> collapses" to the collapse's end
+  (`systems/eventTimers.js`; none while it has only risen); and the notice boards' note under the red seal after the
+  gate's (`sdNoticeCard`, `ui/noticeWindow.js noticeCards`'s `sd`). None of these before it is found: a Hollow that
+  has only risen is a find.
+
+`scenes/sdHost.js` reads them (`mapMark`, `omen`, `rumor`) off the record it heard and the Hollow it stood, so a ring
+or a column never names a Hollow that is not standing.
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the held map's `sd`, the Timers source's `sd`, the board's `sd`, the compass's
+`sd`, the taverns, the column after the gate's fire); `scenes/worldModes.js` FLAGGED - indoors there is no sky to see a
+column in, and the taverns' word rides the world host's own talk seam, which the interiors' talk already is;
+`scenes/dungeonContext.js` FLAGGED - underground there is no sky and no compass of the Bay's; `scenes/exterior.js`
+FLAGGED - the `?exterior` bench is offline, and offline there is no Super dungeon.
+
+Pins: `test/sd2c_omen.test.js` (9); `tools/mutants/sd2c.json` (25, all dead). PINS MOVED: `test/serpent2_herald.test.js`'s
+Timers label (the Super dungeon's row beside the serpent's) and `test/audit18_bible_docs.test.js`'s foreign-pass count
+(twenty-seven call sites across twenty passes, the omen's after the rite's smoke); Rendering.md lists `sdOmenPass.js`,
+UI.md counts `sdMapMark.js`, Systems.md `sdOmen.js`.
+
+Next: a save inside a Hollow and the cast-out at its end (SD2d).

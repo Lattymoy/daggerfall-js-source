@@ -1,0 +1,227 @@
+[
+  {
+    "name": "SD2C-lit-at-once",
+    "file": "src/systems/sdOmen.js",
+    "old": "  return Math.min(clamp01((now - rec.at) / SD_OMEN_KINDLE_MS), clamp01((end - now) / SD_OMEN_FADE_MS));",
+    "new": "  return clamp01((end - now) / SD_OMEN_FADE_MS);",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-never-out",
+    "file": "src/systems/sdOmen.js",
+    "old": "  return Math.min(clamp01((now - rec.at) / SD_OMEN_KINDLE_MS), clamp01((end - now) / SD_OMEN_FADE_MS));",
+    "new": "  return clamp01((now - rec.at) / SD_OMEN_KINDLE_MS);",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-out-at-the-kill",
+    "file": "src/systems/sdOmen.js",
+    "old": "  const end = rec.fellAt != null ? rec.fellAt + SD_COLLAPSE_MS : rec.until;",
+    "new": "  const end = rec.fellAt != null ? rec.fellAt : rec.until;",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-the-collapse-forgotten",
+    "file": "src/systems/sdOmen.js",
+    "old": "  const end = rec.fellAt != null ? rec.fellAt + SD_COLLAPSE_MS : rec.until;",
+    "new": "  const end = rec.until;",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-a-euclid-ring",
+    "file": "src/systems/sdOmen.js",
+    "old": "Math.max(Math.abs(x - site.px), Math.abs(y - site.py)) <= SD_OMEN_PX;",
+    "new": "Math.hypot(x - site.px, y - site.py) <= SD_OMEN_PX;",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-one-axis-read",
+    "file": "src/systems/sdOmen.js",
+    "old": "Math.max(Math.abs(x - site.px), Math.abs(y - site.py)) <= SD_OMEN_PX;",
+    "new": "Math.abs(x - site.px) <= SD_OMEN_PX;",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-rung-while-risen",
+    "file": "src/systems/sdOmen.js",
+    "old": "  if (!rec || !sdMarked(phase) || !hollow?.site || hollow.s !== rec.s) return null;",
+    "new": "  if (!rec || !sdStands(phase) || !hollow?.site || hollow.s !== rec.s) return null;",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-the-ring-slot-unchecked",
+    "file": "src/systems/sdOmen.js",
+    "old": "  if (!rec || !sdMarked(phase) || !hollow?.site || hollow.s !== rec.s) return null;",
+    "new": "  if (!rec || !sdMarked(phase) || !hollow?.site) return null;",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-the-centre-off-the-pixel",
+    "file": "src/systems/sdOmen.js",
+    "old": "cx: hollow.site.px + 0.5, cy: hollow.site.py + 0.5,",
+    "new": "cx: hollow.site.px, cy: hollow.site.py,",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-the-note-without-its-state",
+    "file": "src/systems/sdOmen.js",
+    "old": "  return { subject: 'Super Dungeon', body: words ? `${where} ${words[0].toUpperCase()}${words.slice(1)}.` : where };",
+    "new": "  return { subject: 'Super Dungeon', body: where };",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-a-note-without-a-ring",
+    "file": "src/systems/sdOmen.js",
+    "old": "  if (!mark) return null;",
+    "new": "  if (!mark) return { subject: 'Super Dungeon', body: '' };",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-told-anywhere",
+    "file": "src/systems/sdOmen.js",
+    "old": "  if (here.px !== c.px || here.py !== c.py) return null;\n",
+    "new": "",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-told-after-the-kill",
+    "file": "src/systems/sdOmen.js",
+    "old": "(phase !== 'risen' && phase !== 'found')",
+    "new": "!sdStands(phase)",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-the-answer-unspent",
+    "file": "src/systems/sdOmen.js",
+    "old": "  session.numAnswersGivenTellMeAboutOrRumors = (session.numAnswersGivenTellMeAboutOrRumors | 0) + 1;\n  return sdRumorLine",
+    "new": "  return sdRumorLine",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-the-cap-unread",
+    "file": "src/systems/sdOmen.js",
+    "old": "  if (!((session.numAnswersGivenTellMeAboutOrRumors | 0) < MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS || session.isSpyMaster)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-the-chance-unrolled",
+    "file": "src/systems/sdOmen.js",
+    "old": "  if (!(rolls() < SD_RUMOR_CHANCE)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-a-row-while-risen",
+    "file": "src/systems/eventTimers.js",
+    "old": "  if (sdNow === 'found') live(",
+    "new": "  if (sdNow === 'found' || sdNow === 'risen') live(",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-the-collapse-ends-at-the-kill",
+    "file": "src/systems/eventTimers.js",
+    "old": "sdRec.fellAt + SD_COLLAPSE_MS, sdWhere,",
+    "new": "sdRec.fellAt, sdWhere,",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-the-gates-red",
+    "file": "src/render/sdOmenPass.js",
+    "old": "const COLOR = new Float32Array(SD_OMEN_COLOR);",
+    "new": "const COLOR = new Float32Array([1.0, 0.24, 0.07]);",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-a-dark-column-drawn",
+    "file": "src/render/sdOmenPass.js",
+    "old": "o.origin.every(Number.isFinite) && o.fade > 0.001);",
+    "new": "o.origin.every(Number.isFinite) && o.fade >= 0);",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-the-blend-left-on",
+    "file": "src/render/sdOmenPass.js",
+    "old": "    gl.disable(gl.BLEND);\n    return this.drawn;",
+    "new": "    return this.drawn;",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-the-next-slots-light",
+    "file": "src/scenes/sdHost.js",
+    "old": "      const h = stood && memo && memo.s === stood.s && rec?.s === stood.s ? memo : null;",
+    "new": "      const h = stood && memo ? memo : null;",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-the-column-indoors",
+    "file": "src/scenes/world.js",
+    "old": "    if (!o || (modes?.mode ?? 'exterior') !== 'exterior') return null;\n    const p = playerTravelPixel();",
+    "new": "    if (!o) return null;\n    const p = playerTravelPixel();",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-the-compass-unbounded",
+    "file": "src/scenes/world.js",
+    "old": "    return Math.hypot(at[0] - f[0], at[1] - f[2]) <= SD_COMPASS_M ? at : null;",
+    "new": "    return at;",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  },
+  {
+    "name": "SD2C-the-taverns-unasked",
+    "file": "src/scenes/world.js",
+    "old": "getNewsOrRumors: (session) => sdHost?.rumor(rumorHere(), session) ?? revenantRumor(",
+    "new": "getNewsOrRumors: (session) => revenantRumor(",
+    "tests": [
+      "test/sd2c_omen.test.js"
+    ]
+  }
+]

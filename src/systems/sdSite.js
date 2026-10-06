@@ -40,7 +40,7 @@ export const sdSalt = (s) => SD_SALT_BASE + 1 + ((Math.max(1, s | 0) - 1) % (SAL
 
 const W = 1000;
 /** A location's map pixel, off its MapId's low twenty bits (DFU's own law - systems/mapDirectory.js). */
-const pixelOfLoc = (loc) => { const id = (Number(loc?.mapTableData?.mapId) >>> 0) & 0xfffff; return { px: id % W, py: Math.floor(id / W) }; };
+export const pixelOfLoc = (loc) => { const id = (Number(loc?.mapTableData?.mapId) >>> 0) & 0xfffff; return { px: id % W, py: Math.floor(id / W) }; };
 
 /**
  * The cities a Hollow in region `r` may rise by, best first (the hubs' claim, then the lower region): the region's

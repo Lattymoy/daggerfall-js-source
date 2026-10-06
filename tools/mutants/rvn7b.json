@@ -227,11 +227,12 @@
   {
     "name": "RVN7b-world-unwired",
     "file": "src/scenes/world.js",
-    "old": "    getNewsOrRumors: (session) => revenantRumor(rumorHere(), session) ?? rumorMill.getNewsOrRumors(session),",
-    "new": "    getNewsOrRumors: (session) => rumorMill.getNewsOrRumors(session),",
+    "old": "    getNewsOrRumors: (session) => sdHost?.rumor(rumorHere(), session) ?? revenantRumor(rumorHere(), session) ?? rumorMill.getNewsOrRumors(session),",
+    "new": "    getNewsOrRumors: (session) => sdHost?.rumor(rumorHere(), session) ?? rumorMill.getNewsOrRumors(session),",
     "tests": [
       "test/rvn7b_rumor.test.js"
-    ]
+    ],
+    "note": "SD2c (re-aimed by content): a Super dungeon's word is asked first now; the revenants' unwired still leaves the mill alone after it."
   },
   {
     "name": "RVN7b-world-mill-first",
