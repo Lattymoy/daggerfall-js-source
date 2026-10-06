@@ -183,7 +183,7 @@ test('ROAD-G G1(a): a ZERO-DAMAGE player ARROW reaches the watch\'s door too', (
   // arms only. An arrow reaches a pool through TWO seams - `dealDamage`,
   // which arrowFlight calls inside its own `dmg > 0` fork
   // (arrowFlight.js:"if (dmg > 0)"), and `onAttackFromPlayer`, which it calls
-  // unconditionally at :325 because that is where WeaponManager.cs:630
+  // unconditionally at arrowFlight.js:"onAttackFromPlayer?.(foe, dmg)" because that is where WeaponManager.cs:630
   // lives - and all three hosts that resolve a player shaft EXCLUDED the
   // guards from the second one, on a sentence this pool's own
   // `handleAttackFromPlayer` had already falsified. DFU makes no such
@@ -320,7 +320,7 @@ test('ROAD-G G1(b): both hosts route the transform by POOL MEMBERSHIP', () => {
   // both pools share the host's one renderer, so the old arm tore a
   // watchman down exactly as `removeGuard` does - batch freed,
   // `dead = true`, no corpse, skipped by cityGuards.js:"spaceFoes(guards, collider, foeFrameDt(dt))".."if (g.dead) continue;" and spliced
-  // at :1359 in that same pass. The router is an OWNERSHIP fix, not a
+  // at cityGuards.js:"for (let i = guards.length - 1; i >= 0; i--)" in that same pass. The router is an OWNERSHIP fix, not a
   // leak fix, and no page may say otherwise again.
   // (the halves are joined at runtime so this very file does not carry
   // the sentence it bans)

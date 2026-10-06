@@ -330,7 +330,7 @@ export function fillEquipTable(slots, items) {
  *  SUPERSEDED, not pending. S3d shipped the real roll -
  *  systems/startingGear.js:"export function assignStartingGear" assignStartingGear (ItemHelper's
  *  AssignStartingGear), run on both creation paths at
- *  chargenSession.js:"assignStartingEquipment(playerEntity, { classIndex })" (?class= headless) and :235 (the wizard) -
+ *  chargenSession.js:"assignStartingEquipment(playerEntity, { classIndex })" (?class= headless) and chargenSession.js:"classIndex: result.careerIndex" (the wizard) -
  *  and the guard below (`entity.equip || items.length`) makes this a
  *  no-op for any character that went through either. What is left is
  *  residue at the two host calls (world.js:"if (playerEntity.chargenDone)", exterior.js:"if (playerEntity.chargenDone)"):

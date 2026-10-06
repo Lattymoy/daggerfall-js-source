@@ -691,6 +691,17 @@ Two further mechanics, both learned the expensive way here:
 Post-merge the gate is green on 7,654 tests with `citeShift` reporting
 nothing to move.
 
+**CITE-ANCHOR (2026-10-06) retired the number-by-number resolution above.**
+A cite into our code names its line by a quote -
+`world.js:"const livingQuarry = () =>"` - so a change to a file moves no doc but the ones
+that cite the lines it changed, and a merge conflicts on a cite only where
+both sides changed the cited line - the conflict is then a real one, about
+what the cite should say. A branch that still wrote numbers merges main by
+taking main's side of each cite-only conflict, then running
+`node tools/citeAnchor.mjs --apply` and `--check` on the merged tree: its
+own new cites become anchors in the same pass. Neither citeShift nor
+citeMerge is part of a merge any more.
+
 ### The shape worth keeping
 
 Two of three findings were **in the gates, not the code**, and the third

@@ -20,6 +20,7 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { flagLines } from '../tools/flagSites.mjs';   // IN1: the ONE definition of an open-flag site
+import { citedLines } from '../tools/citeAnchor.mjs';   // CITE-ANCHOR: a cite names its line by a quote
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(join(ROOT, rel), 'utf8');
@@ -236,8 +237,12 @@ test('FS1: the enchant ctx is MOUNTED by every host that owes it', () => {
     'the E2 header states the one-caller claim as HISTORY, not as present fact');
   assert.equal(/The flag now exists where the\n\s*\/\/ work does/.test(world), false,
     'the flag it pointed at was retired at the mount');
-  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:3262 mounts the same one/,
+  assert.match(world, /WAVE D closed it: the body is scenes\/hostEnchant\.js\n\s*\/\/ and dungeonContext\.js:"[^"]+"(?:\.\."[^"]+")? mounts the same one/,
     'and the header names the shipped shape instead');
+  // CITE-ANCHOR: and the mount it names is the gate the sentence describes
+  const header = world.slice(world.indexOf('WAVE D closed it'), world.indexOf('WAVE D closed it') + 400);
+  assert.ok(citedLines(header, 'src/scenes/dungeonContext.js').some((c) => /if \(opts\.enchantCtx !== false\) \{/.test(c.text ?? '')),
+    'the header\'s dungeonContext cite is not the mount\'s gate');
 });
 
 test('FS1: none of the retired claims has a second home', () => {

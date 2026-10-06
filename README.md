@@ -42,7 +42,7 @@ or normal releases behind a paywall.
 - `npm run build` - production build
 - `npm run lint` - eslint over `src/` (no-undef, no-dupe-keys, ...)
 - `npm run check` - lint + test + build (pre-push gate)
-- `npm run cites [-- --apply]` - re-resolve line cites into files you changed (tools/citeShift.mjs)
+- `npm run cites [-- --apply | -- --check]` - write a line number cited into our code as an anchor, `file.js:"the line's text"`, and resolve every anchor (tools/citeAnchor.mjs)
 - `npm run shot [out.png]` - headless render proof (needs ARENA2_PATH + provisioned Chromium)
 - `node tools/landingProbe.mjs` - the landing page and `/play/` in a real browser, no ARENA2 needed
 - `node tools/verify-deploy.mjs` - after a push: proves the live `/play/` serves your commit

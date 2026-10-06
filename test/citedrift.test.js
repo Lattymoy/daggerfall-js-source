@@ -28,6 +28,16 @@
 // document that makes it and resolves it against the file it names. Bump
 // any one of them by a line and the suite goes red at the citation, not
 // three waves later at a reader.
+//
+// CITE-ANCHOR (2026-10-06): a cite into our code names its line by a QUOTE
+// now (tools/citeAnchor.mjs, test/citeanchor.test.js) - a number was a
+// claim about every line above it, and keeping thousands of them true
+// rewrote the same doc lines on every branch that touched a host. The law
+// here stands; what the pins read changed. A pick captures the anchor's
+// quote (and an after-form's line) and resolves it as the gate does, and a
+// range is named by its first line - so where a pin held a range's END,
+// it holds the block that line opens. The records keep their numbers: a
+// struck row's measurement, and a renumbering told as history.
 // ---------------------------------------------------------------------------
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -36,6 +46,7 @@ import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dfuFile, missingDfu } from './dfuRoot.mjs';   // PY1: DFU_PATH, then the in-tree sparse clone
+import { resolveAnchor, maskAnchors, citedLines, anchorLine, bracesAt, forbidAt } from '../tools/citeAnchor.mjs';   // CITE-ANCHOR: the gate's own resolver
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(join(root, rel), 'utf8');
@@ -44,6 +55,35 @@ const read = (rel) => readFileSync(join(root, rel), 'utf8');
 const tracked = (dir) => execFileSync('git', ['ls-files', dir], { cwd: root, encoding: 'utf8' })
   .split('\n').filter(Boolean);
 const lines = (rel) => read(rel).split('\n');
+
+/** CITE-ANCHOR: the line an anchor's quote (and after-form line) names in `target`, as the gate resolves it - 0 for
+ *  none. Masked as the gate masks: a quote counts outside the anchors. */
+const anchorTexts = new Map();
+function anchoredAt(target, quote, after = null) {
+  if (!anchorTexts.has(target)) { const raw = read(target); anchorTexts.set(target, [maskAnchors(raw), raw.split('\n')]); }
+  const [text, L] = anchorTexts.get(target);
+  return resolveAnchor(text, L, quote, after ?? null).line ?? 0;
+}
+/** CITE-ANCHOR's brace rule: in a code file's comment a block's head with nothing to quote but its brace (a hook whose
+ *  text stands twice, `onLevelUp: () => {`) is named at its block's first line - the tool's nudge (anchorLine). Whether
+ *  the anchor at `n`, cited from `from`, is that nudge of a line `want` names: one of the three above it, which the
+ *  tool's own rule names here. */
+function nudgedOnto(from, target, n, want) {
+  if (!n || !bracesAt(from)) return false;
+  const [text, L] = anchorTexts.get(target);
+  for (let k = n - 1; k >= Math.max(1, n - 3); k--) if (want.test(L[k - 1]) && anchorLine(text, L, k, null, forbidAt(from, '// x', 3), true).n === n) return true;
+  return false;
+}
+/** A pick's capture of an anchor: its quote, and an after-form's line. */
+const AT = String.raw`"([^"]+)"(?:\.\."([^"]+)")?`;
+/** The block line `n` (1-based) opens: through the first later line at or above its indent that closes it. A range
+ *  cited by its first line is that block. */
+function blockAt(L, n) {
+  const indent = (l) => l.length - l.trimStart().length;
+  const own = indent(L[n - 1] ?? '');
+  for (let k = n; k < L.length; k++) if (L[k].trim() && indent(L[k]) <= own && /^[})\]]/.test(L[k].trim())) return L.slice(n - 1, k + 1).join('\n');
+  return L.slice(n - 1).join('\n');
+}
 
 const LEDGER = 'bible/01-Overview/Port-Ledger.md';
 const STATUS = 'bible/01-Overview/Port-Status-2026-09-02.md';
@@ -122,7 +162,7 @@ test('CD1: Ledger A row TB1 exists, in section A, STRUCK by the classic-modals c
   // closed the sentence with "(Ledger A: VersionInfo strings are DFU's
   // identity, not this port's)" - a live departure claiming an approval
   // nobody had written: section A carried no version row at all, and
-  // doctrine.test.js:"alternate enemy health" skips the file because it shouts no DEPARTURE
+  // doctrine.test.js:"&& !/deliberate departure/i.test" skips the file because it shouts no DEPARTURE
   // token. The row exists now and, like TB1, is cited BY NAME.
   const verRows = rows.filter((r) => /THE PAUSE WINDOW'S VERSION LINE IS THE PORT'S OWN BUILD TAG/.test(r.s));
   assert.equal(verRows.length, 1, 'section A carries exactly one pause-window version row');
@@ -334,7 +374,7 @@ test('CD2: both status pages state the open-flag count Home.md actually holds', 
   let count = 0;
   for (let i = at + 1; i < home.length; i++) {
     if (/^#{1,2} /.test(home[i])) break;
-    if (/^- `src\/.+:\d+` - /.test(home[i])) count++;
+    if (/^- `src\/[^`]+` - /.test(home[i])) count++;   // CITE-ANCHOR: an entry names its file, its flag's words its line
   }
   assert.ok(count > 0, 'the open-flag list is empty - the parser missed it');
 
@@ -394,12 +434,13 @@ test('CD2: both status pages state the open-flag count Home.md actually holds', 
     `list 1 carries ${sites} unstruck sites against Home.md's ${count} - a closure struck nothing`);
 
   // ...and the wave's six closures are NAMED, because "leaving 17" was
-  // readable only as long as nobody asked which two.
+  // readable only as long as nobody asked which two - each by an anchor
+  // into its file that names a line (CITE-ANCHOR).
   const roadText = read(ROAD);
-  for (const site of ['combat/fpsSpellCasting.js:178', 'characters/enemyCasting.js:91',
-    'systems/inventory.js:51', 'systems/talkMacros.js:314', 'ui/hudLarge.js:75',
-    'ui/exteriorAutomapWindow.js:98']) {
-    assert.ok(roadText.includes(site), `Road-To-1-1.md does not name the retired flag ${site}`);
+  for (const site of ['src/combat/fpsSpellCasting.js', 'src/characters/enemyCasting.js',
+    'src/systems/inventory.js', 'src/systems/talkMacros.js', 'src/ui/hudLarge.js',
+    'src/ui/exteriorAutomapWindow.js']) {
+    assert.ok(citedLines(roadText, site, root).some((c) => c.line), `Road-To-1-1.md does not name the retired flag in ${site}`);
   }
 });
 
@@ -508,7 +549,7 @@ const AF = 'src/combat/arrowFlight.js';   // ROAD-H tail (review)
 // WM3 (2026-09-15): A LITERAL IN THE PICK REGEX IS NOT A CHECK.
 //
 // These entries used to bake the OTHER half of a cite pair into the
-// pick - `/exterior\.js:(\d+)\/:1547/`, `/exterior\.js:1021\/:(\d+)/` -
+// pick - `/exterior\.js:(\d+)\/:N/`, `/exterior\.js:N\/:(\d+)/` -
 // and that number asserts nothing: nothing reads it against the target,
 // it only decides whether the regex MATCHES AT ALL. So when citeShift
 // correctly moved the cite, the pin stopped matching and this file
@@ -530,27 +571,27 @@ const SOURCE_CITES = [
   // re-resolution - a wrong number moved by the right offset is still
   // wrong. Resolved by content here, so the next wave that moves either
   // pool goes red instead of rotting them again.
-  ['test/roadg_pools.test.js', /skipped by cityGuards\.js:(\d+) and spliced/,
+  ['test/roadg_pools.test.js', /skipped by cityGuards\.js:"([^"]+)"(?:\.\."([^"]+)")? and spliced/,
     'src/scenes/cityGuards.js', /^\s*if \(g\.dead\) continue;$/],
-  ['test/roadg_pools.test.js', /spliced\s*\n\s*\/\/ at :(\d+) in that same pass/,
+  ['test/roadg_pools.test.js', /spliced\s*\n\s*\/\/ at cityGuards\.js:"([^"]+)"(?:\.\."([^"]+)")? in that same pass/,
     'src/scenes/cityGuards.js', /guards\.splice\(i, 1\)/],
-  ['src/scenes/world.js', /removeGuard \(cityGuards\.js:(\d+)-\d+\) gives it/,
+  ['src/scenes/world.js', /removeGuard \(cityGuards\.js:"([^"]+)"(?:\.\."([^"]+)")?\) gives it/,
     'src/scenes/cityGuards.js', /^\s*function removeGuard\(g\) \{$/],
-  ['src/scenes/world.js', /\(cityGuards\.js:(\d+)\) and spliced out at the end of it/,
+  ['src/scenes/world.js', /\(cityGuards\.js:"([^"]+)"(?:\.\."([^"]+)")?\) and spliced out at the end of it/,
     'src/scenes/cityGuards.js', /^\s*if \(g\.dead\) continue;$/],
-  ['src/scenes/world.js', /and spliced out at the end of it \(:(\d+)\)/,
+  ['src/scenes/world.js', /and spliced out at the end of it \(cityGuards\.js:"([^"]+)"(?:\.\."([^"]+)")?\)/,
     'src/scenes/cityGuards.js', /guards\.splice\(i, 1\)/],
-  ['src/scenes/worldModes.js', /READ the effect list every frame \(exteriorFoes\.js:(\d+)-\d+ and/,
+  ['src/scenes/worldModes.js', /READ the effect list every frame \(exteriorFoes\.js:"([^"]+)"(?:\.\."([^"]+)")? and/,
     'src/scenes/exteriorFoes.js', /const _fParalyzed = entityIsParalyzed\(f\.entity\)/],
-  ['src/scenes/worldModes.js', /cityGuards\.js:(\d+)-\d+ each take `entityIsParalyzed`/,
+  ['src/scenes/worldModes.js', /cityGuards\.js:"([^"]+)"(?:\.\."([^"]+)")? each take `entityIsParalyzed`/,
     'src/scenes/cityGuards.js', /const _gParalyzed = entityIsParalyzed\(g\.entity\)/],
-  ['src/scenes/cityGuards.js', /encounter pool's is \(exteriorFoes\.js:(\d+)\)\. \*\//,
+  ['src/scenes/cityGuards.js', /encounter pool's is \(exteriorFoes\.js:"([^"]+)"(?:\.\."([^"]+)")?\)\. \*\//,
     'src/scenes/exteriorFoes.js', /^\s*return \{ foes, spawnFoe, damageFoe,/],
-  ['src/systems/quest/questMacros.js', /ui\/travelMapWindow\.js:(\d+) after it\)/,
+  ['src/systems/quest/questMacros.js', /ui\/travelMapWindow\.js:"([^"]+)"(?:\.\."([^"]+)")? after it\)/,
     'src/ui/travelMapWindow.js', /\.replace\('%tcn', name\)/],
-  ['tools/toneProbe.mjs', /`native` \(townTalk\.js:(\d+), true only/,
+  ['tools/toneProbe.mjs', /`native` \(townTalk\.js:"([^"]+)"(?:\.\."([^"]+)")?, true only/,
     'src/scenes/townTalk.js', /native: !!overlay\?\.conversation/],
-  ['tools/worldWhereIsProbe.mjs', /townTalk's live slot \(townTalk\.js:(\d+)\)/,
+  ['tools/worldWhereIsProbe.mjs', /townTalk's live slot \(townTalk\.js:"([^"]+)"(?:\.\."([^"]+)")?\)/,
     'src/scenes/townTalk.js', /overlay: !!overlay/],
 
   // ═══ ROAD-G G7 (2026-09-04): THE `exterior.js` SWEEP ═══
@@ -564,11 +605,11 @@ const SOURCE_CITES = [
   // table, not on a chargen line. Each is re-resolved BY CONTENT here
   // and pinned, so the class cannot go quiet again - a wave that moves
   // the line goes red at the citation instead of at a reader.
-  ['src/characters/playerEntity.js', /exterior\.js:(\d+) and applyHeadlessChargen/,
+  ['src/characters/playerEntity.js', /exterior\.js:"([^"]+)"(?:\.\."([^"]+)")? and applyHeadlessChargen/,
     EX, /createChargenFlow\(fetchBytes\)\.then/],
-  ['src/combat/weaponRig.js', /\(exterior\.js:(\d+), world\.js:10251\)/,
+  ['src/combat/weaponRig.js', /\(exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?, world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)\)/,
     EX, /^ {4}say: \(l\) => townTalk\.say\(l\),$/],
-  ['src/scenes/dungeonContext.js', /exterior\.js:(\d+) and worldModes\.js:\d+/,
+  ['src/scenes/dungeonContext.js', /exterior\.js:"([^"]+)"(?:\.\."([^"]+)")? and worldModes\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)/,
     EX, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(/],
   // ROAD-H tail (review): THE OTHER TWO THIRDS OF THAT SENTENCE. It
   // names THREE hosts and only the exterior number was read, so the
@@ -583,15 +624,15 @@ const SOURCE_CITES = [
   // unconditional call beside it. The round re-resolved the fork's range
   // and left `:195` naming a `backstabChance:` field. Both halves, plus
   // the sibling sentence in cityGuards that already names the call.
-  ['test/roadg_pools.test.js', /\(arrowFlight\.js:(\d+)-\d+\), and `onAttackFromPlayer`/,
+  ['test/roadg_pools.test.js', /\(arrowFlight\.js:"([^"]+)"(?:\.\."([^"]+)")?\), and `onAttackFromPlayer`/,
     AF, /^ {2}if \(dmg > 0\) \{$/],
-  ['test/roadg_pools.test.js', /unconditionally at :(\d+) because that is where WeaponManager/,
+  ['test/roadg_pools.test.js', /unconditionally at arrowFlight\.js:"([^"]+)"(?:\.\."([^"]+)")? because that is where WeaponManager/,
     AF, /^ {2}onAttackFromPlayer\?\.\(foe, dmg\);/],
-  ['src/scenes/cityGuards.js', /calls unconditionally \(arrowFlight\.js:(\d+)\)/,
+  ['src/scenes/cityGuards.js', /calls unconditionally \(arrowFlight\.js:"([^"]+)"(?:\.\."([^"]+)")?\)/,
     AF, /^ {2}onAttackFromPlayer\?\.\(foe, dmg\);/],
-  ['src/scenes/dungeonContext.js', /playerArrowHitFoe is the one copy world\.js:(\d+),/,
+  ['src/scenes/dungeonContext.js', /playerArrowHitFoe is the one copy world\.js:"([^"]+)"(?:\.\."([^"]+)")?,/,
     WO, /onPlayerArrowHitFoe: \(m, t\) => (?:\(t\?\.duel \? duelStrikeOut\([^\n]* : )?playerArrowHitFoe\(/],   // DUEL1: world.js's arm offers a duel opponent's body first
-  ['src/scenes/dungeonContext.js', /exterior\.js:\d+ and worldModes\.js:(\d+) already ran/,
+  ['src/scenes/dungeonContext.js', /exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?) and worldModes\.js:"([^"]+)"(?:\.\."([^"]+)")? already ran/,
     WM, /onPlayerArrowHitFoe: \(m, t\) => playerArrowHitFoe\(/],
   // ROAD-H tail (review): THE LIST PICKER'S THREE ROUTERS. The sentence
   // names the three hosts that mount a bare picker and pass a
@@ -599,69 +640,69 @@ const SOURCE_CITES = [
   // together, and the tail bumped the dungeon's by one - a mechanical
   // +1 preserves staleness exactly as a wrong number moved by the right
   // offset does. Re-resolved by content and read as a set.
-  ['src/ui/listPicker.js', /\(townTalk\.js:(\d+), worldModes\.js:\d+, dungeonContext\.js:\d+ /,
+  ['src/ui/listPicker.js', /\(townTalk\.js:"([^"]+)"(?:\.\."([^"]+)")?, worldModes\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?), dungeonContext\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?) /,
     'src/scenes/townTalk.js', /overlay\.click\?\.\(v\[0\], v\[1\], e\.button === 2, e\.button === 1\)/],
-  ['src/ui/listPicker.js', /\(townTalk\.js:\d+, worldModes\.js:(\d+), dungeonContext\.js:\d+ /,
+  ['src/ui/listPicker.js', /\(townTalk\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?), worldModes\.js:"([^"]+)"(?:\.\."([^"]+)")?, dungeonContext\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?) /,
     WM, /interiorOverlay\?\.click\?\.\(v\[0\], v\[1\], e\.button === 2, e\.button === 1\)/],   // STATUS-LIVE: the arm's gate is interiorPaused() now, so the slot read is optional-chained
-  ['src/ui/listPicker.js', /\(townTalk\.js:\d+, worldModes\.js:\d+, dungeonContext\.js:(\d+) /,
+  ['src/ui/listPicker.js', /\(townTalk\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?), worldModes\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?), dungeonContext\.js:"([^"]+)"(?:\.\."([^"]+)")? /,
     DC, /else activeOverlay\.click\(vx, vy, right, middle\);/],
   // ...and the wizard's hover route, whose dungeon and worldModes
   // numbers this round's one-line insert into worldModes moved.
-  ['src/systems/chargenSession.js', /dungeonContext\.js through `overlayHover`\n\s*\/\/ \(:(\d+)\)/,
+  ['src/systems/chargenSession.js', /dungeonContext\.js through `overlayHover`\n\s*\/\/ \(dungeonContext\.js:"([^"]+)"(?:\.\."([^"]+)")?\)/,
     DC, /overlayHover\(vx, vy, e = null\) \{ activeOverlay\?\.hover\?\.\(vx, vy, e\); \},/],
   // AUDIT 65 UI-5: the dungeon.js half is read by CONTENT here (CD8
   // below resolves that number itself) - the literal 433 was a second
   // copy of a line number and went stale the moment the wheel seam
   // three lines above it grew its point.
-  ['src/systems/chargenSession.js', /dungeon\.js:\d+ and worldModes\.js:(\d+) both feed/,
+  ['src/systems/chargenSession.js', /dungeon\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?) and worldModes\.js:"([^"]+)"(?:\.\."([^"]+)")? both feed/,
     WM, /dungeonCtx\.overlayHover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\)/],
-  ['src/systems/advancement.js', /exterior\.js:(\d+)\/:\d+/, EX, /^ {4}onLevelUp: \(\) => \{$/],
-  ['src/systems/advancement.js', /exterior\.js:\d+\/:(\d+)/, EX, /^ {4}onLevelUp: \(\) => \{$/],   // AUDIT WORLD6b-iii(a): the aim law's import moved the first; the whole cite re-aimed by hand (its world and worldModes halves were stale)
-  ['src/systems/chargenSession.js', /exterior\.js:(\d+)\/:\d+-\d+/,
+  ['src/systems/advancement.js', /exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?\/exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)/, EX, /^ {4}onLevelUp: \(\) => \{$/],
+  ['src/systems/advancement.js', /exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)\/exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?/, EX, /^ {4}onLevelUp: \(\) => \{$/],   // AUDIT WORLD6b-iii(a): the aim law's import moved the first; the whole cite re-aimed by hand (its world and worldModes halves were stale)
+  ['src/systems/chargenSession.js', /exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?\/exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)/,
     EX, /from '\.\.\/systems\/chargenSession\.js'/],
-  ['src/systems/equip.js', /world\.js:\d+, exterior\.js:(\d+)\)/,
+  ['src/systems/equip.js', /world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?), exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?\)/,
     EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
-  ['src/systems/loot.js', /world\.js:\d+ and exterior\.js:(\d+)/,
+  ['src/systems/loot.js', /world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?) and exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?/,
     EX, /loadMagicRegistries\(fetchBytes\)\.then/],
-  ['src/systems/potions.js', /exterior\.js:(\d+)\) and useItem\.js:\d+/,
+  ['src/systems/potions.js', /exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?\) and useItem\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)/,
     EX, /drinkPotion: \(key, potent\) => magic\.drinkPotion\(key, potent\)/],
   // AUDIT SURV-TIERS: the entry above baked this half in as a literal
   // (WM3's own trap, above) - and it sat one line short, on the comment
   // over the call, since before SURV-TIERS moved it. Captured now.
-  ['src/systems/potions.js', /exterior\.js:\d+\) and useItem\.js:(\d+)/,
+  ['src/systems/potions.js', /exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)\) and useItem\.js:"([^"]+)"(?:\.\."([^"]+)")?/,
     'src/systems/useItem.js', /const drank = drinkPotion \? drinkPotion\(item\.potionRecipeKey \?\? 0, Number\.isInteger\(item\.potent\) \? item\.potent : 0\) : null;/],
   // AUDIT SURV-TIERS (the second pass, at the merge of main): and the sentence's other three halves, which no
   // entry captured, had rotted on BOTH sides of the merge - hostMagic.js lines 586-593 / 626-633 landed in the
   // missile code, world.js lines 3485 / 3597 in a comment, dungeonContext.js line 1389 in routeKey's (written as
   // plain numbers: they are the record of what the rotted cites said, not cites). Read by content, each pinned.
-  ['src/systems/potions.js', /scenes\/hostMagic\.js:(\d+)-\d+ builds the/,
+  ['src/systems/potions.js', /scenes\/hostMagic\.js:"([^"]+)"(?:\.\."([^"]+)")? builds the/,
     'src/scenes/hostMagic.js', /^ {4}drinkPotion\(recipeKey, potent = 0\) \{$/],
-  ['src/systems/potions.js', /hand `drinkPotion` down \(world\.js:(\d+),/,
+  ['src/systems/potions.js', /hand `drinkPotion` down \(world\.js:"([^"]+)"(?:\.\."([^"]+)")?,/,
     WO, /drinkPotion: \(key, potent\) => magic\.drinkPotion\(key, potent\)/],
-  ['src/systems/potions.js', /\/\/ {4}dungeonContext\.js:(\d+), exterior\.js:\d+\) and useItem/,
+  ['src/systems/potions.js', /\/\/ {4}dungeonContext\.js:"([^"]+)"(?:\.\."([^"]+)")?, exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)\) and useItem/,
     DC, /drinkPotion: \(key, potent\) => magic\.drinkPotion\(key, potent\)/],
-  ['src/systems/startingGear.js', /world\.js:\d+ and exterior\.js:(\d+) seed it/,
+  ['src/systems/startingGear.js', /world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?) and exterior\.js:"([^"]+)"(?:\.\."([^"]+)")? seed it/,
     EX, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
   // AUDIT SURV-TIERS (the third pass): the OTHER halves of the kit's cites. SURV-OFFSIGHT re-aimed six of them by
   // hand - every one had rotted by e501ed30, because the two entries above read only the exterior.js halves (the
   // half-pinned cite AUDIT 62 names below). Each half is read by content now, with the one that had not rotted yet.
-  ['src/systems/equip.js', /systems\/startingGear\.js:(\d+) assignStartingGear/,
+  ['src/systems/equip.js', /systems\/startingGear\.js:"([^"]+)"(?:\.\."([^"]+)")? assignStartingGear/,
     'src/systems/startingGear.js', /^export function assignStartingGear\(/],
-  ['src/systems/equip.js', /chargenSession\.js:(\d+) \(\?class= headless\)/,
+  ['src/systems/equip.js', /chargenSession\.js:"([^"]+)"(?:\.\."([^"]+)")? \(\?class= headless\)/,
     'src/systems/chargenSession.js', /^ {2}assignStartingEquipment\(playerEntity, \{ classIndex \}\);$/],   // RRI (main): the kit's delegate, which runs assignStartingGear unless a mod's assigner answers
-  ['src/systems/equip.js', /\(\?class= headless\) and :(\d+) \(the wizard\)/,
+  ['src/systems/equip.js', /\(\?class= headless\) and chargenSession\.js:"([^"]+)"(?:\.\."([^"]+)")? \(the wizard\)/,
     'src/systems/chargenSession.js', /assignStartingEquipment\(playerEntity, \{ classIndex: result\.careerIndex/],
-  ['src/systems/equip.js', /host calls \(world\.js:(\d+), exterior\.js:\d+\)/,
+  ['src/systems/equip.js', /host calls \(world\.js:"([^"]+)"(?:\.\."([^"]+)")?, exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)\)/,
     WO, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
-  ['src/systems/startingGear.js', /\/\/ \(equip\.js:(\d+)\), which survives/,
+  ['src/systems/startingGear.js', /\/\/ \(equip\.js:"([^"]+)"(?:\.\."([^"]+)")?\), which survives/,
     'src/systems/equip.js', /^export function seedStartingEquipment\(entity\) \{$/],
-  ['src/systems/startingGear.js', /world\.js:(\d+) and exterior\.js:\d+ seed it/,
+  ['src/systems/startingGear.js', /world\.js:"([^"]+)"(?:\.\."([^"]+)")? and exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?) seed it/,
     WO, /if \(playerEntity\.chargenDone\) seedStartingEquipment\(playerEntity\);/],
-  ['src/scenes/exterior.js', /early-returns \(equip\.js:(\d+)\)\./,
+  ['src/scenes/exterior.js', /early-returns \(equip\.js:"([^"]+)"(?:\.\."([^"]+)")?\)\./,
     'src/systems/equip.js', /^ {2}if \(entity\.equip \|\| \(entity\.items \?\? \[\]\)\.length\) return;$/],
-  ['src/ui/pauseWindow.js', /world\.js:\d+, exterior\.js:(\d+),/,
+  ['src/ui/pauseWindow.js', /world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?), exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?,/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return true; \}/],
-  ['src/ui/restWindow.js', /world\.js:\d+, exterior\.js:(\d+),/,
+  ['src/ui/restWindow.js', /world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?), exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?,/,
     EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return true; \}/],
   // AUDIT 62 (review): ...AND THE OTHER HALF OF THE SAME SENTENCE. The
   // two entries above read the exterior number out of a cite that names
@@ -670,32 +711,32 @@ const SOURCE_CITES = [
   // ExteriorAutomapWindow construction and :4101 on a `locationName:`
   // field. A half-pinned cite is the shape ROAD-G G1 already caught
   // once; both halves are read here now.
-  ['src/ui/pauseWindow.js', /world\.js:(\d+), exterior\.js:\d+,/,
+  ['src/ui/pauseWindow.js', /world\.js:"([^"]+)"(?:\.\."([^"]+)")?, exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?),/,
     WO, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return true; \}/],
-  ['src/ui/restWindow.js', /world\.js:(\d+), exterior\.js:\d+,/,
+  ['src/ui/restWindow.js', /world\.js:"([^"]+)"(?:\.\."([^"]+)")?, exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?),/,
     WO, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return true; \}/],
   // AUDIT SURV-TIERS (the third pass): ...and the sentence's THIRD half, which neither entry read - it had rotted
   // to a comment in input.js's header (525) while the Rest arm moved to 813.
-  ['src/ui/restWindow.js', /exterior\.js:\d+, ui\/input\.js:(\d+)\)/,
+  ['src/ui/restWindow.js', /exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?), ui\/input\.js:"([^"]+)"(?:\.\."([^"]+)")?\)/,
     'src/ui/input.js', /case 'Rest': return ctx\.toggleRest \? \(ctx\.toggleRest\(\), true\) : false;/],   // KB1: the arm answers its door
-  ['test/daychange.test.js', /exterior\.js:(\d+), world\.js:3991/, EX, /playerTicker\.advance\(60\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+) and world\.js:9288/,
+  ['test/daychange.test.js', /exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?, world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)/, EX, /playerTicker\.advance\(60\);/],
+  ['test/overlayreentry.test.js', /exterior\.js:"([^"]+)"(?:\.\."([^"]+)")? and world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
-  ['test/overlayreentry.test.js', /exterior\.js:(\d+), world\.js:9288/,
+  ['test/overlayreentry.test.js', /exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?, world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)/,
     EX, /if \(townTalk\.overlay\?\.isRestWindow\) townTalk\.closeOverlay\?\.\(\);/],
-  ['test/probehygiene.test.js', /keydown ladder, exterior\.js:(\d+)-\d+/,
-    EX, /addEventListener\('keydown', \(e\) => \{/],
-  ['test/probehygiene.test.js', /exterior\.js:(\d+)-\d+ and world\.js's copy/,
+  ['test/probehygiene.test.js', /keydown ladder, exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?/,
+    EX, /^ {4}if \(e\.code === 'Escape'\) backButtonHeld = true;$/],   // CITE-ANCHOR: the ladder by its first statement (the listener's own line holds an open bracket)
+  ['test/probehygiene.test.js', /exterior\.js:"([^"]+)"(?:\.\."([^"]+)")? and world\.js's copy/,
     EX, /if \(!playerEntity\.chargenDone && params\.has\('class'\)\) \{/],
-  ['test/roade_up_seam.test.js', /exterior\.js:(\d+)\/:\d+/,
+  ['test/roade_up_seam.test.js', /exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?\/exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)/,
     EX, /if \(act === 'Rest'\) \{ e\.preventDefault\(\); hudCtx\.toggleRest\(\); return true; \}/],
-  ['test/roade_up_seam.test.js', /exterior\.js:\d+\/:(\d+)/,
+  ['test/roade_up_seam.test.js', /exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)\/exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?/,
     EX, /if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return true; \}/],
-  ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:(\d+)` now/, EX, /setDefaultEnchantCtx/],
-  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:(\d+)`, `world\.js:3987`/, EX, /playerTicker\.advance\(60\);/],
-  ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:(\d+)-\d+\)/,
-    EX, /addEventListener\('keydown', \(e\) => \{/],
-  ['bible/10-UI/UI-Arc.md', /exterior\.js:(\d+)\. It is the only window/, EX, /createSpellbookWindow\(\{/],
+  ['bible/01-Overview/Audit-58.md', /`src\/scenes\/exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?` now/, EX, /setDefaultEnchantCtx/],
+  ['bible/06-Systems/Systems-Arc.md', /`exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`/, EX, /playerTicker\.advance\(60\);/],
+  ['bible/09-Testing/Testing.md', /keydown ladder \(exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?\)/,
+    EX, /^ {4}if \(e\.code === 'Escape'\) backButtonHeld = true;$/],
+  ['bible/10-UI/UI-Arc.md', /exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?\. It is the only window/, EX, /createSpellbookWindow\(\{/],
   // AUDIT QS6 F1, a fifth time and at a second door: this row names FIVE hosts
   // and the table captured ONE, with a sixth number baked into the pick - so
   // citeMerge bumped the LITERAL at the BOX1/TI3 merge and left the doc, and
@@ -703,16 +744,16 @@ const SOURCE_CITES = [
   // that is 5921, `world.js` 24498 for 8836, `interior.js` 326 for 329,
   // `dungeon.js` 988 for 959). Every one is captured now, against the
   // projection each host really builds.
-  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(\d+)`, `dungeon\.js:\d+`/, EX, /^ {6}fieldOfView\(\)( \+ climbFeel\.fovRad\(\))?,/],   // CLIMB4: the climb's kick on the lens
-  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:\d+`, `dungeon\.js:(\d+)`/, 'src/scenes/dungeon.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\)( \+ climbFeel\.fovRad\(\))?, largeHudWorldAspect/],
-  ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:(\d+)`, `world\.js:\d+`, `interior\.js:\d+`, `exterior\.js/, WM, /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\)( \+ \(host\.climbFeel\?\.fovRad\(\) \?\? 0\))?, largeHudWorldAspect/],
-  ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:\d+`, `world\.js:(\d+)`, `interior\.js:\d+`, `exterior\.js/, WO, /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\)( \+ climbFeel\.fovRad\(\))?, worldAspect/],
-  ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:\d+`, `world\.js:\d+`, `interior\.js:(\d+)`, `exterior\.js/, 'src/scenes/interior.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), largeHudWorldAspect/],   // AUDIT RETRO1 A8: the hosts' one denominator here too
+  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `dungeon\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`/, EX, /^ {6}fieldOfView\(\)( \+ climbFeel\.fovRad\(\))?,/],   // CLIMB4: the climb's kick on the lens
+  ['bible/10-UI/Settings-Screen-Spec.md', /`exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `dungeon\.js:"([^"]+)"(?:\.\."([^"]+)")?`/, 'src/scenes/dungeon.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\)( \+ climbFeel\.fovRad\(\))?, largeHudWorldAspect/],
+  ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `interior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `exterior\.js/, WM, /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\)( \+ \(host\.climbFeel\?\.fovRad\(\) \?\? 0\))?, largeHudWorldAspect/],
+  ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `world\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `interior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `exterior\.js/, WO, /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\)( \+ climbFeel\.fovRad\(\))?, worldAspect/],
+  ['bible/10-UI/Settings-Screen-Spec.md', /`worldModes\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `interior\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `exterior\.js/, 'src/scenes/interior.js', /^ {4}const proj = mirrorProjectionX\(perspective\(fieldOfView\(\), largeHudWorldAspect/],   // AUDIT RETRO1 A8: the hosts' one denominator here too
   // ROAD-G G7 (review): the entry above reads the exterior number out of
   // that sentence and nothing else, so the sentence's ANCHOR cite - the
   // function the other five read - was the one cite in it no pin
   // touched, and it named line 24 of a 23-line file. It is read here.
-  ['bible/10-UI/Settings-Screen-Spec.md', /`src\/ui\/viewSettings\.js:(\d+)` is `fieldOfView\(\)`/,
+  ['bible/10-UI/Settings-Screen-Spec.md', /`src\/ui\/viewSettings\.js:"([^"]+)"(?:\.\."([^"]+)")?` is `fieldOfView\(\)`/,
     'src/ui/viewSettings.js', /^export const fieldOfView = \(\) =>/],
   // ...and the Ledger's own, which carry the same rot: a struck row's
   // "Original finding" is a dated snapshot, so where its subject still
@@ -732,66 +773,61 @@ const SOURCE_CITES = [
   // door in all three hosts, the modal-frame return before the ambience
   // update, and the modal block's own range. Every number in a pair is
   // captured now, so none of them can be the half nobody reads.
-  ['bible/01-Overview/Port-Ledger.md', /wired at `world\.js:(\d+)`, `exterior\.js:\d+`, `dungeonContext\.js:\d+`/,
+  ['bible/01-Overview/Port-Ledger.md', /wired at `world\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `dungeonContext\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`/,
     WO, /drinkPotion: \(key, potent\) => magic\.drinkPotion\(key, potent\),/],
-  ['bible/01-Overview/Port-Ledger.md', /wired at `world\.js:\d+`, `exterior\.js:(\d+)`, `dungeonContext\.js:\d+`/,
+  ['bible/01-Overview/Port-Ledger.md', /wired at `world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `dungeonContext\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`/,
     EX, /drinkPotion: \(key, potent\) => magic\.drinkPotion\(key, potent\),/],
-  ['bible/01-Overview/Port-Ledger.md', /wired at `world\.js:\d+`, `exterior\.js:\d+`, `dungeonContext\.js:(\d+)`/,
+  ['bible/01-Overview/Port-Ledger.md', /wired at `world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `dungeonContext\.js:"([^"]+)"(?:\.\."([^"]+)")?`/,
     DC, /drinkPotion: \(key, potent\) => magic\.drinkPotion\(key, potent\),/],
-  ['bible/01-Overview/Port-Ledger.md', /before the ambience update \(`world\.js:(\d+)`, `exterior\.js:\d+`\)/,
+  ['bible/01-Overview/Port-Ledger.md', /before the ambience update \(`world\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`\)/,
     WO, /^ {4}ambience\.update\(dt, \{ playerPos: cam\.pos, inside: false, underground: modes\?\.mode === 'dungeon'(?:, waterSurfaceY: dwPlayer\?\.waterLevelY \?\? null, submerged: !!dwPlayer\?\.submerged)? \}\);/],   // CRICKET-DUNGEON: the dep rides the same line; DW-D: and the sea's forged water state
-  ['bible/01-Overview/Port-Ledger.md', /before the ambience update \(`world\.js:\d+`, `exterior\.js:(\d+)`\)/,
+  ['bible/01-Overview/Port-Ledger.md', /before the ambience update \(`world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?`\)/,
     EX, /^ {4}ambience\.update\(dt, \{ playerPos: eye, inside: false \}\);/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:(\d+)-\d+` and `exterior\.js:\d+-\d+` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:"([^"]+)"(?:\.\."([^"]+)")?` and `exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)` return on modal frames/,
     WO, /^ {4}if \(modes\.frame\(dt, now\)\) \{$/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:\d+-(\d+)` and `exterior\.js:\d+-\d+` return on modal frames/,
-    WO, /^ {4}\}$/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:\d+-\d+` and `exterior\.js:(\d+)-\d+` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)` and `exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?` return on modal frames/,
     EX, /^ {4}if \(modes\.frame\(dt, now\)\) \{$/],
-  ['bible/01-Overview/Port-Ledger.md', /only exterior frames write it \(`world\.js:\d+`, `exterior\.js:(\d+)`\)/,
+  ['bible/01-Overview/Port-Ledger.md', /only exterior frames write it \(`world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?`\)/,
     EX, /renderer\.setWindowEmission\(windowEmissionRGB\(/],
-  ['bible/01-Overview/Port-Ledger.md', /only exterior frames write it \(`world\.js:(\d+)`, `exterior\.js:\d+`\)/,
+  ['bible/01-Overview/Port-Ledger.md', /only exterior frames write it \(`world\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`\)/,
     WO, /renderer\.setWindowEmission\(windowEmissionRGB\(/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:\d+`, `exterior\.js:(\d+)` pass `getNameBankOfRegion`/,
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?` pass `getNameBankOfRegion`/,
     EX, /nameBank: getNameBankOfRegion\(dfLocation\.regionIndex\),/],
-  ['bible/01-Overview/Port-Ledger.md', /`world\.js:(\d+)`, `exterior\.js:\d+` pass `getNameBankOfRegion`/,
+  ['bible/01-Overview/Port-Ledger.md', /`world\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)` pass `getNameBankOfRegion`/,
     WO, /nameBank: getNameBankOfRegion\(dfLocation\.regionIndex\),/],
-  ['bible/01-Overview/Port-Ledger.md', /rig sprite \(`exterior\.js:(\d+)`/, EX, /drawCharacterSprite\(renderer, canvas, rig/],
+  ['bible/01-Overview/Port-Ledger.md', /rig sprite \(`exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?`/, EX, /drawCharacterSprite\(renderer, canvas, rig/],
   // ROAD-G G1 (review): BOTH ends, because the half-shifted range is
   // exactly the defect this file exists to catch - the leading number
   // was re-resolved and the trailing one left where it was, leaving a
-  // range that cannot exist (exterior.js's lines 1840-1492).
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-\d+` build `createDetectFeed`/,
+  // range that cannot exist (exterior.js's lines 1840-1492). CITE-ANCHOR:
+  // a range is named by its first line now, and has no end to leave behind.
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?` build `createDetectFeed`/,
     EX, /const detectFeed = createDetectFeed\(playerEntity, \{/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:\d+-(\d+)` build `createDetectFeed`/,
-    EX, /^ {2}\}\);$/],
-  ['bible/01-Overview/Port-Ledger.md', /world piles from player drops \(`world\.js:\d+`, `exterior\.js:(\d+)`\)/,
+  ['bible/01-Overview/Port-Ledger.md', /world piles from player drops \(`world\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`, `exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?`\)/,
     EX, /const droppedLoot = createDroppedLoot\(/],
-  ['bible/01-Overview/Port-Ledger.md', /world piles from player drops \(`world\.js:(\d+)`, `exterior\.js:\d+`\)/,
+  ['bible/01-Overview/Port-Ledger.md', /world piles from player drops \(`world\.js:"([^"]+)"(?:\.\."([^"]+)")?`, `exterior\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`\)/,
     WO, /const droppedLoot = createDroppedLoot\(/],
-  ['bible/01-Overview/Port-Ledger.md', /createTownTalk passes no engine, `exterior\.js:(\d+)-\d+`/,
+  ['bible/01-Overview/Port-Ledger.md', /createTownTalk passes no engine, `exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?`/,
     EX, /const townTalk = createTownTalk\(\{/],
-  ['bible/01-Overview/Port-Ledger.md', /at HEAD `exterior\.js:(\d+)` answers/,
+  ['bible/01-Overview/Port-Ledger.md', /at HEAD `exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?` answers/,
     EX, /inTownOutside: _isPlayerInTownStrict\(\),/],
-  ['bible/01-Overview/Port-Ledger.md', /\(`_isPlayerInTownStrict`, `exterior\.js:(\d+)`\)/,
+  ['bible/01-Overview/Port-Ledger.md', /\(`_isPlayerInTownStrict`, `exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?`\)/,
     EX, /const _isPlayerInTownStrict = \(\) => _musicInLocationRect\(\)/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)-\d+` return on modal frames/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?` return on modal frames/,
     EX, /if \(modes\.frame\(dt, now\)\) \{/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:\d+-(\d+)` return on modal frames/,
-    EX, /^ {4}\}$/],
-  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:(\d+)`\), and `ambientEffects\.js:155-182`/,
+  ['bible/01-Overview/Port-Ledger.md', /`exterior\.js:"([^"]+)"(?:\.\."([^"]+)")?`\), and `ambientEffects\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)`/,
     EX, /ambience\.update\(dt, \{ playerPos: eye, inside: false \}\)/],
   // AUDIT ENH-NOTICE3 (second pass, B18): six cites the shifter carried
   // along already WRONG - stale before the slice, moved by the right
   // offset, never read. Resolved by content and held here.
-  ['tools/firstHourProbe.mjs', /drain \(world\.js:(\d+)\)/, WO, /window\.__shotReady = true;/],
-  ['tools/fistProbe.mjs', /reproduced at dungeonContext\.js:(\d+) pre-fix/, DC, /Combat bows: the strike frame LOOSES an arrow/],
-  ['tools/mwArmProbe.mjs', /\(dungeon\.js:(\d+)'s exact lens\)/, 'src/scenes/dungeon.js', /mirrorProjectionX\(perspective\(/],
-  ['tools/mwArmProbe.mjs', /perspective \(dungeon\.js:(\d+)\)/, 'src/scenes/dungeon.js', /mirrorProjectionX\(perspective\(/],
-  ['tools/mwRigProbe.mjs', /as world\.js:(\d+) writes it/, WO, /const weaponRig = createWeaponRig\(\{/],
-  ['test/inputmap.test.js', /overlay \(townTalk\.js:(\d+), :\d+\)/, 'src/scenes/townTalk.js', /^ {4}hud\.tick\(dt\);$/],
-  ['test/inputmap.test.js', /overlay \(townTalk\.js:\d+, :(\d+)\)/, 'src/scenes/townTalk.js', /hud\.draw\(renderer, canvas, font, s\)/],
-  ['test/enhancedInventory.test.js', /hand \(enhancedInventory\.js:(\d+)-\d+\)/, 'src/ui/enhancedInventory.js', /const carried = items\.reduce/],
+  ['tools/firstHourProbe.mjs', /drain \(world\.js:"([^"]+)"(?:\.\."([^"]+)")?\)/, WO, /window\.__shotReady = true;/],
+  ['tools/fistProbe.mjs', /reproduced at dungeonContext\.js:"([^"]+)"(?:\.\."([^"]+)")? pre-fix/, DC, /Combat bows: the strike frame LOOSES an arrow/],
+  ['tools/mwArmProbe.mjs', /\(dungeon\.js:"([^"]+)"(?:\.\."([^"]+)")?'s exact lens\)/, 'src/scenes/dungeon.js', /mirrorProjectionX\(perspective\(/],
+  ['tools/mwArmProbe.mjs', /perspective \(dungeon\.js:"([^"]+)"(?:\.\."([^"]+)")?\)/, 'src/scenes/dungeon.js', /mirrorProjectionX\(perspective\(/],
+  ['tools/mwRigProbe.mjs', /as world\.js:"([^"]+)"(?:\.\."([^"]+)")? writes it/, WO, /const weaponRig = createWeaponRig\(\{/],
+  ['test/inputmap.test.js', /overlay \(townTalk\.js:"([^"]+)"(?:\.\."([^"]+)")?, townTalk\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?)\)/, 'src/scenes/townTalk.js', /^ {4}hud\.tick\(dt\);$/],
+  ['test/inputmap.test.js', /overlay \(townTalk\.js:(?:"[^"]+"(?:\.\."[^"]+")?|\d+(?:-\d+)?), townTalk\.js:"([^"]+)"(?:\.\."([^"]+)")?\)/, 'src/scenes/townTalk.js', /hud\.draw\(renderer, canvas, font, s\)/],
+  ['test/enhancedInventory.test.js', /hand \(enhancedInventory\.js:"([^"]+)"(?:\.\."([^"]+)")?\)/, 'src/ui/enhancedInventory.js', /const carried = items\.reduce/],
 ];
 
 const NO_LINE_LEFT = [
@@ -800,7 +836,9 @@ const NO_LINE_LEFT = [
   // pick let citeMerge bump the LITERAL (4219-4222 -> 4245-4248) at a merge and
   // leave the Ledger behind, breaking the pin over a clause nothing was wrong
   // with. What this entry claims is the CLAUSE and the absence, not a line.
-  [/`world\.js:\d+-\d+` and its `exterior\.js` twin, both DELETED by FX1/, 'no loot'],
+  // CITE-ANCHOR: and the number is a RECORD now - the lines the comment held
+  // at the commit that wrote the row - which no tool reads as a cite.
+  [/`world\.js` lines \d+-\d+ at [0-9a-f]{9} and its `exterior\.js` twin, both DELETED by FX1/, 'no loot'],
   [/`exterior\.js`'s inline rest-deps twin - DELETED, see the strike/, 'inTownOutside: true'],
 ];
 
@@ -809,8 +847,9 @@ test('CD4: every citation Wave E moved names the line it means', () => {
   for (const [from, pick, target, want] of SOURCE_CITES) {
     const m = pick.exec(read(from));
     assert.ok(m, `${from} no longer carries the citation this pins`);
-    const line = lines(target)[Number(m[1]) - 1] ?? '';
-    if (!want.test(line)) bad.push(`${from} -> ${target}:${m[1]} is ${JSON.stringify(line.slice(0, 60))}`);
+    const n = anchoredAt(target, m[1], m[2]);
+    const line = n ? lines(target)[n - 1] : '';
+    if (!want.test(line) && !nudgedOnto(from, target, n, want)) bad.push(`${from} -> ${target}:"${m[1]}" is ${n ? JSON.stringify(line.slice(0, 60)) : 'no line (the quote names none)'}`);
   }
   assert.deepEqual(bad, [], 'a comment cites a line that is no longer what it claims');
 
@@ -818,29 +857,35 @@ test('CD4: every citation Wave E moved names the line it means', () => {
   // Thirteen probe headers quote the same seam - townTalk.keydown first
   // in the exterior host's keydown ladder, the trap T2 was written about
   // - and copying a stale number thirteen times is how a wrong line
-  // becomes folklore. They are read as a SET here: one range, resolved
-  // at both ends, so the next reader who moves the ladder fixes all
+  // becomes folklore. They are read as a SET here: one anchor, the
+  // ladder's first statement, with the listener above it and the swallow
+  // the rung after it - so the next reader who moves the ladder fixes all
   // fourteen at once or goes red.
   const probeSrc = readdirSync(join(root, 'tools')).filter((f) => f.endsWith('.mjs'))
     .map((f) => ['tools/' + f, read('tools/' + f)]);
   const exLines = lines(EX);
-  const ranged = new Set();
+  const ladder = new Map();
   for (const [f, text] of probeSrc) {
-    for (const m of text.matchAll(/exterior\.js:(\d+)-(\d+)/g)) ranged.add(`${m[1]}-${m[2]}|${f}`);
+    for (const m of text.matchAll(new RegExp(String.raw`keydown ladder \(exterior\.js:${AT}\)`, 'g'))) {
+      const k = JSON.stringify([m[1], m[2] ?? null]);
+      (ladder.get(k) ?? ladder.set(k, new Set()).get(k)).add(f);
+    }
   }
-  assert.ok(ranged.size >= 13, `only ${ranged.size} probes cite the keydown ladder - the fleet's header moved`);
-  const spans = new Set([...ranged].map((r) => r.split('|')[0]));
-  assert.equal(spans.size, 1, `the fleet quotes ${spans.size} different ladder ranges: ${[...spans].join(', ')}`);
-  const [lo, hi] = [...spans][0].split('-').map(Number);
-  assert.match(exLines[lo - 1] ?? '', /addEventListener\('keydown', \(e\) => \{/,
-    'the probes\' ladder range no longer starts at the keydown listener');
-  assert.match(exLines[hi - 1] ?? '', /if \(townTalk\.keydown\(e, keys\)\) return;/,   // KB1: the rung takes the held Set
-    'the probes\' ladder range no longer ends at the swallow');
+  const cited = [...ladder.values()].reduce((n, s) => n + s.size, 0);
+  assert.ok(cited >= 13, `only ${cited} probes cite the keydown ladder - the fleet's header moved`);
+  assert.equal(ladder.size, 1, `the fleet quotes ${ladder.size} different ladder lines: ${[...ladder.keys()].join(', ')}`);
+  const [q, after] = JSON.parse([...ladder.keys()][0]);
+  const lo = anchoredAt(EX, q, after);
+  assert.ok(lo, 'the probes\' ladder anchor names no line');
+  assert.match(exLines[lo - 2] ?? '', /addEventListener\('keydown', \(e\) => \{/,
+    'the probes\' ladder anchor is not the keydown listener\'s first statement');
+  assert.match(exLines[lo] ?? '', /if \(townTalk\.keydown\(e, keys\)\) return;/,   // KB1: the rung takes the held Set
+    'the swallow is no longer the ladder\'s first rung');
   // ...and the one single-line cite in the fleet, the shot-ready flag
   // bootProbe refuses to wait on outside shot mode.
-  const boot = /__shotReady` is set only in shot mode \(exterior\.js:(\d+)/.exec(read('tools/bootProbe.mjs'));
+  const boot = new RegExp(String.raw`__shotReady\` is set only in shot mode \(exterior\.js:${AT}`).exec(read('tools/bootProbe.mjs'));
   assert.ok(boot, 'bootProbe no longer cites the shot-ready flag');
-  assert.match(exLines[Number(boot[1]) - 1] ?? '', /window\.__shotReady = true;/,
+  assert.match(exLines[anchoredAt(EX, boot[1], boot[2]) - 1] ?? '', /window\.__shotReady = true;/,
     'bootProbe\'s shot-ready cite names another line');
 
   // ROAD-G G7: the two Ledger clauses whose subject the fix DELETED
@@ -860,9 +905,9 @@ test('CD4: every citation Wave E moved names the line it means', () => {
   // line". That sentence is only true while the range resolves.
   const probes = lines(LEDGER).find((l) => /THREE PROBES THE T2 SWEEP FOUND STALE/.test(l));
   assert.ok(probes, 'the THREE PROBES row is gone');
-  const r = /scenes\/townTalk\.js:(\d+)-(\d+)/.exec(probes);
-  assert.ok(r, 'the THREE PROBES row no longer names townTalk\'s seam');
-  const seam = lines('src/scenes/townTalk.js').slice(Number(r[1]) - 1, Number(r[2])).join('\n');
+  const r = citedLines(probes, 'src/scenes/townTalk.js');   // CITE-ANCHOR: the seam named by its first slot
+  assert.ok(r.length === 1 && r[0].line, 'the THREE PROBES row no longer names townTalk\'s seam');
+  const seam = lines('src/scenes/townTalk.js').slice(r[0].line - 1, r[0].line + 2).join('\n');
   assert.match(seam, /overlay: !!overlay/, 'the row\'s townTalk range misses the overlay slot');
   assert.match(seam, /native: !!overlay\?\.conversation/, 'the row\'s townTalk range misses the native slot');
 });
@@ -918,8 +963,8 @@ test('CD5: a `Port-Ledger.md:NNN` cite anywhere in the tree lands on its own row
 // These are the page's src-file cites, each read out of the page and
 // resolved against the line it names.
 const STATUS_SOURCE_CITES = [
-  // the ui-hud row: one full cite and three bare `:N` continuations
-  ['| **ui-hud** |', /`(?:ui\/hud\.js)?:(\d+)`/g, 'src/ui/hud.js', [
+  // the ui-hud row: four cites (a full one and three continuations, each written out in full since CITE-ANCHOR)
+  ['| **ui-hud** |', 'src/ui/hud.js', [
     /const rig = updateHudVitals\(/,
     /drawNearDeathFlicker\(renderer, canvas, cur/,
     /if \(isEnhanced\(\) && typeof document/,
@@ -931,7 +976,7 @@ const STATUS_SOURCE_CITES = [
   // and nothing re-resolved the row that names it. The STRUCK rows keep
   // the measurement's numbers, which the page now says outright; an
   // unstruck row is a live claim and has to name a live line.
-  ['- **`src/scenes/exterior.js:', /exterior\.js:(\d+)/g, 'src/scenes/exterior.js', [
+  ['- **`src/scenes/exterior.js:', 'src/scenes/exterior.js', [
     /TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE/,
   ]],
 ];
@@ -939,30 +984,31 @@ const STATUS_SOURCE_CITES = [
 test('CD6: every `src/` line Port-Status cites is the line it describes', () => {
   const doc = lines(STATUS);
   const bad = [];
-  for (const [rowStart, pick, target, anchors] of STATUS_SOURCE_CITES) {
+  for (const [rowStart, target, anchors] of STATUS_SOURCE_CITES) {
     const row = doc.find((l) => l.startsWith(rowStart));
     assert.ok(row, `Port-Status has no row starting ${rowStart}`);
-    const cites = [...row.matchAll(pick)].map((m) => Number(m[1]));
+    const cites = citedLines(row, target, root);
     assert.equal(cites.length, anchors.length,
       `${rowStart} carries ${cites.length} ${target} cites, the pin knows ${anchors.length}`);
-    cites.forEach((n, i) => {
-      const line = lines(target)[n - 1] ?? '';
-      if (!anchors[i].test(line)) bad.push(`${rowStart} -> ${target}:${n} is ${JSON.stringify(line.slice(0, 60))}`);
+    cites.forEach((c, i) => {
+      if (!anchors[i].test(c.text ?? '')) bad.push(`${rowStart} -> ${target}:"${c.quote}" is ${c.line ? JSON.stringify(c.text.slice(0, 60)) : 'no line'}`);
     });
   }
 
   // item 9's RecordLocationFromMap clause, whose pair was stale on both
-  // sides of the bump: it now names the hook itself, as a range, and the
-  // host arm that fills it.
+  // sides of the bump: it now names the hook itself, by the comment that
+  // opens it (a range, named by its first line), and the host arm that
+  // fills it.
   const text = read(STATUS);
-  const hook = /`ui\/nativeInventory\.js:(\d+)-(\d+)`/.exec(text);
+  const hook = new RegExp(String.raw`\`ui\/nativeInventory\.js:${AT}\``).exec(text);
   assert.ok(hook, 'Port-Status no longer cites the nativeInventory reveal hook');
-  const slice = lines('src/ui/nativeInventory.js').slice(Number(hook[1]) - 1, Number(hook[2])).join('\n');
+  const at = anchoredAt('src/ui/nativeInventory.js', hook[1], hook[2]);
+  const slice = lines('src/ui/nativeInventory.js').slice(at - 1, at + 4).join('\n');   // the hook's comment and the hook
   assert.match(slice, /RecordLocationFromMap's DiscoverRandomLocation/, 'the cited range is not the reveal hook');
   assert.match(slice, /revealMap: this\.hooks\.revealMap \?\? null,/, 'the cited range misses the hook itself');
-  const host = /`scenes\/world\.js:(\d+)`/.exec(text);
+  const host = new RegExp(String.raw`\`scenes\/world\.js:${AT}\``).exec(text);
   assert.ok(host, 'Port-Status no longer cites the host arm that fills it');
-  assert.match(lines('src/scenes/world.js')[Number(host[1]) - 1] ?? '', /revealMap: \(\) => revealLocation\('readMap'\)/,
+  assert.match(lines('src/scenes/world.js')[anchoredAt('src/scenes/world.js', host[1], host[2]) - 1] ?? '', /revealMap: \(\) => revealLocation\('readMap'\)/,
     'the world.js cite is not the arm that fills the reveal hook');
 
   assert.deepEqual(bad, [], 'a Port-Status src cite names a line it does not describe');
@@ -1062,27 +1108,26 @@ test('CD8: the ROAD-G G4 review\'s re-resolved cites name the lines they mean', 
   const lp = lines('src/ui/listPicker.js');
   const bad = [];
 
-  // (1) THE BUTTON READ, cited from four files. `:291` is the sync
-  // call; the GetMouseButton(0) poll the sentences name is `:292`.
+  // (1) THE BUTTON READ, cited from four files. G4 named the sync call;
+  // the GetMouseButton(0) poll the sentences name is the line after it.
+  // Each file names it once (CITE-ANCHOR: by the poll's own words).
   for (const f of ['src/ui/chargen.js', 'src/ui/chargenArt.js',
     'src/ui/spellbookWindow.js', 'test/chargenpointer.test.js']) {
-    const hits = [...read(f).matchAll(/listPicker\.js:(\d+)(?!-)/g)];
-    assert.equal(hits.length, 1, `${f} carries ${hits.length} single-line listPicker cites, the pin knows 1`);
-    const line = lp[Number(hits[0][1]) - 1] ?? '';
-    if (!/this\.scrollBar\.update\(!!\(e\?\.buttons & 1\), vy\)/.test(line)) {
-      bad.push(`${f} -> listPicker.js:${hits[0][1]} is ${JSON.stringify(line.slice(0, 60))}`);
-    }
+    const hits = citedLines(read(f), 'src/ui/listPicker.js', root);
+    const poll = hits.filter((c) => /this\.scrollBar\.update\(!!\(e\?\.buttons & 1\), vy\)/.test(c.text ?? ''));
+    if (poll.length !== 1) bad.push(`${f} names the button read ${poll.length} times among its listPicker cites: ${hits.map((c) => JSON.stringify(c.quote)).join(', ')}`);
   }
 
   // (2) THE LEDGER'S OWN LISTBOX ROW, which carries three of them.
   const row = lines(LEDGER).find((l) => /DFU's ListBox SELECTS on the first click/.test(l));
   assert.ok(row, 'the Ledger\'s ListBox row is gone');
 
-  const dbl = /`ui\/listPicker\.js:(\d+)-(\d+)` runs the real MouseClick/.exec(row);
+  const dbl = new RegExp(String.raw`\`ui\/listPicker\.js:${AT}\` runs the real MouseClick`).exec(row);
   assert.ok(dbl, 'the ListBox row no longer cites the double-click test');
-  assert.match(lp[Number(dbl[1]) - 1] ?? '', /index >= 0 && index < this\.items\.length/,
+  const dblAt = anchoredAt('src/ui/listPicker.js', dbl[1], dbl[2]);
+  assert.match(lp[dblAt - 1] ?? '', /index >= 0 && index < this\.items\.length/,
     'the double-click cite does not start at the row guard');
-  const dblSpan = lp.slice(Number(dbl[1]) - 1, Number(dbl[2])).join('\n');
+  const dblSpan = blockAt(lp, dblAt);   // the range, by its first line: the block the guard opens
   assert.match(dblSpan, /DOUBLE_CLICK_DELAY_MS/, 'the cited range holds no DOUBLE_CLICK_DELAY_MS test');
   // AUDIT 65 UI-1: the stamp is no longer cleared on the double -
   // BaseScreenComponent.cs:687-688 stores it unconditionally - so the
@@ -1090,42 +1135,46 @@ test('CD8: the ROAD-G G4 review\'s re-resolved cites name the lines they mean', 
   assert.match(dblSpan, /if \(wasDouble\) this\._use\(\);/,
     'the cited range never reaches _use()');
 
-  const sync = /with `listPicker\.js:(\d+)-(\d+)` \(`syncScrollBar`\)/.exec(row);
+  const sync = new RegExp(String.raw`with \`listPicker\.js:${AT}\` \(\`syncScrollBar\`\)`).exec(row);
   assert.ok(sync, 'the ListBox row no longer cites the two-way index sync');
-  assert.match(lp[Number(sync[1]) - 1] ?? '', /^ {2}syncScrollBar\(\) \{$/,
+  const syncAt = anchoredAt('src/ui/listPicker.js', sync[1], sync[2]);
+  assert.match(lp[syncAt - 1] ?? '', /^ {2}syncScrollBar\(\) \{$/,
     'the sync cite does not start at syncScrollBar');
-  const syncSpan = lp.slice(Number(sync[1]) - 1, Number(sync[2])).join('\n');
+  const syncSpan = blockAt(lp, syncAt);
   assert.match(syncSpan, /this\.scrollIndex = bar\.scrollIndex;/, 'the cited range misses the FROM-the-bar arm');
   assert.match(syncSpan, /bar\.setScrollIndexWithoutRaisingScrollEvent\(this\.scrollIndex\);/,
     'the cited range misses the TO-the-bar arm');
 
-  const rel = /`ListPickerWindow\.release\(\)`, `listPicker\.js:(\d+)`/.exec(row);
+  // CITE-ANCHOR: this cite sits in the row's struck title, where a strike holds a record's number - but this pin
+  // reads it, so it is live by CD8's own law and an anchor, as CD4's gated cites on struck lines are
+  const rel = new RegExp(String.raw`\`ListPickerWindow\.release\(\)\`, \`listPicker\.js:${AT}\``).exec(row);
   assert.ok(rel, 'the ListBox row no longer cites the picker\'s release()');
-  assert.match(lp[Number(rel[1]) - 1] ?? '', /^ {2}release\(\) \{ this\.scrollBar\.draggingThumb = false; \}$/,
+  assert.match(lp[anchoredAt('src/ui/listPicker.js', rel[1], rel[2]) - 1] ?? '', /^ {2}release\(\) \{ this\.scrollBar\.draggingThumb = false; \}$/,
     'the release() cite names another line');
 
   // (3) THE WIZARD SESSION'S FOUR HOST CITES, in the docstring over the
   // seam G4 extended. Comments WRAP, so they are read off flat prose.
   const flat = read('src/systems/chargenSession.js')
     .replace(/^\s*(\/\/|\*)\s?/gm, '').replace(/\s+/g, ' ');
-  const talk = /townTalk\.js:(\d+)-(\d+), the route itself :(\d+)\)/.exec(flat);
+  const talk = new RegExp(String.raw`townTalk\.js:${AT}, the route itself townTalk\.js:${AT}\)`).exec(flat);
   assert.ok(talk, 'the hover docstring no longer cites townTalk\'s hover seam');
   const tt = lines('src/scenes/townTalk.js');
-  assert.match(tt[Number(talk[1]) - 1] ?? '', /^ {2}function hover\(e\) \{$/,
+  const seamAt = anchoredAt('src/scenes/townTalk.js', talk[1], talk[2]);
+  assert.match(tt[seamAt - 1] ?? '', /^ {2}function hover\(e\) \{$/,
     'the townTalk range does not start at the hover seam');
-  assert.match(tt[Number(talk[2]) - 1] ?? '', /^ {2}\}$/, 'the townTalk range does not end at the seam\'s close');
-  assert.match(tt[Number(talk[3]) - 1] ?? '', /overlay\.hover\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\);/,
+  assert.match(blockAt(tt, seamAt).split('\n').at(-1), /^ {2}\}$/, 'the townTalk range does not end at the seam\'s close');
+  assert.match(tt[anchoredAt('src/scenes/townTalk.js', talk[3], talk[4]) - 1] ?? '', /overlay\.hover\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\);/,
     'the townTalk route cite is not the route');
-  const ctx = /`overlayHover` \(:(\d+)\)/.exec(flat);
+  const ctx = new RegExp(String.raw`\`overlayHover\` \(dungeonContext\.js:${AT}\)`).exec(flat);
   assert.ok(ctx, 'the hover docstring no longer cites dungeonContext\'s overlayHover');
-  assert.match(lines('src/scenes/dungeonContext.js')[Number(ctx[1]) - 1] ?? '',
+  assert.match(lines('src/scenes/dungeonContext.js')[anchoredAt('src/scenes/dungeonContext.js', ctx[1], ctx[2]) - 1] ?? '',
     /overlayHover\(vx, vy, e = null\) \{ activeOverlay\?\.hover\?\.\(vx, vy, e\); \},/,
     'the overlayHover cite names another line');
-  const feeds = /dungeon\.js:(\d+) and worldModes\.js:(\d+) both feed/.exec(flat);
+  const feeds = new RegExp(String.raw`dungeon\.js:${AT} and worldModes\.js:${AT} both feed`).exec(flat);
   assert.ok(feeds, 'the hover docstring no longer names the two hosts that feed it');
-  assert.match(lines('src/scenes/dungeon.js')[Number(feeds[1]) - 1] ?? '',
+  assert.match(lines('src/scenes/dungeon.js')[anchoredAt('src/scenes/dungeon.js', feeds[1], feeds[2]) - 1] ?? '',
     /ctx\.overlayHover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\);/, 'the dungeon.js feed cite names another line');
-  assert.match(lines('src/scenes/worldModes.js')[Number(feeds[2]) - 1] ?? '',
+  assert.match(lines('src/scenes/worldModes.js')[anchoredAt('src/scenes/worldModes.js', feeds[3], feeds[4]) - 1] ?? '',
     /dungeonCtx\.overlayHover\?\.\(v \? v\[0\] : -1, v \? v\[1\] : -1, e\);/,
     'the worldModes.js feed cite names another line (the interior slot\'s own hover is a different route)');
 
