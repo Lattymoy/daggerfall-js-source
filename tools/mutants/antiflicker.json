@@ -1,0 +1,94 @@
+[
+  {
+    "name": "CACHE-OFF-address-off-loses",
+    "file": "src/render/shadowPass.js",
+    "old": "  if (q === 'off') return false;\n",
+    "new": "",
+    "tests": [
+      "test/antiflicker.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-OFF-on-by-default",
+    "file": "src/render/shadowPass.js",
+    "old": "  return search === (globalThis.location?.search ?? '') && getPref('shadowCache') === true;",
+    "new": "  return true;",
+    "tests": [
+      "test/antiflicker.test.js",
+      "test/perfurl_doors.test.js",
+      "test/sc1_shadowcache.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-OFF-device-unread",
+    "file": "src/render/shadowPass.js",
+    "old": "  try { if (store?.getItem?.('dfjs.shadowCache') === 'on') return true; } catch { /* no storage */ }\n",
+    "new": "",
+    "tests": [
+      "test/antiflicker.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-OFF-install-ignores-the-default",
+    "file": "src/render/renderer.js",
+    "old": "      this._shadows.cacheOn = this._shadowCacheWanted !== false;",
+    "new": "      this._shadows.cacheOn = true;",
+    "tests": [
+      "test/antiflicker.test.js"
+    ]
+  },
+  {
+    "name": "EMPTY-HOLD-held-over-a-door",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (!f.cut && this._emptyRun <= SHADOW_EMPTY_HOLD",
+    "new": "      if (this._emptyRun <= SHADOW_EMPTY_HOLD",
+    "tests": [
+      "test/disc15.test.js"
+    ]
+  },
+  {
+    "name": "EMPTY-HOLD-held-for-ever",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (!f.cut && this._emptyRun <= SHADOW_EMPTY_HOLD",
+    "new": "      if (!f.cut && this._emptyRun <= Infinity",
+    "tests": [
+      "test/audit68_render_b.test.js"
+    ]
+  },
+  {
+    "name": "EMPTY-HOLD-never-held",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (!f.cut && this._emptyRun <= SHADOW_EMPTY_HOLD && this._hadMaps",
+    "new": "      if (!f.cut && this._emptyRun <= SHADOW_EMPTY_HOLD && false",
+    "tests": [
+      "test/audit68_render_b.test.js"
+    ]
+  },
+  {
+    "name": "IDLER-STICKY-not-sticky",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (lookChanged && b._dyn !== true && b.selfCard !== true && !b._place && !(b.sway > 0)) b._shIdler = true;\n",
+    "new": "",
+    "tests": [
+      "test/audit_reach.test.js"
+    ]
+  },
+  {
+    "name": "IDLER-STICKY-a-walk-sticks",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (lookChanged && b._dyn !== true && b.selfCard !== true && !b._place && !(b.sway > 0)) b._shIdler = true;",
+    "new": "      if ((lookChanged || placeChanged) && b._dyn !== true && b.selfCard !== true && !b._place && !(b.sway > 0)) b._shIdler = true;",
+    "tests": [
+      "test/audit_reach.test.js"
+    ]
+  },
+  {
+    "name": "POISE-QUIET-the-empty-track-drawn",
+    "file": "src/ui/enhancedHud.js",
+    "old": "    const p = t.poise && t.poise.state && t.poise.state !== 'empty' ? t.poise : null;",
+    "new": "    const p = t.poise;",
+    "tests": [
+      "test/tell9_screen.test.js"
+    ]
+  }
+]

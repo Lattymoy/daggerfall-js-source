@@ -29,6 +29,7 @@ function rig({ onRoad = () => false } = {}) {
 }
 
 test('RATE-LAW: a route runs at its LEG\'s rate - a road x100, a track x100, the open ground x60 - asked of the clock as each leg begins and only on a change, and said on the panel (mutants: the leg\'s kind unread, a track off the road, the clock asked every frame)', () => {
+  dialAtTop();
   const { to, ui, asked, w, frame } = rig();
   const legs = [{ x: 501, y: 250, kind: 'road' }, { x: 502, y: 250, kind: 'track' }, { x: 503, y: 250, kind: 'open' }, { x: 504, y: 250, kind: 'road' }];
   // a PLACE's route (AUDIT-D1: a spot's last stretch asks the host's lanes - test/ratelawfix.test.js)
@@ -49,6 +50,7 @@ test('RATE-LAW: a route runs at its LEG\'s rate - a road x100, a track x100, the
 });
 
 test('RATE-LAW: a resumed route walks back to the road at the open ground\'s rate, then takes up the road\'s (mutant: the join walked at the road\'s rate)', () => {
+  dialAtTop();
   const { to, asked, w, frame } = rig();
   const legs = [{ x: 500, y: 250, kind: 'road' }, { x: 502, y: 250, kind: 'road' }, { x: 504, y: 250, kind: 'road' }];
   // a PLACE's route - a spot's dies with its stop (AUDIT TV A4), a place's waits for the Resume
@@ -72,6 +74,7 @@ test('RATE-LAW: a resumed route walks back to the road at the open ground\'s rat
 });
 
 test('RATE-LAW: a straight walk asks the host what the traveller stands on - x60 across the open ground, x100 while it runs along a road, followed frame by frame (mutant: the host never asked)', () => {
+  dialAtTop();
   let road = false;
   const { to, ui, asked, frame } = rig({ onRoad: () => road });
   to.beginTravelToCoords({ x: 520, y: 250 });
@@ -85,6 +88,7 @@ test('RATE-LAW: a straight walk asks the host what the traveller stands on - x60
 });
 
 test('RATE-LAW: the follow key walks a road or a track at x100, and the ring walk round a town keeps the mod\'s own x15 ceiling - no spinner, no half limit (mutants: the ceiling dropped, the path walked at the open rate)', () => {
+  dialAtTop();
   const { to, ui, asked } = rig();
   to.beginPathTravel({ x: 501, y: 250 });
   assert.deepEqual([asked.at(-1), ui.timeAcceleration, ui.onRoad], [100, 100, true]);
@@ -110,6 +114,10 @@ test('RATE-LAW: a stop asks for walking pace and forgets the rate, so the next j
 // ── THE HOST'S OWN QUESTION, RUN ──────────────────────────────────────────────────────────────────────────────────────
 import { readFileSync } from 'node:fs';
 import { playerOnPathAt, pathsDataPoint, E, W } from '../src/systems/travelPaths.js';
+import { setPaceGround, setTravelPace, _resetTravelPace } from '../src/systems/travelPace.js';   // PACE-DIALS: the road's x100 is the player's dial
+/** PACE-DIALS (2026-10-06): x100 is chosen, on a road - the dial set there as the panels set it (the default is x60, and
+ *  leaving a road takes it back to x60: test/pacedials.test.js). These pins hold the LANES' law at the dial's top. */
+const dialAtTop = () => { _resetTravelPace(); setPaceGround(true); setTravelPace('speed', 100); };
 
 const WORLD = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
 

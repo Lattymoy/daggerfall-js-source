@@ -797,7 +797,7 @@ test('AUDIT DEEP2 A1/A2/A5/A8/A9 by source: the travel panel keeps its presses; 
   assert.doesNotMatch(panel, /addEventListener\('mouseup', \(e\) => \{ if \(e\.target\?\.closest/, 'never the release (AUDIT CHAT C5)');
   const w = rd('src/scenes/world.js');
   assert.match(w, /overlayActive: \(\) => townTalk\.overlayActive \|\| !!travelView\?\.active \|\| !!modes\?\.overlayHeld,/);   // PIN MOVED (FIELD BUGS 29h TOUCH-HELD): and the modes' own stacks
-  assert.match(w, /overlayUp: \(\) => overlayOpen\(\) \|\| travelViewConfirmOpen\(\),/);   // PIN MOVED (OW-CONFIRM): and the view's own question has the keys
+  assert.match(w, /overlayUp: \(\) => overlayOpen\(\) \|\| travelViewConfirmOpen\(\) \|\| waypointMenuOpen\(\),/);   // PIN MOVED (OW-CONFIRM): and the view's own question has the keys; WAYPOINTS (2026-10-06): and its right-click menu (its Escape is its own)
   assert.match(w, /if \(act === 'Escape' && e\.repeat\) return true;[^\n]*\n\s*if \(act === 'Escape' && pauseDoorReady\(\)\) \{ hudCtx\.togglePause\(\); return true; \}/);
 });
 

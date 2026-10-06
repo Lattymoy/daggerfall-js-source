@@ -76,6 +76,10 @@ import { FIXED_DT, MAX_FRAME_DT } from '../src/player/motor.js';
 import { MOD_SETTINGS, colorKeyRgba, colorKeyHex, isColorKey, modSetting, _resetModSettings } from '../src/systems/modSettings.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
 import { mapPixelToWorldCoords } from '../src/world/streamingWorld.js';
+import { setPaceGround, setTravelPace, _resetTravelPace } from '../src/systems/travelPace.js';   // PACE-DIALS: the road's x100 is the player's dial
+/** PACE-DIALS (2026-10-06): x100 is chosen, on a road - the dial set there as the panels set it (the default is x60, and
+ *  leaving a road takes it back to x60: test/pacedials.test.js). These pins hold the LANES' law at the dial's top. */
+const dialAtTop = () => { _resetTravelPace(); setPaceGround(true); setTravelPace('speed', 100); };
 
 const root = new URL('..', import.meta.url);
 const read = (rel) => readFileSync(new URL(rel, root), 'utf8');
@@ -731,6 +735,7 @@ test('TO1: the junction mini-map - twenty pixels square, the player at herePt, t
 // ─── the control panel ────────────────────────────────────────────────
 
 test('TO1: TravelControlUI - the rects are the mod\'s; RATE-LAW: no spinner - the rate a journey runs at is its ground\'s, x100 on a road or a track and x60 off it (mutants: the rates swapped or moved)', () => {
+  dialAtTop();
   assert.deepEqual(CONTROL_RECTS.panel, [0, 0, 320, 27]);
   assert.deepEqual(CONTROL_RECTS.dest, [5, 14, 152, 7]);
   assert.deepEqual(CONTROL_RECTS.timeAccel, [163, 4]);
@@ -1053,6 +1058,7 @@ test('AUDIT OW5b E1: THE ENEMIES STOP ASKED BY THE ENCOUNTER THAT MEETS THE TRAV
 });
 
 test('TO1: the follow key - a road under the feet and a facing that matches begins a leg; nothing under the feet says so', () => {
+  dialAtTop();
   const { to, ui, net, state, said } = rig();
   const at = (x, y) => x + y * 1000;
   net.roads[at(500, 250)] = E | W;

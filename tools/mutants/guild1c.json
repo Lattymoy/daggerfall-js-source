@@ -536,8 +536,8 @@
   {
     "name": "GUILD1c-a-guild-line-on-the-world-tab",
     "file": "src/scenes/world.js",
-    "old": "link.onChat = (line) => chatLog.push(tab.room === SOCIAL_ROOM && (line.ch === 'party' || line.ch === 'guild') ? line.ch : tab.id, line);",
-    "new": "link.onChat = (line) => chatLog.push(tab.room === SOCIAL_ROOM && line.ch === 'party' ? 'party' : tab.id, line);",
+    "old": "|| chatLog.push(tab.room === SOCIAL_ROOM && (line.ch === 'party' || line.ch === 'guild') ? line.ch : tab.id, line);",
+    "new": "|| chatLog.push(tab.room === SOCIAL_ROOM && line.ch === 'party' ? 'party' : tab.id, line);",
     "tests": [
       "test/guild1c.test.js"
     ]

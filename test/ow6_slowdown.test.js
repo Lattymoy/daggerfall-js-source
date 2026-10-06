@@ -11,6 +11,10 @@ import { createLoadGovernor } from '../src/systems/travelGovernor.js';
 import { TRAVEL_HELD_TEXT, TRAVEL_HELD_WHY } from '../src/ui/enhancedTravelControl.js';
 import { foeHostile, foeAlerted, areEnemiesNearby } from '../src/systems/encounters.js';
 import { TRAVEL_VIEW_TEXT, travelWalkRate, TV_MOVE_ACTIONS } from '../src/scenes/travelView.js';
+import { setPaceGround, setTravelPace, _resetTravelPace } from '../src/systems/travelPace.js';   // PACE-DIALS: the road's x100 is the player's dial
+/** PACE-DIALS (2026-10-06): x100 is chosen, on a road - the dial set there as the panels set it (the default is x60, and
+ *  leaving a road takes it back to x60: test/pacedials.test.js). These pins hold the LANES' law at the dial's top. */
+const dialAtTop = () => { _resetTravelPace(); setPaceGround(true); setTravelPace('speed', 100); };
 
 const NORTH = { x: 0, z: 1 };
 
@@ -239,6 +243,7 @@ test('OW6 host run: ON THE CLASSIC SKIN (no view), A FOE STANDING AHEAD HOLDS TH
 });
 
 test('OW6 x TV-WASD host run: THE KEYS\' TRAVEL SLOWS FOR ENEMIES TOO - held under the ground\'s rate (RATE-LAW: x60 off the road, x100 on it) under the view, a band that noticed me (WILD-ALERT: its chase) holds it (the reason the enemies), one far off holds nothing, and the keys let go let the hold go (mutants: the keys uncapped, their way unread)', () => {
+  dialAtTop();
   const keys = () => new Set([TV_MOVE_ACTIONS[0]]);
   // WILD-ALERT: a band that has noticed me - its chase, ahead along the way the keys move
   const band = () => new Map([['b1', { band: { id: 'b1' }, pos: { x: 0, z: 470 } }]]);

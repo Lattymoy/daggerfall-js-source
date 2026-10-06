@@ -1,0 +1,32 @@
+[
+  {
+    "name": "CAT-MEOW-the-plaque-keeps-the-seed",
+    "file": "src/ui/worldPlaque.js",
+    "old": "    setSeed(classicSeed);   // CAT-MEOW: the namers' DisplayName draws leave no mark on the game's stream\n",
+    "new": "",
+    "tests": [
+      "test/fb1006c_catmeow.test.js"
+    ]
+  },
+  {
+    "name": "CAT-MEOW-the-seed-taken-after-the-namers",
+    "file": "src/ui/worldPlaque.js",
+    "old": "  const classicSeed = getSeed();\n  try {\n    const hit = pick ? pick() : pickActivatableHit(eye, dir, targets?.() ?? [], collider);\n    const frame = markBodyStack(resolveHover(hit, { name, contents }));",
+    "new": "  let classicSeed = getSeed();\n  try {\n    const hit = pick ? pick() : pickActivatableHit(eye, dir, targets?.() ?? [], collider);\n    const frame = markBodyStack(resolveHover(hit, { name, contents }));\n    classicSeed = getSeed();",
+    "tests": [
+      "test/fb1006c_catmeow.test.js"
+    ],
+    "note": "the seed sampled after DisplayName drew is the name's seed: put back, it is the frozen stream again"
+  },
+  {
+    "name": "GUARD-WINDOW-the-guard-a-wait",
+    "file": "src/systems/quest/clock.js",
+    "old": "  N0B20Y02: Object.freeze(['S.12']),   // GUARD-WINDOW (FIELD BUGS 2026-10-06c): \"I must guard %g2 for 3 hours\" - the attack comes inside it\n",
+    "new": "",
+    "tests": [
+      "test/fb1006c_guardwindow.test.js",
+      "test/rest8_questwaits.test.js",
+      "test/auditrest2_quests.test.js"
+    ]
+  }
+]
