@@ -1485,7 +1485,9 @@ test('MW-D28: the map is TOTAL - every DF equippable x material answers, or the 
   // MW-BRIG1: and the port's own ARMOUR, one row per template x material it dresses, inside the mod's space
   assert.equal(own.length, Object.keys(OWN_MW_MODELS).length + OWN_MW_ARMOR.length, 'every own-model weapon and armour piece answers a row');
   assert.ok(own.every((o) => o.model && o.item), 'an own row names its mesh and its item');
-  assert.deepEqual(own.filter((o) => o.own === 'ownArmorModels').map((o) => o.index), OWN_MW_ARMOR.map((a) => a.templateIndex));
+  // MW-STEEL1: the classic walk comes first, so the Steel plate's seven rows stand before the mod's brigandine - a set,
+  // compared as one
+  assert.deepEqual(own.filter((o) => o.own === 'ownArmorModels').map((o) => o.index).sort((a, b) => a - b), OWN_MW_ARMOR.map((a) => a.templateIndex).sort((a, b) => a - b));
   // Declared sprites are present, named, and reasoned.
   const sprites = cover.filter((c) => c.kind === 'sprite');
   assert.ok(sprites.length >= 10, 'the Arrow rows are not declared');
@@ -1716,7 +1718,7 @@ test('MW-D29: shadows trim the skin - whole slots gone, single sides kept on the
 test('MW-D29: the thread is unbroken - the menu reads the equip table, the build wears it', () => {
   const arm = readFileSync('src/combat/fpArm.js', 'utf8');
   // NUDE-FLATS: through the upper weld's door (composeWornModest composes, then welds a bare woman's chest)
-  assert.match(arm, /composeWornModest\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female, colourOf \}, showNudity\(\)\)/);
+  assert.match(arm, /composeWornModest\(\{ pieces: armor \?\? \[\], armors: armors \?\? \[\], clothes: clothes \?\? \[\], bodyPool: parts, female, colourOf, helmStyle \}, showNudity\(\)\)/);   // MW-STEEL1: and the Steel Helm switch
   assert.match(arm, /const armors = esmBytes\.flatMap\(\(e\) => walk\(e, 'armors', armorRecords\)\);/);
   assert.match(arm, /const clothes = esmBytes\.flatMap\(\(e\) => walk\(e, 'clothes', clothingRecords\)\);/);
   // MW-D31: ONE composition serves both rigs - buildFpArm composes,

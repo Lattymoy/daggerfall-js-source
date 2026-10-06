@@ -45,7 +45,7 @@
 
 import { WEAPONS, WEAPON_MATERIALS } from '../characters/weapons.js';
 import { OWN_MW_MODELS } from '../characters/ownWeaponModels.js';   // FIELD-GUN-MW2: the weapons Morrowind does not have
-import { OWN_MW_ARMOR, ownArmorModelFor } from '../characters/ownArmorModels.js';   // MW-BRIG1: the armour Morrowind does not have
+import { OWN_MW_ARMOR, ownArmorModelFor, ownArmorParts } from '../characters/ownArmorModels.js';   // MW-BRIG1: the armour Morrowind does not have; MW-STEEL1: and its styles
 import { ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
 import templates from '../characters/itemTemplates.json' with { type: 'json' };
@@ -205,6 +205,9 @@ export const DECLARED_SPRITE_WEAPONS = Object.freeze({
 
 const matName = (table, v) => Object.entries(table).find(([, x]) => x === v)?.[0] ?? null;
 
+/** MW-STEEL1: every mesh an own model can wear, every style's, in its table's order. */
+const ownModelsOf = (own) => [...new Set([own.parts, ...Object.values(own.styles ?? {})].flat().map((p) => p.model))];
+
 /** Resolve one DF garment against the CLOT records: BY TYPE, id-sorted,
  *  enchanted excluded - and on retail the id sort puts common_ ahead of
  *  expensive_ and its betters, so the street clothes win, which is the
@@ -332,6 +335,9 @@ export function itemMapCoverage() {
   for (const [aName, tmpl] of Object.entries(ARMOR_ENUM)) {
     for (const [mName, m] of Object.entries(ARMOR_MATERIAL)) {
       if (m === ARMOR_MATERIAL.None) continue;
+      // MW-STEEL1: a classic piece the port dresses in its own model answers with the port's meshes, every style's
+      const own = OWN_MW_ARMOR.find((a) => a.templateIndex === tmpl && a.material === m);
+      if (own) { out.push({ kind: 'own', item: aName, material: mName, via: 'armor', own: 'ownArmorModels', index: tmpl, model: ownModelsOf(own).join(' + ') }); continue; }
       const hasRow = tmpl in DF_ARMOR_ROWS;
       const hasMat = mName in DF_TO_MW_ARMOR_MATERIAL;
       if (hasRow && hasMat) out.push({ kind: 'mapped', item: aName, material: mName, via: 'armor' });
@@ -353,7 +359,7 @@ export function itemMapCoverage() {
       // MW-BRIG1: a template and material the port dresses in its own model - still a row of the mod's space, and
       // one that answers with the port's meshes rather than a retail record
       const own = OWN_MW_ARMOR.find((a) => a.templateIndex === Number(index) && a.material === m);
-      if (own) { out.push({ kind: 'own', item: `template ${index}`, material: mName, via: 'mod armor', own: 'ownArmorModels', index: Number(index), model: own.parts.map((p) => p.model).join(' + ') }); continue; }
+      if (own) { out.push({ kind: 'own', item: `template ${index}`, material: mName, via: 'mod armor', own: 'ownArmorModels', index: Number(index), model: ownModelsOf(own).join(' + ') }); continue; }
       const ok = !!MOD_ARMOR_ROWS[index] && mName in DF_TO_MW_ARMOR_MATERIAL;
       out.push({ kind: ok ? 'mapped' : 'UNMAPPED', item: `template ${index}`, material: mName, via: 'mod armor' });
     }
@@ -387,6 +393,16 @@ export function mwItemReport(armorRecords, { weapons = null, clothes = null, col
   for (const [aName, tmpl] of Object.entries(ARMOR_ENUM)) {
     for (const mName of Object.keys(DF_TO_MW_ARMOR_MATERIAL)) {
       if (mName === 'Chain2') continue;   // one report line for chain
+      // MW-STEEL1: a piece the port dresses itself names its own meshes - the archives are not asked
+      const own = ownArmorModelFor({ templateIndex: tmpl, material: ARMOR_MATERIAL[mName] });
+      if (own) {
+        rows.push({
+          family: 'armor', item: `${mName} ${aName.replaceAll('_', ' ')}`, found: ownModelsOf(own),
+          note: 'the port\'s own model (characters/ownArmorModels.js) - no record of the archives is asked',
+          dfColour: hex(DF_MATERIAL_RGB[mName]), mwColour: null,
+        });
+        continue;
+      }
       const res = mwArmorRecords(armorRecords, tmpl, ARMOR_MATERIAL[mName]);
       rows.push({
         family: 'armor',
@@ -525,7 +541,7 @@ export function dfWornArmor(slots, EQUIP_SLOTS, ARMOR_ENUM) {
  * missing record, an unknown INDX, a ref with no id for this sex -
  * each is a note, the skin stands, the law is never-traps.
  */
-export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = false, colourOf = null }) {
+export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = false, colourOf = null, helmStyle = undefined }) {   // MW-STEEL1: helmStyle, the Steel Helm switch (undefined: the default style)
   const notes = [];
   const bodyById = new Map((bodyPool ?? []).map((b) => [String(b.id || '').toLowerCase(), b]));
   // ── THE PRIORITY LAW (Audit 30's recording, now consumed) ────────
@@ -587,10 +603,14 @@ export function composeWornArmor({ pieces, armors, clothes, bodyPool, female = f
     // armour's priority, part by part, as composeRefs claims a record's.
     const own = ownArmorModelFor(piece);
     if (own) {
-      for (const p of own.parts) {
+      for (const p of ownArmorParts(own, { helmStyle })) {   // MW-STEEL1: the style the Steel Helm switch asks for
         const at = ARMO_PART.findIndex((r) => r.name === p.part);
         const row = ARMO_PART[at];
-        claim(at, prio, { slot: `${row.name} (${own.id})`, partName: row.name, bones: row.bones, model: p.model, recordId: own.id, piece, skinFrom: own.skinFrom, fitTo: own.fitTo ?? null });   // MW-BRIG2: skinned from the body under it; MW-BRIG3: fitted onto the part it hides
+        claim(at, prio, { slot: `${row.name} (${own.id})`, partName: row.name, bones: row.bones, model: p.model, recordId: own.id, piece, skinFrom: own.skinFrom, fitTo: own.fitTo ?? null,   // MW-BRIG2: skinned from the body under it; MW-BRIG3: fitted onto the part it hides
+          ...(own.fit ? { fit: own.fit, fitFrom: own.fitFrom } : {}) });   // MW-STEEL1: kept to the body its scene carries
+        // MW-STEEL1: what the part covers beyond its own slot is OCCUPIED with no mesh (reserveIndividualPart), so its
+        // skin is not drawn under the plate - at the armour's priority, the law's own gate
+        for (const h of p.hides ?? []) claim(ARMO_PART.findIndex((r) => r.name === h), prio, null);
       }
       continue;
     }
