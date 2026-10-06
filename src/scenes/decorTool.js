@@ -120,6 +120,9 @@ export const DECOR_FLOAT_AT = 3;
 export const DECOR_PREVIEW_SPIN = 30;
 /** How long the service's refusal of a placement stays on the bar, milliseconds. */
 export const DECOR_REFUSAL_MS = 4000;
+/** DECOR-TURN (AUDIT Y1): how long after its last press a placed piece's turn is written, milliseconds - the presses of
+ *  one turning are one write to the account service, never one a press. */
+export const DECOR_TURN_SETTLE_MS = 400;
 /** RENT-FRESH (FIELD BUGS 2026-10-01): how old the owner's rooms may grow while the rooms view is up before they are read
  *  again, milliseconds - a tenant pays at the door while the owner stands in the house. */
 export const RENT_VIEW_FRESH_MS = 30_000;
@@ -1210,41 +1213,64 @@ export function createDecorTool(deps) {
    * stands, never picked up): A PLACED PIECE TURNED BY `deg` about its upright - a hung one spun on its wall, as its
    * placing turns it (systems/decorPlacer.js) - free, its place else as it stands. A door is turned by its doorway (its
    * Move), never here. A yard's piece turned onto the house, a road or another's ground - or one standing higher than a
-   * yard's may - is refused as its placing would be (whyNotHere). Presses while the account service answers one turn
-   * gather into the next, on the piece as it then stands - never one write a press, nor a turn written over a newer.
+   * yard's may - is refused as its placing would be (whyNotHere). AUDIT Y1: it turns at once, as the press is made, and
+   * an online home's piece is written once its presses settle (writeTurn) - each press was a write to the account
+   * service (four statements on its database, one of the hour's DECOR_OPS_MAX), and the piece stood still until it
+   * answered.
    */
-  async function turnPlaced(piece, deg) {
+  function turnPlaced(piece, deg) {
     const r = deps.room?.();
     if (!r || decorIsDoor(piece) || !Number.isFinite(deg)) return false;
-    turnOwed.set(piece.id, (turnOwed.get(piece.id) ?? 0) + deg);
-    if (turnBusy.has(piece.id)) return true;   // gathered into the next turn
-    turnBusy.add(piece.id);
-    let turned = false;
-    try {
-      for (let by = turnOwed.get(piece.id) ?? 0; by; by = turnOwed.get(piece.id) ?? 0) {
-        turnOwed.delete(piece.id);
-        const cur = pool.list().find((p) => p.id === piece.id);
-        if (!cur) break;
-        const axis = decorIsMount(cur) ? 2 : 0;   // DECOR2c: a hung one's turn is its spin on the surface
-        const next = decorPieceOf({ ...cur, rot: cur.rot.map((v, i) => (i === axis ? wrapTurn(Math.round((v + by) * 10) / 10) : v)) });
-        if (!next) break;
-        const why = whyNotHere({ piece: next, radius: ensureScan().radiusOf(entryOf(next)) ?? null });
-        if (why) { deps.say?.(why); break; }
-        const visit = deps.visit?.();
-        const stood = await writeChange(r, next);
-        if (!stood) break;
-        if (deps.visit?.() === visit) pool.put(stood);
-        turned = true;
-      }
-    } finally {
-      turnBusy.delete(piece.id);
-      turnOwed.delete(piece.id);
-    }
-    return turned;
+    const cur = pool.list().find((p) => p.id === piece.id);
+    if (!cur) return false;
+    const axis = decorIsMount(cur) ? 2 : 0;   // DECOR2c: a hung one's turn is its spin on the surface
+    const next = decorPieceOf({ ...cur, rot: cur.rot.map((v, i) => (i === axis ? wrapTurn(Math.round((v + deg) * 10) / 10) : v)) });
+    if (!next) return false;
+    const why = whyNotHere({ piece: next, radius: ensureScan().radiusOf(entryOf(next)) ?? null });
+    if (why) { deps.say?.(why); return false; }
+    pool.put(next);
+    if (r.kind !== 'home') return true;   // offline, the room's pool is its save
+    const owed = turnsOwed.get(piece.id);
+    if (owed) { owed.rot = next.rot; owed.n++; } else turnsOwed.set(piece.id, { r, visit: deps.visit?.(), held: cur, rot: next.rot, n: 1, busy: false });
+    const n = turnsOwed.get(piece.id).n;
+    later(() => { writeTurn(piece.id, n); }, DECOR_TURN_SETTLE_MS);
+    return true;
   }
-  /** DECOR-TURN: the pieces being turned right now, and the turn each owes past the one being written. */
-  const turnBusy = new Set();
-  const turnOwed = new Map();
+  /**
+   * DECOR-TURN (AUDIT Y1): A PIECE'S TURN WRITTEN, once its presses settle - the turn owed, on the piece as it now
+   * stands (a light or a hold changed meanwhile is never written back over), or as the service last held it from a
+   * room since left. Settled while the last is still being answered, it is written after that answer. Refused, the turn
+   * alone is undone - the piece turned back as the service holds it. AUDIT Y2: a piece taken out of the room
+   * meanwhile is never written, nor stood again (an answer that came after its removal put it back).
+   */
+  async function writeTurn(id, n) {
+    const t = turnsOwed.get(id);
+    if (!t || t.n !== n) return;   // a later press's own wait writes it
+    if (t.busy) { t.again = true; return; }   // written after the answer under way
+    const here = deps.visit?.() === t.visit;
+    const standing = () => pool.list().find((p) => p.id === id) ?? null;
+    if (here && !standing()) { turnsOwed.delete(id); return; }   // removed meanwhile
+    const want = decorPieceOf({ ...(standing() ?? t.held), rot: t.rot });
+    if (!want) { turnsOwed.delete(id); return; }
+    t.busy = true;
+    t.again = false;
+    const stood = await writeChange(t.r, want);
+    t.busy = false;
+    const now = deps.visit?.() === t.visit ? standing() : null;
+    if (!stood) {
+      turnsOwed.delete(id);
+      if (now) pool.put(decorPieceOf({ ...now, rot: t.held.rot }) ?? t.held);   // refused: turned back as it was
+      return;
+    }
+    t.held = stood;
+    if (t.n !== n) { if (t.again) { const m = t.n; later(() => { writeTurn(id, m); }, 0); } return; }   // pressed meanwhile
+    turnsOwed.delete(id);
+    if (now) pool.put(decorPieceOf({ ...now, rot: stood.rot }) ?? now);   // the service's own turn
+  }
+  /** DECOR-TURN: each piece's turn not yet written - its room, the piece as the service holds it, the turn owed. */
+  const turnsOwed = new Map();
+  /** AUDIT Y1: a call after `ms` - the host's own clock where it hands one (a pin's), else the page's. */
+  const later = (fn, ms) => (deps.later ?? setTimeout)(fn, ms);
 
   /** HOME-STATIONS: a piece a station cannot be made in for want of gold. */
   const decorStationGoldLine = (kind) => `${DECOR_STATION_NAMES[kind]}: ${DECOR_STATION_FEES[kind].toLocaleString('en-US')} gold, and you have not that much.`;

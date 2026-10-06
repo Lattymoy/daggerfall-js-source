@@ -4,19 +4,19 @@
 // (net/decorLaw.js decorYardHighOk: server-account/src/decor.js placeDecor and moveDecor, scenes/homeYards.js
 // yardWhyNot) - each piece stood on the one below had climbed as far as DECOR_YARD_POS_MAX. And a placed piece is turned
 // where it stands from the panel's "In this room" view (ui/decorPanel.js Turn left / Turn right, scenes/decorTool.js
-// turnPlaced) - free, never picked up. Each pin failed on the build before it. tools/mutants/yardheight.json.
+// turnPlaced) - free, never picked up; online, written once its presses settle (AUDIT Y1). Each pin failed on the build
+// before it. tools/mutants/yardheight.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 
 import { DECOR_YARD_HIGH, decorYardHighOk } from '../src/net/decorLaw.js';
+import { REFUSALS } from '../src/net/accountClient.js';
 import { yardWhyNot, YARD_TOO_HIGH, YARD_IN_HOUSE } from '../src/scenes/homeYards.js';
 import { DECOR_TURN_STEP } from '../src/systems/decorPlacer.js';
 import { createDecorPanel } from '../src/ui/decorPanel.js';
 import { standService, T0 } from './accountDb.mjs';
 import { settle, fakeDoc, fakeWin, all, one, catalogue, rows, toolRig, placeFrom } from './decorFakes.mjs';
 
-const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const piece = (over = {}) => ({ id: 'yard1', model: 41000, flat: null, pos: [8, 0, 2], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 120, ...over });
 const placeOf = (p) => ({ pos: p.pos, rot: p.rot, scale: p.scale, light: p.light, storage: p.storage, paid: p.paid });
 
@@ -31,7 +31,7 @@ test('YARD-HEIGHT the law: a yard\'s piece stands at most DECOR_YARD_HIGH (4 m) 
   assert.equal(yardWhyNot([8, 4.5, 2], lot), YARD_TOO_HIGH);
   assert.equal(yardWhyNot([0, 9, 0], lot), YARD_IN_HOUSE, 'a roof is the house first');
   assert.match(YARD_TOO_HIGH, /4 m/);
-  assert.match(src('src/net/accountClient.js'), /'yard-high': `Too high - a yard's piece stands at most \$\{DECOR_YARD_HIGH\} m above the ground\.`/);
+  assert.equal(REFUSALS['yard-high'], YARD_TOO_HIGH, 'AUDIT Y3: the service\'s refusal, the decorator\'s own sentence');
 });
 
 test('YARD-HEIGHT the service: a yard\'s piece placed past DECOR_YARD_HIGH is refused (`yard-high`) and none stands; at it, it stands; a yard\'s piece moved up past it is refused and stands where it stood; a room\'s piece is never asked (mutants: the place unguarded, the move unguarded, the room\'s piece capped)', async (t) => {
@@ -136,47 +136,38 @@ test('DECOR-TURN offline: Turn right turns the piece DECOR_TURN_STEP about its u
   assert.deepEqual(rig.standing[0].rot, [-180 + DECOR_TURN_STEP, 0, 0], 'wrapped into the law\'s half turn');
 });
 
-test('DECOR-TURN online: the turn is the account service\'s first - the piece\'s whole place, only its turn changed - and the service\'s answer stands; presses while it answers gather into one turn after it, never a write a press; refused, it stands as it was and the service\'s word is said (mutants: the write skipped, a write a press, the gathered turn lost, the refusal stood)', async () => {
+/** A clock a pin turns by hand: each call waits until `run()`, in the order asked. */
+function handClock() {
+  const q = [];
+  return {
+    later: (fn) => { q.push(fn); },
+    async run() { while (q.length) { q.shift()(); await settle(); await settle(); } },
+    waiting: () => q.length,
+  };
+}
+
+test('DECOR-TURN online: the piece turns at once as each press is made, and the turning is written once its presses settle (DECOR_TURN_SETTLE_MS) - the piece\'s whole place, only its turn changed, the account service\'s - never a write a press (mutants: the write skipped, a write a press, the turn shown late)', async () => {
   const calls = [];
-  let hold = null;
   const svc = {
-    answer: null,
     async place(a) { return { ok: true, data: { piece: a.piece } }; },
-    move(a) {
-      calls.push(a);
-      if (svc.answer) return Promise.resolve(svc.answer(a));
-      return new Promise((r) => { hold = () => r({ ok: true, data: { piece: { ...rig.standing[0], ...a.place } } }); });
-    },
+    async move(a) { calls.push(a); return { ok: true, data: { piece: { ...rig.standing[0], ...a.place } } }; },
     async remove() { return { ok: true, data: {} }; },
   };
-  const rig = toolRig({ room: { kind: 'home', where: 'Your home', mapId: 77, buildingKey: 9 }, homeDecor: svc, gold: 1000 });
-  svc.answer = () => ({ ok: true, data: {} });
+  const clock = handClock();
+  const rig = toolRig({ room: { kind: 'home', where: 'Your home', mapId: 77, buildingKey: 9 }, homeDecor: svc, gold: 1000, later: clock.later });
   const chair = await placedOne(rig);
-  svc.answer = null;
   calls.length = 0;
   rig.frame();
   roomPress(rig, chair.id, 'Turn right');
-  await settle();
-  assert.deepEqual(calls, [{ mapId: 77, buildingKey: 9, character: 'char-me', id: chair.id, place: placeOf({ ...chair, rot: [DECOR_TURN_STEP, 0, 0] }) }]);
   btn(panelOf(rig), 'Turn right').fire('click');
   btn(panelOf(rig), 'Turn right').fire('click');
   await settle();
-  assert.equal(calls.length, 1, 'the presses wait on the answer');
-  hold();
-  await settle();
-  await settle();
-  assert.equal(calls.length, 2, 'gathered into one turn');
-  assert.deepEqual(calls[1].place.rot, [3 * DECOR_TURN_STEP, 0, 0], 'from the piece as it then stood');
-  hold();
-  await settle();
+  assert.deepEqual(rig.standing[0].rot, [3 * DECOR_TURN_STEP, 0, 0], 'turned at once, each press');
+  assert.deepEqual(calls, [], 'nothing written while the presses come');
+  await clock.run();
+  assert.deepEqual(calls, [{ mapId: 77, buildingKey: 9, character: 'char-me', id: chair.id, place: placeOf({ ...chair, rot: [3 * DECOR_TURN_STEP, 0, 0] }) }], 'one write, the turning whole');
   assert.deepEqual(rig.standing[0].rot, [3 * DECOR_TURN_STEP, 0, 0]);
-  // refused: the service's word, and it stands as it was
-  svc.answer = () => ({ ok: false, error: 'no-decor' });
-  rig.frame();
-  roomPress(rig, chair.id, 'Turn left');
-  await settle();
-  assert.deepEqual(rig.standing[0].rot, [3 * DECOR_TURN_STEP, 0, 0]);
-  assert.equal(rig.said.at(-1), 'refused: no-decor');
+  assert.equal(rig.standing.length, 1);
 });
 
 test('DECOR-TURN in a yard: a piece whose turned footprint would reach the house is refused in the lot\'s words and the service never asked; one clear of it turns (mutant: the lot unasked)', async () => {
@@ -189,7 +180,8 @@ test('DECOR-TURN in a yard: a piece whose turned footprint would reach the house
   // the house's footprint stands from x = 0.55 east (0.6 past the edge's pad): the metre-wide chair at the origin clears
   // it square (0.5), turned a step its corner reaches 0.61
   const lot = { house: [0.55, -5, 5, 5], lot: [-6, -6, 6, 6], y: 0 };
-  const rig = toolRig({ room: { kind: 'home', yard: true, where: 'Your yard', mapId: 77, buildingKey: 9 }, homeDecor: svc, gold: 1000, placeOk: (p, foot) => yardWhyNot(p.pos, lot, [], foot) });
+  const clock = handClock();
+  const rig = toolRig({ room: { kind: 'home', yard: true, where: 'Your yard', mapId: 77, buildingKey: 9 }, homeDecor: svc, gold: 1000, placeOk: (p, foot) => yardWhyNot(p.pos, lot, [], foot), later: clock.later });
   rig.standing.push({ id: 'c1', model: 41000, flat: null, pos: [0, 0, 0], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 120 });
   rig.frame();
   assert.equal(rig.tool.openPanel(), true);
@@ -199,13 +191,14 @@ test('DECOR-TURN in a yard: a piece whose turned footprint would reach the house
   rig.frame();   // the chosen piece's model asked (its box, the ground it covers)
   await settle();
   for (let i = 0; i < 3; i++) { roomPress(rig, 'c1', 'Turn right'); await settle(); }
+  await clock.run();
   assert.deepEqual(calls, [], 'never asked');
   assert.equal(rig.said.at(-1), YARD_IN_HOUSE);
   assert.deepEqual(rig.standing[0].rot, [0, 0, 0]);
   rig.standing[0] = { ...rig.standing[0], pos: [-2, 0, 0] };
   rig.frame();
   roomPress(rig, 'c1', 'Turn right');
-  await settle();
+  await clock.run();
   assert.equal(calls.length, 1);
   assert.deepEqual(rig.standing[0].rot, [DECOR_TURN_STEP, 0, 0]);
 });

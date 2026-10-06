@@ -1,0 +1,92 @@
+[
+  {
+    "name": "AUDIT-Y1-no-wait",
+    "file": "src/scenes/decorTool.js",
+    "old": "    later(() => { writeTurn(piece.id, n); }, DECOR_TURN_SETTLE_MS);\n",
+    "new": "    later(() => { writeTurn(piece.id, n); }, 0);\n",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "a write a press again"
+  },
+  {
+    "name": "AUDIT-Y1-every-timer-writes",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (!t || t.n !== n) return;   // a later press's own wait writes it\n",
+    "new": "    if (!t) return;   // a later press's own wait writes it\n",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "each press's wait writes, not the last"
+  },
+  {
+    "name": "AUDIT-Y1-over-the-write-under-way",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (t.busy) { t.again = true; return; }   // written after the answer under way\n",
+    "new": "",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "a second write sent over the one still answered"
+  },
+  {
+    "name": "AUDIT-Y1-presses-during-lost",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (t.n !== n) { if (t.again) { const m = t.n; later(() => { writeTurn(id, m); }, 0); } return; }   // pressed meanwhile\n",
+    "new": "    if (t.n !== n) return;   // pressed meanwhile\n",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "the presses made while a write was answered never written"
+  },
+  {
+    "name": "AUDIT-Y1-written-from-the-press",
+    "file": "src/scenes/decorTool.js",
+    "old": "    const want = decorPieceOf({ ...(standing() ?? t.held), rot: t.rot });\n",
+    "new": "    const want = decorPieceOf({ ...t.held, rot: t.rot });\n",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "a light put out meanwhile written back on"
+  },
+  {
+    "name": "AUDIT-Y1-refusal-undoes-all",
+    "file": "src/scenes/decorTool.js",
+    "old": "      if (now) pool.put(decorPieceOf({ ...now, rot: t.held.rot }) ?? t.held);   // refused: turned back as it was\n",
+    "new": "      if (now) pool.put(t.held);   // refused: turned back as it was\n",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "a refused turn undoes the light put out after it"
+  },
+  {
+    "name": "AUDIT-Y1-refusal-stands",
+    "file": "src/scenes/decorTool.js",
+    "old": "      if (now) pool.put(decorPieceOf({ ...now, rot: t.held.rot }) ?? t.held);   // refused: turned back as it was\n",
+    "new": "",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "a refused turn shown as if written"
+  },
+  {
+    "name": "AUDIT-Y2-removed-written",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (here && !standing()) { turnsOwed.delete(id); return; }   // removed meanwhile\n",
+    "new": "",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "a removed piece's turn written - the service's refusal said for nothing"
+  },
+  {
+    "name": "AUDIT-Y2-answer-stands-it-again",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (now) pool.put(decorPieceOf({ ...now, rot: stood.rot }) ?? now);   // the service's own turn\n",
+    "new": "    pool.put(stood);   // the service's own turn\n",
+    "tests": [
+      "test/audityardheight.test.js"
+    ],
+    "note": "an answer after the removal stands the piece again"
+  }
+]

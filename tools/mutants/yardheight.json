@@ -52,7 +52,7 @@
   {
     "name": "YARD-HEIGHT-client-unasked",
     "file": "src/scenes/homeYards.js",
-    "old": "  if (!(Number(pos[1]) <= DECOR_YARD_HIGH)) return YARD_TOO_HIGH;",
+    "old": "  if (!decorYardHighOk({ pos })) return YARD_TOO_HIGH;   // YARD-HEIGHT: never a tower - the service's own law",
     "new": "",
     "tests": [
       "test/yardheight.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "DECOR-TURN-axis",
     "file": "src/scenes/decorTool.js",
-    "old": "        const axis = decorIsMount(cur) ? 2 : 0;",
-    "new": "        const axis = decorIsMount(cur) ? 2 : 1;",
+    "old": "    const axis = decorIsMount(cur) ? 2 : 0;   // DECOR2c: a hung one's turn is its spin on the surface",
+    "new": "    const axis = decorIsMount(cur) ? 2 : 1;   // DECOR2c: a hung one's turn is its spin on the surface",
     "tests": [
       "test/yardheight.test.js"
     ],
@@ -92,48 +92,18 @@
   {
     "name": "DECOR-TURN-unwrapped",
     "file": "src/scenes/decorTool.js",
-    "old": "(i === axis ? wrapTurn(Math.round((v + by) * 10) / 10) : v)",
-    "new": "(i === axis ? Math.round((v + by) * 10) / 10 : v)",
+    "old": "(i === axis ? wrapTurn(Math.round((v + deg) * 10) / 10) : v)",
+    "new": "(i === axis ? Math.round((v + deg) * 10) / 10 : v)",
     "tests": [
       "test/yardheight.test.js"
     ],
     "note": "past half a turn the law refuses the piece"
   },
   {
-    "name": "DECOR-TURN-a-write-a-press",
-    "file": "src/scenes/decorTool.js",
-    "old": "    if (turnBusy.has(piece.id)) return true;   // gathered into the next turn\n",
-    "new": "",
-    "tests": [
-      "test/yardheight.test.js"
-    ],
-    "note": "a write a press, each over the one before"
-  },
-  {
-    "name": "DECOR-TURN-gathered-lost",
-    "file": "src/scenes/decorTool.js",
-    "old": "      for (let by = turnOwed.get(piece.id) ?? 0; by; by = turnOwed.get(piece.id) ?? 0) {",
-    "new": "      for (let by = turnOwed.get(piece.id) ?? 0; by; by = 0) {",
-    "tests": [
-      "test/yardheight.test.js"
-    ],
-    "note": "the presses during a write thrown away"
-  },
-  {
-    "name": "DECOR-TURN-refusal-stood",
-    "file": "src/scenes/decorTool.js",
-    "old": "        const stood = await writeChange(r, next);\n        if (!stood) break;\n        if (deps.visit?.() === visit) pool.put(stood);\n        turned = true;",
-    "new": "        const stood = (await writeChange(r, next)) ?? next;\n        if (deps.visit?.() === visit) pool.put(stood);\n        turned = true;",
-    "tests": [
-      "test/yardheight.test.js"
-    ],
-    "note": "a refused turn stands anyway"
-  },
-  {
     "name": "DECOR-TURN-lot-unasked",
     "file": "src/scenes/decorTool.js",
-    "old": "        if (why) { deps.say?.(why); break; }",
-    "new": "        if (why && false) { deps.say?.(why); break; }",
+    "old": "    if (why) { deps.say?.(why); return false; }\n    pool.put(next);",
+    "new": "    if (why && false) { deps.say?.(why); return false; }\n    pool.put(next);",
     "tests": [
       "test/yardheight.test.js"
     ],
@@ -148,5 +118,25 @@
       "test/yardheight.test.js"
     ],
     "note": "the buttons turn nothing"
+  },
+  {
+    "name": "DECOR-TURN-write-skipped",
+    "file": "src/scenes/decorTool.js",
+    "old": "    later(() => { writeTurn(piece.id, n); }, DECOR_TURN_SETTLE_MS);\n",
+    "new": "",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "an online turn never written"
+  },
+  {
+    "name": "DECOR-TURN-shown-late",
+    "file": "src/scenes/decorTool.js",
+    "old": "    if (why) { deps.say?.(why); return false; }\n    pool.put(next);\n",
+    "new": "    if (why) { deps.say?.(why); return false; }\n",
+    "tests": [
+      "test/yardheight.test.js"
+    ],
+    "note": "the piece stands still until the service answers - and offline never turns"
   }
 ]

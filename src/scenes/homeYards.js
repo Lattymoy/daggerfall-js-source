@@ -41,7 +41,7 @@
 
 import { createDecorRoom } from './decorRoom.js';
 import { createDecorTool } from './decorTool.js';
-import { decorYardPieceOf, DECOR_YARD_CAP, DECOR_YARD_HIGH } from '../net/decorLaw.js';   // YARD-HEIGHT: how high a piece stands
+import { decorYardPieceOf, DECOR_YARD_CAP, decorYardHighOk, DECOR_YARD_HIGH_WHY } from '../net/decorLaw.js';   // YARD-HEIGHT: how high a piece stands, and its words
 import { homeLookRecords } from '../world/homeLook.js';   // HOME-LOOK (AUDIT): the styles a roof's or a door's family holds
 import { onPathTile } from '../player/exteriorSurface.js';   // FB1001 ROAD-LOT: PlayerMotor.OnPathTile - Daggerfall's own road tiles
 import { RMB_TILE_SIDE } from '../world/locationEntrance.js';   // FB1001 ROAD-LOT: RMBLayout.RMBTileSide, a ground tile's side
@@ -90,8 +90,9 @@ export const YARD_IN_HALL = "That is inside the hall - place it in the hall's ya
 export const YARD_HALL_FULL = `The hall's yard already holds ${DECOR_YARD_CAP} pieces.`;
 /** FB1001 ROAD-LOT: what the decorator says of a piece on the town's road or a path. */
 export const YARD_ON_ROAD = 'That is the road - keep the street and its paths clear.';
-/** YARD-HEIGHT: what the decorator says of a piece standing higher than a yard's may (net/decorLaw.js DECOR_YARD_HIGH). */
-export const YARD_TOO_HIGH = `Too high - a yard's piece stands at most ${DECOR_YARD_HIGH} m above the ground.`;
+/** YARD-HEIGHT: what the decorator says of a piece standing higher than a yard's may (net/decorLaw.js DECOR_YARD_HIGH) -
+ *  AUDIT Y3: the service's own refusal's sentence. */
+export const YARD_TOO_HIGH = DECOR_YARD_HIGH_WHY;
 /** How far into a wall's (or a road's) ground a piece may reach and still stand clear of it - touching is not in it. */
 export const YARD_EDGE_PAD = 0.05;
 
@@ -148,7 +149,7 @@ export function yardWhyNot(pos, lot, others = [], foot = [], roads = []) {
   if (yardFootMeets(ground, lot.house, YARD_EDGE_PAD)) return YARD_IN_HOUSE;
   if ((others ?? []).some((r) => yardFootMeets(ground, r, YARD_EDGE_PAD))) return YARD_ON_OTHER;
   if ((roads ?? []).some((r) => yardFootMeets(ground, r, YARD_EDGE_PAD))) return YARD_ON_ROAD;
-  if (!(Number(pos[1]) <= DECOR_YARD_HIGH)) return YARD_TOO_HIGH;   // YARD-HEIGHT: never a tower - the service's own bound
+  if (!decorYardHighOk({ pos })) return YARD_TOO_HIGH;   // YARD-HEIGHT: never a tower - the service's own law
   return null;
 }
 /**

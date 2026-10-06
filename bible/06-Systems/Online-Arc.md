@@ -10084,11 +10084,38 @@ placed turned in place, never picked up).
 - **DECOR-TURN.** The panel's "In this room" (and "In this yard") view has Turn left and Turn right beside Move
   (`ui/decorPanel.js`): the chosen piece turned DECOR_TURN_STEP (15 degrees) about its upright where it stands - a hung
   one spun on its wall, as its placing turns it - free, the panel staying up (`scenes/decorTool.js` turnPlaced). It is a
-  move of its turn alone, through the account service first in an online home; presses while the service answers
-  gather into one turn after it, on the piece as it then stands. A yard's piece turned onto the house, a road or
-  another's ground is refused in the lot's own words, as its placing would be. A door is turned by its doorway (Move),
-  never here.
-- Pinned in `test/yardheight.test.js` (6); `tools/mutants/yardheight.json` 15 of 15 dead.
+  move of its turn alone: it turns at once, and an online home's piece is written once its presses settle
+  (DECOR_TURN_SETTLE_MS - AUDIT YARD-HEIGHT Y1, below). A yard's piece turned onto the house, a road or another's
+  ground is refused in the lot's own words, as its placing would be. A door is turned by its doorway (Move), never
+  here.
+- Pinned in `test/yardheight.test.js` (6); `tools/mutants/yardheight.json` 14 of 14 dead.
+
+### AUDIT YARD-HEIGHT (2026-10-06, Mac: "Audit") - YARD-HEIGHT and DECOR-TURN read again, before their deploy
+
+Two lanes: the author's own adversarial re-read of the PR (#641) and an independent cold read of its diff. FOUND, each
+fixed and pinned (`test/audityardheight.test.js`, `test/yardheight.test.js`; `tools/mutants/audityardheight.json` 9 of 9
+dead, `yardheight.json` 14 of 14):
+
+- **MEDIUM - Y1: every press of Turn was a write, and the piece stood still until it was answered.** turnPlaced wrote
+  each press to the account service at once - a move is four statements on its database (the hour's count, the owner,
+  the row, the write) and one of the hour's DECOR_OPS_MAX (600) - so a piece turned half round was twelve writes, on the
+  database the yards had overloaded that morning (YARD-SHED); and the piece turned only when the answer came. FIXED
+  (`scenes/decorTool.js` turnPlaced, writeTurn): the piece turns at once, as the press is made, and an online home's is
+  written once its presses settle - DECOR_TURN_SETTLE_MS (400 ms) after the last, that press's wait alone writing; a
+  press while a write is answered is written after it, once. The write is the turn owed on the piece as it then stands,
+  so a light put out meanwhile (written at once, as ever) is never written back on; refused, the turn alone is undone -
+  the piece turned back as the service holds it, the service's word said.
+- **LOW - Y2: an answer could stand a removed piece again.** A turn answered after the piece's removal put it back in
+  the room's pool - a piece the service no longer held, standing until the room was read again. FIXED: a turn's answer
+  stands only a piece still standing, and a piece removed while its turn waits is never written.
+- **LOW - Y3: the refusal's sentence was written twice** - the decorator's (`homeYards.js` YARD_TOO_HIGH) and the
+  service's word (`accountClient.js` `yard-high`), free to drift apart. FIXED: one sentence in the law
+  (`net/decorLaw.js` DECOR_YARD_HIGH_WHY, as townSeatLaw.js's rosters' words are), and the decorator asks the law's own
+  decorYardHighOk.
+- **OPEN, Mac's to decide - Y4: the bound is where a piece stands, not how tall it is.** A tree must stand taller than
+  4 m, and any model may be scaled to DECOR_SCALE_MAX (4) - so one large piece at the ground (or at 4 m) can still rise
+  well past a house's eaves. A cap on a piece's top would need a rule by kind (nature pieces apart). Left as asked:
+  "How high above the ground may a yard piece stand?" - 4 m.
 
 ### YARD-SHED - a town's yards asked within reach, kept by the service, needing no session (2026-10-06)
 
