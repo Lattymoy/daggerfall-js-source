@@ -73,8 +73,12 @@ carries its row instead. It stands on three things the port already had:
   BOARD_SPEED - the grapples fly, she is hauled alongside, and you go over her rail. On foot (swimming up, or from a
   deck alongside) the same press within FOOT_BOARD_M of her side with the look on her. The target card and the plate's
   hint say the key ("Colours struck - E: board her"). Too fast beside her, the same press HEAVES TO (AUDIT NAV1): the
-  sails struck and her way taken off at HEAVE_TO_ACCEL times her own rate until she is under BOARD_SPEED, HEAVE_TO_S at
-  most ("Colours struck - E: heave to", then "heaving to").
+  sails struck and her way taken off at Come Sail Away's `brake` - HEAVE_TO_DECEL (HELM-WAY), or at a way past HELM-WAY's
+  what brings her under BOARD_SPEED within HEAVE_TO_M (AUDIT SHIPS A3, `heaveToDecel`) - until she is under BOARD_SPEED,
+  HEAVE_TO_S at most ("Colours struck - E: heave to", then "heaving to"). AUDIT SHIPS 2 XA5 (2026-10-06): the brake never
+  past the runtime's own bound (comeSailAway.js `CSA_BRAKE_MAX`, 20 m/s^2), and the heave-to offered by where it leaves
+  her (`heaveToRun`): a storm's way runs past HEAVE_TO_M, so it is offered as she comes up on a struck ship, not as she
+  passes her (offered beside her, a Carrack at 38.9 m/s ended 34 m off, out of BOARD_RANGE).
 - **Taken, she opens**: the plunder window - her hold, one thing to take from her, and her fate. Shut it and she lies
   taken where she is; Interact opens her again.
 - **The sea at a glance** (AUDIT NAV1): a tag stands over each ship in sight out to NAVAL_TAG_RANGE - her name, what
@@ -91,7 +95,7 @@ rail's height, the beam); the table is what each carries, a side at a time:
 |---|---|---|
 | Rowboat | 96 / 0 / 0 | none - it rams, it does not fight |
 | Large Boat | 240 / 96 / 0 | 3 swivels a side, 1 on the bow |
-| Small Ship | 672 / 256 / 24 | 5 long guns a side (GALLEON: a gun a port of Mac's galleon - the mod's had 6), 2 chain-shot chasers, a fire barrel over the stern |
+| Small Ship | 672 / 256 / 24 | 5 long guns a side (GALLEON: a gun a port of Mac's galleon - the mod's had 6; GALLEON-WEIGHT: a player's throws the six guns' weight, below), 2 chain-shot chasers, a fire barrel over the stern |
 | Large Galley | 832 / 144 / 60 | 4 long guns a side, 3 great guns on the bow - and the ram (GALLEY_RAM) |
 | Carrack | 896 / 352 / 30 | 7 long guns a side, 2 chain-shot chasers, a fire barrel over the stern |
 
@@ -110,7 +114,8 @@ highest):
 | fire barrel | rolled over the stern | where it drifts (FLOAT_DRIFT of the wind) | BARREL_DROP_S (1.2 s), BARREL.stock aboard | 45 / 6 / 3, and always a fire - BARREL.burnPerSecond for BARREL.burn |
 
 TOUGHER-SHIPS (2026-10-03, below): the crew a ball takes is the gun's (`shotMen` - what the wire says) over
-SHIP_TOUGHNESS, on the ball's own roll (`ballMen`): a long gun's one man 0.625 of a man on the average.
+SHIP_TOUGHNESS, on the ball's own roll (`ballMen`): a long gun's one man 0.625 of a man on the average. CREW-HOLD
+(2026-10-06, below): a player's ship's over PLAYER_CREW_TOUGHNESS (3.2) - 0.3125.
 
 AUDIT NAV1 set the carriages' depression (-8 long, -6 great and chase, -10 swivel - a sloop alongside to grapple was
 out of every broadside's reach at -3) and made the great guns heavy (68 m/s to 15 degrees: from a galley's deck 263 m
@@ -665,7 +670,8 @@ sea is sailed at the lowest Ships at sea among the players who share it (Online,
 - **Come Sail Away's way and its sails take the sea fight's word** (AUDIT NAV1): the mod has no hurt, so the port's
   runtime asks the naval host three things it never asked - `wayScale` (its moveSpeed times the host's share: the canvas
   a shot-up rig still sets, a wreck's oars, nothing while she heaves to), `sailRefused` (RaiseSails refused with that
-  line, before the mod's own obstruction) and `accelScale` (its moveAccel times HEAVE_TO_ACCEL while she heaves to).
+  line, before the mod's own obstruction) and a heave-to's brake (`accelScale`, its moveAccel times HEAVE_TO_ACCEL -
+  HELM-WAY made it `brake`, HEAVE_TO_DECEL m/s^2 whatever her own rate, and AUDIT SHIPS A3 sized it to her way).
 - **Warm Ashes' LeaveShip asks a gate first** (above).
 - **A pirate flagship starts `WAQ_SHIP_ATTACK_PIRATE`**, which the mod registers and never starts.
 - **The player's boat is wrecked, never sunk.**
@@ -990,7 +996,8 @@ helm (`systems/helmWay.js`, one law):
   none, so the cutter had no man to take her. Timber without hands keeps her struck; hands back, she fights. A
   player's boat never strikes - the player works her guns.
 - The heave-to brakes at its own HEAVE_TO_DECEL (m/s^2, Come Sail Away's `brake`), never a multiple of a rate the Ship
-  handling moves.
+  handling moves - AUDIT SHIPS A3 (2026-10-06): at the least; at a way past HELM-WAY's, the brake that brings her under
+  BOARD_SPEED within HEAVE_TO_M (`heaveToDecel` - SAIL-FREE's full way had run a Carrack 93 m on at the fixed brake).
 
 Pins: `test/helmway.test.js` (8); the captains' turn (M5), the lookout, the land, the broadside onto the land, the
 sweeps' pace, the raider's day sight, the chasers' stern chase, the fire's long guns and the navy's hearing re-aimed
@@ -1873,6 +1880,39 @@ law as the audit left it.
   toughness, and a pairing within COIN_TOSS (1.1) of even is a coin toss - it fails at seven of eight, not six (AUDIT
   T1). The galley's station outside her great guns' dead zone, which the duels pinned only by a stall none of the
   eight now makes, is pinned at its source (F24, a Large Boat lying still).
+
+## CREW-HOLD and GALLEON-WEIGHT (2026-10-06) - a player's crew that lasts, a galleon's broadside of six - DECLARED
+
+Mac: *"Crew depletes too fast"* and *"The galleon has less cannons, so it needs a buff to account for that"*. Daggerfall
+has no ships; both are the port's own. Pinned in `test/crewhold.test.js` (seven pins), its sixteen mutants all dead
+(`tools/mutants/crewhold.json`).
+
+- **Why the crew went first.** A ball takes its gun's men (`GUNS`: a long gun one, a swivel two, a great gun two) over
+  the crew's toughness, whatever the ball does to her timbers - and measured on `navalAI.js strikeTime`'s own terms a
+  player's crew went before her hull under every gun: a Pirate Brigantine's fire took a galleon's 24 men in 146 s and
+  her hull in 176, a Carrack's 30 in 182 s against 234, and a swivel boat's two men a ball (a Pirate Sloop's, a Coasting
+  Trader's - the Bay's commonest ships) a galleon's in 67 s, where her hull would last 451. The serpent's blows took
+  theirs whole, outside the toughness altogether (`serpentStrike.js` `shipHurt`'s `crew`).
+- **CREW-HOLD** (`navalShips.js` PLAYER_CREW_TOUGHNESS, twice SHIP_TOUGHNESS). Every blow on a player's ship takes its
+  men over her crew's toughness: a captain's ball (`navalHost.js landHit`, `shotDamage`'s `tough`), her fire's `wound`
+  (`navalDamage.js`, the damage's `player`), a galley's ram (`ramMen`'s `tough`) and the serpent's blow (`serpentStrike`,
+  `playerMen` - into the law at last). Now every ship of the line's fire leaves her crew standing when her hull is gone
+  (a brigantine's: her men in 292 s, her hull in 176; a Carrack's in 365 against 234); a swivel boat still thins a crew
+  first - its trade - at half the pace (a galleon's in 134 s). Her hull and canvas are as they were. The captains' crews
+  keep SHIP_TOUGHNESS: a captain's ship strikes by her men as she did, and every duel between them is as it was. The
+  wire is untouched - a blow says its men before the toughness, and her stander reckons them, as TOUGHER-SHIPS left it.
+- **GALLEON-WEIGHT** (`navalShips.js` playerBatteryWeight). Mac's galleon has a gun at each of her ten ports where the
+  mod's galleon carried six a side (MOD_SMALL_SHIP_BUILD), so a player's galleon's broadside lost a sixth with the model.
+  Each ball of it now strikes 6/5 as hard - its hull and canvas harm (`shotDamage`'s `weight`), never its men - and her
+  broadside lands what six long guns did (5 x 14 x 6/5 = 84 = 6 x 14). Her chasers and barrels, every other hull, and the
+  mod's own galleon standing in (six guns, weight 1) throw their own. The weight rides from her guns to each ball's hit on
+  every client (`navalHost.js fire` for mine, `fireFromWord` for a peer's own boat, `navalGunnery.js volleyLaunches`,
+  `navalShots.js`) and into the captains' reckoning of her fire (`strikeTime`, a player's FighterMeasure `player`) - so
+  a wary pirate sizes her up by it: she takes a player's galleon alone at her guns hurt to seven tenths of her hull now
+  (1.39 to one), where four fifths was enough before (1.14 with the weight, under WARY_ODDS; `seapeace` PIN MOVED). A
+  PLAYER'S alone: the captains' galleons (the Pirate Brigantine, the Merchant Galleon, the Navy Cutter) keep the
+  broadside every tuned duel was measured with (AUDIT NAV2 F25, Mac's bar) - weighting their hull too moved six of
+  the captains' tuned pins (F25, NAV-C's running and four of SEA-PEACE's).
 
 ## The tests
 

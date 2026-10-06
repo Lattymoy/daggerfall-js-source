@@ -290,10 +290,11 @@
   {
     "name": "SEAPEACE-a-crewless-boat-at-full-rate",
     "file": "src/scenes/navalHost.js",
-    "old": "crewed: !!boat.crewed });",
-    "new": "crewed: true });",
+    "old": "crewed: !!boat.crewed, player: true });",
+    "new": "crewed: true, player: true });",
     "tests": [
       "test/seapeace.test.js"
-    ]
+    ],
+    "note": "CREW-HOLD/GALLEON-WEIGHT (2026-10-06): re-aimed by content - the line gained the crew's toughness or the weight."
   }
 ]

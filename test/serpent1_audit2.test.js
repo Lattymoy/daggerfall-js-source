@@ -14,9 +14,9 @@ import { cellRoomOfWire, PIXEL_UNITS, SERPENT_FIGHT_KEY, serpentFightId, validSe
 import { serpentTimes, serpentSiteKey, SERPENT_BRAIN_V, SERPENT_NATIVE_PER_M } from '../src/net/serpentLaw.js';
 import {
   newSerpentFight, joinSerpentFight, stepSerpentBrain, serpentStateOf, serpentAttacksFor, ramReach, refOf,
-  SERPENT_ATTACK_TABLE, SERPENT_TICK_MS, SERPENT_TTK_S, FAN_R, ENGAGE_R, ARENA_R, STRAY_M,
+  SERPENT_ATTACK_TABLE, SERPENT_TICK_MS, SERPENT_TTK_S, FAN_R, ENGAGE_R, ARENA_R, SERPENT_SLEEP_MS,
 } from '../src/net/serpentBrain.js';
-import { LEG, MODE, headAt } from '../src/net/serpentBody.js';
+import { LEG, MODE, headAt, onTimeline, sameMode } from '../src/net/serpentBody.js';
 import { createSerpentLink } from '../src/net/serpentLink.js';
 import { createSerpentHost, LAND_JUDGE_MS, HIT_GATHER_MS } from '../src/scenes/serpentHost.js';
 import { HULL } from '../src/systems/naval/navalShips.js';
@@ -111,16 +111,17 @@ test('AUDIT SERPENT 2 F1: every word a fight says names its site, and a client f
 
 // ═══ F2: ONE TIMELINE, NO WORD KEPT TWICE ════════════════════════════════════════════════════════════════
 
-test('AUDIT SERPENT 2 F2: a word that changes nothing is never kept twice - a breach begun in the beat that sent a strayed head to surface said "deep now" again after dropping the surfacing; the relay kept the word twice and every client took it for one it had and kept the surfacing; now the relay\'s ride and track and the client\'s are one (mutants: the duplicate kept on the relay; the client\'s check before the rule)', () => {
+test('AUDIT SERPENT 2 F2: a word that changes nothing is never kept twice - a breach begun in the beat that sent a strayed head to surface said "deep now" again after dropping the surfacing; the relay kept the word twice and every client took it for one it had and kept the surfacing; now the relay\'s ride and track and the client\'s are one - PIN MOVED (SERPENT3): the beat that takes up a slept room (serpentResume) and begins an attack in it (mutants: the duplicate kept on the relay; the client\'s check before the rule)', () => {
   const SOUND = T0 + 25 * 60_000;
   let breaches = 0;
   for (let seed = 1; seed <= 24; seed++) {
     const f = newSerpentFight(DAY, T0 - 60_000, SOUND, 'sethrakul', 0, 0, 0);
     assert.ok(joinSerpentFight(f, 'acct-0001', 'Ama', 20, HULL.Carrack, T0 - 60_000, true));
-    f.legs = [{ k: LEG.line, at: T0 - 1000, x: 0, z: 650, yw: 0, v: 11 }];   // its head swum past its waters
-    f.modes = [{ at: T0 - 60_000, m: MODE.cruise }];
+    f.legs = [{ k: LEG.line, at: T0 - 1000, x: 0, z: 650, yw: 0, v: 11 }];   // its head swum past its waters...
+    f.modes = [{ at: T0 - 60_000, m: MODE.breach }];
     f.openUntil = T0; f.nextAt = T0;
-    assert.ok(Math.hypot(headAt(f.legs, T0).x, headAt(f.legs, T0).z) > ARENA_R + STRAY_M, 'strayed');
+    assert.ok(Math.hypot(headAt(f.legs, T0).x, headAt(f.legs, T0).z) > ARENA_R, 'strayed');
+    assert.ok(T0 - f.lastTickAt > SERPENT_SLEEP_MS, '...in a room that slept: taken up in the beat');
     const L = createSerpentLink({ now: () => T0, site: () => ({ day: DAY, sx: 0, sz: 0 }) });
     const fold = (ws) => { for (const w of ws) { const v = validSerpentOut(w.k === 'st' ? w : { ...w, sx: 0, sz: 0 }); assert.ok(v, `the wire passes ${w.k}`); L.word(v); } };
     fold([serpentStateOf(f)]);
@@ -128,12 +129,27 @@ test('AUDIT SERPENT 2 F2: a word that changes nothing is never kept twice - a br
     const said = stepSerpentBrain(f, T0, [{ sub: 'acct-0001', x: 0, z: 400, dead: false }], seeded(seed));
     assert.ok(!said.some((w) => w.k === 'st'));
     fold(said);
-    if (said.some((w) => w.k === 'atk' && w.a === SERPENT_ATTACK_TABLE.breach.id)) breaches++;
+    if (said.some((w) => w.k === 'atk')) breaches++;
     assert.deepEqual(L.state().modes, f.modes, `seed ${seed}: one ride`);
     assert.deepEqual(L.state().legs, f.legs, `seed ${seed}: one track`);
     assert.ok(f.modes.every((m, i) => !i || m.at !== f.modes[i - 1].at || m.m !== f.modes[i - 1].m), `seed ${seed}: no mode kept twice`);
   }
-  assert.ok(breaches > 0, 'a breach begun in the surfacing\'s beat');
+  assert.ok(breaches > 0, 'an attack begun in the beat that took it up');
+  // the law itself, both halves: a ride already ridden, said again as the word that drops one still to come, changes the
+  // track (said - every client drops it too) and is kept once; said again, it changes nothing and is never kept twice
+  const modes = [{ at: 1, m: MODE.deep }, { at: 5, m: MODE.breach }];
+  assert.equal(onTimeline(modes, { at: 3, m: MODE.deep }, sameMode), true, 'said: it dropped the breach still to come');
+  assert.deepEqual(modes, [{ at: 1, m: MODE.deep }]);
+  assert.equal(onTimeline(modes, { at: 3, m: MODE.deep }, sameMode), false, 'said again: nothing');
+  assert.deepEqual(modes, [{ at: 1, m: MODE.deep }], 'never kept twice');
+  // the client folds the rule FIRST: a word naming a ride it already holds still drops the ride the relay dropped
+  const L = createSerpentLink({ now: () => T0, site: () => ({ day: DAY, sx: 0, sz: 0 }) });
+  const f0 = newSerpentFight(DAY, T0 - 60_000, T0 + 25 * 60_000, 'sethrakul', 0, 0, 0);
+  assert.ok(joinSerpentFight(f0, 'acct-0001', 'Ama', 20, HULL.Carrack, T0 - 60_000, true));
+  f0.modes = [{ at: T0 - 1000, m: MODE.deep }, { at: T0 + 2000, m: MODE.breach }];
+  L.word(validSerpentOut(serpentStateOf(f0)));
+  L.word(validSerpentOut({ k: 'dv', at: T0 - 1000, m: MODE.deep, sx: 0, sz: 0 }));
+  assert.deepEqual(L.state().modes, [{ at: T0 - 1000, m: MODE.deep }], 'the breach the relay dropped, dropped');
 });
 
 // ═══ F5 / F7: THE BRAIN ═════════════════════════════════════════════════════════════════════════════════

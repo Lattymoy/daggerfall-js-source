@@ -167,10 +167,11 @@
   {
     "name": "AUDIT-GN2-TS3-captain-balls-upright",
     "file": "src/scenes/navalHost.js",
-    "old": "const launches = volleyLaunches(heeled(solution, pose, boatOfShooter(shooter)), seed, { skill, carry: pose.velocity });",
-    "new": "const launches = volleyLaunches(heeled(solution, pose, isMine(shooter) ? boatOfShooter(shooter) : null), seed, { skill, carry: pose.velocity });",
+    "old": "const launches = volleyLaunches(heeled(solution, pose, boatOfShooter(shooter)), seed, { skill, carry: pose.velocity, weight });",
+    "new": "const launches = volleyLaunches(heeled(solution, pose, isMine(shooter) ? boatOfShooter(shooter) : null), seed, { skill, carry: pose.velocity, weight });",
     "tests": [
       "test/auditgalleon_guns.test.js"
-    ]
+    ],
+    "note": "CREW-HOLD/GALLEON-WEIGHT (2026-10-06): re-aimed by content - the line gained the crew's toughness or the weight."
   }
 ]
