@@ -28,9 +28,12 @@ jobs:
         run: $WRANGLER d1 insights "$DB_NAME" --timePeriod 1d --sort-by count --sort-type sum --limit 15 --json || true
       - name: the queries by average time, last day
         run: $WRANGLER d1 insights "$DB_NAME" --timePeriod 1d --sort-by time --sort-type avg --limit 10 --json || true
-      - name: the account Worker's live errors (45 s)
+      - name: the account Worker's live traffic (45 s) - every failed request and every logged line, and the mix by route
         run: |
-          timeout 45 $WRANGLER tail daggerfall-accounts --format json --status error > tail.json 2>tail.err || true
-          echo "events: $(grep -c '"outcome"' tail.json || true)"
-          head -c 20000 tail.json || true
-          echo; tail -n 20 tail.err || true
+          timeout 45 $WRANGLER tail daggerfall-accounts --format json > tail.json 2>tail.err || true
+          echo "requests seen: $(jq -s 'length' tail.json 2>/dev/null || echo '?')"
+          echo "== failed or logged =="
+          jq -c 'select(((.event.response.status // 0) >= 500) or (.outcome != "ok") or (((.logs // []) | length) > 0) or (((.exceptions // []) | length) > 0)) | {outcome, status: .event.response.status, method: .event.request.method, url: (.event.request.url // "" | sub("^https?://[^/]+"; "") | sub("[?].*$"; "")), logs: [.logs[]?.message], exceptions: .exceptions}' tail.json 2>/dev/null | head -c 30000 || true
+          echo; echo "== by status and route =="
+          jq -r '"\(.event.response.status // "-") \(.event.request.method // "-") \(.event.request.url // "-" | sub("^https?://[^/]+"; "") | sub("[?].*$"; ""))"' tail.json 2>/dev/null | sort | uniq -c | sort -rn | head -40 || true
+          tail -n 20 tail.err || true
