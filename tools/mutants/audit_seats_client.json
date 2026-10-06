@@ -251,8 +251,8 @@
     "tests": ["test/audit_seats_client.test.js"] },
 
   { "name": "AUDITSEATS-C12-due-open", "file": "src/net/townSeatBook.js",
-    "old": "      if (watchBusy || open !== true) return false;\n      const list = watchHeld()",
-    "new": "      if (watchBusy) return false;\n      const list = watchHeld()",
+    "old": "      if (watchBusy || open !== true || nowMs() < watchRetryAt) return false;   // STORM-SHED: a failed claim's wait\n      const list = watchHeld()",
+    "new": "      if (watchBusy || nowMs() < watchRetryAt) return false;   // STORM-SHED: a failed claim's wait\n      const list = watchHeld()",
     "tests": ["test/audit_seats_client.test.js"] },
   { "name": "AUDITSEATS-C12-due-worth", "file": "src/net/townSeatBook.js",
     "old": "(n >= SEAT_WATCH_CLAIM_MAX ||",
