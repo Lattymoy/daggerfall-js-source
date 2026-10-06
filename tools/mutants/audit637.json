@@ -398,14 +398,5 @@
       "test/audit637_shadow.test.js",
       "test/perfshadow1.test.js"
     ]
-  },
-  {
-    "name": "AUDIT637-D7-the-senders-hold-a-literal-again",
-    "file": "src/scenes/world.js",
-    "old": "  const ONLINE_MOVE_HOLD_MS = SHOWN_MOVE_HOLD_MS;",
-    "new": "  const ONLINE_MOVE_HOLD_MS = 250;",
-    "tests": [
-      "test/runinplace.test.js"
-    ]
   }
 ]

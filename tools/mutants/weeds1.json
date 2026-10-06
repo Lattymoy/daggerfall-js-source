@@ -51,7 +51,8 @@
   "new": "this.replay(f, this.faceVP[face], pos, false, 0, 0.5, REPLAY_ALL, selfNear, cand);",
   "tests": [
    "test/weeds1_flatcasters.test.js"
-  ]
+  ],
+  "note": "PERF-SHADOW1 (re-aimed by content): the lantern replay hands on its candidates (`cand`) after `selfNear`; the mutant still passes the lantern a texel."
  },
  {
   "name": "WEEDS1-the-height-test-takes-the-magnitude-so-an-upside-down-flame-starts-casting",

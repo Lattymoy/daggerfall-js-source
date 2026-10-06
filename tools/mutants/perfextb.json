@@ -161,7 +161,7 @@
       "test/perfextb.test.js"
     ],
     "equivalent": true,
-    "why": "belt and braces, left alive on purpose: P.bb's uOrigin and uSize are written by this loop alone and a uniform is the program's until the next upload, so one reset a replay is exact too - the reset a record keeps the lasts beside the sway's and the texture's, where a future program switch inside a record would need them"
+    "why": "belt and braces, left alive on purpose: P.bb's uOrigin and uSize are written by this loop alone and a uniform is the program's until the next upload, so one reset a replay is exact too - the reset a record keeps the lasts beside the sway's and the texture's, where a future program switch inside a record would need them PERF-SHADOW1 (re-aimed by content): the replay's record loop walks a lantern's candidates now, and the lasts are reset where that loop opens."
   },
   {
     "name": "PERF-EXT12-1-the-pixel-walk-builds-the-object-again",
