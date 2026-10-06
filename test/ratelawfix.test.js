@@ -9,6 +9,10 @@ import { TravelControlUI } from '../src/ui/travelControlUI.js';
 import { createTravelOptions, readTravelOptionsSettings } from '../src/systems/travelOptions.js';
 import { mapPixelWorldOrigin } from '../src/systems/travelPaths.js';
 import { TRAVEL_ROAD_RATE, TRAVEL_OPEN_RATE } from '../src/systems/timeScale.js';
+import { setPaceGround, setTravelPace, _resetTravelPace } from '../src/systems/travelPace.js';   // PACE-DIALS: the road's x100 is the player's dial
+/** PACE-DIALS (2026-10-06): x100 is chosen, on a road - the dial set there as the panels set it (the default is x60, and
+ *  leaving a road takes it back to x60: test/pacedials.test.js). These pins hold the LANES' law at the dial's top. */
+const dialAtTop = () => { _resetTravelPace(); setPaceGround(true); setTravelPace('speed', 100); };
 
 const mid = (x, y) => { const o = mapPixelWorldOrigin(x, y); return { x: o.x + 16384, z: o.z + 16384 }; };
 function rig() {
@@ -26,6 +30,7 @@ function rig() {
 }
 
 test('RATE-LAW-FIX a route\'s last stretch to a SPOT asks the host\'s lanes - x100 while it runs along a road, x60 off across the ground - its pixel\'s step says nothing of where the spot lies (mutant: the step\'s label read)', () => {
+  dialAtTop();
   const { to, asked, w, frame } = rig();
   const legs = [{ x: 501, y: 250, kind: 'road' }, { x: 502, y: 250, kind: 'road' }];
   const o = mapPixelWorldOrigin(502, 250);
@@ -41,6 +46,7 @@ test('RATE-LAW-FIX a route\'s last stretch to a SPOT asks the host\'s lanes - x1
 });
 
 test('RATE-LAW-FIX a route of no legs is a straight walk - the host\'s lanes say its rate, x100 down a road, x60 across country (mutant: the empty route always the open ground\'s)', () => {
+  dialAtTop();
   const { to, asked, w, frame } = rig();
   w.road = true;
   to.beginTravelToPoint({ pixel: { x: 510, y: 250 }, ...mid(510, 250) });

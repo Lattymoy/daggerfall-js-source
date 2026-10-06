@@ -58,6 +58,7 @@ export const HUD_PIECES = Object.freeze([
   { id: 'netstatus', sel: '#enhanced-netstatus, .hudstatus[data-hm-ghost="netstatus"]', name: 'Online status', dummy: true, ghost: 'netstatus' },
   // the Overworld
   { id: 'overworld', sel: '#travel-view .tview-bar', name: 'Overworld panel' },
+  { id: 'overworldFilters', sel: '#travel-view .tview-side', name: 'Overworld filters' },   // FILTERS-LEFT
   { id: 'travel', sel: '#enhanced-travel .travelpanel-bar', name: 'Travel controls' },
   { id: 'junction', sel: '.travelpanel-junction', name: 'Junction map' },
 ].map(Object.freeze));

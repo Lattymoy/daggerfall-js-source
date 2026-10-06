@@ -15,10 +15,15 @@ import { createLoadGovernor, unbuiltAround, TV_GOV_HOLD_S } from '../src/systems
 import { timeScale, setTimeScale, resetTimeScale, MAX_TIME_SCALE, TRAVEL_ROAD_RATE, TRAVEL_OPEN_RATE } from '../src/systems/timeScale.js';
 import { foePaced } from '../src/systems/travelThreat.js';   // RATE-LAW: ENEMY-PACE's fixed floor, which the governor calls
 import { travelDriveForward } from '../src/systems/travelAutopilot.js';
+import { setPaceGround, setTravelPace, _resetTravelPace } from '../src/systems/travelPace.js';   // PACE-DIALS: the road's x100 is the player's dial
+/** PACE-DIALS (2026-10-06): x100 is chosen, on a road - the dial set there as the panels set it (the default is x60, and
+ *  leaving a road takes it back to x60: test/pacedials.test.js). These pins hold the LANES' law at the dial's top. */
+const dialAtTop = () => { _resetTravelPace(); setPaceGround(true); setTravelPace('speed', 100); };
 
 const WORLD = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
 
 test('TV-WASD x RATE-LAW: the keys travel at the GROUND\'s rate - x100 on a road or a track, x60 off it - while the view is up, no journey drives, a movement key is held, the body is on its own feet, nothing is paused and Travel Options is on - else 0, walking pace (mutants: the two rates swapped, a gate dropped)', () => {
+  dialAtTop();
   const up = { viewUp: true, journey: false, moving: true, onFoot: true, paused: false, travels: true, onRoad: false };
   assert.deepEqual([TRAVEL_ROAD_RATE, TRAVEL_OPEN_RATE], [100, 60], 'Mac: "Roads now travel at x100 and non roads at x60"');
   assert.equal(travelWalkRate(up), 60, 'off the road: x60');
@@ -74,6 +79,7 @@ function rig({ onRoad = false } = {}) {
 }
 
 test('TV-WASD host: the world\'s own governor (mounted) runs the clock at the keys\' speed while they are held under the view, x1 again the moment they are let go', () => {
+  dialAtTop();
   resetTimeScale();
   const { w, g } = rig();
   g.govern(1 / 60);
@@ -116,6 +122,7 @@ test('TV-WASD host (AUDIT OW5 G4): the page losing the focus with a key held let
 });
 
 test('TV-WASD host: the load governor holds the keys\' travel to what the land raises, as it holds a journey - and the bar is told', () => {
+  dialAtTop();
   resetTimeScale();
   const { w, g } = rig({ onRoad: true });
   w.keys.add('MoveLeft');

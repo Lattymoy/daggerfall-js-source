@@ -1650,6 +1650,7 @@ export function createAutomapSheet(deps = {}) {
 
     mount() { /* the automap claims none of the world map's chrome */ },
     unmount() { /* ...so it gives none back */ },
+    context() { return false; },   // WAYPOINTS: a dungeon's plan takes no waypoint - its notes are its own
 
     /** At rest the whole floor is on the sheet, centred on the player
      *  where they are on it and on the plan's middle where they are

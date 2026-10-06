@@ -38,6 +38,7 @@ import { installPlusCursor } from './plusCursor.js';   // PLUS7: the gauntlet cu
 import { installWindowMotion } from './windowMotion.js';   // PLUS1/WM1: windows unfold and fold - Enhanced Plus only
 import { isEnhancedPlus } from '../systems/uiSkin.js';   // PLUS1: the Plus sheet is laid only under Plus
 import { pageHas } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { paceControlsCss } from './travelPaceControls.js';   // PACE-DIALS: the Overworld block's speed dials
 import { SERPENT_RING_MAP_CSS } from './serpentMapMark.js';   // SERPENT-TIMERS: the sea serpent's row marked in its waters' own colour
 import { SUPPORT_MARKS_CSS } from './supportAsks.js';   // SUPPORT1: the asks' marks - the door's icons and the website's corner, one drawing
 
@@ -2891,6 +2892,38 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
 @media (pointer: coarse) { .tview-filters { max-height: 38vh; overflow-y: auto; overscroll-behavior: contain; } }
 @media (max-width: 520px) { .tview-bar { right: 10px; width: calc(100vw - 20px); } }
 @media (prefers-reduced-motion: reduce) { .tview-filter, .tview-fdot { transition: none; } }
+/* PACE-DIALS (2026-10-06): the travel speed dials in the Overworld's block - journey or none */
+${paceControlsCss('tview')}
+/* FILTERS-LEFT (2026-10-06, the player: "move the filters for the overworld to the left bottom side"): THE FILTERS' OWN
+   BLOCK in the bottom-left corner - the right's journey block's stone; its foot MEASURED clear of what stands under it
+   (travelViewHud.js measureFurniture, as the right's block is); its head folds it away. */
+.tview-side { position: absolute; left: calc(8px + env(safe-area-inset-left, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); pointer-events: auto; box-sizing: border-box;
+  width: 268px; max-width: calc(100vw - 36px); max-height: calc(100vh - 120px); display: flex; flex-direction: column;
+  background: linear-gradient(180deg, rgba(23,27,33,0.9), rgba(14,16,19,0.93));
+  border: 1px solid rgba(192,138,62,0.45); border-radius: 3px; box-shadow: 0 2px 14px rgba(0,0,0,0.55); }
+.tview-side-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 12px; cursor: pointer;
+  background: none; border: 0; color: var(--dim); font-family: var(--data); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; text-align: left; }
+.tview-side-head:hover { color: var(--bone); }
+.tview-side-head:focus-visible { outline: 1px solid var(--brass); outline-offset: -2px; }
+.tview-side-fold { font-size: 12px; letter-spacing: 0; }
+.tview-side > .tview-filters { border-top: 1px solid rgba(192,138,62,0.2); overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+.tview-side.folded > .tview-filters { display: none; }
+/* WAYPOINTS (2026-10-06): the kinds' switches (each dot its flags' default colour), the follow dropdown, the followed list */
+.tview-fdot-wp-personal { background: #e0473a; } .tview-fdot-wp-party { background: #5cc464; } .tview-fdot-wp-guild { background: #b072e8; }
+.tview-wp-pick { grid-column: 1 / -1; }
+.tview-wp-pick:disabled { cursor: default; }
+.tview-wp-pop { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 4px; }
+.tview-wp-opt { grid-template-columns: 11px 1fr auto; }
+.tview-wp-list { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 3px; }
+.tview-wp-row { display: grid; grid-template-columns: 11px 1fr auto auto 24px; align-items: center; gap: 6px; min-width: 0;
+  padding: 3px 4px 3px 7px; background: rgba(43,50,59,0.6); border: 1px solid rgba(192,138,62,0.25); border-radius: 2px; }
+.tview-wp-flag { width: 11px; height: 9px; box-shadow: 0 0 0 1px rgba(0,0,0,0.7); clip-path: polygon(0 0, 100% 0, 68% 50%, 100% 100%, 0 100%); }
+.tview-wp-name { min-width: 0; font-size: 11.5px; color: var(--bone); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tview-wp-dist { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tview-mode.tview-wp-go, .tview-mode.tview-wp-x { min-width: 0; min-height: 24px; height: 24px; padding: 0 8px; line-height: 1; border-left: 1px solid rgba(192,138,62,0.4); border-radius: 2px; }
+.tview-mode.tview-wp-x { width: 24px; padding: 0; font-size: 14px; }
+@media (pointer: coarse) { .tview-side { left: 10px; bottom: 14px; max-height: 45vh; } }
+@media (max-width: 520px) { .tview-side { left: 10px; width: calc(100vw - 20px); } }
 .travelpanel-msg { position: absolute; left: 50%; top: 86px; transform: translateX(-50%);
   font-size: 13px; color: var(--brass); text-shadow: 0 1px 2px rgba(0,0,0,0.9);
   opacity: 0; transition: opacity 180ms ease; }
@@ -2948,6 +2981,7 @@ html.plus-pad-prompts-visible .px-over > .px-stage:not(.px-acctstage):not(.px-ti
 .hud-foepoise { display: none; position: relative; width: min(280px, 40vw); height: 6px;
   background: rgba(10,12,17,0.6); border: 1px solid rgba(125,116,96,0.45); }
 .hud-foe.poised .hud-foepoise { display: block; }
+.hud-foepoise { box-sizing: content-box; max-height: 6px; }   /* POISE-QUIET: a thin track under the bar, never a block */
 .hud-poisefill { display: block; height: 100%; width: 0; background: transparent; }
 .hud-foepoise.poise-windup .hud-poisefill { background: #e0a43a; }
 .hud-foepoise.poise-iron .hud-poisefill { background: repeating-linear-gradient(135deg, #d8342c 0 4px, #7a1410 4px 6px); }
