@@ -11,11 +11,12 @@
   {
     "name": "LEGACY7H-unread-drops",
     "file": "src/scenes/legacyHost.js",
-    "old": "    if (held == null) return false;\n    return syncHouses(family, p.id, held);",
-    "new": "    return syncHouses(family, p.id, held ?? []);",
+    "old": "    if (held == null) return false;\n    return syncHouses(family, p.id, held, { whole: deps.heldHousesWhole?.() === true });",
+    "new": "    return syncHouses(family, p.id, held ?? [], { whole: deps.heldHousesWhole?.() === true });",
     "tests": [
       "test/legacy7_homes.test.js"
-    ]
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content."
   },
   {
     "name": "LEGACY7H-registry-silent",
@@ -31,15 +32,6 @@
     "file": "src/systems/onlineHomes.js",
     "old": "    try { onWrote?.(id, buildingKey); } catch { /* a listener's fault is never the registry's */ }",
     "new": "    onWrote?.(id, buildingKey);",
-    "tests": [
-      "test/legacy7_homes.test.js"
-    ]
-  },
-  {
-    "name": "LEGACY7H-world-any-characters-homes",
-    "file": "src/scenes/world.js",
-    "old": ".filter((h) => h?.character === me).map((h) => ({",
-    "new": ".map((h) => ({",
     "tests": [
       "test/legacy7_homes.test.js"
     ]

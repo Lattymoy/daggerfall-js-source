@@ -120,13 +120,13 @@
   {
     "name": "AUDIT-LEGACY-II-F2-realm-homes-the-lines",
     "file": "src/scenes/legacyHost.js",
-    "old": "    if (held == null) return false;\n    return syncHouses(family, p.id, held);",
-    "new": "    return syncHouses(family, p.id, held);",
+    "old": "    if (held == null) return false;\n    return syncHouses(family, p.id, held, { whole: deps.heldHousesWhole?.() === true });",
+    "new": "    return syncHouses(family, p.id, held, { whole: deps.heldHousesWhole?.() === true });",
     "tests": [
       "test/auditlegacy2.test.js",
       "test/legacy7_homes.test.js"
     ],
-    "note": "LEGACY7 part five (PIN MOVED, the law changed by its own slice - Legacy-Arc 10b): online the realm's homes ARE the line's now (the realm keeps the line), so the record guards what F2/B4 left standing: a list the world has not read yet (null) learns nothing and DROPS nothing - without the guard an unread list emptied the member's houses at the next save."
+    "note": "LEGACY7 part five (PIN MOVED, the law changed by its own slice - Legacy-Arc 10b): online the realm's homes ARE the line's now (the realm keeps the line), so the record guards what F2/B4 left standing: a list the world has not read yet (null) learns nothing and DROPS nothing - without the guard an unread list emptied the member's houses at the next save. ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the sync says whether the held are the line's whole."
   },
   {
     "name": "AUDIT-LEGACY-II-A7-parked-by-a-rise",
@@ -203,11 +203,12 @@
   {
     "name": "AUDIT-LEGACY-II-A5-houses-rebuilt",
     "file": "src/systems/legacy/household.js",
-    "old": "  const next = was.filter((h) => h.by !== personId || mine.some((m) => sameHouse(m, h)));\n  for (const m of mine) if (!next.some((h) => sameHouse(h, m))) next.push(m);",
-    "new": "  const others = was.filter((h) => h.by !== personId);\n  const next = [...others, ...mine.filter((h) => !others.some((o) => sameHouse(o, h)))];",
+    "old": "  const next = was.filter((h) => (!whole && h.by !== personId) || mine.some((m) => sameHouse(m, h)));\n  for (const m of mine) if (!next.some((h) => sameHouse(h, m))) next.push(m);",
+    "new": "  const others = was.filter((h) => !whole && h.by !== personId);\n  const next = [...others, ...mine.filter((h) => !others.some((o) => sameHouse(o, h)))];",
     "tests": [
       "test/auditlegacy2.test.js"
-    ]
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - `whole` keeps no other member's row."
   },
   {
     "name": "AUDIT-LEGACY-II-A9-cycle-kept",

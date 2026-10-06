@@ -1622,7 +1622,13 @@ const service = {
         // AUDIT LEGACY III O1/O3: the other's character as the relay stamped it, and a half taken back
         if (path === '/v1/realm/wed') return answer(await realmWed(rctx, me, { id: body.id, lease: body.lease, sid: body.sid, partner: body.partner, partnerChar: body.partnerChar, withdraw: body.withdraw === true }));
         if (path === '/v1/realm/unions') return json({ unions: await listUnions(rctx, me) }, 200, origin);
-        return answer(await deleteRealm(rctx, me, body.id));   // /v1/realm/delete - HOUSE-LOSS: which undoes one too, for a door that asks a delete
+        // /v1/realm/delete - HOUSE-LOSS: which undoes one too, for a door that asks a delete. ACCOUNT-HOMES: the homes it
+        // bought go with it, and their towns' kept yards are let go as a decor write lets them go (YARD-SHED)
+        const goneTowns = typeof body.id === 'string'
+          ? ((await rctx.db.prepare('SELECT DISTINCT map_id FROM homes WHERE player = ? AND char_id = ?').bind(me, body.id).all())?.results ?? []).map((t) => t.map_id) : [];
+        const deleted = await deleteRealm(rctx, me, body.id);
+        if (deleted.ok) for (const t of goneTowns) forgetYards(t);
+        return answer(deleted);
       }
 
       // a path this service serves, reached with a method it does not

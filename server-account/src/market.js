@@ -851,12 +851,13 @@ async function listGood(ctx, player, env, { character, region, item, pick, price
   if (prior) return answer(prior, { repeat: true });
   const closed = shut(player, env);
   if (closed) return closed;
-  // HOME-VENDOR: a piece stocked at the seller's own trader - its home's region the listing's, its stall its only door
+  // HOME-VENDOR: a piece stocked at the seller's own trader - its home's region the listing's, its stall its only door.
+  // ACCOUNT-HOMES (2026-10-06): a trader of a home of the seller's ACCOUNT, any character of it (homes.js; a hall's none)
   const vend = vendor == null ? null : vendorOf(vendor);
   if (vendor != null && !vend) return { error: 'bad-vendor' };
   if (vend) {
     const h = await db.prepare(`SELECT h.region FROM home_decor d JOIN homes h ON h.map_id = d.map_id AND h.building_key = d.building_key
-      WHERE ${VENDOR_STANDS_SQL} AND h.player = ?3 AND h.char_id = ?4`).bind(vend.map, vend.id, me, character).first();
+      WHERE ${VENDOR_STANDS_SQL} AND h.player = ?3 AND h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?4)`).bind(vend.map, vend.id, me, character).first();
     if (!h) return { error: 'vendor-not-yours' };
     region = Number(h.region);
   }
@@ -900,7 +901,7 @@ async function listGood(ctx, player, env, { character, region, item, pick, price
       db.prepare(`INSERT OR IGNORE INTO market_listings (id, seller, char_id, region, kind, units, own, bought, price, fee, at, expires_at, rid, n, currency, item, vendor_map, vendor_id)
         SELECT ?3, ?1, ?2, ?4, 'item', 1, 1, 0, ?5, ?6, ?7, ?8, ?9, ?10, 'gold', ?11, ?13, ?14 WHERE ${vend ? stallSalesSql() : openSalesSql('?7')} < ?12
           AND (?14 IS NULL OR EXISTS (SELECT 1 FROM home_decor d JOIN homes h ON h.map_id = d.map_id AND h.building_key = d.building_key
-            WHERE d.map_id = ?13 AND d.id = ?14 AND d.yard = 0 AND json_extract(d.place, '$.station') = '${VENDOR_STATION}' AND h.player = ?1 AND h.char_id = ?2))`)
+            WHERE d.map_id = ?13 AND d.id = ?14 AND d.yard = 0 AND json_extract(d.place, '$.station') = '${VENDOR_STATION}' AND h.player = ?1 AND h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?2)))`)
         .bind(me, character, id, region, price, listingFee(price), nowS, nowS + (vend ? VENDOR_LISTING_S : MARKET_LISTING_S), rid, nonce, JSON.stringify(moved), listingsMax,
           vend?.map ?? null, vend?.id ?? null),
       mustChange(db),   // no listing, no piece out of the record: the record's step rolls back with it
@@ -1774,9 +1775,9 @@ export async function marketVendors(ctx, player, env, { region, character = null
   if (!regionOk(region)) return { error: 'bad-region' };
   const me = typeof character === 'string' && CHAR_ID_RE.test(character) ? character : '';
   const { results = [] } = await db.prepare(`SELECT l.*, d.map_id AS v_map, d.id AS v_id, h.building_key AS v_key, h.owner_name AS v_owner, h.player AS v_player,
-      h.entry AS v_entry, (h.player = ?3 AND h.char_id = ?4) AS v_mine,
+      h.entry AS v_entry, (h.player = ?3) AS v_mine,
       (h.entry = 'guild' AND EXISTS (SELECT 1 FROM guild_members a JOIN guild_members b ON b.guild_id = a.guild_id
-        WHERE a.player = h.player AND a.char_id = h.char_id AND b.player = ?3 AND b.char_id = ?4)) AS v_guildmate,
+        WHERE a.player = h.player AND b.player = ?3 AND b.char_id = ?4)) AS v_guildmate,
       (SELECT MAX(r.until) FROM home_rooms r WHERE r.map_id = h.map_id AND r.building_key = h.building_key AND r.tenant = ?3 AND r.tenant_char = ?4 AND r.until > ?1) AS v_tenancy
     FROM market_listings l JOIN home_decor d ON d.map_id = l.vendor_map AND d.id = l.vendor_id
     JOIN homes h ON h.map_id = d.map_id AND h.building_key = d.building_key
@@ -1798,6 +1799,8 @@ export async function marketVendors(ctx, player, env, { region, character = null
  * HOME-VENDOR: MY TRADERS - `{ character }`: the Vendor page's read (the pause window's, beside the Professions). Every
  * trader of this character's homes (where it stands), the pieces standing at them, the pieces they have SOLD (newest
  * first, while the market keeps the sale's listing), and the gold the sales hold to collect at any board.
+ * ACCOUNT-HOMES (2026-10-06): the traders are the ACCOUNT's homes' (every character of it owns them); what stands at
+ * them, what they sold and the gold held stay this character's - a listing is its seller character's goods.
  */
 export async function marketMyVendors(ctx, player, env, { character } = {}) {
   const { db, nowS } = ctx;
@@ -1808,7 +1811,7 @@ export async function marketMyVendors(ctx, player, env, { character } = {}) {
   const me = player.id;
   const { results: traders = [] } = await db.prepare(`SELECT d.map_id, d.id, h.building_key, h.region, h.owner_name, h.player FROM home_decor d
     JOIN homes h ON h.map_id = d.map_id AND h.building_key = d.building_key
-    WHERE h.player = ?1 AND h.char_id = ?2 AND d.yard = 0 AND json_extract(d.place, '$.station') = '${VENDOR_STATION}' ORDER BY h.map_id, d.id`).bind(me, character).all();
+    WHERE h.player = ?1 AND h.guild_id IS NULL AND (h.deed = 0 OR h.char_id = ?2) AND d.yard = 0 AND json_extract(d.place, '$.station') = '${VENDOR_STATION}' ORDER BY h.map_id, d.id`).bind(me, character).all();
   const { results: stock = [] } = await db.prepare(`SELECT * FROM market_listings WHERE seller = ?1 AND char_id = ?2 AND vendor_id IS NOT NULL AND state = 'open'
     AND expires_at > ?3 ORDER BY at DESC LIMIT ${VENDOR_STOCK_SHOWN * 2}`).bind(me, character, nowS).all();
   const { results: sold = [] } = await db.prepare(`SELECT s.listing, s.price, s.total, s.tax, s.tithe, s.fee, s.at, l.item, l.vendor_map, l.vendor_id

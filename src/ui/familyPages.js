@@ -521,6 +521,13 @@ function liveLine(el, said) {
   return n;
 }
 
+/** FAMILY-TAB (2026-10-06, asked: "When a player is playing without project legacy, the family tab shouldn't show
+ *  (pause menu)"): WHETHER THIS GAME IS PLAYED WITH PROJECT LEGACY - the mod on and a house for the game played (its
+ *  family, or the past played back). A character who plays without one - who answered no lineage, one made online
+ *  before the question was put there or copied in, a scene that keeps no family - has no Family tab; the tab's key
+ *  says why instead (ui/pauseDoor.js openPauseFlow, in noFamilyLine's words). Pure over the provider. */
+export const familyTabShown = (prov = _provider) => !!prov?.on?.() && !!(prov.family?.() || prov.past?.());
+
 /** Why a page has no family to show. LEGACY-CHOICE: a character who answered no lineage, and online one made before the
  *  question was put there (or copied in), play without a house for good - a new character founds one. */
 export const noFamilyLine = (prov) => (!prov ? 'Your family is kept in the world - open this from a game.'

@@ -1,0 +1,123 @@
+[
+  {
+    "name": "GUILD-HALL-SALE-told-every-rank",
+    "file": "server-account/src/homes.js",
+    "old": "...(rank != null && hallMay(rank, 'hall') ? { hallSell: true, refund: homeSaleRefund(Math.max(0, Number(h.paid) || 0)) } : {}),",
+    "new": "...(rank != null ? { hallSell: true, refund: homeSaleRefund(Math.max(0, Number(h.paid) || 0)) } : {}),",
+    "tests": [
+      "test/hallsale.test.js"
+    ],
+    "note": "every member told it may sell the hall, and what it paid."
+  },
+  {
+    "name": "GUILD-HALL-SALE-refund-off-the-price",
+    "file": "server-account/src/homes.js",
+    "old": "...(rank != null && hallMay(rank, 'hall') ? { hallSell: true, refund: homeSaleRefund(Math.max(0, Number(h.paid) || 0)) } : {}),",
+    "new": "...(rank != null && hallMay(rank, 'hall') ? { hallSell: true, refund: homeSaleRefund(Math.max(0, Number(h.price) || 0)) } : {}),",
+    "tests": [
+      "test/hallsale.test.js",
+      "test/guild1d_service.test.js"
+    ],
+    "note": "the door's sum off the price, never what the treasury paid."
+  },
+  {
+    "name": "GUILD-HALL-SALE-door-unasked",
+    "file": "server-account/src/halls.js",
+    "old": "  if (atDoor && (h.map_id !== mapId || h.building_key !== buildingKey)) return { error: 'guild-hall-moved' };\n",
+    "new": "",
+    "tests": [
+      "test/hallsale.test.js"
+    ],
+    "note": "a door naming another building sells the guild's hall anyway."
+  },
+  {
+    "name": "GUILD-HALL-SALE-bad-shape-taken",
+    "file": "server-account/src/halls.js",
+    "old": "  if (atDoor && (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey))) return { error: 'bad-home' };\n",
+    "new": "",
+    "tests": [
+      "test/hallsale.test.js"
+    ],
+    "note": "a building no key names read as the hall moved."
+  },
+  {
+    "name": "GUILD-HALL-SALE-row-to-every-member",
+    "file": "src/systems/onlineHomes.js",
+    "old": "export const hallSellable = (home) => !!home?.hall && home.hallSell === true;",
+    "new": "export const hallSellable = (home) => !!home?.hall;",
+    "tests": [
+      "test/hallsale.test.js"
+    ],
+    "note": "\"Sell it\" on every member's plaque."
+  },
+  {
+    "name": "GUILD-HALL-SALE-menu-to-a-member",
+    "file": "src/systems/onlineHomes.js",
+    "old": "export const hallManaged = (home) => hallEntryTurnable(home) || hallSellable(home);",
+    "new": "export const hallManaged = (home) => !!home?.hall;",
+    "tests": [
+      "test/hallsale.test.js"
+    ],
+    "note": "a plain member's Info press stopped at a menu with nothing in it."
+  },
+  {
+    "name": "GUILD-HALL-SALE-prompt-every-mode",
+    "file": "src/systems/onlineHomes.js",
+    "old": "  if (hallMenu && door === 'enter') return mode === 'info' ? 'hall-menu' : null;",
+    "new": "  if (hallMenu && door === 'enter') return 'hall-menu';",
+    "tests": [
+      "test/hallsale.test.js"
+    ],
+    "note": "the hall's menu in every mode - the guildmaster never walks in with a plain click."
+  },
+  {
+    "name": "GUILD-HALL-SALE-registry-unread",
+    "file": "src/systems/onlineHomes.js",
+    "old": "            hallSell: h.hallSell === true,",
+    "new": "            hallSell: false,",
+    "tests": [
+      "test/hallsale.test.js"
+    ],
+    "note": "the town's word never read."
+  },
+  {
+    "name": "GUILD-HALL-SALE-book-building-dropped",
+    "file": "src/net/guildBook.js",
+    "old": "    return this._hallTold(town, await this._act((c) => (at ? this.door.hallSell(c, at) : this.door.hallSell(c))));",
+    "new": "    return this._hallTold(town, await this._act((c) => this.door.hallSell(c)));",
+    "tests": [
+      "test/hallsale.test.js"
+    ],
+    "note": "the door's building dropped by the guild book."
+  },
+  {
+    "name": "GUILD-HALL-SALE-door-building-dropped",
+    "file": "src/net/accountClient.js",
+    "old": "    hallSell: (character, at = null) => post('/v1/guilds/hall/sell', { character, ...(at ? { mapId: at.mapId, buildingKey: at.buildingKey } : {}) }),",
+    "new": "    hallSell: (character, at = null) => post('/v1/guilds/hall/sell', { character, ...(at ? {} : {}) }),",
+    "tests": [
+      "test/hallsale.test.js"
+    ],
+    "note": "the door's building dropped on the wire."
+  },
+  {
+    "name": "GUILD-HALL-SALE-press-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "            if (verb === HALL_VERB.sell && hallSellable(home)) { openHallSale(bd, home); return true; }",
+    "new": "            if (verb === HALL_VERB.sell && false) { openHallSale(bd, home); return true; }",
+    "tests": [
+      "test/hallsale.test.js"
+    ],
+    "note": "the plaque's row pressed and nothing done."
+  },
+  {
+    "name": "GUILD-HALL-SALE-host-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      sell: (at) => (guildBook ? guildBook.sellHall(at) : Promise.resolve({ ok: false, error: 'no-guild' })),",
+    "new": "      sell: (at) => (guildBook ? guildBook.sellHall() : Promise.resolve({ ok: false, error: 'no-guild' })),",
+    "tests": [
+      "test/hallsale.test.js"
+    ],
+    "note": "the host selling the guild's hall wherever the door stood."
+  }
+]

@@ -2,29 +2,23 @@
   {
     "name": "HOME-CROSSED-the-refusal-gone",
     "file": "server-account/src/homes.js",
-    "old": "  if (home.char_id === at.id && !(Number(home.paid) > 0)) return { error: 'home-crossed' };\n",
+    "old": "  if (!(Number(home.paid) > 0)) return { error: 'home-crossed' };\n",
     "new": "",
     "tests": [
-      "test/fb0930_homecrossed.test.js"
-    ]
+      "test/fb0930_homecrossed.test.js",
+      "test/account_homes.test.js"
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - whichever of the account's characters asks."
   },
   {
     "name": "HOME-CROSSED-a-bought-house-refused",
     "file": "server-account/src/homes.js",
-    "old": "  if (home.char_id === at.id && !(Number(home.paid) > 0)) return { error: 'home-crossed' };",
-    "new": "  if (home.char_id === at.id) return { error: 'home-crossed' };",
+    "old": "  if (!(Number(home.paid) > 0)) return { error: 'home-crossed' };",
+    "new": "  if (home) return { error: 'home-crossed' };",
     "tests": [
       "test/fb0930_homecrossed.test.js"
-    ]
-  },
-  {
-    "name": "HOME-CROSSED-another-characters-house-said-crossed",
-    "file": "server-account/src/homes.js",
-    "old": "  if (home.char_id === at.id && !(Number(home.paid) > 0)) return { error: 'home-crossed' };",
-    "new": "  if (!(Number(home.paid) > 0)) return { error: 'home-crossed' };",
-    "tests": [
-      "test/auditrealm.test.js"
-    ]
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content."
   },
   {
     "name": "HOME-CROSSED-the-status-unsaid",
@@ -38,22 +32,22 @@
   {
     "name": "HOME-CROSSED-every-house-of-mine-crossed",
     "file": "server-account/src/homes.js",
-    "old": "      const crossed = mine && realmHome && !(Number(h.paid) > 0);",
-    "new": "      const crossed = mine && realmHome;",
+    "old": "      const crossed = mine && !deedRow && !(Number(h.paid) > 0);",
+    "new": "      const crossed = mine && !deedRow;",
     "tests": [
       "test/fb0930_homecrossed.test.js"
     ],
-    "note": "HOME-PRICE (PIN MOVED, re-aimed by content): the realm test is named once (`realmHome`) - the refund reads it too."
+    "note": "HOME-PRICE (PIN MOVED, re-aimed by content): the realm test is named once (`realmHome`) - the refund reads it too. ACCOUNT-HOMES (PIN MOVED): re-aimed by content."
   },
   {
     "name": "HOME-CROSSED-anothers-house-marked",
     "file": "server-account/src/homes.js",
-    "old": "      const crossed = mine && realmHome && !(Number(h.paid) > 0);",
-    "new": "      const crossed = realmHome && !(Number(h.paid) > 0);",
+    "old": "      const crossed = mine && !deedRow && !(Number(h.paid) > 0);",
+    "new": "      const crossed = !deedRow && !(Number(h.paid) > 0);",
     "tests": [
       "test/fb0930_homecrossed.test.js"
     ],
-    "note": "HOME-PRICE (PIN MOVED, re-aimed by content): the realm test is named once (`realmHome`) - the refund reads it too."
+    "note": "HOME-PRICE (PIN MOVED, re-aimed by content): the realm test is named once (`realmHome`) - the refund reads it too. ACCOUNT-HOMES (PIN MOVED): re-aimed by content."
   },
   {
     "name": "HOME-CROSSED-the-mark-dropped-by-the-client",

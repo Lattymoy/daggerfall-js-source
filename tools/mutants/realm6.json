@@ -65,12 +65,12 @@
   {
     "name": "REALM6-second-press-pays",
     "file": "server-account/src/homes.js",
-    "old": "  if (held) return held.player === player.id && held.char_id === claim.character ? { ok: true, repeat: true, home: homeOf(held), ...realmSaleOf(held), realm: { seq: at.seq } } : { error: 'home-taken' };\n",
+    "old": "  if (held) return heldByAccount(held, player, claim.character) ? { ok: true, repeat: true, home: homeOf(held), ...realmSaleOf(held), realm: { seq: at.seq } } : { error: 'home-taken' };\n",
     "new": "  if (held && held.player !== player.id) return { error: 'home-taken' };\n",
     "tests": [
       "test/realm6.test.js"
     ],
-    "note": "AUDIT HOME-PRICE (PIN MOVED, re-aimed by content): the repeat's answer carries the sale's sum (C2)."
+    "note": "AUDIT HOME-PRICE (PIN MOVED, re-aimed by content): the repeat's answer carries the sale's sum (C2). ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the account's already."
   },
   {
     "name": "REALM6-landed-claim-unsaid",

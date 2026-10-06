@@ -19,9 +19,10 @@
 //
 // ═══ THE OWNER, IN THE SAME STATEMENT ══════════════════════════════
 //
-// Every write names the home's owner - the account AND the character,
-// a home being one character's (HOME1) - inside its own WHERE, so a
-// piece in somebody else's home is exactly as absent as none (`no-home`
+// Every write names the home's owner inside its own WHERE - the account
+// (ACCOUNT-HOMES, 2026-10-06: a home is its account's, every character
+// of it; the character a write names is the one whose record pays) - so
+// a piece in somebody else's home is exactly as absent as none (`no-home`
 // to place, `no-decor` to move or remove). A placement lands only while
 // the home holds fewer than DECOR_CAP. WHAT a piece is - a model, or a
 // flat - is written once, at the placement, into columns no later
@@ -101,12 +102,15 @@ async function realmDecorWrite(ctx, player, at, { mapId, buildingKey, delta, wri
   return piece ? { ok: true, piece, gold: delta, realm: { seq: prep.seq } } : { error: 'no-decor' };   // AUDIT REALM L1-F3: the gold the record moved - the client takes it, never its own sum
 }
 
-/** The home is the caller's character's: map, key, account, character. GUILD1d (Seats-Arc 8.2: "decor in the hall by
- *  Officers"): or it is a guild's hall and the character is one of its keepers (hallLaw.js HALL_POWERS.decorate) - the
- *  same four places bound, in the same order, read once through `k`. GUILD-YARD: a hall's outside is its keepers' as its
- *  rooms are - homes.js setHomeLook asks the same (exported). */
+/** The home is the caller's: map, key, account, character. ACCOUNT-HOMES (2026-10-06, asked: "House ownership should be
+ *  account bound, not character bound"): a home is its ACCOUNT's - every character of it owns it, whichever bought it,
+ *  and the character bound is the one acting (whose record pays) - save a deed the realm gave (FIELD BUGS 2026-10-04d
+ *  KNIGHT-HOUSE), which stays its knight's: Daggerfall's house in that one save. GUILD1d (Seats-Arc 8.2: "decor in the
+ *  hall by Officers"): or it is a guild's hall and the character is one of its keepers (hallLaw.js
+ *  HALL_POWERS.decorate) - the same four places bound, in the same order, read once through `k`. GUILD-YARD: a hall's
+ *  outside is its keepers' as its rooms are - homes.js setHomeLook asks the same (exported). */
 export const OWNS = `EXISTS (SELECT 1 FROM (SELECT ? AS m, ? AS b, ? AS p, ? AS c) k JOIN homes h ON h.map_id = k.m AND h.building_key = k.b
-  WHERE (h.guild_id IS NULL AND h.player = k.p AND h.char_id = k.c)
+  WHERE (h.guild_id IS NULL AND h.player = k.p AND (h.deed = 0 OR h.char_id = k.c))
     OR (h.guild_id IS NOT NULL AND EXISTS (SELECT 1 FROM guild_members g WHERE g.guild_id = h.guild_id AND g.player = k.p AND g.char_id = k.c
       AND g.rank IN (${HALL_POWERS.decorate.join(', ')})
       AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p))))`;   // AUDIT GUILD1d S2: a realm character's - its moves and stations are paid on its record, never on a client's word

@@ -1,0 +1,52 @@
+[
+  {
+    "name": "FAMILY-TAB-drawn-with-no-house",
+    "file": "src/ui/familyPages.js",
+    "old": "export const familyTabShown = (prov = _provider) => !!prov?.on?.() && !!(prov.family?.() || prov.past?.());",
+    "new": "export const familyTabShown = (prov = _provider) => !!prov?.on?.();",
+    "tests": [
+      "test/legacy3_familytab.test.js"
+    ],
+    "note": "FAMILY-TAB: the tab drawn for a game played without a house (the mod's switch alone - LEGACY3's gate)."
+  },
+  {
+    "name": "FAMILY-TAB-the-past-forgotten",
+    "file": "src/ui/familyPages.js",
+    "old": "export const familyTabShown = (prov = _provider) => !!prov?.on?.() && !!(prov.family?.() || prov.past?.());",
+    "new": "export const familyTabShown = (prov = _provider) => !!prov?.on?.() && !!prov.family?.();",
+    "tests": [
+      "test/legacy3_familytab.test.js"
+    ],
+    "note": "FAMILY-TAB: the past played back (a dead or retired member's save) lost its tab."
+  },
+  {
+    "name": "FAMILY-TAB-the-switch-forgotten",
+    "file": "src/ui/familyPages.js",
+    "old": "export const familyTabShown = (prov = _provider) => !!prov?.on?.() && !!(prov.family?.() || prov.past?.());",
+    "new": "export const familyTabShown = (prov = _provider) => !!(prov?.family?.() || prov?.past?.());",
+    "tests": [
+      "test/legacy3_familytab.test.js"
+    ],
+    "note": "FAMILY-TAB: a house drew the tab with the mod switched off."
+  },
+  {
+    "name": "FAMILY-TAB-key-opens-anyway",
+    "file": "src/ui/pauseDoor.js",
+    "old": "    if (!familyTabShown()) { hudText(noFamilyLine(familyProvider())); return null; }\n",
+    "new": "",
+    "tests": [
+      "test/legacy3_familytab.test.js"
+    ],
+    "note": "FAMILY-TAB: the Family key with no house opened the pause (landing on System) and said nothing."
+  },
+  {
+    "name": "FAMILY-TAB-key-says-nothing",
+    "file": "src/ui/pauseDoor.js",
+    "old": "    if (!familyTabShown()) { hudText(noFamilyLine(familyProvider())); return null; }\n",
+    "new": "    if (!familyTabShown()) { return null; }\n",
+    "tests": [
+      "test/legacy3_familytab.test.js"
+    ],
+    "note": "FAMILY-TAB: the key opened nothing and never said why."
+  }
+]

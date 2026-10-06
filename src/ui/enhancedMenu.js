@@ -150,8 +150,7 @@ import { vendorPageShown, VENDOR_PAGE_SECTIONS, drawVendorPage } from './vendorP
 import { REVENANT_PAGE_SECTIONS, revenantPageShown, drawRevenantsPage } from './revenantPage.js';
 import { COMPANION_PAGE_SECTIONS, companionPageShown, drawCompanionsPage, resetCompanionRoster } from './companionRoster.js';   // COMPANION-ROSTER: the sworn and the slots
 import { STABLE_PAGE_SECTIONS, stablePageShown, drawStablePage, resetHoldingsPages } from './holdingsPages.js';   // HOLDINGS: the horse and the wagon
-import { FAMILY_PAGE_SECTIONS, drawTreePage, drawHousePage, drawHallPage, resetFamilyPages, disarmFamilyPages, sheetHouse } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab; LEGACY-SHEET: the house on the Stats page
-import { legacyOn } from '../systems/legacy/settings.js';   // LEGACY3: ...drawn while the mod is on
+import { FAMILY_PAGE_SECTIONS, drawTreePage, drawHousePage, drawHallPage, resetFamilyPages, disarmFamilyPages, sheetHouse, familyTabShown } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab; LEGACY-SHEET: the house on the Stats page; FAMILY-TAB: drawn while the game is played with it
 import { FLEET_PAGE_SECTIONS, fleetPageShown, drawFleetPage, resetFleetPage } from './fleetPage.js';   // HOLDINGS: the ships
 import { swornBodyOf } from '../systems/revenantCompanions.js';   // COMPANION-ROSTER: a sworn one's live health
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // REVENANT-PAGE: a revenant's kind   // REVENANT-PAGE: the foes that have earned your name
@@ -1168,7 +1167,7 @@ function realmCard(who) {
           // never landed is UNDONE, never deleted - its delete took the home customs had carried, and it could never come
           // in again. The undo gives back its home, its guild place and its customs (realm.js undoRealm).
           row.customs && save.unfinished ? { label: 'Undo bringing in', disabled: realmBusy, onClick: () => ask(`Undo bringing ${row.name} in?`, `${row.name} never finished coming into the realm - its first save never landed. Undoing takes it out and gives everything back: its home, its guild place and its one customs, so the offline character can be brought online again. To finish instead, press Bring online on it below.`, 'Undo', () => realmAct(() => realmUndo(realmIoNow(), row.id), [`${row.name} is out of the realm and customs is undone: its home and guild place are back with the offline character. Bring it online again when you are ready.`])) }
-            : { label: 'Delete character', disabled: realmBusy, onClick: () => ask(`Delete ${row.name}?`, 'An online character deleted is gone from the realm for good - its Renown, its professions and their Stores, its home and its guild place with it. A copy you made offline stays.', 'Delete', () => realmAct(() => realmDelete(realmIoNow(), row.id), [`${row.name} is gone from the realm.`])) },
+            : { label: 'Delete character', disabled: realmBusy, onClick: () => ask(`Delete ${row.name}?`, 'An online character deleted is gone from the realm for good - its Renown, its professions and their Stores, the homes it bought and its guild place with it (a home is your account\'s: your other characters lose it too). A copy you made offline stays.', 'Delete', () => realmAct(() => realmDelete(realmIoNow(), row.id), [`${row.name} is gone from the realm.`])) },
         ],
       }));
     }
@@ -3612,8 +3611,9 @@ function appendPxFoot(home) {
 const PAUSE_TABS = Object.freeze([['quests', 'Quests'], ['stats', 'Stats'], ['holdings', 'Holdings'], ['family', 'Family'], ['system', 'System']]);
 /** HOLDINGS: every tab a landing may name (mountEnhancedMenu's `at`). */
 export const PAUSE_TAB_IDS = Object.freeze(PAUSE_TABS.map(([id]) => id));
-/** LEGACY3: a tab drawn now - the Family tab while Project Legacy is on (a landing on it with the mod off lands on System). */
-const pauseTabShown = (id) => id !== 'family' || legacyOn();
+/** LEGACY3: a tab drawn now - the Family tab while the game is played with Project Legacy (FAMILY-TAB: the mod on AND a
+ *  house for the game played - ui/familyPages.js familyTabShown); a landing on it otherwise lands on System. */
+const pauseTabShown = (id) => id !== 'family' || familyTabShown();
 // The token formattings that carry a journal line - questJournal's own
 // counted set (DaggerfallQuestJournalWindow.cs:658-662 via its :322).
 

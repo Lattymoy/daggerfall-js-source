@@ -606,7 +606,10 @@ export async function leaveRealm({ db }, /** @type {string} */ playerId, /** @ty
  *  - then the row: saves.js's order, so a failure halfway leaves a row whose bytes lie rather than objects nothing
  *  names. AUDIT REALM L1-F7 / L3-F5: AND ITS ONLINE LIFE WITH IT, as the door promises ("its home and its guild place
  *  with it"): the row's delete carries its homes (their pieces and hidden furniture go by the tables' own cascade), its
- *  guild place and its Renown track in ONE batch. They stood under a dead id: a house nobody could buy again nor its
+ *  guild place and its Renown track in ONE batch. ACCOUNT-HOMES (2026-10-06; asked: "Deleted characters should remove
+ *  their houses from online", beside "House ownership should be account bound"): the homes are the ones it BOUGHT -
+ *  every character of the account owns them while it stands, and they go with it, whatever another of them placed in
+ *  them; goods another stocked at their traders wait ('home-vendor-stocked'). They stood under a dead id: a house nobody could buy again nor its
  *  owner sell, a guild whose master could never be succeeded, a track that counted against the account's sixty
  *  (RENOWN-CHAR: the character's Renown goes with it again, as the door said before RENOWN-ACCOUNT).
  *  A guildmaster with members hands the guild over first ('guild-master-leaves', the guild's own word for leaving).
@@ -642,6 +645,10 @@ export async function deleteRealm({ db, bucket, nowS = Math.floor(Date.now() / 1
   // out, kept from going by them (guildKeepsSql), its name and tag held for good (guilds.js disband and leave ask it too)
   if (master?.vault) return { error: 'guild-vault' };
   if (Number((await db.prepare(REALM_MARKET_OPEN_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'realm-market-open' };
+  // ACCOUNT-HOMES (2026-10-06): the homes it bought go with it ("Deleted characters should remove their houses from
+  // online"), and any character of the account may stock a trader in one now - so goods another of them has standing at
+  // one wait, as a sale waits for them (homes.js releaseHome): the delete would leave them for sale at a trader gone
+  if (Number((await db.prepare(HOME_VENDOR_STOCK_SQL).bind(playerId, id).first())?.n ?? 0) > 0) return { error: 'home-vendor-stocked' };
   // HOME-RENT: a room another player is renting in its home waits for its days to run out, and rent held for it waits to
   // be collected - the delete takes the home with it. AUDIT: then no room of it is offered any more, and both are asked
   // again - a rent landing between the first asking and the delete's batch was deleted with the home (a rent needs its
@@ -679,6 +686,11 @@ export const HOME_TENANTS_SQL = `SELECT COUNT(*) AS n FROM home_rooms r JOIN hom
   WHERE h.player = ?1 AND h.char_id = ?2 AND r.tenant IS NOT NULL AND r.until > ?3`;
 /** HOME-RENT: the rent held on a character's homes, not yet collected (`due`) - its delete waits for it too. */
 export const HOME_RENT_DUE_SQL = 'SELECT COALESCE(SUM(rent_due), 0) AS due FROM homes WHERE player = ?1 AND char_id = ?2';
+/** ACCOUNT-HOMES: the goods standing for sale at the traders of the homes a character bought, whoever of the account
+ *  stocked them (`n`) - its delete takes those homes and their traders, so it waits for them. `?1` the account, `?2` the
+ *  character. */
+export const HOME_VENDOR_STOCK_SQL = `SELECT COUNT(*) AS n FROM market_listings l JOIN home_decor d ON d.map_id = l.vendor_map AND d.id = l.vendor_id
+  JOIN homes h ON h.map_id = d.map_id AND h.building_key = d.building_key WHERE l.state = 'open' AND h.player = ?1 AND h.char_id = ?2 AND h.guild_id IS NULL`;
 
 /** PROF-DELETE: A CHARACTER'S MARKET BUSINESS STILL OPEN (`?1` the account, `?2` the character) - each a thing another
  *  player is part of whose goods, piece or Marks' worth would come to this character: a listing or an auction still

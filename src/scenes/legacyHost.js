@@ -152,7 +152,7 @@ export function mergeFamily(stored, saved, cid) {
  *   nearestTown:(here:any) => ({region:string, loc:string}|null), gold:() => number, say:(line:string) => void,
  *   boot:(search:string) => void, search:() => string, loadCharacter:(characterId:string) => boolean,
  *   saveNow:() => boolean, inFight:() => boolean, payEstate?:(gold:number) => void, rng?:() => number,
- *   heldHouses?:() => any[], houseHere?:() => ({mapId:number, buildingKey:number}|null),
+ *   heldHouses?:() => any[], heldHousesWhole?:() => boolean, houseHere?:() => ({mapId:number, buildingKey:number}|null),
  *   hasSave?:(characterId:string) => boolean, livingWorld?:() => boolean,
  *   templeOf?:() => (number|null), askWed?:(name:string, house:string, done:(takeName:boolean) => void) => boolean,
  *   regards?:() => any, regardDay?:() => number, sky?:() => number,
@@ -249,11 +249,12 @@ export function createLegacyHost(deps) {
   }
   /** The played member's held houses into the line's - offline their deeds, online their online homes (the world hands
    *  which). Null held is not known yet (online: the realm's homes not read): nothing learned, nothing dropped. Answers
-   *  whether they changed. */
+   *  whether they changed. ACCOUNT-HOMES: online the held are the account's homes, the line's WHOLE (`heldHousesWhole`)
+   *  - a row another member learned goes once the account no longer holds it. */
   function syncHousesNow(p) {
     const held = deps.heldHouses?.() ?? null;
     if (held == null) return false;
-    return syncHouses(family, p.id, held);
+    return syncHouses(family, p.id, held, { whole: deps.heldHousesWhole?.() === true });
   }
   /** AUDIT LEGACY II A1: whether the character in the world IS the one the record plays - after a choice hands the line
    *  to another (the Succession, a switch) the page runs on under the old character until the boot lands, and the slow

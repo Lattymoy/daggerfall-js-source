@@ -101,20 +101,12 @@
   {
     "name": "DECOR1-anyone-owns",
     "file": "server-account/src/decor.js",
-    "old": "WHERE (h.guild_id IS NULL AND h.player = k.p AND h.char_id = k.c)",
-    "new": "WHERE (h.guild_id IS NULL AND k.p IS NOT NULL AND h.char_id = k.c)",
+    "old": "WHERE (h.guild_id IS NULL AND h.player = k.p AND (h.deed = 0 OR h.char_id = k.c))",
+    "new": "WHERE (h.guild_id IS NULL AND k.p IS NOT NULL AND (h.deed = 0 OR h.char_id = k.c))",
     "tests": [
       "test/decor1.test.js"
-    ]
-  },
-  {
-    "name": "DECOR1-any-character-owns",
-    "file": "server-account/src/decor.js",
-    "old": "WHERE (h.guild_id IS NULL AND h.player = k.p AND h.char_id = k.c)",
-    "new": "WHERE (h.guild_id IS NULL AND h.player = k.p AND k.c IS NOT NULL)",
-    "tests": [
-      "test/decor1.test.js"
-    ]
+    ],
+    "note": "ACCOUNT-HOMES (PIN MOVED): re-aimed by content - the home's account, any character of it."
   },
   {
     "name": "DECOR1-the-cap-unread",

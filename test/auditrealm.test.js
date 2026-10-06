@@ -363,7 +363,7 @@ test('AUDIT REALM L1-F2 / L2-F2: a founding whose answer is lost is asked again 
   assert.deepEqual([lost.ok, lost.unknown, B.session.lost], [false, true, 'unknown']);
 });
 
-test('AUDIT REALM L1-F3: a realm record is paid back only what realm records paid in - another character\'s house is no sale, a treasury deposit no record made is no withdrawal, a house from before the realm comes back as a house, a piece no record paid for gives nothing back', { timeout: 60_000 }, async () => {
+test('AUDIT REALM L1-F3: a realm record is paid back only what realm records paid in - a house no record paid for is no sale (ACCOUNT-HOMES: another character\'s of the account included), a treasury deposit no record made is no withdrawal, a house from before the realm comes back as a house, a piece no record paid for gives nothing back', { timeout: 60_000 }, async () => {
   const s = await registered();
   const A = await s.player('Arthago', { name: 'Arthago', goldPieces: 500_000, items: [], bankAccounts: new Array(20).fill(0).map(() => ({ accountGold: 0 })) });
   const at = () => ({ id: A.char, lease: A.lease, seq: A.session.seq });
@@ -373,7 +373,10 @@ test('AUDIT REALM L1-F3: a realm record is paid back only what realm records pai
   assert.equal((await A.homes.claim({ mapId: 1234, buildingKey: 5, region: 17, character: 'an-offline-id-0001', price: HOME_PRICE_MAX })).error, 'realm-only');
   s.env.DB._raw.prepare("INSERT INTO homes (map_id, building_key, player, char_id, owner_name, region, entry, price, bought_at) VALUES (1234, 5, ?, 'an-offline-id-0001', 'Arthago', 17, 'private', 10000000, 1)").run(A.id);
   const sale = await A.homes.release(1234, 5, at());
-  assert.deepEqual([sale.ok, sale.error], [false, 'no-home'], 'not the realm character\'s house');
+  // ACCOUNT-HOMES (PIN MOVED): the house is the account's, so its realm character may sell it - but no record paid for
+  // it, so it is no sale (HOME-CROSSED's word), and the cap's ten million never reaches the record
+  assert.deepEqual([sale.ok, sale.error], [false, 'home-crossed'], 'a house no record paid for: no sale, whichever character asks');
+  assert.ok(s.env.DB._raw.prepare('SELECT 1 FROM homes WHERE map_id = 1234 AND building_key = 5').get(), 'it stands, the account\'s');
   assert.equal((await s.saveOf(A)).bankAccounts[17].accountGold, 0);
   // (c) a house customs carried in from before the realm (no record paid for it): no gold - and HOME-CROSSED (FIELD BUGS
   // 2026-09-30, PIN MOVED): no sale at all; it was sold for nothing and taken, house and pieces
