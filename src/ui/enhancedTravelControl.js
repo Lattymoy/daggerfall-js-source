@@ -34,8 +34,22 @@ import {
   JUNCTION_HERE_PT, junctionDirectionIndex, drawMapSection, DOT_SCALE, packRGBA,
 } from './travelPathsOverlay.js';
 import { TRAVEL_OPTIONS_TEXT as T } from '../systems/travelOptionsText.js';
+import { buildPaceControls, paceControlsCss } from './travelPaceControls.js';   // PACE-DIALS: the journey's own dials again
 
 export const ENHANCED_TRAVEL_ID = 'enhanced-travel';
+/** PACE-DIALS: the steppers' own sheet - the bar's copy; docked in the Overworld it is hidden (the block has its own). */
+const PACE_STYLE_ID = 'enhanced-travel-pace-style';
+function injectPaceStyle(doc) {
+  if (doc.getElementById?.(PACE_STYLE_ID)) return;
+  const st = doc.createElement('style');
+  st.id = PACE_STYLE_ID;
+  st.textContent = `${paceControlsCss('travelpanel')}
+.travelpanel-bar > .travelpanel-pace { flex: 0 0 auto; min-width: 176px; padding: 6px 12px; border-left: 1px solid rgba(192,138,62,0.2); }
+.travelpanel-pace .travelpanel-pace-title { display: none; }
+#travel-view .tview-dock .travelpanel-pace { display: none; }
+@media (max-width: 560px) { .travelpanel-bar > .travelpanel-pace { flex: 1 1 100%; border-left: 0; } }`;
+  (doc.head ?? doc.body)?.append(st);
+}
 
 let host = null;
 let parts = null;
@@ -63,6 +77,7 @@ function cls(node, key, value) {
 function build(doc, hooks) {
   injectEnhancedStyle(doc);
   injectEnhancedFonts(doc);
+  injectPaceStyle(doc);   // PACE-DIALS
   const root = doc.createElement('div');
   root.id = ENHANCED_TRAVEL_ID;
   root.className = 'travelpanel';
@@ -94,6 +109,10 @@ function build(doc, hooks) {
   // OW-DECK: the listeners stand on the BAR, not the root - every [data-act] is in it, and the Overworld's strip docks
   // the bar in itself (ui/travelViewHud.js): a press there must still reach these hooks
   const bar = root.querySelector('.travelpanel-bar');
+  // PACE-DIALS (2026-10-06, the player: "Revert back to the overworld timer multiplier"): the two dials beside the
+  // time readout - Speed and Near enemies, 5-60 and x100 on a road alone (systems/travelPace.js)
+  const pace = buildPaceControls(doc, 'travelpanel');
+  bar.querySelector('.travelpanel-speed')?.after(pace.root);
   bar.addEventListener('mousedown', (e) => { if (e.target?.closest?.('[data-act]')) e.stopPropagation(); });
   bar.addEventListener('click', (e) => {
     const act = e.target?.closest?.('[data-act]')?.dataset?.act;
@@ -111,6 +130,7 @@ function build(doc, hooks) {
     msg: root.querySelector('.travelpanel-msg'),
     junction: root.querySelector('.travelpanel-junction'),
     bar,
+    pace,   // PACE-DIALS
   };
 }
 
@@ -217,8 +237,8 @@ export function drawEnhancedTravelControl(state = {}, hooks = {}) {
   const dist = distanceText(state.from, state.to);
   put(parts.sub, 'sub', [eta, dist].filter(Boolean).join('  ·  '));
   // TV2: the clock may be HELD under the ground's rate (systems/travelGovernor.js: the land loading; OW6: an alerted
-  // enemy near) - the rate that runs, then the ground's. RATE-LAW: the ground's rate is the journey's, a readout - the
-  // spinner and ENEMY-PACE's near-enemies stepper are gone
+  // enemy near) - the rate that runs, then the ground's. RATE-LAW: the ground says which rate; PACE-DIALS: the player's
+  // dials (the steppers beside this readout, systems/travelPace.js) say how fast each runs
   const accel = state.accel ?? 1;
   const held = state.held != null && state.held < accel ? state.held : null;
   const foesHold = held != null && state.heldWhy === 'foes';
@@ -248,6 +268,7 @@ export function drawEnhancedTravelControl(state = {}, hooks = {}) {
  *  cheap (a canvas), so this one is torn down. */
 export function hideEnhancedTravelControl() {
   if (!host) return;
+  try { parts?.pace?.dispose?.(); } catch { /* PACE-DIALS: its listener goes with it */ }
   try { host.remove(); } catch { /* already gone */ }
   try { parts?.bar?.remove(); parts?.msg?.remove(); } catch { /* OW-DECK: docked in the Overworld's strip - taken down with the journey */ }
   host = null; parts = null; last = null;

@@ -182,8 +182,8 @@
   {
     "name": "TV2-ray-from-the-head",
     "file": "src/scenes/world.js",
-    "old": "_lastProj, _lastView, travelView.eye, worldViewportRect(canvas.clientWidth, canvas.clientHeight));\n    if (!dir) return;\n    const hit",
-    "new": "_lastProj, _lastView, cam.pos, worldViewportRect(canvas.clientWidth, canvas.clientHeight));\n    if (!dir) return;\n    const hit",
+    "old": "    if (!travelViewCanGo()) return;\n    const [sx, sy] = canvasPoint(clientX, clientY, canvas.getBoundingClientRect());\n    const dir = rayDirFromScreen(sx, sy, canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, travelView.eye, worldViewportRect(canvas.clientWidth, canvas.clientHeight));\n    if (!dir) return;\n    const hit",
+    "new": "    if (!travelViewCanGo()) return;\n    const [sx, sy] = canvasPoint(clientX, clientY, canvas.getBoundingClientRect());\n    const dir = rayDirFromScreen(sx, sy, canvas.clientWidth, canvas.clientHeight, _lastProj, _lastView, cam.pos, worldViewportRect(canvas.clientWidth, canvas.clientHeight));\n    if (!dir) return;\n    const hit",
     "tests": [
       "test/tv2_click_to_move.test.js"
     ],

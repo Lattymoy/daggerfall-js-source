@@ -204,7 +204,7 @@ test('AUDIT REST-PARTY D4: every hand-table deadline started before the quest\'s
       }
     }
   });
-  assert.deepEqual(rows.map((r) => r[0]).sort(), ['$CUREVAM:huntstart', '$CUREWER:huntstart', 'B0B71Y03:finddaughter', 'B0B81Y02:S.30', 'K0C00Y07:2ransom', 'K0C30Y03:S.13', 'M0B11Y18:S.05', 'N0B00Y17:time2', 'O0B00Y12:S.01', 'S0000011:S.01', 'U0C00Y00:escapetime', '_BRISIEN:remindpc']);   // (AUDIT REST II Q2: the chapter and the drop)
+  assert.deepEqual(rows.map((r) => r[0]).sort(), ['$CUREVAM:huntstart', '$CUREWER:huntstart', 'B0B71Y03:finddaughter', 'B0B81Y02:S.30', 'K0C00Y07:2ransom', 'K0C30Y03:S.13', 'M0B11Y18:S.05', 'N0B00Y17:time2', 'N0B20Y02:S.12', 'O0B00Y12:S.01', 'S0000011:S.01', 'U0C00Y00:escapetime', '_BRISIEN:remindpc']);   // (AUDIT REST II Q2: the chapter and the drop; GUARD-WINDOW, FIELD BUGS 2026-10-06c: the mage's three-hour guard)
   for (const [id, after, deadline, waitsShort, finished, charged] of rows) {
     assert.deepEqual({ after, deadline, waitsShort, finished, charged }, { after: false, deadline: true, waitsShort: false, finished: false, charged: true }, `${id}: a deadline through the success, the time played charged and no more`);
   }

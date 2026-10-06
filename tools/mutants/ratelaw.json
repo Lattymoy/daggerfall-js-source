@@ -1,9 +1,9 @@
 [
   {
     "name": "RATE-open-rate-is-the-road",
-    "file": "src/systems/timeScale.js",
-    "old": "export const TRAVEL_OPEN_RATE = 60;",
-    "new": "export const TRAVEL_OPEN_RATE = 100;",
+    "file": "src/systems/travelPace.js",
+    "old": "export const OPEN_PACE_MAX = 60;",
+    "new": "export const OPEN_PACE_MAX = 100;",
     "tests": [
       "test/travel_speed_preference.test.js",
       "test/to1_travelOptions.test.js",
@@ -13,9 +13,9 @@
   },
   {
     "name": "RATE-rates-swapped",
-    "file": "src/systems/timeScale.js",
-    "old": "export const travelRateOf = (onRoad) => (onRoad ? TRAVEL_ROAD_RATE : TRAVEL_OPEN_RATE);",
-    "new": "export const travelRateOf = (onRoad) => (onRoad ? TRAVEL_OPEN_RATE : TRAVEL_ROAD_RATE);",
+    "file": "src/systems/travelPace.js",
+    "old": "export const paceRateOn = (onRoad) => Math.min(onRoad ? ROAD_PACE_MAX : OPEN_PACE_MAX, travelPace().speed);",
+    "new": "export const paceRateOn = (onRoad) => Math.min(onRoad ? OPEN_PACE_MAX : ROAD_PACE_MAX, travelPace().speed);",
     "tests": [
       "test/travel_speed_preference.test.js",
       "test/to1_travelOptions.test.js",
@@ -119,7 +119,7 @@
   {
     "name": "RATE-foe-pace-unfloored",
     "file": "src/systems/travelThreat.js",
-    "old": "export const foePaced = (cap, want) => Math.min(want, Math.max(cap, JOURNEY_FOE_PACE));",
+    "old": "export const foePaced = (cap, want) => Math.min(want, Math.max(cap, paceNow('foe') ?? JOURNEY_FOE_PACE));",
     "new": "export const foePaced = (cap, want) => Math.min(want, cap);",
     "tests": [
       "test/enemy_pace.test.js",

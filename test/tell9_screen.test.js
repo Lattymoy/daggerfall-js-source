@@ -361,7 +361,9 @@ test('TELL9: the enhanced HUD draws the track under the foe\'s health - its stat
   const hud = rd('src/ui/enhancedHud.js');
   assert.match(hud, /const foePoise = el\('div', 'hud-foepoise'\);/);
   assert.match(hud, /foe\.append\(foeName, foeTrack, foeBlade, foePoise\);/);
-  assert.match(hud, /const p = t\.poise;/);
+  // POISE-QUIET (2026-10-06, the player: "the block under the monsters hp must go"): an EMPTY track - no wind-up, no iron, no
+  // stagger, no opening - is no track: the bar stands alone until the foe's poise has something to say
+  assert.match(hud, /const p = t\.poise && t\.poise\.state && t\.poise\.state !== 'empty' \? t\.poise : null;/);
   assert.match(hud, /parts\.foe\.classList\.toggle\('poised', !!p\)/);
   assert.match(hud, /width\(parts\.foePoiseFill, 'foePoiseFill', p\.fill \* 100\);/);
   assert.match(hud, /put\(parts\.foePoiseWord, 'foePoiseWord', p\.word\);/);

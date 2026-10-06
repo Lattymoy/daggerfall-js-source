@@ -96,19 +96,30 @@ test('AUDIT REACH B2: the memory holds SHADOW_INSTANCE_MAX placements and EVICTS
   assert.equal(door._shInst.length, SHADOW_INSTANCE_MAX, 'the memory did not grow');
 });
 
-test('AUDIT REACH B3: a flat whose RECORD changes (a townsman\'s idle, a foe\'s swing - the key is record#frame) or whose FLIP changes (a turn: the sign of size.w) has moved - the first cut watched `frame` alone and the cache kept a stale silhouette (mutants: the record forgotten; the flip forgotten)', () => {
+test('AUDIT REACH B3: a flat whose RECORD changes (a townsman\'s idle, a foe\'s swing - the key is record#frame) or whose FLIP changes (a turn: the sign of size.w) has moved - the first cut watched `frame` alone and the cache kept a stale silhouette (mutants: the record forgotten; the flip forgotten); IDLER-STICKY (2026-10-06, the anti-flicker patch): a flat whose look changed where it stands is a mover for good - its idle comes back, so it never re-enters the static caches; one that never changed its look, or only walked, is the hold\'s as before', () => {
   const { r, sp, room, tile, frame } = stand();
   const npc = { archive: 201, record: 1, vao: { id: 'vao-npc' }, indexCount: 6, size: { w: 1, h: 2 }, origin: [2, 0, 0], bounds: new Float32Array([0, 0, 0, 1.2]) };
-  const draw = () => { r.drawMesh(room, I, null); r.drawTerrain(tile, I, {}, {}, 6.4); r.drawBillboards([npc], new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0])); };
+  const turner = { archive: 201, record: 1, vao: { id: 'vao-turner' }, indexCount: 6, size: { w: 1, h: 2 }, origin: [-2, 0, 0], bounds: new Float32Array([0, 0, 0, 1.2]) };
+  const walker = { archive: 201, record: 1, vao: { id: 'vao-walker' }, indexCount: 6, size: { w: 1, h: 2 }, origin: [0, 0, 2], bounds: new Float32Array([0, 0, 0, 1.2]) };
+  const draw = () => { r.drawMesh(room, I, null); r.drawTerrain(tile, I, {}, {}, 6.4); r.drawBillboards([npc, turner, walker], new Float32Array([1, 0, 0]), new Float32Array([0, 1, 0])); };
   frame(draw); frame(draw); frame(draw);
   assert.equal(npc._shDyn, false, 'standing still on one record: still');
+  assert.equal(turner._shDyn, false); assert.equal(walker._shDyn, false);
   npc.record = 2; frame(draw);
   assert.equal(npc._shDyn, true, 'the record changed: moved');
+  assert.equal(turner._shDyn, false, 'the others kept their look and their place: still');
   for (let f = 0; f < SHADOW_DYNAMIC_HOLD + 1; f++) frame(draw);
-  assert.equal(npc._shDyn, false, 'a hold later, still on the new record');
-  npc.size = { w: -1, h: 2 }; frame(draw);
-  assert.equal(npc._shDyn, true, 'turned about (the flip): moved');
+  assert.equal(npc._shDyn, true, 'IDLER-STICKY: a hold later it is still a mover - its look changed where it stands');
+  assert.equal(npc._shIdler, true);
+  assert.equal(turner._shDyn, false, 'one that never changed its look stays cached');
+  turner.size = { w: -1, h: 2 }; frame(draw);
+  assert.equal(turner._shDyn, true, 'turned about (the flip): moved');
   assert.equal(sp.records[2].dynamic, true);
+  walker.origin = [0, 0, 3]; frame(draw);
+  assert.equal(walker._shDyn, true, 'a walk: moved');
+  for (let f = 0; f < SHADOW_DYNAMIC_HOLD + 1; f++) frame(draw);
+  assert.equal(walker._shDyn, false, 'a walker that stops is the hold\'s alone - its look never changed');
+  assert.equal(walker._shIdler, undefined);
 });
 
 test('AUDIT REACH B4: the records in hand follow the floating origin - told of a crossing, the pass moves the matrices and spheres it copied (a batch\'s origin is the host\'s own, already moved), so the crossing\'s frame replays them where the moved lights and eye are: one cache build, not an empty one and a real one (mutants: the records left behind)', () => {

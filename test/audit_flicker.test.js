@@ -346,5 +346,5 @@ test('AUDIT FLICKER R2-R4: the recentre moves the flats the next replay reads, t
   for (const list of ['peerRiders', 'peerWalkers', 'bandSprites', 'yards']) {
     assert.match(w, new RegExp(`if \\(${list}\\) for \\(const b of ${list}\\.batches\\(\\)\\) \\{ if \\(cullOn && billboardOutside\\(b\\)\\) \\{ if \\(renderer\\.shadowReachBatch\\(b\\)\\) castBatches\\.push\\(b\\); continue; \\} allBatches\\.push\\(b\\); \\}`), `R3: ${list} casts off screen`);
   }
-  assert.match(rd('src/render/renderer.js'), /if \(this\._everyLightNow !== this\._everyLightPrev\) sp\.discard\(\);/, 'R4: either way');
+  assert.match(rd('src/render/renderer.js'), /const cut = this\._everyLightNow !== this\._everyLightPrev;[^\n]*\n\s*if \(cut\) sp\.discard\(\);/, 'R4: either way');   // PIN MOVED (EMPTY-HOLD, 2026-10-06): the door's edge is named once - the replay's discard and the pass's hold (a cut is never held) read the same one
 });

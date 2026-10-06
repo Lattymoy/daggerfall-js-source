@@ -171,6 +171,11 @@ import { seatInfoLine, seatTipOf } from '../net/townSeatLaw.js';   // SEAT1a: a 
 export { appRootFrom, APP_ROOT } from '../systems/appRoot.js';
 import { APP_ROOT } from '../systems/appRoot.js';
 import { IT_POPUP, IT_TEXT, itMapRefusal, itMapPaths, itPopUpDefaults, itTogglePress, itTrip, playerPopUpRefusal, seafarerDiscovered } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel's maps and popups, on this sheet
+import {
+  WAYPOINT_KINDS, WAYPOINT_TEXT, shownWaypoints, onWaypoints, isWaypointFollowed, waypointKindsShown, toggleWaypointKind, listWaypoints,
+} from '../systems/mapWaypoints.js';   // WAYPOINTS: the flags on the sheet, and their key row
+import { openWaypointMenu, closeWaypointMenu } from './waypointMenu.js';   // WAYPOINTS: the right-click menu
+import { paintWaypointFlag, flagBox } from './waypointFlags.js';   // WAYPOINTS: the small flags
 import { retroScreenRect } from '../systems/retroMode.js';   // DISC25-B: DFU's CustomScreenRect, the pillarbox's screen
 
 export const HELD_MAP_URL = new URL('art/held-map.png', APP_ROOT ?? globalThis.document?.baseURI ?? 'https://invalid.invalid/').href;
@@ -654,6 +659,9 @@ export class HeldMapWindow {
     // HOME-VENDOR: the trader's waypoint (the host's `vendor`, on the same poll) - one coin, apart from the yellow mark
     this._vendor = null;
     this._vendorKey = '';
+    // WAYPOINTS (2026-10-06): the flags - the store's own list, read at each paint; a change repaints the sheet and its key
+    this._wpHover = null;
+    this._stopWaypoints = onWaypoints(() => { this._dirty = true; this._keySig = ''; });
     this._tipKey = '';
     this._hoverAt = null;   // where the pointer last hovered, paper and client - a poll refreshes the card under it
     this._tipUntil = null;  // WB13c: a tap's card stands until this clock
@@ -988,6 +996,8 @@ export class HeldMapWindow {
     // took the slot - and it runs before `done` reads true.
     noticeRelease(this);
     noticeRelease(this._infoOwner);
+    this._stopWaypoints?.(); this._stopWaypoints = null;   // WAYPOINTS: no listener outlives the window
+    closeWaypointMenu('heldmap');   // ...nor its menu
     this._unmountChrome();
     // ownership-checked: a second window minted after this one owns
     // the surface now, and an unconditional delete would blind it
@@ -1219,6 +1229,7 @@ export class HeldMapWindow {
           travellers: this._trav.filter((t) => playerShown(t)).map((t) => ({ x: t.x, y: t.y, name: t.name, color: TV_KIN_COLORS[t.kin] ?? TRAVELLER_MARK_CSS, journey: t.journey, ship: t.ship })),   // TV3; OWS1: at sea, a ship; OW-WHO: the players' filters; OW-KIN: a friend's and a guild-mate's in theirs
           pulse: env.pulse,
         });
+        this._paintWaypoints(ctx, env);   // WAYPOINTS: the flags over everything the sheet breathes
       },
       // the bay's keys stay with the WINDOW: I, H, P, the travel
       // panel's S/T/N/B and the resume prompt's Y/N are about this
@@ -1229,6 +1240,7 @@ export class HeldMapWindow {
       pickAt: (px, py) => this._pickAt(px, py),
       hoverLabel: (px, py) => this._hoverLabel(px, py),
       mark: (px, py) => this._markLocationHandler(px, py),
+      context: (cx, cy) => this._waypointContext(cx, cy),   // WAYPOINTS: the bay's right click - a flag's menu, or one to add a flag
       // SOC6: the party is POLLED on this window's own cadence, from
       // the first tick to the last - never snapshot at open.
       tick: (dt) => {
@@ -1864,8 +1876,10 @@ export class HeldMapWindow {
     const groups = mapKeyGroups();
     const dpr = this._paper.dpr || 1;
     const who = travelViewWho();
+    const wpShown = waypointKindsShown(), wpAll = listWaypoints();
     const sig = [band, inks ? 1 : 0, dpr, ...groups.map((g) => (this.filters[g.filter] ? 1 : 0)),
-      this._trav.length ? 1 : 0, ...TV_WHO_GROUPS.map((g) => (who[g] ? 1 : 0)), who.renown].join('|');   // OW-WHO: and the players' row
+      this._trav.length ? 1 : 0, ...TV_WHO_GROUPS.map((g) => (who[g] ? 1 : 0)), who.renown,
+      ...WAYPOINT_KINDS.map((k) => `${wpShown[k] ? 1 : 0}:${wpAll.filter((w) => w.kind === k).length}`)].join('|');   // OW-WHO: and the players' row; WAYPOINTS: and theirs
     if (sig === this._keySig) return;
     this._keySig = sig;
     if (typeof box.replaceChildren === 'function') box.replaceChildren(); else box.innerHTML = '';
@@ -1921,6 +1935,28 @@ export class HeldMapWindow {
       row.append(btns);
       box.append(row);
     }
+    // WAYPOINTS (2026-10-06, the player: "Add Waypoints to the filter on the worldmap"): THE WAYPOINTS' ROW - a switch per
+    // kind, the Overworld's own (systems/mapWaypoints.js - one store, so both maps answer alike), each with how many
+    {
+      const row = el('div', 'hmkeyrow');
+      const head = el('span', 'hmkeywho', WAYPOINT_TEXT.title);
+      head.title = 'Right-click the map to add a waypoint, or a flag to rename it';
+      row.append(head);
+      const btns = el('div', 'hmkeykinds');
+      for (const k of WAYPOINT_KINDS) {
+        const on = wpShown[k] !== false, n = wpAll.filter((w) => w.kind === k).length;
+        const b = el('button', `act hmkeyflt${on ? ' on' : ''}`, `${WAYPOINT_TEXT[k]} (${n})`);
+        b.type = 'button'; b.tabIndex = -1;
+        b.onpointerdown = (ev) => ev.preventDefault?.();   // never the focus (the key's own law)
+        b.dataset.wpkind = k;
+        b.title = WAYPOINT_TEXT.tip(WAYPOINT_TEXT[k], on);
+        b.setAttribute?.('aria-pressed', on ? 'true' : 'false');
+        b.onclick = () => { if (this._top || this._info || this._phase !== 'map') return; toggleWaypointKind(k); this._dirty = true; this._renderKey(); };
+        btns.append(b);
+      }
+      row.append(btns);
+      box.append(row);
+    }
   }
 
   /** OW-WHO: a press on the players' row - the shared switch flipped (or the Renown floor stepped), the sheet drawn
@@ -1942,6 +1978,82 @@ export class HeldMapWindow {
     this._marksDirty = true;
     this._dirty = true;
     this._renderKey();
+  }
+
+  // ── WAYPOINTS (2026-10-06) ────────────────────────────────────────
+
+  /** The flags, painted over the sheet's overlay (paper pixels, the overlay's own dpr transform) - each its colour, a
+   *  party's pip, a guild's bar, a followed one on its ring, its name under its foot on the parchment's halo. */
+  _paintWaypoints(ctx, env) {
+    const list = shownWaypoints();
+    if (!list.length) return;
+    ctx.save();
+    ctx.font = "600 11px 'Cormorant', Georgia, serif";
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (const w of list) {
+      const [x, y] = toPaper(env.view, w.mx, w.my);
+      if (x < -24 || y < -8 || x > env.paperW + 24 || y > env.paperH + 32) continue;
+      const hover = this._wpHover === w.id;
+      paintWaypointFlag(ctx, x, y, { color: w.color, kind: w.kind, followed: isWaypointFollowed(w.id), hover });
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(244,234,210,0.85)'; ctx.lineJoin = 'round';
+      ctx.strokeText(w.name, x, y + 4);
+      ctx.fillStyle = hover ? '#6b1d10' : '#2a1d10';
+      ctx.fillText(w.name, x, y + 4);
+    }
+    ctx.restore();
+  }
+
+  /** The flag under a paper point (the top one - the last painted), or null. */
+  _waypointAt(sx, sy) {
+    const list = shownWaypoints();
+    for (let i = list.length - 1; i >= 0; i--) {
+      const w = list[i];
+      const [x, y] = toPaper(this._view, w.mx, w.my);
+      const b = flagBox(x, y);
+      if (sx >= b.x0 && sx <= b.x1 && sy >= b.y0 && sy <= b.y1 + 12) return w;   // and its name under the foot
+    }
+    return null;
+  }
+
+  /** A flag under the pointer names itself (and lights); none, the sheet's own label answers. */
+  _waypointHover(sx, sy) {
+    const w = this._waypointAt(sx, sy);
+    const id = w?.id ?? null;
+    if (id !== this._wpHover) { this._wpHover = id; this._dirty = true; }
+    if (!w) return null;
+    return { label: `${w.name} - ${WAYPOINT_TEXT.kindWord[w.kind]}${!w.mine && w.by ? ` by ${w.by}` : ''} (right-click to edit)`, cursor: 'pointer' };
+  }
+
+  /** WAYPOINTS (the player: "Worldmap(V) with right mouseclick context menu"): a right click on the bay - a flag's own
+   *  menu, or the menu that adds one where the click landed. The world sheet's `context` arm (the others answer false: a
+   *  dungeon's plan has its notes, a street no flag) - the window never asks which sheet is up (EM1). */
+  _waypointContext(clientX, clientY) {
+    if (this._phase !== 'map' || this._top || this._info) return false;
+    const pp = this._paperPoint(clientX, clientY);
+    if (pp === OFF_SHEET || !this._onSheet(pp)) return false;
+    const ctx = this.deps.waypointCtx?.() ?? {};
+    const note = (t) => { if (t && this._chrome?.label) this._chrome.label.textContent = t; };   // the sheet's own label line says it
+    const w = this._waypointAt(pp[0], pp[1]);
+    if (w) {
+      openWaypointMenu({ x: clientX, y: clientY, id: w.id, by: ctx.by, canKind: ctx.canKind ?? { party: false, guild: false }, owner: 'heldmap', onNote: note,
+        onTravel: this._coordsAllowedHere() ? (wp) => this._waypointTravel(wp) : null });
+      return true;
+    }
+    const [mx, my] = toMap(this._view, pp[0], pp[1]);
+    if (!(mx >= 0 && my >= 0 && mx < this._size.width && my < this._size.height)) return false;
+    openWaypointMenu({ x: clientX, y: clientY, point: { mx, my }, by: ctx.by, canKind: ctx.canKind ?? { party: false, guild: false }, owner: 'heldmap', onNote: note });
+    return true;
+  }
+
+  /** "Travel here" on a flag: the bare pixel's own journey, as a click there opens it (MAP2's coordinates decision). */
+  _waypointTravel(w) {
+    if (this._phase !== 'map' || !this._coordsAllowedHere()) return;
+    const px = Math.floor(w.mx), py = Math.floor(w.my);
+    if (px < 0 || py < 0 || px >= this._size.width || py >= this._size.height) return;
+    this._select({ coords: true, x: px + 0.5, y: py + 0.5, colorIndex: -1, kind: 'coords', name: toFormat(TO_TEXT.MsgTargetCoords, px, py), summary: null, mapId: null });
+    this._openPanel('travel');
+    this._dirty = true;
   }
 
   /** The member under the cursor, by a paper-space radius of 18 - two
@@ -2938,7 +3050,9 @@ export class HeldMapWindow {
       if (downAt || uiPress) return;
       // PAN-LEFT-ONLY: only the left button (or a finger, a pen) ever starts a pan - a right press on a flat sheet,
       // or any other button, moves nothing
-      if (e.button != null && e.button !== 0) { if (e.button === 2) e.preventDefault?.(); return; }
+      // WAYPOINTS: and a right press on a flat sheet is the sheet's own (`context` - the bay's waypoint menu; the browser's
+      // is the ONE guard's, ui/input.js installContextMenuGuard - MAC-L3)
+      if (e.button != null && e.button !== 0) { if (e.button === 2) { e.preventDefault?.(); this._sheet?.context(e.clientX, e.clientY); } return; }
       if (e.button === 0 || e.button == null) {
         const pp = this._paperPoint(e.clientX, e.clientY);
         if (pp !== OFF_SHEET && (stripHit(this._strip, pp[0], pp[1]) || this._sheet?.control?.(pp[0], pp[1]))) {
@@ -3189,6 +3303,8 @@ export class HeldMapWindow {
    * The window does the writing, in one place, for every sheet.
    */
   _hoverLabel(sx, sy) {
+    const flag = this._waypointHover(sx, sy);   // WAYPOINTS: a flag names itself first (and lights, or lets its light go)
+    if (flag) return flag;
     if (!this._onSheet([sx, sy])) return null;   // AUDIT-MAP2: off the paper is off the map
     // SOC6: a party member wins the label over the place they are
     // standing in - the player pointed at the green ring, and "who"

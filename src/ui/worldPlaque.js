@@ -45,6 +45,7 @@ import { isTouchDevice } from './touchDevice.js';
 import { crosshairCentreY, CROSSHAIR_ARM } from './hudCrosshair.js';
 import { hudReticle } from './hud.js';   // the reticle's own two terms, from their home
 import { pickActivatableHit } from '../player/activate.js';
+import { getSeed, setSeed } from '../formats/dfRandom.js';   // CAT-MEOW: the readout keeps the classic stream
 import { frameMark } from '../systems/frameClock.js';   // AUDIT-WH P3: the frame in flight, so the gate's two terms are computed once in it
 import { resolveHover, frameSignature } from '../systems/worldHover.js';
 import { foldQuickLoot, quickLootRow, quickLootStats, resetQuickLoot, quickLootOn } from '../systems/quickLoot.js';
@@ -526,6 +527,21 @@ export function worldHoverFrame({
   // Said ONCE (the online lane's own idiom - a latch, not a per-frame
   // console), and the plaque goes down rather than freezing on its
   // last answer: a readout that cannot answer shows nothing.
+  //
+  // CAT-MEOW (FIELD BUGS 2026-10-06c, Flylighter: "NPC sound glitch of a
+  // rapid cat meow", Chesterwark): A READOUT LEAVES THE CLASSIC STREAM AS
+  // IT FOUND IT. A person's name is StaticNPC.DisplayName, which seeds
+  // DFRandom with the NPC's nameSeed and draws the name off it
+  // (characters/staticNpc.js staticNpcName) - and this door asks the
+  // namers EVERY FRAME, where the mod asks once per new hit (prevHit,
+  // .cs:266-275). So while the player looked at a townsperson the stream
+  // restarted at that person's seed each frame, and every draw after it
+  // was the same number: the town animals' 16 Hz roll (systems/
+  // animalAmbience.js, rand() <= 100) answered alike on every tick, and
+  // next to the one person whose draw came under 101 a cat meowed sixteen
+  // times a second. The namers still run as they did; the seed is put
+  // back after them, whatever they drew or threw.
+  const classicSeed = getSeed();
   try {
     const hit = pick ? pick() : pickActivatableHit(eye, dir, targets?.() ?? [], collider);
     const frame = markBodyStack(resolveHover(hit, { name, contents }));
@@ -549,6 +565,8 @@ export function worldHoverFrame({
     try { showWorldPlaque(null); } catch { /* the draw itself is gone; nothing left to hide */ }
     setClassicLootFrame(null);   // DISC22-C: and the classic panel draws nothing either
     return null;
+  } finally {
+    setSeed(classicSeed);   // CAT-MEOW: the namers' DisplayName draws leave no mark on the game's stream
   }
 }
 
