@@ -148,7 +148,13 @@ current design "does not work in an enjoyable manner"):
   wear put no pressure on an outing (a steel longsword lost about 6.5% to a
   hundred swings); at twice it, about 13%, and per swing armour wears
   1.4-1.7 times DFU's and a blade 2.3-2.5 times. The pressure to come back
-  is wear, never price: the price below stays a third.
+  is wear, never price: the price below stays a third. What a weapon holds
+  is one pool for every type since WEAPON-POOL (2026-10-06, Mac: "keep the
+  material disparity, but unify all the weapons types condition stat"): the
+  Warhammer's 1,600 through the material ladder, where Daggerfall's rows ran
+  from a dagger's or a short bow's 50 - a steel longsword holds 2,400 where
+  it held 1,200, so the same hundred swings take half the share. Armour's
+  pools are unchanged.
 - **The price** (REPAIR-RATE, `src/systems/repairService.js`
   `REPAIR_COST_SCALE`): a third of what Daggerfall's formula asks - it was two
   thirds since REPAIR-EASE (2026-09-30). Under Roleplay & Realism: Items'
@@ -156,10 +162,12 @@ current design "does not work in an enjoyable manner"):
   for the piece: still a craftsman's fee (a broken Daedric longsword, 9,216
   gold before the haggle at a middling smith - 5,184 to 6,372 asked), not a
   punishment for using the gear. With the wear above, its upkeep is 3.3-6.4
-  gold a landed hit (17.4-24.0 before the triage).
+  gold a landed hit (17.4-24.0 before the triage) - half that since
+  WEAPON-POOL doubled the longsword's pool, the price being the share.
 - **Kits stay partial** (KIT-CEILING, `src/systems/smithItems.js`): a field
   kit or a smith-made kit mends a piece no further than three quarters of its
-  condition (rounded down: an Iron Dagger's 50 stops at 37). Three quarters
+  condition (rounded down: an Iron Dagger's 1,600 stops at 1,200 - its 50
+  stopped at 37 before WEAPON-POOL). Three quarters
   is the edge of the overhaul's normal band for a blade (61-75% strikes at
   its own damage) and for armour; the 1.1 and 1.3 of a sharp edge come back
   at the smith's. (A blunt weapon's normal band runs to 91%, so a smith adds
@@ -295,7 +303,8 @@ and customs' allowance, and are open numbers (below).
 ## Open numbers
 
 The outing (one dungeon, one to two hours), the wear (DFU's amount since WEAR-ONE,
-`src/systems/equip.js` `DFU_WEAR_MULTIPLE` = 1), the kit ceiling (75%), the repair
+`src/systems/equip.js` `DFU_WEAR_MULTIPLE` = 1), the weapon pool (WEAPON-POOL,
+`src/characters/weapons.js` `WEAPON_CONDITION_POOL` = 1600), the kit ceiling (75%), the repair
 scale (a third), the potions' rates and the companion's capacity are all
 tunable, and each is to be read again against the Phase 1 ledger before it is
 turned. So are a home's (HOME-PRICE, `src/net/homeLaw.js`): 300 gold a square

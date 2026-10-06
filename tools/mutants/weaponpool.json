@@ -1,0 +1,209 @@
+[
+  {
+    "name": "WEAPON-POOL-the-pool-the-claymores",
+    "file": "src/characters/weapons.js",
+    "old": "export const WEAPON_CONDITION_POOL = 1600;",
+    "new": "export const WEAPON_CONDITION_POOL = 1400;",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-mint-pool-on-armour-not-weapons",
+    "file": "src/systems/itemTemplates.js",
+    "old": "let max = t && item.group === 'Weapons' && !isAmmunition(item) ? WEAPON_CONDITION_POOL",
+    "new": "let max = t && item.group === 'Armor' && !isAmmunition(item) ? WEAPON_CONDITION_POOL",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-mint-ammunition-on-the-pool",
+    "file": "src/systems/itemTemplates.js",
+    "old": "item.group === 'Weapons' && !isAmmunition(item) ? WEAPON_CONDITION_POOL",
+    "new": "item.group === 'Weapons' ? WEAPON_CONDITION_POOL",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-mint-unknown-template-on-the-pool",
+    "file": "src/systems/itemTemplates.js",
+    "old": "let max = t && item.group === 'Weapons'",
+    "new": "let max = item.group === 'Weapons'",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-viewer-on-the-rows",
+    "file": "src/characters/weapons.js",
+    "old": "const pool = templateIndex === WEAPONS.Arrow ? t.hitPoints : WEAPON_CONDITION_POOL;",
+    "new": "const pool = t.hitPoints;",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-viewer-arrow-on-the-pool",
+    "file": "src/characters/weapons.js",
+    "old": "const pool = templateIndex === WEAPONS.Arrow ? t.hitPoints : WEAPON_CONDITION_POOL;",
+    "new": "const pool = WEAPON_CONDITION_POOL;",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-no-move-on-load",
+    "file": "src/systems/save.js",
+    "old": "const n = repoolWeaponConditions(list);",
+    "new": "const n = 0;",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-move-armour",
+    "file": "src/systems/conditionRepair.js",
+    "old": "if (!it || it.group !== 'Weapons' || it.magic ||",
+    "new": "if (!it || it.magic ||",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-move-a-magic-items-uses",
+    "file": "src/systems/conditionRepair.js",
+    "old": "it.group !== 'Weapons' || it.magic || !Object.isExtensible(it)",
+    "new": "it.group !== 'Weapons' || !Object.isExtensible(it)",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-write-a-frozen-record",
+    "file": "src/systems/conditionRepair.js",
+    "old": "it.magic || !Object.isExtensible(it) || !Number.isFinite(it.currentCondition)) continue;",
+    "new": "it.magic || !Number.isFinite(it.currentCondition)) continue;",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-move-a-piece-with-no-condition",
+    "file": "src/systems/conditionRepair.js",
+    "old": " || !Number.isFinite(it.currentCondition)) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-null-in-a-list",
+    "file": "src/systems/conditionRepair.js",
+    "old": "    if (!it || it.group !== 'Weapons'",
+    "new": "    if (it.group !== 'Weapons'",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-count-a-piece-on-the-pool",
+    "file": "src/systems/conditionRepair.js",
+    "old": "if (pool === max || !rowPools(it.templateIndex)",
+    "new": "if (!rowPools(it.templateIndex)",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-fingerprint-without-daggerfalls-row",
+    "file": "src/systems/conditionRepair.js",
+    "old": "[ITEM_TEMPLATES[templateIndex]?.hitPoints, templateByIndex(templateIndex)?.hitPoints, RRI_ROW_POOLS.get(templateIndex)]",
+    "new": "[templateByIndex(templateIndex)?.hitPoints, RRI_ROW_POOLS.get(templateIndex)]",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-fingerprint-without-a-custom-row",
+    "file": "src/systems/conditionRepair.js",
+    "old": "[ITEM_TEMPLATES[templateIndex]?.hitPoints, templateByIndex(templateIndex)?.hitPoints, RRI_ROW_POOLS.get(templateIndex)]",
+    "new": "[ITEM_TEMPLATES[templateIndex]?.hitPoints, RRI_ROW_POOLS.get(templateIndex)]",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-fingerprint-without-the-mods-patch",
+    "file": "src/systems/conditionRepair.js",
+    "old": "[ITEM_TEMPLATES[templateIndex]?.hitPoints, templateByIndex(templateIndex)?.hitPoints, RRI_ROW_POOLS.get(templateIndex)]",
+    "new": "[ITEM_TEMPLATES[templateIndex]?.hitPoints, templateByIndex(templateIndex)?.hitPoints]",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-fingerprint-no-material-ladders-x6",
+    "file": "src/systems/conditionRepair.js",
+    "old": "(pool * (conditionMultipliersByMaterial[it.material] ?? 4)) / 4",
+    "new": "(pool * (conditionMultipliersByMaterial[it.material] ?? 6)) / 4",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-fingerprint-quality-truncated",
+    "file": "src/systems/conditionRepair.js",
+    "old": "return made == null ? max : Math.round(max * made);",
+    "new": "return made == null ? max : Math.trunc(max * made);",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-fingerprint-quality-ignored",
+    "file": "src/systems/conditionRepair.js",
+    "old": "const made = QUALITY_EFFECTS[it.quality]?.condition;",
+    "new": "const made = undefined;",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-share-truncated",
+    "file": "src/systems/conditionRepair.js",
+    "old": "it.currentCondition = Math.round((it.currentCondition * pool) / max);",
+    "new": "it.currentCondition = Math.trunc((it.currentCondition * pool) / max);",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-share-rounded-up",
+    "file": "src/systems/conditionRepair.js",
+    "old": "it.currentCondition = Math.round((it.currentCondition * pool) / max);",
+    "new": "it.currentCondition = Math.ceil((it.currentCondition * pool) / max);",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-condition-left-behind",
+    "file": "src/systems/conditionRepair.js",
+    "old": "it.currentCondition = Math.round((it.currentCondition * pool) / max);",
+    "new": "it.currentCondition = it.currentCondition;",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "WEAPON-POOL-maximum-left-behind",
+    "file": "src/systems/conditionRepair.js",
+    "old": "    it.maxCondition = pool;\n",
+    "new": "",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  }
+]

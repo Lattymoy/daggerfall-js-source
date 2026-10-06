@@ -74,17 +74,19 @@ test('KIT-CEILING: no kit mends a piece past three quarters - 60% to 75%, 70% to
   // whole pieces: the old refusal stands
   const whole = mintFieldRepairKit();
   assert.deepEqual(repairKitUse(whole, [whole, at(sword(), 100)]), { kind: 'repairKit', text: 'Nothing here wants mending.', refused: true });
-  // AUDIT ECON R4/R5: the ceiling is ROUNDED DOWN - an Iron Dagger's 50 stops at 37 (74%), never 38 (76%, the sharp
-  // band), and at 37 it is refused in words that do not say 75%
-  const dagger = weaponOfMaterial(113, 0);
-  assert.equal(dagger.maxCondition, 50);
-  assert.equal(kitCeiling(dagger), 37);
-  dagger.currentCondition = 30;
+  // AUDIT ECON R4/R5: the ceiling is ROUNDED DOWN - an Iron Dagger's 50 stopped at 37 (74%), never 38 (76%, the sharp
+  // band), and at 37 it is refused in words that do not say 75%. WEAPON-POOL (2026-10-06): every weapon's pool is a
+  // multiple of 400 now, at any material and quality, so three quarters of one is whole; a smith's Fine Buckler (512 x
+  // 1.15 = 588.8, so 589) is a piece whose three quarters is not - it stops at 441 (74.9%), never 442
+  const buckler = mintPiece({ recipe: 'buckler:iron', quality: 2, seed: 1 }, '0000000000000001');
+  assert.equal(buckler.maxCondition, 589);
+  assert.equal(kitCeiling(buckler), 441);
+  buckler.currentCondition = 354;   // 60%
   const dk = mintFieldRepairKit();
-  assert.equal(repairKitUse(dk, [dk, dagger]).text, 'The Iron Dagger is mended: 60% to 74%.', 'a field kit\'s 8 would take it to 38');
-  assert.equal(dagger.currentCondition, 37);
+  assert.equal(repairKitUse(dk, [dk, buckler]).text, 'The Buckler is mended: 60% to 74%.', 'a field kit\'s 89 would take it to 443');
+  assert.equal(buckler.currentCondition, 441);
   const dk2 = mintFieldRepairKit();
-  assert.equal(repairKitUse(dk2, [dk2, dagger]).text, KIT_CEILING_TEXT);
+  assert.equal(repairKitUse(dk2, [dk2, buckler]).text, KIT_CEILING_TEXT);
 });
 
 test('KIT-CEILING: one piece to mend while the ceiling holds another back still asks - one row, and Keep (AUDIT ECON R1: a worn cuirass at 80% and a flail carried to sell at 20%, and the kit went on the flail unasked); one piece alone is mended, unasked (mutants: the lone row never asked; always asked)', () => {
@@ -115,14 +117,15 @@ test('KIT-CEILING: a kit gives a piece more than a hundredth of its condition or
   assert.equal(useItem(kit, items, {}).text, 'The Iron Flail is mended: 20% to 35%.', 'the quick keys take the flail');
   // the chooser's row and the card read one percentage - DFU's, truncated
   const card = weaponOfMaterial(120, 9); card.equipSlot = 0;
-  card.currentCondition = Math.round(card.maxCondition * 0.735);   // 4704 of 6400: 73.5% - the card's 73, a rounding's 74
+  card.currentCondition = Math.round(card.maxCondition * 0.735);   // 9408 of 12800: 73.5% - the card's 73, a rounding's 74
   const k2 = mintFieldRepairKit();
   const ask = useItem(k2, [k2, card, at(weaponOfMaterial(125, 0), 20)], { chooseTarget: true });
   assert.equal(ask.targets[0], card);
   assert.deepEqual([conditionPercentage(card), ask.labels[0]], [73, 'Daedric Longsword 73% (worn)']);
-  // and the mend's own words: 2080 of 6400 is 32.5%, a field kit's 960 more 47.5% - the card's 32 and 47
+  // and the mend's own words: 4160 of 12800 is 32.5%, a field kit's 1920 more 47.5% - the card's 32 and 47 (WEAPON-POOL:
+  // a Daedric Longsword's pool was 6400, and the same shares were 2080 and 960)
   const k3 = mintFieldRepairKit();
-  const half = weaponOfMaterial(120, 9); half.currentCondition = 2080;
+  const half = weaponOfMaterial(120, 9); half.currentCondition = 4160;
   assert.equal(useItem(k3, [k3, half], {}).text, 'The Daedric Longsword is mended: 32% to 47%.');
 });
 

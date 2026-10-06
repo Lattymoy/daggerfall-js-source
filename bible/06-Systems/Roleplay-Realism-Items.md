@@ -107,6 +107,15 @@ so the Features row says *when the game next loads*. The custom rows
 stay registered with the mod off, so a saved Archer's Axe still
 resolves.
 
+WEAPON-POOL (2026-10-06, Ledger A): a weapon's condition no longer reads
+its row's hitPoints - every weapon type mints from one pool, the
+Warhammer's 1,600, through the material ladder (`characters/weapons.js`
+`WEAPON_CONDITION_POOL`) - so the mod's eight hitPoints patches to
+weapon rows (the Tanto's 40 among them) and its two weapons' 500 reach
+no weapon's condition. They still stand on the rows, verbatim, and a
+piece minted on one while the mod was on moves to the pool on load like
+any other (`systems/conditionRepair.js` `repoolWeaponConditions`).
+
 ### The switches
 
 Eleven modules, the mod's own words, on the Mods pane; `Enabled` is

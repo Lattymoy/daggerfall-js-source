@@ -31,7 +31,7 @@ import { createSceneCache, snapshotSceneCache, restoreSceneCache } from './scene
 import { seedCustomSpellIndex } from './spellMaker.js';   // S1: made spells carry their own record
 import { seedBundleSeq, effectKindLoaded } from './effects.js';   // X10: the live-bundle counter's restore half; AUDIT PRE-MERGE 0928 S3: a mod's effect restores only while its mod is loaded
 import { repairLostCurses } from './curseRepair.js';   // CURSE-REPAIR1: a curse the round clock pruned, given back
-import { repairUnmintedConditions } from './conditionRepair.js';   // DISC21-A: a wearable minted with no condition, minted
+import { repairUnmintedConditions, repoolWeaponConditions } from './conditionRepair.js';   // DISC21-A: a wearable minted with no condition, minted; WEAPON-POOL: a weapon on its row's pool, moved to the one pool
 import { restackStones, nameEmbers, PORTAL_GIFT, givePortalGift } from './gateSpoils.js';   // SS1: Sigil Stones saved before they stacked, folded into one stack; WB12a: and named Deadlands Embers
 import { WALLET_GIFT, giveWalletGift } from './walletItem.js';   // WALLET1: a character from before the wallet is given one, once
 import './profTemplates.js';   // PROF2: the ores, ingots and stone a pack may hold, known to every scene a save loads in
@@ -720,6 +720,12 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   for (const list of repairLists) {
     const n = repairUnmintedConditions(list);
     if (n) console.info(`[save] DISC21-A: ${n} item(s) given the condition they were never minted with`);
+  }
+  // WEAPON-POOL: a weapon minted on its row's pool (an iron dagger at 50) moves to the one pool every type shares now,
+  // its condition the same share of it - every list, as the repairs above
+  for (const list of repairLists) {
+    const n = repoolWeaponConditions(list);
+    if (n) console.info(`[save] WEAPON-POOL: ${n} weapon(s) moved to the one condition pool`);
   }
   // DISC29-B: a Magic or Rare piece of Roleplay & Realism: Items armour rolled before the fix lost Brigandine, Fur or
   // Mail from its name (lootRarity.js rarityName) - given back, so the piece a class check refuses says what it is.

@@ -71,6 +71,19 @@ export const weightMultipliersByMaterial = Object.freeze([4, 5, 4, 4, 3, 4, 4, 2
 export const valueMultipliersByMaterial = Object.freeze([1, 2, 4, 8, 16, 32, 64, 128, 256, 512]);
 export const conditionMultipliersByMaterial = Object.freeze([4, 6, 6, 8, 12, 16, 20, 24, 28, 32]);
 
+/** WEAPON-POOL (2026-10-06, Mac: "keep the material disparity, but unify all the weapons types condition stat"):
+ *  EVERY WEAPON TYPE WEARS FROM ONE POOL - the Warhammer's 1,600, the deepest in Daggerfall's table, so no type has
+ *  less than it had - and its material multiplies it as it always has (the ladder above: x1 iron to x8 Daedric).
+ *  Daggerfall's rows run from 50 (Dagger, Tanto, Short Bow) to 1,600, and every condition cost is flat: a
+ *  Cast-When-Strikes strike's 10 broke an iron dagger in 5 strikes and an iron warhammer in 160, a Cast-When-Held
+ *  item's 1 every four game minutes ran the dagger dry in 200 and the warhammer in 6,400, and a 20-damage blow's 2
+ *  broke a short bow in 25. The light weapons and the bows spent more time broken than drawn, and a Legendary rolled
+ *  on one (Worm's Tooth is a Dagger or a Tanto) carried its strike for five blows. Ammunition keeps its row's:
+ *  CreateWeapon's arrow arm runs no material pass. The rows stay Daggerfall's - itemTemplates.js mintCondition reads
+ *  this in their place, and conditionRepair.js repoolWeaponConditions moves a piece minted on its row. A departure
+ *  (Ledger A, WEAPON-POOL). */
+export const WEAPON_CONDITION_POOL = 1600;
+
 // FormulaHelper.CalculateWeaponMinDamage, verbatim case groups.
 const W = WEAPONS;
 const MIN_DAMAGE = new Map([
@@ -220,12 +233,15 @@ export function weightForMaterial(weightInKg, material) {
 
 /** ItemBuilder.ApplyWeaponMaterial as a pure builder: template row +
  *  material -> the item record. value *= 3 * valueMult; weight via the
- *  quarter-kg rule; maxCondition = hitPoints * condMult / 4 (int);
+ *  quarter-kg rule; maxCondition = hitPoints * condMult / 4 (int) -
+ *  WEAPON-POOL's one pool for hitPoints, the arrow (this table's one
+ *  piece of ammunition) its row's, as mintCondition reads them;
  *  dye from GetWeaponDyeColor; female uses playerTextureArchive - 1. */
 export function buildWeapon(templateIndex, material, { female = false } = {}) {
   const t = byIndex.get(templateIndex);
   if (!t) return null;
-  const maxCondition = Math.trunc((t.hitPoints * conditionMultipliersByMaterial[material]) / 4);
+  const pool = templateIndex === WEAPONS.Arrow ? t.hitPoints : WEAPON_CONDITION_POOL;
+  const maxCondition = Math.trunc((pool * conditionMultipliersByMaterial[material]) / 4);
   return {
     templateIndex,
     name: t.name,

@@ -140,6 +140,33 @@ after the floor roll's 1) and a 50-point dagger or bow broke in about 25
 blows. `DFU_WEAR_MULTIPLE` is 1 again; the seam stays for a later tuning.
 [SUPERSEDES WEAR-TWICE's 2.]
 
+**One pool for every weapon (WEAPON-POOL, 2026-10-06, Mac: "So keep the
+material disparity, but unify all the weapons types condition stat").**
+WEAR-ONE set what a blow costs; this sets what a weapon holds. Daggerfall
+mints a weapon's condition from its row's hitPoints through the material
+ladder (x4 iron to x32 Daedric, over 4), and the rows run from 50 (Dagger,
+Tanto, Short Bow) to 1,600 (Warhammer), so every flat cost picked a type:
+a Cast-When-Strikes strike's 10 broke an iron dagger in 5 strikes and an
+iron warhammer in 160, a Cast-When-Held item's 1 every four magic rounds
+ran them dry in 200 rounds and in 6,400, and 25 blows of 20 damage broke an
+iron short bow. The stronger the player, the deeper each blow's bill, and
+the light weapons and the bows spent more time broken than drawn - a
+Legendary rolled on one (Worm's Tooth is a Dagger or a Tanto) carried its
+strike for five blows. Every weapon type now mints from the Warhammer's
+1,600, the deepest row, so no type has less than it had
+(`characters/weapons.js` `WEAPON_CONDITION_POOL`, read by
+`systems/itemTemplates.js` `mintCondition` in the row's place), and the
+ladder over it as before: 1,600 iron, 2,400 steel and silver, 3,200
+elven, 4,800 dwarven, 6,400 mithril, 8,000 adamantium, 9,600 ebony,
+11,200 orcish, 12,800 Daedric. The rows stay Daggerfall's and every cost
+stays DFU's. Roleplay & Realism: Items' weapon patches and its two
+weapons, and the Thunderlock, take the pool too; ammunition keeps its row
+(CreateWeapon's arrow arm runs no material pass), armour its own, a magic
+item and an artifact their uses. A save's weapons move to the pool on
+load at the same share - a broken piece stays broken
+(`systems/conditionRepair.js` `repoolWeaponConditions`). Ledger A,
+WEAPON-POOL; `test/weaponpool.test.js`.
+
 A soft weapon still wears by what it deals: an iron blade on a Ghost does
 nothing in DFU and wears nothing, and does a little under the soft-material
 requirements and wears that little.
