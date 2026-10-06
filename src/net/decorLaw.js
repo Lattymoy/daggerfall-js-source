@@ -332,11 +332,15 @@ export const DECOR_YARD_CAP = 60;
 export const DECOR_YARD_POS_MAX = 48;
 /**
  * YARD-HEIGHT (2026-10-06, Mac: "limit the height at which players can build ... People currently can build towers that
- * seem out of place"; Mac's call: 4 m): HOW HIGH A YARD'S PIECE MAY STAND - its base at most this far over the ground,
- * metres. A town stands on a flat block, so its ground is the building's own origin's height (the yard's `pos` is from
- * it). A fence with a lantern on it, a cart, a crate on a crate - never a tower: each piece stood on the one below
- * climbed as far as DECOR_YARD_POS_MAX. A piece placed or moved past it is refused at both ends (decorYardHighOk -
- * scenes/homeYards.js yardWhyNot, server-account/src/decor.js); one standing from before it is read as it stands.
+ * seem out of place"; Mac's call: 4 m): HOW HIGH A YARD'S PIECE MAY STAND - its place (`pos`) at most this far over the
+ * ground, metres. A town stands on a flat block, so its ground is the building's own origin's height (the yard's `pos`
+ * is from it). A flat's place is its foot and a hung one's where it hangs; AUDIT YARD-HEIGHT Y8: a model's is its own
+ * origin, which the placer stands above the surface by as much as the model reaches below it (systems/decorPlacer.js
+ * lift) - so a model scaled up stands its origin higher on the same ground. The service knows no model's shape, so both
+ * ends ask the one place they share. A fence with a lantern on it, a cart, a crate on a crate - never a tower: each piece
+ * stood on the one below climbed as far as DECOR_YARD_POS_MAX. A piece placed or moved past it is refused at both ends
+ * (decorYardHighOk - scenes/homeYards.js yardWhyNot, server-account/src/decor.js); one standing from before it is read
+ * as it stands.
  */
 export const DECOR_YARD_HIGH = 4;
 /** YARD-HEIGHT: whether a yard piece's place stands within DECOR_YARD_HIGH of the ground. */

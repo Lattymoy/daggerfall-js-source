@@ -92,8 +92,8 @@
   {
     "name": "DECOR-TURN-unwrapped",
     "file": "src/scenes/decorTool.js",
-    "old": "(i === axis ? wrapTurn(Math.round((v + deg) * 10) / 10) : v)",
-    "new": "(i === axis ? Math.round((v + deg) * 10) / 10 : v)",
+    "old": "(i === axis ? wrapTurn(Math.round((v + by) * 10) / 10) : v)",
+    "new": "(i === axis ? Math.round((v + by) * 10) / 10 : v)",
     "tests": [
       "test/yardheight.test.js"
     ],

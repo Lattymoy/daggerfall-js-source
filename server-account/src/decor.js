@@ -465,8 +465,10 @@ export async function moveDecor(ctx, player, { mapId, buildingKey, character, id
       refusal: async () => 'no-decor',
     });
   }
-  const r = await db.prepare(`UPDATE ${S.table} SET place = ? WHERE map_id = ? AND building_key = ? AND id = ? AND ${S.owns}`)
-    .bind(placeJson(pl), mapId, buildingKey, id, mapId, buildingKey, player.id, character).run();
+  // AUDIT YARD-HEIGHT Y7: the row as read - a room's piece removed and placed again in the yard under its id between the
+  // read and this write took a room's place past the yard's law (its height, its light and its craft)
+  const r = await db.prepare(`UPDATE ${S.table} SET place = ? WHERE map_id = ? AND building_key = ? AND id = ? AND yard = ? AND ${S.owns}`)
+    .bind(placeJson(pl), mapId, buildingKey, id, row.yard, mapId, buildingKey, player.id, character).run();
   if (!r?.meta?.changes) return { error: 'no-decor' };
   const now = await db.prepare(`SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND id = ?`).bind(mapId, buildingKey, id).first();
   const piece = now ? pieceOfRow(now) : null;

@@ -103,7 +103,7 @@ export const DECOR_STATION_UNKEPT = 'Your home could not keep a station yet - no
 /** AUDIT HOME-STATIONS S2: the gold went while the station was being made (spent elsewhere mid-write) - nothing paid. */
 export const DECOR_STATION_GOLD_WENT = 'Your gold ran short while the station was being made - nothing was paid.';
 import { localAabb, transformedAabb } from '../render/frustum.js';
-import { billboardSize } from '../world/rmbFlats.js';
+import { billboardSize, isNatureArchive } from '../world/rmbFlats.js';   // DECOR-TURN (AUDIT Y6): a yard's tree turns in earnest
 import { lookAt, perspective, mirrorProjectionX, trs, multiply } from '../world/mat4.js';
 import { isTextEntryTarget } from '../ui/input.js';
 import { walletReserve } from '../net/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took
@@ -1100,19 +1100,26 @@ export function createDecorTool(deps) {
     const next = { ...p.piece, paid: price.paid };
     const visit = deps.visit?.();
     try {
-      const act = r.kind === 'home' && (price.pay > 0 || price.refund > 0) ? deps.realm?.() : null;   // REALM P2.2b
-      const stood = act ? await writeChangeRealm(r, next, act, price) : await writeChange(r, next);
-      if (!stood) return false;
-      if (!act) {
-        if (price.pay > (deps.wallet?.().gold ?? 0)) {   // the gold went while the service was asked: it stands as it was
-          await writeChange(r, was);
-          return false;
+      // AUDIT Y5: after the piece's write before it - and it writes the piece's turn itself, so a turn owed from the
+      // panel is written no more once it stands
+      const done = await pieceWrite(was.id, async () => {
+        const act = r.kind === 'home' && (price.pay > 0 || price.refund > 0) ? deps.realm?.() : null;   // REALM P2.2b
+        const stood = act ? await writeChangeRealm(r, next, act, price) : await writeChange(r, next);
+        if (!stood) return false;
+        if (!act) {
+          if (price.pay > (deps.wallet?.().gold ?? 0)) {   // the gold went while the service was asked: it stands as it was
+            await writeChange(r, was);
+            return false;
+          }
+          if (price.pay > 0) deps.wallet().pay(price.pay);
+          if (price.refund > 0 && !r.hall) deps.wallet().credit?.(price.refund);   // AUDIT GUILD1d A4: a hall's half is the treasury's, the service's
         }
-        if (price.pay > 0) deps.wallet().pay(price.pay);
-        if (price.refund > 0 && !r.hall) deps.wallet().credit?.(price.refund);   // AUDIT GUILD1d A4: a hall's half is the treasury's, the service's
-      }
-      if (deps.visit?.() === visit) pool.put(stood);
-      if (decorIsDoor(stood)) forgetRooms();   // HOME-DOORS: a door moved frees one doorway and takes another
+        turnsOwed.delete(was.id);
+        if (deps.visit?.() === visit) pool.put(stood);
+        if (decorIsDoor(stood)) forgetRooms();   // HOME-DOORS: a door moved frees one doorway and takes another
+        return true;
+      });
+      if (!done) return false;
     } finally {
       p.busy = false;
     }
@@ -1121,8 +1128,9 @@ export function createDecorTool(deps) {
   }
 
   /** DECOR1e: REMOVE A PLACED PIECE - half of what it cost back to the purse. One that holds anything stays (the panel
-   *  says so): what it holds would go with it. */
-  async function removePiece(piece) {
+   *  says so): what it holds would go with it. AUDIT Y5: after the piece's write before it. */
+  function removePiece(piece) { return pieceWrite(piece.id, () => removeNow(piece)); }
+  async function removeNow(piece) {
     const r = deps.room?.();
     if (piece.item) return takeDown(piece, r);
     if (!r || pool.holdsAny?.(piece.id)) return false;
@@ -1192,20 +1200,25 @@ export function createDecorTool(deps) {
     // decor target), holds nothing and gives no light
     if (decorIsDoor(piece) && (what === 'light' || what === 'storage' || (typeof what === 'string' && what.startsWith('station:')))) return false;
     if (typeof what === 'string' && what.startsWith('station:')) return setStation(r, piece, what.slice(8));
-    let next;
-    if (what === 'light') {
-      const own = entryOf(piece).light;
-      next = decorPieceOf({ ...piece, light: piece.light ? null : (own ?? DECOR_DEFAULT_LIGHT) });
-    } else if (what === 'storage') {   // DECOR2a: the law answers no piece for one's own item made to hold things
-      if (piece.storage && pool.holdsAny?.(piece.id)) return false;
-      next = decorPieceOf({ ...piece, storage: !piece.storage });
-    }
-    if (!next) return false;
-    const visit = deps.visit?.();
-    const stood = await writeChange(r, next);
-    if (!stood) return false;
-    if (deps.visit?.() === visit) pool.put(stood);
-    return true;
+    // AUDIT Y5: after the piece's write before it, on the piece as it then stands
+    return pieceWrite(piece.id, async () => {
+      const cur = pool.list().find((p) => p.id === piece.id);
+      if (!cur) return false;
+      let next;
+      if (what === 'light') {
+        const own = entryOf(cur).light;
+        next = decorPieceOf({ ...cur, light: cur.light ? null : (own ?? DECOR_DEFAULT_LIGHT) });
+      } else if (what === 'storage') {   // DECOR2a: the law answers no piece for one's own item made to hold things
+        if (cur.storage && pool.holdsAny?.(cur.id)) return false;
+        next = decorPieceOf({ ...cur, storage: !cur.storage });
+      }
+      if (!next) return false;
+      const visit = deps.visit?.();
+      const stood = await writeChange(r, next);
+      if (!stood) return false;
+      if (deps.visit?.() === visit) pool.put(stood);
+      return true;
+    });
   }
 
   /**
@@ -1224,53 +1237,66 @@ export function createDecorTool(deps) {
     const cur = pool.list().find((p) => p.id === piece.id);
     if (!cur) return false;
     const axis = decorIsMount(cur) ? 2 : 0;   // DECOR2c: a hung one's turn is its spin on the surface
-    const next = decorPieceOf({ ...cur, rot: cur.rot.map((v, i) => (i === axis ? wrapTurn(Math.round((v + deg) * 10) / 10) : v)) });
+    // AUDIT Y6: a picture that stands on its own (never hung, never a yard's tree) is a billboard - it shows only which
+    // way it faces (DECOR-FLIP), so a press turns it to face the other way, never fifteen degrees nobody sees
+    const by = cur.model == null && axis === 0 && !isNatureArchive(cur.flat?.[0]) ? Math.sign(deg) * 180 : deg;
+    const next = decorPieceOf({ ...cur, rot: cur.rot.map((v, i) => (i === axis ? wrapTurn(Math.round((v + by) * 10) / 10) : v)) });
     if (!next) return false;
     const why = whyNotHere({ piece: next, radius: ensureScan().radiusOf(entryOf(next)) ?? null });
     if (why) { deps.say?.(why); return false; }
     pool.put(next);
     if (r.kind !== 'home') return true;   // offline, the room's pool is its save
     const owed = turnsOwed.get(piece.id);
-    if (owed) { owed.rot = next.rot; owed.n++; } else turnsOwed.set(piece.id, { r, visit: deps.visit?.(), held: cur, rot: next.rot, n: 1, busy: false });
+    if (owed) { owed.rot = next.rot; owed.n++; } else turnsOwed.set(piece.id, { r, visit: deps.visit?.(), held: cur, rot: next.rot, n: 1 });
     const n = turnsOwed.get(piece.id).n;
     later(() => { writeTurn(piece.id, n); }, DECOR_TURN_SETTLE_MS);
     return true;
   }
   /**
    * DECOR-TURN (AUDIT Y1): A PIECE'S TURN WRITTEN, once its presses settle - the turn owed, on the piece as it now
-   * stands (a light or a hold changed meanwhile is never written back over), or as the service last held it from a
-   * room since left. Settled while the last is still being answered, it is written after that answer. Refused, the turn
-   * alone is undone - the piece turned back as the service holds it. AUDIT Y2: a piece taken out of the room
-   * meanwhile is never written, nor stood again (an answer that came after its removal put it back).
+   * stands, or as the service last held it from a room since left. AUDIT Y5: after the piece's write before it (a light,
+   * a station, a move, a removal), so neither is written back over. Refused, the turn alone is undone - the piece turned
+   * back as the service holds it. AUDIT Y2: a piece taken out of the room meanwhile is never written, nor stood again.
    */
-  async function writeTurn(id, n) {
-    const t = turnsOwed.get(id);
-    if (!t || t.n !== n) return;   // a later press's own wait writes it
-    if (t.busy) { t.again = true; return; }   // written after the answer under way
-    const here = deps.visit?.() === t.visit;
-    const standing = () => pool.list().find((p) => p.id === id) ?? null;
-    if (here && !standing()) { turnsOwed.delete(id); return; }   // removed meanwhile
-    const want = decorPieceOf({ ...(standing() ?? t.held), rot: t.rot });
-    if (!want) { turnsOwed.delete(id); return; }
-    t.busy = true;
-    t.again = false;
-    const stood = await writeChange(t.r, want);
-    t.busy = false;
-    const now = deps.visit?.() === t.visit ? standing() : null;
-    if (!stood) {
+  function writeTurn(id, n) {
+    return pieceWrite(id, async () => {
+      const t = turnsOwed.get(id);
+      if (!t || t.n !== n) return;   // a later press's own wait writes it - or a move wrote it
+      const standing = () => pool.list().find((p) => p.id === id) ?? null;
+      if (deps.visit?.() === t.visit && !standing()) { turnsOwed.delete(id); return; }   // removed meanwhile
+      const want = decorPieceOf({ ...(standing() ?? t.held), rot: t.rot });
+      if (!want) { turnsOwed.delete(id); return; }
+      const stood = await writeChange(t.r, want);
+      const now = deps.visit?.() === t.visit ? standing() : null;
+      if (!stood) {
+        turnsOwed.delete(id);
+        if (now) pool.put(decorPieceOf({ ...now, rot: t.held.rot }) ?? t.held);   // refused: turned back as it was
+        return;
+      }
+      t.held = stood;
+      if (t.n !== n) return;   // pressed meanwhile: that press's own wait writes it
       turnsOwed.delete(id);
-      if (now) pool.put(decorPieceOf({ ...now, rot: t.held.rot }) ?? t.held);   // refused: turned back as it was
-      return;
-    }
-    t.held = stood;
-    if (t.n !== n) { if (t.again) { const m = t.n; later(() => { writeTurn(id, m); }, 0); } return; }   // pressed meanwhile
-    turnsOwed.delete(id);
-    if (now) pool.put(decorPieceOf({ ...now, rot: stood.rot }) ?? now);   // the service's own turn
+      if (now) pool.put(decorPieceOf({ ...now, rot: stood.rot }) ?? now);   // the service's own turn
+    });
   }
   /** DECOR-TURN: each piece's turn not yet written - its room, the piece as the service holds it, the turn owed. */
   const turnsOwed = new Map();
   /** AUDIT Y1: a call after `ms` - the host's own clock where it hands one (a pin's), else the page's. */
   const later = (fn, ms) => (deps.later ?? setTimeout)(fn, ms);
+  /**
+   * AUDIT Y5: ONE WRITE OF A PLACED PIECE AT A TIME. Every change of a placed piece is written as its whole place (the
+   * account service's move), so two of one piece in flight at once - a turn and a station, a light and a turn - were
+   * answered in either order, and the later wrote the earlier's change back out (a station's licence paid, the station
+   * gone). Each write of a piece (`fn`) waits for the piece's write before it, and reads the piece as it then stands.
+   */
+  function pieceWrite(id, fn) {
+    const run = (pieceWrites.get(id) ?? Promise.resolve()).then(fn);
+    const tail = run.then(() => {}, () => {});
+    pieceWrites.set(id, tail);
+    tail.then(() => { if (pieceWrites.get(id) === tail) pieceWrites.delete(id); });
+    return run;
+  }
+  const pieceWrites = new Map();
 
   /** HOME-STATIONS: a piece a station cannot be made in for want of gold. */
   const decorStationGoldLine = (kind) => `${DECOR_STATION_NAMES[kind]}: ${DECOR_STATION_FEES[kind].toLocaleString('en-US')} gold, and you have not that much.`;
@@ -1285,37 +1311,34 @@ export function createDecorTool(deps) {
     if (want === VENDOR_STATION && !forgeOffered()) { deps.say?.(VENDOR_COLD_LINE); return false; }   // HOME-VENDOR: nor a trader
     // AUDIT HOME-STATIONS S2: ONE CHANGE AT A TIME, ON THE PIECE AS IT STANDS. A second press while the account service
     // was still answering the first paid the licence twice, or - short of twice the gold - wrote the pre-station piece
-    // back over the one just paid for; and the panel's piece is a snapshot of an earlier frame.
-    if (stationBusy.has(piece.id)) return false;
+    // back over the one just paid for; and the panel's piece is a snapshot of an earlier frame. AUDIT YARD-HEIGHT Y5: the
+    // piece's one queue of writes (pieceWrite) - a second press waits for the first and finds its craft made.
+    return pieceWrite(piece.id, () => stationNow(r, piece, want));
+  }
+  /** HOME-STATIONS: the craft written, on the piece as it stands when its turn to be written comes (AUDIT Y5). */
+  async function stationNow(r, piece, want) {
     const cur = pool.list().find((p) => p.id === piece.id) ?? piece;
     if ((cur.station ?? null) === want) return false;
     const fee = want ? DECOR_STATION_FEES[want] : 0;
     if (fee > (deps.wallet?.().gold ?? 0)) { deps.say?.(decorStationGoldLine(want)); return false; }
     const next = decorPieceOf({ ...cur, station: want });
     if (!next) return false;
-    stationBusy.add(piece.id);
-    try {
-      const visit = deps.visit?.();
-      const act = r.kind === 'home' && fee > 0 ? deps.realm?.() : null;   // REALM P2.2b: the licence on the record, with the piece
-      const stood = act ? await writeChangeRealm(r, next, act, { pay: fee }) : await writeChange(r, next);
-      if (!stood) return false;
-      if ((stood.station ?? null) !== want) { deps.say?.(DECOR_STATION_UNKEPT); return false; }   // an older home service drops it: nothing is paid
-      if (!act && fee > (deps.wallet?.().gold ?? 0)) {   // the gold went while the service was asked: it stands as it was, and says so
-        await writeChange(r, cur);
-        deps.say?.(DECOR_STATION_GOLD_WENT);
-        return false;
-      }
-      if (!act && fee > 0) deps.wallet().pay(fee);
-      if (deps.visit?.() === visit) pool.put(stood);
-      const name = entryOf(cur).name ?? 'The piece';
-      deps.say?.(want ? `${name}: ${DECOR_STATION_NAMES[want]}.` : `${name} is no longer a station.`);
-      return true;
-    } finally {
-      stationBusy.delete(piece.id);
+    const visit = deps.visit?.();
+    const act = r.kind === 'home' && fee > 0 ? deps.realm?.() : null;   // REALM P2.2b: the licence on the record, with the piece
+    const stood = act ? await writeChangeRealm(r, next, act, { pay: fee }) : await writeChange(r, next);
+    if (!stood) return false;
+    if ((stood.station ?? null) !== want) { deps.say?.(DECOR_STATION_UNKEPT); return false; }   // an older home service drops it: nothing is paid
+    if (!act && fee > (deps.wallet?.().gold ?? 0)) {   // the gold went while the service was asked: it stands as it was, and says so
+      await writeChange(r, cur);
+      deps.say?.(DECOR_STATION_GOLD_WENT);
+      return false;
     }
+    if (!act && fee > 0) deps.wallet().pay(fee);
+    if (deps.visit?.() === visit) pool.put(stood);
+    const name = entryOf(cur).name ?? 'The piece';
+    deps.say?.(want ? `${name}: ${DECOR_STATION_NAMES[want]}.` : `${name} is no longer a station.`);
+    return true;
   }
-  /** AUDIT HOME-STATIONS S2: the pieces whose craft is being changed right now. */
-  const stationBusy = new Set();
 
   /** A turn of the piece being placed - HOME-DOORS: a door is turned by its doorway, and a turn swings it the other way. */
   function turnPiece(deg) {

@@ -281,11 +281,12 @@
   {
     "name": "DECOR1e-unholding-a-full-piece",
     "file": "src/scenes/decorTool.js",
-    "old": "      if (piece.storage && pool.holdsAny?.(piece.id)) return false;",
-    "new": "      if (false) return false;",
+    "old": "        if (cur.storage && pool.holdsAny?.(cur.id)) return false;",
+    "new": "        if (false) return false;",
     "tests": [
       "test/decor1e.test.js"
-    ]
+    ],
+    "note": "AUDIT YARD-HEIGHT (PIN MOVED, re-aimed by content: one write of a piece at a time)."
   },
   {
     "name": "DECOR1e-the-removal-refund-whole",
@@ -317,11 +318,12 @@
   {
     "name": "DECOR1e-the-old-place-never-written-back",
     "file": "src/scenes/decorTool.js",
-    "old": "          await writeChange(r, was);\n          return false;",
-    "new": "          return false;",
+    "old": "            await writeChange(r, was);\n            return false;",
+    "new": "            return false;",
     "tests": [
       "test/decor1e.test.js"
-    ]
+    ],
+    "note": "AUDIT YARD-HEIGHT (PIN MOVED, re-aimed by content: one write of a piece at a time)."
   },
   {
     "name": "DECOR1e-the-local-cost-refunded",
@@ -353,11 +355,12 @@
   {
     "name": "DECOR1e-a-late-move-standing",
     "file": "src/scenes/decorTool.js",
-    "old": "        if (price.refund > 0 && !r.hall) deps.wallet().credit?.(price.refund);   // AUDIT GUILD1d A4: a hall's half is the treasury's, the service's\n      }\n      if (deps.visit?.() === visit) pool.put(stood);",
-    "new": "        if (price.refund > 0 && !r.hall) deps.wallet().credit?.(price.refund);   // AUDIT GUILD1d A4: a hall's half is the treasury's, the service's\n      }\n      pool.put(stood);",
+    "old": "          if (price.refund > 0 && !r.hall) deps.wallet().credit?.(price.refund);   // AUDIT GUILD1d A4: a hall's half is the treasury's, the service's\n        }\n        turnsOwed.delete(was.id);\n        if (deps.visit?.() === visit) pool.put(stood);",
+    "new": "          if (price.refund > 0 && !r.hall) deps.wallet().credit?.(price.refund);   // AUDIT GUILD1d A4: a hall's half is the treasury's, the service's\n        }\n        turnsOwed.delete(was.id);\n        pool.put(stood);",
     "tests": [
       "test/decor1e.test.js"
-    ]
+    ],
+    "note": "AUDIT YARD-HEIGHT (PIN MOVED, re-aimed by content: one write of a piece at a time)."
   },
   {
     "name": "DECOR1e-the-pieces-half-never-credited",
