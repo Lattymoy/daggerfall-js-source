@@ -2,11 +2,12 @@
   {
     "name": "SET1-a-set-out-of-the-records-order",
     "file": "src/systems/sigil.js",
-    "old": "export const SIGIL_SET_IDS = Object.freeze(['malacath', 'dagon', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane']);",
-    "new": "export const SIGIL_SET_IDS = Object.freeze(['dagon', 'malacath', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane']);",
+    "old": "export const SIGIL_SET_IDS = Object.freeze(['malacath', 'dagon', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane', 'coilscale']);",
+    "new": "export const SIGIL_SET_IDS = Object.freeze(['dagon', 'malacath', 'nocturnal', 'mora', 'ruhn', 'oath', 'thieftaker', 'orcsbane', 'coilscale']);",
     "tests": [
       "test/set1_law.test.js"
-    ]
+    ],
+    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): the serpent's set after the raids' - re-aimed by content."
   },
   {
     "name": "SET1-a-tier-at-the-wrong-count",
@@ -92,7 +93,7 @@
   {
     "name": "SET1-the-duel-unread",
     "file": "src/systems/sigilSets.js",
-    "old": "export const setsAwake = () => sigilRenown() != null && !_dueling;",
+    "old": "export const setsAwake = () => sigilRenown() != null && !sigilDueling();",
     "new": "export const setsAwake = () => sigilRenown() != null;",
     "tests": [
       "test/set1_law.test.js"

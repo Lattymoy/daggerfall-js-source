@@ -15,7 +15,7 @@ import { repairRefusal } from '../src/systems/repairService.js';
 import { stockShopShelf } from '../src/systems/shopStock.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { provisionsStock } from '../src/systems/survival/items.js';
-import { createRestItem, REST_ITEM, REST_ITEM_TEXT, litCandle, snuffCandle } from '../src/systems/restItems.js';
+import { createRestItem, REST_ITEM, REST_ITEM_TEXT, litCandle, snuffCandle, _setRestItemsOnlineForTests } from '../src/systems/restItems.js';
 import { itemUseHandler } from '../src/systems/itemTemplates.js';
 import { applyCustoms, customsLines } from '../src/systems/realmCustoms.js';
 import { newSurvival, survivalMinute } from '../src/systems/survival/needs.js';
@@ -189,10 +189,17 @@ test('AUDIT REST II H8: a General Store sells two to four Campfires, on the coun
 test('AUDIT REST II H9: "Bring online" keeps a supply left with a repairer offline too - the counter\'s list crosses with the character (save.js otherItems), so customs strips it there as from the pack, the wagon and the stashes (mutant: the counter unread)', () => {
   _resetForTests(); setPref('survival', true);
   const sword = { templateIndex: 113, group: 'Weapons', value: 10 };
-  const snap = { level: 1, goldPieces: 0, items: [], wagonItems: [], bankAccounts: [], otherItems: [createRestItem(REST_ITEM.Bedroll), sword] };
-  const r = applyCustoms(snap);
-  assert.deepEqual(snap.otherItems, [sword], 'the copy\'s counter holds none');
-  assert.equal(r.restKept, 1, 'and the realm says it stayed');
+  // REST-LOOT (2026-10-05): the sources are open, so this is the switch's way back - pinned with the switch shut
+  _setRestItemsOnlineForTests(false);
+  try {
+    const snap = { level: 1, goldPieces: 0, items: [], wagonItems: [], bankAccounts: [], otherItems: [createRestItem(REST_ITEM.Bedroll), sword] };
+    const r = applyCustoms(snap);
+    assert.deepEqual(snap.otherItems, [sword], 'the copy\'s counter holds none');
+    assert.equal(r.restKept, 1, 'and the realm says it stayed');
+  } finally { _setRestItemsOnlineForTests(null); }
+  const open = { level: 1, goldPieces: 0, items: [], wagonItems: [], bankAccounts: [], otherItems: [createRestItem(REST_ITEM.Bedroll), sword] };
+  assert.equal(applyCustoms(open).restKept, 0, 'REST-LOOT: open, the counter\'s supply crosses with the character');
+  assert.equal(open.otherItems.length, 2);
 });
 
 test('AUDIT REST II H10: a Meditation Candle lights from the pack alone - one used from the wagon is refused with words, never "lit" with no kneel after it (mutants: the pack unasked; the ladder\'s entity dropped)', () => {

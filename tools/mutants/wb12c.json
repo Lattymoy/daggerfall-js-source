@@ -164,10 +164,11 @@
   {
     "name": "WB12c-the-crash-s-spoils-past-it",
     "file": "src/scenes/world.js",
-    "old": "recoverSpoils(_spoilsStore, takeGateSpoil,",
-    "new": "recoverSpoils(_spoilsStore, takeSpoil,",
+    "old": "recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => spoilsPool.adopt(rec)",
+    "new": "recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => spoilsPool.adopt(rec)",
     "tests": [
       "test/wb12c_burning_doors.test.js"
-    ]
+    ],
+    "note": "SERPENT-SET (MUT-AIM): the serpent's crash door takes the ember's door too - aimed at the gate's by its pool."
   }
 ]

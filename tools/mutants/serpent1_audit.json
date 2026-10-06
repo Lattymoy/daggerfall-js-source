@@ -1125,14 +1125,15 @@
   {
     "name": "AUDIT-SERPENT-D-route-status-flattened",
     "file": "server-account/src/index.js",
-    "old": "body.cid ?? null }, await gatePublicKey(env, subtle));\n        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);\n        const key = r.renown?.rose",
-    "new": "body.cid ?? null }, await gatePublicKey(env, subtle));\n        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, 400, origin);\n        const key = r.renown?.rose",
+    "old": "serpentStrikeStatement(ctx, who.player, env, d, nonce, earned),\n        });\n        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, r.error === 'no-gate-key' ? 503 : r.error === 'not-yours' ? 403 : 400, origin);\n        const key = r.renown?.rose",
+    "new": "serpentStrikeStatement(ctx, who.player, env, d, nonce, earned),\n        });\n        if (r.error) return json({ error: r.error, ...(r.why ? { why: r.why } : {}) }, 400, origin);\n        const key = r.renown?.rose",
     "tests": [
       "test/serpent1_law.test.js",
       "test/serpent1_relay.test.js",
       "test/serpent1_client.test.js",
       "test/serpent1_auditbooks.test.js"
-    ]
+    ],
+    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): the claim's call carries the serpent's strike now - re-aimed by content."
   },
   {
     "name": "AUDIT-SERPENT-D-claims-hoard-on-any-answer",
@@ -1293,14 +1294,15 @@
   {
     "name": "AUDIT-SERPENT-D-world-hoard-no-crash-door",
     "file": "src/scenes/world.js",
-    "old": "    try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => serpentSpoils.adopt(rec), key: SERPENT_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SERPENT_SPOILS_TEXT.recovered); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); }",
+    "old": "    try { if (recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => serpentSpoils.adopt(rec), key: SERPENT_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SERPENT_SPOILS_TEXT.recovered); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); }   // SERPENT1: the Old Coil's hoard, the same door; SERPENT-SET: its embers by the gate's",
     "new": "",
     "tests": [
       "test/serpent1_law.test.js",
       "test/serpent1_relay.test.js",
       "test/serpent1_client.test.js",
       "test/serpent1_auditbooks.test.js"
-    ]
+    ],
+    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): the serpent's crash door takes its spoils by the ember's door (takeGateSpoil) now - re-aimed by content."
   },
   {
     "name": "AUDIT-SERPENT-D-world-hoard-never-cleared-by-save",

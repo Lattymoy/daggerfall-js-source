@@ -51,7 +51,7 @@ test('RF2: spawnEnemyLoot runs SetEnemyCareer\'s chain in DFU\'s order - the tab
   assert.ok(g.items.length > 0 && g.items.every((it) => ['Weapons', 'Armor', 'MensClothing', 'WomensClothing'].includes(it.group)), 'and the kit is weapons, armour and clothes');
 });
 
-test('PLAIN-LOOT: a foe that is no elite leaves HALF of what it carries - every piece on its own coin, the table\'s, the kit\'s and the trio\'s - and its gold all of it; an elite foe, an Elite Dungeon foe or a champion all of it (AUDIT PLAIN-LOOT: a coin, not a scale on the truncated, halving chance; the merge of main\'s #576: the half read before FOE-CAP\'s cap, and an Elite Dungeon foe all of it within its five)', () => {
+test('PLAIN-LOOT: a foe that is no elite leaves THREE PIECES IN FOUR of what it carries (LOOT-EASE, 2026-10-05; it was half) - every piece on its own coin, the table\'s, the kit\'s and the trio\'s - and its gold all of it; an elite foe, an Elite Dungeon foe or a champion all of it (AUDIT PLAIN-LOOT: a coin, not a scale on the truncated, halving chance; the merge of main\'s #576: the cut read before FOE-CAP\'s cap, and an Elite Dungeon foe all of it within its five)', () => {
   _resetForTests(); setPref('lootRarity', false);
   assert.ok(lootMatrix('F').MinGold > 0 && lootMatrix('F').WP > 0, 'F carries gold and weapons');
   const marks = [{ eliteFoe: true }, { elite: true }, { champion: 'mighty' }];
@@ -67,11 +67,11 @@ test('PLAIN-LOOT: a foe that is no elite leaves HALF of what it carries - every 
   };
   const carried = (e) => e.items.filter((it) => !isGoldPieces(it));
   const carriedAt = (e) => e.atSpawn.filter((it) => !isGoldPieces(it));
-  const plain = stand({}, () => 0.7);
-  assert.ok(plain.atSpawn.length > 0 && plain.atSpawn.every(isGoldPieces), 'a plain foe on a coin of 0.7: its gold, and nothing else');
+  const plain = stand({}, () => 0.8);
+  assert.ok(plain.atSpawn.length > 0 && plain.atSpawn.every(isGoldPieces), 'a plain foe on a coin of 0.8: its gold, and nothing else');
   assert.ok(equipTableOf(plain).some(Boolean), 'its kit still worn');
   for (const mark of marks) {
-    const e = stand(mark, () => 0.7);
+    const e = stand(mark, () => 0.8);
     const kit = new Set(equipTableOf(e).filter(Boolean));
     if (mark.elite) {
       // THE REST ARC'S MERGE of main's #576 (RE-AIMED): FOE-CAP holds an Elite Dungeon's ordinary foe to five, gold
@@ -82,12 +82,12 @@ test('PLAIN-LOOT: a foe that is no elite leaves HALF of what it carries - every 
     }
     assert.ok(e.items.some(isGoldPieces) && carried(e).some((it) => !kit.has(it)) && e.items.some((it) => kit.has(it)) && e.items.some(isMap), `${Object.keys(mark)[0]}: its gold, the table, the kit and the map`);
   }
-  assert.equal(carriedAt(stand({}, () => 0.3)).length, carriedAt(stand({ eliteFoe: true }, () => 0.3)).length, 'a coin under the half keeps the piece');
-  // and it is HALF: a seeded stream, a thousand bodies each way
+  assert.equal(carriedAt(stand({}, () => 0.7)).length, carriedAt(stand({ eliteFoe: true }, () => 0.7)).length, 'a coin under three in four keeps the piece');
+  // and it is THREE IN FOUR: a seeded stream, a thousand bodies each way
   const lcg = (seed) => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
   const mean = (mark) => { const r = lcg(7), t = lcg(11); let n = 0; for (let i = 0; i < 1000; i++) n += carriedAt(stand(mark, r, t)).length; return n / 1000; };
   const ratio = mean({}) / mean({ eliteFoe: true });
-  assert.ok(ratio > 0.45 && ratio < 0.55, `half of what it carries (${ratio.toFixed(3)})`);
+  assert.ok(ratio > 0.7 && ratio < 0.8, `three in four of what it carries (${ratio.toFixed(3)})`);
 });
 
 test('RF2: the port\'s arm rides the seam - loot rarity rolls the carried loot and never the kit, and off it does nothing', () => {
@@ -115,7 +115,9 @@ test('RF2: one seam, one home - each host calls it once per spawn branch and non
   // arguments: the humanoid item-chance scale and the dead creature's own
   // mobileType into generateItems (lootThemes.js reads it), and `rolls` into
   // equipEnemy so its worn-gear drop is on the caller's stream too.
-  assert.match(hc, /export function spawnEnemyLoot\(entity, mobileType, basics, player, \{ rolls = Math\.random, lootDropMult = 1, lootQualityMult = 1, where = null \} = \{\}\) \{\n  const itemChanceScale = \(isHumanoid\(entity\) \? HUMANOID_LOOT_ITEM_SCALE : 1\) \* lootDropMult;\n  entity\.items = generateItems\(enemyLootTableKey\(mobileType, basics\?\.lootTableKey \?\? '-'\), \{ level: effectiveLevel\(player\), gender: player\.gender \}, undefined, \{ itemChanceScale, mobileType \}\);\n  const eq = equipEnemy\(entity, mobileType, effectiveLevel\(player\), rolls, \{ player \}\);   \/\/ SOFTCAP2: a mentor's foes carry the GROUP's loot and gear\n  addEnemyLootExtras\(entity\.items, basics, rolls\);\n  if \(!eliteLooted\(entity\)\) entity\.items = entity\.items\.filter\(\(it\) => isGoldPieces\(it\) \|\| rolls\(\) < PLAIN_FOE_LOOT_KEEP\);[^\n]*\n[\s\S]{0,1600}?\n  rollCorpseLoot\(entity, basics, \{ rolls, luck: liveStat\(player, 'luck'\), qualityMult: lootQualityMult, weights: plain\?\.plainLadder \? PLAIN_FOE_RARITY_WEIGHTS : null \}\);\n  capFoeLoot\(entity\);\n  return entity\.items;\n\}/, 'the chain, in DFU\'s order, the port\'s arm last (FOE-CAP: the cap its last word; CHAMP-LOOT: no champion Rare forced)');
+  // PIN MOVED (RENOWN-LOOT, 2026-10-05): the keep and the plain ladder are read at the roller's Renown - `ease`, read
+  // once at the top so the keep and the ladder are one stage; the chain's order is what it was.
+  assert.match(hc, /export function spawnEnemyLoot\(entity, mobileType, basics, player, \{ rolls = Math\.random, lootDropMult = 1, lootQualityMult = 1, where = null \} = \{\}\) \{\n  const itemChanceScale = \(isHumanoid\(entity\) \? HUMANOID_LOOT_ITEM_SCALE : 1\) \* lootDropMult;\n  const ease = renownLootQuarters\(\);[^\n]*\n  entity\.items = generateItems\(enemyLootTableKey\(mobileType, basics\?\.lootTableKey \?\? '-'\), \{ level: effectiveLevel\(player\), gender: player\.gender \}, undefined, \{ itemChanceScale, mobileType \}\);\n  const eq = equipEnemy\(entity, mobileType, effectiveLevel\(player\), rolls, \{ player \}\);   \/\/ SOFTCAP2: a mentor's foes carry the GROUP's loot and gear\n  addEnemyLootExtras\(entity\.items, basics, rolls\);\n  const keep = plainFoeLootKeep\(ease\);\n  if \(!eliteLooted\(entity\)\) entity\.items = entity\.items\.filter\(\(it\) => isGoldPieces\(it\) \|\| rolls\(\) < keep\);[^\n]*\n[\s\S]{0,1600}?\n  rollCorpseLoot\(entity, basics, \{ rolls, luck: liveStat\(player, 'luck'\), qualityMult: lootQualityMult, weights: plain\?\.plainLadder \? plainFoeRarityWeights\(ease\) : null \}\);\n  capFoeLoot\(entity\);\n  return entity\.items;\n\}/, 'the chain, in DFU\'s order, the port\'s arm last (FOE-CAP: the cap its last word; CHAMP-LOOT: no champion Rare forced)');
   for (const [f, n] of [['src/scenes/dungeonContext.js', 2], ['src/scenes/exteriorFoes.js', 1], ['src/scenes/cityGuards.js', 1]]) {
     const src = read(f);
     assert.equal((src.match(/^\s*spawnEnemyLoot\(entity, /gm) ?? []).length, n, `${f}: once per branch`);

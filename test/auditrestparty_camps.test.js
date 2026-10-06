@@ -15,7 +15,7 @@ import { TEMPLATE } from '../src/systems/survival/food.js';
 import { CAMP_TEXT, campMenu, newCamp, packCamp, CAMP_KIND, campWire } from '../src/systems/survival/camp.js';
 import { setPref, _resetForTests } from '../src/systems/uiPrefs.js';
 import { setSharedClock, setWorldMinutes, setOwnMinutes, advanceOwnMinutes } from '../src/systems/worldTick.js';
-import { createRestItem, REST_ITEM, REST_ITEM_TEXT, useSalts } from '../src/systems/restItems.js';
+import { createRestItem, REST_ITEM, REST_ITEM_TEXT, useSalts, _setRestItemsOnlineForTests } from '../src/systems/restItems.js';
 import { itemUseHandler } from '../src/systems/itemTemplates.js';
 import { newSurvival } from '../src/systems/survival/needs.js';
 import { applyCustoms, customsLines } from '../src/systems/realmCustoms.js';
@@ -99,25 +99,39 @@ test('AUDIT REST-PARTY B3: a peer\'s fire gone cold whose owner is not in the ro
   assert.match(dc, /    if \(!onlineRoom\(\)\) return;\n[\s\S]{0,200}?const peers = opts\.peers\?\.\(\);\n    if \(peers\) camps\.sweepColdAbsent\(new Set\(peers\.map\(\(q\) => q\?\.id\)\)\);\n  \}/, 'online, against the room\'s peers');
 });
 
-test('AUDIT REST-PARTY B4: customs keeps the supplies offline while their sources are shut, and says so; online none is used, offline as ever', () => {
+test('AUDIT REST-PARTY B4: customs keeps the supplies offline while their sources are shut, and says so; online none is used, offline as ever (REST-LOOT: the switch\'s way back - open, they cross and are used online)', () => {
   _resetForTests(); setPref('survival', true);
   const sword = { templateIndex: 113, group: 'Weapons', value: 10 };
-  const snap = { level: 1, goldPieces: 0, items: [createRestItem(REST_ITEM.Bedroll), sword, createRestItem(REST_ITEM.Tonic)], wagonItems: [], bankAccounts: [] };
-  const r = applyCustoms(snap);
-  assert.equal(r.restKept, 2);
-  assert.deepEqual(snap.items, [sword], 'the copy carries none of them');
-  assert.ok(customsLines(r).some((l) => /rest supplies stayed with your offline character/.test(l)));   // AUDIT REST II H13 (PIN MOVED)
-  assert.ok(customsLines(r, { before: true }).some((l) => /will stay/.test(l)));
   const entity = { fatigue: 0, maxFatigue: 100, stats: { endurance: 50, strength: 50 }, survival: newSurvival(0) };
-  const tonic = createRestItem(REST_ITEM.Tonic);
   const h = itemUseHandler(REST_ITEM.Tonic);
-  globalThis.location = { search: '?online' };
-  assert.equal(h.usable(tonic), false, 'online: the card offers no Use');
-  assert.deepEqual(h(tonic, [tonic], { entity }), { kind: 'text', text: REST_ITEM_TEXT.notOnline }, 'and a hotbar press is told why');
-  globalThis.location = { search: '' };
-  assert.equal(h.usable(tonic), true);
-  assert.notEqual(h(tonic, [tonic], { entity }).text, REST_ITEM_TEXT.notOnline, 'offline it is drunk');
+  _setRestItemsOnlineForTests(false);
+  try {
+    const snap = { level: 1, goldPieces: 0, items: [createRestItem(REST_ITEM.Bedroll), sword, createRestItem(REST_ITEM.Tonic)], wagonItems: [], bankAccounts: [] };
+    const r = applyCustoms(snap);
+    assert.equal(r.restKept, 2);
+    assert.deepEqual(snap.items, [sword], 'the copy carries none of them');
+    assert.ok(customsLines(r).some((l) => /rest supplies stayed with your offline character/.test(l)));   // AUDIT REST II H13 (PIN MOVED)
+    assert.ok(customsLines(r, { before: true }).some((l) => /will stay/.test(l)));
+    const tonic = createRestItem(REST_ITEM.Tonic);
+    globalThis.location = { search: '?online' };
+    assert.equal(h.usable(tonic), false, 'online: the card offers no Use');
+    assert.deepEqual(h(tonic, [tonic], { entity }), { kind: 'text', text: REST_ITEM_TEXT.notOnline }, 'and a hotbar press is told why');
+    globalThis.location = { search: '' };
+    assert.equal(h.usable(tonic), true);
+    assert.notEqual(h(tonic, [tonic], { entity }).text, REST_ITEM_TEXT.notOnline, 'offline it is drunk');
+  } finally { _setRestItemsOnlineForTests(null); globalThis.location = { search: '' }; }
   for (const t of Object.values(REST_ITEM)) assert.equal(typeof itemUseHandler(t)?.usable, 'function', `${t} is gated`);
+  // REST-LOOT (2026-10-05): the switch on - the character's own cross, nothing is said, and online the Tonic is drunk
+  const open = { level: 1, goldPieces: 0, items: [createRestItem(REST_ITEM.Bedroll), sword, createRestItem(REST_ITEM.Tonic)], wagonItems: [], bankAccounts: [] };
+  const r = applyCustoms(open);
+  assert.deepEqual([r.restKept, open.items.length], [0, 3], 'open: they cross with the character');
+  assert.equal(customsLines(r).some((l) => /rest supplies/.test(l)), false, 'and nothing is said');
+  const tonic = createRestItem(REST_ITEM.Tonic);
+  globalThis.location = { search: '?online' };
+  try {
+    assert.equal(h.usable(tonic), true, 'online: the card offers Use');
+    assert.notEqual(h(tonic, [tonic], { entity }).text, REST_ITEM_TEXT.notOnline, 'and it is drunk');
+  } finally { globalThis.location = { search: '' }; }
 });
 
 test('AUDIT REST-PARTY B5: an old save\'s kit fire (no fuel of its own) offers no pick-up and packs into nothing; a Campfire does; Firewood feeds a kit to its own cap', () => {

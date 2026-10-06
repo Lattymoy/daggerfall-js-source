@@ -1,0 +1,23 @@
+-- SERPENT-SET (2026-10-05) - A SERPENT'S EMBERS, COUNTED AS A BREACH'S.
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the
+-- deploy runs (ACC1-CI). Deploy this service (acct83) with the site; no
+-- relay change.
+--
+-- Mac: "The serpent boss needs to use the currency from oblivion gate and
+-- have its own equipment rewards". A sea serpent's hoard (src/systems/
+-- serpentSpoils.js) now carries the gate's currency, the Deadlands Ember -
+-- SERPENT_EMBERS (src/net/serpentHoardLaw.js) a receipt, a ship that dealt and
+-- one that stood alike. The pack takes them as it takes a breach's, and the
+-- Broker sells against them on the device; the INSIGNIA's purse is this
+-- service's, and it counted gate_kills.stones alone (accounts.js
+-- insigniaPurse - "an ember is never made anywhere but a breach"), so an
+-- ember won at sea would have been refused at the Broker's counter. A
+-- serpent's row now says the embers its hoard paid, and the purse sums
+-- both tables.
+--
+-- 0 for every row before this: those hoards paid no ember, and a purse
+-- that counted them would let a client spend embers it was never given.
+ALTER TABLE serpent_kills ADD COLUMN stones INTEGER NOT NULL DEFAULT 0;

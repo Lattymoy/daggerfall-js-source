@@ -16,7 +16,7 @@ import { verifyProductRecord, readProductRecord } from '../src/net/productRecord
 let _rid = 0;
 const rid = () => `smith-${String(++_rid).padStart(6, '0')}`;
 const realRandom = globalThis.crypto.getRandomValues.bind(globalThis.crypto);
-/** The service's dice steered: every four-byte draw (a unit's - professions.js dice) all `b` while `fn` runs; the ids and
+/** The service's dice steered: every four-byte draw (a unit's - unitRoll.js dice) all `b` while `fn` runs; the ids and
  *  nonces (eight bytes and more) stay the CSPRNG's, so every piece keeps its own. */
 async function steered(b, fn) {
   globalThis.crypto.getRandomValues = (arr) => (arr.byteLength === 4 ? (new Uint8Array(arr.buffer, arr.byteOffset, 4).fill(b), arr) : realRandom(arr));

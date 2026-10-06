@@ -11,11 +11,12 @@
   {
     "name": "AUDIT-REALM-F1-the-stone-unlisted",
     "file": "src/net/realmTradeLaw.js",
-    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572]);",
-    "new": "export const BOUND_TEMPLATES = Object.freeze([571, 572]);",
+    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 580]);",
+    "new": "export const BOUND_TEMPLATES = Object.freeze([571, 572, 580]);",
     "tests": [
       "test/auditrealm.test.js"
-    ]
+    ],
+    "note": "WALLET1 (PIN MOVED): re-aimed by content - the list names the Wallet's 580 too (systems/walletItem.js)."
   },
   {
     "name": "AUDIT-REALM-F1-the-mark-alone",

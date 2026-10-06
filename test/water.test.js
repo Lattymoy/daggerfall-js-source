@@ -274,7 +274,7 @@ test('WATER1: the switch, the row, the sky\'s colours, the lab, the probe and th
   const arc = rd('bible/07-Rendering/Water-Arc.md');
   assert.match(arc, /# Enhanced water \(WATER1, 2026-09-08\)/);
   assert.match(arc, /fround\(27\.2 \/ 1539\) \* 1539/, 'the ocean-band defect is on the page');
-  assert.match(rd('bible/Home.md'), /07-Rendering\/Water-Arc\.md/);
+  assert.match(rd('bible/01-Overview/Page-Index.md'), /07-Rendering\/Water-Arc\.md/);   // PIN MOVED (WALLET1's merge of main, 2026-10-05): Home.md's page index moved, byte for byte, to its own page
   assert.match(rd('bible/07-Rendering/Rendering.md'), /`waterSurface\.js`/);
 });
 

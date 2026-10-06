@@ -11,11 +11,12 @@
   {
     "name": "MARKS1-2-the-gate-past-the-cap",
     "file": "server-account/src/marks.js",
-    "old": "      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7\n      AND NOT EXISTS",
-    "new": "      AND 1\n      AND NOT EXISTS",
+    "old": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7\n      AND NOT EXISTS",
+    "new": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n      AND 1\n      AND NOT EXISTS",
     "tests": [
       "test/marks1.test.js"
-    ]
+    ],
+    "note": "SILVER-FINDS (MUT-AIM): the finds' strike carries the same purse line - aimed at the combat strike's by its own line above."
   },
   {
     "name": "MARKS1-3-a-guest-strikes",

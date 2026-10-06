@@ -379,7 +379,8 @@ test('SERPENT1 books: a serpent is worth RENOWN_SERPENT_QUESTS quests at the top
   assert.equal(first.recorded, true); assert.equal(first.slain, 1); assert.equal(first.spoils, true);
   assert.equal(first.renown.credited, renownSerpentXp(1));
   const again = await claimSerpent(ctx, m, { receipt: await serpentFor(m.id, priv, DAY, T0S + 1), character: CH, cid: CID2 }, pubKey);
-  assert.deepEqual(again, { recorded: false, why: 'claimed', slain: 1, spoils: false }, 'one a serpent, whatever receipt says it - and its hoard was the first device\'s');
+  // PIN MOVED (AUDIT 625 P4): a repeat says the row's embers - none here: the first claim said none (a build from before them)
+  assert.deepEqual(again, { recorded: false, why: 'claimed', slain: 1, spoils: false, stones: 0 }, 'one a serpent, whatever receipt says it - and its hoard was the first device\'s');
   assert.equal((await claimSerpent(ctx, m, { receipt: r, character: CH, cid: CID }, pubKey)).spoils, true, 'the same device asking again is answered the same');
   const next = await claimSerpent(ctx, m, { receipt: await serpentFor(m.id, priv, DAY + 2), character: CH, cid: CID }, pubKey);
   assert.equal(next.recorded, true); assert.equal(next.slain, 2, 'the next serpent counts');

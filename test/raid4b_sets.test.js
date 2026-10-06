@@ -90,7 +90,7 @@ function door(foes = [], { feet = [0, 0, 0], me = null, clear = undefined } = {}
 const seq = (...xs) => { let i = 0; return () => xs[Math.min(i++, xs.length - 1)]; };
 
 test('RAID4b the law: three sets after the gate boss\'s own - the Broken Oath (the knights\', party 0), the Thief-Taker\'s Garb (the bandits\', 1), Orcsbane Harness (the orcs\', 2) - Aetheric, the Bay\'s towns their Prince, each tier\'s numbers a whole pair and its words whole; a raiding party names its set and nothing else does; no roll of the world ever lands on one (mutants: a raid set among the world\'s; a party naming the wrong set; a missing party naming a world set)', () => {
-  assert.deepEqual(SIGIL_SET_IDS.slice(-3), ['oath', 'thieftaker', 'orcsbane']);
+  assert.deepEqual(SIGIL_SET_IDS.slice(5, 8), ['oath', 'thieftaker', 'orcsbane']);   // PIN MOVED (SERPENT-SET): right after the gate boss's own, the serpent's own after them
   assert.deepEqual([0, 1, 2].map((p) => raidSetOf(p)?.id), ['oath', 'thieftaker', 'orcsbane']);
   for (const p of [3, -1, undefined, null, '1', 1.5]) assert.equal(raidSetOf(p), null, `no set for ${String(p)}`);
   for (const id of ['oath', 'thieftaker', 'orcsbane']) {
@@ -367,8 +367,9 @@ test('RAID4b every raid power sleeps with the sets - offline, in a duel - and fo
 
 test('RAID4b the records: twenty-seven, nine a set in the places\' order - the seven body pieces, the set\'s shield and its ONE-HANDED weapon (so all nine are worn at once) - each of its party\'s make (the knights\' Mithril, the bandits\' Elven, the orcs\' Orcish), three affixes at the Legendary band\'s FLOOR, a weapon\'s blow at its floor too, a line of plain lore; every id its own among every Aetheric record, and the Regalia as it was (mutants: an affix at the top; a raid weapon at the top blow; a record of the wrong make)', () => {
   assert.equal(RAID_SET_PIECES.length, 27);
-  assert.deepEqual(AETHERIC_RECORDS, [...REGALIA, ...RAID_SET_PIECES]);
-  assert.equal(new Set(AETHERIC_RECORDS.map((r) => r.id)).size, 36, 'every id its own');
+  // PIN MOVED (SERPENT-SET): the Regalia, then the raiding parties' - then the Old Coil's own (test/serpentset.test.js)
+  assert.deepEqual(AETHERIC_RECORDS.slice(0, REGALIA.length + RAID_SET_PIECES.length), [...REGALIA, ...RAID_SET_PIECES]);
+  assert.equal(new Set(AETHERIC_RECORDS.map((r) => r.id)).size, AETHERIC_RECORDS.length, 'every id its own');
   assert.equal(RAID_SET_POWER, SIGIL_BANDS.legendary[0]);
   assert.equal(RAID_SET_POWER, 7);
   const own = { oath: ['Mithril', 111, 120], thieftaker: ['Elven', 109, 119], orcsbane: ['Orcish', 110, 124] };

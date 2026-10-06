@@ -41,7 +41,7 @@ import { isGoldPieces } from './inventory.js';
 // AUDIT REALM2 S1: the allowance and the measure live in the law the service reads too (net/realmGoldLaw.js), which holds
 // a customs character's first save to them - re-exported here, their home before it; AUDIT REALM2 T2, T3 and T5's
 // counting with them (every container, a boat's hold, a deed at what the realm's bank pays)
-import { REST_ITEM, REST_ITEMS_ONLINE } from './restItems.js';   // AUDIT REST-PARTY B4: the supplies stay offline while their online sources are shut
+import { REST_ITEM, restItemsOnline } from './restItems.js';   // AUDIT REST-PARTY B4: the supplies stay offline while their online sources are shut (REST-LOOT: open since 2026-10-05; the switch is the way back)
 import { liquidWorthOf, stashedItemLists, carriedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE } from '../net/realmGoldLaw.js';
 
 export { stashedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE };
@@ -98,11 +98,12 @@ export function applyCustoms(snap) {
     for (let i = list.length - 1; i >= 0; i--) if (emptied.has(list[i])) list.splice(i, 1);
   }
   // AUDIT REST-PARTY B4: REST6's supplies (1700-1706) stay behind while every online source of them is shut
-  // (restItems.js REST_ITEMS_ONLINE: the templates ship a release before any shelf, pile or trade carries one, so a
+  // (restItems.js restItemsOnline: the templates ship a release before any shelf, pile or trade carries one, so a
   // client a build behind never meets one) - customs is a door too, and an offline shelf's Bedroll walked in through it,
   // usable, droppable and tradeable online. The offline character keeps them: customs runs on the realm's copy.
+  // REST-LOOT (2026-10-05): the sources are open, so a character's own walk in; this stands behind the switch.
   let restKept = 0;
-  if (!REST_ITEMS_ONLINE) {
+  if (!restItemsOnline()) {
     const strip = (/** @type {any[]} */ list) => {
       let n = 0;
       for (let i = list.length - 1; i >= 0; i--) if (REST_ITEM_IDS.has(list[i]?.templateIndex)) { list.splice(i, 1); n++; }

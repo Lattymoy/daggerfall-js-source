@@ -154,30 +154,33 @@
   },
   {
     "name": "LOOT4-the-leech-past-the-max",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/playerHeal.js",
     "old": "  entity.health = Math.min(max, entity.health + whole);",
     "new": "  entity.health = entity.health + whole;",
     "tests": [
       "test/loot4_procs.test.js"
-    ]
+    ],
+    "note": "SERPENT-SET (PIN MOVED): the heal moved to systems/playerHeal.js, below lootPowers.js and the set powers."
   },
   {
     "name": "LOOT4-the-leech-a-body",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/playerHeal.js",
     "old": "  if (!entity || !(entity.health > 0) || !(amount > 0)) return 0;",
     "new": "  if (!entity || !(amount > 0)) return 0;",
     "tests": [
       "test/loot4_procs.test.js"
-    ]
+    ],
+    "note": "SERPENT-SET (PIN MOVED): the heal moved to systems/playerHeal.js, below lootPowers.js and the set powers."
   },
   {
     "name": "LOOT4-the-leech-its-fraction-lost",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/playerHeal.js",
     "old": "  _healOwed = exact - whole;",
     "new": "  _healOwed = 0;",
     "tests": [
       "test/loot4_procs.test.js"
-    ]
+    ],
+    "note": "SERPENT-SET (PIN MOVED): the heal and its fraction moved to systems/playerHeal.js, below lootPowers.js and the set powers, which the serpent's Shed Skin heals through too."
   },
   {
     "name": "LOOT4-the-thorns-uncapped",

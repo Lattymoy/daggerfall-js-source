@@ -32,8 +32,14 @@ export const isBound = (/** @type {any} */ item) => item?.bound === true || temp
  *  activateDecor) - never a room's. */
 export const BOUND_KEEPS = Object.freeze(['wagon', 'storage']);
 
-/** SS3: whether a bound piece may not be put THERE (a remote kind): every place but the player's own. */
-export const boundRefusesPut = (/** @type {any} */ item, /** @type {string} */ kind) => isBound(item) && !BOUND_KEEPS.includes(kind);
+/** WALLET1: a PACK-ONLY piece (its template row's `packOnly` - the Wallet's, systems/walletItem.js) is bound and goes
+ *  nowhere at all: not even the player's own wagon or storage, for a wallet that left the pack would leave what it holds
+ *  back on the pack's pages. */
+export const isPackOnly = (/** @type {any} */ item) => templateByIndex(item?.templateIndex)?.packOnly === true;
+
+/** SS3: whether a bound piece may not be put THERE (a remote kind): every place but the player's own - and WALLET1, a
+ *  pack-only piece no place at all. */
+export const boundRefusesPut = (/** @type {any} */ item, /** @type {string} */ kind) => isBound(item) && (isPackOnly(item) || !BOUND_KEEPS.includes(kind));
 
 /** SS3: a list a peer handed over, without its bound pieces (null stays null - the caller's refusal). */
 export const unbound = (/** @type {any[] | null} */ list) => (Array.isArray(list) ? list.filter((it) => !isBound(it)) : list);
@@ -46,3 +52,6 @@ export const boundText = (/** @type {string} */ name) => `${name || 'That'} is b
 
 /** The card's line for a bound piece. */
 export const BOUND_LINE = 'Bound - it cannot be dropped, traded or sold.';
+
+/** WALLET1: a pack-only piece's refusal, in the windows' own voice - wherever it was put. */
+export const packOnlyText = (/** @type {string} */ name) => `${name || 'That'} stays in your pack.`;

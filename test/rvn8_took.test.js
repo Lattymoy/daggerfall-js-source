@@ -68,7 +68,8 @@ test('RVN8 THE LAW: at most three held; never a quest item, a summoned piece, th
   assert.equal(N.revenantMayTake(locked), false, 'a locked piece stays yours');
   assert.equal(N.revenantMayTake({ templateIndex: 'x' }), false);
   assert.equal(N.revenantMayTake(null), false);
-  assert.match(read('src/systems/revenant.js'), /&& !item\.questItem && !isSummoned\(item\) && !isGoldPieces\(item\) && !isBagItem\(item\) && !isLocked\(item\);/, 'and the Materials Bag');
+  // PIN MOVED (AUDIT 625 W2): and a pack-only piece - the Wallet (test/audit625_wallet.test.js)
+  assert.match(read('src/systems/revenant.js'), /&& !item\.questItem && !isSummoned\(item\) && !isGoldPieces\(item\) && !isBagItem\(item\) && !isPackOnly\(item\) && !isLocked\(item\);/, 'and the Materials Bag');
 });
 
 test('RVN8 THE PICK: drawn on its id and its kill count from my equipped weapon and my pack\'s five most valuable takeable pieces - never a sixth, never a locked one; one id and count one piece; nothing to take, null (mutants: the pool\'s size; the weapon left out; the draw off its id or its count; the least valuable)', () => {
