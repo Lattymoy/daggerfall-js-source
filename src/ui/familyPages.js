@@ -13,12 +13,14 @@
 //    them (the mod's switch, S1-S4), or pass the mantle (an Enduring elder).
 //  - THE HOUSE: the surname, the model and what it means, the seat, the generations, the living and the fallen.
 //  - THE HALL OF ANCESTORS: every family this browser has founded, living and ended, each with its tree's numbers.
+//  - THE HOUSE ON THE CHARACTER SHEET (sheetHouse): the one played's own facts off their card, on the pause window's
+//    Stats page - the model, the generation, and an Enduring house's age, toll and elder's word.
 //
 // Dressed by the stone-and-brass kit's roles (ui/enhancedFrame.js FRAME_ROLES): this sheet writes geometry and the
 // words' colours alone.
 import { layoutTree } from '../systems/legacy/tree.js';
 import { MODELS, personOf, currentOf, isAlive, parentsOf, childrenOf, siblingsOf, fullNameOf } from '../systems/legacy/family.js';
-import { ageOf, spanOf, isElder } from '../systems/legacy/age.js';
+import { ageOf, spanOf, isElder, isSpent } from '../systems/legacy/age.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { STAT_KEYS_ORDER } from '../systems/statMods.js';
 import { homeOf, familyHome, sameHouse } from '../systems/legacy/household.js';   // LEGACY-HOME: where each of the line lives
@@ -157,6 +159,47 @@ export function personChips(family, p, livedNow) {
   // U2: the heir answer (B12), drawn - a Bloodline member who would leave a newborn heir
   if (!p.died && p.kind === 'member' && family.model === MODELS.bloodline && p.heir === true) out.push({ cls: 'blood', text: 'Has an heir' });
   return out;
+}
+
+/** A person's age as their card says it: an Enduring house's living against their span ("34 of 90"), anyone's at their
+ *  death ("71 at death"); null where the house counts no years (a Bloodline's living - the span is the Enduring
+ *  model's, section 6). The card and the character sheet (sheetHouse) read this one line. Pure. */
+export function ageWord(family, p, lived) {
+  if (p.died) return `${ageOf(p, lived)} at death`;
+  return family.model === MODELS.enduring ? `${ageOf(p, lived)} of ${spanOf(p.race)}` : null;
+}
+
+/** The elder's word on the character sheet - the card's Elder chip and its Pass the mantle, and the span spent that
+ *  tollLine said at the last rise. */
+export const SHEET_HOUSE_TEXT = Object.freeze({
+  elder: 'An elder of the house: the mantle may pass from you on the Family tab.',
+  spent: 'Your span is spent: your next death is your last.',
+});
+
+/**
+ * THE HOUSE ON THE CHARACTER SHEET (bible/06-Systems/Legacy-Arc.md section 11 - the arc's first plan: "the age and the
+ * elder's word on the character sheet"; AUDIT LEGACY F2 found it never built). The one played's house as their card
+ * says it: the model and their generation, and in an Enduring house their age against their span, Arkay's toll and the
+ * elder's word (ui/enhancedMenu.js statsCharacter draws it). Null with no house to show: Project Legacy off, no family,
+ * the one played none of it, or fallen. Pure over the provider.
+ * @returns {{ title: string, rows: [string, string][], word: string|null } | null}
+ */
+export function sheetHouse(prov = _provider) {
+  if (!prov?.on?.()) return null;
+  const family = prov.family?.() ?? null;
+  const p = family ? currentOf(family) : null;
+  if (!p || p.died) return null;
+  const lived = prov.lived?.() ?? 0;
+  /** @type {[string, string][]} */
+  const rows = [['Model', modelWord(family.model)], ['Generation', String((p.gen | 0) + 1)]];
+  const age = ageWord(family, p, lived);
+  if (age) rows.push(['Age', age]);
+  let word = null;
+  if (family.model === MODELS.enduring) {
+    if ((p.toll | 0) > 0) rows.push(['Arkay’s toll', `${p.toll} years`]);
+    word = isSpent(p, lived) ? SHEET_HOUSE_TEXT.spent : isElder(p, lived) ? SHEET_HOUSE_TEXT.elder : null;
+  }
+  return { title: `The House of ${family.surname}`, rows, word };
 }
 
 /** The card's identity line: "Dark Elf Nightblade, level 7". A spouse who married in has no career of this house's
@@ -357,7 +400,8 @@ function personCard(el, family, p, livedNow, rerender, door) {
   if (chips.childNodes?.length || chips.children?.length) card.append(chips);
   const facts = el('div', 'fam-grid');
   const fact = (k, v) => facts.append(el('span', 'k', k), el('span', 'v', v));
-  if (family.model === MODELS.enduring || p.died) fact('Age', p.died ? `${ageOf(p, lived)} at death` : `${ageOf(p, lived)} of ${spanOf(p.race)}`);
+  const age = ageWord(family, p, lived);
+  if (age) fact('Age', age);
   if (_provider?.date && p.born) fact('Born', _provider.date(p.born));
   if (p.died && _provider?.date) fact('Died', _provider.date(p.died.at));
   if (p.died?.place?.loc) fact('Fell at', String(p.died.place.loc));

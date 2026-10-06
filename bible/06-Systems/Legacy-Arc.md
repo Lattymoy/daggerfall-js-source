@@ -234,7 +234,7 @@ line's own law now, Bloodline open at the founder's chargen.
 *Built: LEGACY5. The law is `systems/legacy/marriage.js`; the host's half `scenes/legacyHost.js` (`topicRows`,
 `weddingStep`, `childrenStep`, `residentDied`, `holdsResident`, the spouses in `residentsOf`); the talk's rows
 `scenes/townTalk.js` (`legacyTopics`); the wiring `scenes/world.js`; pinned in `test/legacy5_marriage.test.js`,
-mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed online is LEGACY7's (section 9).*
+mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed online: LEGACY7 part three (section 9).*
 
 - **Courting** a Living World townsperson of a household (the census's `h` roll - never one of the watch, a traveller
   on the roads, a visitor or one of the line; every census resident is an adult): one whose regard of the one played is
@@ -354,7 +354,7 @@ migration `0084_legacy.sql`, acct85; `systems/legacy/realmLine.js`; `test/legacy
   fell as they did (`revenant.js killerOf`), and hands it to the heir (`inheritRevenant`): in their list and their
   mirror, due one to three days on - it HUNTS them as any revenant returns, by Feud's own return roll. The record
   (`died.by`) and the death quest name it ("It was Grushnak the Butcher that struck them down.").
-- **A house name online** is LEGACY7's (section 9).
+- **A house name online**: LEGACY7 part two (section 9).
 
 **Departure (recorded):** the arc's first plan folded the house's standing into one number per region; what was built
 is the parent's own, handed to the child born of them - a house has no standing the law could read apart from the
@@ -381,7 +381,8 @@ than standing still.
   by nothing else - AUDIT LEGACY II A7: a rise or a failed switch wrote it), or retired. A member whose save stands anywhere else (a dungeon, the road, another town's street) is
   on their own journey: not in the world, and their card says so. What is seen and what is saved are one thing: Play as
   a member standing in a house and their own save takes them up in that house. The one played never stands beside
-  themselves. LEGACY5's spouses join them when LEGACY5 builds marriage.
+  themselves. A spouse wed in from the town stands with them (LEGACY5, section 8); a spouse from another player's house
+  never stands in this world (LEGACY7 part three, section 9).
 - **Where they live.** THE FAMILY'S HOUSES are every house a member holds (`family.houses`, each row its holder's - a
   deed is the character's own, `systems/banking.js`, so the rows are the one played's `houses`, a deed that stands,
   learned with the SAVE that holds it and at a load - AUDIT LEGACY II A6: an unsaved purchase or sale moved the line;
@@ -464,11 +465,21 @@ than standing still.
   living who may carry it, then "A child of <name>" - one press; the keyboard and the pad walk it; Escape answers
   nothing (a death must be answered).
 - **The model's question** at the founder's chargen, after the leveling system's, on its screen (both skins): Enduring
-  first, the toll a death will charge said, Bloodline shown shut online.
+  first, the toll a death will charge said; Bloodline open online, its last line saying the realm holds the line on every
+  device (LEGACY7 - AUDIT LEGACY B4 had shut it while a permadeath had no authority there).
 - **The HUD**: the founding, the seat, the elder's word once, Arkay's toll at a rise, the estate and the bequest, the
   remains found, carried and laid to rest.
+- **The character sheet** (LEGACY-SHEET - the arc's first plan, "the age and the elder's word on the character sheet",
+  which AUDIT LEGACY F2 found never built): the pause window's Stats page, its Character section, draws the one played's
+  house off their own card (`ui/familyPages.js sheetHouse`, `ui/enhancedMenu.js statsCharacter`) - the model and the
+  generation, and in an Enduring house the age against the span, Arkay's toll and the elder's word ("An elder of the
+  house: the mantle may pass from you on the Family tab."; "Your span is spent: your next death is your last."). One line
+  of age (`ageWord`) is the card's and the sheet's, so they never disagree. The classic skin's F5 sheet is DFU's own art
+  with no slot for it; the pause window carries it in either skin. Pinned in `test/legacysheet.test.js`, mutation-proven
+  in `tools/mutants/legacysheet.json`.
 - **Not built** (recorded): the mod's classic 1:1 window in its own art (its pictures are the classic UI's own cuts,
-  section 1), an age on the character sheet, a house's standing by region apart from its members' (section 10's departure).
+  section 1; Ledger row (9): every skin draws the Enhanced Plus tab), a house's standing by region apart from its
+  members' (section 10's departure).
 
 ## 12. The slices
 
@@ -481,5 +492,6 @@ than standing still.
 | AUDIT LEGACY | the five-lens audit of LEGACY1-4 (`01-Overview/Audit-Legacy.md`) - the two authorities, the death at the door | built |
 | LEGACY5 | courting, marriage, children, surnames' cadet branches | built |
 | LEGACY6 | world influence: the inherited standing and regard, the towns' talk, the killer remembered | built |
-| LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name; two players wed (part three) | built |
+| LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name; two players wed (part three); the line in its own body (part four) and in its online homes (part five) | built |
+| LEGACY-SHEET | the house on the character sheet: the model, the generation, an Enduring house's age, toll and elder's word (section 11) | built |
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |

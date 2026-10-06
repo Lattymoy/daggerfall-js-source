@@ -150,7 +150,7 @@ import { vendorPageShown, VENDOR_PAGE_SECTIONS, drawVendorPage } from './vendorP
 import { REVENANT_PAGE_SECTIONS, revenantPageShown, drawRevenantsPage } from './revenantPage.js';
 import { COMPANION_PAGE_SECTIONS, companionPageShown, drawCompanionsPage, resetCompanionRoster } from './companionRoster.js';   // COMPANION-ROSTER: the sworn and the slots
 import { STABLE_PAGE_SECTIONS, stablePageShown, drawStablePage, resetHoldingsPages } from './holdingsPages.js';   // HOLDINGS: the horse and the wagon
-import { FAMILY_PAGE_SECTIONS, drawTreePage, drawHousePage, drawHallPage, resetFamilyPages, disarmFamilyPages } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab
+import { FAMILY_PAGE_SECTIONS, drawTreePage, drawHousePage, drawHallPage, resetFamilyPages, disarmFamilyPages, sheetHouse } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab; LEGACY-SHEET: the house on the Stats page
 import { legacyOn } from '../systems/legacy/settings.js';   // LEGACY3: ...drawn while the mod is on
 import { FLEET_PAGE_SECTIONS, fleetPageShown, drawFleetPage, resetFleetPage } from './fleetPage.js';   // HOLDINGS: the ships
 import { swornBodyOf } from '../systems/revenantCompanions.js';   // COMPANION-ROSTER: a sworn one's live health
@@ -3941,6 +3941,16 @@ function statsCharacter(detail, m) {
     g.append(r);
   }
   detail.append(g);
+  // LEGACY-SHEET (bible/06-Systems/Legacy-Arc.md section 11): THE HOUSE - the one played's own facts off their Family
+  // card (ui/familyPages.js sheetHouse): the model, the generation, and an Enduring house's age, toll and elder's word
+  const house = sheetHouse();
+  if (house) {
+    detail.append(pxDivider(house.title));
+    const h = el('div', 'px-statgrid');
+    for (const [label, v] of house.rows) { const r = el('div', 'px-stat'); r.append(el('span', 'k', label), el('span', 'v', v)); h.append(r); }
+    detail.append(h);
+    if (house.word) detail.append(el('p', 'px-note', house.word));
+  }
   // ARENA2: THE ARENA'S NAME FOR YOU (offline - systems/arenaLadder.js): the title of the highest tier whose champion you
   // beat, Grand Champion over all, and your record on its sand; said only once you have fought there
   if (m.arena) {
