@@ -282,7 +282,7 @@
   {
     "name": "KNIGHT-HOUSE-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct87';",
+    "old": "export const ACCOUNT_VERSION = 'acct88';",
     "new": "export const ACCOUNT_VERSION = 'acct76';",
     "tests": [
       "test/fb1004d_knight_house.test.js"

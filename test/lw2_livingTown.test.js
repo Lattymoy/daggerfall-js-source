@@ -126,14 +126,16 @@ test('LW2 a walk: the body walks its day\'s path at the day\'s pace - never slow
   run(t, 1);
   const moved = Math.hypot(p.pos[0] - at0[0], p.pos[2] - at0[2]);
   assert.ok(moved > PERSON_MOVE_SPEED * 0.8 && moved < PERSON_MOVE_SPEED * WALK_FAST * 1.1, `a second's walk (${moved.toFixed(2)} m)`);
-  // the gate: stood for two seconds, it does not move and owes the minutes
+  // the gate: stood for two seconds, it does not move and owes the minutes - LW-SPREAD: PIN MOVED - the player stands
+  // beside it (the street's nearest: kept on it; at the square, a walker the street no longer kept went out of view)
   const before = [...p.pos];
-  run(t, 2, SQUARE, (q) => q === p);
+  const beside = [p.pos[0] + Math.sin(p.yaw) * 1.5, 0, p.pos[2] + Math.cos(p.yaw) * 1.5];
+  run(t, 2, beside, (q) => q === p);
   if (t.town.where(res, t.clock.t, false)?.e.kind === 'walk') {
     assert.ok(Math.hypot(p.pos[0] - before[0], p.pos[2] - before[2]) < 1e-6, 'held');
     const owed = t.town._lag.get(res.id);
     assert.ok(Math.abs(owed - 2 * RATE) < 1e-6, 'owes two seconds of the clock');
-    run(t, 1);
+    run(t, 1, beside);
     assert.ok(Math.abs(t.town._lag.get(res.id) - (2 * RATE - RATE * CATCH_UP)) < 1e-6, 'walks it off');
   }
   assert.equal(CATCH_UP, 0.35); assert.equal(WALK_FAST, 1.6); assert.equal(SNAP_M, 30);
@@ -148,7 +150,7 @@ test('LW2 coming onto the street: on ARRIVAL (the first frame, a jump of the clo
   t.town.maxPopulation = 3;
   run(t, 4);
   const seen = new Set(t.town.pool.filter((r) => r.visible && r.res).map((r) => r.res.id));
-  let checked = 0;
+  let checked = 0, waited = 0;
   for (let f = 0; f < 30 * 160; f++) {   // LW-TALK: PIN MOVED - the street keeps a circle whole: under a tight cap the churn waits on a round's turn (two minutes)
     t.clock.t += RATE / 30;
     const seats = t.town.update(1 / 30, SQUARE, 0, SQUARE, true);
@@ -162,9 +164,10 @@ test('LW2 coming onto the street: on ARRIVAL (the first frame, a jump of the clo
       checked++;
     }
     seen.clear(); for (const id of now) seen.add(id);
+    // LW-SPREAD: PIN MOVED - one wanted in plain sight, waiting to be unseen, counted through the churn (the square's
+    // morning is quieter: read at its last frame alone, nobody waited)
+    for (const r of t.town.pool) if (r.active && r.res && !r.visible && r.scheduleEnable && inSight(r.person)) waited++;
   }
-  let waited = 0;
-  for (const r of t.town.pool) if (r.active && r.res && !r.visible && r.scheduleEnable && inSight(r.person)) waited++;
   // a rest's jump of the clock is an arrival again, and so is the player's (a Recall)
   t.town.maxPopulation = maxPopulationFor(TOWN.blocks);
   t.clock.t += ARRIVAL_JUMP_MIN + 60;

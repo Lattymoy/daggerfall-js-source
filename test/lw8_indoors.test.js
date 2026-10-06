@@ -13,6 +13,7 @@ import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { isOutdoor, DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { createRelations, EVENTS } from '../src/systems/livingWorld/relations.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
+import { townClassOf } from '../src/systems/livingWorld/looks.js';
 import { createLivingIndoors, soundRoom, INDOOR_TICK_S, INDOOR_FAN, INDOOR_SPREAD_M, INDOOR_APART_M, INDOOR_CLEAR_M, INDOOR_DOOR_M, INDOOR_MAX, INDOOR_SEEN_M } from '../src/scenes/livingIndoors.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -129,9 +130,9 @@ function indoorRig({ inside = [], clock = 1000 } = {}) {
   });
   return { layer, sprites, synced, st, rel };
 }
-const RES = (i) => ({ id: `L9.${i}`, name: `Res ${i}`, cls: i % 2 ? 140 : null });
+const RES = (i) => ({ id: `L9.${i}`, name: `Res ${i}`, cls: i % 2 ? 140 : null, job: i === 2 ? 'priest' : 'labourer' });
 
-test('LW8 the residents stood: on the way in all the day has inside stand at once, each on its own spot in their own clothes (no class) facing into the room, to INDOOR_MAX; who comes or goes later waits for the player to look away (or be INDOOR_SEEN_M off); read every INDOOR_TICK_S; another building, none, or the room not whole: cleared (mutants: the arrival, the spots, the unarmed, the facing, the cap, the unseen, the tick, the clear)', () => {
+test('LW8 the residents stood: on the way in all the day has inside stand at once, each on its own spot in their own clothes (LW-LOOKS: PIN MOVED - one whose calling is a class\'s in it, a priest the healer\'s robes; no road gear) facing into the room, to INDOOR_MAX; who comes or goes later waits for the player to look away (or be INDOOR_SEEN_M off); read every INDOOR_TICK_S; another building, none, or the room not whole: cleared (mutants: the arrival, the spots, the unarmed, the facing, the cap, the unseen, the tick, the clear)', () => {
   assert.equal(INDOOR_TICK_S, 1);
   assert.equal(INDOOR_MAX, 12);
   assert.equal(INDOOR_SEEN_M, 14);
@@ -140,7 +141,9 @@ test('LW8 the residents stood: on the way in all the day has inside stand at onc
   assert.equal(rig.layer.size, 3, 'all at once on the way in');
   const stood = rig.layer.stood();
   assert.equal(new Set(stood.map((s) => JSON.stringify(s.at))).size, 3, 'each its own spot');
-  assert.ok(stood.every((s) => s.res.cls === null), 'in their own clothes');
+  // LW-LOOKS: PIN MOVED - in their own clothes, but one whose calling is a class's in it (the road's gear never indoors)
+  assert.deepEqual(stood.map((s) => [s.id, s.res.cls]).sort(), [['L9.1', 140], ['L9.2', townClassOf(RES(2))], ['L9.3', 140]]);
+  assert.equal(townClassOf(RES(2)), 132, 'a priest in the healer\'s robes');
   assert.equal(rig.synced.length, 3);
   // facing into the room - one alone (LW8b: those at a table face one another, test/lw8b_talk.test.js)
   const lone = indoorRig({ inside: [RES(1)] });

@@ -461,7 +461,7 @@ export const FEATURES = Object.freeze([
     title: 'Grass',
     note: 'How much grass grows in the enhanced outdoors. Grass is the heaviest thing outdoors, so try Half '
       + 'first if the game runs slow. Meadow is hand-drawn tufts, flowers and bushes that stand like the trees; '
-      + 'Pixel is finer tufts in the ground\'s colours; Smooth is softer, shaded blades.',
+      + 'Pixel is the older, finer tufts; Smooth is softer, shaded blades.',
     effect: 'The amount takes effect when the world next loads; the style at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({

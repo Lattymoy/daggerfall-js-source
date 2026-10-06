@@ -1,0 +1,326 @@
+[
+  {
+    "name": "LW-LOOKS-own-class",
+    "file": "src/systems/livingWorld/looks.js",
+    "old": "  if (res.cls != null) return res.cls;\n",
+    "new": "",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-priest",
+    "file": "src/systems/livingWorld/looks.js",
+    "old": "  if (res.job === 'priest') return PRIEST_CLASS;\n",
+    "new": "",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-guildsman",
+    "file": "src/systems/livingWorld/looks.js",
+    "old": "  if (res.job !== 'guildsman') return null;\n",
+    "new": "",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-order",
+    "file": "src/systems/livingWorld/looks.js",
+    "old": "  if (ORDER_FACTIONS.has(f)) return M.Knight;\n",
+    "new": "",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-guild-seed",
+    "file": "src/systems/livingWorld/looks.js",
+    "old": "list[lwSeed(textSeed(res.id), 0x636c7373) % list.length]",
+    "new": "list[0]",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-pitch",
+    "file": "src/systems/livingWorld/looks.js",
+    "old": "  if (e.kind === 'beg') return 'beggar';\n",
+    "new": "",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-stall",
+    "file": "src/systems/livingWorld/looks.js",
+    "old": "  if (e.kind === 'stall') return /** @type {any} */ (STALL_ROLE",
+    "new": "  if (e.kind === 'stall') return null && /** @type {any} */ (STALL_ROLE",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-stall-courier",
+    "file": "src/systems/livingWorld/looks.js",
+    "old": "fisher: 'fisher', labourer: 'labourer' });",
+    "new": "fisher: 'fisher', labourer: 'labourer', courier: 'labourer' });",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-priest-door",
+    "file": "src/systems/livingWorld/looks.js",
+    "old": " && e.at?.building === res.work) return 'priest';",
+    "new": ") return 'priest';",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-priest-social",
+    "file": "src/systems/livingWorld/looks.js",
+    "old": "if (res.job === 'priest' && e.kind === 'social' && ",
+    "new": "if (res.job === 'priest' && ",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-sex",
+    "file": "src/systems/livingWorld/looks.js",
+    "old": "  const list = STILL_FLATS[role][res.sex === 'female' ? 'female' : 'male'];",
+    "new": "  const list = STILL_FLATS[role].male;",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-still-seed",
+    "file": "src/systems/livingWorld/looks.js",
+    "old": "list[lwSeed(textSeed(res.id), 0x7374696c) % list.length]",
+    "new": "list[0]",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-walker-picture",
+    "file": "src/characters/residentWalker.js",
+    "old": "    if (this.stillLook && this._stillAnim) return this._frameOut(this.stillLook.record, this._stillAnim.tick(dt), false);",
+    "new": "",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-walker-clock",
+    "file": "src/characters/residentWalker.js",
+    "old": "this._frameOut(this.stillLook.record, this._stillAnim.tick(dt), false)",
+    "new": "this._frameOut(this.stillLook.record, 0, false)",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-walker-archive-back",
+    "file": "src/characters/residentWalker.js",
+    "old": "      this._stillAnim = null;\n      this.archive = this.classArchive;",
+    "new": "      this._stillAnim = null;\n      this.archive = this.ownArchive;",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-walker-armed-under",
+    "file": "src/characters/residentWalker.js",
+    "old": "    if (!this.stillLook) this.archive = this.classArchive;",
+    "new": "    this.archive = this.classArchive;",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-walker-identity",
+    "file": "src/characters/residentWalker.js",
+    "old": " this.cls = null; this.stillLook = null; this._stillAnim = null; }",
+    "new": " }",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-town-class-unworn",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      const cls = townClassOf(res);",
+    "new": "      const cls = res.cls;",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-class-asked",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "this.o.armOf?.(cls === res.cls ? res : { ...res, cls })",
+    "new": "this.o.armOf?.(res)",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-class-unseen",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": " && typeof p.arm === 'function' && (!row.visible || allowChange)) {",
+    "new": " && typeof p.arm === 'function') {",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-still-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "      if (typeof p.still === 'function') {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-still-standing",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "        const role = !p.moving && this._inCircle",
+    "new": "        const role = this._inCircle",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-still-unseen",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "          else if (!row.visible || allowChange) { const look = this.o.flatOf?.(want) ?? null; if (look) p.still(look); }",
+    "new": "          else { const look = this.o.flatOf?.(want) ?? null; if (look) p.still(look); }",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-still-going-on",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "          if (!want) p.still(null);",
+    "new": "          if (!want) ;",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-court",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      const court = b.town.typeOf?.(b.key) === BUILDING_TYPES.Palace;",
+    "new": "      const court = true;",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-court-way-in",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "      const court = b.town.typeOf?.(b.key) === BUILDING_TYPES.Palace;",
+    "new": "      arriving = false; const court = b.town.typeOf?.(b.key) === BUILDING_TYPES.Palace;",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-courtier",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "court && s.res.job === 'courtier' && s.bed < 0",
+    "new": "court && s.bed < 0",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-court-circle",
+    "file": "src/scenes/livingIndoors.js",
+    "old": " && !s.walk && !inCircle.has(id) ? stillFlatOf(s.res, 'court') : null;",
+    "new": " && !s.walk ? stillFlatOf(s.res, 'court') : null;",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-court-unseen",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        if (!want || unseen(placeOf(s))) s.flat = want;",
+    "new": "        s.flat = want;",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-court-drawn",
+    "file": "src/scenes/livingIndoors.js",
+    "old": ", flat: s.flat ?? null });\n      }\n      deps.sprites.sync(list,",
+    "new": " });\n      }\n      deps.sprites.sync(list,",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-indoor-class",
+    "file": "src/scenes/livingIndoors.js",
+    "old": "        stood.set(res.id, { res: { ...res, cls: townClassOf(res) }, spot, bed: -1,",
+    "new": "        stood.set(res.id, { res: { ...res, cls: null }, spot, bed: -1,",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-sprites-talk",
+    "file": "src/world/travellerSprites.js",
+    "old": "      const person = talk ? { nameNPC: res.name,",
+    "new": "      const person = true ? { nameNPC: res.name,",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-sprites-still-talk",
+    "file": "src/world/travellerSprites.js",
+    "old": "      const person = talk ? { nameNPC: res.name,",
+    "new": "      const person = false ? { nameNPC: res.name,",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-sprites-clock",
+    "file": "src/world/travellerSprites.js",
+    "old": "anim: new FlatAnim(flat.archive, Math.max(1, tex.getFrameCount?.(flat.record) ?? 1))",
+    "new": "anim: null",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-host-flats",
+    "file": "src/scenes/world.js",
+    "old": "armOf: livingArmOf, flatOf: livingFlatOf,",
+    "new": "armOf: livingArmOf,",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  },
+  {
+    "name": "LW-LOOKS-host-frames",
+    "file": "src/scenes/world.js",
+    "old": "frameCount: Math.max(1, tex.getFrameCount(flat.record)) };",
+    "new": "frameCount: 1 };",
+    "tests": [
+      "test/lwlooks_town.test.js"
+    ]
+  }
+]

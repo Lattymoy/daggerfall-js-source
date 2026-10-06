@@ -30,6 +30,7 @@ import { readWatchReceipt } from './watchReceipt.js';
 import { mintMarksRid } from './marksBook.js';
 import { tideAt } from './tideLaw.js';   // SEASON1 part two: the Tides
 import { fortWork, towersText } from './fortLaw.js';   // SEAT2b: the works; part two: the Watchtowers' word
+import { jittered } from './backoff.js';   // STORM-SHED: a failed claim's wait, jittered as every book's is
 
 /** How long a list read is kept before the next is asked, ms. */
 export const SEAT_LIST_CACHE_MS = 5 * 60_000;
@@ -50,6 +51,12 @@ export const SEAT_WATCH_KEY = 'seat1.watch';
 export const SEAT_WATCH_HELD_MAX = 60;
 /** SEAT1b: the longest a held receipt waits before the kept ones are claimed, ms. */
 export const SEAT_WATCH_CLAIM_EVERY_MS = 10 * 60_000;
+/** STORM-SHED (2026-10-06 evening, the account service overloaded a second time - "D1 DB is overloaded"): HOW LONG A
+ *  WATCH CLAIM THAT FAILED WAITS BEFORE THE NEXT, ms - doubling with each failure in a row to SEAT_WATCH_CLAIM_EVERY_MS,
+ *  jittered (net/backoff.js), and an answer lets it go. The claim is asked each frame and keeps its receipts through a
+ *  failure, so the frame after a failed answer claimed again: in the outage's two hours /v1/seats/watch was asked 5,587
+ *  times where 600 is the pace, 76% of them failing, and every one of them read each seat's witnesses. */
+export const SEAT_WATCH_RETRY_MS = 30_000;
 /** CROWN2: the red announcements this device has put in chat (their ids, newest kept), and how many it keeps. */
 export const SEAT_RED_SEEN_KEY = 'crown2.redSeen';
 export const SEAT_RED_SEEN_MAX = 100;
@@ -108,11 +115,13 @@ export function parseSiegeCommand(text) {
  *   me?: () => (string|null), character?: () => (string|null), rid?: () => string,
  *   isSeatPixel?: (x: number, y: number) => boolean, relayNowS?: () => (number|null),
  *   onRed?: ((line: { text: string, at: number }) => boolean)|null,
+ *   rand?: () => number,
  * }} deps SEAT1b: `me` the signed-in account's id, `character` the character standing here, `rid` a fresh request id
  *   (the Marks' own shape), `isSeatPixel` whether this client's own derivation holds a seat at a map pixel, `relayNowS`
- *   the relay's clock (null unheard - a receipt's life is the relay's); CROWN2: `onRed` says a red line (false: not yet)
+ *   the relay's clock (null unheard - a receipt's life is the relay's); CROWN2: `onRed` says a red line (false: not yet);
+ *   STORM-SHED: `rand` Math.random's shape, a failed Watch claim's jitter
  */
-export function createTownSeatBook({ door, storage = null, nowMs = () => Date.now(), me = () => null, character = () => null, rid = () => mintMarksRid(), isSeatPixel = () => false, relayNowS = () => null, onRed = null }) {
+export function createTownSeatBook({ door, storage = null, nowMs = () => Date.now(), me = () => null, character = () => null, rid = () => mintMarksRid(), isSeatPixel = () => false, relayNowS = () => null, onRed = null, rand = Math.random }) {
   /** CROWN2: the red lines already said, by id - read from the device once */
   let redSeen = null;
   const redSeenList = () => {
@@ -195,6 +204,8 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
   };
   /** SEAT1b: the Watch's receipts held - read from the device once, kept in memory where the store refuses writes */
   let watchList = null, watchBusy = false;
+  /** STORM-SHED: the failed claims in a row, and the page's time before which none is asked again */
+  let watchFails = 0, watchRetryAt = -Infinity;
   const watchHeld = () => {
     if (watchList) return watchList;
     watchList = [];
@@ -530,7 +541,7 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
     /** AUDIT-SEATS C12: WHETHER claimWatch WOULD CLAIM NOW - its own test, asked each frame before the async call
      *  (scenes/world.js), counted in a loop: a frame with nothing due makes no Promise and no list. */
     claimWatchDue() {
-      if (watchBusy || open !== true) return false;
+      if (watchBusy || open !== true || nowMs() < watchRetryAt) return false;   // STORM-SHED: a failed claim's wait
       const list = watchHeld(), who = me(), t = relayNowS();
       let n = 0, oldest = Infinity;
       for (const w of list) if (w.s === who && (t == null || w.e > t)) { n++; if (w.i < oldest) oldest = w.i; }
@@ -544,6 +555,7 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
      */
     async claimWatch({ force = false } = {}) {
       if (watchBusy || open !== true) return null;
+      if (!force && nowMs() < watchRetryAt) return null;   // STORM-SHED: a failed claim's wait
       const who = me();
       const t = relayNowS();
       const mine = watchHeld().filter((w) => w.s === who && (t == null || w.e > t));
@@ -559,6 +571,11 @@ export function createTownSeatBook({ door, storage = null, nowMs = () => Date.no
         const gone = new Set(batch.map((w) => w.r));
         writeWatch(watchHeld().filter((w) => !gone.has(w.r)));
         if (r?.ok) standingsAt.clear();
+        watchFails = 0; watchRetryAt = -Infinity;
+      } else {
+        // STORM-SHED: kept for the next claim - which waits, the longer the more failures in a row
+        watchFails += 1;
+        watchRetryAt = nowMs() + jittered(Math.min(SEAT_WATCH_CLAIM_EVERY_MS, SEAT_WATCH_RETRY_MS * 2 ** (watchFails - 1)), rand);
       }
       return r?.ok ? r.data : null;
     },
