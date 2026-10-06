@@ -69,13 +69,20 @@ journey - so the attack, charged the same way, always comes inside it. Offline n
 vendored clocks is 272 deadlines and 127 delays. Swept for the same shape (a delay closing an `until ... performed` that
 sends foes): N0B20Y02 is the only one; A0C01Y01's bodyguard timer is a deadline already.
 
+NOT RECOVERED: a guard that already ended this way stays as it is. Once `_S.12_` is performed the `until` never runs
+again, so nothing sets `_S.01_` and the Nightblades never come - as in Daggerfall Unity for a guard who is away from the
+hall when the three hours end. The quest repair (`systems/quest/questRepair.js`) puts back placements alone and never
+writes a task or a clock, which is why the reporter's repair did nothing; and the quest has no failing end (`_oneday_` is
+read by nothing), so the entry stays in the journal. The fix is for every guard taken after it.
+
 The four hosts: the quest clock is the machine's (`systems/quest/clock.js`), read by every host alike; none was edited.
 
 `test/fb1006c_guardwindow.test.js` (2, new) runs the real script: the guard reads as a deadline online, with no short
 wait and its three hours; ticked on the played clock with the latest the attack can come, the three Nightblades are made
 before the mage is hidden, online and off (red before the fix: online, no wave at all before the guard ended).
-`test/rest8_questwaits.test.js` (the table's keys, the split 272/127, the guard's kind) and `test/auditrest2_quests.test.js`
-(the sweep's verdict, overturned with the reason) moved with it. `tools/mutants/fb1006c.json`
+`test/rest8_questwaits.test.js` (the table's keys, the split 272/127, the guard's kind), `test/auditrest2_quests.test.js`
+(the sweep's verdict, overturned with the reason) and `test/auditrestparty_quests.test.js` (D4: every hand-table entry a
+deadline through the quest's success, the guard among them) moved with it. `tools/mutants/fb1006c.json`
 (GUARD-WINDOW-the-guard-a-wait).
 
 ## Not reproduced (3, 4, 5)

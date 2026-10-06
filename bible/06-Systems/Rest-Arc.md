@@ -985,5 +985,5 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   passed, the mage disappeared, but no enemies showed up"): N0B20Y02's `_S.12_` - the three-hour guard of "Protect an
   Honored Mage", which section 8's reading and AUDIT REST II's sweep called a delay - is a deadline by hand
   (ONLINE_DEADLINES): a window to act, and the Nightblades' 55-minute interval is longer than the 24-minute cut. 272
-  deadlines and 127 delays. `test/fb1006c_guardwindow.test.js`; `test/rest8_questwaits.test.js` and
-  `test/auditrest2_quests.test.js` moved with it.
+  deadlines and 127 delays. `test/fb1006c_guardwindow.test.js`; `test/rest8_questwaits.test.js`,
+  `test/auditrest2_quests.test.js` and `test/auditrestparty_quests.test.js` moved with it.
