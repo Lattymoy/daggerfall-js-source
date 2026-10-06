@@ -106,6 +106,7 @@ import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { LivingTown, LINE_HEAD_M as LIVING_HEAD_M } from '../systems/livingWorld/livingTown.js';   // LW2: the living world's streets - residents with days, where DFU's pool stood
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';
+import { knownCriminal } from '../systems/standing.js';   // WATCH-KNOWS: the living watch's word by the law - one whose face it knows
 import { createRelations, LIVING_WORLD_VENDOR } from '../systems/livingWorld/relations.js';   // LW2: how the living world regards this character (modData `LivingWorld`)
 import { ResidentWalker } from '../characters/residentWalker.js';
 import { firstNameOf } from '../systems/livingWorld/lines.js';
@@ -4660,6 +4661,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           ashore: (res) => livingAshore(livingTown, res), crews: () => livingCrews(livingTown),   // LW5: its sailors by their ships' clock; the crews lying here
           // LW7: a townsperson's place by the lives, a hand's death, the player's, and the town's own lines of sight
           holderOf: (res, day) => livingPlaceOf(res, livingCycleOf(res, day)).holder, deadAt: livingDeadAt, slay: livingSlay, killed: livingKilled,   // WATCH-FIX: one of the watch another hand cut down
+          legalStanding: (region) => ({ rep: legalRepOf(playerEntity, region), known: knownCriminal(playerEntity, region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() }) }),   // WATCH-KNOWS: the watch's word by the law
           sees: (a, b) => {
             const tr = state.pixelTranslation(px, py);
             const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], len = Math.hypot(d[0], d[1], d[2]);
@@ -9887,6 +9889,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (l) => townTalk.say(l),
     playSound: (clip) => audio.playOneShot(clip, 1),
     watchFlees: () => cityGuards.frighten(walkMode && playerSpawned ? player.pos : cam.pos) + (modes?.frightenWatch?.() ?? 0),   // the feet the street's pool is driven against (the frame's update)
+    // WATCH-KNOWS: the living world's watch warns a first minor offence in a region (systems/standing.js warningDue)
+    warnsFirst: () => livingWorldOn(), regionName: (r) => REGION_NAMES[r] ?? 'this region', worldNow: () => trustedWorldMinutes(),
   });
   // REP1: THE WATCH STOPS A KNOWN CRIMINAL IT SEES - on the street, a guard's clear line, once in two game hours per
   // region, never in the grace an answered law gives (scenes/standingHost.js; the law's terms: systems/standing.js).

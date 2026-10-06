@@ -140,20 +140,22 @@
   {
     "name": "LW2-friend-unnamed",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    const pool = standing === 'friend' ? LIVING_GREETINGS.friend : standing === 'enemy' || standing === 'hostile' ? LIVING_GREETINGS.enemy",
-    "new": "    const pool = standing === 'friend' ? LIVING_GREETINGS.known : standing === 'enemy' || standing === 'hostile' ? LIVING_GREETINGS.enemy",
+    "old": "standing === 'friend' ? LIVING_GREETINGS.friend : cold",
+    "new": "standing === 'friend' ? LIVING_GREETINGS.known : cold",
     "tests": [
       "test/lw2_livingTown.test.js"
-    ]
+    ],
+    "note": "WATCH-KNOWS (re-aimed by content): the friend's pool beside the watch's word."
   },
   {
     "name": "LW2-enemy-warm",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    const pool = standing === 'friend' ? LIVING_GREETINGS.friend : standing === 'enemy' || standing === 'hostile' ? LIVING_GREETINGS.enemy",
-    "new": "    const pool = standing === 'friend' ? LIVING_GREETINGS.friend : standing === 'hostile' ? LIVING_GREETINGS.enemy",
+    "old": "    const cold = standing === 'enemy' || standing === 'hostile';",
+    "new": "    const cold = standing === 'hostile';",
     "tests": [
       "test/lw2_livingTown.test.js"
-    ]
+    ],
+    "note": "WATCH-KNOWS (re-aimed by content): the enemy's cold word, read once for the street and the watch."
   },
   {
     "name": "LW2-enemy-talks",

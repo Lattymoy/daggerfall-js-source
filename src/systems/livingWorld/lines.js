@@ -309,6 +309,24 @@ export const LIVING_GREETINGS = Object.freeze({
   enemy: Object.freeze(['You.', 'Keep walking.', 'I\'ve nothing to say to you.', 'Get away from me.']),
 });
 
+/** WATCH-KNOWS: the watch's word to the player on duty - by the player's legal standing in the town's region, not the
+ *  man's own regard (`watchBand`): the honoured by name, the respected and the common citizen as the law sees them, one
+ *  under its eye warned, a known criminal told so. */
+export const WATCH_GREETINGS = Object.freeze({
+  honoured: Object.freeze(['{player}. The watch salutes you.', 'An honour, {player}.', 'Safe roads, {player}.', 'Good day to you, {player}.']),
+  respected: Object.freeze(['Good day, citizen.', 'Citizen. All well?', 'Keep well.', 'An honest face. Good day.']),
+  citizen: Object.freeze(['Move along.', 'Citizen.', 'Mind the law.', 'Keep to the street.']),
+  watched: Object.freeze(['I have my eye on you.', 'No trouble, now.', 'Watch yourself.', 'Mind your step in {town}.']),
+  known: Object.freeze(['We know your face.', 'One wrong step and it is the cells.', 'The watch has not forgotten you.', 'Keep your hands where I can see them.']),
+});
+/** WATCH-KNOWS: the watch's band for a legal standing (legalBands.js's ladder): above 40 honoured (honored and up), above
+ *  10 respected, 0 to 10 a common citizen (and dependable), below 0 watched - and `known`, a known criminal (standing.js
+ *  knownCriminal: under -10, or banished), whatever the number says. @param {number} rep @param {boolean} known */
+export function watchBand(rep, known) {
+  if (known) return 'known';
+  return rep > 40 ? 'honoured' : rep > 10 ? 'respected' : rep >= 0 ? 'citizen' : 'watched';
+}
+
 /** The fallback for a token the reader cannot fill. LW-TALK: {place} is filled from the town's own road (meetups.js). */
 export const TOKEN_FALLBACK = Object.freeze({ town: 'town', region: 'the court', a: 'friend', b: 'friend', place: 'the next town', player: 'friend', who: 'someone', foe: 'brigands' });
 

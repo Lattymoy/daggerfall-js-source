@@ -48,7 +48,7 @@ import { dayPlan, entryAt, isOutdoor, DAY_START_MIN, DAY_MIN } from './dayPlan.j
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { createPathBook, pointOnLine } from './townPaths.js';
 import { spotCircles, circleLine, circleStands, aloneStand, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M } from './meetups.js';
-import { LIVING_GREETINGS, LIVING_KEEPSAKE, fillLine, firstNameOf } from './lines.js';
+import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, watchBand, fillLine, firstNameOf } from './lines.js';
 import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
 import { placeKeyOf } from './lives.js';
@@ -183,6 +183,7 @@ export class LivingTown {
    *   slay?: (res: Resident, t: number, seen: boolean) => void,
    *   killed?: (res: Resident, t: number) => void,
    *   sees?: (from: number[], to: number[]) => boolean,
+   *   legalStanding?: (region: number) => ({ rep: number, known: boolean } | null),
    *   keepsakes?: () => readonly any[],
    *   takeKeepsake?: (item: any) => void,
    * }} o - LW6c: `keepsakes()` what the player carries (a keepsake carried home), `takeKeepsake(item)` it handed over.
@@ -196,7 +197,8 @@ export class LivingTown {
    *   LW7: `holderOf(res, day)` who holds a townsperson's place on a day (lives.js - the census's own, a newcomer after a
    *   death, null while it stands empty; a traveller's come with the roads' word); `deadAt(res, t)` whether a hand took
    *   a resident by the minute; `slay(res, t, seen)` the player struck one down (the host makes the turn); WATCH-FIX
-   *   `killed(res, t)` one killed by another hand (the host makes the turn `killed`); `sees(a, b)`
+   *   `killed(res, t)` one killed by another hand (the host makes the turn `killed`); WATCH-KNOWS `legalStanding(region)` the
+   *   player's standing with a region's law - its number and whether its watch knows them for a criminal; `sees(a, b)`
    *   a clear line between two points of the location frame (none given: always)
    */
   constructor(nav, o) {
@@ -761,12 +763,18 @@ export class LivingTown {
     const rel = this.o.relations?.() ?? null;
     const day = this.dayOf(t);
     const standing = rel ? rel.standing(res.id, day) : 'neutral';
-    const pool = standing === 'friend' ? LIVING_GREETINGS.friend : standing === 'enemy' || standing === 'hostile' ? LIVING_GREETINGS.enemy
+    const cold = standing === 'enemy' || standing === 'hostile';
+    // WATCH-KNOWS: one of the watch on duty speaks for the law - the player's standing with the town's region, not his own
+    // regard (one with a grudge of his own stays cold)
+    const law = !cold && res.guard && this.entryOf(res, t)?.e.duty ? this.o.legalStanding?.(this.o.town.region) ?? null : null;
+    const pool = law ? WATCH_GREETINGS[watchBand(law.rep, law.known)] : standing === 'friend' ? LIVING_GREETINGS.friend : cold ? LIVING_GREETINGS.enemy
       : rel?.known(res.id) ? LIVING_GREETINGS.known : LIVING_GREETINGS.stranger;
-    // a stranger says something only now and then (and always when the player stops before them)
-    if (pool === LIVING_GREETINGS.stranger && !stopped && (lwSeed(textSeed(res.id), Math.floor(t)) % 4) !== 0) return null;
+    // a stranger says something only now and then (and always when the player stops before them) - WATCH-KNOWS: and the
+    // watch to a common citizen
+    const seldom = pool === LIVING_GREETINGS.stranger || pool === WATCH_GREETINGS.citizen;
+    if (seldom && !stopped && (lwSeed(textSeed(res.id), Math.floor(t)) % 4) !== 0) return null;
     rel?.seen(res.id, day);
-    return fillLine(pool[lwSeed(textSeed(res.id), Math.floor(t / 7)) % pool.length], { player: this.o.playerName?.() ?? '' });
+    return fillLine(pool[lwSeed(textSeed(res.id), Math.floor(t / 7)) % pool.length], { player: this.o.playerName?.() ?? '', town: this.o.townName ?? '' });
   }
 
   /**

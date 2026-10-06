@@ -1194,6 +1194,36 @@ street and the rooms, and ranked what the player saw.
   beat; a company stays put), `lwfix1_review` (never re-dealt mid-script, by the company), `lwfix6_rooms` (an empty
   table's two meet at once), `lwstand_street` (a body paused on its walk stands on the wheel's still frame).
 
+## WATCH-KNOWS - the watch knows you (2026-10-06)
+
+Mac: "improve the guards" - asked, "The watch knows you": guards greet or warn the player by their legal standing, and a
+first minor offence draws a "Hold!" warning before an arrest. The investigation found no greeting that read a legal
+standing (the REP1 stop was the only time the watch spoke by it, and only to a known criminal): a watchman on duty
+greeted the player with the street's stranger lines, and the watch came for a pocket picked as for a murder - the
+arrest box at its first blow. The living world's lane only (`livingWorldOn`); a recorded departure (Port-Ledger
+WATCH-KNOWS) - classic play keeps DFU's watch.
+
+- **The watch's word** (`lines.js` WATCH_GREETINGS, `watchBand`; `livingTown.js greetingFor`). One of the watch on duty
+  speaks for the law: the player's standing with the town's region (the host's `legalStanding(region)` - its number,
+  and whether its watch knows them, standing.js knownCriminal), not his own regard. Above 40 honoured, by name; above
+  10 respected; 0 to 10 a common citizen - moved along, now and then, as a stranger speaks; below 0 watched; a known
+  criminal (under -10, or banished) told the watch knows their face, whatever the number says (the REP1 stop still asks
+  them every two hours). One with a grudge of his own stays cold; off duty, or indoors, a townsman.
+- **The first minor offence** (`standing.js` WARNABLE_CRIMES, `warningDue`, `noteWarning`; `arrestFlow.js onGuardHit`). A
+  door tried, a trespass, a night in the street, a pocket picked - the court's least (BASE_PENALTY 100-300, none marked or
+  banishable). The watch comes as ever; its first blow, for a minor crime the character was never warned for in this
+  region and no known criminal, is withheld, and the box is a word: "Hold! {crime} is against the law of {region}. This
+  once, you have a warning. The next time, it is the court." The crime is charged as the box would have (`chargeOnce` -
+  the law's notice says what it cost), the warning noted in the standing book (`warned`, saved with it), and the crime
+  let go - the watch walks off with it (cityGuards.js's crime-clear law). The next minor offence in the region, a worse
+  crime, a known criminal, a beast (WERE-FRIGHT's own box) and a chase the box already asked in are the box's.
+- **The four hosts.** `scenes/world.js` - WIRED (the living town's `legalStanding`; the arrest flow's `warnsFirst` -
+  `livingWorldOn` - the region's name and the world's calendar a banishment runs on). `scenes/worldModes.js` - WIRED (a
+  building's watch strikes through the host's arrest flow). `scenes/exterior.js` - FLAGGED as LW2 has it: the
+  fixed-city page keeps DFU's watch (its arrest flow hands no `warnsFirst`). `scenes/dungeonContext.js` - no town.
+- **Pinned** by `test/watchknows_watch.test.js` (the word by the law; the first offence warned; the hosts) and
+  `tools/mutants/watchknows.json`.
+
 ## The four hosts
 
 - `scenes/world.js` - WIRED (LW2 the towns, LW3 the roads and the Overworld).
