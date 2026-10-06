@@ -1,11 +1,12 @@
 // LW8c (2026-10-05, bible/06-Systems/Living-World.md "LW8c", Mac: NPCs "perform activities"): THE ROOM ASTIR - one in
 // no talking circle now and then gets up and crosses the room, to company where one stands alone, along a line the
 // room's collider lets them walk, at a stroll, facing the way they go; a talking circle stays put; a wall, nobody
-// through it. On mock rooms and a mock town's doors (test/lw8b_talk.test.js's shape).
+// through it. On mock rooms and a mock town's doors (test/lw8b_talk.test.js's shape). LW-TALK: PIN MOVED - a table's
+// company meets whatever their stays (scenes/livingIndoors.js), so the rig's rooms of no talk have no talk's beat.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createLivingIndoors, stirPlace, INDOOR_STIR_S, INDOOR_WALK_M, INDOOR_WALK_SPEED, TABLE_M } from '../src/scenes/livingIndoors.js';
-import { ROUND_S, lineMinutes, spotCircles } from '../src/systems/livingWorld/meetups.js';
+import { ROUND_S, GATHER_BEAT_S, lineMinutes, exchangeAt, dealCircles } from '../src/systems/livingWorld/meetups.js';
 import { DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 import { createRelations } from '../src/systems/livingWorld/relations.js';
@@ -39,7 +40,7 @@ function rig({ inside = [], stays = false, wall = null, clock = 100 * DAY_MIN + 
   };
   const town = {
     insideAt: () => st.inside.map((res) => ({ res, e: stays ? { kind: 'tavern', t0: 0, t1: 1e12 } : { kind: 'tavern' } })),
-    dayOf: (t) => Math.floor((t - 240) / DAY_MIN), talkBeat: () => BEAT,
+    dayOf: (t) => Math.floor((t - 240) / DAY_MIN), talkBeat: () => (stays ? BEAT : null),   // LW-TALK: PIN MOVED - no talk, no beat
     lineCtx: () => ({ weather: null, hour: 20, news: null }), typeOf: () => BUILDING_TYPES.Tavern, greetingFor: () => null,
     o: { relations: () => createRelations() },
   };
@@ -108,17 +109,65 @@ test('LW8c company and the room\'s walls: one alone makes for a table where one 
   const lone = [...new Set(snapshot.map((s) => s.table))].filter((tb) => tb !== was.table && count(snapshot.filter((s) => s.id !== mover.id), tb) === 1);
   const near = lone.some((tb) => r.layer.spots().some((p, i) => i >= 0 && Math.hypot(p[0] - was.at[0], p[2] - was.at[2]) <= INDOOR_WALK_M));
   if (lone.length && near) assert.ok(lone.includes(mover.table), `to the company of one alone (table ${mover.table}, lone ${lone})`);
-  // a talking circle stays put
+  // a talking circle stays put - LW-TALK: PIN MOVED - a table's company through its first round together and while an
+  // exchange is on; one gets up only between two, the clock running as the host's does
   const talk = rig({ inside: [RES(1), RES(2)], stays: true });
   talk.layer.frame(0.016, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
   const [x, y] = talk.layer.stood();
   assert.equal(x.table, y.table);
-  const present = [x, y].map((s) => ({ who: s.res, t0: 0, t1: 1e12 }));
-  let t0 = talk.st.clock;
-  while (!spotCircles(`in:7000:${x.table}`, present, t0, BEAT.roundMin)[0]?.talks) t0 += BEAT.roundMin;
-  talk.st.clock = t0;   // a round they talk
-  for (let s = 0; s < INDOOR_STIR_S[1] + 5; s += 0.5) talk.layer.frame(0.5, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
-  assert.ok(talk.layer.stood().every((s) => !s.walking), 'talking: they stay');
+  const since = talk.st.clock;
+  /** the company's circle at minute `t` (scenes/livingIndoors.js: dealt on the table's key and the minute it sat down) */
+  const circleAt = (t) => {
+    const round = Math.floor((t - since) / BEAT.roundMin), start = since + round * BEAT.roundMin;
+    return dealCircles(`in:7000:${x.table}:${since}`, [x.res, y.res], round, start, start + BEAT.roundMin, GATHER_BEAT_S * BEAT.roundMin / ROUND_S)[0];
+  };
+  let ups = 0;
+  for (let s = 0; s < 6 * ROUND_S && !ups; s += 0.5) {
+    const was = talk.st.clock;   // the beat the last frame read who stays put on
+    talk.st.clock += 0.5 * BASE;
+    const before = new Map(talk.layer.stood().map((v) => [v.id, v.walking]));
+    talk.layer.frame(0.5, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
+    for (const v of talk.layer.stood()) {
+      if (!v.walking || before.get(v.id)) continue;
+      ups++;
+      assert.ok(was - since >= BEAT.roundMin, 'not in their first round together');
+      assert.equal(exchangeAt(circleAt(was), was, BEAT.lineMin), null, 'never mid-exchange');
+    }
+  }
+  assert.ok(ups > 0, 'up at last, between two exchanges');
+  // a crowded room: their first try of the second round found nowhere to go (the room shut that beat), so the next falls
+  // due when it falls - one due mid-exchange waits it out (kept for the first round alone, 6 of 8 such pairs got up
+  // mid-exchange)
+  let waited = 0;
+  for (let p = 0; p < 4; p++) {
+    const busy = rig({ inside: [RES(2 * p + 1), RES(2 * p + 2)], stays: true });
+    busy.layer.frame(0.016, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
+    const [u, v] = busy.layer.stood();
+    assert.equal(u.table, v.table);
+    const at = busy.st.clock;
+    const dealt = (t) => {
+      const round = Math.floor((t - at) / BEAT.roundMin), start = at + round * BEAT.roundMin;
+      return dealCircles(`in:7000:${u.table}:${at}`, [u.res, v.res], round, start, start + BEAT.roundMin, GATHER_BEAT_S * BEAT.roundMin / ROUND_S)[0];
+    };
+    busy.st.block = true;
+    let up = false;
+    for (let s = 0; s < 4 * ROUND_S && !up; s += 0.5) {
+      const was = busy.st.clock;
+      if (was - at >= BEAT.roundMin + 2 * BASE) busy.st.block = false;   // the way open two seconds into their second round
+      busy.st.clock += 0.5 * BASE;
+      const before = new Map(busy.layer.stood().map((w) => [w.id, w.walking]));
+      busy.layer.frame(0.5, [0, 0, -4.6], 0, [0, 1.6, -4.6]);
+      for (const w of busy.layer.stood()) {
+        if (!w.walking || before.get(w.id)) continue;
+        up = true;
+        assert.ok(was - at >= BEAT.roundMin + 2 * BASE, `pair ${p}: not while the room was shut`);
+        assert.equal(exchangeAt(dealt(was), was, BEAT.lineMin), null, `pair ${p}: never mid-exchange`);
+        if (exchangeAt(dealt(was - 0.5 * BASE), was - 0.5 * BASE, BEAT.lineMin) != null) waited++;
+      }
+    }
+    assert.ok(up, `pair ${p}: up at last`);
+  }
+  assert.ok(waited > 0, `one due mid-exchange waited it out (${waited})`);
   // walls: a partition at x = 0 - every walk keeps to its own side
   const walled = rig({ inside: [RES(1), RES(2), RES(3)], wall: 0 });
   walled.layer.frame(0.016, [0, 0, -4.6], 0, [0, 1.6, -4.6]);

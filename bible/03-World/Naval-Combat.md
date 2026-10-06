@@ -464,7 +464,7 @@ them, and no captain takes them for a contact.
   hull under a quarter pulses), chips for fire, brace and a crippled ship, the crown's waters and four notoriety
   anchors, the BATTERY ROSE (bow over stern, port and starboard either side - each its guns, filling as it reloads
   and FULL brass when loaded, flashing as it comes ready - AUDIT NAV1 - gold when the look lays it, brass-edged when it
-  can fire) and the hint (the key that matters most first - a ship in reach
+  can fire; an empty barrel battery dimmed by its own class, `gun-empty` - HUD-CLASS, `10-UI/UI-Arc.md`: as the bare `empty` it took the windows' `.empty` margin and stretched its row) and the hint (the key that matters most first - a ship in reach
   to board or plunder, then the guns). The AIM under the crosshair (AUDIT NAV1: dimmed, with why, while the battery
   cannot fire; one stack with THE TALLY under it, below). The TARGET CARD under the compass: her name, class and captain, the distance, her hull and sails,
   whether she is hostile (its red over her trade's colour), her state and the key that boards her - while a broadside is

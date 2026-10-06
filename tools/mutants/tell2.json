@@ -293,7 +293,7 @@
   {
     "name": "TELL2-person-unmuted",
     "file": "src/scenes/hostCombat.js",
-    "old": "      if (ignoreHumanSounds(f.mobileType)) play(SOUND.SwingMediumPitch",
+    "old": "      if (ignoreHumanSounds(f.mobileType) || f.quietVoice) play(SOUND.SwingMediumPitch",
     "new": "      if (false) play(SOUND.SwingMediumPitch",
     "tests": [
       "test/tell2_tell.test.js"

@@ -92,11 +92,12 @@
   {
     "name": "LW6d-early",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": " && !turns.died?.size && !turns.home?.size)) return [];",
-    "new": " && !turns.died?.size)) return [];",
+    "old": " && !turns.died?.size && !turns.killed?.size && !turns.home?.size)) return [];",
+    "new": " && !turns.died?.size && !turns.killed?.size)) return [];",
     "tests": [
       "test/lw6d_word.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW6d-known",

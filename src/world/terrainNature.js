@@ -32,7 +32,7 @@ import {
   HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE,
   TERRAIN_SIZE, SCALED_BEACH_ELEVATION,
 } from './terrainSampler.js';
-import { WORLD_MAP_TILE_DIM } from './terrainTiles.js';
+import { WORLD_MAP_TILE_DIM, sampleHeight } from './terrainTiles.js';   // AUDIT LW-DRY: the sample's height, one home (WATER1's float)
 
 const MAX_STEEPNESS = 50;
 const SLOPE_SINK_RATIO = 70;
@@ -84,7 +84,7 @@ export function natureStandsAt(heightmapData, tilemapData, locationRect, x, y) {
   if (steepness > MAX_STEEPNESS) return null;
   const hx = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (x / tDim))));
   const hy = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (y / tDim))));
-  if (Math.fround(heightmapData[hy + hx * hDim] * MAX_TERRAIN_HEIGHT) < SCALED_BEACH_ELEVATION) return null;
+  if (sampleHeight(heightmapData[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;
   const scale = TERRAIN_SIZE / tDim;
   return { x: x * scale, y: at(x, y) - steepness / SLOPE_SINK_RATIO, z: y * scale };
 }
@@ -248,7 +248,7 @@ export function layoutNature(heightmapData, tilemapData, opts) {
       const hy = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (y / tDim))));
       // x & y swapped in heightmap, verbatim; unscaled height vs beach.
       // WATER-AUDIT: float32, as the tile job's twin of this line is.
-      const height = Math.fround(heightmapData[hy + hx * hDim] * MAX_TERRAIN_HEIGHT);
+      const height = sampleHeight(heightmapData[hy + hx * hDim]);
       if (height < beachLine) continue;
 
       const record = rng.nextIntRange(1, 32);
@@ -471,7 +471,7 @@ function layoutForests(heightmapData, tilemapData, opts) {
       if (g2 > TAN_MAX_STEEP_SQ) continue;
       const hx = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (x / tDim))));
       const hy = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (y / tDim))));
-      if (Math.fround(heightmapData[hy + hx * hDim] * MAX_TERRAIN_HEIGHT) < SCALED_BEACH_ELEVATION) continue;
+      if (sampleHeight(heightmapData[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) continue;
 
       const wood = Math.min(1, Math.max(0, woodAt(x, y) + placesPull(pois, x, y)));
       const tree = (FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * wood) * ground;

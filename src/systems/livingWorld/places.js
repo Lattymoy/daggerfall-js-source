@@ -105,6 +105,69 @@ const yawTo = (fx, fz, tx, tz) => Math.atan2(tx - fx, tz - fz);
  *  eighty metres and more out, HARBOUR-BOOK's). */
 export const HARBOUR_RING = 120;
 
+/** LW-STAND: half a person's breadth (m) - a body is the square this far about its middle. */
+export const STAND_REACH_M = 0.4;
+
+/** AUDIT LW-STAND: the slack the street's geometry gives at a boundary (m) - a body's own steps along a way the street
+ *  holds are never refused for their rounding. */
+const STREET_SLACK = 1e-6;
+
+/**
+ * @typedef {{ holds: (x: number, z: number) => boolean, reach: (ax: number, az: number, bx: number, bz: number) => number,
+ *   clear: (ax: number, az: number, bx: number, bz: number) => boolean }} Street
+ */
+
+/**
+ * LW-STAND (field, 2026-10-05, Mac: "NPCs will get stuck over bodies of water, or be stuck running into walls"): THE
+ * STREET A PERSON STANDS AND WALKS ON - the street net's cells (the grid's own walkable cells: a building's footprint
+ * and the water are none - world/cityNavigation.js - nor is the grid's outside), and a body the square of `reach`
+ * about its middle. AUDIT LW-STAND: EXACT. A body stands where the square overlaps no cell off the net (`holds`) - its
+ * corners too: four probes on its axes stood a body over a building's corner - and a straight way holds it where the
+ * square swept along it overlaps none: the off-net cells grown by `reach`, against the way (the slab test). So any part
+ * of a way the street holds it holds too, and a walker sounding its way afresh each step never finds shut what was open
+ * (the samples a quarter-metre apart did, and one walked on the spot between two answers). `reach(a, b)` how far along
+ * the way from `a` toward `b` the street holds a body; `clear(a, b)` whether it holds the whole way. Pure: every reader
+ * alike. Positions in the location's frame (metres).
+ * @param {{ width: number, height: number }} nav @param {{ net: Int32Array, netId: number }} places
+ * @param {number} [reach]
+ * @returns {Street}
+ */
+export function streetGeometry(nav, places, reach = STAND_REACH_M) {
+  const W = nav.width, H = nav.height, C = NAV_CELL, net = places.net, id = places.netId;
+  const r = reach - STREET_SLACK;
+  /** the way from (ax, az) to (bx, bz) as a share of its length: the first share at which a body walking it would
+   *  overlap a cell off the net - Infinity for none */
+  const enter = (/** @type {number} */ ax, /** @type {number} */ az, /** @type {number} */ bx, /** @type {number} */ bz) => {
+    const dx = bx - ax, dz = bz - az;
+    const x0 = Math.floor((Math.min(ax, bx) - reach) / C), x1 = Math.floor((Math.max(ax, bx) + reach) / C);
+    const y0 = Math.floor((Math.min(az, bz) - reach) / C), y1 = Math.floor((Math.max(az, bz) + reach) / C);
+    let first = Infinity;
+    for (let cy = y0; cy <= y1; cy++) {
+      for (let cx = x0; cx <= x1; cx++) {
+        if (cx >= 0 && cy >= 0 && cx < W && cy < H && net[cy * W + cx] === id) continue;
+        // the cell grown by the reach, open: the shares of the way strictly inside it
+        let lo = 0, hi = 1;
+        const lx = cx * C - r, hx = (cx + 1) * C + r, lz = cy * C - r, hz = (cy + 1) * C + r;
+        if (dx === 0) { if (!(ax > lx && ax < hx)) continue; } else {
+          const ta = (lx - ax) / dx, tb = (hx - ax) / dx;
+          lo = Math.max(lo, Math.min(ta, tb)); hi = Math.min(hi, Math.max(ta, tb));
+        }
+        if (dz === 0) { if (!(az > lz && az < hz)) continue; } else {
+          const ta = (lz - az) / dz, tb = (hz - az) / dz;
+          lo = Math.max(lo, Math.min(ta, tb)); hi = Math.min(hi, Math.max(ta, tb));
+        }
+        if (lo < hi && lo < first) first = lo;
+      }
+    }
+    return first;
+  };
+  return {
+    holds: (x, z) => enter(x, z, x, z) === Infinity,
+    reach: (ax, az, bx, bz) => Math.hypot(bx - ax, bz - az) * Math.min(1, enter(ax, az, bx, bz)),
+    clear: (ax, az, bx, bz) => enter(ax, az, bx, bz) === Infinity,
+  };
+}
+
 /**
  * LW5: A DOCK FROM THE HARBOUR - a port with no Ship building (most: Daggerfall stands no piers) has its dock where its
  * streets meet the water nearest its harbour's berth (`x`, `z` the berth, the location's frame): the street cell nearest

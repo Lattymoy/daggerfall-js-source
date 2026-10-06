@@ -39,20 +39,22 @@
   {
     "name": "LW-FIX1-round-deal",
     "file": "src/scenes/livingIndoors.js",
-    "old": "        if (dealt === undefined) {",
-    "new": "        if (true) {",
+    "old": "          company.set(ti, co = { ids, since: was ? was.s + SLOT_LINES * beat.lineMin : t, carry: was ? co.circle : null, circle: null });",
+    "new": "          company.set(ti, co = { ids, since: t, carry: null, circle: null });",
     "tests": [
       "test/lwfix1_review.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): never re-dealt mid-script - one who sits down mid-exchange waits for its last line (the company carried)."
   },
   {
     "name": "LW-FIX1-gone",
     "file": "src/scenes/livingIndoors.js",
-    "old": "          if (!c.members.every((m) => at.some((x) => x.id === m.id))) continue;",
-    "new": "          void 0;",
+    "old": "const was = co?.circle && co.circle.members.every((m) => at.some((x) => x.id === m.id)) ? exchangeAt(co.circle, t, beat.lineMin) : null;",
+    "new": "const was = co?.circle ? exchangeAt(co.circle, t, beat.lineMin) : null;",
     "tests": [
       "test/lwfix1_review.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): one of a circle gone, its talk is over at once - never carried without them."
   },
   {
     "name": "LW-FIX1-slain",

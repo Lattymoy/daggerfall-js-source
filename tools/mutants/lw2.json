@@ -38,8 +38,8 @@
   {
     "name": "LW2-owed-dropped",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "      if (stop) lag += dt * rate;",
-    "new": "      if (stop) lag += 0;",
+    "old": "      if (stop || row.paused || fear) lag += dt * rate;",
+    "new": "      if (row.paused || fear) lag += dt * rate;",
     "tests": [
       "test/lw2_livingTown.test.js"
     ]
@@ -102,11 +102,12 @@
   {
     "name": "LW2-taken-forgotten",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "      if (this._taken.get(res.id) === day) continue;",
-    "new": "      if (false) continue;",
+    "old": "      if (this._taken.get(res.id) === day || this.o.deadAt?.(res, t)) {   // LW7: struck down - dead from that minute",
+    "new": "      if (this.o.deadAt?.(res, t)) {   // LW7: struck down - dead from that minute",
     "tests": [
       "test/lw2_livingTown.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content, twice): the law in its new home - the census's first pass, the taken and the dead."
   },
   {
     "name": "LW2-conversion-unread",
@@ -129,29 +130,32 @@
   {
     "name": "LW2-everyone-speaks",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "        if (line && line.who.id === row.res.id) out.push({ person: p, text: line.text, kind: /** @type {'talk'} */ ('talk') });",
-    "new": "        if (line) out.push({ person: p, text: line.text, kind: /** @type {'talk'} */ ('talk') });",
+    "old": "if (line && line.who.id === row.res.id && c.circle.members",
+    "new": "if (line && c.circle.members",
     "tests": [
       "test/lw2_livingTown.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW2-friend-unnamed",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    const pool = standing === 'friend' ? LIVING_GREETINGS.friend : standing === 'enemy' || standing === 'hostile' ? LIVING_GREETINGS.enemy",
-    "new": "    const pool = standing === 'friend' ? LIVING_GREETINGS.known : standing === 'enemy' || standing === 'hostile' ? LIVING_GREETINGS.enemy",
+    "old": "standing === 'friend' ? LIVING_GREETINGS.friend : cold",
+    "new": "standing === 'friend' ? LIVING_GREETINGS.known : cold",
     "tests": [
       "test/lw2_livingTown.test.js"
-    ]
+    ],
+    "note": "WATCH-KNOWS (re-aimed by content): the friend's pool beside the watch's word."
   },
   {
     "name": "LW2-enemy-warm",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    const pool = standing === 'friend' ? LIVING_GREETINGS.friend : standing === 'enemy' || standing === 'hostile' ? LIVING_GREETINGS.enemy",
-    "new": "    const pool = standing === 'friend' ? LIVING_GREETINGS.friend : standing === 'hostile' ? LIVING_GREETINGS.enemy",
+    "old": "    const cold = standing === 'enemy' || standing === 'hostile';",
+    "new": "    const cold = standing === 'hostile';",
     "tests": [
       "test/lw2_livingTown.test.js"
-    ]
+    ],
+    "note": "WATCH-KNOWS (re-aimed by content): the enemy's cold word, read once for the street and the watch."
   },
   {
     "name": "LW2-enemy-talks",

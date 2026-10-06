@@ -15,7 +15,7 @@ import { createRelations, EVENTS, HOSTILE_AT, HAND_KINDS, HAND_NAME_MAX, TURNS_M
 import { placeAt, handDeath, roadHits, fateHits, deathCounted, turnKey, HAZARD } from '../src/systems/livingWorld/lives.js';
 import { handsOn, membersAt, newsOf, remainsNear, awayOf, partyAt, placeCycle, CALENDAR_MPM, NEWS_DAYS } from '../src/systems/livingWorld/trips.js';
 import { newsScript, SLAIN_NEWS, DIED_NEWS, HELPED_NEWS, ROAD_NEWS, fillLine } from '../src/systems/livingWorld/lines.js';
-import { circleLine } from '../src/systems/livingWorld/meetups.js';
+import { circleLine, circleSlots, slotSpoken, exchangeScript } from '../src/systems/livingWorld/meetups.js';   // LW-TALK: PIN MOVED - the news told in an exchange
 import { createLivingRoads } from '../src/scenes/livingRoads.js';
 import { DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
@@ -49,7 +49,7 @@ function run(t, seconds) {
 }
 
 test('LW7 the regards keep the deeds: a hand\'s death (HAND_KINDS - `slain` by the player, `died` at their side) a turn with its minute, whether it was seen and the name (to HAND_NAME_MAX), once, kept to TURNS_MAX and through the save as [key, t, seen, who] - a record of the old kinds alone written as LW4 wrote it; one of their own slain turns a stranger HOSTILE; each tone of word counts once a day (mutants: the minute unasked, a turn twice, the name, the seen, the record, the cap, the tone\'s day)', () => {
-  assert.deepEqual([...HAND_KINDS], ['slain', 'died']);
+  assert.deepEqual([...HAND_KINDS], ['slain', 'died', 'killed']);   // WATCH-FIX: PIN MOVED - and one of the watch another hand cut down (test/watchfix_watch.test.js)
   assert.equal(EVENTS.slain, -75);
   assert.ok(EVENTS.slain <= HOSTILE_AT, 'one of their own slain: hostile from nothing');
   const rel = createRelations();
@@ -298,13 +298,14 @@ test('LW7 the town talks of the deeds (`deedNews`): each of its own the player s
   assert.match(lt, /ctx\.player = this\.o\.playerName\?\.\(\) \?\? '';/);
   assert.ok(SLAIN_NEWS.seen.every((sc) => sc.some((l) => l.includes('{player}'))), 'seen, the player named');
   assert.ok(SLAIN_NEWS.unseen.every((sc) => !sc.some((l) => l.includes('{player}'))), 'unseen, not');
-  // the circle fills the player's name
+  // the circle fills the player's name - LW-TALK: PIN MOVED - told in an exchange, on the exchange's own draw
+  const slain = [{ kind: 'slain', who: 'Ada Reed', seen: true, foe: '', place: '' }];
   let filled = null;
   for (let seed = 1; seed < 20000 && !filled; seed++) {
-    const told = newsScript(seed, [{ kind: 'slain', who: 'Ada Reed', seen: true, foe: '', place: '' }]);
-    if (told?.script !== SLAIN_NEWS.seen[1]) continue;
-    filled = circleLine({ members: [{ id: 'p', name: 'Bo Reed', job: 'farmer' }, { id: 'q', name: 'Cy Moss', job: 'farmer' }], seed, start: 0, end: 1e6, talks: true, index: 0 }, 0, 10,
-      { news: [{ kind: 'slain', who: 'Ada Reed', seen: true, foe: '', place: '' }], player: 'Mac' });
+    const c = { members: [{ id: 'p', name: 'Bo Reed', job: 'farmer' }, { id: 'q', name: 'Cy Moss', job: 'farmer' }], seed, start: 0, end: 2000, from: 0, index: 0 };
+    const k = circleSlots(c, 10).findIndex((_, i) => slotSpoken(c, i));
+    if (k < 0 || exchangeScript(c, k, 10, { news: slain, player: 'Mac' }, null).script !== SLAIN_NEWS.seen[1]) continue;
+    filled = circleLine(c, circleSlots(c, 10)[k], 10, { news: slain, player: 'Mac' });
   }
   assert.equal(filled?.text, fillLine(SLAIN_NEWS.seen[1][0], { player: 'Mac', who: 'Ada' }));
 });
@@ -359,24 +360,25 @@ test('LW7 the streaming host: every resident\'s place by the lives (`livingCycle
   const w = rd('src/scenes/world.js');
   assert.match(w, /if \(res\.roll !== 't'\) return cycleOf\(res, day, livingScale\(\)\)\.k;/, 'a townsperson\'s own cycle');
   assert.match(w, /return placeCycle\(roster\.find\(\(r\) => r\.slot === res\.slot\) \?\? res, roster, day, livingScale\(\)\);/, 'a traveller\'s place cycle');
-  assert.match(w, /if \(!turns\.slain\.size && !turns\.died\.size\) return false;\n\s*const h = livingPlaceOf\(res, livingCycleOf\(res, Math\.floor\(\(t - 240\) \/ 1440\)\)\)\.hand;\n\s*return h != null && h <= t;/);
+  assert.match(w, /if \(!turns\.slain\.size && !turns\.died\.size && !turns\.killed\.size\) return false;[^\n]*\n\s*const h = livingPlaceOf\(res, livingCycleOf\(res, Math\.floor\(\(t - 240\) \/ 1440\)\)\)\.hand;\n\s*return h != null && h <= t;/);
   assert.match(w, /const livingSlay = \(res, t, seen\) => \{ livingRelations\.turn\('slain', turnKey\(res, livingCycleOf\(res, Math\.floor\(\(t - 240\) \/ 1440\)\)\), \{ t, seen, who: res\.name \}\); \};/);
   assert.match(w, /got = \{ holder, dies: !pl\.vacant && pl\.dies, hand: pl\.hand \};/);
   assert.match(w, /return pl\.dies && pl\.hand == null; \},   \/\/ LW7/);
   assert.match(w, /f = handsOn\(f, \(m\) => livingPlaceOf\(m, livingCycleOf\(m, Math\.floor\(\(trip\.outT0 - 240\) \/ 1440\)\)\)\.hand\);/);
   assert.match(w, /helped: won\.has\(n\.enc\) \}\)\);/);
   assert.match(w, /const res = livingPlaceOf\(c\.res, livingCycleOf\(c\.res, day\)\)\.holder;/);
-  assert.match(w, /holderOf: \(res, day\) => livingPlaceOf\(res, livingCycleOf\(res, day\)\)\.holder, deadAt: livingDeadAt, slay: livingSlay,/);
+  assert.match(w, /holderOf: \(res, day\) => livingPlaceOf\(res, livingCycleOf\(res, day\)\)\.holder, deadAt: livingDeadAt, slay: livingSlay, killed: livingKilled,/);   // WATCH-FIX: PIN MOVED - and one of the watch another hand killed
   assert.match(w, /const hit = collider\.raycast\(\[a\[0\] \+ locOrigin\[0\] \+ tr\[0\], a\[1\] \+ tr\[1\], a\[2\] \+ locOrigin\[2\] \+ tr\[2\]\], \[d\[0\] \/ len, d\[1\] \/ len, d\[2\] \/ len\], len\);\n\s*return !\(Number\.isFinite\(hit\) && hit < len - 0\.25\);/, 'the town\'s line of sight, the collider\'s');
   // the street's seams
   assert.match(w, /pos, fwdYaw: person\.facingYaw, guard: person\.guard, person,/);
   assert.match(w, /cityGuards\.resolveCivilianHit\(weaponRig\.playerWeapon, cam\.pos, lookFwd, player\.pos, livingStruckPool\(_guardPool\(\)\),/);
   assert.match(w, /const livingStruckPool = \(pool\) => \(livingWorldOn\(\) \? pool\.map\(\(e\) => \(\{ \.\.\.e, disable: \(\) => \{ livingDeedOf\(e\.person, e\.pos\); e\.disable\(\); \} \}\)\) : pool\);/);
-  assert.match(w, /if \(!person\.guard\) \{ town\.slain\(person\); return; \}\n\s*if \(town\.struck\(person\)\) _livingWatchTurned\.push\(/);
+  assert.match(w, /if \(!person\.guard\) \{ town\.slain\(person\); return; \}\n\s*town\.struck\(person\);/);   // WATCH-FIX: PIN MOVED - the guard stood in his place is followed by its mark (livingWatchStep), whichever arm stood it
   assert.match(w, /retire: \(person\) => \{ livingDeedOf\(person\); for \(const p of built\.values\(\)\) if \(p\.population\?\.retire\(person\)\) break; \},/);
-  // LW-FIX2: the guard found by the conversion's own mark, and cut down the town's whole deed (test/lwfix2_watch.test.js)
-  assert.match(w, /const livingWatchStep = \(\) => watchStep\(_livingWatchTurned, cityGuards\.guards\);/);
-  assert.match(w, /if \(_livingWatchTurned\.length\) livingWatchStep\(\);/);
+  // LW-FIX2: the guard found by the conversion's own mark, and cut down the town's whole deed (test/lwfix2_watch.test.js) -
+  // WATCH-FIX: PIN MOVED - every marked guard followed every frame in the lane, its end deciding (test/watchfix_watch.test.js)
+  assert.match(w, /const livingWatchStep = \(\) => watchStep\(_livingWatchTurned, cityGuards\.guards, \{ resolve: livingResidentOf, localOf: livingLocalOf \}\);/);
+  assert.match(w, /if \(livingWorldOn\(\)\) \{ livingWatchStep\(\); livingPeerWatchStep\(\); \}/);
   assert.match(w, /else if \(!r\?\.spared && livingStrikeRoad\(cam\.pos, lookFwd\)\) surfacePlayer\(\);/);
   assert.match(w, /const near = nearestPerson\(eye, dir, livingRoads\.talkSeats\(\)\);[^\n]*\n\s*if \(!near \|\| near\.distance > WEAPON_REACH\) return false;\n\s*const wall = collider\.raycast\(eye, dir, near\.distance\);\n\s*if \(Number\.isFinite\(wall\) && wall < near\.distance - 1e-3\) return false;\n\s*if \(!livingRoads\.slain\(near\.entry\.person\)\) return false;/);
   assert.match(w, /tallyCrimeGuildRequirements\(playerEntity, false, 5\);\n\s*playerWeaponHitEntity\(playerEntity, \{ health: 0 \}, \{ isCivilian: true \}\);/);

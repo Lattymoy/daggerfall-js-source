@@ -2,29 +2,32 @@
   {
     "name": "LW-FIX2-mark-find",
     "file": "src/scenes/livingWatch.js",
-    "old": "    w.guard ??= guards.find((g) => g.livingFrom === w.from) ?? null;",
-    "new": "    w.guard ??= guards.find((g) => !g.dead) ?? null;",
+    "old": "    if (!g?.livingFrom || g.livingFollowed) continue;",
+    "new": "    if (!g || g.livingFollowed) continue;",
     "tests": [
       "test/lwfix2_watch.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW-FIX2-deed",
     "file": "src/scenes/livingWatch.js",
-    "old": "    if (w.guard?.dead) { w.town.slain({ living: { id: w.res.id, res: w.res, town: w.town }, pos: w.at }); turned.splice(i, 1); }",
-    "new": "    if (w.guard?.dead) { turned.splice(i, 1); }",
+    "old": "      if (g.killedBy === 'player') w.town.slain(person);",
+    "new": "      if (false) w.town.slain(person);",
     "tests": [
       "test/lwfix2_watch.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW-FIX2-gone",
     "file": "src/scenes/livingWatch.js",
-    "old": "    else if (w.guard ? !guards.includes(w.guard) : ++w.waited > WATCH_WAIT) turned.splice(i, 1);",
-    "new": "    else if (w.guard ? false : ++w.waited > WATCH_WAIT) turned.splice(i, 1);",
+    "old": "    const ended = !!g.dead || !guards.includes(g);",
+    "new": "    const ended = !guards.includes(g);",
     "tests": [
       "test/lwfix2_watch.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW-FIX2-wait",
@@ -65,11 +68,12 @@
   {
     "name": "LW-FIX2-mark-swing",
     "file": "src/scenes/cityGuards.js",
-    "old": "    if (stood && best.person?.living) stood.livingFrom = best.person.living;",
-    "new": "    void stood;",
+    "old": "      if (p.person?.living) g.livingFrom = p.person.living;",
+    "new": "      void p.person;",
     "tests": [
       "test/lwfix2_watch.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW-FIX2-mark-trample",
@@ -83,10 +87,11 @@
   {
     "name": "LW-FIX2-host",
     "file": "src/scenes/world.js",
-    "old": "  const livingWatchStep = () => watchStep(_livingWatchTurned, cityGuards.guards);",
-    "new": "  const livingWatchStep = () => watchStep(_livingWatchTurned, []);",
+    "old": "  const livingWatchStep = () => watchStep(_livingWatchTurned, cityGuards.guards, { resolve: livingResidentOf, localOf: livingLocalOf });",
+    "new": "  const livingWatchStep = () => watchStep(_livingWatchTurned, [], { resolve: livingResidentOf, localOf: livingLocalOf });",
     "tests": [
       "test/lwfix2_watch.test.js"
-    ]
+    ],
+    "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   }
 ]

@@ -146,7 +146,7 @@
   {
     "name": "DISC19-F-threat-need-not-hunt",
     "file": "src/systems/townWatch.js",
-    "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion != null && !t.dead)) return false;   // AUDIT CC-B6: a monster fighting a companion is still the fight\n",
+    "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion != null && !t.dead)   // AUDIT CC-B6: a monster fighting a companion is still the fight\n    && !(t?.civilian === true && (t.entity?.health ?? 0) > 0)) return false;   // WATCH-PROTECTS: and one hunting a townsperson of the living world\n",
     "new": "",
     "tests": [
       "test/disc19.test.js"
