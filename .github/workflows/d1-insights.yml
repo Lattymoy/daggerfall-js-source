@@ -1,0 +1,90 @@
+# ONE-OFF DIAGNOSTICS (2026-10-06 evening, the account service overloaded a second time - decorations not showing;
+# the owner allowed it): READ-ONLY. Which queries spend the accounts database's time (the last 2 h against the day),
+# the service's own per-route metrics (SCALE1, Analytics Engine) now against the same hours yesterday, the players
+# online (the relay's SCALE2b metrics), and 45 s of the account Worker's live traffic. THIS REPOSITORY'S ACTIONS LOGS
+# ARE PUBLIC, so every step prints totals only: no request, header, address or body is ever printed. Removed once read.
+name: d1-insights (one-off, read-only)
+on:
+  push:
+    branches: [ccr-e812e54a-50fqma]
+    paths: [".github/workflows/d1-insights.yml"]
+permissions:
+  contents: read
+jobs:
+  insights:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: a27adccb38c8e8b82fa32e5736274a94
+      DB_NAME: daggerfall-accounts
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: wrangler
+        run: npm i -g wrangler@4 >/dev/null 2>&1 && wrangler --version
+
+      - name: the database (size, last 24 h reads and writes)
+        continue-on-error: true
+        run: |
+          wrangler d1 info "$DB_NAME" --json > info.json || true
+          jq -c 'del(.uuid)' info.json || cat info.json
+          echo "DB_ID=$(jq -r '.uuid // empty' info.json)" >> "$GITHUB_ENV"
+
+      - name: the queries (last 2 h against the last day)
+        continue-on-error: true
+        run: |
+          for spec in "2h time" "2h reads" "2h count" "1d time" "1d count"; do
+            set -- $spec
+            echo "=== last $1, top 15 by $2 (sum)"
+            wrangler d1 insights "$DB_NAME" --time-period "$1" --sort-by "$2" --sort-type sum --limit 15 --json \
+              | jq -c '.[] | {n: .numberOfTimesRun, ms: (.totalDurationMs | floor), avgMs: (.avgDurationMs * 100 | floor / 100), rows: .totalRowsRead, avgRows: (.avgRowsRead | floor), written: .totalRowsWritten, q: (.query | .[0:240])}' || true
+          done
+
+      - name: the database by the hour (last 30 h)
+        continue-on-error: true
+        run: |
+          start=$(date -u -d '-30 hours' +%Y-%m-%dT%H:00:00Z)
+          q="{ viewer { accounts(filter: {accountTag: \"$CLOUDFLARE_ACCOUNT_ID\"}) { d1AnalyticsAdaptiveGroups(limit: 100, filter: {databaseId: \"$DB_ID\", datetimeHour_geq: \"$start\"}, orderBy: [datetimeHour_ASC]) { sum { readQueries writeQueries rowsRead rowsWritten } dimensions { datetimeHour } } } } }"
+          jq -n --arg q "$q" '{query: $q}' > gql.json
+          curl -sS -X POST https://api.cloudflare.com/client/v4/graphql -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'content-type: application/json' --data @gql.json \
+            | jq -c '(.errors // empty), (.data.viewer.accounts[0].d1AnalyticsAdaptiveGroups[]? | {h: .dimensions.datetimeHour, reads: .sum.readQueries, writes: .sum.writeQueries, rowsRead: .sum.rowsRead, rowsWritten: .sum.rowsWritten})'
+
+      - name: the account service's routes (Analytics Engine)
+        continue-on-error: true
+        run: |
+          sql() { echo "=== $1"; curl -sS -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/analytics_engine/sql" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" --data "$2 FORMAT JSONEachRow" || true; echo; }
+          sql "requests and D1 statements by the hour (30 h)" "SELECT toStartOfInterval(timestamp, INTERVAL '1' HOUR) AS hour, SUM(_sample_interval) AS requests, SUM(_sample_interval * double3) AS d1, SUM(_sample_interval * double1) / SUM(_sample_interval) AS avg_ms FROM daggerfall_accounts WHERE timestamp > NOW() - INTERVAL '30' HOUR GROUP BY hour ORDER BY hour"
+          sql "refusals and failures by the hour (30 h)" "SELECT toStartOfInterval(timestamp, INTERVAL '1' HOUR) AS hour, blob3 AS status, SUM(_sample_interval) AS n FROM daggerfall_accounts WHERE timestamp > NOW() - INTERVAL '30' HOUR AND double2 >= 400 GROUP BY hour, status ORDER BY hour, status"
+          sql "routes, last 2 h" "SELECT blob1 AS route, SUM(_sample_interval) AS requests, SUM(_sample_interval * double3) AS d1, SUM(_sample_interval * double1) / SUM(_sample_interval) AS avg_ms FROM daggerfall_accounts WHERE timestamp > NOW() - INTERVAL '2' HOUR GROUP BY route ORDER BY d1 DESC LIMIT 40" | tee routes.txt
+          sql "routes, the same 2 h yesterday" "SELECT blob1 AS route, SUM(_sample_interval) AS requests, SUM(_sample_interval * double3) AS d1, SUM(_sample_interval * double1) / SUM(_sample_interval) AS avg_ms FROM daggerfall_accounts WHERE timestamp > NOW() - INTERVAL '26' HOUR AND timestamp <= NOW() - INTERVAL '24' HOUR GROUP BY route ORDER BY d1 DESC LIMIT 40"
+          sql "refusals by route, last 2 h" "SELECT blob1 AS route, blob3 AS status, blob4 AS refusal, SUM(_sample_interval) AS n FROM daggerfall_accounts WHERE timestamp > NOW() - INTERVAL '2' HOUR AND double2 >= 400 GROUP BY route, status, refusal ORDER BY n DESC LIMIT 30"
+          top=$(grep -o '"route":"[^"]*"' routes.txt | head -12 | sed 's/"route":"\([^"]*\)"/'"'"'\1'"'"'/' | paste -sd, -)
+          if [ -n "$top" ]; then
+            sql "the top 12 routes by the hour (last 12 h)" "SELECT toStartOfInterval(timestamp, INTERVAL '1' HOUR) AS hour, blob1 AS route, SUM(_sample_interval) AS requests, SUM(_sample_interval * double3) AS d1 FROM daggerfall_accounts WHERE timestamp > NOW() - INTERVAL '12' HOUR AND blob1 IN ($top) GROUP BY hour, route ORDER BY hour, d1 DESC"
+          fi
+
+      - name: the players online (the relay's rooms, Analytics Engine)
+        continue-on-error: true
+        run: |
+          curl -sS -X POST "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/analytics_engine/sql" -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            --data "SELECT toStartOfInterval(timestamp, INTERVAL '1' HOUR) AS hour, blob1 AS kind, SUM(_sample_interval * double3) AS hellos, SUM(_sample_interval * double2) / 12 AS sockets_avg FROM daggerfall_relay WHERE timestamp > NOW() - INTERVAL '30' HOUR GROUP BY hour, kind ORDER BY hour, kind FORMAT JSONEachRow" || true
+
+      - name: the account Worker's live traffic (45 s, totals only)
+        continue-on-error: true
+        run: |
+          timeout 45 wrangler tail daggerfall-accounts --format json > tail.json 2> tail.err || true
+          jq -s '
+            def path: (.event.request.url // "" | sub("^https?://[^/]+"; "") | sub("\\?.*$"; "") | sub("^/v1/saves/.*"; "/v1/saves/:slot") | sub("^/v1/realm/[^/]+/data$"; "/v1/realm/:id/data"));
+            def who: (.event.request.headers["cf-connecting-ip"] // .event.request.headers["x-real-ip"] // "?");
+            {
+              events: length,
+              outcomes: (group_by(.outcome) | map({key: (.[0].outcome // "?"), value: length}) | from_entries),
+              routes: (map({r: path, s: (.event.response.status // 0)}) | group_by([.r, .s]) | map({route: .[0].r, status: .[0].s, n: length}) | sort_by(-.n) | .[0:40]),
+              clients: (map(who) | unique | length),
+              busiest_clients_requests: (group_by(who) | map(length) | sort | reverse | .[0:15]),
+              busiest_three_clients_routes: (group_by(who) | sort_by(-length) | .[0:3] | map(map(path) | group_by(.) | map({key: .[0], value: length}) | from_entries)),
+              errors: ([.[] | (.exceptions[]?.message // empty), (.logs[]? | select(.level == "error") | .message | map(tostring) | join(" "))] | map(split("\n")[0] | gsub("/v1/saves/[^ ]*"; "/v1/saves/:slot") | gsub("/v1/realm/[^/ ]+/data"; "/v1/realm/:id/data") | .[0:220]) | group_by(.) | map({n: length, msg: .[0]}) | sort_by(-.n) | .[0:15])
+            }' tail.json || true
+          grep -v -i "token\|secret" tail.err | tail -n 5 || true
