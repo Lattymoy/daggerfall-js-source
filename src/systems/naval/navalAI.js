@@ -80,7 +80,7 @@
 // host forgives the player's stray ball on her (navalHost.js ALLY_STRAY_SHARE). And the bay is gentler: a quarter of
 // the pirates bold (BOLD_SHARE), and a boat lying still grappled only after GRAPPLE_STILL_S.
 
-import { classById, batteryOf, hullBuild, GUNS, HULL, SHIP_CLASSES, buildsStamp, SHIP_TOUGHNESS } from './navalShips.js';
+import { classById, batteryOf, hullBuild, GUNS, HULL, SHIP_CLASSES, buildsStamp, SHIP_TOUGHNESS, playerBatteryWeight } from './navalShips.js';
 import { mulberry32 } from '../../combat/bloodArt.js';   // SEA-PEACE: the temper's draw (navalShips.js names on the same stream kind)
 import { createShipDamage, SHIP_STATES, STRUCK_AT, HOLED_BONUS, WATERLINE_BAND } from './navalDamage.js';
 import { createGunDeck, aimSolution, reloadSeconds } from './navalGunnery.js';
@@ -446,7 +446,7 @@ export function outguns(threat, ship) {
 function sizeUp(c) {
   const p = c.power ?? (c.ship ? shipPower(c.ship) : null);
   if (typeof p !== 'number') return p;
-  return c.hull == null ? null : fightingPower({ hull: c.hull, hullHp: hullBuild(c.hull).hullHp, hullShare: c.hullShare ?? 1 });
+  return c.hull == null ? null : fightingPower({ hull: c.hull, hullHp: hullBuild(c.hull).hullHp, hullShare: c.hullShare ?? 1, player: true });   // a player's boat's word
 }
 
 /**
@@ -464,7 +464,7 @@ export function temperOf(cls, seed) {
 
 /** AUDIT NAV2 F25: a ship's measure (fightingPower's answer).
  * @typedef {Readonly<{ hull: number, hullHp: number, hullShare: number, crewShare: number, crew: number, strikes: boolean,
- *   skill: number, range: number, turn: number, crewed: boolean, tactic: string }>} FighterMeasure */
+ *   skill: number, range: number, turn: number, crewed: boolean, tactic: string, player: boolean }>} FighterMeasure */
 /**
  * SEA-PEACE: a ship's FIGHTING POWER - AUDIT NAV2 F25 (Mac: "Model crew losses"): no longer one number (her weight of
  * metal times the hull she has left, which counted a hull's hurt a salvo only, so a sloop - whose swivels take two men a
@@ -473,14 +473,16 @@ export function temperOf(cls, seed) {
  * (`strikeTime`, `odds`): her hull and its build, the hull and the men she has left, whether she strikes when they are
  * down (an AI ship does; a player's boat never), her gunners' skill, the range she fights at, her turn, and whether her
  * guns have a crew to load them. A player's boat's range and turn are her hull's (rangeOfHull, turnOfHull), and a galley's
- * great guns hers to fight with.
+ * great guns hers to fight with. GALLEON-WEIGHT: `player` - a player's boat, whose galleon's broadside throws the weight
+ * of six guns (navalShips.js playerBatteryWeight).
  * @param {{ hull: number, hullHp: number, hullShare?: number, crewShare?: number, crew?: number, strikes?: boolean,
- *   skill?: number, range?: number | null, turn?: number | null, crewed?: boolean, tactic?: string }} o
+ *   skill?: number, range?: number | null, turn?: number | null, crewed?: boolean, tactic?: string, player?: boolean }} o
  */
-export function fightingPower({ hull, hullHp, hullShare = 1, crewShare = 1, crew = 0, strikes = false, skill = PLAYER_GUN_SKILL, range = null, turn = null, crewed = true, tactic = null }) {
+export function fightingPower({ hull, hullHp, hullShare = 1, crewShare = 1, crew = 0, strikes = false, skill = PLAYER_GUN_SKILL, range = null, turn = null, crewed = true, tactic = null, player = false }) {
   return Object.freeze({
     hull, hullHp: Math.max(0, hullHp), hullShare: clamp(hullShare, 0, 1), crewShare: clamp(crewShare, 0, 1), crew: Math.max(0, crew), strikes: !!strikes,
     skill, range: range ?? rangeOfHull(hull), turn: turn ?? turnOfHull(hull), crewed: !!crewed, tactic: tactic ?? (hull === HULL.LargeGalley ? 'bow' : 'broadside'),
+    player: !!player,
   });
 }
 /** SEA-PEACE: a sea ship's own fighting power, as she stands. */
@@ -515,7 +517,8 @@ export function strikeTime(a, b) {
     const g = GUNS[bat.gun];
     const balls = bat.muzzles.length / sides.length / (reloadSeconds(bat.gun, a.crewShare, a.crewed) + TURN_PER_VOLLEY / Math.max(1, a.turn));
     const hits = balls * hitShare(bat, a.skill, b.hull);
-    hull += hits * g.hull * (1 + HOLED_BONUS * Math.min(1, WATERLINE_BAND / hullBuild(b.hull).top));   // a low hull is holed at the waterline
+    const w = a.player ? playerBatteryWeight(a.hull, side) : 1;   // GALLEON-WEIGHT: a player's galleon's broadside, six guns' weight
+    hull += hits * g.hull * w * (1 + HOLED_BONUS * Math.min(1, WATERLINE_BAND / hullBuild(b.hull).top));   // a low hull is holed at the waterline
     men += (hits * g.crew) / SHIP_TOUGHNESS;   // TOUGHER-SHIPS: a ball's men (navalDamage.js ballMen), as her hull's points
   }
   const byHull = hull > 0 ? b.hullHp * Math.max(0, b.hullShare - STRUCK_AT) / hull : Infinity;

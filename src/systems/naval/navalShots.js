@@ -73,7 +73,7 @@ export function createShotField(deps) {
     const back = Math.max(0, since);
     for (const l of launches) {
       balls.push({
-        volley: id, shooter, owner, resolve, side, gun: l.gun, index: l.index, count: launches.length,
+        volley: id, shooter, owner, resolve, side, gun: l.gun, weight: l.weight ?? 1, index: l.index, count: launches.length,   // GALLEON-WEIGHT: to its hit
         p0: [...l.p0], v0: [...l.v0], born: clock - back + Math.max(0, l.delay ?? 0), t: 0, shown: false, prev: [...l.p0], pos: [...l.p0], spin: random() * Math.PI * 2,
       });
     }
@@ -136,13 +136,13 @@ export function createShotField(deps) {
     // the canvas it tears on the way - before whatever stops it
     for (const r of rigsCrossed(targets, a, next, radius, b, firstT)) {
       (b.rigged ??= new Set()).add(r.t.id);
-      emit({ type: 'hit', volley: b.volley, shooter: b.shooter, owner: b.owner, target: r.t.id, gun: b.gun, point: r.e.point, zone: 'rig', dir, resolve: b.resolve });
+      emit({ type: 'hit', volley: b.volley, shooter: b.shooter, owner: b.owner, target: r.t.id, gun: b.gun, weight: b.weight, point: r.e.point, zone: 'rig', dir, resolve: b.resolve });
     }
     if (firstT === Infinity) return false;
     const at = (k) => [a[0] + (next[0] - a[0]) * k, a[1] + (next[1] - a[1]) * k, a[2] + (next[2] - a[2]) * k];
     if (ship && ship.e.t === firstT) {
       emit({
-        type: 'hit', volley: b.volley, shooter: b.shooter, owner: b.owner, target: ship.t.id, gun: b.gun, point: ship.e.point,
+        type: 'hit', volley: b.volley, shooter: b.shooter, owner: b.owner, target: ship.t.id, gun: b.gun, weight: b.weight, point: ship.e.point,
         zone: hitZone(ship.e.point[1] - seaY), dir, resolve: b.resolve,
       });
     } else if (land != null && land === firstT) emit({ type: 'land', volley: b.volley, shooter: b.shooter, gun: b.gun, point: at(land) });

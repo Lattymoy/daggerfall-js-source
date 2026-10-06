@@ -195,7 +195,7 @@ import { fundFort, readForts } from './seatForts.js';   // SEAT2b: a seat's fort
 /** SEAT1c: the account's row with the Charter titles it may wear laid on it (`seatTitles`, titles.js titlesHeld), while the
  *  seats are open to it - for the wardrobe's read and its write. */
 const withSeatTitles = async (ctx, player, env) => (seatsOpenFor(player, env) ? { ...player, seatTitles: await seatTitlesOf(ctx.db, player.id) } : player);
-import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsOf } from './decor.js';   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
+import { decorOf, placeDecor, moveDecor, removeDecor, hideDecorBase, yardsKept, forgetYards } from './decor.js';   // YARD-SHED: a town's yards kept   // DECOR1: an online home's decor; BASE-HIDE: what its owner took out
 import { gateStrikeStatement, gateStrikeAnswer, raidStrikeStatement, combatStrikeAnswer, raidStrikeRid, deedStatements, deedAnswer, deedEvent, marksOf, marksCardOf, exchangeMarks, depositGuildMarks, withdrawGuildMarks, marksReport, serpentStrikeStatement, serpentStrikeAnswer, findMarks } from './marks.js';   // MARKS1: the server's currency; SILVER-WAYS: a raid's silver and a guild's deeds
 import { readBoard, pinNote, takeDownNote, reportNote, moderateNote, postNotice, removeNotice } from './board.js';   // NOTICE1: the Notice Board
 import { profState, profPixels, harvestNode, chooseSpec, withdrawStores, depositStores, smeltAtForge, craftAtAnvil, buyStock, listWrits, deliverWrit } from './professions.js';   // BAG1: a deposit   // PROF1: the professions; PROF2: the forge; PROF3: the anvil and the smith's stock
@@ -624,6 +624,16 @@ const service = {
       // REALM P2.1: a trade's half carries two offers of up to sixteen records each - the one JSON route past 4 KiB
       const body = request.method === 'POST' ? await readBody(request, path === '/v1/realm/trade' ? REALM_TRADE_BODY_MAX : MAX_BODY_BYTES) : {};
       if (!body) return no('body', 400, origin);
+      // YARD-SHED (2026-10-06, the service down - "D1 DB is overloaded. Requests queued for too long."): A TOWN'S YARDS NEED
+      // NO SESSION. Its answer is every caller's alike, any guest's to read (decor.js yardsKept), and the two reads a
+      // session costs were most of the database's day - so it is answered here, from the isolate's kept answer, bounded
+      // per address in this isolate's memory as a session's door is per account (no write to count it).
+      if (path === '/v1/homes/yards' && request.method === 'POST') {
+        const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+        if (overAccountRate(`yards:${ip}`, nowS, ACCOUNT_MAX, ACCOUNT_WINDOW_S)) return no('rate', 429, origin);
+        const r = await yardsKept(ctx, body.mapId, nowS);
+        return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
+      }
       // ═══ AUDIT-ACC F13: A CREDENTIAL DOES NOT GO IN A URL ══════
       //
       // This read `?secret=` on a GET, and the comment above defended
@@ -992,10 +1002,6 @@ const service = {
           const r = await decorOf(ctx, who.player, body);
           return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
         }
-        if (path === '/v1/homes/yards') {   // HOME-YARD: every yard of a town, read by anyone walking its streets
-          const r = await yardsOf(ctx, who.player, body);
-          return 'error' in r ? no(r.error, 400, origin) : json(r, 200, origin);
-        }
         if (path === '/v1/homes/rooms') {   // HOME-RENT: a home's rooms, read by anyone at its door
           const r = await roomsOf(ctx, who.player, body);
           return 'error' in r ? no(r.error, r.error === 'no-home' ? 404 : 400, origin) : json(r, 200, origin);
@@ -1010,6 +1016,7 @@ const service = {
             : path === '/v1/homes/decor/move' ? await moveDecor(hctx, who.player, body)
               : path === '/v1/homes/decor/hidden' ? await hideDecorBase(hctx, who.player, body)   // BASE-HIDE
                 : await removeDecor(hctx, who.player, body);
+          forgetYards(body?.mapId);   // YARD-SHED: the town's kept yards let go, whatever the write did
           if (!('error' in r)) return json(r, 200, origin);
           const said = realmNo(r);
           if (said) return said;

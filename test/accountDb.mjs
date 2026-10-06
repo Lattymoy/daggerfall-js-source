@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 
 import worker from '../server-account/src/index.js';
 import { _resetKeyForTests } from '../server-account/src/signing.js';
+import { _resetYardsKept } from '../server-account/src/decor.js';   // YARD-SHED: a stood service is a fresh isolate - no town's yards kept
 import { renownXpFor } from '../src/net/renown.js';
 import { mintReceipt, importReceiptKey } from '../src/net/gateReceipt.js';
 import { ACCEPTED } from '../src/net/legalLaw.js';   // MERGE 2: TERMS1 - a request that makes an account carries the versions ticked
@@ -51,6 +52,7 @@ export const T0 = 1_800_000_000;
 /** The Worker on a fresh database, with the gate's key pair - `env` extended by `extra`. */
 export async function standService(extra = {}) {
   _resetKeyForTests();
+  _resetYardsKept();
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pkcs8 = Buffer.from(new Uint8Array(await subtle.exportKey('pkcs8', kp.privateKey))).toString('base64');
   const gk = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);

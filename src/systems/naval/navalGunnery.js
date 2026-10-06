@@ -162,10 +162,13 @@ export function aimSolution(ship, side, look, seaY, { range = null, target = nul
  * (`seed`), a gun every RIPPLE_S - each from where its port stands when it fires, the deck's way (`carry`) over its
  * wait. `skill` (0..1) is a gun crew's: the scatter at (1.5 - skill) of the gun's own, so a poor crew throws wider and
  * a crack one tighter than the zone's half-width.
- * @returns {{ delay: number, p0: number[], v0: number[], gun: string, index: number }[]}
+ * GALLEON-WEIGHT: each launch carries the `weight` of metal it throws (navalShips.js playerBatteryWeight - a player's
+ * galleon's broadside), to its ball and its hit.
+ * @returns {{ delay: number, p0: number[], v0: number[], gun: string, weight: number, index: number }[]}
  */
-export function volleyLaunches(solution, seed, { skill = 0.5, carry = null } = {}) {
+export function volleyLaunches(solution, seed, { skill = 0.5, carry = null, weight = 1 } = {}) {
   if (!solution || solution.barrel) return [];
+  const w = Number.isFinite(weight) && weight > 0 ? weight : 1;
   const gun = GUNS[solution.gun];
   const rand = volleyRandom(seed);
   const k = clamp(1.5 - skill, 0.4, 1.5);
@@ -173,7 +176,7 @@ export function volleyLaunches(solution, seed, { skill = 0.5, carry = null } = {
   return solution.muzzles.map((p0, index) => {
     const s = scatter(solution.dir, solution.elevation, gun.yawSpread * k, gun.pitchSpread * k, rand);
     const delay = index * RIPPLE_S;
-    return { delay, p0: [p0[0] + (c[0] ?? 0) * delay, p0[1] + (c[1] ?? 0) * delay, p0[2] + (c[2] ?? 0) * delay], v0: launchVelocity(s.dir, s.elevation, gun.speed, carry), gun: solution.gun, index };
+    return { delay, p0: [p0[0] + (c[0] ?? 0) * delay, p0[1] + (c[1] ?? 0) * delay, p0[2] + (c[2] ?? 0) * delay], v0: launchVelocity(s.dir, s.elevation, gun.speed, carry), gun: solution.gun, weight: w, index };
   });
 }
 
