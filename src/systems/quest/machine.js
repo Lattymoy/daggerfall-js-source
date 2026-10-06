@@ -1700,7 +1700,7 @@ export class QuestMachine {
    *  faction ("This effectively shuts down several named NPCs during
    *  main quest") - and TalkManager.cs does not contain the word
    *  Listener at all. The port already ships that reader, at
-   *  src/scenes/worldModes.js:3203. A pending marker over shipped work
+   *  src/scenes/worldModes.js:"if (questBridge?.machine.factionListeners.has(pn.factionID))". A pending marker over shipped work
    *  is worse than no marker: it sends the next reader looking for
    *  work that is done, in a file that never had it. */
   addFactionListener(factionID, owner) {

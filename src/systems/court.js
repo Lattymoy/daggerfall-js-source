@@ -30,7 +30,7 @@
 // the field only 2 (:137) or 0 (:139), so its own `punishmentType ==
 // 1` arms at :329 and :399 are dead code, and :279 says so in DFU's
 // own words - "Seems like an execution sentence can't be given in
-// classic. It can't be given here, either." court.js:77, :409 and
+// classic. It can't be given here, either." court.js:"if (court.punishmentType === 1) return 'Execution';", court.js:"export function pleaGuilty".."if (court.punishmentType === 1) return { outcome: 'executed' };" and
 // :431 carry the same unreachable arm for the same reason (an arm
 // that is absent and an arm that is wrong read alike from the call
 // site). The prison time-skip riding the host clock callback is the

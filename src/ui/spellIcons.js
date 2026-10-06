@@ -77,7 +77,7 @@ export const spellIconDim = () => (_art ? Math.trunc(_art.icons.w / SPELL_ICON_R
  *  The null matters: GetSpellIcon (:151-157) answers null outside
  *  [0, Count) and the panel then shows its black background. The
  *  `index % count` WRAP belongs to SpellMakerWindow.SetIcon, which
- *  clamps at MINT time - systems/spellMaker.js:132 already does it -
+ *  clamps at MINT time - systems/spellMaker.js:"for (let i = 0; i < 5; i++)" already does it -
  *  not to the collection, so a record carrying a bad icon byte reads
  *  as a black square here rather than as some other spell's icon. */
 export function spellIconRect(index) {

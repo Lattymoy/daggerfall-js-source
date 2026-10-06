@@ -702,11 +702,12 @@
   {
     "name": "AUDIT625-D3-a-range-the-tools-cannot-read",
     "file": "bible/10-UI/Settings-Screen-Spec.md",
-    "old": "pinned `test/settings.test.js:36-37`",
-    "new": "pinned `test/settings.test.js:36‑37`",
+    "old": "pinned `test/settings.test.js:\"Object.keys(DEFAULTS).length, 13\"`",
+    "new": "pinned `test/settings.test.js:\"Object.keys(DEFAULTS).length, 13”`",
     "why": "a range set with a typographic dash: the cite tools read its head alone",
     "tests": [
       "test/citedrift.test.js"
-    ]
+    ],
+    "note": "CITE-ANCHOR: the cite is an anchor now, and the same damage is a quote the tools cannot read - a curly close quote where the range had a non-breaking hyphen."
   }
 ]

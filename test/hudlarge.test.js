@@ -19,6 +19,7 @@ import { setValue, resetToDefaults } from '../src/systems/settings.js';
 import { ridingRect } from '../src/systems/riding.js';
 import { MODES, nextInteractionMode } from '../src/player/interactionMode.js';
 import { routeAction } from '../src/ui/input.js';
+import { resolveAnchor, maskAnchors } from '../tools/citeAnchor.mjs';   // CITE-ANCHOR: a cite names its line by a quote
 import { drawHud } from '../src/ui/hud.js';                  // AUDIT 65 UI-4: largeHudBar() is the LAST DRAWN bar
 import { audio } from '../src/systems/audio.js';             // AUDIT 65 UI-4
 import { SOUND } from '../src/systems/soundClips.js';        // AUDIT 65 UI-4
@@ -493,8 +494,8 @@ test('D10: the narrowed flag\'s citation resolves to the activation ray it rests
   // paragraph; the withdrawal above it stands unchanged, so the split
   // moves to the block that now follows it.
   const header = src('ui/hudLarge.js').split('WHAT E5 DID NOT TAKE')[0];
-  const cites = [...header.matchAll(/scenes\/([A-Za-z0-9_]+)\.js:(\d+)/g)]
-    .map((m) => [`scenes/${m[1]}.js`, Number(m[2])]);
+  const cites = [...header.matchAll(/scenes\/([A-Za-z0-9_]+)\.js:"([^"]+)"(?:\.\."([^"]+)")?/g)]
+    .map((m) => [`scenes/${m[1]}.js`, resolveAnchor(maskAnchors(src(`scenes/${m[1]}.js`)), src(`scenes/${m[1]}.js`).split('\n'), m[2], m[3] ?? null).line ?? 0]);
   assert.ok(cites.length >= 2, 'the withdrawal cites the hosts it rests on');
   for (const [rel, n] of cites) {
     const line = src(rel).split('\n')[n - 1];

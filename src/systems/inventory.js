@@ -233,7 +233,7 @@ export function stacksWith(a, b) {
     // oil have none, and the one stackable WEAPON is the arrow, whose
     // material DFU itself zeroes - CreateWeapon's arrow arm writes
     // `newItem.nativeMaterialValue = 0` and skips ApplyWeaponMaterial
-    // entirely (ItemBuilder.cs:359-364), which enemyEquipment.js:137-144
+    // entirely (ItemBuilder.cs:359-364), which enemyEquipment.js:"if (templateIndex === ARROW_TEMPLATE)"
     // reproduces. So `(a.material ?? 0) === (b.material ?? 0)` is true
     // wherever ItemCollection.cs:706-714 would have matched, and the
     // `?? 0` above is the fix that keeps it that way.
@@ -332,8 +332,8 @@ export function addItem(list, item, position = 'back') {
  * are called by name rather than respelled.
  *
  * ROAD-Ar R5 - THE REMAINDER, RESTATED. A2 recorded two surviving
- * inline re-spellings of this member (equip.js:253 and
- * potionMakerWindow.js:168, both on paths where nothing stackable is
+ * inline re-spellings of this member (equip.js:"SplitStack(item, 1)" and
+ * potionMakerWindow.js:"The old cut filtered", both on paths where nothing stackable is
  * equippable) and missed a THIRD, which was the one on the main path:
  * itemTransfer._applyTransfer's partial arm, reached by every
  * pack<->wagon/loot and shelf->basket move that the wagon or carry

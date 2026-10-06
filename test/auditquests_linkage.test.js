@@ -250,7 +250,7 @@ test('AUDIT QUESTS 2: every shipped quest parses, and only the four known lines 
     if (!quest) { failed.push(`${f}: parsed to null`); continue; }
     // THE SIGNAL. An unmatched line is NOT a null action - the factory
     // returns null and _readTaskLines pends the raw text instead
-    // (task.js:192-201). A pin that looked for a null in `actions`
+    // (task.js:"const factory = this.parentQuest?.actionFactory"). A pin that looked for a null in `actions`
     // could never fail: nothing pushes one there.
     for (const task of quest.tasks?.values() ?? []) {
       for (const line of task.pendingActionLines ?? []) {

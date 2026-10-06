@@ -136,7 +136,7 @@ The three criticals, in the order they were found:
 - **The courtroom rendered solid red** - and this one is the campaign's
   sharpest lesson. The 2026-09-01 incident's fix was "a palettized IMG
   must mint its own `DFPalette`". B5's court backdrop copied that law one
-  file over to `CORT01I0.IMG`, which is **not** one of `imgFile.js:23-30`'s
+  file over to `CORT01I0.IMG`, which is **not** one of `imgFile.js:"ReadPalette's switch"`'s
   six palettized names (verbatim `ImgFile.cs:477-489`), so `_readPalette`
   takes its early return, the fresh palette is never filled, and every
   pixel decodes against an unloaded table. The incident's own remedy,
@@ -262,9 +262,9 @@ for the two-phase toggle-close, an FNT plate label where DFU reloads a
 yellow `DaggerfallFont` texture.)
 
 Wave D's three unshipped slices are the honest ones: the chargen
-picker's scroll-bar HIT (`chargenArt.js:753`, narrowed to itself), the
-gold stack in `inventory.js:51`, and the docked large-HUD occlusion
-(`hudLarge.js:56`) - each rewritten in place with the evidence rather
+picker's scroll-bar HIT (`chargenArt.js:"the selected row"`, narrowed to itself), the
+gold stack in `inventory.js:"E4 (2026-09-02) RETIRED"`, and the docked large-HUD occlusion
+(`hudLarge.js:"sprite by the bar's"`) - each rewritten in place with the evidence rather
 than left as a token.
 
 ## What was refuted, and why
@@ -342,7 +342,7 @@ behaviour, mis-read as gaps), 10 blocked (no 1:1 target, or a blocker
 outside the site's scope).** The 93 stale-and-not-a-gap flags across 54
 files went to 6 retirement lanes, which **retired 96 sites** (three more
 turned up inside the same docstrings) and **kept 2** with their reasons -
-`buildingLocks.js:67`'s `ownsShip`, genuinely open, and one already
+`buildingLocks.js:"ownsShip                      -"`'s `ownsShip`, genuinely open, and one already
 deleted by the fix round. The 42 closable flags became Wave D's 42
 slices.
 
@@ -414,7 +414,7 @@ play; all of it is written down at its site.
    rendered solid red because the incident's own remedy was copied to a
    file the remedy's predicate excludes, and the pin written beside it
    asserted the false law. The incident record said "any palettized-IMG
-   consumer must mint its own palette"; nobody re-read `imgFile.js:23-30`
+   consumer must mint its own palette"; nobody re-read `imgFile.js:"ReadPalette's switch"`
    to ask whether this consumer was one. **Copy the check, not the
    conclusion.**
 4. **Disclosure is the difference between a remainder and a defect, and

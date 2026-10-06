@@ -117,11 +117,11 @@ Recorded so it is not re-audited:
 ## Degrades worth naming
 
 - **`chaikin()` smooths the SIMPLIFIED chain**
-  (`src/ui/overworldModel.js:398`), so its corner cut is a fraction of a
+  (`src/ui/overworldModel.js:"const smooth = chaikin"`), so its corner cut is a fraction of a
   long segment: at a bend the drawn line leaves the painted band by 192
   terrain tiles / 1,229 world units. Take the bounded-corner-cut
   alternative, not a densify pass.
-- **Half of all T-junctions tear** (`src/ui/overworldModel.js:337`) - only
+- **Half of all T-junctions tear** (`src/ui/overworldModel.js:"export function chaikin"`) - only
   chain ENDS are pinned, so a spur's drawn end stops in open country
   beside a trunk that has swung away.
 - **5,658 draw calls in the map's resting view** against 6 for the rest
@@ -130,7 +130,7 @@ Recorded so it is not re-audited:
   the batching patch end to end: 5,658 -> 7 draw calls, picture
   byte-identical.
 - **The road-discovery layer has six passing tests and no caller**
-  (`src/ui/overworldModel.js:452`, `src/ui/overworldMap.js:496`; the window RETIRED in MAP1, 2026-09-18). Every
+  (`src/ui/overworldModel.js` line 452, `src/ui/overworldMap.js:496`; the window RETIRED in MAP1, 2026-09-18). Every
   road in the Bay is drawn from the first frame, running unbroken to
   towns the same map is deliberately hiding. This is the R3W
   orphaned-layer defect again, in a new module.
@@ -143,7 +143,7 @@ Recorded so it is not re-audited:
   (`src/systems/roadTravel.js:187`): ~200 ms of blocked main thread per (RETIRED)
   click, ~0.9 s and 33 MB per card visit.
 - **Nothing is drawn for the whole 26-second bake**
-  (`src/scenes/world.js:884`) - the world host has no frame loop yet and
+  (`src/scenes/world.js:"placement is pixelTranslation"`) - the world host has no frame loop yet and
   `status()` writes only `document.title`.
 - **A landmass with fewer than two hubs gets no road at all**
   (`src/systems/roads.js:728`). Take the verifier's PRIMARY proposal; its (RETIRED)

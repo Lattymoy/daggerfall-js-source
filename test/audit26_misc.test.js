@@ -91,7 +91,7 @@ test('audit26 misc F134: a villager tone lands on the design\'s OWN race', () =>
   const seam = mountSeam();
   assert.equal(seam.RACES.includes('Human'), false, 'RACES is the eight-race table');
 
-  // Every villager race and the tone it ships (villagerDesigns.js:296-299).
+  // Every villager race and the tone it ships (villagerDesigns.js:"export const RACE_TONE").
   const expect = { Redguard: 'Deep', Nord: 'Pale', Breton: 'Fair' };
   for (const [race, tone] of Object.entries(expect)) {
     assert.equal(DESIGN_TONE[race], tone, `${race} ships the ${tone} tone`);

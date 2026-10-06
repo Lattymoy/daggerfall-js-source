@@ -34,8 +34,8 @@
 //     shipped scene carries.
 // A third has no port equivalent yet rather than being unported here:
 // EnemyAttack.cs:332 is `ApplyDamageToNonPlayer`, foe-vs-foe melee,
-// which the port's pools do not do (documented at enemyCasting.js:149
-// and dungeonContext.js:2067). When friendly fire lands, its splash is
+// which the port's pools do not do (documented at enemyCasting.js:"the player only -"
+// and dungeonContext.js:"found four instances"). When friendly fire lands, its splash is
 // `showBloodSplash(targetBloodIndex, bloodCentre(...))`.
 
 import { FlatAnim, isAnimatedFlat, IMPACT_FPS, MISSILE_FPS } from '../render/flatAnimation.js';   // AUDIT 26 F033: ImpactBillboardFramesPerSecond   // FIELD-GUN14: a flying flat's own rate, which is the missile's
@@ -171,7 +171,7 @@ export function createHitEffects({
       // which is the same knob asked the other way.
       //
       // THIS BRANCH NEVER RAN CORRECTLY. `billboardSize` answers a
-      // {w, h} RECORD (rmbFlats.js:180, and billboardXml's override
+      // {w, h} RECORD (rmbFlats.js:"Misc block flats", and billboardXml's override
       // keeps the shape), and neither arm of the old ternary was that:
       // an object is not an Array, so every scaled flat took
       // `entry.size * scale` - object times number, which is NaN. A

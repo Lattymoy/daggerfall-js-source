@@ -495,7 +495,7 @@ test('AUDIT 63 F48 (review): the SHOP mount wires all six DoSteal effects, and t
   // writes through (DaggerfallTradeWindow.cs:913-928), and an unwired
   // hook is a silent free-goods button - no Pickpocket tally, no
   // Thieves Guild credit, no crime, no guards, no HUD line. Same shape
-  // as theft.test.js:133's pin on the private-property arm.
+  // as theft.test.js:"'SpawnCityGuards(true) -"'s pin on the private-property arm.
   const modes = src('scenes/worldModes.js');
   const at = modes.indexOf('return createTradeWindow({');
   assert.ok(at > 0, 'the shop mount is where it was');

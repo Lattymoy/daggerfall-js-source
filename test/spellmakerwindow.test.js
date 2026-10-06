@@ -218,7 +218,7 @@ test('E1 LIVE: the button-up reaches the NESTED picker, so its thumb latch drops
   // EffectSettingsEditorWindow, which owns no picker, and the drag
   // latch survived the button coming up: one stray held move after
   // letting go and the thumb resumed from the stale anchor
-  // (VerticalScrollBar.Update's else arm, listPicker.js:126-132).
+  // (VerticalScrollBar.Update's else arm, listPicker.js:"stays VISIBLE - which").
   const w = win();
   press(w, 'addEffect');
   const bar = w.picker.scrollBar;

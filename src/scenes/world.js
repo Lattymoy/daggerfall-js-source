@@ -3035,7 +3035,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // (x, z) and the 49-entry scan (with a fresh translation array per
   // entry, inside the collider's substeps) collapses to one Map.get.
   // The invariant it leans on - the current pixel's frame sits at the
-  // origin under compensation - is the one streaming.test.js:139 fuzz
+  // origin under compensation - is the one streaming.test.js:"2000-step fuzz holds" fuzz
   // pins over 2000 crossings.
   const _htT = [0, 0, 0];
   /** @param {boolean} [terrainOnly] - DW-D: a carved cell's seafloor is no DaggerfallTerrain (DeepWaterFloorMesh), so
@@ -4011,12 +4011,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  AUDIT-FIELD F7: A FLOOR, NOT THE WHOLE DISTANCE. The first cut
    *  called 64 "more than the fastest accelerated step", which is true
    *  of a fixed physics STEP and false of a FRAME: the motor moves
-   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:1495),
+   *  `speed * min(dt, MAX_FRAME_DT) * scale` in one go (motor.js:"if (!this.levitating)"),
    *  and the frame that hitches is exactly the frame in which the
    *  streamer is behind. A horse at the shipped default limit of sixty
    *  covers ~65 units in a 10 fps frame and ~120 at the mod's ceiling of
    *  a hundred - past a 64-unit probe, off the built world, and once the
-   *  motor is airborne `airControl` is false (motor.js:3174) so zeroing
+   *  motor is airborne `airControl` is false (motor.js:"a Jump-buffed player") so zeroing
    *  the drive on the NEXT frame no longer steers: the fall is already
    *  paid for. `travelLookahead` measures the frame that is about to
    *  run instead, and keeps 64 as its floor. */
@@ -4950,7 +4950,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT 26 (F019): the pixel's street StaticNPCs - identity inputs
     // + the billboard extent the activation ray needs, resolved the
     // way the interior host resolves its people's
-    // (interiorContext.js:445-466). FLATS.CFG is awaited because
+    // (interiorContext.js:"const standPerson"). FLATS.CFG is awaited because
     // SetLayoutData's exterior overload reads it for the gender
     // (StaticNPC.cs:185-194); loadFlats never throws and is warmed with
     // the scene, so this is a coalesced wait. The list rides the pixel,
@@ -5808,7 +5808,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Mac's word, and the whole of it: `resting` is not a fatigue knob,
     // it is the needs' one word for "sat still", and other laws read
     // it. It held the bare-skin block's naked-cold and sunburn ticks
-    // and the byFire exposure damage (needs.js:544, :520) - the health
+    // and the byFire exposure damage (needs.js:"&& !vampire && !ctx.beastForm", needs.js:"if (!resting || !env.byFire)") - the health
     // Mac wants ticking. One flag, several laws; the journey takes the
     // world as it finds it.
     //
@@ -10429,10 +10429,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   // ?dungeon host RAN every CastWhenUsed / CastWhenStrikes / SoulBound
   // / affinity arm against no ctx at all. They are optional-chained, so
   // it WAS silent. WAVE D closed it: the body is scenes/hostEnchant.js
-  // and dungeonContext.js:3262 mounts the same one, gated on
+  // and dungeonContext.js:"if (opts.enchantCtx !== false)" mounts the same one, gated on
   // `opts.enchantCtx !== false` because setDefaultEnchantCtx is a
   // session singleton and EC1 already routes THIS host's mount into
-  // that context through modes.dungeonCtx - so worldModes.js:7285
+  // that context through modes.dungeonCtx - so worldModes.js:"carries no mode qualifier"
   // passes false beside its `chargen: false` and only the standalone
   // ?dungeon route mounts its own. S40 filled isResting
   // in - the sentence that stood here said it "stays absent above
@@ -10462,7 +10462,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // artifact affinity scans saw an empty room. Nothing threw and
   // nothing was logged - the enchantment simply had no effect where
   // the fighting is. The one ctx in play is this mount: no host passes
-  // an enchantCtx at the strike site (formulas.js:522 defaults it
+  // an enchantCtx at the strike site (formulas.js:"why the player arm" defaults it
   // null), so mergeCtx folds this default under every dispatch.
   // The law itself is in shared.js, tested on its own - which pool is
   // live, and whose sinks a record from it must go through. This host
@@ -10528,11 +10528,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:588-593) never looks the record up in `foes`, and
+    // (exteriorFoes.js:"if (f.companion != null) _fullNext") never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
-    // got exactly what removeGuard (cityGuards.js:1762-1780) gives it -
+    // got exactly what removeGuard (cityGuards.js:"function removeGuard") gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
-    // (cityGuards.js:1123) and spliced out at the end of it (:1359).
+    // (cityGuards.js:"spaceFoes(guards, collider, foeFrameDt(dt))".."if (g.dead) continue;") and spliced out at the end of it (cityGuards.js:"for (let i = guards.length - 1; i >= 0; i--)").
     // Routing by POOL MEMBERSHIP is an OWNERSHIP fix: each pool owns the
     // teardown of its own records so the two can diverge safely, and
     // removeFoe's `questBehaviour?.notifyDestroyed()` (exteriorFoes.js
@@ -11734,12 +11734,12 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  area / if (...IsPlayerInsideDungeon) return;" - so WorldX/WorldZ,
    *  and with them CurrentMapPixel, hold the entrance's values for as
    *  long as the player is down there. A dungeon's local frame is its
-   *  own (RDB block origins are SIGNED, dungeonLayout.js:75-76), so
+   *  own (RDB block origins are SIGNED, dungeonLayout.js:"const originX = block.x"), so
    *  converting the player's dungeon feet through the streamer's
    *  exterior origin slides the pixel a step west on any negative local
    *  x and a step south on any negative local z - one block off the
    *  start of Privateer's Hold is enough. That is what made Recall's
-   *  IsSameInterior dungeon arm (teleportAnchor.js:169-172) unable to
+   *  IsSameInterior dungeon arm (teleportAnchor.js:"if (here.insideDungeon && ctx === WORLD_CONTEXT.Dungeon)") unable to
    *  answer true against an anchor set in the room the player is
    *  standing in: setRecallAnchor already took the streamer's pixel
    *  (:2777) and this read did not. The streamer is frozen while a mode
@@ -11779,7 +11779,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *
    *  A terrain tile is 2 x WorldMapTileDim = 256 world units - the same
    *  step locationWorldRect walks when it shifts a pixel corner by the
-   *  location's tile origin (streamingWorld.js:60-61). Tile ROWS rise
+   *  location's tile origin (streamingWorld.js:"const minX = origin.x"). Tile ROWS rise
    *  with z, which is why row 127 is north and row 0 south, derived
    *  from generateTileData.
    *
@@ -13103,7 +13103,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // and 6pm regardless of travel type"). The two are separately
         // sourced - the racial arm off the compound race, the career
         // arm off the class's own CFG bit (the burn read both until
-        // VAMP-DAY left it the career's: passiveSpecials.js:126).
+        // VAMP-DAY left it the career's: passiveSpecials.js:"sinks?.hurt?.(SUN_DAMAGE_AMOUNT)").
         // VAMP-HOOD: the racial arm asks the hood (vampirism.js
         // racialSunAverse), so a hooded vampire lands in the day it
         // travelled into; the career's arm is its own and stands.
@@ -13224,7 +13224,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so an F9 pressed inside a shop recorded the street's sheath and
     // hand. The mode host answers for the rig that is actually drawn
     // and null outside interior mode (the dungeon owns its own
-    // composer, dungeonContext.js:8710), so exterior mode and a
+    // composer, dungeonContext.js:"damage = trunc(5 * (distance - 5))"), so exterior mode and a
     // pre-seam mode host compose exactly as before, per field.
     const wp = modes?.weaponPose?.() ?? null;
     const snap = snapshotPlayer(playerEntity, {
@@ -14079,7 +14079,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (:619) and RETURNS, and it sits ABOVE the racial override's
     // CheckFastTravel at :624-626. It is a separate rung, not a clause
     // of the racial one: DFU reads Career.DamageFromSunlight (DFCareer.cs's
-    // own CFG bit, specialAdvantages.js:266 here) where CheckFastTravel
+    // own CFG bit, specialAdvantages.js:"secondary === 'fromSunlight'" here) where CheckFastTravel
     // reads the RacialOverrideEffect. Same localized key at both sites,
     // so the box says the same sentence.
     // LIVED1: online the day cannot be rested away - a rest moves the character's own clock, not the sky - so both
@@ -15150,20 +15150,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     toggleAutomap: () => toggleExteriorAutomap(),
     openTravelMap: () => toggleTravelMap(),
     /** AUDIT 58 (f2/hosts): THE SHEATH PANEL'S DOOR - the eleventh
-     *  panel of the large HUD (ui/hudLarge.js:239), which until now
+     *  panel of the large HUD (ui/hudLarge.js:"key: 'spellbook',"), which until now
      *  answered in ONE host of four. HUDLarge.cs:477-484's
      *  SheathPanel_OnMouseClick calls
      *  GameManager.Instance.WeaponManager.ToggleSheath() - a SINGLETON
      *  call with no scene gate at all, registered for both buttons at
      *  :211-212, so the panel is live on every screen the bar is drawn
-     *  on. Here routeAction's arm is optional (ui/input.js:815) and
+     *  on. Here routeAction's arm is optional (ui/input.js:"here is the claim") and
      *  only dungeonContext.js carried the door, so above ground, in
      *  ?exterior and inside a building the click was swallowed by
      *  routeLargeHudClick's unconditional `return true` and nothing
      *  drew or sheathed - while Z kept working everywhere, which is
      *  why it read as "only the panel is dead". THE FOUR HOSTS RULE.
      *  No double-fire from the keyboard: routeKey declines
-     *  POLLED_ACTIONS (ui/input.js:652), so a Z press reaches the
+     *  POLLED_ACTIONS (ui/input.js:"export function routeKeyUp"), so a Z press reaches the
      *  frame's edge latch and nothing else. */
     toggleSheath: () => weaponRig.toggleSheath(),
     // QS2: the diamond's three presses, beside the sheath panel's door and for
@@ -15365,7 +15365,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     // AUDIT 58 (f3/input) - THE COMBO ARM'S MISSING ARGUMENT.
     // actionOf resolves a COMBO code only when it is handed the host's
-    // held-keys Set (ui/input.js:269-290), and no host passed one - so
+    // held-keys Set (ui/input.js:"and the whole of DFU's"), and no host passed one - so
     // GetUnaryKey's combo branch (InputManager.cs:1666-1712) was live
     // for the POLLED actions, which read through held(), and dead for
     // every DISPATCHED one. A player who bound Inventory to Shift+I in
@@ -15565,7 +15565,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         // gates the position now, not just the presence.
         // WEAPON-VIS2: this ladder never calls routeKey (the comment
         // above the Escape arm says so directly), so routeKey's own
-        // `POLLED_ACTIONS.has(act)` decline (ui/input.js:774) never
+        // `POLLED_ACTIONS.has(act)` decline (ui/input.js:"if (POLLED_ACTIONS.has(act)) return") never
         // touched this door. hudCtx carries toggleSheath (AUDIT 58, for
         // the large HUD's sheath panel), so 'ReadyWeapon' - Z - reached
         // routeAction from BOTH here AND the frame's own poll below
@@ -15600,7 +15600,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // AUDIT 58 (f3/input) - THE ONE READER. This host builds the mode
   // machine unconditionally, and that machine used to register a
   // SECOND bindCursorToggle over the same module-global flag
-  // (player/pointerLock.js:89-329), so ONE Enter flipped it twice and
+  // (player/pointerLock.js:"let _cursorActive"), so ONE Enter flipped it twice and
   // `cursorActive()` could never rise here at all - the large HUD's
   // eleven panels were unreachable by mouse in this host, and the
   // second flip fired a releaseLook/requestLook pair inside one event.
@@ -15864,7 +15864,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     lookFilter.add(e.movementX * lookScale(), -e.movementY * lookScale() * lookInvert());
   });
   // U41: `!townTalk.overlayActive` is the dungeon host's own gate
-  // (dungeon.js:254, "a right-click on a window is the window's...
+  // (dungeon.js:"latches this host used", "a right-click on a window is the window's...
   // never a swing"), which these two hosts never got. It matters now
   // that the travel map makes RMB a ROUTINE gesture - its zoom - and
   // an ungated one fires a readied spell or looses an arrow at the
@@ -16508,7 +16508,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exterior -> the townTalk overlay, interior OR dungeon -> the mode
   // machine's slot. U43-ii shipped the dungeon half: showQuestBox
   // offers the window to `modes.showQuestOverlay` below, and
-  // worldModes answers it in BOTH modes (worldModes.js:11007-11071 -
+  // worldModes answers it in BOTH modes (worldModes.js:"v[0], v[1], e.button," -
   // dungeon routes to dungeonCtx.showOverlay), so a dungeon popup is
   // shown rather than logged loudly and dropped.
   // AUDIT 24 (wave 21): DaggerfallMessageBox.Show() is a
@@ -17029,11 +17029,11 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  all fixed forever. The port cloned first and re-expanded from
    *  source every time, which is the port being more correct than
    *  the game it is a port of. The answer pipeline's caller clones
-   *  BEFORE calling (answerPipeline.js:665, C#'s own `.Clone()` at
+   *  BEFORE calling (answerPipeline.js:"falls back to anyInfo.", C#'s own `.Clone()` at
    *  :3552), so the in-place pass is right for both. Also: C# calls
    *  this whether or not GetQuest found anything - the null-parent arm
    *  is a DFU forum-bug fix INSIDE ExpandQuestMessage, not a caller
-   *  guard, and expandQuestMessage carries it (questMacros.js:568). */
+   *  guard, and expandQuestMessage carries it (questMacros.js:"'%g1': (mcp) => call"). */
   const expandQuestTokens = (questID, tokens) => {
     expandQuestMessage(questBridge?.machine.getQuest(questID) ?? null, tokens, true);
     return tokensToString(tokens);
@@ -20754,7 +20754,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const socialActText = (k, who) => (k === 'friend.request' ? `Friend request sent to ${who}`
     : k === 'party.invite' ? `Party invite sent to ${who}`
       : k === 'friend.remove' ? `${who} is no longer your friend` : 'Sent');
-  /** PARTY-REST1: RestWindow's own `mode` string ('loiter'|'timed'|'full', restWindow.js:691) to the wire's small
+  /** PARTY-REST1: RestWindow's own `mode` string ('loiter'|'timed'|'full', restWindow.js:"is the host's live") to the wire's small
    *  numbers (net/wire.js validPartyPose: 0/1/2) - the one place the three hosts' restState getters (worldModes.js,
    *  dungeonContext.js) and this host's own outdoor overlay converge, so the mapping is written once. */
   const partyRestModeCode = (mode) => (mode === 'timed' ? 1 : mode === 'full' ? 2 : 0);
@@ -24381,7 +24381,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // main.js sets ?load when the menu resolves it, and its comment says
   // "Load Game rides the dungeon host's OWN quickLoad" - true when the
   // classic start booted scenes/dungeon.js, and U31 moved it HERE. The
-  // only reader of `load` in the whole tree is dungeon.js:125, so the
+  // only reader of `load` in the whole tree is dungeon.js:"maps.load(mapsBytes, climateBytes, politicBytes)", so the
   // flag arrived in this host and was discarded: the player got a
   // brand-new character in Privateer's Hold and the only way to reach
   // their save was to start a new game and press F11. A load is not a
@@ -26723,7 +26723,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // window held in the townTalk slot while the player was inside a
       // building or a dungeon, and gated it on the window existing -
       // but townTalk.frame ticks and draws the HUD TEXT LAYER too
-      // (townTalk.js:666, :674). So every HUD line raised in a modal
+      // (townTalk.js:"NextInteractionMode", townTalk.js:"reads the four modes"). So every HUD line raised in a modal
       // mode had nowhere to land, which is why the interior weapon
       // rig's `say` was a console.warn and the interior ticker's was a
       // console.log. Drawn ABOVE the modal render, which is where
@@ -27297,7 +27297,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const _act = activateFrame((latch.activate ??= createActivateGate()), {
           down: _activateDown,
           hasReadySpell: magic.spellArmed(),
-          touchSpell: magic.readied()?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:206)
+          touchSpell: magic.readied()?.rangeType === 1,   // rangeType 1 is ByTouch (spellcast.js:"ClassicTargetIndexToTargetType")
           hudBlocked: activeMouseOverLargeHUD(),
           paused: _overlayHeld,
         });
@@ -28958,11 +28958,11 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // AFTER the damage fork closes (:615), so a shaft that lost the
         // roll still enrages what it hit and wakes the area. ROAD-G G1
         // (review): the WATCH carries the pair now
-        // (cityGuards.js:857-862), so this seam ROUTES by pool exactly
+        // (cityGuards.js:"function handleAttackFromPlayer"), so this seam ROUTES by pool exactly
         // as `dealDamage` above it does, instead of excluding the
         // guards - a zero-damage shaft into a pacified watchman has to
         // reach the same door the zero-damage SWING already reaches
-        // (cityGuards.js:1480). DFU makes no pool distinction:
+        // (cityGuards.js:"damageGuard(foe, 0, playerFeet, null)"). DFU makes no pool distinction:
         // AssignBowDamageToTarget's player arm (DaggerfallMissile.cs
         // :660-688) calls WeaponDamage, so :630 runs for the shaft as
         // for the swing.
@@ -29086,7 +29086,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // layer, because a talk window is a modal above the vitals.
     // AUDIT 39: THE CALL IS UNCONDITIONAL. drawHud runs the damage
     // flash and the enhanced DOM HUD ABOVE its own `!art` return
-    // (hud.js:453-481) because neither reads ARENA2 - "a player whose
+    // (hud.js:"HUDCompass.DrawCompass") because neither reads ARENA2 - "a player whose
     // HUD art failed to load still has vitals". Wrapping the whole
     // call in `if (hudArt)` inverted that: hudArt starts null and is
     // filled by a fire-and-forget load whose failure leaves it null

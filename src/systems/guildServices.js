@@ -230,7 +230,7 @@ function knightlyCanAccessService(membership, service) {
 // - and above rank 8 the service is FREE, so the whole paid-teleport
 // feature was unreachable by exactly the players it is written for.
 //
-// The registry is the formula registry's shape (combat/formulas.js:57-60,
+// The registry is the formula registry's shape (combat/formulas.js:"name per member,",
 // FormulaHelper.RegisterOverride): one entry per guild name, an arm that
 // returns `undefined` to DECLINE so the stock law stands, and the mod's
 // own install as the only writer. This file stays a LEAF - the mod

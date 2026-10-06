@@ -16,7 +16,7 @@
 // does not draw. So this screen draws NO native art and claims no DFU
 // geometry: it is the same TEXT IDIOM ui/charsheet.js's LevelUpScreen
 // already ships in ("The level-up screen stays on the text idiom",
-// charsheet.js:26) - a dimmed full screen and drawText rows. What it
+// charsheet.js:"a later U8 slice") - a dimmed full screen and drawText rows. What it
 // reproduces faithfully is the mod's LAW, which is what the mod
 // registry asks of a vendored port; the mod's LOOK is Morrowind's and
 // stays there.
@@ -62,7 +62,7 @@ export const REMAINING_POINTS_LABEL = 'Virtues left';
 
 /** The mod prints Morrowind's `sAttributeStrength` GMSTs; Daggerfall's
  *  own attribute names are the port's stat keys, and the sheet already
- *  prints them as three-letter heads (charsheet.js:186). This screen
+ *  prints them as three-letter heads (charsheet.js:"font, t, (W - measureText(font.fnt, t) * s)"). This screen
  *  has the room for the whole word. */
 const label = (k) => k.charAt(0).toUpperCase() + k.slice(1);
 
@@ -155,10 +155,10 @@ export class VirtueLevelUpScreen {
     return ok;
   }
 
-  // The same action vocabulary LevelUpScreen answers (charsheet.js:134),
+  // The same action vocabulary LevelUpScreen answers (charsheet.js:"this.working = { ...entity.stats };"),
   // so every host's existing overlay route drives this screen unchanged
   // - including 'char:-', which is the only hyphen a typed-character
-  // branch can produce (ui/input.js:500 - the typed-character branch,
+  // branch can produce (ui/input.js:"three actions to" - the typed-character branch,
   // whose class carries a literal trailing hyphen).
   input(action) {
     const key = STAT_KEYS_ORDER[this.cursor];

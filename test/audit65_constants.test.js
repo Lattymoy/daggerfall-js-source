@@ -74,7 +74,7 @@ const QUIET = (() => {
 
 /** The producer chain, end to end: chargen mints the skills array, the
  *  curse mints the racialOverride, and the MAGIC ROUND is what writes
- *  `entry.skillMods` (lycanthropy.js:262-263 - ApplyLycanthropeAdvantages
+ *  `entry.skillMods` (lycanthropy.js:"entry.skillMods =" - ApplyLycanthropeAdvantages
  *  re-applied every round, LycanthropyEffect.cs:566-584). Nothing here
  *  touches `entity.skills`, which is the whole point: the permanent
  *  array never moves, so a reader of it never sees the +30. */
@@ -90,7 +90,7 @@ function lycanthrope() {
 
 /** The classic pane's drawn text, recovered at the glyph seam -
  *  drawText indexes `fnt.glyphWidth(code - FNT_ASCII_START)` for every
- *  non-space character in order (the idiom nativetrade.test.js:320-330
+ *  non-space character in order (the idiom nativetrade.test.js:"const drawSpy = ()"
  *  already uses). Spaces take the `fixedWidth` arm and are simply
  *  absent from the stream. */
 function paintedBy(sheet, page) {
@@ -251,9 +251,9 @@ test('AUDIT 65 CV-2: an enemy shaft meets the player at 0.45 + 0.35, two-sided, 
 test('AUDIT 65 CV-2: EVERY player-side capsule call carries the player body, at all five sites', () => {
   // The seam is five direct calls: hostMagic's AoE arm and its enemy
   // missile contact, dungeonContext's two enemy-missile player arms, and
-  // the shared ArrowFlight the three world hosts fly (world.js:572,
-  // exterior.js:45, worldModes.js:112; the dungeon runs its own loop and
-  // takes the shared player-arrow LAW at dungeonContext.js:114) - so
+  // the shared ArrowFlight the three world hosts fly (world.js:"import { inflictPoison }",
+  // exterior.js:"import { ArrowFlight, playerArrowHitFoe }", worldModes.js:"import { ArrowFlight, playerArrowHitFoe }"; the dungeon runs its own loop and
+  // takes the shared player-arrow LAW at dungeonContext.js:"import { playerArrowHitFoe }") - so
   // worldModes.js and exterior.js hold no arrow contact of their own.
   // THE FOUR HOSTS RULE: the sweep is the WHOLE of src/, not a list of
   // three files, or a fifth host wiring its own contact escapes it.

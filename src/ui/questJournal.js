@@ -5,7 +5,7 @@
 // port already keeps:
 //
 //   Active quests  - QuestMachine.getAllQuestLogMessages()
-//                    (systems/quest/machine.js:733, already verbatim)
+//                    (systems/quest/machine.js:"is the questor for", already verbatim)
 //   Finished quests- PlayerNotebook.getFinishedQuests()
 //   Notebook       - PlayerNotebook.getNotes()
 //   Messages       - PlayerNotebook.getMessages() (the 50-slot ring)
@@ -370,7 +370,7 @@ export class QuestJournalWindow {
         // (DaggerfallQuestJournalWindow.cs:658-662). AUDIT 24 ui: the
         // last three were spelled with C#'s enum names, which the
         // notebook never emits - it files 'highlight'/'question'/
-        // 'answer' (notebook.js:8-9), so every note and every
+        // 'answer' (notebook.js:"with the notebook's"), so every note and every
         // finished-quest entry silently lost its date/city header,
         // uncounted and undrawn, where DFU draws it in HighlightColor.
         // AUDIT 24 (the seven-slice sweep): the COLOUR rides with the
@@ -572,7 +572,7 @@ export class QuestJournalWindow {
   // in src/ui takes `(renderer, canvas, font, s)` where s is the HUD
   // scale, and that is what the one caller passes: CharSheet.draw
   // forwards its own four arguments straight through to `this.child`
-  // (charsheet.js:357). So the logbook received the SCALE - a number -
+  // (charsheet.js:"export class CharSheet"). So the logbook received the SCALE - a number -
   // in its font slot, `largeFont ?? font` picked it because a number is
   // not nullish, and `measureText(3.fnt, title)` reached measureText
   // with undefined. Opening the character sheet and pressing LOGBOOK

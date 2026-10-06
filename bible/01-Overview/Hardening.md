@@ -170,8 +170,8 @@ carried only the first of the two lines, so a player fighting with the
 left-hand weapon loaded back holding the right hand's item, or bare
 fists. By the time it was found, the two restore lines had drifted six
 and thirteen lines apart inside their own hosts, and the comment in
-`worldModes.js` that pointed between them cited `world.js:12100` and
-`dungeonContext.js:8738` - lines that had moved to `:6935` and `:8710`.
+`worldModes.js` that pointed between them cited `world.js` line 12100 and
+`dungeonContext.js` line 8738 - lines that had moved to 6935 and 8710.
 *Three copies of a rule, and the signpost between them stale as well.*
 
 The pair lives in `src/combat/playerWeapon.js` now - `weaponPoseOf`,
@@ -218,8 +218,8 @@ for the drift this program's thesis predicts, and both came back clean;
 the honest result of an audit is sometimes that the work is not owed.
 
 **S1 - the two exterior hosts' draw ladders. THE HOSTS ARE NOT PEERS,
-and the record never said so.** `main.js:120` routes `?exterior`,
-`?region` and `?loc` to `bootExterior`; the front door (`main.js:255`)
+and the record never said so.** `main.js:"if (params.has('exterior') || params.has('region') || params.has('loc'))"` routes `?exterior`,
+`?region` and `?loc` to `bootExterior`; the front door (`main.js:"stored choice and".."return bootWorld(canvas, renderer, params, status);"`)
 boots `bootWorld`. main.js says it in its own words: *"Dev scenes stay
 one param away (?exterior/?world/etc)."* So this is a shipping ladder
 against a dev scene's ladder, not two live copies of one law - which is
@@ -232,7 +232,7 @@ has and `exterior.js` lacks is the streaming host's own (terrain pixels,
 riding, online peers). Everything `exterior.js` has and `world.js` lacks
 is a `?rig`/`?rigNear`/`?shot` probe rig, its own `refreshSeason` - whose
 streaming twin `tickSeason` is documented AND cites `refreshSeason` by
-name at `world.js:995` - and two math helpers in the shot path. **No
+name at `world.js:"let seasonsActive"` - and two math helpers in the shot path. **No
 drift.**
 
 **S2 - the mode-transition teardown order. Three candidate findings, all
@@ -249,13 +249,13 @@ three collapsed on verification.**
 2. *"`npcSession.onWorldChanged()` is on both door exits and not on the
    teleport/load path."* True, and correct: every caller of
    `forceExitToExterior` follows it with `_teleportToPixel`, and THAT
-   function owns the call (`world.js:12072`, DFU's `OnMapPixelChanged` /
+   function owns the call (`world.js:"const wantsLanding"`, DFU's `OnMapPixelChanged` /
    `OnLoadEvent`). The quickload caller goes through
    `restoreSessionState` instead. Calling it in both places would be the
    redundancy, not the fix.
-3. *"`worldModes.js:11889` disposes the dungeon overlay that
+3. *"`worldModes.js:"hover,"` disposes the dungeon overlay that
    `dungeonCtx.destroy()` disposes again - HARD1's double free."* Already
-   known, already written down, at `dungeonContext.js:9631-9632`:
+   known, already written down, at `dungeonContext.js:"lootContents(key) {".."const i = Number(iStr);"`:
    *"dispose() is idempotent (A2), which is what makes the outer host's
    call harmless."* The tree had the answer before the audit asked.
 
@@ -558,12 +558,12 @@ The door list derived; the four arm names did not. It demanded `close`,
 which no host has ever called on a slot - the hosts free a window with
 `dispose?.()` - so that requirement was invented, and it passed only
 because the one door lacking `close` was also the one being skipped. And
-it omitted `tick`, which `interior.js:396` calls unguarded **every
+it omitted `tick`, which `interior.js:"overlay.tick(dt)"` calls unguarded **every
 frame**.
 
 **F3 - it assumed the population was `ui/*Door.js`.** It is not. Twelve
 window classes are constructed straight into a host slot, and
-`townTalk.js:1235` paints every *covered* window as well
+`townTalk.js:"windows.eachPaintedBeneath"` paints every *covered* window as well
 (`eachCoveredWindow((w) => w.draw(...))`), so depth is in the contract
 too, not just the top of the stack.
 
@@ -571,7 +571,7 @@ too, not just the top of the stack.
 
 Read off the four hosts that own a window stack, scoped to the enclosing
 function rather than a fixed lookback (the first pass used four lines and
-mis-read `townTalk.js:1327` as unguarded; its guard sits eight lines up -
+mis-read `townTalk.js:"overlay.hover(v ? v[0] : -1, v ? v[1] : -1, e)"` as unguarded; its guard sits eight lines up -
 HARD2's D10 pin was re-aimed for the same reason):
 
 | arm | required by | note |
@@ -654,7 +654,7 @@ extraction changed.
 ### One thing left standing, deliberately
 
 `citeShift` reports two citations "for a person" in a STRUCK row of
-`Port-Ledger.md` - `combat/playerWeapon.js:119-161` and its `:808`
+`Port-Ledger.md` - `combat/playerWeapon.js` lines 119-161 and its line 808
 continuation. Read at the commit before this branch, **that span was
 already stale**: it claims to name the port's own gesture path and
 actually pointed at the sheath-and-hand region. HARD2c's insertion moved
@@ -690,6 +690,17 @@ Two further mechanics, both learned the expensive way here:
 
 Post-merge the gate is green on 7,654 tests with `citeShift` reporting
 nothing to move.
+
+**CITE-ANCHOR (2026-10-06) retired the number-by-number resolution above.**
+A cite into our code names its line by a quote -
+`world.js:"const livingQuarry = () =>"` - so a change to a file moves no doc but the ones
+that cite the lines it changed, and a merge conflicts on a cite only where
+both sides changed the cited line - the conflict is then a real one, about
+what the cite should say. A branch that still wrote numbers merges main by
+taking main's side of each cite-only conflict, then running
+`node tools/citeAnchor.mjs --apply` and `--check` on the merged tree: its
+own new cites become anchors in the same pass. Neither citeShift nor
+citeMerge is part of a merge any more.
 
 ### The shape worth keeping
 

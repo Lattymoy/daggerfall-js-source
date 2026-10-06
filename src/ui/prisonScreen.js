@@ -116,7 +116,7 @@ let _courtArt = null;
  *  as DFU's `LoadPalette(imgFile.PaletteName)` does for it
  *  (DaggerfallUI.cs:1225-1231, reached from :75). Minting one here
  *  hands the decode an UNLOADED DFPalette - all 256 entries (255,0,0)
- *  by its constructor (dfPalette.js:12-18) - and the courtroom draws
+ *  by its constructor (dfPalette.js:"export class DFPalette") - and the courtroom draws
  *  as a solid red panel. The mint-your-own law belongs to PRIS00I0
  *  below and to those six names only; read
  *  test/incident_texture.test.js, which now sweeps both directions. */
@@ -163,7 +163,7 @@ export async function preloadPrisonScreenArt(deps) {
   // PRIS00I0 is one of the SIX palettized IMGs: ImgFile._readPalette
   // writes INTO the palette it is handed, so it gets its OWN DFPalette
   // and never the host's shared ART_PAL (the U18/17k law - see
-  // titleScreen.js:44-46). The A3 slice took `deps` whole and the
+  // titleScreen.js:"own. One of the SIX"). The A3 slice took `deps` whole and the
   // shared palette rode in with it: ONE boot-time preload repainted
   // every texture decoded after it - weapons gold, caves and
   // exteriors off - for the entire session (the 2026-09-01 incident).

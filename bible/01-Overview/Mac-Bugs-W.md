@@ -270,10 +270,10 @@ Outside it is not.
 
 | host | collider | where the ground is |
 |---|---|---|
-| `dungeonContext.js:435` | `new Collider(() => -Infinity)` | floor meshes |
-| `interiorContext.js:333` | `new Collider(() => -Infinity)` | floor meshes |
-| `exterior.js:610` | `new Collider(() => GROUND_OFFSET * 0.025)` | **`heightAt`** |
-| `world.js:3018` | `new Collider(heightAt)` | **`heightAt`** |
+| `dungeonContext.js:"entries it holds."` | `new Collider(() => -Infinity)` | floor meshes |
+| `interiorContext.js:"const collider ="` | `new Collider(() => -Infinity)` | floor meshes |
+| `exterior.js:"const collider ="` | `new Collider(() => GROUND_OFFSET * 0.025)` | **`heightAt`** |
+| `world.js:"const collider ="` | `new Collider(heightAt)` | **`heightAt`** |
 
 `heightAt` is applied to the **capsule**, in `_resolveSphere`, and
 nowhere else. So every drop cast down outdoors met nothing — and
@@ -322,7 +322,7 @@ nothing.
 
 ### Not changed, but noticed
 
-`droppedTorches.js:248` casts the same bucket ray to find what a
+`droppedTorches.js:"const wall = col?.raycastHit"` casts the same bucket ray to find what a
 thrown torch hit, with a `raycast` fallback that has the same blind
 spot outdoors. It is not what was reported and it is not blood, so it
 is left alone and written down here instead.
