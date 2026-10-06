@@ -126,7 +126,7 @@ test('FOE-SPACING by source: the street\'s pool, the watch and the dungeon each 
   const x = rd('src/scenes/exteriorFoes.js');
   assert.match(x, /spaceFoes\(foes, collider, foeFrameDt\(dt\)\);[^\n]*\n\s*for \(const f of foes\) \{/, 'the street\'s encounter pool (and the interior pool, the same factory)');
   const g = rd('src/scenes/cityGuards.js');
-  assert.match(g, /spaceFoes\(guards, collider, foeFrameDt\(dt\)\);[^\n]*\n\s*const out = \[\];\n\s*for \(const g of guards\) \{/, 'the watch (and the indoor watch)');
+  assert.match(g, /spaceFoes\(guards, collider, foeFrameDt\(dt\)\);[^\n]*\n\s*for \(const g of guards\) \{/, 'the watch (and the indoor watch)');   // WATCH-SWING (FIELD BUGS 2026-10-06): the frame's list is declared at its own pass after the drive, no longer between the spacing and the loop
   const d = rd('src/scenes/dungeonContext.js');
   assert.match(d, /spaceFoes\(foes, collider, foeFrameDt\(dt\), \(f, i\) => spacingSkips\(f\) \|\| f\._ownFrom != null \|\| \(!_authority && isRoomFoe\(f, i\)\)\);[^\n]*\n(?:\s*\/\/[^\n]*\n\s*clearDoorways\(foes, [^\n]*\n)?\s*for \(const f of foes\) \{\n\s*_fi\+\+;/, 'the dungeon - never a room foe this page does not own');
   assert.match(rd('src/scenes/worldModes.js'), /return createExteriorFoes\(\{/, 'the interior pool is the street\'s factory');
