@@ -38,8 +38,8 @@
   {
     "name": "LW2-owed-dropped",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "      if (stop || row.paused) lag += dt * rate;",
-    "new": "      if (row.paused) lag += dt * rate;",
+    "old": "      if (stop || row.paused || fear) lag += dt * rate;",
+    "new": "      if (row.paused || fear) lag += dt * rate;",
     "tests": [
       "test/lw2_livingTown.test.js"
     ]

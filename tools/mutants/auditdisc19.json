@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-DISC19-W1-fight-with-defender-is-quiet",
     "file": "src/systems/townWatch.js",
-    "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion != null && !t.dead)) return false;",
-    "new": "  if (!isPlayerTarget(t) && !(t?.companion != null && !t.dead)) return false;",
+    "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion",
+    "new": "  if (!isPlayerTarget(t) && !(t?.companion",
     "tests": [
       "test/auditdisc19.test.js"
     ]

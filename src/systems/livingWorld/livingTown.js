@@ -72,6 +72,19 @@ export const CATCH_UP = 0.35;
 export const SNAP_M = 30;
 /** A walk begun this many of the clock's minutes ago from a door is a coming-out (seen at any range). */
 export const DOOR_POP_MIN = 2;
+/** WATCH-PROTECTS: how near a hostile monster sends one on the street running (m) - a few strides of it. */
+export const PANIC_M = 10;
+/** WATCH-PROTECTS: a townsperson running from one (m/s) - twice their walk. */
+export const FLEE_SPEED = PERSON_MOVE_SPEED * 2;
+/** WATCH-PROTECTS: how near one who ran keeps clear of the monster (m) - standing, never walking their day back to it
+ *  while it stands within this of them. */
+export const FLEE_WARY_M = PANIC_M * 2;
+/** WATCH-PROTECTS: how long one who ran keeps clear once the monster is beyond FLEE_WARY_M (real seconds), standing,
+ *  before their day takes them up again. */
+export const FLEE_HOLD_S = 4;
+/** WATCH-PROTECTS: the farthest one runs from where they took fright (m) - then they cower: inside SNAP_M of their day,
+ *  so it takes them up again on foot, never with a jump. */
+export const FLEE_FAR_M = 20;
 /** WATCH-DAY: how far the second of a patrol's pair walks beside the first (m), and behind him where the street will
  *  not hold him beside. */
 export const PAIR_SIDE_M = 0.9;
@@ -156,8 +169,8 @@ export const DEED_KNOWN_MIN = 60;
 /**
  * @typedef {import('./census.js').Resident} Resident
  * @typedef {import('./dayPlan.js').Entry} Entry
- * @typedef {{ person: any, active: boolean, scheduleEnable: boolean, scheduleRecycle: boolean, visible: boolean, res: Resident|null, mine: boolean, arrival: boolean, paused?: boolean }} Row - LW-STAND `paused`: in view on a walk not
- *   yet searched (its minutes owed, as the politeness gate's)
+ * @typedef {{ person: any, active: boolean, scheduleEnable: boolean, scheduleRecycle: boolean, visible: boolean, res: Resident|null, mine: boolean, arrival: boolean, paused?: boolean, flee?: { at: number[], left: number, from: number[] } | null }} Row - LW-STAND `paused`: in view on a walk not
+ *   yet searched (its minutes owed, as the politeness gate's); WATCH-PROTECTS `flee`: running from a monster (`_fright`)
  */
 
 export class LivingTown {
@@ -186,6 +199,7 @@ export class LivingTown {
    *   legalStanding?: (region: number) => ({ rep: number, known: boolean } | null),
    *   keepsakes?: () => readonly any[],
    *   takeKeepsake?: (item: any) => void,
+   *   dangers?: () => (readonly number[][] | null),
    * }} o - LW6c: `keepsakes()` what the player carries (a keepsake carried home), `takeKeepsake(item)` it handed over.
    *   `tripsOf(day)` the roads' word on the town for a day (trips.js through the host's book: who of it is away
    *   when, who of elsewhere stays here; LW-TALK `places` the towns its roads and news name, its talk's {place}), undefined while its ways are still being asked; `armOf(res)` a resident's
@@ -480,7 +494,7 @@ export class LivingTown {
   }
 
   _free(row) {
-    row.active = false; row.scheduleEnable = false; row.scheduleRecycle = false; row.visible = false; row.arrival = false; row.paused = false;
+    row.active = false; row.scheduleEnable = false; row.scheduleRecycle = false; row.visible = false; row.arrival = false; row.paused = false; row.flee = null;
     if (row.res) this._lag.delete(row.res.id);
     row.res = null;
     if (row.person) row.person.living = null;
@@ -531,6 +545,38 @@ export class LivingTown {
   /** DFU's hiding: whether a body `dx`, `dz` off the player is out of their sight - beyond POP_VISIBLE_RANGE or behind
    *  them - where a row may come on or go (in sight it does neither). */
   _hidden(dx, dz, viewYaw) { return Math.hypot(dx, dz) > POP_VISIBLE_RANGE || !this._inView(dx, dz, viewYaw); }
+
+  /** WATCH-PROTECTS: what frightens one on the street this frame - the nearest hostile monster (`dangers`, the host's,
+   *  [x, z] in the location frame): within PANIC_M, run from; once they ran, kept clear of standing while it is within
+   *  FLEE_WARY_M of them (walked back, their day took them to it and they ran again), and for FLEE_HOLD_S after; null
+   *  when nothing does. No farther than FLEE_FAR_M from where it began, they cower.
+   *  @param {Row} row @param {any} p @param {readonly number[][] | null} dangers @param {number} dt */
+  _fright(row, p, dangers, dt) {
+    let near = null, best = Infinity;
+    for (const d of dangers ?? []) { const m = Math.hypot(d[0] - p.pos[0], d[1] - p.pos[2]); if (m < best) { best = m; near = d; } }
+    const run = best < PANIC_M;
+    if (run || (row.flee && best < FLEE_WARY_M)) row.flee = { at: near, left: FLEE_HOLD_S, from: row.flee?.from ?? [p.pos[0], p.pos[2]] };
+    else if (row.flee && (row.flee.left -= dt) <= 0) row.flee = null;
+    if (!row.flee) return null;
+    const far = Math.hypot(p.pos[0] - row.flee.from[0], p.pos[2] - row.flee.from[1]) >= FLEE_FAR_M;
+    return { at: row.flee.at, run: run && !far };
+  }
+
+  /** WATCH-PROTECTS: a frame of running from `fear.at` - straight away from it where the street holds the stride, else
+   *  turned a little at a time, to a quarter turn either way; cornered, or done running, they stand.
+   *  @param {any} p @param {{ at: number[], run: boolean }} fear @param {number} dt */
+  _run(p, fear, dt) {
+    p.moving = false;
+    if (!fear.run) return;
+    const away = Math.atan2(p.pos[0] - fear.at[0], p.pos[2] - fear.at[1]), stride = FLEE_SPEED * dt;
+    for (const turn of [0, 0.4, -0.4, 0.8, -0.8, 1.2, -1.2, Math.PI / 2, -Math.PI / 2]) {
+      const a = away + turn, x = p.pos[0] + Math.sin(a) * stride, z = p.pos[2] + Math.cos(a) * stride;
+      if (!this._street.clear(p.pos[0], p.pos[2], x, z)) continue;
+      p.pos[0] = x; p.pos[2] = z; p.pos[1] = p.groundY(x, z); p.yaw = a; p.moving = true;
+      p.pace = FLEE_SPEED / PERSON_MOVE_SPEED;   // their legs at the run's cadence (residentWalker.js pace)
+      return;
+    }
+  }
 
   /** The census read: who is wanted on the street now, and the circles at the spots. */
   _tick(playerPos, viewYaw) {
@@ -678,13 +724,19 @@ export class LivingTown {
     out.length = 0;
     const seats = this._rows;
     this._onStreet = true;   // LW-PERF: the street's own walks asked first
+    const dangers = this.o.dangers?.() ?? null;   // WATCH-PROTECTS: the hostile monsters about (the host's, this frame)
     for (const row of this.pool) {
       if (!row.active || !row.res) continue;
       const res = row.res, p = row.person;
-      const stop = row.visible && dt > 0 ? !!wantsToStopFn(p) : false;
+      // WATCH-PROTECTS: one a monster comes near runs from it - their day held while they run, owed as the gate's
+      // minutes, and taken up again from where they ran to; frightened, they stop for nobody (the politeness gate is a
+      // walk's), and a frame the clock stands still (a talk window open) keeps the fright as it was
+      const fear = row.visible ? this._fright(row, p, dangers, dt) : null;
+      const stop = row.visible && dt > 0 && !fear ? !!wantsToStopFn(p) : false;
+      p.pace = 1;
       // the politeness gate's minutes, owed and walked off - LW-STAND: and a pause's, on a walk not yet searched
       let lag = this._lag.get(res.id) ?? 0;
-      if (stop || row.paused) lag += dt * rate;
+      if (stop || row.paused || fear) lag += dt * rate;
       else if (lag > 0) lag = Math.max(0, lag - dt * rate * CATCH_UP);
       const w = this.where(res, this._now - lag, true);
       if (!w) { this._free(row); continue; }   // indoors: in through the door, out through the gate
@@ -698,7 +750,8 @@ export class LivingTown {
       // its minutes are owed (`paused`, above): searched, the walk is walked from where they stood, never cut straight
       // across, through whatever stood between, to where its clock had got to
       row.paused = !!w.pending && row.visible;
-      if (w.pending) { if (!row.visible) continue; p.moving = false; }
+      if (fear) this._run(p, fear, dt);
+      else if (w.pending) { if (!row.visible) continue; p.moving = false; }
       else {
         const dx0 = w.x - p.pos[0], dz0 = w.z - p.pos[2];
         const d = Math.hypot(dx0, dz0);
@@ -732,7 +785,7 @@ export class LivingTown {
       const seat = seats[out.length] ??= { person: null, out: null };
       seat.person = p; seat.out = frameOut;
       out.push(seat);
-      if (dt > 0) this._greet(res, p, dist, stop);
+      if (dt > 0 && !fear) this._greet(res, p, dist, stop);   // WATCH-PROTECTS: the frightened greet nobody
     }
     this._onStreet = false;
     this._paths.run();   // LW-PERF: the frame's searching on what the asking left of its cells
@@ -791,10 +844,11 @@ export class LivingTown {
     if (this._scripts.size > 4096) this._scripts.clear();
     /** LW-TALK: a circle's line is said aloud to a circle that stands together on this street - every one of them stood
      *  and at their place (22-84% of the first cut's lines were said while their circle was still walking together, or
-     *  to one the street had not stood) */
-    const standing = new Set(this.pool.filter((r) => r.visible && r.res && !r.person.moving).map((r) => r.res.id));
+     *  to one the street had not stood) - WATCH-PROTECTS: and none of them frightened (`flee`): scattered from a monster,
+     *  standing clear of it, the circle is silent */
+    const standing = new Set(this.pool.filter((r) => r.visible && r.res && !r.person.moving && !r.flee).map((r) => r.res.id));
     for (const row of this.pool) {
-      if (!row.visible || !row.res) continue;
+      if (!row.visible || !row.res || row.flee) continue;   // WATCH-PROTECTS: the frightened say nothing
       const p = row.person;
       if (Math.hypot(p.pos[0] - eye[0], p.pos[2] - eye[2]) > range) continue;
       const c = this._inCircle.get(row.res.id);

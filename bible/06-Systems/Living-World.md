@@ -1224,6 +1224,48 @@ WATCH-KNOWS) - classic play keeps DFU's watch.
 - **Pinned** by `test/watchknows_watch.test.js` (the word by the law; the first offence warned; the hosts) and
   `tools/mutants/watchknows.json`.
 
+## WATCH-PROTECTS - the watch protects the town's people (2026-10-06)
+
+Mac: "improve the guards" - asked, "The watch protects people": a monster attacking townspeople draws the watch to
+defend them. The investigation found no townsperson a monster could attack: DFU's enemy senses weigh other enemies and
+the player alone ("Civilian Mobile NPCs are not handled here", EnemySenses.cs:739-741), and the port's target machine
+with them (`enemyTargets.js getTargets`) - a wolf in the square walked through the crowd to the player, and the town's
+people stood on beside its fight; the watch's defenders came to a monster hunting the player or one of themselves
+(DISC19-F, `townWatch.js isTownThreat`). The living world's lane only (`livingWorldOn`), on the street; a recorded
+departure (Port-Ledger WATCH-PROTECTS) - classic play keeps DFU's street.
+
+- **The quarry** (`quarry.js` makeQuarry; `world.js livingQuarry`). Each of the living town's people on the street, none
+  of the watch, stands for the target machine as a body of their own at their feet - a `civilian`, QUARRY_HEIGHT tall,
+  one health - in the shared candidate list beside the foes and the watchmen; the dead let go.
+- **Who hunts them** (`enemyTargets.js huntsCivilians`). A hostile monster that fights hand to hand - never the watch,
+  an ally, a companion or a quest's foe; never a class (a man with a blade is no monster); never an archer or a caster,
+  whose arrow or spell meets foes and players alone (nothing on the street would stop one). The machine weighs a
+  townsperson for it alone, as near as the player and no likelier: no team's chain, and no "has no target" weight (a
+  townsperson never has one) - whatever the infighting setting.
+- **One blow** (`QUARRY_BLOW`; `exteriorFoes.js`'s non-player arm). The first blow a monster lands strikes a townsperson
+  down, whatever it would deal - as the player's first does in DFU (WeaponManager.cs:500-509, `cityGuards.js
+  resolveCivilianHit`); its sound and blood as any blow's. The town is told by `killed` - another hand: nobody's regard
+  of the player moves (LW7) - and the body leaves the street at once.
+- **The watch comes** (`townWatch.js isTownThreat`). A monster hunting a townsperson alive is the town's threat as one
+  hunting the player is: the watch's defenders come to it after the arrival's countdown (DISC19-F); one struck down is no
+  fight to come to.
+- **The street runs** (`livingTown.js _fright`, `_run`; the host's `dangers` - its foes alive and hostile, no ally or
+  companion, in the town's frame). One on the street a hostile monster comes within PANIC_M (10 m) of runs straight from
+  it at FLEE_SPEED - twice their walk, their legs at the run's cadence (`residentWalker.js pace`) - along a wall where the
+  street will not hold the straight way, never through it; no farther than FLEE_FAR_M (20 m) from where they took fright
+  (inside SNAP_M, so their day takes them up again on foot, never with a jump), and there they cower. Their day is held
+  while they run - its minutes owed, as the politeness gate's - and taken up from where they ran to; they keep clear,
+  standing, while the monster stands within FLEE_WARY_M (20 m - never their day back to it), and FLEE_HOLD_S (4 s) after
+  it is gone. Frightened, they stop for nobody (the politeness gate is a walk's), greet nobody (a word said unseen would
+  rest them past it) and say nothing - a word up before the fright goes with it, and a circle with any of it frightened
+  is silent; a frame the clock stands still (a talk window open) keeps the fright as it was.
+- **The four hosts.** `scenes/world.js` - WIRED (the street's people in the shared candidate list, `livingQuarry`; the
+  street's `dangers`, `livingDangers`). `scenes/exterior.js` - FLAGGED as LW2 has it: the fixed-city page keeps DFU's
+  street (no quarry, no dangers). `scenes/worldModes.js` - none: indoors the street's people are nobody's quarry
+  (`livingQuarry` is the exterior's alone). `scenes/dungeonContext.js` - no town.
+- **Pinned** by `test/watchprotects_watch.test.js` (who hunts; the one blow; the watch comes; the street runs, cornered,
+  chased; the frightened silent; the run's body; struck down; the hosts) and `tools/mutants/watchprotects.json`.
+
 ## The four hosts
 
 - `scenes/world.js` - WIRED (LW2 the towns, LW3 the roads and the Overworld).

@@ -106,6 +106,7 @@ import { CityNavigation } from '../world/cityNavigation.js';   // T2 towns
 import { TownPopulation } from '../systems/townPopulation.js';
 import { LivingTown, LINE_HEAD_M as LIVING_HEAD_M } from '../systems/livingWorld/livingTown.js';   // LW2: the living world's streets - residents with days, where DFU's pool stood
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';
+import { makeQuarry } from '../systems/livingWorld/quarry.js';   // WATCH-PROTECTS: a townsperson as a monster's quarry
 import { knownCriminal } from '../systems/standing.js';   // WATCH-KNOWS: the living watch's word by the law - one whose face it knows
 import { createRelations, LIVING_WORLD_VENDOR } from '../systems/livingWorld/relations.js';   // LW2: how the living world regards this character (modData `LivingWorld`)
 import { ResidentWalker } from '../characters/residentWalker.js';
@@ -4662,6 +4663,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           // LW7: a townsperson's place by the lives, a hand's death, the player's, and the town's own lines of sight
           holderOf: (res, day) => livingPlaceOf(res, livingCycleOf(res, day)).holder, deadAt: livingDeadAt, slay: livingSlay, killed: livingKilled,   // WATCH-FIX: one of the watch another hand cut down
           legalStanding: (region) => ({ rep: legalRepOf(playerEntity, region), known: knownCriminal(playerEntity, region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() }) }),   // WATCH-KNOWS: the watch's word by the law
+          dangers: () => livingDangers(px, py, locOrigin),   // WATCH-PROTECTS: the monsters its people run from
           sees: (a, b) => {
             const tr = state.pixelTranslation(px, py);
             const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], len = Math.hypot(d[0], d[1], d[2]);
@@ -10526,7 +10528,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // through the one that owns the billboard - `exteriorFoePool` is
     // the watch AND the encounter foes, and this arm reached the
     // encounter pool's remover for both. That was not a leak: removeFoe
-    // (exteriorFoes.js:587-592) never looks the record up in `foes`, and
+    // (exteriorFoes.js:588-593) never looks the record up in `foes`, and
     // both pools share this host's one renderer, so a struck WATCHMAN
     // got exactly what removeGuard (cityGuards.js:1762-1780) gives it -
     // batch freed, `dead = true`, no corpse, skipped by the next AI pass
@@ -11045,6 +11047,34 @@ export async function bootWorld(canvas, renderer, params, status) {
   // none of them: above ground a foe's Continuous Damage never took a
   // round, its poison never fired, and a paralysed foe stayed paralysed.
   subscribeFoePools(playerTicker, [() => cityGuards.guards, () => exteriorFoes.foes], foeSinks);
+  // WATCH-PROTECTS: THE STREET'S PEOPLE AS A MONSTER'S QUARRY (systems/livingWorld/quarry.js) - the living world's
+  // townspeople on the street, none of the watch, each a body at their world feet that a hostile monster fighting hand to
+  // hand may hunt (characters/enemyTargets.js huntsCivilians); struck, killed by another hand (livingTown.js killed)
+  const _quarryOf = new WeakMap();
+  const livingQuarry = () => {
+    if (!livingWorldOn() || _mode() !== 'exterior') return [];
+    const out = [];
+    for (const seat of _livePersons) {
+      const p = seat.person, living = p?.living;
+      if (!living?.town || p.guard) continue;
+      let q = _quarryOf.get(p);
+      if (!q || q.living !== living) { q = makeQuarry(p, (body) => body.living.town.killed(body.person)); _quarryOf.set(p, q); }   // a row dressed anew: another body
+      if (q.entity.health <= 0) continue;
+      q.ai.feet[0] = seat.pos[0]; q.ai.feet[1] = seat.pos[1]; q.ai.feet[2] = seat.pos[2]; q.ai.yaw = p.yaw;
+      out.push(q);
+    }
+    return out;
+  };
+  // WATCH-PROTECTS: the monsters a town's people run from (livingTown.js PANIC_M) - this host's foes, alive, hostile, and
+  // neither the player's ally nor a companion, at their feet in the location frame of the town at px, py
+  const livingDangers = (px, py, locOrigin) => {
+    const tr = state.pixelTranslation(px, py), out = [];
+    for (const f of exteriorFoes.foes) {
+      if (f.dead || !f.ai?.isHostile || f.companion != null || f.entity?.team === 'PlayerAlly') continue;
+      out.push([f.ai.feet[0] - locOrigin[0] - tr[0], f.ai.feet[2] - locOrigin[2] - tr[2]]);
+    }
+    return out;
+  };
   /** AUDIT 24 (wave 36): the senses context every foe pool owes its
    *  foes, built ONCE per frame for all of them. This host used to pass
    *  `{ playerInvisible }` alone, which left Chameleon and Shade inert,
@@ -11063,7 +11093,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // DFU's database yields only ACTIVE behaviours. Passing the
     // getter (not the array) keeps one live view per frame with no
     // pool importing the other.
-    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes].filter((f) => !f.dead && !f.puppet),   // AUDIT WORLD6b B8: a puppet is nobody's target here - it lands no blow and takes none of mine (a foe hunting a peer is 6b-ii's)
+    // WATCH-PROTECTS: and the street's people, the living world's (livingQuarry, above)
+    candidates: () => [...cityGuards.guards, ...exteriorFoes.foes, ...livingQuarry()].filter((f) => !f.dead && !f.puppet),   // AUDIT WORLD6b B8: a puppet is nobody's target here - it lands no blow and takes none of mine (a foe hunting a peer is 6b-ii's)
     playerEntity,
     wildUnaware: (f) => wildGated(f),   // WILD-ALERT: a wilderness foe that has not noticed a fast traveller leaves them off its list
   });

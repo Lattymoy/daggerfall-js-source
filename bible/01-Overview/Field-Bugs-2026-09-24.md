@@ -983,7 +983,7 @@ set), where the player saw their beast.
 
 The wire was never at fault. `wb` goes out on its edge (`wire.js:1347`),
 through the door (`:1287`) and the easing (`online.js:238`), from the sender
-at `world.js:23283`.
+at `world.js:23314`.
 
 **Fix.** `peerRiders.js` takes a peer whose pose says `wb`, as it takes a
 rider:
@@ -1004,7 +1004,7 @@ still stands for them. A beast is never nothing.
 The modal passes (`worldModes.js:9262` the dungeon, `:9473` the interior)
 draw only `host.extraBillboards`. That was `remotePlayers.batches()` alone,
 so a beast drawn by the rider layer would have been nothing indoors and
-underground. It hands over both layers' batches now (`world.js:23593`). A
+underground. It hands over both layers' batches now (`world.js:23624`). A
 rider never reaches those passes: a door dismounts. The eye the layer turns
 its sprites to (`cam.pos`) is live in every mode, because worldModes shares
 world.js's `cam` and sets it each modal frame.
@@ -1071,12 +1071,12 @@ the scene the picture takes in:
 
 **Hosts.** Every Morrowind body in the port goes through `drawThird`. The
 local player's goes through `mwView.mwViewDrawBody` (`mwView.js:447`,
-`:463`), which four files call: `world.js:28039`, `exterior.js:5509`,
+`:463`), which four files call: `world.js:28070`, `exterior.js:5509`,
 `worldModes.js:9250` and `:9362` (the dungeon and the interior passes),
 and `dungeon.js:1110`. `dungeonContext.js`, the fourth motor host, builds
 the dungeon for those hosts and draws no body of its own. The other players'
 bodies go through `peerBodies.js:705` (`PeerBodies.draw`, and INVIS-LOOK's `drawVeiled`, by `_drawBodies`). The open world
-calls it at `world.js:28040`, and the modal passes reach it through
+calls it at `world.js:28071`, and the modal passes reach it through
 `host.drawPeerBodies` (`worldModes.js:9251`, `:9363`). The fix therefore
 sits in one place and reaches every host.
 

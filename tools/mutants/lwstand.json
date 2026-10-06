@@ -101,8 +101,8 @@
   {
     "name": "LW-STAND-stride-kept",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "      if (w.pending) { if (!row.visible) continue; p.moving = false; }",
-    "new": "      if (w.pending) { if (!row.visible) continue; }",
+    "old": "      else if (w.pending) { if (!row.visible) continue; p.moving = false; }",
+    "new": "      else if (w.pending) { if (!row.visible) continue; }",
     "tests": [
       "test/lwstand_street.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LW-STAND-pause-unowed",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "      if (stop || row.paused) lag += dt * rate;",
-    "new": "      if (stop) lag += dt * rate;",
+    "old": "      if (stop || row.paused || fear) lag += dt * rate;",
+    "new": "      if (stop || fear) lag += dt * rate;",
     "tests": [
       "test/lwstand_street.test.js"
     ]

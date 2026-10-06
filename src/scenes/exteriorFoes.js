@@ -97,6 +97,7 @@ import { revenantRoutable, revenantRouted, revenantRoutedEvent, revenantFleeStep
 import { revenantMayYield, beginYield, yieldStep, slipEvent, kneelPose, beginExecution, executionStep, finishExecution, beginSpare, spareDone, fateDissolve, fateModel, dropFateHeld, revenantWillHolds, beginTearAway, revenantLastStandDue, beginLastStand, roarStep } from '../systems/revenantFate.js';   // REVENANT-FATE: beaten, it yields - kill it or spare it
 import { setBatchDissolve } from '../systems/dissolve.js';   // DISSOLVE: burnt away, or gathered through a portal
 import { createPortalSet } from './portalFx.js';   // COMPANION-PORTAL
+import { QUARRY_BLOW } from '../systems/livingWorld/quarry.js';   // WATCH-PROTECTS: a townsperson's one blow
 import { elitesAllowed, promoteEliteFoe, rollOverworldElite, grantEliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, ELITE_FOE_SIZE } from '../systems/eliteFoes.js';   // ELITE FOES: 5% of the wilds' foes   // HITFLASH1
 
 // The port's allocation-owner guards (classic self-limits through the
@@ -1685,7 +1686,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
           if (blowConnects(f.ai, meleeHitConnects(f.ai._dist, f.ai.inSight, withinYaw(f.ai.yaw, fdx, fdz, MELEE_HIT_YAW_DEG)))) {
             applyDamageToNonPlayer(f, _foeTarget, {
               weapon: fwpn, direction: ffwd, rolls,
-              calculateAttackDamage,
+              calculateAttackDamage: _foeTarget.civilian ? QUARRY_BLOW : calculateAttackDamage,   // WATCH-PROTECTS: a townsperson falls to one landed blow, as DFU's civilian does to the player's
               // the TARGET's own pool owns its death chain: an
               // encounter foe routes to damageFoe, a watchman to the
               // guard pool's door (the host wires that through the

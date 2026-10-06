@@ -46,6 +46,9 @@ export class ResidentWalker extends MobilePerson {
     this.unit = null;
     this.armed = false;
     this.ownArchive = opts.archive;
+    /** WATCH-PROTECTS: the walk wheel's cadence as a share of the walk's - the living town's run, twice (livingTown.js
+     *  _run): at the walk's four frames a second a runner's legs skated a stride twice their own. */
+    this.pace = 1;
     this.state = 'idle';
     this.moveCount = 1;   // the anti-skate rule is the pool's: a resident is placed where it is, never mid-tile
   }
@@ -88,7 +91,7 @@ export class ResidentWalker extends MobilePerson {
     if (this.armed && this.unit) return this.unit.update(dt, { moving: this.moving && !wantsToStop }, this.yaw, this.pos, cameraPos);
     const st = wantsToStop ? 'idle' : this.moving ? 'move' : 'stand';
     if (st !== this.state) { this.state = st; this.frame = 0; this._timer = 0; }
-    const fps = st === 'idle' ? PERSON_IDLE_FPS : PERSON_MOVE_FPS;
+    const fps = st === 'idle' ? PERSON_IDLE_FPS : PERSON_MOVE_FPS * this.pace;
     this._timer += dt;
     while (this._timer >= 1 / fps) { this._timer -= 1 / fps; this.frame++; }
     if (st === 'idle') {
