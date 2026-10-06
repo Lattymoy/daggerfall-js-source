@@ -296,8 +296,9 @@ export const HOME_BANK_LINES = Object.freeze(['Online, a home is bought', 'at it
  * THE CLIENT'S REGISTRY over `api` (net/accountClient.js accountHomes: every answer `{ ok, data }` or
  * `{ ok: false, error }`, never a throw). `character()` is the character playing - a home is ONE character's
  * (`own`), though its account may always walk in (`mine`). Answers `{ ensure, waitFor, known, homeAt, claim,
- * release, setEntry, version }`; `version` moves on every change a door would show.
- * @param {{ api: any, character?: () => (string|null), now?: () => number, ttlMs?: number }} opts
+ * release, setEntry, version }`; `version` moves on every change a door would show. LEGACY7 part five: `onWrote(mapId,
+ * buildingKey)` told of each change of mine (a claim, a release, an entry) - the line's houses read again.
+ * @param {{ api: any, character?: () => (string|null), now?: () => number, ttlMs?: number, onWrote?: ((mapId: number, buildingKey: number) => void) | null }} opts
  */
 export function createOnlineHomes({ api, character = () => null, now = () => Date.now(), ttlMs = HOME_TOWN_TTL_MS, onWrote = null }) {
   /** @type {Map<number, {at: number, homes: Map<number, any>}>} */
