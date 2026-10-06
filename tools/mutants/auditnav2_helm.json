@@ -138,11 +138,12 @@
   {
     "name": "AUDIT-NAV2-F20-the-quarter-second-swing",
     "file": "src/systems/helmWay.js",
-    "old": "she swings 8.8 deg/s (the mod's 0.45)",
-    "new": "she swings 8.3 deg/s (the mod's 0.4)",
+    "old": "8.8 deg/s (the mod's 0.45)",
+    "new": "8.3 deg/s (the mod's 0.4)",
     "tests": [
       "test/auditnav2_helm.test.js"
-    ]
+    ],
+    "note": "SAIL-FREE (re-aimed by content): the figures alone - the header's sentence wraps them onto their own line since SAIL-FREE's re-measure, and the pin reads the header whitespace-folded."
   },
   {
     "name": "AUDIT-NAV2-F31-E-not-the-hold",
