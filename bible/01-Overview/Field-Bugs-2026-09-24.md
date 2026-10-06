@@ -1071,12 +1071,12 @@ the scene the picture takes in:
 
 **Hosts.** Every Morrowind body in the port goes through `drawThird`. The
 local player's goes through `mwView.mwViewDrawBody` (`mwView.js:447`,
-`:463`), which four files call: `world.js:27987`, `exterior.js:5508`,
+`:463`), which four files call: `world.js:28003`, `exterior.js:5508`,
 `worldModes.js:9248` and `:9360` (the dungeon and the interior passes),
 and `dungeon.js:1110`. `dungeonContext.js`, the fourth motor host, builds
 the dungeon for those hosts and draws no body of its own. The other players'
 bodies go through `peerBodies.js:705` (`PeerBodies.draw`, and INVIS-LOOK's `drawVeiled`, by `_drawBodies`). The open world
-calls it at `world.js:27988`, and the modal passes reach it through
+calls it at `world.js:28004`, and the modal passes reach it through
 `host.drawPeerBodies` (`worldModes.js:9249`, `:9361`). The fix therefore
 sits in one place and reaches every host.
 

@@ -1,4 +1,4 @@
-// SERPENT3 (2026-10-05, Mac: "the serpent world boss teleports. Nobody has beat it yet."; his call: "Two or more ships") -
+// SERPENT3 (2026-10-05, Mac: "the serpent world boss teleports. Nobody has beat it yet."; Mac's call: "Two or more ships") -
 // THE SERPENT NEVER LEAPS (bible/11-Multiplayer/Sea-Serpent.md section 15). The relay's own brain over whole fights: its
 // head swims every metre it shows (a Rising Maw and a coil dashed for under the sea, closed on at the surface first, the
 // Maelstrom formed where it swims, a slept fight taken up where it was); every attack's swim said as it begins, so a client

@@ -56,9 +56,10 @@ export function ramHead(atk, t) {
 
 /**
  * SERPENT3 - A PAIR'S SHARE (2026-10-05, Mac's call: "Two or more ships" - "its blows scale down when fewer than three
- * ships fight it, so a pair has a real chance; one ship alone still can't"): with exactly two ships afloat at the fight
- * (`n`, the relay's count - serpentBrain.js `ships`, the whole state's `n`) every blow, grip, crush, grind and venom bite
- * lands at SERPENT_PAIR_SHARE - each of a pair takes what each of three would; a lone ship, and three or more, the whole.
+ * ships fight it, so a pair has a real chance; one ship alone still can't"): with exactly two ships fighting it (`n`,
+ * the relay's count - serpentBrain.js serpentShipsFighting, the shares in its health: AUDIT SHIPS C1) every blow, grip,
+ * crush, grind and venom bite lands at SERPENT_PAIR_SHARE - each of a pair takes what each of three would; a lone ship,
+ * and three or more, the whole.
  */
 export const SERPENT_PAIR_SHARE = 2 / 3;
 export const fleetShare = (n) => (n === 2 ? SERPENT_PAIR_SHARE : 1);

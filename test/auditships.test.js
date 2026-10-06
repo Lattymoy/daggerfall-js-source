@@ -184,7 +184,7 @@ test('AUDIT SHIPS C1 the ships fighting it are the shares standing in its health
   stepSerpentBrain(pair, T0, [body('s1', 100, 0), body('s2', -100, 0), body('s3', 0, 120)], rng);
   assert.equal(pair.ships, 2, 'a pair and a rowboat: two ships');
   near(fleetShare(serpentStateOf(pair).n), SERPENT_PAIR_SHARE, 1e-12, 'the pair\'s share');
-  // the rider: her own ship's share brought, then her `in` from his deck
+  // the rider: her own ship's share brought, then her `in` from the captain's deck
   const ride = surfaced(fightOf([HULL.SmallShip, HULL.SmallShip]));
   const both = ride.max, frac = ride.hp / ride.max;
   joinSerpentFight(ride, 's2', 'P2', 20, -1, T0 + 100, true);

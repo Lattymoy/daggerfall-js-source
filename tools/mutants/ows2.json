@@ -173,8 +173,8 @@
   {
     "name": "OWS2-helm-calm-sails",
     "file": "src/systems/seaHelm.js",
-    "old": "q.hasSails && windLen >= H.calm",
-    "new": "q.hasSails && windLen >= 0",
+    "old": "(q.free ? windLen > 0 : windLen >= H.calm)",
+    "new": "(q.free ? windLen > 0 : windLen >= 0)",
     "tests": [
       "test/ows2_crossing.test.js"
     ]

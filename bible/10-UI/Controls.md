@@ -128,7 +128,9 @@ binds") - THE ARROWS ARE THE HELM (DECLARED, the Port-Ledger's HELM-KEYS row):
   comes down one (`systems/comeSailAway.js ladderUp, ladderDown`): the oars backing water, at rest, pulling ahead, then
   her sails and, where the square sails are the player's own (the assist's AutoStowSquareSails off, a hull with both
   kinds), all her canvas - More sail and Less sail's steps above the oars. The oars keep their rung with no key held. A
-  step with nowhere to go says so. End still toggles all her canvas, the brackets still trim.
+  step with nowhere to go says so. End still toggles all her canvas, the brackets still trim - under the mod's own
+  helm (AUDIT SHIPS A6/D1, 2026-10-06: under the Responsive one her trim is the helm's own, every sail drawing at its
+  crest - SAIL-FREE - so the brackets move nothing there and the panel and the pad offer no trim).
 - **Left and right steer**: at a helm DFU's `TurnLeft` and `TurnRight` - the arrows - are the RUDDER's, as A and D are
   (`inputActions.js HELM_RUDDER_ACTIONS`, read through the mod's own input seam, its rudder's swing too), and the
   keyboard look does not turn the view with them there. One action, one meaning - a turn - read by whoever the hands

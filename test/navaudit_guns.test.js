@@ -206,6 +206,13 @@ test('AUDIT NAV1 G7 station alongside: presented, her way matches the enemy\'s a
   upwind.speed = 5;
   run(upwind, world({ wind: [0, 0, WIND_RATED], contacts: [player(at(250, 100))] }), 0.1);
   assert.equal(upwind.present?.side, 'port', 'she shows the side the wind lets bear');
+  // that lay is 29 degrees off - BEAR_COST_S alone (29 s) outweighs port's 17 s turn since HELM-WAY. NO_BEAR_S is what
+  // decides a lay only a little past the fire's window: at 232 degrees starboard asks her 11.7 into the eye (the window
+  // 7.5), 11.7 s against port's 18.7 s turn - she would show it and sail on unfired
+  const edge = ship('pirateBrig', { yaw: 135 * DEG });
+  edge.speed = 5;
+  run(edge, world({ wind: [0, 0, WIND_RATED], contacts: [player(at(232, 100))] }), 0.1);
+  assert.equal(edge.present?.side, 'port', 'a lay a little past the window is not taken either');
   assert.ok(NO_BEAR_S > 60, 'a side that cannot bear outweighs the turn to the other');
   // point-blank, loaded: she bends off to open the range rather than slug hull to hull
   const pb = ship('pirateBrig');

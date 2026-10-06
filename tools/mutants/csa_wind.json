@@ -281,7 +281,7 @@
   {
     "name": "CSA-E-power-stowed-counts",
     "file": "src/systems/comeSailAway.js",
-    "old": "      if (animatorOf(sail).GetBool('Stowed')) continue;   // a sail without an Animator throws, as the C#'s does",
+    "old": "      if (!all && animatorOf(sail).GetBool('Stowed')) continue;",
     "new": "      if (false) continue;",
     "tests": [
       "test/csa_wind.test.js"
@@ -650,8 +650,8 @@
   {
     "name": "CSA-E-arm-rudder-mod",
     "file": "src/systems/comeSailAway.js",
-    "old": "    state.TurnTarget = f(num18 * f(f(f(responsive() ? steerage(way / SAIL_FREE.gain) : way) * f(boat.modifierRudder)) / 10));",
-    "new": "    state.TurnTarget = f(num18 * f(f(f(responsive() ? steerage(way / SAIL_FREE.gain) : way) * f(boat.modifierRudder)) / 5));",
+    "old": "    state.TurnTarget = f(num18 * f(f(f(responsive() ? steerage(way / sailFreeGain(boat)) : way) * f(boat.modifierRudder)) / 10));",
+    "new": "    state.TurnTarget = f(num18 * f(f(f(responsive() ? steerage(way / sailFreeGain(boat)) : way) * f(boat.modifierRudder)) / 5));",
     "tests": [
       "test/csa_wind.test.js"
     ]

@@ -88,9 +88,11 @@ export const SERPENT_DRAWN_MS = 12_000;
  *  then snapped its head on by the dash's start (4 m at 150 ms). */
 export const SERPENT_SAY_AHEAD_MS = 500;
 /** SERPENT3: CLOSING - a Rising Maw or a coil chosen at a ship beyond the dash its own wind-up swims is not begun: it
- *  surges at her ON THE SURFACE at CLOSE_V (m/s - the galleon's best is 16) until she lies within that dash, and begins
- *  it then, its telegraph its own length; she outsails it SERPENT_CLOSE_MS (ms) and it chooses again. A wind-up stretched
- *  to a long dash gave every moving ship ten seconds to sail clear (a lone galleon won 10 fights in 12, simulated). */
+ *  surges at her ON THE SURFACE at CLOSE_V (m/s) at the least - AUDIT SHIPS A1/D5: closeV, CLOSE_GAIN_V over her own way,
+ *  which SAIL-FREE takes past CLOSE_V (a galleon's best is 16.2 m/s at the rated wind and twice it in a storm) - until she
+ *  lies within that dash, and begins it then, its telegraph its own length; she outsails it SERPENT_CLOSE_MS (ms) and it
+ *  chooses again. A wind-up stretched to a long dash gave every moving ship ten seconds to sail clear (a lone galleon won
+ *  10 fights in 12, simulated). */
 export const CLOSE_V = 20;
 export const SERPENT_CLOSE_MS = 12_000;
 /** AUDIT SHIPS A1: and never slower than the ship it closes on - its surge is CLOSE_GAIN_V (m/s) over her way
@@ -299,7 +301,7 @@ export const serpentShareWanted = (p, now) => !p.wreck && p.aboard !== false && 
  *  (a rowboat brings none and deals none), afloat, at the fight, her guns heard, and her captain aboard her (every other
  *  share is retired - serpentShareWanted, serpentWreck). The pair's share reads it (systems/serpentStrike.js fleetShare).
  *  It counted every account at the fight whose hull claim, which only ever grows, was 0 or more: a lone galleon with a
- *  rowboat beside her, or with a friend riding her deck who had sighted it from his own ship, was "a pair" and took two
+ *  rowboat beside her, or with a friend riding her deck who had sighted it from their own ship, was "a pair" and took two
  *  thirds of every blow - the lone ship eased that Mac's call rules out - while a true pair with a rowboat by was three,
  *  and lost its share. The count is the health's own now, so two ships eased is two ships' health to fight. */
 export const serpentShipsFighting = (f) => Object.values(f.players).filter((p) => p.share > 0 && !p.retired).length;

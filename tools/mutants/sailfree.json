@@ -169,7 +169,7 @@
   {
     "name": "SAIL-FREE-way-on-without-gain",
     "file": "src/systems/comeSailAway.js",
-    "old": "return responsive() ? f(rate * f(SAIL_FREE.gain)) : rate;",
+    "old": "return responsive() ? f(rate * f(sailFreeGain(b))) : rate;",
     "new": "return rate;",
     "tests": [
       "test/sailfree.test.js",
@@ -180,7 +180,7 @@
   {
     "name": "SAIL-FREE-coast-without-gain",
     "file": "src/systems/comeSailAway.js",
-    "old": "return responsive() ? f(coast * f(SAIL_FREE.gain)) : coast;",
+    "old": "return responsive() && state.wayBySail ? f(coast * f(sailFreeGain(b))) : coast;",
     "new": "return coast;",
     "tests": [
       "test/sailfree.test.js",
@@ -200,7 +200,7 @@
   {
     "name": "SAIL-FREE-rudder-without-gain",
     "file": "src/systems/comeSailAway.js",
-    "old": "steerage(way / SAIL_FREE.gain)",
+    "old": "steerage(way / sailFreeGain(boat))",
     "new": "steerage(way)",
     "tests": [
       "test/auditnav2_helm.test.js",

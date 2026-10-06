@@ -35,13 +35,14 @@
 export const HELM_WAY = Object.freeze({ sailAccel: 3.5, coast: 3, turnAccelSail: 2.4, steerFloor: 3, steerPeak: 14, steerPeakV: 4.5 });
 
 /**
- * SAIL-FREE (DECLARED, the Port-Ledger's HELM-WAY row; 2026-10-05, Mac: "Currently its too hard to sail against the wind,
- * ships need more speed"; his calls: "No tacking, Black Flag" and "nothing that breaks immersion") - HER WAY UNDER SAIL,
- * the responsive helm's (the mod's own stays under Classic). Measured first on the real runtime (a 1.5 m/s wind): Come
- * Sail Away's GetSailPower gives a fore-and-aft sail a quarter to half of its pull close-hauled and drives it ASTERN
- * within 30 degrees of the wind's eye, and a square sail nothing forward of the beam - the galleon made 4.7 m/s 45
- * degrees off the eye and went astern at 30, a Carrack 1.8 m/s, a Large Galley nothing at all - while every captain on
- * the Bay sails by navalAI.js windFactor (70% close-hauled, never astern). So under the responsive helm:
+ * SAIL-FREE (DECLARED, the Port-Ledger's own SAIL-FREE row - AUDIT SHIPS D10; 2026-10-05, Mac: "Currently its too hard
+ * to sail against the wind, ships need more speed"; Mac's calls: "No tacking, Black Flag" and "nothing that breaks
+ * immersion") - HER WAY UNDER SAIL, the responsive helm's (the mod's own stays under Classic). Measured first on the
+ * real runtime (a 1.5 m/s wind): Come Sail Away's GetSailPower gives a fore-and-aft sail a quarter to half of its pull
+ * close-hauled and drives it ASTERN within 30 degrees of the wind's eye, and a square sail nothing forward of the
+ * beam - the galleon made 4.7 m/s 45 degrees off the eye, lay dead at 30 and went astern inside it, a Carrack 1.8 m/s,
+ * a Large Galley nothing at all - while every captain on the Bay sails by navalAI.js windFactor (70% close-hauled,
+ * never astern). So under the responsive helm:
  *   - HER CANVAS is each sail she has set at its own best pull (comeSailAway.js canvasPull: the mod's own curve for its
  *     kind, at its crest, scaled for its size) - the mod's law draws her square and her fore-and-aft sails at their best
  *     on different headings, so a mixed rig never had all of its canvas drawing at once;
@@ -51,12 +52,30 @@ export const HELM_WAY = Object.freeze({ sailAccel: 3.5, coast: 3, turnAccelSail:
  *     drives her at most twice her rated way;
  *   - HER PACE (SAIL_FREE.pace): Come Sail Away's speeds were set for its time dial, which online is gone
  *     (HELM-TIME-ONLINE) - every way under sail a fifth again;
- *   - HER HANDLING at her new way (SAIL_FREE.gain - the galleon's way on her beam, SAIL-FREE's 14.38 m/s over the mod's
- *     8.75): her way comes on and off at HELM-WAY's rates times it, and her rudder reads her way over it (steerage), so
- *     she gathers her way, loses it and swings at her full way as she did - on a wider circle, as a faster hull does.
+ *   - HER HANDLING at her new way (her rig's gain - sailFreeGain: the galleon's SAIL_FREE.gain is her way on her beam,
+ *     SAIL-FREE's 14.38 m/s over the mod's 8.75; every rig has its own, AUDIT SHIPS A5): her way comes on and - while
+ *     she loses a way her canvas made - off at HELM-WAY's rates times it, and her rudder reads her way over it
+ *     (steerage), so she gathers her way, loses it and swings at her full way as she did - on a wider circle, as a
+ *     faster hull does.
  * The player's alone: the captains keep their own point of sail (navalAI.js windFactor) and HELM-WAY's pace.
  */
 export const SAIL_FREE = Object.freeze({ pace: 1.2, gain: 1.643 });
+/**
+ * AUDIT SHIPS A5 (2026-10-06, Mac: "Audit everything"): HER RIG'S OWN GAIN - her SAIL-FREE drive on her beam in the rated
+ * wind over the mod's own (HELM-WAY's, its auto-trim's) for her hull and, a Large Boat's, her variant (SAIL_FREE.gain is
+ * the galleon's). SAIL_FREE.gain was every hull's, so a Large Boat (her way up 6%) gathered and lost hers a third
+ * quicker than HELM-WAY tuned her, and a Large Galley (her way doubled) a third slower, with a Carrack between. Measured
+ * on the runtime and pinned there (test/auditships_sail.test.js): a rig whose drive moves moves them.
+ */
+export const SAIL_FREE_GAINS = Object.freeze({
+  1: Object.freeze([1.065, 1.159, 2.071, 1.190, 1.233, 1.212, 2.131]),   // the Large Boat's seven rigs
+  2: Object.freeze([SAIL_FREE.gain]),   // the Small Ship (Mac's galleon)
+  3: Object.freeze([2.131]),            // the Large Galley
+  4: Object.freeze([1.798]),            // the Carrack
+});
+/** AUDIT SHIPS A5: a boat's gain (SAIL_FREE_GAINS) - her hull's first rig's for a variant it lacks; 1 for a hull with no
+ *  sails (the rowboat). */
+export const sailFreeGain = (b) => SAIL_FREE_GAINS[b?.hull]?.[b?.variant ?? 0] ?? SAIL_FREE_GAINS[b?.hull]?.[0] ?? 1;
 export const POINT_OF_SAIL = Object.freeze({ run: 0.9, quarter: 45, head: 0.55 });
 /**
  * The point of sail's share of her best way: `offRun` degrees between her heading and where the wind blows TO (0 running

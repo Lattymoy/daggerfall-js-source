@@ -1,4 +1,4 @@
-// SAIL-FREE (2026-10-05, Mac: "Currently its too hard to sail against the wind, ships need more speed"; his calls: "No
+// SAIL-FREE (2026-10-05, Mac: "Currently its too hard to sail against the wind, ships need more speed"; Mac's calls: "No
 // tacking, Black Flag" and "nothing that breaks immersion") - the responsive helm's way under sail (systems/helmWay.js
 // SAIL-FREE; systems/comeSailAway.js canvasPull and sailDrive), driven on Come Sail Away's real runtime over the vendored
 // hulls (test/csaScene.mjs): the point of sail's curve and its no-tack law, the sea's bounded wind, her canvas at its
@@ -205,7 +205,8 @@ test('SAIL-FREE the Overworld journey sails her straight for a mark to windward:
   assert.equal(seaHelmStep(st, q(false, -(SEA_HELM.laneDeg - 1))).course, SEA_HELM.noGoFore, 'within the lane: held');
   assert.equal(seaHelmStep(st, q(false, -(SEA_HELM.laneDeg + 1))).course, -SEA_HELM.noGoFore, 'past it: about');
   for (const b of [10, -(SEA_HELM.laneDeg - 1), -(SEA_HELM.laneDeg + 1)]) { assert.equal(seaHelmStep(fr, q(true, b)).course, b); assert.equal(fr.tack, 0, 'free: no tack held'); }
-  const i = WORLD.indexOf('sailWay: CSA_HANDLING.moveSpeedSail');
+  // PIN MOVED (AUDIT SHIPS A4, 2026-10-06): her sails' way is the runtime's own word now (sailWayOf), not the mod's formula
+  const i = WORLD.indexOf('sailWay: csaRuntime.sailWayOf(boat)');
   assert.ok(i >= 0, 'the world asks the journey');
   assert.match(WORLD.slice(i, WORLD.indexOf('\n', i)), /, free: !!csaRuntime\.helmResponsive\(\),/, 'and tells it the helm she has');
 });

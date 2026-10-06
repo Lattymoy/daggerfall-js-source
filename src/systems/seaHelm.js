@@ -22,7 +22,8 @@
 //     the oars turn it at 20 degrees a second), for a spell after the
 //     sails made no way (`stall`), near a landfall's shore (`rowInM` - the
 //     oars take it in, as a sailor lowers sail to come ashore), while land
-//     stands close ahead (`avoidM`), and whenever a crew's oars are the
+//     stands close ahead (`avoidM` - AUDIT SHIPS A2: or the way she makes in
+//     `avoidS`, if farther: `seaHelmReach`), and whenever a crew's oars are the
 //     faster (`oarWay` over `sailWay`: the Large Galley's crew rows at
 //     eight, its one square sail makes four or five - a crew rows for
 //     nothing, a lone rower pays the fatigue, so a crewless boat sails);
@@ -37,7 +38,10 @@
 //     under the responsive helm (`free`) she makes the most of her way
 //     sailing straight for it, so there is no cone and no tack;
 //   - land close ahead turns the boat to the freer side (the host's
-//     probe of the water ahead and to either hand);
+//     probe of the water ahead and to either hand) - AUDIT SHIPS A2: and,
+//     her bow clear of it, she holds the heading that cleared it while
+//     the mark's own line runs onto land within reach, never turning back
+//     onto it;
 //   - the rudder: held toward the course while the heading is more than
 //     `deadDeg` off it.
 //
@@ -54,7 +58,8 @@ export const SEA_HELM = Object.freeze({
   noGoFore: 35,
   /** ...and square sails alone: past 68 their pull falls faster than the course gains (GetSailPower's square law). */
   noGoSquare: 68,
-  /** A wind shorter than this fills no sail (UpdateWind's 1-2, a tenth of it in fog). */
+  /** A wind shorter than this fills no sail (UpdateWind's 1-2, a tenth of it in fog) - the mod's own helm's; under
+   *  SAIL-FREE's any breath does (AUDIT SHIPS A4). */
   calm: 0.25,
   /** Under sail, a way ahead slower than this (m/s)... */
   stallMps: 0.35,
@@ -66,40 +71,59 @@ export const SEA_HELM = Object.freeze({
   rowInM: 120,
   /** Land this near ahead on a leg that does not land there (m): the oars, and the rudder to the freer side. */
   avoidM: 120,
+  /** AUDIT SHIPS A2 (2026-10-06): ...or as near as the way she makes in this long (s), if nearer than her reach: at
+   *  SAIL-FREE's 16 m/s a galleon struck 120 m off an islet coasted onto it under oars (seaHelmReach). */
+  avoidS: 13,
   /** The heading more than this off the course (degrees): the oars turn the boat onto it, the sails wait. */
   sailTurnMax: 30,
 });
+
+/** AUDIT SHIPS A2: how far ahead (m) the hand keeps her off land at a way of `way` m/s - avoidM, or what her way runs in
+ *  avoidS, if farther. */
+export const seaHelmReach = (way) => Math.max(SEA_HELM.avoidM, Math.max(0, way) * SEA_HELM.avoidS);
+/** AUDIT SHIPS A2: how far ahead (m) the hand looks now - her way's reach, or the reach it saw land at while that land is
+ *  not yet cleared (`st.reach`: slowing under the oars to turn off an islet shrank the reach, the islet fell out of it, and
+ *  she raised sail and ran back at it). The host probes the water this far (scenes/world.js tvSeaSail). */
+export const seaHelmLook = (st, way) => Math.max(seaHelmReach(way), st?.reach ?? 0);
 
 /** An angle folded into (-180, 180]. */
 export const foldDeg = (d) => { const a = ((d % 360) + 540) % 360 - 180; return a === -180 ? 180 : a; };
 /** A flat direction's heading - degrees clockwise from north (+z), as the port's yaw counts. */
 export const headingOf = (x, z) => (Math.atan2(x, z) * 180) / Math.PI;
 
-/** The helm's memory between frames: the tack held, the stall's clock, the oars' spell. */
-export const createSeaHelm = () => ({ tack: 0, stall: 0, oars: 0 });
+/** The helm's memory between frames: the tack held, the stall's clock, the oars' spell, the reach land was seen at. */
+export const createSeaHelm = () => ({ tack: 0, stall: 0, oars: 0, reach: 0 });
 
 /**
  * One frame of the journey's hand on the helm.
- * @param {{ tack: number, stall: number, oars: number }} st
+ * @param {{ tack: number, stall: number, oars: number, reach?: number }} st
  * @param {{ heading: number, bearing: number, wind: number[], hasSails: boolean, squareOnly?: boolean, sailsUp: boolean,
  *   canSail: boolean, way: number, dt: number, landfall?: boolean, landAhead?: number, freer?: number, crewed?: boolean,
- *   oarWay?: number, sailWay?: number, free?: boolean }} q
+ *   oarWay?: number, sailWay?: number, free?: boolean, markAhead?: number }} q
  *   `heading` the bow's and `bearing` the mark's (degrees, clockwise from north); `wind` the wind's flat vector (where
  *   it blows); `way` the boat's speed along its bow (m/s, astern negative); `landAhead` the metres to land along the
  *   bow (Infinity: none seen); `freer` the hand with more water (-1 left, 1 right); `landfall` this leg ends ashore;
  *   `crewed` a crew at the oars, whose speed is `oarWay` against the sails' `sailWay` in this wind (m/s); `free` the
- *   responsive helm's SAIL-FREE, under which no course is too near the wind to sail.
+ *   responsive helm's SAIL-FREE, under which no course is too near the wind to sail; `markAhead` the metres to land
+ *   along the mark's own bearing (AUDIT SHIPS A2 - Infinity: none seen).
  * @returns {{ turn: -1|0|1, sails: 'raise'|'lower'|null, row: boolean, course: number }}
  */
 export function seaHelmStep(st, q) {
   const H = SEA_HELM;
   const windLen = Math.hypot(q.wind[0] ?? 0, q.wind[1] ?? 0);
   const ahead = q.landAhead ?? Infinity;
-  const avoiding = !q.landfall && ahead <= H.avoidM;
+  const reach = seaHelmLook(st, q.way);
+  const avoiding = !q.landfall && ahead <= reach;
+  // AUDIT SHIPS A2: her bow clear, the mark's line still running onto land within reach - she holds the heading that
+  // cleared it (let go as her bow cleared it, the hand turned her straight back onto the islet she was turning off)
+  const blocked = !q.landfall && !avoiding && (q.markAhead ?? Infinity) <= reach;
+  st.reach = avoiding || blocked ? reach : 0;
   const rowingIn = !!q.landfall && ahead <= H.rowInM;
   if (st.oars > 0) st.oars = Math.max(0, st.oars - q.dt);
   const crewRows = !!q.crewed && (q.oarWay ?? 0) >= (q.sailWay ?? 0);
-  const sailable = q.hasSails && windLen >= H.calm && !rowingIn && !avoiding && !crewRows;
+  // AUDIT SHIPS A4: under SAIL-FREE (`free`) any breath fills her sails - the sea's wind is the captains' bounded share of
+  // it (helmWay.js seaWind: a fog's tenth sails her at 0.3 of the rated), where the mod's under `calm` fills none
+  const sailable = q.hasSails && (q.free ? windLen > 0 : windLen >= H.calm) && !rowingIn && !avoiding && !crewRows;
   let course = foldDeg(q.bearing);
   if (sailable) {
     const eye = headingOf(-(q.wind[0] ?? 0), -(q.wind[1] ?? 0));   // where the wind comes from
@@ -112,6 +136,7 @@ export function seaHelmStep(st, q) {
     } else st.tack = 0;
   } else st.tack = 0;
   if (avoiding) course = foldDeg(q.heading + (q.freer ?? 1) * 90);   // land close ahead: hard over to the freer hand
+  else if (blocked) course = foldDeg(q.heading);
   const err = foldDeg(course - q.heading);
   // the stall: under sail, on the course, and making no way ahead
   if (q.sailsUp && q.way < H.stallMps && Math.abs(err) <= H.sailTurnMax) {

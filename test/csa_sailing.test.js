@@ -622,10 +622,16 @@ test('CSA-D: the pause gates - Update marks wasPaused and does nothing, LateUpda
   assert.equal(s.rt.state.wasPaused, true);
   assert.deepEqual(s.rt.state.MoveVectorCurrent, [0, 0, 0]);
   assert.equal(s.player.frozen, 0, 'the pin did not run');
+  // HELM-LADDER (PIN MOVED): a held key no longer pulls - a press climbs the ladder, and a bare update presses nothing -
+  // so her oars are put to pulling ahead here, or LateUpdate has no vector to spend and the gate nothing to hold
+  s.rt.state.oarThrottle = 1;
   s.rt.update();
+  assert.ok(Math.hypot(...s.rt.state.MoveVectorCurrent) > 0, 'under way');
   const p = boat.GameObject.position;
   s.rt.lateUpdate({ paused: true });
   assert.deepEqual(boat.GameObject.position, p, 'LateUpdate paused: the boat stands, its vector unspent');
+  s.rt.lateUpdate();
+  assert.notDeepEqual(boat.GameObject.position, p, 'unpaused, it is spent');
   s.rt.fixedUpdate({ paused: true });
   assert.equal(s.rt.state.parentedObjects.size, 0, 'FixedUpdate paused: no rider taken');
   s.rt.fixedUpdate();

@@ -29,7 +29,7 @@
   {
     "name": "HELM-WAY-rudder-unread",
     "file": "src/systems/comeSailAway.js",
-    "old": "(responsive() ? steerage(way / SAIL_FREE.gain) : way)",
+    "old": "(responsive() ? steerage(way / sailFreeGain(boat)) : way)",
     "new": "(way)",
     "tests": [
       "test/helmway.test.js"

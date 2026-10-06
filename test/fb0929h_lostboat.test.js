@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { comeSailAwayModels } from '../src/systems/comeSailAwayModels.js';
 import { spawnBoat } from '../src/systems/comeSailAwayBoat.js';
-import { createComeSailAwayRuntime, NO_WATER_LEVEL, BOAT_PARTS_TEMPLATE, LOST_UNDER_M } from '../src/systems/comeSailAway.js';
+import { createComeSailAwayRuntime, NO_WATER_LEVEL, BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE, LOST_UNDER_M } from '../src/systems/comeSailAway.js';
 
 const DIR = new URL('../vendor/come-sail-away/Models/', import.meta.url);
 const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
@@ -25,7 +25,7 @@ const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSiz
 function terrain(x, y, height, up = 0) {
   return { mapPixelX: x, mapPixelY: y, position: [(x - 10) * 819.2, up, -(y - 20) * 819.2], tileMap: new Uint8Array(128 * 128), sampleHeight: typeof height === 'function' ? height : () => height };
 }
-function scene({ terrains, inside = false, compensation = [0, 0, 0] } = {}) {
+function scene({ terrains, inside = false, compensation = [0, 0, 0], held = [] } = {}) {
   const out = { hud: [], removed: [], pack: [] };
   const player = { position: [1, 36, 3], rotation: [0, 0, 0, 1] };
   const deps = {
@@ -49,7 +49,7 @@ function scene({ terrains, inside = false, compensation = [0, 0, 0] } = {}) {
     time: () => 0,
     persistentDungeonBoats: () => false,
     packedItems: { serialize: (items) => items.map((it) => ({ ...it })), deserialize: (records) => records.map((it) => ({ ...it })) },
-    items: { create: (template) => ({ template, UID: 900 + out.pack.length }), addToPlayer: (it) => out.pack.push(it) },
+    items: { create: (template) => ({ template, UID: 900 + out.pack.length }), addToPlayer: (it) => out.pack.push(it), player: () => held },
     cargoWeight: () => 0,
   };
   return { rt: createComeSailAwayRuntime(deps), out };
@@ -83,12 +83,16 @@ test('LOST-BOAT: a boat afloat stays, a crewed hull stays (its deed calls it), a
   restore(beach.rt, [saved(1, 100, 34, 100)]);
   beach.rt.update();
   assert.equal(beach.rt.AllBoats.length, 1, 'a keel on a beach is no lost boat');
-  // a Small Ship under the ground: her deed repositions her at a port (useBoatDeed) - never packed into parts too
-  const crewed = scene({ terrains: [terrain(10, 20, 60)] });
+  // a Small Ship under the ground: her deed repositions her at a port (useBoatDeed) - never packed into parts too. Her
+  // deed in the pack, as a deed ship's is (SHIP-PACK): with none PackBoat itself refuses her, and could not tell the skip
+  const deed = { templateIndex: BOAT_DEED_TEMPLATE, UID: 42 }, held = [deed];
+  const crewed = scene({ terrains: [terrain(10, 20, 60)], held });
   restore(crewed.rt, [saved(2, 100, 34, 100)]);
   crewed.rt.update();
   assert.equal(crewed.rt.AllBoats.length, 1, 'crewed: kept');
   assert.deepEqual(crewed.out.pack, []);
+  assert.deepEqual(held, [deed], 'her deed still in the pack');
+  assert.deepEqual([crewed.out.hud, crewed.rt.AllBoats[0]?.groundAsked], [[], true], 'asked, and nothing said of a lost boat');
   // the seabed: FIELD-CSA1's first way - a boat stood on the floor 14 m under the sea's top
   const bed = scene({ terrains: [terrain(10, 20, 20)] });
   restore(bed.rt, [saved(1, 100, 20, 100)]);

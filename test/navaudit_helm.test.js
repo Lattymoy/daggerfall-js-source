@@ -12,7 +12,7 @@ import { HULL, batteryOf, hullBuild } from '../src/systems/naval/navalShips.js';
 import { SHIP_STATES, BRACE_TAKEN, BARE_POLES, WRECKED_OARS, STRUCK_AT } from '../src/systems/naval/navalDamage.js';
 import { BOARD_RANGE, BOARD_SPEED } from '../src/systems/naval/navalBoarding.js';
 import { NAVAL_DEG, shotPosition, segmentBoxEntry } from '../src/systems/naval/navalBallistics.js';
-import { hullBoxOf, rigBoxesOf, AIM_CAM_OUT, AIM_CAM_UP, AIM_CAM_AFT, AIM_CAM_TAU, AIM_CAM_CLEAR, RAM_REACH, RAM_MEMORY_S, RAM_DAMAGE, RAM_RECOIL, BOW_RECOIL, GALLEY_RAM, RAM_SPEED, RAM_COOLDOWN_S, HEAVE_TO_DECEL, HEAVE_TO_S, COMPASS_SHIP_RANGE, PLAYER_SKILL, PLAYER_SKILL_THIN } from '../src/scenes/navalHost.js';
+import { hullBoxOf, rigBoxesOf, AIM_CAM_OUT, AIM_CAM_UP, AIM_CAM_AFT, AIM_CAM_TAU, AIM_CAM_CLEAR, RAM_REACH, RAM_MEMORY_S, RAM_DAMAGE, RAM_RECOIL, BOW_RECOIL, GALLEY_RAM, RAM_SPEED, RAM_COOLDOWN_S, HEAVE_TO_DECEL, HEAVE_TO_S, heaveToDecel, COMPASS_SHIP_RANGE, PLAYER_SKILL, PLAYER_SKILL_THIN } from '../src/scenes/navalHost.js';
 import { drawShipCompassMarks, SHIP_MARK_COLORS, compassMarkerLerp, DETECT_MARKER_W, DETECT_MARKER_H } from '../src/ui/hud.js';
 import { navalHudText, drawNavalHud, destroyNavalHud, navalTouchBrace, NAVAL_BRACE_H, NAVAL_HUD_CSS } from '../src/ui/navalHud.js';
 import { NavalRenderer, NAVAL_STRIDE, aimTone, AIM_TONES, AIM_POST_HALF_W, AIM_POST_HALF_H, AIM_STRIKE_HALF, flatAcross } from '../src/render/navalRender.js';
@@ -832,6 +832,14 @@ test('AUDIT NAV1 H16 heave to: a struck ship in reach with the helm too fast to 
   assert.equal(h.host.brake(), HEAVE_TO_DECEL, 'still heaving to');
   frames(h, [[h.e, at]], 4);
   assert.equal(h.host.brake(), 0, 'past HEAVE_TO_S');
+  // AUDIT SHIPS A3 (2026-10-06): a heave-to at SAIL-FREE's way brakes by it - her way off within HEAVE_TO_M
+  h.runtime.state.velocityCurrent = [0, 0, 16];
+  frames(h, [[h.e, at]]);
+  assert.equal(h.host.activate(), true);
+  assert.ok(Math.abs(h.host.brake() - heaveToDecel(16)) < 1e-9 && heaveToDecel(16) > HEAVE_TO_DECEL, `the brake her way needs (${h.host.brake()})`);
+  frames(h, [[h.e, at]], Math.floor(HEAVE_TO_S * 10) + 4);
+  assert.equal(h.host.brake(), 0, 'past HEAVE_TO_S');
+  h.runtime.state.velocityCurrent = [0, 0, 6];
   // she is gone from the struck: the heave-to with her
   h.host.activate();
   assert.equal(h.host.brake(), HEAVE_TO_DECEL);

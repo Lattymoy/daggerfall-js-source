@@ -360,6 +360,13 @@ export const COMPASS_SHIP_RANGE = 900;
 export const PLAYER_SKILL = 0.6;
 export const PLAYER_SKILL_THIN = 0.3;
 export const HEAVE_TO_S = 8;
+/** AUDIT SHIPS A3 (2026-10-06, Mac: "Audit everything"): HER WAY OFF BESIDE HER - the brake sized to the way she heaves to
+ *  at, so it comes off within HEAVE_TO_M (m) at HEAVE_TO_DECEL at the least (heaveToDecel): at SAIL-FREE's ways the fixed
+ *  2 m/s^2 ran a galleon 50-64 m and a Carrack 73-93 m (8.5 s, past HEAVE_TO_S) before she came under BOARD_SPEED, out of
+ *  BOARD_RANGE of the ship she hove to beside. Under HELM-WAY's ways (8.2 m/s, 1.6 m/s^2 by this) it is 2 as it was. */
+export const HEAVE_TO_M = 20;
+/** AUDIT SHIPS A3: the brake (m/s^2) that takes a way of `v` m/s down to BOARD_SPEED within HEAVE_TO_M. */
+export const heaveToDecel = (v) => Math.max(HEAVE_TO_DECEL, (v * v - BOARD_SPEED * BOARD_SPEED) / (2 * HEAVE_TO_M));
 /** AUDIT NAV1 (the helm): THE SHIPWRIGHT stands at a port - a port town's waters (`where().nearPort`), her way under
  *  YARD_SPEED (she lies to his quay) and no hostile ship near (systems/naval/navalYard.js). */
 export const YARD_SPEED = 2.5;
@@ -2628,15 +2635,16 @@ export function createNavalHost(deps) {
   }
 
   // ── heave to (AUDIT NAV1, the helm) ─────────────────────────────────────────────────────────────────────────────
-  let heaveTo = null;   // { id, until }
+  let heaveTo = null;   // { id, until, decel }
   /** A struck ship in reach that the helm is too fast to board - the one a heave-to is for - or null. */
   function heaveFor(boat) {
     if (!boat || boardable(boat)) return null;
     return boardable(boat, { anySpeed: true });
   }
-  /** Strike the sails and take her way off beside `e`. */
-  function startHeaveTo(e) {
-    heaveTo = { id: e.id, until: clock + HEAVE_TO_S };
+  /** Strike the sails and take her way off beside `e` (AUDIT SHIPS A3: at the brake her way needs - heaveToDecel). */
+  function startHeaveTo(e, boat) {
+    const v = boat ? boatPose(boat).velocity : [0, 0, 0];
+    heaveTo = { id: e.id, until: clock + HEAVE_TO_S, decel: heaveToDecel(Math.hypot(v[0], v[2])) };
     const r = csa();
     if (r?.state?.sailPosition > 0) r.LowerSails?.();
     deps.say?.(`Heave to! Your way comes off beside ${e.ship.names?.name ?? 'her'}.`, 2.5);
@@ -2649,8 +2657,8 @@ export function createNavalHost(deps) {
     const slow = !v || Math.hypot(v[0], v[2]) <= BOARD_SPEED;
     if (slow || clock > heaveTo.until || !e || e.ship.damage.state !== SHIP_STATES.struck || e.ship.boarded) heaveTo = null;
   }
-  /** Come Sail Away's `brake` seam: her way comes off at HEAVE_TO_DECEL while she heaves to (0: her own rate). */
-  const brake = () => (enabled && heaveTo && myBoat() ? HEAVE_TO_DECEL : 0);
+  /** Come Sail Away's `brake` seam: her way comes off at the heave-to's brake while she heaves to (0: her own rate). */
+  const brake = () => (enabled && heaveTo && myBoat() ? heaveTo.decel : 0);
 
   /**
    * Activate: at the helm, throw the grapples on a struck ship in reach; on foot (a deck alongside her, or swimming
@@ -2666,7 +2674,7 @@ export function createNavalHost(deps) {
       const e = boardable(boat);
       if (e) { startBoarding('board', e, boat); return true; }
       const fast = heaveFor(boat);
-      if (fast) { startHeaveTo(fast); return true; }   // AUDIT NAV1: too fast to board her - heave to
+      if (fast) { startHeaveTo(fast, boat); return true; }   // AUDIT NAV1: too fast to board her - heave to
       return yardHere(boat) && openYard(boat);   // AUDIT NAV1: the shipwright, lying to his quay
     }
     const e = boardableOnFoot();
