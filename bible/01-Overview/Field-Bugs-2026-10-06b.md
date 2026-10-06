@@ -71,13 +71,31 @@ that looks now).
 - each look's sound, baked on its first play: 3.1-7.8 ms (fire, frost, poison, shock, magic), 22.8 ms for the heal's
   synthesised stand-in (only until the heal's own clip has loaded).
 
+**Measured in Chromium** (SwiftShader, the probes' own flags, the real module served by Vite): building the light's
+pass (`new SpellImpactPass(gl)` - two shaders compiled, linked and the status read) held the calling thread 6.8 ms
+cold, beside 2-3.5 ms for a trivial program on the same context; its draw for a dozen landings live, 0.1 ms. A
+player's GPU compiles differently and the figure is this one's, but it is the size of a frame's hitch, not a stall a
+line's cushion cannot take.
+
 **First use, and how often it comes.** The light's GL pass (`SpellImpactPass`: two shaders compiled and linked) is
 built inside the frame that first DRAWS a landing (`drawFx`) - not warmed at idle, as every other on-demand program is
 (`render/warmPrograms.js`, PERF-WARM: "the compile that happens mid-frame"). The sounds are baked on each look's first
 play. Both belong to the cast ENGINE (`createPlayerMagic`), and an engine is made by the street's host and again by
 every dungeon entered (`buildDungeonContext`): each dungeon's first landing compiles the pass again, each look's first
 landing bakes its sound again, and each new engine fetches the heal's clip again. A peer's landing is drawn too, so one
-player's first spell is the first-use frame of every client that sees it.
+player's first spell is the first-use frame of every client that sees it. Small as each is - a few milliseconds, once
+a look an engine - they belong to the context and the audio engine, which live for the page, not to the engine; that
+is open (Performance-Next.md's list).
+
+**What the spell effects DO do to another player: the camera's kick.** Every missile that lands within 14 m of the
+player kicks their camera (`landFx`'s `shake`, 3 for a bolt and 4.5 for a blast, falling off with distance through
+`betterAmbience.weaponKick`) - the player's own, and with no test of whose it is, a peer's drawn missile and every
+fireball of the sun baby's wrath. In a crowd that casts, the screen shakes with everyone's spells. Whether another's
+spell should move my camera is a call about the feel, not a fault in the code: open, for Mac.
+
+**So the spell effects are not what made players desync**: they say nothing on the wire, and what they cost a frame is
+milliseconds. What they share with the desync is the look - a frame that runs long anywhere stands that player on every
+screen, and until RUN-IN-PLACE every such stand looked like running on the spot.
 
 ## What makes a pose late (3)
 

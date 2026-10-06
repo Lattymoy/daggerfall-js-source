@@ -179,45 +179,51 @@ container's CPU, or node/Chromium micro-benchmarks over the real modules where n
    shadow and air passes; V8 deoptimized the shadow replay once on it in node ("wrong call target"). A bound method
    kept on the renderer is the same call.
 
+7. **The spell effects' first use, per engine** (IMPACTFX; `01-Overview/Field-Bugs-2026-10-06b.md`) - the light's pass
+   is compiled inside the frame of the first landing an engine draws (6.8 ms on SwiftShader), not warmed at idle as
+   every other on-demand program is (PERF-WARM), and each look's sound is baked on its first play (3-8 ms in node).
+   Both belong to the cast ENGINE, and every dungeon entered makes one. The renderer owning the pass (one a page, in
+   its warmSteps) and one sound bank an audio engine would pay each once a page, at idle. Nothing a player sees.
+
 **The GPU (not measurable on SwiftShader - for a player's card).**
-7. **The cloud march** - 21-29% of SwiftShader's outdoor frame in every weather, and the Render Scale does not touch it
+8. **The cloud march** - 21-29% of SwiftShader's outdoor frame in every weather, and the Render Scale does not touch it
    (PERF-UPD). Every lever changes the sky's look: Mac's.
-8. **Steady shadows' draws** - every lantern with a mover or a sway by it redraws its six dynamic faces every frame (42
+9. **Steady shadows' draws** - every lantern with a mover or a sway by it redraws its six dynamic faces every frame (42
    face passes a frame at Knightstale by day). PERF-SHADOW1 took their CPU walk; the GPU's passes are FLICKER-FIX's
    trade for stability, and the cadence is Mac's.
-9. **The flats' draw count** - ~1,090 draws a frame in a town, one a (archive, record) a map pixel. A texture array
+10. **The flats' draw count** - ~1,090 draws a frame in a town, one a (archive, record) a map pixel. A texture array
    over an archive's records, or centres merged across pixels: a renderer project, nothing a player sees.
-10. **An automatic quality governor** - the Render Scale chosen from the measured frame. It changes the picture as the
+11. **An automatic quality governor** - the Render Scale chosen from the measured frame. It changes the picture as the
     machine struggles: Mac's.
 
 **Online - the client.**
-11. **The host's per-peer passes** - getPref three times a peer a frame: safe to tidy.
-12. **Inbound messages** - JSON.parse is most of a message's 19-21 us; a new frame type for bundled poses needs a relay
+12. **The host's per-peer passes** - getPref three times a peer a frame: safe to tidy.
+13. **Inbound messages** - JSON.parse is most of a message's 19-21 us; a new frame type for bundled poses needs a relay
     deploy (SCALE5's slimmer poses).
-13. **The realm checkpoint** - the idle key from the object, not three passes over the whole save: no behaviour change.
+14. **The realm checkpoint** - the idle key from the object, not three passes over the whole save: no behaviour change.
 
 **Online - the relay (each a deploy that drops every player once - batched, announced).**
-14. **`_message` under the ceiling and the pose arm tightened** - 108.5 -> 39.3 us a moving pose at 200 in one pixel,
+15. **`_message` under the ceiling and the pose arm tightened** - 108.5 -> 39.3 us a moving pose at 200 in one pixel,
     measured, no behaviour change. Ready for the next announced window.
-15. **The foes lane** fan-bounded, and no full frame with no foes - tiering far listeners as poses are tiered changes
+16. **The foes lane** fan-bounded, and no full frame with no foes - tiering far listeners as poses are tiered changes
     what they see: a design call.
-16. **Slimmer poses** - quantised, defaults omitted, -35% bytes measured; binary later. SCALE5.
-17. **SCALE3's load harness** still does not exist; the benches this pass used (a Room over a counting fake, the client
+17. **Slimmer poses** - quantised, defaults omitted, -35% bytes measured; binary later. SCALE5.
+18. **SCALE3's load harness** still does not exist; the benches this pass used (a Room over a counting fake, the client
     session over a fake socket) are its measuring half.
 
 **Tooling.**
-18. `npm run perf`'s dungeon row (`/play/?shot&class=0`) now stands on the New Character window and never readies.
-19. Indoors the world host never sets `__shotReady` (its modal frame returns first); the probe reads `__mode()` and
+19. `npm run perf`'s dungeon row (`/play/?shot&class=0`) now stands on the New Character window and never readies.
+20. Indoors the world host never sets `__shotReady` (its modal frame returns first); the probe reads `__mode()` and
     `__streamIdle()` there.
 
 ## For Mac
 
-- **The relay's pose path** (14) is measured and ready - 108.5 -> 39.3 us a moving pose at 200 players in one map
+- **The relay's pose path** (15) is measured and ready - 108.5 -> 39.3 us a moving pose at 200 players in one map
   pixel, no behaviour change - and it is a relay deploy, which drops every player once. It waits for the next window
   you announce; it goes up as its own pull request.
-- **Steady shadows' GPU cost** (8): this pass took the CPU's walk out of the every-frame lantern redraws; the redraws
+- **Steady shadows' GPU cost** (9): this pass took the CPU's walk out of the every-frame lantern redraws; the redraws
   themselves (42 face passes a frame at Knightstale by day) are FLICKER-FIX's trade for stability. A slower cadence for
   a lantern whose only reason is a swaying tree would trade some of that back.
-- **The cloud march** (7) and **an automatic quality governor** (10) both change what a player sees.
+- **The cloud march** (8) and **an automatic quality governor** (11) both change what a player sees.
 - **The page doors** (4): ending the per-read `location.search` overturns PERF-URL's "not a latch" rule.
-- **The foes lane** (15): bounding it by distance changes what a far player sees of a fight.
+- **The foes lane** (16): bounding it by distance changes what a far player sees of a fight.
