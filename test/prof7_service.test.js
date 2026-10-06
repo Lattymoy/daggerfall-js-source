@@ -264,7 +264,7 @@ test('PROF7 service: the day\'s harvests rebuilt for a body\'s hide keep every r
   assert.throws(() => db.exec(`UPDATE node_harvests SET tier = 8 WHERE rid = 'rid00002'`), /CHECK/);
   assert.throws(() => db.exec(`UPDATE node_harvests SET extra_qty = 0 WHERE rid = 'rid00002'`), /CHECK/);
   assert.deepEqual(db.prepare("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'node_harvests' AND name LIKE 'idx_%' ORDER BY name").all().map((r) => r.name),
-    ['idx_node_harvests_account', 'idx_node_harvests_carry_day', 'idx_node_harvests_day', 'idx_node_harvests_today']);   // SCALE1 (0043_scale_indexes.sql): and the sweep's day; PIN MOVED (AUDIT2 BAG1 S1, 0076_materials_bag.sql): and the carried rows' own sweep
+    ['idx_node_harvests_account', 'idx_node_harvests_carry_day', 'idx_node_harvests_char_day', 'idx_node_harvests_day', 'idx_node_harvests_today']);   // SCALE1 (0043_scale_indexes.sql): and the sweep's day; PIN MOVED (AUDIT2 BAG1 S1, 0076_materials_bag.sql): and the carried rows' own sweep; PIN MOVED (STORM-SHED, 0085_storm_shed.sql): and the character's day, covering
   assert.equal(db.prepare('SELECT dye FROM products').get().dye, null, 'a piece before it undyed');
   db.exec(`UPDATE products SET dye = 9`);
   assert.throws(() => db.exec(`UPDATE products SET dye = 10`), /CHECK/, 'a dye is one of the ten');
