@@ -180,7 +180,8 @@ test('AUDIT-RR2 G14/G16/G19: an RDB/RDI JSON is served whole since WD1 (never wi
   const s = rd('src/formats/worldDataReplacement.js');
   // G14 was the refusal of an RDB/RDI file the converter could not read; WD1 (Aquatic Sprites) ported the RDB
   // and RDI halves, so the block is converted whole and only an RMB takes the building replacements (:382-384)
-  assert.match(s, /const dfBlock = blockFromJson\(json, block\);\s+if \(blockName\.endsWith\('\.RMB'\)\) replaceRmbBlockBuildingData\(blockName, block, dfBlock\);/);
+  // PIN MOVED (AUDIT QA2 B1): the served name rides with the block - the port's curations key on the name the town lays
+  assert.match(s, /const dfBlock = blockFromJson\(json, block, blockName\);\s+if \(blockName\.endsWith\('\.RMB'\)\) replaceRmbBlockBuildingData\(blockName, block, dfBlock\);/);
   const rdb = blockFromJson({ Name: 'W0000000.RDB', Type: 'Rdb', RdbBlock: { ModelReferenceList: [{ ModelId: '63130', ModelIdNum: 63130, Description: 'C0L' }], ObjectRootList: [{ RdbObjects: null }] } }, 1016);
   assert.equal(rdb.rmbBlock, null);
   assert.ok(rdb.rdbBlock, 'an RDB file serves its RDB half, never a null body');

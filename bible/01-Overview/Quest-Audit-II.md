@@ -217,7 +217,10 @@ Notes taken too: the tool read TEMPAA00 (laid by no town) for Stendarr's name se
 promised what its body did not check; a share's die drawn for good once a quest was shared - only a copy kept in step
 now; a received copy was a shared copy only after its arrival's re-seat; two members seated in one house named it each by their own DFRandom - a shared re-seat draws a residence's name from the share and the building now, DFRandom put back; a `remote shop`, which no dart ever admits, walked every town of its region - the region gate admits a town as a dart does; and the record's own claims -
 TEMPLE-HOME "classic" with Beautiful Cities on, "the words name the town", "its clocks measure the trip", the four hosts
-named nowhere - corrected above.
+named nowhere - corrected above. The text pins on lines this audit moved re-aimed, PIN MOVED: `wd3_layoutPins` and
+`qa2_layouts` (the host's pin loop, now `admitPinnedPacks`), `fb1003b_questor` (`townLayoutsKnown`), `auditrr2` (the
+door's `blockFromJson` call, the served name with it). With the player's ARENA2 four gated pins fail here and on
+origin/main alike - this CD copy's data (FACTION.TXT's ruler 12, the Longtale location, two patch rebuilds' sha256).
 
 ## What could not be measured
 
