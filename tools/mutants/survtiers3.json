@@ -419,22 +419,22 @@
   {
     "name": "SURVTIERS3-the-kit-cite-headless-chargen-rots",
     "file": "src/systems/equip.js",
-    "old": "chargenSession.js:144 (?class= headless)",
-    "new": "chargenSession.js:142 (?class= headless)",
+    "old": "chargenSession.js:145 (?class= headless)",
+    "new": "chargenSession.js:143 (?class= headless)",
     "tests": [
       "test/citedrift.test.js"
     ],
-    "note": "LEGACY1 (PIN MOVED): its cite shifted by citeShift (Project Legacy's seams in world.js, chargenSession.js and input.js); re-aimed by content. "
+    "note": "LEGACY1 (PIN MOVED): its cite shifted by citeShift (Project Legacy's seams in world.js, chargenSession.js and input.js); re-aimed by content.  LEGACY-CHOICE (PIN MOVED): re-aimed by content to the cite citeShift moved (chargenSession.js gained the family law's import)."
   },
   {
     "name": "SURVTIERS3-the-kit-cite-wizard-rots",
     "file": "src/systems/equip.js",
-    "old": "(?class= headless) and :237 (the wizard)",
-    "new": "(?class= headless) and :225 (the wizard)",
+    "old": "(?class= headless) and :238 (the wizard)",
+    "new": "(?class= headless) and :226 (the wizard)",
     "tests": [
       "test/citedrift.test.js"
     ],
-    "note": "LEGACY1 (PIN MOVED): its cite shifted by citeShift (Project Legacy's question chain in chargenSession.js); re-aimed by content. "
+    "note": "LEGACY1 (PIN MOVED): its cite shifted by citeShift (Project Legacy's question chain in chargenSession.js); re-aimed by content.  LEGACY-CHOICE (PIN MOVED): re-aimed by content to the continuation moved by hand (chargenSession.js gained the family law's import - CD4 holds it)."
   },
   {
     "name": "SURVTIERS3-the-kit-cite-world-seed-rots",

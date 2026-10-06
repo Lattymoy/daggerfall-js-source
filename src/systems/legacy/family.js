@@ -31,6 +31,14 @@ export const FAMILY_VERSION = 1;
 export const MODELS = Object.freeze({ bloodline: 'bloodline', enduring: 'enduring' });
 export const isModel = (m) => m === MODELS.bloodline || m === MODELS.enduring;
 
+/** LEGACY-CHOICE (2026-10-06, Mac: "a enhanced plus UI popup for online when creating a character. Perma Death, the
+ *  regular option, or the option that skips the liniage system entirely"): THE THIRD ANSWER - a character who founds no
+ *  house. Never a family's model: the character's own answer (`entity.legacyChoice`, saved with them), and Project
+ *  Legacy sits them out for good - at their birth and at every load, in either lane. */
+export const NO_LINEAGE = 'none';
+/** A character's answer to the model question - a model, or no lineage. */
+export const isLegacyChoice = (c) => isModel(c) || c === NO_LINEAGE;
+
 /** Its Features tile's Descendants choice, the mod's own two (modsettings.json "Family"/"Descendants"). */
 export const DESCENDANTS = Object.freeze({ random: 0, always: 1 });
 /** B14: the mod shipped Max Siblings 0 and Siblings Probability 0, so a fresh install never saw a sibling. */

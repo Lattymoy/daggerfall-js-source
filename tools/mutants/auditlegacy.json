@@ -112,12 +112,13 @@
   {
     "name": "AUDIT-LEGACY-B4-bloodline-online",
     "file": "src/scenes/legacyHost.js",
-    "old": "    const asked = model ?? deps.entity?.legacyModel ?? (deps.online() ? MODELS.enduring : s.model);",
-    "new": "    const asked = model ?? deps.entity?.legacyModel ?? s.model;",
+    "old": "    const asked = isModel(chose) ? chose : deps.online() ? MODELS.enduring : s.model;",
+    "new": "    const asked = isModel(chose) ? chose : s.model;",
     "tests": [
-      "test/legacy7_online.test.js"
+      "test/legacy7_online.test.js",
+      "test/legacychoice.test.js"
     ],
-    "note": "LEGACY7 (PIN MOVED): re-aimed by content - B4's law kept where it still stands: a character founded at an online LOAD is Enduring (a chargen's answer is the founder's own now)."
+    "note": "LEGACY7 (PIN MOVED): re-aimed by content - B4's law kept where it still stands: a character founded at an online LOAD is Enduring (a chargen's answer is the founder's own now). LEGACY-CHOICE (PIN MOVED): online a house is founded at a birth alone now, so B4's law is the birth's - one no question was put to (the headless door) founds online's safe Enduring, never the tile's permadeath; re-aimed by content."
   },
   {
     "name": "AUDIT-LEGACY-B4-online-bloodline-falls",

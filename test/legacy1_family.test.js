@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import {
   familyRng, foundFamily, addChild, rollSiblings, recordDeath, successors, newbornAllowed, readFamily,
   inheritCareer, inheritRace, bloodOf, hearthOf, estateOf, bornValues, heirAnswer, surnameOf, givenOf, writePlayer,
-  siblingsOf, isCustomCareer, MODELS, DESCENDANTS, SIBLINGS_MAX_DEFAULT, SIBLINGS_CHANCE_DEFAULT, ESTATE_MAX,
+  siblingsOf, isCustomCareer, MODELS, NO_LINEAGE, DESCENDANTS, SIBLINGS_MAX_DEFAULT, SIBLINGS_CHANCE_DEFAULT, ESTATE_MAX,
   RACE_INHERIT_CHANCE, CAREER_INHERIT_CHANCE, BLOOD_MAX, HEARTH_MAX, personOf,
 } from '../src/systems/legacy/family.js';
 import { ageOf, payToll, spanOf, startAgeOf, tollYears, isElder, isSpent, YEAR_MINUTES, SPANS } from '../src/systems/legacy/age.js';
@@ -313,7 +313,8 @@ test('LEGACY2: the model question offers Enduring first - Enter without reading 
   assert.match(legacyModelOptions({ online: false, tollShare: 0.1 })[0].lines[1], /Arkay takes 10% of a lifespan/, 'AUDIT LEGACY U7: the toll a death will charge, not the Standard\'s');
   const on = legacyModelOptions({ online: true, tollShare: 0.06 });
   // PIN MOVED (LEGACY7): AUDIT LEGACY B4 shut Bloodline online until the realm kept lineages - it does now (the tombstone)
-  assert.deepEqual(on.map((x) => [x.id, x.locked]), [[MODELS.enduring, false], [MODELS.bloodline, false]], 'LEGACY7: online Bloodline is open - the realm holds the line');
+  // PIN MOVED (LEGACY-CHOICE): and online a third answer after the two - no lineage, Enduring still first
+  assert.deepEqual(on.map((x) => [x.id, x.locked]), [[MODELS.enduring, false], [MODELS.bloodline, false], [NO_LINEAGE, false]], 'LEGACY7: online Bloodline is open - the realm holds the line');
   // PIN MOVED (AUDIT LEGACY III U8): beside the line's end, never instead of it - the end holds online as off
   assert.deepEqual([on[1].lines[3], o[1].lines[3]], ['With no one left, the line ends.', 'With no one left, the line ends.']);
   assert.match(on[1].lines[4], /the realm holds the line/);

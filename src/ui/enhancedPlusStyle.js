@@ -276,6 +276,10 @@ body .dfchat-form .dfchat-close { min-width: 32px; padding: 4px 8px; }
   text-transform: uppercase; color: #efe8d6; text-shadow: 1px 1px 0 #050608, 2px 2px 0 rgba(0,0,0,0.5); }
 .lvl-lead { margin: 0 0 18px; text-align: center; font-size: 14px; color: #c9bfa4; text-shadow: 1px 1px 0 #050608; }
 .lvl-opts { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+/* LEGACY-CHOICE: Project Legacy's online popup puts three answers - the window widens so the three stand in one row
+   (each tile no narrower than 210px), and a narrower screen wraps them as the grid does two */
+.lvl-shell .px-win.lvl-three { width: min(1000px, 100%); }
+.lvl-three .lvl-opts { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
 .lvl-opt { font: inherit; text-align: left; color: #d8cfae; cursor: pointer; display: flex; flex-direction: column; gap: 10px;
   padding: 14px 16px 12px; background: rgba(0,0,0,0.32); border: 2px solid;
   border-color: ${FRAME_TONES.stoneDark} ${FRAME_TONES.stoneMid} ${FRAME_TONES.stoneLit} ${FRAME_TONES.stoneDim};

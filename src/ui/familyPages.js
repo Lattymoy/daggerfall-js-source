@@ -19,7 +19,7 @@
 // Dressed by the stone-and-brass kit's roles (ui/enhancedFrame.js FRAME_ROLES): this sheet writes geometry and the
 // words' colours alone.
 import { layoutTree } from '../systems/legacy/tree.js';
-import { MODELS, personOf, currentOf, isAlive, parentsOf, childrenOf, siblingsOf, fullNameOf } from '../systems/legacy/family.js';
+import { MODELS, NO_LINEAGE, personOf, currentOf, isAlive, parentsOf, childrenOf, siblingsOf, fullNameOf } from '../systems/legacy/family.js';
 import { ageOf, spanOf, isElder, isSpent } from '../systems/legacy/age.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { STAT_KEYS_ORDER } from '../systems/statMods.js';
@@ -60,6 +60,8 @@ export const TREE_ZOOM_STEP = 1.12;
  *   and the Living World running - AUDIT LEGACY II B5)
  * @property {() => boolean} [livingWorld]   whether the Living World runs (its towns are where the line stands)
  * @property {(house:any) => boolean} [markHome]   LEGACY-HOME: make one of the family's houses its home
+ * @property {() => (string|null)} [choice]   LEGACY-CHOICE: the played character's own answer (`entity.legacyChoice`)
+ * @property {() => boolean} [online]   LEGACY-CHOICE: whether the page is the online lane's
  */
 let _provider = /** @type {FamilyProvider|null} */ (null);
 /** The host's provider, or null to take the pages down. */
@@ -519,9 +521,13 @@ function liveLine(el, said) {
   return n;
 }
 
-const noFamilyLine = (prov) => (!prov ? 'Your family is kept in the world - open this from a game.'
+/** Why a page has no family to show. LEGACY-CHOICE: a character who answered no lineage, and online one made before the
+ *  question was put there (or copied in), play without a house for good - a new character founds one. */
+export const noFamilyLine = (prov) => (!prov ? 'Your family is kept in the world - open this from a game.'
   : !prov.on?.() ? 'Turn on Project Legacy (Features) to found a family and carry your line on.'
-    : 'Your family is founded when your character is made, or the first time an older character is loaded.');
+    : prov.choice?.() === NO_LINEAGE ? 'This character chose to live without a house. Make a new character to found one.'
+      : prov.online?.() ? 'This character has no house - online, a house is founded only when a character is made. Make a new character to found one.'
+        : 'Your family is founded when your character is made, or the first time an older character is loaded.');
 
 /** THE HOUSE PAGE. */
 export function drawHousePage(detail, rerender, { el, divider } = /** @type {any} */ ({})) {

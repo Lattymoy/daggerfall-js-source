@@ -150,7 +150,7 @@ test('LEGACY7 the host online: a tombstone refused is said, and asked again befo
   assert.equal(w.booted.length, 1, 'heard: carried on');
 });
 
-test('LEGACY7 the host online: a character founded at a load (no chargen answer) is Enduring whatever its Features tile says - never a permadeath they did not choose', () => {
+test('LEGACY7 the host online: PIN MOVED (LEGACY-CHOICE) - a character loaded online with no house is founded never (it was Enduring at its first load: AUDIT LEGACY B4\'s law, gone with Mac\'s "Current characters already created start without this system and requires a new game"); offline its Features tile\'s model at its first load as ever (D9); a birth no question was put to founds online\'s safe Enduring, never a permadeath they did not choose', () => {
   _resetModSaveData();
   _resetModSettings();
   setModSetting(LEGACY_MOD, 'Legacy.Model', 1);
@@ -161,9 +161,11 @@ test('LEGACY7 the host online: a character founded at a load (no chargen answer)
     saveNow: () => true, inFight: () => false, rng: familyRng(1),
   });
   const on = mk(true);
-  assert.equal(on.found().model, MODELS.enduring, 'online: Enduring');
+  assert.equal(on.afterBoot(), null, 'online, loaded: no house');
+  assert.equal(on.family, null);
+  assert.equal(on.onCharacterMade().model, MODELS.enduring, 'online, born with no answer (the headless door): Enduring');
   const off = mk(false);
-  assert.equal(off.found().model, MODELS.bloodline, 'offline: its Features tile\'s (D9)');
+  assert.equal(off.afterBoot().model, MODELS.bloodline, 'offline, loaded: its Features tile\'s (D9)');
   _resetModSettings();
 });
 

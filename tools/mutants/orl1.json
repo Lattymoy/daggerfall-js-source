@@ -554,11 +554,13 @@
   {
     "name": "the-questions-up-arm-is-dropped",
     "file": "src/ui/levelingChoice.js",
-    "old": "    up: 'up', ArrowUp: 'up', down: 'up', ArrowDown: 'up',",
-    "new": "    down: 'up', ArrowDown: 'up',",
+    "old": "    up: 'up', ArrowUp: 'up', down: 'down', ArrowDown: 'down',",
+    "new": "    down: 'down', ArrowDown: 'down',",
     "tests": [
-      "test/orl1_leveling.test.js"
-    ]
+      "test/orl1_leveling.test.js",
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE (PIN MOVED): up and down are each a direction now (three answers online); re-aimed by content."
   },
   {
     "name": "the-tile-ships-a-placeholder-note",
@@ -718,11 +720,13 @@
   {
     "name": "the-question-swallows-the-click-again",
     "file": "src/ui/levelingChoice.js",
-    "old": "    const i = choiceAtNative(vx, vy, this.options);\n    if (i < 0) return false;",
+    "old": "    const i = choiceAtNative(vx, vy, this.options, this.tops);\n    if (i < 0) return false;",
     "new": "    const i = -1;\n    if (i < 0) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
-    ]
+      "test/orl1_leveling.test.js",
+      "test/legacychoice.test.js"
+    ],
+    "note": "LEGACY-CHOICE (PIN MOVED): the hit test reads the screen's own tops (a stacked screen's); re-aimed by content."
   },
   {
     "name": "both-digits-answer-with-the-same-system",

@@ -193,12 +193,34 @@ on the tree, no longer played) and the player chooses an heir.
 The heirloom in Enduring is the elder's to hand down - always one: a retiring elder's BEQUEST (their best worn piece,
 paid to whoever takes the mantle, no quest), a fallen elder's lying with their remains (section 7).
 
-**Offline with Project Legacy off** nothing changes: DFU's death and its title menu. **Online without a family** (a
-character made before this arc): the character is founded into an Enduring family at its next load, which changes
-nothing about its death but the toll - a player never wakes into permadeath they did not choose. **Online until LEGACY7**
+**Offline with Project Legacy off** nothing changes: DFU's death and its title menu. **Online without a family** - a
+character made before the question was put online, made with the mod off, or copied in from the offline lane: it is
+NEVER founded (LEGACY-CHOICE, below - it was founded into an Enduring family at its next load until then, AUDIT
+LEGACY B4's law: a player never wakes into permadeath they did not choose, and now into no house they did not choose).
+It plays without a house, the realm's own death; a new character founds one. **Online until LEGACY7**
 (AUDIT LEGACY B4) a house was Enduring, an offline Bloodline played online died the room's death, and no Succession was
 answered - permadeath had no authority there. LEGACY7 gave it one, the realm's tombstone (section 9): online is the
 line's own law now, Bloodline open at the founder's chargen.
+
+**LEGACY-CHOICE - the popup online, and who is founded** (2026-10-06, Mac: "I want to add a enhanced plus UI popup for
+online when creating a character. Perma Death, the regular option, or the option that skips the liniage system
+entirely. Current characters already created start without this system and requires a new game"; built:
+`ui/legacyModelChoice.js`, `ui/levelingChoice.js`, `scenes/legacyHost.js found`, `systems/chargenSession.js
+finishChargen`, `test/legacychoice.test.js`, `tools/mutants/legacychoice.json`):
+- ONLINE THE QUESTION HAS THREE ANSWERS - Enduring (the regular one, first: Enter without reading never costs a
+  character), Bloodline (permadeath), and NO LINEAGE (`family.js NO_LINEAGE`): no house and no heirs, the realm's own
+  death. On Enhanced Plus it is the popup - the Plus window, the three side by side as stone tiles tagged Not
+  permadeath, Permadeath and Classic (the leveling question's word for the game as it always was), keys 1, 2 and 3,
+  up and down each a direction; on the classic skin the same three stacked by their own heights within the 200.
+  Offline it keeps its two: the mod's own switch in Features does the third for every character there.
+- THE ANSWER IS THE CHARACTER'S (`entity.legacyChoice`, saved beside the leveling answer): one who answered no lineage
+  founds no house - at their birth or at any load, in either lane (a copy keeps it).
+- ONLINE A HOUSE IS FOUNDED AT A CHARACTER'S BIRTH ALONE: the boot's own call (`afterBoot`, `atLoad`) founds nobody
+  online - a character loaded with no house plays without one, for good. A character whose house the store or the
+  realm knows is found, as ever; a birth no question was put to (the headless door) founds online's safe Enduring.
+  Offline an older character is founded at its first load into its own answer, else its Features tile's (D9).
+- The Family tab says why there is no house: the character chose none, or (online) a house is founded only when a
+  character is made - make a new character to found one.
 
 ## 7. HEIRLOOMS AND THE DEATH QUEST
 
@@ -545,6 +567,7 @@ than standing still.
 | LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name; two players wed (part three); the line in its own body (part four) and in its online homes (part five) | built |
 | LEGACY-SHEET | the house on the character sheet: the model, the generation, an Enduring house's age, toll and elder's word (section 11) | built |
 | LEGACY-NAME | a house founded nameless named at its seat; a seat's house said once; the news's doubled surname (section 8) | built |
+| LEGACY-CHOICE | the popup online: Enduring, Bloodline or no lineage at chargen, kept on the character; online a house founded at a birth alone - a character loaded with no house plays without one (section 6) | built |
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |
 | AUDIT LEGACY II | the six-lens audit of LEGACY1-4 and LEGACY-HOME (`01-Overview/Audit-Legacy-II.md`) | built |
 | AUDIT LEGACY III | the six-lens audit of the whole arc, server side too (`01-Overview/Audit-Legacy-III.md`) - character-bound weddings, the line's own route bound, the write made from what it read, two copies' persons kept apart, the news on the reader's clock | built |

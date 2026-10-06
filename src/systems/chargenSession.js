@@ -44,6 +44,7 @@ import { oblivionLevelingEnabled, initVirtueLeveling, LEVELING_CLASSIC, newChara
 import { isOnlinePage } from './onlineLane.js';   // LEVEL-ONLINE: Daggerfall's leveling is offline-only for a new character
 import { legacyOn } from './legacy/settings.js';   // LEGACY2: Project Legacy's question - the family's model
 import { legacyModelScreen } from '../ui/legacyModelChoice.js';
+import { isLegacyChoice } from './legacy/family.js';   // LEGACY-CHOICE: the answer kept on the character
 
 /** SPELLS.STD as an index -> spell map. AUDIT 17f: the exterior
  *  hosts ran chargen without one and called finishChargen with no
@@ -291,6 +292,9 @@ export function finishChargen(playerEntity, result, spellsByIndex = null, { roll
   // LEVEL-ONLINE: an online character is born on Oblivion's bar whatever a result carries - the question offers
   // Daggerfall's only offline, and this is the law's own door, not the screen's (a hand-built result goes through it too).
   initVirtueLeveling(playerEntity, newCharacterLevelingSystem(result.levelingSystem ?? LEVELING_CLASSIC, { online: isOnlinePage() }));
+  // LEGACY-CHOICE: AND PROJECT LEGACY'S ANSWER, kept on the character as the leveling one is - a model, or no lineage,
+  // which keeps them out of the system for good (legacyHost.js found). A result the question was not put to carries none.
+  if (isLegacyChoice(result.legacyModel)) playerEntity.legacyChoice = result.legacyModel;
   return playerEntity;
 }
 

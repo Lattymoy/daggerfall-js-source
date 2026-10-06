@@ -8,8 +8,9 @@
 // drives it headless.
 //
 // WHAT IT DOES, END TO END:
-//   - FOUNDS a family around the character played (D9: at creation, or at the first load of an older save), its model
-//     the chargen's answer (`entity.legacyModel`) or its Features tile's - and FINDS the family a save made before its
+//   - FOUNDS a family around the character played (D9: at creation, or offline at the first load of an older save), its
+//     model the chargen's answer (`entity.legacyChoice`, kept on the character) or its Features tile's - never one who
+//     answered no lineage, and online never at a load (LEGACY-CHOICE) - and FINDS the family a save made before its
 //     founding belongs to, rather than founding a second (AUDIT LEGACY A3);
 //   - keeps the record in the save (`modData.ProjectLegacy`, the mod's IHasModSaveData) and in the store;
 //   - RECORDS A DEATH THE INSTANT IT HAPPENS (`onDeath`, the death door's listener - characters/playerEntity.js
@@ -31,7 +32,7 @@
 import {
   LEGACY_VENDOR, MODELS, foundFamily, readFamily, personOf, currentOf, writePlayer, recordDeath, successors,
   newbornAllowed, addChild, rollSiblings, setCurrent, endFamily, touch, estateOf, bornValues, fullNameOf, isCustomCareer,
-  isAlive, memberLook, nameAtSeat, lineSurnameOf,
+  isAlive, memberLook, nameAtSeat, lineSurnameOf, isModel, NO_LINEAGE,
 } from '../systems/legacy/family.js';
 import { houseWord } from '../systems/legacy/houseName.js';   // LEGACY-NAME: "the house of Sentinel", never "of of"
 import { loadFamily, storeFamily, leaveBirth, readBirth, clearBirth, listFamilies, mergeFacts, noteSeen, seenRevOf } from '../systems/legacy/store.js';
@@ -304,15 +305,24 @@ export function createLegacyHost(deps) {
   }
 
   /** FOUND the family around the character being played - a new character's answer, or its Features tile's model. LEGACY7:
-   *  online too - the realm keeps the line and a Bloodline's tombstone (server-account/src/legacy.js). */
-  function found(model = null) {
+   *  online too - the realm keeps the line and a Bloodline's tombstone (server-account/src/legacy.js). `atLoad` - the
+   *  boot's own call (afterBoot), for a character loaded with no house; else a character's birth. */
+  function found(model = null, { atLoad = false } = {}) {
     if (family || past || !deps.on() || !deps.entity?.chargenDone) return family;
     const known = familyOfCharacter(cidOf());
     if (known) { adopt(known); return family; }   // the store knows this character's house - never a second
+    // LEGACY-CHOICE (Mac: "the option that skips the liniage system entirely"): the character's own answer, kept on them -
+    // one who answered no lineage founds no house, at their birth or at any load, in either lane
+    const chose = model ?? deps.entity?.legacyChoice ?? null;
+    if (chose === NO_LINEAGE) return null;
+    // LEGACY-CHOICE (Mac: "Current characters already created start without this system and requires a new game"):
+    // ONLINE A HOUSE IS FOUNDED AT A CHARACTER'S BIRTH ALONE - one made before the question was put online, or copied in
+    // from the offline lane, plays without one (it was founded Enduring at its first load: AUDIT LEGACY B4's law, gone
+    // with it). Offline an older character is founded at its first load as ever (D9).
+    if (atLoad && deps.online()) return null;
     const s = legacySettings();
-    // online a character founded at a LOAD (made before this arc - no chargen answer) is Enduring whatever its Features tile
-    // says: a player never wakes into a permadeath the realm holds that they did not choose (AUDIT LEGACY B4's law, kept)
-    const asked = model ?? deps.entity?.legacyModel ?? (deps.online() ? MODELS.enduring : s.model);
+    // a birth no question was put to (the headless door) founds online's safe answer, offline its Features tile's
+    const asked = isModel(chose) ? chose : deps.online() ? MODELS.enduring : s.model;
     family = foundFamily(deps.entity, { model: asked, seat: deps.town(deps.here()), at: deps.now(), rng, settings: s });
     const p = current();
     p.bornOwn = Math.floor(deps.own() ?? 0);
@@ -1168,8 +1178,9 @@ export function createLegacyHost(deps) {
     lived,
     found,
     onCharacterMade: (model = null) => found(model),
-    /** The boot's end: a loaded character with no family is found, or founded into its Features tile's model (D9). */
-    afterBoot: () => found(),
+    /** The boot's end: a loaded character with no family is found - and offline founded into their own answer or its
+     *  Features tile's model (D9); online never (LEGACY-CHOICE). */
+    afterBoot: () => found(null, { atLoad: true }),
     onDeath,
     deathOutcome,
     willRise,

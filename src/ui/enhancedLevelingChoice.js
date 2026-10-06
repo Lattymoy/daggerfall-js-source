@@ -51,7 +51,8 @@ function buildFace(doc, owner) {
   shell.setAttribute('role', 'dialog');
   shell.setAttribute('aria-modal', 'true');
   shell.setAttribute('aria-labelledby', `${LEVELING_FACE_ID}-title`);
-  const win = el(doc, 'div', 'px-win lvl-win');
+  // LEGACY-CHOICE: three answers (Project Legacy's online popup) widen the window to stand them side by side
+  const win = el(doc, 'div', owner.options.length >= 3 ? 'px-win lvl-win lvl-three' : 'px-win lvl-win');
   for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el(doc, 'span', `px-gem px-corner px-${c}`));
   const body = el(doc, 'div', 'px-body');
   const card = el(doc, 'div', 'card lvl-card');

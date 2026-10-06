@@ -22572,6 +22572,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     inWorld: () => legacySettings().familyInWorld && livingWorldOn(),   // LEGACY-HOME; AUDIT LEGACY II B5: in the Living World's towns alone
     livingWorld: () => livingWorldOn(),
     markHome: (h) => !!legacyHost?.markHome(h),
+    choice: () => playerEntity.legacyChoice ?? null,   // LEGACY-CHOICE: why a character has no house
+    online: () => isOnlinePage(),
   });
   if (params.has('legacyborn')) legacyHost.takeBorn(params.get('legacyborn'));   // LEGACY1: the waiting birth, before the new game's mod records are made
   _legacyMade(legacyHost);
@@ -25001,7 +25003,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   if (!_loadedGame) mwViewNewGame((modes?.mode ?? 'exterior') !== 'exterior');
   if (!_loadedGame) hccRuntime.handleNewGame();   // HCC: StartGameBehaviour.OnNewGame [IL_98c0]
   if (!_loadedGame) newGameModSaveRecords();   // WA1: a new character starts from every mod's NewSaveData (systems/modSaveData.js - a recorded departure)
-  legacyHost?.afterBoot();   // LEGACY1 (D9): a loaded character with no family founded into the Mods pane's model; a born or new one's is its own
+  legacyHost?.afterBoot();   // LEGACY1 (D9): a loaded character with no family founded offline into its own answer or its Features tile's model - online never (LEGACY-CHOICE); a born or new one's is its own
   if (legacyRealmLine) legacyOnlineHomesRead();   // LEGACY7 part five: the realm's homes of the one played, for the line's houses
   // E3 - THE CONSOLE. ExteriorAutomap.Start (:417) and
   // DaggerfallTravelMapWindow's ctor (:229) each register their own
