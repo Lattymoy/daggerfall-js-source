@@ -218,7 +218,7 @@ uploads as-is with `UNPACK_FLIP_Y_WEBGL` off (`renderer.js:3426`), and
 (`renderer.js:450-452`). The seasonal record arrived in PNG raster
 order instead - `decodeTexture2D` flips Unity's bottom-up rows to
 top-down for its own consumers, and the loose arm is a canvas
-`getImageData` - and `world.js:4695` / `exterior.js` handed that
+`getImageData` - and `world.js:4697` / `exterior.js` handed that
 straight to `uploadTexture` (the one upload site is `naturePicture.js:54`
 now - AUDIT 05b A12). So a seasonal flat drew mirrored against
 the classic flat uploaded five lines later in the same batch loop. In

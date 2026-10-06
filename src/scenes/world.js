@@ -2386,7 +2386,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     for (let d = 0; d <= NEWS_DAYS; d++) { const tr = townTrips(town, noon - d * 1440, livingTripWorld, o); if (tr) told.push(...tr); }
     const won = livingRelations.turns().won;
     const news = newsOf(told, noon).map((n) => ({ ...n, foe: n.foe != null ? livingFoeWord(n.foe, 2) : '', helped: won.has(n.enc) }));   // LW7: a fight the player turned
-    return { away, visitors, holders, news };
+    // LW-TALK: the towns of its road - where its people's trips of these days were bound - for its talk's {place}
+    const places = [...new Set([...trips, ...told].map((tr) => tr.to?.name).filter(Boolean))].sort();
+    return { away, visitors, holders, news, places };
   };
   // LW5: THE BAY'S SAILORS (systems/livingWorld/portCrews.js) - a port's sailors the crews of the packets calling at it,
   // each where her clock has her (the shared one the naval host stands and steers her by, raidNowMs): aboard under way,

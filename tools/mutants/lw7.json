@@ -565,11 +565,12 @@
   {
     "name": "LW7-dead-walk",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "      if (this.o.deadAt?.(res, t)) continue;   // LW7",
-    "new": "      void 0;   // LW7",
+    "old": "if (this._taken.get(res.id) === day || this.o.deadAt?.(res, t)) {",
+    "new": "if (this._taken.get(res.id) === day) {",
     "tests": [
       "test/lw7_deeds.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-road-slay-unmade",

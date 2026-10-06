@@ -47,7 +47,7 @@ import { townCensus, isHome, watchShiftSize } from './census.js';
 import { dayPlan, entryAt, isOutdoor, DAY_START_MIN, DAY_MIN } from './dayPlan.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { createPathBook, pointOnLine } from './townPaths.js';
-import { spotCircles, circleLine, circleStands, aloneStand, ROUND_S, lineMinutes } from './meetups.js';
+import { spotCircles, circleLine, circleStands, aloneStand, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M } from './meetups.js';
 import { LIVING_GREETINGS, LIVING_KEEPSAKE, fillLine, firstNameOf } from './lines.js';
 import { keepsakeFor } from './keepsake.js';
 import { lwSeed, textSeed } from './seed.js';
@@ -111,6 +111,36 @@ export function walkGap(e, p) {
   const gz = Math.max(Math.min(a.z, b.z) - p[2], 0, p[2] - Math.max(a.z, b.z));
   return Math.hypot(gx, gz);
 }
+/** LW-TALK: how much nearer a talking circle counts than its nearest one (m) - the ring the ones alone at a spot stand in
+ *  (meetups.js ALONE_FAR_M), which its circles stand beyond: counted level with them, not behind them all. Nearest alone,
+ *  the busiest square at six in the evening kept the ones alone about it and fell silent (10.5 lines a minute, 63% of
+ *  its seconds silent; with the ring counted, 24 and 33%). */
+export const TALK_PULL_M = ALONE_FAR_M;
+/**
+ * LW-TALK: WHO THE STREET KEEPS - the wanted ([{ res, d }], d the metres off the player), each with the circle they
+ * stand in (`circleOf(id)`, else alone): a circle's people come on together, nearest first - a unit as near as its
+ * nearest one, a circle TALK_PULL_M nearer - while the whole of it fits the cap, or wait together. Nearest first is the
+ * street's one order (LW2's): put first, those already on the street held every row from the nearer (a walk passing
+ * beside the player never came on, nor a watchman back from his guard), and those in the player's sight let one go who
+ * stood just behind him.
+ * @param {{ res: Resident, d: number }[]} wanted @param {(id: string) => any} circleOf @param {number} cap
+ * @returns {Set<Resident>}
+ */
+export function keepUnits(wanted, circleOf, cap) {
+  /** @type {Map<any, { res: Resident[], d: number }>} */
+  const units = new Map();
+  for (const w of wanted) {
+    const c = circleOf(w.res.id);
+    const key = c ?? w.res, d = c ? w.d - TALK_PULL_M : w.d;
+    const u = units.get(key);
+    if (u) { u.res.push(w.res); u.d = Math.min(u.d, d); } else units.set(key, { res: [w.res], d });
+  }
+  const keep = new Set();
+  for (const u of [...units.values()].sort((a, b) => a.d - b.d || (a.res[0].id < b.res[0].id ? -1 : 1))) {
+    if (keep.size + u.res.length <= cap) for (const r of u.res) keep.add(r);
+  }
+  return keep;
+}
 /** How long a word to the player stands (real seconds). */
 export const GREET_S = 3.4;
 /** A resident's line stands this high over their feet (m) - a townsperson's billboard and a little. */
@@ -143,7 +173,7 @@ export class LivingTown {
    *   relations?: () => (ReturnType<typeof import('./relations.js').createRelations> | null),
    *   playerName?: () => string, weather?: () => (string|null), townName?: string, regionName?: string,
    *   tripsOf?: (day: number) => ({ away: Map<string, { t0: number, t1: number, yaw: number, armed: boolean, dock?: boolean }[]>, visitors: { res: Resident, inT: number, outT: number, yaw: number, trip?: any, dock?: boolean }[],
-   *     holders?: Map<string, Resident|null>, news?: { kind: string, who: string, foe: string, place: string }[] } | undefined),
+   *     holders?: Map<string, Resident|null>, news?: { kind: string, who: string, foe: string, place: string }[], places?: string[] } | undefined),
    *   armOf?: (res: Resident) => ({ mobileType: number, basics: any, archive: number, frameCount: (record: number) => number, sex?: 'male'|'female' } | null),
    *   ashore?: (res: Resident) => ('home'|'sea'|'abroad'|null),
    *   crews?: () => { res: Resident, inT: number, outT: number, berth?: { lane: { key: string }, k: number } }[],
@@ -157,7 +187,7 @@ export class LivingTown {
    *   takeKeepsake?: (item: any) => void,
    * }} o - LW6c: `keepsakes()` what the player carries (a keepsake carried home), `takeKeepsake(item)` it handed over.
    *   `tripsOf(day)` the roads' word on the town for a day (trips.js through the host's book: who of it is away
-   *   when, who of elsewhere stays here), undefined while its ways are still being asked; `armOf(res)` a resident's
+   *   when, who of elsewhere stays here; LW-TALK `places` the towns its roads and news name, its talk's {place}), undefined while its ways are still being asked; `armOf(res)` a resident's
    *   class sprite once its art is loaded, else null - `clock` the sky's minute (worldTick.js skyMinutes); `rate` the clock's minutes a real second now (a
    *   journey's scale in it); `mpm` the walking pace in the clock's metres a minute (LW0 decision 3). LW5: `ashore(res)`
    *   where one of its sailors is by their packet's clock (portCrews.js - at sea or abroad, in no street of this town);
@@ -196,8 +226,11 @@ export class LivingTown {
     this._lag = new Map();
     /** @type {Map<string, { circle: any, index: number, spot: any }>} this tick's circles, by member */
     this._inCircle = new Map();
-    /** @type {Map<string, number>} when each last spoke to the player (the clock's minute) */
+    /** @type {Map<string, { t: number, said: boolean }>} when each last came by the player (the clock's minute), and
+     *  whether they spoke (LW-TALK: one who kept quiet speaks when the player stops before them) */
     this._greeted = new Map();
+    /** LW-TALK: each exchange's script as it began (meetups.js exchangeScript) @type {Map<string, any>} */
+    this._scripts = new Map();
     /** @type {{ person: any, text: string, until: number }[]} the words to the player standing */
     this._greetings = [];
     this._now = 0;
@@ -293,7 +326,7 @@ export class LivingTown {
     const got = this.o.tripsOf(day);
     if (!got) return null;
     this._roads = { day, away: got.away, visitorOf: new Map(got.visitors.map((v) => [v.res.id, v])), visitors: got.visitors.map((v) => v.res),
-      holders: got.holders ?? null, news: got.news ?? null };   // LW4: who holds each traveller's place today; the town's news of the road
+      holders: got.holders ?? null, news: got.news ?? null, places: got.places ?? null };   // LW4: who holds each traveller's place today; the town's news of the road; LW-TALK: its towns
     this._people = null;
     for (const [id, e] of this._plans) if (e.day === day && !e.roads) this._plans.delete(id);   // planned before the roads were known: again
     return this._roads;
@@ -493,6 +526,10 @@ export class LivingTown {
 
   _inView(dx, dz, viewYaw) { return dx * Math.sin(viewYaw) + dz * Math.cos(viewYaw) > 0; }
 
+  /** DFU's hiding: whether a body `dx`, `dz` off the player is out of their sight - beyond POP_VISIBLE_RANGE or behind
+   *  them - where a row may come on or go (in sight it does neither). */
+  _hidden(dx, dz, viewYaw) { return Math.hypot(dx, dz) > POP_VISIBLE_RANGE || !this._inView(dx, dz, viewYaw); }
+
   /** The census read: who is wanted on the street now, and the circles at the spots. */
   _tick(playerPos, viewYaw) {
     const t = this._now;
@@ -500,27 +537,70 @@ export class LivingTown {
     // a row the street disabled itself (the watch's conversion copies the pool's free inline): that resident is taken -
     // WATCH-FIX: and a guard of the watch's standing for them undoes it (`lend`, which frees the row itself when it comes first)
     for (const r of this.pool) if (r.res && !r.active) { this._take(r.res); this._free(r); }
+    const roundMin = ROUND_S * this._baseRate();
+    /** LW-TALK: every stay at a spot that runs into the last two rounds - the deal is the plans', so every reader deals
+     *  alike: one gone from this street alone (taken, struck down) is dealt, and left out after (`absent`); before, the
+     *  spot dealt without them, and every pair after them changed on that reader alone */
     /** @type {Map<string, { who: Resident, t0: number, t1: number }[]>} */
     const presence = new Map();
     /** @type {Map<string, any>} */
     const spotOf = new Map();
+    const absent = new Set();
+    /** LW-TALK: the census's own on this street, each read for where they stand once the beat's circles are dealt */
+    const alive = [];
     const wanted = [];
     /** @type {{ res: Resident, gap: number }[]} */
     const pending = [];
     if (this.o.harbour && !this.places.dock.length && !this._harbourDock) this.dockSpot();   // LW5: the harbour sounded since
     for (const res of [...this.peopleOf(day), ...this._crewsNow()]) {
-      if (this._taken.get(res.id) === day) continue;
       if (this._away(res)) continue;   // WATCH-FIX: with the watch - a guard stands for them
       if (this._gone(res)) continue;   // LW5: aboard, or ashore at the far port
-      if (this.o.deadAt?.(res, t)) continue;   // LW7: struck down - dead from that minute
+      const plan = this.planOf(res, day);
+      for (let i = Math.max(0, entryAt(plan, t)); i >= 0 && plan[i].t1 > t - 2 * roundMin; i--) {
+        const e = plan[i];
+        if (e.t0 > t || e.kind === 'walk' || !isOutdoor(e)) continue;
+        const list = presence.get(e.at.key) ?? [];
+        list.push({ who: res, t0: e.t0, t1: e.t1 });
+        presence.set(e.at.key, list);
+        spotOf.set(e.at.key, e.at);
+      }
+      if (this._taken.get(res.id) === day || this.o.deadAt?.(res, t)) {   // LW7: struck down - dead from that minute
+        absent.add(res.id);
+        const row = this._rowOf(res);
+        if (row) this._free(row);   // LW-TALK: and off the street at once, in the player's sight or not - marked to go, the
+        continue;                   // dead stood where the player looked till he looked away, unless the host disabled them
+      }
+      alive.push(res);
+    }
+    // the circles at every spot two or more stand at (the whole census's, so every reader's circles agree) - LW-TALK: each
+    // circle's talk waits for its people to gather, from where the last round stood them (their place in it, else their
+    // own about the spot) to their place in this one, at the walking pace (`from`)
+    this._inCircle.clear();
+    for (const [key, list] of presence) {
+      if (list.length < 2) continue;
+      const spot = spotOf.get(key);
+      const now = spotCircles(key, list, t, roundMin);
+      if (!now.length) continue;
+      /** @type {Map<string, { x: number, z: number }>} */
+      const stood = new Map();
+      for (const c of spotCircles(key, list, now[0].start - 1e-6, roundMin)) circleStands(spot, c, this._street).forEach((st, i) => stood.set(c.members[i].id, st));
+      for (const dealt of now) {
+        const places = circleStands(spot, dealt, this._street);
+        let far = 0;
+        dealt.members.forEach((m, i) => { const was = stood.get(m.id) ?? aloneStand(spot, m.id, this._street); far = Math.max(far, Math.hypot(places[i].x - was.x, places[i].z - was.z)); });
+        const from = dealt.start + (far / PERSON_MOVE_SPEED + GATHER_BEAT_S) * this._baseRate();
+        const members = dealt.members.filter((m) => !absent.has(m.id));
+        if (members.length < 2) continue;   // left alone on this street: their own counsel
+        const circle = { ...dealt, members, from };
+        members.forEach((m, index) => this._inCircle.set(m.id, { circle, index, spot }));
+      }
+    }
+    // LW-TALK: WHERE EACH ONE STANDS IS READ BY THIS BEAT'S DEAL, dealt above - read before it, an arrival stood the street
+    // by the last scene's circles (or none: each one about their own stand) and moved it a beat later, every one dealt
+    // into a circle walking off to their place in it as the player came
+    for (const res of alive) {
       const at = this.entryOf(res, t);
       if (!at) continue;
-      if (at.e.kind !== 'walk' && isOutdoor(at.e)) {
-        const list = presence.get(at.e.at.key) ?? [];
-        list.push({ who: res, t0: at.e.t0, t1: at.e.t1 });
-        presence.set(at.e.at.key, list);
-        spotOf.set(at.e.at.key, at.e.at);
-      }
       const w = this.where(res, t, false);
       if (!w) continue;
       if (w.pending) { const gap = walkGap(w.e, playerPos); if (gap < LIVING_RANGE + WALK_STRAY_M) pending.push({ res, gap }); continue; }
@@ -542,16 +622,9 @@ export class LivingTown {
         if (d < LIVING_RANGE) wanted.push({ res, d });
       }
     }
-    wanted.sort((a, b) => a.d - b.d || (a.res.id < b.res.id ? -1 : 1));
-    const keep = new Set(wanted.slice(0, this.maxPopulation).map((w) => w.res));
-    // the circles at every spot two or more stand at (the whole census's, so every reader's circles agree)
-    const roundMin = ROUND_S * this._baseRate();
-    this._inCircle.clear();
-    for (const [key, list] of presence) {
-      if (list.length < 2) continue;
-      const spot = spotOf.get(key);
-      for (const circle of spotCircles(key, list, t, roundMin)) circle.members.forEach((m, index) => this._inCircle.set(m.id, { circle, index, spot }));
-    }
+    // LW-TALK: THE STREET KEEPS A CIRCLE WHOLE (keepUnits) - its people come on together, nearest first, or wait together
+    // (the nearest were taken one by one, and at a busy square 44 of 64 lines went to a partner the street had not stood)
+    const keep = keepUnits(wanted, (id) => this._inCircle.get(id)?.circle, this.maxPopulation);
     // the street: a row whose resident is no longer wanted goes when unseen; one wanted again stays
     for (const r of this.pool) if (r.active && r.res) r.scheduleRecycle = !keep.has(r.res);
     // the wanted not yet on the street come on
@@ -646,7 +719,7 @@ export class LivingTown {
       }
       const dx = p.pos[0] - playerPos[0], dz = p.pos[2] - playerPos[2];
       const dist = Math.hypot(dx, dz);
-      const allowChange = dist > POP_VISIBLE_RANGE || !this._inView(dx, dz, viewYaw);
+      const allowChange = this._hidden(dx, dz, viewYaw);
       // WATCH-DAY: one of the watch wears the uniform on duty and his own clothes off it - changed where nobody sees it
       // (a body not yet stood, or out of the player's sight): never in view
       if (res.guard && p.guard !== !!w.e.duty && (!row.visible || allowChange)) p.setIdentity(w.e.duty ? res.archive : (res.civvies ?? res.archive), !!w.e.duty);
@@ -664,13 +737,15 @@ export class LivingTown {
     return out;
   }
 
-  /** A word to the player passing close, at most once in GREET_REST_MIN of the clock. */
+  /** A word to the player passing close, at most once in GREET_REST_MIN of the clock - LW-TALK: and one who kept quiet
+   *  as the player came by speaks when the player stops before them (the rest was taken by the quiet pass, so the stop
+   *  that rule waits for never came: not one of 298 quiet strangers spoke, held before the player). */
   _greet(res, person, dist, stopped) {
     if (dist > GREET_RANGE || this._inCircle.has(res.id)) return;
     const last = this._greeted.get(res.id);
-    if (last != null && this._now >= last && this._now - last < GREET_REST_MIN) return;   // AUDIT-E6: a clock gone back (a load) forgets the rest
-    this._greeted.set(res.id, this._now);
+    if (last && this._now >= last.t && this._now - last.t < GREET_REST_MIN && (last.said || !stopped)) return;   // AUDIT-E6: a clock gone back (a load) forgets the rest
     const text = this.greetingFor(res, this._now, stopped);
+    this._greeted.set(res.id, { t: this._now, said: text != null });
     if (text == null) return;
     this._greetings = this._greetings.filter((g) => g.person !== person && g.until > this._realNow);
     this._greetings.push({ person, text, until: this._realNow + GREET_S });
@@ -705,14 +780,19 @@ export class LivingTown {
     const lineMin = lineMinutes(this._baseRate());
     const ctx = this.lineCtx(this._now);
     this._greetings = this._greetings.filter((g) => g.until > this._realNow);
+    if (this._scripts.size > 4096) this._scripts.clear();
+    /** LW-TALK: a circle's line is said aloud to a circle that stands together on this street - every one of them stood
+     *  and at their place (22-84% of the first cut's lines were said while their circle was still walking together, or
+     *  to one the street had not stood) */
+    const standing = new Set(this.pool.filter((r) => r.visible && r.res && !r.person.moving).map((r) => r.res.id));
     for (const row of this.pool) {
       if (!row.visible || !row.res) continue;
       const p = row.person;
       if (Math.hypot(p.pos[0] - eye[0], p.pos[2] - eye[2]) > range) continue;
       const c = this._inCircle.get(row.res.id);
       if (c) {
-        const line = circleLine(c.circle, this._now, lineMin, ctx);
-        if (line && line.who.id === row.res.id) out.push({ person: p, text: line.text, kind: /** @type {'talk'} */ ('talk') });
+        const line = circleLine(c.circle, this._now, lineMin, ctx, this._scripts);
+        if (line && line.who.id === row.res.id && c.circle.members.every((m) => standing.has(m.id))) out.push({ person: p, text: line.text, kind: /** @type {'talk'} */ ('talk') });
         continue;
       }
       const g = this._greetings.find((x) => x.person === p);
@@ -725,12 +805,12 @@ export class LivingTown {
    * What the town's talk knows at minute `t`: the town, the region, the weather, the hour, the road's news (LW4) and the
    * deeds' beside it (LW7), the character's name for a deed's. The street's circles' (`speech`) and LW8b's rooms'.
    * @param {number} t
-   * @returns {{ town?: string, region?: string, weather: string|null, hour: number, news: any[]|null, player?: string }}
+   * @returns {{ town?: string, region?: string, weather: string|null, hour: number, news: any[]|null, places: readonly string[]|null, player?: string }}
    */
   lineCtx(t) {
     const hour = Math.floor((((t % DAY_MIN) + DAY_MIN) % DAY_MIN) / 60);
-    /** @type {{ town?: string, region?: string, weather: string|null, hour: number, news: any[]|null, player?: string }} */
-    const ctx = { town: this.o.townName, region: this.o.regionName, weather: this.o.weather?.() ?? null, hour, news: this._roads?.news ?? null };   // LW4: the road's news
+    /** @type {{ town?: string, region?: string, weather: string|null, hour: number, news: any[]|null, places: readonly string[]|null, player?: string }} */
+    const ctx = { town: this.o.townName, region: this.o.regionName, weather: this.o.weather?.() ?? null, hour, news: this._roads?.news ?? null, places: this._roads?.places ?? null };   // LW4: the road's news; LW-TALK: its towns
     const deeds = this.deedNews(t);   // LW7: the deeds' news beside the road's, and the character's name for it
     if (deeds.length) ctx.news = [...(ctx.news ?? []), ...deeds];
     ctx.player = this.o.playerName?.() ?? '';

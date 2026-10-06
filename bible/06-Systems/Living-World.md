@@ -130,12 +130,15 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
   at six is left at six; the LW1 pins found the helper who stayed on); an away window (trips.js, LW3) is geared for at home `GEAR_MIN` where the traveller goes armed, walked out to
   arrive as it opens and home as it closes, each walk ARMED. A walk's minutes: the cells' Manhattan distance x
   `WALK_DETOUR` + `WALK_EXTRA_M`, over the pace.
-- **`meetups.js`.** Rounds of `ROUND_S` (40 real seconds) laid on the clock; whoever stands at a spot for a WHOLE round
-  pairs off on an order drawn from the spot, the round and their ids (the odd three together); `TALK_SHARE` of circles
-  talk; a line each `CREW_LINE_S` of the clock, the first member first; `circleStands` round the spot on the golden
-  angle, `CIRCLE_APART` apart, facing in.
+- **`meetups.js`.** Rounds of `ROUND_S` (LW-TALK: 120 real seconds, each spot's on a phase of its own - the first cut's
+  40 on one minute everywhere) laid on the clock; whoever stands at a spot for a WHOLE round pairs off on an order drawn
+  from the spot, the round and their ids (the odd three together - `dealCircles`); LW-TALK: a circle's talk waits for its
+  people to gather (`from`) and runs in exchanges (`circleSlots`, `exchangeAt`), `TALK_SHARE` of them spoken, a line each
+  `CREW_LINE_S` of the clock, a dialogue between the exchange's opener and the rest; `circleStands` round the spot on the
+  golden angle, `CIRCLE_APART` apart, facing in.
 - **`lines.js`.** Original words in the crew's two-and-three-line shape: the town's talk, the trades', the weather's,
-  the evening's and the night's; tokens with fallbacks; LIVING_GREETINGS by regard.
+  the morning's, the day's (LW-TALK, the street's), the evening's and the night's; tokens with fallbacks; LIVING_GREETINGS
+  by regard.
 - **`relations.js`.** A regard per resident (-100..100), a stranger 0: a word +3 once a day, a polite word +1, a gift
   +8, help +20, a life saved +35, a blow -45, a crime -15, one of theirs slain -60, a blunt word -6; friend at 40, enemy
   at -40, hostile at -70; eased toward zero half a point a day unseen and never across; 600 kept; the save's record
@@ -604,10 +607,12 @@ conversations with each other ... much like the crew on board ships" - LW8 stood
   deal, each spot not yet at a table opens one and takes the nearest of the rest within `TABLE_M` (2.2 m) of every one
   already at it, to `TABLE_MAX` (3). The room fills TABLE BY TABLE (the tables in the deal, each its spots in turn), so
   those inside stand in twos and threes; those at a table face its middle, one alone faces the room.
-- **The circles.** Each round of the street's (`ROUND_S`, laid on the town's clock: `talkBeat`) those at a table its
-  whole round (their stays at the building's door) meet as the street's circles do - `spotCircles` on the table's own
-  key (`in:<building>:<table>`), the street's `TALK_SHARE` of them talking, a line each `CREW_LINE_S` of the clock, the
-  first speaker first. One come in mid-round meets none till the next.
+- **The circles.** LW-TALK: a table's company - those standing at it - meets from the minute it sat down as it is, a
+  round of the street's at a time (`ROUND_S`, on the town's clock: `talkBeat`) while it stays the same, dealt as the
+  street's circles are (`dealCircles` on `in:<building>:<table>:<the minute>`) and talking in the street's exchanges.
+  One who comes while an exchange is on waits for its last line (the company there carries it); one who goes ends the
+  talk at once. (The first cut dealt the tables on the street's own round by their stays: one come in mid-round met
+  nobody till the next.)
 - **The words.** The street's own (`circleLine`: the town's talk, the trades', the weather's, the evening's and the
   night's, the town's news of the road and of the deeds - `lineCtx`, at the room's minute), and the ROOM'S OWN beside
   them (`ROOM_TALKS` by the building's kind, `roomKindOf`: the tavern's, the temple's, a shop's - any shop, the bank, the
@@ -653,7 +658,8 @@ defects; each is fixed and pinned (`test/lwfix1_review.test.js`, `tools/mutants/
   in plain view.
 - **A table's talk is the round's as it began**: each table's circles are dealt once a round (`roundCircles`) - one who
   sits down mid-round joins the next round's talk, and a circle one of whom goes falls silent till the next round;
-  never a conversation re-dealt mid-script.
+  never a conversation re-dealt mid-script. (LW-TALK: the law kept by the company - one who sits down mid-exchange
+  waits for its last line, and the new company meets after it.)
 - **The player's own dead**: the deep passes by a `slain` or `died` diver (the pool's corpse) as it does the fallen
   beside the player; and the books are made again below when a turn is made there (`livingTurnsFresh`, for the
   remains and the divers alike) - before, a diver slain below was laid again as the deep's once their company left.
@@ -1112,6 +1118,82 @@ stop, so at five in the evening more "guards" walked the street than mid-shift.
   the uniform; the post; a great city) and `tools/mutants/watchday.json`. PIN MOVED: `lw1_livingWorld` (the census's watch, the
   shifts), `lwfix3_town` (the beat to the shift's end), `watchfix_watch` (the census full, a returning resident comes on
   as the player turns; his patrol's mate a witness).
+## LW-TALK - the town's people face one another and talk together (2026-10-06)
+
+Mac: "I want to ensure everything is working with NPCs actually interacting with each other, talking, etc" - and asked
+how two who talk should stand, "Turn them". The investigation measured the first cut on the synthetic towns, the
+street and the rooms, and ranked what the player saw.
+
+- **The facing** (`characters/residentWalker.js`, STAND_FRAME). DFU's idle record is one front view: every talker in a
+  circle faced the camera, never the one they talked to (88,358 of 88,358 standing frames on the street, every frame
+  indoors), and the watch at his post faced the street. A resident standing keeps the way they face - the walk wheel's
+  record for their yaw against the camera, held on its STAND_FRAME (the walk sprite's still frame), flipped as the wheel
+  is; the idle record is the politeness gate's alone, DFU's own use of it (one who stops for the player turns to face
+  them). The living world's lane only (the classic walkers are DFU's own); Mac to confirm the frame in the game.
+- **A round is a meeting** (`meetups.js` ROUND_S, `spotRound`, `dealCircles`). Two minutes, each spot's on a phase of
+  its own: the first cut's 40 s re-dealt a busy square three times a minute (76-92% of its people had a new partner
+  every round, walking up to 30 m to reach them) and every spot on the same minute (ten lines in one frame, then half a
+  minute of silence - 73-82% of the day's seconds silent at the square).
+- **The gathering** (`livingTown.js` `_tick`, `from`). A circle's talk waits for its people: from where the last round
+  stood them (their place in its circle, else their own about the spot) to their place in this one, the farthest of
+  them at the walking pace, and GATHER_BEAT_S after. The deal and the walk are the plans' alone, so every reader
+  gathers alike. (22-84% of the first cut's lines, by hour and town, were said while their circle was still walking
+  together.)
+- **The exchanges** (`circleSlots`, `exchangeAt`, `slotSpoken`, `exchangeScript`). A meeting talks in exchanges: a script
+  a slot of SLOT_LINES lines' time, the first OPEN_S into the talk, each next PAUSE_S after the last - each circle's own
+  draws - none begun that the round's end would cut (CLOSE_S); TALK_SHARE of the slots spoken, the rest quiet spells
+  (the first cut stood whole circles quiet a whole round). A script is a DIALOGUE: the slot's opener, turning slot by
+  slot, says its even lines and the others answer in turn - a third line is the opener's (in a trio, the third answers
+  the fourth). It is drawn as its exchange begins - the hour it began, the opener's trade first - and kept to its end
+  (the reader's `memo`: a change of weather mid-script swapped it 916 times in 2000), and never the script the circle
+  said last.
+- **Said aloud together** (`livingTown.js speech`, the street's keep, `keepUnits`). A circle's line is said aloud only
+  while every one of it stands at their place on this street, and the street keeps a circle whole - its people come on
+  together, nearest first, or wait together (at a busy square 58 of 77 lines went to a partner the street had not
+  stood, 44 of them for the cap). A circle counts TALK_PULL_M nearer than its nearest one - the ring the ones alone at a
+  spot stand in (meetups.js ALONE_FAR_M), beyond which its circles stand: nearest alone, the busiest square at six in the
+  evening kept the ones alone about it and fell silent (10.5 lines a minute, 63% of its seconds). Nothing else orders
+  it: put first, those already on the street held every row from the nearer (a walk passing beside the player never
+  came on, nor a watchman back from his guard - LW-FIX3's, LW-PERF's, LW2's and WATCH-FIX's pins), and those in the
+  player's sight let one go who stood just behind him (WATCH-DAY's). The census deals the circles before it reads where
+  anyone stands - read before them, an arrival stood the street by the last scene's circles and let half of it go a beat
+  later (12 of the 24 at the synthetic square at six) - and the taken and the dead leave the street at once, in the
+  player's sight or not (marked to go, one struck down stood where the player looked till he looked away). DFU's hiding
+  has one home (`_hidden`). Where the cap and the hiding law (nobody comes on in plain sight) leave one of a circle off
+  the street, the circle stands silent; on the synthetic towns 70-100% of the lines due near the player are heard - the
+  least at the close-built town at six in the evening, its cap of 24 under the square's crowd.
+- **Every reader deals alike.** The deal is the plans': one taken off this street alone (the trample) or struck down
+  here is dealt and left out after - their partner to their own counsel, the spot's other circles as every reader has
+  them (the first cut dealt the street's own, and one gone re-paired the whole spot on that reader, round after round).
+- **The rooms** (`scenes/livingIndoors.js`). A table's company meets from the minute it sat down as it is (see LW8b);
+  one who comes while an exchange is on waits for its last line; its people stay put while an exchange is on and
+  through their first round together (one in a quiet circle got up mid-talk; a temple's two parted the moment their
+  talk ended, one three-line talk in three quarters of an hour).
+- **The word to the player** (`livingTown.js _greet`, the rooms'). One who kept quiet as the player came by speaks when
+  the player stops before them: the quiet pass took the rest, so the stop that rule waits for never came (0 of 298
+  strangers held before the player spoke). A word said rests GREET_REST_MIN. In a room a stop is the player standing still
+  within the street's idle distance (the first cut never asked).
+- **The words** (`lines.js`). {place} is a town of the town's road - its trips' towns, the host's word (`places`), the
+  exchange's draw (eight scripts always said "the next town"). The morning's greeting and the day's talk keep their
+  hours, on the street ("Morning" was heard at six in the evening, and by the night watch); a trade's pool is the
+  trade's once however many share it, and the commonest trades have six scripts (two homemakers drew their one script
+  half the time: "The baker's bread is getting smaller." opened a fifth of the town's talk, "Hauled stone since dawn."
+  a sixth); the morning's, the day's, the evening's and the night's pools wide enough that no opener is three in a
+  hundred of a day's. A third line that undid its question is the asker's comeback now.
+- **The road's parties** (`scenes/livingRoads.js`) talk in exchanges from their round's start (nobody gathers: a party
+  walks together).
+- **The four hosts.** `scenes/world.js` - WIRED (the street's town; the towns of the road for {place}).
+  `scenes/worldModes.js` - WIRED (the rooms, through `livingIndoors.js`). `scenes/exterior.js` - FLAGGED as LW2 has it:
+  the fixed-city page keeps DFU's walkers. `scenes/dungeonContext.js` - no town.
+- **Pinned** by `test/lwtalk_town.test.js` (the facing; the meeting; the exchanges; the street; every reader alike; the
+  word to the player; the words; the hosts) and `tools/mutants/lwtalk.json`. PIN MOVED: `lw1_livingWorld` (the meeting's
+  phase and exchanges), `lw2_livingTown` (the gate's idle record; the churn under a cap waits on a round's turn),
+  `lw3_roads` (an armed traveller standing: the class sprite's idle, the outfit's own on the wheel),
+  `lw4_trouble` (the news told in an exchange; the talk's context; the host's word), `lw7_deeds` (the deed told in an
+  exchange), `lw8b_talk` (a table's company; the street's words reference), `lw8c_astir` (a room of no talk has no
+  beat; a company stays put), `lwfix1_review` (never re-dealt mid-script, by the company), `lwfix6_rooms` (an empty
+  table's two meet at once), `lwstand_street` (a body paused on its walk stands on the wheel's still frame).
+
 ## The four hosts
 
 - `scenes/world.js` - WIRED (LW2 the towns, LW3 the roads and the Overworld).

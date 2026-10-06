@@ -15,8 +15,8 @@ import { synthTown, closeTown } from './lwTown.mjs';
 import { townPlaces, harbourDock, streetGeometry, STAND_REACH_M } from '../src/systems/livingWorld/places.js';
 import { circleStands, circleMiddle, aloneStand, CIRCLE_APART, STAND_BEARINGS, STAND_SOUND_M, STAND_MARGIN_M, ALONE_NEED_M, ALONE_FAR_M } from '../src/systems/livingWorld/meetups.js';
 import { LivingTown } from '../src/systems/livingWorld/livingTown.js';
-import { ResidentWalker } from '../src/characters/residentWalker.js';
-import { PERSON_MOVE_SPEED, PERSON_IDLE_RECORD, PERSON_GUARD_IDLE_RECORD } from '../src/characters/mobilePerson.js';
+import { ResidentWalker, STAND_FRAME } from '../src/characters/residentWalker.js';   // LW-TALK: PIN MOVED - standing, the wheel's still frame
+import { PERSON_MOVE_SPEED, MOVE_RECORDS } from '../src/characters/mobilePerson.js';
 import { CityNavigation, NAV_CELL } from '../src/world/cityNavigation.js';
 import { DAY_MIN, isOutdoor } from '../src/systems/livingWorld/dayPlan.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
@@ -237,7 +237,7 @@ test('LW-STAND the pause: a resident in view whose next walk is not searched yet
       if (!t.town.where(p.living.res, read, false)?.pending) continue;
       if (!began.has(p)) began.set(p, read);
       assert.equal(p.moving, false, `${p.living.res.id}: stands, not a walk on the spot`);
-      if (!p.armed) assert.equal(out.record, p.guard ? PERSON_GUARD_IDLE_RECORD : PERSON_IDLE_RECORD, 'the idle picture (the watch\'s own)');
+      if (!p.armed) assert.ok(MOVE_RECORDS.includes(out.record) && out.frame === STAND_FRAME, 'standing: the walk wheel\'s still frame');   // LW-TALK: PIN MOVED - the idle record is the politeness gate's alone
       assert.deepEqual([p.pos[0], p.pos[2]], at.get(p), 'where they were');
       assert.ok(Math.abs(read - began.get(p)) < 1e-6, `${p.living.res.id}: the walk's clock held while it waits (${(read - began.get(p)).toFixed(3)} min on)`);
     }

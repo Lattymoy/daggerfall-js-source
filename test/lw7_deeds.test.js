@@ -15,7 +15,7 @@ import { createRelations, EVENTS, HOSTILE_AT, HAND_KINDS, HAND_NAME_MAX, TURNS_M
 import { placeAt, handDeath, roadHits, fateHits, deathCounted, turnKey, HAZARD } from '../src/systems/livingWorld/lives.js';
 import { handsOn, membersAt, newsOf, remainsNear, awayOf, partyAt, placeCycle, CALENDAR_MPM, NEWS_DAYS } from '../src/systems/livingWorld/trips.js';
 import { newsScript, SLAIN_NEWS, DIED_NEWS, HELPED_NEWS, ROAD_NEWS, fillLine } from '../src/systems/livingWorld/lines.js';
-import { circleLine } from '../src/systems/livingWorld/meetups.js';
+import { circleLine, circleSlots, slotSpoken, exchangeScript } from '../src/systems/livingWorld/meetups.js';   // LW-TALK: PIN MOVED - the news told in an exchange
 import { createLivingRoads } from '../src/scenes/livingRoads.js';
 import { DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
@@ -298,13 +298,14 @@ test('LW7 the town talks of the deeds (`deedNews`): each of its own the player s
   assert.match(lt, /ctx\.player = this\.o\.playerName\?\.\(\) \?\? '';/);
   assert.ok(SLAIN_NEWS.seen.every((sc) => sc.some((l) => l.includes('{player}'))), 'seen, the player named');
   assert.ok(SLAIN_NEWS.unseen.every((sc) => !sc.some((l) => l.includes('{player}'))), 'unseen, not');
-  // the circle fills the player's name
+  // the circle fills the player's name - LW-TALK: PIN MOVED - told in an exchange, on the exchange's own draw
+  const slain = [{ kind: 'slain', who: 'Ada Reed', seen: true, foe: '', place: '' }];
   let filled = null;
   for (let seed = 1; seed < 20000 && !filled; seed++) {
-    const told = newsScript(seed, [{ kind: 'slain', who: 'Ada Reed', seen: true, foe: '', place: '' }]);
-    if (told?.script !== SLAIN_NEWS.seen[1]) continue;
-    filled = circleLine({ members: [{ id: 'p', name: 'Bo Reed', job: 'farmer' }, { id: 'q', name: 'Cy Moss', job: 'farmer' }], seed, start: 0, end: 1e6, talks: true, index: 0 }, 0, 10,
-      { news: [{ kind: 'slain', who: 'Ada Reed', seen: true, foe: '', place: '' }], player: 'Mac' });
+    const c = { members: [{ id: 'p', name: 'Bo Reed', job: 'farmer' }, { id: 'q', name: 'Cy Moss', job: 'farmer' }], seed, start: 0, end: 2000, from: 0, index: 0 };
+    const k = circleSlots(c, 10).findIndex((_, i) => slotSpoken(c, i));
+    if (k < 0 || exchangeScript(c, k, 10, { news: slain, player: 'Mac' }, null).script !== SLAIN_NEWS.seen[1]) continue;
+    filled = circleLine(c, circleSlots(c, 10)[k], 10, { news: slain, player: 'Mac' });
   }
   assert.equal(filled?.text, fillLine(SLAIN_NEWS.seen[1][0], { player: 'Mac', who: 'Ada' }));
 });

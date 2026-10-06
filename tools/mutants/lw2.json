@@ -102,11 +102,12 @@
   {
     "name": "LW2-taken-forgotten",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "      if (this._taken.get(res.id) === day) continue;",
-    "new": "      if (false) continue;",
+    "old": "      if (this._taken.get(res.id) === day || this.o.deadAt?.(res, t)) {   // LW7: struck down - dead from that minute",
+    "new": "      if (this.o.deadAt?.(res, t)) {   // LW7: struck down - dead from that minute",
     "tests": [
       "test/lw2_livingTown.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content, twice): the law in its new home - the census's first pass, the taken and the dead."
   },
   {
     "name": "LW2-conversion-unread",
@@ -129,11 +130,12 @@
   {
     "name": "LW2-everyone-speaks",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "        if (line && line.who.id === row.res.id) out.push({ person: p, text: line.text, kind: /** @type {'talk'} */ ('talk') });",
-    "new": "        if (line) out.push({ person: p, text: line.text, kind: /** @type {'talk'} */ ('talk') });",
+    "old": "if (line && line.who.id === row.res.id && c.circle.members",
+    "new": "if (line && c.circle.members",
     "tests": [
       "test/lw2_livingTown.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW2-friend-unnamed",

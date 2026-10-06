@@ -371,11 +371,12 @@
   {
     "name": "LW4-news-on-the-road",
     "file": "src/systems/livingWorld/meetups.js",
-    "old": "  const told = ctx.road ? null : newsScript(circle.seed, ctx.news);",
-    "new": "  const told = newsScript(circle.seed, ctx.news);",
+    "old": "    const told = ctx.road ? null : newsScript(seed, ctx.news);",
+    "new": "    const told = newsScript(seed, ctx.news);",
     "tests": [
       "test/lw4_trouble.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW4-news-nameless",
@@ -443,11 +444,12 @@
   {
     "name": "LW4-town-untold",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "hour, news: this._roads?.news ?? null };",
-    "new": "hour, news: null };",
+    "old": "hour, news: this._roads?.news ?? null, places:",
+    "new": "hour, news: null, places:",
     "tests": [
       "test/lw4_trouble.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW4-ring-facing-in",

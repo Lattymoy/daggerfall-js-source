@@ -405,11 +405,12 @@
   {
     "name": "LW1-late-arrival-counted",
     "file": "src/systems/livingWorld/meetups.js",
-    "old": "  const here = present.filter((p) => p.t0 <= start && p.t1 >= end)",
-    "new": "  const here = present.filter((p) => p.t1 >= end)",
+    "old": "present.filter((p) => p.t0 <= start && p.t1 >= end)",
+    "new": "present.filter((p) => p.t1 >= end)",
     "tests": [
       "test/lw1_livingWorld.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW1-no-trio",
@@ -423,20 +424,22 @@
   {
     "name": "LW1-talk-share",
     "file": "src/systems/livingWorld/meetups.js",
-    "old": "export const TALK_SHARE = 0.7;",
-    "new": "export const TALK_SHARE = 0.75;",
+    "old": "export const TALK_SHARE = 0.75;",
+    "new": "export const TALK_SHARE = 0.7;",
     "tests": [
-      "test/lw1_livingWorld.test.js"
-    ]
+      "test/lwtalk_town.test.js"
+    ],
+    "note": "LW-TALK (re-aimed by content): the share a slot's now (TALK_SHARE 0.75 of exchanges), pinned in lwtalk_town."
   },
   {
     "name": "LW1-speaker-turn",
     "file": "src/systems/livingWorld/meetups.js",
-    "old": "  const who = circle.members[index % circle.members.length];",
-    "new": "  const who = circle.members[0];",
+    "old": "const who = circle.members[(at.k + (index % 2 ? 1 + ((index - 1) >> 1) % (n - 1) : 0)) % n];",
+    "new": "const who = circle.members[0];",
     "tests": [
       "test/lw1_livingWorld.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW1-stand-apart",
@@ -459,11 +462,12 @@
   {
     "name": "LW1-trade-pool-unread",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  for (const j of jobs) { const p = JOB_TALKS[/** @type {keyof typeof JOB_TALKS} */ (j)]; if (p) pools.push(p); }",
+    "old": "  for (const j of new Set(jobs)) { const p = JOB_TALKS[/** @type {keyof typeof JOB_TALKS} */ (j)]; if (p) pools.push(p); }",
     "new": "  void jobs;",
     "tests": [
       "test/lw1_livingWorld.test.js"
-    ]
+    ],
+    "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW1-talk-twice",

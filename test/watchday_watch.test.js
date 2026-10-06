@@ -222,6 +222,10 @@ test('WATCH-DAY the uniform on duty: the walk out, the watch or the post, the wa
     const got = pick(want);
     assert.ok(got, want ? 'one on his watch' : 'one off duty in the street');
     clock.t = got.t;
+    // LW-TALK: PIN MOVED - where he stands is read by the minute's deal, a beat of the census there first (read before it,
+    // his place was the last scene's: his own stand, 4 m off his place in the evening's circle, beyond its crowd's nearest)
+    const was = lt.where(got.w, clock.t, true);
+    step(1 / 30, [was.x + 1, 0, was.z], Math.PI / 2);
     const w0 = lt.where(got.w, clock.t, true);
     step(1, [w0.x + 1, 0, w0.z], Math.PI / 2);   // standing beside him, looking away
     const row = lt.pool.find((r) => r.res?.id === got.w.id && r.visible);

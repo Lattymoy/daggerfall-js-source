@@ -18,7 +18,7 @@ import {
 import { townPlaces, streetNet, exitToward, exitNearest, SOCIAL_OUT, MARKET_OUT } from '../src/systems/livingWorld/places.js';
 import { findTownPath, pathLine, pointOnLine, stepCost, createPathBook } from '../src/systems/livingWorld/townPaths.js';
 import { dayPlan, entryAt, isOutdoor, walkMinutes, schedule, watchDuty, patrolBeat, WATCH_SHIFTS, favourites, DAY_START_MIN, DAY_MIN, MIN_STAY, GEAR_MIN, HOME_GAP, WALK_DETOUR, WALK_EXTRA_M } from '../src/systems/livingWorld/dayPlan.js';   // WATCH-DAY: PIN MOVED - the watch's duty and its patrol's beat
-import { spotCircles, circleLine, circleStands, aloneStand, lineMinutes, ROUND_S, TALK_SHARE, CIRCLE_APART } from '../src/systems/livingWorld/meetups.js';
+import { spotCircles, spotRound, circleLine, circleSlots, slotSpoken, exchangeScript, circleStands, aloneStand, lineMinutes, ROUND_S, CIRCLE_APART } from '../src/systems/livingWorld/meetups.js';   // LW-TALK: PIN MOVED - a round on its spot's phase, the talk in exchanges
 import { fillLine, firstNameOf, pickScript, TOWN_TALKS, JOB_TALKS, LIVING_GREETINGS, TOKEN_FALLBACK } from '../src/systems/livingWorld/lines.js';
 import { createRelations, regardStanding, EVENTS, FRIEND_AT, ENEMY_AT, HOSTILE_AT, EASE_PER_DAY, RELATIONS_MAX, LIVING_WORLD_VENDOR } from '../src/systems/livingWorld/relations.js';
 import { CREW_LINE_S } from '../src/systems/naval/crewLife.js';
@@ -310,11 +310,11 @@ test('LW1 favourites: a resident keeps to the same two social spots, tavern, tem
   assert.ok(f1.social.length >= 1 && f1.social.every((s) => places.social.includes(s)));
 });
 
-test('LW1 meetings: the residents at a spot for the WHOLE of a round pair off in an order drawn from the spot, the round and their ids - two by two, the odd three together, one alone none; a circle talks TALK_SHARE of rounds; its script a line every CREW_LINE_S of the clock from the round\'s start, the first member first, each in turn, then quiet; the circles stand about the spot, CIRCLE_APART apart, facing in (mutants: a late arrival counted, the trio, the beat, the speaker\'s turn)', () => {
+test('LW1 meetings: the residents at a spot for the WHOLE of a round pair off in an order drawn from the spot, the round and their ids - two by two, the odd three together, one alone none; a circle\'s script (LW-TALK: an exchange\'s, lwtalk_town.test.js) a line every CREW_LINE_S of the clock, its opener first, then the other, then quiet; the circles stand about the spot, CIRCLE_APART apart, facing in (mutants: a late arrival counted, the trio, the beat, the speaker\'s turn)', () => {
   const who = (i, job = 'keeper') => ({ id: `L1.${i}`, name: `Name${i} Sur`, job });
   const roundMin = ROUND_S * 0.2;
-  const t = 1000 * roundMin + 1;
-  const start = 1000 * roundMin, end = start + roundMin;
+  const { start, end } = spotRound('sq', 1000 * roundMin, roundMin);   // LW-TALK: PIN MOVED - the spot's own phase
+  const t = start + 1;
   const present = [0, 1, 2, 3, 4].map((i) => ({ who: who(i), t0: start - 5, t1: end + 2 * roundMin }));
   present.push({ who: who(9), t0: start + 1, t1: end + 2 * roundMin });   // came mid-round: waits for the next
   const circles = spotCircles('sq', present, t, roundMin);
@@ -324,18 +324,22 @@ test('LW1 meetings: the residents at a spot for the WHOLE of a round pair off in
   assert.deepEqual(spotCircles('sq', present.slice(0, 1), t, roundMin), [], 'one alone keeps their own counsel');
   const next = spotCircles('sq', present, t + roundMin, roundMin);
   assert.equal(next.flatMap((c) => c.members).length, 6, 'the late one joins the next round');
-  assert.equal(TALK_SHARE, 0.7);
-  const talking = circles.find((c) => c.talks) ?? { ...circles[0], talks: true };
+  // LW-TALK: PIN MOVED - the talk in exchanges from its people's gathering; a spoken exchange's script a line every
+  // CREW_LINE_S, its opener (the slot's) first, then the other, quiet after its last line (lwtalk_town.test.js)
+  const pair = circles[0];
   const lineMin = lineMinutes(0.2);
   assert.equal(lineMin, CREW_LINE_S * 0.2);
-  const l0 = circleLine(talking, talking.start, lineMin, {});
-  const l1 = circleLine(talking, talking.start + lineMin, lineMin, {});
-  assert.equal(l0.who, talking.members[0]); assert.equal(l0.index, 0);
-  assert.equal(l1.who, talking.members[1]); assert.equal(l1.index, 1);
-  const script = pickScript(talking.seed, { jobs: talking.members.map((m) => m.job), hour: 12 });
-  assert.equal(circleLine(talking, talking.start + lineMin * script.length + 1e-6, lineMin, {}), null, 'quiet after its last line');
-  assert.ok(circleLine(talking, talking.start + lineMin * script.length - 1e-6, lineMin, {}), 'the last line still said');
-  assert.equal(circleLine({ ...talking, talks: false }, talking.start, lineMin, {}), null);
+  const slots = circleSlots(pair, lineMin);
+  const k = slots.findIndex((_, i) => slotSpoken(pair, i));
+  const s0 = slots[k];
+  const { script } = exchangeScript(pair, k, lineMin, {}, null);
+  const l0 = circleLine(pair, s0, lineMin, {});
+  const l1 = circleLine(pair, s0 + lineMin, lineMin, {});
+  assert.equal(l0.who, pair.members[k % 2]); assert.equal(l0.index, 0);
+  assert.equal(l1.who, pair.members[(k + 1) % 2]); assert.equal(l1.index, 1);
+  assert.equal(circleLine(pair, s0 + lineMin * script.length + 1e-6, lineMin, {}), null, 'quiet after its last line');
+  assert.ok(circleLine(pair, s0 + lineMin * script.length - 1e-6, lineMin, {}), 'the last line still said');
+  assert.equal(circleLine(pair, pair.start, lineMin, {}), null, 'gathering: nothing yet');
   const stands = circleStands({ x: 10, z: 20 }, circles[0]);
   assert.ok(Math.abs(Math.hypot(stands[0].x - stands[1].x, stands[0].z - stands[1].z) - CIRCLE_APART) < 1e-9);
   const cx = (stands[0].x + stands[1].x) / 2, cz = (stands[0].z + stands[1].z) / 2;
