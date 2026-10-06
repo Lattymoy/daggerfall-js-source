@@ -62,6 +62,7 @@ import { SERPENT_EMBERS } from './serpentHoardLaw.js';   // AUDIT 625 P4: the em
 import { HERALDRY_CHANGE_DRAKES } from './heraldryLaw.js';   // GUILD1d: a change's cost, in its refusal's own sentence
 import { VENDOR_REFUSAL_WORDS } from './vendorLaw.js';   // HOME-VENDOR: a trader's refusals
 import { ARENA_TEXT } from '../systems/arenaText.js';   // ARENA4b: the arena's refusals, in its own frozen table
+import { jittered } from './backoff.js';   // STORM-SHED: a failed mint's hold, jittered as every book's wait is
 
 /** WHERE THE SERVICE IS. Its own constant beside the relay's
  *  DEFAULT_SERVER (net/online.js), because they are two Workers and
@@ -859,6 +860,17 @@ export function forgetSession(storage) {
  *  than that in any room it opens; the token itself lives MAX_TTL_S (five minutes). */
 export const TOKEN_REUSE_MS = 60_000;
 
+/** STORM-SHED (2026-10-06 evening, the account service overloaded a second time - "D1 DB is overloaded"; decorations
+ *  missing): A FAILED MINT HOLDS THE PAGE'S NEXT ONE OFF. A room whose hello the relay refused for want of a token asks
+ *  again within BACKOFF_MAX_MS (net/online.js) - right for a busy room, ruinous for a busy service: every room of every
+ *  tab (the cell, its halos, the hub, the region channel) minted afresh every few seconds while the service failed, and
+ *  a mint is a dozen statements. A reconnect wave at 20:10 was 3,658 mints in five minutes where 470 is the pace, most of
+ *  them failed, and the failures asking again held the database down. So a failure holds the next mint off MINT_COOL_MS,
+ *  doubling with each failure in a row to MINT_COOL_MAX_MS, jittered (net/backoff.js) - a room asking meanwhile is
+ *  answered null at once with the failure's word - and a token lets it go. */
+export const MINT_COOL_MS = 2_000;
+export const MINT_COOL_MAX_MS = 60_000;
+
 /**
  * ACC1d: ONE TOKEN FOR ONE RELAY CONNECTION - NEVER TWICE INTO ONE ROOM.
  *
@@ -868,6 +880,12 @@ export const TOKEN_REUSE_MS = 60_000;
  * D4): a token held over and sent twice into one room is the exact frame
  * the relay refuses, and a player who reconnected would be refused their
  * own name - so a room this token has opened never gets it again.
+ * STORM-SHED: OPENED BY A HELLO, NEVER BY THE MINT - the session says so
+ * (`minter.opened(room, token)`) as its hello carries the token. A mint
+ * slower than the session's TOKEN_WAIT_MS sent its room's hello without
+ * one, yet the token was marked as that room's: the room's retry minted
+ * again, slower again under the load, and each client minted hundreds an
+ * hour while the database queued.
  *
  * SCALE2: AND ONE MINT A CONNECT, NOT ONE A SOCKET. Every socket minted
  * its own - the cell, up to three halos, the hub and the region channel,
@@ -909,23 +927,30 @@ export const TOKEN_REUSE_MS = 60_000;
  * SCALE2: the minter says WHY it answered null (`minter.lastWhy`: 'no-session', or the service's refusal word -
  * 'auth', 'rate', 'server', 'offline'...; null after a token), so a session can tell "sign in" from "try again".
  *
+ * STORM-SHED: a mint that failed holds the next one off (MINT_COOL_MS, doubling to MINT_COOL_MAX_MS, jittered) - every
+ * room asking meanwhile answered null at once with the failure's word, and `minter.coolMs()` how long it still holds, so
+ * a session's next hello waits for it (net/online.js). A token lets it go; another sign-in is never held by this one's.
+ *
  * @param {object} io
  * @param {(url: string, init: object) => Promise<any>} io.fetch
  * @param {any} io.storage  appStorage() in the app, a Map in a test
  * @param {((who: {name: string, kind: string, title: string|null, glyphs: string[], level: number|null, xp: number|null, guild?: string|null}) => void)|null} [io.onIssued]
  * @param {(() => string|null)|null} [io.character]
  * @param {(() => number)} [io.now]
- * @returns {((room?: string|null) => Promise<string|null>) & { lastWhy: string|null }}
+ * @param {(() => number)} [io.rand]  Math.random's shape - the cooldown's jitter
+ * @returns {((room?: string|null) => Promise<string|null>) & { lastWhy: string|null, coolMs: () => number, opened: (room: string|null, token: string) => void }}
  */
-export function accountTokenMinter({ fetch, storage, onIssued = null, character = null, now = () => Date.now() }) {
+export function accountTokenMinter({ fetch, storage, onIssued = null, character = null, now = () => Date.now(), rand = Math.random }) {
   /** @type {{ token: string, secret: string, character: string|null, at: number, rooms: Set<string> } | null} */
   let held = null;
   /** @type {Promise<string|null> | null} */
   let minting = null;
+  /** STORM-SHED: the mints held off after a failure - one sign-in's (its secret), until `until` on now()'s clock, the
+   *  failures in a row counted and the last one's word kept to answer with. */
+  let cool = { secret: /** @type {string|null} */ (null), fails: 0, until: -Infinity, why: /** @type {string|null} */ (null) };
   const reuse = (/** @type {string|null} */ room, /** @type {string} */ secret, /** @type {string|null} */ named) => {
     if (!held || room == null || held.rooms.has(room) || held.secret !== secret || held.character !== named) return null;
     if (!(now() - held.at < TOKEN_REUSE_MS)) return null;
-    held.rooms.add(room);
     return held.token;
   };
   const minter = Object.assign(async (/** @type {string|null} */ room = null) => {
@@ -942,13 +967,34 @@ export function accountTokenMinter({ fetch, storage, onIssued = null, character 
       const shared = reuse(room, session.secret, named);
       if (shared) { minter.lastWhy = null; return shared; }
     }
+    // STORM-SHED: a failure's hold, while it runs, answers every room at once with its word - nothing on the wire
+    if (cool.secret === session.secret && now() < cool.until) { minter.lastWhy = cool.why; return null; }
     const p = mintFresh(session, named).then((token) => {
-      if (token) held = { token, secret: session.secret, character: named, at: now(), rooms: new Set(room != null ? [room] : []) };
+      if (token) {
+        held = { token, secret: session.secret, character: named, at: now(), rooms: new Set() };   // STORM-SHED: opened by a hello (`opened`), never by the mint
+        cool = { secret: null, fails: 0, until: -Infinity, why: null };
+      } else {
+        const fails = cool.secret === session.secret ? cool.fails + 1 : 1;
+        cool = { secret: session.secret, fails, until: now() + jittered(Math.min(MINT_COOL_MAX_MS, MINT_COOL_MS * 2 ** (fails - 1)), rand), why: minter.lastWhy };
+      }
       return token;
     });
     minting = p;
     try { return await p; } finally { if (minting === p) minting = null; }
-  }, { lastWhy: /** @type {string|null} */ (null) });
+  }, {
+    lastWhy: /** @type {string|null} */ (null),
+    /** STORM-SHED: a hello carried `token` into `room` (net/online.js) - the relay spends it there, so that room is minted
+     *  afresh from now on. Until a hello carries it, the room may be handed it again: a token that came after the
+     *  session's wait opened nothing, and marking it spent at the mint made that room's every retry mint again. */
+    opened: (/** @type {string|null} */ room, /** @type {string} */ token) => {
+      if (held && room != null && held.token === token) held.rooms.add(room);
+    },
+    /** STORM-SHED: how long this sign-in's next mint is still held off, ms (0 for none). */
+    coolMs: () => {
+      const session = storedSession(storage);
+      return session && cool.secret === session.secret ? Math.max(0, cool.until - now()) : 0;
+    },
+  });
 
   /** One mint on the wire - the identity adopted, or null with `lastWhy` said. */
   async function mintFresh(/** @type {any} */ session, /** @type {string|null} */ named) {

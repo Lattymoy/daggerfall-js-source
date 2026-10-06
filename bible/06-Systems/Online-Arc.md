@@ -10140,6 +10140,45 @@ with repros against the committed tree - Y5 to Y8. FOUND, each fixed and pinned 
   well past a house's eaves. A cap on a piece's top would need a rule by kind (nature pieces apart). Left as asked:
   "How high above the ground may a yard piece stand?" - 4 m.
 
+### STORM-SHED - a failed or slow ask never asked faster; the reads it multiplied made cheap (2026-10-06 evening)
+
+The account service overloaded again the evening after YARD-SHED: `D1_ERROR: D1 DB is overloaded. Requests queued for
+too long.`, 34,793 requests failed in the 20:00 hour, and decorations went missing. Read off the database and the
+service's own metrics (a one-off read-only diagnostics workflow, removed once read):
+
+- **It came in waves.** 500s at 22:00 and 00:00 the night before, 14:00-15:00 (the yards, YARD-SHED), 18:00 (the
+  world174 relay deploy) and 20:10-21:00, with healthy hours between. In five-minute buckets, 19:05-20:05 was ~470 mints
+  and no failure; at 20:10 the mints were 3,658, the relay refused 709 tokenless world hellos, and every route failed.
+- **The clients held each wave up.** A mint slower than TOKEN_WAIT_MS sent its room's hello without a token, and the
+  minter still marked the token as that room's: the room's retry (1-8 s) minted again, slower again under the load -
+  a client minted hundreds an hour, each mint about fifteen statements. A failed mint was asked again by every room of
+  every tab within seconds. A Watch claim that failed was claimed again the frame after its answer: `/v1/seats/watch`
+  5,587 times in two hours where 600 is the pace, 76% failing.
+- **The reads those asks multiplied grew with the data.** Each list, claim and report read every seat's witness rows
+  (4,050 a read, the costliest read by time), and the professions' state read a character's harvests today off the
+  primary key by the day alone - every player's harvests of the day, 8,021 rows a read.
+
+The fix, at both ends:
+
+- **The token** (`net/accountClient.js`, `net/online.js`): a token opens a room when a hello carries it there (the
+  session says so, `minter.opened`), never at the mint - a late token is handed to its room's next socket. A failed mint
+  holds the page's next one off MINT_COOL_MS, doubling to MINT_COOL_MAX_MS, jittered; every room asking meanwhile is
+  answered at once with the failure's word, and a refused room waits the hold out (`_afterMintHold`).
+- **The Watch** (`net/townSeatBook.js`): a failed claim waits SEAT_WATCH_RETRY_MS, doubling to the claim's own ten
+  minutes; an answer lets the wait go.
+- **The service** (acct88): one isolate keeps the seats' witness rows SEAT_ROWS_KEPT_S for a player's list, a Watch
+  claim and a report (`townSeats.js` seatRowsOf - one read for an ask of one moment, a report or strike written here
+  forgotten at once, a read across such a write never kept); a developer's list (the audit, AUDIT-SEATS T2) and every
+  other act read the table as it stands. `metrics.js` countedDb's Proxy names the binding it wraps (`DB_ROOT`), so the
+  rows are the isolate's, not a request's. Migration 0085 indexes a character's harvests by player, character and day.
+- No relay change: merging drops nobody. Pinned in `test/stormshed.test.js` (11); `tools/mutants/stormshed.json` 27 of
+  27 dead.
+- **Not done here, measured:** the season's #1 (BOARD_SQL, about 1,037 rows) read by each isolate each minute for the
+  mint's laurel - 109 million of the database's 760 million rows a day; `arenaRatingOf`'s two reads on every registered
+  mint walk the season's rated bouts (the `a = ?2 OR b = ?2`); `/v1/homes/layouts` scans every home on each boot and
+  retries every 24 s while unheard, and decorations wait on it; and a Project Legacy save posts its line's record on
+  every checkpoint, so an online family's checkpoint is never idle.
+
 ### YARD-SHED - a town's yards asked within reach, kept by the service, needing no session (2026-10-06)
 
 The account service went down for everyone on 2026-10-06: every database call failed with `D1_ERROR: D1 DB is

@@ -17,7 +17,7 @@ import {
   seatMineLines, seatTributeLine, seatSpanWords, seatMay, SEAT_POWERS, ACCOUNT_SEAT_WEEK_CAP, GATE_WEEK_CAP, RENOWN_WEEK_CAP,
   SEAT_WATCH_CLAIM_MAX, WATCH_DAY_CAP,
 } from '../src/net/townSeatLaw.js';
-import { createTownSeatBook, SEAT_WATCH_KEY, SEAT_WATCH_CLAIM_EVERY_MS, SEAT_STANDINGS_CACHE_MS } from '../src/net/townSeatBook.js';
+import { createTownSeatBook, SEAT_WATCH_KEY, SEAT_WATCH_CLAIM_EVERY_MS, SEAT_STANDINGS_CACHE_MS, SEAT_WATCH_RETRY_MS } from '../src/net/townSeatBook.js';
 import { createRenownTracker } from '../src/net/renownTracker.js';
 import { cellRoomOfWire, PIXEL_UNITS } from '../src/net/wire.js';
 import { fakeRoom } from './fakeRoom.mjs';
@@ -183,6 +183,9 @@ test('SEAT1b THE BOOK KEEPS THE WATCH: a signed tick for the signed-in account i
   assert.equal(await book.claimWatch(), null);
   assert.equal(book.watchHeldCount(), 1, 'kept through a failed claim');
   answer = { ok: true, data: { ok: true, counted: 1 } };
+  // STORM-SHED (PIN MOVED): not at once - a failed claim waits (test/stormshed.test.js holds how long)
+  assert.equal(await book.claimWatch(), null, 'the claim after a failure waits');
+  now.ms += 1.5 * SEAT_WATCH_RETRY_MS;
   assert.deepEqual(await book.claimWatch(), { ok: true, counted: 1 }, 'the oldest ten minutes old: claimed');
   // a dead one is let go when the next comes, and never offered
   const dead = await tick();
