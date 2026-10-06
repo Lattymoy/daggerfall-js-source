@@ -37,7 +37,7 @@ test('LEGACY7 a line: founded, written only past its rev - a stale write answere
   assert.deepEqual((await call('/v1/realm/lineage', { id: FAM, record: record(3) })).body, { ok: true, rev: 3 });
   const stale = await call('/v1/realm/lineage', { id: FAM, record: record(3, [{ id: 1 }, { id: 2 }]) });
   assert.equal(stale.status, 409);
-  assert.equal(stale.body.error, 'stale');
+  assert.equal(stale.body.error, 'lineage-stale');
   assert.equal(stale.body.rev, 3);
   assert.deepEqual(stale.body.record.people, [{ id: 1 }], 'the stored one, to merge into');
   assert.deepEqual((await call('/v1/realm/lineage', { id: FAM, record: record(5, [{ id: 1 }, { id: 2 }]) })).body, { ok: true, rev: 5 });

@@ -572,7 +572,7 @@ export const REFUSALS = Object.freeze({
   'lineage-played': 'That member of the family already has a character in the realm.',
   'lineage-model': 'A family keeps the way of death it was founded with.',
   'too-many-lineages': 'You have as many families as an account may hold online.',
-  stale: 'Your family was changed on another device. This one takes those changes in and saves again.',
+  'lineage-stale': 'Your family was changed on another device. This one takes those changes in and saves again.',
   // AUDIT REALM2 S2: the online acts that cost gold are a realm character's
   'realm-only': 'Only an online character of the realm can do that.',
   // REALM P2.1: a trade's sid another pair settled (server-account/src/realmTrade.js)

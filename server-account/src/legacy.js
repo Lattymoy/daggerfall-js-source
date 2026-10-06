@@ -79,7 +79,7 @@ export async function listLineages({ db }, /** @type {string} */ playerId) {
 
 /**
  * A LINE WRITTEN - founded, or a newer record of one. Lands only past the stored rev (asked IN the write); a line past
- * LINEAGES_MAX is refused, never one already held. Answers `{ ok, rev }`, `{ error: 'stale', rev, record }` (the stored
+ * LINEAGES_MAX is refused, never one already held. Answers `{ ok, rev }`, `{ error: 'lineage-stale', rev, record }` (the stored
  * one, to merge into and write again), or `{ error }`: 'body', 'too-many-lineages'. The model is the founder's, for
  * good: a record that says another is refused ('lineage-model').
  * @param {any} ctx @param {string} playerId @param {{ id: unknown, record: unknown }} at
@@ -95,7 +95,7 @@ export async function putLineage({ db, nowS }, playerId, { id, record }) {
       .bind(rec.text, rec.rev, rec.surname, nowS, playerId, id, rec.rev).run();
     if (moved.meta.changes) return { ok: true, rev: rec.rev };
     const now = await db.prepare('SELECT rev, record FROM lineages WHERE player = ? AND id = ?').bind(playerId, id).first();
-    return { error: 'stale', rev: now?.rev ?? had.rev, record: parsed(now?.record ?? had.record) };
+    return { error: 'lineage-stale', rev: now?.rev ?? had.rev, record: parsed(now?.record ?? had.record) };
   }
   const wrote = await db.prepare(
     'INSERT OR IGNORE INTO lineages (player, id, surname, model, record, rev, created_at, updated_at)'

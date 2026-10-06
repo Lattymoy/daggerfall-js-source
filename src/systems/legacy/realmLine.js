@@ -58,7 +58,7 @@ export function createRealmLine({ io, storage, list = realmLineages, put = realm
       for (;;) {
         const r = await put(io(), id, record);
         if (r.ok) { lastError = null; break; }
-        if (r.error === 'stale' && r.data?.record && ++tries < PUSH_TRIES) {
+        if (r.error === 'lineage-stale' && r.data?.record && ++tries < PUSH_TRIES) {
           // the service holds facts this copy lacks (another device of the account): taken in, and written past both
           const merged = mergeLines(record, r.data.record);
           merged.rev = Math.max(record.rev | 0, r.data.rev | 0) + 1;

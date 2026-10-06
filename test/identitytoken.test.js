@@ -328,9 +328,10 @@ test('ACC1a: PURE, and both ends can import it', async () => {
   // it imports the wire's name law and the guild's shapes (GUILD1c - guildLaw.js imports nothing), and the heraldry's
   // colours (SEASON1 part two, PIN MOVED: a Season's banner ribbon - heraldryLaw.js imports nothing), and - SEAT2b part two
   // (b), PIN MOVED: a siege pass's works - siegeRef.js's worksOf (it imports nothing, and the relay bundles it already),
-  // and nothing else
+  // and - LEGACY7 part two, PIN MOVED: a house's claims - houseLaw.js's houseClaimOk (it imports nothing; the relay bundles
+  // it too, world172), and nothing else
   const imports = [...text.matchAll(/from\s+'(\.[^']+)'/g)].map((m) => m[1]);
-  assert.deepEqual(imports, ['./wire.js', './guildLaw.js', './heraldryLaw.js', './siegeRef.js'], 'a new import here is a new file in the relay\'s bundle');
+  assert.deepEqual(imports, ['./wire.js', './guildLaw.js', './heraldryLaw.js', './siegeRef.js', './houseLaw.js'], 'a new import here is a new file in the relay\'s bundle');
 });
 
 // ═══ ACC1d: THE TRIPWIRE FIRED, AND THIS IS WHAT REPLACED IT ═══════

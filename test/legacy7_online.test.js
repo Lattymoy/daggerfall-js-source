@@ -52,7 +52,7 @@ test('LEGACY7 the line\'s realm copy: read in at the boot with the device\'s fac
   stored.rev = 20;
   const put = async (io, id, record) => {
     calls.push(record.rev);
-    if (record.rev <= stored.rev) return { ok: false, error: 'stale', data: { rev: stored.rev, record: stored } };
+    if (record.rev <= stored.rev) return { ok: false, error: 'lineage-stale', data: { rev: stored.rev, record: stored } };
     stored = record;
     return { ok: true, data: { rev: record.rev } };
   };

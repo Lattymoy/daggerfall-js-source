@@ -1586,7 +1586,7 @@ const service = {
         if (path === '/v1/realm/lineages') return json({ lineages: await listLineages(rctx, me) }, 200, origin);
         if (path === '/v1/realm/lineage') {
           const r = await putLineage(rctx, me, { id: body.id, record: body.record });
-          if (r.error === 'stale') return json(r, 409, origin);
+          if (r.error === 'lineage-stale') return json(r, 409, origin);
           return answer(r);
         }
         if (path === '/v1/realm/die') return answer(await realmDie(rctx, me, { id: body.id, lease: body.lease }));

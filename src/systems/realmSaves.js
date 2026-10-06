@@ -93,7 +93,7 @@ async function realmAsk(io, path, { method = 'GET', json = null, raw = null, hea
     try { data = await res.json(); } catch { data = null; }
     const error = typeof data?.error === 'string' ? data.error : 'server';
     if (error === 'auth') forgetSession(io.storage);   // accountClient.js's law: only `auth` signs out
-    return { ok: false, error, status: res.status, ...(Number.isSafeInteger(data?.seq) ? { seq: data.seq } : {}), ...(error === 'stale' && data ? { data } : {}) };   // LEGACY7: a stale line's stored record, to merge into
+    return { ok: false, error, status: res.status, ...(Number.isSafeInteger(data?.seq) ? { seq: data.seq } : {}), ...(error === 'lineage-stale' && data ? { data } : {}) };   // LEGACY7: a stale line's stored record, to merge into
   }
   if (type.includes('json')) {
     try { return { ok: true, data: await res.json() }; } catch { return { ok: false, error: 'server' }; }
@@ -120,7 +120,7 @@ export const realmLineages = async (/** @type {any} */ io) => {
   const r = await realmAsk(io, '/v1/realm/lineages', { method: 'POST', json: {} });
   return r.ok ? { ok: true, lineages: Array.isArray(r.data?.lineages) ? r.data.lineages : [] } : r;
 };
-/** LEGACY7: a line written past its rev - `{ ok, data: { rev } }`, or `{ ok: false, error: 'stale', data: { rev, record } }`
+/** LEGACY7: a line written past its rev - `{ ok, data: { rev } }`, or `{ ok: false, error: 'lineage-stale', data: { rev, record } }`
  *  (the stored record, to merge into and write again). */
 export const realmLineagePut = (/** @type {any} */ io, /** @type {string} */ id, /** @type {any} */ record) => realmAsk(io, '/v1/realm/lineage', { method: 'POST', json: { id, record } });
 /** LEGACY7: THE TOMBSTONE - the playing tab's character fallen for good, under its lease. */
