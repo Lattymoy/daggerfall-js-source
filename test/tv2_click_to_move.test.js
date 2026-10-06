@@ -494,9 +494,12 @@ test('TV2 readout: the route line moves to its first point, lines through the re
 
 test('TV2 host wiring: the click is a ray from the VIEW\'s eye through this frame, met with the built ground; a known place under it (its rect grown) is reached by the roads, the ground walked to, the water and the unseen refused', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /const \[sx, sy\] = canvasPoint\(clientX, clientY, canvas\.getBoundingClientRect\(\)\);/, 'the canvas\'s own pixels (tapRay reads them)');
-  assert.match(w, /rayDirFromScreen\(sx, sy, canvas\.clientWidth, canvas\.clientHeight, _lastProj, _lastView, travelView\.eye, worldViewportRect\(/, 'from the eye the frame was drawn from');
-  assert.match(w, /const hit = groundHit\(travelView\.eye, dir, \(x, z\) => heightAt\(x, z\)\);/);
+  // WAYPOINTS (2026-10-06): the right click's menu casts the same ray (onTravelViewContext) - so these are read at the
+  // CLICK's own site, from the line only it has: a mutant of the click's ray is not hidden by the menu's copy
+  const pick = w.slice(w.indexOf('function onTravelViewPick('), w.indexOf('function onTravelViewPick(') + 1400);
+  assert.match(pick, /if \(!travelViewCanGo\(\)\) return;\n\s*const \[sx, sy\] = canvasPoint\(clientX, clientY, canvas\.getBoundingClientRect\(\)\);/, 'the canvas\'s own pixels (tapRay reads them)');
+  assert.match(pick, /rayDirFromScreen\(sx, sy, canvas\.clientWidth, canvas\.clientHeight, _lastProj, _lastView, travelView\.eye, worldViewportRect\(/, 'from the eye the frame was drawn from');
+  assert.match(pick, /const hit = groundHit\(travelView\.eye, dir, \(x, z\) => heightAt\(x, z\)\);/);
   assert.match(w, /if \(!row \|\| !travelCheckDiscovered\(row\)\) return null;/, 'an undiscovered place has no name to go to - DFU\'s own law, the travel map\'s');
   assert.match(w, /const TV_PLACE_GROW = 6144;/);
   assert.match(w, /woods\.getHeightMapValue\(px, py\) <= WATER_BYTE/, 'the water: roadsProducer\'s own byte law');

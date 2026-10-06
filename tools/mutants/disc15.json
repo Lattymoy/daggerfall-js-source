@@ -65,7 +65,7 @@
   {
     "name": "DISC15-the-streets-records-replayed-for-the-tavern",
     "file": "src/render/renderer.js",
-    "old": "    if (this._everyLightNow !== this._everyLightPrev) sp.discard();",
+    "old": "    if (cut) sp.discard();",
     "new": "    ",
     "tests": [
       "test/disc15.test.js"

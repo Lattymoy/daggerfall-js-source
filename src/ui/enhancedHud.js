@@ -1038,7 +1038,9 @@ export function drawEnhancedHud(vitals, heading01, dt = 0, opts = {}) {
     const o = t.fade < 1 ? String(t.fade.toFixed(2)) : '';
     if (parts.foe.style.opacity !== o) parts.foe.style.opacity = o;
     // TELL9 (11.1): the poise track - its state a class (the sheet's colour, the hatch, the flash), its fill, its word
-    const p = t.poise;
+    // POISE-QUIET (2026-10-06, the player: "the block under the monsters hp must go"): an EMPTY track (no wind-up, no
+    // iron, no stagger, no opening) is not drawn - the bar stands alone until the foe's poise has something to say
+    const p = t.poise && t.poise.state && t.poise.state !== 'empty' ? t.poise : null;
     const pk = p ? p.state : '';
     if (last.foePoise !== pk || last.foePoiseRef !== ref) {
       // AUDIT TELL U4: the flash is a break's - THIS foe going into its stagger, never the bar turned onto one already in it

@@ -32,8 +32,8 @@
   {
     "name": "OW-THEME-bar-unthemed",
     "file": "src/ui/enhancedFrame.js",
-    "old": "    '.tview-bar', '.tview-confirm',",
-    "new": "    '.tview-confirm',",
+    "old": "    '.tview-bar', '.tview-side',",
+    "new": "    '.tview-side',",
     "tests": [
       "test/tv5_far_places.test.js"
     ],

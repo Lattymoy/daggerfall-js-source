@@ -21,6 +21,8 @@
 // scene's axes (a heading's forward is (sin yaw, cos yaw), as the drive's own yaw).
 // ═══════════════════════════════════════════════════════════════════
 
+import { paceNow } from './travelPace.js';   // PACE-DIALS: the near-enemies pace is the player's dial
+
 /** Real seconds of warning the traveller always has before an enemy's reach. OW6-LATE (2026-09-29, the player: "when you
  *  go near enemies it slows you down waaaay to early - its good that it does it but still"): 2, was 5 - the hold begins
  *  2.5x nearer at every pace (a rider at x40 held from 1.3 km short of a band's sight, not 3.2 km), and the traveller
@@ -58,8 +60,10 @@ export const threatStep = (n) => (n >= 5 ? Math.floor(n / 5) * 5 : Math.max(1, M
  *  still eases a journey down toward them, never under this. It was the panel's second stepper, whose own default it
  *  keeps; the stepper is gone. */
 export const JOURNEY_FOE_PACE = 5;
-/** The enemies' cap on the rate asked (`want`), floored at JOURNEY_FOE_PACE and never over the ask. */
-export const foePaced = (cap, want) => Math.min(want, Math.max(cap, JOURNEY_FOE_PACE));
+/** The enemies' cap on the rate asked (`want`), floored at the near-enemies pace and never over the ask. PACE-DIALS
+ *  (2026-10-06, the player: "the nearby enemy timer to set to 60x max"): the floor is the player's dial again
+ *  (systems/travelPace.js `foe`: 5..60, x100 on a road alone) - JOURNEY_FOE_PACE its default. */
+export const foePaced = (cap, want) => Math.min(want, Math.max(cap, paceNow('foe') ?? JOURNEY_FOE_PACE));
 
 /**
  * THE CAP: the highest time scale at which the traveller, at `speedMps` (their own unscaled pace, the motor's), takes

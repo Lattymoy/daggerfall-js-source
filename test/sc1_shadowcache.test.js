@@ -211,7 +211,7 @@ test('SC1: a flat whose origin moves is a dynamic (per batch, on the batch), a s
   assert.equal(st.facesDrawn, 6, 'and again every frame (the nearest slot)');
   r.setShadowCache(true);
   assert.equal(sp.cacheOn, true);
-  assert.equal(shadowCacheOn(''), true); assert.equal(shadowCacheOn('?shadowcache=off'), false);
+  assert.equal(shadowCacheOn('', null), false); assert.equal(shadowCacheOn('?shadowcache=on', null), true); assert.equal(shadowCacheOn('?shadowcache=off', null), false);   // CACHE-OFF: off unless asked on
   assert.match(rd('src/render/enhancedLighting.js'), /renderer\.setShadowCache\?\.\(shadowCacheOn\(search\)\);/, 'read at the lane\'s install, like the air\'s');
 });
 
