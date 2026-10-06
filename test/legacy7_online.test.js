@@ -226,7 +226,7 @@ test('LEGACY7 wiring: the boot reads the lines before any save; the realm\'s cop
   const w = rd('src/scenes/world.js');
   const pull = w.indexOf('await legacyRealmLine.pull()');
   assert.ok(pull > 0 && pull < w.indexOf('restoreModSaveRecords('), 'read before any save is restored');
-  assert.match(w, /stored: \(f\) => \{ legacyRealmLine\?\.push\(f\); \},\n\s+tombstone: \(\) => \(realmSession \? realmSession\.die\(\) : false\),/);
+  assert.match(w, /stored: \(f\) => \{ legacyRealmLine\?\.push\(f\); \},\n\s+tombstone: \(why\) => \(realmSession \? realmSession\.die\(why\) : false\),/);
   assert.match(w, /if \(realmNew\) \{ legacyRealmBirth\(host\)\.catch\(/);
   assert.match(w, /saveNow: \(\) => \(legacyFirstSave \? legacyFirstSave\(\) : /);
   assert.match(w, /if \(legacyRealmLine\) \{\n\s+if \(legacyRealmRoster && !legacyRealmRoster\.has\(String\(cid\)\)\) return false;\n\s+legacyBoot\(realmBootSearch\(location\.search, String\(cid\), BOOT_DOOR_KEYS\)\);/);
