@@ -38,8 +38,8 @@
   {
     "name": "TS1-far-ring-on-the-prefab",
     "file": "src/render/farRing.js",
-    "old": "Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION) * STREAMING_TERRAIN_SCALE;",
-    "new": "Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION) * 1.5;",
+    "old": "Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION)) * STREAMING_TERRAIN_SCALE;",
+    "new": "Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION)) * 1.5;",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TS1-restand-inverted",
     "file": "src/scenes/world.js",
-    "old": "(was / STREAMING_TERRAIN_SCALE - 1)",
-    "new": "(STREAMING_TERRAIN_SCALE / was - 1)",
+    "old": "const r = was > 0 ? was / STREAMING_TERRAIN_SCALE : 1;",
+    "new": "const r = was > 0 ? STREAMING_TERRAIN_SCALE / was : 1;",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TS1-restand-keeps-compensation",
     "file": "src/scenes/world.js",
-    "old": "return y - (h - state.compensation[1]) * (was",
-    "new": "return y - h * (was",
+    "old": "return y - (h - state.compensation[1] - now) * (r - 1)",
+    "new": "return y - (h - now) * (r - 1)",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TS1-restand-unbuilt-untouched",
     "file": "src/scenes/world.js",
-    "old": "    return y * (STREAMING_TERRAIN_SCALE / was);",
-    "new": "    return y;",
+    "old": "    return (y - then) * (was > 0 ? STREAMING_TERRAIN_SCALE / was : 1) + now;",
+    "new": "    return y - then + now;",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TS1-quickload-row-in-scene-frame",
     "file": "src/scenes/world.js",
-    "old": "const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was); };",
-    "new": "const restandNative = (nx, nz, y) => restandHeight(y, nx, nz, was);",
+    "old": "const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was, wasLand); };",
+    "new": "const restandNative = (nx, nz, y) => restandHeight(y, nx, nz, was, wasLand);",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "TS1-quickload-player-raw",
     "file": "src/scenes/world.js",
-    "old": "const ly = restandHeight(w.y ?? 2, lx, lz, was) + state.compensation[1];",
+    "old": "const ly = restandHeight(w.y ?? 2, lx, lz, was, wasLand) + state.compensation[1];",
     "new": "const ly = (w.y ?? 2) + state.compensation[1];",
     "tests": [
       "test/terrainscale1.test.js"
@@ -209,7 +209,7 @@
   {
     "name": "TS1-anchor-landing-raw",
     "file": "src/scenes/world.js",
-    "old": "return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale)) + state.compensation[1], lz];",
+    "old": "return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale), landOf(a.landforms)) + state.compensation[1], lz];",
     "new": "return [lx, (a.y ?? 2) + state.compensation[1], lz];",
     "tests": [
       "test/terrainscale1.test.js"
@@ -236,8 +236,8 @@
   {
     "name": "TS1-restore-drops-stamp",
     "file": "src/systems/save.js",
-    "old": "terrainScale: snap.terrainScale ?? null };",
-    "new": "terrainScale: null };",
+    "old": "terrainScale: snap.terrainScale ?? null, landforms:",
+    "new": "terrainScale: null, landforms:",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "TS1-ship-unstamped",
     "file": "src/scenes/world.js",
-    "old": "yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE },",
-    "new": "yaw: cam.yaw },",
+    "old": "yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE, landforms",
+    "new": "yaw: cam.yaw, landforms",
     "tests": [
       "test/terrainscale1.test.js"
     ]

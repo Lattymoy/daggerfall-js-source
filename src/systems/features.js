@@ -712,6 +712,21 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'realForests', initial: true, online: true }),
   }),
+  // LANDFORM1-3 (2026-10-06, Mac: "Can we adjust the heightmap to be more of this? and allow roads to carve through
+  // terrian and caverns without breaking anything and rivers to actually have depth"): LANDFORMS - the small heightmap
+  // stands taller, roads are graded into the land, rivers lie in channels (world/landforms.js, inside the terrain's
+  // kernel). FORCED ON ONLINE: it is the ground the room stands on. `?landforms=off` the kill door, offline;
+  // scenes/shared.js landformsOn composes it.
+  Object.freeze({
+    id: 'landforms',
+    group: 'world',
+    title: 'Landforms',
+    note: 'Mountains and high ground stand taller, as the map draws them. Roads are cut level into hillsides and built up '
+      + 'over hollows, and rivers run in channels below their banks. Off keeps Daggerfall\u2019s own ground.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'landforms', initial: true, online: true }),
+  }),
   // NEARBY-QUESTS (2026-10-04, Discord: "quests of the game you take from guilds and so on need to be near you on
   // overworld map"): a remote quest site is drawn near the player, within a reach that grows with level
   // (systems/quest/questReach.js; systems/quest/place.js reads it as each new quest picks its sites). The player's own

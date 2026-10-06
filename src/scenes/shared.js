@@ -829,6 +829,15 @@ export function realForestsOn(search) {
   const row = onlineForcedPref('realForests', search) ?? getPref('realForests');
   return !!row && (isOnlinePage(search) || isEnhanced(search));
 }
+/** LANDFORM1-3: THE LANDFORMS' SWITCH - the Features row (`landforms`) on the enhanced skin, and on for everyone online
+ *  whatever their skin: it is the ground itself, and a room agrees on its ground (realForestsOn's shape). `?landforms=off`
+ *  the kill door, offline. The world host reads it once, at its mount (a flip reaches the next world). Off - and on the
+ *  classic skin - the kernel is DFU's to the bit. */
+export function landformsOn(search) {
+  if (pageParam('landforms', search) === 'off' && !isOnlinePage(search)) return false;
+  const row = onlineForcedPref('landforms', search) ?? getPref('landforms');
+  return !!row && (isOnlinePage(search) || isEnhanced(search));
+}
 /** FOREST1: the LocationTypes (DFRegion.cs:66-86) the woods close round - DungeonLabyrinth 4, DungeonKeep 7,
  *  ReligionCult 9, DungeonRuin 10, Graveyard 12, Coven 13. Every other place stands in cleared fields. */
 export const FOREST_HIDDEN_LOCATION_TYPES = Object.freeze(new Set([4, 7, 9, 10, 12, 13]));

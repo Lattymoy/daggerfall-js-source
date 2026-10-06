@@ -212,7 +212,7 @@ test('ROADS 3: the network rides both terrain kernels and the world host builds 
   assert.match(worker, /generatePixelTerrain\(\{ \.\.\.m, woods, roads \}\)/, 'and hands it to the kernel on every job');
   const client = fs.readFileSync('src/world/terrainGenClient.js', 'utf8');
   assert.match(client, /setRoads\(settlements, onStats = null, switches = null\)/, 'the client has the door (ROADS 24: the switches ride it)');
-  assert.equal((client.match(/roads: this\._roads \?\? null/g) || []).length, 3,
+  assert.equal((client.match(/roads: this\._roads \?\? null/g) || []).length, 6,   // LANDFORM1-3: and the three paths a promotion's grid takes here - its ghost rows are cut along the same network
     'every same-thread path - direct, worker-error, and dying-worker drain - carries it');
   // AUDIT ROADS F2: the worker BUILDS; this thread builds only on a
   // fallback path, and every one of the three calls _roadsFallback first.

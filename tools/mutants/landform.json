@@ -1,0 +1,319 @@
+[
+  {
+    "name": "LANDFORM-knee-is-the-ocean",
+    "file": "src/world/landforms.js",
+    "old": "if (!(h > LANDFORM_KNEE)) return h;   // the knee",
+    "new": "if (!(h > SCALED_OCEAN_ELEVATION)) return h;   // the knee",
+    "tests": [
+      "test/landform.test.js"
+    ],
+    "equivalent": true,
+    "why": "the coast fade is zero at the knee (smoothstep from LANDFORM_KNEE), so no cut reaches a height under it either way; the early return is the law said plainly, and a fast path for the sea"
+  },
+  {
+    "name": "LANDFORM-gain",
+    "file": "src/world/landforms.js",
+    "old": "relief: Object.freeze({ from: 200, full: 900, gain: 0.9 }),",
+    "new": "relief: Object.freeze({ from: 200, full: 900, gain: 0.8 }),",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-lift-eased-linear",
+    "file": "src/world/landforms.js",
+    "old": "return gain * e * smooth01((e - from) / (full - from));",
+    "new": "return gain * e * Math.min(1, (e - from) / (full - from));",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-compass-y-not-flipped",
+    "file": "src/world/landforms.js",
+    "old": "const dx = mdx, dy = -mdy;",
+    "new": "const dx = mdx, dy = mdy;",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-origin-y-south",
+    "file": "src/world/landforms.js",
+    "old": "const oy = (MAP_H - py) * span;",
+    "new": "const oy = py * span;",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-profile-mirrored",
+    "file": "src/world/landforms.js",
+    "old": "const lx = half + s.dx * k, ly = half + s.dy * k;",
+    "new": "const lx = half + s.dx * k, ly = half - s.dy * k;",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-profile-no-large-map",
+    "file": "src/world/landforms.js",
+    "old": "const macro = low + noise(lx, ly) * NOISE_MAP_SCALE;",
+    "new": "const macro = low + noise(lx, ly);",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-profile-unlifted",
+    "file": "src/world/landforms.js",
+    "old": "prof[k] = Math.max(macro, SCALED_OCEAN_ELEVATION) + reliefLift(low);",
+    "new": "prof[k] = Math.max(macro, SCALED_OCEAN_ELEVATION);",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-river-shallower",
+    "file": "src/world/landforms.js",
+    "old": "river: Object.freeze({ flat: 2, bank: 1.5, verge: 6, drop: 1.92 }),",
+    "new": "river: Object.freeze({ flat: 2, bank: 1.5, verge: 6, drop: 1.5 }),",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-river-narrow",
+    "file": "src/world/landforms.js",
+    "old": "river: Object.freeze({ flat: 2, bank: 1.5, verge: 6, drop: 1.92 }),",
+    "new": "river: Object.freeze({ flat: 1, bank: 1.5, verge: 6, drop: 1.92 }),",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-road-narrow",
+    "file": "src/world/landforms.js",
+    "old": "road: Object.freeze({ flat: 1.25, bank: 2.5, verge: 6, drop: 0 }),",
+    "new": "road: Object.freeze({ flat: 0.5, bank: 2.5, verge: 6, drop: 0 }),",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-road-short-verge",
+    "file": "src/world/landforms.js",
+    "old": "road: Object.freeze({ flat: 1.25, bank: 2.5, verge: 6, drop: 0 }),",
+    "new": "road: Object.freeze({ flat: 1.25, bank: 2.5, verge: 4, drop: 0 }),",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-stream-shallower",
+    "file": "src/world/landforms.js",
+    "old": "stream: Object.freeze({ flat: 1, bank: 1.25, verge: 4, drop: 0.8 }),",
+    "new": "stream: Object.freeze({ flat: 1, bank: 1.25, verge: 4, drop: 0.5 }),",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-arm-past-its-end-still-grades",
+    "file": "src/world/landforms.js",
+    "old": "const w = (((1 - d / reach) ** 2) / (q * q)) * (1e-3 + 0.999 * (1 - smooth01(past)));",
+    "new": "const w = (((1 - d / reach) ** 2) / (q * q));",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-no-levee",
+    "file": "src/world/landforms.js",
+    "old": "const top = smoothLand > floor + dial.drop ? smoothLand : floor + dial.drop;",
+    "new": "const top = smoothLand;",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-river-over-road",
+    "file": "src/world/landforms.js",
+    "old": "  Object.freeze({ key: 'rivers', dial: LANDFORM_DIALS.river, water: true }),\n  Object.freeze({ key: 'tracks', dial: LANDFORM_DIALS.track, water: false }),\n  Object.freeze({ key: 'roads', dial: LANDFORM_DIALS.road, water: false }),",
+    "new": "  Object.freeze({ key: 'tracks', dial: LANDFORM_DIALS.track, water: false }),\n  Object.freeze({ key: 'roads', dial: LANDFORM_DIALS.road, water: false }),\n  Object.freeze({ key: 'rivers', dial: LANDFORM_DIALS.river, water: true }),",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-no-floor-clamp",
+    "file": "src/world/landforms.js",
+    "old": "return out > least ? out : least;",
+    "new": "return out;",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-no-coast-fade",
+    "file": "src/world/landforms.js",
+    "old": "const fade = smoothstep(LANDFORM_KNEE, LANDFORM_KNEE + LANDFORM_DIALS.coast, land);",
+    "new": "const fade = 1;",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-rivers-cut-unpainted",
+    "file": "src/world/landforms.js",
+    "old": "const cutRivers = !!(rivers && roads?.water);",
+    "new": "const cutRivers = !!rivers;",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-lift-unblended",
+    "file": "src/world/landforms.js",
+    "old": "  blendLocationTerrain(field, sum / field.length, locationRect, hDim);\n",
+    "new": "\n",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-kernel-ceiling",
+    "file": "src/world/terrainSampler.js",
+    "old": "if (shape) return Math.max(0, shape(x, y, scaledHeight, baseHeight * BASE_HEIGHT_SCALE, ground) / MAX_TERRAIN_HEIGHT);",
+    "new": "if (shape) return Math.min(1, Math.max(0, shape(x, y, scaledHeight, baseHeight * BASE_HEIGHT_SCALE, ground) / MAX_TERRAIN_HEIGHT));",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-kernel-low-with-noise",
+    "file": "src/world/terrainSampler.js",
+    "old": "shape(x, y, scaledHeight, baseHeight * BASE_HEIGHT_SCALE, ground)",
+    "new": "shape(x, y, scaledHeight, baseHeight * BASE_HEIGHT_SCALE + noiseHeight * NOISE_MAP_SCALE, ground)",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-ghost-rows-raw",
+    "file": "src/world/terrainSampler.js",
+    "old": "if (!k) kernels.set(key, k = sampleKernel(woods, mapPixelX + dx, mapPixelY + dy, hDim, true, landform));",
+    "new": "if (!k) kernels.set(key, k = sampleKernel(woods, mapPixelX + dx, mapPixelY + dy, hDim, true, null));",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-build-ghost-rows-raw",
+    "file": "src/world/terrainGen.js",
+    "old": "const grid = restrideGrid({ woods, px, py, stride, samples, landforms });",
+    "new": "const grid = restrideGrid({ woods, px, py, stride, samples });",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-job-rivers-always",
+    "file": "src/world/terrainGen.js",
+    "old": "  const landforms = landform ? createLandforms({ woods, roads, rivers: !!landform.rivers }) : null;\n  const samples",
+    "new": "  const landforms = landform ? createLandforms({ woods, roads, rivers: true }) : null;\n  const samples",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-worker-grid-no-network",
+    "file": "src/world/terrainGenWorker.js",
+    "old": "const { positions, normals } = restrideGrid({ ...m, woods, roads });",
+    "new": "const { positions, normals } = restrideGrid({ ...m, woods });",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-ring-unlifted",
+    "file": "src/render/farRing.js",
+    "old": "positions[o + 1] = ringHeight(byte, relief);",
+    "new": "positions[o + 1] = ringHeight(byte);",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-switch-any-skin",
+    "file": "src/scenes/shared.js",
+    "old": "  const row = onlineForcedPref('landforms', search) ?? getPref('landforms');\n  return !!row && (isOnlinePage(search) || isEnhanced(search));",
+    "new": "  const row = onlineForcedPref('landforms', search) ?? getPref('landforms');\n  return !!row;",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-kill-door-online",
+    "file": "src/scenes/shared.js",
+    "old": "if (pageParam('landforms', search) === 'off' && !isOnlinePage(search)) return false;",
+    "new": "if (pageParam('landforms', search) === 'off') return false;",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-restand-backwards",
+    "file": "src/scenes/world.js",
+    "old": "const then = wasLand ? lift : 0, now = landform ? lift : 0;",
+    "new": "const then = landform ? lift : 0, now = wasLand ? lift : 0;",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-restand-scale-only",
+    "file": "src/scenes/world.js",
+    "old": "if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !lifted) return y;",
+    "new": "if (!(was > 0) || was === STREAMING_TERRAIN_SCALE) return y;",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-save-always-stamped",
+    "file": "src/systems/save.js",
+    "old": "if (landforms === true) snap.landforms = true;",
+    "new": "snap.landforms = true;",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-save-restores-dfu",
+    "file": "src/systems/save.js",
+    "old": "landforms: snap.landforms === true };",
+    "new": "landforms: false };",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-anchor-forgets",
+    "file": "src/systems/teleportAnchor.js",
+    "old": "landforms: landforms === true,",
+    "new": "landforms: false,",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM-scene-cache-forgets",
+    "file": "src/systems/sceneCache.js",
+    "old": "  ...(d.landforms === true ? { landforms: true } : {}),\n",
+    "new": "\n",
+    "tests": [
+      "test/landform.test.js"
+    ]
+  }
+]

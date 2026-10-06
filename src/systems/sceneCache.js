@@ -132,6 +132,8 @@ const copySceneEntry = (d) => ({
   // writer's own frame), and `terrainScale` the ground an exterior height stood on - absent on an entry written
   // before either was carried, which the restoring host reads as the old raw frame on the prefab's 1.5.
   frame: d.frame ?? null, terrainScale: d.terrainScale ?? null,
+  // LANDFORM1: and whose ground an exterior height stood on - the Landforms row's, or (absent) DFU's
+  ...(d.landforms === true ? { landforms: true } : {}),
   // WD3: the layout of the town an interior was cached in (systems/layoutPins.js) - only where a layout mod changed the
   // town; an entry without one was cached in Daggerfall's own
   ...(typeof d.layout === 'string' && d.layout ? { layout: d.layout } : {}),

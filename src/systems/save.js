@@ -240,7 +240,7 @@ export function bagTakesSaved(raw) {
 }
 
 /** A plain-object snapshot of the player + scene extras. */
-export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null, dungeon = null, travelMap = null, escortingFaces = null, quickslots = null, spawns = null, smallerDungeonsState = 0, modData = null } = {}) {
+export function snapshotPlayer(entity, { position = null, pose = null, classicMinutes = 0, readiedSpellIndex = null, world = null, locationKey = null, quest = null, talk = null, interior = null, dungeon = null, travelMap = null, escortingFaces = null, quickslots = null, spawns = null, smallerDungeonsState = 0, modData = null, landforms = false } = {}) {
   // Q4-v: `quest` is the bridge's whole envelope (machine + notebook +
   // the one-time list) - opaque here, exactly like `world`.
   // TK-i: `talk` is TalkManager's SaveDataConversation (the rumor
@@ -299,6 +299,10 @@ export function snapshotPlayer(entity, { position = null, pose = null, classicMi
   // world host re-stands its heights on today's ground as it lands them (world.js restandHeight). Additive: SAVE_VERSION
   // does not move, and an older build ignores the field.
   const snap = { v: SAVE_VERSION, position, pose, classicMinutes, readiedSpellIndex, world, locationKey, quest, talk, interior, dungeon, travelMap, escortingFaces, quickslots, spawns, smallerDungeonsState, modData, terrainScale: STREAMING_TERRAIN_SCALE };
+  // LANDFORM1: and WHOSE ground - the Landforms row's (world/landforms.js), on a save written with it on. Written only
+  // then: a save without it was written on DFU's, which is every save from before the row, and the host re-stands its
+  // heights by the landforms' lift on whichever ground it lands on (world.js restandHeight). Additive, as the scale is.
+  if (landforms === true) snap.landforms = true;
   // LIVED1: `classicMinutes` is the CHARACTER's clock - the hosts hand their own (worldTick.ownMinutes): offline the
   // one clock, online theirs, and every marker the envelope holds is on it. Online the WORLD's minute rides beside it,
   // the minute the character left the world at, which is what the arrival's one arm for an absence measures (AUDIT
@@ -1080,7 +1084,7 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // TIME3 (bible/06-Systems/Online-Time-Arc.md 6.3): the quest block on the character's clock - an online save taken
   // before TIME3 kept its countdowns on the world's, and they move onto the character's once, by the distance at the
   // save (quest/questStamps.js questBlockOnOwnClock); a TIME3 save and any offline one are there already.
-  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: questBlockOnOwnClock(snap) ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null, terrainScale: snap.terrainScale ?? null };   // TERRAIN-SCALE1: null - written before the stamp, on the prefab's 1.5
+  return { position: snap.position, pose: snap.pose ?? null, classicMinutes: snap.classicMinutes, readiedSpellIndex: snap.readiedSpellIndex, world: snap.world ?? null, locationKey: snap.locationKey ?? null, quest: questBlockOnOwnClock(snap) ?? null, talk: snap.talk ?? null, interior: snap.interior ?? null, dungeon: snap.dungeon ?? null, travelMap: snap.travelMap ?? null, escortingFaces: snap.escortingFaces ?? null, quickslots: snap.quickslots ?? null, spawns: snap.spawns ?? null, smallerDungeonsState: snap.smallerDungeonsState ?? 0, modData: snap.modData ?? null, terrainScale: snap.terrainScale ?? null, landforms: snap.landforms === true };   // TERRAIN-SCALE1: null - written before the stamp, on the prefab's 1.5; LANDFORM1: false - on DFU's ground
 }
 
 /** AUDIT LIVED1 F (K3/S4): A SAVE FROM BEFORE LIVED1 CAN HOLD A MARKER AHEAD OF ITS OWN CLOCK. RESTX2's online rest ran

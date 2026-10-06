@@ -73,13 +73,14 @@ test('TERRAIN-SCALE1: a save carries the scale its heights stood on; one without
 });
 
 /** world.js's own restandHeight and scaleOf, run against a stub ground. */
-function restander(ground, comp = 0) {
-  const i = WORLD.indexOf('  const restandHeight = (y, x, z, was) => {');
+function restander(ground, comp = 0, { landform = null, lift = () => 0 } = {}) {
+  const i = WORLD.indexOf('  const restandHeight = (y, x, z, was, wasLand = false) => {');
   const j = WORLD.indexOf('  // Building doors (P3)', i);
   assert.ok(i > 0 && j > i, 'the helper stands where the rig reads it');
   const state = { compensation: [0, comp, 0] };
   const heightAt = (x, z) => (ground(x, z) == null ? -Infinity : ground(x, z) + comp);
-  return new Function('heightAt', 'state', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', `${WORLD.slice(i, j)}\nreturn { restandHeight, scaleOf };`)(heightAt, state, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE);
+  // LANDFORM1: the law's two new reads - the row's state and the lift at a spot (test/landform.test.js runs them)
+  return new Function('heightAt', 'state', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', 'landform', 'landformLiftAt', `${WORLD.slice(i, j)}\nreturn { restandHeight, scaleOf, landOf };`)(heightAt, state, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, landform, lift);
 }
 
 test('TERRAIN-SCALE1: a height written on the old scale stands again on today\'s ground - the same height above it where the ground is built, the ratio where it is not', () => {
@@ -97,7 +98,7 @@ test('TERRAIN-SCALE1: a height written on the old scale stands again on today\'s
 
 test('TERRAIN-SCALE1: the host stands every saved exterior height again as it lands it - the player, the piles, torches, camps, foes, guards, the inside pools, the exterior scene cache, the anchor', () => {
   assert.match(WORLD, /const was = scaleOf\(extras\.terrainScale\);/);
-  assert.match(WORLD, /const ly = restandHeight\(w\.y \?\? 2, lx, lz, was\) \+ state\.compensation\[1\];/, 'the player, after the arrival pixel is built');
+  assert.match(WORLD, /const ly = restandHeight\(w\.y \?\? 2, lx, lz, was, wasLand\) \+ state\.compensation\[1\];/, 'the player, after the arrival pixel is built');
   assert.match(WORLD, /extras\.interior\.foes = restandRows\(extras\.interior\.foes\); extras\.interior\.guards = restandRows\(extras\.interior\.guards\);/);
   assert.match(WORLD, /droppedLoot\.restoreWorld\(restandRows\(w\.piles\)/);
   assert.match(WORLD, /droppedTorches\.restore\(restandAt\('position'\)\(w\.droppedTorches\)/);
@@ -107,12 +108,12 @@ test('TERRAIN-SCALE1: the host stands every saved exterior height again as it la
   assert.match(WORLD, /terrainScale: STREAMING_TERRAIN_SCALE,   \/\/ TERRAIN-SCALE1: the ground these heights stand on/, 'the exterior scene cache is stamped...');
   assert.match(WORLD, /const was = scaleOf\(arrived\.terrainScale\);/, '...and read');
   assert.match(WORLD, /terrainScale: STREAMING_TERRAIN_SCALE,   \/\/ TERRAIN-SCALE1: the ground that height stands on/, 'the anchor is stamped...');
-  assert.match(WORLD, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\)\) \+ state\.compensation\[1\], lz\];/, '...and stood again at the recall');
+  assert.match(WORLD, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\), landOf\(a\.landforms\)\) \+ state\.compensation\[1\], lz\];/, '...and stood again at the recall');
   // audit: the ship's remembered deck - stamped at boarding, stood again after the teleport built its pixel (the
   // teleport stands a deck verbatim, never grounded)
-  assert.match(WORLD, /position: shipMemory\(\{ mapPixel: here, pos: \[\.\.\.player\.pos\], yaw: cam\.yaw, terrainScale: STREAMING_TERRAIN_SCALE \}, state\.compensation\[1\]\),/);   // AUDIT 68 S22: and compensation-free
+  assert.match(WORLD, /position: shipMemory\(\{ mapPixel: here, pos: \[\.\.\.player\.pos\], yaw: cam\.yaw, terrainScale: STREAMING_TERRAIN_SCALE, landforms: !!landform \}, state\.compensation\[1\]\),/);   // LANDFORM1: and whose ground   // AUDIT 68 S22: and compensation-free
   const ship = WORLD.slice(WORLD.indexOf('    await _teleportToPixel(t.go.x, t.go.y, localPos, { reposition: t.reposition, grounded: legacy });'));
-  assert.match(ship, /^    await _teleportToPixel[^\n]*\n(?:\s*\/\/[^\n]*\n)*    if \(localPos && !legacy && scaleOf\(t\.restore\?\.terrainScale\) !== STREAMING_TERRAIN_SCALE\) \{\n      const c = state\.compensation\[1\];\n      const y = restandHeight\(localPos\[1\] - c, localPos\[0\], localPos\[2\], scaleOf\(t\.restore\.terrainScale\)\) \+ c;\n      if \(walkMode\) player\.spawn\(localPos\[0\], y, localPos\[2\]\);/);
+  assert.match(ship, /^    await _teleportToPixel[^\n]*\n(?:\s*\/\/[^\n]*\n)*    if \(localPos && !legacy && \(scaleOf\(t\.restore\?\.terrainScale\) !== STREAMING_TERRAIN_SCALE \|\| landOf\(t\.restore\?\.landforms\) !== !!landform\)\) \{[^\n]*\n      const c = state\.compensation\[1\];\n      const y = restandHeight\(localPos\[1\] - c, localPos\[0\], localPos\[2\], scaleOf\(t\.restore\.terrainScale\), landOf\(t\.restore\.landforms\)\) \+ c;\n      if \(walkMode\) player\.spawn\(localPos\[0\], y, localPos\[2\]\);/);
 });
 
 /** The quickload's own re-stand helpers, sliced from world.js and run over a stub frame and ground. */
@@ -124,7 +125,8 @@ function quickloadHelpers(stamp) {
   const state = { localFromWorld: (nx, nz) => [nx - 100, nz - 200] };
   const restandHeight = (y, x, z, was) => { calls.push([y, x, z, was]); return y - 1; };
   const scaleOf = (s) => (s > 0 ? s : DEFAULT_TERRAIN_SCALE);
-  const api = new Function('extras', 'state', 'restandHeight', 'scaleOf', 'STREAMING_TERRAIN_SCALE', `${WORLD.slice(i, j)}\nreturn { was, restandRows, restandAt };`)({ terrainScale: stamp }, state, restandHeight, scaleOf, STREAMING_TERRAIN_SCALE);
+  const landOf = (s) => s === true;   // LANDFORM1: the save's ground - DFU's here, with the row off
+  const api = new Function('extras', 'state', 'restandHeight', 'scaleOf', 'STREAMING_TERRAIN_SCALE', 'landOf', 'landform', `${WORLD.slice(i, j)}\nreturn { was, restandRows, restandAt };`)({ terrainScale: stamp }, state, restandHeight, scaleOf, STREAMING_TERRAIN_SCALE, landOf, null);
   return { ...api, calls };
 }
 
@@ -157,6 +159,7 @@ test('TERRAIN-SCALE1: an exterior scene a save carried from before the stamp sta
       state: { localFromWorld: (nx, nz) => [nx - 100, nz - 200], compensation: [0, 5, 0] },
       restandHeight: (y, x, z, was) => (was === 1.25 ? y : y - 1000 - x - z),
       scaleOf: (s) => (s > 0 ? s : DEFAULT_TERRAIN_SCALE),
+      landOf: (s) => s === true,   // LANDFORM1
       droppedLoot: { restoreWorld: (list) => { got.piles = list; } },
       droppedTorches: { restore: (list, from) => { got.torches = list.map((t) => from(t.position)); } },
     };

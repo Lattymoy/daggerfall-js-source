@@ -108,7 +108,7 @@ export const ANCHOR_MUST_BE_SET = 4001;
  */
 export function makeAnchor({
   worldContext = WORLD_CONTEXT.Exterior, pixel, nativeX, nativeZ, y = 0,
-  local = null, yaw = 0, pitch = 0, interior = null, buildingKey = 0, terrainScale = null,
+  local = null, yaw = 0, pitch = 0, interior = null, buildingKey = 0, terrainScale = null, landforms = false,
 } = {}) {
   const insideBuilding = worldContext === WORLD_CONTEXT.Interior;
   const insideDungeon = worldContext === WORLD_CONTEXT.Dungeon;
@@ -121,6 +121,8 @@ export function makeAnchor({
     nativeX, nativeZ, y,
     // TERRAIN-SCALE1: the terrain scale `y` stood on; null on an anchor from before the stamp (the prefab's 1.5)
     terrainScale: terrainScale > 0 ? terrainScale : null,
+    // LANDFORM1: and whose ground - true on the Landforms row's; false (or absent, before the row) on DFU's
+    landforms: landforms === true,
     local: local ? [...local] : null,
     yaw, pitch,
     insideBuilding, insideDungeon,

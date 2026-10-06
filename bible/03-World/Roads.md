@@ -688,3 +688,12 @@ shore records a stream writes over grass (20-22, 49) are mostly-grass by
 texel count, so they passed `grassRecordsOf` and blades grew up out of
 the water. That one needed no new data: `world/waterCorners.js` already
 owns the question, and the placer asks it now.
+
+## LANDFORM2/3 - the roads and rivers cut into the land (2026-10-06)
+
+Mac: "allow roads to carve through terrian and caverns without breaking anything and rivers to actually have depth,
+not just lying flat on land." Behind the Features row `landforms` (`03-World/Landforms.md`), the terrain's kernel grades
+every road and track level across along the network's own centre lines - the ones this painter paints - cut into the
+hillside and built up over a hollow, and lays every painted river and stream in a channel under its banks. The painter
+and SmoothRoads are untouched and run after it. Online the rivers are not cut, so the MODS-ONLINE reading above - a
+river paints tiles and never moves a height - stays true in a room.

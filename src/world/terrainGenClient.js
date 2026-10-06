@@ -207,7 +207,7 @@ export class TerrainGenClient {
    * @returns {Promise<{ positions: Float32Array, normals: Float32Array }>}
    */
   grid(job) {
-    if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, ...job }));
+    if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, ...job }));   // LANDFORM1-3: the fallback's own network
     const id = ++this._gridId;
     return new Promise((resolve) => {
       this._grids.set(id, { job, resolve });
@@ -221,7 +221,7 @@ export class TerrainGenClient {
     this._grids.delete(m.id);
     if (m.t === 'gridError') {
       console.warn('[terrain] worker grid failed; building it on the main thread -', m.message);
-      g.resolve(restrideGrid({ woods: this._woods, ...g.job }));
+      g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, ...g.job }));
       return;
     }
     g.resolve({ positions: m.positions, normals: m.normals });
@@ -258,6 +258,6 @@ export class TerrainGenClient {
     // PERF-EXT26: and the promotions it held - built here, once each
     const grids = [...this._grids.values()];
     this._grids.clear();
-    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, ...g.job }));
+    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, ...g.job }));
   }
 }

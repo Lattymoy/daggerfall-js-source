@@ -152,6 +152,6 @@ test('GATE-SEEN: every client scans the same map - a mod\'s appended location ba
 test('GATE-SEEN by source: the world hands the pool the far ground - the terrain sampler\'s own kernel for the gate\'s pixel', () => {
   const w = read('src/scenes/world.js');
   assert.match(w, /groundAt: \(px, py, x, z\) => gateGroundAt\(px, py, x, z\),/);
-  assert.match(w, /if \(key !== _gateKernelAt\) \{ _gateKernelAt = key; _gateKernel = sampleKernel\(woods, px, py\); \}/);
+  assert.match(w, /if \(key !== _gateKernelAt\) \{ _gateKernelAt = key; _gateKernel = sampleKernel\(woods, px, py, HEIGHTMAP_DIMENSION, true, landformsHere\(\)\); \}/, 'LANDFORM1-3: the ground the pixel will be built on - the landforms\' when the row is on');
   assert.match(w, /return _gateKernel\(lx \/ heightCell, lz \/ heightCell\) \* worldHeight \+ t\[1\];/, 'heightAt\'s own sample coordinates and scale');
 });

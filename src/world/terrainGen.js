@@ -21,13 +21,14 @@
 // first and its tilemap + rect ride INTO the job as plain data.
 // ═══════════════════════════════════════════════════════════════════
 
-import { generateSamples, ghostSampler } from './terrainSampler.js';
+import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSampler.js';
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData } from './terrainTiles.js';
 import { layoutNature } from './terrainNature.js';
 import { paintRoads, smoothRoadHeights, pathCorners } from './roadPainter.js';
 import { MAP_W } from './roadNetwork.js';
 import { applyPicks } from './wodLocationLoader.js';   // WOD2: World of Daggerfall's smoothing arms
+import { createLandforms } from './landforms.js';   // LANDFORM1-3: the port's own terrain, inside the kernel
 
 /**
  * The whole CPU side of one streamed pixel, in buildPixel's own order:
@@ -53,13 +54,20 @@ import { applyPicks } from './wodLocationLoader.js';   // WOD2: World of Daggerf
  *   Real forests switch (null off, DFU's scatter): the climate's summer
  *   nature archive, and whether the pixel's location is a place the woods
  *   hide (a dungeon, a shrine) rather than one they draw back from (a town).
+ * @param {?{rivers: boolean}} [job.landform] - LANDFORM1-3: the Landforms
+ *   row (null off, DFU's kernel): the relief, the paths cut into the land
+ *   with this kernel's own network, and whether rivers are cut (never
+ *   online, where the river switch is each player's own).
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
  *   nature: Array<{record:number,x:number,y:number,z:number}>}}
  */
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, wod = null, forests = null }) {
-  const samples = generateSamples(woods, px, py);
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, wod = null, forests = null, landform = null }) {
+  // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
+  // are the same roads; restrideGrid's ghost rows take the same landforms, so the edge normals read the shaped ground.
+  const landforms = landform ? createLandforms({ woods, roads, rivers: !!landform.rivers }) : null;
+  const samples = generateSamples(woods, px, py, HEIGHTMAP_DIMENSION, landforms);
   let avg = 0;
   if (hasLocation) {
     [avg] = calcAvgMaxHeight(samples);
@@ -102,7 +110,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // a real location starts from its own mean (MapData.averageHeight is
   // only ever computed there), every other from 0.
   const wodResult = wod && wod.picks.length ? applyPicks(samples, wod.picks, hasLocation ? avg : 0) : null;
-  const grid = restrideGrid({ woods, px, py, stride, samples });   // PERF-EXT26: the one grid law, the restride's too
+  const grid = restrideGrid({ woods, px, py, stride, samples, landforms });   // PERF-EXT26: the one grid law, the restride's too
   const tilemapBytes = convertTilemap(tilemap);
   const nature = layoutNature(samples, tilemap, {
     mapPixelX: px,
@@ -150,9 +158,12 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
  * swap (STREAM1's restride) and the terrain worker's `grid` job all run
  * this one law, so a promotion built on the worker is the bytes one built
  * on the main thread is, by construction.
- * @param {{ woods: object, px: number, py: number, stride?: number, samples: Float32Array }} job
+ * LANDFORM1-3: the ghost rows are the neighbours' SHAPED ground - `landforms` when the caller holds them (the build
+ * above), else made here from `landform` and the network (a promotion: the host's job, the worker's own network).
+ * @param {{ woods: object, px: number, py: number, stride?: number, samples: Float32Array, landform?: ?{rivers: boolean}, roads?: ?object, landforms?: ?object }} job
  * @returns {{ positions: Float32Array, normals: Float32Array }}
  */
-export function restrideGrid({ woods, px, py, stride = 1, samples }) {
-  return buildTerrainGrid(samples, stride, ghostSampler(woods, px, py));
+export function restrideGrid({ woods, px, py, stride = 1, samples, landform = null, roads = null, landforms = null }) {
+  const lf = landforms ?? (landform ? createLandforms({ woods, roads, rivers: !!landform.rivers }) : null);
+  return buildTerrainGrid(samples, stride, ghostSampler(woods, px, py, HEIGHTMAP_DIMENSION, lf));
 }
