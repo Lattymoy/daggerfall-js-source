@@ -10066,6 +10066,80 @@ home's alone - they are about other players.
 - Known limits: the lot is a box round the footprint (a building turned off the grid has a wider lot); yard pieces are
   not activation targets; the street's wandering folk are not steered round them.
 
+### YARD-HEIGHT and DECOR-TURN - a yard's piece stands at most 4 m up; a placed piece turned where it stands (2026-10-06)
+
+Mac: "limit the height at which players can build, along with adding the ability to rotate objects on the ground.
+People currently can build towers that seem out of place." Mac's calls: 4 m, and "Turn placed pieces" (a piece already
+placed turned in place, never picked up).
+
+- **YARD-HEIGHT.** A yard's piece stood on whatever the eye met, the piece below included, and the owner's own lift
+  added DECOR_RAISE_MAX (3 m) to each, so a stack climbed as far as the lot's own bound, DECOR_YARD_POS_MAX (48 m).
+  Now its place stands at most DECOR_YARD_HIGH (`net/decorLaw.js`, 4 m) over the ground - its `pos` height, from the
+  building's own origin, which stands on the town's ground (`scenes/world.js` homeFrames). Refused at both ends by the
+  one law (decorYardHighOk): the decorator says why before it asks (`scenes/homeYards.js` yardWhyNot - after the lot's
+  own reasons, so a roof is still "the house"), and the service refuses a yard's piece placed or moved past it
+  (`server-account/src/decor.js` placeDecor and moveDecor, `yard-high`, worded in `net/accountClient.js`). A room's
+  pieces are never asked. A piece standing from before it stays where it stands, read as ever, until its owner moves it
+  down or removes it; turned or moved, it must stand within the bound. acct86.
+- **DECOR-TURN.** The panel's "In this room" (and "In this yard") view has Turn left and Turn right beside Move
+  (`ui/decorPanel.js`): the chosen piece turned DECOR_TURN_STEP (15 degrees) about its upright where it stands - a hung
+  one spun on its wall, as its placing turns it - free, the panel staying up (`scenes/decorTool.js` turnPlaced). It is a
+  move of its turn alone: it turns at once, and an online home's piece is written once its presses settle
+  (DECOR_TURN_SETTLE_MS - AUDIT YARD-HEIGHT Y1, below); a picture standing on its own faces the other way (Y6). A yard's piece turned onto the house, a road or another's
+  ground is refused in the lot's own words, as its placing would be. A door is turned by its doorway (Move), never
+  here.
+- Pinned in `test/yardheight.test.js` (6); `tools/mutants/yardheight.json` 14 of 14 dead.
+
+### AUDIT YARD-HEIGHT (2026-10-06, Mac: "Audit") - YARD-HEIGHT and DECOR-TURN read again, before their deploy
+
+Two lanes: the author's own adversarial re-read of the PR (#641) - Y1 to Y4 - and an independent cold read of its diff,
+with repros against the committed tree - Y5 to Y8. FOUND, each fixed and pinned (`test/audityardheight.test.js`,
+`test/yardheight.test.js`; `tools/mutants/audityardheight.json` 14 of 14 dead, `yardheight.json` 14 of 14):
+
+- **MEDIUM - Y1: every press of Turn was a write, and the piece stood still until it was answered.** turnPlaced wrote
+  each press to the account service at once - a move is four statements on its database (the hour's count, the owner,
+  the row, the write) and one of the hour's DECOR_OPS_MAX (600) - so a piece turned half round was twelve writes, on the
+  database the yards had overloaded that morning (YARD-SHED); and the piece turned only when the answer came. FIXED
+  (`scenes/decorTool.js` turnPlaced, writeTurn): the piece turns at once, as the press is made, and an online home's is
+  written once its presses settle - DECOR_TURN_SETTLE_MS (400 ms) after the last, that press's wait alone writing; a
+  press while a write is answered is written after it, once. The write is the turn owed on the piece as it then stands,
+  so a light put out meanwhile (written at once, as ever) is never written back on; refused, the turn alone is undone -
+  the piece turned back as the service holds it, the service's word said.
+- **LOW - Y2: an answer could stand a removed piece again.** A turn answered after the piece's removal put it back in
+  the room's pool - a piece the service no longer held, standing until the room was read again. FIXED: a turn's answer
+  stands only a piece still standing, a piece removed while its turn waits is never written, and (Y5) a removal waits
+  for the turn being answered.
+- **LOW - Y3: the refusal's sentence was written twice** - the decorator's (`homeYards.js` YARD_TOO_HIGH) and the
+  service's word (`accountClient.js` `yard-high`), free to drift apart. FIXED: one sentence in the law
+  (`net/decorLaw.js` DECOR_YARD_HIGH_WHY, as townSeatLaw.js's rosters' words are), and the decorator asks the law's own
+  decorYardHighOk.
+- **MEDIUM - Y5: a turn and a station of one piece in flight at once - the station's licence paid, the station gone.**
+  Every change of a placed piece is written as its whole place (the service's move), and nothing kept two of one piece
+  from being in flight together: a Turn pressed while "Make station" was answered sent the piece without its craft, and
+  landing second, the service's plain move wrote the station out - the 50,000 gold kept, nothing back (the cold read's
+  repro: the row and the client's piece both stationless, the purse 50,000 down). A light and a turn the same. FIXED
+  (`scenes/decorTool.js` pieceWrite): one write of a piece at a time - a turn, a light, a hold, a station, a move and a
+  removal each wait for the piece's write before it and read the piece as it then stands; a move writes the piece's
+  turn itself, so a turn owed from the panel is written no more once the move stands.
+- **LOW - Y6: a picture turned showed nothing for six presses.** A flat standing on its own is a billboard - it shows
+  only which way it faces (DECOR-FLIP: past a quarter turn its picture is mirrored), so fifteen degrees changed nothing
+  on the screen, six presses in a row. FIXED: Turn faces such a picture the other way at a press; a yard's tree (which
+  turns in earnest as Low Poly Trees draw it), a hung piece and a model turn a step.
+- **LOW - Y7: the service's move wrote a row other than the one it read.** Its plain write was bound to the piece's id
+  and owner alone, so a room's piece removed and placed again in the yard under its id between the move's read and its
+  write took the room's place - past the yard's height (a deliberate client's race; the cold read's repro served it in
+  the town's yards). FIXED (`server-account/src/decor.js` moveDecor): the write is bound to the yard it read
+  (`AND yard = ?`), as the gold paths' writes are to the place they read.
+- **DOCUMENTED - Y8: the bound is a model's origin, not its foot.** A model's `pos` is its own origin, which the placer
+  stands above the surface by as much as the model reaches below it - a tall model whose origin is at its middle,
+  scaled up, stands its origin past 4 m on the ground. The service knows no model's shape, so a foot measured by the
+  client alone would let the two ends disagree (the client offering what the service refuses); both ask the one place
+  they share. `net/decorLaw.js` says so; nothing in the catalogue's props stands its origin that high below a 4x scale.
+- **OPEN, Mac's to decide - Y4: the bound is where a piece stands, not how tall it is.** A tree must stand taller than
+  4 m, and any model may be scaled to DECOR_SCALE_MAX (4) - so one large piece at the ground (or at 4 m) can still rise
+  well past a house's eaves. A cap on a piece's top would need a rule by kind (nature pieces apart). Left as asked:
+  "How high above the ground may a yard piece stand?" - 4 m.
+
 ### YARD-SHED - a town's yards asked within reach, kept by the service, needing no session (2026-10-06)
 
 The account service went down for everyone on 2026-10-06: every database call failed with `D1_ERROR: D1 DB is
