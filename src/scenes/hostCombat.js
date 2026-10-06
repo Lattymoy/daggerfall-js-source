@@ -8,7 +8,8 @@
 // FormulaHelper.cs, DaggerfallUnityItem.cs, PlayerActivate.cs
 // (MIT, Daggerfall Workshop).
 
-import { plainFoeLootRule, capFoeLoot, PLAIN_FOE_RARITY_WEIGHTS } from '../systems/foeLootCap.js';   // FOE-CAP: a plain foe's cap and ladder
+import { plainFoeLootRule, capFoeLoot, plainFoeRarityWeights } from '../systems/foeLootCap.js';   // FOE-CAP: a plain foe's cap and ladder (RENOWN-LOOT: at the roller's Renown)
+import { renownLootQuarters, lootEased } from '../systems/renownLoot.js';   // RENOWN-LOOT: LOOT-EASE's buff by the roller's Renown
 import { SKILLS, tallySkill, skillValue, SKILL_NAMES } from '../systems/skills.js';
 import { effectiveLevel } from '../systems/mentorMode.js';   // SOFTCAP2: mentor mode - the level the world is built around
 import { vampireAttackVoice } from '../systems/vampirism.js';   // V5: GetCustomRaceGenderAttackSoundData
@@ -120,22 +121,34 @@ export const hasBowAttack = (basics) =>
  *  Daedra Lord is not. */
 const HUMANOID_LOOT_ITEM_SCALE = 0.25;   // MOD: keep a quarter of the item chance (drop 75%)
 /** PLAIN-LOOT (Mac, 2026-10-02: "reduce the loot dropped by non elite enemies by 50%"): a foe that is no elite leaves
- *  HALF of what it carries - every piece the chain put on its body (the table's, the worn kit's droppable cut, the trio
+ *  PART of what it carries - every piece the chain put on its body (the table's, the worn kit's droppable cut, the trio
  *  and the port's extras) kept on its own coin, after the humanoid cut; its gold all of it, as that cut leaves it.
  *  A coin per piece and not a scale on the table's chance (AUDIT PLAIN-LOOT): DFU's ladder halves its chance at every
  *  step and rolls it truncated to whole percent, so a scaled chance compounded down the ladder and a 1-3% one fell to
  *  0 - the scale had kept 33-50% of the table, and nothing of a level-1 humanoid's. "Elite" is any of the three: an
- *  ELITE FOE (`eliteFoe`), an Elite Dungeon's foe (`elite`), a LOOT7 champion. */
-const PLAIN_FOE_LOOT_KEEP = 0.5;
+ *  ELITE FOE (`eliteFoe`), an Elite Dungeon's foe (`elite`), a LOOT7 champion.
+ *  LOOT-EASE (2026-10-05, Mac: "I think loot was way overtuned as a nerf. We need to bring their drop rates up" and
+ *  "Lets not overture the drop rates, but they definitely need a buff"): THREE PIECES IN FOUR, where PLAIN-LOOT kept
+ *  one in two. FOE-CAP's cap and plain ladder landed on the half a day later; measured through this chain, a plain
+ *  humanoid's body held 0.9 pieces and a third of them nothing but gold (1.9, an eighth bare, before PLAIN-LOOT). Half
+ *  the cut given back: 1.3 pieces, a fifth bare. */
+const PLAIN_FOE_LOOT_KEEP = 0.75;
+/** PLAIN-LOOT's own half - the live game's before LOOT-EASE, where RENOWN-LOOT's step starts. */
+const PLAIN_FOE_LOOT_KEEP_BEFORE = 0.5;
+/** RENOWN-LOOT (systems/renownLoot.js): the share a plain foe keeps at `quarters` of LOOT-EASE's buff - 62.5% at
+ *  Renown 1 online, three in four offline and at Renown 20, 87.5% at Renown 40. */
+export const plainFoeLootKeep = (quarters = renownLootQuarters()) => lootEased(PLAIN_FOE_LOOT_KEEP_BEFORE, PLAIN_FOE_LOOT_KEEP, quarters);
 const eliteLooted = (entity) => !!(entity?.eliteFoe || entity?.elite || championOf(entity));
 // ELITE: `lootDropMult` scales every item category's chance (gold untouched, as the humanoid cut);
 // `lootQualityMult` scales the rarity ladder's odds. Both 1 everywhere but an elite dungeon.
 export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Math.random, lootDropMult = 1, lootQualityMult = 1, where = null } = {}) {
   const itemChanceScale = (isHumanoid(entity) ? HUMANOID_LOOT_ITEM_SCALE : 1) * lootDropMult;
+  const ease = renownLootQuarters();   // RENOWN-LOOT: the roller's Renown, read once for the keep and the ladder alike
   entity.items = generateItems(enemyLootTableKey(mobileType, basics?.lootTableKey ?? '-'), { level: effectiveLevel(player), gender: player.gender }, undefined, { itemChanceScale, mobileType });
   const eq = equipEnemy(entity, mobileType, effectiveLevel(player), rolls, { player });   // SOFTCAP2: a mentor's foes carry the GROUP's loot and gear
   addEnemyLootExtras(entity.items, basics, rolls);
-  if (!eliteLooted(entity)) entity.items = entity.items.filter((it) => isGoldPieces(it) || rolls() < PLAIN_FOE_LOOT_KEEP);   // PLAIN-LOOT: half of it, on the host's stream as the kit's cut is
+  const keep = plainFoeLootKeep(ease);
+  if (!eliteLooted(entity)) entity.items = entity.items.filter((it) => isGoldPieces(it) || rolls() < keep);   // PLAIN-LOOT: three pieces in four (LOOT-EASE; RENOWN-LOOT: by the roller's Renown), on the host's stream as the kit's cut is
   // RRI2: EnemyEntity.OnLootSpawned (EnemyEntity.cs:399) fires here, after
   // the trio and with the kit already in Items - the mod's
   // RandomConditionEnemyItems (RoleplayRealismItemsMod.cs:222-245) wears
@@ -148,7 +161,7 @@ export function spawnEnemyLoot(entity, mobileType, basics, player, { rolls = Mat
   // and carries at most its cap, gold included; the stamp rides the entity so the death's handlers are capped too
   const plain = plainFoeLootRule(entity, basics);
   if (plain) entity.lootCap = plain.cap;
-  rollCorpseLoot(entity, basics, { rolls, luck: liveStat(player, 'luck'), qualityMult: lootQualityMult, weights: plain?.plainLadder ? PLAIN_FOE_RARITY_WEIGHTS : null });
+  rollCorpseLoot(entity, basics, { rolls, luck: liveStat(player, 'luck'), qualityMult: lootQualityMult, weights: plain?.plainLadder ? plainFoeRarityWeights(ease) : null });
   capFoeLoot(entity);
   return entity.items;
 }

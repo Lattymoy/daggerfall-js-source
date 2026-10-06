@@ -87,7 +87,7 @@ test('SILVER-WAYS the law: a gate 50 and a raid 30 under one combat cap of 150 a
   assert.deepEqual(MARKS_FAUCETS.raid, { amount: 30 });
   assert.deepEqual(MARKS_FAUCETS.deed, { amount: 25, perDay: 4, members: 3, tenureS: 7 * DAY });
   assert.deepEqual(MARKS_FAUCETS.motherlode, { amount: 10, perDay: 1 });
-  assert.deepEqual(MARKS_COMBAT, { kinds: ['gate', 'raid'], perDay: 150 });
+  assert.deepEqual(MARKS_COMBAT, { kinds: ['gate', 'raid', 'serpent'], perDay: 150 });   // PIN MOVED (SERPENT-SET): the serpents under the same cap, the ceiling unmoved
   assert.deepEqual([combatStrike(50, 0), combatStrike(30, 100), combatStrike(30, 130), combatStrike(50, 140), combatStrike(30, 150), combatStrike(30, 170), combatStrike(30, -5)],
     [50, 30, 20, 10, 0, 0, 30]);
   assert.deepEqual(['raid', 'guild-deed', 'motherlode', 'contract-escrow', 'contract-pay', 'contract-return'].map((k) => MARKS_KINDS[k]),

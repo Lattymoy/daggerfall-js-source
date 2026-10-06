@@ -40,6 +40,7 @@ import { bookTitle } from './books.js';   // IM1: GetBookTitle's legacy-data arm
 import { dfRandPick } from '../formats/textRsc.js';   // ROAD-A7: GetRandomTokens' dfRand draw
 import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js';
 import { isRestItem, restItemLines } from './restItems.js'; import { isPortalStone, portalStoneLines } from './portalStone.js';   // REST6: the seven's cards; PORTAL1: and the Portal Stone's
+import { isWalletItem, WALLET_CARD_LINES } from './walletItem.js';   // WALLET1: the wallet's card
 import { isSurvivalItem, isCampingEquipment, isCampfireKit, isSkillet } from './survival/items.js';   // SURV5: the survival items' own info box
 import { isFood, foodOf, foodStage, foodSatiety, isWaterskin, waterIn, WATERSKIN_CAPACITY_KG, STAGE_WORDS } from './survival/food.js';   // ROAD-U: the identity DFU reads off the item's own record
 import { makerName, PROVENANCE_RE } from '../net/recipeLaw.js';   // AUDIT 30 C7: a maker's mark as the law writes it
@@ -693,6 +694,7 @@ export function survivalInfoTokens(item) {
   else if (isSkillet(item)) out.push({ text: 'Cooking at a campfire goes twice as fast.', center: true });
   else if (isRestItem(item)) for (const text of restItemLines(item)) out.push({ text, center: true });   // REST6
   else if (isPortalStone(item)) for (const text of portalStoneLines()) out.push({ text, center: true });   // PORTAL1
+  else if (isWalletItem(item)) for (const text of WALLET_CARD_LINES) out.push({ text, center: true });   // WALLET1
   return out;
 }
 
@@ -704,7 +706,7 @@ export function itemInfoRows(item, rows, macros = {}) {
   // BUILT tokens rather than a record id, so both bypass `rows(id)`.
   if (isPotionRecipe(item)) record = potionRecipeTokens();
   if (isSurvivalItem(item) || isRestItem(item)) record = survivalInfoTokens(item);
-  if (isPortalStone(item)) record = survivalInfoTokens(item);   // PORTAL1: the stone's card, built the same way   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
+  if (isPortalStone(item) || isWalletItem(item)) record = survivalInfoTokens(item);   // PORTAL1: the stone's card, built the same way; WALLET1: and the wallet's   // SURV5: built tokens, like the recipe's - the custom rows have no TEXT.RSC record
   if (!painting && item?.group === 'Paintings' && _paintFile) {
     // ROAD-A7: every one of the painting reads is GetRandomTokens with
     // dfRand TRUE (InitPaintingInfo :65 and the four macro readers
@@ -836,7 +838,7 @@ export function itemStatRows(item) {
   // arrow, a helm or shield under HelmAndShieldMaterialDisplay - so the
   // panel never names a metal the pack withholds; push drops an empty.
   push('Material', itemNameParts(item).material);
-  const survival = isSurvivalItem(item) || isRestItem(item) || isPortalStone(item);   // REST6: the seven's lines too; PORTAL1: and the Portal Stone's
+  const survival = isSurvivalItem(item) || isRestItem(item) || isPortalStone(item) || isWalletItem(item);   // REST6: the seven's lines too; PORTAL1: and the Portal Stone's; WALLET1: and the wallet's
   if (survival) for (const t of survivalInfoTokens(item).slice(2)) push('', t.text);
   else if ((item.maxCondition ?? 0) > 0) push('Condition', `${conditionWord(item)} (${conditionPercentage(item)}%)`);
   // The weight is the STACK's, as `weightString` has it and as the

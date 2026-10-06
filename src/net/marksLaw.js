@@ -17,6 +17,19 @@
 // have had. There is no route, function or table here that turns gold
 // into Marks, and the pins hold that.
 //
+// SILVER-FINDS (2026-10-05, Mac: "Silver should be more accessible in
+// more forms of interactions like foraging and different activities,
+// also needs to be sometimes lootable"). TWO FAUCETS ARE BOUNDED, NOT
+// WITNESSED: a gathering's find, the service's own dice inside a harvest
+// it already counts and caps (`gather`), and a loot find - a body, a
+// treasure pile, a searched coffin or chest - whose amount is the
+// service's dice and whose day is the service's count (`find`). A
+// modified client can claim either without the act, as it can a hide
+// (PROF0 6), so each is small and capped by the UTC day: the most a
+// client that lies prints is the cap, the line the law draws instead of
+// the witness. Every other faucet is still an act a server witnessed -
+// SERPENT-SET's serpent among them, a receipt the relay signed.
+//
 // The shapes and bounds BOTH ends read - the account service
 // (server-account/src/marks.js), which keeps every balance and the one
 // ledger, and the client. Pure: no clock, no DOM, no network.
@@ -28,8 +41,9 @@ export const MARKS_MAX = 10_000_000;
 export const MARK_WORTH_GOLD = 10;
 
 /**
- * THE FAUCETS - only acts a server witnessed, each capped. MARKS1 strikes the first (the gate's receipts); the rest
- * come with their slices, and are named here so the cap is the law before the faucet is built.
+ * THE FAUCETS - acts a server witnessed, each capped (SILVER-FINDS' `gather` and `find` bounded by the day instead -
+ * above). MARKS1 strikes the first (the gate's receipts); the rest come with their slices, and are named here so the
+ * cap is the law before the faucet is built.
  *   gate      - an Oblivion Gate receipt the relay signed and the service counted (WB5b): 50 (100 under a Daedric
  *               Incursion, SEAT0 9.3 - the second half at the Turning, seatIncursion.js). SILVER-WAYS: under the day's
  *               COMBAT cap (MARKS_COMBAT) with the raids', no longer two a day of its own.
@@ -42,6 +56,13 @@ export const MARK_WORTH_GOLD = 10;
  *               it - each a character `tenureS` in the guild - have claimed the same raid or gate: 25, `perDay` a guild a
  *               UTC day.
  *   motherlode - a Motherlode find (PROF2b): 10, one an account a UTC day.
+ *   serpent   - SERPENT-SET (2026-10-05): a sea serpent slain - its receipt the relay signed at the kill (SERPENT1, `l1`)
+ *               and the service counted once a (day, account): 40, a ship that stood `stood` of it (the serpent's own
+ *               Renown law), under the COMBAT cap.
+ *   gather    - SILVER-FINDS: a harvest's find - the service's dice, `chance` of a counted harvest (any of the five acts:
+ *               an herb patch, a vein, a tree, a body, a net), `amount` its range, at most `perDay` an account a UTC day.
+ *   find      - SILVER-FINDS: a loot find - a body, a treasure pile or a searched thing (`chance` the device's roll, each
+ *               kind's own), `amount` the service's dice, at most `perDay` an account a UTC day.
  */
 export const MARKS_FAUCETS = Object.freeze({
   gate: Object.freeze({ amount: 50 }),
@@ -49,14 +70,18 @@ export const MARKS_FAUCETS = Object.freeze({
   writ: Object.freeze({ perDay: 3 }),   // PROF1: the pay is each writ's own (professionLaw.js writPay)
   deed: Object.freeze({ amount: 25, perDay: 4, members: 3, tenureS: 7 * 86_400 }),
   motherlode: Object.freeze({ amount: 10, perDay: 1 }),
+  serpent: Object.freeze({ amount: 40, stood: 0.5 }),
+  gather: Object.freeze({ chance: 0.1, amount: Object.freeze([2, 5]), perDay: 30 }),
+  find: Object.freeze({ chance: Object.freeze({ corpse: 0.05, pile: 0.12, search: 0.15 }), amount: Object.freeze([1, 4]), perDay: 20 }),
 });
 /**
  * SILVER-WAYS: THE DAY'S COMBAT CAP - what the gates and the raids strike an account together, a UTC day. The gate was
  * two a day of its own (100); a fighter now earns by raids too, and the day's ceiling rose by one raid's worth and a
  * little (150 = three gates, or five raids, or two gates and a raid and part of another). The strike that meets the cap
- * pays what the day has left of it (`combatStrike`), never nothing for a few silver short.
+ * pays what the day has left of it (`combatStrike`), never nothing for a few silver short. SERPENT-SET: a serpent slain
+ * strikes under the same cap - a sailor reaches the day's silver at sea too, and the ceiling does not rise.
  */
-export const MARKS_COMBAT = Object.freeze({ kinds: Object.freeze(['gate', 'raid']), perDay: 150 });
+export const MARKS_COMBAT = Object.freeze({ kinds: Object.freeze(['gate', 'raid', 'serpent']), perDay: 150 });
 /** What a combat faucet's `amount` strikes when `earned` is the day's combat silver so far: the amount, or the day's last. */
 export const combatStrike = (amount, earned) => Math.max(0, Math.min(amount, MARKS_COMBAT.perDay - Math.max(0, earned)));
 /** The Bank of the Empire's exchange: Marks for gold, never the other way. */
@@ -124,6 +149,9 @@ export const MARKS_KINDS = Object.freeze({
   'contract-pay': 'move',     // SILVER-WAYS: a defender's pay less its tax, out of the contract's escrow
   'contract-return': 'move',  // SILVER-WAYS: what is left of a contract's escrow, home to its guild at a withdrawal or its seventh day
   motherlode: 'mint',         // PROF2b: a Motherlode found - the relay's word that the striker stood in its cell, counted
+  serpent: 'mint',            // SERPENT-SET: a sea serpent slain - the relay's receipt, counted (under the day's combat cap)
+  gather: 'mint',             // SILVER-FINDS: a harvest's find - the service's dice in a harvest it counted (bounded by the day)
+  find: 'mint',               // SILVER-FINDS: a loot find - the service's dice, the day's count (bounded by the day)
 });
 
 /** The switch the service's config holds (MARKS_OPEN): off, dev (the developers alone), on. */
@@ -141,3 +169,21 @@ export const MARKS_RID_RE = /^[A-Za-z0-9_-]{8,40}$/;
 
 /** A balance as a person reads it: "1,240 Marks", "1 Mark". */
 export const marksText = (n) => `${Number(n).toLocaleString('en-US')} silver`;
+
+/** SERPENT-SET: what a serpent's receipt strikes before the day's cap - a ship that stood, `stood` of it (`earned` the
+ *  receipt's `x`). */
+export const serpentStrikeOf = (earned) => (earned === 'stood' ? Math.floor(MARKS_FAUCETS.serpent.amount * MARKS_FAUCETS.serpent.stood) : MARKS_FAUCETS.serpent.amount);
+/** SILVER-FINDS: an amount in `range` - its `[lo, hi]`, a faucet's frozen pair - off one roll of dice in [0, 1).
+ *  @param {readonly number[]} range @param {number} roll */
+const amountOf = (range, roll) => {
+  const [lo, hi] = range;
+  return lo + Math.max(0, Math.min(hi - lo, Math.floor(roll * (hi - lo + 1))));
+};
+/** SILVER-FINDS: a counted harvest's find - the service's two rolls in [0, 1): the silver it finds, or 0 for none. */
+export const gatherFindOf = (chanceRoll, amountRoll) => (chanceRoll < MARKS_FAUCETS.gather.chance ? amountOf(MARKS_FAUCETS.gather.amount, amountRoll) : 0);
+/** SILVER-FINDS: the things a loot find may be in - a foe's body, a treasure pile, a searched thing (SEARCH1). */
+export const FIND_KINDS = Object.freeze(['corpse', 'pile', 'search']);
+/** SILVER-FINDS: the share of a looted thing of `kind` that holds a find (the device's roll), 0 for no such kind. */
+export const findChanceOf = (kind) => (FIND_KINDS.includes(kind) ? MARKS_FAUCETS.find.chance[kind] : 0);
+/** SILVER-FINDS: what a loot find strikes - the service's roll in [0, 1). */
+export const lootFindOf = (roll) => amountOf(MARKS_FAUCETS.find.amount, roll);

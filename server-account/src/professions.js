@@ -40,9 +40,10 @@
 // ═══════════════════════════════════════════════════════════════════
 import { accountKind, mintId, overRate } from './accounts.js';
 import { isDeveloper } from './titles.js';
-import { marksOpenFor, balanceOf } from './marks.js';
+import { marksOpenFor, balanceOf, gatherStrikeStatement, gatherStrikeRid, findLineAnswer } from './marks.js';   // SILVER-FINDS: a harvest's find
+import { dice } from './unitRoll.js';   // SILVER-FINDS: the service's dice, below this file and marks.js (which needs them too)
 import { CHAR_ID_RE } from './service.js';
-import { MARKS_MAX, utcDay } from '../../src/net/marksLaw.js';
+import { MARKS_MAX, utcDay, gatherFindOf } from '../../src/net/marksLaw.js';
 import { renownForXp, RENOWN_XP_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
 import {
   PROFESSIONS, isProfession, rankOfXp, tierOpen, harvestXp, writXp, specOk, specsAt, SPEC_RANKS, RESPEC,
@@ -105,12 +106,6 @@ export function asks(player, { character, rid, needRid = true }) {   // PROF12: 
   return null;
 }
 export const shut = (player, env) => (profOpenFor(player, env) ? null : { error: 'prof-closed' });
-/** A random unit in [0, 1) from the service's CSPRNG. */
-export function dice(rand) {
-  const b = new Uint32Array(1);
-  rand(new Uint8Array(b.buffer));
-  return b[0] / 4294967296;
-}
 
 // ─── WHAT A CHARACTER HAS ────────────────────────────────────────────
 
@@ -287,6 +282,13 @@ export async function profPixels({ db }, player, env, { character, pixels, dunge
 
 // ─── A HARVEST ───────────────────────────────────────────────────────
 
+/** SILVER-FINDS: a harvest's find as its answer says it - `{ marks: { struck, balance, today } }` where the harvest's
+ *  line was struck (marks.js findLineAnswer, under the harvest's own line id), else nothing. */
+async function gatherMarksOf(ctx, player, env, rid) {
+  const m = await findLineAnswer(ctx, player, env, gatherStrikeRid(rid));
+  return m ? { marks: m } : {};
+}
+
 /** The answer a harvest's row gives - the first time (`rankBefore` the track's rank before it, so a rise is said), or
  *  again to a request asked twice. PROF2: a gem the strikes found, and its Stores. */
 async function harvestAnswer(db, row, nowS, extra, rankBefore = null) {
@@ -400,7 +402,7 @@ export async function harvestNode(ctx, player, env, body = {}) {
   const T = carry ? 'prof_carried' : 'prof_stores';
   const ROOM = carry ? CARRIED_MAX : STORES_MAX;
   const prior = await db.prepare('SELECT * FROM node_harvests WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
-  if (prior) return harvestAnswer(db, prior, nowS, { repeat: true });   // before the switch: a harvest made is a harvest answered
+  if (prior) return harvestAnswer(db, prior, nowS, { repeat: true, ...(await gatherMarksOf(ctx, player, env, rid)) });   // before the switch: a harvest made is a harvest answered
   const closed = shut(player, env);
   if (closed) return closed;
   const n = parseNodeKey(node);
@@ -548,6 +550,12 @@ export async function harvestNode(ctx, player, env, body = {}) {
   const levyKey = !deep && !isBody && seatsOpenFor(player, env) ? await levyAt(db, nowS, region, [n.x, n.y]) : null;
   const levy = levyKey == null ? 0 : Math.max(0, Math.min(levyOf(qty, dice(rand)), qty - 1));
   const kept = qty - levy;
+  // SILVER-FINDS (2026-10-05, Mac: "Silver should be more accessible in more forms of interactions like foraging"): A
+  // HARVEST'S FIND - the service's dice, after every draw above so each of them is what it was; struck in this batch, by
+  // THIS harvest's row alone, under the day's `gather` silver (marks.js gatherStrikeStatement). Bounded, not witnessed:
+  // a harvest is the client's word on its node, as a hide is, so the day is the bound (marksLaw.js SILVER-FINDS).
+  const silver = gatherFindOf(dice(rand), dice(rand));
+  const find = silver > 0 ? gatherStrikeStatement(ctx, player, env, { rid, nonce, amount: silver }) : null;
   const deepUnconfirmed = deep && !confirmed ? 1 : 0;
   const mine = 'player = ?1 AND rid = ?2 AND n = ?3';
   const stored = `COALESCE((SELECT SUM(qty) FROM ${T} WHERE player = ?1 AND char_id = ?4 AND material = ?5), 0)`;   // BAG1: the count it lands in
@@ -616,10 +624,11 @@ export async function harvestNode(ctx, player, env, body = {}) {
     ...(isBody ? [] : [db.prepare(`INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at)
       SELECT ?9, ?4, ?1, ?5, ?6, ?7 WHERE ?8 = 1 AND EXISTS (SELECT 1 FROM node_harvests WHERE ${mine})`)
       .bind(player.id, rid, nonce, key, pixelReport(climate, region), region, nowS, witness, wkind)]),
+    ...(find ? [find] : []),   // SILVER-FINDS: the find, last
   ]);
   const made = await db.prepare('SELECT * FROM node_harvests WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
-  if (made?.n === nonce) return harvestAnswer(db, made, nowS, levy > 0 ? { levy: { qty: levy, key: levyKey } } : {}, rank);
-  if (made) return harvestAnswer(db, made, nowS, { repeat: true });   // the same request, racing itself
+  if (made?.n === nonce) return harvestAnswer(db, made, nowS, { ...(levy > 0 ? { levy: { qty: levy, key: levyKey } } : {}), ...(await gatherMarksOf(ctx, player, env, rid)) }, rank);
+  if (made) return harvestAnswer(db, made, nowS, { repeat: true, ...(await gatherMarksOf(ctx, player, env, rid)) });   // the same request, racing itself
   if (await db.prepare('SELECT 1 FROM node_harvests WHERE day = ?1 AND node = ?2 AND kind = ?3 AND player = ?4 AND char_id = ?5')
     .bind(day, node, kind, player.id, character).first()) return { error: 'node-taken' };
   if (((await todayOf(db, player.id, character, day))[profession] ?? 0) >= HARVESTS_PER_DAY) return { error: 'prof-cap' };

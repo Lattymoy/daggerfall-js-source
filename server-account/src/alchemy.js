@@ -19,8 +19,9 @@
 // ═══════════════════════════════════════════════════════════════════
 import { mintId, overRate } from './accounts.js';
 import {
-  asks, shut, dice, trackView, trackRow, storeOf, spendableSql, spendStatements, seatStepsFor,
+  asks, shut, trackView, trackRow, storeOf, spendableSql, spendStatements, seatStepsFor,
 } from './professions.js';
+import { dice } from './unitRoll.js';   // SILVER-FINDS: the service's dice moved below professions.js and marks.js
 import { rankOfXp, specsAt, craftXpCap, STORES_MAX, PROF_OPS_MAX, PROF_OPS_WINDOW_S, ARCANE_ESSENCE } from '../../src/net/professionLaw.js';
 import { FIRST_CRAFT_XP, recipeById, PROVENANCE_RE } from '../../src/net/recipeLaw.js';
 import {

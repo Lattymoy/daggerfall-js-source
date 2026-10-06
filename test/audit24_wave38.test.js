@@ -311,9 +311,9 @@ test('audit24 wave38: the encounter pool exports the seam, and the host asks BOT
 
   // ...and the ROUTER itself, RUN off the fixed-city host's own line.
   // Routing a `foeCorpse:` key into the watch pool is not a harmless
-  // miss: cityGuards.js:1493-1495 turns the key into
+  // miss: cityGuards.js:1495-1497 turns the key into
   // `guards.find((g) => g.id === id)` over ids minted by
-  // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:199-383)
+  // `_nextGuardId++`, and takeCorpseLoot (corpseMarker.js:200-396)
   // tests only `corpseDisabled` and `entity.items` - never death - so
   // opening an encounter corpse would empty a LIVE watchman's pack.
   // AUDIT 65 MC-2 MADE THE ARM TWO RUNGS: the corpse now competes for

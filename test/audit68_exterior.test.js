@@ -93,11 +93,13 @@ test('AUDIT 68 S20-frame-return-kills-loop: every exit from a host\'s frame() re
     const i = src.indexOf('if (!quickLootTake(dropKey, _hooks, playerEntity,');
     assert.ok(i > 0, `${file}: the pile's quick take`);
     const arm = src.slice(i, src.indexOf('\n', src.indexOf('if (w) townTalk.showOverlay(w);', i) + 1) + 200);
-    assert.match(arm, /if \(w\) townTalk\.showOverlay\(w\);[^\n]*\n\s*\} else droppedLoot\.releaseEmptied\(\);/, `${file}: a take that emptied the pile frees it`);
+    // PIN MOVED (AUDIT 625 S2): the streaming host's treasure container rolls its find beside the window and the take
+    assert.match(arm, /if \(w\) townTalk\.showOverlay\(w\);[^\n]*\n(?:\s*if \(w && _find\) silverFindAt\('pile', _find\);\n)?\s*\} else (?:\{\n\s*if \(_find\) silverFindAt\('pile', _find\);\n\s*)?droppedLoot\.releaseEmptied\(\);/, `${file}: a take that emptied the pile frees it`);
   }
   // ...and the interior host's pile, the third door onto the same law (the dungeon's settles through onEmptied)
   const wm = rd('src/scenes/worldModes.js');
-  assert.match(wm, /if \(!quickLootTake\(key, _hooks, playerEntity, [^\n]*\)\) mountInterior\(interiorInventory\(\{ loot: _hooks \}\)\);[^\n]*\n\s*else interiorDropped\.releaseEmptied\(\);/,
+  // PIN MOVED (AUDIT 625 S2): the window's and the take's arms each roll a treasure pile's find (once it opened)
+  assert.match(wm, /if \(!quickLootTake\(key, _hooks, playerEntity, [^\n]*\)\) \{[^\n]*\n\s*const w = interiorInventory\(\{ loot: _hooks \}\);\n\s*mountInterior\(w\);\n[^\n]*\n\s*\} else \{\n\s*if \(_find\) silverFindAt\('pile', _find\);\n\s*interiorDropped\.releaseEmptied\(\);/,
     'worldModes.js: a take that emptied the room\'s pile frees it');
 });
 

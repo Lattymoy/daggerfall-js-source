@@ -220,7 +220,7 @@ function killDoor() {
     handleAttackFromPlayer: () => {}, damageShieldPool: (e, n) => n, noteFighter: () => {}, PARTY_ME: 'me', _sharedFoe: () => false, partyFoeLoses: (f, n) => n, fightN: () => 1,
     peerSoulTrapOf: () => null, attemptSoulTrap: () => ({ allowDeath: true }), isAzurasStarEquipped: () => false, fillEmptyTrap: () => false,
     hudText: { add: (l) => hud.push(l) }, SOUL_TRAP_TEXT: {}, setEnemyAlert: () => {}, sayEnemyDied,
-    spawnCorpse: () => {}, playRareDrop: () => {}, stampWonWeapons: () => {}, raiseEnemyDeath: () => {}, liveStat: () => 50,
+    spawnCorpse: () => {}, playRareDrop: () => {}, rollCorpseKit: () => [], stampWonWeapons: () => {}, raiseEnemyDeath: () => {}, liveStat: () => 50,
   };
   return { hud, ...mount(`${fnSrc('damageFoe')} return { damageFoe };`, state) };
 }
@@ -230,7 +230,7 @@ function joiner(self) {
   const foes = [foeRec(0), foeRec(7, { champion: 'vampiric' })];
   const state = {
     foes, _layoutFoes: 2, _retyping: new Set(), _authority: false, validFoeRecord, opts: { selfId: () => self },
-    renownFoeDied: () => {}, reportPlayerKill: () => {}, addCorpseFood: () => {}, stampWonWeapons: () => {}, liveStat: () => 50,
+    renownFoeDied: () => {}, reportPlayerKill: () => {}, rollCorpseKit: () => [], addCorpseFood: () => {}, stampWonWeapons: () => {}, capFoeLoot: () => [], liveStat: () => 50,
     playerEntity: { isPlayer: true, items: [] }, setFoeDead: (f, d) => { f.dead = d; }, retypeFoe: async () => false,
     sayEnemyDied, hudText: { add: (l) => hud.push(l) },
   };

@@ -2,8 +2,8 @@
 // place). These initial values are the PRE-CHARGEN state only:
 // createCharacter (systems/chargen) rolls the real career the first
 // time a chargen-running context boots, and every host runs it
-// through systems/chargenSession.js - dungeonContext.js:2895,
-// world.js:6363, exterior.js:1481 and applyHeadlessChargen for the
+// through systems/chargenSession.js - dungeonContext.js:2897,
+// world.js:6367, exterior.js:1481 and applyHeadlessChargen for the
 // test room (AUDIT 23).
 //
 // NOT A GAP (recorded): the stand-ins below - flat skills 30,
@@ -230,7 +230,8 @@ export const duelSpare = (entity) => { _duelFell?.(entity); };
 //   - a DAMAGE MODIFIER: `fn(entity, dmg) -> dmg`, over the damage before the shield pool (Malacath's Unbroken halves);
 //   - a DEATH SAVE: `fn(entity, dmg) -> boolean`, asked when the damage would take a live player to zero - one that
 //     answers true leaves them at 1 instead, before the guild's avoid-death is asked (Malacath's Unbroken itself);
-//   - a HURT LISTENER: `fn(entity, { dmg, before, after })`, told after the damage lands (Ruhn's Wrath of the Warden).
+//   - a HURT LISTENER: `fn(entity, { dmg, before, after })`, told after the damage lands (Ruhn's Wrath of the Warden) -
+//     AUDIT 625 P1: and `saved: true` when a death save turned it aside, a killing blow told as what it did (to 1).
 // NONE of them is asked on a SetHealth(0) door (`bypassShield`: drowning and the exhaustion collapse mean death, not
 // damage) or on a duel's own blow (`spare`: the duel's floor is its law), and a veto or a shield that takes the whole
 // blow leaves them all untold.
@@ -266,8 +267,9 @@ function playerDeathSaved(entity, dmg) {
   for (const fn of _deathSaves.values()) { try { if (fn(entity, dmg) === true) return true; } catch { /* as above */ } }
   return false;
 }
-function tellHurt(entity, dmg, before, after) {
-  for (const fn of _hurtListeners.values()) { try { fn(entity, { dmg, before, after }); } catch { /* as above */ } }
+function tellHurt(entity, dmg, before, after, saved = false) {
+  const hurt = saved ? { dmg, before, after, saved: true } : { dmg, before, after };   // AUDIT 625 P1: a death turned aside says so
+  for (const fn of _hurtListeners.values()) { try { fn(entity, hurt); } catch { /* as above */ } }
 }
 
 /**
@@ -315,7 +317,7 @@ export function hurtPlayer(entity, dmg, { bypassShield = false, spare = null } =
     const was = entity.health;
     entity.health = 1;
     surfacePlayer();
-    tellHurt(entity, was - 1, was, 1);
+    tellHurt(entity, was - 1, was, 1, true);
     return false;
   }
   const before = entity.health;

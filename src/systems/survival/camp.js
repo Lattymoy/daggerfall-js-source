@@ -344,12 +344,16 @@ const q2 = (v) => Math.round(v * 100) / 100;
 const q3 = (v) => Math.round(v * 1000) / 1000;
 /** One camp as its owner says it: i the id, k the kind (0 tent, 1 fire), p the world frame's [x, y, z], y the yaw, u the minute its fire dies, w the wear.
  *  DECK-CAMP: and `d`, a camp on a boat - [her owner ('' the sender's own, else that player's id), her number, the
- *  deck's x, y, z, the yaw on her] - so every client poses it off the same hull. */
+ *  deck's x, y, z, the yaw on her] - so every client poses it off the same hull.
+ *  AUDIT 625 L4: and `j: 1`, an Ember Jar's fire (REST-LOOT opened the jar's use online; a peer saw a plain campfire). The
+ *  relay reads none of the foes frame it rides, and a reader a build behind drops the field and sees the campfire it
+ *  always saw. */
 export const campWire = (camp, toWire = (p) => p) => {
   const p = toWire(camp.pos);
   const out = { i: camp.id, k: camp.kind === CAMP_KIND.Tent ? 0 : 1, p: [q2(p[0]), q2(p[1]), q2(p[2])], y: q3(camp.yaw), u: Number.isFinite(camp.litUntil) ? Math.round(camp.litUntil) : -1, w: camp.wear | 0 };
   const d = validDeck(camp.deck);
   if (d) out.d = [d.mine ? '' : d.peer, d.uid, q3(d.local[0]), q3(d.local[1]), q3(d.local[2]), q3(d.yaw)];
+  if (camp.jar === true) out.j = 1;   // AUDIT 625 L4: an Ember Jar's fire says so - a peer's copy is the jar, never a plain campfire
   return out;
 };
 /** The record projected, or null: a field outside its law refuses the record WHOLE (wire.js's rule). */
@@ -362,6 +366,7 @@ export function validCampRecord(r) {
   if (!Number.isFinite(r.y)) return null;
   if (!Number.isFinite(r.u) || r.u < -1 || r.u > 2 ** 31) return null;
   if (!Number.isInteger(r.w) || r.w < 0 || r.w > 255) return null;
+  if (r.j !== undefined && r.j !== 1) return null;   // AUDIT 625 L4: an Ember Jar's fire, 1 or nothing
   let d = null;
   if (r.d !== undefined) {   // DECK-CAMP: a deck's address, whole or the record refused
     const a = r.d;
@@ -369,13 +374,14 @@ export function validCampRecord(r) {
     if (!validDeck({ ...(a[0] === '' ? { mine: true } : { peer: a[0] }), uid: a[1], local: [a[2], a[3], a[4]], yaw: a[5] })) return null;
     d = [a[0], a[1], a[2], a[3], a[4], wrapAngle(a[5])];
   }
-  return { i: r.i, k: r.k, p: [r.p[0], r.p[1], r.p[2]], y: wrapAngle(r.y), u: r.u, w: r.w, ...(d ? { d } : {}) };
+  return { i: r.i, k: r.k, p: [r.p[0], r.p[1], r.p[2]], y: wrapAngle(r.y), u: r.u, w: r.w, ...(d ? { d } : {}), ...(r.j === 1 ? { j: 1 } : {}) };
 }
 /** A projected record as a camp of `owner`, in this scene's frame. DECK-CAMP: its boat read from where THIS player
  *  stands - the sender's own boat is that peer's, one named by `selfId` this player's own, any other that player's. */
 export function campFromWire(r, owner, toScene = (p) => p, selfId = null) {
   const p = toScene(r.p);
   const camp = { id: r.i, owner, kind: r.k === 0 ? CAMP_KIND.Tent : CAMP_KIND.Fire, pos: [p[0], p[1], p[2]], yaw: r.y, litUntil: r.u < 0 ? null : r.u, wear: r.w, placedAt: null };
+  if (r.j === 1 && camp.kind === CAMP_KIND.Fire) camp.jar = true;   // AUDIT 625 L4: an Ember Jar's fire is a jar on every copy
   if (r.d) {
     const [who, uid, x, y, z, yaw] = r.d;
     const ref = who === '' ? { peer: owner } : selfId != null && who === selfId ? { mine: true } : { peer: who };

@@ -656,7 +656,7 @@ test('IF1: the four stride hosts ask ownsStride before the classic play and driv
   // the records
   assert.ok(existsSync(join(root, 'bible/06-Systems/Immersive-Footsteps.md')));
   assert.match(rd('bible/01-Overview/Active-Arcs.md'), /06-Systems\/Immersive-Footsteps\.md/);
-  assert.match(rd('bible/Home.md'), /06-Systems\/Immersive-Footsteps\.md/);
+  assert.match(rd('bible/01-Overview/Page-Index.md'), /06-Systems\/Immersive-Footsteps\.md/);   // PIN MOVED (WALLET1's merge of main, 2026-10-05): Home.md's page index moved, byte for byte, to its own page
   assert.match(rd('bible/09-Testing/Testing.md'), /if1_immersivefootsteps\.test\.js/);
   const m = /(\d+) modules\s*\n?\s*live under\s*\n?\s*`src\/systems\/`/.exec(rd('bible/06-Systems/Systems.md'));
   assert.equal(Number(m[1]), readdirSync(join(root, 'src/systems')).filter((f) => f.endsWith('.js')).length, 'Systems.md counts src/systems/ live - IF1 put immersiveFootsteps.js in that count');

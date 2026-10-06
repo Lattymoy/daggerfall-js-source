@@ -209,7 +209,7 @@
   {
     "name": "SET5-a-sleeping-pieces-sigil-called-faint",
     "file": "src/systems/sigilSets.js",
-    "old": "return lines.length && _dueling && setIdOf(item) && !sigilHasBlow(item.sigil) ? ['Sigil (asleep in a duel)'] : lines;",
+    "old": "return lines.length && sigilDueling() && setIdOf(item) && !sigilHasBlow(item.sigil) ? ['Sigil (asleep in a duel)'] : lines;",
     "new": "return lines;",
     "tests": [
       "test/set5_ui.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "SET5-a-set-weapons-blow-unsaid-in-a-duel",
     "file": "src/systems/sigilSets.js",
-    "old": "return lines.length && _dueling && setIdOf(item) && !sigilHasBlow(item.sigil) ? ['Sigil (asleep in a duel)'] : lines;",
-    "new": "return lines.length && _dueling && setIdOf(item) ? ['Sigil (asleep in a duel)'] : lines;",
+    "old": "return lines.length && sigilDueling() && setIdOf(item) && !sigilHasBlow(item.sigil) ? ['Sigil (asleep in a duel)'] : lines;",
+    "new": "return lines.length && sigilDueling() && setIdOf(item) ? ['Sigil (asleep in a duel)'] : lines;",
     "tests": [
       "test/set5_ui.test.js"
     ]
