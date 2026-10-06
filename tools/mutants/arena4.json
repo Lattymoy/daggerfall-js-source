@@ -1656,8 +1656,8 @@
   {
     "name": "ARENA4-SVC-RATING-LAST",
     "file": "server-account/src/arena.js",
-    "old": "(a = ?2 OR b = ?2) ORDER BY at DESC, rowid DESC LIMIT 1",
-    "new": "(a = ?2 OR b = ?2) ORDER BY at ASC, rowid ASC LIMIT 1",
+    "old": "ORDER BY at DESC, k DESC LIMIT 1) AS last,",
+    "new": "ORDER BY at ASC, k ASC LIMIT 1) AS last,",
     "tests": [
       "test/arena4_service.test.js"
     ]

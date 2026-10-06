@@ -61,6 +61,10 @@ export const ARENA_HALL_MAX = 20;
 /** How long the season's #1 (the laurel) is kept by a Worker before it is counted again, seconds - a token lives five
  *  minutes, so a laurel is at most six behind the board. */
 export const ARENA_CHAMPION_CACHE_S = 60;
+/** STORM-SHED 2 (2026-10-06, the account database's follow-ups): how long the season's #1 as the service last counted
+ *  it (`arena_champions`, migration 0086) is taken as it stands before a reader counts it again, seconds. Every rated
+ *  bout recorded counts it at once (claimArena); this bounds whatever else moves the board (an account deleted). */
+export const ARENA_CHAMPION_STORED_S = 600;
 const GRAND_TIER = ARENA_TIERS - 1;
 
 // ═══ ARENA4b (2026-10-03) - A BOUT'S RENOWN ═══════════════════════════════════════════════════════════════════════════
@@ -153,16 +157,23 @@ const BOARD_SQL = `WITH ${SIDES_SQL},
     FROM last JOIN tally ON tally.p = last.p WHERE last.rn = 1
     ORDER BY last.r DESC, tally.w DESC, tally.n ASC, last.at ASC, last.p ASC`;
 
-/** An account's rating in a season and its tally - the start for one that has fought nobody. */
+/** STORM-SHED 2: ONE ACCOUNT'S RATED BOUTS OF A SEASON, read off its own side of each - an indexed read a side
+ *  (idx_arena_pvp_a, idx_arena_pvp_b), where `a = ? OR b = ?` walked the season's every bout on every registered
+ *  account's token. Each row the account's rating after, when, its row, and whether it won, lost or drew. `p` the
+ *  account's parameter, `s` the season's. A row whose two sides are one account is read once, from `a`. */
+const MY_BOUTS_SQL = (p, s) => `SELECT ra1 AS r, at, rowid AS k, CASE result WHEN 0 THEN 1 ELSE 0 END AS w, CASE result WHEN 1 THEN 1 ELSE 0 END AS l, CASE result WHEN 2 THEN 1 ELSE 0 END AS d
+      FROM arena_pvp WHERE a = ${p} AND season = ${s} AND rated = 1
+    UNION ALL
+    SELECT rb1, at, rowid, CASE result WHEN 1 THEN 1 ELSE 0 END, CASE result WHEN 0 THEN 1 ELSE 0 END, CASE result WHEN 2 THEN 1 ELSE 0 END
+      FROM arena_pvp WHERE b = ${p} AND season = ${s} AND rated = 1 AND a IS NOT ${p}`;
+
+/** An account's rating in a season and its tally - the start for one that has fought nobody. STORM-SHED 2: one read,
+ *  off the account's own bouts (MY_BOUTS_SQL). */
 export async function arenaRatingOf({ db }, playerId, season) {
-  const last = await db.prepare(`SELECT CASE WHEN a = ?2 THEN ra1 ELSE rb1 END AS r FROM arena_pvp
-     WHERE season = ?1 AND rated = 1 AND (a = ?2 OR b = ?2) ORDER BY at DESC, rowid DESC LIMIT 1`).bind(season, playerId).first();
-  const t = await db.prepare(`SELECT SUM(CASE WHEN (a = ?2 AND result = 0) OR (b = ?2 AND result = 1) THEN 1 ELSE 0 END) AS w,
-       SUM(CASE WHEN (a = ?2 AND result = 1) OR (b = ?2 AND result = 0) THEN 1 ELSE 0 END) AS l,
-       SUM(CASE WHEN result = 2 THEN 1 ELSE 0 END) AS d, COUNT(*) AS n
-     FROM arena_pvp WHERE season = ?1 AND rated = 1 AND (a = ?2 OR b = ?2)`).bind(season, playerId).first();
+  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_BOUTS_SQL('?2', '?1')}) ORDER BY at DESC, k DESC LIMIT 1) AS last,
+       SUM(w) AS w, SUM(l) AS l, SUM(d) AS d, COUNT(*) AS n FROM (${MY_BOUTS_SQL('?2', '?1')})`).bind(season, playerId).first();
   const n = (v) => Number(v ?? 0) || 0;
-  return { rating: last ? arenaRatingOk(Number(last.r)) : ARENA_ELO_START, wins: n(t?.w), losses: n(t?.l), draws: n(t?.d), bouts: n(t?.n) };
+  return { rating: t?.last != null ? arenaRatingOk(Number(t.last)) : ARENA_ELO_START, wins: n(t?.w), losses: n(t?.l), draws: n(t?.d), bouts: n(t?.n) };
 }
 
 /** AUDIT ARENA-LADDER O2: may this board row wear the laurel - its rated bouts, against enough different foes. */
@@ -176,14 +187,27 @@ export async function arenaChampionOf({ db }, season) {
   const rows = (await db.prepare(`${BOARD_SQL} LIMIT 1`).bind(season).all()).results ?? [];
   return laurelOfBoard(rows);
 }
+/** STORM-SHED 2: THE SEASON'S #1 COUNTED AND KEPT - the board's top as it stands now, written to `arena_champions`
+ *  (migration 0086) for every Worker to read. Answers the #1 (or null). */
+export async function storeArenaChampion(ctx, season, nowS) {
+  const id = await arenaChampionOf(ctx, season);
+  await ctx.db.prepare(`INSERT INTO arena_champions (season, player, at) VALUES (?1, ?2, ?3)
+    ON CONFLICT (season) DO UPDATE SET player = excluded.player, at = excluded.at`).bind(season, id, nowS).run();
+  _champ = { season, at: nowS, id };   // and this Worker's own word of it
+  return id;
+}
 /** One Worker's word of the season's #1, kept ARENA_CHAMPION_CACHE_S. */
 let _champ = { season: 0, at: -Infinity, id: null };
 /** Tests: the kept #1 forgotten. */
 export function _resetArenaCache() { _champ = { season: 0, at: -Infinity, id: null }; }
+/** STORM-SHED 2: the season's #1 as the service last counted it - counted afresh only where it never was this season or
+ *  is ARENA_CHAMPION_STORED_S old. Every Worker counted the whole board (BOARD_SQL) each minute: 109 million of the
+ *  database's 760 million rows a day, for one name a rated bout alone moves. */
 async function championNow(ctx, nowS) {
   const season = arenaSeasonOf(nowS);
   if (_champ.season === season && nowS - _champ.at < ARENA_CHAMPION_CACHE_S) return _champ.id;
-  const id = await arenaChampionOf(ctx, season);
+  const kept = await ctx.db.prepare('SELECT player, at FROM arena_champions WHERE season = ?1').bind(season).first();
+  const id = kept && nowS - Number(kept.at) < ARENA_CHAMPION_STORED_S ? kept.player ?? null : await storeArenaChampion(ctx, season, nowS);
   _champ = { season, at: nowS, id };
   return id;
 }
@@ -372,7 +396,12 @@ async function claimPlayers(ctx, player, c, season) {
         WHERE ${RATING_NOW_SQL('?3')} = ?7 AND ${RATING_NOW_SQL('?4')} = ?8`)
       .bind(c.j, season, a, b, c.r, c.h, ra.rating, rb.rating, na, nb, rated ? 1 : 0, ma?.banner ?? null, mb?.banner ?? null, nowS).run();
     const row = await db.prepare('SELECT * FROM arena_pvp WHERE bout = ?1').bind(c.j).first();
-    if (Number(ins?.meta?.changes ?? 0) > 0) return { recorded: true, kind: 'pvp', ...(await pvpAnswer(ctx, player.id, row)) };
+    if (Number(ins?.meta?.changes ?? 0) > 0) {
+      // STORM-SHED 2: a rated bout is what moves the board - its #1 counted now, for every Worker (arena_champions). The
+      // bout stands whatever the count does: one that fails leaves the kept word to ARENA_CHAMPION_STORED_S (championNow)
+      if (rated) { try { await storeArenaChampion(ctx, season, nowS); } catch { /* the bout is recorded; the #1 is counted again by its age */ } }
+      return { recorded: true, kind: 'pvp', ...(await pvpAnswer(ctx, player.id, row)) };
+    }
     if (row) return { recorded: false, why: 'claimed', ...(await pvpAnswer(ctx, player.id, row)) };
   }
   return { error: 'busy' };   // the receipt is kept and carried again (net/arenaClaims.js - every error but a receipt's)
@@ -427,8 +456,7 @@ export const ARENA_RATE_TRIES = 4;
  *  rating, arenaRatingOk's bounds, the start for none), `p` the account's parameter, ?2 the season - for a write to ask
  *  in its own WHERE. */
 const RATING_NOW_SQL = (p) => `COALESCE((SELECT CASE WHEN r BETWEEN ${ARENA_ELO_MIN} AND ${ARENA_ELO_MAX} THEN r ELSE ${ARENA_ELO_START} END
-    FROM (SELECT CASE WHEN a = ${p} THEN ra1 ELSE rb1 END AS r FROM arena_pvp WHERE season = ?2 AND rated = 1 AND (a = ${p} OR b = ${p})
-      ORDER BY at DESC, rowid DESC LIMIT 1)), ${ARENA_ELO_START})`;
+    FROM (SELECT r FROM (${MY_BOUTS_SQL(p, '?2')}) ORDER BY at DESC, k DESC LIMIT 1)), ${ARENA_ELO_START})`;   // STORM-SHED 2: arenaRatingOf's own read
 /** What a players' bout's claim answers its claimant: their side, the result for them, their rating before and after,
  *  whether it counted, and their season now. */
 async function pvpAnswer(ctx, me, row) {
