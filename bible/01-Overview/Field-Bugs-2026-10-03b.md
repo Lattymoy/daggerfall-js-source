@@ -92,8 +92,9 @@ Port-Ledger WD3 departure (8) names the questor.
 **Said, not fixed.** A town where neither the journal's building nor any named building holding the questor's faction
 and look stands keeps the record, and the questor stays unreachable there; standing them as a quest flat at a marker
 is the next step if that is ever met. The re-seated person is the mod's own person of the hall, who may wear another
-look than the questor did. A questor met in a house (no named hall) is never re-seated. AUDIT PRE-MERGE 1003 D17's row
-is history and says what was true then.
+look than the questor did. A questor met in a house (no named hall) is never re-seated (narrowed since by QUEST-AUDIT
+II HOUSE-HALL, `01-Overview/Quest-Audit-II.md`: a guild's contact in a House2 hall, and a questor whose own person
+still stands on their own key, are). AUDIT PRE-MERGE 1003 D17's row is history and says what was true then.
 
 ## VERMIN-SHARED (3)
 

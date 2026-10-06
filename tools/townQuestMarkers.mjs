@@ -100,9 +100,18 @@ export async function openTownData(arena2) {
   /** A block of a pack as the door serves it - the pack's own rebuild over the player's BLOCKS.BSA. */
   const packBlock = (vendor, name) => {
     const index = blocks.getBlockIndex(name);
-    return { dfBlock: W.blockFromJson(packs[vendor].rebuild(`${name}.json`, maps), index), index };
+    return { dfBlock: W.blockFromJson(packs[vendor].rebuild(`${name}.json`, maps), index, name), index };
   };
-  return { blocks, maps, packs, getModel, packBlock };
+  /** A flat's classic billboard, metres { w, h } - the size a person's pick box takes (scenes/interiorContext.js
+   *  standPerson's billboardSize, the TEXTURE file's record; AUDIT QA2: the temple summoners' spots ask it). */
+  const { TextureFile, texName } = await import('../src/formats/textureFile.js');
+  const { classicBillboardSize } = await import('../src/world/rmbFlats.js');
+  const textures = new Map();
+  const billboardSize = (archive, record) => {
+    if (!textures.has(archive)) { const t = new TextureFile(); t.load(bytes(texName(archive)), texName(archive)); textures.set(archive, t); }
+    return classicBillboardSize(textures.get(archive), record);
+  };
+  return { blocks, maps, packs, getModel, packBlock, billboardSize };
 }
 
 /** The triangles of a laid-out interior: [ax,ay,az, bx,by,bz, cx,cy,cz, nx,ny,nz] each, the normal turned to the

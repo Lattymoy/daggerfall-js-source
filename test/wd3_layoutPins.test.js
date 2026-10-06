@@ -283,8 +283,10 @@ test('WD3 the load: the save\'s towns in the layouts its things were made in, be
   const body = W.slice(at, W.indexOf('\n  async function worldQuickLoad', at));
   assert.match(body, /const records = homeLayoutsOnline \? \(_serverLayoutRecords \?\? \[\]\) : layoutRecordsOf\(\{\n {6}houses: playerEntity\.houses, rooms: playerEntity\.rentedRooms,/);
   assert.match(body, /repairs: \(playerEntity\.otherItems \?\? \[\]\)\.map\(\(it\) => it\?\.repairData\)\.filter\(Boolean\),\n {6}anchor: playerEntity\.anchorPosition,/);
-  assert.match(body, /for \(const v of \[\.\.\.pin\.in\]\) if \(!\(await ensureWorldDataPack\(v\)\)\) \{ pin\.in\.delete\(v\); dropped\+\+; \}/);
-  assert.match(body, /const changed = setLayoutPins\(pins\);/);
+  // PIN MOVED (QUEST-AUDIT II PIN-SLEEP): and the town is held back - its records sleep (test/qa2_layouts.test.js)
+  // AUDIT QA2: the loop is layoutPins' admitPinnedPacks, run in test/qa2_layouts.test.js
+  assert.ok(body.includes('const { dropped, heldBack } = await admitPinnedPacks(pins, ensureWorldDataPack);'));
+  assert.ok(body.includes('const changed = setLayoutPins(pins, { heldBack, missing: worldDataPacksMissing() });'));
   assert.match(body, /if \(built\.has\(pixelKey\)\) \{[\s\S]{0,120}destroyPixel\(px, py, \{ collectLoose: false \}\);\n {8}queue\.push\(\{ px, py \}\);/);
   assert.match(body, /const forgotten = homeLayoutsOnline && _serverLayoutRecords === null \? 0 : pruneDiscoveryLayouts\(\);/);
   assert.match(W, /await applyLayoutPins\(extras\);   \/\/ WD3: the save's towns in the layouts its things were made in, before its place is built/);
