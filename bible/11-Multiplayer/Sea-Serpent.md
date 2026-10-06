@@ -647,10 +647,21 @@ at its word's arrival - a gathering and a wire after the ball struck.
   ram's turn begins `SERPENT_SAY_AHEAD_MS` (500 ms) after it is said, its head keeping its way meanwhile, so every screen
   holds the word before the head takes it. AUDIT SHIPS B5/D2: so is every other turn of its own - a change of pace, the
   cry's and the roar's rearing, an attack's ride, the coil's winding on (the coil frame's `w`) and its letting go
-  (`off`), the kill's throes and the sounding's dive - what was to come let go at the beat itself (`holdNow`). Said at
-  the beat, they snapped a screen 150 ms behind: 3.6 m on a kill mid-dash, 1.4 m on a closing surge, 8.5 m up or down
-  on a ride. A screen within `SERPENT_SAY_AHEAD_MS` less a beat (250 ms) of the relay draws nothing it must snap back
-  from but its steering's turns' few centimetres.
+  (`off`), the kill's throes and the sounding's dive. Said at the beat, they snapped a screen 150 ms behind: 3.6 m on a
+  kill mid-dash, 1.4 m on a closing surge, 8.5 m up or down on a ride. AUDIT SHIPS 2 (2026-10-06): and every leg of its
+  steering, judged from where its head will be then; its closing surge is swum as its dashes are (`closeOn` - a turn of
+  `HUNT_TURN_R` and a straight at where it meets her, laid again only when its straight no longer runs at her, where
+  steered as it cruises it swung 30 degrees each side of her every 1.25 s); and an end (the throes, the dive, a coil's
+  letting go) is laid from its own moment alone - nothing said before it unsaid, since a blow is judged between beats
+  (B5's `holdNow` held the swim from the blow and unsaid a dash a lagging screen had begun, 3.2 m at 250 ms). A screen
+  any wire's time short of `SERPENT_SAY_AHEAD_MS` behind the relay draws its head where the relay does, to the
+  millimetre (measured at 150, 250 and 450 ms over whole fights, ships at 26.5 m/s).
+- **One centre** (AUDIT SHIPS 2). Her word `held` moves a coil onto her hull's middle; its head's round is laid again
+  about that centre where the coil drawn has gone round to (`coilRound`), from once the coil holds the whole body, so
+  its track moves out of sight - and so is an older law's coil across the relay's deploy. Kept round the mark, the
+  body lurched up to 42 m as it unwound.
+- **Kept before it is said** (AUDIT SHIPS 2). The relay checkpoints a fight before it says any word that lays its track
+  (`serpentSaysTrack`), so a relay restarted wakes it no earlier than its screens hold it (it snapped heads up to 106 m).
 - **A slept fight taken up** (`serpentResume`). A fight not stepped for `SERPENT_SLEEP_MS` (5 s) - the relay beats one
   only while someone hears it - circles where its head was from its last beat (a round of `ORBIT_R` toward its waters'
   heart), cruising; the attack it had in flight landed on empty waters; a coil holding a ship keeps its round and its

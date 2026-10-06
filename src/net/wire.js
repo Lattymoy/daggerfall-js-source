@@ -4039,8 +4039,13 @@ export const SERPENT_OUT_KINDS = Object.freeze(['st', 'sw', 'dv', 'atk', 'hp', '
 export const SERPENT_HZ_MAX = 10;
 export const serpentGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SERPENT_HZ_MAX);
 /** The first relay that keeps a serpent's fight. An older one CLOSES the socket on the frame (the cast arm's law), so a
- *  client says none to it - the sighting and the omen run all the same; the serpent is not drawn. */
-export const SERPENT_RELAY_MIN = 165;
+ *  client says none to it - the sighting and the omen run all the same; the serpent is not drawn. AUDIT 2 XC2
+ *  (2026-10-06): and the first whose brain is this client's law - SERPENT3's (world172: no leap, the ships fighting it
+ *  counted, the coil's winding said ahead). It was SERPENT1's world165: on a release day the site deploys before the
+ *  relay (relay-deploy.yml waits out a live siege), and this client fought the older brain - a lone galleon with a rowboat
+ *  by was "a pair" again, and a coil was drawn up to 57 m from the body the relay judged. The relay refuses an older game
+ *  (SERPENT_BRAIN_MIN); this is the client's half of that law. */
+export const SERPENT_RELAY_MIN = 172;
 export const relaySupportsSerpent = (v) => { const m = /^world(\d+)$/.exec(typeof v === 'string' ? v : ''); return !!m && Number(m[1]) >= SERPENT_RELAY_MIN; };
 /** SERPENT2: the first hub that takes a serpent's `site` (its Discord herald). An older one closes the socket on the kind
  *  it does not know, so a client says none to it. */
@@ -4191,7 +4196,8 @@ function serpentOutOf(m) {
     case 'sw': { const l = spLeg(m.l); return l ? { k: 'sw', l } : null; }
     case 'dv': { const d = spMode(m); return d ? { k: 'dv', ...d } : null; }
     case 'atk': { const a = spAtk(m); return a ? { k: 'atk', ...a } : null; }
-    case 'hp': return spHp(m.h) && spHp(m.m) && m.h <= m.m ? { k: 'hp', h: m.h, m: m.m } : null;
+    // AUDIT 2 XC1: and the count of the ships fighting it, whenever that changes (serpentBrain.js hpFrame)
+    case 'hp': return spHp(m.h) && spHp(m.m) && m.h <= m.m && (m.n === undefined || intIn(m.n, 0, 100_000)) ? { k: 'hp', h: m.h, m: m.m, ...(m.n !== undefined ? { n: m.n } : {}) } : null;
     case 'ph': return intIn(m.n, 1, 3) && spMs(m.until) ? { k: 'ph', n: m.n, until: m.until } : null;
     case 'coil': { const c = spCoil(m); return c ? { k: 'coil', ...c } : null; }
     case 'ch': return Number.isSafeInteger(m.i) && m.i >= 1 && spHp(m.h) ? { k: 'ch', i: m.i, h: m.h } : null;

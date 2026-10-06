@@ -180,7 +180,7 @@
   {
     "name": "SAIL-FREE-coast-without-gain",
     "file": "src/systems/comeSailAway.js",
-    "old": "return responsive() && state.wayBySail ? f(coast * f(sailFreeGain(b))) : coast;",
+    "old": "return share >= 1 ? f(coast * f(sailFreeGain(b))) : f(coast * f(1 + (sailFreeGain(b) - 1) * share));",
     "new": "return coast;",
     "tests": [
       "test/sailfree.test.js",

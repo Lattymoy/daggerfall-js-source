@@ -1010,7 +1010,7 @@
   {
     "name": "NAV1H-the-brake-unread",
     "file": "src/systems/comeSailAway.js",
-    "old": "    return brake > 0 ? f(Math.min(20, brake)) : moveAccelOwn();",
+    "old": "    return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn();",
     "new": "    return moveAccelOwn();",
     "tests": [
       "test/csa_wind.test.js"
@@ -1019,7 +1019,7 @@
   {
     "name": "NAV1H-the-brake-unheld",
     "file": "src/systems/comeSailAway.js",
-    "old": "    return brake > 0 ? f(Math.min(20, brake)) : moveAccelOwn();",
+    "old": "    return brake > 0 ? f(Math.min(CSA_BRAKE_MAX, brake)) : moveAccelOwn();",
     "new": "    return brake > 0 ? f(brake) : moveAccelOwn();",
     "tests": [
       "test/csa_wind.test.js"

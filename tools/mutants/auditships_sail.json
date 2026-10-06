@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-SHIPS-A3-the-fixed-brake",
     "file": "src/scenes/navalHost.js",
-    "old": "export const heaveToDecel = (v) => Math.max(HEAVE_TO_DECEL, (v * v - BOARD_SPEED * BOARD_SPEED) / (2 * HEAVE_TO_M));",
-    "new": "export const heaveToDecel = (v) => HEAVE_TO_DECEL;",
+    "old": "export const heaveToDecel = (v) => Math.min(CSA_BRAKE_MAX, Math.max(HEAVE_TO_DECEL, (v * v - BOARD_SPEED * BOARD_SPEED) / (2 * HEAVE_TO_M)));",
+    "new": "export const heaveToDecel = (v) => HEAVE_TO_DECEL + 0 * v;",
     "tests": [
       "test/auditships_sail.test.js",
       "test/navaudit_helm.test.js"
@@ -159,8 +159,8 @@
   {
     "name": "AUDIT-SHIPS-A5-the-gain-on-every-coast",
     "file": "src/systems/comeSailAway.js",
-    "old": "return responsive() && state.wayBySail ? f(coast * f(sailFreeGain(b))) : coast;",
-    "new": "return responsive() ? f(coast * f(sailFreeGain(b))) : coast;",
+    "old": "if (!responsive() || !(share > 0)) return coast;",
+    "new": "if (!responsive()) return coast;",
     "tests": [
       "test/auditships_sail.test.js",
       "test/helmway.test.js"
@@ -169,8 +169,8 @@
   {
     "name": "AUDIT-SHIPS-A5-the-oars-never-say",
     "file": "src/systems/comeSailAway.js",
-    "old": "      if (num3 !== 0) state.wayBySail = false;   // AUDIT SHIPS A5: her oars drive her\n",
-    "new": "",
+    "old": "state.sailWay = way < was ? state.sailWay * (way / was) : state.sailPosition === 1 ? state.sailWay + (way - was) : state.sailWay;",
+    "new": "state.sailWay = way < was ? state.sailWay * (way / was) : state.sailWay + (way - was);",
     "tests": [
       "test/helmway.test.js"
     ]

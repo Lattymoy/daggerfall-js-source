@@ -20260,10 +20260,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     level: () => playerEntity.level ?? 1,
     boat: () => (navalOn() ? naval?.serpentBoat?.() ?? null : null),
     strike: (boat, hurt, o) => naval?.serpentStrike?.(boat, hurt, o),
-    // the venom's bite on my own body: a share of my health and points, the cry and the shake an element's blow is given
-    hurt: (pct, base) => {
-      if (!(playerEntity.health > 0)) return;
-      const n = Math.max(1, Math.round(pct * (playerEntity.maxHealth ?? 0) + base));
+    // the venom's bite on my own body: `n` points (serpentStrike.js venomBite of my health, at the pair's share - AUDIT 2
+    // XC4), the cry and the shake an element's blow is given
+    maxHealth: () => playerEntity.maxHealth ?? 0,
+    hurt: (n) => {
+      if (!(playerEntity.health > 0) || !(n > 0)) return;
       hurtPlayer(playerEntity, n);
       betterAmbience.weaponKick(0.5);
       playPlayerVoice(audio, playerPainVoice(playerEntity, n));

@@ -144,3 +144,45 @@ each dies again against a stronger pin:
 There is no GPU and no browser in this container. The wake's pacing, the coil drawn turning with its head, and the
 trim's absence from the panel were driven through their hosts and the DOM harness, not seen. The relay's hello beat and
 its reload gate were driven through fake rooms, not a deployed relay: `world172` is not yet deployed.
+
+## The second round (AUDIT SHIPS 2)
+
+2026-10-06, Mac: "Audit everything" again, of PR #634 with the first round's fixes. Five lenses (A the sailing, B the
+serpent's brain and relay, C its client and the pair's share, D the tests and the docs, E the mutation coverage). Mac
+then stopped the round ("Can we stop with the probes. This is eating usage and taking far too long") and asked for a
+speed indicator and sails that work: what was fixed by then is below, pinned in `test/auditships2.test.js` (15) and
+`test/auditships2_sail.test.js` (4), with the moved pins noted on their rows (`09-Testing/Testing.md`). The mutation
+records for the serpent's half are `tools/mutants/auditships2.json` (32, with 25 more re-aimed by content and
+`AUDIT-SHIPS-D2-hold-dropped` retired - XB2 removed the law it held); the round stopped before they were run.
+
+**Fixed:**
+
+| | What was wrong | Now |
+|---|---|---|
+| XB1 | Steering turns were said at the beat; the closing surge was steered as it cruises and swung 30 degrees each side of her every 1.25 s. A screen 150 ms late drew the head 0.76 m off, 250 ms late 2.4 m. | Every steering leg is said SERPENT_SAY_AHEAD_MS on; the surge is a planned turn and straight (`closeOn`). Clients at 150, 250 and 450 ms draw the relay's head exactly. |
+| XB2 | A kill between beats held the swim from the blow (`holdNow`), unsaying a dash a lagging screen had begun (3.2 m at 250 ms). | Ends are laid from their own moment alone. |
+| XC3 / XB5 | `held` moved the coil's centre but not its head's round; an older law's coil kept its old round. The body lurched up to 42 m (102 m across a deploy) unwinding. | `coilRound`: the round laid again about the coil as drawn, out of sight. |
+| XB4 | A game told to reload kept its share and its ship in the count for 45 s. | `serpentShareWanted` reads `stale`. |
+| XB6 | The relay checkpointed after its words went out; a restart snapped heads up to 106 m. | The fight is kept before a word that lays its track (`serpentSaysTrack`). |
+| XB8 | A client could inflate her way unseen by slowing her poses' send clock. | Her clock is held to the relay's (SERPENT_CLOCK_SPAN_MS, SERPENT_CLOCK_SKEW). A visibly forged place stays the game's usual trust. |
+| XB9 | A captain on a smaller warship of her own was no ship of the fight. | Her share is taken down to that ship's (AUDIT SERPENT H2's "never shrinks" moved). |
+| XB10 | A coil's closing went on at a captain who stepped onto a friend's deck. | It lets a hand go. |
+| XB11 | A ship hove to kept her last way for a heartbeat's 20 s. | No new pose past SERPENT_WAY_STALE_MS of the relay's clock: at rest. |
+| XC1, XC2, XC4-XC8 | The count reached clients 5 s late; the client fought any older relay; a pair's venom was not two thirds; a wreck stayed coiled; the wake stopped at the word; a ship change said an `in` every frame; the bar mislabelled the count. | Fixed before the stop (the count on the `hp` word, SERPENT_RELAY_MIN 172, the venom shared and carried, the wreck let go, the wake to its turn, IN_CHANGE_MS, "ships fighting it"). |
+| XA1 | Under the responsive helm the oars' rate both gathered and shed way: struck and rowed, a galleon took 48 s and 400 m to come down. | A way above the oars' is shed no slower than her coast (12 s, as before A5). |
+| XA5 / XD1 | The heave-to asked up to 47 m/s^2 and the runtime gave 20: a storm's Carrack ended out of BOARD_RANGE. | One bound (`CSA_BRAKE_MAX`); offered by where it leaves her (`heaveToRun`). |
+| XA6 | The boat wire's way bound was 27 m/s at an open journey's x60; a storm galleon vanished from other screens. | Bound sized from the real ceiling, and the writer holds a way to it. |
+| XA7 | The coast's gain followed the arm that drove her last, not who made her way. | It follows her canvas's share of her way (`sailWay`), saved with her way. |
+| XD5 / XD6 | The lag pin's metric could not see the closing's snaps; two pins could not fail their titles (CLOSE_GAIN_V, the booms). | The lag pin reads the drawn head against the relay's every 10 ms; both pins read the law's own figures. |
+
+**Open - left by the stop:**
+
+- **Mac's call, the lone ship in a storm (XB3/XD2).** The fleet sim now flies each hull's own body and can give a ship a
+  helm that answers telegraphs (`tools/serpentFleetSim.mjs --react`). At 38% gunnery over 24 fights a lone galleon or
+  Carrack wins none circling in any wind, none to 4 of 24 with a 300 ms helm in fair weather, and 22-24 of 24 with it in
+  a storm (10-22 at 600 ms). "One ship alone still can't" holds in fair weather only.
+- **Lens A's journey hand (XA2, XA3, XA4) and XA8, XA9:** the Overworld journey's look grows with her way, not her stop,
+  and looks past the mark; its blocked hold commits to one side; under Classic it rows a crewed galleon whose sails read
+  aback before they are set; the fallback galleon's gain; a peer's snap trusts its own word's way.
+- **Lens E's weak pins (XE1-XE15)** - laws the pins cannot fail, each with a scratch pin that kills it; and lens D's
+  XD4 (old figures in section 5), XD7 (the balance pin's slack and its weight in `tools/testTimes.json`) and XD8 nits.

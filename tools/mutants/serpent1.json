@@ -193,8 +193,8 @@
   {
     "name": "SERPENT1-wire-relay-min",
     "file": "src/net/wire.js",
-    "old": "export const SERPENT_RELAY_MIN = 165;",
-    "new": "export const SERPENT_RELAY_MIN = 164;",
+    "old": "export const SERPENT_RELAY_MIN = 172;",
+    "new": "export const SERPENT_RELAY_MIN = 171;",
     "tests": [
       "test/serpent1_relay.test.js"
     ],
@@ -248,7 +248,7 @@
   {
     "name": "SERPENT1-host-in-every-frame",
     "file": "src/scenes/serpentHost.js",
-    "old": "const due = lastIn.day !== sw.day || lastIn.hl !== hl || t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
+    "old": "const due = lastIn.day !== sw.day || (lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS) || t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
     "new": "const due = true;",
     "tests": [
       "test/serpent1_client.test.js"

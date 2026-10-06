@@ -188,8 +188,8 @@
   {
     "name": "SERPENT3-closing-at-cruise",
     "file": "src/net/serpentBrain.js",
-    "old": "steer(f, now, closeAim(f, now, target), closeV(f, target), out, HUNT_TURN_R);",
-    "new": "steer(f, now, closeAim(f, now, target), CRUISE_V, out, HUNT_TURN_R);",
+    "old": "const go = now + SERPENT_SAY_AHEAD_MS, v = closeV(f, target), [ax, az] = closeAim(f, now, target);",
+    "new": "const go = now + SERPENT_SAY_AHEAD_MS, v = CRUISE_V, [ax, az] = closeAim(f, now, target);",
     "tests": [
       "test/serpent3.test.js"
     ]
@@ -197,8 +197,8 @@
   {
     "name": "SERPENT3-closing-on-the-cruising-turn",
     "file": "src/net/serpentBrain.js",
-    "old": "steer(f, now, closeAim(f, now, target), closeV(f, target), out, HUNT_TURN_R);",
-    "new": "steer(f, now, closeAim(f, now, target), closeV(f, target), out);",
+    "old": "  const h = headAt(f.legs, go), way = wayOnto(h, h.yw, HUNT_TURN_R, { x: ax, z: az });\n  const turn = way && way.turn * way.r >= 0.05 ? (way.turn * way.r * 1000) / v : 0;\n  if (turn) pushLeg(f, legFrom(f.legs, go, LEG.arc, v, HUNT_TURN_R, way.s1), out);",
+    "new": "  const h = headAt(f.legs, go), way = wayOnto(h, h.yw, TURN_R, { x: ax, z: az });\n  const turn = way && way.turn * way.r >= 0.05 ? (way.turn * way.r * 1000) / v : 0;\n  if (turn) pushLeg(f, legFrom(f.legs, go, LEG.arc, v, TURN_R, way.s1), out);",
     "tests": [
       "test/serpent3.test.js"
     ]
@@ -243,7 +243,7 @@
   {
     "name": "SERPENT3-resume-lets-the-coil-go",
     "file": "src/net/serpentBrain.js",
-    "old": "  if (coilHolds(f, now)) return out;\n  if (f.atk) { f.atk = null;",
+    "old": "  if (coilHolds(f, now)) { if (law) coilRound(f, f.coil, now, out); return out; }\n  if (f.atk) { f.atk = null;",
     "new": "  if (f.atk) { f.atk = null;",
     "tests": [
       "test/serpent3.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "SERPENT3-resume-at-the-relay-in",
     "file": "server/src/index.js",
-    "old": "else this._serpentFan(fights, id, f, serpentBrain.serpentResume(f, now));",
-    "new": "else this._serpentFan(fights, id, f, []);",
+    "old": "else await this._serpentSay(fights, id, f, serpentBrain.serpentResume(f, now), now);",
+    "new": "else await this._serpentSay(fights, id, f, [], now);",
     "tests": [
       "test/serpent1_relay.test.js"
     ]
@@ -261,8 +261,8 @@
   {
     "name": "SERPENT3-resume-at-the-relay-word",
     "file": "server/src/index.js",
-    "old": "this._serpentFan(fights, id, f, serpentBrain.serpentResume(f, now));   // SERPENT3: judged",
-    "new": "this._serpentFan(fights, id, f, []);   // SERPENT3: judged",
+    "old": "await this._serpentSay(fights, id, f, serpentBrain.serpentResume(f, now), now);   // SERPENT3: judged",
+    "new": "await this._serpentSay(fights, id, f, [], now);   // SERPENT3: judged",
     "tests": [
       "test/serpent3.test.js"
     ]
@@ -306,8 +306,8 @@
   {
     "name": "SERPENT3-pair-venom-unread",
     "file": "src/scenes/serpentHost.js",
-    "old": "deps.hurt?.(p.pct * k, p.base * k, 'poison');",
-    "new": "deps.hurt?.(p.pct, p.base, 'poison');",
+    "old": "const n = venomHurt(venomBite(p, deps.maxHealth?.() ?? 0), share(), blows);",
+    "new": "const n = venomHurt(venomBite(p, deps.maxHealth?.() ?? 0), 1, blows);",
     "tests": [
       "test/serpent3.test.js"
     ]
@@ -396,8 +396,8 @@
   {
     "name": "SERPENT3-wake-on-the-surface",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (s.fell || s.gone || modeAt(s.modes, t) !== MODE.deep) return;",
-    "new": "if (s.fell || s.gone) return;",
+    "old": "    if (modeAt(s.modes, t) !== MODE.deep) return;\n",
+    "new": "",
     "tests": [
       "test/serpent3.test.js"
     ]

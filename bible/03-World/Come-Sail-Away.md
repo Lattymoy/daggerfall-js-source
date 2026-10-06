@@ -2049,7 +2049,11 @@ nothing beached). A moored fleet says no `m` at all, so a reader of the
 older build - which reads `b` alone - reads the same record; a new reader
 of an old record leads nothing. The door takes the way whole or drops the
 record whole (aligned with `b`, three finite numbers, a boat's speed and
-turn). The change key carries it, so a boat brought up short is said at
+turn) - AUDIT SHIPS 2 XA6 (2026-10-06): its speed bound sized from the
+real ceiling (`CSA_WIRE_SPEED_MAX`, 2M natives a second: SAIL-FREE's
+fastest at the Handling dials' tenfold and x100), and the writer holds a
+way to it, where 64k - 27 m/s of way at an open journey's x60 - dropped a
+storm galleon's whole word from every screen. The change key carries it, so a boat brought up short is said at
 once. `scenes/comeSailAwayPeers.js` LEADS a boat under way instead of
 chasing it: each frame it is carried on by the way's share of the frame
 (what the lead grew by - none past CSA_PEER_LEAD_MAX, 0.6 s, so a late
@@ -2362,9 +2366,16 @@ the mod to the letter:
   HELM-WAY's rates times it, and her rudder reads her way over it (`steerage(way / gain)`), so every hull gathers her
   way, loses it and swings at her full way as she did under HELM-WAY - on a wider circle, as a faster hull does. The
   galleon's gain had been every hull's: a Large Boat gathered her way a third quicker, a Large Galley a third slower. A
-  coast takes the gain only for a way her canvas made (`wayBySail`): a way her oars made is lost at HELM-WAY's own coast
-  (a rowboat had stopped in 2 s where she took 3.3, a galley's oar coast from 8 m/s in 16 s against 27), and the
-  journey's autorun oars come on at the oars' own rate.
+  coast takes the gain only for a way her canvas made: a way her oars made is lost at HELM-WAY's own coast (a rowboat had
+  stopped in 2 s where she took 3.3, a galley's oar coast from 8 m/s in 16 s against 27), and the journey's autorun oars
+  come on at the oars' own rate. AUDIT SHIPS 2 (2026-10-06): the gain is taken in her canvas's SHARE of the way she
+  carries (`sailWay` - gathered under canvas, lost in its share, saved with her way), where a flag of the arm that drove
+  her last coasted a ladder's step through the oars' rung and a load ungained; and under the oars a way above what they
+  make (her canvas's) comes off no slower than her coast - at the oars' rate both ways, a galleon struck and rowed took
+  48 s and 400 m to come down to their way. The mod's own helm keeps its rates.
+- **HELM-SPEED** (2026-10-06, Mac: "add a speed indicator for when you're sailing"): the helm panel says her way through
+  the water beside her name, the runtime's own, in knots to a tenth (`helmPanelState` `way`; ui/enhancedHelm.js
+  `helmSpeedText`).
 - **Her sails draw on every heading**: no fore-and-aft sail luffs in the wind's eye, no square sail is laid aback (its
   Animator's Wind the wind's own), and the square-sail assist stows none upwind - raised there (RaiseSails) or brought
   there (the update's assist).

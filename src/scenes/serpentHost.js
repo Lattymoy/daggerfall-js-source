@@ -33,12 +33,16 @@ import { bodyAt, segmentBox, segExposed, headExposed, coilWeight, SEG_N, MODE, m
 import { SERPENT_ATTACK_BY_ID, SERPENT_ATTACK_TABLE, ADMIT_R, FAN_R, ENGAGE_R, SERPENT_POOL_TICK_MS, ZONES, SERPENT_PHASE_NAMES, MAEL_R, SERPENT_SHIELD_MS, CRUISE_V, refOf, SERPENT_DRAWN_MS } from '../net/serpentBrain.js';
 import { serpentBossById, serpentCountdown, serpentCountdownWords, serpentSwims, SERPENT_BRAIN_V, SERPENT_DIVE_MS } from '../net/serpentLaw.js';
 import { cellRoomOfWire } from '../net/wire.js';
-import { shapeMeets, shipHurt, crushHurt, gripHurt, grindHurt, shoveOf, shoveLeft, maelPull, globAt, poolOf, poolBites, fleetShare, SHOVE_S } from '../systems/serpentStrike.js';
+import { shapeMeets, shipHurt, crushHurt, gripHurt, grindHurt, venomBite, venomHurt, shoveOf, shoveLeft, maelPull, globAt, poolOf, poolBites, fleetShare, SHOVE_S } from '../systems/serpentStrike.js';
 
 /** How often an `in` is said again while I am within its waters' sight (a reconnect, a halo come up, a share back). */
 export const IN_RESEND_MS = 20_000;
 /** How soon an `in` unanswered is said again. */
 export const IN_RETRY_MS = 3000;
+/** AUDIT 2 XC7 (2026-10-06): the `in` said at once when the ship I stand on changes (AUDIT SHIPS C1) waits this long after
+ *  the last (ms) - a hull that flapped every frame said sixty a second, and the cell's shared bucket (SERPENT_HZ_MAX) then
+ *  dropped every volley I fired. */
+export const IN_CHANGE_MS = 1000;
 /** The volleys' balls on it gathered this long into one word a zone (the brain's blow rate: six words a second). */
 export const HIT_GATHER_MS = 500;
 /** How near its waters my ship must be for the serpent to count as a hostile near - no rest, no time scale (m). */
@@ -89,7 +93,7 @@ export function createSerpentHost(deps) {
   let live = null;
   let memDay = null;   // the day the memory above is of
   let wreckSaid = null;   // my wreck's word as last said this day (1 wrecked, 0 afloat), null none yet
-  let blows = { hull: 0, sail: 0, crew: 0 };   // AUDIT SHIPS C3: the pair's share of its blows and crush, carried
+  let blows = { hull: 0, sail: 0, crew: 0, venom: 0 };   // AUDIT SHIPS C3: the pair's share of its blows and crush, carried (AUDIT 2 XC4: and the venom's)
   let lastWake = -Infinity;   // AUDIT SHIPS C4: the last wake's splash (the fight's clock)
   let meNow = null;   // my account, read once a frame (AUDIT SERPENT L5)
 
@@ -101,7 +105,7 @@ export function createSerpentHost(deps) {
     memDay = day;
     resolved.clear(); seen.clear(); crushed = 0; lastCoil = null; lastPhase = null; lastFell = null; lastGone = null;
     held = null; pools = []; shove = null; pending = new Map(); wreckSaid = null;
-    blows = { hull: 0, sail: 0, crew: 0 }; lastWake = -Infinity;
+    blows = { hull: 0, sail: 0, crew: 0, venom: 0 }; lastWake = -Infinity;
   }
   /** The fight's frame: the cell's site when it has said one, the omen's until then. */
   const siteOf = (sw) => { const s = deps.link.state(); return s.day === sw.day && s.sx ? { sx: s.sx, sz: s.sz } : { sx: sw.site.sx, sz: sw.site.sz }; };
@@ -136,7 +140,7 @@ export function createSerpentHost(deps) {
     const hl = b ? b.hull : -1;   // AUDIT SERPENT B4/H2: my own ship's, at her helm or on her deck
     // AUDIT SHIPS C1: said again at once when the ship I stand on changes - aboard my own or not is what keeps my share
     // in its health (serpentBrain.js aboard), and twenty seconds of a share that is not fighting is twenty seconds wrong
-    const due = lastIn.day !== sw.day || lastIn.hl !== hl || t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);
+    const due = lastIn.day !== sw.day || (lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS) || t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);
     if (!due || Math.hypot(me[0], me[1]) > ADMIT_R) return;
     if (deps.online.send({ k: 'in', d: sw.day, bv: SERPENT_BRAIN_V, lv: Math.max(1, Math.floor(deps.level?.() ?? 1)), hl, sx: sw.site.sx, sz: sw.site.sz }, cell)) lastIn = { day: sw.day, at: t, hl };
   }
@@ -227,7 +231,10 @@ export function createSerpentHost(deps) {
    *  wake was its judging's and stopped where it struck my ship), so a ship sees it come where its jumps showed nothing
    *  until it was there. */
   function dashWake(s, t) {
-    if (s.fell || s.gone || modeAt(s.modes, t) !== MODE.deep) return;
+    if (modeAt(s.modes, t) !== MODE.deep) return;
+    // AUDIT 2 XC6: its end is said ahead (AUDIT SHIPS B5) - the dash it was in swims on until its own turn, the last leg it
+    // says (the throes', the dive's); stopped at the word, 15-18 m of a 34 m/s dash went by with no wave over it
+    if ((s.fell || s.gone) && !(t < (s.legs[s.legs.length - 1]?.at ?? -Infinity))) return;
     const L = s.legs[legIndexAt(s.legs, t)];
     if (!L || !(L.v > CRUISE_V)) return;
     const h = headAt(s.legs, t);
@@ -331,8 +338,9 @@ export function createSerpentHost(deps) {
     const p = pools.find((q) => poolBites(q, me[0], me[1], t));
     if (!p) return;
     poolBiteAt = t;
-    const k = share();
-    deps.hurt?.(p.pct * k, p.base * k, 'poison');
+    // AUDIT 2 XC4: the whole bite on my body, then the pair's share of it carried bite to bite (venomHurt)
+    const n = venomHurt(venomBite(p, deps.maxHealth?.() ?? 0), share(), blows);
+    if (n > 0) deps.hurt?.(n, 'poison');
   }
 
   return {

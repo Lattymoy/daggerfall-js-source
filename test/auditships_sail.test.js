@@ -220,6 +220,16 @@ test('AUDIT SHIPS A6/D1 under the responsive helm her trim is the helm\'s own - 
   r.run(2);
   near(r.s.rt.state.MoveVectorTarget[2], drive, 1e-9, 'the trim keys move nothing');
   assert.deepEqual(r.boat.Booms.map((b) => [...b.localRotation]), booms, 'her booms as the assist trims them');
+  // AUDIT 2 XD6 (2026-10-06): the assist's own trim, in the same wind - read as unmoved alone, booms never trimmed at all
+  // passed too (in this wind they turn about 30 degrees off their spawn)
+  for (const wind of [90, 150]) {
+    const resp = helmOn(HULL.SmallShip, { off: wind, settings: off }), assist = helmOn(HULL.SmallShip, { off: wind, handling: 'classic' });
+    const spawn = resp.boat.Booms.map((b) => [...b.localRotation]);
+    resp.run(5); assist.run(5);
+    const rot = (x) => x.boat.Booms.map((b) => b.localRotation.map((q) => Math.round(q * 1e6) / 1e6));
+    assert.deepEqual(rot(resp), rot(assist), `wind ${wind} deg: her booms where the assist trims them`);
+    assert.ok(resp.boat.Booms.some((b, i) => b.localRotation.some((q, k) => Math.abs(q - spawn[i][k]) > 0.05)), `wind ${wind} deg: trimmed off their spawn`);
+  }
   const c = helmOn(HULL.SmallShip, { handling: 'classic', settings: off });
   c.run(1);
   assert.equal(c.s.rt.helmPanelState().manualTrim, true, 'the mod\'s own helm: the trim is the player\'s');

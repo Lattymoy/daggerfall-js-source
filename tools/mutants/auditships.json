@@ -2,7 +2,7 @@
   {
     "name": "AUDIT-SHIPS-A1-way-unread",
     "file": "src/net/serpentBrain.js",
-    "old": "{ f.players[b.sub].seenAt = now; serpentWayOf(f.players[b.sub], b); }",
+    "old": "{ f.players[b.sub].seenAt = now; serpentWayOf(f.players[b.sub], b, now); }",
     "new": "{ f.players[b.sub].seenAt = now; }",
     "tests": [
       "test/auditships.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-SHIPS-A1-warp-learned",
     "file": "src/net/serpentBrain.js",
-    "old": "if (dt > SERPENT_WAY_STALE_MS || Math.hypot(vx, vz) > SERPENT_WAY_MAX_V) rest();",
-    "new": "if (dt > SERPENT_WAY_STALE_MS) rest();",
+    "old": "if (p.skew || dt > SERPENT_WAY_STALE_MS || Math.hypot(vx, vz) > SERPENT_WAY_MAX_V) rest();",
+    "new": "if (p.skew || dt > SERPENT_WAY_STALE_MS) rest();",
     "tests": [
       "test/auditships.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-SHIPS-A1-stale-learned",
     "file": "src/net/serpentBrain.js",
-    "old": "if (dt > SERPENT_WAY_STALE_MS || Math.hypot(vx, vz) > SERPENT_WAY_MAX_V) rest();",
-    "new": "if (Math.hypot(vx, vz) > SERPENT_WAY_MAX_V) rest();",
+    "old": "if (p.skew || dt > SERPENT_WAY_STALE_MS || Math.hypot(vx, vz) > SERPENT_WAY_MAX_V) rest();",
+    "new": "if (p.skew || Math.hypot(vx, vz) > SERPENT_WAY_MAX_V) rest();",
     "tests": [
       "test/auditships.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "AUDIT-SHIPS-A1-surge-unled",
     "file": "src/net/serpentBrain.js",
-    "old": "const target = serpentLeadOf(f, target0, (dist(h.x, h.z, target0.x, target0.z) / closeV(f, target0)) * 1000);",
+    "old": "const target = serpentLeadOf(f, target0, SERPENT_SAY_AHEAD_MS + (dist(h.x, h.z, target0.x, target0.z) / closeV(f, target0)) * 1000);",
     "new": "const target = target0;",
     "tests": [
       "test/auditships.test.js",
@@ -138,8 +138,8 @@
   {
     "name": "AUDIT-SHIPS-A1-fixed-surge",
     "file": "src/net/serpentBrain.js",
-    "old": "steer(f, now, closeAim(f, now, target), closeV(f, target), out, HUNT_TURN_R);",
-    "new": "steer(f, now, closeAim(f, now, target), CLOSE_V, out, HUNT_TURN_R);",
+    "old": "const go = now + SERPENT_SAY_AHEAD_MS, v = closeV(f, target), [ax, az] = closeAim(f, now, target);",
+    "new": "const go = now + SERPENT_SAY_AHEAD_MS, v = CLOSE_V, [ax, az] = closeAim(f, now, target);",
     "tests": [
       "test/auditships.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "AUDIT-SHIPS-C1-aboard-unread",
     "file": "src/net/serpentBrain.js",
-    "old": "!p.wreck && p.aboard !== false && now - (p.seenAt",
-    "new": "!p.wreck && now - (p.seenAt",
+    "old": "!p.wreck && !p.stale && p.aboard !== false && now - (p.seenAt",
+    "new": "!p.wreck && !p.stale && now - (p.seenAt",
     "tests": [
       "test/auditships.test.js"
     ]
@@ -255,7 +255,7 @@
   {
     "name": "AUDIT-SHIPS-C1-client-change-unread",
     "file": "src/scenes/serpentHost.js",
-    "old": "lastIn.day !== sw.day || lastIn.hl !== hl || ",
+    "old": "lastIn.day !== sw.day || (lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS) || ",
     "new": "lastIn.day !== sw.day || ",
     "tests": [
       "test/auditships.test.js"
@@ -413,8 +413,8 @@
   {
     "name": "AUDIT-SHIPS-D2-pace-at-the-beat",
     "file": "src/net/serpentBrain.js",
-    "old": "const paced = L && Math.abs(L.v - v) > 0.5 ? now + SERPENT_SAY_AHEAD_MS : now;",
-    "new": "const paced = now;",
+    "old": "function steer(f, now, aim, v, out) {\n  const go = now + SERPENT_SAY_AHEAD_MS;",
+    "new": "function steer(f, now, aim, v, out) {\n  const go = now;",
     "tests": [
       "test/auditships.test.js",
       "test/serpent3.test.js"
@@ -451,21 +451,10 @@
   {
     "name": "AUDIT-SHIPS-D2-released-at-the-beat",
     "file": "src/net/serpentBrain.js",
-    "old": "  f.coil.off = go;\n  holdNow(f, now, out);",
-    "new": "  f.coil.off = now;\n  holdNow(f, now, out);",
+    "old": "  f.coil.off = go;\n  pushLeg(f, legFrom(f.legs, go, LEG.line, v), out);",
+    "new": "  f.coil.off = now;\n  pushLeg(f, legFrom(f.legs, go, LEG.line, v), out);",
     "tests": [
       "test/auditships.test.js",
-      "test/serpent1_law.test.js"
-    ]
-  },
-  {
-    "name": "AUDIT-SHIPS-D2-hold-dropped",
-    "file": "src/net/serpentBrain.js",
-    "old": "  if (L) pushLeg(f, legFrom(f.legs, now, L.k, L.v, L.r ?? 0, L.sd ?? 1), out);\n",
-    "new": "",
-    "tests": [
-      "test/auditships.test.js",
-      "test/serpent1_audit.test.js",
       "test/serpent1_law.test.js"
     ]
   },
@@ -656,8 +645,8 @@
   {
     "name": "AUDIT-SHIPS-D3-closing-on-a-wreck",
     "file": "src/net/serpentBrain.js",
-    "old": "const t = here.find((b) => b.sub === c.s && !f.players[b.sub]?.wreck) ?? null;",
-    "new": "const t = here.find((b) => b.sub === c.s) ?? null;",
+    "old": "const t = here.find((b) => b.sub === c.s && !f.players[b.sub]?.wreck && (A !== SERPENT_ATTACK_TABLE.coil || serpentOnShip(f.players[b.sub]))) ?? null;",
+    "new": "const t = here.find((b) => b.sub === c.s && (A !== SERPENT_ATTACK_TABLE.coil || serpentOnShip(f.players[b.sub]))) ?? null;",
     "tests": [
       "test/auditships.test.js"
     ]

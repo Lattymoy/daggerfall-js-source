@@ -80,6 +80,13 @@ export const shipHurt = (A, whole, k = 1, carry = null) => ({ hull: shared(A.hul
 /** The coil's crush at its end, and its grip for `dtS` seconds (whole points carried on the ship's own fraction -
  *  `carry`, the grip's remainder - so a grip of 3.4 a second is 3.4 a second, not 3); each times the fleet's share `k`. */
 export const crushHurt = (whole, k = 1, carry = null) => shipHurt(CRUSH, whole, k, carry);
+/** The venom's whole bite on a body of `maxHealth` (points): `pool.pct` of it and `pool.base` more, never under 1 (it was
+ *  world.js's own line, the hurt's law beside its shape here). */
+export const venomBite = (pool, maxHealth) => Math.max(1, Math.round(pool.pct * Math.max(0, maxHealth) + pool.base));
+/** AUDIT 2 XC4 (2026-10-06): the venom's bite at the fleet's share `k` - the whole bite rounded as it always was, then
+ *  shared and CARRIED on her own carry (`venom`) as every blow is (shared): handed on as pct x k and base x k and rounded
+ *  a bite at a time, a pair took the whole of a 1-point bite and a half of a 2-point one. 0 - nothing bites. */
+export const venomHurt = (whole, k = 1, carry = null) => shared(whole, k, carry, 'venom');
 export function gripHurt(whole, dtS, carry = { hull: 0, crew: 0 }, k = 1) {
   const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k, crew = carry.crew + GRIP.crew * dtS * k;
   const out = { hull: Math.floor(hull), sail: 0, crew: Math.floor(crew) };

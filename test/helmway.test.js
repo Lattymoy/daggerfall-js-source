@@ -76,9 +76,11 @@ test('HELM-WAY her way on and off: under sail the responsive helm gathers way at
   near(quick.s.rt.properties.moveAccel(), classic.s.rt.properties.moveAccel() * HELM_WAY.coast * SAIL_FREE.gain, 1e-5, 'the coast, sails struck');
   for (const h of [classic, quick]) h.s.rt.state.oarThrottle = 1;   // HELM-LADDER: the oars pulling ahead at their rung
   near(quick.s.rt.properties.moveAccel(), classic.s.rt.properties.moveAccel(), 1e-9, 'the oars pulled: the mod\'s own');
-  // AUDIT SHIPS A5: and a way her oars made is lost at HELM-WAY's own coast, her rig's gain none of it
-  for (const h of [classic, quick]) { h.s.frame(); h.s.rt.state.oarThrottle = 0; }
-  near(quick.s.rt.properties.moveAccel(), classic.s.rt.properties.moveAccel() * HELM_WAY.coast, 1e-5, 'the oars at rest: HELM-WAY\'s coast');
+  // AUDIT SHIPS A5: and a way her oars made is lost at HELM-WAY's own coast, her rig's gain none of it. PIN MOVED (AUDIT 2
+  // XA7, 2026-10-06): rowed from rest - a beat of sail and a frame of oars was the way her canvas made, all but a seventh
+  const [cr, qr] = [helmOn(HULL.SmallShip, { handling: 'classic', raise: false }), helmOn(HULL.SmallShip, { handling: 'responsive', raise: false })];
+  for (const h of [cr, qr]) { h.s.rt.state.oarThrottle = 1; h.s.frame(); h.s.rt.state.oarThrottle = 0; }
+  near(qr.s.rt.properties.moveAccel(), cr.s.rt.properties.moveAccel() * HELM_WAY.coast, 1e-5, 'the oars at rest: HELM-WAY\'s coast');
   for (const h of [classic, quick]) { h.s.held.clear(); h.s.held.add('MoveRight'); }
   near(quick.s.rt.properties.turnAccel(), classic.s.rt.properties.turnAccel(), 1e-9, 'an oar turn: the mod\'s own');
   assert.ok(HELM_WAY.sailAccel > 1 && HELM_WAY.coast > 1 && HELM_WAY.turnAccelSail > 1);

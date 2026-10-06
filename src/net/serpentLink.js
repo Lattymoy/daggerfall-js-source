@@ -66,7 +66,7 @@ export function foldSerpent(s, w, now) {
       return { ...s, modes: modes.slice(-MODES_KEPT), heardAt: now };
     }
     case 'atk': return { ...s, atk: { i: w.i, a: w.a, at: w.at, x: w.x, z: w.z, yw: w.yw, tg: w.tg, ...(w.s ? { s: w.s } : {}) }, heardAt: now };
-    case 'hp': return { ...s, hp: w.h, max: w.m, heardAt: now };
+    case 'hp': return { ...s, hp: w.h, max: w.m, ...(w.n !== undefined ? { n: w.n } : {}), heardAt: now };   // AUDIT 2 XC1: the count with it
     case 'ph': return { ...s, ph: w.n, sh: w.until, coil: s.coil && !(s.coil.off > 0) ? { ...s.coil, off: now } : s.coil, heardAt: now };
     case 'coil': return { ...s, coil: { i: w.i, s: w.s, x: w.x, z: w.z, th: w.th, at: w.at, ...(w.w !== undefined ? { w: w.w } : {}), until: w.until, off: s.coil?.i === w.i ? s.coil.off : w.off ?? 0, h: w.h, m: w.m }, heardAt: now };   // AUDIT SHIPS D2: `w`, its winding's drawn moment
     case 'ch': return s.coil?.i === w.i ? { ...s, coil: { ...s.coil, h: w.h }, heardAt: now } : s;

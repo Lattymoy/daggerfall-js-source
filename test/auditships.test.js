@@ -13,13 +13,13 @@ import assert from 'node:assert/strict';
 import {
   newSerpentFight, joinSerpentFight, stepSerpentBrain, applySerpentHit, serpentStateOf, serpentResume, serpentWoke, serpentWreck,
   coilWord, coilHolds, pickSerpentTarget, pruneLegs, closeV, serpentWayOf, serpentLeadOf, serpentShipsFighting, serpentOnShip, maelTurnToFit,
-  SERPENT_ATTACK_TABLE, SERPENT_PHASE_AT, SERPENT_TICK_MS, ZONES, ARENA_R, MAEL_ORBIT_R, CRUISE_V, DASH_V, CLOSE_V, CLOSE_GAIN_V, DRIFT_V,
+  SERPENT_ATTACK_TABLE, SERPENT_PHASE_AT, SERPENT_TICK_MS, ZONES, ARENA_R, MAEL_ORBIT_R, CRUISE_V, DASH_V, CLOSE_V, DRIFT_V,
   SERPENT_SLEEP_MS, SERPENT_DRAWN_MS, SERPENT_SAY_AHEAD_MS, SERPENT_LEAD_MAX_MS, SERPENT_WAY_EASE_MS, SERPENT_WAY_STALE_MS, SERPENT_WAY_MAX_V,
   STUN_X, HEAD_X, GUN_REACH_M, SERPENT_POSE_SLACK, ORBIT_R, RAM_V, ramLen, serpentWrapYaw,
 } from '../src/net/serpentBrain.js';
 import { LEG, MODE, COIL_R, SWIM_MIN_V, headAt, bodyAt, modeAt, coilAngleAt, coilWeight } from '../src/net/serpentBody.js';
 import { createSerpentLink } from '../src/net/serpentLink.js';
-import { createSerpentHost, WAKE_MS } from '../src/scenes/serpentHost.js';
+import { createSerpentHost, WAKE_MS, IN_CHANGE_MS } from '../src/scenes/serpentHost.js';
 import { fleetShare, shipHurt, crushHurt, shapeMeets, ramHead, SERPENT_PAIR_SHARE } from '../src/systems/serpentStrike.js';
 import { serpentTimes, serpentSiteKey, SERPENT_BRAIN_V, SERPENT_NATIVE_PER_M } from '../src/net/serpentLaw.js';
 import { validSerpentOut, cellRoomOfWire, serpentFightId, PIXEL_UNITS } from '../src/net/wire.js';
@@ -141,7 +141,8 @@ test('AUDIT SHIPS A1 it closes on a ship no slower than CLOSE_GAIN_V over her wa
   const f = fightOf([HULL.Carrack]);
   const at = (vz) => { f.players.s1.vx = 0; f.players.s1.vz = vz; return closeV(f, { sub: 's1' }); };
   assert.equal(at(0), CLOSE_V, 'a ship lying still: CLOSE_V');
-  near(at(17.7), 17.7 + CLOSE_GAIN_V, 1e-9, 'a galleon at full sail in a 2 m/s wind');
+  // AUDIT 2 XD6 (2026-10-06): the law's own figures - read off CLOSE_GAIN_V itself, a gain of 6 passed as well as 8
+  near(at(17.7), 25.7, 1e-9, 'a galleon at full sail in a 2 m/s wind');
   assert.equal(at(30), DASH_V, 'never past its dash');
   assert.equal(closeV(f, null), CLOSE_V);
   // the beat: a ship 300 m ahead of its head running north at 20 m/s
@@ -154,7 +155,7 @@ test('AUDIT SHIPS A1 it closes on a ship no slower than CLOSE_GAIN_V over her wa
   g.closing = { a: SERPENT_ATTACK_TABLE.breach.id, s: 's1', at: T0 + 2250 };
   const beats = run(g, T0 + 2250, T0 + 6000, ships, seeded(2));
   const surge = beats.flatMap((b) => b.said).filter((x) => x.k === 'sw').map((x) => x.l.v);
-  assert.ok(surge.length > 0 && surge.every((v) => Math.abs(v - (20 + CLOSE_GAIN_V)) <= 0.5), `surged at her way and CLOSE_GAIN_V (${surge.join(', ')})`);
+  assert.ok(surge.length > 0 && surge.every((v) => Math.abs(v - 28) <= 0.5), `surged at 28 m/s (${surge.join(', ')})`);
 });
 
 test('AUDIT SHIPS A1 one ship alone still can\'t, and two can (Mac\'s call: "Two or more ships") at the ways SAIL-FREE gives a ship circling under full sail - against the relay\'s own brain over whole fights (tools/serpentFleetSim.mjs), at the measured 38% gunnery a lone galleon wins at most one fight in twelve circling at 17.7, 21.2 and 26.5 m/s (a galleon in a 2 m/s wind, a Carrack in one, a galleon in a storm), and a pair eight at 13.3 m/s and ten at 17.7; aimed where she stood and closed on at 20 m/s, a lone galleon won every fight from 15.5 m/s (mutants: unled marks; the fixed surge; the pair\'s share lost)', async () => {
@@ -237,7 +238,7 @@ function stateOf(now, n) {
   return n === undefined ? st : { ...st, n };
 }
 
-test('AUDIT SHIPS C1 on the client: the `in` is said again AT ONCE when the ship I stand on changes - off her deck, back aboard - not IN_RESEND_MS later: what I am aboard is what keeps my share in its health, and twenty seconds of a share that is not fighting is twenty seconds of a pair\'s share wrong (mutants: the change unread)', () => {
+test('AUDIT SHIPS C1 on the client: the `in` is said again AT ONCE when the ship I stand on changes - off her deck, back aboard - not IN_RESEND_MS later (AUDIT 2 XC7: and never sooner than IN_CHANGE_MS after the last): what I am aboard is what keeps my share in its health, and twenty seconds of a share that is not fighting is twenty seconds of a pair\'s share wrong (mutants: the change unread)', () => {
   const R = clientRig({ online: true });
   R.host.frame();
   R.hear(stateOf(R.at()));
@@ -246,9 +247,13 @@ test('AUDIT SHIPS C1 on the client: the `in` is said again AT ONCE when the ship
   assert.deepEqual(ins(), [HULL.Carrack], 'said once');
   R.step(100);
   assert.deepEqual(ins(), [HULL.Carrack], 'not again while nothing changes');
+  // PIN MOVED (AUDIT 2 XC7, 2026-10-06): at once - but never sooner than IN_CHANGE_MS after the last (a hull flapping each
+  // frame said sixty a second and the cell's bucket dropped my volleys)
   R.board(null); R.step(100);
-  assert.deepEqual(ins(), [HULL.Carrack, -1], 'off her deck: said at once');
-  R.board('mine'); R.step(100);
+  assert.deepEqual(ins(), [HULL.Carrack], 'off her deck 200 ms after the last: held');
+  R.step(IN_CHANGE_MS - 100);
+  assert.deepEqual(ins(), [HULL.Carrack, -1], 'off her deck: said as IN_CHANGE_MS passes');
+  R.board('mine'); R.step(IN_CHANGE_MS);
   assert.deepEqual(ins(), [HULL.Carrack, -1, HULL.Carrack], 'aboard again: said at once');
 });
 
@@ -413,11 +418,14 @@ test('AUDIT SHIPS B4 a Rising Maw at a ship close ahead bursts on its mark: a wa
 
 // ═══ B5/D2: EVERY TURN OF ITS OWN SAID AHEAD ═══════════════════════════════════════════════════════════════════════
 
-/** Whole fights - two ships circling and firing (on the coil while it holds, its head a seventh of the time), the coiled
- *  ship's word at the landing on her own machine, slain or sounding - folded by a client `lag` ms late: the worst a
- *  50 ms frame of its head (on the flat) and its depth moved more than the relay's own did. */
-function laggedFights(lag, seeds = 6) {
-  let xz = 0, y = 0;
+/** Whole fights - two ships circling at `v` m/s and firing, on the beat and between beats (a blow is judged as it comes),
+ *  on the coil while it holds (its head a seventh of the time), the coiled ship's word at the landing on her own machine,
+ *  slain or sounding - folded by a client at each of `lags` (ms late): how far each drew its head from the relay's at the
+ *  same moment, every 10 ms, and its whole body (its depth and its coil with it) every 50 ms. PIN MOVED (AUDIT 2 XB1/XD5,
+ *  2026-10-06): its step against the relay's own step in a 50 ms frame, at 150 ms and 13 m/s ships, read 0.028 m while
+ *  the head was drawn 0.15 m off - a sideways snap keeps its step's length, and a frame dilutes it. */
+function laggedFights(lags, { seeds = 6, v = 26.5 } = {}) {
+  const worst = lags.map((lag) => ({ lag, head: 0, body: 0 }));
   for (let seed = 1; seed <= seeds; seed++) {
     const rng = seeded(seed), dice = seeded(seed + 50);
     const sound = seed % 2 ? T0 + 4 * 60_000 : SOUND;
@@ -425,49 +433,54 @@ function laggedFights(lag, seeds = 6) {
     [HULL.Carrack, HULL.SmallShip].forEach((hl, i) => joinSerpentFight(f, acct(i), `P${i}`, 20, hl, T0, true));
     surfaced(f);
     let clock = T0;
-    const link = createSerpentLink({ now: () => clock, site: () => ({ day: f.day, sx: 0, sz: 0 }) });
-    const hear = (w) => { const v = validSerpentOut(w.k === 'st' ? w : { ...w, sx: 0, sz: 0 }); assert.ok(v, `the wire passes ${w.k}`); link.word(v); };
-    hear(serpentStateOf(f));
-    const inbox = [], coils = new Map();
+    const screens = lags.map((lag) => ({ lag, inbox: [], link: createSerpentLink({ now: () => clock, site: () => ({ day: f.day, sx: 0, sz: 0 }) }) }));
+    const hear = (link, w) => { const ok = validSerpentOut(w.k === 'st' ? w : { ...w, sx: 0, sz: 0 }); assert.ok(ok, `the wire passes ${w.k}`); link.word(ok); };
+    for (const s of screens) hear(s.link, serpentStateOf(f));
+    const say = (t, ws) => { for (const w of ws) for (const s of screens) s.inbox.push({ due: t + s.lag, w }); };
+    const coils = new Map();
     const ships = [0, 1].map((i) => ({ a: i * 3.1, r: 160 + 70 * i, dir: i ? -1 : 1 }));
     const foot = (i) => { const s = ships[i]; return { sub: acct(i), x: Math.sin(s.a) * s.r, z: Math.cos(s.a) * s.r, yw: s.a + s.dir * Math.PI / 2, hl: 30, hw: 8, dead: false }; };
-    let prev = null;
-    for (let t = T0; t < T0 + 9 * 60_000 && !(f.fell && t > f.fell.at + 8000) && !(f.gone && t > sound + 8000); t += 50) {
+    const fire = (t) => { for (let i = 0; i < 2; i++) {
+      const z = coilHolds(f, t) && seed % 3 ? ZONES.coil : dice() < 0.15 ? ZONES.head : ZONES.body;   // every third fight lets its coils crush
+      say(t, applySerpentHit(f, acct(i), seed % 2 ? 4 : 9, z, foot(i), t));
+    } };
+    for (let t = T0; t < T0 + 9 * 60_000 && !(f.fell && t > f.fell.at + 8000) && !(f.gone && t > sound + 8000); t += 10) {
       clock = t;
-      for (const s of ships) s.a += (s.dir * 13 * 0.05) / s.r;
+      for (const s of ships) s.a += (s.dir * v * 0.01) / s.r;
       if ((t - T0) % SERPENT_TICK_MS === 0) {
-        for (const w of stepSerpentBrain(f, t, [0, 1].map((i) => ({ ...foot(i), ts: t })), rng)) { inbox.push({ due: t + lag, w }); if (w.k === 'atk' && w.a === SERPENT_ATTACK_TABLE.coil.id) coils.set(w.i, w); }
+        const said = stepSerpentBrain(f, t, [0, 1].map((i) => ({ ...foot(i), ts: t })), rng);
+        say(t, said);
+        for (const w of said) if (w.k === 'atk' && w.a === SERPENT_ATTACK_TABLE.coil.id) coils.set(w.i, w);
         for (const [i, a] of coils) {
           if (t < a.at) continue;
           coils.delete(i);
           const k = [0, 1].find((j) => acct(j) === a.s);
           if (k === undefined) continue;
           const ft = foot(k);
-          for (const w of coilWord(f, a.s, shapeMeets(a, ft, a.at) ? 'held' : 'esc', a.i, ft.x, ft.z, t)) inbox.push({ due: t + lag, w });
+          say(t, coilWord(f, a.s, shapeMeets(a, ft, a.at) ? 'held' : 'esc', a.i, ft.x, ft.z, t));
         }
-        if ((t - T0) % 500 === 0) for (let i = 0; i < 2; i++) {
-          const z = coilHolds(f, t) && seed % 3 ? ZONES.coil : dice() < 0.15 ? ZONES.head : ZONES.body;   // every third fight lets its coils crush
-          for (const w of applySerpentHit(f, acct(i), seed % 2 ? 4 : 9, z, foot(i), t)) inbox.push({ due: t + lag, w });
-        }
+        if ((t - T0) % 500 === 0) fire(t);
       }
-      while (inbox.length && inbox[0].due <= t) hear(inbox.shift().w);
-      const c = headAt(link.state().legs, t), r = headAt(f.legs, t);
-      const cy = bodyAt(link.state(), t)[0].y, ry = bodyAt(f, t)[0].y;
-      if (prev) {
-        xz = Math.max(xz, Math.hypot(c.x - prev.c.x, c.z - prev.c.z) - Math.hypot(r.x - prev.r.x, r.z - prev.r.z));
-        y = Math.max(y, Math.abs(cy - prev.cy) - Math.abs(ry - prev.ry));
-      }
-      prev = { c, r, cy, ry };
+      if ((t - T0) % 500 === 120) fire(t);   // AUDIT 2 XB2: between beats - a kill there too
+      for (const s of screens) while (s.inbox.length && s.inbox[0].due <= t) hear(s.link, s.inbox.shift().w);
+      const r = headAt(f.legs, t), rb = (t - T0) % 50 === 0 ? bodyAt(f, t) : null;
+      screens.forEach((s, i) => {
+        const c = headAt(s.link.state().legs, t);
+        worst[i].head = Math.max(worst[i].head, Math.hypot(c.x - r.x, c.z - r.z));
+        if (rb) { const cb = bodyAt(s.link.state(), t); for (let j = 0; j < rb.length; j++) worst[i].body = Math.max(worst[i].body, Math.hypot(cb[j].x - rb[j].x, cb[j].y - rb[j].y, cb[j].z - rb[j].z)); }
+      });
     }
     assert.ok(f.fell || f.gone, `seed ${seed}: the fight ended`);
   }
-  return { xz, y };
+  return worst;
 }
 
-test('AUDIT SHIPS B5/D2 every turn of its own is said SERPENT_SAY_AHEAD_MS ahead - its throes and its sounding (what was to come let go at the beat, nothing turned yet), the cry\'s and the roar\'s rearing, a change of pace (cruising to a closing surge), every attack\'s ride and its settling back, the whirl\'s rearing, a coil\'s letting go (crushed, broken, slipped) and its winding drawn from when its word has come (`w`) - so through whole fights, slain and sounded, a client 150 ms late sees its head move no more in a frame than the relay\'s did, but for its turns\' few centimetres, and its depth never snap; said at the beat, its kill mid-dash snapped a lagging head 3.6 m, a surge 1.4 m, a spit\'s rise 8.5 m up and a coil\'s winding 2 m (mutants: each said at the beat)', () => {
-  const { xz, y } = laggedFights(150);
-  assert.ok(xz <= 0.05, `its head (${xz.toFixed(3)} m over the relay's own step in a 50 ms frame at most)`);
-  assert.ok(y <= 0.01, `its depth (${y.toFixed(3)} m)`);
+test('AUDIT SHIPS B5/D2 every turn of its own is said SERPENT_SAY_AHEAD_MS ahead - its throes and its sounding, the cry\'s and the roar\'s rearing, a change of pace, every attack\'s ride and its settling back, the whirl\'s rearing, a coil\'s letting go (crushed, broken, slipped) and its winding drawn from when its word has come (`w`) - PIN MOVED (AUDIT 2 XB1/XB2/XD5, 2026-10-06): and its steering\'s turns and its closing surge (closeOn), and the kill\'s throes and the letting go laid from then alone, a blow judged between beats - so through whole fights, slain and sounded, ships circling at 26.5 m/s, a client any wire\'s time short of it late (150, 250 and 450 ms) draws the relay\'s head and body to the millimetre, and one past it does not; said at the beat, its kill mid-dash snapped a lagging head 3.6 m, a surge 1.4 m, a spit\'s rise 8.5 m up and a coil\'s winding 2 m, its closing\'s turns 0.8 m at 150 ms and 2.2 m at 250, and a kill between beats 3.2 m (mutants: each said at the beat)', () => {
+  const [a, b, c, late] = laggedFights([150, 250, 450, 650]);
+  // its body to the centimetre - a leg begins where the last left the head, rounded to it (roundLeg), and a client lets
+  // go of a leg as its tail leaves it, so a tail on the very joint may be drawn from either side of it (AUDIT SERPENT S2)
+  for (const w of [a, b, c]) assert.ok(w.head <= 0.001 && w.body < 0.01, `${w.lag} ms late: its head drawn ${w.head.toFixed(4)} m and its body ${w.body.toFixed(4)} m from the relay's`);
+  assert.ok(late.head > 0.5 && late.body > 0.5, `a client past it does see it (${late.head.toFixed(2)} m and ${late.body.toFixed(2)} m at ${late.lag} ms)`);
 });
 
 // ═══ B6: THE COIL DRAWN TURNS WITH ITS HEAD ════════════════════════════════════════════════════════════════════════

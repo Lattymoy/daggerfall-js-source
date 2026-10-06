@@ -311,8 +311,17 @@ test('SERPENT1 brain: the join - a ship brings its share at the CURRENT fraction
   assert.ok(Math.abs(f.hp / f.max - frac2) < 1e-12, 'at the fraction it stands at');
   assert.equal(f.players.s2.bucket, 0, 'its bucket empty');
   assert.equal(f.players.s2.lv, 30, 'the first level kept');
+  // PIN MOVED (AUDIT 2 XB9, 2026-10-06): a smaller warship of her own is her ship now too - her share down to hers, at the
+  // fraction it stands at, her bucket kept (spendPurse holds it to her depth): never shrunk, a captain sailing one was
+  // no ship of the fight at all (AUDIT SHIPS C1's `aboard`), and a true pair read as one. Her rowboat or a friend's
+  // deck still takes her share out whole until she is aboard again (C1)
+  const was = f.max, frac3 = f.hp / f.max, bucket = f.players.s2.bucket;
   assert.ok(joinSerpentFight(f, 's2', 'P2b', 60, HULL.LargeBoat, T0 + 3000, true));
-  assert.equal(f.players.s2.hl, HULL.Carrack, 'a smaller claim never shrinks it');
+  assert.equal(f.players.s2.hl, HULL.LargeBoat, 'a smaller warship of her own: hers');
+  assert.equal(f.max, was - SERPENT_TTK_S * SHIP_REF[HULL.Carrack] + SERPENT_TTK_S * SHIP_REF[HULL.LargeBoat]);
+  assert.ok(Math.abs(f.hp / f.max - frac3) < 1e-12, 'at the fraction it stands at');
+  assert.equal(f.players.s2.bucket, bucket, 'her bucket kept');
+  assert.equal(f.players.s2.retired, false, 'a ship of the fight');
   assert.equal(f.players.s2.name, 'P2b', 'the name follows the player');
   assert.ok(!joinSerpentFight(f, 's3', 'P3', 1, HULL.Carrack, T0, false), 'not while it admits nobody');
   const g = fightOf([]);

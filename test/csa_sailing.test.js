@@ -15,7 +15,7 @@ import {
   mathfMoveTowards, mathfClamp, yawOfForward, PASSENGERS_ABOARD_TEXT, NICE_BOAT_TEXT, boardPlaceOf, carriedPoint, yawDelta,
   IRONS_TELL_DEG, IRONS_TELL_WAY, IRONS_TELL_S, IRONS_TEXT, OAR_RUNG_TEXT, OAR_ASTERN_TEXT,
 } from '../src/systems/comeSailAway.js';
-import { helmButtons, helmHint } from '../src/ui/enhancedHelm.js';   // HELM-LADDER: the sails' button is the toggle, the line the ladder
+import { helmButtons, helmHint, helmSpeedText, KNOTS_PER_MPS } from '../src/ui/enhancedHelm.js';   // HELM-LADDER: the sails' button is the toggle, the line the ladder - HELM-SPEED: her way
 import { animatorOf } from '../src/systems/comeSailAwayBoat.js';
 import { quatRotate, quatAngleAxis } from '../src/world/quat.js';
 
@@ -824,6 +824,21 @@ test('CSA-L: helmPanelState - what the helm panel shows, read and never written:
   assert.equal(assisted.rt.helmPanelState().manualTrim, false, 'the assist trims by default');
   assisted.rt.StopSailing();
   assert.equal(assisted.rt.helmPanelState(), null, 'the helm left');
+});
+
+test('HELM-SPEED (2026-10-06, Mac: "add a speed indicator for when you\'re sailing"): the panel says her way through the water - the runtime\'s own, in knots to a tenth - at rest none, under way what she makes, astern the same', () => {
+  const s = scene();
+  const boat = s.place(1, 0);
+  s.rt.StartSailing(boat);
+  assert.equal(s.rt.helmPanelState().way, 0, 'at rest');
+  assert.equal(helmSpeedText(0), '0.0 knots');
+  s.rt.state.MoveVectorCurrent = [0, 0, 5];
+  assert.equal(s.rt.helmPanelState().way, 5, 'her way');
+  assert.equal(helmSpeedText(s.rt.helmPanelState().way), '9.7 knots', '5 m/s');
+  s.rt.state.MoveVectorCurrent = [0, 0, -2];
+  assert.equal(helmSpeedText(s.rt.helmPanelState().way), '3.9 knots', 'backing water');
+  assert.ok(Math.abs(KNOTS_PER_MPS - 1.943844) < 1e-6);
+  assert.equal(helmSpeedText(undefined), '', 'none known: nothing said');
 });
 
 test('CSA-K: the laws another player\'s boat shares with mine, one export each - BoardBoat\'s place (boardPlaceOf), the status box\'s words, the door\'s turn (turnDoor: its Animator over, its sound), the helm\'s carry of its child (carriedPoint, yawDelta)', () => {

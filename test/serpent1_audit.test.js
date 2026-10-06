@@ -95,18 +95,28 @@ test('AUDIT SERPENT S2: a kill while a ram\'s run is still to come, and the soun
     if (end === 'gone') { now += 1000; fold(stepSerpentBrain(f, now, b, rng)); assert.equal(modeAt(f.modes, now), MODE.deep, 'under the sea'); }
     assert.ok(f.legs.at(-1).at > now && f.modes.at(-1).at > now, 'its swim and its ride still to come');
     now += 10;
-    if (end === 'gone') { f.soundAt = now; const said = stepSerpentBrain(f, now, b, rng); fold(said); assert.ok(f.gone, 'sounded'); assert.ok(said.some((w) => w.k === 'dv' && w.at === now && w.m === MODE.deep), 'its ride said, though it rides it already'); }
+    const go = now + SERPENT_SAY_AHEAD_MS, before = (xs) => xs.filter((x) => x.at > now && x.at < go).map((x) => ({ ...x }));
+    const legsSaid = before(f.legs), modesSaid = before(f.modes);
+    // PIN MOVED (AUDIT 2 XB2, 2026-10-06): its ride said at its turn, SERPENT_SAY_AHEAD_MS on, though it rides it already
+    if (end === 'gone') { f.soundAt = now; const said = stepSerpentBrain(f, now, b, rng); fold(said); assert.ok(f.gone, 'sounded'); assert.ok(said.some((w) => w.k === 'dv' && w.at === go && w.m === MODE.deep), 'its ride said, though it rides it already'); }
     else { f.hp = 1; f.shieldUntil = 0; fold(applySerpentHit(f, acct(0), 50, ZONES.body, b[0], now)); assert.ok(f.fell, 'slain as its dash begins'); }
     const inOrder = (xs) => xs.every((x, i) => !i || xs[i - 1].at <= x.at);
     assert.ok(inOrder(f.legs) && inOrder(f.modes), `the relay's in order (${end})`);
     assert.ok(inOrder(L.state().legs) && inOrder(L.state().modes), 'the client\'s in order');
-    assert.deepEqual(L.state().legs, f.legs, 'one track');
+    // PIN MOVED (AUDIT 2 XB2, 2026-10-06): the client's track the relay's from its first leg on - the relay keeps the legs a
+    // blow is judged back on a second longer (AUDIT SHIPS D3), as it keeps its modes
+    assert.deepEqual(L.state().legs, f.legs.slice(-L.state().legs.length), 'one track');
     assert.deepEqual(L.state().modes, f.modes.slice(-L.state().modes.length), 'one ride');
     // PIN MOVED (AUDIT SHIPS B5, 2026-10-06): nothing still to come after its end but its own throes or dive, said
-    // SERPENT_SAY_AHEAD_MS on - what was to come let go AT the end (holdNow), so no screen draws a turn it never took
-    const after = (xs) => xs.filter((x) => x.at > now);
-    assert.deepEqual(after(f.legs).map((l) => l.at), [now + SERPENT_SAY_AHEAD_MS], `nothing still to come after its end but its own swim (${end})`);
-    assert.ok(after(f.modes).every((m) => m.at === now + SERPENT_SAY_AHEAD_MS && m.m === (end === 'fell' ? MODE.dying : MODE.deep)), 'and its own ride');
+    // SERPENT_SAY_AHEAD_MS on. PIN MOVED (AUDIT 2 XB2, 2026-10-06): and what was said to come before then, swum as it was
+    // said - let go AT the end (holdNow), the swim a screen a wire's time behind had begun was unsaid
+    const after = (xs) => xs.filter((x) => x.at >= go);
+    assert.deepEqual(after(f.legs).map((l) => l.at), [go], `nothing still to come after its end but its own swim (${end})`);
+    const ride = end === 'fell' ? MODE.dying : MODE.deep;
+    assert.ok(after(f.modes).every((m) => m.at === go && m.m === ride) && modeAt(f.modes, go) === ride, 'and its own ride');
+    assert.deepEqual(before(f.legs), legsSaid, `what was to come before its turn swum as it was said (${end})`);
+    assert.deepEqual(before(f.modes), modesSaid, 'and ridden');
+    if (end === 'fell') assert.ok(legsSaid.length, 'its run\'s wind-up was to come before its turn');
   }
 });
 

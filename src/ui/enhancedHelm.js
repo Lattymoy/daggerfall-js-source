@@ -124,6 +124,8 @@ body:has(.hud-foe.on) .helmpanel { --hp-top: calc(18px + 28px * var(--hud-scale,
   align-items: center; gap: 6px; padding: 8px 12px; width: max-content; max-width: calc(100vw - 24px); box-sizing: border-box; border: 2px solid; border-radius: 0; }
 .helmpanel-title { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 4px 12px; }
 .helmpanel-name { font-size: 15px; letter-spacing: 0.06em; color: #efe8d6; text-shadow: 1px 1px 0 #050608; }
+.helmpanel-speed { font-size: 13px; letter-spacing: 0.06em; color: #d9c48a; text-shadow: 1px 1px 0 #050608; font-variant-numeric: tabular-nums; }
+.helmpanel-speed:empty { display: none; }
 .helmpanel-hint { font-size: 11px; letter-spacing: 0.08em; color: #a89f88; text-shadow: 1px 1px 0 #050608; }
 .helmpanel-hint:empty { display: none; }
 .helmpanel-btns { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; }
@@ -182,16 +184,18 @@ function build(doc) {
   title.className = 'helmpanel-title';
   const name = doc.createElement('span');
   name.className = 'helmpanel-name';
+  const speed = doc.createElement('span');   // HELM-SPEED: her way, beside her name
+  speed.className = 'helmpanel-speed';
   const hint = doc.createElement('span');
   hint.className = 'helmpanel-hint';
-  title.append(name, hint);
+  title.append(name, speed, hint);
   const btns = doc.createElement('div');
   btns.className = 'helmpanel-btns';
   bar.append(title, btns);
   root.append(bar);
   swallowPresses(root);
   doc.body.append(root);
-  return { root, bar, name, hint, btns, buttons: new Map() };
+  return { root, bar, name, speed, hint, btns, buttons: new Map() };
 }
 
 /** Every hold let go - the panel hidden, rebuilt or gone never leaves a trim held. */
@@ -267,6 +271,8 @@ export function drawEnhancedHelm(state = {}, hooks = {}, { doc = globalThis.docu
   if (last.rootClass !== rootClass) { last.rootClass = rootClass; parts.root.className = rootClass; }
   const title = h ? `At the helm - ${HULL_NAMES[h.hull] ?? 'Boat'}` : `Aboard ${aboard.owner ? `${aboard.owner}'s` : "another player's"} ${HULL_NAMES[aboard.hull] ?? 'boat'}`;
   if (last.title !== title) { last.title = title; parts.name.textContent = title; }
+  const speed = h ? helmSpeedText(h.way) : '';
+  if (last.speed !== speed) { last.speed = speed; parts.speed.textContent = speed; }
   const hint = h ? helmHint(h, state) : '';
   if (last.hint !== hint) { last.hint = hint; parts.hint.textContent = hint; }
   const list = helmButtons(h);
@@ -312,6 +318,11 @@ export function helmHint(h, state = {}) {
   if (!state.mouseFree) parts.push(`Free the mouse (${state.freeKey || 'Y'}) to use these`);
   return parts.filter(Boolean).join(' · ');
 }
+
+/** HELM-SPEED (2026-10-06, Mac: "add a speed indicator for when you're sailing"): knots in a metre a second. */
+export const KNOTS_PER_MPS = 3600 / 1852;
+/** Her way (m/s, helmPanelState's `way`) as the helm reads it - in knots, to a tenth; '' with none known. */
+export const helmSpeedText = (way) => (Number.isFinite(way) ? `${(Math.max(0, way) * KNOTS_PER_MPS).toFixed(1)} knots` : '');
 
 /** Taken down: at the helm no longer, aboard nothing, the skin or the mod off. Every hold is let go first. */
 export function hideEnhancedHelm() {

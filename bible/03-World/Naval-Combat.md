@@ -75,7 +75,10 @@ carries its row instead. It stands on three things the port already had:
   hint say the key ("Colours struck - E: board her"). Too fast beside her, the same press HEAVES TO (AUDIT NAV1): the
   sails struck and her way taken off at Come Sail Away's `brake` - HEAVE_TO_DECEL (HELM-WAY), or at a way past HELM-WAY's
   what brings her under BOARD_SPEED within HEAVE_TO_M (AUDIT SHIPS A3, `heaveToDecel`) - until she is under BOARD_SPEED,
-  HEAVE_TO_S at most ("Colours struck - E: heave to", then "heaving to").
+  HEAVE_TO_S at most ("Colours struck - E: heave to", then "heaving to"). AUDIT SHIPS 2 XA5 (2026-10-06): the brake never
+  past the runtime's own bound (comeSailAway.js `CSA_BRAKE_MAX`, 20 m/s^2), and the heave-to offered by where it leaves
+  her (`heaveToRun`): a storm's way runs past HEAVE_TO_M, so it is offered as she comes up on a struck ship, not as she
+  passes her (offered beside her, a Carrack at 38.9 m/s ended 34 m off, out of BOARD_RANGE).
 - **Taken, she opens**: the plunder window - her hold, one thing to take from her, and her fate. Shut it and she lies
   taken where she is; Interact opens her again.
 - **The sea at a glance** (AUDIT NAV1): a tag stands over each ship in sight out to NAVAL_TAG_RANGE - her name, what

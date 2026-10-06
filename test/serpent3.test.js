@@ -385,8 +385,11 @@ test('SERPENT3 a pair\'s share (Mac: "Two or more ships"): with exactly two ship
     assert.equal(strikes[0].hurt.hull, Math.round((B.hull * 1200 + B.base) * k), `${n} ship(s): the blow's share`);
     const P = SERPENT_ATTACK_TABLE.spit.pool;
     assert.ok(bites.length > 0, 'the venom bit');
-    near(bites[0][0], P.pct * k, 1e-12, `${n} ship(s): the venom's share`);
-    near(bites[0][1], P.base * k, 1e-12);
+    // PIN MOVED (AUDIT 2 XC4, 2026-10-06): the venom's bite is handed on in points - its whole on my body (3 at 100
+    // health), then the pair's share of it, carried bite to bite (pct x k and base x k rounded alone let a pair take
+    // the whole of a 1-point bite)
+    const whole = Math.max(1, Math.round(P.pct * 100 + P.base));
+    assert.deepEqual(bites[0], [Math.round(whole * k), 'poison'], `${n} ship(s): the venom's share`);
   }
 });
 
@@ -427,7 +430,7 @@ function clientRig() {
     toScene: (sx, sz, x, z) => [x, z], toSite: (sx, sz, x, z) => [x, z], seaY: () => 0,
     feet: () => [60, 1, 0], level: () => 20,
     boat: () => ({ boat, hull: 4, root: [60, 0], pos: [60, 0, 0], yaw: 0, hl: 25, hw: 7, maxHull: 1200, maxSail: 600, atHelm: true, wrecked: false }),
-    strike: (b, hurt) => strikes.push({ b, hurt }), hurt: (pct, base) => bites.push([pct, base]),
+    strike: (b, hurt) => strikes.push({ b, hurt }), maxHealth: () => 100, hurt: (n, el) => bites.push([n, el]),
     say: () => {}, mid: () => {}, sound: () => {}, fx: (k, p) => fx.push([k, p]),
   });
   const hear = (w) => { const v = validSerpentOut(w.k === 'st' ? w : { ...w, sx: 0, sz: 0 }); assert.ok(v, `the wire passes ${w.k}`); link.word(v); };
