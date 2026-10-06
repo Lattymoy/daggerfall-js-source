@@ -5196,7 +5196,7 @@ make the aura misallign".
 - Left, said: not seen in a running game client - the test drives the real sprite body and the real peer layers frame
   by frame, no GPU; the wings still stand on a rider at the saddle's rest pose (no shoulders read off a horse's frame).
 
-## LEGACY7 — Project Legacy's lines and the tombstone (2026-10-06, acct85 - acct84 on its branch, renumbered past SERPENT-SET at the merge of main)
+## LEGACY7 — Project Legacy's lines and the tombstone (2026-10-06, acct86 - acct84 on its branch, renumbered past SERPENT-SET's acct84 and then YARD-SHED's acct85 at the merges of main)
 
 Mac: "online integration with permadeath (Bloodline) or non-permadeath (Enduring)". The record is
 `06-Systems/Legacy-Arc.md` section 9; the service's half is `server-account/src/legacy.js` and migration
@@ -5228,6 +5228,6 @@ Mac: "online integration with permadeath (Bloodline) or non-permadeath (Enduring
   (`gone`), `ended_by` whose; `/v1/realm/die` takes `why: 'retired'` for an elder's mantle passed, which keeps it.
   `/v1/realm/unions` lists the account's unions, each from its own side.
 - **Deploy**: the relay (world174 - the house's stamp and the `wed` frame; world172 on its branch, renumbered past
-  main's WATCH-FIX and SERPENT3 at the merge) first, then the migration and the service (acct85), then the site - the
+  main's WATCH-FIX and SERPENT3 at the merge) first, then the migration and the service (acct86), then the site - the
   new site founds, tombstones and weds at the service.
 

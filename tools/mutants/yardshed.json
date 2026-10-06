@@ -1,0 +1,92 @@
+[
+  {
+    "name": "YARD-SHED-door-after-session",
+    "file": "server-account/src/index.js",
+    "old": "      if (path === '/v1/homes/yards' && request.method === 'POST') {\n        const ip",
+    "new": "      if (path === '/v1/homes/yards-moved-behind-the-session' && request.method === 'POST') {\n        const ip",
+    "tests": [
+      "test/yardshed.test.js"
+    ],
+    "note": "the yards asked behind a session's two reads again"
+  },
+  {
+    "name": "YARD-SHED-unkept",
+    "file": "server-account/src/decor.js",
+    "old": "  if (kept && nowS - kept.at < YARDS_KEPT_S) return kept.answer;",
+    "new": "  if (kept && nowS - kept.at < 0) return kept.answer;",
+    "tests": [
+      "test/yardshed.test.js"
+    ],
+    "note": "every ask a read"
+  },
+  {
+    "name": "YARD-SHED-unshared",
+    "file": "server-account/src/decor.js",
+    "old": "  if (asking) return asking;\n  const gen",
+    "new": "  if (asking && false) return asking;\n  const gen",
+    "tests": [
+      "test/yardshed.test.js"
+    ],
+    "note": "two asks at one moment, two reads"
+  },
+  {
+    "name": "YARD-SHED-unforgotten",
+    "file": "server-account/src/decor.js",
+    "old": "  keptYards.delete(mapId);\n  askingYards.delete(mapId);",
+    "new": "  askingYards.delete(mapId);",
+    "tests": [
+      "test/yardshed.test.js"
+    ],
+    "note": "a write here leaves the town's old answer kept"
+  },
+  {
+    "name": "YARD-SHED-gen-ignored",
+    "file": "server-account/src/decor.js",
+    "old": "if (!('error' in answer) && (yardWrites.get(mapId) ?? 0) === gen) {",
+    "new": "if (!('error' in answer)) {",
+    "tests": [
+      "test/yardshed.test.js"
+    ],
+    "note": "an answer asked before a write kept after it"
+  },
+  {
+    "name": "YARD-SHED-unlimited",
+    "file": "server-account/src/index.js",
+    "old": "if (overAccountRate(`yards:${ip}`, nowS, ACCOUNT_MAX, ACCOUNT_WINDOW_S)) return no('rate', 429, origin);",
+    "new": "",
+    "tests": [
+      "test/yardshed.test.js"
+    ],
+    "note": "an address asks without bound"
+  },
+  {
+    "name": "YARD-SHED-every-town",
+    "file": "src/scenes/homeYards.js",
+    "old": "      if (withinReach(p, feet)) ensure(p.homeTown);",
+    "new": "      ensure(p.homeTown);",
+    "tests": [
+      "test/yardshed.test.js"
+    ],
+    "note": "the whole streaming grid's towns asked"
+  },
+  {
+    "name": "YARD-SHED-no-doubling",
+    "file": "src/scenes/homeYards.js",
+    "old": "export const yardRetryMs = (n) => Math.min(YARD_RETRY_MAX_MS, YARD_RETRY_MS * 2 ** Math.max(0, n - 1));",
+    "new": "export const yardRetryMs = (n) => YARD_RETRY_MS;",
+    "tests": [
+      "test/yardshed.test.js"
+    ],
+    "note": "a failed town asked every YARD_RETRY_MS"
+  },
+  {
+    "name": "YARD-SHED-count-unkept",
+    "file": "src/scenes/homeYards.js",
+    "old": "      if (!Array.isArray(list)) { failed.set(mapId, { at: now(), n: (failed.get(mapId)?.n ?? 0) + 1 }); return; }",
+    "new": "      if (!Array.isArray(list)) { failed.set(mapId, { at: now(), n: 1 }); return; }",
+    "tests": [
+      "test/yardshed.test.js"
+    ],
+    "note": "the failures in a row never counted"
+  }
+]

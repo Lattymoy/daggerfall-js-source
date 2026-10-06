@@ -10066,6 +10066,31 @@ home's alone - they are about other players.
 - Known limits: the lot is a box round the footprint (a building turned off the grid has a wider lot); yard pieces are
   not activation targets; the street's wandering folk are not steered round them.
 
+### YARD-SHED - a town's yards asked within reach, kept by the service, needing no session (2026-10-06)
+
+The account service went down for everyone on 2026-10-06: every database call failed with `D1_ERROR: D1 DB is
+overloaded. Requests queued for too long.`, so no identity token was minted and no player could join a room. Read off
+the database itself (`wrangler d1 insights`, `d1 info`, 45 s of `wrangler tail`):
+
+- The day before, 17.4 million reads and 688 million rows. 4.86 million were the session lookup and 4.73 million the
+  player row behind every request, and **3.0 million were this one town's yards** (`home_decor ... AND yard = 1`, 43 rows
+  each, 131 million rows).
+- In 45 s of the outage, 577 of the 930 requests were `/v1/homes/yards`, and all 150 token mints failed.
+- **Why.** `scenes/homeYards.js` asked every built pixel's town - the whole streaming grid's, where a yard is drawn
+  only within YARD_DRAW_M (300 m) of the eye - every minute, and a failed ask again every 10 s: a database too slow to
+  answer was asked six times as often, and the yards held it overloaded.
+
+The fix, at both ends:
+
+- **The service** (`server-account/src/decor.js` yardsKept, `index.js`) answers a town's yards before a session: the
+  answer is every caller's alike, any guest's to read, and the two reads a session costs were most of the day's. One
+  isolate keeps each town's answer YARDS_KEPT_S (30 s), asks once for every caller of the same moment, and forgets a
+  town a decor write there touched (an answer asked before that write is never kept). An address is bounded in memory
+  as a session is (ACCOUNT_MAX a minute) - no write to count it. acct85.
+- **The client** (`scenes/homeYards.js`) asks a town only while one of its homes is within YARD_ASK_M (500 m) of the
+  player's feet, and each failure in a row doubles the wait, from YARD_RETRY_MS to YARD_RETRY_MAX_MS (5 minutes).
+- Pinned in `test/yardshed.test.js` (4); `tools/mutants/yardshed.json` 9 of 9 dead.
+
 ### KNIGHT-HOUSE - a house a Knightly Order gives is its knight's on every door (FIELD BUGS 2026-10-04d)
 
 The Discord: "Houses earned through Knightly Orders still possibly purchaseable? ... I don't want to risk my Knight

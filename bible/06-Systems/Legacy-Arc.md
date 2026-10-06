@@ -294,7 +294,7 @@ mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed onl
 ## 9. ONLINE
 
 *LEGACY7 - built: the line, the tombstone, the member's birth and the house name (`server-account/src/legacy.js`,
-migration `0084_legacy.sql`, acct85; `systems/legacy/realmLine.js`; `test/legacy7_service.test.js`,
+migration `0084_legacy.sql`, acct86; `systems/legacy/realmLine.js`; `test/legacy7_service.test.js`,
 `test/legacy7_online.test.js`, `tools/mutants/legacy7.json`), and two players wed (part three: `net/wedSession.js`, the
 `wed` frame of world174 (world172 on its branch, renumbered past main's WATCH-FIX and SERPENT3 at the merge),
 `server-account/src/legacy.js` realmWed; `test/legacy7_wed.test.js`, `tools/mutants/legacy7wed.json`).*
@@ -328,7 +328,7 @@ migration `0084_legacy.sql`, acct85; `systems/legacy/realmLine.js`; `test/legacy
   LEGACY7 an online founder kept the client's id in the record while the realm named the character anew, so its saves
   were refused into the record and its next load founded a second house.
 - **Enduring online** is the offline law: the toll, the rise, the elder's mantle.
-- **A house name online** (LEGACY7 part two, `net/houseLaw.js`; world174, acct85; `test/legacy7_house.test.js`,
+- **A house name online** (LEGACY7 part two, `net/houseLaw.js`; world174, acct86; `test/legacy7_house.test.js`,
   `tools/mutants/legacy7house.json`): the account service reads a realm character's house off its line and signs it
   into the identity token beside the guild's tag - `hn` the surname, `hc` the member's given name, `hb` a Bloodline,
   `hg` the generation's numeral from the second of a name ("Ysolde II") - through the name filter (the house is shown

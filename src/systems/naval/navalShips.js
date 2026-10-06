@@ -96,6 +96,19 @@ export const SIDE_DIR = Object.freeze({ starboard: Object.freeze([1, 0, 0]), por
  * reads her hurts as the share of her old whole they were (navalHost.js savedHurts).
  */
 export const SHIP_TOUGHNESS = 1.6;
+/**
+ * CREW-HOLD (2026-10-06, Mac: "Crew depletes too fast"): A PLAYER'S CREW STANDS TWICE WHAT A CAPTAIN'S DOES. The men a
+ * blow takes are its men over her crew's toughness (navalDamage.js ballMen), and at SHIP_TOUGHNESS a player's crew went
+ * before her hull under every gun - measured on navalAI.js strikeTime's own terms, a galleon's 24 men in 146 s of a
+ * Pirate Brigantine's fire against 176 s for her hull, a Carrack's 30 in 182 s against 234 (1.21 and 1.29 times
+ * faster), and a swivel boat's 2 men a ball (a Pirate Sloop's) emptied a galleon in 67 s that would need 451 s to sink
+ * her. At twice it every ship of the line's fire leaves her crew standing when her hull is gone - a galleon's men in
+ * 292 s of a brigantine's fire against 176 for her hull, a Carrack's 365 against 234; a swivel boat's balls still thin
+ * them first (a galleon's in 134 s), its trade, at half the pace. A player's own ship
+ * alone: every ball, fire, ram and serpent's blow on her (navalHost.js landHit, the galley's ram, serpentStrike; her
+ * fire's `wound`). The captains' crews keep SHIP_TOUGHNESS, so a captain's ship strikes by her men as she did.
+ */
+export const PLAYER_CREW_TOUGHNESS = 2 * SHIP_TOUGHNESS;
 /** A hull's points over its first build's, toughened. */
 const tough = (hp) => Math.round(hp * SHIP_TOUGHNESS);
 /** A hull's rig boxes, frozen (a box's `boom`, `pivot`, `obb` or `sail` riding on its pair). AUDIT GN2-RG3: `sail` the
@@ -219,6 +232,21 @@ export function batteryOf(hull, side) {
   const k = side === 'bow' ? b.bow : side === 'stern' ? b.stern : null;
   return k ? { side, gun: k.gun, muzzles: k.muzzles.map((m) => [...m]) } : null;
 }
+/**
+ * GALLEON-WEIGHT (2026-10-06, Mac: "The galleon has less cannons, so it needs a buff to account for that"): A PLAYER'S
+ * GALLEON THROWS THE WEIGHT OF SIX GUNS FROM HER FIVE PORTS. Mac's galleon has a gun at each of her ten gunports
+ * (GALLEON, HULL_BUILDS) where the galleon Come Sail Away shipped carried six a side (MOD_SMALL_SHIP_BUILD) - a sixth of
+ * her broadside went with the model. So each ball of her broadside strikes MOD_SMALL_SHIP_BUILD's count over hers as
+ * hard (6/5) - her hull and canvas harm (navalDamage.js shotDamage `weight`), never her men (a ball takes its gun's) -
+ * and her broadside lands what the mod's six long guns did (5 x 14 x 6/5 = 84 = 6 x 14). 1 while the mod's own galleon
+ * stands in for hers (six guns, hullBuild), and for her chasers and barrels. A PLAYER'S alone - mine (navalHost.js fire)
+ * and a peer's (fireFromWord), riding each ball to its hit (navalGunnery.js volleyLaunches, navalShots.js) and the
+ * captains' reckoning of her fire (navalAI.js strikeTime, a player's FighterMeasure): the captains' galleons - the
+ * Pirate Brigantine, the Merchant Galleon, the Navy Cutter - keep the broadside every tuned duel was measured with
+ * (AUDIT NAV2 F25, Mac's bar).
+ */
+export const playerBatteryWeight = (hull, side) => (hull === HULL.SmallShip && (side === 'starboard' || side === 'port')
+  ? MOD_SMALL_SHIP_BUILD.broadside.length / Math.max(1, hullBuild(hull).broadside.length) : 1);
 /** Every battery a hull carries. */
 export const batteriesOf = (hull) => SIDES.map((s) => batteryOf(hull, s)).filter(Boolean);
 

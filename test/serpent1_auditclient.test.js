@@ -291,7 +291,8 @@ test('AUDIT SERPENT M4/S1/L4/D2/D6/D5 and L2/B6/T4: the world\'s wiring and the 
   assert.match(w, /const level = spoilsLevel\(entry\.ch === characterIdOf\(playerEntity\) \? playerEntity\.level \?\? 1 : Number\(entry\.lv\) \|\| c\.l \|\| 1, c\.l\);/);
   assert.match(w, /return spoilsLock\(\(\) => serpentSpoils\.grant\(/);
   assert.match(n, /if \(segmentOfTarget\(e\.target\) != null\) \{ t\.hits\+\+; t\.ended\+\+; \}/);
-  assert.match(n, /const k = st\.guns\.braced \? BRACE_TAKEN : 1;\n\s+const change = st\.damage\.apply\(k < 1 \? \{ \.\.\.hurt, hull: Math\.round\(\(hurt\.hull \?\? 0\) \* k\), sail: Math\.round\(\(hurt\.sail \?\? 0\) \* k\) \} : hurt, clock\);/);
+  // PIN MOVED (CREW-HOLD, 2026-10-06): its men over a player's crew's toughness (playerMen), the brace still halving hull and sail
+  assert.match(n, /const k = st\.guns\.braced \? BRACE_TAKEN : 1;\n[^\n]*\n\s+const men = playerMen\(hurt\.crew \?\? 0, random\(\)\);\n\s+const change = st\.damage\.apply\(\{ \.\.\.hurt, crew: men, \.\.\.\(k < 1 \? \{ hull: Math\.round\(\(hurt\.hull \?\? 0\) \* k\), sail: Math\.round\(\(hurt\.sail \?\? 0\) \* k\) \} : \{\}\) \}, clock\);/);
   assert.match(n, /const v = best\.e \? velocityOf\(best\.e\.ship\) : best\.v;/);
   assert.match(n, /ships\.push\(\{ e: SERPENT_AIM, v: t\.v \?\? \[0, 0, 0\]/);
   assert.match(src('src/net/online.js'), /isSocialRoom\(room\) \? r\.k === 'fell' \|\| r\.k === 'rcpt' : isCellRoom\(room\)/, 'the hub hands a receipt (S5)');

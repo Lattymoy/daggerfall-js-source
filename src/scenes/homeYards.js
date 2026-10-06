@@ -65,6 +65,19 @@ export const YARD_MARK_HIGH = 1;
 /** A town's yards, believed this long; an unanswered ask waits this long before the next. */
 export const YARD_TOWN_TTL_MS = 60_000;
 export const YARD_RETRY_MS = 10_000;
+/**
+ * YARD-SHED (2026-10-06, the account service down - "D1 DB is overloaded. Requests queued for too long."): A TOWN'S
+ * YARDS ARE ASKED ONLY WITHIN REACH, AND A FAILED ASK BACKS OFF. Every built pixel's town was asked every minute - the
+ * whole streaming grid's, where a yard is drawn only within YARD_DRAW_M of the eye - and a failed ask again every
+ * YARD_RETRY_MS, so a database too slow to answer was asked six times as often: 3.0 million asks a day, 577 of the 930
+ * requests the service saw in 45 s of the outage. Now a town is asked while one of its homes stands within YARD_ASK_M of
+ * the player's feet (its yards drawn before they are in sight), and each failure in a row doubles the wait, to
+ * YARD_RETRY_MAX_MS.
+ */
+export const YARD_ASK_M = YARD_DRAW_M + 200;
+export const YARD_RETRY_MAX_MS = 300_000;
+/** The wait before a town's next ask after `n` failures in a row (ms). */
+export const yardRetryMs = (n) => Math.min(YARD_RETRY_MAX_MS, YARD_RETRY_MS * 2 ** Math.max(0, n - 1));
 /** How often the yards are brought in line with the town, seconds. */
 export const YARD_SYNC_S = 0.5;
 /** What the decorator says of a piece off the lot, in the house, or on another building's ground. */
@@ -253,6 +266,7 @@ export function createHomeYards(deps) {
   /** @type {Map<number, {at: number, byKey: Map<number, any[]>}>} */
   const towns = new Map();
   const asking = new Map();
+  /** @type {Map<number, {at: number, n: number}>} YARD-SHED: each town's last failure and the failures in a row */
   const failed = new Map();
   /** @type {Map<string, {pool: any, px: number, py: number, mapId: number, bk: number, t: number[], sig: string, lot: any, frame: any, entry: any, trees: Map<string, any>, treeSet: any}>} */
   const yards = new Map();
@@ -270,11 +284,12 @@ export function createHomeYards(deps) {
     if (deps.heard?.() === false) return;   // WD3 (AUDIT WD3 R6): a yard is laid out on its town's layout - none asked before it is heard
     const had = towns.get(mapId);
     if (had && now() - had.at < YARD_TOWN_TTL_MS) return;
-    if (asking.has(mapId) || now() - (failed.get(mapId) ?? -Infinity) < YARD_RETRY_MS) return;
+    const f = failed.get(mapId);
+    if (asking.has(mapId) || (f && now() - f.at < yardRetryMs(f.n))) return;   // YARD-SHED: each failure in a row doubles the wait
     const asked = wrote;
     const p = Promise.resolve().then(() => deps.api?.yards?.(mapId)).then((r) => {
       const list = r?.ok ? r.data?.yards : null;
-      if (!Array.isArray(list)) { failed.set(mapId, now()); return; }
+      if (!Array.isArray(list)) { failed.set(mapId, { at: now(), n: (failed.get(mapId)?.n ?? 0) + 1 }); return; }
       const byKey = new Map();
       for (const y of list) {
         if (!Number.isSafeInteger(y?.buildingKey) || !Array.isArray(y.pieces)) continue;
@@ -283,7 +298,7 @@ export function createHomeYards(deps) {
       for (const [bk, w] of writes.get(mapId) ?? []) if (w.n > asked) byKey.set(bk, w.list);   // YARD-STALE: written since it was asked
       towns.set(mapId, { at: now(), byKey });
       failed.delete(mapId);
-    }, () => { failed.set(mapId, now()); }).finally(() => { asking.delete(mapId); });
+    }, () => { failed.set(mapId, { at: now(), n: (failed.get(mapId)?.n ?? 0) + 1 }); }).finally(() => { asking.delete(mapId); });
     asking.set(mapId, p);
   }
 
@@ -338,11 +353,23 @@ export function createHomeYards(deps) {
 
   /** THE YARDS BROUGHT IN LINE with the town: each home's pieces stood in its pixel (again where the town's answer
    *  changed, or the world recentred), a pixel gone taken down with its yards. */
+  /** YARD-SHED: whether one of a town pixel's homes stands within YARD_ASK_M of the player's feet - a host that says no
+   *  feet asks as before. */
+  function withinReach(p, feet) {
+    if (!feet) return true;
+    const t = deps.translation(p.px, p.py);
+    for (const [, frame] of p.homeFrames) {
+      if (!frame?.at) return true;   // a frame without its place: asked, as before
+      if (Math.hypot(t[0] + frame.at[0] - feet[0], t[2] + frame.at[2] - feet[2]) <= YARD_ASK_M) return true;
+    }
+    return false;
+  }
   function sync() {
     const live = new Set();
+    const feet = deps.feet?.() ?? null;
     for (const [pk, p] of deps.built?.() ?? []) {
       if (!p?.homeTown || !p.homeFrames) continue;
-      ensure(p.homeTown);
+      if (withinReach(p, feet)) ensure(p.homeTown);
       const town = towns.get(p.homeTown);
       for (const [bk, frame] of p.homeFrames) {
         const home = deps.homes?.homeAt?.(p.homeTown, bk) ?? null;
