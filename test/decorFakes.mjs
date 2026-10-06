@@ -140,8 +140,9 @@ export const ACTIONS = new Map([['KeyW', 'MoveForwards'], ['KeyS', 'MoveBackward
  * AUDIT 05b A3: `scan` - scan deps of the pin's own over the rig's (`mods`, `modelRadius`, `flatRadius`; none, as before).
  * AUDIT 05b A5: `prepareModel` the host's law over a model the tool draws (none unless handed). AUDIT 05b A6: `getTexture`
  * the pipeline's texture door over the rig's, and `flatPicture` the host's picture door for a flat (none unless handed).
+ * DECOR-TURN (AUDIT Y1): `later(fn, ms)` the host's clock a turn's write waits on (the page's setTimeout unless handed).
  */
-export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 1000, homeDecor = null, locked = true, touch = false, radius = () => 0.8, base = null, mwPicture = null, collider = null, iconUrl = async () => null, getGpuMesh = async (id) => ({ gpu: id }), now = () => 0, extraFlats = [], extraPeople = [], recordSize = () => ({ width: 16, height: 32 }), realm = null, doors = [], doorsHere = null, walls = null, rent = null, look = null, placeOk = null, lot = null, yardCap = null, charterClear = null, scan = {}, prepareModel = null, getTexture = null, flatPicture = null } = {}) {
+export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 1000, homeDecor = null, locked = true, touch = false, radius = () => 0.8, base = null, mwPicture = null, collider = null, iconUrl = async () => null, getGpuMesh = async (id) => ({ gpu: id }), now = () => 0, extraFlats = [], extraPeople = [], recordSize = () => ({ width: 16, height: 32 }), realm = null, doors = [], doorsHere = null, walls = null, rent = null, look = null, placeOk = null, lot = null, yardCap = null, charterClear = null, scan = {}, prepareModel = null, getTexture = null, flatPicture = null, later = null } = {}) {
   const doc = fakeDoc();
   const win = fakeWin();
   const entries = decorCatalogue(collectDecor([rmb([41000, 41000, 41001, 41811], [[210, 3], [209, 0]]), rmb([41000], [[209, 0]], doors, extraPeople)]));
@@ -242,6 +243,7 @@ export function toolRig({ room = { kind: 'house', where: 'Your house' }, gold = 
     ...(charterClear ? { charterClear } : {}),   // SEAT-HALL: the court's two metres
     ...(prepareModel ? { prepareModel } : {}),   // AUDIT 05b A5
     ...(flatPicture ? { flatPicture } : {}),   // AUDIT 05b A6
+    ...(later ? { later } : {}),   // DECOR-TURN (AUDIT Y1): the host's clock for a turn's settling, a pin's own
   });
   const cam = { pos: [10, 1.6, 10], yaw: 0, pitch: 0 };
   const frame = (over = {}) => tool.frame({ dt: 0.1, cam, overlayUp: false, interior: true, ...over });

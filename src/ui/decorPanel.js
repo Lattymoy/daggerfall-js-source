@@ -312,20 +312,21 @@ export function createDecorButton({ onPress, touch = false, doc = document }) {
  * `onPoint(entry|null)` - the piece the preview shows changed; `thumbOf(entry)` - a Promise of a flat's picture (a URL);
  * NUDE-DECOR: `thumbKeyOf(entry)` - the key that picture is kept under (the entry's own, unless the host draws it as
  * another picture now - a figure's stand-in);
- * DECOR1e: `onMove(piece)`, `onRemove(piece)`, `onToggle(piece, 'light'|'storage')` - a placed piece's four changes.
+ * DECOR1e: `onMove(piece)`, `onRemove(piece)`, `onToggle(piece, 'light'|'storage')` - a placed piece's four changes;
+ * DECOR-TURN: `onTurn(piece, dir)` - and turned where it stands, a step left (-1) or right (1).
  * BASE-HIDE: `base` in the view - the room's own furniture, each `{ key, name, kind, model, flat, shape, hidden, holds,
  * dist }`, nearest first; `onBase(keys, out)` - those pieces taken out of the room (`out`) or put back, free.
  * DECOR-ROOMS: `rooms` and `roomId` in the view - a house's rooms (`{ id, name }`, two or more) and the one chosen, and
  * `room` on each placed and built-in piece; `onRoom(id)` - a room's tab chosen.
  * @param {{ onPlace: (entry: any) => void, onClose?: () => void, onPoint?: (entry: any) => void,
  *   thumbOf?: (entry: any) => Promise<string|null>|null, onMove?: (piece: any) => void, onRemove?: (piece: any) => void,
- *   onToggle?: (piece: any, what: string) => void, onPlaceLook?: (furniture: any, look: any) => void,
+ *   onToggle?: (piece: any, what: string) => void, onTurn?: (piece: any, dir: number) => void, onPlaceLook?: (furniture: any, look: any) => void,
  *   onBase?: (keys: string[], out: boolean) => void, onRoom?: (id: number) => void, onRent?: (what: string, row: any, price: number|null) => void,
  *   onPaint?: (what: string, look: any) => void, doc?: any, win?: any, thumbKeyOf?: (entry: any) => string }} opts
  */
 export function createDecorPanel({
   onPlace, onClose = () => {}, onPoint = () => {}, thumbOf = () => null, onMove = () => {}, onRemove = () => {}, onToggle = () => {},
-  onPlaceLook = () => {}, onBase = () => {}, onRoom = () => {}, onRent = () => {}, onPaint = () => {}, doc = document, win = globalThis,
+  onTurn = () => {}, onPlaceLook = () => {}, onBase = () => {}, onRoom = () => {}, onRent = () => {}, onPaint = () => {}, doc = document, win = globalThis,
   thumbKeyOf = (e) => e.key,
 }) {
   injectStyle(doc);
@@ -375,6 +376,9 @@ export function createDecorPanel({
   const roomActions = el('div', 'dfdecor-room-actions');
   const act = (label, fn) => { const b = el('button', 'dfdecor-btn', label); b.type = 'button'; b.addEventListener('click', fn); return b; };
   const moveBtn = act('Move', () => { const it = placedSelected(); if (it && !moveBtn.disabled) { hide(); onMove(it.piece); } });
+  // DECOR-TURN (Mac: "the ability to rotate objects on the ground"): the chosen piece turned where it stands, the panel up
+  const turnBtn = (label, dir) => { const b = act(label, () => { const it = placedSelected(); if (it && !b.disabled) onTurn(it.piece, dir); }); return b; };
+  const turnLeftBtn = turnBtn('Turn left', -1), turnRightBtn = turnBtn('Turn right', 1);
   const lightBtn = act('Light', () => { const it = placedSelected(); if (it) onToggle(it.piece, 'light'); });
   const storeBtn = act('Holds things', () => { const it = placedSelected(); if (it && !storeBtn.disabled) onToggle(it.piece, 'storage'); });
   const removeBtn = act('Remove', () => { const it = placedSelected(); if (it && !removeBtn.disabled) onRemove(it.piece); });
@@ -391,7 +395,7 @@ export function createDecorPanel({
     if (what) onToggle(it.piece, what);
   });
   for (const b of [lightBtn, storeBtn, stationPick, stationBtn]) b.className += ' dfdecor-yardless';   // HOME-YARD
-  roomActions.append(moveBtn, lightBtn, storeBtn, stationPick, stationBtn, removeBtn);
+  roomActions.append(moveBtn, turnLeftBtn, turnRightBtn, lightBtn, storeBtn, stationPick, stationBtn, removeBtn);
   // BASE-HIDE: the room's own furniture - the chosen piece out or back, and the whole room at once
   const baseActions = el('div', 'dfdecor-base-actions');
   const baseBtn = act('Take out', () => { const it = baseSelected(); if (it && !baseBtn.disabled) onBase([it.key], !it.hidden); });
@@ -896,6 +900,7 @@ export function createDecorPanel({
     stationPick.disabled = !it || !!it.piece.item || it.piece.storage || door;
     stationBtn.disabled = stationPick.disabled;
     moveBtn.disabled = !it;
+    turnLeftBtn.disabled = turnRightBtn.disabled = !it || door;   // DECOR-TURN: a door is turned by its doorway (Move)
     lightBtn.disabled = !it || door;
     storeBtn.disabled = !it || !!it.piece.item || (it.piece.storage && it.holds) || !!it.piece.station || door;   // HOME-STATIONS: a station holds nothing
     removeBtn.disabled = !it || it.holds;

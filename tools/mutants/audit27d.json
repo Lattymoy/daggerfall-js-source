@@ -432,20 +432,22 @@
   {
     "name": "AUDIT-S2-no-guard",
     "file": "src/scenes/decorTool.js",
-    "old": "    if (stationBusy.has(piece.id)) return false;\n",
-    "new": "",
+    "old": "    return pieceWrite(piece.id, () => stationNow(r, piece, want));\n",
+    "new": "    return stationNow(r, piece, want);\n",
     "tests": [
       "test/homestations.test.js"
-    ]
+    ],
+    "note": "AUDIT YARD-HEIGHT (PIN MOVED, re-aimed by content): the guard is the piece's one queue of writes (pieceWrite) - stationBusy, which it made redundant, is gone."
   },
   {
     "name": "AUDIT-S2-rollback-unsaid",
     "file": "src/scenes/decorTool.js",
-    "old": "        deps.say?.(DECOR_STATION_GOLD_WENT);\n",
+    "old": "    deps.say?.(DECOR_STATION_GOLD_WENT);\n",
     "new": "",
     "tests": [
       "test/homestations.test.js"
-    ]
+    ],
+    "note": "AUDIT YARD-HEIGHT (PIN MOVED, re-aimed by content: one write of a piece at a time)."
   },
   {
     "name": "AUDIT-S3-craft-out-of-signature",
