@@ -97,7 +97,7 @@ test('RUN-IN-PLACE: one home - the drawn pose the play-out makes is the one ever
   const src = readFileSync(new URL('../src/net/online.js', import.meta.url), 'utf8');
   assert.match(src, /const was = p\.drawn, s = poseAlong\(p\.path, p\.cur\);/, 'the drawn pose is made in tick (AUDIT 637 C1: against the place the law last drew)');
   const world = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
-  assert.equal(Number(/const ONLINE_MOVE_HOLD_MS = (\d+);/.exec(world)?.[1]), SHOWN_MOVE_HOLD_MS, 'the sender\'s hold and the watcher\'s are one length');
+  assert.match(world, /const ONLINE_MOVE_HOLD_MS = SHOWN_MOVE_HOLD_MS;/, 'the sender\'s hold IS the watcher\'s - one literal, net/online.js (AUDIT 637 D7)');
   const climb = readFileSync(new URL('../src/net/peerClimb.js', import.meta.url), 'utf8');
   assert.match(climb, /export const peerMoving = \(shown\) => !!shown\?\.mv && !peerClimbing\(shown\);/, 'a body strides off the drawn pose\'s mv');
   assert.ok(PEER_TIMEOUT_MS > SHOWN_MOVE_HOLD_MS * 100);

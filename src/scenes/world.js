@@ -577,7 +577,7 @@ import { Collider } from '../player/collider.js';
 import { createDataPipeline } from './dataPipeline.js';
 import { createWorldModes } from './worldModes.js';
 import { setAmbientTextHost, tickAmbientText } from '../systems/ambientText.js';   // AT2: Ambient Text's one component - this host claims it and feeds it the frame
-import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, WORLD_REPUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory
+import { OnlineSession, roomKeyFor, DEFAULT_SERVER, WORLD_PUBLISH_MS, WORLD_REPUBLISH_MS, FOES_MS, FOES_FULL_MS, FOES_STALE_MS, SHOWN_MOVE_HOLD_MS } from '../net/online.js';   // ONLINE1: the session; WORLD1: the room's memory; AUDIT 637 D7: the move hold, one law both ends
 import { createSeatLock, SEAT_NOTICE, SEAT_MID_TEXT, PLAY_HERE_LABEL } from '../net/oneSeat.js';   // ONE-SEAT: one tab of a player online - the browser's arm, beside the hub's
 import { readAccount, buyInsignia, equipTitle, equipAura, adoptIdentity as adoptSessionIdentity } from '../net/accountClient.js';   // WB9g: the Broker's insignia - the account's wardrobe, its sale and its wearing, and my own screen's word of it
 import { ownAura } from '../systems/ownGlyphs.js';   // WB9g: the aura at my own feet - the service's last word, kept on the stored session
@@ -18234,7 +18234,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let sceneToOnline = campToWire;
   const ROOM_HOLD_MS = 500;   // AUDIT ONLINE D11: a room key holds this long before the socket moves - a cell edge is not a churn
   const ONLINE_LOOK_CHECK_MS = 1000;   // PROFILE2: how often my look is re-composed and compared with what the rooms were told
-  const ONLINE_MOVE_HOLD_MS = 250;   // ONLINE-MVFLICKER1: see the outgoing `mv` computation's own header - debounces a single stray zero-delta sample
+  const ONLINE_MOVE_HOLD_MS = SHOWN_MOVE_HOLD_MS;   // ONLINE-MVFLICKER1: see the outgoing `mv` computation's own header - debounces a single stray zero-delta sample. AUDIT 637 D7: the watcher's hold (net/online.js), one literal for both ends
   // ACC1d: ONE minter, shared by the presence session and every channel
   // link - it holds no token and caches nothing, so a shared minter is
   // still a FRESH token per socket, which is what the relay's spend-once

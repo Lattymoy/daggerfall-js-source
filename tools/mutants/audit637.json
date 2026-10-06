@@ -248,5 +248,164 @@
       "test/audit637_roster.test.js",
       "test/soc3_socialpanel.test.js"
     ]
+  },
+  {
+    "name": "AUDIT637-B1a-the-far-planes-term-dropped",
+    "file": "src/render/shadowPass.js",
+    "old": "  return 1e-3 + 1e-5 * s + CUBE_F32_FAR * far * s;",
+    "new": "  return 1e-3 + 1e-5 * s;",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-B1b-the-class-slack-dropped",
+    "file": "src/render/shadowPass.js",
+    "old": "lim[o + 4] = cubeSlack(x, y, z, far);",
+    "new": "lim[o + 4] = 0;",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-B2a-a-list-reused-without-emptying",
+    "file": "src/render/shadowPass.js",
+    "old": "if (bb[j]) bb[j].length = 0; else bb[j] = [];",
+    "new": "if (!bb[j]) bb[j] = [];",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-B2b-the-quads-asked-short-of-the-cubes-reach",
+    "file": "src/render/shadowPass.js",
+    "old": "lim[o + 3] + cubeReach(rad) - rad + lim[o + 4])) continue;",
+    "new": "lim[o + 3] + lim[o + 4])) continue;",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-B2c-the-lean-left-out",
+    "file": "src/render/shadowPass.js",
+    "old": "        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]);   // the record's wind, for its quads' lean (quadRadius)",
+    "new": "        const wl = 0;   // the record's wind, for its quads' lean (quadRadius)",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-B2d-the-static-faces-ask-no-quads",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (cand) this._candidateQuads(rank);   // PERF-SHADOW1\n",
+    "new": "\n",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-B2e-the-dynamic-faces-ask-no-quads",
+    "file": "src/render/shadowPass.js",
+    "old": "          if (cand) this._candidateQuads(rank);   // PERF-SHADOW1 (a no-op when the static faces asked it above)",
+    "new": "          // the quads not asked",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-B3a-the-walk-made-up-front",
+    "file": "src/render/shadowPass.js",
+    "old": "    this._candWalked = false;\n    let anyDyn = false;",
+    "new": "    this._candWalked = false; if (casters.length) this._casterCandidates(L, casters, farOf);\n    let anyDyn = false;",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-B3b-the-scan-asked-with-nothing-dynamic",
+    "file": "src/render/shadowPass.js",
+    "old": "const dynNear = anyDyn ? this._dynamicNear(",
+    "new": "const dynNear = true ? this._dynamicNear(",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-B3c-a-dynamic-record-other-than-a-flats-missed",
+    "file": "src/render/shadowPass.js",
+    "old": "for (let i = 0; i < this.count; i++) if (this.records[i].dynamic) { anyDyn = true; break; }",
+    "new": "for (let i = 0; i < this.count; i++) if (this.records[i].kind === REC_BB && this.records[i].dynamic) { anyDyn = true; break; }",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-B3d-the-walk-made-again-by-every-lantern",
+    "file": "src/render/shadowPass.js",
+    "old": "  _casterCandidates(L, casters, farOf) {\n    this._candWalked = true;",
+    "new": "  _casterCandidates(L, casters, farOf) {",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-B4a-the-lists-left-at-discard",
+    "file": "src/render/shadowPass.js",
+    "old": "    for (const c of this._cands) { for (let j = 0; j < c.hw; j++) { const l = c.bb[j]; if (l) l.length = 0; } c.n = 0; c.hw = 0; }\n",
+    "new": "",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-B4b-the-filled-extent-never-recorded",
+    "file": "src/render/shadowPass.js",
+    "old": "    for (let k = 0; k < nC; k++) { const c = out[k]; if (c && c.n > c.hw) c.hw = c.n; }   // AUDIT 637 B4: as far as discard() must empty\n",
+    "new": "",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-B5-an-infinite-centre-culled",
+    "file": "src/render/shadowPass.js",
+    "old": "  return !(d > R) || d === Infinity;",
+    "new": "  return !(d > R);",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-B6-a-negative-radius-reaching-r-1-plus-sqrt-2",
+    "file": "src/render/shadowPass.js",
+    "old": "export const cubeReach = (r) => (r > 0 ? r * CUBE_REACH : r);",
+    "new": "export const cubeReach = (r) => r * CUBE_REACH;",
+    "tests": [
+      "test/audit637_shadow.test.js",
+      "test/perfshadow1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT637-D7-the-senders-hold-a-literal-again",
+    "file": "src/scenes/world.js",
+    "old": "  const ONLINE_MOVE_HOLD_MS = SHOWN_MOVE_HOLD_MS;",
+    "new": "  const ONLINE_MOVE_HOLD_MS = 250;",
+    "tests": [
+      "test/runinplace.test.js"
+    ]
   }
 ]

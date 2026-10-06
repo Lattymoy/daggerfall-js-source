@@ -3,7 +3,7 @@
 // hundreds a frame - and it read `location.search` (a DOM getter, before PERF-URL's memo can answer) to learn whether
 // the page is online, then looked the key up in a table that forces a handful of keys (the mods' switches the features
 // register). Measured in the real game (Knightstale, offline): 0.09 ms a frame of isOnlinePage under onlineForcedPref.
-// Now the table first, as onlineForcedSetting has always asked it: the same answer (two pure reads joined by &&), and
+// Now the table first, as onlineForcedSetting has asked it since AUDIT RETRO1 G2: the same answer (two pure reads joined by &&), and
 // no page read for a key no page forces.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

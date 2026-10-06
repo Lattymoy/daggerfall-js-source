@@ -316,7 +316,10 @@ export const SHADOW_SWAY_EVERY = 4;
  *  shadow map (with dynamic shadows) for the lo map (static only) from one frame to the next, and (b) lifts the lo
  *  tier's rebuild budget. Costs GPU time; turn off Settings > Features > Steady shadows (or from the console,
  *  window.__DF_SHADOW_TUNING.override = false; null hands it back to the row) to get EL8's schedule back. */
-export const SHADOW_TUNING = { steady: true, override: null, debug: false, debugForce: null, selfLamps: null, calmForce: null };
+export const SHADOW_TUNING = { steady: true, override: null, debug: false, debugForce: null, selfLamps: null, calmForce: null, facePrepass: true };
+// PERF-SHADOW1: `facePrepass` false walks every lantern face and dynamic scan over every record, as before the pre-pass
+// (_casterCandidates) - the pins' oracle and an A/B's off arm (console: window.__DF_SHADOW_TUNING.facePrepass = false).
+// AUDIT 637 B8: declared here, where the console finds it.
 /** STEADY-BALANCE (2026-10-04, Discord: "shadows too dark and too light where they should be normal ... light of candles too
  *  bright ... it fixed the flickering tho"): THE PLAYER'S OWN CARD CASTS INTO THE TWO LAMPS NEAREST IT AGAIN, steady or not.
  *  FLICKER-FIX had cast it into EVERY lamp with a full map under Steady shadows (twelve): in first person the card
@@ -869,17 +872,36 @@ const REPLAY_ALL = 0, REPLAY_STATIC = 1, REPLAY_DYNAMIC = 2, REPLAY_LO = 3;   //
  *  through the light at 45 degrees - take one to (along) + r sqrt 2 <= far + r (1 + sqrt 2) across it; the near plane
  *  bounds only from behind. A sphere past far + r (1 + sqrt 2) on some axis is taken by NO face's sphereInPlanes. */
 export const CUBE_REACH = 1 + Math.SQRT2;
+/** PERF-SHADOW1: the reach CUBE_REACH grants a sphere of radius r past the far. AUDIT 637 B6: a radius below zero - a
+ *  sphere the planes take only well inside them - reaches far + r along a face's axis, which is the farther of its far
+ *  plane's bound and its sides' (r (1 + sqrt 2) is the nearer for a negative r). One home for the cube's reach: the
+ *  sphere walk and a placed batch's quads (_candidateQuads) both take it. */
+export const cubeReach = (r) => (r > 0 ? r * CUBE_REACH : r);
+/** AUDIT 637 B1: the far plane's float32 rounding, per world unit of far and of the light's place. A face's far plane is
+ *  row 3 less row 2 of its float32 view-projection (frustumPlanes): two entries near 1 whose difference is the plane's
+ *  normal, 2 near / (far - near). spherePlanes divides by that normal, so a rounding of an entry (2^-24) moves the
+ *  plane by (far - near) / (2 near) of it - at the far plane, and over the light's own place. Three such roundings
+ *  (the product's, the subtraction's, the normal's) and a margin: 4 x 2^-24 / near. */
+export const CUBE_F32_FAR = (4 * 2 ** -24) / SHADOW_POINT_NEAR;
 /** PERF-SHADOW1: the slack the cube keeps over that bound - the faces' planes are float32 and the light is a world
  *  place, so a margin over the rounding of both (a pre-pass that is ever the narrower test would drop a draw). Measured
- *  with the real planes: past the exact bound by up to 1.3e-3 for a lantern 30 km from the origin, none near it. */
-export const cubeSlack = (px, py, pz, far) => 1e-3 + 1e-5 * (Math.abs(px) + Math.abs(py) + Math.abs(pz) + far);
+ *  with the real planes: past the exact bound by up to 1.3e-3 for a lantern 30 km from the origin.
+ *  AUDIT 637 B1: that was the side planes', for fars to 36 - the far plane's grows with far x (far + the place)
+ *  (CUBE_F32_FAR): 2.75e-3 past the bound for a lantern of far 96 at the origin, where this gave 2e-3, and the pre-pass
+ *  dropped a draw a face made. Lights reach to SHADOW_CASTER_MAX_RANGE. */
+export const cubeSlack = (px, py, pz, far) => {
+  const s = Math.abs(px) + Math.abs(py) + Math.abs(pz) + far;
+  return 1e-3 + 1e-5 * s + CUBE_F32_FAR * far * s;
+};
 /** PERF-SHADOW1: can a sphere [x, y, z, r] reach the cube of lantern `k` in `lim` (x, y, z, far, slack a lantern)? A
  *  NaN anywhere answers yes, as the faces' sphereInPlanes does (a NaN in any term of a plane's sum compares false, so
  *  no plane culls it): Math.max carries a NaN on any axis into the one compare, where a test axis by axis would cull
- *  a sphere NaN on one axis by another. */
+ *  a sphere NaN on one axis by another. AUDIT 637 B5: and so does a centre off at infinity - a face's plane meets it as
+ *  0 x Infinity or Infinity - Infinity, a NaN, and culls nothing with that plane - so it is kept, as some face takes it. */
 export const cubeKeeps = (lim, k, x, y, z, r) => {
-  const o = k * 5, R = lim[o + 3] + r * CUBE_REACH + lim[o + 4];
-  return !(Math.max(Math.abs(x - lim[o]), Math.abs(y - lim[o + 1]), Math.abs(z - lim[o + 2])) > R);
+  const o = k * 5, R = lim[o + 3] + cubeReach(r) + lim[o + 4];
+  const d = Math.max(Math.abs(x - lim[o]), Math.abs(y - lim[o + 1]), Math.abs(z - lim[o + 2]));
+  return !(d > R) || d === Infinity;
 };
 
 /**
@@ -960,6 +982,9 @@ export class ShadowPass {
     this.kind = null;
     /** per-frame counts, for a probe */
     this.stats = { records: 0, sunDraws: 0, pointDraws: 0, culled: 0, cascadesDrawn: 0, facesDrawn: 0, staticFaces: 0, dynFaces: 0, blits: 0, cachedSlots: 0, loSlots: 0, loFaces: 0, selfLamps: 0 };   // SC1: the faces split, the blits, the slots served from the cache; DISC15: the lo tier's slots and faces
+    // AUDIT 637 B7: `culled` counts what a replay's own tests culled. A lantern face walks its candidates alone (PERF-SHADOW1),
+    // so what it cannot reach it never asks - and never counts: the perf meter's `culled` is the sun's, the air's and the
+    // faces' own culls of what the cube kept, smaller than it read before the pre-pass for the same frame.
     this._planes = new Float32Array(24);   // EL5: the replay's frustum
     this._bSphere = new Float64Array(4);   // AUDIT 68 S16-batch-sphere-dup: batchSphere's scratch for the SC1 scans
     this._selfAt = new Float64Array(3);    // DISC29-E: where the player's own card stands this frame (_selfCardAt)
@@ -982,11 +1007,12 @@ export class ShadowPass {
     // cube (indices, in record order) and, of a billboard list, the flats that can (`bb`, a list a candidate) - with the
     // lanterns' (x, y, z, far, slack), per lantern the slot the record in hand holds in its list (-1: none yet), and
     // per lantern 1 while its lists hold a placed batch its quads have not been asked of (_candidateQuads)
-    this._cands = Array.from({ length: SHADOW_POINT_CASTERS }, () => ({ n: 0, rec: new Int32Array(64), bb: [] }));
+    this._cands = Array.from({ length: SHADOW_POINT_CASTERS }, () => ({ n: 0, hw: 0, rec: new Int32Array(64), bb: [] }));   // AUDIT 637 B4: `hw` the most slots filled since discard
     this._candOf = new Array(SHADOW_POINT_CASTERS).fill(null);
     this._candLim = new Float64Array(5 * SHADOW_POINT_CASTERS);
     this._candOpen = new Int32Array(SHADOW_POINT_CASTERS);
     this._candQuads = new Uint8Array(SHADOW_POINT_CASTERS);
+    this._candWalked = false;   // AUDIT 637 B3: this frame's walk made (render clears it; _candFor makes it on the first ask)
     this._sunPlanes = SHADOW_CASCADES.map(() => new Float32Array(24));   // SHADOW-REACH: the cascades' frusta, for the hosts' reach test
     this._sunPlanesFrame = -1;
     this._shiftGen = 0;                 // AUDIT SC1: the floating origin's generation (shiftOrigin)
@@ -1368,6 +1394,9 @@ export class ShadowPass {
     for (let i = 0; i < this.count; i++) { const r = this.records[i]; r.mesh = null; r.surface = null; r.batches = null; r.texRemap = null; }
     this.count = 0;
     this._selfCard = null;
+    // AUDIT 637 B4: and the lanterns' candidate lists, as far as they were ever filled - a list holds batches, and one
+    // kept past the frame kept a destroyed batch's placement grid (or a dungeon's, into the daylight) with it
+    for (const c of this._cands) { for (let j = 0; j < c.hw; j++) { const l = c.bb[j]; if (l) l.length = 0; } c.n = 0; c.hw = 0; }
   }
 
 
@@ -1449,7 +1478,14 @@ export class ShadowPass {
       const same = samePlace(sl, o, L, i * 4);   // AUDIT FLICKER P3
       farOf[rank] = same ? heldShadowFar(sl[o + 3], L[i * 4 + 3]) : shadowFarFor(L[i * 4 + 3]);
     }
-    const cands = casters.length ? this._casterCandidates(L, casters, farOf) : null;   // PERF-SHADOW1: one walk, every lantern's six faces
+    // PERF-SHADOW1: one walk, every lantern's six faces (_candFor). AUDIT 637 B3: made by the first lantern that walks
+    // this frame - a face it draws, or its dynamic scan in a frame with a dynamic record - never up front: a still town
+    // whose maps were all cached walked every record and flat against every lantern for lists nobody read (0.31 -> 0.78
+    // ms a frame, twelve lanterns over 2,000 flats). And with no dynamic record in the frame no lantern's dynamic scan
+    // can answer anything but none (each of its arms asks a record's `dynamic` first), so none is asked.
+    this._candWalked = false;
+    let anyDyn = false;
+    for (let i = 0; i < this.count; i++) if (this.records[i].dynamic) { anyDyn = true; break; }
     if (this.cacheOn && casters.length) {
       // PERF-EXT3: every ranked caster's static signature in ONE walk, before the loop that reads them - with the
       // pos and the shadow's far the loop takes (below), so a signature is the one its own walk would have folded
@@ -1464,7 +1500,6 @@ export class ShadowPass {
     for (let rank = 0; rank < casters.length; rank++) {
       const i = casters[rank], k = slotOf[rank];
       const pos = [L[i * 4], L[i * 4 + 1], L[i * 4 + 2]];
-      const cand = cands && cands[rank];   // PERF-SHADOW1: this lantern's candidates (null: its faces walk everything)
       // PERF-FLICKER: the SHADOW's far, not the lantern's live one - the
       // flicker must not count as "this light changed" and rebuild six
       // faces. Everything below takes this value (the face matrices, the
@@ -1495,6 +1530,7 @@ export class ShadowPass {
       if (!this.cacheOn) {
         // the old path whole: every caster in range, static or not, into the live layers at the cadence
         if (changed || due || selfMoved) {
+          const cand = this._candFor(rank, L, casters, farOf);   // PERF-SHADOW1: this lantern's candidates (null: its faces walk everything)
           if (cand) this._candidateQuads(rank);   // PERF-SHADOW1: the quads asked by a lantern that draws, once a frame
           pointFaceMatrices(pos, far, this.faceVP);
           for (let face = 0; face < 6; face++) {
@@ -1513,6 +1549,7 @@ export class ShadowPass {
         const staticStale = changed || !this._slotCached[k] || this._slotSig[k * 2] !== sigHash || this._slotSig[k * 2 + 1] !== sigCount;
         let matrices = false;
         if (staticStale) {
+          const cand = this._candFor(rank, L, casters, farOf);
           if (cand) this._candidateQuads(rank);   // PERF-SHADOW1
           pointFaceMatrices(pos, far, this.faceVP); matrices = true;
           for (let face = 0; face < 6; face++) {
@@ -1525,9 +1562,10 @@ export class ShadowPass {
           this._slotCached[k] = 1; this._slotSig[k * 2] = sigHash; this._slotSig[k * 2 + 1] = sigCount;
         } else this.stats.cachedSlots++;
         // the dynamics on top: the cache blitted into the live layers, then the moving casters alone, at the cadence
-        const dynNear = this._dynamicNear(pos, far, f.isSpectral, selfNear, cand);   // 0 none, 1 sway alone, 2 a mover
+        const dynNear = anyDyn ? this._dynamicNear(pos, far, f.isSpectral, selfNear, this._candFor(rank, L, casters, farOf)) : DYN_NONE;   // 0 none, 1 sway alone, 2 a mover
         const dueDyn = dynNear === DYN_SWAY ? (SHADOW_TUNING.steady || (this.frameNo + k) % SHADOW_SWAY_EVERY === 0) : due;   // AUDIT REACH: a swaying wood redraws on the sway's own cadence
         if (dynNear && (dueDyn || staticStale || !this._slotLiveDyn[k] || selfMoved)) {
+          const cand = this._candFor(rank, L, casters, farOf);
           if (cand) this._candidateQuads(rank);   // PERF-SHADOW1 (a no-op when the static faces asked it above)
           this._blitSlot(k);
           if (!matrices) pointFaceMatrices(pos, far, this.faceVP);
@@ -1677,6 +1715,7 @@ export class ShadowPass {
    * @param {ArrayLike<number>} L @param {ArrayLike<number>} casters @param {ArrayLike<number>} farOf
    */
   _casterCandidates(L, casters, farOf) {
+    this._candWalked = true;
     const out = this._candOf, lim = this._candLim, open = this._candOpen, quads = this._candQuads;
     const nC = casters.length;
     let live = 0;
@@ -1718,13 +1757,20 @@ export class ShadowPass {
         }
       }
     }
+    for (let k = 0; k < nC; k++) { const c = out[k]; if (c && c.n > c.hw) c.hw = c.n; }   // AUDIT 637 B4: as far as discard() must empty
     return out;
+  }
+  /** AUDIT 637 B3: lantern `rank`'s candidates - the walk (_casterCandidates) made by the first lantern that asks this
+   *  frame, for all of them; null when its faces walk everything. */
+  _candFor(rank, L, casters, farOf) {
+    if (!this._candWalked) this._casterCandidates(L, casters, farOf);
+    return this._candOf[rank];
   }
   /**
    * PERF-SHADOW1: a lantern's placed batches asked of their QUADS - once a frame, and only by a lantern about to draw
    * a face. A placed batch (PERF-EXT1's pixel-wide wood) passes the sphere walk for every lantern in its pixel; one of
-   * whose quads (radius `rad`) none stands within far + rad (1 + sqrt 2) of the light on every axis - placementsInCube's
-   * own box (far + rad) grown by rad sqrt 2 and the slack - is taken by no face, and leaves this lantern's lists (a
+   * whose quads (radius `rad`) none stands within far + cubeReach(rad) of the light on every axis - placementsInCube's
+   * own box (far + rad) grown to the cube's reach and the slack - is taken by no face, and leaves this lantern's lists (a
    * record left with no flat leaves them too, its order kept). One whose sphere or radius is not a number stays, as no
    * face's planes cull it. A lantern that draws nothing this frame asks nothing (a still room drawn whole reads no
    * placement), and one whose lists hold no placed batch has nothing to ask.
@@ -1749,7 +1795,7 @@ export class ShadowPass {
             const c = batchSphere(b, sp);
             if (c && c[0] === c[0] && c[1] === c[1] && c[2] === c[2] && c[3] === c[3]) {
               const rad = quadRadius(wl, b);
-              if (rad === rad && !placementsInCube(b, rad, lim[o], lim[o + 1], lim[o + 2], lim[o + 3] + rad * Math.SQRT2 + lim[o + 4])) continue;
+              if (rad === rad && !placementsInCube(b, rad, lim[o], lim[o + 1], lim[o + 2], lim[o + 3] + cubeReach(rad) - rad + lim[o + 4])) continue;   // AUDIT 637: the cube's own reach (placementsInCube adds the radius itself)
             }
           }
           list[m++] = b;

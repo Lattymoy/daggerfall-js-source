@@ -11,38 +11,42 @@
   {
     "name": "PERF-SHADOW1-b-the-cube-without-its-slack",
     "file": "src/render/shadowPass.js",
-    "old": "export const cubeSlack = (px, py, pz, far) => 1e-3 + 1e-5 * (Math.abs(px) + Math.abs(py) + Math.abs(pz) + far);",
-    "new": "export const cubeSlack = (px, py, pz, far) => 0;",
+    "old": "  return 1e-3 + 1e-5 * s + CUBE_F32_FAR * far * s;",
+    "new": "  return 0;",
     "tests": [
       "test/perfshadow1.test.js"
-    ]
+    ],
+    "note": "AUDIT 637 (re-aimed by content): B1 made cubeSlack a block with the far plane's own term; the mutant still answers no slack at all."
   },
   {
     "name": "PERF-SHADOW1-c-a-nan-sphere-culled-by-the-cube",
     "file": "src/render/shadowPass.js",
-    "old": "  return !(Math.max(Math.abs(x - lim[o]), Math.abs(y - lim[o + 1]), Math.abs(z - lim[o + 2])) > R);",
-    "new": "  return Math.max(Math.abs(x - lim[o]), Math.abs(y - lim[o + 1]), Math.abs(z - lim[o + 2])) <= R;",
+    "old": "  return !(d > R) || d === Infinity;",
+    "new": "  return d <= R || d === Infinity;",
     "tests": [
       "test/perfshadow1.test.js"
-    ]
+    ],
+    "note": "AUDIT 637 (re-aimed by content): B5 named the farthest axis `d` and keeps a centre at infinity; the mutant still culls a NaN."
   },
   {
     "name": "PERF-SHADOW1-c2-a-sphere-nan-on-one-axis-culled-by-another",
     "file": "src/render/shadowPass.js",
-    "old": "  return !(Math.max(Math.abs(x - lim[o]), Math.abs(y - lim[o + 1]), Math.abs(z - lim[o + 2])) > R);",
-    "new": "  return !(Math.abs(x - lim[o]) > R || Math.abs(y - lim[o + 1]) > R || Math.abs(z - lim[o + 2]) > R);",
+    "old": "  return !(d > R) || d === Infinity;",
+    "new": "  return !(Math.abs(x - lim[o]) > R || Math.abs(y - lim[o + 1]) > R || Math.abs(z - lim[o + 2]) > R) || d === Infinity;",
     "tests": [
       "test/perfshadow1.test.js"
-    ]
+    ],
+    "note": "AUDIT 637 (re-aimed by content): B5 named the farthest axis `d`; the mutant still asks axis by axis, so a NaN on one is culled by another."
   },
   {
     "name": "PERF-SHADOW1-d-a-placed-batch-asked-by-the-far-alone",
     "file": "src/render/shadowPass.js",
-    "old": "lim[o + 3] + rad * Math.SQRT2 + lim[o + 4])) continue;",
+    "old": "lim[o + 3] + cubeReach(rad) - rad + lim[o + 4])) continue;",
     "new": "lim[o + 3])) continue;",
     "tests": [
       "test/perfshadow1.test.js"
-    ]
+    ],
+    "note": "AUDIT 637 (re-aimed by content): the cube's reach is one home now (cubeReach); the mutant still asks the quads by the far alone."
   },
   {
     "name": "PERF-SHADOW1-e-a-nan-placed-batch-asked-of-its-quads",
@@ -92,11 +96,12 @@
   {
     "name": "PERF-SHADOW1-j-no-candidates-handed-to-the-faces",
     "file": "src/render/shadowPass.js",
-    "old": "    const cands = casters.length ? this._casterCandidates(L, casters, farOf) : null;",
-    "new": "    const cands = null;",
+    "old": "    return this._candOf[rank];\n  }",
+    "new": "    return null;\n  }",
     "tests": [
       "test/perfshadow1.test.js"
-    ]
+    ],
+    "note": "AUDIT 637 (re-aimed by content): B3 makes the walk on the first lantern's ask (_candFor); the mutant still hands every lantern none."
   },
   {
     "name": "PERF-SHADOW1-k-a-light-not-a-number-given-candidates",
@@ -137,11 +142,13 @@
   {
     "name": "PERF-SHADOW1-o-the-quads-asked-in-the-one-walk-for-every-lantern",
     "file": "src/render/shadowPass.js",
-    "old": "    const cands = casters.length ? this._casterCandidates(L, casters, farOf) : null;",
-    "new": "    const cands = casters.length ? this._casterCandidates(L, casters, farOf) : null;\n    if (cands) for (let rank = 0; rank < casters.length; rank++) this._candidateQuads(rank);",
+    "old": "    if (!this._candWalked) this._casterCandidates(L, casters, farOf);",
+    "new": "    if (!this._candWalked) { this._casterCandidates(L, casters, farOf); for (let k = 0; k < casters.length; k++) this._candidateQuads(k); }",
     "tests": [
-      "test/perfexta.test.js"
-    ]
+      "test/perfexta.test.js",
+      "test/audit637_shadow.test.js"
+    ],
+    "note": "AUDIT 637 (re-aimed by content): B3 makes the walk on the first lantern's ask (_candFor); the mutant still asks every lantern's quads with it. PIN MOVED: with no walk in a still frame the review's still room no longer sees it - audit637_shadow's mixed frame does (a cached lantern beside a wood while another lantern walks)."
   },
   {
     "name": "PERF-SHADOW1-p-a-record-left-with-no-flat-kept-in-the-list",
