@@ -1158,7 +1158,7 @@ of the board for better organization, instruction and readability"**.
   (`ui/noticeDoor.js` prefetchNoticeBoard, asked as the town's board is read on arrival; a failed fetch is let go for
   the press's own retry). The Market's first view is read as the board opens (`prefetch`), so its tab answers from the
   book's minute's cache; its opening settle no longer holds the read back (a settle that moves anything lets the cache
-  go, and the read asks again - MARKET-AUDIT B2's door). The Seat tab asks its works beside the standings, never after
+  go, and a read it overtook asks again - AUDIT 30 C6, `net/marketBook.js` read). The Seat tab asks its works beside the standings, never after
   their answer.
 - **Fewer words.** Each tab's fixed words in one table (`BOARD_WORDS`, `MARKET_WORDS`, `SEAT_TAB_WORDS`, `VENDOR_TEXT`),
   every one at most 120 characters, none naming the counting-house - "The counting-house is not answering. The market
