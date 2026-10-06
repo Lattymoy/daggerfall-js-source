@@ -35,7 +35,9 @@ Taken at the design, in the request's own order; each is Mac's to overrule.
 5. **ARMOUR IS THE CLASS SPRITE.** Daggerfall draws no worn gear on any NPC; the armed look it has is the eighteen
    human classes' sprites (`enemyBasics.js` 128-145, eight archive pairs). A resident who goes beyond the walls to fight
    - an adventurer, a caravan's guard, the watch on the road - walks out in their class's sprite and walks home in it;
-   in town, at home, they are a townsperson again.
+   in town, at home, they are a townsperson again. (Overruled in town for a calling, LW-LOOKS 2026-10-06 - Mac's "Class
+   looks + still flats": one with a class of their own, a guild hall's own and a temple's priest walk the town in a
+   class's sprite all day.)
 6. **RELATIONS ARE THE CHARACTER'S.** Who is a friend and who an enemy is per character and per resident, saved with
    the character (`modSaveData` vendor `LivingWorld`); online it rides the character's snapshot as every other modData
    record does. The world is shared; how it feels about you is yours.
@@ -229,7 +231,8 @@ the trample (`retire`), the probes.
 - **The armed walk.** `ResidentWalker.arm(look)` wears the class's eight-way MobileUnit on its archive by the
   resident's sex (`travellerSprites.js classLookOf`), its art loaded into the people's own texture table; out of it at
   home. NPCS ADVENTURING BEYOND TOWNS DRESS OUT IN ARMOR BEFORE LEAVING: the gear stay, then the class sprite walking
-  out of the gate.
+  out of the gate. (LW-LOOKS: one with a class of their own wears it in town all day now - `looks.js townClassOf`; the
+  gear stay is kept.)
 - **On the road** (`livingRoads.js`): every second the parties within `ROADS_VIEW_PX` (6) of the player's pixel
   (`partiesNear`, the book's memo of every trip made); each frame each party placed (`partyPlaces`) - BY DAY in file,
   `FILE_GAP_N` (1.8 m) apart along the way, `FILE_SIDE_N` to either side, facing the way; BY NIGHT in a ring
@@ -238,7 +241,8 @@ the trample (`retire`), the probes.
   `wayfarer caravan`) with its kind and where it is bound - the travellers' filter group, a square in the road's dust.
 - **Their bodies** (`travellerSprites.js`): the armed in their class's sprite, the rest in their own outfit (the
   walker's billboard); each a talk target in the street's shape, freed as it leaves the list and all at `clear()` -
-  indoors (the mode frame) and outside the open world.
+  indoors (the mode frame) and outside the open world. (LW-LOOKS: or a resident's still picture - a talk target as
+  any; the fallen's none.)
 - **Talk and regard on the road.** The talk ray and the hover take the road's people beside the town's
   (`_talkPersons`); the watch's conversion and the trample keep to the town's. A word is noted, an enemy refuses, and a
   hand caught in a traveller's purse costs their regard - and calls no watch (`livingTalk.caught`; on the road there is
@@ -584,7 +588,8 @@ all have tasks ... perform activities" - LW2 shut the door behind a resident; th
   through a wall), each landing on this room's floor (no floor, or another - a stair's foot - no spot), kept
   `INDOOR_APART_M` (1.3 m) from every other, `INDOOR_CLEAR_M` (1.1 m) from the building's static people and
   `INDOOR_DOOR_M` (1.8 m) from every way in (LW-FIX6: each door's landing). Each resident takes a spot in the order of their ids over an order the
-  building's key deals, facing into the room, in their own clothes (indoors no one is armed), to `INDOOR_MAX` (12).
+  building's key deals, facing into the room, in their own clothes (indoors no one is armed - LW-LOOKS: but one whose
+  calling is a class's in it), to `INDOOR_MAX` (12).
 - **Coming and going**: who is inside is read every `INDOOR_TICK_S` (1 s); on the way in the room is as the day has it,
   all at once (LW2's arrival law); after it one who comes or goes waits for the player to look away (or be
   `INDOOR_SEEN_M`, 14 m, off).
@@ -1566,6 +1571,64 @@ nearest their home (their own or the next), and they had no breakfast.
   the hours its pin read; LW-SPREAD's re-judge had left LW-SPACE's own list out. Its law is pinned by hand now
   (`lwspace_street` bound since: a stall then the talk at one spot, one come between), and the branch's four lists -
   `lwspace`, `lwspread`, `lwerrands`, `lwlodge` - judged whole on its tree: 99 of 99 dead.
+
+## LW-LOOKS - what a resident looks like (2026-10-06)
+
+Mac: NPCs should "even utilize different sprite forms not just the basic npc sprites" - and, asked how, "Class looks +
+still flats": guild members, priests, adventurers and sellswords walk the town in their class's full eight-way sprite;
+one who stays put without talking stands as Daggerfall's still NPC picture of their kind (a beggar at their pitch, a
+stall-keeper at the square, a priest at the temple door, the palace's courtiers indoors); talkers keep turning to face
+each other. Before, every resident walked the town in one of their people's four outfits (LW0 decision 4), and a
+class's sprite was a fighter's on the road alone (LW3's armed walk, LW0 decision 5).
+
+- **The class they walk the town in** (`systems/livingWorld/looks.js townClassOf`, GUILD_CLASSES, PRIEST_CLASS). One
+  with a class of their own (the census's `cls`: an adventurer, a sellsword, a courier) wears it all day, not only to
+  and from the road; a guild hall's own members (the census's `guildsman`, of their hall's faction) their guild's - the
+  Mages Guild's one of the mage's six (Mage, Healer, Sorcerer, Battlemage, Spellsword, Nightblade), the Fighters
+  Guild's one of the warrior's six (Warrior, Barbarian, Archer, Ranger, Monk, Knight), their seed's; a knightly order's
+  a knight; a hall of any other faction none; a temple's priests the healer's robes. Those of a guild by their trade or
+  their class (LW-ERRANDS' members: a scholar, an armourer's people) and the rest keep their outfit - a shop's people
+  carry its faction, and keep theirs too. The class is put on as the watch's uniform is (WATCH-DAY): where nobody sees
+  it - a body not yet stood, or out of the player's sight - and they are as they were till its art is in (the host
+  loads it on first asking). Indoors (LW8) one whose calling is a class's stands in it.
+- **The still picture** (`looks.js stillRoleOf`, `stillFlatOf`, STILL_FLATS). One keeping their place alone stands as
+  Daggerfall's own still picture of their kind - its NPC flats, FLATS.CFG's captions and genders, none ChildGard
+  censors: a beggar at their pitch (seven men, two crones), a stall-keeper at their stall by their trade (a merchant,
+  a crafter, a labourer at their stint, a fisher with the catch - a courier, with a class of their own, keeps it), a
+  priest at their own temple's door of a morning, and at home in the palace a courtier (`livingIndoors.js`: six
+  gentlemen, five ladies) - their seed's among their kind's of their sex, its frames on the game's own billboard clock
+  (render/flatAnimation.js FlatAnim, five a second: the blacksmith's hammer at his anvil). Each picture was
+  looked over for its kind; none stands a tenth over the people's tallest walker (2.15 m - the cowled old man, 177.0,
+  stands 2.65 m), and out are the "cowled woman" (178.0, a cowled swordswoman), the "wizened crone" (175.15, a witch at
+  her magic), the hooded men, the children and those dressed for a fight or for little at all. Every kind has several,
+  so no picture is stood by all: a market's labourers are many at once. Stood as where nobody sees it - a body coming
+  on at its pitch comes on as it, one come to it in the player's sight is themselves till the player looks away - and
+  themselves at once when they go on, walk up to their stand, or join a circle: a picture never walks, and in a circle
+  they turn to those they talk with (LW-TALK). A courtier's is dealt by the room's own circles of the frame, on the way
+  in too, and a resident's picture is a talk target as any (`travellerSprites.js`; the fallen on the road none, and no
+  speaker).
+- **The game's towns** (Daggerfall, Wayrest, Sentinel, Ripmarket, Tuntale; day 120, the plans' circles dealt): of their
+  305-317 people 18-24 walk in a class - 12-14 of their own, 4-8 a guild's, two priests; at nine 17-37 stand as still
+  pictures (labourers at their stints, 11-28; beggars, 2-9; merchants, to 3) on 11-14 pictures, the most of one 4-6
+  across the whole town; at one 22-38 (crafters at their stalls, 14-27) on 14-20, the most of one 4-7; a priest at the
+  temple's door between a quarter past eight and a quarter to nine in four of the five; at six one or none.
+- **The four hosts.** `scenes/world.js` - WIRED: `livingFlatOf` loads a still picture's art into the people's own
+  texture table as `livingArmOf` loads a class's, and hands the town its record's frames (`flatOf`); the people pass
+  draws it as any person (its archive, record and frame); `scenes/worldModes.js` - WIRED through the host (the
+  building's billboard pass draws the room's residents, LW8); `scenes/exterior.js` - FLAGGED as LW2 has it (no living
+  town); `scenes/dungeonContext.js` - no town.
+- **Pinned** by `test/lwlooks_town.test.js` (8: the town's class; the still pictures' kinds, sexes and seeds; the game's
+  own in FLATS.CFG - their sexes, none censored, their heights; the walker as a picture - its frames, armed under it,
+  dressed as another; on the street - come on as it, a picture never walking up out of sight, in view never changed,
+  looked away from the picture, walking on themselves; the street's classes and the art come late; indoors - the
+  court's on the way in, in a circle herself (the room's circles of the frame), in view never changed, in no other
+  building, a talk target, the fallen no one; the host) and `tools/mutants/lwlooks.json` (36, all dead); the court read
+  after the frame's circles are dealt is checked by hand (read before them, a courtier in a circle stood as the picture
+  a frame). PIN MOVED: `test/lw8_indoors.test.js` (indoors one whose calling is a class's wears it - a priest the
+  healer's robes); `tools/mutants/lw3.json` LW3-never-armed and LW3-host-tripless-town and `lw8.json` LW8-unarmed
+  re-aimed by content. The 376 records of the lists on the files LW-LOOKS touched (`livingTown.js`, `livingIndoors.js`,
+  `residentWalker.js`, `travellerSprites.js`), of `lw3` and `lw8` whole, and naming `lw8_indoors`, re-judged: 374 dead,
+  two equivalent as recorded.
 
 ## The four hosts
 

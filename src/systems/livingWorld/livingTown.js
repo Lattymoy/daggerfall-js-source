@@ -47,6 +47,7 @@ import { PERSON_MOVE_SPEED } from '../../characters/mobilePerson.js';
 import { townPlaces, exitToward, harbourDock, streetGeometry } from './places.js';
 import { townCensus, isHome, watchShiftSize } from './census.js';
 import { dayPlan, entryAt, isOutdoor, DAY_START_MIN, DAY_MIN } from './dayPlan.js';
+import { townClassOf, stillRoleOf, stillFlatOf } from './looks.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { createPathBook, pointOnLine } from './townPaths.js';
 import { spotCircles, circleLine, circlesStands, aloneStand, aloneStands, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M, SPACE_M } from './meetups.js';
@@ -212,6 +213,7 @@ export class LivingTown {
    *   tripsOf?: (day: number) => ({ away: Map<string, { t0: number, t1: number, yaw: number, armed: boolean, dock?: boolean }[]>, visitors: { res: Resident, inT: number, outT: number, yaw: number, trip?: any, dock?: boolean }[],
    *     holders?: Map<string, Resident|null>, news?: { kind: string, who: string, foe: string, place: string }[], places?: string[] } | undefined),
    *   armOf?: (res: Resident) => ({ mobileType: number, basics: any, archive: number, frameCount: (record: number) => number, sex?: 'male'|'female' } | null),
+   *   flatOf?: (flat: { archive: number, record: number }) => ({ archive: number, record: number, frameCount: number } | null),
    *   ashore?: (res: Resident) => ('home'|'sea'|'abroad'|null),
    *   crews?: () => { res: Resident, inT: number, outT: number, berth?: { lane: { key: string }, k: number } }[],
    *   harbour?: () => ({ x: number, z: number } | null),
@@ -229,7 +231,8 @@ export class LivingTown {
    * }} o - LW6c: `keepsakes()` what the player carries (a keepsake carried home), `takeKeepsake(item)` it handed over.
    *   `tripsOf(day)` the roads' word on the town for a day (trips.js through the host's book: who of it is away
    *   when, who of elsewhere stays here; LW-TALK `places` the towns its roads and news name, its talk's {place}), undefined while its ways are still being asked; `armOf(res)` a resident's
-   *   class sprite once its art is loaded, else null - `clock` the sky's minute (worldTick.js skyMinutes); `rate` the clock's minutes a real second now (a
+   *   class sprite once its art is loaded, else null (LW-LOOKS: `res.cls` the class asked - their town's), `flatOf(flat)` a
+   *   still picture's art and its frames once loaded, else null - `clock` the sky's minute (worldTick.js skyMinutes); `rate` the clock's minutes a real second now (a
    *   journey's scale in it); `mpm` the walking pace in the clock's metres a minute (LW0 decision 3). LW5: `ashore(res)`
    *   where one of its sailors is by their packet's clock (portCrews.js - at sea or abroad, in no street of this town);
    *   `crews()` the hands of the packets lying here from elsewhere, each ashore from `inT` to `outT` (the clock's
@@ -910,9 +913,6 @@ export class LivingTown {
       else if (lag > 0) lag = Math.max(0, lag - dt * rate * CATCH_UP);
       const w = this.where(res, this._now - lag, true);
       if (!w) { this._free(row); continue; }   // indoors: in through the door, out through the gate
-      // LW3: walking to or from the road, in their gear
-      const armed = !!w.e.armed && res.cls != null;
-      if (armed !== !!p.armed && typeof p.arm === 'function') { if (!armed) p.arm(null); else { const look = this.o.armOf?.(res) ?? null; if (look) p.arm(look); } }
       if (w.e.kind !== 'walk') lag = 0;   // standing at a spot owes nothing
       if (lag > 0) this._lag.set(res.id, lag); else this._lag.delete(res.id);
       // LW-STAND (field, 2026-10-05): a walk not yet searched is a pause where they stand - before, the body kept the
@@ -954,6 +954,23 @@ export class LivingTown {
       // WATCH-DAY: one of the watch wears the uniform on duty and his own clothes off it - changed where nobody sees it
       // (a body not yet stood, or out of the player's sight): never in view
       if (res.guard && p.guard !== !!w.e.duty && (!row.visible || allowChange)) p.setIdentity(w.e.duty ? res.archive : (res.civvies ?? res.archive), !!w.e.duty);
+      // LW3: walking to or from the road, in their gear - LW-LOOKS: and in town too, in the class their calling keeps (looks.js
+      // townClassOf: one with a class of their own - the road's armed - a guild hall's own, a priest's robes); put on as the
+      // uniform is, where nobody sees it, and as they were till its art is in
+      const cls = townClassOf(res);
+      if ((cls ?? null) !== (p.cls ?? null) && typeof p.arm === 'function' && (!row.visible || allowChange)) { if (cls == null) p.arm(null); else { const look = this.o.armOf?.(cls === res.cls ? res : { ...res, cls }) ?? null; if (look) p.arm(look); } }
+      // LW-LOOKS: one keeping their place alone - a beggar at their pitch, a stall-keeper at their stall, a priest at the
+      // temple's door - stands as Daggerfall's still picture of their kind (looks.js), stood where nobody sees it, as the
+      // uniform is; themselves again at once when they go on or join a circle (a picture never walks)
+      if (typeof p.still === 'function') {
+        const role = !p.moving && this._inCircle.get(res.id)?.spot !== w.e.at ? stillRoleOf(res, w.e) : null;   // a walk's none (stillRoleOf)
+        const want = role ? stillFlatOf(res, role) : null;
+        const has = p.stillLook;
+        if ((want?.archive ?? -1) !== (has?.archive ?? -1) || (want?.record ?? -1) !== (has?.record ?? -1)) {
+          if (!want) p.still(null);
+          else if (!row.visible || allowChange) { const look = this.o.flatOf?.(want) ?? null; if (look) p.still(look); }
+        }
+      }
       if (row.scheduleRecycle && allowChange) { this._free(row); continue; }
       if (row.scheduleEnable && !w.pending && (allowChange || w.fromDoor || (row.arrival && standing))) { row.scheduleEnable = false; row.visible = true; row.arrival = false; }
       if (!row.visible) continue;
