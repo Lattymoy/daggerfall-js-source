@@ -102,8 +102,8 @@
 // CHAP1, THE ROLL (bible/11-Multiplayer/Chapters-Arc.md 3): a realm character's standing with Daggerfall's own guilds -
 // the twenty-two guild factions' reputation and its memberships - kept here, under the playing tab's lease, while
 // CHAPTERS_OPEN lets the account in (npcRoll.js; the law src/net/npcChapterLaw.js):
-//   POST /v1/chapters/roll { character, lease, seed? } -> { roll, seeded? } | { roll: null }   (seeded once, from the save, capped by the character's age)
-//   POST /v1/chapters/claim { character, lease, rid, deltas, members } -> { roll, credited } | { roll, repeat }   (a loss whole, a gain under the day's bound)
+//   POST /v1/chapters/roll { character, lease, seed? } -> { roll, from, seeded? } | { roll: null }   (seeded once from the save - a customs crossing from the epoch capped; what is owed paid)
+//   POST /v1/chapters/claim { character, lease, rid, deltas, members } -> { roll, credited } | { roll, repeat }   (a loss whole, a gain at the day's pace and the rest owed)
 // ARENA4b, the arena online's second half: a bout's Renown on its claim, and the homes the arena displaced:
 //   POST /v1/arena/claim { receipt, character?, name? } -> { ...ARENA4's, renown?, order? }   (a ladder win, a rated players' win)
 //   POST /v1/arena/attempt { tier, bout, room } -> { ticket, tier, bout, room, forfeits } | 409 { error: 'order', ladder } | 403 { error: 'ladder-needs-account' }   (AUDIT ARENA-LADDER: a ladder attempt's ticket, for one room)
@@ -277,10 +277,11 @@ const REALM_STATUS = Object.freeze({
 /** CUSTOMS-PASS: a pass's refusals - a bad shape 400 (the default), a caller who is no developer 403, no such account
  *  404, a guest's name two accounts wear 409. */
 const PASS_STATUS = Object.freeze({ 'not-developer': 403, 'no-player': 404, ambiguous: 409 });
-/** CHAP1: the Roll's refusals - a bad shape 400 (the default), the switch shut 403, no such character 404, a lease
- *  another tab took or a Roll not yet read 409 (a race lost: asked again), a tombstone 410. */
+/** CHAP1: the Roll's refusals - a bad shape 400 (the default), the switch shut 403, no such character or none of its
+ *  saves landed 404, a lease another tab took 409 (the tab stops), a Roll not yet read or a race lost 409 (the tab asks
+ *  again - AUDIT CHAP R12: this said the lease was asked again too), a tombstone 410. */
 const ROLL_STATUS = Object.freeze({
-  'chapters-closed': 403, 'no-realm-character': 404, lease: 409, 'roll-unseeded': 409, 'roll-busy': 409, dead: 410,
+  'chapters-closed': 403, 'no-realm-character': 404, 'no-data': 404, lease: 409, 'roll-unseeded': 409, 'roll-busy': 409, dead: 410,
 });
 /** GUILD1: each guild refusal's status - a bad shape 400 (the default), the wrong rank or too little Renown 403, a
  *  thing that is not there 404, a conflict with what is 409, the hour's writes spent 429. */

@@ -737,6 +737,11 @@ async function undoCustoms({ db, bucket }, playerId, id, originId) {
     await db.batch([
       db.prepare('DELETE FROM realm_characters WHERE id = ? AND player = ? AND bytes = 0').bind(id, playerId),
       mustChange(db),
+      // AUDIT CHAP S3: and its Roll - npcRoll.js seeds none before the first save lands (heldUnder's `no-data`), so this
+      // is the delete's own guard, as deleteRealm's batch takes the three tables for a character that played
+      db.prepare('DELETE FROM npc_roll WHERE player = ? AND char_id = ?').bind(playerId, id),
+      db.prepare('DELETE FROM npc_roll_heads WHERE player = ? AND char_id = ?').bind(playerId, id),
+      db.prepare('DELETE FROM npc_rep_events WHERE player = ? AND char_id = ?').bind(playerId, id),
       ...customsCarry(db, playerId, id, originId),   // the carry, run back: from the realm's id to the offline one
       // the pass's census row (a pass is spent only where this account's census counted no such character), asked before
       // the pass comes back below

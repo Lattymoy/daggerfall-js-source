@@ -608,8 +608,8 @@ import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, kn
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry, renownStruckAt } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
-import { createRollTracker, rollValuesOf } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
-import { rollMembersOf } from '../net/npcChapterLaw.js';   // CHAP1: the memberships a claim carries
+import { createRollTracker, rollEntityDoors } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
+import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save
 import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
 import { pickRegionHubs, hubAtMapId, hubArrivalLine } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub
 import { deriveTownSeats, seatAtMapId } from '../systems/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
@@ -722,7 +722,7 @@ import { morrowindDataCount, morrowindDataGeneration, getBytes } from './dataSou
 // Q4-v: THE QUEST BRIDGE - the machine goes live in this host.
 import { createQuestBridge, tokensToRows } from './questBridge.js';
 import { loadQuestPack } from './questData.js';
-import { ensureFactionRep, getReputation, changeReputation, setReputation } from '../systems/factionRep.js';
+import { ensureFactionRep, getReputation, changeReputation } from '../systems/factionRep.js';
 import { changeLegalRep, legalRepOf, CRIMES, setCrimeCommitted, lowerRepForCrime, setCrimeRepFactor } from '../systems/court.js';   // the region's LegalRep: the status box, the quest actions, the crimes (REP1 retired :498-511's levy)
 import { isEquipped, unequipSlot, unequipItem } from '../systems/equip.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
@@ -2262,6 +2262,15 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _legacyMade = () => {};
   /** LEGACY1: the host, once made - a birth's chargen (`?legacyborn=`) waits for it, since the flow's files can land first. */
   const legacyReady = new Promise((res) => { _legacyMade = res; });
+  // AUDIT CHAP C1/C2/C4 (bible/01-Overview/Audit-Chapters.md): THE ROLL'S LAST ADOPTION, KEPT IN THE SAVE - the Roll's
+  // sequence and its twenty-two as this character last adopted them online (net/npcRollTracker.js keeps it at every
+  // adoption), so the next page claims whatever moved after it and was never claimed. Offline nothing writes it.
+  let rollKept = null;
+  registerModSaveData(ROLL_KEPT_VENDOR, {
+    newSaveData: () => null,
+    getSaveData: () => rollKept,
+    restoreSaveData: (rec) => { rollKept = rollKeptOf(rec); },
+  });
   registerModSaveData(LIVING_WORLD_VENDOR, {
     newSaveData: () => null,
     getSaveData: () => livingRelations.snapshot(),
@@ -19224,25 +19233,18 @@ export async function bootWorld(canvas, renderer, params, status) {
   // moves here is claimed back, and the service's answer adopted (net/npcRollTracker.js). Built only online and only for
   // a realm character, as the Renown tracker is; offline, and while CHAPTERS_OPEN keeps the account out, the save keeps
   // it exactly as DFU does.
+  // AUDIT CHAP: the glue is the tracker module's own (rollEntityDoors), so it is pinned there; what was never claimed
+  // rides the save (`rollKept`, above) - the page's going sends nothing (C1/T1: the lease is given up first)
   const rollTracker = onlineOn && realmSession ? createRollTracker({
     io: accountRoll({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),
     character: () => realmSession.id,
     lease: () => realmSession.lease,
-    read: () => rollValuesOf(playerEntity?.factionRep),
-    write: (values) => {
-      const store = playerEntity?.factionRep;
-      if (store) for (const [f, rep] of Object.entries(values)) setReputation(store, Number(f), rep);
-    },
-    members: () => rollMembersOf(playerEntity?.guildMemberships),
-    onCeiling: (factions) => {
-      for (const f of factions) {
-        const name = String(playerEntity?.factionRep?.dict?.get(f)?.name ?? 'the guild').replace(/^The /, 'the ');
-        townTalk.say(`Your standing with ${name} can rise no further today.`);
-      }
-    },
+    ...rollEntityDoors(() => playerEntity),
+    kept: () => rollKept,
+    keep: (k) => { rollKept = k; },
+    onCeiling: (factions) => { for (const f of factions) townTalk.say(rollCeilingLine(playerEntity?.factionRep?.dict?.get(f)?.name)); },
     onStop: (error) => { if (error !== 'chapters-closed') console.warn('[roll] the Roll stopped:', error); },   // shut: the save keeps it, quietly
   }) : null;
-  if (rollTracker) globalThis.addEventListener?.('pagehide', () => { rollTracker.leave(); });   // CHAP1: what moved since the last claim goes as the page does
   // SIGIL1: THE DRINK - the weapon in my hand takes every point of Renown XP I earn with it (a kill, a quest), and a
   // rise to a new stage is said (systems/sigil.js drinkSigil: nothing while my Renown is unknown). Past the hour's cap
   // the service keeps nothing, and the sigil drinks nothing either - as the page last heard it.

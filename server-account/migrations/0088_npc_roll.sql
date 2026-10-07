@@ -12,27 +12,35 @@
 -- law is src/net/npcChapterLaw.js, the service src/npcRoll.js.
 --
 --   npc_roll_heads  one row a realm character the Roll keeps: whose it
---                   is, the cap its seed was taken under, and `seq` and
---                   `last_rid` - every claim moves `seq` on by one, and a
---                   claim whose id is the last one taken is answered,
---                   never credited twice.
+--                   is, the cap its seed was taken under, and `seq`,
+--                   `last_rid` and `tag` - every write moves `seq` on by
+--                   one under a `tag` of its own (AUDIT CHAP S1: every
+--                   row a write carries asks for that tag, so a write
+--                   that lost its race - even to a twin of itself -
+--                   writes nothing), and a claim whose id was taken is
+--                   answered, never credited twice.
 --   npc_roll        one row a guild faction of that character (the
 --                   twenty-two, seeded together): its reputation, the
---                   day's gains so far (`gained` on the UTC day
---                   `gained_day` - the daily bound), and its membership:
+--                   day's net change so far (`gained` on the UTC day
+--                   `gained_day` - the daily pace), what a gain past the
+--                   pace left `owed` (AUDIT CHAP D2: paid on the days
+--                   after, never lost), and its membership:
 --                   `member`, the `rank` its client reported, and
 --                   `joined_at` - when the service first saw it a member,
 --                   the tenure a seat will ask (CHAP4).
 --   npc_rep_events  the record: every line of every claim, what it asked
---                   and what it was credited.
+--                   and what it was credited - kept ROLL_EVENTS_KEEP_S
+--                   (90 days), and asked by `rid` for a repeat.
 --
--- A realm character's delete takes all three (src/realm.js deleteRealm).
+-- A realm character's delete takes all three (src/realm.js deleteRealm, and undoCustoms for a
+-- customs whose first save never landed).
 CREATE TABLE IF NOT EXISTS npc_roll_heads (
   char_id     TEXT PRIMARY KEY,
   player      TEXT NOT NULL,
   cap         INTEGER NOT NULL,
   seq         INTEGER NOT NULL DEFAULT 0,
   last_rid    TEXT,
+  tag         TEXT,
   seeded_at   INTEGER NOT NULL,
   updated_at  INTEGER NOT NULL
 );
@@ -45,6 +53,7 @@ CREATE TABLE IF NOT EXISTS npc_roll (
   rep         INTEGER NOT NULL DEFAULT 0,
   gained_day  INTEGER NOT NULL DEFAULT 0,
   gained      INTEGER NOT NULL DEFAULT 0,
+  owed        INTEGER NOT NULL DEFAULT 0,
   member      INTEGER NOT NULL DEFAULT 0,
   rank        INTEGER,
   joined_at   INTEGER,
@@ -62,3 +71,4 @@ CREATE TABLE IF NOT EXISTS npc_rep_events (
   at          INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS npc_rep_events_char ON npc_rep_events (char_id, at);
+CREATE INDEX IF NOT EXISTS npc_rep_events_rid ON npc_rep_events (char_id, rid);

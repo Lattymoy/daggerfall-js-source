@@ -854,12 +854,12 @@ world-data halves stood beside it until RR3b shipped the world-data half and
 struck that row; VE1 found this count still reading two), three are declared
 departures (the two Morrowind judgement rows, the settings taxonomy), two
 are audit preambles, ~~one is RESERVED by the owner (smaller-dungeon
-generation, to the enhanced lane)~~ (**it read 226 and 21 until `:751` was
+generation, to the enhanced lane)~~ (**it read 226 and 21 until `:752` was
 STRUCK: SHIPPED at AUDIT 28 W4**), and two say inside their own text that
 they are closed (`RegionPowerAndConditionsUpdate`, vampirism/lycanthropy).
 
 That accounts for 15 of the 19, leaving **4 unstruck rows that carry a
-route** (the fourth, `:938`, A MOD'S MATERIALS, added by VE1 and routed to
+route** (the fourth, `:939`, A MOD'S MATERIALS, added by VE1 and routed to
 the Rendering arc) - plus `:809`, struck at its head but carrying a live
 PENDING clause in its tail, for **six rows that still owe work: items 1-4
 and 6 below, and the Materials row** (item 5 was the sixth, OT1 struck it; item 7 the seventh, DR1). The measurement this section was first written over read 246

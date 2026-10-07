@@ -1333,14 +1333,11 @@ export function accountMarks({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
  */
 export function accountRoll({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
   const post = waitedPost({ fetch, storage }, waitMs);
-  /** The page's last claim, as it goes: `keepalive`, so the browser finishes it (AUDIT RENOWN1 GAME-8's door). */
-  const leaving = async (body) => {
-    const s = storedSession(storage);
-    return s ? call({ fetch, base: serviceBase(storage), secret: s.secret, keepalive: true }, '/v1/chapters/claim', body) : { ok: false, error: 'no-session' };
-  };
+  // AUDIT CHAP C1/T1: no claim as the page goes - the realm session gives its lease up first and the service clears it,
+  // so one never landed; what was not claimed rides the save to the next page (net/npcRollTracker.js)
   return {
     read: (character, lease, seed = null) => post('/v1/chapters/roll', { character, lease, ...(seed ? { seed } : {}) }),
-    claim: (character, lease, rid, deltas, members, leave = false) => (leave ? leaving : (b) => post('/v1/chapters/claim', b))({ character, lease, rid, deltas, members }),
+    claim: (character, lease, rid, deltas, members) => post('/v1/chapters/claim', { character, lease, rid, deltas, members }),
   };
 }
 

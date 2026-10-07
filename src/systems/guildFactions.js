@@ -8,11 +8,14 @@
 // the skills and the client's prefs. ONE DFU MEMBER, ONE EXPORT: each table lives here alone - guilds.js builds GUILDS
 // on GUILD_FACTION_IDS, and guildVariants.js hands DIVINES and ORDERS on from here. Every value is a constant of DFU's
 // MIT code, never a row of FACTION.TXT. And the reputation's bounds, which factionRep.js hands on from here for the
-// same reason (its graph reaches the save).
+// same reason (its graph reaches the save), and the rank row the Roll reads (AUDIT CHAP D1).
 
 /** PersistentFactionData's reputation bounds - Mathf.Clamp (:32-35); factionRep.js hands them on. */
 export const MIN_REPUTATION = -100;
 export const MAX_REPUTATION = 100;
+
+/** Guild.cs :36-38 - the reputation each of the ten ranks needs; guilds.js hands it on (AUDIT CHAP D1). */
+export const RANK_REQ_REPUTATION = Object.freeze([0, 10, 20, 30, 40, 50, 60, 70, 80, 90]);
 
 /** The four guilds that are one guild each - their factionId (FightersGuild.cs, MagesGuild.cs, ThievesGuild.cs,
  *  DarkBrotherhood.cs; guilds.js GUILDS reads them). */

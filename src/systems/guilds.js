@@ -65,7 +65,7 @@ import { SKILLS, permanentSkillValue } from './skills.js';
 import { getReputation, setReputation } from './factionRep.js';   // RR1: the underworld guilds' join floor
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
 import { dayOfYear } from './gameDate.js';   // S28: DaggerfallDateTime.DayOfYear
-import { GUILD_FACTION_IDS } from './guildFactions.js';   // CHAP1: the four ids' one home, a leaf the account service reads
+import { GUILD_FACTION_IDS, RANK_REQ_REPUTATION } from './guildFactions.js';   // CHAP1: the four ids' one home, a leaf the account service reads; AUDIT CHAP D1: and the reputation's rank row
 
 /** Internal_Strings "nonMember". Guild.GetTitle returns the PLAYER'S
  *  NAME for a non-member; three subclasses override that with this
@@ -73,8 +73,10 @@ import { GUILD_FACTION_IDS } from './guildFactions.js';   // CHAP1: the four ids
  *  KnightlyOrder.cs :126). */
 export const NON_MEMBER_TITLE = 'non-member';
 
-/** Guild.cs :36-38. Ten rows, one per rank. */
-export const RANK_REQ_REPUTATION = Object.freeze([0, 10, 20, 30, 40, 50, 60, 70, 80, 90]);
+/** Guild.cs :36-38. Ten rows, one per rank. AUDIT CHAP D1: the reputation's row lives in the leaf guildFactions.js,
+ *  which the account service reaches (the Roll's seed keeps a member's rank, and its record bounds a reported one), and
+ *  is handed on here. */
+export { RANK_REQ_REPUTATION };
 export const RANK_REQ_SKILL_HIGH = Object.freeze([22, 23, 31, 39, 47, 55, 63, 71, 79, 87]);
 export const RANK_REQ_SKILL_LOW = Object.freeze([4, 5, 9, 13, 17, 21, 25, 29, 33, 37]);
 

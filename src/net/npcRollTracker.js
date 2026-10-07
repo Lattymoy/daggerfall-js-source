@@ -6,18 +6,33 @@
 //
 // Mac: "Server-owned" (bible/11-Multiplayer/Chapters-Arc.md section 3).
 // net/npcChapterLaw.js holds the law; server-account/src/npcRoll.js keeps
-// the Roll; this file decides WHEN to ask and what to hold.
+// the Roll; this file decides WHEN to ask and what to hold. Its audit is
+// bible/01-Overview/Audit-Chapters.md (AUDIT CHAP).
 //
 // ═══ THE SERVICE'S WORD IS THE STANDING ════════════════════════════
 //
 // The first read carries the save's standing as a seed (taken only if the
 // Roll has none) and answers the Roll: its twenty-two reputations are
-// written over the entity's, whatever the save said. From then on DFU's
-// own law moves them on this machine - a quest, a donation, a crime - and
-// what moved since the Roll's last word is claimed, at most once a
-// ROLL_CLAIM_MS, and only when something did. The answer is adopted the
-// same way (rollAdopt): the service's number, plus whatever moved here
-// while the claim was out, which is the next claim's.
+// written over the entity's. From then on DFU's own law moves them on
+// this machine - a quest, a donation, a crime - and what moved since the
+// Roll's last word is claimed, at most once a ROLL_CLAIM_MS, and only when
+// something did. The answer is adopted the same way (rollAdopt): the
+// service's number, plus whatever moved here and was not sent.
+//
+// ═══ WHAT WAS NEVER CLAIMED IS KEPT IN THE SAVE ═════════════════════
+//
+// AUDIT CHAP C1/T1: the page's last claim, sent as it went, never went -
+// the realm session gives its lease up first, and the service clears it.
+// AUDIT CHAP C2/C4: a first read wrote the Roll over every move the page
+// had made before it landed, and a session played while the Roll was shut
+// or stopped was reverted the next time. One answer closes all three: each
+// adoption is KEPT - the Roll's sequence and its twenty-two (`keep`, the
+// host's mod-save record, so it rides every checkpoint) - and the next
+// page's first read, finding the Roll still at that sequence, knows that
+// whatever the save holds past it was never claimed, and claims it. A
+// Roll that moved on since (a claim the save never saw) keeps only what
+// moved on this page (`values0`, the standing as the page first saw it):
+// nothing is ever claimed twice.
 //
 // A CLAIM THE NETWORK LOST IS SENT AGAIN AS IT WAS - the same id, the same
 // lines - so a claim that landed while its answer was lost is answered as
@@ -26,16 +41,18 @@
 // the page (ROLL_STOPS); anything else is asked again, waiting longer each
 // time. Shut, the save keeps the standing exactly as before CHAP1.
 //
-// Pure: the clock, the service and the entity's standing are arguments.
+// Pure but for `rollEntityDoors`, the host's glue: the clock, the service
+// and the entity's standing are arguments.
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  ROLL_FACTIONS, ROLL_CLAIM_MS, ROLL_RETRY_MS, ROLL_RETRY_MAX_MS, rollDeltasOf, rollAdopt, rollMembersKey, rollRep,
+  ROLL_FACTIONS, ROLL_CLAIM_MS, ROLL_RETRY_MS, ROLL_RETRY_MAX_MS, rollDeltasOf, rollAdopt, rollMembersKey, rollMembersOf, rollRep, rollKeptOf,
 } from './npcChapterLaw.js';
+import { setReputation } from '../systems/factionRep.js';
 
 /** The refusals that end the tracker for this page - the Roll shut, the character no longer this tab's, the account
  *  gone, or a shape the service will not take (a build to update). Every other is asked again. */
-export const ROLL_STOPS = Object.freeze(['chapters-closed', 'lease', 'no-realm-character', 'dead', 'auth', 'no-session', 'body', 'roll-seed', 'roll-claim']);
+export const ROLL_STOPS = Object.freeze(['chapters-closed', 'lease', 'no-realm-character', 'no-data', 'dead', 'auth', 'no-session', 'body', 'roll-seed', 'roll-claim']);
 
 /** A claim's own id: twelve random bytes, hex. */
 export function rollRid(rand = (b) => globalThis.crypto.getRandomValues(b)) {
@@ -58,6 +75,19 @@ export function rollValuesOf(/** @type {any} */ store) {
   return out;
 }
 
+/** THE HOST'S GLUE (AUDIT CHAP T5: the five lines world.js held as text alone): the entity's standing read, the Roll's
+ *  word written through DFU's own door (SetReputation), and its memberships - null with no book to read. */
+export function rollEntityDoors(/** @type {() => any} */ entityOf) {
+  return {
+    read: () => rollValuesOf(entityOf()?.factionRep),
+    write: (/** @type {Record<number, number>} */ values) => {
+      const store = entityOf()?.factionRep;
+      if (store) for (const [f, rep] of Object.entries(values)) setReputation(store, Number(f), rep);
+    },
+    members: () => rollMembersOf(entityOf()?.guildMemberships),
+  };
+}
+
 /** A Roll's members as a claim carries them: `[{ f, rank }]`. */
 const membersOf = (/** @type {any} */ list) => (Array.isArray(list) ? list.map((m) => ({ f: m.f, rank: m.rank })) : []);
 
@@ -65,16 +95,23 @@ const membersOf = (/** @type {any} */ list) => (Array.isArray(list) ? list.map((
  * The tracker. `io` is accountClient.js accountRoll's door (`read`, `claim`); `character()` and `lease()` the realm
  * character this tab plays and its lease (null: not playing - nothing is asked); `read()` the twenty-two as the entity
  * holds them now (rollValuesOf - null before its store stands); `write(values)` puts the Roll's word on the entity;
- * `members()` its memberships (npcChapterLaw.js rollMembersOf). `onCeiling(factions)` hears the lines the day's bound
- * cut; `onStop(error)` the refusal that ended it.
+ * `members()` its memberships (rollMembersOf - null with no book); `kept()` the last adoption as the save keeps it and
+ * `keep(k)` the new one (the host's mod-save record). `onCeiling(factions)` hears the lines the day's pace cut;
+ * `onStop(error)` the refusal that ended it.
  * @param {{ io: any, character: () => string | null, lease: () => string | null, read: () => Record<number, number> | null,
- *   write: (values: Record<number, number>) => void, members: () => { f: number, rank: number }[], now?: () => number,
+ *   write: (values: Record<number, number>) => void, members: () => { f: number, rank: number }[] | null,
+ *   kept?: () => unknown, keep?: (k: { seq: number, factions: Record<number, number> }) => void, now?: () => number,
  *   rid?: () => string, onCeiling?: (factions: number[]) => void, onStop?: (error: string) => void }} o
  */
-export function createRollTracker({ io, character, lease, read, write, members, now = () => Date.now(), rid = () => rollRid(), onCeiling = () => {}, onStop = () => {} }) {
+export function createRollTracker({
+  io, character, lease, read, write, members, kept = () => null, keep = () => {}, now = () => Date.now(), rid = () => rollRid(),
+  onCeiling = () => {}, onStop = () => {},
+}) {
   /** @type {Record<number, number> | null} the Roll's last word, as adopted */
   let base = null;
-  /** @type {{ rid: string, deltas: Record<number, number>, members: { f: number, rank: number }[] } | null} */
+  /** @type {Record<number, number> | null} the standing as this page first saw it - what moved since is this page's */
+  let values0 = null;
+  /** @type {{ rid: string, deltas: Record<number, number>, members: { f: number, rank: number }[] | null } | null} */
   let pending = null;
   /** @type {string | null} */
   let stopped = null;
@@ -92,6 +129,7 @@ export function createRollTracker({ io, character, lease, read, write, members, 
     const a = rollAdopt(read() ?? from, from, sent, roll.factions);
     write(a.local);
     base = a.base;
+    keep({ seq: roll.seq, factions: a.base });
     heldKey = rollMembersKey(membersOf(roll.members));
     wait = ROLL_RETRY_MS;
     nextAt = now();
@@ -100,23 +138,29 @@ export function createRollTracker({ io, character, lease, read, write, members, 
   async function first(/** @type {string} */ id, /** @type {string} */ ls, /** @type {Record<number, number>} */ values) {
     const r = await io.read(id, ls, { factions: values, members: members() });
     if (!r.ok) return fail(r.error);
-    if (!r.data?.roll) return fail('roll-seed');   // a seed went with it, so the Roll stands - or the service took none
-    adopt(values, {}, r.data.roll);
+    const roll = r.data?.roll;
+    if (!roll) return fail('roll-seed');   // a seed went with it, so the Roll stands - or the service took none
+    // the base the answer is adopted over: the seed itself, when this read made the Roll; the kept adoption, when the Roll
+    // still stands where the save last saw it (whatever the save holds past it was never claimed); else this page's start
+    const k = rollKeptOf(kept());
+    const from = r.data.seeded ? values : k && k.seq === r.data.from ? k.factions : /** @type {Record<number, number>} */ (values0);
+    adopt(from, {}, roll);
   }
 
   /** The claim due now, or null: the one still out, or what moved since the Roll's last word. */
-  const due = (/** @type {Record<number, number>} */ cur, /** @type {boolean} */ hurry) => {
+  const due = (/** @type {Record<number, number>} */ cur) => {
     if (pending) return pending;
     const deltas = rollDeltasOf(cur, /** @type {Record<number, number>} */ (base));
     const list = members();
-    if (!Object.keys(deltas).length && rollMembersKey(list) === heldKey) return null;
-    if (!hurry && now() - lastSentAt < ROLL_CLAIM_MS) return null;
+    const key = rollMembersKey(list);
+    if (!Object.keys(deltas).length && (key === null || key === heldKey)) return null;
+    if (now() - lastSentAt < ROLL_CLAIM_MS) return null;
     pending = { rid: rid(), deltas, members: list };
     return pending;
   };
 
   async function claim(/** @type {string} */ id, /** @type {string} */ ls, /** @type {Record<number, number>} */ cur) {
-    const c = due(cur, false);
+    const c = due(cur);
     if (!c) return;
     const from = /** @type {Record<number, number>} */ (base);
     lastSentAt = now();
@@ -126,7 +170,7 @@ export function createRollTracker({ io, character, lease, read, write, members, 
     adopt(from, c.deltas, r.data.roll);
     const credited = r.data.credited ?? {};
     const cut = Object.keys(c.deltas).map(Number).filter((f) => c.deltas[f] > 0 && (credited[f] ?? c.deltas[f]) < c.deltas[f]);
-    if (cut.length && !r.data.repeat) onCeiling(cut);
+    if (cut.length) onCeiling(cut);
   }
 
   return {
@@ -137,19 +181,11 @@ export function createRollTracker({ io, character, lease, read, write, members, 
       if (!id || !ls) return;
       const values = read();
       if (!values) return;
+      values0 ??= values;
       busy = true;
       (base ? claim(id, ls, values) : first(id, ls, values))
         .catch(() => fail('server'))
         .finally(() => { busy = false; });
-    },
-    /** THE PAGE GOES: whatever moved since the last claim, sent now (the door's `leaving` - a browser finishes it after
-     *  the page), whatever the minute says. Its answer is nobody's: the next page reads the Roll. */
-    leave() {
-      if (stopped || !base) return;
-      const id = character(), ls = lease(), cur = read();
-      if (!id || !ls || !cur) return;
-      const c = due(cur, true);
-      if (c) io.claim(id, ls, c.rid, c.deltas, c.members, true)?.catch?.(() => {});
     },
     get held() { return base != null; },
     get stopped() { return stopped; },
