@@ -372,8 +372,10 @@ Every climate's land wears its own hills (`LANDFORM_DIALS.lands`, one entry a
 land; CLIMATE.PAK's ten values each name one, any other value the woodlands').
 Each land's height is LANDFORM5's law with its own `low`, `high` and `upland`;
 its SHAPE is its own (`shapeRaw`), centred on its own field so the land's mean
-height is untouched (`SHAPE_NORM`: each shape's mean and spread measured over its
-field, nine in ten of its points inside -1..1) and held inside -1..1 without a
+height is untouched (`LAND_NORMS`, by land: each land's mean and spread measured
+over its own shape's field with its own dials, nine in ten of its points inside
+-1..1 - the deserts and the knolls share shapes and keep their own spreads) and
+held inside -1..1 without a
 crease (`saturate`: itself to 0.6, easing toward 1 past it, so a summit or a
 valley floor a shape overreaches rounds off instead of being cut flat):
 
@@ -532,16 +534,20 @@ headless boot died on it before the push).
 
 - `scenes/world.js` - WIRED: the switch read once at the mount, the job's `landform`, the promotion's and the
   restride's ghost rows, the gate's beacon, the far ring and the travel view, every record's height written in DFU's
-  frame, and the re-stand.
+  frame, and the re-stand. LANDFORM4-6: the sites and the climates made once at the location index's fill and handed to
+  both kernels (`setLandformTables`), and carried by this thread's own landforms (`landformsHere` - the gate, the
+  re-stand) and its restride; the far ring and the travel view take neither (RESIDUES).
 - `scenes/worldModes.js` - its own heights NOT WIRED, by design (AUDIT LANDFORMS C1): the heights the world host hands
   it are DFU's frame already, and its interior cache is in the building's frame. A legacy cache (raw scene positions,
   written before TERRAIN-SCALE1 carried the frame) is stood again through the world host's `restandSceneHeight` - the
-  re-stand, the lift with it (AUDIT LANDFORMS II J13: this line said NOT WIRED alone).
+  re-stand, the lift with it (AUDIT LANDFORMS II J13: this line said NOT WIRED alone) - and since LANDFORM4-6 the pull
+  and the hills with it, the same field.
 - `scenes/dungeonContext.js` - NOT WIRED, by design: the camps left standing outside reach its save through the world
-  host's `outerCampsSave`, in DFU's frame.
+  host's `outerCampsSave`, in DFU's frame. LANDFORM4-6 change nothing here: the pull and the hills are in the frame's
+  field like the lift.
 - `scenes/exterior.js` - NOT WIRED, by design: the fixed-city bench runs no terrain kernel at all (no tile pipeline,
   Roads.md's MODS AUDIT); it stands its one city on the location's flat ground - DFU's ground, which is the frame
-  every record is written in.
+  every record is written in. LANDFORM4-6 the same: no kernel, no sites, no climates.
 
 ## ON THE REAL WOODS.WLD (2026-10-07)
 

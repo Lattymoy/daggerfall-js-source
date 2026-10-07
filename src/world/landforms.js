@@ -402,6 +402,9 @@ function ridgeline(wx, wy, cs, sn) {
   return r1 + 0.45 * r1 * r2 + 0.16 * r1 * r2 * c * c;
 }
 
+/** LANDFORM6: the ridgelines' own centre and gain (the mountains', and the foothills' half of them). */
+const RIDGED_NORM = Object.freeze([0.967, 1.4]);
+
 /** LANDFORM6: ridgelines on the trend the rock field gives the point, blended across the turn between two. */
 function ridged(wx, wy, rock) {
   const m = smooth01(0.5 + rock / 0.25);
@@ -489,13 +492,13 @@ function broken(wx, wy, gx, gy) {
 
 /**
  * LANDFORM6: a land's shape at a warped point, before it is centred - `wx`, `wy` the warped point, `gx`, `gy` the point
- * itself, `rock` the slow rock field (-1..1) there. Each shape's centre and spread are SHAPE_NORM's.
+ * itself, `rock` the slow rock field (-1..1) there. Each land's centre and spread are LAND_NORMS'.
  * @returns {number}
  */
 export function shapeRaw(shape, wx, wy, gx, gy, rock, land) {
   switch (shape) {
     case 'ridged': return ridged(wx, wy, rock);
-    case 'foothills': return 0.55 * rolling(wx, wy, 1) + 0.45 * ((ridged(wx, wy, rock) - SHAPE_NORM.ridged[0]) * SHAPE_NORM.ridged[1]);
+    case 'foothills': return 0.55 * rolling(wx, wy, 1) + 0.45 * ((ridged(wx, wy, rock) - RIDGED_NORM[0]) * RIDGED_NORM[1]);
     case 'desert': {
       const r = smooth01(0.5 + (rock - land.rockFrom) / 0.35);
       const swell = 0.5 * signed(wx / 720 + 3.3, wy / 720 + 96.1) + 0.2 * signed(wx / 300 + 51.9, wy / 300 + 17.7);
@@ -508,17 +511,20 @@ export function shapeRaw(shape, wx, wy, gx, gy, rock, land) {
   }
 }
 
-/** LANDFORM6: each shape's centre and gain (`(raw - centre) * gain`, then held to -1..1), measured over the shape's own
- *  field so its mean sits on the land and nine in ten of its points inside the range - the land's average height is
- *  DFU's, lifted, whatever shape it wears. */
-const SHAPE_NORM = Object.freeze({
-  rolling: [0, 1], ridged: [0.967, 1.4], foothills: [0.165, 1.7], desert: [0.173, 1.55], desert2: [0.17, 1.22],
-  knolls: [0.025, 1.25], knollsSoft: [0.015, 1.5], hummocks: [-0.005, 2.6], broken: [-0.31, 1.25],
+/** LANDFORM6: each land's centre and gain (`(raw - centre) * gain`, then held to -1..1), measured over its own shape's
+ *  field with its own dials, so its mean sits on the land and nine in ten of its points inside the range - the land's
+ *  average height is DFU's, lifted, whatever shape it wears. By land, not by shape: two lands that share a shape (the
+ *  deserts, the knolls) wear it with their own dials and so their own spread. The woodlands' and the coasts' rolling
+ *  octaves are LANDFORM5's own, uncentred. */
+const LAND_NORMS = Object.freeze({
+  woodlands: Object.freeze([0, 1]), mountainWoods: Object.freeze([0.165, 1.7]), mountain: RIDGED_NORM,
+  desert: Object.freeze([0.173, 1.55]), desert2: Object.freeze([0.17, 1.22]), rainforest: Object.freeze([0.025, 1.25]),
+  subtropical: Object.freeze([0.015, 1.5]), swamp: Object.freeze([-0.005, 2.6]), haunted: Object.freeze([-0.31, 1.25]),
+  ocean: Object.freeze([0, 1]),
 });
-const normOf = (land) => (land.shape === 'desert' ? SHAPE_NORM[land.rockFrom < 0 ? 'desert2' : 'desert'] : land.shape === 'knolls' && land.edge > 0.95 ? SHAPE_NORM.knollsSoft : SHAPE_NORM[land.shape]);
-/** LANDFORM6: each land's centre and gain, read once. */
-const LAND_NORM = Object.freeze(LANDS.map(normOf));
-const LAND_TOP = Object.freeze(LANDS.map((land) => land.high * land.upland));
+/** LANDFORM6: each land's centre and gain and its tallest hill, by its index, read once. */
+const LAND_NORM = Object.freeze(LAND_NAMES.map((k) => LAND_NORMS[k]));
+const LAND_TOP = Object.freeze(LANDS.map(landTop));
 
 /** LANDFORM6: a shape's height held inside -1..1 without a crease - itself up to 0.6, then easing toward 1 (its slope
  *  whole at 0.6, so a valley floor or a summit the shape reaches past its spread rounds off instead of being cut flat). */
