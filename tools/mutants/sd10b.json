@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-SD-C4-entered-unpassed",
     "file": "src/scenes/world.js",
-    "old": "sdRiftWord(rec, s, now, { entered: _sdEntered.has(s) })",
-    "new": "sdRiftWord(rec, s, now)",
+    "old": "sdRiftWord(rec, s, now, { entered: _sdEntered.has(s), fallen",
+    "new": "sdRiftWord(rec, s, now, { fallen",
     "tests": [
       "test/sd10b_audit.test.js"
     ]

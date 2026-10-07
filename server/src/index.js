@@ -269,7 +269,7 @@ import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehi
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
 import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
 import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY, sdFightRelayGate, SD_BRAIN_MIN, SD_NO_WORDS, SD_FIGHT_KEY, SD_INTERNAL_FELL, validSdFellTell, SD_RC_PREFIX, sdReceiptKey, SD_HERE_HOLD_MS, SD_SLOT_KEY, SD_HELD_KEY } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
-import { sdFirst, sdRise, sdFind, sdFell, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL } from '../../src/net/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
+import { sdFirst, sdRise, sdFind, sdFell, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL, SD_NO_FALLEN } from '../../src/net/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
 import { orreryOf, orreryStep, orreryLit, orreryFresh, orreryTurn, orreryShortest, orreryRightsFresh, orreryTurnerOf, orreryMayTurn, orreryTurned, orreryLashed, stoneInReach, dungeonToRealm, SD_STONES, SD_HOURS, SD_FRAY_MAX, SD_STONE_REACH_SLACK, SD_STONE_SETTLE_MS } from '../../src/net/sdBrain.js';   // SD6b: the Orrery's law - the realm judges every turn by it; AUDIT SD II (L7 H2): and who may turn while others turn
 import { newRemnantFight, joinRemnant, applyRemnantHit, applyEchoHit, applyHeartHit, stepRemnant, remnantStateOf, arenaOf, inArena, SD_LOST_MS } from '../../src/net/sdRemnant.js';   // SD8b: the Brass Remnant's law - the realm runs its fight by it
 import { mintSdReceipt, readSdReceipt, SD_RECEIPT_TTL_S } from '../../src/net/sdReceipt.js';   // SD9a: the Hour's receipt - minted at the Remnant's fall, kept by the hub
@@ -2423,6 +2423,7 @@ export class Room {
       if (step === 'eye') return;
       // ARENA4: a bout's room - a fighter's pose is the referee's (its speed checked, its place the reach's); HOTFIX 1003f: a
       // spectator's is fanned as anyone's - the stands are bodies (a private session's stranger's reaches nobody, below)
+      if (posed && m.p?.dd && typeof a.sub === 'string' && a.sub && isSdRoom(a.key)) await this._sdMarkFallen(a.key, a.sub);   // SD-ONELIFE: a death in the Hour, kept
       if (isArenaFloorRoom(a.key) && m.t === 'pose') {   // ARENA4b: in an exhibition's room no socket is ever on the sand
         const cur = this._attach(ws);
         if (cur.af) { try { const st = await this._boutOf(); if (st && cur.afid) poseOf(st, cur.afid, m.p.x, m.p.z, now); } catch (e) { console.warn('[arena] pose', e?.message ?? e); } }
@@ -4880,7 +4881,7 @@ export class Room {
     if (this._sdRealm === undefined) {
       const v = await this.state.storage.get(SD_REALM_KEY);
       const strs = (xs) => (Array.isArray(xs) ? xs.filter((x) => typeof x === 'string').slice(0, SD_FIGHTERS_MAX) : []);
-      if (this._sdRealm === undefined) this._sdRealm = v && v.s === s && Array.isArray(v.in) ? { s, in: strs(v.in), gu: strs(v.gu) } : { s, in: [], gu: [] };   // AUDIT SD II (L7 M3): `gu` the guests among them
+      if (this._sdRealm === undefined) this._sdRealm = v && v.s === s && Array.isArray(v.in) ? { s, in: strs(v.in), gu: strs(v.gu), dead: strs(v.dead) } : { s, in: [], gu: [], dead: [] };   // SD-ONELIFE: `dead` the accounts that died in it   // AUDIT SD II (L7 M3): `gu` the guests among them
     }
     return this._sdRealm;
   }
@@ -4893,6 +4894,7 @@ export class Room {
     if (rec === undefined) return SD_NO_BUSY;   // AUDIT SD: no answer - try again
     if (!rec || rec.s !== s || !sdHolds(rec, now)) return SD_NO_CLOSED;
     const realm = await this._sdRealmOf(s);
+    if (sub && realm.dead.includes(sub)) return SD_NO_FALLEN;   // SD-ONELIFE: one life a Hollow
     if (sub && realm.in.includes(sub)) return null;
     if (!sdAdmits(rec, now)) return SD_NO_CLOSED;
     const f = await this._sdFightOf();
@@ -4917,6 +4919,15 @@ export class Room {
     if (realm.in.length >= SD_FIGHTERS_MAX && !free(() => true)) return SD_NO_FULL;
     if (sub && !realm.in.includes(sub)) { realm.in.push(sub); if (guest) realm.gu.push(sub); await this.state.storage.put(SD_REALM_KEY, realm); }
     return null;
+  }
+  /** SD-ONELIFE (Mac: "A death within the rift casts you out and youre unable to re enter. You get one life to prove your
+   *  worth"): the account whose dying pose (PCORPSE1's `dd`) came through a realm is kept as dead there - every hello of
+   *  its after is refused (SD_NO_FALLEN), whatever its page says. */
+  async _sdMarkFallen(key, sub) {
+    const realm = await this._sdRealmOf(sdSlotOfRoom(key));
+    if (realm.dead.includes(sub) || realm.dead.length >= SD_FIGHTERS_MAX) return;
+    realm.dead.push(sub);
+    await this.state.storage.put(SD_REALM_KEY, realm);
   }
   /** SD6b: THE ORRERY'S HALL in a realm - `{ s, st, f, ok, last }`: the stones' hours, the fray, the Concord, and each
    *  stone's last turn (the relay's clock) - the instance's, else storage's, else fresh from the slot's law. */

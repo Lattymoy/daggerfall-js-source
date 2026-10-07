@@ -222,3 +222,6 @@ export const SD_NO_RIFT = 'The Rift will not take you yet.';
 export const SD_NO_CLOSED = 'The Hour has closed.';
 /** And the realm's seats every one taken (SD_FIGHTERS_MAX accounts have entered it). */
 export const SD_NO_FULL = 'The Hour is full.';
+/** SD-ONELIFE (2026-10-07, Mac: "A death within the rift casts you out and youre unable to re enter. You get one life to
+ *  prove your worth"): the Hour refuses an account that died in it - one life a Hollow. */
+export const SD_NO_FALLEN = 'The Hour will not take you back.';

@@ -21,7 +21,7 @@
 //
 // Online only, as the Hollow is. Not a DFU member. Ledger A (SUPER-DUNGEONS).
 
-import { sdPhase, SD_NO_RIFT, SD_NO_CLOSED } from '../net/sdLaw.js';
+import { sdPhase, SD_NO_RIFT, SD_NO_CLOSED, SD_NO_FALLEN } from '../net/sdLaw.js';
 
 /** Health and damage multipliers for a Super dungeon's foes (the Elite's x2 and x2). */
 export const SUPER_HEALTH_SCALE = 4;
@@ -203,18 +203,22 @@ export function sdLandingPlace(rift, ret, probe) {
  *  how many it keeps - a reload no longer forgets them. */
 export const SD_ENTERED_KEY = 'sd11.entered';
 export const SD_ENTERED_MAX = 8;
+/** SD-ONELIFE: where the device keeps the slots whose Hour this player died in - its Rift refuses them for good. */
+export const SD_FALLEN_KEY = 'sd12.fallen';
 /**
  * The Rift's own word before it asks (section 6): null - step through; else its refusal. Not yet found, or the hub's
  * record not heard: "The Rift will not take you yet." The Hour closed - the slot gone or another's - or closing to a
  * newcomer after its boss fell: "The Hour has closed." `entered`: this player went through before (the realm's room
- * keeps them until it is gone).
+ * keeps them until it is gone). `fallen`: this player died in its Hour - one life a Hollow (SD-ONELIFE): "The Hour will not
+ * take you back."
  * @param {import('../net/sdLaw.js').SdRecord | null | undefined} rec
  * @param {number} s the Hollow's slot
  * @param {number} now
  */
-export function sdRiftWord(rec, s, now, { entered = false } = {}) {
+export function sdRiftWord(rec, s, now, { entered = false, fallen = false } = {}) {
   if (!rec) return SD_NO_RIFT;
   if (rec.s !== s) return SD_NO_CLOSED;
+  if (fallen) return SD_NO_FALLEN;
   const ph = sdPhase(rec, now);
   if (ph === 'found' || (ph === 'fell' && entered)) return null;
   return ph === 'risen' ? SD_NO_RIFT : SD_NO_CLOSED;

@@ -196,7 +196,7 @@ test('SD5a the dungeon host by source: the Hour\'s refusals beside the court\'s 
     wayBack: 'To the Hollow', noRest: 'You cannot rest in the Shattered Hour.', noSave: 'You cannot save in the Shattered Hour.',
     noMap: 'You cannot map the Shattered Hour.', noMark: 'You cannot set a Mark in the Shattered Hour.',
     noRecall: 'Nothing answers a Recall in the Shattered Hour.', lost: 'The way to the Shattered Hour is lost.',
-    died: 'The Shattered Hour casts you out. You wake before the Hollow\'s door.',   // AUDIT SD II (L6 F4, PIN MOVED): a death in the Hour is the Hour's
+    died: 'The Shattered Hour casts you out for good. You wake before the Hollow\'s door.',   // AUDIT SD II (L6 F4, PIN MOVED): a death in the Hour is the Hour's; SD-ONELIFE (PIN MOVED): and final
   });
 });
 
@@ -236,7 +236,7 @@ function worldSteps({ hollow = { s: 7, key: HOLLOW.key, site: { px: 303, py: 202
   };
   const sdHost = { hollow: () => hollow };
   const env = {
-    sdHost, modes, playerEntity: { health: 10 }, INTERIOR_SEASON: 3, SD_REALM_TEXT, isSdRealm, _sdEntered: new Set(),   // AUDIT SD: the slots gone through (PIN MOVED)
+    sdHost, modes, playerEntity: { health: 10 }, INTERIOR_SEASON: 3, SD_REALM_TEXT, isSdRealm, _sdEntered: new Set(), _sdFallen: new Set(),   // AUDIT SD: the slots gone through (PIN MOVED); SD-ONELIFE: and died in (PIN MOVED)
     sdRiftOf: () => ({ word }), setMidScreenText: (t) => log.push(['said', t]), _teleportToPixel: async (x, y) => log.push(['pixel', x, y]),
     sdSay: (t) => log.push(['said', t]),   // AUDIT SD II (SD11d, PIN MOVED): through the Hour's voice
   };

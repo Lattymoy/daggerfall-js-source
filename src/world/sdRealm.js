@@ -75,7 +75,7 @@ export const SD_REALM_TEXT = Object.freeze({
   lost: 'The way to the Shattered Hour is lost.',
   // AUDIT SD II (L6 F4): a death in the Hour is the Hour's own - said so through its veil (the gate's court: "You are cast
   // out of the Burning Court."), never the plain dungeon's waking
-  died: 'The Shattered Hour casts you out. You wake before the Hollow\'s door.',
+  died: 'The Shattered Hour casts you out for good. You wake before the Hollow\'s door.',   // SD-ONELIFE: one life a Hollow
 });
 /** The floors a player is kept on until the Concord lays the bridge (SD6): the Threshold, the walk and the Orrery's
  *  hall. Discs { x, z, r } and the walk's band { x, z0, z1, halfW }, the realm's frame. */

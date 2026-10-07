@@ -115,7 +115,7 @@
   {
     "name": "SD11c-L6F17-never-kept",
     "file": "src/scenes/world.js",
-    "old": "try { appStorage()?.setItem?.(SD_ENTERED_KEY, JSON.stringify([...kept].slice(-SD_ENTERED_MAX))); } catch { /* this session's memory holds it */ }",
+    "old": "try { appStorage()?.setItem?.(key, JSON.stringify([...kept].slice(-SD_ENTERED_MAX))); } catch { /* this session's memory holds it */ }",
     "new": "void 0;",
     "tests": [
       "test/sd11c_page.test.js"
@@ -124,7 +124,7 @@
   {
     "name": "SD11c-L6F17-never-read",
     "file": "src/scenes/world.js",
-    "old": "JSON.parse(appStorage()?.getItem?.(SD_ENTERED_KEY) ?? '[]')",
+    "old": "JSON.parse(appStorage()?.getItem?.(key) ?? '[]')",
     "new": "JSON.parse('[]')",
     "tests": [
       "test/sd11c_page.test.js"

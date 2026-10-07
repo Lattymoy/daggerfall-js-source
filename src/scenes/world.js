@@ -301,7 +301,7 @@ import { SD_STEPS_TEXT } from './sdSteps.js';   // SD7b: the cast-back's line
 import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH, SD_ARENA, realmToDungeon as sdRealmToDungeon, SD_TURN_WAIT_LINE } from '../net/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall; SD10: the arena, where the way home stands; AUDIT SD II (L7 H2): a turn the stones refused
 import { SD_REM_SINK_MS } from './sdRemnant.js';   // SD10: the way home rises once the Remnant's body has sunk
 import { SD_HOME_TEXT } from './sdEnd.js';   // SD10: the way home's words
-import { sdRiftWord, sdReturnStands, SD_ENTERED_KEY, SD_ENTERED_MAX } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
+import { sdRiftWord, sdReturnStands, SD_ENTERED_KEY, SD_ENTERED_MAX, SD_FALLEN_KEY } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
 import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/lootDataTables.js';   // WB12d: the casket's pile, undrawn
 import { createSigilBroker } from './sigilBrokerPool.js';   // SET7: the Sigil Broker - her body, her box and name, her press; BROKER-CAGE: caged at the faithful's circle
@@ -21509,21 +21509,27 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  Rift's own word off the hub's record for the Hollow's slot `s` (null: step through), whether the Return still stands
    *  (until the boss falls), and the realm's door (SD5a: the step through to the Shattered Hour, taken under the veil).
    *  Null offline - no Hollow stands there. */
+  /** A set of Hollows' slots kept on the device under `key`, its last SD_ENTERED_MAX (a store that refuses: the session's). */
+  const sdSlotsKept = (key) => {
+    const kept = new Set((() => { try { const v = JSON.parse(appStorage()?.getItem?.(key) ?? '[]'); return Array.isArray(v) ? v.filter(Number.isSafeInteger) : []; } catch { return []; } })());
+    return {
+      has: (s) => kept.has(s),
+      add: (s) => { if (kept.has(s)) return; kept.add(s); try { appStorage()?.setItem?.(key, JSON.stringify([...kept].slice(-SD_ENTERED_MAX))); } catch { /* this session's memory holds it */ } },
+    };
+  };
   /** AUDIT SD: the Hollows' slots whose Hour I went through - during its collapse the Rift admits me again
    *  (world/sdDungeon.js sdRiftWord's `entered`; the realm keeps me as it does - SD4b, section 6). AUDIT SD II (L6 F17):
    *  kept on the device, the last few slots (SD_ENTERED_KEY) - a reload forgot it, and the Rift said "The Hour has
    *  closed." to a fighter its realm would have admitted. */
-  const _sdEntered = (() => {
-    const kept = new Set((() => { try { const v = JSON.parse(appStorage()?.getItem?.(SD_ENTERED_KEY) ?? '[]'); return Array.isArray(v) ? v.filter(Number.isSafeInteger) : []; } catch { return []; } })());
-    return {
-      has: (s) => kept.has(s),
-      add: (s) => { kept.add(s); try { appStorage()?.setItem?.(SD_ENTERED_KEY, JSON.stringify([...kept].slice(-SD_ENTERED_MAX))); } catch { /* this session's memory holds it */ } },
-    };
-  })();
+  const _sdEntered = sdSlotsKept(SD_ENTERED_KEY);
+  /** SD-ONELIFE (Mac: "A death within the rift casts you out and youre unable to re enter. You get one life to prove your
+   *  worth"): the Hollows' slots whose Hour I died in - their Rift refuses me for good (the realm's door refuses the
+   *  account too: SD_NO_FALLEN). */
+  const _sdFallen = sdSlotsKept(SD_FALLEN_KEY);
   const sdRiftOf = (s) => {
     if (!sdHost) return null;
     const rec = sdHost.record(), now = Date.now() + _sharedOffsetMs;
-    return { word: sdRiftWord(rec, s, now, { entered: _sdEntered.has(s) }), returns: sdReturnStands(rec, s, now), enter: () => sdEnterRealm(s) };
+    return { word: sdRiftWord(rec, s, now, { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) }), returns: sdReturnStands(rec, s, now), enter: () => sdEnterRealm(s) };
   };
   /** SD5a (Super-Dungeons.md section 7): THROUGH THE RIFT - out of the Hollow and into the Shattered Hour, under the veil
    *  (scenes/worldModes.js stepThroughFire): the Hollow left as a teleport leaves a dungeon, the player at its pixel
@@ -24593,6 +24599,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) {
+      { const hourSlot = modes?.sdRealmSlot?.() ?? null; if (hourSlot != null) _sdFallen.add(hourSlot); }   // SD-ONELIFE: a death in the Hour is final for its Hollow
       if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room
       if (online.room) {
         // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure
@@ -24612,7 +24619,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!_respawning) {
         if (!_rezSeen) _rezSeen = rezSnapshot(social?.others() ?? []);
         const rez = social?.acct ? rezFor(social.others(), social.acct, _rezSeen) : null;
-        if (rez) { resurrectInPlace(rez); return; }
+        if (rez && modes?.sdRealmSlot?.() == null) { resurrectInPlace(rez); return; }   // SD-ONELIFE: no Resurrect in the Hour - one life
       }
       peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy(); peerCandlesFrame([], dt); return;   // PEERLIGHT2: and no candle hangs over the dead; AUDIT RIDE: and no rider stands frozen over it either
     }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen

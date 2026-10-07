@@ -246,10 +246,11 @@ test('SD11c THE END JUDGED WHERE I STAND (L1 F3): a step under the veil - into t
 
 /** world.js's Rift memory (its own text) over `storage`. */
 function enteredOf(storage) {
-  const at = W.indexOf('\n  const _sdEntered = (() => {');
-  assert.ok(at > 0, '_sdEntered');
-  const text = W.slice(at + 1, W.indexOf('\n  })();\n', at) + 8);
-  return new Function('appStorage', 'SD_ENTERED_KEY', 'SD_ENTERED_MAX', `${text}\nreturn _sdEntered;`)(() => storage, SD_ENTERED_KEY, SD_ENTERED_MAX);
+  const at = W.indexOf('\n  const sdSlotsKept = (key) => {');   // SD-ONELIFE (PIN MOVED): one memory for the slots entered and died in
+  assert.ok(at > 0, 'sdSlotsKept');
+  const text = W.slice(at + 1, W.indexOf('\n  };\n', at) + 5);
+  assert.match(W, /\n  const _sdEntered = sdSlotsKept\(SD_ENTERED_KEY\);\n/);
+  return new Function('appStorage', 'SD_ENTERED_KEY', 'SD_ENTERED_MAX', `${text}\nreturn sdSlotsKept(SD_ENTERED_KEY);`)(() => storage, SD_ENTERED_KEY, SD_ENTERED_MAX);
 }
 const memStorage = () => { const m = new Map(); return { m, getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), removeItem: (k) => m.delete(k) }; };
 
@@ -264,7 +265,7 @@ function riftHost({ rec, hollow, storage = memStorage(), entered = true } = {}) 
   };
   const env = {
     sdHost: { record: () => h.rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, modes, playerEntity: { health: 10 },
-    INTERIOR_SEASON: 3, SD_REALM_TEXT, setMidScreenText: (t) => log.push(['said', t]), sdSay: (t) => log.push(['said', t]), _sdEntered: enteredOf(storage),
+    INTERIOR_SEASON: 3, SD_REALM_TEXT, setMidScreenText: (t) => log.push(['said', t]), sdSay: (t) => log.push(['said', t]), _sdEntered: enteredOf(storage), _sdFallen: new Set(),   // SD-ONELIFE (PIN MOVED)
     _teleportToPixel: async () => { log.push('pixel'); if (h.onWalk) h.rec = h.onWalk; },
   };
   const body = `${constOf('sdRiftOf')}\n${fnOf('sdEnterRealm')}\nreturn { sdRiftOf, sdEnterRealm };`;
@@ -606,7 +607,7 @@ test('SD11c THE WORLD HOST\'S FIGHT, RUN FROM ITS OWN TEXT (L8 G3, L5 F5): in th
 // ── L6 F4, F14: the Hour's death, the floor's last words ──────────────
 
 test('SD11c A DEATH IN THE HOUR IS THE HOUR\'S, AND THE FLOOR\'S LAST WORDS GO TO THE CHAT (L6 F4, F14): the respawn reads the Hour before it leaves it, and wakes under the veil with the Hour\'s own words (it woke with a plain dungeon\'s); what the floor still held, gathered as I leave, is said in the chat - over the screen it took the place of the way home\'s line or the cast-out\'s a frame after (mutants: read after the exit; the dungeon\'s words; the gathered line over the screen)', () => {
-  assert.equal(SD_REALM_TEXT.died, 'The Shattered Hour casts you out. You wake before the Hollow\'s door.');
+  assert.equal(SD_REALM_TEXT.died, 'The Shattered Hour casts you out for good. You wake before the Hollow\'s door.');   // SD-ONELIFE (PIN MOVED): one life
   const w = strip(W);
   const at = w.indexOf('const diedInHour = modes?.sdRealmSlot?.() != null;');
   const go = w.indexOf('Promise.resolve().then(async () => {', at);

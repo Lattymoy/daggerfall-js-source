@@ -1,0 +1,101 @@
+[
+  {
+    "name": "SD12-ONELIFE-the-death-unkept",
+    "file": "server/src/index.js",
+    "old": "if (posed && m.p?.dd && typeof a.sub === 'string' && a.sub && isSdRoom(a.key)) await this._sdMarkFallen(a.key, a.sub);",
+    "new": "if (false) await this._sdMarkFallen(a.key, a.sub);",
+    "tests": [
+      "test/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD12-ONELIFE-any-room",
+    "file": "server/src/index.js",
+    "old": "typeof a.sub === 'string' && a.sub && isSdRoom(a.key)) await this._sdMarkFallen",
+    "new": "typeof a.sub === 'string' && a.sub) await this._sdMarkFallen",
+    "tests": [
+      "test/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD12-ONELIFE-unread-at-the-door",
+    "file": "server/src/index.js",
+    "old": "    if (sub && realm.dead.includes(sub)) return SD_NO_FALLEN;",
+    "new": "    if (false) return SD_NO_FALLEN;",
+    "tests": [
+      "test/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD12-ONELIFE-memory-alone",
+    "file": "server/src/index.js",
+    "old": "gu: strs(v.gu), dead: strs(v.dead) }",
+    "new": "gu: strs(v.gu), dead: [] }",
+    "tests": [
+      "test/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD12-ONELIFE-twice-over",
+    "file": "server/src/index.js",
+    "old": "if (realm.dead.includes(sub) || realm.dead.length >= SD_FIGHTERS_MAX) return;",
+    "new": "if (realm.dead.length >= SD_FIGHTERS_MAX) return;",
+    "tests": [
+      "test/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD12-ONELIFE-the-fallen-let-through",
+    "file": "src/world/sdDungeon.js",
+    "old": "  if (fallen) return SD_NO_FALLEN;\n",
+    "new": "",
+    "tests": [
+      "test/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD12-ONELIFE-one-memory-for-both",
+    "file": "src/world/sdDungeon.js",
+    "old": "export const SD_FALLEN_KEY = 'sd12.fallen';",
+    "new": "export const SD_FALLEN_KEY = SD_ENTERED_KEY;",
+    "tests": [
+      "test/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD12-ONELIFE-the-death-unmarked",
+    "file": "src/scenes/world.js",
+    "old": "if (hourSlot != null) _sdFallen.add(hourSlot); }",
+    "new": "if (hourSlot != null) void hourSlot; }",
+    "tests": [
+      "test/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD12-ONELIFE-the-rift-blind",
+    "file": "src/scenes/world.js",
+    "old": "{ entered: _sdEntered.has(s), fallen: _sdFallen.has(s) }",
+    "new": "{ entered: _sdEntered.has(s) }",
+    "tests": [
+      "test/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD12-ONELIFE-a-resurrect-in-the-hour",
+    "file": "src/scenes/world.js",
+    "old": "if (rez && modes?.sdRealmSlot?.() == null) { resurrectInPlace(rez); return; }",
+    "new": "if (rez) { resurrectInPlace(rez); return; }",
+    "tests": [
+      "test/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "SD12-ONELIFE-a-forgiving-death",
+    "file": "src/world/sdRealm.js",
+    "old": "casts you out for good. You wake",
+    "new": "casts you out. You wake",
+    "tests": [
+      "test/sd12_onelife.test.js"
+    ]
+  }
+]

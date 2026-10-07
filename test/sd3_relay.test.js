@@ -252,7 +252,7 @@ test('SD3 the realm: the Worker mints `sd:<s>` only for the slot the hub\'s reco
     const realm = W.world.room(sdRoomKey(rec.s));
     const a = realm.connect(); await realm.hello(a, 'peer-a', null, { name: 'Ann' });
     assert.equal(a.closed, null, 'a newcomer while found');
-    assert.deepEqual(realm.store.get(SD_REALM_KEY), { s: rec.s, in: ['acct-peer-a'], gu: ['acct-peer-a'] });   // AUDIT SD II (PIN MOVED, L7 M3): and the guests among them
+    assert.deepEqual(realm.store.get(SD_REALM_KEY), { s: rec.s, in: ['acct-peer-a'], gu: ['acct-peer-a'], dead: [] });   // AUDIT SD II (PIN MOVED, L7 M3): and the guests among them; SD-ONELIFE (PIN MOVED): and its dead
     const a2 = realm.connect(); await realm.hello(a2, 'peer-a2', null, { name: 'Ann', tokenSub: 'acct-peer-a' });
     assert.equal(a.closed?.reason, 'replaced', 'one seat an account');
     // the boss falls: the record says fell (the realm's own slice says it in SD8 - here, the hub's record moved)

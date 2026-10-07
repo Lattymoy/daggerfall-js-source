@@ -129,8 +129,8 @@
   {
     "name": "SD4B-another-slot-through",
     "file": "src/world/sdDungeon.js",
-    "old": "  if (rec.s !== s) return SD_NO_CLOSED;\n  const ph = sdPhase(rec, now);\n  if (ph === 'found'",
-    "new": "  const ph = sdPhase(rec, now);\n  if (ph === 'found'",
+    "old": "  if (rec.s !== s) return SD_NO_CLOSED;\n  if (fallen) return SD_NO_FALLEN;\n  const ph = sdPhase(rec, now);\n  if (ph === 'found'",
+    "new": "  if (fallen) return SD_NO_FALLEN;\n  const ph = sdPhase(rec, now);\n  if (ph === 'found'",
     "tests": [
       "test/sd4b_rift.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "SD4B-the-word-off-no-record",
     "file": "src/scenes/world.js",
-    "old": "    return { word: sdRiftWord(rec, s, now, { entered: _sdEntered.has(s) }), returns:",
-    "new": "    return { word: sdRiftWord(null, s, now, { entered: _sdEntered.has(s) }), returns:",
+    "old": "    return { word: sdRiftWord(rec, s, now, { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) }), returns:",
+    "new": "    return { word: sdRiftWord(null, s, now, { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) }), returns:",
     "tests": [
       "test/sd4b_rift.test.js"
     ]

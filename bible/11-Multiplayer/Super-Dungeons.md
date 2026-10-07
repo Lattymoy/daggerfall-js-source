@@ -905,8 +905,8 @@ dungeon host with a level made in code - never a fifth host.
   Rift (the Return's place, `dungeonContext.js sdRiftLanding`). A Hollow gone meanwhile: outside, at its pixel.
 - **Out by force**: a death, or the Hour's end (SD2d's cast-out reaches the Hour now - the Hollow counts a player in its
   Hour as inside it), lands before the Hollow's door (the mode machine's landing reads `sdHollow`) - a death in the Hour
-  wakes under its veil with its own words, *"The Shattered Hour casts you out. You wake before the Hollow's door."*
-  (SD11c: it woke with a plain dungeon's). A room that refuses
+  wakes under its veil with its own words, *"The Shattered Hour casts you out for good. You wake before the Hollow's
+  door."* (SD11c: it woke with a plain dungeon's), and it is final (SD-ONELIFE, below). A room that refuses
   the player for good (the Hour full, or closed) casts them out the same way with the relay's own words, once.
 
 THE FOUR HOSTS: `scenes/world.js` WIRED (the way in and back, the eject, the room key, the edge, Mark, Recall,
@@ -1919,4 +1919,31 @@ voice), `test/sd5a_realm.test.js` (the Hour's lines and veil), `test/sd6c_hall.t
 the arena), `test/sd8d_remnant_blows.test.js` (the call's count, the fall to all), `test/sd10_collapse.test.js` (the
 readouts' words), `test/sd10b_audit.test.js`, `test/sd11b_relay.test.js`, `test/sd11c_page.test.js` (the voice in their
 rigs), `test/tier1_dungeontiers.test.js` (the plaque's article), `test/wb6c_gate_veil.test.js` (the step's look),
+`test/relayversion.test.js` (`world176` re-hashed in place - `net/sdLaw.js` is in the bundle).
+
+### SD-ONELIFE - shipped 2026-10-07 (one life a Hollow)
+
+Mac: *"A death within the rift casts you out and youre unable to re enter. You get one life to prove your worth"*. A
+death in the Shattered Hour casts the player out (SD5a, under the Hour's veil, *"The Shattered Hour casts you out for
+good. You wake before the Hollow's door."*) and is final for that Hollow - its found window and its collapse alike:
+
+- **The realm keeps its dead.** The dying pose (PCORPSE1's `dd`) that comes through a realm's room marks its account
+  dead there (`server/src/index.js` `_sdMarkFallen`, kept with the realm under `SD_REALM_KEY` beside `in` and `gu`, once
+  each, read back by a fresh instance). Its door (`_sdAdmit`) refuses that account's every hello after, before it asks
+  whether they were in: *"The Hour will not take you back."* (`net/sdLaw.js` `SD_NO_FALLEN`) - a refusal the page takes
+  as final, so it casts out with those words. A world cell's death marks nothing.
+- **The page keeps the slot.** The frame I die in the Hour keeps its slot on the device (`SD_FALLEN_KEY`, the last
+  SD_ENTERED_MAX, one memory with the slots gone through - `scenes/world.js` `sdSlotsKept`); the Rift asks with it
+  (`world/sdDungeon.js` `sdRiftWord`'s `fallen`) and says the realm's words before the step, found or collapsing, though
+  I went through.
+- **No Resurrect in the Hour.** A body raised in place would stand in a fight its death has left; the death's way out
+  is the Hour's.
+
+What a fallen fighter earned stands: a part in the Remnant's kill is on its receipt (SD9a's law, the gate's), and the
+spoils thrown are the world's.
+
+Pins: `test/sd12_onelife.test.js` (3 - the realm remembers a death; the Rift's word; the page, from its text);
+`tools/mutants/sd12_onelife.json` (11). RE-AIMED BY CONTENT: `sd4b.json` (2), `sd10b.json`, `sd11c.json` (2). PINS MOVED: `test/sd3_relay.test.js` (the realm's record keeps `dead`),
+`test/sd4b_rift.test.js` (the Rift asked with the fallen), `test/sd5a_realm.test.js` and `test/sd11c_page.test.js` (the
+death's words; the device's memory is `sdSlotsKept`), `test/sd10b_audit.test.js` (the Rift's rig),
 `test/relayversion.test.js` (`world176` re-hashed in place - `net/sdLaw.js` is in the bundle).
