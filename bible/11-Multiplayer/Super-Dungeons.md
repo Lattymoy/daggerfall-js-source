@@ -814,3 +814,40 @@ door), `tools/mutants/sd4a.json`'s fires-warm.
 
 SD5b next: the Hour's sky (`render/sdSky.js`) on the realm's anchored clock.
 
+### SD5b - shipped 2026-10-07 (the Hour's sky)
+
+Section 7's sky (`render/sdSky.js`), on the Deadlands' law (`render/deadlands.js`): PAINTED, NOT BUILT - one triangle
+over the screen at the far plane, depth-tested at LEQUAL and never written, each pixel reading its own ray
+(`skyBasis`), drawn in the dungeon arm's world pass after the Hour's islands and before its flats (PERF2's law: it
+burns only where nothing nearer drew), every state it touches handed back.
+
+- **The void**: near-black brass, a glow of brass along the horizon that meets the frame's haze, and two fields of
+  stars.
+- **The aurorae**: slow curtains of brass light high over the islands, a pale green at their hems (the Mantella's).
+- **The shards**: three of the Bay's skylines hanging upside down from the upper sky, dark against the glow with a lit
+  rim - Daggerfall's towers and spires, Sentinel's domes and minarets, Wayrest's bridge on its piers - round the sides
+  and behind, never over the arena's clock, each drifting its own way round the sky.
+- **The clock-face**: over the arena (+z, the realm's forward), a ring of stars, its twelve hours the brightest, and
+  two hands of light turning BACKWARDS, the minute hand twelve turns to the hour's one - the Hour unwinding.
+- **The clock**: the Deadlands' own anchored clock (`deadlandsSeconds`, anchored to the relay's), so every screen shows
+  the same moment; every rate is whole cycles over `SD_SKY_PERIOD` (720 s) and the clock is handed wrapped
+  (`sdSkyClock`), so the sky never jumps.
+- **Its light**: display-encoded, scaled by the realm's gain (`skyGain` over `SD_REALM_FOG`), its horizon in the
+  frame's haze.
+
+The GLSL was compiled and linked in Chromium's WebGL2 (headless, the swiftshader lane) before it shipped; the tests pin
+its laws, not its pixels.
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (`drawSdSky` - the pass built once, `sdSkyPassOf`, a failed build warned and
+never retried; on the anchored clock, in the frame's haze, at the realm's gain; its foreign pass marked);
+`scenes/worldModes.js` WIRED (the dungeon arm paints it in the Hour, after the islands and before the flats);
+`scenes/dungeonContext.js` FLAGGED - the level knows nothing of its sky; `scenes/exterior.js` FLAGGED - no Hour opens on
+the bench.
+
+Pins: `test/sd5b_sky.test.js` (6 - the clock and its whole cycles, the clock-face and its backward hands, the shards,
+the shaders, the draw over a recording GL, the hosts by source); `tools/mutants/sd5b.json` (22, all dead). PINS MOVED:
+`test/farring.test.js`, `test/perf2.test.js` and `test/glstate.test.js` count 23 foreign passes marked in `world.js`
+(the Hour's sky the 23rd), and `test/audit18_bible_docs.test.js` (AUDIT 39r) 28 across both exterior hosts, twenty-one
+passes.
+
+SD6 next: the Orrery of Endings (section 8) - the stones, the riddle, the relay's judgement and the bridge it lays.

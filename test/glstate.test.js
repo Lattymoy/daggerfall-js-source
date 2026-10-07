@@ -150,7 +150,7 @@ test('EV6: the skies neither query CURRENT_PROGRAM nor restore - the hosts mark 
     // UNDER-LOOK (FIELD BUGS 2026-10-01): and the water body and the sun's shafts under the sea, one more in the world host
     // WB12d: and the faithful's rite's pillar of smoke, one more in the world host (after the gate's fire)
     // SD2c: and a Super dungeon's omen, one more in the world host (after the rite's smoke - PIN MOVED)
-    const want = host === 'src/scenes/world.js' ? 22 : 5;   // HOTFIX 1003l: the sky over the arena's floor, through the world host's drawSky hook   // CROWN-HALL: the banners' cloth in a castle's throne room (PIN MOVED)   // LOOT11: the loot lines' two seams, the street's pass and the modes' hook
+    const want = host === 'src/scenes/world.js' ? 23 : 5;   // SD5b: the Shattered Hour's sky (PIN MOVED)   // HOTFIX 1003l: the sky over the arena's floor, through the world host's drawSky hook   // CROWN-HALL: the banners' cloth in a castle's throne room (PIN MOVED)   // LOOT11: the loot lines' two seams, the street's pass and the modes' hook
     assert.equal((s.match(/renderer\.markForeignPass\(\);/g) || []).length, want,
       `${host} marks its foreign seams (the sky, the rain, the sand, the wisps, the bolts${want === 6 ? ', and the grass' : ''})`);
   }

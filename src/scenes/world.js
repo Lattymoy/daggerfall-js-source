@@ -288,7 +288,8 @@ import { createSdHost } from './sdHost.js';   // SD2b: the Hollow in the world -
 import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
 import { SdOmenPassRenderer } from '../render/sdOmenPass.js';   // SD2c: the Hollow's omen, the gate's beacon in brass
 import { SD_CAST_OUT_LINE, sdRoomKey } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room
-import { isSdRealm, realmArena, SD_REALM_TEXT } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
+import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
+import { SdSkyRenderer } from '../render/sdSky.js';   // SD5b: the Hour's sky
 import { sdRiftWord, sdReturnStands } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
 import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/lootDataTables.js';   // WB12d: the casket's pile, undrawn
@@ -21046,6 +21047,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     // death's (its own door wakes them), and the Hollow goes the frame they are out
     castOut: () => { if (!(playerEntity.health > 0) || modes?.deathUp?.()) return; if (modes?.unstuck?.()) setMidScreenText(SD_CAST_OUT_LINE); },
   }) : null;
+  /** SD5b: the Hour's sky pass - built the first time the Hour is drawn; null when it would not build (its sky then the
+   *  frame's clear colour, never the Hour's floors). */
+  let _sdSkyPass;
+  const sdSkyPassOf = () => {
+    if (_sdSkyPass === undefined) { try { _sdSkyPass = new SdSkyRenderer(renderer.gl); } catch (e) { console.warn('[sd] the Hour\'s sky could not be built', e); _sdSkyPass = null; } }
+    return _sdSkyPass;
+  };
   /** SD2b: the Hollow stood or taken down, its find, its lines. SD2d: called from the online frame, above the modal
    *  return, in every mode - a Hollow's end reaches a player standing inside it. It stood in the exterior's half of the
    *  frame, which the dungeon's frame never reaches: underground nothing moved the Hollow on. */
@@ -24492,6 +24500,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     drawGateBackdrop: ({ proj, view }) => {
       const d = deadlandsPass();
       if (d?.draw(proj, view, _courtSea, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, COURT_FOG.color))) renderer.markForeignPass();
+    },
+    // SD5b (Super-Dungeons.md section 7): THE HOUR'S SKY (render/sdSky.js) - after the realm's solid geometry, before its
+    // flats, on the realm's anchored clock (the Deadlands' own, anchored to the relay's - every screen one moment), in its
+    // haze and at its light's gain (skyGain over the realm's fog)
+    drawSdSky: ({ proj, view }) => {
+      const p = sdSkyPassOf();
+      if (p?.draw(proj, view, deadlandsSeconds(), courtFogNow(), skyGain(renderer._fogColor, SD_REALM_FOG.color))) renderer.markForeignPass();
     },
     // WB4: the telegraph on the court's floor, in the dungeon arm's world pass - fogged as the floor is; WB6b: and the
     // air's life after it (the embers and the ash, render/deadlands.js drawLife), in the same air and the sky's light
