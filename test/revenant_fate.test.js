@@ -242,6 +242,36 @@ test('REVENANT-FATE no door, no yield; a kill is a kill; a puppet and a companio
   assert.equal(F.revenantMayYield({ entity: { revenant: { id: 'x' } }, companion: 'rv:x' }), false);
 });
 
+test('REVENANT-HEIR (Discord, 2026-10-07: "I got them to Elite Level V and I thought they\'d kneel but they just keeled over and died"): my revenant is never handed on - a death\'s, a door\'s or a walk-away\'s handover names an heir for my plain foe and none for it, so it stays mine and a party member\'s killing blow still brings its last stand and then its fate here; an heir that took it held no record of it and killed it as a plain foe (mutants: the revenant handed like any foe; the dungeon\'s own frame handing it)', async () => {
+  fresh();
+  const me = player();
+  const r = revenantOf(me, { rank: 1 });
+  const { pool } = rig(me);
+  const net = { room: () => 'world:3,12', selfId: () => 'ann-0001', now: () => 0, staleMs: 1e9, onPeerHit: () => true, toWire: (p) => [p[0], p[1], p[2]], toScene: (p) => [p[0], p[1], p[2]] };
+  pool.setNet(net);
+  const rev = await pool.spawnFoe(2, [0, 0, 0], { feetGiven: true, level: 6, revenant: r });
+  const plain = await pool.spawnFoe(2, [4, 0, 0], { feetGiven: true, level: 6 });
+  const frame = pool.handOverFrame(() => 'bob-0002');
+  assert.equal(frame.f.find((x) => x.i === plain.seq)?.e, 'bob-0002', 'a plain foe goes to the heir its owner names');
+  assert.equal(frame.f.find((x) => x.i === rev.seq)?.e, undefined, 'my revenant is named for nobody');
+  assert.equal(pool.dropOwnLive(), 1, 'only the plain foe is let go');
+  assert.equal(rev.dead, false, 'the revenant stays mine');
+  // the heir's own side, had it been handed: another character's pool holds no record of it - a plain death
+  const { pool: heir } = rig(player('char-heir'));
+  heir.setNet({ ...net, selfId: () => 'bob-0002' });
+  heir.applyFoes('ann-0001', { ...frame, f: frame.f.map((x) => (x.i === rev.seq ? { ...x, e: 'bob-0002' } : x)) });
+  await new Promise((res) => setTimeout(res, 20));
+  const taken = heir.foes.find((x) => !x.puppet && x.entity?.revenant);
+  assert.ok(taken, 'the heir stood it as its own');
+  heir.damageFoe(taken, 99999, [0, 0, 3], null, { fromPlayer: true });
+  assert.equal(taken.dead, true, 'an heir\'s copy holds no record of it: no kneel, a plain death - why it is never handed');
+  // and staying mine, the party member's killing blow lands here, where its record is: it kneels
+  pool.applyHit('bob-0002', { k: 'world:3,12', i: rev.seq, dmg: 9999, kind: 'melee' });
+  assert.equal(rev.dead, false, 'a party member\'s last blow does not kill it');
+  assert.ok(rev.yielded, 'it kneels, its fate mine');
+  assert.match(read('src/scenes/dungeonContext.js'), /if \(heirOf && !f\.dead\) \{ const h = f\.entity\?\.revenant\?\.id \? null : \(heirOf\(f\) \?\? null\); f\._heir = h; if \(h\) r\.e = h; \}/, 'underground, my lair\'s stand goes with me too');
+});
+
 // ── the wire, the activation, the hosts ────────────────────────────────────────────────────────────────────────
 test('REVENANT-FATE the wire and the doors: a record says `yd` kneeling and `ex` burning (1 or absent); the pool writes both, a puppet kneels and burns from them; activating a kneeling one opens its choice at the treasure\'s reach; every host hands its door (mutants: a bad flag let through; the puppet standing; the door unasked)', () => {
   assert.deepEqual(validFoeRecord({ i: 3, yd: 1, ex: 1 }), { i: 3, yd: 1, ex: 1 });
