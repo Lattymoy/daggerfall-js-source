@@ -292,7 +292,7 @@ test('SD8d THE HOSTS, by source: the world host makes the blows online beside th
   assert.match(W, /const sdBlows = sdFightLink \? createSdRemnantBlows\(\{/);
   assert.match(W, /feet: \(\) => \(playerSpawned && modes\?\.sdRealmSlot\?\.\(\) != null \? player\.feetAt\(\) : null\),\n\s+grounded: \(\) => !!player\.grounded,/);
   assert.match(W, /strike: \(dmg, how\) => \{ modes\?\.dungeonCtx\?\.strikePlayer\?\.\(dmg, how\); \},[^\n]*\n\s+say: \(t, everyone = false, key = null\) => \{ if \(everyone \|\| sdNearArena\(\)\) sdSay\(t, SD_VOICE_RANK\.turn, key\); \},/);   // AUDIT SD II (L6 F15, SD11d, PIN MOVED): near its arena, its fall to the whole Hour, through the Hour's voice
-  assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); sdBlows\?\.leave\(\); _sdFightHeld = false; \}/);
+  assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); sdBlows\?\.leave\(\); sdRemVoice\?\.leave\(\); _sdFightHeld = false; \}/);   // SD14a (PIN MOVED): its voice let go with it
   assert.match(W, /if \(inRealm\) \{ try \{ sdBlows\?\.frame\(\); \}/);
   assert.match(W, /drawSdTelegraph: \(\{ proj, view, eye \}\) => \{ const t = performance\.now\(\) \/ 1000, fog = courtFogNow\(\); const blows = !!sdBlows\?\.drawPass\(proj, view, eye, t, fog\), lines = !!sdSpoilsPool\?\.drawPass\(proj, view, eye, t, fog\); if \(blows \|\| lines\) renderer\.markForeignPass\(\); \},/);   // SD9e: and its spoils' loot lines, in the same pass (PIN MOVED)
   const M = read('src/scenes/worldModes.js');

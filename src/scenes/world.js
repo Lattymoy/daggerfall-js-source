@@ -323,6 +323,7 @@ import { createSerpentHost } from './serpentHost.js';   // SERPENT1: the client'
 import { SerpentRenderer } from '../render/serpentRender.js';   // SERPENT1: its body over and under the sea, its telegraphs, the maelstrom and the venom
 import { createSdFightLink } from '../net/sdFightLink.js';   // SD8c: the realm's fight as the page holds it
 import { createSdRemnantBlows } from './sdRemnantBlows.js';   // SD8d: its blows on me - seen, heard, judged on my feet
+import { createSdRemnantVoice } from './sdRemnantVoice.js';   // SD14a: its body and its Echoes heard
 import { remnantBarModel, sdBarNear } from '../ui/sdRemnantBar.js';   // SD8c: the Brass Remnant's bar, the gate's in brass
 import { createSdVoice, SD_VOICE_RANK } from './sdVoice.js';   // AUDIT SD II (SD11d): the Hour's lines over the screen, paced
 import { serpentBarModel } from '../ui/serpentBar.js'; import { drawGateBossBar } from '../ui/gateBossBar.js';   // SERPENT1: its boss bar, in the sea's colours - the gate's bar, its one node
@@ -21686,6 +21687,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     me: () => (online ? online.name ?? null : null),   // my row of the chart
     hudHidden: () => gamePaused() || !!townTalk.hudHidden,
   }) : null;
+  /** SD14a (Super-Dungeons.md section 10): ITS VOICE (scenes/sdRemnantVoice.js) - its body and its Echoes heard, off the
+   *  fight this page holds: strides, growls, grunts, its wake and its turns, the stun, the release of each blow, a Volley
+   *  aimed at my feet. Online alone, beside the link. */
+  const sdRemVoice = sdFightLink ? createSdRemnantVoice({ audio, link: sdFightLink, feet: () => (playerSpawned && modes?.sdRealmSlot?.() != null ? player.feetAt() : null) }) : null;
   /** SD9e (Super-Dungeons.md section 11): ITS SPOILS ON THE ARENA'S FLOOR (scenes/sdSpoils.js) - SD_SPEW_AT_MS into its
    *  fall, off my receipt from my own realm (sdSpoilsReceipt), thrown from where it fell; leaving the Hour gathers the
    *  floor. Online alone, beside the link. */
@@ -21715,9 +21720,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // SD9e: whatever is still on the arena's floor into the pack - and AUDIT SD II (L5 F5): a checkpoint asked at once (the
     // Hour refuses every save, so what it gave stood on the device alone until the next one, two minutes on)
     if (!inRealm && _sdFightHeld) { sdSpoilsBurst?.leave(); saveSoon.changed(); }
-    if (!inRealm && _sdFightHeld) { sdFightLink.leave(); sdBlows?.leave(); _sdFightHeld = false; }
+    if (!inRealm && _sdFightHeld) { sdFightLink.leave(); sdBlows?.leave(); sdRemVoice?.leave(); _sdFightHeld = false; }
     if (!inRealm) _sdHall = null;   // AUDIT SD II (L2 F17): the hall's word forgotten out of the realm - kept, the next visit to the slot's Hour turned its stones from stale places and chimed a Concord reached meanwhile
     if (inRealm) { try { sdBlows?.frame(); } catch (e) { console.warn('[sd] blows', e?.message ?? e); } }   // SD8d: its blows on me
+    if (inRealm) { try { sdRemVoice?.frame(); } catch (e) { console.warn('[sd] voice', e?.message ?? e); } }   // SD14a: its body heard
     if (inRealm) { try { sdSpoilsBurst?.frame(); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } }   // SD9e: its spoils, thrown and flying
     let bar = null;
     if (inRealm) {

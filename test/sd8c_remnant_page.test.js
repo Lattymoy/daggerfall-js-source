@@ -661,7 +661,7 @@ test('SD8c THE HOSTS, by source: the dungeon context makes the arena\'s set in t
   assert.match(W, /const sdFightLink = params\.has\('online'\) \? createSdFightLink\(\{ now: \(\) => Date\.now\(\) \+ _sharedOffsetMs, say: \(t, key\) => \{ if \(sdNearArena\(\)\) sdSay\(t, SD_VOICE_RANK\.turn, key\); \} \}\) : null;/);   // AUDIT SD II (L6 F15, SD11d, PIN MOVED): its lines near its arena, through the Hour's voice
   assert.match(W, /online\.onSdFight = \(w\) => sdFightHeard\(w\);/);
   assert.match(W, /if \(!sdFightLink \|\| slot == null \|\| \(w\.k === 'st' && w\.s !== slot\)\) return;/);
-  assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); sdBlows\?\.leave\(\); _sdFightHeld = false; \}/);   // PIN MOVED (SD8d): its blows forgotten with it
+  assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); sdBlows\?\.leave\(\); sdRemVoice\?\.leave\(\); _sdFightHeld = false; \}/);   // PIN MOVED (SD8d): its blows forgotten with it   // SD14a (PIN MOVED): its voice let go with it
   assert.match(W, /if \(sdBarNear\(x, z\)\) bar = remnantBarModel\(sdFightLink\.state\(\), sdFightLink\.now\(\)\);/);
   assert.match(W, /if \(bar \|\| _sdBarUp\) \{ drawGateBossBar\(bar, \{ hidden: gamePaused\(\) \|\| !!townTalk\.hudHidden \}\); _sdBarUp = !!bar; \}/);
   assert.match(W, /sdFightIn: \(\) => !!online\?\.sendSdIn\?\.\(playerEntity\.level\),/);

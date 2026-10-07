@@ -473,8 +473,8 @@
   {
     "name": "SD11c-G3-left-every-frame",
     "file": "src/scenes/world.js",
-    "old": "    if (!inRealm && _sdFightHeld) { sdFightLink.leave(); sdBlows?.leave(); _sdFightHeld = false; }",
-    "new": "    if (!inRealm) { sdFightLink.leave(); sdBlows?.leave(); _sdFightHeld = false; }",
+    "old": "    if (!inRealm && _sdFightHeld) { sdFightLink.leave(); sdBlows?.leave(); sdRemVoice?.leave(); _sdFightHeld = false; }",
+    "new": "    if (!inRealm) { sdFightLink.leave(); sdBlows?.leave(); sdRemVoice?.leave(); _sdFightHeld = false; }",
     "tests": [
       "test/sd11c_page.test.js"
     ]

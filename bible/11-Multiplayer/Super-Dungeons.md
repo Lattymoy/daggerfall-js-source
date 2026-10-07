@@ -2034,3 +2034,33 @@ after.
 
 Pins: `test/sd13_score.test.js` (7 - the songs; the Hour's sound; the levels; where I stand; the law; the fall played
 whole; the host, from the world host's text); `tools/mutants/sd13.json` (27).
+
+### SD14a - shipped 2026-10-07 (the Brass Remnant's voice)
+
+The Warden speaks in 48 cues; the Remnant had its blows' wind-ups and landings and its fall's thud, and nothing of its
+body (the inventory's own words: "no Remnant footsteps, its wake, phase turns, Echo rise / fall ... the stun, the loss,
+any voice"). `scenes/sdRemnantVoice.js` reads the fight this page holds each frame and speaks 32 cues more, in
+Daggerfall's own Iron Atronach's voice (`ENEMY_BASICS` row 36: its move 222, bark 223, attack 224) pitched for a
+colossus of brass - the Remnant under gold under silver:
+
+- **Its body**: a stride on the stone every `SD_STRIDE_M` (3.2 m) walked, where it stands (a body put somewhere far is
+  no stride; none outside time); a growl while it does not strike, 7 s and a seeded part of 6 more apart, held through
+  a blow; a grunt for each 0.4% of its health lost, 1.4 s apart, a fighter's share joining moving the count; its wake
+  (the bark, the Hour's bell under it); the Dragon Break (the Orrery's chime, low - it steps outside time) and the
+  Last Moment (its deepest bark, the storm's roll); back from outside time (the gears grinding together); stunned (its
+  bark, a ring) and up again (the gears); the gears slipping once under a fifth of its health; its cry at its fall; the
+  ground's shock under its Stomp; the Hour's bell, lowest, when the fight is lost.
+- **Its Echoes**, each at its own pitch: risen (the chime), striding (`SD_ECHO_STRIDE_M`), hurt, broken (the shatter).
+- **Each blow's release** (WB13d's law): `SD_RELEASE_MS` (350 ms) before it lands, once - the Stomp's body, the Hand's
+  swing, the Volley's gears loosed, the Pulse's roll, the Reset's ring, the End's bell.
+- **Aimed at me**: a Volley's mark within `SD_STING_M` (2 m) of my feet stings at its word, at my feet (WB13e).
+
+A turn is heard as it happens: a fight first seen (a late join, a reload) is taken as it stands, and a wake or a fall
+heard over 1.5 s late is never sounded. With the blows' 14, the Orrery's 4, the Steps' 4, the Hearts' 4, the Rift's bell
+and the way home's toll, the arc speaks in 60 cues (the Hour's air, SD14b, past them). The world host makes it beside
+the fight's link, frames it with the blows in the Hour and lets it go with the link out of it.
+
+Pins: `test/sd14a_voice.test.js` (7 - the voice; the turns; hurt and the slip; strides and the growl; the Echoes; the
+releases, the shock and the sting; forgotten and the host's); `tools/mutants/sd14a.json` (27). RE-AIMED BY CONTENT:
+`sd11c.json` (the fight left once). PINS MOVED: `test/sd11c_page.test.js`, `test/sd8c_remnant_page.test.js`,
+`test/sd8d_remnant_blows.test.js` (the voice framed and let go beside the blows).
