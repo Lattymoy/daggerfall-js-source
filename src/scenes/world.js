@@ -651,7 +651,7 @@ import { enhancedHudScale, setHudSetChips, enhancedHudBottom, enhancedHudQuick }
 import { makeHitPend } from '../net/hitPend.js';   // AUDIT FOES FOE2: a blow the wire refused waits and goes
 import { PeerBodies, peerIsWolf } from '../net/peerBodies.js';   // MWBODY1: the others in the Morrowind body; WEREWOLF1: and in Bloodmoon's wolf
 import { ChatLog, CHAT_REJOIN_MS } from '../net/chat.js';   // CHAT1: the tabs and their lines
-import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT, ROLL_OLD_RELAY_TEXT, EMOTE_OLD_RELAY_TEXT, GUILD_OLD_RELAY_TEXT, NO_GUILD_TEXT, partyNoteTab } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
+import { oocText, localLineHeard, nextRegionRoom, regionJoinedText, CHAN_OLD_RELAY_TEXT, ROLL_OLD_RELAY_TEXT, EMOTE_OLD_RELAY_TEXT, GUILD_OLD_RELAY_TEXT, NO_GUILD_TEXT, SOLO_LOCAL_TEXT, partyNoteTab } from '../net/chat.js';   // CHAT-CHAN: the channels' own laws (a second chat import: CHAT1's pin holds the first as it stands)
 import { parseChatLine, HELP_LINES, CHAT_GREETING_TEXT, unknownCommandText, emptyCommandText, hostMisuseText, badRollText, expandShortcodes, EMOTE_LINES } from '../net/chatCommands.js';   // CHAT-CHAN: what a typed line IS; DICE1: and a roll; EMOTE1: an action, a gesture, a shortcode
 import { partyRosterSource, localRosterSource, guildRosterSource } from '../net/roster.js';   // CHAT-CHAN: the Party and Local tabs' composed lists
 import { partyCompassPoints } from '../ui/partyMapMarks.js';   // COMPASS-PARTY: the party's points on the compass
@@ -766,7 +766,7 @@ import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundP
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { homeLookRemap, HOME_LOOK_BUILD_WAIT_MS } from '../world/homeLook.js';   // HOME-LOOK: a painted house's own table
-import { createHomeYards } from './homeYards.js';   // HOME-YARD: the town's yards, and the owner's decorator outside
+import { createHomeYards, yardLampRows } from './homeYards.js';   // HOME-YARD: the town's yards, and the owner's decorator outside; YARD-LIGHT: a yard's lamps as the night's scene lights
 import { loadIcon } from '../ui/textureCanvas.js';   // HOME-YARD: the decorator's pictures
 import { decorScanDeps } from '../systems/decorScan.js';   // HOME-YARD: the catalogue's scan (DECOR-DUNGEON: one constructor for both hosts)
 import { DOOR_TYPE } from '../world/meshReader.js';   // ARENA1: the undercroft's stair is a dungeon entrance (DECOR-DUNGEON: GLOBAL_SCALE went with the yards' scan deps, systems/decorScan.js)
@@ -2103,7 +2103,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // same as ?grass=off - no renderer, no field, nothing drawn.
   const grassDensity = Math.max(0, Math.min(1, Number(getPref('grassDensity')) || 0)) * LAB_GRASS.density;
   const labGrass = isEnhanced() && getPref('enhancedEnvironments') && grassDensity > 0 && pageParam('grass') !== 'off'
-    ? new LabGrassRenderer(renderer.gl) : null;
+    ? new LabGrassRenderer(renderer.gl, { provoke: pageParam('provoke') !== 'last' }) : null;   // GRASS-ON: `?provoke=last` draws the field under GL's own convention, to time it both ways (render/labGrass.js)
   let labGrassField = null;   // GR5: the world-anchored field, filled a cell or two a frame
   if (labGrass) discSlotCount(LAB_GRASS.span);   // PERF-EXT20: the field's one sweep, paid here behind the loading screen - every createGrassField after reads the memo
   const grassNormalScratch = [0, 1, 0];   // GRASS-LIT2: the slope's answer, one array for every blade (the placer copies it)
@@ -5929,7 +5929,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const shotMode = params.has('shot');
   const walkMode = params.has('play') || (!params.has('fly') && !shotMode);
   const startKey = `${startPixel.x},${startPixel.y}`;
-  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), enhancedJumping: () => isEnhancedJumping(playerEntity), carriedWeight: () => carriedWeight(playerEntity), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)), parkour: parkourDeps(playerEntity, (l) => townTalk?.say(l), { hold: () => !!gatherHost && (gatherHost.acting() || !!gatherHost.target) }) });   // CLIMB-NODE: a node under the look, or an act, holds the free climb's walk-in start (the street's, the dungeon's and a building's - one motor)   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
+  const player = new PlayerMotor(collider, motorStats(playerEntity), { jumpBoost: () => jumpSpeedMultiplier(playerEntity), enhancedJumping: () => isEnhancedJumping(playerEntity), carriedWeight: () => carriedWeight(playerEntity), travelling: () => travellingOutdoors(), climbing: climbingDeps(playerEntity, (l) => townTalk?.say(l)), parkour: parkourDeps(playerEntity, (l) => townTalk?.say(l), { hold: () => !!gatherHost && (gatherHost.acting() || !!gatherHost.target) }) });   // CLIMB-NODE: a node under the look, or an act, holds the free climb's walk-in start (the street's, the dungeon's and a building's - one motor); CLIMB-TRAVEL: no climb of either lane while a journey or the keys' travel runs (the thunk runs in the frame, after wildTravelling is declared)   // AcrobatMotor skill jump (P14) + M3 climbing; motorStats = the LIVE entity (PlayerSpeedChanger reads LiveSpeed/Running/Swimming every step)
   // AUDIT 21 (hosts lane, F3): onLevelUp. Without it advancement.js takes its
   // HEADLESS arm - `spendPoolLowest`, which dumps every point into your LOWEST
   // stats with no message and no choice. Cross a level threshold walking a
@@ -14255,6 +14255,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  its lists, the view itself, the spawns it was told of. They sat in applyPose past `if (!pose) return;`, so a save
    *  without a pose (an older envelope) loaded with the last run's chases still running, its rudder held, its "?"s. */
   function overworldLoadReset() {
+    _soloMemory = null;   // AUDIT FB1007b H2: nor the tutorial dungeon's memory - the loaded character's time is the save's
     tvRaid.chase.clear(); tvRaid.spent.clear(); tvRaid.list = []; tvRaid.at = -Infinity; tvRaid.peer.clear(); tvRaid.spentAt.length = 0;   // OWS3: no chase across a load; OW6: nor what the peers said, nor what I was saying
     csaJourneyHelm.held.clear(); csaJourneyHelm.row = false; tvSea.means = null; tvSea.phase = null; tvSea.boat = null; tvSea.wasLive = false;   // AUDIT OWS A1: nor a crossing's hand on the helm - a load into a dungeon's boat kept its rudder held
     tvPlates = { at: null, list: [] };   // AUDIT DEEP T2-4: the loaded character's discoveries - never the plates the last one knew
@@ -14997,6 +14998,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (tvWater(pick.pixel.x, pick.pixel.y) || at[1] <= tvSeaY() + TV_SEA_EPS_M) { tvSay(TRAVEL_VIEW_TEXT.water); return false; }
       return travelViewWalkTo(at, pick.pixel, { roads: tvMapForcesRoads() });
     }
+    // AUDIT FB1007b C2: from a wall the pick is answered with the refusal - never DFU's fast travel in its stead (the
+    // callers fall through to it on false)
+    if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return true; }
     if (coords) travelOptions.beginTravelToCoords(pick.pixel, !!opts?.speedCautious);
     else {
       travelOptions.beginTravel({
@@ -18542,6 +18546,21 @@ export async function bootWorld(canvas, renderer, params, status) {
     else { _worldSaid = said; _worldSaidAt = now; _worldSaidKey = key; }
     return ok;
   };
+  // AUDIT FB1007b H2: THE TUTORIAL DUNGEON'S OWN MEMORY. No room remembers a solo dungeon (HOLD-SOLO), so every entry
+  // built it whole - its dead risen, the containers emptied full again, rolled anew at the player's level: the LOOT-REGEN
+  // report's "all the guys I killed before have loot again", and the one online dungeon outside WORLD8's hour. Its memory
+  // is kept here as a room keeps one (the place's own record, stamped on the relay's clock), taken at the door out and
+  // laid back at the next door in. A load is its own time and forgets it, as a reload of the page does.
+  let _soloMemory = null;   // { mapId, shared }
+  const keepSoloMemory = () => {
+    const id = onlineOn ? modes?.roomIdentity?.() : null;
+    if (_loading) _soloMemory = null;
+    else if (id?.solo) _soloMemory = { mapId: id.mapId, shared: modes?.placeSharedWorld() };
+  };
+  const restoreSoloMemory = () => {
+    const id = onlineOn ? modes?.roomIdentity?.() : null;
+    if (!_loading && id?.solo && _soloMemory?.mapId === id.mapId) modes?.restorePlaceSharedWorld(_soloMemory.shared);
+  };
   // WORLD2: ONE SIMULATION PER ROOM. While I host a world room the dungeon's layout foes are mine to step and I
   // stream every changed one FOES_MS apart (every one FOES_FULL_MS apart, so a dropped delta heals); while another
   // hosts, my layout foes are puppets that follow the stream and my blows on them go to the host as hits.
@@ -18781,6 +18800,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     const mode = modes?.mode ?? 'exterior';
     const identity = modes?.roomIdentity?.();
     if (identity?.kind === 'arena') return { error: 'battle' };
+    // AUDIT FB1007b H3: the tutorial dungeon is each character's own (HOLD-SOLO) - staff sent there landed in their own
+    // empty copy, told they stood at the player's exact position
+    if (identity?.solo) return { error: 'unavailable' };
     const privateRoom = identity?.private ? privateRoomHere(identity) : null;
     if (mode === 'interior' && (!identity?.buildingKey || (identity.private && !privateRoom))) return { error: 'private' };
     const inside = modes?.anchorContext?.();
@@ -19409,6 +19431,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         link.onStaffTeleport = (m) => client.receive(m);
       }
       if (tab.room === SOCIAL_ROOM) link.onGate = (g) => gateLink?.word(g);   // WB3b: the hub's word of a kill, and a fighter's receipt outside the court
+      // AUDIT FB1007b H4: the hub's welcome carries the relay's clock too (AUDIT SOC B7) - heard as the presence session's
+      // is. In the tutorial dungeon that session keys no room (HOLD-SOLO) and its welcome never came: a session loaded or
+      // born there ran on this machine's clock until the player walked out - the time away paid late, over the time in
+      // the Hold, and every trusted reading (a banishment's term, a receipt's life, the timers) blank
+      if (tab.room === SOCIAL_ROOM) link.onClock = (offsetMs) => online?.onClock?.(offsetMs);
       if (tab.room === SOCIAL_ROOM) link.onSerpent = (w) => serpentLink?.word(w);   // SERPENT1: the hub's word of a sea serpent's kill, Bay-wide, and the day's at my hello
       if (tab.room === SOCIAL_ROOM) link.onRite = (w) => riteHost?.onBroken(w);   // WB12d: the hub's word of a broken rite, and at my hello
       if (tab.room === SOCIAL_ROOM) link.onRaid = (f, room) => (f.k === 'tw' ? offerRaidTowns(link, f.h) : raidRelayWord(f, room));   // RAID3: the hub's word of a cleanse anywhere, and the day's at my hello; RAID-ROLL: its ask for the towns table
@@ -22728,6 +22755,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     inWorld: () => legacySettings().familyInWorld && livingWorldOn(),   // LEGACY-HOME; AUDIT LEGACY II B5: in the Living World's towns alone
     livingWorld: () => livingWorldOn(),
     markHome: (h) => !!legacyHost?.markHome(h),
+    familySeatHere: () => legacyHost?.familySeatHere() ?? null,   // FAMILY-SEAT (FIELD BUGS 2026-10-07b): the House page moves the seat
+    moveFamilySeat: () => legacyHost?.moveFamilySeat() ?? { ok: false, why: 'Not here.' },
     choice: () => playerEntity.legacyChoice ?? null,   // LEGACY-CHOICE: why a character has no house
     online: () => isOnlinePage(),
   });
@@ -23255,8 +23284,11 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  from before the channels, no party), else the socket it rides (connecting, reconnecting, refused: the session's
    *  own line, labelled with the tab - AUDIT CHAT B5). The Region tab before its first region reads the World link's,
    *  whose welcome is what it waits on. */
+  /** AUDIT FB1007b H5: online, in a place no one shares - the tutorial dungeon (HOLD-SOLO): connected, and alone. */
+  const soloHere = () => !!online && !!modes?.roomIdentity?.()?.solo;
   const chatStatus = (tabId) => {
     const tab = chatLog?.tab(tabId);
+    if (tabId === 'local' && soloHere()) return SOLO_LOCAL_TEXT;   // AUDIT FB1007b H5
     if ((tabId === 'party' || tabId === 'region') && chanOld()) return CHAN_OLD_RELAY_TEXT;
     if (tabId === 'party' && !social?.party) return NO_PARTY_TEXT;
     if (tabId === 'guild' && guildOld()) return GUILD_OLD_RELAY_TEXT;   // GUILD1c
@@ -23278,6 +23310,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (tabId === 'guild' && guildOld()) return why(GUILD_OLD_RELAY_TEXT);   // GUILD1c
     // EMOTE1: an action only down a session whose relay carries one - an older one would say the words bare
     const s = tabId === 'local' ? online : tabId === 'party' || tabId === 'guild' ? socialLink() : chatLinks.get(tabId);
+    if (tabId === 'local' && soloHere()) return why(SOLO_LOCAL_TEXT);   // AUDIT FB1007b H5: said, never kept in the field in silence
     if (me && s?.status === 'open' && !s.emoteOk) return why(EMOTE_OLD_RELAY_TEXT);
     if (tabId === 'local') return online?.sendChat(text, { me }) ?? false;
     if (tabId === 'party') {
@@ -23298,6 +23331,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const why = (line) => { chatLog.push(tabId, { text: line, system: true }); return false; };
     if ((tabId === 'party' || tabId === 'region') && chanOld()) return why(CHAN_OLD_RELAY_TEXT);
     if (tabId === 'guild' && guildOld()) return why(GUILD_OLD_RELAY_TEXT);   // GUILD1c
+    if (tabId === 'local' && soloHere()) return why(SOLO_LOCAL_TEXT);   // AUDIT FB1007b H5
     const s = tabId === 'local' ? online : tabId === 'party' || tabId === 'guild' ? socialLink() : chatLinks.get(tabId);
     if (s?.status === 'open' && !s.rollOk) return why(ROLL_OLD_RELAY_TEXT);
     if (tabId === 'party' && !social?.party) return why(NO_PARTY_TEXT);
@@ -23630,6 +23664,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!online && !mail) return null;
     const readers = pageReaders();
     const why = readers.length ? null
+      : soloHere() ? PAGE_NO_READERS_TEXT   // AUDIT FB1007b H5: in the Hold, connected and alone - never "not connected"
       : (!online || online.status !== 'open') ? `${NOT_CONNECTED_TEXT}.`
         : (!online.pageOk ? PAGE_UNSUPPORTED_TEXT : PAGE_NO_READERS_TEXT);
     return { readers, why, show: showPage, letter: mail ? letterPage : null };
@@ -23959,7 +23994,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     else {
       const ident = modes?.roomIdentity?.();
       const loc = _questLoc();   // the location under the player: an interior's room is named by it
-      key = ident?.private ? privateRoomHere(ident) : roomKeyFor({
+      // HOLD-SOLO (FIELD BUGS 2026-10-07b, nObOdy: "Lock privateer's hold. The first dungeon is a tutorial area"): the
+      // tutorial dungeon keys no room - no one stands in it but its own character, its foes and doors are its save's,
+      // and nobody hands a fresh character what it did not earn; the street outside is the shared world again
+      key = ident?.private ? privateRoomHere(ident) : ident?.solo ? null : roomKeyFor({
         host: 'world', mode,
         mapId: ident?.kind === 'dungeon' ? (ident.mapId ?? null) : (loc?.mapTableData?.mapId ?? null),
         regionIndex: ident?.kind === 'dungeon' ? ident.regionIndex : (loc?.regionIndex ?? -1),
@@ -24449,10 +24487,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     raiseFallen: (f) => raiseFallenDoor(f),
     plaquePeerAct: (eye, dir) => plaquePeerAct(eye ?? cam.pos, dir ?? socialFwd()),   // ACT-MENU: the building's and the dungeon's press on a player the plaque lit, on the press's own ray (AUDIT DISC7 A9)
     pointerSurfaceUp: () => pointerSurfaces.size > 0,   // AUDIT DROPS E1: the plaque comes down under the F-menu, the chat and the friends panel indoors and underground too (AUDIT-WH2 L3-F3's law, the street's own term)
-    onDungeonLeave: () => { const n = handOverRoomFoes(); if (n) console.info(`[foes] handed ${n} quest foe(s) at the dungeon's door`); gatherHost?.leaveDungeon(); worldPublish(performance.now(), true); },   // WORLD1: the room's memory goes out while the dungeon still stands; QUEST-PARTY phase 3c: my shared quest's foes to the party who stay
+    onDungeonLeave: () => { const n = handOverRoomFoes(); if (n) console.info(`[foes] handed ${n} quest foe(s) at the dungeon's door`); keepSoloMemory(); gatherHost?.leaveDungeon(); worldPublish(performance.now(), true); },   // WORLD1: the room's memory goes out while the dungeon still stands; QUEST-PARTY phase 3c: my shared quest's foes to the party who stay
     // OH-D: the four DFU events There's a Hole in the Bottom of the Ocean subscribes to (its Install), raised by the doors
     onSetDungeon: (ctx) => ohAbyss?.onDungeonSet(ohDungeonOf(ctx)),   // DaggerfallDungeon.OnSetDungeon
-    onTransitionDungeonInterior: (ctx) => { navalStow(); ohAbyss?.onDungeonEntered(ohDungeonOf(ctx)); csaOnTransition(); navalTransition(); },   // PlayerEnterExit.OnTransitionDungeonInterior (CSA-C: Come Sail Away's OnTransition after OceanHoles' - the mods' load order)
+    onTransitionDungeonInterior: (ctx) => { navalStow(); ohAbyss?.onDungeonEntered(ohDungeonOf(ctx)); csaOnTransition(); navalTransition(); restoreSoloMemory(); },   // PlayerEnterExit.OnTransitionDungeonInterior (CSA-C: Come Sail Away's OnTransition after OceanHoles' - the mods' load order)
     onFailedTransition: () => { ohAbyss?.onTransitionFailed(); },   // PlayerEnterExit.OnFailedTransition
     onTransitionDungeonExterior: () => { navalStow(); ohAbyss?.onDungeonExited(); csaOnTransition(); navalTransition(); },   // PlayerEnterExit.OnTransitionDungeonExterior (and Come Sail Away's)
     onEnemySpawn: (rec) => { const d = ohDungeonOf(modes?.dungeonCtx); if (d) ohAbyss?.onEnemySpawned(d, d.foeView(rec)); },   // OH-E: GameManager.OnEnemySpawn
@@ -25311,6 +25349,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  it reads through - refilled every frame, never re-minted. */
   const _sceneLights = [];
   const _lightT = [0, 0, 0];
+  const _yardRows = [];   // AUDIT YARD-LIGHT (L4): the yards' lamps' scene-light rows, refilled in place (homeYards.js yardLampRows)
   // WOD2: the frame's World of Daggerfall lights ride the same pool,
   // after the lanterns, with a range array of their own beside the
   // animator's (theirs never flicker - the interior light prefab is not
@@ -25989,8 +26028,13 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     tvSeaSail(boat, kind, dt);
   }
   /** THE GATE every click passes first: a journey needs Travel Options, and the mod's own refusal when foes are near. */
+  // AUDIT FB1007b C2: NO JOURNEY SETS OUT FROM A WALL - a journey lets the hold go (CLIMB-TRAVEL), and a traveller who
+  // set out from a handhold fell its height (a fresh character's health is a 12.5 m drop): refused and said, as a foe near
+  // refuses it
+  const climbingNow = () => !!(player.climb?.isClimbing || player.mantling || player.onWall || player.holdPending);
   function travelViewCanGo() {
     if (!travelOptions) { tvSay(TRAVEL_VIEW_TEXT.noJourneys); return false; }
+    if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return false; }   // AUDIT FB1007b C2
     if (duelEnemyNear() || areEnemiesNearby(exteriorFoePool())) { tvSay(TRAVEL_VIEW_TEXT.enemies); return false; }   // AUDIT DEEP2 B-4: a live duel too (DUEL1: no journey out of a duel)
     if (csaAboard.aboard) { tvSay(TRAVEL_VIEW_TEXT.passenger); return false; }   // OWS2: aboard another's boat, its helmsman steers
     return true;
@@ -26325,6 +26369,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
   let _wildGate = false;   // this frame: a fast traveller (a journey driving, or the Overworld's keys) out of doors
   const wildStealth = () => skillValue(playerEntity, SKILLS.Stealth);
   const wildTravelling = () => (!!travelControlUI?.isShowing && !!travelOptions?.state?.autopilot) || tvWalking > 0;
+  // AUDIT FB1007b C1: THE MOTOR'S JOURNEY IS OUT OF DOORS (CLIMB-TRAVEL's `travelling`), as the wild gate's is - the keys'
+  // travel is the exterior frame's (its governor alone writes tvWalking, and no indoor frame runs it), so a load or a door
+  // taken with the keys held left it standing, and no wall indoors could be climbed until the player walked out again
+  const travellingOutdoors = () => wildTravelling() && (modes?.mode ?? 'exterior') === 'exterior';
   /** A foe the gate holds off me: mine (a puppet is its owner's), out in the wilderness (a town's foes keep the town's
    *  law), and not yet alerted to the fast traveller. */
   const wildGated = (f) => _wildGate && !f.puppet && !wildFoes.alerted(f) && !!f.ai?.feet && !_inAnyLocationRect(f.ai.feet);
@@ -27132,7 +27180,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // AUDIT OW5 G4: and only while the page has the focus - a key held as the window lost it never sends its keyup, and the
       // clock ran on at the spinner's rate (x10: ten game hours in five real minutes) until the key was tapped again
       moving: TV_MOVE_ACTIONS.some((a) => held(keys, a)) && (typeof document === 'undefined' || document.hasFocus?.() !== false),
-      onFoot: walkMode && playerSpawned && !player.isPlayerSwimming && !csaBoatUnderMe(),
+      onFoot: walkMode && playerSpawned && !player.isPlayerSwimming && !csaBoatUnderMe() && !(player.climb?.isClimbing || player.mantling || player.onWall || player.holdPending),   // CLIMB-TRAVEL, AUDIT FB1007b C3: hands on a wall, or a load's hold, walk at walking pace
       paused: gamePaused(),
       travels: !!travelControlUI, onRoad: !journey && travelView?.state === 'up' && travellerOnRoad(),   // RATE-LAW: the ground's rate, where the spinner's was
     });
@@ -28845,6 +28893,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (lightsOnAt(minute)) for (const l of quays?.lights() ?? []) csaLit.push({ x: l.x, y: l.y, z: l.z, range: l.range, color: CITY_LIGHT_COLOR_F32 });
     if (lightsOnAt(minute)) {
       worldLightAnimator.tick(dt);
+      // YARD-LIGHT: the yards' lamps - the town's own (homeYards.js yardLampOf: an outdoor lamp is the town's) - scene lights beside
+      // the quays', never the player's extras; in the lanterns' hours and colour, each on the town's flicker at its slot (AUDIT
+      // YARD-LIGHT L3: after the tick, as the street reads it) at its own reach, rows refilled in place (L4: PERF-LIGHTS' law)
+      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit);
       // PERF-LIGHTS (2026-09-19): THE LANTERNS ARE A POOL, NOT A FRESH
       // LIST. This built an array and an object PER LANTERN every frame -
       // a town at night is hundreds of them, and the pixel translation

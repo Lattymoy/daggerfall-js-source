@@ -10,8 +10,8 @@
 //   FORAGE0 6.4 - in water, swimming, or at sea), a cast stands just
 //   ahead of the look, keyed `haul:<x>:<y>:<day>:<id>` - the pixel, the
 //   UTC day, and twelve hex digits drawn here (net/nodeLaw.js haulKey).
-//   A new key after each haul. Fishing is bounded, not witnessed: forty
-//   hauls an account a day.
+//   A new key after each haul. Fishing is bounded, not witnessed: by the
+//   hour's writes (CAP-OFF: its forty hauls an account a day are gone).
 //   THE SCHOOLS. Two a pixel a day where the first water their spots find
 //   is (nodeLaw schoolSpots), stood as the Fish item's own world picture
 //   on the water (Foraging's Fish, 1605 - DFU's TEXTURE.211) -
@@ -28,7 +28,7 @@
 //   species' own item, into the pack once.
 // ═══════════════════════════════════════════════════════════════════
 import { haulKey, parseNodeKey, schoolSpots, SCHOOLS_PER_PIXEL, SCHOOL_R, pixelKey } from '../net/nodeLaw.js';
-import { HAULS_PER_DAY, FISH_KEY, actBand, PEARL, storesFullIn, fullWordsIn } from '../net/professionLaw.js';
+import { FISH_KEY, actBand, PEARL, storesFullIn, fullWordsIn } from '../net/professionLaw.js';
 import { goodsWhere } from '../net/bagLaw.js';   // BAG1: where the haul went
 import { createFishAct } from '../systems/fishAct.js';
 import { FT, attributeAverage } from '../systems/foragingLaw.js';
@@ -121,17 +121,16 @@ export function haulLine(d, species) {
 
 /**
  * WHAT E DOES AT THE WATER, and the prompt that says it: `{ harvest, verb, rest, ready }` - `ready` false with `rest`
- * naming what is missing (the ground the net never works, the account's day, the Stores' room). `school` - a school's
- * words (where one rises near), said beside a ready cast.
- * @param {{ taken: boolean, counting: boolean, hauls: number, cap?: number, rank: number, storesFull: boolean,
- *   where?: string|null, school?: string, fullWords?: string }} o
+ * naming what is missing (the ground the net never works, the Stores' room - CAP-OFF: no day's hauls). `school` - a
+ * school's words (where one rises near), said beside a ready cast.
+ * @param {{ taken: boolean, counting: boolean, rank: number, storesFull: boolean, where?: string|null, school?: string,
+ *   fullWords?: string }} o
  */
-export function fishPlan({ taken, counting, hauls, cap = HAULS_PER_DAY, rank, storesFull, where = null, school = '', fullWords = 'Stores full' }) {   // BAG1: `fullWords` the book's (professionLaw fullWordsIn)
+export function fishPlan({ taken, counting, rank, storesFull, where = null, school = '', fullWords = 'Stores full' }) {   // BAG1: `fullWords` the book's (professionLaw fullWordsIn)
   const harvest = 'fish';
   const verb = 'Cast the net';
   if (taken || counting) return { harvest, verb, rest: 'being counted', ready: false };
   if (where) return { harvest, verb, rest: where, ready: false };
-  if (hauls >= cap) return { harvest, verb, rest: `Fishing ${rank} - ${hauls} of ${cap} hauls today`, ready: false, full: true };
   if (storesFull) return { harvest, verb, rest: `${fullWords} - ${materialCountLabel(FISH_KEY, 2)}`, ready: false };
   return { harvest, verb, rest: `Fishing ${rank}${school ? ` - ${school}` : ''}`, ready: true };
 }
@@ -292,7 +291,7 @@ export function fishKind({ book, host }) {
     nodeName: () => 'Open Water',
     plan(n, { rank, entity }) {
       const plan = fishPlan({
-        taken: book.taken(n.key, 'fish'), counting: book.counting(n.key, 'fish'), hauls: book.state.hauls ?? 0, cap: book.state.caps?.hauls ?? HAULS_PER_DAY,
+        taken: book.taken(n.key, 'fish'), counting: book.counting(n.key, 'fish'),
         rank: rank('fishing'), storesFull: storesFullIn(book, FISH_KEY) /* STORES-ROOM: every origin, as the service counts */, fullWords: fullWordsIn(book), where: actChecksRefusal(NET_WHERE, NET_WHERE_WORDS) ?? (tooTiredForTheWater(entity) ? NET_TIRED_WORDS : null), school: schoolWords(),
       });
       return { ...plan, profession: 'fishing' };
@@ -318,8 +317,8 @@ export function fishKind({ book, host }) {
         hand: () => null,
       };
     },
-    /** The account's day, as the chip says it: its hauls against the day's forty. */
-    tally: () => ({ n: book.state.hauls ?? 0, cap: book.state.caps?.hauls ?? HAULS_PER_DAY }),
+    /** The account's day, as the chip says it: its hauls today (CAP-OFF: against no cap). */
+    tally: () => ({ n: book.state.hauls ?? 0 }),
     cleanNote: () => ' (a full net)',
     actNote: (rep) => {
       if (!rep) return '';

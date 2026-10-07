@@ -121,8 +121,8 @@
   {
     "name": "AP-hud-place-by-words",
     "file": "src/ui/partyPanel.js",
-    "old": "export const withMe = (p, here) => !!p && !!here\n  && p.px === here.px && p.py === here.py && (p.in ?? 0) === (here.in ?? 0)\n  && ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null));",
-    "new": "export const withMe = (p, here) => !!p && !!here && placeText(p) === placeText(here);",
+    "old": "export const withMe = (p, here) => !!p && !!here\n  && p.px === here.px && p.py === here.py && (p.in ?? 0) === (here.in ?? 0)\n  && ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null))\n",
+    "new": "export const withMe = (p, here) => !!p && !!here && placeText(p) === placeText(here)\n",
     "tests": ["test/party8b.test.js"]
   },
   {

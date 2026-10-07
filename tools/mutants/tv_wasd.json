@@ -47,8 +47,8 @@
   {
     "name": "TV-WASD-swimming-travels",
     "file": "src/scenes/world.js",
-    "old": "      onFoot: walkMode && playerSpawned && !player.isPlayerSwimming && !csaBoatUnderMe(),",
-    "new": "      onFoot: walkMode && playerSpawned && !csaBoatUnderMe(),",
+    "old": "      onFoot: walkMode && playerSpawned && !player.isPlayerSwimming && !csaBoatUnderMe() && !(player.climb?.isClimbing || player.mantling || player.onWall || player.holdPending),",
+    "new": "      onFoot: walkMode && playerSpawned && !csaBoatUnderMe() && !(player.climb?.isClimbing || player.mantling || player.onWall || player.holdPending),",
     "tests": [
       "test/tv_wasd.test.js"
     ]

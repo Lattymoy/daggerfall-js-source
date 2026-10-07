@@ -10029,6 +10029,7 @@ home's alone - they are about other players.
 
 - **The law** (`net/decorLaw.js` decorYardPieceOf, both ends): a yard's piece is a catalogue piece standing outside -
   never one's own item, holding nothing, serving no craft, giving no light - within 48 m of its frame; sixty a yard.
+  (YARD-LIGHT, below: no light OF ITS OWN - a yard's lamp lights as the town lights its own.)
 - **The frame** is the building's own place in its town (`world/rmbLayout.js` `recordAt`, the subrecord's origin -
   not a DFU field) in the world's axes, as a room's pieces stand from the door; `scenes/world.js` records each
   building's frame and the box round its models at the build (`homeFrames`).
@@ -10065,6 +10066,111 @@ home's alone - they are about other players.
   (`07-Rendering/Low-Poly-Trees.md`).
 - Known limits: the lot is a box round the footprint (a building turned off the grid has a wider lot); yard pieces are
   not activation targets; the street's wandering folk are not steered round them.
+
+### YARD-LIGHT - a yard's lamp lights as the town's (2026-10-07)
+
+Discord, through Mac: a screenshot at night - a lamp post and a torch standing in a yard before a house, both flames
+drawn, neither lighting the ground or the wall beside it - "i wish lights worked outside.."; Mac: "I guess enhanced
+lighting isnt shown lantern light anymore?"
+
+- **What was dark.** Not Enhanced Lighting: the town's own lanterns - the TEXTURE.210 flats its RMB blocks stand - light
+  at night as they did. Measured in the world host over ARENA2, headless on SwiftShader, by `tools/townLanternProbe.mjs`
+  (AUDIT YARD-LIGHT: the same night frame with the frame's point lights and with none, five metres off the lowest
+  lantern lit): Daggerfall at 22:00 on the Enhanced Lighting lane holds 48 point lights, the lane's whole cap, and the
+  street's half of the screen reads 45.63 with them against 30.01 without. The lamps in the picture were a YARD's.
+  HOME-YARD's law gives a yard's piece no light of its own (`net/decorLaw.js` decorYardPieceOf - "an outdoor lamp is the
+  town's"), the
+  decorator strips the catalogue's light from a piece placed outside and hides its Light button there, and nothing lit
+  it as the town either: a lamp post placed in a yard stood dark beside the street's lit ones, while the yard's
+  catalogue said "gives light" of every lamp.
+- **The law: an outdoor lamp IS the town's.** Daggerfall lights every TEXTURE.210 flat standing in a town block
+  (RMBLayout.AddLight - `world/cityLights.js` collectCityLights), so a yard's lights too (`scenes/homeYards.js`
+  yardLampOf): the town's lantern (YARD_LAMP - DaggerfallLight [City]: range 18, intensity 1, white - the law's numbers;
+  the frame lights it as it lights the street's, below), hung where the town hangs its own - the flat's drawn top and
+  the 0.15 m the town's billboards are sunk by and their lights are not (YARD_LAMP_RAISE: `world/rmbFlats.js`
+  BLOCK_FLATS_OFFSET_Y) - and a scaled lamp is the lamp scaled, its height and its reach alike (AUDIT YARD-LIGHT L5,
+  L6). Any other piece gives none.
+  Nothing is stored and nothing is switched: the piece still carries no light of its own, the service and its law are
+  untouched, and a lamp placed before this lights as it stands.
+- **Standing.** The room's own machinery carries it (`scenes/decorRoom.js` `lampOf` - a host's law over the light a
+  piece gives, in place of the piece's own; a room passes none and gives the light its pieces carry, as ever): a yard's
+  lamp is mounted into the yard's own list once its picture stands, moved in place with a recentre (restand, FB1001
+  YARD-RECENTRE), and taken down with its piece or its pixel. `lamps()` answers each yard's first YARD_LAMPS_MAX (8)
+  lamps in the order its pieces stand, of every yard standing - no distance cuts one (AUDIT YARD-LIGHT L1, L2).
+- **Lit** (`scenes/world.js`): beside the quays' lanterns, among the scene lights - ranked with the street's own in the
+  night's one selection, never the player's extras (AUDIT HOLDINGS Q3's law) - in the lanterns' hours
+  (isCityLightsOn, 17:00-08:00) and as the street's lanterns are lit: in their colour (CITY_LIGHT_COLOR_F32: white on
+  the classic set, EL1's flame on the lane), at the town's flicker (CityLightAnimator, read after its tick) at a slot
+  named by its piece (yardLampSlot, FNV-1a of the id, set when the lamp is mounted - LA-LIGHTS1's law: its own flicker
+  whatever else stands) times the lamp's reach over the town's 18 (`homeYards.js` yardLampRows - the rows refilled in
+  place). The lamp's flame flat is a TEXTURE.210 batch, so it never shadows its own light (EL6, SHADOW_LIGHT_FLATS).
+- **The four hosts.** `scenes/world.js` WIRED. `scenes/exterior.js` (the bench) stands no online homes - HOME-YARD's own
+  FLAG - so no yard to light. `scenes/worldModes.js` and `scenes/dungeonContext.js` stand no street.
+- Pinned in `test/yardlight.test.js` (6) - the law, the flicker's slot, decorRoom under the host's law and a room
+  without one, the real yard host, and world.js's own night composition run out of its source over a real Renderer
+  (`test/yardLightRig.mjs`, shared with the audit's pins) - `tools/mutants/yardlight.json` 17 of 17 dead
+  (YARDLIGHT-far-lit retired with the cut it pinned: AUDIT YARD-LIGHT L2). audit0928_render's R2 scope stands
+  `yards: null`.
+- Known limits: the yard's Light button stays hidden - a yard's lamp keeps the town's hours, not its owner's; only a
+  TEXTURE.210 flat lights (a model, or a flame of another archive, gives none, as in the town); a yard lights eight
+  lamps at most (AUDIT YARD-LIGHT L1).
+
+### AUDIT YARD-LIGHT (2026-10-07, Mac: "audit this") - YARD-LIGHT read again, before its merge
+
+Four reads: three cold ones of the PR (#666), each with repros against its tree - A the frame and the light pipeline, B
+the numbers (the town's density, the frame's cost, a lamp's height and scale), C the pins and the record - and the
+author's own. Every finding was read again against the tree before a line changed. FOUND, each fixed and pinned
+(`test/audityardlight.test.js` 7, `test/yardlight.test.js` 6 re-aimed - both over `test/yardLightRig.mjs`, world.js's
+own night composition; `tools/mutants/audityardlight.json` 13 of 13 dead, `yardlight.json` 17 of 17; and the 346
+mutants of the 42 other lists aimed at decorRoom.js, homeYards.js, decorTool.js or rmbFlats.js all still dead):
+
+- **MEDIUM - L1: a yard lit every lamp it stood.** (B) A yard holds DECOR_YARD_CAP (60) pieces and every TEXTURE.210
+  flat among them lit: sixty lamps round one lot lit its ground nine times as bright as the brightest ground any
+  Daggerfall town block lights, and near the yard they took the classic set's sixteen from the street. Measured over
+  BLOCKS.BSA, the densest of its 920 town blocks stands eight (GRVEAL01, GRVEAS01, GRVEAM01, CUSTAA02, CUSTAA04); 340
+  stand none. FIXED (`scenes/homeYards.js` YARD_LAMPS_MAX, `scenes/decorRoom.js` pushLights): a yard lights its first
+  eight lamps in the order its pieces stand; a ninth stands unlit, and lights when one before it is taken down.
+- **LOW - L2: a far yard's lamps went out at once.** (A) `lamps()` cut a yard past YARD_DRAW_M (300 m) of its origin
+  from the eye - the model draw's own cull - so a walk away put a yard's lamps out together in one frame, unfaded,
+  beside the street's lanterns, which the selection's cap fades (LA-LIGHTS2); the lamp's flame flat stood on (the
+  billboard pass culls the yards' flats itself). FIXED: no distance cuts a lamp; the night's one selection ranks a
+  yard's with the street's and fades them as it fades theirs.
+- **LOW - L3: a yard's flicker ran a frame behind the street's.** (A, B) Its rows were filled before the town
+  animator's tick, so a yard lamp flickered one frame behind the lantern beside it. FIXED: filled after the tick, as
+  the street's are read.
+- **LOW - L4: a night frame made objects for every yard lamp.** (A, B) Each lamp's row was a new object every frame
+  and its slot was hashed from its id again every frame. FIXED (`homeYards.js` yardLampRows): the rows are kept and
+  refilled in place (PERF-LIGHTS' law), and the slot is set once, when the lamp is mounted.
+- **LOW - L5: a yard's lamp hung 0.15 m below the town's.** (B, the author) The town draws its TEXTURE.210 flats sunk
+  by blockFlatsOffsetY (-6 native units, 0.15 m) and hangs their lights unsunk (RMBLayout.AddLight), so the town's light
+  stands 0.15 m above its picture's top; YARD-LIGHT hung the yard's at the top. FIXED: YARD_LAMP_RAISE, read off
+  `world/rmbFlats.js` BLOCK_FLATS_OFFSET_Y (exported for it), pinned against the real collectors.
+- **LOW - L6: a scaled lamp lit away from itself.** (B) Its light hung at its scaled top but kept the town's 18 m
+  reach, so the town's commonest lamp post (210.29, drawn 4 m tall) scaled four times stood its light 16 m up and lit
+  its own foot a fiftieth as much as at its own size (0.012 against 0.605 on the classic falloff; 0.021 against 1.112
+  on the lane's - measured on TEXTURE.210's own sizes). FIXED: a scaled lamp
+  is the lamp scaled - its height, its raise and its reach alike - so its foot is lit as the town's lamp lights its own
+  at every scale; the frame takes the town's flicker at the lamp's reach.
+- **LOW - the pins' gaps.** (C) No pin stood two lamps in one yard or two yards lit, and the recentre pin moved x
+  alone. PINNED: two yards of two lamps each, each in its own frame; a recentre on all three axes.
+- **LOW - the record.** (C) YARD-LIGHT's record said `tools/enhancedLightingProbe.mjs`'s night street "lights its
+  ground on both lanes" - that probe photographs a street, it measures no lantern; it read YARD_LAMP's white as the
+  colour the lamp is lit in (the frame lights it in the street's: the flame on the lane); `lamps()` was "every yard
+  drawn"; the PR's patch notes promised "the same warm glow" (white on the classic set) "from dusk (17:00) to dawn
+  (08:00)" (the lanterns' hours, not the sun's); decorTool's two comments and decorRoom's JSDoc said a yard's piece
+  gives no light at all. FIXED: the record above says what was measured and by what - `tools/townLanternProbe.mjs`,
+  committed, the A/B in the world host, and its numbers; the notes and the comments say what the lamp does; and
+  YARDLIGHT-own-light-asked carries its `why` (a defensive pin: no producer mints a lit yard piece).
+- **DOCUMENTED - a yard read again blinks its lamps a frame.** (B) A yard whose pieces are read again sets its pool
+  anew (`decorRoom.js` set): its lamps stand again when their pictures do, so a lamp is dark for a frame or two - as
+  its flame flat is, HOME-YARD's own re-read. The light is the picture's and is not held past it.
+- **OPEN, Mac's to decide - where the eight is kept.** The cap is the client's rule alone: the decorator still places a
+  ninth lamp, which stands unlit. A law at both ends (the decorator refusing a ninth, the account service too, as
+  YARD-HEIGHT's bound is kept) would say so where it is placed - a change to the decor law and the service, past this
+  fix. Asked: "Should a yard refuse a ninth lamp, or keep it standing dark?"
+- **OPEN, Mac's to decide - a yard's brazier is not a hearth.** (C) A yard's 210.0 bowl, 210.1 camp flame or 210.20
+  brazier now lights as the town's, but cooks and warms nothing: HEARTH1's fires are collected from the town's blocks
+  (`survival/hearth.js`), never from a yard. Making them hearths would give a home a free kitchen. Left as is.
 
 ### YARD-HEIGHT and DECOR-TURN - a yard's piece stands at most 4 m up; a placed piece turned where it stands (2026-10-06)
 
@@ -15002,3 +15108,34 @@ whenever it mounts before the card, which made the probe's Escape check a race.
 - **Pinned**: `test/profile_ui.test.js` (3); `tools/mutants/profile_ui.json` (9, all dead). PIN MOVED:
   serpent1_auditclient (the serpents slain are a plaque). Re-aimed: inspect1.json INS-gear-out-of-order (the row carries
   its part).
+
+## HOLD-SOLO (2026-10-07, FIELD BUGS 2026-10-07b, nObOdy on the Discord: "Lock privateer's hold. The first dungeon is a tutorial area") - the tutorial dungeon is every character's own
+
+"New players loading in in front of 50 players in a dead dungeon with no enemies ruins the magic. ... I couldnt even get
+gear or experience for my character cause i had to zoom past dead enemies and already open doors to get out and i sure
+as heck don't want to be given stuff i didn't earn by players standing there waiting all day."
+
+Every dungeon's room is keyed by its map id (`net/online.js` roomKeyFor), so every character in Privateer's Hold stood
+in ONE world room, `dungeon:m187853213`: the others' bodies, the room's memory (WORLD1 - the dead stay dead, the doors
+stay open), its simulation (WORLD2), its acts (WORLD3) and its loot (WORLD4), and a trade from anyone there (a peer in
+the room). The tutorial dungeon now keys NO room: `scenes/worldModes.js` roomIdentity marks it `solo` - the location on
+the shipped start's cell, 109/158 (`systems/startDungeon.js` isTutorialHold; AUDIT FB1007b H1: never the player's own
+Startup.StartCellX/Y, a setting, which took any dungeon a player named out of the shared world - the classic start, PH1
+and D-ONLINE2 read the configured cell as ever, isStartDungeon) - and `scenes/world.js`'s key block answers `solo` with
+null, which the frame's `!key` arm leaves (AUDIT ONLINE D4: a place keyed no room is no room).
+Every shared lane asks `isWorldRoom` of the room it is in, so they go quiet with it; the dungeon is the character's own
+save's, as it is offline. Chat's World, Region, Party and Guild tabs ride the hub and keep talking; the Local tab has
+nobody to hear, and says so (AUDIT FB1007b H5, with a page held out, the party card and the Online pane). The street
+outside the Hold is the shared world again (its cell's room). The relay is untouched: an older client still joins the old
+room, and only with other older clients.
+
+AUDIT FB1007b (`01-Overview/Audit-FB1007b.md`): no room remembers the Hold, so every entry built it whole, its loot
+rolled anew at the player's level - online the page keeps its memory as a room keeps one, at the door out, laid back at
+the next door in (WORLD8's hour on it), forgotten by a load (H2); the hub's link hears the relay's clock for it, where
+the presence session hears no welcome (H4); and a staff `/tp` to a player there is refused as unavailable (H3).
+
+Of every location in the world, the start cell holds one: Daggerfall's Privateer's Hold (map id 187853213, pixel
+109/158; MAPS.BSA read through the port's own reader).
+
+- **Pinned**: `test/fb1007b_holdsolo.test.js` (9; one gated on ARENA2); `tools/mutants/fb1007b.json` (its
+  FB1007B-HOLD / START-CELL / PH1 records and the audit's H records). Record: `01-Overview/Field-Bugs-2026-10-07b.md`.

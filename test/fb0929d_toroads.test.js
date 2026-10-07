@@ -106,7 +106,7 @@ const HOST = [
   constBlock('travelViewAllowed'),
   fnSource('tvOwnsJourneys'), fnSource('tvRoutesJourneys'), fnSource('tvMapForcesRoads'), fnSource('travelViewResume'), fnSource('beginAcceleratedTravel'),
   fnSource('travelViewRouteTo'), fnSource('tvFreePull'), fnSource('tvJoinedLegs'), fnSource('travelViewWalkTo'), fnSource('tvJourneyUp'),
-  fnSource('tvMooredDry'), fnSource('tvSeaNoWay'), fnSource('travelViewCanGo'),
+  fnSource('tvMooredDry'), fnSource('tvSeaNoWay'), lineSource('const climbingNow = '), fnSource('travelViewCanGo'),   // AUDIT FB1007b C2: no journey from a wall
   `const onLower = ${ON_LOWER};`, `const onTravel = ${ON_TRAVEL};`, `const onTravelToCoords = ${ON_COORDS};`,
   'return { tvOwnsJourneys, tvRoutesJourneys, travelViewResume, beginAcceleratedTravel, tvJourneyUp, onLower, onTravel, onTravelToCoords, tvTrip };',
 ].join('\n');

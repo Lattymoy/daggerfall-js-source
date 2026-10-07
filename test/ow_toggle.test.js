@@ -71,7 +71,7 @@ function rig({ firstPerson = false, enhanced = true } = {}) {
   };
   const env = {
     travelOptions, travelView: view, isEnhanced: () => enhanced, modSetting, TRAVEL_OPTIONS_VENDOR,
-    travelViewAllowed: () => ({ ok: true }), travelViewCanGo: () => true,
+    travelViewAllowed: () => ({ ok: true }), travelViewCanGo: () => true, climbingNow: () => false,   // AUDIT FB1007b C2: on the ground
     tvPlaceSummary: (x, y) => ({ pixel: { x, y }, name: 'Daggerfall' }),
     travelViewRouteTo: (s) => { calls.push(['travelViewRouteTo', s.name]); return true; },
     travelViewWalkTo: (at, pixel) => { calls.push(['travelViewWalkTo', pixel.x, pixel.y]); return true; },

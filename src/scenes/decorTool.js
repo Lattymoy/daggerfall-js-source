@@ -353,7 +353,8 @@ export const eyePoint = (collider, eye, dir, skip = null) => eyeHit(collider, ey
  *                      online home of the player's own)
  *   placeOk(piece)   - HOME-YARD: why a piece cannot stand where the ghost shows it (off the lot), or null; lot() - the
  *                      lot's edge as decal quads, marked while a piece is placed; yardCap - a yard's own cap. A `room()`
- *                      with `yard` is a home's yard (scenes/homeYards.js): no doors, nothing held, no light
+ *                      with `yard` is a home's yard (scenes/homeYards.js): no doors, nothing held, no light of a piece's
+ *                      own (YARD-LIGHT: its TEXTURE.210 flats light as the town's - homeYards.js yardLampOf)
  *   look()           - HOME-LOOK: the painter's door for the house outside - `{ current, season, preview(look), commit(look) }`
  *                      - or null
  *   flatAs(flat)     - DECOR-OUTDOOR: the picture a flat is here, [archive, record] - a yard's nature in its season
@@ -853,7 +854,7 @@ export function createDecorTool(deps) {
    *  storage; its size, when the scan has not read it yet, is what it was priced at. */
   function beginPlacing(catalogueEntry, editing = null) {
     const s = ensureScan();
-    const yard = !!deps.room?.()?.yard;   // HOME-YARD: outside, nothing is held and no piece gives light
+    const yard = !!deps.room?.()?.yard;   // HOME-YARD: outside, nothing is held and no piece carries a light of its own (YARD-LIGHT: a lamp lights as the town's)
     const entry0 = editing ? { ...catalogueEntry, light: editing.light ?? null, storage: !!editing.storage, station: editing.station ?? null } : catalogueEntry;   // AUDIT HOME-STATIONS S1: a moved station stays one
     const entry = yard ? { ...entry0, storage: false, light: null, station: null } : entry0;
     const free = entry.kind === 'own';   // DECOR2a: the player's own item - no price, whatever its size

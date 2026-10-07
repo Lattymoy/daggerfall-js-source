@@ -18,7 +18,8 @@
 //   the TOASTS  - on the right, four at most, three seconds each:
 //                 "+3 Red Roses to your Stores", "+45 Herbalism XP",
 //                 "Herbalism 34 -> 35";
-//   the CHIP    - under the compass: "Herbalism 34 / 60 today";
+//   the CHIP    - under the compass: "Herbalism 34 - 12 today" (the
+//                 day's count - CAP-OFF: no "/ 60" after it);
 //   the BANNER  - a rank's name at 25, 50, 75 and 100.
 //
 // The toasts' law is pure (`createToastQueue`); the rest is the DOM the

@@ -1,13 +1,13 @@
 [
   {
-    "name": "PROF7-hides-per-day-31",
+    "name": "PROF7-hides-per-day-exported-again",
     "file": "src/net/professionLaw.js",
-    "old": "export const HIDES_PER_DAY = 30;",
-    "new": "export const HIDES_PER_DAY = 31;",
+    "old": "export const HIGH_HIDES_PER_DAY = 3;",
+    "new": "export const HIDES_PER_DAY = 30;\nexport const HIGH_HIDES_PER_DAY = 3;",
     "tests": [
-      "test/prof7_law.test.js",
-      "test/prof7_service.test.js"
-    ]
+      "test/cap_off.test.js"
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the law exports no day's thirty - the mutant exports it again. It was the mutant that made the day thirty-one."
   },
   {
     "name": "PROF7-high-hides-four",
@@ -280,35 +280,38 @@
     ]
   },
   {
-    "name": "PROF7-svc-hunt-cap-undecided",
+    "name": "PROF7-svc-hunt-cap-again",
     "file": "server-account/src/professions.js",
-    "old": "OR (${hunted} < ?21 AND",
-    "new": "OR (${hunted} < ?21 + 1 AND",
+    "old": "        AND (?9 <> 'hunting' OR ?19 < ?20 OR ${huntedHigh} < ?21)\n",
+    "new": "        AND (?9 <> 'hunting' OR (COALESCE((SELECT SUM(qty) FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?6), 0) < 30 AND (?19 < ?20 OR ${huntedHigh} < ?21)))\n",
     "tests": [
-      "test/prof7_service.test.js"
+      "test/prof7_service.test.js",
+      "test/audit32_service.test.js",
+      "test/cap_off.test.js"
     ],
-    "equivalent": true,
-    "why": "AUDIT 32 L2: the day's thirty is kept by the hide's own cut to the day's room - at the cap the decision's qty is 0, and node_harvests' CHECK (qty >= 1) refuses the row under the INSERT OR IGNORE, so the WHERE's bound is belt-and-braces (kept: it says the law in the statement that decides it)"
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the day's thirty hides are gone and the pins turned (the thirty-first credited) - the mutant decides the thirty in the INSERT again. It was the mutant that let a thirty-first through. It was recorded equivalent (\"AUDIT 32 L2: the day's thirty is kept by the hide's own cut to the day's room - at the cap the decision's qty is 0, and node_harvests' CHECK (qty >= 1) refuses the row under the INSERT OR IGNORE, so the WHERE's bound is belt-and-braces (kept: it says the law in the statement that decides it)\"); the inverse is not - it dies."
   },
   {
     "name": "PROF7-svc-high-undecided",
     "file": "server-account/src/professions.js",
-    "old": "AND (?22 < ?23 OR ${huntedHigh} < ?24)",
-    "new": "AND (1 OR ${huntedHigh} < ?24)",
+    "old": "?9 <> 'hunting' OR ?19 < ?20 OR",
+    "new": "?9 <> 'hunting' OR 1 OR",
     "tests": [
       "test/prof7_service.test.js"
     ],
     "equivalent": true,
-    "why": "AUDIT 32 L2: the rare three the same - the qty cut to the rare hides' room is 0 at their cap, and the CHECK (qty >= 1) refuses the row under the OR IGNORE; the WHERE's bound is belt-and-braces"
+    "why": "AUDIT 32 L2: the rare three the same - the qty cut to the rare hides' room is 0 at their cap, and the CHECK (qty >= 1) refuses the row under the OR IGNORE; the WHERE's bound is belt-and-braces",
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the rare hides' bound kept, ?19 to ?21 now."
   },
   {
     "name": "PROF7-svc-tier-unwritten",
     "file": "server-account/src/professions.js",
-    "old": "THEN ?20 END, ?22, CASE",
-    "new": "THEN ?20 END, 0, CASE",
+    "old": "THEN ?18 END, ?19, CASE",
+    "new": "THEN ?18 END, 0, CASE",
     "tests": [
       "test/prof7_service.test.js"
-    ]
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the tier is ?19 now."
   },
   {
     "name": "PROF7-svc-butchery-one",
@@ -386,13 +389,14 @@
     ]
   },
   {
-    "name": "PROF7-svc-hunt-post-check-gone",
+    "name": "PROF7-svc-high-post-check-gone",
     "file": "server-account/src/professions.js",
-    "old": "    if (hunt.hides >= HIDES_PER_DAY) return { error: 'prof-hunt-cap' };\n",
+    "old": "    if (tier >= HIGH_HIDE_TIER && hunt.high >= HIGH_HIDES_PER_DAY) return { error: 'prof-hunt-high' };\n",
     "new": "",
     "tests": [
       "test/prof7_service.test.js"
-    ]
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (re-aimed by content): the post-check that named the day's thirty is gone with it; the one that stands names the rare hides - without it a fourth rare hide's refusal says `stores-full`."
   },
   {
     "name": "PROF7-svc-dye-unchecked",
@@ -490,11 +494,12 @@
   {
     "name": "PROF7-index-hunt-cap-400",
     "file": "server-account/src/index.js",
-    "old": "'prof-hunt-cap': 409, 'prof-hunt-high': 409,",
-    "new": "'prof-hunt-cap': 400, 'prof-hunt-high': 400,",
+    "old": "'prof-hunt-high': 409, 'prof-foe': 400,",
+    "new": "'prof-hunt-high': 400, 'prof-foe': 400,",
     "tests": [
       "test/prof7_service.test.js"
-    ]
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): `prof-hunt-cap` has no status now - the rare hides' refusal alone."
   },
   {
     "name": "PROF7-leatherworker-armour",
@@ -1053,11 +1058,12 @@
   {
     "name": "PROF7-pages-hunt-day-characters",
     "file": "src/ui/profPages.js",
-    "old": "    pane.append(el('p', 'prof-today', `Today: ${h.hides} of",
-    "new": "    pane.append(el('p', 'prof-today', `Today: ${0} of",
+    "old": "    pane.append(el('p', 'prof-today', `Today: ${h.hides} hide",
+    "new": "    pane.append(el('p', 'prof-today', `Today: ${0} hide",
     "tests": [
       "test/prof7_client.test.js"
-    ]
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the day's hides a count, no 'of 30'."
   },
   {
     "name": "PROF7-no-loom-station",

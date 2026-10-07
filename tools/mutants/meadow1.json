@@ -600,28 +600,6 @@
   ]
  },
  {
-  "name": "AUDIT-MEADOW1-the-grass-on-by-default",
-  "file": "src/systems/features.js",
-  "old": "key: 'grassDensity', initial: 0,",
-  "new": "key: 'grassDensity', initial: 1,",
-  "tests": [
-   "test/grassmeadow.test.js",
-   "test/perf1.test.js",
-   "test/ft7_quality.test.js",
-   "test/ft18_features.test.js",
-   "test/pref1_shelf.test.js"
-  ]
- },
- {
-  "name": "AUDIT-MEADOW1-the-old-shelfs-full-kept",
-  "file": "src/systems/uiPrefs.js",
-  "old": "if (p[SHELF_STAMP] === undefined && p.grassDensity === 1) _prefs.grassDensity",
-  "new": "if (false) _prefs.grassDensity",
-  "tests": [
-   "test/pref1_shelf.test.js"
-  ]
- },
- {
   "name": "AUDIT-MEADOW1-the-palette-leaves-the-art",
   "file": "src/render/labGrass.js",
   "old": "this[classic ? 'artGroundClassic' : 'artGround'] = new Float32Array(meadowArtGround(tones[1]));",
