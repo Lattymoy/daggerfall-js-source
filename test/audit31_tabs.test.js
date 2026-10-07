@@ -160,7 +160,7 @@ test('AUDIT 31 U2, U10: every field under its visible name; a Post or a Commissi
   assert.equal(btn(r.host, 'Deliver').textContent, 'Deliver 30');
   const own = byClass(r.host, 'seal-guild')[1];
   assert.equal(field(own, 'supply|W2'), undefined);
-  assert.match(own.textContent, /Your guild's Officers and Guildmaster do not deliver to its writs\./);
+  assert.match(own.textContent, /Officers and the Guildmaster do not deliver to their own guild's writs\./);   // BOARD-UI (PIN MOVED)
   // the writ form: an Officer with no budget
   btn(r.host, 'Post a guild writ').click(); await ticks();
   const form = byClass(r.host, 'work-form')[0];
@@ -223,7 +223,7 @@ test('AUDIT 31 U4, U11, H6, U13: Yours declines a commission naming you and says
   const held = Object.assign([], { blocked: 1 });
   const h = workRig({ data: boardData(), pieces: held });
   await openWork(h.host);
-  assert.match(byClass(h.host, 'seal-commission')[0].textContent, /Your piece that answers it is equipped, locked or bound - free it first\./);
+  assert.match(byClass(h.host, 'seal-commission')[0].textContent, /Your piece for it is equipped, locked or bound - free it first\./);   // BOARD-UI (PIN MOVED)
   h.v.unmount();
 });
 
@@ -274,7 +274,7 @@ test('AUDIT 31 L6, U14: a next bid past any balance is said, never a Bid greyed 
   redraw();
   byClass(root, 'market-row')[0].click();
   redraw();
-  assert.match(root.textContent, /The next bid would be 10,000,001 silver - more than any account can hold\. It stands where it is\./);
+  assert.match(root.textContent, /The next bid \(10,000,001 silver\) is more than an account can hold\./);   // BOARD-UI (PIN MOVED)
   assert.equal(byClass(root, 'market-bid').length, 0);
   data = { rows: [] };
   tab.state.family = 'weapons';

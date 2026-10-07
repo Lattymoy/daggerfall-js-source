@@ -29,6 +29,7 @@ import {
 } from './professionLaw.js';
 import { GROUP_TEMPLATE_INDICES } from '../systems/itemTemplatesData.js';   // PROF10: DFU's Jewellery enum, one home
 import { CLOTHING_DYES } from '../characters/dyes.js';   // DFU's ten clothing dyes (DyeColors 0-9), one home
+import { textCaught } from './nameFilter.js';   // TEXT-F1: a mark's words, read as a name's (nameFilter.js imports nothing)
 
 // ─── THE METALS (PROF0 4.1) ──────────────────────────────────────────
 
@@ -838,6 +839,14 @@ export function makerName(name) {
   if (/[\ud800-\udbff]$/.test(n)) n = n.slice(0, -1);
   n = n.trim();
   return n.length ? n : null;
+}
+/** TEXT-F1 (2026-10-07, Mac: "Any human input elements need filtering"): A MARK AS IT MAY BE SIGNED AND SHOWN - makerName's,
+ *  and none whose words the filter catches (net/nameFilter.js textCaught): a character's name is the player's own
+ *  typing, and the mark carries it to every holder of the piece, every shelf and every market. Null for none - the piece
+ *  is made, unmarked. makerName stays the SHAPE law (decorLaw.js reads it to tell a forged mark from a true one). */
+export function makerMark(name) {
+  const n = makerName(name);
+  return n && !textCaught(n) ? n : null;
 }
 /** A Masterwork's name: "Silverthorn's Mithril Longsword". */
 export const markedName = (maker, name) => `${maker}'s ${name}`;

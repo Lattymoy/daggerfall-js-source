@@ -64,7 +64,7 @@ import { magicPowersLines } from '../systems/itemPowers.js';   // PLUS10: %mpw
 import { CHAT_MAX } from '../net/wire.js';   // CHAT-POST: a posted item is one chat line
 import { itemIsIdentified } from '../systems/tradeModes.js';   // PLUS10: MagicPowers' identified arm
 import { PACK_PAGES, PAGE_IDS, pageOf, filterByPage } from './packPages.js';   // PX31: the pack's nine pages (the classic keeps DFU's four)
-import { isWalletItem, walletContents, walletLines, refreshWalletSilver } from '../systems/walletItem.js';   // WALLET1: the wallet's sheet
+import { isWalletItem, walletContents, walletLedger, refreshWalletSilver } from '../systems/walletItem.js';   // WALLET1: the wallet's sheet; WALLET-UI: its ledger
 import { useItem, isLightSource, usableItem, isPotionRecipe, toggleHood, HOOD_TEXT, nextDrape, drapeCount, DRAPE_TEXT } from '../systems/useItem.js';   // PLUS10: isPotionRecipe, a recipe's second Info box   // HT2: the light source's own act; Mac: Use only where the law has an arm   // HOOD-SAID: the hood's button and its lines   // CLOAK-DRAPE: the drape's
 // QS2: the quickslot model (systems/quickslots.js). This screen is the ONE
 // place a slot is filled - Mac's own words, "in the enhanced menu through the
@@ -3308,8 +3308,9 @@ function openInfo(item) {
 }
 
 /**
- * WALLET1: THE WALLET'S SHEET - what it holds, in the classic box's own words (systems/walletItem.js walletLines: the
- * gold, the silver, the letters and what they are worth, the embers, the shards), then each piece it holds as the
+ * WALLET1: THE WALLET'S SHEET - what it holds, in the classic box's own words (systems/walletItem.js walletLedger, the
+ * box saying its rows as lines; WALLET-UI drew them as a ledger: the gold, the silver, the letters and what they are
+ * worth, the embers, the shards), then each piece it holds as the
  * PACK'S OWN ROW (AUDIT 625 W3: `itemRow`, the page's - its picture, its count, its hotbar chip, and every gesture a page
  * gives a piece: the click that opens its card, whose acts are the pack's (its lock, its stow, the bound law's
  * refusals); Shift into the store beside it; the double click that wears a crystal; the drag; the right click's menu;
@@ -3322,7 +3323,19 @@ function openInfo(item) {
  */
 function walletSheet(w) {
   const box = el('div', 'walletsheet');
-  for (const text of walletLines(w).slice(1)) box.append(el('p', 'meta', text));
+  // WALLET-UI: the ledger (systems/walletItem.js walletLedger) - each part under its name, a row a currency, its label
+  // left and its figure right, in one column; a figure not counted here gives way to why, a letter's worth stands under
+  // its count; the pieces it holds under the part that names them
+  for (const part of walletLedger(w)) {
+    box.append(el('h4', 'wallet-head', part.head));
+    for (const r of part.rows) {
+      const row = el('div', `wallet-row${r.none ? ' none' : ''}`);
+      row.dataset.key = r.key;
+      row.append(el('span', 'wallet-k', r.label), el('span', `wallet-v${r.figure == null ? ' why' : ''}`, r.figure ?? r.note));
+      box.append(row);
+      if (r.figure != null && r.note) box.append(el('p', 'wallet-note', r.note));
+    }
+  }
   if (w.held.length) {
     const rows = el('div', 'walletpieces');
     for (const it of w.held) rows.append(itemRow(it));

@@ -133,14 +133,14 @@ test('SEAT1b THE SEAT TAB\'S WORDS: the week\'s clock, a standing, the empty boa
   assert.equal(seatStandingLine({ guild: { name: 'The Silver Hand', tag: 'SH' }, influence: 8393 }, 0), '1. the Silver Hand <SH> - 8,393 influence');
   assert.equal(seatNoStandingsLine(ANTICLERE), 'No guild has pledged to Anticlere this week.');
   const mine = { guild: 'g1', rank: 1, seasoned: true, bound: 'g1', pledges: [{ region: 21, key: 3021 }], influence: 340 };
-  assert.deepEqual(seatMineLines(ANTICLERE, mine), ['Your guild is pledged to Anticlere.', 'Your week here: 340 of 2,000.']);
+  assert.deepEqual(seatMineLines(ANTICLERE, mine), ['Your guild is pledged to Anticlere.', 'Your influence here this week: 340 of 2,000.']);   // BOARD-UI (PIN MOVED): what the number is
   assert.deepEqual(seatMineLines(ANTICLERE, { ...mine, pledges: [{ region: 21, key: 3022 }] }, (k) => (k === 3022 ? 'Alcaire Keep' : null)), ['Your guild is pledged to Alcaire Keep in this region.']);
   assert.deepEqual(seatMineLines(ANTICLERE, { ...mine, pledges: [] }), ['Your guild has not pledged in this region this week.']);
-  assert.deepEqual(seatMineLines(ANTICLERE, { ...mine, seasoned: false }), ['Your guild is pledged to Anticlere.', 'You count for your guild\'s seats after 7 days in it.']);
+  assert.deepEqual(seatMineLines(ANTICLERE, { ...mine, seasoned: false }), ['Your guild is pledged to Anticlere.', 'You count for your guild after 7 days in it.']);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the words cut
   assert.deepEqual(seatMineLines(ANTICLERE, { ...mine, bound: 'g2' }), ['Your guild is pledged to Anticlere.', 'Your account fights for another guild this week.']);
   assert.deepEqual(seatMineLines(ANTICLERE, null), ['Join a guild to fight for a seat.']);
   assert.match(seatTributeLine(100), /^Tribute: up to 100 silver more this week/);
-  assert.match(seatTributeLine(0), /no room for more this week/);
+  assert.match(seatTributeLine(0), /no room left this week - it is at most a fifth of your guild's influence here\./);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the words cut
 });
 
 /** A seats' book over a scripted door. */
@@ -278,7 +278,7 @@ test('SEAT1b THE SEAT TAB: beside the board\'s tabs while the seats are open, ne
   assert.deepEqual(rows.map((r) => r.textContent), ['1. Ebon Oath <EO> - 900 influence', '2. the Silver Hand <SH> - 340 influence']);
   assert.equal(rows[1].className.includes('mine'), true, 'the reader\'s own guild marked');
   assert.equal(rows[0].querySelectorAll('.notice-banner').length, 1, 'a guild under its banner');
-  assert.match(text, /Your guild is pledged to Anticlere\.Your week here: 340 of 2,000\./);
+  assert.match(text, /Your guild is pledged to Anticlere\.Your influence here this week: 340 of 2,000\./);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): what the number is
   assert.match(text, /Tribute: up to 80 silver more this week/);
   byClass(host, 'notice-seat-drop')[0].click();
   await tick();

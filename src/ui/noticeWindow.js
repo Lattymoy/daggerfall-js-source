@@ -27,6 +27,12 @@
 // buy orders (GLOBAL-MARKET: every board's), this account's own and the History - shown while the market is this account's (`market`, the host's: the
 // board, the professions and the Marks all open to it). Its region is handed to it on its own, not through Work's.
 //
+// BOARD-UI (2026-10-06, Mac: "overhaul the notice boards to enhance readability, Including each of the tabs"; "Reduce
+// overusage of bloated text"): the Notices tab in two parts - the town's and the server's word ("News"), then the
+// players' notes under their count; each tab names its count where it has one (the notes not yet read, the writs
+// open); the Work tab's day stands above its cards, not under the last; the cards straight; the words cut to what the
+// reader needs.
+//
 // THE HOUSE'S SHAPE, as the bounty board's (ui/bountyWindow.js) and the Broker's before it: a lazy chunk the door
 // (ui/noticeDoor.js) mounts in its own host - `mountNoticeBoard(host, deps)` answers `{ repaint, unmount }` - the back
 // key and a tap on the scrim leave through the door's own close. On the classic skins the window lays its own sheet,
@@ -81,10 +87,29 @@ export const snippetOf = (body, lines = 4) => String(body ?? '').split('\n').fil
 export const recruitPosters = (board) => (board?.notes ?? []).filter((n) => n?.button === 'guild' && n.guild);
 /** GUILD1e: what the Guilds tab says of the reader's own guild board when it has none to show. */
 export const GUILD_BOARD_EMPTY = Object.freeze({
-  'no-guild': 'Your character belongs to no guild. A guild\'s board is for its members.',
-  shut: 'The guild boards are not open to you.',
-  slow: 'The counting-house is not answering. Your guild\'s board cannot be read now.',
-  none: (name) => `Nobody in ${name} has pinned a note. Yours could be the first.`,
+  'no-guild': 'Join a guild to read its board.',
+  shut: 'Guild boards are closed to you.',
+  slow: 'Your guild\'s board did not load.',
+  none: (name) => `No notes from ${name} yet.`,
+});
+/** BOARD-UI: the window's own fixed words, in one place - short, and plain. */
+export const BOARD_WORDS = Object.freeze({
+  reading: 'Reading the board...',
+  stale: 'This may be out of date - the server is slow to answer.',
+  closed: 'The Notice Board is closed to you. Only the town\'s news is shown.',
+  slow: 'Players\' notes did not load. Only the town\'s news is shown.',
+  noNotes: 'No notes from players yet.',
+  news: 'News',
+  notes: 'Players\' notes',
+  writsShut: 'Court work is closed to you.',
+  writsSlow: 'The writs did not load.',
+  writsNone: (region) => `No Court writs in ${region} today. They go up once players have gathered in the region.`,
+  writsReading: 'Reading the writs...',
+  noRecruits: 'No guild is recruiting here.',
+  hidden: 'Hidden after reports until a moderator looks at it. You can still take it down.',
+  guestAnswer: 'Only a registered account can answer a note',
+  pinTip: 'Answers come to you as letters. A recruit button needs a guild rank that can invite.',
+  noticeTip: 'Goes up on every board, under the red seal.',
 });
 
 /**
@@ -176,8 +201,11 @@ export function mountNoticeBoard(host, deps) {
   const workShown = () => !!work && work.book?.state?.open === true;
   // PROF5: the Market tab - its own state and views, the window's one-at-a-time door and its status line
   const marketHost = deps.market ?? null;
-  // MARKET-AUDIT U4: a market that shuts while its tab is read stays the tab, its shut word said (AUDIT 30 U11) - it vanished
-  const marketShown = () => !!marketHost && (marketHost.book?.state?.open !== false || tab === 'market');
+  // MARKET-AUDIT U4: a market that shuts while its tab is read stays the tab, its shut word said (AUDIT 30 U11) - it vanished.
+  // AUDIT 657 B5: and a Market the board showed as it opened stays for this opening - the board's own read of the market
+  // (BOARD-UI's prefetch) can hear it is shut before the tab is pressed, and the tab went with no word; pressed, it says why
+  const marketAtOpen = !!marketHost && marketHost.book?.state?.open !== false;
+  const marketShown = () => !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market');
   // AUDIT 30 U12: the market's door is its own - a board read under way never greys Buy, and a market act never the board
   let marketBusy = false;
   const market = marketHost ? createMarketTab(marketHost, {
@@ -333,12 +361,12 @@ export function mountNoticeBoard(host, deps) {
     const notes = board?.notes?.length ?? 0;
     const gnotes = gboard?.notes?.length ?? 0;
     const sub = tab === 'guilds'
-      ? (gboard ? `${gnotes} note${gnotes === 1 ? '' : 's'} on ${gboard.guild?.name ?? 'your guild'}'s board · you have ${gme().live} of ${gme().max} up` : (gbusy ? 'Reading the board...' : ''))
+      ? (gboard ? `${gnotes} note${gnotes === 1 ? '' : 's'} on ${gboard.guild?.name ?? 'your guild'}'s board · yours up: ${gme().live} of ${gme().max}` : (gbusy ? BOARD_WORDS.reading : ''))
       : board
-        ? `${notes} note${notes === 1 ? '' : 's'} pinned here${me().canPin ? ` · you have ${me().live} of ${me().max} up` : ''}`
-        : (busy ? 'Reading the board...' : '');
+        ? `${notes} note${notes === 1 ? '' : 's'} pinned here${me().canPin ? ` · yours up: ${me().live} of ${me().max}` : ''}`
+        : (busy ? BOARD_WORDS.reading : '');
     title.append(el('h2', null, guildOnly ? `The board of ${gboard?.guild?.name ?? guildOnly.name}` : traderOnly ? traderOnly.title : `Notice Board of ${deps.town.name}`), el('p', 'notice-sub', traderOnly ? (traderOnly.sub ?? '') : sub));
-    const line = el('p', `notice-word${word?.ok ? ' ok' : ''}`, word?.text ?? ((tab === 'guilds' ? gstale : stale) ? 'The board may be out of date - the counting-house is slow to answer.' : ''));
+    const line = el('p', `notice-word${word?.ok ? ' ok' : ''}`, word?.text ?? ((tab === 'guilds' ? gstale : stale) ? BOARD_WORDS.stale : ''));
     line.setAttribute('aria-live', 'polite');
     title.append(line);
     const acts = el('div', 'notice-headacts');
@@ -361,6 +389,13 @@ export function mountNoticeBoard(host, deps) {
     return [head, tabsNode()];
   }
 
+  /** BOARD-UI: a tab's count - the Notices' notes not yet read when the window opened, the Work tab's writs open to take
+   *  once its list is read; null for none. */
+  const tabCount = (id) => {
+    if (id === 'notices') return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).filter((c) => c.isNew).length || null;
+    if (id === 'work' && writs) return (writs.writs ?? []).filter((w) => w.state === 'open').length + (writs.writsOpen === true ? (writs.guildWrits ?? []).filter((w) => w.state === 'open').length + (writs.commissions ?? []).filter((c) => c.state === 'open' && c.forMe).length : 0) || null;
+    return null;
+  };
   /** The tabs: Notices alone, or Notices and Work while the professions are this account's (PROF1), and Market while
    *  the market is (PROF5). */
   function tabsNode() {
@@ -370,6 +405,8 @@ export function mountNoticeBoard(host, deps) {
     if (!shown.some(([id]) => id === tab)) tab = shown[0][0];
     for (const [id, label] of shown) {
       const t = el(shown.length > 1 ? 'button' : 'span', `notice-tab${tab === id ? ' on' : ''}`, label);
+      const n = shown.length > 1 ? tabCount(id) : null;
+      if (n) { t.append(el('span', 'notice-tabcount', String(n))); t.setAttribute('aria-label', `${label}, ${n} ${id === 'work' ? 'open' : 'new'}`); }
       if (tab === id) t.setAttribute('aria-current', 'page');
       if (shown.length > 1) {
         t.setAttribute('type', 'button');
@@ -387,6 +424,8 @@ export function mountNoticeBoard(host, deps) {
       }
       tabs.append(t);
     }
+    // BOARD-UI: the chosen tab scrolled into the strip, once it is in the window (a phone's strip scrolls sideways)
+    Promise.resolve().then(() => { try { /** @type {any} */ (tabs.querySelector?.('.notice-tab.on'))?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' }); } catch { /* none to scroll */ } });
     return tabs;
   }
 
@@ -419,9 +458,8 @@ export function mountNoticeBoard(host, deps) {
   }
 
   /** A Court writ's card: its need, pay and Renown, its time left, what the Stores hold of it, and Take. */
-  function writNode(w, i) {
+  function writNode(w) {
     const li = el('li', `notice-card notice-writ seal-court${w.state !== 'open' ? ' done' : ''}`);
-    li.style.setProperty('--tilt', `${((i * 37) % 5) - 2}deg`);
     li.append(el('span', 'notice-pin'), el('span', 'writ-kind', 'Court writ'));
     li.append(el('p', 'writ-need', `The Court of ${work.regionName} needs ${w.qty} ${work.countName(w.material, w.qty)}`));
     li.append(el('p', 'writ-pay', `Pays ${w.pay.toLocaleString('en-US')} silver, ${w.renown.toLocaleString('en-US')} Renown`));
@@ -432,8 +470,8 @@ export function mountNoticeBoard(host, deps) {
       const full = (work.book.state.writs?.today ?? 0) >= (work.book.state.writs?.max ?? 3);
       const b = button('primary notice-take', 'Take', () => takeWrit(w));
       b.disabled = busy || workBusy || held < w.qty || full;   // AUDIT 31 B10: nor while a guild writ's or a commission's act is out
-      if (held < w.qty) b.title = work.book.carrying?.() ? 'You do not hold enough - in your Stores, your Materials Bag and your pack together' : 'Your Stores do not hold enough';   // BAG1; AUDIT BAG1: and the pack
-      else if (full) b.title = 'You have filled all the Court writs a day allows';
+      if (held < w.qty) b.title = work.book.carrying?.() ? 'Not enough - your Stores, Materials Bag and pack together' : 'Not enough in your Stores';   // BAG1; AUDIT BAG1: and the pack
+      else if (full) b.title = 'You have filled today\'s Court writs';
       take.append(b);
     }
     take.append(el('span', null, `${held.toLocaleString('en-US')} ${work.book.carrying?.() ? 'held' : 'in your Stores'}`));   // BAG1: the Stores' and what is carried
@@ -459,33 +497,32 @@ export function mountNoticeBoard(host, deps) {
 
   function workBody() {
     const body = el('div', 'notice-cork');
+    // BOARD-UI: the day's count above the cards - under the last card it stood off the bottom of a long list
+    const today = writs?.today ?? { filled: work.book.state.writs?.today ?? 0, max: work.book.state.writs?.max ?? 3 };
+    body.append(el('p', 'notice-worktoday', `Court writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));
     const grid = el('ul', 'notice-grid');
     grid.setAttribute('role', 'list');
     const list = writs?.writs ?? [];
-    list.forEach((w, i) => grid.append(writNode(w, i)));
+    for (const w of list) grid.append(writNode(w));
     // PROF6: this region's guild writs and commissions in the Court's own grid (AUDIT 31 U14 - the Court's stood alone)
     const more = workMore ? workMore.cards(writs) : [];
     for (const c of more) grid.append(c);
-    if (writsBusy && !writs) grid.append(el('li', 'notice-empty', 'Reading the writs...'));
+    if (writsBusy && !writs) grid.append(el('li', 'notice-empty', BOARD_WORDS.writsReading));
     else if (!writs && writsError) {
       const shut = writsError === 'prof-closed' || writsError === 'no-session' || writsError === 'auth';
-      const li = el('li', 'notice-empty', shut ? 'The Court posts its writs for others. Its work is not open to you.'
-        : 'The counting-house is not answering. The writs cannot be read now.');   // AUDIT 31 U13: the guilds' and the commissions' too
+      const li = el('li', 'notice-empty', shut ? BOARD_WORDS.writsShut : BOARD_WORDS.writsSlow);   // AUDIT 31 U13: the guilds' and the commissions' too
       if (!shut) li.append(button('notice-retry', 'Try again', () => loadWrits(true)));   // AUDIT 29 C11: read now, not in a minute
       grid.append(li);
     }
-    else if (writs && !list.length) grid.append(el('li', 'notice-empty', `The Court of ${work.regionName} posts no writs yet. When its lands are known to the counting-houses - gathered on, and witnessed - its writs go up here each day.`));
+    else if (writs && !list.length) grid.append(el('li', 'notice-empty', BOARD_WORDS.writsNone(work.regionName)));
     body.append(grid);
     const yours = workMore ? workMore.node(writs) : null;   // PROF6: "Yours", the forms
     if (yours) body.append(yours);
-    const today = writs?.today ?? { filled: work.book.state.writs?.today ?? 0, max: work.book.state.writs?.max ?? 3 };
-    body.append(el('p', 'notice-worktoday', `Court writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));
     return body;
   }
 
-  function cardNode(c, i) {
+  function cardNode(c) {
     const li = el('li', `notice-card seal-${c.seal}${c.isNew ? ' new' : ''}${c.note?.hidden ? ' hidden' : ''}`);
-    li.style.setProperty('--tilt', `${((i * 37) % 5) - 2}deg`);
     li.setAttribute('role', 'button');
     li.setAttribute('tabindex', '0');
     li.append(el('span', 'notice-pin'), el('h4', null, c.subject), el('p', 'notice-snippet', snippetOf(c.body)));
@@ -499,19 +536,31 @@ export function mountNoticeBoard(host, deps) {
     return li;
   }
 
+  /** BOARD-UI: a part's name over its grid, ruled, with its count where it has one. */
+  function sectionHead(text, count = null) {
+    const h = el('h3', 'notice-section', text);
+    if (count != null) h.append(el('span', 'notice-sectioncount', String(count)));
+    return h;
+  }
+  function gridOf(cards) {
+    const grid = el('ul', 'notice-grid');
+    grid.setAttribute('role', 'list');
+    for (const c of cards) grid.append(cardNode(c));
+    return grid;
+  }
+  /** THE NOTICES TAB (BOARD-UI): the town's and the server's word ("News"), then the players' notes under their count. */
   function boardBody() {
     const body = el('div', 'notice-cork');
     const cards = noticeCards({ town: deps.town, rumour: deps.rumour, bountyLine: deps.bountyLine, gate: deps.gate?.() ?? null, board, seenAt: seenAtOpen });
-    const grid = el('ul', 'notice-grid');
-    grid.setAttribute('role', 'list');
-    cards.forEach((c, i) => grid.append(cardNode(c, i)));
+    const news = cards.filter((c) => !c.note), notes = cards.filter((c) => c.note);
+    if (news.length) body.append(sectionHead(BOARD_WORDS.news), gridOf(news));
+    body.append(sectionHead(BOARD_WORDS.notes, board ? notes.length : null));
+    const grid = gridOf(notes);
     if (!board && !busy && error) {
       // AUDIT 28 N11: a board closed to this account says so - the next press is DFU's own sign again
-      grid.append(el('li', 'notice-empty', error === 'board-closed' || error === 'no-session' || error === 'auth'
-        ? 'The Notice Board is not open to you. The town\'s own news is all it shows.'
-        : 'The counting-house is not answering. The town\'s own news is all the board shows now.'));
+      grid.append(el('li', 'notice-empty', error === 'board-closed' || error === 'no-session' || error === 'auth' ? BOARD_WORDS.closed : BOARD_WORDS.slow));
     }
-    else if (board && !(board.notes?.length)) grid.append(el('li', 'notice-empty', me().canPin ? 'No player has pinned a note here. Yours could be the first.' : 'No player has pinned a note here.'));
+    else if (board && !notes.length) grid.append(el('li', 'notice-empty', `${BOARD_WORDS.noNotes}${me().canPin ? ' Pin the first.' : ''}`));
     body.append(grid);
     return body;
   }
@@ -526,10 +575,9 @@ export function mountNoticeBoard(host, deps) {
   }
 
   /** GUILD1e: a town's recruitment note hung as its guild's poster - the banner, the guild, the note's subject. */
-  function posterNode(n, i) {
+  function posterNode(n) {
     const c = { key: `note:${n.id}`, seal: 'guild', subject: n.subject, body: n.body, from: n.from, at: n.at, expiresAt: n.expiresAt, note: n };
     const li = el('li', 'notice-card notice-poster seal-guild');
-    li.style.setProperty('--tilt', `${((i * 37) % 5) - 2}deg`);
     li.setAttribute('role', 'button');
     li.setAttribute('tabindex', '0');
     const img = bannerImg(n.guild.heraldry, 38);
@@ -548,15 +596,15 @@ export function mountNoticeBoard(host, deps) {
   function guildsBody() {
     const body = el('div', 'notice-cork');
     const g = gboard?.guild ?? null;
-    const head = el('p', 'notice-section');
+    const head = el('h3', 'notice-section');
     const img = g ? bannerImg(g.heraldry, 30) : null;
     if (img) head.append(img);
-    head.append(el('span', null, g ? `<${g.tag}> ${g.name} - for its members` : 'Your guild'));
+    head.append(el('span', null, g ? `<${g.tag}> ${g.name} - members only` : 'Your guild'));
     body.append(head);
     const grid = el('ul', 'notice-grid');
     grid.setAttribute('role', 'list');
     const notes = gboard?.notes ?? [];
-    notes.forEach((n, i) => grid.append(cardNode({ key: `gnote:${n.id}`, seal: 'guild', subject: n.subject, body: n.body, from: n.from, at: n.at, expiresAt: n.expiresAt, gnote: n }, i)));
+    for (const n of notes) grid.append(cardNode({ key: `gnote:${n.id}`, seal: 'guild', subject: n.subject, body: n.body, from: n.from, at: n.at, expiresAt: n.expiresAt, gnote: n }));
     if (gbusy && !gboard) grid.append(el('li', 'notice-empty', 'Reading your guild\'s board...'));
     else if (!gboard && gerror) {
       const shut = gerror === 'board-closed' || gerror === 'no-session' || gerror === 'auth';
@@ -568,11 +616,11 @@ export function mountNoticeBoard(host, deps) {
     body.append(grid);
     if (!guildOnly) {
       const posters = recruitPosters(board);
-      body.append(el('p', 'notice-section', `Recruiting in ${deps.town.name}`));
+      body.append(sectionHead(`Recruiting in ${deps.town.name}`));
       const pg = el('ul', 'notice-grid');
       pg.setAttribute('role', 'list');
-      posters.forEach((n, i) => pg.append(posterNode(n, i)));
-      if (!posters.length) pg.append(el('li', 'notice-empty', 'No guild is recruiting here. A guild\'s Officers pin its posters with the note\'s recruitment button.'));
+      for (const n of posters) pg.append(posterNode(n));
+      if (!posters.length) pg.append(el('li', 'notice-empty', BOARD_WORDS.noRecruits));
       body.append(pg);
     }
     return body;
@@ -587,7 +635,7 @@ export function mountNoticeBoard(host, deps) {
     subject.maxLength = NOTE_SUBJECT_MAX; subject.value = d.subject; subject.placeholder = 'What is it about?';
     subject.setAttribute('data-focus', 'gsubject');
     const text = /** @type {HTMLTextAreaElement} */ (el('textarea', 'notice-textarea'));
-    text.maxLength = NOTE_BODY_MAX; text.value = d.body; text.rows = 7; text.placeholder = 'Your note, as your guild will read it.';
+    text.maxLength = NOTE_BODY_MAX; text.value = d.body; text.rows = 7; text.placeholder = 'Your note';
     text.setAttribute('data-focus', 'gbody');
     const counted = el('span', 'notice-count', `${d.body.length} / ${NOTE_BODY_MAX}`);
     subject.oninput = () => { d.subject = subject.value; };
@@ -595,10 +643,10 @@ export function mountNoticeBoard(host, deps) {
     const days = /** @type {HTMLSelectElement} */ (el('select', 'notice-select'));
     for (const n of NOTE_DAYS) { const o = /** @type {HTMLOptionElement} */ (el('option', null, `${n} day${n === 1 ? '' : 's'}`)); o.value = String(n); if (n === d.days) o.selected = true; days.append(o); }
     days.onchange = () => { d.days = Number(days.value); };
-    form.append(field('Subject', subject), field('Note', text, counted), field('Stands for', days));
-    form.append(el('p', 'notice-tip', `Only ${gboard?.guild?.name ?? 'your guild'}'s members read it, here and at the board in its hall.`));
+    form.append(field('Subject', subject), field('Note', text, counted), field('Keep it up for', days));
+    form.append(el('p', 'notice-tip', `Only members of ${gboard?.guild?.name ?? 'your guild'} can read it.`));
     const acts = el('div', 'notice-acts');
-    acts.append(button('primary notice-dopin', gbusy ? 'Pinning...' : 'Pin it up', () => {
+    acts.append(button('primary notice-dopin', gbusy ? 'Pinning...' : 'Pin it', () => {
       gact(() => deps.book.pinGuild(character(), { subject: d.subject, body: d.body, days: d.days }))
         .then(() => { if (word?.ok) { d.subject = ''; d.body = ''; } });
     }));
@@ -620,7 +668,7 @@ export function mountNoticeBoard(host, deps) {
     const meta = el('p', 'notice-meta');
     meta.textContent = [c.from ? `Posted by ${c.from}${n?.title ? `, ${n.title}` : ''}` : NOTICE_SEALS[c.seal], c.expiresAt ? timeLeftText(c.expiresAt, nowS()) : ''].filter(Boolean).join(' · ');
     card.append(meta);
-    if (!me().moderator && n?.mine && n.hidden) card.append(el('p', 'notice-mod', 'Reports have hidden this note from other readers until a moderator looks at it. You may take it down.'));   // AUDIT 28 N2
+    if (!me().moderator && n?.mine && n.hidden) card.append(el('p', 'notice-mod', BOARD_WORDS.hidden));   // AUDIT 28 N2
     if (me().moderator && n?.hidden) card.append(el('p', 'notice-mod', `Hidden by ${n.reports} report${n.reports === 1 ? '' : 's'} · note ${n.id}`));
     else if (me().moderator && n) card.append(el('p', 'notice-mod', `Note ${n.id}${n.reports ? ` · ${n.reports} report${n.reports === 1 ? '' : 's'}` : ''}`));
     const acts = el('div', 'notice-acts');
@@ -638,7 +686,7 @@ export function mountNoticeBoard(host, deps) {
         const r = deps.answer?.(n);
         if (r && r.ok === false) { word = { ok: false, text: r.text ?? '' }; render(); }
       });
-      if (!me().canPin) { b.disabled = true; b.title = 'A registered account answers a note'; }
+      if (!me().canPin) { b.disabled = true; b.title = BOARD_WORDS.guestAnswer; }
       // AUDIT 31 U5: a crafter's button only where commissions are this account's - never pressed to be refused
       else if (n.button === 'commission' && !commissionsOpen()) { b.disabled = true; b.setAttribute('title', 'Commissions are not open to you here'); }
       acts.append(b);
@@ -670,7 +718,7 @@ export function mountNoticeBoard(host, deps) {
     const subject = /** @type {HTMLInputElement} */ (el('input', 'notice-input'));
     subject.maxLength = NOTE_SUBJECT_MAX; subject.value = draft.subject; subject.placeholder = 'What is it about?';
     const text = /** @type {HTMLTextAreaElement} */ (el('textarea', 'notice-textarea'));
-    text.maxLength = NOTE_BODY_MAX; text.value = draft.body; text.rows = 7; text.placeholder = 'Your note, as the town will read it.';
+    text.maxLength = NOTE_BODY_MAX; text.value = draft.body; text.rows = 7; text.placeholder = 'Your note';
     const counted = el('span', 'notice-count', `${draft.body.length} / ${NOTE_BODY_MAX}`);
     subject.oninput = () => { draft.subject = subject.value; };
     text.oninput = () => { draft.body = text.value; counted.textContent = `${text.value.length} / ${NOTE_BODY_MAX}${text.value.split('\n').length > NOTE_LINES_MAX ? ` - at most ${NOTE_LINES_MAX} lines` : ''}`; };
@@ -678,12 +726,12 @@ export function mountNoticeBoard(host, deps) {
     for (const d of NOTE_DAYS) { const o = /** @type {HTMLOptionElement} */ (el('option', null, `${d} day${d === 1 ? '' : 's'}`)); o.value = String(d); if (d === draft.days) o.selected = true; days.append(o); }
     days.onchange = () => { draft.days = Number(days.value); };
     const btn = /** @type {HTMLSelectElement} */ (el('select', 'notice-select'));
-    for (const k of ['', ...NOTE_BUTTONS]) { const o = /** @type {HTMLOptionElement} */ (el('option', null, k ? NOTE_BUTTON_LABEL[k] : 'No button')); o.value = k; if (k === draft.button) o.selected = true; btn.append(o); }
+    for (const k of ['', ...NOTE_BUTTONS]) { const o = /** @type {HTMLOptionElement} */ (el('option', null, k ? NOTE_BUTTON_LABEL[k] : 'None')); o.value = k; if (k === draft.button) o.selected = true; btn.append(o); }
     btn.onchange = () => { draft.button = btn.value; };
-    form.append(field('Subject', subject), field('Note', text, counted), field('Stands for', days), field('A button for the reader', btn));
-    form.append(el('p', 'notice-tip', 'A recruitment button needs a guild rank that may invite. The reader\'s answer comes to you as a letter.'));
+    form.append(field('Subject', subject), field('Note', text, counted), field('Keep it up for', days), field('Answer button', btn));
+    form.append(el('p', 'notice-tip', BOARD_WORDS.pinTip));
     const acts = el('div', 'notice-acts');
-    const pin = button('primary notice-dopin', busy ? 'Pinning...' : 'Pin it up', () => {
+    const pin = button('primary notice-dopin', busy ? 'Pinning...' : 'Pin it', () => {
       act(() => deps.book.pin(map, { subject: draft.subject, body: draft.body, days: draft.days, button: draft.button || null, character: deps.character?.() ?? null }))
         .then(() => { if (word?.ok) { draft.subject = ''; draft.body = ''; draft.button = ''; } });
     });
@@ -708,7 +756,7 @@ export function mountNoticeBoard(host, deps) {
     text.oninput = () => { noticeDraft.body = text.value; };
     days.oninput = () => { noticeDraft.days = Number(days.value); };
     form.append(field('Subject', subject), field('Notice', text), field(`Days (1 to ${NOTICE_DAYS_MAX})`, days));
-    form.append(el('p', 'notice-tip', 'The server\'s word, under the red seal, on every board.'));
+    form.append(el('p', 'notice-tip', BOARD_WORDS.noticeTip));
     const acts = el('div', 'notice-acts');
     acts.append(button('primary notice-dopost', 'Post on every board', () => {
       // AUDIT 28 N7: posted, the draft is spent - a second press never puts the same notice up twice
@@ -759,6 +807,9 @@ export function mountNoticeBoard(host, deps) {
 
   render();
   load(false);
+  // BOARD-UI (Mac: "Enhance the speed at which the notice board and market loads"): the Market's first view read as the
+  // board opens, beside the board's own read - its tab answers from the minute's cache, or joins the read under way
+  if (market && marketShown()) market.prefetch?.();
   return {
     repaint: () => render(),
     unmount() {

@@ -40,7 +40,7 @@ import { isPackOnly } from './itemBound.js';   // AUDIT 625 W1: nor a pack-only 
 import { decorFlatLight } from './decorCatalogue.js';
 import { itemDyeColor, itemDyeTarget } from './itemDye.js';
 import { decorItemOf, decorIsMount, DECOR_ARCHIVE_MAX, DECOR_RECORD_MAX, DECOR_ARTIFACT_UNKNOWN } from '../net/decorLaw.js';
-import { PROVENANCE_RE, MASTERWORK, makerName, markedName } from '../net/recipeLaw.js';   // PROF4: a crafted piece's id and mark
+import { PROVENANCE_RE, MASTERWORK, makerMark, markedName } from '../net/recipeLaw.js';   // PROF4: a crafted piece's id and mark
 
 /** The groups whose items never stand as themselves: weapons and armour are mounted (DECOR2c); a vehicle is no thing
  *  one carries, coin is a counter, and a deed or a quest's own item is not the player's to set down. */
@@ -75,7 +75,7 @@ export function decorDescriptorOf(item) {
   // PROF4 (bible/06-Systems/Professions-Arc.md 25): a crafted piece's provenance, and its mark where its name carries
   // one - online the service writes the mark from its own row, whatever this sends
   const pv = typeof item.provenance === 'string' && PROVENANCE_RE.test(item.provenance) ? item.provenance : null;
-  const mk = pv && (item.marked === true || item.quality === MASTERWORK) ? makerName(item.maker) : null;
+  const mk = pv && (item.marked === true || item.quality === MASTERWORK) ? makerMark(item.maker) : null;   // TEXT-F1: a mark the filter lets stand
   return decorItemOf({
     t: item.templateIndex, g: g >= 0 ? g : null,
     m: Number.isSafeInteger(item.material) && item.material > 0 ? item.material : null,

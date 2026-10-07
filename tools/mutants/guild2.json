@@ -378,7 +378,7 @@
   {
     "name": "AUDIT2-GUILD2-S2-the-word-unsaid",
     "file": "server-account/src/index.js",
-    "old": "        if (r.error === 'guild-name-word' && typeof r.word === 'string')",
+    "old": "        if ((r.error === 'guild-name-word' || r.error === 'guild-rank-word') && typeof r.word === 'string')",
     "new": "        if (false)",
     "tests": [
       "test/guild2_service.test.js"

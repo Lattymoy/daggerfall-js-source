@@ -33,7 +33,7 @@
 // earns nothing - the service never sees it.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  recipeById, dishOf, dishMinutes, DISHES, DISH_TEMPLATES, DISH_ICON, HAND_CHEF, HAND_PROVISIONER, PROVENANCE_RE, makerName, dishSpell,
+  recipeById, dishOf, dishMinutes, DISHES, DISH_TEMPLATES, DISH_ICON, HAND_CHEF, HAND_PROVISIONER, PROVENANCE_RE, makerMark, dishSpell,
 } from '../net/recipeLaw.js';
 import { setItemFields, mintCondition, registerItemUseHandler } from './itemTemplates.js';
 import { eatFood } from './survival/items.js';
@@ -62,7 +62,7 @@ export function mintDish({ recipe, maker = null, hand = null }, provenance) {
   item.name = dishOf(r.id)?.name ?? item.name;
   item.recipe = r.id;
   item.provenance = provenance;
-  const mark = makerName(maker);
+  const mark = makerMark(maker);   // TEXT-F1
   if (mark) item.maker = mark;
   if (hand === HAND_PROVISIONER) item.noRot = true;   // 3.3: a Provisioner's dish never spoils
   if (hand === HAND_CHEF && dishOf(r.id)?.effect.party === true) item.chef = true;   // 3.3: a Chef's feast lasts half again

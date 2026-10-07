@@ -97,7 +97,8 @@ test('F077: a filled soul trap says whose soul it holds', () => {
   // early return (:302) sits BEFORE the soul arm. IM1 reshaped the
   // ternary (the unidentified arm leads, the Books arm follows), so
   // the pin holds the exact identified tail instead of source order.
-  assert.match(ii, /const itemName = !identified \? \(t\?\.name \?\? ''\)\n\s+: item\?\.group === 'Books' \? [^\n]+\n\s+: \(name \?\? item\?\.name \?\? t\?\.name \?\? ''\) \+ soulTrapNameSuffix\(item, enemyDisplayName\);/,
+  // PIN MOVED (TEXT-F1): a typed name read through shownItemName, its words starred - the suffix's arm unchanged
+  assert.match(ii, /const itemName = !identified \? \(t\?\.name \?\? ''\)\n\s+: item\?\.group === 'Books' \? [^\n]+\n\s+: \(name \?\? shownItemName\(item\) \?\? t\?\.name \?\? ''\) \+ soulTrapNameSuffix\(item, enemyDisplayName\);/,
     'the suffix is on the identified non-book arm, behind the unidentified early return');
 });
 
