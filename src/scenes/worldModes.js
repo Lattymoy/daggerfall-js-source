@@ -8963,6 +8963,7 @@ export function createWorldModes(host) {
     // applyFallLanding charged the damage, a swimmer kept sinking, and
     // the crouch edge still toggled. dungeon.js:"${JSON.stringify(ctx.startMarker)}," is this same gate
     // ("no movers, no motor").
+    if (cardSeat && !overlayHeld && leavesSeat(mv, jumpHeld || !!player.toggleAutorun)) standFromCardTable();   // CARDS2: a step, a jump, the stick or the autorun latch stands you up - so a seated body has nothing to walk with
     playerBlowFrame({ motor: player, entity: playerEntity, shake: (k) => betterAmbience.weaponKick(k), hurt: (n) => { hurtPlayer(playerEntity, n); flashPlayerDamage(n); surfacePlayer(); } });   // TELL6e: a landing's push, rattle, knockdown and bleed; AUDIT TELL L6: under a window too, as the street's hosts run it - a building's foes keep their clock there (WINFOE1), and a bleed its ticks, never all at once on the close
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
@@ -8972,7 +8973,6 @@ export function createWorldModes(host) {
       // and nothing else. Dropping run/sneak/autoRun/back from this bag read
       // as a RELEASE to the motor's press-edge latches, so a key held
       // through the paralysis fired a synthetic press on the frame it lifted.
-      if (cardSeat && leavesSeat(mv, jumpHeld || !!player.toggleAutorun)) standFromCardTable();   // CARDS2: a step, a jump, the stick or the autorun latch stands you up - so a seated body has nothing to walk with
       player.update(dt, paralyzed ? { forward: 0, strafe: 0, run: held(keys, 'Run'), autoRun: held(keys, 'AutoRun'), back: mv.backwards, sneak: held(keys, 'Sneak') || walkModeOn(), jump: false, up: false, down: false, crouch: crouchPress } : {
         forward: axes.forward,   // AUDIT 28 W8: InputManager's axes - accelerated under MovementAcceleration, the held difference without
         strafe: axes.strafe,

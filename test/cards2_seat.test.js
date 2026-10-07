@@ -118,7 +118,7 @@ test('CARDS2 the interior host\'s seat: the target, the press, the stand, the he
   has("        sitAtCardTable(Number(key.split(':')[1]));   // CARDS2");
   has("    if (cardSeat) { standFromCardTable(); return true; }", 'the press stands you up first');
   has('  function tryExit({ pressCast = false } = {}) {\n    if (cardSeat) { standFromCardTable(); return true; }', 'first in the press, before the ray');
-  const leave = src.indexOf('      if (cardSeat && leavesSeat(mv, jumpHeld || !!player.toggleAutorun)) standFromCardTable();');
+  const leave = src.indexOf('    if (cardSeat && !overlayHeld && leavesSeat(mv, jumpHeld || !!player.toggleAutorun)) standFromCardTable();');
   assert.ok(leave > 0 && leave < src.indexOf('      player.update(dt, paralyzed ? {'), 'whatever would move the body stands it up first');
   const over = src.indexOf("    if (mode === 'interior') decorTool.cameraOverride(cam);");
   const seat = src.indexOf("    if (mode === 'interior' && cardSeat) cam.pos = cardSeat.eye.slice();");

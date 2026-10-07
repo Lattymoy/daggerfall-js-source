@@ -134,7 +134,7 @@ export function bestHand(cards) {
 }
 
 /** The hand as the table says it: "Full House", "Pair". */
-export const handName = (h) => HAND_NAMES[h.cat];
+export const pokerHandName = (h) => HAND_NAMES[h.cat];   // not `handName`: shipCrew.js has one (a crew hand's), and AUDIT 24 keeps one name one thing
 
 // ── THE POTS ──────────────────────────────────────────────────────────────────────────────────────────────────────
 

@@ -263,7 +263,7 @@
   {
     "name": "CS-host-step-sits-on",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (cardSeat && leavesSeat(mv, jumpHeld || !!player.toggleAutorun)) standFromCardTable();",
+    "old": "    if (cardSeat && !overlayHeld && leavesSeat(mv, jumpHeld || !!player.toggleAutorun)) standFromCardTable();",
     "new": "",
     "tests": [
       "test/cards2_seat.test.js"

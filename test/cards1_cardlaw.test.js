@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  RANKS, SUITS, DECK_SIZE, cardText, parseCard, freshDeck, shuffleDeck, rankFive, compareHands, bestHand, handName,
+  RANKS, SUITS, DECK_SIZE, cardText, parseCard, freshDeck, shuffleDeck, rankFive, compareHands, bestHand, pokerHandName,
   HAND_HIGH_CARD, HAND_PAIR, HAND_TWO_PAIR, HAND_TRIPS, HAND_STRAIGHT, HAND_FLUSH, HAND_FULL_HOUSE, HAND_QUADS,
   HAND_STRAIGHT_FLUSH, sidePots, newHand, legalActions, act, timeoutAction, viewFor,
 } from '../src/net/cardLaw.js';
@@ -86,7 +86,7 @@ test('CARDS1 every category and its tie-break ranks, five cards', () => {
     ['Kh Ad 2c 3s 4d', HAND_HIGH_CARD, [12, 11, 2, 1, 0]],   // no straight round the corner
   ];
   assert.deepEqual(rows.map(([h]) => rankFive(C(h))), rows.map(([, cat, ranks]) => ({ cat, ranks })));
-  assert.deepEqual(rows.map(([h]) => handName(rankFive(C(h)))), [
+  assert.deepEqual(rows.map(([h]) => pokerHandName(rankFive(C(h)))), [
     'Straight Flush', 'Straight Flush', 'Four of a Kind', 'Full House', 'Flush', 'Straight', 'Straight', 'Straight',
     'Three of a Kind', 'Two Pair', 'Pair', 'High Card', 'High Card',
   ]);
