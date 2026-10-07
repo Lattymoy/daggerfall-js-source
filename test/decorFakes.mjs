@@ -280,8 +280,9 @@ export const yardPiece = (over = {}) => ({ id: 'p1', model: null, flat: [504, 12
  *  `shift` is where the pixel stands in the scene (written in place, then `yards.rebase()` - a recentre). AUDIT 05b A4:
  *  `town.pieces` the service's answer for the home (written in place - another writer's), `clock.t` the host's clock (ms:
  *  the town asked again past YARD_TOWN_TTL_MS). AUDIT 05b A5: every model a metre's box (the pipeline's cpu copy - the
- *  decorator's ghost reads its box), and `meshDraws` each model drawn with the table it was drawn with, as it stood then. */
-export function yardWorld({ pieces, season = SEASON.Summer, climate = WOODS, seasonal = null, own = false, iconUrl = async () => null, trees = null, sizes: own_sizes = {} } = {}) {
+ *  decorator's ghost reads its box), and `meshDraws` each model drawn with the table it was drawn with, as it stood then.
+ *  AUDIT YARD-LIGHT: `neighbours` more homes in the same pixel - { [buildingKey]: { at, box, pieces } } - another's yards. */
+export function yardWorld({ pieces, season = SEASON.Summer, climate = WOODS, seasonal = null, own = false, iconUrl = async () => null, trees = null, sizes: own_sizes = {}, neighbours = {} } = {}) {
   const made = [];
   const uploads = [];
   const animated = [];
@@ -294,15 +295,15 @@ export function yardWorld({ pieces, season = SEASON.Summer, climate = WOODS, sea
   const box = { positions: new Float32Array([-0.5, 0, -0.5, 0.5, 1, 0.5]) };
   const pixel = (s) => ({
     px: 0, py: 0, homeTown: 7, homeRegion: 17, season: s, townClimate: climate,
-    homeFrames: new Map([[300, { at: [10, 0, 10], box: [6, 0, 7, 14, 6, 13] }]]),
+    homeFrames: new Map([[300, { at: [10, 0, 10], box: [6, 0, 7, 14, 6, 13] }], ...Object.entries(neighbours).map(([k, n]) => [Number(k), { at: n.at, box: n.box }])]),
     texRemap: new Map(), forest: { base: 504, archive: s === SEASON.Winter ? 505 : 504 },
     flatAnims: { add: (b, a, n) => animated.push([b, a, n]), remove() {} },
   });
   const built = new Map([['0,0', pixel(season)]]);
   const sizes = { 504: [40, 120], 505: [44, 130], 201: [30, 20], ...own_sizes };
   const yards = createHomeYards({
-    api: { yards: async () => ({ ok: true, data: { yards: [{ buildingKey: 300, pieces: town.pieces }] } }) },
-    homes: { homeAt: (m, k) => (k === 300 ? { owner: 'Tomas', own, look: null } : null) },
+    api: { yards: async () => ({ ok: true, data: { yards: [{ buildingKey: 300, pieces: town.pieces }, ...Object.entries(neighbours).map(([k, n]) => ({ buildingKey: Number(k), pieces: n.pieces }))] } }) },
+    homes: { homeAt: (m, k) => (k === 300 ? { owner: 'Tomas', own, look: null } : neighbours[k] ? { owner: 'Ilsa', own: false, look: null } : null) },
     built: () => built, translation: () => shift, feet: () => (own ? [18, 0, 10] : [100, 0, 100]), outside: () => true, eye: () => (own ? [18, 1.6, 10] : [100, 1.6, 100]),
     collider: () => ({ addMesh() {}, removeBucket() {} }),
     meshes: { getGpuMesh: async (id) => ({ id, subMeshes: [{ textureArchive: SWAPPED, textureRecord: 0 }] }), cpuModels: { get: () => box } },

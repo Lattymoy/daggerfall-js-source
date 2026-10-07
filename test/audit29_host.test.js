@@ -46,7 +46,7 @@ function rig({ answer = null, clear = null } = {}) {
   };
   const door = {
     account: () => 'acct-1',
-    state: async () => (r.open ? { ok: true, data: { day, character: 'c1', tracks: r.tracks, today: {}, taken: [], stores: [], caps: { harvests: 60, stores: 5000 } } } : { ok: false, error: 'prof-closed' }),
+    state: async () => (r.open ? { ok: true, data: { day, character: 'c1', tracks: r.tracks, today: {}, taken: [], stores: [], caps: { stores: 5000 } } } : { ok: false, error: 'prof-closed' }),
     pixels: async (c, px) => ({ ok: true, data: { pixels: px.map(([x, y]) => ({ x, y, state: 'none' })), dungeons: [] } }),
     harvest: async (b) => { asked.push(b); return (answer ?? (() => ({ ok: true, data: { node: b.node, kind: b.kind, material: 'metal:iron', qty: 3, xp: 22, track: { profession: 'mining', xp: 22, rank: 1 }, today: 1 } })))(b); },
   };

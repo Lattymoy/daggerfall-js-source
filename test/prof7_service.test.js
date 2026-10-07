@@ -1,6 +1,6 @@
 // PROF7 (2026-09-29, Mac: "Do it") - HUNTING, THE SKINNING KNIFE AND OUTFITTING AS THE SERVICE KEEPS THEM: a body's
 // harvest (`body:<day>:<id>`, the foe the client names - Hunting bounded, not witnessed: no ground, no hours, the
-// account's day of 30 hides and 3 of tiers 5-6 decided in the harvest's own INSERT; the knife's report bounded - a clean
+// account's day of 3 hides of tiers 5-6 decided in the harvest's own INSERT (CAP-OFF: its 30 of any tier gone); the knife's report bounded - a clean
 // pelt x1.5, a torn one its part lost; the DFU part one body in four; the butchery beside it, a Butcher's two); the
 // loom's cures (a Tanner's at 50) and its weave; Outfitting's crafts and a garment's dye, signed into its record and
 // carried by the market's pieces; and the day's harvests rebuilt over rows that stood before. Driven through the real
@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 
 import { standService, T0 } from './accountDb.mjs';
 import { bodyKey } from '../src/net/nodeLaw.js';
-import { xpForRank, harvestXp, HIDES_PER_DAY, HIGH_HIDES_PER_DAY } from '../src/net/professionLaw.js';
+import { xpForRank, harvestXp, HIGH_HIDES_PER_DAY } from '../src/net/professionLaw.js';
 import { craftXp } from '../src/net/recipeLaw.js';
 import { readProductRecord, verifyProductRecord } from '../src/net/productRecord.js';
 import { sharedClassicMinutes } from '../src/net/wire.js';
@@ -131,7 +131,7 @@ test('PROF7 service: the knife\'s report, bounded - a clean pelt x1.5, its fract
 
 // ─── HUNTING'S DAY (PROF0 6) ─────────────────────────────────────────
 
-test('PROF7 service: Hunting\'s day is the account\'s - 30 hides across its characters, 3 of tiers 5-6, decided in the harvest\'s own INSERT (a refusal writes no row and moves nothing); the state says the day and its bounds', async () => {
+test('PROF7 service: Hunting\'s day is the account\'s - 3 hides of tiers 5-6 across its characters, decided in the harvest\'s own INSERT (a refusal writes no row and moves nothing); CAP-OFF: the hides past thirty credited; the state says the day and its bound', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
   s.setXp(mac, xpForRank(100), 'hunting');
@@ -142,16 +142,17 @@ test('PROF7 service: Hunting\'s day is the account\'s - 30 hides across its char
   assert.deepEqual([s.rows(mac), s.stores(mac, 'hide:harpy')], [before, []], 'nothing written, nothing stored');
   const rat = await s.call('/v1/prof/harvest', skin(mac, MOB.Rat), mac.secret);
   assert.deepEqual([rat.status, rat.body.hunt], [200, { hides: HIGH_HIDES_PER_DAY + 1, high: HIGH_HIDES_PER_DAY }], 'a low hide still');
-  // the day's thirty: the rest taken, the next refused
-  s.hunted(mac, HIDES_PER_DAY - HIGH_HIDES_PER_DAY - 2, 1, 'char-mac-alt');
+  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): the day held thirty hides - a thirty-first was
+  // `prof-hunt-cap`, refused in the INSERT. Now a hide below the rare is counted, not bounded
+  s.hunted(mac, 30 - HIGH_HIDES_PER_DAY - 2, 1, 'char-mac-alt');
   const last = await s.call('/v1/prof/harvest', skin(mac, MOB.Rat), mac.secret);
-  assert.deepEqual([last.status, last.body.hunt.hides], [200, HIDES_PER_DAY]);
+  assert.deepEqual([last.status, last.body.hunt.hides], [200, 30]);
   const n = s.rows(mac);
-  const capped = await s.call('/v1/prof/harvest', skin(mac, MOB.Rat), mac.secret);
-  assert.deepEqual([capped.status, capped.body], [409, { error: 'prof-hunt-cap' }]);
-  assert.equal(s.rows(mac), n, 'the cap decided in the INSERT');
+  const past = await s.call('/v1/prof/harvest', skin(mac, MOB.Rat), mac.secret);
+  assert.deepEqual([past.status, past.body.hunt.hides], [200, 31], JSON.stringify(past.body));
+  assert.equal(s.rows(mac), n + 1, 'the thirty-first written');
   const st = (await s.call('/v1/prof/state', { character: mac.character }, mac.secret)).body;
-  assert.deepEqual([st.hunt, st.caps.hides, st.caps.highHides], [{ hides: HIDES_PER_DAY, high: HIGH_HIDES_PER_DAY }, 30, 3]);
+  assert.deepEqual([st.hunt, st.caps.hides, st.caps.highHides], [{ hides: 31, high: HIGH_HIDES_PER_DAY }, undefined, 3]);
   // another account's day is its own - and its rare hides are counted as the service writes them (the tier kept)
   const ann = await s.registered('Ann');
   s.setXp(ann, xpForRank(100), 'hunting');

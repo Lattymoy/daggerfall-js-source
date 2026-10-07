@@ -490,11 +490,12 @@
   {
     "name": "AUDIT2-BAG1-K9-carried-full-unlearned",
     "file": "src/net/profBook.js",
-    "old": "if (r?.error === 'prof-cap' || r?.error === 'stores-full' || r?.error === 'carried-full') state.reread = true;",
-    "new": "if (r?.error === 'prof-cap' || r?.error === 'stores-full') state.reread = true;",
+    "old": "if (r?.error === 'stores-full' || r?.error === 'carried-full') state.reread = true;",
+    "new": "if (r?.error === 'stores-full') state.reread = true;",
     "tests": [
       "test/bag1_client.test.js"
-    ]
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): `prof-cap` is no longer among the refusals that read the state again."
   },
   {
     "name": "AUDIT2-BAG1-K4-the-overflow-lost",
