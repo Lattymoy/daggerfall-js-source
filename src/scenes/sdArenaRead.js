@@ -17,7 +17,7 @@
 // Pure but for the beats' memory. The arena's frame throughout (x, z from its centre). Not a DFU member. Ledger A
 // (SUPER-DUNGEONS).
 import { SD_ARENA } from '../net/sdBrain.js';
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, atkWindup, blowShape, profileOf, stompFrontAt, handSwept, behindPillar, SD_ECHO_PAIR_MS } from '../net/sdRemnant.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, atkWindup, blowShape, sdProfileOf, stompFrontAt, handSwept, behindPillar, SD_ECHO_PAIR_MS } from '../net/sdRemnant.js';
 import { TELEGRAPH_NOW_MS } from '../render/gateTelegraph.js';
 import { screenBearing } from './gateCourt.js';
 import { SD_ELEMENT_COLOR, SD_ELEMENT_GROUND, sdTint } from './sdRemnantBlows.js';
@@ -134,7 +134,7 @@ export function createSdBeats() {
       if (awake && !k.awake && t - s.op < SD_BEAT_LATE_MS) show('wake', s.op, sdWakeText(s.mk));
       k.awake = awake;
       if (s.ph !== k.ph) {
-        if (s.ph === 2) show('break', t, { ...SD_BEAT_TEXT.break, sub: sdBreakSub(profileOf(s).pairMs) }, '#e8c060');
+        if (s.ph === 2) show('break', t, { ...SD_BEAT_TEXT.break, sub: sdBreakSub(sdProfileOf(s).pairMs) }, '#e8c060');
         else if (s.ph === 3) show('moment', t, SD_BEAT_TEXT.moment, '#9cffc8');
         k.ph = s.ph;
       }

@@ -102,8 +102,8 @@ test('SD-ONELIFE THE PAGE, from the world host\'s own text: the slot of the Hour
   assert.equal(make(SD_FALLEN_KEY).has(19), true, 'a reload reads it back');
   assert.notEqual(SD_FALLEN_KEY, SD_ENTERED_KEY);
   assert.match(W, /const _sdFallen = sdSlotsKept\(SD_FALLEN_KEY\);/);
-  assert.match(W, /\{ const hourSlot = modes\?\.sdRealmSlot\?\.\(\) \?\? null; if \(hourSlot != null\) _sdFallen\.add\(hourSlot\); \}[^\n]*\n\s*if \(_deathWasOnline == null\)/, 'kept the frame I die');
+  assert.match(W, /if \(_deathWasOnline == null\)[^\n]*\n\s*\{ const hourSlot = modes\?\.sdRealmSlot\?\.\(\) \?\? null; if \(hourSlot != null\) _sdFallen\.add\(hourSlot\); \}/, 'kept the frame I die');   // AUDIT SD III (PIN MOVED): under D-ONLINE1's capture, which stays the death block's first statement (AUDIT WORLD B6, MWBODY1)
   assert.match(W, /word: sdRiftWord\(rec, s, now, \{ entered: _sdEntered\.has\(s\), fallen: _sdFallen\.has\(s\) \}\),/, 'the Rift asked with it');
-  assert.match(W, /if \(rez && modes\?\.sdRealmSlot\?\.\(\) == null\) \{ resurrectInPlace\(rez\); return; \}/, 'no Resurrect in the Hour');
+  assert.match(W, /const rez = social\?\.acct && modes\?\.sdRealmSlot\?\.\(\) == null \? rezFor\(social\.others\(\), social\.acct, _rezSeen\) : null;[^\n]*\n\s*if \(rez\) \{ resurrectInPlace\(rez\); return; \}/, 'no Resurrect in the Hour');   // AUDIT SD III (PIN MOVED): asked of the call, the rise MWBODY1's own line
   assert.equal(SD_REALM_TEXT.died, 'The Shattered Hour casts you out for good. You wake before the Hollow\'s door.');
 });

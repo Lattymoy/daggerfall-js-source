@@ -2347,7 +2347,7 @@ element, a light for SD18b, a signature and its law), `SD_OMENS` (9), `sdMarksCy
 `(k + floor(k / 36)) mod 6`, the Endings' order and the omens' seats the salt's shuffles), `sdMarksOf(slot)`,
 `validSdMarks`, `sdMarksLaw` (multipliers multiplied: Sunfall's and the Burning Brass's brass burns three times as
 long).
-- **The profile** (`net/sdRemnant.js` `sdFightProfile`, `profileOf`): the numbers the relay runs the fight by - health,
+- **The profile** (`net/sdRemnant.js` `sdFightProfile`, `sdProfileOf` - `profileOf` until AUDIT SD III, whose name the gate's brain already held): the numbers the relay runs the fight by - health,
 wind-ups, the End, the Pulse's beat and step, the Reset's, the pair's window and Hand, the walks, Sunfall's seven, the
 fray, the Stomp's disc and ring, the Hand's sweep, the pool - the table's own with no marks. The fight is born with its
 marks (`newRemnantFight(s, fi, now, mk)`) and keeps them; its state says them (`mk`).

@@ -279,7 +279,7 @@ export function rigMatrices(base, rig, out = SD_RIG_PARTS.map(() => new Float32A
 /** A point of a part's own frame (the body's) where `m` stands it. */
 export const apply4 = (m, p) => [m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]];
 /** The hands, in their arms' own frame: the arms' feet. */
-export const SD_HAND = Object.freeze([Object.freeze([-B.armX, B.armBot, 0]), Object.freeze([B.armX, B.armBot, 0])]);
+export const SD_REM_HAND = Object.freeze([Object.freeze([-B.armX, B.armBot, 0]), Object.freeze([B.armX, B.armBot, 0])]);
 
 /** A body's base matrix in the ARENA's frame, on its floor (no sink): where its parts' points are asked. */
 export function arenaBase(x, z, yw, scale = 1, out = new Float64Array(16)) {
@@ -296,7 +296,7 @@ export function handAt(s, who, h, t) {
   const [x, z] = sdBodyAt(Bd, t);
   arenaBase(x, z, Bd.yw ?? 0, who < 0 ? 1 : SD_ECHO.h / SD_REM.h, _base);
   rigMatrices(_base, remnantRig(s, who, t, _rig), /** @type {any} */ (_parts));
-  return apply4(_parts[4 + h], SD_HAND[h]);
+  return apply4(_parts[4 + h], SD_REM_HAND[h]);
 }
 
 /**

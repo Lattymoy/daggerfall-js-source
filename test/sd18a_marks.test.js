@@ -17,7 +17,7 @@ import {
 } from '../src/net/sdMarks.js';
 import {
   SD_BLOWS, SD_BODY, SD_SHARE_X, SD_TTK_S, SD_ENDS_MS, SD_PULSE_EVERY_MS, SD_ECHO_PAIR_MS, SD_RESET_EVERY_MS, SD_ECHO_HAND_EVERY_MS, SD_REM, SD_ECHO,
-  SD_PULSE_PCT, SD_PHASE_AT, sdFightProfile, profileOf, blowShape, atkWindup, pulsePctOf, shapeStamp, windupFor, newRemnantFight, joinRemnant,
+  SD_PULSE_PCT, SD_PHASE_AT, sdFightProfile, sdProfileOf, blowShape, atkWindup, pulsePctOf, shapeStamp, windupFor, newRemnantFight, joinRemnant,
   stepRemnant, remnantStateOf, stompFrontAt, ringPassed, handSwept, handAngleAt, applyRemnantHit, applyEchoHit, heartHpFor, heartCountFor,
 } from '../src/net/sdRemnant.js';
 import { sdBlowVerdict, sdVolleyPools } from '../src/net/sdStrike.js';
@@ -215,7 +215,7 @@ test('SD18a THE WIRE AND THE PAGE: a blow\'s shape bounded key by key, an elemen
   assert.equal('mk' in validSdOut({ ...st, mk: ['blades', 'blades', 'short'] }), false, 'marks that are not marks dropped');
   let s = foldSdFight(SD_FIGHT_EMPTY, validSdOut(st), T0);
   assert.deepEqual(s.mk, ['blades', 'hardened', 'unending']);
-  assert.equal(profileOf(s).pairMs, 10_000);
+  assert.equal(sdProfileOf(s).pairMs, 10_000);
   s = foldSdFight(s, validSdOut({ ...base, sh: { el: 'fire', w: 900 } }), T0);
   assert.deepEqual(s.rem.atk.sh, { el: 'fire', w: 900 }, 'the blow its shape');
   const stun = foldSdFight(s, validSdOut({ k: 'stun', until: T0 + 8000, at: T0 }), T0);

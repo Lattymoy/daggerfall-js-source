@@ -58,7 +58,7 @@
   {
     "name": "SD18A-the-brazen-hide-forgotten",
     "file": "src/net/sdRemnant.js",
-    "old": "SD_SHARE_X * profileOf(f).hpX, frac",
+    "old": "SD_SHARE_X * sdProfileOf(f).hpX, frac",
     "new": "SD_SHARE_X, frac",
     "tests": [
       "test/sd18a_marks.test.js"
@@ -76,7 +76,7 @@
   {
     "name": "SD18A-the-hungering-heart-once",
     "file": "src/net/sdRemnant.js",
-    "old": "f.pulses++; f.pulseAt += profileOf(f).pulseMs; }",
+    "old": "f.pulses++; f.pulseAt += sdProfileOf(f).pulseMs; }",
     "new": "f.pulses++; f.pulseAt += SD_PULSE_EVERY_MS; }",
     "tests": [
       "test/sd18a_marks.test.js"
@@ -85,8 +85,8 @@
   {
     "name": "SD18A-the-gears-unquickened",
     "file": "src/net/sdRemnant.js",
-    "old": "const P = profileOf(f), w = CHOSEN.includes(A) && P.windX !== 1 ? Math.round(windupFor(A, f.phase, b) * P.windX) : windupFor(A, f.phase, b);",
-    "new": "const P = profileOf(f), w = windupFor(A, f.phase, b);",
+    "old": "const P = sdProfileOf(f), w = CHOSEN.includes(A) && P.windX !== 1 ? Math.round(windupFor(A, f.phase, b) * P.windX) : windupFor(A, f.phase, b);",
+    "new": "const P = sdProfileOf(f), w = windupFor(A, f.phase, b);",
     "tests": [
       "test/sd18a_marks.test.js"
     ]
@@ -139,7 +139,7 @@
   {
     "name": "SD18A-the-hardened-hearts-forgotten",
     "file": "src/net/sdRemnant.js",
-    "old": "heartHpFor(here.map((b) => f.players[b.sub].lv), n) * profileOf(f).heartX)",
+    "old": "heartHpFor(here.map((b) => f.players[b.sub].lv), n) * sdProfileOf(f).heartX)",
     "new": "heartHpFor(here.map((b) => f.players[b.sub].lv), n))",
     "tests": [
       "test/sd18a_marks.test.js"
@@ -148,7 +148,7 @@
   {
     "name": "SD18A-the-dragon-break-fifteen",
     "file": "src/net/sdRemnant.js",
-    "old": "now - X.downAt < profileOf(f).pairMs) continue;",
+    "old": "now - X.downAt < sdProfileOf(f).pairMs) continue;",
     "new": "now - X.downAt < SD_ECHO_PAIR_MS) continue;",
     "tests": [
       "test/sd18a_marks.test.js"
@@ -157,7 +157,7 @@
   {
     "name": "SD18A-the-unending-reset-fifty",
     "file": "src/net/sdRemnant.js",
-    "old": "f.resetAt = f.outUntil + profileOf(f).resetFirstMs;",
+    "old": "f.resetAt = f.outUntil + sdProfileOf(f).resetFirstMs;",
     "new": "f.resetAt = f.outUntil + SD_RESET_FIRST_MS;",
     "tests": [
       "test/sd18a_marks.test.js"
@@ -310,7 +310,7 @@
   {
     "name": "SD18A-the-stun's-reset-fifty",
     "file": "src/net/sdFightLink.js",
-    "old": "rk: w.until + profileOf(s).resetMs, heardAt: now };",
+    "old": "rk: w.until + sdProfileOf(s).resetMs, heardAt: now };",
     "new": "rk: w.until + 50_000, heardAt: now };",
     "tests": [
       "test/sd18a_marks.test.js"
@@ -319,7 +319,7 @@
   {
     "name": "SD18A-rises-again-at-fifteen",
     "file": "src/ui/sdRemnantBar.js",
-    "old": "(s.ec[fallen].dn + profileOf(s).pairMs - now)",
+    "old": "(s.ec[fallen].dn + sdProfileOf(s).pairMs - now)",
     "new": "(s.ec[fallen].dn + 15_000 - now)",
     "tests": [
       "test/sd18a_marks.test.js"
@@ -328,7 +328,7 @@
   {
     "name": "SD18A-the-card-at-fifteen",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "show('break', t, { ...SD_BEAT_TEXT.break, sub: sdBreakSub(profileOf(s).pairMs) }, '#e8c060');",
+    "old": "show('break', t, { ...SD_BEAT_TEXT.break, sub: sdBreakSub(sdProfileOf(s).pairMs) }, '#e8c060');",
     "new": "show('break', t, SD_BEAT_TEXT.break, '#e8c060');",
     "tests": [
       "test/sd18a_marks.test.js"

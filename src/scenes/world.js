@@ -21824,7 +21824,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (inRealm) {
       const nowMs = performance.now();
       if (_sdMarksSince === null) _sdMarksSince = nowMs;
-      marks = sdMarksCardModel(sdFightLink.state()?.mk ?? sdMarksOf(modes.sdRealmSlot()), { since: _sdMarksSince, now: nowMs });
+      marks = sdMarksCardModel(sdFightLink.state()?.mk ?? sdMarksOf(modes?.sdRealmSlot?.() ?? null), { since: _sdMarksSince, now: nowMs });   // AUDIT SD III: guarded on the object - this runs above `var modes` (audit24 wave37's law)
     } else _sdMarksSince = null;
     const hidden = gamePaused() || !!townTalk.hudHidden;
     if (bar || _sdBarUp) { drawGateBossBar(bar, { hidden }); _sdBarUp = !!bar; }
@@ -24776,8 +24776,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     // AUDIT ONLINE D12: the dead broadcast nothing and see no one
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) {
-      { const hourSlot = modes?.sdRealmSlot?.() ?? null; if (hourSlot != null) _sdFallen.add(hourSlot); }   // SD-ONELIFE: a death in the Hour is final for its Hollow
       if (_deathWasOnline == null) _deathWasOnline = _onlineWorldSession();   // D-ONLINE1: the modal hosts' deaths (a dungeon's, a building's) are captured here, BEFORE the leave below clears online.room
+      { const hourSlot = modes?.sdRealmSlot?.() ?? null; if (hourSlot != null) _sdFallen.add(hourSlot); }   // SD-ONELIFE: a death in the Hour is final for its Hollow (AUDIT SD III: under D-ONLINE1's capture, the block's first statement as AUDIT WORLD B6 and MWBODY1 hold it)
       if (online.room) {
         // PCORPSE1: the body is left where it fell - one last pose, flagged, before the leave below takes the living figure
         _deadMark = online._pose ? { k: online.room, x: online._pose.x, y: online._pose.y, z: online._pose.z, at: Date.now() } : null;
@@ -24795,8 +24795,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       // caster's pose) as new, and rose the instant it fell
       if (!_respawning) {
         if (!_rezSeen) _rezSeen = rezSnapshot(social?.others() ?? []);
-        const rez = social?.acct ? rezFor(social.others(), social.acct, _rezSeen) : null;
-        if (rez && modes?.sdRealmSlot?.() == null) { resurrectInPlace(rez); return; }   // SD-ONELIFE: no Resurrect in the Hour - one life
+        const rez = social?.acct && modes?.sdRealmSlot?.() == null ? rezFor(social.others(), social.acct, _rezSeen) : null;   // SD-ONELIFE: no Resurrect in the Hour - one life (AUDIT SD III: asked of the call, so the rise stays MWBODY1's `if (rez)`)
+        if (rez) { resurrectInPlace(rez); return; }
       }
       peerBodies.destroy(); remotePlayers.sync([], onlineToScene); peerRiders?.destroy(); peerWalkers?.destroy(); peerCandlesFrame([], dt); return;   // PEERLIGHT2: and no candle hangs over the dead; AUDIT RIDE: and no rider stands frozen over it either
     }   // AUDIT WORLD B6: the dungeon's and the building's death screens stand in the mode's slot   // AUDIT MWBODY B7: and no body stands frozen over the death screen

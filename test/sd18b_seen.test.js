@@ -74,7 +74,7 @@ test('SD18b THE HOUR\'S CARD as a fighter steps in: the gate\'s card\'s model, l
   assert.equal(sdMarksCardModel(MK, { since: 0, now: SD_MARKS_ARRIVE_MS }), null, 'gone');
   assert.equal(sdMarksCardModel(['nope'], { since: 0, now: 10 }), null);
   assert.equal(sdMarksCardModel(['blades', 'twin', 'short'], { since: 0, now: 10 }).sub, 'The Brass Remnant keeps the Ending of the Blades');
-  assert.match(W, /marks = sdMarksCardModel\(sdFightLink\.state\(\)\?\.mk \?\? sdMarksOf\(modes\.sdRealmSlot\(\)\), \{ since: _sdMarksSince, now: nowMs \}\);/);
+  assert.match(W, /marks = sdMarksCardModel\(sdFightLink\.state\(\)\?\.mk \?\? sdMarksOf\(modes\?\.sdRealmSlot\?\.\(\) \?\? null\), \{ since: _sdMarksSince, now: nowMs \}\);/);
   assert.match(W, /if \(_sdMarksSince === null\) _sdMarksSince = nowMs;/);
   assert.match(W, /\} else _sdMarksSince = null;/);
   assert.match(W, /if \(marks \|\| _sdMarksUp\) \{ drawGateMarksCard\(marks, \{ hidden \}\); _sdMarksUp = !!marks; \}/);

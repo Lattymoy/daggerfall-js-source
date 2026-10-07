@@ -12,7 +12,7 @@
 // answered me.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_REM_START, SD_ECHO_SPOTS, SD_PHASE_AT, keepInArena, profileOf } from './sdRemnant.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_REM_START, SD_ECHO_SPOTS, SD_PHASE_AT, keepInArena, sdProfileOf } from './sdRemnant.js';
 
 /**
  * @typedef {{ x: number, z: number, yw: number, mv: {x: number, z: number, tx: number, tz: number, v: number, at: number}|null, atk: any }} SdBody
@@ -150,7 +150,7 @@ export function foldSdFight(s, w, now) {
     case 'hp': return { ...s, h: w.h, m: w.m, heardAt: now };
     case 'ph':
       if (w.n === 2) return { ...s, ph: 2, rem: stopped(s.rem, w.at), heardAt: now };
-      return { ...s, ph: 3, ec: null, ou: w.up, rem: { x: 0, z: 0, yw: Math.PI, mv: null, atk: null }, h: Math.min(s.h, SD_PHASE_AT[1] * s.m), rk: w.up + profileOf(s).resetFirstMs, heardAt: now };
+      return { ...s, ph: 3, ec: null, ou: w.up, rem: { x: 0, z: 0, yw: Math.PI, mv: null, atk: null }, h: Math.min(s.h, SD_PHASE_AT[1] * s.m), rk: w.up + sdProfileOf(s).resetFirstMs, heardAt: now };
     case 'ec': {
       const ec = w.e.map((t, k) => {
         const had = s.ec?.[k] ?? null;
@@ -163,7 +163,7 @@ export function foldSdFight(s, w, now) {
     case 'cx': return { ...s, cx: { i: w.i, m: w.m, c: w.c.map((q) => [q[0], q[1], w.m]) }, heardAt: now };
     case 'cxh': return s.cx && s.cx.i === w.i ? { ...s, cx: { ...s.cx, c: s.cx.c.map((q, k) => [q[0], q[1], Number.isFinite(w.h[k]) ? w.h[k] : q[2]]) }, heardAt: now } : s;
     case 'cxb': return s.cx && s.cx.i === w.i && s.cx.c[w.c] ? { ...s, cx: { ...s.cx, c: s.cx.c.map((q, k) => (k === w.c ? [q[0], q[1], 0] : q)) }, heardAt: now } : s;
-    case 'stun': return { ...s, su: w.until, stunAt: w.at, rem: stopped(s.rem, w.at), cx: null, rk: w.until + profileOf(s).resetMs, heardAt: now };
+    case 'stun': return { ...s, su: w.until, stunAt: w.at, rem: stopped(s.rem, w.at), cx: null, rk: w.until + sdProfileOf(s).resetMs, heardAt: now };
     case 'fell':
       if (s.fell) return w.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: w.dm }, heardAt: now } : { ...s, heardAt: now };
       return { ...s, fell: { at: w.at, top: w.top, n: w.n, ...(w.dm ? { dm: w.dm } : {}) }, rem: stopped(s.rem, w.at), h: 0, clk: null, cx: null, heardAt: now };

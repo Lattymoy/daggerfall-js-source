@@ -83,7 +83,7 @@
   {
     "name": "SD8C-the-last-moment-no-reset-clock",
     "file": "src/net/sdFightLink.js",
-    "old": "rk: w.up + profileOf(s).resetFirstMs, ",
+    "old": "rk: w.up + sdProfileOf(s).resetFirstMs, ",
     "new": "rk: s.rk, ",
     "tests": [
       "test/sd8c_remnant_page.test.js"

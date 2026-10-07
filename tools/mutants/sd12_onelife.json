@@ -83,8 +83,8 @@
   {
     "name": "SD12-ONELIFE-a-resurrect-in-the-hour",
     "file": "src/scenes/world.js",
-    "old": "if (rez && modes?.sdRealmSlot?.() == null) { resurrectInPlace(rez); return; }",
-    "new": "if (rez) { resurrectInPlace(rez); return; }",
+    "old": "const rez = social?.acct && modes?.sdRealmSlot?.() == null ? rezFor(",
+    "new": "const rez = social?.acct ? rezFor(",
     "tests": [
       "test/sd12_onelife.test.js"
     ]

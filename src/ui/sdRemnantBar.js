@@ -10,7 +10,7 @@
 //
 // `remnantBarModel` is pure - the fight's state and the relay's clock in, the gate bar's model out. Not a DFU member.
 // Ledger A (SUPER-DUNGEONS).
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_PHASE_AT, SD_PHASE_NAMES, atkWindup, profileOf } from '../net/sdRemnant.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_PHASE_AT, SD_PHASE_NAMES, atkWindup, sdProfileOf } from '../net/sdRemnant.js';
 import { sdMarksViewOf, sdOmensLine } from './sdMarksView.js';   // SD18b
 import { SD_ARENA } from '../net/sdBrain.js';
 import { sdBlowDone, sdHourOver } from '../net/sdFightLink.js';
@@ -88,7 +88,7 @@ export function remnantBarModel(s, now) {
     else if (stunned) callout = { text: SD_BAR_TEXT.stunned(Math.ceil((s.su - now) / 1000)), color: SD_BAR_CSS.stun, t: null, dagon: false, move: false };
     else if (rem && s.ph !== 2) callout = callOf(rem, s.ph, SD_BODY.remnant, now);
     else if (echo) callout = callOf(echo.atk, s.ph, SD_BODY.gold + echo.e, now, SD_BAR_TEXT.echo(echo.e, SD_BLOW_BY_ID[echo.atk.a].name));
-    else if (fallen >= 0) callout = { text: SD_BAR_TEXT.rises(fallen, Math.max(0, Math.ceil((s.ec[fallen].dn + profileOf(s).pairMs - now) / 1000))), color: SD_BAR_CSS.ward, t: null, dagon: false, move: false };
+    else if (fallen >= 0) callout = { text: SD_BAR_TEXT.rises(fallen, Math.max(0, Math.ceil((s.ec[fallen].dn + sdProfileOf(s).pairMs - now) / 1000))), color: SD_BAR_CSS.ward, t: null, dagon: false, move: false };
     else if (s.ph === 2) callout = { text: SD_BAR_TEXT.outside, color: SD_BAR_CSS.ward, t: null, dagon: false, move: false };
     else if (outside) callout = { text: SD_BAR_TEXT.returns(Math.max(0, Math.ceil((s.ou - now) / 1000))), color: SD_BAR_CSS.ward, t: null, dagon: false, move: false };
   }
@@ -97,7 +97,7 @@ export function remnantBarModel(s, now) {
   const alpha = s.fell ? Math.max(0, Math.min(1, 1 - (since - FELL_HOLD_MS) / FELL_FADE_MS)) : 1;
   const ec = !s.fell && s.ph === 2 && s.ec ? s.ec : null;
   // AUDIT SD II (L6 F6): a fallen Echo's chip counts to its rising, pulsing at the last (it said "fallen" and no time)
-  const riseIn = (E) => (E.h > 0 || !(E.dn > 0) ? null : Math.max(0, E.dn + profileOf(s).pairMs - now));   // SD18a: the Dragon's Break's ten
+  const riseIn = (E) => (E.h > 0 || !(E.dn > 0) ? null : Math.max(0, E.dn + sdProfileOf(s).pairMs - now));   // SD18a: the Dragon's Break's ten
   const chip = (E, e) => { const r = riseIn(E); return r === null ? SD_BAR_TEXT.echoLeft(E.h, E.m) : SD_BAR_TEXT.rises(e, Math.ceil(r / 1000)).replace(/^(Gold|Silver) /, ''); };
   const resetComing = !s.fell && !s.ended && s.ph >= 3 && s.rk > now && !(s.rem?.atk?.a === SD_BLOWS.reset.id && !sdBlowDone(s.rem.atk, now));
   return {

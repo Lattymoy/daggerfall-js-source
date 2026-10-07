@@ -146,7 +146,7 @@
   {
     "name": "SD8A-no-rise",
     "file": "src/net/sdRemnant.js",
-    "old": "        if (X.h > 0 || X.downAt == null || now - X.downAt < profileOf(f).pairMs) continue;",
+    "old": "        if (X.h > 0 || X.downAt == null || now - X.downAt < sdProfileOf(f).pairMs) continue;",
     "new": "        if (true) continue;",
     "tests": [
       "test/sd8a_remnant.test.js"
@@ -200,7 +200,7 @@
   {
     "name": "SD8A-the-pair-at-once-again",
     "file": "src/net/sdRemnant.js",
-    "old": "  f.ecHandAt = now + profileOf(f).pairHandMs;",
+    "old": "  f.ecHandAt = now + sdProfileOf(f).pairHandMs;",
     "new": "  f.ecHandAt = now;",
     "tests": [
       "test/sd8a_remnant.test.js"
@@ -263,7 +263,7 @@
   {
     "name": "SD8A-the-next-reset-forgotten",
     "file": "src/net/sdRemnant.js",
-    "old": "    f.resetAt = f.stunUntil + profileOf(f).resetMs;",
+    "old": "    f.resetAt = f.stunUntil + sdProfileOf(f).resetMs;",
     "new": "    f.resetAt = 0;",
     "tests": [
       "test/sd8a_remnant.test.js"

@@ -12,7 +12,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
   remnantRig, rigMatrices, restRig, arenaBase, apply4, handAt, sdGearsAt, sdBeamsAt, sdBeamDraws, beamReach, gearFlightOf,
-  SD_REM_STATES, SD_RIG_PARTS, SD_RIG_JOINTS, SD_HAND, SD_WAKE_MS, SD_SLIP_EVERY_MS, SD_GEAR_ARC_M, SD_BEAM_END_Y, SD_BEAM_FADE_MS, LEAN, TWIST, NOD,
+  SD_REM_STATES, SD_RIG_PARTS, SD_RIG_JOINTS, SD_REM_HAND, SD_WAKE_MS, SD_SLIP_EVERY_MS, SD_GEAR_ARC_M, SD_BEAM_END_Y, SD_BEAM_FADE_MS, LEAN, TWIST, NOD,
 } from '../src/scenes/sdRemnantRig.js';
 import { buildRemnantParts, buildRemnantModel, buildGearModel, SD_REMNANT_PARTS, SD_REMNANT_BODY, SD_GEAR, remnantMatrix } from '../src/world/sdRemnantModel.js';
 import { createSdRemnant, SD_GEAR_DRAWS } from '../src/scenes/sdRemnant.js';
@@ -79,8 +79,8 @@ test('SD17 EIGHTEEN STATES TO THE WARDEN\'S TEN - at rest the parts stand where 
   const one = (f) => { const q = restRig(); f(q); return rigMatrices(arenaBase(0, 0, 0), q); };
   assert.ok(apply4(one((q) => { q.legs[0] = 0.5; })[0], [-B.legX, 0, 0])[2] > 1, 'the foot forward');
   assert.ok(apply4(one((q) => { q.trunk[LEAN] = 0.3; })[2], [0, SD_RIG_JOINTS.neck, 0])[2] > 0.5, 'the chest forward');
-  assert.ok(apply4(one((q) => { q.arms[0][0] = Math.PI / 2; })[4], SD_HAND[0])[2] > 2.5, 'the hand forward');
-  assert.ok(apply4(one((q) => { q.arms[0][1] = 0.8; })[4], SD_HAND[0])[0] < -B.armX - 1.5, 'its right arm out to its right');
+  assert.ok(apply4(one((q) => { q.arms[0][0] = Math.PI / 2; })[4], SD_REM_HAND[0])[2] > 2.5, 'the hand forward');
+  assert.ok(apply4(one((q) => { q.arms[0][1] = 0.8; })[4], SD_REM_HAND[0])[0] < -B.armX - 1.5, 'its right arm out to its right');
   assert.ok(apply4(one((q) => { q.trunk[NOD] = 0.5; })[3], [0, SD_RIG_JOINTS.neck + 0.5, B.headD / 2])[1] < SD_RIG_JOINTS.neck + 0.5, 'its face down');
   assert.ok(apply4(one((q) => { q.trunk[TWIST] = Math.PI / 2; })[2], [0, SD_RIG_JOINTS.neck, 1])[0] > 0.9, 'turned as a facing turns: +z toward +x');
 });
@@ -151,7 +151,7 @@ test('SD17 EVERY BLOW MOVED: the Stomp\'s leg raised over the floor and slammed 
   // the Hand: the right hand along the bearing - at a quarter of the sweep, and at three quarters, turned the other way
   for (const [sw, k] of [[1, 0.25], [1, 0.75], [-1, 0.25]]) {
     const A = SD_BLOWS.hand, hs = s(A, T0, { sw }), t = T0 + A.active * k, P = partsAt(hs, -1, t);
-    const shoulder = apply4(P[4], [-B.armX, SD_RIG_JOINTS.shoulder, 0]), hand = apply4(P[4], SD_HAND[0]);
+    const shoulder = apply4(P[4], [-B.armX, SD_RIG_JOINTS.shoulder, 0]), hand = apply4(P[4], SD_REM_HAND[0]);
     const bearing = 0.4 + sw * (A.arc * k - A.arc / 2);
     assert.ok(near(Math.atan2(hand[0] - shoulder[0], hand[2] - shoulder[2]), bearing, 1e-6), `the hand down the bearing (sw ${sw}, ${k})`);
     assert.ok(Math.abs(hand[1] - shoulder[1]) < 0.6, 'held out, about level (its lean dips it)');
@@ -165,7 +165,7 @@ test('SD17 EVERY BLOW MOVED: the Stomp\'s leg raised over the floor and slammed 
   assert.ok(remnantRig(vs, -1, go + 300).arms[0][0] > 2, 'thrown');
   // the Reset: hands over its head, trembling more as it nears
   const rs = fight({ ph: 3, rem: { x: 0, z: 0, yw: 0, mv: null, atk: blow(SD_BLOWS.reset, T0 + 8000) } });
-  const hands = (t) => partsAt(rs, -1, t).slice(4).map((m, h) => apply4(m, SD_HAND[h])[1]);
+  const hands = (t) => partsAt(rs, -1, t).slice(4).map((m, h) => apply4(m, SD_REM_HAND[h])[1]);
   assert.ok(hands(T0 + 3000).every((y) => y > SD_REM.h), 'over its head');
   const spread = (a, b) => { let lo = Infinity, hi = -Infinity; for (let t = a; t < b; t += 5) { const v = remnantRig(rs, -1, t).trunk[LEAN]; lo = Math.min(lo, v); hi = Math.max(hi, v); } return hi - lo; };
   assert.ok(spread(T0 + 7400, T0 + 7800) > spread(T0 + 1600, T0 + 2000) * 2, 'trembling more as it nears');
