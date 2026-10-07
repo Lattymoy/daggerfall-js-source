@@ -1,0 +1,113 @@
+[
+  {
+    "name": "CACHE-COPY-the-draw-dropped",
+    "file": "src/render/shadowPass.js",
+    "old": "      gl.drawArrays(gl.TRIANGLES, 0, 3);\n",
+    "new": "",
+    "tests": [
+      "test/cachecopy.test.js",
+      "test/sc1_shadowcache.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-COPY-the-compare-left-less",
+    "file": "src/render/shadowPass.js",
+    "old": "    gl.depthFunc(gl.ALWAYS);\n",
+    "new": "",
+    "tests": [
+      "test/cachecopy.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-COPY-less-not-put-back",
+    "file": "src/render/shadowPass.js",
+    "old": "    gl.depthFunc(gl.LESS);\n    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);",
+    "new": "    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);",
+    "tests": [
+      "test/cachecopy.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-COPY-the-layer-without-its-slot",
+    "file": "src/render/shadowPass.js",
+    "old": "      gl.uniform1i(C.layer, k * 6 + face);",
+    "new": "      gl.uniform1i(C.layer, face);",
+    "tests": [
+      "test/cachecopy.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-COPY-the-unit-not-chosen",
+    "file": "src/render/shadowPass.js",
+    "old": "    gl.useProgram(C.p);\n    gl.activeTexture(gl.TEXTURE0);\n",
+    "new": "    gl.useProgram(C.p);\n",
+    "tests": [
+      "test/cachecopy.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-COPY-the-cache-left-bound",
+    "file": "src/render/shadowPass.js",
+    "old": "    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);   // no cache left on a unit while a rebuild draws into it\n",
+    "new": "",
+    "tests": [
+      "test/cachecopy.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-COPY-the-array-behind-the-tracker",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (bindVao) bindVao(this._copyVao); else gl.bindVertexArray(this._copyVao);\n",
+    "new": "    gl.bindVertexArray(this._copyVao);\n",
+    "tests": [
+      "test/cachecopy.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-COPY-mediump",
+    "file": "src/render/shadowPass.js",
+    "old": "precision highp sampler2DArray;\nuniform sampler2DArray uCache;",
+    "new": "precision mediump sampler2DArray;\nuniform sampler2DArray uCache;",
+    "tests": [
+      "test/cachecopy.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-COPY-the-texel-not-its-own",
+    "file": "src/render/shadowPass.js",
+    "old": "texelFetch(uCache, ivec3(gl_FragCoord.xy, uLayer), 0)",
+    "new": "texelFetch(uCache, ivec3(0, 0, uLayer), 0)",
+    "tests": [
+      "test/cachecopy.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-COPY-a-shadow-sampler",
+    "file": "src/render/shadowPass.js",
+    "old": "uniform sampler2DArray uCache;",
+    "new": "uniform sampler2DArrayShadow uCache;",
+    "tests": [
+      "test/cachecopy.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-COPY-the-door-asked-on",
+    "file": "src/render/shadowPass.js",
+    "old": "  return pageParam('shadowcache', search) !== 'off';   // PERF-URL\n",
+    "new": "  return pageParam('shadowcache', search) === 'on';   // PERF-URL\n",
+    "tests": [
+      "test/cachecopy.test.js",
+      "test/perfurl_doors.test.js",
+      "test/sc1_shadowcache.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-COPY-the-renderer-default-off",
+    "file": "src/render/renderer.js",
+    "old": "    this._shadowCacheWanted = true;",
+    "new": "    this._shadowCacheWanted = false;",
+    "tests": [
+      "test/cachecopy.test.js"
+    ]
+  }
+]

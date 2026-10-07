@@ -992,8 +992,9 @@ static casters in its reach changes: `_staticSignature`, an order-free
 fold over the identities and positions of the still records whose
 spheres touch the light's (the hosts' draw order is the culling's and
 must not count). The live layers are then the cache BLITTED
-(`_blitSlot`: six depth blits, no rasterisation) with the dynamics
-drawn on top at EL8's cadence - and nothing at all when no dynamic is
+(`_blitSlot`: six depth blits, no rasterisation - a triangle a face
+since CACHE-COPY, below: on Direct3D the blit was the driver's read)
+with the dynamics drawn on top at EL8's cadence - and nothing at all when no dynamic is
 near. A still room costs zero shadow draws a frame.
 
 **Sticky slots.** A light keeps the slot it had while it stays among the
@@ -2041,7 +2042,8 @@ For the report itself (NVIDIA, a shop's hanging lamp): nothing found depends on 
 lookups sit in per-light loops, but all three maps have one level with MIN = MAG = LINEAR, so no LOD a GPU picks can
 change a result; no index runs out of range; no noise from time or a frame counter. The one path left whose result a
 driver decides is SC1's depth blit from the static cache into the live layers (`_blitSlot`, valid by the spec: the
-same DEPTH_COMPONENT24, the same size, NEAREST) - unconfirmed, and not changed on a guess. What this section fixed
+same DEPTH_COMPONENT24, the same size, NEAREST) - unconfirmed, and not changed on a guess (CACHE-COPY, 2026-10-07, below:
+confirmed in ANGLE's source and replaced by a draw). What this section fixed
 indoors is frame-rate dependent (P1, P2, R1, R4), and frame rate is what differs between two machines.
 
 Recorded, not changed: a batch past 128 placements is treated as dynamic (raising the cap costs a pairwise walk); the
@@ -2051,3 +2053,69 @@ casters for a frame; a peer's WB9h body out of view does not cast.
 `test/audit_flicker.test.js` (7); fourteen older pins re-aimed at the new text (el2, perfsun_fragment, la_audit,
 la_shadow, perfexta, la_post, sc1, disc15, el5_field, disc23b, la_cost, invislook; el3_air and lc1_clusters for F3
 and F4). `tools/mutants/audit_flicker.json` (28, all dead).
+
+## CACHE-COPY - THE BLINK WAS THE CACHE'S COPY, NOT THE CACHE (2026-10-07, Mac: "So one thing I noticed, instead of one of my developers fixing the flickering shadow issue, they just turned on the non-baked version on by default, which really really kill performance. Instead of such a half baked fix, I want to fix the flickering issue properly")
+
+**What was turned off.** The anti-flicker patch (`01-Overview/Waypoints-And-Pace.md`, 2026-10-06) answered "every
+shadow in the tavern blinking at once ... on every card, and none with `&shadowcache=off`" with CACHE-OFF: SC1's static
+cache off unless asked on. With it off every caster slot replays every caster in its reach into six faces every frame
+(under Steady shadows, every slot) - the cost SC1 was built to remove. The patch's other parts were its guesses on the
+way there - EMPTY-HOLD (a run of empty frames held) and IDLER-STICKY (a flat whose picture changed in place a mover for
+good) - and after both the player still saw it ("it still flicker but not with ... &shadowcache=off").
+
+**What blinked.** Nothing in the cache's logic. On SwiftShader the cached maps are the full replay's pixel for pixel -
+`tools/shadowCacheProbe.mjs`'s walker, and `tools/shadowTavernProbe.mjs`'s tavern (fourteen lamps with DISC15's lo tier,
+townsfolk with an origin swapping their picture and nudged 2 mm on their idle's beat, an animated flat, the player's
+card; 200 frames, the caches rebuilt 246 faces' worth on the beat). What SwiftShader never runs is the path AUDIT
+FLICKER left as the one "whose result a driver decides": `_blitSlot`, six `blitFramebuffer(DEPTH_BUFFER_BIT)` calls a
+slot out of a layer of the cache array into a layer of the live one. ANGLE's source says what Direct3D 11 does with it,
+and on Windows every browser's WebGL is ANGLE over D3D11 (Chrome, Edge, Firefox; the desktop app's Chromium too):
+- `Framebuffer11::blitImpl` hands a depth blit to `Renderer11::blitRenderbufferRect`. DEPTH_COMPONENT24 is stored
+  `D24_UNORM_S8_UINT`, so a blit of the depth alone is a "partial" depth-stencil blit (`partialDSBlit`), which may not be
+  a `CopySubresourceRegion`: it goes to `Blit11::copyDepth`, a full-screen quad whose pixel shader writes SV_DEPTH.
+- The quad reads the source through its render target's shader view. A depth render target of a 2D array's layer is
+  built with no blit view (`TextureStorage11_2DArray::getRenderTarget`), so its plain one is taken - a `TEXTURE2DARRAY`
+  view of that layer.
+- `copyDepth` always draws with `PS_PassthroughDepth2D`, which declares `Texture2D<float4> TextureF`. A view whose
+  dimension is not the shader's declaration is invalid in D3D11 (the debug layer's DEVICE_DRAW_VIEW_DIMENSION_MISMATCH),
+  and what the read returns is the driver's.
+So the statics in the live layers were whatever each driver read, not the cache. A lamp with no mover near is copied
+when its cache is rebuilt, and every lamp in reach of a change to the static set rebuilds on the same frame - the
+patch's own reading of the player's logs (STATIC-WHO) put the blink on those frames: two townsfolk leaving and rejoining
+the static set on their idle's beat, nine lamps rebuilt at once. A lamp with a mover near is copied every frame (AUDIT
+FLICKER's report: "not casting right on nvidia gpu but not on amd" - a driver's choice, frame by frame). `?shadowcache=off`
+copies nothing, which is why it never blinked.
+
+**The copy is a draw** (`render/shadowPass.js` `_blitSlot`, SC1's name kept). A full-screen triangle a face into the
+live layer (`DEPTH_COPY_VS`: three vertices made of gl_VertexID over an empty vertex array, deepWatersRender.js's), its
+fragment shader fetching the cache at its own texel of the same layer and writing it as `gl_FragDepth` (`DEPTH_COPY_FS`:
+`texelFetch` on a HIGHP `sampler2DArray` - a mediump fetch would round the 24-bit depth to eleven bits), under DEPTH_TEST
+with ALWAYS and the replays' LESS put back after; the cache bound on unit 0 for the copy and unbound after it; the empty
+array bound through the renderer's tracked binder (`f.bindVao`), so the replays after it rebind their own. Every backend
+runs it down the path it runs every shadow lookup down - ANGLE's translator declares a `sampler2DArray` as the array
+view it binds. The depth comes through exactly (a 24-bit unorm through a float32 and back is the same 24 bits). It costs
+what the blit cost - the same fragments, and on D3D11 the same kind of quad - and the cache's saving is whole again: a
+still room draws nothing a frame, a lamp by a mover copies and draws the mover. The copy's program is compiled with the
+lane's others (24 shaders on install, 22 before), never on the frame that first needs it.
+
+**The door is SC1's again.** `shadowCacheOn` answers on unless `?shadowcache=off` (the comparison's door). CACHE-OFF's
+`shadowcache=on`, the device's `dfjs.shadowCache`, the Enhanced Lighting row's "Shadow cache (faster, may flicker)" part
+(`prefs.shadowCache`) and the renderer's `shadowCacheDefault` with its console line are gone. EMPTY-HOLD, IDLER-STICKY
+and STATIC-WHO stand - none was the blink, and each is pinned where it is (audit68_render_b S17, disc15, audit_reach B3).
+IDLER-STICKY draws an idler with the movers rather than rebuilding its lamps' caches at every idle: a steady redraw for a
+rebuild's spike, a trade, not a fix of anything that blinked.
+
+**Recorded, not changed.** The probes agree frame for frame but for one kind of frame: the one in which a flat that has
+stood still changes its picture (a townsman's first idle frame, a prop starting). The replay reads a batch's live state
+at the next beginFrame while the classification is the record's, so the full replay draws the new picture a frame before
+the cache's movers take it - one silhouette in its old pose one frame longer (2 of the tavern's 200 frames, 8 levels of
+255 at most). Not verified on Direct3D: there is no Windows GPU here. The cause is ANGLE's source read, not a capture,
+and the fix takes the path away rather than depending on what any driver does with it.
+
+**The four hosts.** No host changed: the copy is the renderer's shadow pass, under `scenes/exterior.js`,
+`scenes/world.js`, `scenes/worldModes.js` (interiors) and `scenes/dungeonContext.js` alike.
+
+`test/cachecopy.test.js` (4); `tools/mutants/cachecopy.json` (12, all dead). Pins moved: sc1_shadowcache, audit_lighting,
+audit_reach, shadowreach and disc24c_self_shadow count the copy program's draws where they counted `blitFramebuffer`;
+el1_enhancedlighting's lane install compiles 24 and its row has no Shadow cache part; perfurl_doors and sc1 read the door
+on again; antiflicker keeps EMPTY-HOLD's constant alone, and its four CACHE-OFF mutants went with the code they mutated.

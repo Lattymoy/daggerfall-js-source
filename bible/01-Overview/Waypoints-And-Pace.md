@@ -68,6 +68,13 @@ idle, a 211 prop) is a mover for good - its shadow drawn with the movers', never
 walker that stops is still the hold's alone. STATIC-WHO: with the shadow debug log on, a rebuild frame names what came
 into and went out of the static set.
 
+CACHE-OFF RETIRED (CACHE-COPY, 2026-10-07, `07-Rendering/Enhanced-Lighting-Arc.md`, Mac: "Instead of such a half baked
+fix, I want to fix the flickering issue properly"): the blink was the cache's COPY, not the cache - on Direct3D (ANGLE,
+every browser on Windows) a depth blit out of an array's layer is a Texture2D shader handed the layer's array view, and
+the driver's read. The copy is a draw and the cache is on again: `shadowcache=on`, the device's switch and the "Shadow
+cache" part are gone, `?shadowcache=off` is SC1's door as it was. `test/antiflicker.test.js` holds EMPTY-HOLD's constant
+alone (1) and `tools/mutants/antiflicker.json` its six EMPTY-HOLD, IDLER-STICKY and POISE-QUIET records.
+
 ## What integration changed
 
 Each against a law of this tree the patches did not know:

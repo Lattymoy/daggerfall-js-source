@@ -508,7 +508,7 @@ export function bbVertexShader(ext = null) {
 }
 
 import { createClusterSpace, buildLightClusters, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_X, CLUSTER_Y, CLUSTER_NEAR, CLUSTER_Z_SCALE, CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT } from './lightClusters.js';   // LC1: the lantern loop's grid
-import { ShadowPass, SHADOW_GLSL, SHADOW_VIEW_SCALE, shadowCacheOn } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
+import { ShadowPass, SHADOW_GLSL, SHADOW_VIEW_SCALE } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
 import { boundsOf, spherePlanes, batchVisible, batchSphere, ZERO_ORIGIN, placementGrid, quadHalfDiagonal } from './bounds.js';   // PERF-EXT1: and a batch's placement grid; the review: and the half-diagonal's one home
 import { billboardKey, sortByKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: the batch's texture key - one home with the two replays; LA-COST2: and the cutout pass's sort by it
 import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
@@ -1337,15 +1337,6 @@ export function buildWireIndices(triIndices, subMeshes) {
 }
 
 
-/**
- * CACHE-OFF (2026-10-06, the player: every shadow in the tavern blinking with the shadow cache, on every card, and none
- * with `&shadowcache=off`): the renderer's own default is the page's one door (shadowPass.js shadowCacheOn - OFF unless
- * asked on); outside a page (the pins' fake GL in node) the cache stays on, so SC1's pins still drive its path.
- */
-export function shadowCacheDefault() {
-  return typeof document === 'undefined' ? true : shadowCacheOn();
-}
-
 export class Renderer {
   // HARD3: two fields this class mints LAZILY, with `??=` at their point
   // of use, and so never declares anywhere a reader or a checker can see
@@ -1363,9 +1354,7 @@ export class Renderer {
     const gl = canvas.getContext('webgl2', { antialias: false });
     if (!gl) throw new Error('WebGL2 required');
     this.gl = gl;
-    // CACHE-OFF: no shadow-cache blits unless asked (the whole-room shadow blink)
-    this._shadowCacheWanted = shadowCacheDefault();
-    console.info(`[shadow] cache ${this._shadowCacheWanted ? 'ON (the shadowcache override)' : 'off - direct shadow draws (default; &shadowcache=on to compare)'}`);
+    this._shadowCacheWanted = true;   // SC1: the static shadow cache's door (setShadowCache - the lane's install reads the page's, shadowPass.js shadowCacheOn); CACHE-COPY: on, as SC1 built it
 
     // EL1: THE WORLD PROGRAM SET - mesh, character, billboard, terrain -
     // is BUILT as a unit and INSTALLED as a unit, because the Enhanced

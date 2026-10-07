@@ -81,14 +81,14 @@ test('EL1: the row is the Features home\'s, on by default, forced on online', ()
   assert.deepEqual(f.control, {
     store: 'prefs', key: 'enhancedLighting', initial: true, online: 'player',   // OL-LIGHT: the player's online too
     // FLICKER-FIX: Steady shadows (on) and the Shadow debug log (off) are parts of the row, the player's online too;
-    // STEADY-BALANCE: and the Calmer eye (off), its own chip now; CACHE-OFF: and the Shadow cache (off - it blinked)
-    also: [{ store: 'prefs', key: 'steadyShadows', initial: true, online: 'player' }, { store: 'prefs', key: 'shadowDebug', initial: false, online: 'player' }, { store: 'prefs', key: 'calmEye', initial: false, online: 'player' }, { store: 'prefs', key: 'shadowCache', initial: false, online: 'player' }],
-    parts: [{ key: 'enhancedLighting', label: 'Lighting' }, { key: 'steadyShadows', label: 'Steady shadows' }, { key: 'calmEye', label: 'Calmer eye' }, { key: 'shadowCache', label: 'Shadow cache (faster, may flicker)' }, { key: 'shadowDebug', label: 'Shadow debug log' }],
+    // STEADY-BALANCE: and the Calmer eye (off), its own chip now; CACHE-COPY: CACHE-OFF's Shadow cache part gone - the cache is on
+    also: [{ store: 'prefs', key: 'steadyShadows', initial: true, online: 'player' }, { store: 'prefs', key: 'shadowDebug', initial: false, online: 'player' }, { store: 'prefs', key: 'calmEye', initial: false, online: 'player' }],
+    parts: [{ key: 'enhancedLighting', label: 'Lighting' }, { key: 'steadyShadows', label: 'Steady shadows' }, { key: 'calmEye', label: 'Calmer eye' }, { key: 'shadowDebug', label: 'Shadow debug log' }],
   });
   assert.equal(PREF_DEFAULTS.enhancedLighting, true, 'on by default like the other enhanced visuals');
   assert.equal(PREF_DEFAULTS.steadyShadows, true); assert.equal(PREF_DEFAULTS.shadowDebug, false);   // FLICKER-FIX
   assert.equal(PREF_DEFAULTS.calmEye, false);   // STEADY-BALANCE
-  assert.equal(PREF_DEFAULTS.shadowCache, false);   // CACHE-OFF: the cache is asked for, never assumed
+  assert.equal('shadowCache' in PREF_DEFAULTS, false);   // CACHE-COPY: no switch for the cache - it is on (?shadowcache=off the comparison's door)
   assert.equal(featureForControl('prefs', 'enhancedLighting'), f);
   assert.match(f.effect, /when the world next loads/);
 });
@@ -237,23 +237,23 @@ test('EL1: the renderer builds the classic set alone, compiles the lane once on 
   const classicMesh = r.program, classicBb = r.bbProgram, classicTerrain = r.terrainProgram, classicChar = r.charProgram;
   assert.equal(r.lightingLane, null); assert.equal(r.maxPointLights, 16);
   r.setLightingLane(EL_LANE);
-  assert.equal(count(calls, 'compileShader') - boot, 22, 'the lane: five programs (MAC-BUG W6: the decal\'s twin), a VS and an FS each; EL2: and the shadow pass\'s three depth programs (AUDIT BAY A12: and the one that cuts a fading ship\'s shadow); EL7: the rigs\' depth program and the water surface\'s lane program');
+  assert.equal(count(calls, 'compileShader') - boot, 24, 'the lane: five programs (MAC-BUG W6: the decal\'s twin), a VS and an FS each; EL2: and the shadow pass\'s three depth programs (AUDIT BAY A12: and the one that cuts a fading ship\'s shadow); EL7: the rigs\' depth program and the water surface\'s lane program; CACHE-COPY: and the copy that puts the shadow cache into the live layers, compiled with the rest - never on the frame that first needs it');
   assert.equal(r.lightingLane, EL_LANE); assert.equal(r.maxPointLights, 48);
   assert.notEqual(r.program, classicMesh); assert.notEqual(r.bbProgram, classicBb); assert.notEqual(r.terrainProgram, classicTerrain); assert.notEqual(r.charProgram, classicChar);
   const laneMesh = r.program;
   const lookups = count(calls, 'getUniformLocation'), stamp = r._frameStamp;
   r.setLightingLane(EL_LANE);
-  assert.equal(count(calls, 'compileShader') - boot, 22, 'the same lane again compiles nothing');
+  assert.equal(count(calls, 'compileShader') - boot, 24, 'the same lane again compiles nothing');
   assert.equal(count(calls, 'getUniformLocation'), lookups, 'and looks nothing up');
   // LA-COST7 (2026-09-27): a set installed again looks nothing up now either - its locations are memoized on it - so
   // the no-op is read off what an install still does: it forgets every frame block, and the stamp moves (LA-COST1)
   assert.equal(r._frameStamp, stamp, 'and moves no stamp: the same lane again is a no-op');
   r.setLightingLane(null);
-  assert.equal(count(calls, 'compileShader') - boot, 22, 'back to classic compiles nothing');
+  assert.equal(count(calls, 'compileShader') - boot, 24, 'back to classic compiles nothing');
   assert.equal(r.program, classicMesh); assert.equal(r.bbProgram, classicBb); assert.equal(r.terrainProgram, classicTerrain); assert.equal(r.charProgram, classicChar);
   assert.equal(r.maxPointLights, 16); assert.equal(r.lightingLane, null);
   r.setLightingLane(EL_LANE);
-  assert.equal(count(calls, 'compileShader') - boot, 22, 'the lane again is the kept set');
+  assert.equal(count(calls, 'compileShader') - boot, 24, 'the lane again is the kept set');
   assert.equal(r.program, laneMesh);
   // the cap: 48 lights survive setPointLights on the lane, 16 on classic
   const lights = new Float32Array(60 * 4).map((_, i) => i);

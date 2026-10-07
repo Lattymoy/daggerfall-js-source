@@ -39,7 +39,9 @@ function recordingGl() {
   const canvas = { getContext: () => gl, clientWidth: 320, clientHeight: 200, width: 320, height: 200 };
   return { gl, calls, canvas };
 }
-const count = (calls, name) => calls.filter((c) => c[0] === name).length;
+/** CACHE-COPY: the faces of the cache copied into the live layers - one triangle each, drawn with the copy program (SC1's
+ *  blit until 2026-10-07: on Direct3D a depth blit out of a layer of an array was no copy - render/shadowPass.js _blitSlot) */
+const copies = (calls, sp) => { let n = 0, prog = null; for (const c of calls) { if (c[0] === 'useProgram') prog = c[1]; else if (c[0] === 'drawArrays' && prog === sp.programs.copy.p) n++; } return n; };
 
 function stand() {
   const { calls, canvas } = recordingGl();
@@ -56,7 +58,7 @@ function stand() {
     r.setPointLights(lights, new Float32Array([1, 1, 1]));
     calls.length = 0;
     r.beginFrame(I, I, lightDir, WORLD_FRAME);
-    const st = { ...sp.stats, casters: sp.casters, blit: count(calls, 'blitFramebuffer') };
+    const st = { ...sp.stats, casters: sp.casters, blit: copies(calls, sp) };
     draw();
     r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
     return st;
