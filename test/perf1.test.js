@@ -64,7 +64,7 @@ test('PERF1 pins: every host stamps its frame, the grass takes the pref\'s fract
     assert.match(s, /if \(!frameAlive\(_frameToken\)\) \{ destroyWorldPlaque\(\); return; \}[^\n]*\n\s+if \(frameCapSkip\(now\)\) \{ requestAnimationFrame\(frame\); return; \}[^\n]*\n\s+frameBegin\(now\);/, `${h}: begin at the top of the live frame (a held frame returns before frameEnd, so it leaves no sample)`);
     assert.match(s, /frameEnd\(\);\s+\/\/ PERF1\n\s+requestAnimationFrame\(frame\);\n  \}\n  requestAnimationFrame\(frame\);/, `${h}: end before the loop re-arms`);
   }
-  assert.equal(PREF_DEFAULTS.grassDensity, 1, 'the full field by default - the enhanced look is the law, the dial is the escape');
+  assert.equal(PREF_DEFAULTS.grassDensity, 0, 'PIN MOVED (AUDIT MEADOW1, Mac: "Let\'s have our grass tufts off by default also"): no field until the player asks for one');
   assert.equal(PREF_DEFAULTS.cloudQuality, 'default');
   assert.ok(Object.hasOwn(QUALITY, PREF_DEFAULTS.cloudQuality));
   const w = read('src/scenes/world.js');

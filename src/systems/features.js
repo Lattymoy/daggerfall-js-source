@@ -460,14 +460,14 @@ export const FEATURES = Object.freeze([
     group: 'sight',
     title: 'Grass',
     note: 'How much grass grows in the enhanced outdoors. Grass is the heaviest thing outdoors, so try Half '
-      + 'first if the game runs slow. Pixel grass is hand-drawn tufts that match the trees and people; Smooth '
-      + 'is softer, shaded blades.',
+      + 'first if the game runs slow. Meadow is hand-drawn tufts, flowers and bushes that stand like the trees; '
+      + 'Pixel is the older, finer tufts; Smooth is softer, shaded blades.',
     effect: 'The amount takes effect when the world next loads; the style at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
-      store: 'prefs', key: 'grassDensity', initial: 1, online: 'player', tiers: Object.freeze([[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]),   // PERF1: a fraction of the lab's 1.2 million blades; a dial, the player's online
-      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'grassStyle', initial: 'pixel', online: 'player' })]),   // GRASS-PX: a uniform in the one grass program, so it flips live
-      parts: Object.freeze([Object.freeze({ key: 'grassStyle', label: 'Style', tiers: Object.freeze([['pixel', 'Pixel'], ['smooth', 'Smooth']]) })]),
+      store: 'prefs', key: 'grassDensity', initial: 0, online: 'player', tiers: Object.freeze([[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]),   // PERF1: a fraction of the lab's 1.2 million blades; a dial, the player's online; AUDIT MEADOW1 (Mac: "Let's have our grass tufts off by default also"): Off by default
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'grassStyle', initial: 'meadow', online: 'player' })]),   // GRASS-PX: a uniform in the one grass program, so it flips live; MEADOW1: the meadow the default
+      parts: Object.freeze([Object.freeze({ key: 'grassStyle', label: 'Style', tiers: Object.freeze([['meadow', 'Meadow'], ['pixel', 'Pixel'], ['smooth', 'Smooth']]) })]),
     }),
   }),
   Object.freeze({
@@ -608,7 +608,7 @@ export const FEATURES = Object.freeze([
     control: Object.freeze({
       store: 'prefs', key: 'floraSway', initial: true, online: 'player', lane: 'wind',   // WIND3: systems/windDrive.js floraSwayOn; render/renderer.js BB_VS uSway
       also: Object.freeze([Object.freeze({ store: 'prefs', key: 'windWisps', initial: true, online: 'player' })]),   // WIND3: render/windWisps.js wispsOn
-      parts: Object.freeze([Object.freeze({ key: 'floraSway', label: 'Trees sway' }), Object.freeze({ key: 'windWisps', label: 'Wisps' })]),
+      parts: Object.freeze([Object.freeze({ key: 'floraSway', label: 'Sway' }), Object.freeze({ key: 'windWisps', label: 'Wisps' })]),   // AUDIT MEADOW1: the sway is the grass's too (labGrass.js draw), so the part is not the trees' alone
     }),
   }),
   // ES1 (2026-09-16, Mac: "lump this in as a new enhanced toggle. Enhanced

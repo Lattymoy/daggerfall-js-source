@@ -323,6 +323,7 @@ export function buildTuftMips(sheet = buildTuftSheet()) {
 }
 
 /** the style the pref names: anything that is not the word `smooth` is
- *  the row's default, pixel - the same fallback the settings pane draws
- *  for a value that is no tier (enhancedMenu.js, BLOOD AUDIT 5) */
+ *  a sprite style - the row's default (the meadow, MEADOW1; grassMeadow.js
+ *  meadowGrass says which) or this one - the same fallback the settings
+ *  pane draws for a value that is no tier (enhancedMenu.js, BLOOD AUDIT 5) */
 export const pixelGrass = (style) => style !== 'smooth';

@@ -17,12 +17,12 @@ import { QUALITY } from '../src/render/volumetricClouds.js';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
 
-test('FT7: grass density - the four fractions, the full field by default, off a real tier', () => {
+test('FT7: grass density - the four fractions, off by default (AUDIT MEADOW1), off a real tier', () => {
   const f = FEATURES.find((x) => x.id === 'grass');   // FT18: the density is the one grass row's bar
   assert.ok(f); assert.deepEqual(f.kinds, ['enhanced']);
   assert.equal(f.control.key, 'grassDensity');
   assert.deepEqual(f.control.tiers.map(([v]) => v), [1, 0.5, 0.25, 0]);
-  assert.equal(PREF_DEFAULTS.grassDensity, 1, 'the full field by default - the enhanced look is the law, the dial is the escape (PERF1)');
+  assert.equal(PREF_DEFAULTS.grassDensity, 0, 'PIN MOVED (AUDIT MEADOW1, Mac: "Let\'s have our grass tufts off by default also"): PERF1\'s full field by default is Off now');
   assert.match(f.note, /in the enhanced outdoors/, 'the dial says what it is under');
   assert.deepEqual(checkFeature(f), []);
   assert.equal(featureForControl('prefs', 'grassDensity'), f);
