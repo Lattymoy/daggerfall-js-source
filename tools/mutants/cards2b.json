@@ -290,7 +290,7 @@
   {
     "name": "SB-host-escape-pauses",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (mode === 'interior' && cardSeat && e.code === 'Escape' && !interiorKeyCtx.uiOverlayActive) { standFromCardTable(); e.preventDefault(); return; }",
+    "old": "    if (mode === 'interior' && cardSeat && actionOf(e, keys) === 'Escape' && !interiorKeyCtx.uiOverlayActive) { standFromCardTable(); e.preventDefault(); return; }",
     "new": "",
     "tests": [
       "test/cards2b_seated.test.js"
@@ -299,7 +299,7 @@
   {
     "name": "SB-host-pose-unsaid",
     "file": "src/scenes/worldModes.js",
-    "old": "    seatPose: () => (cardSeat ? { feet: cardSeat.feet, yaw: cardSeat.yaw, st: seatTopByte(cardSeat.top) } : null),",
+    "old": "    seatPose: () => (mode === 'interior' && cardSeat ? { feet: cardSeat.feet, yaw: cardSeat.yaw, st: seatTopByte(cardSeat.top) } : null),",
     "new": "    seatPose: () => null,",
     "tests": [
       "test/cards2b_seated.test.js"
@@ -344,8 +344,17 @@
   {
     "name": "SB-host-no-peer-seats",
     "file": "src/scenes/world.js",
-    "old": "    seatedPeers: () => (peersNear() ?? []).filter((p) => p.st).map((p) => p.feet),",
-    "new": "",
+    "old": "    seatedPeers: () => seatedPeerFeet(),",
+    "new": "    seatedPeers: () => [],",
+    "tests": [
+      "test/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-host-hidden-peer-seats",
+    "file": "src/scenes/world.js",
+    "old": "if (p.shown?.st && online.visible(p)) out.push(onlineToScene(p.shown));",
+    "new": "if (p.shown?.st) out.push(onlineToScene(p.shown));",
     "tests": [
       "test/cards2b_seated.test.js"
     ]

@@ -18,7 +18,8 @@ THE VERIFIER IS READING), each told to reproduce every finding before it reporte
 | E | the record and the pins | the mutants re-run in a copy of the tree, candidate mutants of its own |
 
 Beside the lanes, the sweep of every test that reads a touched host (1,562 files) found ten failures of CARDS2b's own
-(below, S1). Every finding was verified against the code before it was fixed; the fixes were made in the live tree,
+(below, S1), and the second sweep, over the audit's own fixes (1,567 files), eight more - each a pinned line a fix had
+rewritten, each fix moved off it (B1, B2, B3, S1's Escape). Every finding was verified against the code before it was fixed; the fixes were made in the live tree,
 never the snapshot.
 
 ## Findings
@@ -27,10 +28,10 @@ never the snapshot.
 |---|---|---|---|
 | C1 | HIGH | CARDS1 re-hashed `world175` in place calling it undeployed; the live relay answers `{"version":"world175"}` (relay-deploy.yml deploys every push to main that moves RELAY_VERSION). Merged alone, the relay's law would have changed under a live version - SLAM8's bug. | FIXED: the row restored byte for byte from main; world176 (already CARDS2b's) carries the dice lift, said in its row and in RELAY_VERSION's chain |
 | C2 | MED | The world175 -> world176 sed rewrote history in 21 version chains ("TEXT-F1 moved it on last (world176") and dropped the live world175 from four capability lists | FIXED: rebuilt from main - lists append world176, chains prepend "CARDS2b moved it on last", the bare reads move on |
-| S1 | MED | The sweep: CARDS2b's body-at-the-seat and third-person view rewrote lines DISC18, CLIMB6 C16, AUDIT 65 XL-4, MWBODY1 and AUDIT CLIMB-ARC N1 pin; the Escape line broke U43's one dispatch; the seat byte broke MAC7's arm literal; and the RELAY_VERSION bump REPLACED its 148 KB version chain (HT-WAIST-NET's pin) | FIXED: the seat's view is section 2's first person (the design's own); Escape spent above the dispatch as AUDIT 29 D1 spends one; the byte set after the literal; the chain restored with CARDS2b at its head |
-| B1 | HIGH | `forceExitToExterior` (a load, a quest teleport, Recall, a respawn, sailing) never cleared the seat: outdoors the pose kept saying the tavern seat to every peer; loaded into a room, the eye stayed at the old seat | FIXED: `setMode` empties the seat whenever the mode leaves the interior, and a new room seats nobody |
-| B2 | MED | The seated eye overrode the death camera's sink and tilt | FIXED: the seated eye is set straight after the body's, before the death's sink |
-| B3 / C3 | MED | "The nearest free seat" was never free - two players sat in one chair, both drawn there | FIXED: `takenSeats` over the others' seated feet (`host.seatedPeers`, from `peersNear`'s new `st`); a full table says so |
+| S1 | MED | The sweep: CARDS2b's body-at-the-seat and third-person view rewrote lines DISC18, CLIMB6 C16, AUDIT 65 XL-4, MWBODY1 and AUDIT CLIMB-ARC N1 pin; the Escape line broke U43's one dispatch; the seat byte broke MAC7's arm literal; and the RELAY_VERSION bump REPLACED its 148 KB version chain (HT-WAIST-NET's pin) | FIXED: the seat's view is section 2's first person (the design's own); Escape spent above the dispatch as AUDIT 29 D1 spends one, read through the registry (`actionOf`, KB1's law 5 - never the raw code); the byte set after the literal; the chain restored with CARDS2b at its head |
+| B1 | HIGH | `forceExitToExterior` (a load, a quest teleport, Recall, a respawn, sailing) never cleared the seat: outdoors the pose kept saying the tavern seat to every peer; loaded into a room, the eye stayed at the old seat | FIXED: the forced road out (`forceExitToExterior`'s teardown) empties the seat as the door does, a new room seats nobody, and the pose never says a seat outside a building (`seatPose` gated on the mode). (`setMode` was the first home; WORLD-HOVER pins its one line whole, and the second sweep moved it.) |
+| B2 | MED | The seated eye overrode the death camera's sink and tilt | FIXED: the seated eye is held off while a death screen holds the camera - the dead fall from the body's own eye. (Set before the sink at first; DC1 and PR-WW1 pin the sink straight after the eye's write, and the second sweep moved it.) |
+| B3 / C3 | MED | "The nearest free seat" was never free - two players sat in one chair, both drawn there | FIXED: `takenSeats` over the others' seated feet (`host.seatedPeers` - world.js `seatedPeerFeet`, peersNear's own walk and gates; peersNear's row is pinned whole by INVIS-NET, WORLD3 and AUDIT WORLD6b-ii, so the seat reads the peers itself); a full table says so |
 | B5 | LOW | A swing while seated struck from the capsule's eye, not the seat's | FIXED: the swing button and a swing key stand you up first. RECORDED: a readied spell fires on its press, before the release's stand (the cast law's order, `activateGate.js`) |
 | B6 | LOW | Seats stood round the WORLD box, which bulges past a table turned off the square | FIXED: the context keeps the table's own box and matrix; the seats stand round it |
 | D1 | MED | The head's look, solved after the arms, carried the hands 4 cm off their marks (the biped's clavicles hang from its neck) | FIXED: no look - a seat square to its side faces the table |
@@ -69,6 +70,6 @@ person.
 
 `test/cards1_cardlaw.test.js` 15, `test/cards2_seat.test.js` 10, `test/cards2b_seated.test.js` 8.
 `tools/mutants/cards1.json` 48 (47 dead, 1 equivalent as recorded - a folded seat's bet, which can never top the live
-ones), `cards2.json` 54, `cards2b.json` 39 - all dead. The foreign records the fixes moved were re-aimed by content:
+ones), `cards2.json` 56, `cards2b.json` 40 - all dead. The foreign records the fixes moved were re-aimed by content:
 `climb5.json` (`peerMoving`, back to main's body-camera record), `invisnet.json` (`peersNear`'s row), `worldhover.json`
 (`setMode`), `cards1.json`'s `CD-bb-no-option`.

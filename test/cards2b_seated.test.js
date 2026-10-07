@@ -164,13 +164,14 @@ test('CARDS2b by source: the pose the seat says, the request to the peers\' rigs
   const has = (src, s, why) => assert.ok(src.includes(s), why ?? s);
   has(wm, "    cardSeat = { table: i, seat: k, eye: st.eye.slice(), feet: st.feet.slice(), yaw: st.yaw, top: st.top };");
   has(wm, "  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before) standFromCardTable(); });", 'a hit stands you up');
-  const esc = wm.indexOf("    if (mode === 'interior' && cardSeat && e.code === 'Escape' && !interiorKeyCtx.uiOverlayActive) { standFromCardTable(); e.preventDefault(); return; }");
+  const esc = wm.indexOf("    if (mode === 'interior' && cardSeat && actionOf(e, keys) === 'Escape' && !interiorKeyCtx.uiOverlayActive) { standFromCardTable(); e.preventDefault(); return; }");   // KB1: the registry's Escape, never its raw code
   assert.ok(esc > 0 && esc < wm.indexOf('    // U43: THE ONE DISPATCH.'), 'Escape stands you up, spent above the one dispatch');
-  has(wm, '    seatPose: () => (cardSeat ? { feet: cardSeat.feet, yaw: cardSeat.yaw, st: seatTopByte(cardSeat.top) } : null),');
+  has(wm, "    seatPose: () => (mode === 'interior' && cardSeat ? { feet: cardSeat.feet, yaw: cardSeat.yaw, st: seatTopByte(cardSeat.top) } : null),");
   const arm = read('src/combat/fpArm.js');
   has(arm, '  function thirdClimb(cw, cam) {\n    if (cam && cam.seat) { climbLast = null; return thirdSeat(cam); }', 'AUDIT CARDS D5: the seat wins the climb\'s slot, over any climb\'s tail');
   has(arm, '    return seatRequestFor(cam && cam.seat, { unitsPerMetre: MW_UNITS_PER_METER, weight: rs.weight, height: rs.height });', 'AUDIT CARDS E2: at the rig\'s units and the body\'s race');
-  has(read('src/scenes/world.js'), '    seatedPeers: () => (peersNear() ?? []).filter((p) => p.st).map((p) => p.feet),', 'AUDIT CARDS B3: the host learns the others\' seats');
+  has(read('src/scenes/world.js'), '    seatedPeers: () => seatedPeerFeet(),', 'AUDIT CARDS B3: the host learns the others\' seats');
+  has(read('src/scenes/world.js'), '    for (const p of online.peers.values()) if (p.shown?.st && online.visible(p)) out.push(onlineToScene(p.shown));', 'the seated peers I can see, at their scene feet');
   const w = read('src/scenes/world.js');
   has(w, "    if (seated) { const w = sceneToOnline(seated.feet); pose.x = w[0]; pose.y = w[1]; pose.z = w[2]; pose.yaw = seated.yaw; }", 'the pose is the seat\'s, in the room\'s frame');
   const at = w.indexOf('    const seated = modes?.seatPose?.() ?? null;');

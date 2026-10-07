@@ -151,15 +151,16 @@ test('CARDS2 the interior host\'s seat: the target, the press, the stand, the he
   assert.ok(leave > 0 && leave < src.indexOf('      player.update(dt, paralyzed ? {'), 'whatever would move the body - or swing from it - stands it up first');
   const swing = src.indexOf("    if (cardSeat && isSwingButton(e.button) && !modalWindowUp()) { standFromCardTable(); return; }");
   assert.ok(swing > 0 && swing < src.indexOf("    if (isSwingButton(e.button) && !modalWindowUp()) modalAttackSink()?.(0, 0, true);"), 'AUDIT CARDS B5: the swing button stands you up, and swings nothing');
-  // AUDIT CARDS B2: the seated eye straight after the body's, BEFORE the death's sink and tilt, which take it from there
-  has("    cam.pos = player.eyeAt();   // EV1: the interpolated render eye\n    if (mode === 'interior' && cardSeat) cam.pos = cardSeat.eye.slice();", 'the seated eye after the body\'s');
-  const seat = src.indexOf("    if (mode === 'interior' && cardSeat) cam.pos = cardSeat.eye.slice();");
-  assert.ok(seat > 0 && seat < src.indexOf('    if (interiorOverlay instanceof DeathScreen) cam.pos[1] -= interiorOverlay.drop;'), 'and before the death\'s sink');
+  // AUDIT CARDS B2: the seated eye after the body's and the decorator's - and never over a death's sink and tilt
+  const over = src.indexOf("    if (mode === 'interior') decorTool.cameraOverride(cam);");
+  const seat = src.indexOf("    if (mode === 'interior' && cardSeat && !(interiorOverlay instanceof DeathScreen)) cam.pos = cardSeat.eye.slice();");
+  assert.ok(over > 0 && seat > over, 'the seated eye after the body\'s and the decorator\'s, held off while a death screen sinks the eye');
   // AUDIT CARDS E1: standing up does what it says - the slot empties and the eye goes home
   has("  function standFromCardTable() {\n    if (!cardSeat) return;\n    cardSeat = null;\n    cam.pos = player.eyeAt();", 'the stand empties the seat and gives the body its eye back');
   // AUDIT CARDS B1: every road out of a building empties the seat - the mode's change (a load, a teleport, a respawn), a new room
-  has("mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; cardSeat = null; } };", 'the mode leaving the interior empties the seat');
-  has("      interiorBuilding = building;\n      cardSeat = null;", 'a new room seats nobody');
+  has("        cardSeat = null;   // CARDS2b (AUDIT CARDS B1): the forced road out - a load, a quest teleport, Recall, a respawn, a sail - empties the seat as the door does\n        interiorCtx = null; interiorBuilding = null; interiorCabin = null;", 'the forced road out empties the seat');
+  has("      cardSeat = null;   // CARDS2b (AUDIT CARDS B1): a new room seats nobody yet\n      interiorBuilding = building;", 'a new room seats nobody');
+  has("    seatPose: () => (mode === 'interior' && cardSeat ?", 'and the pose never says a seat outside a building');
   has("    const k = nearestFreeSeat(seats, player.pos[0], player.pos[2], takenSeats(seats, host.seatedPeers?.() ?? []));", 'AUDIT CARDS B3: another player\'s seat is taken');
   has("    return t ? (t.seats ??= cardTableSeats(t, seatProbe)) : [];", 'AUDIT CARDS B6: the whole table - its own box and its turn - to the seats');
   has("    if (cardSeat) mwv.eye = cam.pos;   // CARDS2: seated, the seat's own view - first person (Tavern-Cards.md section 2)\n    const view = betterAmbience.view(", 'the seat\'s own view, first person, the last word on the eye');

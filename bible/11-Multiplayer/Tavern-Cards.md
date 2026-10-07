@@ -317,9 +317,10 @@ sweep of every test reading a touched host; the whole record is `01-Overview/Aud
   beside the seat. The version chains in 37 test files were rebuilt from main: appended, never renamed.
 - **The view (S1).** The seat's view is first person - section 2's fixed seat view - and this host draws no seated body
   of its own; the others see it through `st`.
-- **The seat's lifetime (B1, B2).** The seat empties whenever the mode leaves the interior (a load, a teleport, a
-  respawn) and in a new room; the seated eye is set before the death's sink.
-- **The table (B3, B6).** Another player's seat is taken (`takenSeats`, their seated feet from `peersNear`); the seats
+- **The seat's lifetime (B1, B2).** The forced road out (a load, a teleport, a respawn) empties the seat as the door
+  does, a new room seats nobody, the pose never says a seat outside a building, and the seated eye stands aside while a
+  death screen holds the camera.
+- **The table (B3, B6).** Another player's seat is taken (`takenSeats`, the seated feet of the players I can see in my room); the seats
   stand round the table's OWN box through its matrix, never the world box's bulge.
 - **The body (D1-D6).** Seats sit SQUARE to their side, 0.35 m out (`SEAT_OUT`, now seatPose's - the edge and the
   hands' one home), the hands 0.1 m past the edge; no head turn; the body's distances follow its race; the seat wins

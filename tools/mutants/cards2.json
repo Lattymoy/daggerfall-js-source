@@ -381,7 +381,7 @@
   {
     "name": "CS-host-eye-standing",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (mode === 'interior' && cardSeat) cam.pos = cardSeat.eye.slice();",
+    "old": "    if (mode === 'interior' && cardSeat && !(interiorOverlay instanceof DeathScreen)) cam.pos = cardSeat.eye.slice();",
     "new": "",
     "tests": [
       "test/cards2_seat.test.js"
@@ -406,10 +406,10 @@
     ]
   },
   {
-    "name": "CS-host-seat-outlives-mode",
+    "name": "CS-host-seat-outlives-forced-exit",
     "file": "src/scenes/worldModes.js",
-    "old": "privateVisitRoom = null; privateVisitOwner = null; cardSeat = null; } };",
-    "new": "privateVisitRoom = null; privateVisitOwner = null; } };",
+    "old": "        cardSeat = null;   // CARDS2b (AUDIT CARDS B1): the forced road out",
+    "new": "        // CARDS2b (AUDIT CARDS B1): the forced road out",
     "tests": [
       "test/cards2_seat.test.js"
     ]
@@ -417,7 +417,7 @@
   {
     "name": "CS-host-seat-into-new-room",
     "file": "src/scenes/worldModes.js",
-    "old": "      interiorBuilding = building;\n      cardSeat = null;",
+    "old": "      cardSeat = null;   // CARDS2b (AUDIT CARDS B1): a new room seats nobody yet\n      interiorBuilding = building;",
     "new": "      interiorBuilding = building;",
     "tests": [
       "test/cards2_seat.test.js"
@@ -482,6 +482,24 @@
     "file": "src/scenes/worldModes.js",
     "old": "    cam.yaw = seats[k].yaw;\n    cam.pitch = seats[k].pitch;",
     "new": "",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-eye-over-death",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (mode === 'interior' && cardSeat && !(interiorOverlay instanceof DeathScreen)) cam.pos",
+    "new": "if (mode === 'interior' && cardSeat) cam.pos",
+    "tests": [
+      "test/cards2_seat.test.js"
+    ]
+  },
+  {
+    "name": "CS-host-pose-outdoors",
+    "file": "src/scenes/worldModes.js",
+    "old": "    seatPose: () => (mode === 'interior' && cardSeat ?",
+    "new": "    seatPose: () => (cardSeat ?",
     "tests": [
       "test/cards2_seat.test.js"
     ]

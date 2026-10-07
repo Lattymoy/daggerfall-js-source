@@ -23624,6 +23624,14 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WORLD3: the peers in my room as target candidates - each with its feet in THIS scene and its body's height; null
    *  when there is no room. The dungeon host's foes read it (peerCandidates) and, since WORLD6b-ii, the cell's own. */
   const _peerHeights = new Map();   // AUDIT WORLD6b-ii C5: a peer's height is the peer's - the doll answers 0 while it is not standing (a slot churn, a load), and the aim point flickered with it
+  /** CARDS2b (AUDIT CARDS B3): the seated feet of the players in my room I can see, in this room's scene - the card
+   *  tables' taken seats. peersNear's own walk and gates; its row is pinned whole, so the seat reads the peers itself. */
+  const seatedPeerFeet = () => {
+    if (!online || !online.room || online.status !== 'open') return [];
+    const out = [];
+    for (const p of online.peers.values()) if (p.shown?.st && online.visible(p)) out.push(onlineToScene(p.shown));
+    return out;
+  };
   const peersNear = ({ presenceOnly = false } = {}) => {
     if (!online || !online.room || online.status !== 'open') return null;
     const out = [];
@@ -23632,7 +23640,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!online.visible(p)) continue;   // AUDIT PSCALE1 NET-2: on the session's OWN clock (Date.now) - performance.now() against its stamps never timed a silent peer out
       const h = peerBodies?.heightOf(p.id) || 0;
       if (h > 0) _peerHeights.set(p.id, h);
-      out.push({ id: p.id, feet: onlineToScene(p.shown), height: _peerHeights.get(p.id), cv: p.shown?.cv | 0, st: p.shown?.st | 0 });   // INVIS-NET: and the peer's concealment, for the foes' senses; CARDS2b: and their seat, for the card tables' taken seats
+      out.push({ id: p.id, feet: onlineToScene(p.shown), height: _peerHeights.get(p.id), cv: p.shown?.cv | 0 });   // INVIS-NET: and the peer's concealment, for the foes' senses
     }
     // SLAM4 (2026-09-16, the 30th-anniversary slam): AND THE REMEMBERED HEIGHTS GO WITH THE PEERS. This map only
     // ever grew: every id that has ever stood in the room stayed in it for the life of the session. A twenty-minute
@@ -24563,7 +24571,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // what test/audit24_wave37.test.js asserts, both ways.
   var modes = createWorldModes({
     climbFeel,   // CLIMB4: the one body's climb camera - the modal frames take it after their own motor step
-    seatedPeers: () => (peersNear() ?? []).filter((p) => p.st).map((p) => p.feet),   // CARDS2b (AUDIT CARDS B3): the others' seated feet, in this room's scene - their seats are taken
+    seatedPeers: () => seatedPeerFeet(),   // CARDS2b (AUDIT CARDS B3): the others' seated feet, in this room's scene - their seats are taken
     sailingCabin: sailingCabins,
     linkedBankCabin: () => readBankCabinLink(playerEntity.boatCabinLink),
     enterLinkedBankCabin: () => enterLinkedBankCabin(),

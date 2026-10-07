@@ -5937,7 +5937,7 @@ export function createWorldModes(host) {
    * the next line - so the sixth mode turns the suite red rather than
    * leaking a street.
    */
-  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; cardSeat = null; } };   // CARDS2b (AUDIT CARDS B1): nobody stays seated outside a building - a load, a teleport, a death's respawn and the door alike
+  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; } };
   function exteriorDoorTargets() {
     const gen = doorGeneration?.();
     if (gen !== undefined && _doorCache && _doorCache.gen === gen) return _doorCache;
@@ -7278,8 +7278,8 @@ export function createWorldModes(host) {
       // AUDIT 68 S23-failed-entry-stale-building: the identity and the
       // three PlayerActivate.cs:1120-1122 latches, committed with the
       // context and not before it.
-      interiorBuilding = building;
       cardSeat = null;   // CARDS2b (AUDIT CARDS B1): a new room seats nobody yet
+      interiorBuilding = building;
       privateVisitRoom = restore?.privateRoom ?? null;
       privateVisitOwner = restore?.cabinOwner ?? null;
       interiorCabin = hit.sailingCabin ?? null;
@@ -9173,7 +9173,6 @@ export function createWorldModes(host) {
     // ticker above rides - a paused game runs no Update at all.
     if (!overlayHeld) host.encounterTick?.();
     cam.pos = player.eyeAt();   // EV1: the interpolated render eye
-    if (mode === 'interior' && cardSeat) cam.pos = cardSeat.eye.slice();   // CARDS2: the seated eye - before the death's sink and tilt (AUDIT CARDS B2), which take it from there
     // DC1: PlayerDeath.Update's camera sink; the fresh eye array keeps
     // it per-frame, never cumulative. AUDIT 39 (#36) added the dungeon
     // arm - the context registers its OWN death presenter for the whole
@@ -9185,6 +9184,7 @@ export function createWorldModes(host) {
     if (interiorOverlay instanceof DeathScreen) interiorOverlay.tiltView(cam);
     if (mode === 'dungeon') dungeonCtx?.deathTilt?.(cam);
     if (mode === 'interior') decorTool.cameraOverride(cam);   // DECOR1d: the free camera's eye, while a piece is placed
+    if (mode === 'interior' && cardSeat && !(interiorOverlay instanceof DeathScreen)) cam.pos = cardSeat.eye.slice();   // CARDS2: the seated eye - never over a death's sink and tilt (AUDIT CARDS B2): the dead fall from the body's own eye
     host.climbFeel?.frame(dt, overlayHeld);   // CLIMB4: the climb's camera, off this frame's motor (the world host's handle - one body) - AUDIT CLIMB-ARC F2/F4: held while the motor is
     // A8 - POINTER PARITY, THE FLAG AT THIS LINE RETIRED. Mouse0 is
     // DFU's ActivateCenterObject: the readied spell fires on its
@@ -11052,7 +11052,7 @@ export function createWorldModes(host) {
     if (e.profActEnded) return;
     // CARDS2b: seated at a card table with no window up, Escape stands you up and is spent there - as a gathering act's
     // end spends it above - so the pause menu opens on the next one, standing
-    if (mode === 'interior' && cardSeat && e.code === 'Escape' && !interiorKeyCtx.uiOverlayActive) { standFromCardTable(); e.preventDefault(); return; }
+    if (mode === 'interior' && cardSeat && actionOf(e, keys) === 'Escape' && !interiorKeyCtx.uiOverlayActive) { standFromCardTable(); e.preventDefault(); return; }
     // U43: THE ONE DISPATCH. GameManager.Update (:509-557) is a single
     // flat chain with no scene gate at all - the window a key opens
     // does not care where the player is standing. The port had three
@@ -11918,6 +11918,7 @@ export function createWorldModes(host) {
         // the stack holds (ROAD-B B1).
         interiorWindows.reconcile(interiorOverlay);
         interiorWindows.clear((w) => w.dispose?.());
+        cardSeat = null;   // CARDS2b (AUDIT CARDS B1): the forced road out - a load, a quest teleport, Recall, a respawn, a sail - empties the seat as the door does
         interiorCtx = null; interiorBuilding = null; interiorCabin = null; interiorHome = null; interiorSeatHall = null; interiorOverlay = null; exteriorDoor = null; _seatHallVisit = false;   // HOME1: the visit's home with the identity
         _insideTavern = false;   // ROAD-B B4: PlayerEnterExit.cs:874, the same latch on the teleport/load arm
         _insidePartyRestExempt = false;   // TAVERN-REST1/GUILD-REST1: cleared on the same teleport/load arm as the tavern latch above
@@ -12058,7 +12059,7 @@ export function createWorldModes(host) {
     get footstepKind() { return _modeFootstepKind; },
     /** CARDS2b: the seat the pose says (scenes/world.js's sender): the feet and the facing the body is drawn at, and the
      *  wire's `st` - the table's top above them - or null off a seat. On the returned object, as footstepKind is. */
-    seatPose: () => (cardSeat ? { feet: cardSeat.feet, yaw: cardSeat.yaw, st: seatTopByte(cardSeat.top) } : null),
+    seatPose: () => (mode === 'interior' && cardSeat ? { feet: cardSeat.feet, yaw: cardSeat.yaw, st: seatTopByte(cardSeat.top) } : null),   // AUDIT CARDS B1: and never outside a building, whatever road left it
     // PARTY-REST DROP (AUDIT DROPS D1, kept): world.js reads `modes?.restState` - THIS object. The party-rest
     // drop wrote the getter below onto interiorKeyCtx, the interior KEY table's own ctx, which this factory
     // never returns, so from a tavern it read `undefined` and broadcast `rest: null` - the very hole D1 had

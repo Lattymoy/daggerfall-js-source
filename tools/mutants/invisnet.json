@@ -58,8 +58,8 @@
   {
     "name": "INVIS-foes-blind-to-it",
     "file": "src/scenes/world.js",
-    "old": ", cv: p.shown?.cv | 0, st:",
-    "new": ", cv: 0, st:",
+    "old": ", cv: p.shown?.cv | 0 });",
+    "new": ", cv: 0 });",
     "tests": ["test/invisnet.test.js"]
   },
   {
