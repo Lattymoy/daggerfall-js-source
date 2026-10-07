@@ -561,11 +561,16 @@ export const FEATURES = Object.freeze([
     id: 'quick-loot',
     group: 'loot',
     title: 'Quick loot',
-    note: 'Loot without opening a window: the mouse wheel moves through the list, Activate takes one item and '
-      + 'one key takes everything, so you never stop aiming. Off uses the inventory window.',
+    note: 'Loot without a window: the wheel moves through the list, Activate takes one item and one key takes all '
+      + '(Take gear sets which gear; Junk is left). Off uses the inventory window.',   // LOOT18: the take-all's tier and the junk, in the FT15 budget
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'quickLoot', initial: true, online: 'player' }),   // the player's own: it stands nothing, rolls nothing and is not on the wire - the same category chatHidden is (OL1)
+    control: Object.freeze({
+      store: 'prefs', key: 'quickLoot', initial: true, online: 'player',   // the player's own: it stands nothing, rolls nothing and is not on the wire - the same category chatHidden is (OL1)
+      // LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): the take-all's tier - a part, the player's own
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickLootTier', initial: 'all', online: 'player' })]),
+      parts: Object.freeze([Object.freeze({ key: 'quickLootTier', label: 'Take gear', tiers: Object.freeze([['all', 'All'], ['magic', 'Magic+'], ['rare', 'Rare+']]) })]),
+    }),
   }),
   // LR1 (2026-09-14): LOOT RARITY - the port's own item ladder
   // (systems/lootRarity.js): Common, Magic, Rare, Legendary, with

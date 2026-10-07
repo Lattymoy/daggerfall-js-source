@@ -39,11 +39,12 @@
   {
     "name": "LOOT2-perfect-before-it-is-read",
     "file": "src/systems/lootRarity.js",
-    "old": "  if (tier === 'rare' && isPerfect(item) && identified(item)) return 'Perfect Rare';",
-    "new": "  if (tier === 'rare' && isPerfect(item)) return 'Perfect Rare';",
+    "old": "  if (tier === 'rare' && isPerfect(item) && identified(item)) return `${cursed}Perfect Rare`;",
+    "new": "  if (tier === 'rare' && isPerfect(item)) return `${cursed}Perfect Rare`;",
     "tests": [
       "test/loot2_exalted.test.js"
-    ]
+    ],
+    "note": "LOOT16 (RE-AIMED BY CONTENT, bible/06-Systems/Loot-II-Arc.md section 8): the Perfect's line carries a known curse's word before it now; the law it pins - a Perfect said only once its numbers are read - unmoved"
   },
   {
     "name": "LOOT2-the-chance-a-half",
@@ -84,11 +85,12 @@
   {
     "name": "LOOT2-the-worth-forgotten",
     "file": "src/systems/lootRarity.js",
-    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + EXALTED_WORTH + affixesWorth([line]);",
-    "new": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line]);",
+    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + exaltedWorth(item) + affixesWorth([line], item);   // LOOT14: a garment's at half",
+    "new": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);",
     "tests": [
       "test/loot2_exalted.test.js"
-    ]
+    ],
+    "note": "LOOT14 (RE-AIMED BY CONTENT): the price line reads a garment's half (bible/06-Systems/Loot-II-Arc.md section 6) - the law it pins unmoved."
   },
   {
     "name": "LOOT2-exalted-with-the-switch-off",

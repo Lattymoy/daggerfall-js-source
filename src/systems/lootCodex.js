@@ -33,7 +33,7 @@
 // find is said, no imprint is made, and an imprint sleeps.
 // ═══════════════════════════════════════════════════════════════════
 
-import { lootRarityOn, allLegendaries, legendaryById, powerOf, foundAmong, powerFits } from './lootRarity.js';
+import { lootRarityOn, allLegendaries, legendaryById, powerOf, foundAmong, powerFits, recordFitsGroup } from './lootRarity.js';
 import { AETHERIC_RECORDS, aethericById } from './aetheric.js';
 import { registerTakeListener } from './inventory.js';
 import { registerModSaveData } from './modSaveData.js';
@@ -159,7 +159,7 @@ export const IMPRINT_PRICE = Object.freeze({ shards: 20, gold: 5000 });
 /** The found Legendaries a Rare may take the power of: its own group's, with a power it can use (AUDIT LOOT F1 - never
  *  Chain Lightning on a sword or Earthshaker on a bow: lootRarity.js powerFits). */
 export const imprintChoices = (item) => (item?.rarity === 'rare'
-  ? allLegendaries().filter((r) => r.group === item.group && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)))
+  ? allLegendaries().filter((r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)))
   : []);
 /** Why a Rare may not take that record's power now, or null: 'off', 'not' (not a Rare), 'unknown', 'worn', 'imprinted',
  *  'unfound' (a record the codex has not, of another group, or with no power), 'shards', 'gold'. */

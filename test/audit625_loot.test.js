@@ -90,14 +90,14 @@ test('AUDIT 625 L5: a joiner\'s copy of a body and an arrival\'s are capped as t
 
 // ─── THE KIT'S ROLL, WHOLE ───────────────────────────────────────────
 
-test('AUDIT 625 L6: the kit rolls what its record says - the player\'s luck (2 per mille a point), the finders on its Legendary threshold, the door\'s last pass (a Magic piece\'s chance at a line that does something) and the foe\'s family steering its Legendary\'s pick (mutants: luck dropped; the finders dropped; the last pass dropped; the family dropped)', async () => {
+test('AUDIT 625 L6: the kit rolls what its record says - the player\'s luck (LOOT13: 1% of each threshold a point), the finders on its Legendary threshold, the door\'s last pass (a Magic piece\'s chance at a line that does something) and the foe\'s family steering its Legendary\'s pick (mutants: luck dropped; the finders dropped; the last pass dropped; the family dropped)', async () => {
   const { registerLegendaryFind, isProcAffix, foundAmong } = await import('../src/systems/lootRarity.js');
   _resetPrefsForTests(); setPref('lootRarity', true);
   try {
-    // luck: tier 8's plain Magic is 90 per mille at luck 50, 190 (its cap) at luck 100 - a roll of 0.15 between them
-    const lucky = body(); rollCorpseKit(lucky.e, { rolls: at(0.15), luck: 100 });
+    // luck: tier 8's plain Magic is 90 per mille at luck 50, 135 at luck 100 (LOOT13: half again) - a roll of 0.12 between them
+    const lucky = body(); rollCorpseKit(lucky.e, { rolls: at(0.12), luck: 100 });
     assert.equal(rarityOf(lucky.e.items[1]), 'magic', 'luck 100: blue');
-    const plain = body(); rollCorpseKit(plain.e, { rolls: at(0.15), luck: 50 });
+    const plain = body(); rollCorpseKit(plain.e, { rolls: at(0.12), luck: 50 });
     assert.equal(rarityOf(plain.e.items[1]), 'common', 'luck 50: white');
     // the finders: a roll of 0.01 is under tier 8's Rare (15.6) and over its Legendary (0.75); a finder of a thousand
     // lifts the Legendary threshold to the Rare's
