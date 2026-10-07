@@ -233,8 +233,9 @@ test('WB9a the court\'s card: from the step in, while he stands to be read, then
 
 test('WB9a the seams, by source: the world host hands the pool the card beside its banner (never over the fire), clears it outside the street and the court, and tells the court when the fire is over the screen', () => {
   const world = read('src/scenes/world.js');
-  assert.match(world, /marks: \(card\) => drawGateMarksCard\(card, \{ hidden: gamePaused\(\) \|\| !!townTalk\.hudHidden \|\| !!gateVeil\?\.busy \}\),/);
-  assert.match(world, /if \(gatePool && \(modes\?\.mode \?\? 'exterior'\) !== 'exterior' && modes\?\.gateArenaDay\?\.\(\) == null && modes\?\.sdRealmSlot\?\.\(\) == null\) drawGateMarksCard\(null\);/);   // SD18b (PIN MOVED): the Hour draws its own marks on the card
+  assert.match(world, /marks: \(card\) => \{ _gateMarksWish = card; \},/);   // SD19 (PIN MOVED): the gate's card a wish the presence frame draws, before a Hollow's door's
+  assert.match(world, /drawGateMarksCard\(_gateMarksWish \?\? sb\?\.card \?\? null, \{ hidden \}\);/);
+  assert.match(world, /if \(\(gatePool \|\| sdHost\) && \(modes\?\.mode \?\? 'exterior'\) !== 'exterior' && modes\?\.gateArenaDay\?\.\(\) == null && modes\?\.sdRealmSlot\?\.\(\) == null\) drawGateMarksCard\(null\);/);   // SD18b (PIN MOVED): the Hour draws its own marks on the card; SD19 (PIN MOVED): a Hollow's door's card too
   assert.match(world, /veiled: \(\) => !!gateVeil\?\.busy,/);
   assert.match(world, /drawGateBanner\(null\); drawGateMarksCard\(null\);( drawGateDamageChart\(null\);)?( drawGateGround\(null\);)? travelView/, 'a held frame takes it with the banner');   // WB9d: and his ground's rim; GATE-UX: and the damage chart
 });

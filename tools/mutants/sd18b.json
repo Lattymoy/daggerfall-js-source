@@ -47,8 +47,8 @@
   {
     "name": "SD18B-the-card-never-fades",
     "file": "src/ui/sdMarksView.js",
-    "old": "const alpha = Math.min(1, age / 250, (SD_MARKS_ARRIVE_MS - age) / SD_MARKS_FADE_MS);",
-    "new": "const alpha = Math.min(1, age / 250);",
+    "old": "alpha = Math.min(1, age / 250, (SD_MARKS_ARRIVE_MS - age) / SD_MARKS_FADE_MS);",
+    "new": "alpha = Math.min(1, age / 250);",
     "tests": [
       "test/sd18b_seen.test.js"
     ]

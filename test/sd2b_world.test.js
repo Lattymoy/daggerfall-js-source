@@ -3,6 +3,7 @@
 // names found over this client's own map files and stood at its pixel while its phase stands, the find said at its door
 // until the hub's word moves it, and the chat's lines for the moves everyone online hears. bible/11-Multiplayer/
 // Super-Dungeons.md sections 2-4.
+import { sdMarksLine } from '../src/systems/sdOmen.js';   // SD19 (PIN MOVED): its marks said with its find
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -127,7 +128,7 @@ test('SD2b the find: at its door (SD_FOUND_NEAR_M), while the record says risen,
   s.clock += SD_FOUND_RESEND_MS;
   host.frame();
   assert.equal(s.sent.length, 2, 'found: no more');
-  assert.deepEqual(s.lines, [sdFoundLine({ who: 'Mara', near: 'Copperham' })], 'the find said, near its city');
+  assert.deepEqual(s.lines, [sdFoundLine({ who: 'Mara', near: 'Copperham' }), sdMarksLine({ name: host.hollow()?.loc?.name, s: found.s })], 'the find said, near its city - SD19 (PIN MOVED): and its marks');
 });
 
 test('SD2b the lines: the find, the kill and the fading said once each, to everyone - a rise to nobody; a line whose place the scan has not found yet waits for it, and past SD_LINE_WAIT_MS is said with the region\'s name (mutants: a line said twice; the fading said after a kill; a line lost while the scan warms)', () => {
@@ -144,7 +145,9 @@ test('SD2b the lines: the find, the kill and the fading said once each, to every
   assert.deepEqual(s.lines, [], 'owed until its city is known');
   s.scanReady = true;
   host.frame();
-  assert.deepEqual(s.lines, ['Mara has found an Abyss Dungeon near Copperham!'], 'once, near its city');
+  assert.deepEqual(s.lines.slice(0, 1), ['Mara has found an Abyss Dungeon near Copperham!'], 'once, near its city');
+  assert.match(s.lines[1], /keeps the Ending of /, 'SD19 (PIN MOVED): and its marks');
+  s.lines.length = 1;
   const fell = sdFell(found, T0 + M, { top: 'Ann', n: 3 });
   host.heard({ k: 'ev', ...fell });
   host.frame();

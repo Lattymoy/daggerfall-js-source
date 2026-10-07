@@ -99,7 +99,9 @@ test('SD2c the Timers row: none while it has only risen, its fading once found, 
   const [c] = rows(k, T0 + 3 * H + M);
   assert.equal(c.title, 'The Stopped Bell collapses');
   assert.equal(c.until, k.fellAt + SD_COLLAPSE_MS);
-  assert.deepEqual(rows(k, k.fellAt + SD_COLLAPSE_MS), [], 'gone');
+  // SD19 (PIN MOVED): gone - its own row with it; the next one's rise counted (never where), until it may rise
+  assert.deepEqual(rows(k, k.fellAt + SD_COLLAPSE_MS).map((x) => [x.id, x.title, x.where, x.live, x.at]), [['sd:2', 'An Abyss Dungeon rises', null, false, k.next]], 'gone');
+  assert.deepEqual(rows(k, k.next), [], 'and none once it may');
   assert.deepEqual(rows(f, T0 + 2 * H, { name: null, place: null }).map((x) => [x.title, x.where]), [['The Abyss Dungeon stands', null]], 'its name and city not known yet');
   assert.deepEqual(eventTimerRows({ now: T0 }).filter((x) => x.kind === 'super'), [], 'offline: no record');
   assert.deepEqual(TIMER_KINDS.slice(0, 3), ['gate', 'serpent', 'super']);

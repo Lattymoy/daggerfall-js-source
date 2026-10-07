@@ -16,7 +16,7 @@ import { sdPhase, sdStands, sdMarked, SD_COLLAPSE_MS } from '../net/sdLaw.js';
 import { timerText } from './eventTimers.js';
 import { pixelOfLoc } from './sdSite.js';
 import { MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS } from './rumorMill.js';
-import { sdMarksOf, sdEndingOf } from '../net/sdMarks.js';   // SD18c: the Ending a Hollow keeps, by its slot
+import { sdMarksOf, sdEndingOf, sdOmensOf } from '../net/sdMarks.js';   // SD18c: the Ending a Hollow keeps, by its slot
 
 /** How far the column is seen, map pixels (Chebyshev) - section 4's twelve. */
 export const SD_OMEN_PX = 12;
@@ -80,6 +80,60 @@ export function sdNoticeCard(mark, cityName) {
   const where = cityName ? `${name}, near ${cityName}.` : `${name}.`;
   return { subject: 'Abyss Dungeon', body: words ? `${where} ${words[0].toUpperCase()}${words.slice(1)}.` : where };
 }
+
+// ── SD19: THE HOLLOW'S PRESENCE (2026-10-07, Mac: "The detail needs to exceed that of the oblivion gates") ────────────
+// The gate's sky burns over its region, a banner counts it down at its fire, and the chat speaks of it eight ways
+// (systems/gateOmen.js); the Hollow had its column alone, three lines and a row once found. Now:
+//   THE BRASS AIR: the land's haze and light lean to brass near a standing Hollow (the taverns have always said so - "the
+//     air goes brass-coloured ... at dusk"), by its column's own light, the eye's distance (whole within SD_AIR.fullM,
+//     gone at SD_AIR.edgeM) and the hour - strongest at dusk (sdAirWeight, sdBrassGrade, sdBrassLight).
+//   THE BANNER at its door, beside its marks on the gate's own card (sdBannerText - the world's frame).
+//   THE WORDS: its marks said with its find (sdMarksLine), and a found Hollow's last hour said to the realm (sdHourLine).
+/** The brass air: whole within fullM metres, gone by edgeM; its most; its dusk (minute of the day, half a window,
+ *  what of it stands outside the window). */
+export const SD_AIR = Object.freeze({ fullM: 1000, edgeM: 8000, max: 0.55, duskAt: 1170, duskHalf: 150, base: 0.45 });
+const smooth = (a, b, x) => { const k = clamp01((x - a) / (b - a)); return k * k * (3 - 2 * k); };
+/** How much of the brass air reaches `d` metres from the Hollow. Pure. */
+export const sdAirNear = (d) => (Number.isFinite(d) ? 1 - smooth(SD_AIR.fullM, SD_AIR.edgeM, d) : 0);
+/** How much of it the hour gives - SD_AIR.base all day, whole at dusk. Pure. */
+export function sdAirDusk(minute) {
+  const m = ((Number(minute) || 0) % 1440 + 1440) % 1440, dm = Math.abs(((m - SD_AIR.duskAt + 720) % 1440 + 1440) % 1440 - 720);
+  const k = dm >= SD_AIR.duskHalf ? 0 : 0.5 + 0.5 * Math.cos((Math.PI * dm) / SD_AIR.duskHalf);
+  return SD_AIR.base + (1 - SD_AIR.base) * k;
+}
+/** THE BRASS AIR'S WEIGHT, 0..SD_AIR.max: the column's light (sdOmenLight), the distance's and the hour's. Pure. */
+export const sdAirWeight = (light, d, minute) => SD_AIR.max * clamp01(light) * sdAirNear(d) * sdAirDusk(minute);
+/** The brass the haze leans to by its own brightness: the ramp's stops (luminance, colour). */
+export const SD_BRASS_RAMP = Object.freeze([
+  Object.freeze({ at: 0, color: Object.freeze([0.16, 0.1, 0.04]) }),
+  Object.freeze({ at: 0.45, color: Object.freeze([0.62, 0.42, 0.16]) }),
+  Object.freeze({ at: 0.9, color: Object.freeze([1.0, 0.8, 0.42]) }),
+]);
+const LUMA = [0.2126, 0.7152, 0.0722];
+/** `rgb` (the land's haze) graded toward the brass by `w` - a new array, `rgb` never written. Pure. */
+export function sdBrassGrade(rgb, w) {
+  const k = clamp01(w || 0);
+  if (k === 0) return [rgb[0], rgb[1], rgb[2]];
+  const l = LUMA[0] * rgb[0] + LUMA[1] * rgb[1] + LUMA[2] * rgb[2], [s0, s1, s2] = SD_BRASS_RAMP;
+  const [a, b, f] = l < s1.at ? [s0.color, s1.color, clamp01((l - s0.at) / (s1.at - s0.at))] : [s1.color, s2.color, clamp01((l - s1.at) / (s2.at - s1.at))];
+  return [0, 1, 2].map((i) => rgb[i] + (a[i] + (b[i] - a[i]) * f - rgb[i]) * k);
+}
+/** The light under it - each channel toward SD_BRASS_TINT by `w`; a fresh Float32Array (the renderer's light). Pure. */
+export const SD_BRASS_TINT = Object.freeze([1.1, 0.92, 0.62]);
+export const sdBrassLight = (rgb, w) => new Float32Array([0, 1, 2].map((i) => rgb[i] * (1 + (SD_BRASS_TINT[i] - 1) * clamp01(w || 0))));
+/** The banner at its door: within this many metres of its centre. */
+export const SD_BANNER_M = 60;
+/** The banner's words: its name, what it is, its state ("fades in 1d 04h", "collapsing"). */
+export const sdBannerText = (name, rec, now) => { const w = sdStateWords(rec, now); return `${name ? `${name} - an Abyss Dungeon` : 'An Abyss Dungeon'}${w ? ` - ${w}` : ''}`; };
+/** Its marks in a line, said with its find: "The Stopped Bell keeps the Ending of Sentinel - Sunfall - under The Brazen
+ *  Hide and The Short Hour." */
+export function sdMarksLine({ name, s }) {
+  const mk = sdMarksOf(s), E = sdEndingOf(mk), O = sdOmensOf(mk);
+  return E ? `${name || 'The Abyss Dungeon'} keeps the Ending of ${E.stone} - ${E.sig} - under ${O.map((o) => o.name).join(' and ')}.` : '';
+}
+/** A found Hollow's last hour, said to the realm once. */
+export const SD_HOUR_LEFT_MS = 60 * 60 * 1000;
+export const sdHourLine = ({ name, near }) => `${name || 'The Abyss Dungeon'} near ${near || 'the Iliac Bay'} will fade within the hour.`;
 
 /** SD18c: what the taverns say of a Hollow by the Ending it keeps - the omen that goes with it. */
 export const SD_ENDING_RUMOR = Object.freeze({

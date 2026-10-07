@@ -19,7 +19,7 @@ import { sdPhase, sdStands, sdFoundLine, sdFellLine, sdFadeLine, SD_FOUND_NEAR_M
 import { countdownText } from '../net/gateLaw.js';   // SD10: the collapse's countdown, the gate's own words
 import { findSdSite, pickSdTemplate, sdHollowLocation } from '../systems/sdSite.js';
 import { worldRoom } from '../net/wire.js';
-import { sdMapMark, sdOmenLight, sdRumor } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of
+import { sdMapMark, sdOmenLight, sdRumor, sdMarksLine, sdHourLine, SD_HOUR_LEFT_MS } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of; SD19: its marks and its last hour said
 
 /** A line the scan has not been able to place yet is said with the region's name after this long, never lost. */
 export const SD_LINE_WAIT_MS = 30_000;
@@ -99,6 +99,8 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
   let castOutS = 0;
   /** SD10: the collapse's last readout said - its slot and its mark. AUDIT SD II (L6 F5): and the fade's. */
   let warned = { s: 0, at: Infinity }, fadeWarned = { s: 0, at: Infinity };
+  /** SD19: the slot whose last hour has been said (once a slot). */
+  let hourSaidS = 0;
 
   /** The Hollow a record names, found once a slot; null while the scan is not ready (it is warmed). */
   function hollowOf(r) {
@@ -139,7 +141,7 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
       owed.shift();
       const near = h?.site?.cityName || regionName(o.rec.r) || 'the Iliac Bay';
       const name = h?.loc?.name || 'an Abyss Dungeon';
-      if (o.kind === 'found') say(sdFoundLine({ who: o.rec.fb || 'Someone', near }));
+      if (o.kind === 'found') { say(sdFoundLine({ who: o.rec.fb || 'Someone', near })); const m = sdMarksLine({ name: h?.loc?.name, s: o.rec.s }); if (m) say(m); }   // SD19: and its marks
       else if (o.kind === 'fell') say(sdFellLine({ top: o.rec.top || 'Someone', n: o.rec.n ?? 1, name }));
       else say(sdFadeLine({ name }));
     }
@@ -185,6 +187,11 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
         const [px, py] = stood.key.split(',').map(Number);
         if (sendFound({ s: stood.s, px, py }, worldRoom(px, py))) { foundSentAt = t; foundSentS = stood.s; }
       }
+    }
+    // SD19: A FOUND HOLLOW'S LAST HOUR, said to the realm once (its place known - or the world offering none: the region's name)
+    if (phase === 'found' && rec && hourSaidS !== rec.s && Number.isFinite(rec.until) && rec.until > t && rec.until - t <= SD_HOUR_LEFT_MS) {
+      const hh = hollowOf(rec);
+      if (hh || (memo && memo.s === rec.s && memo.none)) { hourSaidS = rec.s; say(sdHourLine({ name: hh?.loc?.name, near: hh?.site?.cityName || regionName(rec.r) })); }
     }
     sayOwed(t);
   }

@@ -10,6 +10,7 @@
 // the way back from the Hour stood a player on the Return's own foot; a mark or save in a Hollow gone since entered the
 // nearest dungeon. With them, the page's untested arms (the lens on the tests): the whole state folded in the shadow, the
 // world host's fight seams run from their own text, the End in the Dragon Break, and the smaller gaps.
+import { sdMarksLine } from '../src/systems/sdOmen.js';   // SD19 (PIN MOVED): its marks said with its find
 import './modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -775,7 +776,7 @@ test('SD11c THE SMALLER GAPS (L8 G13): a fallen Echo strikes nothing (its blow i
     rig.host.frame(); rig.host.frame();
     assert.equal(rig.host.hollow(), null, 'nothing stood');
     assert.equal(warns.filter((m) => /offers no Hollow/.test(m)).length, 1, 'warned once');
-    assert.deepEqual(rig.log.filter((x) => Array.isArray(x) && x[0] === 'line').map((x) => x[1]), [sdFoundLine({ who: 'Mara', near: 'the Alik\'r Desert' })], 'the find said, by its region');
+    assert.deepEqual(rig.log.filter((x) => Array.isArray(x) && x[0] === 'line').map((x) => x[1]), [sdFoundLine({ who: 'Mara', near: 'the Alik\'r Desert' }), sdMarksLine({ name: null, s: r.s })], 'the find said, by its region - SD19 (PIN MOVED): and its marks');
   } finally { console.warn = warn; }
   void quiet; void near;
 });

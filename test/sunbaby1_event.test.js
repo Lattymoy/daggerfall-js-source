@@ -227,7 +227,7 @@ test('SUNBABY1 host: the sky controller draws the flower sky over the sky and it
   assert.match(shared, /if \(clouds\) \{ clouds\.update\(viewport\); clouds\.draw\(yaw, pitch, fovY, aspect\); \}[^\n]*\n\s*if \(sunbabyW > 0\) sunbabySky\?\.draw\(yaw, pitch, fovY, aspect\);/, 'after the clouds, before the host\'s marker');
   assert.match(shared, /setSunbaby\(w, on = false\) \{\s*sunbabyW = Math\.max\(0, Math\.min\(1, Number\(w\) \|\| 0\)\);\s*sunbabyOn = !!on;\s*if \(sunbabyW > 0\) \{ const p = sunbabyPass\(\); if \(p\) p\.weight = sunbabyW; \}\s*else if \(sunbabySky\) sunbabySky\.weight = 0;/);
   assert.match(shared, /try \{ sunbabySky = new SunbabySkyRenderer\(gl\); \} catch/, 'built the first time it shows, and a failed build costs the flowers, never the frame');
-  assert.match(shared, /const c = sunbabyW > 0 \? sunbabyHaze\(own, sunbabyW, sunbabyEvil\) : own;[^\n]*\n\s*return dreadW > 0 \? dreadGrade\(c, dreadW\) : c;/, 'the fog');   // SUNBABY2 moved it: the wrath's horizon
+  assert.match(shared, /const c = sunbabyW > 0 \? sunbabyHaze\(own, sunbabyW, sunbabyEvil\) : own;[^\n]*\n\s*const d = dreadW > 0 \? dreadGrade\(c, dreadW\) : c;/, 'the fog');   // SUNBABY2 moved it: the wrath's horizon; SD19 (PIN MOVED): the brass graded over it
   assert.match(shared, /const dreaded = \(ws\) => sunbabyWaterSky\(dreadW > 0 \? [^\n]*: ws, sunbabyW, sunbabyEvil\);/, 'the water, on either lane');   // SUNBABY2 moved it: the wrath's sky
   assert.match(shared, /use\(skyIndex, minuteOfDay, showNightSky = true, extra = null\) \{\s*if \(sunbabyOn && extra\) extra = \{ \.\.\.extra, violence: extra\.weather, cells: null, cloudBase: null, approach: 0 \};/, 'no storm cell, no violence, no front under the sun baby');
 });
@@ -240,7 +240,7 @@ test('SUNBABY1 host: world.js hears the sun baby on the hub\'s one onEvent, SHOW
   assert.match(world, /link\.onEvent = \(ev, o\) => \{ dread\.set\(ev, o\); sunbaby\.set\(ev, o\); \};/);
   assert.match(world, /const sunbabyW = sunbaby\.tick\(dt\);/);
   assert.match(world, /if \(isEnhanced\(\) && !weatherOverride && !sunbaby\.on\) \{[^\n]*\n\s*const ds = distantStorms\.tick\(/);
-  assert.match(world, /sunbabyLight\(dreadLight\(withMoonAmbient\(exteriorAmbient\([\s\S]*?\), moonNow\), skyDreadW\), sunbabyW, sunbabyFace\.evil\), sunScale\(minute\)/);   // SUNBABY2 moved it: the wrath
+  assert.match(world, /sunbabyLight\(dreadLight\(withMoonAmbient\(exteriorAmbient\([\s\S]*?\), moonNow\), skyDreadW\), sunbabyW, sunbabyFace\.evil\), sdAirW\), sunScale\(minute\)/);   // SUNBABY2 moved it: the wrath; SD19 (PIN MOVED): leaning brass near a Hollow
   const set = world.indexOf('sky.setSunbaby(sunbabyW, sunbaby.on);');
   assert.ok(set > 0 && set < world.indexOf('sky.use(('), 'before the sky\'s frame reads it');
   assert.match(world, /if \(staged\.kind && !relayKnowsLiveEvent\(hub\.eventV, staged\.kind\)\) return say\('The server cannot stage that event yet\.'\);/);

@@ -19,6 +19,7 @@ import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, m
 import { meterFor } from '../render/perfMeter.js';   // VC6d: `?perf=zones` - the sky's own span
 import { dreadGrade, DREAD_SKY_WORD } from '../world/dreadSky.js';   // EVENT1: the live event's grade and the sky it wears
 import { sunbabyHaze, sunbabyWaterSky } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's haze and the sky the water mirrors under it
+import { sdBrassGrade } from '../systems/sdOmen.js';   // SD19: the brass air near a standing Hollow
 import { SunbabySkyRenderer } from '../render/sunbabySkyRenderer.js';   // SUNBABY1: its flower sky, over every sky
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
@@ -266,6 +267,7 @@ export function createSkyController(gl, params) {
   // door back to the mod's raw ceil, bug for bug.
   if (dynamicSky) dynamicSky.bandDither = params.get('bands') !== 'raw';
   const dynamic = dynamicOn ? new DynamicSkies(dynamicSkiesAssets(), modSettingsOf('dynamic-skies')) : null;   // no clock here: the first use() is Init's WorldTime.Now, and its tick runs ChangeLunarPhases first
+  let brassW = 0;   // SD19: the brass air's weight this frame (setBrass) - 0 is none, and nothing below changes
   let dreadW = 0;   // EVENT1: the live event's weight this frame (setDread) - 0 is no event, and nothing below changes
   let dreadGlow = 0;   // EVENT1: and the red strikes' glow in the cloud deck this frame (the composite's flash, beside the storm's)
   // SUNBABY1: the sun baby's weight this frame (setSunbaby) - 0 is no event, and nothing below changes - and its pass,
@@ -392,7 +394,8 @@ export function createSkyController(gl, params) {
     fogColorFor(fogNow) {
       const own = dynamic?.fogColor ?? outdoorFogColor(fogNow, (enhancedSky ?? dynamicSky ?? sky).clearColor);
       const c = sunbabyW > 0 ? sunbabyHaze(own, sunbabyW, sunbabyEvil) : own;   // SUNBABY1: the land's haze is the flower sky's horizon (SUNBABY2: the wrath's, burning)
-      return dreadW > 0 ? dreadGrade(c, dreadW) : c;   // EVENT1: the land's haze is the sky's colour under the dread too
+      const d = dreadW > 0 ? dreadGrade(c, dreadW) : c;   // EVENT1: the land's haze is the sky's colour under the dread too
+      return brassW > 0 ? sdBrassGrade(d, brassW) : d;   // SD19: and brass near a standing Hollow
     },
     /** EVENT1: the live event's weight this frame, 0..1 (world/dreadSky.js createDread) - every pass that draws the sky
      *  grades its colour by it, the fog above takes the same grade, and while it is above 0 the sky wears the storm
@@ -407,6 +410,7 @@ export function createSkyController(gl, params) {
      *  the sky and its clouds by it, the fog and the water's sky lean to it - and `on`, whether it is staged now: while
      *  it is, the sky's frame (use) stands on the clear day the host shows, without the weather map's storm cells, its
      *  violence or its approaching front. 0 and false are exactly the sky there was. */
+    setBrass(w) { brassW = Math.max(0, Math.min(1, Number(w) || 0)); },   // SD19: the brass air near a standing Hollow (systems/sdOmen.js sdAirWeight)
     setSunbaby(w, on = false) {
       sunbabyW = Math.max(0, Math.min(1, Number(w) || 0));
       sunbabyOn = !!on;

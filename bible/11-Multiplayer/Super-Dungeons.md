@@ -160,6 +160,13 @@ against the slot's law (section 4) or in the realm's own frame (sections 8-10).
   it while its record says `risen` for that slot, asking the pose again; it sets `found`, keeps the finder's VERIFIED
   name, and fans it: *"<name> has found an Abyss Dungeon near <city>!"* From then on everyone online sees it on
   the map (its ring), the compass (inside 1 km), the Timers window and the notice boards.
+- **Its presence** (SD19). The air the taverns speak of is there: near a standing Hollow the land's haze and light lean
+  to brass, by its column's light, whole within 1 km and gone by 8 km, a little all day and most at dusk. Within 60 m of
+  its centre a banner names it and its state (*"The Stopped Bell - an Abyss Dungeon - fades in 1d 04h"*, *"... -
+  collapsing"*), its marks beside it on the gate's own card. Its find is followed by its marks (*"The Stopped Bell keeps
+  the Ending of Sentinel - Sunfall - under The Unending Reset and The Brazen Hide."*), a found Hollow's last hour is said
+  to the realm once (*"... near Copperham will fade within the hour."*), and once one is gone the Timers count the next
+  one's not-before - never where.
 
 A forged `found` (a client claiming a pixel that is not the site) cannot place the Hollow anywhere else - every client
 places it from its own map files. But it can say "found" - and open the realm - as early as the rise itself, and no check
@@ -2412,3 +2419,38 @@ where none is kept), and its card on the held map says *It keeps the Ending of <
 Pins: `test/sd18c_endings.test.js` (4 - the lights; the bodies and the scene; the sparks; the word);
 `tools/mutants/sd18c.json` (13). PINS MOVED: `test/sd8c_remnant_page.test.js` (the art's records; the context's birth of
 the scene), `test/sd2c_omen.test.js` (the map card's line, the rumor by the slot's Ending).
+
+### SD19 - shipped 2026-10-07 (the Hollow's presence)
+
+A gate's sky burns over its region, a banner counts it down at its fire, and the chat speaks of it eight ways
+(`systems/gateOmen.js`); a Hollow had its column, three lines and a Timers row once found. SD19 gives it a presence:
+
+- **The brass air** (`systems/sdOmen.js` `SD_AIR`, `sdAirNear`, `sdAirDusk`, `sdAirWeight`): the taverns have always
+said *the air goes brass-coloured ... at dusk*; now it does. The weight is the column's own light (`sdOmenLight`) times
+the eye's distance (whole within `SD_AIR.fullM` 1000 m, gone by `SD_AIR.edgeM` 8000 m, a smoothstep between) times the
+hour (`SD_AIR.base` 0.45 of it all day, whole at minute 1170, a cosine window of 150 minutes each side), never past
+`SD_AIR.max` 0.55. The land's haze is graded toward the brass its own brightness falls on (`sdBrassGrade`, a
+three-stop `SD_BRASS_RAMP` by luminance) - last, over the sun baby's and the dread's (`scenes/shared.js` `setBrass`,
+`fogColorFor`) - and both lights lean toward `SD_BRASS_TINT` (`sdBrassLight`, around the ambient and the key in
+`scenes/world.js`). The world reads it each exterior frame (`sdAirNow`: none indoors, none with no Hollow standing),
+before the haze is read. The grade is the CPU's, on the fog and the light - no sky shader changes.
+- **The banner at its door** (`sdBannerText`, `SD_BANNER_M` 60): within 60 m of its centre while it stands (risen,
+found or collapsing), outside, walking: its name, what it is and its state, on the gate's banner
+(`ui/gateBanner.js`), and its marks on the gate's own card in its `'gate'` mode (`ui/sdMarksView.js`
+`sdMarksCardModel(mk, { mode: 'gate' })` - no clock: it stands while the player does; none once it fell). Both are the
+world's wishes (`presenceFrame`): the gate's pool sets its own (`_gateBannerWish`, `_gateMarksWish`), and it wins - its
+countdown is a fire's; a Hollow's door's is drawn only where no gate asks. Indoors both are cleared, gate or Hollow.
+- **The words** (`scenes/sdHost.js`): the find is followed by its marks (`sdMarksLine` - its Ending, its signature and
+both omens); a found Hollow's last hour (`SD_HOUR_LEFT_MS`) is said to the realm once a slot (`sdHourLine`), near its
+city once its place is known, by the region's name if the world offers no Hollow - never while it is only risen (a
+find, not news).
+- **The next one's rise** (`systems/eventTimers.js`): once a Hollow is gone - beaten, collapsed or faded unfound - the
+Timers count the next slot's not-before (`rec.next`), never where; the row goes once it may rise.
+
+Pins: `test/sd19_presence.test.js` (6 - the air's law; the grade and the light; the sky and the light by source; the
+banner and the card; the words; the next rise); `tools/mutants/sd19.json` (34). PINS MOVED: `test/sd2b_world.test.js`
+and `test/sd11c_page.test.js` (the marks line after the find), `test/sd2c_omen.test.js` (the gone state's next-rise row),
+`test/wb2_gate.test.js` and `test/wb9a_gate_marks_seen.test.js` (the banner and the card as wishes, cleared indoors for a
+Hollow too), `test/wbx8_gate_sky.test.js`, `test/sunbaby1_event.test.js`, `test/sunbaby2_phases.test.js` and `test/event1_live_event.test.js` (the lights under `sdBrassLight`, the haze's dread grade now `d`), `test/auditwb_world.test.js` (the banner a wish, hidden by the same three). Records
+re-aimed by content: `EVENT1-controller-fog-ungraded`, `SD18B-the-card-never-fades`, `SUNBABY1-host-light-unlifted`,
+`WB2-the-banner-follows-indoors`.

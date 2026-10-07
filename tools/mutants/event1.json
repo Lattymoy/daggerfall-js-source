@@ -362,8 +362,8 @@
   {
     "name": "EVENT1-controller-fog-ungraded",
     "file": "src/scenes/shared.js",
-    "old": "return dreadW > 0 ? dreadGrade(c, dreadW) : c;",
-    "new": "return c;",
+    "old": "const d = dreadW > 0 ? dreadGrade(c, dreadW) : c;",
+    "new": "const d = c;",
     "tests": [
       "test/event1_live_event.test.js"
     ]

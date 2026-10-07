@@ -101,17 +101,21 @@ export const SD_MARKS_FADE_MS = 700;
 /**
  * What the Hour's card shows now, or null: from the moment `since` a fighter stepped into the Hour, gone
  * SD_MARKS_ARRIVE_MS later (its last SD_MARKS_FADE_MS a fade) - the gate's card's model (ui/gateMarksView.js
- * drawGateMarksCard draws it), low on the right, clear of the crosshair.
- * @param {unknown} mk @param {{ since?: number, now?: number }} [o]
+ * drawGateMarksCard draws it), low on the right, clear of the crosshair. SD19: `mode` 'gate' at its Hollow's door
+ * outside - no clock: it stands while the player does, to the side under the compass line (the gate's own place).
+ * @param {unknown} mk @param {{ since?: number, now?: number, mode?: 'arrive'|'gate' }} [o]
  */
-export function sdMarksCardModel(mk, { since = 0, now = 0 } = {}) {
+export function sdMarksCardModel(mk, { since = 0, now = 0, mode = 'arrive' } = {}) {
   const view = sdMarksViewOf(mk);
   if (!view) return null;
-  const age = now - since;
-  if (!(age >= 0) || age >= SD_MARKS_ARRIVE_MS) return null;
-  const alpha = Math.min(1, age / 250, (SD_MARKS_ARRIVE_MS - age) / SD_MARKS_FADE_MS);
+  let alpha = 1;
+  if (mode !== 'gate') {
+    const age = now - since;
+    if (!(age >= 0) || age >= SD_MARKS_ARRIVE_MS) return null;
+    alpha = Math.min(1, age / 250, (SD_MARKS_ARRIVE_MS - age) / SD_MARKS_FADE_MS);
+  }
   return {
-    mode: 'arrive', key: view.key, alpha: Math.round(alpha * 100) / 100,
+    mode: mode === 'gate' ? 'gate' : 'arrive', key: view.key, alpha: Math.round(alpha * 100) / 100,
     title: SD_MARKS_CARD_TEXT.title, sub: SD_MARKS_CARD_TEXT.sub(sdEndingOf(mk)),
     aspect: view.aspect, trials: view.trials,
   };

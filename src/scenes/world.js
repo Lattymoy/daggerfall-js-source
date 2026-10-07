@@ -289,7 +289,7 @@ import { gateScanner, findGateSite, gateSeaPixel, politicClaimed } from '../syst
 import { createGatePool, GATE_TEXT } from './gatePool.js';   // WB2: the gate the world stands - its stone, its fire and beacon, its collider and its door
 import { createRiteHost, RITE_TEXT } from './riteHost.js';   // WB12d: the faithful's rite - its circle, its smoke, its faithful, its word and its chest
 import { createSdHost } from './sdHost.js';   // SD2b: the Hollow in the world - the hub's record in, the Hollow stood at its pixel, the find, the lines
-import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
+import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M, sdAirWeight, sdBrassLight, sdBannerText, SD_BANNER_M } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
 import { SdOmenPassRenderer } from '../render/sdOmenPass.js';   // SD2c: the Hollow's omen, the gate's beacon in brass
 import { SD_CAST_OUT_LINE, sdRoomKey, isSdRoom, sdPhase } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room; SD9e: a receipt from my realm's
 import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG, SD_REALM_FLOORS } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
@@ -21194,8 +21194,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (royalClaims?.due()) royalClaims.offer();   // AUDIT-SEATS C5: and a bout's - before its week is over and the service answers `royal-over`
     siegeHerald?.tick();   // AUDIT-SEATS G1: the battles announced in red, at their marks
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) { leaveBattle(); _watchedFrom = null; }   // AUDIT-SEATS C1: the dead fight in no battle - its HUD stood frozen over the death screen (the battle's tick is the living online frame's); G4: and a spectator's spot is the respawn's to replace
-    if (gatePool && (modes?.mode ?? 'exterior') !== 'exterior') drawGateBanner(null);   // WB2: the countdown is the street's; the pool's own frame runs there alone
-    if (gatePool && (modes?.mode ?? 'exterior') !== 'exterior' && modes?.gateArenaDay?.() == null && modes?.sdRealmSlot?.() == null) drawGateMarksCard(null);   // WB9a: the gate's card is the street's, the court draws its own - anywhere else, none (SD18b: the Hour draws its own marks on it)
+    if ((gatePool || sdHost) && (modes?.mode ?? 'exterior') !== 'exterior') drawGateBanner(null);   // WB2: the countdown is the street's; the pool's own frame runs there alone (SD19: and a Hollow's door's)
+    if ((gatePool || sdHost) && (modes?.mode ?? 'exterior') !== 'exterior' && modes?.gateArenaDay?.() == null && modes?.sdRealmSlot?.() == null) drawGateMarksCard(null);   // WB9a: the gate's card is the street's, the court draws its own - anywhere else, none (SD18b: the Hour draws its own marks on it)
     // WB3b: the court stands until its gate's day is over - then it comes apart around whoever is in it, who land
     // before the gate; out of it, its state is forgotten (its falls and receipts are kept)
     const courtDay = modes?.gateArenaDay?.() ?? null;
@@ -21434,8 +21434,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     now: () => Date.now() + _sharedOffsetMs,
     feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
     say: (text) => setMidScreenText(text),
-    banner: (text) => drawGateBanner(text, { hidden: gamePaused() || !!townTalk.hudHidden || !!gateVeil?.busy }),   // AUDIT WB C5: never over the step's fire
-    marks: (card) => drawGateMarksCard(card, { hidden: gamePaused() || !!townTalk.hudHidden || !!gateVeil?.busy }),   // WB9a: tonight's marks beside the countdown - never over the step's fire
+    banner: (text) => { _gateBannerWish = text; },   // AUDIT WB C5: never over the step's fire - SD19: shared with a Hollow's door (presenceFrame)
+    marks: (card) => { _gateMarksWish = card; },   // WB9a: tonight's marks beside the countdown - never over the step's fire (SD19: presenceFrame)
     ready: () => !!online?.gateOk,   // WB3b: a relay that runs a gate's boss room (net/wire.js relaySupportsGate)
     landBefore: (g) => landBeforeGate(g),   // AUDIT WBX W1: a player sealed in a rising horn's root, set down before the gate
     enter: (g) => { modes?.enterGateArena?.(g); },   // WB3b: into the Burning Court (scenes/worldModes.js)
@@ -21822,6 +21822,34 @@ export async function bootWorld(canvas, renderer, params, status) {
       y = _sdFoot.local + t[1];
     }
     return { origin: [t[0] + lx, y, t[2] + lz], fade: o.light };
+  };
+  /** SD19: a standing Hollow's centre in THIS scene - `[x, z]` - or null (the compass's and the air's). */
+  const sdHollowAt = (h) => { const t = state.pixelTranslation(h.site.px, h.site.py), [lx, lz] = spawnedLocationCentreLocal(h.loc); return [t[0] + lx, t[2] + lz]; };
+  /** SD19: THE BRASS AIR (systems/sdOmen.js sdAirWeight) - by its column's light, the eye's distance and the hour; 0 with no
+   *  Hollow standing, or anywhere but outside. */
+  const sdAirNow = (eye, minuteNow) => {
+    const o = sdHost?.omen();
+    if (!o?.hollow?.site || (modes?.mode ?? 'exterior') !== 'exterior' || !eye) return 0;
+    const [x, z] = sdHollowAt(o.hollow);
+    return sdAirWeight(o.light, Math.hypot(eye[0] - x, eye[2] - z), minuteNow);
+  };
+  /** SD19: THE BANNER AT ITS DOOR (systems/sdOmen.js sdBannerText) and its marks on the gate's own card ('gate' mode) -
+   *  within SD_BANNER_M of its centre while it stands; `{ text, card }` or null. */
+  const sdBannerNow = () => {
+    const h = sdHost?.hollow(), rec = sdHost?.record();
+    if (!h?.site || !rec || rec.s !== h.s || !walkMode || !playerSpawned || (modes?.mode ?? 'exterior') !== 'exterior') return null;
+    if (!['risen', 'found', 'fell'].includes(sdHost.phase())) return null;
+    const [x, z] = sdHollowAt(h), f = player.feetAt();
+    if (Math.hypot(f[0] - x, f[2] - z) > SD_BANNER_M) return null;
+    const t = Date.now() + _sharedOffsetMs;
+    return { text: sdBannerText(h.loc?.name, rec, t), card: sdHost.phase() === 'fell' ? null : sdMarksCardModel(sdMarksOf(h.s), { mode: 'gate' }) };
+  };
+  /** SD19: the banner and the marks card outside - the gate's wish first (its fire's countdown), else a Hollow's door's. */
+  let _gateBannerWish = null, _gateMarksWish = null;
+  const presenceFrame = () => {
+    const sb = sdHost ? sdBannerNow() : null, hidden = gamePaused() || !!townTalk.hudHidden || !!gateVeil?.busy;
+    drawGateBanner(_gateBannerWish ?? sb?.text ?? null, { hidden });
+    drawGateMarksCard(_gateMarksWish ?? sb?.card ?? null, { hidden });
   };
   /** SD2c: the compass's mark - a found Hollow's centre, in THIS scene, while the player stands outside within
    *  SD_COMPASS_M of it (section 4's kilometre); before it is found it is a find, and nothing points at it. */
@@ -29577,13 +29605,16 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     sky.setSunbaby(sunbabyW, sunbaby.on);   // SUNBABY1: its flower sky, and the clear day the sky wears while it is staged
     sky.setSunbabyFace(sunbabyFace.evil, sunbabyFace.todd);   // SUNBABY2: the face it wears, and the wrath's burning sky
     sky.setDread(skyDreadW, dreadCloudGlow(boltFrame.bolts));   // EVENT1: the sky's grade, and the red strikes' glow in its deck; WBX8: the gate's, where it is the greater
+    const sdAirW = sdHost ? sdAirNow(tvStand, minute) : 0;   // SD19: the brass air near a standing Hollow - its haze and its light
+    sky.setBrass?.(sdAirW);
     // EV5: the moons light the night - the masser as a second key, the
     // secunda folded into the ambient. null by day and under classic.
     const moonNow = sky.moonlight();
     renderer.setMoonlight(moonNow);
+    // SD19: the land's light leaning to brass near a standing Hollow (sdBrassLight, both lights)
     renderer.setLighting(
-      sunbabyLight(dreadLight(withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), wxNow.sun), moonNow), skyDreadW), sunbabyW, sunbabyFace.evil), sunScale(minute) * wxNow.sun * flash * sky.sunFactor() * (1 - DREAD_KEY_DIM * skyDreadW),   // EVENT1: the land under the dread's light; SUNBABY1: lifted toward noon's under the sun baby (SUNBABY2: reddened under its wrath)   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground); WX2: the scale is the front's
-      sunbabyKey(dreadLight(SUN_RIG_COLOR, skyDreadW), sunbabyW, sunbabyFace.evil));   // SUNBABY2: the key reddened under the wrath
+      sdBrassLight(sunbabyLight(dreadLight(withMoonAmbient(exteriorAmbient(minute, getFloat('Enhancements', 'NightAmbientLightScale', 0, 1), wxNow.sun), moonNow), skyDreadW), sunbabyW, sunbabyFace.evil), sdAirW), sunScale(minute) * wxNow.sun * flash * sky.sunFactor() * (1 - DREAD_KEY_DIM * skyDreadW),   // EVENT1: the land under the dread's light; SUNBABY1: lifted toward noon's under the sun baby (SUNBABY2: reddened under its wrath)   // ES1d: the cloud in front of the sun takes the KEY light (never the ambient - the sky still lights the ground); WX2: the scale is the front's
+      sdBrassLight(sunbabyKey(dreadLight(SUN_RIG_COLOR, skyDreadW), sunbabyW, sunbabyFace.evil), sdAirW));   // SUNBABY2: the key reddened under the wrath; SD19: brass near a Hollow
     // DW-C: the distance fog's own "under" (UnderwaterDistanceFog.TryGetUnderwaterPresentation) - the surfaces'
     // _DeepWatersUnderwater and UnderwaterPresentationEffects' light suppression read it too, so it is taken
     // here, before the lights, from this frame's camera and capsule
@@ -29639,6 +29670,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
 
     // WB2: the gate stood for this frame - before the lights (its fire lights the ground) and the world pass (its stone)
     try { if (gatePool?.frame(dt)) warmGateVeil(); } catch (e) { console.warn('[gate] pool', e?.message ?? e); }   // AUDIT WB D5: a gate stands - the step's veil is built ahead
+    if (gatePool || sdHost) presenceFrame();   // SD19: the banner and the card - the gate's, else a Hollow's door's
     try { sigilBroker?.frame(dt); } catch (e) { console.warn('[broker] pool', e?.message ?? e); }   // SET7: the Broker stands where the clock stands her - BROKER-CAGE: in her cage at the faithful's circle
     try { riteHost?.frame(); } catch (e) { console.warn('[rite] host', e?.message ?? e); }   // WB12d: the faithful's circle, before the lights (its braziers light the ground)
     try { if (_mode() === 'exterior' && !_loading) harbourBook.step(now / 1000); } catch (e) { console.warn('[harbours] book', e?.message ?? e); }   // HARBOUR-BOOK: the port near the player sounded, before its quays stand

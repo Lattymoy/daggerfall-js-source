@@ -236,7 +236,7 @@
   {
     "name": "WB2-the-banner-follows-indoors",
     "file": "src/scenes/world.js",
-    "old": "    if (gatePool && (modes?.mode ?? 'exterior') !== 'exterior') drawGateBanner(null);",
+    "old": "    if ((gatePool || sdHost) && (modes?.mode ?? 'exterior') !== 'exterior') drawGateBanner(null);",
     "new": "    if (false) drawGateBanner(null);",
     "tests": [
       "test/wb2_gate.test.js"
