@@ -668,8 +668,9 @@ async function sellOut(homes, { mapId, buildingKey, credit, realm }) {
 // (server-account/src/homes.js arenaMoveHome); this is the client's half, the offline move's own steps (world.js
 // moveArenaDeed) for a home the service keeps. Online, in Daggerfall, once the homes' towns stand in their layouts:
 //   1. the moves this character made and never read (an answer lost, the page gone before the letter) - the old scene
-//      emptied into the new again (harmless: a scene emptied once is gone) and the letter said; never a refund, which
-//      the move's own batch paid onto the record;
+//      emptied into the new again (harmless: a scene emptied once is gone - FIELD BUGS 2026-10-07 HOME-WIPE: only since
+//      emptyArenaScene never writes over the new home's own record; it wrote an empty one over it at each such boot) and
+//      the letter said; never a refund, which the move's own batch paid onto the record;
 //   2. every home of the town that is this character's (or a hall it keeps) and stands in the arena's cell - the new
 //      house PICKED here (`pick`, systems/arenaMove.js arenaHomeFor over the town's buildings, every key a home holds
 //      left out - asked again past one taken meanwhile), POSTED (inside a realm act for a home: the pieces' refund comes
