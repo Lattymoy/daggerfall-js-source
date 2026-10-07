@@ -3890,7 +3890,19 @@ map by day and its arrival is not pushed to dusk. Bare-headed, the
 door says DFU's line and then "Raise the hood of a cloak or robe to
 travel by day." Online this was the whole wait: the shared clock's day
 is one real hour, and no rest or trip moves it. The day's -20 is the
-street's sun on the stats (FIELD BUGS 2026-10-01b), and stays under a hood.
+street's sun on the stats (FIELD BUGS 2026-10-01b).
+
+HOOD-SUN (2026-10-07, Mac: "The vampire cloak and hood doesn't work ingame for shielding against the sun") - the hood shields the stats too. VAMP-HOOD let a raised hood lift the travel
+rules alone, so a hooded vampire in the street at noon still stood 20
+down - since VAMP-DAY the sun's only bite, and the one the player sees.
+`systems/vampirism.js` vampirismMagicRound now hands vampireStatMod
+racialSunAverse, the one hood law: under a raised hood the street's sun
+reaches the curse no more than a roof's, and the vampire has DFU's +20;
+bare-headed, the -20 stands; a hood in the pack shields nothing.
+`test/fb0929_vampirehood.test.js` (its stats pin moved),
+`test/fb1001b_vampsun.test.js` (the law's line); mutants
+`tools/mutants/vamphood.json` (three added), the vampday, fb1001b_vampsun
+and lived1 records re-aimed by content - all dead.
 
 THE SEAM IS REGISTERED BY THE MODE MACHINE. worldModes owns mode and
 interiorBuilding for BOTH town pages - world.js and exterior.js each
