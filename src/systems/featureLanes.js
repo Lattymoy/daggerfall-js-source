@@ -8,7 +8,7 @@
 // render/windWisps.js). So they live together, over the shelf alone, and no consumer learns they exist. Nothing a
 // lane writes is a new key: every value it sets is one a row of its own could already set.
 //
-//   'wind'       - Trees sway and Wisps: the bar is both, each is its own in the drawer.
+//   'wind'       - Sway (the trees' and the grass's) and Wisps: the bar is both, each is its own in the drawer.
 //   'quickSlots' - QS's diamond switch and HB1's quickbar-or-hotbar: Off, Diamond, Hotbar.
 //   'blood'      - BLOOD1's marks, BLOOD1b's overkill, BLOOD2e's lens and BLOOD2g's gore: the gore dial with an Off.
 import { getPref, setPref } from './uiPrefs.js';
