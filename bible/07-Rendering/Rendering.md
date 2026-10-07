@@ -1366,6 +1366,12 @@ corner: each takes the product of its two shares).
   every index is positive). Every integer of the chunk says `highp`
   itself: a fragment stage's ints are mediump unless they say, a phone's
   mediump int is sixteen bits, and the origin runs to 128,000.
+- On the boot path: TERRAIN_FS is built from the chunk as the renderer
+  loads, so the chunk and the law it reads its numbers from are two files
+  more in the entry's static reach (66). Both are leaves - the chunk imports
+  the law alone, the law nothing - so BOOT2's ceiling moves to 68
+  (`test/boot2.test.js`, which holds them leaves; `tools/mutants/boot2.json`
+  ECOTONE1's record, dead) and its hub law stands.
 
 **The ground** - `render/ecotoneGlsl.js` in both terrain programs: after
 the tile's own `textureGrad`, the same record of each neighbour's set (every
