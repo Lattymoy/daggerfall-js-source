@@ -171,6 +171,20 @@ export const STREETS = Object.freeze(['preflop', 'flop', 'turn', 'river', 'showd
 const BOARD_AFTER = { flop: 3, turn: 1, river: 1 };
 
 const nextSeat = (n, i) => (i + 1) % n;
+/** AUDIT CARDS A3: a count of chips - a SAFE integer, so every post, call and payout is exact (past 2^53 a chip paid
+ *  is a chip that may not leave the stack). */
+const chips = (v) => Number.isSafeInteger(v) && v >= 0;
+/** What seat `i` owes to stay in: the round's bet, short of what it put in - but when no other seat can still act, only
+ *  as much as another live seat actually bet. AUDIT CARDS A1: a big blind all-in for less than the small blind left the
+ *  small blind owing the full blind against nobody (a call always handed back, a fold - and the seat clock's - a
+ *  covered hand forfeited); the casino's "a short blind is still a full blind to call" is for a seat with an opponent
+ *  left to act, and with none there is only the bet to match. */
+function owedBy(st, i) {
+  const me = st.seats[i];
+  let top = 0, others = false;
+  st.seats.forEach((o, k) => { if (k === i || o.folded) return; if (canAct(o)) others = true; if (o.bet > top) top = o.bet; });
+  return Math.max(0, (others ? st.currentBet : Math.min(st.currentBet, top)) - me.bet);
+}
 const canAct = (s) => !s.folded && !s.allIn;
 
 /**
@@ -179,11 +193,18 @@ const canAct = (s) => !s.folded && !s.allIn;
  * for a table the law refuses.
  * @param {{seats: {id: string, stack: number}[], button: number, sb: number, bb: number, deck: number[]}} p
  */
-export function newHand({ seats, button, sb, bb, deck }) {
-  const n = seats?.length ?? 0;
+export function newHand({ seats, button, sb, bb, deck } = /** @type {any} */ ({})) {
+  // AUDIT CARDS A2: a table the relay is handed is refused, never thrown on - a seat an object with a stack and a name
+  // of its own (the relay keys seats by id), every hole of a sparse array a refusal
+  if (!Array.isArray(seats)) return null;
+  const n = seats.length;
   if (n < HOLDEM_SEATS_MIN || n > HOLDEM_SEATS_MAX) return null;
-  if (!seats.every((s) => Number.isInteger(s.stack) && s.stack > 0)) return null;
-  if (!Number.isInteger(sb) || !Number.isInteger(bb) || sb < 1 || bb < sb) return null;
+  for (let i = 0; i < n; i++) {
+    const s = seats[i];
+    if (!s || typeof s !== 'object' || typeof s.id !== 'string' || !s.id || !chips(s.stack) || s.stack < 1) return null;
+  }
+  if (new Set(seats.map((s) => s.id)).size !== n) return null;
+  if (!chips(sb) || !chips(bb) || sb < 1 || bb < sb) return null;
   if (!Number.isInteger(button) || button < 0 || button >= n) return null;
   if (!Array.isArray(deck) || deck.length !== DECK_SIZE || new Set(deck).size !== DECK_SIZE || !deck.every(isCard)) return null;
   const st = {
@@ -220,7 +241,7 @@ function firstToAct(st, from) {
   for (let k = 0; k < n; k++) {
     const i = (from + k) % n;
     const s = st.seats[i];
-    if (canAct(s) && (s.bet < st.currentBet || (!s.acted && bettors >= 2))) return i;
+    if (canAct(s) && (owedBy(st, i) > 0 || (!s.acted && bettors >= 2))) return i;
   }
   return -1;
 }
@@ -237,7 +258,7 @@ const live = (st) => st.seats.filter((s) => !s.folded);
 export function legalActions(st, seat) {
   if (!st || st.result || st.toAct !== seat) return null;
   const s = st.seats[seat];
-  const owe = st.currentBet - s.bet;
+  const owe = owedBy(st, seat);
   const call = Math.min(owe, s.stack);
   const reach = s.bet + s.stack;   // all-in, as a total this round
   // A seat that acted may raise again only when the raising since its action adds up to a full raise.
@@ -271,7 +292,7 @@ export function act(st, seat, action) {
     }
     case 'raise': {
       const to = action.to;
-      if (!legal.raise || !Number.isInteger(to) || to < legal.raise.min || to > legal.raise.max) return null;
+      if (!legal.raise || !chips(to) || to < legal.raise.min || to > legal.raise.max) return null;
       const put = to - s.bet;
       s.stack -= put; s.bet = to; s.total += put;
       if (!s.stack) s.allIn = true;

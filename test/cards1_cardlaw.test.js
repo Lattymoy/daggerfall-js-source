@@ -49,7 +49,8 @@ test('CARDS1 the shuffle: Fisher-Yates from the top, each partner drawn 0..i, th
   // i=3 draws 5 % 4 = 1 (swap 3,1); i=2's first draw, 2^32-1, sits past the largest multiple of 3 and is thrown back,
   // 7 % 3 = 1 (swap 2,1); i=1 draws 1 % 2 = 1 (itself).
   assert.deepEqual(shuffleDeck(script([5, 0xFFFFFFFF, 7, 1]), [0, 1, 2, 3]), [0, 2, 3, 1]);
-  // A partner drawn from 0..i, never 0..i-1: an all-zero source sends every card to the bottom once, in turn.
+  // An all-zero source swaps each top card with the bottom one, in turn (AUDIT CARDS A4: this alone cannot tell 0..i
+  // from 0..i-1 - zero is in both); the partner's range is the next line's: drawing i itself leaves each card where it is.
   assert.deepEqual(shuffleDeck(() => 0, [0, 1, 2, 3]), [1, 2, 3, 0]);
   assert.deepEqual(shuffleDeck(script([3, 2, 1]), [0, 1, 2, 3]), [0, 1, 2, 3]);
   const box = freshDeck();
@@ -124,6 +125,9 @@ test('CARDS1 the pots by contribution: layers, folded chips, the uncalled bet', 
   assert.deepEqual(sidePots([40, 100, 100, 70], [false, false, false, true]),
     [{ amount: 160, eligible: [0, 1, 2] }, { amount: 150, eligible: [1, 2] }]);
   assert.deepEqual(sidePots([0, 0], [false, false]), []);
+  // AUDIT CARDS E6: a layer nobody still in reached (a seat that left the table folded above the rest - CARDS5's fold
+  // out of turn) joins the pot below it, never a pot nobody can win.
+  assert.deepEqual(sidePots([100, 50, 50], [true, false, false]), [{ amount: 200, eligible: [1, 2] }]);
 });
 
 test('CARDS1 the blinds and the deal: heads-up the button posts small; the deal from the seat left of it', () => {
@@ -146,7 +150,39 @@ test('CARDS1 the blinds and the deal: heads-up the button posts small; the deal 
     table([1000, 1000], { sb: 10, bb: 5 }), table([1000, 1000], { button: 2 })])
     assert.equal(newHand({ ...bad, deck: freshDeck() }), null);
   assert.equal(newHand({ ...table([1000, 1000]), deck: freshDeck().slice(1) }), null);
+  // AUDIT CARDS A2/A3: refused, never thrown on - a sparse or a null seat, no seats at all, a nameless or a twice-named
+  // seat, a stack or a blind past a safe integer.
+  const two = () => table([1000, 1000]).seats;
+  for (const seats of [[, two()[1]], [null, two()[1]], { length: 2 }, [{ id: 'a', stack: 5 }, { id: 'a', stack: 5 }], [{ id: '', stack: 5 }, two()[1]],
+    [{ stack: 5 }, two()[1]], [{ id: { x: 1 }, stack: 5 }, two()[1]], [{ id: 'a', stack: 2 ** 54 }, two()[1]]])   // eslint-disable-line no-sparse-arrays
+    assert.equal(newHand({ ...table([1000, 1000]), seats, deck: freshDeck() }), null, JSON.stringify(seats));
+  assert.equal(newHand(), null);
+  assert.equal(newHand({ ...table([1000, 1000]), seats: { 0: { id: 'a', stack: 5 }, 1: { id: 'b', stack: 5 }, length: 2 }, deck: freshDeck() }), null, 'an array-like is no table');
+  assert.equal(newHand({ ...table([1000, 1000], { bb: 2 ** 54 }), deck: freshDeck() }), null);
   assert.equal(newHand({ ...table([1000, 1000]), deck: [...freshDeck().slice(1), 1] }), null);
+});
+
+test('CARDS1 a big blind all-in for less than the small blind: nothing left to call, the board runs out (AUDIT CARDS A1)', () => {
+  // Heads-up: the small blind has put in 5 against an all-in 3 - no action is owed, the hand runs to the showdown, the
+  // two the 3 cannot match go home.
+  const hu = newHand({ ...table([1000, 3]), deck: stacked({ button: 0, holes: [['As', 'Ah'], ['2c', '7d']], board: ['3h', '8s', '9d', 'Jc', 'Kd'] }) });
+  assert.equal(hu.street, 'showdown');
+  assert.deepEqual(hu.result.pots, [{ amount: 6, eligible: [0, 1], winners: [0] }, { amount: 2, eligible: [0], winners: [0] }]);
+  assert.deepEqual(hu.seats.map((s) => s.stack), [1003, 0]);
+  // Three-handed: the button still owes the full big blind (another seat can act); once it folds, the small blind owes
+  // nothing more against the all-in 3, and the board runs out.
+  let st = newHand({ ...table([1000, 1000, 3]), deck: freshDeck() });
+  assert.deepEqual(legalActions(st, 0), { seat: 0, fold: true, check: false, call: 10, raise: { min: 20, max: 1000 } });
+  st = play(st, [[0, 'fold']]);
+  assert.equal(st.street, 'showdown', 'the small blind is asked nothing');
+  assert.equal(st.seats.reduce((a, s) => a + s.stack, 0), 2003);
+  // Called instead, the small blind owes the rest of the full blind - the button can still act.
+  const called = play(newHand({ ...table([1000, 1000, 3]), deck: freshDeck() }), [[0, 'call']]);
+  assert.equal(legalActions(called, 1).call, 5);
+  // Heads-up, a big blind all-in for 7 - between the blinds: the small blind owes the 2 it does not cover, not the 5 the
+  // full blind would ask.
+  const between = newHand({ ...table([1000, 7]), deck: freshDeck() });
+  assert.deepEqual(legalActions(between, 0), { seat: 0, fold: true, check: false, call: 2, raise: null });
 });
 
 test('CARDS1 the big blind\'s option, a check-down, the showdown', () => {

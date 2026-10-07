@@ -203,7 +203,7 @@ import { buildTrainingFlow, buildRefinedTrainingFlow, buildDonationFlow, buildCu
 import { preloadListPickerArt } from '../ui/listPicker.js';
 import { getTitle } from '../systems/guilds.js';
 import { getDivine, DIVINES } from '../systems/guildVariants.js';
-import { cardTableSeats, nearestFreeSeat, seatFloorOk, leavesSeat, SEAT_FLOOR_PROBE } from '../world/cardTables.js';   // CARDS2: the tavern's card table and its seats
+import { cardTableSeats, nearestFreeSeat, takenSeats, seatFloorOk, leavesSeat, SEAT_FLOOR_PROBE } from '../world/cardTables.js';   // CARDS2: the tavern's card table and its seats
 import { seatTopByte } from '../player/seatPose.js';   // CARDS2b: the seat on the pose
 import { registerPlayerHurtListener } from '../characters/playerEntity.js';   // CARDS2b: a hit stands you up
 import { BUILDING_TYPES, isResidence, isTavern } from '../world/buildingNames.js';   // ROAD-B B4: IsTavern joins IsResidence at the door latch
@@ -480,12 +480,12 @@ export function createWorldModes(host) {
   };
   const cardSeatsOf = (i) => {
     const t = interiorCtx?.tables?.[i];
-    return t ? (t.seats ??= cardTableSeats(t.aabb, seatProbe)) : [];   // the room never moves: probed once a visit
+    return t ? (t.seats ??= cardTableSeats(t, seatProbe)) : [];   // the room never moves: probed once a visit (AUDIT CARDS B6: round the table's own box, turned by its matrix)
   };
   function sitAtCardTable(i) {
     const seats = cardSeatsOf(i);
-    const k = nearestFreeSeat(seats, player.pos[0], player.pos[2]);
-    if (k < 0) return;
+    const k = nearestFreeSeat(seats, player.pos[0], player.pos[2], takenSeats(seats, host.seatedPeers?.() ?? []));   // AUDIT CARDS B3: another player's seat is theirs
+    if (k < 0) { say('Every seat at this table is taken.'); return; }
     const st = seats[k];
     cardSeat = { table: i, seat: k, eye: st.eye.slice(), feet: st.feet.slice(), yaw: st.yaw, top: st.top };
     cam.yaw = seats[k].yaw;
@@ -5937,7 +5937,7 @@ export function createWorldModes(host) {
    * the next line - so the sixth mode turns the suite red rather than
    * leaking a street.
    */
-  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; } };
+  const setMode = (next) => { dropDoorCache(); if (next !== mode) interiorWeapon.silenceTorch();   /* DISC6: the building's rig leaves the frame - its torch loop with it */ mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; cardSeat = null; } };   // CARDS2b (AUDIT CARDS B1): nobody stays seated outside a building - a load, a teleport, a death's respawn and the door alike
   function exteriorDoorTargets() {
     const gen = doorGeneration?.();
     if (gen !== undefined && _doorCache && _doorCache.gen === gen) return _doorCache;
@@ -7279,6 +7279,7 @@ export function createWorldModes(host) {
       // three PlayerActivate.cs:1120-1122 latches, committed with the
       // context and not before it.
       interiorBuilding = building;
+      cardSeat = null;   // CARDS2b (AUDIT CARDS B1): a new room seats nobody yet
       privateVisitRoom = restore?.privateRoom ?? null;
       privateVisitOwner = restore?.cabinOwner ?? null;
       interiorCabin = hit.sailingCabin ?? null;
@@ -8973,7 +8974,7 @@ export function createWorldModes(host) {
     // applyFallLanding charged the damage, a swimmer kept sinking, and
     // the crouch edge still toggled. dungeon.js:"${JSON.stringify(ctx.startMarker)}," is this same gate
     // ("no movers, no motor").
-    if (cardSeat && !overlayHeld && leavesSeat(mv, jumpHeld || !!player.toggleAutorun)) standFromCardTable();   // CARDS2: a step, a jump, the stick or the autorun latch stands you up - so a seated body has nothing to walk with
+    if (cardSeat && !overlayHeld && leavesSeat(mv, jumpHeld || !!player.toggleAutorun || swingKey)) standFromCardTable();   // CARDS2: a step, a jump, the stick or the autorun latch stands you up - so a seated body has nothing to walk with
     playerBlowFrame({ motor: player, entity: playerEntity, shake: (k) => betterAmbience.weaponKick(k), hurt: (n) => { hurtPlayer(playerEntity, n); flashPlayerDamage(n); surfacePlayer(); } });   // TELL6e: a landing's push, rattle, knockdown and bleed; AUDIT TELL L6: under a window too, as the street's hosts run it - a building's foes keep their clock there (WINFOE1), and a bleed its ticks, never all at once on the close
     if (!overlayHeld) {
       // Audit F3: crouch stays live while paralyzed (DFU gates movement/jump only)
@@ -9172,6 +9173,7 @@ export function createWorldModes(host) {
     // ticker above rides - a paused game runs no Update at all.
     if (!overlayHeld) host.encounterTick?.();
     cam.pos = player.eyeAt();   // EV1: the interpolated render eye
+    if (mode === 'interior' && cardSeat) cam.pos = cardSeat.eye.slice();   // CARDS2: the seated eye - before the death's sink and tilt (AUDIT CARDS B2), which take it from there
     // DC1: PlayerDeath.Update's camera sink; the fresh eye array keeps
     // it per-frame, never cumulative. AUDIT 39 (#36) added the dungeon
     // arm - the context registers its OWN death presenter for the whole
@@ -9183,7 +9185,6 @@ export function createWorldModes(host) {
     if (interiorOverlay instanceof DeathScreen) interiorOverlay.tiltView(cam);
     if (mode === 'dungeon') dungeonCtx?.deathTilt?.(cam);
     if (mode === 'interior') decorTool.cameraOverride(cam);   // DECOR1d: the free camera's eye, while a piece is placed
-    if (mode === 'interior' && cardSeat) cam.pos = cardSeat.eye.slice();   // CARDS2: the seated eye
     host.climbFeel?.frame(dt, overlayHeld);   // CLIMB4: the climb's camera, off this frame's motor (the world host's handle - one body) - AUDIT CLIMB-ARC F2/F4: held while the motor is
     // A8 - POINTER PARITY, THE FLAG AT THIS LINE RETIRED. Mouse0 is
     // DFU's ActivateCenterObject: the readied spell fires on its
@@ -10504,6 +10505,7 @@ export function createWorldModes(host) {
     // (UserInterfaceManager.cs:179-185), so the click never reaches
     // WeaponManager - and here it reached interceptAttack first, so a
     // readied spell was CAST by a right-click meant to remove an item.
+    if (cardSeat && isSwingButton(e.button) && !modalWindowUp()) { standFromCardTable(); return; }   // CARDS2b (AUDIT CARDS B5): seated, the swing stands you up - a blow from the capsule's eye, not the seat's, is no blow
     if (isSwingButton(e.button) && !modalWindowUp()) modalAttackSink()?.(0, 0, true);
   });
 

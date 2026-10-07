@@ -8,52 +8,51 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  CARD_TABLE_MODELS, isCardTableModel, SEAT_SPACING, SEAT_SIDE_MIN, SEAT_OUT, SEAT_SURFACE_MAX,
-  seatSpots, cardTableSeats, nearestFreeSeat, seatFloorOk, leavesSeat, yawToward,
+  CARD_TABLE_MODELS, isCardTableModel, SEAT_SPACING, SEAT_SIDE_MIN, SEAT_SURFACE_MAX, SEAT_TAKEN_RADIUS,
+  seatSpots, cardTableSeats, nearestFreeSeat, takenSeats, seatFloorOk, leavesSeat, yawToward,
 } from '../src/world/cardTables.js';
 import { tavernFurniture } from '../tools/cardTableCensus.mjs';
-import { SEATED_EYE_HEIGHT } from '../src/player/seatPose.js';
+import { SEATED_EYE_HEIGHT, SEAT_OUT } from '../src/player/seatPose.js';
+import { trs } from '../src/world/mat4.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const box = (x1, z1, y0 = 0, top = 0.8) => ({ min: [0, y0, 0], max: [x1, top, z1] });
 const round = (v) => Math.round(v * 1e6) / 1e6;
-const at = (s) => [round(s.x), round(s.z), s.side];
+const at = (s) => [round(s.lx), round(s.lz), s.side, s.nx, s.nz];
 
 test('CARDS2 the table\'s ids: 41130, the one table this tree can name', () => {
   assert.deepEqual([...CARD_TABLE_MODELS], [41130]);
   assert.deepEqual([41130, 41100, 41106, 41000].map(isCardTableModel), [true, false, false, false], 'a chair, a bench, a bed are no table');
-  assert.deepEqual([SEAT_SPACING, SEAT_SIDE_MIN, SEAT_OUT, round(SEATED_EYE_HEIGHT), SEAT_SURFACE_MAX], [0.75, 0.6, 0.45, 1.22, 0.55], 'the seated eye the seated body\'s head (seatPose.js)');
+  assert.deepEqual([SEAT_SPACING, SEAT_SIDE_MIN, SEAT_OUT, round(SEATED_EYE_HEIGHT), SEAT_SURFACE_MAX, SEAT_TAKEN_RADIUS], [0.75, 0.6, 0.35, 1.22, 0.55, 0.3], 'the seated eye the seated body\'s head, the sitter\'s distance its own (seatPose.js)');
 });
 
-test('CARDS2 the seats a table\'s box holds: as many as fit along each side, out from its edge, in a fixed order', () => {
+test('CARDS2 the seats a table\'s own box holds: as many as fit along each side, out from its edge, each with its side\'s inward way, in a fixed order', () => {
   // Two metres by one: one seat at each end, two along each long side.
   assert.deepEqual(seatSpots(box(2, 1)).map(at), [
-    [2.45, 0.5, '+x'], [-0.45, 0.5, '-x'], [0.5, 1.45, '+z'], [1.5, 1.45, '+z'], [0.5, -0.45, '-z'], [1.5, -0.45, '-z'],
+    [2.35, 0.5, '+x', -1, 0], [-0.35, 0.5, '-x', 1, 0], [0.5, 1.35, '+z', 0, -1], [1.5, 1.35, '+z', 0, -1], [0.5, -0.35, '-z', 0, 1], [1.5, -0.35, '-z', 0, 1],
   ]);
-  assert.ok(seatSpots(box(2, 1)).every((s) => s.floorY === 0), 'on the floor the table stands on');
   // A side shorter than SEAT_SIDE_MIN seats nobody; one just long enough seats one.
   assert.deepEqual(seatSpots(box(2, 0.5)).map((s) => s.side), ['+z', '+z', '-z', '-z']);
   assert.deepEqual(seatSpots(box(0.6, 0.6)).map((s) => s.side), ['+x', '-x', '+z', '-z']);
   assert.deepEqual(seatSpots(box(0.5, 0.5)), []);
 });
 
-test('CARDS2 the seats kept: the probe\'s veto, the seated eye looking at the table\'s middle, two at least', () => {
-  const t = { min: [0, 0.2, 0], max: [2, 1, 1] };
+test('CARDS2 the seats kept: the probe\'s veto, each seat square to its side, the eye looking down at the top, two at least', () => {
+  const t = { aabb: { min: [0, 0.2, 0], max: [2, 1, 1] } };
   const all = cardTableSeats(t, () => true);
   assert.equal(all.length, 6);
   const end = all[0];
-  assert.deepEqual(end.eye.map(round), [2.45, 1.42, 0.5]);
-  assert.deepEqual([end.feet.map(round), round(end.top)], [[2.45, 0.2, 0.5], 0.8], 'CARDS2b: the body\'s feet on the floor, the top above them');
-  assert.equal(round(end.yaw), round(-Math.PI / 2), 'the +x end looks down -x, at the middle');
-  assert.equal(round(end.pitch), round(Math.atan2(1 - 1.42, 1.45)), 'down at the table\'s top');
-  for (const s of all) {
-    const l = Math.hypot(1 - s.eye[0], 0.5 - s.eye[2]);
-    assert.deepEqual([round(Math.sin(s.yaw)), round(Math.cos(s.yaw))], [round((1 - s.eye[0]) / l), round((0.5 - s.eye[2]) / l)], `${s.side} looks at the middle`);
-  }
+  assert.deepEqual(end.eye.map(round), [2.35, 1.42, 0.5]);
+  assert.deepEqual([end.feet.map(round), round(end.top), end.floorY], [[2.35, 0.2, 0.5], 0.8, 0.2], 'the body\'s feet on the floor, the top above them');
+  assert.equal(round(end.pitch), round(Math.atan2(1 - 1.42, 1.35)), 'down at the table\'s top');
+  // AUDIT CARDS D3: square to its side, never turned to the middle - the +x end faces -x, a +z seat -z, a -z seat +z.
+  assert.deepEqual(all.map((s) => [s.side, round(Math.sin(s.yaw)), round(Math.cos(s.yaw))]), [
+    ['+x', -1, 0], ['-x', 1, 0], ['+z', 0, -1], ['+z', 0, -1], ['-z', 0, 1], ['-z', 0, 1],
+  ]);
   // The probe is asked from the table's middle at the eye's height to the eye.
   const asked = [];
   cardTableSeats(t, (from, to) => { asked.push([from.map(round), to.map(round)]); return true; });
-  assert.deepEqual(asked[0], [[1, 1.42, 0.5], [2.45, 1.42, 0.5]]);
+  assert.deepEqual(asked[0], [[1, 1.42, 0.5], [2.35, 1.42, 0.5]]);
   // A wall along both ends: four left.
   assert.deepEqual(cardTableSeats(t, (f, to) => to[0] > 0 && to[0] < 2).map((s) => s.side), ['+z', '+z', '-z', '-z']);
   // One seat left is no card table.
@@ -61,11 +60,37 @@ test('CARDS2 the seats kept: the probe\'s veto, the seated eye looking at the ta
   assert.equal(cardTableSeats(t, (f, to) => to[0] > 2 || to[0] < 0).length, 2);
 });
 
+test('CARDS2 a table turned off the square seats round its own box, not its world box\'s bulge (AUDIT CARDS B6)', () => {
+  // A 2 x 1 table turned 45 degrees about the vertical, at (10, 0, 20): its world box is a 2.12 m square.
+  const m = trs(10, 0, 20, 0, 45, 0);
+  const box2 = { min: [-1, 0, -0.5], max: [1, 0.8, 0.5] };
+  const corners = [[-1, -0.5], [1, -0.5], [-1, 0.5], [1, 0.5]].map(([x, z]) => [m[0] * x + m[8] * z + m[12], m[2] * x + m[10] * z + m[14]]);
+  const aabb = { min: [Math.min(...corners.map((c) => c[0])), 0, Math.min(...corners.map((c) => c[1]))], max: [Math.max(...corners.map((c) => c[0])), 0.8, Math.max(...corners.map((c) => c[1]))] };
+  const seats = cardTableSeats({ aabb, box: box2, matrix: m }, () => true);
+  assert.equal(seats.length, 6);
+  // Each seat SEAT_OUT from its own side: the ends 1 + 0.35 from the middle, the long sides' seats 0.5 + 0.35 across.
+  const d = (s) => round(Math.hypot(s.x - 10, s.z - 20));
+  assert.deepEqual(seats.map(d), [1.35, 1.35, round(Math.hypot(0.5, 0.85)), round(Math.hypot(0.5, 0.85)), round(Math.hypot(0.5, 0.85)), round(Math.hypot(0.5, 0.85))]);
+  // ...and each faces the table's middle square to its side - for an end seat, straight at the middle.
+  const e = seats[0];
+  assert.deepEqual([round(Math.sin(e.yaw)), round(Math.cos(e.yaw))], [round((10 - e.x) / 1.35), round((20 - e.z) / 1.35)]);
+  // The world box alone would have stood them round the bulge, up to SEAT_OUT + 0.56 from the table.
+  assert.ok(cardTableSeats({ aabb }, () => true).some((s) => Math.hypot(s.x - 10, s.z - 20) > 1.5));
+});
+
 test('CARDS2 a long table keeps six, taken round the sides in turn', () => {
-  const long = cardTableSeats(box(4, 1), () => true);
+  const long = cardTableSeats({ aabb: box(4, 1) }, () => true);
   assert.deepEqual(long.map((s) => s.side), ['+x', '-x', '+z', '+z', '-z', '-z']);
   assert.deepEqual(long.filter((s) => s.side === '+z').map((s) => round(s.x)), [0.4, 1.2], 'the first along each side, in its own order');
   assert.equal(seatSpots(box(4, 1)).length, 12);
+});
+
+test('CARDS2 another player\'s seat is taken (AUDIT CARDS B3)', () => {
+  const seats = [{ x: 0, z: 0 }, { x: 2, z: 0 }, { x: 2, z: 2 }];
+  assert.deepEqual(takenSeats(seats, [[2.1, 5, 0.2], [9, 0, 9]]), [1], 'within 0.3 m on the ground, whatever the height');
+  assert.deepEqual(takenSeats(seats, [[2, 0, 0.31]]), []);
+  assert.deepEqual(takenSeats(seats, []), []);
+  assert.equal(nearestFreeSeat(seats, 1.9, 0.2, takenSeats(seats, [[2, 0, 0]])), 2);
 });
 
 test('CARDS2 the nearest free seat; something to sit over; what stands you up; the yaw\'s own law', () => {
@@ -74,8 +99,10 @@ test('CARDS2 the nearest free seat; something to sit over; what stands you up; t
   assert.equal(nearestFreeSeat(seats, 1.9, 0.2, [1]), 2);
   assert.equal(nearestFreeSeat(seats, 1.9, 0.2, [0, 1, 2]), -1);
   assert.equal(nearestFreeSeat([], 0, 0), -1);
-  // The floor (1.22 down), a chair's seat (0.67 down) - not a table's top, not the air, not a drop.
-  assert.deepEqual([1.22, 0.67, 0.66, Infinity, 2.01, NaN].map(seatFloorOk), [true, true, false, false, false, false]);
+  // The floor (1.22 down), a chair's seat (SEAT_SURFACE_MAX under the eye's drop - the boundary itself, AUDIT CARDS E7)
+  // - not a table's top, not the air, not a drop.
+  const edge = SEATED_EYE_HEIGHT - SEAT_SURFACE_MAX;
+  assert.deepEqual([1.22, edge, edge - 1e-9, Infinity, 2, 2.01, NaN].map(seatFloorOk), [true, true, false, false, true, false, false]);
   assert.deepEqual([
     [{}, false], [{ forwards: true }, false], [{ backwards: true }, false], [{ left: true }, false], [{ right: true }, false],
     [{}, true], [{ analog: { x: 0.1, y: 0.1 } }, false], [{ analog: { x: 0, y: 0.5 } }, false], [null, false],
@@ -107,7 +134,7 @@ test('CARDS2 the census: the tavern\'s props in the furniture range, counted, si
 test('CARDS2 the interior context lists its card tables, a prop like the furniture after it', () => {
   const src = read('src/scenes/interiorContext.js');
   const gate = src.indexOf('    if (p.objectType !== PROP_MODEL_TYPE) continue;');
-  const push = src.indexOf('    if (isCardTableModel(classicModelIdOf(p.modelIdNum))) tables.push({ aabb, matrix, modelIdNum: p.modelIdNum });');
+  const push = src.indexOf('    if (isCardTableModel(classicModelIdOf(p.modelIdNum))) { const b = localAabb(cpu.positions); tables.push({ aabb, box: { min: b.slice(0, 3), max: b.slice(3) }, matrix, modelIdNum: p.modelIdNum }); }');
   assert.ok(gate > 0 && push > gate, 'behind the prop gate - a non-prop table model is scenery, as a non-prop shelf is');
   assert.match(src, /^ {4}tables, {4}\/\/ CARDS2: the card tables$/m);
 });
@@ -120,11 +147,21 @@ test('CARDS2 the interior host\'s seat: the target, the press, the stand, the he
   has("        sitAtCardTable(Number(key.split(':')[1]));   // CARDS2");
   has("    if (cardSeat) { standFromCardTable(); return true; }", 'the press stands you up first');
   has('  function tryExit({ pressCast = false } = {}) {\n    if (cardSeat) { standFromCardTable(); return true; }', 'first in the press, before the ray');
-  const leave = src.indexOf('    if (cardSeat && !overlayHeld && leavesSeat(mv, jumpHeld || !!player.toggleAutorun)) standFromCardTable();');
-  assert.ok(leave > 0 && leave < src.indexOf('      player.update(dt, paralyzed ? {'), 'whatever would move the body stands it up first');
-  const over = src.indexOf("    if (mode === 'interior') decorTool.cameraOverride(cam);");
+  const leave = src.indexOf('    if (cardSeat && !overlayHeld && leavesSeat(mv, jumpHeld || !!player.toggleAutorun || swingKey)) standFromCardTable();');
+  assert.ok(leave > 0 && leave < src.indexOf('      player.update(dt, paralyzed ? {'), 'whatever would move the body - or swing from it - stands it up first');
+  const swing = src.indexOf("    if (cardSeat && isSwingButton(e.button) && !modalWindowUp()) { standFromCardTable(); return; }");
+  assert.ok(swing > 0 && swing < src.indexOf("    if (isSwingButton(e.button) && !modalWindowUp()) modalAttackSink()?.(0, 0, true);"), 'AUDIT CARDS B5: the swing button stands you up, and swings nothing');
+  // AUDIT CARDS B2: the seated eye straight after the body's, BEFORE the death's sink and tilt, which take it from there
+  has("    cam.pos = player.eyeAt();   // EV1: the interpolated render eye\n    if (mode === 'interior' && cardSeat) cam.pos = cardSeat.eye.slice();", 'the seated eye after the body\'s');
   const seat = src.indexOf("    if (mode === 'interior' && cardSeat) cam.pos = cardSeat.eye.slice();");
-  assert.ok(over > 0 && seat > over, 'the seated eye after the body\'s and the decorator\'s');
+  assert.ok(seat > 0 && seat < src.indexOf('    if (interiorOverlay instanceof DeathScreen) cam.pos[1] -= interiorOverlay.drop;'), 'and before the death\'s sink');
+  // AUDIT CARDS E1: standing up does what it says - the slot empties and the eye goes home
+  has("  function standFromCardTable() {\n    if (!cardSeat) return;\n    cardSeat = null;\n    cam.pos = player.eyeAt();", 'the stand empties the seat and gives the body its eye back');
+  // AUDIT CARDS B1: every road out of a building empties the seat - the mode's change (a load, a teleport, a respawn), a new room
+  has("mode = next; if (next !== 'interior') { privateVisitRoom = null; privateVisitOwner = null; cardSeat = null; } };", 'the mode leaving the interior empties the seat');
+  has("      interiorBuilding = building;\n      cardSeat = null;", 'a new room seats nobody');
+  has("    const k = nearestFreeSeat(seats, player.pos[0], player.pos[2], takenSeats(seats, host.seatedPeers?.() ?? []));", 'AUDIT CARDS B3: another player\'s seat is taken');
+  has("    return t ? (t.seats ??= cardTableSeats(t, seatProbe)) : [];", 'AUDIT CARDS B6: the whole table - its own box and its turn - to the seats');
   has("    if (cardSeat) mwv.eye = cam.pos;   // CARDS2: seated, the seat's own view - first person (Tavern-Cards.md section 2)\n    const view = betterAmbience.view(", 'the seat\'s own view, first person, the last word on the eye');
   has("    cardSeat = null;   // CARDS2: and nobody stays seated in a room they left");
   has("(key) => (typeof key === 'string' && key.startsWith('cardtable:') ? { title: 'Card table' } : null)");

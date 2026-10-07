@@ -42,6 +42,7 @@
 import { lookAt, multiply, ortho, perspective, transformPoint, trs, wrapAngle } from '../world/mat4.js';
 import { ClimbPose } from '../player/climbPose.js';   // CLIMB6: the climb's limbs, in the world
 import { climbRequestToRig, climbRequestToFirstPerson } from './climbRig.js';   // CLIMB6: ...and in each rig's space
+import { seatRequestFor } from '../player/seatPose.js';   // CARDS2b: the seat in the rig's space
 import { fieldOfView } from '../ui/viewSettings.js';   // CLIMB6: the world lens the arm's hands are matched to
 import { MW_ARM_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import {
@@ -3394,16 +3395,16 @@ export function createFpArm() {
    *  hosts draw it at (drawThird: bodyFeetAt, bodyYawFor), the race's scales its own. Off the wall the last request
    *  fades with the law's weight, held where it was on the body (the hands leave the stone with it). */
   /** CARDS2b: the SEAT's request in the rig - the climb rig's own solver over player/seatPose.js's world request
-   *  (`cam.seat`: { origin, yaw, req }), the hips on the chair and the hands on the table. A seated body never climbs,
-   *  so the seat rides the climb's slot: thirdClimb answers it whenever no climb holds the body. */
+   *  (`cam.seat`: { feet, yaw, top }), the hips on the chair and the hands on the table. A seated body never climbs, so
+   *  the seat rides the climb's slot - and it wins it: a climb still easing out (climbLast, for up to its OUT_TAU tail)
+   *  never holds a body that has sat down (AUDIT CARDS D5). */
   function thirdSeat(cam) {
-    const s = cam && cam.seat;
-    if (!s || !s.req || !s.origin) return null;
     const rs = (built && built.raceScale) || { weight: 1, height: 1 };
-    return climbRequestToRig(s.req, { feet: s.origin, yaw: s.yaw, unitsPerMetre: MW_UNITS_PER_METER, weight: rs.weight, height: rs.height });
+    return seatRequestFor(cam && cam.seat, { unitsPerMetre: MW_UNITS_PER_METER, weight: rs.weight, height: rs.height });   // AUDIT CARDS D2: at this body's race
   }
   function thirdClimb(cw, cam) {
-    if (!(cw && cw.w > 0)) { climbLast = null; return thirdSeat(cam); }   // CARDS2b: no climb - the seat, if one holds the body
+    if (cam && cam.seat) { climbLast = null; return thirdSeat(cam); }   // CARDS2b: seated - the seat, over any climb's tail
+    if (!(cw && cw.w > 0)) { climbLast = null; return null; }
     const snap = cam && cam.climb;
     if (snap && snap.feet) {
       const rs = (built && built.raceScale) || { weight: 1, height: 1 };

@@ -63,10 +63,10 @@
     ]
   },
   {
-    "name": "SB-hands-far",
+    "name": "SB-hands-on-the-edge",
     "file": "src/player/seatPose.js",
-    "old": "export const SEAT_HAND_AHEAD = 0.45;",
-    "new": "export const SEAT_HAND_AHEAD = 0.55;",
+    "old": "export const SEAT_HAND_ON = 0.1;",
+    "new": "export const SEAT_HAND_ON = 0;",
     "tests": [
       "test/cards2b_seated.test.js"
     ]
@@ -110,8 +110,35 @@
   {
     "name": "SB-hips-not-dropped",
     "file": "src/player/seatPose.js",
-    "old": "      offset: [0, -SEAT_HIP_DROP, 0],",
+    "old": "      offset: [0, -SEAT_HIP_DROP * h, 0],",
     "new": "      offset: null,",
+    "tests": [
+      "test/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-drop-unscaled",
+    "file": "src/player/seatPose.js",
+    "old": "      offset: [0, -SEAT_HIP_DROP * h, 0],",
+    "new": "      offset: [0, -SEAT_HIP_DROP, 0],",
+    "tests": [
+      "test/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-feet-by-height",
+    "file": "src/player/seatPose.js",
+    "old": "at(SEAT_FOOT_AHEAD * w, side * SEAT_FOOT_SIDE * w, SEAT_ANKLE * h)",
+    "new": "at(SEAT_FOOT_AHEAD * h, side * SEAT_FOOT_SIDE * w, SEAT_ANKLE * h)",
+    "tests": [
+      "test/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-hands-scaled",
+    "file": "src/player/seatPose.js",
+    "old": "at(SEAT_OUT + SEAT_HAND_ON, side * SEAT_HAND_SIDE * w, top + SEAT_HAND_OVER)",
+    "new": "at((SEAT_OUT + SEAT_HAND_ON) * h, side * SEAT_HAND_SIDE * w, top + SEAT_HAND_OVER)",
     "tests": [
       "test/cards2b_seated.test.js"
     ]
@@ -119,8 +146,26 @@
   {
     "name": "SB-hands-under",
     "file": "src/player/seatPose.js",
-    "old": "at(SEAT_HAND_AHEAD, side * SEAT_HAND_SIDE, top + SEAT_HAND_OVER)",
-    "new": "at(SEAT_HAND_AHEAD, side * SEAT_HAND_SIDE, SEAT_HAND_OVER)",
+    "old": "at(SEAT_OUT + SEAT_HAND_ON, side * SEAT_HAND_SIDE * w, top + SEAT_HAND_OVER)",
+    "new": "at(SEAT_OUT + SEAT_HAND_ON, side * SEAT_HAND_SIDE * w, SEAT_HAND_OVER)",
+    "tests": [
+      "test/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-request-no-race",
+    "file": "src/player/seatPose.js",
+    "old": "  const s = seatRigInput(seat.feet, seat.yaw, seat.top, { weight, height });",
+    "new": "  const s = seatRigInput(seat.feet, seat.yaw, seat.top);",
+    "tests": [
+      "test/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-request-no-seat-guard",
+    "file": "src/player/seatPose.js",
+    "old": "  if (!seat || !seat.feet) return null;",
+    "new": "  if (!seat) return null;",
     "tests": [
       "test/cards2b_seated.test.js"
     ]
@@ -171,6 +216,15 @@
     ]
   },
   {
+    "name": "SB-sit-slides",
+    "file": "src/net/online.js",
+    "old": "  const k = (!!from.st !== !!to.st) || t > 1 ? 1 : t < 0 ? 0 : t;",
+    "new": "  const k = t > 1 ? 1 : t < 0 ? 0 : t;",
+    "tests": [
+      "test/cards2b_seated.test.js"
+    ]
+  },
+  {
     "name": "SB-peer-unseated",
     "file": "src/net/peerBodies.js",
     "old": "    b.cam.seat = peer.shown.st ? seatFor(b, f, b.yaw, peer.shown.st) : null;",
@@ -183,7 +237,25 @@
     "name": "SB-peer-never-rebuilt",
     "file": "src/net/peerBodies.js",
     "old": "  if (b.seatKey !== key) { b.seatKey = key;",
-    "new": "  if (!b.seatReq) { b.seatKey = key;",
+    "new": "  if (!b.seatSpec) { b.seatKey = key;",
+    "tests": [
+      "test/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-peer-key-no-st",
+    "file": "src/net/peerBodies.js",
+    "old": "${yaw.toFixed(3)},${st}`;",
+    "new": "${yaw.toFixed(3)}`;",
+    "tests": [
+      "test/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-peer-key-no-yaw",
+    "file": "src/net/peerBodies.js",
+    "old": "${f[2].toFixed(2)},${yaw.toFixed(3)},${st}`;",
+    "new": "${f[2].toFixed(2)},${st}`;",
     "tests": [
       "test/cards2b_seated.test.js"
     ]
@@ -191,17 +263,17 @@
   {
     "name": "SB-peer-top-default",
     "file": "src/net/peerBodies.js",
-    "old": "b.seatReq = seatRigInput(f, yaw, seatTopOf(st));",
-    "new": "b.seatReq = seatRigInput(f, yaw);",
+    "old": "top: seatTopOf(st) };",
+    "new": "top: undefined };",
     "tests": [
       "test/cards2b_seated.test.js"
     ]
   },
   {
-    "name": "SB-peer-walks-in",
-    "file": "src/net/peerBodies.js",
-    "old": "  const moving = peerMoving(shown) && !shown.st;",
-    "new": "  const moving = peerMoving(shown);",
+    "name": "SB-sitter-walks",
+    "file": "src/net/peerClimb.js",
+    "old": "!peerClimbing(shown) && !shown?.st;",
+    "new": "!peerClimbing(shown);",
     "tests": [
       "test/cards2b_seated.test.js"
     ]
@@ -236,8 +308,17 @@
   {
     "name": "SB-arm-no-seat",
     "file": "src/combat/fpArm.js",
-    "old": "    if (!(cw && cw.w > 0)) { climbLast = null; return thirdSeat(cam); }",
-    "new": "    if (!(cw && cw.w > 0)) { climbLast = null; return null; }",
+    "old": "    if (cam && cam.seat) { climbLast = null; return thirdSeat(cam); }   // CARDS2b",
+    "new": "    // CARDS2b",
+    "tests": [
+      "test/cards2b_seated.test.js"
+    ]
+  },
+  {
+    "name": "SB-arm-no-race",
+    "file": "src/combat/fpArm.js",
+    "old": "return seatRequestFor(cam && cam.seat, { unitsPerMetre: MW_UNITS_PER_METER, weight: rs.weight, height: rs.height });",
+    "new": "return seatRequestFor(cam && cam.seat, { unitsPerMetre: MW_UNITS_PER_METER });",
     "tests": [
       "test/cards2b_seated.test.js"
     ]
@@ -261,13 +342,12 @@
     ]
   },
   {
-    "name": "SB-seat-top-of-floor",
-    "file": "src/world/cardTables.js",
-    "old": "top: mid[1] - s.floorY,",
-    "new": "top: mid[1],",
+    "name": "SB-host-no-peer-seats",
+    "file": "src/scenes/world.js",
+    "old": "    seatedPeers: () => (peersNear() ?? []).filter((p) => p.st).map((p) => p.feet),",
+    "new": "",
     "tests": [
-      "test/cards2b_seated.test.js",
-      "test/cards2_seat.test.js"
+      "test/cards2b_seated.test.js"
     ]
   }
 ]

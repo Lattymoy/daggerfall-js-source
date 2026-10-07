@@ -237,7 +237,9 @@ const lerpAngle = (a, b, t) => a + wrapAngle(b - a) * t;
 /** The pose between two, t in 0..1 (the yaw by the shorter arc). */
 export function lerpPose(from, to, t) {
   if (!from) return { ...to };
-  const k = t < 0 ? 0 : t > 1 ? 1 : t;
+  // CARDS2b (AUDIT CARDS D6): a sit or a stand is a place taken, not a walk - the seated body drawn sliding to its chair
+  // (the seat on at once, the feet still easing) was neither
+  const k = (!!from.st !== !!to.st) || t > 1 ? 1 : t < 0 ? 0 : t;
   return {
     x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k, z: from.z + (to.z - from.z) * k,
     yaw: lerpAngle(from.yaw, to.yaw, k), pitch: from.pitch + (to.pitch - from.pitch) * k, mv: to.mv,

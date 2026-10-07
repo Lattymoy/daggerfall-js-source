@@ -32,6 +32,7 @@ import { isHouseContainerModel } from '../systems/containers.js';
 import { isShopShelfModel } from '../systems/shopStock.js';   // E2
 import { isBedModel } from '../systems/rrRealism.js';   // RR1: the three bed models a click may rest on
 import { isCardTableModel } from '../world/cardTables.js';   // CARDS2
+import { localAabb } from '../render/frustum.js';   // AUDIT CARDS B6: a card table's own box
 import { classicModelIdOf } from '../world/customModels.js';   // WD3: an alias is its classic model to the beds' test
 import { LADDER_MODEL_ID } from '../player/enterExit.js';
 import { MACHINERY_MODEL_ID } from '../world/windmillMesh.js';   // WM4b: the mill's machinery and its moving parts
@@ -429,7 +430,7 @@ export async function buildInteriorContext(deps, dfBlock, blockIndex, recordInde
     // for, so it is not ported.) A non-prop shelf/wardrobe model was a
     // lootable container here where DFU leaves it as geometry.
     if (p.objectType !== PROP_MODEL_TYPE) continue;
-    if (isCardTableModel(classicModelIdOf(p.modelIdNum))) tables.push({ aabb, matrix, modelIdNum: p.modelIdNum });   // CARDS2: a prop, like the furniture below
+    if (isCardTableModel(classicModelIdOf(p.modelIdNum))) { const b = localAabb(cpu.positions); tables.push({ aabb, box: { min: b.slice(0, 3), max: b.slice(3) }, matrix, modelIdNum: p.modelIdNum }); }   // CARDS2: a prop, like the furniture below; AUDIT CARDS B6: its own box and its turn, so its seats stand round the table and not round the world box's bulge
     const had = [containers.length, shelves.length, beds.length];   // BASE-HIDE: which list this piece lands in, if any
     if (isShopShelfModel(p.modelIdNum)) {
       if (opts.houseOwned) {

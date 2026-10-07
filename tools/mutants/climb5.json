@@ -182,8 +182,8 @@
   {
     "name": "CLIMB5-peer-walks-on-the-wall",
     "file": "src/net/peerClimb.js",
-    "old": "export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown);",
-    "new": "export const peerMoving = (shown) => !!shown?.mv;",
+    "old": "export const peerMoving = (shown) => !!shown?.mv && !peerClimbing(shown) && !shown?.st;",
+    "new": "export const peerMoving = (shown) => !!shown?.mv && !shown?.st;",
     "tests": [
       "test/climb5.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "CLIMB5-body-camera-walks-on-the-wall",
     "file": "src/net/peerBodies.js",
-    "old": "const moving = peerMoving(shown) && !shown.st;   // CLIMB5: a shimmy along a lip is no walk",
-    "new": "const moving = !!shown.mv && !shown.st;   // CLIMB5: a shimmy along a lip is no walk",
+    "old": "const moving = peerMoving(shown);   // CLIMB5: a shimmy along a lip is no walk",
+    "new": "const moving = !!shown.mv;   // CLIMB5: a shimmy along a lip is no walk",
     "tests": [
       "test/climb5.test.js"
     ]

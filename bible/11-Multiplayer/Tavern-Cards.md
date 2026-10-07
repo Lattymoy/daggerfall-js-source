@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, mine and the others', on relay world176. Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, the others' to see, on relay world176; AUDIT CARDS over all of it the same day (section 13, `01-Overview/Audit-Cards.md`). Mac answered
 four of section 9's five questions the same day; the card art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -206,9 +206,10 @@ or deals yet; the relay (CARDS5) and the patrons (CARDS4) will read it.
   unbiased draw. ONE HOME: the rejection sample that lived inside `rollDice` is now `drawBelow(m, rand32)` in
   `net/dice.js`, `rollDice` and `shuffleDeck` both call it, and the test sweeps `cardLaw.js` for a second `2 ** 32`.
   The two dice mutants on those lines (`DC-rejection-dropped`, `DC-face-off-by-one`) were re-aimed by content and
-  still die (31 of 31). `net/dice.js` is relay law, so its bytes moved the relay's hash: `world175` (TEXT-F1, NOT YET
-  DEPLOYED) was re-hashed in place in `test/relayversion.test.js`, the way AUDIT 657 and LEGACY7 re-hashed undeployed
-  rows - no roll changed, so no new version.
+  still die (31 of 31). `net/dice.js` is relay law, so its bytes moved the relay's hash. **AUDIT CARDS C1 corrected
+  this record:** CARDS1 re-hashed `world175` in place calling it undeployed - it was LIVE (the relay's `/health`
+  answered world175; relay-deploy.yml deploys every push to main that moves RELAY_VERSION), so its row was restored
+  byte for byte and the lift rides world176, CARDS2b's version.
 - **The hand's rank** (`rankFive`, `bestHand`, `compareHands`): nine categories, each with its tie-break ranks, the
   wheel topped by its five, no straight round the corner, the best five of seven by trying all twenty-one.
 - **The pots** (`sidePots`): a layer per level some seat put in, contested by the seats still in that reached it; a
@@ -260,7 +261,10 @@ Mac: **"Continue"**.
   law and by source. The first eye on it is Mac's, with the census.
 - **Pins:** `test/cards2_seat.test.js`, 8 tests. `tools/mutants/cards2.json`: 38, 38 dead; the one first-pass
   survivor was a finite guard the upper bound already made, and it was deleted rather than pinned.
-- **Ledger:** section A row TAVERN CARDS, narrowed to say CARDS2 landed and CARDS2b is open.
+- **Ledger:** section A row TAVERN CARDS, narrowed to say CARDS2 landed and CARDS2b is open (CARDS2b landed after
+  it; section 12). Superseded since: the seated eye is 1.22 m (CARDS2b, the seated head's), the seats stand 0.35 m
+  out, square to their side and round the table's own box, and "the nearest free seat" counts the others' (AUDIT
+  CARDS, section 13).
 
 ## 12. CARDS2b (2026-10-07): the seated body
 
@@ -268,9 +272,10 @@ Mac: **"Continue"**.
 
 - **The request** (`src/player/seatPose.js`, pure). Morrowind has no sitting animation, so the seat is posed the way
   CLIMB6 poses a climb: a request in the world - the hips dropped, the feet planted on the floor a thigh's length
-  ahead with the knees forward, the hands on the table's top with the elbows out and down and the palms flat, the head
-  turned to the table's middle - which the climb rig's own `climbRequestToRig` maps into the rig and `applyClimbRig`
-  solves on the skeleton's bones. No number names a bone.
+  ahead with the knees forward, the hands on the table's top with the elbows out and down and the palms flat - which
+  the climb rig's own `climbRequestToRig` maps into the rig and `applyClimbRig` solves on the skeleton's bones. No
+  number names a bone. (CARDS2b first turned the head to the table's middle too; AUDIT CARDS D1 took it out - section
+  13.)
 - **MEASURED on retail's biped** (Weapon Sheathing's vendored `xbase_anim_sh.nif`, the skeleton CLIMB6 measured on):
   its pelvis stands at 1.09 m, its thigh 0.46 m, its shin 0.53 m. The first guess (a 0.45 m drop, the hands 0.55 m
   ahead) left the hips high and the hands 8 cm short of the table; the shipped numbers - a 0.48 m drop, the feet and
@@ -280,7 +285,7 @@ Mac: **"Continue"**.
   seated head is - and CARDS2's seats moved with it.
 - **My view** (`scenes/worldModes.js`). Seated, the view is the seat's own, first person - section 2's fixed seat
   view - so this host draws no seated body of its own (the capsule stays where it sat down from - a chair is no floor
-  to stand a capsule in). A hit (any health lost, `registerPlayerHurtListener`) and Escape (spent above the one key
+  to stand a capsule in). A hit (any health lost through the health door, `registerPlayerHurtListener` - a duel's sparring blows never reach it, AUDIT CARDS B4) and Escape (spent above the one key
   dispatch, the way a gathering act's end spends it, when no window is up) stand you up, as the press and a step do.
   (CARDS2b first drew the body at the seat and let the view follow it in third person; the sweep of the host's pins
   showed that rewrote four hosts' worth of pinned lines - DISC18, CLIMB6 C16, AUDIT 65 XL-4, U43 - for a view the
@@ -302,3 +307,27 @@ Mac: **"Continue"**.
 - **Pins:** `test/cards2b_seated.test.js`, 7 tests. `tools/mutants/cards2b.json`: 32, 32 dead (one survived the
   first pass - the peer's table top, pinned at the default height, which a mutant dropping it could not move - and two
   records were re-aimed to parse).
+
+## 13. AUDIT CARDS (2026-10-07): the arc audited
+
+Mac: **"Lets do a comprehensive audit on everything developed so far"**. Five lanes over a frozen snapshot, and the
+sweep of every test reading a touched host; the whole record is `01-Overview/Audit-Cards.md`. What it changed, here:
+
+- **The relay record (C1, C2).** `world175` was live; its row is main's again, and world176 carries CARDS1's dice lift
+  beside the seat. The version chains in 37 test files were rebuilt from main: appended, never renamed.
+- **The view (S1).** The seat's view is first person - section 2's fixed seat view - and this host draws no seated body
+  of its own; the others see it through `st`.
+- **The seat's lifetime (B1, B2).** The seat empties whenever the mode leaves the interior (a load, a teleport, a
+  respawn) and in a new room; the seated eye is set before the death's sink.
+- **The table (B3, B6).** Another player's seat is taken (`takenSeats`, their seated feet from `peersNear`); the seats
+  stand round the table's OWN box through its matrix, never the world box's bulge.
+- **The body (D1-D6).** Seats sit SQUARE to their side, 0.35 m out (`SEAT_OUT`, now seatPose's - the edge and the
+  hands' one home), the hands 0.1 m past the edge; no head turn; the body's distances follow its race; the seat wins
+  over a climb's tail; a sit or a stand is drawn whole, not as a slide; and a sitter is no walker to any reader
+  (`peerMoving`). Proven by solving EVERY seat of a real table on retail's biped: both wrists inside the table's edge.
+- **The law (A1-A3).** A short big blind against nobody owes only what a live seat bet (`owedBy`); a bad table is
+  refused, never thrown on; chips are safe integers.
+- **Recorded, not built:** a readied spell fires on its press before the release stands you up (B5); a duel's sparring
+  blows do not stand you up (B4); seated, foes and the collider stand at the capsule until the first blow (C4); a
+  tall, slight race's hands stop a few centimetres short of the table (D2); CARDS5 needs a fold out of turn for a seat
+  whose player leaves (section 5).

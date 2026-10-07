@@ -75,7 +75,7 @@ import { peerStubEntity, lookKey } from './remotePlayers.js';
 import { POSE_STRIKES } from './wire.js';   // MAC7 #1: the swing's kind, by the wire's index
 import { HIT_FRAME_MELEE, MELEE_NUM_FRAMES } from '../characters/weaponStates.js';   // MW-PACE1: where in a blow its hit lands
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
-import { seatRigInput, seatTopOf } from '../player/seatPose.js';   // CARDS2b: the seated body's request
+import { seatTopOf } from '../player/seatPose.js';   // CARDS2b: the table's top the pose names
 import { JUMP_UNITS, stepPeerPace } from './peerPace.js'; import { peerBodyYaw, peerClimbing, peerMoving, PeerClimbTrack } from './peerClimb.js';   // HT-WAIST-BACK: the pace law, lifted - the walkers' lanterns swing off it too; CLIMB5: the climb's facing and pose
 
 
@@ -242,17 +242,18 @@ export function peerBuildOpts(look, shown = null, glyphs = null) {
  * written in place each frame. WB9h: `yaw` the body's own eased yaw
  * (the pose's when none), so no copy of the pose is made a frame.
  */
-/** CARDS2b: a seated peer's request at the feet and facing the body is drawn at - kept while neither moves (a sitter's
- *  pose stands still), rebuilt while the arrival eases in. */
+/** CARDS2b: a seated peer's seat (`{ feet, yaw, top }` - the rig's thirdSeat poses it at the body's own race) at the
+ *  feet and facing the body is drawn at - kept while none of them moves (a sitter's pose stands still), rebuilt while
+ *  the arrival eases in or the seat changes. */
 export function seatFor(b, f, yaw, st) {
   const key = `${f[0].toFixed(2)},${f[1].toFixed(2)},${f[2].toFixed(2)},${yaw.toFixed(3)},${st}`;
-  if (b.seatKey !== key) { b.seatKey = key; b.seatReq = seatRigInput(f, yaw, seatTopOf(st)); }
-  return b.seatReq;
+  if (b.seatKey !== key) { b.seatKey = key; b.seatSpec = { feet: [f[0], f[1], f[2]], yaw, top: seatTopOf(st) }; }
+  return b.seatSpec;
 }
 
 export function peerCamera(shown, feet, speed = 0, cam = null, yaw = peerBodyYaw(shown)) {
   const c = cam ?? { pos: [0, 0, 0], yaw: 0, pitch: 0, sneaking: false, bob: [0, 0], move: { forward: 0, strafe: 0, running: false, speed: 0, grounded: true, jumping: false, swimming: false, levitating: false } };
-  const moving = peerMoving(shown) && !shown.st;   // CLIMB5: a shimmy along a lip is no walk; CARDS2b: nor a sitter's arrival at the chair
+  const moving = peerMoving(shown);   // CLIMB5: a shimmy along a lip is no walk
   c.move.grounded = !peerClimbing(shown);   // CLIMB5: on the wall the body is off the ground - the in-air pose the local third person takes there
   c.pos[0] = feet[0]; c.pos[1] = feet[1]; c.pos[2] = feet[2];
   c.yaw = yaw; c.pitch = 0;
