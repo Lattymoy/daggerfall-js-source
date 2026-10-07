@@ -234,10 +234,13 @@ Six Ending-stones stand on a ring in the hall, each carved with one of the Bay's
 - **New every time.** The gearing, the starting hours, the true hours and the riddles are drawn from the slot's seed,
   so no Hollow's answer is another's.
 
-The law (`net/sdBrain.js` `orrery*`): the gearing is a matrix `M` over Z/12 built as the product of a lower and an upper
-unit-triangular matrix of small entries, so its determinant is 1 and EVERY target is reachable; the true hours are
-`T = P0 + M t*` for a drawn `t*` whose shortest solution is at least 12 turns; the riddles are drawn as a chain from two
-plain clues so `T` is their unique solution (pinned by brute force over all 12^6 configurations). The relay holds the
+The law (`net/sdBrain.js` `orrery*`): the gearing is a matrix `M` over Z/12 - ONE unit-triangular matrix in a hidden
+order (`M = P U P^T`), so its determinant is 1 and EVERY target is reachable, each stone turns itself exactly one hour,
+and a hall can learn it by turning each stone once (SD6a: the design first named the product of a lower and an upper
+unit-triangular matrix, whose diagonal is not one - a stone would turn itself two hours or none). The riddles come
+first, a chain from two plain clues, each later clue a true bijection tying a new stone to one known before it, so the
+true hours `T` are their unique solution (pinned by brute force over all 12^6 configurations); the start `P0` is drawn
+until the shortest way from it, `t = M^-1 (T - P0)`, is 12 to 24 turns - room under the fray to learn and err. The relay holds the
 stones, the fray and the Concord; a turn is `{t:'sd',k:'pz',i,a,q}` from a fighter whose pose is within reach of stone
 `i`, one turn per stone per 700 ms (the gear settling), at most 3 a second per account. The Concord, once reached, is
 kept for the slot.
@@ -851,3 +854,42 @@ the shaders, the draw over a recording GL, the hosts by source); `tools/mutants/
 passes.
 
 SD6 next: the Orrery of Endings (section 8) - the stones, the riddle, the relay's judgement and the bridge it lays.
+
+### SD6a - shipped 2026-10-07 (the Orrery's law)
+
+Section 8's law, pure (`net/sdBrain.js`, beside the Hour's frame; no imports - the relay takes it whole), drawn from the
+slot alike on the relay and every page:
+
+- **The stones** (`SD_STONES`): Daggerfall (the lion), Sentinel (the sun), Wayrest (the ship), Orsinium (the tusk), the
+  Underking (the crown of bone), the Blades (the dragon) - on a ring of 11 m round the hall's centre at bearings 30 to
+  330 degrees (`SD_STONE_POS`), none on the walk in or the way on, no place reaching two. Each shows an hour of twelve
+  (`sdHourShown`: 1 to 12, none the twelfth).
+- **The gearing** (`orreryOf(s).gear`): one unit-triangular matrix in a hidden order - each stone turns itself one hour,
+  and each after the first turns one or two stones before it, by one or two hours either way. The first turns alone; the
+  last no other turn moves. Its determinant is 1: every set of hours is reachable (`orrerySolve`, back-substituted in the
+  order). Amended from the design's `L*U`, whose diagonal is not one.
+- **The riddles and the truth**: two stones said plainly, then each later stone tied to one known before it - an offset
+  (*"Wayrest keeps the hour Sentinel keeps, and two more."*), opposite (*"The Underking stands opposite Orsinium."*),
+  or a mirror through twelve (*"Read the Blades from twelve backwards and you read Daggerfall."*) - so each clue is true
+  by its making (`sdRiddleHolds`, `sdRiddleText`), shuffled onto the six plaques.
+- **The start**: drawn until the shortest way to the truth is `SD_TRUTH_TURNS_MIN` 12 to `SD_TRUTH_TURNS_MAX` 24 turns.
+- **One turn judged** (`orreryStep`, the relay's): the stone one hour, its partners by their gears, the fray one more,
+  the dial's count (`orreryLit` - how many, not which); the 48th turn (`SD_FRAY_MAX`) that is not the Concord snaps the
+  stones back to the start, the fray to nothing, and lashes the hall (`x`; `SD_FRAY_LASH` a quarter); the Concord is
+  kept (a turn after it is nothing).
+- **Reach** (`stoneInReach`): within 3 m of a stone (`SD_STONE_REACH`; the relay a metre more for a pose's lag,
+  `SD_STONE_REACH_SLACK`); the lash reaches whoever stands in the hall (`inOrreryHall`). One turn a stone in 700 ms, at
+  most 3 a second (`SD_STONE_SETTLE_MS`, `SD_TURN_HZ`) - the relay's gates, SD6b.
+
+THE FOUR HOSTS: none yet - FLAGGED all four; the law is read by SD6b's relay and SD6c's hall.
+
+Pins: `test/sd6a_orrery.test.js` (11 - the stones, the hours, the gearing over 500 slots, the riddles' truth and their
+forest over 500, the brute force over all 12^6 configurations for five, the words, the start, a hall that learns the
+gearing by turning each stone once and reaches the Concord inside the fray in all 500 - and a thousand random halls
+that never do - one turn judged, the reach, the draw from the slot and THE GOLDEN DRAW: slot 1's order, start, truth
+and plaques, so a change to the draw cannot pass unseen - it changes every Hollow's answer on the relay as on the page
+and moves the relay's version with it); `tools/mutants/sd6a.json` (24, all dead - two survived at first: the solve
+counting a stone's own unknown turn, which is nought - re-aimed at a gear read transposed; and a finite-number guard on
+the reach that NaN already refuses - the guard is gone).
+
+SD6b next: the relay judges the turns - the `pz` frame, the realm's stones in its storage, the Concord kept.
