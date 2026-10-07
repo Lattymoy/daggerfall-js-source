@@ -1,0 +1,22 @@
+[
+  {
+    "name": "GUARD-RETURN-a-re-set-keeps-the-count",
+    "file": "src/systems/quest/actions.js",
+    "old": "  initialiseOnSet() {\n    this.lastSpawnTime = 0;\n    this.spawnCounter = 0;\n  }",
+    "new": "  initialiseOnSet() {\n    this.lastSpawnTime = 0;\n  }",
+    "tests": [
+      "test/fb1007_guardreturn.test.js"
+    ],
+    "note": "CreateFoe.InitialiseOnSet zeroes the counter: kept, a return to the hall would meet no second wave - a law DFU does not have"
+  },
+  {
+    "name": "GUARD-RETURN-pc-at-never-clears",
+    "file": "src/systems/quest/actions.js",
+    "old": "    } else {\n      this.parentQuest.clearTask(this.taskSymbol);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/fb1007_guardreturn.test.js"
+    ],
+    "note": "PcAt.Update clears its task on every tick the player is elsewhere (PcAt.cs) - the clear is what re-arms the wave"
+  }
+]

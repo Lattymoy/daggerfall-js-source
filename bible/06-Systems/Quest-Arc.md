@@ -6467,3 +6467,51 @@ the item, the saved action state lands after it); online the room's word can lan
 travel is the only reading that agrees. The one difference: a quest that hot-places an item onto a marker that already
 moved this visit stands it on the marker, where DFU's reparent leaves it off by the travel.
 `test/fb1003b_totem.test.js`; `tools/mutants/fb1003b_totem.json`. `01-Overview/Field-Bugs-2026-10-03b.md` TOTEM-CAGE.
+
+## GUARD-RETURN - a return to the hall re-arms the Nightblades, as in Daggerfall Unity (2026-10-07, a player through the lead)
+
+The report: "Protect an Honored Mage: assassins spawn again after leaving and re-entering the Mages Guild" - accept
+N0B20Y02, stay in the guild until the three Nightblades come, kill them, step out while the three hours run, come back
+before they end, and three more come.
+
+That is Daggerfall Unity's own law, faithfully run, and nothing in the port. `until _S.12_ performed: pc at
+_magesguild_ set _S.01_`, and `_S.01_` is `create foe _F.00_ every 55 minutes 1 times with 100% success`. Traced
+through DFU's C# (master, fetched for this reading):
+
+- PcAt.Update STARTS its task on every tick the player is at the Place and CLEARS it on every tick they are not
+  (`ParentQuest.StartTask` / `ParentQuest.ClearTask`; the port's `actions.js:"this.parentQuest.clearTask(this.taskSymbol);"`).
+- A clear is Task.SetTriggerValue(false), which calls RearmActions - the wave's IsComplete is lifted.
+- The next tick `_S.01_` runs set again, Task.Update's `if (!prevTriggered) action.InitialiseOnSet()` re-arms the wave
+  whole (the port's `task.js:"if (!this.prevTriggered) action.initialiseOnSet();"`).
+- CreateFoe.InitialiseOnSet zeroes lastSpawnTime and spawnCounter - Update's own comment on the count says "This can be
+  cleared on next set/rearm" (the port's `actions.js:"InitialiseOnSet (CreateFoe.cs:61-65): a task rearm restarts the"`).
+  The first Update after it backdates the timer a Range(0, interval) into the 55 minutes, and the 100% roll makes
+  `foe.SpawnCount` (3) again.
+
+CreateFoe reads no kill count. Foe.KillCount ("does not rearm") is read by the `killed` trigger, and by
+GameObjectHelper.AddQuestResourceObjects for a PLACED foe alone (`if (foe.KillCount < foe.SpawnCount)
+AddQuestFoe(...)`; the port's `sceneMount.js:"if (resource.killCount < resource.spawnCount) {"`). So a `place foe`
+killed stays dead on re-entry, and a `create foe` wave comes again whenever its task is set again. The Online-Waits page
+recorded the same re-arm already (`Online-Waits.md` W3: a guard stepping out for a minute every twenty met 2.8 waves of
+Nightblades offline over 400 rolls); online the re-armed wave keeps the script's full interval, never the short wait.
+The reward is not at risk: `_questdone_` waits on `_S.03_` (`killed 3 _F.00_`), and the second three only add to the
+kills.
+
+NOT CHANGED, and Mac's to decide: it is a Port-Doctrine departure. The shape is not N0B20Y02's alone - a counted
+`create foe` wave in a task that a `pc at` sets and clears stands in 26 vendored quests (A0C10Y02, A0C10Y05, B0B00Y00,
+B0B10Y04, B0B71Y03, B0B81Y02, K0C00Y00, K0C00Y02, K0C0XY01, K0C30Y03, L0A01L00, L0B50Y11, M0B00Y15, M0B00Y16, M0B1XY01,
+M0B20Y02, M0C00Y14, N0B10Y03, N0B20Y02, O0A0AL00, O0B10Y07, P0B20L09, R0C10Y08, R0C10Y09, S0000006, Z0C00Y00; read off
+the parsed corpus), and every one re-arms the same way on a return. A departure aimed at this report alone would be a
+wave whose foe has its whole count killed (`killCount >= spawnCount`, AddQuestResourceObjects' own test) keeping its
+spent count across a re-set; it would also stop the second and later rats, guards and monsters of the other 25 for a
+player who steps out and back, which is why it is not taken here.
+
+The four hosts: the law is the quest machine's (`systems/quest/actions.js`, `systems/quest/task.js`), read by every
+host alike - scenes/exterior.js, scenes/world.js, scenes/worldModes.js (the interior, where the guild stands) and
+scenes/dungeonContext.js; none was edited, and the interior's placed-foe mount is DFU's kill test above.
+
+`test/fb1007_guardreturn.test.js` (3) runs the real script through the quest's own update, the Place's own isPlayerHere
+over the hosts' location seams and the Foe's own incrementKills, and pins the reading AS DFU's: one wave for a guard who
+stays; a second three for one who kills, steps out and comes back inside the trance (none while away; the kills on
+record unread); nothing armed after the trance. `tools/mutants/fb1007_guardreturn.json` (2, both dead: a re-set that
+keeps the count, a `pc at` that never clears).
