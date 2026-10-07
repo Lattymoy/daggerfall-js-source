@@ -52,7 +52,7 @@ test('FT18: ten rows are four, and nothing they offered is lost - every key, def
     assert.equal(row(gone), undefined, `${gone} is condensed`);
   }
   assert.equal(FEATURES.length, 79);   // MW-STEEL1's Steel Helm (2026-10-06); LEGACY1's Project Legacy (2026-10-05); LW2's living world (2026-10-04); LOAD1's loading screens (2026-10-05); LPT1's Low Poly Trees (2026-10-05); FIELD BUGS 2026-10-04e: the road's encounters (WILD-ROAD); NEARBY-QUESTS (2026-10-04); IT1's Immersive Travel row (2026-10-04); WD3's Beautiful Villages and Beautiful Cities (2026-10-01); FOREST1's real forests (2026-10-01); CLIMB1's enhanced climbing (2026-09-30); GUIDE5's quest marks, GUIDE4's quest tracker and GUIDE3's quest herald (2026-09-29); NAV's Naval Combat row the port's own (2026-09-28); FORAGE1's Foraging row (2026-09-28, MERGE 2); IIL1-T's modded lighting (2026-09-27); PERF-SCALE's render scale (2026-09-25) is the one row added since; the sea update's four mod rows (AS1, DS1, WA1, DW-D) came with its merge, OH-A's Ocean Holes row after it, and CSA-A's Come Sail Away row; EM3-3D's 3D dungeon map (2026-09-27); RAID1's World Events - Raiding Parties (2026-09-27)
-  const want = { grassDensity: 1, grassStyle: 'pixel', floraSway: true, windWisps: true, quickbarStyle: 'hotbar', quickslots: true,   // HB-LYCFREE: the hotbar by default (PIN MOVED)
+  const want = { grassDensity: 0, grassStyle: 'meadow', floraSway: true, windWisps: true, quickbarStyle: 'hotbar', quickslots: true,   // HB-LYCFREE: the hotbar by default (PIN MOVED); MEADOW1: the meadow by default (PIN MOVED); AUDIT MEADOW1: the grass Off by default (PIN MOVED)
     'blood-gore': 'normal', 'blood-marks': true, 'blood-overkill': true, 'blood-screen': true };
   for (const [k, v] of Object.entries(want)) assert.equal(FEATURE_PREF_DEFAULTS[k], v, `${k} keeps its default`);
   assert.deepEqual(row('grass').control.parts.map((p) => p.key), ['grassStyle']);
@@ -182,7 +182,7 @@ test('FT18: All off - every switch to Off, a row with no Off to Daggerfall\'s ow
       if (to >= 0) assert.equal(st.at, to, `${f.id} is off`);
     }
     assert.equal(label('cloud-quality'), 'High', 'a choice keeps what it was');
-    assert.equal(getPref('grassStyle'), 'pixel', 'and so does a choice in a drawer');
+    assert.equal(getPref('grassStyle'), 'meadow', 'and so does a choice in a drawer');   // MEADOW1: the meadow by default (PIN MOVED)
     assert.equal(label('dungeon-wall-style'), 'Classic');
     assert.deepEqual([label('render-scale'), getPref('renderScale'), renderScaleSetting()], ['100%', 1, 1], 'the world drawn at the window\'s own size again - the renderer reads 100%');
     assert.equal(label('enhanced-environments'), 'Off', 'the outdoors bar says Off now, so All off can find it');
@@ -263,7 +263,7 @@ test('FT18: a condensed tile opens its parts - switches as chips, a choice as a 
     const smooth = find(bars[1], 'ft-segb').find((b) => b.textContent === 'Smooth');
     smooth.onclick({ stopPropagation() {} });
     assert.equal(getPref('grassStyle'), 'smooth');
-    assert.equal(getPref('grassDensity'), 1);
+    assert.equal(getPref('grassDensity'), 0);   // PIN MOVED (AUDIT MEADOW1): the density's own default, Off
     assert.equal(t.dataset.fid, 'blood', 'the search hides a tile by its id');
   } finally { delete globalThis.document; fresh(); }
 });

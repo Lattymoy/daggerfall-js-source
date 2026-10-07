@@ -90,7 +90,7 @@ test('GR1: grass records come from the archive\u2019s own texels - none for road
   // edge, freed at the trailing one - rather than re-scattering whole
   // when the eye moved 60m.
   assert.match(w, /labGrassField\.update\(ex, ez, keep, ground, slope\);/, 'the field follows the eye');
-  assert.match(w, /labGrass\.draw\(proj, view, new Float32Array\(cam\.pos\), now \/ 1000,/);
+  assert.match(w, /labGrass\.draw\(proj, view, new Float32Array\(cam\.pos\), windClock,/);   // PIN MOVED (AUDIT MEADOW1): the gust wave's clock, carried across the floating origin
   assert.match(w, /renderer\.markForeignPass\(\);   \/\/ EV6: the grass changed programs/);
 });
 
@@ -139,7 +139,7 @@ test('GR2: darker green and a billboard about Y in the lab and the game alike; o
   assert.equal((readFileSync('src/systems/windDrive.js', 'utf8').match(/const slider = labWindSlider\(w\);/g) || []).length, 1, 'the grass and the rain share the one mapping, in its one home');
   assert.ok(!/labWindSlider/.test(w) && !/mag \* 260/.test(w), 'the guessed scale is gone, and the host holds no copy of the mapping');
   assert.ok(!/labWindSlider/.test(readFileSync('src/scenes/exterior.js', 'utf8')), 'the exterior host too');
-  assert.match(w, /\{ dir: wd\.dir, speed: wd\.slider \* wd\.gust, windV: wd\.windV \}/, 'the grass takes the one answer');
+  assert.match(w, /\{ dir: wd\.dir, speed: wd\.slider \* wd\.gust, windV: wd\.windV, sway: floraSwayOn\(\) && wd\.on \}/, 'the grass takes the one answer');   // PIN MOVED (AUDIT MEADOW1): and the trees' sway switch
   // 3. the walk is a generator that yields, and lands where the one-shot lands
   const keep = (x) => (x > 0 ? 0 : null);
   const whole = placeLabGrass({ centre: [3, 4], keep });
