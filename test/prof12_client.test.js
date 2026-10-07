@@ -555,7 +555,7 @@ test('AUDIT PROF-541 R2-C2: one latch holds every craft and brew (profBook _craf
   assert.equal(accountRefusalText('prof-busy'), 'Your hands are busy with another craft.');
   const w = src('src/scenes/world.js');
   assert.doesNotMatch(w, /'The anvil is still ringing|'Your last (?:work|dish|piece) is still on the/);
-  assert.match(w, /if \(!r\?\.ok\) return \{ ok: false, text: r\?\.kept \? st\.kept : `\$\{accountRefusalText\(r\?\.error\)\}\$\{movedFirstText\(r\)\}` \};/);   // PIN MOVED (AUDIT2 BAG1 K8): and what went into the Stores first
+  assert.match(w, /if \(!r\?\.ok\) return \{ ok: false, text: r\?\.kept \? st\.kept : `\$\{accountRefusalText\(r\?\.error\)\}\$\{movedFirstText\(r\)\}\$\{chain \? ` \$\{chain\}` : ''\}` \};/);   // PIN MOVED (AUDIT2 BAG1 K8): and what went into the Stores first; (CRAFT1) and what the chain refined first
   // the latch is one: a brew under way refuses a dish
   let release;
   const door = { account: () => 'acc', brew: () => new Promise((r) => { release = r; }), craft: async () => ({ ok: true, data: {} }) };

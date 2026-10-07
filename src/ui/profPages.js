@@ -57,6 +57,7 @@ import {
   JEWEL_FEE,   // PROF10: the jeweller's bench
   ALCHEMY_FEE, ENCHANT_FEE, TRANSMUTE_RECIPES, TRANSMUTER, APOTHECARY_STOCK,   // PROF12: the alchemy and enchanting stations
   STORES_MAX, ARCANE_ESSENCE,   // AUDIT PROF-541 B8: a disenchant's room in the Stores
+  smeltRecipe,   // CRAFT1: a chain's works said
 } from '../net/professionLaw.js';
 import {
   POTIONS, brewKeys, brewSpends, brewCount, potentChance, potentPct, potentLasts, potentAble, brewXp, brewFirstPays, ingredientKeys, DISTILLER, POTENT,
@@ -82,6 +83,7 @@ import { createPlaneAct } from '../systems/planeAct.js';
 import { material } from '../net/nodeLaw.js';
 import { marksText } from '../net/marksLaw.js';   // AUDIT 32 R13: "1 Drake", as the Market tab says it
 import { accountRefusalText } from '../net/accountClient.js';
+import { chainPlan, chainNeeded, chainYield } from '../net/chainLaw.js';   // CRAFT1: the works a craft's inputs want first
 import { getPref, setPref } from '../systems/uiPrefs.js';
 
 /**
@@ -892,6 +894,43 @@ const spendsOf = (r, book, heartwood) => recipeInputs(r, { heartwood: heartwood 
 /** Whether the Stores make a recipe now - its inputs, or (PROF4) what it would spend (`inputs`). */
 export const craftable = (r, held, inputs = r.inputs) => inputs.every((inp) => held(inp.key) >= inp.n);
 
+// ─── CRAFT1: THE CHAIN (bible/06-Systems/Professions-Arc.md 41) ─────
+
+/** CRAFT1: the chain a recipe's inputs want from what is held (net/chainLaw.js) - null where they are held as they stand. */
+export function chainOf(inputs, book) {
+  const held = (k) => book.held(k);
+  return chainNeeded(inputs, held) ? chainPlan(inputs, held, { track: (prof) => book.track(prof) }) : null;
+}
+/** CRAFT1: whether inputs not held as they stand are made from what is (the craft runs the chain first, profBook craft). */
+export const fromRaw = (inputs, book) => chainOf(inputs, book)?.ok === true;
+/** A recipe row's word: held now, made from raw, or wanting its inputs. */
+export const makeWord = (can, raw) => (can ? 'can make now' : raw ? 'can make from raw' : 'wants its inputs');
+/** A work's verb, as the stations' own rows say it ('Smelt', 'Burn', 'Saw', 'Cure', 'Weave', 'Cut', 'Mix'). */
+const workVerb = (id) => { const v = String(id).split(':')[0]; return ['burn', 'saw', 'cure', 'weave', 'cut', 'mix'].includes(v) ? v : 'smelt'; };
+/**
+ * CRAFT1: THE CHAIN SAID under a recipe whose inputs are not held as they stand - the works the craft runs first and the
+ * goods they take ("Refined first: smelt Iron Ingot x3, ... - from Iron x6, ..."), or what the bottom of the chain is
+ * short of. Answers the plan (null where none is wanted).
+ */
+export function chainNote(box, el, p, book, inputs) {
+  const plan = chainOf(inputs, book);
+  if (!plan) return null;
+  if (!plan.ok) {
+    box.append(el('p', 'px-note prof-short', `From raw goods, short of ${plan.short.map((s) => `${p.name(s.key)} x${s.n}`).join(', ')}.`));
+    return plan;
+  }
+  const made = new Map();
+  for (const w of plan.works) {
+    const r = smeltRecipe(w.id);
+    if (!r) continue;
+    const k = `${workVerb(w.id)} ${p.name(r.out)}`;
+    made.set(k, (made.get(k) ?? 0) + w.count * chainYield(r, (prof) => book.track(prof)));
+  }
+  const raw = plan.spent.filter((s) => !inputs.some((i) => i.key === s.key));
+  box.append(el('p', 'px-note prof-chain', `Refined first, here: ${[...made].map(([k, n]) => `${k} x${n}`).join(', ')}${raw.length ? ` - from ${raw.map((s) => `${p.name(s.key)} x${s.n}`).join(', ')}` : ''}. Their XP is the works' own; what is left over stays in your Stores.`));
+  return plan;
+}
+
 /** The heat let go: its loop and its keys. */
 function endHeat() {
   _anvil.off?.();
@@ -997,10 +1036,11 @@ function drawAnvil(detail, rerender, { el, divider }) {
   for (const r of list) {
     const open = recipeOpen(r, rank);
     const can = open && craftable(r, held, spendsOf(r, book, false));
-    const row = el('button', `prof-recipe${_anvil.picked === r.id ? ' on' : ''}${can ? '' : ' prof-locked'}`);
+    const raw = open && !can && fromRaw(spendsOf(r, book, false), book);   // CRAFT1
+    const row = el('button', `prof-recipe${_anvil.picked === r.id ? ' on' : ''}${can || raw ? '' : ' prof-locked'}`);
     row.type = 'button';
     row.disabled = striking;
-    row.append(el('b', null, r.name), el('span', 'prof-split', open ? (can ? 'can make now' : 'wants its inputs') : `rank ${r.rank}`));
+    row.append(el('b', null, r.name), el('span', 'prof-split', open ? makeWord(can, raw) : `rank ${r.rank}`));
     row.onclick = () => { _anvil.picked = r.id; rerender(); };
     detail.append(row);
   }
@@ -1017,6 +1057,7 @@ function drawAnvil(detail, rerender, { el, divider }) {
       if (sale && have < inp.n && forge.kind === 'shop') counterBuy(line, { el, p, state: _anvil, rerender, key: inp.key, need: inp.n - have, sale, who: 'the smith' });   // COUNTER-GATES
       box.append(line);
     }
+    const chain = chainNote(box, el, p, book, spends);   // CRAFT1: the works it runs first
     if (takesQuality(r) && recipeOpen(r, rank)) {
       const odds = qualityOdds(rank - r.rank, { masterwright: specs[100] === 'masterwright' });
       box.append(el('p', 'px-note', `Your rank ${rank}, margin ${rank - r.rank}: ${odds.map((o, q) => (o ? `${QUALITY_NAMES[q]} ${o}` : null)).filter(Boolean).join(' | ')}. A clean heat is a step better.`));
@@ -1025,7 +1066,7 @@ function drawAnvil(detail, rerender, { el, divider }) {
     const gentle = getPref('gentleActs') === true;
     const elsewhere = handsAt(_anvil);   // AUDIT 32 P2
     if (elsewhere && !_anvil.act) box.append(el('p', 'px-note', `Your hands are at ${elsewhere} - finish there first.`));
-    const ready = recipeOpen(r, rank) && craftable(r, held, spends) && !_anvil.busy && !_anvil.crafting && !_anvil.act && !elsewhere && !short;
+    const ready = recipeOpen(r, rank) && (craftable(r, held, spends) || chain?.ok === true) && !_anvil.busy && !_anvil.crafting && !_anvil.act && !elsewhere && !short;
     // AUDIT 30 A3: a craft bound to its recipe and its Heartwood when the heat began, never to the page's pick at its end;
     // AUDIT 32 P5: its own flag in flight - a stock purchase answered under it re-offered Craft mid-craft
     const craftOf = (id, wood) => async (clean) => {
@@ -1217,10 +1258,11 @@ function drawWorkbench(detail, rerender, { el, divider }) {
   for (const r of list) {
     const open = recipeOpen(r, rank);
     const can = open && craftable(r, held, spendsOf(r, book, false));
-    const row = el('button', `prof-recipe${_bench.picked === r.id ? ' on' : ''}${can ? '' : ' prof-locked'}`);
+    const raw = open && !can && fromRaw(spendsOf(r, book, false), book);   // CRAFT1
+    const row = el('button', `prof-recipe${_bench.picked === r.id ? ' on' : ''}${can || raw ? '' : ' prof-locked'}`);
     row.type = 'button';
     row.disabled = planing;
-    row.append(el('b', null, r.name), el('span', 'prof-split', r.later ? LATER_WORDS.SEAT2 : open ? (can ? 'can make now' : 'wants its inputs') : `rank ${r.rank}`));
+    row.append(el('b', null, r.name), el('span', 'prof-split', r.later ? LATER_WORDS.SEAT2 : open ? makeWord(can, raw) : `rank ${r.rank}`));
     row.onclick = () => { _bench.picked = r.id; rerender(); };
     detail.append(row);
   }
@@ -1237,6 +1279,7 @@ function drawWorkbench(detail, rerender, { el, divider }) {
       if (sale?.counter === 'furnisher' && have < inp.n && bench.kind === 'shop') counterBuy(line, { el, p, state: _bench, rerender, key: inp.key, need: inp.n - have, sale, who: 'the furnisher' });   // COUNTER-GATES
       box.append(line);
     }
+    const chain = chainNote(box, el, p, book, spends);   // CRAFT1: the works it runs first
     if (r.later) box.append(el('p', 'px-note', 'Comes with a later work.'));   // a recipe named before its slice (none since SEAT2b part two)
     else if (r.kind === 'siege') box.append(el('p', 'px-note', 'A Ram Kit goes to your Stores - a seat writ carries it to your guild\'s Siege Camp, and a camp that wins a Right of Siege sends it to the battle where a Gatehouse stands.'));   // SEAT2b part two: a siege work's road
     else if (r.kind === 'arrows') box.append(el('p', 'px-note', `Twenty arrows, one quiver - an arrow takes no quality.`));
@@ -1249,7 +1292,7 @@ function drawWorkbench(detail, rerender, { el, divider }) {
     const gentle = getPref('gentleActs') === true;
     const elsewhere = handsAt(_bench);   // AUDIT 32 P2
     if (elsewhere && !_bench.act) box.append(el('p', 'px-note', `Your hands are at ${elsewhere} - finish there first.`));
-    const ready = !r.later && recipeOpen(r, rank) && craftable(r, held, spends) && !_bench.busy && !_bench.crafting && !_bench.act && !elsewhere && !short;
+    const ready = !r.later && recipeOpen(r, rank) && (craftable(r, held, spends) || chain?.ok === true) && !_bench.busy && !_bench.crafting && !_bench.act && !elsewhere && !short;
     // AUDIT 30 A3: the pass makes the recipe it began on, with its Heartwood - never the page's pick when it lands; AUDIT 32
     // P5: its own flag in flight, as the loom's
     const craftOf = (id, wood) => async (clean, rep = null) => {
@@ -1423,10 +1466,11 @@ function drawLoom(detail, rerender, { el, divider }) {
   for (const r of list) {
     const open = recipeOpen(r, rank);
     const can = open && craftable(r, held);
-    const row = el('button', `prof-recipe${_loom.picked === r.id ? ' on' : ''}${can ? '' : ' prof-locked'}`);
+    const raw = open && !can && fromRaw(r.inputs, book);   // CRAFT1
+    const row = el('button', `prof-recipe${_loom.picked === r.id ? ' on' : ''}${can || raw ? '' : ' prof-locked'}`);
     row.type = 'button';
     row.disabled = sewing;
-    row.append(el('b', null, r.name), el('span', 'prof-split', open ? (can ? 'can make now' : 'wants its inputs') : `rank ${r.rank}`));
+    row.append(el('b', null, r.name), el('span', 'prof-split', open ? makeWord(can, raw) : `rank ${r.rank}`));
     row.onclick = () => { _loom.picked = r.id; rerender(); };
     detail.append(row);
   }
@@ -1444,6 +1488,7 @@ function drawLoom(detail, rerender, { el, divider }) {
       if (sale && have < inp.n && loom.kind === 'shop') counterBuy(line, { el, p, state: _loom, rerender, key: inp.key, need: inp.n - have, sale, who: 'the Weavers', counter: 'weavers' });
       box.append(line);
     }
+    const chain = chainNote(box, el, p, book, r.inputs);   // CRAFT1: the works it runs first
     if (r.family === 'furnishings') box.append(el('p', 'px-note', 'Furnishings go among your things, to set down in a room of your own (Decorate).'));
     // A GARMENT'S DYE (9.3: "itemDye.js's colours"): one of DFU's ten, chosen here and sewn in, or none (AUDIT 32 L3:
     // every garment takes one, DFU's "unchangeable" shirts too - the word is their variant's)
@@ -1471,7 +1516,7 @@ function drawLoom(detail, rerender, { el, divider }) {
     const dye = r.kind === 'garment' && r.dyes === true ? _loom.dye : null;
     const elsewhere = handsAt(_loom);   // AUDIT 32 P2
     if (elsewhere && !_loom.act) box.append(el('p', 'px-note', `Your hands are at ${elsewhere} - finish there first.`));
-    const ready = recipeOpen(r, rank) && craftable(r, held) && !_loom.busy && !_loom.crafting && !_loom.act && !elsewhere && !short;
+    const ready = recipeOpen(r, rank) && (craftable(r, held) || chain?.ok === true) && !_loom.busy && !_loom.crafting && !_loom.act && !elsewhere && !short;
     // AUDIT 30 A3's law: the stitch makes the recipe it began on, in the dye it began in; AUDIT 32 P5: a craft's own flag
     // in flight - a cure answered under it cleared the loom's one flag, and Craft was offered again mid-craft
     const craftOf = (id, d) => async (clean) => {
@@ -1727,10 +1772,11 @@ function drawMasonBench(detail, rerender, { el, divider }) {
   for (const r of MASONRY_RECIPES) {
     const open = recipeOpen(r, rank, specs);
     const can = open && craftable(r, held);
-    const row = el('button', `prof-recipe${_mason.picked === r.id ? ' on' : ''}${can ? '' : ' prof-locked'}`);
+    const raw = open && !can && fromRaw(r.inputs, book);   // CRAFT1
+    const row = el('button', `prof-recipe${_mason.picked === r.id ? ' on' : ''}${can || raw ? '' : ' prof-locked'}`);
     row.type = 'button';
     row.disabled = striking;
-    row.append(el('b', null, r.name), el('span', 'prof-split', open ? (can ? 'can make now' : 'wants its inputs') : 'a Sculptor\'s'));
+    row.append(el('b', null, r.name), el('span', 'prof-split', open ? makeWord(can, raw) : 'a Sculptor\'s'));
     row.onclick = () => { _mason.picked = r.id; rerender(); };
     detail.append(row);
   }
@@ -1744,13 +1790,14 @@ function drawMasonBench(detail, rerender, { el, divider }) {
       line.append(el('span', null, `${p.name(inp.key)} ${Math.min(have, inp.n)} / ${inp.n} (${have} stored)`));
       box.append(line);
     }
+    const chain = chainNote(box, el, p, book, r.inputs);   // CRAFT1: the works it runs first
     box.append(el('p', 'px-note', 'Stone decor goes among your things, to set down in a room of your own (Decorate).'));
     const open = recipeOpen(r, rank, specs);
     if (open) {
       const odds = qualityOdds(rank - r.rank, { masterwright: false });
       box.append(el('p', 'px-note', `Your rank ${rank}, margin ${rank - r.rank}: ${odds.map((o, q) => (o ? `${QUALITY_NAMES[q]} ${o}` : null)).filter(Boolean).join(' | ')}. A clean chisel is a step better.`));
     }
-    const ready = open && craftable(r, held) && !_mason.busy && !_mason.crafting && !_mason.act && !elsewhere && !short;
+    const ready = open && (craftable(r, held) || chain?.ok === true) && !_mason.busy && !_mason.crafting && !_mason.act && !elsewhere && !short;
     const go = el('button', 'act primary', _mason.crafting ? 'At the bench...' : 'Craft');
     go.type = 'button';
     go.disabled = !ready;
@@ -2086,10 +2133,11 @@ function drawJewellerBench(detail, rerender, { el, divider }) {
   for (const r of list) {
     const open = recipeOpen(r, rank);
     const can = open && (craftable(r, held) || (lapidary && takesCracked(r) && craftable(r, held, spendsFor(r, false, true))));
-    const row = el('button', `prof-recipe${_jewel.picked === r.id ? ' on' : ''}${can ? '' : ' prof-locked'}`);
+    const raw = open && !can && fromRaw(r.inputs, book);   // CRAFT1
+    const row = el('button', `prof-recipe${_jewel.picked === r.id ? ' on' : ''}${can || raw ? '' : ' prof-locked'}`);
     row.type = 'button';
     row.disabled = cutting;
-    row.append(el('b', null, r.name), el('span', 'prof-split', open ? (can ? 'can make now' : 'wants its inputs') : `rank ${r.rank}`));
+    row.append(el('b', null, r.name), el('span', 'prof-split', open ? makeWord(can, raw) : `rank ${r.rank}`));
     row.onclick = () => { _jewel.picked = r.id; rerender(); };
     detail.append(row);
   }
@@ -2111,6 +2159,7 @@ function drawJewellerBench(detail, rerender, { el, divider }) {
       line.append(el('span', null, `${p.name(inp.key)} ${Math.min(have, inp.n)} / ${inp.n} (${have} stored)`));
       box.append(line);
     }
+    const chain = chainNote(box, el, p, book, spends);   // CRAFT1: the works it runs first
     const hand = jewelHand(r, specs[50]);
     box.append(el('p', 'px-note', `${jewelPointsLine(r, hand)}${hand === JEWEL_HAND_GOLDSMITH ? ' - a Goldsmith\'s Silver, counted as Gold' : hand === JEWEL_HAND_GEMCUTTER ? ' - a Gemcutter\'s gem' : ''}. The item maker spends them${r.product === 'wand' ? '' : ', beside a Masterwork\'s own enchantment'}.`));   // AUDIT PROF10 J2: it takes a crafted piece with its Rare roll (itemMakerWindow.js itemMakerFilter); AUDIT PROF-541 J5: a Wand rolls none (lootRarity.js rarityEligible: no slot)
     if (recipeOpen(r, rank)) {
@@ -2131,7 +2180,7 @@ function drawJewellerBench(detail, rerender, { el, divider }) {
       lab.append(cb, globalThis.document.createTextNode(` Set a Siege-cracked Gem as the ${gemWord(r.gem)} (${crackedHeld} stored)`));
       box.append(lab);
     }
-    const ready = recipeOpen(r, rank) && craftable(r, held, spends) && !_jewel.crafting && !_jewel.act && !elsewhere && !short;
+    const ready = recipeOpen(r, rank) && (craftable(r, held, spends) || chain?.ok === true) && !_jewel.crafting && !_jewel.act && !elsewhere && !short;
     if (elsewhere && !_jewel.act) box.append(el('p', 'px-note', `Your hands are at ${elsewhere} - finish there first.`));
     const wood = _jewel.heartwood && takesHeartwood(r), crack = _jewel.cracked === true && lapidary && takesCracked(r);
     if (_jewel.act && _jewel.actRecipe) {

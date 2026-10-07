@@ -59,6 +59,7 @@ import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe } from '.
 import { CARRIED_MAX, DEPOSIT_MAX, carriedUsable, carriedTotal, clampCarried } from './bagLaw.js';   // BAG1: what a character carries, counted
 import { recipeById, recipeInputs } from './recipeLaw.js';   // BAG1: a craft's inputs, moved in from the bag first
 import { potionById, brewSpends } from './alchemyLaw.js';   // BAG1: a brew's
+import { chainPlan, chainNeeded } from './chainLaw.js';   // CRAFT1: the works a craft's inputs want first
 import { pixelKey, parseNodeKey } from './nodeLaw.js';
 import { accountRefusalText } from './accountClient.js';
 import { ASK_AGAIN_NOW, jittered } from './backoff.js';   // SCALE1: asks again spread out, and never at once into a minute's refusal
@@ -624,9 +625,14 @@ export function createProfBook({ door, storage = null, character = () => null, n
      * so a lost answer is asked again (the same id, the same pieces) and `mint` makes them on the answer, once: the tab
      * that lets the craft go mints it (AUDIT 29 C5's law). One at a time. AUDIT 30 C4: `fee` the station's gold, kept with
      * the craft and handed to `mint` with it - the tab that mints the pieces pays it, whenever the answer comes.
-     * @returns {Promise<{ ok: boolean, data?: any, error?: string, kept?: boolean, elsewhere?: boolean }>}
+     * CRAFT1 (bible/06-Systems/Professions-Arc.md 41): THE CHAIN - inputs the Stores and what is carried lack are made
+     * first by the works chainLaw plans from what is held, each the service's own smelt kept in the Stores (`stay`), in
+     * the plan's order; a plan that cannot cover them asks no work (the craft is asked as before - the book's view of the
+     * Stores is not the service's, and the service says what is short), and a work refused stops the craft with the
+     * works before it done (`refined`). `chain: false` asks none.
+     * @returns {Promise<{ ok: boolean, data?: any, error?: string, kept?: boolean, elsewhere?: boolean, refined?: { id: string, count: number, xp: number }[] }>}
      */
-    async craft(recipe, { clean = false, name = null, heartwood = false, fee = 0, dye = null, seat = null, cracked = false } = {}, mint) {
+    async craft(recipe, { clean = false, name = null, heartwood = false, fee = 0, dye = null, seat = null, cracked = false, chain = true } = {}, mint) {
       if (_craftBusy) return { ok: false, error: 'prof-busy' };
       const key = slot();
       const c = character();
@@ -634,9 +640,22 @@ export function createProfBook({ door, storage = null, character = () => null, n
       _craftBusy = (async () => {
         // BAG1: what the Stores lack, from the bag and the pack first - the anvil's route spends the Stores
         const r0 = recipeById(recipe);
-        const ready = r0 ? await book.ensureInStores(recipeInputs(r0, { heartwood: heartwood === true, joiner: book.track(r0.profession ?? 'smithing').specs?.[50] === 'joiner', cracked: cracked === true })) : { ok: true };
+        const inputs = r0 ? recipeInputs(r0, { heartwood: heartwood === true, joiner: book.track(r0.profession ?? 'smithing').specs?.[50] === 'joiner', cracked: cracked === true }) : [];
+        // CRAFT1: the chain's works first, their products kept in the Stores for the craft
+        /** @type {{ id: string, count: number, xp: number }[]} */
+        const refined = [];
+        if (r0 && chain !== false && chainNeeded(inputs, (k) => book.held(k))) {
+          const plan = chainPlan(inputs, (k) => book.held(k), { track: (p) => book.track(p) });
+          // a plan that cannot cover them asks no work - the craft is asked as ever, and the service says what is short
+          if (plan.ok) for (const w of plan.works) {
+            const s = await book.smelt(w.id, w.count, { stay: true });
+            if (!s?.ok) return { ok: false, error: s?.error ?? 'offline', material: s?.material, moved: s?.moved ?? 0, refined, ...(s?.elsewhere ? { elsewhere: true } : {}) };
+            refined.push({ id: w.id, count: w.count, xp: Number(s.data?.xp) || 0 });
+          }
+        }
+        const ready = r0 ? await book.ensureInStores(inputs) : { ok: true };
         // AUDIT2 BAG1 K5: never `kept` - no craft was kept; an unanswered put-in is said as such (`deposit-kept`)
-        if (!ready.ok) return { ok: false, error: ready.error ?? 'materials-short', material: ready.material, moved: ready.moved ?? 0 };
+        if (!ready.ok) return { ok: false, error: ready.error ?? 'materials-short', material: ready.material, moved: ready.moved ?? 0, ...(refined.length ? { refined } : {}) };
         const w = { rid: rid(), recipe, clean: clean === true, name: typeof name === 'string' ? name : null, character: c, heartwood: heartwood === true,   // PROF4: a Heartwood for a plank
           fee: Number.isSafeInteger(fee) && fee > 0 ? fee : 0, ...(Number.isInteger(dye) ? { dye } : {}),   // PROF7: a garment's dye
           ...(Number.isSafeInteger(seat) && seat >= 0 ? { seat } : {}),   // SEAT2b part two: the held town the station stands in (its crafting halls' steps)
@@ -644,7 +663,8 @@ export function createProfBook({ door, storage = null, character = () => null, n
         const kept = keptOf(key);
         kept.crafts.push(w);
         writeKept(kept, key);
-        return craftOne(w, key, mint);
+        const res = await craftOne(w, key, mint);
+        return refined.length ? { ...res, refined } : res;
       })().finally(() => { _craftBusy = null; });
       return _craftBusy;
     },
@@ -791,8 +811,9 @@ export function createProfBook({ door, storage = null, character = () => null, n
     /** A recipe `count` times at the forge. The id is kept until an answer comes, so a press after a lost answer is the
      *  same smelt, never a second. Answers the service's answer; the Stores and Smithing's track moved with it. PROF11:
      *  or a mason's work at the bench, `clean` the chisel's report (the service reads it only where the work has the act;
-     *  a press after a lost answer is the same work, whatever its chisel). */
-    async smelt(recipe, count, { clean = false } = {}) {
+     *  a press after a lost answer is the same work, whatever its chisel). CRAFT1: `stay` keeps what it made in the
+     *  Stores - a chain's work, whose product the craft after it spends there. */
+    async smelt(recipe, count, { clean = false, stay = false } = {}) {
       const c = character();
       if (!c) return { ok: false, error: 'prof-character' };
       const owner = slot();
@@ -810,7 +831,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
         if (owner !== slot()) return { ok: false, error: 'elsewhere', elsewhere: true };
         if (r?.ok) { for (const s of r.data?.stores ?? []) applyStore(s); applyTrack(r.data?.track); } else shutBy(r);
         // BAG1: AND WHAT IT MADE INTO THE BAG OR THE PACK - as much as fits; the rest stays in the Stores, said
-        if (r?.ok && carry && work) r.data.put = await carryOut(work.out, (Number(r.data.own) || 0) + (Number(r.data.bought) || 0));
+        if (r?.ok && carry && work && stay !== true) r.data.put = await carryOut(work.out, (Number(r.data.own) || 0) + (Number(r.data.bought) || 0));
         return r;
       })();
       // AUDIT2 BAG1 K13: a press whose put-in or carry-out threw lets the id go - a rejected promise held it for good, and

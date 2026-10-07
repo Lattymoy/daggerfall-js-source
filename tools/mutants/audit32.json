@@ -332,8 +332,8 @@
   {
     "name": "AUDIT32-B4-anvil-busy-everywhere",
     "file": "src/scenes/world.js",
-    "old": "text: r?.kept ? st.kept : `${accountRefusalText(r?.error)}${movedFirstText(r)}` };",
-    "new": "text: r?.kept ? st.kept : r?.error === 'prof-busy' ? 'The anvil is still ringing from your last work.' : `${accountRefusalText(r?.error)}${movedFirstText(r)}` };",
+    "old": "text: r?.kept ? st.kept : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };",
+    "new": "text: r?.kept ? st.kept : r?.error === 'prof-busy' ? 'The anvil is still ringing from your last work.' : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };",
     "tests": [
       "test/audit30_client.test.js",
       "test/prof3_client.test.js"

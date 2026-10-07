@@ -1,0 +1,107 @@
+[
+  {
+    "name": "CRAFT1-law-trades-down",
+    "file": "src/net/chainLaw.js",
+    "old": "!!r && !r.spec && r.inputs.every((/** @type {any} */ inp) => tierOf(inp.key) <= tierOf(r.out));",
+    "new": "!!r && !r.spec;",
+    "tests": ["test/craft1_chain.test.js"]
+  },
+  {
+    "name": "CRAFT1-law-transmutes",
+    "file": "src/net/chainLaw.js",
+    "old": "!!r && !r.spec && r.inputs.every(",
+    "new": "!!r && r.inputs.every(",
+    "tests": ["test/craft1_chain.test.js"]
+  },
+  {
+    "name": "CRAFT1-law-one-deep",
+    "file": "src/net/chainLaw.js",
+    "old": "export const CHAIN_DEPTH = 4;",
+    "new": "export const CHAIN_DEPTH = 1;",
+    "tests": ["test/craft1_chain.test.js"]
+  },
+  {
+    "name": "CRAFT1-law-rank-unasked",
+    "file": "src/net/chainLaw.js",
+    "old": "  const rankOf = (/** @type {any} */ r) => (r.xp ? track(r.xp)?.rank ?? 0 : 0);",
+    "new": "  const rankOf = (/** @type {any} */ r) => 100;",
+    "tests": ["test/craft1_chain.test.js"]
+  },
+  {
+    "name": "CRAFT1-law-yield-unspecialised",
+    "file": "src/net/chainLaw.js",
+    "old": "  const perOf = (/** @type {any} */ r) => chainYield(r, track);",
+    "new": "  const perOf = (/** @type {any} */ r) => r.per;",
+    "tests": ["test/craft1_chain.test.js"]
+  },
+  {
+    "name": "CRAFT1-law-spare-lost",
+    "file": "src/net/chainLaw.js",
+    "old": "        p.spare(key, made - Math.min(made, left));",
+    "new": "        p.spare(key, 0);",
+    "tests": ["test/craft1_chain.test.js"]
+  },
+  {
+    "name": "CRAFT1-law-short-at-the-top",
+    "file": "src/net/chainLaw.js",
+    "old": "    const r = works[0];",
+    "new": "    const r = null;",
+    "tests": ["test/craft1_chain.test.js"]
+  },
+  {
+    "name": "CRAFT1-law-no-split",
+    "file": "src/net/chainLaw.js",
+    "old": "count: Math.min(SMELT_MAX, w.count - i * SMELT_MAX) })));",
+    "new": "count: w.count })).slice(0, 1));",
+    "tests": ["test/craft1_chain.test.js"]
+  },
+  {
+    "name": "CRAFT1-law-xp-unsaid",
+    "file": "src/net/chainLaw.js",
+    "old": "    if (r.xp && Number(w.xp) > 0) xp.set(",
+    "new": "    if (false) xp.set(",
+    "tests": ["test/craft1_chain.test.js"]
+  },
+  {
+    "name": "CRAFT1-book-chain-always",
+    "file": "src/net/profBook.js",
+    "old": "        if (r0 && chain !== false && chainNeeded(",
+    "new": "        if (r0 && chainNeeded(",
+    "tests": ["test/craft1_chain.test.js"]
+  },
+  {
+    "name": "CRAFT1-book-short-runs-anyway",
+    "file": "src/net/profBook.js",
+    "old": "          if (plan.ok) for (const w of plan.works) {",
+    "new": "          for (const w of plan.works) {",
+    "tests": ["test/craft1_chain.test.js"]
+  },
+  {
+    "name": "CRAFT1-book-carried-out",
+    "file": "src/net/profBook.js",
+    "old": "if (r?.ok && carry && work && stay !== true) r.data.put",
+    "new": "if (r?.ok && carry && work) r.data.put",
+    "tests": ["test/craft1_chain.test.js"]
+  },
+  {
+    "name": "CRAFT1-anvil-not-offered",
+    "file": "src/ui/profPages.js",
+    "old": "    const ready = recipeOpen(r, rank) && (craftable(r, held, spends) || chain?.ok === true) && !_anvil.busy",
+    "new": "    const ready = recipeOpen(r, rank) && craftable(r, held, spends) && !_anvil.busy",
+    "tests": ["test/craft1_chain.test.js"]
+  },
+  {
+    "name": "CRAFT1-loom-not-offered",
+    "file": "src/ui/profPages.js",
+    "old": "    const ready = recipeOpen(r, rank) && (craftable(r, held) || chain?.ok === true) && !_loom.busy",
+    "new": "    const ready = recipeOpen(r, rank) && craftable(r, held) && !_loom.busy",
+    "tests": ["test/craft1_chain.test.js"]
+  },
+  {
+    "name": "CRAFT1-host-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "          const chain = refinedText(r?.refined, materialLabel, (prof) => profBook.track(prof));",
+    "new": "          const chain = '';",
+    "tests": ["test/craft1_chain.test.js"]
+  }
+]

@@ -1230,8 +1230,8 @@
   {
     "name": "PROF10-pages-one-act-a-page-unkept",
     "file": "src/ui/profPages.js",
-    "old": "craftable(r, held, spends) && !_jewel.crafting && !_jewel.act && !elsewhere && !short;",
-    "new": "craftable(r, held, spends) && !_jewel.crafting && !_jewel.act && !short;",
+    "old": "(craftable(r, held, spends) || chain?.ok === true) && !_jewel.crafting && !_jewel.act && !elsewhere && !short;",
+    "new": "(craftable(r, held, spends) || chain?.ok === true) && !_jewel.crafting && !_jewel.act && !short;",
     "tests": [
       "test/prof10_client.test.js"
     ]
