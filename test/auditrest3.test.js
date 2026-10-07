@@ -67,7 +67,7 @@ test('AUDIT REST III A1: the world host\'s one home stands the save\'s camps out
     camps: { dropOwn: () => calls.push('drop'), restore: (rows, from) => calls.push(['restore', rows, from]) },
     scaleOf: (s) => (s > 0 ? s : 1), STREAMING_TERRAIN_SCALE: 2, state: { localFromWorld: (x, z) => [x / 10, z / 10] },
     restandHeight: (y, x, z, was) => `y${y}@${x},${z}/${was}`, campFromNatives: 'fromNatives',
-    landOf: (s) => s === true, landform: null,   // LANDFORM1: the save's ground beside its scale - DFU's here, and the row off
+    landform: null,   // LANDFORM1: the row off - every height DFU's frame, no lift to put back on
   };
   const stand = mount(`${fnOf('src/scenes/world.js', 'standSavedOuterCamps')}\nreturn standSavedOuterCamps;`, state);
   stand({ world: {} });

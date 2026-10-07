@@ -8,6 +8,20 @@
 
 Newest first.
 
+**2026-10-07 - AUDIT LANDFORMS.** Mac: *"Dont worry about it. Instead let's do just an audit and ensure this is
+perfect"*, of LANDFORM1-3 (#655), the heightmap raised, the roads cut in, the rivers in channels. Five lenses - the law
+and the math re-measured on the real WOODS.WLD, and four independent adversarial reviewers on a snapshot of the pushed
+head (every reader of the ground, the saves and the re-stand, online and the pipeline, the tests' honesty). Paid: the
+painted water climbed up to 19 m out of its channel where a road's cut refilled it (E2), and a hillside road stood on a
+32 m shelf (E1); a save from this build would have dropped the character from the sky on any build without the row -
+every height a record carries is in DFU's frame now, no stamp (C1); a record stood before its pixel was built took the
+wild lift, 203 m off a town at worst (B1), and across a change of the row one by a road landed up to 29.8 m over its
+ground - the field follows the cuts now (B2); 359 coastal town tiles turned between sand and land through the blend -
+a location's tiles are DFU's own blend's now (D3); online one failed fetch stood a client on other roads (C3). Every
+pin red first; lane D's 69 mutants in the record, the arm-weighting law written out and equal to the shaper at every
+sample. 135 mutants, 128 dead and 7 recorded equivalent. Open for Mac: two builds in one room (C2), OW-MOUNTAINS on the
+lifted ground (A2). Record: `Audit-Landforms.md` (AUDIT LANDFORMS).
+
 **2026-10-05 - AUDIT VE.** Mac: *"Audit this. Ensure this is on by default. And performance isn't affected"*, of
 Vanilla Enhanced (VE1-VE4, #621). Four lenses - the default, performance (measured in Chromium and node), the door against
 DFU (an independent adversarial review of a snapshot of the pushed head) and the tests' own honesty. Paid: Vanilla

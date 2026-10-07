@@ -92,9 +92,11 @@ export function getNoise(x, y, frequency, amplitude, persistance, octaves, seed 
  * LANDFORM1: `landform` is world/landforms.js's createLandforms - the port's own terrain, the Features row
  * `landforms` - asked once for this pixel's shaper, which takes every sample over the beach line with the parts it is
  * made of. null (the default, and every classic caller) is DFU's kernel, the same arithmetic in the same order.
+ * AUDIT LANDFORMS D3: `classic`, an array of hDim x hDim, takes DFU's own sample beside each shaped one the closure
+ * answers at a whole sample (generateSamples' loop, the one caller that passes it) - the classic line's value to the bit.
  * @returns {(x: number, y: number) => number} normalized sample.
  */
-export function sampleKernel(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION, groundNoise = true, landform = null) {
+export function sampleKernel(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION, groundNoise = true, landform = null, classic = null) {
   const { base, noise } = kernelTerms(woods, mapPixelX, mapPixelY, hDim);
   const shape = landform ? landform.pixel(mapPixelX, mapPixelY) : null;
 
@@ -127,7 +129,11 @@ export function sampleKernel(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMEN
       // LANDFORM1: the shaped ground has no ceiling at 1 - a mountain the landforms raise stands over the
       // reference's normalising height rather than flattening against it. The shaper is handed DFU's height as DFU
       // stands it, clamped at its ceiling (landforms.js THE CEILING: WOODS.WLD's one glitch byte is the only ground over it).
-      if (shape) return Math.max(0, shape(x, y, scaledHeight < MAX_TERRAIN_HEIGHT ? scaledHeight : MAX_TERRAIN_HEIGHT, baseHeight * BASE_HEIGHT_SCALE, ground) / MAX_TERRAIN_HEIGHT);
+      if (shape) {
+        const h = scaledHeight < MAX_TERRAIN_HEIGHT ? scaledHeight : MAX_TERRAIN_HEIGHT;
+        if (classic) classic[x * hDim + y] = h / MAX_TERRAIN_HEIGHT;   // AUDIT LANDFORMS D3: the line below's value - h is over the ocean's floor and at most 1539, so its clamps are moot
+        return Math.max(0, shape(x, y, h, baseHeight * BASE_HEIGHT_SCALE, ground) / MAX_TERRAIN_HEIGHT);
+      }
       return Math.min(1, Math.max(0, scaledHeight / MAX_TERRAIN_HEIGHT));
     }
   };
@@ -183,10 +189,12 @@ export function kernelTerms(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENS
  * @param {number} mapPixelY
  * @param {number} hDim - heightmap dimension (default 129).
  * @param {?object} [landform] - LANDFORM1: world/landforms.js's createLandforms, or null for DFU's kernel.
+ * @param {?Float32Array} [classic] - AUDIT LANDFORMS D3: with a `landform`, filled with DFU's own samples in the same
+ *   pass - generateSamples(woods, mapPixelX, mapPixelY, hDim) to the bit, for the tiles a location's blend classifies.
  * @returns {Float32Array} normalized samples; sample(x, y) = out[x * hDim + y].
  */
-export function generateSamples(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION, landform = null) {
-  const kernel = sampleKernel(woods, mapPixelX, mapPixelY, hDim, true, landform);
+export function generateSamples(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION, landform = null, classic = null) {
+  const kernel = sampleKernel(woods, mapPixelX, mapPixelY, hDim, true, landform, classic);
   const data = new Float32Array(hDim * hDim);
   for (let x = 0; x < hDim; x++) {
     for (let y = 0; y < hDim; y++) {

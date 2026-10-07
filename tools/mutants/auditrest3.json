@@ -132,7 +132,7 @@
   {
     "name": "AUDITREST3-A1-never-re-stood",
     "file": "src/scenes/world.js",
-    "old": "const rows = savedScale === STREAMING_TERRAIN_SCALE && savedLand === !!landform ? outer : outer.map((r) => {",
+    "old": "const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform ? outer : outer.map((r) => {",
     "new": "const rows = true ? outer : outer.map((r) => {",
     "tests": [
       "test/auditrest3.test.js"

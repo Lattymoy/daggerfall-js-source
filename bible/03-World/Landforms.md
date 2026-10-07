@@ -38,6 +38,20 @@ cells at the sea's height), the roads' router and the travel map's sea (raw
 bytes), LW-DRY, the spawned dungeons' dry gate (kept on DFU's kernel - its
 admissions do not move).
 
+THE LANDFORMS MOVE THE GROUND, NEVER A TILE (AUDIT LANDFORMS D3). The knee
+holds for the kernel's samples; a location's blend (`blendLocationTerrain`)
+then pulls its whole pixel toward the pixel's mean, and the landforms move that
+mean - a road's bed and a river's channel by centimetres, a massif behind a
+town by up to 268 m (Chesterbrugh) - so a beach sample near a town crossed the
+beach line where DFU's did not: 359 tiles in 97 of the 314 coastal location
+pixels turned between sand and land on the real data. A location's tiles are
+classified on DFU's own samples through DFU's own blend, which the kernel writes
+in the same pass (`generateSamples`' `classic`): 0 of the 314 differ now, the
+painter and the location's own tiles included, and where a tile parts from the
+shaped ground it parts by at most 2.2 m (the Dunynak Excavation; 313 of the 359
+by under 10 cm). The Deep Waters bake reads the same DFU blend
+(`pixelWaterSampler`), so its water and the tiles' are one by construction.
+
 ## ONE FUNCTION OF WORLD POSITION, INSIDE THE KERNEL
 
 The shaper rides `sampleKernel`'s new `landform` argument
@@ -75,7 +89,8 @@ DFU's height as DFU stands it - clamped at MAX_TERRAIN_HEIGHT, 1539 - and the
 lift is level past the heightmap's 7-bit top (`low` 8 x 127, the byte DFU's
 ceiling is built on), so nothing stands over `LANDFORM_CEILING`, DFU's ceiling
 plus the most the lift adds (2416 units, about 3,020 m). Real ground never
-reaches either: its bytes stop at 110 and DFU's kernel never meets its own
+reaches either: its bytes stop at 109 (at (963, 442), read raw - AUDIT
+LANDFORMS D13) and DFU's kernel never meets its own
 ceiling on them. WOODS.WLD's one byte over 127 does - a 255 at map pixel
 (470, 355), in the sea off Tigonus (the "High Rock sea coast" region), among
 bytes of 2 to 15. DFU's kernel stands it as a 1.9 km pillar, flat at its
@@ -185,33 +200,62 @@ surface that kept the old height, and the game stood on neither. This slice
 moves the ground everything reads - the collider, the nature, the grass and the
 film alike - and draws nothing new.
 
-## THE SAVES STAND AGAIN ON THE OTHER GROUND
+## THE SAVES: EVERY HEIGHT IN DFU'S FRAME
 
-TERRAIN-SCALE1's re-stand, given a second arm. Every record that carries a
-`terrainScale` now carries `landforms: true` when it was written on the
-landforms (the save, the dungeon's save through the mode machine, the exterior
-scene cache, the ship's remembered deck, the recall anchor), and a record
-without it was written on DFU's - which is every save from before the row.
-`restandHeight(y, x, z, was, wasLand)` takes the landforms' lift at the record's
-own spot off or on (`landformLiftAt`, world/landforms.js `landformLift`): the
-lift field taken through the location's own blend (`blendLocationTerrain`
-over the field - the blend is linear in the samples), so a town's levelled
-ground is exact, and the wild is the lift at the point. Not followed: a cut's
-few metres along a path, and World of Daggerfall's flatten; a body that ends
-under its ground the collider lifts (the floor beneath everything). The
-interior cache is in its building's frame and moves with the ground.
+TERRAIN-SCALE1's re-stand, given a second arm (AUDIT LANDFORMS C1/B4). Every
+exterior height a record carries - the save's player, piles, torches, camps,
+foes, guards and inside pools, the exterior scene cache, the ship's remembered
+deck, the recall anchor, a dungeon save's camps left outside - is written in
+DFU's frame: the landforms' lift at the record's own spot (`landformLiftAt`)
+taken off as it is written (`groundFrameHeight`, `groundFrameNative`,
+`campToRecord`) and put back on as it is read (`restandHeight`), whatever the
+row says. A record says nothing of the row - no stamp, SAVE_VERSION 1 - and a
+build without the row (a desktop copy that has not updated, the site after a
+revert) reads a landforms save as it always read one, every height over its own
+ground. The slice's first cut stamped `landforms: true` on lifted heights, and
+every such build would have dropped the character by the lift: over 25 m (a fall
+billing 100 HP) at 30% of the land, 184 m at the 90th percentile of the towns.
+
+The lift is the field the row puts there, taken through the location's own
+blend (`blendLocationTerrain` over the field - the blend is linear in the
+samples), so a town's levelled ground is exact. For a pixel not built yet - a
+load stands its records before their pixels stream in: its camps anywhere in
+the world, a neighbour's piles and guards - the rect is the one its build will
+stamp: the location's own, asked of the index, or online the spawn its roll
+stands (`_liftLocationAt`, bound to the Overworld's side-effect-free probe). It
+was the wild lift there (AUDIT LANDFORMS B1): up to 203 m off a location's
+levelled ground (Tamarilyn Coven; 1,036 of 15,251 locations over a metre at the
+rect's centre), into a camp that is never stood again.
+
+The field is the kernel's own shaped ground less DFU's over the network this
+thread holds (AUDIT LANDFORMS B2): the lift with a road's cut and fill and a
+river's channel, asked of the two kernels a sample at a time in the wild and in
+one pass through a town's blend (the kernel writes DFU's samples beside the
+shaped ones, `generateSamples`' `classic`), made again once the network lands.
+It was the lift alone, and across a change of the row - the one-time stand of
+every save from before it, or a landforms save read with the row off - a record
+by a path took the cut's difference with it: on the real data up to 29.8 m over
+a road's cut on a hillside (a fall billing over 120 HP), and over 5 m at 555 of
+the 701,841 samples the cuts move. Now a record goes out and comes back exactly within a
+build, and across a change of the row it lands within 1.6 m over and 2.0 m
+under its ground in the wild (the mod's SmoothRoads, which smooths DFU's own
+road and not the level bed; 99th percentile 0.07 m) and within 0.9 m in a town.
+Not followed: World of Daggerfall's flatten. A body under its ground the
+collider lifts. The interior cache is in its building's frame and moves with
+the ground.
 
 ## THE FOUR HOSTS
 
 - `scenes/world.js` - WIRED: the switch read once at the mount, the job's `landform`, the promotion's and the
-  restride's ghost rows, the gate's beacon, the far ring and the travel view, the save's stamp, and the re-stand.
-- `scenes/worldModes.js` - WIRED: hands the stamp to the dungeon it mounts (`landforms: host.landforms`); its own
-  interior cache is in the building's frame and needs none.
-- `scenes/dungeonContext.js` - WIRED: its save carries the world host's stamp (the camps left standing outside are
-  exterior heights).
+  restride's ghost rows, the gate's beacon, the far ring and the travel view, every record's height written in DFU's
+  frame, and the re-stand.
+- `scenes/worldModes.js` - NOT WIRED, by design (AUDIT LANDFORMS C1): the heights the world host hands it are DFU's
+  frame already; its own interior cache is in the building's frame.
+- `scenes/dungeonContext.js` - NOT WIRED, by design: the camps left standing outside reach its save through the world
+  host's `outerCampsSave`, in DFU's frame.
 - `scenes/exterior.js` - NOT WIRED, by design: the fixed-city bench runs no terrain kernel at all (no tile pipeline,
-  Roads.md's MODS AUDIT); it stands its one city on the location's flat ground, so its saves carry no stamp - DFU's
-  ground, which is the ground it stands on.
+  Roads.md's MODS AUDIT); it stands its one city on the location's flat ground - DFU's ground, which is the frame
+  every record is written in.
 
 ## ON THE REAL WOODS.WLD (2026-10-07)
 
@@ -239,6 +283,17 @@ Roads network, in scratch, with the slice's own functions:
 - THE RIVERS, 199 straight inland river pixels: the floor level across its
   painted width (median spread 0.00 m), 2.2 m under the lower bank top (median;
   95th percentile 2.7 m).
+- THE TILES (AUDIT LANDFORMS D3), every location pixel with sea or beach in it
+  (314), the whole pipeline with its painter: 0 tiles differ from DFU's (359 in
+  97 did, before).
+- THE RE-STAND (AUDIT LANDFORMS B2), a record moved across a change of the row
+  by the field, against the whole pipeline's two grounds: at the 701,841
+  samples the cuts move in 300 lifted path pixels, median 0.00 m, 99th
+  percentile 0.07 m, worst 1.6 m over and 2.0 m under (the lift alone: median
+  0.5 m over, 99th percentile 3.1 m, worst 29.8 m over and 28.6 m under); at
+  every sample of 997 location pixels a path crosses, within 0.9 m. A field
+  costs a town 7 ms (one kernel pass) and a record in the wild its four
+  samples.
 
 ## RESIDUES, NAMED
 
@@ -259,33 +314,78 @@ Roads network, in scratch, with the slice's own functions:
   ring's vertex with the row off and 212 m with it on (AUDIT LANDFORMS): the
   lift scales that gap and opens none. The extremes widen with the relief
   (726 -> 1,174 m), which is the ring's own law at taller heights.
-- Online, the room's memory (WORLD1) carries heights with no stamp, as it
-  carried no terrain scale. The row and the river switch are forced on for
-  every player at once and a room forgets when it empties, so its heights
-  change ground together, at the deploy.
-- NOT SEEN IN THE GAME. The container this was built in carries no ARENA2;
-  the shapes were checked on the picture as a stand-in heightmap and on the
-  real Basic Roads network, never on the real WOODS.WLD. WATER2's lesson
-  stands: Mac's eye in the real game before the merge.
+- TWO BUILDS IN ONE ROOM (AUDIT LANDFORMS C2). Nothing keeps builds apart
+  online: `worldRoom` carries no ground tag, the relay reads no client build,
+  a deploy reloads no open tab (updateNotice.js), and the macOS and portable
+  desktop copies never update themselves. A player on a build without the row
+  and one with it share a room on two grounds - each draws the other at the
+  sender's height (interiors ride the exterior frame), so in a town they part
+  by the town's lift: at the location pixels median 0 m, 75th percentile
+  10.9 m, 90th 184 m, 99th 492 m (97 of 410 cities over 10 m, Makilliweyn about
+  390 m) - until the old tab reloads or the old copy updates. No earlier ground
+  slice kept builds apart either (TERRAIN-SCALE1, WOD1, WD3, DW-A..D bumped
+  nothing; a RELAY_VERSION bump restarts the relay and the old tabs reconnect
+  into the same rooms). Real separation is a relay change - a ground law in
+  the world hello, GATE_BRAIN_MIN's shape, or a tag in `worldRoom` - and
+  Mac's call. The room's memory (WORLD1) holds dungeon and building places
+  only, no exterior height.
+- A RECORD BY A PATH, ACROSS A CHANGE OF THE ROW (THE SAVES, above): the mod's
+  SmoothRoads smooths DFU's own road and not the landforms' level bed, so a
+  record on a road from before the row lands within 1.6 m over or 2.0 m under
+  it; World of Daggerfall's flatten is not followed either.
+- OW-MOUNTAINS judges a travel route's open step on raw bytes
+  (`systems/travelRoute.js` openStepBlocked: 16 bytes, 160 m between pixel
+  centres, DFU's slopes); with the row on, 251 of the 839,697 steps it admits
+  outside the Mountain climate rise more than 160 m on the lifted ground (the
+  worst 390 m, (803, 212) -> (804, 212), about 25 degrees). No failure traced
+  - the slope limit is 70 degrees. Whether it should read `reliefByteHeight`
+  with the row on is Mac's call (AUDIT LANDFORMS A2).
+- Come Sail Away's `Terrain.SampleHeight` (world/terrainSurface.js
+  `unityHeightmapStep`) still caps the ground at DFU's 1,923.75 m, the one
+  reader that keeps a ceiling at 1; 0.85% of land samples stand over it, where
+  no boat goes (AUDIT LANDFORMS N1).
+- A CAUSEWAY'S WALL. Inside a channel a road stands on its own bed alone and
+  its bank gives way to the channel (E2), so the ground drops from the
+  causeway's top to the channel's floor within a sample - about 2.4 m over
+  6.4 m at a river - which the heightfield draws as a steep bank.
+- NOT SEEN IN THE GAME. The shapes were measured on the real WOODS.WLD and the
+  real Basic Roads network (ON THE REAL WOODS.WLD, above) and looked at as
+  renders of a stand-in heightmap made from the picture, never in the running
+  game. WATER2's lesson stands: Mac's eye in the real game before the merge.
 
 ## AUDIT LANDFORMS (2026-10-07)
 
 Mac: *"Dont worry about it. Instead let's do just an audit and ensure this is
-perfect"* - the record is `01-Overview/Audit-Landforms.md`. It changed two laws
-of this page: a road's low bank falls to the land (E1), and a channel is the
-water's (E2) - both above, in LANDFORM2.
+perfect"* - the record is `01-Overview/Audit-Landforms.md`. It changed these
+laws of this page, each above where it lives:
+
+- a road's low bank falls to the land (E1) and a channel is the water's (E2) -
+  LANDFORM2;
+- the landforms move the ground, never a tile: a location's tiles are DFU's
+  own blend's (D3) - THE LAW;
+- every height a record carries is in DFU's frame, no stamp (C1/B4); a pixel
+  not built yet takes its location's own lift (B1); and the field follows the
+  cuts (B2) - THE SAVES;
+- online a failed fetch of Basic Roads' arrays is asked again before the port's
+  own network stands in (C3, `Roads.md`), and the ground's online note names the
+  rivers (C4);
+- the version skew online is named (C2) - RESIDUES.
 
 ## Pins
 
 `test/landform.test.js` - the knee (every sample of eleven coastal pixels, the
 classifier's tiles equal, no step where a road or a river meets the beach, the
-shaper at its worst), the lift and the ring, every seam and ghost row, the road
-graded level to the macro height and the land untouched past its verge, the
-river's floor and its levee, the causeway, rivers off and the room's switch
-online, the build's edge normals, a point's lift against the real pipeline in a town, the re-stand
-both ways, the stamps, the switch, the host's wiring, the worker byte for byte,
-and THE CEILING (a glitch byte in a lowland, a road graded across it).
-`tools/mutants/landform.json` - 40 mutants, 39 dead and 1 recorded equivalent
-(the knee's early return: the coast fade is zero at the knee, so it is the law
-said plainly and a fast path for the sea). The TERRAIN-SCALE1, PERF-EXT26 and
-EV4 pins that read the lines the slice changed now read the new lines.
+shaper at its worst), the lift and the ring (the top byte 1.9 x its own term),
+every seam and ghost row, the road graded level to the macro height along the
+whole arm and the land untouched past its verge, the river's floor and its
+levee, the causeway, rivers off and the room's switch online, the build's edge
+normals, a point's lift against the real pipeline in a town, a record's height
+DFU's frame both ways and no stamp anywhere, the switch, the host's wiring, the
+worker byte for byte, and THE CEILING (a glitch byte in a lowland, a road graded
+across it). `test/auditlandforms.test.js` - the audit's own (its record:
+`01-Overview/Audit-Landforms.md`), THE LAW WRITTEN OUT among them: a second
+statement of the shaper, equal to it at every sample of the fixture's bend,
+junction, ends, crossing and shore. `tools/mutants/landform.json` - 36 mutants,
+all dead; `tools/mutants/auditlandforms.json` - 99, 92 dead and 7 recorded
+equivalent. The TERRAIN-SCALE1, PERF-EXT26 and EV4 pins that read the lines the
+slice changed now read the new lines.

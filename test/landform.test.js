@@ -102,6 +102,7 @@ test('LANDFORM1: the small heightmap is lifted - nothing under the median land, 
   assert.equal(ringHeight(100, true), reliefByteHeight(100) * STREAMING_TERRAIN_SCALE);
   assert.equal(reliefByteHeight(100), 800 + reliefLift(800));
   assert.ok(ringHeight(127, true) > ringHeight(127) * 1.5, 'the top stands half as tall again and more');
+  assert.ok(Math.abs((reliefByteHeight(127) - LANDFORM_KNEE) / (127 * 8 - LANDFORM_KNEE) - 1.9) < 1e-12, 'the top byte: 1.9 x its own term over the knee, as the title says (AUDIT LANDFORMS D6)');
   assert.equal(ringHeight(20, true), ringHeight(20), 'the lowlands are DFU\'s');
   assert.equal(ringHeight(0, true), SCALED_OCEAN_ELEVATION * STREAMING_TERRAIN_SCALE, 'the sea is the sea');
   const grid = (relief) => buildFarRingGrid({ heightBytes: woods.heightMapBuffer, mapWidth: MAP_WIDTH, mapHeight: MAP_HEIGHT, climateAt: () => 231, baseX: 400, baseY: 250, radius: 2, relief });
@@ -184,7 +185,7 @@ test('LANDFORM2: a road is graded level across to the kernel\'s own macro height
   const { flat, bank, verge } = LANDFORM_DIALS.road;
   assert.deepEqual([flat, bank, verge, LANDFORM_DIALS.road.drop], [1.25, 2.5, 6, 0]);
   let cutAway = 0;
-  for (let y = 4; y <= 124; y++) {
+  for (let y = 0; y <= 128; y++) {   // PIN MOVED (AUDIT LANDFORMS D5): it ran 4..124, and the hand-over between two pixels' arms is in the rows it skipped
     const bed = at(cut, 64, y);
     assert.ok(Math.abs(bed - macro(64, y)) * UNIT < 1e-3, `y=${y}: the bed is the macro height on the centre line - the arm alongside grades it, at the centre and the pixel edge too`);
     for (const x of [63, 65]) assert.ok(Math.abs(at(cut, x, y) - bed) * UNIT < 0.05, `y=${y}: level across (x=${x})`);
@@ -253,7 +254,7 @@ test('LANDFORM1: a point\'s lift is the lift field taken through the location\'s
   const dfu = run(false), shaped = run(true);
   for (const [sx, sy] of [[60, 70], [41, 51], [79, 89], [20, 70], [60, 110], [5, 5], [120, 20], [100, 100]]) {
     const want = (at(shaped, sx, sy) - at(dfu, sx, sy)) * UNIT;
-    assert.ok(Math.abs(landformLift(woods, px, py, sx, sy, rect) - want) < 0.05, `(${sx},${sy}): ${landformLift(woods, px, py, sx, sy, rect).toFixed(3)} vs the pipeline's ${want.toFixed(3)}`);
+    assert.ok(Math.abs(landformLift(woods, px, py, sx, sy, rect) - want) < 0.01, `(${sx},${sy}): ${landformLift(woods, px, py, sx, sy, rect).toFixed(3)} vs the pipeline's ${want.toFixed(3)}`);   // AUDIT LANDFORMS D7: 0.05 was fifty times the agreement
   }
   assert.ok(Math.abs(landformLift(woods, px, py, 60, 70, rect) - landformLift(woods, px, py, 45, 55, rect)) < 1e-6, 'the whole levelled ground rises as one');
   assert.ok(landformLift(woods, px, py, 60, 70, rect) > 50, 'and it rises');
@@ -263,52 +264,65 @@ test('LANDFORM1: a point\'s lift is the lift field taken through the location\'s
   assert.ok(Math.abs(landformLift(woods, px, 230, 33, 77) - (at(wild, 33, 77) - at(wildDfu, 33, 77)) * UNIT) < 1e-3, 'in the wild: reliefLift of the kernel\'s own small-heightmap term');
 });
 
-/** world.js's own restandHeight, sliced and run against a stub ground (terrainscale1.test.js's harness, with the
- *  landforms' two reads). */
+/** world.js's own groundFrameHeight, groundFrameNative and restandHeight, sliced and run against a stub ground and a stub
+ *  lift (terrainscale1.test.js's harness, with the landforms' two reads; test/auditlandforms.test.js runs the real lift). */
 function restander({ ground, comp = 0, landform = false, lift = () => 0 }) {
-  const i = WORLD.indexOf('  const restandHeight = (y, x, z, was, wasLand = false) => {');
+  const i = WORLD.indexOf('  const groundFrameHeight = (y, x, z) =>');
   const j = WORLD.indexOf('  // Building doors (P3)', i);
-  assert.ok(i > 0 && j > i);
-  const state = { compensation: [0, comp, 0] };
+  assert.ok(i > 0 && j > i && WORLD.slice(i, j).includes('  const restandHeight = (y, x, z, was) => {'));
+  const state = { compensation: [0, comp, 0], localFromWorld: (nx, nz) => [nx - 100, nz - 200] };
   const heightAt = (x, z) => (ground(x, z) == null ? -Infinity : ground(x, z) + comp);
-  return new Function('heightAt', 'state', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', 'landform', 'landformLiftAt', `${WORLD.slice(i, j)}\nreturn { restandHeight, landOf };`)(heightAt, state, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, landform, lift);
+  return new Function('heightAt', 'state', 'STREAMING_TERRAIN_SCALE', 'DEFAULT_TERRAIN_SCALE', 'landform', 'landformLiftAt', `${WORLD.slice(i, j)}\nreturn { groundFrameHeight, groundFrameNative, restandHeight };`)(heightAt, state, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, landform, lift);
 }
 
-test('LANDFORM1: a height written on the other ground stands again on today\'s - its own height over the ground, the landforms\' lift at its own spot put on or taken off', () => {
+test('LANDFORM1: a record\'s height is DFU\'s frame - written with the landforms\' lift at its own spot taken off, stood again with it put back on; with the row off it lands as it came', () => {
+  // AUDIT LANDFORMS C1 MOVED THIS PIN: it ran a stamp (`landforms: true`) that told a reader whose ground a height stood
+  // on - and a build that never knew the stamp (a desktop copy not yet updated, a revert) stood a landforms save's every
+  // height the lift over its ground. A record is DFU's frame now, whatever the row: nothing to tell.
   const L = 140, g = 500;   // the lift at the spot, and DFU's ground there
   const on = restander({ ground: (x) => (x < 1000 ? g + L : null), comp: 21, landform: true, lift: () => L });
-  assert.equal(on.landOf(true), true); assert.equal(on.landOf(undefined), false); assert.equal(on.landOf('yes'), false);
-  assert.equal(on.restandHeight(g + 3, 10, 10, 1.25, false), g + 3 + L, 'a save from before the row, loaded with it on: lifted');
-  assert.equal(on.restandHeight(g + 3, 5000, 10, 1.25, false), g + 3 + L, '...where the ground is not built too');
-  assert.equal(on.restandHeight(g + L + 3, 10, 10, 1.25, true), g + L + 3, 'written on the landforms: untouched');
+  assert.equal(on.groundFrameHeight(g + L + 3, 10, 10), g + 3, 'written with the row on: 3 over DFU\'s ground');
+  assert.equal(on.groundFrameNative(110, 210, g + L + 3), g + 3, '...a record in natives the same');
+  assert.equal(on.restandHeight(g + 3, 10, 10, 1.25), g + L + 3, 'read with the row on: the lift put back on');
+  assert.equal(on.restandHeight(g + 3, 5000, 10, 1.25), g + L + 3, '...where the ground is not built too');
+  // and read where the row is off - this build with it off, or a build without it: 3 over DFU's ground, as it stood
+  const off = restander({ ground: (x) => (x < 1000 ? g : null), comp: 21, landform: false, lift: () => L });
+  assert.equal(off.restandHeight(on.groundFrameHeight(g + L + 3, 10, 10), 10, 10, 1.25), g + 3);
+  assert.equal(off.groundFrameHeight(g + 3, 10, 10), g + 3, 'written with the row off: DFU\'s frame is the ground\'s own');
+  assert.equal(off.groundFrameNative(110, 210, g + 3), g + 3);
+  assert.equal(off.restandHeight(123.4, 10, 10, 1.25), 123.4, 'and read with it off: as it came');
+  assert.equal(off.restandHeight(123.4, 5000, 10, 1.25), 123.4);
+  // the lift is the one at the record's OWN spot, scene coordinates for a height and natives through the frame for a row
+  const spot = restander({ ground: () => null, landform: true, lift: (x, z) => 2 * x + z });
+  assert.equal(spot.groundFrameHeight(100, 7, 5), 81);
+  assert.equal(spot.groundFrameNative(107, 205, 100), 81);
+  assert.equal(spot.restandHeight(81, 7, 5, 1.25), 100, 'the round trip is exact');
+  assert.ok(Number.isNaN(spot.groundFrameHeight(NaN, 7, 5)) && spot.groundFrameHeight(-Infinity, 7, 5) === -Infinity, 'a height that is no number passes as it came');
   // the scale's arm and the land's together: a 1.5 save of DFU's ground, now on the landforms at 1.25
   const sample = 0.3, gOld = sample * MAX_TERRAIN_HEIGHT * 1.5, gNew = sample * MAX_TERRAIN_HEIGHT * 1.25;
   const both = restander({ ground: (x) => (x < 1000 ? gNew + L : null), comp: 21, landform: true, lift: () => L });
-  assert.ok(Math.abs(both.restandHeight(gOld + 6.5, 10, 10, 1.5, false) - (gNew + L + 6.5)) < 1e-6, 'on a roof on the old scale: the same 6.5 over today\'s ground');
-  assert.ok(Math.abs(both.restandHeight(gOld, 5000, 10, 1.5, false) - (gNew + L)) < 1e-6, 'unbuilt: the ratio on DFU\'s part, the lift on top');
-  const off = restander({ ground: (x) => (x < 1000 ? g : null), comp: 21, landform: false, lift: () => L });
-  assert.equal(off.restandHeight(g + L + 3, 10, 10, 1.25, true), g + 3, 'a landforms save loaded with the row off: the lift taken off');
-  assert.equal(off.restandHeight(g + L + 3, 5000, 10, 1.25, true), g + 3);
-  assert.equal(off.restandHeight(123.4, 10, 10, 1.25, false), 123.4, 'DFU\'s ground both ways: untouched');
-  assert.equal(off.restandHeight(123.4, 10, 10, 1.25), 123.4, 'and a caller that names no stamp means DFU\'s');
+  assert.ok(Math.abs(both.restandHeight(gOld + 6.5, 10, 10, 1.5) - (gNew + L + 6.5)) < 1e-6, 'on a roof on the old scale: the same 6.5 over today\'s ground');
+  assert.ok(Math.abs(both.restandHeight(gOld, 5000, 10, 1.5) - (gNew + L)) < 1e-6, 'unbuilt: the ratio on DFU\'s part, the lift on top');
+  // and with the row off the old scale's height takes the scale's arm alone - no lift, built or not
+  const offOld = restander({ ground: (x) => (x < 1000 ? gNew : null), comp: 21, landform: false, lift: () => L });
+  assert.ok(Math.abs(offOld.restandHeight(gOld + 6.5, 10, 10, 1.5) - (gNew + 6.5)) < 1e-6, 'the row off, the old scale: the same 6.5 over DFU\'s ground');
+  assert.ok(Math.abs(offOld.restandHeight(gOld, 5000, 10, 1.5) - gNew) < 1e-6);
 });
 
-test('LANDFORM1: the save, the scene cache and the anchor carry whose ground their heights stand on - and a record from before carries DFU\'s', () => {
+test('LANDFORM1: no record carries whose ground it stood on - the save, the scene cache, the anchor, the deck and a dungeon\'s outer camps are DFU\'s frame, so every build reads them as it always read one', () => {
+  // AUDIT LANDFORMS C1 MOVED THIS PIN: it pinned the stamp each carried (`landforms: true`) and the reads of it
+  for (const f of ['src/systems/save.js', 'src/systems/sceneCache.js', 'src/systems/teleportAnchor.js', 'src/systems/ship.js', 'src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) {
+    assert.equal(src(f).includes('landforms'), false, `${f}: no stamp`);
+  }
+  assert.equal(/landforms: !!landform|landOf\(|wasLand|savedLand/.test(WORLD), false, 'the host writes none and reads none');
   const entity = { items: [], stats: {} };
-  const snap = snapshotPlayer(entity, { landforms: true });
-  assert.equal(snap.landforms, true);
-  assert.equal(restorePlayer(entity, snap).landforms, true);
-  const plain = snapshotPlayer(entity, {});
-  assert.equal(Object.hasOwn(plain, 'landforms'), false, 'nothing written for DFU\'s ground - an older build reads the save as it always did');
-  assert.equal(restorePlayer(entity, plain).landforms, false);
-  assert.equal(makeAnchor({ pixel: { x: 1, y: 2 }, nativeX: 0, nativeZ: 0, y: 5, terrainScale: 1.25, landforms: true }).landforms, true);
-  assert.equal(makeAnchor({ pixel: { x: 1, y: 2 }, nativeX: 0, nativeZ: 0, y: 5 }).landforms, false);
+  assert.equal(Object.hasOwn(snapshotPlayer(entity, {}), 'landforms'), false);
+  assert.equal(Object.hasOwn(makeAnchor({ pixel: { x: 1, y: 2 }, nativeX: 0, nativeZ: 0, y: 5, terrainScale: 1.25 }), 'landforms'), false);
   const cache = createSceneCache();
-  cacheScene(cache, 'A', { droppedPiles: [], terrainScale: 1.25, landforms: true });
-  cacheScene(cache, 'B', { droppedPiles: [], terrainScale: 1.25 });
+  cacheScene(cache, 'A', { droppedPiles: [], terrainScale: 1.25 });
   const round = restoreSceneCache(createSceneCache(), JSON.parse(JSON.stringify(snapshotSceneCache(cache))));
-  assert.equal(restoreCachedScene(round, 'A').landforms, true);
-  assert.equal(restoreCachedScene(round, 'B').landforms, undefined, 'an entry on DFU\'s ground carries nothing');
+  assert.equal(restoreCachedScene(round, 'A').landforms, undefined);
+  assert.equal(restorePlayer(entity, snapshotPlayer(entity, {})).landforms, undefined);
 });
 
 test('LANDFORM1-3: the switch is the Features row on the enhanced skin, the room\'s ground online, and ?landforms=off offline', () => {
@@ -333,7 +347,7 @@ test('LANDFORM1-3: the switch is the Features row on the enhanced skin, the room
   assert.equal(row.effect, 'Takes effect when the world next loads.');
 });
 
-test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promotion with it, raises the ring and the beacon by it, and stamps every save with it', () => {
+test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promotion with it, raises the ring and the beacon by it, and stands every record\'s height again by it', () => {
   assert.match(WORLD, /\n  const landform = landformsOn\(\);\n/, 'once, at the mount - the same job online and off: the room\'s river switch decides online');
   assert.match(WORLD, /const landformsHere = \(\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\) \}\) : null\);/, 'this thread\'s landforms, over its own network');
   assert.equal((WORLD.match(/landformsOn\(/g) ?? []).length, 1);
@@ -343,16 +357,14 @@ test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promo
   assert.match(WORLD, /_gateKernel = sampleKernel\(woods, px, py, HEIGHTMAP_DIMENSION, true, landformsHere\(\)\);/, 'the gate\'s beacon stands on the shaped ground');
   assert.match(WORLD, /relief: !!landform,   \/\/ LANDFORM1: the ring stands the massifs/, 'the far ring');
   assert.match(WORLD, /ringHeight\(byte, !!landform\)/, 'the travel view past the built grid');
-  assert.match(WORLD, /landforms: !!landform,   \/\/ LANDFORM1: the ground every exterior height in it stands on/, 'the save');
-  assert.match(WORLD, /landforms: !!landform,   \/\/ LANDFORM1: the ground its save's outside heights/, 'the dungeon\'s save, through the mode machine');
-  assert.match(src('src/scenes/worldModes.js'), /landforms: host\.landforms === true,/);
-  assert.match(src('src/scenes/dungeonContext.js'), /landforms: opts\.landforms === true,/);
-  assert.match(WORLD, /const wasLand = landOf\(extras\.landforms\);/, 'the quickload reads the save\'s ground');
-  assert.match(WORLD, /const today = was === STREAMING_TERRAIN_SCALE && wasLand === !!landform;/);
-  assert.match(WORLD, /restandHeight\(p\[1\], x, z, savedScale, savedLand\)/, 'the camps left outside');
-  assert.match(WORLD, /return restandHeight\(y, x, z, was, wasLand\); \};\n    droppedLoot\.restoreWorld\(arrived/, 'the exterior scene cache');
+  // AUDIT LANDFORMS C1 MOVED THESE PINS: they read a stamp - every record is DFU's frame now, the row's lift put back on at
+  // every read (test/auditlandforms.test.js runs each path, row on and off)
+  assert.match(WORLD, /const today = was === STREAMING_TERRAIN_SCALE && !landform;/, 'the quickload');
+  assert.match(WORLD, /const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform \? outer : outer\.map/, 'the camps left outside');
+  assert.match(WORLD, /return restandHeight\(y, x, z, was\); \};   \/\/ LANDFORM1: the row's lift put back on\n    droppedLoot\.restoreWorld\(arrived/, 'the exterior scene cache');
   const tg = src('src/world/terrainGen.js');
-  assert.match(tg, /const landforms = landform \? createLandforms\(\{ woods, roads \}\) : null;\n  const samples = generateSamples\(woods, px, py, HEIGHTMAP_DIMENSION, landforms\);/, 'the kernel cuts along the network the painter paints');
+  // AUDIT LANDFORMS D3 MOVED THIS PIN: the same pass writes DFU's own samples beside, for a location's tiles
+  assert.match(tg, /const landforms = landform \? createLandforms\(\{ woods, roads \}\) : null;\n(?:  \/\/[^\n]*\n)*  const classic = landforms && hasLocation \? new Float32Array\(HEIGHTMAP_DIMENSION \* HEIGHTMAP_DIMENSION\) : null;\n  const samples = generateSamples\(woods, px, py, HEIGHTMAP_DIMENSION, landforms, classic\);/, 'the kernel cuts along the network the painter paints');
   assert.match(tg, /const lf = landforms \?\? \(landform \? createLandforms\(\{ woods, roads \}\) : null\);/, 'and a promotion\'s ghost rows along the same');
   assert.match(src('src/world/terrainGenWorker.js'), /if \(m\.t === 'grid' && m\.landform && pendingRoads\) \{ pendingRoads\.then\(\(\) => handle\(m\)\); return; \}/, 'a landforms promotion waits for the network its pixel was cut along');
 });

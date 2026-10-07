@@ -39,5 +39,20 @@ export function network({ water = true } = {}) {
   for (let y = 245; y <= 252; y++) set(n.streams, 312, y, DIR.N | DIR.S);             // a stream
   for (let x = 92; x <= 112; x++) set(n.roads, x, 200, DIR.E | DIR.W);               // a road down to the beach
   for (let x = 92; x <= 112; x++) set(n.rivers, x, 300, DIR.E | DIR.W);              // and a river out to sea
+  // AUDIT LANDFORMS D8: a bend, a junction and their ends on the mountain's flank, where the arms' grades part - the
+  // arm-weighting law's own ground (test/auditlandforms.test.js walks it sample by sample)
+  set(n.roads, 350, 200, DIR.E);                                                     // an end
+  for (let x = 351; x <= 353; x++) set(n.roads, x, 200, DIR.E | DIR.W);
+  set(n.roads, 352, 200, DIR.S);                                                     // a junction: a road south
+  for (let y = 201; y <= 203; y++) set(n.roads, 352, y, DIR.N | DIR.S);
+  set(n.roads, 352, 204, DIR.N);
+  set(n.roads, 354, 200, DIR.W | DIR.N);                                             // a bend: west, then north
+  for (let y = 197; y <= 199; y++) set(n.roads, 354, y, DIR.N | DIR.S);
+  set(n.roads, 354, 196, DIR.S);
+  set(n.tracks, 356, 204, DIR.NE);                                                   // a track off the diagonal...
+  set(n.tracks, 357, 203, DIR.SW | DIR.NE);
+  set(n.tracks, 358, 202, DIR.SW | DIR.N);                                           // ...into the north-south
+  set(n.tracks, 358, 201, DIR.S | DIR.N);
+  set(n.tracks, 358, 200, DIR.S);
   return n;
 }

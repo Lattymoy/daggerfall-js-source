@@ -66,17 +66,25 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
   // are the same roads; restrideGrid's ghost rows take the same landforms, so the edge normals read the shaped ground.
   const landforms = landform ? createLandforms({ woods, roads }) : null;
-  const samples = generateSamples(woods, px, py, HEIGHTMAP_DIMENSION, landforms);
+  // AUDIT LANDFORMS D3: THE LANDFORMS MOVE THE GROUND, NEVER A TILE. A location's blend pulls its whole pixel toward the
+  // pixel's mean, and the landforms move that mean (a road's bed and a river's channel by centimetres, a massif in the
+  // pixel by up to 268 m - Chesterbrugh), so a beach sample the classifier read on the shaped blend crossed the beach
+  // line where DFU's did not: 359 tiles in 97 of the 314 coastal location pixels on the real data turned between sand
+  // and land. The tiles are classified on DFU's own samples through DFU's own blend - written in the same pass - and
+  // where they part from the shaped ground they part by at most 2.2 m (the Dunynak Excavation, 313 under 10 cm).
+  const classic = landforms && hasLocation ? new Float32Array(HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION) : null;
+  const samples = generateSamples(woods, px, py, HEIGHTMAP_DIMENSION, landforms, classic);
   let avg = 0;
   if (hasLocation) {
     [avg] = calcAvgMaxHeight(samples);
     blendLocationTerrain(samples, avg, locationRect);
+    if (classic) blendLocationTerrain(classic, calcAvgMaxHeight(classic)[0], locationRect);
   }
   // ROADS 2: the one seam. Ground classified, squares not yet run, so a
   // road tile lands over a known ground type and the marching squares
   // blend around it. `roads` is null in a solo build with no network
   // loaded and the pipeline is then byte-for-byte what it was.
-  const tileData = generateTileData(samples, px, py);
+  const tileData = generateTileData(classic ?? samples, px, py);
   // GRASS-PATH1: the painter's own record of which tiles it wrote, so
   // the grass placer can keep off a path it cannot name by record.
   let paths = null;

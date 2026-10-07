@@ -14939,8 +14939,28 @@ the row online with the ground's words; offline it stays the player's, off as
 shipped, and the online sync (UXB1-E) copies the room's on home with the rest.
 The landforms' job lost its own river flag: the painter's switch is the cut's.
 
-Pins: `test/landform.test.js`, `test/modsonline.test.js` (the count, 47; the
-named key), `test/onlinelane.test.js` (the contrast re-aimed a third time, at
-the roads a travel map only draws), `test/uxb1e_onlinesync.test.js`; mutants:
-`tools/mutants/landform.json` (37: 36 dead, 1 equivalent as recorded).
+AUDIT LANDFORMS (2026-10-07, `01-Overview/Audit-Landforms.md`) added three:
+- C3, HIS NETWORK OR NONE YET: one failed fetch of Basic Roads' arrays stood
+  that client on the port's own generated network - other roads, no rivers, so
+  with the landforms a river pixel's ground a median 4.8 m off its peers'.
+  Online the arrays are asked again (`world/roadsProducer.js` retryModRoads,
+  WOD6's backoff: 5 s, doubling to a minute, twelve more tries), the pixels
+  roadless meanwhile and rebuilt when they land (ROADS 25); the port's own
+  network only once every try has failed.
+- C4: the ground's lock note (`ui/enhancedMenu.js` ONLINE_GROUND_NOTE) names
+  the rivers it now locks.
+- C2, TWO BUILDS IN ONE ROOM, named and left to Mac: nothing keeps a build
+  without the landforms and one with them out of the same room (`worldRoom`
+  carries no ground tag, the relay reads no build, a deploy reloads no tab),
+  and each draws the other at the sender's height - in a town off by the
+  town's lift until the old tab reloads (`03-World/Landforms.md`, RESIDUES).
+  Keeping them apart is a relay change. The saves are safe across builds
+  either way (C1: every height a record carries is DFU's frame).
+
+Pins: `test/landform.test.js`, `test/auditlandforms.test.js` (C3: the backoff
+and the host's landing, online and off; C4), `test/modsonline.test.js` (the
+count, 47; the named key), `test/onlinelane.test.js` (the contrast re-aimed a
+third time, at the roads a travel map only draws),
+`test/uxb1e_onlinesync.test.js`; mutants: `tools/mutants/landform.json` (36,
+all dead), `tools/mutants/auditlandforms.json` (the C3 and C4 records).
 Not verified in a browser: no online session exists in this container.

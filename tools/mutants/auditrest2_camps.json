@@ -138,7 +138,7 @@
   {
     "name": "AUDITREST2-H6-the-host-never-hands-them",
     "file": "src/scenes/world.js",
-    "old": "    outerCampsSave: () => camps.snapshot(campToNatives),",
+    "old": "    outerCampsSave: () => camps.snapshot(campToRecord),",
     "new": "    outerCampsSave: () => null,",
     "tests": [
       "test/auditrest2_camps.test.js"

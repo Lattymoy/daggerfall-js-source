@@ -8082,7 +8082,6 @@ export function createWorldModes(host) {
           onEnemySpawn: (rec) => host.onEnemySpawn?.(rec),   // OH-E: GameManager.OnEnemySpawn, for a foe stood after the layout
           onDungeonCleared: () => host.onDungeonCleared?.(),
           spawnLedger: () => host.spawnLedger?.() ?? null,
-          landforms: host.landforms === true,   // LANDFORM1: the ground the camps outside stand on, stamped on a save made down here
           // FOE1 (2026-09-15, Mac, relaying players: "during online play,
           // certain enemies cant be damaged"): THIS LINE WAS INSIDE A
           // COMMENT. HT1 appended `// HT1: the torch keys` to the end of

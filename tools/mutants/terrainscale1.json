@@ -92,8 +92,8 @@
   {
     "name": "TS1-restand-unbuilt-untouched",
     "file": "src/scenes/world.js",
-    "old": "    return (y - then) * (was > 0 ? STREAMING_TERRAIN_SCALE / was : 1) + now;",
-    "new": "    return y - then + now;",
+    "old": "    return y * (was > 0 ? STREAMING_TERRAIN_SCALE / was : 1) + now;",
+    "new": "    return y + now;",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TS1-quickload-row-in-scene-frame",
     "file": "src/scenes/world.js",
-    "old": "const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was, wasLand); };",
-    "new": "const restandNative = (nx, nz, y) => restandHeight(y, nx, nz, was, wasLand);",
+    "old": "const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was); };",
+    "new": "const restandNative = (nx, nz, y) => restandHeight(y, nx, nz, was);",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "TS1-quickload-player-raw",
     "file": "src/scenes/world.js",
-    "old": "const ly = restandHeight(w.y ?? 2, lx, lz, was, wasLand) + state.compensation[1];",
+    "old": "const ly = restandHeight(w.y ?? 2, lx, lz, was) + state.compensation[1];",
     "new": "const ly = (w.y ?? 2) + state.compensation[1];",
     "tests": [
       "test/terrainscale1.test.js"
@@ -209,7 +209,7 @@
   {
     "name": "TS1-anchor-landing-raw",
     "file": "src/scenes/world.js",
-    "old": "return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale), landOf(a.landforms)) + state.compensation[1], lz];",
+    "old": "return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale)) + state.compensation[1], lz];",
     "new": "return [lx, (a.y ?? 2) + state.compensation[1], lz];",
     "tests": [
       "test/terrainscale1.test.js"
@@ -236,8 +236,8 @@
   {
     "name": "TS1-restore-drops-stamp",
     "file": "src/systems/save.js",
-    "old": "terrainScale: snap.terrainScale ?? null, landforms:",
-    "new": "terrainScale: null, landforms:",
+    "old": "terrainScale: snap.terrainScale ?? null };",
+    "new": "terrainScale: null };",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "TS1-ship-unstamped",
     "file": "src/scenes/world.js",
-    "old": "yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE, landforms",
-    "new": "yaw: cam.yaw, landforms",
+    "old": "yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE },",
+    "new": "yaw: cam.yaw },",
     "tests": [
       "test/terrainscale1.test.js"
     ]

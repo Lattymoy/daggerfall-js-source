@@ -123,3 +123,26 @@ export async function loadModRoads(fetchFn = globalThis.fetch, urls = MOD_ROADS)
     return { ...out, source: 'basic-roads', stats: { source: 'basic-roads', roadPixels: n } };
   } catch { return null; }
 }
+
+/** AUDIT LANDFORMS C3: how many more times an online page asks for Basic Roads' arrays after the first ask failed. */
+export const MOD_ROADS_RETRY_MAX = 12;
+
+/**
+ * AUDIT LANDFORMS C3: Basic Roads' arrays asked again in the background after a failed load - 5 s after, then doubling
+ * to a minute between tries (WOD6's backoff, worldOfDaggerfall.js), `max` more tries. Online a room's ground is cut along
+ * HIS network (the lane forces the mod), so the host asks again rather than stand one client on the port's own.
+ * @param {object} [o]
+ * @param {(ms: number) => Promise<void>} [o.wait] - the pause before each try
+ * @param {(tries: number, ms: number) => void} [o.onTry] - told before each pause
+ * @returns {Promise<?object>} his arrays (loadModRoads' shape), or null once every try failed
+ */
+export async function retryModRoads({ fetchFn = globalThis.fetch, urls = MOD_ROADS, wait = (ms) => new Promise((r) => setTimeout(r, ms)), max = MOD_ROADS_RETRY_MAX, onTry = null } = {}) {
+  for (let tries = 0; tries < max; tries++) {
+    const ms = Math.min(60000, 5000 * 2 ** tries);
+    onTry?.(tries, ms);
+    await wait(ms);
+    const his = await loadModRoads(fetchFn, urls);
+    if (his) return his;
+  }
+  return null;
+}

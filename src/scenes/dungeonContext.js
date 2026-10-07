@@ -8735,7 +8735,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (isGateArena(dfLocation)) { if (!quiet) hudText.add(COURT_TEXT.noSave); return false; }
       if (isArenaFloor(dfLocation)) { if (!quiet) hudText.add(ARENA_TEXT.refuse.save); return false; }   // ARENA2: a made level no save re-enters
       const snap = snapshotPlayer(playerEntity, {
-        landforms: opts.landforms === true,   // LANDFORM1: the world host's ground, which the camps outside stand on (none in the standalone ?dungeon)
         position: lastPlayerFeet, classicMinutes: classicMinutesRef.value,
         readiedSpellIndex: magic.readiedIndex(),
         // AUDIT 25 B4: DFU saves quest + conversation WHEREVER the

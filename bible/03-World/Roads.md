@@ -698,3 +698,9 @@ hillside and built up over a hollow, and lays every painted river and stream in 
 and SmoothRoads are untouched and run after it. Online the rivers are cut too (Mac: "Yes rivers should be online"):
 the MODS-ONLINE reading - a river paints tiles and never moves a height - is still true of this smoother, but the
 landforms' cut moves it, so RiversAndStreams is the room's now, ON (`06-Systems/Online-Arc.md`, LANDFORM3).
+
+AUDIT LANDFORMS C3 (2026-10-07): online his network or none yet. The generated network above is the fallback a page
+stands on when his arrays do not load - and online that one failed fetch stood a client on other roads and no rivers
+than its room's. Online `loadModRoads`' failure is asked again (`retryModRoads`, WOD6's backoff: 5 s, doubling to a
+minute, twelve more tries); the pixels stand roadless meanwhile and the roads sweep rebuilds them when the arrays land
+(ROADS 25). The generated network stands in only once every try has failed; offline it stands in at once, as before.

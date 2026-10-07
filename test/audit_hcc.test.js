@@ -83,8 +83,8 @@ test('AUDIT HCC H3: DFU\'s per-mod save data rides EVERY save - the envelope nam
   assert.deepEqual(extras.modData, { [V]: rec }, 'the record comes back from the slot, wherever the save was taken');
   assert.equal(restorePlayer({}, JSON.parse(JSON.stringify(snapshotPlayer(entity, {})))).modData, null, 'a save without it restores null - OnStartLoad\'s fresh start');
   const save = rd('src/systems/save.js');
-  assert.match(save, /smallerDungeonsState = 0, modData = null, landforms = false \} = \{\}\) \{/);   // LANDFORM1: the ground's stamp rides after it
-  assert.match(save, /modData: snap\.modData \?\? null, terrainScale: snap\.terrainScale \?\? null, landforms: snap\.landforms === true \};/);   // TERRAIN-SCALE1 rides after it
+  assert.match(save, /smallerDungeonsState = 0, modData = null \} = \{\}\) \{/);
+  assert.match(save, /modData: snap\.modData \?\? null, terrainScale: snap\.terrainScale \?\? null \};/);   // TERRAIN-SCALE1 rides after it
   assert.match(rd('src/scenes/dungeonContext.js'), /modData: opts\.horseCartSave \|\| opts\.modSaveRecords \? \{ \.\.\.\(opts\.horseCartSave \? \{ 'horse-cart-and-cargo': opts\.horseCartSave\(\) \} : \{\}\), \.\.\.\(opts\.modSaveRecords\?\.\(\) \?\? \{\}\) \} : null,/);   // WA1: every registered mod's record rides beside it
   assert.match(rd('src/scenes/dungeonContext.js'), /opts\.horseCartLoad\?\.\(extras\.modData\?\.\['horse-cart-and-cargo'\] \?\? null\);[^\n]*\n\s+this\.restoreSaved\(extras, setPlayerPos\);/);
 });

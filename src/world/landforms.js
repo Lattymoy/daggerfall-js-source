@@ -83,7 +83,7 @@
 // (1.25 m - STREAMING_TERRAIN_SCALE).
 // ═══════════════════════════════════════════════════════════════════
 
-import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, kernelTerms } from './terrainSampler.js';
+import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, kernelTerms, sampleKernel, generateSamples } from './terrainSampler.js';
 import { BEACH_JITTER, blendLocationTerrain } from './terrainTiles.js';
 import { DIR_DELTA, MAP_W, MAP_H } from './roadNetwork.js';
 
@@ -156,14 +156,16 @@ export function reliefByteHeight(byte) {
 }
 
 /**
- * LANDFORM1: how far the landforms lift DFU's ground at a point of a pixel, in kernel units - what a height written on
- * one ground is moved by to stand on the other (world.js restandHeight: a save, a cached scene, an anchor). The lift is
- * reliefLift of the kernel's small-heightmap term alone, and the one step DFU takes after the kernel that moves a
- * point's ground - a location's blend, which lerps every sample toward the pixel's mean - is linear in the samples. So
- * a point's lift is the lift FIELD taken through that same blend (blendLocationTerrain itself, over the field): exact
- * over a town's levelled ground, exact in the wild. Not followed: a cut's few metres along a path, and World of
- * Daggerfall's flatten - a body that ends under its ground the collider lifts (collider.js: the floor beneath
- * everything).
+ * LANDFORM1: how far the landforms move DFU's ground at a point of a pixel, in kernel units - what a height written in
+ * one frame is moved by to stand on the other (world.js groundFrameHeight and restandHeight: a save, a cached scene,
+ * an anchor). The one step DFU takes after the kernel that moves a point's ground - a location's blend, which lerps
+ * every sample toward the pixel's mean - is linear in the samples, so a point's move is a FIELD taken through that
+ * same blend (blendLocationTerrain itself, over the field): exact over a town's levelled ground, exact in the wild.
+ * AUDIT LANDFORMS B2: with the world's `landforms` the field is the kernel's own shaped samples less DFU's, so a road's
+ * cut and fill and a river's channel are followed too; it was the lift alone, and a record from before the row stood
+ * up to 29.8 m over a road's cut (a fall that kills) - on the real data now 1.6 m over at worst, 2.0 m under (the
+ * mod's SmoothRoads, which smooths DFU's own road and not the level bed). Without them, the lift alone (no network).
+ * Not followed: World of Daggerfall's flatten.
  * @param {object} woods - the sampler's three-method surface.
  * @param {number} px
  * @param {number} py
@@ -172,28 +174,48 @@ export function reliefByteHeight(byte) {
  * @param {?{xMin: number, xMax: number, yMin: number, yMax: number}} [locationRect] - the pixel's location rect
  *   (setLocationTiles' answer), or null in the wild.
  * @param {number} [hDim]
+ * @param {?object} [landforms] - createLandforms over the network the pixel is cut along, or null: the lift alone
  * @returns {number}
  */
-export function landformLift(woods, px, py, sx, sy, locationRect = null, hDim = HEIGHTMAP_DIMENSION) {
-  return landformLiftField(woods, px, py, locationRect, hDim)(sx, sy);
+export function landformLift(woods, px, py, sx, sy, locationRect = null, hDim = HEIGHTMAP_DIMENSION, landforms = null) {
+  return landformLiftField(woods, px, py, locationRect, hDim, landforms)(sx, sy);
 }
 
 /**
- * LANDFORM1: landformLift for every point of one pixel - the field made once (a town's: all its samples through the
- * blend), then read at each point. A load re-stands a whole save's records at once, most of them in one town.
+ * LANDFORM1: landformLift for every point of one pixel - the field made once, then read at each point. A load
+ * re-stands a whole save's records at once, most of them in one town. A town's is all its samples through the blend
+ * (with the landforms, one kernel pass: the shaped samples and DFU's beside them, generateSamples' `classic`); in the
+ * wild a sample is asked of the two kernels when a point first reads it, so a far record costs its four corners.
  * @returns {(sx: number, sy: number) => number}
  */
-export function landformLiftField(woods, px, py, locationRect = null, hDim = HEIGHTMAP_DIMENSION) {
-  const { base } = kernelTerms(woods, px, py, hDim);
-  const at = (x, y) => reliefLift(base(x, y) * BASE_HEIGHT_SCALE);
-  if (!locationRect) return at;
-  const field = new Float32Array(hDim * hDim);
-  let sum = 0;
-  for (let x = 0; x < hDim; x++) for (let y = 0; y < hDim; y++) sum += (field[x * hDim + y] = at(x, y));
-  blendLocationTerrain(field, sum / field.length, locationRect, hDim);
-  // the blended field between its samples: bilinear, the read the collider's own floor takes (world.js heightAt)
+export function landformLiftField(woods, px, py, locationRect = null, hDim = HEIGHTMAP_DIMENSION, landforms = null) {
   const span = hDim - 1;
-  const f = (x, y) => field[x * hDim + y];
+  let f;
+  if (landforms && !locationRect) {
+    const shaped = sampleKernel(woods, px, py, hDim, true, landforms), plain = sampleKernel(woods, px, py, hDim, true, null);
+    const memo = new Map();   // a sample as generateSamples keeps it, float32 - the ground the pixel is built of
+    f = (x, y) => {
+      const k = x * hDim + y;
+      let v = memo.get(k);
+      if (v === undefined) memo.set(k, v = (Math.fround(shaped(x, y)) - Math.fround(plain(x, y))) * MAX_TERRAIN_HEIGHT);
+      return v;
+    };
+  } else {
+    const { base } = kernelTerms(woods, px, py, hDim);
+    const at = (x, y) => reliefLift(base(x, y) * BASE_HEIGHT_SCALE);
+    if (!locationRect) return at;
+    const field = new Float32Array(hDim * hDim);
+    let sum = 0;
+    if (landforms) {
+      const classic = new Float32Array(hDim * hDim), shaped = generateSamples(woods, px, py, hDim, landforms, classic);
+      for (let i = 0; i < field.length; i++) sum += (field[i] = (shaped[i] - classic[i]) * MAX_TERRAIN_HEIGHT);
+    } else {
+      for (let x = 0; x < hDim; x++) for (let y = 0; y < hDim; y++) sum += (field[x * hDim + y] = at(x, y));
+    }
+    blendLocationTerrain(field, sum / field.length, locationRect, hDim);
+    f = (x, y) => field[x * hDim + y];
+  }
+  // the field between its samples: bilinear, the read the collider's own floor takes (world.js heightAt)
   return (sx, sy) => {
     const cx = Math.max(0, Math.min(span, sx)), cy = Math.max(0, Math.min(span, sy));
     const ix = Math.min(span - 1, Math.floor(cx)), iy = Math.min(span - 1, Math.floor(cy));
