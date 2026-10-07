@@ -150,8 +150,9 @@
     "tests": [
       "test/titlen.test.js"
     ],
-    "old": "export const FOUNDER_UNTIL = 1_790_294_400;",
-    "new": "export const FOUNDER_UNTIL = 1_790_380_800;"
+    "old": "export const FOUNDER_UNTIL = 1_790_337_600;",
+    "new": "export const FOUNDER_UNTIL = 1_790_380_800;",
+    "note": "FOUNDER5 (PIN MOVED, re-aimed by content): the instant is 12:00Z on the 25th now; moved forward a further twelve hours, it still dies."
   },
   {
     "name": "DEV3-tabby-not-granted",
