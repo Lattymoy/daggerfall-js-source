@@ -22,8 +22,8 @@
  {
   "name": "GRASS2-the-budget-is-taken-at-the-cells-CENTRE-so-its-near-edge-is-cut",
   "file": "src/render/labGrass.js",
-  "old": "      const dn = Math.sqrt(dx * dx + dz * dz);",
-  "new": "      const dn = Math.hypot((box[0] + box[3]) / 2 - eye[0], (box[2] + box[5]) / 2 - eye[2]);",
+  "old": "      near[slot] = Math.sqrt(dx * dx + dz * dz);",
+  "new": "      near[slot] = Math.hypot((box[0] + box[3]) / 2 - eye[0], (box[2] + box[5]) / 2 - eye[2]);",
   "tests": [
    "test/perf2.test.js"
   ]
