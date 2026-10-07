@@ -245,11 +245,12 @@
   {
     "name": "BLOOD1a-the-marks-draw-OVER-the-billboards",
     "file": "src/scenes/world.js",
-    "old": "    bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.\n    if (lowPolyTrees) lowPolyTreesFrame(cullOn ? _planes : null);   // LPT1: the near 3D trees, for the flats' call below (AFTER the gibs' call above, which would spend them)\n    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)\n    renderer.drawBillboards(allBatches, camRight, bbUp);",
-    "new": "    if (lowPolyTrees) lowPolyTreesFrame(cullOn ? _planes : null);   // LPT1: the near 3D trees, for the flats' call below (AFTER the gibs' call above, which would spend them)\n    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)\n    renderer.drawBillboards(allBatches, camRight, bbUp);\n    bloodMarks.draw(camRight, UP_Y);",
+    "old": "    bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.\n    if (lowPolyTrees) lowPolyTreesFrame(cullOn ? _planes : null);   // LPT1: the near 3D trees, for the flats' call below (AFTER the gibs' call above, which would spend them)\n    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], windClock, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)\n    renderer.drawBillboards(allBatches, camRight, bbUp);",
+    "new": "    if (lowPolyTrees) lowPolyTreesFrame(cullOn ? _planes : null);   // LPT1: the near 3D trees, for the flats' call below (AFTER the gibs' call above, which would spend them)\n    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], windClock, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)\n    renderer.drawBillboards(allBatches, camRight, bbUp);\n    bloodMarks.draw(camRight, UP_Y);",
     "tests": [
       "test/blood1_decals.test.js"
-    ]
+    ],
+    "why": "AUDIT MEADOW1 re-aimed by content: the flats' wind takes the gust wave's clock (windClock) now"
   },
   {
     "name": "BLOOD1a-the-shift-moves-the-ring-but-not-the-buffer",
