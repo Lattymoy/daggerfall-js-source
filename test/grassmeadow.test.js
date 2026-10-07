@@ -746,7 +746,7 @@ test('MEADOW1: the meadow\'s edits land once each over the four lists before the
   assert.deepEqual(['meadow', 'pixel', 'smooth'].map(pixelGrass), [true, true, false]);
   // the rows: the grass Off until asked for, the meadow its style; the wind's sway the grass's as well as the trees'
   const grass = FEATURES.find((f) => f.id === 'grass'), wind = FEATURES.find((f) => f.id === 'wind');
-  assert.deepEqual([grass.control.key, grass.control.initial, grass.control.tiers.map(([v]) => v)], ['grassDensity', 0, [1, 0.5, 0.25, 0]], 'Off by default (Mac: "Let\'s have our grass tufts off by default also")');
+  assert.deepEqual([grass.control.key, grass.control.initial, grass.control.tiers.map(([v]) => v)], ['grassDensity', 1, [1, 0.5, 0.25, 0]], 'Full by default, the meadow its style (MEADOW-ON, Mac: "Meadow grass should be on by default" - AUDIT MEADOW1 had it Off)');
   assert.deepEqual({ ...grass.control.also[0] }, { store: 'prefs', key: 'grassStyle', initial: 'meadow', online: 'player' });
   assert.deepEqual(grass.control.parts[0].tiers.map(([v]) => v), ['meadow', 'pixel', 'smooth']);
   assert.deepEqual(wind.control.parts.map((p) => [p.key, p.label]), [['floraSway', 'Sway'], ['windWisps', 'Wisps']]);

@@ -22,7 +22,7 @@ test('FT7: grass density - the four fractions, off by default (AUDIT MEADOW1), o
   assert.ok(f); assert.deepEqual(f.kinds, ['enhanced']);
   assert.equal(f.control.key, 'grassDensity');
   assert.deepEqual(f.control.tiers.map(([v]) => v), [1, 0.5, 0.25, 0]);
-  assert.equal(PREF_DEFAULTS.grassDensity, 0, 'PIN MOVED (AUDIT MEADOW1, Mac: "Let\'s have our grass tufts off by default also"): PERF1\'s full field by default is Off now');
+  assert.equal(PREF_DEFAULTS.grassDensity, 1, 'PIN MOVED (MEADOW-ON, Mac: "Meadow grass should be on by default"): PERF1\'s full field by default again (AUDIT MEADOW1 had it Off)');
   assert.match(f.note, /in the enhanced outdoors/, 'the dial says what it is under');
   assert.deepEqual(checkFeature(f), []);
   assert.equal(featureForControl('prefs', 'grassDensity'), f);
