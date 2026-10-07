@@ -1,0 +1,102 @@
+[
+  {
+    "name": "HIGHCAST-unasked",
+    "file": "src/scenes/fishHost.js",
+    "old": "      if (!acting && host.waterY && castOverWater(castAt(host.eye()), host.waterY(castAt(host.eye())))) return [];",
+    "new": "      if (false && !acting && host.waterY && castOverWater(castAt(host.eye()), host.waterY(castAt(host.eye())))) return [];",
+    "tests": [
+      "test/fb1007_highcast.test.js"
+    ],
+    "note": "the cast stands over the sea from a cliff and on a deck at every look again"
+  },
+  {
+    "name": "HIGHCAST-live-cast-dropped",
+    "file": "src/scenes/fishHost.js",
+    "old": "      if (!acting && host.waterY && castOverWater(castAt(host.eye()), host.waterY(castAt(host.eye())))) return [];",
+    "new": "      if (host.waterY && castOverWater(castAt(host.eye()), host.waterY(castAt(host.eye())))) return [];",
+    "tests": [
+      "test/fb1007_highcast.test.js"
+    ],
+    "note": "a thrown net is lost when the look rises off the water"
+  },
+  {
+    "name": "HIGHCAST-asked-at-the-eye",
+    "file": "src/scenes/fishHost.js",
+    "old": "      if (!acting && host.waterY && castOverWater(castAt(host.eye()), host.waterY(castAt(host.eye())))) return [];",
+    "new": "      if (!acting && host.waterY && castOverWater(castAt(host.eye()), host.waterY(host.eye().pos))) return [];",
+    "tests": [
+      "test/fb1007_highcast.test.js"
+    ],
+    "note": "the surface asked under the angler, not under the cast"
+  },
+  {
+    "name": "HIGHCAST-bound-inclusive",
+    "file": "src/scenes/fishHost.js",
+    "old": "at[1] - surfaceY > CAST_OVER_WATER_M;",
+    "new": "at[1] - surfaceY >= CAST_OVER_WATER_M;",
+    "tests": [
+      "test/fb1007_highcast.test.js"
+    ],
+    "note": "a cast at the bound is refused"
+  },
+  {
+    "name": "HIGHCAST-unknown-refused",
+    "file": "src/scenes/fishHost.js",
+    "old": "export const castOverWater = (at, surfaceY) => surfaceY != null && Number.isFinite(surfaceY) && at[1]",
+    "new": "export const castOverWater = (at, surfaceY) => (surfaceY == null || Number.isFinite(surfaceY)) && at[1]",
+    "tests": [
+      "test/fb1007_highcast.test.js"
+    ],
+    "note": "ground not built refuses the cast: a deck over a streaming pixel stops fishing"
+  },
+  {
+    "name": "HIGHCAST-infinite-refused",
+    "file": "src/scenes/fishHost.js",
+    "old": "export const castOverWater = (at, surfaceY) => surfaceY != null && Number.isFinite(surfaceY) && at[1]",
+    "new": "export const castOverWater = (at, surfaceY) => surfaceY != null && at[1]",
+    "tests": [
+      "test/fb1007_highcast.test.js"
+    ],
+    "note": "a surface read as -Infinity refuses every cast"
+  },
+  {
+    "name": "HIGHCAST-bound-low",
+    "file": "src/scenes/fishHost.js",
+    "old": "export const CAST_OVER_WATER_M = 5.5;",
+    "new": "export const CAST_OVER_WATER_M = 5;",
+    "tests": [
+      "test/fb1007_highcast.test.js"
+    ],
+    "note": "the carrack's deck never fishes"
+  },
+  {
+    "name": "HIGHCAST-bound-high",
+    "file": "src/scenes/fishHost.js",
+    "old": "export const CAST_OVER_WATER_M = 5.5;",
+    "new": "export const CAST_OVER_WATER_M = 6.5;",
+    "tests": [
+      "test/fb1007_highcast.test.js"
+    ],
+    "note": "a level look from the galleon's deck fishes again"
+  },
+  {
+    "name": "HIGHCAST-host-seafloor",
+    "file": "src/scenes/world.js",
+    "old": "return Number.isFinite(g) ? Math.max(g, (deepWaters?.oceanLocalY",
+    "new": "return Number.isFinite(g) ? Math.min(g, (deepWaters?.oceanLocalY",
+    "tests": [
+      "test/fb1007_highcast.test.js"
+    ],
+    "note": "the carved seabed read as the water's surface: no deck over the deep fishes"
+  },
+  {
+    "name": "HIGHCAST-host-unknown-is-sea",
+    "file": "src/scenes/world.js",
+    "old": "+ state.pixelTranslation(state.current.x, state.current.y, _fishSeaT)[1]) : null; },",
+    "new": "+ state.pixelTranslation(state.current.x, state.current.y, _fishSeaT)[1]) : 0; },",
+    "tests": [
+      "test/fb1007_highcast.test.js"
+    ],
+    "note": "ground not built answers a height, and the kind refuses on it"
+  }
+]
