@@ -382,7 +382,7 @@
   {
     "name": "AUDIT-GALLEON-ZERO-the-jib-to-a-point",
     "file": "src/world/galleonRig.js",
-    "old": "let p = lerp3(foot, head, v * JIB.top);",
+    "old": "let p = lerp3(foot, head, v * top);",
     "new": "let p = lerp3(foot, head, v);",
     "tests": [
       "test/auditgalleon_rig.test.js"

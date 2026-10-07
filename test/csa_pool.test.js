@@ -11,7 +11,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { createComeSailAwayPool, activeObjects, lanternLightUpdate, vertexBox, LANTERN_HANDLER_REACH, CSA_LIGHTS_MAX } from '../src/scenes/comeSailAwayPool.js';
 import { Boat, setLights } from '../src/systems/comeSailAwayBoat.js';
-import { CSA_MODEL_URLS } from '../src/systems/comeSailAwayModels.js';
+import { CSA_MODEL_URLS, CARRACK_MODEL_URL, LARGE_BOAT_MODEL_URL } from '../src/systems/comeSailAwayModels.js';
+import { setShipStanding } from '../src/systems/naval/navalShips.js';
 import { PrefabNode } from '../src/world/prefabNode.js';
 
 const fileFetch = async (url) => {
@@ -114,8 +115,12 @@ test('CSA-B: a spawned boat draws every active, switched-on renderer that wears 
 test('CSA-B: the sails bake on FixDeformations\' timer - nothing drawn until the first bake, the mesh built once its textures are in, the later bakes written over it', async () => {
   const renderer = recordingRenderer();
   const pipeline = standInPipeline();
-  const pool = createComeSailAwayPool({ renderer, pipeline, fetchFn: fileFetch, log: { warn() {} } });
+  // SHIPS-2: the mod's own Carrack and her five sails on FixDeformations' own timer - hull 4 as the game stands it when
+  // Mac's carrack's model will not load (his bakes on the galleon's law: test/ships2_carrack.test.js)
+  const modFetch = (url) => (url === CARRACK_MODEL_URL || url === LARGE_BOAT_MODEL_URL ? Promise.resolve({ ok: false, status: 404 }) : fileFetch(url));
+  const pool = createComeSailAwayPool({ renderer, pipeline, fetchFn: modFetch, log: { warn() {} } });
   const boat = await pool.spawn(new Boat(4), { position: [0, 0, 0], rotation: [0, 0, 0, 1] });   // the carrack: five sails
+  setShipStanding(4, true); setShipStanding(1, true);   // the builds the new ships' again, for every other test
   const holders = [...activeObjects(boat.GameObject)].filter(([n]) => n.getComponent('FixDeformations')).map(([n]) => n);
   assert.equal(holders.length, 5);
   for (let f = 0; f < 7; f++) pool.frame(1 / 60, { playerPosition: [0, 0, 0] });

@@ -515,7 +515,11 @@ test('AUDIT WK-SN HER HATCH AND HER BOW: her hatch at her main deck\'s middle, h
     const lv = mainLevel(deck), main = deckExtentZ(deck, lv), mid = (main[0] + main[1]) / 2;
     assert.deepEqual(life.hatch, deck.nearest(0, mid, lv), 'her hatch the cell of her main deck nearest her middle');
     assert.ok(Math.abs(life.hatch[2] - mid) < (deck === pool.deckOf(HULL.Carrack, 0) ? 2.6 : 1.5), `her hatch amidships: ${life.hatch[2]} in ${main}`);
-    assert.ok(Math.abs(life.bow[2] - (main[1] - LOOKOUT_BACK)) < deck.cell, `her bow ${LOOKOUT_BACK} m from her main deck's stem: ${life.bow[2]} in ${main}`);
+    // PIN MOVED (SHIPS-2, 2026-10-07): the Carrack is Mac's carrack now - her fore mast's partner (2.5 m across, 0.78
+    // m over her deck) stands on her main deck's stem, and her bow is the cell nearest it on her centre line, abaft the
+    // partner (1.25 m further aft than LOOKOUT_BACK); every other deck's LOOKOUT_BACK from her stem as it was
+    const reach = deck === pool.deckOf(HULL.Carrack, 0) ? 1.3 : deck.cell;
+    assert.ok(Math.abs(life.bow[2] - (main[1] - LOOKOUT_BACK)) < reach && Math.abs(life.bow[0]) < deck.cell, `her bow ${LOOKOUT_BACK} m from her main deck's stem: ${life.bow[2]} in ${main}`);
     assert.deepEqual(life.bow, deck.nearest(0, main[1] - LOOKOUT_BACK, lv));
     assert.ok(Math.abs(life.bow[1] - lv) <= DECK_STEP && Math.abs(life.hatch[1] - lv) <= DECK_STEP, 'each on her main deck');
     assert.ok(deck.walkable(life.bow[0], life.bow[2]) && deck.walkable(life.hatch[0], life.hatch[2]), 'each a cell of her deck');

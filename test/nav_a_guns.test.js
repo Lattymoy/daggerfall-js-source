@@ -163,7 +163,7 @@ test('NAV-A the volley: a launch a muzzle, a gun every RIPPLE_S from the first a
   const ship = { position: [0, 0, 0], rotation: ID, velocity: [0, 0, 0], hull: 4 };
   const aim = aimSolution(ship, 'port', null, 0, { range: 100 });
   const a = volleyLaunches(aim, 42, { skill: 0.5 }), b = volleyLaunches(aim, 42, { skill: 0.5 });
-  assert.equal(a.length, 7, 'seven long guns a side on the Carrack');
+  assert.equal(a.length, 5, 'five long guns a side on the Carrack');   // PIN MOVED (SHIPS-2, 2026-10-07): Mac's carrack, a gun a port
   assert.deepEqual(a, b);
   assert.notDeepEqual(volleyLaunches(aim, 43, { skill: 0.5 }), a);
   a.forEach((l, i) => near(l.delay, i * RIPPLE_S, 1e-12));
@@ -310,7 +310,7 @@ test('NAV-A the hulls\' batteries as HULL_BUILDS measures them: a rowboat none, 
   assert.deepEqual(kinds(1), { starboard: 'swivelx3', port: 'swivelx3', bow: 'swivelx1' });
   assert.deepEqual(kinds(2), { starboard: 'longx5', port: 'longx5', bow: 'chainx2', stern: 'barrelx1' });   // PIN MOVED (GALLEON, 2026-10-01): a gun a port
   assert.deepEqual(kinds(3), { starboard: 'longx4', port: 'longx4', bow: 'heavyx3' });
-  assert.deepEqual(kinds(4), { starboard: 'longx7', port: 'longx7', bow: 'chainx2', stern: 'barrelx1' });
+  assert.deepEqual(kinds(4), { starboard: 'longx5', port: 'longx5', bow: 'chainx2', stern: 'barrelx1' });   // PIN MOVED (SHIPS-2, 2026-10-07): Mac's carrack, a gun a port
   for (let h = 1; h < HULL_BUILDS.length; h++) {
     for (const m of batteryOf(h, 'starboard').muzzles) assert.ok(m[0] > 0, `hull ${h}: a starboard muzzle on the starboard side`);
     for (const m of batteryOf(h, 'port').muzzles) assert.ok(m[0] < 0, `hull ${h}: a port muzzle on the port side`);

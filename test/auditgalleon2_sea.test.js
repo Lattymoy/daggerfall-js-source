@@ -94,7 +94,10 @@ test('AUDIT GALLEON-2 PF6: a hull\'s draft (shipLife.js draftOf - world.js naval
     setGalleonStanding(true); assert.ok(Math.abs(LIFE.draftOf(HULL.SmallShip) - 4.7) < 1e-9, 'standing: 4.7');
     setGalleonStanding(false); assert.ok(Math.abs(LIFE.draftOf(HULL.SmallShip) - 3.41) < 1e-9, 'fallen back: 3.41');
   } finally { setGalleonStanding(true); }
-  assert.deepEqual([HULL.Rowboat, HULL.LargeBoat, HULL.LargeGalley, HULL.Carrack].map(LIFE.draftOf), [0.8, 1.4, 2.8, 3.2], 'the others as they were');
+  assert.deepEqual([HULL.Rowboat, HULL.LargeBoat, HULL.LargeGalley].map(LIFE.draftOf), [0.8, 1.4, 2.8], 'the others as they were');
+  // PIN MOVED (SHIPS-2, 2026-10-07): hull 4 is Mac's carrack - her draft her keel's as the galleon's is (4.65 over her
+  // 4.59 m keel), the mod's Carrack's 3.2 fallen back (test/ships2_carrack.test.js holds both)
+  assert.ok(Math.abs(LIFE.draftOf(HULL.Carrack) - (LIFE.DRAFT_SPARE - hullBuild(HULL.Carrack).keel)) < 1e-9, 'the Carrack\'s her keel\'s');
   // world.js asks it when it sounds - no frozen table of its own
   const law = WORLD.slice(WORLD.indexOf('const navalIsWater = '), WORLD.indexOf('let _navalCapitals'));
   assert.match(law, /draftOf\(hull\)/i, 'navalIsWater reads draftOf');
@@ -157,14 +160,19 @@ test('AUDIT GALLEON-2 RG3: her rig\'s boxes are her canvas where it hangs - each
   boat.Sails.find((x) => /MainTopsail/.test(x.name)).setActive(true);
   stowSail(animatorOf(boat.Sails.find((x) => /ForeCourse/.test(x.name))), true);
   assert.equal(rigBoxesOf(boat).length, rig.length - 1, 'the fore course furled: its box gone');
-  // the other hulls: their boxes as they stood, furled or set
-  for (const b of HULL_BUILDS.filter((x) => x.hull !== HULL.SmallShip)) for (const box of b.rig) assert.equal(/** @type {any} */ (box).sail, undefined, `hull ${b.hull}'s boxes name no sail`);
+  // the other hulls: their boxes as they stood, furled or set. PIN MOVED (SHIPS-2, 2026-10-07): hulls 4 and 1 are Mac's
+  // carrack and Tiny Ship - their boxes each a sail's of theirs, as hers are (the large boat's of her plan's): furled
+  // none, set every one of hers (test/ships2_carrack.test.js, test/ships2_largeboat.test.js)
+  const theirs = [HULL.Carrack, HULL.LargeBoat];
+  for (const b of HULL_BUILDS.filter((x) => x.hull !== HULL.SmallShip && !theirs.includes(x.hull))) for (const box of b.rig) assert.equal(/** @type {any} */ (box).sail, undefined, `hull ${b.hull}'s boxes name no sail`);
+  for (const hull of theirs) for (const box of hullBuild(hull).rig) assert.ok(Number.isInteger(/** @type {any} */ (box).sail), `hull ${hull}'s boxes each name a sail`);
   for (const hull of [HULL.LargeBoat, HULL.LargeGalley, HULL.Carrack]) {
     const o = scene().place(hull, 0, [0, 0, 0], [0.6, 0, 0.8]);
+    const mine = hullBuild(hull).rig.filter((b) => /** @type {any} */ (b).variant == null || /** @type {any} */ (b).variant === 0);
     const furled = rigBoxesOf(o).length;
     for (const sail of o.Sails) stowSail(animatorOf(sail), false);
-    assert.equal(furled, hullBuild(hull).rig.length, `hull ${hull} furled: every box`);
-    assert.equal(rigBoxesOf(o).length, furled, `hull ${hull} set: the same`);
+    assert.equal(furled, theirs.includes(hull) ? 0 : mine.length, `hull ${hull} furled: ${theirs.includes(hull) ? 'no box' : 'every box'}`);
+    assert.equal(rigBoxesOf(o).length, mine.length, `hull ${hull} set: every box of hers`);
   }
 });
 
@@ -183,8 +191,17 @@ test('AUDIT GALLEON-2 RG4: a sea galleon loses her highest canvas first - by whe
     assert.equal(sailsShown(5, d.sailShare()), 2);
     assert.deepEqual(e.boat.Sails.filter((s) => s.activeSelf).map((s) => s.name).sort(), ['ForeCourseSquareSail', 'MainGaffLargeSail'], 'her two lowest kept');
   }
-  // the mod's hulls: by each sail node's height, as they stood
-  for (const cls of ['pirateSloop', 'pirateGalley', 'merchantCarrack']) {
+  // PIN MOVED (SHIPS-2, 2026-10-07): a merchant carrack is Mac's carrack - by where each canvas of hers hangs, as the
+  // galleon's: her main topsail, her lateen mizzen, her main course, her fore course, her spritsail
+  {
+    const h = await sea({ hull: null, wind: [0, 0, 0] });
+    const e = h.host._sea.get(h.host.spawnShip('merchantCarrack', { range: 300, bearing: 0, yaw: 0 }));
+    h.host.frame(0.1);
+    assert.deepEqual(e.sailsByHeight.map((s) => s.name), ['MainTopsailSquareSail', 'MizzenLateenSail', 'MainCourseSquareLargeSail', 'ForeCourseSquareLargeSail', 'SpritsailSquareSmallSail'], 'merchantCarrack: highest canvas first');
+  }
+  // the mod's hulls: by each sail node's height, as they stood (a pirate sloop is Mac's Tiny Ship on her first plan:
+  // one lateen)
+  for (const cls of ['pirateSloop', 'pirateGalley']) {
     const h = await sea({ hull: null, wind: [0, 0, 0] });
     const e = h.host._sea.get(h.host.spawnShip(cls, { range: 300, bearing: 0, yaw: 0 }));
     h.host.frame(0.1);

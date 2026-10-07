@@ -29,7 +29,9 @@ export const GUN_DECK_SIDES = Object.freeze({ starboard: 'Starboard', port: 'Por
 /** A battery stays laid this long (s) after its last word - a lay, a run-out, a gun fired. */
 export const HOLD_S = 2.5;
 /** Where a gun stands along its own +x (m, from her centreline): run in to load, run out to fire (world/galleonModel.js
- *  GUN's - its muzzle a hair outside her planking). */
+ *  GUN's - its muzzle a hair outside her planking). SHIPS-2: a gun whose node carries a GunCarriage stands at that
+ *  carriage's own `runInX` and `runOutX` (world/carrackModel.js: the new carrack's, on their platforms under her
+ *  wider-set ports); a gun with none at these. */
 export const RUN_IN_X = GUN.runInX;
 export const RUN_OUT_X = GUN.runOutX;
 /** How fast a gun is run out and in (m/s) - out in about a second, as the run-out's tell (navalAI.js RUN_OUT_S 1.3). */
@@ -63,7 +65,7 @@ export function createGalleonGunDeck() {
     if (!boat?.GameObject) return null;
     let r = rigs.get(boat);
     if (r && r.root === boat.GameObject) return r.sides ? r : null;
-    const found = { starboard: { guns: [], lids: [], laidUntil: -Infinity, firedAt: [], x: [] }, port: { guns: [], lids: [], laidUntil: -Infinity, firedAt: [], x: [] } };
+    const found = { starboard: { guns: [], lids: [], laidUntil: -Infinity, firedAt: [], x: [], inX: [], outX: [] }, port: { guns: [], lids: [], laidUntil: -Infinity, firedAt: [], x: [], inX: [], outX: [] } };
     for (const n of boat.GameObject.walk()) {
       const m = /^(Gun|Gunport)(Starboard|Port)(\d+)$/.exec(n.name);
       if (!m) continue;
@@ -72,7 +74,13 @@ export function createGalleonGunDeck() {
     }
     const any = found.starboard.guns.length || found.port.guns.length || found.starboard.lids.length || found.port.lids.length;
     r = { root: boat.GameObject, sides: any ? found : null };
-    if (any) for (const s of Object.values(found)) { s.firedAt = s.guns.map(() => -Infinity); s.x = s.guns.map((g) => Math.abs(g?.localPosition?.[0] ?? RUN_IN_X)); }
+    if (any) for (const s of Object.values(found)) {
+      s.firedAt = s.guns.map(() => -Infinity);
+      // SHIPS-2: each gun's own stations where its carriage names them
+      s.inX = s.guns.map((g) => g?.getComponent?.('GunCarriage')?.runInX ?? RUN_IN_X);
+      s.outX = s.guns.map((g) => g?.getComponent?.('GunCarriage')?.runOutX ?? RUN_OUT_X);
+      s.x = s.guns.map((g, i) => Math.abs(g?.localPosition?.[0] ?? s.inX[i]));
+    }
     rigs.set(boat, r);
     return any ? r : null;
   }
@@ -89,11 +97,11 @@ export function createGalleonGunDeck() {
       }
       s.guns.forEach((g, i) => {
         if (!g) return;
-        const want = laid ? RUN_OUT_X : RUN_IN_X;
+        const want = laid ? s.outX[i] : s.inX[i];
         const x = s.x[i];
         s.x[i] = x < want ? Math.min(want, x + RUN_SPEED * dt) : Math.max(want, x - RUN_SPEED * dt);
         const kick = recoilAt(now - s.firedAt[i]);
-        if (s.x[i] !== RUN_IN_X || kick > 0) rest = false;
+        if (s.x[i] !== s.inX[i] || kick > 0) rest = false;
         const sign = side === 'starboard' ? 1 : -1;
         const at = sign * (s.x[i] - kick);
         if (g.localPosition[0] !== at) g.localPosition = [at, g.localPosition[1], g.localPosition[2]];
@@ -118,7 +126,7 @@ export function createGalleonGunDeck() {
       // AUDIT GN-G2/G3: out and open as it fires - the kick starts from the port. AUDIT GN2-PF1: the snap taken at once -
       // her Animators ran this frame before the shot (world.js: csaUpdate's animate and csaPeers.frame, then navalFrame),
       // and a Play left for their next update stood the shutter at 0-27 deg as its ball left
-      if (s.x[index] < RUN_OUT_X) s.x[index] = RUN_OUT_X;
+      if (s.x[index] < s.outX[index]) s.x[index] = s.outX[index];
       const a = s.lids[index]?.getComponent?.('Animator')?.animator;
       if (a) { a.SetBool('Opened', true); a.Play(OPENED_STATE); a.update(0); }
     },
@@ -142,7 +150,7 @@ export function createGalleonGunDeck() {
       for (const boat of settling) {
         const r = rigOf(boat);
         if (!r) continue;
-        for (const s of Object.values(r.sides)) { s.laidUntil = -Infinity; s.firedAt.fill(-Infinity); s.x.fill(RUN_IN_X); }
+        for (const s of Object.values(r.sides)) { s.laidUntil = -Infinity; s.firedAt.fill(-Infinity); s.x = [...s.inX]; }
         stand(r, lastNow, 0);
       }
       settling.clear();

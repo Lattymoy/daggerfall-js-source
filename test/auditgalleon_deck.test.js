@@ -21,6 +21,7 @@ import { CAPSULE_RADIUS } from '../src/player/motor.js';
 import { hullBuild, HULL } from '../src/systems/naval/navalShips.js';
 import { MOBILE } from '../src/systems/naval/navalBoarding.js';
 import { MEASURED } from '../src/world/galleonModel.js';
+import { MEASURED as CARRACK_MEASURED } from '../src/world/carrackModel.js';
 import { MODELS, ctxFor } from './csaScene.mjs';
 import { sea, readyPool } from './navalSea.mjs';
 
@@ -305,7 +306,11 @@ test('AUDIT GALLEON D4 HER LOOKOUT KEEPS HER MAIN DECK\'S BOW: her bow LOOKOUT_B
     const life = createCrewLife({ deck: d, roster: crewRoster({ hull, seed: 1, crew: 40 }).slice(0, 4), seed: 1 });
     if (!life.bow) continue;
     assert.ok(Math.abs(life.bow[1] - main) <= DECK_STEP, `${HULL_NAMES[hull]}: her bow on her main deck (${life.bow.map((v) => v.toFixed(2))}, main ${main.toFixed(2)})`);
-    assert.ok(Math.abs(life.bow[2] - (ext[1] - LOOKOUT_BACK)) < d.cell, `${HULL_NAMES[hull]}: LOOKOUT_BACK from her main deck's stem (${life.bow[2]} in ${ext})`);
+    // PIN MOVED (SHIPS-2, 2026-10-07): Mac's carrack's fore mast's partner stands on her main deck's stem - her bow the
+    // cell nearest it on her centre line, abaft the partner (1.25 m further aft); every other hull's where it was
+    const reach = hull === HULL.Carrack ? 1.3 : d.cell;
+    assert.ok(Math.abs(life.bow[2] - (ext[1] - LOOKOUT_BACK)) < reach && Math.abs(life.bow[0]) < d.cell, `${HULL_NAMES[hull]}: LOOKOUT_BACK from her main deck's stem (${life.bow[2]} in ${ext})`);
+    assert.deepEqual(life.bow, d.nearest(0, ext[1] - LOOKOUT_BACK, main), `${HULL_NAMES[hull]}: the cell of her main deck nearest it`);
   }
   // the Carrack's lookout through a day, a fight, a muster each way, a night and a day's work: never off her main deck
   const d = pool.deckOf(HULL.Carrack, 0), main = mainLevel(d);
@@ -430,9 +435,13 @@ test('AUDIT GALLEON D7 HER HATCHWAYS ARE NO DECK: a part of hers that opens and 
   // her doors still walls: her great cabin a room of its own, her deck before her castle's door no way into it
   assert.ok(d.pieceAt(0, -14, 6.2) > 0, 'her great cabin a piece of its own');
   assert.equal(d.walkable(0, -10.4), false, 'her castle\'s doorway no deck');
-  // the Carrack's cargo hatch: no deck over it
+  // the Carrack's hatchways: no deck over them. PIN MOVED (SHIPS-2, 2026-10-07): the Carrack is Mac's carrack now - no
+  // cargo doors over a hold (the mod's 4 x 5 m at 3.64), her two hatchways open companions down to her gun deck, each
+  // under a house of hers (world/carrackModel.js MEASURED)
   const carrack = pool.deckOf(HULL.Carrack, 0);
-  assert.deepEqual(cellsOf(carrack).filter((c) => c[0] > -2.01 && c[0] < 1.99 && c[2] > 1 && c[2] < 6).length, 0, 'no cell over the Carrack\'s cargo hatch');
+  for (const h of [CARRACK_MEASURED.hatchAft, CARRACK_MEASURED.hatchFore]) {
+    assert.deepEqual(cellsOf(carrack).filter((c) => Math.abs(c[0]) < h.halfX && c[2] > h.z0 && c[2] < h.z1).length, 0, `no cell over the Carrack's hatchway at ${h.z0}`);
+  }
   // THE RULE: the pool marks what opens, and nothing but those parts' floors leaves any hull's deck - every hull baked
   // here off her own colliders with them marked as the pool marks them (a DoorTrigger under the node) is the pool's
   // deck, and baked with none marked differs from it at those parts' floors and the inset's margin round them alone
@@ -453,7 +462,10 @@ test('AUDIT GALLEON D7 HER HATCHWAYS ARE NO DECK: a part of hers that opens and 
     const lids = meshes.filter((q) => q.moves).map((q) => q.name);
     const gone = cellsOf(plain).filter((c) => !marked.walkable(c[0], c[2]));
     if (hull === HULL.SmallShip) assert.deepEqual([lids.length, gone.length], [4, 82], `the galleon: her covers and her doors marked (${lids}), her hatchways' 82 cells gone`);
-    else if (hull === HULL.Carrack) assert.deepEqual([lids.length, gone.length], [7, 116], `the Carrack: her doors and her cargo doors marked (${lids}), her cargo hatch's 116 cells gone`);
+    // PIN MOVED (SHIPS-2, 2026-10-07): Mac's carrack's middle house's two door leaves are all of hers that open - shut,
+    // a wall either way, and no floor of hers gone (the mod's Carrack's five doors and two cargo doors took her cargo
+    // hatch's 116 cells)
+    else if (hull === HULL.Carrack) assert.deepEqual([lids.length, gone.length], [2, 0], `the Carrack: her house door's leaves marked (${lids}), no floor gone`);
     else assert.equal(gone.length, 0, `${HULL_NAMES[hull]}: her deck the bake it was (${lids})`);
     for (const c of gone) assert.ok(hull === HULL.SmallShip ? holes.some((h) => Math.abs(c[0]) < h.halfX + 0.6 && c[2] > h.z0 - 0.6 && c[2] < h.z1 + 0.6) : c[0] > -2.6 && c[0] < 2.6 && c[2] > 0.4 && c[2] < 6.6, `${HULL_NAMES[hull]}: a cell gone away from her hatch: ${c}`);
   }
@@ -604,7 +616,11 @@ test('AUDIT GALLEON T4 A BOARDING\'S MUSTERS STAND ON HER MAIN DECK: world.js na
   const pool = await readyPool(), w = deckDoors(pool);
   for (const hull of [HULL.SmallShip, HULL.Carrack]) {
     const boat = standing(hull), d = pool.deckOf(hull, 0), m = boat.MeshObject.worldMatrix(), main = mainLevel(d);
-    assert.ok(d.spots(48).some((p) => p[1] > main + 1), `${HULL_NAMES[hull]}: her whole deck's spots reach her raised deck`);
+    // PIN MOVED (SHIPS-2, 2026-10-07): Mac's carrack has no raised deck a walk reaches (her houses' roofs no flight's;
+    // the mod's Carrack's forecastle stood up its stair) - her deck one level, every spot of hers on it; the galleon's
+    // castle the raised deck the musters must keep off
+    if (hull === HULL.SmallShip) assert.ok(d.spots(48).some((p) => p[1] > main + 1), `${HULL_NAMES[hull]}: her whole deck's spots reach her raised deck`);
+    else assert.ok(d.spots(48).every((p) => Math.abs(p[1] - main) <= DECK_STEP), `${HULL_NAMES[hull]}: her deck one level`);
     for (const n of [8, 16, 24, 48]) {
       const spots = w.navalDeckSpots(boat, n);
       assert.equal(spots.length, n);
@@ -699,9 +715,8 @@ test('AUDIT GALLEON D-wall HER DECK AS SHE STANDS: her entry ports (her bulwark 
   const life = createCrewLife({ deck: carrack, roster: [{ mobile: MOBILE.Warrior, gender: 'male' }], seed: 1 });
   const from = carrack.nearest(0, 0, cm), walk = carrack.path([from[0], from[2]], [life.bow[0], life.bow[2]]);
   assert.ok(walk && Math.hypot(walk.at(-1)[0] - life.bow[0], walk.at(-1)[2] - life.bow[2]) < 1e-6, `the Carrack's bow a walk's end (${life.bow.map((v) => v.toFixed(2))})`);
-  for (const [x, z] of [[-0.18, 14.01], [1.32, 14.01], [1.32, 14.51], [1.32, 15.01]]) {
-    assert.ok(!carrack.walkable(x, z) && Math.abs(carrack.heightAt(x, z, cm) - cm) < 1e-3 && carrack.pieceAt(x, z, cm) === 0, `the room under her forecastle at (${x}, ${z}): her deck's floor beside her walk`);
-  }
+  // PIN MOVED (SHIPS-2, 2026-10-07): the room under the mod's Carrack's forecastle (her floor beside her walk at four
+  // cells) is gone with her - Mac's carrack has no forecastle, her open deck one walk from her waist to her bow (above)
   // a floor to stand aboard on looks up
   for (const hull of [HULL.SmallShip, HULL.Carrack, HULL.LargeGalley]) {
     const d = pool.deckOf(hull, 0), Fh = facesOf(hull);
@@ -741,10 +756,10 @@ test('AUDIT GALLEON D-wall A TALK\'S PLACE ON HER MAIN DECK: a hand coming over 
 
 // ── every hull and every rig ──────────────────────────────────────────────────────────────────────────────────────
 
-test('AUDIT GALLEON THE BAKES: every hull\'s deck - every rig of hers the one her rig 0 bakes - as the deck lens left it (PIN MOVED, AUDIT GALLEON D-wall: each wall its own height in a cell): the galleon\'s 838 cells (her hatchways out, her entry ports and her bow to her side), her main deck\'s 664 and her castle and flights over it; the Carrack\'s 511 (her cargo hatch out, the ground under her half deck\'s stairs and the room under her forecastle in); the Rowboat\'s 13 and the Large Boat\'s 18 as they were, the Large Galley\'s 4016', async () => {
+test('AUDIT GALLEON THE BAKES: every hull\'s deck - every rig of hers the one her rig 0 bakes - as the deck lens left it (PIN MOVED, AUDIT GALLEON D-wall: each wall its own height in a cell): the galleon\'s 838 cells (her hatchways out, her entry ports and her bow to her side), her main deck\'s 664 and her castle and flights over it; the Rowboat\'s 13 as it was, the Large Galley\'s 4016; PIN MOVED (SHIPS-2, 2026-10-07): the Carrack\'s 1087 (Mac\'s carrack: her main deck at 7.81 one level, her houses, her masts\' partners and her helm out) and the Large Boat\'s 95 (Mac\'s Tiny Ship: her deck at 0.90 and her helmsman\'s step at 1.55) where the mod\'s were 511 and 18', async () => {
   const pool = await readyPool();
   const counts = Array.from(HULL_NAMES, (_, hull) => pool.deckOf(hull, 0).count);
-  assert.deepEqual(counts, [13, 18, 838, 4016, 511]);
+  assert.deepEqual(counts, [13, 95, 838, 4016, 1087]);
   const g = pool.deckOf(HULL.SmallShip, 0);
   assert.equal(cellsOf(g).filter((c) => Math.abs(c[1] - mainLevel(g)) <= DECK_STEP).length, 664, 'the galleon\'s main deck');
   for (let hull = 0; hull < HULL_NAMES.length; hull++) for (let v = 1; v < HULL_VARIANT_COUNTS[hull]; v++) assert.equal(pool.deckOf(hull, v), pool.deckOf(hull, 0));

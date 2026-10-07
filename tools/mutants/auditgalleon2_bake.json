@@ -121,7 +121,7 @@
   },
   {
     "name": "AUDITGN2-BK1-version-unread",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "  assertBlenderFill(tree);   // AUDIT GN2-BK1\n",
     "new": "",
     "tests": ["test/auditgalleon2_bake.test.js"],
@@ -129,7 +129,7 @@
   },
   {
     "name": "AUDITGN2-BK1-last-saved-unread",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "  for (const at of ['Original', 'LastSaved']) {",
     "new": "  for (const at of ['Original']) {",
     "tests": ["test/auditgalleon2_bake.test.js"],
@@ -137,7 +137,7 @@
   },
   {
     "name": "AUDITGN2-BK1-name-unread",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "    if (!name.startsWith('Blender')) throw",
     "new": "    if (false) throw",
     "tests": ["test/auditgalleon2_bake.test.js"],
@@ -145,7 +145,7 @@
   },
   {
     "name": "AUDITGN2-BK1-version-by-prefix",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "    if (version !== BLENDER_FILL && !version.startsWith(`${BLENDER_FILL}.`)) {",
     "new": "    if (!version.startsWith(BLENDER_FILL)) {",
     "tests": ["test/auditgalleon2_bake.test.js"],
@@ -169,7 +169,7 @@
   },
   {
     "name": "AUDITGN2-BK4-source-unrecorded",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "    source,\n",
     "new": "    source: SOURCE_FBX,\n",
     "tests": ["test/auditgalleon2_bake.test.js"],
@@ -193,7 +193,7 @@
   },
   {
     "name": "AUDITGN2-BK4-source-from-cwd",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "  const rel = relative(ROOT, abs);",
     "new": "  const rel = relative(process.cwd(), abs);",
     "tests": ["test/auditgalleon2_bake.test.js"],
@@ -201,7 +201,7 @@
   },
   {
     "name": "AUDITGN2-BK5-round-half-up",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "export const round4 = (v) => Math.sign(v) * Math.round(Math.abs(v) * 1e4) / 1e4 + 0;",
     "new": "export const round4 = (v) => Math.round(v * 1e4) / 1e4 + 0;",
     "tests": ["test/auditgalleon2_bake.test.js"],
@@ -209,7 +209,7 @@
   },
   {
     "name": "AUDITGN2-BK5-minus-nought",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "export const round4 = (v) => Math.sign(v) * Math.round(Math.abs(v) * 1e4) / 1e4 + 0;",
     "new": "export const round4 = (v) => Math.sign(v) * Math.round(Math.abs(v) * 1e4) / 1e4;",
     "tests": ["test/auditgalleon2_bake.test.js"],
