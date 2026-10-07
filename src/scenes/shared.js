@@ -15,7 +15,7 @@ import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime, isNight, setLightCurve, daylightScale } from '../world/worldClock.js';   // DS1: isNight for the mod's moonlight, setLightCurve for the mod's own curve; CLK3 review: daylightScale for its moonlight's ramp
 import { createWindModel } from '../systems/wind.js';   // WIND1; WEATHER2b: the lead is the front's own (leadMinutes)
 import { releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: a door the game opened is not a door to warn about
-import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
+import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, nightSkyLight, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world; MOONLIT1: and its night has a light of its own
 import { meterFor } from '../render/perfMeter.js';   // VC6d: `?perf=zones` - the sky's own span
 import { dreadGrade, DREAD_SKY_WORD } from '../world/dreadSky.js';   // EVENT1: the live event's grade and the sky it wears
 import { sunbabyHaze, sunbabyWaterSky } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's haze and the sky the water mirrors under it
@@ -548,6 +548,15 @@ export function createSkyController(gl, params) {
       // puts them, lit by DFU's phase - so the world's night agrees
       // with the sky it stands under
       return dynamicMoonlight(dynamicMoons);
+    },
+    /** MOONLIT1: the night sky's own light, the floor the world's
+     *  ambient never falls below (enhancedSky.js nightSkyLight) - off the
+     *  same eased cover the dome is drawn with, the mod's moons' state
+     *  under the mod. null under the classic sky, so the 1:1 lane keeps
+     *  DFU's 0.25 night to the byte. */
+    nightFloor() {
+      if (enhancedSky?.state) return nightSkyLight(enhancedSky.state);
+      return dynamicMoons ? nightSkyLight(dynamicMoons) : null;
     },
     /** Ensure the panorama for (skyIndex, minuteOfDay); async, frame-late.
      *  ES1: the enhanced sky takes the same call and needs the weather

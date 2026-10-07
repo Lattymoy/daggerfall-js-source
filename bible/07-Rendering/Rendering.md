@@ -668,9 +668,10 @@ directory by `test/audit18_bible_docs.test.js`:
   out of EL_GLSL byte for byte) and each light's map where it has one
   (`shadowOfLight`, the flats' reader, at the sun's lift), in the
   provoking vertex alone, handed down `flat` as `vPoint`; the fragment
-  adds it beside R12 (the stage holds 221 uniform vectors at most - 220
-  at GRASS-LIT2, MEADOW1's switch `uArt` the one since - counting every
-  scalar whole and off the code, not its comments; 233 if a driver keeps
+  adds it beside R12 (the stage holds 222 uniform vectors at most - 220
+  at GRASS-LIT2, MEADOW1's switch `uArt` one since and MOONLIT1's
+  `uMoonScale` the other - counting every
+  scalar whole and off the code, not its comments; 234 if a driver keeps
   the two const face tables as uniforms - of the 256 WebGL2 promises;
   pinned). A
   lantern at night: the blade beside it drew
@@ -844,7 +845,8 @@ directory by `test/audit18_bible_docs.test.js`:
   blades' own box by its cards' reach and top (AUDIT MEADOW1, below -
   MEADOW1 had widened every style's), and the pack's decode frame is still
   the blades' own bounds. The vertex stage holds 221 uniform vectors at
-  most (the GRASS-LIT2 count, plus `uArt`). THE HOSTS:
+  most (the GRASS-LIT2 count, plus `uArt` - 222 since MOONLIT1's
+  `uMoonScale`). THE HOSTS:
   `scenes/world.js` draws it through the same `labGrass.draw` call (the
   row's word read every frame - a uniform, no reload); `scenes/exterior.js`
   (the fixed city), `scenes/worldModes.js` (interiors) and

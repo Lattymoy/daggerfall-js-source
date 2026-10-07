@@ -2062,7 +2062,8 @@ test('MAC-BUG W6 by source: the decal has a LANE TWIN, the flat’s model on the
   // elIndirectLit (N.L, the lantern's map, the contact shadow, the
   // glint), which is what the mesh under the mark takes
   assert.match(EL_DECAL_FS, /vec3 lit = albedo \* \(ambient \+ sunLit \+ moonLit \+ elPointLitWet\(vWorld, n, sheen, glint\) \+ elIndirectLit\(vWorld, n\)\);/, 'the mesh’s lantern and indirect terms, N.L - and (BLOOD AUDIT 5) the moon by N.L and the trilight ambient');
-  assert.match(EL_DECAL_FS, /vec3 moonLit = uDecalMoon \* max\(dot\(n, uMoonDir\), 0\.0\);/);
+  // MOONLIT1: the moon by the same N.L, under her map where she owns it - gated as the sun's visibility is
+  assert.match(EL_DECAL_FS, /float mndl = max\(dot\(n, uMoonDir\), 0\.0\);\n  vec3 moonLit = \(dot\(uDecalMoon, uDecalMoon\) > 0\.0 && mndl > 0\.0\) \? uDecalMoon \* \(mndl \* moonShadowAt\(vWorld, n\)\) : vec3\(0\.0\);/);
   assert.match(EL_DECAL_FS, /vec3 ambient = uTrilight > 0\.5 \? \(n\.y >= 0\.0 \? mix\(uTint, uAmbientSky, n\.y\) : mix\(uTint, uAmbientGround, -n\.y\)\) : uTint;/);
   assert.match(EL_DECAL_FS, /float sunVis = \(dot\(uDecalSun, uDecalSun\) > 0\.0 && ndl > 0\.0\) \? cloudShadowAt\(vWorld\) \* sunShadowAt\(vWorld, n\) : 0\.0;/, 'the sun’s visibility ONCE - the nine-tap map is read for the diffuse and the glint together');
   assert.match(EL_DECAL_FS, /vec3 sunLit = uDecalSun \* \(ndl \* sunVis\);/);

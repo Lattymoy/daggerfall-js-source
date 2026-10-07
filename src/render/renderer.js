@@ -508,7 +508,7 @@ export function bbVertexShader(ext = null) {
 }
 
 import { createClusterSpace, buildLightClusters, CLUSTER_GRID_W, CLUSTER_GRID_H, CLUSTER_LIST_W, CLUSTER_LIST_ROWS, CLUSTER_X, CLUSTER_Y, CLUSTER_NEAR, CLUSTER_Z_SCALE, CLUSTER_GRID_UNIT, CLUSTER_LIST_UNIT } from './lightClusters.js';   // LC1: the lantern loop's grid
-import { ShadowPass, SHADOW_GLSL, SHADOW_VIEW_SCALE, shadowCacheOn } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program
+import { ShadowPass, SHADOW_GLSL, SHADOW_VIEW_SCALE, shadowCacheOn, shadowKind } from './shadowPass.js';   // EL7: the receiver block, for the water surface's lane program; MOONLIT1: the kind, asked of the moon
 import { boundsOf, spherePlanes, batchVisible, batchSphere, ZERO_ORIGIN, placementGrid, quadHalfDiagonal } from './bounds.js';   // PERF-EXT1: and a batch's placement grid; the review: and the half-diagonal's one home
 import { billboardKey, sortByKey } from './billboardKey.js';   // AUDIT 68 S16-bbkey-stale-shadow-reach: the batch's texture key - one home with the two replays; LA-COST2: and the cutout pass's sort by it
 import { cullDisabled } from './frustum.js';   // PERF-CROWD2: the billboard pass culls for every host, so no host can forget to
@@ -1407,6 +1407,7 @@ export class Renderer {
     this._camFwd = new Float32Array(4);
     this._panelLane = null;  // AUDIT-EL F7: the lane a panel bracket suspended
     this._studioDepth = 0;   // AUDIT-EL F1: inside the studio bake (a UI picture: no eye)
+    this._lensDepth = 0;   // MOONLIT1: inside a lens-local sprite pass (the FP viewmodel) - no moon-owned map (_uploadEl)
     this._adaptOneTex = null;
     this.maxPointLights = CLASSIC_MAX_LIGHTS;
     this._decA = new Float32Array(3); this._decB = new Float32Array(3); this._decC = new Float32Array(3);   // AUDIT F4: three, because one site decodes the ambient, the moon AND the sun and holds all three   // EL1: the decode scratch (two, for the billboard tint's two terms)
@@ -1557,6 +1558,11 @@ export class Renderer {
     this._moonDir = new Float32Array([0, 1, 0]);
     this._moonScale = 0;
     this._moonColor = new Float32Array([1, 1, 1]);
+    // MOONLIT1: whether the moon slot holds the world's MOON (moonlightTerm's `casts`), which may own the directional
+    // shadow map - the court's key and the automap's fill ride the same slot and never do - and whether it owns it on
+    // this frame (_renderPasses decides, drawBillboards splits a flat's light by it)
+    this._moonCasts = false;
+    this._moonMapNow = false;
     // ROAD-C c2: the third directional term defaults off the same way -
     // the automap beacon group is the one pass that ever raises it.
     this._light3Dir = new Float32Array([0, 1, 0]);
@@ -2339,6 +2345,11 @@ export class Renderer {
     // bake, the door shut): the same gate the contact block and the grid take
     gl.uniform1f(scLoc, this._airGlows() ? 0 : this._scatterGain());
     if (this._shadows) this._shadows.upload(this._el[key].shadow);   // EL2: the maps and the receiver's uniforms
+    // MOONLIT1: a LENS-LOCAL pass or a STUDIO bake reads no moon-owned map - its geometry stands at the origin of a
+    // private space and the map is world-space (the VC5 review's reason for borrowing the cloud deck off both), and its
+    // key is the studio's, no moon. So a night the moon owns the map lights them as every night did before her map (a
+    // sun-owned map is as it was)
+    if ((this._lensDepth > 0 || this._studioDepth > 0) && this._shadows?.sunParams[3] > 1.5) gl.uniform4f(this._el[key].shadow.sunParams, 0, 0, 0, 0);
     this._uploadAdapt(this._el[key].ao);   // EL6: the AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)
     // EL8: the contact block - the previous frame's depth, for a WORLD frame's own draws alone (a sprite pass, a bake or a panel is another view: the march would read a stranger's depth)
     if (this._air) this._air.uploadContact(this._el[key].contact, this._contactWanted !== false && this._spriteDepth === 0 && this._studioDepth === 0 && !this._panelSaved);
@@ -2414,6 +2425,7 @@ export class Renderer {
     this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set
     const retro = world && !this._panelSaved ? this._retroBegin() : null;   // RETRO1: after the owed present, which reads the frame it presents
     if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span
+    if (world) this._moonMapNow = false;   // MOONLIT1: no map is the moon's until this frame's hand-over says so (_renderPasses) - a frame with no maps (the classic set) owns none
     if (this._shadows && world) this._renderPasses(proj, view, lightDir);
     // EL4: THE FRAME IMAGE - the world pass draws into it, the clear included; a panel frame keeps the canvas
     this._frameFbo = this._air && !this._panelSaved ? this._air.beginFrameTarget(retro ? retro.width : this.canvas.width, retro ? retro.height : this.canvas.height, retro ? 'retro' : 'canvas') : null;
@@ -2632,8 +2644,16 @@ export class Renderer {
     const cut = this._everyLightNow !== this._everyLightPrev;   // EMPTY-HOLD: a door crossed is a cut - nothing of the other side is held over it
     if (cut) sp.discard();   // AUDIT FLICKER R4: a door crossed EITHER way - the street's first frame replayed the room's records into its cascades (the room stands in world coordinates at its building), and the far cascade held them a frame more
     if (this._everyLightNow !== this._everyLightPrev) { this._air?.invalidatePrev(); } this._everyLightPrev = this._everyLightNow; this._everyLightNow = false;   // LA-POST6: a door crossed either way is a cut - the air's contact march has no previous frame of this room (its prepare is below)
+    // MOONLIT1: THE MOON TAKES THE DIRECTIONAL MAP once the sun's key is nought and hers has height (the sun's own test,
+    // shadowKind, asked of her numbers) - the world's moon alone (setMoonlight's `casts`: never the court's key or the
+    // automap's fill on the same slot). The sun's scale is EXACTLY nought the whole night (worldClock.sunScale) and every
+    // sun term in the lane is gated on it, so no sun term reads her map; the air pass below keeps the sun's numbers - no
+    // shafts toward the moon, no haze march by her.
+    const moonMap = this._moonCasts && !(this._sunScale > 0) && shadowKind(this._moonScale, this._moonDir) === 'sun';
+    this._moonMapNow = moonMap;
     sp.render({
-      eye: this._shadowEye(), lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1; TV1: the cascades about the focus
+      eye: this._shadowEye(), lightDir: moonMap ? this._moonDir : lightDir, sunScale: moonMap ? this._moonScale : this._sunScale, moon: moonMap,   // MOONLIT1
+      pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1; TV1: the cascades about the focus
       cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,   // AUDIT DEEP R-3: and grown to the travel view's picture - AUDIT DEEP2 D7: once it is half risen (at the head the near cascade went from 1.2 cm texels to 4.7 in one frame, and back at the fall's end)
       textures: this.textures, isSpectral: isSpectralArchive, bindVao, everyLight, cut,
     });
@@ -3291,6 +3311,7 @@ export class Renderer {
     if (sd) { this._cloudShadow = null; this._csStamp++; }
     this._proj = proj; this._view = view; this._fogMode = 0; this._dwFog[0] = 0;
     this._spriteDepth++;   // AUDIT-EL F2
+    if (lensLocal) this._lensDepth++;   // MOONLIT1: no moon-owned map at the origin of a private space (_uploadEl)
     // LA-COST1: the character block this draw uploads is the SPRITE's - its camera, no fog, its light (MAC-P's
     // viewmodel, PX23's studio, both set before this), the contact and the grid off - so the block the world's
     // rigs uploaded is forgotten on the way in, and this one on the way out (the finally). Only the character
@@ -3322,6 +3343,7 @@ export class Renderer {
       gl.clearColor(cc[0], cc[1], cc[2], cc[3]);
       this._proj = sp; this._view = sv; this._fogMode = sf; this._dwFog[0] = sw;
       this._spriteDepth--;   // AUDIT-EL F2
+      if (lensLocal) this._lensDepth--;   // MOONLIT1
       this._cFrameStamp = -1;   // LA-COST1: the sprite's block is no world rig's
       if (sd) { this._cloudShadow = sd; this._csStamp++; }
     }
@@ -4535,6 +4557,8 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       moonScale: this._moonScale,
       moonDir: [...this._moonDir],
       moonColor: [...this._moonColor],
+      moonCasts: this._moonCasts,   // MOONLIT1: the world's moon, which may own the directional map
+      moonMapNow: this._moonMapNow,   // MOONLIT1: and whether it owns it this frame - a panel is no world frame (cleared below)
       light3Scale: this._light3Scale,
       light3Dir: [...this._light3Dir],
       light3Color: [...this._light3Color],
@@ -4560,6 +4584,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       worldViewportPx: this._worldViewportPx,
       rect,
     };
+    this._moonMapNow = false;   // MOONLIT1: the panel's flats keep the moon's half in their tint - its picture owns no map
     this.setScreenOffset(0, 0);
     // `setup` runs AFTER the save and BEFORE beginFrame, which is the
     // only window in which a pass can choose its own fog/lighting:
@@ -4620,6 +4645,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     this.setMoonlight(s.moonScale ? { scale: s.moonScale, dir: s.moonDir, color: s.moonColor } : null);
     this._moonDir[0] = s.moonDir[0]; this._moonDir[1] = s.moonDir[1]; this._moonDir[2] = s.moonDir[2];
     this._moonColor[0] = s.moonColor[0]; this._moonColor[1] = s.moonColor[1]; this._moonColor[2] = s.moonColor[2];
+    this._moonCasts = s.moonCasts; this._moonMapNow = s.moonMapNow;   // MOONLIT1: the world's moon, and its map, back
     this.setThirdLight(s.light3Scale ? { scale: s.light3Scale, dir: s.light3Dir, color: s.light3Color } : null);
     this._light3Dir[0] = s.light3Dir[0]; this._light3Dir[1] = s.light3Dir[1]; this._light3Dir[2] = s.light3Dir[2];
     this._light3Color[0] = s.light3Color[0]; this._light3Color[1] = s.light3Color[1];
@@ -4664,9 +4690,12 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
 
   /** EV5: the second directional term - the masser's key light. Takes
    *  moonlightTerm's output or null; null (day, classic sky, indoors)
-   *  zeroes the scale and every shader's moon term is a no-op. */
+   *  zeroes the scale and every shader's moon term is a no-op. MOONLIT1:
+   *  a term that `casts` is the world's moon, which takes the directional
+   *  shadow map on a frame the sun's scale is nought (_renderPasses). */
   setMoonlight(moon) {
     this._frameStamp++;   // LA-COST1: the moon rides the billboard's tint, the decal's and the character's terms and the terrain's
+    this._moonCasts = !!moon?.casts;   // MOONLIT1: only the world's moon may own the directional map
     if (!moon) { this._moonScale = 0; return; }
     this._moonScale = moon.scale;
     this._moonDir[0] = moon.dir[0]; this._moonDir[1] = moon.dir[1]; this._moonDir[2] = moon.dir[2];
@@ -6032,13 +6061,17 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
         // is the only one that could have it; found by the audit that had
         // just pinned PERF-FOG's decoded fog (gone since EL-DISTANCE) against the same hazard one method away.
         const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);
+        // MOONLIT1: the moon's half rides the TINT - or, on a frame she owns the directional map, the KEY slot beside
+        // the sun's (nought all night), whose read of the map the lane makes once a quad (EL_BB_VS_EXT's vBBSunVis): a
+        // moonlit tree or townsman stands in the shade of the house she is behind
+        const mt = this._moonMapNow ? 0 : this._moonScale * 0.5, mk = this._moonMapNow ? this._moonScale * 0.5 : 0;
         gl.uniform3f(
           this.bbUTint,
-          am[0] + mc[0] * this._moonScale * 0.5,
-          am[1] + mc[1] * this._moonScale * 0.5,
-          am[2] + mc[2] * this._moonScale * 0.5
+          am[0] + mc[0] * mt,
+          am[1] + mc[1] * mt,
+          am[2] + mc[2] * mt
         );
-        gl.uniform3f(this.bbUSun, sc[0] * this._sunScale * 0.5, sc[1] * this._sunScale * 0.5, sc[2] * this._sunScale * 0.5);   // VC4: the sun's half, shadowed in the shader
+        gl.uniform3f(this.bbUSun, sc[0] * this._sunScale * 0.5 + mc[0] * mk, sc[1] * this._sunScale * 0.5 + mc[1] * mk, sc[2] * this._sunScale * 0.5 + mc[2] * mk);   // VC4: the sun's half, shadowed in the shader; MOONLIT1: and the moon's when the map is hers
       } else {
         gl.uniform3f(this.bbUTint, 1, 1, 1);
         gl.uniform3f(this.bbUSun, 0, 0, 0);

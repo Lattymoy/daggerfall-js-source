@@ -308,11 +308,12 @@
   {
     "name": "renderer-air-before-shadows",
     "file": "src/render/renderer.js",
-    "old": "    sp.render({\n      eye: this._shadowEye(), lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1; TV1: the cascades about the focus\n      cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,   // AUDIT DEEP R-3: and grown to the travel view's picture - AUDIT DEEP2 D7: once it is half risen (at the head the near cascade went from 1.2 cm texels to 4.7 in one frame, and back at the fall's end)\n      textures: this.textures, isSpectral: isSpectralArchive, bindVao, everyLight, cut,\n    });\n    if (this._air) {",
+    "old": "    sp.render({\n      eye: this._shadowEye(), lightDir: moonMap ? this._moonDir : lightDir, sunScale: moonMap ? this._moonScale : this._sunScale, moon: moonMap,   // MOONLIT1\n      pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1; TV1: the cascades about the focus\n      cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,   // AUDIT DEEP R-3: and grown to the travel view's picture - AUDIT DEEP2 D7: once it is half risen (at the head the near cascade went from 1.2 cm texels to 4.7 in one frame, and back at the fall's end)\n      textures: this.textures, isSpectral: isSpectralArchive, bindVao, everyLight, cut,\n    });\n    if (this._air) {",
     "new": "    if (this._air) {",
     "tests": [
       "test/el3_air.test.js"
-    ]
+    ],
+    "why": "MOONLIT1 re-aimed by content: the shadow pass's call carries the moon's hand-over above it and in it; same law, same killer."
   },
   {
     "name": "lane-no-air",

@@ -91,7 +91,8 @@ test('c2/S2 every named global is written and written BACK to its entry value', 
   r.setAutomapMode(2);
   r.setFog('linear', 0.25, 3, 44, new Float32Array([0.1, 0.2, 0.3]));
   r.setLighting(new Float32Array([0.11, 0.22, 0.33]), 0.44, new Float32Array([0.5, 0.6, 0.7]));
-  r.setMoonlight({ scale: 0.8, dir: [0, 1, 0], color: [0.9, 0.9, 1] });
+  r.setMoonlight({ scale: 0.8, dir: [0, 1, 0], color: [0.9, 0.9, 1], casts: true });   // MOONLIT1: the world's moon
+  r._moonMapNow = true;   // MOONLIT1: as a world frame's hand-over leaves it on a night the moon owns the map
   r.setWindowEmission(new Float32Array([0.3, 0.4, 0.5]));
   r.setPointLights(new Float32Array([1, 2, 3, 4]), new Float32Array([1, 0, 0]));
   r.setIndirectLight([5, 6, 7], 8, new Float32Array([0.2, 0.3, 0.4]));
@@ -106,6 +107,7 @@ test('c2/S2 every named global is written and written BACK to its entry value', 
     fogMode: r._fogMode, fogDensity: r._fogDensity, fogRange: [...r._fogRange], fogColor: [...r._fogColor],
     ambient: [...r._ambient], sunScale: r._sunScale, sunColor: [...r._sunColor], clockLit: r._clockLit,
     moonScale: r._moonScale, moonDir: [...r._moonDir], moonColor: [...r._moonColor],
+    moonCasts: r._moonCasts, moonMapNow: r._moonMapNow,   // MOONLIT1
     windowEmission: [...r._windowEmission],
     pointLights: [...r._pointLights], pointColor: [...r._pointColor],
     indirect: [...r._indirect], indirectColor: [...r._indirectColor],
@@ -129,6 +131,7 @@ test('c2/S2 every named global is written and written BACK to its entry value', 
     r.setScreenOffset(100, 100);
     assert.equal(r._fogMode, 0, 'the pass really is running with its own fog');
     assert.equal(r._clipY, 3);
+    assert.equal(r._moonMapNow, false, 'MOONLIT1: a panel owns no map - its flats keep the moon\'s half in their tint');
   });
 
   assert.deepEqual([...r.screenOffset], before.screenOffset, 'screenOffset');
@@ -146,6 +149,9 @@ test('c2/S2 every named global is written and written BACK to its entry value', 
   assert.equal(r._moonScale, before.moonScale, 'moon scale');
   assert.deepEqual([...r._moonDir], before.moonDir, 'moon dir');
   assert.deepEqual([...r._moonColor], before.moonColor, 'moon colour');
+  assert.equal(before.moonCasts, true, 'MOONLIT1: the entry state is the world\'s moon');
+  assert.equal(r._moonCasts, before.moonCasts, 'MOONLIT1: and it is the world\'s moon again - the setup\'s null took it, the restore\'s plain term carries no `casts`');
+  assert.equal(r._moonMapNow, before.moonMapNow, 'MOONLIT1: and owns the map it owned');
   assert.deepEqual([...r._windowEmission], before.windowEmission, 'window emission');
   assert.deepEqual([...r._pointLights], before.pointLights, 'point lights');
   assert.deepEqual([...r._pointColor], before.pointColor, 'point colour');

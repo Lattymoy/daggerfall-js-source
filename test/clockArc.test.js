@@ -315,7 +315,8 @@ test('CLK4: the review - a distant zone never moves the player\'s stale clock, a
   const sim = read('src/systems/weatherSim.js');
   assert.doesNotMatch(sim, /_evolveDoor\b/, 'no cached lane answer');
   assert.match(sim, /let _evolveUrlDoor = null;/);
-  // (4) THE MOONLIGHT RAMPS on the daylight curve - no step at 18:00, none at 06:00
+  // (4) THE MOONLIGHT RAMPS - no step at 18:00, none at 06:00. CLK3 ramped it on the daylight curve; MOONLIT1 on the
+  // sun's depression (moonRise), the same continuous clock, so the sun's key and the moon's are never both lit
   const base = 405 * 360 * MINUTES_PER_DAY;
   let nightOf = null;
   for (let d = 0; d < 32 && nightOf === null; d++) {
@@ -335,7 +336,7 @@ test('CLK4: the review - a distant zone never moves the player\'s stale clock, a
   assert.equal(moonlightTerm(skyState({ minuteOfDay: 12 * 60, classicMinutes: base + nightOf * MINUTES_PER_DAY + 12 * 60 })), null, 'none at noon');
   assert.equal(skyState({ minuteOfDay: 720, classicMinutes: base }).daylight, daylightScale(720), 'the state carries the rig\'s curve');
   assert.match(read('src/render/dynamicSkiesBridge.js'), /daylight: daylightScale\(minuteOfDay\),/, 'and the mod\'s moon state carries it too (DS2: in the bridge now)');
-  assert.ok(MOONLIGHT.dayFade > 0 && MOONLIGHT.dayFade < 0.2);
+  assert.ok(MOONLIGHT.twilightDeg > 0 && MOONLIGHT.twilightDeg < 18, 'MOONLIT1: the moons take the night within astronomical twilight');
   // (5) THE DECK HAS A PERIOD: both decks whole, the field the same a period away, the drift wrapped where it becomes the state
   assert.equal(DECK_PERIOD % DECK_LATTICE, 0, 'the near deck');
   assert.ok(Math.abs((DECK_PERIOD * 0.55) / DECK_LATTICE - Math.round((DECK_PERIOD * 0.55) / DECK_LATTICE)) < 1e-9, 'the far deck (0.55 of the drift)');

@@ -364,7 +364,9 @@ test('LA-COST1: THE LAW, READ OFF THE SOURCE - every field the four gated frame 
     '_lane', '_exposure', '_air', '_shadows', '_contactWanted', '_volumetricsWanted', '_spriteDepth', '_studioDepth', '_panelSaved',
     '_clustersLive', '_clusterRect', '_clusterZ', '_camFwd', '_clusterTex', '_decalLights',
     '_focus',   // TV1: the point the fog measures from (setFocus stamps)
-    '_dwColumn'];   // merged beside DW-F: the water column's frame (setWaterColumn stamps; beginFrame clears it)
+    '_dwColumn',   // merged beside DW-F: the water column's frame (setWaterColumn stamps; beginFrame clears it)
+    '_moonMapNow',   // MOONLIT1: the moon owns the directional map this frame (decided inside beginFrame before its stamp; the panel bracket's save and restore stamp)
+    '_lensDepth'];   // MOONLIT1: inside a lens-local sprite pass (the sprite pass forgets the character block on the way in and out)
   // NOT INPUTS: the programs' location tables (re-looked-up by _installWorldSet, which forgets the blocks), scratch the
   // block writes before it reads, the memo's own keys (the first test), the gates' stamps, the GL-state shadows - and
   // the automap's four, which _uploadFog sends only to a program that declares them: the mesh's, never these four

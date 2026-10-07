@@ -612,6 +612,8 @@ export const GRASSLIT_VS_EDITS = Object.freeze([
       + 'uniform vec4 uIndirect; uniform vec3 uIndirectColor;   // GRASS-LIT: R12, the light that follows the player\n'
       + CLOUD_SHADOW_GLSL + SHADOW_GLSL
       + 'flat out float vSun;                    // GRASS-LIT: the sun that reaches the root - the deck\'s and the map\'s, one value a triangle\n'
+      + 'uniform float uMoonScale;          // MOONLIT1: the fragment\'s own, here too - the moon\'s map is asked only while she has a scale\n'
+      + 'flat out float vMoonSh;                 // MOONLIT1: the moon\'s map at the root where she owns it, as vSun is the sun\'s\n'
       + 'out vec3 vNear;                         // GRASS-LIT: the player\'s light at the root\n'
       + 'out float vFar;                         // GRASS-LIT: how far into the range - the colour gives way to the ground\'s\n'
       + 'uniform float uLane;               // GRASS-LIT2: the fragment\'s own, here too - the lane\'s lantern falloff or the classic one\n'
@@ -659,6 +661,7 @@ export const GRASSLIT_VS_EDITS = Object.freeze([
       + '  // read in each triangle\'s PROVOKING vertex alone (the last - GL\'s, and WebGL\'s, convention) and handed down flat:\n'
       + '  // the root\'s sun is one value a blade, so the other two vertices of a triangle need not pay the map\'s taps\n'
       + `  vSun = (gl_VertexID % 3 == 2 && uSunScale > 0.0) ? cloudShadowAt(rootW) * sunShadowAt(rootW + vec3(0.0, ${GRASS_SUN_LIFT}, 0.0), vec3(0.0, 1.0, 0.0)) : 0.0;   // off the ground's own depth: a tree's shade, never the ground's acne\n`
+      + `  vMoonSh = (gl_VertexID % 3 == 2 && uMoonScale > 0.0) ? moonShadowAt(rootW + vec3(0.0, ${GRASS_SUN_LIFT}, 0.0), vec3(0.0, 1.0, 0.0)) : 1.0;   // MOONLIT1: the same read for the moon - the ground under a moon-shadowed tree is dark, so is its grass\n`
       + '  vec3 iL = uIndirect.xyz - rootW; float iD = length(iL);\n'
       + '  float iAtt = clamp(1.0 - iD / max(uIndirect.w, 1e-4), 0.0, 1.0);\n'
       + '  vNear = iAtt * iAtt * max(dot(nrm, iL / max(iD, 1e-4)), 0.0) * uIndirectColor;\n'
@@ -685,6 +688,7 @@ export const GRASSLIT_FS_EDITS = Object.freeze([
     from: 'uniform float uPixel, uPxSteps, uPxVariants, uPxTintBands; uniform sampler2D uPxSheet;   // GRASS-PX\n',
     to: 'uniform float uPixel, uPxSteps, uPxVariants, uPxTintBands; uniform sampler2D uPxSheet;   // GRASS-PX\n'
       + 'flat in float vSun; in vec3 vNear; in float vFar;   // GRASS-LIT\n'
+      + 'flat in float vMoonSh;   // MOONLIT1: the moon\'s map at the root\n'
       + 'flat in vec3 vPoint;   // GRASS-LIT2: the lanterns at the root\n'
       + 'uniform float uLane, uELExposure;   // GRASS-LIT: 1 under Enhanced Lighting, and the lane\'s exposure\n'
       + 'uniform vec3 uGrassTone[4];   // GRASS-LIT: the tuft\'s four tones as ratios of the ground\'s mean - root, middle, tip, highlight (GRASS_TONES)\n'
@@ -725,7 +729,7 @@ export const GRASSLIT_FS_EDITS = Object.freeze([
   Object.freeze({
     why: 'lit as the ground is - the ambient under a soft sward shade, the sun through the deck and the map, the moon, the player\'s light - and under Enhanced Lighting through the lane\'s own decode, exposure, curve and encode',
     from: '  c *= (uAmb * 1.25 * (0.42 + 0.58*t) + uSunCol * (uSunScale * 1.15 * vLam) + uMoonCol * (uMoonScale * 1.15 * vMoonLam));',
-    to: `  vec3 light = uAmb * (${GRASS_SWARD} + ${(1 - GRASS_SWARD).toFixed(2)}*t) + uSunCol * (uSunScale * vLam * vSun) + uMoonCol * (uMoonScale * vMoonLam) + vNear + vPoint;   // GRASS-LIT; GRASS-LIT2: and the lanterns\n`
+    to: `  vec3 light = uAmb * (${GRASS_SWARD} + ${(1 - GRASS_SWARD).toFixed(2)}*t) + uSunCol * (uSunScale * vLam * vSun) + uMoonCol * (uMoonScale * vMoonLam * vMoonSh) + vNear + vPoint;   // GRASS-LIT; GRASS-LIT2: and the lanterns; MOONLIT1: the moon under her map\n`
       + '  c = uLane > 0.5 ? elEncode(elTonemapRGB(elDecode(c) * light * (uELExposure * elAdapt()))) : c * light;   // GRASS-LIT: the lane\'s pipeline, as EL_TERRAIN_FS runs it',
   }),
   Object.freeze({

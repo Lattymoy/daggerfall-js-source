@@ -14,6 +14,8 @@
 //   - a lantern behind a wall whose glare reaches the wall's pixels (the
 //     bleed: the wall's region is compared with and without the lantern);
 //   - a lit floor that the wall does not shadow (the caster's map);
+//   - MOONLIT1: a full moon behind the wall whose shadow the floor in front of it does not take (the world's moon owns
+//     the directional map once the sun's scale is nought - and a key on the moon slot without `casts` never does);
 //   - a replay that culls nothing (the record spheres are wired).
 //
 // Usage: node tools/enhancedLightingProbe.mjs [outDir]   (PNGs land in outDir, default scratch/el5/)
@@ -150,7 +152,7 @@ const result = await page.evaluate(async ({ W, H }) => {
   const read = () => { const px = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px); return px; };
 
   const frames = {};
-  const scene = (label, { lane, air, sun, withA, sky = false, night = false, withEmitter = true, emitterInFront = false, withFlameB = true, carried = false, contact = null, panelB = false }) => {
+  const scene = (label, { lane, air, sun, withA, sky = false, night = false, withEmitter = true, emitterInFront = false, withFlameB = true, carried = false, contact = null, panelB = false, moon = null, noLights = false }) => {
     r.setLightingLane(lane ? EL_LANE : null);
     r.setAir(!!air);
     if (r.air) r.air._now = () => 1000;   // the eye's clock frozen: no adaptation between frames or scenes, so a with/without comparison is the scene's alone
@@ -165,7 +167,8 @@ const result = await page.evaluate(async ({ W, H }) => {
       L = new Float32Array([...dummies, ...L]);
       r.setContact(contact);
     } else r.setContact(true);
-    r.setPointLights(L, lanternColor(on, DUNGEON_LIGHT));
+    r.setPointLights(noLights ? new Float32Array(0) : L, lanternColor(on, DUNGEON_LIGHT));   // MOONLIT1: `noLights` - the moon the floor's only key
+    r.setMoonlight(moon);   // MOONLIT1: null (every scene before it) is the renderer's default - no moon term
     if (sky && night) {
       r.setClearColor([0.02, 0.02, 0.05, 1]);
       r.setLighting(new Float32Array([0.09, 0.09, 0.12]), 0, new Float32Array([1, 0.95, 0.85]));
@@ -216,6 +219,14 @@ const result = await page.evaluate(async ({ W, H }) => {
   scene('street-day-lane', { lane: true, air: true, sun: true, withA: true, sky: true });
   scene('street-night-classic', { lane: false, air: false, sun: false, withA: true, sky: true, night: true });
   scene('street-night-lane', { lane: true, air: true, sun: false, withA: true, sky: true, night: true });
+  // MOONLIT1: the street at night under a full moon BEHIND the wall (from -z, 37 degrees up): the world's moon (`casts`)
+  // takes the directional map, the sun's scale being nought, and the wall's shadow lies on the floor in front of it; the
+  // same key without `casts` (the court's, the automap's fill) lights the floor unshadowed. No lanterns.
+  const MOON = { scale: 0.5, dir: [0, 0.6, -0.8], color: [0.79, 0.74, 0.78], casts: true };
+  const moonNight = { sun: false, withA: false, sky: true, night: true, noLights: true, withEmitter: false, withFlameB: false };
+  scene('street-moon-lane', { lane: true, air: true, ...moonNight, moon: MOON });
+  scene('street-moon-lane-nocast', { lane: true, air: true, ...moonNight, moon: { ...MOON, casts: false } });
+  scene('street-moon-classic', { lane: false, air: false, ...moonNight, moon: MOON });
   // the wall's screen rectangle and the floor patch behind it (the shadowed one) and in front (lit by B)
   const project = (p) => { const v = [view[0] * p[0] + view[4] * p[1] + view[8] * p[2] + view[12], view[1] * p[0] + view[5] * p[1] + view[9] * p[2] + view[13], view[2] * p[0] + view[6] * p[1] + view[10] * p[2] + view[14], 1];
     const c = [proj[0] * v[0] + proj[4] * v[1] + proj[8] * v[2] + proj[12] * v[3], proj[1] * v[0] + proj[5] * v[1] + proj[9] * v[2] + proj[13] * v[3], 0, proj[3] * v[0] + proj[7] * v[1] + proj[11] * v[2] + proj[15] * v[3]];
@@ -295,6 +306,18 @@ if (!(openLane - openNoA > 0.02)) failures.push(`lantern A does not light the op
 const sh = result.frames['dungeon-lane'].stats.shadows;
 if (!sh || sh.culledTotal === 0) failures.push('the replays culled nothing - the record spheres are not wired');   // SC1: over the frames - the last frame of a still room replays nothing at all
 if (!sh || sh.casters < 2) failures.push(`two lanterns in range, ${sh?.casters} caster(s)`);
+// MOONLIT1: the moon's shadow, on a real GL
+{
+  const cast = Uint8Array.from(result.frames['street-moon-lane'].px), free = Uint8Array.from(result.frames['street-moon-lane-nocast'].px);
+  const kind = result.frames['street-moon-lane'].stats.shadows?.kind, freeKind = result.frames['street-moon-lane-nocast'].stats.shadows?.kind;
+  const shade = regionMean(cast, result.shadowRect), shadeFree = regionMean(free, result.shadowRect);
+  const open = regionMean(cast, result.openRect), openFree = regionMean(free, result.openRect);
+  console.log(`the full moon behind the wall: the directional map is '${kind}' ('${freeKind}' with no \`casts\`); the floor in front of the wall ${shade.toFixed(4)} under her map vs ${shadeFree.toFixed(4)} unshadowed; the open floor beside it ${open.toFixed(4)} vs ${openFree.toFixed(4)}`);
+  if (kind !== 'moon') failures.push(`the world's moon did not take the directional map (kind ${kind})`);
+  if (freeKind === 'moon') failures.push('a key on the moon slot without `casts` took the directional map');
+  if (!(shade < shadeFree - 0.02)) failures.push(`the wall casts no moon shadow (${shade.toFixed(4)} vs ${shadeFree.toFixed(4)} unshadowed)`);
+  if (!(Math.abs(open - openFree) < 0.01)) failures.push(`the moon's map darkens the open floor it should not (${open.toFixed(4)} vs ${openFree.toFixed(4)})`);
+}
 if (pageErrors.length) failures.push(...pageErrors.map((e) => 'pageerror: ' + e));
 await browser.close(); await server.close();
 if (failures.length) { console.log('FAIL\n  ' + failures.join('\n  ')); process.exit(1); }

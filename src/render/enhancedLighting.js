@@ -588,7 +588,10 @@ void main() {
   // output-identical rather than an approximation.
   float ndl = max(dot(n, uLightDir), 0.0);
   float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map
-  float mdiff = max(dot(n, uMoonDir), 0.0);
+  // MOONLIT1: the moon's key under the directional map where she owns it (moonShadowAt: 1 where she does not) - read
+  // only where her scale and her N.L are above nought, PERF-SUN2's gate on the sun's
+  float mndl = max(dot(n, uMoonDir), 0.0);
+  float mdiff = (uMoonScale > 0.0 && mndl > 0.0) ? mndl * moonShadowAt(vWorldPos, n) : 0.0;
   float l3diff = max(dot(n, uLight3Dir), 0.0);
   // emission cancels other light (DaggerfallDefault.shader:83-85), in linear
   vec3 emission = elDecode(texture(uEmissionTex, vUV).rgb) * uEmissionColor;
@@ -683,6 +686,10 @@ ${LPT_FS_TEXEL}  if (tex.a < ((uSpectral == 1 || uConceal.x > 0.0) ? 0.1 : 0.5))
   // there is still uBBSun, which is the sun's whole share of the tint
   // and is ZERO at night. A uniform branch, so every sprite in the world
   // stops paying nine shadow compares for a term that is not there.
+  // MOONLIT1: uBBSun is the share of whichever light OWNS the directional
+  // map - the sun's by day, the moon's on a night she owns it
+  // (Renderer.drawBillboards) - so a moonlit flat takes her shadow by the
+  // same read; on a night she does not, it is zero as before.
   // TREES1: sunShadowSOFTat - a flat reads its shadow ONCE for the whole
   // sprite, so the kernel is the only gradation it gets and the far
   // cascade's one-tap trade does not apply to it.
@@ -716,7 +723,8 @@ ${LPT_FS_TEXEL}  if (tex.a < ((uSpectral == 1 || uConceal.x > 0.0) ? 0.1 : 0.5))
  *  vertex, so a corner lands exactly where BB_VS lands it). EL_BB_FS used to read the sun map at the flat's base in
  *  every FRAGMENT; the base is the quad's centre (aCenter + uOrigin, the same at all four corners), so each corner
  *  reads the one value the fragments were reading - the same point, `sunShadowSoftAt`, the same kernel - and hands it
- *  on `flat`, uninterpolated. Night still reads nothing: the uBBSun gate is PERF-SUN2's, moved with the read. The
+ *  on `flat`, uninterpolated. Night still reads nothing: the uBBSun gate is PERF-SUN2's, moved with the read (MOONLIT1:
+ *  but a night whose moon owns the map carries her half in uBBSun, and reads her map by this same line). The
  *  receiver block compiles in a vertex shader (a texture() there reads level 0, and the maps have no other) - the
  *  shadow and air passes keep BB_VS itself; tools/enhancedLightingProbe.mjs links this on a real GL, which is where
  *  the one catch showed: a vertex shader's ints default to highp and a fragment shader's to mediump, and a uniform
@@ -910,7 +918,8 @@ void main() {
   // trilight ambient, as the mesh under the mark takes them.
   float sunVis = (dot(uDecalSun, uDecalSun) > 0.0 && ndl > 0.0) ? cloudShadowAt(vWorld) * sunShadowAt(vWorld, n) : 0.0;
   vec3 sunLit = uDecalSun * (ndl * sunVis);
-  vec3 moonLit = uDecalMoon * max(dot(n, uMoonDir), 0.0);
+  float mndl = max(dot(n, uMoonDir), 0.0);
+  vec3 moonLit = (dot(uDecalMoon, uDecalMoon) > 0.0 && mndl > 0.0) ? uDecalMoon * (mndl * moonShadowAt(vWorld, n)) : vec3(0.0);   // MOONLIT1: under the moon's map, as the mesh under the mark takes it
   vec3 ambient = uTrilight > 0.5 ? (n.y >= 0.0 ? mix(uTint, uAmbientSky, n.y) : mix(uTint, uAmbientGround, -n.y)) : uTint;
   // BLOOD3: THE SHEEN IS THE DEPTH, AND THEN THE ANGLE. A mark does not
   // dry evenly - the thin rim goes first and the deep middle holds the
@@ -1023,7 +1032,10 @@ void main() {
   // output-identical rather than an approximation.
   float ndl = max(dot(n, uLightDir), 0.0);
   float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map
-  float mdiff = max(dot(n, uMoonDir), 0.0);
+  // MOONLIT1: the moon's key under the directional map where she owns it (moonShadowAt: 1 where she does not) - read
+  // only where her scale and her N.L are above nought, PERF-SUN2's gate on the sun's
+  float mndl = max(dot(n, uMoonDir), 0.0);
+  float mdiff = (uMoonScale > 0.0 && mndl > 0.0) ? mndl * moonShadowAt(vWorldPos, n) : 0.0;
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));   // EL3: the ambient under the AO image
   outColor = vec4(elFinish(lit, vWorldPos), 1.0);
@@ -1084,7 +1096,10 @@ void main() {
   // output-identical rather than an approximation.
   float ndl = max(dot(n, uLightDir), 0.0);
   float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map
-  float mdiff = max(dot(n, uMoonDir), 0.0);
+  // MOONLIT1: the moon's key under the directional map where she owns it (moonShadowAt: 1 where she does not) - read
+  // only where her scale and her N.L are above nought, PERF-SUN2's gate on the sun's
+  float mndl = max(dot(n, uMoonDir), 0.0);
+  float mdiff = (uMoonScale > 0.0 && mndl > 0.0) ? mndl * moonShadowAt(vWorldPos, n) : 0.0;
   vec3 lit = albedo * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)
     + elPointLit(vWorldPos, n) + elIndirectLit(vWorldPos, n));   // EL3
   outColor = vec4(elFinish(lit, vWorldPos), 1.0);

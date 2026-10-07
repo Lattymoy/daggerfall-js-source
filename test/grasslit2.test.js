@@ -32,12 +32,12 @@ const zeros3 = (n) => Array.from({ length: n }, () => [0, 0, 0]);
 /** The grass vertex stage, run on the compiled text: one blade at the cell's middle (15, rootY 0, 15) with no lean and
  *  no wind, its height lane `w`, the frame's `lights` ([{ at, range, color }], colours as the host uploads them),
  *  `casterOf` the lights' shadow slots (-1: none). Answers the stage's outputs. */
-function vertex({ w = packHeightSlope(0.5, 0, 0, 0), sunDir = [0, 1, 0], moonDir = [0, 1, 0], lean = [0.5, 0.5], lane = 0, lights = [], vertexId = 2, casterOf = null, shadow = 1, cell = null, bind = {} }) {   // AUDIT A1: `cell` the cell's list (default: every light, in order); AUDIT C: `lean` aPB.xy, `bind` more globals
+function vertex({ w = packHeightSlope(0.5, 0, 0, 0), sunDir = [0, 1, 0], moonDir = [0, 1, 0], moonScale = 0, lean = [0.5, 0.5], lane = 0, lights = [], vertexId = 2, casterOf = null, shadow = 1, cell = null, bind = {} }) {   // AUDIT A1: `cell` the cell's list (default: every light, in order); AUDIT C: `lean` aPB.xy, `bind` more globals
   const f = glslFunctions(LAB_GRASS_HEAD + GAME_GRASS_FIELD + GAME_GRASS_VS, {
     // AUDIT GRASS-LIT2 C1: a unorm16 reaches the stage as a FLOAT32, and a GPU may normalise it by the reciprocal -
     // the value such a GPU hands the stage; w / 65535 in doubles is exact, and hid a floor
     aCorner: [0.5, 0.5], aPA: [0.5, 0.5, 0, Math.fround(w * Math.fround(1 / 65535))], aPB: [...lean, 0.5, 0.5], aPC: [0.2, 0.3, 0.1, 0],
-    uVP: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], uTime: 0, uWind: 0, uRange: 300, uEye: [0, 1, 0], uSunDir: sunDir, uMoonDir: moonDir, uWindDir: [1, 0],
+    uVP: [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], uTime: 0, uWind: 0, uRange: 300, uEye: [0, 1, 0], uSunDir: sunDir, uMoonDir: moonDir, uWindDir: [1, 0], uMoonScale: moonScale,   // MOONLIT1: the moon's scale, which gates her map's read at the root
     uSnowFull: 1.1, uSlotN: 0, uCellFrame: [0, 0, 0, 1], uBladeScale: [heightFloor(), heightSpan(), 0.05, 0.05], uCellSize: 30, uPixel: 0, uPxVariants: 8,
     uGFieldOrigin: [0, 0], uGFieldM: 1, uSnowGlobal: 0, uWindV: [0, 0], uSunScale: 0.6, uCamPos: [0, 0, 0], uIndirect: [0, 0, 0, 0], uIndirectColor: [0, 0, 0],
     uCloudShadowRect: [0, 0, 0, 0], uSunVP: [Array(16).fill(0), Array(16).fill(0), Array(16).fill(0)], uSunOrigin: [0, 0, 0, 0], uSunShadowParams: [0, 0, 0, 0], uSunTexel: [0, 0, 0, 0],
@@ -205,7 +205,7 @@ test('GRASS-LIT2: the vertex stage still fits the vectors WebGL2 promises every 
     for (const v of names.split(',')) vectors += Number(v.match(/\[(\d+)\]/)?.[1] ?? 1) * (type === 'mat4' ? 4 : 1);
   }
   assert.ok(vectors <= 256, `${vectors} vectors at most`);
-  assert.equal(vectors, 221, 'the count the docs quote');   // FLICKER-FIX: 212 with eight casters - uPointShadowParams and uShadowIndex are twelve now (+8); MEADOW1: 221, the meadow's switch (+1)
+  assert.equal(vectors, 222, 'the count the docs quote');   // FLICKER-FIX: 212 with eight casters - uPointShadowParams and uShadowIndex are twelve now (+8); MEADOW1: 221, the meadow's switch (+1); MOONLIT1: 222, the moon's scale beside the sun's (+1)
   // the two const face tables are 12 more if a driver keeps a dynamically indexed const array in uniform storage
   assert.ok(vectors + 12 <= 256);
   assert.ok(GAME_GRASS_VS.includes(`uniform vec4 uPointLights[${GRASS_MAX_LIGHTS}];`) && GAME_GRASS_VS.includes(`uniform vec3 uPointColors[${GRASS_MAX_LIGHTS}];`));
@@ -472,11 +472,11 @@ test('AUDIT GRASS-LIT2 A2: a draw without shadows hands every lantern NO caster 
 /** The grass fragment's colour on the compiled stage (GRASS-LIT's fragment(), with the vertex stage's lamberts and
  *  lanterns handed in rather than assumed level): the smooth style at `t`, the patch tint at its mean, no snow, wet,
  *  fog or rim. `lane` hands the light decoded as the host does. */
-function fragment({ ground = WOOD, t = 0.5, light = NOON, lane = false, vLam = 1, vMoonLam = 0, vPoint = [0, 0, 0], adapt = 1 }) {
+function fragment({ ground = WOOD, t = 0.5, light = NOON, lane = false, vLam = 1, vMoonLam = 0, vMoonSh = 1, vPoint = [0, 0, 0], adapt = 1 }) {   // MOONLIT1: vMoonSh, the moon's map at the root (1: none shadows it)
   const dec = (c) => (lane ? c.map(elDecode) : c);
   const [hi, lo] = packAdapt(adapt);
   const f = glslFunctions(LAB_GRASS_HEAD + GAME_GRASS_FS, {
-    vT: t, vTint: 0.5, vFade: 1, vLam, vSnow: 0, vWet: 0, vGround: [...ground], vMoonLam,
+    vT: t, vTint: 0.5, vFade: 1, vLam, vSnow: 0, vWet: 0, vGround: [...ground], vMoonLam, vMoonSh,
     vUV: [0.5, 0.5], vVar: 0, vWorld: [0, 0, 10], vSun: 1, vFar: 0, vNear: [0, 0, 0], vPoint,
     uAmb: dec(light.amb), uSunCol: dec(light.sunCol), uMoonCol: dec(light.moonCol ?? [0, 0, 0]), uDim: 1, uSunScale: light.sunScale, uMoonScale: light.moonScale ?? 0,
     uPixel: 0, uPxSteps: 8, uPxVariants: 8, uPxTintBands: 4, uLane: lane ? 1 : 0, uELExposure: EL_EXPOSURE,
@@ -572,10 +572,11 @@ test('AUDIT GRASS-LIT2 C4: the JS twin is the two stages end to end - on a hills
     const normal = [u.nx, Math.sqrt(1 - u.nx * u.nx - u.nz * u.nz), u.nz];
     for (const lane of [false, true]) {
       const up = lights.map((l) => ({ ...l, color: lane ? l.color.map(elDecode) : l.color }));   // as the draw uploads them
-      const v = vertex({ w, sunDir: NIGHT.sunDir, moonDir: NIGHT.moonDir, lane: lane ? 1 : 0, lights: up });
+      const v = vertex({ w, sunDir: NIGHT.sunDir, moonDir: NIGHT.moonDir, moonScale: NIGHT.moonScale, lane: lane ? 1 : 0, lights: up });
       assert.ok(v.vPoint.some((c) => c > 0) && v.vMoonLam > 0, 'the lanterns and the moon both reach the root');
       for (const t of [0.3, 0.7]) {
-        const got = fragment({ t, light: NIGHT, lane, vLam: v.vLam, vMoonLam: v.vMoonLam, vPoint: v.vPoint });
+        assert.equal(v.vMoonSh, 1, 'MOONLIT1: no map is the moon\'s here - her light at the root whole');
+        const got = fragment({ t, light: NIGHT, lane, vLam: v.vLam, vMoonLam: v.vMoonLam, vMoonSh: v.vMoonSh, vPoint: v.vPoint });
         const want = grassLit(WOOD, t, { ...NIGHT, normal, root, points: lights }, lane, eye);
         assert.ok(close(got, want, 1e-6), `slope [${u.nx}, ${u.nz}], lane ${lane}, t ${t}: ${got} vs ${want}`);
       }

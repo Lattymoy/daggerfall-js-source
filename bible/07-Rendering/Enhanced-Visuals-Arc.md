@@ -340,6 +340,13 @@ switch. moonlight.test.js pins the fraction table, the formula
 against the state's own numbers, the day/new-moon/cloud gates, the
 in-place fold, and the wiring shape; the moonlit picture is owed to
 a data-bearing session (?tod= at night, phases from the calendar).
+MOONLIT1 (2026-10-07) re-made this term on the owner's report that the
+night was too dark - the key at 0.5 on the lit fraction squared, faded
+into the horizon's haze, rising as the twilight goes, diffused by a lid,
+leaned toward silver, Masser's arc leaned south, her key owning the
+directional shadow map once the sun's is nought, and a floor of the
+night sky's own light under DFU's 0.25: `Enhanced-Lighting-Arc.md`
+MOONLIT1 is its record.
 
 EV6 (2026-08-31): GL STATE SHADOWING + THE SPRITE RT. The frame ran
 ~1045 useProgram calls and as many VAO binds for a handful of

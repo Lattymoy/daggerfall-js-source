@@ -189,7 +189,7 @@ test('GRASS-PX: the compiled stages are the lab\'s text under the declared edits
     assert.deepEqual([...used].filter((u) => !declared.has(u)), [], `${label} uses an undeclared uniform`);
     // `flat` is a qualifier here and never a name (VC6 took the sky down with an identifier named flat), and `patch` is reserved
     const code = body.split('\n').map((l) => l.split('//')[0]).join('\n');   // the comments are prose and say "flat" as a word
-    assert.equal((code.match(/\bflat\b/g) || []).length, (code.match(/\bflat (in|out) (?:float (?:vVar|vSun)|vec3 vPoint)\b/g) || []).length, `${label}: flat only as the varyings' qualifier (GRASS-LIT: the root's sun, one a triangle; GRASS-LIT2: its lanterns)`);
+    assert.equal((code.match(/\bflat\b/g) || []).length, (code.match(/\bflat (in|out) (?:float (?:vVar|vSun|vMoonSh)|vec3 vPoint)\b/g) || []).length, `${label}: flat only as the varyings' qualifier (GRASS-LIT: the root's sun, one a triangle; GRASS-LIT2: its lanterns; MOONLIT1: the moon's map at the root)`);
     assert.ok(!/\bpatch\b/.test(code), `${label}: no identifier named patch`);
   }
   // the pixel terms, by their exact lines: with the switch at zero every one of them is the lab's arithmetic

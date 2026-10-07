@@ -75,7 +75,9 @@ export function dynamicMoonState(dyn, minuteOfDay, cover = 0) {
   };
   return {
     night: isNight(minuteOfDay),
-    daylight: daylightScale(minuteOfDay),   // CLK3 review: the rig's curve (the mod's own while it is the sky), so the moonlight ramps here too
+    daylight: daylightScale(minuteOfDay),   // CLK3 review: the rig's curve (the mod's own while it is the sky)
+    minuteOfDay,   // MOONLIT1: the clock the moons rise on (moonRise - the sun's depression on the port's own arc, the one isNight and the sun's key follow)
+    cloudCover: cover,   // MOONLIT1: the lid the key is diffused by and the night sky's floor greys under - the port's eased row, as `cloud` above
     masser: moon('Moon', dyn.phases?.masser?.phase ?? -1, mat._MoonColor),
     secunda: moon('Secunda', dyn.phases?.secunda?.phase ?? -1, mat._SecundaColor),
   };

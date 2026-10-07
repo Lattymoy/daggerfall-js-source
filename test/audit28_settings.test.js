@@ -88,8 +88,11 @@ test('AUDIT 28 W1: NightAmbientLightScale reaches exteriorAmbient in BOTH exteri
   for (const host of ['src/scenes/exterior.js', 'src/scenes/world.js']) {
     const h = read(host);
     assert.equal((h.match(/exteriorAmbient\(minute, /g) || []).length, 1, `${host}: one exterior ambient call`);
-    assert.match(h, /exteriorAmbient\(minute, getFloat\('Enhancements', 'NightAmbientLightScale', 0, 1\), wxNow\.sun\)/,   // WX2: the weather scale rides the front
-      `${host}: the night scale is not read`);
+    // MOONLIT1: read ONCE a frame into `nightScale`, which scales DFU's night arm and the enhanced sky's night floor alike
+    assert.equal((h.match(/const nightScale = getFloat\('Enhancements', 'NightAmbientLightScale', 0, 1\);/g) || []).length, 1,
+      `${host}: the night scale is read once`);
+    assert.match(h, /withNightFloor\(exteriorAmbient\(minute, nightScale, wxNow\.sun\), sky\.nightFloor\(\), nightScale\)/,   // WX2: the weather scale rides the front
+      `${host}: the night scale is not read into both nights`);
   }
 });
 

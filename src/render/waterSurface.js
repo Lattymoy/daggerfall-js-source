@@ -365,7 +365,10 @@ void main() {
   vec2 uv = fract(f + vec2(uScroll));
   vec3 tex = textureGrad(uTileArr, vec3(uv, 0.0), wgx, wgy).rgb * uTint;
   float diff = max(dot(n, uLightDir), 0.0) * shadow;
-  float mdiff = max(dot(n, uMoonDir), 0.0);
+  // MOONLIT1: under the lane the moon's light on the water - its body and its glint - takes her map where she owns it
+  // (moonShadowAt: 1 where she does not), read only while she has a scale (PERF-SUN2's uniform branch, as the sun's)
+  float mshadow = ${shadowGlsl ? 'uMoonScale > 0.0 ? moonShadowAt(vWorldPos, n) : 0.0' : '1.0'};
+  float mdiff = max(dot(n, uMoonDir), 0.0) * mshadow;
   vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff));
   // WATER-AUDIT (M2): the ground's other two terms - the sixteen point
   // lights and the player-following indirect light - so a torch by a
@@ -402,7 +405,7 @@ void main() {
   vec3 H = normalize(uLightDir + V);
   float spec = pow(max(dot(n, H), 0.0), 180.0) * uSunScale * shadow;
   vec3 Hm = normalize(uMoonDir + V);
-  float mspec = pow(max(dot(n, Hm), 0.0), 220.0) * uMoonScale;
+  float mspec = pow(max(dot(n, Hm), 0.0), 220.0) * uMoonScale * mshadow;   // MOONLIT1: a quay's moon shadow takes the glint off the water it lies on
   col += uSunColor * (1.6 * spec) + uMoonColor * (0.7 * mspec);
   col += pointSpec * 1.2;   // WATER-LIT1: the lamps' and the torch's glints
   float alpha = (uOpacity + (1.0 - uOpacity) * F) * edge;

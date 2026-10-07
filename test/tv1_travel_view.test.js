@@ -624,7 +624,7 @@ test('TV1 focus: the fog measures from the focus - the camera while none is set 
   assert.equal((r.match(/focus: gl\.getUniformLocation\([A-Za-z.]+, 'uFocus'\)/g) ?? []).length, 3, 'the water, the world programs\' factory, the character quad');
   assert.match(r, /focus: u\('uFocus'\)/, 'the lane\'s tables');
   assert.match(r, /if \(prog\.focus\) gl\.uniform4fv\(prog\.focus, this\._focus\);/);
-  assert.match(r, /eye: this\._shadowEye\(\), lightDir, sunScale: this\._sunScale, pointLights: this\._pointLights, carried: this\._pointCarried,/);
+  assert.match(r, /eye: this\._shadowEye\(\), lightDir: moonMap \? this\._moonDir : lightDir, sunScale: moonMap \? this\._moonScale : this\._sunScale, moon: moonMap,[^\n]*\n\s*pointLights: this\._pointLights, carried: this\._pointCarried,/);   // MOONLIT1: the moon's hand-over beside the focus
   // ...and the shadow pass hands its receivers the eye it rendered about, in every table that uploads it
   assert.equal((r.match(/sunOrigin: gl\.getUniformLocation\(p, 'uSunOrigin'\)/g) ?? []).length, 2, 'the lane\'s world tables');
   assert.match(rd('src/render/airPass.js'), /sunOrigin: u\(p, 'uSunOrigin'\)/, 'the air pass\'s shafts');

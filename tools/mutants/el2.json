@@ -182,11 +182,12 @@
   {
     "name": "render-sun-flag",
     "file": "src/render/shadowPass.js",
-    "old": "      this.sunParams[3] = 1;\n",
+    "old": "      this.sunParams[3] = this.kind === 'moon' ? 2 : 1;   // MOONLIT1: the map's owner - 2 the moon's (moonShadowAt reads it), 1 the sun's\n",
     "new": "      this.sunParams[3] = 0;\n",
     "tests": [
       "test/el2_shadows.test.js"
-    ]
+    ],
+    "why": "MOONLIT1 re-aimed by content: the flag names the map's owner now (2 the moon's) - the sun's map still flagged 1; same law, same killer."
   },
   {
     "name": "render-point-index",
@@ -209,11 +210,12 @@
   {
     "name": "render-no-colormask",
     "file": "src/render/shadowPass.js",
-    "old": "    gl.colorMask(false, false, false, false);\n    if (this.kind === 'sun') {",
-    "new": "    if (this.kind === 'sun') {",
+    "old": "    gl.colorMask(false, false, false, false);\n    if (this.kind === 'sun' || this.kind === 'moon') {",
+    "new": "    if (this.kind === 'sun' || this.kind === 'moon') {",
     "tests": [
       "test/el2_shadows.test.js"
-    ]
+    ],
+    "why": "MOONLIT1 re-aimed by content: the directional branch takes the moon's map too; same law, same killer."
   },
   {
     "name": "render-culls",
@@ -272,13 +274,13 @@
   {
     "name": "renderer-panel-keeps",
     "file": "src/render/renderer.js",
-    "old": "    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span\n    if (this._shadows && world) this._renderPasses(proj, view, lightDir);",
-    "new": "    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span\n    if (this._shadows && (world || this._panelSaved)) this._renderPasses(proj, view, lightDir);",
+    "old": "    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span\n    if (world) this._moonMapNow = false;   // MOONLIT1: no map is the moon's until this frame's hand-over says so (_renderPasses) - a frame with no maps (the classic set) owns none\n    if (this._shadows && world) this._renderPasses(proj, view, lightDir);",
+    "new": "    if (world && this._perf) { this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }   // EL8: the frame's clock starts with its passes; VC6d: and its first span\n    if (world) this._moonMapNow = false;   // MOONLIT1: no map is the moon's until this frame's hand-over says so (_renderPasses) - a frame with no maps (the classic set) owns none\n    if (this._shadows && (world || this._panelSaved)) this._renderPasses(proj, view, lightDir);",
     "tests": [
       "test/el2_shadows.test.js",
       "test/audit_el.test.js"
     ],
-    "why": "PERF-READ1 re-aimed by content: the perf reset sits after the deck line now. RETRO1 re-aimed BY CONTENT: the retro mode's lines now sit beside this one; same law, same killer."
+    "why": "PERF-READ1 re-aimed by content: the perf reset sits after the deck line now. RETRO1 re-aimed BY CONTENT: the retro mode's lines now sit beside this one; same law, same killer. MOONLIT1 re-aimed by content: the frame's moon-map reset sits between them now."
   },
   {
     "name": "renderer-wire-casts",
@@ -346,10 +348,11 @@
   {
     "name": "lane-mesh-no-sun-shadow",
     "file": "src/render/enhancedLighting.js",
-    "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff",
-    "new": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) : 0.0;\n  float mdiff = max(dot(n, uMoonDir), 0.0);\n  float l3diff",
+    "old": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) * sunShadowAt(vWorldPos, n) : 0.0;   // EL2: the sun map\n  // MOONLIT1: the moon's key under the directional map where she owns it (moonShadowAt: 1 where she does not) - read\n  // only where her scale and her N.L are above nought, PERF-SUN2's gate on the sun's\n  float mndl = max(dot(n, uMoonDir), 0.0);\n  float mdiff = (uMoonScale > 0.0 && mndl > 0.0) ? mndl * moonShadowAt(vWorldPos, n) : 0.0;\n  float l3diff",
+    "new": "  float diff = (uSunScale > 0.0 && ndl > 0.0) ? ndl * cloudShadowAt(vWorldPos) : 0.0;\n  // MOONLIT1: the moon's key under the directional map where she owns it (moonShadowAt: 1 where she does not) - read\n  // only where her scale and her N.L are above nought, PERF-SUN2's gate on the sun's\n  float mndl = max(dot(n, uMoonDir), 0.0);\n  float mdiff = (uMoonScale > 0.0 && mndl > 0.0) ? mndl * moonShadowAt(vWorldPos, n) : 0.0;\n  float l3diff",
     "tests": [
       "test/el2_shadows.test.js"
-    ]
+    ],
+    "why": "MOONLIT1 re-aimed by content: the moon's term between the sun's and the third light's reads her map now; same law, same killer."
   }
 ]

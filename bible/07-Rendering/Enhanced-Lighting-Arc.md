@@ -202,7 +202,8 @@ own (`_uploadEl`), the maps bound on units 13 and 14 (the cloud shadow's
 no shadow into the view; the character rigs (the Morrowind body, the
 peers, the first-person arm) cast none; the water surface receives none;
 the moon casts none (the map is the sun's, and at night the lanterns are
-the light). EL3 or a later pass owns those.
+the light - MOONLIT1, 2026-10-07: she casts now, the map hers once the sun's
+scale is nought). EL3 or a later pass owns those.
 
 **Pinned** (`test/el2_shadows.test.js`, 8): the constants; the cascades'
 geometry and snap; the cube faces against the depth reference; the caster
@@ -2051,3 +2052,138 @@ casters for a frame; a peer's WB9h body out of view does not cast.
 `test/audit_flicker.test.js` (7); fourteen older pins re-aimed at the new text (el2, perfsun_fragment, la_audit,
 la_shadow, perfexta, la_post, sc1, disc15, el5_field, disc23b, la_cost, invislook; el3_air and lc1_clusters for F3
 and F4). `tools/mutants/audit_flicker.json` (28, all dead).
+
+## MOONLIT1 - THE MOONLIT NIGHT (2026-10-07, the owner: "I feel like nighttime is too dark. Like the moonlight needs to have detailed lighting when the moon is in full. It should never be pitch black at night")
+
+**Measured first.** A typical default-pack texel - display 0.30; Vanilla Enhanced's temperate terrain averages 0.31,
+the buildings' archives 0.20 to 0.34 - through the lane's own arithmetic (decode, exposure 1.4 times the eye at its
+1.8 ceiling, the colour curve, encode) read **24/255 on a moonless night**: DFU's flat 0.25 ambient decodes to 0.05
+and nothing else lights an exterior night, the sun rig being off (PlayerAmbientLight, SunlightManager - both verbatim on
+the classic lane, where the same texel reads 19). The eye was already wide open; its ceiling is EL4's, kept so a
+dungeon stays dark. A full Masser (EV5) added a key of 0.25 in her disc's rose - the ground at midnight 55,44,40, a dim
+red - and she stood at the ZENITH at midnight, on the sun's own arc, so her light reached no wall and laid every
+shadow under its caster; and she cast none (EL2's recorded limit: the map was the sun's alone). The night was pitch
+black where the moon was not, and flat where it was.
+
+**THE NIGHT SKY'S OWN LIGHT - the floor** (`render/enhancedSky.js` `NIGHT_SKY`, `nightSkyLight`, `withNightFloor`;
+`scenes/shared.js` `sky.nightFloor()`). Starlight and airglow: what a night has with no moon in it. A clear sky's is a
+cool blue-grey (`#606a7f`), a lid's greyer and a little darker (`#545963`), eased between by `moonCloudiness` - the
+dome's own eased cover, nought at the sunny row's scattered cumulus (0.32) and whole from the rain row's lid (0.97).
+The hosts fold it UNDER DFU's lerp per channel (`withNightFloor`: each channel the greater), not on top of it - so it
+binds only where the day's ambient has fallen past it: from about 16:55 to 07:05 in clear weather (DFU's lerp passes
+the floor's blue there - the dusk only ever darkens INTO the night, never brightens toward it), and all of a
+thunderstorm's day, which DFU leaves darker than a clear night (its lerp rides the weather's scale squared - AUDIT 39's
+#13 - so a storm's noon was 0.287 against the floor's 0.35, and is lifted to it, no further). Noon in clear weather is
+DFU's to the byte. Night Brightness (`NightAmbientLightScale`) scales the floor as it scales DFU's night - read once a
+frame into `nightScale` in each host - and at nought the night is the player's black.
+
+**THE MOONS' LIGHT** (`MOONLIGHT`, `moonRise`, `moonCloudiness`, `moonlightTerm`). EV5's term, re-made:
+- **The phase.** A moon's light is its lit fraction SQUARED (`phasePower` 2): a half moon gives a quarter of the full
+  moon's light (the real one gives about a tenth), so the full moon is THE bright night and a crescent barely a glow.
+- **The key**, Masser's: 0.5 at full, clear and high (EV5's 0.25 lit the night's faces a dim red), times the dome's
+  own visibility (daylight and the clouds where she is drawn, as before).
+- **The twilight** (`moonRise`): the moons take the night over the sun's first six degrees of depression - civil
+  twilight - eased. It replaced CLK3's daylight-curve ramp, which put the moon's key up over the last quarter hour of
+  DAY. This one is EXACTLY nought while the sun is up, and the sun's key is above nought only then (`sunScale` is 0
+  for the whole night), so the two keys are never both lit - the directional shadow map has one owner at a time, and
+  the hand-over below needs no blend. Continuous on the clock: a minute moves it at most a sixteenth.
+- **The horizon's haze**: the key fades in over the moon's first ~14.5 degrees (`horizonY` 0.25 in sine) - no step at
+  moonrise or moonset, where EV5's stepped a wall facing her from lit to dark in one frame (the dome's visibility cut).
+  The moonlit sky's fill fades in from the dome's own -0.05 to `fillY` 0.1 for the same reason.
+- **The lid** (`cloudDiffuse` 0.9, `cloudFill` 0.2): a cloud lid takes most of the key off the direct light and gives a
+  share of what it takes back as fill - an overcast full moon is a glow with no shadow worth the name, broken cumulus
+  keeps three quarters of her key. A storm's moonlight, key and fill together, is under half a clear night's.
+- **The colour**: the key leans from Masser's rose toward silver (`#c4cfe8`, `silverMix` 0.65) - moonlight is seen cool
+  (the Purkinje shift), and her tint is kept in it. The floor's blue shade against her lavender-silver light is the
+  two-tone a moonlit night reads by.
+- **The moonlit sky** (`skyFill` 0.06, Masser's, in her key's colour; Secunda's 0.04 on her own phase squared, in hers):
+  the shade under a full moon is lighter than a moonless night's.
+- **Masser's arc** (`MOONS.masser.tilt` -0.35): twenty degrees SOUTH (-Z; the star pole is north). Rise and set stay due
+  east and west - the tilt turns about the east-west axis - and a full Masser at midnight stands at 70 degrees in the
+  south: a wall facing her takes a third of her key, and a caster's shadow lies beside it, a third of its height long.
+
+**THE MOON'S SHADOWS** (`render/shadowPass.js`, `render/renderer.js`). The moon term carries `casts` - it is the
+world's MOON; the two other tenants of the slot (the Burning Court's key, WB6a; the automap beacons' fill, ROAD-C c2)
+never carry it. `Renderer._renderPasses` hands her the directional map when the slot casts, the sun's scale is EXACTLY
+nought, and `shadowKind` - the sun's own test, scale over 0.01 and height over `SHADOW_MIN_SUN_Y` - passes on HER numbers:
+the cascades are drawn from her direction at her scale, and the pass names the map `'moon'` (`sunParams[3]` 2 where the
+sun's is 1). A change of owner redraws all three cascades (the far one's every-other-frame cadence would otherwise hold
+the sun's far map into the night for a frame), and EMPTY-HOLD never holds an empty frame across it. The receiver
+block's `moonShadowAt` reads the map only where the moon drew it; `sunShadowAt` stays the map's word whoever drew it,
+because every sun term is gated on the sun's scale, which is nought while the map is hers. The readers: the lane's
+mesh, terrain and character moon terms (gated on her scale and her N.L, PERF-SUN2's law), the decal's, the water's
+body and glint (a quay's moon shadow takes the glint off the water it lies on), the grass's root read (one value a
+triangle, beside the sun's), and a FLAT through its key slot - the renderer moves her Lambert-average half from the
+tint to `uBBSun` on a frame she owns the map, and the lane's billboard vertex shader reads the map there by the line it
+always had (`_moonMapNow`, reset at every world frame and false through a panel bracket, which saves and restores the
+world's `_moonCasts` beside the moon it already kept). A lens-local sprite pass (the FP viewmodel) and a studio bake
+(the inventory figure, an item icon) hear no moon-owned map: their geometry stands at the origin of a private space and
+the map is world-space - the VC5 review's reason for borrowing the cloud deck off both - so their nights are as they
+were before her map (a sun-owned map reaches them as it always has; that is recorded below, not changed). The air pass
+keeps the sun's numbers: no shafts toward the moon and no haze march by her. The classic lane has no maps and keeps
+her half on the tint.
+
+**THE FOUR HOSTS.** `scenes/world.js` and `scenes/exterior.js` fold the floor and the moonlit sky over DFU's lerp
+(`withMoonAmbient(withNightFloor(exteriorAmbient(minute, nightScale, wxNow.sun), sky.nightFloor(), nightScale), moonNow)`)
+and set the key as before. `scenes/worldModes.js` (the interiors) and `scenes/dungeonContext.js` (the dungeons) have no
+sky: they keep DFU's interior night (PlayerAmbientLight's 0.20/0.18/0.20) and their own dungeon light, and clear the
+moon slot as they always did - FLAGGED by name here, not wired, because a room has no night sky to light it. Under
+Dynamic Skies the mod's moons take the same law: `dynamicMoonState` carries its clock and the eased lid now. The
+classic sky answers no floor and no moon - DFU's night to the byte, as EV5's was.
+
+**The look, measured** (the harness of the measurement above, the law's own functions; the texel at 0.30):
+
+| night | was | now |
+|---|---|---|
+| moonless, clear | 24,24,24 | 40,45,55 |
+| full moon, clear, midnight - the ground she lights | 55,44,40 | 75,74,83 |
+| the same, in her shadow | (no shadow) | 47,52,62 |
+| the same, a south wall at midnight | 29,29,29 | 59,61,71 |
+| half moon, 21:00, lit | 38,32,31 | 48,52,61 |
+| full moon under an overcast lid | 49,40,37 (lit, cast nothing) | 49,50,55 (a glow) |
+| a thunderstorm's moonless night | 24,24,24 | 34,37,41 |
+| clear noon | 104,111,113 | 104,111,113 |
+| a thunderstorm's noon (the ground) | 46,51,53 | 49,56,61 |
+
+A full moon's ground is now about seven tenths of a clear noon's on screen, cool, with shadows a third darker than
+the light around them; the darkest shade of any night, any phase and any weather row is 34,37,41 (a lid with no moon in
+it - the pin holds 33). The classic lane under the enhanced sky takes the floor and the moon's light without the
+shadows (29,32,38 a moonless night).
+
+**On a real GL.** `tools/enhancedLightingProbe.mjs` gained a moonlit street: the open-sky scene with no lanterns, a full
+moon behind the wall at 37 degrees. The lane with the world's moon draws the map as `'moon'`, and the floor in front
+of the wall reads darker under her map than with the same key without `casts` (0.0281 against 0.2722, the frame's
+mean in that rectangle), while the open floor beside the wall reads the same in both (0.2345 against 0.2346); the
+same key without `casts` leaves the map `'point'`, and the classic lane renders the same scene with no map at all
+(its `shadows` stat null). Every frame reads `gl 0`. ANGLE over SwiftShader, no game data -
+**NOT SEEN** in the game on a GPU or over the player's ARENA2: the brightness is the harness's arithmetic and the
+probe's synthetic stone, and the dials are the constants above.
+
+**The cost.** A night whose moon owns the map draws the three cascades a day frame draws (the far one every other
+frame unless Steady shadows is on), where a night drew the lanterns' cubes alone. A night with no moon up, or one too
+faint (a key under 0.01) or too low, draws none, as before.
+
+**Recorded, not built.** The clouds' shadow map stays the sun's (`volumetricClouds.js` SHADOW_FS marches the sun's ray
+and writes nothing under the horizon), so no cloud shadows drift across a moonlit field - the lid's diffusion is the
+whole sky's, from the eased cover. The far ring past the cascades, the banners and a low-poly tree's own faces take the
+moon unshadowed (a tree's flat takes her shadow through its key slot). The first-person sprite's tint (`flatLightAt`)
+takes her half unshadowed, as it takes the sun's. A sun-owned map reaches a lens-local pass and a studio bake by day
+(their studio key reads it at the origin of their private space, where the world's cascades may stand) - the reason
+the moon's is kept from them, found here and not changed for the sun, whose behaviour is not this slice's.
+
+**Pinned** (`test/moonlit1_night.test.js`, 13): the floor and its fold; the clear day untouched and the dusk monotone;
+the storm's day and Night Brightness; `moonRise` against every minute's sun; the phase, the haze, the lid, Secunda's
+lift, the colour, `casts`; Masser's arc and the slot's other tenants; the mod's state; the receiver block and every
+reader; the renderer's hand-over on the fake GL (whose, when, never under the sun, never without `casts`, never too
+low or faint, never on the classic set, a flat's half moved); the lens-local pass and the studio bake hearing no
+moon-owned map while a world character takes it; the owner's change redrawing every cascade and never held across;
+both hosts' fold; and the look above, through the lane's own arithmetic. Re-aimed on the new law: `moonlight.test.js`'s
+three EV5 pins, `clockArc.test.js`'s CLK3 constant, `audit28_settings.test.js`'s W1 read (one `nightScale`),
+`roadc_panelframe.test.js` (the bracket's two new globals), `blood1_decals.test.js`'s BLOOD AUDIT 5 decal line (the
+moon under her map), `grasslit2.test.js` (the vertex stage's 222 vectors - `uMoonScale` beside `uSunScale`, quoted in
+`Rendering.md` GRASS-LIT2 - and the stage evaluators handed `vMoonSh`), `grasspx.test.js` (`flat` only as a varying's
+qualifier - `vMoonSh` the fourth), `la_cost.test.js`'s LA-COST1 law (two new inputs of the gated blocks, `_moonMapNow`
+and `_lensDepth`, their writers inside beginFrame, the panel bracket's stamping restore and the sprite pass that forgets
+its block), `sunbaby1_event.test.js` (the host's light, over the floor now) and `tv1_travel_view.test.js` (the
+cascades about the focus, the moon's hand-over beside it). Campaign `tools/mutants/moonlit1.json`: 45 mutants, 45
+dead; five el2/el3 records re-aimed by content and dead again.

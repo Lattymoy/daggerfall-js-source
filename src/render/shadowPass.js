@@ -641,14 +641,17 @@ export function pickShadowCasters(lights, eye, max = SHADOW_POINT_CASTERS, carri
 }
 
 /** The frame's shadow kind off the lighting the host set: the sun map
- *  when there is a sun with height, else the cube map. */
+ *  when there is a sun with height, else the cube map. MOONLIT1: the
+ *  renderer asks it of the MOON too, with the moon's scale and direction,
+ *  and render() names a directional map drawn from the moon 'moon'. */
 export function shadowKind(sunScale, lightDir) {
   return sunScale > 0.01 && lightDir && lightDir[1] > SHADOW_MIN_SUN_Y ? 'sun' : 'point';
 }
 
 /** THE RECEIVER BLOCK, interpolated into every lane shader that lights by
  *  the sun or a lantern. sunShadowAt: the sun term's visibility at a world
- *  point with normal n (1 = lit); pointShadowAt: the same for the one
+ *  point with normal n (1 = lit) - MOONLIT1: the directional map's, whichever
+ *  light drew it; moonShadowAt the moon term's; pointShadowAt: the same for the one
  *  shadowed lantern. Both 1.0 while their map is off (params.w). */
 /** EL5: the shader's face bases, generated from CUBE_FACES so the receiver
  *  and pointFaceMatrices can never disagree. */
@@ -774,6 +777,11 @@ float sunShadowAt(vec3 wp, vec3 n) { return sunShadowTap(wp, n, false, 0.0); }
 /** A FLAT, which reads once for a whole sprite: the kernel at every distance (TREES1). AUDIT FLICKER S1: h its
  *  height, whose own card the read is kept off. */
 float sunShadowSoftAt(vec3 wp, vec3 n, float h) { return sunShadowTap(wp, n, true, h); }
+/** MOONLIT1: THE MOON TERM'S SHARE OF THE DIRECTIONAL MAP - its word where the map was drawn from the moon
+ *  (uSunShadowParams.w 2), none where the sun drew it or none was drawn. The two above are the map's word whoever drew
+ *  it, and need no such test: the renderer hands the map to the moon only while the sun's scale is nought, and every
+ *  sun term is gated on that scale (a sprite's key half is the owner's - Renderer.drawBillboards). */
+float moonShadowAt(vec3 wp, vec3 n) { return uSunShadowParams.w > 1.5 ? sunShadowTap(wp, n, false, 0.0) : 1.0; }
 // the face's depth of a point whose major-axis distance is m (cubeDepthRef in shadowPass.js)
 float cubeDepthOfM(float m, float far) {
   float near = ${SHADOW_POINT_NEAR};
@@ -1435,6 +1443,7 @@ export class ShadowPass {
     AIR_TUNING.calm = SHADOW_TUNING.calmForce ?? !!getPref('calmEye');
     const heldKind = this.kind;   // EMPTY-HOLD: the kind the held maps were drawn for
     this.kind = shadowKind(f.sunScale, f.lightDir);
+    if (this.kind === 'sun' && f.moon) this.kind = 'moon';   // MOONLIT1: the directional map drawn from the MOON (f.lightDir and f.sunScale are hers - the renderer's hand-over, Renderer._moonMapNow)
     this.frameNo++;
     this.stats.cascadesDrawn = 0; this.stats.facesDrawn = 0; this.stats.staticFaces = 0; this.stats.dynFaces = 0; this.stats.blits = 0; this.stats.cachedSlots = 0;   // SC1
     this.stats.loSlots = 0; this.stats.loFaces = 0;   // DISC15
@@ -1460,7 +1469,9 @@ export class ShadowPass {
     gl.enable(gl.DEPTH_TEST);
     gl.depthMask(true);
     gl.colorMask(false, false, false, false);
-    if (this.kind === 'sun') {
+    if (this.kind === 'sun' || this.kind === 'moon') {
+      // MOONLIT1: nor is a map drawn from the OTHER light - the far cascade's every-other-frame would hold the sun's into the night
+      if (heldKind !== this.kind) this._sunDrawn.fill(0);
       // AUDIT DEEP R-3: the travel view's scale - a far map drawn at the other scale is never kept (EL8's every-other-frame)
       const k = f.cascadeScale > 1 ? f.cascadeScale : 1;
       if (k !== this._sunScaleK) { this._sunScaleK = k; this._sunDrawn.fill(0); }
@@ -1481,7 +1492,7 @@ export class ShadowPass {
         this._sunDrawn[c] = 1; this.stats.cascadesDrawn++;
       }
       for (let c = 0; c < SHADOW_CASCADES.length; c++) { this.sunParams[c] = SHADOW_CASCADES[c] * k; this.sunTexel[c] = sunTexelWorld(c, k); this._sunVPFlat.set(this.sunVP[c], c * 16); }
-      this.sunParams[3] = 1;
+      this.sunParams[3] = this.kind === 'moon' ? 2 : 1;   // MOONLIT1: the map's owner - 2 the moon's (moonShadowAt reads it), 1 the sun's
       this.sunOrigin[0] = f.eye[0]; this.sunOrigin[1] = f.eye[1]; this.sunOrigin[2] = f.eye[2]; this.sunOrigin[3] = 1;   // TV1
     } else this._sunDrawn.fill(0);   // AUDIT 68 S17-far-cascade-shift: a returning sun never reuses a map drawn at another place and time
     // EL5: THE LANTERNS CAST TOO, sun or no sun - the nearest SHADOW_POINT_CASTERS

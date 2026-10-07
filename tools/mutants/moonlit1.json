@@ -1,0 +1,421 @@
+[
+  {
+    "name": "MOONLIT1-masser-back-on-the-zenith",
+    "file": "src/render/enhancedSky.js",
+    "old": "masser:  { radius: 0.040, color: '#d39a86', tilt: -0.35 },",
+    "new": "masser:  { radius: 0.040, color: '#d39a86', tilt: 0.00 },",
+    "tests": [
+      "test/moonlit1_night.test.js",
+      "test/moonlight.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-key-at-ev5s-dial",
+    "file": "src/render/enhancedSky.js",
+    "old": "  masser: 0.5,          // MOONLIT1",
+    "new": "  masser: 0.25,          // MOONLIT1",
+    "tests": [
+      "test/moonlit1_night.test.js",
+      "test/moonlight.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-lit-fraction-not-squared",
+    "file": "src/render/enhancedSky.js",
+    "old": "  phasePower: 2,",
+    "new": "  phasePower: 1,",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-no-haze-at-the-horizon",
+    "file": "src/render/enhancedSky.js",
+    "old": "const direct = MOONLIGHT.masser * mLight * smoothstep(0, MOONLIGHT.horizonY, m.dir[1]);",
+    "new": "const direct = MOONLIGHT.masser * mLight;",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-moon-rises-before-the-sun-sets",
+    "file": "src/render/enhancedSky.js",
+    "old": "return smoothstep(0, MOONLIGHT.twilightDeg, -elev);",
+    "new": "return smoothstep(-MOONLIGHT.twilightDeg, 0, -elev);",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-a-clockless-state-is-always-night",
+    "file": "src/render/enhancedSky.js",
+    "old": "  if (elev === null) return state.night ? 1 : 0;",
+    "new": "  if (elev === null) return 1;",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-lid-takes-nothing-off-the-key",
+    "file": "src/render/enhancedSky.js",
+    "old": "const key = direct * (1 - MOONLIGHT.cloudDiffuse * cloud);",
+    "new": "const key = direct;",
+    "tests": [
+      "test/moonlit1_night.test.js",
+      "test/moonlight.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-lid-gives-nothing-back",
+    "file": "src/render/enhancedSky.js",
+    "old": "\n    + MOONLIGHT.cloudFill * MOONLIGHT.cloudDiffuse * cloud * direct;",
+    "new": ";",
+    "tests": [
+      "test/moonlit1_night.test.js",
+      "test/moonlight.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-secundas-lift-on-the-plain-fraction",
+    "file": "src/render/enhancedSky.js",
+    "old": "const fillS = MOONLIGHT.secunda * phaseLitFraction(s.phase) ** MOONLIGHT.phasePower * s.vis",
+    "new": "const fillS = MOONLIGHT.secunda * phaseLitFraction(s.phase) * s.vis",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-fill-ignores-the-horizon",
+    "file": "src/render/enhancedSky.js",
+    "old": "const fillM = MOONLIGHT.skyFill * mLight * smoothstep(-0.05, MOONLIGHT.fillY, m.dir[1])",
+    "new": "const fillM = MOONLIGHT.skyFill * mLight",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-key-wears-masser-unleaned",
+    "file": "src/render/enhancedSky.js",
+    "old": "const color = mix3(m.color, hex(MOONLIGHT.silver), MOONLIGHT.silverMix);",
+    "new": "const color = m.color;",
+    "tests": [
+      "test/moonlit1_night.test.js",
+      "test/moonlight.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-term-never-casts",
+    "file": "src/render/enhancedSky.js",
+    "old": "    casts: true,\n  };",
+    "new": "  };",
+    "tests": [
+      "test/moonlit1_night.test.js",
+      "test/moonlight.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-cumulus-counts-as-a-lid",
+    "file": "src/render/enhancedSky.js",
+    "old": "return smoothstep(WEATHER_SKY.sunny.cover, WEATHER_SKY.rain.cover, cover ?? 0);",
+    "new": "return smoothstep(0, WEATHER_SKY.rain.cover, cover ?? 0);",
+    "tests": [
+      "test/moonlit1_night.test.js",
+      "test/moonlight.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-floor-never-greys",
+    "file": "src/render/enhancedSky.js",
+    "old": "return mix3(hex(NIGHT_SKY.clear), hex(NIGHT_SKY.overcast), moonCloudiness(state?.cloudCover));",
+    "new": "return hex(NIGHT_SKY.clear);",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-floor-adds-instead-of-floors",
+    "file": "src/render/enhancedSky.js",
+    "old": "  ambient[0] = Math.max(ambient[0], floor[0] * scale);",
+    "new": "  ambient[0] = ambient[0] + floor[0] * scale;",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-night-brightness-ignored-by-the-floor",
+    "file": "src/render/enhancedSky.js",
+    "old": "  ambient[1] = Math.max(ambient[1], floor[1] * scale);",
+    "new": "  ambient[1] = Math.max(ambient[1], floor[1]);",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-floor-is-dfus-grey",
+    "file": "src/render/enhancedSky.js",
+    "old": "  clear: '#606a7f',",
+    "new": "  clear: '#404040',",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-mods-state-carries-no-lid",
+    "file": "src/render/dynamicSkiesBridge.js",
+    "old": "    cloudCover: cover,",
+    "new": "    cloudCover: 0,",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-mods-state-carries-no-clock",
+    "file": "src/render/dynamicSkiesBridge.js",
+    "old": "    minuteOfDay,   // MOONLIT1",
+    "new": "    // MOONLIT1",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-no-floor-under-the-mod",
+    "file": "src/scenes/shared.js",
+    "old": "      return dynamicMoons ? nightSkyLight(dynamicMoons) : null;",
+    "new": "      return null;",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-world-host-forgets-the-floor",
+    "file": "src/scenes/world.js",
+    "old": "withMoonAmbient(withNightFloor(exteriorAmbient(minute, nightScale, wxNow.sun), sky.nightFloor(), nightScale), moonNow)",
+    "new": "withMoonAmbient(exteriorAmbient(minute, nightScale, wxNow.sun), moonNow)",
+    "tests": [
+      "test/moonlit1_night.test.js",
+      "test/moonlight.test.js",
+      "test/audit28_settings.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-fixed-city-forgets-the-floor",
+    "file": "src/scenes/exterior.js",
+    "old": "withMoonAmbient(withNightFloor(exteriorAmbient(minute, nightScale, wxNow.sun), sky.nightFloor(), nightScale), moonNow)",
+    "new": "withMoonAmbient(exteriorAmbient(minute, nightScale, wxNow.sun), moonNow)",
+    "tests": [
+      "test/moonlit1_night.test.js",
+      "test/moonlight.test.js",
+      "test/audit28_settings.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-moons-map-named-the-suns",
+    "file": "src/render/shadowPass.js",
+    "old": "    if (this.kind === 'sun' && f.moon) this.kind = 'moon';",
+    "new": "",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-flag-names-no-owner",
+    "file": "src/render/shadowPass.js",
+    "old": "      this.sunParams[3] = this.kind === 'moon' ? 2 : 1;",
+    "new": "      this.sunParams[3] = 1;",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-suns-far-map-held-into-the-night",
+    "file": "src/render/shadowPass.js",
+    "old": "      if (heldKind !== this.kind) this._sunDrawn.fill(0);",
+    "new": "",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-moon-term-reads-no-map",
+    "file": "src/render/shadowPass.js",
+    "old": "float moonShadowAt(vec3 wp, vec3 n) { return uSunShadowParams.w > 1.5 ? sunShadowTap(wp, n, false, 0.0) : 1.0; }",
+    "new": "float moonShadowAt(vec3 wp, vec3 n) { return 1.0; }",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-moon-reads-the-suns-map",
+    "file": "src/render/shadowPass.js",
+    "old": "float moonShadowAt(vec3 wp, vec3 n) { return uSunShadowParams.w > 1.5 ?",
+    "new": "float moonShadowAt(vec3 wp, vec3 n) { return uSunShadowParams.w > 0.5 ?",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-mesh-moon-unshadowed",
+    "file": "src/render/enhancedLighting.js",
+    "old": "float mdiff = (uMoonScale > 0.0 && mndl > 0.0) ? mndl * moonShadowAt(vWorldPos, n) : 0.0;\n  float l3diff",
+    "new": "float mdiff = mndl;\n  float l3diff",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-mark-unshadowed",
+    "file": "src/render/enhancedLighting.js",
+    "old": "uDecalMoon * (mndl * moonShadowAt(vWorld, n))",
+    "new": "uDecalMoon * mndl",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-water-reads-no-moon-map",
+    "file": "src/render/waterSurface.js",
+    "old": "${shadowGlsl ? 'uMoonScale > 0.0 ? moonShadowAt(vWorldPos, n) : 0.0' : '1.0'}",
+    "new": "1.0",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-glint-ignores-the-quay",
+    "file": "src/render/waterSurface.js",
+    "old": "* uMoonScale * mshadow;",
+    "new": "* uMoonScale;",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-grass-moon-unshadowed",
+    "file": "src/render/labGrass.js",
+    "old": "uMoonCol * (uMoonScale * vMoonLam * vMoonSh)",
+    "new": "uMoonCol * (uMoonScale * vMoonLam)",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-any-key-on-the-slot-casts",
+    "file": "src/render/renderer.js",
+    "old": "const moonMap = this._moonCasts && !(this._sunScale > 0) && shadowKind(this._moonScale, this._moonDir) === 'sun';",
+    "new": "const moonMap = !(this._sunScale > 0) && shadowKind(this._moonScale, this._moonDir) === 'sun';",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-moon-takes-the-map-under-the-sun",
+    "file": "src/render/renderer.js",
+    "old": "const moonMap = this._moonCasts && !(this._sunScale > 0) && shadowKind(this._moonScale, this._moonDir) === 'sun';",
+    "new": "const moonMap = this._moonCasts && shadowKind(this._moonScale, this._moonDir) === 'sun';",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-cascades-drawn-from-the-sun",
+    "file": "src/render/renderer.js",
+    "old": "lightDir: moonMap ? this._moonDir : lightDir,",
+    "new": "lightDir,",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-pass-not-told",
+    "file": "src/render/renderer.js",
+    "old": "moon: moonMap,   // MOONLIT1",
+    "new": "moon: false,   // MOONLIT1",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-a-stale-hand-over-on-the-classic-set",
+    "file": "src/render/renderer.js",
+    "old": "    if (world) this._moonMapNow = false;",
+    "new": "",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-every-moon-casts",
+    "file": "src/render/renderer.js",
+    "old": "    this._moonCasts = !!moon?.casts;",
+    "new": "    this._moonCasts = true;",
+    "tests": [
+      "test/moonlit1_night.test.js",
+      "test/roadc_panelframe.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-flats-moon-stays-on-the-tint",
+    "file": "src/render/renderer.js",
+    "old": "const mt = this._moonMapNow ? 0 : this._moonScale * 0.5, mk = this._moonMapNow ? this._moonScale * 0.5 : 0;",
+    "new": "const mt = this._moonScale * 0.5, mk = 0;",
+    "tests": [
+      "test/moonlit1_night.test.js",
+      "test/moonlight.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-a-panel-owns-the-worlds-map",
+    "file": "src/render/renderer.js",
+    "old": "    this._moonMapNow = false;   // MOONLIT1: the panel",
+    "new": "    // MOONLIT1: the panel",
+    "tests": [
+      "test/roadc_panelframe.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-panel-loses-the-worlds-moon",
+    "file": "src/render/renderer.js",
+    "old": "    this._moonCasts = s.moonCasts; this._moonMapNow = s.moonMapNow;",
+    "new": "",
+    "tests": [
+      "test/roadc_panelframe.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-viewmodel-reads-her-map",
+    "file": "src/render/renderer.js",
+    "old": "if ((this._lensDepth > 0 || this._studioDepth > 0) && this._shadows?.sunParams[3] > 1.5)",
+    "new": "if ((this._studioDepth > 0) && this._shadows?.sunParams[3] > 1.5)",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-studio-reads-her-map",
+    "file": "src/render/renderer.js",
+    "old": "if ((this._lensDepth > 0 || this._studioDepth > 0) && this._shadows?.sunParams[3] > 1.5)",
+    "new": "if ((this._lensDepth > 0) && this._shadows?.sunParams[3] > 1.5)",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-guard-hides-the-suns-map-too",
+    "file": "src/render/renderer.js",
+    "old": "&& this._shadows?.sunParams[3] > 1.5) gl.uniform4f(",
+    "new": "&& this._shadows?.sunParams[3] > 0.5) gl.uniform4f(",
+    "tests": [
+      "test/moonlit1_night.test.js"
+    ]
+  },
+  {
+    "name": "MOONLIT1-the-lens-depth-never-counted",
+    "file": "src/render/renderer.js",
+    "old": "    if (lensLocal) this._lensDepth++;",
+    "new": "",
+    "tests": [
+      "test/moonlit1_night.test.js",
+      "test/la_cost.test.js"
+    ]
+  }
+]

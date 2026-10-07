@@ -593,7 +593,11 @@ half three quarters behind (rising at midnight, high at dawn). So DFU's
 phase and the moon you see agree - a lycanthrope's full moon IS a full
 moon overhead at midnight - and the terminator is a lit sphere, not a
 texture. Masser is the big red one, Secunda smaller, paler and tilted
-off the arc so they do not overlap forever.
+off the arc so they do not overlap forever. (MOONLIT1, 2026-10-07: Masser's
+arc leans twenty degrees SOUTH, off the sun's - a full Masser stands at
+seventy degrees in the south at midnight, still high, so her light
+reaches a wall and her shadows have length; rise and set stay due east
+and west. `07-Rendering/Enhanced-Lighting-Arc.md` MOONLIT1.)
 
 THE SEAM. `createSkyController` builds the enhanced pass when the skin
 is enhanced and `?sky=classic` is absent, and exposes ONE `renderer`

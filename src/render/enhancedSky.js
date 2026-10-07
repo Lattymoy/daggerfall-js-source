@@ -94,9 +94,15 @@ export const GREY_ZENITH = '#66707c';
 export const GREY_HORIZON = '#9aa3ac';
 
 /** The moons: angular radius (radians) and colour. Masser is the big
- *  red one, Secunda the small pale one; Secunda rides a little higher. */
+ *  red one, Secunda the small pale one; Secunda rides a little higher.
+ *  MOONLIT1 (2026-10-07): Masser's arc leans 20 degrees SOUTH (-Z; the
+ *  star pole is north) - on the sun's own arc a full Masser stood at the
+ *  zenith at midnight, the hour its light is strongest, and a light
+ *  straight overhead lights no wall and lays every shadow under its
+ *  caster. Rise and set stay due east and west (the tilt turns about
+ *  the east-west axis). */
 export const MOONS = Object.freeze({
-  masser:  { radius: 0.040, color: '#d39a86', tilt: 0.00 },
+  masser:  { radius: 0.040, color: '#d39a86', tilt: -0.35 },
   secunda: { radius: 0.021, color: '#e9e6dc', tilt: 0.22 },
 });
 
@@ -279,11 +285,37 @@ export function moonSkyDirection(minuteOfDay, phase, tilt = 0) {
    night - by day the sun owns the sky - and only under the ENHANCED
    sky, because only it has this state at all: the classic lane keeps
    DFU's hard-off night verbatim. The two scales are the dials, the
-   STUDIO_AMBIENT shape. */
+   STUDIO_AMBIENT shape.
+
+   MOONLIT1 (2026-10-07, the owner: "I feel like nighttime is too dark.
+   Like the moonlight needs to have detailed lighting when the moon is
+   in full. It should never be pitch black at night"). Measured first:
+   a typical default-pack texel (0.30) read 24/255 at a moonless night
+   on the lane with the eye wide open, and a full Masser lit it a dim
+   red 55,44,40 - straight down from the zenith at midnight, onto no
+   wall, casting nothing. Now: the night sky has a light of its own
+   (NIGHT_SKY, below - the floor); a moon's light is its lit fraction
+   SQUARED, so the full moon is the bright night; Masser's key is twice
+   EV5's, leans from her rose toward silver, fades into the haze at the
+   horizon and rises as the twilight goes (moonRise); a cloud lid takes
+   most of the key and gives a share of it back as fill; the moonlit
+   sky lifts the shade; and the key owns the directional shadow map
+   once the sun's is nought (`casts` - render/shadowPass.js's 'moon'
+   kind), so a full moon throws the buildings', the trees' and the
+   people's shadows. On the same texel: ~45 a moonless night, ~75 lit
+   and ~50 in shadow under a full moon, noon untouched. */
 export const MOONLIGHT = Object.freeze({
-  masser: 0.25,    // full-Masser key scale (night ambient is 0.25 - a full moon roughly doubles a moonlit face)
-  secunda: 0.06,   // full-Secunda ambient lift
-  dayFade: 0.06,   // CLK3 review: the daylight level under which the moonlight rises to full - the rig's curve reaches 0 at 18:00, so the term ramps over the last minutes of dusk and the first of dawn instead of stepping at the hour
+  masser: 0.5,          // MOONLIT1: a full, clear, high Masser's key (EV5's 0.25 lit the night's faces a dim red)
+  skyFill: 0.06,        // MOONLIT1: the moonlit sky's share of the ambient - Masser's light scattered back down, in her key's colour
+  fillY: 0.1,           // MOONLIT1: the moon's height at which that fill is whole (it begins at the dome's own -0.05, where she is drawn)
+  secunda: 0.04,        // a full Secunda's ambient lift, in her colour (EV5's 0.06 on the lit fraction; MOONLIT1: on its square)
+  phasePower: 2,        // MOONLIT1: a moon's light is its lit fraction to this power - a half moon gives a quarter of the full (the real one a tenth)
+  horizonY: 0.25,       // MOONLIT1: the key fades into the haze below this height (~14.5 degrees) - no step at moonrise or moonset
+  twilightDeg: 6,       // MOONLIT1: the sun's depression over which the moons take the night (moonRise) - civil twilight
+  cloudDiffuse: 0.9,    // MOONLIT1: how much of the key a full lid takes off the direct light...
+  cloudFill: 0.2,       // MOONLIT1: ...and the share of what it takes that comes back down as fill
+  silver: '#c4cfe8',    // MOONLIT1: the key leans from Masser's rose toward this silver...
+  silverMix: 0.65,      // MOONLIT1: ...this far: moonlight is seen cool (the Purkinje shift), and Masser's tint is kept in it
 });
 
 /** How much of a moon's disc is lit, 0..1: New (0) none, Full (4)
@@ -293,29 +325,99 @@ export function phaseLitFraction(phase) {
   return p <= 4 ? p / 4 : (8 - p) / 4;
 }
 
+/** MOONLIT1: how much a cloud lid stands between the sky and the ground,
+ *  0..1, off the eased cover the dome is drawn with: nothing at the
+ *  sunny row's scattered cumulus, all of it from the rain row's lid. */
+export function moonCloudiness(cover) {
+  return smoothstep(WEATHER_SKY.sunny.cover, WEATHER_SKY.rain.cover, cover ?? 0);
+}
+
+/** MOONLIT1: how far the moons have taken the night, 0..1 - the sun's
+ *  depression under the horizon over MOONLIGHT.twilightDeg, eased. It
+ *  replaced CLK3's daylight-curve ramp, which put the moon's key up
+ *  over the last quarter hour of DAY: this one is exactly 0 while the
+ *  sun is up, and the sun's key is above nought only then (worldClock's
+ *  sunScale is 0 for the whole night), so the two keys are never both
+ *  lit and the directional shadow map has one owner at a time. It is
+ *  continuous on the clock - no step at dusk or dawn. A state with no
+ *  clock in it (a test's hand-built one) keeps the night boolean. */
+export function moonRise(state) {
+  const elev = Number.isFinite(state.elevDeg) ? state.elevDeg
+    : Number.isFinite(state.minuteOfDay) ? Math.asin(Math.max(-1, Math.min(1, sunSkyDirection(state.minuteOfDay)[1]))) * 180 / Math.PI
+      : null;
+  if (elev === null) return state.night ? 1 : 0;
+  return smoothstep(0, MOONLIGHT.twilightDeg, -elev);
+}
+
 /** The world light's moon term for one frame, from skyState's own
- *  output: null when the sky is not night's, or when neither moon
- *  contributes. `dir`/`scale`/`color` drive the second directional
- *  term (the masser); `ambient` is secunda's additive floor lift. */
+ *  output (or the mod's moons, dynamicMoonState): null by day, or when
+ *  neither moon contributes. `dir`/`scale`/`color` drive the second
+ *  directional term (the masser's key); `ambient` is the moonlit sky's
+ *  additive lift - Masser's sky in her key's colour, Secunda's in hers,
+ *  and what a cloud lid scatters of the key; `casts` (MOONLIT1) says
+ *  the key is the world's MOON, which the renderer may hand the
+ *  directional shadow map (the court's key and the automap's fill,
+ *  which ride the same slot, never carry it). */
 export function moonlightTerm(state) {
-  // CLK3 review: the day's hand on the moonlight is the DAYLIGHT CURVE
-  // the rig's key rides - continuous on the clock - and not the hour's
-  // boolean (a state without the curve keeps the boolean: the tests')
-  const nightness = state.daylight == null ? (state.night ? 1 : 0) : clamp01(1 - state.daylight / MOONLIGHT.dayFade);
-  if (nightness <= 0) return null;
-  const key = MOONLIGHT.masser * phaseLitFraction(state.masser.phase) * state.masser.vis * nightness;
-  const lift = MOONLIGHT.secunda * phaseLitFraction(state.secunda.phase) * state.secunda.vis * nightness;
-  if (key <= 0 && lift <= 0) return null;
-  const sc = state.secunda.color;
+  const rise = moonRise(state);
+  if (rise <= 0) return null;
+  const m = state.masser, s = state.secunda;
+  const cloud = moonCloudiness(state.cloudCover);
+  // her light as it reaches the world: the lit fraction's square, the
+  // dome's visibility (daylight and the clouds where she is drawn), the twilight
+  const mLight = phaseLitFraction(m.phase) ** MOONLIGHT.phasePower * m.vis * rise;
+  const direct = MOONLIGHT.masser * mLight * smoothstep(0, MOONLIGHT.horizonY, m.dir[1]);
+  const key = direct * (1 - MOONLIGHT.cloudDiffuse * cloud);
+  const fillM = MOONLIGHT.skyFill * mLight * smoothstep(-0.05, MOONLIGHT.fillY, m.dir[1])
+    + MOONLIGHT.cloudFill * MOONLIGHT.cloudDiffuse * cloud * direct;
+  const fillS = MOONLIGHT.secunda * phaseLitFraction(s.phase) ** MOONLIGHT.phasePower * s.vis * rise * smoothstep(-0.05, MOONLIGHT.fillY, s.dir[1]);
+  if (key <= 0 && fillM <= 0 && fillS <= 0) return null;
+  const color = mix3(m.color, hex(MOONLIGHT.silver), MOONLIGHT.silverMix);
+  const sc = s.color;
   return {
-    dir: state.masser.dir,
+    dir: m.dir,
     scale: key,
-    color: state.masser.color,
-    ambient: [sc[0] * lift, sc[1] * lift, sc[2] * lift],
+    color,
+    ambient: [color[0] * fillM + sc[0] * fillS, color[1] * fillM + sc[1] * fillS, color[2] * fillM + sc[2] * fillS],
+    casts: true,
   };
 }
 
-/** Fold the secunda lift into a host's ambient, in place (the hosts
+/** MOONLIT1: THE NIGHT SKY'S OWN LIGHT - starlight and airglow, what a
+ *  night has with no moon in it - as the floor the world's ambient
+ *  never falls below under the enhanced sky (display colours, as every
+ *  host colour): a clear sky's is a cool blue-grey, a lid's greyer
+ *  (moonCloudiness). DFU's night ambient is a flat 0.25 and its lerp to
+ *  noon's 0.9 rides the daylight curve times the weather's scale
+ *  squared; the hosts fold this floor UNDER that lerp, per channel
+ *  (withNightFloor), so it binds only where the day's ambient has
+ *  fallen past it - dusk to dawn in clear weather (from about 17:00,
+ *  so a dusk only ever darkens into the night), and the darkest hours
+ *  of a storm day, which DFU leaves darker than a clear night - and
+ *  noon in clear weather is DFU's to the byte. Night Brightness
+ *  (NightAmbientLightScale) scales it as it scales DFU's night. */
+export const NIGHT_SKY = Object.freeze({
+  clear: '#606a7f',      // MOONLIT1: a typical texel (0.30) at ~45/255 on the lane, the eye open (24 under DFU's 0.25)
+  overcast: '#545963',   // MOONLIT1: under a lid - greyer and a little darker (~37 the same texel)
+});
+
+/** MOONLIT1: the floor for this frame's sky - the state's own eased cover. */
+export function nightSkyLight(state) {
+  return mix3(hex(NIGHT_SKY.clear), hex(NIGHT_SKY.overcast), moonCloudiness(state?.cloudCover));
+}
+
+/** MOONLIT1: fold the night sky's floor under a host's ambient, per
+ *  channel and in place; `scale` is Night Brightness. null (the classic
+ *  sky, which has no night of its own) touches nothing. */
+export function withNightFloor(ambient, floor, scale = 1) {
+  if (!floor) return ambient;
+  ambient[0] = Math.max(ambient[0], floor[0] * scale);
+  ambient[1] = Math.max(ambient[1], floor[1] * scale);
+  ambient[2] = Math.max(ambient[2], floor[2] * scale);
+  return ambient;
+}
+
+/** Fold the moonlit sky's lift into a host's ambient, in place (the hosts
  *  mint the ambient array fresh each frame - no second allocation). */
 export function withMoonAmbient(ambient, moon) {
   if (!moon) return ambient;
