@@ -74,7 +74,7 @@ Between the trance and the punishment, the line counted the leftover down, so th
 
 The line now counts only a clock whose end can change something (`systems/quest/clock.js clockCounts`): the task a finished clock sets (its own name) acts, or a `when` reads it, or an `until ... performed` waits on it. An action the registry could not read counts as an action (`scenes/questBridge.js questLog`).
 
-Open: online, the punishment's seven days are game days PLAYED. The shared clock lets no rest and no travel skip them, so it is about fourteen real hours, with the waves themselves spent after about four. Whether to shorten it online, as Guard the Guild's watch was, is Mac's call.
+Open: online, the punishment's seven days are game days PLAYED. The shared clock lets no rest and no travel skip them, so it is about fourteen real hours, with the waves themselves spent after about four. Whether to shorten it online, as Guard the Guild's watch was, is Mac's call. [ANSWERED by REST8 (2026-10-03, `06-Systems/Online-Time-Arc.md` 6.3d): `_S.09_` reads as a delay, and online a delay takes the short wait - about two real minutes of play. Found still marked open by WAITS (2026-10-07, `06-Systems/Online-Waits.md`) and checked against the parsed script.]
 
 `test/deadclock.test.js` (3, the real script parsed); `tools/mutants/deadclock.json` 8, 8 dead. Re-aimed: `test/questbridge.test.js` (MAC-K2's mount takes `clockCounts`, and pins a dead clock skipped) and `test/enhancedPause.test.js` (PX22).
 

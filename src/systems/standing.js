@@ -22,12 +22,15 @@
 //
 // Node-pure: every clock read is the caller's `now` - the character's own minutes for the watch's stops and graces
 // (LIVED1: the standing is the character's), the WORLD's for a banishment's term (a sentence of the realm, on its
-// calendar - online it lifts after about two and a half real days whether or not the player plays).
+// calendar, whether or not the player plays). BANISH-SKY: the term is thirty days of the calendar the player SEES -
+// online the sky's (about thirty real hours since SKY-SLOW), stamped on the world's event clock as every term is, and
+// measured across with the sky's own law (skyCalendar.js, which the shared clock switches on with the sky it installs).
 import { CRIMES } from './crimes.js';
 import {
   legalRepOf, changeLegalRep, LEGAL_REP_MAX, BASE_PENALTY, PENALTY_PER_LEGAL_REP_POINT, MIN_PENALTY, MAX_PENALTY,
 } from './court.js';
 import { SEVERE_PUNISHMENT_BANISHED } from './encounters.js';
+import { skyMinuteOfEvent, eventMinuteOfSky } from './skyCalendar.js';   // BANISH-SKY: the calendar the player sees, against the event clock's stamps
 
 /** DFU's own line (PlayerEntity.cs:500, `LegalRep < -10`): below it the watch knows your face. */
 export const KNOWN_CRIMINAL_BELOW = -10;
@@ -35,8 +38,24 @@ export const KNOWN_CRIMINAL_BELOW = -10;
 export const CHALLENGE_COOLDOWN_MINUTES = 120;
 /** A game day's grace once the law has been answered: nobody stops a criminal on the courthouse steps. */
 export const CHALLENGE_GRACE_MINUTES = 1440;
-/** A banishment's term: thirty days of the world's calendar. */
+/** A banishment's term: thirty days of the world's calendar - offline DFU's one clock; online the days of the sky the
+ *  player sees (BANISH-SKY, banishmentEnd below). */
 export const BANISHMENT_MINUTES = 30 * 1440;
+/**
+ * BANISH-SKY (2026-10-07, bible/06-Systems/Online-Waits.md WAIT4; Mac: "Take care of this", over the sweep of the waits
+ * still long online). REP3's thirty days were counted on the world's event clock (TimeScale 12): sixty real hours. But
+ * the calendar every menu shows online is the sky's (TIME1), whose day is one real hour since SKY-SLOW - so a player told
+ * "banished for 28 more days" watched twenty-eight days go by on the calendar and was still banished for as long again.
+ * The term is now thirty days of the calendar the player sees: stamped, as every term, in the event clock's minutes
+ * (TIME's rule - no stamp is taken on the sky), at the event minute the sky reads thirty days on - measured with the
+ * sky's own law (skyCalendar.js), so it is exact across any change of the sky's rate (AUDIT WAITS B4: a rate read at
+ * the stamp would have sized a term begun near a switch on the wrong rate). With no sky standing - offline, or a shared
+ * clock installed without one - the calendar is the one clock: REP3's thirty days whole.
+ */
+export const banishmentEnd = (worldNow) => eventMinuteOfSky(skyMinuteOfEvent(worldNow) + BANISHMENT_MINUTES);
+/** BANISH-SKY: a thousandth of a game minute - the two laws' round trip is exact to a few millionths, and a days-left
+ *  count must not read 31 at the stamp for the float's sake. */
+const CALENDAR_EPSILON_MINUTES = 1e-3;
 /** A temple's penance: five points of a region's law back toward zero, never past it. */
 export const PENANCE_POINTS = 5;
 /** The first penance's price in a region; the nth costs n times it. */
@@ -73,14 +92,14 @@ export function restoreStanding(player, snap) {
 
 // ---- REP3: banishment, timed or pardoned ------------------------------------------------------------------------
 
-/** Banish the character from a region for BANISHMENT_MINUTES of the world's calendar (the court's state 4). The flag
+/** Banish the character from a region for the calendar's thirty days (banishmentEnd; the court's state 4). The flag
  *  bit is DFU's own field (`SeverePunishmentFlags |= 1`), kept for the classic save and every reader of it. */
 export function banish(player, regionIndex, worldNow) {
   const r = player.regionConditions?.[regionIndex];
   if (!r) return false;
   r.severePunishmentFlags |= SEVERE_PUNISHMENT_BANISHED;
   // AUDIT REP F2: an untrusted clock (worldTick.js trustedWorldMinutes' NaN) stamps nothing - the first trusted read does
-  r.banishedUntil = Number.isFinite(worldNow) ? worldNow + BANISHMENT_MINUTES : null;
+  r.banishedUntil = Number.isFinite(worldNow) ? banishmentEnd(worldNow) : null;   // BANISH-SKY: the calendar's thirty days
   return true;
 }
 /** Lift a region's banishment (its term run out, or a pardon). */
@@ -98,7 +117,7 @@ export function isBanished(player, regionIndex, worldNow) {
   if (!r || (r.severePunishmentFlags & SEVERE_PUNISHMENT_BANISHED) === 0) return false;
   // AUDIT REP F2: the world's calendar not yet trusted (online, the relay unheard): banished, and nothing stamped or lifted
   if (!Number.isFinite(worldNow)) return true;
-  if (!Number.isFinite(r.banishedUntil)) r.banishedUntil = worldNow + BANISHMENT_MINUTES;
+  if (!Number.isFinite(r.banishedUntil)) r.banishedUntil = banishmentEnd(worldNow);   // BANISH-SKY: the calendar's thirty days
   if (worldNow >= r.banishedUntil) { liftBanishment(player, regionIndex); return false; }
   return true;
 }
@@ -107,6 +126,15 @@ export function banishmentLeft(player, regionIndex, worldNow) {
   if (!isBanished(player, regionIndex, worldNow)) return 0;
   if (!Number.isFinite(worldNow)) return NaN;   // AUDIT REP F2: not known until the world's calendar is trusted
   return player.regionConditions[regionIndex].banishedUntil - worldNow;
+}
+/** BANISH-SKY: the days a banishment has left in the calendar the player sees (the sky's, online), rounded up - its last
+ *  hour is still a day - 0 when none, NaN while the term is not known (AUDIT REP F2). The priest and the Standing page
+ *  say these; the span is measured with the sky's law, end against now. */
+export function banishmentDaysLeft(player, regionIndex, worldNow) {
+  const left = banishmentLeft(player, regionIndex, worldNow);
+  if (!Number.isFinite(left) || left <= 0) return left;
+  const span = skyMinuteOfEvent(worldNow + left) - skyMinuteOfEvent(worldNow);
+  return Math.max(1, Math.ceil((span - CALENDAR_EPSILON_MINUTES) / 1440));
 }
 export function pardonPrice(player, regionIndex) {
   return PARDON_BASE_PRICE * ((standingOf(player).pardons[regionIndex] ?? 0) + 1);

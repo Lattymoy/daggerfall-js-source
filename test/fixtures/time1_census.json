@@ -797,6 +797,18 @@
    "why": "TIME3: a journal date, stamped on the event clock, on the sky's calendar"
   },
   {
+   "file": "src/systems/skyCalendar.js",
+   "has": "export const skyOfEventLaw = (eventMinutes) => skyClassicMinutes(wallMsForClassicMinutes(eventMinutes));",
+   "clock": "law",
+   "why": "BANISH-SKY: the sky's minute at an event minute as the law has it - the lane doors read an online save's banishment with it"
+  },
+  {
+   "file": "src/systems/skyCalendar.js",
+   "has": "export const eventOfSkyLaw = (skyMinutes) => sharedClassicMinutes(wallMsForSkyMinutes(skyMinutes));",
+   "clock": "law",
+   "why": "BANISH-SKY: the event minute at a sky minute - a banishment's thirty days of the sky's calendar, stamped on the event clock"
+  },
+  {
    "file": "src/systems/worldTick.js",
    "has": "regionIndex, minute = worldMinutes()) => worldRegionPricesOn",
    "clock": "law",
