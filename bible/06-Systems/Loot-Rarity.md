@@ -214,6 +214,16 @@ snapshot copies items as they are); `affixes` joins
 `enchantments` is (AUDIT WORLD4 B1). An older save carries neither
 field and reads Common.
 
+The Loot arc II (`Loot-II-Arc.md`) adds four fields, each declared in
+`systems/itemFields.js` and absent on every piece that has none - so
+an older save and an older peer read as before: `cursed` (LOOT16, a
+cursed find's drawback - `validCurse`), `honed` (LOOT17, the hones a
+piece has taken), `junk` (LOOT18, the player's mark - the lock's twin)
+and `socket` (LOOT20, 'empty' or the gem set in it - `validSocket`; a
+set gem's line rides `affixes` marked with its gem). A known curse is
+read on the tier line ("Cursed Rare"), as the Exalted is: a variant of
+its rung, never a rung of its own (the arc's law 7).
+
 ## The Test Room door
 
 "The loot ladder" (`test=loot`): the Nord Warrior with a Magic and a
