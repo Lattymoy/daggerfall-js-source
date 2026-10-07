@@ -101,7 +101,7 @@
   {
     "name": "FH-chase-walk",
     "file": "tools/tellDuel.mjs",
-    "old": "(chasing ? RUN : WALK) * DT",
+    "old": "(chasing ? runner : WALK) * DT",
     "new": "WALK * DT",
     "tests": [
       "test/feudharness.test.js"
@@ -140,7 +140,8 @@
     "old": "caught: end !== 'fled' && !!f.fleeing });",
     "new": "caught: false });",
     "tests": [
-      "test/feudharness.test.js"
+      "test/feudharness.test.js",
+      "test/flightfirst.test.js"
     ]
   },
   {
