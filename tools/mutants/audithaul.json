@@ -101,7 +101,7 @@
   {
     "name": "AUDIT-HAUL-CARDS-A3-card-on-a-held-world",
     "file": "src/scenes/gatherHost.js",
-    "old": "const live = deps.active?.() === true || deps.activeDungeon?.() === true;",
+    "old": "const live = deps.active?.() === true || deps.activeDungeon?.() === true || deps.activeInterior?.() === true;",
     "new": "const live = true;",
     "tests": [
       "test/haulcards.test.js"

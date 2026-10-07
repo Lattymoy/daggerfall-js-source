@@ -1370,7 +1370,7 @@ Every PROF slice's record names all four (Home.md, THE FOUR HOSTS RULE, 17e), ea
 |---|---|
 | `scenes/world.js` - the streaming world | The wilderness nodes (trees, herb patches, veins, boulders, fishing spots and schools), placed as each terrain tile streams in and freed as it streams out; Motherlodes; gate-touched ground; the Notice Boards; every gathering act; Hunting's skinning outdoors |
 | `scenes/exterior.js` - the fixed city | DFU's own board of its one city - never the Notice Board, which is online's (10.7; AUDIT 28 corrected "the board"). **FLAGGED by name**: no nodes - a fixed city has no wilderness around it and no streamer to place them |
-| `scenes/worldModes.js` - building interiors | The stations (a home's, a guild hall's, a shop's for its use fee); the crafting acts; the Stores chest at a home, a hall or a seat's palace; a station's window in the host's overlay slot |
+| `scenes/worldModes.js` - building interiors | The stations (a home's, a guild hall's, a shop's for its use fee); the crafting acts; the Stores chest at a home, a hall or a seat's palace; a station's window in the host's overlay slot; Hunting's skinning of a building's own foes (INDOOR-SKIN, 29) |
 | `scenes/dungeonContext.js` - dungeons | Dungeon veins on the RDB walls (Dwarven Scrap, Adamantium, Diamonds); Hunting's skinning of a dungeon's foes; the act rig as outdoors |
 
 ### 17.2 The process laws, applied
@@ -2634,8 +2634,8 @@ Mac: **"Do it"** (2026-09-29, PROF7 after the VEIN-NEED fix: "What was next on t
   A body names no ground, keeps no hours (FORAGE0 14.3: "not Hunting (the knife is not Foraging's, and foes die at
   night)") and writes no witness. ~~The character's 60 and the account's 120 bound it too, and never bite first.~~ (CAP-OFF, 2026-10-07:
   no day's cap bounds it.)
-- **Where a body is a node**: the street's pool and a dungeon's, in the one gathering host (22's law: the host stands
-  in the streaming world and its dungeons) - a body felled in a building's interior is DFU's corpse alone. A body is a
+- **Where a body is a node**: the street's pool, a dungeon's and (INDOOR-SKIN, below) a building's, in the one
+  gathering host. A body is a
   **LOOSE node** (`GatherKind.looseNodesOf`): it carries its own place - the corpse marker's ground on the street
   (`exteriorFoes.corpseAt`, the corpse lens's one home - DT1's law), the feet in a dungeon - which the floating origin
   moves under it; an act finds its body again by its key every frame and ends when its pool lets it go. AUDIT 32: a
@@ -2796,11 +2796,39 @@ As built:
   witness table's NOT NULL key also holds). The earlier lists re-aimed by content where PROF7 moved their code (twenty),
   and two of PROF3's recorded equivalent: its "the stock is never withdrawn" gate has nothing left to refuse. The
   done-when is `prof7_client`'s DONE WHEN, through the real Worker.
-- **The four hosts** (17.1): the streaming world wires it all - the street's bodies and a dungeon's, the loom, the
-  Tracker; the fixed city, the standalone dungeon and the interiors' own pools stand no professions (22's law), and a
-  body felled there is DFU's corpse.
+- **The four hosts** (17.1): the streaming world wires it all - the street's bodies, a dungeon's and (INDOOR-SKIN,
+  below) a building's, the loom, the Tracker; the fixed city and the standalone dungeon stand no professions (22's
+  law), and a body felled there is DFU's corpse.
 - **For Mac**: what Trophy Hunter, Couturier and Saddler should stand as; whether the borrowed pictures read right
-  (the woods' open flag); whether a body felled in a building's interior should be a node.
+  (the woods' open flag).
+- **INDOOR-SKIN** (FIELD BUGS 2026-10-07, "Cannot skin indoors": "When doing a Fighters Guild quest to kill giant
+  rodents, their bodies are not able to be skinned"). The Fighters Guild's Hunt for Giant Rodents (`M0B00Y15`) places
+  its house `local random` and stands its Giant Rats and Giant Bats in it - DFU's Rat and Giant Bat, Rat Pelt and Bat
+  Leather. FACT: the building's foe pool (`worldModes.js` makeInteriorFoes, the street's own `createExteriorFoes`)
+  told the player's kill, so the body was stamped; three seams then lost it. The world host listed Hunting's bodies
+  from the dungeon's pool or else the STREET's, so indoors it searched the street's dead; the gathering host was live on
+  the street (`active`) and underground (`activeDungeon`) alone; and the building's ladder (`tryExit`), plaque and rig
+  offered nothing to a profession. Indoors a body was DFU's corpse and no more - section 29 had put the question to Mac
+  above, and the field answered it. DECIDED: a building's bodies are nodes as the street's and a dungeon's are. ONE
+  seam picks the pool by the mode - `huntHost.js:"export function bodiesHere("`, the street's, a dungeon's or a
+  building's (`worldModes.js` hands `interiorFoes` and `openInteriorBody`, the building's body door, which its ladder's
+  corpse arm now shares: `worldModes.js:"function openInteriorBodyLoot(lootKey, pileKeys = null) {"`). The gathering host
+  takes `activeInterior` (`gatherHost.js:"const indoors = () => !inDungeon() && !!deps.activeInterior?.();"`): indoors
+  it stands the building's loose nodes alone - never the street's pixels round the house - sees them through the
+  building's own walls (`clear`'s fourth argument), and an act begun there ends under a window or at the door. The
+  building's ladder takes tryExitDungeon's three arms and its VEIN-NEED foot, its plaque picks and names a node over the
+  race's winner, its rig draws the knife and holds the swing off an act's press. The knife's checks stand as they were:
+  in a house in town the settlement's check passes (it asks `mustBeOutside`), and a live rat in the room is "enemies
+  nearby". THE FOUR HOSTS: `world.js` (the street) and `worldModes.js` (a building; a dungeon through
+  `dungeonContext.js`, unchanged) skin; `exterior.js` - FLAGGED by name: the fixed city stands no professions. NOT DONE:
+  a building's body is no NODE-MARK - neither on the compass nor in the glow (`world.js` nodeMarksAt keeps "null in a
+  building"), and a Tracker marks the street's animals alone. Pinned: `test/fb1007_indoorskin.test.js` (4) - the
+  quest's own Foe resources parsed from the vendored script, stood by the real pool's `spawnFoe` as
+  tryPlaceInteriorQuestFoe stands them and felled through its damage door; `tools/mutants/fb1007_indoorskin.json`, 13
+  mutants, 13 dead. Re-aimed by content: fifteen records of ten lists (the dungeon's three ladder arms and its VEIN-NEED
+  foot now stand a twin above them in the building's ladder) and the pins of `prof7_client`, `audit32_client`,
+  `worldhover`, `lootstack`, `audit29_host`, `fb0930b_toolsaid` and `fb1001_audit` that read the moved lines (the
+  dungeon's ladder pins read from `tryExitDungeon` down now, where the building's twin stood first).
 
 ## 30. PROF8 - Fishing with the net, as built (BUILT 2026-09-30)
 
