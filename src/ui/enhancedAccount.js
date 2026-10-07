@@ -175,14 +175,16 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
 
   /**
    * PROFILE-MENU - THE PORTRAIT, the one the corner mark wears (ui/profileBadge.js): the face of the character last
-   * played, handed in by the door as it hands the mark its own (`face`, a canvas or a promise of one), in a round well.
+   * played, handed in by the door as it hands the mark its own (`face`, loadFace's promise of a canvas), in a round well.
    * A hooded silhouette stands until the face lands, and for good with none - the mark's own NEVER TRAPS. The face is
    * drawn ONCE per card: a repaint moves the same canvas into the new well, never asks for another.
    */
   let faceArt = null;
+  // AUDIT PROFILE-MENU P7: ONE SHAPE, the one the producer mints - loadFace is async, so the door hands a promise; a
+  // canvas handed bare was a branch nothing in the game could reach
   if (face && typeof (/** @type {any} */ (face).then) === 'function') {
     /** @type {Promise<any>} */ (face).then((art) => { if (art) { faceArt = art; if (flow.stage === 'in') paint(); } }).catch(() => {});
-  } else if (face) faceArt = face;
+  }
   function portrait() {
     const well = el('div', faceArt ? 'acctportrait hasface' : 'acctportrait');
     well.setAttribute?.('aria-hidden', 'true');
@@ -505,7 +507,6 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
       const grid = el('div', 'acctgrid');
       const deeds = el('div', 'acctcol');
       const kept = el('div', 'acctcol');
-      grid.append(deeds, kept);
       root.append(grid);
       /** A section: its head, and the list its rows go in - `row` writes a key and a value into the list in hand. It
        *  stands in its column only once a row is in it (`keep`): ACC1e's rule, no heading over an empty box. */
@@ -606,6 +607,13 @@ export function accountCard(doc, flow, { onClose = null, face = null, character 
         account.append(el('p', 'meta', 'Adding a username keeps everything this account already has.'));
       }
       host = root;
+      // AUDIT PROFILE-MENU P2: A COLUMN WITH NOTHING IN IT IS NOT DRAWN - a new guest, or an account a service before the
+      // record knows, has no deeds, and its Account stood in the right half of the wide window beside an empty left one.
+      // Two columns (and the wide window) only when both have something to say.
+      const both = deeds.children.length > 0;
+      grid.className = both ? 'acctgrid acctgrid2' : 'acctgrid';
+      if (both) grid.append(deeds);
+      grid.append(kept);
     }
     // ── THE CODE, THE ONE TIME IT EXISTS ────────────────────────────
     if (stage === 'code' && flow.recoveryCode) {

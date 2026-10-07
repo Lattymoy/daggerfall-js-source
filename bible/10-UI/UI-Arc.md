@@ -19030,7 +19030,7 @@ Three surfaces the Plus refresh had never reached, done as one pass because they
 portrait opens, the doors under the wordmark, and the page in front of the game.
 
 **PROFILE-MENU - the card is a profile** (`ui/enhancedAccount.js`, its sheet in `ui/enhancedStyle.js`). Signed in, the
-account card was one centred column of eleven key-and-value rows - who you are, what you have done and what the account
+account card was one centred column of key-and-value rows (up to fourteen) - who you are, what you have done and what the account
 is, all at one weight - with the Renown rows wrapping to three lines on a phone, where the window also stood from the
 top of the screen to its middle with the menu reading through the scrim under it. It reads now in the order a player
 looks:
@@ -19049,20 +19049,24 @@ looks:
 - **Wardrobe**: ACC3c's pickers, unchanged, under their head.
 - **Account**: the facts ACC4 pinned (username, kind, registered, time played) and the Patreon row beside them.
 
-Each section stands only once a row is in it (ACC1e: no heading over an empty box) and says no fact twice. Two columns
-where the window is wide (a container query on the card - the WINDOW's width decides), one on a phone; the window widens
-for the profile (`:has(.card.acct.acctin)`) and keeps clear of the foot's plaques under the wordmark; on a phone the
-stage is the screen's, under a heavier scrim. Under Plus a deed's tile is a panel (`ui/enhancedFrame.js` panel role).
+Each section stands only once a row is in it (ACC1e: no heading over an empty box), and a column only once a section
+is in it. Two columns where the card is wide and both have something in them (a container query on the card,
+`.acctgrid2`), one otherwise; the window widens only for two (`:has(.acctgrid2)`) and keeps clear of the foot's plaques
+under the wordmark, takes the height on a short screen, and keeps its row of presses - Close among them - stuck at its
+foot. On a phone every account stage is the screen's, under a heavier scrim (the sign-in forms included: more room than
+the 58dvh window over a menu reading through). Two facts are still said twice, as the old card said them: a registered
+account's name is its username, and the first character's Renown is the chip by the name and its own row. Under Plus a deed's tile is a panel (`ui/enhancedFrame.js` panel role).
 The card still brings no design language of its own - no style from script, no colour - so the bars are the browser's
 `<progress>` told how to draw by the sheet.
 
 **PLUS-MENU - the doors in stone** (`ui/enhancedPlusStyle.js` `MENU_CSS`). The front door was the one enhanced screen
 the kit never reached: eight words floating on the night while the About plaque, the asks and the profile mark were
-carved. The doors (`.doorbtn`) and the System tab's list (`.px-menu.px-compact`) play the kit's BUTTON role now - raised
+carved. The doors (`.doorbtn`) play the kit's BUTTON role now - raised
 stone, brass under the pointer and the pad, sunk while held, and every Plus colour's ground, since the theme rules are
 walked out of the same role list. `MENU_CSS` gives them the 2px edge the role paints and the padding gives it back, so a
-door is the box it was (the pin reads both rules and does the sum); one width a column so the list reads as one rail;
-the diamonds stand at rest in dim stone and light the classic gold on the door under the pointer; a phone's doors sit at
+door is the box it was (the pin reads both rules and does the sum); one width a column, inside the stage, so the list
+reads as one rail; the diamonds stand at rest in dim stone (the lit stone on Stone's ground) and light the classic gold
+on the door under the pointer, and are hidden from a reader - a door is named by its word; a phone's doors sit at
 the 44px floor a size down, so the rail stands above the foot's plaques on a tall phone (PX8's scroll still holds where
 it cannot). The rule under the wordmark is gilt.
 
@@ -19077,9 +19081,64 @@ colour of the page's own (each box the page declares gives its edge and room and
 injected after the page's sheet, as the night and the marks are), and the plaque and the ask keep the About plaque's
 edge as their fallback. One source: the site's stone and the game's are both `FRAME_TONES`.
 
-`test/plus_menu_site.test.js` (7); `tools/mutants/plus_menu_site.json` (24 dead). PIN MOVED: `landing` U63 (the plaque
+`test/plus_menu_site.test.js` (7); `tools/mutants/plus_menu_site.json` (24 dead at the slice, 52 and 3 equivalent after its audit). PIN MOVED: `landing` U63 (the plaque
 edge was the page's only box; the kit's boxes give their edge and no colour), `profile1_badge` and
 `profile2_pause_profile` (the character's law is `profileCharacter`, which the card asks too). Re-aimed:
 `tools/mutants/renown1.json` RENOWN1-heading-changed-for-everyone (the heading lands in the plate),
 `tools/mutants/profile2.json` P2-live-portrait-is-the-newest-save (the law's new home), and `tools/mutants/profile1.json`
 P1-door-shares-the-tile-canvas (the card asks for the face as a copy too, so the record names the mark's own line).
+
+### AUDIT PROFILE-MENU / PLUS-MENU / PLUS-SITE (2026-10-07, Mac: "Audit this")
+
+Three cold lanes over the slice as pushed (the profile card; the menu's and the site's sheets; the pins, the mutants and
+the record), each reading the tree only - nothing was touched while they read - and every finding reproduced here
+before it was paid.
+
+**Paid.**
+- **P1 (severe) - a short screen took the profile window away.** Wider than 480px and at most 560px tall (a landscape
+  phone), the stage drops its deep top padding (SHORT-TOUCH), but the profile's window rule - heavier than
+  SHORT-TOUCH's, by its `:has()` - still subtracted the 270px it no longer had: 844x390 drew the window 36px tall,
+  740x360 6px, 1024x540 186px. A short screen's rule now follows it at its weight: 370px, 340px, 520px.
+- **P2 - an empty column.** A new guest, or an account a service before the record knows, has no Record and no
+  Characters, and its Account stood in the right half of the wide window beside an empty left column. A column is
+  drawn only with something in it; two columns, and the wide window, only for two.
+- **P3 - Stone's light ground.** The record's tile names read 2.3:1 there and the section heads 2.6:1; the window takes
+  AUDIT TIMERS1 UI-4's lift (`--dim`, `--brass` and a hard drop under the words).
+- **P4 - Close out of reach.** The profile is long and its row of presses stood under all of it - 470px of scrolling on a
+  phone to put the window away, and below the fold at every size with a full record. The row is stuck at the window's
+  foot over a fade of the window's ink (the body's foot padding is the row's, or words scrolled under it showed through);
+  on a phone its four presses stand two to a row.
+- **P7 - the shape the producer mints.** `loadFace` is async, so the door hands a promise; the card's branch for a bare
+  canvas was reached by the pins alone, and they drew the plate through it. The branch is gone and the plate is pinned
+  through the promise.
+- **M1 - the door panned sideways.** The rail's width was the viewport's (`100vw - 32px`) on a stage that keeps 24px a
+  side on a phone: 8px past it from 320 to 431px wide, so the whole door moved under a thumb. It is the stage's now.
+- **M2 - the diamonds were every door's name.** Standing at rest, they were read with the word - "◆ Continue ◆" - and
+  `getByRole('button', { name: 'Settings' })` found nothing; `tools/enhancedMenuProbe.mjs`'s door census failed on it.
+  Each is hidden from a reader; the probe reads the word.
+- **M3 - a list that does not exist.** `.px-menu.px-compact` was dressed "the same" as the System tab's list, and nothing
+  builds it: that list is the rail's rows (`.px-qrow`, the kit's qrow role, dressed already). The selector left the kit,
+  `MENU_CSS` and the pins, and the claim this record, the commit and the patch notes made. (The base sheet's own
+  `.px-menu.px-compact` rules are older than this slice and left as they stand.)
+- **M4 - Stone's diamonds.** The dim stone diamond on Stone's button ground was 1.2:1; the lit stone stands there at rest.
+- **The pins.** 27 mutants the slice's own list did not hold survived the pins lane - among them the card's container
+  (without it the two columns never come: no ancestor is a container), the fittings DRAWN rather than only written, the
+  phone window's full rule, the site's brass under the pointer, its sinking press and its name band, the duels' share
+  rounding (14 of 20 cannot tell round from floor), the guest's note in its section, and the class sweep's two blind
+  spots (an SVG's class is an attribute, and a prefix passed for its longer name - `.acctworn` for `.acctworntitle`). Each
+  is pinned in `test/plus_menu_site.test.js`, and the list holds them: 52 dead. The landing's colourless-box count is
+  exact (6), not at least. A comment that called the portrait a well and the bars meters under Plus said what the kit
+  does not do; it says what it does.
+
+**Equivalent, recorded so.** The bar's clamp (no caller leaves the range, and a real `<progress>` clamps itself), the
+`host` restore after the signed-in block (build resets it before every paint), and the face's stage check (a repaint of
+a form puts the focus back) - each marked `equivalent` with its reason in the list.
+
+**Unchanged on purpose.** The phone rule takes every account stage, not the profile alone: the sign-in forms gain the
+room, and on a phone the wordmark was already covered.
+
+Probes on the paid tree: `tools/supportAsksProbe.mjs` 22/22, `shortTouchProbe.mjs` ("every door can be seen and
+pressed"), `menuPadProbe.mjs` ("the door answers the pad"), `landingProbe.mjs` 54/54, `enhancedMenuProbe.mjs` 31/32 - its
+door census passing again, and its classic-rail check failing on main too (it predates LOAD1's Screenshots entry), as
+`enhancedTapProbe.mjs`'s intro wait does (stale, not this slice's). PIN MOVED: `landing` U63's
+colourless count; `tools/enhancedMenuProbe.mjs` reads a door's word.

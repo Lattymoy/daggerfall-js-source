@@ -2194,21 +2194,21 @@ export const OVER_KIT_CSS = [ITEM_FRAME_CSS, ONLINE_DRESS_CSS];
  *  (ui/enhancedFrame.js: raised stone, brass under the pointer and the pad, sunk while held, every Plus colour's
  *  ground), one width a column so the list reads as one carved rail; this gives them the 2px edge the role paints (the
  *  padding gives back what the edge takes, so a door is the box it was) and keeps the diamonds standing, dim stone at
- *  rest and the classic gold on the door under the pointer. The System tab's list over a game is dressed the same. The
- *  rule under the wordmark is gilt. */
+ *  rest and the classic gold on the door under the pointer. The rule under the wordmark is gilt. */
 export const MENU_CSS = `
 /* ── PLUS-MENU: THE DOORS ── */
-.px-menu:not(.px-compact) { width: min(384px, calc(100vw - 32px)); align-items: stretch; gap: 8px; }
+/* AUDIT PLUS-MENU M1: the stage's own width, never the viewport's - a phone's stage keeps 24px a side, and 100vw - 32px
+   ran the rail 8px past it, so the whole door panned sideways under a thumb */
+.px-home .px-menu { width: min(384px, 100%); align-items: stretch; gap: 8px; }
 .px-menu .doorbtn { justify-content: space-between; border: 2px solid; padding: 6px 24px; }
-.px-menu.px-compact { align-items: stretch; gap: 8px; width: min(380px, 100%); margin-inline: auto; }
-.px-menu.px-compact button { justify-content: space-between; border: 2px solid; padding: 4px 20px; }
-.px-menu .doorbtn .px-c, .px-menu.px-compact button .px-c { visibility: visible; color: #5a5446; text-shadow: 1px 1px 0 #050608; }
-.px-menu .doorbtn:hover .px-c, .px-menu .doorbtn:focus-visible .px-c,
-.px-menu.px-compact button:hover .px-c, .px-menu.px-compact button:focus-visible .px-c { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+.px-menu .doorbtn .px-c { visibility: visible; color: #5a5446; text-shadow: 1px 1px 0 #050608; }
+.px-menu .doorbtn:hover .px-c, .px-menu .doorbtn:focus-visible .px-c { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* AUDIT PLUS-MENU M4: on Stone's light ground the dim stone diamond was gone (1.2:1) - the lit stone, at rest only */
+:root[data-plus-theme="stone"] .px-menu .doorbtn:not(:hover):not(:focus-visible) .px-c { color: #9a9079; }
 /* a phone: the doors at the 44px tap floor and a size down, so the rail stands above the foot's plaques on a tall phone
    (the stage still scrolls where it cannot - PX8) */
 @media (max-width: 480px) {
-  .px-menu:not(.px-compact) { gap: 6px; }
+  .px-home .px-menu { gap: 6px; }
   .px-menu .doorbtn { padding: 2px 16px; min-height: 44px; font-size: 22px; }
 }
 /* the rule under the wordmark: two gilt bars fading out from the gem */

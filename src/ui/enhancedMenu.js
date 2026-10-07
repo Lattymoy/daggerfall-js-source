@@ -3560,7 +3560,10 @@ function renderHome() {
     // so the hook is structural: doorbtn plus the section id, which
     // is what a probe actually means when it says New Game.
     const b = el('button', `doorbtn door-${id}`);
-    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
+    // AUDIT PLUS-MENU M2: the diamonds stand at rest under Plus (MENU_CSS), so they are drawing, not words - hidden from
+    // a reader, or every door was named "◆ Continue ◆"
+    const dia = () => { const d = el('span', 'px-c', '\u25c6'); d.setAttribute('aria-hidden', 'true'); return d; };
+    b.append(dia(), document.createTextNode(label), dia());
     b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
     menu.append(b);
   }

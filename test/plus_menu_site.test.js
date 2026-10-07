@@ -11,7 +11,8 @@
 //   - PLUS-SITE: the website wears the kit's roles in the kit's tones, cut without a picture and injected at serve and
 //     build (ui/enhancedFrame.js siteKitCss, scripts/landingHtml.mjs).
 //
-// The record: bible/10-UI/UI-Arc.md PROFILE-MENU / PLUS-MENU / PLUS-SITE. Mutants: tools/mutants/plus_menu_site.json.
+// The record: bible/10-UI/UI-Arc.md PROFILE-MENU / PLUS-MENU / PLUS-SITE, and its AUDIT (the pins it added say so).
+// Mutants: tools/mutants/plus_menu_site.json.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -65,6 +66,7 @@ test('PROFILE-MENU: signed in, the card is a profile - the plate first, then the
   assert.equal(card.root.className, 'card acct acctin', 'the profile\'s own class, so the window widens for it');
   const [plate, grid] = card.root.children;
   assert.ok(has(plate, 'acctplate') && has(grid, 'acctgrid'), 'the plate, then the sections');
+  assert.equal(grid.className, 'acctgrid acctgrid2', 'two columns, both with something in them');
   const [deeds, kept] = grid.children;
   assert.deepEqual(heads(deeds.all), ['Record', 'Characters'], 'what they have done, in the first column');
   assert.deepEqual(heads(kept.all), ['Wardrobe', 'Account'], 'what they wear and what the account is, in the second');
@@ -73,9 +75,19 @@ test('PROFILE-MENU: signed in, the card is a profile - the plate first, then the
   assert.ok(has(well, 'acctportrait') && has(well.children[0], 'acctsilhouette'), 'no face handed in: the silhouette');
   assert.equal(ident.children[0].tag, 'h3');
   assert.deepEqual(ident.children[0].children.map((c) => [c.className, c.textContent]), [['acctrenown', '10'], ['acctname', 'Nystul']]);
-  // nothing to tell: no Record, no Characters, no Wardrobe - the Account stands alone
+  // nothing to tell (a service from before the record, or the offline fallback's stored session): no Record, no
+  // Characters, no Wardrobe - the Account stands alone, and in ONE column (AUDIT P2: an empty left one stood beside it)
   const bare = draw({ account: { id: 'p2', name: 'Theod', handle: 'Theod', kind: 'linked', playedS: 60 } });
   assert.deepEqual(heads(bare.all()), ['Account'], 'no heading over an empty box (ACC1e)');
+  const bareGrid = bare.card.root.children[1];
+  assert.deepEqual([bareGrid.className, bareGrid.children.length], ['acctgrid', 1], 'one column, not two with one empty');
+  // a NEW GUEST as the service answers one today (records at zero, no Renown yet, Marks not a guest's): the Record
+  // with its zeros, and the guest's note inside the Account it is about
+  const guest = draw({ account: { id: 'p3', name: 'Theod Gwyn', guestName: 'Theod Gwyn', handle: null, kind: 'guest', registeredAt: null,
+    playedS: 600, duels: { wins: 0, losses: 0 }, gates: { closed: 0 }, raids: { defended: 0 }, serpents: { slain: 0 }, renown: [], marks: null } });
+  assert.deepEqual(heads(guest.all()), ['Record', 'Account']);
+  const acct = guest.all().find((n) => n.tag === 'section' && n.children[0]?.textContent === 'Account');
+  assert.ok(acct.all.some((n) => n.className === 'meta' && /keeps everything this account already has/.test(n.textContent)), 'the note is the Account\'s');
   // a form is the card it was: no plate, no profile class
   const form = draw({ stage: 'login', account: null });
   assert.equal(form.card.root.className, 'card acct');
@@ -97,6 +109,9 @@ test('PROFILE-MENU: the Record is a tile a deed, the duels with their share won 
   const [mara, old] = chars.children.map((li) => li.children[2]);
   assert.deepEqual([mara.value, mara.max, mara.title], [490, renownXpFor(11) - renownXpFor(10), `490 / ${(renownXpFor(11) - renownXpFor(10)).toLocaleString('en-US')} XP to Renown 11`]);
   assert.deepEqual([old.value, old.max], [1, 1], 'the highest there is: full');
+  // the share rounds to the nearest whole - two of three is 67%, not 66%
+  const third = draw({ account: { ...ACCOUNT, duels: { wins: 2, losses: 1 } } }).all().find((n) => has(n, 'acctrecord')).children[0].children[2];
+  assert.equal(third.title, '67% of duels won');
   // no duels fought: the words, and no bar to draw a share of nothing
   const none = draw({ account: { ...ACCOUNT, duels: { wins: 0, losses: 0 } } });
   assert.equal(none.all().find((n) => has(n, 'acctrecord')).children[0].children.length, 2);
@@ -107,13 +122,15 @@ test('PROFILE-MENU: the Record is a tile a deed, the duels with their share won 
 
 test('PROFILE-MENU: the plate wears the corner mark\'s portrait - a face handed in, or one that lands later, drawn once and moved, never asked twice - the title worn in its own colour\'s class, only the glyphs shown, and whose face it is (mutants: a hidden glyph drawn; the late face never drawn; the title\'s class dropped)', async () => {
   const canvas = { tag: 'canvas', className: '', children: [], get all() { return [canvas]; } };
-  const now = draw({ face: canvas, character: 'Playing Mara Venn · level 12', wardrobe: { titles: ['founder'], title: 'founder', glyphs: ['sprout', 'dev'], glyphsOff: ['dev'] } });
+  // AUDIT P7: THE SHAPE THE PRODUCER MINTS - loadFace is async, so the door hands a promise, never a bare canvas
+  const now = draw({ face: Promise.resolve(canvas), character: 'Playing Mara Venn · level 12', wardrobe: { titles: ['founder'], title: 'founder', glyphs: ['sprout', 'dev'], glyphsOff: ['dev'] } });
+  await new Promise((r) => setTimeout(r, 0));
   const well = now.all().find((n) => has(n, 'acctportrait'));
-  assert.deepEqual([well.className, well.children[0]], ['acctportrait hasface', canvas]);
+  assert.deepEqual([well.className, well.children[0], well.attrs['aria-hidden']], ['acctportrait hasface', canvas, 'true'], 'the face, a picture a reader is not told about');
   const worn = now.all().find((n) => has(n, 'acctworn'));
   assert.equal(worn.children[0].className, 'acctworntitle tl-founder');
   assert.equal(worn.children[0].children[0].textContent, 'Founder');
-  assert.deepEqual(worn.children.slice(1).map((c) => c.className), ['acctglyph gl-sprout'], 'the hidden glyph is not worn');
+  assert.deepEqual(worn.children.slice(1).map((c) => [c.className, c.title]), [['acctglyph gl-sprout', 'New account']], 'the hidden glyph is not worn; a shown one is named');
   assert.equal(now.all().find((n) => has(n, 'acctcharline')).textContent, 'Playing Mara Venn · level 12');
   // the face as a promise: the silhouette, then the face on the card that follows
   let land;
@@ -121,21 +138,45 @@ test('PROFILE-MENU: the plate wears the corner mark\'s portrait - a face handed 
   assert.ok(has(later.all().find((n) => has(n, 'acctportrait')).children[0], 'acctsilhouette'));
   land(canvas);
   await new Promise((r) => setTimeout(r, 0));
-  assert.equal(later.all().find((n) => has(n, 'acctportrait')).children[0], canvas, 'the face landed and the card drew it');
+  const landed = later.all().find((n) => has(n, 'acctportrait'));
+  assert.deepEqual([landed.className, landed.children[0]], ['acctportrait hasface', canvas], 'the face landed and the card drew it');
+  // a bare canvas is no shape the door hands: it draws the silhouette (the branch for it is gone - AUDIT P7)
+  assert.ok(has(draw({ face: canvas }).all().find((n) => has(n, 'acctportrait')).children[0], 'acctsilhouette'));
   // nothing worn, nothing said
   assert.ok(!draw().all().some((n) => has(n, 'acctworn') || has(n, 'acctcharline')));
 });
 
-test('PROFILE-MENU: every class the profile wears is the skin\'s, the title worn has its colour rule per title, the window widens for it and keeps clear of the foot, and a phone gives it the screen (mutants: the plate\'s title colourless; the window\'s width)', () => {
+test('PROFILE-MENU: every class the profile wears is the skin\'s, the title worn has its colour rule per title, the window widens for it and keeps clear of the foot, and a phone gives it the screen (mutants: the plate\'s title colourless; the window\'s width; the short screen\'s height; Close out of reach)', async () => {
   const css = src('src/ui/enhancedStyle.js');
   const worn = new Set();
-  // every class, the gradient title's word among them (Shadow Fang's is a gradient): the source's rule, not only the walked one
-  for (const n of draw({ wardrobe: { titles: ['shadowfang', 'disciple'], title: 'shadowfang', glyphs: ['sprout'], auras: ['dagonfire'] } }).all()) for (const c of cls(n)) if (c) worn.add(c);
-  assert.deepEqual([...worn].filter((c) => !css.includes(`.${c}`) && !ENHANCED_CSS.includes(`.${c}`)), [], 'a class the skin has no rule for');
+  // every class, the gradient title's word among them (Shadow Fang's is a gradient), an SVG's too (its class is an
+  // attribute) - each matched WHOLE against the composed sheet's rules (AUDIT P6: a prefix passed for its longer name,
+  // `.acctworn` for `.acctworntitle`, and the comments counted)
+  const face = { tag: 'canvas', className: '', children: [], get all() { return [face]; } };
+  const card = draw({ face: Promise.resolve(face), wardrobe: { titles: ['shadowfang', 'disciple'], title: 'shadowfang', glyphs: ['sprout'], auras: ['dagonfire'] } });
+  await new Promise((r) => setTimeout(r, 0));   // the face lands: `hasface` is walked too
+  for (const n of card.all()) for (const c of [...cls(n), ...String(n.attrs?.class ?? '').split(/\s+/)]) if (c) worn.add(c);
+  assert.ok(worn.has('acctglyphart') && worn.has('acctworn') && worn.has('hasface'), 'the walk sees the SVG, the line and the face');
+  const rules = ENHANCED_CSS.replace(/\/\*[\s\S]*?\*\//g, ' ');
+  assert.deepEqual([...worn].filter((c) => !new RegExp(`\\.${c}(?![\\w-])`).test(rules)), [], 'a class the skin has no rule for');
   assert.match(ENHANCED_CSS, /\.card \.acctworntitle\.tl-founder \{ color: (#[0-9a-f]{6}|rgba?\()/, 'the worn title\'s colour, walked out of the vocabulary');
-  assert.match(css, /\.px-win\.px-acctwin:has\(\.card\.acct\.acctin\) \{ width: min\(820px, 94vw\); max-height: min\(720px, calc\(100dvh - clamp\(270px, 33vh, 400px\) - 84px\)\); \}/);
-  assert.match(css, /@media \(max-width: 480px\) \{\n  \.px-stage\.px-acctstage \{ padding: max\(10px, env\(safe-area-inset-top\)\) 8px/);
-  assert.match(css, /@container \(min-width: 600px\) \{ \.card \.acctgrid \{ grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\);/);
+  assert.match(css, /\.px-win\.px-acctwin:has\(\.card\.acct\.acctin\) \{ max-height: min\(720px, calc\(100dvh - clamp\(270px, 33vh, 400px\) - 84px\)\); \}/);
+  assert.match(css, /\.px-win\.px-acctwin:has\(\.acctgrid2\) \{ width: min\(820px, 94vw\); \}/, 'wide only for two columns');
+  // AUDIT P1: a short screen gives it the height - LATER than the rule above, at its weight, or 844x390 drew 36px
+  const short = '@media (max-height: 560px) { .px-win.px-acctwin:has(.card.acct.acctin) { max-height: calc(100dvh - 20px); } }';
+  assert.ok(css.indexOf(short) > css.indexOf('.px-win.px-acctwin:has(.card.acct.acctin) { max-height: min(720px'), 'the short screen\'s rule, after the window\'s');
+  assert.match(css, /\.px-over \.px-win\.px-acctwin:has\(\.card\.acct\.acctin\) \{ max-height: min\(760px, 86dvh\); \}/, 'over a game: centred, the height the pause window has');
+  // a phone gives it the screen - the stage AND the window
+  assert.match(css, /@media \(max-width: 480px\) \{\n  \.px-stage\.px-acctstage \{ padding: max\(10px, env\(safe-area-inset-top\)\) 8px max\(10px, env\(safe-area-inset-bottom\)\); background: rgba\(8,10,15,0\.88\); \}\n  \.px-win\.px-acctwin, \.px-win\.px-acctwin:has\(\.card\.acct\.acctin\) \{ width: 100%; max-height: calc\(100dvh - 20px\); \}/);
+  // two columns are the CARD's width's call - the card is the container the query reads, or it never matches
+  assert.match(css, /\.card\.acctin \{ container-type: inline-size; \}/);
+  assert.match(css, /@container \(min-width: 600px\) \{ \.card \.acctgrid\.acctgrid2 \{ grid-template-columns: minmax\(0, 1fr\) minmax\(0, 1fr\);/);
+  assert.match(css, /\.card ul\.acctfacts\.acctrecord li:has\(\.acctbar\) \{ grid-column: 1 \/ -1; \}/, 'the duels\' tile takes the row');
+  // AUDIT P4: Close in reach - the presses stand at the window's foot, the body's foot padding theirs
+  assert.match(css, /\.px-win\.px-acctwin \.card\.acct\.acctin \.acts \{ position: sticky; bottom: 0; z-index: 1; padding-bottom: 20px;/);
+  assert.match(css, /\.px-win\.px-acctwin:has\(\.card\.acct\.acctin\) \.px-body \{ padding-bottom: 0; \}/);
+  // AUDIT P3: Stone's light ground lifts the profile's quiet words, as it lifts the hourglass's
+  assert.match(css, /:root\[data-plus-theme="stone"\] \.px-acctwin \{ --dim: #e2dccd; --brass: #ffd98a;/);
   assert.ok(FRAME_ROLES.panel.includes('.px-win .card.acctin ul.acctfacts.acctrecord li'), 'under Plus a deed\'s tile is a panel');
   // the card still brings no design language of its own (ACC1e)
   const js = src('src/ui/enhancedAccount.js').replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/(^|[ \t])\/\/[^\n]*/gm, '$1');
@@ -148,20 +189,29 @@ test('PROFILE-MENU: every class the profile wears is the skin\'s, the title worn
 
 // ── PLUS-MENU ───────────────────────────────────────────────────────
 
-test('PLUS-MENU: the doors and the System list are the kit\'s buttons, given the edge the role paints at the box they were, one width a column, the diamonds standing; a phone\'s at the tap floor (mutants: the doors out of the role; the edge without the padding given back; the sheet after the kit)', () => {
-  for (const sel of ['.px-menu .doorbtn', '.px-menu.px-compact button']) assert.ok(FRAME_ROLES.button.includes(sel), `${sel} is a button`);
+test('PLUS-MENU: the doors are the kit\'s buttons, given the edge the role paints at the box they were, one width a column inside the stage, the diamonds standing but never read as words; a phone\'s at the tap floor (mutants: the doors out of the role; the edge without the padding given back; the sheet after the kit; the rail past a phone\'s stage; the diamonds named)', () => {
+  assert.ok(FRAME_ROLES.button.includes('.px-menu .doorbtn'), 'a door is a button');
+  // AUDIT M3: `.px-menu.px-compact` was named for the System tab's list, and nothing builds it - no dead selector stays
+  assert.doesNotMatch(MENU_CSS, /px-compact/);
+  assert.ok(!Object.values(FRAME_ROLES).flat().some((x) => x.includes('px-compact')));
   assert.ok(PLUS_CSS.indexOf(MENU_CSS) > 0 && PLUS_CSS.indexOf(MENU_CSS) < PLUS_CSS.indexOf('/* FRAME1: LAST'), 'before the kit, so the kit\'s paint wins');
   // THE BOX THEY WERE: the base door's padding, less the 2px edge the role paints
   const base = /\.px-menu button \{[^}]*padding: (\d+)px (\d+)px;/.exec(ENHANCED_CSS);
   const plus = /\.px-menu \.doorbtn \{ justify-content: space-between; border: 2px solid; padding: (\d+)px (\d+)px; \}/.exec(MENU_CSS);
   assert.ok(base && plus, 'both rules');
   assert.deepEqual([Number(plus[1]) + 2, Number(plus[2]) + 2], [Number(base[1]), Number(base[2])], 'a door is the box it was');
-  const compactBase = /\.px-menu\.px-compact button \{[^}]*padding: (\d+)px (\d+)px; \}/.exec(ENHANCED_CSS);
-  const compact = /\.px-menu\.px-compact button \{ justify-content: space-between; border: 2px solid; padding: (\d+)px (\d+)px; \}/.exec(MENU_CSS);
-  assert.deepEqual([Number(compact[1]) + 2, Number(compact[2]) + 2], [Number(compactBase[1]), Number(compactBase[2])]);
-  assert.match(MENU_CSS, /\.px-menu:not\(\.px-compact\) \{ width: min\(384px, calc\(100vw - 32px\)\); align-items: stretch;/);
-  assert.match(MENU_CSS, /\.px-menu \.doorbtn \.px-c, \.px-menu\.px-compact button \.px-c \{ visibility: visible;/);
-  assert.match(MENU_CSS, /@media \(max-width: 480px\) \{\n  \.px-menu:not\(\.px-compact\) \{ gap: 6px; \}\n  \.px-menu \.doorbtn \{ padding: 2px 16px; min-height: 44px;/);
+  // AUDIT M1: the stage's width, never the viewport's - 100vw - 32px ran 8px past a phone's stage and panned the door
+  assert.match(MENU_CSS, /\.px-home \.px-menu \{ width: min\(384px, 100%\); align-items: stretch;/);
+  assert.match(MENU_CSS, /\.px-menu \.doorbtn \.px-c \{ visibility: visible; color: #5a5446;/);
+  assert.match(MENU_CSS, /\.px-menu \.doorbtn:hover \.px-c, \.px-menu \.doorbtn:focus-visible \.px-c \{ color: rgb\(243,239,44\);/, 'gold on the door under the pointer');
+  // AUDIT M4: on Stone the dim diamond vanished - the lit stone at rest, and still the gold under the pointer
+  assert.match(MENU_CSS, /:root\[data-plus-theme="stone"\] \.px-menu \.doorbtn:not\(:hover\):not\(:focus-visible\) \.px-c \{ color: #9a9079; \}/);
+  assert.match(MENU_CSS, /@media \(max-width: 480px\) \{\n  \.px-home \.px-menu \{ gap: 6px; \}\n  \.px-menu \.doorbtn \{ padding: 2px 16px; min-height: 44px; font-size: 22px; \}/);
+  assert.match(MENU_CSS, /\.px-home \.px-rule::before \{ background: linear-gradient\(90deg, transparent, #7a5424 45%, #f3cf86\); \}/, 'the rule under the wordmark gilt');
+  // AUDIT M2: standing at rest, the diamonds would be every door's name - "◆ Continue ◆" - so each is hidden from a reader
+  const menu = src('src/ui/enhancedMenu.js');
+  const doorLoop = menu.slice(menu.indexOf("const b = el('button', `doorbtn door-${id}`);"), menu.indexOf('menu.append(b);', menu.indexOf("const b = el('button', `doorbtn door-${id}`);")));
+  assert.match(doorLoop, /const dia = \(\) => \{ const d = el\('span', 'px-c', '\\u25c6'\); d\.setAttribute\('aria-hidden', 'true'\); return d; \};\n\s+b\.append\(dia\(\), document\.createTextNode\(label\), dia\(\)\);/);
   // every Plus colour dresses them: the theme rules are walked out of the same role list
   assert.match(PLUS_CSS, /:root\[data-plus-theme="stone"\] \.px-menu \.doorbtn/);
 });
@@ -184,6 +234,13 @@ test('PLUS-SITE: the site wears the kit - its roles in the game\'s own tones, cu
   assert.match(SITE_KIT_CSS, /\.doorplaques \.plaque:first-child \{ border-color: #f3cf86 #7a5424 #5c3f1a #c08a3e; background-color: #2a2217; \}/, 'Play, in brass');
   assert.deepEqual(SITE_ROLES.button, ['.plaque', '.ask', '.doorlinks a']);
   assert.deepEqual(SITE_ROLES.window, ['main > section']);
+  assert.deepEqual(SITE_ROLES.header, ['main > section > h2'], 'a section\'s name on its lit band');
+  // the fittings are DRAWN: the window's ::before, laid absolute over its corners, eight layers a fitting, four fittings
+  assert.match(SITE_KIT_CSS, new RegExp(`main > section::before \\{\\n  content: ''; position: absolute; inset: -${SITE_FITTING / 2 + 2}px; pointer-events: none;`));
+  assert.equal((SITE_KIT_CSS.match(/no-repeat/g) ?? []).length, 32, 'rivet and ring, the lit and shaded edges, the body and the outline - at four corners');
+  // what you press goes brass under the pointer and sinks while held
+  assert.match(SITE_KIT_CSS, /\.plaque:hover,\n\.ask:hover,\n\.doorlinks a:hover,\n\.doorplaques \.plaque:first-child:hover,\n\.plaque:focus-visible,[^{]*\{ border-color: #f3cf86 #7a5424 #5c3f1a #c08a3e;/);
+  assert.match(SITE_KIT_CSS, /\.plaque:active,\n\.ask:active,\n\.doorlinks a:active,\n\.doorplaques \.plaque:first-child:active \{ border-color: #25221b #7a7260 #9a9079 #3a352a; translate: 1px 1px;/);
 });
 
 test('PLUS-SITE: every box the page declares is one the kit paints - its edge and room the page\'s, its colour the kit\'s - and the question-and-answer lists stand a panel a pair (mutants: a section with no edge; a pair outside its panel)', () => {
@@ -194,6 +251,7 @@ test('PLUS-SITE: every box the page declares is one the kit paints - its edge an
     assert.ok(roles.includes(sel.trim()) || sel.split(',').every((s) => roles.includes(s.trim())), `${sel.trim()} declares a box the kit does not paint`);
   }
   assert.match(css, /main > section \{ position: relative; border: 4px solid;/, 'a section is a window');
+  assert.match(css, /\.doorlinks a \{ display: inline-flex; align-items: center; min-height: 44px;/, 'a section link is a thumb\'s target');
   assert.match(css, /\.cols > div, \.grid > div \{ border: 2px solid;/);
   assert.match(css, /\.step::before \{[^}]*width: 54px; height: 54px; border: 2px solid;/, 'the numeral in its socket');
   assert.match(css, /\.qa > div \{ display: grid; grid-template-columns: 220px 1fr;[^}]*border: 2px solid; \}/);

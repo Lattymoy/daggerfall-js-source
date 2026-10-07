@@ -2,8 +2,8 @@
   {
     "name": "PROFILE-MENU-sections-out-of-order",
     "file": "src/ui/enhancedAccount.js",
-    "old": "      grid.append(deeds, kept);",
-    "new": "      grid.append(kept, deeds);",
+    "old": "      if (both) grid.append(deeds);\n      grid.append(kept);",
+    "new": "      grid.append(kept);\n      if (both) grid.append(deeds);",
     "tests": [
       "test/plus_menu_site.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PROFILE-MENU-the-windows-width",
     "file": "src/ui/enhancedStyle.js",
-    "old": "{ width: min(820px, 94vw); max-height: min(720px,",
-    "new": "{ width: min(500px, 92vw); max-height: min(720px,",
+    "old": ".px-win.px-acctwin:has(.acctgrid2) { width: min(820px, 94vw); }",
+    "new": ".px-win.px-acctwin:has(.acctgrid2) { width: min(500px, 92vw); }",
     "tests": [
       "test/plus_menu_site.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PLUS-MENU-the-doors-out-of-the-role",
     "file": "src/ui/enhancedFrame.js",
-    "old": "    '.px-menu .doorbtn', '.px-menu.px-compact button'],",
-    "new": "    '.px-menu.px-compact button'],",
+    "old": "    '.px-menu .doorbtn'],",
+    "new": "    ],",
     "tests": [
       "test/plus_menu_site.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PLUS-MENU-the-diamonds-hidden",
     "file": "src/ui/enhancedPlusStyle.js",
-    "old": ".px-menu .doorbtn .px-c, .px-menu.px-compact button .px-c { visibility: visible;",
-    "new": ".px-menu .doorbtn .px-c, .px-menu.px-compact button .px-c { visibility: hidden;",
+    "old": ".px-menu .doorbtn .px-c { visibility: visible;",
+    "new": ".px-menu .doorbtn .px-c { visibility: hidden;",
     "tests": [
       "test/plus_menu_site.test.js"
     ]
@@ -214,5 +214,290 @@
     "tests": [
       "test/plus_menu_site.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-P1-the-short-screen-loses-the-height",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "@media (max-height: 560px) { .px-win.px-acctwin:has(.card.acct.acctin) { max-height: calc(100dvh - 20px); } }\n",
+    "new": "",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-P2-a-column-drawn-empty",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "const both = deeds.children.length > 0;",
+    "new": "const both = true;",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-P2-two-columns-for-one",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "@container (min-width: 600px) { .card .acctgrid.acctgrid2 {",
+    "new": "@container (min-width: 600px) { .card .acctgrid {",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-P2-the-card-no-container",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".card.acctin { container-type: inline-size; }",
+    "new": ".card.acctin { container-type: normal; }",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-P3-stone-not-lifted",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ":root[data-plus-theme=\"stone\"] .px-acctwin { --dim: #e2dccd;",
+    "new": ":root[data-plus-theme=\"stone\"] .px-acctwinx { --dim: #e2dccd;",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-P4-close-scrolls-away",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".acts { position: sticky; bottom: 0; z-index: 1;",
+    "new": ".acts { position: static; bottom: 0; z-index: 1;",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-P4-words-under-the-bar",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".px-win.px-acctwin:has(.card.acct.acctin) .px-body { padding-bottom: 0; }",
+    "new": ".px-win.px-acctwin:has(.card.acct.acctin) .px-body { padding-bottom: 24px; }",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-P7-the-bare-canvas-branch-back",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "  if (face && typeof (/** @type {any} */ (face).then) === 'function') {",
+    "new": "  if (face && typeof (/** @type {any} */ (face).then) !== 'function') faceArt = face;\n  else if (face) {",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-P8-the-share-floored",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "`${Math.round((100 * won) / (won + lost))}% of duels won`",
+    "new": "`${Math.floor((100 * won) / (won + lost))}% of duels won`",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-P9-the-guest-note-off-its-section",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "        account.append(el('p', 'meta', 'Adding a username keeps everything this account already has.'));",
+    "new": "        root.append(el('p', 'meta', 'Adding a username keeps everything this account already has.'));",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-P9-the-portrait-read-aloud",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "    well.setAttribute?.('aria-hidden', 'true');\n",
+    "new": "",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-P9-a-glyph-unnamed",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "        chip.title = GLYPH_LABEL[g.key] ?? g.key;\n",
+    "new": "",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-P9-the-phone-window-not-the-screen",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "  .px-win.px-acctwin, .px-win.px-acctwin:has(.card.acct.acctin) { width: 100%; max-height: calc(100dvh - 20px); }\n",
+    "new": "",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-P9-the-duels-tile-in-a-column",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".card ul.acctfacts.acctrecord li:has(.acctbar) { grid-column: 1 / -1; }\n",
+    "new": "",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-P9-the-pause-window-height",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".px-over .px-win.px-acctwin:has(.card.acct.acctin) { max-height: min(760px, 86dvh); }\n",
+    "new": "",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-M1-the-rail-past-the-stage",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".px-home .px-menu { width: min(384px, 100%);",
+    "new": ".px-home .px-menu { width: min(384px, calc(100vw - 32px));",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-M2-the-diamonds-named",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "d.setAttribute('aria-hidden', 'true'); return d;",
+    "new": "return d;",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-M4-stone-diamonds-gone",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ":root[data-plus-theme=\"stone\"] .px-menu .doorbtn:not(:hover):not(:focus-visible) .px-c { color: #9a9079; }\n",
+    "new": "",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-M9-no-gold-under-the-pointer",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".px-menu .doorbtn:hover .px-c, .px-menu .doorbtn:focus-visible .px-c { color: rgb(243,239,44);",
+    "new": ".px-menu .doorbtn:hover .px-c, .px-menu .doorbtn:focus-visible .px-c { color: #5a5446;",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-M9-the-rule-not-gilt",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".px-home .px-rule::before { background: linear-gradient(90deg, transparent, #7a5424 45%, #f3cf86); }",
+    "new": ".px-home .px-rule::before { background: #7d7460; }",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-M9-the-phone-font",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "  .px-menu .doorbtn { padding: 2px 16px; min-height: 44px; font-size: 22px; }",
+    "new": "  .px-menu .doorbtn { padding: 2px 16px; min-height: 44px; }",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S3-the-fittings-not-drawn",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "${list(r.window, '::before')} {",
+    "new": "${list(r.window, '::nope')} {",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S3-the-fittings-not-laid-over",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "  content: ''; position: absolute; inset: -${SITE_FITTING / 2 + 2}px; pointer-events: none;",
+    "new": "  content: ''; inset: -${SITE_FITTING / 2 + 2}px; pointer-events: none;",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S3-a-fitting-without-its-body",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "    at(t.brass, 1, 1, F - 2, F - 2), at(t.outline, 0, 0, F, F),",
+    "new": "    at(t.outline, 0, 0, F, F),",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S5-no-name-band",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "  header: ['main > section > h2'],",
+    "new": "  header: [],",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S5-no-brass-under-the-pointer",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "${list(pressable, ':hover')},\n${list(pressable, ':focus-visible')} { border-color: ${BRASS}; background-color: ${t.groundButtonHi};",
+    "new": "${list(pressable, ':focus-visible')} { border-color: ${BRASS}; background-color: ${t.groundButtonHi};",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S5-never-sinks",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "${list(pressable, ':active')} { border-color: ${SUNK}; translate: 1px 1px;",
+    "new": "${list(pressable, ':active')} { border-color: ${RAISED}; translate: 1px 1px;",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-S9-a-link-under-the-tap-floor",
+    "file": "index.html",
+    "old": ".doorlinks a { display: inline-flex; align-items: center; min-height: 44px;",
+    "new": ".doorlinks a { display: inline-flex; align-items: center;",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EQ-the-bar-unclamped",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "        b.value = Math.max(0, Math.min(max, value));",
+    "new": "        b.value = value;",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ],
+    "equivalent": true,
+    "why": "No caller can leave the range (won <= won + lost; a level's xp in is under its need), and a real <progress> clamps its value to [0, max] itself - the clamp is belt and braces for the fake document alone."
+  },
+  {
+    "name": "AUDIT-EQ-host-not-restored-after",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "      host = root;\n      // AUDIT PROFILE-MENU P2",
+    "new": "      // AUDIT PROFILE-MENU P2",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ],
+    "equivalent": true,
+    "why": "build() sets host = root at its top on every paint, and wardrobe()/patreonRow() are called only inside the signed-in block with host set just before each - the restore after the block is redundant with the reset before the next."
+  },
+  {
+    "name": "AUDIT-EQ-a-face-repaints-a-form",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "if (art) { faceArt = art; if (flow.stage === 'in') paint(); }",
+    "new": "if (art) { faceArt = art; paint(); }",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ],
+    "equivalent": true,
+    "why": "A repaint of a form puts the focus and caret back (AUDIT TERMS1 T3's focusBack), so an extra paint when a face lands on a sign-in card is invisible; the stage check only spares the work."
   }
 ]

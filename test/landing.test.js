@@ -400,7 +400,7 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   const boxes = (css.match(/border: 2px solid #7d7460/g) ?? []).length;
   assert.equal(boxes, 2, 'the plaque shape and the asks\' shape - no third plaque rule, not even a second ask');
   const colourless = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/border: \d+px solid(?=;)/g)].length;
-  assert.ok(colourless >= 6, `the kit's boxes give their edge and no colour (${colourless})`);
+  assert.equal(colourless, 6, 'the kit\'s boxes give their edge and no colour - a section, its columns and features, a step and its numeral, a question\'s panel, a section link');   // AUDIT PLUS-SITE S12: exact, not at least
   assert.match(css, /\.plaque \{/);
   assert.match(css, /\.ask \{/);
   // The door's three, exactly: Play into the browser, Install onto the

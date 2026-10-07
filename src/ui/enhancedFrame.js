@@ -162,9 +162,10 @@ export const FRAME_ROLES = {
     'body .dfpage-btn', 'body .dfpeer-btn:not(.cancel)', 'body .dfduel-btn', 'body .dfprofile-duel', 'body .dfdecor-btn', 'body .dfdecor-open',
     'body .dfprofile-wed',   // LEGACY7 part three: the inspect card's Propose
     'body .dfnaval-btn',   // NAV-F: the plunder window's presses
-    // PLUS-MENU (2026-10-07, Mac: "give the main menu the enhanced plus UI treatment"): the front door's doors and the
-    // System tab's list - stone slabs that go brass under the pointer, as every other Plus press does
-    '.px-menu .doorbtn', '.px-menu.px-compact button'],
+    // PLUS-MENU (2026-10-07, Mac: "give the main menu the enhanced plus UI treatment"): the front door's doors - stone
+    // slabs that go brass under the pointer, as every other Plus press does (AUDIT PLUS-MENU M3: the System tab's list
+    // named beside them was `.px-menu.px-compact`, which nothing builds - that list is the rail's rows, the qrow role)
+    '.px-menu .doorbtn'],
   primary: ['.lv-ok', '.hmroot .act:not(.hmtool)', 'body .dfdecor-place', 'body .bounty-shell .act.primary', 'body .lgs-shell .act.primary', 'body .notice-shell .act.primary',
     'body .aw-shell .act.primary',   // ARENA3: Fight and the wager placed - what the window is for   // BOUNTY1: Take bounty and Take the reward in brass   // PLUS-MAP: the map's tools are plain stone   // PLUS-DRESS: Place is what the decorator is for
     'body .dfnaval-take'],   // NAV-F: Take all (and a raid's Sail on) - what the plunder window is for
