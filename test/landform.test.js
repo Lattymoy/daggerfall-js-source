@@ -14,6 +14,7 @@ import { createLandforms, reliefLift, reliefByteHeight, landformLift, LANDFORM_K
 import { generateTileData, BEACH_JITTER } from '../src/world/terrainTiles.js';
 import { generatePixelTerrain, restrideGrid } from '../src/world/terrainGen.js';
 import { DIR } from '../src/world/roadNetwork.js';
+import { syntheticWoodsBytes, network } from './landformWorld.mjs';   // the synthetic world, one home (AUDIT LANDFORMS)
 import { ringHeight, buildFarRingGrid } from '../src/render/farRing.js';
 import { landformsOn } from '../src/scenes/shared.js';
 import { FEATURES, checkFeature } from '../src/systems/features.js';
@@ -30,47 +31,10 @@ const UNIT = MAX_TERRAIN_HEIGHT;   // a normalized sample in kernel units
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const WORLD = src('src/scenes/world.js');
 
-/** A WOODS.WLD the real reader loads: the sea west of x = 100, land rising east, one mountain at (400, 250) up to the
- *  7-bit top, and four large-map cells taken in turn so the large heightmap is not one value everywhere. */
-function syntheticWoodsBytes() {
-  const offsetsStart = 32 + 28 * 4;
-  const cellsStart = offsetsStart + MAP_WIDTH * MAP_HEIGHT * 4;
-  const CELL = 22 + 25;
-  const heightMapOffset = cellsStart + 4 * CELL;
-  const out = new Uint8Array(heightMapOffset + MAP_WIDTH * MAP_HEIGHT);
-  const v = new DataView(out.buffer);
-  v.setUint32(0, MAP_WIDTH * MAP_HEIGHT * 4, true);
-  v.setUint32(4, MAP_WIDTH, true);
-  v.setUint32(8, MAP_HEIGHT, true);
-  v.setUint32(16, cellsStart, true);
-  v.setUint32(28, heightMapOffset, true);
-  for (let c = 0; c < 4; c++) for (let i = 0; i < 25; i++) out[cellsStart + c * CELL + 22 + i] = 6 + ((i * 7 + c * 5) % 9);
-  for (let y = 0; y < MAP_HEIGHT; y++) {
-    for (let x = 0; x < MAP_WIDTH; x++) {
-      v.setUint32(offsetsStart + (y * MAP_WIDTH + x) * 4, cellsStart + ((x + 2 * y) % 4) * CELL, true);
-      const land = x < 100 ? 0 : Math.round((x - 100) * 0.35);
-      const cone = Math.max(0, 60 - Math.hypot(x - 400, y - 250) * 0.6);
-      out[heightMapOffset + y * MAP_WIDTH + x] = Math.min(127, Math.round(land + cone));
-    }
-  }
-  return out;
-}
 const WOODS_BYTES = syntheticWoodsBytes();
 const woods = new WoodsFile();
 assert.equal(woods.load(WOODS_BYTES.slice()), true);
 
-/** A network in Basic Roads' layout - one compass byte a map pixel, y * 1000 + x. */
-function network({ water = true } = {}) {
-  const n = { roads: new Uint8Array(MAP_WIDTH * MAP_HEIGHT), tracks: new Uint8Array(MAP_WIDTH * MAP_HEIGHT), rivers: new Uint8Array(MAP_WIDTH * MAP_HEIGHT), streams: new Uint8Array(MAP_WIDTH * MAP_HEIGHT), water, smooth: true };
-  const set = (arr, x, y, m) => { arr[y * MAP_WIDTH + x] |= m; };
-  for (let y = 240; y <= 262; y++) set(n.roads, 300, y, DIR.N | DIR.S);              // a road north-south over the land
-  for (let x = 280; x <= 320; x++) set(n.rivers, x, 255, DIR.E | DIR.W);             // a river east-west, under it
-  for (let k = 0; k < 8; k++) set(n.tracks, 290 + k, 244 - k, DIR.NE | DIR.SW);      // a track on the diagonal
-  for (let y = 245; y <= 252; y++) set(n.streams, 312, y, DIR.N | DIR.S);             // a stream
-  for (let x = 92; x <= 112; x++) set(n.roads, x, 200, DIR.E | DIR.W);               // a road down to the beach
-  for (let x = 92; x <= 112; x++) set(n.rivers, x, 300, DIR.E | DIR.W);              // and a river out to sea
-  return n;
-}
 const NET = network();
 const LF = createLandforms({ woods, roads: NET });
 const RELIEF = createLandforms({ woods });   // the lift alone: no network to cut along
@@ -228,12 +192,13 @@ test('LANDFORM2: a road is graded level across to the kernel\'s own macro height
     cutAway = Math.max(cutAway, (at(lifted, 64, y) - bed) * UNIT);
   }
   assert.ok(cutAway > 1, `the ground noise is cut out of the bed (up to ${cutAway.toFixed(2)} units)`);
-  // the bank rises from the bed toward the land, never past it
+  // the bank runs from the bed toward the smooth land, never past it - up on the high side, down on the low side (PIN
+  // MOVED, AUDIT LANDFORMS E1: the low side was a level shelf, which passed a check against the land with noise trivially)
   for (const y of [30, 90]) {
     const bed = at(cut, 64, y);
     for (const x of [61, 67]) {
-      const v = at(cut, x, y), land = at(lifted, x, y);
-      assert.ok((v - bed) * (land - bed) >= 0 && Math.abs(v - bed) <= Math.abs(land - bed) + 1e-7, `y=${y} x=${x}: the bank lies between the bed and the land`);
+      const v = at(cut, x, y), smooth = macro(x, y);
+      assert.ok((v - bed) * (smooth - bed) >= 0 && Math.abs(v - bed) <= Math.abs(smooth - bed) + 1e-7, `y=${y} x=${x}: the bank lies between the bed and the smooth land`);
     }
   }
 });

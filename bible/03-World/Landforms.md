@@ -90,9 +90,11 @@ the land's median 459 m unchanged, the 90th percentile 1,180 -> 1,567 m, the
 peaks 1,924 -> about 3,000 m; the steepest macro slope 11 -> 20 degrees.
 
 THE FAR RING takes the same lift (`render/farRing.js` ringHeight's `relief`,
-`reliefByteHeight`): it reads the same byte at a pixel's centre the streamed
-kernel's `low` comes from, so the horizon stands the massifs the ground it
-hands over to stands. The travel view past the built grid reads it too.
+`reliefByteHeight`): it reads the byte the streamed kernel's `low` is
+interpolated from, so the horizon's massifs rise by the lift the ground they
+hand over to rises by. The travel view past the built grid reads it too. (The
+ring leaves out the large heightmap's term and stands a byte at its pixel's
+centre, as it did - EV8's own law, a residue below.)
 
 ## LANDFORM2 - THE ROADS ARE CUT IN
 
@@ -107,10 +109,13 @@ pixels on a seam read one profile).
 
 THE CROSS-SECTION, per layer (`LANDFORM_DIALS`; distances in samples of 6.4 m,
 heights in kernel units of 1.25 m): a level floor out to `flat`; a bank over
-`bank` up to its TOP - the smooth land, or `drop` over the floor where the land
-lies lower; then the land again, its ground noise with it, over the `verge`. So
-a road on a hillside is cut into it with a bank up to the land, and on its low
-side runs a level shoulder and an embankment down. Near a centre or a bend the
+`bank` to its TOP - the smooth land, or for a river or a stream `drop` over its
+floor where the land lies lower (a levee); then the land again, its ground noise
+with it, over the `verge`. So a road on a hillside is cut into it with a bank up
+to the land, and on its low side filled with a bank down to it over the same
+width (AUDIT LANDFORMS E1: it was a level shelf the bank's whole width, the
+levee's rule with a `drop` of 0 - a bed 32 m wide on a hillside, and fills to
+11 m on the real WOODS.WLD where 4 m now stand). Near a centre or a bend the
 arms grade a sample together (inverse-square weights on the squared distance,
 so the nearest is all but alone and a bend's inside is a blend, never a step),
 and an arm the sample lies BEYOND the end of stands down over one sample - a
@@ -126,7 +131,15 @@ alongside grades it (the road is level across to the float).
 
 The layers lerp in paint order, the last winning (roadPainter.js: the first
 painter to write a tile keeps it, and roads paint first): a road over a river
-is a causeway. Each layer's reach is its flat, bank and verge (under ten
+is a causeway. A CHANNEL IS THE WATER'S (AUDIT LANDFORMS E2): where a sample
+lies in a river's or a stream's channel - its floor, and its bank by how far up
+it - a road or a track stands there on its own bed alone, the causeway's top,
+and its bank and verge give way to the channel. They refilled it: on the real
+WOODS.WLD the painted water climbed up to 19 m out of its floor beside 629
+crossings and riverside roads (55,096 wet corners lifted half a metre or more;
+11,191 now, every one a corner a water tile shares with the road's own bed - the
+one row of water against the causeway, which a heightfield cannot hold level).
+Each layer's reach is its flat, bank and verge (under ten
 samples), well inside the 3 x 3 pixels a shaper gathers its arms from. Within
 `coast` (12 units) over the knee every cut fades in from nothing, so a path run
 down to the beach meets it without a step.
@@ -214,12 +227,15 @@ Roads network, in scratch, with the slice's own functions:
   (the Dragontail summit, pixel (943, 470)); 45.8% of the land lifted by more
   than a metre. Over the whole Bay at two samples a pixel, only the glitch's
   four samples moved with THE CEILING.
-- THE ROADS, 300 straight road and track pixels: the bed's tilt across its
-  painted tiles median 0.75 -> 0.01 m, 95th percentile 2.78 -> 0.35 m, worst
-  11.5 -> 2.3 m; the cut under the centre line median 0.8 m, worst 1.9 m (the
-  ground noise taken away); an embankment's height median 0.6 m, worst 12.8 m
-  (a level shoulder on a steep hillside); the grade along the road median
-  2.9% either way, 95th percentile 10.7 -> 11.2%.
+- THE ROADS, 300 straight road and track pixels (AUDIT LANDFORMS re-measured
+  them, E1 in): the bed's tilt across its painted tiles median 0.54 -> 0.00 m,
+  95th percentile 1.90 -> 0.00 m, worst 8.0 -> 0.00 m; the cut under the centre
+  line median 0.8 m, worst 2.0 m (the ground noise taken away); a fill's height
+  median 0.3 m, worst 5.9 m (it was 0.6 and 12.8 m with the level shelf); the
+  grade along the road median 2.8% either way, 95th percentile 10.7 -> 10.9%.
+- THE PAINTED WATER, every river and stream pixel (3,048): every wet corner
+  over the coast fade lies on its channel's flat floor - bends, junctions,
+  joins and mouths alike.
 - THE RIVERS, 199 straight inland river pixels: the floor level across its
   painted width (median spread 0.00 m), 2.2 m under the lower bank top (median;
   95th percentile 2.7 m).
@@ -238,6 +254,11 @@ Roads network, in scratch, with the slice's own functions:
   bills more HP than any character has either way.
 - At the far ring classes (stride 2 and 4) a cut a few samples wide is
   sampled, not drawn - a painted road was already so.
+- The far ring (EV8) stands a pixel's byte at the pixel's centre with no
+  large-heightmap term, so the streamed ground stands a median 213 m over the
+  ring's vertex with the row off and 212 m with it on (AUDIT LANDFORMS): the
+  lift scales that gap and opens none. The extremes widen with the relief
+  (726 -> 1,174 m), which is the ring's own law at taller heights.
 - Online, the room's memory (WORLD1) carries heights with no stamp, as it
   carried no terrain scale. The row and the river switch are forced on for
   every player at once and a room forgets when it empties, so its heights
@@ -246,6 +267,13 @@ Roads network, in scratch, with the slice's own functions:
   the shapes were checked on the picture as a stand-in heightmap and on the
   real Basic Roads network, never on the real WOODS.WLD. WATER2's lesson
   stands: Mac's eye in the real game before the merge.
+
+## AUDIT LANDFORMS (2026-10-07)
+
+Mac: *"Dont worry about it. Instead let's do just an audit and ensure this is
+perfect"* - the record is `01-Overview/Audit-Landforms.md`. It changed two laws
+of this page: a road's low bank falls to the land (E1), and a channel is the
+water's (E2) - both above, in LANDFORM2.
 
 ## Pins
 

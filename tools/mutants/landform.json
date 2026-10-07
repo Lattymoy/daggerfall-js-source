@@ -130,7 +130,7 @@
   {
     "name": "LANDFORM-no-levee",
     "file": "src/world/landforms.js",
-    "old": "const top = smoothLand > floor + dial.drop ? smoothLand : floor + dial.drop;",
+    "old": "const top = dial.drop > 0 && !(smoothLand > floor + dial.drop) ? floor + dial.drop : smoothLand;",
     "new": "const top = smoothLand;",
     "tests": [
       "test/landform.test.js"

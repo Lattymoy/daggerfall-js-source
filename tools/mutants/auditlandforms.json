@@ -1,0 +1,56 @@
+[
+  {
+    "name": "AUDIT-LANDFORMS-E2-road-refills-the-channel",
+    "file": "src/world/landforms.js",
+    "old": "      if (chan > 0 && !layers[li].water && dmins[li] > layers[li].dial.flat) a *= 1 - chan;\n",
+    "new": "",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-E2-no-layer-is-water",
+    "file": "src/world/landforms.js",
+    "old": "    if (segs.length) layers.push({ dial, reach, segs, water: LAYERS[li].water });",
+    "new": "    if (segs.length) layers.push({ dial, reach, segs, water: false });",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-E2-distances-never-kept",
+    "file": "src/world/landforms.js",
+    "old": "      dmins[li] = dmin;\n",
+    "new": "",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-E2-the-causeway-gives-way-too",
+    "file": "src/world/landforms.js",
+    "old": "if (chan > 0 && !layers[li].water && dmins[li] > layers[li].dial.flat) a *= 1 - chan;",
+    "new": "if (chan > 0 && !layers[li].water) a *= 1 - chan;",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-E2-the-channel-past-its-bank",
+    "file": "src/world/landforms.js",
+    "old": "const d = layers[li].dial, c = 1 - smoothstep(d.flat, d.flat + d.bank, dmins[li]);",
+    "new": "const d = layers[li].dial, c = 1 - smoothstep(d.flat, d.flat + d.bank + d.verge, dmins[li]);",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-E1-the-level-shelf-back",
+    "file": "src/world/landforms.js",
+    "old": "const top = dial.drop > 0 && !(smoothLand > floor + dial.drop) ? floor + dial.drop : smoothLand;",
+    "new": "const top = smoothLand > floor + dial.drop ? smoothLand : floor + dial.drop;",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  }
+]
