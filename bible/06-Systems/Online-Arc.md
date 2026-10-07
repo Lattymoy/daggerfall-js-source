@@ -14957,8 +14957,21 @@ AUDIT LANDFORMS (2026-10-07, `01-Overview/Audit-Landforms.md`) added three:
   Keeping them apart is a relay change. The saves are safe across builds
   either way (C1: every height a record carries is DFU's frame).
 
+AUDIT LANDFORMS II (2026-10-07) added one and named one:
+- G3: nothing timed out a fetch of Basic Roads' arrays, so one that never
+  answered left that client roadless for the session and the retry never asked
+  again. A fetch is a failed ask after 30 s now (`world/roadsProducer.js`
+  MOD_ROADS_FETCH_TIMEOUT_MS: each file's fetch and its body race it and are
+  asked to stop).
+- C3'S WINDOW, named: while the retry asks again (555 s of backoff over twelve
+  tries) a client stands roadless beside peers on the network - a peer on a
+  road drawn sunk a median 0.77 m, one wading a river drawn under the ground a
+  median 2.04 m - until the arrays land (`03-World/Landforms.md`, RESIDUES).
+  When they land, what lies on the ground rides the rebuilt ground (G1/G2).
+
 Pins: `test/landform.test.js`, `test/auditlandforms.test.js` (C3: the backoff
-and the host's landing, online and off; C4), `test/modsonline.test.js` (the
+and the host's landing, online and off; C4; G3: the fetch's timeout; J7: the
+retry on its own defaults), `test/modsonline.test.js` (the
 count, 47; the named key), `test/onlinelane.test.js` (the contrast re-aimed a
 third time, at the roads a travel map only draws),
 `test/uxb1e_onlinesync.test.js`; mutants: `tools/mutants/landform.json` (36,

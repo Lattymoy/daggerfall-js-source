@@ -704,6 +704,10 @@ stands on when his arrays do not load - and online that one failed fetch stood a
 than its room's. Online `loadModRoads`' failure is asked again (`retryModRoads`, WOD6's backoff: 5 s, doubling to a
 minute, twelve more tries); the pixels stand roadless meanwhile and the roads sweep rebuilds them when the arrays land
 (ROADS 25). The generated network stands in only once every try has failed; offline it stands in at once, as before.
+AUDIT LANDFORMS II G3: and a fetch is a failed ask after 30 s (`MOD_ROADS_FETCH_TIMEOUT_MS`) - each file's fetch and
+its body race it and are asked to stop. Nothing timed one out, so a fetch that never answered left a client roadless
+for the session and the retry never asked again. When the arrays land after a pixel's first build, what lies on its
+ground rides the rebuilt ground (G1/G2, `03-World/Landforms.md` THE SAVES).
 
 ## VERGE1 - clear roadsides: nothing of the wild stands over a road (2026-10-07, a port departure)
 

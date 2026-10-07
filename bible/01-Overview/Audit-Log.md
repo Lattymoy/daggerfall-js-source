@@ -8,6 +8,25 @@
 
 Newest first.
 
+**2026-10-07 - AUDIT LANDFORMS II.** Mac: *"Do another deep audit on this"*, of LANDFORM1-3 and its first audit (#655).
+Six lenses on the audited head - the first audit's fixes, the network's timing, main's arrivals since, the body on the
+ground, the tests' and the record's honesty (five independent adversarial reviewers on a snapshot), and this session's
+own on the real data and in the running game. Paid: a Travel Options journey down a lifted mountain road billed lethal
+falls - the collider's floor reaches as far as the slope limit allows over a substep's run now (I3); a track over water
+was painted a ford and cut a causeway, its water up to 7.9 m over the channel - a track gives way to the channel too
+(J1), and streams are pinned at last (J2); a bench on a steep hillside stood its banks twice the hillside's grade and
+launched runs into 20-49 m falls - a bank is held within half a grade of its hillside (I2); when Basic Roads' network
+landed after a pixel's first build, what lay on its ground stayed in the air (a pile 28 m up) and the held player fell
+the cut - both ride the new ground now (G1/G2); a fetch that never answered left an online client roadless all
+session - a failed ask after 30 s (G3); the spawn's probe was bound after the boot's load, and a camp by a spawn
+drifted 24 m a session (F1); nature asked the beach line of the shaped blend while the tiles asked DFU's (H2); and the
+lift steepened Menevia's sea-cliff rim into a wall a road dropped a walker 95 m down - asked "Is it too steep?", then
+"Go ahead", the lift fades beside the sea now and the rim stands as DFU stands it (I1). This session's own headless boot
+caught a boot crash its G1 fix had made and the boot gate missed - fixed, and the gate scoped (K1) - and drove a save
+across the row both ways onto its ground. Every fix's pin red first; the first audit's overstated sentences corrected
+(J1, J8, J11, I4, I5). 60 new mutants and 24 re-aimed; 195 judged on the final code, 189 dead and 6 recorded
+equivalent. Record: `Audit-Landforms.md` (AUDIT LANDFORMS II).
+
 **2026-10-07 - AUDIT LANDFORMS.** Mac: *"Dont worry about it. Instead let's do just an audit and ensure this is
 perfect"*, of LANDFORM1-3 (#655), the heightmap raised, the roads cut in, the rivers in channels. Five lenses - the law
 and the math re-measured on the real WOODS.WLD, and four independent adversarial reviewers on a snapshot of the pushed
@@ -18,7 +37,7 @@ every height a record carries is in DFU's frame now, no stamp (C1); a record sto
 wild lift, 203 m off a town at worst (B1), and across a change of the row one by a road landed up to 29.8 m over its
 ground - the field follows the cuts now (B2); 359 coastal town tiles turned between sand and land through the blend -
 a location's tiles are DFU's own blend's now (D3); online one failed fetch stood a client on other roads (C3). Every
-pin red first; lane D's 69 mutants in the record, the arm-weighting law written out and equal to the shaper at every
+fix's pin red first (lane D's coverage pins proven by their mutants - AUDIT LANDFORMS II J8); lane D's 69 mutants in the record, the arm-weighting law written out and equal to the shaper at every
 sample. 135 mutants, 128 dead and 7 recorded equivalent. Open for Mac: two builds in one room (C2), OW-MOUNTAINS on the
 lifted ground (A2). Record: `Audit-Landforms.md` (AUDIT LANDFORMS).
 
