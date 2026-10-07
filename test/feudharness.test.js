@@ -22,10 +22,14 @@ const { Collider } = await import('../src/player/collider.js');
 const { EnemyAttack } = await import('../src/characters/enemyAttack.js');
 const { setPref, getPref } = await import('../src/systems/uiPrefs.js');
 const { MOBILE_TYPES: M } = await import('../src/characters/mobileTypes.js');
+const { runSpeed } = await import('../src/player/motor.js');
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const SEEDS = (n, from = 1) => Array.from({ length: n }, (_, i) => from + i);
 const fights = (opts, seeds) => seeds.map((seed) => H.revenantFight({ ...opts, seed }));
+// PIN MOVED (FLIGHT-FIRST, test/flightfirst.test.js): a fleeing foe runs at twice its walk now, and a runner at Speed
+// and Running 50 no longer runs it down on flat ground - the flight's pins below chase as a fast runner does
+const FAST = runSpeed(90, 90);
 
 test('FEUD HARNESS THE FAULT: risen in its last stand as it runs, its run is over - the motor no longer flees, and the flee law asks nothing more of it (mutants: the run left running)', () => {
   const was = getPref('lootRarity');
@@ -79,24 +83,24 @@ test('FEUD HARNESS ITS FLIGHT: under a fifth of its health it may run - striking
   let struckRunning = 0;
   EnemyAttack.prototype.update = function (dt, ai, ...rest) { if (ai?.fleeLeft > 0 && ai.vitals?.()?.revenant) struckRunning++; return step.call(this, dt, ai, ...rest); };
   let rows;
-  try { rows = fights({ rank: 3, mode: 'trade' }, SEEDS(40)); } finally { EnemyAttack.prototype.update = step; }
+  try { rows = fights({ rank: 3, mode: 'trade', runner: FAST }, SEEDS(40)); } finally { EnemyAttack.prototype.update = step; }
   assert.equal(struckRunning, 0, 'running, its attack is never stepped (the pools\' `continue`)');
   const ran = rows.filter((x) => x.flight);
   assert.ok(ran.length >= 3, `some run (${ran.length})`);
   assert.ok(ran.every((x) => x.scattered === x.band), 'its band scatters from it');
   assert.ok(ran.every((x) => x.end === 'knelt' || x.end === 'tore'), 'run down');
   assert.ok(ran.some((x) => x.stoodInFlight), 'some rise in their last stand as they run - and fight on to their end');
-  assert.ok(ran.some((x) => x.caught), 'some are brought down as they run');
+  assert.ok(ran.some((x) => x.cornered), 'some are run down and cornered');   // PIN MOVED (FLIGHT-FIRST): a fast runner at a rank-3's heels finds its last stand first, never its kneel mid-run (`caught` - test/flightfirst.test.js, rank 1)
   const long = ran.filter((x) => x.t - x.flightAt > F.BAND_SCATTER_S + 0.5);
   assert.ok(long.length > 0 && long.every((x) => x.bandGone === x.band), 'its scattered band gone when its run is spent');
   assert.ok(ran.filter((x) => x.t - x.flightAt < F.BAND_SCATTER_S - 0.5).every((x) => x.bandGone === 0), 'not before');
-  const let_ = fights({ rank: 3, mode: 'trade', chase: false }, ran.map((x) => rows.indexOf(x) + 1));
+  const let_ = fights({ rank: 3, mode: 'trade', chase: false, runner: FAST }, ran.map((x) => rows.indexOf(x) + 1));
   assert.ok(let_.filter((x) => x.flight).length > 0 && let_.filter((x) => x.flight).every((x) => x.end === 'fled'), 'let go, it escapes');
   assert.ok(fights({ rank: 3, mode: 'trade', flight: false }, SEEDS(40)).every((x) => !x.flight && x.end !== 'fled'), 'no flight: none');
 });
 
 test('FEUD HARNESS RANK 5\'S RALLY: at its stand its band\'s survivors to it; its band scattered by its flight, RALLY_KIN of its kin through a portal (mutants: the rally unasked; the portal unopened; the count moved)', () => {
-  const rows = fights({ rank: 5, mode: 'trade' }, SEEDS(40));
+  const rows = fights({ rank: 5, mode: 'trade', runner: FAST }, SEEDS(40));
   const stood = rows.filter((x) => x.stood);
   assert.ok(stood.some((x) => x.rallied === x.band && x.portal === 0), 'its band standing: to it');
   const portal = stood.filter((x) => x.portal > 0);
