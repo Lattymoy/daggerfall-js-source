@@ -36,7 +36,7 @@
 
 import { hash32 } from '../../world/spawnedDungeons.js';
 import { mulberry32 } from '../../combat/bloodArt.js';
-import { hullBuild } from './navalShips.js';
+import { hullBuild, MOD_CARRACK_BUILD } from './navalShips.js';
 
 /** How far past the town's rect a berth may lie (m), the shore scan's grid (m), the water kept between a berth's hull
  *  and the shore (m), a berth's spacing (her lengths), and the most berths a harbour holds. */
@@ -62,6 +62,10 @@ export const HULL_DRAFT = Object.freeze([0.8, 1.4, null, 2.8, 3.2]);
 export const DRAFT_SPARE = 0.06;
 export const draftOf = (hull) => {
   const h = Math.min(HULL_DRAFT.length - 1, Math.max(0, hull | 0));
+  // SHIPS-2: the new carrack's is her keel's too (4.65 m - the table's 3.2 sailed her 4.59 m keel over a 3.3 m floor),
+  // the table's while the mod's own carrack stands in for her; under the galleon's 4.7, so the deepest that berths is the
+  // galleon still and no harbour is sounded anew
+  if (h === 4 && hullBuild(4) !== MOD_CARRACK_BUILD) return DRAFT_SPARE - hullBuild(4).keel;
   return h === 2 ? DRAFT_SPARE - hullBuild(2).keel : /** @type {number} */ (HULL_DRAFT[h]);
 };
 /** AUDIT GN2-GN1: the deepest keel of BERTH_HULLS as the hulls stand. */
@@ -122,18 +126,29 @@ export function hullSize(hull) {
   const b = hullBuild(hull);
   return { length: b.bowZ - b.aftZ, halfWidth: b.halfWidth, bowZ: b.bowZ, aftZ: b.aftZ };
 }
+/** SHIPS-2: THE SHIP A HARBOUR'S BERTHS ARE SIZED FOR - the mod's own Carrack's footprint (MOD_CARRACK_BUILD: 51.95 m by
+ *  8.43 a side), whatever stands as BERTH_HULL. Mac's carrack is 49.45 m by 6.70: sized off her, every port's berths
+ *  would stand anew and its quays with them. So a berth is sounded, spaced, approached and quayed for the template, and
+ *  a hull lies alongside it by her own half beam against the template's (`alongside`). Any other hull its own size. */
+export const BERTH_TEMPLATE = MOD_CARRACK_BUILD;
+export function berthSize(hull) {
+  if (hull !== BERTH_HULL) return hullSize(hull);
+  const b = BERTH_TEMPLATE;
+  return { length: b.bowZ - b.aftZ, halfWidth: b.halfWidth, bowZ: b.bowZ, aftZ: b.aftZ };
+}
 
 /** QUAYS (systems/naval/quays.js): where a hull lies alongside a berth's quay - the berth is sounded for `harbourHull`
  *  (BERTH_HULL, the Carrack) and its quay stands off that hull's side, so a narrower one lies in toward it by the
  *  difference and a wider one out from it: her side always the quay's gap off its face. `[x, z]`. */
 export function alongside(berth, hull, harbourHull = BERTH_HULL) {
-  const off = hullSize(hull).halfWidth - hullSize(harbourHull).halfWidth;
+  const off = hullSize(hull).halfWidth - berthSize(harbourHull).halfWidth;
   return [berth.pos[0] + berth.normal[0] * off, berth.pos[1] + berth.normal[1] * off];
 }
 
-/** Whether her whole footprint at `pos` ([x, z]) heading `yaw` floats: her centreline bow to stern and both sides. */
+/** Whether her whole footprint at `pos` ([x, z]) heading `yaw` floats: her centreline bow to stern and both sides - a
+ *  berth's (BERTH_HULL's) the berths' template's (SHIPS-2: berthSize). */
 export function footprintClear(pos, yaw, hull, isWater) {
-  const { halfWidth, bowZ, aftZ } = hullSize(hull);
+  const { halfWidth, bowZ, aftZ } = berthSize(hull);
   const fx = Math.sin(yaw), fz = Math.cos(yaw), sx = fz, sz = -fx;
   for (let z = aftZ; z <= bowZ + 1e-6; z += Math.max(4, (bowZ - aftZ) / 8)) {
     for (const s of [-halfWidth, 0, halfWidth]) {
@@ -150,7 +165,7 @@ export function footprintClear(pos, yaw, hull, isWater) {
  * AUDIT GN2-GN1: sounded for `hull`'s footprint in `deep`'s water too - the deepest keel that berths (BERTH_HULLS).
  */
 export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deepestBerther(), max = HARBOUR_BERTHS }) {
-  const { length, halfWidth } = hullSize(hull);
+  const { length, halfWidth } = berthSize(hull);   // SHIPS-2: the berths' template's
   const isWater = (x, z, h) => !!own(x, z, h) && (h === deep || !!own(x, z, deep));
   const water = (x, z) => isWater(x, z, hull);
   const cx = (rect.minX + rect.maxX) / 2, cz = (rect.minZ + rect.maxZ) / 2;

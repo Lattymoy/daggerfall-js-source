@@ -256,7 +256,7 @@
   {
     "name": "QUAY-alongside-the-point",
     "file": "src/systems/naval/shipLife.js",
-    "old": "  const off = hullSize(hull).halfWidth - hullSize(harbourHull).halfWidth;",
+    "old": "  const off = hullSize(hull).halfWidth - berthSize(harbourHull).halfWidth;",
     "new": "  const off = 0;",
     "tests": [
       "test/quays.test.js",

@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-GN2-PF3-her-pictures-at-her-first-draw",
     "file": "src/scenes/comeSailAwayPool.js",
-    "old": "        try { await pipeline.getTexture(GALLEON_ARCHIVE); for (const r of GALLEON_BANDS.sternWindows.recs) galleonGlow(r); }",
-    "new": "        try { for (const r of GALLEON_BANDS.sternWindows.recs) galleonGlow(r); }",
+    "old": "        try { await pipeline.getTexture(art.archive); for (const r of art.glowRecs) art.glow(r); }",
+    "new": "        try { for (const r of art.glowRecs) art.glow(r); }",
     "tests": [
       "test/auditgalleon2_prefab.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-GN2-PF3-her-glow-at-her-first-draw",
     "file": "src/scenes/comeSailAwayPool.js",
-    "old": "await pipeline.getTexture(GALLEON_ARCHIVE); for (const r of GALLEON_BANDS.sternWindows.recs) galleonGlow(r); }",
-    "new": "await pipeline.getTexture(GALLEON_ARCHIVE); }",
+    "old": "await pipeline.getTexture(art.archive); for (const r of art.glowRecs) art.glow(r); }",
+    "new": "await pipeline.getTexture(art.archive); }",
     "tests": [
       "test/auditgalleon2_prefab.test.js"
     ],
@@ -83,7 +83,7 @@
   {
     "name": "AUDIT-GN2-PF5-her-archive-never-marked",
     "file": "src/scenes/comeSailAwayPool.js",
-    "old": "        pipeline?.markClassicArt?.(GALLEON_ARCHIVE);\n",
+    "old": "        pipeline?.markClassicArt?.(art.archive);\n",
     "new": "",
     "tests": [
       "test/auditgalleon2_prefab.test.js"
@@ -93,7 +93,7 @@
   {
     "name": "AUDIT-GN2-PF5-her-glow-a-replacement",
     "file": "src/scenes/comeSailAwayPool.js",
-    "old": "{ replacement: !pipeline.isClassicArt?.(GALLEON_ARCHIVE) }",
+    "old": "{ replacement: !pipeline.isClassicArt?.(sm.textureArchive) }",
     "new": "{ replacement: true }",
     "tests": [
       "test/auditgalleon2_prefab.test.js"

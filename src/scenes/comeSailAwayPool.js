@@ -50,8 +50,10 @@ import { cullDisabled } from '../render/frustum.js';
 import { mat4FromQuatPosScale, quatRotateInto } from '../world/quat.js';
 import { colliderPoses, boxColliderTriangles, invertAffine, BUILTIN_COLLIDER_MESHES } from '../world/prefabColliders.js';   // DECK-WALK: a hull's colliders at rest
 import { buildDeck } from '../systems/naval/navalDeck.js';   // DECK-WALK: her walkable deck
-import { hullBuild, setGalleonStanding } from '../systems/naval/navalShips.js';   // AUDIT GN-G4: and hull 2's build follows the hull that stands
+import { hullBuild, setGalleonStanding, setShipStanding } from '../systems/naval/navalShips.js';   // AUDIT GN-G4: and hull 2's build follows the hull that stands (SHIPS-2: hull 4's and hull 1's)
 import { registerGalleonArt, GALLEON_ARCHIVE, galleonGlow, BANDS as GALLEON_BANDS } from '../world/galleonArt.js';   // GALLEON: the new galleon's own pictures, on the texture door before her meshes ask
+import { registerCarrackArt, CARRACK_ARCHIVE, carrackGlow, BANDS as CARRACK_BANDS } from '../world/carrackArt.js';   // SHIPS-2: and the new carrack's,
+import { registerLargeBoatArt, LARGE_BOAT_ARCHIVE } from '../world/largeBoatArt.js';   // and the new large boat's
 import { toColor32 } from '../formats/color32Order.js';
 import { addVendorTextures } from '../systems/textureReplacement.js';
 
@@ -62,6 +64,16 @@ export const LANTERN_HANDLER_REACH = DUNGEON_LIGHT_HANDLER.unscaledBlockRange * 
 export const CSA_LIGHTS_MAX = 8;
 /** AUDIT NAV1 (the presentation): the hull whose FlagObject a flagless sea ship is given (the Small Ship - graftColours). */
 export const FLAG_DONOR_HULL = 2;
+/** SHIPS-2: THE PORT'S OWN SHIPS' PICTURES - each standing ship's archive, how it is put on the texture door, the
+ *  records whose glass glows at night (cut while the world loads) and the glow itself (its emission mask), by the models'
+ *  key for the ship (systems/comeSailAwayModels.js PORT_SHIPS). */
+export const PORT_ART = Object.freeze({
+  galleon: Object.freeze({ archive: GALLEON_ARCHIVE, register: registerGalleonArt, glowRecs: GALLEON_BANDS.sternWindows.recs, glow: galleonGlow }),
+  carrack: Object.freeze({ archive: CARRACK_ARCHIVE, register: registerCarrackArt, glowRecs: CARRACK_BANDS.transom.recs, glow: carrackGlow }),
+  largeBoat: Object.freeze({ archive: LARGE_BOAT_ARCHIVE, register: registerLargeBoatArt, glowRecs: Object.freeze([]), glow: () => null }),
+});
+/** A picture's night glow, whichever port ship's archive it is in (null for any other). */
+const glowOf = (archive, record) => Object.values(PORT_ART).find((a) => a.archive === archive)?.glow(record) ?? null;
 
 /** Each active object under `root` with its world matrix, depth first - the parent's matrix carried down once. */
 export function* activeObjects(root) {
@@ -189,11 +201,13 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
       // anything asks the pipeline for that archive, so they upload as every hull's do (AUDIT GN2-PF3: painted when the
       // preload asks for it, below; this said "made at boot", and they were made at her first draw). AUDIT GN2-PF5: and
       // they are her CLASSIC art, as ARENA2's is every other hull's - Retro Mode's no-mip cap reaches them
-      if (m?.galleon) {
-        registerGalleonArt(addVendorTextures);
-        pipeline?.markClassicArt?.(GALLEON_ARCHIVE);
+      // SHIPS-2: and the new carrack's and the new large boat's, each as hers are, when their own models stand
+      for (const [key, art] of Object.entries(PORT_ART)) {
+        if (!m?.[key]) continue;
+        art.register(addVendorTextures);
+        pipeline?.markClassicArt?.(art.archive);
       }
-      if (m) setGalleonStanding(m.galleon);   // AUDIT GN-G4: hull 2's numbers are the hull that stands
+      if (m) { setGalleonStanding(m.galleon); setShipStanding(4, m.carrack); setShipStanding(1, m.largeBoat); }   // AUDIT GN-G4: each hull's numbers are the hull that stands
       models = m; modelsFailed = !m; return m;
     });
     return modelsLoading;
@@ -237,9 +251,11 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
       // AUDIT GN2-PF3: her pictures painted (her archive's first ask builds all twenty-three on the vendor door) and her
       // glass's glow cut while the world loads - they were her first mesh's ask (meshFor) or a sail bake's, at the first
       // draw of a hull 2: a 50-120 ms stall the first time she came into view
-      if (models.galleon) {
-        try { await pipeline.getTexture(GALLEON_ARCHIVE); for (const r of GALLEON_BANDS.sternWindows.recs) galleonGlow(r); }
-        catch (e) { warnOnce(`tex:${GALLEON_ARCHIVE}`, `[come-sail-away] TEXTURE.${GALLEON_ARCHIVE} will not load - the boats' faces in it draw nothing`, e); }
+      // SHIPS-2: every standing port ship's so
+      for (const [key, art] of Object.entries(PORT_ART)) {
+        if (!models[key]) continue;
+        try { await pipeline.getTexture(art.archive); for (const r of art.glowRecs) art.glow(r); }
+        catch (e) { warnOnce(`tex:${art.archive}`, `[come-sail-away] TEXTURE.${art.archive} will not load - the boats' faces in it draw nothing`, e); }
       }
       for (let hull = 0; hull < HULL_NAMES.length; hull++) deckOf(hull, 0);   // DECK-WALK: baked while the world loads (10-50 ms a hull), never mid-voyage (AUDIT NAV2 F57: every rig's deck, one a hull)
       preloaded = true;
@@ -351,7 +367,8 @@ export function createComeSailAwayPool({ renderer = null, pipeline = null, fetch
           // her stern windows (a loose 38131_6 or _21) glows by HER glass, as a pack's over a town's window glows by
           // the classic picture's (scenes/dataPipeline.js's window arm cuts the mask from the classic bitmap). AUDIT
           // GN2-PF5: flagged as her picture is - her classic art's, under Retro Mode's cap with it
-          if (sm.textureArchive === GALLEON_ARCHIVE) { const glow = galleonGlow(sm.textureRecord); if (glow) renderer.uploadEmissionTexture?.(GALLEON_ARCHIVE, sm.textureRecord, toColor32(glow), { replacement: !pipeline.isClassicArt?.(GALLEON_ARCHIVE) }); }
+          // SHIPS-2: the new carrack's transom gallery's glass the same
+          { const glow = glowOf(sm.textureArchive, sm.textureRecord); if (glow) renderer.uploadEmissionTexture?.(sm.textureArchive, sm.textureRecord, toColor32(glow), { replacement: !pipeline.isClassicArt?.(sm.textureArchive) }); }
         }
         meshes.set(key, renderer.createMesh(model));
       })().catch((e) => { meshes.set(key, null); warnOnce(`mesh:${key}`, '[come-sail-away] a boat mesh failed to build', e); }).finally(() => meshLoads.delete(key)));

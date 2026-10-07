@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-GN2-PF2-the-switch-stamps-nothing",
     "file": "src/systems/naval/navalShips.js",
-    "old": "export function setGalleonStanding(on) { if (galleonStanding !== !!on) stamp++; galleonStanding = !!on; }",
-    "new": "export function setGalleonStanding(on) { galleonStanding = !!on; }",
+    "old": "export function setShipStanding(hull, on) { if (standing[hull] !== !!on) stamp++; standing[hull] = !!on; }",
+    "new": "export function setShipStanding(hull, on) { standing[hull] = !!on; }",
     "tests": [
       "test/auditgalleon2_sea.test.js"
     ]

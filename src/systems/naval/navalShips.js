@@ -182,15 +182,46 @@ export const HULL_BUILDS = Object.freeze([
     hullHp: tough(520), sailHp: tough(90), crew: 60, deck: 10.25, beam: 8.8, ram: true, bowZ: 51.27, aftZ: -41.89, halfWidth: 11.17, keel: -2.46, top: 14.09, sailWay: 0.5,
     rig: rigOf([[-25, 17, 12.5], [25, 36.9, 17]]),
   }),
-  Object.freeze({   // 4 Carrack - seven long guns a side on the main deck (3.64), chasers under the forecastle, barrels astern
+  // SHIPS-2 (2026-10-07, Mac: "implement both of these new ship placement models ... ensure it matches the love we gave
+  // the other new ship model"): hull 4 is Mac's carrack now (world/carrackModel.js) and every number here is hers, off
+  // her own model (test/ships2_carrack.test.js pins each to it), as hull 2's are the galleon's: a gun at each of her ten
+  // gunports, its muzzle 9 cm outside her planking at the port's middle - her ports 3.07 to 4.06 m over the sea, her guns
+  // on platforms 0.45 m over her gun deck (1.9576) so their axis is the ports' - two chasers on swivels on her bow's
+  // deck, the barrels over her quarter rail at her stern. Her box is her hull's, her houses' and her quarter rail's
+  // MeshCollider's bounds (her stem's head, her stern rail, her knuckle's half beam, her keel, the aft house's ridge);
+  // her deck her main deck, her half beam at it inside her rail's cap. Her rig is each of her five sails as it hangs
+  // set in any wind, each on its boom about its mast's axis (the spritsail's about its slings under her bowsprit) - her
+  // lateen in two (its canvas a sloping quad: its foot's band the length of it, its peak's over her middle house),
+  // every box three quarters and more canvas across its face (test/ships2_carrack.test.js). Her hull points, canvas
+  // points and crew are the Carrack's as the mod built it, and her handling with them (her Modifiers are its own).
+  Object.freeze({   // 4 Carrack - five ports a side on her gun deck, the guns' axis at the ports' middle (3.5634)
     hull: 4, gun: 'long',
-    broadside: Object.freeze([[6.3, 4.5, -16], [7.0, 4.5, -12], [7.7, 4.5, -8], [7.9, 4.5, -4.2], [7.4, 4.5, 0], [7.1, 4.5, 4.2], [5.8, 4.5, 8.4]].map(Object.freeze)),
-    bow: Object.freeze({ gun: 'chain', muzzles: Object.freeze([Object.freeze([-1.2, 10.1, 19.5]), Object.freeze([1.2, 10.1, 19.5])]) }),
-    stern: Object.freeze({ gun: 'barrel', muzzles: Object.freeze([Object.freeze([0, 7.6, -27.5])]) }),
-    hullHp: tough(560), sailHp: tough(220), crew: 30, deck: 3.64, beam: 7.4, ram: false, bowZ: 23.71, aftZ: -28.24, halfWidth: 8.43, keel: -3.35, top: 11.82, sailWay: 1,
-    rig: rigOf([[-13.8, 20, 14], [13.8, 39.6, 18.5]], [[-10.5, 26, -5], [10.5, 45.3, -1.5]], [[-3, 17, -31], [3, 39.7, -10.7]]),
+    broadside: Object.freeze([[6.785, 3.5634, -9.2435], [6.785, 3.5634, -5.6075], [6.785, 3.5634, -1.3762], [6.785, 3.5634, 2.6505], [6.785, 3.5634, 6.8825]].map(Object.freeze)),
+    bow: Object.freeze({ gun: 'chain', muzzles: Object.freeze([Object.freeze([-1.15, 9.95, 20.45]), Object.freeze([1.15, 9.95, 20.45])]) }),
+    stern: Object.freeze({ gun: 'barrel', muzzles: Object.freeze([Object.freeze([0, 8.9, -23.6])]) }),
+    hullHp: tough(560), sailHp: tough(220), crew: 30, deck: 7.81, beam: 6.0, ram: false, bowZ: 26.14, aftZ: -23.31, halfWidth: 6.7, keel: -4.59, top: 11.55, sailWay: 1,
+    rig: rigOf(
+      onBoom(0, [0, 9.35, 28.4], [-3.5, 6.17, 28.16], [3.5, 9.52, 29.3], 0),        // the spritsail and its yard
+      onBoom(1, [0, 15.5, 17.2475], [-5.7, 10.77, 17.33], [5.7, 15.67, 19.78], 1),  // the fore course and its yard
+      onBoom(2, [0, 15.2, 8.9293], [-5.6, 11.27, 9.01], [5.6, 15.37, 11.49], 2),    // the main course and its yard
+      onBoom(3, [0, 18.9, 8.9293], [-4.7, 15.47, 9.01], [4.7, 19.07, 10.46], 3),    // the main topsail and its yard
+      onBoom(4, [0, 15.54, -1.279], [-1.95, 12.4, -9.76], [0.21, 16.0, 2.28], 4),   // the lateen along its foot,
+      onBoom(4, [0, 15.54, -1.279], [-1.73, 16.0, -10.08], [0.03, 20.91, -3.87], 4), // and its peak
+    ),
   }),
 ]);
+
+/** SHIPS-2: the mod's own Carrack's build - seven long guns a side on its main deck (3.64), chasers under its
+ *  forecastle, barrels astern - which hull 4 is again when the new carrack's model will not load or build
+ *  (systems/comeSailAwayModels.js falls back to the mod's own prefab, never no ship: AUDIT GN-G4's law). */
+export const MOD_CARRACK_BUILD = Object.freeze({
+  hull: 4, gun: 'long',
+  broadside: Object.freeze([[6.3, 4.5, -16], [7.0, 4.5, -12], [7.7, 4.5, -8], [7.9, 4.5, -4.2], [7.4, 4.5, 0], [7.1, 4.5, 4.2], [5.8, 4.5, 8.4]].map(Object.freeze)),
+  bow: Object.freeze({ gun: 'chain', muzzles: Object.freeze([Object.freeze([-1.2, 10.1, 19.5]), Object.freeze([1.2, 10.1, 19.5])]) }),
+  stern: Object.freeze({ gun: 'barrel', muzzles: Object.freeze([Object.freeze([0, 7.6, -27.5])]) }),
+  hullHp: tough(560), sailHp: tough(220), crew: 30, deck: 3.64, beam: 7.4, ram: false, bowZ: 23.71, aftZ: -28.24, halfWidth: 8.43, keel: -3.35, top: 11.82, sailWay: 1,
+  rig: rigOf([[-13.8, 20, 14], [13.8, 39.6, 18.5]], [[-10.5, 26, -5], [10.5, 45.3, -1.5]], [[-3, 17, -31], [3, 39.7, -10.7]]),
+});
 
 /** AUDIT GN-G4: the mod's own Small Ship's build - the galleon Come Sail Away shipped, six long guns a side at her own
  *  ports - which hull 2 is again when the new galleon's model will not load or build (systems/comeSailAwayModels.js
@@ -204,16 +235,21 @@ export const MOD_SMALL_SHIP_BUILD = Object.freeze({
   hullHp: tough(420), sailHp: tough(160), crew: 24, deck: 3.64, beam: 7.4, ram: false, bowZ: 19.88, aftZ: -24.25, halfWidth: 8.43, keel: -3.35, top: 10.92, sailWay: 1,
   rig: rigOf([[-3.5, 10.92, -20.1], [3.5, 34, 26]]),
 });
-/** Whether hull 2 stands as the new galleon (true until the models say otherwise - the pool sets it as they load). */
-let galleonStanding = true;
-/** AUDIT GN-G4: the models' answer - the new galleon over hull 2 (true) or the mod's own galleon (false). AUDIT GN2-PF2:
+/** SHIPS-2: THE MOD'S OWN BUILD OF EACH HULL A SHIP OF THE PORT'S STANDS IN FOR - what that hull is while its own model
+ *  does not stand (the galleon's, the carrack's, the large boat's: systems/comeSailAwayModels.js PORT_SHIPS). */
+export const MOD_BUILDS = Object.freeze({ 2: MOD_SMALL_SHIP_BUILD, 4: MOD_CARRACK_BUILD });
+/** Whether each such hull stands as the port's ship (true until the models say otherwise - the pool sets it as they load). */
+const standing = { 2: true, 4: true };
+/** AUDIT GN-G4: the models' answer for a hull - the port's ship over it (true) or the mod's own (false). AUDIT GN2-PF2:
  *  each switch a new `buildsStamp` - what is reckoned off the builds and kept (navalAI.js layMin, hitShare) is kept for one. */
 let stamp = 0;
-export function setGalleonStanding(on) { if (galleonStanding !== !!on) stamp++; galleonStanding = !!on; }
+export function setShipStanding(hull, on) { if (standing[hull] !== !!on) stamp++; standing[hull] = !!on; }
+/** AUDIT GN-G4: hull 2's - the new galleon over it, or the mod's own galleon. */
+export function setGalleonStanding(on) { setShipStanding(2, on); }
 export const buildsStamp = () => stamp;
-/** A hull's build, or the rowboat's for anything unknown - hull 2's the mod's own galleon's while she stands in for the
- *  new one (AUDIT GN-G4). */
-export const hullBuild = (hull) => (hull === 2 && !galleonStanding ? MOD_SMALL_SHIP_BUILD : HULL_BUILDS[hull] ?? HULL_BUILDS[0]);
+/** A hull's build, or the rowboat's for anything unknown - a hull the port's ship stands in for the mod's own build's
+ *  while its model does not stand (AUDIT GN-G4). */
+export const hullBuild = (hull) => (MOD_BUILDS[hull] && !standing[hull] ? MOD_BUILDS[hull] : HULL_BUILDS[hull] ?? HULL_BUILDS[0]);
 /** TOUGHER-SHIPS: the timbers and canvas a hull stood with before it was toughened - what a save from before measured
  *  her hurts against. */
 export function firstBuildOf(hull) {
@@ -243,10 +279,12 @@ export function batteryOf(hull, side) {
  * and a peer's (fireFromWord), riding each ball to its hit (navalGunnery.js volleyLaunches, navalShots.js) and the
  * captains' reckoning of her fire (navalAI.js strikeTime, a player's FighterMeasure): the captains' galleons - the
  * Pirate Brigantine, the Merchant Galleon, the Navy Cutter - keep the broadside every tuned duel was measured with
- * (AUDIT NAV2 F25, Mac's bar).
+ * (AUDIT NAV2 F25, Mac's bar). SHIPS-2: and a player's carrack the weight of the mod's carrack's seven from her five
+ * ports (MOD_CARRACK_BUILD's count over hers, 7/5) - every hull a ship of the port's stands in for throws its mod's
+ * broadside (MOD_BUILDS), and 1 while the mod's own stands.
  */
-export const playerBatteryWeight = (hull, side) => (hull === HULL.SmallShip && (side === 'starboard' || side === 'port')
-  ? MOD_SMALL_SHIP_BUILD.broadside.length / Math.max(1, hullBuild(hull).broadside.length) : 1);
+export const playerBatteryWeight = (hull, side) => (MOD_BUILDS[hull] && (side === 'starboard' || side === 'port')
+  ? MOD_BUILDS[hull].broadside.length / Math.max(1, hullBuild(hull).broadside.length) : 1);
 /** Every battery a hull carries. */
 export const batteriesOf = (hull) => SIDES.map((s) => batteryOf(hull, s)).filter(Boolean);
 
