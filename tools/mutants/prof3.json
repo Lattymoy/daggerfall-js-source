@@ -434,9 +434,9 @@
   },
   {
     "name": "PROF3-kit-least-worn",
-    "file": "src/systems/smithItems.js",
-    "old": "worn(b) - worn(a) || conditionShare(a) - conditionShare(b));",
-    "new": "worn(b) - worn(a) || conditionShare(b) - conditionShare(a));",
+    "file": "src/systems/itemTemplates.js",
+    "old": "wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
+    "new": "wornFirst(b) - wornFirst(a) || conditionShare(b) - conditionShare(a);",
     "tests": [
       "test/prof3_client.test.js"
     ]

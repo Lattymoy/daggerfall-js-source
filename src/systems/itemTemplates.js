@@ -240,6 +240,17 @@ export const rollPaintingMessage = (rolls = Math.random) => Math.floor(rolls() *
  *  ? 100 * currentCondition / maxCondition : 100`, C# integer division. */
 export const conditionPercentage = (item) => ((item?.maxCondition ?? 0) > 0 ? Math.trunc(100 * (item.currentCondition ?? 0) / item.maxCondition) : 100);
 
+/** A piece's condition as a share of its maximum - the mend order's key, and a kit's before and after. */
+export const conditionShare = (item) => item.currentCondition / item.maxCondition;
+const wornFirst = (item) => (item.equipSlot != null ? 1 : 0);
+/** THE MEND ORDER. MEND-AIM's (2026-09-30, kurkku on Discord: "always repairing the most worn piece of equipment means
+ *  fixing arrows or random loot you picked up most of the time"), one home since MEND-WORN gave Repairs Objects the
+ *  same answer: what is WORN first - the player's own gear, never a piece of loot carried to sell - then the rest,
+ *  each the lowest share of its condition left first. A sort comparator, and the sort is stable, so two pieces at one
+ *  share keep the pack's order. Read by the repair kit (smithItems.js repairKitTargets) and Repairs Objects
+ *  (enchantments.js repairsObjectsTarget). */
+export const mendOrder = (a, b) => wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);
+
 // ---- ItemHelper.GetCustomItemsForGroup ----------------------------------
 /** FORAGE1: DFU's `customItemTemplates` by group - every LOADED mod's registered custom templates of a group, in
  *  the order the mods registered them - asked by the shelf's second loop (DaggerfallLoot.cs:255-287) and the random

@@ -8,9 +8,9 @@
   },
   {
     "name": "MEND-AIM-loot-before-worn",
-    "file": "src/systems/smithItems.js",
-    "old": ".sort((a, b) => worn(b) - worn(a) || conditionShare(a) - conditionShare(b));",
-    "new": ".sort((a, b) => conditionShare(a) - conditionShare(b));",
+    "file": "src/systems/itemTemplates.js",
+    "old": "export const mendOrder = (a, b) => wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
+    "new": "export const mendOrder = (a, b) => conditionShare(a) - conditionShare(b);",
     "tests": ["test/mend_aim.test.js"]
   },
   {

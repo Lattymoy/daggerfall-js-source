@@ -388,9 +388,10 @@ can't keep the numbers as is"), and what is left for another pass:
   iron dagger strikes at x1.3 for 65 blows of 20 damage (it was 3), and a long bow for 16 times its old count - as a
   warhammer always did.
 - **Two point-by-point enchantments scale the other way.** Repairs Objects mends 1 point every four rounds on the first
-  worn piece, so a dagger found at 20% holds it 32 times as long; Item Deteriorates (a side effect that pays 3,000,
-  1,500 or 500 points) wears 1 every four rounds, so a dagger taking it lasts 6,400 rounds (it was 200) for the same
-  credit.
+  piece below its condition in the pack, so a dagger found at 20% holds it 32 times as long; Item Deteriorates (a side
+  effect that pays 3,000, 1,500 or 500 points) wears 1 every four rounds, so a dagger taking it lasts 6,400 rounds (it
+  was 200) for the same credit. Repairs Objects DONE on Mac's word ("Now we just gotta fix the 'repairs objects' not
+  working"): MEND-WORN, below. Item Deteriorates stands.
 - **Repair days where repairs are not instant** (Instant Repairs is the default): 1,000 points a day, so a broken
   Daedric weapon of any type is 12.8 days (a Daedric dagger was one).
 - **An enchanted piece There's a Hole in the Bottom of the Ocean raised a material** keeps its old material's pool -
@@ -466,3 +467,58 @@ Recorded, not changed:
 
 Re-aimed: `test/disc21.test.js`'s pin on the load's repair line (the walk and the runner), and
 `tools/mutants/audit0929_actions.json`'s D3 record (customs' walk dropped from savedItemLists).
+
+## MEND-WORN (2026-10-07, Mac: "Now we just gotta fix the 'repairs objects' not working") - Repairs Objects mends what is worn
+
+Repairs Objects ran, and it looked dead. DFU's law (MagicRound, `RepairsObjects.cs:69-102`) mends one point every fourth
+magic round on the FIRST piece below its condition in the whole pack, in the pack's order. That is Interkarma's 2022
+change, 6846029b4, "RepairsObjects should repair all items in inventory". From 2019 the loop walked the equip table,
+which the class's own comment records as classic's: "Only equipped items will receive repairs ... Priority is based on
+equip order enumeration". The port ran the 2022 law verbatim, and three things in the port made it invisible:
+
+- **The pack.** Roleplay & Realism: Items is on by default. Its kit is worn to 30-75% (shoes carried ahead of the gear),
+  and its loot and its shelves come at 20-75%, books among them. So the first damaged piece was rarely one the player
+  wore. The pins' own fixture is the mod's kit for Running, Long Blade and Streetwise, put on: DFU's walk mends the shoes.
+- **What a smith refuses.** The walk reads no `isNotRepairable`. DFU sets it on the Arrow (minted at 0) and the four
+  lights, whose condition is their fuel, and the port sets it on the Dwemer Pellet, the Campfire and the rest items'
+  doses (AUDIT REST II H7). A lit torch burns a point every twenty real seconds, which is a tick's own pace, so a torch
+  first in the pack was refuelled as it burned.
+- **The pool.** WEAPON-POOL's pools (1,600 to 12,800) left a weapon one point a tick, a 32nd of a dagger's old share: an
+  iron blade 1% about every five real minutes, a Daedric one every 43.
+
+The law now (`systems/enchantments.js` `repairsObjectsTarget`, `POOL_WEAPON_MEND`; `systems/itemTemplates.js`
+`mendOrder`):
+
+- **Which piece.** What is worn first, the most worn first (the lowest share of its condition left), then the pack's most
+  worn; two at one share keep the pack's order. That is MEND-AIM's order for a repair kit (kurkku: "always repairing the
+  most worn piece of equipment means fixing arrows or random loot you picked up most of the time"). It is one export now,
+  `mendOrder`, read by the kit's `repairKitTargets` and by Repairs Objects.
+- **Never what a smith refuses** as not repairable (the template's `isNotRepairable`, `repairService.js`
+  repairRefusal's). An enchanted piece mends only under AllowMagicRepairs, which is DFU's gate (on by default and online,
+  DISC22-A).
+- **How much.** A weapon on the pool mends 32 a tick (Mac, asked: "Weapons as a classic dagger"). That is the classic
+  Dagger's point of its 50, on the pool: iron 2% a tick, Daedric 0.25%. DFU's own yardstick, a Dwarven dagger battered
+  to new in eight or nine hours, now holds for every weapon type: 123 ticks, about 8.2 game hours. A magic item's or an
+  artifact's condition is its uses, not the pool (`loot.js`), so it keeps DFU's point, and so do armour and everything
+  else.
+- **Unchanged from DFU:** the cadence (every fourth round), the player alone, one piece a tick, and no synthetic-time
+  gate. A weapon still on its row's pool moves to the one pool first (`repoolWeapon`), as `lowerCondition` does before a
+  wear (AUDIT WEAPON-POOL P2).
+
+Recorded, not changed:
+- **A pool weapon now mends about as fast as a fight wears it.** It gets 32 a tick, every twenty real seconds, against a
+  point or two a landed blow (WEAR-ONE). A classic dagger had the same share per tick and wore 32 times as fast.
+- **Armour keeps the point:** an iron cuirass (4,096) mends 1% every 41 ticks, about 14 real minutes. The most worn
+  piece takes every tick, so a blade waits behind a cuirass worn further than it: Roleplay & Realism's kit at 53% holds
+  a blade at 69% back upwards of 630 ticks, 42 game hours. In play the blade is usually the most worn: it wears on every
+  blow the player lands, a piece of armour only on the blows that strike it, and its pool is the smaller.
+- **Camping Equipment** keeps its uses in its condition and a smith mends it, so it is mended once nothing worn wants
+  it, as a smith would.
+- **Item Deteriorates** still wears a point every four rounds (AUDIT WEAPON-POOL's recorded line, above).
+
+Four hosts: none changed. The law runs in the one round pump (`systems/worldTick.js` runMagicRoundsFor, then
+enchantmentMagicRound) that every host's ticker feeds: exterior.js, world.js and worldModes.js through
+`scenes/shared.js` createPlayerTicker, and dungeonContext.js through tickPlayerMinutes. Deploy: none, since neither
+service's bundle reaches these files. `test/mend_worn.test.js` (8); `tools/mutants/mend_worn.json` (15 of 15 dead, the
+old walk restored among them). Re-aimed by content, because the kit's comparator moved into `mendOrder`:
+`tools/mutants/mend_aim.json` MEND-AIM-loot-before-worn and `tools/mutants/prof3.json` PROF3-kit-least-worn (both dead).
