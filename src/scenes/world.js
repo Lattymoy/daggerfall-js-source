@@ -257,7 +257,7 @@ import { vergeClear, natureReach, pathTileMask, lptFitCap } from '../world/roadV
 import { LPT_CROWNS } from '../world/lptCrowns.js';   // LPT-FIT: the drawn prototype's crown, turned (its radial reach)
 import { ecotoneOwner, ecoOrigin } from '../world/ecotone.js'; import { MAP_W, MAP_H } from '../world/roadNetwork.js';   // ECOTONE1: a border point's owner, the pixel's lattice origin, the map's edges
 import { insideRocks, forestAt } from '../world/terrainNature.js';   // FOREST1 (AUDIT F1): a wood's flats keep out of the rock pieces; GRASS-LIT2: the shot hook's woods
-import { huntKind, createBodyStamps, bodiesOf, trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks
+import { huntKind, createBodyStamps, bodiesHere, trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks; INDOOR-SKIN: the pool by the mode
 import { fishKind } from './fishHost.js';   // PROF8: Fishing's casts and schools - a kind in it
 import { utcDayOfMs } from '../net/nodeLaw.js';   // PROF8: a haul's UTC day
 import { registerPlayerKillListener } from '../systems/playerKills.js';   // PROF7: the player's own kill stamps a body
@@ -1637,7 +1637,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (text) => chatNotice(text), regionName: (r) => REGION_NAMES[r] ?? 'the Iliac Bay', oreName: (m) => materialLabel(m).replace(/ Ore$/, ''),
     onChange: (l) => gatherHost?.restandAt(l.x, l.y),
   }) : null;
-  /** PROF7: the stamped bodies where the player is (scenes/huntHost.js bodiesOf) - the gather host's, once it is built. */
+  /** PROF7: the stamped bodies where the player is (scenes/huntHost.js bodiesHere - the street's, a dungeon's or a building's) - the gather host's, once it is built. */
   let huntBodies = () => [];
   /** PROF7: the station a recipe's profession is crafted at - the anvil (Smithing's), the workbench (Carpentry's, PROF4),
    *  the loom (Outfitting's) - its place, its keeper and its words. */
@@ -10413,12 +10413,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       // dungeon's, a puppet's owner's word), a node where it lies while the pack holds a Skinning Knife
       const bodyStamps = createBodyStamps({ nowMs: () => Date.now() + _sharedOffsetMs });
       registerPlayerKillListener('hunting', (entity) => { bodyStamps.stamp(entity); });
-      huntBodies = () => (modeNow() === 'dungeon'
-        ? bodiesOf(modes?.dungeonCtx?.foes, bodyStamps, (f) => modes?.dungeonCtx?.corpseAt?.(f), (f) => modes?.dungeonCtx?.corpseKeyOf?.(f))   // AUDIT 32 H3: where it lies, not where it flew
-        : bodiesOf(exteriorFoes.foes, bodyStamps, exteriorFoes.corpseAt, exteriorFoes.corpseKeyOf));
+      // FIELD BUGS 2026-10-07 INDOOR-SKIN: and a building's - its own pool (a quest's rats in a house in town), where the
+      // street's was asked and the body was never found
+      huntBodies = () => bodiesHere(modeNow(), { street: exteriorFoes, dungeon: modes?.dungeonCtx, interior: modes?.interiorFoes }, bodyStamps);
       // AUDIT 32 H8: a body's search opens its loot through its pool's own door, by its key - the street's body window, the
-      // dungeon's take
-      const openHuntLoot = (key) => (key.startsWith('foeCorpse:') ? openBodyLoot(key) : modes?.dungeonCtx?.takeLoot(key, getInteractionMode()));
+      // dungeon's take; INDOOR-SKIN: a building's body window (its keys are the street's spelling, its pool its own)
+      const openHuntLoot = (key) => (modeNow() === 'interior' ? modes?.openInteriorBody?.(key)
+        : key.startsWith('foeCorpse:') ? openBodyLoot(key) : modes?.dungeonCtx?.takeLoot(key, getInteractionMode()));
       const _fishSeaT = [0, 0, 0];   // HIGH-CAST: the sea's top's translation, the fish host's waterY
       gatherHost = createGatherHost({
         book: profBook, hud, kinds: [herbKind({ book: profBook }), mineKind({ book: profBook, lodes: motherlodeBook, marks: marksBook }),   // PROF2b: and the Motherlodes
@@ -10460,8 +10461,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         marks: marksBook,   // SILVER-FINDS: a harvest's find said, its balance kept
         eye: () => ({ pos: cam.pos, dir: [Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)] }),
         // AUDIT 29 C1: a node seen - the eye's ray to it through the place's collider (the street's, or the dungeon's own)
-        clear: (from, to, underground) => {
-          const c = underground ? modes?.dungeonCtx?.collider : collider;
+        clear: (from, to, underground, interior = false) => {
+          const c = underground ? modes?.dungeonCtx?.collider : interior ? modes?.interiorCollider : collider;   // INDOOR-SKIN: a building's own walls
           if (!c?.raycast) return true;
           const d = [to[0] - from[0], to[1] - from[1], to[2] - from[2]];
           const l = Math.hypot(d[0], d[1], d[2]) || 1;
@@ -10484,6 +10485,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         step: (n) => plaqueStep(n),
         active: () => walkMode && modeNow() === 'exterior' && !townTalk.overlayActive && !modes?.deathUp?.() && !modes?.transitioning && !travelView?.active,   // AUDIT 32 H10: never from under the travel view (its ray is the hidden head's - AUDIT OW5 V2's law for E)
         activeDungeon: () => walkMode && modeNow() === 'dungeon' && !modes?.dungeonCtx?.uiOverlayActive && !modes?.deathUp?.() && !modes?.transitioning,   // PROF2: a dungeon's veins
+        activeInterior: () => walkMode && modeNow() === 'interior' && !modes?.overlayHeld && !townTalk.overlayActive && !modes?.deathUp?.() && !modes?.transitioning,   // INDOOR-SKIN: a building's bodies (its own pool's)
         onSettle: () => { profBook.settle(profMint, profMintCraft).catch(() => {}); }, pointer: (want) => { const relock = () => { if (!cursorActive() && !gamePaused() && !pointerSurfaces.size && !(modes?.modalWindowUp?.() ?? false) && !overlayOpen() && !travelView?.active) requestLook(canvas); }; if (want === 'look') { if (cursorActive()) { setCursorActive(false); relock(); } return null; } if (controllerLook()) return null; const off = holdCursor(); return () => { if (!off()) return; if (backButtonHeld) escRelock = relock; else relock(); }; },   // HERB-CURSOR (FIELD BUGS 2026-10-02 part four): the Basket's glints are clicked with the cursor, held free while it plays and the look taken back after (never under a window, a surface, an overlay, the travel view or the player's own freed mouse); a vein's, a body's or the net's act is aimed by the look - a mouse the player freed is taken back, under the same gates (AUDIT A4). AUDIT A1: an Escape that ended the act asks on its keyup (escRelock) - a lock taken inside its keydown was the browser's to end on the keyup, and ESC-LOCK read that as a second Escape; C8: a pad in hand strikes with its trigger, and no hold shows the OS pointer
       });
       /** AUDIT PROF-541 B4: the town the alchemy station stands in, where my guild holds it - its Apothecary's steps, and

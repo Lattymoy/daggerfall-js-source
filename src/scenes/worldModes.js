@@ -963,6 +963,7 @@ export function createWorldModes(host) {
     collider: () => player.collider ?? null, missEffect: (k, p, o) => interiorHitEffects.showMissEffect(k, p, o),   // WW1: the weapon widget's environment recoil, and DoClang/DoThud on the interior pool
     actionDown: (action) => held(keys, action), torches: () => interiorTorches,   // HT1; KB1: registry actions
     dropRefusal: () => visitorDropRefusal(),   // HOUSE-DROP: and a light dropped or thrown on a visitor's floor
+    actTool: () => host.profActTool?.() ?? null,   // INDOOR-SKIN: the Skinning Knife (DFU's Dagger) in the building rig's hand at a body, as the street's and the dungeon's rigs draw it
     // MW-D8: see world.js's twin note - the arm rides the eye, and the
     // dep is required so a missing one is a reason, never a wrong place.
     // MW-D10: rule 54's neck pitch; MW-D15: rule 32(a)'s sneak sink.
@@ -2307,6 +2308,7 @@ export function createWorldModes(host) {
   const ownsThisInterior = (b = interiorBuilding) => !privateVisitRoom && ((!!interiorCabin && b === interiorBuilding) || (b?.buildingType === BUILDING_TYPES.Ship && ownsShip(playerEntity))
     || (interiorHome && b === interiorBuilding ? interiorHome.own : isHouseOwned(playerEntity.houses ?? [], b?.regionIndex ?? 0, b?.buildingKey)));   // HOME1: my online home's cupboards are my storage, and another's are not
   const interiorHoverName = composeNamer([
+    (key) => host.profHoverName?.(key) ?? null,   // INDOOR-SKIN (PROF-MENU): a profession node's acts first (a body's knife and search), as underground
     (key) => interiorCabin && typeof key === 'string' && key.startsWith('exit:') ? { title: 'Return to deck' } : null,
     (key) => {
       // AUDIT-WH2 L2-F5: C1's guard, on this ladder too. The exterior
@@ -7326,9 +7328,38 @@ export function createWorldModes(host) {
     return true;
   }
 
-  function tryExit({ pressCast = false } = {}) {
+  /** INTERIOR-BODIES: a body of this building's opened - the street's
+   *  and the watch's pools each their own keys (`foeCorpse:`,
+   *  `guardCorpse:`). QUICK-LOOT B4: through the window's own door -
+   *  `loot` is the container's hooks, the object this arm would hand
+   *  the window. LOOT-STACK: and the window carries the pile as tabs,
+   *  each of which comes back through this same door with the pile in
+   *  hand (world.js openBodyLoot's law: quick loot takes on a press
+   *  only). FIELD BUGS 2026-10-07 INDOOR-SKIN: one door for the
+   *  ladder's press and the outer host's (a skinnable body's list's
+   *  Search, `openInteriorBody`) - it was this ladder's own closure. */
+  function openInteriorBodyLoot(lootKey, pileKeys = null) {
+    const bodyPool = (k) => (k.startsWith('foeCorpse:') ? interiorFoes : interiorGuards);
+    bodyPool(lootKey)?.takeLoot(lootKey, (l) => say(l), (loot) => {
+      if (!pileKeys && quickLootTake(lootKey, loot, playerEntity, (l) => say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards
+      const pile = lootPile(lootKey, { keys: pileKeys, describe: (k) => bodyPool(k)?.pileBody(k) ?? null, open: openInteriorBodyLoot });
+      const w = interiorInventory({ loot: pile ? { ...loot, pile } : loot });
+      mountInterior(w);
+      return !!w;   // AUDIT 625 D6: whether it OPENED (a refused pack is null) - the corpse door rolls a body's silver on it
+    });
+  }
+
+  function tryExit({ pressCast = false, interact = false, actClick = false } = {}) {
     const eye = player.eye;
     const dir = eyeDir();
+    // FIELD BUGS 2026-10-07 INDOOR-SKIN: a profession node under the look takes the press first - a body of this
+    // building's, its knife's act started (the outer host's gathering host) - tryExitDungeon's three arms, line for line:
+    // on Interact alone (AUDIT 29 C2/H3), the click on a node's lit row (PROF-MENU), and a click mid-act the act's to its
+    // release (AUDIT 32 H5, CLICK-LIFT). The ladder had none of them, so a quest's rats in a house were DFU's corpses and
+    // nothing else
+    if (interact && !pressCast && host.profPress?.()) return true;
+    if (!interact && !pressCast && !actClick && !host.profActing?.() && host.profClick?.()) return true;
+    if (!interact && (actClick || host.profActing?.())) return true;
     // QG1, AUDIT 58: the quest-resource click arm, which this ray was
     // the only one of the three without - tryExitDungeon carries it
     // and so does world.js's exterior ladder, while CreateFoe's
@@ -7415,7 +7446,7 @@ export function createWorldModes(host) {
     if (host.livingPersonsAct?.(eye, dir, _pick?.distance ?? Infinity)) return true;   // LW8: a resident in the room, nearer than the ladder's winner - the street's own talk ray (the host's townTalk.tryActivate)
     if (_pick && _pick === _boatPick) { host.csaActivate?.(_pick); return true; }   // CSA-D: RegisterCustomActivation's silent reach - no "too far" of the port's
     const key = _pick?.key ?? null;
-    if (key === null) return false;
+    if (key === null) { if (interact && !pressCast) host.profNeed?.(); return false; }   // VEIN-NEED (INDOOR-SKIN): a body that passed E on says what it needs
     // AUDIT 65 MC-2: THE REFUSAL, where DFU keeps it - inside the
     // handler the one ray dispatched into. `midScreenText.js`'s header
     // named eleven `youAreTooFarAway` sites and the port could reach
@@ -7489,22 +7520,7 @@ export function createWorldModes(host) {
       // already refuses a window that could not be built. One host, one
       // way in.
       if (key.startsWith('foeCorpse:') || key.startsWith('guardCorpse:')) {
-        const bodyPool = (k) => (k.startsWith('foeCorpse:') ? interiorFoes : interiorGuards);
-        // QUICK-LOOT B4: through the window's own door - `loot` is the
-        // container's hooks, the object this arm would hand the window.
-        // LOOT-STACK: and the window carries the pile as tabs, each of
-        // which comes back through this same door with the pile in hand
-        // (world.js openBodyLoot's law: quick loot takes on a press only).
-        const openBodyLoot = (lootKey, pileKeys = null) => {
-          bodyPool(lootKey)?.takeLoot(lootKey, (l) => say(l), (loot) => {
-            if (!pileKeys && quickLootTake(lootKey, loot, playerEntity, (l) => say(l), { getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null, took: showPickups })) return true;   // AUDIT QL-WEIGHT1: the window's own resolver; PICKUP-FEED: the cards
-            const pile = lootPile(lootKey, { keys: pileKeys, describe: (k) => bodyPool(k)?.pileBody(k) ?? null, open: openBodyLoot });
-            const w = interiorInventory({ loot: pile ? { ...loot, pile } : loot });
-            mountInterior(w);
-            return !!w;   // AUDIT 625 D6: whether it OPENED (a refused pack is null) - the corpse door rolls a body's silver on it
-          });
-        };
-        openBodyLoot(key);
+        openInteriorBodyLoot(key);
         return true;
       }
       if (key.startsWith('hearth:')) { interiorCamps.activate(key, getInteractionMode(), plaqueActionFor(key)); return true; }   // HEARTH1: name it, or cook on it - AUDIT REST II H2: the plaque's lit row, as the other hosts pass it
@@ -9743,11 +9759,12 @@ export function createWorldModes(host) {
           const d = [-view[2], -view[6], -view[10]];
           const ground = pickActivatableHit(mwv.eye, d, interiorActivationTargets(), interiorCtx.collider);
           const liveFoes = liveFoeTargets(interiorFoePool(), 'mobileFoe');
-          return raceWinner({
+          const ray = raceWinner({
             ground,
             foe: peacefulFoePass(pickActivatableHit(mwv.eye, d, liveFoes, interiorCtx.collider), liveFoes, doorDistanceOf(mwv.eye, d, interiorActivationTargets(), interiorCtx.collider), getInteractionMode()),   // TACT3d: a peaceful watchman in front of a door is no hit
             peer: host.peerHoverPick?.() ?? null,   // PEER-PLAQUE1: another player in the room, raced as the F key picks them - off the key's own ray (AUDIT DROPS E3)
           });
+          return host.profHoverPick?.(ray) ?? ray;   // INDOOR-SKIN (PROF-MENU): a body the press would take, over the race's winner - the dungeon's own line
         },
         collider: interiorCtx.collider,
         // AUDIT-WH L2: `overlayHeld`, not `!!interiorOverlay`. The slot
@@ -10401,7 +10418,7 @@ export function createWorldModes(host) {
   // C9: interior mode routes the same RMB seam to its weapon rig.
   const modalAttackSink = () =>
     (mode === 'dungeon' && dungeonCtx) ? dungeonCtx.playerAttackInput
-      : mode === 'interior' ? ((dx, dy, held) => { if (held && magic?.interceptAttack(true)) return; interiorWeapon.attackInput(dx, dy, held); })   // M2: an armed cast eats the click
+      : mode === 'interior' ? ((dx, dy, held) => { if (held && host.profActing?.()) return; if (held && magic?.interceptAttack(true)) return; interiorWeapon.attackInput(dx, dy, held); })   // M2: an armed cast eats the click; INDOOR-SKIN: an act's press is the act's, never a swing (the PRESS alone - dungeonContext.js's law)
         : null;
   addEventListener('mousemove', (e) => {
     const sink = modalAttackSink();
@@ -11918,6 +11935,10 @@ export function createWorldModes(host) {
     // M2: the cast engine's mode-aware raycast reads the INTERIOR's
     // collider while a building is mounted.
     get interiorCollider() { return interiorCtx?.collider ?? null; },
+    /** FIELD BUGS 2026-10-07 INDOOR-SKIN: the building's own foe pool (makeInteriorFoes - a quest's, a punishment's), null
+     *  outside one - Hunting's bodies where they lie (scenes/huntHost.js bodiesHere); and a body's loot by its key. */
+    get interiorFoes() { return interiorFoes; },
+    openInteriorBody: (key) => { if (interiorCtx && typeof key === 'string') openInteriorBodyLoot(key); },
     /** LW-LODGE: the room's beds - its Rest markers (feet), RentRoom's own list - and the index among them of the bed of
      *  the room the player rents here (-1 none): the living world deals the rest to the tavern's lodgers. */
     get interiorBeds() { return interiorRestMarkers().map((m) => [m.x, m.y, m.z]); },

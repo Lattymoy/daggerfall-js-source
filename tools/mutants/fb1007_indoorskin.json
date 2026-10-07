@@ -1,0 +1,106 @@
+[
+  {
+    "name": "INDOORSKIN-interior-pool-unasked",
+    "file": "src/scenes/huntHost.js",
+    "old": "  const pool = mode === 'dungeon' ? dungeon : mode === 'interior' ? interior : street;",
+    "new": "  const pool = mode === 'dungeon' ? dungeon : street;",
+    "tests": ["test/fb1007_indoorskin.test.js"],
+    "note": "the bug as shipped: a building's bodies looked for among the street's dead"
+  },
+  {
+    "name": "INDOORSKIN-street-in-a-building",
+    "file": "src/scenes/huntHost.js",
+    "old": "  const pool = mode === 'dungeon' ? dungeon : mode === 'interior' ? interior : street;",
+    "new": "  const pool = mode === 'dungeon' ? dungeon : mode === 'interior' ? interior ?? street : street;",
+    "tests": ["test/fb1007_indoorskin.test.js"],
+    "note": "a building with no pool yet falls back to the street's bodies"
+  },
+  {
+    "name": "INDOORSKIN-interior-pool-outside",
+    "file": "src/scenes/huntHost.js",
+    "old": "  const pool = mode === 'dungeon' ? dungeon : mode === 'interior' ? interior : street;",
+    "new": "  const pool = mode === 'dungeon' ? dungeon : interior ?? street;",
+    "tests": ["test/fb1007_indoorskin.test.js"],
+    "note": "the building's pool read on the street"
+  },
+  {
+    "name": "INDOORSKIN-host-off-indoors",
+    "file": "src/scenes/gatherHost.js",
+    "old": "  const indoors = () => !inDungeon() && !!deps.activeInterior?.();",
+    "new": "  const indoors = () => false;",
+    "tests": ["test/fb1007_indoorskin.test.js"],
+    "note": "the gathering host dead in a building again - no body a node"
+  },
+  {
+    "name": "INDOORSKIN-street-pixels-indoors",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      : inside ? [] : nearPixels(pos, reachBox)",
+    "new": "      : nearPixels(pos, reachBox)",
+    "tests": ["test/fb1007_indoorskin.test.js"],
+    "note": "a wilderness node stood round the house is a target inside it"
+  },
+  {
+    "name": "INDOORSKIN-street-walls",
+    "file": "src/scenes/gatherHost.js",
+    "old": "deps.clear(pos, c.at, c.best.dungeon, c.best.interior)",
+    "new": "deps.clear(pos, c.at, c.best.dungeon)",
+    "tests": ["test/fb1007_indoorskin.test.js"],
+    "note": "a building's body seen through the street's collider"
+  },
+  {
+    "name": "INDOORSKIN-act-outlives-the-door",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        const here = act.dungeon ? inDungeon() : act.interior ? indoors() : deps.active();",
+    "new": "        const here = act.dungeon ? inDungeon() : act.interior ? true : deps.active();",
+    "tests": ["test/fb1007_indoorskin.test.js"],
+    "note": "the knife's act plays on through the door out"
+  },
+  {
+    "name": "INDOORSKIN-act-not-the-buildings",
+    "file": "src/scenes/gatherHost.js",
+    "old": "dungeon: t.dungeon, interior: !!t.interior, loose",
+    "new": "dungeon: t.dungeon, interior: false, loose",
+    "tests": ["test/fb1007_indoorskin.test.js"],
+    "note": "a building's act read as the street's - ended in its first frame"
+  },
+  {
+    "name": "INDOORSKIN-world-street-bodies",
+    "file": "src/scenes/world.js",
+    "old": "interior: modes?.interiorFoes }, bodyStamps);",
+    "new": "interior: exteriorFoes }, bodyStamps);",
+    "tests": ["test/fb1007_indoorskin.test.js"],
+    "note": "world.js hands the street's pool as the building's"
+  },
+  {
+    "name": "INDOORSKIN-world-host-off",
+    "file": "src/scenes/world.js",
+    "old": "        activeInterior: () => walkMode && modeNow() === 'interior' && !modes?.overlayHeld",
+    "new": "        activeInterior: () => walkMode && modeNow() === 'exterior' && !modes?.overlayHeld",
+    "tests": ["test/fb1007_indoorskin.test.js"],
+    "note": "the world's gathering host never live in a building"
+  },
+  {
+    "name": "INDOORSKIN-ladder-no-press",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (interact && !pressCast && host.profPress?.()) return true;\n    if (!interact && !pressCast && !actClick && !host.profActing?.() && host.profClick?.()) return true;\n    if (!interact && (actClick || host.profActing?.())) return true;\n    // QG1, AUDIT 58",
+    "new": "    if (!interact && !pressCast && !actClick && !host.profActing?.() && host.profClick?.()) return true;\n    if (!interact && (actClick || host.profActing?.())) return true;\n    // QG1, AUDIT 58",
+    "tests": ["test/fb1007_indoorskin.test.js"],
+    "note": "E in a building never reaches the body's knife"
+  },
+  {
+    "name": "INDOORSKIN-plaque-unasked",
+    "file": "src/scenes/worldModes.js",
+    "old": "          return host.profHoverPick?.(ray) ?? ray;   // INDOOR-SKIN",
+    "new": "          return ray;   // INDOOR-SKIN",
+    "tests": ["test/fb1007_indoorskin.test.js"],
+    "note": "the building's plaque never lists the body's acts"
+  },
+  {
+    "name": "INDOORSKIN-swing-through-the-act",
+    "file": "src/scenes/worldModes.js",
+    "old": "{ if (held && host.profActing?.()) return; if (held && magic?.interceptAttack(true)) return; interiorWeapon.attackInput(dx, dy, held); }",
+    "new": "{ if (held && magic?.interceptAttack(true)) return; interiorWeapon.attackInput(dx, dy, held); }",
+    "tests": ["test/fb1007_indoorskin.test.js"],
+    "note": "an act's press swings the building's weapon"
+  }
+]

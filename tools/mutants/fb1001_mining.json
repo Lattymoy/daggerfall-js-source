@@ -101,8 +101,8 @@
   {
     "name": "NODE-AIM-only-the-nearest-asked",
     "file": "src/scenes/gatherHost.js",
-    "old": "    for (const c of seen) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon)) return c.best;",
-    "new": "    for (const c of seen.slice(0, 1)) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon)) return c.best;",
+    "old": "    for (const c of seen) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon, c.best.interior)) return c.best;",
+    "new": "    for (const c of seen.slice(0, 1)) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon, c.best.interior)) return c.best;",
     "tests": [
       "test/fb1001_mining.test.js"
     ]
@@ -110,7 +110,7 @@
   {
     "name": "NODE-AIM-the-hidden-taken",
     "file": "src/scenes/gatherHost.js",
-    "old": "    for (const c of seen) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon)) return c.best;",
+    "old": "    for (const c of seen) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon, c.best.interior)) return c.best;",
     "new": "    for (const c of seen) return c.best;",
     "tests": [
       "test/fb1001_mining.test.js"

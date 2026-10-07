@@ -245,13 +245,14 @@ export function aimAt(eyePos, at, view) {
  *   nowMs: () => number, eye: () => ({ pos: number[], dir: number[] }), view: () => ({ yaw: number, pitch: number }),
  *   feet: () => number[], entity: () => any, keyLabel: (a: string) => string,
  *   input: () => ({ held: boolean, attack: boolean, choice?: boolean }), active: () => boolean,
- *   activeDungeon?: () => boolean, onSettle?: () => void, clear?: (from: number[], to: number[], underground: boolean) => boolean,
+ *   activeDungeon?: () => boolean, activeInterior?: () => boolean, onSettle?: () => void, clear?: (from: number[], to: number[], underground: boolean, interior?: boolean) => boolean,
  *   plaque?: () => boolean, lit?: (key: string) => any, choose?: (rows: string[], pick: (i: number) => void) => boolean,
  *   step?: (n: number) => boolean, settled?: (pos: number[]) => boolean,
  *   pointer?: (want: 'cursor'|'look') => ((() => void) | null), haul?: (entries: any[]) => boolean,
  *   marks?: { findLine: (found: any, kind: string) => (string|null) } | null,
  * }} deps `active` - the streaming world's exterior, walking, nothing over it (the host's); `activeDungeon` - a dungeon
- *   entered, walking, nothing over it; `nowMs` the shared clock. PROF-MENU: `plaque` - the loot plaque stands (it names
+ *   entered, walking, nothing over it; `activeInterior` - INDOOR-SKIN: a building entered, walking, nothing over it (its
+ *   loose nodes alone); `nowMs` the shared clock. PROF-MENU: `plaque` - the loot plaque stands (it names
  *   the node, so no prompt does); `lit(key)` - the row the plaque has lit over that key (quickLoot.js plaqueActionFor);
  *   `choose(rows, pick)` - the rows as a list, where no plaque stands (true when it opened); `step(n)` - the plaque's lit
  *   row moved n rows (quickLoot.js plaqueStep), the act choice key's. `settled` - SETTLE-STAND: whether a scene place is
@@ -287,6 +288,12 @@ export function createGatherHost(deps) {
    *  own doors for the flats (owned with the dungeon's batches). */
   let dungeon = null;
   const inDungeon = () => !!dungeon && !!deps.activeDungeon?.();
+  /** FIELD BUGS 2026-10-07 INDOOR-SKIN: a building's interior, walking, nothing over it - no ground of its own stands a
+   *  node there (no pixel, no wall), but a loose node lies where it fell (Hunting's bodies, the building's own pool). The
+   *  host was live on the street and underground alone, so a body felled in a house was no node and E the loot's. */
+  const indoors = () => !inDungeon() && !!deps.activeInterior?.();
+  /** Whether the player stands anywhere the host works: the street, a dungeon, or a building. */
+  const live = () => deps.active() || inDungeon() || indoors();
   const rank = (profession) => book.track(profession).rank;
   const specs = (profession) => book.track(profession).specs ?? { 50: null, 100: null };
   /** NODE-MARKS: the marks' one list and the records it is refilled from; what a kind's mark is asked with */
@@ -416,9 +423,10 @@ export function createGatherHost(deps) {
     const reachBox = NODE_REACH + 1;
     // PROF2: underground the dungeon's nodes, in its own space; above ground the streamed pixels'
     const under = inDungeon();
+    const inside = !under && indoors();   // INDOOR-SKIN: a building's loose nodes alone - never the street's pixels round it
     /** @type {Array<{ nodes: any[], entry: any, info: any, loose?: boolean, at: (n: any) => number[]|null }>} */
     const places = under ? [{ nodes: dungeon.nodes, entry: null, info: dungeon.info, at: (n) => [n.local[0], n.local[1] + (n.lift ?? 0.3), n.local[2]] }]
-      : nearPixels(pos, reachBox).map((s) => ({ nodes: s.nodes, entry: s.entry, info: s.info, at: (n) => worldOf(s, n) }));
+      : inside ? [] : nearPixels(pos, reachBox).map((s) => ({ nodes: s.nodes, entry: s.entry, info: s.info, at: (n) => worldOf(s, n) }));
     // PROF7: the loose nodes - each its own place (Hunting's bodies), above ground or below
     for (const k of own) {
       if (!k.looseNodesOf) continue;
@@ -453,14 +461,14 @@ export function createGatherHost(deps) {
         const ang = Math.acos(Math.max(-1, Math.min(1, cos))) * (180 / Math.PI);
         if (ang < NODE_AIM_DEG) {
           // the node's bearing below the eye (AUDIT 32 H7: a body under the player's feet asks them to step back)
-          seen.push({ ang, yields: n.yields === true, at: [w[0], pos[1] + up, w[2]], best: { node: n, px: s.entry?.px ?? null, py: s.entry?.py ?? null, dungeon: s.loose ? under : !s.entry, loose: !!s.loose, info: s.info, world: w, pitch: Math.atan2(dy, Math.hypot(dx, dz)) * (180 / Math.PI) } });
+          seen.push({ ang, yields: n.yields === true, at: [w[0], pos[1] + up, w[2]], best: { node: n, px: s.entry?.px ?? null, py: s.entry?.py ?? null, dungeon: s.loose ? under : !s.entry, interior: inside, loose: !!s.loose, info: s.info, world: w, pitch: Math.atan2(dy, Math.hypot(dx, dz)) * (180 / Math.PI) } });
         }
       }
     }
     // AUDIT 29 C1: and seen - a ray to the node through the place's collider (a vein through a dungeon's wall, a patch
     // behind a rock, is no target); NODE-AIM: nearest the look first, and the first seen is the one
     seen.sort((a, b) => Number(a.yields) - Number(b.yields) || a.ang - b.ang);   // CAST-LOOK: a node the look itself stands last
-    for (const c of seen) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon)) return c.best;
+    for (const c of seen) if (!deps.clear || deps.clear(pos, c.at, c.best.dungeon, c.best.interior)) return c.best;   // INDOOR-SKIN: a building's own walls
     return null;
   }
   /** AUDIT 29 C10: the stood pixels whose ground is within `r` of `pos` - the player's and its edge neighbours' - never
@@ -547,7 +555,7 @@ export function createGatherHost(deps) {
     const a = k?.start(t.node, plan, ctxFor(t, tool, byPress));
     if (!a) return false;
     if (a.refused) { hud.toast(a.refused); return false; }
-    act = { ...a, node: t.node, px: t.px, py: t.py, dungeon: t.dungeon, loose: !!t.loose, info: t.info, world: t.world };
+    act = { ...a, node: t.node, px: t.px, py: t.py, dungeon: t.dungeon, interior: !!t.interior, loose: !!t.loose, info: t.info, world: t.world };
     syncPointer();   // HERB-CURSOR: in the press's frame, while its activation stands (a lock a browser asks one for)
     chipProfession = a.profession;
     chipLeft = CHIP_S;
@@ -597,7 +605,7 @@ export function createGatherHost(deps) {
       // AUDIT HAUL-CARDS A3: only on a live world (walking, nothing over it) - a window open as the answer lands takes
       // the feed down with the plaque (ui/worldPlaque.js hideWorldPlaque), and the card went before it was seen, its
       // lines unsaid; there the lines are said as ever
-      const live = deps.active?.() === true || deps.activeDungeon?.() === true;
+      const live = deps.active?.() === true || deps.activeDungeon?.() === true || deps.activeInterior?.() === true;   // INDOOR-SKIN: a building's too
       let hauled = false;
       try { hauled = live && deps.haul?.(harvestHauls(d, { name: k?.haulName?.(d) ?? null, note })) === true; } catch { hauled = false; }
       if (!hauled) hud.toast(k?.storesLine ? k.storesLine(d) : storesLine(d), { keep: true });   // GATHER-SAID: the goods in one line, outlasting the rest; PROF4's Resin, PROF7's butchery in it; PROF8's species
@@ -732,7 +740,7 @@ export function createGatherHost(deps) {
       passedOn = '';
       passedCast = null;
       if (act) return !click;   // AUDIT 29 D3: E during an act is the act's - never a door's or a loot's behind it (a click is clickTaken's)
-      if (!target || !(deps.active() || inDungeon()) || book.state.open !== true) return false;
+      if (!target || !live() || book.state.open !== true) return false;
       const t = target;
       const rows = rowsFor(t);
       const lit = deps.lit?.(menuKey(t)) ?? null;
@@ -761,7 +769,7 @@ export function createGatherHost(deps) {
      * @param {any} [ray] the host's own race's winner this frame
      */
     hoverHit(ray = null) {
-      if (act || !target || book.state.open !== true || !(deps.active() || inDungeon())) return null;
+      if (act || !target || book.state.open !== true || !live()) return null;
       const rows = rowsFor(target);
       if (!rows.length) return null;
       if (!rows.some(pressable) && ray && ray.distance <= ray.reach) return null;
@@ -805,7 +813,7 @@ export function createGatherHost(deps) {
       if (cast) {
         // CAST-E: nothing else took the press - the cast it passed on, if it may still be cast (else what it needs)
         if (act) return true;
-        if (!(deps.active() || inDungeon()) || book.state.open !== true) return false;
+        if (!live() || book.state.open !== true) return false;
         const plan = planFor(cast);
         if (plan?.ready) return start(cast, plan) || true;
         const need = needLine(plan, rank);
@@ -828,7 +836,7 @@ export function createGatherHost(deps) {
      */
     useTool(templateIndex) {
       const own = kinds.filter((k) => k.tools?.includes(templateIndex));
-      if (!own.length || !(deps.active() || inDungeon()) || book.state.open !== true) return false;
+      if (!own.length || !live() || book.state.open !== true) return false;
       if (act) return 'taken';
       const t = findTarget(own);
       if (!t) return false;
@@ -889,7 +897,7 @@ export function createGatherHost(deps) {
         const gone = act.loose ? !w : !act.dungeon && !stood.has(pixelKey(act.px, act.py));   // its pixel torn down under it; PROF7: its body let go
         act.act.tick(dt, { held: input.held || act.heldByUse === true, attack, view: v, pos: { x: feet[0], z: feet[2] }, aim: aimAt(pos, act.world, v) });   // TOOL-USE: a hold the Use made
         const away = gone || Math.hypot(act.world[0] - pos[0], act.world[2] - pos[2]) > (act.node.reach ?? NODE_REACH) + 1;
-        const here = act.dungeon ? inDungeon() : deps.active();
+        const here = act.dungeon ? inDungeon() : act.interior ? indoors() : deps.active();   // INDOOR-SKIN: a building's act ends at its door
         if (act.act.state.cancelled || away || !here) {   // GATHER-SAID: said, never only the meter gone (Escape ends it in `cancel`, unsaid)
           // AUDIT FB1005 W2: an act dropped is ENDED, as at every other drop - a window, a door, the helm, a pixel's
           // edge: Fishing's live cast stayed neither done nor cancelled and kept the bank a target (SHORE-CAST)
@@ -900,7 +908,7 @@ export function createGatherHost(deps) {
         else hud.setMeter(act.act, act.label ?? '', { byUse: act.heldByUse === true });   // TOUCH-HOLD: a Use's hold says no key
         hud.setPrompt(null);
       } else {
-        target = deps.active() || inDungeon() ? findTarget() : null;
+        target = live() ? findTarget() : null;
         if (target) {
           // PROF-MENU: the plaque names the node and lists its acts where it stands - no prompt beside it; where none
           // stands, the prompt says the one act, or the choice E opens
