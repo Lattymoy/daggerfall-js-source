@@ -1,0 +1,336 @@
+[
+  {
+    "name": "MWSPELLFX1-vis-at-a-key-is-the-one-before",
+    "file": "src/formats/mwVfx.js",
+    "old": "while (lo < hi) { const mid = (lo + hi) >>> 1; if (time < keys[mid].time) hi = mid; else lo = mid + 1; }",
+    "new": "while (lo < hi) { const mid = (lo + hi) >>> 1; if (time <= keys[mid].time) hi = mid; else lo = mid + 1; }",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-u-offset-not-negated",
+    "file": "src/formats/mwVfx.js",
+    "old": "  return [(u - 0.5) * uScale + 0.5 - uTrans, (v - 0.5) * vScale + 0.5 + vTrans];",
+    "new": "  return [(u - 0.5) * uScale + 0.5 + uTrans, (v - 0.5) * vScale + 0.5 + vTrans];",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-flip-at-delta-zero-draws-nothing",
+    "file": "src/formats/mwVfx.js",
+    "old": "  if (!delta) return 0;",
+    "new": "  if (!delta) return -1;",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-root-marks-itself",
+    "file": "src/formats/mwVfx.js",
+    "old": "    const marked = overridden || (!isRoot && rootTex >= 0 && own.includes(rootTex));",
+    "new": "    const marked = overridden || (rootTex >= 0 && own.includes(rootTex));",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-a-hidden-node-keeps-its-meshes",
+    "file": "src/formats/mwVfx.js",
+    "old": "    const skip = skipMeshes || (hidden && !hasVis);",
+    "new": "    const skip = skipMeshes;",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-alpha-uniform-replaces",
+    "file": "src/formats/mwVfx.js",
+    "old": "clamp01(diffuseA * alphaUniform)];",
+    "new": "clamp01(alphaUniform)];",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-billboard-faces-away",
+    "file": "src/formats/mwVfx.js",
+    "old": "          [-relForward[0], -relForward[1], -relForward[2]]);",
+    "new": "          [relForward[0], relForward[1], relForward[2]]);",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-world-sparks-take-the-scale",
+    "file": "src/formats/mwVfx.js",
+    "old": "          const frame = affineOrthoNormalize(affineMul(placeA, ps));",
+    "new": "          const frame = affineMul(placeA, ps);",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-every-system-in-the-world",
+    "file": "src/formats/mwVfx.js",
+    "old": "        if (p.desc.localSpace) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-world-sparks-sized-by-the-effect",
+    "file": "src/formats/mwVfx.js",
+    "old": "sizeScale: affineScale(viewA) });",
+    "new": "sizeScale: affineScale(affineMul(viewA, placeA)) });",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-a-loop-starts-over",
+    "file": "src/formats/mwVfx.js",
+    "old": "        if (loop && desc.length > 0) time -= desc.length * Math.floor(time / desc.length);",
+    "new": "        if (loop && desc.length > 0) time = 0;",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-an-inactive-controller-counts",
+    "file": "src/formats/mwVfx.js",
+    "old": "    if (c.flags & CONTROLLER_FLAG_ACTIVE) out.push(c);",
+    "new": "    out.push(c);",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-every-bolt-wears-the-texture",
+    "file": "src/formats/mwSpellFx.js",
+    "old": "        texture: effects.length === 1 ? effects[0]?.particle || null : null,",
+    "new": "        texture: effects[0]?.particle || null,",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-negative-light-ignored",
+    "file": "src/formats/mwSpellFx.js",
+    "old": "  return (mgef?.flags ?? 0) & MGEF_FLAG.NegativeLight ? c.map((v) => 1 - v) : c;",
+    "new": "  return c;",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-a-casting-visual-per-effect",
+    "file": "src/formats/mwSpellFx.js",
+    "old": "    cast: effects.map((m) => visual(m, 'cast')).filter((v, i, all) => v && all.findIndex((w) => w && w.model === v.model) === i),",
+    "new": "    cast: effects.map((m) => visual(m, 'cast')).filter(Boolean),",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-area-at-its-own-size",
+    "file": "src/formats/mwSpellFx.js",
+    "old": "export const areaVisualScale = (radiusMetres, unitsPerMetre) => 2 * (radiusMetres * unitsPerMetre) / MW_UNITS_PER_FOOT;",
+    "new": "export const areaVisualScale = (radiusMetres, unitsPerMetre) => (radiusMetres * unitsPerMetre) / MW_UNITS_PER_FOOT;",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-hands-wear-the-first",
+    "file": "src/formats/mwSpellFx.js",
+    "old": "  const last = effects[effects.length - 1];",
+    "new": "  const last = effects[0];",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-magic-harm-is-all-one",
+    "file": "src/formats/mwSpellFx.js",
+    "old": "if (ELEMENTAL.has(type) && Number.isInteger(element) && element >= 0 && element <= 3) return ELEMENT_DAMAGE[element];",
+    "new": "if (ELEMENTAL.has(type) && Number.isInteger(element) && element >= 0 && element <= 4) return ELEMENT_DAMAGE[element];",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-bolt-spins-backwards",
+    "file": "src/formats/mwSpellFx.js",
+    "old": "  const a = -seconds * BOLT_SPIN_PER_S;   // about -Y: Ry(-angle)",
+    "new": "  const a = seconds * BOLT_SPIN_PER_S;   // about -Y: Ry(-angle)",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-a-creature-not-lifted-by-its-ratio",
+    "file": "src/formats/mwSpellFx.js",
+    "old": "  return { scale: ratio > 1 ? ratio : 1, offset: offset * ratio };",
+    "new": "  return { scale: ratio > 1 ? ratio : 1, offset };",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-file-sets-every-flag",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "      e.flags = d.getInt32(8, true) & (0x200 | 0x400 | 0x800);   // AllowSpellmaking | AllowEnchanting | NegativeLight",
+    "new": "      e.flags = d.getInt32(8, true);   // AllowSpellmaking | AllowEnchanting | NegativeLight",
+    "tests": [
+      "test/mwload_records.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-a-named-static-left-behind",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "  return [...byId.values()].filter((e) => e.id.startsWith(VFX_STATIC_PREFIX) || named.has(e.id));",
+    "new": "  return [...byId.values()].filter((e) => e.id.startsWith(VFX_STATIC_PREFIX));",
+    "tests": [
+      "test/mwload_records.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-my-missile-flies-bare",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    withBolt(missiles[missiles.length - 1]);   // MW-SPELLFX1: and its bolt",
+    "new": "    void 0;",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-flat-and-the-bolt-both",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (m.mwBolt && m.mwBolt.state() !== 'failed') return;   // MW-SPELLFX1: the bolt is its look; the classic flat stands in only where there is none",
+    "new": "    void 0;",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-bolt-outlives-its-missile",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    m.mwBolt?.end();   // MW-SPELLFX1: the bolt goes with it",
+    "new": "    void 0;",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-no-hit-on-the-foe",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (foe?.ai?.feet && !(r?.saved || r?.chanceFailed || r?.reflected)) mwFx.hit(",
+    "new": "    if (false) mwFx.hit(",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-no-cast-without-hands",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    mwFx.cast(sp, _doorFeet, { player: true });   // MW-SPELLFX1: no hands to begin - the casting effects all the same",
+    "new": "    void 0;",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-no-burst",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    mwFx.area(spell, pos, EXPLOSION_RADIUS);   // MW-SPELLFX1: the area visual where it goes off (explodeSpell)",
+    "new": "    void 0;",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-drawn-by-nobody",
+    "file": "src/scenes/hostMagic.js",
+    "old": "      const mw = mwFx.draw();   // MW-SPELLFX1: Morrowind's spell effects, through the renderer's own particle path",
+    "new": "      const mw = false;",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-hands-that-did-not-cast-glow",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (!built || !built.ok || upper !== UPPER_BODY.Casting) return false;",
+    "new": "      if (!built || !built.ok) return false;",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-glow-on-the-fixture-s-hands",
+    "file": "src/combat/fpArm.js",
+    "old": "export const VFX_HAND_BONES = Object.freeze(['bip01 l hand', 'bip01 r hand']);",
+    "new": "export const VFX_HAND_BONES = Object.freeze(['left hand', 'right hand']);",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-glow-leaks-its-gpu",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (r.done) { c.gpu?.release(); castFx.splice(i, 1); changed = true; continue; }",
+    "new": "      if (r.done) { castFx.splice(i, 1); changed = true; continue; }",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-switch-leaves-them-running",
+    "file": "src/scenes/mwMagicFx.js",
+    "old": "      if (!enabled()) { this.clear(); return; }",
+    "new": "      if (!enabled()) return;",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-burst-unscaled",
+    "file": "src/scenes/mwMagicFx.js",
+    "old": "      const place = translate(passToMw(at), areaVisualScale(radius, MW_UNITS_PER_METER));",
+    "new": "      const place = translate(passToMw(at));",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-bolt-never-spins",
+    "file": "src/scenes/mwMagicFx.js",
+    "old": "        const r = mul3(boltAttitude(passDirToMw(where.dir)), boltSpin(clock));",
+    "new": "        const r = mul3(boltAttitude(passDirToMw(where.dir)), boltSpin(0));",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-world-unmirrored",
+    "file": "src/scenes/mwMagicFx.js",
+    "old": "export const MW_TO_PASS = Object.freeze({ a: Float32Array.from([-U, 0, 0, 0, 0, U, 0, -U, 0]), t: Object.freeze([0, 0, 0]) });",
+    "new": "export const MW_TO_PASS = Object.freeze({ a: Float32Array.from([U, 0, 0, 0, 0, U, 0, -U, 0]), t: Object.freeze([0, 0, 0]) });",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ]
+  },
+  {
+    "name": "MWSPELLFX1-the-records-version-left",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "export const ARM_RECORDS_VERSION = 4;",
+    "new": "export const ARM_RECORDS_VERSION = 3;",
+    "tests": [
+      "test/mwload_records.test.js"
+    ],
+    "note": "A derived record set extracted before the magic effects carries no MGEF and no STAT; its version is what refuses it first."
+  }
+]

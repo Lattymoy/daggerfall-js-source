@@ -232,6 +232,34 @@ export function machineCancelBowDraw(m, liveSpeed = 50) {
   return false;
 }
 
+/**
+ * MW-PACE1 (2026-10-07, Mac: "Morrowind attack animations don't scale with attack speed/multiple attacks when attack
+ * speed is high"): THE BLOW'S CLOCK, SAID AHEAD OF TIME - when the strike this machine has just begun lands its hit,
+ * and when it is done, in seconds from its first frame. The Morrowind arm is a picture of this machine (rule 24's note,
+ * Morrowind-Rules.md: the hit frame is FPSWeapon's, not the .kf's), and a picture paced by the WEAP record's own speed
+ * drew one blow while the machine struck two - the second refused, the hit landing mid-wind-up. The caller that starts
+ * the arm's wind-up reads this at the strike's first frame (combat/weaponRig.js fpAttack) and the arm fits each section
+ * of its blow into it (combat/fpArm.js blowRate).
+ *
+ * The machine steps ONCE per frame and drops the remainder (ARROW2, machineStep below), so a tick lasts the whole
+ * frames it takes to cover it: given the frame's `dt`, a step is ceil(tick / dt) frames. Without one, the nominal tick.
+ * The unarmed strike to the left is FPSWeapon's eight-tick list, its hit the first visit to frame 2. Null for Idle and
+ * for a ranged machine - the bow's hit waits for the arm's own "shoot release" (MW-D42), and its arm keeps the record's
+ * pace.
+ * @returns {{ seconds: number, hitAt: number, step: number } | null}
+ */
+export function blowSchedule(m, liveSpeed, animCtx = null, dt = 0) {
+  if (!m || m.state === 'Idle' || (m.ranged ?? m.isBow)) return null;
+  const tick = m.tick ?? getMeleeWeaponAnimTime(liveSpeed, animCtx);
+  if (!(tick > 0) || !Number.isFinite(tick)) return null;
+  const step = dt > 0 ? Math.max(1, Math.ceil(tick / dt - 1e-9)) * dt : tick;
+  if (m.isUnarmed && m.state === 'StrikeLeft') {
+    return { seconds: LEFT_UNARMED_ANIMS.length * step, hitAt: (LEFT_UNARMED_ANIMS.indexOf(HIT_FRAME_MELEE) + 1) * step, step };
+  }
+  const frames = (m.frames ?? MELEE_NUM_FRAMES)[m.state] ?? 5;
+  return { seconds: frames * step, hitAt: (m.hitFrame ?? HIT_FRAME_MELEE) * step, step };
+}
+
 export function machineStep(m, dt, liveSpeed, animCtx = null) {   // AUDIT-RR F1: the rig's { entity, weaponType, usingRightHand } for a registered GetMeleeWeaponAnimTime override
   m.now += dt;
   const events = [];

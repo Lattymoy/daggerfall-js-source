@@ -24,6 +24,7 @@
 import {
   createWeaponMachine, machineAttack, machineStep, gestureDirection,
   MAX_GESTURE_SECONDS, BOW_DRAWN_HOLD_FRAME, machineCancelBowDraw, THUNDERLOCK_NUM_FRAMES, CLASSIC_UPDATE_INTERVAL,
+  blowSchedule,   // MW-PACE1: the strike just begun, timed - what the Morrowind arm fits its blow into
 } from '../characters/weaponStates.js';
 import { GUN_FEEL, GUN_TICK_SECONDS, GUN_COOLDOWN_SECONDS } from './gunFeel.js';   // FIELD-GUN7: the lab's cadence, from the one home
 import { DIRECTION_TO_STRIKE, ATTACKS_FP, sampleClip } from '../characters/anims.js';
@@ -594,6 +595,14 @@ export class PlayerWeapon {
     this.machine.cooldown = thunderlock ? GUN_COOLDOWN_SECONDS : null;
     this.machine.hitFrame = thunderlock ? GUN_FEEL.hitFrame : null;
     return machineStep(this.machine, dt, this.liveSpeed, this.animCtx?.() ?? null);
+  }
+
+  /** MW-PACE1: THE STRIKE JUST BEGUN, TIMED - when its hit lands and when it is done, at this frame's `dt`
+   *  (characters/weaponStates.js blowSchedule: the machine's own tick, read off the same live Speed and the same
+   *  GetMeleeWeaponAnimTime ask as update() above). Null for a ranged weapon or an idle machine. combat/weaponRig.js
+   *  fpAttack hands it to the Morrowind arm, which fits its blow into it. */
+  strikeSchedule(dt = 0) {
+    return blowSchedule(this.machine, this.liveSpeed, this.animCtx?.() ?? null, dt);
   }
 
   /** The FP viewmodel pose this frame: the fpMelee1H base with the

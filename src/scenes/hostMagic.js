@@ -71,6 +71,7 @@ import { coverDistance, coverStep } from '../ai/cover.js';   // TACT1: billboard
 import { blowTaken } from '../systems/blowTaken.js';   // TELL1: what a spell's target takes (a staggered foe a quarter more)
 import { noteFeudHarm, elementFeudClass } from '../systems/feudLedger.js';   // RVN1: my spell, in its fight's ledger (a leaf)
 import { sandSpellRefusal } from '../systems/arenaKit.js';   // AUDIT ARENA-LADDER: the sand's kit law
+import { createMwMagicFx } from './mwMagicFx.js';   // MW-SPELLFX1: Morrowind's spell effects, drawn by every host through this engine
 
 /** SUNBABY2: a sky fireball (skyFire) is drawn this many times its flat's size, its flash too - a ball a sun throws,
  *  seen falling from far up - and heard this far (metres) from where it lands. */
@@ -188,7 +189,13 @@ export function createPlayerMagic({
   spellRefusal = null,
   // GIFT-QUIET: the clock a gift's lines are held back by, in ms - the real one (performance.now) unless a test hands one
   giftClockMs = undefined,
+  // MW-SPELLFX1 (2026-10-07, Mac: "We need to implement morrowind spell casting effects and animations"): MORROWIND'S
+  // SPELL EFFECTS (scenes/mwMagicFx.js) - the casting effects at the cast's start, the bolts, the hits and the bursts,
+  // drawn by drawFx with the impact pass. Every door is quiet without Morrowind data or with the switch off; a test may
+  // hand its own.
+  mwMagicFx = null,
 }) {
+  const mwFx = mwMagicFx ?? createMwMagicFx({ renderer });
   const playerCaster = () => ({ entity: playerEntity, sinks: playerSinks });
   /** GIFT-QUIET (systems/allyCast.js GIFT_LINE_QUIET_S): a gift's line - an armed ready's, a caster's - said at most once
    *  in the window (createGiftLineGate); `fresh` says it whatever the window. */
@@ -661,6 +668,8 @@ export function createPlayerMagic({
       return sinks.hurt(d, { ...(o ?? {}), element: spell?.element ?? null });   // RVN3: the element rides to the door (its weakness's weight)
     } } : sinks;
     const r = applySpell(spell, casterLevel, foe.entity, landing, rolls, caster, ctx);
+    // MW-SPELLFX1: the hit, on the foe it landed on (playEffects) - not one it saved against or turned back
+    if (foe?.ai?.feet && !(r?.saved || r?.chanceFailed || r?.reflected)) mwFx.hit(spell, foe.ai.feet, { body: { height: foe.ai.height ?? CAPSULE_HEIGHT, radius: foe.ai.radius ?? PLAYER_BODY_RADIUS } });
     // STRIKE-SHARED (2026-09-29): ANOTHER PLAYER'S strike spell, landed here on the foe I own (`ctx.peerCaster` its id).
     // The trap's line is its caster's and not mine to speak, and a new trap is marked with whose it is - its soul goes
     // to that caster's pack, never mine (mysticism.js peerSoulTrapOf). An incumbent trap keeps its own caster, as it
@@ -703,6 +712,7 @@ export function createPlayerMagic({
     const ctx = { ...(lastCastCost > 0 ? { ...base, selfCastCost: lastCastCost } : base), ...(extraCtx ?? {}) };
     if (caster?.entity && caster.entity !== playerEntity && !caster.entity.isPlayer) markPlayerHarm(caster.entity);   // REVENANT-HARM: before it lands - its burn may be the death
     const r = applySpell(spell, casterLevel, playerEntity, playerSinks, rolls, caster, ctx);
+    if (_doorFeet && !(r.saved || r.chanceFailed || r.reflected)) mwFx.hit(spell, _doorFeet);   // MW-SPELLFX1: the hit, about me
     if (r.paralyzed) say('You are paralyzed.');
     // S19c: AssignBundle's failure messages, player hosts only -
     // CasterOnly chance fails say "Spell effect failed.", external
@@ -799,6 +809,7 @@ export function createPlayerMagic({
     if (r.healed > 0) say(`You are healed ${r.healed} points.`);
   }
   function explodeAt(pos, spell, casterLevel, playerFeet, caster = null, { excludeFoe = null, playerHeight = CAPSULE_HEIGHT, allies = false, duel = false, boss = duel } = {}) {
+    mwFx.area(spell, pos, EXPLOSION_RADIUS);   // MW-SPELLFX1: the area visual where it goes off (explodeSpell)
     // SHIPMATES: a blast of the player's own crew passes the player and the rest of the crew by (combat/friendlyFire.js)
     const crewBlast = isShipmate(caster?.foe);
     for (const t of sweepFoes(pos, EXPLOSION_RADIUS, foes())) {
@@ -1040,6 +1051,7 @@ export function createPlayerMagic({
       for (const t of sweepFoes(eye, EXPLOSION_RADIUS, duelMarksFor(sp))) giveToDuel(t, sp);   // DUEL1: and my duel opponent, if they stand in it
       for (const t of sweepFoes(eye, EXPLOSION_RADIUS, bossMarksFor(sp))) giveToBoss(t, sp);   // WB4b: and the court's boss, if any of him stands in it
       giveAreaToCaster(sp);   // AREA-CASTER: and me, when it is all gifts
+      mwFx.area(sp, _doorFeet ?? [eye[0], eye[1] - 1, eye[2]], EXPLOSION_RADIUS);   // MW-SPELLFX1: the burst at the caster (explodeSpell's hit position is the caster's own)
       // IMPACTFX: the area seen going off about me - a heal's wide ring of rising light, or the element's nova on the floor
       // AOE-SIZE: drawn to the sphere the sweep above catches - EXPLOSION_RADIUS about my EYE, so its rim on the floor
       // is where a foe stops being caught
@@ -1052,7 +1064,8 @@ export function createPlayerMagic({
     lastCastCost = cost;
     tallyCastSkills(sp);
     surfacePlayer();
-    missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true, ally: !readiedFree && allyCastable(sp), duel: !!duelSpellOf(sp), boss: !!duelSpellOf(sp) || (sp.effects ?? []).some((e) => e && isSoulTrapEffect(e)) || spellSways(sp) });   // AID1 onto ALLY-CAST: may be given to a party mate it strikes (never a free ready's); DUEL1: may strike my duel opponent; AUDIT WBX F5: may meet the court's boss - a harmful spell, or a Soul Trap (at range or bursting, as by touch)
+    missiles.push({ spell: sp, pos: [eye[0], eye[1], eye[2]], dir: [...dir], age: 0, batch: null, fromPlayer: true, ally: !readiedFree && allyCastable(sp), duel: !!duelSpellOf(sp), boss: !!duelSpellOf(sp) || (sp.effects ?? []).some((e) => e && isSoulTrapEffect(e)) || spellSways(sp) });
+    withBolt(missiles[missiles.length - 1]);   // MW-SPELLFX1: and its bolt   // AID1 onto ALLY-CAST: may be given to a party mate it strikes (never a free ready's); DUEL1: may strike my duel opponent; AUDIT WBX F5: may meet the court's boss - a harmful spell, or a Soul Trap (at range or bursting, as by touch)
     if (sp.rangeType === 4) giveAreaToCaster(sp);   // AREA-CASTER: an Area at Range spell of gifts lands on me too, wherever it bursts
     return done(true);
   }
@@ -1122,8 +1135,10 @@ export function createPlayerMagic({
     // further casting until it releases.
     if (startCastAnim && startCastAnim(sp, () => releaseFrame(parked))) {
       castInProgress = true;
+      mwFx.cast(sp, _doorFeet, { player: true });   // MW-SPELLFX1: the casting effects as the hands begin, VFX_Hands on them
       return true;
     }
+    mwFx.cast(sp, _doorFeet, { player: true });   // MW-SPELLFX1: no hands to begin - the casting effects all the same
     // :436-439 - no animation, so the release is now.
     return releaseFrame(parked);
   }
@@ -1160,6 +1175,7 @@ export function createPlayerMagic({
     readiedSpell = sp;
     readiedFree = free;
     readiedCost = spellPointCost;
+    mwFx.prepare(sp);   // MW-SPELLFX1: its visuals load while it waits, so the cast is not a frame late
     onNewReadySpell?.(sp);   // :348 - after the assignment, before the CasterOnly instant cast
     if (sp.rangeType === 0) {
       // AUDIT ALLY-CAST A1: a CasterOnly spell with a PARTY MATE under the crosshair ARMS instead of firing on the
@@ -1194,8 +1210,16 @@ export function createPlayerMagic({
     return true;
   }
 
+  /** MW-SPELLFX1: a missile's Morrowind bolt (scenes/mwMagicFx.js) - placed now, moved with the flight, ended with it. */
+  function withBolt(m) {
+    m.mwBolt = mwFx.bolt(m.spell);
+    m.mwBolt.at(m.pos, m.dir);
+    return m;
+  }
+
   async function ensureMissileBatch(m) {
     if (m.batch !== null) return;
+    if (m.mwBolt && m.mwBolt.state() !== 'failed') return;   // MW-SPELLFX1: the bolt is its look; the classic flat stands in only where there is none
     m.batch = false;   // in-flight guard
     const archive = missileArchive(m.spell.element);
     const t = await getTexture(archive);
@@ -1221,6 +1245,7 @@ export function createPlayerMagic({
   }
 
   function retireMissile(m) {
+    m.mwBolt?.end();   // MW-SPELLFX1: the bolt goes with it
     if (m.batch) {
       flatAnims.remove(m.batch);   // FA1
       const bi = batches.indexOf(m.batch);
@@ -1241,6 +1266,7 @@ export function createPlayerMagic({
     setPlayerDoor(_door);
     stepSparks(dt);   // IMPACTFEEL (after the door: SET2 publishes it first thing each frame): the chunks' flight
     fx.step(dt);      // IMPACTFX: the light's
+    mwFx.update(dt);  // MW-SPELLFX1: Morrowind's spell effects - their clocks, their places, their streams
     for (const m of missiles) if (!m.dead && m.spell && !m._artNoted) { m._artNoted = true; noteElementArt(m.spell.element); }   // ART-COLOUR: sampled while it flies, so its landing wears it
     // FA1: the missile flats' clock rides the module's OWN update, not
     // each host's frame - hostMagic is shared by three of them and a
@@ -1282,6 +1308,7 @@ export function createPlayerMagic({
       }
       const _adv = step * _cs.advance;   // AUDIT TACT B5: no further than cover's touch
       m.pos[0] += m.dir[0] * _adv; m.pos[1] += m.dir[1] * _adv; m.pos[2] += m.dir[2] * _adv;
+      m.mwBolt?.at(m.pos, m.dir);   // MW-SPELLFX1
       // The batch was built ONCE at the fire position; flight rides
       // the batch's origin uniform (zero GL churn).
       if (m.batch) m.batch.origin = [m.pos[0] - m.firePos[0], m.pos[1] - m.firePos[1], m.pos[2] - m.firePos[2]];
@@ -1538,6 +1565,7 @@ export function createPlayerMagic({
       for (const m of peerCandleMounts.values()) m.clear();   // PEERLIGHT2
       peerCandleMounts.clear();
       clearSparks(); fx.clear();   // IMPACTFX: the bursts die with the engine
+      mwFx.destroy();   // MW-SPELLFX1: and the Morrowind effects, GL and all
       if (fxPass) { const p = fxPass; fxPass = null; fxBroken = true; p.destroy(); }   // IMPACTFX: and their GL pass (the slot emptied first; a draw after this builds nothing)
       impacts.clear();   // AUDIT 68 S21-magic-destroy-impacts: a flash still warming its archive is marked dead, so it publishes nothing into this dead engine
       for (const b of batches) { flatAnims.remove(b); renderer.destroyBillboardBatch(b); }
@@ -1552,6 +1580,7 @@ export function createPlayerMagic({
       for (const m of missiles) retireMissile(m);
       missiles.length = 0;
       clearSparks(); fx.clear();   // IMPACTFX: a load or a teleport leaves no burst behind in the old place
+      mwFx.clear();   // MW-SPELLFX1: nor a Morrowind effect
     },
     /** X11: the candle's point light, in nearestLights' own vec4 shape,
      *  or null. Each host prepends it to the array it hands the
@@ -1563,7 +1592,8 @@ export function createPlayerMagic({
     /** IMPACTFX: THE BURSTS' PASS - the hosts call this right after this engine's billboards, in their world pass,
      *  under the renderer's own camera and fog. Answers whether it drew (it marks the foreign pass itself). */
     drawFx() {
-      if (!fx.live || fxBroken || !renderer?.gl || !renderer._proj || !renderer._view) return false;
+      const mw = mwFx.draw();   // MW-SPELLFX1: Morrowind's spell effects, through the renderer's own particle path
+      if (!fx.live || fxBroken || !renderer?.gl || !renderer._proj || !renderer._view) return mw;
       const n = fx.build();
       if (!n) return false;
       if (!fxPass) { try { fxPass = new SpellImpactPass(renderer.gl); } catch (e) { fxBroken = true; console.warn('[magic] the impact pass would not build', e?.message ?? e); return false; } }
@@ -1623,9 +1653,14 @@ export function createPlayerMagic({
       // that, its whoosh IS the cast sound. A peer's cast plays that same clip from the peer's own position, on
       // the enemy casters' 3D door and distance (EnemyCastReadySpell's play3dId, maxDistance 16).
       try { audio.play3dId?.(SPELL_CAST_SOUND[el] ?? SPELL_CAST_SOUND[4], from, 1, { maxDistance: 16 }); } catch { /* a sound never costs the visual */ }
+      // MW-SPELLFX1: their casting effects at their feet - the body this scene stands for them, or a standing eye's
+      const look = { element: el, rangeType };
+      const q = casterId != null ? (peerBodies?.() ?? []).find((b) => b && b.id === casterId && Array.isArray(b.feet)) : null;
+      const feet = q ? q.feet : [from[0], from[1] - CAPSULE_HEIGHT * 0.9, from[2]];
+      mwFx.cast(look, feet);
       if (rangeType === 2 || rangeType === 4) {
         if (!Array.isArray(dir) || dir.length !== 3 || !dir.every(Number.isFinite)) return false;
-        missiles.push({ spell: { element: el, rangeType }, pos: [...from], dir: [...dir], age: 0, batch: null, fromPlayer: null, visual: true, casterId });
+        missiles.push(withBolt({ spell: look, pos: [...from], dir: [...dir], age: 0, batch: null, fromPlayer: null, visual: true, casterId }));   // MW-SPELLFX1: its bolt
         return true;
       }
       // a touch goes off at arm's length along the aim; a self or area cast on the caster's own body
@@ -1650,7 +1685,11 @@ export function createPlayerMagic({
      *  aimed by the caller (the host aims at the player mid-capsule
      *  at fire time, the trap/dungeon shape). */
     fireEnemyMissile(from, dir, spell, casterLevel, casterFoe) {
-      missiles.push({ spell, casterLevel, casterFoe, pos: [...from], dir: [...dir], age: 0, batch: null, fromPlayer: false });
+      // MW-SPELLFX1: the caster's casting effects (CastSpell::cast plays a caster's that no character controller does)
+      if (casterFoe?.ai?.feet) mwFx.cast(spell, casterFoe.ai.feet, { body: { height: casterFoe.ai.height ?? CAPSULE_HEIGHT, radius: casterFoe.ai.radius ?? PLAYER_BODY_RADIUS } });
+      missiles.push(withBolt({ spell, casterLevel, casterFoe, pos: [...from], dir: [...dir], age: 0, batch: null, fromPlayer: false }));   // MW-SPELLFX1: and its bolt
     },
+    /** MW-SPELLFX1: the Morrowind spell effects layer, for the console and a pin. */
+    mwFx,
   };
 }

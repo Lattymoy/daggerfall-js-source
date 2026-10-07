@@ -7020,3 +7020,146 @@ by the camera as above; with Eye Of The Beholder off, a third-person
 player falls to the first at the change and stays there. Pinned in
 `test/werewolf1.test.js` (the merge's test), `tools/mutants/werewolf1.json`
 (the `WEREWOLF1-MERGE-*` rows).
+
+## DECLARED DIVERGENCE (MW-PACE1, 2026-10-07): a blow paced by Daggerfall's machine
+
+Mac: *"Morrowind attack animations don't scale with attack speed/multiple
+attacks when attack speed is high"*. The [C] rule above ("weapSpeed is the
+WEAP record's float mData.mSpeed ... and scales ONLY the three attack
+play() calls") is the reference's pace, and the arm played it: a blow took
+the record's own time whatever the player's Speed, while Daggerfall's
+machine - the one that owns the damage - struck on ITS clock
+(`characters/weaponStates.js`, SWING-LAW: one step a frame, the hit at
+frame 2, done at 5). At a high Speed the machine finished a blow and began
+the next while the arm was still in the first; the arm, gated on
+WeaponEquipped, refused the second strike, so one blow in two was drawn
+and the drawn one landed after its damage.
+
+The three attack sections now run on the MACHINE's schedule. The machine
+says, at a strike's first frame, when its hit lands and when the blow is
+done, at that frame's dt (`blowSchedule`: a step is the tick rounded up to
+whole frames, as the machine steps; the unarmed strike to the left its own
+eight ticks), handed over by `combat/playerWeapon.js` strikeSchedule and
+`combat/weaponRig.js` fpAttack. `combat/fpArm.js` fits the wind-up at the
+rate that brings the playhead from "<type> start" through the release to
+"<type> hit" by the machine's hit (`blowPace`), re-fits the release from
+where the arm stands when it begins (a frame that ran long is made up
+there, not carried into the damage) and the follow-through to the blow's
+end (`blowRate`: span over the time left, held to 0.1..12), and a strike
+arriving in the follow-through cuts it for the next blow - the wind-up and
+the release are never cut, the blow they carry has not landed. The
+record's pace stands where there is no deadline to fit: a shot (its hit
+waits for the arm's own "shoot release", MW-D42), a held wind-up, and any
+blow with no schedule. A peer's body has no Speed on the wire, but its
+swing count arrives a blow at a time: the burst's shortest gap paces its
+blows (`net/peerBodies.js` peerBlowPace - a pause only lengthens a gap; a
+gap past 2.2 s ends the burst, whose first blow keeps the record's pace),
+its hit two fifths in. `test/mwpace1.test.js`, `tools/mutants/mwpace1.json`
+(10, all dead). Ledger A (MW-PACE1).
+
+## MW-CAST1 (2026-10-07): the cast, played
+
+Mac: *"We need to implement morrowind spell casting effects and
+animations"*. MW-D39 gave the arm a spellcast stance and a cast, and none
+of it reached the screen. Four faults, each pinned in `test/mwcast1.test.js`
+(6) on an arm whose clips carry the spellcast group
+(`test/fixtures/mw/castClip.mjs` - armfpweapon.kf written back by
+`tools/nifWrite.mjs` with the group appended):
+
+- **The draw gate hid it.** A readied spell hides the weapon (`shown()`'s
+  HasReadySpell leg) and the first-person draw returned before the arm, so
+  the spell stance and the cast were never on screen. The casting hands
+  are the gate's fifth exception (`combat/weaponRig.js`, `armCasts`), beside
+  the torch, the held sheet, the shield and the sliding gun.
+- **The cast was dropped two tenths in.** Daggerfall clears the readied
+  spell AT its release (EntityEffectManager.PlayerSpellCasting_OnReleaseFrame
+  :2136-2141), and the arm took the un-ready for an abort. A cast in flight
+  now plays to its "<type> stop" as the reference's does; the stance it
+  came from drops when it ends (`unreadyAfterCast`).
+- **The spell left on frame 5, not the hands' release.** OpenMW casts on the
+  spellcast group's "<type> release" (character.cpp handleTextKey). The arm
+  signals it (`takeCastRelease`, consumed as MW-D42's shot is), and
+  `combat/fpsSpellCasting.js` HOLDS its release for the Morrowind hands on
+  screen - on their key, or when they stop casting without one, or at
+  `HELD_RELEASE_MAX_S` (1.5 s) whatever happens, so nothing waits for ever.
+  The classic lane's frame 5 is untouched.
+- **The weapon stayed in the casting hand.** OpenMW shows no weapon in the
+  Spell stance; a readied spell and a cast in flight put it out of the hand
+  on both rigs (`weaponInHand`).
+
+And the world starts a cast on the LIVE rig (`scenes/world.js`
+startCastAnim: the mode's rig, the interior's indoors), so its count
+reaches the pose. `tools/mutants/mwcast1.json` (9: 8 dead, 1 equivalent as
+recorded - the Casting leg of the spell stance, which castSpell's latch
+and the deferred un-ready make unreachable today).
+
+## MW-SPELLFX1 (2026-10-07): the spell's effects
+
+The same ask's other half. With Morrowind data attached, a spell is drawn
+as Morrowind draws it - with the player's own masters' visuals:
+
+- **The runtime** (`src/formats/mwVfx.js`, pure): an effect mesh as OpenMW
+  runs one - every controller on the effect's own clock from zero
+  (Animation::addEffect, EffectManager::addEffect), over when the clock
+  reaches the longest ACTIVE controller's stop time
+  (FindMaxControllerLengthVisitor), hidden at once unless it loops, when
+  the remainder carries (UpdateVfxCallback). Keyframed nodes ([B]: no
+  rotation keys is the rest rotation), visibility keys (VisController's
+  upper_bound; a hidden node with no NiVisController skips its meshes,
+  nifloader.cpp :826-843), NiAlphaController (the alpha uniform over the
+  diffuse alpha), NiMaterialColorController (the target in the flags),
+  NiUVController (on the geometry alone; scaled about the centre, U's
+  offset negated), NiFlipController (int(t / delta) % count), billboards
+  (AutoTransform's three modes, rule 60 and [B]), and particle systems
+  (mwParticles.js, each tied to its node; LocalSpace kept in the node's
+  space, anything else in the Morrowind world at the file's own size,
+  emitted through the emitter's orthonormalised world frame). The ROOT's
+  first NiTexturingProperty is what an effect's particle texture replaces,
+  on every other node listing that record and over its subtree
+  (overrideFirstRootTexture). Its frames come out as packed streams in the
+  particle program's format - a triangle is three vertices of size 0 - so
+  the renderer's particle path draws a mesh and its sparks alike
+  (`src/render/vfxGpu.js`, `Renderer.drawWorldParticleEffects`).
+- **The records** (`formats/mwFirstPerson.js` readMagicEffect, readStatic;
+  ARM_RECORDS_VERSION 4): MGEF - INDX, MEDT's school, flags (the three a
+  legacy file may set), colour and speed, PTEX and the four visuals' ids -
+  and the STATs an effect is drawn with (the VFX_ family and any id an MGEF
+  in the same file names), in the one pass every arm record rides.
+- **The plan** (`src/formats/mwSpellFx.js`): a casting visual per model
+  (playSpellCastingEffects), a bolt for a target spell (getMagicBoltData:
+  the particle texture only for one projectile effect, the light the mean
+  of the effects' colours, NegativeLight inverted), each effect's hit
+  (playEffects) and area (explodeSpell, at area x 2 in scale), VFX_Hands
+  wearing the LAST effect's texture; OpenMW's VFX_Default* where an effect
+  names none. **A DECLARED DEPARTURE, AND ONLY A LOOK:** Daggerfall's
+  effects are not Morrowind's, so each is drawn as the Morrowind effect
+  nearest it - harm by the spell's element (Fire, Frost, Shock Damage,
+  Poison; magic's is Damage Health), the rest by family (a Heal Health is
+  Restore Health, a Levitate is Levitate), a family nobody named by its
+  school. What a spell DOES is Daggerfall's, unchanged. Ledger A
+  (MW-SPELLFX1).
+- **The world** (`src/scenes/mwMagicFx.js`), driven by the one cast engine
+  (`scenes/hostMagic.js`) at the reference's moments: the casting visuals
+  about the caster's feet as the cast STARTS (castInput, where the
+  character controller adds them - character.cpp :1574-1613) and VFX_Hands
+  on the hands that began (`fpArm.castHands`, both rigs, the view that is
+  live); every missile's bolt (mine, an enemy's, another player's drawn
+  one), at the missile, its +Y along the flight (launchMagicBolt's pitch
+  then yaw) and spinning a turn a second about it (RotateCallback), the
+  classic flat standing in only where there is no bolt to draw; the hit on
+  whoever a spell lands on (applySpellToFoe - a creature's effect sized off
+  its body, Animation::addEffect's !isNpc rule - and applySpellToPlayer);
+  and the burst where an area goes off (explodeAt, and the area about me).
+  THE FOUR HOSTS: `scenes/dungeonContext.js`, `scenes/world.js` and
+  `scenes/exterior.js` each make the engine, and `scenes/worldModes.js`
+  (the interior) rides `world.js`'s; all four draw it through
+  `magic.drawFx()`, in their world pass. The Morrowind Spell Effects switch
+  (`systems/features.js` `mw-spell-effects`, pref `mwSpellEffects`, on by
+  default, the viewer's) is read at every spawn; off clears what runs.
+
+Not carried, recorded on the modules: lighting past the white ambient,
+AutoPlay's frame clock, roll/path/look-at/morph controllers, sorting, the
+bolt's light, a looping hit (ContinuousVfx), an actor's facing,
+VFX_Multiple's dummies, and the creatures' and other players' VFX_Hands.
+`test/mwspellfx1.test.js` (16), `test/mwload_records.test.js` (the
+records), `tools/mutants/mwspellfx1.json` (37, all dead).

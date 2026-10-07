@@ -209,7 +209,93 @@ export const WRITERS = {
     o.u32(rec.failAction ?? 0).u32(rec.zfailAction ?? 0).u32(rec.zpassAction ?? 0);
     o.u32(rec.drawMode ?? 0);
   },
+
+  // MW-STEEL2: A SKIN, so a test can stand a SKINNED body - a retail body part's own records - on a skeleton whose
+  // rest is not its bind pose, which is what the plate's T-pose fault needed and no rigid fixture can show. The
+  // reader's field order exactly (mwNifFile.js NiSkinInstance / NiSkinData): the instance names its data, its
+  // skeleton root and its bones; the data carries the skin's own transform, the bone count, the 4.0.0.2 partition ref,
+  // and per bone its inverse bind, a bounding sphere and its (vertex, weight) list.
+  NiSkinInstance(o, rec) {
+    o.ref(rec.data);
+    o.ref(rec.skeletonRoot ?? -1);
+    o.refList(rec.bones ?? []);
+  },
+
+  // MW-CAST1: AN EXTERNAL .KF, so a test can stand an arm whose clips carry a group no committed fixture has (the
+  // spellcast group). The reader's field order exactly (mwNifFile.js): the helper is a bare NiObjectNET whose extra
+  // chain is the text keys and then one bone name per controller, and whose controller chain is the keyframe
+  // controllers in the same order. Held to the reader by a round trip: armfpweapon.kf parsed and written back is the
+  // same bytes.
+  NiSequenceStreamHelper(o, rec) {
+    objectNET(o, rec);
+  },
+
+  NiStringExtraData(o, rec) {
+    o.ref(rec.next ?? -1);
+    o.u32(rec.recordSize ?? 4 + Buffer.byteLength(String(rec.string ?? ''), 'latin1'));
+    o.string(rec.string);
+  },
+
+  NiTextKeyExtraData(o, rec) {
+    o.ref(rec.next ?? -1);
+    o.u32(rec.recordSize ?? 0);
+    o.u32(rec.keys.length);
+    for (const k of rec.keys) o.f32(k.time).string(k.text);
+  },
+
+  NiKeyframeController(o, rec) {
+    o.ref(rec.next ?? -1).u16(rec.flags ?? 8).f32(rec.frequency ?? 1).f32(rec.phase ?? 0);
+    o.f32(rec.startTime ?? 0).f32(rec.stopTime ?? 0).ref(rec.target ?? -1);
+    o.ref(rec.data);
+  },
+
+  NiKeyframeData(o, rec) {
+    const rot = rec.rotationKeys ?? [];
+    o.u32(rot.length);
+    if (rot.length) {
+      if ((rec.rotationType ?? 1) === 4) throw new Error('NiKeyframeData: XYZ rotation keys are not written');
+      o.u32(rec.rotationType ?? 1);
+      for (const k of rot) {
+        o.f32(k.time).f32Array(k.value);
+        if ((rec.rotationType ?? 1) === 3) o.f32Array(k.tbc);
+      }
+    }
+    keyGroup(o, rec.translations, 3);
+    keyGroup(o, rec.scales, 1);
+  },
+
+  NiSkinData(o, rec) {
+    const tr = rec.transform ?? {};
+    o.mat33(tr.rotation ?? IDENTITY3).vec3(tr.translation ?? [0, 0, 0]).f32(tr.scale ?? 1);
+    o.u32(rec.bones.length);
+    o.ref(rec.partitions ?? -1);
+    for (const b of rec.bones) {
+      const t = b.transform ?? {};
+      o.mat33(t.rotation ?? IDENTITY3).vec3(t.translation ?? [0, 0, 0]).f32(t.scale ?? 1);
+      o.vec3(b.center ?? [0, 0, 0]).f32(b.radius ?? 0);
+      o.u16(b.indices.length);
+      for (let v = 0; v < b.indices.length; v++) o.u16(b.indices[v]).f32(b.weights[v]);
+    }
+  },
 };
+
+/** MW-CAST1: a KeyGroup<T> as the reader takes it (mwNifFile.js readKeyGroupOf): the count, then - only when there are
+ *  keys - the interpolation type and the keys, a quadratic key's two tangents and a TBC key's three floats after its
+ *  value. `dim` is 1 for a float group, 3 for a vector. */
+function keyGroup(o, group, dim) {
+  const keys = group?.keys ?? [];
+  o.u32(keys.length);
+  if (!keys.length) return;
+  const type = group.type ?? 1;
+  o.u32(type);
+  const val = (v) => (dim === 1 ? o.f32(v) : o.f32Array(v));
+  for (const k of keys) {
+    o.f32(k.time);
+    val(k.value);
+    if (type === 2) { val(k.inTan); val(k.outTan); }
+    else if (type === 3) o.f32Array(k.tbc);
+  }
+}
 
 /** The sphere the exporter writes beside the vertices. */
 export function boundingSphere(positions) {

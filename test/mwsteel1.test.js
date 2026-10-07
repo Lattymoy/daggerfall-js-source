@@ -30,7 +30,7 @@ import {
 import { readPng } from '../tools/pngIO.mjs';
 import { readFbx } from '../tools/fbxRead.mjs';
 import { stripFbx, meshModelNames } from '../tools/fbxStrip.mjs';
-import { SOURCE, TEXTURES, PIECES, REFERENCE_PARTS, NOT_IN_SET, bakeSteelPlate, bakeObject, meshFile, textureFile, textureName, objectTree } from '../tools/bakeSteelPlate.mjs';
+import { SOURCE, TEXTURES, PIECES, REFERENCE_PARTS, bakeSteelPlate, bakeObject, meshFile, textureFile, textureName, objectTree } from '../tools/bakeSteelPlate.mjs';
 import { plateSkeleton, plateBody } from './fixtures/mw/plateRig.mjs';
 
 const raw = (p) => readFileSync(new URL(`../${p}`, import.meta.url));
@@ -66,9 +66,9 @@ const bounds = (arrays) => positionBounds(arrays);
 test('MW-STEEL1: every shipped mesh and texture is re-made from the committed sources byte for byte, and read back as the port reads it', () => {
   const pngs = Object.fromEntries(Object.entries(TEXTURES).map(([t, p]) => [t, raw(p)]));
   const baked = bakeSteelPlate({ open: raw(SOURCE.open), closed: raw(SOURCE.closed), pngs });
-  assert.deepEqual(baked.pieces.map((p) => p.id), ['cuirass', 'pauldron_right', 'pauldron_left', 'gauntlet_right', 'gauntlet_left',
+  assert.deepEqual(baked.pieces.map((p) => p.id), ['cuirass', 'skirt', 'pauldron_right', 'pauldron_left', 'gauntlet_right', 'gauntlet_left',
     'greave_right', 'greave_left', 'boot_right', 'boot_left', 'helm_open', 'helm_closed']);
-  assert.deepEqual(baked.textures.map((t) => t.tex), ['cuirass', 'pauldron', 'gauntlet', 'greave', 'boot', 'helm', 'visor']);
+  assert.deepEqual(baked.textures.map((t) => t.tex), ['cuirass', 'pauldron', 'gauntlet', 'greave', 'boot', 'helm', 'visor', 'skirt']);
   for (const p of baked.pieces) {
     assert.equal(Buffer.compare(Buffer.from(p.nif), raw(meshFile(p.id))), 0, `${meshFile(p.id)} is not what tools/bakeSteelPlate.mjs makes - re-run it`);
     const batches = flattenNif(parseNif(onDisk(meshFile(p.id))));
@@ -90,16 +90,17 @@ test('MW-STEEL1: every shipped mesh and texture is re-made from the committed so
 });
 
 test('MW-STEEL1: the sources are Mac\'s exports less the Morrowind body they were fitted on - held to their bytes, and refused when a piece is not where it was read', () => {
-  assert.equal(sha(SOURCE.open), '814a22dbeeaacd78d674380866bd1d2b77c1d79618011f992cbf281db71cf86e');
+  assert.equal(sha(SOURCE.open), '7a4b20045a22b40f474be66119a1084f1ca1da9eab7dccb7469e9208252fb67d');   // MW-STEEL2: re-imported with the plate skirt kept
   assert.equal(sha(SOURCE.closed), '4efd294bdb4fba2a7f6a78286a8bd1d53c591a57d1337cdbedfe914b8752121a');
   for (const [name, bytes] of [['open', raw(SOURCE.open)], ['closed', raw(SOURCE.closed)]]) {
-    for (const ref of [...Object.values(REFERENCE_PARTS), ...NOT_IN_SET]) assert.equal(meshModelNames(bytes).includes(ref), false, `the ${name} source carries no ${ref}`);
+    for (const ref of Object.values(REFERENCE_PARTS)) assert.equal(meshModelNames(bytes).includes(ref), false, `the ${name} source carries no ${ref}`);
     assert.equal(bytes.includes(Buffer.from('tx_b_n_breton')), false, `the ${name} source names no Morrowind body texture`);
     assert.equal(readFbx(bytes).version, 7400);
   }
   assert.deepEqual(meshModelNames(raw(SOURCE.closed)), ['Sphere', 'Sphere.001 Remeshed Remeshed'], 'the second export is committed as its closed helm alone');
-  assert.deepEqual(NOT_IN_SET, ['Imperial_Silver_Cuirass_67_Male.011'], 'the plate skirt under the breastplate is not the set\'s (Mac) - stripped, never baked');
-  assert.equal(PIECES.some((p) => p.shapes.some((s) => NOT_IN_SET.includes(s.object))), false);
+  // MW-STEEL2: the plate skirt under the breastplate is kept since its painting came, and baked as the set's skirt
+  assert.ok(meshModelNames(raw(SOURCE.open)).includes('Imperial_Silver_Cuirass_67_Male.011'), 'the open source keeps the skirt');
+  assert.deepEqual(PIECES.find((p) => p.id === 'skirt').shapes.map((x) => [x.object, x.texture]), [['Imperial_Silver_Cuirass_67_Male.011', 'skirt']]);
   // a piece moved past the slack is refused by name
   const tree = readFbx(raw(SOURCE.open));
   assert.throws(() => bakeObject(tree, 'Cube.024', [[0.32, -6.48, -0.21], [11.33, 14.61, 48.2]]), /"Cube\.024" stands at .* not where its piece was read/);
@@ -153,7 +154,7 @@ test('MW-STEEL1: the set composes into retail\'s slots - the breastplate the cui
   const worn = composeWornArmor({ pieces: SET, armors: [], bodyPool: [] });
   assert.deepEqual(worn.notes, []);
   assert.deepEqual(worn.adds.map((a) => [a.partName, a.model]), [
-    ['hair', 'steel_plate_helm_closed.nif'], ['cuirass', 'steel_plate_cuirass.nif'],
+    ['hair', 'steel_plate_helm_closed.nif'], ['cuirass', 'steel_plate_cuirass.nif'], ['skirt', 'steel_plate_skirt.nif'],
     ['right hand', 'steel_plate_gauntlet_right.nif'], ['left hand', 'steel_plate_gauntlet_left.nif'],
     ['right foot', 'steel_plate_boot_right.nif'], ['left foot', 'steel_plate_boot_left.nif'],
     ['right upper leg', 'steel_plate_greave_right.nif'], ['left upper leg', 'steel_plate_greave_left.nif'],
@@ -161,14 +162,17 @@ test('MW-STEEL1: the set composes into retail\'s slots - the breastplate the cui
   ]);
   assert.deepEqual(worn.shadows, ['hair', 'chest', 'hand:right', 'hand:left', 'wrist:right', 'wrist:left', 'forearm:right', 'forearm:left',
     'foot:right', 'foot:left', 'ankle:right', 'ankle:left', 'knee:right', 'knee:left', 'upperleg:right', 'upperleg:left'],
-  'the head is left - the open helm shows the face and the closed one\'s eye slit looks onto it; the groin is left - the set is the breastplate and the leg armour (Mac)');
+  'the head is left - the open helm shows the face and the closed one\'s eye slit looks onto it; the skirt shadows nothing - the groin skin stays under it, as ARMO_PART\'s skirt row says');
   // every add carries the body it is skinned from and the fit that keeps it to the scene's body
   for (const a of worn.adds) {
     const own = OWN_MW_ARMOR.find((o) => o.id === a.recordId);
-    assert.deepEqual(a.skinFrom, own.skinFrom);
+    const part = ownArmorParts(own).find((p) => p.model === a.model);
+    assert.deepEqual(a.skinFrom, part.skinFrom ?? own.skinFrom, `${a.slot}: its part's own body, else its piece's`);
     assert.equal(a.fit, own.fit);
     assert.deepEqual(a.fitFrom, [...new Set(own.fit.map((r) => r.to))]);
+    assert.equal(a.solvePose, 'bind', `${a.slot}: MW-STEEL2 - solved in the body's bind pose`);
   }
+  assert.deepEqual(worn.adds.find((a) => a.partName === 'skirt').skinFrom, ['groin', 'upperleg'], 'the skirt is skinned from the groin and the thighs it hangs over');
   // the law stands over them: a worn skirt (clothing's, base priority 3) reserves the groin and both upper legs, so it
   // covers the greaves as it covers retail's
   const skirted = composeWornArmor({ pieces: [...SET, { kind: 'clothing', name: 'Short Skirt' }], armors: [], clothes: [{ id: 'common_skirt_01', type: 7, model: 'c/skirt.nif', parts: [{ part: 5, male: 'c_skirt' }] }],
@@ -185,7 +189,7 @@ test('MW-STEEL1: the Steel Helm switch picks the helm - closed by default, open 
   assert.deepEqual(helm('closed'), ['steel_plate_helm_closed.nif']);
   assert.deepEqual(helm('open'), ['steel_plate_helm_open.nif']);
   assert.deepEqual(helm('visor-up'), ['steel_plate_helm_closed.nif']);
-  assert.deepEqual(ownArmorParts(ownArmorModelFor(SET[0]), { helmStyle: 'open' }).map((p) => p.model), ['steel_plate_cuirass.nif'], 'a piece with no styles is its parts in either');
+  assert.deepEqual(ownArmorParts(ownArmorModelFor(SET[0]), { helmStyle: 'open' }).map((p) => p.model), ['steel_plate_cuirass.nif', 'steel_plate_skirt.nif'], 'a piece with no styles is its parts in either');
   // the switch is a Features row of the port's own, the viewer's, closed by default
   const row = FEATURES.find((f) => f.id === 'steel-helm');
   assert.deepEqual([row.group, row.kinds, row.control.key, row.control.initial, row.control.online, row.control.tiers], ['combat', ['enhanced'], 'mwSteelHelm', 'closed', 'player', [['closed', 'Closed'], ['open', 'Open']]]);

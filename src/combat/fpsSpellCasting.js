@@ -57,6 +57,12 @@ export const SMALL_FRAME_ADJUST = 0.134;
  *  note. Seven steps at 0.04s is a 0.28s cast. */
 export const ANIM_SPEED = 0.04;
 
+/** MW-CAST1: the longest a release HELD for the Morrowind arm's own key waits (seconds from the cast) before it goes
+ *  anyway - NEVER-TRAPS, the bow's HELD_HIT_MAX_S law (combat/weaponRig.js, MW-D42): a .kf with no "<type> release",
+ *  an arm that loses its build mid-cast, and the spell still leaves, late rather than never. Morrowind's own casts
+ *  release well inside it. */
+export const HELD_RELEASE_MAX_S = 1.5;
+
 /** frameIndices (:50) - "Animation starts and ends with frame 0". */
 export const FRAME_INDICES = Object.freeze([0, 1, 2, 3, 4, 5, 0]);
 
@@ -148,7 +154,12 @@ export class SpellCastAnim {
     this.currentFrame = -1;
     this._acc = 0;
     this._onRelease = null;   // the OnReleaseFrame subscriber (see playOneShot)
+    this._hold = null;        // MW-CAST1: the release held for the Morrowind arm's key (see playOneShot)
+    this._heldAge = 0;
   }
+
+  /** MW-CAST1: is a release waiting on the Morrowind arm's own key? */
+  get releaseHeld() { return !!this._hold; }
 
   /** IsPlayingAnim (:71-74). */
   get isPlayingAnim() { return this.currentFrame >= 0; }
@@ -180,13 +191,21 @@ export class SpellCastAnim {
    * @param {?Function} onRelease raised on the release frame (:284).
    * @returns true when a cast actually started.
    */
-  playOneShot(element, onRelease = null) {
-    if (this.isPlayingAnim) return false;
+  playOneShot(element, onRelease = null, { hold = null } = {}) {
+    if (this.isPlayingAnim || this._hold) return false;
     if (!magicAnimFilename(element)) return false;
     this.element = element;
     this.currentFrame = 0;
     this._acc = 0;
     this._onRelease = onRelease;
+    // MW-CAST1 (Mac: "We need to implement morrowind spell casting effects and animations"): THE SPELL LEAVES ON THE
+    // ARM'S KEY. With the Morrowind arm casting, the release waits for its "<type> release" (`hold` answers true once
+    // the arm has crossed it, or once it no longer casts) - OpenMW casts there (character.cpp handleTextKey:
+    // `groupname == "spellcast" && action == mAttackType + " release"`), as the bow's shot waits for "shoot release"
+    // (MW-D42). The classic frames still run - their IsPlayingAnim is DFU's gate, and frame 5 is simply not the
+    // release - and the hold has a ceiling, HELD_RELEASE_MAX_S, so nothing waits for ever.
+    this._hold = typeof hold === 'function' ? hold : null;
+    this._heldAge = 0;
     return true;
   }
 
@@ -220,15 +239,20 @@ export class SpellCastAnim {
    * @returns true on the step that crossed the release frame.
    */
   tick(dt) {
-    if (!this.isPlayingAnim) { this._acc = 0; return false; }
-    this._acc += dt;
     let released = false;
+    // MW-CAST1: a held release goes on the arm's key, or at the ceiling - whether or not the classic frames still run
+    if (this._hold) {
+      this._heldAge += dt;
+      if (this._hold() || this._heldAge >= HELD_RELEASE_MAX_S) { this._hold = null; released = true; this._raiseRelease(); }
+    }
+    if (!this.isPlayingAnim) { this._acc = 0; return released; }
+    this._acc += dt;
     while (this._acc >= ANIM_SPEED && this.currentFrame >= 0) {
       this._acc -= ANIM_SPEED;
       this.currentFrame++;
       // :283-284 - the raise happens ON the step, before the end-of-
       // frames wrap, and the handler runs inside the coroutine.
-      if (this.currentFrame === RELEASE_FRAME) { released = true; this._raiseRelease(); }
+      if (this.currentFrame === RELEASE_FRAME && !this._hold) { released = true; this._raiseRelease(); }
       if (this.currentFrame >= FRAME_INDICES.length) this.currentFrame = -1;
     }
     return released;

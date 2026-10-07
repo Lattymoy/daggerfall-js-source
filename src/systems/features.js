@@ -935,6 +935,20 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mwSteelHelm', initial: 'closed', online: 'player', tiers: Object.freeze([['closed', 'Closed'], ['open', 'Open']]) }),
   }),
+  // MW-SPELLFX1 (2026-10-07, Mac: "We need to implement morrowind spell casting effects and animations"): Morrowind's
+  // spell effects - the casting effects and the glowing hands as a cast starts, the bolt it flies as, the hit and the
+  // burst - off the player's own masters (scenes/mwMagicFx.js). On by default, the Morrowind body's own look. The
+  // VIEWER'S, as the sheathing is: it is how this machine draws a spell - mine and every peer's - and it never reaches
+  // the wire. Read at every effect's spawn; off clears the effects running.
+  Object.freeze({
+    id: 'mw-spell-effects',
+    group: 'combat',
+    title: 'Morrowind Spell Effects',
+    note: 'With Morrowind data, spells look as they do in Morrowind: a swirl and glowing hands as you cast, the bolt in flight, the hit and the burst. Off, the classic missiles fly alone.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwSpellEffects', initial: true, online: 'player' }),
+  }),
   // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING - the first
   // Morrowind mod, and the only row whose effect line has to say NEXT
   // CHARACTER. Every other mod's switch lands on the running game; this
