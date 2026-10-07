@@ -15,13 +15,33 @@
 // next frame finds them outside and takes it down.
 //
 // Pure but for its seams, which the world host hands in (scenes/world.js). Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { sdPhase, sdStands, sdFoundLine, sdFellLine, sdFadeLine, SD_FOUND_NEAR_M, SD_FOUND_RESEND_MS } from '../net/sdLaw.js';
+import { sdPhase, sdStands, sdFoundLine, sdFellLine, sdFadeLine, SD_FOUND_NEAR_M, SD_FOUND_RESEND_MS, SD_COLLAPSE_MS } from '../net/sdLaw.js';
+import { countdownText } from '../net/gateLaw.js';   // SD10: the collapse's countdown, the gate's own words
 import { findSdSite, pickSdTemplate, sdHollowLocation } from '../systems/sdSite.js';
 import { worldRoom } from '../net/wire.js';
 import { sdMapMark, sdOmenLight, sdRumor } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of
 
 /** A line the scan has not been able to place yet is said with the region's name after this long, never lost. */
 export const SD_LINE_WAIT_MS = 30_000;
+
+/** SD10 (2026-10-07, section 11's collapse): THE COLLAPSE'S READOUTS - whoever stands in the Hollow or its Hour while it
+ *  collapses is told how long is left: at the fall (or the first frame they are inside during it), then as each of these
+ *  is left, ms - each once a slot, never one already passed. */
+export const SD_COLLAPSE_WARN_MS = Object.freeze([60_000, 30_000, 10_000]);
+/** The readout owed now: the least mark at or above `left` - the whole collapse's first - when it is under the last one
+ *  said (`said`, Infinity for none); else null. Pure. */
+export function sdCollapseDue(left, said = Infinity) {
+  if (!(left > 0)) return null;
+  let due = SD_COLLAPSE_MS;
+  for (const m of SD_COLLAPSE_WARN_MS) if (left <= m) due = m;
+  return due < said ? due : null;
+}
+/** Its words: in the Hour, the way home named at the first; in the Hollow, the Hollow's. Pure. */
+export function sdCollapseLine(left, { hour = false, first = false } = {}) {
+  const t = countdownText(left);
+  if (hour) return first ? `The Hour is breaking - it collapses in ${t}. The way home stands where the Remnant fell.` : `The Hour collapses in ${t}.`;
+  return first ? `The Hour is broken - the Hollow collapses in ${t}.` : `The Hollow collapses in ${t}.`;
+}
 
 /** @typedef {import('../net/wire.js').SdRecord} SdRecord */
 
@@ -42,9 +62,11 @@ export const SD_LINE_WAIT_MS = 30_000;
  *   say: (text: string) => void,
  *   regionName?: (r: number) => string,
  *   castOut?: (key: string) => void,
- * }} o
+ *   warn?: (text: string) => void,
+ *   inHour?: () => boolean,
+ * }} o SD10: `warn` the collapse's readouts (over the screen), `inHour` whether I stand in the Hour rather than the Hollow
  */
-export function createSdHost({ now, scan, warmScan = () => {}, cities, templates, where, stand, unstand, inside, door, feet, sendFound, say, regionName = () => '', castOut = () => {} }) {
+export function createSdHost({ now, scan, warmScan = () => {}, cities, templates, where, stand, unstand, inside, door, feet, sendFound, say, regionName = () => '', castOut = () => {}, warn = () => {}, inHour = () => false }) {
   /** @type {SdRecord|null} */
   let rec = null;
   let heardAny = false;
@@ -58,6 +80,8 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
   let foundSentAt = -Infinity, foundSentS = 0;
   /** SD2d: the slot whose Hollow this player was cast out of - once a slot. */
   let castOutS = 0;
+  /** SD10: the collapse's last readout said - its slot and its mark. */
+  let warned = { s: 0, at: Infinity };
 
   /** The Hollow a record names, found once a slot; null while the scan is not ready (it is warmed). */
   function hollowOf(r) {
@@ -116,6 +140,12 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
       else if (castOutS !== stood.s) { castOutS = stood.s; castOut(stood.key); }
     }
     if (h && !stood) { stand(h.key, h.loc); stood = { s: h.s, key: h.key, loc: h.loc }; }
+    // SD10: THE COLLAPSE'S READOUTS - to whoever stands in it (the Hollow, or its Hour) while it collapses
+    if (phase === 'fell' && stood && stood.s === rec?.s && rec.fellAt != null && inside(stood.loc)) {
+      const left = rec.fellAt + SD_COLLAPSE_MS - t;
+      const due = sdCollapseDue(left, warned.s === rec.s ? warned.at : Infinity);
+      if (due != null) { const first = warned.s !== rec.s; warned = { s: rec.s, at: due }; warn(sdCollapseLine(left, { hour: inHour(), first })); }
+    }
     // the find: at its door, while the record says risen - again every SD_FOUND_RESEND_MS until the hub's word moves it
     if (phase === 'risen' && stood && stood.s === rec?.s && (foundSentS !== stood.s || t - foundSentAt >= SD_FOUND_RESEND_MS)) {
       const d = door(stood.key), f = feet();

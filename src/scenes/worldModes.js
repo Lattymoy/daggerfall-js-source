@@ -8155,6 +8155,8 @@ export function createWorldModes(host) {
           sdFightIn: () => !!host.sdFightIn?.(),   // SD8c: my `in`, down my socket in the realm
           sdBlow: (k, f) => !!host.sdBlow?.(k, f),   // SD8c: a blow of mine on the Remnant, an Echo or a Heart, out to the realm
           sdWayBack: () => host.sdWayBack?.(),   // SD5a: the Shattered Hour's way back through its Rift - the outer host's (scenes/world.js)   // SD4b: the outer host's word on a Super dungeon's Rift and Return - off the hub's record, its realm's door
+          sdWayHome: () => host.sdWayHome?.(),   // SD10: the Hour's way home, out to the Hollow's door - the outer host's
+          sdHomeAt: () => host.sdHomeAt?.() ?? null,   // SD10: where it stands: where the Remnant fell, once its body has sunk
           timers: (o) => host.timers?.(o) ?? null,   // TIMERS1: the dungeon's pause face reads the world host's source
           // CASTLE1: the world host's load, for a save the dungeon's own
           // door finds was taken somewhere else (dungeonContext.js

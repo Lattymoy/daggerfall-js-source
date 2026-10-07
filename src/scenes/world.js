@@ -296,7 +296,9 @@ import { SD_HALL_FLOORS } from '../world/sdHall.js';   // SD6c: the bridge and t
 import { SD_HALL_TEXT, SD_HALL_SOUNDS } from './sdHall.js';   // SD6c: the snap's line; SD9d: the hall's clunk and toll, the Brass's powers' sounds
 import { SD_STEPS_FLOORS, SD_CAST_BACK_LOSS } from '../world/sdSteps.js';   // SD7b: the Steps' band and the arena, the Concord's floors too; what the void costs
 import { SD_STEPS_TEXT } from './sdSteps.js';   // SD7b: the cast-back's line
-import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH } from '../net/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall
+import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH, SD_ARENA, realmToDungeon as sdRealmToDungeon } from '../net/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall; SD10: the arena, where the way home stands
+import { SD_REM_SINK_MS } from './sdRemnant.js';   // SD10: the way home rises once the Remnant's body has sunk
+import { SD_HOME_TEXT } from './sdEnd.js';   // SD10: the way home's words
 import { sdRiftWord, sdReturnStands } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
 import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/lootDataTables.js';   // WB12d: the casket's pile, undrawn
@@ -21218,6 +21220,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // drained at its safe point: PositionPlayerToDungeonExit's landing) and the closing line said; a dead player is the
     // death's (its own door wakes them), and the Hollow goes the frame they are out
     castOut: () => { if (!(playerEntity.health > 0) || modes?.deathUp?.()) return; if (modes?.unstuck?.()) setMidScreenText(SD_CAST_OUT_LINE); },
+    // SD10: the collapse's readouts over the screen, in the Hour's words while I stand in it
+    warn: (text) => setMidScreenText(text),
+    inHour: () => modes?.sdRealmSlot?.() != null,
   }) : null;
   /** SD5b: the Hour's sky pass - built the first time the Hour is drawn; null when it would not build (its sky then the
    *  frame's clear colour, never the Hour's floors). */
@@ -21278,6 +21283,26 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the player at the Hollow's pixel outside, the Hollow entered by its own door (startInDungeon - the door at this
    *  pixel) and stood beside its Rift (the Return's place - dungeonContext.js sdRiftLanding). A Hollow gone meanwhile, or
    *  a door that would not open: outside, at its pixel. */
+  /** SD10 (Super-Dungeons.md section 11's collapse): WHERE THE WAY HOME STANDS - where the Remnant fell, once its body has
+   *  sunk (scenes/sdRemnant.js SD_REM_SINK_MS), on the arena's floor, for as long as the fight this page holds says it
+   *  fell - one place a fight; null otherwise (the dungeon host takes it down). */
+  let _sdHome = null;
+  const sdHomeAt = () => {
+    const s = sdFightLink?.state();
+    if (!s?.fell || sdFightLink.now() < s.fell.at + SD_REM_SINK_MS) return null;
+    if (_sdHome?.fi !== s.fi) _sdHome = { fi: s.fi, at: sdRealmToDungeon(SD_ARENA.x + s.rem.x, 0, SD_ARENA.z + s.rem.z) };
+    return _sdHome.at;
+  };
+  /** SD10: THE WAY HOME, walked into or pressed - out of the Hour under the veil, before the Hollow's door outside (the
+   *  mode machine's own exit: the realm's way out lands there, as its end casts a player out), the floor's spoils
+   *  gathered as the Hour is left. Answers whether it carried me. */
+  function sdWayHome() {
+    if (!isSdRealm(modes?.dungeonLocation) || !(playerEntity.health > 0) || modes?.deathUp?.()) return false;
+    gateVeil?.flash();
+    if (!modes?.unstuck?.()) return false;
+    setMidScreenText(SD_HOME_TEXT.taken);
+    return true;
+  }
   function sdWayBack() {
     const loc = modes?.dungeonLocation;
     if (!isSdRealm(loc) || !modes?.stepThroughFire) return false;
@@ -24881,6 +24906,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     dungeonOnline: () => onlineOn,   // AUDIT WORLD34 B2: online, the dungeon that gets built is the ROOM's - one layout (SD-ONLINE: the world's size for it)
     superRift: (s) => sdRiftOf(s),   // SD4b: a Super dungeon's Rift and Return - their word off the hub's record, the realm's door
     sdWayBack: () => sdWayBack(),   // SD5a: the Shattered Hour's way back, through its Rift into the Hollow
+    sdWayHome: () => sdWayHome(),   // SD10: the way home, out of the Hour to the Hollow's door
+    sdHomeAt: () => sdHomeAt(),   // SD10: where it stands - where the Remnant fell, its body sunk
     sdTurn: (i, a) => !!online?.sendSdTurn?.(i, a),   // SD6c: a turn of the Orrery's stones, down my socket in the realm
     sdHallWord: () => sdHallWord(),   // SD6c: the realm's latest word on the hall, for the hall's set
     sdCastBack: () => sdCastBack(),   // SD7b: the Unmoored Steps' void - stood back on the checkpoint, what it costs

@@ -1,0 +1,191 @@
+[
+  {
+    "name": "SD10-a-mark-twice",
+    "file": "src/scenes/sdHost.js",
+    "old": "  return due < said ? due : null;",
+    "new": "  return due <= said ? due : null;",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-a-passed-mark",
+    "file": "src/scenes/sdHost.js",
+    "old": "  for (const m of SD_COLLAPSE_WARN_MS) if (left <= m) due = m;",
+    "new": "  for (const m of SD_COLLAPSE_WARN_MS) if (left < m + 5000) due = m;",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-said-when-out",
+    "file": "src/scenes/sdHost.js",
+    "old": "  if (!(left > 0)) return null;\n  let due = SD_COLLAPSE_MS;",
+    "new": "  let due = SD_COLLAPSE_MS;",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-minute-lost",
+    "file": "src/scenes/sdHost.js",
+    "old": "export const SD_COLLAPSE_WARN_MS = Object.freeze([60_000, 30_000, 10_000]);",
+    "new": "export const SD_COLLAPSE_WARN_MS = Object.freeze([30_000, 10_000]);",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-way-home-unsaid",
+    "file": "src/scenes/sdHost.js",
+    "old": "`The Hour is breaking - it collapses in ${t}. The way home stands where the Remnant fell.`",
+    "new": "`The Hour is breaking - it collapses in ${t}.`",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-hours-words-in-the-hollow",
+    "file": "src/scenes/sdHost.js",
+    "old": "  if (hour) return first ?",
+    "new": "  if (true) return first ?",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-never-told",
+    "file": "src/scenes/sdHost.js",
+    "old": "      if (due != null) { const first = warned.s !== rec.s; warned = { s: rec.s, at: due }; warn(sdCollapseLine(left, { hour: inHour(), first })); }",
+    "new": "      if (due != null) { const first = warned.s !== rec.s; warned = { s: rec.s, at: due }; }",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-told-outside",
+    "file": "src/scenes/sdHost.js",
+    "old": "&& rec.fellAt != null && inside(stood.loc)) {",
+    "new": "&& rec.fellAt != null) {",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-told-every-frame",
+    "file": "src/scenes/sdHost.js",
+    "old": "warned = { s: rec.s, at: due };",
+    "new": "warned = { s: rec.s, at: Infinity };",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-returns-words-in-the-hour",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      if (key === SD_RETURN_KEY && ret) return { title: retTitle, subs: [retTo] };",
+    "new": "      if (key === SD_RETURN_KEY && ret) return { title: SD_END_TEXT.ret, subs: [SD_END_TEXT.retTo] };",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-stood-twice",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      if (ret || !at) return false;\n      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };",
+    "new": "      if (!at) return false;\n      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-carried-off-where-it-rises",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };\n      wasRet = null;\n",
+    "new": "      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };\n",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-way-home-unstood",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (home && !sdEnd.ret) sdEnd.standReturn(home);",
+    "new": "if (home && !sdEnd.ret) void home;",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-never-taken-down",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "else if (!home && sdEnd.ret) sdEnd.returnOut(); }",
+    "new": "}",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-hollows-check-in-the-hour",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    else if (sdEnd.ret && t >= _sdEndCheckAt) {",
+    "new": "    if (sdEnd.ret && t >= _sdEndCheckAt) {",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-no-way-out",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "onReturn: () => opts.sdWayHome?.(), retTitle",
+    "new": "retTitle",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-doors-unhanded",
+    "file": "src/scenes/worldModes.js",
+    "old": "          sdWayHome: () => host.sdWayHome?.(),",
+    "new": "          sdWayHome: () => {},",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-stood-before-the-body-sank",
+    "file": "src/scenes/world.js",
+    "old": "    if (!s?.fell || sdFightLink.now() < s.fell.at + SD_REM_SINK_MS) return null;",
+    "new": "    if (!s?.fell) return null;",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-out-with-no-veil",
+    "file": "src/scenes/world.js",
+    "old": "    gateVeil?.flash();\n    if (!modes?.unstuck?.()) return false;",
+    "new": "    if (!modes?.unstuck?.()) return false;",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-readouts-unvoiced",
+    "file": "src/scenes/world.js",
+    "old": "    warn: (text) => setMidScreenText(text),\n",
+    "new": "",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  },
+  {
+    "name": "SD10-the-hour-unasked",
+    "file": "src/scenes/world.js",
+    "old": "    inHour: () => modes?.sdRealmSlot?.() != null,\n",
+    "new": "",
+    "tests": [
+      "test/sd10_collapse.test.js"
+    ]
+  }
+]

@@ -353,7 +353,10 @@ row alone, and read off it as the Broker's sale is - so every badge the service 
 **The collapse.** The kill sets the record `fell`; for `SD_COLLAPSE_MS` (3 minutes) the realm stands so the spoils can
 be taken and a way home rises where the Remnant fell (to the Hollow's door, OUTSIDE). Then `gone`: on every client the
 Hollow sinks into its pixel, its column of light goes out, and anyone still in the Hollow or the Hour is cast out
-before its door: *"The Hour closes, and the Hollow folds in on itself behind you."*
+before its door: *"The Hour closes, and the Hollow folds in on itself behind you."* (SD10a: the way home is the
+Return's pale light, risen once the Remnant's body has sunk; whoever stands in the Hollow or the Hour is told how long
+is left - at the fall, then at a minute, thirty seconds and ten. The Hollow is taken down at its end, not sunk: a
+location's blocks have no sink in this port.)
 
 ## 12. Regular, Elite, Super - the labels
 
@@ -1519,3 +1522,36 @@ seven records re-aimed by content (`raid4b.json`'s roll, `wb9f.json`'s press, `s
 court's, so `wb9f.json`'s stands keeps one site.
 
 SD10 next: the collapse, the readouts and the arc's audit.
+
+### SD10a - shipped 2026-10-07 (the collapse: the way home and the readouts)
+
+Section 11's collapse, as the page lives it. The record's law was SD1's (`fell` for `SD_COLLAPSE_MS`, then `gone`) and
+its end SD2d's (whoever stands in the Hollow or its Hour cast out before its door, with the closing line); what the
+three minutes between were missing was a way out and a clock. No relay or account change.
+
+- **The way home** (`scenes/sdEnd.js` `standReturn`, `SD_HOME_TEXT`): the Return's pale light, stood alone and later -
+  where the Remnant fell, once its body has sunk (`scenes/sdRemnant.js` `SD_REM_SINK_MS`), on the arena's floor - under
+  the Hour's own words on its plaque (*The Way Home*, *To the Hollow's door*). Walked into or pressed, it carries the
+  player out of the Hour under the veil, before the Hollow's door outside: the mode machine's own exit, the one the
+  Hour's end casts a player out by (`scenes/world.js` `sdWayHome`); leaving gathers the floor's spoils (SD9e). The
+  dungeon host stands it where the world host says (`sdHomeAt` - the fight this page holds, one place a fight) and takes
+  it down when it says none; in the Hour, the Hollow's Return check (the boss fallen, the Return out) never runs.
+- **The readouts** (`scenes/sdHost.js` `sdCollapseDue`, `sdCollapseLine`, `SD_COLLAPSE_WARN_MS`): whoever stands in the
+  Hollow or its Hour while it collapses is told how long is left - at the fall (or the first frame they stand inside
+  during it, with what is left), then at a minute, thirty seconds and ten - each once a slot, never one already passed,
+  over the screen; in the Hour its first names the way home, in the Hollow the Hollow's own words. The countdown is the
+  gate's own (`countdownText` - seconds rounded up, never 0:00 while time is left). The Timers row already counted it
+  (SD2c: "<name> collapses").
+- **Not done, said so**: the design's "the Hollow sinks into its pixel" - a location's blocks have no sink in this port;
+  at its end the Hollow is taken down (SD2b's unstand) the frame nobody stands in it, its column of light out with its
+  phase (SD2c).
+
+THE FOUR HOSTS: the way home is the dungeon host's (`scenes/dungeonContext.js`, the Hour's own Rift set) through the mode
+machine's doors (`scenes/worldModes.js` `sdWayHome`, `sdHomeAt`) to the world host's (`scenes/world.js`); the readouts
+are the Hollow host's, which frames in every mode (SD2d), voiced by the world host. `scenes/exterior.js` has no Hollow.
+
+Pins: `test/sd10_collapse.test.js` (5 - the readouts' law; the readouts in the Hollow and the Hour; the way home; the
+hosts by source); `tools/mutants/sd10.json` (21, all dead). PINS MOVED: the Hour's Rift set (`test/sd5a` - its way
+home with it).
+
+SD10b next: the arc's audit.

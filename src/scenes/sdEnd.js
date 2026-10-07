@@ -12,6 +12,9 @@
 //    jumped, a frame not ticked) forgets the step.
 //  - THE PRESS: `targets()` stands each in the activation ray (`sdrift:0`, `sdreturn:0`), `hoverName(key)` names it on
 //    the plaque, and `press(key)` hands it to the host as a step does.
+//  - SD10 (2026-10-07): THE WAY HOME in the Shattered Hour (section 11's collapse) - the Return's pale light stood alone,
+//    later, where the Remnant fell (`standReturn`), under the place's own words (`retTitle`, `retTo` - SD_HOME_TEXT): its
+//    step or press is the host's way out of the Hour to the Hollow's door.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 
@@ -30,6 +33,12 @@ export const RIFT_TEX = 96;
 export const RETURN_FRAMES = 12;
 export const RETURN_FPS = 10;
 export const RETURN_TEX = Object.freeze({ w: 40, h: 64 });
+/** SD10: the way home's words - its plaque, and what is said as it carries a player out of the Hour. */
+export const SD_HOME_TEXT = Object.freeze({
+  title: 'The Way Home',
+  to: 'To the Hollow\'s door',
+  taken: 'The way home carries you out of the Hour, to the Hollow\'s door.',
+});
 /** The keys the activation ray stands them under. */
 export const SD_RIFT_KEY = 'sdrift:0';
 export const SD_RETURN_KEY = 'sdreturn:0';
@@ -126,10 +135,11 @@ const boxOf = (at, half, height) => ({ min: [at[0] - half, at[1], at[2] - half],
 
 /**
  * A Super dungeon's end. `onRift()` / `onReturn()` are the host's - a step into either, or a press, hands it over.
- * SD5a: `riftTo` its plaque's row - the Shattered Hour's way back says where it leads.
- * @param {{ renderer?: any, audio?: any, now?: () => number, onRift?: () => void, onReturn?: () => void, riftTo?: string }} [deps]
+ * SD5a: `riftTo` its plaque's row - the Shattered Hour's way back says where it leads. SD10: `retTitle` and `retTo` the
+ * Return's (the Hour's way home says its own).
+ * @param {{ renderer?: any, audio?: any, now?: () => number, onRift?: () => void, onReturn?: () => void, riftTo?: string, retTitle?: string, retTo?: string }} [deps]
  */
-export function createSdEnd({ renderer = null, audio = null, now = () => performance.now(), onRift = () => {}, onReturn = () => {}, riftTo = SD_END_TEXT.riftTo } = {}) {
+export function createSdEnd({ renderer = null, audio = null, now = () => performance.now(), onRift = () => {}, onReturn = () => {}, riftTo = SD_END_TEXT.riftTo, retTitle = SD_END_TEXT.ret, retTo = SD_END_TEXT.retTo } = {}) {
   /** @type {{ at: number[], size: number, batch: any } | null} */
   let rift = null;
   /** @type {{ at: number[], batch: any } | null} */
@@ -156,6 +166,13 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
       rift = { at: [...r.at], size: r.size, batch: batchAt(RIFT_ARCHIVE, r.at, r.size, r.size) };
       if (retAt) ret = { at: [...retAt], batch: batchAt(RETURN_ARCHIVE, retAt, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };
       bell = startRiftBell(audio, [r.at[0], r.at[1] + r.size / 2, r.at[2]]);
+      return true;
+    },
+    /** SD10: the Return stood alone, after the stand (the Hour's way home, where the Remnant fell) - once while it stands. */
+    standReturn(at) {
+      if (ret || !at) return false;
+      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };
+      wasRet = null;
       return true;
     },
     /** The Return goes out (the boss fell) - for good: it never stands again in this dungeon. */
@@ -188,7 +205,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     /** The plaque's words for either - a namer is handed every key the ray can win. */
     hoverName(key) {
       if (key === SD_RIFT_KEY && rift) return { title: SD_END_TEXT.rift, subs: [riftTo] };
-      if (key === SD_RETURN_KEY && ret) return { title: SD_END_TEXT.ret, subs: [SD_END_TEXT.retTo] };
+      if (key === SD_RETURN_KEY && ret) return { title: retTitle, subs: [retTo] };   // SD10: the Hour's way home says its own
       return null;
     },
     /** A press on either, handed to the host as a step is. True when it was one of these. */

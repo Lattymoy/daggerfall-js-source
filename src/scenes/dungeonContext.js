@@ -238,7 +238,7 @@ import { elitesAllowed, pickDungeonElites, promoteEliteFoe, grantEliteLoot, elit
 import { ELITE_FOE_MULTIPLIER, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE, ELITE_LOOT_DROP_MULT, ELITE_LOOT_QUALITY_MULT } from '../world/spawnedDungeons.js';   // ELITE: an elite spawn's foe count and strength
 import { superFoeLevel, scaleSuperFoe, SUPER_ELITE_FOES, SUPER_LOOT_OPTS, SUPER_LOOT_DROP_MULT, SUPER_LOOT_QUALITY_MULT, sdEndMarks, sdRiftPlace, sdReturnPlace } from '../world/sdDungeon.js';   // SD4a: a Super dungeon's difficulty; SD4b: its end's place
 import { dungeonEndOf } from '../world/dungeonEnd.js';   // SD4b: RVN7d's lair law, lifted - the lair's stand and a Super dungeon's end read one law
-import { createSdEnd } from './sdEnd.js';   // SD4b: a Super dungeon's Rift and Return
+import { createSdEnd, SD_HOME_TEXT } from './sdEnd.js';   // SD4b: a Super dungeon's Rift and Return; SD10: the Hour's way home
 import { createSdHall } from './sdHall.js';   // SD6c: the Orrery's hall in the Shattered Hour
 import { createSdSteps } from './sdSteps.js';   // SD7b: the Unmoored Steps in the Shattered Hour
 import { createSdRemnant } from './sdRemnant.js';   // SD8c: the Brass Remnant in the Shattered Hour
@@ -1779,7 +1779,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the end the lair's law finds (world/dungeonEnd.js), as wide as its hall lets them (world/sdDungeon.js) - the same on
   // every client. Pressed, or walked into (scenes/sdEnd.js).
   const sdEnd = _superTier ? createSdEnd({ renderer, audio, onRift: () => sdRiftStep(), onReturn: () => sdReturnStep() })
-    : _sdRealm ? createSdEnd({ renderer, audio, riftTo: SD_REALM_TEXT.wayBack, onRift: () => opts.sdWayBack?.() }) : null;   // SD5a: the Shattered Hour's way back - the same Rift, at its Threshold's back
+    : _sdRealm ? createSdEnd({ renderer, audio, riftTo: SD_REALM_TEXT.wayBack, onRift: () => opts.sdWayBack?.(), onReturn: () => opts.sdWayHome?.(), retTitle: SD_HOME_TEXT.title, retTo: SD_HOME_TEXT.to }) : null;   // SD5a: the Shattered Hour's way back - the same Rift, at its Threshold's back; SD10: and its way home, the Return's light where the Remnant fell
   // SD6c (Super-Dungeons.md section 8): THE ORRERY'S HALL in the Shattered Hour (scenes/sdHall.js) - its stones,
   // plaques, dial and bridge, stood the first frame I stand here; a handle's turn sent through the outer host (the realm
   // judges it), the realm's word on the hall read from it every frame
@@ -1845,11 +1845,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const at = api.startSpawn({ preferEnterMarker: false });
     if (at) actions.onTeleport?.({ pos: at });
   }
-  /** One frame: stood once I stand here; the Return out once its boss falls (asked once a second); the step. */
+  /** One frame: stood once I stand here; the Return out once its boss falls (asked once a second); the step. SD10: in the
+   *  Hour, the way home instead - stood where the outer host says the Remnant fell (its body sunk), gone when it says none. */
   function sdEndFrame(playerFeet) {
     if (playerFeet && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }
     const t = performance.now();
-    if (sdEnd.ret && t >= _sdEndCheckAt) { _sdEndCheckAt = t + 1000; const w = sdEndWord(); if (w && !w.returns) sdEnd.returnOut(); }
+    if (_sdRealm) { const home = opts.sdHomeAt?.() ?? null; if (home && !sdEnd.ret) sdEnd.standReturn(home); else if (!home && sdEnd.ret) sdEnd.returnOut(); }
+    else if (sdEnd.ret && t >= _sdEndCheckAt) { _sdEndCheckAt = t + 1000; const w = sdEndWord(); if (w && !w.returns) sdEnd.returnOut(); }
     sdEnd.frame(playerFeet ?? null);
   }
   const fateSay = (ev) => { if (ev) revenantSay(ev, (l) => hudText.add(l)); };
