@@ -1103,7 +1103,10 @@ over rank 1: 3.25 trading, 2.98 dodging - the last stand's share grows with the 
 target holds. **AUDIT FEUD 2** made the harness faithful to the pools (the AUDIT FEUD 2 record) and measured again: the will
 by dodging 94.6%, by its weakness 100%, by trading 12.7%; a perfect dodger struck by 0.2% of a trader's telegraphed blows,
 in 98.4% of its time; rank 5 over rank 1, 2.66 trading and 2.63 dodging; TELL's four hold (LIGHT 0.5%, HEAVY 91.0%,
-MASSIVE 97.7% of the floor, FAIR 0) - every target holds, each with room. **FEUD HARNESS** fought the rest of the fight
+MASSIVE 97.7% of the floor, FAIR 0) - every target holds, each with room. **FLIGHT-FIRST** (`06-Systems/Revenants.md`
+section 38) let a flight get away - a young revenant breaks at 35% on 80%, every run at twice its walk - so the will's
+three read the fights its will decided and RANKS a rank's weight, ranks 1 and 5 never running: the will by its
+weakness 100%, by dodging 93.1%, by trading 11.5%; rank 5 over rank 1, 2.67 trading and 2.64 dodging. **FEUD HARNESS** fought the rest of the fight
 the pools give a revenant - its band and its flight (the FEUD HARNESS record) - and measured again: the will by dodging
 88.0%, by its weakness 100%, by trading 11.4%; a perfect dodger struck by none of a trader's telegraphed blows (0 in a
 thousand fights), in 99.2% of its time; rank 5 over rank 1, 2.69 trading and 2.62 dodging - every target holds. The
