@@ -10616,6 +10616,12 @@ export function createWorldModes(host) {
     // a quest individual, in DFU exactly as here.
     updateNpcPresence: () => {
       if (!interiorBuilding || !interiorCtx) return;
+      // FIELD BUGS 2026-10-07 HALL-FOLK ("Sometimes there are NPCs in the player guild halls"): a player's room online
+      // stands none of its people, after a rest as at the door - an online home, anyone's (a guild's hall among them),
+      // and a private room. The answer is the build's own (`home`, latched as interiorHome; the private room's
+      // restore), which this re-roll never asked: a rest by day in a House2-4 hall or home (open 6-18) stood its old
+      // residents back up. DFU's own deed keeps UpdateNpcPresence's unasked ownership (B5, interiorPeople.js).
+      if (interiorHome || privateVisitRoom) return;
       const hour = Math.floor((Math.floor(skyMinutes()) % 1440) / 60);   // TIME1: who is in is the sky's hour
       if (!updateNpcPresence(interiorBuilding?.buildingType ?? BUILDING_TYPES.None, {
         hour, insideOpenShop: !!interiorBuilding.insideOpenShop,
