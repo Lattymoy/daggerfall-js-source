@@ -402,7 +402,8 @@ test('AUDIT RETRO1 C8/E5: every host shows its frame at its own foot - a frame t
   assert.equal(x.hits.length, 2, 'both ?exterior frame tails - the modal one was missed (the second pass, F1/J2)');
   assert.ok(x.hits[1] > x.h.indexOf('townTalk.frame(dt);   // T3b'), 'after the last draw');
   // DISC29-D: the indoor foot closes its frame token WITH a sample now (frameEnd), below the note that says why
-  assert.match(x.h.slice(x.hits[0] - 200, x.hits[0] + 900), /townTalk\.frame\(dt\);\n\s+renderer\.resolveFrame\(\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s+frameEnd\(\);/, 'the modal foot, after its last draw');
+  // SHOT1: the PrintScreen shot owed to a drawn frame is read right after the resolve (ui/screenshot.js deliverOwedShots)
+  assert.match(x.h.slice(x.hits[0] - 200, x.hits[0] + 900), /townTalk\.frame\(dt\);\n\s+renderer\.resolveFrame\(\);[^\n]*\n\s+deliverOwedShots\(\);[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s+frameEnd\(\);/, 'the modal foot, after its last draw');
   assert.match(src('render/renderer.js'), /resolveFrame\(\) \{ this\._compositeAir\(\); \}/);
 });
 

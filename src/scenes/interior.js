@@ -45,6 +45,7 @@ import { swallowBrowserKey, actionsOf, keyboardLook } from '../ui/input.js';   /
 import { worldViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // AUDIT RETRO1 A8/C4: the lens and the world rect the other hosts take - the docked bar's, and retro mode's texture aspect and pillarbox
 import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT RETRO1 C4: DaggerfallHUD's shortcuts, Shift-F11 among them, as in the other hosts
 import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate, the fourth host's
+import { deliverOwedShots } from '../ui/screenshot.js';   // SHOT1: every drawn foot pays the shots owed (this host routes no PrintScreen of its own)
 
 // Milestone 4 scene: one building interior, standalone at block-local origin.
 export async function bootInterior(canvas, renderer, params, status) {
@@ -405,6 +406,7 @@ export async function bootInterior(canvas, renderer, params, status) {
       if (overlay) overlay.draw(renderer, canvas, mapFont, 1);
     }
     renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
+    deliverOwedShots();   // SHOT1: the PrintScreen shots owed to a drawn frame, read from this one (ui/screenshot.js)
 
     frames++;
     if (shotMode && frames === 5) window.__shotReady = true;

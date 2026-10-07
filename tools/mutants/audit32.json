@@ -224,8 +224,8 @@
   {
     "name": "AUDIT32-H5-dungeon-click-through",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (!interact && (actClick || host.profActing?.())) return true;\n",
-    "new": "",
+    "old": "    if (!interact && (actClick || host.profActing?.())) return true;\n    // QG1: the quest-resource click arm runs FIRST and does not",
+    "new": "    // QG1: the quest-resource click arm runs FIRST and does not",
     "tests": [
       "test/audit32_client.test.js"
     ]

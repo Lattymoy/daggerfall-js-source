@@ -7,6 +7,13 @@ import { fileURLToPath } from 'node:url';
 import { usableMagicItems, createUseMagicItemWindow } from '../src/ui/useMagicItemWindow.js';
 import { ENCHANTMENT_TYPES } from '../src/formats/magicDef.js';
 import { TEMPLATES } from '../src/systems/useItem.js';
+import { MAGIC_ITEM_RECORD_SIZE, readMagicDef } from '../src/formats/magicDef.js';
+import { createPotion, createRegularMagicItem, CLASSIC_RECIPE_KEYS } from '../src/systems/loot.js';
+import { HEALING_RECIPE_KEY, MAGICKA_RECIPE_KEY, mintHealingPotion } from '../src/systems/healingSupply.js';
+import { setItemFields } from '../src/systems/itemTemplates.js';
+import { addItem } from '../src/systems/inventory.js';
+import { brewItems } from '../src/systems/alchemyItems.js';
+import { POTIONS } from '../src/net/alchemyLaw.js';
 
 // UI1 - THE USE-MAGIC-ITEM WINDOW (DaggerfallUseMagicItemWindow, whole;
 // DaggerfallUI.cs:581-583). The port had the DOOR and not the room:
@@ -40,9 +47,72 @@ test('UI1: UpdateUsableMagicItems - a CastWhenUsed enchantment or a potion, in p
 test('UI1: nothing usable, NO WINDOW (DaggerfallUI :581-583) - not an empty list', () => {
   assert.equal(createUseMagicItemWindow({ items: [{ name: 'Rock' }], isEnchanted }), null);
   assert.equal(createUseMagicItemWindow({ items: [], isEnchanted }), null);
-  const win = createUseMagicItemWindow({ items: [potion('Cure')], isEnchanted });
+  const win = createUseMagicItemWindow({ items: [createPotion(HEALING_RECIPE_KEY)], isEnchanted });
   assert.ok(win);
-  assert.deepEqual(win.items, ['Cure'], 'the row is the item name');
+  assert.deepEqual(win.items, ['Potion of Healing'], 'the row is the item\'s LongName (UMI-NAMES)');
+});
+
+// UMI-NAMES (2026-10-07, the field: "Use Magic Item Menu is crowded" - "Kit of
+// Venom Spitting", and MANY rows reading just "Glass Bottle"). Refresh (:50-57)
+// lists each item's LongName - ItemHelper.ResolveItemLongName - and the factory
+// listed the raw `name` field: a potion's template "Glass Bottle" (setItemFields
+// names it so; createPotion's own mint carries no name at all, so a blank row),
+// a MAGIC.DEF item its unfilled "%it of ...". Fixtures off the real producers.
+test('UMI-NAMES: a potion is listed by its RECIPE, "Potion of X" - never "Glass Bottle" (ResolveItemLongName\'s %po arm)', () => {
+  const restore = createPotion(MAGICKA_RECIPE_KEY);
+  const pack = [mintHealingPotion(), setItemFields(createPotion(HEALING_RECIPE_KEY)), restore, setItemFields(createPotion(CLASSIC_RECIPE_KEYS[0]))];
+  assert.equal(pack[1].name, 'Glass Bottle', 'the shape the shelf and the loot mint carries - the name the window used to show');
+  const win = createUseMagicItemWindow({ items: pack });
+  assert.deepEqual(win.items, ['Potion of Healing', 'Potion of Healing', 'Potion of Restore Power', 'Potion of Stamina']);
+  // a Potent brew (PROF12) says so, as every other list does (itemNameParts)
+  const brew = brewItems({ potion: POTIONS.find((p) => p.key === HEALING_RECIPE_KEY)?.id, count: 1, potent: 25 });
+  assert.equal(brew.length, 1);
+  assert.deepEqual(createUseMagicItemWindow({ items: brew }).items, ['Potent Potion of Healing']);
+});
+
+test('UMI-NAMES: identical potions are ONE row because they are one STACK (ItemCollection.AddItem) - the window folds nothing', () => {
+  const pack = [];
+  for (let i = 0; i < 5; i++) addItem(pack, mintHealingPotion());
+  addItem(pack, setItemFields(createPotion(HEALING_RECIPE_KEY)));   // a shelf's / a body's Healing joins the same stack
+  addItem(pack, createPotion(MAGICKA_RECIPE_KEY));
+  assert.equal(pack.length, 2);
+  assert.equal(pack[0].stackCount, 6);
+  const win = createUseMagicItemWindow({ items: pack });
+  assert.deepEqual(win.items, ['Potion of Healing', 'Potion of Restore Power'], 'one row per item, as DFU lists them');
+  // and the pick hands on the stack itself, row for row
+  const used = [];
+  const w2 = createUseMagicItemWindow({ items: pack, onUse: (it) => used.push(it) });
+  w2.onPick(1, w2.items[1]);
+  assert.equal(used[0], pack[1]);
+});
+
+/** One MAGIC.DEF record (MagicItemsFile.ReadNextMagicItem's 62 bytes). */
+function magicDefBytes(records) {
+  const buf = new Uint8Array(4 + records.length * MAGIC_ITEM_RECORD_SIZE);
+  const v = new DataView(buf.buffer);
+  v.setInt32(0, records.length, true);
+  let o = 4;
+  for (const r of records) {
+    for (let i = 0; i < r.name.length; i++) buf[o + i] = r.name.charCodeAt(i);
+    o += 32;
+    buf[o++] = r.type; buf[o++] = r.group; buf[o++] = 0;
+    for (let i = 0; i < 10; i++) { v.setInt8(o++, r.ench[i]?.[0] ?? -1); v.setInt8(o++, r.ench[i]?.[1] ?? -1); }
+    v.setInt16(o, r.uses, true); o += 2;
+    v.setInt32(o, r.value, true); o += 4;
+    buf[o++] = 0;
+  }
+  return buf;
+}
+
+test('UMI-NAMES: a MAGIC.DEF item fills its %it - identified "Mark of Lightning", unidentified the bare "Mark" (ResolveItemName)', () => {
+  const templates = readMagicDef(magicDefBytes([{ name: '%it of Lightning', type: 0, group: 0, ench: [[ENCHANTMENT_TYPES.CastWhenUsed, 31]], uses: 1500, value: 0 }]));
+  const seq = (...v) => { let i = 0; return () => v[Math.min(i++, v.length - 1)]; };
+  // the producer: group 0's seventh group (Jewellery), the fifth jewel (the Mark) - the featherweight test's draw
+  const mark = createRegularMagicItem(templates, 1, 'female', seq(0, 0.9, 0.5));
+  assert.equal(mark.name, '%it of Lightning', 'the raw field the window used to list');
+  assert.deepEqual(createUseMagicItemWindow({ items: [mark] }).items, ['Mark'], 'an unidentified item reads as its template (ItemHelper :269-271)');
+  mark.isIdentified = true;   // the identify service's own write (worldModes)
+  assert.deepEqual(createUseMagicItemWindow({ items: [mark] }).items, ['Mark of Lightning']);
 });
 
 test('UI1: AllowCancel is false, and the pick CLOSES first, then uses (:88-97)', () => {

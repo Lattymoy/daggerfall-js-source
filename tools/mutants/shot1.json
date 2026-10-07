@@ -1,0 +1,110 @@
+[
+ {
+  "name": "SHOT1-read-at-the-press",
+  "file": "src/ui/screenshot.js",
+  "old": "  afterDraw = oweToFrameFoot, doc = globalThis.document, later = setTimeout,",
+  "new": "  afterDraw = null, doc = globalThis.document, later = setTimeout,",
+  "tests": [
+   "test/shot1_frame_foot.test.js"
+  ]
+ },
+ {
+  "name": "SHOT1-the-raf-ride-back",
+  "file": "src/ui/screenshot.js",
+  "old": "  afterDraw = oweToFrameFoot, doc = globalThis.document, later = setTimeout,",
+  "new": "  afterDraw = (fn) => (globalThis.requestAnimationFrame ? globalThis.requestAnimationFrame(fn) : fn()), doc = globalThis.document, later = setTimeout,",
+  "tests": [
+   "test/shot1_frame_foot.test.js"
+  ]
+ },
+ {
+  "name": "SHOT1-batch-not-emptied-first",
+  "file": "src/ui/screenshot.js",
+  "old": "  const batch = _owed.splice(0);\n  for (const fn of batch) {",
+  "new": "  const batch = _owed;\n  for (const fn of batch) {",
+  "tests": [
+   "test/shot1_frame_foot.test.js"
+  ]
+ },
+ {
+  "name": "SHOT1-one-shot-per-foot",
+  "file": "src/ui/screenshot.js",
+  "old": "  const batch = _owed.splice(0);",
+  "new": "  const batch = _owed.splice(0, 1);",
+  "tests": [
+   "test/shot1_frame_foot.test.js"
+  ]
+ },
+ {
+  "name": "SHOT1-a-throw-drops-the-rest",
+  "file": "src/ui/screenshot.js",
+  "old": "for (const fn of batch) { try { fn(); } catch (e) { console.warn('[shot] the screenshot could not be read:', e?.message ?? e); } }",
+  "new": "for (const fn of batch) { fn(); }",
+  "tests": [
+   "test/shot1_frame_foot.test.js"
+  ]
+ },
+ {
+  "name": "SHOT1-world-exterior-foot-unpaid",
+  "file": "src/scenes/world.js",
+  "old": "    capturePendingScreenshot(canvas);\n    deliverOwedShots();",
+  "new": "    capturePendingScreenshot(canvas);",
+  "tests": [
+   "test/shot1_frame_foot.test.js"
+  ]
+ },
+ {
+  "name": "SHOT1-world-modal-foot-unpaid",
+  "file": "src/scenes/world.js",
+  "old": "      capturePendingScreenshot(canvas);   // SS1: a save armed from a modal mode still lands its shot\n      deliverOwedShots();",
+  "new": "      capturePendingScreenshot(canvas);   // SS1: a save armed from a modal mode still lands its shot",
+  "tests": [
+   "test/shot1_frame_foot.test.js"
+  ]
+ },
+ {
+  "name": "SHOT1-exterior-paid-above-the-resolve",
+  "file": "src/scenes/exterior.js",
+  "old": "    renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame\n    deliverOwedShots();",
+  "new": "    deliverOwedShots();\n    renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame",
+  "tests": [
+   "test/shot1_frame_foot.test.js"
+  ]
+ },
+ {
+  "name": "SHOT1-exterior-modal-foot-unpaid",
+  "file": "src/scenes/exterior.js",
+  "old": "this host's modal foot too - world.js's has it\n      deliverOwedShots();",
+  "new": "this host's modal foot too - world.js's has it",
+  "tests": [
+   "test/shot1_frame_foot.test.js"
+  ]
+ },
+ {
+  "name": "SHOT1-dungeon-foot-unpaid",
+  "file": "src/scenes/dungeon.js",
+  "old": "    capturePendingScreenshot(canvas);\n    deliverOwedShots();",
+  "new": "    capturePendingScreenshot(canvas);",
+  "tests": [
+   "test/shot1_frame_foot.test.js"
+  ]
+ },
+ {
+  "name": "SHOT1-dungeon-held-frame-pays",
+  "file": "src/scenes/dungeon.js",
+  "old": "    if (frameCapSkip(now)) { requestAnimationFrame(frame); return; }",
+  "new": "    if (frameCapSkip(now)) { deliverOwedShots(); requestAnimationFrame(frame); return; }",
+  "tests": [
+   "test/shot1_frame_foot.test.js"
+  ]
+ },
+ {
+  "name": "SHOT1-interior-foot-unpaid",
+  "file": "src/scenes/interior.js",
+  "old": "    deliverOwedShots();   // SHOT1",
+  "new": "    // SHOT1",
+  "tests": [
+   "test/shot1_frame_foot.test.js"
+  ]
+ }
+]
