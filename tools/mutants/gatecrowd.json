@@ -1,9 +1,9 @@
 [
   {
-    "name": "GATECROWD-default-sixteen",
+    "name": "GATECROWD-default-twelve",
     "file": "src/net/gateCrowd.js",
-    "old": "export const GATE_CROWD_DEFAULT = 12;",
-    "new": "export const GATE_CROWD_DEFAULT = 16;",
+    "old": "export const GATE_CROWD_DEFAULT = 0;",
+    "new": "export const GATE_CROWD_DEFAULT = 12;",
     "tests": [
       "test/gatecrowd.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "GATECROWD-tiers-reordered",
     "file": "src/net/gateCrowd.js",
-    "old": "export const GATE_CROWD_TIERS = Object.freeze([12, 24, 0]);",
-    "new": "export const GATE_CROWD_TIERS = Object.freeze([24, 12, 0]);",
+    "old": "export const GATE_CROWD_TIERS = Object.freeze([0, 12, 24]);",
+    "new": "export const GATE_CROWD_TIERS = Object.freeze([12, 24, 0]);",
     "tests": [
       "test/gatecrowd.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "GATECROWD-pref-default-literal",
     "file": "src/systems/uiPrefs.js",
-    "old": "  gateCrowd: 12,\n",
-    "new": "  gateCrowd: 24,\n",
+    "old": "  gateCrowd: 0,\n",
+    "new": "  gateCrowd: 12,\n",
     "tests": [
       "test/gatecrowd.test.js"
     ]

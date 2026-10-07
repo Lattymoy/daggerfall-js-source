@@ -2358,11 +2358,15 @@ telegraphs. Now:
 
 **The crowd thinned (GATE-CROWD).** A court holds as many challengers as come (`net/gateBrain.js` GATE_FIGHTERS_MAX),
 and forty round one boss were forty bodies, names, lights, spells and footsteps over his telegraphs. WB9h made the
-crowd's Morrowind bodies affordable; it did not make the fight readable. Now, in a gate's court, past the count on the
-Other players card - **Crowd in the Burning Court** (the court by its own name: WB12a's guard holds every shipped string
-to the breach's words): the nearest 12 by default, the nearest 24, or everyone - only that many other players are
-drawn: every party mate, then the nearest across the floor (`net/gateCrowd.js crowdDrawn`). The rest stand nowhere on
-this screen - no body, sprite, name, light, aura, spell's flight or step - until they are among the nearest again.
+crowd's Morrowind bodies affordable; it did not make the fight readable. Now, in a gate's court, past the count chosen
+on the Other players card - **Crowd in the Burning Court** (the court by its own name: WB12a's guard holds every shipped
+string to the breach's words): everyone by default, or the nearest 12 or 24 - only that many other players are drawn:
+every party mate, then the nearest across the floor (`net/gateCrowd.js crowdDrawn`). The rest stand nowhere on this
+screen - no body, sprite, name, light, aura, spell's flight or step - until they are among the nearest again.
+
+**Everyone by default** (Mac, after the first push: *"The default other setting should be everyone"*): the court is drawn
+whole until a player chooses a count. The default is the first of the card's choices (`GATE_CROWD_TIERS` 0, 12, 24),
+so a stored value that is none of them shows as Everyone on the card and reads as everyone in the court.
 
 - HELD PLACES. The drawn are chosen again every frame, and a crowd milling at the edge of the count traded players in
   and out every frame - a sprite built and a body handed over each time (WB9h's churn). A player drawn last frame keeps
@@ -2370,7 +2374,7 @@ this screen - no body, sprite, name, light, aura, spell's flight or step - until
   unheld, it changed hands every frame; held, never.
 - THE CUT is the online frame's one list of the players drawn (`visiblePeers`, through `createGateCrowd().cut`): after
   the map's poses are taken off the whole list, before anything is drawn from it. A party mate is never cut, and counts
-  toward the number. A stored choice that is none of the three reads as twelve (`gateCrowdMax`).
+  toward the number. A stored choice that is none of the three reads as the default, everyone (`gateCrowdMax`).
 - Nothing of the fight is cut. The relay judges every blow; the boss, his host, the bar's count of challengers, the
   damage chart, the spoils and the chat are the fight's.
 - NOT THERE TO PRESS. A player the crowd leaves undrawn is not there to press, aim at or hear either - INVIS-NET's law
@@ -2378,7 +2382,7 @@ this screen - no body, sprite, name, light, aura, spell's flight or step - until
   its burst (`giftablePeers`), and a blow's spark and a struck player's cry (`peerFxFrame`) ask the cut. Found on the
   change's own re-read, before it was pushed: the first cut left the plaque naming players it had not drawn, a heal
   aimed past them landing on them, and their cries heard. The party panel, the Nearby list and the chat still name them.
-- THE SHELF'S DEFAULT is a literal (`systems/uiPrefs.js` `gateCrowd: 12`), pinned equal to the law's: the shelf is on
+- THE SHELF'S DEFAULT is a literal (`systems/uiPrefs.js` `gateCrowd: 0`), pinned equal to the law's: the shelf is on
   the boot path, and importing the law made `net/gateCrowd.js` the entry's 69th file, past BOOT2's ceiling of 68.
 - THE COURT ALONE. The street, a building and a dungeon hold duels, arena bouts and battles, where the player cut from
   the screen could be the one fighting me. In a court nobody fights anybody but him, so the count is applied nowhere
@@ -2894,8 +2898,8 @@ once.
 **GATE-CROWD (2026-10-07) - the court alone, its crowd thinned.** Section 21 above:
 - No companion steps into a gate's court: lifted at the step, health and spells carried, stood behind the player again
   outside; no card for them in the court's party panel; the court says so once as a fighter steps in with any.
-- In the court, past the Other players card's count (12 by default, 24, or everyone) only the nearest other players are
-  drawn, the party always, the places held against one less than four metres nearer; one left undrawn is not there to
+- In the court, past the Other players card's count (everyone by default, or 12 or 24) only the nearest other players
+  are drawn, the party always, the places held against one less than four metres nearer; one left undrawn is not there to
   press, aim a gift at or hear struck.
 - No relay or account change.
 - Pins `test/gatecrowd.test.js` (9), with auditwatchkit_net, invisnet, mwbody1, peerplaque, soc5_interact and audit27d

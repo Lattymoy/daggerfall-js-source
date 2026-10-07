@@ -29,42 +29,43 @@ const ME = [0, 0, 0];
 
 // ── the law ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('GATE-CROWD the choices: twelve by default, twenty-four, or everyone; held four metres; a stored value that is no choice reads as twelve; the shelf\'s default is the law\'s (mutants: another default; the tiers reordered; the hold three; a stray value kept; the shelf\'s own literal)', () => {
-  assert.deepEqual(GATE_CROWD_TIERS, [12, 24, 0]);
-  assert.equal(GATE_CROWD_DEFAULT, 12);
+test('GATE-CROWD the choices: everyone by default (Mac: "The default other setting should be everyone"), twelve or twenty-four; held four metres; a stored value that is no choice reads as everyone; the shelf\'s default is the law\'s (mutants: another default; the tiers reordered; the hold three; a stray value kept; the shelf\'s own literal)', () => {
+  assert.deepEqual(GATE_CROWD_TIERS, [0, 12, 24], 'the default first - the card shows the first for a value that is no choice');
+  assert.equal(GATE_CROWD_DEFAULT, 0);
   assert.equal(GATE_CROWD_HOLD_M, 4);
   assert.equal(PREF_DEFAULTS.gateCrowd, GATE_CROWD_DEFAULT, 'the prefs shelf carries the law\'s own default');
   for (const v of GATE_CROWD_TIERS) assert.equal(gateCrowdMax(v), v, `${v} is a choice`);
-  for (const v of [undefined, null, 7, -12, '12', 13, true, Infinity]) assert.equal(gateCrowdMax(v), 12, `${String(v)} is no choice`);
+  for (const v of [undefined, null, 7, -12, '12', 13, true, Infinity]) assert.equal(gateCrowdMax(v), 0, `${String(v)} is no choice`);
 });
 
 test('GATE-CROWD the drawn: everyone while the crowd is no more than the count; past it the nearest on the ground, a party mate always and counted; ties by id; no count draws everyone (mutants: one over the count; the farthest drawn; height counted; a mate dropped; mates uncounted; ties unordered; no count cutting)', () => {
   const twelve = Array.from({ length: 12 }, (_, i) => peer(`p${String(i).padStart(2, '0')}`, i + 1));
-  assert.equal(crowdDrawn(twelve, ME, { at }).size, 12, 'twelve of twelve');
+  assert.equal(crowdDrawn(twelve, ME, { at, max: 12 }).size, 12, 'twelve of twelve');
   const crowd = Array.from({ length: 20 }, (_, i) => peer(`p${String(i).padStart(2, '0')}`, 20 - i));   // p00 the farthest (20 m), p19 the nearest (1 m)
-  assert.deepEqual(ids(crowdDrawn(crowd, ME, { at })), ids(crowd.slice(8).map((p) => p.id)), 'the twelve nearest of twenty');
+  assert.equal(crowdDrawn(crowd, ME, { at }).size, 20, 'by default, everyone');
+  assert.deepEqual(ids(crowdDrawn(crowd, ME, { at, max: 12 })), ids(crowd.slice(8).map((p) => p.id)), 'the twelve nearest of twenty');
   assert.equal(crowdDrawn(crowd, ME, { at, max: 24 }).size, 20, 'twenty under a count of twenty-four');
   assert.equal(crowdDrawn(crowd, ME, { at, max: 0 }).size, 20, 'no count: everyone');
   // the ground's distance - one standing high over me is as near as their feet across the floor
   const high = [...crowd.slice(1), peer('up', 0.5, 0, 40)];   // twenty, the nearest of them forty metres overhead
-  assert.ok(crowdDrawn(high, ME, { at }).has('up'), 'height is not distance on the floor');
+  assert.ok(crowdDrawn(high, ME, { at, max: 12 }).has('up'), 'height is not distance on the floor');
   // a party mate across the court is drawn, and takes one of the twelve
   const mates = new Set(['p00', 'p01']);
-  const withMates = crowdDrawn(crowd, ME, { at, mate: (id) => mates.has(id) });
+  const withMates = crowdDrawn(crowd, ME, { at, max: 12, mate: (id) => mates.has(id) });
   assert.equal(withMates.size, 12);
   assert.ok(withMates.has('p00') && withMates.has('p01'), 'the farthest two, my party, drawn');
   assert.deepEqual(ids(withMates), ids(['p00', 'p01', ...crowd.slice(10).map((p) => p.id)]), 'and the ten nearest strangers');
   // a party larger than the count is drawn whole, and nobody else
   const many = new Set(crowd.slice(0, 14).map((p) => p.id));
-  assert.deepEqual(ids(crowdDrawn(crowd, ME, { at, mate: (id) => many.has(id) })), ids([...many]), 'the party, whole');
+  assert.deepEqual(ids(crowdDrawn(crowd, ME, { at, max: 12, mate: (id) => many.has(id) })), ids([...many]), 'the party, whole');
   // ties: one distance, ordered by id - the same answer in any order of arrival
   const huddle = Array.from({ length: 16 }, (_, i) => peer(`r${String(i).padStart(2, '0')}`, 5));
-  const a = ids(crowdDrawn(huddle, ME, { at })), b = ids(crowdDrawn([...huddle].reverse(), ME, { at }));
+  const a = ids(crowdDrawn(huddle, ME, { at, max: 12 })), b = ids(crowdDrawn([...huddle].reverse(), ME, { at, max: 12 }));
   assert.deepEqual(a, b, 'a huddle at one distance is cut alike whatever order it came in');
   assert.deepEqual(a, huddle.slice(0, 12).map((p) => p.id), 'the lowest ids');
   // `out` is refilled, never grown
   const out = new Set(['stale']);
-  assert.equal(crowdDrawn(crowd, ME, { at }, out), out);
+  assert.equal(crowdDrawn(crowd, ME, { at, max: 12 }, out), out);
   assert.ok(!out.has('stale') && out.size === 12);
 });
 
@@ -73,20 +74,21 @@ test('GATE-CROWD held places: one drawn last frame keeps the place against one l
   const held = peer('held', 20), near = peer('near', 17), nearer = peer('nearer', 15.5);
   const was = new Set([...base.map((p) => p.id), 'held']);
   // without a hold the newcomer three metres nearer takes the twelfth place
-  assert.ok(crowdDrawn([...base, held, near], ME, { at }).has('near'));
-  assert.ok(!crowdDrawn([...base, held, near], ME, { at, hold: 0, was }).has('held'), 'no hold, no place kept');
+  assert.ok(crowdDrawn([...base, held, near], ME, { at, max: 12 }).has('near'));
+  assert.ok(!crowdDrawn([...base, held, near], ME, { at, max: 12, hold: 0, was }).has('held'), 'no hold, no place kept');
   // held: three metres nearer is not enough
-  const kept = crowdDrawn([...base, held, near], ME, { at, was });
+  const kept = crowdDrawn([...base, held, near], ME, { at, max: 12, was });
   assert.ok(kept.has('held') && !kept.has('near'), 'the place held against one three metres nearer');
   // four and a half metres nearer is
-  const lost = crowdDrawn([...base, held, nearer], ME, { at, was });
+  const lost = crowdDrawn([...base, held, nearer], ME, { at, max: 12, was });
   assert.ok(lost.has('nearer') && !lost.has('held'), 'and given up to one four and a half nearer');
 });
 
 test('GATE-CROWD the host\'s crowd: out of a court every peer, the same list, and the places forgotten; in one under the count the same list; past it the drawn in the frame\'s own order; a crowd milling at the edge does not swap every frame; who shows - everyone out of a court, the drawn in one (mutants: cut out of a court; the places never forgotten; the held set refilled under itself; a new list every frame; the order lost; everyone shown in a court; nobody shown outside one; the court never marked)', () => {
   const crowd = createGateCrowd();
   const list = Array.from({ length: 20 }, (_, i) => peer(`p${String(i).padStart(2, '0')}`, 20 - i));
-  const o = { me: ME, at };
+  assert.equal(createGateCrowd().cut(list, { me: ME, at, on: true }), list, 'at the default, everyone: the list itself');
+  const o = { me: ME, at, max: 12 };
   assert.equal(crowd.cut(list, { ...o, on: false }), list, 'out of a court: the list itself');
   assert.equal(crowd.held().size, 0);
   assert.ok(crowd.shows('p00') && crowd.shows('nobody here'), 'out of a court every player shows');
@@ -118,7 +120,7 @@ test('GATE-CROWD the host\'s crowd: out of a court every peer, the same list, an
   let unheld = 0, prev = null;
   for (let f = 0; f < 60; f++) {
     x.shown.x = f % 2 ? 14 : 15.2; y.shown.x = f % 2 ? 14.5 : 13.9;
-    const drawn = [...crowdDrawn(milling, ME, { at, hold: 0 })].sort().join();
+    const drawn = [...crowdDrawn(milling, ME, { at, max: 12, hold: 0 })].sort().join();
     if (prev !== null && drawn !== prev) unheld++;
     prev = drawn;
   }
@@ -152,8 +154,10 @@ test('GATE-CROWD the online frame: the drawn list cut after the map\'s poses are
   assert.equal(createGateCrowd().cut(crowd, ask(host(7))).length, 20, 'the card at twenty-four');
   prefs.gateCrowd = 0;
   assert.equal(createGateCrowd().cut(crowd, ask(host(7))).length, 20, 'and at everyone');
+  prefs.gateCrowd = undefined;
+  assert.equal(createGateCrowd().cut(crowd, ask(host(7))).length, 20, 'nothing chosen: everyone');
   prefs.gateCrowd = 'junk';
-  assert.equal(createGateCrowd().cut(crowd, ask(host(7))).length, 12, 'a stray value reads as twelve');
+  assert.equal(createGateCrowd().cut(crowd, ask(host(7))).length, 20, 'a stray value reads as everyone');
   // the readers of the drawn list are the cut's - the casts, the seen (lights, riders, bodies, walkers, auras) and the
   // sprites, names and steps; the map's poses were taken off the whole list above it
   assert.match(WORLD, /const seen = \[\];\n\s*for \(const d of visiblePeers\) \{/);
@@ -172,7 +176,7 @@ test('GATE-CROWD the Other players card: the crowd\'s choice beside the sprite a
   const card = menu.slice(menu.indexOf('function peerSpritesCard() {'), menu.indexOf('\n}\n', menu.indexOf('function peerSpritesCard() {')));
   assert.match(card, /c\.append\(choiceRow\('gateCrowd', 'Crowd in the Burning Court',\n\s*'[^\n]*',\n\s*GATE_CROWD_TIERS\.map\(\(n\) => \[n, n \? `Nearest \$\{n\}` : 'Everyone'\]\), \{ home: true \}\)\);/);
   assert.match(menu, /import \{ GATE_CROWD_TIERS \} from '\.\.\/net\/gateCrowd\.js';/);
-  assert.match(read('src/systems/uiPrefs.js'), /\n {2}gateCrowd: 12,\n/, 'the shelf\'s literal - pinned equal to the law\'s default in the first test, never imported (BOOT2)');
+  assert.match(read('src/systems/uiPrefs.js'), /\n {2}gateCrowd: 0,\n/, 'the shelf\'s literal - pinned equal to the law\'s default in the first test, never imported (BOOT2)');
   assert.doesNotMatch(read('src/systems/uiPrefs.js'), /from '\.\.\/net\/gateCrowd\.js'/, 'the shelf is on the boot path: it imports nothing of the court');
 });
 

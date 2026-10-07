@@ -2,11 +2,11 @@
 // GATE-CROWD (2026-10-07, Mac: "We need to not allow followers inside the oblivion gates, plus need some type of filter
 // when there are too many people"): THE COURT'S CROWD, FILTERED ON THIS SCREEN. A court holds as many challengers as
 // come (net/gateBrain.js GATE_FIGHTERS_MAX), and forty round one boss are forty bodies, names, lights, spells and
-// footsteps over his telegraphs. In a gate's court, past the count the player chose (the Other players card - twelve,
-// twenty-four or everyone) only that many other players are drawn: every party mate, then the nearest. The rest stand
-// nowhere on this screen - no body, no sprite, no name, no light, no spell's flight, no step heard - until they are
-// among the nearest again. Nothing of the fight is filtered: the relay judges every blow, and the boss, his host, the
-// bar's count of challengers, the damage chart and the spoils are the fight's, never this screen's drawing.
+// footsteps over his telegraphs. In a gate's court, past the count the player chose on the Other players card - twelve
+// or twenty-four; everyone, the default, cuts nobody - only that many other players are drawn: every party mate, then
+// the nearest. The rest stand nowhere on this screen - no body, no sprite, no name, no light, no spell's flight, no step
+// heard - until they are among the nearest again. Nothing of the fight is filtered: the relay judges every blow, and the
+// boss, his host, the bar's count of challengers, the damage chart and the spoils are the fight's, never this screen's.
 //
 // HELD PLACES. The drawn set is chosen again every frame, and a crowd milling at the edge of the count swapped players
 // in and out - each one a sprite built and a Morrowind body handed over (net/peerBodies.js, WB9h's churn). A player
@@ -18,10 +18,11 @@
 // The law is pure (`crowdDrawn`); `createGateCrowd` keeps the held places between frames for the host (scenes/world.js,
 // the online frame's drawn peers). Not a DFU member: Daggerfall has no other players. Ledger A (GATE-CROWD).
 
-/** The Other players card's choices: how many other players a gate's court draws at once (0: everyone). */
-export const GATE_CROWD_TIERS = Object.freeze([12, 24, 0]);
-/** Twelve, unless the player chose otherwise. */
-export const GATE_CROWD_DEFAULT = 12;
+/** The Other players card's choices: how many other players a gate's court draws at once (0: everyone), the default
+ *  first - the card's row shows the first for a stored value that is none of them, as gateCrowdMax reads it. */
+export const GATE_CROWD_TIERS = Object.freeze([0, 12, 24]);
+/** Everyone, unless the player chose otherwise (Mac, 2026-10-07: "The default other setting should be everyone"). */
+export const GATE_CROWD_DEFAULT = 0;
 /** A player drawn keeps their place against one who is not until that one stands this much nearer (m). */
 export const GATE_CROWD_HOLD_M = 4;
 
