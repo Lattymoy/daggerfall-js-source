@@ -31,9 +31,9 @@ test('SD5a the frame: the Threshold at the made block\'s middle, the walk, the O
   assert.deepEqual(SD_ORRERY, { x: 0, z: 42, r: 18 });
   assert.equal(SD_ORRERY.z - SD_ORRERY.r, 24, 'z 24');
   assert.equal(SD_ORRERY.z + SD_ORRERY.r, 60, 'to z 60');
-  assert.deepEqual(SD_STEPS, { z0: 60, z1: 190 });
-  assert.deepEqual(SD_ARENA, { x: 0, z: 220, r: 26 });
-  assert.ok(SD_ARENA.z - SD_ARENA.r >= SD_STEPS.z1 && SD_ARENA.z + SD_ARENA.r <= 250, 'the arena within z 190-250');
+  assert.deepEqual(SD_STEPS, { z0: 60, z1: 220 });   // SD7a (PIN MOVED): the course the engine can jump runs to z 220
+  assert.deepEqual(SD_ARENA, { x: 0, z: 246, r: 26 });   // SD7a (PIN MOVED): the arena moved out past it
+  assert.ok(SD_ARENA.z - SD_ARENA.r >= SD_STEPS.z1 && SD_ARENA.z + SD_ARENA.r <= 272, 'the arena within z 220-272');
   assert.ok(SD_WALK.z0 < SD_THRESHOLD.r && SD_WALK.z1 > SD_ORRERY.z - SD_ORRERY.r, 'the walk reaches into both floors');
   assert.deepEqual(realmToDungeon(1, 2, 3), [26.6, 2, 28.6]);
   assert.deepEqual(dungeonToRealm(...realmToDungeon(-4, 0, 99)), [-4, 0, 99]);
@@ -109,7 +109,7 @@ test('SD5a the floors, for the collider: the Threshold, the walk, the Orrery\'s 
   const sign = (p, a, b) => (p[0] - b[0]) * (a[1] - b[1]) - (a[0] - b[0]) * (p[1] - b[1]);
   const inTri = (p, [a, b, c]) => { const d1 = sign(p, a, b), d2 = sign(p, b, c), d3 = sign(p, c, a); return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0)); };
   const floored = (x, z) => { const [dx, , dz] = realmToDungeon(x, 0, z); return tris.some((tr) => inTri([dx, dz], tr)); };
-  for (const [x, z, what] of [[0, 0, 'the Threshold'], [0, 16, 'the walk'], [1.5, 16, 'the walk\'s edge'], [0, 42, 'the Orrery'], [12, 42, 'its hall'], [0, 220, 'the arena'], [20, 220, 'its rim']]) assert.ok(floored(x, z), what);
+  for (const [x, z, what] of [[0, 0, 'the Threshold'], [0, 16, 'the walk'], [1.5, 16, 'the walk\'s edge'], [0, 42, 'the Orrery'], [12, 42, 'its hall'], [0, SD_ARENA.z, 'the arena'], [20, SD_ARENA.z, 'its rim']]   /* SD7a (PIN MOVED): the arena at its own place */) assert.ok(floored(x, z), what);
   for (const [x, z, what] of [[0, 120, 'the Steps\' void'], [4, 16, 'beside the walk'], [0, -9, 'behind the Threshold']]) assert.ok(!floored(x, z), what);
 });
 
@@ -143,7 +143,7 @@ test('SD5a the lamps and the light: the Threshold\'s four and the hall\'s and th
     assert.ok(on, 'inside a rim');
   }
   const near = realmLightsNear(realmToDungeon(0, 0, 220));
-  assert.ok(Math.hypot(near[0].x - SD_REALM_ORIGIN[0], near[0].z - SD_REALM_ORIGIN[2] - 220) < SD_ARENA.r, 'the nearest first');
+  assert.ok(Math.hypot(near[0].x - SD_REALM_ORIGIN[0], near[0].z - SD_REALM_ORIGIN[2] - SD_ARENA.z) < SD_ARENA.r, 'the nearest first');
   const a = realmLighting(), b = realmLighting();
   assert.notEqual(a.tri.sky, b.tri.sky, 'fresh arrays');
   assert.ok(close(Math.hypot(...a.key.dir), 1));

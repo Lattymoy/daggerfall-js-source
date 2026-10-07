@@ -12,8 +12,11 @@
 //   | THE THRESHOLD          | a disc at z 0, radius 8     | the landing; the way back through the Rift at its back  |
 //   | the walk               | z 7 to 25, 4 m wide         | from the Threshold to the Orrery                        |
 //   | THE ORRERY OF ENDINGS  | a disc at z 42, radius 18   | the puzzle hall (SD6) - z 24 to 60                      |
-//   | THE UNMOORED STEPS     | z 60 to 190                 | the platforming course (SD7) - the void until then      |
-//   | THE LAST MOMENT        | a disc at z 220, radius 26  | the boss's arena, four brass pillars (SD8) - z 194-246  |
+//   | THE UNMOORED STEPS     | z 60 to 220                 | the platforming course (SD7) - the void until then      |
+//   | THE LAST MOMENT        | a disc at z 246, radius 26  | the boss's arena, four brass pillars (SD8) - z 220-272  |
+//
+// SD7a: the Steps' span runs to z 220 and the arena stands at z 246 (z 190 and 220 before): the course the engine can
+// jump (world/sdSteps.js) is 145 m long.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 
@@ -23,8 +26,8 @@ export const SD_REALM_ORIGIN = Object.freeze([25.6, 0, 25.6]);
 export const SD_THRESHOLD = Object.freeze({ x: 0, z: 0, r: 8 });
 export const SD_WALK = Object.freeze({ x: 0, z0: 7, z1: 25, halfW: 2 });
 export const SD_ORRERY = Object.freeze({ x: 0, z: 42, r: 18 });
-export const SD_STEPS = Object.freeze({ z0: 60, z1: 190 });
-export const SD_ARENA = Object.freeze({ x: 0, z: 220, r: 26 });
+export const SD_STEPS = Object.freeze({ z0: 60, z1: 220 });
+export const SD_ARENA = Object.freeze({ x: 0, z: 246, r: 26 });
 /** The arena's four brass pillars: on its diagonals, this far from its centre, this thick and this tall. */
 export const SD_PILLAR_R = 16;
 export const SD_PILLAR_W = 1.6;

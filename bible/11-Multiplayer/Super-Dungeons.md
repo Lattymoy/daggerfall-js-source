@@ -204,8 +204,8 @@ pseudo-archives 38151-38159) laid along +Z in the dungeon's frame:
 |---|---|---|
 | **The Threshold** | z 0 | the landing, radius 8 m; the way back through the Rift (to the Hollow's end) |
 | **The Orrery of Endings** | z 24-60 | the puzzle hall, radius 18 m (section 8) |
-| **The Unmoored Steps** | z 60-190 | the platforming course, three spans (section 9) |
-| **The Last Moment** | z 190-250 | the boss arena, radius 26 m, four brass pillars (section 10) |
+| **The Unmoored Steps** | z 60-220 | the platforming course, three spans (section 9) |
+| **The Last Moment** | z 220-272 | the boss arena, radius 26 m, four brass pillars (section 10) |
 
 The sky (`render/sdSky.js`): a void of brass light and slow aurorae, the Bay's skylines hanging upside down in it -
 Daggerfall's towers, Sentinel's domes, Wayrest's bridges - the shards of the endings, turning on the realm's clock; a
@@ -250,12 +250,20 @@ kept for the slot.
 With the Concord a bridge of light opens from the Orrery to the first of the Steps. Three spans over the void, each
 begun at a stone checkpoint:
 
-1. **The Drift** - eight brass platforms swinging side to side (2-4 m, periods 4-7 s), the gaps a running leap's
-   (4-6.5 m; `player/parkour.js`'s range is 4-7).
+1. **The Drift** - eight brass platforms swinging side to side (2-4 m from side to side, periods 4-7 s, each its own
+   phase), the gaps a running jump's (2.4-3.2 m when two line up).
 2. **The Beat** - seven platforms that are there only on the Hour's beat (solid 2.4 s, gone 1.2 s, alternate stones
-   half a beat apart), and two brass walls to run (CLIMB3's wall run) between them.
-3. **The Crumble** - eight cracked platforms that fall 0.7 s after a foot touches them (back after 5 s), and the Warp's
-   breath across them: a gust every 6 s pushing 3 m/s sideways for a second.
+   half a beat apart, each blinking the 0.4 s before it goes), and two brass RISERS between them: walls 2.3 m tall, run
+   up (CLIMB3's wall run) or climbed, the course a riser higher after each.
+3. **The Crumble** - eight cracked platforms, each a step down to the arena's floor, that shake for 0.7 s after a foot
+   touches them and fall (back after 5 s), and the Warp's breath across them: a gust every 6 s pushing 3 m/s sideways
+   for a second, left and right by turns, its wind heard the second before.
+
+Amended to the engine (SD7a): the design's gaps were a running leap's (4-6.5 m), and a leap flies 4.1 m at Jumping 0 -
+gaps that only a trained leap crosses shut out every build that never trained it, so the gaps are a plain running
+jump's at a modest build (Speed 40, Running 20: 3.1 m), the skill buying margin, not entry; the walls are run UP
+(CLIMB3 runs up a wall met straight, and the engine has no run along one), so they are risers, not a corridor; and the
+course is 145 m from the first step, so the Steps run to z 220 and the arena stands at z 246.
 
 Falling below the course (y < -30) casts the player back to the span's checkpoint with 15% of their health lost (*"The
 Hour casts you back."*). The platforms move on the realm's anchored clock, so every player sees the same Step in the
@@ -982,3 +990,42 @@ mode machine's route take the hall's keys too) and `test/sd5a_realm.test.js` (th
 exported as `realmIsland` for the first step).
 
 SD7 next: the Unmoored Steps (section 9) - from the first step, three spans over the void on the realm's clock.
+
+### SD7a - shipped 2026-10-07 (the Unmoored Steps' law)
+
+Section 9's law, pure (`world/sdSteps.js`): the course from the Orrery's first step to the Last Moment's arena, in the
+realm's frame. The page stands, moves and judges it (SD7b); the relay never does.
+
+- **The course** (`SD_STEPS_COURSE`, `SD_CHECKPOINTS`): laid along +z from the first step's far edge (A, SD6c's, z 72).
+  The Drift's eight (z 79-115, on the course's line at rest), B (z 122); the Beat's seven and its two risers (z 129-166,
+  the course 2.3 m higher after each riser: y 0, 2.3, 4.6), C (z 173, y 4.6); the Crumble's eight (z 180-216), each a
+  step down to the arena's floor; the course ends at the arena's near edge (`SD_COURSE_END`, z 220). Every step is a
+  slab 0.6 m thick, 3 m across (the Crumble's 2.6).
+- **Fair to the engine**: every gap is a jump (2.4 m at least), and no gap is longer than a plain running jump at a
+  modest build at Jumping 0 (Speed 40, Running 20: 3.1 m, `player/motor.js`'s own speeds and gravity, at 95% of the
+  closed form for the fixed step), with the capsule's reach. A riser stands against the step before it, 2.3 m higher -
+  past any skill's jump (Jumping 100 rises 1.14 m; a Jump spell is a way up too) and inside the wall run's reach at skill 0 (`wallRunHeight` plus
+  `PARKOUR_REACH_MIN`). The only step up is a riser, and every step down is under a metre.
+- **On the realm's clock** (`deadlandsSeconds`, every screen the same): a Drift step swings across x
+  (`stepAt` - `amp sin(2 pi t / period + phase)`, 1-2 m either way, 4-7 s, each its own phase); a Beat step stands 2.4 s
+  of every 3.6, alternate steps half a beat apart, and blinks the 0.4 s before it goes (`beatStands`, `beatBlinks` - the
+  risers always stand); a Crumble step touched shakes 0.7 s, falls under gravity and is whole again 5 s after it fell
+  (`crumbleAfter`, from the touch - each player's own).
+- **The Warp's breath** (`gustAt`, `inBreath`): over the Crumble alone, a gust every 6 s, a second long, 3 m/s across,
+  +x then -x by turns, its wind rising the second before.
+- **The void** (`inVoid`, `spanAt`, `castBackTo`): below y -30 a body is cast back to its span's checkpoint - A over the
+  Drift, B over the Beat, C over the Crumble - 15% of its health lost (`SD_CAST_BACK_LOSS`). The edge lets go from just
+  inside the first step's far edge to just inside the arena's near edge (`SD_STEPS_FREE`, for SD7b's clamp).
+- **The frame moved** (`net/sdBrain.js`): the Steps run z 60-220 and the arena stands at z 246 (z 60-190 and 220 before)
+  - the course the engine can jump is 145 m. Section 9 is amended to the engine (the gaps, the risers); the stage table
+  of section 7 moves with it.
+
+THE FOUR HOSTS: none yet - FLAGGED all four; the law is read by SD7b's page.
+
+Pins: `test/sd7a_steps.test.js` (7 - the course; fair to the engine; the Drift; the Beat; the Crumble; the Warp's
+breath; the void and the spans); `tools/mutants/sd7a.json` (22, all dead). PINS MOVED: `test/sd5a_realm.test.js` (the
+Steps' span and the arena, the arena's floor probes and its nearest lamps at its new place); `test/relayversion.test.js`
+- `world176` re-hashed in place (`net/sdBrain.js` is in the relay's bundle; undeployed).
+
+SD7b next: the Steps on the page - the slabs and their colliders, moving on the realm's clock and carrying a body that
+stands on one, the Beat's blink and the Crumble's fall, the breath's push, the cast-back, and the edge let go.
