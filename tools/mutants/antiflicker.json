@@ -1,43 +1,5 @@
 [
   {
-    "name": "CACHE-OFF-address-off-loses",
-    "file": "src/render/shadowPass.js",
-    "old": "  if (q === 'off') return false;\n",
-    "new": "",
-    "tests": [
-      "test/antiflicker.test.js"
-    ]
-  },
-  {
-    "name": "CACHE-OFF-on-by-default",
-    "file": "src/render/shadowPass.js",
-    "old": "  return search === (globalThis.location?.search ?? '') && getPref('shadowCache') === true;",
-    "new": "  return true;",
-    "tests": [
-      "test/antiflicker.test.js",
-      "test/perfurl_doors.test.js",
-      "test/sc1_shadowcache.test.js"
-    ]
-  },
-  {
-    "name": "CACHE-OFF-device-unread",
-    "file": "src/render/shadowPass.js",
-    "old": "  try { if (store?.getItem?.('dfjs.shadowCache') === 'on') return true; } catch { /* no storage */ }\n",
-    "new": "",
-    "tests": [
-      "test/antiflicker.test.js"
-    ]
-  },
-  {
-    "name": "CACHE-OFF-install-ignores-the-default",
-    "file": "src/render/renderer.js",
-    "old": "      this._shadows.cacheOn = this._shadowCacheWanted !== false;",
-    "new": "      this._shadows.cacheOn = true;",
-    "tests": [
-      "test/antiflicker.test.js"
-    ]
-  },
-  {
     "name": "EMPTY-HOLD-held-over-a-door",
     "file": "src/render/shadowPass.js",
     "old": "      if (!f.cut && this._emptyRun <= SHADOW_EMPTY_HOLD",

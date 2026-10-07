@@ -62,7 +62,6 @@ import { aabbOutside } from './frustum.js';   // SHADOW-REACH: a host's box agai
 import { getPref } from '../systems/uiPrefs.js';
 import { AIR_TUNING } from './airPass.js';   // FLICKER-FIX: the calmer eye
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
-import { appStorage } from '../systems/appStorage.js';   // CACHE-OFF: the device's switch, through the one storage seam
 import { BAYER_GLSL, DISSOLVE_GLSL } from './orderedDither.js';   // AUDIT BAY A12: a fading ship's shadow dissolves with her
 
 /** The sun map: two cascades of this size, as a depth texture array. */
@@ -382,19 +381,13 @@ export const SHADOW_EMPTY_HOLD = 30;
 export const SHADOW_LO_REBUILDS = 2;
 /** FLICKER-FIX: the lo tier's rebuilds a frame under Steady shadows - a stale lo map settles in a third of the frames. */
 export const SHADOW_LO_REBUILDS_STEADY = 6;
-/** SC1: the door - `?shadowcache=off` replays every caster at the cadence, as before. */
-export function shadowCacheOn(search = globalThis.location?.search ?? '', store = appStorage()) {
-  // CACHE-OFF (2026-10-06, the player: with the cache "it still flicker but not with ... &shadowcache=off" - every shadow
-  // in the tavern blinking, on every card, Enhanced Lighting alone): the cache is OFF unless asked ON - by the address
-  // (`shadowcache=on`), the device (localStorage `dfjs.shadowCache` = 'on') or the Enhanced Lighting option "Shadow cache"
-  // (prefs `shadowCache`, off by default); `shadowcache=off` still wins
-  const q = pageParam('shadowcache', search);
-  if (q === 'on') return true;
-  if (q === 'off') return false;
-  try { if (store?.getItem?.('dfjs.shadowCache') === 'on') return true; } catch { /* no storage */ }
-  // the Enhanced Lighting row's "Shadow cache" part - off by default; asked only of the page's own search (getPref reads
-  // that one, so a door handed another search is answered by it alone - PERF-URL's one parse)
-  return search === (globalThis.location?.search ?? '') && getPref('shadowCache') === true;
+/** SC1: the door - `?shadowcache=off` replays every caster at the cadence, as before.
+ *  CACHE-COPY (2026-10-07): ON unless asked off, again. The anti-flicker patch's CACHE-OFF had turned it OFF unless
+ *  asked on (the address, the device, an Enhanced Lighting part "Shadow cache (faster, may flicker)") because the
+ *  cached shadows blinked - the blink was the cache's COPY on Direct3D (_blitSlot), not the cache, and the copy is a
+ *  draw now; with the cache off every lamp replayed its whole room six faces a frame. */
+export function shadowCacheOn(search = globalThis.location?.search ?? '') {
+  return pageParam('shadowcache', search) !== 'off';   // PERF-URL
 }
 /** SC1: are two spheres touching - a record's against a lantern's reach. */
 export function spheresTouch(ax, ay, az, ar, bx, by, bz, br) {
@@ -874,6 +867,24 @@ uniform sampler2D uTex;
 void main() {
   if (texture(uTex, vUV).a < 0.5) discard;
 }`;
+/** CACHE-COPY (2026-10-07): SC1's cache into the live layers BY A DRAW (_blitSlot) - a full-screen triangle made of
+ *  gl_VertexID alone (deepWatersRender.js's), drawn with an empty vertex array. */
+export const DEPTH_COPY_VS = `#version 300 es
+void main() {
+  vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+  gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
+}`;
+/** CACHE-COPY: each texel takes the cache's depth at its own texel of layer uLayer. HIGHP, the sampler most of all: a
+ *  mediump fetch would round the 24-bit depth to eleven bits. A depth texture with no compare mode reads as red. */
+export const DEPTH_COPY_FS = `#version 300 es
+precision highp float;
+precision highp int;
+precision highp sampler2DArray;
+uniform sampler2DArray uCache;
+uniform int uLayer;
+void main() {
+  gl_FragDepth = texelFetch(uCache, ivec3(gl_FragCoord.xy, uLayer), 0).r;
+}`;
 
 /** AUDIT REACH: what _dynamicNear answers - nothing near, a swaying flat alone (the slow cadence), a mover. */
 const DYN_NONE = 0, DYN_SWAY = 1, DYN_MOVER = 2;
@@ -931,7 +942,9 @@ export class ShadowPass {
     const bb = opts.build(opts.vs.bb, DEPTH_BB_FS);
     const char = opts.vs.char ? opts.build(opts.vs.char, DEPTH_FS) : null;   // EL7: the rigs' own vertex layout
     const meshCut = opts.build(opts.vs.mesh, DEPTH_CUT_FS);   // AUDIT BAY A12
+    const copy = opts.build(DEPTH_COPY_VS, DEPTH_COPY_FS);   // CACHE-COPY: the cache into the live layers (_blitSlot)
     this.programs = {
+      copy: { p: copy, cache: u(copy, 'uCache'), layer: u(copy, 'uLayer') },
       mesh: { p: mesh, proj: u(mesh, 'uProj'), view: u(mesh, 'uView'), model: u(mesh, 'uModel') },
       meshCut: { p: meshCut, proj: u(meshCut, 'uProj'), view: u(meshCut, 'uView'), model: u(meshCut, 'uModel'), cut: u(meshCut, 'uDissolveCut') },
       char: char ? { p: char, proj: u(char, 'uProj'), view: u(char, 'uView'), model: u(char, 'uModel') } : null,
@@ -954,6 +967,7 @@ export class ShadowPass {
     // `?shadowcache=off` never reads were allocated all the same
     this.cacheTex = null;
     this.cacheFbos = [];
+    this._copyVao = gl.createVertexArray();                       // CACHE-COPY: the copy's triangle reads no attribute
     this.cacheOn = true;                                          // SC1: the door (renderer.setShadowCache)
     this._slotSig = new Int32Array(2 * SHADOW_POINT_CASTERS);     // SC1: per slot, the static signature's (hash, count) the cache was drawn from
     this._slotCached = new Uint8Array(SHADOW_POINT_CASTERS);      // SC1: the cache holds this slot's light's statics
@@ -1602,13 +1616,13 @@ export class ShadowPass {
           this.stats.facesDrawn += 6; this.stats.staticFaces += 6;
           this._slotCached[k] = 1; this._slotSig[k * 2] = sigHash; this._slotSig[k * 2 + 1] = sigCount;
         } else this.stats.cachedSlots++;
-        // the dynamics on top: the cache blitted into the live layers, then the moving casters alone, at the cadence
+        // the dynamics on top: the cache copied into the live layers (CACHE-COPY: a draw), then the moving casters alone, at the cadence
         const dynNear = anyDyn ? this._dynamicNear(pos, far, f.isSpectral, selfNear, this._candFor(rank, L, casters, farOf)) : DYN_NONE;   // 0 none, 1 sway alone, 2 a mover
         const dueDyn = dynNear === DYN_SWAY ? (SHADOW_TUNING.steady || (this.frameNo + k) % SHADOW_SWAY_EVERY === 0) : due;   // AUDIT REACH: a swaying wood redraws on the sway's own cadence
         if (dynNear && (dueDyn || staticStale || !this._slotLiveDyn[k] || selfMoved)) {
           const cand = this._candFor(rank, L, casters, farOf);
           if (cand) this._candidateQuads(rank);   // PERF-SHADOW1 (a no-op when the static faces asked it above)
-          this._blitSlot(k);
+          this._blitSlot(k, f.bindVao);   // CACHE-COPY: by a draw
           if (!matrices) pointFaceMatrices(pos, far, this.faceVP);
           for (let face = 0; face < 6; face++) {
             gl.bindFramebuffer(gl.FRAMEBUFFER, this.pointFbos[k * 6 + face]);
@@ -1619,7 +1633,7 @@ export class ShadowPass {
           this._slotLiveDyn[k] = 1; this._slotSelf[k] = selfWant;
         } else if (staticStale || (!dynNear && this._slotLiveDyn[k])) {
           // a fresh cache, or the last walker gone: the live layers are the cache again
-          this._blitSlot(k);
+          this._blitSlot(k, f.bindVao);
           this._slotLiveDyn[k] = 0; this._slotSelf[k] = 0;
         }
       }
@@ -1921,14 +1935,46 @@ export class ShadowPass {
     }
     return near;
   }
-  /** SC1: the cache's six layers into the live ones - a depth blit, no rasterisation. */
-  _blitSlot(k) {
-    const gl = this.gl, S = SHADOW_POINT_SIZE;
+  /**
+   * SC1: the cache's six layers into the live ones.
+   *
+   * CACHE-COPY (2026-10-07, Mac: "instead of one of my developers fixing the flickering shadow issue, they just turned
+   * on the non-baked version on by default, which really really kill performance ... I want to fix the flickering
+   * issue properly"): BY A DRAW, NOT A BLIT. This was six blitFramebuffer(DEPTH_BUFFER_BIT) calls from a layer of the
+   * cache array into a layer of the live one - valid by the spec, and the one path AUDIT FLICKER left "whose result a
+   * driver decides", unconfirmed. Confirmed in ANGLE's source: on Windows every browser's WebGL is ANGLE over Direct3D
+   * 11, and there this blit is no copy. DEPTH_COMPONENT24 is stored D24S8, so a depth-only blit is a "partial" depth-
+   * stencil one, which Renderer11::blitRenderbufferRect hands to Blit11::copyDepth: a quad whose pixel shader
+   * (PS_PassthroughDepth2D) declares a Texture2D and is given the layer's TEXTURE2DARRAY view (a depth render target
+   * keeps no blit view of its own, so its plain one is taken). D3D11 calls a view whose dimension is not the shader's
+   * invalid and leaves the read to the driver - the statics that came back were the driver's, not the cache's, and
+   * they changed whenever the cache did: every lamp's shadows at once on every rebuild (the anti-flicker patch's "the
+   * whole room's shadows blinked", "on every card", "none with &shadowcache=off"), and a lamp redrawn every frame for a
+   * mover read them every frame (AUDIT FLICKER's "not casting right on nvidia"). SwiftShader - ANGLE over Vulkan, the
+   * probes' GPU - copies it, so no probe saw it.
+   *
+   * The draw is the same copy on every backend: a full-screen triangle that fetches the cache at its own texel (a
+   * sampler2DArray, which ANGLE's translator declares as the array it binds) and writes it as gl_FragDepth - the same
+   * 24 bits (a unorm through a float32 and back), under DEPTH_TEST with ALWAYS, the replays' LESS put back. The same
+   * fragments the blit wrote, and on Direct3D the same kind of quad. `bindVao` is the renderer's tracked binder, so the
+   * replays after it rebind their own arrays.
+   */
+  _blitSlot(k, bindVao = null) {
+    const gl = this.gl, S = SHADOW_POINT_SIZE, C = this.programs.copy;
+    gl.useProgram(C.p);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.cacheTex);
+    gl.uniform1i(C.cache, 0);
+    if (bindVao) bindVao(this._copyVao); else gl.bindVertexArray(this._copyVao);
+    gl.depthFunc(gl.ALWAYS);
     for (let face = 0; face < 6; face++) {
-      gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.cacheFbos[k * 6 + face]);
-      gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this.pointFbos[k * 6 + face]);
-      gl.blitFramebuffer(0, 0, S, S, 0, 0, S, S, gl.DEPTH_BUFFER_BIT, gl.NEAREST);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, this.pointFbos[k * 6 + face]);
+      gl.viewport(0, 0, S, S);
+      gl.uniform1i(C.layer, k * 6 + face);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
+    gl.depthFunc(gl.LESS);
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, null);   // no cache left on a unit while a rebuild draws into it
     this.stats.blits += 6;
   }
 

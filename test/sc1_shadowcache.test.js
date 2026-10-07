@@ -49,7 +49,9 @@ function recordingGl() {
   const canvas = { getContext: () => gl, clientWidth: 320, clientHeight: 200, width: 320, height: 200 };
   return { gl, calls, canvas };
 }
-const count = (calls, name) => calls.filter((c) => c[0] === name).length;
+/** CACHE-COPY: the faces of the cache copied into the live layers - one triangle each, drawn with the copy program (SC1's
+ *  blit until 2026-10-07: on Direct3D a depth blit out of a layer of an array was no copy - render/shadowPass.js _blitSlot) */
+const copies = (calls, sp) => { let n = 0, prog = null; for (const c of calls) { if (c[0] === 'useProgram') prog = c[1]; else if (c[0] === 'drawArrays' && prog === sp.programs.copy.p) n++; } return n; };
 
 /** A room: a bounded static mesh (two sub-meshes), a terrain tile, a lantern at the origin; the lane, no sun. */
 function stand() {
@@ -67,7 +69,7 @@ function stand() {
     r.setPointLights(lights, new Float32Array([1, 1, 1]));
     calls.length = 0;
     r.beginFrame(I, I, lightDir, WORLD_FRAME);
-    const st = { ...sp.stats, casters: sp.casters, index: [...sp.shadowIndex], blit: count(calls, 'blitFramebuffer') };
+    const st = { ...sp.stats, casters: sp.casters, index: [...sp.shadowIndex], blit: copies(calls, sp) };
     draw();
     r.drawScreenQuad({ id: 'ui' }, { x: 0, y: 0, w: 10, h: 10 });
     return st;
@@ -205,13 +207,13 @@ test('SC1: a flat whose origin moves is a dynamic (per batch, on the batch), a s
   assert.equal(sp.cacheOn, false);
   frame(draw);
   st = frame(draw);
-  assert.equal(st.staticFaces, 0); assert.equal(st.dynFaces, 0); assert.equal(st.blit, 0, 'no cache, no blit');
+  assert.equal(st.staticFaces, 0); assert.equal(st.dynFaces, 0); assert.equal(st.blit, 0, 'no cache, no copy');
   assert.equal(st.facesDrawn, 6); assert.ok(st.pointDraws > 6 * 2 && st.pointDraws <= 6 * 4, `the old path: everything in range, six faces - the room one run (PERF-EXT2) (${st.pointDraws})`);
   st = frame(draw);
   assert.equal(st.facesDrawn, 6, 'and again every frame (the nearest slot)');
   r.setShadowCache(true);
   assert.equal(sp.cacheOn, true);
-  assert.equal(shadowCacheOn('', null), false); assert.equal(shadowCacheOn('?shadowcache=on', null), true); assert.equal(shadowCacheOn('?shadowcache=off', null), false);   // CACHE-OFF: off unless asked on
+  assert.equal(shadowCacheOn(''), true); assert.equal(shadowCacheOn('?shadowcache=off'), false);   // CACHE-COPY: on unless asked off, as SC1 built it
   assert.match(rd('src/render/enhancedLighting.js'), /renderer\.setShadowCache\?\.\(shadowCacheOn\(search\)\);/, 'read at the lane\'s install, like the air\'s');
 });
 
