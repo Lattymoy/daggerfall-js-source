@@ -437,7 +437,9 @@ hour, not fit to fight under half health, the ladder done).
 **The fix from ARENA1** (`systems/arenaMove.js emptyArenaScene`): the old house's scene is emptied into the new one by
 what it held - the owner's own things back to the furnishings or the pack, the catalogue's placed pieces paid back whole
 into Daggerfall's bank account, the furniture marks dropped, every chest's, storage piece's and floor pile's item into the
-new house's `container:0` (a crate set down where the owner first walks in when the house has none). A torch left burning
+new house's `container:0` (a crate set down where the owner first walks in when the house has none) [FIELD BUGS 2026-10-07: never
+over a record the owner already keeps there - what is carried joins its `container:0` (HOME-WIPE); and the record a move
+makes is stamped with its town's layout, the deed's offline (CRATE-LAYOUT) - `01-Overview/Field-Bugs-2026-10-07.md`]. A torch left burning
 on the old floor is not carried (recorded) [SUPERSEDED at ARENA-FIX 11: it is put out and carried].
 
 **The four hosts.** world.js WIRED (the driver, the city stage and schedule, the instance's stage through the modes,
@@ -766,7 +768,12 @@ room withdrawn, hidden pieces and placed items deleted, the catalogue's and the 
 owner's record in the same batch (a hall's into its treasury). The client (`arenaMove.js arenaHomeFor` - `arenaHouseFor`
 filtered by `homeCandidate`; `onlineHomes.js moveArenaHomes`; world.js `moveArenaHomesOnline`) runs once a boot after the
 homes' towns land: picks, posts inside a realm act, empties the old scene into the new one (`emptyArenaScene`), the
-Daggerfall Bank's letter and the notebook line, and marks the move read only once a checkpoint holds the emptied scene.
+Daggerfall Bank's letter and the notebook line, and marks the move read only once a checkpoint holds the emptied scene
+[FIELD BUGS 2026-10-07 HOME-WIPE: until it is read, every boot empties it again, and the emptying - its old scene gone -
+wrote an empty record over the new home's own, every chest, storage piece, owned thing and floor, which that boot's
+checkpoint sent to the realm; a read lost to the account service's overloads of 2026-10-06 emptied the home at each boot
+after. A record its owner keeps is never written over now, and the new home's record is stamped with the homes' towns'
+layout (CRATE-LAYOUT) - `01-Overview/Field-Bugs-2026-10-07.md`].
 `claimHome` and `buyHall` refuse a key in the cell (`home-arena`) - an old build still stands GEMSAL03. The relay needs
 nothing: its interior rooms carry no loot and expire.
 
