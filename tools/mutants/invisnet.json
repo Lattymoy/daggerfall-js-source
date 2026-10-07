@@ -65,7 +65,7 @@
   {
     "name": "INVIS-pressed-anyway",
     "file": "src/scenes/world.js",
-    "old": "pickPeerInFront(eye, dir, (peersNear() ?? []).filter((q) => !q.cv)",
+    "old": "pickPeerInFront(eye, dir, openPeers(peersNear(), isPartyMate)",
     "new": "pickPeerInFront(eye, dir, (peersNear() ?? [])",
     "tests": ["test/invisnet.test.js"]
   },
@@ -102,6 +102,41 @@
     "file": "src/scenes/world.js",
     "old": "    peerCandlesFrame(seen, dt);",
     "new": "    peerCandlesFrame(drawable, dt);",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "CMATE-mates-dropped",
+    "file": "src/player/socialPick.js",
+    "old": "  return peers.filter((p) => p && (!p.cv || (typeof isMate === 'function' && isMate(p.id) === true)));",
+    "new": "  return peers.filter((p) => p && !p.cv);",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "CMATE-strangers-kept",
+    "file": "src/player/socialPick.js",
+    "old": "  return peers.filter((p) => p && (!p.cv || (typeof isMate === 'function' && isMate(p.id) === true)));",
+    "new": "  return peers.filter((p) => p);",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "CMATE-truthy-is-a-mate",
+    "file": "src/player/socialPick.js",
+    "old": "  return peers.filter((p) => p && (!p.cv || (typeof isMate === 'function' && isMate(p.id) === true)));",
+    "new": "  return peers.filter((p) => p && (!p.cv || (typeof isMate === 'function' && isMate(p.id))));",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "CMATE-everyone-a-mate",
+    "file": "src/scenes/world.js",
+    "old": "function isPartyMate(id) { return !!social?.party && social.isPartyPeer(id); }",
+    "new": "function isPartyMate(id) { return true; }",
+    "tests": ["test/invisnet.test.js"]
+  },
+  {
+    "name": "CMATE-page-keeps-the-old-law",
+    "file": "src/scenes/world.js",
+    "old": "    return openPeers(near, isPartyMate).map((p) => ({ id: p.id,",
+    "new": "    return near.filter((p) => !p.cv).map((p) => ({ id: p.id,",
     "tests": ["test/invisnet.test.js"]
   }
 ]
