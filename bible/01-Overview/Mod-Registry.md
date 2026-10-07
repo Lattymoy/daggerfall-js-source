@@ -4,9 +4,11 @@
 > left as it wrote them.** They were true of the fifteen rows that
 > existed on 2026-09-15 and they are the record of what putting those
 > rows side by side found. The live numbers are derived, not written:
-> `vendor/` holds 50 directories and 29 of their READMEs still carry an
+> `vendor/` holds 51 directories and 30 of their READMEs still carry an
 > unfilled permission line, each shown as `RECORD OPEN` in the table
-> (LEGACY1, 2026-10-05: Mac's own `project-legacy`, the fiftieth - the author's own permission
+> (PI1, 2026-10-07: demifiend000's `physical-items`, the fifty-first - Mac's word of permission
+> recorded ("permission has been granted"), the author's own words not yet, so the open count rises by one;
+> LEGACY1, 2026-10-05: Mac's own `project-legacy`, the fiftieth - the author's own permission
 > written in its README, so the open count stands;
 > VE4, 2026-10-05: carademono's `vanilla-enhanced`, the forty-ninth - Mac's word of permission
 > recorded ("Approved and yes"), the author's own words not yet, so the open count rises by one;
@@ -157,6 +159,7 @@ not the date the slice shipped, where those differ.
 | `low-poly-trees` | manifest, and the author's geometry - every mesh's positions, normals and uv0 and its submeshes' indices, each prefab's mesh, root scale and materials, each material's cut, faces and colour - with each texture as an ATLAS SPEC (the records it copies and where, never a texel) | SquidKamer | 5 | shipped `.rar` `LowPolyTrees_V5-380-v5-1669847452` (one `.dfmod`), handed over by Mac 2026-10-05; `tools/lowPolyTreesExtract.mjs` rebuilds every vendored file but the README from it and the player's ARENA2 | handed over by Mac 2026-10-05 - **RECORD OPEN** | LPT1 | 2026-10-05 | `07-Rendering/Low-Poly-Trees.md` |
 | `world-tooltips` | manifest, settings, and the mod's OWN source - the bundle ships `Modded_HUDTooltipWindow.cs` as a Unity TextAsset, so nothing here is a decompile | jefetienne | 1.1 | shipped zip `World_Tooltips_-_Windows_1.1-158-1-1-1655327614`, handed over by Mac 2026-09-21; `tools/worldTooltipsAssets.mjs` reproduces all three vendored files byte for byte | MIT ("Copyright (c) 2009-2018 jefetienne", shipped as `LICENSE-world-tooltips`, beside Daggerfall Workshop's own) | WORLD-HOVER | 2026-09-21 | `10-UI/UI-Arc.md` |
 | `vanilla-enhanced` | three mods' pictures, byte for byte (`public/art/vanilla-enhanced/`): the Base's 1,246 PNGs, Masked Roads' 9 and Snowless Swamps and Jungles' 160, each under its asset name, and the 21 Masked Roads road tiles that live only in its texture arrays - from the repository's own source pictures, each proved within BC7's error of its slice; each manifest verbatim; a generated listing per directory (every file's source path and sha256) and the door's name index - not Winter Tracks, Kokey's Temperate or any Material | carademono (Masked Roads with Kokey) | 3.4.7 | the public repository `github.com/drcarademono/vanilla-enhanced` at `c0c9041c`; `tools/vanillaEnhancedVendor.mjs` writes every file from it and checks the tree against it | granted (Mac 2026-10-05: "Approved and yes"); Port-Doctrine's one exception to A RENDER OF GAME DATA IS GAME DATA - **RECORD OPEN** | VE4 | 2026-10-05 | `07-Rendering/Vanilla-Enhanced.md` |
+| `physical-items` | manifest and settings verbatim, the compiled script byte for byte and its IL dump (`il/`, the port's law - the bundle carries no C# source); nothing else - the mod ships no art: an item in the world wears its own inventory picture (or its Morrowind one, the port's) | demifiend000 | 0.1.29 | shipped `.zip` `Physical_Items_1411_1_2026-10-07T03-53Z_k855tuXe51` (the bundle alone, 52,372 bytes, recovered whole from a partial download); behaviour off the IL, placement not yet ported (recorded on its page) | granted (Mac handed the zip over 2026-10-07: "permission has been granted") - **RECORD OPEN** | PI1 | 2026-10-07 | `06-Systems/Physical-Items.md` |
 
 ## Known deviations, per row
 

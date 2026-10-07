@@ -83,7 +83,7 @@
   {
     "name": "LOOT11-drop-pool-no-finds",
     "file": "src/scenes/droppedLoot.js",
-    "old": "  const lootFinds = () => piles.filter((p) => alive(p) && p.items?.length).map((p) => ({ root: lootCrown(p.pos, p.size), items: p.items }));",
+    "old": "  const lootFinds = () => [...piles.filter((p) => alive(p) && p.items?.length && !presented(p)).map((p) => ({ root: lootCrown(p.pos, p.size), items: p.items })), ...physical.finds()];   // PI1: and each standing item's own",
     "new": "  const lootFinds = () => [];",
     "tests": [
       "test/loot11_lines.test.js"
