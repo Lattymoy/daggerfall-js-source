@@ -12,8 +12,9 @@
 // THE ROLL, with the gate's own makers - section 11's table: gold (SD_SPOILS_GOLD_PER_LEVEL a level, the seed varying it
 // a fifth either way); ONE piece Legendary SD_SPOILS_LEGENDARY of the time, else Rare; TWO Rare or better by the
 // source's chances (SD_SPOILS_SOURCE - a boss past the ladder's top tier, a lucky hand: the hardest fight in the game);
-// every piece KNOWN, the ladder's last pass after them (LOOT2); and LAST OF ALL (SD9d) a piece of the Brass of Numidium
-// NUMIDIUM_SET_CHANCE of the time (systems/aetheric.js rollNumidiumPiece), so no roll before it ever moves.
+// every piece KNOWN, the ladder's last pass after them (LOOT2); then (SD9d) a piece of the Brass of Numidium
+// NUMIDIUM_SET_CHANCE of the time (systems/aetheric.js rollNumidiumPiece); and LAST OF ALL (GILDED1) the Hourlock, the
+// Gilded rung's one record, GILDED_CHANCE of the time (systems/gilded.js rollHourlock) - so no roll before either ever moves.
 //
 // THROWN FROM WHERE IT FELL (scenes/sdSpoils.js): the spoils pool's burst on the arena's floor, under keys of its own
 // (SD_SPOILS_KEYS - an Hour's receipts never push a boss's or a hoard's out of the spent list); a receipt that comes
@@ -23,7 +24,8 @@
 import { seededRng } from './wind.js';
 import { spoilsBase } from './gateSpoils.js';
 import { applyRarity, rarityChances, lastPass } from './lootRarity.js';
-import { rollNumidiumPiece } from './aetheric.js';   // SD9d: the Brass Remnant's own set - the spoils' last roll
+import { rollNumidiumPiece } from './aetheric.js';   // SD9d: the Brass Remnant's own set
+import { rollHourlock } from './gilded.js';   // GILDED1: the Hourlock - the spoils' last roll
 import { RANDOM_TREASURE_ICONS } from './loot.js';
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it) - over half again a gate boss's. */
@@ -70,8 +72,8 @@ function graded(item, tier, rolls) {
 
 /**
  * THE SPOILS for one fighter: `{ gold, pieces: [{ item, tier }] }` - in the order they leave it: the first piece, the two
- * Rare-or-better, then (SD9d) a piece of the Brass of Numidium when one drops. The same seed, level and world answer
- * the same spoils.
+ * Rare-or-better, then (SD9d) a piece of the Brass of Numidium when one drops, then (GILDED1) the Hourlock when it does.
+ * The same seed, level and world answer the same spoils.
  * @param {number} seed the receipt's `c` @param {number} level the level it fought at
  */
 export function rollSdSpoils(seed, level) {
@@ -82,9 +84,12 @@ export function rollSdSpoils(seed, level) {
   pieces.push(graded(spoilsBase(lv, rolls), rolls() < SD_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));
   for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls), rolls));
   lastPass(pieces.map((p) => p.item), rolls);
-  // SD9d: THE BRASS OF NUMIDIUM - rolled LAST, so every spoils before it is what it was for its seed
+  // SD9d: THE BRASS OF NUMIDIUM - rolled after every piece, so every spoils before it is what it was for its seed
   const brass = rollNumidiumPiece(rolls);
   if (brass) pieces.push({ item: brass, tier: brass.rarity });
+  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was
+  const hourlock = rollHourlock(rolls);
+  if (hourlock) pieces.push({ item: hourlock, tier: hourlock.rarity });
   return { gold, pieces };
 }
 

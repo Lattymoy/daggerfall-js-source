@@ -752,11 +752,12 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // keys by the name the atlas is asked by: the mod's per-template art
     // is what the mod is for, and its author's tables are honoured over
     // DFU's cache slot.
-    const key = `${type}:${item?.material ?? 0}:${thunderlock ? '' : atlasFileName(item, WEAPON_FILE[type] ?? '')}`;
+    const gilded = thunderlock && item?.rarity === 'gilded';   // GILDED1: the Hourlock's frames in gold leaf (thunderlockArt.js gildFrame)
+    const key = `${type}:${item?.material ?? 0}:${thunderlock ? (gilded ? 'gilded' : '') : atlasFileName(item, WEAPON_FILE[type] ?? '')}`;
     if (!cache.has(key)) {
       cache.set(key, null);
       (thunderlock
-        ? loadThunderlockArt(renderer, { magic: type === WEAPON_TYPES.Thunderlock_Magic })
+        ? loadThunderlockArt(renderer, { magic: type === WEAPON_TYPES.Thunderlock_Magic, gilded })
         : loadFpsWeaponArt(fetchBytes, palette, renderer, type, item?.material ?? 0, item))
         .then((art) => cache.set(key, art))
         .catch((e) => console.warn('[weaponRig] art load failed', key, e));

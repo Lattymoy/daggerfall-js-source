@@ -713,8 +713,8 @@ body:has(.hud-foe.on.blade) .travelpanel { --tp-top: calc(18px + 28px * var(--hu
  *  one bevelled in the tier's colour (lit top-left, shaded bottom-right, the kit's light) with the colour's glow sunk
  *  inside, brighter under the pointer. NEVER BY COLOUR ALONE (AUDIT INV2 A8/A9's law): a tile carries its tier's
  *  pips in the free corner - one magic, two rare, three legendary, a diamond within a diamond for an Aetheric (SET6),
- *  a star for an artifact - and the card says the word. The five hues are lootRarity.js RARITIES' own, pinned against
- *  that table. A weapon that carries a sigil
+ *  a star for an artifact, two for the Gilded rung (GILDED1) - and the card says the word. The six hues are lootRarity.js
+ *  RARITIES' own, pinned against that table. A weapon that carries a sigil
  *  wears the rune (ui/sigilCard.js) in the tile's other free corner, in the arcane teal no tier wears, and its card
  *  draws the sigil's own block. Laid AFTER the kit so a tier outranks the kit's stone at the same weight. */
 /** LOCK1: the padlock a locked piece wears - a shackle and a body with a keyhole, pixel for pixel, in brass with its
@@ -729,6 +729,7 @@ const RARITY_VARS = Object.freeze({
   legendary: `--rar: #e07a2e; --rar-hi: #f7b684; --rar-lo: #8e4518; --rar-rgb: 224,122,46; --rar-pips: '\\25c6\\25c6\\25c6';`,
   aetheric: `--rar: #bfe8ff; --rar-hi: #f0faff; --rar-lo: #4d7fa3; --rar-rgb: 191,232,255; --rar-pips: '\\25c8';`,
   artifact: `--rar: #b57bee; --rar-hi: #dcbcf8; --rar-lo: #683a9c; --rar-rgb: 181,123,238; --rar-pips: '\\2726';`,
+  gilded: `--rar: #ffcf4d; --rar-hi: #fff1b8; --rar-lo: #8f6410; --rar-rgb: 255,207,77; --rar-pips: '\\2726\\2726';`,   // GILDED1: gold leaf, two stars over the artifact's one
 });
 /** LOOT2 (bible/06-Systems/Loot-Arc.md section 4): an EXALTED Legendary's pips - its three diamonds and a star. */
 export const EXALTED_PIPS = `--rar-pips: '\\25c6\\25c6\\25c6\\2605';`;
@@ -934,6 +935,10 @@ export const REFORGE_CSS = `/* ── LOOT9/LOOT10: THE REFORGE'S WINDOW (ui/ref
 .broker-offer.codex-set { cursor: default; }
 .broker-offer.codex-row .broker-set, .broker-offer.codex-set .broker-set { white-space: normal; }   /* a hint and a set's pieces read whole, a phone's too */
 .broker-offer.codex-row:not(.found) .broker-name { color: #8d8270; }
+.broker-offer.codex-gilded { grid-template-columns: minmax(0, 1fr); }   /* GILDED1: the Gilded rung's rows, at the page's head - a Legendary's row's shape */
+.broker-offer.codex-gilded .broker-set { white-space: normal; }
+.broker-offer.codex-gilded:not(.found) .broker-name { color: #8d8270; }
+.broker-offer.codex-gilded.found .broker-name { color: #ffcf4d; }
 .broker-offer.scry-row > .broker-offer-body { grid-column: 1 / span 2; }   /* AUDIT LOOT II B2: a family's row has no picture - its words take the frame's column too (a phone's as well), its price and press where his stand */
 .broker-offer.scry-row .broker-set { white-space: normal; }   /* the haunts read whole */
 .broker-offer > .reforge-keep { grid-column: 4; }
@@ -1818,6 +1823,22 @@ ${rarityVarsCss()}
   letter-spacing: 1px; text-shadow: 0 0 4px rgba(var(--rar-rgb),0.7); }
 .inv-tip > .card[data-rarity] { border-top-color: var(--rar); }
 .bigicon[data-rarity] img { filter: drop-shadow(0 0 7px rgba(var(--rar-rgb),0.55)) drop-shadow(1px 1px 0 #050608); }
+/* GILDED1: THE GOLD LEAF CATCHES THE LIGHT. A Gilded piece's frame breathes a gold glow - stepped, so it reads as
+   pixels and not as a blur - wherever it stands: a pack tile, a worn row and socket, a hotbar slot. The states above and
+   below still win the moment they last (a drop target, a refusal); a player who asks the system for less motion gets a
+   still glow at its brighter end. */
+@keyframes gilded-glow { from { box-shadow: 0 0 0 1px #050608, 0 0 5px rgba(255,207,77,0.35), inset 0 0 9px rgba(255,207,77,0.16); }
+  to { box-shadow: 0 0 0 1px #050608, 0 0 12px rgba(255,207,77,0.72), inset 0 0 15px rgba(255,207,77,0.32); } }
+.pack-shell .pack-dock .itemrow[data-rarity="gilded"], .pack-shell .walletpieces .itemrow[data-rarity="gilded"],
+.pack-shell .equipped .wornrow[data-rarity="gilded"], .pack-shell .wornsock[data-rarity="gilded"],
+.hb .hb-slot[data-rarity="gilded"] .hb-frame, .hud-qdiamond .hud-qcell[data-rarity="gilded"]:not(.socket) .hud-qframe {
+  animation: gilded-glow 2.6s steps(8, end) infinite alternate; }
+.bigicon[data-rarity="gilded"] img { filter: drop-shadow(0 0 9px rgba(255,207,77,0.8)) drop-shadow(0 0 2px #fff1b8) drop-shadow(1px 1px 0 #050608); }
+@media (prefers-reduced-motion: reduce) {
+  .pack-shell .pack-dock .itemrow[data-rarity="gilded"], .pack-shell .walletpieces .itemrow[data-rarity="gilded"],
+  .pack-shell .equipped .wornrow[data-rarity="gilded"], .pack-shell .wornsock[data-rarity="gilded"],
+  .hb .hb-slot[data-rarity="gilded"] .hb-frame, .hud-qdiamond .hud-qcell[data-rarity="gilded"]:not(.socket) .hud-qframe {
+    animation: none; box-shadow: 0 0 0 1px #050608, 0 0 12px rgba(255,207,77,0.72), inset 0 0 15px rgba(255,207,77,0.32); } }
 /* AUDIT MERGE-PLUS D2: a list's picture keeps its icon INSIDE the tier's 2px frame - a worn pair's 28px tile is
    border-box, and its 28px icon cap painted over two of the frame's four edges */
 .pack-shell .loot-win .itemrow[data-rarity] .tile img, .trade-shell .itemrow[data-rarity] .tile img,

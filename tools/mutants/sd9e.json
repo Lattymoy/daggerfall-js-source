@@ -47,8 +47,8 @@
   {
     "name": "SD9E-the-brass-before-the-last-pass",
     "file": "src/systems/sdSpoils.js",
-    "old": "  lastPass(pieces.map((p) => p.item), rolls);\n  // SD9d: THE BRASS OF NUMIDIUM - rolled LAST, so every spoils before it is what it was for its seed\n  const brass = rollNumidiumPiece(rolls);\n",
-    "new": "  // SD9d: THE BRASS OF NUMIDIUM - rolled LAST, so every spoils before it is what it was for its seed\n  const brass = rollNumidiumPiece(rolls);\n  lastPass(pieces.map((p) => p.item), rolls);\n",
+    "old": "  lastPass(pieces.map((p) => p.item), rolls);\n  // SD9d: THE BRASS OF NUMIDIUM - rolled after every piece, so every spoils before it is what it was for its seed\n  const brass = rollNumidiumPiece(rolls);\n",
+    "new": "  // SD9d: THE BRASS OF NUMIDIUM - rolled after every piece, so every spoils before it is what it was for its seed\n  const brass = rollNumidiumPiece(rolls);\n  lastPass(pieces.map((p) => p.item), rolls);\n",
     "tests": [
       "test/sd9e_spoils.test.js"
     ]
@@ -58,6 +58,15 @@
     "file": "src/systems/sdSpoils.js",
     "old": "  pieces.push(graded(spoilsBase(lv, rolls), rolls() < SD_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));\n  for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls), rolls));\n",
     "new": "  for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls), rolls));\n  pieces.push(graded(spoilsBase(lv, rolls), rolls() < SD_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));\n",
+    "tests": [
+      "test/sd9e_spoils.test.js"
+    ]
+  },
+  {
+    "name": "SD9E-the-hourlock-before-the-brass",
+    "file": "src/systems/sdSpoils.js",
+    "old": "  const brass = rollNumidiumPiece(rolls);\n  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was\n  const hourlock = rollHourlock(rolls);\n",
+    "new": "  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was\n  const hourlock = rollHourlock(rolls);\n  const brass = rollNumidiumPiece(rolls);\n  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n",
     "tests": [
       "test/sd9e_spoils.test.js"
     ]

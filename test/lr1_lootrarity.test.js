@@ -101,8 +101,8 @@ test('LR5: the switch - ON by default (the ladder is the port\'s own game), forc
 });
 
 test('LR1: one ladder - a rolled tier is the item\'s own, an enchanted item derives Magic, an artifact is the ceiling', () => {
-  assert.deepEqual(LR.RARITY_ORDER, ['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact'], 'SET6: the Aetheric rung under the Artifact');
-  assert.deepEqual(LR.RARITY_ORDER.map((t) => LR.RARITIES[t].rank), [0, 1, 2, 3, 4, 5]);
+  assert.deepEqual(LR.RARITY_ORDER, ['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact', 'gilded'], 'SET6: the Aetheric rung under the Artifact; GILDED1: the Gilded over it');
+  assert.deepEqual(LR.RARITY_ORDER.map((t) => LR.RARITIES[t].rank), [0, 1, 2, 3, 4, 5, 6]);
   assert.equal(LR.rarityOf({ ...sword(), rarity: 'aetheric' }), 'aetheric', 'SET6: an Aetheric piece wears its own field, as a Legendary does');
   const untouched = sword();
   assert.deepEqual(LR.applyRarity(untouched, 'aetheric', () => 0), sword(), 'SET6: nothing ROLLS the Aetheric - the ladder\'s roll leaves the piece as it was');

@@ -1,0 +1,209 @@
+[
+  {
+    "name": "GILDED1-the-rung-under-the-artifact",
+    "file": "src/systems/lootRarity.js",
+    "old": "  gilded:    Object.freeze({ rank: 6, label: 'Gilded',",
+    "new": "  gilded:    Object.freeze({ rank: 4, label: 'Gilded',",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-the-roll-taking-it",
+    "file": "src/systems/rarityTier.js",
+    "old": "export const ROLLED_TIERS = Object.freeze(['magic', 'rare', 'legendary']);",
+    "new": "export const ROLLED_TIERS = Object.freeze(['magic', 'rare', 'legendary', 'gilded']);",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-a-line-over-the-band",
+    "file": "src/systems/gilded.js",
+    "old": "    line('damage', 40),",
+    "new": "    line('damage', 50),",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-the-power-every",
+    "file": "src/systems/gilded.js",
+    "old": "kind: 'toll', every: 3, pct: 100,",
+    "new": "kind: 'toll', every: 2, pct: 100,",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-the-price",
+    "file": "src/systems/gilded.js",
+    "old": "  item.value = itemBaseValue(item) + affixesWorth(affixes) + GILDED_WORTH;",
+    "new": "  item.value = itemBaseValue(item) + affixesWorth(affixes);",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-unknown",
+    "file": "src/systems/gilded.js",
+    "old": "  item.isIdentified = true;\n  item.value =",
+    "new": "  item.isIdentified = false;\n  item.value =",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-the-band-let-in",
+    "file": "src/systems/gilded.js",
+    "old": "(a.param ?? null) !== (w.param ?? null) || a.value !== w.value) return null;",
+    "new": "(a.param ?? null) !== (w.param ?? null) || a.value > w.value) return null;",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-a-mark-let-in",
+    "file": "src/systems/gilded.js",
+    "old": "  for (const k of NEVER_ON_GILDED) if (item[k] != null) return null;\n",
+    "new": "\n",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-the-salvage",
+    "file": "src/systems/reforge.js",
+    "old": "  if (item.rarity === 'gilded') return 'gilded';",
+    "new": "  if (item.rarity === 'never') return 'gilded';",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-the-item-maker",
+    "file": "src/systems/enchanting.js",
+    "old": "export const itemMakerRefuses = (item) => isAetheric(item) || isGilded(item);",
+    "new": "export const itemMakerRefuses = (item) => isAetheric(item) || (false && isGilded(item));",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-the-heirloom",
+    "file": "src/systems/legacy/heirloom.js",
+    "old": "const NEVER_RARITY = new Set(['aetheric', 'artifact', 'gilded']);",
+    "new": "const NEVER_RARITY = new Set(['aetheric', 'artifact']);",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-the-chance",
+    "file": "src/systems/gilded.js",
+    "old": "export const GILDED_CHANCE = 1 / 50;",
+    "new": "export const GILDED_CHANCE = 1 / 20;",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-every-shot-tolls",
+    "file": "src/systems/lootPowers.js",
+    "old": "const tollDue = (weapon, p) => !!weapon && (_tolls.get(weapon) ?? 0) === p.every - 1;",
+    "new": "const tollDue = (weapon, p) => !!weapon && p.every > 0;",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-a-miss-counted",
+    "file": "src/systems/lootPowers.js",
+    "old": "      case 'toll': if (tollDue(weapon, p)) pct += p.pct; break;",
+    "new": "      case 'toll': if (tollDue(weapon, p)) pct += p.pct; if (weapon) _tolls.set(weapon, ((_tolls.get(weapon) ?? 0) + 1) % p.every); break;",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-the-count-never-turns",
+    "file": "src/systems/lootPowers.js",
+    "old": "_tolls.set(weapon, ((_tolls.get(weapon) ?? 0) + 1) % p.every); _lastToll",
+    "new": "_tolls.set(weapon, (_tolls.get(weapon) ?? 0) + 1); _lastToll",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-no-refund",
+    "file": "src/systems/lootPowers.js",
+    "old": "{ addItem(me.items, createPellets(1)); _lastToll = null; }",
+    "new": "{ _lastToll = null; }",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-any-kill-refunds",
+    "file": "src/systems/lootPowers.js",
+    "old": "case 'toll': if (p.refund && _lastToll?.foe === foe && now",
+    "new": "case 'toll': if (p.refund && now",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-the-metal-prefix",
+    "file": "src/systems/itemInfo.js",
+    "old": "|| item?.legendary || item?.aetheric || item?.gilded) return { name: base, material: '' };",
+    "new": "|| item?.legendary || item?.aetheric) return { name: base, material: '' };",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-the-codex-blind-to-it",
+    "file": "src/systems/lootCodex.js",
+    "old": "  if (item?.rarity === 'gilded' && typeof item.gilded === 'string' && gildedById(item.gilded)) return { kind: 'gilded', id: item.gilded };   // GILDED1\n",
+    "new": "\n",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-the-gold-forgotten-in-a-list",
+    "file": "src/systems/thunderlock.js",
+    "old": "  ? (forPaperDoll ? ART_RECORDS.gildedDoll : ART_RECORDS.gildedIcon)",
+    "new": "  ? (forPaperDoll ? ART_RECORDS.gildedDoll : ART_RECORDS.icon)",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-the-twin-never-worn",
+    "file": "src/characters/ownWeaponModels.js",
+    "old": "(item && ((item.rarity === 'gilded' && OWN_MW_GILDED[item.templateIndex]) || OWN_MW_MODELS[item.templateIndex])) || null;",
+    "new": "(item && OWN_MW_MODELS[item.templateIndex]) || null;",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-the-hand-never-found",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "  for (let x = 0; x < footRight; x++) { const i = (h - 1) * w + x; if (glove[i]) { mask[i] = 1; stack.push(i); } }",
+    "new": "  for (let x = 0; x < footRight; x++) { const i = (h - 1) * w + x; if (glove[i] && x < 0) { mask[i] = 1; stack.push(i); } }",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  },
+  {
+    "name": "GILDED1-alpha-written",
+    "file": "src/combat/thunderlockArt.js",
+    "old": "    d[o + 2] = d[o + 2] * (1 - k) + c[2] * k;\n  }\n  return rgba;\n}\n/** The pixels a gilded sheet gilds",
+    "new": "    d[o + 2] = d[o + 2] * (1 - k) + c[2] * k;\n    d[o + 3] = Math.round(255 * k);\n  }\n  return rgba;\n}\n/** The pixels a gilded sheet gilds",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
+  }
+]

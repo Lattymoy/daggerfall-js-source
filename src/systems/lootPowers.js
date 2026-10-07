@@ -55,7 +55,8 @@ import { registerPlayerKillListener } from './playerKills.js';
 import { registerAbsorptionChance } from './absorption.js';
 import { registerMagicRoundHook, skyMinutes } from './worldTick.js';   // TIME1: a moon power answers to the sky's night
 import { setsDueling } from './sigilSets.js';
-import { addGoldPieces } from './inventory.js';
+import { addGoldPieces, addItem } from './inventory.js';
+import { createPellets } from './thunderlock.js';   // GILDED1: the Hour Tolls gives a felling shot's pellet back
 import { isNight } from '../world/worldClock.js';
 import { hudText } from './notify.js';
 import { healMine, _resetPlayerHealForTests } from './playerHeal.js';   // SERPENT-SET: the one heal a power gives, below this file and the sets'
@@ -125,16 +126,28 @@ const freshState = () => ({
 let _s = freshState();
 /** @type {WeakMap<object, number>} */
 let _hexed = new WeakMap();              // a foe's entity -> until when its blows are hexed
+/** @type {WeakMap<object, number>} */
+let _tolls = new WeakMap();              // GILDED1: a tolling weapon -> its landed shots since its last toll
+/** @type {{ foe: object, at: number } | null} */
+let _lastToll = null;                    // GILDED1: the last foe a tolling weapon's shot landed on, and when
 /** @type {WeakSet<object>} */
 let _struck = new WeakSet();             // the foes my blows have landed on (First Blood)
 let _manaOwed = 0;
+/** GILDED1: THE HOUR TOLLS - is this weapon's next landed shot its toll? Its landed shots are counted on the strike
+ *  (lootStrike, after the blow), so the blow asks before the count moves: shots one and two ring nothing, the third tolls. */
+const tollDue = (weapon, p) => !!weapon && (_tolls.get(weapon) ?? 0) === p.every - 1;
+/** GILDED1: how long after its shot landed a foe's fall is the shot's - a kill is told the frame its health ran out,
+ *  which is the strike's own frame or the next; a second is a generous bound that a later blow of anything else
+ *  replaces (the record is the last landed shot's). */
+export const TOLL_REFUND_S = 1;
 let _say = (line) => { hudText(line); };
 /** The host's voice for a power's line (the HUD's own door by default). */
 export function setLootPowersVoice({ say = null } = {}) { if (typeof say === 'function') _say = say; }
 const say = (line) => { try { _say(line); } catch { /* a line is not the power's problem */ } };
 
-/** The power ids a piece carries: a Legendary's own record, and (LOOT10) a Rare's imprint - none on anything else. */
-const powerIds = (it) => [it?.rarity === 'legendary' ? it.legendary : null, it?.rarity === 'rare' ? it.imprint : null];
+/** The power ids a piece carries: a Legendary's own record, (LOOT10) a Rare's imprint and (GILDED1) a Gilded record's -
+ *  none on anything else. */
+const powerIds = (it) => [it?.rarity === 'legendary' ? it.legendary : null, it?.rarity === 'rare' ? it.imprint : null, it?.rarity === 'gilded' ? it.gilded : null];
 /** Every power MY entity's worn pieces carry - `[{ id, power, item }]`, ONE entry an id (a power counts once): a
  *  Legendary's own record, and (LOOT10) a Rare's imprint. None for anyone but me, with the switch off, or in a duel. */
 export function wornPowers(entity) {
@@ -199,6 +212,7 @@ export function lootBlow(weapon, damage, attacker, target, info) {
       case 'rage': if (share(attacker) < p.below / 100) pct += p.pct; break;
       case 'execute': if (share(target) < p.below / 100) pct += p.pct; break;
       case 'firstblood': if (!_struck.has(target)) pct += p.pct; break;
+      case 'toll': if (tollDue(weapon, p)) pct += p.pct; break;   // GILDED1: the third that lands
       default: break;
     }
   }
@@ -223,6 +237,7 @@ export function lootStrike(attacker, target, damage, weapon) {
       case 'fists': if (!weapon) again(target, damage); break;
       case 'conduit': gainMana(attacker, p.mana); break;
       case 'flow': _s.flow = Math.min(p.max, flowStacks(now) + 1); _s.flowUntil = now + p.seconds; break;
+      case 'toll': if (weapon) { _tolls.set(weapon, ((_tolls.get(weapon) ?? 0) + 1) % p.every); _lastToll = { foe: target, at: now }; } break;   // GILDED1
       default: break;
     }
   }
@@ -375,6 +390,7 @@ export function lootKill(foe) {
       case 'rage': healMine(me, (me.maxHealth * p.heal) / 100); break;
       case 'siphon': gainMana(me, (me.maxMagicka * p.pct) / 100); break;
       case 'tribute': { const g = p.gold * Math.max(1, foe.level | 0); addGoldPieces(me, g); say(`Tribute: ${g} gold.`); break; }
+      case 'toll': if (p.refund && _lastToll?.foe === foe && now - _lastToll.at <= TOLL_REFUND_S && Array.isArray(me?.items)) { addItem(me.items, createPellets(1)); _lastToll = null; } break;   // GILDED1: the felling shot's pellet, back
       case 'haste':
         if (now >= _s.hasteReady && door?.castOnPlayer) { _s.hasteReady = now + p.recover; _s.recovering.add('haste'); door.castOnPlayer(hasteBundle(p)); }
         break;
@@ -493,7 +509,7 @@ export function lootHudChips(entity, now = _now()) {
 
 /** Tests only: every carry and power fresh, a clock and a chance of their own (seconds, [0, 1)). */
 export function _resetLootPowersForTests() {
-  _carry = new WeakMap(); _resetPlayerHealForTests(); _manaOwed = 0; _s = freshState(); _hexed = new WeakMap(); _struck = new WeakSet();
+  _carry = new WeakMap(); _resetPlayerHealForTests(); _manaOwed = 0; _s = freshState(); _hexed = new WeakMap(); _struck = new WeakSet(); _tolls = new WeakMap(); _lastToll = null;
   _say = (line) => { hudText(line); };
 }
 export function _setLootPowersClockForTests(fn) { _now = typeof fn === 'function' ? fn : () => performance.now() / 1000; }

@@ -313,9 +313,28 @@ export function inventoryItemModel(item) {
   return ITEM_MODEL_PICTURES.get(item?.templateIndex) ?? null;
 }
 
+// ---- THUNDERLOCK-ART: a port-owned item's own pictures, by job ----------
+/** THUNDERLOCK-ART (2026-10-07, AUDIT SD III's companion; Mac: "The thunderlock/ammo also doesnt recieve proper artwork
+ *  in slots like the hotbar or inventory"): A CLASSIC WEAPON'S ICON IS ITS DOLL LAYER - GetInventoryTextureArchive hands
+ *  back the PlayerTextureArchive the doll draws from, which is why a classic icon carries the fist's notch - and the
+ *  port's own weapon was made the same way (tools/gunPaperdoll.mjs), so its pack tile and hotbar slot showed a doll layer
+ *  with a hole in it. A weapon of the port's OWN has pictures of its own to give, and registers them here: a provider
+ *  answers `{ archive, record }` for an item - `forPaperDoll` true on the doll, false in a list - or null, and DFU's
+ *  ladder answers as before. Registered by the item's home (systems/thunderlock.js), which imports this file. */
+const _ownImages = new Map();
+export function registerOwnItemImage(templateIndex, fn) { if (typeof fn === 'function') _ownImages.set(templateIndex, fn); else _ownImages.delete(templateIndex); }
+/** The port's own picture for an item and a job, or null for every item DFU's ladder answers. */
+export function ownItemImage(item, { forPaperDoll = false } = {}) {
+  const fn = _ownImages.get(item?.templateIndex);
+  const r = fn ? fn(item, { forPaperDoll }) : null;
+  return r && Number.isInteger(r.archive) && Number.isInteger(r.record) ? r : null;
+}
+
 export function inventoryItemImage(item, identity = undefined) {
   const t = templateByIndex(item.templateIndex);
   if (!t) return null;
+  // THUNDERLOCK-ART: a weapon of the port's own draws its own picture in a list, never its doll layer
+  { const own = ownItemImage(item); if (own) return { archive: own.archive, record: own.record, dye: itemDyeColor(item), dyeTarget: itemDyeTarget(item) }; }
   // MAC-D2 (Skibbster on Discord, 2026-09-21, with a screenshot of a
   // TOMATO on the "Small Cart" card): TRANSPORTATION HAS NO INVENTORY
   // ART, AND THE FIELDS THAT LOOK LIKE IT ARE ANOTHER ITEM'S.

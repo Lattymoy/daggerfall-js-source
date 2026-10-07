@@ -18,6 +18,7 @@ import { SERPENT_SPOILS_KEYS } from '../src/systems/serpentSpoils.js';
 import { spoilsBase } from '../src/systems/gateSpoils.js';
 import { applyRarity, rarityChances, lastPass } from '../src/systems/lootRarity.js';
 import { rollNumidiumPiece, NUMIDIUM_SET_CHANCE, AETHERIC } from '../src/systems/aetheric.js';
+import { rollHourlock, GILDED_CHANCE, GILDED } from '../src/systems/gilded.js';
 import { seededRng } from '../src/systems/wind.js';
 import { RANDOM_TREASURE_ICONS, validLootItem } from '../src/systems/loot.js';
 import { mintSdReceipt } from '../src/net/sdReceipt.js';
@@ -36,14 +37,14 @@ const T0 = 1_000_000;
 
 // ── the roll ──────────────────────────────────────────────────────────
 
-test('SD9e THE ROLL: section 11\'s table - gold 400 a level, a fifth either way; a first piece Legendary a quarter of the time, else Rare; two Rare or better at a boss past the ladder\'s top tier with a lucky hand; every piece known, wearable and never under Rare; the Brass of Numidium a third of the time, last; the same seed the same spoils (mutants: the gold; the share; a Magic piece; the source)', () => {
+test('SD9e THE ROLL: section 11\'s table - gold 400 a level, a fifth either way; a first piece Legendary a quarter of the time, else Rare; two Rare or better at a boss past the ladder\'s top tier with a lucky hand; every piece known, wearable and never under Rare; the Brass of Numidium a third of the time, after them; the Hourlock one in fifty, last of all (GILDED1); the same seed the same spoils (mutants: the gold; the share; a Magic piece; the source)', () => {
   assert.deepEqual([SD_SPOILS_GOLD_PER_LEVEL, SD_SPOILS_LEGENDARY, { ...SD_SPOILS_SOURCE }], [400, 0.25, { boss: true, tier: 24, luck: 70 }]);
-  let brass = 0, firstLeg = 0;
+  let brass = 0, hour = 0, firstLeg = 0;
   const N = 1500;
   for (let seed = 1; seed <= N; seed++) {
     const s = rollSdSpoils(seed * 2654435761, 20);
     assert.ok(s.gold >= 400 * 20 * 0.8 && s.gold <= 400 * 20 * 1.2 && Number.isInteger(s.gold), `seed ${seed}: ${s.gold} gold`);
-    const plain = s.pieces.filter((p) => p.tier !== AETHERIC);
+    const plain = s.pieces.filter((p) => p.tier !== AETHERIC && p.tier !== GILDED);
     assert.equal(plain.length, 3, `seed ${seed}: three pieces`);
     for (const p of plain) {
       assert.ok(RANK[p.tier] >= RANK.rare, `seed ${seed}: ${p.tier}`);
@@ -51,11 +52,15 @@ test('SD9e THE ROLL: section 11\'s table - gold 400 a level, a fifth either way;
       assert.equal(p.item.rarity, p.tier);
     }
     if (plain[0].tier === 'legendary') firstLeg++;
-    const last = s.pieces.length === 4 ? s.pieces[3] : null;
-    if (last) { brass++; assert.equal(last.item.sigil.set, 'numidium', `seed ${seed}: the Brass's alone`); }
-    assert.ok(s.pieces.slice(0, 3).every((p) => p.tier !== AETHERIC), 'the Brass last, or not at all');
+    // (GILDED1) after the three: the Brass when it drops, then the Hourlock when it does - nothing else, in that order
+    const after = s.pieces.slice(3), b = after.find((p) => p.tier === AETHERIC), h = after.find((p) => p.tier === GILDED);
+    if (b) { brass++; assert.equal(b.item.sigil.set, 'numidium', `seed ${seed}: the Brass's alone`); }
+    if (h) { hour++; assert.equal(h.item.gilded, 'the-hourlock', `seed ${seed}: the Hourlock`); assert.equal(after.at(-1), h, `seed ${seed}: the Hourlock after the Brass`); }
+    assert.equal(after.length, (b ? 1 : 0) + (h ? 1 : 0), `seed ${seed}: nothing else after the three`);
+    assert.ok(s.pieces.slice(0, 3).every((p) => p.tier !== AETHERIC && p.tier !== GILDED), 'the Brass and the Hourlock last, or not at all');
   }
   assert.ok(Math.abs(brass / N - NUMIDIUM_SET_CHANCE) < 0.04, `the Brass ${brass} of ${N}`);
+  assert.ok(hour > 0 && Math.abs(hour / N - GILDED_CHANCE) < 0.015, `the Hourlock ${hour} of ${N}`);
   assert.ok(firstLeg / N <= SD_SPOILS_LEGENDARY + 0.03 && firstLeg / N > 0.1, `a first Legendary ${firstLeg} of ${N} (a kind with no record falls to Rare)`);
   assert.deepEqual(JSON.parse(JSON.stringify(rollSdSpoils(77, 9))), JSON.parse(JSON.stringify(rollSdSpoils(77, 9))), 'the same seed, the same spoils');
   assert.equal(rollSdSpoils(77, 0).gold, rollSdSpoils(77, 1).gold, 'a level under 1 is 1');
@@ -66,7 +71,7 @@ test('SD9e THE ROLL: section 11\'s table - gold 400 a level, a fifth either way;
   assert.equal(rareOrBetter(() => (c.legendary / c.rare) * 1.001), 'rare');
 });
 
-test('SD9e THE ORDER: the roll is its law\'s stream, read in order - the gold, the first piece, the two Rare or better, the ladder\'s last pass, and the Brass of Numidium LAST, so no roll before it moves (an oracle off the same makers, over 300 seeds; mutants: the Brass before the last pass; the two before the first)', () => {
+test('SD9e THE ORDER: the roll is its law\'s stream, read in order - the gold, the first piece, the two Rare or better, the ladder\'s last pass, the Brass of Numidium, and the Hourlock LAST (GILDED1), so no roll before it moves (an oracle off the same makers, over 300 seeds; mutants: the Brass before the last pass; the two before the first; the Hourlock before the Brass)', () => {
   const oracle = (seed, level) => {
     const rolls = seededRng(seed >>> 0);
     const gold = Math.round(400 * level * (0.8 + 0.4 * rolls()));
@@ -76,6 +81,8 @@ test('SD9e THE ORDER: the roll is its law\'s stream, read in order - the gold, t
     lastPass(pieces.map((p) => p.item), rolls);
     const brass = rollNumidiumPiece(rolls);
     if (brass) pieces.push({ item: brass, tier: brass.rarity });
+    const hour = rollHourlock(rolls);
+    if (hour) pieces.push({ item: hour, tier: hour.rarity });
     return { gold, pieces };
   };
   for (let seed = 1; seed <= 300; seed++) {

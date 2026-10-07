@@ -159,7 +159,7 @@
   {
     "name": "DW1-18-the-rig-cache-forgets-the-atlas-name",
     "file": "src/combat/weaponRig.js",
-    "old": "    const key = `${type}:${item?.material ?? 0}:${thunderlock ? '' : atlasFileName(item, WEAPON_FILE[type] ?? '')}`;",
+    "old": "    const key = `${type}:${item?.material ?? 0}:${thunderlock ? (gilded ? 'gilded' : '') : atlasFileName(item, WEAPON_FILE[type] ?? '')}`;",
     "new": "    const key = `${type}:${item?.material ?? 0}`;",
     "tests": [
       "test/dw1_diverseweapons.test.js"

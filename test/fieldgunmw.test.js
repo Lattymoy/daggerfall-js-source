@@ -30,7 +30,7 @@ import { animWeaponType } from '../src/combat/fpArm.js';
 import { MW_UNITS_PER_METRE, THUNDERLOCK_METRES, SETTINGS, OUT, SOURCE_FBX, bakeThunderlock } from '../tools/bakeThunderlock.mjs';
 import { WEAPONS } from '../src/characters/weapons.js';
 import { THUNDERLOCK_TEMPLATE } from '../src/characters/thunderlockIds.js';
-import { OWN_MW_MODELS, ownWeaponModelFor, ownWeaponModelPaths } from '../src/characters/ownWeaponModels.js';
+import { OWN_MW_MODELS, OWN_MW_GILDED, ownWeaponModelFor, ownWeaponModelPaths } from '../src/characters/ownWeaponModels.js';
 import { ownMwDataPath, ownMwArchive } from '../src/systems/ownMwAssets.js';
 import { makeVendoredArchive } from '../src/systems/urlArchive.js';
 
@@ -42,11 +42,12 @@ const shipped = (p) => new Uint8Array(readFileSync(new URL(`../src/assets/mw/${p
  *  rather than out of anything this test invented. */
 function shippedArchive() {
   const files = new Map();
-  for (const own of Object.values(OWN_MW_MODELS)) files.set(`meshes/${own.model}`, shipped(`meshes/${own.model}`));
-  files.set('textures/thunderlock.dds', shipped('textures/thunderlock.dds'));
+  for (const own of [...Object.values(OWN_MW_MODELS), ...Object.values(OWN_MW_GILDED)]) files.set(`meshes/${own.model}`, shipped(`meshes/${own.model}`));
+  for (const t of ['thunderlock.dds', 'thunderlock_gilded.dds']) files.set(`textures/${t}`, shipped(`textures/${t}`));   // GILDED1: and the gold twin's
   return { has: (p) => files.has(p), get: (p) => files.get(p) };
 }
 const GUN = { templateIndex: THUNDERLOCK_TEMPLATE };
+const HOURLOCK = { templateIndex: THUNDERLOCK_TEMPLATE, rarity: 'gilded' };   // GILDED1: the Gilded rung's piece - its gold twin
 
 test('FIELD-GUN-MW2: the defect is real - Morrowind has no type, and no record, for this weapon', () => {
   // The pin is the CAUSE, not the symptom, so it keeps meaning
@@ -78,10 +79,12 @@ test('FIELD-GUN-MW2: the SHIPPED nif parses with the port\'s own reader, and fla
   assert.equal(Math.max(...b.indices) < b.positions.length / 3, true, 'every index is in range');
   assert.ok(b.uvs && b.uvs.length / 2 === b.positions.length / 3, 'one uv per vertex');
   assert.ok(b.normals && b.normals.length === b.positions.length, 'one normal per vertex');
-  // RULE 65's only two-sided value, and it is not decoration: the mesh
-  // is an open shell (65 of its edges are shared by a single face), so
-  // with backface culling the player sees through it.
-  assert.equal(b.material.twoSided, true, 'DrawMode Both - the model is an open shell');
+  // RULE 65's only two-sided value. It was written for an open shell
+  // (65 of its edges shared by a single face); THUNDERLOCK-ART capped
+  // its eleven holes (tools/meshCap.mjs - thunderlockart.test.js holds
+  // it closed) and the flag stays, for the faces Mac's export winds
+  // inward: a part seen from inside is drawn, never a hole.
+  assert.equal(b.material.twoSided, true, 'DrawMode Both - kept over the capped shell');
   assert.equal(b.material.textureFile, 'thunderlock.dds');
   // White, because the TEXTURE carries the colour. A tint here would be
   // a second place to change it.
@@ -141,14 +144,20 @@ test('FIELD-GUN-MW2: the preload names exactly what the read opens', () => {
   // in fpArm.js that `findLoaded` names at runtime. Two doors, one
   // question - so they are asked together.
   const arc = shippedArchive();
-  const paths = weaponPartPaths({ weapon: GUN, hasAmmo: true, allWeapons: [], has: archiveHas([arc]) });
-  const res = resolveWeaponParts({
-    weapon: GUN, hasAmmo: true, allWeapons: [], find: (p) => (arc.has(p) ? arc : null),
-    skeletonBytes: fixture('armfp.nif'), has: archiveHas([arc]),
-  });
-  assert.deepEqual(paths, ownWeaponModelPaths(), 'the preload asks the table, not a second copy of it');
-  assert.equal(paths.length, res.parts.length, 'one path preloaded per part read');
-  for (const p of paths) assert.ok(arc.has(p), `${p} is not in the shipped archive`);
+  const all = [];
+  for (const weapon of [GUN, HOURLOCK]) {   // GILDED1: the plain gun and its gold twin, each its own row
+    const paths = weaponPartPaths({ weapon, hasAmmo: true, allWeapons: [], has: archiveHas([arc]) });
+    const res = resolveWeaponParts({
+      weapon, hasAmmo: true, allWeapons: [], find: (p) => (arc.has(p) ? arc : null),
+      skeletonBytes: fixture('armfp.nif'), has: archiveHas([arc]),
+    });
+    assert.equal(paths.length, res.parts.length, 'one path preloaded per part read');
+    assert.equal(Buffer.compare(Buffer.from(res.parts[0].bytes), Buffer.from(arc.get(paths[0]))), 0, 'the read opens what was preloaded');
+    for (const p of paths) assert.ok(arc.has(p), `${p} is not in the shipped archive`);
+    all.push(...paths);
+  }
+  assert.deepEqual(all, ownWeaponModelPaths(), 'the preload asks the table, not a second copy of it');
+  assert.notEqual(all[0], all[1], 'the Hourlock wears its own file');
 });
 
 test('FIELD-GUN-MW2: it BINDS - the shipped mesh reaches the arm\'s weapon bone', () => {
@@ -211,7 +220,7 @@ test('FIELD-GUN-MW2: the own-model door answers ONLY for the port\'s own', () =>
   assert.equal(ownWeaponModelFor({ templateIndex: undefined }), null);
   // ...and every row it DOES answer names a file that is actually here,
   // walked off the table so a row added without its mesh reddens.
-  for (const own of Object.values(OWN_MW_MODELS)) {
+  for (const own of [...Object.values(OWN_MW_MODELS), ...Object.values(OWN_MW_GILDED)]) {   // GILDED1: the gold twin's row too
     assert.doesNotThrow(() => shipped(`meshes/${own.model}`), `meshes/${own.model} is named by the table and not committed`);
     assert.ok(own.bone && own.id && own.name, 'a row carries the bone and the names the card prints');
   }
@@ -388,6 +397,12 @@ test('FIELD-GUN-MW2: the shipped assets are REPRODUCED from the committed source
   assert.equal(r.dds.length, dds.length, `the baked texture is ${r.dds.length} bytes and ${OUT.texture} is ${dds.length}`);
   assert.equal(Buffer.compare(Buffer.from(r.dds), Buffer.from(dds)), 0,
     `${OUT.texture} is not what tools/bakeThunderlock.mjs produces from ${SOURCE_FBX} - re-run it`);
+
+  // GILDED1: and the Hourlock's twin, off the same bake
+  for (const [bytes, path] of [[r.gildedNif, OUT.gildedMesh], [r.gildedDds, OUT.gildedTexture]]) {
+    assert.equal(Buffer.compare(Buffer.from(bytes), Buffer.from(onDisk(path))), 0,
+      `${path} is not what tools/bakeThunderlock.mjs produces from ${SOURCE_FBX} - re-run it`);
+  }
 
   // And the bake is DETERMINISTIC, which is the property the sentence
   // above rests on: a second run of the same input is the same bytes.

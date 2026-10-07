@@ -2,7 +2,7 @@
   {
     "name": "SD11c-L1F1-the-window-left",
     "file": "src/scenes/worldModes.js",
-    "old": "    dungeonCtx.overlayWindow?.()?.dispose?.();   // AUDIT SD II (L1 F1): forceExitToExterior's OnPop for the slot - a Hollow's end casts out here under any window (AUDIT SD III: above the fires' packing, so REST-PARTY's pack stays the line before the pose)\n    const carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0;",
+    "old": "    dungeonCtx.overlayWindow?.()?.dispose?.();   // AUDIT SD II (L1 F1): forceExitToExterior's OnPop - a Hollow's end casts out under any window (AUDIT SD III: above the packing)\n    const carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0;",
     "new": "    const carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0;",
     "tests": [
       "test/sd11c_page.test.js",

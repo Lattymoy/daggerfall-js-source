@@ -145,7 +145,10 @@ shadowed, and alpha is never written.
 `GROUP_TEMPLATE_INDICES`, DFU's own group enum table, and a custom
 template is not in it — the survival mod had to *add* its provisions
 to the shelves deliberately. `test/thunderlock.test.js` pins that as a
-law rather than an accident.
+law rather than an accident. (SHOP-PELLETS, 2026-10-07: the GUN stays
+so, by Mac's word above; its SHOT is sold now, at Mac's later word -
+"allowing the purchase of the ammunition in stores" - section
+SHOP-PELLETS below.)
 
 **Found, then** — by the port's own loot ladder (`lootRarity.js`,
 LR1-LR5), as a **unique find**. That is a different question from a
@@ -175,7 +178,8 @@ The rows above were true of the piles alone. What the roll adds past the carried
 **It arrives loaded.** 6-18 pellets with it: a gun found with no
 ammunition is a gun that cannot be fired and cannot be bought shot
 for, which reads as a broken drop rather than a rare one. Few enough
-that it still sends you looking.
+that it still sends you looking. (SHOP-PELLETS, 2026-10-07: shot can
+be bought now, at the counter of every shop that sells weapons.)
 
 **And it claims its own legendary.** `The Last Lock` — 20% damage, +10
 agility, +30 Archery, Cast When Strikes — marked `exclusive`, so a gun
@@ -1755,3 +1759,96 @@ carries the metre and the basis), and by source the gate, the order,
 the third-person frame, the flight's world origin and the hosts' one
 door (generative). Re-aimed: `thunderlock.test.js` F8's voice call.
 
+
+## THUNDERLOCK-ART (2026-10-07): the gun in its slots, closed, and in gold
+
+Mac, with the Gilded rung (`06-Systems/Gilded.md`): "overhauling the thunderlock in general including the morrowinds gun
+model and proper animations and allowing the purchase of the ammunition in stores. The thunderlock/ammo also doesnt
+recieve proper artwork in slots like the hotbar or inventory."
+
+### Every slot drew the initials, and the cause was the dye
+
+The pack tile, the hotbar slot and the quick diamond each ask a picture by the item's DYE - DISC22-D taught every icon
+door GetItemImage's `TryImportTexture` by `item.dyeColor` (ItemHelper.cs:458), right for a dyed set (Roleplay Realism
+Items' `520_10-0_Iron` .. `_Daedric`). The port's own art is ONE truecolor picture with no dyed forms, registered undyed:
+the gun is Dwarven and its pellets Iron, so the doors asked `560_1-0_Dwarven` and `561_0-0_Iron`, nothing answered, and
+every slot fell to the item's initials. FIELD-GUN1 had fixed the archive (the stand-in branch); this was the key.
+
+`systems/textureReplacement.js` `standInDye`: A STAND-IN TAKES NO DYE. An imported texture is drawn as it is - DFU's
+ChangeDye is the classic arm's alone (:466-476) - so a record registered as a stand-in, undyed, and with no dyed entry
+at all, answers every dye with itself; a record with any dyed entry (a dyed set) still answers by its dyes alone, and one
+record of a real ARENA2 archive (`standIn` absent) is untouched. Read at the top of each of the five doors that take a
+dye (`textureReplacementRect`, `hasTextureReplacement`, `textureReplacementBytes`, `preloadTextureRecord`,
+`decodedTexture`), so no door can ask it differently.
+
+### A list draws the whole gun
+
+A classic weapon's icon IS its doll layer - `GetInventoryTextureArchive` hands back the `PlayerTextureArchive` the doll
+draws from, which is why a classic icon carries the fist's notch. The gun's doll layer was made the same way
+(`tools/gunPaperdoll.mjs`), with an ellipse punched out of its grip where the fist closes: right on the doll, wrong in a
+list, where it read as a gun broken in two. `systems/itemTemplates.js` `registerOwnItemImage` / `ownItemImage`: a weapon
+of the port's own answers its own picture by job - `forPaperDoll` on the doll (`ui/paperDoll.js`), not in a list
+(`inventoryItemImage`, the one door every list asks) - and DFU's ladder answers everything else as before.
+`systems/thunderlock.js` ART_RECORDS: 0 the doll layer, 1 the whole gun, 2 and 3 the Hourlock's gold pair.
+
+`tools/gunIcons.mjs` makes every one of them from the doll layer's own pixels (Mac's painting lives in the ignored
+`scratch/`): the gap HEALED row by row from the receiver's edge to the butt's, shaded as a turned stock is, and trimmed;
+the gold twins off one gold-leaf ramp with two glints. Deterministic, and pinned pixel for pixel against the committed
+PNGs. The PELLET keeps its own picture - the 12px ball `tools/gunPaperdoll.mjs` cut from Mac's painting, at the size Mac
+asked for twice (FIELD-GUN16, FIELD-GUN18: "Shrink the orb pellet ammo sprite in the inventory. It's too large"). A first
+draft of this slice redrew it as a 22x18 heap of shot; `gunLab.test.js` refused it on Mac's own number, and it was put
+back - its slots had failed on the dye, never on the picture.
+
+`tools/gunSlotsProbe.mjs` draws the REAL pack (the enhanced skin) and the REAL hotbar over the real sheets on Vite's own
+dev server, desktop and phone, with the gun worn, thirty pellets and the Hourlock carried, and reads each slot's picture
+back (the art it drew, its natural size, how much of the slot it fills, and whether the eye can see it): 20 of 20
+checks, every slot a picture. The probe found two things on the way. Its first draft removed the pack's DOM instead of
+closing it, so the pack never let go of the hotbar's drop mode and the bar sat tucked (opacity 0) under a window that
+was gone - every slot "drawn" and none seen; it closes through the overlay's own `dispose` now, and asks
+`checkVisibility` of every picture. And the pellet's hotbar slot drew a WEAR BAR under its count, the two on top of
+each other: `systems/quickslots.js` `showsWear` had no word for ammunition, where the pack's `wearPct` says "an arrow
+is spent, not worn" - it says so too now, for arrows as for pellets.
+
+### The Morrowind gun was open, and now it is closed
+
+FIELD-GUN-MW1 measured Mac's mesh and said so - 65 edges shared by one triangle - and RULE 65's two-sided flag kept the
+far walls drawn. It did not close the holes: eleven of them, the five barrels' ends, four small quads under the sights,
+and a skewed opening across the receiver's REAR - the face a first-person eye looks straight at, through which the eye
+saw the inside of the gun. `tools/meshCap.mjs` caps every hole: its boundary walked as the mesh's own edges run, a fan
+from the loop's centroid with each edge taken back (so the cap's winding agrees with the faces round it and it faces
+OUT), its vertices its own with the cap's one flat normal - a hard edge, so the unwrap gives it an island and the
+occlusion bake darkens a recessed one (a muzzle's bore reads dark). `tools/bakeThunderlock.mjs` caps before it unwraps;
+the shipped NIF is 360 triangles and no boundary (it was 295 and eleven loops). The Hourlock's twin
+(`thunderlock_gilded.nif` over `thunderlock_gilded.dds`, `characters/ownWeaponModels.js` OWN_MW_GILDED) is the same
+capped mesh in gold leaf (`tools/meshTexture.mjs` GILDED_BANDS).
+
+**Pins** (`test/thunderlockart.test.js`, 4; `tools/mutants/thunderlockart.json`, 11 dead): the stand-in's dye, the
+pictures by job (and the Hourlock's gold layer through the doll's own door; a hotbar slot of shot with its count and
+no bar), the derivation pixel for pixel (the pellet left Mac's 12px ball), the mesh
+closed (an open cube capped facing out; the shipped gun and its twin with no boundary). Moved: FIELD-GUN-MW2's preload
+(two rows) and its bake (two twins), its two-sided note (kept over the capped shell).
+
+## SHOP-PELLETS (2026-10-07): the shot on the counter
+
+Mac: "allowing the purchase of the ammunition in stores." Until now the gun arrived loaded (6-18 pellets with the find)
+and every pellet after that was a body's or a pile's - "a gun found with no ammunition is a gun that cannot be fired and
+cannot be bought shot for", as `thunderlock.test.js` put it.
+
+`systems/shopStock.js` `shopPelletStack`: the Dwemer Pellets are sold WHERE DAGGERFALL SELLS WEAPONS - every storefront
+whose pair table (`SHOP_ITEM_GROUPS`, DaggerfallLootDataTables' own bytes) carries the Weapons group: the Weapon Smith
+(0x46), the Armorer and the General Store (0x14), the Pawn Shop (0x0A) - on the COUNTER's shelf (shelfIndex 0, the one a
+counter sells from), from NO roll and after every draw of DFU's, so the classic stream and every item of DFU's on the
+shelf are exactly what they were. The stack is the shop's own weight of weapons: its Weapons chance over the Weapon
+Smith's, of SHOP_PELLETS_MAX (50), and a poor shop half of that (quality 1 half, 20 whole) - a Weapon Smith 25 to 50, an
+Armorer or a General Store 7 to 14, a Pawn Shop 4 to 7. No table of the port's own invents a shop's number; DFU's bytes
+say which shop leans on weapons, and by how much.
+
+The pellet's own mint (`createPellets`), priced a pellet as an arrow is priced an arrow, so a bought stack merges with a
+found one and a smith buys shot back as it buys arrows. It sells out and comes back with the day's restock, as the rest
+of the shelf does - it is not ENDLESS-STOCK's (that law is Mac's word for the bag, the Campfire and Rations). The GUN
+stays a find: the shelf still names nothing of it, and `thunderlock.test.js` stocks every shelf of every shop whole and
+finds none.
+
+A departure of kind (Port-Ledger section A): a shelf carries a thing DFU's never does. **Pins**
+(`test/shoppellets.test.js`, 3; `tools/mutants/shoppellets.json`, 7 dead) - and the four that enumerate a Weapon Smith's,
+an Armorer's or a General Store's shelf moved with it, each saying so.

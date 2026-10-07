@@ -73,18 +73,27 @@ export const BANDS = [
   { at: 0.50, name: 'receiver', colour: [0.205, 0.112, 0.034], rough: 0.50 },   // the same alloy, cast
   { at: 0.76, name: 'grip',     colour: [0.055, 0.034, 0.022], rough: 0.95 },   // dark, matte
 ];
+/** GILDED1 (2026-10-07): THE HOURLOCK'S GOLD LEAF, the same four bands. The barrel and the receiver gilt and polished
+ *  (a third of the bronze's roughness), the muzzle a scorched gilt, the grip a dark enamel - a gilded gun is gilt where
+ *  the eye goes and dark where the hand does. Linear, as the bronze's are (0.80 encodes to sRGB 0.91). */
+export const GILDED_BANDS = [
+  { at: 0.00, name: 'muzzle',   colour: [0.150, 0.096, 0.030], rough: 0.80 },   // scorched gilt
+  { at: 0.07, name: 'barrel',   colour: [0.800, 0.530, 0.120], rough: 0.20 },   // gold leaf, polished
+  { at: 0.50, name: 'receiver', colour: [0.680, 0.430, 0.095], rough: 0.25 },   // the same, cast
+  { at: 0.76, name: 'grip',     colour: [0.090, 0.040, 0.020], rough: 0.85 },   // dark enamel
+];
 
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 /** The band colour at a fraction of the long axis, interpolated so the
  *  parts meet instead of banding. */
-export function bandAt(t) {
+export function bandAt(t, bands = BANDS) {
   const x = clamp01(t);
   let i = 0;
-  while (i + 1 < BANDS.length && BANDS[i + 1].at <= x) i++;
-  const a = BANDS[i];
-  const b = BANDS[Math.min(i + 1, BANDS.length - 1)];
+  while (i + 1 < bands.length && bands[i + 1].at <= x) i++;
+  const a = bands[i];
+  const b = bands[Math.min(i + 1, bands.length - 1)];
   const span = b.at - a.at;
   // A SHORT blend, not a ramp across the whole band: a gun is machined
   // parts bolted together, and a smooth gradient from muzzle to butt
@@ -285,12 +294,12 @@ export function muzzleFraction(y, bounds) {
 }
 
 /** Shade one baked texel. Linear RGB out. */
-export function shadeTexel(p, n, ao, bounds) {
+export function shadeTexel(p, n, ao, bounds, bands = BANDS) {
   // WHERE ON THE GUN: FORWARD IS +Y after the MW1 bake, so the muzzle
   // is the axis MAXIMUM and the fraction runs back from it. Measured
   // from the minimum - the obvious way round - this paints the gun
   // back to front.
-  const band = bandAt(muzzleFraction(p[1], bounds));
+  const band = bandAt(muzzleFraction(p[1], bounds), bands);
   let [r, g, b] = band.colour;
 
   // BRUSHING, along the barrel. The frequency is high across the gun
@@ -373,7 +382,7 @@ export function dilate(rgba, covered, size, passes) {
 }
 
 /** Bake one mesh to an RGBA atlas. */
-export function bakeTexture(mesh, { size = 512, rays = 64, dilatePasses = 8 } = {}) {
+export function bakeTexture(mesh, { size = 512, rays = 64, dilatePasses = 8, bands = BANDS } = {}) {
   const ao = vertexAO(mesh, { rays });
   const { pos, nrm, occ, covered } = bakeAttributes(mesh, size, ao);
   const rgba = new Uint8ClampedArray(size * size * 4);
@@ -382,7 +391,7 @@ export function bakeTexture(mesh, { size = 512, rays = 64, dilatePasses = 8 } = 
     const c = shadeTexel(
       [pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]],
       [nrm[i * 3], nrm[i * 3 + 1], nrm[i * 3 + 2]],
-      occ[i], mesh.bounds,
+      occ[i], mesh.bounds, bands,
     );
     rgba[i * 4] = toSrgb(c[0]); rgba[i * 4 + 1] = toSrgb(c[1]); rgba[i * 4 + 2] = toSrgb(c[2]); rgba[i * 4 + 3] = 255;
   }

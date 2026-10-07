@@ -19,7 +19,8 @@ import { cursedKnown, liftPrice, liftRefusal } from '../systems/lootCurse.js';  
 import { SCRY_FAMILIES, SCRY_FAMILY_WORDS, SCRY_PRICE, familyPlaces, scryRefusal } from '../systems/lootScry.js';   // LOOT19: scrying
 import { foundAmong, hasSocket, socketGem, gemLine, affixLabel, GEM_IDS, GEM_NAMES } from '../systems/lootRarity.js';   // LOOT20: the sockets
 import { gemsHeld, setGemRefusal, unsetGemRefusal, SET_GEM_PRICE } from '../systems/reforge.js';
-import { codexRows, codexSets, codexCount, imprintChoices, imprintRefusal, IMPRINT_PRICE } from '../systems/lootCodex.js';   // LOOT10: the codex's page and the imprint's
+import { codexRows, codexSets, codexCount, codexGilded, imprintChoices, imprintRefusal, IMPRINT_PRICE } from '../systems/lootCodex.js';   // LOOT10: the codex's page and the imprint's - GILDED1: and the Gilded rung's rows
+import { gildedById } from '../systems/gilded.js';
 import { setById } from '../systems/sigilSets.js';
 import { itemIsIdentified } from '../systems/tradeModes.js';
 import { reforgePrice, reforgeRefusal, salvageShards, salvageRefusal, shardsHeld, shardsText, honePrice, honeRefusal } from '../systems/reforge.js';   // LOOT17: and the hone
@@ -72,7 +73,7 @@ export const LIFT_REFUSALS = Object.freeze({
   worn: 'Take it off first', gold: 'Not enough gold', gone: 'No longer in your pack',
 });
 export const CODEX_TITLE = 'The Codex';
-export const CODEX_SUB = 'Every Legendary and every Aetheric piece you have found - and where the rest are said to be';
+export const CODEX_SUB = 'Every Gilded, Legendary and Aetheric piece you have found - and where the rest are said to be';
 /** LOOT10: the imprint's words. */
 export const IMPRINTED = (name, rec, power) => `Imprinted: ${name} - ${power} (of ${rec}).`;
 export const IMPRINT_NONE = 'Your codex holds no Legendary of its kind yet - find one, and its power may be taken.';
@@ -89,7 +90,7 @@ export const REFORGE_REFUSALS = Object.freeze({
   imprinted: 'It has taken a power already', unfound: 'Not a power your codex holds for it',
   none: 'Nothing of theirs is hidden in this region', nowhere: 'No map to scry here', family: 'No such kin',   // LOOT19
   set: 'A gem is set in it - unset it first', nogem: 'None of that gem in your pack', empty: 'No gem in it',   // LOOT20
-  gone: 'No longer in your pack', aetheric: 'An Aetheric piece is the Broker\'s to dismantle', artifact: 'An artifact will not break',
+  gone: 'No longer in your pack', aetheric: 'An Aetheric piece is the Broker\'s to dismantle', gilded: 'A Gilded piece will not break', artifact: 'An artifact will not break',
   quest: 'A quest\'s item will not break', bound: 'Bound - it will not break', locked: 'Locked - unlock it first',
 });
 /** A line's press word - "Reforge" (the imprint's "Imprint" - AUDIT LOOT F6: its presses said Reforge), or why not in a
@@ -262,7 +263,7 @@ export function mountReforgeWindow(host, deps) {
     if (page === 'sockets') { renderSockets(items, payer, have, picture); return; }   // LOOT20
     const rows = page === 'reforge'
       ? items.filter((it) => reforgePrice(it) && reforgeableLines(it).length)
-      : items.filter((it) => salvageShards(it) > 0 && !['aetheric', 'artifact', 'quest', 'off'].includes(salvageRefusal(it) ?? ''));
+      : items.filter((it) => salvageShards(it) > 0 && !['aetheric', 'gilded', 'artifact', 'quest', 'off'].includes(salvageRefusal(it) ?? ''));
     if (!rows.includes(picked)) picked = page === 'reforge' ? rows[0] ?? null : null;
     if (page === 'salvage') everyMagic(rows);   // LOOT18
     if (!rows.length) {
@@ -396,12 +397,25 @@ export function mountReforgeWindow(host, deps) {
     }
     list.append(head);
   }
-  /** LOOT10: THE CODEX - every Legendary record, found and not, then the Aetheric sets; a row pressed shows it whole. */
+  /** LOOT10: THE CODEX - every Legendary record, found and not, then the Aetheric sets; a row pressed shows it whole.
+   *  GILDED1: the Gilded rung's records first, over them all, as the rung stands. */
   let pickedRec = null;
   const head2 = (text) => { const h = el('li', 'broker-insignia-head codex-head', text); h.setAttribute('role', 'presentation'); return h; };
   function renderCodex() {
     const n = codexCount();
-    purse.textContent = `${n.legendary} of ${n.legendaries} Legendaries · ${n.aetheric} of ${n.aetherics} Aetheric`;
+    purse.textContent = `${n.gilded} of ${n.gildeds} Gilded · ${n.legendary} of ${n.legendaries} Legendaries · ${n.aetheric} of ${n.aetherics} Aetheric`;
+    const gold = codexGilded();
+    list.append(head2(`Gilded - ${n.gilded} of ${n.gildeds} found`));
+    for (const g of gold) {
+      const row = el('li', `broker-offer codex-gilded${g.found ? ' found' : ''}${pickedRec === g.id ? ' on' : ''}`);
+      row.dataset.record = g.id;
+      if (g.found) row.dataset.rarity = 'gilded';
+      const text = el('div', 'broker-offer-body');
+      text.append(el('span', 'broker-name', g.found ? g.name : 'Unfound'), el('span', 'broker-set', g.found ? `${g.group} · found on day ${g.day}` : `${g.group} · ${g.hint}`));
+      row.append(text);
+      pressable(row, () => { pickedRec = g.id; render(); });
+      list.append(row);
+    }
     list.append(head2(`Legendaries - ${n.legendary} of ${n.legendaries} found`));
     const rows = codexRows();
     for (const r of rows) {
@@ -424,22 +438,22 @@ export function mountReforgeWindow(host, deps) {
       row.append(text);
       list.append(row);
     }
-    const r = rows.find((x) => x.id === pickedRec);
+    const r = rows.find((x) => x.id === pickedRec) ?? gold.find((x) => x.id === pickedRec);
     if (!r) return;
     card = el('div', 'card broker-card codex-card');
-    if (r.found) card.dataset.rarity = 'legendary';
+    if (r.found) card.dataset.rarity = r.kind;
     card.append(el('h3', null, r.found ? r.name : 'Unfound'));
     const ul = el('ul', 'rarity');
-    ul.append(el('li', null, `Legendary · ${r.group}`));
+    ul.append(el('li', null, `${RARITIES[r.kind]?.label ?? 'Legendary'} · ${r.group}`));
     if (r.found) {
-      const rec = legendaryById(r.id);
-      for (const a of rec?.affixes ?? []) { const line = affixLine({ rarity: 'legendary', affixes: [a] }, 0); if (line) ul.append(el('li', null, line)); }
+      const rec = r.kind === 'gilded' ? gildedById(r.id) : legendaryById(r.id);
+      for (const a of rec?.affixes ?? []) { const line = affixLine({ rarity: r.kind, affixes: [a] }, 0); if (line) ul.append(el('li', null, line)); }
       if (r.power) ul.append(el('li', null, powerLine(r.power)));
       if (r.lore) ul.append(el('li', null, r.lore));
       ul.append(el('li', null, `First found on day ${r.day}`));
     } else ul.append(el('li', null, 'Not yet found'));
     card.append(ul, el('p', 'boundline', r.hint));
-    const kin = !r.found ? foundAmong(r.id) : null;   // LOOT19: an unfound record's family, to the scryers' page
+    const kin = !r.found && r.kind === 'legendary' ? foundAmong(r.id) : null;   // LOOT19: an unfound record's family, to the scryers' page (GILDED1: a Legendary's - the Hour is scried by no one)
     if (kin && pages.includes('scry') && SCRY_FAMILIES.includes(kin)) {
       const go = el('button', 'act broker-buy scry-kin', SCRY_FOR_KIN);
       go.setAttribute('type', 'button');
