@@ -2176,3 +2176,32 @@ Pins: `test/sd14c_motes.test.js` (5 - over a thousand; each in its place; on the
 law, and the small faded; drawn, and the world host's); `tools/mutants/sd14c.json` (13). PINS MOVED:
 `test/sd8d_remnant_blows.test.js`, `test/sd9e_spoils.test.js` (the Hour's world pass draws the motes beside the blows
 and the loot lines).
+
+### SD15 - shipped 2026-10-07 (the arena read)
+
+The gate tells a fighter "move!" when a blow is about to land on their feet (WB13a) and shows the fight's turns on a
+card (WB13e); the Hour told neither - in first person at a colossus's feet the floor's telegraph is out of sight.
+`scenes/sdArenaRead.js` and `ui/sdTitleCard.js`:
+
+- **In it** (`sdPerilAt`): the soonest of the Remnant's and its Echoes' blows still to land on my feet - the Stomp's
+  disc, the Hour-Hand's sweep (from now on, unshaded by a pillar), a Volley's mark: its name, its wind-up's share, its
+  last moment, its floor colour, and the nearest way out over the arena's floor (`sdWayOut`: 24 bearings, a quarter
+  metre at a time, 20 m at most, never past a metre inside the rim) as the screen turns it. Once the Stomp has landed,
+  its ring rolling out within `SD_JUMP_CALL_M` (3 m) of me: *"Brass Stomp - jump!"*, no arrow. The Hour's own blows over
+  the whole floor are never "in it" - no step escapes them. Drawn by the gate's own ground view (`ui/gateGroundView.js`:
+  the rim pulsing in the blow's colour, the words under the crosshair, the arrow), which also feels the burning brass
+  under my feet (*"Burning brass - step out!"* - the blows say `burning()`).
+- **The beats** (`createSdBeats`) on the Hour's own card, in brass and the Mantella's light (the Warden's burns in
+  Dagon's red): its wake (*The Brass Remnant - What the Warp kept of the Numidium*), *II - The Dragon Break* (*Gold and
+  silver - fell them within 15 seconds*), *III - The Last Moment* (*Break its Hearts before the Reset lands*), *The Hour
+  - Ends in one minute*, and *The Brass Remnant - Undone*; each once a fight, a wake and a fall shown live alone, a late
+  page taking the fight as it stands. The card's model is the Warden's own pure one (`titleCardModel`); its node is
+  made once and updated.
+
+The world host reads the fight once a frame for the bar, the ground and the card, hides all three with the HUD, and
+puts them away with the bar.
+
+Pins: `test/sd15_read.test.js` (6 - the Stomp; the Hand, the Volley and the Echoes'; the way out and the ground view; the
+beats; the Hour's card and the host's; the burning brass felt); `tools/mutants/sd15.json` (21). PINS MOVED:
+`test/sd8c_remnant_page.test.js` (the fight read once; one hide), `test/sd11c_page.test.js` and `test/sd11a_scenes.test.js`
+(the arena read in the fight's rigs).

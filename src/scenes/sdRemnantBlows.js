@@ -323,6 +323,8 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     /** What it holds, for the tests. */
     state: () => ({ pools: pools.map((p) => ({ ...p })), inFire, marks: [...marks.entries()].map(([i, m]) => ({ i, ...m, seen: { ...m.seen } })), chartAt }),
     /** Out of the Hour: its marks and its brass forgotten, the chart put away. */
+    /** SD15: whether I stand in the burning brass this frame (the arena read's rim). */
+    burning: () => inFire,
     leave() {
       marks.clear(); pools = []; inFire = false; prevT = null; shapes = [];
       marksFi = 0; fellFi = 0; endSaid = 0;   // AUDIT SD: the next Hollow's Hour numbers its fights from 1 again

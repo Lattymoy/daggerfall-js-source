@@ -595,8 +595,11 @@ test('AUDIT SD II L2 F17: THE HALL\'S WORD FORGOTTEN OUT OF THE REALM, run from 
     sdSpoilsBurst: { leave() {}, frame() {} }, sdBlows: { leave() {}, frame() {} }, player: { pos: [0, 0, 0] }, playerEntity: { health: 10, maxHealth: 10 },
     sdDungeonToRealm: () => [0, 0, 1e9], sdBarNear: () => false, remnantBarModel: () => null, drawGateBossBar() {}, gamePaused: () => false, townTalk: { hudHidden: false },
     inOrreryHall, SD_FRAY_LASH, hurtPlayer() {}, flashPlayerDamage() {}, setMidScreenText() {}, SD_HALL_TEXT,
+    // SD14a, SD15 (PIN MOVED): the voice and the arena read in the fight's frame
+    sdRemVoice: { leave() {}, frame() {} }, cam: { yaw: 0 }, SD_ARENA: { x: 0, z: 0 }, sdPerilAt: () => null, sdGroundModel: () => null,
+    sdBeats: { frame: () => null, leave() {} }, titleCardModel: () => null, drawGateGround() {}, drawSdTitleCard() {},
   };
-  const h = new Function(...Object.keys(env), `let _sdHall = null, _sdFightHeld = false, _sdBarUp = false;\n${text}\nreturn { sdHallHeard, sdFightFrame, sdHallWord, sdConcordHere };`)(...Object.values(env));
+  const h = new Function(...Object.keys(env), `let _sdHall = null, _sdFightHeld = false, _sdBarUp = false, _sdGroundUp = false, _sdCardUp = false;\n${text}\nreturn { sdHallHeard, sdFightFrame, sdHallWord, sdConcordHere };`)(...Object.values(env));
   const word = { k: 'pz', s: 3, st: [1, 2, 3, 4, 5, 6], f: 0, lit: 6, ok: true };
   h.sdHallHeard(word);
   h.sdFightFrame();

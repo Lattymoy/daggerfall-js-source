@@ -574,8 +574,11 @@ function fightHost() {
     sdRemVoice: { leave: () => log.push('voice.leave'), frame: () => log.push('voice.frame') },   // SD14a (PIN MOVED): its voice beside its blows
     sdDungeonToRealm: () => [0, 0, 0], player: { pos: [0, 0, 0] }, sdBarNear: () => false, remnantBarModel: () => null,
     drawGateBossBar: () => log.push('bar'), gamePaused: () => false, townTalk: {},
+    // SD15 (PIN MOVED): the arena read beside the bar - nothing to read in an empty fight
+    playerEntity: { health: 10 }, SD_ARENA: { x: 0, z: 0 }, cam: { yaw: 0 }, sdPerilAt: () => null, sdGroundModel: () => null,
+    sdBeats: { frame: () => null, leave: () => {} }, titleCardModel: () => null, drawGateGround: () => log.push('ground'), drawSdTitleCard: () => log.push('card'),
   };
-  const body = `let _sdFightHeld = false, _sdBarUp = false;\n${fnOf('sdFightHeard')}\n${constOf('sdFightFrame')}\nreturn { sdFightHeard, sdFightFrame, held: () => _sdFightHeld };`;
+  const body = `let _sdFightHeld = false, _sdBarUp = false, _sdGroundUp = false, _sdCardUp = false;\n${fnOf('sdFightHeard')}\n${constOf('sdFightFrame')}\nreturn { sdFightHeard, sdFightFrame, held: () => _sdFightHeld };`;
   const api = new Function(...Object.keys(env), body)(...Object.values(env));
   return { ...api, log, at: (s) => { slot = s; }, receipts: env._sdReceipts };
 }

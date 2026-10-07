@@ -308,7 +308,7 @@ import { createSigilBroker } from './sigilBrokerPool.js';   // SET7: the Sigil B
 import { createBrokerOverlay, closeBrokerDoor } from '../ui/brokerDoor.js';   // SET7: her window, a lazy chunk behind its door
 import { brokerStock, brokerDay, brokerBought, makeBrokerSale, spendableStonesIn, lockedStonesIn, stoneCount, insigniaSale, stonesText } from '../systems/sigilBroker.js';   // SET7: the day's stock, the record, the sale   // SS1: the stones counted over their stacks
 import { drawGateBanner } from '../ui/gateBanner.js';
-import { drawGateGround } from '../ui/gateGroundView.js';   // WB9d: his ground's rim and warning - hidden with a held frame (the court draws it)
+import { drawGateGround } from '../ui/gateGroundView.js';   // WB9d: his ground's rim and warning - hidden with a held frame (the court draws it); SD15: and the Hour's
 import { drawGateDamageChart } from '../ui/gateDamageChart.js';   // GATE-UX: the kill's damage chart (the court draws it - scenes/gateCourt.js); a held frame hides it with the rest
 import { drawGateMarksCard } from '../ui/gateMarksView.js';   // WB9a: tonight's marks over the screen - by the gate before it is entered (and in the court as a fighter steps in: scenes/gateCourt.js)
 import { createGateLink, GATE_NO_TEXT, gateRefusalText } from '../net/gateLink.js'; import { readReceipt } from '../net/gateReceipt.js';   // AUDIT WB A2: a receipt's day, seed and account, for its spoils outside the court   // WB3b: what the client holds of a gate's fight - the relay's words, folded
@@ -326,6 +326,9 @@ import { createSdRemnantBlows } from './sdRemnantBlows.js';   // SD8d: its blows
 import { createSdRemnantVoice } from './sdRemnantVoice.js';   // SD14a: its body and its Echoes heard
 import { createSdAir } from './sdAir.js';   // SD14b: the Hour's air - its beds and its far events
 import { SdMotesRenderer } from '../render/sdMotes.js';   // SD14c: the Hour's motes
+import { sdPerilAt, sdGroundModel, createSdBeats } from './sdArenaRead.js';   // SD15: the arena read - in it, and the fight's beats
+import { drawSdTitleCard } from '../ui/sdTitleCard.js';   // SD15: the Hour's own card
+import { titleCardModel } from '../ui/gateTitleCard.js';   // SD15: the card's pure model, the Warden's
 import { remnantBarModel, sdBarNear } from '../ui/sdRemnantBar.js';   // SD8c: the Brass Remnant's bar, the gate's in brass
 import { createSdVoice, SD_VOICE_RANK } from './sdVoice.js';   // AUDIT SD II (SD11d): the Hour's lines over the screen, paced
 import { serpentBarModel } from '../ui/serpentBar.js'; import { drawGateBossBar } from '../ui/gateBossBar.js';   // SERPENT1: its boss bar, in the sea's colours - the gate's bar, its one node
@@ -21685,7 +21688,8 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  kept; the arena's set reads it (dungeonContext.js, through the mode machine) and sends my `in` and my blows by the
    *  doors below. Out of the realm it is forgotten. */
   const sdFightLink = params.has('online') ? createSdFightLink({ now: () => Date.now() + _sharedOffsetMs, say: (t, key) => { if (sdNearArena()) sdSay(t, SD_VOICE_RANK.turn, key); } }) : null;   // AUDIT SD II (L6 F15): to whoever stands near its arena
-  let _sdFightHeld = false, _sdBarUp = false;
+  let _sdFightHeld = false, _sdBarUp = false, _sdGroundUp = false, _sdCardUp = false;   // SD15: the ground's rim and the Hour's card up
+  const sdBeats = createSdBeats();   // SD15: the fight's turns, as this page sees them
   /** SD8d (Super-Dungeons.md section 10): ITS BLOWS ON ME (scenes/sdRemnantBlows.js) - each one on the arena's floor as it
    *  winds up and lands, heard, and judged on my own feet through the dungeon context's door (the gate court's way); its
    *  fall and the fight's damage chart. Online alone, beside the link. */
@@ -21737,15 +21741,29 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (inRealm) { try { sdBlows?.frame(); } catch (e) { console.warn('[sd] blows', e?.message ?? e); } }   // SD8d: its blows on me
     if (inRealm) { try { sdRemVoice?.frame(); } catch (e) { console.warn('[sd] voice', e?.message ?? e); } }   // SD14a: its body heard
     if (inRealm) { try { sdSpoilsBurst?.frame(); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } }   // SD9e: its spoils, thrown and flying
-    let bar = null;
+    let bar = null, ground = null, card = null;
     if (inRealm) {
       const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
-      if (sdBarNear(x, z)) bar = remnantBarModel(sdFightLink.state(), sdFightLink.now());
-    }
-    if (bar || _sdBarUp) { drawGateBossBar(bar, { hidden: gamePaused() || !!townTalk.hudHidden }); _sdBarUp = !!bar; }
+      const s = sdFightLink.state(), now = sdFightLink.now();
+      if (sdBarNear(x, z)) bar = remnantBarModel(s, now);
+      // SD15: THE ARENA READ (scenes/sdArenaRead.js) - a blow still to land on my feet, and the burning brass under them,
+      // on the gate's own rim and warning; the fight's turns on the Hour's own card
+      const peril = playerEntity.health > 0 ? sdPerilAt(s, now, x - SD_ARENA.x, z - SD_ARENA.z, cam.yaw) : null;
+      ground = sdGroundModel({ burning: !!sdBlows?.burning?.(), now, peril });
+      const beat = sdBeats.frame(s, now);
+      card = beat ? titleCardModel(beat, now) : null;
+    } else sdBeats.leave();
+    const hidden = gamePaused() || !!townTalk.hudHidden;
+    if (bar || _sdBarUp) { drawGateBossBar(bar, { hidden }); _sdBarUp = !!bar; }
+    if (ground || _sdGroundUp) { drawGateGround(ground, { hidden }); _sdGroundUp = !!ground; }
+    if (card || _sdCardUp) { drawSdTitleCard(card, { hidden }); _sdCardUp = !!card; }
   };
   /** No online frame: the Remnant's bar put away. */
-  const sdFightAway = () => { if (_sdBarUp) { drawGateBossBar(null); _sdBarUp = false; } };
+  const sdFightAway = () => {
+    if (_sdBarUp) { drawGateBossBar(null); _sdBarUp = false; }
+    if (_sdGroundUp) { drawGateGround(null); _sdGroundUp = false; }   // SD15
+    if (_sdCardUp) { drawSdTitleCard(null); _sdCardUp = false; }
+  };
   /** The hall's word for the realm I stand in, or null; and whether its Concord holds (the edge widens with it). */
   const sdHallWord = () => (_sdHall && _sdHall.s === modes?.sdRealmSlot?.() ? _sdHall : null);
   const sdConcordHere = () => !!sdHallWord()?.ok;

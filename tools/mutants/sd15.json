@@ -1,0 +1,191 @@
+[
+  {
+    "name": "SD15-the-disc-unread",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "  if (A === SD_BLOWS.stomp) return (x, z) => Math.hypot(x - atk.x, z - atk.z) <= A.r;\n",
+    "new": "",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-no-way-out",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "    const way = Number.isFinite(yaw) ? sdWayOut(best.inside, fx, fz) : null;",
+    "new": "    const way = null;",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-the-ring-never-called",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "      if (d > front && d - front <= SD_JUMP_CALL_M && (!jump || atk.at < jump.at)) jump = { at: atk.at, name: A.name };\n",
+    "new": "",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-the-ring-called-after-it-passed",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "      if (d > front && d - front <= SD_JUMP_CALL_M",
+    "new": "      if (Math.abs(d - front) <= SD_JUMP_CALL_M",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-the-shade-ignored",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + A.active) && !behindPillar(atk.x, atk.z, x, z);",
+    "new": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + A.active);",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-the-beams-past-read",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + A.active) && !behindPillar",
+    "new": "handSwept(atk, x, z, atk.at, atk.at + A.active) && !behindPillar",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-the-echoes-unread",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "  (s.ec ?? []).forEach((E, i) => { if (E.h > 0 && E.atk) blows.push([SD_BODY.gold + i, E.atk]); });\n  let best = null, jump = null;",
+    "new": "  let best = null, jump = null;",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-the-latest-of-two",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "if (!live || t < atk.at - w || (best && best.at <= atk.at)) continue;",
+    "new": "if (!live || t < atk.at - w || (best && best.at >= atk.at)) continue;",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-the-pulse-in-it",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "  return null;\n}\n\n/**\n * A BLOW STILL TO COME",
+    "new": "  return (x, z) => Math.hypot(x, z) <= SD_ARENA.r;\n}\n\n/**\n * A BLOW STILL TO COME",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-a-way-out-past-the-rim",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "      if (Math.hypot(x, z) > R) break;\n",
+    "new": "",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-the-brass-unfelt",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "  const m = groundViewModel({ inside: !!burning,",
+    "new": "  const m = groundViewModel({ inside: false,",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-a-late-joins-beats",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "        k = { fi: s.fi, awake: t >= s.op, ph: s.ph, last: Number.isFinite(s.ends) && s.ends - t <= SD_BEAT_LAST_MS, fell: !!s.fell };",
+    "new": "        k = { fi: s.fi, awake: false, ph: 1, last: false, fell: false };",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-the-wake-late",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "if (awake && !k.awake && t - s.op < SD_BEAT_LATE_MS) show(",
+    "new": "if (awake && !k.awake) show(",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-a-beat-twice",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "      k.last = k.last || last;",
+    "new": "      k.last = last;",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-no-last-minute",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "      if (last && !k.last) show('last', t, SD_BEAT_TEXT.last, '#ff6a5a');\n",
+    "new": "",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-the-fall-late",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "if (s.fell && !k.fell) { k.fell = true; if (t - s.fell.at < SD_BEAT_LATE_MS) show(",
+    "new": "if (s.fell && !k.fell) { k.fell = true; if (true) show(",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-the-card-in-red",
+    "file": "src/ui/sdTitleCard.js",
+    "old": "export const SD_TITLE_BRASS = '#e8c060';",
+    "new": "export const SD_TITLE_BRASS = 'rgba(255,70,30,1)';",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-the-card-rebuilt",
+    "file": "src/ui/sdTitleCard.js",
+    "old": "  if (!root) {\n    if (!want || !doc?.createElement) return;\n    build(doc);\n  }",
+    "new": "  if (!want || !doc?.createElement) return;\n  build(doc);",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-the-ground-never-drawn",
+    "file": "src/scenes/world.js",
+    "old": "    if (ground || _sdGroundUp) { drawGateGround(ground, { hidden }); _sdGroundUp = !!ground; }\n",
+    "new": "",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-never-put-away",
+    "file": "src/scenes/world.js",
+    "old": "    if (_sdCardUp) { drawSdTitleCard(null); _sdCardUp = false; }\n",
+    "new": "",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  },
+  {
+    "name": "SD15-the-burning-unread",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "    burning: () => inFire,",
+    "new": "    burning: () => false,",
+    "tests": [
+      "test/sd15_read.test.js"
+    ]
+  }
+]

@@ -662,8 +662,8 @@ test('SD8c THE HOSTS, by source: the dungeon context makes the arena\'s set in t
   assert.match(W, /online\.onSdFight = \(w\) => sdFightHeard\(w\);/);
   assert.match(W, /if \(!sdFightLink \|\| slot == null \|\| \(w\.k === 'st' && w\.s !== slot\)\) return;/);
   assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); sdBlows\?\.leave\(\); sdRemVoice\?\.leave\(\); _sdFightHeld = false; \}/);   // PIN MOVED (SD8d): its blows forgotten with it   // SD14a (PIN MOVED): its voice let go with it
-  assert.match(W, /if \(sdBarNear\(x, z\)\) bar = remnantBarModel\(sdFightLink\.state\(\), sdFightLink\.now\(\)\);/);
-  assert.match(W, /if \(bar \|\| _sdBarUp\) \{ drawGateBossBar\(bar, \{ hidden: gamePaused\(\) \|\| !!townTalk\.hudHidden \}\); _sdBarUp = !!bar; \}/);
+  assert.match(W, /const s = sdFightLink\.state\(\), now = sdFightLink\.now\(\);\n\s*if \(sdBarNear\(x, z\)\) bar = remnantBarModel\(s, now\);/);   // SD15 (PIN MOVED): the fight read once a frame, for the bar and the arena read
+  assert.match(W, /const hidden = gamePaused\(\) \|\| !!townTalk\.hudHidden;\n\s*if \(bar \|\| _sdBarUp\) \{ drawGateBossBar\(bar, \{ hidden \}\); _sdBarUp = !!bar; \}/);   // SD15 (PIN MOVED): one hide for the bar, the ground and the card
   assert.match(W, /sdFightIn: \(\) => !!online\?\.sendSdIn\?\.\(playerEntity\.level\),/);
   assert.match(W, /sdBlow: \(k, f\) => !!online\?\.sendSdBlow\?\.\(k, f\),/);
   assert.match(W, /serpentAway\(!onlineOn\);[^\n]*sdFightAway\(\);/);
