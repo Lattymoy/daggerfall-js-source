@@ -3878,6 +3878,10 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   `tools/mutants/craft3.json`. FOUND by the moved pins: the jeweller's bench still said "Jewelcrafting XP" - its
   craft's now. PIN MOVED (a discipline's track its craft's; ten professions; four cards a merged rank): the profession
   suites - `prof1`, `prof2`, `prof3`, `prof4`, `prof9`, `prof10`, `prof11`, `prof12`, `audit29`, `audit30`, `audit32`.
+- **FOUND by CI on the merge's head** (one red in shard 3 of 4, fixed in its own commit): `seat2b_peace_law`'s
+  Siegewright's day read `SPECIALISATIONS.carpentry[100]`, a track CRAFT3 folds into Building - PIN MOVED: Carpentry has
+  no track of its own, the Siegewright is Building's choice at 100 and `specOk('building', 100, 'siegewright')` holds;
+  `seat2b_peace`'s 63 mutants re-judged, all dead.
 
 ### 41.7 CRAFT4 - tempering and reforging, as built (BUILT 2026-10-07)
 
