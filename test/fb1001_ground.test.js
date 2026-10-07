@@ -20,7 +20,8 @@
 // room is the service's count (professionLaw.js storesFullIn). REFUSALS-LEARNED: `prof-cap` and `stores-full` (another
 // device took the day's room) now read the state again; `prof-account-cap` and `prof-deep-cap` (counts the state does
 // not carry) close the craft, or the unvouched dungeons' veins, until the UTC day turns - the host says so instead of
-// offering the act. RATE-KEPT: `prof-rate` ("Try again later") let the harvest go; it is kept and asked again now.
+// offering the act. CAP-OFF (2026-10-07): `prof-cap` and `prof-account-cap` are said no more - the day's cap is gone -
+// and an old service's saying them moves nothing; `stores-full` and `prof-deep-cap` stand. RATE-KEPT: `prof-rate` ("Try again later") let the harvest go; it is kept and asked again now.
 import './chargenDom.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -30,7 +31,7 @@ import { standService, T0, sessionStorageOf } from './accountDb.mjs';
 import { accountProf, SESSION_KEY } from '../src/net/accountClient.js';
 import { createProfBook } from '../src/net/profBook.js';
 import { veins, boulders, dungeonVeins, nodeKey, pixelReport } from '../src/net/nodeLaw.js';
-import { xpForRank, storesFullIn, NODE_PROFESSIONS } from '../src/net/professionLaw.js';
+import { xpForRank, storesFullIn } from '../src/net/professionLaw.js';
 import { mineKind, mineRecord, standMineNodes } from '../src/scenes/mineHost.js';
 import { createForagingItem } from '../src/systems/foragingInstall.js';
 import { createGatherHost } from '../src/scenes/gatherHost.js';
@@ -222,7 +223,7 @@ function stubBook({ stores = [], answers = [] } = {}) {
   const asked = [];
   const door = {
     account: () => 'acct-1',
-    state: async () => ({ ok: true, data: { day: utcDay(_ms / 1000), character: 'c1', tracks: [{ profession: 'mining', xp: xpForRank(100), rank: 100, specs: { 50: null, 100: null } }], today: {}, taken: [], stores, caps: { harvests: 60, stores: 5000 } } }),
+    state: async () => ({ ok: true, data: { day: utcDay(_ms / 1000), character: 'c1', tracks: [{ profession: 'mining', xp: xpForRank(100), rank: 100, specs: { 50: null, 100: null } }], today: {}, taken: [], stores, caps: { stores: 5000, withdraw: 200, highHides: 3 } } }),
     pixels: async () => ({ ok: true, data: { pixels: [], dungeons: [] } }),
     harvest: async (b) => { asked.push(b); return answers.shift() ?? { ok: false, error: 'offline' }; },
   };
@@ -247,27 +248,29 @@ test('STORES-ROOM: 4,000 own and 1,000 bought with gold fill the Stores as the s
   assert.equal(storesFullIn({ held: () => 4999, state: { caps: null } }, 'x'), false);
 });
 
-test('REFUSALS-LEARNED: the account\'s day in a craft and its unvouched dungeon veins, refused once, close until the UTC day turns; the character\'s day and the Stores, refused, read the state again (mutants: the account cap forgotten; the deep cap forgotten; the state never read again)', async () => {
+test('REFUSALS-LEARNED: the account\'s unvouched dungeon veins, refused once, close until the UTC day turns; the Stores, refused, read the state again. CAP-OFF: the day\'s caps an old service may still say - `prof-account-cap`, `prof-cap` - close nothing and read nothing (mutants: the deep cap forgotten; the state never read again; the old refusals learned again)', async () => {
   _ms = (D * DAY + 13 * 3600) * 1000;
   const day = utcDay(_ms / 1000);
-  const { book } = stubBook({ answers: [{ ok: false, error: 'prof-account-cap' }, { ok: false, error: 'prof-deep-cap' }, { ok: false, error: 'prof-cap' }] });
+  const { book } = stubBook({ answers: [{ ok: false, error: 'prof-account-cap' }, { ok: false, error: 'prof-deep-cap' }, { ok: false, error: 'prof-cap' }, { ok: false, error: 'stores-full' }] });
   assert.equal((await book.refresh()).ok, true);
-  assert.equal(book.closed('account:mining'), false);
+  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): `prof-account-cap` closed Mining for the
+  // account until the UTC day turned, and `prof-cap` read the state again - the day's cap they said is gone
   assert.equal((await book.harvest(ore(nodeKey({ kind: 'vein', x: 400, y: 200, day, slot: 0 })))).error, 'prof-account-cap');
-  assert.equal(book.closed('account:mining'), true, 'Mining closed for the account');
-  assert.equal(book.closed('account:herbalism'), false, 'the other crafts open');
+  assert.equal(book.closed('account:mining'), false, 'no craft closed for the account');
   assert.equal((await book.harvest(ore(`dvein:4000:${day}:0`))).error, 'prof-deep-cap');
   assert.equal(book.closed('deep'), true, 'the unvouched dungeons\' veins closed');
   assert.equal(book.stale(), false, 'neither asks the state again');
   assert.equal((await book.harvest(ore(nodeKey({ kind: 'vein', x: 400, y: 200, day, slot: 1 })))).error, 'prof-cap');
   _ms += 30_001;
-  assert.equal(book.stale(), true, 'the character\'s day filled elsewhere: the state read again');
+  assert.equal(book.stale(), false, 'no day\'s count to read again');
+  assert.equal((await book.harvest(ore(nodeKey({ kind: 'vein', x: 400, y: 200, day, slot: 2 })))).error, 'stores-full');
+  _ms += 30_001;
+  assert.equal(book.stale(), true, 'the Stores filled elsewhere: the state read again');
   assert.equal((await book.refresh()).ok, true);
   assert.equal(book.stale(), false, 'read');
   // the UTC day turns: what the refusals closed opens
   _ms = ((D + 1) * DAY + 60) * 1000;
-  assert.deepEqual([book.closed('account:mining'), book.closed('deep')], [false, false], 'a new day');
-  assert.deepEqual(Object.keys(NODE_PROFESSIONS).sort(), ['body', 'boulder', 'dvein', 'haul', 'herb', 'tree', 'vein'], 'every node kind the service knows names its craft');
+  assert.equal(book.closed('deep'), false, 'a new day');
 });
 
 test('RATE-KEPT: a harvest refused for the hour\'s acts (`prof-rate`, "Try again later") is kept and asked again - not let go after the act and the tool were spent (mutants: the hour\'s refusal lets it go)', async () => {
@@ -298,7 +301,7 @@ test('GROUND-STALE underground, and REFUSALS-LEARNED\'s deep cap: a dungeon vein
   const answers = [];
   const door = {
     account: () => 'acct-1',
-    state: async () => ({ ok: true, data: { day, character: 'c1', tracks: [{ profession: 'mining', xp: xpForRank(100), rank: 100, specs: { 50: null, 100: null } }], today: {}, taken: [], stores: [], caps: { harvests: 60, stores: 5000 } } }),
+    state: async () => ({ ok: true, data: { day, character: 'c1', tracks: [{ profession: 'mining', xp: xpForRank(100), rank: 100, specs: { 50: null, 100: null } }], today: {}, taken: [], stores: [], caps: { stores: 5000, withdraw: 200, highHides: 3 } } }),
     pixels: async (c, px, ds) => ({ ok: true, data: { pixels: [], dungeons: (ds ?? []).map((x) => ({ id: x, state: dstate, ...(dstate === 'confirmed' ? { climate: MOUNTAIN, region: REGION } : {}) })) } }),
     harvest: async () => answers.shift() ?? { ok: false, error: 'offline' },
   };

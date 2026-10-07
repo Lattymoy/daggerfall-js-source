@@ -51,7 +51,8 @@ const counts = (tree, herb, vein, boulder) => Object.freeze({ tree, herb, vein, 
 /** A wilderness pixel's nodes a day, by climate. The sea has none (Fishing's alone). BOULDERS (FIELD BUGS 2026-10-01, the
  *  service's acct47): the boulders 3 / 4 / 5 where they were 1 / 2 / 3 - a field's pieces hold one on each side now.
  *  MORE-NODES (2026-10-02, Mac: "increase all profession nodes", "Double"; acct48): the trees, the herb patches and the
- *  veins twice what they were - a day's sixty a profession is the bound, so it is the walk between nodes that halves. */
+ *  veins twice what they were - the walk between nodes halves (CAP-OFF: and with no day's cap, the nodes and the walk
+ *  between them are the day's whole bound). */
 export const NODE_COUNTS = Object.freeze({
   [CLIMATES.Woodlands]: counts(12, 8, 4, 3),
   [CLIMATES.MountainWoods]: counts(10, 6, 6, 4),
@@ -139,8 +140,9 @@ export const regionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < REGION_N
 export const nodeKey = ({ kind, x, y, day, slot }) => `${kind}:${x}:${y}:${day}:${slot}`;
 export const dveinKey = ({ dungeon, day, slot }) => `dvein:${dungeon}:${day}:${slot}`;
 /** PROF7: a body's id - `body:<day>:<id>`, the UTC day of the kill and twelve hex digits the killer's client drew at it
- *  (scenes/huntHost.js). Hunting is bounded, not witnessed (PROF0 6): the id is the client's word and the day's cap
- *  its bound - so it names no pixel, no dungeon and no foe, and the service reads none of it but the day. */
+ *  (scenes/huntHost.js). Hunting is bounded, not witnessed (PROF0 6): the id is the client's word and the hour's writes
+ *  and the day's rare hides its bound (CAP-OFF) - so it names no pixel, no dungeon and no foe, and the service reads
+ *  none of it but the day. */
 export const bodyKey = ({ day, id }) => `body:${day}:${id}`;
 export const BODY_ID_RE = /^[0-9a-f]{12}$/;
 const NODE_KEY_RE = /^(tree|herb|vein|boulder):(\d{1,3}):(\d{1,3}):(\d{1,6}):(\d{1,2})$/;
@@ -148,8 +150,8 @@ const DVEIN_KEY_RE = /^dvein:(\d{1,7}):(\d{1,6}):(\d{1,2})$/;
 const BODY_KEY_RE = /^body:(\d{1,6}):([0-9a-f]{12})$/;
 /** PROF8: a haul's id - `haul:<x>:<y>:<day>:<id>`, the map pixel the net was cast from, its UTC day and twelve hex
  *  digits the angler's client drew at the cast (scenes/fishHost.js). Fishing is bounded, not witnessed (PROF0 6): the
- *  pixel is the client's word, read for its ground (the sea's finds are a confirmed pixel's) and its day - the day's
- *  forty hauls the bound. */
+ *  pixel is the client's word, read for its ground (the sea's finds are a confirmed pixel's) and its day - the hour's
+ *  writes the bound (CAP-OFF: the day's forty hauls are gone). */
 export const haulKey = ({ x, y, day, id }) => `haul:${x}:${y}:${day}:${id}`;
 const HAUL_KEY_RE = /^haul:(\d{1,3}):(\d{1,3}):(\d{1,6}):([0-9a-f]{12})$/;
 /** A dungeon's identity, DFU's own: `MapTableData.MapId & 0xfffff` (formats/mapsFile.js). */

@@ -192,11 +192,12 @@
   {
     "name": "PROF2-22-a-gem-into-full-stores",
     "file": "server-account/src/professions.js",
-    "old": "        CASE WHEN COALESCE((SELECT SUM(qty) FROM ${T} WHERE player = ?1 AND char_id = ?4 AND material = ?15), 0) < ?11 THEN ?15 END, ?13, ?2, ?3",
-    "new": "        ?15, ?13, ?2, ?3",
+    "old": "        CASE WHEN COALESCE((SELECT SUM(qty) FROM ${T} WHERE player = ?1 AND char_id = ?4 AND material = ?14), 0) < ?11 THEN ?14 END, ?13, ?2, ?3",
+    "new": "        ?14, ?13, ?2, ?3",
     "tests": [
       "test/prof2_service.test.js"
-    ]
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the gem is ?14 now."
   },
   {
     "name": "PROF2-23-smelt-from-nothing",

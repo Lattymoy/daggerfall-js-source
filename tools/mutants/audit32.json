@@ -20,29 +20,32 @@
   {
     "name": "AUDIT32-L2-decision-counts-bodies",
     "file": "server-account/src/professions.js",
-    "old": "const hunted = \"COALESCE((SELECT SUM(qty) FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?6), 0)\";",
-    "new": "const hunted = \"COALESCE((SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?6), 0)\";",
+    "old": "const huntedHigh = \"COALESCE((SELECT SUM(qty) FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?6 AND tier >= ?20), 0)\";",
+    "new": "const huntedHigh = \"COALESCE((SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?6 AND tier >= ?20), 0)\";",
     "tests": [
       "test/audit32_service.test.js"
-    ]
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the day's hides of any tier are counted no more, so the decision's count in hides is the rare hides' alone."
   },
   {
-    "name": "AUDIT32-L2-day-room-uncut",
+    "name": "AUDIT32-L2-day-room-cut-again",
     "file": "server-account/src/professions.js",
-    "old": "CASE WHEN ?9 = 'hunting' THEN ?21 - ${hunted} ELSE ?10 END",
-    "new": "?10",
+    "old": "          CASE WHEN ?9 = 'hunting' AND ?19 >= ?20 THEN ?21 - ${huntedHigh} ELSE ?10 END),",
+    "new": "          CASE WHEN ?9 = 'hunting' AND ?19 >= ?20 THEN ?21 - ${huntedHigh} ELSE ?10 END, CASE WHEN ?9 = 'hunting' THEN 30 - COALESCE((SELECT SUM(qty) FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?6), 0) ELSE ?10 END),",
     "tests": [
       "test/audit32_service.test.js"
-    ]
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the day's room of thirty hides is gone and L2's pin turned (a clean pelt at 29 is whole) - the mutant cuts the last skinning to the thirty again. It was the mutant that left the room uncut."
   },
   {
     "name": "AUDIT32-L2-high-room-uncut",
     "file": "server-account/src/professions.js",
-    "old": "CASE WHEN ?9 = 'hunting' AND ?22 >= ?23 THEN ?24 - ${huntedHigh} ELSE ?10 END",
+    "old": "CASE WHEN ?9 = 'hunting' AND ?19 >= ?20 THEN ?21 - ${huntedHigh} ELSE ?10 END",
     "new": "?10",
     "tests": [
       "test/audit32_service.test.js"
-    ]
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): ?19 to ?21 now."
   },
   {
     "name": "AUDIT32-S2-body-slots-read",
@@ -56,20 +59,22 @@
   {
     "name": "AUDIT32-S3-second-find-all-or-nothing",
     "file": "server-account/src/professions.js",
-    "old": "CASE WHEN ${storedExtra} < ?11 THEN ?20 END",
-    "new": "CASE WHEN ${storedExtra} + ?25 <= ?11 THEN ?20 END",
+    "old": "CASE WHEN ${storedExtra} < ?11 THEN ?18 END",
+    "new": "CASE WHEN ${storedExtra} + ?22 <= ?11 THEN ?18 END",
     "tests": [
       "test/audit32_service.test.js"
-    ]
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): ?18 and ?22 now."
   },
   {
     "name": "AUDIT32-S3-second-find-uncut",
     "file": "server-account/src/professions.js",
-    "old": "CASE WHEN ${storedExtra} < ?11 THEN MIN(?25, ?11 - ${storedExtra}) ELSE 1 END",
-    "new": "?25",
+    "old": "CASE WHEN ${storedExtra} < ?11 THEN MIN(?22, ?11 - ${storedExtra}) ELSE 1 END",
+    "new": "?22",
     "tests": [
       "test/audit32_service.test.js"
-    ]
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): ?22 now."
   },
   {
     "name": "AUDIT32-S4-foe-after-the-hour",
@@ -144,13 +149,14 @@
     ]
   },
   {
-    "name": "AUDIT32-B2-cap-refusal-unheard",
+    "name": "AUDIT32-B2-cap-refusal-learned-again",
     "file": "src/net/profBook.js",
-    "old": "    if (r?.error === 'prof-hunt-cap') state.hunt",
-    "new": "    if (false) state.hunt",
+    "old": "    if (r?.error === 'prof-hunt-high') state.hunt",
+    "new": "    if (r?.error === 'prof-hunt-cap') state.hunt = { ...(state.hunt ?? { hides: 0, high: 0 }), hides: 30 };\n    if (r?.error === 'prof-hunt-high') state.hunt",
     "tests": [
       "test/audit32_client.test.js"
-    ]
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the day's thirty is gone, and B2's pin turned - an old service's `prof-hunt-cap` raises nothing. The mutant learns it again. It was the mutant that never heard it."
   },
   {
     "name": "AUDIT32-B2-high-refusal-unheard",

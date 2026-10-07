@@ -209,7 +209,7 @@ test('PROF2 service: a gem - a strike on the glint a chance on witnessed ground,
   assert.ok(s.stores(full, f.body.material)[0][1] >= 2, 'the ore still given');
 });
 
-test('PROF2 service: Deep Delver\'s dungeon veins yield half again; the Mining day holds 60, the Herbalism day its own', async (t) => {
+test('PROF2 service: Deep Delver\'s dungeon veins yield half again; the Mining day past 60 credited (CAP-OFF), and a fifth vein in a dungeon nobody has vouched for still refused', async (t) => {
   const s = await stand();
   const mac = await s.registered('Mac');
   s.setXp(mac, xpForRank(100), 'mining', { spec50: 'deep-delver' });
@@ -225,8 +225,12 @@ test('PROF2 service: Deep Delver\'s dungeon veins yield half again; the Mining d
   s.raw.prepare(`INSERT INTO node_harvests (day, node, kind, player, char_id, profession, material, qty, xp, at, rid, n)
     SELECT ?, 'vein:1:1:' || ? || ':' || value, 'ore', ?, ?, 'mining', 'metal:iron', 1, 1, ?, 'fill' || value, 'x' FROM json_each(?)`)
     .run(today(), today(), mac.id, mac.character, _now, JSON.stringify(Array.from({ length: 56 }, (_, i) => i)));
+  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): the day held 60 - a sixty-first was `prof-cap`.
+  // Now the sixty-first is credited, and the bound that stands is the unvouched dungeons' four (AUDIT 29 A5)
+  const past = await s.call('/v1/prof/harvest', ore(mac, veinOf(WOODS, GLENUMBRA, (x) => x.tier === 1)), mac.secret);
+  assert.deepEqual([past.status, past.body.today], [200, 61], JSON.stringify(past.body));
   const capped = await s.call('/v1/prof/harvest', { character: mac.character, node: dveinKey({ dungeon: 999, day: today(), slot: 0 }), kind: 'ore', climate: MOUNTAIN, region: WAYREST, act: {}, at: _now - 2, rid: rid() }, mac.secret);
-  assert.deepEqual(capped.body, { error: 'prof-cap' }, 'sixty harvests of Mining a day');
+  assert.deepEqual(capped.body, { error: 'prof-deep-cap' }, 'a fifth dungeon nobody has vouched for');
 });
 
 // ─── THE FORGE ───────────────────────────────────────────────────────

@@ -1,6 +1,7 @@
 // AUDIT 29 (2026-09-28, Mac: "Lets audit everything so far before we continue") - THE PROFESSIONS' SERVICE, AS THE
 // AUDIT FOUND IT, through the real Worker over node:sqlite (test/accountDb.mjs): a node taken once whatever its
-// spelling; the day's harvests bounded an account as well as a character; the dungeons nobody vouched for four veins a
+// spelling; the day's harvests bounded an account as well as a character (RETIRED by CAP-OFF - neither is bounded now,
+// the pin turned to say so); the dungeons nobody vouched for four veins a
 // day; a dissent on confirmed ground written down; a signature's own slot; a region's ground by its pixels' facts;
 // the XP answered as credited; a paid change of specialisation one track's, asked as the client saw it; a free one
 // answered again after the switch; Motherlode Sense refused; a writ's same-id race and a writ one filled oneself.
@@ -10,7 +11,7 @@ import assert from 'node:assert/strict';
 
 import { standService, T0 } from './accountDb.mjs';
 import { veins, nodeCount, nodeKey, dveinKey, herbPatches } from '../src/net/nodeLaw.js';
-import { xpForRank, PROF_XP_MAX, HARVESTS_PER_DAY, HARVESTS_PER_ACCOUNT_DAY, DEEP_UNCONFIRMED_PER_DAY, RESPEC } from '../src/net/professionLaw.js';
+import { xpForRank, PROF_XP_MAX, DEEP_UNCONFIRMED_PER_DAY, RESPEC } from '../src/net/professionLaw.js';
 import { sharedClassicMinutes } from '../src/net/wire.js';
 import { utcDay } from '../src/net/marksLaw.js';
 
@@ -103,17 +104,17 @@ test('AUDIT 29 A1: a node spelt with a leading zero is no node - the day\'s once
 
 // ─── THE ACCOUNT'S DAY ───────────────────────────────────────────────
 
-test('AUDIT 29 A3: the day\'s harvests are bounded an account too - characters invented by the id fill no more than two characters\' days a profession', async () => {
+test('AUDIT 29 A3, RETIRED by CAP-OFF (2026-10-07, Mac: "Remove the cap on life skills"): the account\'s day in a profession bounds nothing - after 120 harvests (two characters\' old days) across invented characters, a fifth character\'s is credited', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
-  assert.equal(HARVESTS_PER_ACCOUNT_DAY, 2 * HARVESTS_PER_DAY);
   const ins = s.raw.prepare(`INSERT INTO node_harvests (day, node, kind, player, char_id, profession, material, qty, xp, at, rid, n)
     VALUES (?, ?, 'ore', ?, ?, 'mining', 'metal:iron', 1, 15, ?, ?, 'x')`);
-  for (let i = 0; i < HARVESTS_PER_ACCOUNT_DAY; i++) ins.run(today(), `vein:1:1:${today()}:${i}`, mac.id, `alt-${String(i % 4).padStart(4, '0')}`, _now, `seed-${i}-xxxx`);
+  for (let i = 0; i < 120; i++) ins.run(today(), `vein:1:1:${today()}:${i}`, mac.id, `alt-${String(i % 4).padStart(4, '0')}`, _now, `seed-${i}-xxxx`);
   const v = tier1Vein();
   const r = await s.call('/v1/prof/harvest', ore(mac, v.key, WOODS, GLENUMBRA), mac.secret);
-  assert.deepEqual([r.status, r.body], [409, { error: 'prof-account-cap' }], 'a fifth character, never used today, refused');
-  assert.equal((await s.call('/v1/prof/harvest', { ...ore(mac, herbNode(), WOODS, GLENUMBRA), kind: 'herbs' }, mac.secret)).status, 200, 'another profession\'s day is its own');
+  // PIN MOVED (CAP-OFF): a fifth character, never used today, was refused - `prof-account-cap`
+  assert.deepEqual([r.status, r.body.today], [200, 1], JSON.stringify(r.body));
+  assert.equal((await s.call('/v1/prof/harvest', { ...ore(mac, herbNode(), WOODS, GLENUMBRA), kind: 'herbs' }, mac.secret)).status, 200, 'another profession\'s day as ever');
 });
 function herbNode() {
   const p = herbPatches({ x: 300, y: 200, day: today(), climate: WOODS })[0];
