@@ -274,7 +274,8 @@ relay's: a player who reaches the arena simply arrives, and the fight judges whe
 ## 10. The Last Moment - the Brass Remnant
 
 What the Warp kept of the Numidium: a brass colossus four times a man's height, its chest an open cage around a heart
-of shattered soul-gem light - the Mantella's echo. The relay runs it (`net/sdBrain.js`), as it runs the Warden.
+of shattered soul-gem light - the Mantella's echo. The relay runs it (`net/sdRemnant.js`, beside `net/sdBrain.js` - SD8a), as
+it runs the Warden.
 
 **Health.** Each fighter who enters brings `SD_TTK_S` (420 s) x `dpsRef(lv)` x 1.25 to its health - nearly twice the
 Warden's share - added at its current fraction (the gate's `joinFight` law). The same caps on how much a blow is
@@ -297,6 +298,16 @@ is stunned for 8 s and takes 1.5x; leave one and the Reset lands - 70% of everyo
 
 **The Hour Ends.** Fifteen minutes after the first blow, the Hour ends: every 2 s, 99% of everyone's health. A group that
 cannot finish it in fifteen minutes does not.
+
+Read and amended in the law (SD8a): the Echoes' "half of what is left" is half of what is left to the break's end (35%),
+so the two together are the phase, and a blow on either comes off the whole; while both stand each fights with the Stomp
+and the Volley, and the Hour-Hand is the pair's - every 14 s from both at once, each holding for the other, gold turning
+one way and silver the other (left to each, the two fell out of step and the Hand came from one); one left alone fights
+with all three. The Mantella Pulse is the Hour's own clock, not the Walking Hour's alone: every 30 s from the wake through
+every phase, the heart beating whether it is struck or not. "The first blow" is the Remnant's own, at the opening's end
+(8 s after the first fighter's `in`): a fight nobody strikes still ends. A blow cannot take it past the phase it is in
+before the turn. The Hearts hold three seconds of the living's reference damage between them. And a fight no living
+fighter has stood in for 30 s is LOST - the next is fresh: it is meant to be lost, many times.
 
 **What it asks of a build.** Its blows are shares of the struck player's own health (the gate's law), so no amount of
 health makes it safe; the pulses and the Reset are unresisted magic, so no resistance makes it safe; it cannot be
@@ -1085,3 +1096,56 @@ pin now asks for a real one). PINS MOVED: `test/sd6c_hall.test.js` (the Concord'
 ward re-aimed by content; `tools/mutants/sd6c.json`'s lash re-aimed by content (the cast-back takes the same two lines).
 
 SD8 next: the Last Moment - the Brass Remnant (section 10), the relay's brain for it, three phases.
+
+### SD8a - shipped 2026-10-07 (the Brass Remnant's law)
+
+Section 10's law, pure (`net/sdRemnant.js`), as the Warden's is (`net/gateBrain.js`): the moment and a [0,1) source
+handed in, no I/O - the relay's to run (SD8b) and every screen's to read. Its frame is the arena's (its centre the
+origin - `arenaOf`).
+
+- **The fight** (`newRemnantFight`): born with the first fighter's `in`, numbered (`fi` - every screen knows a fresh one),
+  the Remnant at the far side facing the way in; it wakes 8 s on (`SD_OPENING_MS`). A share is the gate's law at its own
+  numbers (`joinRemnant`: `SD_TTK_S` 420 x `dpsRef` x `SD_SHARE_X` 1.25, at the fraction it stands at, an empty bucket for
+  one who comes to it bled, the first claim kept, 256 seats, an idle one freed); a fighter away 30 s takes its share out
+  (the gate's `retireShare`). LOST after 30 s with no living fighter in the arena (`SD_LOST_MS`).
+- **Belief** (`applyRemnantHit`, `applyEchoHit`, `applyHeartHit`): the gate's own hand and purse - `net/gateBrain.js`
+  exports `spendBlow` and `spendPurse` now, and the Remnant keeps no blow rate or bucket of its own: one hand and one purse
+  for every body in the fight. A pose in the arena, a melee blow within reach of the body it meets; asleep, outside time or
+  past the Hour, nothing lands; a phase holds its floor; a stunned Remnant takes half again; the Last Moment's last blow
+  fells it - where it stands, the fight's best three and every fighter's part (the gate's `topDealers`, `damageChart`;
+  `earned` reads it as the gate's does).
+- **The Walking Hour**: each body walks at its chosen (threat, then any) and strikes - the Stomp only within 5 m of its
+  body, the Hour-Hand and the Volley from anywhere, and after a far blow it walks in 3 s (`SD_WALK_IN_MS`) before it
+  chooses again unless its chosen comes within its Stomp; never a blow a third time running (the gate's `REPEAT_MAX`).
+- **The Dragon Break**: at 70% it steps outside time; the Echoes rise at their spots 2.5 s on, each with half of what is
+  left to 35%, the pool kept true as shares come and go (`rescaleEchoes`); one fallen and left alone 15 s rises with half
+  its health; both fallen within it - the Last Moment, at 35%, the Remnant back at the centre after 2.5 s. The pair's
+  Hour-Hand every 14 s from both at once (`pairHand`).
+- **The Last Moment**: wind-ups 80%, its walk a quarter faster; the Reset 50 s after its return and 50 s after each ended
+  (8 s, never shortened, called once the blow in flight is done): the Hearts rise (`heartCountFor`, on a ring 8-22 m out,
+  6 m apart, 3 m clear of every pillar, `heartHpFor`); all broken - stunned 8 s, x1.5, the next 50 s after the stun; one
+  left - it lands and heals 8%. The Hearts take no blow in its last half second (`heartsOpen`).
+- **The Hour's own blows** (body `SD_BODY.hour`): the Pulse every 30 s from the wake, numbered (`pulsePct` - 12% and 2%
+  more each); the Hour Ends 15 minutes after the wake, every 2 s from then - and nothing else is done or believed.
+- **The geometry both ends judge by**: the Stomp's ring rolling out (`stompRingAt`, `ringPassed` - its front's width), the
+  Hour-Hand's turn (`handAngleAt`, `handSwept` - the beam's width at the body's distance, its length), and a pillar's shade
+  (`behindPillar` - the four squares on the diagonals, `SD_PILLARS`).
+- **The frames** (the `sd` frame's kinds SD8b will carry): `atk {b, i, a, at, x, z, yw, tg, sw?, n?}`, `mv {b, ...}`, `hp`,
+  `ph {n, at, up}`, `ec {e, d?, n?, r?}`, `cx`/`cxh`/`cxb`, `stun`, `lost`, and the whole state (`remnantStateOf`).
+
+Simulated whole (the pins): eight fighters at their reference damage, splitting the Echoes and breaking every Heart, fell
+it in about nine minutes (532 s); at 60% of it, still inside the Hour (879 s); at half, the Hour Ends with it standing at
+14%; all on one Echo, it keeps rising and the Last Moment comes five minutes late; Hearts left, the Reset lands six
+times and heals.
+
+THE FOUR HOSTS: none yet - FLAGGED all four; the law is read by SD8b's relay and SD8c's page.
+
+Pins: `test/sd8a_remnant.test.js` (12 - the numbers; a share and a seat; belief; the Walking Hour; the Dragon Break and
+its pair's Hand, close in and from afar; the Last Moment and the Reset; the Hour's own blows; lost; the geometry; whole
+fights simulated; the state; the gate's hand and purse shared); `tools/mutants/sd8a.json` (42, all dead - the pair's Hand
+was each Echo's own at first, with the other joining when free, and two seeds never paired it: the Hand is the pair's
+clock now, and a hold that only a close fight needs is pinned by one). PINS MOVED: `test/relayversion.test.js` -
+`world176` re-hashed in place (`net/gateBrain.js` exports its hand and purse; undeployed).
+
+SD8b next: the relay runs it - the realm's fight on its alarm, the wire's kinds, the `in` and the blows believed, the fall
+told to the hub.
