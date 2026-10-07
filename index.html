@@ -113,8 +113,9 @@
     .dek { max-width: 46ch; margin: 0 auto 24px; }
     .gate { max-width: 54ch; margin: 0 auto 26px; color: #a89f88; font-size: 15px; }
     .gate b { color: #d8cfae; font-weight: 400; }
-    .doorlinks { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 10px 26px; justify-content: center; }
-    .doorlinks a { border: 0; }
+    .doorlinks { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    /* PLUS-SITE: the sections' four are pressed, so they are slabs too - the plaque's kind a size down */
+    .doorlinks a { display: inline-flex; align-items: center; min-height: 44px; padding: 6px 14px; border: 2px solid; color: #d8cfae; }
 
     /* THE ASKS (U64's corner; PATREON1, 2026-09-25, Mac: "Replace website
        KOFI with patreon"; SUPPORT1, 2026-10-05, Mac: "I want to add the
@@ -159,27 +160,37 @@
     .stat[data-stat="tests"]::after { content: ' tests'; }
     .stat[data-stat="lines"]::after { content: ' lines of code'; }
 
-    /* SECTIONS: centered, boxless, a rule and a gem between them. */
-    main { max-width: 1000px; margin: 0 auto; padding: 0 24px 40px; }
-    section { padding: 26px 0 46px; text-align: center; }
-    section h2 { font-size: clamp(36px, 5vw, 52px); line-height: 1; }
+    /* SECTIONS. PLUS-SITE (2026-10-07, Mac: "give the main menu the enhanced plus UI treatment and do the same thing for
+       our website"): each a carved WINDOW of the game's stone - its name on the lit band at its head, a box inside it a
+       PANEL. The page gives each box its edge and room; the stone and brass are the kit's, injected after this sheet by
+       scripts/landingHtml.mjs from the game's own tones (ui/enhancedFrame.js siteKitCss), as the night and the marks
+       are. Without the kit (the raw file) every edge falls back to the text's colour, never to a colour of its own. */
+    main { max-width: 1000px; margin: 0 auto; padding: 24px 24px 40px; }
+    main > section { position: relative; border: 4px solid; padding: 0 30px 34px; margin: 0 0 44px; text-align: center; }
+    main > section > h2 { font-size: clamp(36px, 5vw, 52px); line-height: 1; margin: 0 -30px; padding: 24px 16px 20px; }
+    main > section > .rule { margin: 18px auto 26px; }
     .lede { color: #a89f88; max-width: 56ch; margin: 14px auto 30px; font-size: 15px; }
-    .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; text-align: left; }
+    .cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; text-align: left; }
+    .cols > div, .grid > div { border: 2px solid; padding: 16px 18px 4px; }
     .cols h3 { font-size: 26px; margin-bottom: 8px; }
     .cols p { color: #a89f88; font-size: 15px; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px 26px; text-align: left; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; text-align: left; }
+    .grid dd { margin-bottom: 12px; }
     .grid dt { font-size: 15px; letter-spacing: 0.18em; text-indent: 0.18em; text-transform: uppercase; color: #d8cfae; text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
-    .grid dd { margin: 6px 0 0; color: #a89f88; font-size: 15px; }
+    .grid dd { margin-top: 6px; margin-left: 0; color: #a89f88; font-size: 15px; }
 
     .steps { list-style: none; margin: 0 auto; padding: 0; counter-reset: step; text-align: left; max-width: 64ch; }
-    .step { display: grid; grid-template-columns: 54px 1fr; gap: 0 16px; padding: 18px 0; border-top: 2px solid #232a33; }
-    .step:first-child { border-top: 0; }
-    .step::before { counter-increment: step; content: counter(step); font-size: 40px; line-height: 1; color: var(--brass); text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
+    /* a step is a panel, its numeral in a brass-lit socket */
+    .step { display: grid; grid-template-columns: 54px 1fr; gap: 0 18px; padding: 16px 18px 4px; margin: 0 0 12px; border: 2px solid; }
+    .step::before { counter-increment: step; content: counter(step); display: flex; align-items: center; justify-content: center;
+      width: 54px; height: 54px; border: 2px solid; font-size: 36px; line-height: 1; color: var(--brass); text-shadow: 2px 2px 0 rgba(0,0,0,0.8); }
     .step h3 { font-size: 24px; margin-bottom: 6px; }
     .step p { color: #a89f88; font-size: 15px; }
     .sources { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 15px; }
 
-    .qa { display: grid; grid-template-columns: 240px 1fr; gap: 20px 26px; text-align: left; margin: 0; }
+    /* a question and its answer, a panel each */
+    .qa { display: flex; flex-direction: column; gap: 12px; text-align: left; margin: 24px 0 0; }
+    .qa > div { display: grid; grid-template-columns: 220px 1fr; gap: 6px 24px; padding: 16px 18px; border: 2px solid; }
     .qa dt { font-size: 24px; line-height: 1.1; text-shadow: 2px 2px 0 rgba(0,0,0,0.7); }
     .qa dd { margin: 0; color: #a89f88; font-size: 15px; }
     .qa dd .meta { display: block; color: #7d7460; font-size: 14px; margin-top: 6px; }
@@ -195,8 +206,12 @@
 
     @media (max-width: 860px) {
       .cols, .grid { grid-template-columns: 1fr; }
-      .qa { grid-template-columns: 1fr; gap: 4px 0; }
-      .qa dd { margin-bottom: 16px; }
+      .qa > div { grid-template-columns: 1fr; }
+      main { padding: 16px 14px 32px; }
+      main > section { padding: 0 16px 24px; }
+      main > section > h2 { margin: 0 -16px; }
+      .step { grid-template-columns: 44px 1fr; gap: 0 14px; padding: 14px 14px 4px; }
+      .step::before { width: 44px; height: 44px; font-size: 28px; }
       .door { padding-bottom: 140px; }
       /* The asks keep ONE row on a phone, where two plaques in full words
          would wrap onto the wordmark: the mark and the platform's name,
@@ -290,22 +305,22 @@
         </div></li>
       </ol>
       <dl class="qa">
-        <dt>Controls</dt>
-        <dd>Daggerfall Unity's defaults. WASD and mouse, F6 for the pack, F9 and F11 to quick save and load, Esc for the rest. Rebind anything in Settings.</dd>
+        <div><dt>Controls</dt>
+          <dd>Daggerfall Unity's defaults. WASD and mouse, F6 for the pack, F9 and F11 to quick save and load, Esc for the rest. Rebind anything in Settings.</dd></div>
 
-        <dt>Browsers</dt>
-        <dd>Any current one with WebGL2: Chrome, Edge, Firefox or Safari.</dd>
+        <div><dt>Browsers</dt>
+          <dd>Any current one with WebGL2: Chrome, Edge, Firefox or Safari.</dd></div>
 
-        <dt>Saves</dt>
-        <dd>In your browser's storage. The desktop app keeps them as real files instead.</dd>
+        <div><dt>Saves</dt>
+          <dd>In your browser's storage. The desktop app keeps them as real files instead.</dd></div>
 
-        <dt id="desktop">The desktop app</dt>
-        <dd>Optional. Saves become real files you can back up, it finds your Daggerfall install and reads ARENA2 straight from disk, and it works offline. The Windows installer and the Linux AppImage update themselves before you play; the portable exe and the Mac tell you when a new version is out.
+        <div><dt id="desktop">The desktop app</dt>
+          <dd>Optional. Saves become real files you can back up, it finds your Daggerfall install and reads ARENA2 straight from disk, and it works offline. The Windows installer and the Linux AppImage update themselves before you play; the portable exe and the Mac tell you when a new version is out.
           <span class="dl"><a href="https://github.com/Lattymoy/daggerfall-js-source/releases/latest/download/DaggerfallOnline-win-x64-setup.exe">Windows</a><a href="https://github.com/Lattymoy/daggerfall-js-source/releases/latest/download/DaggerfallOnline-mac-arm64.dmg">macOS</a><a href="https://github.com/Lattymoy/daggerfall-js-source/releases/latest/download/DaggerfallOnline-linux-x86_64.AppImage">Linux</a></span>
-          <span class="meta">On Windows the <code>-setup</code> file installs where you choose; the <code>-portable</code> one runs from wherever you put it (<a href="https://github.com/Lattymoy/daggerfall-js-source/releases/latest/download/DaggerfallOnline-win-x64-portable.exe">get it here</a>). The app is not code-signed yet, so the first launch warns: on Windows choose More info, then Run anyway; on a Mac open it once, then choose Open Anyway under System Settings, Privacy &amp; Security. The Mac build is for Apple silicon. On Linux, make the AppImage executable. <a href="https://github.com/Lattymoy/daggerfall-js-source/releases/latest">Every file</a>, or <a href="https://github.com/Lattymoy/daggerfall-js-source/blob/main/bible/01-Overview/Desktop-App.md">build it from source</a>.</span></dd>
+          <span class="meta">On Windows the <code>-setup</code> file installs where you choose; the <code>-portable</code> one runs from wherever you put it (<a href="https://github.com/Lattymoy/daggerfall-js-source/releases/latest/download/DaggerfallOnline-win-x64-portable.exe">get it here</a>). The app is not code-signed yet, so the first launch warns: on Windows choose More info, then Run anyway; on a Mac open it once, then choose Open Anyway under System Settings, Privacy &amp; Security. The Mac build is for Apple silicon. On Linux, make the AppImage executable. <a href="https://github.com/Lattymoy/daggerfall-js-source/releases/latest">Every file</a>, or <a href="https://github.com/Lattymoy/daggerfall-js-source/blob/main/bible/01-Overview/Desktop-App.md">build it from source</a>.</span></dd></div>
 
-        <dt>If it breaks</dt>
-        <dd>Reload first. If it is still broken, file it on the <a href="https://github.com/Lattymoy/daggerfall-js-source/issues">issue tracker</a> and say what you did.</dd>
+        <div><dt>If it breaks</dt>
+          <dd>Reload first. If it is still broken, file it on the <a href="https://github.com/Lattymoy/daggerfall-js-source/issues">issue tracker</a> and say what you did.</dd></div>
       </dl>
     </section>
 
@@ -330,17 +345,17 @@
       <h2 id="credits-h">Credits</h2>
       <div class="rule"><i class="gem"></i></div>
       <dl class="qa">
-        <dt><a href="https://github.com/Interkarma/daggerfall-unity">Daggerfall Unity</a></dt>
-        <dd>Interkarma and contributors, MIT licence. Daggerfall Online is a separate project translated from its C#. Without it there would be nothing to build on.</dd>
+        <div><dt><a href="https://github.com/Interkarma/daggerfall-unity">Daggerfall Unity</a></dt>
+          <dd>Interkarma and contributors, MIT licence. Daggerfall Online is a separate project translated from its C#. Without it there would be nothing to build on.</dd></div>
 
-        <dt>The Elder Scrolls II: Daggerfall</dt>
-        <dd>Bethesda Softworks, 1996. A fan project, not affiliated with or endorsed by Bethesda or ZeniMax.</dd>
+        <div><dt>The Elder Scrolls II: Daggerfall</dt>
+          <dd>Bethesda Softworks, 1996. A fan project, not affiliated with or endorsed by Bethesda or ZeniMax.</dd></div>
 
-        <dt><a href="https://www.dfworkshop.net/">Daggerfall Workshop</a> and <a href="https://en.uesp.net/wiki/Daggerfall:Daggerfall">UESP</a></dt>
-        <dd>The format documentation the readers were checked against.</dd>
+        <div><dt><a href="https://www.dfworkshop.net/">Daggerfall Workshop</a> and <a href="https://en.uesp.net/wiki/Daggerfall:Daggerfall">UESP</a></dt>
+          <dd>The format documentation the readers were checked against.</dd></div>
 
-        <dt><a href="https://github.com/Lattymoy">Lattymoy</a></dt>
-        <dd>Built Daggerfall Online. Source, docs and the ledger are on <a href="https://github.com/Lattymoy/daggerfall-js-source">GitHub</a>.<span class="meta">Set in Jacquard 12 and Pixelify Sans from Google Fonts.</span></dd>
+        <div><dt><a href="https://github.com/Lattymoy">Lattymoy</a></dt>
+          <dd>Built Daggerfall Online. Source, docs and the ledger are on <a href="https://github.com/Lattymoy/daggerfall-js-source">GitHub</a>.<span class="meta">Set in Jacquard 12 and Pixelify Sans from Google Fonts.</span></dd></div>
       </dl>
     </section>
 

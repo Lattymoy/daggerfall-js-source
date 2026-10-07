@@ -417,8 +417,8 @@
   {
     "name": "RENOWN1-heading-changed-for-everyone",
     "file": "src/ui/enhancedAccount.js",
-    "old": "    } else root.append(el('h3', null, heading));",
-    "new": "    } else { const plain = el('h3', null, null); plain.append(el('span', 'acctname', heading)); root.append(plain); }",
+    "old": "    } else head.append(el('h3', null, heading));",
+    "new": "    } else { const plain = el('h3', null, null); plain.append(el('span', 'acctname', heading)); head.append(plain); }",
     "tests": [
       "test/renown1.test.js"
     ]

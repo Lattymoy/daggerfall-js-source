@@ -46,7 +46,8 @@ async function run(label, opts) {
   // probe's subject; the claim is that the home DREW, with the doors
   // this file goes on to drive. So it asks for those by name, and a
   // door added or moved is not a failure here.
-  const doors = (await page.locator('.px-menu button').allInnerTexts()).map((t) => t.trim().toUpperCase());
+  // AUDIT PLUS-MENU M2: a door's diamonds are drawing (aria-hidden) and stand at rest under Plus - the name is the words
+  const doors = (await page.locator('.px-menu button').allInnerTexts()).map((t) => t.replace(/\u25c6/g, '').trim().toUpperCase());
   check(`${label}: the menu draws with no ARENA2`, doors.length > 0, `${doors.length} doors`);
   for (const want of ['SETTINGS', 'FEATURES']) {
     check(`${label}: the ${want.toLowerCase()} door is on the rail`, doors.includes(want), doors.join(' / '));
