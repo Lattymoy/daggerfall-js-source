@@ -19,7 +19,7 @@ test('ARENA2 hosts - world.js: one driver, ticked before the modal return, its s
   assert.match(W, /const arenaBouts = createArenaBouts\(\{/);
   const tick = W.indexOf('    arenaFrame(dt);   // ARENA2');
   assert.ok(tick > 0);
-  assert.ok(tick < W.indexOf('if (!gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({'), 'ticked before the music and the modal return below it');
+  assert.ok(tick < W.indexOf('if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({'), 'ticked before the music and the modal return below it');   // SD13 (PIN MOVED): the Hour's score asked first
   assert.match(W, /if \(mode === 'dungeon'\) return modes\?\.arenaFloorStage\?\.\(\) \?\? modes\?\.arenaPitStage\?\.\(\) \?\? null;/, 'in the instance its stage (ARENA-FIX 4: in the undercroft the pit\'s)');
   assert.match(W, /if \(mode !== 'exterior' \|\| !walkMode \|\| !playerSpawned \|\| !arenaCityPixel\(\)\) return null;/);
   assert.match(W, /if \(ex\?\.open && ex\.hour !== _arenaHourRun\) \{ _arenaHourRun = ex\.hour; arenaBouts\.ask\(\{ where: 'city', kind: 'exhibition', ex \}\); \}/, 'the hour\'s bout, once an hour');
@@ -33,7 +33,7 @@ test('ARENA2 hosts - world.js: one driver, ticked before the modal return, its s
 test('ARENA2 hosts - world.js: the crowd drawn in both passes, the music held, the duel\'s law, my ring, the doors handed the modes', () => {
   assert.match(W, /for \(const b of arenaBouts\.batches\(\)\) \{ if \(cullOn && billboardOutside\(b\)\) continue; allBatches\.push\(b\); \}/);
   assert.match(W, /\.\.\.\(\(modes\?\.mode \?\? 'exterior'\) === 'dungeon' \? arenaBouts\.batches\(\) : \[\]\)\]/);
-  assert.match(W, /if \(!gateScoreFrame\(\) && !arenaScoreFrame\(\)\) musicDirector\.update\(\{/);
+  assert.match(W, /if \(!hourScoreFrame\(\) && !gateScoreFrame\(\) && !arenaScoreFrame\(\)\) musicDirector\.update\(\{/);   // SD13 (PIN MOVED): the Hour's score asked first
   assert.match(W, /for \(const song of Object\.values\(arenaScoreSongs\(\)\)\) music\.registerSong\(song\.name, song\);/);
   assert.match(W, /function duelEnemyNear\(\) \{ return !!duelMgr\?\.live \|\| arenaBouts\.holds\(\); \}/, 'no rest, no travel, no journey in my bout');
   assert.match(W, /if \(!player\.arena\) player\.arena = arenaBouts\.ring\(\);[^\n]*\/\/ ARENA2/, 'online');   // HOTFIX 1003i: the stands' rail after it on its line

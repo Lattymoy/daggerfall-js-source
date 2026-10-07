@@ -291,7 +291,7 @@ import { createRiteHost, RITE_TEXT } from './riteHost.js';   // WB12d: the faith
 import { createSdHost } from './sdHost.js';   // SD2b: the Hollow in the world - the hub's record in, the Hollow stood at its pixel, the find, the lines
 import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
 import { SdOmenPassRenderer } from '../render/sdOmenPass.js';   // SD2c: the Hollow's omen, the gate's beacon in brass
-import { SD_CAST_OUT_LINE, sdRoomKey, isSdRoom } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room; SD9e: a receipt from my realm's
+import { SD_CAST_OUT_LINE, sdRoomKey, isSdRoom, sdPhase } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room; SD9e: a receipt from my realm's
 import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG, SD_REALM_FLOORS } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
 import { SdSkyRenderer } from '../render/sdSky.js';   // SD5b: the Hour's sky
 import { SD_HALL_FLOORS } from '../world/sdHall.js';   // SD6c: the bridge and the first step, the Concord's floors
@@ -339,6 +339,7 @@ import { DeadlandsRenderer, skyGain, anchoredClock } from '../render/deadlands.j
 import { createDeadlandsAir } from './deadlandsAir.js';   // WB6b: and their air - the wind, the fire, the thunder of the sky's strikes
 import { createGateVeil } from '../ui/gateVeil.js';   // WB6c: the step through the gate - a vortex of fire in and out
 import { gateScoreSongs, createCourtScore, GATE_SONGS, SCORE_SILENCE } from '../systems/gateScore.js';   // WB7: the Warden's score - the court's own music
+import { sdScoreSongs, createHourScore, sdScorePlace, SD_SCORE_SILENCE } from '../systems/sdScore.js';   // SD13: the Hour's own score
 import { createSpoilsPool, spoilsStore, recoverSpoils, spoilsLevel, SPOILS_TEXT, SPOILS_SPENT_RESEND_MS } from './spoilsPool.js';
 import { breachBookFor, BREACH_BOOK_TEXT } from '../systems/breachBook.js';   // WB12c: the first ember brings the Guild's book
 import { bossPlace } from '../world/gateBoss.js';   // AUDIT WBX F3: where he fell - a charge's head, a leap's flight - frozen by the link's fold   // WB5: a fallen boss's spoils, spewed, glowing and taken
@@ -21336,6 +21337,33 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (want === SCORE_SILENCE) { if (music.current !== null) music.fadeOut(); } else music.playSong(want);   // AUDIT WB D2: the quiet after the fanfare is its ending, faded - not a cut
     return true;
   };
+  /** SD13: THE SCORE OF THE HOUR (systems/sdScore.js) - while I stand in a Hollow or its Hour the music is theirs, not
+   *  the director's: the Hollow's walk; in the Hour the hall's, the Steps', the arena's war by its phase and its last
+   *  minute, the fall's song, then the collapse's - which the Hollow plays too while it collapses. The songs are made
+   *  the first time either is stood in; let go (the song stopped, the director's next frame plays its own) the frame I
+   *  stand in neither. Answers whether the Hour holds the music this frame. */
+  let _hourScoreHeld = false, _hourScoreMade = false;
+  const _hourScore = createHourScore();
+  const sdScoreWhere = () => {
+    if ((modes?.mode ?? 'exterior') !== 'dungeon') return null;
+    if (modes?.sdRealmSlot?.() != null) { const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]); return sdScorePlace(x, z); }
+    return modes?.dungeonLocation?.superTier ? 'hollow' : null;
+  };
+  const hourScoreFrame = () => {
+    const place = sdScoreWhere();
+    if (place == null) {
+      if (_hourScoreHeld) { _hourScoreHeld = false; music.stop(); }
+      return false;
+    }
+    if (!_hourScoreMade) { _hourScoreMade = true; for (const song of Object.values(sdScoreSongs())) music.registerSong(song.name, song); }
+    _hourScoreHeld = true;
+    const slot = modes?.dungeonLocation?.sdSlot ?? modes?.sdRealmSlot?.() ?? null;
+    const now = sdFightLink?.now?.() ?? Date.now() + _sharedOffsetMs, rec = sdHost?.record?.() ?? null;
+    const collapsing = rec != null && rec.s === slot && sdPhase(rec, now) === 'fell';
+    const want = _hourScore.want(place, place === 'hollow' ? null : sdFightLink?.state?.() ?? null, now, collapsing);
+    if (want === SD_SCORE_SILENCE) { if (music.current !== null) music.fadeOut(); } else music.playSong(want);
+    return true;
+  };
   /** ARENA2: THE ARENA'S MUSIC (systems/arenaScore.js) - while a bout is heard here, the march, then the fanfare, then
    *  quiet through the healers; let go (the song stopped, the director's next frame plays its own) the frame there is
    *  none. The songs are made the first time a bout is heard. Answers whether the arena holds the music this frame. */
@@ -28097,7 +28125,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // sunny outdoor track, and when that song ended nothing fed `songEnded`
     // so it fell silent for the rest of the visit. The whole interior and
     // dungeon music path was dead code in this host.
-    if (!gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard
+    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard; SD13: and a Hollow or its Hour while I stand in it
       inside: false,
       inLocationRect: _musicInLocationRect(),
       locationType: _musicLocationType(),

@@ -718,6 +718,11 @@ carries none. The court's four carry `SCORE_PRESS` and read -15.8 / -15.4 / -14.
 which also plays one player through the whole fight and the song after it. See `11-Multiplayer/World-Bosses.md` section
 15; `test/wb10a_gate_score.test.js`.
 
+SD13 (2026-10-07): THE SCORE OF THE HOUR (`systems/sdScore.js`) - the Hollow's and the Shattered Hour's nine songs by
+the same door and the same law's shape: made notes registered by name, seamless, pressed (`HOUR_PRESS`, a ceiling a
+decibel under the clip), held by the world host's `hourScoreFrame` ahead of the court's and the arena's. See
+`11-Multiplayer/Super-Dungeons.md` section 7 and its SD13 record; `tools/sdScoreProbe.mjs`; `test/sd13_score.test.js`.
+
 ## FIELD-WIND1 (2026-09-29): the wind was a moan - a bed the port makes
 
 The Discord through Mac: "A repetitive moaning sound in the open world." The port's wind (WIND3, `systems/windAudio.js`;

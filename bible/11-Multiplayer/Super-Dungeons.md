@@ -240,6 +240,13 @@ the Deadlands' law) so every screen shows the same moment.
 The realm refuses what the Court refuses: rest, save, map, a Mark and a Recall, regeneration (`courtRules`) - and
 Levitate (SD7b: a Levitate running lifts nothing in the Hour, as in a siege's room; its Steps are walked, not flown).
 
+**Its music** (SD13, `systems/sdScore.js`): the Hollow and the Hour have a score of their own - C minor and a clock
+where the Warden's is D minor and fire. Its one motif is the Westminster quarters struck in the minor and BROKEN, the
+fourth change ending on F sharp, the tritone, where the hour should strike; MENDED in C major as the Remnant falls. The
+Hollow's walk; the Orrery's riddle; the Steps over the void; the Remnant's three phases, the Dragon Break's two themes
+in canon (silver two beats behind gold); the Hour's last minute; the fall; the collapse. Where I stand chooses (the
+hall, the Steps, the arena as near as its bar is heard), and in the arena the fight does.
+
 ## 8. The Orrery of Endings - the puzzle
 
 Six Ending-stones stand on a ring in the hall, each carved with one of the Bay's endings: **Daggerfall** (the lion),
@@ -1992,3 +1999,38 @@ Pins: `test/sd12_onelife.test.js` (3 - the realm remembers a death; the Rift's w
 `test/sd4b_rift.test.js` (the Rift asked with the fallen), `test/sd5a_realm.test.js` and `test/sd11c_page.test.js` (the
 death's words; the device's memory is `sdSlotsKept`), `test/sd10b_audit.test.js` (the Rift's rig),
 `test/relayversion.test.js` (`world176` re-hashed in place - `net/sdLaw.js` is in the bundle).
+
+### SD13 - shipped 2026-10-07 (the Score of the Hour)
+
+Mac: *"The detail needs to exceed that of the oblivion gates. These are the pinnacle of the hardest content in the
+game"*. The Warden has four songs, 5,529 notes, ten voices; the Hollow and the Hour had none - a dungeon's track played
+under the Remnant. Now nine, written as notes for the game's own player and FM bank, pressed, chosen by a pure law:
+
+| song | where, when | tempo / length | notes |
+|---|---|---|---|
+| HOURHOLW - the Hollow | inside a Hollow | 84 BPM, 32 bars | 572 |
+| HOURHALL - the Orrery | the Threshold, the hall, the bridge | 96 BPM, 32 bars | 1,074 |
+| HOURSTEP - the Unmoored Steps | the Steps; the arena before its fight's first word | 120 BPM, 32 bars | 1,228 |
+| HOURWAR1 - the Remnant wakes | the arena, phase one | 136 BPM, 32 bars | 1,464 |
+| HOURWAR2 - the Dragon Break | phase two | 142 BPM, 32 bars | 1,795 |
+| HOURWAR3 - the Last Moment | phase three | 152 BPM, 32 bars | 2,856 |
+| HOURLAST - the Hour ends | the fight's last minute | 160 BPM, 16 bars | 1,184 |
+| HOURFELL - it falls | the fall, anywhere in the Hour: SD_SCORE_STING_MS (16.5 s) from its own first note | 88 BPM, 12 bars | 102 |
+| HOURGONE - the collapse | after the fall, and in the Hollow while it collapses | 72 BPM, 24 bars | 590 |
+
+10,865 notes on thirteen voices and the kit (14 channels against the Warden's 10): the harpsichord's escapement, the
+bass, strings, brass, choir, church organ, timpani, a music box for the chime, tubular bells for the hours, horns,
+pizzicato, harp and the orchestra hit; the kit's woods for the clock (the tick on the hi wood block, the tock on the
+low, the claves racing in the Last Moment), the gears' ride bell, the low drums. Silence from the End (its word or its
+time) and on a lost fight; the fall played whole from its own first note (`createHourScore`, the gate's AUDIT WB D2 and
+WBX W3), a fall heard late going straight to the collapse's. The world host's `hourScoreFrame` holds the music before
+the court's and the arena's, and lets it go stopped the frame I stand in neither.
+
+Measured through the real player in Chromium (`tools/sdScoreProbe.mjs`, 32 checks): the war at -16.4 / -15.8 / -14.6
+dBFS and its last minute -14.4 (the Warden's -15.8 / -15.4 / -14.2), the fall -14.8, the places under them (-17.4 the
+Steps, -19.8 the hall, -19.9 the Hollow, -19.6 the collapse); every peak under -1 dBFS at the highest MusicVolume;
+every second sounding; the fall rung out before the collapse's song; one player through all nine and an unpressed song
+after.
+
+Pins: `test/sd13_score.test.js` (7 - the songs; the Hour's sound; the levels; where I stand; the law; the fall played
+whole; the host, from the world host's text); `tools/mutants/sd13.json` (27).
