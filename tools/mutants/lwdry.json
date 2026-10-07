@@ -101,8 +101,8 @@
   {
     "name": "LW-DRY-tile-job-unread",
     "file": "src/world/terrainTiles.js",
-    "old": "    if (isWaterHeight(height)) {",
-    "new": "    if (height < 0) {",
+    "old": "  if (isWaterHeight(height)) return WATER;",
+    "new": "  if (height < 0) return WATER;",
     "tests": [
       "test/terrain.test.js"
     ]

@@ -1250,12 +1250,11 @@ directory by `test/audit18_bible_docs.test.js`:
   texel of the ground is the climate's dirt darkened to silt, by the water's
   own corner coverage, a puddle keeping its art (`07-Rendering/Water-Arc.md`
   WATER-NEXT 2).
-- `waterSurface.js` - WATER1 THE WATER SURFACE: the enhanced pass over the
-  exterior water tiles - the terrain grid drawn again and lifted, the
-  water-corner table that inverts the marching squares, the swell, foam, Fresnel,
-  glint and rain shader (`drawWaterSurface` in renderer.js) - since WATER-NEXT 2-4 a sheet of its own over a
-  carved bed, a three-train swell, Beer-Lambert through the scene's copy, the shore's foam and the ripple field
-  (`07-Rendering/Water-Arc.md` WATER-NEXT) - drawn after
+- `waterSurface.js` - THE WATER SURFACE (WATER1, replaced by WATER-NEXT 2-4): the enhanced pass over the
+  exterior water tiles - a sheet of its own over a carved bed (WATER1 drew the terrain grid again, lifted), the
+  water-corner table that inverts the marching squares, a three-train swell, Beer-Lambert through the scene's copy,
+  Fresnel, the glints, the rain, the shore's foam and the ripple field (`drawWaterSurface` in renderer.js;
+  `07-Rendering/Water-Arc.md` WATER-NEXT, AUDIT WATER-NEXT) - drawn after
   every opaque pass of a pixel and before the first flat, in both exterior
   hosts. Switch `enhancedWater`, `?water=off`. `07-Rendering/Water-Arc.md`. And
   (FIELD BUGS 2026-09-29 (the sea) #4) THE SEA'S STACK IN WINDOW DEPTH,

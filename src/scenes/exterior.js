@@ -34,7 +34,9 @@ import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.G
 import { convertTilemap, isOutdoorWaterTile } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0
 import { waterUniforms, tilemapRectHasWater, waterSwitchOn, buildWaterIndices } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the town's ground; WATER-AUDIT: asked over the real extent
 import { waterBedOf, flatGrid } from '../world/waterBed.js';   // WATER-NEXT 2: the town's grid and the bed under its water
+import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS } from '../world/waterRipples.js';   // AUDIT WATER-NEXT m12: the rings round a wading player, the streaming world's own stir
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
+import { GROUND_RECORD_LIMIT } from '../world/terrainTiles.js';   // AUDIT WATER-NEXT m8: MeshReader.cs:487's marker, one home
 import { climbRigInput } from '../player/climbPose.js';   // CLIMB6: the body's limbs on the climb
 import { PlayerMotor, startRestGroundedCheck, motionBagOf } from '../player/motor.js';   // the rest gate's grounded input, one home; WW2: the one motion bag
 import { exteriorSurfaces, downProbe, rayDistanceFor, ON_EXTERIOR_WATER, exteriorSwimming } from '../player/exteriorSurface.js';   // ROAD-B (b3): PlayerMotor's three exterior surface methods; OT1: IsPlayerSwimming above ground
@@ -752,7 +754,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     for (let ty = 0; ty < GROUND_TILE_DIM; ty++) {
       for (let tx = 0; tx < GROUND_TILE_DIM; tx++) {
         const tile = srcTiles[tx][GROUND_TILE_DIM - 1 - ty];
-        const raw = tile.textureRecord >= 56
+        const raw = tile.textureRecord >= GROUND_RECORD_LIMIT   // AUDIT WATER-NEXT m8: the marker's one home (world/terrainTiles.js)
           ? 2   // record 2 * 4 = 8, grass (MeshReader.cs:487)
           : (tile.tileBitfield === 0 ? 0xff : tile.tileBitfield);
         locationTilemap[(b.x * GROUND_TILE_DIM + tx) +
@@ -913,6 +915,9 @@ export async function bootExterior(canvas, renderer, params, status) {
   // flat ground, never the grid), and the water takes its own sheet over the grid as it stood
   renderer.waterBed = waterOn;   // WATER-NEXT 2: the ground under the enhanced water is a bed (render/waterBedGlsl.js)
   renderer.waterSimple = getPref('waterQuality') === 'simple';   // WATER-NEXT: the Water quality row
+  // AUDIT WATER-NEXT m12: THE FOUR HOSTS - the town's water takes the ripple field the streaming world's does (Full only)
+  const townRipples = waterOn && !renderer.waterSimple ? createRippleStir(createRipples()) : null;
+  let _townOnWater = false;   // the player's feet in the town's water this frame (the footsteps' own answer)
   const townGrid = waterOn ? flatGrid(loc.width * GROUND_TILE_DIM, loc.height * GROUND_TILE_DIM, GROUND_OFFSET * 0.025, RMB_SIDE / GROUND_TILE_DIM) : null;
   const townBed = townGrid ? waterBedOf(townGrid, tilemapBytes, { tileDim: tilemapDim, width: loc.width * GROUND_TILE_DIM, height: loc.height * GROUND_TILE_DIM }) : null;
   const groundSurface = townGrid ? renderer.createTerrainSurface((townBed?.ground ?? townGrid).positions, (townBed?.ground ?? townGrid).normals, townGrid.indices) : (() => {
@@ -927,7 +932,7 @@ export async function bootExterior(canvas, renderer, params, status) {
   const identityMatrix = trs(0, 0, 0, 0, 0, 0);
   const townWater = waterOn ? (() => {
     const idx = buildWaterIndices(tilemapBytes, 1, undefined, tilemapDim, loc.width * GROUND_TILE_DIM, loc.height * GROUND_TILE_DIM);
-    return idx ? renderer.createWaterSheet(idx, townBed ? { positions: townBed.sheet, depths: townBed.depths } : { terrain: groundSurface }) : null;
+    return idx ? renderer.createWaterSheet(idx, townBed ? { positions: townBed.sheet, depths: townBed.sheetDepths } : { terrain: groundSurface }) : null;   // AUDIT WATER-NEXT H2: the sheet's own depths
   })() : null;
 
   /** FD1 - the RAW (pre-conversion) tilemap byte under the player,
@@ -5104,6 +5109,7 @@ export async function bootExterior(canvas, renderer, params, status) {
         // PlayerFootsteps.cs:116 - "Play splash footsteps whether
         // player is walking on or swimming in exterior water".
         const _onWater = _surf.water !== ON_EXTERIOR_WATER.None;
+        _townOnWater = _onWater;   // AUDIT WATER-NEXT m12: the ripple field's stir reads the same answer
         const _step = footsteps.update(player.pos, {
           grounded: player.grounded, swimming: player.swimming, levitating: player.levitating,
           spriteStep: mwViewFootstep(),   // AUDIT-EOTB2: SyncFootsteps - the sprite's stride while it is on screen
@@ -5724,6 +5730,12 @@ export async function bootExterior(canvas, renderer, params, status) {
     // WATER1: THE WATER, after the ground, the models and the arrows and
     // before the first flat - see world.js for the order's reasons.
     if (waterOn) {   // WATER-NEXT 2: the town's own sheet (waterOn is the town's has-water too: the sheet is there)
+      if (townRipples) {   // AUDIT WATER-NEXT m12: the field, stirred by the player in the water, before its water draws
+        townRipples.begin(dt, cam.pos[0], cam.pos[2]);
+        if (_townOnWater) townRipples.stir(player, player.pos, !!(player.isPlayerSwimming || player.swimming), now);   // AUDIT WATER-NEXT F4: outdoors the swimmer is isPlayerSwimming
+        townRipples.end(dt);
+      }
+      renderer.setWaterRipples(townRipples?.field ?? null, RIPPLE_SPAN, RIPPLE_CELLS);
       renderer.drawWaterSurface(townWater, identityMatrix, renderer.tileArrays.get(groundArchive), tilemapTex, 6.4,
         waterUniforms({ seconds: now / 1000, wind: sky.wind(), rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() }),
         tilemapDim);   // WATER-AUDIT: the town's own tilemap side, not 128

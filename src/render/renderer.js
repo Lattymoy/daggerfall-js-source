@@ -2685,8 +2685,13 @@ export class Renderer {
    *  framebuffers and puts the frame's back; a no-op without the air pass or a world frame bound. */
   snapshotAoDepth() {
     if (!this._air || !this._frameFbo) return false;
-    return this._air.snapshotAoDepth();
+    const took = this._air.snapshotAoDepth();
+    this._forgetUnitShadows();   // AUDIT WATER-NEXT G11: the copy's first frame bound its texture on the active unit
+    return took;
   }
+  /** AUDIT WATER-NEXT G11: the air pass's snapshots allocate their copies on whatever unit is active, behind the
+   *  bindings' shadows - the next `_bindTex0` of the texture the shadow still named skipped, and drew black. */
+  _forgetUnitShadows() { this._tex0Bound = null; this._tex1Bound = null; }
 
   _compositeAir() {
     if (this._retroOwed && !this._air?.pending) this._presentRetroFrame();
@@ -2698,6 +2703,7 @@ export class Renderer {
     // frame and hand the per-quad bracket straight back. The air pass
     // only needs the baseline when it actually resolves.
     this._close2D();
+    this._underWater = undefined;   // AUDIT WATER-NEXT G14: resolved - the frame's copy is no copy of what is drawn next
     const sc = this._scissor;   // AUDIT RETRO1 F3: a screen scissor live at the first quad is not the passes' - lifted for them and the present, and put back
     if (sc) this.gl.disable(this.gl.SCISSOR_TEST);
     if (this._perfOpen) this._perf?.mark('air');   // VC6d: the AO, the bloom, the shafts and the resolve - a WORLD frame's (AUDIT RETRO1 J8: a menu's resolve, the meter closed, opened a span nothing closed)
@@ -4480,6 +4486,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     gl.uniform3fv(this.uLightDir, lightDir);
     this._lightDir = lightDir;
     this._frameStamp++;   // PERF3
+    this._ripples = null;   // AUDIT WATER-NEXT G12: no ripple field but the one a host hands over this frame
     gl.uniform3fv(this.uAmbient, this._c3(this._ambient));   // EL1: every colour goes up as the installed set wants it (_c3)
     this._uploadTrilight();
     gl.uniform1f(this.uSunScale, this._sunScale);
@@ -5493,18 +5500,20 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   captureUnderWater() {
     if (this._underWater !== undefined) return this._underWater;
     this._underWater = (this._air && this._frameFbo && !this.waterSimple) ? this._air.snapshotUnderWater() : null;
+    if (this._underWater) this._forgetUnitShadows();   // AUDIT WATER-NEXT G11
     return this._underWater;
   }
 
   /** WATER-NEXT 4: THE RIPPLE FIELD the water reads this frame - world/waterRipples.js's (its `bytes`, `origin`,
    *  `version`), or null for none. The host hands it over each frame; the texture is written only when the field moved. */
   setWaterRipples(field, span = 48, cells = 96) {
-    this._ripples = field ? { field, span, cells } : null;
+    this._ripples = field ?? null;   // AUDIT WATER-NEXT P4: the field itself, a frame's handing no object
+    this._rippleSpan = span; this._rippleCells = cells;
   }
 
   /** WATER-NEXT 4: the ripple field on its unit (uploaded when its version moved), or the switch off. */
   _bindRipples(L) {
-    const gl = this.gl, r = this._ripples;
+    const gl = this.gl, r = this._ripples, cells = this._rippleCells;
     gl.uniform1i(L.rippleOn, r ? 1 : 0);
     gl.uniform1i(L.ripple, WATER_RIPPLE_UNIT);
     this._activeTexture(gl.TEXTURE0 + WATER_RIPPLE_UNIT);
@@ -5512,21 +5521,21 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       if (!this._rippleTex) {
         this._rippleTex = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, this._rippleTex);
-        gl.texStorage2D(gl.TEXTURE_2D, 1, gl.R8, r.cells, r.cells);
+        gl.texStorage2D(gl.TEXTURE_2D, 1, gl.R8, cells, cells);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         this._rippleVersion = -1;
       } else gl.bindTexture(gl.TEXTURE_2D, this._rippleTex);
-      const v = r.field.version();
+      const v = r.version();
       if (v !== this._rippleVersion) {
         gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, r.cells, r.cells, gl.RED, gl.UNSIGNED_BYTE, r.field.bytes);
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, cells, cells, gl.RED, gl.UNSIGNED_BYTE, r.bytes);
         gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
         this._rippleVersion = v;
       }
-      gl.uniform3f(L.rippleRect, r.field.origin[0], r.field.origin[1], r.span);
+      gl.uniform3f(L.rippleRect, r.packed[0], r.packed[1], this._rippleSpan);   // AUDIT WATER-NEXT G13: where the bytes were packed - the field may have slid since
     } else gl.bindTexture(gl.TEXTURE_2D, this._blackTex);
     this._tex1Bound = null;   // unit 1 is the billboards' emission unit: its shadow is forgotten, the next flat binds its own
     this._activeTexture(gl.TEXTURE0);
@@ -5887,7 +5896,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
       proj: u('uProj'), view: u('uView'), model: u('uModel'), lift: u('uLift'),
       tileArr: u('uTileArr'), tilemap: u('uTilemap'), tileSize: u('uTileSize'), tileDim: u('uTileDim'), mask: u('uWaterMask'),
       pointCount: u('uPointCount'), pointLights: u('uPointLights'), pointColors: u('uPointColors'), indirect: u('uIndirect'), indirectColor: u('uIndirectColor'),
-      time: u('uTime'), windDir: u('uWindDir'), windStrength: u('uWindStrength'), rain: u('uRain'), scroll: u('uScroll'),
+      time: u('uTime'), windDir: u('uWindDir'), windStrength: u('uWindStrength'), rain: u('uRain'),
       lightDir: u('uLightDir'), ambient: u('uAmbient'), sunScale: u('uSunScale'), sunColor: u('uSunColor'),
       moonDir: u('uMoonDir'), moonScale: u('uMoonScale'), moonColor: u('uMoonColor'),
       zenith: u('uSkyZenith'), horizon: u('uSkyHorizon'), tint: u('uTint'), f0: u('uF0'), shoreSoft: u('uShoreSoft'),
@@ -5962,12 +5971,13 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   }
 
   /** WATER-NEXT 2: the water program's frame block, the terrain's water and the open sea alike (`open` 1: no tilemap,
-   *  the whole sheet water). Binds the program (the lane's when it shadows). */
-  _waterFrameBlock(L, u, open) {
+   *  the whole sheet water), on the program the caller bound (the lane's when it shadows) - AUDIT WATER-NEXT G15: it
+   *  binds none itself. `lift` the sheet's height over its grid (the sea's own, else the frame's). */
+  _waterFrameBlock(L, u, open, lift = u.lift) {
     const gl = this.gl;
     gl.uniformMatrix4fv(L.proj, false, this._proj);
     gl.uniformMatrix4fv(L.view, false, this._view);
-    gl.uniform1f(L.lift, u.lift);
+    gl.uniform1f(L.lift, lift);
     gl.uniform1i(L.open, open);
     gl.uniform1f(L.time, u.time);
     gl.uniform2f(L.windDir, u.windDir[0], u.windDir[1]);
@@ -6013,7 +6023,7 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
   _drawWaterRows(L, rows, n) {
     this._close2D();   // PERF-2D: every draw hands the baseline back first (a no-op after the callers' own)
     const gl = this.gl;
-    gl.vertexAttrib1f(1, NO_BED_DEPTH);   // a sheet without a bed: attribute 1 is a shallow constant (createWaterSheet)
+    gl.vertexAttrib1f(1, -NO_BED_DEPTH);   // a sheet without a bed: attribute 1 is a shallow constant (createWaterSheet) - AUDIT WATER-NEXT H2: negative, no bed under it (world/waterCorners.js SHEET_NO_BED)
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
@@ -6078,12 +6088,16 @@ void main() { vec4 t = texture(uTex, vUV); if (t.a < 0.5) discard; outColor = ve
     if (!list.length) return;
     this._close2D();
     const gl = this.gl;
+    // AUDIT WATER-NEXT G2: the sea takes its own copy of the frame. It draws in the mod's Transparent queue, after the
+    // flats and the people; reading the copy the terrain's water took before them, it painted over every one of them it
+    // stood in front of - a wading foe's legs, a corpse in the shallows - and they came and went with a pond in view
+    this._underWater = undefined;
     const laneWater = !!(this._lane?.shadows && this.waterSurfaceProgramLane && this._shadows);
     const L = laneWater ? this._wsLane : this._ws;
     this._use(laneWater ? this.waterSurfaceProgramLane : this.waterSurfaceProgram);
     this._csLoc.water = L.cloud; this._waterSurfaceFog = L.fog;
-    this._waterFrameBlock(L, { ...u, lift: liftY }, 1);
-    gl.uniform3fv(L.openColor, color);
+    this._waterFrameBlock(L, u, 1, liftY);   // AUDIT WATER-NEXT P4: the sea's height beside the frame's uniforms, no copy of them a frame
+    gl.uniform3f(L.openColor, color[0], color[1], color[2]);
     gl.uniform1i(L.tileArr, 0);
     const rows = this._seaRows;
     let n = 0;

@@ -90,8 +90,9 @@ const ARCHIVE = 302;
 renderer.uploadTileArray(ARCHIVE, layers);
 // WATER-AUDIT: the water's own quads over the terrain's vertices, as the hosts draw it
 const waterIndices = buildWaterIndices(tilemapBytes, 1);
-const water = waterIndices ? renderer.createWaterSheet(waterIndices, bed ? { positions: bed.sheet, depths: bed.depths } : { terrain }) : null;
+const water = waterIndices ? renderer.createWaterSheet(waterIndices, bed ? { positions: bed.sheet, depths: bed.sheetDepths } : { terrain }) : null;   // AUDIT WATER-NEXT H2: the sheet's own depths
 const hasWater = !!water;
+renderer.waterBed = hasWater;   // AUDIT WATER-NEXT G15: the lab's ground under its water is a bed, as the hosts draw it (render/waterBedGlsl.js)
 
 const t0 = performance.now();
 const TILE_MATRICES = [];

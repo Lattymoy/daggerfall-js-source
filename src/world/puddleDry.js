@@ -9,7 +9,7 @@
 // 632 of those are DFU's shallow-water art (records 8, 9 and 23 - a pool painted on sand or grass, the "one square"
 // WATER-PUDDLE drew in its art's shape), the rest a lone shore corner or edge (a sliver) or one of the two lone record-0
 // tiles. The rest are ponds a block was laid out with - a water heart in its shore ring, a garden pond, the castles'
-// moats (40 to 110 tiles), Sentinel's harbour - and they stay.
+// moats (a CASTAA block's runs to 202 tiles with its ring - AUDIT WATER-NEXT m11), Sentinel's harbour - and they stay.
 //
 // THE RULE: a patch is a puddle when it is ONE tile, or every tile of it is shallow-water art (PUDDLE_RECORDS: DFU's
 // PlayerMotor.OnShallowWaterTile records the shore families do not hold, world/waterCorners.js SHALLOW_WHOLE, and
@@ -27,13 +27,12 @@
 import { waterCorners, WATER_DRAW_MASK_TABLE } from './waterCorners.js';
 import { PUDDLE_RECORDS } from './puddleMask.js';   // the shallow-water art's records, one list (WATER-PUDDLE's)
 import { convertTile } from './terrainSurface.js';
+import { GROUND_RECORD_LIMIT as RECORD_LIMIT } from './terrainTiles.js';   // AUDIT WATER-NEXT m8: MeshReader.cs:487's marker, one home
 
 /** The shallow-water art: a patch made of these alone is a puddle, whatever its size. */
 const PUDDLE = new Set(PUDDLE_RECORDS);
 /** An RMB block's ground is 16 tiles a side. */
 const DIM = 16;
-/** MeshReader.cs:487's random marker: a record past the tileset is no tile (rmbLayout.js buildGroundTilemap). */
-const RECORD_LIMIT = 56;
 const NEIGHBOURS = Object.freeze([[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]]);
 const STEPS = Object.freeze([[1, 0], [-1, 0], [0, 1], [0, -1]]);
 

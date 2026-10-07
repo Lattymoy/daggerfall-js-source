@@ -345,9 +345,10 @@ const canStandFoe = (mobileType) => !!ENEMY_BASICS[mobileType]?.maleTexture;
  *  this literal beside their own copy of the draw call, and the draw
  *  is the context's now (see drawFoes), so the colour is too.
  *  AUDIT 65 CV-3/MC-5: this 0.82 is the FLAT alpha drawWater's quad
- *  takes - NOT render/waterSurface.js's WATER_OPACITY, which is the
- *  enhanced surface's Fresnel FLOOR (a different pass, no Fresnel, no
- *  shore feather). They agree by taste, not by law. */
+ *  takes - NOT the enhanced surface's (render/waterSurface.js), a
+ *  different pass whose opacity is its depth's since WATER-NEXT 2
+ *  (AUDIT WATER-NEXT m6 retired WATER_OPACITY, the 0.94 this once
+ *  agreed with by taste, not by law). */
 export const DUNGEON_WATER_COLOR = Object.freeze([1, 1, 1, 0.82]);
 
 /**

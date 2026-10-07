@@ -66,8 +66,8 @@ import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS, maskMapId } fr
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
 import { buildTerrainIndices, isOutdoorWaterTile, TERRAIN_TILE_DIM, TERRAIN_SKIRT_DEPTH, surfaceHeightAt, surfaceNormalAt, groundOffPlane, terrainSampleHeightAt, lowestGroundUnder } from '../world/terrainSurface.js';   // GRASS-LIT2: the ground's normal under a blade
 import { waterUniforms, buildWaterIndices, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the pixel's own grid; WATER-AUDIT: its own index set
-import { waterBedOf } from '../world/waterBed.js';
-import { createRipples, stirOf, RIPPLE_SPAN, RIPPLE_CELLS } from '../world/waterRipples.js';   // WATER-NEXT 4: the rings and wakes   // WATER-NEXT 2: the bed under the water, carved for the eye alone
+import { waterBedDepths } from '../world/waterBed.js';   // WATER-NEXT 2: the bed under the water, carved for the eye alone (AUDIT WATER-NEXT H1: the cap's re-carve asks its depths)
+import { createRipples, createRippleStir, RIPPLE_SPAN, RIPPLE_CELLS, BOAT_STIR, BOAT_WAKE_SPEED } from '../world/waterRipples.js';   // WATER-NEXT 4: the rings and wakes
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // GRASS-WET1: the one table that says which of a tile's corners stand in water - the DRAW's, because a blade in a puddle is a picture, not a physics
 import { windowEmissionRGB } from '../render/windowEmission.js';
 import { CITY_LIGHT_COLOR, CITY_LIGHT_RANGE, LIGHTS_ARCHIVE, collectCityLights, nearestLights, capFadeColors, capFadePairs, fillLanternPool, rangesFor } from '../world/cityLights.js';
@@ -551,7 +551,7 @@ import { giveNavalItems } from '../systems/naval/navalTransfer.js';
 import { InputMessageBoxWindow } from '../ui/inputMessageBox.js';   // HCC: the horse's name (DaggerfallInputMessageBox)
 import { getBool, getInt, getFloat } from '../systems/settings.js';   // U31: StartCellX/Y + StartInDungeon, the classic start's own three keys   // F-slice: worldCoordToMapPixel for the travel start pixel
 import { STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, TERRAIN_SIZE, SCALED_OCEAN_ELEVATION, sampleKernel } from '../world/terrainSampler.js';   // GR1: the sea plane, so no blade stands in water
-import { restrideGrid } from '../world/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
+import { restrideGrid, gridBed } from '../world/terrainGen.js';   // PERF-EXT26: the restride's grid - the kernel's own law (EV4's ghost rows), on the worker or here
 import { getLocationTerrainTileOrigin, setLocationTiles } from '../world/terrainTiles.js';
 // The start-marker arm (StreamingWorld's PositionPlayerToLocation), the
 // law and its two location-type reads. AUDIT 64 F18/F19: DFU reaches it
@@ -2166,34 +2166,25 @@ export async function bootWorld(canvas, renderer, params, status) {
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door. A draw only: nothing here tells the game where water is.
   const waterOn = waterSwitchOn();   // FT6: the one composition (render/waterSurface.js)
-  // WATER-NEXT 4: the ripple field round the camera - the rings and wakes of what moves in the water (world/waterRipples.js)
   renderer.waterBed = waterOn;   // WATER-NEXT 2: the ground under the enhanced water is a bed (render/waterBedGlsl.js)
   renderer.waterSimple = getPref('waterQuality') === 'simple';   // WATER-NEXT: the Water quality row - Simple takes no copy and no ripples
-  const ripples = waterOn && !renderer.waterSimple ? createRipples() : null;
+  // WATER-NEXT 4: the ripple field round the camera - the rings and wakes of what moves in the water (world/waterRipples.js)
+  const ripples = waterOn && !renderer.waterSimple ? createRippleStir(createRipples()) : null;   // AUDIT WATER-NEXT m12: the hosts' one stir
   let _rippleOnWater = false;   // the player's feet in exterior water this frame (the footsteps' own answer)
-  const _rippleLast = new WeakMap();   // a body's last place, for its speed
-  let _rippleT = 0;
   /** WATER-NEXT 4: one step of the ripple field - recentred on the eye, stirred by the player in the water and by every
-   *  boat afloat that moves, stepped at its fixed rate, and handed to the renderer for this frame's water. */
-  function stirRipples(dt) {
+   *  boat afloat under way, stepped at its fixed rate, and handed to the renderer for this frame's water. AUDIT
+   *  WATER-NEXT P3/m12: the hosts' one stir (world/waterRipples.js createRippleStir) on the frame's clock - no closure
+   *  or array a frame - and a hull stirs only under way (BOAT_WAKE_SPEED). */
+  function stirRipples(dt, nowMs) {
     if (!ripples) return;
-    ripples.recenter(cam.pos[0], cam.pos[2]);
-    _rippleT += dt;
-    const emit = _rippleT >= 0.1;
-    if (emit) _rippleT = 0;
-    const stir = (key, pos, swimming, force = 1) => {
-      const last = _rippleLast.get(key) ?? [pos[0], pos[2], performance.now()];
-      const t = performance.now(), speed = Math.hypot(pos[0] - last[0], pos[2] - last[1]) / Math.max(1e-3, (t - last[2]) / 1000);
-      _rippleLast.set(key, [pos[0], pos[2], t]);
-      if (emit) ripples.disturb(pos[0], pos[2], stirOf(speed, swimming) * force, swimming ? 1.0 : 0.7);
-    };
-    if (_rippleOnWater) stir(player, player.pos, !!player.swimming);
+    ripples.begin(dt, cam.pos[0], cam.pos[2]);
+    if (_rippleOnWater) ripples.stir(player, player.pos, !!(player.isPlayerSwimming || player.swimming), nowMs);   // AUDIT WATER-NEXT F4: outdoors the swimmer is isPlayerSwimming (swimming is Deep Waters' forge's)
     for (const boat of csaRuntime?.AllBoats ?? []) {
       const g = boat.GameObject;
-      if (g?.activeSelf && g.position) stir(boat, g.position, true, 2.5);
+      if (g?.activeSelf && g.position) ripples.stir(boat, g.position, true, nowMs, BOAT_STIR, BOAT_WAKE_SPEED);
     }
-    ripples.step(dt);
-    renderer.setWaterRipples(ripples, RIPPLE_SPAN, RIPPLE_CELLS);
+    ripples.end(dt);
+    renderer.setWaterRipples(ripples.field, RIPPLE_SPAN, RIPPLE_CELLS);
   }
   const distantStorms = createDistantStorms();   // WEATHER3d: the storms at a distance - their strikes and their thunder on its way
   const stormLights = createStormLights();   // BOLT: every strike's channel and light, the storm overhead's and the distant ones'
@@ -3892,9 +3883,38 @@ export async function bootWorld(canvas, renderer, params, status) {
   function dwSetTilemap(entry, bytes) {
     renderer.writeTilemapTexture(entry.tilemapTex, bytes, TERRAIN_TILE_DIM);
     entry._dwBytes = bytes === entry.tilemapBytes ? null : bytes;
+    dwRecarve(entry);   // AUDIT WATER-NEXT H1: the bed by the TileMap the cap leaves, before the clip and the water read the ground
     dwClipTerrain(entry);
     dwWaterSurface(entry);
   }
+  /** AUDIT WATER-NEXT H1: THE TileMap THE BED IS CARVED BY - the one the water draws from: the cap's, where Deep Waters
+   *  patched one, else the pixel's own. A tile the cap clipped votes dry, so the bed comes up to its bank at the clip's
+   *  edge, where the mod's floor is fitted to the vanilla shore - carved under it, the ground stood metres below the floor
+   *  it should meet, and the gap between them was open. */
+  function bedBytesOf(p) { return p._dwBytes ?? p.tilemapBytes; }
+  /** AUDIT WATER-NEXT H1 (2026-10-07): A REPAINTED TILE IS GROUND. The cap repaints a water tile that stands above the
+   *  sea with the ground beside it (world/deepWaterCap.js) - and the bed had been carved by the pixel's own TileMap at
+   *  the build, so every such tile was a pit four units deep, of grass or sand, with no water over it (Iliac Puddle No
+   *  More is on by default: a river's mouth on a coast). When the cap's TileMap moves the bed, the ground is carved again
+   *  from the grid as it stood (`_bed.sheet` and `_bed.normals`); the clip and the water's sheet are re-made after it by
+   *  the caller. Once a cap (a coastal pixel's): one depth pass, and a carve and an upload where the bed moved. */
+  function dwRecarve(p) {
+    if (!waterOn || !p._bed || !p.terrain) return;   // no vertex was under water: a cap only takes water away
+    const stride = p._stride ?? 1;
+    const halo = stride === 1 ? p._bed.halo : null;   // AUDIT WATER-NEXT F2: the seams' tiles the build read
+    const depths = waterBedDepths(bedBytesOf(p), { stride, halo });
+    const was = p._bed.depths;
+    if (depths === was || (depths && was && depths.length === was.length && depths.every((d, i) => d === was[i]))) return;
+    const grid = { positions: p._bed.sheet, normals: p._bed.normals };
+    const bed = depths ? gridBed(grid, bedBytesOf(p), stride, halo) : null;
+    renderer.destroyMesh(p.terrain);
+    p.terrain = renderer.createTerrainSurface(bed?.positions ?? grid.positions, bed?.normals ?? grid.normals,
+      stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
+    p._bed = { sheet: grid.positions, normals: grid.normals, depths: bed?.depths ?? null, sheetDepths: bed?.sheetDepths ?? null, halo };   // the grid kept: a cap lifted carves it back
+  }
+  /** WATER-NEXT 2: a pixel's bed as the host keeps it - the grid AS IT STOOD (the water's sheet, and its normals for a
+   *  re-carve) and the depths; the carved ground is uploaded and let go. null where no vertex is under water. */
+  function hostBed(grid, bed) { return bed ? { sheet: grid.positions, normals: grid.normals, depths: bed.depths, sheetDepths: bed.sheetDepths, halo: bed.halo ?? null } : null; }
   // DW-F: WATER1 - the port's own water, drawn over the tiles whose art is water - reads the TileMap the cap
   // leaves: a texel the mod clips (the carved sea) or repaints from the ground beside it (raised water) takes
   // WATER1's sheet with it, as it takes the ground's water art, and the texture's water is the sheet's again
@@ -3909,7 +3929,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   }
   /** WATER-NEXT 2: a water sheet's source - the bed's grid and depths, or (no vertex under water) the terrain's own
    *  positions with no bed (renderer.createWaterSheet). */
-  function waterSheetOf(bed, terrain) { return bed ? { positions: bed.sheet, depths: bed.depths } : { terrain }; }
+  function waterSheetOf(bed, terrain) { return bed?.depths ? { positions: bed.sheet, depths: bed.sheetDepths } : { terrain }; }   // AUDIT WATER-NEXT H2: the sheet's own depths
   // DW-C: THE CLIP'S CULL - a quad, and at a far stride a skirt segment, whose every tile the cap clipped leaves the
   // ground's index set: the mod's discard exactly while a tile is a quad (stride 1). FAR-CLIP1: at EV4's far stride a
   // quad is sixteen tiles and a part-clipped one stands - its clipped tiles are the clip program's to discard
@@ -4179,7 +4199,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const here = playerTravelPixel();
       let arch = here ? built.get(`${here.x},${here.y}`)?.groundArchive : null;   // the sea's water is the camera's climate's
       if (arch == null) for (const p of built.values()) if (p.groundArchive != null) { arch = p.groundArchive; break; }
-      renderer.drawSeaSurfaces(_dwSurfaceList, deepWaters.oceanLocalY + SURFACE_RENDER_Y_OFFSET, _waterU, f.look.topColor.slice(0, 3), renderer.tileArrays.get(arch));
+      renderer.drawSeaSurfaces(_dwSurfaceList, deepWaters.oceanLocalY + SURFACE_RENDER_Y_OFFSET, _waterU, f.look.topColor, renderer.tileArrays.get(arch));   // its rgb read in place
       return;
     }
     dwRender.drawSurfaces(_dwSurfaceList, { ...f.look, underwater: f.underwater, liftY: deepWaters.oceanLocalY + SURFACE_RENDER_Y_OFFSET, surfaceScroll: surfaceScrollAt(nowMs / 1000), surfaceTexture: _dwSurfaceTex });
@@ -4558,8 +4578,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // EV4: the far ring builds strided with its skirt; the kernel's
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
-    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads, paths, wodAverages, beach } = await terrainGen.generate({
+    const { samples, tilemap, positions, normals, bed: carved, tilemapBytes, avg, nature, withRoads, paths, wodAverages, beach } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
+      bed: waterOn,   // AUDIT WATER-NEXT P1: the bed under the water, carved on the worker with the grid
       // WOD2: the smoothing arms run in the kernel; FOREST1: and whether each pick is a SITE the woods close round (a camp, a
       // fort, a ruin - not a rock field or a mountain, AUDIT FOREST1 F1) and its whole footprint (its objects, F7)
       wod: wodPicks ? { picks: wodPicks.map((p) => ({ flatten: p.flatten, rect: p.rect, hide: !wodPiecewise(p.prefabName), bounds: forests ? wodSiteFootprint(p.prefab, p.rect) : null })) } : null,
@@ -4615,9 +4636,10 @@ export async function bootWorld(canvas, renderer, params, status) {
       };
     }
     // WATER-NEXT 2 (world/waterBed.js): the ground the eye sees carved into a bed under the water - the game's ground
-    // (heightAt, the samples) never moves - and the water's own sheet, the grid as it stood with the bed's depth
-    const bed = waterOn ? waterBedOf({ positions, normals }, tilemapBytes, { stride }) : null;
-    const terrain = renderer.createTerrainSurface(bed?.ground.positions ?? positions, bed?.ground.normals ?? normals,
+    // (heightAt, the samples) never moves - and the water's own sheet, the grid as it stood with the bed's depth.
+    // AUDIT WATER-NEXT P1: carved by the kernel on the worker (terrainGen.js restrideGrid), not on this thread
+    const bed = hostBed({ positions, normals }, carved);
+    const terrain = renderer.createTerrainSurface(carved?.positions ?? positions, carved?.normals ?? normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
     // WATER1 / WATER-AUDIT (M4): the water's own quads - null for a pixel without water, which never enters the pass
     const waterIndices = waterOn ? buildWaterIndices(tilemapBytes, stride) : null;
@@ -4627,7 +4649,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // terrain's own vertices, grown by every model and flat batch below.
     // EV4: dropped by the skirt depth so a future restride to the far
     // ring never hangs geometry below the culling box.
-    const bounds = localAabb(bed?.ground.positions ?? positions);   // WATER-NEXT 2: the bed inside the box
+    const bounds = localAabb(carved?.positions ?? positions);   // WATER-NEXT 2: the bed inside the box
     bounds[1] -= TERRAIN_SKIRT_DEPTH;
     const unionBox = (b) => {
       for (let i = 0; i < 3; i++) {
@@ -5458,7 +5480,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       withRoads,   // ROADS 25: painted with the network present, or before it arrived (see below)
       _box: bounds,   // EV3: pixel-local presentation bounds (terrain + models + flats)
       _stride: stride,   // EV4: the terrain surface's current ring class
-      _bed: bed ? { sheet: bed.sheet, depths: bed.depths } : null,   // WATER-NEXT 2: the bed, for the cap's re-index (dwWaterSurface)
+      _bed: bed,   // WATER-NEXT 2: the bed, for the cap's re-index (dwWaterSurface) and its re-carve (dwRecarve)
       groundNormals: labGrass && stride === 1 ? normals : null,   // GRASS-LIT2: the near grid's vertex normals - the grass reads its slope off them; AUDIT B1: only where there is grass (200 KB a pixel)
       population, locOrigin, personBatches,   // T2 towns
       npcs: pixelNpcs,   // AUDIT 26 (F019): RMBLayout's street StaticNPCs, pixel-local
@@ -5766,20 +5788,22 @@ export async function bootWorld(canvas, renderer, params, status) {
     const key = `${p.px},${p.py}`;
     if (built.get(key) !== p) return;                  // evicted while it waited
     if (strideFor(p.px, p.py) === p._stride) return;   // walked back out of the near ring
-    terrainGen.grid({ px: p.px, py: p.py, stride: 1, samples: p.samples, landform }).then((grid) => {   // LANDFORM1-3: the ghost rows the build took
+    const bedBytes = waterOn ? bedBytesOf(p) : null;   // AUDIT WATER-NEXT P1: the bed carved on the worker with the grid
+    terrainGen.grid({ px: p.px, py: p.py, stride: 1, samples: p.samples, landform, bed: bedBytes }).then((grid) => {   // LANDFORM1-3: the ghost rows the build took
       if (built.get(key) !== p) return;                              // evicted, or rebuilt, while the worker built it
       if (strideFor(p.px, p.py) !== 1 || p._stride === 1) return;   // walked back out, or promoted meanwhile
+      if (waterOn && bedBytesOf(p) !== bedBytes) grid = { ...grid, bed: gridBed(grid, bedBytesOf(p), 1, grid.bed?.halo ?? null) };   // the cap's TileMap moved meanwhile: carved by the one that stands
       restrideTerrain(p, 1, grid);
     }).catch((e) => console.error(`[terrain] promotion of ${key} failed:`, e));
   }
 
-  function restrideTerrain(p, stride, grid = restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples, landform, roads: terrainGen.roads() })) {   // PERF-EXT26: or the grid the worker built; LANDFORM1-3: the build's ghost rows
+  function restrideTerrain(p, stride, grid = restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples, landform, roads: terrainGen.roads(), bed: waterOn ? bedBytesOf(p) : null })) {   // PERF-EXT26: or the grid the worker built; LANDFORM1-3: the build's ghost rows; AUDIT WATER-NEXT P1: the bed with it
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
     if (p.dwTerrain) { renderer.destroyWaterSurface(p.dwTerrain); p.dwTerrain._dead = true; p.dwTerrain = null; }   // DW-C
     renderer.destroyMesh(p.terrain);
-    const bed = waterOn ? waterBedOf(grid, p.tilemapBytes, { stride }) : null;   // WATER-NEXT 2: the bed at the new ring class
+    const bed = waterOn ? hostBed(grid, grid.bed) : null;   // WATER-NEXT 2: the bed at the new ring class - AUDIT WATER-NEXT P1/H1: the kernel's, by the TileMap the water draws from
     p._bed = bed;
-    p.terrain = renderer.createTerrainSurface(bed?.ground.positions ?? grid.positions, bed?.ground.normals ?? grid.normals,
+    p.terrain = renderer.createTerrainSurface(grid.bed?.positions ?? grid.positions, grid.bed?.normals ?? grid.normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
     const waterIndices = waterOn ? buildWaterIndices(p._dwBytes ?? p.tilemapBytes, stride) : null;   // DW-F: the cap's TileMap, where it patched one
     p.water = waterIndices ? renderer.createWaterSheet(waterIndices, waterSheetOf(bed, p.terrain)) : null;
@@ -16965,10 +16989,10 @@ export async function bootWorld(canvas, renderer, params, status) {
         location: p.location ?? null,
       });
     };
-    // WATER-NEXT 4 probe: a stir dropped into the ripple field at a world point (a body's splash), so a shot sees rings
     // WATER-NEXT probe: the sea's surface in scene y at the camera's pixel (Iliac Puddle No More's ocean line), or null
     window.__seaY = () => { const at = playerTravelPixel(); return deepWaters && at ? state.pixelTranslation(at.x, at.y, [0, 0, 0])[1] + deepWaters.oceanLocalY : null; };
-    window.__ripple = (x, z, strength = 0.25) => { ripples?.disturb(x, z, strength, 1.2); return !!ripples; };
+    // WATER-NEXT 4 probe: a stir dropped into the ripple field at a world point (a body's splash), so a shot sees rings
+    window.__ripple = (x, z, strength = 0.25) => { ripples?.field.disturb(x, z, strength, 1.2); return !!ripples; };
     // WATER-PUDDLE probe: every tile of these records in the built pixels, as world centres on the ground
     window.__findTiles = (records, max = 40) => {
       const want = new Set(records), out = [];
@@ -29477,7 +29501,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // cloud deck and the mills take; null = calm), the front's rain, and
     // the dome's own two colours to reflect.
     if (waterOn) {
-      stirRipples(dt);   // WATER-NEXT 4
+      stirRipples(dt, now);   // WATER-NEXT 4
       const wu = _waterU = waterUniforms({ seconds: now / 1000, wind: windNow, rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() });   // WATER-NEXT 2: the sea's draw takes the frame's too
       let n = 0;   // PERF-EXT13: collected, then ONE call - the frame's block once, not once a pixel (renderer.js)
       for (const p of built.values()) {

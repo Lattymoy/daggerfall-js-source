@@ -30,10 +30,16 @@ the grass nor the water; two exterior hosts to wire.
 
 ## The departure
 
+**Superseded by WATER-NEXT 2-4 (below; AUDIT WATER-NEXT M4).** What this
+section and "What it does not do" describe is WATER1 as it shipped: the
+water is now its own sheet over a carved bed, the terrain pass paints the
+bed, and the surface refracts, foams and ripples. The record below is
+WATER1's.
+
 `render/waterSurface.js` and `drawWaterSurface` in `render/renderer.js`.
 Enhanced skin only, switch `enhancedWater` (on by default, its row in
 the enhanced pane), `?water=off` the kill door. The classic lane and
-the terrain pass are untouched.
+the terrain pass were untouched.
 
 **The geometry is the terrain's.** There is no water mesh. The pass
 draws the pixel's own terrain surface again - the same positions and
@@ -213,7 +219,7 @@ the eye: the shore up close, the river and the lake, the rain up close.
 
 ## What it does not do
 
-No point-light GLINTS on the water (a dock's lantern lights the surface
+(WATER1's, as it shipped - AUDIT WATER-NEXT M4: WATER-NEXT 2-4 below draws refraction, foam and wakes.) No point-light GLINTS on the water (a dock's lantern lights the surface
 as it lights the bank, and is not mirrored in it), no
 refraction, no foam, no underwater view (DFU has no exterior
 submersion), no wake. (Depth-tinted shallows: WATER2 below, off the
@@ -883,7 +889,7 @@ pin offered (pinned).
 Mac: *"overhauling the water to appear as real translucent water with
 proper waves and shoreline interactivity completely replacing our current
 water implementation"*; asked: the new water is the ENHANCED skin's (the
-classic lane keeps DFU's flat tile - the doctrine); the waves modest and
+classic skin keeps DFU's flat tile - the doctrine; AUDIT WATER-NEXT m3: the skin, not the lighting lane); the waves modest and
 the weather's (calm lakes and rivers, a sea's swell that grows in a
 storm); the gameplay's water line fixed. The plan, a pull request a phase,
 each landed on a shot from the real game (THE REVERT's lesson):
@@ -917,7 +923,8 @@ the game page, not the lab.
 
 Mac: *"real translucent water with proper waves and shoreline interactivity completely replacing our current water
 implementation"*, then *"keep building within this pr"* and *"You have autonomy"*. Enhanced skin only (asked); the
-classic lane draws DFU's flat tile as it did. Every step was judged on shots of the real game
+classic skin draws DFU's flat tile as it did (AUDIT WATER-NEXT m3: the skin - the Enhanced skin on the classic lighting
+lane draws the new water, its blend arm). Every step was judged on shots of the real game
 (`tools/waterLookProbe.mjs`, Daggerfall's moat and Sentinel's palace pool and harbour, headless on SwiftShader with
 the player's own ARENA2 - the renders stay out of the tree), THE REVERT's lesson.
 
@@ -975,7 +982,8 @@ enhanced water (`columnOn`), which measures the column itself; and the sheets' 6
 the beach - the open sea now fades where it covers no water, so the shore is where its plane meets the sand.
 
 **What it costs, and the Simple tier.** Under the lane the copy is one blit of the frame's colour and depth a frame,
-and the water's fragments read up to four more texels (the copy, its depth twice, the ripple field's slope); SwiftShader's
+and the water's fragments read up to seven more texels (the copy, its depth twice, the ripple field's four taps - AUDIT
+WATER-NEXT m11); SwiftShader's
 milliseconds are nobody's, so the cost on a real GPU is not measured here. The plan's cheaper setting is the
 `water-quality` row (Features, the Enhanced kind, the player's online): Full by default; Simple takes no copy and keeps no
 ripple field (`renderer.waterSimple`) - the bed, the swell, the foam and the body stand, and the blend does the looking
@@ -1002,8 +1010,40 @@ footsteps' own on-water answer, and every boat afloat (Come Sail Away's). The re
 water, `RIPPLE_SCALE` a step) only when it moved, on unit 1 - the billboards' emission unit, whose shadow it forgets
 after the bind - and the water adds its slope inside the field, faded at the field's edge. Drawn only.
 
-**Pinned**: `test/waterbed.test.js` (6), `test/waterripples.test.js` (6), `test/waternext.test.js` (7); WATER1's pins
+**Pinned**: `test/waterbed.test.js` (6), `test/waterripples.test.js` (6), `test/waternext.test.js` (8); WATER1's pins
 moved to the new shapes (`water.test.js`, `waterlit1`, `dwc_fog`, `perfextb`, `perfsun_fragment`, `grain1_terrainmip`,
-`ft6_water`, `perf2`, `rr3b` - each PIN MOVED). Mutants: `tools/mutants/waternext.json`, all dead (the first run's four
+`ft6_water`, `terrainworker`, `dwe_decorations` - each PIN MOVED; `rr3b` is PUDDLE-DRY's, above - AUDIT WATER-NEXT m1/m4). Mutants: `tools/mutants/waternext.json`, all dead (the first run's four
 survivors - the chamfer's diagonal, the byte bias after a step, unit 1's shadow pinned on a twin line, the gale pinned
 against itself - each pinned).
+
+## AUDIT WATER-NEXT (2026-10-07) - THE WATER AUDITED, ITS COST MEASURED
+
+Mac: *"I want you to do a comprehensive audit ensuring this is perfection and performance is unaffected"*. Three lenses
+(the GL and the shader; the hosts and the world's lifecycle; the record and the pins) and a performance lens measured
+against main; the findings, the fixes and what is recorded are `01-Overview/Audit-WATER-NEXT.md`. What moved in the laws
+above:
+
+- **The bed is the kernel's** (P1). `terrainGen.js restrideGrid` carves it with the grid it builds - the build's, the
+  promotion's and the restride's, on the terrain worker - and the host uploads what it answers (`bed`: the depths, the
+  sheet's depths, the carved ground, the seam's halo). WATER-NEXT 2 had carved on the host's thread at every build and
+  restride: 0.3 ms for a pixel with no water, 1-2 ms for a coast's.
+- **Deep Waters' cap carves it** (H1). The bed is carved from the TileMap the water draws from (`bedBytesOf`: the cap's
+  where it patched one): a tile the cap repaints is ground (it was a dry pit four units deep), and a tile it clips votes
+  dry, so the bed meets the mod's floor, fitted to the shore, at the clip's edge. `dwRecarve` carves again from the grid
+  as it stood when the cap lands or lifts.
+- **A seam is carved alike from both sides** (F2). A near grid's bed reads `BED_HALO_TILES` (4) of each neighbour's
+  tiles past its edge, classified and marched by the neighbour's own law (`terrainTiles.js tileDataAt`, `marchTile`)
+  from the kernel's ghost samples; a stamped or painted neighbour tile (a town, a road, a river) is not in its kernel,
+  and a strided grid's skirt closes its own seams.
+- **The sheet has its own depths** (H2, `sheetDepthsOf`): the carve's depth where the carve reaches, its bank 0, and
+  `SHEET_NO_BED` (`-NO_BED_DEPTH`) over ground never carved - tinted water that takes no swell (its troughs had gone
+  under the ground in a fair wind).
+- **The composition is premultiplied** (G1/G3): what is seen through the water is fogged once, as its bank is; a glint
+  and the foam are the same strength with or without the copy.
+- **The sea takes its own copy** (G2), after the flats and the people it may stand in front of.
+- **The ripple field** sleeps again after a slide (its edge held still - M1), slides nothing asleep (P2), is placed
+  where its bytes were packed (G13), is stirred by a hull only under way (`BOAT_WAKE_SPEED`, P3) and by the outdoor
+  swimmer's own flag (F4), and runs in the fixed town too through the hosts' one stir (`createRippleStir`, m12). THE
+  FOUR HOSTS: the streaming world and the fixed town draw the enhanced water and stir its field; the interiors
+  (`worldModes.js`) and the dungeons (`dungeonContext.js`) draw no enhanced water - their pools are the classic plane.
+- `WATER_OPACITY` and the sheet's `scroll` retired (m6): nothing drew them.

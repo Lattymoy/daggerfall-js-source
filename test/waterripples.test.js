@@ -83,12 +83,14 @@ test('WATER-NEXT 4 a body\'s stir: a still swimmer bobs, a wader\'s wake grows w
 
 test('WATER-NEXT 4 the hosts and the shader: the world stirs with the player\'s own footsteps answer and every boat afloat, steps before its water draws and hands the field over; the water reads its slope inside the field, faded at its edge; the renderer uploads only a moved field and forgets unit 1\'s shadow (mutants: no stir; the field never handed; the shadow kept)', () => {
   const w = read('src/scenes/world.js');
-  assert.match(w, /const ripples = waterOn && !renderer\.waterSimple \? createRipples\(\) : null;/);
+  assert.match(w, /const ripples = waterOn && !renderer\.waterSimple \? createRippleStir\(createRipples\(\)\) : null;/);
   assert.match(w, /_rippleOnWater = _onWater;/);
-  assert.match(w, /if \(_rippleOnWater\) stir\(player, player\.pos, !!player\.swimming\);/);
+  // PIN MOVED (AUDIT WATER-NEXT P3/m12/F4): the hosts' one stir on the frame's clock; the outdoor swimmer's own flag; a hull under way
+  assert.match(w, /if \(_rippleOnWater\) ripples\.stir\(player, player\.pos, !!\(player\.isPlayerSwimming \|\| player\.swimming\), nowMs\);/);
   assert.match(w, /for \(const boat of csaRuntime\?\.AllBoats \?\? \[\]\) \{/);
-  assert.match(w, /if \(waterOn\) \{\n\s*stirRipples\(dt\);/);
-  assert.match(w, /renderer\.setWaterRipples\(ripples, RIPPLE_SPAN, RIPPLE_CELLS\);/);
+  assert.match(w, /if \(g\?\.activeSelf && g\.position\) ripples\.stir\(boat, g\.position, true, nowMs, BOAT_STIR, BOAT_WAKE_SPEED\);/, 'a hull stirs under way alone');
+  assert.match(w, /if \(waterOn\) \{\n\s*stirRipples\(dt, now\);/);
+  assert.match(w, /renderer\.setWaterRipples\(ripples\.field, RIPPLE_SPAN, RIPPLE_CELLS\);/);   // PIN MOVED (AUDIT WATER-NEXT m12): the stir's field
   const r = read('src/render/renderer.js');
   assert.match(r, /if \(v !== this\._rippleVersion\) \{/);
   assert.match(r, /this\._tex1Bound = null;   \/\/ unit 1 is the billboards' emission unit/);

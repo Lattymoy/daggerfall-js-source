@@ -2,8 +2,8 @@
   {
     "name": "BED-one-vote-enough",
     "file": "src/world/waterBed.js",
-    "old": "        if (!(table[bytes[tz * tileDim + tx]] & bit)) { ok = false; break; }",
-    "new": "        if (table[bytes[tz * tileDim + tx]] & bit) { ok = true; break; }",
+    "old": "      if (south && west && !(table[bytes[rowS + cx - 1]] & 8)) continue;",
+    "new": "      if (south && west && (table[bytes[rowS + cx - 1]] & 8)) { wet[vz * gx + vx] = 1; any = true; continue; }",
     "tests": [
       "test/waterbed.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BED-the-edge-a-bank",
     "file": "src/world/waterBed.js",
-    "old": "        if (tx < 0 || tz < 0 || tx >= width || tz >= height) continue;",
-    "new": "        if (tx < 0 || tz < 0 || tx >= width || tz >= height) { ok = false; break; }",
+    "old": "      if (!((south || north) && (west || east))) continue;   // a tile past the map's edge is no vote - and no tile, no vertex",
+    "new": "      if (!(south && north && west && east)) continue;   // a tile past the map's edge is no vote - and no tile, no vertex",
     "tests": [
       "test/waterbed.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "BED-no-diagonal",
     "file": "src/world/waterBed.js",
-    "old": "        if (x > 0) relax(i, i - gx - 1, 4);",
-    "new": "        if (x > 0) relax(i, i - gx - 1, 99);",
+    "old": "        if (x > 0 && d[i - gx - 1] + 4 < v) v = d[i - gx - 1] + 4;",
+    "new": "        if (x > 0 && d[i - gx - 1] + 99 < v) v = d[i - gx - 1] + 99;",
     "tests": [
       "test/waterbed.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "BED-host-uncarved",
     "file": "src/scenes/world.js",
-    "old": "    const terrain = renderer.createTerrainSurface(bed?.ground.positions ?? positions, bed?.ground.normals ?? normals,",
+    "old": "    const terrain = renderer.createTerrainSurface(carved?.positions ?? positions, carved?.normals ?? normals,",
     "new": "    const terrain = renderer.createTerrainSurface(positions, normals,",
     "tests": [
       "test/waterbed.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "RIPPLE-contents-left",
     "file": "src/world/waterRipples.js",
-    "old": "    for (const a of [cur, prev]) {",
-    "new": "    for (const a of []) {",
+    "old": "    slide(cur, dx, dz); slide(prev, dx, dz);",
+    "new": "    ",
     "tests": [
       "test/waterripples.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SWELL-on-the-bank",
     "file": "src/render/waterSurface.js",
-    "old": "  float grow = uOpen == 1 ? 1.0 : smoothstep(0.0, ${SWELL_DEPTH.toFixed(2)}, aDepth);",
-    "new": "  float grow = 1.0;",
+    "old": "  float grow = uOpen == 1 ? 1.0 : (aDepth < 0.0 ? 0.0 : smoothstep(0.0, ${SWELL_DEPTH.toFixed(2)}, aDepth));",
+    "new": "  float grow = uOpen == 1 ? 1.0 : (aDepth < 0.0 ? 0.0 : 1.0);",
     "tests": [
       "test/waternext.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "QUALITY-ripples-kept",
     "file": "src/scenes/world.js",
-    "old": "  const ripples = waterOn && !renderer.waterSimple ? createRipples() : null;",
-    "new": "  const ripples = waterOn ? createRipples() : null;",
+    "old": "  const ripples = waterOn && !renderer.waterSimple ? createRippleStir(createRipples()) : null;",
+    "new": "  const ripples = waterOn ? createRippleStir(createRipples()) : null;",
     "tests": [
       "test/waternext.test.js"
     ]
