@@ -573,6 +573,14 @@ test('MW-SPELLFX1: the one cast engine drives the layer at the reference\'s mome
   bare.magic.update(1 / 60, [0, 0, 0]);
   await new Promise((r) => setTimeout(r, 0));
   assert.equal(bare.world.batchesMade, 1, 'a bolt with nothing to draw it: the classic flat stands in');
+  // ...and so does a bolt that ended in flight - the effects switched off - so the missile is never left unseen
+  const off = engine({ boltState: 'ended' });
+  off.magic.update(0, [0, 0, 0]);
+  off.magic.setReadied({ name: 'Firebolt', index: 91, element: 0, rangeType: 2, effects: [dmg] });
+  off.magic.castInput([0, 1.6, 0], [0, 0, 1]);
+  off.magic.update(1 / 60, [0, 0, 0]);
+  await new Promise((r) => setTimeout(r, 0));
+  assert.equal(off.world.batchesMade, 1, 'a bolt that ended in flight: the classic flat stands in');
   // the draw, the clear, the teardown
   assert.equal(magic.drawFx(), true, 'drawn even when no impact burst is live');
   assert.ok(calls.some((c) => c[0] === 'draw'));

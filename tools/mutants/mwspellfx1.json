@@ -209,11 +209,21 @@
   {
     "name": "MWSPELLFX1-the-flat-and-the-bolt-both",
     "file": "src/scenes/hostMagic.js",
-    "old": "    if (m.mwBolt && m.mwBolt.state() !== 'failed') return;   // MW-SPELLFX1: the bolt is its look; the classic flat stands in only where there is none",
+    "old": "    if (m.mwBolt && ['pending', 'live'].includes(m.mwBolt.state())) return;   // MW-SPELLFX1: the bolt is its look; the classic flat stands in where it draws nothing - nothing to draw it with, or the effects switched off in flight",
     "new": "    void 0;",
     "tests": [
       "test/mwspellfx1.test.js"
     ]
+  },
+  {
+    "name": "MWSPELLFX1-an-ended-bolt-unseen",
+    "file": "src/scenes/hostMagic.js",
+    "old": "    if (m.mwBolt && ['pending', 'live'].includes(m.mwBolt.state())) return;   // MW-SPELLFX1: the bolt is its look; the classic flat stands in where it draws nothing - nothing to draw it with, or the effects switched off in flight",
+    "new": "    if (m.mwBolt && m.mwBolt.state() !== 'failed') return;",
+    "tests": [
+      "test/mwspellfx1.test.js"
+    ],
+    "note": "A bolt ended in flight (the effects switched off) kept the classic flat away, and the missile flew on unseen."
   },
   {
     "name": "MWSPELLFX1-the-bolt-outlives-its-missile",

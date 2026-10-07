@@ -1219,7 +1219,7 @@ export function createPlayerMagic({
 
   async function ensureMissileBatch(m) {
     if (m.batch !== null) return;
-    if (m.mwBolt && m.mwBolt.state() !== 'failed') return;   // MW-SPELLFX1: the bolt is its look; the classic flat stands in only where there is none
+    if (m.mwBolt && ['pending', 'live'].includes(m.mwBolt.state())) return;   // MW-SPELLFX1: the bolt is its look; the classic flat stands in where it draws nothing - nothing to draw it with, or the effects switched off in flight
     m.batch = false;   // in-flight guard
     const archive = missileArchive(m.spell.element);
     const t = await getTexture(archive);
@@ -1595,8 +1595,8 @@ export function createPlayerMagic({
       const mw = mwFx.draw();   // MW-SPELLFX1: Morrowind's spell effects, through the renderer's own particle path
       if (!fx.live || fxBroken || !renderer?.gl || !renderer._proj || !renderer._view) return mw;
       const n = fx.build();
-      if (!n) return false;
-      if (!fxPass) { try { fxPass = new SpellImpactPass(renderer.gl); } catch (e) { fxBroken = true; console.warn('[magic] the impact pass would not build', e?.message ?? e); return false; } }
+      if (!n) return mw;
+      if (!fxPass) { try { fxPass = new SpellImpactPass(renderer.gl); } catch (e) { fxBroken = true; console.warn('[magic] the impact pass would not build', e?.message ?? e); return mw; } }
       renderer.endUiRun?.();
       const eye = renderer._camPos;
       fxPass.draw(fx.buf, n, renderer._proj, renderer._view, eye, { mode: renderer._fogMode, density: renderer._fogDensity, range: renderer._fogRange, camPos: eye, focus: renderer._focus });

@@ -1,3 +1,4 @@
+// @ts-check
 // MW-SPELLFX1 (2026-10-07): A MORROWIND EFFECT'S STREAMS ON THE GPU.
 //
 // formats/mwVfx.js answers an effect's frame as packed streams in the particle program's own format; this holds the
@@ -12,6 +13,9 @@ import { wrapModes } from '../formats/mwTexture.js';
 /**
  * `renderer` the port's; `textures` a Map from a texture file to its decoded entry ({ image: { mips } } -
  * fpArm.collectArmTextures' shape); `capacity` vfxCapacity's Map from a stream key to its most vertices.
+ * @param {any} renderer render/renderer.js's (its particle effects and character textures)
+ * @param {Map<string, any> | null | undefined} textures
+ * @param {Map<string, number> | null | undefined} capacity
  */
 export function createVfxGpu(renderer, textures, capacity) {
   const effects = new Map();   // stream key -> the renderer's particle effect
