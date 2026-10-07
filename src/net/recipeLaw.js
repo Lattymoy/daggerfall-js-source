@@ -588,7 +588,7 @@ export const recipeById = (id) => (typeof id === 'string' ? BY_ID.get(id) ?? nul
  * product id is two professions'.
  * @param {Recipe|null} r
  */
-export const patternOf = (r) => r?.product ?? null;
+export const recipePattern = (r) => r?.product ?? null;   // AUDIT24 one-home: not tools/depthCopyCheck.js's patternOf (a depth pattern, no kin)
 /**
  * @typedef {{ id: string, name: string, recipes: readonly Recipe[] }} Pattern
  */

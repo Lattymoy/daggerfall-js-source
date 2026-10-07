@@ -3738,7 +3738,7 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
 
 - **The law** - `src/net/recipeLaw.js`: every recipe carries its `pattern` (the piece's word whatever it is made of -
   "Longsword", "Chain Cuirass", "Arrows", "Hunter's Stew") and its `madeOf` ("Mithril", "Harpy Feathers", "northern
-  Root Bulb"; "" where a pattern is made one way). `patternOf` is the recipe's `product` (`longsword`, `garment-163`,
+  Root Bulb"; "" where a pattern is made one way). `recipePattern` is the recipe's `product` (`longsword`, `garment-163`,
   `stew`) - FACT, pinned: no product id is two professions'. `patternsOf(list)` groups a list into its patterns, each
   once in the list's order, its materials in theirs.
 - **The first-make 500** - `firstCraftKey` is the pattern AT ITS TIER (`longsword@6`), `firstCraftKin` every recipe of it
@@ -3785,6 +3785,11 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   dead: `audit30` A3, `audit32` P8, `audit_seats_open` ASO-loom-note, `prof10` J7's two, `prof4`'s five, `prof7`'s
   three, `prof9`'s R2-S7 three, and `craft1`'s six R2 rows (one lock for the stations' rows now - patternRows'; the
   workbench's and the loom's standings their raw; a material made from raw unlocked in its box).
+- **FOUND by CI on the merge's head** (two red in shard 2 of 4, fixed in its own commit): `audit24_onehome`'s one-home
+  ratchet - the new `patternOf` shared its name with `tools/depthCopyCheck.js`'s depth pattern (another thing), so it is
+  `recipePattern` now, under neither the homonyms nor a raised ratchet; and `fb1001_stations`' COUNTER-GATES walked the
+  anvil's old metal row and the workbench's wood row - PIN MOVED to the patterns (the Longsword, then Iron; the Plain
+  Single Bed), its four mutants re-judged, all dead.
 
 ## Appendix A - a day of a gatherer
 
