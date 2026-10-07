@@ -648,8 +648,8 @@
  {
   "name": "SEAT2a-tab-window-anyone",
   "file": "src/ui/seatTab.js",
-  "old": "      if (holder && data.mine?.guild === holder.guild.id && SEAT_LEVER_RANKS.includes(data.mine?.rank)) body.append(windowNode(data.fight?.window ?? null));",
-  "new": "      if (holder && data.mine?.guild === holder.guild.id) body.append(windowNode(data.fight?.window ?? null));",
+  "old": "      const ruling = !!holder && data.mine?.guild === holder.guild.id && SEAT_LEVER_RANKS.includes(data.mine?.rank);",
+  "new": "      const ruling = !!holder;",
   "tests": [
    "test/seat2a_client.test.js"
   ]

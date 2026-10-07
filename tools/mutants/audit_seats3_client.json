@@ -164,7 +164,7 @@
   {
     "name": "SEATS3-D3-the-tithe-unsaid",
     "file": "src/ui/marketTab.js",
-    "old": "pct > 0 ? `${saleTax(100)}% tax and the seat's ${pct}% Tithe` :",
+    "old": "pct > 0 ? `${saleTax(100)}% tax and the ${pct}% Tithe` :",
     "new": "pct > 0 ? `${saleTax(100)}% tax` :",
     "tests": [
       "test/audit_seats3_client.test.js"

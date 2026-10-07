@@ -159,6 +159,7 @@ export function guildWordText(error, r = null, nowS = Math.floor(Date.now() / 10
   if (error === 'gold') return GUILD_GOLD_SHORT_TEXT;
   if (error === 'guild-unsure') return GUILD_DEPOSIT_UNSURE;
   if (error === 'guild-name-word' && typeof r?.why === 'string' && r.why) return `A guild's name and tag may not carry "${r.why}" - a word the realm keeps out of names.`;
+  if (error === 'guild-rank-word' && typeof r?.why === 'string' && r.why) return `A rank's name may not carry "${r.why}" - a word the realm keeps out of names.`;   // TEXT-F1
   if (error === 'guild-rename-soon' && Number.isSafeInteger(r?.at) && r.at > nowS) return guildRenameSoonText(r.at, nowS);
   return accountRefusalText(error);
 }

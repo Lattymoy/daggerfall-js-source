@@ -10978,10 +10978,10 @@ as `acct61`, and main's own `acct47` (BOULDERS) and `acct48` (MORE-NODES) are di
   hub's circle, the names kept clear of it (`markReach`); a crown in its kingdom's metal over a crown seat; a March's
   thin second ring half in each claiming crown's metal, a Free Land's green; the Charter's line in the map's box.
 - **The banners** (3.4; `src/scenes/seatBanners.js`): anchors measured where a seat town's pixel is built - the
-  palace door's two (GUILD1d's measure), a banner at each city gate on its town side beside a post, a pennant over each
-  rumour board (never a bounty board), at most 8 - hung with the kingdom's plain banner (a March's two claimants'
-  metals, a Free Land's none) on GUILD1d's cloth pass, the halls' and the seats' banners the nearest sixteen together
-  (`world.js` bannersHung). `ui/heraldryArt.js` draws a plain banner (two colours, no device).
+  palace door's two (GUILD1d's measure), a banner at each city gate on its town side beside a post, a pennant over the
+  town's one Notice Board (ONE-BOARD, Professions-Arc 10.11), at most 8 - hung with the kingdom's plain banner (a March's
+  two claimants' metals, a Free Land's none) on GUILD1d's cloth pass, the halls' and the seats' banners the nearest
+  sixteen together (`world.js` bannersHung). `ui/heraldryArt.js` draws a plain banner (two colours, no device).
 - **Four hosts**: `world.js` WIRED; `worldModes.js` and `dungeonContext.js` stand no street; `exterior.js` (the fixed
   city) FLAGGED - it runs no account service, so no seat is open there.
 
@@ -14918,3 +14918,87 @@ on that player's own machine at its landing - the world boss's law (`net/gateStr
 at a peer it hunts as at its owner; the owner's own view of the peer's feet decides only its foe's punish window. A
 peer's blow on a foe winding up carries its class (`wc`, `hitClassOf`) so the owner's poise meter weighs it as its own.
 
+## TEXT-F1 (2026-10-07, Mac: "Any human input elements need filtering, including notes") - a player's words filtered
+
+NAME-F1 (2026-09-16) filtered NAMES - a handle, a guild's name and tag, a house, a ship, a horse, a spell - and said in
+its header that a chat line was not its business. Everything else a player types and another player reads went out
+unread: the chat on every channel, the staff's red lines and narration, a Notice Board's notes and a guild's
+recruitment posters, the server's notices, a guild's own board, a letter and the answer to a note, a journal page
+shared, a waypoint shared with a party, a guild's rank names, a custom class's name (the inspect card says it), a
+maker's mark and a name the Item Maker gave a piece.
+
+**The reader** (`src/net/nameFilter.js` maskText, textCaught). A name is one word, read whole; a sentence read whole
+hides every word in it - stage 1 drops the spaces, so "you are an ass" is `youareanass`, where `ass` stands alone
+nowhere. So a line is read word by word, each word through NAME-F1's two readings and its lists, and a word caught is
+starred letter for letter. The line's spaces and punctuation stand and it never grows (one star a letter - a letter
+past the Basic Plane is two UTF-16 units and one star, AUDIT 657 D9), so a bound measured before holds after, and
+the mask is idempotent - a starred word has no letters left. Three differences from a name's verdict: the server's own
+words (IMPERSONATION) are not read ("ask a mod" is a sentence); a word spelled a letter at a time (`f u c k`,
+`f.u.c.k`) is read as the run of its letters; a word's own sentence marks are read off it (`fuck!` - a leet `!` inside
+a word is its `i`, at its end the sentence's). A number is not read (`8008`). The lists moved for prose and names
+alike: the compounds a sentence reaches for, which no boundary finds in one word (`asshole`, `arsehole`, `bullshit`,
+`dickhead`, `dipshit`, `dumbass`, `shithead`); `nigga` with the slurs; and ANYWHERE - the words a boundary only ever let past
+(`fuck`, `cocksuck`, `faggot`, `nigga`, `nigger`), read anywhere inside a word, so `motherfucker` is caught
+where a boundary let it pass, in a name as in a line. Two English words hold one innocently - snigger and niggard - and a listed word
+and a tail spell ordinary words (spiced, cocky, pricked, a booby trap): each is read as itself (AUDIT 657 T1,
+`net/nameFilter.js` INNOCENT). Every capitalised name the port quotes in its own source - an item, a place, a book, a
+ship - reads unchanged (AUDIT 657's pin parses `src/` and reads all of them, some 6,950; TEXT-F1's read a `name:` key's
+alone, and the Spices shop, the Spiced ships and Spicy Grilled Lizard were starred).
+
+**Starred, where.** `src/net/wire.js` sanitizeChat - a chat line, a red line, a narration: on the sender's machine, at
+the relay's parse and on every reader's - and wordsLine - a letter's subject and lines (`src/net/letterLaw.js`), so a
+note's, a poster's, a server notice's and a guild note's, and a journal page's head and lines. A shared waypoint rides a
+chat line, so it is starred with it. The account service also stars a note, a notice and a guild note AS THE BOARDS
+ARE READ (`server-account/src/board.js` noteView and the notices, `server-account/src/guildBoard.js`), so a note pinned
+before the filter reads as one pinned after it.
+
+**Judged, where** - a name-shaped line is refused or let go, as a name is: a rank's name with a caught word is refused
+naming it (`guild-rank-word`, the word its `why`, said on the guild tab - `server-account/src/guilds.js`
+renameGuildRanks, `server-account/src/index.js`, `src/net/accountClient.js` REFUSALS, `src/ui/socialPanel.js`
+guildWordText); a custom class the filter catches is no class at all (`src/net/wire.js` validLook - the relay's
+projection, so no peer sees it); a maker's mark the filter catches is left off the piece (`src/net/recipeLaw.js`
+makerMark - the service's mint, the client's smith and cook mints, and the card and the furniture that show a mark;
+makerName stays the SHAPE law `src/net/decorLaw.js` reads to tell a forged mark); and a name the Item Maker gave a piece
+is starred wherever the pack names it (`src/systems/itemInfo.js` shownItemName, in resolveItemName and the macro and
+survival names - every holder, shelf and market). DFU's Item Maker window is untouched.
+
+Relay **world175** (the relay's parse runs both laws); ACCOUNT_VERSION **acct90** (no migration). The four hosts
+(`scenes/exterior.js`, `scenes/world.js`, `scenes/worldModes.js`, `scenes/dungeonContext.js`) are untouched - no seam
+of theirs moved.
+
+- **Pinned**: `test/text_filter.test.js` (9 - two of them through the real service: a note, a notice, a guild note and
+  a letter kept and read starred; a rank's word refused and said); `tools/mutants/text_filter.json` (17, all dead).
+  PIN MOVED: chatroster_namefilter (NAME-F2's import line), mail1 (wordsLine is still visibleText's, its words
+  starred), legacy7_wed (WED_RELAY_MIN is world174, the relay having moved on), audit26_questitem (F077's soul-trap pin
+  reads the name line through shownItemName - b8ded8cb; AUDIT 657 D7), the relay's version pins and the account's. Re-aimed: eight mutant records whose lines moved (audit30, fb1004d_knight_house, gatekeys, guild1e, guild2,
+  mail1, prof3, soc1).
+- **Not done here**: a private surface - a waypoint kept to oneself, an automap note, a save's name - is not read: no
+  other player sees it. A letter already in a box is kept as it was written (one reader, private); every letter sent
+  from here is starred. And the filter is NAME-F1's speed bump, not a wall: a word split across two (`fu ck`) or spelled
+  in another alphabet's letters passes.
+
+## PROFILE-UI (2026-10-07, Mac: "Lets only organize and polish the player profile. Its a mess") - the inspect card in order
+
+INSPECT1's card (`src/ui/profileWindow.js`) had gathered a part from every arc that touched a player - RENOWN1's level,
+GUILD1c's tag, LEGACY7's house, DUEL1's record, WB5b's gates, RAID4's towns, AUDIT SERPENT D4's serpents - each one
+more line under the name, or one more mark beside it. A player showing every glyph the token carries (eighteen, where
+three stood when the card was made) squeezed their name to a letter a line at every width, and the card's own probe
+(`tools/profileProbe.mjs`) failed 41 of its checks for it - while photographing the front door's film instead of the
+card.
+
+Now, top to bottom: the title; the name line - the Renown, the name, the tag - breaking BETWEEN them where they will not
+stand on one line, never inside the name; the glyphs on a row of their own under it, wrapping; the house; the level,
+race and class; the record as one row of plaques, each its own words; the waiting or the silence, said under the head
+before the gap it explains; then the sheet beside what they wear, and what they wear in its parts - in hand (a shield
+with the sword), armour, clothing, jewellery - each piece by its own group (net/wire.js LOOK_GROUPS), a pair worn in two
+slots of one name ONE row under the plural with both names (gearGroups - the card said "Ring" twice, eight such pairs to
+a full look, AUDIT 657 D8). The card is wider (560px), so a long piece's name keeps its line.
+
+The probe builds the widest card a player can be shown - every glyph, a Renown at RENOWN_MAX, the longest tag the guild
+law takes, every plaque, the widest outfit - and reads it at a desktop's width, a narrow window's and a phone's, on the
+enhanced sheet and bare: every check passes. It loads with `?nointro` - the film takes Escape at the window, stopped,
+whenever it mounts before the card, which made the probe's Escape check a race.
+
+- **Pinned**: `test/profile_ui.test.js` (3); `tools/mutants/profile_ui.json` (9, all dead). PIN MOVED:
+  serpent1_auditclient (the serpents slain are a plaque). Re-aimed: inspect1.json INS-gear-out-of-order (the row carries
+  its part).

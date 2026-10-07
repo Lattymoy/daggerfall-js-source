@@ -83,7 +83,7 @@ import {
   GUILD_RENAME_GOLD, GUILD_RENAME_COOLDOWN_S, guildRenameAt, guildRenameOpen,   // GUILD2a: a new name, for a price
 } from '../../src/net/guildLaw.js';
 import { vaultStanding, guildVaultSlots } from '../../src/net/guildVaultLaw.js';   // GUILD2b: the vault, in the guild's view
-import { checkName, normaliseName, standsAlone, IMPERSONATION } from '../../src/net/nameFilter.js';   // GUILD2a: a guild's name and tag pass the name filter (Seats-Arc 18 said they did)
+import { checkName, normaliseName, standsAlone, IMPERSONATION, textCaught } from '../../src/net/nameFilter.js';   // GUILD2a: a guild's name and tag pass the name filter (Seats-Arc 18 said they did)
 import { seatWeekOf } from '../../src/net/townSeatLaw.js';   // GUILD2a: no new name in a week the guild fights for a seat
 
 const charOk = (c) => typeof c === 'string' && CHAR_ID_RE.test(c);
@@ -557,6 +557,10 @@ export async function renameGuildRanks(ctx, player, { character, ranks } = {}) {
   if (!guildMay(a.me.rank, 'renameRanks')) return { error: 'guild-rank' };
   const names = guildRankNamesOf(ranks);
   if (!names) return { error: 'bad-ranks' };
+  // TEXT-F1 (2026-10-07): a rank's name is a name the guild's members wear - its words read as a name's, the word caught
+  // said (AUDIT2 GUILD2 S2's own shape)
+  const caught = names.map(textCaught).find(Boolean);
+  if (caught) return { error: 'guild-rank-word', word: caught };
   if (await spend(ctx, player)) return { error: 'guild-rate' };
   await db.prepare('UPDATE guilds SET ranks = ? WHERE id = ?').bind(JSON.stringify(names), a.me.guild_id).run();
   return { ok: true, ranks: names };

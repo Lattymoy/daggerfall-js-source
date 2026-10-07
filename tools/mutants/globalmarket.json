@@ -101,8 +101,8 @@
   {
     "name": "GLOBAL-MARKET-tab-orders-regional-words",
     "file": "src/ui/marketTab.js",
-    "old": "'No buy orders stand on the Bay\\'s boards.'",
-    "new": "`No buy orders stand on the boards of ${m.regionName}.`",
+    "old": "  noOrders: 'No buy orders right now.',",
+    "new": "  noOrders: 'No buy orders in this region.',",
     "tests": [
       "test/globalmarket.test.js"
     ]

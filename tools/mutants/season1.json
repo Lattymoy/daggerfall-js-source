@@ -549,7 +549,7 @@
  {
   "name": "SEASON1-tab-line",
   "file": "src/ui/seatTab.js",
-  "old": "      if (season) body.append(el('p', 'notice-seat-week notice-seat-season', season));\n",
+  "old": "      if (season) week.append(el('p', 'notice-seat-week notice-seat-season', season));\n",
   "new": "",
   "tests": [
    "test/season1_client.test.js"
