@@ -60,7 +60,7 @@ import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES, CLIMATES, REGION_NAMES } from '../formats/mapsFile.js';   // SPAWNED-DUNGEONS1: the ocean gate and the synthesized location's region name
 import { questTracker } from '../ui/questTracker.js';   // GUIDE5: the quest the player follows - its places, marked
 import { marksOn, questMapMarks } from '../ui/questMarks.js'; import { boatCompassPoints } from '../ui/boatMarks.js';   // GUIDE5: where the quests point, on the held map and the compass; BOAT-MARK: where my boats lie, on the compass
-import { settlementsOf, loadModRoads, basicRoadsPathsPoint, WATER_BYTE } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22; WOD2: Basic Roads' getPathsPoint, the question World of Daggerfall's loader asks
+import { settlementsOf, loadModRoads, retryModRoads, basicRoadsPathsPoint, WATER_BYTE } from '../world/roadsProducer.js';   // ROADS 3 / AUDIT ROADS F2 / ROADS 22; WOD2: Basic Roads' getPathsPoint, the question World of Daggerfall's loader asks
 import { modSetting, modSettingsOf, modSettingsGeneration, MOD_SETTINGS, latchModLoaded } from '../systems/modSettings.js';   // ROADS 24; HCC: the mod's eight switches; CSA-D: a mod's title for the load's failure line; AUDIT PRE-MERGE 0928 S4: the next-load mods latched at mount
 import { hasPortFor, hasPort, setSeatHarbours, PORT_LOCATION_IDS, maskMapId } from '../systems/travelPorts.js';   // AUDIT-RR2 G22: Travel Options' port list for RR's ship gate; SEAT2b part two: a members' Harbour among them (hasPortFor)
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../formats/woodsFile.js';
@@ -251,6 +251,8 @@ import { treeKind, isTreeRecord, FOREST_STAMP } from './treeHost.js';   // PROF4
 import { createLowPolyTrees } from '../systems/lowPolyTreesAssets.js';   // LPT1: Low Poly Trees - the host's one door
 import { LPT_SCALE_MAX, lptVariety, buildTreeSet } from '../world/lowPolyTrees.js'; import { naturePicture } from '../world/naturePicture.js';   // LPT1: each tree's own draw, and a near pixel's set; AUDIT 05b A12: which picture a nature flat stands as, every host's one choice
 import { realForestsOn, FOREST_HIDDEN_LOCATION_TYPES, roadVergesOn, climateBlendOn } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide; VERGE1: the clear roadsides' switch; ECOTONE1: the blended climates'
+import { landformsOn } from './shared.js';   // LANDFORM1-3: the Landforms switch
+import { createLandforms, landformLiftField, cliffFadeAt } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
 import { vergeClear, natureReach } from '../world/roadVerge.js';   // VERGE1: a wild flat's footprint off the roads
 import { ecotoneOwner, ecoOrigin } from '../world/ecotone.js'; import { MAP_W, MAP_H } from '../world/roadNetwork.js';   // ECOTONE1: a border point's owner, the pixel's lattice origin, the map's edges
 import { insideRocks, forestAt } from '../world/terrainNature.js';   // FOREST1 (AUDIT F1): a wood's flats keep out of the rock pieces; GRASS-LIT2: the shot hook's woods
@@ -1179,6 +1181,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       return;
     }
     if (his) { terrainGen.setRoadsData({ ...his, ...roadSwitches }, (st) => console.log(`[roads] Basic Roads, 1:1: ${st.roadPixels ?? '?'} road pixels (Hazelnut)${roadSwitches.water ? ', rivers and streams on' : ''}${roadSwitches.smooth ? '' : ', smoothing off'}`)); rebuildRoadless(); return; }
+    // AUDIT LANDFORMS C3: ONLINE, HIS NETWORK OR NONE YET. The room's ground is cut along his arrays (the lane forces the
+    // mod, onlineLane.js), and one failed fetch stood this client on the port's own network - other roads, no rivers: with
+    // the Landforms row a river pixel's ground a median 4.8 m off its peers'. Asked again (retryModRoads, WOD6's backoff);
+    // the pixels stand roadless meanwhile and ROADS 25 rebuilds them when the arrays land - the port's own network only
+    // once every try has failed.
+    if (params.has('online')) {
+      retryModRoads({ onTry: (n, ms) => console.warn(`[roads] Basic Roads data did not load - asking again in ${ms / 1000} s (online: the room's network)`) }).then((late) => {
+        if (late) { terrainGen.setRoadsData({ ...late, ...roadSwitches }, (st) => console.log(`[roads] Basic Roads, 1:1, landed late: ${st.roadPixels ?? '?'} road pixels (Hazelnut)`)); rebuildRoadless(); return; }
+        console.warn('[roads] Basic Roads data did not load on any try - generating our own network');
+        terrainGen.setRoads(settlementsOf(maps), logRoads, roadSwitches);
+        rebuildRoadless();
+      });
+      return;
+    }
     console.warn('[roads] Basic Roads data did not load - generating our own network');
     terrainGen.setRoads(settlementsOf(maps), logRoads, roadSwitches);
     rebuildRoadless();
@@ -1194,6 +1210,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   // once, as the world mounts: every pixel of a world stands one forest,
   // and a flip of the row reaches the next world.
   const forests = realForestsOn();
+  // LANDFORM1-3: THE LANDFORMS (world/landforms.js) - read once, as the world mounts, the forests' way: every pixel of a
+  // world stands on one ground. A river is cut where it is painted (the network's `water`); online the river switch is
+  // the room's (onlineLane.js ONLINE_ROOM_MOD_KEYS), so the room stands on one ground. Off, every kernel is DFU's to the bit.
+  const landform = landformsOn();
+  /** LANDFORM1-3: this thread's landforms - the gate's beacon (gateGroundAt) and a record's frame (landformLiftAt)
+   *  read them, over the network this thread holds: the same arrays the worker cuts along. */
+  const landformsHere = () => (landform ? createLandforms({ woods, roads: terrainGen.roads() }) : null);
   // VERGE1: CLEAR ROADSIDES (world/roadVerge.js) - read once, as the world mounts, as the forests are: where the wild's
   // flats stand is one law for a world, and a flip of the row reaches the next.
   const verges = roadVergesOn();
@@ -1995,6 +2018,35 @@ export async function bootWorld(canvas, renderer, params, status) {
       regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)),
     }, elite: isEliteSpawn(_spawnSalt, px, py) });   // ELITE: the same hash on every client
   }
+  /** AUDIT OW4 D2: HAS A SPAWN'S TIME RUN OUT - the spawned feature's own test (spawnedDungeonAt's: the ledger's two
+   *  clocks, never while the player is in it), asked NOW: the index lets an expired spawn go only when its pixel next
+   *  builds, and until then its plate stood and its walk went. AUDIT OW5b D2: gone FROM THE GROUND - one standing on built
+   *  ground stands until that ground is next built (_locationToBuild takes it out then), and its plate stands with it.
+   *  FIELD BUGS 29h (SPAWN-PLATE; the Discord: "Elite Dungeons that despawn stay on map ... no entrance anymore but are
+   *  still marked"): standing on the ground is the BUILD's word - whether the pixel stood a location, never that it is
+   *  built. A pixel built after the clock ran out is built EMPTY, and read as built it kept its found plate (the store
+   *  files a spawn for good) and its walk to bare grass whenever the traveller came within the grid. */
+  const tvSpawnGone = (x, y) => { const key = `${x},${y}`; return _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key) && built.get(key)?.location == null; };
+  /** AUDIT OW4 D4: WHAT spawnedDungeonAt WOULD STAND on a pixel it has not built - its own gates (the sea, a path across
+   *  the pixel, the clocks; the roll and the page are asked by the caller) and its clone, with none of its writes (the
+   *  index, the ledger's first sight, the roads' provisional keys): a far found spawn is marked, never built. */
+  function tvSpawnAt(px, py) {
+    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py) || tvSpawnGone(px, py)) return null;
+    const roads = terrainGen.roads();
+    return roads && !pathFreePixel(roads, px, py) ? null : _spawnCloneAt(px, py);
+  }
+  /** AUDIT OW5b D3: WHAT STANDS ON A PIXEL, built or not - the index's place, else the spawn its roll would stand (online,
+   *  side-effect free: tvSpawnAt). A member walking to the leader's spawn read the index alone, and a far spawn their own
+   *  pixels had never built was a bare spot to them. */
+  const tvLocationAt = (x, y) => locationIndex.get(`${x},${y}`) ?? (params.has('online') && spawnsDungeon(_spawnSalt, x, y) ? tvSpawnAt(x, y) : null);
+  /** AUDIT LANDFORMS B1: landformLiftAt's pixels not built yet - what the build will stand there: the index's place, else
+   *  online the spawn its roll stands; one past its time with nobody in it is built empty (_locationToBuild), read here
+   *  without taking it out of the index. AUDIT LANDFORMS II F1: declared here, beside the build's own answer, so it is the
+   *  whole answer before anything can ask it. It was bound beside the Overworld's probes, far below the boot's load
+   *  (`await worldQuickLoad({ ...bootLoadPick, snap })`) - online the only load - so that load stood a spawn's records on
+   *  the wild lift and every later save wrote them on the spawn's: a camp at a spawned dungeon drifted by up to 24 m a
+   *  session (the Citadel of Copperton), and a camp is never stood again. */
+  const _liftLocationAt = (x, y) => (locationIndex.get(`${x},${y}`)?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(x, y));
 
   // U31 / THE CLASSIC START. StartGameBehaviour (:371-401) does not
   // resolve the start by NAME - it reads a map pixel out of settings
@@ -2108,6 +2160,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const grassNormalScratch = [0, 1, 0];   // GRASS-LIT2: the slope's answer, one array for every blade (the placer copies it)
   let gustPhase = 0, gustWind = [0, 0];   // AUDIT MEADOW1: the gust wave's phase the crossings carried, and the wind it was last drawn under (systems/windDrive.js gustClock)
   let hccGroundMoved = null;   // DISC20-C: the horse-cart pool's re-stand over a pixel just built - bound once the pool is (the boot's first pixel builds before it)
+  let rideGround = null;   // AUDIT LANDFORMS II G1/G2: what rides a rebuilt pixel's ground - bound once the pools and the player are (BOOT-TDZ2)
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door. A draw only: nothing here tells the game where water is.
   const waterOn = waterSwitchOn();   // FT6: the one composition (render/waterSurface.js)
@@ -3686,6 +3739,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** AUDIT DW-F: a pixel the port rebuilds (a season's re-skin, the roads, a WoD sweep - rebuilds DFU never makes) keeps its
    *  rubble: pixel key -> the list, batches and all, adopted by the entry that stands next (pixel-local, so it is where it lay). */
   const _dwRubbleCarry = new Map();
+  /** AUDIT LANDFORMS II G1: ...and the GROUND a pixel the port rebuilds under the live pools stood on: pixel key -> its
+   *  samples as they were, until the entry that stands next publishes and the pools ride the ground's move (the carry
+   *  below, beside DISC20-C's carts). The last few rebuilds' alone - one never published (walked away from) goes with
+   *  the oldest. */
+  const _groundBefore = new Map();
   /** SpawnRubbleBatches' Spawn for one terrain: FilterPlacements now (its count is the C#'s), the batch stood when its pictures are warm. */
   function dwSpawnRubble(entry, placements) {
     const kept = dwDecor.filter(entry, placements);
@@ -4083,6 +4141,65 @@ export async function bootWorld(canvas, renderer, params, status) {
     dwRender.drawSurfaces(_dwSurfaceList, { ...f.look, underwater: f.underwater, liftY: deepWaters.oceanLocalY + SURFACE_RENDER_Y_OFFSET, surfaceScroll: surfaceScrollAt(nowMs / 1000), surfaceTexture: _dwSurfaceTex });
     renderer.markForeignPass();   // EV6: the surfaces' programs ran behind the shadows' back
   }
+  /** LANDFORM1: how far the landforms move DFU's ground at a scene point, in world units (world/landforms.js
+   *  landformLift - the kernel's own shaped ground less DFU's over the network this thread holds, the cuts with the
+   *  lift (AUDIT LANDFORMS B2), over the location rect of the pixel's build, so a town's levelled ground is exact).
+   *  What the row puts there, read while it is on. A pixel's field is kept for the next record a save or a load stands
+   *  on it - the last LIFT_FIELDS_KEPT pixels asked, the longest unasked let go first (AUDIT LANDFORMS II F3: dropped
+   *  whole past eight, a save whose records stood on nine pixels made every field again - a town's is a kernel pass,
+   *  146 ms for nine on the main thread and 0.4-0.6 s for sixteen - at every save, online every two-minute checkpoint).
+   *  AUDIT LANDFORMS B1: the rect is the build's for a pixel not built yet too - the one setLocationTiles will stamp
+   *  (tvTownRects' own fallback). A load stands records before their pixels stream in (its camps anywhere in the world, a
+   *  neighbour's piles), and the wild lift it took there was up to 203 m off a location's levelled ground (Tamarilyn
+   *  Coven; 1,036 of 15,251 locations over a metre at the rect's centre), into a camp that is never stood again. */
+  const LIFT_FIELDS_KEPT = 32;   // a town's field is 129 x 129 floats (66 KB): 2 MB at the most
+  const _liftFields = new Map();
+  /** ...and the rect that build will stamp, kept per pixel while the same place stands there (a spawn's clone is made
+   *  afresh at each ask, so a spawn's is asked again - 50 us, against its field's kernel pass) */
+  const _liftRects = new Map();
+  const landformLiftAt = (x, z) => {
+    const c = state.compensation;
+    const px = state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE);
+    const py = state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE);
+    if (!woods || px < 0 || py < 0 || px >= MAP_WIDTH || py >= MAP_HEIGHT) return 0;
+    const t = state.pixelTranslation(px, py);
+    const at = built.get(`${px},${py}`);
+    let rect = at ? at.locationRect ?? null : null;
+    if (!at) {
+      const loc = _liftLocationAt(px, py), had = _liftRects.get(`${px},${py}`);
+      if (had && had.loc === loc) rect = had.rect;
+      else {
+        if (loc?.exterior?.exteriorData && loc.mapTableData) rect = setLocationTiles(loc, maps, blocks, new Uint8Array(128 * 128)) ?? null;
+        _liftRects.delete(`${px},${py}`);
+        if (_liftRects.size >= LIFT_FIELDS_KEPT) _liftRects.delete(_liftRects.keys().next().value);   // the longest unasked
+        _liftRects.set(`${px},${py}`, { loc, rect });
+      }
+    }
+    // AUDIT LANDFORMS B2: the field follows the cuts, so it is the network's too - made again once the network lands
+    const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0}`;
+    let field = _liftFields.get(key);
+    if (field) _liftFields.delete(key);   // asked again: the last to be let go
+    else {
+      if (_liftFields.size >= LIFT_FIELDS_KEPT) _liftFields.delete(_liftFields.keys().next().value);   // the longest unasked
+      field = landformLiftField(woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere());
+    }
+    _liftFields.set(key, field);
+    return field((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;
+  };
+  /** AUDIT LANDFORMS C1/B4: A HEIGHT GOES INTO A RECORD IN DFU'S FRAME. With the row on the ground at (x, z) stands
+   *  `landformLiftAt(x, z)` over DFU's, and every exterior height a record carries (the save, the scene cache, the ship's
+   *  deck, an anchor, a dungeon's outer camps) is written without it - so a build without the row reads it as it always
+   *  read one, and this one puts the lift back on (restandHeight). Written on the landforms' own ground (LANDFORM1's
+   *  stamp), a record stood the lift over its ground on any build before: a save loaded on a desktop copy that has not
+   *  updated, or after a revert, dropped its character - a fall of over 100 HP from 30% of the land. `y` is
+   *  compensation-free, (x, z) scene coordinates. */
+  const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y - landformLiftAt(x, z) : y);
+  /** ...for a record in NATIVE coordinates (a pile, a foe, a guard). */
+  const groundFrameNative = (nx, nz, y) => {
+    if (!landform) return y;
+    const [x, z] = state.localFromWorld(nx, nz);
+    return groundFrameHeight(y, x, z);
+  };
   // TERRAIN-SCALE1: A HEIGHT WRITTEN UNDER ANOTHER TERRAIN SCALE, STOOD
   // AGAIN ON TODAY'S GROUND. Every exterior height a save (or a scene
   // cache, or an anchor) carries is compensation-free and stood on
@@ -4098,11 +4215,20 @@ export async function bootWorld(canvas, renderer, params, status) {
   // exact for anything that stood ON its ground and a sixth of any
   // height above it off. (x, z) are scene coordinates; `was` absent or
   // equal to today's scale is today's ground, untouched.
+  //
+  // LANDFORM1: and every record's height is DFU's frame (AUDIT LANDFORMS
+  // C1: groundFrameHeight writes it so), so while the Landforms row is on
+  // it takes the lift at its own spot (landformLiftAt) back on, beside the
+  // scale's arm: on today's ground it is the ground's height there plus
+  // its own `off`.
   const restandHeight = (y, x, z, was) => {
-    if (!(was > 0) || was === STREAMING_TERRAIN_SCALE || !Number.isFinite(y)) return y;
+    if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y;
+    if (!Number.isFinite(y)) return y;
+    const now = landform ? landformLiftAt(x, z) : 0;
+    const r = was > 0 ? was / STREAMING_TERRAIN_SCALE : 1;
     const h = heightAt(x, z);
-    if (Number.isFinite(h)) return y - (h - state.compensation[1]) * (was / STREAMING_TERRAIN_SCALE - 1);
-    return y * (STREAMING_TERRAIN_SCALE / was);
+    if (Number.isFinite(h)) return y - (h - state.compensation[1] - now) * (r - 1) + now;
+    return y * (was > 0 ? STREAMING_TERRAIN_SCALE / was : 1) + now;
   };
   /** TERRAIN-SCALE1: the scale a record without its own stamp was written on - the prefab's, before the stamp. */
   const scaleOf = (stamp) => (stamp > 0 ? stamp : DEFAULT_TERRAIN_SCALE);
@@ -4388,7 +4514,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // EV4: the far ring builds strided with its skirt; the kernel's
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
-    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads, paths, wodAverages } = await terrainGen.generate({
+    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads, paths, wodAverages, beach } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
       // WOD2: the smoothing arms run in the kernel; FOREST1: and whether each pick is a SITE the woods close round (a camp, a
       // fort, a ruin - not a rock field or a mountain, AUDIT FOREST1 F1) and its whole footprint (its objects, F7)
@@ -4396,6 +4522,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // FOREST1: the woods' archive (the climate's summer one, which names its Trees) and whether this pixel's place is one they hide
       forests: forests ? { archive: climate.natureArchive, hidden: FOREST_HIDDEN_LOCATION_TYPES.has(dfLocation?.mapTableData?.locationType) } : null,
       ecotone: natureBorder,   // ECOTONE1: null unless a neighbour's nature differs
+      landform,   // LANDFORM1-3: the shaped ground, cut along the kernel's own network
     });
     // DW-B: HandlePromote's synchronous arm - a pixel beside the player's is
     // promoted now, on the Deep Waters worker while this build lays out, and
@@ -5269,6 +5396,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       _lookV: homeLookRead,   // HOME-LOOK (AUDIT)
       homeFrames: pixelHomeFrames, homeRegion: dfLocation?.regionIndex ?? 0,   // HOME-YARD: each building's frame, and the town's region (a yard's pieces are paid there)
       seatAnchors, _boardSplit: pixelBoardSplit, festivalAnchors, festivalLanterns,   // SEAT1a (above); FESTIVAL-STAGE (above)
+      beach: beach ?? null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel with the row on - where a gathering node asks the beach line
       px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, hearths: pixelHearths, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
       townClimate: townClimateBase,   // DECOR-OUTDOOR: the climate its town's buildings wear - a yard's pieces wear it too (scenes/homeYards.js)
@@ -5353,6 +5481,27 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (hccGroundMoved) {
       const t = state.pixelTranslation(px, py);
       hccGroundMoved(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
+    }
+    // AUDIT LANDFORMS II G1/G2: A REBUILD CARRIES WHAT LIES ON ITS GROUND. The road network's landing (ROADS 25) cuts the
+    // landforms' roads and channels metres into a pixel built before it - 14% of the network's samples move, up to 30 m
+    // on the Menevia escarpment - and a late World of Daggerfall pack or the gate's clearing flattens one. The pools'
+    // piles, dropped lights, camps and bodies stayed on the ground as it was, hung over a cut or buried in a fill, and
+    // the next save kept them so (written and read through the landed field). Each rides the ground's own move under it,
+    // the new samples less the old (TERRAIN-SCALE1's law); and the player the hold held over this pixel, on their feet,
+    // rides it too - put back where they stood, they fell the cut (28.7 m, 118 HP, at the worst); a fall under way is
+    // their own (FALL-KEPT).
+    const groundWas = _groundBefore.get(key);
+    if (groundWas) {
+      _groundBefore.delete(key);
+      const now = built.get(key).samples, t = state.pixelTranslation(px, py);
+      const groundIn = (smp, x, z) => {   // heightAt's own read: bilinear over the pixel's samples, pixel-local
+        const fx = Math.max(0, Math.min(TERRAIN_SIZE, x - t[0])) / heightCell, fz = Math.max(0, Math.min(TERRAIN_SIZE, z - t[2])) / heightCell;
+        const ix = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fx)), iz = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fz)), sx = fx - ix, sz = fz - iz;
+        const at = (a, b) => smp[a * HEIGHTMAP_DIMENSION + b];
+        return (at(ix, iz) * (1 - sx) * (1 - sz) + at(ix + 1, iz) * sx * (1 - sz) + at(ix, iz + 1) * (1 - sx) * sz + at(ix + 1, iz + 1) * sx * sz) * worldHeight;
+      };
+      const moved = (x, z) => groundIn(now, x, z) - groundIn(groundWas, x, z);
+      rideGround?.(t, key, moved);
     }
     if (homeTown) _homeLookV = -1;   // HOME-LOOK (AUDIT): a town's pixel stood after the registry moved is painted by the next refresh
     // AUDIT-TO1 B3: the second hook. BOOT-TDZ2: THE MOD IS ASKED FIRST,
@@ -5562,14 +5711,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     const key = `${p.px},${p.py}`;
     if (built.get(key) !== p) return;                  // evicted while it waited
     if (strideFor(p.px, p.py) === p._stride) return;   // walked back out of the near ring
-    terrainGen.grid({ px: p.px, py: p.py, stride: 1, samples: p.samples }).then((grid) => {
+    terrainGen.grid({ px: p.px, py: p.py, stride: 1, samples: p.samples, landform }).then((grid) => {   // LANDFORM1-3: the ghost rows the build took
       if (built.get(key) !== p) return;                              // evicted, or rebuilt, while the worker built it
       if (strideFor(p.px, p.py) !== 1 || p._stride === 1) return;   // walked back out, or promoted meanwhile
       restrideTerrain(p, 1, grid);
     }).catch((e) => console.error(`[terrain] promotion of ${key} failed:`, e));
   }
 
-  function restrideTerrain(p, stride, grid = restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples })) {   // PERF-EXT26: or the grid the worker built
+  function restrideTerrain(p, stride, grid = restrideGrid({ woods, px: p.px, py: p.py, stride, samples: p.samples, landform, roads: terrainGen.roads() })) {   // PERF-EXT26: or the grid the worker built; LANDFORM1-3: the build's ghost rows
     if (p.water) { renderer.destroyWaterSurface(p.water); p.water = null; }
     if (p.dwTerrain) { renderer.destroyWaterSurface(p.dwTerrain); p.dwTerrain._dead = true; p.dwTerrain = null; }   // DW-C
     renderer.destroyMesh(p.terrain);
@@ -5632,6 +5781,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (oceanHoles) oceanHoles.destroyed(p);   // OH-B: and its pit (the terrain's OceanHole_Pit child)
     if (collectLoose) for (const r of [...(_dwRubble.get(p) ?? [])]) dwFreeRubble(r);   // DW-E5: the sunken loot's rubble goes with an unload (Port-Ledger: DFU pools the terrain with its children)
     else if (_dwRubble.has(p)) { _dwRubbleCarry.set(key, _dwRubble.get(p)); _dwRubble.delete(p); }   // AUDIT DW-F: ...and outlives the port's own rebuilds, as the piles do
+    if (!collectLoose && p.samples) {   // AUDIT LANDFORMS II G1: the ground the rebuild will carry the pools off
+      _groundBefore.delete(key);
+      if (_groundBefore.size >= 64) _groundBefore.delete(_groundBefore.keys().next().value);
+      _groundBefore.set(key, p.samples);
+    }
     if (collectLoose && _dwGuards.has(key)) { for (const h of _dwGuards.get(key)) h.destroy(); _dwGuards.delete(key); }   // AUDIT DW-F: and the wrecks' guards, their terrain's children
     if (p.dwTerrain) { renderer.destroyWaterSurface(p.dwTerrain); p.dwTerrain._dead = true; p.dwTerrain = null; }   // DW-C: the clip's own index set and VAO (the ground's buffers it read went above)
     if (p.personBatches) for (const b of p.personBatches.values()) renderer.destroyBatch(b);   // T2
@@ -6888,6 +7042,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   // named once for the three that need them: the save, the load, and the teleport that re-anchors the frame under the pool
   const campToNatives = (pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; };
   const campFromNatives = (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; };
+  /** AUDIT LANDFORMS C1: a camp as a record keeps it - natives, its height in DFU's frame (groundFrameHeight). The frame
+   *  change above keeps campToNatives' own: a recenter is this ground both ways. */
+  const campToRecord = (pos) => { const n = campToNatives(pos); return [n[0], groundFrameHeight(n[1], pos[0], pos[2]), n[2]]; };
   /** AUDIT REST II H6: THE CAMPS I LEFT STANDING OUTSIDE ride a dungeon save too (outerCampsSave, in natives) and a load
    *  stands the save's, as the world branch does - without it a Campfire placed after the save stood beside the pack's
    *  restored one (two), and a fresh page lost every camp outside. A save from before carries none, and what stands,
@@ -6898,7 +7055,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const outer = extras?.world?.outerCamps;
     if (!Array.isArray(outer)) return;
     const savedScale = scaleOf(extras.terrainScale);   // TERRAIN-SCALE1: each stood again on today's ground, as the world branch's
-    const rows = savedScale === STREAMING_TERRAIN_SCALE ? outer : outer.map((r) => {
+    const rows = savedScale === STREAMING_TERRAIN_SCALE && !landform ? outer : outer.map((r) => {   // LANDFORM1: and the row's lift put back on (DFU's frame, AUDIT LANDFORMS C1)
       const p = r?.pos;
       if (!Array.isArray(p)) return r;
       const [x, z] = state.localFromWorld(p[0], p[2]);
@@ -9626,6 +9783,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       },
     },
   });
+  // AUDIT LANDFORMS II G1/G2: what rides a rebuilt pixel's ground, bound here, once the pools and the player stand -
+  // BOOT-TDZ2: the boot's first build publishes before they are declared, and the network lands inside it on most
+  // boots, so read from the publish they were a dead zone (the boot died on `droppedLoot`: AUDIT LANDFORMS II K1).
+  // Nothing lies on the ground before this.
+  rideGround = (t, key, moved) => {
+    for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, camps.groundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);
+    if (_seasonHoldKey === key && walkMode && playerSpawned && player.grounded) player.pos[1] += moved(player.pos[0], player.pos[2]);
+  };
 
   // ═══ ARENA2 (2026-10-02, Mac: "Players can choose to watch AI fights ... and climb esclating tiers of opponents";
   // "During fights, the crowd is present and can cheer/boo you"): THE ARENA'S BOUTS ON THIS SCREEN ═══════════════════
@@ -12501,8 +12666,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   function cacheExteriorScene(pixel) {
     cacheScene(_sceneCache(), worldSceneName(pixel.x, pixel.y), {
       lootContainers: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos))
-        .map((sp) => ({ ...sp, containerType: LOOT_CONTAINER_TYPES.DroppedLoot, y: sp.y - state.compensation[1] })),
-      droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),
+        .map((sp) => ({ ...sp, containerType: LOOT_CONTAINER_TYPES.DroppedLoot, y: groundFrameNative(sp.nativeX, sp.nativeZ, sp.y - state.compensation[1]) })),   // AUDIT LANDFORMS C1: DFU's frame
+      droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), wc.z]; }),
       terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground these heights stand on
     });
   }
@@ -12514,7 +12679,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // TERRAIN-SCALE1: an entry a save carried from before the stamp stood on the prefab's 1.5 - stood again on today's
     // ground, which the arrival has just built
     const was = scaleOf(arrived.terrainScale);
-    const restand = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was); };
+    const restand = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was); };   // LANDFORM1: the row's lift put back on
     droppedLoot.restoreWorld(arrived.lootContainers.map((c) => ({ ...c, y: restand(c.nativeX, c.nativeZ, c.y) })),
       (nx, nz) => state.localFromWorld(nx, nz), state.compensation[1]);
     droppedTorches.restore(arrived.droppedTorches.map((t) => { const p = t.position; return { ...t, position: [p[0], restand(p[0], p[2], p[1]), p[2]] }; }), (p) => { const [lx, lz] = state.localFromWorld(p[0], p[2]); return [lx, p[1] + state.compensation[1], lz]; });   // HT1
@@ -12571,7 +12736,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const t = shipTransition(playerEntity, {
       boardShipPosition: playerEntity.boardShipPosition ?? null,
       mapPixel: here,
-      position: shipMemory({ mapPixel: here, pos: [...player.pos], yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE }, state.compensation[1]),   // TERRAIN-SCALE1 (audit): the ground `pos` stood on; AUDIT 68 S22: its height without the streamer's compensation
+      position: shipMemory({ mapPixel: here, pos: [player.pos[0], groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) + state.compensation[1], player.pos[2]], yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE }, state.compensation[1]),   // AUDIT LANDFORMS C1: its height in DFU's frame   // TERRAIN-SCALE1 (audit): the ground `pos` stood on; AUDIT 68 S22: its height without the streamer's compensation
     });
     if (!t) return;
     // TR-AUDIT F-F1: READ the reposition rather than infer it from
@@ -12628,7 +12793,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     await _teleportToPixel(t.go.x, t.go.y, localPos, { reposition: t.reposition, grounded: legacy });
     // TERRAIN-SCALE1 (audit): a deck remembered by a save from before the stamp stood on the prefab's 1.5 - the
     // teleport stood the player on it verbatim (not grounded); stood again now, over the pixel just built
-    if (localPos && !legacy && scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE) {
+    if (localPos && !legacy && (scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform)) {   // LANDFORM1: or with the row's lift to put back on
       const c = state.compensation[1];
       const y = restandHeight(localPos[1] - c, localPos[0], localPos[2], scaleOf(t.restore.terrainScale)) + c;
       if (walkMode) player.spawn(localPos[0], y, localPos[2]);
@@ -12685,7 +12850,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       // free frame survives any recenter between the set and the cast.
       // So there is no restore call here and no compensation on the
       // anchor - see makeAnchor's note, which is where the law lives.
-      y: pf[1] - state.compensation[1],
+      // AUDIT LANDFORMS C1: DFU's frame - outside, and in a building (the exterior's frame); a dungeon's feet are its own
+      // frame's, and its anchor lands on `local` alone (AUDIT LANDFORMS II F4: they were asked the lift as a scene point)
+      y: inDungeon ? pf[1] - state.compensation[1] : groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),
       terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground that height stands on
       local: inside.local,
       yaw: cam.yaw, pitch: cam.pitch,
@@ -12709,7 +12876,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const anchorLanding = (a) => {
     if (a.insideDungeon && a.local) return [...a.local];
     const [lx, lz] = state.localFromWorld(a.nativeX, a.nativeZ);
-    return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale)) + state.compensation[1], lz];   // TERRAIN-SCALE1: an anchor set before the stamp stood on the prefab's 1.5
+    return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale)) + state.compensation[1], lz];   // TERRAIN-SCALE1: an anchor set before the stamp stood on the prefab's 1.5; LANDFORM1: and the row's lift put back on
   };
 
   let _recalling = false;
@@ -13602,7 +13769,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // record - the pile/foe/guard law three lines below.
     const interiorPools = modes?.interiorPoolSnapshot?.((pos) => state.worldCoords(pos)) ?? null;
     if (interior && interiorPools) {
-      const shed = (rows) => (rows ?? []).map((r) => ({ ...r, y: r.y - state.compensation[1] }));
+      const shed = (rows) => (rows ?? []).map((r) => ({ ...r, y: groundFrameNative(r.nativeX, r.nativeZ, r.y - state.compensation[1]) }));   // AUDIT LANDFORMS C1: DFU's frame
       interior.foes = shed(interiorPools.foes);
       interior.guards = shed(interiorPools.guards);
     }
@@ -13656,13 +13823,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       modData: { [HCC_VENDOR]: hccRuntime.getSaveData(), ...modSaveRecords() },   // WA1: every registered mod's record beside it (systems/modSaveData.js)   // AUDIT HCC H3: the mod's own record (WagonSaveData, GetSaveData [IL_9354]) in DFU's per-mod slot - written whatever the switch says, so a save taken with the mod off keeps the horse's name and the parked wagon for when it comes back on
       locationKey: 'world',
       world: {
-        pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: pf[1] - state.compensation[1],
+        pixel: playerTravelPixel(), nativeX: wc.x, nativeZ: wc.z, y: groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),   // AUDIT LANDFORMS C1: every height below in DFU's frame
         // P2-slice (items-2): loose piles ride the envelope in
         // NATIVES with the compensation-free height, the player
         // half's exact law.
-        piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: sp.y - state.compensation[1] })),
-        droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; }),
-        camps: camps.snapshot(campToNatives),   // SURV3: my camps, in natives   // HT1: the mod's own save data rides the envelope
+        piles: droppedLoot.snapshotWorld((pos) => state.worldCoords(pos)).map((sp) => ({ ...sp, y: groundFrameNative(sp.nativeX, sp.nativeZ, sp.y - state.compensation[1]) })),
+        droppedTorches: droppedTorches.snapshot((pos) => { const wc = state.worldCoords(pos); return [wc.x, groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), wc.z]; }),
+        camps: camps.snapshot(campToRecord),   // SURV3: my camps, in natives   // HT1: the mod's own save data rides the envelope
         // AUDIT 26 F216/F217: LIVE ENEMIES ride the envelope - DFU's
         // SaveData_v1 carries enemyData wherever the player stands
         // (:865, restored :1006). Saved nowhere, a quickload during a
@@ -13670,8 +13837,8 @@ export async function bootWorld(canvas, renderer, params, status) {
         // attacker with the spawn catch-up suppressed: a free escape
         // from any outdoor fight. Natives, the pile law; the
         // compensation-free height rides per record.
-        foes: exteriorFoes.snapshotWorld((pos) => state.worldCoords(pos)).map((sf) => ({ ...sf, y: sf.y - state.compensation[1] })),
-        guards: cityGuards.snapshotWorld((pos) => state.worldCoords(pos)).map((sg) => ({ ...sg, y: sg.y - state.compensation[1] })),
+        foes: exteriorFoes.snapshotWorld((pos) => state.worldCoords(pos)).map((sf) => ({ ...sf, y: groundFrameNative(sf.nativeX, sf.nativeZ, sf.y - state.compensation[1]) })),
+        guards: cityGuards.snapshotWorld((pos) => state.worldCoords(pos)).map((sg) => ({ ...sg, y: groundFrameNative(sg.nativeX, sg.nativeZ, sg.y - state.compensation[1]) })),
       },
     });
     const into = sink ?? realmSaveSink();   // REALM P1.3: a realm character's save is the service's checkpoint, never a local slot
@@ -14073,10 +14240,11 @@ export async function bootWorld(canvas, renderer, params, status) {
         // exact over the arrival pixel, which is built by now, and over the
         // building an inside save re-enters)
         const was = scaleOf(extras.terrainScale);
+        const today = was === STREAMING_TERRAIN_SCALE && !landform;   // LANDFORM1: every height DFU's frame - the row's lift goes back on
         const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was); };
         // a list the envelope does not carry passes through as it came, and a record without its position is the restore's to refuse
-        const restandRows = (rows) => (was === STREAMING_TERRAIN_SCALE || !Array.isArray(rows) ? rows : rows.map((r) => (r ? { ...r, y: restandNative(r.nativeX, r.nativeZ, r.y) } : r)));
-        const restandAt = (key) => (rows) => (was === STREAMING_TERRAIN_SCALE || !Array.isArray(rows) ? rows : rows.map((r) => { const p = r?.[key]; return Array.isArray(p) ? { ...r, [key]: [p[0], restandNative(p[0], p[2], p[1]), p[2]] } : r; }));
+        const restandRows = (rows) => (today || !Array.isArray(rows) ? rows : rows.map((r) => (r ? { ...r, y: restandNative(r.nativeX, r.nativeZ, r.y) } : r)));
+        const restandAt = (key) => (rows) => (today || !Array.isArray(rows) ? rows : rows.map((r) => { const p = r?.[key]; return Array.isArray(p) ? { ...r, [key]: [p[0], restandNative(p[0], p[2], p[1]), p[2]] } : r; }));
         if (extras.interior) { extras.interior.foes = restandRows(extras.interior.foes); extras.interior.guards = restandRows(extras.interior.guards); }
         const [lx, lz] = state.localFromWorld(w.nativeX, w.nativeZ);
         const ly = restandHeight(w.y ?? 2, lx, lz, was) + state.compensation[1];
@@ -21041,8 +21209,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   let _gateKernel = null, _gateKernelAt = '';
   const gateGroundAt = (px, py, x, z) => {
     if (!woods) return -Infinity;
-    const key = `${px},${py}`;
-    if (key !== _gateKernelAt) { _gateKernelAt = key; _gateKernel = sampleKernel(woods, px, py); }
+    const key = `${px},${py},${landform && terrainGen.roads() ? 1 : 0}`;   // LANDFORM1-3: and kept again once the network lands - the pixel is cut along it
+    if (key !== _gateKernelAt) { _gateKernelAt = key; _gateKernel = sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, true, landformsHere()); }
     const t = state.pixelTranslation(px, py);
     const lx = x - t[0], lz = z - t[2];
     if (!(lx >= 0 && lz >= 0 && lx <= TERRAIN_SIZE && lz <= TERRAIN_SIZE)) return -Infinity;
@@ -24852,7 +25020,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     horseCart: hccRuntimeOn,   // HCC: the runtime's transition handlers and storage-access word, when the mod is on
     onPreTransition: () => { const n = handOverFoes(); if (n) console.info(`[foes] handed ${n} foe(s) at the door`); },   // AUDIT PSCALE1 NET-3: a door out of the open country hands my foes to the players outside
     horseCartSave: () => hccRuntime.getSaveData(),   // AUDIT HCC H3: the record a dungeon save carries (DFU's per-mod slot, whatever the switch says)
-    outerCampsSave: () => camps.snapshot(campToNatives),   // AUDIT REST II H6: my camps standing outside, for a dungeon's own save
+    outerCampsSave: () => camps.snapshot(campToRecord),   // AUDIT REST II H6: my camps standing outside, for a dungeon's own save; AUDIT LANDFORMS C1: DFU's frame
     outerCampsLoad: (extras) => standSavedOuterCamps(extras),   // AUDIT REST III A1: and the save's stood again by the dungeon's own load
     horseCartLoad: (rec) => { hccRuntime.handleStartLoad(); if (rec) hccRuntime.restoreSaveData(rec); },   // AUDIT HCC H3: a same-dungeon load's OnStartLoad and RestoreSaveData
     modSaveRecords: () => modSaveRecords(),   // WA1: the records a dungeon save carries beside HCC's
@@ -25486,7 +25654,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // ground the view shows out there - under the grid's current compensation
     const px = worldCoordToMapPixel(nx, nz);
     const byte = px.x >= 0 && px.y >= 0 && px.x < 1000 && px.y < 500 ? woods.getHeightMapValue(px.x, px.y) : 0;
-    return [x, ringHeight(byte) + state.pixelTranslation(px.x, px.y)[1] + lift, z];
+    const fade = landform && px.x >= 0 && px.y >= 0 && px.x < 1000 && px.y < 500 ? cliffFadeAt((bx, by) => woods.getHeightMapValue(bx, by), px.x, px.y) : 1;   // AUDIT LANDFORMS II I1: faded beside the sea, as the ring is
+    return [x, ringHeight(byte, !!landform, fade) + state.pixelTranslation(px.x, px.y)[1] + lift, z];   // LANDFORM1: the raised massif
   };
   /** TV4 (AUDIT TV D3): the land's height at a scene point - the built grid's, the far ring's past it. */
   // AUDIT DEEP R-4: on the SEA, its surface (and the margin with it - the sea is flat and known): the seabed Deep Waters
@@ -26188,27 +26357,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  store's is its name too. Nothing else - a spawn not yet said is not marked (that feature never says one next door). */
   const tvSpawnFound = (s) => hasDiscoveredLocationId(s.loc.mapTableData.mapId);
   const tvSpawnKnown = (s) => tvSpawnFound(s) || _announcedSpawnPixels.has(`${s.x},${s.y}`);
-  /** AUDIT OW4 D2: HAS A SPAWN'S TIME RUN OUT - the spawned feature's own test (spawnedDungeonAt's: the ledger's two
-   *  clocks, never while the player is in it), asked NOW: the index lets an expired spawn go only when its pixel next
-   *  builds, and until then its plate stood and its walk went. AUDIT OW5b D2: gone FROM THE GROUND - one standing on built
-   *  ground stands until that ground is next built (_locationToBuild takes it out then), and its plate stands with it.
-   *  FIELD BUGS 29h (SPAWN-PLATE; the Discord: "Elite Dungeons that despawn stay on map ... no entrance anymore but are
-   *  still marked"): standing on the ground is the BUILD's word - whether the pixel stood a location, never that it is
-   *  built. A pixel built after the clock ran out is built EMPTY, and read as built it kept its found plate (the store
-   *  files a spawn for good) and its walk to bare grass whenever the traveller came within the grid. */
-  const tvSpawnGone = (x, y) => { const key = `${x},${y}`; return _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key) && built.get(key)?.location == null; };
-  /** AUDIT OW4 D4: WHAT spawnedDungeonAt WOULD STAND on a pixel it has not built - its own gates (the sea, a path across
-   *  the pixel, the clocks; the roll and the page are asked by the caller) and its clone, with none of its writes (the
-   *  index, the ledger's first sight, the roads' provisional keys): a far found spawn is marked, never built. */
-  function tvSpawnAt(px, py) {
-    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py) || tvSpawnGone(px, py)) return null;
-    const roads = terrainGen.roads();
-    return roads && !pathFreePixel(roads, px, py) ? null : _spawnCloneAt(px, py);
-  }
-  /** AUDIT OW5b D3: WHAT STANDS ON A PIXEL, built or not - the index's place, else the spawn its roll would stand (online,
-   *  side-effect free: tvSpawnAt). A member walking to the leader's spawn read the index alone, and a far spawn their own
-   *  pixels had never built was a bare spot to them. */
-  const tvLocationAt = (x, y) => locationIndex.get(`${x},${y}`) ?? (params.has('online') && spawnsDungeon(_spawnSalt, x, y) ? tvSpawnAt(x, y) : null);
   /** AUDIT OW4 D4: the found spawns within the far range that the index does not hold (filedSpawns) - online alone, as
    *  the spawns are (spawnedDungeonAt's own gate). The store files a spawn under its pixel's id (spawnedMapId). */
   const tvFiledSpawns = (at) => (params.has('online') ? filedSpawns({ at, rolls: (x, y) => spawnsDungeon(_spawnSalt, x, y),
@@ -29197,6 +29345,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           heightBytes: woods.heightMapBuffer, mapWidth: MAP_WIDTH, mapHeight: MAP_HEIGHT,
           climateAt: (x, y) => maps.getClimateIndex(x, y),
           baseX: state.current.x, baseY: state.current.y,
+          relief: !!landform,   // LANDFORM1: the ring stands the massifs the streamed ground raises
         }, state.current.x, state.current.y, state.terrainDistance);
       } else {
         farRing.punchHole(state.current.x, state.current.y, state.terrainDistance);

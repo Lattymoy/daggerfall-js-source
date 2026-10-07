@@ -31,7 +31,10 @@
     "file": "src/world/wodLocationLoader.js",
     "old": "    if (st.hasLocation) {\n      if (t === 0) return st.out;",
     "new": "    if (st.hasLocation) {\n      if (t === 0) continue;",
-    "tests": ["test/wod2_loader.test.js", "test/flow2_fast_tests.test.js"]
+    "tests": [
+      "test/wod2_loader.test.js",
+      "test/flow2_fast_tests.test.js"
+    ]
   },
   {
     "name": "the-mean-drops-its-inclusive-bound",
@@ -171,8 +174,8 @@
   {
     "name": "the-flatten-runs-before-the-tiles",
     "file": "src/world/terrainGen.js",
-    "old": "  const tileData = generateTileData(samples, px, py);",
-    "new": "  if (wod && wod.picks.length) applyPicks(samples, wod.picks, 0);\n  const tileData = generateTileData(samples, px, py);",
+    "old": "  const tileData = generateTileData(classic ?? samples, px, py);",
+    "new": "  if (wod && wod.picks.length) applyPicks(samples, wod.picks, 0);\n  const tileData = generateTileData(classic ?? samples, px, py);",
     "tests": [
       "test/wod2_loader.test.js"
     ]

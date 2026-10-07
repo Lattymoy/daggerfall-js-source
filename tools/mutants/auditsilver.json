@@ -211,7 +211,7 @@
   {
     "name": "AUDIT-SILVER-WAYS-D4-fallback-unasked",
     "file": "src/scenes/mineHost.js",
-    "old": "        ?? standAnywhere(samples, tilemap, locationRect, pieces, stone);",
+    "old": "        ?? standAnywhere(samples, tilemap, locationRect, pieces, stone, beach);",
     "new": "        ?? (standAnywhere && null);",
     "tests": [
       "test/auditsilver_client.test.js"
@@ -220,8 +220,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-D4-town-unasked",
     "file": "src/scenes/mineHost.js",
-    "old": "    const at = natureStandsAt(samples, tilemap, locationRect, x, y, clear);\n    if (at && onPixel(at.x, at.z) && !insideRocks(rocks, at.x, at.z)) return at;",
-    "new": "    const at = natureStandsAt(samples, tilemap, null, x, y, clear);\n    if (at && onPixel(at.x, at.z) && !insideRocks(rocks, at.x, at.z)) return at;",
+    "old": "    const at = natureStandsAt(samples, tilemap, locationRect, x, y, clear, beach);\n    if (at && onPixel(at.x, at.z) && !insideRocks(rocks, at.x, at.z)) return at;",
+    "new": "    const at = natureStandsAt(samples, tilemap, null, x, y, clear, beach);\n    if (at && onPixel(at.x, at.z) && !insideRocks(rocks, at.x, at.z)) return at;",
     "tests": [
       "test/auditsilver_client.test.js"
     ]

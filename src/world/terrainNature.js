@@ -70,8 +70,9 @@ export const isTreeRecord = (baseArchive, record) => !!TREE_RECORDS[baseArchive]
  * @param {{xMin:number,xMax:number,yMin:number,yMax:number}|null} locationRect
  * @param {number} x tile x (0-127) @param {number} y tile y (0-127)
  * @param {((x: number, z: number) => boolean)|null} [clear]
+ * @param {?Float32Array} [beach] - AUDIT LANDFORMS II H2: the beach line is asked of DFU's own blend in a location's pixel (`beach`, the terrain job's `classic`), as the tiles are (D3); null, the samples' own
  */
-export function natureStandsAt(heightmapData, tilemapData, locationRect, x, y, clear = null) {
+export function natureStandsAt(heightmapData, tilemapData, locationRect, x, y, clear = null, beach = null) {
   const hDim = HEIGHTMAP_DIMENSION;
   const tDim = WORLD_MAP_TILE_DIM;
   if (!heightmapData || !tilemapData || !(x >= 0 && x < tDim && y >= 0 && y < tDim)) return null;
@@ -88,7 +89,7 @@ export function natureStandsAt(heightmapData, tilemapData, locationRect, x, y, c
   if (steepness > MAX_STEEPNESS) return null;
   const hx = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (x / tDim))));
   const hy = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (y / tDim))));
-  if (sampleHeight(heightmapData[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;
+  if (sampleHeight((beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2
   const scale = TERRAIN_SIZE / tDim;
   if (clear && !clear(x * scale, y * scale)) return null;   // VERGE1
   return { x: x * scale, y: at(x, y) - steepness / SLOPE_SINK_RATIO, z: y * scale };
@@ -173,6 +174,8 @@ export function makeTerrainKey(mapPixelX, mapPixelY) {
  * @param {?{archive:number, pois?:Array<{xMin:number,xMax:number,yMin:number,yMax:number,hide:boolean}>}} [opts.forests]
  *   FOREST1: the Real forests switch - the climate's summer nature archive and the pixel's places. Absent (or on a
  *   desert, or an archive with no Tree table), DFU's scatter below, byte for byte.
+ * @param {?Float32Array} [opts.beach] AUDIT LANDFORMS II H2: the samples the beach line is asked of - DFU's own blend in a
+ *   location's pixel with the Landforms row on (the terrain job's `classic`); null, the heights' own
  * @param {?{nature:ArrayLike<number>, type:ArrayLike<number>}} [opts.ecotone] ECOTONE1: the 3x3 of pixels' climates
  *   about this one - each one's summer nature archive and ClimateBaseType, indexed (dz + 1) * 3 + (dx + 1), dx east and
  *   dz north (the pixel's own at 4). Absent, or every neighbour this pixel's own, the layout is the pixel's alone.
@@ -276,7 +279,7 @@ function dfuTiles(heightmapData, tilemapData, opts) {
     if (tileDraw(wx, wz, 4) > chance) return null;
     const hx = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (x / tDim))));
     const hy = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (y / tDim))));
-    if (sampleHeight(heightmapData[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;
+    if (sampleHeight((opts.beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2
     return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: x * scale, y: heightAt(x, y) - steepness / SLOPE_SINK_RATIO, z: y * scale };
   };
 }
@@ -357,7 +360,7 @@ function dfuScatter(heightmapData, tilemapData, opts) {
       const hy = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (y / tDim))));
       // x & y swapped in heightmap, verbatim; unscaled height vs beach.
       // WATER-AUDIT: float32, as the tile job's twin of this line is.
-      const height = sampleHeight(heightmapData[hy + hx * hDim]);
+      const height = sampleHeight((opts.beach ?? heightmapData)[hy + hx * hDim]);   // AUDIT LANDFORMS II H2: DFU's blend's
       if (height < beachLine) continue;
 
       const record = rng.nextIntRange(1, 32);
@@ -591,7 +594,7 @@ function forestTiles(heightmapData, tilemapData, opts) {
     if (g2 > TAN_MAX_STEEP_SQ) return null;
     const hx = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (x / tDim))));
     const hy = Math.min(hDim - 1, Math.max(0, Math.trunc(hDim * (y / tDim))));
-    if (sampleHeight(heightmapData[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;
+    if (sampleHeight((opts.beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2
 
     const wood = Math.min(1, Math.max(0, woodAt(x, y) + placesPull(pois, x, y)));
     const tree = (FOREST.plainTree + (FOREST.forestTree - FOREST.plainTree) * wood) * ground;
