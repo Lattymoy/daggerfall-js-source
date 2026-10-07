@@ -278,10 +278,15 @@ test('terrain: Daggerfall city on terrain - integration pins', { skip: skipReal 
     hist.set(r, (hist.get(r) || 0) + 1);
   }
   // Grass fill dominates outside the walls; roads (46) and city dirt hold.
-  assert.equal(hist.get(2), 8173);
-  assert.equal(hist.get(1), 3142);
-  assert.equal(hist.get(46), 1706);
-  assert.equal(hist.get(11), 899);
+  // PIN MOVED (PUDDLE-DRY, world/puddleDry.js): DFU's stamp gives 8173 grass, 3142 dirt, 1706 road and 899 of record
+  // 11; the city's 61 puddle tiles (records 8: 17, 9: 33, 23: 11) are served dry, as the ground round each - 10 grass,
+  // 31 dirt, 11 road, 6 of record 11, 2 of 47, 1 of 10
+  assert.equal(hist.get(2), 8183);
+  assert.equal(hist.get(1), 3173);
+  assert.equal(hist.get(46), 1717);
+  assert.equal(hist.get(11), 905);
+  assert.equal(hist.get(8) ?? 0, 0, 'no puddle art left in the city');
+  assert.equal(hist.get(23), 1, 'record 23 left only where it meets a shore');
 
   // Per-pixel climate: Woodlands ground archive 302.
   assert.equal(maps.getClimateIndex(207, 213), 231);

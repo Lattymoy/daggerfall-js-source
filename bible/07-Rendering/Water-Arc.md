@@ -818,3 +818,97 @@ still whole; the CPU's turn against the shader's, texel for texel, and
 the grass placer asking it; and, with ARENA2, the desert puddle a pool (not the tile)
 and the desert's and the woods' record 9 dry. Mutants (21, 21 dead):
 `tools/mutants/waterpuddle.json`.
+
+## PUDDLE-DRY - A TOWN'S PUDDLES ARE DRY GROUND (2026-10-07)
+
+Mac: *"removing the water puddles entirely from town layouts"*; asked,
+"Puddles only" (the moats and the docks' water stay) and "Both skins".
+Port-Ledger section A, row PUDDLE-DRY.
+
+**What a puddle is, measured.** A census of BLOCKS.BSA (a scratch script
+over every RMB block's 16x16 ground, not committed; the figures are
+pinned with ARENA2 in `test/puddledry.test.js`): 920 blocks, 1,311
+patches of water - 4-connected, a tile counted wet where the draw's table
+(`WATER_DRAW_MASK_TABLE`) gives it any water corner, so a pond's shore
+ring is part of its pond. 674 patches are ONE tile: 632 of them DFU's
+shallow-water art (records 8: 141, 9: 353, 23: 138 - a pool painted on
+sand or grass, WATER-PUDDLE's "one square"), the rest a lone shore
+corner or edge, two lone record-0 tiles (WATER-DRAW1's sentinel tiles)
+and a few records 33 and 36. The rest are laid-out water: a water heart
+in its shore ring, a garden pond, a hard-edged basin of two to four
+open-water tiles (a trough, a fountain's bowl), a shore ring round a
+statue, the castles' moats (a CASTAA block's runs to 202 tiles with its
+ring), Sentinel's harbour.
+
+**The rule** (`world/puddleDry.js` dryPuddles): a patch is a puddle when
+it is one tile, or every tile of it is shallow-water art
+(`PUDDLE_RECORDS`: SHALLOW_WHOLE and SHALLOW_DRAWN, one list). Each of
+its tiles takes the ground most of its eight dry neighbours stand on, the
+byte whole (its turn and flip with it), a tie to the first in the walk's
+order; a wet neighbour and a random marker are no ground; a puddle with
+no dry neighbour is left. 700 patches dried, 611 kept. Daggerfall city's
+61 puddle tiles (records 8: 17, 9: 33, 23: 11) became 31 dirt, 11 road,
+10 grass, 6 of record 11, 2 of 47 and 1 of 10 - the terrain test's city
+histogram moved with them.
+
+**One door.** It runs where a block is served - `formats/blocksFile.js`
+getBlock, BLOCKS.BSA's block and a world-data mod's - once a ground. So
+every reader of the ground sees one ground with no puddle law of its own:
+the streamed stamp (`terrainTiles.js` setLocationTiles), the fixed town
+(`scenes/exterior.js`), the streamed town's tilemap (`scenes/world.js`),
+the layout (`rmbLayout.js` buildGroundTilemap), the townsfolk's paths
+(`cityNavigation.js`), the town map (`ui/inkTown.js`); the feet
+(`exteriorSurface.js`, PUDDLE-RAIN's whole-tile swim gone with the tile),
+the grass (GRASS-WET1) and the water pass follow. `readClassicBlock` (a
+mod's diff base) keeps the file's bytes. Both skins: the classic town
+loses its puddles too, the departure Mac chose so the two never
+disagree. WATER-PUDDLE's art mask stays for the shallow art that still
+meets a pond.
+
+**Pinned** in `test/puddledry.test.js` (7), its fixtures the block
+reader's own ground decode: the list; a pool in the sand is sand, the
+byte whole, a wet neighbour never taken; a patch of art and a lone tile
+of anything wet dried; a pond in its ring, a basin and art meeting a
+shore kept; once a ground, never from nothing; the one door by source;
+with ARENA2, every block served with no puddle, 700 dried, 611 kept, a
+moat whole. Moved: `test/terrain.test.js`'s Daggerfall city histogram and
+`test/rr3b_worlddata.test.js`'s GetBlock pin (PIN MOVED). Mutants (12,
+12 dead): `tools/mutants/puddledry.json` - the first run's two survivors
+were a redundant sentinel ternary (taken out: `convertTile` answers
+record 0 for the zero byte either way) and a wet diagonal neighbour no
+pin offered (pinned).
+
+## WATER-NEXT - THE OVERHAUL, AS DECIDED (2026-10-07)
+
+Mac: *"overhauling the water to appear as real translucent water with
+proper waves and shoreline interactivity completely replacing our current
+water implementation"*; asked: the new water is the ENHANCED skin's (the
+classic lane keeps DFU's flat tile - the doctrine); the waves modest and
+the weather's (calm lakes and rivers, a sea's swell that grows in a
+storm); the gameplay's water line fixed. The plan, a pull request a phase,
+each landed on a shot from the real game (THE REVERT's lesson):
+
+1. **PUDDLE-DRY** (above) - shipped first, apart from the renderer.
+2. **The surface.** One water renderer for WATER1's terrain water and
+   Deep Waters' sea top alike: a tessellated surface of its own, summed
+   Gerstner waves moving it; the frame's opaque colour and depth copied
+   after the opaque passes, so the water refracts what is under it,
+   darkens with depth (absorption) and meets the ground softly; Fresnel
+   over the sky. Behind the `enhanced-water` row; its cost measured on
+   the game page against PERF-EXT13's pass, with a cheaper setting for a
+   weak GPU.
+3. **The shore and the beds.** Foam where the water is shallow, the
+   swell running up a beach, the breakers built from the same waves
+   (Come Sail Away's sprite breakers retired for it); a shallow bed
+   carved under a lake, pond or moat, whose ground today sits at the
+   surface - clear water must have something under it (the sea has Deep
+   Waters' floor, the rivers LANDFORM3's channel).
+4. **The ripples.** A ripple field round the camera - the player's, a
+   boat's and a creature's wakes, wading rings and splashes.
+
+**What does not move.** Every reader of water as play keeps its line:
+the feet (`exteriorSurface.js`), `onExteriorWater`, fishing, climbing,
+the swim motor, the townsfolk's paths, Deep Waters' swim, the boats'
+`WaterLevel` (a boat bobs on the waves' own function, drawn only), the
+dungeon's level. WATER2-5's revert is the warning: a look is landed on
+the game page, not the lab.
