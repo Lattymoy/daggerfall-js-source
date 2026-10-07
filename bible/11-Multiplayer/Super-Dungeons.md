@@ -1290,7 +1290,8 @@ the driver judging on my feet; the brass burning and the Hour striking; the fall
 hosts by source); `tools/mutants/sd8d.json` (32, all dead - at first one record did not parse, and two survived: a
 second health guard behind the frame's own (dropped - one law, the frame's) and the burning brass never drawn (pinned
 now)). PINS MOVED: `test/sd8c_remnant_page.test.js` (the blows forgotten with the fight); `test/audit18_bible_docs.test.js`
-(AUDIT 39r - twenty-nine foreign-pass call sites: the floor's hook). My copies of the court's `strike`
+(AUDIT 39r - twenty-nine foreign-pass call sites: the floor's hook), and the world host's own three counts of them,
+twenty-four now (`test/farring.test.js`, `test/glstate.test.js`, `test/perf2.test.js` - found by the whole suite). My copies of the court's `strike`
 and `me` doors were reworded so the gate's records keep one site each (`wb4.json`'s, `gateux.json`'s).
 
 The Brass Remnant (SD8) is whole: its law, the relay running it, the page showing it and carrying my blows, its blows on
