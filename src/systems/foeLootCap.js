@@ -111,7 +111,9 @@ export function isLootSupply(item) {
 // LOOT14 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 6): a GARMENT below Legendary ranks under a supply
 // and over a plain piece - a Magic shirt never pushes a Potion of Healing off a three-piece body (LOOT-EASE's call)
 const GARMENT_UNDER_SUPPLY = 0.5;
-const garmentRank = (it) => (isGarment(it) && rarityRank(it) > 0 && rarityRank(it) < RARITIES.legendary.rank ? GARMENT_UNDER_SUPPLY : null);
+// AUDIT LOOT II A9: with the ladder on - off, a garment ranks as it always did (a DFU magic shirt, Magic by its
+// enchantment, over a potion: law 6)
+const garmentRank = (it) => (lootRarityOn() && isGarment(it) && rarityRank(it) > 0 && rarityRank(it) < RARITIES.legendary.rank ? GARMENT_UNDER_SUPPLY : null);
 const capRank = (it) => { const r = rarityRank(it); const g = garmentRank(it); if (g != null) return g; return r > 0 ? 1 + r : (isLootSupply(it) ? 1 : 0); };
 
 /**

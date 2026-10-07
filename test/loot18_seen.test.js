@@ -309,5 +309,6 @@ test('LOOT18: the line compare - each line against the same on what a wear repla
     assert.ok(rows[3].classList.contains('lost'));
     assert.equal(lineCompareBlock(e2, on2), null, 'a worn piece compares with nothing');
   });
-  assert.match(read('src/ui/enhancedInventory.js'), /\{ const lc = lineCompareBlock\(deps\.entity, picked\); if \(lc\) into\.append\(lc\); \}/, 'the card draws it under AC-COMPARE\'s numbers');
+  // PIN MOVED (AUDIT LOOT II B6): the card hands both blocks its one comparison
+  assert.match(read('src/ui/enhancedInventory.js'), /const lc = lineCompareBlock\(deps\.entity, picked, wear\); if \(lc\) into\.append\(lc\);/, 'the card draws it under AC-COMPARE\'s numbers');
 });

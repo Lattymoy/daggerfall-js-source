@@ -317,20 +317,22 @@
   {
     "name": "LOOT15-the-frost-spell-dropped",
     "file": "src/systems/survival/temperature.js",
-    "old": "    frostResist: (ctx?.frostResist ?? 0) + (Number(mods.coldDegrees) || 0),",
-    "new": "    frostResist: Number(mods.coldDegrees) || 0,",
+    "old": "    coldDegrees: Number(mods.coldDegrees) || 0, heatDegrees: Number(mods.heatDegrees) || 0,",
+    "new": "    coldDegrees: Number(mods.coldDegrees) || 0, heatDegrees: Number(mods.heatDegrees) || 0, frostResist: Number(mods.coldDegrees) || 0,",
     "tests": [
       "test/loot15_garments.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A2): the degrees ride beside the host's own resistances now - the law is that a spell's frost resistance survives the wardrobe's context, and this lays one over it."
   },
   {
     "name": "LOOT15-the-fire-spell-dropped",
     "file": "src/systems/survival/temperature.js",
-    "old": "    fireResist: (ctx?.fireResist ?? 0) + (Number(mods.heatDegrees) || 0),",
-    "new": "    fireResist: Number(mods.heatDegrees) || 0,",
+    "old": "    coldDegrees: Number(mods.coldDegrees) || 0, heatDegrees: Number(mods.heatDegrees) || 0,",
+    "new": "    coldDegrees: Number(mods.coldDegrees) || 0, heatDegrees: Number(mods.heatDegrees) || 0, fireResist: Number(mods.heatDegrees) || 0,",
     "tests": [
       "test/loot15_garments.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A2): as the frost record - a spell's fire resistance survives the wardrobe's context."
   },
   {
     "name": "LOOT15-the-minute-drops-the-host",
@@ -362,20 +364,22 @@
   {
     "name": "LOOT15-a-fall-whole",
     "file": "src/scenes/shared.js",
-    "old": "    const dmg = Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD) * (1 - less));",
-    "new": "    const dmg = Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD));",
+    "old": "  return Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD) * (1 - less));",
+    "new": "  return Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD));",
     "tests": [
       "test/loot15_garments.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A1): the bill is shared.js playerFallDamage now, read by applyFallLanding and the dungeon's landing alike."
   },
   {
     "name": "LOOT15-a-negative-fall-adds",
     "file": "src/scenes/shared.js",
-    "old": "    const less = Math.min(WARDROBE_FALL_MOST, Math.max(0, Number(entity?._mods?.fallLess) || 0)) / 100;",
-    "new": "    const less = Math.min(WARDROBE_FALL_MOST, Number(entity?._mods?.fallLess) || 0) / 100;",
+    "old": "  const less = Math.min(WARDROBE_FALL_MOST, Math.max(0, Number(entity?._mods?.fallLess) || 0)) / 100;",
+    "new": "  const less = Math.min(WARDROBE_FALL_MOST, Number(entity?._mods?.fallLess) || 0) / 100;",
     "tests": [
       "test/loot15_garments.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A1): the clamp moved with the bill into shared.js playerFallDamage."
   },
   {
     "name": "LOOT15-the-drain-whole",

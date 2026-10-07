@@ -206,7 +206,7 @@ export function mountReforgeWindow(host, deps) {
     t.setAttribute('type', 'button');
     t.setAttribute('role', 'tab');
     t.dataset.page = id;
-    t.onclick = (e) => { e.stopPropagation(); page = /** @type {any} */ (id); picked = null; asking = null; render(); };
+    t.onclick = (e) => { e.stopPropagation(); page = /** @type {any} */ (id); picked = null; dropAsk(); render(); };
     tabOf[id] = t;
     tabs.append(t);
   }
@@ -235,6 +235,14 @@ export function mountReforgeWindow(host, deps) {
     return frame;
   };
   const say = (ok, text) => { note = { ok, text }; };
+  /** AUDIT LOOT II B4: a pending ask let go - another page, another piece - takes its question with it ("Break all 3 Magic
+   *  pieces...?" stood over the next page); any other word stays. */
+  const dropAsk = () => { if (asking) note = null; asking = null; };
+  const drawNote = () => {
+    noteLine.textContent = note ? note.text : '';
+    noteLine.className = `broker-note${note?.ok ? ' ok' : ''}`;
+    if (!note) noteLine.setAttribute('hidden', ''); else noteLine.removeAttribute?.('hidden');
+  };
   const render = () => {
     if (!alive) return;
     const items = deps.items() ?? [];
@@ -242,9 +250,7 @@ export function mountReforgeWindow(host, deps) {
     const have = { shards: shardsHeld(items), gold: deps.gold() };
     const picture = deps.picture !== undefined ? deps.picture : (it) => classicPicture(it, deps.wearer, () => render());
     purse.textContent = reforgePurseText(have.shards, have.gold);
-    noteLine.textContent = note ? note.text : '';
-    noteLine.className = `broker-note${note?.ok ? ' ok' : ''}`;
-    if (!note) noteLine.setAttribute('hidden', ''); else noteLine.removeAttribute?.('hidden');
+    drawNote();
     for (const [id, t] of Object.entries(tabOf)) { t.setAttribute('aria-selected', id === page ? 'true' : 'false'); t.classList.toggle('on', id === page); }   // AUDIT LOOT F6: the chosen page the kit's brass
     for (const c of [...list.children]) c.remove();
     card?.remove();
@@ -365,7 +371,7 @@ export function mountReforgeWindow(host, deps) {
    *  at a time. Two at the least: one is its own row's press. */
   function everyMagic(rows) {
     const magics = rows.filter((it) => it.rarity === 'magic' && !salvageRefusal(it));
-    if (magics.length < 2) { if (asking === EVERY_MAGIC) asking = null; return; }
+    if (magics.length < 2) { if (asking === EVERY_MAGIC) { dropAsk(); drawNote(); } return; }   // the ask lapsed under it (B4: its question drawn away now - the line was drawn before the page)
     const shards = magics.reduce((n, it) => n + salvageShards(it), 0);
     const head = el('li', 'broker-insignia-head salvage-every');
     head.setAttribute('role', 'presentation');
@@ -502,7 +508,7 @@ export function mountReforgeWindow(host, deps) {
       const gem = socketGem(it);
       text.append(el('span', 'broker-name', nameOf(it)), el('span', 'broker-set', gem ? `${tierLabel(it)} · ${GEM_NAMES[gem]}` : `${tierLabel(it)} · an empty socket`));
       row.append(frameOf(it, picture), text);
-      pressable(row, () => { picked = it; asking = null; render(); });
+      pressable(row, () => { picked = it; dropAsk(); render(); });
       list.append(row);
     }
     if (!picked) return;

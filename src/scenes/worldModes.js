@@ -364,6 +364,7 @@ import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js'; import { lootRarityOn } from '../systems/lootRarity.js'; import { reforgePiece, salvagePiece, shardsHeld, honePiece, setGemPiece, unsetGemPiece } from '../systems/reforge.js'; import { buyPortalStone, portalStoneRefusal, shardsKept, PORTAL_TEXT } from '../systems/portalStone.js'; import { createReforgeOverlay } from '../ui/reforgeDoor.js'; import { imprintPiece } from '../systems/lootCodex.js';   // LOOT9: the Mages Guild's Reforge; LOOT10: its imprint
 import { liftCurse } from '../systems/lootCurse.js';   // LOOT16: the temple's lifting
+import { setJunk } from '../systems/itemJunk.js';   // AUDIT LOOT II C5: a sold piece's mark ends at the shelf
 import { scryPlace } from '../systems/lootScry.js';   // LOOT19: the guild's scryers
 import { SpellMakerWindow, preloadSpellMakerArt, spellMakerArtLoaded } from '../ui/spellMakerWindow.js';   // S1: the Mages Guild / Kynareth spell maker; E8: on INFO01I0 art
 import { hasSpellbook } from '../systems/spellMaker.js';   // AUDIT 63 F12: MakeSpells' door gate (DaggerfallGuildServicePopupWindow.cs:391)
@@ -2778,6 +2779,7 @@ export function createWorldModes(host) {
         const i = playerEntity.items.indexOf(it);
         if (i >= 0) playerEntity.items.splice(i, 1);
         shelf.items.push(it);   // sold goods land on the open shelf
+        setJunk(it, false);   // AUDIT LOOT II C5: the junk mark is the seller's word for what goes - gone, it is the merchant's, unmarked if bought back
       }
     } else if (mode === 'Repair') {
       deductGold(playerEntity, price);
@@ -2892,6 +2894,7 @@ export function createWorldModes(host) {
     addGold(playerEntity, price);
     playerEntity.items.splice(playerEntity.items.indexOf(it), 1);
     shelf.items.push(it);   // sold goods land on the open shelf (DFU's remoteItems)
+    setJunk(it, false);   // AUDIT LOOT II C5: sold, its junk mark ends
     tallySkill(playerEntity, SKILLS.Mercantile, 1);
     surfacePlayer();
     return price;

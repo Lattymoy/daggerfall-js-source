@@ -38,8 +38,10 @@ And three of this arc's own, each the lesson of something this page found:
 9. **A seed's draws stay its seed's** (LOOT2's last-pass law, generalised). Every new roll is taken AFTER every draw a
    door already makes - the wardrobe's pass after the last pass, the curse and the socket after the wardrobe - so a
    seeded mint (the gate's spoils, a town's thanks, a crafted piece, every golden pin) mints what it did.
-10. **Gear alone never makes a body immune** (LOOT12). Immunity is the body's - its race, its career, a spell - or a
-    whole Aetheric set's tier, earned by its growth.
+10. **Gear alone never makes a body immune** (LOOT12). Immunity is the body's - its race, its career, a spell - or an
+    Aetheric design's own: a whole set's tier, earned by its growth, or a record whose line its arc set whole (Ruhn's
+    Gate-Shield's Magic, 50). A rolled line never tops one up: the ladder's lines fill to the cap beside an Aetheric
+    piece's, never past it (AUDIT LOOT II A8).
 
 ## 2. The shape, end to end
 
@@ -618,3 +620,128 @@ last two found and not found - the stones last, everything before them the seed'
 `useItem` (the pool full and one off a stack, full already said and not spent, the last one gone; the worn enchanted
 pieces whole - a Rare's and a DFU magic ring's - and never a plain or a carried one, all whole said and not spent) and the
 Test Room's and the registration's wire. `tools/mutants/loot21.json` (20, all dead).
+
+## 16. AUDIT LOOT II - the arc, audited (2026-10-07)
+
+Mac: *"Lets go all in. Rake your time and be as detailed as possible"*. Before the merge the arc was read again by three
+cold lanes - the laws and the balance (every pass, door and fold against section 1's laws, each claim measured through
+the real code), the windows and the hosts (every page, row, press and hook, both skins), and the wire, the saves, the
+servers and online play (128,968 items through `validLootItem` after a JSON round trip, the forgeries it must refuse,
+the realm's trade law, customs, the seeded doors) - and the whole suite (`npm test`, 22,449 tests) was run on the
+branch. The lanes found twenty-two things (the quest's gem twice, A3 and B1) and the suite four: the suite's four and
+nineteen of the lanes' are fixed, three are stated, and two of the fixes state what they leave (A9's third, C5's rest).
+
+**The whole suite's four** - each a pin the arc moved without saying so, the law under it sound:
+
+- AUDIT 24's one-home ratchet: LOOT20's `gemOf` was a name `net/nodeLaw.js` already declares - `gemKindOf` now.
+- AUDIT REALM F1 lists every module that registers templates, so no registrar's bound rows pass the realm service
+  unseen: `ayleidStones.js` is the fourteenth, its rows in the check (neither bound - a stone changes hands, as the
+  Thunderlock does).
+- LOOT14's door pin read every piece after a list's first two as a garment; since LOOT21 the door's last draws are the
+  late finds, so the pin takes the garments by place and lets only a late find follow them.
+- PROF9 pins its tart line verbatim and aims two mutants at the career's lines, and LOOT15 had folded the Long Road into
+  the tart's: the career's and the tart's law stands in a helper of `scenes/shared.js` `fatigueLossMultiplierFor`'s,
+  PROF9's lines as they were written, and the Long Road is laid over its product - the same law.
+
+**Fixed.**
+
+- **A1 - the Long Road was dead below ground.** The dungeon's landing (`dungeonContext.js` `reportActivity`, both
+  dungeon hosts') billed DFU's fall inline and never read `fallLess`; LOOT15 pinned `applyFallLanding` alone (law 8, no
+  dead lines). `scenes/shared.js` `playerFallDamage` is the bill's one home - DFU's, the Long Road off it - and both
+  landings read it.
+- **A2 - the Wayfarer's Robes chilled a cold night.** Desert-Born's twenty rode the felt temperature's fire resistance,
+  and Climates & Calories resists the own warmth (the clothes', the armour's, the race's) as heat: the robes alone in the
+  Alik'r at 02:00 in January read -45 for -33, and a temperate night -40, freezing, for -28. `survival/temperature.js`
+  `wardrobeCtx` hands the degrees beside the host's resistances, and `feltTemperature` takes each off the felt number
+  on its own side alone, toward comfortable and never past it - the twenty the line says (in the heat it had been up to
+  forty, the noon's twenty and the robes' own warmth's).
+- **B1 (A3) - a quest's gem could be set in a socket.** `reforge.js` `looseGem` read the lock and the slot, never
+  `questItem`: R0C10Y01 puts a quest ruby in the pack and waits on `toting _item_`, and the Sockets page offered it, the
+  setting took it, and the quest could never close. A quest's gem is no loose gem, as the Salvage page refuses a quest's
+  piece.
+- **A4 - a gem's line took a kind from its piece.** `lootRarity.js` `reforgeAffix` counted a gem's line among the
+  piece's own: with a Diamond set, a Rare blade's damage line had no kind left to become (199 of 199 seeds) while the
+  press was offered, and pressed it answered `not`. A gem's line is its socket's - it takes no kind and no param from a
+  reforge.
+- **A5 - the compare set each line against their whole.** `lineComparison` rowed a line at a time against the sum of its
+  kind on what a wear replaces, so a gem's line beside the piece's own read twice: "+24% damage ▲11" and "+6% damage
+  ▼7", a down arrow on a gain of 17. A row is a kind and param now - the piece's sum against theirs, "+30% damage ▲17".
+- **A6 - a curse's drawback undid a line of its piece.** `curseParams` weighed a Good Rep With and a Potent Vs alone:
+  1,239 of 20,000 cursed gowns took Bad Rep With on a group the gown carried standing for (83 against the curse's own
+  reward line), and 271 blades in 20,000 Low Damage Vs against their slayer's kind. It weighs the piece's standing and
+  slayer lines too, and `cursePiece` draws the drawback against the piece WITH its reward line.
+- **A7 - a line minted past the roll drew evenly.** A curse's reward line drew its skill evenly over all 35, so 42 in a
+  hundred of a garment's were a combat or a magic skill ("+17 Mysticism" on a Formal Cloak) against LOOT14's lean.
+  `lineParam` mints it on the leans its rolled lines take - one roll, as `pick`'s, so no draw after it moves - and an
+  Exalted garment's line too. Armour's and jewellery's Exalted line stays the even draw the seeded spoils exalt through
+  the last pass (a cuirass's Exalted skill is the body's 606 times in 1,742 - about twelve in thirty-five).
+- **A8 - an Aetheric line and a rolled one made a body immune.** LOOT12 laid an Aetheric piece's lines whole BESIDE the
+  capped 45: the Oathkeeper's Helm's +35 Magic and a Rare ring's +20 made 55, and 2,000 of 2,000 Magic throws turned.
+  The rolled lines fill to the cap net of an Aetheric piece's own (`rolledCounts`): 45. A record whose line its arc set
+  whole stands - Ruhn's Gate-Shield's 50, the Regalia's design - and no rolled line tops it up; law 10 says so now.
+- **A9 - the ladder off was not DFU.** With the switch off a DFU magic shirt ranked under a potion at the corpse cap
+  (`foeLootCap.js` `garmentRank` read no switch), and a Masterwork garment was made Rare (`rarityEligible` took a garment
+  whatever the switch). Both read it: off, the cap ranks as it always did and a made garment is DFU's.
+- **A10 - every shirt filled the drought.** Every garment the wardrobe's pass rolled counted for LOOT8's drought, but
+  only 18 of the 76 garment templates can be a Legendary (every weapon's, armour's and jewel's can), so cheap clothing
+  walked the threshold toward its x3. `lootDrought.js` `noteTaken` counts a garment only if a Legendary is cut on it;
+  the mark still clears, for it is also the door's word that the piece was rolled.
+- **B2 - the Scry page's rows were unreadable.** Three cells in the Broker's four-column grid: a family's name and its
+  haunts fell into the 48px picture column ("The…", "Orc…"), a phone's 44px the same. `REFORGE_CSS` spans a scry row's
+  words over the picture column on both widths and lets its haunts read whole - AUDIT LOOT F6's fix for the Codex's rows,
+  which the new page never got.
+- **B3 - "Sell junk (1)" that sold nothing.** The footer counted a summoned piece marked junk and the press passed it by:
+  the button stood, said nothing and did nothing. The count and the press read one rule (`enhancedTrade.js`
+  `junkStages` - the counter's own click law, its summoned and quest refusals).
+- **B4 - an ask's question outlived it.** A tab or another piece let the pending ask go but left its question in the
+  header ("Break all 3 Magic pieces...?" over the Reforge page). `reforgeWindow.js` `dropAsk` takes the question with the
+  ask, and an ask that lapses under a repaint draws its question away at once.
+- **B5 - the cap's note read a hidden line.** `rolledResistOf` summed every worn rolled piece, identified or not, so
+  hovering a known piece told the points on an unidentified one; every other compare sets an unknown piece aside, and
+  this one now does (the fold reads them all, as it always did).
+- **B6 - the card compared a wear twice.** `lineCompareBlock` ran `wearComparison` again after `compareBlock` - four
+  folds a hover for two, the ladder off as well. The card makes one comparison and hands it to both; with the ladder off
+  the line block compares nothing.
+- **B7 - a comment said a scrying's region is null at sea.** `getRegionIndexAt` always answers a region (the coast's 31,
+  out of range the first); the comment says what is true.
+- **C1 - a hone was lost to the market.** The market mints a made piece again from its record (AUDIT 30 C2), and
+  `smithItems.js` `asMinted` passed a honed one: listed, its hone went back to the roll and the shards and the gold with
+  it. `asMinted` says no to a honed piece, as AUDIT LOOT F3 says no to a reforged or an imprinted one.
+- **C4 - the curse's field comment sat on the socket's line** (`itemFields.js`): each on its own.
+- **C5 - a sold piece came back off the shelf still junk.** The port lands sold goods on the merchant's shelf, buyable
+  back; the junk mark is the seller's word for what goes, and both of the host's sales (`worldModes.js` `commitTrade`,
+  `doSell`) end it at the shelf.
+
+**Stated.**
+
+- **A9's third - a curse's drawback bites with the ladder off.** It is a DFU enchantment among the piece's, as a Rare's
+  flavour is, and the ladder's law off is that not one read moves: DFU reads them. The reward line is dormant with every
+  ladder line and the lift, a ladder row, waits for the switch; taking the piece off ends the drawback.
+- **A11 - a draw for a garment's proc line.** `lastPass` takes one for each Magic or Rare garment, and no proc kind names
+  a clothing group. It comes after every old draw, so no seed moves: the draw buys nothing, and skipping it would buy
+  nothing either.
+- **C2 - an older build cannot read the new finds.** An older tab refuses a list holding a laddered garment (its lines'
+  kinds are unknown to its `validAffix`), a stone or a wardrobe imprint. Since AUDIT SETS M2 a container or a body it
+  cannot read is never opened, claimed or closed over ("Reload to open it"); a trade is refused whole; a market collect
+  abandons the realm session, the piece kept in the record; a foe handed to an older heir is skipped. Nothing is lost,
+  and the update notice asks old tabs to reload. REST6 held its templates back a release (`REST_ITEMS_ONLINE`); the
+  first arc's new kinds (LOOT4) shipped as these do.
+- **C3 - a plain made garment from before the arc comes back laddered through the market.** The market mints a made
+  piece again from its record, so a Superior or Masterwork garment made before garments joined the ladder returns at
+  its quality's tier - what the same craft makes now, as a weapon's always has.
+- **C5's rest - a junk mark rides a handed piece.** A piece given in a trade or left in a chest carries its owner's
+  mark, as a locked one carries the lock.
+
+**What moved.** LOOT12's Aetheric pin (the rolled lines to the cap beside it), LOOT14's `wardrobeCtx` pin and door pin,
+LOOT15's degrees (off the felt number, beside a spell's), LOOT18's card pin, AUDIT REALM F1's registrars. Mutant records
+re-aimed by content, laws unmoved: `loot8.json` (1), `loot12.json` (3), `loot14.json` (1), `loot15.json` (5),
+`loot16.json` (2), `loot18.json` (6), `loot20.json` (1), `fb0929d_accompare.json` (1).
+
+Pinned: `test/auditloot2.test.js` (17) - one block a finding, each driven through the real code: the fall's bill and
+the dungeon's reading it; the degrees on their own side, never past comfortable, the real robes on the auditor's night;
+a quest's ruby never offered or taken, a loose one beside it taken; a Diamond's blade reforged; one row a kind; no
+drawback against a standing or a slayer over 1,500 seeds; the leans of a cursed and an Exalted garment's line and a
+cuirass's even draw; the helm and the ring at 45, the Gate-Shield whole; the cap's rank and the craft with the switch
+off; the drought's garments; the Scry rows' rule; Sell junk's count; a question let go; a hidden line unread; one
+comparison a card; a honed piece not as minted; the shelf's mark. `tools/mutants/auditloot2.json` (29, all dead); every
+re-aimed record re-run dead.

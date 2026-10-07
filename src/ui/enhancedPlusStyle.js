@@ -924,7 +924,8 @@ export const BROKER_CSS = `/* ── SET7: THE SIGIL BROKER'S WINDOW (ui/brokerW
 }`;
 /** AUDIT LOOT F6: THE REFORGE'S WINDOW (ui/reforgeWindow.js) - the Broker's shape, so his sheet lays it; these are the rules
  *  his window never needed: the pages' tabs (the chosen one the kit's brass `.on`), the Codex's rows of words alone (his
- *  grid put them in its 48px picture column), the salvage's Keep under its Break, and a card's line with its press. The
+ *  grid put them in its 48px picture column) and the Scry page's (LOOT19), the salvage's Keep under its Break, and a
+ *  card's line with its press. The
  *  classic skin lays it beside his sheet (reforgeWindow.js), the Plus sheet carries it. */
 export const REFORGE_CSS = `/* ── LOOT9/LOOT10: THE REFORGE'S WINDOW (ui/reforgeWindow.js) ── */
 .reforge-tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 16px 0; }
@@ -933,6 +934,8 @@ export const REFORGE_CSS = `/* ── LOOT9/LOOT10: THE REFORGE'S WINDOW (ui/ref
 .broker-offer.codex-set { cursor: default; }
 .broker-offer.codex-row .broker-set, .broker-offer.codex-set .broker-set { white-space: normal; }   /* a hint and a set's pieces read whole, a phone's too */
 .broker-offer.codex-row:not(.found) .broker-name { color: #8d8270; }
+.broker-offer.scry-row > .broker-offer-body { grid-column: 1 / span 2; }   /* AUDIT LOOT II B2: a family's row has no picture - its words take the frame's column too (a phone's as well), its price and press where his stand */
+.broker-offer.scry-row .broker-set { white-space: normal; }   /* the haunts read whole */
 .broker-offer > .reforge-keep { grid-column: 4; }
 .reforge-card .reforge-line, .imprint-card .imprint-choice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; margin: 2px 0; }
 .reforge-card .reforge-press, .imprint-card .imprint-press { width: auto; flex: 0 0 auto; }

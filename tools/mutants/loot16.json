@@ -128,11 +128,12 @@
   {
     "name": "LOOT16-potent-undone",
     "file": "src/systems/lootRarity.js",
-    "old": "    || (row.type === T.LowDamageVs && e?.type === T.PotentVs && e.param === p)));",
-    "new": "    ));",
+    "old": "(e.param === p || e.param === 5))\n    || (row.type === T.LowDamageVs && e?.type === T.PotentVs && e.param === p))",
+    "new": "(e.param === p || e.param === 5)))",
     "tests": [
       "test/loot16_curses.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A6): curseParams reads the piece's lines after its enchantments."
   },
   {
     "name": "LOOT16-never-a-legendary",
@@ -218,11 +219,12 @@
   {
     "name": "LOOT16-a-carried-param",
     "file": "src/systems/lootRarity.js",
-    "old": "param: pick(carried.has(id) ? unclaimed(id) : kindParams(id, item), rolls), value } : { id, value };\n  const row = pick(rows, rolls);",
-    "new": "param: pick(kindParams(id, item), rolls), value } : { id, value };\n  const row = pick(rows, rolls);",
+    "old": "param: lineParam(item, id, carried.has(id) ? unclaimed(id) : kindParams(id, item), rolls), value } : { id, value };",
+    "new": "param: lineParam(item, id, kindParams(id, item), rolls), value } : { id, value };",
     "tests": [
       "test/loot16_curses.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A7): the reward line's param on the leans (lineParam)."
   },
   {
     "name": "LOOT16-the-flavour-lost",

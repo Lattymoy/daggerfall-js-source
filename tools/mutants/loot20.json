@@ -299,11 +299,12 @@
   {
     "name": "LOOT20-a-locked-gem-spent",
     "file": "src/systems/reforge.js",
-    "old": "const looseGem = (it, gem) => gemKindOf(it) === gem && !isLocked(it) && !isEquipped(it);",
-    "new": "const looseGem = (it, gem) => gemKindOf(it) === gem && !isEquipped(it);",
+    "old": "!it.questItem && !isLocked(it) && !isEquipped(it);",
+    "new": "!it.questItem && !isEquipped(it);",
     "tests": [
       "test/loot20_sockets.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II B1): a quest's gem is no loose gem either."
   },
   {
     "name": "LOOT20-a-stack-taken-whole",

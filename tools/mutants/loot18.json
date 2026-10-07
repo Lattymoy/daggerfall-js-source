@@ -128,11 +128,12 @@
   {
     "name": "LOOT18-the-counter-takes-anything",
     "file": "src/ui/enhancedTrade.js",
-    "old": "    && localListAccepts(mode, it, { accepts: deps.accepts, enchanted: deps.enchanted }));\n}",
-    "new": "    );\n}",
+    "old": "    && localListAccepts(mode, it, { accepts: deps.accepts, enchanted: deps.enchanted }) && junkStages(it));\n}",
+    "new": "    && junkStages(it));\n}",
     "tests": [
       "test/loot18_seen.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II B3): the count reads the click's own law (junkStages) beside it."
   },
   {
     "name": "LOOT18-no-confirm",
@@ -155,11 +156,12 @@
   {
     "name": "LOOT18-every-magic-for-one",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    if (magics.length < 2) { if (asking === EVERY_MAGIC) asking = null; return; }",
-    "new": "    if (magics.length < 1) { if (asking === EVERY_MAGIC) asking = null; return; }",
+    "old": "    if (magics.length < 2) { if (asking === EVERY_MAGIC) { dropAsk(); drawNote(); } return; }",
+    "new": "    if (magics.length < 1) { if (asking === EVERY_MAGIC) { dropAsk(); drawNote(); } return; }",
     "tests": [
       "test/loot18_seen.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II B4): a lapsed ask's question drawn away with it."
   },
   {
     "name": "LOOT18-every-magic-the-locked-too",
@@ -326,11 +328,12 @@
   {
     "name": "LOOT18-the-delta-backwards",
     "file": "src/systems/lootRarity.js",
-    "old": "delta: carried.has(key(a)) ? a.value - sumOf(key(a)) : null",
-    "new": "delta: carried.has(key(a)) ? sumOf(key(a)) - a.value : null",
+    "old": "delta: carried.has(k) ? value - sumIn(theirs, k) : null",
+    "new": "delta: carried.has(k) ? sumIn(theirs, k) - value : null",
     "tests": [
       "test/loot18_seen.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A5): a row a kind."
   },
   {
     "name": "LOOT18-a-shared-line-lost",
@@ -344,20 +347,22 @@
   {
     "name": "LOOT18-the-replaced-resist-kept",
     "file": "src/systems/lootRarity.js",
-    "old": "      const then = now.worn - rolled(known, a.param) + rolled([item], a.param);",
-    "new": "      const then = now.worn + rolled([item], a.param);",
+    "old": "      const rolledThen = Math.max(0, worn.rolled - out.rolled + inn.rolled);",
+    "new": "      const rolledThen = Math.max(0, worn.rolled + inn.rolled);",
     "tests": [
       "test/loot18_seen.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A8): the after-state split rolled from Aetheric."
   },
   {
     "name": "LOOT18-the-cap-unread",
     "file": "src/systems/lootRarity.js",
-    "old": "      row.resist = { now: now.counts, then: Math.min(RESIST_CAP, Math.max(0, then)) };",
-    "new": "      row.resist = { now: now.counts, then: Math.max(0, then) };",
+    "old": "then: rolledCounts(rolledThen, Math.max(0, worn.own - out.own + inn.own)) };",
+    "new": "then: rolledThen };",
     "tests": [
       "test/loot18_seen.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A8): the cap read beside the Aetheric's, after."
   },
   {
     "name": "LOOT18-the-chip-unsigned",
@@ -398,8 +403,9 @@
   {
     "name": "LOOT18-the-card-draws-none",
     "file": "src/ui/enhancedInventory.js",
-    "old": "  { const lc = lineCompareBlock(deps.entity, picked); if (lc) into.append(lc); }   // LOOT18: and its lines against theirs\n",
+    "old": "    const lc = lineCompareBlock(deps.entity, picked, wear); if (lc) into.append(lc);   // LOOT18: and its lines against theirs\n",
     "new": "",
+    "note": "Re-aimed by content (AUDIT LOOT II B6): the card makes one comparison and hands it to both blocks.",
     "tests": [
       "test/loot18_seen.test.js"
     ]

@@ -27,7 +27,7 @@ import { struckBodyPartTable } from '../combat/formulas.js';
 import { itemDamageLine, weaponDamageRange } from '../systems/itemInfo.js';
 import { itemIsIdentified } from '../systems/tradeModes.js';
 import { armorLabelValue } from './nativeInventory.js';
-import { lineComparison } from '../systems/lootRarity.js';   // LOOT18: the lines against what a wear replaces
+import { lineComparison, lootRarityOn } from '../systems/lootRarity.js';   // LOOT18: the lines against what a wear replaces
 
 /** The seven parts in DFU's BodyParts order (ItemEnums.cs:140-150), named off the enum's own members ("RightArm" says
  *  "Right arm"), so no second list of them stands anywhere. No lookbehind in the split (SAFARI1: a Safari before 16.4
@@ -190,8 +190,11 @@ export function armourPlaque(entity) {
  *  line with what of its element the rolled gear counts, now and after (LOOT12's cap). Only a wear that replaces a known
  *  piece, and only a piece whose lines are known. */
 export const LINES_HEAD = 'Its lines against what it replaces';
-export function lineCompareBlock(entity, item) {
-  const cmp = wearComparison(entity, item);
+export function lineCompareBlock(entity, item, wear = undefined) {
+  // AUDIT LOOT II B6: the card's comparison handed in (`wear`, compareBlock's) - a hover folded the entity twice for it -
+  // and none at all with the ladder off, where there are no lines to set
+  if (!lootRarityOn()) return null;
+  const cmp = wear === undefined ? wearComparison(entity, item) : wear;
   if (!cmp || !cmp.replaces.length) return null;
   const lines = lineComparison(entity, item, cmp.replaces);
   if (!lines || (!lines.rows.length && !lines.lost.length)) return null;
@@ -214,8 +217,8 @@ export function lineCompareBlock(entity, item) {
   return box;
 }
 
-export function compareBlock(entity, item, nameOf = (it) => String(it?.name ?? 'piece')) {
-  const cmp = wearComparison(entity, item);
+export function compareBlock(entity, item, nameOf = (it) => String(it?.name ?? 'piece'), wear = undefined) {
+  const cmp = wear === undefined ? wearComparison(entity, item) : wear;   // AUDIT LOOT II B6: or the one the card already made
   if (!cmp) return null;
   if (!cmp.parts.length && !cmp.damage && item.group !== 'Armor' && itemDamageLine(item) == null) return null;
   const box = el('div', 'cmp');

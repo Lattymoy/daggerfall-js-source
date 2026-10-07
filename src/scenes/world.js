@@ -11555,8 +11555,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   };
   let _locationRevealedByMapItem = null;
   /** LOOT19 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 11): THE REGION A SCRYING READS - the current
-   *  region's map table as systems/lootScry.js reads it, and the player's map pixel; null where there is no region (the
-   *  open sea). The Mages Guild's window asks it through the interior host (scenes/worldModes.js openReforge). */
+   *  region's map table as systems/lootScry.js reads it, and the player's map pixel; null only where the region's table
+   *  cannot load (AUDIT LOOT II B7: getRegionIndexAt always answers a region - the coast's 31, out of range the first -
+   *  and a guild hall stands in one). The Mages Guild's window asks it through the interior host (scenes/worldModes.js
+   *  openReforge). */
   const scryWhere = () => {
     const at = playerTravelPixel();
     const region = maps.getRegion(maps.getRegionIndexAt(at.x, at.y));

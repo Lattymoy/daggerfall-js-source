@@ -31,7 +31,7 @@ const jewel = (templateIndex, rarity, affixes) => ({ ...mintCondition({ group: '
 const wear = (e, ...pieces) => { for (const p of pieces) { e.items.push(p); equipItem(e, p); } return e; };
 const fire = (value) => ({ id: 'resist', param: 'fire', value });
 
-test('LOOT12: the rolled lines count to 45 an element - two Rares at +25 are 45 and not 50, a third adds nothing, another element is its own, an Aetheric piece rides whole beyond, off is nothing', () => {
+test('LOOT12: the rolled lines count to 45 an element - two Rares at +25 are 45 and not 50, a third adds nothing, another element is its own, an Aetheric piece rides whole and the rolled fill to the cap beside it (AUDIT LOOT II A8), off is nothing', () => {
   on();
   try {
     assert.equal(LR.RESIST_CAP, 45);
@@ -50,8 +50,10 @@ test('LOOT12: the rolled lines count to 45 an element - two Rares at +25 are 45 
     assert.equal(piece.rarity, 'aetheric');
     wear(e, piece);
     const line = crown.affixes.find((a) => a.id === 'resist' && a.param === 'fire').value;
-    assert.equal(entityResistMod(e, ['fire']), 45 + line, 'the Aetheric line rides whole, beside the capped rolled ones');
-    assert.deepEqual(LR.rolledResistOf(e, 'fire'), { worn: 65, counts: 45 }, 'and is never counted as a rolled line');
+    // PIN MOVED (AUDIT LOOT II A8): the Aetheric line rides whole and the rolled ones fill to the cap BESIDE it - the cap
+    // is the gear's whole (45 + its line made the Oathkeeper's Helm and a Rare ring a body immune to Magic)
+    assert.equal(entityResistMod(e, ['fire']), 45, 'the Aetheric line whole, the rolled ones to the cap beside it');
+    assert.deepEqual(LR.rolledResistOf(e, 'fire'), { worn: 65, counts: 45 - line }, 'and is never counted as a rolled line');
     off();
     computeEntityMods(e);
     assert.equal(entityResistMod(e, ['fire']), 0, 'off: the fold folds nothing');

@@ -1247,6 +1247,15 @@ export function applyNightStars(bmp, random) {
 /** LOOT15: the most the wardrobe takes off a fall's damage and off the minute's fatigue drain (%). */
 export const WARDROBE_FALL_MOST = 75;
 export const WARDROBE_FATIGUE_MOST = 50;
+/** A PLAYER'S FALL, BILLED - DFU's trunc(HPPerMetre * (distance - threshold)) past the threshold (AcrobatMotor
+ *  .CheckFallingDamage :214-222), the Pilgrim's Sandals' Long Road off it (LOOT15: `fallLess`, the loot ladder's fold's -
+ *  entity._mods, empty with the ladder off - at most WARDROBE_FALL_MOST). The ONE home of the bill: applyFallLanding's
+ *  three hosts and the dungeon's own landing (dungeonContext.js reportActivity) read it - AUDIT LOOT II A1: the dungeon
+ *  billed its own and the Long Road was dead below ground. */
+export function playerFallDamage(entity, distance) {
+  const less = Math.min(WARDROBE_FALL_MOST, Math.max(0, Number(entity?._mods?.fallLess) || 0)) / 100;
+  return Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD) * (1 - less));
+}
 /** AcrobatMotor.CheckFallingDamage (:214-222) + PlayerHealth
  *  .ApplyPlayerFallDamage, verbatim: past fallingDamageThreshold the
  *  fall bills HPPerMetre * (distance - threshold), truncated; past
@@ -1277,10 +1286,7 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null, 
   // -1 the streaming world reports off terrain (indoors, dungeons).
   if (inOutdoorWater) return;
   if (distance > FALL_DAMAGE_THRESHOLD) {
-    // LOOT15 (bible/06-Systems/Loot-II-Arc.md section 7): the Pilgrim's Sandals' Long Road - `fallLess` off the bill, the
-    // loot ladder's fold's (entity._mods; empty with the ladder off), at most WARDROBE_FALL_MOST
-    const less = Math.min(WARDROBE_FALL_MOST, Math.max(0, Number(entity?._mods?.fallLess) || 0)) / 100;
-    const dmg = Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD) * (1 - less));
+    const dmg = playerFallDamage(entity, distance);   // LOOT15 (bible/06-Systems/Loot-II-Arc.md section 7): the bill, the Long Road off it
     // AUDIT 21 (hosts lane, F6): the no-`hurt` arm went through the ONE
     // damage door now, so a fatal fall outdoors or in a building raises the
     // death screen instead of leaving you walking around at 0 HP.

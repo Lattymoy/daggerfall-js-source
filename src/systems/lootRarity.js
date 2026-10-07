@@ -134,7 +134,7 @@ export function rarityEligible(item) {
   if (!item || item.questItem || item.artifact || item.magic || item.rarity || enchanted(item) || item.equipSlot != null) return false;
   if (!wearableItem(item)) return false;   // RARITY-WEAR: no slot, no tier - every affix and a Held enchantment read worn pieces alone
   if (item.group === 'Weapons') return !isAmmunition(item);
-  if (isGarment(item)) return true;   // LOOT14: a garment, on the wardrobe's own pool
+  if (isGarment(item)) return lootRarityOn();   // LOOT14: a garment, on the wardrobe's own pool - with the ladder on (AUDIT LOOT II A9: off, a garment is DFU's, a Masterwork's too - law 6)
   return item.group === 'Armor' || item.group === 'Jewellery';
 }
 
@@ -631,6 +631,11 @@ function pickSkill(item, free, rolls) {
 }
 /** Tests only: the one draw, alone. */
 export const _pickSkillForTests = pickSkill;
+/** AUDIT LOOT II A7: A LINE'S PARAM MINTED PAST THE ROLL - a curse's reward line, an Exalted garment's - on the leans its
+ *  rolled lines take (a skill to the item's own and its kin, a garment's to the street's; a standing to its dress), one
+ *  roll as `pick` takes, so the draws after it stand where they were. An even draw over every skill put "+17 Mysticism"
+ *  on a Formal Cloak. */
+const lineParam = (item, id, free, rolls) => (id === 'skill' ? pickSkill(item, free, rolls) : id === 'standing' ? pickStanding(item, free, rolls) : pick(free, rolls));
 
 /** LR4 (the audit): ONE AFFIX RECORD, VALID - a known kind, a param the
  *  kind names (and none for a kind without), an integer value from 1 to
@@ -1342,7 +1347,10 @@ export function exaltLegendary(item, rolls = Math.random) {
   const [lo, hi] = AFFIX_RANGES[id].legendary;
   const value = rangeInt(Math.ceil((lo + hi) / 2), hi, rolls);
   const k = AFFIX_KINDS[id];
-  const line = k.params ? { id, param: pick(carried.has(id) ? freeParams(id) : kindParams(id, item), rolls), value } : { id, value };
+  const free = carried.has(id) ? freeParams(id) : kindParams(id, item);
+  // AUDIT LOOT II A7: a garment's on the wardrobe's leans (LOOT14); a weapon's, armour's or jewel's the even draw it always
+  // was - the seeded spoils exalt those through lastPass, and their seeds stand
+  const line = k.params ? { id, param: isGarment(item) ? lineParam(item, id, free, rolls) : pick(free, rolls), value } : { id, value };
   item.affixes = [...item.affixes, line];
   item.exalted = true;
   item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + exaltedWorth(item) + affixesWorth([line], item);   // LOOT14: a garment's at half
@@ -1380,14 +1388,19 @@ export const CURSE_DRAWBACKS = Object.freeze([
 ]);
 const CURSE_METAL = Object.freeze(['Weapons', 'Armor']);
 /** The params of a drawback row a piece may take - none for a row not of its group, and none that would cancel a good
- *  the piece already carries (Good Rep With the same group or every group, Potent Vs the same kind): a drawback that
- *  undoes a flavour is two dead lines (law 8). */
+ *  the piece already carries (Good Rep With the same group or every group, Potent Vs the same kind; AUDIT LOOT II A6:
+ *  and its own lines - a standing with the group, which feeds the same reactions, or a slayer's against the kind, the
+ *  curse's own reward line among them): a drawback that undoes a flavour or a line is two dead lines (law 8). The
+ *  rows' params are DFU's, in DFU's order - STANDING_GROUPS and SLAYER_FOES name them so. */
 export function curseParams(row, item) {
   if (row.groups && !row.groups.includes(item?.group)) return [];
   const own = Array.isArray(item?.enchantments) ? item.enchantments : [];
+  const lines = Array.isArray(item?.affixes) ? item.affixes : [];
   const params = row.metal && CURSE_METAL.includes(item?.group) ? row.metal : row.params;
   return params.filter((p) => !own.some((e) => (row.type === T.BadRepWith && e?.type === T.GoodRepWith && (e.param === p || e.param === 5))
-    || (row.type === T.LowDamageVs && e?.type === T.PotentVs && e.param === p)));
+    || (row.type === T.LowDamageVs && e?.type === T.PotentVs && e.param === p))
+    && !lines.some((a) => (row.type === T.BadRepWith && a?.id === 'standing' && a.param === STANDING_GROUPS[p])
+      || (row.type === T.LowDamageVs && a?.id === 'slayer' && a.param === SLAYER_FOES[p])));
 }
 /** Whether a piece carries a curse not yet lifted. */
 export const isCursed = (item) => !!item?.cursed && typeof item.cursed === 'object';
@@ -1410,9 +1423,12 @@ export function cursePiece(item, rolls = Math.random) {
   const [lo, hi] = AFFIX_RANGES[id][item.rarity];
   const top = Math.ceil((lo + hi) / 2);   // the top half of its tier's band, as an Exalted's line
   const value = rangeInt(top, hi, rolls);
-  const line = AFFIX_KINDS[id].params ? { id, param: pick(carried.has(id) ? unclaimed(id) : kindParams(id, item), rolls), value } : { id, value };
-  const row = pick(rows, rolls);
-  const drawback = { type: row.type, param: pick(curseParams(row, item), rolls) };
+  const line = AFFIX_KINDS[id].params ? { id, param: lineParam(item, id, carried.has(id) ? unclaimed(id) : kindParams(id, item), rolls), value } : { id, value };
+  // AUDIT LOOT II A6: the drawback against the piece WITH its reward line - never one that undoes it (a "+5 standing
+  // with Merchants" beside "Bad Rep With: Merchants"); a row that bites any piece is always left, so none is ever empty
+  const lined = { ...item, affixes: [...item.affixes, line] };
+  const row = pick(CURSE_DRAWBACKS.filter((r) => curseParams(r, lined).length), rolls);
+  const drawback = { type: row.type, param: pick(curseParams(row, lined), rolls) };
   item.affixes = [...item.affixes, line];
   item.enchantments = [...(Array.isArray(item.enchantments) ? item.enchantments : []), { ...drawback }];
   item.cursed = drawback;
@@ -1561,7 +1577,7 @@ export function reforgeAffix(item, index, rolls = Math.random) {
   const tier = item.rarity;
   const old = item.affixes[index];
   const was = AFFIX_KINDS[old.id];
-  const others = item.affixes.filter((_, i) => i !== index);
+  const others = item.affixes.filter((a, i) => i !== index && a?.gem == null);   // AUDIT LOOT II A4: a gem's line is its socket's, no roll's - it never takes a kind or a param from the piece's own (a Diamond's damage left a weapon's damage line nothing to become)
   const freeParams = (id) => kindParams(id, item).filter((p) => !others.some((a) => a?.id === id && a.param === p));   // LOOT14: a garment's own params
   const pool = AFFIX_IDS.filter((id) => {
     const k = AFFIX_KINDS[id];
@@ -1730,7 +1746,9 @@ export function affixFold(entity) {
       }
     }
   }
-  for (const [el, v] of Object.entries(rolledResist)) mods.resist[el] = (mods.resist[el] ?? 0) + Math.min(RESIST_CAP, v);
+  // AUDIT LOOT II A8: the cap is the gear's whole - an element's rolled lines fill to it beside an Aetheric piece's own,
+  // never past it (the Oathkeeper's Helm's 35 and a Rare ring's 20 made 55, and every Magic throw turned)
+  for (const [el, v] of Object.entries(rolledResist)) mods.resist[el] = (mods.resist[el] ?? 0) + rolledCounts(v, mods.resist[el] ?? 0);
   return mods;
 }
 /** LOOT12 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 4): HONEST RESISTANCE. A resistance line adds its
@@ -1742,23 +1760,34 @@ export function affixFold(entity) {
  *  An Aetheric piece's lines and a set's tier are their own designs - the Regalia's fire immunity is its tier's, earned
  *  by its growth - and the body's own (its race, its career, a spell's resistance) are untouched: immunity is theirs. */
 export const RESIST_CAP = 45;
-/** What the wearer's rolled lines carry of an element, and what of it counts - `{ worn, counts }` (both 0 off). */
+/** AUDIT LOOT II A8: what of `rolled` points of an element counts beside `own` - an Aetheric piece's, its design whole:
+ *  the rolled lines fill to RESIST_CAP net of it, and add nothing past it (Ruhn's Gate-Shield's 50 is its record's). */
+const rolledCounts = (rolled, own) => Math.min(rolled, Math.max(0, RESIST_CAP - own));
+/** An element's resistance on pieces, split - `rolled` (the ladder's tiers' lines) and `own` (an Aetheric piece's). */
+function resistSplit(pieces, element) {
+  let rolled = 0, own = 0;
+  for (const p of pieces) {
+    const pts = (Array.isArray(p?.affixes) ? p.affixes : []).reduce((n, a) => n + (validAffix(a) && a.id === 'resist' && a.param === element ? a.value : 0), 0);
+    if (ROLLED_TIERS.includes(p.rarity)) rolled += pts; else own += pts;
+  }
+  return { rolled, own };
+}
+/** What the wearer's rolled lines carry of an element, and what of it counts - `{ worn, counts }` (both 0 off) - as the
+ *  card says it: of the pieces the wearer KNOWS (AUDIT LOOT II B5: a worn piece not yet identified is set aside, as
+ *  every other compare sets it - the note read a hidden line's points), beside an Aetheric piece's own (A8). */
 export function rolledResistOf(entity, element) {
   if (!entity || !lootRarityOn()) return { worn: 0, counts: 0 };
-  let worn = 0;
-  for (const it of wornItems(entity)) {
-    if (!ROLLED_TIERS.includes(it.rarity)) continue;
-    for (const a of it.affixes) if (validAffix(a) && a.id === 'resist' && a.param === element) worn += a.value | 0;
-  }
-  return { worn, counts: Math.min(RESIST_CAP, worn) };
+  const { rolled, own } = resistSplit(wornItems(entity).filter(identified), element);
+  return { worn: rolled, counts: rolledCounts(rolled, own) };
 }
 /** LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): A PIECE'S LINES AGAINST WHAT IT WOULD REPLACE
- *  (`replaces`, the worn pieces a wear would take off - ui/armourCard.js wearComparison's). For each of its lines, the
- *  same line - its kind and its param - summed over them, and the difference (`delta`, null for a line they lack: new);
- *  then each line they carry and it does not (`lost`, its label at their sum). A resistance line also says what of its
- *  element the wearer's rolled gear counts now and would count after (`resist` - LOOT12's cap, so a line past it reads
- *  as the nothing it adds). Null with the switch off, while the piece is unknown, or with nothing known to set it
- *  against; a worn piece not yet identified is set aside (its lines are not known). */
+ *  (`replaces`, the worn pieces a wear would take off - ui/armourCard.js wearComparison's). For each kind and param its
+ *  lines carry (a gem's line summed with its own - AUDIT LOOT II A5), the sum, the same summed over them, and the
+ *  difference (`delta`, null for a kind they lack: new); then each they carry and it does not (`lost`, its label at
+ *  their sum). A resistance row also says what of its element the wearer's rolled gear counts now and would count after
+ *  (`resist` - LOOT12's cap, beside an Aetheric piece's own, so a line past it reads as the nothing it adds). Null with
+ *  the switch off, while the piece is unknown, or with nothing known to set it against; a worn piece not yet identified
+ *  is set aside (its lines are not known). */
 export function lineComparison(entity, item, replaces = []) {
   if (!lootRarityOn() || !item || !identified(item)) return null;
   const known = (replaces ?? []).filter((r) => r && r !== item && identified(r));
@@ -1766,23 +1795,26 @@ export function lineComparison(entity, item, replaces = []) {
   const key = (a) => `${a.id}:${a.param ?? ''}`;
   const mine = (Array.isArray(item.affixes) ? item.affixes : []).filter(validAffix);
   const theirs = known.flatMap((r) => (Array.isArray(r.affixes) ? r.affixes : []).filter(validAffix));
-  const sumOf = (k) => theirs.reduce((n, a) => n + (key(a) === k ? a.value : 0), 0);
+  const sumIn = (list, k) => list.reduce((n, a) => n + (key(a) === k ? a.value : 0), 0);
   const carried = new Set(theirs.map(key));
   const own = new Set(mine.map(key));
-  const rolled = (pieces, element) => pieces.filter((p) => ROLLED_TIERS.includes(p.rarity)).flatMap((p) => p.affixes ?? [])
-    .reduce((n, a) => n + (validAffix(a) && a.id === 'resist' && a.param === element ? a.value : 0), 0);
-  const rows = mine.map((a) => {
-    const row = { text: affixLabel(a), delta: carried.has(key(a)) ? a.value - sumOf(key(a)) : null, resist: null };
+  // AUDIT LOOT II A5: A ROW A KIND - the piece's lines of one kind and param (its own and a gem's) summed against theirs:
+  // a row a line, each set against their whole, read "+24% damage ▲11" and "+6% damage ▼7" for a gain of 17
+  const rows = [...own].map((k) => {
+    const a = mine.find((x) => key(x) === k);
+    const value = sumIn(mine, k);
+    const row = { text: AFFIX_KINDS[a.id].label({ ...a, value }), delta: carried.has(k) ? value - sumIn(theirs, k) : null, resist: null };
     if (a.id === 'resist') {
       const now = rolledResistOf(entity, a.param);
-      const then = now.worn - rolled(known, a.param) + rolled([item], a.param);
-      row.resist = { now: now.counts, then: Math.min(RESIST_CAP, Math.max(0, then)) };
+      const worn = resistSplit(wornItems(entity).filter(identified), a.param), out = resistSplit(known, a.param), inn = resistSplit([item], a.param);
+      const rolledThen = Math.max(0, worn.rolled - out.rolled + inn.rolled);
+      row.resist = { now: now.counts, then: rolledCounts(rolledThen, Math.max(0, worn.own - out.own + inn.own)) };   // A8: beside the Aetheric's, after
     }
     return row;
   });
   const lost = [...carried].filter((k) => !own.has(k)).map((k) => {
     const a = theirs.find((x) => key(x) === k);
-    return affixLabel({ ...a, value: Math.min(sumOf(k), AFFIX_RANGES[a.id].legendary[1]) });
+    return affixLabel({ ...a, value: Math.min(sumIn(theirs, k), AFFIX_RANGES[a.id].legendary[1]) });
   });
   return { rows, lost };
 }

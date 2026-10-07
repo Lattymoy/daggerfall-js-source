@@ -96,7 +96,7 @@ import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
   isForbiddenEquip, isBrokenItem, getEquipSlot, bodyPartForSlot,   // getEquipSlot - Mac (2026-09-18): Wear only where a slot would take it; bodyPartForSlot - AC-COMPARE: GetBodyPartForEquipSlot, the part a worn panel stands for
 } from '../systems/equip.js';
-import { armourBadge, armourPlaque, compareBlock, lineCompareBlock } from './armourCard.js';   // AC-COMPARE: the doll's numbers on the map, the overall figure, the card's comparison
+import { armourBadge, armourPlaque, compareBlock, lineCompareBlock, wearComparison } from './armourCard.js';   // AC-COMPARE: the doll's numbers on the map, the overall figure, the card's comparison
 import { statFlip } from './statsCard.js';   // STATS-CARD: the paperdoll's flip side, its Stats button
 import {
   itemWeight, isEnchanted, totalWeight, addItem, goldStack,
@@ -2959,8 +2959,11 @@ function infoCard(picked, side, ready = render, { body = false } = {}) {
   // pack's one way of showing an item), so the comparison needs no key: what it would replace, then its damage and the
   // armour a wear moves, each set against what is worn now in green or red (ui/armourCard.js). A pack piece or a loot
   // row's; a worn piece is what is worn, and has none.
-  { const cmp = compareBlock(deps.entity, picked, (it) => itemLongName(it, { getQuest: deps.getQuest ?? null })); if (cmp) into.append(cmp); }
-  { const lc = lineCompareBlock(deps.entity, picked); if (lc) into.append(lc); }   // LOOT18: and its lines against theirs
+  {
+    const wear = wearComparison(deps.entity, picked);   // AUDIT LOOT II B6: one comparison for both blocks
+    const cmp = compareBlock(deps.entity, picked, (it) => itemLongName(it, { getQuest: deps.getQuest ?? null }), wear); if (cmp) into.append(cmp);
+    const lc = lineCompareBlock(deps.entity, picked, wear); if (lc) into.append(lc);   // LOOT18: and its lines against theirs
+  }
   return { c, line, big };
 }
 

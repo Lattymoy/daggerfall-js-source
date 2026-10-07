@@ -181,8 +181,9 @@ test('LOOT14: the readers, through the real fold - DRESS1\'s standing (the gear\
   assert.ok(Math.abs(allDry - without * 0.25) < 1e-9, 'at most 75% turned aside');
   const COLD = { climateIndex: 0, month: 0, hour: 2, weather: 'snow', insideBuilding: false };
   assert.equal(feltTemperature(COLD, worn, { gearWarmth: 6 }).clothes - feltTemperature(COLD, worn, {}).clothes, 6, 'the felt reading carries the lining');
-  // the degrees ride the host's own resistances (LOOT15's powers write them)
-  assert.deepEqual(wardrobeCtx({ frostResist: 10 }, { coldDegrees: 20, heatDegrees: 5 }), { gearWarmth: 0, gearDry: 0, frostResist: 30, fireResist: 5 });
+  // the degrees ride beside the host's own resistances, never on them (LOOT15's powers write them; PIN MOVED, AUDIT LOOT
+  // II A2: feltTemperature takes them off the felt number alone)
+  assert.deepEqual(wardrobeCtx({ frostResist: 10 }, { coldDegrees: 20, heatDegrees: 5 }), { gearWarmth: 0, gearDry: 0, coldDegrees: 20, heatDegrees: 5 });
   assert.deepEqual(wardrobeCtx({}, null), {}, 'nothing folded, nothing laid');
   // ...and the minute of the needs reads it off the wearer (survival/needs.js survivalMinute lays the wardrobe's context)
   const STORM = { climateIndex: 0, month: 6, hour: 12, weather: 'thunder', insideBuilding: false, insideDungeon: false, inSunlight: false };

@@ -105,29 +105,35 @@ const twin = (id) => ({ ...legendary(id), legendary: null });
 test('LOOT15: the powers through their own readers - the degrees in the felt temperature, the standing, the hood\'s Stealth, the fatigue and the fall; once however many carry one; never another\'s; off nothing', () => {
   on();
   const felt = (env, e, ctx = {}) => feltTemperature(env, e.equip.slots, { ...ctx, ...wardrobeCtx(ctx, e._mods) }).felt;
-  // Desert-Born: the felt reading's own fire resistance, twenty degrees - on the noon and on what the robes add
+  // PIN MOVED (AUDIT LOOT II A2, Loot-II-Arc.md section 15): the degrees come off the felt number itself, toward
+  // comfortable and never past it, on their own side alone - laid on the fire resistance, the robes' twenty resisted
+  // the outfit's own warmth too, and a cold night was colder in them
+  // Desert-Born: the heat felt twenty less
   const desert = { climateIndex: CLIMATES.Desert, month: 6, hour: 13, weather: 'sunny', insideBuilding: false, inSunlight: true };
   const robed = wear(player(), legendary('alikr-robes'));
   const robedTwin = wear(player(), twin('alikr-robes'));
   assert.deepEqual([robed._mods.heatDegrees, robed._mods.coldDegrees, robedTwin._mods.heatDegrees], [20, 0, 0]);
   assert.ok(felt(desert, robedTwin) > 30, `the desert at noon is hot (${felt(desert, robedTwin)})`);
-  assert.equal(felt(desert, robed), felt(desert, robedTwin, { fireResist: 20 }), 'the felt reading\'s fire resistance');
-  assert.ok(felt(desert, robed) <= felt(desert, robedTwin) - 20, 'twenty degrees less, at the least');
-  assert.equal(felt(desert, robed, { fireResist: 15 }), felt(desert, robedTwin, { fireResist: 35 }), 'laid on a spell\'s');
-  // ...and the minute of the needs lays them so, on the host's own resistance (survival/needs.js survivalMinute)
+  assert.equal(felt(desert, robed), felt(desert, robedTwin) - 20, 'twenty degrees less - the twenty it says');
+  assert.equal(felt(desert, robed, { fireResist: 15 }), felt(desert, robedTwin, { fireResist: 15 }) - 20, 'beside a spell\'s, never on it');
+  // ...and the minute of the needs lays them so (survival/needs.js survivalMinute)
   const QUIET = { drainFatigue() {}, restoreFatigue() {}, hurt() {}, say() {} };
   const minuteFelt = (who, ctx) => { survivalOf(who, 3000).wet = 0; return survivalMinute(who, 3001, desert, { worn: equipTableOf(who), ctx, sinks: QUIET }).felt; };
-  assert.equal(minuteFelt(robed, { fireResist: 10 }), minuteFelt(robedTwin, { fireResist: 30 }), 'the minute: a spell\'s ten and the robes\' twenty');
-  assert.ok(minuteFelt(robed, { fireResist: 10 }) < minuteFelt(robedTwin, { fireResist: 10 }));
-  // Mountain-Born: the cold, twenty
+  assert.equal(minuteFelt(robed, { fireResist: 10 }), minuteFelt(robedTwin, { fireResist: 10 }) - 20, 'the minute: the robes\' twenty beside a spell\'s ten');
+  // Mountain-Born: the cold felt twenty less
   const pass = { climateIndex: CLIMATES.Mountain, month: 0, hour: 2, weather: 'snow', insideBuilding: false };
   const mantled = wear(player(), legendary('wrothgar-mantle'));
   const mantleTwin = wear(player(), twin('wrothgar-mantle'));
   assert.deepEqual([mantled._mods.coldDegrees, mantled._mods.heatDegrees], [20, 0]);
   assert.ok(felt(pass, mantleTwin) < -20, `a mountain pass at night is cold (${felt(pass, mantleTwin)})`);
-  assert.equal(felt(pass, mantled), felt(pass, mantleTwin, { frostResist: 20 }), 'the felt reading\'s frost resistance');
   assert.equal(felt(pass, mantled) - felt(pass, mantleTwin), 20);
-  assert.equal(felt(pass, mantled, { frostResist: 10 }), felt(pass, mantleTwin, { frostResist: 30 }), 'laid on a spell\'s');
+  assert.equal(felt(pass, mantled, { frostResist: 10 }), felt(pass, mantleTwin, { frostResist: 10 }) + 20, 'beside a spell\'s');
+  // each on its own side alone: the robes on the pass, the mantle in the desert, nothing
+  assert.equal(felt(pass, wear(player(), legendary('alikr-robes'))), felt(pass, wear(player(), twin('alikr-robes'))), 'the robes never chill a cold night');
+  assert.equal(felt(desert, mantled), felt(desert, mantleTwin), 'the mantle never cools the noon');
+  // and never past comfortable: a heat under twenty is felt as none
+  const mild = { climateIndex: CLIMATES.Desert, month: 3, hour: 10, weather: 'sunny', insideBuilding: false, inSunlight: true };
+  if (felt(mild, robedTwin) > 0 && felt(mild, robedTwin) < 20) assert.equal(felt(mild, robed), 0);
   // Royal Bearing: five with every group, laid with the silks' own nobility line under the gear's cap
   const court = wear(player(), legendary('barenziah-silks'));
   const silksTwin = wear(player(), twin('barenziah-silks'));

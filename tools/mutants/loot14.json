@@ -2,11 +2,12 @@
   {
     "name": "LOOT14-a-garment-never-rolls",
     "file": "src/systems/lootRarity.js",
-    "old": "  if (isGarment(item)) return true;   // LOOT14: a garment, on the wardrobe's own pool",
-    "new": "  if (isGarment(item)) return false;   // LOOT14: a garment, on the wardrobe's own pool",
+    "old": "  if (isGarment(item)) return lootRarityOn();",
+    "new": "  if (isGarment(item)) return false;",
     "tests": [
       "test/loot14_wardrobe.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A9): a garment is eligible with the ladder on."
   },
   {
     "name": "LOOT14-one-cut-only",

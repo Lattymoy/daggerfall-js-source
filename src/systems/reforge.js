@@ -184,8 +184,9 @@ export function honePiece(item, index, player, rolls = Math.random) {
 /** What setting a gem costs, the gem besides. */
 export const SET_GEM_PRICE = 100;
 /** A gem item the setting may take: of its kind, unlocked and not worn - the shards' own law (a gem is a jewel a slot
- *  takes too). */
-const looseGem = (it, gem) => gemKindOf(it) === gem && !isLocked(it) && !isEquipped(it);
+ *  takes too) - and never a quest's (AUDIT LOOT II B1: a quest's ruby is the one its giver waits for, `toting _item_`;
+ *  set in a socket it was gone and the quest could never close, where the Salvage page refuses a quest's piece). */
+const looseGem = (it, gem) => gemKindOf(it) === gem && !it.questItem && !isLocked(it) && !isEquipped(it);
 /** The pack's loose gems, by kind: `{ ruby: 2, ... }`. */
 export const gemsHeld = (items) => Object.fromEntries(GEM_IDS.map((g) => [g, (Array.isArray(items) ? items : []).reduce((n, it) => n + (looseGem(it, g) ? (it.stackCount ?? 1) : 0), 0)]));
 /** Take one loose gem of a kind out of a pack (a stack shrinks, a last one goes). Answers whether it could. */

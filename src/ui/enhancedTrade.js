@@ -623,29 +623,33 @@ function quickSellSelected() {
 
 /** LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): THE JUNK THIS COUNTER WOULD TAKE NOW - every
  *  junk piece of the pack (systems/itemJunk.js) the Sell list shows on any tab (not worn, a piece this shop's counter
- *  accepts, not yet on it) and whose sale is not refused (locked, bound). None outside a Sell. */
+ *  accepts, not yet on it), whose sale is not refused (locked, bound) and that the counter's own click would stage (a
+ *  summoned piece, a quest's, the click's own refusals - AUDIT LOOT II B3: the footer counted what the press then passed
+ *  by, and a summoned robe left "Sell junk (1)" a button that did nothing). None outside a Sell. */
 function junkForCounter() {
   if (!selling()) return [];
   const equipped = deps.isEquipped ?? (() => false);
   const held = remoteItems();
   return (deps.packItems?.() ?? []).filter((it) => isJunk(it) && !equipped(it) && !held.includes(it) && !saleRefused(it)
-    && localListAccepts(mode, it, { accepts: deps.accepts, enchanted: deps.enchanted }));
+    && localListAccepts(mode, it, { accepts: deps.accepts, enchanted: deps.enchanted }) && junkStages(it));
 }
-/** LOOT18: SELL JUNK - every such piece onto the counter in one press, whole, each by the counter's own click law (a
- *  piece the law would not stage stays in the pack), and then the counter's own price and confirm: the footer's Sell, the
- *  YesNo box it always asks. Answers how many it laid. */
+/** Whether the counter's own click would stage a junk piece - its law, and its summoned and quest refusals. */
+function junkStages(item) {
+  const d = localClickDecision(mode, item, {
+    inBasket: (i) => basket.includes(i),
+    allowMagicRepairs: deps.allowMagicRepairs ?? false,
+    usingIdentifySpell: deps.usingIdentifySpell ?? false,
+    wagonLoaded: (deps.entity?.wagonItems ?? []).length > 0,
+    bagLoaded: (deps.entity?.bagItems ?? []).length > 0,
+    usedWagon: null,
+  });
+  return d.kind === 'stage' && !isSummoned(item) && !questTransferRefused(item, { fromLocal: true, toWagon: false, getQuest: deps.getQuest ?? null });
+}
+/** LOOT18: SELL JUNK - every such piece onto the counter in one press, whole, each by the counter's own click law, and
+ *  then the counter's own price and confirm: the footer's Sell, the YesNo box it always asks. Answers how many it laid. */
 function sellJunk() {
   let laid = 0;
   for (const item of junkForCounter()) {
-    const d = localClickDecision(mode, item, {
-      inBasket: (i) => basket.includes(i),
-      allowMagicRepairs: deps.allowMagicRepairs ?? false,
-      usingIdentifySpell: deps.usingIdentifySpell ?? false,
-      wagonLoaded: (deps.entity?.wagonItems ?? []).length > 0,
-      bagLoaded: (deps.entity?.bagItems ?? []).length > 0,
-      usedWagon: null,
-    });
-    if (d.kind !== 'stage' || isSummoned(item) || questTransferRefused(item, { fromLocal: true, toWagon: false, getQuest: deps.getQuest ?? null })) continue;
     clearLightSourceOnLeave(item, deps.entity, true);
     move(item, deps.packItems(), remoteItems());
     laid++;
