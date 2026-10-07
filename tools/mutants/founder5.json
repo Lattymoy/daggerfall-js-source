@@ -79,5 +79,66 @@
       "test/founder5.test.js"
     ],
     "note": "The config's FOUNDER_HANDLES names nobody."
+  },
+  {
+    "name": "FOUNDER5-live-no-link-at-a-save",
+    "file": "server-account/src/saves.js",
+    "old": "  if (!have) await linkFirstPlay({ db }, playerId, characterId);   // FOUNDER5: a new slot - the character may have arrived\n",
+    "new": "",
+    "tests": [
+      "test/founder5.test.js"
+    ],
+    "note": "A character backed up onto a new account links nothing: the account waits on a person to re-run 0078, the very input Mac asked to be without."
+  },
+  {
+    "name": "FOUNDER5-live-no-link-at-customs",
+    "file": "server-account/src/realm.js",
+    "old": "  await linkFirstPlay({ db }, playerId, origin);   // FOUNDER5: the character arrived on this account\n",
+    "new": "",
+    "tests": [
+      "test/founder5.test.js"
+    ],
+    "note": "A character brought into the realm links nothing."
+  },
+  {
+    "name": "FOUNDER5-live-the-census-unasked",
+    "file": "server-account/src/founderLink.js",
+    "old": "'SELECT player FROM realm_census WHERE char_id = ?2'",
+    "new": "'SELECT player FROM realm_census WHERE 0'",
+    "tests": [
+      "test/founder5.test.js"
+    ],
+    "note": "The census - where every guest-era Renown track was gathered when the realm opened - links nothing."
+  },
+  {
+    "name": "FOUNDER5-live-later-too",
+    "file": "server-account/src/founderLink.js",
+    "old": "' WHERE id = ?1 AND (SELECT t FROM linked) < MIN(created_at, COALESCE(registered_at, created_at), COALESCE(first_played_at, created_at))'",
+    "new": "' WHERE id = ?1'",
+    "tests": [
+      "test/founder5.test.js"
+    ],
+    "note": "A link writes whatever it finds, NULL or later: an account linked to nothing has its column written, and one linked to a later row has its first play moved."
+  },
+  {
+    "name": "FOUNDER5-live-itself",
+    "file": "server-account/src/founderLink.js",
+    "old": "' WHERE o.id <> ?1 AND o.id IN ('",
+    "new": "' WHERE o.id IN ('",
+    "tests": [
+      "test/founder5.test.js"
+    ],
+    "equivalent": true,
+    "why": "The account's own first play is never earlier than its own MIN(created_at, registered_at, first_played_at), so linking to itself can never pass the earlier-only guard. Kept as 0078 keeps it: the statement says it asks OTHER rows."
+  },
+  {
+    "name": "FOUNDER5-live-the-save-index-dropped",
+    "file": "server-account/migrations/0087_founder_live.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_saves_character ON saves (character_id);\n",
+    "new": "",
+    "tests": [
+      "test/founder5.test.js"
+    ],
+    "note": "A save asked by character reads the whole table."
   }
 ]

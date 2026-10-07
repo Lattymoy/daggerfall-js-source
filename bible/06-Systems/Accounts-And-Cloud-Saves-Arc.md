@@ -4567,7 +4567,7 @@ sign-in; link shared characters; grant by name; move the cutoff later), Mac chos
   the wardrobe and on the signed token). `tools/mutants/founder4.json` (12, all dead); three of `founder3.json`'s
   re-aimed by content at the new `firstPlayed` (6, all dead). The acct76 pins credit FOUNDER4 beside PRIMARCH.
 
-## FOUNDER5 — Founder before the 25th on any clock, and by name (2026-10-07, acct92)
+## FOUNDER5 — Founder before the 25th on any clock, linked live, and by name (2026-10-07, acct92, migration 0087)
 
 Mac: "Can we grant every account before sept 25th the founder title. Ive tried this multiple times and its never
 worked". Asked how to reach the players no rule could prove (time zone and a name list; the cutoff moved to today;
@@ -4588,11 +4588,27 @@ linking characters at every save; every account), Mac chose "Time zone + name li
   first played; a guest has no handle and holds none; a founder by the date holds it unlisted, and never twice. A list
   in config and not a column, ACC3's law: Mac grants one by a reviewed, deployed edit, and taking a handle off takes the
   title from the next token. Empty at ship: nobody by name yet - a player who reports it missing is added there.
-- `ACCOUNT_VERSION` acct92 in both the Worker and `wrangler.toml`; no migration, no relay change (Founder is already in
-  the token's vocabulary), no client change. The version's pins moved to acct92.
-- Pins: `test/founder5.test.js` (4) - the clock, the names, the config and the real Worker (an account first seen at
+- **The link, kept live** (Mac, then: "I want to do this without my input"; `server-account/src/founderLink.js`
+  linkFirstPlay). FOUNDER4's link was written once, at 0078's deploy, and a character carried onto a new account after
+  it linked nothing until a person re-ran the statement. The same fact is now written as a character ARRIVES on an
+  account - a cloud save's new slot (`saves.js` putCard) and a customs (`realm.js` customsRealm) - for that account and
+  that character: the earliest first play of another row holding it, where earlier than the account's own. Never on
+  the token's path (about a mint a second, STORM-SHED); both writes are rare acts a player makes. It asks 0078's
+  holdings less `renown_tracks`, whose key puts the character second (the census was seeded from it when the realm
+  opened, and a track since is keyed by a realm id, which links nothing). One hop, earlier only; a failure is
+  swallowed after the write it follows has landed, and the next arrival links it. Migration
+  `0087_founder_live.sql` indexes `saves (character_id)` and `realm_characters (origin_id)` so neither is read whole.
+- **Still not reached, and why.** A player whose play before the 25th left no record on ANY row the service keeps -
+  never online as a guest, a guest row whose characters never reached it - cannot be proven by anything the service
+  can check: a character's id is a random UUID with no date in it, and anything the player's own machine says could
+  be typed by anyone. FOUNDER_HANDLES stays for them, optional and empty.
+- `ACCOUNT_VERSION` acct92 in both the Worker and `wrangler.toml`; migration 0087 (two indexes), no relay change
+  (Founder is already in the token's vocabulary), no client change. The version's pins moved to acct92.
+- Pins: `test/founder5.test.js` (7) - the clock, the names, the config and the real Worker (an account first seen at
   10pm New York time on the 24th and one named in the config each wear Founder on the signed token; one neither holds
-  none). `tools/mutants/founder5.json` (8: 7 dead, 1 equivalent as recorded). The pins of the old instant moved
+  none); the live link's statement and indexes (its query plans read them), and the real Worker through a cloud save
+  and a customs (Founder the moment the character arrives; nothing for a character no earlier row holds, nor one
+  linked to a later row). `tools/mutants/founder5.json` (14: 12 dead, 2 equivalent as recorded). The pins of the old instant moved
   (founder2, founder3, founder4, titlen, acc3titles; founder2.json's two records and titlen.json's TR-founder-cutoff-moved-forward re-aimed by content).
 
 ## KNIGHT-HOUSE — a deed the realm gave, held off its character's record (2026-10-04, acct77)

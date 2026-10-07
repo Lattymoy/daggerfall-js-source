@@ -7,6 +7,9 @@
 //   - NO RECORD. A player whose play before it the service never recorded (a guest's storage cleared, a character never
 //     saved to the cloud) cannot be proven by any rule. FOUNDER_HANDLES names them: a list in config, the developers'
 //     law - case-folded, a registered account's alone, and it only adds.
+// And then, "I want to do this without my input": FOUNDER4's link (0078) ran once, so a character carried onto a new
+// account after its deploy linked nothing until a person re-ran it. server-account/src/founderLink.js writes the same
+// fact as a character ARRIVES - a cloud save's new slot, a customs - with nobody's hand on it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -16,6 +19,7 @@ import { _resetKeyForTests } from '../server-account/src/signing.js';
 import { titlesHeld, titleWorn, equipRefusal, wardrobeOf, founderHandles, isNamedFounder, FOUNDER_UNTIL } from '../server-account/src/titles.js';
 import { verifyToken, importPublicKeyB64 } from '../src/net/identityToken.js';
 import { ACCEPTED } from '../src/net/legalLaw.js';
+import { LINK_SQL } from '../server-account/src/founderLink.js';
 
 const HOUR = 60 * 60;
 const DAY = 24 * HOUR;
@@ -79,6 +83,12 @@ function d1() {
   db.exec('PRAGMA foreign_keys = ON');
   for (const f of MIGRATIONS) db.exec(src(`server-account/migrations/${f}`));
   return {
+    _raw: db,
+    // D1's batch: every statement in one transaction, all or none (customs writes in one)
+    async batch(stmts) {
+      db.exec('BEGIN');
+      try { const out = []; for (const st of stmts) out.push(await st.run()); db.exec('COMMIT'); return out; } catch (e) { db.exec('ROLLBACK'); throw e; }
+    },
     prepare(sql) {
       const stmt = db.prepare(sql);
       let args = [];
@@ -136,4 +146,89 @@ test('FOUNDER5, end to end: an account first seen on the evening of the 24th in 
   const neither = await account('Newcomer');
   assert.deepEqual((await call('GET', '/v1/account', undefined, neither)).body.wardrobe.titles, [], 'first seen after the cutoff, not named: none');
   assert.equal((await call('POST', '/v1/account/title', { title: 'founder' }, neither)).status, 403);
+});
+
+// ── THE LINK, KEPT LIVE ─────────────────────────────────────────────
+
+test('FOUNDER5 the live link: the statement asks the four holdings 0078 asks that can be asked by character (renown_tracks left out, read whole by character), one hop, earlier only; 0087 indexes saves and realm characters by character', () => {
+  const sources = [...LINK_SQL.matchAll(/SELECT (\w+) FROM (\w+) WHERE (\w+) = \?2/g)].map((m) => `${m[2]}.${m[3]}`);
+  assert.deepEqual(sources, ['realm_census.char_id', 'saves.character_id', 'realm_characters.origin_id', 'realm_passes.origin_id']);
+  assert.doesNotMatch(LINK_SQL, /renown_tracks/);
+  assert.doesNotMatch(LINK_SQL, /o\.first_played_at/, 'one hop: another row\'s own link is never followed');
+  const migration = src('server-account/migrations/0087_founder_live.sql');
+  assert.match(migration, /^CREATE INDEX IF NOT EXISTS idx_saves_character ON saves \(character_id\);$/m);
+  assert.match(migration, /^CREATE INDEX IF NOT EXISTS idx_realm_characters_origin ON realm_characters \(origin_id\) WHERE origin_id IS NOT NULL;$/m);
+  const db = new DatabaseSync(':memory:');
+  for (const f of MIGRATIONS) db.exec(src(`server-account/migrations/${f}`));
+  const plan = (q) => db.prepare(`EXPLAIN QUERY PLAN ${q}`).all().map((r) => r.detail).join(' | ');
+  assert.match(plan("SELECT player_id FROM saves WHERE character_id = 'x'"), /idx_saves_character/, 'a save asked by character reads the index');
+  assert.match(plan("SELECT player FROM realm_characters WHERE origin_id = 'x'"), /idx_realm_characters_origin/);
+});
+
+async function stand() {
+  const { subtle } = globalThis.crypto;
+  _resetKeyForTests();
+  const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
+  const pkcs8 = Buffer.from(new Uint8Array(await subtle.exportKey('pkcs8', kp.privateKey))).toString('base64');
+  const env = { DB: d1(), IDENTITY_PRIVATE_KEY: pkcs8, ACCOUNT_VERSION: 'test1', ALLOWED_ORIGIN: '*' };
+  const call = async (method, path, body, bearer = null) => {
+    const res = await worker.fetch(new Request(`https://accounts.invalid${path}`, {
+      method,
+      headers: { ...(body !== undefined ? { 'content-type': 'application/json' } : {}), ...(bearer ? { authorization: `Bearer ${bearer}` } : {}) },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    }), env);
+    return { status: res.status, body: await res.json().catch(() => null) };
+  };
+  const raw = env.DB._raw;
+  const guest = async (firstSeen) => {
+    const g = (await call('POST', '/v1/auth/guest', { ...ACCEPTED })).body;
+    raw.prepare('UPDATE players SET created_at = ? WHERE id = ?').run(firstSeen, g.id);
+    return g;
+  };
+  const account = async (handle) => {
+    const g = (await call('POST', '/v1/auth/guest', { ...ACCEPTED })).body;
+    assert.equal((await call('POST', '/v1/auth/register', { handle, password: 'a-long-enough-password', ...ACCEPTED }, g.secret)).status, 200);
+    return g;
+  };
+  const titles = async (who) => (await call('GET', '/v1/account', undefined, who.secret)).body.wardrobe.titles;
+  const card = (who, char, name = 'QuickSave') => call('PUT', `/v1/saves/${char}/${name}`, { characterName: 'Hero', gameTime: 1, realTime: 1, saveVersion: 1 }, who.secret);
+  return { call, raw, guest, account, titles, card };
+}
+
+test('FOUNDER5 the live link, a cloud save: an account registered long after the cutoff that backs up a character a guest from before it played holds Founder at once - no migration, no list; a character no earlier row holds links nothing; a later row never moves it', async () => {
+  const s = await stand();
+  const CHAR = '3f0c2a9e-1b7d-4c55-9a61-0d2f6e8b7c11';
+  const old = await s.guest(OLD_CUT - 5 * DAY);   // the browser's guest, before the cutoff - on the realm's census
+  s.raw.prepare('INSERT INTO realm_census (player, char_id) VALUES (?, ?)').run(old.id, CHAR);
+  const back = await s.account('Returning');   // registered today, in the desktop app
+  assert.deepEqual(await s.titles(back), [], 'before the character arrives: none');
+  assert.equal((await s.card(back, CHAR)).status, 200);
+  assert.deepEqual(await s.titles(back), ['founder'], 'its first cloud save: Founder');
+  const row = s.raw.prepare('SELECT first_played_at FROM players WHERE id = ?').get(back.id);
+  assert.equal(row.first_played_at, OLD_CUT - 5 * DAY, 'the guest\'s first contact, recorded');
+
+  const lone = await s.account('Newcomer');
+  assert.equal((await s.card(lone, '9a1d7e40-5c2b-4f18-8e33-7b6c0f2a9d54')).status, 200);
+  assert.deepEqual(await s.titles(lone), [], 'a character of its own alone: none');
+  assert.equal(s.raw.prepare('SELECT first_played_at FROM players WHERE id = ?').get(lone.id).first_played_at, null);
+
+  const late = await s.guest(OLD_CUT + 30 * DAY);   // a row after the cutoff holding the same character changes nothing
+  s.raw.prepare('INSERT INTO realm_census (player, char_id) VALUES (?, ?)').run(late.id, 'c0ffee00-1111-2222-3333-444455556666');
+  const third = await s.account('Third');
+  assert.equal((await s.card(third, 'c0ffee00-1111-2222-3333-444455556666')).status, 200);
+  assert.deepEqual(await s.titles(third), [], 'linked to a row first seen after the cutoff: none');
+  assert.equal(s.raw.prepare('SELECT first_played_at FROM players WHERE id = ?').get(third.id).first_played_at, null, 'and nothing written: a link to a LATER first play records nothing');
+});
+
+test('FOUNDER5 the live link, a customs: an account that brings in, on its pass, a character a guest from before the cutoff played holds Founder at once', async () => {
+  const s = await stand();
+  const CHAR = 'offline-early-hero-01';
+  const old = await s.guest(OLD_CUT - 9 * DAY);
+  s.raw.prepare('INSERT INTO realm_census (player, char_id) VALUES (?, ?)').run(old.id, CHAR);
+  const back = await s.account('Customs');
+  s.raw.prepare('INSERT INTO realm_passes (player, granted_by, granted_at) VALUES (?, ?, ?)').run(back.id, 'dev', OLD_CUT + DAY);
+  assert.deepEqual(await s.titles(back), []);
+  const came = await s.call('POST', '/v1/realm/customs', { origin: CHAR, name: 'Hero' }, back.secret);
+  assert.equal(came.status, 200, JSON.stringify(came.body));
+  assert.deepEqual(await s.titles(back), ['founder'], 'brought in: Founder');
 });
