@@ -13,9 +13,20 @@
 // in once at boot (main.js).
 //
 // THE FRAME, NOT THE BUFFER'S LEFTOVERS. The renderer's context does not preserve its drawing buffer, so reading the
-// canvas from inside a key event gets a cleared buffer. A requestAnimationFrame callback queued now runs AFTER the
-// host's own (queued during the previous frame), and the buffer is only cleared after every callback of the frame
-// has run - so the read lands on the frame just drawn.
+// canvas from inside a key event gets a cleared buffer: the canvas is readable only in the task that drew it.
+//
+// SHOT1 (2026-10-07, a player's gallery: "Wayrest" and "Daggerfall" kept FULLY BLACK, a battle at Dak'fron kept
+// whole): THE SHOT RIDES THE HOST'S FRAME FOOT, NOT A FRAME OF ITS OWN. KB1 queued the read on a requestAnimationFrame
+// of its own, on the reasoning that it ran after the host's callback in the same browser frame. Two things the host
+// does broke that: (1) FPS-CAP1's HELD FRAME - `frameCapSkip` re-arms and returns, drawing nothing, so on a fast scene
+// under a Frame Rate Cap (a town on a 120 Hz screen, every other browser frame held at a 60 cap) the shot's callback read a
+// frame nothing had drawn, while a battle running under the cap held no frame and read whole; (2) A PRESS FROM INSIDE
+// THE FRAME - the pad's tick (`gamepad?.tick(dt)`, ui/gamepadInput.js) dispatches its button as a synthetic keydown
+// inside the host's callback, so the shot's rAF was queued BEFORE the host re-armed its own at its foot and ran first
+// next frame, ahead of the draw. So the shot is OWED (`takeScreenshot` queues it here) and the host's frame foot pays
+// it (`deliverOwedShots`, after `renderer.resolveFrame()`, beside SS1's `capturePendingScreenshot` - the save's shot,
+// which was always taken this way): every host draws the frame first, and a frame that draws nothing never reaches
+// a foot, so the shot waits for the next one that does.
 
 import { getPref } from '../systems/uiPrefs.js';   // LOAD1: the download's switch - already on the entry's graph (main.js reads it), so it adds no file there
 
@@ -46,11 +57,29 @@ export function screenshotName(d = new Date()) {
  *  holds its URL 40 s for exactly this. The blob is one PNG, so holding it that long costs nothing. */
 export const REVOKE_AFTER_MS = 40_000;
 
-/** Save `canvas` as a PNG after the frame now being drawn. Answers a promise of the file name, or null when the
+// SHOT1: THE OWED SHOTS - every press waiting for a drawn frame, in press order (ASYNC NEVER DROPS: two presses
+// before one foot are two shots of that frame, never one).
+const _owed = [];
+/** SHOT1: queue `fn` for the next host frame foot - takeScreenshot's default `afterDraw`. */
+export function oweToFrameFoot(fn) { _owed.push(fn); }
+/** SHOT1: how many shots wait for a drawn frame (the tests' window). */
+export const owedShots = () => _owed.length;
+/** SHOT1: THE HOSTS' FRAME FOOT - called after the frame's last draw (`renderer.resolveFrame()`), while the buffer is
+ *  still this task's to read: every owed shot is taken from the frame just drawn. Emptied before it runs (THE SLOT IS
+ *  EMPTIED BEFORE THE OCCUPANT IS TOLD), so a shot owed during the delivery is the next frame's. Answers the count. */
+export function deliverOwedShots() {
+  if (!_owed.length) return 0;
+  const batch = _owed.splice(0);
+  for (const fn of batch) { try { fn(); } catch (e) { console.warn('[shot] the screenshot could not be read:', e?.message ?? e); } }
+  return batch.length;
+}
+
+/** Save `canvas` as a PNG from the next frame a host draws. Answers a promise of the file name, or null when the
  *  canvas gave no image (a lost context) or the download is switched off. LOAD1: `keep` hands the same PNG to the
- *  gallery (its answer is `said` to the HUD); `download` false skips the file. */
+ *  gallery (its answer is `said` to the HUD); `download` false skips the file. SHOT1: `afterDraw` is when the canvas
+ *  is read - the host's frame foot (`oweToFrameFoot`) by default; the tests pass null to read at once. */
 export function takeScreenshot(canvas, {
-  raf = globalThis.requestAnimationFrame, doc = globalThis.document, later = setTimeout,
+  afterDraw = oweToFrameFoot, doc = globalThis.document, later = setTimeout,
   keep = null, download = true, said = null,
 } = {}) {
   return new Promise((resolve) => {
@@ -75,7 +104,7 @@ export function takeScreenshot(canvas, {
         resolve(name);
       }, 'image/png');
     };
-    if (typeof raf === 'function') raf(shoot); else shoot();
+    if (typeof afterDraw === 'function') afterDraw(shoot); else shoot();
   });
 }
 

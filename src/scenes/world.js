@@ -808,7 +808,7 @@ import { createActivateGate, activateFrame, setClickDelay } from '../systems/act
 import { openPauseFlow, preloadPauseFlowArt, pauseDoorReady, pauseOpts } from '../ui/pauseDoor.js';   // I3/I4; U51 picks the skin; MAC-L1: pauseOpts is the ONE reader of the door's options
 import { isEnhanced, isEnhancedPlus } from '../systems/uiSkin.js';   // WM2d: the mills are an enhanced-only addition
 import { beginLoading, syncLoading, setLoadingPlace, setLoadingAside, loadingPlaceOf, bootLine, BOOT_HOLD_MAX_MS } from '../ui/loadingScreen.js';   // LOAD1: the loading screen - the boot's, and every world move's
-import { setShotPlace } from '../ui/screenshot.js';   // LOAD1: a kept screenshot says where it was taken
+import { setShotPlace, deliverOwedShots } from '../ui/screenshot.js';   // LOAD1: a kept screenshot says where it was taken; SHOT1: and it is read at this host's frame foot
 import { drawEnhancedTextLayer, hideEnhancedTextLayer } from '../ui/enhancedTextLayer.js';   // FONT3: a draw list's words in the enhanced face (Come Sail Away's position reading)
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 import { drawEnhancedStatusLine } from '../ui/enhancedHudText.js';   // FONT1: the online status line in the skin's own face
@@ -27771,6 +27771,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       townTalk.frame(dt);
       renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
       capturePendingScreenshot(canvas);   // SS1: a save armed from a modal mode still lands its shot
+      deliverOwedShots();   // SHOT1: the PrintScreen shots owed to a drawn frame, read from this one (ui/screenshot.js)
       gateVeil?.frameDrawn();   // AUDIT WB D5: the step's fire holds shut on the frames the new place has drawn
       // DISC29-D (Skeptikali on Discord: a dungeon at 99.9% CPU, and a counter that could not say whose): the indoor
       // foot is a WHOLE frame - the interior or the dungeon, its foes, its draw - so it takes its sample, and the FPS
@@ -30347,6 +30348,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // screenshot while the buffer is still this task's to read
     // (preserveDrawingBuffer false clears it after compositing).
     capturePendingScreenshot(canvas);
+    deliverOwedShots();   // SHOT1: the PrintScreen shots owed to a drawn frame, read from this one (ui/screenshot.js)
 
     if (shotMode) {
       window.__frame++;
