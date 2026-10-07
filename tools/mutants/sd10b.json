@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-SD-C3-home-by-the-fights-number",
     "file": "src/scenes/world.js",
-    "old": "if (_sdHome?.fell !== s.fell.at) { const [x, z] = clearOfPillars(s.rem.x, s.rem.z); _sdHome = { fell: s.fell.at,",
-    "new": "if (_sdHome?.fell !== s.fi) { const [x, z] = clearOfPillars(s.rem.x, s.rem.z); _sdHome = { fell: s.fi,",
+    "old": "if (_sdHome?.fell !== s.fell.at) {\n      const [x, z] = clearOfPillars(s.rem.x, s.rem.z);\n      _sdHome = { fell: s.fell.at,",
+    "new": "if (_sdHome?.fell !== s.fi) {\n      const [x, z] = clearOfPillars(s.rem.x, s.rem.z);\n      _sdHome = { fell: s.fi,",
     "tests": [
       "test/sd10b_audit.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-SD-C6-a-portal-stood-unlisted",
     "file": "src/scenes/sdEnd.js",
-    "old": "      if (retAt) ret = { at: [...retAt], batch: batchAt(RETURN_ARCHIVE, retAt, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };\n      rebatch();",
-    "new": "      if (retAt) ret = { at: [...retAt], batch: batchAt(RETURN_ARCHIVE, retAt, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };",
+    "old": "      if (retAt) ret = { at: [...retAt], batch: batchAt(RETURN_ARCHIVE, retAt, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h), risesAt: -Infinity, pressed: false };\n      rebatch();",
+    "new": "      if (retAt) ret = { at: [...retAt], batch: batchAt(RETURN_ARCHIVE, retAt, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h), risesAt: -Infinity, pressed: false };",
     "tests": [
       "test/sd10b_audit.test.js"
     ]

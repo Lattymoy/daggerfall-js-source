@@ -428,10 +428,12 @@ export const turningRatesWhole = () => Object.values(TURNING_HZ).every((r) => r 
 /** The Hourbreaker's own colours (ui/playerBadge.js HOUR_*): the Remnant's brass, its bar's gold, the light of its heart. */
 export const TURNING_RGB = Object.freeze({ brass: Object.freeze(HOUR_BRASS.slice(0, 3)), gold: Object.freeze(HOUR_GOLD.slice(0, 3)), light: Object.freeze(HOUR_LIGHT.slice(0, 3)) });
 /** The wheel's turn at clock time `t` (s), radians: TAU x wheel each second, eased over its first TURNING_STEP_S and held
- *  the rest - never going back, whole over the clock. The shader's own (turningWheel). Pure. */
+ *  the rest - never going back, whole over the clock. The shader's own (turningWheel). Pure. AUDIT SD II (SD11f): FORWARD
+ *  AS THE EYE SEES IT - its angle FALLS, clockwise on the screen (the one mirror's law, turningDialAngle's below), as a
+ *  clock's escapement steps; it grew, and the wheel stepped anticlockwise, the dial's own way - back. */
 export function turningWheelAngle(t) {
   const s = Math.floor(t), e = Math.min(1, (t - s) / TURNING_STEP_S);
-  return Math.PI * 2 * TURNING_HZ.wheel * (s + e * e * (3 - 2 * e));
+  return -Math.PI * 2 * TURNING_HZ.wheel * (s + e * e * (3 - 2 * e));
 }
 /** The dial's turn at `t`: backwards, smoothly - ANTICLOCKWISE as the eye sees the ground, as the Hour's sky's hands turn
  *  (render/sdSky.js). Pure. AUDIT SD II (L2 F13): the ground's angle (atan(p.y, p.x), p = (x, z) about the feet) grows
@@ -729,8 +731,8 @@ const vec3 TH_LIGHT = ${v3(TURNING_RGB.light)};
 float turnPixel() { return max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002); }
 // a band between two radii (or heights), its edges a pixel wide
 float turnBand(float x, float lo, float hi, float px) { return clamp((x - lo) / px + 0.5, 0.0, 1.0) * clamp((hi - x) / px + 0.5, 0.0, 1.0); }
-// the wheel's turn: a step on the second, eased over its first quarter, held the rest (turningWheelAngle)
-float turningWheel() { float s = floor(uTime), e = clamp((uTime - s) / ${TURNING_STEP_S.toFixed(3)}, 0.0, 1.0); return TAU * (s + e * e * (3.0 - 2.0 * e)) ${hzGlsl(TURNING_HZ.wheel)}; }
+// the wheel's turn: a step on the second, eased over its first quarter, held the rest - forward, clockwise on the screen (turningWheelAngle)
+float turningWheel() { float s = floor(uTime), e = clamp((uTime - s) / ${TURNING_STEP_S.toFixed(3)}, 0.0, 1.0); return -TAU * (s + e * e * (3.0 - 2.0 * e)) ${hzGlsl(TURNING_HZ.wheel)}; }   // AUDIT SD II (SD11f): falling - clockwise as the eye sees it
 float turningBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(TURNING_HZ.pulse)}); }
 // a tooth's face across its pitch (0..1 round from its leading edge): solid over its middle half, its flanks a pixel wide
 float turningTooth(float w, float r, float px) {

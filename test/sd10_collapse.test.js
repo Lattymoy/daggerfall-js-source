@@ -134,14 +134,16 @@ test('SD10 THE WAY HOME: the Return\'s pale light stood alone, later, where it i
   assert.deepEqual(e.hoverName(SD_RETURN_KEY), { title: 'The Way Home', subs: ['To the Hollow\'s door'] });
   assert.equal(e.press(SD_RETURN_KEY), true);
   assert.equal(homes, 1, 'pressed: the host\'s way home');
-  // walked into: outside, then inside, the Portal Stones' latch
+  // AUDIT SD II (SD11f, L6 F9, PIN MOVED): never walked into - it stands where the spoils land; pressed alone
   let clock = 1000;
   const w = createSdEnd({ now: () => clock, onReturn: () => { homes++; }, retTitle: SD_HOME_TEXT.title, retTo: SD_HOME_TEXT.to });
   w.stand({ rift: { at: [0, 0, -4], size: 4 }, retAt: null });
   w.standReturn([10, 0, 20]);
   w.frame([10, 0, 21]); clock += 16;
-  assert.equal(w.frame([10, 0, 20.3]), 'return', 'stepped into');
-  assert.equal(homes, 2);
+  assert.equal(w.frame([10, 0, 20.3]), null, 'stepped into: nothing');
+  assert.equal(homes, 1);
+  assert.equal(w.press(SD_RETURN_KEY), true);
+  assert.equal(homes, 2, 'pressed');
   w.returnOut();
   assert.equal(w.ret, null);
   assert.equal(w.standReturn([3, 0, 3]), true, 'stood again where it is next told');
@@ -158,12 +160,12 @@ test('SD10 THE WAY HOME: the Return\'s pale light stood alone, later, where it i
   assert.equal(carried, 0, 'standing where it rose: not carried off');
   z.frame([10, 0, 21]); clock2 += 16;
   z.frame([10, 0, 20.3]);
-  assert.equal(carried, 1, 'stepped out, and back in');
+  assert.equal(carried, 0, 'stepped out, and back in: still nothing');   // AUDIT SD II (SD11f, L6 F9, PIN MOVED): pressed alone
   // a Hollow's own Return keeps its words
   const d = createSdEnd({});
   d.stand({ rift: { at: [0, 0, 0], size: 4 }, retAt: [2, 0, 0] });
   assert.deepEqual(d.hoverName(SD_RETURN_KEY), { title: SD_END_TEXT.ret, subs: [SD_END_TEXT.retTo] });
-  assert.deepEqual(SD_HOME_TEXT, { title: 'The Way Home', to: 'To the Hollow\'s door', taken: 'The way home carries you out of the Hour, to the Hollow\'s door.' });
+  assert.deepEqual(SD_HOME_TEXT, { title: 'The Way Home', to: 'To the Hollow\'s door', taken: 'The way home carries you out of the Hour, to the Hollow\'s door.', rises: 'The way home stands open.' });   // AUDIT SD II (SD11f, L6 F16, PIN MOVED): and said as it rises
 });
 
 // ── the hosts ────────────────────────────────────────────────────────
@@ -171,12 +173,12 @@ test('SD10 THE WAY HOME: the Return\'s pale light stood alone, later, where it i
 test('SD10 THE HOSTS: the dungeon host stands the Hour\'s way home where the outer host says and takes it down when it says none (never the Hollow\'s Return check in the Hour); the mode machine hands both doors through; the world host says where - the Remnant\'s fall, its body sunk, one place a fall (AUDIT SD), clear of the pillars - and carries a player out of the Hour before the Hollow\'s door under the veil; the Hollow host is handed the readouts\' voice and the Hour\'s question (mutants: the way home unstood; never taken down; stood before the body sank; out with no veil; the readouts unvoiced)', () => {
   const D = strip(read('src/scenes/dungeonContext.js'));
   assert.match(D, /: _sdRealm \? createSdEnd\(\{ renderer, audio, riftTo: SD_REALM_TEXT\.wayBack, onRift: \(\) => opts\.sdWayBack\?\.\(\), onReturn: \(\) => opts\.sdWayHome\?\.\(\), retTitle: SD_HOME_TEXT\.title, retTo: SD_HOME_TEXT\.to \}\) : null;/);
-  assert.match(D, /if \(_sdRealm\) \{ const home = opts\.sdHomeAt\?\.\(\) \?\? null; if \(home && !sdEnd\.ret\) sdEnd\.standReturn\(home\); else if \(!home && sdEnd\.ret\) sdEnd\.returnOut\(\); \}\n\s*else if \(sdEnd\.ret && t >= _sdEndCheckAt\)/);
+  assert.match(D, /if \(_sdRealm\) \{ const home = opts\.sdHomeAt\?\.\(\) \?\? null; if \(home && !sdEnd\.ret\) sdEnd\.standReturn\(home, opts\.sdHomeAge\?\.\(\) \?\? Infinity\); else if \(!home && sdEnd\.ret\) sdEnd\.returnOut\(\); \}\n\s*else if \(sdEnd\.ret && t >= _sdEndCheckAt\)/);   // AUDIT SD II (SD11f, L6 F16, PIN MOVED): stood with how long ago it rose
   const M2 = strip(read('src/scenes/worldModes.js'));
   assert.match(M2, /sdWayHome: \(\) => host\.sdWayHome\?\.\(\),/);
   assert.match(M2, /sdHomeAt: \(\) => host\.sdHomeAt\?\.\(\) \?\? null,/);
   const W = strip(read('src/scenes/world.js'));
-  assert.match(W, /const sdHomeAt = \(\) => \{\n\s*const s = sdFightLink\?\.state\(\);\n\s*if \(!s\?\.fell \|\| sdFightLink\.now\(\) < s\.fell\.at \+ SD_REM_SINK_MS\) return null;\n[^\n]*\n\s*if \(_sdHome\?\.fell !== s\.fell\.at\) \{ const \[x, z\] = clearOfPillars\(s\.rem\.x, s\.rem\.z\); _sdHome = \{ fell: s\.fell\.at, at: sdRealmToDungeon\(SD_ARENA\.x \+ x, 0, SD_ARENA\.z \+ z\) \}; \}\n\s*return _sdHome\.at;\n\s*\};/);   // AUDIT SD: one place a fall, clear of the pillars (PIN MOVED)
+  assert.match(W, /const sdHomeAt = \(\) => \{\n\s*const s = sdFightLink\?\.state\(\);\n\s*if \(!s\?\.fell \|\| sdFightLink\.now\(\) < s\.fell\.at \+ SD_REM_SINK_MS\) return null;\n[^\n]*\n\s*if \(_sdHome\?\.fell !== s\.fell\.at\) \{\n\s*const \[x, z\] = clearOfPillars\(s\.rem\.x, s\.rem\.z\);\n\s*_sdHome = \{ fell: s\.fell\.at, at: sdRealmToDungeon\(SD_ARENA\.x \+ x, 0, SD_ARENA\.z \+ z\) \};\n[^\n]*\n\s*\}\n\s*return _sdHome\.at;\n\s*\};/);   // AUDIT SD: one place a fall, clear of the pillars (PIN MOVED); AUDIT SD II (SD11f, L6 F16, PIN MOVED): said as it rises
   assert.match(W, /function sdWayHome\(\) \{\n\s*if \(!isSdRealm\(modes\?\.dungeonLocation\) \|\| !\(playerEntity\.health > 0\) \|\| modes\?\.deathUp\?\.\(\)\) return false;\n\s*gateVeil\?\.flash\('brass'\);\n\s*if \(!modes\?\.unstuck\?\.\(\)\) return false;\n\s*sdSay\(SD_HOME_TEXT\.taken\);/);   // AUDIT SD II (SD11d, PIN MOVED): the Hour's brass veil, its voice
   assert.match(W, /sdWayHome: \(\) => sdWayHome\(\),/);
   assert.match(W, /sdHomeAt: \(\) => sdHomeAt\(\),/);

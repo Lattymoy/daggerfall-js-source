@@ -29,8 +29,8 @@
   {
     "name": "SD9C-the-wheel-smooth",
     "file": "src/render/auraRing.js",
-    "old": "float turningWheel() { float s = floor(uTime), e = clamp((uTime - s) / ${TURNING_STEP_S.toFixed(3)}, 0.0, 1.0); return TAU * (s + e * e * (3.0 - 2.0 * e)) ${hzGlsl(TURNING_HZ.wheel)}; }",
-    "new": "float turningWheel() { return TAU * uTime ${hzGlsl(TURNING_HZ.wheel)}; }",
+    "old": "float turningWheel() { float s = floor(uTime), e = clamp((uTime - s) / ${TURNING_STEP_S.toFixed(3)}, 0.0, 1.0); return -TAU * (s + e * e * (3.0 - 2.0 * e)) ${hzGlsl(TURNING_HZ.wheel)}; }",
+    "new": "float turningWheel() { return -TAU * uTime ${hzGlsl(TURNING_HZ.wheel)}; }",
     "tests": [
       "test/sd9c_turning.test.js"
     ]

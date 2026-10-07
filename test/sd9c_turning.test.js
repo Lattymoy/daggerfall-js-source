@@ -64,12 +64,13 @@ test('SD9c THE LOOK\'S LAW: the seventh kind, added whole (no shade, no mesh, no
   // the wheel: held through most of each second, stepping in its first quarter, never back
   for (const s of [0, 7, 59, 119]) {
     assert.equal(turningWheelAngle(s + TURNING_STEP_S), turningWheelAngle(s + 0.9), `held after its step (${s})`);
-    assert.ok(turningWheelAngle(s + 0.1) > turningWheelAngle(s) && turningWheelAngle(s + 0.1) < turningWheelAngle(s + TURNING_STEP_S), 'stepping in its first quarter');
-    assert.ok(Math.abs(turningWheelAngle(s + 1) - turningWheelAngle(s) - TAU * TURNING_HZ.wheel) < 1e-12, 'a step a second');
+    // AUDIT SD II (SD11f, PIN MOVED): its angle falls - forward, clockwise on the screen (below)
+    assert.ok(turningWheelAngle(s + 0.1) < turningWheelAngle(s) && turningWheelAngle(s + 0.1) > turningWheelAngle(s + TURNING_STEP_S), 'stepping in its first quarter');
+    assert.ok(Math.abs(turningWheelAngle(s) - turningWheelAngle(s + 1) - TAU * TURNING_HZ.wheel) < 1e-12, 'a step a second');
   }
-  let last = -Infinity;
-  for (let t = 0; t <= AURA_CLOCK_PERIOD; t += 0.05) { const a = turningWheelAngle(t); assert.ok(a >= last - 1e-12, `never back (${t})`); last = a; }
-  assert.ok(Math.abs(turningWheelAngle(AURA_CLOCK_PERIOD) - 2 * TAU) < 1e-9, 'two turns over the clock: whole at the wrap');
+  let last = Infinity;
+  for (let t = 0; t <= AURA_CLOCK_PERIOD; t += 0.05) { const a = turningWheelAngle(t); assert.ok(a <= last + 1e-12, `never back (${t})`); last = a; }
+  assert.ok(Math.abs(turningWheelAngle(AURA_CLOCK_PERIOD) + 2 * TAU) < 1e-9, 'two turns over the clock: whole at the wrap');
   // AUDIT SD II (L2 F13 - PIN MOVED): BACK AS THE EYE SEES IT, never the math sign. Through the game's own camera
   // (world/mat4.js lookAt and its one mirror) a mark on the ground's dial - at (cos a, sin a) of (x, z) about the feet -
   // turns ANTICLOCKWISE on the screen, as the Hour's sky's hands do (render/sdSky.js: sin(back), cos(back) of (azimuth,
@@ -81,6 +82,12 @@ test('SD9c THE LOOK\'S LAW: the seventh kind, added whole (no shade, no mesh, no
   let turned = 0;
   for (let t = 0; t < 30; t += 1) { const d = screenAngle(turningDialAngle(t + 1)) - screenAngle(turningDialAngle(t)); turned += Math.atan2(Math.sin(d), Math.cos(d)); }
   assert.ok(turned > 0.5, `the dial turns back - anticlockwise on the screen (${turned.toFixed(3)} rad in 30 s)`);
+  // AUDIT SD II (SD11f): and the wheel inside it steps FORWARD - clockwise on the screen, against the dial; it stepped
+  // the dial's own way, back, its angle rising through the same mirror
+  const wheelAt = (a) => { const s = onScreen([Math.cos(a) * TURNING_R, 0, Math.sin(a) * TURNING_R]); return Math.atan2(s[1] - feet[1], s[0] - feet[0]); };
+  let stepped = 0;
+  for (let t = 0; t < 30; t += 1) { const d = wheelAt(turningWheelAngle(t + 1)) - wheelAt(turningWheelAngle(t)); stepped += Math.atan2(Math.sin(d), Math.cos(d)); }
+  assert.ok(stepped < -0.5, `the wheel steps forward - clockwise on the screen (${stepped.toFixed(3)} rad in 30 s)`);
   assert.ok(Math.abs(Math.abs(turningDialAngle(AURA_CLOCK_PERIOD)) - TAU) < 1e-9, 'one turn over the clock');
   assert.deepEqual(TURNING_RGB.gold, TITLE_RGBA.hourbreaker.slice(0, 3), 'the Hourbreaker\'s gold');
   assert.match(AURA_FS, /if \(uAura == 6\) \{ vec3 c = uKind == 0 \? turningGround\(vP\) : turningWall\(vP\);/);

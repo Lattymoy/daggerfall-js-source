@@ -58,11 +58,36 @@ export function buildRiftBell(bell, bubbles, { srcRate = SND_RATE, rate = RIFT_B
  * @param {number[]} at
  */
 export function startRiftBell(audio, at) {
-  if (!audio?.loop3d || !audio?.registerSamples || !audio?.samplesOf || !at) return null;
+  if (!audio?.loop3d || !at) return null;
   try {
-    const bell = audio.samplesOf(RIFT_BELL_RECORDS.bell);
-    if (!bell) return null;
-    if (!audio.registerSamples(RIFT_BELL_KEY, buildRiftBell(bell, audio.samplesOf(RIFT_BELL_RECORDS.bubbles)), RIFT_BELL_RATE)) return null;
+    if (!bellOn(audio)) return null;
     return audio.loop3d(RIFT_BELL_KEY, at, 1, { ...RIFT_BELL_RANGE, distanceModel: 'linear', lowpass: RIFT_BELL_LOWPASS_HZ }) ?? null;
   } catch { return null; }   // a sound that cannot stand never costs the Rift
+}
+
+/** The toll registered on the engine, once the archive is read - true once it stands. */
+function bellOn(audio) {
+  if (!audio?.registerSamples || !audio?.samplesOf) return false;
+  const bell = audio.samplesOf(RIFT_BELL_RECORDS.bell);
+  if (!bell) return false;
+  return !!audio.registerSamples(RIFT_BELL_KEY, buildRiftBell(bell, audio.samplesOf(RIFT_BELL_RECORDS.bubbles)), RIFT_BELL_RATE);
+}
+
+/** AUDIT SD II (L6 F16): the way home's toll - the Rift's own bell, a fourth higher (the way out, where the Rift is the
+ *  way in), heard across the arena, unmuffled. */
+export const SD_HOME_TOLL = Object.freeze({ pitch: 4 / 3, refDistance: 6, maxDistance: 70 });
+
+/**
+ * AUDIT SD II (L6 F16): ONE TOLL where the way home rises (`at`, the scene's [x, y, z]) - it rose unheard. Answers
+ * whether it sounded.
+ * @param {any} audio the engine (systems/audio.js)
+ * @param {number[]} at
+ */
+export function tollRiftBell(audio, at) {
+  if (!audio?.play3d || !at) return false;
+  try {
+    if (!bellOn(audio)) return false;
+    const T = SD_HOME_TOLL;
+    return audio.play3d(RIFT_BELL_KEY, at, 1, { refDistance: T.refDistance, maxDistance: T.maxDistance, distanceModel: 'linear', pitch: T.pitch }) != null;
+  } catch { return false; }   // a toll that cannot sound never costs the way home
 }

@@ -300,8 +300,8 @@ import { SD_STEPS_FLOORS, SD_CAST_BACK_LOSS } from '../world/sdSteps.js';   // S
 import { SD_STEPS_TEXT } from './sdSteps.js';   // SD7b: the cast-back's line
 import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH, SD_ARENA, realmToDungeon as sdRealmToDungeon, SD_TURN_WAIT_LINE } from '../net/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall; SD10: the arena, where the way home stands; AUDIT SD II (L7 H2): a turn the stones refused
 import { SD_REM_SINK_MS } from './sdRemnant.js';   // SD10: the way home rises once the Remnant's body has sunk
-import { SD_HOME_TEXT } from './sdEnd.js';   // SD10: the way home's words
-import { sdRiftWord, sdReturnStands, SD_ENTERED_KEY, SD_ENTERED_MAX, SD_FALLEN_KEY } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
+import { SD_HOME_TEXT, SD_HOME_SAY_MS } from './sdEnd.js';   // SD10: the way home's words; AUDIT SD II (L6 F16): said as it rises
+import { sdRiftWord, sdReturnStands, sdRiftCount, SD_ENTERED_KEY, SD_ENTERED_MAX, SD_FALLEN_KEY } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
 import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/lootDataTables.js';   // WB12d: the casket's pile, undrawn
 import { createSigilBroker } from './sigilBrokerPool.js';   // SET7: the Sigil Broker - her body, her box and name, her press; BROKER-CAGE: caged at the faithful's circle
@@ -21529,7 +21529,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const sdRiftOf = (s) => {
     if (!sdHost) return null;
     const rec = sdHost.record(), now = Date.now() + _sharedOffsetMs;
-    return { word: sdRiftWord(rec, s, now, { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) }), returns: sdReturnStands(rec, s, now), enter: () => sdEnterRealm(s) };
+    return { word: sdRiftWord(rec, s, now, { entered: _sdEntered.has(s), fallen: _sdFallen.has(s) }), returns: sdReturnStands(rec, s, now), count: sdRiftCount(rec, s, now), enter: () => sdEnterRealm(s) };   // AUDIT SD II (L6 F5): and its count
   };
   /** SD5a (Super-Dungeons.md section 7): THROUGH THE RIFT - out of the Hollow and into the Shattered Hour, under the veil
    *  (scenes/worldModes.js stepThroughFire): the Hollow left as a teleport leaves a dungeon, the player at its pixel
@@ -21565,8 +21565,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     const s = sdFightLink?.state();
     if (!s?.fell || sdFightLink.now() < s.fell.at + SD_REM_SINK_MS) return null;
     // AUDIT SD: one place a FALL (its instant - a fight's number begins again in every Hollow's Hour), clear of the pillars
-    if (_sdHome?.fell !== s.fell.at) { const [x, z] = clearOfPillars(s.rem.x, s.rem.z); _sdHome = { fell: s.fell.at, at: sdRealmToDungeon(SD_ARENA.x + x, 0, SD_ARENA.z + z) }; }
+    if (_sdHome?.fell !== s.fell.at) {
+      const [x, z] = clearOfPillars(s.rem.x, s.rem.z);
+      _sdHome = { fell: s.fell.at, at: sdRealmToDungeon(SD_ARENA.x + x, 0, SD_ARENA.z + z) };
+      if (sdHomeAge() < SD_HOME_SAY_MS) sdSay(SD_HOME_TEXT.rises);   // AUDIT SD II (L6 F16): said as it rises, never long after
+    }
     return _sdHome.at;
+  };
+  /** AUDIT SD II (L6 F16): how long ago the way home began to rise (ms, the fight's clock) - its rise drawn from it
+   *  (scenes/sdEnd.js standReturn); null while the fight this page holds has not fallen. */
+  const sdHomeAge = () => {
+    const s = sdFightLink?.state();
+    return s?.fell ? sdFightLink.now() - (s.fell.at + SD_REM_SINK_MS) : null;
   };
   /** SD10: THE WAY HOME, walked into or pressed - out of the Hour under the veil, before the Hollow's door outside (the
    *  mode machine's own exit: the realm's way out lands there, as its end casts a player out), the floor's spoils
@@ -25207,6 +25217,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     sdWayBack: () => sdWayBack(),   // SD5a: the Shattered Hour's way back, through its Rift into the Hollow
     sdWayHome: () => sdWayHome(),   // SD10: the way home, out of the Hour to the Hollow's door
     sdHomeAt: () => sdHomeAt(),   // SD10: where it stands - where the Remnant fell, its body sunk
+    sdHomeAge: () => sdHomeAge(),   // AUDIT SD II (L6 F16): how long ago it began to rise
     sdTurn: (i, a) => !!online?.sendSdTurn?.(i, a),   // SD6c: a turn of the Orrery's stones, down my socket in the realm
     sdSay: (t, rank) => sdSay(t, rank),   // AUDIT SD II (SD11d): the Hour's voice, for the hall and the Rift
     sdHallWord: () => sdHallWord(),   // SD6c: the realm's latest word on the hall, for the hall's set

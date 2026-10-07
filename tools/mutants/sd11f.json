@@ -1,0 +1,218 @@
+[
+  {
+    "name": "SD11f-the-way-home-walked-into",
+    "file": "src/scenes/sdEnd.js",
+    "old": "const inRet = !!ret && !ret.pressed && inSdPortal(",
+    "new": "const inRet = !!ret && inSdPortal(",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-every-return-pressed-alone",
+    "file": "src/scenes/sdEnd.js",
+    "old": "SD_RETURN_SIZE.h), risesAt: -Infinity, pressed: false };",
+    "new": "SD_RETURN_SIZE.h), risesAt: -Infinity, pressed: true };",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-never-risen",
+    "file": "src/scenes/sdEnd.js",
+    "old": "    ret.batch.origin[1] = ret.at[1] - SD_RETURN_SIZE.h * (1 - k);",
+    "new": "    ret.batch.origin[1] = ret.at[1];",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-risen-at-once",
+    "file": "src/scenes/sdEnd.js",
+    "old": "    const k = clamp01((t - ret.risesAt) / SD_HOME_RISE_MS);",
+    "new": "    const k = 1;",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-the-rise-left-halfway",
+    "file": "src/scenes/sdEnd.js",
+    "old": "    ret.up = k >= 1;",
+    "new": "    ret.up = true;",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-no-toll",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      if (ago < SD_HOME_SAY_MS) tollRiftBell(audio, [at[0], at[1] + SD_RETURN_SIZE.h / 2, at[2]]);\n",
+    "new": "",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-tolled-to-a-late-page",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      if (ago < SD_HOME_SAY_MS) tollRiftBell(",
+    "new": "      if (true) tollRiftBell(",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-the-toll-at-the-rifts-pitch",
+    "file": "src/systems/sdRiftSound.js",
+    "old": "distanceModel: 'linear', pitch: T.pitch })",
+    "new": "distanceModel: 'linear', pitch: 1 })",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-the-toll-a-fifth",
+    "file": "src/systems/sdRiftSound.js",
+    "old": "export const SD_HOME_TOLL = Object.freeze({ pitch: 4 / 3,",
+    "new": "export const SD_HOME_TOLL = Object.freeze({ pitch: 3 / 2,",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-a-toll-that-throws",
+    "file": "src/systems/sdRiftSound.js",
+    "old": "  } catch { return false; }   // a toll that cannot sound never costs the way home",
+    "new": "  } finally { /* a toll that cannot sound never costs the way home */ }",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-never-said",
+    "file": "src/scenes/world.js",
+    "old": "      if (sdHomeAge() < SD_HOME_SAY_MS) sdSay(SD_HOME_TEXT.rises);",
+    "new": "      void SD_HOME_SAY_MS;",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-said-to-a-late-page",
+    "file": "src/scenes/world.js",
+    "old": "      if (sdHomeAge() < SD_HOME_SAY_MS) sdSay(",
+    "new": "      if (true) sdSay(",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-the-age-from-the-fall",
+    "file": "src/scenes/world.js",
+    "old": "    return s?.fell ? sdFightLink.now() - (s.fell.at + SD_REM_SINK_MS) : null;",
+    "new": "    return s?.fell ? sdFightLink.now() - s.fell.at : null;",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-stood-with-no-age",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "sdEnd.standReturn(home, opts.sdHomeAge?.() ?? Infinity);",
+    "new": "sdEnd.standReturn(home);",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-the-age-unforwarded",
+    "file": "src/scenes/worldModes.js",
+    "old": "          sdHomeAge: () => host.sdHomeAge?.() ?? null,   // AUDIT SD II (L6 F16): how long ago it began to rise\n",
+    "new": "",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-no-count-on-the-plaque",
+    "file": "src/scenes/sdEnd.js",
+    "old": "subs: n ? [riftTo, n] : [riftTo] }; }",
+    "new": "subs: [riftTo] }; }",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-the-hours-by-the-second",
+    "file": "src/world/sdDungeon.js",
+    "old": "left < HOUR_MS ? countdownText(left) : sdLongCount(left)",
+    "new": "countdownText(left)",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-the-minutes-rounded-down",
+    "file": "src/world/sdDungeon.js",
+    "old": "const m = Math.max(0, Math.ceil((Number.isFinite(ms) ? ms : 0) / 60000));",
+    "new": "const m = Math.max(0, Math.floor((Number.isFinite(ms) ? ms : 0) / 60000));",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-the-collapse-uncounted",
+    "file": "src/world/sdDungeon.js",
+    "old": "  if (ph === 'fell') return SD_COUNT_TEXT.collapses(countdownText(rec.fellAt + SD_COLLAPSE_MS - now));\n",
+    "new": "",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-another-slot-counted",
+    "file": "src/world/sdDungeon.js",
+    "old": "  if (!rec || rec.s !== s) return null;\n  const ph = sdPhase(rec, now);\n  if (ph === 'fell') return SD_COUNT_TEXT",
+    "new": "  if (!rec) return null;\n  const ph = sdPhase(rec, now);\n  if (ph === 'fell') return SD_COUNT_TEXT",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-the-count-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "returns: sdReturnStands(rec, s, now), count: sdRiftCount(rec, s, now), enter:",
+    "new": "returns: sdReturnStands(rec, s, now), enter:",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-the-count-unasked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "onReturn: () => sdReturnStep(), riftCount: () => sdEndWord()?.count ?? null })",
+    "new": "onReturn: () => sdReturnStep() })",
+    "tests": [
+      "test/sd11f_scenes.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-the-wheel-stepping-back",
+    "file": "src/render/auraRing.js",
+    "old": "  return -Math.PI * 2 * TURNING_HZ.wheel * (s + e * e * (3 - 2 * e));",
+    "new": "  return Math.PI * 2 * TURNING_HZ.wheel * (s + e * e * (3 - 2 * e));",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  },
+  {
+    "name": "SD11f-the-wheels-shader-stepping-back",
+    "file": "src/render/auraRing.js",
+    "old": "return -TAU * (s + e * e * (3.0 - 2.0 * e))",
+    "new": "return TAU * (s + e * e * (3.0 - 2.0 * e))",
+    "tests": [
+      "test/sd9c_turning.test.js"
+    ]
+  }
+]

@@ -14,12 +14,15 @@
 //    the plaque, and `press(key)` hands it to the host as a step does.
 //  - SD10 (2026-10-07): THE WAY HOME in the Shattered Hour (section 11's collapse) - the Return's pale light stood alone,
 //    later, where the Remnant fell (`standReturn`), under the place's own words (`retTitle`, `retTo` - SD_HOME_TEXT): its
-//    step or press is the host's way out of the Hour to the Hollow's door.
+//    step or press is the host's way out of the Hour to the Hollow's door. AUDIT SD II (L6 F9, F16): PRESSED, NEVER
+//    WALKED INTO - it stands where the Remnant fell, where its spoils land, and a step after them carried a player out
+//    mid-loot (the gate's SS3, back again); and it RISES out of the floor (SD_HOME_RISE_MS, the gate's portal's) with
+//    the Rift's bell tolled once, a fourth higher - it stood up unseen and unheard.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 
 import { SD_RETURN_SIZE, SD_RIFT_REACH_M, SD_RETURN_REACH_M, SD_END_TEXT, inSdPortal } from '../world/sdDungeon.js';
-import { startRiftBell } from '../systems/sdRiftSound.js';
+import { startRiftBell, tollRiftBell } from '../systems/sdRiftSound.js';
 import { RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../player/activate.js';
 
 export const RIFT_ARCHIVE = 'fxsdrift';
@@ -38,7 +41,13 @@ export const SD_HOME_TEXT = Object.freeze({
   title: 'The Way Home',
   to: 'To the Hollow\'s door',
   taken: 'The way home carries you out of the Hour, to the Hollow\'s door.',
+  rises: 'The way home stands open.',   // AUDIT SD II (L6 F16): said as it rises (the fall's readout said where)
 });
+/** AUDIT SD II (L6 F16): how long the way home takes to rise out of the floor (ms) - the gate's portal's own
+ *  (world/gateArena.js PORTAL_RISE_MS) - and how long after it began to rise it is still said and tolled (a page that
+ *  comes later finds it standing, in silence). */
+export const SD_HOME_RISE_MS = 1500;
+export const SD_HOME_SAY_MS = SD_HOME_RISE_MS + 1000;
 /** The keys the activation ray stands them under. */
 export const SD_RIFT_KEY = 'sdrift:0';
 export const SD_RETURN_KEY = 'sdreturn:0';
@@ -139,13 +148,15 @@ const boxOf = (at, half, height) => ({ min: [at[0] - half, at[1], at[2] - half],
 /**
  * A Super dungeon's end. `onRift()` / `onReturn()` are the host's - a step into either, or a press, hands it over.
  * SD5a: `riftTo` its plaque's row - the Shattered Hour's way back says where it leads. SD10: `retTitle` and `retTo` the
- * Return's (the Hour's way home says its own).
- * @param {{ renderer?: any, audio?: any, now?: () => number, onRift?: () => void, onReturn?: () => void, riftTo?: string, retTitle?: string, retTo?: string }} [deps]
+ * Return's (the Hour's way home says its own). AUDIT SD II (L6 F5): `riftCount()` the Rift's plaque's second row - how
+ * long its Hour stands (world/sdDungeon.js sdRiftCount), or null.
+ * @param {{ renderer?: any, audio?: any, now?: () => number, onRift?: () => void, onReturn?: () => void, riftTo?: string, retTitle?: string, retTo?: string, riftCount?: () => (string | null) }} [deps]
  */
-export function createSdEnd({ renderer = null, audio = null, now = () => performance.now(), onRift = () => {}, onReturn = () => {}, riftTo = SD_END_TEXT.riftTo, retTitle = SD_END_TEXT.ret, retTo = SD_END_TEXT.retTo } = {}) {
+export function createSdEnd({ renderer = null, audio = null, now = () => performance.now(), onRift = () => {}, onReturn = () => {}, riftTo = SD_END_TEXT.riftTo, retTitle = SD_END_TEXT.ret, retTo = SD_END_TEXT.retTo, riftCount = () => null } = {}) {
   /** @type {{ at: number[], size: number, batch: any } | null} */
   let rift = null;
-  /** @type {{ at: number[], batch: any } | null} */
+  /** @type {{ at: number[], batch: any, risesAt: number, up?: boolean, pressed: boolean } | null} AUDIT SD II (L6 F9,
+   *  F16): when it began to rise, whether it has, and whether only a press takes it (the way home) */
   let ret = null;
   let bell = null;
   let wasRift = null, wasRet = null, hasLast = false;
@@ -174,23 +185,35 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     return batch;
   };
   const free = (batch) => { if (batch) { try { renderer.destroyBillboardBatch(batch); } catch { /* gone */ } } };
+  /** AUDIT SD II (L6 F16): the way home's foot as far as it has risen - from a body's height under the floor to the floor. */
+  const rose = (t = now()) => {
+    if (!ret?.batch?.origin) return;
+    const k = clamp01((t - ret.risesAt) / SD_HOME_RISE_MS);
+    ret.batch.origin[1] = ret.at[1] - SD_RETURN_SIZE.h * (1 - k);
+    ret.up = k >= 1;
+  };
 
   return {
     /** Stand the Rift (`rift` { at: its foot, size }) and the Return (`retAt` its foot) - once; the bell with the Rift. */
     stand({ rift: r, retAt }) {
       if (rift || !r?.at) return false;
       rift = { at: [...r.at], size: r.size, batch: batchAt(RIFT_ARCHIVE, r.at, r.size, r.size) };
-      if (retAt) ret = { at: [...retAt], batch: batchAt(RETURN_ARCHIVE, retAt, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };
+      if (retAt) ret = { at: [...retAt], batch: batchAt(RETURN_ARCHIVE, retAt, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h), risesAt: -Infinity, pressed: false };
       rebatch();
       bell = startRiftBell(audio, [r.at[0], r.at[1] + r.size / 2, r.at[2]]);
       return true;
     },
-    /** SD10: the Return stood alone, after the stand (the Hour's way home, where the Remnant fell) - once while it stands. */
-    standReturn(at) {
+    /** SD10: the Return stood alone, after the stand (the Hour's way home, where the Remnant fell) - once while it stands.
+     *  AUDIT SD II (L6 F9, F16): pressed alone; `age` how long ago it began to rise (ms - the fight's clock's, a page that
+     *  comes later finds it risen), tolled while it rises. */
+    standReturn(at, age = Infinity) {
       if (ret || !at) return false;
-      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };
+      const ago = Number.isFinite(age) ? Math.max(0, age) : Infinity;
+      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h), risesAt: now() - ago, pressed: true };
       wasRet = null;
       rebatch();
+      if (ago < SD_HOME_SAY_MS) tollRiftBell(audio, [at[0], at[1] + SD_RETURN_SIZE.h / 2, at[2]]);
+      rose();
       return true;
     },
     /** The Return goes out (the boss fell) - for good: it never stands again in this dungeon. */
@@ -201,13 +224,14 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
       const age = (t - born) / 1000;
       if (rift?.batch) rift.batch.record = RIFT_RECS[((Math.floor(age * RIFT_FPS) % RIFT_FRAMES) + RIFT_FRAMES) % RIFT_FRAMES];
       if (ret?.batch) ret.batch.record = RETURN_RECS[((Math.floor(age * RETURN_FPS) % RETURN_FRAMES) + RETURN_FRAMES) % RETURN_FRAMES];
+      if (ret?.batch && !ret.up) rose(t);   // AUDIT SD II (L6 F16): out of the floor
       if (!feet) { wasRift = wasRet = null; hasLast = false; return null; }
       // AUDIT SD II (L2 F9): the jump's length by its square - Math.hypot made a list of its numbers every frame
       const dx = feet[0] - lastFeet[0], dy = feet[1] - lastFeet[1], dz = feet[2] - lastFeet[2];
       const gap = t - lastAt[0] > SD_STEP_GAP_MS || !hasLast || dx * dx + dy * dy + dz * dz > SD_STEP_JUMP_M * SD_STEP_JUMP_M;
       lastAt[0] = t; lastFeet[0] = feet[0]; lastFeet[1] = feet[1]; lastFeet[2] = feet[2]; hasLast = true;
       const inRift = !!rift && inSdPortal(feet, rift.at, Math.min(SD_RIFT_REACH_M, rift.size / 4), rift.size);
-      const inRet = !!ret && inSdPortal(feet, ret.at, SD_RETURN_REACH_M, SD_RETURN_SIZE.h);
+      const inRet = !!ret && !ret.pressed && inSdPortal(feet, ret.at, SD_RETURN_REACH_M, SD_RETURN_SIZE.h);   // AUDIT SD II (L6 F9): the way home pressed alone
       const enteredRift = inRift && wasRift === false && !gap;
       const enteredRet = inRet && wasRet === false && !gap;
       wasRift = inRift; wasRet = inRet;
@@ -219,7 +243,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     targets() { return _targets; },
     /** The plaque's words for either - a namer is handed every key the ray can win. */
     hoverName(key) {
-      if (key === SD_RIFT_KEY && rift) return { title: SD_END_TEXT.rift, subs: [riftTo] };
+      if (key === SD_RIFT_KEY && rift) { const n = riftCount(); return { title: SD_END_TEXT.rift, subs: n ? [riftTo, n] : [riftTo] }; }   // AUDIT SD II (L6 F5): and how long its Hour stands
       if (key === SD_RETURN_KEY && ret) return { title: retTitle, subs: [retTo] };   // SD10: the Hour's way home says its own
       return null;
     },

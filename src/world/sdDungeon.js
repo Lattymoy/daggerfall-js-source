@@ -7,7 +7,9 @@
 //   |                        | Regular      | Elite        | Super                                                  |
 //   | foes per enemy marker  | 1            | 3            | 3 - the Elite's own expansion (characters/              |
 //   |                        |              |              | dungeonEnemies.js expandEliteEnemies), its 64 KiB frame |
-//   |                        |              |              | budget proven at 151 markers                           |
+//   |                        |              |              | proven at 151 markers - the largest spawn template; a   |
+//   |                        |              |              | Hollow's own templates measured against it (AUDIT SD II |
+//   |                        |              |              | L8 D1, test/sd11f_scenes.test.js, over the real data)  |
 //   | foe health / damage    | x1 / x1      | x2 / x2      | x4 / x2.5                                              |
 //   | foe level band         | the player's | the player's | at least SUPER_FOE_LEVEL_MIN - the tables' top band     |
 //   | elite foes             | 1 at 20%     | 3-4          | 6 (systems/eliteFoes.js)                               |
@@ -21,7 +23,8 @@
 //
 // Online only, as the Hollow is. Not a DFU member. Ledger A (SUPER-DUNGEONS).
 
-import { sdPhase, SD_NO_RIFT, SD_NO_CLOSED, SD_NO_FALLEN } from '../net/sdLaw.js';
+import { sdPhase, SD_NO_RIFT, SD_NO_CLOSED, SD_NO_FALLEN, SD_COLLAPSE_MS } from '../net/sdLaw.js';
+import { countdownText } from '../net/gateLaw.js';
 
 /** Health and damage multipliers for a Super dungeon's foes (the Elite's x2 and x2). */
 export const SUPER_HEALTH_SCALE = 4;
@@ -222,6 +225,36 @@ export function sdRiftWord(rec, s, now, { entered = false, fallen = false } = {}
   const ph = sdPhase(rec, now);
   if (ph === 'found' || (ph === 'fell' && entered)) return null;
   return ph === 'risen' ? SD_NO_RIFT : SD_NO_CLOSED;
+}
+
+/** AUDIT SD II (L6 F5): an hour, and the Rift plaque's count words. */
+const HOUR_MS = 3600 * 1000;
+export const SD_COUNT_TEXT = Object.freeze({
+  fades: (t) => `Fades in ${t}`,
+  collapses: (t) => `Collapses in ${t}`,
+});
+/** "47h 12m" - hours and minutes, the minutes rounded UP, as the gate's countdown rounds its seconds (never less than
+ *  is left). Pure. */
+export function sdLongCount(ms) {
+  const m = Math.max(0, Math.ceil((Number.isFinite(ms) ? ms : 0) / 60000));
+  return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`;
+}
+/**
+ * AUDIT SD II (L6 F5): THE RIFT'S COUNT - its plaque's second row, how long its Hour stands: in its collapse
+ * *"Collapses in 2:31"*; found or risen, *"Fades in 46h 12m"*, its last hour by the minute and second (*"Fades in
+ * 12:04"* - the gate's countdown words). A Hollow unbeaten closed on everyone in it with no count anywhere inside. Null
+ * with no record, another slot's, or one gone.
+ * @param {import('../net/sdLaw.js').SdRecord | null | undefined} rec
+ * @param {number} s the Hollow's slot
+ * @param {number} now
+ */
+export function sdRiftCount(rec, s, now) {
+  if (!rec || rec.s !== s) return null;
+  const ph = sdPhase(rec, now);
+  if (ph === 'fell') return SD_COUNT_TEXT.collapses(countdownText(rec.fellAt + SD_COLLAPSE_MS - now));
+  if (ph !== 'risen' && ph !== 'found') return null;
+  const left = rec.until - now;
+  return SD_COUNT_TEXT.fades(left < HOUR_MS ? countdownText(left) : sdLongCount(left));
 }
 
 /** The Return stands until the boss falls: while its slot's record is risen or found - and while no record has been

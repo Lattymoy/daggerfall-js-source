@@ -92,8 +92,8 @@
   {
     "name": "SD10-stood-twice",
     "file": "src/scenes/sdEnd.js",
-    "old": "      if (ret || !at) return false;\n      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };",
-    "new": "      if (!at) return false;\n      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };",
+    "old": "      if (ret || !at) return false;\n      const ago",
+    "new": "      if (!at) return false;\n      const ago",
     "tests": [
       "test/sd10_collapse.test.js"
     ]
@@ -101,16 +101,18 @@
   {
     "name": "SD10-carried-off-where-it-rises",
     "file": "src/scenes/sdEnd.js",
-    "old": "      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };\n      wasRet = null;\n",
-    "new": "      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };\n",
+    "old": "      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h), risesAt: now() - ago, pressed: true };\n      wasRet = null;\n",
+    "new": "      ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h), risesAt: now() - ago, pressed: true };\n",
     "tests": [
       "test/sd10_collapse.test.js"
-    ]
+    ],
+    "equivalent": true,
+    "why": "AUDIT SD II (SD11f, L6 F9): the way home is pressed alone, so no step into it is ever taken and the step latch's reset changes nothing a player can meet. It was the law that a player standing where it rose is not carried off; press-only keeps that law whole, and the reset stays for a Return stood this way that a later change lets be walked into again."
   },
   {
     "name": "SD10-the-way-home-unstood",
     "file": "src/scenes/dungeonContext.js",
-    "old": "if (home && !sdEnd.ret) sdEnd.standReturn(home);",
+    "old": "if (home && !sdEnd.ret) sdEnd.standReturn(home, opts.sdHomeAge?.() ?? Infinity);",
     "new": "if (home && !sdEnd.ret) void home;",
     "tests": [
       "test/sd10_collapse.test.js"

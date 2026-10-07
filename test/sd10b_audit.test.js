@@ -23,13 +23,13 @@ import { POOL_TICK_MS, HIT_KINDS } from '../src/net/gateBrain.js';
 import { createSdRemnantBlows, bodysBlow, SD_BLOWS_TEXT } from '../src/scenes/sdRemnantBlows.js';
 import { arenaToDungeon, SD_REM_SINK_MS } from '../src/scenes/sdRemnant.js';
 import { createSdSpoils, clearOfPillars, SD_PILLAR_CLEAR_M, SD_SPEW_AT_MS } from '../src/scenes/sdSpoils.js';
-import { createSdEnd } from '../src/scenes/sdEnd.js';
+import { createSdEnd, SD_HOME_TEXT, SD_HOME_SAY_MS } from '../src/scenes/sdEnd.js';
 import { createSdHall } from '../src/scenes/sdHall.js';
 import { handMatrix } from '../src/world/sdHall.js';
 import { mintSdReceipt, readSdReceipt } from '../src/net/sdReceipt.js';
 import { spoilsLevel } from '../src/scenes/spoilsPool.js';
 import { sdSpoilsDay, sdSpoilsList, SD_SPOILS_TEXT } from '../src/systems/sdSpoils.js';
-import { sdRiftWord, sdReturnStands } from '../src/world/sdDungeon.js';
+import { sdRiftWord, sdReturnStands, sdRiftCount } from '../src/world/sdDungeon.js';
 import { sdFell, sdRoomKey, isSdRoom, SD_NO_CLOSED, SD_NO_FULL, SD_COLLAPSE_MS } from '../src/net/sdLaw.js';
 import { dungeonSizeFor, onlineDungeonSize } from '../src/world/smallerDungeons.js';
 import { orreryOf } from '../src/net/sdBrain.js';
@@ -134,10 +134,14 @@ test('AUDIT SD THE NEXT HOUR SAYS ITS OWN: out of the Hour the driver forgets wh
 /** world.js's way home's place, from its own text, over a fight link the test sets. */
 function homeHost() {
   let state = null, now = 0;
-  const env = { sdFightLink: { state: () => state, now: () => now }, SD_REM_SINK_MS, clearOfPillars, sdRealmToDungeon: realmToDungeon, SD_ARENA };
-  const body = `let _sdHome = null;\n${constOf('sdHomeAt')}\nreturn sdHomeAt;`;
-  const sdHomeAt = new Function(...Object.keys(env), body)(...Object.values(env));
-  return { sdHomeAt, set: (s, t) => { state = s; now = t; } };
+  const said = [];
+  const env = {
+    sdFightLink: { state: () => state, now: () => now }, SD_REM_SINK_MS, clearOfPillars, sdRealmToDungeon: realmToDungeon, SD_ARENA,
+    sdSay: (t) => said.push(t), SD_HOME_SAY_MS, SD_HOME_TEXT,   // AUDIT SD II (SD11f, L6 F16, PIN MOVED): said as it rises
+  };
+  const body = `let _sdHome = null;\n${constOf('sdHomeAt')}\n${constOf('sdHomeAge')}\nreturn { sdHomeAt, sdHomeAge };`;
+  const { sdHomeAt, sdHomeAge } = new Function(...Object.keys(env), body)(...Object.values(env));
+  return { sdHomeAt, sdHomeAge, said, set: (s, t) => { state = s; now = t; } };
 }
 
 test('AUDIT SD THE WAY HOME, ONE PLACE A FALL: where the Remnant fell, keyed by the fall\'s own instant - the next Hollow\'s Hour (its fight numbered 1 again) stands its way home where ITS Remnant fell, never the last one\'s place; a fall inside a pillar stands it clear of the pillar\'s square (mutants: keyed by the fight\'s number; inside the pillar)', () => {
@@ -167,7 +171,7 @@ function riftHost({ rec = null, entered = true, s = 7 } = {}) {
     forceExitToExterior: () => log.push('out'), enterSdRealm: async () => { log.push('realm'); return entered; },
   };
   const env = {
-    sdHost: { record: () => rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, modes, playerEntity: { health: 10 }, INTERIOR_SEASON: 3, isSdRealm,
+    sdHost: { record: () => rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, sdRiftCount, modes, playerEntity: { health: 10 }, INTERIOR_SEASON: 3, isSdRealm,
     SD_REALM_TEXT: { lost: 'lost' }, setMidScreenText: (t) => log.push(['said', t]), _teleportToPixel: async () => log.push('pixel'), _sdEntered: new Set(), _sdFallen: new Set(),   // SD-ONELIFE (PIN MOVED)
     sdSay: (t) => log.push(['said', t]),   // AUDIT SD II (SD11d, PIN MOVED): the Hour's lines through its voice
   };
