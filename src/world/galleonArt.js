@@ -74,8 +74,9 @@ export const GALLEON_TILE = Object.freeze({
   beams: [2, 2], dark: [2, 2], underDeck: [2, 2],
 });
 
-/** The palette - Daggerfall's own muted earths, and the livery's three: oxblood, gilt, tar. */
-const C = Object.freeze({
+/** The palette - Daggerfall's own muted earths, and the livery's three: oxblood, gilt, tar. SHIPS-2: the fleet's
+ *  (world/carrackArt.js and world/largeBoatArt.js paint with it and with the tools below). */
+export const C = Object.freeze({
   tar: [30, 27, 24], weed: [44, 54, 34], tallow: [184, 172, 140], wale: [30, 25, 22], waleLit: [64, 54, 44],
   oxblood: [118, 34, 27], oxbloodLit: [146, 50, 38], gilt: [196, 152, 62], giltDark: [128, 92, 36], giltLit: [236, 200, 110],
   oak: [104, 72, 44], oakDark: [70, 47, 29], oakLit: [132, 96, 60], seam: [36, 25, 17],
@@ -92,24 +93,24 @@ const C = Object.freeze({
 // ── the tools ────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 /** @param {number} w @param {number} h */
-const picture = (w, h) => ({ width: w, height: h, data: new Uint8Array(w * h * 4) });
+export const picture = (w, h) => ({ width: w, height: h, data: new Uint8Array(w * h * 4) });
 /** @param {{width:number,height:number,data:Uint8Array}} img @param {number} x @param {number} y @param {ArrayLike<number>} rgb */
-const put = (img, x, y, rgb) => {
+export const put = (img, x, y, rgb) => {
   const w = img.width, h = img.height;
   const i = ((((y % h) + h) % h) * w + (((x % w) + w) % w)) * 4;
   img.data[i] = clamp8(rgb[0]); img.data[i + 1] = clamp8(rgb[1]); img.data[i + 2] = clamp8(rgb[2]); img.data[i + 3] = 255;
 };
 /** @param {{width:number,height:number,data:Uint8Array}} img @param {number} x @param {number} y */
-const get = (img, x, y) => {
+export const get = (img, x, y) => {
   const w = img.width, h = img.height;
   const i = ((((y % h) + h) % h) * w + (((x % w) + w) % w)) * 4;
   return [img.data[i], img.data[i + 1], img.data[i + 2]];
 };
 const clamp8 = (v) => Math.max(0, Math.min(255, Math.round(v)));
 /** @param {ArrayLike<number>} a @param {ArrayLike<number>} b @param {number} t */
-const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+export const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 /** @param {ArrayLike<number>} c @param {number} k */
-const shade = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
+export const shade = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
 
 /** Tileable value noise over a w x h picture, `cx` by `cy` lattice cells across it. */
 function noise(seed, w, h, cx, cy) {
@@ -131,7 +132,7 @@ function noise(seed, w, h, cx, cy) {
  * the row (every `lenMin`..`lenMax` texels, wrapping), its own tone, a grain stretched along it, its seam a dark row
  * under it and its butt a dark column; `trenail` a nail-dot texel near each butt. `base(x, y)` is the wood's colour.
  */
-function planks(img, { y0 = 0, y1 = img.height, ph = 8, lenMin = 24, lenMax = 48, seed = 1, base, seamCol = C.seam, tone = 0.12, grain = 0.10, trenail = null, vertical = false }) {
+export function planks(img, { y0 = 0, y1 = img.height, ph = 8, lenMin = 24, lenMax = 48, seed = 1, base, seamCol = C.seam, tone = 0.12, grain = 0.10, trenail = null, vertical = false }) {
   const W = vertical ? img.height : img.width;
   const r = mulberry32(seed);
   const g = noise(seed + 11, W, 64, 4, 16);
@@ -176,6 +177,10 @@ function band(img, y0, y1, col, seed, amp = 0.06) {
   const n = noise(seed, img.width, img.height, 8, 8);
   for (let y = y0; y < y1; y++) for (let x = 0; x < img.width; x++) put(img, x, y, shade(col, 1 - amp + 2 * amp * n(x, y)));
 }
+/** SHIPS-2: the painter's tools for the other ships' painters (world/carrackArt.js, world/largeBoatArt.js), under names
+ *  of their own - `noise`, `band` and `sliceOf` are other things elsewhere (systems/arenaSound.js,
+ *  render/lightClusters.js). */
+export { noise as paintNoise, band as paintBand, sliceOf as liverySlice };
 
 // ── the pictures ─────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -419,9 +424,9 @@ export function grateArt() {
 
 /** A gunport lid: its whole face (u across, v up) - the strake's oxblood planked, a black border, and its iron
  *  hinge straps over the top. 64 x 64. */
-export function lidArt() {
+export function lidArt(base = C.oxblood, seam = [70, 20, 16]) {   // SHIPS-2: a ship's own strake's (world/carrackArt.js)
   const S = GALLEON_TEX_SIZE, img = picture(S, S);
-  planks(img, { ph: 8, lenMin: S, lenMax: S, seed: 0x11d, base: () => C.oxblood, tone: 0.06, seamCol: [70, 20, 16], vertical: false });
+  planks(img, { ph: 8, lenMin: S, lenMax: S, seed: 0x11d, base: () => base, tone: 0.06, seamCol: seam, vertical: false });
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (x < 4 || x > S - 5 || y < 2 || y > S - 3) put(img, x, y, C.wale);
   for (const sx of [12, 44]) for (let y = 2; y < 30; y++) for (let x = sx; x < sx + 8; x++) put(img, x, y, x === sx ? C.hoopLit : C.hoop);
   return img;
@@ -461,10 +466,10 @@ export function underDeckArt() {
  *  the noise is the picture's own tileable lattice. AUDIT GN-R11: it was a block pattern worn by nothing - its 8-texel
  *  blocks repeated every 3 inside an 8-block tile, so it never tiled - and its doc named the throats, which wore the
  *  lid's picture (AUDIT GN-R8). */
-export function darkArt() {
+export function darkArt(base = C.oxblood, lit = C.oxbloodLit, seam = [44, 13, 10], nail = [62, 19, 15]) {   // SHIPS-2: a ship's own strake's
   const S = GALLEON_TEX_SIZE, img = picture(S, S);
   const n = noise(0xd4c, S, S, 8, 8);
-  planks(img, { ph: 8, lenMin: 20, lenMax: 44, seed: 0xd4b, base: (x, y) => shade(mix(C.oxblood, C.oxbloodLit, 0.25 * n(x, y)), 0.72), tone: 0.08, grain: 0.1, seamCol: [44, 13, 10], trenail: [62, 19, 15] });
+  planks(img, { ph: 8, lenMin: 20, lenMax: 44, seed: 0xd4b, base: (x, y) => shade(mix(base, lit, 0.25 * n(x, y)), 0.72), tone: 0.08, grain: 0.1, seamCol: seam, trenail: nail });
   return img;
 }
 

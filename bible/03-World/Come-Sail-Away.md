@@ -2762,6 +2762,92 @@ ship's half a metre over it (the mod's galleon's numbers on hers fail by 2.3 m);
 either side; the host's plank from the build that stands; the Carpenter on all four hulls with a deck.
 `tools/mutants/galleonholdings.json` (13, all dead). Measured over Come Sail Away's real pool; not seen in a browser.
 
+## The new carrack and the new large boat (SHIPS-2, 2026-10-07 - OURS)
+
+Mac, sending `Tiny_Ship.fbx`, `New_Ship_2.fbx` and `New_Ship_2_Shutter.fbx`: *"implement both of these new ship placement
+models, UV Map/Texture, and ensure it matches the love we gave the other new ship model we implemented."* Hull 4, the
+Carrack (the pirate flagship's and the merchant carrack's hull), is his New Ship 2 now, and hull 1, the Large Boat (the
+pirate sloop's and the coasting trader's), his Tiny Ship - each fitted out round his model as the galleon is (above). The
+Port-Ledger's SHIPS-2 row carries the departures.
+
+**Their model.** The three exports are one scene: read object for object, the newest (`Tiny_Ship.fbx`) holds New Ship 2
+whole, her shutter in its place against her port side, and the Tiny Ship beside her - so it alone is committed
+(`src/assets/ships/source/Tiny_Ship.fbx`) and both ships bake out of it. The galleon's bake is every ship's now
+(`tools/shipBake.mjs`: each object named to its role and refused unless it stands in the scene box it was read in, the
+scene's other objects skipped and checked to be what they are said to be - the other ship's band of the scene, a spare
+piece, a face-less node - Blender 5.1's own cut, the boat's frame); `tools/bakeCarrack.mjs` (0.8 of the scene) and
+`tools/bakeLargeBoat.mjs` (0.72) are its specs. `test/ships2_bake.test.js` re-bakes both to the byte, and holds the scene
+split between them: nothing read twice, nothing unread.
+
+**Their prefabs** are Come Sail Away's data shape on one bench (`world/shipKit.js prefabBench` - the galleon's builder
+made every ship's, ONE CONSTRUCTION SEAM) and stand in for prefabs 112414 and 112411 (`systems/comeSailAwayModels.js
+PORT_SHIPS`: each fetched beside the mod's five files, built once a process, its components after the galleon's in the
+shared table; one that will not load or build leaves its hull the mod's own and says so once, every other ship as it
+would stand). The mod's own SpawnBoat walks each by name.
+
+- **The carrack** (`world/carrackModel.js`, her hull `NewCarrack`): her main deck at 7.81 m, her gun deck at 1.96 under
+  it; three houses on her deck (the middle one over her aft hatchway, its doorway a pair of leaves - the port on the
+  mod's Door Controller, the starboard on its mirror's clips - so a boarder and a player go down her companion to her gun
+  deck); ten gunports, each shutter fitted to its own side of her (`lidFitOf`: 13 rows from its hinge over her knuckle to
+  its foot under the chine, by 17 stations along her - the widest gap 2.6 cm, the deepest bite 2.4) and solid down to
+  the sill; a gun behind each on a platform a step (0.38 m) over her gun deck - under the deck lens's DECK_STEP, so her
+  gun deck round each platform stays her floor (at the port's own middle, 0.445 m, its ends read a body ashore) - each
+  gun on its own GunCarriage (`systems/naval/galleonGunDeck.js` reads its stations: her ports stand wider than the
+  galleon's) and its muzzle 9 cm out of her planking in the port; two chasers on her bow's deck, the barrels over her
+  quarter rail; her wheel and its pedestal before the helmsman's place, her rudder on her sternpost (1.9 cm clear of her
+  stern at 35 degrees); the mod's anchor along her bow's flare, weighed and let go, every edge of it clear of her (let go
+  at 4.094 m its shank crossed her bow's swell under the water - 4.244 now); her rope ladders plumb from her entry port
+  down her knuckle; her cargo on her gun deck; seven lanterns (her quarter's two poles and her taffrail's, a hanging one
+  in her aft house, three on her beams) - so a carrack at sea is lit by night now (AUDIT WK-N4's `carriesLanterns`).
+- **Her rig** (`world/carrackRig.js`): a spritsail (small square), a fore course and a main course (large square), a main
+  topsail and a lateen mizzen, by the mod's own names - its GetSailPower, its trim's arms and its first square sail read
+  them as they read its carrack's; her fore and main shrouds on channels outside her rail (their feet led aft, so a
+  course braced sharp clears them), no shrouds on her mizzen (her lateen sweeps them), her stays, her braces and sheets
+  belayed on her rails. Every canvas at every Wind and stowed, the yards braced to the auto-trim's 45 and the lateen
+  swung to 90 either way: nothing meets but where it is made fast (`test/shipSweep.mjs`, shared with the large boat; her
+  lateen's halyard is led to her mizzen's masthead's face - to its axis it went into the mast half way up).
+- **The large boat** (`world/largeBoatModel.js`, her hull `NewLargeBoat`): her deck at 0.90 m, her gunwale's cap at 2.25;
+  her rudder hung on her sternpost and turned about its rake (10.6 degrees), its tiller level over her stern rail to the
+  helmsman's hand, him on a step at her stern (1.55) with her stern rail his guard rail; six swivels on her caps and one on
+  the cap at her port bow (her stem is her bowsprit's heel: there it stood in the spar); the mod's anchor stowed on her
+  foredeck inside her ceiling, its cargo forward of her mast, its tall lantern pole at her starboard bow (on her stem it
+  stood through her forestay and her staysails) and the galleon's short one at her port quarter, each lantern hung
+  outboard as the mod hangs its own.
+- **Her seven plans** (`world/largeBoatRig.js PLANS`): the mod's large boat's seven, each its sails by the mod's own names
+  in the mod's order, so the walk reads each plan as it read the mod's (`test/ships2_largeboat.test.js` walks both); the
+  four larger set their upper canvas on a topmast over Mac's masthead. A sail's parts are keyed without its name's
+  `Sail` (`sailKey`): the walk takes every node whose name holds it for a sail, and a yard, a brace or a belay named for
+  its sail would have been counted in her Sails. Every plan swept clear (the topsail's yard lowered under the topmast
+  stay, the forestay set up on the bowsprit short of its end so the topmast stay comes down over it, the gaff topsail's
+  luff clear of the masthead's cap, plan 5's large gaff with no peak halyard - a square topsail braced round sweeps any
+  line from the topmast to its peak).
+- **Their pictures** (`world/carrackArt.js`, archive 38141; `world/largeBoatArt.js`, 38151): painted at load from
+  numbers alone, each 64 x 64, the galleon's numbers for every picture the fleet shares and each ship's livery her own,
+  cut into slices by height; the carrack's stern windows glow by night through the pool's emission mask
+  (`scenes/comeSailAwayPool.js PORT_ART`).
+
+**HULL_BUILDS** (`systems/naval/navalShips.js`): each hull measured off her own model - her box her MeshCollider's
+bounds, her deck, her muzzles at her guns' own muzzles, her rig boxes each a sail's canvas set in any wind on its boom
+(the large boat's each of her plan's: `variant`, `scenes/navalHost.js rigBoxesOf`). The mod's own builds stand while its
+hulls do (`MOD_CARRACK_BUILD`, `MOD_LARGE_BOAT_BUILD`, `setShipStanding`), with their gangways (`systems/naval/quays.js`).
+
+**What it moved elsewhere.** The carrack's five guns a side throw the mod's seven's weight, a player's and a captain's
+alike (`shipBatteryWeight`: the duels were tuned with seven; the captains' galleons keep their five's), so the pirate
+flagship stands to the navy as she did. The Tiny Ship stands a metre higher than the mod's boat: a ball finds her 0.70
+as often as a Small Ship (the mod's boat 0.49), and the war galley's broadside lays on her from 53 m - so the pirate
+sloop closes to 50 where she closed to 55, inside it as before (her duels and her prey as they stood). The berths,
+quays and footprints are sized off the mod's Carrack still (`systems/naval/shipLife.js BERTH_TEMPLATE`), every harbour
+as it stood; Mac's carrack, narrower, lies in toward a quay by the difference, and her draft is her keel's (4.65, under
+the galleon's 4.7). Her open deck is one level at 7.81 (the deck lens's 1087 cells), her lookout's bow abaft her fore
+mast's partner.
+
+Pins: `test/ships2_carrack.test.js` (11), `test/ships2_largeboat.test.js` (11), `test/ships2_bake.test.js` (2); the naval
+suites' PIN MOVED rows, and the laws found on the mod's own Carrack and Large Boat (their cargo doors, forecastle stair,
+five doors, thwarts, sail bakes, colours' graft and dark hull) held on them as the game's fallback
+(`test/navalSea.mjs modShipsPool`, `test/csaScene.mjs MOD_MODELS`). Drawn offline with a scratch rasterizer over the
+real prefabs and art (every plan of the large boat, the carrack's sides, stern, bow, gun deck and helm); not seen in a
+browser.
+
 ## A foe in the water reaches no one aboard (WATER-FOES, 2026-10-04 - DEPARTURE)
 
 From the field: "Enemies in the water on a boat shouldn't slow down your ship or prevent you from resting when on

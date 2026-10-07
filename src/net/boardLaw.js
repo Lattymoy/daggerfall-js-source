@@ -6,10 +6,9 @@
 // client's window (ui/noticeWindow.js) both read. The record is bible/06-Systems/Professions-Arc.md 10.1 and 10.6
 // (PROF0), and 10.7 as built.
 //
-// A BOARD IS ITS TOWN'S. A town's one Notice Board (ONE-BOARD, systems/bountyBoard.js noticeBoardIndex: of the boards
-// BOUNTY1 left, the one nearest the middle - AUDIT 657 B10) shows its notes: a note is pinned to the TOWN, keyed by its
-// location's map id (MAPS.BSA's MapTableData.MapId, unsigned - regionHubs.js's key), so a board stood later for a seat or
-// a hub is the same board.
+// A BOARD IS ITS TOWN'S. Every rumour board of a town (BOUNTY1 took the other half, systems/bountyBoard.js
+// questBoardIndices) shows the same notes: a note is pinned to the TOWN, keyed by its location's map id (MAPS.BSA's
+// MapTableData.MapId, unsigned - regionHubs.js's key), so a board stood later for a seat or a hub is the same board.
 //
 // A NOTE IS A LETTER PINNED UP. Its words are MAIL1's (net/letterLaw.js letterWords: a subject and a body, cleaned,
 // never cut, refused past their bounds) - one law for a player's words to other players, not a second one. What a

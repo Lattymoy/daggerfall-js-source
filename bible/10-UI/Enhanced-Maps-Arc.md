@@ -633,10 +633,9 @@ housing". Neither was on any map: the town plan marked the player, a quest's res
 The bank's house showed only as its name ("<Name>'s residence", once discovered) and an online home (HOME1) not at
 all.
 
-- **A Notice Board** is a pinned card, where the board stands in the street. It is the town's one Notice
-  Board (model 41739; ONE-BOARD, `06-Systems/Professions-Arc.md` 10.11 - `noticeBoardIndex`, it was every board
-  `questBoardIndices` left), while the Notice Board is open: online, `BOARD_OPEN` - the board NOTICE1 floats a town's
-  unread count over. Offline the boards are Daggerfall's rumour
+- **A Notice Board** is a pinned card, where the board stands in the street. It is one of the town's
+  boards (model 41739) that is not a bounty board (`questBoardIndices`; ONE-BOARD REVERTED, `06-Systems/Professions-Arc.md`
+  10.11), while the Notice Board is open: online, `BOARD_OPEN` - the boards NOTICE1 floats a town's unread count over. Offline the boards are Daggerfall's rumour
   boards and are not marked. Under the pointer: "Notice Board", or "Notice Board: 3 new".
 - **A player's house** is a house on its building (its place: the plates' anchor). Every online home in the
   town is marked, as its door names it: "Your home" filled in the player's ink (the caret's), another player's

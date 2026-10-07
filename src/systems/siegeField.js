@@ -124,8 +124,8 @@ export function siegeFieldOf({ frames = null, palaceKeys = [], templeKeys = [], 
     gateBanner = step(centre, away, SIEGE_FIELD.openGateM);
     attack = step(centre, away, SIEGE_FIELD.openCampM);
   }
-  // the Market: the rumour board nearest the middle - AUDIT 657 B7: the town's Notice Board, by ONE-BOARD's own choice
-  // (bountyBoard.js noticeBoardIndex) - this walk broke a tie by the boards' order, that one by their position
+  // the Market: the rumour board nearest the middle (bountyBoard.js noticeBoardIndex - AUDIT 657 B7: one law, its tie
+  // broken by the boards' position, never their order)
   const at = noticeBoardIndex(boards, bounty, centre);
   const market = at >= 0 && boards[at].box.length >= 6 ? boxMid(boards[at].box) : centre;
   // the Temple: its door, else the largest guild hall's, else the middle

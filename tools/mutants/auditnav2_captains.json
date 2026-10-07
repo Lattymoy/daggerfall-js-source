@@ -304,8 +304,8 @@
   {
     "name": "AUDIT-NAV2-F28-the-carrack-heavy-again",
     "file": "src/systems/naval/navalShips.js",
-    "old": "keel: -3.35, top: 11.82, sailWay: 1,",
-    "new": "keel: -3.35, top: 11.82, sailWay: 0.5,",
+    "old": "keel: -4.59, top: 11.55, sailWay: 1,",
+    "new": "keel: -4.59, top: 11.55, sailWay: 0.5,",
     "tests": [
       "test/auditnav2_captains.test.js"
     ]

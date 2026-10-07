@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { sea, seeded } from './navalSea.mjs';
+import { sea, seeded, modShipsPool } from './navalSea.mjs';
 import { sparsOf, FLAME_AWASH, BLAST_SHAKE, NEAR_BOOM_M, FAR_FADE_M, FAR_MATCH, GUN_PITCH_JITTER, GUN_GAIN_JITTER_DB, HIT_CONFIRM_REF_M, HIT_BURST_MAX, GUN_KICK, NEAR_LIFE_M, FAR_LIFE_EVERY,
   NAVAL_TAG_RANGE, NAVAL_TAG_NEAR, NAVAL_TAG_MAX, TAG_LIFT, SAIL_HO_RANGE, SAIL_HO_GAP_S, SAIL_HO_CHECK_S, bearingWords, withArticle,
   SMOKE_FROM, SMOKE_SPAN, DAMAGE_LIST_FROM, DAMAGE_LIST_MAX, DAMAGE_LIST_EASE_S, TIMBER_PER_HIT, sailsShown, lineOver } from '../src/scenes/navalHost.js';
@@ -124,15 +124,18 @@ test('AUDIT NAV1 (the presentation) she lists to her seed\'s side and goes down 
   }
 });
 
-test('AUDIT NAV1 (the presentation) her spars as drawn: the corners of every rigid mesh under her hull\'s mesh object, in its frame - never a skinned sail\'s bind pose (the Carrack\'s reads 101 m); the Large Boat\'s rigs apart (6 to 9.4 m); her depth her highest point at her LAST pose, over her mesh\'s lift, and SINK_CLEAR (mutants: the skinned sails counted, another rig\'s counted, one measure for every rig, the pose at rest measured, the lift dropped)', async () => {
+test('AUDIT NAV1 (the presentation) her spars as drawn: the corners of every rigid mesh under her hull\'s mesh object, in its frame - never a skinned sail\'s bind pose (the Carrack\'s reads 101 m); the Large Boat\'s rigs apart (6.3 to 9.5 m, Mac\'s Tiny Ship - the mod\'s 6 to 9.4); her depth her highest point at her LAST pose, over her mesh\'s lift, and SINK_CLEAR (mutants: the skinned sails counted, another rig\'s counted, one measure for every rig, the pose at rest measured, the lift dropped)', async () => {
   const h = await sea({ hull: 2 });
   const top = (sp) => sp.lift + Math.max(...sp.points.map((p) => p[1]));
   const carrack = place(h, 'merchantCarrack', [300, 0, 0]);
   const c = sparsOf(carrack.boat, h.pool.models);
-  assert.ok(Math.abs(top(c) - 47.51) < 0.05, `the Carrack's mainmast truck, not her sails' bind pose (${top(c).toFixed(2)})`);
+  // PIN MOVED (SHIPS-2, 2026-10-07): the Carrack is Mac's carrack - her flagstaff's truck over her main topmast 21.90 m
+  // up (the mod's mainmast truck stood 47.51); the Large Boat is Mac's Tiny Ship - her mesh at her root (the mod's 0.1
+  // over it), her first plan's lateen's yard 7.3 m up, her second's bare masthead 6.3, her fourth's topmast's truck 9.5
+  assert.ok(Math.abs(top(c) - 21.9) < 0.05, `the Carrack's flagstaff's truck, not her sails' bind pose (${top(c).toFixed(2)})`);
   const boats = [0, 1, 3].map((variant) => sparsOf(place(h, 'merchantCoaster', [300 + variant * 40, 0, 0], { variant }).boat, h.pool.models));
-  assert.ok(boats.every((b) => Math.abs(b.lift - 0.1) < 1e-6), 'the Large Boat\'s mesh stands 0.1 m over her root');
-  assert.deepEqual(boats.map((b) => Math.round(top(b) * 10) / 10), [9.3, 6, 9.4], 'her lateen, her short mast, her tall mast');
+  assert.ok(boats.every((b) => Math.abs(b.lift) < 1e-6), 'the Large Boat\'s mesh at her root');
+  assert.deepEqual(boats.map((b) => Math.round(top(b) * 10) / 10), [7.3, 6.3, 9.5], 'her lateen, her short mast, her topmast');
   assert.equal(sparsOf(null, h.pool.models), null);
   // the host measures a rig once and a ship once: two Large Boats of two rigs go down to two depths
   const s = await sea({ hull: 2 });
@@ -140,7 +143,8 @@ test('AUDIT NAV1 (the presentation) her spars as drawn: the corners of every rig
   const short = place(s, 'merchantCoaster', [300, 0, 60], { variant: 1, seed: 0 });
   for (const e of [tall, short]) e.ship.damage.apply({ hull: 1e6, sail: 0, crew: 0 }, 0);
   s.host.frame(0.1);
-  assert.ok(tall.sinkUnder > short.sinkUnder + 2, `the tall mast goes deeper (${tall.sinkUnder.toFixed(1)} vs ${short.sinkUnder.toFixed(1)})`);
+  // (PIN MOVED, SHIPS-2: Mac's Tiny Ship's topmast's truck 3.2 m over her bare masthead - 1.9 m deeper at her last pose)
+  assert.ok(tall.sinkUnder > short.sinkUnder + 1.5, `the tall mast goes deeper (${tall.sinkUnder.toFixed(1)} vs ${short.sinkUnder.toFixed(1)})`);
   // the law: her highest point at her last pose (by the head, to starboard - seed 0), over her mesh's lift, SINK_CLEAR more
   const sp = sparsOf(tall.boat, s.pool.models);
   const last = sinkAngles(0, 1);
@@ -323,7 +327,7 @@ test('AUDIT NAV1 (the presentation) THE MIX, my broadside: each report at one ov
     for (let i = 0; i < 12; i++) { at.t += 0.05; h.host.frame(0.05); }
     const reports = played.filter((s) => s.k === NAVAL_SFX.cannon);
     const n = reports.length;
-    assert.equal(n, hull === 2 ? 5 : 7, 'every gun heard');   // PIN MOVED (GALLEON, 2026-10-01): the Small Ship's five ports a side
+    assert.equal(n, 5, 'every gun heard');   // PIN MOVED (GALLEON, 2026-10-01): the Small Ship's five ports a side (SHIPS-2, 2026-10-07: and Mac's carrack's)
     const lo = 10 ** (-GUN_GAIN_JITTER_DB / 20) / Math.sqrt(n), hi = 10 ** (GUN_GAIN_JITTER_DB / 20) / Math.sqrt(n);
     assert.ok(reports.every((r) => r.v >= lo - 1e-9 && r.v <= hi + 1e-9), `each at 1/sqrt(${n}), jittered (${reports.map((r) => r.v.toFixed(2))})`);
     assert.ok(reports.every((r) => Math.abs(r.opts.pitch - 1) <= GUN_PITCH_JITTER + 1e-9), 'each its own pitch');
@@ -482,19 +486,32 @@ test('AUDIT NAV1 (the presentation) her colours by her state: her faction\'s whi
   h.run(0.2);
   assert.equal(e.boat.FlagEmitter.isEmitting, true, 'taken: colours again -');
   assert.equal(e.boat.flagColor, null, '- the captor\'s orange (FlagMaterial\'s, the player\'s boats\' own)');
-  // the Carrack's graft
+  // the Carrack's colours. PIN MOVED (SHIPS-2, 2026-10-07): Mac's carrack carries her own, as the galleon does
+  // (world/carrackModel.js: the galleon's FlagObject at her main topmast's truck, under her hull's node) - nothing grafted
   const c = place(h, 'pirateFlagship', [400, 0, 0], { seed: 0 });
   assert.ok(c.boat.FlagObject, 'a Carrack at sea flies her colours');
-  assert.equal(c.boat.FlagObject.parent.name, 'CarrackMast1', 'on her tallest mast - heeling with it');
+  assert.equal(c.boat.FlagObject.parent.name, 'NewCarrack', 'her own, under her hull - heeling with it');
   const at = c.boat.MeshObject.inverseTransformPoint(c.boat.FlagObject.position);   // her hull's own frame: the swell heels it
-  assert.ok(Math.abs(at[0]) < 0.05 && Math.abs(at[1] - 47.51) < 0.05 && Math.abs(at[2] + 3.09) < 0.05, `at its truck (${at.map((v) => v.toFixed(2))})`);
+  assert.ok(Math.abs(at[0]) < 0.05 && Math.abs(at[1] - 21.75) < 0.05 && Math.abs(at[2] - 8.93) < 0.05, `at her main topmast's truck (${at.map((v) => v.toFixed(2))})`);
+  // the graft: a flagless sea ship given FLAG_DONOR_HULL's colours on her tallest mast's truck - the mod's own Carrack's,
+  // as the game stands her when Mac's carrack's model will not load (test/navalSea.mjs modShipsPool)
+  const mod = await modShipsPool();
+  try {
+    const hm = await sea({ hull: 2, pool: mod.pool });
+    const g = place(hm, 'pirateFlagship', [400, 0, 0], { seed: 0 });
+    assert.equal(g.boat.FlagObject?.parent?.name, 'CarrackMast1', 'the mod\'s Carrack: on her tallest mast - heeling with it');
+    const gat = g.boat.MeshObject.inverseTransformPoint(g.boat.FlagObject.position);
+    assert.ok(Math.abs(gat[0]) < 0.05 && Math.abs(gat[1] - 47.51) < 0.05 && Math.abs(gat[2] + 3.09) < 0.05, `at its truck (${gat.map((v) => v.toFixed(2))})`);
+    const ownMod = mod.pool.spawnNow(Object.assign(new Boat(4, 0), { uid: 7 }), { position: [0, 0, 0], rotation: [0, 0, 0, 1] });
+    assert.equal(ownMod.FlagObject, null, 'a player\'s mod Carrack: the mod\'s rig as it is');
+  } finally { mod.restore(); }
   assert.equal(c.boat.FlagEmitter, c.boat.FlagObject.getComponentInChildren('ParticleSystem').particleSystem);
   assert.equal(c.boat.FlagEmitter.renderer.m_RenderMode, 4, 'a mesh flag - the world draws it as her colours');
   h.run(1);
   assert.ok(c.boat.FlagEmitter.particleCount > 0 && c.boat.particleSystems.includes(c.boat.FlagEmitter), 'flying, among her particle systems');
   assert.deepEqual(c.boat.flagColor, NAVAL_FACTIONS.pirate.flag, 'the black');
   const own = h.pool.spawnNow(Object.assign(new Boat(4, 0), { uid: 7 }), { position: [0, 0, 0], rotation: [0, 0, 0, 1] });
-  assert.equal(own.FlagObject, null, 'a player\'s Carrack: the mod\'s rig as it is');
+  assert.equal(own.FlagObject?.parent?.name, 'NewCarrack', 'a player\'s Carrack: her own colours, as a player\'s galleon');
   assert.equal(FLAG_DONOR_HULL, 2);
   // the card: the hostile red last, so it wins over a navy's or a merchantman's colour
   const i = (sel) => NAVAL_HUD_CSS.indexOf(sel);
@@ -1034,7 +1051,10 @@ test('AUDIT NAV1 (the presentation) HER HURTS SEEN, her list and her canvas (#15
   const c = place(h, 'merchantCarrack', [-300, 0, 0], { seed: 2 });
   const sails = [...c.boat.Sails];
   assert.equal(sails.length, 5);
-  const high = (n) => n.worldMatrix()[13];
+  // PIN MOVED (SHIPS-2, 2026-10-07): Mac's carrack's canvas by where it hangs set, as the galleon's (AUDIT GN2-RG4: the
+  // host's sailsByHeight - her lateen's node is at its yard's slings; her fore course's yard over her main course's,
+  // its canvas set under it)
+  const order = c.sailsByHeight, high = (n) => -order.indexOf(n);
   c.ship.damage.apply({ hull: 0, sail: c.ship.damage.maxSail - Math.floor(c.ship.damage.maxSail * 0.4), crew: 0 }, 0);   // 0.4 of her canvas left, or a hair under
   h.host.frame(0.1);
   const shown = sails.filter((n) => n.activeSelf), gone = sails.filter((n) => !n.activeSelf);

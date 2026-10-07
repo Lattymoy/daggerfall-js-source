@@ -282,7 +282,8 @@ test('OWS2 pool: a hull\'s rig, built once off SpawnBoat and never placed - its 
   assert.equal(pool.hullRig(1), null, 'before the models: nothing');
   assert.equal(await pool.preload(), true);
   const lb = pool.hullRig(1);
-  const b = new Boat(1, 0); spawnBoat(b, ctxFor({ position: [0, 0, 0], rotation: [0, 0, 0, 1] }));
+  // SHIPS-2: SpawnBoat over the pool's own models (its hull 1 Mac's Tiny Ship - this file's MODELS are the mod's alone)
+  const b = new Boat(1, 0); spawnBoat(b, { ...ctxFor({ position: [0, 0, 0], rotation: [0, 0, 0, 1] }), models: pool.models });
   assert.deepEqual(lb.nodes, b.Nodes.map((n) => [...n.localPosition]), 'SpawnBoat\'s own nodes');
   assert.deepEqual([lb.sails, lb.crewed, lb.packable], [1, false, true], 'the Large Boat: one lateen, no crew, packs');
   assert.equal(pool.hullRig(1), lb, 'built once');

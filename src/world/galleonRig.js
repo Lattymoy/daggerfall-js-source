@@ -47,7 +47,7 @@
 // Not a DFU member. Ledger A (GALLEON).
 import { MeshBench, prism, rope, box, sub, add, scl, len, norm, lerp3, sagging } from './galleonMesh.js';
 import { TEX, GALLEON_TILE } from './galleonArt.js';
-import { pathHash } from './unityAnimator.js';
+import { nodeOf, constClip, posCurve } from './shipKit.js';   // SHIPS-2: the shipwright's kit, every ship's
 import { FIX_DEFORMATIONS_INTERVAL } from './skinnedBake.js';
 
 /**
@@ -102,7 +102,7 @@ export const SAILS = Object.freeze([
   Object.freeze({ key: 'Jib', kind: 'stay', size: 'Large' }),
 ]);
 /** A square sail's canvas grid (columns across, rows down) and a fore-and-aft sail's (along the foot, up the luff). */
-export const GRID = Object.freeze({ square: Object.freeze([9, 8]), gaff: Object.freeze([8, 7]), stay: Object.freeze([8, 7]) });
+export const GRID = Object.freeze({ square: Object.freeze([9, 8]), gaff: Object.freeze([8, 7]), stay: Object.freeze([8, 7]), lateen: Object.freeze([9, 7]) });   // SHIPS-2: a lateen's along its foot
 /** A clip's length (s): a CrossFade between the sail's states runs SAIL_ANIMATION_SPEED (2) of these. */
 export const SAIL_CLIP_S = 1;
 /** A yard's radius at its slings and at its arms (it tapers between). */
@@ -124,13 +124,11 @@ export const FURL_R = 0.13;
 export const BAKE = Object.freeze({ rope: Object.freeze({ everyFrame: true }), canvasTimer: (k) => Math.fround(k * FIX_DEFORMATIONS_INTERVAL / SAILS.length) });
 const bakeCadence = (o) => ({ type: 'BakeCadence', ...o });
 
-const nodeOf = (name, { p = [0, 0, 0], r = [0, 0, 0, 1], s = [1, 1, 1], c = [], kids = [], active = true } = {}) => ({ name, active, layer: 0, tag: 0, position: [...p], rotation: [...r], scale: [...s], components: c, children: kids });
-const constClip = (name, curves, length = 0, loop = true) => ({ name, start: 0, stop: length, sampleRate: 60, loop, wrapMode: 0, denseRate: 60, denseBegin: 0, events: [], curves });
-const posCurve = (path, p) => ({ path: pathHash(path), attribute: 'position', components: p.map((v) => ({ constant: Math.fround(v) })) });
 
 /** A square sail's yard's radius `x` along it from its slings (its taper). */
 export function yardRadius(sail, x) {
-  return YARD_R[0] + (YARD_R[1] - YARD_R[0]) * Math.min(1, Math.abs(x) / (sail.yardSpan / 2));
+  const R = sail.yardR ?? YARD_R;   // SHIPS-2: or the sail's own yard's (world/largeBoatRig.js: a boat's lighter spars)
+  return R[0] + (R[1] - R[0]) * Math.min(1, Math.abs(x) / (sail.yardSpan / 2));
 }
 /** How far forward of its mast's axis a square sail's yard hangs (its boom's frame z). */
 export const yardOffset = (sail) => (sail.mast === 'fore' ? RIG.foreR : RIG.mainR) + 0.24;
@@ -158,7 +156,9 @@ export function squareSailPose(sail, d, mastR, pose) {
       const belly = sail.belly * sail.footW * arch * Math.sin(0.8 * Math.PI * v);
       z += belly; y += 0.07 * sail.drop * arch * v; x *= 1 - 0.035 * Math.sin(Math.PI * v);
     } else if (pose === 'aback') {
-      z -= Math.min(0.1 * sail.footW, d - mastR - 0.06) * arch * Math.sin(Math.PI * v) + 0.04 * v;
+      // SHIPS-2: or the depth a sail of another ship's names (`aback` - world/carrackRig.js's, whose yards hang further off
+      // their masts than her shrouds would let the canvas press back)
+      z -= (sail.aback ?? Math.min(0.1 * sail.footW, d - mastR - 0.06)) * arch * Math.sin(Math.PI * v) + 0.04 * v;
     } else if (pose === 'stowed') {
       // AUDIT GN-R1: the furled roll seated against the yard (its nearest turn hung 11-17 cm off it): a roll of FURL_R
       // round a line FURL_R + HEAD_OFF off the yard's surface, the head's own way round it - each row a turn on from the
@@ -222,16 +222,21 @@ export function jibCorners() {
 /** The jib's corners (the boat's frame) in a pose: 'center', 'port' / 'starboard' (bellied to that side, the two
  *  halves of the Staysail Controller's five Winds at their halves), 'stowed' rolled down its stay. Row 0 is its head. */
 export function jibPose(pose, k = 1) {
+  return staysailPose(jibCorners(), pose, k);
+}
+/** SHIPS-2: ANY STAYSAIL'S CORNERS - the jib's law, on its own `tack`, `clew` and `head` (the boat's frame): in a pose,
+ *  its grid stopping `top` of the way up to its head (the jib's), bellied `belly` m set full (the jib's 1.0;
+ *  world/largeBoatRig.js's own are smaller). Row 0 is its head. */
+export function staysailPose({ tack, clew, head }, pose, k = 1, top = JIB.top, belly = 1.0) {
   const [NU, NV] = GRID.stay;
-  const { tack, clew, head } = jibCorners();
   const out = [];
   for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) {
     const u = i / (NU - 1), v = 1 - j / (NV - 1);   // AUDIT GN-R13: v 1 at the head (row 0), 0 at the foot
     const foot = lerp3(tack, clew, u);
-    let p = lerp3(foot, head, v * JIB.top);
+    let p = lerp3(foot, head, v * top);
     const arch = Math.sin(Math.PI * u) * (1 - v) * 1.6 * Math.sin(Math.PI * (0.2 + 0.6 * (1 - v)));
-    if (pose === 'port') p[0] -= 1.0 * k * arch;
-    else if (pose === 'starboard') p[0] += 1.0 * k * arch;
+    if (pose === 'port') p[0] -= belly * k * arch;
+    else if (pose === 'starboard') p[0] += belly * k * arch;
     else if (pose === 'center') p[0] += 0.1 * arch;
     else if (pose === 'stowed') {
       const stay = lerp3(tack, head, Math.min(1, v * 0.97 + u * 0.03));
@@ -240,6 +245,81 @@ export function jibPose(pose, k = 1) {
     out.push(p);
   }
   return out;
+}
+
+/**
+ * SHIPS-2: A LATEEN - any ship's (world/carrackRig.js's mizzen, world/largeBoatRig.js's): its yard slung on its mast's
+ * port side `sail.side` off the axis from its fore end `sail.fore` (low) to its after end `sail.aft` (high), her frame,
+ * its radius `sail.yardR` at its slings and its ends; its foot from its tack at `sail.footY` under the yard's fore end to
+ * its clew at `sail.clewZ` (and `sail.clewY`, level with its tack unless it says - a boat's rises over her helm). `mast` is its mast - `{ z, top, radius(y) }` (her frame; `radius` its corners' off
+ * its axis at a height). Its boom stands on the mast's axis where its yard passes the mast.
+ */
+export function lateenBoomY(sail, mast) {
+  return sail.fore[1] + (sail.aft[1] - sail.fore[1]) * (sail.fore[2] - mast.z) / (sail.fore[2] - sail.aft[2]);
+}
+/** The lateen's yard's two ends in its boom's frame (the mast's axis at the boom's height), on the mast's port side. */
+export function lateenYard(sail, mast) {
+  const y0 = lateenBoomY(sail, mast);
+  const at = (p) => [-sail.side, p[1] - y0, p[2] - mast.z];
+  return { fore: at(sail.fore), aft: at(sail.aft) };
+}
+/**
+ * The lateen's corners (its boom's frame) in a pose: its head along the yard from its throat (`sail.throat` m up from
+ * the yard's fore end) to its peak (`sail.peakIn` m short of its after end), HEAD_OFF under the yard's surface; its foot
+ * level from its tack under the yard's fore end to its clew. Row 0 its head (AUDIT GN-R13's law). 'right' bellied away
+ * from the mast (to port: the good tack - the mod's Right, "GoodTack"), 'left' pressed toward it (the bad tack: its
+ * canvas held off the mast within `sail.pin` m of it - flat against its side there, as a lateen lies on the bad tack),
+ * 'center' hanging, 'stowed' brailed up under its yard. Its belly `sail.belly` m set full.
+ */
+export function lateenSailPose(sail, mast, pose) {
+  const [NU, NV] = GRID.lateen;
+  const { fore, aft } = lateenYard(sail, mast);
+  const y0 = lateenBoomY(sail, mast);
+  const along = norm(sub(aft, fore)), L = len(sub(aft, fore));
+  const under = [0, along[2], -along[1]];   // square to the yard in its plane, down (the yard rises aft: along's z < 0)
+  const onYard = (s) => add(add(fore, scl(along, s)), scl(under, sail.yardR[0] + HEAD_OFF));
+  const throat = onYard(sail.throat), peak = onYard(L - sail.peakIn);
+  const tack = [-sail.side, sail.footY - y0, throat[2] - 0.15 * (sail.throat / 1.2)], clew = [-sail.side, (sail.clewY ?? sail.footY) - y0, sail.clewZ - mast.z];
+  const out = [];
+  for (let j = 0; j < NV; j++) for (let i = 0; i < NU; i++) {
+    const u = i / (NU - 1), v = 1 - j / (NV - 1);   // the head's row first (v 1), the foot's last
+    const footAt = lerp3(tack, clew, u), headAt = lerp3(throat, peak, u);
+    let p = lerp3(footAt, headAt, v);
+    const arch = Math.sin(Math.PI * u) * Math.sin(Math.PI * (0.1 + 0.85 * v));
+    if (pose === 'right') p[0] -= sail.belly * arch;
+    else if (pose === 'center') p[0] -= 0.11 * sail.belly * arch;
+    else if (pose === 'left') p[0] += sail.belly * arch * Math.min(1, Math.max(0, (Math.abs(p[2]) - sail.pin * 0.3) / sail.pin));
+    else if (pose === 'stowed') {
+      const k = 0.06 + 0.05 * Math.sin(u * Math.PI * 3);
+      p = lerp3(headAt, p, k);
+      p[0] -= sail.yardR[0] * 0.7 + 0.1 * Math.sin(u * 9 + v * 2) * (sail.yardR[0] / 0.19);
+    }
+    out.push(p);
+  }
+  return out;
+}
+/** The lateen's spars in its boom's frame: its yard (thickest at its slings, where it passes the mast), an iron band
+ *  there, the parrel round the mast that holds it, and its halyard from the slings up into the masthead. Worn in
+ *  `archive` (a ship's own; the pictures it wears are the fleet's shared ones). */
+export function lateenSparsGeometry(sail, mast, archive = undefined) {
+  const bench = new MeshBench(archive);
+  const { fore, aft } = lateenYard(sail, mast);
+  const y0 = lateenBoomY(sail, mast);
+  const slings = [-sail.side, 0, 0];
+  prism(bench, TEX.spar, slings, fore, sail.yardR[0], sail.yardR[1], 8, { smooth: true, tileV: GALLEON_TILE.spar[1] });
+  prism(bench, TEX.spar, slings, aft, sail.yardR[0], sail.yardR[1], 8, { smooth: true, tileV: GALLEON_TILE.spar[1] });
+  const along = norm(sub(aft, fore)), band = sail.yardR[0] * 0.42;
+  prism(bench, TEX.iron, sub(slings, scl(along, band)), add(slings, scl(along, band)), sail.yardR[0] * 1.13, sail.yardR[0] * 1.13, 8, { smooth: true });
+  // the parrel: a rope ring round the mast, made fast to the yard at its slings
+  const r = mast.radius(y0) + sail.yardR[0] * 0.26, N = 10, rr = Math.max(0.018, sail.yardR[0] * 0.18), dy = -sail.yardR[0] * 0.63;
+  const ring = [];
+  for (let k = 0; k <= N; k++) { const a = Math.PI / 2 + (k / N) * Math.PI * 2; ring.push([Math.sin(a) * -r, dy, Math.cos(a) * r]); }
+  rope(bench, TEX.rope, ring, rr);
+  rope(bench, TEX.rope, [[-r, dy, 0], [slings[0] + sail.yardR[0] * 0.7, -sail.yardR[0] * 0.26, 0]], rr);
+  // the halyard, from the slings up to the masthead's face on their side (SHIPS-2: to its axis it went into the mast
+  // half way up - the slings stand off the mast, which tapers: led to its face it lies outside the mast all the way)
+  rope(bench, TEX.rope, [add(slings, [0, sail.yardR[0], 0]), [-(mast.radius(mast.top - 0.15) + rr), mast.top - 0.15 - y0, 0]], rr * 0.86);
+  return bench.finish();
 }
 
 /**
@@ -309,18 +389,19 @@ export function liftHead(sail) {
 }
 /** A yard: tapered from its slings to its arms, an iron band at each quarter, its footrope sagging under it, and its
  *  lifts up to its masthead (so they swing with it). In the boom's frame. */
-export function yardGeometry(span, d, liftTo) {
+export function yardGeometry(span, d, liftTo, { r = YARD_R, footropes = true } = {}) {
   const bench = new MeshBench();
   const half = span / 2;
-  prism(bench, TEX.spar, [0, 0, d], [half, 0, d], YARD_R[0], YARD_R[1], 8, { tileV: GALLEON_TILE.spar[1], smooth: true });
-  prism(bench, TEX.spar, [0, 0, d], [-half, 0, d], YARD_R[0], YARD_R[1], 8, { tileV: GALLEON_TILE.spar[1], smooth: true });
-  for (const x of [-half * 0.5, half * 0.5]) prism(bench, TEX.iron, [x - 0.06, 0, d], [x + 0.06, 0, d], 0.16, 0.16, 8, { smooth: true });
+  prism(bench, TEX.spar, [0, 0, d], [half, 0, d], r[0], r[1], 8, { tileV: GALLEON_TILE.spar[1], smooth: true });
+  prism(bench, TEX.spar, [0, 0, d], [-half, 0, d], r[0], r[1], 8, { tileV: GALLEON_TILE.spar[1], smooth: true });
+  for (const x of [-half * 0.5, half * 0.5]) prism(bench, TEX.iron, [x - 0.06, 0, d], [x + 0.06, 0, d], r[0] - 0.01, r[0] - 0.01, 8, { smooth: true });
   // the parrel holding it to the mast
-  box(bench, TEX.trim, [0, 0, d * 0.55], [0.22, 0.16, d * 0.45], { tile: GALLEON_TILE.trim });
+  box(bench, TEX.trim, [0, 0, d * 0.55], [r[0] + 0.05, r[0] - 0.01, d * 0.45], { tile: GALLEON_TILE.trim });
   // its footropes, and its lifts to the masthead over it. AUDIT GN-R1: the footropes hang ABAFT the yard, where a hand
-  // stands on them to work it (2 cm forward of the canvas's plane, they ran through it and its furled roll)
+  // stands on them to work it (2 cm forward of the canvas's plane, they ran through it and its furled roll). SHIPS-2: a
+  // boat's yard (`r` its own radii) none - her hands work it from her deck
   for (const s of [-1, 1]) {
-    rope(bench, TEX.rope, sagging([s * 0.25, -0.1, d - 0.22], [s * (half - 0.15), -0.06, d - 0.16], 0.45, 6), 0.022);
+    if (footropes) rope(bench, TEX.rope, sagging([s * 0.25, -0.1, d - 0.22], [s * (half - 0.15), -0.06, d - 0.16], 0.45, 6), 0.022);
     rope(bench, TEX.rope, [[s * (half - 0.2), 0.05, d], liftTo], 0.024);
   }
   return bench.finish();
@@ -479,15 +560,14 @@ export const BELAYS = Object.freeze({
 // ── the rig as nodes ────────────────────────────────────────────────────────────────────────────────────────────────
 
 /**
- * The rig: its nodes (to hang under the hull's node), the meshes they name, and its clips and overrides.
- * `cx` is the prefab builder's (world/galleonModel.js): `mesh(key, geometry)` registers a mesh, `comp(record)` a
- * component and answers its index, `skinned(node, key, bones, root)` asks for a SkinnedMeshRenderer whose bone pointers
- * are filled in once the tree's paths are known.
+ * SHIPS-2: A RIG'S BENCH - how every ship of the port's makes her sails and her running rope (world/carrackRig.js's and
+ * world/largeBoatRig.js's are made here as hers are): a still mesh's node (`meshNode`), a sail's node with its bones, its
+ * skinned canvas and its clips over the mod's controller (`sailNode`), a running rope between two bones (`running`).
+ * `ship` names her meshes and materials (`<ship>:sail:<key>`, `<ship>-canvas`), `clipPrefix` her clips and overrides,
+ * `timerOf(sailKey)` each canvas's bake timer (BAKE); the clips and overrides made land in `clips` and `overrides`.
  */
-export function buildRig(cx) {
-  const kids = [];
+export function rigBench(cx, { ship, clipPrefix, timerOf }) {
   const clips = {}, overrides = {};
-  const mastOf = (m) => (m === 'fore' ? { z: RIG.foreZ, r: RIG.foreR } : { z: RIG.mainZ, r: RIG.mainR });
   const meshNode = (name, key, geometry, opts = {}) => {
     cx.mesh(key, geometry);
     return nodeOf(name, { ...opts, c: [cx.comp({ type: 'MeshFilter', m_Mesh: { mesh: key } }), cx.comp({ type: 'MeshRenderer', m_Enabled: true, materials: geometry.slots.map((s) => ({ ...s })) })] });
@@ -500,14 +580,14 @@ export function buildRig(cx) {
     const bones = rest.map((p, k) => nodeOf(`B${k}`, { p }));
     const bonesNode = nodeOf(bonesName, { kids: bones });
     const geometry = canvasGeometry(rest, grid);
-    const key = `galleon:sail:${sailKey}`;
+    const key = `${ship}:sail:${sailKey}`;
     cx.mesh(key, geometry);
     const texChild = nodeOf(`${cx.archive}_${TEX.canvas}`);   // ApplyGameTextures' slot 0: the canvas
-    const meshNode = nodeOf(meshName, { c: [cx.comp(bakeCadence({ timer: BAKE.canvasTimer(SAILS.findIndex((x) => x.key === sailKey)) }))], kids: [texChild] });   // AUDIT GN2-RG9
-    cx.skinned(meshNode, key, bones, bonesNode, [{ material: 'galleon-canvas' }]);
-    const clipName = (pose) => `galleon2/${sailKey} ${pose}`;
+    const meshNode = nodeOf(meshName, { c: [cx.comp(bakeCadence({ timer: timerOf(sailKey) }))], kids: [texChild] });   // AUDIT GN2-RG9
+    cx.skinned(meshNode, key, bones, bonesNode, [{ material: `${ship}-canvas` }]);
+    const clipName = (pose) => `${clipPrefix}/${sailKey} ${pose}`;
     const curvesOf = (grid2) => grid2.map((p, k) => posCurve(`${bonesName}/B${k}`, p));
-    const ovName = `galleon2/${sailKey}`;
+    const ovName = `${clipPrefix}/${sailKey}`;
     if (base === 'Staysail Controller') {
       clips[clipName('Stowed')] = constClip(clipName('Stowed'), curvesOf(poses.stowed), SAIL_CLIP_S, false);
       for (const [slot, g] of [['Left', poses.left], ['Center Left', poses.centerLeft], ['Center', poses.center], ['Center Right', poses.centerRight], ['Right', poses.right]]) {
@@ -526,13 +606,26 @@ export function buildRig(cx) {
    *  stands in hers at rest - AUDIT GN2-RG2: a sheet's, its sail's), baked every frame (AUDIT GN2-RG1). */
   const running = (name, a, b, at = [0, 0, 0]) => {
     const meshName = `${name}Line`;
-    const key = `galleon:rope:${name}`;
+    const key = `${ship}:rope:${name}`;
     const geometry = ropeGeometry(sub(a.world, at), sub(b.world, at), 0.028);
     cx.mesh(key, geometry);
     const meshNode = nodeOf(meshName, { c: [cx.comp(bakeCadence({ ...BAKE.rope }))], kids: [nodeOf(`${cx.archive}_${TEX.rope}`)] });
-    cx.skinned(meshNode, key, [a.bone, b.bone], null, [{ material: 'galleon-rope' }], true);
+    cx.skinned(meshNode, key, [a.bone, b.bone], null, [{ material: `${ship}-rope` }], true);
     return meshNode;
   };
+  return { clips, overrides, meshNode, sailNode, running };
+}
+
+/**
+ * The rig: its nodes (to hang under the hull's node), the meshes they name, and its clips and overrides.
+ * `cx` is the prefab builder's (world/galleonModel.js): `mesh(key, geometry)` registers a mesh, `comp(record)` a
+ * component and answers its index, `skinned(node, key, bones, root)` asks for a SkinnedMeshRenderer whose bone pointers
+ * are filled in once the tree's paths are known.
+ */
+export function buildRig(cx) {
+  const kids = [];
+  const mastOf = (m) => (m === 'fore' ? { z: RIG.foreZ, r: RIG.foreR } : { z: RIG.mainZ, r: RIG.mainR });
+  const { clips, overrides, meshNode, sailNode, running } = rigBench(cx, { ship: 'galleon', clipPrefix: 'galleon2', timerOf: (sailKey) => BAKE.canvasTimer(SAILS.findIndex((x) => x.key === sailKey)) });
 
   // the yards and their square sails
   const squareSails = {};

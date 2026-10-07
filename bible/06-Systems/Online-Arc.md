@@ -11088,8 +11088,8 @@ as `acct61`, and main's own `acct47` (BOULDERS) and `acct48` (MORE-NODES) are di
   hub's circle, the names kept clear of it (`markReach`); a crown in its kingdom's metal over a crown seat; a March's
   thin second ring half in each claiming crown's metal, a Free Land's green; the Charter's line in the map's box.
 - **The banners** (3.4; `src/scenes/seatBanners.js`): anchors measured where a seat town's pixel is built - the
-  palace door's two (GUILD1d's measure), a banner at each city gate on its town side beside a post, a pennant over the
-  town's one Notice Board (ONE-BOARD, Professions-Arc 10.11), at most 8 - hung with the kingdom's plain banner (a March's
+  palace door's two (GUILD1d's measure), a banner at each city gate on its town side beside a post, a pennant over each
+  rumour board (never a bounty board; ONE-BOARD REVERTED, Professions-Arc 10.11), at most 8 - hung with the kingdom's plain banner (a March's
   two claimants' metals, a Free Land's none) on GUILD1d's cloth pass, the halls' and the seats' banners the nearest
   sixteen together (`world.js` bannersHung). `ui/heraldryArt.js` draws a plain banner (two colours, no device).
 - **Four hosts**: `world.js` WIRED; `worldModes.js` and `dungeonContext.js` stand no street; `exterior.js` (the fixed
