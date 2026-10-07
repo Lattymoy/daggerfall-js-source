@@ -66,7 +66,11 @@ export function collectInteriorPeople(recordData) {
  * The non-shop arm is gated on `buildingType <= House4`, which is not
  * a tidy "residences only": Temple (14), Tavern (15) and Palace (16)
  * are all under it, so a Palace's people keep its 10:00-16:00 hours
- * while a House5 (21) or a Ship (24) is never gated at all.
+ * while a House5 (21) or a Ship (24) is never gated at all. The hours
+ * are isBuildingOpen's EFFECTIVE ones: online the relief shift
+ * (buildingLocks.js onlineReliefBuilding - OL5's guild hall, OL6's
+ * bank, library and palace) keeps their people standing at night, as
+ * its door stays open.
  *
  * @param building - { buildingType, factionId, buildingKey }
  * @param ctx.hour              - the classic hour (0-23)

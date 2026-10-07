@@ -1,0 +1,101 @@
+[
+  {
+    "name": "SUMMON-NAME-offline-names-too",
+    "file": "src/systems/daedraSummoning.js",
+    "old": "export const summonsByName = ({ factionId = 0, factionType = null, online = false } = {}) => !!online\n  && factionId",
+    "new": "export const summonsByName = ({ factionId = 0, factionType = null, online = false } = {}) => !!(online || true)\n  && factionId",
+    "tests": [
+      "test/summonname_online.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-NAME-a-coven-names-too",
+    "file": "src/systems/daedraSummoning.js",
+    "old": "  && factionId !== GLENMORIL_WITCHES && factionType !== WITCHES_COVEN_TYPE;",
+    "new": "  && factionId !== GLENMORIL_WITCHES;",
+    "tests": [
+      "test/summonname_online.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-NAME-glenmoril-names-too",
+    "file": "src/systems/daedraSummoning.js",
+    "old": "  && factionId !== GLENMORIL_WITCHES && factionType !== WITCHES_COVEN_TYPE;",
+    "new": "  && factionType !== WITCHES_COVEN_TYPE;",
+    "tests": [
+      "test/summonname_online.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-NAME-the-list-in-dfus-order",
+    "file": "src/systems/daedraSummoning.js",
+    "old": "export const PRINCES_BY_NAME = Object.freeze([...DAEDRA].sort((a, b) => a.name.localeCompare(b.name)));",
+    "new": "export const PRINCES_BY_NAME = Object.freeze([...DAEDRA]);",
+    "tests": [
+      "test/summonname_online.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-NAME-the-question-says-the-day",
+    "file": "src/systems/daedraSummoning.js",
+    "old": "  Object.freeze({ text: 'Do you, %pcn, wish', center: true }),",
+    "new": "  Object.freeze({ text: 'for %dae. Do you, %pcn, wish', center: true }),",
+    "tests": [
+      "test/summonname_online.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-NAME-the-yes-summons-the-first",
+    "file": "src/systems/daedraSummoning.js",
+    "old": "      onYes: () => { const next = summon(PRINCES_BY_NAME[i]); return next ? [next] : null; },",
+    "new": "      onYes: () => { const next = summon(PRINCES_BY_NAME[0]); return next ? [next] : null; },",
+    "tests": [
+      "test/summonname_online.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-NAME-the-answer-is-dropped",
+    "file": "src/systems/daedraSummoning.js",
+    "old": "      onYes: () => { const next = summon(PRINCES_BY_NAME[i]); return next ? [next] : null; },",
+    "new": "      onYes: () => { summon(PRINCES_BY_NAME[i]); return null; },",
+    "tests": [
+      "test/summonname_online.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-NAME-the-question-names-the-first",
+    "file": "src/systems/daedraSummoning.js",
+    "old": "      rows: expand(SUMMON_BY_NAME_ROWS, PRINCES_BY_NAME[i]),",
+    "new": "      rows: expand(SUMMON_BY_NAME_ROWS, PRINCES_BY_NAME[0]),",
+    "tests": [
+      "test/summonname_online.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-NAME-the-coven-popup-takes-the-list",
+    "file": "src/scenes/worldModes.js",
+    "old": "      const byName = summonerFactionId == null && listPickerArtLoaded()\n",
+    "new": "      const byName = listPickerArtLoaded()\n",
+    "tests": [
+      "test/summonname_online.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-NAME-not-a-summoning-day-online",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (!daedra && !byName) return { rows: box(SUMMON_TEXT.notToday, null, 'This is not a summoning day.') };",
+    "new": "      if (!daedra) return { rows: box(SUMMON_TEXT.notToday, null, 'This is not a summoning day.') };",
+    "tests": [
+      "test/summonname_online.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-NAME-the-yes-summons-the-days-prince",
+    "file": "src/scenes/worldModes.js",
+    "old": "        const r = attemptSummoning({\n          daedra: called,",
+    "new": "        const r = attemptSummoning({\n          daedra,",
+    "tests": [
+      "test/summonname_online.test.js"
+    ]
+  }
+]

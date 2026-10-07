@@ -84,8 +84,10 @@ started (DFU: -16).
   two rolls; every lesser crime is fined or jailed at any standing, and its court draws no roll.
 - **Thirty days of the world's calendar** (`standing.js banish`, the court's state 4): DFU's bit (`SeverePunishmentFlags
   |= 1`) and its term, `banishedUntil`, saved with the region (`regionConditions.js`, `b`). Lifted on the first read
-  past it. A banishment from before REP is given its thirty days from the first read. Online it lifts about two and a
-  half real days on, whether or not the player plays - a sentence of the realm, on its calendar. The calendar is read
+  past it. A banishment from before REP is given its thirty days from the first read. Online it lifts whether or not the
+  player plays - a sentence of the realm, on its calendar: BANISH-SKY (2026-10-07, `Online-Waits.md` WAIT4) counts the
+  thirty days on the calendar the player SEES, the sky's (TIME1), so thirty real hours since SKY-SLOW - REP3 had them on
+  the event clock, sixty real hours, which the menus' calendar ran through twice. The calendar is read
   only when it can be trusted (`worldTick.js trustedWorldMinutes`, AUDIT REP F2): online, until the relay's clock is
   heard, a term is neither stamped nor lifted - a machine clock set fast at the boot lifted it for good.
 - **A pardon** at the region's TEMPLE (the donation's priest): 2,500 gold, each later pardon in that region one step
@@ -109,7 +111,7 @@ started (DFU: -16).
 
 - **The Standing page** (`enhancedMenu.js statsLaw`) lists every region whose law knows the player's name, worst first:
   the region, the band's word, the number, and what it costs - *known to the watch (a stop: 640 gold)*, *banished, 28
-  days left (a pardon: 2500 gold)*. A common citizen's region is not listed. The guilds' rows say *on probation*.
+  days left (a pardon: 2500 gold)* (online, BANISH-SKY: *banished, 28 days left, about 28 hours (a pardon: 2500 gold)*). A common citizen's region is not listed. The guilds' rows say *on probation*.
 - **A notice on every change** a cause moved (`court.js changeLegalRep`'s `cause`, `standingHost.js installLegalNotices`):
   *"Theft: the law of Daggerfall thinks less of you (-8). You are undependable."*, *"Your debt to Daggerfall is paid
   (+8)."*, *"The court of Daggerfall clears your name (+20)."*, the penance's, the contract's and the raid's own. The

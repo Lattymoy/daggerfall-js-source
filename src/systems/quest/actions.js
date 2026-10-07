@@ -58,6 +58,7 @@ import { dfuEffectKeyOf } from '../spellEffects.js';   // QG1: CastEffectDo's ke
 import { setLocationVariant, setNewLocationVariant, setBlockVariant, setBuildingVariant, makeLocationKey, NO_VARIANT } from '../worldDataVariants.js';   // RR3: WorldUpdate's registry
 import { ONLINE_GUARD_WINDOWS, guardWindowStep } from './onlineGuard.js';   // GUARD-ONLINE: a guarded quest's window online is its arrival's
 import { raisedSince } from './questStamps.js';   // TIME3: a wave's interval charges a raise whole
+import { waveIsAwaited, questWaitsShort, ONLINE_DELAY_SECONDS } from './clock.js';   // WAVE-WAIT: a wave the quest waits on comes on the short wait online
 import { stringHash } from '../../formats/netRuntime.js';   // VERMIN-SHARED: a shared copy's pick, seeded (a leaf)
 import { seededFirst } from '../wind.js';   // VERMIN-SHARED: the port's one seeded die (imports nothing)
 /** TIME3 (bible/06-Systems/Online-Time-Arc.md 6.3): the SKY a quest reads an hour, a date or a season on - its own
@@ -2282,6 +2283,17 @@ export class CreateFoe extends ActionTemplate {
    *  draw is unconditional; floor(r * 0) is 0 either way. */
   _range(n) { return Math.floor((this.parentQuest?.rolls ?? Math.random)() * n); }
 
+  /** WAVE-WAIT (bible/06-Systems/Online-Waits.md WAIT2): how long the wave's first arrival may wait - its interval (DFU's
+   *  Range(0, interval) backdate, below), or, online and until the wave first comes, the short wait (ONLINE_DELAY_SECONDS:
+   *  24 of the character's minutes, about two real minutes of play) for a wave the quest waits on (clock.js
+   *  waveIsAwaited, read once). The waves after it keep the script's interval - once the messenger has come, the gap is
+   *  the script's pacing again. Offline, and for every wave the quest does not wait on, the interval: DFU's draw whole. */
+  _firstArrivalSeconds() {
+    if (this.spawnCounter > 0 || !questWaitsShort(this.parentQuest)) return this.spawnInterval;
+    this._awaited ??= waveIsAwaited(this.parentQuest, this.foeSymbol?.name);
+    return this._awaited ? Math.min(this.spawnInterval, ONLINE_DELAY_SECONDS) : this.spawnInterval;
+  }
+
   update(_caller) {
     const world = this.parentQuest.hooks?.world;
     if (!world?.createFoeGameObjects) return;   // headless / spawn seam absent - the charter
@@ -2302,7 +2314,9 @@ export class CreateFoe extends ActionTemplate {
     // spends the world's played time alone, the Clock's own law (quest/clock.js chargeSeconds) [SUPERSEDES TIME3's raise
     // spent whole]
     const raisedNow = this.parentQuest.raisedSeconds?.() ?? null;
-    if (this.lastSpawnTime === 0) { this.lastSpawnTime = gameSeconds - this._range(this.spawnInterval); this._lastTick = gameSeconds; }
+    // WAVE-WAIT: the wave's first arrival - its interval, or online the short wait for a wave the quest waits on
+    const first = this._firstArrivalSeconds();
+    if (this.lastSpawnTime === 0) { this.lastSpawnTime = gameSeconds - (this.spawnInterval - first) - this._range(first); this._lastTick = gameSeconds; }
     // AUDIT WORLD7/8 A3: a marker AHEAD of the world (an offline save loaded online is game-weeks past the shared
     // calendar; the relay's welcome can correct the clock backwards) spawned nothing for the whole offset - a
     // backward gap online is a resume too: the marker stands here. A6: the marker moves on the in-flight path as well
@@ -2310,6 +2324,9 @@ export class CreateFoe extends ActionTemplate {
     else if (this._lastTick == null) { if (Number.isFinite(step) && (gameSeconds - this.lastSpawnTime > step || gameSeconds < this.lastSpawnTime)) this.lastSpawnTime = gameSeconds; this._lastTick = gameSeconds; }   // a resume past a step: the time away is forgiven whole and the first wave waits a full interval from here (OL3's standing-up arm)
     else if (Number.isFinite(step) && gameSeconds < this._lastTick) { this.lastSpawnTime = gameSeconds; this._lastTick = gameSeconds; }
     else { const raised = Number.isFinite(step) ? Math.min(raisedSince(raisedNow, this._lastRaised), gameSeconds - this._lastTick) : 0; const forgiven = Math.max(0, gameSeconds - this._lastTick - raised - step) + raised; if (forgiven > 0) this.lastSpawnTime += forgiven; this._lastTick = gameSeconds; }
+    // WAVE-WAIT: until it first comes, an awaited wave is never further away than the short wait - a resume, a load that
+    // stamped `now` (restoreSaveData's quirk: a full interval) or a failed roll lands it inside one, not a whole interval on
+    if (first < this.spawnInterval && !this.spawnInProgress) this.lastSpawnTime = Math.min(this.lastSpawnTime, gameSeconds - (this.spawnInterval - first));   // (never while one is in flight: its start consumed the interval, and the next is the script's)
     this._lastRaised = raisedNow;
 
     // Max spawns reached - cleared only by a set/rearm

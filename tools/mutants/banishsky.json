@@ -1,0 +1,119 @@
+[
+  {
+    "name": "BANISH-SKY-the-term-ignores-the-sky",
+    "file": "src/systems/standing.js",
+    "old": "export const banishmentTermMinutes = () => BANISHMENT_MINUTES / skyPerWorld();",
+    "new": "export const banishmentTermMinutes = () => BANISHMENT_MINUTES;",
+    "tests": [
+      "test/banishsky_standing.test.js"
+    ]
+  },
+  {
+    "name": "BANISH-SKY-a-bad-rate-is-taken",
+    "file": "src/systems/standing.js",
+    "old": "return Number.isFinite(r) && r > 0 ? r : 1; };",
+    "new": "return r; };",
+    "tests": [
+      "test/banishsky_standing.test.js"
+    ]
+  },
+  {
+    "name": "BANISH-SKY-the-days-said-on-the-event-clock",
+    "file": "src/systems/standing.js",
+    "old": "  return Number.isFinite(left) ? Math.ceil((left * skyPerWorld()) / 1440) : left;",
+    "new": "  return Number.isFinite(left) ? Math.ceil(left / 1440) : left;",
+    "tests": [
+      "test/banishsky_standing.test.js"
+    ]
+  },
+  {
+    "name": "BANISH-SKY-the-court-stamps-the-old-term",
+    "file": "src/systems/standing.js",
+    "old": "  r.banishedUntil = Number.isFinite(worldNow) ? worldNow + banishmentTermMinutes() : null;",
+    "new": "  r.banishedUntil = Number.isFinite(worldNow) ? worldNow + BANISHMENT_MINUTES : null;",
+    "tests": [
+      "test/banishsky_standing.test.js"
+    ]
+  },
+  {
+    "name": "BANISH-SKY-the-first-read-stamps-the-old-term",
+    "file": "src/systems/standing.js",
+    "old": "  if (!Number.isFinite(r.banishedUntil)) r.banishedUntil = worldNow + banishmentTermMinutes();",
+    "new": "  if (!Number.isFinite(r.banishedUntil)) r.banishedUntil = worldNow + BANISHMENT_MINUTES;",
+    "tests": [
+      "test/banishsky_standing.test.js"
+    ]
+  },
+  {
+    "name": "BANISH-SKY-the-install-forgets-the-sky",
+    "file": "src/systems/worldTick.js",
+    "old": "  setBanishmentCalendar(_skyWall ? skyPerWorldMinute : null);",
+    "new": "  setBanishmentCalendar(null);",
+    "tests": [
+      "test/banishsky_standing.test.js"
+    ]
+  },
+  {
+    "name": "BANISH-SKY-the-rate-inverted",
+    "file": "src/systems/worldTick.js",
+    "old": "  return ms > 0 ? MINUTES_PER_DAY / (ms * ONLINE_MINUTES_PER_MS) : 1;",
+    "new": "  return ms > 0 ? (ms * ONLINE_MINUTES_PER_MS) / MINUTES_PER_DAY : 1;",
+    "tests": [
+      "test/banishsky_standing.test.js"
+    ]
+  },
+  {
+    "name": "BANISH-SKY-offline-says-real-time",
+    "file": "src/systems/worldTick.js",
+    "old": "  if (!_sharedClock || !Number.isFinite(worldMinutes) || worldMinutes <= 0) return null;",
+    "new": "  if (!Number.isFinite(worldMinutes) || worldMinutes <= 0) return null;",
+    "tests": [
+      "test/banishsky_standing.test.js"
+    ]
+  },
+  {
+    "name": "BANISH-SKY-the-hours-rounded-down",
+    "file": "src/systems/worldTick.js",
+    "old": "  return real >= 120 ? `about ${Math.ceil(real / 60)} hours` : `about ${real} minute${real === 1 ? '' : 's'}`;",
+    "new": "  return real >= 120 ? `about ${Math.round(real / 60)} hours` : `about ${real} minute${real === 1 ? '' : 's'}`;",
+    "tests": [
+      "test/banishsky_standing.test.js"
+    ]
+  },
+  {
+    "name": "BANISH-SKY-the-priest-counts-event-days",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "    const days = banishmentDaysLeft(entity, regionIndex, worldNow());",
+    "new": "    const days = Math.ceil(banishmentLeft(entity, regionIndex, worldNow()) / 1440);",
+    "tests": [
+      "test/banishsky_standing.test.js"
+    ]
+  },
+  {
+    "name": "BANISH-SKY-the-priest-says-no-real-time",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "        ...(real ? line(`(${real})`) : []),\n",
+    "new": "",
+    "tests": [
+      "test/banishsky_standing.test.js"
+    ]
+  },
+  {
+    "name": "BANISH-SKY-the-page-counts-event-days",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    const days = banishmentDaysLeft(entity, i, worldNow);",
+    "new": "    const days = Math.ceil(left / 1440);",
+    "tests": [
+      "test/banishsky_standing.test.js"
+    ]
+  },
+  {
+    "name": "BANISH-SKY-the-page-says-no-real-time",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "left${real ? `, ${real}` : ''}` : '';",
+    "new": "left` : '';",
+    "tests": [
+      "test/banishsky_standing.test.js"
+    ]
+  }
+]

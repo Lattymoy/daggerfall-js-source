@@ -29,7 +29,7 @@
   {
     "name": "REP3-the-term-never-stamped",
     "file": "src/systems/standing.js",
-    "old": "  r.banishedUntil = Number.isFinite(worldNow) ? worldNow + BANISHMENT_MINUTES : null;\n  return true;",
+    "old": "  r.banishedUntil = Number.isFinite(worldNow) ? worldNow + banishmentTermMinutes() : null;   // BANISH-SKY: the calendar's thirty days\n  return true;",
     "new": "  return true;",
     "tests": [
       "test/rep3_banishment.test.js"

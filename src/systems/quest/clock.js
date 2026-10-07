@@ -288,6 +288,31 @@ export function clockIsDeadline(quest, clock) {
   return readsAsDeadline(quest, name) && !closes(quest, name);
 }
 
+/** WAVE-WAIT (2026-10-07, bible/06-Systems/Online-Waits.md WAIT2; Mac: "Take care of this", over the sweep of the waits
+ *  still long online): A WAVE THE QUEST WAITS ON. A wave (`create foe` / `send ... every N minutes`) runs on played time
+ *  online (WORLD7's step, QCLOCK-WORLD's lived charge - a rest spends none of it), and REST8 left its interval whole as
+ *  pacing. Pacing it is, for a wave that harasses: its gap is the player's breathing space, and the corpus's long ones
+ *  are all of that kind - K'avar's archers (2000 minutes), the knights on the totem (1300), the Sx100 ambushes, the
+ *  thieves and the posses. But one wave is not pacing, it is the quest's next page: the King of Worms (S0000021) is mute
+ *  until his zombie messenger is killed (`killed 1 _zombie_` -> `when _S.02_ and _S.15_` -> his offer), and it is sent
+ *  `every 1410 minutes` - up to 117 real minutes of play, about an hour on average, before a main-quest giver would
+ *  speak, and nothing the player could do brought it sooner. THE READING: a wave whose foe's KILL a quest waits on - the
+ *  `killed` task, and what it reaches through a positive `when` (`reached`, the clock reading's own walk), offers the
+ *  quest (a Prompt) or settles it (a reward, TrainPc, the next quest). Of the corpus's waves two read so: S0000021's
+ *  messenger, and N0B20Y02's Nightblades (the guard's reward waits on their three deaths - 55 minutes, inside the guard's
+ *  three hours). Every other wave's kill reaches a word at most (`say`), or nothing: the posse's, the bribe path's
+ *  knights and barbarians (`when _S.07_ and _yes_` says a line). An `injured` reader is the foe's own cry, not the
+ *  quest's page, and is not read. */
+export function waveIsAwaited(quest, foeName) {
+  if (!foeName || !quest?.tasks) return false;
+  for (const [tn, t] of quest.tasks) {
+    if (!t.actions.some((a) => a.isTriggerCondition && a.constructor?.typeName === 'KilledFoe' && a.foeSymbol?.name === foeName)) continue;
+    const r = reached(quest, tn);
+    if (r.settles || r.types.has('Prompt')) return true;
+  }
+  return false;
+}
+
 /** TIMEFREE: the clocks whose end is a PENALTY the reading above cannot see - the end does not lose the quest or cost
  *  a standing, it sends something after the player: the cure quests' hunters (`when _huntstart_ create foe`),
  *  U0C00Y00's monster slipping away to its hideout, M0B11Y18's mark leaving the house. AUDIT TIMEFREE T6: and

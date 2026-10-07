@@ -208,8 +208,8 @@ migration.
 | Interior light and its night ambient | `interior.js`, `worldModes.js` (`isNight(worldMinutes() % 1440)`) |
 | The season's ground, the climate season, the herbs' and the writs' season | `world.js` and `exterior.js` (`refreshSeason`, `climateSeasonFromMinutes`, `seasonValue`); `net/nodeLaw.js dayDate` (with the account service, section 4) |
 | The air's month and hour for survival, the forager's month (the hunter's winter too, until HUNT-OUT removed the hunt, 2026-10-04) | `world.js`, `exterior.js`, `dungeonContext.js` (the air); `monthValue` into `foragingInstall.js` |
-| The calendar: holidays and Suns Rest, Heart's Day, the kitchen's hours, the temple's cure days, the Witches Festival's spell price, the holiday's words on entering a town, a Daedra prince's summoning day | `worldModes.js` (`getHolidayId`, `worldNow`, `dayOfYearFromMinutes`, the spellbook's `classicMinutes`), `world.js`. The coven's once-a-day re-roll is a stamp and stays on the event clock |
-| Opening hours, locks by the hour, who is inside | `worldModes.js` (`_hour`, `resolveBuildingUnlocked`), `characters/interiorPeople.js` |
+| The calendar: holidays and Suns Rest, Heart's Day, the kitchen's hours, the temple's cure days, the Witches Festival's spell price, the holiday's words on entering a town, a Daedra prince's summoning day | `worldModes.js` (`getHolidayId`, `worldNow`, `dayOfYearFromMinutes`, the spellbook's `classicMinutes`), `world.js`. The coven's once-a-day re-roll is a stamp and stays on the event clock. [SUMMON-NAME, 2026-10-07 (`Online-Waits.md` WAIT3): online the temple's and the guild's summoner calls the prince the player names, so the day gates nothing there; offline and at a coven, as here] |
+| Opening hours, locks by the hour, who is inside | `worldModes.js` (`_hour`, `resolveBuildingUnlocked`), `characters/interiorPeople.js` [online the relieved buildings - OL4's shops, OL5's guild hall, OL6's bank, library and palace (`Online-Waits.md` WAIT1) - stand on the shift whatever the hour] |
 | The curses' and the careers' sun and moon | the rounds' `skyMinutes` (`worldTick.js`, the four hosts), `world.js`' sun rungs and party-travel refusal, `dungeonContext.js`' sunlight seam |
 | Night's spawns, and the overworld's bands at night | `encounters.js`, `campEncounters.js` (`skyMinutes`); `world.js` `bandNight` |
 | Enchantments and loot powers that read the season or the moon | `hostEnchant.js`, `lootPowers.js` |
@@ -231,7 +231,7 @@ Nothing in this table changes. It is listed so the census has its other half.
 | Faction powers and regional conditions | `worldTick.js runCalendarArms`, the world half |
 | Stock by the day or the month: guild shelves, potions, houses for sale, shops | `worldModes.js` (`dayShelf`, `stockGuildPotions`, `housesForSale`), `shopStock.js` |
 | The weather's rolls and evolution (6.4) | `worldTick.js`, `weatherSim.js` |
-| Terms: a banishment, a pardon | `standing.js`, `arrestFlow.js`, the hosts' `worldNow` (`trustedWorldMinutes`) |
+| Terms: a banishment, a pardon | `standing.js`, `arrestFlow.js`, the hosts' `worldNow` (`trustedWorldMinutes`) [BANISH-SKY, 2026-10-07 (`Online-Waits.md` WAIT4): stamped here still; the banishment's thirty days are sized by the sky's calendar, the one the player sees - thirty real hours] |
 | Absence: TM-1's recovery, SURV7's fresh start, the save's `worldMinutes` | `worldTick.js` (`payAbsenceWhenHeard`), `save.js` |
 | The world's half of a dead span | `deathRespawn.js` (`skipDeadMinutes`) |
 | Camps: a fire's hours and a kit's | `scenes/camps.js` |
@@ -415,7 +415,10 @@ night is a raise, which 6.3c charges nothing. So 6.3b's reading comes back for i
   84 days.
 - **Kept as 6.3c has them:** a taken bounty lapses and shows its time (AUDIT REST II Q3: one held through 6.3b's
   never-lapse runs from the first online tick after the update, once - below); a letter waits for town and the sky's morning;
-  `daily from` windows on the sky; spawn intervals, QAE RaiseTime and TrainPc's hours as pacing.
+  `daily from` windows on the sky; spawn intervals, QAE RaiseTime and TrainPc's hours as pacing. [WAVE-WAIT, 2026-10-07
+  (`Online-Waits.md` WAIT2): but a wave the quest WAITS on - its kill an offer or a reward, S0000021's messenger and
+  N0B20Y02's Nightblades - first comes inside the short wait; the waves after it, and every wave that harasses, keep
+  their pacing]
 - **The edge**: a deadline read as a delay fires its end two minutes in, as under 6.3b; a delay read as a deadline only
   waits its played days now (6.3b froze it). The pins guard the first: `test/rest8_questwaits.test.js` (6.3b's file,
   re-aimed - every vendored clock ticked past the short wait online: all 127 delays land, not one of the 272 deadlines
@@ -704,3 +707,9 @@ terms; 9 is new and not built.
   guard is a deadline by hand - read as a delay, it was cut to the 24-minute short wait and the mage was hidden before
   the attack its 55-minute interval sends; a guard who stepped out in those two real minutes lost the attack for good.
   272 and 127. `test/fb1006c_guardwindow.test.js`, `tools/mutants/fb1006c.json`.
+- 2026-10-07: WAITS (`Online-Waits.md`, Mac: "What are some elements that are still far too lengthy?", then "Take care of
+  this, you have autonomy"): the sweep of every wait still long online, and four built - OL6 (the bank, the library and
+  the palace on the shift), WAVE-WAIT (a wave the quest waits on first comes inside the short wait), SUMMON-NAME (online
+  the summoner calls the prince the player names) and BANISH-SKY (a banishment's thirty days are the sky's calendar's).
+  Its OPEN holds what is still a call: Loiter and the night interval, the holidays, the full moon, banishment's length,
+  the relay's cadences.

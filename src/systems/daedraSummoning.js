@@ -81,6 +81,45 @@ export const SUMMON_TEXT = Object.freeze({
   notToday: 480, areYouSure: 481, before: 482, failed: 484,
 });
 
+/**
+ * SUMMON-NAME (2026-10-07, bible/06-Systems/Online-Waits.md WAIT3; Mac: "Take care of this", over the sweep of the
+ * waits still long online). DFU's temple and Mages Guild answer one prince on his own day of the year and nobody on the
+ * other 344 (`daedraForSummoner` below, unchanged); a single player waits a rest of seconds for the day. Online the day
+ * is the sky's (TIME1) and no rest moves the sky: since SKY-SLOW a sky year is fifteen real days, so a prince answered
+ * for one real hour in fifteen days, and between Vaernima's day (190) and Nocturnal's (248) nobody answered anywhere
+ * for fifty-eight real hours. For the reason OL4 gave the shops their night shift - a schedule no player can wait out
+ * by resting is a real-time lockout - online the summoner calls the prince the player NAMES, on any day. The rest is
+ * DFU's whole: the price off the summoner's own regard, the chance off the prince's (and his weather's favour),
+ * Sheogorath's gatecrash, the prince met before, the gold gone before the roll, the quest he offers. A witches' coven
+ * keeps its own law - one prince a day, drawn (the event clock's day online, TIME1), Glenmoril's always Hircine - and
+ * offline nothing moves.
+ */
+export const summonsByName = ({ factionId = 0, factionType = null, online = false } = {}) => !!online
+  && factionId !== GLENMORIL_WITCHES && factionType !== WITCHES_COVEN_TYPE;
+/** SUMMON-NAME: the sixteen as the online summoner lists them - by name, the way a player looks for one. */
+export const PRINCES_BY_NAME = Object.freeze([...DAEDRA].sort((a, b) => a.name.localeCompare(b.name)));
+/** SUMMON-NAME: the question online. Record 481 opens "Today is %dat, the day of summoning for %dae", which online
+ *  is false on every day but his; its own next words ask the question, and are the box - DFU's rows from "Do you",
+ *  its breaks and its "you life" kept. */
+export const SUMMON_BY_NAME_ROWS = Object.freeze([
+  Object.freeze({ text: 'Do you, %pcn, wish', center: true }),
+  Object.freeze({ text: 'to risk you life and very soul by summoning', center: true }),
+  Object.freeze({ text: '%dae into our mundane world?', center: true }),
+]);
+/** SUMMON-NAME: the online flow's boxes (guildServiceWindows.js ServiceFlowWindow's shapes) - the sixteen by name, then
+ *  the question about the one picked. `summon(daedra)` is the host's Yes, the popup's own answer (a box, or null once a
+ *  window is dispatched), wrapped into the flow's list; `expand(rows, daedra)` resolves %dae and %pcn. */
+export function summonByNameBoxes(summon, expand = (rows) => rows) {
+  return [{
+    picker: PRINCES_BY_NAME.map((d) => d.name),
+    onPick: (i) => [{
+      rows: expand(SUMMON_BY_NAME_ROWS, PRINCES_BY_NAME[i]),
+      buttons: 'YesNo',
+      onYes: () => { const next = summon(PRINCES_BY_NAME[i]); return next ? [next] : null; },
+    }],
+  }];
+}
+
 /** DAEDRA1 - THE SUMMONING'S OWN MACRO, and the reason it needs one.
  *  Record 481 reads "Today is %dat, the day of summoning for %dae. Do
  *  you, %pcn, wish to risk you life and very soul by summoning %dae
