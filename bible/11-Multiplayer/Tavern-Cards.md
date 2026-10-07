@@ -1,8 +1,8 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, written before a line of it is built (2026-10-07). Nothing here ships yet. The questions in
-section 9 are Mac's to answer; until he does, every DECIDED below is the record's proposal, and a slice that ships one
-records any change here first.**
+**Status: DESIGN RECORD, written before a line of it is built (2026-10-07). Nothing here ships yet. Mac answered
+four of section 9's five questions the same day; the card art is still open. Every DECIDED below binds the build
+slices, and a slice that ships one records any change here first.**
 
 ## Mac's words
 
@@ -13,6 +13,8 @@ records any change here first.**
   particpate in our own unique card game."**
 - **"I imagine actual detailed card physics, needing to be in a tavern and being set up in a sort of table enviroment
   where you can see other players sprites."**
+- answering this record (section 9): the order **"Hold'em first"**; the collectible rules **"Iliac Hand as
+  proposed"**; the stakes **"Real gold"**; offline play **"Yes, patrons play"**.
 
 ## How to read this page
 
@@ -31,7 +33,7 @@ narrows its Ledger section A row (`01-Overview/Port-Ledger.md`), the way DICE1 a
 - **DECIDED (Mac): the table lives in a tavern.** A game is played seated at a tavern table, never from a menu.
 - **DECIDED (Mac): a collectible game of our own** - cards are collected in play and built into decks. This is the meta
   game: the long arc, the reason to come back.
-- **DECIDED: Texas Hold'em ships first, as the house game.** It is what the thread asked for by name, it needs no
+- **DECIDED (Mac): Texas Hold'em ships first, as the house game.** It is what the thread asked for by name, it needs no
   collection, and it builds every seam the collectible game stands on - the table, the seat, the deal, the hidden hand,
   the card physics, the relay's shuffle - with rules nobody has to design. The collectible game then lands on a table
   that already works.
@@ -82,8 +84,8 @@ narrows its Ledger section A row (`01-Overview/Port-Ledger.md`), the way DICE1 a
 - **DECIDED: the hand evaluator is one pure module** (`net/cardLaw.js` or its name at CARDS1), read by both ends like
   `net/dice.js` is: five-of-seven best hand, every category from high card to the straight flush, the wheel (A-2-3-4-5),
   ties split by kicker, side pots by contribution. Its pins are deepEqual against hand-written tables, mutation-checked.
-- **DECIDED: stakes are gold.** Offline, the player's own purse. Online, see section 5.
-- **DECIDED: offline, tavern patrons play.** Sitting at a table with nobody there seats one to five patrons from the
+- **DECIDED (Mac): stakes are gold.** Offline, the player's own purse. Online, see section 5.
+- **DECIDED (Mac): offline, tavern patrons play.** Sitting at a table with nobody there seats one to five patrons from the
   tavern's own crowd, each with a purse and a temperament (tight, loose, a bluffer). They are this game's NPCs, not
   DFU's: their talk and their money are the table's, never a quest's. A patron who loses his purse leaves the table.
 
@@ -108,8 +110,8 @@ narrows its Ledger section A row (`01-Overview/Port-Ledger.md`), the way DICE1 a
 
 ## 6. The collectible game (the meta game)
 
-The rules below are the record's PROPOSAL, written so Mac has something concrete to cut. Section 9 asks whether he
-wants this, his own design, or a design pass of its own before any of it is built.
+**DECIDED (Mac): "Iliac Hand as proposed".** The rules below were the record's proposal; Mac took them as written.
+Their numbers (deck size, turn count, magicka cap) are MEASURE until CARDS7 plays them against patrons and reports.
 
 ### 6.1 The game - "Iliac Hand" (working name)
 
@@ -179,12 +181,10 @@ Each ships alone and is verifiable without the next.
 | **CARDS9** | Collecting: foe drops, tavern packs, quest and boss cards, cards in the trade and the market. |
 | **CARDS10** | Iliac Hand at the table, offline against patrons and online through the relay; the season ladder. |
 
-## 9. Open questions for Mac
+## 9. Questions for Mac (four answered 2026-10-07)
 
-1. **The order.** Hold'em first, then the collectible game on the same table (the record's proposal) - or the
-   collectible game first?
-2. **The collectible game's rules.** Iliac Hand as written in section 6, your own design, or a design pass of its own
-   before CARDS7?
-3. **Gold stakes.** Real gold at the table (offline the purse, online escrowed) - or chips that buy nothing?
-4. **Offline play.** Tavern patrons as opponents (the record's proposal) - or online only?
-5. **The card art.** Who paints the cards, and in what style?
+1. **The order.** ANSWERED: Hold'em first.
+2. **The collectible game's rules.** ANSWERED: Iliac Hand as proposed.
+3. **Gold stakes.** ANSWERED: real gold (offline the purse, online escrowed).
+4. **Offline play.** ANSWERED: tavern patrons play.
+5. **The card art.** OPEN: who paints the cards, and in what style? Needed by CARDS8, not before.
