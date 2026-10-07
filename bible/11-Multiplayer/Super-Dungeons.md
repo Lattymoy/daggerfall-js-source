@@ -668,4 +668,46 @@ dungeon home is its own, unchanged; `scenes/exterior.js` FLAGGED - the bench is 
 Pins: `test/sd2d_castout.test.js` (4); `tools/mutants/sd2d.json` (8, all dead). `tools/mutants/sd2b.json`'s
 SD2b-the-ground-pulled re-aimed by content (the guard has a line of its own beside the cast-out; all 17 dead).
 
-The Hollow's world half is whole: SD4 makes it Super - its difficulty, its end, the Rift and the Return.
+The Hollow's world half is whole: SD4 makes it Super - its difficulty (SD4a), its end, the Rift and the Return (SD4b).
+
+### SD4a - shipped 2026-10-07 (the Super difficulty)
+
+Section 5's table, in the dungeon host. `scenes/dungeonContext.js` reads the tier ONCE (`_superTier`:
+`dungeonTier(dfLocation) === 'super'` - TIER1's one law over the Hollow's location word) before its fires, and every arm
+below it asks that; the numbers are `world/sdDungeon.js`'s.
+
+- **Three foes at every enemy marker** - the Elite's own expansion (`expandEliteEnemies`, `ELITE_FOE_MULTIPLIER`), so
+  the 64 KiB foe frame is the budget the Elite proved at 151 markers. Each record carries `superTier` beside the Elite's
+  mark, the same on every client (the foe frame indexes the list by position).
+- **x4 health, x2.5 damage** (`scaleSuperFoe`, `applyEliteScaling`'s own arm before the Elite's). The foe also wears the
+  Elite Dungeon's mark, so its poise (`ai/tells.js`) and its body's loot cap (`systems/foeLootCap.js`) are an Elite
+  dungeon's at the least.
+- **The top band.** The layout's random foes and a rest's encounter are rolled at `superFoeLevel` - the player's level,
+  never under 24 - and a class foe is built at it (a revenant's or a bout fighter's own level first).
+  ChooseRandomEnemyType draws only from a table's last six rows past level 18, on both of its arms (the alternate
+  arm's power is full at 20), so 24 is the top band whatever the dice say. The player's own level never moves: the loot
+  tables still read it.
+- **Six elites** (`pickDungeonElites`'s `count`, `SUPER_ELITE_FOES`), the same on every client. A Super dungeon's elite
+  is the Elite Dungeon's stack read the same way (`systems/eliteFoes.js`): its health is the dungeon's and the elite's
+  added (2 + 5 = 7 in an Elite dungeon, 4 + 5 = 9 here), its damage the dungeon's and the elite's extra over a plain
+  blow (2 + 2 = 4 there, 2.5 + 2 = 4.5 here). A puppet of another player's elite takes the blows; its maximum is its
+  owner's word.
+- **Loot +50%**, drop and quality, on its foes' bodies (`SUPER_LOOT_OPTS`) and its treasure piles - the Elite's +20%,
+  in the same shape.
+- **No fire of its own** - `dungeonFirePlan`'s `cold` answers none and casts no ray: no campfire, no ward, no rest
+  point, no mark. The layout's own braziers are DFU's flats, as anywhere.
+
+A loose foe stood later (a rest's, a search's, a quest's) keeps the Elite's law: built at the band's level, not scaled -
+only the layout's list is the place's own.
+
+THE FOUR HOSTS: `scenes/dungeonContext.js` WIRED (all of it); `scenes/world.js` FLAGGED - the Hollow's location already
+carries its word (SD2b); `scenes/worldModes.js` FLAGGED - nothing of the mode machine reads a tier; `scenes/exterior.js`
+FLAGGED - the bench is offline, and a Super dungeon stands nowhere else.
+
+Pins: `test/sd4a_super.test.js` (7); `tools/mutants/sd4a.json` (23, all dead). PINS MOVED: the Elite's by-source pins
+read the Super's arm beside theirs - `test/elitedungeons.test.js` (the expansion, the piles' quality),
+`test/elitefloor_foetitle.test.js` (the promotion's arm), `test/lr1_lootrarity.test.js`, `test/world8.test.js` and
+`test/audit23_systems.test.js` (the piles' roll); `tools/mutants/revenant.json`'s ELITE-FLOOR-the-per-client-level-asked re-aimed at the promotion's new
+options.
+
+SD4b is next: the end, the Rift and the Return.

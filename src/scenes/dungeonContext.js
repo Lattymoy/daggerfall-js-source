@@ -236,6 +236,8 @@ import { collectDungeonEnemies, expandEliteEnemies, enemyHierarchyOrder } from '
 import { isOnlinePage } from '../systems/onlineLane.js';   // ELITE FOES: online play only
 import { elitesAllowed, pickDungeonElites, promoteEliteFoe, grantEliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, eliteCorpseSize } from '../systems/eliteFoes.js';   // ELITE FOES: 3-4 champions in an Elite Dungeon
 import { ELITE_FOE_MULTIPLIER, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE, ELITE_LOOT_DROP_MULT, ELITE_LOOT_QUALITY_MULT } from '../world/spawnedDungeons.js';   // ELITE: an elite spawn's foe count and strength
+import { superFoeLevel, scaleSuperFoe, SUPER_ELITE_FOES, SUPER_LOOT_OPTS, SUPER_LOOT_DROP_MULT, SUPER_LOOT_QUALITY_MULT } from '../world/sdDungeon.js';   // SD4a: a Super dungeon's difficulty
+import { dungeonTier } from '../systems/dungeonTier.js';   // SD4a: the location's tier, the one law (TIER1)
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 import { foeTitle } from '../systems/foeTitle.js';   // FOE-TITLE: what a revenant, a champion or an elite is called
 import { revenantFleeStep, revenantFleeHealth, revenantDeed, revenantSlain, revenantSay, revenantFleeEvent, revenantCorneredEvent, revenantEscapeEvent, revenantSlainEvent, revenantUnbrokenEvent, revenantFlinch, revenantSignatureEvent, revenantById, applyRevenant, grantRevenantLoot, revenantForLair, releaseRevenantStand, revenantSpawnOptions, revenantTauntEvent, revenantWakeEvent, revenantToReturn, REVENANT_TAUNT_DISTANCE } from '../systems/revenant.js';   // RVN7d: a revenant in its lair, its taunt, its band, a rest's return
@@ -957,6 +959,11 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     }
   }
 
+  // SD4a (bible/11-Multiplayer/Super-Dungeons.md section 5): A SUPER DUNGEON - a Hollow, by its location's word
+  // (systems/dungeonTier.js) - is the port's hardest (world/sdDungeon.js): no fire of its own, its random foes rolled at
+  // the top band and built at its level, three at every marker as an Elite's, each x4 health and x2.5 damage, six
+  // elites among them, and its loot +50%. Read once here; every arm below asks it.
+  const _superTier = dungeonTier(dfLocation) === 'super';
   // REST3 (2026-10-03, bible/06-Systems/Rest-Arc.md section 4; Mac: "Dungeon layouts now recieve multiple strategic
   // placements for campfires"): THE DUNGEON'S OWN FIRES (world/dungeonFires.js). Placed here - after every block's
   // geometry is in the collider, before the flats are batched and the lights' flicker is sized - so a placed fire is a
@@ -972,6 +979,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     ...fireLayoutInputs(dungeon.blocks, dungeonHearths),   // AUDIT REST-PARTY C6: the law's doors and fires, read as tools/dungeonFireProbe.mjs reads them
     seed: dfLocation?.dungeon?.recordElement?.header?.locationId ?? 0,
     elite: !!dfLocation?.elite,
+    cold: _superTier,   // SD4a: none in a Super dungeon - the Hour is cold
   });
   const placedFires = firePlan?.fires ?? [];
   if (placedFires.length) {
@@ -1025,7 +1033,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     {
       locationId: dfLocation.dungeon.recordElement.header.locationId,
       dungeonType: dfLocation.mapTableData.dungeonType,
-      playerLevel: effectiveLevel(playerEntity),   // SOFTCAP2: a mentor's dungeon draws the GROUP's monsters. ChooseRandomEnemyType bands on the LIVE level (wired audit 2026-08-16; was stuck at the default 1)
+      playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity)) : effectiveLevel(playerEntity),   // SOFTCAP2: a mentor's dungeon draws the GROUP's monsters. ChooseRandomEnemyType bands on the LIVE level (wired audit 2026-08-16; was stuck at the default 1); SD4a: a Super dungeon's at the top band
     });
   // PROF2: A DUNGEON VEIN'S WALL (profIdentity / veinWall below; bible/06-Systems/Professions-Arc.md 23) - over the
   // layout's own markers, before an elite copy is added: every client of the dungeon casts the same rays.
@@ -1063,7 +1071,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const _hallBeasts = _undercroftHall ? _undercroftHall.beasts.map((b, i) => ({ x: b.x, y: b.y, z: b.z, mobileType: b.mobileType, fixed: true, reaction: 'passive', gender: 'unspecified', spawnDistanceType: 0, loadID: 0x55430100 + i, blockIndex: -1, arenaChained: i })) : null;
   /** @type {number[][] | null} LW6b: the dungeon's resting places, sounded once (restingSpots) */
   let _restingSpots = null;
-  const enemies = dfLocation?.elite
+  const enemies = dfLocation?.elite || _superTier   // SD4a: a Super dungeon stands the Elite's three at every marker
     ? expandEliteEnemies(_layoutEnemies, {
       copies: ELITE_FOE_MULTIPLIER,
       clearance: (from, dir, dist) => collider.raycast([from[0], from[1] + 0.9, from[2]], dir, dist),
@@ -1072,13 +1080,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       floor: (at) => { const d = collider.raycast([at[0], at[1] + 1, at[2]], [0, -1, 0], 3); return Number.isFinite(d) ? at[1] + 1 - d : null; },
     })
     : (_hallBeasts ? [..._hallBeasts, ...deepFoesOf(_layoutEnemies, _undercroftHall.deep)] : _layoutEnemies);   // UNDERCROFT-DEEP: and the deep cellars' foes, past the hall's reach
+  if (_superTier) for (const e of enemies) e.superTier = true;   // SD4a: each record says so - its own scale and loot (applyEliteScaling, eliteLootOpts), on every client alike
   if (!_undercroftHall) markDungeonChampions(enemies, dfLocation.dungeon.recordElement.header.locationId);   // ARENA-FIX 4: no champion among the chained beasts   // LOOT7: the layout's champions, a hash of the place and the marker - every client the same, no wire word
   // ELITE FOES: an Elite Dungeon holds 3 or 4 champions among its foes - a pure pick over the list every client builds,
   // seeded by the dungeon's own id, so every client marks the same records (systems/eliteFoes.js)
   // ...and a normal dungeon at most one, one time in five
   // ONLINE ONLY: offline, no elites (the room's id is read straight off opts - onlineRoom() is declared below)
   // (ARENA-FIX 4: the undercroft's chained beasts stand passive, which the pick never takes)
-  if (elitesAllowed({ onlinePage: isOnlinePage(), inRoom: opts.selfId?.() != null })) pickDungeonElites(enemies, dfLocation?.dungeon?.recordElement?.header?.locationId ?? dfLocation?.name ?? '', { elite: !!dfLocation?.elite });
+  if (elitesAllowed({ onlinePage: isOnlinePage(), inRoom: opts.selfId?.() != null })) pickDungeonElites(enemies, dfLocation?.dungeon?.recordElement?.header?.locationId ?? dfLocation?.name ?? '', { elite: !!dfLocation?.elite, count: _superTier ? SUPER_ELITE_FOES : null });   // SD4a: a Super dungeon's six
   // C8 E1 (?foes): CLASS enemies (mobileType > 43, human morphology)
   // spawn as canonical rigs instead of their C3 billboards - one rig
   // per enemy (individual animation state), floor-snapped through the
@@ -1281,6 +1290,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  calculateAttackDamage reads `damageScale` at the tail, so every blow door - melee, bow,
    *  foe-on-foe - is covered). The record's `elite` rides `src`, so a respawn or a retype keeps it. */
   function eliteLootOpts(e) {
+    if (e?.superTier) return SUPER_LOOT_OPTS;   // SD4a: a Super dungeon's +50%
     return e?.elite ? { lootDropMult: ELITE_LOOT_DROP_MULT, lootQualityMult: ELITE_LOOT_QUALITY_MULT } : {};
   }
   /** MT-ii's law, at the build (AUDIT OH-F C4): SetupDemoEnemy.cs:85-86 overwrites the MobileEnemy STRUCT COPY
@@ -1302,7 +1312,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     foeDeps.applyProgressionScaling?.(entity, scaling);   // lazily loaded beside makeEnemyEntity; the dungeon's own deps (the import used `D`, which only the spawn builders below bind)
   }
   function applyEliteScaling(entity, e) {
-    if (e?.eliteFoe && entity && promoteEliteFoe(entity, { eliteDungeon: !!e.elite, checkLevel: false })) { if (e.elite) entity.elite = true; return; }   // ELITE-FLOOR: the pick's own (by the kind's level, every client alike)   // ELITE FOES: 5x health, 3x damage - 7x / 4x in an Elite Dungeon, in place of its doubling
+    if (e?.eliteFoe && entity && promoteEliteFoe(entity, { eliteDungeon: !!e.elite, superDungeon: !!e.superTier, checkLevel: false })) { if (e.elite) entity.elite = true; return; }   // ELITE-FLOOR: the pick's own (by the kind's level, every client alike)   // ELITE FOES: 5x health, 3x damage - 7x / 4x in an Elite Dungeon, in place of its doubling
+    if (e?.superTier && entity) { scaleSuperFoe(entity); return void applyChampion(entity, e.champion); }   // SD4a: a Super dungeon's - x4 health, x2.5 damage, an Elite dungeon's marks at the least
     if (!e?.elite || !entity) return void applyChampion(entity, e?.champion);   // LOOT7: a plain dungeon's champion (its loot reads the mark, so before it)
     entity.maxHealth = Math.max(1, Math.round(entity.maxHealth * ELITE_HEALTH_SCALE));
     entity.health = entity.maxHealth;
@@ -1363,7 +1374,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       const careerIndex = e.mobileType - 128;
       const cf = new D.ClassFile();
       cf.load(await D.fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`));
-      const entity = D.makeEnemyEntity(e.mobileType, basics, cf.career, e.level ?? effectiveLevel(D.playerEntity));   // SOFTCAP1: a mentor's dungeon is built at the group's level; ARENA2: a bout fighter at its tier's
+      const entity = D.makeEnemyEntity(e.mobileType, basics, cf.career, e.level ?? (_superTier ? superFoeLevel(effectiveLevel(D.playerEntity)) : effectiveLevel(D.playerEntity)));   // SOFTCAP1: a mentor's dungeon is built at the group's level; ARENA2: a bout fighter at its tier's; SD4a: a Super dungeon's class foe at its band
       applyEliteScaling(entity, e);   // ELITE: double health, double damage
       if (!puppet && e.level == null) applyProgressionScalingTo(entity, basics);   // SOFTCAP1: tougher high-tier foes against skills past 100 (a puppet is its owner's build); ARENA2: never a bout fighter (the ladder is a fixed mountain)
       applySpawnAlliance(entity, e);   // MT-ii / AUDIT OH-F C4
@@ -2729,7 +2740,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       restAsks: playerEntity.restAsks,   // SURV4 + SURV-TIERS: priced at the open (scenes/shared.js) - the bare floor asks twice in Hard; a fire on it, or any Casual floor, once
       enemyAlertActive: !!playerEntity.enemyAlertActive,
       dungeonType: dfLocation.mapTableData.dungeonType,
-      playerLevel: effectiveLevel(playerEntity),   // SOFTCAP2: mentor mode - the group's level
+      playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity)) : effectiveLevel(playerEntity),   // SOFTCAP2: mentor mode - the group's level; SD4a: a Super dungeon's at the top band
     });
     // RVN7d (bible/12-Enhanced-AI/Feud-Arc.md 18.4): in its own lair a due revenant answers the rest's first roll ("You
     // wake to Grushnak standing over you."); and any roll that hits may be a due one's return - the open world's arm.
@@ -3583,9 +3594,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  PLAYER's level and gender, the pile trio, the rarity roll at the dungeon's tier). */
   function rollPileItems() {
     const elite = !!dfLocation?.elite;   // ELITE: the piles get the same +20% drops and +20% quality as the foes
-    const items = generateLootItems(lootKey, { level: effectiveLevel(playerEntity), gender: playerEntity.gender }, undefined, elite ? { itemChanceScale: ELITE_LOOT_DROP_MULT } : {});
+    const items = generateLootItems(lootKey, { level: effectiveLevel(playerEntity), gender: playerEntity.gender }, undefined, _superTier ? { itemChanceScale: SUPER_LOOT_DROP_MULT } : elite ? { itemChanceScale: ELITE_LOOT_DROP_MULT } : {});   // SD4a: a Super dungeon's +50%
     addPileLootExtras(items, lootKey, Math.random, { locationIndex: dfLocation.mapTableData.dungeonType, luck: liveStat(playerEntity, 'luck'), level: effectiveLevel(playerEntity), where: 'dungeon' });   // FORAGE3: OnLootSpawned at the dungeon type's index; REALM P0.4: online, the level's gold divided back; AUDIT OH-F B3: the dungeon's own
-    rollLootRarity(items, { ...pileSource(dungeonRarityTier(dfLocation.mapTableData.dungeonType)), qualityMult: elite ? ELITE_LOOT_QUALITY_MULT : 1, family: dungeonFamily(dfLocation.mapTableData.dungeonType) }, { luck: liveStat(playerEntity, 'luck') });
+    rollLootRarity(items, { ...pileSource(dungeonRarityTier(dfLocation.mapTableData.dungeonType)), qualityMult: _superTier ? SUPER_LOOT_QUALITY_MULT : elite ? ELITE_LOOT_QUALITY_MULT : 1, family: dungeonFamily(dfLocation.mapTableData.dungeonType) }, { luck: liveStat(playerEntity, 'luck') });
     stampWonWeapons(items, 1);   // SIGIL1: a pile found online, its weapons' sigils rolled at the mint
     return items;
   }

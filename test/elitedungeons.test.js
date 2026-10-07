@@ -86,7 +86,7 @@ test('ELITE: a foe with damageScale 2 lands double; the player and scale-1 foes 
 test('ELITE by source: the dungeon host expands an elite list and scales every foe it mints', async () => {
   const { readFile } = await import('node:fs/promises');
   const src = await readFile(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
-  assert.match(src, /dfLocation\?\.elite\s*\?\s*expandEliteEnemies\(/, 'elite spawns expand the layout list');
+  assert.match(src, /dfLocation\?\.elite \|\| _superTier\s*(?:\/\/[^\n]*)?\n\s*\?\s*expandEliteEnemies\(/, 'elite spawns expand the layout list');   // SD4a (PIN MOVED): and a Super dungeon, the Elite's three at a marker
   assert.equal((src.match(/applyEliteScaling\(entity, e\);/g) ?? []).length, 2, 'both the class and the monster branch scale');
   assert.match(src, /entity\.maxHealth \* ELITE_HEALTH_SCALE/);
   assert.match(src, /entity\.damageScale = ELITE_DAMAGE_SCALE/);
@@ -105,7 +105,7 @@ test('ELITE: loot - +20% item drop chance and +20% rarity odds, caps unchanged',
   const dc = await src(new URL('../src/scenes/dungeonContext.js', import.meta.url), 'utf8');
   assert.equal((dc.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity, \{ \.\.\.eliteLootOpts\(e\), where: 'dungeon' \}\)/g) ?? []).length, 2, 'both foe branches');
   assert.match(dc, /itemChanceScale: ELITE_LOOT_DROP_MULT/, 'the treasure piles drop more');
-  assert.match(dc, /qualityMult: elite \? ELITE_LOOT_QUALITY_MULT : 1/, 'and roll better');
+  assert.match(dc, /qualityMult: _superTier \? SUPER_LOOT_QUALITY_MULT : elite \? ELITE_LOOT_QUALITY_MULT : 1/, 'and roll better');   // SD4a (PIN MOVED): a Super dungeon's +50% before the Elite's
   const hc = await src(new URL('../src/scenes/hostCombat.js', import.meta.url), 'utf8');
   assert.match(hc, /\* lootDropMult;/);
   assert.match(hc, /qualityMult: lootQualityMult/);
