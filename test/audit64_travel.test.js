@@ -30,9 +30,9 @@ import {
 import { REPOSITION } from '../src/systems/ship.js';
 import { RMB_SIDE } from '../src/world/locationLayout.js';
 import { arrivalClampMinutes } from '../src/systems/travel.js';
-import { careerSunDamage } from '../src/systems/passiveSpecials.js';
+import { careerSunDamage, careerSunAverse } from '../src/systems/passiveSpecials.js';
 import { SPECIAL_ABILITY_BITS } from '../src/systems/specialAdvantages.js';
-import { SUNLIGHT_TRAVEL_TEXT, VAMPIRE_HOOD_TEXT, racialFastTravelBlock } from '../src/systems/vampirism.js';
+import { SUNLIGHT_TRAVEL_TEXT, VAMPIRE_HOOD_TEXT, racialFastTravelBlock, careerFastTravelBlock } from '../src/systems/vampirism.js';
 import { isDayFromMinutes } from '../src/systems/gameDate.js';
 
 const read = (rel) => readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
@@ -219,9 +219,12 @@ test('AUDIT 64 F20: the arrival clamp\'s SECOND arm is the CAREER flag', () => {
   // took its racial arm (passiveSpecials.js:"sinks?.hurt?.(SUN_DAMAGE_AMOUNT)" reads the career alone;
   // the travel rules still read both). VAMP-HOOD (2026-09-29): the racial
   // arm is the flag under a bare head - vampirism.js racialSunAverse -
-  // and the career's beside it is DFU's as ever.
+  // and HOOD-CAREER (2026-10-07, PIN MOVED) the career's beside it too:
+  // passiveSpecials.js careerSunAverse, the bit under a bare head (a
+  // bare entity carries no equip, so it reads the bit).
+  assert.equal(careerSunAverse({ career }), true, 'bare-headed: the bit');
   assert.match(read('src/scenes/world.js'),
-    /sunAverse: racialSunAverse\(playerEntity\) \|\| careerSunDamage\(playerEntity\.career\),/,
+    /sunAverse: racialSunAverse\(playerEntity\) \|\| careerSunAverse\(playerEntity\),/,
     'HasVampirism() || Career.DamageFromSunlight (DaggerfallTravelPopUp.cs:351)');
 });
 
@@ -234,19 +237,26 @@ test('AUDIT 64 F21: the travel map door refuses a career sun-damaged class by da
   const career = sunCareer();
   assert.equal(racialFastTravelBlock({ career }, 12 * 60), null,
     'CheckFastTravel is the RACIAL rung and never reads the career');
-  assert.equal(careerSunDamage(career) && isDayFromMinutes(12 * 60), true, 'noon: refused');
-  assert.equal(careerSunDamage(career) && isDayFromMinutes(2 * 60), false, 'night: admitted');
+  // HOOD-CAREER (2026-10-07, PIN MOVED): the career rung is
+  // vampirism.js careerFastTravelBlock, the racial rung's shape - DFU's
+  // box by day, bare-headed, and the hood's way out after it.
+  assert.deepEqual(careerFastTravelBlock({ career }, 12 * 60), { text: SUNLIGHT_TRAVEL_TEXT, hint: VAMPIRE_HOOD_TEXT }, 'noon: refused');
+  assert.equal(careerFastTravelBlock({ career }, 2 * 60), null, 'night: admitted');
+  assert.equal(careerFastTravelBlock({ career: { abilityFlagsAndSpellPointsBitfield: 0 } }, 12 * 60), null, 'no bit: admitted');
+  assert.equal(careerFastTravelBlock({ racialOverride: { sunDamage: true } }, 12 * 60), null,
+    'the career rung never reads the racial override');
+  assert.equal(isDayFromMinutes(12 * 60) && !isDayFromMinutes(2 * 60), true);
 
   const world = read('src/scenes/world.js');
   const i = world.indexOf('const toggleTravelMap = (gotoPlace = null) =>');
   assert.ok(i > 0);
   const door = world.slice(i, world.indexOf('/** G5: the map the guild', i));
-  assert.match(door, /if \(careerSunDamage\(playerEntity\.career\) && isDayFromMinutes\(nowMin\)\) \{\s*\n\s*sayWithNightfall\(SUNLIGHT_TRAVEL_TEXT\);\s*\n\s*return false;\s*\n\s*\}/,   // LIVED1: and, online, when the world's night falls (AUDIT LIVED1 M: on its own HUD row)
+  assert.match(door, /const cfb = careerFastTravelBlock\(playerEntity, nowMin\);\s*\n\s*if \(cfb\) \{ sayWithNightfall\(cfb\.text\); if \(cfb\.hint\) townTalk\.say\(cfb\.hint\); return false; \}/,   // LIVED1: and, online, when the world's night falls (AUDIT LIVED1 M: on its own HUD row)
     'the career box, with the same localized key both DFU sites use');
   // ORDER, DaggerfallUI.cs's own: GiveOffer (:612), the career box
   // (:614), then CheckFastTravel (:625).
   const offer = door.indexOf('if (giveOffer()) return false;');   // GUIDE2: the door answers whether a map opened
-  const careerRung = door.indexOf('careerSunDamage(playerEntity.career)');
+  const careerRung = door.indexOf('careerFastTravelBlock(playerEntity');
   const racial = door.indexOf('racialFastTravelBlock(playerEntity');
   assert.ok(offer > 0 && careerRung > offer && racial > careerRung,
     'GiveOffer, then the career box, then the racial override');
@@ -289,6 +299,8 @@ test('AUDIT 64 F24: the sunlightDamageFastTravelDay refusal is DFU\'s own line',
   // DFU's as `hint`, said after it - never in its place.
   assert.deepEqual(racialFastTravelBlock({ racialOverride: { sunDamage: true } }, 12 * 60),
     { text: SUNLIGHT_TRAVEL_TEXT, hint: VAMPIRE_HOOD_TEXT });
-  assert.match(read('src/scenes/world.js'), /sayWithNightfall\(SUNLIGHT_TRAVEL_TEXT\);/,
-    'and the career box shows the same constant');
+  // HOOD-CAREER (PIN MOVED): the career box speaks it through its own
+  // rung, careerFastTravelBlock, as the racial one does.
+  assert.deepEqual(careerFastTravelBlock({ career: sunCareer() }, 12 * 60),
+    { text: SUNLIGHT_TRAVEL_TEXT, hint: VAMPIRE_HOOD_TEXT }, 'and the career box shows the same constant');
 });

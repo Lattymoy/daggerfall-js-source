@@ -50,7 +50,7 @@ function host({ safe = true, target = true, failBuild = false, boat = false, own
     setSyntheticTimeIncrease: no, playerTicker: { advance: () => { advances++; }, classicMinutes: 1000, ownMinutes: 1000 },
     weatherOverride: true, tickWeather: no, maps: {}, applyClimateWeather: no, fieldXZ: no, climateAt: no,
     currentWeather: no, weather: null, applyWeather: no, arrivalClampMinutes: () => 0,
-    racialSunAverse: () => false, careerSunDamage: () => false, _lastEncMinutes: 0,
+    racialSunAverse: () => false, careerSunAverse: () => false, _lastEncMinutes: 0,
     raisePlayerSkills: no, ActionTextBox: class {}, YesNoBoxWindow: class {}, announceLevelUp: no,
     makeCharSheetWindow: no, setCrimeCommitted: () => events.push('crime-cleared'), CRIMES: { None: 0 },
     arrestFlow: { crimeCleared: no }, warmAshesPostTravel: no,
