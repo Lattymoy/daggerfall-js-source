@@ -279,10 +279,10 @@
     ]
   },
   {
-    "name": "CS-host-third-person",
+    "name": "CS-host-view-at-the-capsule",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (cardSeat) mwv.eye = cam.pos;   // CARDS2: seated, first person at the seat",
-    "new": "",
+    "old": "fpEye: cam.pos, feet: cardSeat ? cardSeat.feet : player.feetAt(),",
+    "new": "fpEye: cam.pos, feet: player.feetAt(),",
     "tests": [
       "test/cards2_seat.test.js"
     ]

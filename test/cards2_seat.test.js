@@ -8,10 +8,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  CARD_TABLE_MODELS, isCardTableModel, SEAT_SPACING, SEAT_SIDE_MIN, SEAT_OUT, SEATED_EYE_HEIGHT, SEAT_SURFACE_MAX,
+  CARD_TABLE_MODELS, isCardTableModel, SEAT_SPACING, SEAT_SIDE_MIN, SEAT_OUT, SEAT_SURFACE_MAX,
   seatSpots, cardTableSeats, nearestFreeSeat, seatFloorOk, leavesSeat, yawToward,
 } from '../src/world/cardTables.js';
 import { tavernFurniture } from '../tools/cardTableCensus.mjs';
+import { SEATED_EYE_HEIGHT } from '../src/player/seatPose.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const box = (x1, z1, y0 = 0, top = 0.8) => ({ min: [0, y0, 0], max: [x1, top, z1] });
@@ -21,7 +22,7 @@ const at = (s) => [round(s.x), round(s.z), s.side];
 test('CARDS2 the table\'s ids: 41130, the one table this tree can name', () => {
   assert.deepEqual([...CARD_TABLE_MODELS], [41130]);
   assert.deepEqual([41130, 41100, 41106, 41000].map(isCardTableModel), [true, false, false, false], 'a chair, a bench, a bed are no table');
-  assert.deepEqual([SEAT_SPACING, SEAT_SIDE_MIN, SEAT_OUT, SEATED_EYE_HEIGHT, SEAT_SURFACE_MAX], [0.75, 0.6, 0.45, 1.15, 0.55]);
+  assert.deepEqual([SEAT_SPACING, SEAT_SIDE_MIN, SEAT_OUT, round(SEATED_EYE_HEIGHT), SEAT_SURFACE_MAX], [0.75, 0.6, 0.45, 1.22, 0.55], 'the seated eye the seated body\'s head (seatPose.js)');
 });
 
 test('CARDS2 the seats a table\'s box holds: as many as fit along each side, out from its edge, in a fixed order', () => {
@@ -41,9 +42,10 @@ test('CARDS2 the seats kept: the probe\'s veto, the seated eye looking at the ta
   const all = cardTableSeats(t, () => true);
   assert.equal(all.length, 6);
   const end = all[0];
-  assert.deepEqual(end.eye.map(round), [2.45, 1.35, 0.5]);
+  assert.deepEqual(end.eye.map(round), [2.45, 1.42, 0.5]);
+  assert.deepEqual([end.feet.map(round), round(end.top)], [[2.45, 0.2, 0.5], 0.8], 'CARDS2b: the body\'s feet on the floor, the top above them');
   assert.equal(round(end.yaw), round(-Math.PI / 2), 'the +x end looks down -x, at the middle');
-  assert.equal(round(end.pitch), round(Math.atan2(1 - 1.35, 1.45)), 'down at the table\'s top');
+  assert.equal(round(end.pitch), round(Math.atan2(1 - 1.42, 1.45)), 'down at the table\'s top');
   for (const s of all) {
     const l = Math.hypot(1 - s.eye[0], 0.5 - s.eye[2]);
     assert.deepEqual([round(Math.sin(s.yaw)), round(Math.cos(s.yaw))], [round((1 - s.eye[0]) / l), round((0.5 - s.eye[2]) / l)], `${s.side} looks at the middle`);
@@ -51,7 +53,7 @@ test('CARDS2 the seats kept: the probe\'s veto, the seated eye looking at the ta
   // The probe is asked from the table's middle at the eye's height to the eye.
   const asked = [];
   cardTableSeats(t, (from, to) => { asked.push([from.map(round), to.map(round)]); return true; });
-  assert.deepEqual(asked[0], [[1, 1.35, 0.5], [2.45, 1.35, 0.5]]);
+  assert.deepEqual(asked[0], [[1, 1.42, 0.5], [2.45, 1.42, 0.5]]);
   // A wall along both ends: four left.
   assert.deepEqual(cardTableSeats(t, (f, to) => to[0] > 0 && to[0] < 2).map((s) => s.side), ['+z', '+z', '-z', '-z']);
   // One seat left is no card table.
@@ -72,8 +74,8 @@ test('CARDS2 the nearest free seat; something to sit over; what stands you up; t
   assert.equal(nearestFreeSeat(seats, 1.9, 0.2, [1]), 2);
   assert.equal(nearestFreeSeat(seats, 1.9, 0.2, [0, 1, 2]), -1);
   assert.equal(nearestFreeSeat([], 0, 0), -1);
-  // The floor (1.15 down), a chair's seat (0.6 down) - not a table's top, not the air, not a drop.
-  assert.deepEqual([1.15, 0.6, 0.59, Infinity, 2.01, NaN].map(seatFloorOk), [true, true, false, false, false, false]);
+  // The floor (1.22 down), a chair's seat (0.67 down) - not a table's top, not the air, not a drop.
+  assert.deepEqual([1.22, 0.67, 0.66, Infinity, 2.01, NaN].map(seatFloorOk), [true, true, false, false, false, false]);
   assert.deepEqual([
     [{}, false], [{ forwards: true }, false], [{ backwards: true }, false], [{ left: true }, false], [{ right: true }, false],
     [{}, true], [{ analog: { x: 0.1, y: 0.1 } }, false], [{ analog: { x: 0, y: 0.5 } }, false], [null, false],
@@ -123,7 +125,7 @@ test('CARDS2 the interior host\'s seat: the target, the press, the stand, the he
   const over = src.indexOf("    if (mode === 'interior') decorTool.cameraOverride(cam);");
   const seat = src.indexOf("    if (mode === 'interior' && cardSeat) cam.pos = cardSeat.eye.slice();");
   assert.ok(over > 0 && seat > over, 'the seated eye after the body\'s and the decorator\'s');
-  has('    if (cardSeat) mwv.eye = cam.pos;   // CARDS2: seated, first person at the seat\n    const view = betterAmbience.view(', 'first person at the seat');
+  has('      fpEye: cam.pos, feet: cardSeat ? cardSeat.feet : player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,', 'CARDS2b: the view, first or third person, follows the seated body');
   has("    cardSeat = null;   // CARDS2: and nobody stays seated in a room they left");
   has("(key) => (typeof key === 'string' && key.startsWith('cardtable:') ? { title: 'Card table' } : null)");
   has("    return seatFloorOk(c.raycast(to, [0, -1, 0], SEAT_FLOOR_PROBE));");

@@ -14,6 +14,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { HOLDEM_SEATS_MIN, HOLDEM_SEATS_MAX } from '../net/cardLaw.js';
+import { SEATED_EYE_HEIGHT } from '../player/seatPose.js';   // CARDS2b: the seated eye is the seated body's head
 
 /** The ARCH3D ids a card table may be (classic ids: the host maps a town mod's alias through classicModelIdOf first). */
 export const CARD_TABLE_MODELS = Object.freeze(new Set([41130]));
@@ -25,8 +26,6 @@ export const SEAT_SPACING = 0.75;
 export const SEAT_SIDE_MIN = 0.6;
 /** MEASURE (CARDS2): how far out from the table's edge a seat stands - where a chair's sitter's feet are. */
 export const SEAT_OUT = 0.45;
-/** MEASURE (CARDS2): a seated adult's eye above the floor (a standing eye is motor.js EYE_HEIGHT, 1.7). */
-export const SEATED_EYE_HEIGHT = 1.15;
 /** How far below a seat's eye the probe looks for its floor before it calls the seat floorless. */
 export const SEAT_FLOOR_PROBE = 2;
 /** MEASURE (CARDS2): the highest a thing under a seat may stand and still be sat over - a chair's seat, a bench. */
@@ -87,7 +86,7 @@ export function cardTableSeats(aabb, clear) {
     const eye = [s.x, s.floorY + SEATED_EYE_HEIGHT, s.z];
     if (!clear([mid[0], eye[1], mid[2]], eye)) continue;
     const dx = mid[0] - eye[0], dz = mid[2] - eye[2];
-    kept.push({ ...s, eye, yaw: yawToward(eye[0], eye[2], mid[0], mid[2]), pitch: Math.atan2(mid[1] - eye[1], Math.hypot(dx, dz)) });
+    kept.push({ ...s, eye, feet: [s.x, s.floorY, s.z], top: mid[1] - s.floorY, yaw: yawToward(eye[0], eye[2], mid[0], mid[2]), pitch: Math.atan2(mid[1] - eye[1], Math.hypot(dx, dz)) });   // CARDS2b: the body's feet and the table's top above them
   }
   if (kept.length < HOLDEM_SEATS_MIN) return [];
   if (kept.length <= HOLDEM_SEATS_MAX) return kept;

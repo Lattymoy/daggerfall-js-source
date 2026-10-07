@@ -62,8 +62,8 @@
   {
     "name": "DISC18-the-interior-draws-the-body-on-the-camera-s-feet",
     "file": "src/scenes/worldModes.js",
-    "old": "\n    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
-    "new": "\n    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.feetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
+    "old": "\n    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: cardSeat ? cardSeat.feet : player.bodyFeetAt(), yaw:",
+    "new": "\n    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: cardSeat ? cardSeat.feet : player.feetAt(), yaw:",
     "tests": [
       "test/disc18.test.js",
       "test/mac1_playreport.test.js",

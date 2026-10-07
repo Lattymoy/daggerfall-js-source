@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue") - the seat, without the seated body (CARDS2b). Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue"), CARDS2b SHIPPED (section 12; Mac: "Continue") - the seated Morrowind body, mine and the others', on relay world176. Mac answered
 four of section 9's five questions the same day; the card art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -54,8 +54,9 @@ narrows its Ledger section A row (`01-Overview/Port-Ledger.md`), the way DICE1 a
 - **DECIDED: sitting.** Activating a card table offers its game; accepting puts the player in a SEAT. Seated, the
   camera moves to a fixed seat view over the table (the player's eyes at the seat, looking at the table's centre),
   movement is held, and the mouse drives the hand and the chips. Leaving the seat (the activate key, Escape, or a hit)
-  stands the player back where they sat from. **FACT:** no seated pose exists in the characters today (grep for a sit
-  pose in `src/characters/` finds none) - CARDS2 adds one for both bodies, sprite and Morrowind.
+  stands the player back where they sat from. **FACT:** no seated pose existed in the characters (grep for a sit
+  pose in `src/characters/` found none) - CARDS2b poses the Morrowind body (section 12); the sprite lane has no sitting
+  art and is CARDS2c.
 - **DECIDED (Mac): you see the other players.** A seated peer is drawn seated in their chair, through the same
   `remotePlayers.js` body every peer already has (sprite or Morrowind, whichever they wear), facing the table. Their
   face-down cards sit in front of them on the cloth; their chips stack beside them.
@@ -173,7 +174,8 @@ Each ships alone and is verifiable without the next.
 |---|---|
 | **CARDS1** SHIPPED | The deck law, pure and DOM-free, one home for both ends: the 52-card deck, the unbiased shuffle, the Hold'em evaluator, the betting round's state machine, side pots. Pins deepEqual against hand tables; mutants. |
 | **CARDS2** SHIPPED | The table and the seat: a tavern's own table (the one nameable id, and the census for the rest), its seats, the seat view, held movement, standing up. Offline, alone at the table. |
-| **CARDS2b** | The seated pose for both bodies (sprite and Morrowind), the body moved to its seat, peers drawn seated (a pose field on the wire, so a RELAY_VERSION), a hit standing you up, Escape. |
+| **CARDS2b** SHIPPED | The body drawn at its seat, the Morrowind body posed seated (the climb rig's solver), peers drawn seated (`st` on the pose, relay world176), a hit and Escape standing you up. |
+| **CARDS2c** | The sprite lane seated: Eye Of The Beholder has no sitting art, so a sprite body stands at its seat today. |
 | **CARDS3** | The card bodies: the plate, the pass, the deal arcs, the flip, the slide and settle, the fanned hand and the peek, the chips. Frame cost measured on the probe. |
 | **CARDS4** | Offline Hold'em: the patrons, their temperaments and purses, gold stakes. The first playable game. |
 | **CARDS5** | Online Hold'em: the relay deals and runs the table, hidden hands, spectators, the seat clock. Friendly tables. |
@@ -259,3 +261,39 @@ Mac: **"Continue"**.
 - **Pins:** `test/cards2_seat.test.js`, 8 tests. `tools/mutants/cards2.json`: 38, 38 dead; the one first-pass
   survivor was a finite guard the upper bound already made, and it was deleted rather than pinned.
 - **Ledger:** section A row TAVERN CARDS, narrowed to say CARDS2 landed and CARDS2b is open.
+
+## 12. CARDS2b (2026-10-07): the seated body
+
+Mac: **"Continue"**.
+
+- **The request** (`src/player/seatPose.js`, pure). Morrowind has no sitting animation, so the seat is posed the way
+  CLIMB6 poses a climb: a request in the world - the hips dropped, the feet planted on the floor a thigh's length
+  ahead with the knees forward, the hands on the table's top with the elbows out and down and the palms flat, the head
+  turned to the table's middle - which the climb rig's own `climbRequestToRig` maps into the rig and `applyClimbRig`
+  solves on the skeleton's bones. No number names a bone.
+- **MEASURED on retail's biped** (Weapon Sheathing's vendored `xbase_anim_sh.nif`, the skeleton CLIMB6 measured on):
+  its pelvis stands at 1.09 m, its thigh 0.46 m, its shin 0.53 m. The first guess (a 0.45 m drop, the hands 0.55 m
+  ahead) left the hips high and the hands 8 cm short of the table; the shipped numbers - a 0.48 m drop, the feet and
+  the hands 0.45 m ahead - put the hips level with the knees over standing shins, the feet on their marks, and both
+  hands on the top to a millionth of a unit (`test/cards2b_seated.test.js` solves it). The seated eye is no longer its
+  own guess: `SEATED_EYE_HEIGHT` is the standing eye (motor.js `EYE_HEIGHT`) lowered by the drop, 1.22 m, where the
+  seated head is - and CARDS2's seats moved with it.
+- **My body** (`scenes/worldModes.js`). Seated, the body is drawn at the seat facing the table (the capsule stays where
+  it sat down from - a chair is no floor to stand a capsule in), the rig is handed the request (`camera().seat`,
+  fpArm's `thirdSeat`, riding the climb's slot - a sitter never climbs), and the view, first person or third, follows
+  the seated body: CARDS2's forced first person is retired. A hit (any health lost, `registerPlayerHurtListener`) and
+  Escape (the pause door without a station's `at`) stand you up, as the press and a step do.
+- **The others' bodies.** The pose a seated player sends is the seat's - the feet and the facing the body is drawn at,
+  through the room's own frame (`sceneToOnline`) - and carries `st`, the table's top above the feet in 5 cm steps
+  (1..40, `wire.js` `seatOf`, `POSE_SEAT_TOP_MAX`), omitted standing so a standing pose keeps its bytes. `poseChanged`
+  sends a sit or a stand at once; `lerpPose` carries it whole; `peerBodies` hands the peer's rig the same request at
+  its drawn feet and facing (`seatFor`, rebuilt only while the arrival eases in) and does not walk it into the chair.
+- **Relay world176** (NOT YET DEPLOYED): `validPose` relays `st`. An older relay strips it, and the others see the
+  sitter standing at the seat. The bump was the sed over the 37 test files with `relayversion.test.js` excluded, and
+  the law's row appended.
+- **CARDS2c, open:** the sprite lane. Eye Of The Beholder has no sitting art, so a sprite body - mine in that lane, a
+  peer's walker or paperdoll - stands at its seat facing the table.
+- **Not verified in a live tavern** (no ARENA2 here). The pose is verified on the real skeleton, not on screen.
+- **Pins:** `test/cards2b_seated.test.js`, 7 tests. `tools/mutants/cards2b.json`: 32, 32 dead (one survived the
+  first pass - the peer's table top, pinned at the default height, which a mutant dropping it could not move - and two
+  records were re-aimed to parse).
