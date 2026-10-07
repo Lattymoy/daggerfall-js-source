@@ -84,7 +84,9 @@ test('GR1: grass records come from the archive\u2019s own texels - none for road
   // the host: the near ring, the season, the sea plane, the record
   const w = readFileSync('src/scenes/world.js', 'utf8');
   assert.match(w, /p\._stride === 1 && p\.tilemapBytes && p\.season !== SEASON\.Winter/, 'near ring only, never in winter');
-  assert.match(w, /if \(rec === 0 \|\| !grass \|\| !grass\.has\(rec\)\) return null;/, 'a water record or a non-grass record: no blade');
+  // PIN MOVED (ECOTONE1, 2026-10-07): the records of the ground the root stands in - its pixel's (`grass`), or at a climate
+  // border the neighbour's set the ground's border gives it there
+  assert.match(w, /const g = ga === p\.groundArchive \? grass : grassRecords\.get\(ga\);\n\s*if \(rec === 0 \|\| !g \|\| !g\.has\(rec\)\) return null;/, 'a water record or a non-grass record: no blade');
   assert.match(w, /if \(h <= sea\) return null;/, 'under the sea plane: no blade');
   // GR5: the field follows the eye by CELLS now - filled at the leading
   // edge, freed at the trailing one - rather than re-scattering whole
@@ -219,7 +221,9 @@ test('GR4: the game feeds each tile\'s MEAN colour, averaged once where the texe
   const g = world.slice(world.indexOf('const ground = (x, z) => {'), world.indexOf('if (!labGrassField) labGrassField = createGrassField('));   // AUDIT 68: `createGrassFields(` was never there - the slice ran to -1
   assert.match(g, /const tx = Math\.floor\(lx \/ 6\.4\); const tz = Math\.floor\(lz \/ 6\.4\);/);
   assert.match(g, /const rec = p\.tilemapBytes\[tz \* TERRAIN_TILE_DIM \+ tx\] >> 2;/);
-  assert.match(g, /return groundMeanColour\.get\(p\.groundArchive\)\?\.\[rec\] \?\? null;/);
+  // PIN MOVED (ECOTONE1, 2026-10-07): the colour of the set the ground there is drawn from - at a climate border, the one
+  // the ground's border gives the point (keep's own ask, so a blade's root and its colour agree)
+  assert.match(g, /return groundMeanColour\.get\(p\.ecoGround \? borderGround\(p, lx, lz\) : p\.groundArchive\)\?\.\[rec\] \?\? null;/);
   assert.match(world, /labGrassField\.update\(ex, ez, keep, ground, slope\);/, 'and the field is handed it');
 });
 

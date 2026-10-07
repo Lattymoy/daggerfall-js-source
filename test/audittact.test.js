@@ -324,7 +324,11 @@ test('AUDIT TACT B2: no one-way hiding place - a tree is a trunk and a crown, an
   fat.cover = createCoverIndex();
   fat.cover.add('k', [coverProxy([0, 0, 5], { w: 3, h: 5 })]);
   assert.equal(canSeeTarget(fat, [0, 0, 0], 0, 1.8, [0, 0, 5]), true, 'in it: seen');
-  assert.match(rd('src/scenes/world.js'), /coverProxies\(c, size, \{ tree: archive === natureArchive && isTreeRecord\(natureArchive, record\) \}\)/);
+  // ECOTONE1: PIN MOVED - any of the pixel's nature archives (a climate border stands its neighbour's too), its Trees
+  // named by that archive's SUMMER set: the season's own number names none in winter, so a winter wood's trees were cover
+  // as flats until then
+  assert.match(rd('src/scenes/world.js'), /coverProxies\(c, size, \{ tree: natureSet\.has\(archive\) && isTreeRecord\(natureBase\(archive\), record\) \}\)/);
+  assert.match(rd('src/scenes/world.js'), /const natureBase = \(a\) => \(a === natureArchive \? climate\.natureArchive : borderNature\.get\(a\)\);/);
 });
 
 test('AUDIT TACT B3: people are no cover - a person flat is skipped wherever it stands', () => {

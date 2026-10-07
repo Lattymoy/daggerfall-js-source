@@ -323,7 +323,10 @@ test('WIND3 the hosts: both exterior hosts read the one wind once a frame, feed 
     // gustClock, so the flats and the grass stand still under a crossing); the exterior host has no floating origin
     const clock = host === 'src/scenes/world.js' ? 'windClock' : 'now \\/ 1000';
     one(new RegExp(`renderer\\.setFlatWind\\(floraSwayOn\\(\\) && wd\\.on \\? \\[wd\\.windV\\[0\\], wd\\.windV\\[1\\], ${clock}, wd\\.gust\\] : null\\);[^\\n]*\\n\\s*renderer\\.drawBillboards\\(`, 'g'), 'the flats\' wind, right before their draw');
-    assert.equal((s.match(/batch\.sway = floraSwayOf\(archive, natureArchive, (sib\.)?size\.h\);/g) || []).length, 2, `${host}: the season's batch and the classic one tagged`);
+    // PIN MOVED (ECOTONE1, 2026-10-07): the streaming host asks by its pixel's nature set - its own climate's archive and any
+    // a climate border stood there (windDrive.js floraSwayOf takes a Set); the exterior host has one climate
+    const flora = host === 'src/scenes/world.js' ? 'natureSet' : 'natureArchive';
+    assert.equal((s.match(new RegExp(`batch\\.sway = floraSwayOf\\(archive, ${flora}, (sib\\.)?size\\.h\\);`, 'g')) || []).length, 2, `${host}: the season's batch and the classic one tagged`);
     for (const imp of ["from '../systems/windDrive.js'", "from '../render/windWisps.js'", "from '../systems/windAudio.js'"]) assert.ok(s.includes(imp), `${host}: imports ${imp}`);
   }
   assert.match(rd('src/scenes/world.js'), /\{ dir: wd\.dir, speed: wd\.slider \* wd\.gust, windV: wd\.windV, sway: floraSwayOn\(\) && wd\.on \}/, 'the grass takes the same answer');   // PIN MOVED (AUDIT MEADOW1): and the flats' own switch

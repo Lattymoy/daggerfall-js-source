@@ -65,5 +65,12 @@ test('BOOT2: the entry\'s static reach touches neither hub and stays under the c
   // systems/pageQuery.js (the one parse every URL door reads through - onlineLane, uiSkin, the render doors) is a leaf
   // that imports nothing, so it can bring no hub with it (the hub law above is what holds that). The ceiling moves to
   // 64: the same promise, room for a real need, measured again.
-  assert.ok(reach.size <= 64, `the entry statically reaches ${reach.size} files - BOOT2 measured 43, PERF-URL 61, and holds the ceiling at 64`);
+  // ECOTONE1 (2026-10-07): 66 - the terrain programs' border chunk (render/ecotoneGlsl.js, which TERRAIN_FS is built from
+  // as the renderer loads) and the law it takes its numbers from (world/ecotone.js). Both are leaves - the chunk imports
+  // the law alone and the law imports nothing - so neither can bring a hub, and the assertion below keeps them so. The
+  // ceiling moves to 68: the same promise, room for a real need, measured again.
+  const importsOf = (p) => [...rd(p).matchAll(STATIC)].map((m) => m[1]);
+  assert.deepEqual([importsOf('src/render/ecotoneGlsl.js'), importsOf('src/world/ecotone.js')], [['../world/ecotone.js'], []],
+    'the border chunk and its law stay leaves on the boot path');
+  assert.ok(reach.size <= 68, `the entry statically reaches ${reach.size} files - BOOT2 measured 43, PERF-URL 61, ECOTONE1 66, and holds the ceiling at 68`);
 });

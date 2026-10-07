@@ -483,7 +483,7 @@ test('WATER1: a sea clamped to the ocean elevation is WATER through generateTile
   assert.match(src, /const height = sampleHeight\(heightmapData\[hy \+ hx \* hDim\]\);\s+if \(isWaterHeight\(height\)\) \{/, 'the tile job\'s own');
   // AUDIT LW-DRY: the nature scatter's three beach reads go through the one home - the product written out nowhere else
   const nature = readFileSync(new URL('../src/world/terrainNature.js', import.meta.url), 'utf8');
-  assert.equal((nature.match(/sampleHeight\(heightmapData\[hy \+ hx \* hDim\]\)/g) || []).length, 3, 'the scatter reads the sample\'s height as the tile job does');
+  assert.equal((nature.match(/sampleHeight\(heightmapData\[hy \+ hx \* hDim\]\)/g) || []).length, 4, 'the scatter reads the sample\'s height as the tile job does (ECOTONE1: and the border tile\'s DFU law, dfuTiles, the fourth)');
   assert.doesNotMatch(nature, /Math\.fround\([^;]*\* MAX_TERRAIN_HEIGHT\)/, 'and writes the product out nowhere itself');
   assert.equal(SCALED_OCEAN_ELEVATION, Math.fround(27.2), 'which the shared constant IS (WATER-AUDIT: 3.4f * 8 in C#)');
   assert.match(src, /if \(height <= Math\.fround\(SCALED_BEACH_ELEVATION \+ jitter\)\) \{/, 'and the beach the same');

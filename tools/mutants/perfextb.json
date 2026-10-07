@@ -65,8 +65,8 @@
   {
     "name": "PERF-EXT10-8-a-host-writes-a-field-the-factory-never-minted",
     "file": "src/scenes/world.js",
-    "old": "      batch.sway = floraSwayOf(archive, natureArchive, size.h);",
-    "new": "      batch.sway = floraSwayOf(archive, natureArchive, size.h); batch._flora = true;",
+    "old": "      batch.sway = floraSwayOf(archive, natureSet, size.h);",
+    "new": "      batch.sway = floraSwayOf(archive, natureSet, size.h); batch._flora = true;",
     "tests": [
       "test/perfextb.test.js"
     ]

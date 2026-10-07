@@ -102,8 +102,9 @@ export function pathCorners(mask, x, y, w = 1000) {
  * excluding them by number would strip the grass from every dirt edge
  * in the world to clear one path. Only the painter knows, and it knows
  * it exactly - so it says so, one byte a tile, at the moment it writes.
- * `opts.paths` is that Uint8Array (128x128, 1 = painted); absent, the
- * painter is byte-for-byte what it was.
+ * `opts.paths` is that Uint8Array (128x128, 1 = painted - VERGE1: or a
+ * track laid over dirt, which the mod writes nothing for, tile()); absent,
+ * the painter is byte-for-byte what it was.
  *
  * @param {object} masks - { road, track, river, stream } bytes for this pixel
  * @param {object} corners - { road, track, river, stream } corner bytes
@@ -158,7 +159,11 @@ function tile(ctx, slot, rotate, flip, overwrite = true) {
   if (!slot) return false;
   if (!overwrite && ctx.tilemap[ctx.i] !== 0) return false;
   const t = slot[ctx.ground];
-  if (t === NC) return false;
+  // VERGE1 (AUDIT FOREST1 F8, which never held): a TRACK OVER DIRT is a path the mod writes nothing for - its table's
+  // dirt column is NO_CHANGE, the one NO_CHANGE in any of the four tables - so the mask said nothing there, and the
+  // woods (layoutForests), the grass and the home yards that keep off a path stood on it. It is marked and not
+  // written: the tile stays the ground's, the painter's answer (false, not painted) is the mod's.
+  if (t === NC) { if (ctx.paths) ctx.paths[ctx.i] = 1; return false; }
   // RotateFlipTile adds the bits BEFORE the zero check, so a rotated
   // water tile is 64/128/192 and only bare water becomes water_temp.
   let v = t;

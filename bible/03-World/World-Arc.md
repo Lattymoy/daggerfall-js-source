@@ -100,6 +100,24 @@ scatter above stands byte for byte. The rules and the numbers (measured
 on the real WOODS.WLD) are the Port-Ledger A row (REAL FORESTS); the audit
 is `01-Overview/Audit-Forest1-Grass.md`; pins in test/forest1.test.js.
 
+CLEAR ROADSIDES (VERGE1, 2026-10-07, Mac: "Making sure objects, like
+trees, avoid pathways and roads") keeps the disc of every wild flat's
+widest picture - a Low Poly tree's crown among them - off the painted roads
+and tracks, in both scatters, with the herbs, the veins on the stone and
+World of Daggerfall's flats; behind the enhanced row `roadVerges`, forced on
+online. The record is `03-World/Roads.md` VERGE1; pins in
+test/verge1.test.js.
+
+BLENDED CLIMATES (ECOTONE1, 2026-10-07, Mac: "Making it where bione
+transitions are insta t and instead fade and transition naturally into each
+other") gives every map pixel's edge a wandering, patchy border two hundred
+metres deep in place of DFU's straight line: the ground samples its
+neighbours' tile sets across it, a border tile's flats are laid by the
+climate that owns it (between two wooded climates only the species change),
+the grass grows by the ground under it. Behind the enhanced row
+`climateBlend`, forced on online. The record is `07-Rendering/Rendering.md`
+ECOTONE1; pins in test/ecotone1.test.js.
+
 ## Milestone 7 - locations on terrain (SHIPPED)
 
 `src/formats/umRandom.js` is a 1:1 translation of Unity.Mathematics

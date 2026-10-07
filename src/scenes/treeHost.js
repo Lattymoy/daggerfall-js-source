@@ -169,8 +169,10 @@ export function treeKind({ book, renderer = null, flatBatchAabb = null, getTextu
     /** A felled tree's stump, where the archive has one. */
     goneFlatsOf(n, entry) {
       const f = entry?.forest;
-      if (!f || !STUMP_ARCHIVES.includes(f.base)) return [];
-      return [{ archive: f.archive, record: STUMP_RECORD, scale: 1, centers: [n.local] }];
+      if (!f) return [];
+      const base = n.flat?.base ?? f.base, archive = n.flat?.archive ?? f.archive;   // ECOTONE1: a border tree's own climate's stump
+      if (!STUMP_ARCHIVES.includes(base)) return [];
+      return [{ archive, record: STUMP_RECORD, scale: 1, centers: [n.local] }];
     },
     /** The pixel's felled trees sunk in their batches (and yesterday's stood again). */
     stood(entry, nodes) {

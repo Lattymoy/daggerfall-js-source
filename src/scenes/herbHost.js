@@ -48,16 +48,20 @@ export const PATCH_MARK = Object.freeze({ w: 2.2, h: 1.3 });
  * where DFU's nature would stand there - `{ key, slot, herb, tier, offSeason, local }`, `local` pixel-local metres.
  * NODE-CLEAR (AUDIT 2026-10-01 part four): never inside a rock piece (`rocks`, the pixel's) - one stood there, on the compass
  * and glowing, and no look reached it; it stands nowhere, as VEIN-CLEAR's last vein does.
+ * VERGE1: `verge` (`(x, z, reach) => boolean`, the pixel's - world/roadVerge.js vergeClear), when handed, keeps a patch's
+ * glow off the roads: a patch whose ring (PATCH_MARK's width) would reach one stands nowhere that day.
  * @param {{ px: number, py: number, day: number, climate: number, confirmed?: boolean, seasonalEye?: boolean,
- *   samples: Float32Array, tilemap: Uint8Array, locationRect?: any, rocks?: number[][] }} p
+ *   samples: Float32Array, tilemap: Uint8Array, locationRect?: any, rocks?: number[][],
+ *   verge?: ((x: number, z: number, reach: number) => boolean)|null }} p
  */
-export function standPatches({ px, py, day, climate, confirmed = false, seasonalEye = false, samples, tilemap, locationRect = null, rocks = [] }) {
+export function standPatches({ px, py, day, climate, confirmed = false, seasonalEye = false, samples, tilemap, locationRect = null, rocks = [], verge = null }) {
   const out = [];
   if (!HERB_TABLES[climate]) return out;
+  const clear = verge ? (x, z) => verge(x, z, PATCH_MARK.w / 2) : null;
   for (const p of herbPatches({ x: px, y: py, day, climate, confirmed, seasonalEye })) {
     const tx = Math.min(WORLD_MAP_TILE_DIM - 1, Math.floor(p.u * WORLD_MAP_TILE_DIM));
     const ty = Math.min(WORLD_MAP_TILE_DIM - 1, Math.floor(p.v * WORLD_MAP_TILE_DIM));
-    const base = natureStandsAt(samples, tilemap, locationRect, tx, ty);
+    const base = natureStandsAt(samples, tilemap, locationRect, tx, ty, clear);
     if (!base || insideRocks(rocks, base.x, base.z)) continue;   // NODE-CLEAR
     out.push({ key: nodeKey({ kind: 'herb', x: px, y: py, day, slot: p.slot }), slot: p.slot, herb: p.herb, tier: p.tier, offSeason: p.offSeason, local: [base.x, base.y, base.z] });
   }
@@ -137,6 +141,7 @@ export function herbKind({ book }) {
         px, py, day, climate: info.climate, confirmed, seasonalEye: specs('herbalism')[100] === 'seasonal-eye',
         samples: entry.samples, tilemap: entry.tilemap, locationRect: entry.locationRect ?? entry.wodSite ?? null,   // AUDIT 29 C8: a WoD site's rect, as nature keeps off it (terrainGen.js)
         rocks: entry.rocks ?? [],   // NODE-CLEAR: and never inside a rock piece
+        verge: entry.verge ?? null,   // VERGE1: nor over a road
       });
     },
     flatsOf(p) {

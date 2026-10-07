@@ -128,8 +128,8 @@
   {
     "name": "VEIN-CLEAR-the-last-fallback-inside-a-piece-taken",
     "file": "src/scenes/mineHost.js",
-    "old": "?? outside(natureStandsAt(samples, tilemap, locationRect, tx, ty));",
-    "new": "?? natureStandsAt(samples, tilemap, locationRect, tx, ty);",
+    "old": "?? outside(natureStandsAt(samples, tilemap, locationRect, tx, ty, clear));",
+    "new": "?? natureStandsAt(samples, tilemap, locationRect, tx, ty, clear);",
     "tests": [
       "test/fb1001_mining.test.js"
     ]
