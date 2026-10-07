@@ -90,7 +90,7 @@ const find = (n, cls) => {
 test('CRYSTAL-FIST vocabulary: the title and the glyph join the closed lists last, the aura joins AURAS last; "Crystal Fist" and "Crystal Resonance" in words; the title ONE colour - the reference\'s own purple, #a349a4 - no gradient, no edge; the glyph in it, filled; `\\` on the classic face; the resonance\'s button in the Crystal Fist\'s purple; the wire keeps all three (mutants: the colour, the glyph\'s colour, the mark, the fill, the button\'s paint, the words)', () => {
   assert.deepEqual(TITLES.slice(-2), ['crystalfist', 'hourbreaker'], 'the vocabulary\'s newest when it came - SD9b\'s Hourbreaker after it (PIN MOVED)');
   assert.equal(GLYPHS.at(-1), 'crystalfist');
-  assert.equal(AURAS.at(-1), 'resonance');
+  assert.deepEqual(AURAS.slice(-2), ['resonance', 'turninghour'], 'the vocabulary\'s newest when it came - SD9c\'s Turning Hour after it (PIN MOVED)');
   assert.equal(TITLE_TEXT.crystalfist, 'Crystal Fist', 'the owner: "Title: Crystal Fist"');
   assert.equal(AURA_TEXT.resonance, 'Crystal Resonance');
   assert.equal(GLYPH_LABEL.crystalfist, 'Crystal Fist', 'named on the account card');

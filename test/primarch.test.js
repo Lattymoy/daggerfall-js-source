@@ -91,7 +91,7 @@ const find = (n, cls) => {
 test('PRIMARCH vocabulary: the title and the glyph join the closed lists last, the aura joins AURAS after the ward; "Primarch" and "Golden Radiance" in words; the title ONE colour - the pixel menu\'s own light gold, #d8cfae, held to the menu\'s rule - no gradient, no edge; the glyph in it, filled; `Y` on the classic face; the radiance\'s button in the Primarch\'s gold; the wire keeps all three (mutants: the colour, the glyph\'s colour, the mark, the fill, the button\'s paint, the words)', () => {
   assert.deepEqual(TITLES.slice(-3), ['primarch', 'crystalfist', 'hourbreaker'], 'the vocabulary\'s newest when it came - CRYSTAL-FIST\'s after it, SD9b\'s Hourbreaker after that (PIN MOVED)');
   assert.deepEqual(GLYPHS.slice(-2), ['primarch', 'crystalfist']);
-  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance'], 'the Broker\'s fire, the ward, then the radiance - SHADOW-CLOAK\'s cloak after it, SERAPH-WINGS\' wings after that, CRYSTAL-FIST\'s resonance after them (PIN MOVED)');
+  assert.deepEqual([...AURAS], ['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour'], 'the Broker\'s fire, the ward, then the radiance - SHADOW-CLOAK\'s cloak after it, SERAPH-WINGS\' wings after that, CRYSTAL-FIST\'s resonance after them (PIN MOVED) (PIN MOVED: SD9c\'s Turning Hour last)');
   assert.equal(TITLE_TEXT.primarch, 'Primarch', 'GA00250: "the title will be Primarch"');
   assert.equal(AURA_TEXT.radiance, 'Golden Radiance');
   assert.equal(GLYPH_LABEL.primarch, 'Primarch', 'named on the account card');
@@ -116,7 +116,7 @@ test('PRIMARCH vocabulary: the title and the glyph join the closed lists last, t
   assert.ok(GLYPH_MARK.primarch.charCodeAt(0) >= FONT_GLYPH_MIN && GLYPH_MARK.primarch.charCodeAt(0) <= FONT_GLYPH_MAX, 'inside the font');
   for (const a of AURAS) assert.ok(AURA_TEXT[a] && TITLES.includes(AURA_PAINT[a]), `every aura has a word and a title's paint for its button: ${a}`);
   assert.equal(AURA_PAINT.radiance, 'primarch', 'the radiance in the Primarch\'s own gold');
-  assert.deepEqual({ ...AURA_PAINT }, { dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist' }, 'CRYSTAL-FIST\'s resonance in the Crystal Fist\'s purple (PIN MOVED) - the fire and the ward as before - SERAPH-WINGS\' wings in the Founder\'s gold (PIN MOVED) - SHADOW-CLOAK\'s cloak in the Shadow Fang\'s paint after them (PIN MOVED)');
+  assert.deepEqual({ ...AURA_PAINT }, { dagonfire: 'gatebreaker', oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker' }, 'SD9c\'s Turning Hour in the Hourbreaker\'s gold (PIN MOVED) - CRYSTAL-FIST\'s resonance in the Crystal Fist\'s purple (PIN MOVED) - the fire and the ward as before - SERAPH-WINGS\' wings in the Founder\'s gold (PIN MOVED) - SHADOW-CLOAK\'s cloak in the Shadow Fang\'s paint after them (PIN MOVED)');
   const badge = titleBadge({ title: 'primarch' });
   assert.deepEqual({ text: badge.text, rgba: badge.rgba, gradient: badge.gradient, edge: badge.edge }, { text: 'Primarch', rgba: TITLE_RGBA.primarch, gradient: null, edge: null });
   assert.deepEqual(readBadge({ title: 'primarch', glyphs: ['primarch'] }), { title: 'primarch', glyphs: ['primarch'] }, 'the wire keeps it');

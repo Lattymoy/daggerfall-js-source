@@ -1393,3 +1393,37 @@ slices re-aimed by content (`fb1004d_knight_house.json`'s version and `gatekeys.
 `test/serpent1_auditclient.test.js` (the Inspect card's facts - the Hours after the serpents).
 
 SD9c next: The Turning Hour - the aura's look, worn.
+
+### SD9c - shipped 2026-10-07 (The Turning Hour)
+
+Section 11's aura - "a slow wheel of brass gears and gold light about the wearer" - drawn and worn. The relay's
+`world176` re-hashed in place (the token's auras); no account version (SD9b's grant already lays it on the row).
+
+- **Held and worn**: `net/identityToken.js` AURAS gains `turninghour`, last; `server-account/src/titles.js` holds it off
+  the row's second grant (`sd_honours`, SD9b - a registered account's alone, never off the title's bit), and it is worn
+  through the aura's own door and signed into the token as every aura is. Its word *The Turning Hour* and its paint
+  the Hourbreaker's (`ui/playerBadge.js` - the button in the bar's gold).
+- **Drawn** (`render/auraRing.js`, the aura pass's seventh look, added whole as the radiance is, in the Hourbreaker's
+  own colours): THE GROUND - a brass wheel about the feet (its rim; 24 teeth out of it; its hub and six spokes)
+  STEPPING on the second as a clock's escapement does (`turningWheelAngle` - eased over a quarter of each second, held
+  the rest, never back, two turns over the aura's clock), a light that does not turn gleaming on the brass as it passes
+  under; outside it the Hour's dial - a line of gold and its twelve marks, the Hour's own the longer - turning BACK,
+  as the Hour's sky's hands do; gold light pooled at the feet, breathing. THE WALL (the pass's strip at the teeth's
+  tips): the wheel's edge seen from the side, its teeth's faces passing round with it and gold along their top; gold
+  light rising off it, gone by the knee; fourteen motes rising. It kindles up, as the radiance does; every rate whole
+  over the clock, the teeth, spokes and marks whole round - no seam behind the wearer.
+
+THE FOUR HOSTS: unchanged - the pass draws every wearer's look already (`scenes/world.js`, `scenes/worldModes.js`);
+`scenes/dungeonContext.js`, `scenes/exterior.js` untouched.
+
+Pins: `test/sd9c_turning.test.js` (4 - held and worn; the look's law; the wheel, the shader run; the dial and the
+light, the shader run); `tools/mutants/sd9c.json` (20, all dead). The shaders compiled and linked in headless
+Chromium's WebGL2 (swiftshader), and the ground and the strip were rendered to images and looked at. PINS MOVED: the
+vocabulary's auras (`test/aegis`, `test/primarch`, `test/seraphwings`, `test/shadowcloak`, `test/crystalfist` - the
+Turning Hour after the Crystal Resonance; `test/primarch`'s paints); `test/relayversion.test.js` (`world176`
+re-hashed: the token's auras); thirteen records from the earlier auras' slices re-aimed by content - their
+vocabulary's line and their paints' (`aegis`, `crystalfist`, `primarch`, `seraphwings`, `shadowcloak`), and the Broker's-first
+order across the held auras, which now hold the Hour's grant too. The strip's kindling is worded apart from the
+radiance's, so `primarch.json`'s kindling record keeps one site.
+
+SD9d next: the spoils thrown from where the Remnant fell.

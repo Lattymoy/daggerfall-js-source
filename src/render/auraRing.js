@@ -121,11 +121,25 @@
 //   a pixel or two fades to its cell's average cover, so the rows do not moire far off; the glow round a square, which a
 //   cell's edge cut into a line over each column's top, is gone. AND A WEARER'S OWN PULSE - `uSeed` offsets its clock.
 //
+// SD9c (2026-10-07, the Super Dungeons arc; bible/11-Multiplayer/Super-Dungeons.md section 11): THE TURNING HOUR, the
+// seventh look - the Brass Remnant's aura, "a slow wheel of brass gears and gold light about the wearer", granted one
+// kill in eight on its first write (server-account/src/sds.js). Added whole, as the radiance is, in the Hourbreaker's own
+// colours (ui/playerBadge.js HOUR_*):
+//   - THE GROUND: a brass wheel lying about the feet - its rim, TURNING_TEETH teeth out of it, its hub and TURNING_SPOKES
+//     spokes - STEPPING on the second as a clock's escapement does (eased over a quarter of each second, held the rest:
+//     turningWheelAngle), two turns over the clock; a light that does not turn gleaming on the brass as it passes under;
+//     outside it the Hour's dial, a line of gold and its twelve marks - the Hour's own the longer - turning BACK, as the
+//     Hour's sky's hands do (render/sdSky.js); gold light pooled at the feet, breathing.
+//   - THE WALL, the pass's strip at the teeth's tips: the wheel's edge seen from the side - its teeth's faces passing
+//     round with it, gold along their top - gold light rising off it, gone by the knee, and TURNING_MOTES motes rising.
+// It kindles UP, as the radiance does. Every rate whole over the clock (turningRatesWhole); the teeth, the spokes and
+// the marks whole round, so no seam behind the wearer. No third draw, no host changed.
+//
 // Not a DFU member. Ledger A (WB).
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram } from './glProgram.js';
 import { wrapAngle } from '../world/mat4.js';
-import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour
+import { GLYPH_PATH, GLYPH_DETAIL, CRYSTAL_PURPLE, HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT } from '../ui/playerBadge.js';   // SHADOW-CLOAK: the wearer's own glyph, its emblem; CRYSTAL-FIST AUDIT: the Crystal Fist's purple, the resonance's one colour
 
 /** The ring's radius about the feet (m), the ground quad's half-width, the flames' height, and the ground's lift. */
 export const AURA_RING_R = 0.85;
@@ -389,6 +403,39 @@ export function resonanceLitInto(out, t, kindle = 1) {
 export const wingRatesWhole = () => [...Object.values(WING_HZ), WING_FLOW.rate, WING_FLOW.fray].every((hz) => Number.isInteger(Math.round(hz * AURA_CLOCK_PERIOD * 1e6) / 1e6))
   && WING_MOTE_LIFE.every((l) => Number.isInteger(AURA_CLOCK_PERIOD / l));
 
+// SD9c (2026-10-07, the Super Dungeons arc; bible/11-Multiplayer/Super-Dungeons.md section 11): THE TURNING HOUR - the
+// Brass Remnant's aura, "a slow wheel of brass gears and gold light about the wearer", one kill in eight on its first
+// write (server-account/src/sds.js). The pass's seventh look, added whole as the radiance is:
+export const TURNING_R = 0.7;             // the wheel's rim, where its teeth stand, m
+export const TURNING_RIM_M = 0.06;        // the rim's band, inward
+export const TURNING_TEETH = 24;
+export const TURNING_TOOTH_M = 0.07;      // a tooth's reach out of the rim
+export const TURNING_SPOKES = 6;
+export const TURNING_SPOKE_M = 0.035;     // a spoke's width
+export const TURNING_HUB_R = 0.2;
+export const TURNING_DIAL_R = 1.0;        // the Hour's dial, outside the wheel
+export const TURNING_MARKS = 12;
+export const TURNING_MARK_M = 0.07;       // an hour's mark, inward from the dial; the Hour's own twice as long
+export const TURNING_H = 0.62;            // the wall: the wheel's edge, and the light rising off it
+export const TURNING_EDGE_M = 0.05;       // the wheel's thickness, seen from the side
+export const TURNING_MOTES = 14;
+/** Its rates, in turns a second: the wheel two turns over the clock - stepping on the second, a clock's escapement; the
+ *  dial one turn BACK (the Hour's hands run backwards - render/sdSky.js); the light's breath; the motes' rise. */
+export const TURNING_HZ = Object.freeze({ wheel: 1 / 60, dial: 1 / 120, pulse: 1 / 4, mote: 1 / 6 });
+/** The wheel's step takes the first quarter of each second, and it holds the rest. */
+export const TURNING_STEP_S = 0.25;
+export const turningRatesWhole = () => Object.values(TURNING_HZ).every((r) => r > 0 && Number.isInteger(Math.round(r * AURA_CLOCK_PERIOD * 1e6) / 1e6));
+/** The Hourbreaker's own colours (ui/playerBadge.js HOUR_*): the Remnant's brass, its bar's gold, the light of its heart. */
+export const TURNING_RGB = Object.freeze({ brass: Object.freeze(HOUR_BRASS.slice(0, 3)), gold: Object.freeze(HOUR_GOLD.slice(0, 3)), light: Object.freeze(HOUR_LIGHT.slice(0, 3)) });
+/** The wheel's turn at clock time `t` (s), radians: TAU x wheel each second, eased over its first TURNING_STEP_S and held
+ *  the rest - never going back, whole over the clock. The shader's own (turningWheel). Pure. */
+export function turningWheelAngle(t) {
+  const s = Math.floor(t), e = Math.min(1, (t - s) / TURNING_STEP_S);
+  return Math.PI * 2 * TURNING_HZ.wheel * (s + e * e * (3 - 2 * e));
+}
+/** The dial's turn at `t`: backwards, smoothly. Pure. */
+export const turningDialAngle = (t) => -Math.PI * 2 * TURNING_HZ.dial * t;
+
 /** AEGIS: HOW EACH AURA IS DRAWN - its kind in the shader (`uAura`), its ring's radius, its wall's height and how many
  *  symbols float off it (the third draw - none for the fire). A pin walks AURAS and requires one each. SHADOW-CLOAK: and,
  *  for the cloak alone, the mesh its wall is (`mesh` - the shaped cloth, not the strip) and that it SHADES: it darkens
@@ -400,6 +447,7 @@ export const AURA_LOOK = Object.freeze({
   shadowcloak: Object.freeze({ kind: 3, ringR: CLOAK_HEM_R, flameH: CLOAK_H, glyphs: CLOAK_EMBLEMS, shreds: CLOAK_SHREDS, mesh: 'cloak', shade: true }),   // SHADOW-CLOAK: the cape on the body, its emblems, and its shreds when it tears
   seraphwings: Object.freeze({ kind: 4, ringR: WING_POOL_R, flameH: WING_REACH[1], glyphs: WING_CARDS, mesh: 'wings' }),   // SERAPH-WINGS: the wings on the body, their sparks and their backlight
   resonance: Object.freeze({ kind: 5, ringR: RESONANCE_R, flameH: RESONANCE_H, glyphs: 0, shade: true }),   // CRYSTAL-FIST: the ring of columns of squares, on the strip; AUDIT: drawn premultiplied, so the squares stay the one purple
+  turninghour: Object.freeze({ kind: 6, ringR: TURNING_R + TURNING_TOOTH_M, flameH: TURNING_H, glyphs: 0 }),   // SD9c: the wheel at the feet, its edge on the strip at its teeth's tips
 });
 /** The look a wearer's aura is drawn with - Dagon's Fire for one that names none (the fire was the only aura before). */
 export const auraLookOf = (aura) => (typeof aura === 'string' && Object.hasOwn(AURA_LOOK, aura) ? AURA_LOOK[aura] : AURA_LOOK.dagonfire);
@@ -668,6 +716,74 @@ vec4 resonanceGround(vec2 p) {
   float pitch = TAU * r / RES_N;
   float c = resCover(vec2((fract(cu) - 0.5) * pitch, r - uRingR), pitch, RES_PITCH) * uKindle;
   return vec4(RES_PURPLE * c, c);
+}
+`;
+const TURNING_GLSL = `
+const vec3 TH_BRASS = ${v3(TURNING_RGB.brass)};
+const vec3 TH_GOLD = ${v3(TURNING_RGB.gold)};
+const vec3 TH_LIGHT = ${v3(TURNING_RGB.light)};
+// the metres a pixel spans here, never under a few millimetres
+float turnPixel() { return max(max(length(dFdx(vWorld)), length(dFdy(vWorld))), 0.002); }
+// a band between two radii (or heights), its edges a pixel wide
+float turnBand(float x, float lo, float hi, float px) { return clamp((x - lo) / px + 0.5, 0.0, 1.0) * clamp((hi - x) / px + 0.5, 0.0, 1.0); }
+// the wheel's turn: a step on the second, eased over its first quarter, held the rest (turningWheelAngle)
+float turningWheel() { float s = floor(uTime), e = clamp((uTime - s) / ${TURNING_STEP_S.toFixed(3)}, 0.0, 1.0); return TAU * (s + e * e * (3.0 - 2.0 * e)) ${hzGlsl(TURNING_HZ.wheel)}; }
+float turningBreath() { return 0.85 + 0.15 * sin(uTime * TAU ${hzGlsl(TURNING_HZ.pulse)}); }
+// a tooth's face across its pitch (0..1 round from its leading edge): solid over its middle half, its flanks a pixel wide
+float turningTooth(float w, float r, float px) {
+  float pitch = TAU * r / ${TURNING_TEETH.toFixed(1)}, x = fract(w / TAU * ${TURNING_TEETH.toFixed(1)}) * pitch;
+  return clamp((x - 0.2 * pitch) / px + 0.5, 0.0, 1.0) * clamp((0.7 * pitch - x) / px + 0.5, 0.0, 1.0);
+}
+vec3 turningGround(vec2 p) {
+  float r = length(p);
+  if (r > uGroundR) discard;
+  float px = turnPixel(), breath = turningBreath();
+  // THE GOLD LIGHT the wheel stands in, brightest at the feet
+  vec3 col = TH_GOLD * exp(-r * r / 0.22) * 0.3 * breath;
+  // never the angle at the middle, where atan(0, 0) is no number (the resonance's AUDIT)
+  if (r > 0.05) {
+    float a = atan(p.y, p.x), w = a - turningWheel();
+    // THE WHEEL: its rim, its teeth out of it, its hub and its spokes - all turning with it
+    float rim = turnBand(r, ${(TURNING_R - TURNING_RIM_M).toFixed(3)}, ${TURNING_R.toFixed(3)}, px);
+    float tooth = turnBand(r, ${TURNING_R.toFixed(3)} - px, ${(TURNING_R + TURNING_TOOTH_M).toFixed(3)}, px) * turningTooth(w, r, px);
+    float hub = turnBand(r, ${(TURNING_HUB_R - 0.03).toFixed(3)}, ${TURNING_HUB_R.toFixed(3)}, px);
+    float across = abs(fract(w / TAU * ${TURNING_SPOKES.toFixed(1)} + 0.5) - 0.5) * TAU * r / ${TURNING_SPOKES.toFixed(1)};
+    float spoke = clamp((${(TURNING_SPOKE_M / 2).toFixed(4)} - across) / px + 0.5, 0.0, 1.0) * turnBand(r, ${TURNING_HUB_R.toFixed(3)} - px, ${(TURNING_R - TURNING_RIM_M).toFixed(3)} + px, px);
+    float brass = max(max(rim, tooth), max(hub, spoke));
+    // its gleam - a light that does not turn, the teeth catching it as they pass under it
+    float gleam = pow(0.5 + 0.5 * cos(a - 0.6), 6.0);
+    col += brass * (TH_BRASS * 0.8 + TH_LIGHT * 0.45 * gleam);
+    // THE DIAL outside it, turning BACK: a line of gold and the Hour's twelve marks, the Hour's own the longer
+    float d = a + uTime * TAU ${hzGlsl(TURNING_HZ.dial)};   // the dial's own angle (turningDialAngle: it turns back)
+    float hr = fract(d / TAU * ${TURNING_MARKS.toFixed(1)} + 0.5) - 0.5;   // across the nearest hour's mark, in hours
+    float first = 1.0 - step(0.5, mod(floor(fract(d / TAU) * ${TURNING_MARKS.toFixed(1)} + 0.5), ${TURNING_MARKS.toFixed(1)}));   // the Hour's own
+    float markLen = ${TURNING_MARK_M.toFixed(3)} * (1.0 + first);
+    float mark = clamp((0.009 - abs(hr) * TAU * r / ${TURNING_MARKS.toFixed(1)}) / px + 0.5, 0.0, 1.0) * turnBand(r, ${TURNING_DIAL_R.toFixed(3)} - markLen, ${TURNING_DIAL_R.toFixed(3)}, px);
+    float line = turnBand(r, ${(TURNING_DIAL_R - 0.006).toFixed(3)}, ${(TURNING_DIAL_R + 0.006).toFixed(3)}, px);
+    col += TH_GOLD * max(mark, line * 0.7) * (0.75 + 0.25 * breath);
+  }
+  return col * uKindle * (1.0 - smoothstep(uGroundR - 0.2, uGroundR, r));
+}
+vec3 turningWall(vec2 q) {
+  float u = q.x, v = q.y, y = v * uFlameH, px = turnPixel(), breath = turningBreath();
+  // THE WHEEL'S EDGE, seen from the side: its teeth's faces passing round with it, a line of gold along their top
+  float w = u * TAU - turningWheel();
+  float edge = clamp((${TURNING_EDGE_M.toFixed(3)} - y) / px + 0.5, 0.0, 1.0) * turningTooth(w, uRingR, px);
+  vec3 col = TH_BRASS * 0.8 * edge + TH_GOLD * 0.6 * edge * turnBand(y, ${(TURNING_EDGE_M - 0.012).toFixed(3)}, ${TURNING_EDGE_M.toFixed(3)}, px);
+  // THE GOLD LIGHT rising off it, gone by the knee
+  col += TH_GOLD * 0.16 * (1.0 - smoothstep(0.0, 0.3, y)) * breath;
+  // THE MOTES, rising the wall's height each at its own place and pace
+  float circ = TAU * uRingR, sparks = 0.0;
+  for (int m = 0; m < ${TURNING_MOTES}; m++) {
+    float fm = float(m);
+    float h1 = fract(sin(fm * 41.37 + 1.7) * 43758.5453), h2 = fract(sin(fm * 17.93 + 3.1) * 24634.6345);
+    float mv = fract(uTime ${hzGlsl(TURNING_HZ.mote)} * (1.0 + mod(fm, 3.0)) + h2);
+    vec2 dm = vec2((fract(u - h1 + 0.5) - 0.5) * circ, (v - mv) * uFlameH);
+    sparks += exp(-dot(dm, dm) / 0.0004) * (1.0 - mv) * smoothstep(0.0, 0.08, mv);
+  }
+  col += (TH_LIGHT + TH_GOLD) * 0.5 * sparks;
+  // kindled UP, as the radiance is: the light rising from the feet
+  return clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0) * col;
 }
 `;
 /** SHADOW-CLOAK: A GLYPH'S OUTLINE AS STRAIGHT EDGES - an SVG path of absolute M, L, Q and Z (ui/playerBadge.js
@@ -1275,7 +1391,7 @@ export const AURA_FS = HEAD + `in vec2 vP;
 in vec3 vWorld;
 in vec3 vS;             // AEGIS: a floating symbol's age, rune and number
 uniform int uKind;
-uniform int uAura;      // AEGIS: 0 Dagon's Fire, 1 the Oblivion Ward, 2 the Golden Radiance (AURA_LOOK - PRIMARCH), 3 the Holo Shadow Cloak (SHADOW-CLOAK), 4 the Seraph Wings (SERAPH-WINGS), 5 the Crystal Resonance (CRYSTAL-FIST)
+uniform int uAura;      // AEGIS: 0 Dagon's Fire, 1 the Oblivion Ward, 2 the Golden Radiance (AURA_LOOK - PRIMARCH), 3 the Holo Shadow Cloak (SHADOW-CLOAK), 4 the Seraph Wings (SERAPH-WINGS), 5 the Crystal Resonance (CRYSTAL-FIST), 6 The Turning Hour (SD9c)
 uniform vec3 uAt;       // PRIMARCH: the feet - the axis the radiance's column stands on
 uniform float uYaw;     // SHADOW-CLOAK: the wearer's facing - the cloak's opening is at their front
 uniform int uSide;      // SHADOW-CLOAK: which side of the cloth this draw lays - 0 its lining (front faces culled), 1 its outside (back faces culled)
@@ -1290,7 +1406,7 @@ uniform vec3 uCamPos;
 out vec4 o;
 ${FOG_FACTOR_GLSL}${NOISE_GLSL}
 const float TAU = 6.283185307179586;
-${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}
+${WARD_GLSL}${RADIANCE_GLSL}${RESONANCE_GLSL}${TURNING_GLSL}${CLOAK_SHAPE_GLSL}${CLOAK_FS_GLSL}${WING_SHARED_GLSL}${WING_FS_GLSL}
 void main() {
   if (uAura == 4) { vec3 wl = uKind == 0 ? wingsGround(vP) : uKind == 1 ? wingStrand(vP, vS) : vS.y > 1.5 ? wingHalo(vP, vS.x) : wingMote(vP, vS); o = vec4(wl * fogFactorAt(vWorld), 1.0); return; }   // SERAPH-WINGS: added whole; kindled within (the strands unfurl)
   if (uAura == 3) {   // SHADOW-CLOAK: premultiplied - the light it adds, and how much the shadow covers; both fogged
@@ -1300,6 +1416,7 @@ void main() {
     return;
   }
   if (uAura == 5) { vec4 c = uKind == 0 ? resonanceGround(vP) : resonanceWall(vP); float f = fogFactorAt(vWorld); o = vec4(c.rgb * f, c.a * f); return; }   // CRYSTAL-FIST: premultiplied (AURA_LOOK shade), fogged to nothing; AUDIT: the columns rise as it kindles by node's counts (uResLit), the feet by uKindle
+  if (uAura == 6) { vec3 c = uKind == 0 ? turningGround(vP) : turningWall(vP); o = vec4(c * fogFactorAt(vWorld), 1.0); return; }   // SD9c: added whole, kindled within (the ground fades in, the strip rises)
   if (uAura == 2) { vec3 rad = uKind == 0 ? radianceGround(vP) : radianceWall(vP); o = vec4(rad * uKindle * fogFactorAt(vWorld), 1.0); return; }   // PRIMARCH
   if (uAura == 1) { vec3 ward = uKind == 0 ? wardGround(vP) : uKind == 1 ? wardWall(vP) : wardSymbol(vP, vS); o = vec4(ward * uKindle * fogFactorAt(vWorld), 1.0); return; }   // AEGIS
   // every rate a whole number of cycles over the clock, in turns a second times TAU - never a rounded radian rate, which
