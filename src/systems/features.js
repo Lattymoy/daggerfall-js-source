@@ -498,7 +498,7 @@ export const FEATURES = Object.freeze([
     effect: 'The amount takes effect when the world next loads; the style at once.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
-      store: 'prefs', key: 'grassDensity', initial: 0, online: 'player', tiers: Object.freeze([[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]),   // PERF1: a fraction of the lab's 1.2 million blades; a dial, the player's online; AUDIT MEADOW1 (Mac: "Let's have our grass tufts off by default also"): Off by default
+      store: 'prefs', key: 'grassDensity', initial: 1, online: 'player', tiers: Object.freeze([[1, 'Full'], [0.5, 'Half'], [0.25, 'Quarter'], [0, 'Off']]),   // PERF1: a fraction of the lab's 1.2 million blades; a dial, the player's online; GRASS-ON (2026-10-07, Mac: "Can you please turn grass on by default"): Full by default again, where AUDIT MEADOW1 had it Off
       also: Object.freeze([Object.freeze({ store: 'prefs', key: 'grassStyle', initial: 'meadow', online: 'player' })]),   // GRASS-PX: a uniform in the one grass program, so it flips live; MEADOW1: the meadow the default
       parts: Object.freeze([Object.freeze({ key: 'grassStyle', label: 'Style', tiers: Object.freeze([['meadow', 'Meadow'], ['pixel', 'Pixel'], ['smooth', 'Smooth']]) })]),
     }),

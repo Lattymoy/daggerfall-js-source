@@ -36,6 +36,21 @@
 // outside, is a tab of the yard's panel (ui/decorPanel.js), its look tried on
 // the house as it is chosen and written when it is painted.
 //
+// YARD-LIGHT (2026-10-07, Discord through Mac - a lamp post and a torch in
+// a yard at night, dark: "i wish lights worked outside.."): A YARD'S LAMP IS
+// THE TOWN'S. A yard's piece carries no light of its own (net/decorLaw.js -
+// "an outdoor lamp is the town's"), and nothing lit it as the town either, so
+// a lamp post placed outside stood dark beside the street's lit ones. Now a
+// TEXTURE.210 flat standing in a yard lights as Daggerfall lights every one
+// standing in a town block (RMBLayout.AddLight, world/cityLights.js): the
+// DaggerfallLight [City] at the flat's top, in the town lanterns' hours,
+// colour and flicker, ranked with the street's own (yardLampOf, `lamps`;
+// scenes/world.js). Nothing is stored and nothing is switched: a lamp placed
+// before this lights as it stands. AUDIT YARD-LIGHT: a yard lights its first
+// YARD_LAMPS_MAX lamps (the densest Daggerfall block stands eight), hung the
+// town's own height above the picture, its reach scaled with the piece - and
+// no distance cuts one: the night's one selection ranks it with the street.
+//
 // Online alone - a yard is an online home's. Not a DFU member. Ledger A.
 // ═══════════════════════════════════════════════════════════════════
 
@@ -50,7 +65,63 @@ import { homeOutsideKept, homeYardWhere } from '../systems/onlineHomes.js';   //
 import { createYardNature, isNaturePiece, yardNatureFlat, yardTreeSet } from './yardNature.js';   // DECOR-OUTDOOR: a yard's trees and plants, in its town's season; DECOR-LPT: as Low Poly Trees' own
 import { remapSubMeshes } from '../world/texRemap.js';   // DECOR-OUTDOOR: a yard's models in its town's climate
 import { applyClimate } from '../world/climateSwaps.js';
-import { isNatureArchive } from '../world/rmbFlats.js';
+import { isNatureArchive, BLOCK_FLATS_OFFSET_Y } from '../world/rmbFlats.js';   // AUDIT YARD-LIGHT: and how far the town's flats stand below their lights
+import { LIGHTS_ARCHIVE, CITY_LIGHT_RANGE, CITY_LIGHT_INTENSITY, CITY_LIGHT_COLOR } from '../world/cityLights.js';   // YARD-LIGHT: the town's lantern
+import { GLOBAL_SCALE } from '../world/meshReader.js';
+
+/** YARD-LIGHT: the light a yard's lamp gives - the town's lantern's (DaggerfallLight [City]: range 18, intensity 1,
+ *  white). The world host lights it as it lights theirs: the town lanterns' colour (CITY_LIGHT_COLOR_F32) and their
+ *  flicker, at the lamp's own reach (yardLampRows). */
+export const YARD_LAMP = Object.freeze({ range: CITY_LIGHT_RANGE, intensity: CITY_LIGHT_INTENSITY, color: CITY_LIGHT_COLOR });
+/** AUDIT YARD-LIGHT (L1): HOW MANY OF A YARD'S LAMPS LIGHT - the most TEXTURE.210 flats any Daggerfall town block stands
+ *  (eight, in GRVEAL01, GRVEAS01, GRVEAM01, CUSTAA02 and CUSTAA04 of the 920 RMB blocks; most stand three to five).
+ *  A yard holds sixty pieces: sixty lamps round one lot summed nine times the brightest ground in any Daggerfall block,
+ *  put the street's lanterns out of the classic set's sixteen, and looped a lane fragment over all forty-eight lights.
+ *  The first eight a yard stands light (decorRoom.js pushLights - the order they were placed); the rest stand unlit,
+ *  as every yard lamp stood before YARD-LIGHT. */
+export const YARD_LAMPS_MAX = 8;
+/** AUDIT YARD-LIGHT (L5): how far above its picture's top the town hangs a lantern's light - RMBLayout sinks a block's
+ *  flats by blockFlatsOffsetY and never their lights (0.15 m), so a yard's lamp hangs as far above its own. */
+export const YARD_LAMP_RAISE = -BLOCK_FLATS_OFFSET_Y * GLOBAL_SCALE;
+/**
+ * YARD-LIGHT: THE LIGHT A YARD'S PIECE GIVES (decorRoom.js `lampOf`) - a TEXTURE.210 flat's is the town's lantern, hung
+ * where the town hangs its own over a picture of its size (collectCityLights: the record's height plus the picture's -
+ * the drawn top and YARD_LAMP_RAISE above it); anything else gives none, and neither does a flat whose picture has not
+ * stood yet (`size` null). AUDIT YARD-LIGHT (L6): a piece scaled is the lamp scaled - its picture, its light's height
+ * above its foot and its reach alike, so it lights its ground as the town's lamp lights its own (the reach kept, a 4 m
+ * lamp post scaled four times stood its light sixteen metres up and lit next to nothing under it). The light carries
+ * its flicker slot (yardLampSlot - once, here, never a frame).
+ */
+export function yardLampOf(piece, size) {
+  if (piece?.flat?.[0] !== LIGHTS_ARCHIVE || !(size?.h > 0)) return null;
+  const k = piece.scale > 0 ? piece.scale : 1;
+  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h + YARD_LAMP_RAISE * k };
+}
+/** YARD-LIGHT: the town's flicker slot a yard's lamp takes (CityLightAnimator), named by its piece - FNV-1a of the id -
+ *  so it keeps its own flicker whatever else stands (LA-LIGHTS1's law for the street's lanterns). */
+export function yardLampSlot(id) {
+  const s = String(id ?? '');
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return h >>> 0;
+}
+/**
+ * AUDIT YARD-LIGHT (L3, L4): THE YARDS' LAMPS AS THE NIGHT'S SCENE LIGHTS - pushed onto `out` (the world host's `csaLit`)
+ * as rows refilled in place from `rows` (PERF-LIGHTS' law: a night frame makes nothing for its lanterns): each lamp's
+ * place, the town's flicker at its slot (`animRanges`, read after the animator's tick) at the lamp's own reach, and the
+ * town lanterns' `color`. Answers `out`.
+ */
+export function yardLampRows(lamps, rows, animRanges, color, out) {
+  for (let i = 0; i < lamps.length; i++) {
+    const l = lamps[i];
+    const e = rows[i] ?? (rows[i] = { x: 0, y: 0, z: 0, range: 0, color: null });
+    e.x = l.x; e.y = l.y; e.z = l.z;
+    e.range = animRanges[l.slot % animRanges.length] * (l.range / CITY_LIGHT_RANGE);
+    e.color = color;
+    out.push(e);
+  }
+  return out;
+}
 
 /** AUDIT: how far from the eye a yard's pieces are drawn, metres (its flats stand in the billboard pass's own cull). */
 export const YARD_DRAW_M = 300;
@@ -342,6 +413,9 @@ export function createHomeYards(deps) {
     y.pool = createDecorRoom({
       meshes: deps.meshes, renderer: deps.renderer, getTexture: deps.getTexture, uploadRecord: deps.uploadRecord, uploadRecordFrame: deps.uploadRecordFrame,
       collider: () => deps.collider?.() ?? null, origin: () => originOf(y),
+      // YARD-LIGHT: a lamp lights as the town's (yardLampOf) - the room's machinery mounts it when its picture stands, moves
+      // it with a recentre (restand) and takes it down with the piece; `lamps` reads them in the order the pieces stand
+      lampOf: yardLampOf,
       flatAnims: () => entryOf(y)?.flatAnims ?? null,   // DECOR-OUTDOOR: a street's animal or flame moves as its town's own (the pixel's animator, ticked with it)
       prepareModel: (gpu) => climateOf(y, gpu),   // DECOR-OUTDOOR: its town's climate
       // DECOR-OUTDOOR: a tree or a plant in its town's season - the climate's own, drawn as its pixel draws its nature;
@@ -580,6 +654,19 @@ export function createHomeYards(deps) {
     return _treeSets;
   }
 
+  const _lamps = [];
+  /** YARD-LIGHT: THE YARDS' LAMPS where they stand now (scene space), for the world's lanterns in their hours
+   *  (scenes/world.js, yardLampRows). AUDIT YARD-LIGHT: each yard's first YARD_LAMPS_MAX lamps in the order its pieces
+   *  stand (L1), and every yard standing - no distance cuts a lamp (L2: a cut at YARD_DRAW_M of the yard's origin put its
+   *  lamps out at once, unfaded, beside the street's lit ones; the night's one selection ranks them with the street's,
+   *  and its cap fades them as it fades theirs). The list is refilled and answered; each lamp is the light its yard
+   *  keeps (decorRoom.js mountLight's - x, y, z, its reach and its slot). */
+  function lamps() {
+    _lamps.length = 0;
+    for (const y of yards.values()) y.pool.pushLights(_lamps, YARD_LAMPS_MAX);
+    return _lamps;
+  }
+
   return {
     frame,
     rebase,
@@ -601,6 +688,8 @@ export function createHomeYards(deps) {
     batches: () => [...[...yards.values()].flatMap((y) => y.pool.batches()), ...tool.batches()],
     /** DECOR-LPT: the yards' 3D trees, for the world's near set (scenes/world.js lowPolyTreesFrame). */
     treeSets,
+    /** YARD-LIGHT: the yards' lamps, for the world's lanterns. */
+    lamps,
     /** The lot's edge while a piece is placed, on the world's decal pass. */
     drawDecals: (r = deps.renderer) => tool.drawMounts(r),
     drawPreview: () => tool.drawPreview(cur ? remapOf(cur.yard) : null),   // AUDIT 05b A5: in the yard's climate, as it will stand

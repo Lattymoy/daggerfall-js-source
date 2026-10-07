@@ -790,7 +790,7 @@ import { ROTOR_HUB, rotorPhase, advanceRotor, mountRotor, MILL_SOUND, millSoundP
 import { BODY } from '../world/windmillMesh.js';   // WM2d: the tower, for the collider
 import { remapSubMeshes } from '../world/texRemap.js';   // WM3: the one climate/dungeon remap seam
 import { homeLookRemap, HOME_LOOK_BUILD_WAIT_MS } from '../world/homeLook.js';   // HOME-LOOK: a painted house's own table
-import { createHomeYards } from './homeYards.js';   // HOME-YARD: the town's yards, and the owner's decorator outside
+import { createHomeYards, yardLampRows } from './homeYards.js';   // HOME-YARD: the town's yards, and the owner's decorator outside; YARD-LIGHT: a yard's lamps as the night's scene lights
 import { loadIcon } from '../ui/textureCanvas.js';   // HOME-YARD: the decorator's pictures
 import { decorScanDeps } from '../systems/decorScan.js';   // HOME-YARD: the catalogue's scan (DECOR-DUNGEON: one constructor for both hosts)
 import { DOOR_TYPE } from '../world/meshReader.js';   // ARENA1: the undercroft's stair is a dungeon entrance (DECOR-DUNGEON: GLOBAL_SCALE went with the yards' scan deps, systems/decorScan.js)
@@ -2152,7 +2152,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // same as ?grass=off - no renderer, no field, nothing drawn.
   const grassDensity = Math.max(0, Math.min(1, Number(getPref('grassDensity')) || 0)) * LAB_GRASS.density;
   const labGrass = isEnhanced() && getPref('enhancedEnvironments') && grassDensity > 0 && pageParam('grass') !== 'off'
-    ? new LabGrassRenderer(renderer.gl) : null;
+    ? new LabGrassRenderer(renderer.gl, { provoke: pageParam('provoke') !== 'last' }) : null;   // GRASS-ON: `?provoke=last` draws the field under GL's own convention, to time it both ways (render/labGrass.js)
   let labGrassField = null;   // GR5: the world-anchored field, filled a cell or two a frame
   if (labGrass) discSlotCount(LAB_GRASS.span);   // PERF-EXT20: the field's one sweep, paid here behind the loading screen - every createGrassField after reads the memo
   const grassNormalScratch = [0, 1, 0];   // GRASS-LIT2: the slope's answer, one array for every blade (the placer copies it)
@@ -25737,6 +25737,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  it reads through - refilled every frame, never re-minted. */
   const _sceneLights = [];
   const _lightT = [0, 0, 0];
+  const _yardRows = [];   // AUDIT YARD-LIGHT (L4): the yards' lamps' scene-light rows, refilled in place (homeYards.js yardLampRows)
   // WOD2: the frame's World of Daggerfall lights ride the same pool,
   // after the lanterns, with a range array of their own beside the
   // animator's (theirs never flicker - the interior light prefab is not
@@ -29275,6 +29276,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (lightsOnAt(minute)) for (const l of quays?.lights() ?? []) csaLit.push({ x: l.x, y: l.y, z: l.z, range: l.range, color: CITY_LIGHT_COLOR_F32 });
     if (lightsOnAt(minute)) {
       worldLightAnimator.tick(dt);
+      // YARD-LIGHT: the yards' lamps - the town's own (homeYards.js yardLampOf: an outdoor lamp is the town's) - scene lights beside
+      // the quays', never the player's extras; in the lanterns' hours and colour, each on the town's flicker at its slot (AUDIT
+      // YARD-LIGHT L3: after the tick, as the street reads it) at its own reach, rows refilled in place (L4: PERF-LIGHTS' law)
+      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit);
       // PERF-LIGHTS (2026-09-19): THE LANTERNS ARE A POOL, NOT A FRESH
       // LIST. This built an array and an object PER LANTERN every frame -
       // a town at night is hundreds of them, and the pixel translation
