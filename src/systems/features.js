@@ -415,7 +415,7 @@ export const FEATURES = Object.freeze([
       + 'fog, shadows from the sun and your torch, darker corners, a glow on windows and flames, and rays of '
       + 'sunlight. Off is Daggerfall Unity’s flat lighting.'
       + ' Steady shadows stops shadows popping (off: more frame rate); Calmer eye slows how fast your eyes adjust.',
-    effect: 'Lighting takes effect when the world next loads; steady shadows and calmer eye at once.',
+    effect: 'Lighting and the shadow cache take effect when the world next loads; steady shadows and calmer eye at once.',
     kinds: Object.freeze(['enhanced']),
     // OL-LIGHT (2026-09-24, Mac: "Can we let people disable it online"): THE PLAYER'S, ONLINE TOO. It was forced on
     // with the rest of the enhanced lane, so a player it did not suit - the interior flicker DISC15 closed, a GPU
@@ -428,8 +428,8 @@ export const FEATURES = Object.freeze([
     // no lo-tier rebuild cap; off = EL8's schedule, cheaper but shadows can pop).
     control: Object.freeze({
       store: 'prefs', key: 'enhancedLighting', initial: true, online: 'player',
-      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'steadyShadows', initial: true, online: 'player' }), Object.freeze({ store: 'prefs', key: 'shadowDebug', initial: false, online: 'player' }), Object.freeze({ store: 'prefs', key: 'calmEye', initial: false, online: 'player' })]),   // FLICKER-FIX: shadowDebug prints the console log (render/shadowPass.js _debugLog); STEADY-BALANCE: calmEye, the slow eye on its own chip
-      parts: Object.freeze([Object.freeze({ key: 'enhancedLighting', label: 'Lighting' }), Object.freeze({ key: 'steadyShadows', label: 'Steady shadows' }), Object.freeze({ key: 'calmEye', label: 'Calmer eye' }), Object.freeze({ key: 'shadowDebug', label: 'Shadow debug log' })]),
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'steadyShadows', initial: true, online: 'player' }), Object.freeze({ store: 'prefs', key: 'shadowDebug', initial: false, online: 'player' }), Object.freeze({ store: 'prefs', key: 'calmEye', initial: false, online: 'player' }), Object.freeze({ store: 'prefs', key: 'shadowCache', initial: false, online: 'player' })]),   // FLICKER-FIX: shadowDebug prints the console log (render/shadowPass.js _debugLog); STEADY-BALANCE: calmEye, the slow eye on its own chip
+      parts: Object.freeze([Object.freeze({ key: 'enhancedLighting', label: 'Lighting' }), Object.freeze({ key: 'steadyShadows', label: 'Steady shadows' }), Object.freeze({ key: 'calmEye', label: 'Calmer eye' }), Object.freeze({ key: 'shadowCache', label: 'Shadow cache (faster, may flicker)' }), Object.freeze({ key: 'shadowDebug', label: 'Shadow debug log' })]),   // CACHE-OFF (2026-10-06, the player: "add an option for it in enhanced lighting just in case but leave it off by default so it doesnt flicker")
     }),
   }),
   // IIL1-T (2026-09-27, Mac: "add an alternative light on off option to test the modded lighting"): Improved Interior
@@ -890,6 +890,20 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect at once with the Morrowind body.',   // FT18: the Mods page it named is gone - the tile rebuilds it (enhancedMenu.js TILE_AFTER)
     kinds: Object.freeze(['mod']),
     control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),
+  }),
+  // MW-STEEL1 (2026-10-06, Mac: "the armor replacement of the morrowind steel armor with a varient to toggle the helmet
+  // type"): the steel plate's helm, two ways - closed (a visor and a plume) or open (a nasal helm, the face showing).
+  // Mac's answers: a switch here beside Weapon Sheathing, closed by default. The VIEWER'S, as the sheathing is: it is
+  // how this machine draws a steel helm - the player's and every peer's - and it never reaches the wire. Read where the
+  // worn set is composed (combat/fpArm.js); the tile rebuilds the body at once (ui/enhancedMenu.js TILE_AFTER).
+  Object.freeze({
+    id: 'steel-helm',
+    group: 'combat',
+    title: 'Steel Helm',
+    note: 'With the Morrowind body, a Steel Helm is worn closed, with a visor and a plume, or open, a nasal helm that shows the face.',
+    effect: 'Takes effect at once with the Morrowind body.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwSteelHelm', initial: 'closed', online: 'player', tiers: Object.freeze([['closed', 'Closed'], ['open', 'Open']]) }),
   }),
   // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING - the first
   // Morrowind mod, and the only row whose effect line has to say NEXT

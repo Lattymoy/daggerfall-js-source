@@ -1248,5 +1248,7 @@ export function createTravelOptions(deps = {}) {
     drawJunctionMap, updateJunctionMap, disableJunctionMap,
     attemptAvoidEncounter,
     encounter,   // AUDIT OW5b E1: the enemies stop, asked by the encounter that meets the traveller
+    // PACE-DIALS: a dial turned under a running journey - its ground's rate asked of the clock again at once
+    reapplyRate: () => { if (st.autopilot && ui?.isShowing) applyRate(true); },
   };
 }

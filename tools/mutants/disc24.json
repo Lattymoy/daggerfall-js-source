@@ -178,8 +178,8 @@
   {
     "name": "D24C-self-judged-still",
     "file": "src/render/shadowPass.js",
-    "old": "const moving = b._dyn === true || b.selfCard === true || (",
-    "new": "const moving = b._dyn === true || (",
+    "old": "const moving = b._dyn === true || b.selfCard === true || b._shIdler === true || (",
+    "new": "const moving = b._dyn === true || b._shIdler === true || (",
     "tests": [
       "test/disc24c_self_shadow.test.js",
       "test/sc1_shadowcache.test.js",

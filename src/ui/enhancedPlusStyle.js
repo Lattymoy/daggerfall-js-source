@@ -644,6 +644,52 @@ body:has(.hud-foe.on.blade) .travelpanel { --tp-top: calc(18px + 28px * var(--hu
 .tview-map:hover, .tview-map:focus-visible, .tview-back:hover, .tview-back:focus-visible, .tview-mode:hover, .tview-mode:focus-visible {
   outline: none; color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); }
 .tview-filters { padding: 9px 12px 11px; gap: 5px; }
+/* FILTERS-LEFT: the filters' own block, bottom left - the right's block's stone and face */
+.tview-side { font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; font-variant-ligatures: none;
+  font-feature-settings: 'liga' 0, 'clig' 0; color: #d8cfae; border: 2px solid; border-radius: 0; width: 292px; }
+.tview-side-head { font-family: inherit; font-size: 11px; padding: 8px 14px; color: #a89f88; text-shadow: 1px 1px 0 #050608; }
+.tview-side-head:hover, .tview-side-head:focus-visible { outline: none; color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); }
+.tview-side > .tview-filters { border-top: 2px solid rgba(5,6,8,0.55); box-shadow: inset 0 1px 0 rgba(163,152,128,0.18); }
+:root[data-plus-theme="stone"] .tview-side > .tview-filters { border-top-color: rgba(5,6,8,0.5); box-shadow: inset 0 1px 0 rgba(255,255,255,0.16); }
+:root[data-plus-theme="stone"] .tview-side-head { color: #15130f; text-shadow: 1px 1px 0 rgba(255,255,255,0.36); }
+.tview-mode.tview-wp-go, .tview-mode.tview-wp-x { min-width: 0; min-height: 26px; height: 26px; padding: 0 9px; border: 2px solid; font-size: 11px; }
+.tview-mode.tview-wp-x { width: 26px; padding: 0; font-size: 14px; text-indent: 0; }
+.tview-wp-pick:disabled { color: #6c6552; text-shadow: none; }
+#wp-menu { font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; font-variant-ligatures: none; border-radius: 0; }
+#wp-menu { color: #d8cfae; border: 2px solid; padding: 12px 14px 14px; }
+#wp-menu .wpm-title { font-size: 15px; letter-spacing: 0.04em; color: #efe8d6; text-shadow: 1px 1px 0 #050608, 2px 2px 0 rgba(0,0,0,0.5); }
+#wp-menu .wpm-sub, #wp-menu .wpm-label { font-size: 11px; letter-spacing: 0.18em; color: #a89f88; text-shadow: 1px 1px 0 #050608; }
+#wp-menu .wpm-btn, #wp-menu .wpm-kind { min-height: 30px; border: 2px solid; border-radius: 0; font-family: inherit; font-size: 12px;
+  letter-spacing: 0.12em; text-indent: 0.12em; text-transform: uppercase; color: #e6dec6; text-shadow: 1px 1px 0 #050608, 2px 2px 0 rgba(0,0,0,0.45); }
+#wp-menu .wpm-kind + .wpm-kind { border-left: 2px solid; }
+#wp-menu .wpm-kind { color: #a89f88; }
+#wp-menu .wpm-kind.on, #wp-menu .wpm-btn.main, #wp-menu .wpm-btn:hover, #wp-menu .wpm-btn:focus-visible, #wp-menu .wpm-kind:not(:disabled):hover {
+  outline: none; color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); }
+#wp-menu .wpm-kind:disabled { color: #6c6552; text-shadow: none; }
+#wp-menu input.wpm-name { min-height: 30px; border: 2px solid; border-radius: 0; font-family: inherit; font-size: 13px; color: #efe8d6; }
+#wp-menu .wpm-x { font-family: inherit; color: #a89f88; }
+#wp-menu .wpm-x:hover { color: rgb(243,239,44); }
+#wp-menu .wpm-swatch { height: 22px; border-radius: 0; border: 2px solid #050608; }
+#wp-menu .wpm-swatch.on { border-color: rgb(243,239,44); box-shadow: 0 0 0 1px #050608; }
+#wp-menu .wpm-note { color: #c9bfa4; text-shadow: 1px 1px 0 #050608; }
+.tview-wp-row { border: 2px solid rgba(5,6,8,0.55); border-radius: 0; }
+.tview-wp-name { color: #efe8d6; text-shadow: 1px 1px 0 #050608; }
+.tview-wp-dist { color: #a89f88; text-shadow: 1px 1px 0 #050608; }
+/* PACE-DIALS: THE SPEED DIALS, the kit's own - two stone presses round a sunk socket with the rate in the journey's gold
+   numerals (the old spinner's dress, PLUS8's .travelpanel-accel), the dial's word in the block's lettering. The kit paints
+   the stone (FRAME_ROLES: the presses are buttons, the socket a well); these place, size and letter. */
+.tview-pace, .travelpanel-pace, .pbox-pace { font-family: ${PIXEL_STACK}; -webkit-font-smoothing: none; font-variant-ligatures: none;
+  font-feature-settings: 'liga' 0, 'clig' 0; }
+.tview-pace-word, .travelpanel-pace-word, .pbox-pace-word { font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #d8cfae;
+  text-shadow: 1px 1px 0 #050608; }
+.tview-pace-num, .travelpanel-pace-num, .pbox-pace-num { height: 30px; border: 2px solid; font-family: inherit; font-size: 16px;
+  color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); }
+.tview-pace-step, .travelpanel-pace-step, .pbox-pace-step { height: 30px; min-width: 30px; border: 2px solid; border-radius: 0;
+  font-family: inherit; font-size: 15px; color: #e6dec6; text-shadow: 1px 1px 0 #050608, 2px 2px 0 rgba(0,0,0,0.45); }
+.tview-pace-step:hover:not(:disabled), .travelpanel-pace-step:hover:not(:disabled), .pbox-pace-step:hover:not(:disabled),
+.tview-pace-step:focus-visible, .travelpanel-pace-step:focus-visible, .pbox-pace-step:focus-visible {
+  outline: none; color: rgb(243,239,44); text-shadow: 1px 1px 0 rgb(93,77,12); }
+.tview-pace-step:disabled, .travelpanel-pace-step:disabled, .pbox-pace-step:disabled { color: #6c6552; text-shadow: none; cursor: default; }
 .tview-filter { border: 2px solid; border-radius: 0; font-family: inherit; font-size: 11px; letter-spacing: 0.05em; padding: 4px 7px;
   color: #8f8772; text-shadow: 1px 1px 0 #050608; }
 .tview-filter.on { color: #efe8d6; }

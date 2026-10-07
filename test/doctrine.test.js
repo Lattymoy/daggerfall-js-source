@@ -414,6 +414,43 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/mw/source/Brigandine_Steel.png', "SUPPLIED - the brigandine's texture as Mac supplied it with the mesh (the FBX's Steel.png), committed as the DDS's source"],
   ['src/assets/mw/meshes/brigandine_steel.nif', 'SUPPLIED - the brigandine, baked to a Morrowind NIF by tools/bakeBrigandine.mjs (skinned from the body at bind time, MW-BRIG2); a Bethesda format, no Bethesda data'],
   ['src/assets/mw/textures/brigandine_steel.dds', 'SUPPLIED - Brigandine_Steel.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  // MW-STEEL1 (2026-10-06): Mac's steel plate, the whole classic set for the Morrowind body, supplied as two Blender
+  // exports of one scene (New_Ship.fbx, the open helm; New_Ship1.fbx, the closed). His scene also carried the body it
+  // was fitted on - Morrowind's own Breton head and neck, out of a "Morrowind_TPose_Models" pack - and those are
+  // Bethesda's meshes, so they are NOT committed: tools/fbxStrip.mjs took them out, every other record byte for byte,
+  // and only their bounds are kept (characters/ownArmorModels.js STEEL_PLATE_SCENE). A plate skirt under the
+  // breastplate went with them - Mac: "That was never apart of the set" (bakeSteelPlate.mjs NOT_IN_SET). The armour itself is Mac's export
+  // as given; three of its objects are named for the meshes they were modelled from (Imperial_Silver_Cuirass_67_Male,
+  // Imperial_Steel_Left_Gauntlet_20_Male, Breton_Male), so whether the geometry and the paintings are his own work or
+  // carry a licence of their own is Mac's to confirm (bible/04-Characters/Steel-Plate.md). tools/bakeSteelPlate.mjs
+  // re-makes every mesh and texture below from these sources, and test/mwsteel1.test.js holds it to the bytes.
+  ['src/assets/mw/source/Steel_Plate.fbx', "SUPPLIED - Mac's Blender export of the steel plate with the open helm (New_Ship.fbx, 2026-10-06), the Morrowind Breton head and neck it was fitted on and the skirt not of the set stripped out by tools/fbxStrip.mjs; committed so the files below are a DERIVATION the gate can re-run"],
+  ['src/assets/mw/source/Steel_Plate_Closed_Helm.fbx', "SUPPLIED - the closed helm and its visor out of Mac's second export (New_Ship1.fbx, 2026-10-06), every other object stripped by tools/fbxStrip.mjs (the shared pieces are the first export's, measured the same); a DERIVATION's source"],
+  ['src/assets/mw/source/Steel_Plate_Cuirass.png', "SUPPLIED - the breastplate's painting as Mac sent it (his steelbreastplate texture), committed as its DDS's source"],
+  ['src/assets/mw/source/Steel_Plate_Pauldron.png', "SUPPLIED - the pauldrons' painting as Mac sent it (his steelpauldrons texture), committed as its DDS's source"],
+  ['src/assets/mw/source/Steel_Plate_Gauntlet.png', "SUPPLIED - the gauntlets' painting as Mac sent it (his newgloves texture), committed as its DDS's source"],
+  ['src/assets/mw/source/Steel_Plate_Greave.png', "SUPPLIED - the greaves' painting as Mac sent it (his steelpants texture), committed as its DDS's source"],
+  ['src/assets/mw/source/Steel_Plate_Boot.png', "SUPPLIED - the boots' painting as Mac sent it (his BOOTS texture), committed as its DDS's source"],
+  ['src/assets/mw/source/Steel_Plate_Helm.png', "SUPPLIED - the helm's painting as Mac sent it (his helmet texture), committed as its DDS's source"],
+  ['src/assets/mw/source/Steel_Plate_Visor.png', "SUPPLIED - the closed helm's visor and plume, painted as Mac sent it (his helmetface texture), committed as its DDS's source"],
+  ['src/assets/mw/meshes/steel_plate_cuirass.nif', 'SUPPLIED - the steel plate\'s breastplate, baked to a Morrowind NIF by tools/bakeSteelPlate.mjs (skinned from the body at bind time); a Bethesda format - the geometry Mac\'s export as given'],
+  ['src/assets/mw/meshes/steel_plate_pauldron_right.nif', 'SUPPLIED - the steel plate\'s right pauldron, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
+  ['src/assets/mw/meshes/steel_plate_pauldron_left.nif', 'SUPPLIED - the steel plate\'s left pauldron, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
+  ['src/assets/mw/meshes/steel_plate_gauntlet_right.nif', 'SUPPLIED - the steel plate\'s right gauntlet, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
+  ['src/assets/mw/meshes/steel_plate_gauntlet_left.nif', 'SUPPLIED - the steel plate\'s left gauntlet, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
+  ['src/assets/mw/meshes/steel_plate_greave_right.nif', 'SUPPLIED - the steel plate\'s right greave, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
+  ['src/assets/mw/meshes/steel_plate_greave_left.nif', 'SUPPLIED - the steel plate\'s left greave, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
+  ['src/assets/mw/meshes/steel_plate_boot_right.nif', 'SUPPLIED - the steel plate\'s right boot, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
+  ['src/assets/mw/meshes/steel_plate_boot_left.nif', 'SUPPLIED - the steel plate\'s left boot, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
+  ['src/assets/mw/meshes/steel_plate_helm_open.nif', 'SUPPLIED - the steel plate\'s open helm, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
+  ['src/assets/mw/meshes/steel_plate_helm_closed.nif', 'SUPPLIED - the steel plate\'s closed helm, its shell and its visor two shapes of one part, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
+  ['src/assets/mw/textures/steel_plate_cuirass.dds', 'SUPPLIED - Steel_Plate_Cuirass.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/steel_plate_pauldron.dds', 'SUPPLIED - Steel_Plate_Pauldron.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/steel_plate_gauntlet.dds', 'SUPPLIED - Steel_Plate_Gauntlet.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/steel_plate_greave.dds', 'SUPPLIED - Steel_Plate_Greave.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/steel_plate_boot.dds', 'SUPPLIED - Steel_Plate_Boot.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/steel_plate_helm.dds', 'SUPPLIED - Steel_Plate_Helm.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/steel_plate_visor.dds', 'SUPPLIED - Steel_Plate_Visor.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
   // GALLEON (2026-10-01): the new galleon, Mac's own model of hull 2 (the
   // Small Ship), supplied as three Blender exports of one scene - the same
   // geometry, only their creation stamps differ, so one is committed. The

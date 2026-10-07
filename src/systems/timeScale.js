@@ -43,6 +43,8 @@
 // (systems/comeSailAway.js SetTimeScale) - and it is 1 whenever neither
 // runs.
 
+import { paceRateOn, ROAD_PACE_MAX, OPEN_PACE_MAX } from './travelPace.js';   // PACE-DIALS: the player's speed dial, under the road rule - and its two ceilings, declared there once
+
 /** The scale a journey may never exceed. The mod's own AccelerationLimit
  *  slider stopped at 100 (modsettings.json), and a scale beyond that is
  *  a physics step of a second and a half. */
@@ -58,10 +60,12 @@ export const MAX_TIME_SCALE = 100;
  *  dial: the land loading (systems/travelGovernor.js), an alerted enemy
  *  (systems/travelThreat.js) and the ring walk's own ceiling
  *  (travelPaths.js MAX_CIRCUMNAVIGATION_ACCEL). */
-export const TRAVEL_ROAD_RATE = MAX_TIME_SCALE;
-export const TRAVEL_OPEN_RATE = 60;
-/** The rate a fast traveller's ground asks for: a road or a track, or not. */
-export const travelRateOf = (onRoad) => (onRoad ? TRAVEL_ROAD_RATE : TRAVEL_OPEN_RATE);
+export const TRAVEL_ROAD_RATE = ROAD_PACE_MAX;   // PACE-DIALS: the dial's top (MAX_TIME_SCALE, pinned equal - test/pacedials.test.js)
+export const TRAVEL_OPEN_RATE = OPEN_PACE_MAX;
+/** The rate a fast traveller's ground asks for: a road or a track, or not. PACE-DIALS (2026-10-06, the player: "Revert
+ *  back to the overworld timer multiplier for ppl to set to 60x and 100x on roads"): the two rates above are now the
+ *  CEILINGS of the player's speed dial (systems/travelPace.js: x100 a road's alone, x60 anywhere else). */
+export const travelRateOf = (onRoad) => paceRateOn(onRoad);
 
 let _scale = 1;
 
