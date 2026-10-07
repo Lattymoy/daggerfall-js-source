@@ -21,6 +21,7 @@
 // load arm.
 
 import { mintCondition, templateByIndex } from './itemTemplates.js';   // AUDIT 23
+import { repoolWeapon } from './conditionRepair.js';   // AUDIT WEAPON-POOL P2: a weapon on its row's pool moves before it wears
 import { EQUIP_SLOTS } from '../characters/paperdoll.js';
 import { ITEM_GROUPS, SLOT_RULES } from '../characters/equipRules.js';
 import { customItemClass, rriNativeMaterialValue, rriEquipSound } from './rriItems.js';
@@ -521,6 +522,9 @@ export function blowWear(amount, rolls = Math.random) {
 
 export function lowerCondition(item, amount, owner = null, say = null, removeFrom = null) {
   mintCondition(item);
+  // AUDIT WEAPON-POOL P2: a weapon still on its row's pool - back from a store the load does not walk (hung in a room, a
+  // revenant's take, a quest's prize, an heir's bequest, a market or vault record) - moves to the one pool before it wears
+  repoolWeapon(item);
   if ((item.maxCondition ?? 0) <= 0) return false;   // no condition to lower: the frozen stand-ins and 0-hitPoint templates cannot break
   item.currentCondition -= amount;
   if (item.currentCondition > 0) return false;
