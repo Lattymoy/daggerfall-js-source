@@ -244,6 +244,6 @@ test('SD9e THE HOST: world.js keeps the Hour\'s pool under its own keys - the du
   assert.match(m, /function standSdRealm\(ctx\) \{[\s\S]*?ctx\.addActivationTargets\(\(\) => \(host\.spoilTargets\?\.\(\) \?\? NO_TARGETS\)\);\n\s*ctx\.addActivationNamer\(\(key\) => \(\(typeof key === 'string' && key\.startsWith\('spoil'\)\) \? host\.spoilName\?\.\(key\) \?\? null : null\)\);\n  \}/);
   assert.match(w, /sdRealmLights: \(\) => sdSpoilsPool\?\.lights\(\) \?\? \[\],/);
   assert.match(w, /\.\.\.\(gateCourt\?\.batches\(\) \?\? \[\]\), \.\.\.\(sdSpoilsPool\?\.batches\(\) \?\? \[\]\),/);
-  assert.match(w, /lines = !!sdSpoilsPool\?\.drawPass\(proj, view, eye, t, fog\); if \(blows \|\| lines\) renderer\.markForeignPass\(\);/);
+  assert.match(w, /lines = !!sdSpoilsPool\?\.drawPass\(proj, view, eye, t, fog\); const motes = [^\n]*; if \(blows \|\| lines \|\| motes\) renderer\.markForeignPass\(\);/);   // SD14c (PIN MOVED): the Hour's motes in the same pass
   assert.match(m, /realmLightsWith\(_dgLit, host\.sdRealmLights\?\.\(\) \?\? NO_LIGHTS, cam\.pos\)/);   // AUDIT SD II (L2 F9 - PIN MOVED): the spoils' light before the lamps, into the realm's own arrays
 });

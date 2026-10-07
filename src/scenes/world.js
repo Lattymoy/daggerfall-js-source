@@ -325,6 +325,7 @@ import { createSdFightLink } from '../net/sdFightLink.js';   // SD8c: the realm'
 import { createSdRemnantBlows } from './sdRemnantBlows.js';   // SD8d: its blows on me - seen, heard, judged on my feet
 import { createSdRemnantVoice } from './sdRemnantVoice.js';   // SD14a: its body and its Echoes heard
 import { createSdAir } from './sdAir.js';   // SD14b: the Hour's air - its beds and its far events
+import { SdMotesRenderer } from '../render/sdMotes.js';   // SD14c: the Hour's motes
 import { remnantBarModel, sdBarNear } from '../ui/sdRemnantBar.js';   // SD8c: the Brass Remnant's bar, the gate's in brass
 import { createSdVoice, SD_VOICE_RANK } from './sdVoice.js';   // AUDIT SD II (SD11d): the Hour's lines over the screen, paced
 import { serpentBarModel } from '../ui/serpentBar.js'; import { drawGateBossBar } from '../ui/gateBossBar.js';   // SERPENT1: its boss bar, in the sea's colours - the gate's bar, its one node
@@ -21523,6 +21524,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (_sdSkyPass === undefined) { try { _sdSkyPass = new SdSkyRenderer(renderer.gl); } catch (e) { console.warn('[sd] the Hour\'s sky could not be built', e); _sdSkyPass = null; } }
     return _sdSkyPass;
   };
+  /** SD14c: the Hour's motes (render/sdMotes.js) - made the first time the Hour is drawn, null where a context cannot. */
+  let _sdMotesPass;
+  const sdMotesPassOf = () => {
+    if (_sdMotesPass === undefined) { try { _sdMotesPass = new SdMotesRenderer(renderer.gl); } catch (e) { console.warn('[sd] the Hour\'s motes could not be built', e); _sdMotesPass = null; } }
+    return _sdMotesPass;
+  };
   /** SD2b: the Hollow stood or taken down, its find, its lines. SD2d: called from the online frame, above the modal
    *  return, in every mode - a Hollow's end reaches a player standing inside it. It stood in the exterior's half of the
    *  frame, which the dungeon's frame never reaches: underground nothing moved the Hollow on. */
@@ -25150,8 +25157,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (told || lived) renderer.markForeignPass();
     },
     // SD8d: the Brass Remnant's blows on the arena's floor, in the dungeon arm's world pass - fogged as the floor is; SD9e:
-    // and its spoils' loot lines, in the same pass
-    drawSdTelegraph: ({ proj, view, eye }) => { const t = performance.now() / 1000, fog = courtFogNow(); const blows = !!sdBlows?.drawPass(proj, view, eye, t, fog), lines = !!sdSpoilsPool?.drawPass(proj, view, eye, t, fog); if (blows || lines) renderer.markForeignPass(); },
+    // and its spoils' loot lines, in the same pass; SD14c: and the Hour's motes (render/sdMotes.js), in its fog and its sky's light
+    drawSdTelegraph: ({ proj, view, eye }) => { const t = performance.now() / 1000, fog = courtFogNow(); const blows = !!sdBlows?.drawPass(proj, view, eye, t, fog), lines = !!sdSpoilsPool?.drawPass(proj, view, eye, t, fog); const motes = !!sdMotesPassOf()?.draw(proj, view, deadlandsSeconds(), fog, skyGain(renderer._fogColor, SD_REALM_FOG.color), renderer.worldViewportPx?.[3]); if (blows || lines || motes) renderer.markForeignPass(); },
     deadlandsSeconds: () => deadlandsSeconds(),   // WB6b: the court's flash and the shards' drift keep the sky's clock
     staffTeleportHeld: () => staffTeleportHeld,
     canVisitPrivateRoom: () => !seatOut() && isStaff(_staffGlyphs) && !!chatLinks.get('world')?.staffTeleportOk,

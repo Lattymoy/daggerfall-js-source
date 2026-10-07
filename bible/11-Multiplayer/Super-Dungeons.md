@@ -249,7 +249,9 @@ hall, the Steps, the arena as near as its bar is heard), and in the arena the fi
 
 **Its air** (SD14b, `scenes/sdAir.js`): four beds - the void's wind breathing, the Hour's works (a tick and a tock a
 second) everywhere, the Orrery's hum in the hall, the arena's gears under its floor - and four kinds of far event on
-the sky's clock: a bell tolled, a gear falling into the void, the void's moan, the shards grinding overhead.
+the sky's clock: a bell tolled, a gear falling into the void, the void's moan, the shards grinding overhead. And seen
+(SD14c, `render/sdMotes.js`): 1,220 motes - the hall's brass dust turning with the Orrery, sparks rising out of the
+void under the Steps, the Hour's gold-green motes orbiting the arena against the clock, the shards' dust falling.
 
 ## 8. The Orrery of Endings - the puzzle
 
@@ -2146,3 +2148,31 @@ have run, beside the Deadlands' own. With the Remnant's voice (SD14a) the arc sp
 
 Pins: `test/sd14b_air.test.js` (5 - the beds; the made sounds; the events; heard from its quarter; the world host);
 `tools/mutants/sd14b.json` (16).
+
+### SD14c - shipped 2026-10-07 (the Hour's motes)
+
+The Deadlands' air carries 896 motes (embers off the sea and its braziers, ash); the Hour carried none.
+`render/sdMotes.js` draws 1,220, four kinds, each a point after the realm's solid geometry - depth-tested, never
+written, added, in the Hour's fog and its sky's light (the world host's `drawSdTelegraph`, the Hour's world pass):
+
+| kind | how many | where and how |
+|---|---|---|
+| brass dust | 320 | round the Orrery, inside its ring and 4 m past it, 0.4-7 m up - turning once a period with the stones, bobbing; never out over the Steps |
+| sparks out of the void | 360 | under the course from the first step to its end, rising from 26 m below to a body's height and gone there, cooling gold to brass |
+| the Hour's motes | 300 | round the arena 4-30 m out, 1-12 m up, orbiting AGAINST the clock, breathing - the Mantella's gold-green |
+| the shards' dust | 240 | the sky over everything, 14-46 m up, falling slowly |
+
+Each is a pure function of its seeded draws and the sky's clock (`sdMoteAt`, the vertex shader's own law in JS), every
+rate a whole number of turns over the period - every screen the same air at the same moment; a life's wrap falls only
+where a mote is unseen. A mote under `SD_MOTE_MIN_PX` (2 px) across is drawn that wide and faded by how much smaller it
+is (`sdMotePx`): the first browser run showed far motes - one-pixel points whose pixel's centre fell outside their disc
+- dropped, the far air flickering and thinning.
+
+In a real browser (`tools/sdMotesProbe.mjs`, 19 checks): the program compiles and links; from the hall, the Steps, the
+arena and under the sky, at two times, the frame is lit, there is no GL error, and every mote asked (up to twelve of
+each kind in view) is lit where `sdMoteAt` projects it.
+
+Pins: `test/sd14c_motes.test.js` (5 - over a thousand; each in its place; on the Hour's clock; the shader RUN holds the
+law, and the small faded; drawn, and the world host's); `tools/mutants/sd14c.json` (13). PINS MOVED:
+`test/sd8d_remnant_blows.test.js`, `test/sd9e_spoils.test.js` (the Hour's world pass draws the motes beside the blows
+and the loot lines).
