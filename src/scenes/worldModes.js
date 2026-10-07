@@ -392,7 +392,7 @@ import { loadGraceActive as dwLoadGraceActive } from '../world/deepWaterRuntime.
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';   // HALT-ONE: the living watch's lane, for a watch called into a building
 /** BOUNTY1: the plaque over a town's bounty board. */
 const BOUNTY_BOARD_TEXT = 'Bounty Board';
-const NOTICE_BOARD_TEXT = 'Notice Board';   // ONE-BOARD: the town's one Notice Board, while it is open to this account
+const NOTICE_BOARD_TEXT = 'Notice Board';   // ONE-BOARD: a town's Notice Board, while it is open to this account
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
