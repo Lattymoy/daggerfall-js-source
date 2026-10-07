@@ -1,0 +1,111 @@
+[
+  {
+    "name": "FB1007-HOME-WIPE-REVERTED",
+    "file": "src/systems/arenaMove.js",
+    "old": "  const kept = containsPermanentScene(cache, to) ? cache.scenes.get(to) ?? null : null;   // HOME-WIPE: the owner's record\n  if (kept) {\n    if (out.crate.length) {\n      const lc = kept.lootContainers;   // every entry is copySceneEntry's: the list is always there\n      const chest = lc.find((c) => c?.key === ARENA_CRATE_KEY);\n      if (chest) { chest.items = [...(Array.isArray(chest.items) ? chest.items : []), ...out.crate.map(copyItem)]; chest.crate = true; }\n      else lc.push({ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 });\n    }\n  } else if (out.crate.length || permanent) {\n    cacheScene(cache, to, stampLayout({ lootContainers: out.crate.length ? [{ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 }] : [], frame: 'building' }, layout));   // CRATE-LAYOUT\n  }\n  if (permanent) addPermanentScene(cache, to);\n",
+    "new": "  if (out.crate.length || permanent || containsPermanentScene(cache, to)) {\n    cacheScene(cache, to, { lootContainers: out.crate.length ? [{ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 }] : [], frame: 'building' });\n    if (permanent) addPermanentScene(cache, to);\n  }\n",
+    "tests": [
+      "test/fb1007_homewipe.test.js"
+    ],
+    "why": "the field bug itself: the block as it shipped before the fix - a replayed move wrote an empty record over the owner's home"
+  },
+  {
+    "name": "FB1007-OWNER-RECORD-UNREAD",
+    "file": "src/systems/arenaMove.js",
+    "old": "  const kept = containsPermanentScene(cache, to) ? cache.scenes.get(to) ?? null : null;   // HOME-WIPE: the owner's record",
+    "new": "  const kept = null;   // HOME-WIPE: the owner's record",
+    "tests": [
+      "test/fb1007_homewipe.test.js"
+    ]
+  },
+  {
+    "name": "FB1007-STRANGER-KEPT",
+    "file": "src/systems/arenaMove.js",
+    "old": "  const kept = containsPermanentScene(cache, to) ? cache.scenes.get(to) ?? null : null;   // HOME-WIPE: the owner's record",
+    "new": "  const kept = cache.scenes.get(to) ?? null;   // HOME-WIPE: the owner's record",
+    "tests": [
+      "test/fb1007_homewipe.test.js"
+    ]
+  },
+  {
+    "name": "FB1007-NOTHING-CARRIED-TOUCHES",
+    "file": "src/systems/arenaMove.js",
+    "old": "    if (out.crate.length) {\n      const lc = kept.lootContainers;",
+    "new": "    if (true) {\n      const lc = kept.lootContainers;",
+    "tests": [
+      "test/fb1007_homewipe.test.js"
+    ]
+  },
+  {
+    "name": "FB1007-CHEST-OWN-DROPPED",
+    "file": "src/systems/arenaMove.js",
+    "old": "chest.items = [...(Array.isArray(chest.items) ? chest.items : []), ...out.crate.map(copyItem)];",
+    "new": "chest.items = [...out.crate.map(copyItem)];",
+    "tests": [
+      "test/fb1007_homewipe.test.js"
+    ]
+  },
+  {
+    "name": "FB1007-CARRIED-DROPPED",
+    "file": "src/systems/arenaMove.js",
+    "old": "chest.items = [...(Array.isArray(chest.items) ? chest.items : []), ...out.crate.map(copyItem)];",
+    "new": "chest.items = [...(Array.isArray(chest.items) ? chest.items : [])];",
+    "tests": [
+      "test/fb1007_homewipe.test.js"
+    ]
+  },
+  {
+    "name": "FB1007-CRATE-MARK-LOST",
+    "file": "src/systems/arenaMove.js",
+    "old": "chest.crate = true; }",
+    "new": "chest.crate = chest.crate; }",
+    "tests": [
+      "test/fb1007_homewipe.test.js"
+    ]
+  },
+  {
+    "name": "FB1007-NO-FIRST-CHEST-DROPPED",
+    "file": "src/systems/arenaMove.js",
+    "old": "      else lc.push({ key: ARENA_CRATE_KEY,",
+    "new": "      else [].push({ key: ARENA_CRATE_KEY,",
+    "tests": [
+      "test/fb1007_homewipe.test.js"
+    ]
+  },
+  {
+    "name": "FB1007-LAYOUT-UNSTAMPED",
+    "file": "src/systems/arenaMove.js",
+    "old": "frame: 'building' }, layout));   // CRATE-LAYOUT",
+    "new": "frame: 'building' }, null));   // CRATE-LAYOUT",
+    "tests": [
+      "test/fb1007_homewipe.test.js"
+    ]
+  },
+  {
+    "name": "FB1007-LAYOUT-OFFLINE-UNHANDED",
+    "file": "src/systems/arenaMove.js",
+    "old": "{ layout: slot.layout ?? null }",
+    "new": "{ layout: null }",
+    "tests": [
+      "test/fb1007_homewipe.test.js"
+    ]
+  },
+  {
+    "name": "FB1007-LAYOUT-ONLINE-UNHANDED",
+    "file": "src/scenes/world.js",
+    "old": "homeSceneName(now.mapId, to), { layout: layoutStampOfMapId(now.mapId) }),",
+    "new": "homeSceneName(now.mapId, to), { layout: null }),",
+    "tests": [
+      "test/fb1007_homewipe.test.js"
+    ]
+  },
+  {
+    "name": "FB1007-PERMANENCE-LOST",
+    "file": "src/systems/arenaMove.js",
+    "old": "  if (permanent) addPermanentScene(cache, to);\n  return out;",
+    "new": "  if (false) addPermanentScene(cache, to);\n  return out;",
+    "tests": [
+      "test/fb1007_homewipe.test.js"
+    ]
+  }
+]
