@@ -431,6 +431,11 @@ each body's `mv` and `atk` (its `b`: 0 the Remnant, 1 GOLD, 2 SILVER, 3 the Hour
 {e,at,d?,n?,r?}`, the Hearts' `cx`, `cxh` (their health - the gate's `cxh`, which the table above left out) and `cxb`,
 `stun`, `fell`, `lost {at}` (a fight lost - the table above had none: the next `in` makes a fresh one) and `no {m}`; and
 the realm's door to the hub, `/internal/sd/fell`.
+SD9a shipped the receipts: `rcpt {r}` out - an `h1` (`net/sdReceipt.js`, bounded by `SD_RECEIPT_WIRE_MAX`, signed or
+not, nothing else's) from the realm to each earner at the fall and again at a late `in`, and from the hub at a hello while
+it is good and to an earner's seat at the fall; `spent {s}` in, to the hub alone (junk anywhere else), on the find's
+bucket; the realm's tell to the hub carries its receipts (`rc`, [account, receipt] each) and who stood in the realm
+(`here`).
 
 ## 15. The four hosts
 
@@ -1296,3 +1301,47 @@ and `me` doors were reworded so the gate's records keep one site each (`wb4.json
 
 The Brass Remnant (SD8) is whole: its law, the relay running it, the page showing it and carrying my blows, its blows on
 me. SD9 next: the feat - the receipts, the spoils, the set, the title, the aura.
+
+### SD9a - shipped 2026-10-07 (the Hour's receipt)
+
+Section 11's kill, on the relay - `world176` still, re-hashed in place while it is undeployed.
+
+- **The receipt** (`net/sdReceipt.js`, pure, all three ends import it): `h1.<claims>.<signature>` - the slot, the boss
+  (the Remnant alone), the account, the relay's own 32-bit seed, how it was earned (`dealt` | `stood`), the level the
+  fight admitted it at, issued and expires a week on - signed by the relay's one key (`GATE_SIGNING_KEY`, the gate's,
+  the raid's and the serpent's). The version is inside the signed bytes, so an `h1` is refused by every other verifier
+  and theirs by this one; its claims carry none of the others' own fields besides. With no key it goes out unsigned
+  (`h1.<claims>.`) - the page still rolls its spoils off the seed; the account service declines it (SD9b).
+- **Minted at the fall** (`server/src/index.js` `_sdFightFallOnce`, the gate's law): for each fighter who EARNED it (the
+  gate's `earned` - 2% of their own share dealt, or alive in the arena half the fight), before the fall is said - kept
+  with the fight (`rc`) and with who stood in the realm at the kill (`here`), then `fell` to the realm, then each
+  earner's `rcpt` on their socket there, then the hub told. A late `in` after the fall is answered with the fall and
+  its receipt again.
+- **Kept by the hub** (`_sdKeepReceipts`, `_sdReceiptTo`, `_sdSpent` - the gate's AUDIT WB A4, WBX S4 and WBX2 M3
+  laws): one key an account (`sdrc:<sub>`, its latest) for the receipt's week, never over a newer slot's or the
+  account's word that this slot's is spent (that word may come first). A fighter who stood in the realm is held from
+  its hellos two minutes (`SD_HERE_HOLD_MS` - the realm's floor spends it); every other earner's seat in the hub is
+  handed it at once. A hello hands a good one - never a spent or expired one (forgotten there); `spent {s}` from the
+  account's hub socket marks it; the hub's sweep forgets the expired (its own cursor, `sweep:sdrc`).
+- **The page** (`net/online.js`): `onSdReceipt(r, room)` hears my receipt from my own realm or the hub, never a cell;
+  `sendSdSpent(s)` says a slot's spoils taken to the hub, signed in, at a relay that keeps it, on the find's bucket.
+
+THE FOUR HOSTS: none wired - the receipt's page is SD9c's (the spoils thrown from where it fell). `scenes/world.js`
+FLAGGED (it will hand `onSdReceipt` to the spoils and `sendSdSpent` to their taking); `scenes/worldModes.js`,
+`scenes/dungeonContext.js` and `scenes/exterior.js` FLAGGED.
+
+Pins: `test/sd9a_receipt.test.js` (6 - the receipt; the wire; the relay signing the fall; the hub keeping them; the
+page; the relay by source); `tools/mutants/sd9a.json` (55, all dead - at first three survived: an order mutant that
+left the first mint in place (re-aimed, and pinned by the record as the fall was fanned), another account's receipt
+kept (its pin had changed the slot as well) and the newest-socket loop, which was the gate's own copy of the rule:
+the hub now hands by `_siegeSockets` (AUDIT SEATS-3 B4's one pass), the serpent's way, and the pin is ONE-SEAT's -
+a new tab takes the seat, and the receipt goes to it, never the tab it closed). PINS MOVED: `test/relayversion.test.js` - `net/sdReceipt.js`
+joins the relay's bundle, `world176` re-hashed in place; `test/sd3_relay.test.js` and `test/sd8b_fight.test.js` (the
+kinds' lists - `spent` in, `rcpt` out; a late `in` reads the fall under its receipt; the tell's projection carries
+`rc` and `here`); `test/auditwbx2.test.js` - the hub's sweep reads six cursors in its one read now, the Hour's
+`sweep:sdrc` last (found by the whole suite); `tools/mutants/sd6b.json`'s `pz` unknown and `sd8b.json`'s hub-not-told
+re-aimed by content. Two of
+my lines were reworded so the gate's records keep one site each (`earned` as a filter; the bucket's toll).
+
+SD9b next: the claim - the account service verifies the `h1`, writes the kill once a slot and account, and rolls
+Hourbreaker and The Turning Hour on that first write.

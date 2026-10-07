@@ -64,8 +64,8 @@ async function withRealm(fn) {
 }
 
 test('SD8b THE WIRE: the fight\'s words each way, projected and bounded - an `in` (a level, a brain), a blow (its number, a damage the wire bounds, its kind) on the Remnant, an Echo or a Heart; the whole fight as the law says it, a body\'s walk and blow, the health, a phase\'s turn, the Echoes, the Hearts, the stun, the fall, a loss, a refusal; its numbers the law\'s own, pinned equal (mutants: an Echo past the second; a Heart past the eighth; the Hour\'s blow from a body)', () => {
-  assert.deepEqual([...SD_KINDS], ['found', 'pz', 'in', 'hit', 'ehit', 'xhit']);
-  assert.deepEqual([...SD_OUT_KINDS], ['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no']);
+  assert.deepEqual([...SD_KINDS], ['found', 'pz', 'in', 'hit', 'ehit', 'xhit', 'spent']);   // SD9a: and a slot's spoils taken (PIN MOVED)
+  assert.deepEqual([...SD_OUT_KINDS], ['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no', 'rcpt']);   // SD9a: and the fall's receipt (PIN MOVED)
   // the law's numbers
   assert.equal(SD_BODIES, Object.keys(SD_BODY).length);
   assert.equal(SD_FIGHT_BLOWS, SD_BLOW_BY_ID.length);
@@ -138,7 +138,7 @@ test('SD8b THE WIRE: the fight\'s words each way, projected and bounded - an `in
   for (let k = 0; k < 40; k++) { const g = sdFightRelayGate(b, 1000); b = g.bucket; n += g.pass ? 1 : 0; }
   assert.equal(n, SD_FIGHT_HZ + 4, 'the relay\'s deeper');
   assert.equal(SD_INTERNAL_FELL, '/internal/sd/fell');
-  assert.deepEqual(validSdFellTell({ s: 4, at: T0, top: 'Ann', n: 3, x: 1 }), { s: 4, at: T0, top: 'Ann', n: 3 });
+  assert.deepEqual(validSdFellTell({ s: 4, at: T0, top: 'Ann', n: 3, x: 1 }), { s: 4, at: T0, top: 'Ann', n: 3, rc: [], here: [] });   // SD9a: and its receipts and who stood there, none told (PIN MOVED)
   for (const bad of [{ s: 0, at: T0, top: '', n: 0 }, { s: 4, at: -1, top: '', n: 0 }, { s: 4, at: T0, top: 3, n: 0 }, { s: 4, at: T0, top: '', n: 257 }]) assert.equal(validSdFellTell(bad), null);
 });
 
@@ -269,7 +269,7 @@ test('SD8b THE FALL: the Last Moment\'s last blow fells it - kept before it is s
     assert.ok(hws.sent.filter((m) => m.t === 'sd' && m.k === 'ev').length > evsBefore, 'everyone online hears it');
     // a later `in` (a fighter come back in): the fall
     await realm.raw(bo, say({ k: 'in', lv: 30, bv: SD_BRAIN_V }));
-    const late = fights(bo).at(-1);
+    const late = fights(bo).filter((m) => m.k !== 'rcpt').at(-1);   // SD9a: its receipt again after it (PIN MOVED)
     assert.equal(late.k, 'st');
     assert.equal(late.fell.at, fell.at, 'the fall');
     // a newcomer after the kill is not admitted to the realm at all (SD3's law)
@@ -338,6 +338,6 @@ test('SD8b the relay by source: the fight\'s words routed in a realm alone on th
   assert.match(w, /if \(await this\._sdFightTick\(\)\) return;/);
   assert.match(w, /if \(path === SD_INTERNAL_FELL\) return this\._sdFellInternal\(request\);/);
   assert.match(w, /import \{ newRemnantFight, joinRemnant, applyRemnantHit, applyEchoHit, applyHeartHit, stepRemnant, remnantStateOf, arenaOf, inArena, SD_LOST_MS \} from '\.\.\/\.\.\/src\/net\/sdRemnant\.js';/);
-  assert.match(read('test/relayversion.test.js'), /'src\/net\/sdBrain\.js', 'src\/net\/sdRemnant\.js'\]/);
+  assert.match(read('test/relayversion.test.js'), /'src\/net\/sdBrain\.js', 'src\/net\/sdRemnant\.js'[\],]/);   // SD9a: net/sdReceipt.js after it (PIN MOVED)
   assert.match(read('bible/11-Multiplayer/Super-Dungeons.md'), /### SD8b - shipped 2026-10-07/);
 });

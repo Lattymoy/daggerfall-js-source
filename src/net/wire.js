@@ -4342,6 +4342,9 @@ function serpentOutOf(m) {
 //                    d?, n?, r?} (the Echoes - one fallen and by whom, one risen) | {k:'cx', i, m, c} | {k:'cxh', i, h} |
 //                    {k:'cxb', i, c, n, at} (the Hearts) | {k:'stun', until, at} | {k:'fell', at, top, n, dm?} | {k:'lost', at}
 //                    | {k:'no', m}
+// SD9a: the fall's receipt - realm -> client {t:'sd', k:'rcpt', r} (an `h1` - net/sdReceipt.js - to each earner in the
+// realm, and again on a late `in`; the hub hands it to a hello while it is good, and to an earner's newest other socket)
+// and client -> hub {t:'sd', k:'spent', s} (its spoils taken: the hub's kept copy of that slot's is spent)
 /** The first relay that keeps the Super dungeon. An older one CLOSES the socket on the frame, so a client says none to
  *  it - and its hub says no record, so a client stands no Hollow. */
 export const SD_RELAY_MIN = 176;   // world176 - the Super Dungeons arc's one version (world171 on its branch, then world172; main's CRYSTAL-FIST took world171, its WATCH-FIX world172, SERPENT3 world173 and LEGACY7 world174, then world175 - which main's TEXT-F1 took)
@@ -4389,10 +4392,10 @@ export function validSdRecord(v) {
 
 /** What a client may say: `found`, to the cell its Hollow stands in; `pz` (SD6b), a turn in the realm's Orrery; SD8b: the
  *  Last Moment's fight - `in`, and a blow on the Remnant (`hit`), an Echo (`ehit`), a Heart (`xhit`). */
-export const SD_KINDS = Object.freeze(['found', 'pz', 'in', 'hit', 'ehit', 'xhit']);
+export const SD_KINDS = Object.freeze(['found', 'pz', 'in', 'hit', 'ehit', 'xhit', 'spent']);
 /** What the relay says: `ev`, the hub's record; `pz` (SD6b), the realm's Orrery; SD8b: the fight's words (a client drops
  *  any other kind). */
-export const SD_OUT_KINDS = Object.freeze(['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no']);
+export const SD_OUT_KINDS = Object.freeze(['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no', 'rcpt']);
 /** SD8b: THE FIGHT'S BRAIN, by number (the gate's law, AUDIT WBX R7) - said on every `in`, refused below SD_BRAIN_MIN: a
  *  client that does not know the Remnant's blows would judge each a miss. 1 is SD8's: the Walking Hour, the Dragon Break,
  *  the Last Moment, the Hour's own blows. */
@@ -4403,6 +4406,10 @@ export const SD_BRAIN_MIN = 1;
 export const SD_FIGHT_HZ = 16;
 export const sdFightGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SD_FIGHT_HZ);
 export const sdFightRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SD_FIGHT_HZ, SD_FIGHT_HZ + 4);
+/** SD9a: THE FALL'S RECEIPT on the wire - an `h1` (net/sdReceipt.js; the wire imports no law, so its bound is pinned
+ *  equal there), signed or not. */
+export const SD_RECEIPT_WIRE_MAX = 512;
+const SD_RECEIPT_RE = /^h1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$/;
 /** SD8b: the fight's numbers the wire bounds by - net/sdRemnant.js's own (the wire imports no law, so they are pinned equal
  *  there): a point of the arena's frame within SD_ARENA_BOUND of its centre; the bodies; the blows; the Echoes; the Hearts
  *  at most; the Volley's marks at most. */
@@ -4438,6 +4445,7 @@ export function validSdIn(m) {
   if (!m || typeof m !== 'object' || !SD_KINDS.includes(m.k)) return null;
   if (m.k === 'pz') return intIn(m.i, 0, SD_PZ_STONES - 1) && (m.a === 1 || m.a === -1) && intIn(m.q, 0, SD_PZ_Q_MAX) ? { k: 'pz', i: m.i, a: m.a, q: m.q } : null;
   if (m.k === 'found') return intIn(m.s, 1, SD_SLOT_MAX) && intIn(m.px, 0, 999) && intIn(m.py, 0, 499) ? { k: 'found', s: m.s, px: m.px, py: m.py } : null;
+  if (m.k === 'spent') return intIn(m.s, 1, SD_SLOT_MAX) ? { k: 'spent', s: m.s } : null;   // SD9a: a slot's spoils taken
   // SD8b: the fight - an `in` (my level; my game's brain), else a blow (its number, its damage, its kind - the gate's bounds)
   if (m.k === 'in') return intIn(m.lv, 1, GATE_LV_WIRE_MAX) ? { k: 'in', lv: m.lv, ...(intIn(m.bv, 0, 999) ? { bv: m.bv } : {}) } : null;
   if (!intIn(m.q, 0, GATE_SEQ_MAX) || !finite(m.d) || m.d <= 0 || m.d > GATE_DMG_WIRE_MAX || (m.r !== 0 && m.r !== 1 && m.r !== 2)) return null;
@@ -4507,6 +4515,7 @@ function validSdFightOut(m) {
     case 'fell': { const f = gateFell(m); return f ? { k: 'fell', ...f } : null; }
     case 'lost': return gateMs(m.at) ? { k: 'lost', at: m.at } : null;
     case 'no': return SD_NO_WORDS.includes(m.m) ? { k: 'no', m: m.m } : null;
+    case 'rcpt': return typeof m.r === 'string' && m.r.length <= SD_RECEIPT_WIRE_MAX && SD_RECEIPT_RE.test(m.r) ? { k: 'rcpt', r: m.r } : null;   // SD9a
     default: return null;
   }
 }
@@ -4547,13 +4556,24 @@ export const SD_ORRERY_KEY = 'sdorrery';
 /** SD8b: where a realm keeps its fight (net/sdRemnant.js newRemnantFight's record - outside every swept prefix). */
 export const SD_FIGHT_KEY = 'sdfight';
 /** SD8b: a realm's fall as told to the hub - the slot, the moment, the best fighter's name, how many fought - projected, or
- *  null. */
+ *  null. SD9a: and its receipts (`rc` - [account, receipt] each, the wire's own receipts alone) and who stood in the realm
+ *  at the kill (`here` - their spoils are its floor's). */
 export function validSdFellTell(v) {
   if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
   const b = /** @type {any} */ (v);
   if (!intIn(b.s, 1, SD_SLOT_MAX) || !gateMs(b.at) || typeof b.top !== 'string' || !intIn(b.n, 0, SD_FIGHTERS_MAX)) return null;
-  return { s: b.s, at: b.at, top: sanitizeName(b.top), n: b.n };
+  const rc = [];
+  for (const e of Array.isArray(b.rc) ? b.rc.slice(0, SD_FIGHTERS_MAX) : []) {
+    if (Array.isArray(e) && typeof e[0] === 'string' && ID_RE.test(e[0]) && typeof e[1] === 'string' && e[1].length <= SD_RECEIPT_WIRE_MAX && SD_RECEIPT_RE.test(e[1])) rc.push([e[0], e[1]]);
+  }
+  const here = Array.isArray(b.here) ? b.here.filter((x) => typeof x === 'string' && ID_RE.test(x)).slice(0, SD_FIGHTERS_MAX) : [];
+  return { s: b.s, at: b.at, top: sanitizeName(b.top), n: b.n, rc, here };
 }
+/** SD9a: where the hub keeps an account's Hour receipt for its hello (its latest, a receipt's life) - outside every
+ *  swept prefix but its own; how long an earner who stood in the realm at the kill is left to its floor first. */
+export const SD_RC_PREFIX = 'sdrc:';
+export const sdReceiptKey = (sub) => `${SD_RC_PREFIX}${sub}`;
+export const SD_HERE_HOLD_MS = 2 * 60 * 1000;
 /**
  * A cell's find, as told to the hub - the claim (`s`, `px`, `py`), the finder's pose as the cell's socket stood it (`x`,
  * `z`, the MapsFile frame) and name (`fb`) - projected, or null. The hub judges it against its record (net/sdLaw.js

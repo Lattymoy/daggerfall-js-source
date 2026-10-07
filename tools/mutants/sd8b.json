@@ -174,8 +174,8 @@
   {
     "name": "SD8B-the-hub-not-told-at-once",
     "file": "server/src/index.js",
-    "old": "    this._sdFightFan([{ k: 'fell', ...f.fell }]);   // its moment, its best three, its count, its chart\n    await this._sdTellFellOnce(f, now);",
-    "new": "    this._sdFightFan([{ k: 'fell', ...f.fell }]);   // its moment, its best three, its count, its chart",
+    "old": "    for (const [ws, b] of [...this._all()]) { const r = b.id && b.sub ? f.rc[b.sub] : null; if (r) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r })); }\n    await this._sdTellFellOnce(f, now);",
+    "new": "    for (const [ws, b] of [...this._all()]) { const r = b.id && b.sub ? f.rc[b.sub] : null; if (r) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r })); }",
     "tests": [
       "test/sd8b_fight.test.js"
     ]

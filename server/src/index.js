@@ -268,10 +268,11 @@ import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehi
 
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
 import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
-import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY, sdFightRelayGate, SD_BRAIN_MIN, SD_NO_WORDS, SD_FIGHT_KEY, SD_INTERNAL_FELL, validSdFellTell } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
+import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY, sdFightRelayGate, SD_BRAIN_MIN, SD_NO_WORDS, SD_FIGHT_KEY, SD_INTERNAL_FELL, validSdFellTell, SD_RC_PREFIX, sdReceiptKey, SD_HERE_HOLD_MS } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
 import { sdFirst, sdRise, sdFind, sdFell, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL } from '../../src/net/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
 import { orreryOf, orreryStep, orreryLit, orreryFresh, stoneInReach, dungeonToRealm, SD_STONES, SD_HOURS, SD_FRAY_MAX, SD_STONE_REACH_SLACK, SD_STONE_SETTLE_MS } from '../../src/net/sdBrain.js';   // SD6b: the Orrery's law - the realm judges every turn by it
 import { newRemnantFight, joinRemnant, applyRemnantHit, applyEchoHit, applyHeartHit, stepRemnant, remnantStateOf, arenaOf, inArena, SD_LOST_MS } from '../../src/net/sdRemnant.js';   // SD8b: the Brass Remnant's law - the realm runs its fight by it
+import { mintSdReceipt, readSdReceipt, SD_RECEIPT_TTL_S } from '../../src/net/sdReceipt.js';   // SD9a: the Hour's receipt - minted at the Remnant's fall, kept by the hub
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -484,6 +485,7 @@ export class Room {
     this._secrets = new Bounded(HUB_KEEP_MAX);
     this._asecrets = new Bounded(HUB_KEEP_MAX);   // SCALE2b: the hub's account id -> profile secret (null: none), read once and kept
     this._noGateRcpt = new Bounded(HUB_KEEP_MAX); // SCALE2b: accounts the hub holds no gate receipt for (dropped whole when one is written)
+    this._noSdRcpt = new Bounded(HUB_KEEP_MAX);   // SD9a: and no Hour receipt (dropped whole when one is written)
     this._noRaidRcpt = new Bounded(HUB_KEEP_MAX); // SCALE2b: and no raid receipts
     this._worldMemo = undefined;   // SCALE2b: the stored world, raw, as `_worldRaw` read it (undefined: not read this wake)
     this._parks = null;            // SCALE2b: a cell's parked teams, key -> record - a promise of the one list a wake
@@ -1150,7 +1152,7 @@ export class Room {
    *  next hello, as a drain's is. The cursors ride storage; a full page is followed SWEEP_STEP_MS later, an empty one
    *  ACCOUNT_SWEEP_MS later from the start. */
   async _sweepHub(now) {
-    const cur = (await this.state.storage.get(['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc']));   // AUDIT WBX2 M9: one read
+    const cur = (await this.state.storage.get(['sweep:acct', 'sweep:party', 'sweep:gaterc', 'sweep:raidrc', 'sweep:serpentrc', 'sweep:sdrc']));   // AUDIT WBX2 M9: one read
     const acur = cur.get('sweep:acct') ?? null, pcur = cur.get('sweep:party') ?? null, gcur = cur.get('sweep:gaterc') ?? null, rcur = cur.get('sweep:raidrc') ?? null, scur = cur.get('sweep:serpentrc') ?? null;
     const accts = await this.state.storage.list({ prefix: 'acct:', limit: SWEEP_PAGE, ...(acur ? { startAfter: acur } : {}) });
     const dead = [], idle = []; let alast = null;
@@ -1179,9 +1181,14 @@ export class Room {
     const src = await this.state.storage.list({ prefix: SERPENT_RC_PREFIX, limit: SWEEP_PAGE, ...(scur ? { startAfter: scur } : {}) });
     let slast = null;
     for (const [k, r] of src) { slast = k; if (!r || typeof r !== 'object' || !(Number.isFinite(r.e) && now < r.e * 1000)) dead.push(k); }
+    // SD9a: and an Hour receipt (or its spent mark) kept for an account that never came back, once it has expired
+    const dcur = cur.get('sweep:sdrc') ?? null;
+    const drc = await this.state.storage.list({ prefix: SD_RC_PREFIX, limit: SWEEP_PAGE, ...(dcur ? { startAfter: dcur } : {}) });
+    let dlast = null;
+    for (const [k, v] of drc) { dlast = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }
     for (let i = 0; i < dead.length; i += SWEEP_PAGE) await this.state.storage.delete(dead.slice(i, i + SWEEP_PAGE));
-    const more = accts.size >= SWEEP_PAGE || parties.size >= SWEEP_PAGE || kept.size >= SWEEP_PAGE || rcs.size >= SWEEP_PAGE || src.size >= SWEEP_PAGE;
-    await this.state.storage.put({ 'sweep:acct': accts.size >= SWEEP_PAGE ? alast : null, 'sweep:party': parties.size >= SWEEP_PAGE ? plast : null, 'sweep:gaterc': kept.size >= SWEEP_PAGE ? glast : null, 'sweep:raidrc': rcs.size >= SWEEP_PAGE ? rlast : null, 'sweep:serpentrc': src.size >= SWEEP_PAGE ? slast : null });
+    const more = accts.size >= SWEEP_PAGE || parties.size >= SWEEP_PAGE || kept.size >= SWEEP_PAGE || rcs.size >= SWEEP_PAGE || src.size >= SWEEP_PAGE || drc.size >= SWEEP_PAGE;
+    await this.state.storage.put({ 'sweep:acct': accts.size >= SWEEP_PAGE ? alast : null, 'sweep:party': parties.size >= SWEEP_PAGE ? plast : null, 'sweep:gaterc': kept.size >= SWEEP_PAGE ? glast : null, 'sweep:raidrc': rcs.size >= SWEEP_PAGE ? rlast : null, 'sweep:serpentrc': src.size >= SWEEP_PAGE ? slast : null, 'sweep:sdrc': drc.size >= SWEEP_PAGE ? dlast : null });
     await this.state.storage.setAlarm(now + (more ? SWEEP_STEP_MS : ACCOUNT_SWEEP_MS));
   }
 
@@ -1558,6 +1565,8 @@ export class Room {
         if (isSocialRoom(a.key) && who.subject) { try { await this._serpentReceiptTo(ws, who.subject, now); } catch (e) { console.warn('[hub] serpent receipt failed', e?.message ?? e); } }
         // AUDIT WB A4: and this account's receipt, while it is good (spent, it goes)
         if (isSocialRoom(a.key) && who.subject) { try { await this._gateReceiptTo(ws, who.subject, now); } catch (e) { console.warn('[hub] gate receipt failed', e?.message ?? e); } }
+        // SD9a: and this account's Hour receipt, while it is good (spent, it goes)
+        if (isSocialRoom(a.key) && who.subject) { try { await this._sdReceiptTo(ws, who.subject, now); } catch (e) { console.warn('[hub] sd receipt failed', e?.message ?? e); } }
         // WB12d: the faithful's rite broken while this player was away, while its circle still stands
         // BROKER-CAGE: and its faithful every one fallen - the Broker's cage open - until the Wrath's midnight (cageStands: a
         // Warden fallen early takes the circle, never her)
@@ -2067,6 +2076,12 @@ export class Room {
         return;
       }
       if (!this._spend(ws, now, sdRelayGate, 'sdBucket', 'sdDrops', 'too many sd frames')) return;
+      // SD9a: A SLOT'S SPOILS TAKEN - the hub's alone (anywhere else junk, the gate's `spent` law): its kept copy spent
+      if (m.k === 'spent') {
+        if (!isSocialRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }
+        try { await this._sdSpent(a.sub, m.s, now); } catch (e) { console.warn('[hub] sd spent failed', e?.message ?? e); }
+        return;
+      }
       if (!isCellRoom(a.key)) { this._junk(ws); return; }
       try { await this._sdFoundWord(ws, a, m, now); } catch (e) { console.warn('[sd] word failed', e?.message ?? e); }
       return;
@@ -4910,7 +4925,7 @@ export class Room {
       if (typeof a.sub !== 'string' || !a.sub || !a.pose || a.pose.dd) return;
       const at = this._arenaPoseOf(a.pose);
       if (!inArena(at.x, at.z, POSE_SLACK)) return;   // from the arena alone
-      if (f?.fell) { this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f) })); return; }
+      if (f?.fell) { this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f) })); if (f.rc?.[a.sub]) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r: f.rc[a.sub] })); return; }   // SD9a: and its receipt again
       if (!f || f.lost || now - f.lastTickAt >= SD_LOST_MS) f = this._sdFight = newRemnantFight(s, (f?.fi ?? 0) + 1, now);
       const present = new Set();
       for (const [, b] of this._all()) if (b.sub && b.id) present.add(b.sub);
@@ -4958,9 +4973,20 @@ export class Room {
   }
   async _sdFightFallOnce(f, now) {
     if (f.said) return;
+    // SD9a: THE RECEIPTS - each fighter who earned it (the gate's `earned`: 2% of its own share dealt, or alive in the arena
+    // half the fight), minted before the fall is said and kept with it
+    const key = await this._receiptKeyOf(), nowS = Math.floor(now / 1000);
+    f.rc = {};
+    for (const sub of Object.keys(f.players).filter((x) => earned(f, x))) {
+      try { f.rc[sub] = await mintSdReceipt({ d: f.s, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv }, key, { subtle: crypto.subtle, nowS }); }
+      catch (e) { console.warn('[sd] receipt refused', e?.message ?? e); }
+    }
     f.said = true;   // kept before it is said
+    // who stood in the realm at the kill - their spoils are its floor's, so the hub hands their other tabs nothing first
+    f.here = [...new Set([...this._all()].filter(([, b]) => b.id && b.sub && f.rc[b.sub]).map(([, b]) => b.sub))].slice(0, SD_FIGHTERS_MAX);
     await this._sdFightSave(f, now, true);
     this._sdFightFan([{ k: 'fell', ...f.fell }]);   // its moment, its best three, its count, its chart
+    for (const [ws, b] of [...this._all()]) { const r = b.id && b.sub ? f.rc[b.sub] : null; if (r) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r })); }
     await this._sdTellFellOnce(f, now);
   }
   /** The hub told of the fall, and it kept - once it has answered (a relay built without the binding keeps its own word). */
@@ -4970,7 +4996,7 @@ export class Room {
     let ok = !rooms?.idFromName || !rooms?.get;
     if (!ok) {
       try {
-        const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${SD_INTERNAL_FELL}`, { method: 'POST', body: JSON.stringify({ s: f.s, at: f.fell.at, top: f.fell.top[0] ?? '', n: f.fell.n }), signal: AbortSignal.timeout(SD_TELL_RETRY_MS) }));
+        const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${SD_INTERNAL_FELL}`, { method: 'POST', body: JSON.stringify({ s: f.s, at: f.fell.at, top: f.fell.top[0] ?? '', n: f.fell.n, rc: Object.entries(f.rc ?? {}), here: f.here ?? [] }), signal: AbortSignal.timeout(SD_TELL_RETRY_MS) }));
         ok = !!res && (res.ok || (res.status >= 400 && res.status < 500));
       } catch (e) { console.warn('[sd] hub', e?.message ?? e); }
     }
@@ -4990,7 +5016,51 @@ export class Room {
       const fell = sdFell(rec, Date.now(), { top: c.top, n: c.n });
       if (fell) { await this._sdSave(fell); this._sdFan(fell); }
     }
+    await this._sdKeepReceipts(c, Date.now());   // SD9a
     return json({ ok: true });
+  }
+  /**
+   * SD9a: THE HUB KEEPS EACH EARNER'S HOUR RECEIPT (the gate's AUDIT WB A4 law) for its life, one key an account (its
+   * latest), and hands it to that account's next hello - never over a newer slot's, nor over its account's word that this
+   * slot's is spent (that word may come first). One that stood in the realm at the kill is held from its hellos
+   * SD_HERE_HOLD_MS (the realm's floor spends it); every other earner's newest socket here is handed it now.
+   */
+  async _sdKeepReceipts(c, now) {
+    const here = new Set(c.here);
+    const keep = [];
+    for (const [sub, r] of c.rc) { const cl = readSdReceipt(r); if (cl && cl.s === sub && cl.d === c.s) keep.push([sub, { s: c.s, r, e: cl.e, ...(here.has(sub) ? { hold: now + SD_HERE_HOLD_MS } : {}) }]); }
+    if (!keep.length) return;
+    this._noSdRcpt.clear();   // receipts are being written - nobody's 'none' stands
+    const had = new Map();
+    for (let i = 0; i < keep.length; i += 128) for (const [k, v] of await this.state.storage.get(keep.slice(i, i + 128).map(([sub]) => sdReceiptKey(sub)))) had.set(k, v);
+    const fresh = keep.filter(([sub]) => {
+      const v = had.get(sdReceiptKey(sub));
+      return !(v && typeof v === 'object' && Number.isSafeInteger(v.s) && (v.s > c.s || (v.s === c.s && v.spent)));
+    });
+    for (let i = 0; i < fresh.length; i += 128) await this.state.storage.put(Object.fromEntries(fresh.slice(i, i + 128).map(([sub, v]) => [sdReceiptKey(sub), v])));
+    const owed = new Map(fresh.filter(([sub]) => !here.has(sub)));
+    for (const [sub, [ws]] of this._siegeSockets()) if (owed.has(sub)) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r: owed.get(sub).r }));   // the account's newest socket (AUDIT SOC B9's law)
+  }
+  /** SD9a: an account's kept Hour receipt to its hello while it is good - an expired one forgotten, a spent one not said, a
+   *  realm fighter's held while its floor spends it. */
+  async _sdReceiptTo(ws, sub, now) {
+    if (this._noSdRcpt.has(sub)) return;
+    const k = sdReceiptKey(sub);
+    const v = await this.state.storage.get(k);
+    if (!v || typeof v !== 'object') { this._noSdRcpt.set(sub, 1); return; }
+    if (!(Number.isFinite(v.e) && now < v.e * 1000) || (!v.spent && typeof v.r !== 'string')) { await this.state.storage.delete(k); return; }
+    if (v.spent === true || (Number.isFinite(v.hold) && now < v.hold)) return;
+    this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r: v.r }));
+  }
+  /** SD9a: the account's word that a slot's spoils are taken - REMEMBERED AS SPENT in its kept copy's place, for a receipt's
+   *  life (the gate's AUDIT WBX2 M3: the word may come before the kill's own, and must stand over it). A newer slot's is
+   *  left alone. */
+  async _sdSpent(sub, slot, now) {
+    const k = sdReceiptKey(sub);
+    const v = await this.state.storage.get(k);
+    const at = v && typeof v === 'object' && Number.isSafeInteger(v.s) ? v.s : null;
+    if (at !== null && (at > slot || (at === slot && v.spent === true))) return;
+    await this.state.storage.put(k, { s: slot, spent: true, e: Math.floor(now / 1000) + SD_RECEIPT_TTL_S });
   }
 
   // ───────────────────────────── RAID3: A TOWN'S RAID ─────────────────────────────
