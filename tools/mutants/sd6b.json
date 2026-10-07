@@ -2,8 +2,8 @@
   {
     "name": "SD6B-pz-unknown",
     "file": "src/net/wire.js",
-    "old": "export const SD_KINDS = Object.freeze(['found', 'pz']);",
-    "new": "export const SD_KINDS = Object.freeze(['found']);",
+    "old": "export const SD_KINDS = Object.freeze(['found', 'pz', 'in', 'hit', 'ehit', 'xhit']);",
+    "new": "export const SD_KINDS = Object.freeze(['found', 'in', 'hit', 'ehit', 'xhit']);",
     "tests": [
       "test/sd6b_hall.test.js"
     ]

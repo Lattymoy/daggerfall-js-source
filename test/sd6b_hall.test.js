@@ -58,8 +58,8 @@ async function withHall(fn) {
 }
 
 test('SD6b the wire: `pz` each way - a turn (which stone, which way, its number) and the hall (six hours, the fray, the dial, the Concord, the turn and its turner, the snap); its numbers the Orrery\'s own, pinned equal (the wire imports no law) (mutants: a seventh stone believed; a turn of two hours; a hall of five stones; the fray past its most)', () => {
-  assert.deepEqual([...SD_KINDS], ['found', 'pz']);
-  assert.deepEqual([...SD_OUT_KINDS], ['ev', 'pz']);
+  assert.deepEqual([...SD_KINDS].slice(0, 2), ['found', 'pz']);   // SD8b (PIN MOVED): the fight's words after them
+  assert.deepEqual([...SD_OUT_KINDS].slice(0, 2), ['ev', 'pz']);   // SD8b (PIN MOVED): the fight's words after them
   assert.equal(SD_PZ_STONES, SD_STONES.length); assert.equal(SD_PZ_HOURS, SD_HOURS); assert.equal(SD_PZ_FRAY_MAX, SD_FRAY_MAX); assert.equal(SD_PZ_HZ, SD_TURN_HZ);
   assert.deepEqual(validSdIn({ k: 'pz', i: 5, a: -1, q: 7, junk: 1 }), { k: 'pz', i: 5, a: -1, q: 7 });
   for (const bad of [{ i: 6, a: 1, q: 1 }, { i: -1, a: 1, q: 1 }, { i: 0, a: 2, q: 1 }, { i: 0, a: 0, q: 1 }, { i: 0, a: 1, q: -1 }, { i: 0, a: 1, q: 1.5 }, { i: 0, a: 1 }, { i: '0', a: 1, q: 1 }, { i: 0, a: 1, q: SD_PZ_Q_MAX + 1 }])

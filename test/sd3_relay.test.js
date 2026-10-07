@@ -65,8 +65,8 @@ test('SD3 the wire: the frame\'s one kind each way, projected; the record\'s law
   assert.equal(relaySupportsSd(RELAY_VERSION), true);
   assert.equal(relaySupportsSd('world174'), false, 'LEGACY7\'s relay closes the socket on `sd`');
   for (const v of [undefined, null, '', 'world', 'world17x', 'acct172', 172]) assert.equal(relaySupportsSd(v), false, String(v));
-  assert.deepEqual([...SD_KINDS], ['found', 'pz']);   // SD6b: and `pz`, the Orrery's turn (PIN MOVED)
-  assert.deepEqual([...SD_OUT_KINDS], ['ev', 'pz']);   // SD6b: and `pz`, the Orrery's hall (PIN MOVED)
+  assert.deepEqual([...SD_KINDS], ['found', 'pz', 'in', 'hit', 'ehit', 'xhit']);   // SD6b: and `pz`, the Orrery's turn (PIN MOVED); SD8b: and the fight's words (PIN MOVED)
+  assert.deepEqual([...SD_OUT_KINDS], ['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no']);   // SD6b: and `pz`, the Orrery's hall (PIN MOVED); SD8b: and the fight's (PIN MOVED)
   assert.deepEqual(validSdIn({ k: 'found', s: 3, px: PX, py: PY, junk: 1 }), { k: 'found', s: 3, px: PX, py: PY }, 'projected');
   for (const bad of [{ k: 'found', s: 0, px: 1, py: 1 }, { k: 'found', s: 1e9, px: 1, py: 1 }, { k: 'found', s: 1.5, px: 1, py: 1 }, { k: 'found', s: 1, px: 1000, py: 1 }, { k: 'found', s: 1, px: 1, py: 500 }, { k: 'found', s: 1, px: -1, py: 1 }, { k: 'ev', s: 1, px: 1, py: 1 }, null, 'found']) assert.equal(validSdIn(bad), null, JSON.stringify(bad));
   assert.equal(parseClient(JSON.stringify({ t: 'sd', k: 'found', s: 1, px: 1, py: 1 })).error, 'sd before hello');

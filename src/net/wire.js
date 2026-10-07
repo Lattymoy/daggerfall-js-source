@@ -4331,6 +4331,16 @@ function serpentOutOf(m) {
 //   client -> realm: {t:'sd', k:'pz', i, a, q}                                 (stone i, a +1 forward or -1 back, my turn's number)
 //   realm -> client: {t:'sd', k:'pz', s, st, f, lit, ok, i?, a?, id?, q?, x?}   (the stones, the fray, the dial's count, the
 //                    Concord; the turn and its turner's id and number; x 1 when the Hour snapped back and lashed the hall)
+// SD8b: in the realm, THE LAST MOMENT'S FIGHT (net/sdRemnant.js the law, the relay its runner - the gate's own shape):
+//   client -> realm: {t:'sd', k:'in', lv, bv}          (I fight: my level, my game's brain)
+//                    {t:'sd', k:'hit', q, d, r}        (a blow on the Remnant - my blow's number, its damage, its kind)
+//                    {t:'sd', k:'ehit', e, q, d, r}    (on Echo e, 0 GOLD or 1 SILVER)  |  {t:'sd', k:'xhit', c, q, d, r} (on Heart c)
+//   realm -> client: {t:'sd', k:'st', ...}             (the whole fight - net/sdRemnant.js remnantStateOf - at the `in`, every 5 s)
+//                    {k:'mv', b, x, z, tx, tz, v, at} | {k:'atk', b, i, a, at, x, z, yw, tg, sw?, n?}  (a body's walk and blow:
+//                    b 0 the Remnant, 1 GOLD, 2 SILVER, 3 the Hour) | {k:'hp', h, m} | {k:'ph', n, at, up} | {k:'ec', e, at,
+//                    d?, n?, r?} (the Echoes - one fallen and by whom, one risen) | {k:'cx', i, m, c} | {k:'cxh', i, h} |
+//                    {k:'cxb', i, c, n, at} (the Hearts) | {k:'stun', until, at} | {k:'fell', at, top, n, dm?} | {k:'lost', at}
+//                    | {k:'no', m}
 /** The first relay that keeps the Super dungeon. An older one CLOSES the socket on the frame, so a client says none to
  *  it - and its hub says no record, so a client stands no Hollow. */
 export const SD_RELAY_MIN = 176;   // world176 - the Super Dungeons arc's one version (world171 on its branch, then world172; main's CRYSTAL-FIST took world171, its WATCH-FIX world172, SERPENT3 world173 and LEGACY7 world174, then world175 - which main's TEXT-F1 took)
@@ -4376,10 +4386,34 @@ export function validSdRecord(v) {
   return out;
 }
 
-/** What a client may say: `found`, to the cell its Hollow stands in; `pz` (SD6b), a turn in the realm's Orrery. */
-export const SD_KINDS = Object.freeze(['found', 'pz']);
-/** What the relay says: `ev`, the hub's record; `pz` (SD6b), the realm's Orrery (a client drops any other kind). */
-export const SD_OUT_KINDS = Object.freeze(['ev', 'pz']);
+/** What a client may say: `found`, to the cell its Hollow stands in; `pz` (SD6b), a turn in the realm's Orrery; SD8b: the
+ *  Last Moment's fight - `in`, and a blow on the Remnant (`hit`), an Echo (`ehit`), a Heart (`xhit`). */
+export const SD_KINDS = Object.freeze(['found', 'pz', 'in', 'hit', 'ehit', 'xhit']);
+/** What the relay says: `ev`, the hub's record; `pz` (SD6b), the realm's Orrery; SD8b: the fight's words (a client drops
+ *  any other kind). */
+export const SD_OUT_KINDS = Object.freeze(['ev', 'pz', 'st', 'mv', 'atk', 'hp', 'ph', 'ec', 'cx', 'cxh', 'cxb', 'stun', 'fell', 'lost', 'no']);
+/** SD8b: THE FIGHT'S BRAIN, by number (the gate's law, AUDIT WBX R7) - said on every `in`, refused below SD_BRAIN_MIN: a
+ *  client that does not know the Remnant's blows would judge each a miss. 1 is SD8's: the Walking Hour, the Dragon Break,
+ *  the Last Moment, the Hour's own blows. */
+export const SD_BRAIN_V = 1;
+export const SD_BRAIN_MIN = 1;
+/** SD8b: the fight frames' own bucket - the gate's (GATE_HZ_MAX: the hand's four blows a second, a swing's bodies under
+ *  one `q`, the `in`), the relay's deeper. */
+export const SD_FIGHT_HZ = 16;
+export const sdFightGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SD_FIGHT_HZ);
+export const sdFightRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SD_FIGHT_HZ, SD_FIGHT_HZ + 4);
+/** SD8b: the fight's numbers the wire bounds by - net/sdRemnant.js's own (the wire imports no law, so they are pinned equal
+ *  there): a point of the arena's frame within SD_ARENA_BOUND of its centre; the bodies; the blows; the Echoes; the Hearts
+ *  at most; the Volley's marks at most. */
+export const SD_ARENA_BOUND = 40;
+export const SD_BODIES = 4;
+export const SD_FIGHT_BLOWS = 6;
+export const SD_ECHOES = 2;
+export const SD_HEARTS_MAX = 8;
+export const SD_TARGETS_MAX = 5;
+/** SD8b: why a realm refuses an `in` - the Hour closed, the fight over (fallen, or past its Hour), the arena full, a game
+ *  whose brain is older than the realm's. */
+export const SD_NO_WORDS = Object.freeze(['the Hour has closed', 'the fight is over', 'the arena is full', 'an older Hour']);
 /** SD6b: the Orrery's numbers the wire bounds by - net/sdBrain.js's own (its stones, their hours, the fray's most; the wire
  *  imports no law, so they are pinned equal there) - and a turn's number's bound. */
 export const SD_PZ_STONES = 6;
@@ -4402,7 +4436,78 @@ export const sdRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SD_HZ_MAX
 export function validSdIn(m) {
   if (!m || typeof m !== 'object' || !SD_KINDS.includes(m.k)) return null;
   if (m.k === 'pz') return intIn(m.i, 0, SD_PZ_STONES - 1) && (m.a === 1 || m.a === -1) && intIn(m.q, 0, SD_PZ_Q_MAX) ? { k: 'pz', i: m.i, a: m.a, q: m.q } : null;
-  return intIn(m.s, 1, SD_SLOT_MAX) && intIn(m.px, 0, 999) && intIn(m.py, 0, 499) ? { k: 'found', s: m.s, px: m.px, py: m.py } : null;
+  if (m.k === 'found') return intIn(m.s, 1, SD_SLOT_MAX) && intIn(m.px, 0, 999) && intIn(m.py, 0, 499) ? { k: 'found', s: m.s, px: m.px, py: m.py } : null;
+  // SD8b: the fight - an `in` (my level; my game's brain), else a blow (its number, its damage, its kind - the gate's bounds)
+  if (m.k === 'in') return intIn(m.lv, 1, GATE_LV_WIRE_MAX) ? { k: 'in', lv: m.lv, ...(intIn(m.bv, 0, 999) ? { bv: m.bv } : {}) } : null;
+  if (!intIn(m.q, 0, GATE_SEQ_MAX) || !finite(m.d) || m.d <= 0 || m.d > GATE_DMG_WIRE_MAX || (m.r !== 0 && m.r !== 1 && m.r !== 2)) return null;
+  if (m.k === 'ehit') return intIn(m.e, 0, SD_ECHOES - 1) ? { k: 'ehit', e: m.e, q: m.q, d: m.d, r: m.r } : null;
+  if (m.k === 'xhit') return intIn(m.c, 0, SD_HEARTS_MAX - 1) ? { k: 'xhit', c: m.c, q: m.q, d: m.d, r: m.r } : null;
+  return { k: 'hit', d: m.d, q: m.q, r: m.r };   // on the Remnant
+}
+/** SD8b: the fight's words' parts, bounded (the gate's helpers where its shapes are the gate's). */
+const sdXZ = (v) => finite(v) && Math.abs(v) <= SD_ARENA_BOUND;
+const sdMove = (mv) => (mv && typeof mv === 'object' && [mv.x, mv.z, mv.tx, mv.tz].every(sdXZ) && finite(mv.v) && mv.v >= 0 && mv.v <= 20 && gateMs(mv.at)
+  ? { x: mv.x, z: mv.z, tx: mv.tx, tz: mv.tz, v: mv.v, at: mv.at } : null);
+const sdAtk = (a) => {
+  if (!a || typeof a !== 'object' || !intIn(a.b, 0, SD_BODIES - 1) || !Number.isSafeInteger(a.i) || a.i < 1 || !intIn(a.a, 0, SD_FIGHT_BLOWS - 1)) return null;
+  if (!gateMs(a.at) || !sdXZ(a.x) || !sdXZ(a.z) || !finite(a.yw) || Math.abs(a.yw) > 8 || !Array.isArray(a.tg) || a.tg.length > SD_TARGETS_MAX) return null;
+  if (!a.tg.every((p) => Array.isArray(p) && p.length === 2 && sdXZ(p[0]) && sdXZ(p[1]))) return null;
+  if ((a.sw != null && a.sw !== 1 && a.sw !== -1) || (a.n != null && !intIn(a.n, 0, 9999))) return null;
+  return { b: a.b, i: a.i, a: a.a, at: a.at, x: a.x, z: a.z, yw: a.yw, tg: a.tg.map((p) => [p[0], p[1]]), ...(a.sw != null ? { sw: a.sw } : {}), ...(a.n != null ? { n: a.n } : {}) };
+};
+/** A body as the state says it - its blow (if any) its own. */
+const sdBody = (B, b) => {
+  if (!B || typeof B !== 'object' || !sdXZ(B.x) || !sdXZ(B.z) || !finite(B.yw) || Math.abs(B.yw) > 8) return null;
+  const mv = B.mv == null ? null : sdMove(B.mv), atk = B.atk == null ? null : sdAtk(B.atk);
+  if ((B.mv != null && !mv) || (B.atk != null && (!atk || atk.b !== b))) return null;
+  return { x: B.x, z: B.z, yw: B.yw, mv, atk };
+};
+/** The Echoes - each [health, whole, up (when it stands), fallen (0 standing)]. */
+const sdEchoes = (e) => (Array.isArray(e) && e.length === SD_ECHOES && e.every((t) => Array.isArray(t) && t.length === 4 && gateHp(t[0]) && gateHp(t[1]) && t[0] <= t[1] && msOrNone(t[2]) && msOrNone(t[3]))
+  ? e.map((t) => [t[0], t[1], t[2], t[3]]) : null);
+/** The Reset's Hearts - its blow's number, the health each rose with, each spot (and, in a state, the health it stands at). */
+const sdCx = (cx, withHp) => {
+  if (!cx || typeof cx !== 'object' || !Number.isSafeInteger(cx.i) || cx.i < 1 || !gateHp(cx.m) || !Array.isArray(cx.c) || cx.c.length < 1 || cx.c.length > SD_HEARTS_MAX) return null;
+  if (!cx.c.every((q) => Array.isArray(q) && q.length === (withHp ? 3 : 2) && sdXZ(q[0]) && sdXZ(q[1]) && (!withHp || (gateHp(q[2]) && q[2] <= cx.m)))) return null;
+  return { i: cx.i, m: cx.m, c: cx.c.map((q) => (withHp ? [q[0], q[1], q[2]] : [q[0], q[1]])) };
+};
+/** SD8b: the realm's fight word, projected for the client: the kind's own fields, bounded, or null. */
+function validSdFightOut(m) {
+  switch (m.k) {
+    case 'st': {
+      if (!intIn(m.s, 1, SD_SLOT_MAX) || !Number.isSafeInteger(m.fi) || m.fi < 1 || !intIn(m.ph, 1, 3) || !gateHp(m.h) || !gateHp(m.m) || m.h > m.m) return null;
+      if (!gateMs(m.op) || !msOrNone(m.ou) || !intIn(m.pu, 0, 9999) || !gateMs(m.pa) || !gateMs(m.ends) || !msOrNone(m.ended)) return null;
+      if (!msOrNone(m.su) || !msOrNone(m.rk) || !intIn(m.n, 0, SD_FIGHTERS_MAX) || !msOrNone(m.lost)) return null;
+      const rem = sdBody(m.rem, 0);
+      if (!rem) return null;
+      let ec = null;
+      if (m.ec != null) {
+        if (!Array.isArray(m.ec) || m.ec.length !== SD_ECHOES) return null;
+        ec = m.ec.map((E, k) => { const B = sdBody(E, k + 1); return B && gateHp(E.h) && gateHp(E.m) && E.h <= E.m && msOrNone(E.up) && msOrNone(E.dn) ? { h: E.h, m: E.m, up: E.up, dn: E.dn, ...B } : null; });
+        if (!ec.every(Boolean)) return null;
+      }
+      const clk = m.clk == null ? null : sdAtk(m.clk), cx = m.cx == null ? null : sdCx(m.cx, true), fell = m.fell == null ? null : gateFell(m.fell);
+      if ((m.clk != null && (!clk || clk.b !== SD_BODIES - 1)) || (m.cx != null && !cx) || (m.fell != null && !fell)) return null;
+      return { k: 'st', s: m.s, fi: m.fi, ph: m.ph, h: m.h, m: m.m, op: m.op, ou: m.ou, rem, ec, clk, pu: m.pu, pa: m.pa, ends: m.ends, ended: m.ended, cx, su: m.su, rk: m.rk, n: m.n, fell, lost: m.lost };
+    }
+    case 'mv': { const mv = intIn(m.b, 0, SD_BODIES - 2) ? sdMove(m) : null; return mv ? { k: 'mv', b: m.b, ...mv } : null; }
+    case 'atk': { const a = sdAtk(m); return a ? { k: 'atk', ...a } : null; }
+    case 'hp': return gateHp(m.m) && gateHp(m.h) && m.h <= m.m ? { k: 'hp', h: m.h, m: m.m } : null;
+    case 'ph': return intIn(m.n, 2, 3) && gateMs(m.at) && gateMs(m.up) ? { k: 'ph', n: m.n, at: m.at, up: m.up } : null;
+    case 'ec': {
+      const e = sdEchoes(m.e);
+      if (!e || !gateMs(m.at) || (m.d != null && !intIn(m.d, 0, SD_ECHOES - 1)) || (m.r != null && !intIn(m.r, 0, SD_ECHOES - 1)) || (m.n != null && typeof m.n !== 'string')) return null;
+      return { k: 'ec', e, at: m.at, ...(m.d != null ? { d: m.d } : {}), ...(m.n != null ? { n: sanitizeName(m.n) } : {}), ...(m.r != null ? { r: m.r } : {}) };
+    }
+    case 'cx': { const cx = sdCx(m, false); return cx ? { k: 'cx', ...cx } : null; }
+    case 'cxh': return Number.isSafeInteger(m.i) && m.i >= 1 && Array.isArray(m.h) && m.h.length >= 1 && m.h.length <= SD_HEARTS_MAX && m.h.every(gateHp) ? { k: 'cxh', i: m.i, h: [...m.h] } : null;
+    case 'cxb': return Number.isSafeInteger(m.i) && m.i >= 1 && intIn(m.c, 0, SD_HEARTS_MAX - 1) && typeof m.n === 'string' && gateMs(m.at) ? { k: 'cxb', i: m.i, c: m.c, n: sanitizeName(m.n), at: m.at } : null;
+    case 'stun': return gateMs(m.at) && gateMs(m.until) && m.until > m.at ? { k: 'stun', until: m.until, at: m.at } : null;
+    case 'fell': { const f = gateFell(m); return f ? { k: 'fell', ...f } : null; }
+    case 'lost': return gateMs(m.at) ? { k: 'lost', at: m.at } : null;
+    case 'no': return SD_NO_WORDS.includes(m.m) ? { k: 'no', m: m.m } : null;
+    default: return null;
+  }
 }
 /** The relay's sd word, projected for the client: `{k:'ev', ...record}` - a Hollow that rose (slot 1 or later; the hub's
  *  first beat is its own) - or (SD6b) `{k:'pz', s, st, f, lit, ok, i?, a?, id?, q?, x?}`, the realm's Orrery - or null. */
@@ -4419,6 +4524,7 @@ export function validSdOut(m) {
     if (m.x === 1) out.x = 1;
     return out;
   }
+  if (m.k !== 'ev') return validSdFightOut(m);   // SD8b: the realm's fight
   const r = validSdRecord(m);
   return r && r.s > 0 ? { k: 'ev', ...r } : null;
 }
@@ -4427,6 +4533,8 @@ export function validSdOut(m) {
 export const SD_INTERNAL_CENSUS = '/internal/sd/census';
 export const SD_INTERNAL_FOUND = '/internal/sd/found';
 export const SD_INTERNAL_LIVE = '/internal/sd/live';
+/** SD8b: a realm telling the hub its Remnant fell (the director moves its record on - net/sdLaw.js sdFell). */
+export const SD_INTERNAL_FELL = '/internal/sd/fell';
 /** How soon a cell whose hub did not answer a find tells it again (the rite's number). */
 export const SD_TELL_RETRY_MS = 5000;
 /** Where the hub keeps its record, a cell a find it owes the hub, and a realm who entered it (never `world:` - swept). */
@@ -4435,6 +4543,16 @@ export const SD_FOUND_KEY = 'sdfound';
 export const SD_REALM_KEY = 'sdrealm';
 /** SD6b: where a realm keeps its Orrery's hall - `{ s, st, f, ok, last }` (outside every swept prefix). */
 export const SD_ORRERY_KEY = 'sdorrery';
+/** SD8b: where a realm keeps its fight (net/sdRemnant.js newRemnantFight's record - outside every swept prefix). */
+export const SD_FIGHT_KEY = 'sdfight';
+/** SD8b: a realm's fall as told to the hub - the slot, the moment, the best fighter's name, how many fought - projected, or
+ *  null. */
+export function validSdFellTell(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v)) return null;
+  const b = /** @type {any} */ (v);
+  if (!intIn(b.s, 1, SD_SLOT_MAX) || !gateMs(b.at) || typeof b.top !== 'string' || !intIn(b.n, 0, SD_FIGHTERS_MAX)) return null;
+  return { s: b.s, at: b.at, top: sanitizeName(b.top), n: b.n };
+}
 /**
  * A cell's find, as told to the hub - the claim (`s`, `px`, `py`), the finder's pose as the cell's socket stood it (`x`,
  * `z`, the MapsFile frame) and name (`fb`) - projected, or null. The hub judges it against its record (net/sdLaw.js

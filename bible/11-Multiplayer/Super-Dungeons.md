@@ -424,7 +424,12 @@ that use them (SD6's `pz`, SD8's fight, SD9's receipts), each extending `SD_KIND
 relay version while it is undeployed - `world176` now (`world171` on the branch, renumbered past main's CRYSTAL-FIST,
 WATCH-FIX, SERPENT3, LEGACY7 and TEXT-F1 at the merges). SD6b shipped `pz` each way - the realm's out frame is the hall,
 `pz {s,st,f,lit,ok,i?,a?,id?,q?,x?}` (the turn that made it so, its turner and number, and `x` when the Hour snapped
-back).
+back). SD8b shipped the fight: `in`, `hit`, `ehit {e,...}`, `xhit {c,...}` in, under the fight's own bucket (`sdFightGate`,
+the gate's 16 a second) and its brain's number (`SD_BRAIN_V` 1 - `no` below `SD_BRAIN_MIN`); out, the whole fight (`st` -
+`net/sdRemnant.js remnantStateOf`, numbered `fi`), each body's `mv` and `atk` (its `b`: 0 the Remnant, 1 GOLD, 2 SILVER, 3
+the Hour), `hp`, `ph {n,at,up}`, `ec {e,at,d?,n?,r?}`, the Hearts' `cx`, `cxh` (their health - the gate's `cxh`, which the
+table above left out) and `cxb`, `stun`, `fell`, `lost {at}` (a fight lost - the table above had none: the next `in` makes a
+fresh one) and `no {m}`; and the realm's door to the hub, `/internal/sd/fell`.
 
 ## 15. The four hosts
 
@@ -1149,3 +1154,42 @@ clock now, and a hold that only a close fight needs is pinned by one). PINS MOVE
 
 SD8b next: the relay runs it - the realm's fight on its alarm, the wire's kinds, the `in` and the blows believed, the fall
 told to the hub.
+
+### SD8b - shipped 2026-10-07 (the relay runs the Brass Remnant)
+
+Sections 10 and 14 on the relay - `world176` still, re-hashed in place while it is undeployed.
+
+- **The wire** (`net/wire.js`): the fight's words each way (section 14), projected and bounded - the gate's own bounds for a
+  level, a blow's number, damage and kind; the arena's frame (`SD_ARENA_BOUND` 40), the bodies, the blows, the Echoes, the
+  Hearts and the Volley's marks at the law's own numbers (the wire imports no law: pinned equal); the whole state checked
+  part by part (each body's blow its own; the Hour's blow the Hour's); four refusals (`SD_NO_WORDS`); the hub's door's tell
+  (`validSdFellTell`).
+- **The realm runs it** (`server/src/index.js`, the gate's shape): the fight kept in the realm's storage (`SD_FIGHT_KEY`),
+  stepped by the Remnant's law on the realm's alarm (`_sdFightTick` - every 250 ms while it lives and someone is in the
+  realm; the alarm is the room's other duties' once it is lost, fallen and told, or nobody is here), its frames fanned to
+  every soul in the realm. An `in` from a verified account alive IN THE ARENA, whose game's brain is the realm's, the Hour
+  still holding its slot, joins it and is answered with the whole fight; a fight LOST - or one no beat has moved for 30 s, a
+  realm that emptied - is done, and the next `in` makes a fresh one, numbered on. A blow is believed from where the
+  socket's own pose stands in the arena's frame (`dungeonToRealm`, `arenaOf`) - the dead strike nothing, and a blow before
+  an `in` is junk - and keeps the beat as an `in` does. A soul entering the realm mid-fight is told the fight as it stands
+  at its hello, as the hall is.
+- **The fall, said once** (the gate's AUDIT WB A10 law - kept before it is said): the fight checkpointed with its `said`,
+  `fell` to everyone in the realm with its damage chart, then the hub told until it answers (`/internal/sd/fell`): the hub
+  moves its record to `fell` (net/sdLaw.js `sdFell` - the collapse and the rest from then) and says it to everyone online
+  (SD2b's chat line). The realm refuses a newcomer from its own kill on, before the hub's word comes round.
+- **The page** (`net/online.js`): `sendSdIn(lv)` (my game's brain said) and `sendSdBlow(k, fields)` down my own socket in the
+  realm at a relay that keeps it, on the fight's bucket; `onSdFight` hears the fight from my own realm alone.
+
+THE FOUR HOSTS: none wired - the fight's page is SD8c's. `scenes/world.js` FLAGGED (it will hand the fight to the arena's set
+and its blows to `sendSdBlow`); `scenes/worldModes.js`, `scenes/dungeonContext.js` and `scenes/exterior.js` FLAGGED.
+
+Pins: `test/sd8b_fight.test.js` (7 - the wire; the realm runs the fight - its `in`, its share, its beat, believed blows and
+refused ones, the fight at the hello; refused `in`s; lost and fresh, through an eviction and past a sleep; the fall - said,
+kept, told, the hub's record and its fan, the newcomer refused, the beat stopped; the page; the relay by source);
+`tools/mutants/sd8b.json` (27, all dead). PINS MOVED: `test/sd3_relay.test.js` and `test/sd6b_hall.test.js` (the fight's kinds after
+theirs); `test/relayversion.test.js` - `net/sdRemnant.js` joins the relay's bundle, `world176` re-hashed in place;
+`test/scale2b.test.js` - thirteen calls between rooms, the tell of the fall on the find's own retry (still nine on
+ROOM_CALL_MS); `tools/mutants/sd6b.json`'s `pz` unknown re-aimed by content (the kinds' list grew).
+
+SD8c next: the Remnant on the page - the colossus, its Echoes and Hearts drawn, the telegraphs, the bar, the blows sent
+through the three seams and the Remnant's own judged on the struck player's machine.

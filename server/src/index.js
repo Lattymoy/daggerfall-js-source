@@ -211,7 +211,7 @@ import { isGateRoom, gateDayOfRoom, gateAdmits, gateHolds, gateTimes, gateBossOf
 import { riteNear, riteHeard, riteStands, cageStands, RITE_HELPERS_MAX } from '../../src/net/gateRite.js';   // WB12d: the faithful's rite; BROKER-CAGE: the Broker's cage, omen to midnight
 import { isSiegeRoom, newFighter, isSiegeNpcId, siegeNpcFoe, siegeNpcPose, siegeNpcFell, siegeNpcInReach, siegeNpcProvoked, refereeBlow, refereeCast, refereeStep, siegeHeld, siegeNextWave, siegeRise, SIEGE_WAVE_MS, SIEGE_FIGHTERS_MAX, SIEGE_SPECTATORS_MAX, SIEGE_OPENS_MS, SIEGE_TICK_MS, siegeNextBeat, fieldOf, newBattle, battleStep, honoured, siegeCampPose, siegeFieldFrame, isBattleRoom, isRoyalRoom, battleOfRoom, royalAsk, royalAccept, royalMarks, royalMayStrike, royalStepOk, royalEnd, royalStep, royalLadder, royalNextBeat, ROYAL_RC_KEEP, siegePlaceFree, siegeReturn, royalPrune, worksOf, refereeWorkBlow, siegeWaveMs, siegeRamDown, siegeBreach, SIEGE_WORK_IDS, SIEGE_GATEHOUSE, SIEGE_RAM, siegeGroundOf, siegeOffGround, siegeStepLevel, royalLevel, SIEGE_HEIGHT_M } from '../../src/net/siegeRef.js';   // PVP-REF: a siege's referee - siegeRef.js imports nothing, so the worker's graph stays flat   // SEAT2a: and its battle   // AUDIT-SEATS T3/R5: a side's places, a fighter's return, a tourney's records   // SEAT2b part two (b): the works in battle
 import { mintSiegeReceipt, SIEGE_RECEIPT_TTL_S, mintRoyalReceipt } from '../../src/net/siegeReceipt.js';   // SEAT2a: the relay's fourth signature - a fighter's result and Honours
-import { newFight, joinFight, applyHit, applyCrystalHit, applyHostHit, applyHeal, stepBrain, stateOf, earned, earnedBy, COURT_CENTRE, BRAIN_TICK_MS, CHECKPOINT_MS, GATE_FIGHTERS_MAX } from '../../src/net/gateBrain.js';
+import { newFight, joinFight, applyHit, applyCrystalHit, applyHostHit, applyHeal, stepBrain, stateOf, earned, earnedBy, COURT_CENTRE, BRAIN_TICK_MS, CHECKPOINT_MS, GATE_FIGHTERS_MAX, POSE_SLACK } from '../../src/net/gateBrain.js';
 import { mintReceipt, importReceiptKey, readReceipt, RECEIPT_TTL_S } from '../../src/net/gateReceipt.js';
 // SERPENT1 (2026-10-04, Mac: "a new world event that requires players with a ship to meet up and take on a large scale
 // sea serpent in the ocean"): FOUR FILES JOIN THE BUNDLE - net/serpentLaw.js (the day's window - it imports wire.js and
@@ -268,9 +268,10 @@ import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehi
 
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
 import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
-import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
-import { sdFirst, sdRise, sdFind, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL } from '../../src/net/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
+import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY, sdFightRelayGate, SD_BRAIN_MIN, SD_NO_WORDS, SD_FIGHT_KEY, SD_INTERNAL_FELL, validSdFellTell } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
+import { sdFirst, sdRise, sdFind, sdFell, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL } from '../../src/net/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
 import { orreryOf, orreryStep, orreryLit, orreryFresh, stoneInReach, dungeonToRealm, SD_STONES, SD_HOURS, SD_FRAY_MAX, SD_STONE_REACH_SLACK, SD_STONE_SETTLE_MS } from '../../src/net/sdBrain.js';   // SD6b: the Orrery's law - the realm judges every turn by it
+import { newRemnantFight, joinRemnant, applyRemnantHit, applyEchoHit, applyHeartHit, stepRemnant, remnantStateOf, arenaOf, inArena, SD_LOST_MS } from '../../src/net/sdRemnant.js';   // SD8b: the Brass Remnant's law - the realm runs its fight by it
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -577,6 +578,7 @@ export class Room {
     if (path === SD_INTERNAL_CENSUS) return this._sdCensusInternal();   // SD3: the hub asking a region's channel how many stand in it
     if (path === SD_INTERNAL_FOUND) return this._sdFoundInternal(request);   // SD3: a cell telling the hub a Hollow found
     if (path === SD_INTERNAL_LIVE) return this._sdLiveInternal();   // SD3: the Worker or a realm asking the hub its record
+    if (path === SD_INTERNAL_FELL) return this._sdFellInternal(request);   // SD8b: a realm telling the hub its Remnant fell
     const key = roomOf(new URL(request.url).pathname);
     if (!key || (key.startsWith('owned:') && !privateInteriorOf(key))) return json({ error: 'no such private room' }, 404);
     // AUDIT WB A1: A SEAT IS A HELLO'S. A socket that opened and never said hello kept its seat for as long as it stood
@@ -1116,6 +1118,7 @@ export class Room {
     if (await this._gateTick()) return;   // WB3: a gate room's alarm is its boss's beat
     if (await this._siegeTick()) return;   // PVP-REF: a siege room's alarm is its fallen fighters' waves
     if (await this._arenaTick()) return;   // ARENA4: a bout's beat, or the hall's queue
+    if (await this._sdFightTick()) return;   // SD8b: a realm's alarm is its Remnant's beat while its fight lives
     // SERPENT1: A CELL WITH A SERPENT'S FIGHT beats it - and its other duties (a rite's tell, its raids' ends) still run,
     // every SERPENT_REST_MS while the fight beats and on every firing once it is over, under one alarm: the soonest of the
     // beat and what they arm
@@ -1651,6 +1654,8 @@ export class Room {
       // SD6b: the Orrery's hall as it stands - the stones, the fray, the dial and the Concord - to a soul entering the Hour,
       // after the welcome that resets its session
       if (isSdRoom(a.key)) { try { if (!this._send(ws, this._sdHallWord(await this._sdHallOf(sdSlotOfRoom(a.key))))) return; } catch (e) { console.warn('[sd] hall word failed', e?.message ?? e); } }
+      // SD8b: and its fight, while one lives or has fallen - a soul come in mid-fight sees the Remnant where it stands
+      if (isSdRoom(a.key)) { try { const sf = await this._sdFightOf(); if (sf && !sf.lost && sf.s === sdSlotOfRoom(a.key) && !this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(sf) }))) return; } catch (e) { console.warn('[sd] fight word failed', e?.message ?? e); } }
       if (unseen) return;   // HOTFIX 1003f: a floor's hello said as anyone's - a private session's stranger's to nobody (a member's join says it: `_sessionShow`)
       const join = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, look: m.look, pose: this._drawn({ sub: who.subject, pose: m.pose }, a.key).pose }, who));   // AUDIT-SEATS T2: and a spectator's join stands it nowhere
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id && (!S || S.members[b.sub])) this._send(other, join);   // AUDIT PRE-MERGE 1003b R4: a member's to the members alone
@@ -2051,6 +2056,14 @@ export class Room {
         if (!this._spend(ws, now, sdPzRelayGate, 'sdPzBucket', 'sdPzDrops', 'too many turns')) return;
         if (!isSdRoom(a.key)) { this._junk(ws); return; }
         try { await this._sdTurn(ws, a, m, now); } catch (e) { console.warn('[sd] turn failed', e?.message ?? e); }
+        return;
+      }
+      // SD8b: THE LAST MOMENT'S FIGHT - in a Hollow's realm alone (anywhere else junk), on the fight's own bucket: an `in`
+      // joins it, a blow is believed by the Remnant's law from where the socket's own pose stands (_sdFightFrame)
+      if (m.k === 'in' || m.k === 'hit' || m.k === 'ehit' || m.k === 'xhit') {
+        if (!this._spend(ws, now, sdFightRelayGate, 'sdFightBucket', 'sdFightDrops', 'too many fight frames')) return;
+        if (!isSdRoom(a.key)) { this._junk(ws); return; }
+        try { await this._sdFightFrame(ws, a, m, now); } catch (e) { console.warn('[sd] fight failed', e?.message ?? e); }
         return;
       }
       if (!this._spend(ws, now, sdRelayGate, 'sdBucket', 'sdDrops', 'too many sd frames')) return;
@@ -4784,7 +4797,7 @@ export class Room {
     return this._sdRealm;
   }
   /** Why a hello into a realm is refused, or null to admit it: the Hour closed (the slot gone, or another's), a newcomer
-   *  after the kill, the realm full. A newcomer admitted is kept - it may come back until the Hollow is gone. */
+   *  after the kill (the hub's record, or SD8b the realm's own fight), the realm full. A newcomer admitted is kept - it may come back until the Hollow is gone. */
   async _sdAdmit(key, sub, now) {
     const s = sdSlotOfRoom(key);
     const rec = await this._sdLiveOf(s, now);
@@ -4792,6 +4805,7 @@ export class Room {
     const realm = await this._sdRealmOf(s);
     if (sub && realm.in.includes(sub)) return null;
     if (!sdAdmits(rec, now)) return SD_NO_CLOSED;
+    if ((await this._sdFightOf())?.fell) return SD_NO_CLOSED;   // SD8b: the realm knows its own kill before the hub's word comes round
     if (realm.in.length >= SD_FIGHTERS_MAX) return SD_NO_FULL;
     if (sub) { realm.in.push(sub); await this.state.storage.put(SD_REALM_KEY, realm); }
     return null;
@@ -4839,6 +4853,144 @@ export class Room {
     await this.state.storage.put(SD_ORRERY_KEY, hall);
     const word = this._sdHallWord(hall, { i: m.i, a: m.a, id: a.id, q: m.q, ...(res.x ? { x: 1 } : {}) });
     for (const [other, b] of [...this._all()]) if (b.id) this._send(other, word);
+  }
+
+  // ───────────────────────────── SD8b: THE LAST MOMENT'S FIGHT ─────────────────────────────
+  /** The realm's fight - the instance's, else storage's (the gate's law: one room, one fight). */
+  async _sdFightOf() {
+    if (this._sdFight === undefined) { const v = await this.state.storage.get(SD_FIGHT_KEY); if (this._sdFight === undefined) this._sdFight = v && typeof v === 'object' && Number.isSafeInteger(v.s) ? v : null; }
+    return this._sdFight;
+  }
+  /** The fight to storage - every CHECKPOINT_MS from the beat, at once on a join, the fall and the loss. */
+  async _sdFightSave(f, now, force) {
+    if (!force && now - (this._sdFightSavedAt ?? 0) < CHECKPOINT_MS) return;
+    this._sdFightSavedAt = now;
+    await this.state.storage.put(SD_FIGHT_KEY, f);
+  }
+  /** A pose of the dungeon's frame in the arena's (net/sdBrain.js dungeonToRealm, net/sdRemnant.js arenaOf). */
+  _arenaPoseOf(p) { const [x, , z] = dungeonToRealm(p.x, p.y ?? 0, p.z); const [ax, az] = arenaOf(x, z); return { x: ax, z: az }; }
+  /** The fight's bodies in the realm now - one a fighter, its NEWEST socket speaking for it (the gate's law): where its
+   *  last pose stands in the arena's frame, and whether that pose says it died. */
+  _sdFightBodies(f) {
+    const newest = new Map();
+    for (const [, b] of this._all()) {
+      if (!b.id || !b.sub || !b.pose || !f.players[b.sub]) continue;
+      const had = newest.get(b.sub);
+      if (!had || (b.since ?? 0) >= (had.since ?? 0)) newest.set(b.sub, b);
+    }
+    return [...newest.values()].map((b) => { const c = this._arenaPoseOf(b.pose); return { sub: b.sub, x: c.x, z: c.z, dead: !!b.pose.dd }; });
+  }
+  /** The fight's frames to everyone in the realm, in order. */
+  _sdFightFan(frames) {
+    if (!frames.length) return;
+    const outs = frames.map((fr) => JSON.stringify({ t: 'sd', ...fr }));
+    for (const [ws, b] of [...this._all()]) if (b.id) for (const s of outs) if (!this._send(ws, s)) break;
+  }
+  /** The beat is armed now unless it already is, sooner. */
+  async _sdFightArm(now) {
+    const at = await this.state.storage.getAlarm();
+    if (at == null || at > now + BRAIN_TICK_MS) await this.state.storage.setAlarm(now + BRAIN_TICK_MS);
+  }
+  /**
+   * A FIGHT WORD in a realm (Super-Dungeons.md section 10): `in` - from a verified account alive in the arena, a game whose
+   * brain is the realm's, the Hour still holding its slot - joins the fight (a fight lost, or one no beat has moved for
+   * SD_LOST_MS - a realm that emptied - is done: the next is fresh, numbered on) and is answered with its whole state; a
+   * fight fallen answers with its state alone. A blow is believed by the Remnant's law from where the socket's own pose
+   * stands (the dead strike nothing), and keeps the beat as an `in` does.
+   */
+  async _sdFightFrame(ws, a, m, now) {
+    const s = sdSlotOfRoom(a.key);
+    let f = await this._sdFightOf();
+    if (f && f.s !== s) f = this._sdFight = null;
+    if (m.k === 'in') {
+      const no = (w) => { this._send(ws, JSON.stringify({ t: 'sd', k: 'no', m: w })); };
+      if (!(m.bv >= SD_BRAIN_MIN)) { no(SD_NO_WORDS[3]); return; }
+      const rec = await this._sdLiveOf(s, now);
+      if (!rec || rec.s !== s || !sdHolds(rec, now)) { no(SD_NO_WORDS[0]); return; }
+      if (typeof a.sub !== 'string' || !a.sub || !a.pose || a.pose.dd) return;
+      const at = this._arenaPoseOf(a.pose);
+      if (!inArena(at.x, at.z, POSE_SLACK)) return;   // from the arena alone
+      if (f?.fell) { this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f) })); return; }
+      if (!f || f.lost || now - f.lastTickAt >= SD_LOST_MS) f = this._sdFight = newRemnantFight(s, (f?.fi ?? 0) + 1, now);
+      const present = new Set();
+      for (const [, b] of this._all()) if (b.sub && b.id) present.add(b.sub);
+      if (!joinRemnant(f, a.sub, a.name ?? '', m.lv, now, present)) { no(f.ended ? SD_NO_WORDS[1] : SD_NO_WORDS[2]); return; }
+      this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f) }));
+      await this._sdFightSave(f, now, true);
+      await this._sdFightArm(now);
+      return;
+    }
+    if (!f || !f.players[a.sub]) { this._junk(ws); return; }
+    const pose = a.pose && !a.pose.dd ? this._arenaPoseOf(a.pose) : null;
+    if (m.k === 'ehit') this._sdFightFan(applyEchoHit(f, a.sub, m.e, m.d, m.r, pose, now, m.q));
+    else if (m.k === 'xhit') this._sdFightFan(applyHeartHit(f, a.sub, m.c, m.d, m.r, pose, now, m.q));
+    else {
+      applyRemnantHit(f, a.sub, m.d, m.r, pose, now, m.q);
+      if (f.fell && !f.said) { await this._sdFightFall(f, now); return; }
+    }
+    if (!f.fell && !f.lost && !(this._sdBeatArmedTo > now)) { this._sdBeatArmedTo = now + BRAIN_TICK_MS; await this._sdFightArm(now); }
+  }
+  /** ONE BEAT of a realm's alarm while its fight lives: the Remnant's law stepped over the bodies in the realm, its frames
+   *  fanned, the fall said once, the fight checkpointed (at once when it is lost) - and the next beat armed while someone
+   *  is here (a realm nobody stands in sleeps: an `in` after SD_LOST_MS finds its fight done). False when the realm holds
+   *  no living fight - the alarm is the room's other duties' then. */
+  async _sdFightTick() {
+    const f = await this._sdFightOf();
+    if (!f || f.lost || (f.said && f.told)) return false;
+    const now = Date.now();
+    try {
+      this._sdFightFan(stepRemnant(f, now, this._sdFightBodies(f), rand01));
+      if (f.fell && !f.said) await this._sdFightFall(f, now);
+      else if (f.said && !f.told) await this._sdTellFellOnce(f, now);
+      await this._sdFightSave(f, now, !!f.lost);
+    } catch (e) { console.warn('[sd] beat failed', e?.message ?? e); }
+    if (f.said && !f.told) { await this.state.storage.setAlarm(now + SD_TELL_RETRY_MS); return true; }
+    const here = [...this._all()].some(([, b]) => b.id);
+    if (here && !f.fell && !f.lost) { await this.state.storage.setAlarm(now + BRAIN_TICK_MS); return true; }
+    return false;
+  }
+  /** THE FALL, SAID ONCE (the gate's law, AUDIT WB A10 - kept before it is said): the fight checkpointed with its `said`,
+   *  then `fell` to everyone in the realm, then the hub told until it answers. One at a time (AUDIT WB12d L2). */
+  async _sdFightFall(f, now) {
+    if (this._sdFalling) return this._sdFalling;
+    this._sdFalling = this._sdFightFallOnce(f, now).finally(() => { this._sdFalling = null; });
+    return this._sdFalling;
+  }
+  async _sdFightFallOnce(f, now) {
+    if (f.said) return;
+    f.said = true;   // kept before it is said
+    await this._sdFightSave(f, now, true);
+    this._sdFightFan([{ k: 'fell', ...f.fell }]);   // its moment, its best three, its count, its chart
+    await this._sdTellFellOnce(f, now);
+  }
+  /** The hub told of the fall, and it kept - once it has answered (a relay built without the binding keeps its own word). */
+  async _sdTellFellOnce(f, now) {
+    if (f.told || !f.fell) return;
+    const rooms = this.env?.ROOMS;
+    let ok = !rooms?.idFromName || !rooms?.get;
+    if (!ok) {
+      try {
+        const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${SD_INTERNAL_FELL}`, { method: 'POST', body: JSON.stringify({ s: f.s, at: f.fell.at, top: f.fell.top[0] ?? '', n: f.fell.n }), signal: AbortSignal.timeout(SD_TELL_RETRY_MS) }));
+        ok = !!res && (res.ok || (res.status >= 400 && res.status < 500));
+      } catch (e) { console.warn('[sd] hub', e?.message ?? e); }
+    }
+    if (!ok) return;
+    f.told = true;
+    await this._sdFightSave(f, now, true);
+  }
+  /** SD8b: THE HUB HEARS A FALL - its record moved on (net/sdLaw.js sdFell: the collapse and the rest from now) and said to
+   *  everyone online, while it holds that slot found. */
+  async _sdFellInternal(request) {
+    let body = null;
+    try { body = await request.json(); } catch { /* refused below */ }
+    const c = validSdFellTell(body);
+    if (!c) return json({ ok: false }, 400);
+    const rec = await this._sdOf();
+    if (rec && rec.s === c.s) {
+      const fell = sdFell(rec, Date.now(), { top: c.top, n: c.n });
+      if (fell) { await this._sdSave(fell); this._sdFan(fell); }
+    }
+    return json({ ok: true });
   }
 
   // ───────────────────────────── RAID3: A TOWN'S RAID ─────────────────────────────
