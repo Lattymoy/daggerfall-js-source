@@ -221,5 +221,5 @@ test('SD14a FORGOTTEN AS THE HOUR IS LEFT, and the world host\'s: made beside th
   assert.equal(count(r.heard, SD_VOICE_CUES.wake), 0, 'left: the next fight seen is taken as it stands');
   assert.match(W, /const sdRemVoice = sdFightLink \? createSdRemnantVoice\(\{ audio, link: sdFightLink, feet: \(\) => \(playerSpawned && modes\?\.sdRealmSlot\?\.\(\) != null \? player\.feetAt\(\) : null\) \}\) : null;/);
   assert.match(W, /if \(inRealm\) \{ try \{ sdRemVoice\?\.frame\(\); \} catch \(e\) \{ console\.warn\('\[sd\] voice', e\?\.message \?\? e\); \} \}/);
-  assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); sdBlows\?\.leave\(\); sdRemVoice\?\.leave\(\); _sdFightHeld = false; \}/);
+  assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); sdBlows\?\.leave\(\); sdRemVoice\?\.leave\(\); sdFx\?\.leave\(\); _sdFightHeld = false; \}/);   // SD16 (PIN MOVED): its sparks forgotten with it
 });

@@ -327,6 +327,7 @@ import { createSdRemnantVoice } from './sdRemnantVoice.js';   // SD14a: its body
 import { createSdAir } from './sdAir.js';   // SD14b: the Hour's air - its beds and its far events
 import { SdMotesRenderer } from '../render/sdMotes.js';   // SD14c: the Hour's motes
 import { sdPerilAt, sdGroundModel, createSdBeats } from './sdArenaRead.js';   // SD15: the arena read - in it, and the fight's beats
+import { createSdFx } from './sdFx.js';   // SD16: the blows seen - bursts, shakes and lights
 import { drawSdTitleCard } from '../ui/sdTitleCard.js';   // SD15: the Hour's own card
 import { titleCardModel } from '../ui/gateTitleCard.js';   // SD15: the card's pure model, the Warden's
 import { remnantBarModel, sdBarNear } from '../ui/sdRemnantBar.js';   // SD8c: the Brass Remnant's bar, the gate's in brass
@@ -21707,6 +21708,13 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  fight this page holds: strides, growls, grunts, its wake and its turns, the stun, the release of each blow, a Volley
    *  aimed at my feet. Online alone, beside the link. */
   const sdRemVoice = sdFightLink ? createSdRemnantVoice({ audio, link: sdFightLink, feet: () => (playerSpawned && modes?.sdRealmSlot?.() != null ? player.feetAt() : null) }) : null;
+  /** SD16 (Super-Dungeons.md section 10): ITS BLOWS SEEN (scenes/sdFx.js) - each landing and turn a burst of sparks on the
+   *  gate's own spark pass, the camera shaken by how near it fell, the floor lit. Online alone, beside the link. */
+  const sdFx = sdFightLink ? createSdFx({
+    link: sdFightLink,
+    feet: () => (playerSpawned && modes?.sdRealmSlot?.() != null ? player.feetAt() : null),
+    shake: (k) => betterAmbience.weaponKick(k),   // the gate's door (WB13d): under the player's own maxShake
+  }) : null;
   /** SD9e (Super-Dungeons.md section 11): ITS SPOILS ON THE ARENA'S FLOOR (scenes/sdSpoils.js) - SD_SPEW_AT_MS into its
    *  fall, off my receipt from my own realm (sdSpoilsReceipt), thrown from where it fell; leaving the Hour gathers the
    *  floor. Online alone, beside the link. */
@@ -21736,10 +21744,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // SD9e: whatever is still on the arena's floor into the pack - and AUDIT SD II (L5 F5): a checkpoint asked at once (the
     // Hour refuses every save, so what it gave stood on the device alone until the next one, two minutes on)
     if (!inRealm && _sdFightHeld) { sdSpoilsBurst?.leave(); saveSoon.changed(); }
-    if (!inRealm && _sdFightHeld) { sdFightLink.leave(); sdBlows?.leave(); sdRemVoice?.leave(); _sdFightHeld = false; }
+    if (!inRealm && _sdFightHeld) { sdFightLink.leave(); sdBlows?.leave(); sdRemVoice?.leave(); sdFx?.leave(); _sdFightHeld = false; }
     if (!inRealm) _sdHall = null;   // AUDIT SD II (L2 F17): the hall's word forgotten out of the realm - kept, the next visit to the slot's Hour turned its stones from stale places and chimed a Concord reached meanwhile
     if (inRealm) { try { sdBlows?.frame(); } catch (e) { console.warn('[sd] blows', e?.message ?? e); } }   // SD8d: its blows on me
     if (inRealm) { try { sdRemVoice?.frame(); } catch (e) { console.warn('[sd] voice', e?.message ?? e); } }   // SD14a: its body heard
+    if (inRealm) { try { sdFx?.frame(); } catch (e) { console.warn('[sd] fx', e?.message ?? e); } }   // SD16: its blows seen
     if (inRealm) { try { sdSpoilsBurst?.frame(); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } }   // SD9e: its spoils, thrown and flying
     let bar = null, ground = null, card = null;
     if (inRealm) {
@@ -25151,7 +25160,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     spoilName: (key) => floorPool()?.nameOf(key) ?? null,
     spoilContents: (key) => floorPool()?.contentsOf(key) ?? null,
     takeSpoil: (key) => !!floorPool()?.pick(key),
-    sdRealmLights: () => sdSpoilsPool?.lights() ?? [],   // SD9e: its spoils' light, first in the Hour's channel
+    sdRealmLights: () => {   // SD9e: its spoils' light, first in the Hour's channel; SD16: and its landings' flashes
+      const lit = sdSpoilsPool?.lights() ?? [], fx = sdFx && sdFightLink ? sdFx.lights(sdFightLink.now()) : [];
+      return fx.length ? [...lit, ...fx] : lit;
+    },
     // WB6a: the Deadlands' sea and sky, in the dungeon arm's world pass after the court's solid geometry - in the court's
     // own air (the renderer's fog as it set it for the court, the sky's light following the lane's with the fog's colour)
     drawGateBackdrop: ({ proj, view }) => {
@@ -25175,8 +25187,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (told || lived) renderer.markForeignPass();
     },
     // SD8d: the Brass Remnant's blows on the arena's floor, in the dungeon arm's world pass - fogged as the floor is; SD9e:
-    // and its spoils' loot lines, in the same pass; SD14c: and the Hour's motes (render/sdMotes.js), in its fog and its sky's light
-    drawSdTelegraph: ({ proj, view, eye }) => { const t = performance.now() / 1000, fog = courtFogNow(); const blows = !!sdBlows?.drawPass(proj, view, eye, t, fog), lines = !!sdSpoilsPool?.drawPass(proj, view, eye, t, fog); const motes = !!sdMotesPassOf()?.draw(proj, view, deadlandsSeconds(), fog, skyGain(renderer._fogColor, SD_REALM_FOG.color), renderer.worldViewportPx?.[3]); if (blows || lines || motes) renderer.markForeignPass(); },
+    // and its spoils' loot lines, in the same pass; SD14c: and the Hour's motes (render/sdMotes.js), in its fog and its sky's light;
+    // SD16: and its blows' sparks (scenes/sdFx.js, the gate's spark pass) on the fight's clock
+    drawSdTelegraph: ({ proj, view, eye }) => { const t = performance.now() / 1000, fog = courtFogNow(); const blows = !!sdBlows?.drawPass(proj, view, eye, t, fog), lines = !!sdSpoilsPool?.drawPass(proj, view, eye, t, fog); const motes = !!sdMotesPassOf()?.draw(proj, view, deadlandsSeconds(), fog, skyGain(renderer._fogColor, SD_REALM_FOG.color), renderer.worldViewportPx?.[3]); const sparks = !!(sdFx && sdFightLink && sdFx.draw(renderer.gl, proj, view, eye, sdFightLink.now(), fog, renderer.worldViewportPx?.[3])); if (blows || lines || motes || sparks) renderer.markForeignPass(); },
     deadlandsSeconds: () => deadlandsSeconds(),   // WB6b: the court's flash and the shards' drift keep the sky's clock
     staffTeleportHeld: () => staffTeleportHeld,
     canVisitPrivateRoom: () => !seatOut() && isStaff(_staffGlyphs) && !!chatLinks.get('world')?.staffTeleportOk,

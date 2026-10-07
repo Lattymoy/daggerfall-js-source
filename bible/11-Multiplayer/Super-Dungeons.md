@@ -378,6 +378,15 @@ health makes it safe; the pulses and the Reset are unresisted magic, so no resis
 paralysed, slowed, charmed, reflected or soul-trapped; nothing regenerates in the Hour; the Reset is a damage race and
 the Dragon Break a coordination race; the Hour Ends is a clock. It is meant to be lost, many times, before it is won.
 
+**How its blows are seen** (SD16, `scenes/sdFx.js`). Each landing and turn is a burst of sparks on the gate's own spark
+pass (`render/gateFx.js`) in the Hour's own 17 kinds and colours - the Stomp at its feet and its ring's dust as it
+rolls, the Hour-Hand's light out of the chest, the Volley's gears at each mark, the Pulse, the Reset and the End over
+the arena's heart in the Mantella's green, its white and red, each Echo risen and broken in gold or silver, each Heart
+risen and broken, the stun, its wake, its gears slipping under a fifth, and its fall: a burst out of its chest, a column
+of brass as its body sinks, and the way home's pale light where it rises. Nine of them shake the camera by how near they
+fell (the whole arena for the Hour's own), and eleven light the floor where they fall; the fall flashes the arena
+white-gold.
+
 ## 11. The feat - receipts, spoils, the set, the title, the aura, the collapse
 
 **The kill (relay).** As the gate's: kept before it is said, one fall at a time, the hub told until it answers. Each
@@ -2205,3 +2214,40 @@ Pins: `test/sd15_read.test.js` (6 - the Stomp; the Hand, the Volley and the Echo
 beats; the Hour's card and the host's; the burning brass felt); `tools/mutants/sd15.json` (21). PINS MOVED:
 `test/sd8c_remnant_page.test.js` (the fight read once; one hide), `test/sd11c_page.test.js` and `test/sd11a_scenes.test.js`
 (the arena read in the fight's rigs).
+
+### SD16 - shipped 2026-10-07 (the blows seen)
+
+The Warden's court throws 12 kinds of burst, shakes the camera under 7 of his landings and lights its floor where they
+fall (WB13d, WB13e); the Hour threw none - its blows were a telegraph on the floor and a sound. `scenes/sdFx.js` reads
+the fight this page holds each frame, as the voice does (a page that comes late takes the fight as it stands), and sees:
+
+- **The bursts** (`SD_FX_KINDS`, 17): the Stomp's landing at its feet and its ring's dust at six points of its front,
+`SD_RING_DUST.after` (400 ms) into its roll; the Hour-Hand's light out of the chest (gold for the Remnant, the Echo's
+own colour for an Echo's); the Volley's gears at each mark; the Pulse, the Reset and the End over the arena's heart (a
+Reset the Hearts broke throws none); each Echo risen and broken; each Heart risen and broken - the last one's break and
+the Hearts' going arrive in one word (the stun's), and are seen as one; the stun; its wake (live alone); its gears
+slipping once under a fifth (`SD_SLIP_FRAC`, the voice's); its fall (a burst out of its chest, then `SD_FX_COLUMN` -
+three bursts of brass 1.5 s on, a quarter-second apart, as its body sinks - then the way home's pale light where
+`clearOfPillars` stands it, as it rises at `SD_REM_SINK_MS`). A landing is seen once, and only within
+`SD_FX_LAND_LATE_MS` (500 ms) of it; a turn within `SD_FX_LATE_MS` (1.5 s). Sixteen at most stand (the pass's
+`FX_BURSTS_MAX`), the oldest given up for the newest.
+- **The shakes** (`SD_SHAKE`, 9, through the gate's door - `betterAmbience.weaponKick`, under the player's own
+maxShake): the Stomp (2.5 fading over 14 m), a Volley's nearest mark (1.2 over 6 m), an Echo broken (1.5 over 10 m), the
+stun (1.5 over 20 m); the whole arena's for the Pulse (1.5), the wake (2), the Reset (3), the fall (4) and the End (5).
+Out of the Hour, none.
+- **The lights**: each lit kind's flash where it fell (`light` [intensity, reach]), fading over the gate's
+`FX_LIGHT_MS`, in the Hour's own channel after the spoils' (`sdRealmLights`, `realmLightsWith`); the fall's white-gold
+over the arena for `SD_FX_FLASH_MS`.
+
+Drawn in the Hour's world pass after the motes, on the fight's clock, the pass made the first time there is a burst. In
+a real browser (`tools/sdFxProbe.mjs`, 18 checks, on Vite's own server - the scene's graph reaches `import.meta.glob`):
+the Stomp, a Volley, the Pulse, the Hearts and the fall each drawn by the gate's spark pass with no GL error, every
+burst lit where the law stands it, the brass warm and the Hearts green about them, and a flash in the Hour's light for
+each that throws one.
+
+Pins: `test/sd16_fx.test.js` (6 - more than the gate; a landing once, where the law puts it; the Hand, the Volley, an
+Echo's and the Hour's own; the turns, the Echoes and the Hearts; the fall; the bursts as the pass takes them and the
+world host's); `tools/mutants/sd16.json` (28). PINS MOVED: `test/sd8c_remnant_page.test.js`,
+`test/sd8d_remnant_blows.test.js`, `test/sd14a_voice.test.js`, `test/sd11c_page.test.js` (its sparks framed and left
+beside the voice), `test/sd14c_motes.test.js`, `test/sd9e_spoils.test.js` (drawn after the motes; lit after the spoils);
+records re-aimed by content: `sd11c.json` G3, `sd14a.json` never-let-go, `sd9e.json` unlit.

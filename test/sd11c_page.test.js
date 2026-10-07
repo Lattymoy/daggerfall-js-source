@@ -572,6 +572,7 @@ function fightHost() {
     sdSpoilsBurst: { leave: () => log.push('floor.leave'), frame: () => log.push('floor.frame') }, saveSoon: { changed: () => log.push('save') },
     sdBlows: { leave: () => log.push('blows.leave'), frame: () => log.push('blows.frame') },
     sdRemVoice: { leave: () => log.push('voice.leave'), frame: () => log.push('voice.frame') },   // SD14a (PIN MOVED): its voice beside its blows
+    sdFx: { leave: () => log.push('fx.leave'), frame: () => log.push('fx.frame') },   // SD16 (PIN MOVED): its sparks beside its voice
     sdDungeonToRealm: () => [0, 0, 0], player: { pos: [0, 0, 0] }, sdBarNear: () => false, remnantBarModel: () => null,
     drawGateBossBar: () => log.push('bar'), gamePaused: () => false, townTalk: {},
     // SD15 (PIN MOVED): the arena read beside the bar - nothing to read in an empty fight
@@ -595,12 +596,12 @@ test('SD11c THE WORLD HOST\'S FIGHT, RUN FROM ITS OWN TEXT (L8 G3, L5 F5): in th
   assert.equal(h.held(), true);
   h.log.length = 0;
   h.sdFightFrame(); h.sdFightFrame();
-  assert.deepEqual(h.log, ['blows.frame', 'voice.frame', 'floor.frame', 'blows.frame', 'voice.frame', 'floor.frame'], 'in the Hour: each frame');   // SD14a (PIN MOVED): and its voice
+  assert.deepEqual(h.log, ['blows.frame', 'voice.frame', 'fx.frame', 'floor.frame', 'blows.frame', 'voice.frame', 'fx.frame', 'floor.frame'], 'in the Hour: each frame');   // SD14a (PIN MOVED): and its voice   // SD16 (PIN MOVED): and its sparks
   h.log.length = 0;
   h.receipts.set(4, 'r');
   h.at(null);
   h.sdFightFrame();
-  assert.deepEqual(h.log, ['receipts', 'floor.leave', 'save', 'link.leave', 'blows.leave', 'voice.leave'], 'out: the receipts, the floor gathered, a checkpoint asked, the fight left');   // SD14a (PIN MOVED): its voice too
+  assert.deepEqual(h.log, ['receipts', 'floor.leave', 'save', 'link.leave', 'blows.leave', 'voice.leave', 'fx.leave'], 'out: the receipts, the floor gathered, a checkpoint asked, the fight left');   // SD14a (PIN MOVED): its voice too   // SD16 (PIN MOVED): its sparks
   h.log.length = 0;
   h.receipts.clear();
   h.sdFightFrame(); h.sdFightFrame();

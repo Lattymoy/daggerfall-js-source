@@ -344,8 +344,8 @@
   {
     "name": "SD9E-unlit",
     "file": "src/scenes/world.js",
-    "old": "    sdRealmLights: () => sdSpoilsPool?.lights() ?? [],",
-    "new": "    sdRealmLights: () => [],",
+    "old": "      const lit = sdSpoilsPool?.lights() ?? [], fx =",
+    "new": "      const lit = [], fx =",
     "tests": [
       "test/sd9e_spoils.test.js"
     ]

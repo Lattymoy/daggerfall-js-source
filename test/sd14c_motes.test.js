@@ -120,5 +120,5 @@ test('SD14c DRAWN: one draw of every mote, added, depth-tested and never written
   assert.ok(calls.some((c) => c[0] === 'blendFunc' && c[1] === 3 && c[2] === 3), 'added');
   assert.ok(calls.some((c) => c[0] === 'uniform3fv' && c[2] === SD_REALM_ORIGIN), 'the realm\'s origin');
   assert.equal(r.draw(P, P, NaN), false, 'no clock: nothing');
-  assert.match(W, /const motes = !!sdMotesPassOf\(\)\?\.draw\(proj, view, deadlandsSeconds\(\), fog, skyGain\(renderer\._fogColor, SD_REALM_FOG\.color\), renderer\.worldViewportPx\?\.\[3\]\); if \(blows \|\| lines \|\| motes\)/);
+  assert.match(W, /const motes = !!sdMotesPassOf\(\)\?\.draw\(proj, view, deadlandsSeconds\(\), fog, skyGain\(renderer\._fogColor, SD_REALM_FOG\.color\), renderer\.worldViewportPx\?\.\[3\]\); const sparks = [^\n]*; if \(blows \|\| lines \|\| motes \|\| sparks\)/);   // SD16 (PIN MOVED): the blows' sparks after the motes
 });

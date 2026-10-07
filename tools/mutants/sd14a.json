@@ -227,8 +227,8 @@
   {
     "name": "SD14a-never-let-go",
     "file": "src/scenes/world.js",
-    "old": "sdBlows?.leave(); sdRemVoice?.leave(); _sdFightHeld = false; }",
-    "new": "sdBlows?.leave(); _sdFightHeld = false; }",
+    "old": "sdBlows?.leave(); sdRemVoice?.leave(); sdFx?.leave(); _sdFightHeld = false; }",
+    "new": "sdBlows?.leave(); sdFx?.leave(); _sdFightHeld = false; }",
     "tests": [
       "test/sd14a_voice.test.js"
     ]
