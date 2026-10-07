@@ -494,9 +494,10 @@ export function telegraphQuad() {
 }
 /** WB13a: the ground the pass lays the quad over for `shape` in court `k`, [x0, z0, x1, z1] - its bounds within the
  *  court's own square (the floor and TELEGRAPH_MARGIN past it), the whole square for a shape over the whole court, or
- *  null where they do not meet. Pure. */
-export function telegraphQuadOver(shape, k) {
-  const C = COURTS[k], half = COURT_R + TELEGRAPH_MARGIN;
+ *  null where they do not meet. SD8d: over another floor's courts and radius (`courts`, `R` - the Brass Remnant's
+ *  arena). Pure. */
+export function telegraphQuadOver(shape, k, courts = COURTS, R = COURT_R) {
+  const C = courts[k], half = R + TELEGRAPH_MARGIN;
   if (!C) return null;
   const B = telegraphBounds(shape);
   const x0 = Math.max(C[0] - half, B ? B[0] : -Infinity), z0 = Math.max(C[1] - half, B ? B[1] : -Infinity);
@@ -551,7 +552,10 @@ export class GateTelegraphRenderer {
    * (0..1, net/gateBrain.js walkFormed; none, none drawn) - and the shape goes on over the laid stretch of each walkway
    * its court joins (the whole arena's, of every one): a blow at the rim reaches the walkway past it, and strikes there.
    */
-  draw(shape, proj, view, eye, seconds, fog = null, centre = COURT_CENTRE, walks = null) {
+  draw(shape, proj, view, eye, seconds, fog = null, centre = COURT_CENTRE, walks = null, floor = null) {
+    // SD8d: another floor than the Burning Court's - `floor` { r, courts } (the Brass Remnant's arena: one floor, its
+    // centre the frame's origin); the court's own by default
+    const floorCourts = floor?.courts ?? COURTS, floorR = floor?.r ?? COURT_R;
     this.drawn = 0;
     this.walked = 0;
     if (!shape || !(shape.alpha > 0.001)) return;
@@ -587,7 +591,7 @@ export class GateTelegraphRenderer {
     gl.uniform1f(U.uAlpha, Math.min(1, shape.alpha));
     gl.uniform3fv(U.uColor, shape.color);
     gl.uniform3fv(U.uEdgeCol, shape.edge ?? TELEGRAPH_EDGE);   // WB13a
-    gl.uniform1f(U.uFloorR, COURT_R);
+    gl.uniform1f(U.uFloorR, floorR);
     gl.uniform1i(U.uFogMode, fog ? fog.mode : 0);
     gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
@@ -598,12 +602,12 @@ export class GateTelegraphRenderer {
     gl.disable(gl.CULL_FACE);
     gl.enable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(-2, -4);
     // WB9b: over its court - or, the whole arena's, over each of them; WB13a: over its own ground there
-    const one = Number.isInteger(shape.court) && shape.court >= 0, k0 = one ? (COURTS[shape.court] ? shape.court : 0) : 0, k1 = one ? k0 + 1 : COURTS.length;
+    const one = Number.isInteger(shape.court) && shape.court >= 0, k0 = one ? (floorCourts[shape.court] ? shape.court : 0) : 0, k1 = one ? k0 + 1 : floorCourts.length;
     gl.uniform1i(U.uOnWalk, 0);
     for (let k = k0; k < k1; k++) {
-      const q = telegraphQuadOver(shape, k);
+      const q = telegraphQuadOver(shape, k, floorCourts, floorR);
       if (!q) continue;
-      gl.uniform2f(U.uCourt, COURTS[k][0], COURTS[k][1]);
+      gl.uniform2f(U.uCourt, floorCourts[k][0], floorCourts[k][1]);
       gl.uniform2f(U.uLo, q[0], q[1]); gl.uniform2f(U.uHi, q[2], q[3]);
       gl.drawArrays(gl.TRIANGLES, 0, this.count);
       this.drawn++;

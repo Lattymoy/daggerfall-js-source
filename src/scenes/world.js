@@ -318,6 +318,7 @@ import { createSerpentLink } from '../net/serpentLink.js'; import { readSerpentR
 import { createSerpentHost } from './serpentHost.js';   // SERPENT1: the client's half of the fight - the `in`, the volleys, the blows on my ship, the coil and the whirl
 import { SerpentRenderer } from '../render/serpentRender.js';   // SERPENT1: its body over and under the sea, its telegraphs, the maelstrom and the venom
 import { createSdFightLink } from '../net/sdFightLink.js';   // SD8c: the realm's fight as the page holds it
+import { createSdRemnantBlows } from './sdRemnantBlows.js';   // SD8d: its blows on me - seen, heard, judged on my feet
 import { remnantBarModel, sdBarNear } from '../ui/sdRemnantBar.js';   // SD8c: the Brass Remnant's bar, the gate's in brass
 import { serpentBarModel } from '../ui/serpentBar.js'; import { drawGateBossBar } from '../ui/gateBossBar.js';   // SERPENT1: its boss bar, in the sea's colours - the gate's bar, its one node
 import { playSerpentSound } from '../systems/serpentSounds.js';   // SERPENT1: its voice - DAGGER.SND's own, pitched for its size
@@ -21279,6 +21280,19 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  doors below. Out of the realm it is forgotten. */
   const sdFightLink = params.has('online') ? createSdFightLink({ now: () => Date.now() + _sharedOffsetMs, say: (t) => setMidScreenText(t) }) : null;
   let _sdFightHeld = false, _sdBarUp = false;
+  /** SD8d (Super-Dungeons.md section 10): ITS BLOWS ON ME (scenes/sdRemnantBlows.js) - each one on the arena's floor as it
+   *  winds up and lands, heard, and judged on my own feet through the dungeon context's door (the gate court's way); its
+   *  fall and the fight's damage chart. Online alone, beside the link. */
+  const sdBlows = sdFightLink ? createSdRemnantBlows({
+    gl: renderer.gl, audio, link: sdFightLink,
+    feet: () => (playerSpawned && modes?.sdRealmSlot?.() != null ? player.feetAt() : null),
+    grounded: () => !!player.grounded,
+    player: () => playerEntity,
+    strike: (dmg, how) => { modes?.dungeonCtx?.strikePlayer?.(dmg, how); },   // the door every blow lands by, the court's
+    say: (t) => setMidScreenText(t, courtSaySeconds(t)),
+    me: () => (online ? online.name ?? null : null),   // my row of the chart
+    hudHidden: () => gamePaused() || !!townTalk.hudHidden,
+  }) : null;
   function sdFightHeard(w) {
     const slot = modes?.sdRealmSlot?.();
     if (!sdFightLink || slot == null || (w.k === 'st' && w.s !== slot)) return;
@@ -21290,7 +21304,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   const sdFightFrame = () => {
     if (!sdFightLink) return;
     const inRealm = modes?.sdRealmSlot?.() != null;
-    if (!inRealm && _sdFightHeld) { sdFightLink.leave(); _sdFightHeld = false; }
+    if (!inRealm && _sdFightHeld) { sdFightLink.leave(); sdBlows?.leave(); _sdFightHeld = false; }
+    if (inRealm) { try { sdBlows?.frame(); } catch (e) { console.warn('[sd] blows', e?.message ?? e); } }   // SD8d: its blows on me
     let bar = null;
     if (inRealm) {
       const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
@@ -24696,6 +24711,8 @@ export async function bootWorld(canvas, renderer, params, status) {
       const lived = deadlandsPass()?.drawLife(proj, view, _courtCentre, deadlandsSeconds(), fog, glow, _courtBeds, renderer.worldViewportPx?.[3]);
       if (told || lived) renderer.markForeignPass();
     },
+    // SD8d: the Brass Remnant's blows on the arena's floor, in the dungeon arm's world pass - fogged as the floor is
+    drawSdTelegraph: ({ proj, view, eye }) => { if (sdBlows?.drawPass(proj, view, eye, performance.now() / 1000, courtFogNow())) renderer.markForeignPass(); },
     deadlandsSeconds: () => deadlandsSeconds(),   // WB6b: the court's flash and the shards' drift keep the sky's clock
     staffTeleportHeld: () => staffTeleportHeld,
     canVisitPrivateRoom: () => !seatOut() && isStaff(_staffGlyphs) && !!chatLinks.get('world')?.staffTeleportOk,

@@ -656,7 +656,7 @@ test('SD8c THE HOSTS, by source: the dungeon context makes the arena\'s set in t
   assert.match(W, /const sdFightLink = params\.has\('online'\) \? createSdFightLink\(\{ now: \(\) => Date\.now\(\) \+ _sharedOffsetMs, say: \(t\) => setMidScreenText\(t\) \}\) : null;/);
   assert.match(W, /online\.onSdFight = \(w\) => sdFightHeard\(w\);/);
   assert.match(W, /if \(!sdFightLink \|\| slot == null \|\| \(w\.k === 'st' && w\.s !== slot\)\) return;/);
-  assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); _sdFightHeld = false; \}/);
+  assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); sdBlows\?\.leave\(\); _sdFightHeld = false; \}/);   // PIN MOVED (SD8d): its blows forgotten with it
   assert.match(W, /if \(sdBarNear\(x, z\)\) bar = remnantBarModel\(sdFightLink\.state\(\), sdFightLink\.now\(\)\);/);
   assert.match(W, /if \(bar \|\| _sdBarUp\) \{ drawGateBossBar\(bar, \{ hidden: gamePaused\(\) \|\| !!townTalk\.hudHidden \}\); _sdBarUp = !!bar; \}/);
   assert.match(W, /sdFightIn: \(\) => !!online\?\.sendSdIn\?\.\(playerEntity\.level\),/);

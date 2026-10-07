@@ -1252,3 +1252,46 @@ fight's frame after the realm's); `test/relayversion.test.js` - `world176` re-ha
 
 SD8d next: its blows on me - the telegraphs on the arena's floor, each judged on my own machine (the ring jumped, the
 Hand outrun or shaded, the Volley's discs and its burning brass, the Pulse, the Reset, the End), its sounds, its fall.
+
+### SD8d - shipped 2026-10-07 (the Brass Remnant's blows on me)
+
+Section 10's blows, on the struck player's own machine - the gate's law (co-op's: an enemy's strike on a client is applied
+by that client); the relay never learns who was struck.
+
+- **Judged on my feet** (`net/sdStrike.js` `sdBlowVerdict`, pure, over the geometry the law shares - `stompRingAt`,
+  `ringPassed`, `handSwept`, `behindPillar`): each part of each blow once, a share of my own maximum health and its base
+  (the gate's `strikeDamage`). THE STOMP - its disc as it lands on a body within 7 m; its ring rolling out to 22 m strikes a
+  body ON THE GROUND as its front passes (the motor's `grounded` - a body in the air lets it pass under, and is never struck
+  after). THE HOUR-HAND - its beam strikes a body it sweeps over, within its 34 m, unless a pillar stands between the body
+  and where it was cast from. THE GEAR VOLLEY - one strike however many of its discs meet me, and its brass burning at
+  each mark for 6 s (`sdVolleyPools`): a bite each second I stand in it, the first a second after I stepped in (the gate's
+  burning-ground law). THE HOUR'S OWN - the Pulse (its share grows with its count), the Reset as it lands (a broken one
+  never does - the stun's word takes it out of flight) and the End: the whole arena and its slack, nobody on the Steps. A
+  landing first seen more than 400 ms after it is not judged (the gate's `STRIKE_LATE_MS`). Every strike lands by the
+  dungeon context's own door (`strikePlayer` - the hurt, the flash, the cry).
+- **Seen** (`scenes/sdRemnantBlows.js` `sdTelegraphShapes`): every blow in flight - the Remnant's, each Echo's (faster),
+  the Hour's own - on the arena's floor by the gate's telegraph pass (`render/gateTelegraph.js`, which now draws over
+  another floor than the Burning Court's: its centre, its radius, its one court - the court's own by default): the
+  Stomp's disc filling to its landing, then its ring rolling out at its front; the Hand's half-circle as it gathers, then
+  its beam where it stands in its sweep; the Volley's marks; the Hour's own over the whole floor (the Reset's and the
+  End's in Dagon's edge); the burning brass coming up and dying down.
+- **Heard and said**: each blow's wind-up at its word and its landing where it lands (DAGGER.SND's own, pitched for a
+  colossus of brass); the Reset gathering ("break its Hearts!") and the Hour's End, each once.
+- **Its fall**: its body's thud and the line, once a fight; then the fight's damage chart (the gate's own,
+  `ui/gateDamageChart.js`) from the realm's word of the fall.
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the blows made online beside the link - my feet in the Hour, the motor's ground,
+my entity, the dungeon context's strike door; framed in the realm, forgotten out of it; the floor's hook);
+`scenes/worldModes.js` WIRED (the dungeon arm draws the floor in the Hour, after the court's); `scenes/dungeonContext.js`
+unchanged (its strike door is the gate's); `scenes/exterior.js` FLAGGED (no Hour offline).
+
+Pins: `test/sd8d_remnant_blows.test.js` (8 - the Stomp; the Hour-Hand; the Volley and the Hour's own; the floor's shapes;
+the driver judging on my feet; the brass burning and the Hour striking; the fall and the floor drawn over the arena; the
+hosts by source); `tools/mutants/sd8d.json` (32, all dead - at first one record did not parse, and two survived: a
+second health guard behind the frame's own (dropped - one law, the frame's) and the burning brass never drawn (pinned
+now)). PINS MOVED: `test/sd8c_remnant_page.test.js` (the blows forgotten with the fight); `test/audit18_bible_docs.test.js`
+(AUDIT 39r - twenty-nine foreign-pass call sites: the floor's hook). My copies of the court's `strike`
+and `me` doors were reworded so the gate's records keep one site each (`wb4.json`'s, `gateux.json`'s).
+
+The Brass Remnant (SD8) is whole: its law, the relay running it, the page showing it and carrying my blows, its blows on
+me. SD9 next: the feat - the receipts, the spoils, the set, the title, the aura.
