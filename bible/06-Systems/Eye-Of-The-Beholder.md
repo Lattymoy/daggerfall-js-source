@@ -1089,3 +1089,33 @@ archive's), `classRecordScale` (`player/classSkins.js`) is read by `spriteOffset
 of every view of every sheet against its group's median found no other (the next lowest, 1524's hurt record 11, is 0.88
 and a standing pose). Pins: `test/skin2_class_skins.test.js` ACRO-SHORT (the exact 110 pixels, the sweep, her idle
 wheel through `spriteFor`); mutants `tools/mutants/skin2.json` +5. `01-Overview/Field-Bugs-2026-09-27.md`.
+
+## SPRITE-FLICKER (2026-10-07): the view that went back
+
+Mac: "I notice with eye of the beholder sprite movement, it's very finicky when moving and then switching to run at
+angles. Like it flickers like it doesn't know which direction it wants to face."
+
+**What it was.** Every repaint the sprite makes waits three frames (`UpdateBillboardDelayed`, DELAYED_FRAMES), and each
+one carries the orientation it is to paint, taken when it is QUEUED. UpdateOrientation queues the view it chose; the
+walk clock, a table change and the mirror revert queue `lastOrientation` - the view UpdateBillboard last painted, which
+is the OLD one for the three frames a turn is in flight. One queued in those three frames lands after the turn and
+paints the old view back: the new view for a frame, the old one until the next tenth-of-a-second check
+(ORIENTATION_TIME), then the new one again. A run halves the walk's frame (`speedMod`), so the clock met a turn twice as
+often - driven in node through the real body, a strafe pressed while running blinked back 41 times in 120 at 60 fps,
+17 at a walk. The table change (Idle to Move, a start at an angle) and the mirror revert land in the turn's own frame
+instead, so they show no blink: they hold the turn back that tenth. The IL does the same (`LoopIdleBillboard` hands
+`UpdateBillboardDelayed` the field), so this is the mod's own behaviour, not a misreading of it.
+
+**The change.** `eotbBody.js` keeps `orientationChosen`, written by UpdateOrientation every time it snaps, and those
+three repaints queue it in place of `lastOrientation`; the comparison that decides whether a turn repaints at all still
+reads `lastOrientation`, as the IL's does. The clips keep the IL's field - they paint at once, so the view they paint
+never undoes a later choice. A DEPARTURE from the assembly, the fifth, recorded in the Ledger row. Nothing else in the
+sprite's turning moved: the wheel, the 0.1 s throttle, the three-frame delay and the facing are the IL's. The peers'
+sprites (`net/peerRiders.js`) paint their view at once and queue nothing, so they never had it.
+
+**Pins.** `test/eotb_body.test.js` SPRITE-FLICKER: three sweeps - the strafe pressed at 24 phases of the run clock and
+the orientation clock, a start at an angle at 12, the camera turned across the mirror revert at 14 - each held to one
+law, that from three frames after UpdateOrientation's choice the view on screen is that choice. `state()` reports
+`orientationChosen` for it. `tools/mutants/spriteflicker.json` 4 - 4 dead, each by its own sweep (the earlier cut of the
+pin, "the view never goes back", let the table change and the revert survive: their stale paint lands in the turn's
+own frame and never shows a blink). Not verified in a browser.

@@ -232,6 +232,17 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   let stateCurrent = 'Idle';
   let stateLast = null;
   let lastOrientation = 0;
+  /** SPRITE-FLICKER (2026-10-07, Mac: "it's very finicky when moving and then switching to run at angles. Like it
+   *  flickers like it doesn't know which direction it wants to face"): the orientation UpdateOrientation last CHOSE.
+   *  `lastOrientation` is the one that has LANDED - UpdateBillboard writes it, three frames after the choice - and the
+   *  mod hands that to every repaint the walk clock, a table change and the mirror revert queue. One queued inside
+   *  those three frames lands AFTER the turn and paints the old view back: the walk clock's, the new view for a frame
+   *  and the old one until the next tenth-of-a-second check (a run halves the walk's frame, speedMod, so a strafe met
+   *  it 41 times in 120 at a 60 fps run, measured, against 17 at a walk); the table change's (a start at an angle) and
+   *  the revert's, landing in the turn's own frame, the turn held back that tenth. Those three queue THIS - the view
+   *  the next one to land should show. A departure from the assembly, recorded in the Ledger; the clips keep the IL's
+   *  `lastOrientation` (they paint at once, so the view they paint never undoes a later choice). */
+  let orientationChosen = 0;
   let forceOrient = false;      // HORSE-FACE: a placing's repaint, owed to the next UpdateOrientation - never an orientation of its own
   let lastMoveDirection = null;
   let currentAngle = 0;
@@ -578,6 +589,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     lastMoveDirection = facing;
     currentAngle = signedAngleY(toCamera, facing);
     const o = orientationFor(facing, toCamera);
+    orientationChosen = o;   // SPRITE-FLICKER
     if (o !== lastOrientation || force || forceOrient || !shown) { forceOrient = false; updateBillboardDelayed(frameCurrent, o, stateCurrent); }
     // [IL] TorchOffset (IL_47df-IL_48bd), third person only: Selfie (2)
     // parks PlayerTorch half way from the head to the camera; Billboard
@@ -646,12 +658,12 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       if (frameTimer > frameTime(last.riding, cfg.walkAnimSpeedMod) * mod) {
         if (frameCurrent < n - 1) frameCurrent++; else frameCurrent = 0;
         if (frameCurrent > n - 1) frameCurrent = 0;
-        updateBillboardDelayed(frameCurrent, lastOrientation, stateCurrent);
+        updateBillboardDelayed(frameCurrent, orientationChosen, stateCurrent);   // SPRITE-FLICKER: the IL's lastOrientation
         frameTimer = 0;
       } else frameTimer += dt;
     }
     stateCurrent = chooseTable({ ...last, readyStance: cfg.readyStance });
-    if (stateLast !== stateCurrent || (animating && !isAnimating)) updateBillboardDelayed(frameCurrent, lastOrientation, stateCurrent);
+    if (stateLast !== stateCurrent || (animating && !isAnimating)) updateBillboardDelayed(frameCurrent, orientationChosen, stateCurrent);   // SPRITE-FLICKER
     if (isAnimating && !animating) animating = true;
     else if (!isAnimating && animating) animating = false;
     stateLast = stateCurrent;
@@ -667,7 +679,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       if (mirrorCount > 0 && !isAnimating && t > 0) {
         if (mirrorTimer > t) {
           mirrorCount = 0; mirrorTimer = 0;
-          updateBillboardDelayed(frameCurrent, lastOrientation, stateCurrent);
+          updateBillboardDelayed(frameCurrent, orientationChosen, stateCurrent);   // SPRITE-FLICKER
           return;
         }
         mirrorTimer += dt;
@@ -990,7 +1002,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       active: activeFlag, FP, table: stateCurrent, orientation: lastOrientation, frame: frameCurrent, ready: firstUp, cached: tex.size,
       shown: shown ? { ...shown } : null, pending: pending.map((p) => ({ ...p })),
       clip: isAnimating ? { table: isAnimating.table, frames: [...isAnimating.frames], i: isAnimating.i, kind: isAnimating.kind, phase: isAnimating.phase, interval: isAnimating.interval, freeze: isAnimating.freeze } : null,
-      mirrorCount, mirrorTimer, pingpongCount, died, animating, currentAngle, orientationTimer,
+      mirrorCount, mirrorTimer, pingpongCount, died, animating, currentAngle, orientationTimer, orientationChosen,   // SPRITE-FLICKER
       lastMoveDirection: lastMoveDirection ? [...lastMoveDirection] : null, last: { ...last }, hasPlayedFootstep, footstepAlt, wasGrounded,
       material: material(), placed: place(),
       lantern: { hangs: lanternHangs(), shown: lanternShown(), swing: { fore: lantern.swing.fore, side: lantern.swing.side }, batch: !!lantern.batch },   // HT-WAIST; HT-WAIST-BACK: hangs, and drawn
