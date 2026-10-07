@@ -183,7 +183,7 @@ test('FAR-CLIP1: drawTerrain binds the installed set\'s clip program when asked 
   assert.equal(lanePlain.fs, EL_TERRAIN_FS);
   const laneClip = drawTerrain(r, rig, true);
   assert.equal(terrainFragment(laneClip.fs)(CLIP_SENTINEL, [TILE, TILE]).discarded, true, 'the lane\'s clip program discards the byte');
-  assert.equal(rig.compiled() - beforeLane, 22 + 2, 'the lane\'s twenty-two (EL1; AUDIT BAY A12: the shadow pass\'s cutting program among them), and its clip program once asked');
+  assert.equal(rig.compiled() - beforeLane, 24 + 2, 'the lane\'s twenty-four (EL1; AUDIT BAY A12: the shadow pass\'s cutting program among them; CACHE-COPY: and the copy that puts the shadow cache into the live layers), and its clip program once asked');
   assert.deepEqual([...valuesOf(laneClip).keys()].sort(), [...valuesOf(lanePlain).keys()].sort(), 'the lane\'s uniforms reach its clip program too');
   assert.ok(valuesOf(laneClip).has('uELExposure') && valuesOf(laneClip).has('uSunShadow'), 'the exposure and the shadow maps among them');
   for (const d of [lanePlain, laneClip]) for (const e of d.uploads) assert.equal(e.loc.p, d.prog, `lane ${e.loc.name}: the bound program's own location`);
