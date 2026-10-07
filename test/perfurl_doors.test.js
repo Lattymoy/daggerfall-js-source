@@ -57,7 +57,7 @@ test('PERF-URL: the frame’s doors read through it - the online lane, the skin,
       assert.equal(isEnhanced(search), false);
       assert.equal(airOn(search), false);
       assert.equal(contactOn(search), true);
-      assert.equal(shadowCacheOn(search, null), false);   // CACHE-OFF: off unless asked on
+      assert.equal(shadowCacheOn(search), true);   // CACHE-COPY: on unless asked off, as SC1 built it
       assert.equal(onlineForcedPref('perfurl-not-a-forced-key', search), undefined);
       assert.equal(swayDisabled(search), false);   // AUDIT PERF-URL A4: PERF-SUN's door, through the one home too
     }

@@ -2,8 +2,11 @@
 // performance"): THE STATIC SHADOW CACHE ON A REAL GPU - the same picture, and the draws it no longer makes.
 //
 // The pins (test/sc1_shadowcache.test.js) prove the cache's laws on the fake GL; what only a GPU can prove is that
-// a depth BLIT of the cached faces into the live layers, with the movers drawn on top, lights the same pixels the
-// full replay lit. This probe draws enhancedLightingProbe's room through the real renderer on SwiftShader with a
+// a COPY of the cached faces into the live layers, with the movers drawn on top, lights the same pixels the full
+// replay lit. CACHE-COPY (2026-10-07): the copy is a draw, a triangle a face (render/shadowPass.js _blitSlot) - it was a
+// depth blit, which SwiftShader (ANGLE over Vulkan) copies and Direct3D (ANGLE's Blit11::copyDepth, a Texture2D shader
+// handed an array's layer) left to the driver, so this probe never saw the blink. tools/shadowTavernProbe.mjs is the
+// tavern the players described. This probe draws enhancedLightingProbe's room through the real renderer on SwiftShader with a
 // walker (a flat whose origin moves a step a frame) crossing it, six frames, the cache on and `setShadowCache(false)`,
 // and reads both back frame by frame:
 //   - every frame must agree pixel for pixel to within the dither's byte;
@@ -122,7 +125,7 @@ for (let f = 0; f < result.on.length; f++) {
   const a = Uint8Array.from(on.px), b = Uint8Array.from(off.px);
   if (f === 3 || f === 8) { writeFileSync(`${outDir}/frame${f}-cache.png`, png(W, H, a)); writeFileSync(`${outDir}/frame${f}-plain.png`, png(W, H, b)); }
   const c = compare(a, b);
-  console.log(`frame ${f}${on.walking ? ' (walker)' : ' (still)   '}: cache on - point draws ${on.st.pointDraws} (static faces ${on.st.staticFaces}, dyn faces ${on.st.dynFaces}, blits ${on.st.blits}, cached slots ${on.st.cachedSlots}); off - point draws ${off.st.pointDraws} | max |diff| ${c.maxd}, ${c.over} channels over 2`);
+  console.log(`frame ${f}${on.walking ? ' (walker)' : ' (still)   '}: cache on - point draws ${on.st.pointDraws} (static faces ${on.st.staticFaces}, dyn faces ${on.st.dynFaces}, copies ${on.st.blits}, cached slots ${on.st.cachedSlots}); off - point draws ${off.st.pointDraws} | max |diff| ${c.maxd}, ${c.over} channels over 2`);
   check(`frame ${f}: no GL error`, on.err === 0 && off.err === 0, `${on.err}/${off.err}`);
   if (f >= 1) check(`frame ${f}: the same picture as the full replay (a dither byte at most)`, c.maxd <= 2 && c.over === 0, `max ${c.maxd}, ${c.over} over`);
 }
@@ -131,7 +134,7 @@ check('the first replay draws the caches (three casters, eighteen static faces)'
 // frame 1 replays the first records (the walker's first sight is still: everything into the caches); frame 2 sees its
 // first step (the caches drawn again without it, the walker on top); from frame 3 the caches stand and the walker alone is drawn
 check('with the walker crossing, the cache draws the walker alone - a fraction of the full replay - every frame once its step is seen', on.slice(3, 6).every((f, i) => f.st.staticFaces === 0 && f.st.pointDraws < off[i + 3].st.pointDraws / 3), on.slice(3, 6).map((f, i) => `${f.st.pointDraws} vs ${off[i + 3].st.pointDraws}`).join(', '));
-check('with the walker gone, one blit puts the caches back (the frame its absence is seen), and then NOTHING - no draw, no blit', on[7].st.pointDraws === 0 && on[7].st.blits === 18 && on[8].st.pointDraws === 0 && on[8].st.blits === 0, `frame 7: ${on[7].st.pointDraws} draws, ${on[7].st.blits} blits; frame 8: ${on[8].st.pointDraws} draws, ${on[8].st.blits} blits`);
+check('with the walker gone, one copy puts the caches back (the frame its absence is seen), and then NOTHING - no draw, no copy', on[7].st.pointDraws === 0 && on[7].st.blits === 18 && on[8].st.pointDraws === 0 && on[8].st.blits === 0, `frame 7: ${on[7].st.pointDraws} draws, ${on[7].st.blits} faces copied; frame 8: ${on[8].st.pointDraws} draws, ${on[8].st.blits} copied`);
 check('...while the old path still draws the room', off[8].st.pointDraws > 0, `${off[8].st.pointDraws}`);
 if (pageErrors.length) { console.log('pageerrors:', pageErrors.join(' | ')); fails++; }
 await browser.close(); await server.close();

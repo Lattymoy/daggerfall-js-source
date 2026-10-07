@@ -1,0 +1,46 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Shadow cache copy check</title>
+<style>
+  body { margin: 0; padding: 16px; background: #17181d; color: #e8e6e1; font: 15px/1.5 system-ui, sans-serif; max-width: 860px; }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  pre { white-space: pre-wrap; background: #0d0e12; padding: 12px; border-radius: 6px; font-size: 13px; }
+  #verdict { font-weight: 600; }
+</style></head><body>
+<!-- CACHE-COPY (2026-10-07): src/tools/depthCopyCheck.js on this machine's own GPU. Nothing on this page flickers - it
+     draws offscreen and prints numbers. Open it under `npm run dev` at /tools/fixtures/depth-copy-check.html in the
+     browser that flickered; `?size=512&layers=72&rounds=8` checks the cache's full shape. -->
+<h1>Shadow cache copy check</h1>
+<p>Enhanced Lighting keeps lamp shadows in a cache and copies them onto the screen's shadow maps every frame a lamp has
+something moving near it. The old copy (a depth blit) read back whatever the graphics driver made of it on Direct3D,
+which is what flickered. This page copies a known pattern both ways, the old blit and the new copy, on this machine's
+GPU, and counts the texels that came back wrong. Nothing on this page flickers: it draws offscreen and prints numbers.</p>
+<p id="verdict">Running...</p>
+<pre id="out"></pre>
+<script type="module">
+import { runDepthCopyCheck, verdictOf } from '/src/tools/depthCopyCheck.js';
+const q = new URLSearchParams(location.search);
+const opts = { size: Number(q.get('size')) || 128, layers: Number(q.get('layers')) || 72, rounds: Number(q.get('rounds')) || 4 };
+const canvas = document.createElement('canvas');
+canvas.width = 1; canvas.height = 1;
+const gl = canvas.getContext('webgl2', { antialias: false });
+const say = (verdict, detail) => { document.getElementById('verdict').textContent = verdict; document.getElementById('out').textContent = detail; };
+if (!gl) {
+  window.depthCopyResult = { error: 'no WebGL2' };
+  say('This browser gave no WebGL2 context, so nothing could be checked.', '');
+} else {
+  const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+  const gpu = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+  try {
+    const r = runDepthCopyCheck(gl, opts);
+    const verdict = verdictOf(r);
+    window.depthCopyResult = { gpu, ...r, verdict };
+    const line = (name, m) => `${name}: ${m.wrong} of ${r.texels} texels wrong (rounds: ${m.byRound.join(', ')})`
+      + (m.wrong ? ` - another layer's value ${m.otherLayer}, never written ${m.cleared}, neither ${m.other}; first: ${JSON.stringify(m.firstWrong)}` : '');
+    say(verdict, [`GPU: ${gpu}`, `Browser: ${navigator.userAgent}`, `Shape: ${r.size} square, ${r.layers} layers, ${r.rounds} rounds`,
+      line('Old depth blit', r.blit), line('New draw copy (CACHE-COPY)', r.draw),
+      `The check's control (a copy aimed one layer off on purpose): ${r.control.wrong} of ${r.texels} found wrong, ${r.control.otherLayer} as another layer's value - every one, or the check is blind`].join('\n'));
+  } catch (e) {
+    window.depthCopyResult = { gpu, error: String(e?.message ?? e) };
+    say('The check could not run here.', `GPU: ${gpu}\n${e?.stack ?? e}`);
+  }
+}
+</script></body></html>

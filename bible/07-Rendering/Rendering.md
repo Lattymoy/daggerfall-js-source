@@ -152,8 +152,10 @@ directory by `test/audit18_bible_docs.test.js`:
   See `07-Rendering/Enhanced-Lighting-Arc.md`.
   SC1 (2026-09-23): the static casters are drawn ONCE - every record classified
   static or dynamic as it is recorded, each caster slot's statics cached in a
-  second depth array and blitted under the movers, sticky slots by position,
-  `?shadowcache=off` the old path (`Enhanced-Lighting-Arc.md`, SC1).
+  second depth array and copied under the movers (CACHE-COPY, 2026-10-07: by a
+  draw - a depth blit out of an array's layer was the driver's read on Direct3D),
+  sticky slots by position, `?shadowcache=off` the old path
+  (`Enhanced-Lighting-Arc.md`, SC1, CACHE-COPY).
 - `skyRenderer.js` - painted skies (R4) + the night sky.
 - `lightClusters.js` - LC1 CLUSTERED LIGHTS (2026-09-23): the frustum cut into
   16 x 9 x 24 cells once a frame on the CPU, each light written into the cells
