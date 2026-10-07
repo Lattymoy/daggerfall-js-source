@@ -220,8 +220,8 @@
   {
     "name": "WB6b-the-dungeon-dripping-in-the-deadlands",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (!isGateArena(dfLocation) && !isArenaFloor(dfLocation)) sceneAmbience.update(dt, {",
-    "new": "      if (!isArenaFloor(dfLocation)) sceneAmbience.update(dt, {",
+    "old": "      if (!isGateArena(dfLocation) && !isArenaFloor(dfLocation) && !_sdRealm) sceneAmbience.update(dt, {",
+    "new": "      if (!isArenaFloor(dfLocation) && !_sdRealm) sceneAmbience.update(dt, {",
     "tests": [
       "test/wb6b_deadlands_life.test.js"
     ]

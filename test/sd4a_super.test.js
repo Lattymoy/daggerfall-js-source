@@ -143,7 +143,7 @@ test('SD4a the host by source: the tier read once by its one law before the fire
   const tier = DC.indexOf('const _superTier = ');
   const fires = DC.indexOf('  const firePlan = isGateArena(dfLocation)');
   assert.ok(tier > 0 && fires > tier, 'read before the fires');
-  assert.match(DC.slice(fires, fires + 1200), /\n {4}cold: _superTier,[^\n]*\n {2}\}\);/);
+  assert.match(DC.slice(fires, fires + 1200), /\n {4}cold: _superTier(?: \|\| _sdRealm)?,[^\n]*\n {2}\}\);/);   // SD5a (PIN MOVED): and the Shattered Hour's
   assert.match(DC, /playerLevel: _superTier \? superFoeLevel\(effectiveLevel\(playerEntity\)\) : effectiveLevel\(playerEntity\),[^\n]*SOFTCAP2: a mentor's dungeon/, 'the layout\'s roll');
   assert.match(DC, /playerLevel: _superTier \? superFoeLevel\(effectiveLevel\(playerEntity\)\) : effectiveLevel\(playerEntity\),[^\n]*SOFTCAP2: mentor mode/, 'the rest\'s roll');
   assert.match(DC, /D\.makeEnemyEntity\(e\.mobileType, basics, cf\.career, e\.level \?\? \(_superTier \? superFoeLevel\(effectiveLevel\(D\.playerEntity\)\) : effectiveLevel\(D\.playerEntity\)\)\);/, 'a class foe at the band (a revenant\'s or a bout\'s own level first)');

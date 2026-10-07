@@ -10,18 +10,20 @@
 // host's own question (dungeonLocationFor, online) and counts what comes back.
 //
 // AND NOT EVERY "DUNGEON" IS ONE: the places the port MADE as dungeons - the Burning Court (world/gateArena.js), the
-// arena's floor (world/arenaFloor.js) and its undercroft (world/arenaCity.js) - carry a dungeon so the dungeon host can
-// stand them, and none is a Regular Dungeon to anyone walking in. They have no label.
+// arena's floor (world/arenaFloor.js) and its undercroft (world/arenaCity.js), and SD5a's Shattered Hour
+// (world/sdRealm.js) - carry a dungeon so the dungeon host can stand them, and none is a Regular Dungeon to anyone
+// walking in. They have no label.
 //
 // Not a DFU member. Ledger A (TIER1).
 import { dungeonLocationFor, SMALLER_DUNGEON_THRESHOLD, MEDIUM_DUNGEON_THRESHOLD } from './smallerDungeons.js';
 import { isArenaUndercroft } from './arenaCity.js';
 import { isGateArena } from './gateArena.js';
 import { isArenaFloor } from './arenaFloor.js';
+import { isSdRealm } from './sdRealm.js';   // SD5a: the Shattered Hour, a made place
 import { dungeonTier, DUNGEON_TIER_TEXT, DUNGEON_SIZE_TEXT } from '../systems/dungeonTier.js';
 
 /** Is this a place the port made, standing in the dungeon host - no dungeon to tier? */
-export const madeDungeon = (loc) => isGateArena(loc) || isArenaFloor(loc) || isArenaUndercroft(loc);
+export const madeDungeon = (loc) => isGateArena(loc) || isArenaFloor(loc) || isArenaUndercroft(loc) || isSdRealm(loc);
 
 /** A BUILT dungeon's size class by its block count: 'small' (five or fewer), 'medium' (eight or fewer), 'large' - or
  *  null when it carries no blocks (a summary row, not a built location). */

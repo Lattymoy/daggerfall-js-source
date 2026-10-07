@@ -321,9 +321,9 @@ test('SD4b the host\'s steps, run from its own text: into the Rift its word firs
 
 test('SD4b the hosts by source: the dungeon stands them for a Super dungeon alone, the first frame I stand there; the Return asked about once a second; the ray, the plaque, the drops\' pass, the press and the destroy; the mode machine\'s press arm and its forward; the world host\'s word off the hub\'s record (mutants: stood in every dungeon; the press unrouted; the forward lost; the word off no record)', () => {
   const D = read('src/scenes/dungeonContext.js');
-  assert.match(D, /const sdEnd = _superTier \? createSdEnd\(\{ renderer, audio, onRift: \(\) => sdRiftStep\(\), onReturn: \(\) => sdReturnStep\(\) \}\) : null;/);
+  assert.match(D, /const sdEnd = _superTier \? createSdEnd\(\{ renderer, audio, onRift: \(\) => sdRiftStep\(\), onReturn: \(\) => sdReturnStep\(\) \}\)\n\s*: _sdRealm \? createSdEnd\([^\n]*\) : null;/);   // SD5a (PIN MOVED): the Shattered Hour stands its way back with the same set
   assert.match(D, /const sdEndWord = \(\) => opts\.superRift\?\.\(dfLocation\?\.sdSlot\) \?\? null;/);
-  assert.match(D, /const rift = sdRiftPlace\(floorLanding\(collider, \[end\.x, end\.y \+ 0\.2, end\.z\]\), probe\);\n\s*sdEnd\.stand\(\{ rift, retAt: sdReturnPlace\(rift, probe\) \}\);/);
+  assert.match(D, /const rift = sdRiftPlace\(floorLanding\(collider, \[end\.x, end\.y \+ 0\.2, end\.z\]\), probe\);\n\s*_sdLanding = sdReturnPlace\(rift, probe\);\n\s*sdEnd\.stand\(\{ rift, retAt: _sdLanding \}\);/);   // SD5a (PIN MOVED): the Return's place kept - the way back from the Hour stands a player there
   assert.match(D, /if \(playerFeet && !_sdEndAsked\) \{ _sdEndAsked = true; standSdEnd\(\); \}/);
   assert.match(D, /if \(sdEnd\.ret && t >= _sdEndCheckAt\) \{ _sdEndCheckAt = t \+ 1000; const w = sdEndWord\(\); if \(w && !w\.returns\) sdEnd\.returnOut\(\); \}/);
   assert.match(D, /if \(playerFeet && !_lairAsked\) \{[^\n]*\n {4}if \(sdEnd\) sdEndFrame\(playerFeet\);/, 'the frame, beside the lair\'s stand');
@@ -337,7 +337,7 @@ test('SD4b the hosts by source: the dungeon stands them for a Super dungeon alon
   assert.ok(arm > 0 && arm < W.indexOf("    if (!key.startsWith('exit:')) {\n      dungeonCtx.actions.activate(key"), 'before the press falls through to the action objects');
   assert.match(W, /superRift: \(s\) => host\.superRift\?\.\(s\) \?\? null,/);
   const w = read('src/scenes/world.js');
-  assert.match(w, /return \{ word: sdRiftWord\(rec, s, now\), returns: sdReturnStands\(rec, s, now\), enter: \(\) => false \};/);
+  assert.match(w, /return \{ word: sdRiftWord\(rec, s, now\), returns: sdReturnStands\(rec, s, now\), enter: \(\) => sdEnterRealm\(s\) \};/);   // SD5a (PIN MOVED): the realm's door - the step through to the Shattered Hour
   assert.match(w, /const rec = sdHost\.record\(\), now = Date\.now\(\) \+ _sharedOffsetMs;/, 'the hub\'s record, on the shared clock the Hollow\'s host reads');
   assert.match(w, /superRift: \(s\) => sdRiftOf\(s\),/);
   assert.match(read('bible/11-Multiplayer/Super-Dungeons.md'), /### SD4b - shipped 2026-10-07/);

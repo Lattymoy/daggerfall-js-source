@@ -287,7 +287,8 @@ import { createRiteHost, RITE_TEXT } from './riteHost.js';   // WB12d: the faith
 import { createSdHost } from './sdHost.js';   // SD2b: the Hollow in the world - the hub's record in, the Hollow stood at its pixel, the find, the lines
 import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
 import { SdOmenPassRenderer } from '../render/sdOmenPass.js';   // SD2c: the Hollow's omen, the gate's beacon in brass
-import { SD_CAST_OUT_LINE } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out
+import { SD_CAST_OUT_LINE, sdRoomKey } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room
+import { isSdRealm, realmArena, SD_REALM_TEXT } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
 import { sdRiftWord, sdReturnStands } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
 import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/lootDataTables.js';   // WB12d: the casket's pile, undrawn
@@ -12577,6 +12578,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  mode's inside half, one record. */
   function setRecallAnchor() {
     if (modes?.gateArenaDay?.() != null) { setMidScreenText(COURT_TEXT.noMark); return; }   // WB3b: a mark in a place that ends with the day
+    if (modes?.sdRealmSlot?.() != null) { setMidScreenText(SD_REALM_TEXT.noMark); return; }   // SD5a: nor in the Shattered Hour
     const inside = modes?.anchorContext?.() ?? { worldContext: WORLD_CONTEXT.Exterior, local: null, buildingKey: 0, interior: null };
     const pf = walkMode && playerSpawned ? player.pos : cam.pos;
     // A DUNGEON's local frame is its own, so its world coordinates
@@ -12643,6 +12645,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT ARENA-LADDER A5: NO RECALL OFF THE SAND - my bout holds me as its doors do (the duel's law: no door, no rest, no
     // travel). Recall tore the floor down under a losing bout, which went unsaid: no loss, no run lost, the climb untouched.
     if (arenaBouts.holds()) { townTalk.say(ARENA_TEXT.refuse.travel); return; }
+    if (modes?.sdRealmSlot?.() != null) { setMidScreenText(SD_REALM_TEXT.noRecall); return; }   // SD5a (Super-Dungeons.md section 7): nothing answers a Recall in the Hour - its ways are the Rift's
     const anchor = playerEntity.anchorPosition;
     const plan = teleportPlan(anchor, {
       ...(modes?.insideContext?.() ?? { insideBuilding: false, insideDungeon: false, buildingKey: 0 }),
@@ -20673,6 +20676,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WB9b: the court's floor as the dungeon arm asks for it each frame - the fight's crossings and the relay's clock */
   const _gateFloor = { xa: [], now: 0, none: Object.freeze([]) };
   const _courtArena = courtArena(_gateFloor.none, 0);
+  const _realmArena = realmArena();   // SD5a: the Shattered Hour's floors, as far as they are laid
   const gateCourt = gateLink ? createGateCourt({
     renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, link: gateLink, spoils: spoilsPool,
     now: () => Date.now() + _sharedOffsetMs,
@@ -21025,7 +21029,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     where: (px, py) => { const regionIndex = maps.getRegionIndexAt(px, py); return { regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) }; },
     stand: (key, loc) => { _locIndexGen += 1; locationIndex.set(key, loc); _sdLate.add(key); },
     unstand: (key) => { if (locationIndex.get(key)?.superTier) { _locIndexGen += 1; locationIndex.delete(key); } _sdLate.add(key); },
-    inside: (loc) => (modes?.mode ?? 'exterior') === 'dungeon' && modes?.dungeonLocation?.sdSlot === loc?.sdSlot,
+    inside: (loc) => (modes?.mode ?? 'exterior') === 'dungeon' && (modes?.dungeonLocation?.sdSlot === loc?.sdSlot || modes?.dungeonLocation?.sdRealm === loc?.sdSlot),   // SD5a: or in its Hour - the end casts me out of either
     // its mouth: the dungeon entrance its pixel's blocks stood (the doors' list - kept a door generation)
     door: (key) => {
       if (_sdDoorAt && _sdDoorAt.key === key && _sdDoorAt.gen === doorGeneration) return _sdDoorAt.at;
@@ -21045,16 +21049,72 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD2b: the Hollow stood or taken down, its find, its lines. SD2d: called from the online frame, above the modal
    *  return, in every mode - a Hollow's end reaches a player standing inside it. It stood in the exterior's half of the
    *  frame, which the dungeon's frame never reaches: underground nothing moved the Hollow on. */
-  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } };
+  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } sdRealmFrame(); };
+  /** SD5a: OUT OF AN HOUR THAT WILL NOT HAVE ME - its room's hello refused for good (the Rift's own words, SD3's
+   *  _sdAdmit: the Hour full, or closed) or its socket replaced: cast out before the Hollow's door (the mode machine's own
+   *  exit - the realm's way out lands there) with the relay's words, once, as the court casts out (ejectFromCourt) -
+   *  never left standing in a room nobody else can reach. A player dead there is the death's. */
+  let _sdOut = false;
+  const sdRealmFrame = () => {
+    if (modes?.sdRealmSlot?.() == null) { _sdOut = false; return; }
+    if (_sdOut || !online?.terminal || !(playerEntity.health > 0) || modes?.deathUp?.()) return;
+    _sdOut = true;
+    gateVeil?.flash();
+    if (modes?.unstuck?.()) setMidScreenText(/^The Hour /.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);
+  };
   /** SD4b (Super-Dungeons.md section 6): a Super dungeon's end, for the dungeon host (through the mode machine) - the
    *  Rift's own word off the hub's record for the Hollow's slot `s` (null: step through), whether the Return still stands
-   *  (until the boss falls), and the realm's door. The door is SD5's (the Shattered Hour): none yet, so a Rift that would
-   *  admit says it will not take you. Null offline - no Hollow stands there. */
+   *  (until the boss falls), and the realm's door (SD5a: the step through to the Shattered Hour, taken under the veil).
+   *  Null offline - no Hollow stands there. */
   const sdRiftOf = (s) => {
     if (!sdHost) return null;
     const rec = sdHost.record(), now = Date.now() + _sharedOffsetMs;
-    return { word: sdRiftWord(rec, s, now), returns: sdReturnStands(rec, s, now), enter: () => false };
+    return { word: sdRiftWord(rec, s, now), returns: sdReturnStands(rec, s, now), enter: () => sdEnterRealm(s) };
   };
+  /** SD5a (Super-Dungeons.md section 7): THROUGH THE RIFT - out of the Hollow and into the Shattered Hour, under the veil
+   *  (scenes/worldModes.js stepThroughFire): the Hollow left as a teleport leaves a dungeon, the player at its pixel
+   *  outside (the staff teleport's way - the street streamed under them, so the way out of the Hour has a door to land
+   *  before), then the realm built and entered (enterSdRealm) - its room the relay's `sd:<s>`, whose hello asks the Rift's
+   *  law again (SD3). The Rift's word is asked once more under the veil: the Hour can close while it does. Answers whether
+   *  the step began. */
+  function sdEnterRealm(s) {
+    const h = sdHost?.hollow();
+    if (!h || h.s !== s || !modes?.stepThroughFire) return false;
+    const hollow = { key: h.key, px: h.site.px, py: h.site.py, name: h.loc.name };
+    const site = { climateBase: h.loc.climate?.climateType ?? 2, season: INTERIOR_SEASON, climate: h.loc.climate, regionIndex: h.loc.regionIndex ?? -1, regionName: h.loc.regionName ?? '' };
+    modes?.stepThroughFire(async () => {
+      if ((modes?.mode ?? 'exterior') !== 'dungeon' || !(playerEntity.health > 0)) return false;
+      const word = sdRiftOf(s)?.word;
+      if (word) { setMidScreenText(word); return false; }
+      modes?.forceExitToExterior();
+      await _teleportToPixel(hollow.px, hollow.py);
+      if (await modes?.enterSdRealm?.({ s, hollow, site })) return true;
+      setMidScreenText(SD_REALM_TEXT.lost);   // the realm would not build: outside, at the Hollow's pixel
+      return false;
+    });
+    return true;
+  }
+  /** SD5a: BACK THROUGH THE RIFT - out of the Hour and into its Hollow, beside its Rift, under the veil: the realm left,
+   *  the player at the Hollow's pixel outside, the Hollow entered by its own door (startInDungeon - the door at this
+   *  pixel) and stood beside its Rift (the Return's place - dungeonContext.js sdRiftLanding). A Hollow gone meanwhile, or
+   *  a door that would not open: outside, at its pixel. */
+  function sdWayBack() {
+    const loc = modes?.dungeonLocation;
+    if (!isSdRealm(loc) || !modes?.stepThroughFire) return false;
+    const back = loc.sdHollow;
+    modes?.stepThroughFire(async () => {
+      if (!isSdRealm(modes?.dungeonLocation) || !(playerEntity.health > 0)) return false;
+      modes?.forceExitToExterior();
+      if (!back) return true;
+      await _teleportToPixel(back.px, back.py);
+      if (sdHost?.hollow()?.key !== back.key) return true;   // its end overtook the step: outside, where it stood
+      if (!(await modes?.startInDungeon?.())) return true;
+      const at = modes?.dungeonCtx?.sdRiftLanding?.();
+      if (at) modes?.setPlayerLocalPosition?.(at);
+      return true;
+    });
+    return true;
+  }
   /** SD2c: THE HOLLOW'S OMEN (render/sdOmenPass.js) - a column of brass-gold light over a Super dungeon's pixel from its
    *  rise to its end (sdHost omen: the record's own light), seen from SD_OMEN_PX map pixels round, outside alone. Its foot
    *  is the built ground under the Hollow's centre, or on a pixel not built yet the terrain sampler's own kernel there
@@ -21296,6 +21356,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WB3b: the court's floor is a ring the body cannot leave - WB9b: the three courts' floor, as far as the walkways
     // between them are laid (one arena, its crossings and clock refilled each frame)
     if (!player.arena && modes?.gateArenaDay?.() != null) { _courtArena.xa = gateLink?.state()?.xa ?? _gateFloor.none; _courtArena.now = Date.now() + _sharedOffsetMs; player.arena = _courtArena; }
+    if (!player.arena && modes?.sdRealmSlot?.() != null) player.arena = _realmArena;   // SD5a: the Hour's floors are an edge the body cannot leave - the void under them
     if (!player.arena) player.arena = arenaBouts.ring(); if (!player.arena) { const s = arenaOnline?.session?.(); player.arena = standsRail(modes?.arenaFloorStage?.()?.centre?.() ?? null, player.feetAt()[1], !!s && (s.state ? s.state.h === 1 : !!s.host)); }   // ARENA2: my bout's ring on the arena's sand (the duel's clamp); HOTFIX 1003i: else the stands' rail - no watcher jumps down onto the sand (the session's host may)
     duelPrompt?.render();
   };
@@ -23986,6 +24047,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     const mp = overworld ? worldCoordToMapPixel(wc.x, wc.z) : null;
     if (overworld) key = siegeSession?.room() ?? royalSession?.room() ?? roomKeyFor({ host: 'world', mode: 'exterior', mapPixel: mp });   // SEAT2a part four: a battle entered stands in its own room (CROWN1 part two: a Royal Tourney too)
     else if (modes?.roomIdentity?.()?.kind === 'gate') key = gateRoomKey(modes?.roomIdentity?.()?.day);   // WB3b: the court's room is its gate's own
+    else if (modes?.roomIdentity?.()?.kind === 'sd') key = sdRoomKey(modes?.roomIdentity?.()?.s);   // SD5a: the Hour's room is the relay's realm (SD3's _sdAdmit asks the Rift's law of its hello)
     else if (modes?.roomIdentity?.()?.kind === 'arena') key = arenaFloorRoomOf(modes?.roomIdentity?.()?.o);   // ARENA4: a relay's bout's floor is its room (ARENA4b: the hour's exhibition's, `x<hour>`, its own)
     else {
       const ident = modes?.roomIdentity?.();
@@ -24541,6 +24603,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     legacyRiseLine: () => { const o = legacyHost?.deathOutcome(); return o?.kind === 'rise' ? o.line : null; },   // ...and presents the outcome there: the toll's word
     dungeonOnline: () => onlineOn,   // AUDIT WORLD34 B2: online, the dungeon that gets built is the ROOM's - one layout (SD-ONLINE: the world's size for it)
     superRift: (s) => sdRiftOf(s),   // SD4b: a Super dungeon's Rift and Return - their word off the hub's record, the realm's door
+    sdWayBack: () => sdWayBack(),   // SD5a: the Shattered Hour's way back, through its Rift into the Hollow
+    sdHollowDoors: (h) => buildingDoors.filter((d) => d.pixelKey === h?.key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map((d) => d.door),   // SD5a: out of the Hour - a death, its end - before the Hollow's door
     // D-ONLINE1: the death screen's door for the deaths this host does
     // not present itself (a dungeon's, a building interior's -
     // worldModes.js). False (not handled) when this session is not
@@ -27390,7 +27454,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     deadlandsAirFrame();   // WB6b: after the court's ways out have run, online or not - the frame it is gone is the frame its air falls silent
     if (onlineOn && playerSpawned && (seatOut() || townTalk.overlay instanceof DeathScreen || modes?.deathUp?.())) { siegeHud?.hide(); siegeNpcs?.leave(); }   // AUDIT SEATS-2 C4: the dead and a tab out of the seat draw no battle - the online frame returns before its tick
     arenaFrame(dt);   // ARENA2: the bout on the city's floor or the instance's - before the modal return, so the instance's runs too
-    setCourtRules(modes?.gateArenaDay?.() != null);   // WBX6: the Deadlands keep no regeneration - set before any magic round of this frame, cleared the frame the court is gone
+    setCourtRules(modes?.gateArenaDay?.() != null);
+    if (modes?.sdRealmSlot?.() != null) setCourtRules(true);   // SD5a: nor in the Shattered Hour - the court's law (Super-Dungeons.md section 7)   // WBX6: the Deadlands keep no regeneration - set before any magic round of this frame, cleared the frame the court is gone
     // LOAD1: THE LOADING SCREEN STANDS WHILE THE WORLD IS MOVED - AUDIT 68 S22's one question (every mover's latch, the
     // teleport core's window, the abyss) and a door's build in this host's modes. Above the mode's return, so every
     // drawn frame asks; below the video's wait (AUDIT 39 #160's head, and AUDIT 28 W7's tick on the frame's dt) - a

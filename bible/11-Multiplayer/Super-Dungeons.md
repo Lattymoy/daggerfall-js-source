@@ -759,3 +759,58 @@ measured one now). PIN MOVED: `test/rvn7d_stand.test.js` reads the lair's stand 
 `test/nudedecor.test.js` names the new billboard host (`scenes/sdEnd.js` - a portal, no person).
 
 SD5 is next: the Shattered Hour - the made level, its sky, the way in and out.
+
+### SD5a - shipped 2026-10-07 (the Shattered Hour, the made level and its ways in and out)
+
+Section 7, on the Burning Court's law (`world/gateArena.js`, World-Bosses.md section 4): the realm is a DUNGEON - the
+dungeon host with a level made in code - never a fifth host.
+
+- **The frame** (`net/sdBrain.js`, pure, for the relay's judgements to come): the Threshold at the made block's middle
+  (`SD_REALM_ORIGIN`, the court's centre's place), every floor at y 0, the stages along +z - the Threshold (z 0, r 8),
+  the walk (z 7-25, 4 m wide), the Orrery's hall (z 42, r 18 - z 24-60), the Steps' span (z 60-190) and the Last
+  Moment's arena (z 220, r 26, its four brass pillars on the diagonals).
+- **The made location** (`world/sdRealm.js sdRealmLocation`): *The Shattered Hour*, made location `0x7ffff200`, one
+  made block `SDHOUR.RDB` at index 900200, map id 0 (no world room keys off it), `sdRealm` the Hollow's slot and
+  `sdHollow` the Hollow it was entered from (where the way back leads). `isSdRealm` reads it; `madeDungeon` names it
+  (no tier, no size). Its blocks file answers its one empty block, its start marker on the Threshold.
+- **The Hour itself** (`buildRealmModel`, art made in code - `world/sdRealmArt.js`, pseudo-archive 38151): each stage an
+  island hanging in the void on a root of dark stone, its floor dark stone set in brass with a brass lip; the walk
+  between brass kerbs; the Orrery's floor the Hour-dial (twelve brass hours round its rim, a ring of six segments within
+  for the stones of SD6); the arena's floor cracked brass with the Mantella's light in its seams, and its four pillars.
+  Its floors go to the collider (`realmFloorTris`), its lamps (`realmLights`, warm brass on the rims) to the frame's
+  lights after the player's own, its light a brass trilight with a key from the clock-face behind the arena
+  (`realmLighting`), its air a thin brass haze (`SD_REALM_FOG`). Its edge keeps a player on the Threshold, the walk and
+  the hall (`realmClamp`, the motor's `arena`) until SD6's bridge lays more.
+- **What the Hour refuses** - the court's refusals, beside the court's own lines: rest, save (the pause's Save says
+  why), map (no automap slot either), a Mark and a Recall (*"Nothing answers a Recall in the Shattered Hour."*), and
+  regeneration (`courtRules`, switched on in the Hour). No drip, no door, no fire of the dungeon's own.
+- **The way in** (`scenes/world.js sdEnterRealm`, the Rift's door - SD4b's `enter`): under the veil (the gate's, the
+  design's), the Rift's word asked once more (the Hour can close while the veil does), the Hollow left as a teleport
+  leaves a dungeon, the player put at its pixel outside (the staff teleport's way - the street streamed, so the way out
+  has a door to land before), then the realm built and entered (`scenes/worldModes.js enterSdRealm`), facing the Orrery.
+  Its room is the relay's realm, `sd:<s>`, whose hello asks the Rift's law again (SD3's `_sdAdmit`).
+- **The way back** (`sdWayBack`): the Hollow's own Rift at the Threshold's back (*The Rift - To the Hollow*), pressed or
+  walked into - under the veil, out of the Hour, to the Hollow's pixel, into the Hollow by its door, stood beside its
+  Rift (the Return's place, `dungeonContext.js sdRiftLanding`). A Hollow gone meanwhile: outside, at its pixel.
+- **Out by force**: a death, or the Hour's end (SD2d's cast-out reaches the Hour now - the Hollow counts a player in its
+  Hour as inside it), lands before the Hollow's door (the mode machine's landing reads `sdHollow`). A room that refuses
+  the player for good (the Hour full, or closed) casts them out the same way with the relay's own words, once.
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the way in and back, the eject, the room key, the edge, Mark, Recall,
+regeneration, the Hollow's count of who is inside); `scenes/worldModes.js` WIRED (`enterSdRealm`, `standSdRealm`, the
+landing, the light, air and lamps every frame, the room identity, `sdRealmSlot`, `stepThroughFire` handed out);
+`scenes/dungeonContext.js` WIRED (the refusals, the way back's Rift, the landing beside a Hollow's Rift);
+`scenes/exterior.js` FLAGGED - the bench is offline, and no Hour opens there.
+
+Pins: `test/sd5a_realm.test.js` (12 - the frame, the made location and block, the mesh, the floors, the edge, the lamps
+and light, the art, the hosts by source, and the world host's two steps RUN from its own text); `tools/mutants/sd5a.json` (24, all dead).
+PINS MOVED: the court's by-source pins read the Hour's line beside theirs - `test/arena2_hosts.test.js` and
+`test/wb3b_gate_arena.test.js` (the pause's Save), `test/arena2_hosts.test.js` and `test/wb6b_deadlands_life.test.js`
+(no drip), `test/mapkeep.test.js` (no map slot), `test/disc15.test.js` (the Hour's lamps between the court's and the
+shadow ask) and `test/moonlight.test.js` (the Hour's key, the fourth `setMoonlight`, straight after the court's);
+`tools/mutants/wb6b.json` and `audit27h.json` re-aimed; the arc's own -
+`test/sd4a_super.test.js` (the cold fire plan), `test/sd4b_rift.test.js` (the realm's Rift, the kept landing, the
+door), `tools/mutants/sd4a.json`'s fires-warm.
+
+SD5b next: the Hour's sky (`render/sdSky.js`) on the realm's anchored clock.
+

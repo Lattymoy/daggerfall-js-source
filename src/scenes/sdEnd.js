@@ -126,9 +126,10 @@ const boxOf = (at, half, height) => ({ min: [at[0] - half, at[1], at[2] - half],
 
 /**
  * A Super dungeon's end. `onRift()` / `onReturn()` are the host's - a step into either, or a press, hands it over.
- * @param {{ renderer?: any, audio?: any, now?: () => number, onRift?: () => void, onReturn?: () => void }} [deps]
+ * SD5a: `riftTo` its plaque's row - the Shattered Hour's way back says where it leads.
+ * @param {{ renderer?: any, audio?: any, now?: () => number, onRift?: () => void, onReturn?: () => void, riftTo?: string }} [deps]
  */
-export function createSdEnd({ renderer = null, audio = null, now = () => performance.now(), onRift = () => {}, onReturn = () => {} } = {}) {
+export function createSdEnd({ renderer = null, audio = null, now = () => performance.now(), onRift = () => {}, onReturn = () => {}, riftTo = SD_END_TEXT.riftTo } = {}) {
   /** @type {{ at: number[], size: number, batch: any } | null} */
   let rift = null;
   /** @type {{ at: number[], batch: any } | null} */
@@ -186,7 +187,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     },
     /** The plaque's words for either - a namer is handed every key the ray can win. */
     hoverName(key) {
-      if (key === SD_RIFT_KEY && rift) return { title: SD_END_TEXT.rift, subs: [SD_END_TEXT.riftTo] };
+      if (key === SD_RIFT_KEY && rift) return { title: SD_END_TEXT.rift, subs: [riftTo] };
       if (key === SD_RETURN_KEY && ret) return { title: SD_END_TEXT.ret, subs: [SD_END_TEXT.retTo] };
       return null;
     },

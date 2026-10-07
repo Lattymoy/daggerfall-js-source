@@ -240,6 +240,8 @@ import { superFoeLevel, scaleSuperFoe, SUPER_ELITE_FOES, SUPER_LOOT_OPTS, SUPER_
 import { dungeonEndOf } from '../world/dungeonEnd.js';   // SD4b: RVN7d's lair law, lifted - the lair's stand and a Super dungeon's end read one law
 import { createSdEnd } from './sdEnd.js';   // SD4b: a Super dungeon's Rift and Return
 import { SD_NO_RIFT } from '../net/sdLaw.js';   // SD4b: the Rift's word when nobody can answer it
+import { isSdRealm, SD_REALM_TEXT, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - a made place, its refusals, its way back
+import { realmToDungeon } from '../net/sdBrain.js';   // SD5a: the realm's frame
 import { dungeonTier } from '../systems/dungeonTier.js';   // SD4a: the location's tier, the one law (TIER1)
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 import { foeTitle } from '../systems/foeTitle.js';   // FOE-TITLE: what a revenant, a champion or an elite is called
@@ -967,6 +969,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the top band and built at its level, three at every marker as an Elite's, each x4 health and x2.5 damage, six
   // elites among them, and its loot +50%. Read once here; every arm below asks it.
   const _superTier = dungeonTier(dfLocation) === 'super';
+  const _sdRealm = isSdRealm(dfLocation);   // SD5a: the Shattered Hour, read once - every arm below asks the flag
   // REST3 (2026-10-03, bible/06-Systems/Rest-Arc.md section 4; Mac: "Dungeon layouts now recieve multiple strategic
   // placements for campfires"): THE DUNGEON'S OWN FIRES (world/dungeonFires.js). Placed here - after every block's
   // geometry is in the collider, before the flats are batched and the lights' flicker is sized - so a placed fire is a
@@ -982,7 +985,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     ...fireLayoutInputs(dungeon.blocks, dungeonHearths),   // AUDIT REST-PARTY C6: the law's doors and fires, read as tools/dungeonFireProbe.mjs reads them
     seed: dfLocation?.dungeon?.recordElement?.header?.locationId ?? 0,
     elite: !!dfLocation?.elite,
-    cold: _superTier,   // SD4a: none in a Super dungeon - the Hour is cold
+    cold: _superTier || _sdRealm,   // SD4a: none in a Super dungeon - the Hour is cold; SD5a: nor in the Hour itself
   });
   const placedFires = firePlan?.fires ?? [];
   if (placedFires.length) {
@@ -1772,7 +1775,10 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // where its word admits) and the Return (to the way in, until the boss falls), stood the first frame I stand here at
   // the end the lair's law finds (world/dungeonEnd.js), as wide as its hall lets them (world/sdDungeon.js) - the same on
   // every client. Pressed, or walked into (scenes/sdEnd.js).
-  const sdEnd = _superTier ? createSdEnd({ renderer, audio, onRift: () => sdRiftStep(), onReturn: () => sdReturnStep() }) : null;
+  const sdEnd = _superTier ? createSdEnd({ renderer, audio, onRift: () => sdRiftStep(), onReturn: () => sdReturnStep() })
+    : _sdRealm ? createSdEnd({ renderer, audio, riftTo: SD_REALM_TEXT.wayBack, onRift: () => opts.sdWayBack?.() }) : null;   // SD5a: the Shattered Hour's way back - the same Rift, at its Threshold's back
+  /** SD5a: where a player coming back through the Rift is stood - the Return's place, beside it (kept as it stands). */
+  let _sdLanding = null;
   let _sdEndAsked = false, _sdEndCheckAt = 0;
   /** The outer host's word on this Hollow's end (world.js, through the mode machine): { word, returns, enter }, or null. */
   const sdEndWord = () => opts.superRift?.(dfLocation?.sdSlot) ?? null;
@@ -1780,6 +1786,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  beside it - every ray this dungeon's own collider. */
   function standSdEnd() {
     if (!sdEnd || !collider) return;
+    if (_sdRealm) { sdEnd.stand({ rift: { at: realmToDungeon(0, 0, SD_WAY_BACK_Z), size: SD_WAY_BACK_SIZE }, retAt: null }); return; }   // SD5a: the way back, at the Threshold's back
     const end = dungeonEndOf(dungeon.enterMarker ?? dungeon.startMarker ?? null, sdEndMarks(_layoutEnemies, dungeon.blocks));
     if (!end) return;
     const probe = {
@@ -1787,7 +1794,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       ray: (o, dir, max) => { const d = collider.raycast(o, dir, max); return Number.isFinite(d) ? d : null; },
     };
     const rift = sdRiftPlace(floorLanding(collider, [end.x, end.y + 0.2, end.z]), probe);
-    sdEnd.stand({ rift, retAt: sdReturnPlace(rift, probe) });
+    _sdLanding = sdReturnPlace(rift, probe);
+    sdEnd.stand({ rift, retAt: _sdLanding });
   }
   /** Into the Rift: its own word first (the outer host's, off the hub's record) - through to the Shattered Hour where it
    *  admits and the realm's door takes me (SD5), else its refusal said. */
@@ -6957,7 +6965,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // under those) and the outer host's street slot (opts.breathHeld), which held the motor while the lungs ran on.
       breathTick(opts.breathHeld?.() ? 0 : dt, playerFeet, playerHeight);
       const _surf = waterSurfaceYAt(playerFeet[0], playerFeet[2]);
-      if (!isGateArena(dfLocation) && !isArenaFloor(dfLocation)) sceneAmbience.update(dt, {   // ARENA2: no drip nor dungeon door on the open sand - the crowd is its air (scenes/arenaBouts.js)   // WB6b: the court has its own air (scenes/deadlandsAir.js) - no drip, no door, no bird in the Deadlands
+      if (!isGateArena(dfLocation) && !isArenaFloor(dfLocation) && !_sdRealm) sceneAmbience.update(dt, {   // ARENA2: no drip nor dungeon door on the open sand - the crowd is its air (scenes/arenaBouts.js)   // WB6b: the court has its own air (scenes/deadlandsAir.js) - no drip, no door, no bird in the Deadlands
         playerPos: [playerFeet[0], playerFeet[1] + playerHeight / 2, playerFeet[2]],   // the controller center (DFU transform.position)
         waterSurfaceY: _surf,
         submerged: _surf != null && playerFeet[1] + playerHeight / 2 + 76 * 0.025 - 0.95 < _surf,
@@ -7696,7 +7704,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // :2492-2493). The world host builds a saved dungeon through the door's own build, and this line reset the colour
   // tier of the record the load had just restored - every step of the run went gray - stamped it and pruned the
   // store the save carried; quickLoad's re-fetch below came too late to keep any of it.
-  let automapRec = isGateArena(dfLocation) || isArenaFloor(dfLocation) ? detachedAutomapRecord()   // ARENA2: nor the arena's floor   // AUDIT 27h M1: the court keeps no map, so it takes no slot from one
+  let automapRec = isGateArena(dfLocation) || isArenaFloor(dfLocation) || _sdRealm ? detachedAutomapRecord()   // ARENA2: nor the arena's floor   // AUDIT 27h M1: the court keeps no map, so it takes no slot from one
     : enterDungeonAutomap(automapKey, classicMinutesRef.value, { fromLoad: !!opts.automapFromLoad });
   // ROAD-C c2/S1: the reveal MODEL (rows in DFU's block/element/model
   // walk order, the point-query hash grid, the draw partition). Bind
@@ -8580,7 +8588,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
         // the standalone ?dungeon probe never sets, so it stays open there.
         loadingPrevented: () => !!opts.dungeonOnline?.(),
         timers: (o) => opts.timers?.(o) ?? null,   // TIMERS1: the world host's source, through worldModes
-        savingPrevented: () => isGateArena(dfLocation) || isArenaFloor(dfLocation),   // ARENA2: nor on the arena's sand   // WB3b: the pause's Save says why, in the court
+        savingPrevented: () => isGateArena(dfLocation) || isArenaFloor(dfLocation) || _sdRealm,   // ARENA2: nor on the arena's sand   // WB3b: the pause's Save says why, in the court
         // SAV4: the slot window's seams over the same two verbs.
         playerName: () => playerEntity.name, playerId: () => playerEntity.characterId ?? null,
         saveAs: (saveName) => ctx.quickSave?.(saveName),
@@ -8602,6 +8610,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleAutomap() {
       if (activeOverlay) return;
       if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noMap); return; }
+      if (_sdRealm) { hudText.add(SD_REALM_TEXT.noMap); return; }   // SD5a: the Hour keeps no map, as the Deadlands keep none
       if (isArenaFloor(dfLocation)) { hudText.add(ARENA_TEXT.refuse.map); return; }   // ARENA2: a made level with nothing to chart   // WB3b: an empty level, and no place to chart
       // EM3: THE SKIN FORK, at the one place this host builds the map.
       // The classic arm answers null without its native art and the
@@ -8800,6 +8809,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     toggleRest() {
       if (activeOverlay) return;
       if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noRest); return; }
+      if (_sdRealm) { hudText.add(SD_REALM_TEXT.noRest); return; }   // SD5a: nor a rest
       if (isArenaFloor(dfLocation)) { hudText.add(ARENA_TEXT.refuse.rest); return; }   // ARENA2: no rest on the sand (the duel's law)   // WB3b: an enemy is always near - the boss
       // S40: the gate itself moved to systems/restSession.js. It was
       // written out here because this was the only host that could
@@ -8927,6 +8937,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     reportInput(keys, pitch) { _inputState = `keys:${keys} pitch:${pitch.toFixed(2)}`; },
     quickSave(saveName = QUICK_SAVE_NAME, { quiet = false, sink = null } = {}) {   // REALM P0.5: a quiet checkpoint takes no shot and says only a failure; P1.3: a realm character's goes to the service
       // WB3b: a save made in the court would load into a place that no longer stands (the court is the day's alone)
+      if (_sdRealm) { if (!quiet) hudText.add(SD_REALM_TEXT.noSave); return false; }   // SD5a: nor a save
       if (isGateArena(dfLocation)) { if (!quiet) hudText.add(COURT_TEXT.noSave); return false; }
       if (isArenaFloor(dfLocation)) { if (!quiet) hudText.add(ARENA_TEXT.refuse.save); return false; }   // ARENA2: a made level no save re-enters
       const snap = snapshotPlayer(playerEntity, {
@@ -9828,6 +9839,13 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     /** SD4b: a press on a Super dungeon's Rift or Return - the press ladder's `sdrift:` / `sdreturn:` arm (worldModes.js). */
     sdPress(key) { return !!sdEnd?.press(key); },
+    /** SD5a: where a player back from the Shattered Hour is stood - beside this Hollow's Rift (stood now if the first frame
+     *  has not stood it yet); null in any other dungeon. */
+    sdRiftLanding() {
+      if (!_superTier || !sdEnd) return null;
+      if (!_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }
+      return _sdLanding ? [_sdLanding[0], _sdLanding[1], _sdLanding[2]] : null;
+    },
     dungeonActivationTargets() {
       // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
       return composeActivationTargets([...activationTargets(actions.objects), ...lootTargets()], _hostTargets);

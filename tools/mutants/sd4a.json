@@ -101,8 +101,8 @@
   {
     "name": "SD4A-the-host's-fires-warm",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    cold: _superTier,   // SD4a",
-    "new": "    cold: false,   // SD4a",
+    "old": "    cold: _superTier || _sdRealm,   // SD4a",
+    "new": "    cold: _sdRealm,   // SD4a",
     "tests": [
       "test/sd4a_super.test.js"
     ]

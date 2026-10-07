@@ -65,8 +65,8 @@ test('ARENA2 hosts - dungeonContext.js wired (what the sand will not allow); ARE
   assert.match(D, /if \(isArenaFloor\(dfLocation\)\) \{ hudText\.add\(ARENA_TEXT\.refuse\.rest\); return; \}/);
   assert.match(D, /if \(isArenaFloor\(dfLocation\)\) \{ if \(!quiet\) hudText\.add\(ARENA_TEXT\.refuse\.save\); return false; \}/);
   assert.match(D, /if \(isArenaFloor\(dfLocation\)\) \{ hudText\.add\(ARENA_TEXT\.refuse\.map\); return; \}/);
-  assert.match(D, /savingPrevented: \(\) => isGateArena\(dfLocation\) \|\| isArenaFloor\(dfLocation\),/);
-  assert.match(D, /if \(!isGateArena\(dfLocation\) && !isArenaFloor\(dfLocation\)\) sceneAmbience\.update\(dt, \{/, 'no dungeon drip on the open sand');
+  assert.match(D, /savingPrevented: \(\) => isGateArena\(dfLocation\) \|\| isArenaFloor\(dfLocation\)(?: \|\| _sdRealm)?,/);   // SD5a (PIN MOVED): and the Shattered Hour beside them
+  assert.match(D, /if \(!isGateArena\(dfLocation\) && !isArenaFloor\(dfLocation\)(?: && !_sdRealm)?\) sceneAmbience\.update\(dt, \{/, 'no dungeon drip on the open sand');   // SD5a (PIN MOVED): nor in the Shattered Hour
   assert.match(X, /\/\/ ARENA-FIX 12 \(2026-10-02\): WIRED - THE FOUR HOSTS\./);
   assert.match(X, /const arenaBouts = createArenaBouts\(\{/, 'one driver');
   assert.match(X, /arenaHerald: \(\) => arenaHerald\(\),/, 'the Herald\'s choice through the mode machine');
