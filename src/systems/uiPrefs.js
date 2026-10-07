@@ -25,6 +25,7 @@ import { appStorage } from './appStorage.js';   // DA1: the storage seam
 import { onlineForcedPref } from './onlineLane.js';   // OL1: the online lane's forcing, read before the shelf
 import { FEATURE_PREF_DEFAULTS } from './features.js';   // RF4: the port's own switches, declared once on their rows
 import { isStoredTier } from './survival/difficulty.js';   // SURV-TIERS: what the survival key may hold (an import-free leaf)
+import { GATE_CROWD_DEFAULT } from '../net/gateCrowd.js';   // GATE-CROWD: a court's crowd, twelve by default (an import-free leaf)
 
 export const PREF_DEFAULTS = Object.freeze({
   // PX30c: the enhanced HUD's scale. It lives HERE and not in DFU's
@@ -125,6 +126,9 @@ export const PREF_DEFAULTS = Object.freeze({
   peerClassSprites: true,
   peerAttackSounds: true,   // PEER-FS2: other players' swing sounds - on by default
   peerFootsteps: true,   // PEER-FS1: other players' footstep sounds - on by default
+  // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): how many other players an
+  // Oblivion Gate's court draws at once - the nearest, the party always (net/gateCrowd.js GATE_CROWD_TIERS; 0 everyone)
+  gateCrowd: GATE_CROWD_DEFAULT,
   nightCrickets: true,   // SNDREP1: the night crickets loop (SoundClips.AmbientCrickets) - on by default; off silences it
   distantHowl: true,     // SNDREP1: the distant howl (SoundClips.AmbientDistantHowl) - on by default; off silences it
   // WS1: `mwSheathing` (Weapon Sheathing on the third-person body) is

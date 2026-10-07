@@ -2332,6 +2332,58 @@ The relay stays **world141**, never deployed, re-hashed in place for T2's ring, 
 opening's end and the rhythm. The brain's law stays 5: each screen judges its own feet, so an older game fights the
 older ring until it reloads. Nothing changes in the account service.
 
+## 21. The court alone, its crowd thinned (GATE-CROWD, 2026-10-07)
+
+Mac: *"We need to not allow followers inside the oblivion gates, plus need some type of filter when there are too many
+people"*.
+
+**No companion in the court (GATE-ALONE).** A player's companions - the crew's hands ashore (CREW-COMPANIONS) and the
+sworn revenants (REVENANT-COMPANION) - walked into the court behind them, as through every other door: the companion
+layer (`scenes/crewAshore.js`) stands its party in whatever place the player is in, and the court is a dungeon. There
+they followed and fought nothing - the Warden's blows are judged against each screen's own feet, and the court is no
+world room, so no lane carried them to anyone else. Only their owner saw them: up to three more bodies over his
+telegraphs. Now:
+
+- The place the layer asks for (`scenes/world.js companionPlace`) is none in a gate's court, for the crew's layer and
+  the sworn's alike. The layer lifts every companion as the player steps in - a door's own lift, the health and the
+  spells carried - and stands none inside, however long. Out of the court (the way home, a death cast out, the
+  collapse) the next place stands them behind the player again, through their portals.
+- They stay the player's: the party, the slots, the sworn's loyalty and their rest are untouched. A sworn one called
+  from the roster in the court comes once the player is out.
+- The party panel draws no card for them in the court (`partyCompanions`).
+- The court says so once as a fighter steps in with any at their side - *"Your companions cannot follow you into the
+  Deadlands."* (`world/gateArena.js COURT_TEXT.noCompanions`, the refusals' shape) - once the step's fire has opened
+  (`courtAloneFrame`, in the gate's frame after the court's own): never through the door, under the fire or under a
+  window, and owed again in the next court.
+
+**The crowd thinned (GATE-CROWD).** A court holds as many challengers as come (`net/gateBrain.js` GATE_FIGHTERS_MAX),
+and forty round one boss were forty bodies, names, lights, spells and footsteps over his telegraphs. WB9h made the
+crowd's Morrowind bodies affordable; it did not make the fight readable. Now, in a gate's court, past the count on the
+Other players card - **Crowd in an Oblivion Gate**: the nearest 12 by default, the nearest 24, or everyone - only that
+many other players are drawn: every party mate, then the nearest across the floor (`net/gateCrowd.js crowdDrawn`). The
+rest stand nowhere on this screen - no body, sprite, name, light, aura, spell's flight or step - until they are among
+the nearest again.
+
+- HELD PLACES. The drawn are chosen again every frame, and a crowd milling at the edge of the count traded players in
+  and out every frame - a sprite built and a body handed over each time (WB9h's churn). A player drawn last frame keeps
+  the place until another stands GATE_CROWD_HOLD_M (4 m) nearer. Sixty frames of two players trading the twelfth place:
+  unheld, it changed hands every frame; held, never.
+- THE CUT is the online frame's one list of the players drawn (`visiblePeers`, through `createGateCrowd().cut`): after
+  the map's poses are taken off the whole list, before anything is drawn from it. A party mate is never cut, and counts
+  toward the number. A stored choice that is none of the three reads as twelve (`gateCrowdMax`).
+- Nothing of the fight is cut. The relay judges every blow; the boss, his host, the bar's count of challengers, the
+  damage chart, the spoils and the chat are the fight's. A spell cast at the crowd still finds a player not drawn - the
+  cast's targets are the room's (`peersNear`), not this screen's.
+- THE COURT ALONE. The street, a building and a dungeon hold duels, arena bouts and battles, where the player cut from
+  the screen could be the one fighting me. In a court nobody fights anybody but him, so the count is applied nowhere
+  else.
+
+Pinned: `test/gatecrowd.test.js` (9) - the law and its held places, the host's crowd, the online frame's cut (lifted and
+evaluated), the card, `companionPlace` (lifted and run), the companion layer through a court, the court's word (lifted);
+the party panel's cards in `test/auditwatchkit_net.test.js` (none in a court). Moved with it: the drawn list's pins in
+`test/invisnet.test.js` and `test/mwbody1.test.js`. Mutants `tools/mutants/gatecrowd.json` (38, all dead). No relay
+change, no account change. Not yet seen in a browser over a real court.
+
 ## Shipped
 
 **WB1 (2026-09-25) - the omen.** `net/gateLaw.js` (the schedule, the room's key and window, the rolls, the boss table,
@@ -2829,6 +2881,15 @@ day."). Main's SEAT1b: a gate claim carries its region and is the war-guild's in
 region and earns no influence, the rite alone being no kill. Main's siege tick runs before the rite's tell in a room's
 alarm. The patch notes ride the pull request (REL6). Merging deploys world151 and acct62, which drops connected players
 once.
+
+**GATE-CROWD (2026-10-07) - the court alone, its crowd thinned.** Section 21 above:
+- No companion steps into a gate's court: lifted at the step, health and spells carried, stood behind the player again
+  outside; no card for them in the court's party panel; the court says so once as a fighter steps in with any.
+- In the court, past the Other players card's count (12 by default, 24, or everyone) only the nearest other players are
+  drawn, the party always, the places held against one less than four metres nearer.
+- No relay or account change.
+- Pins `test/gatecrowd.test.js` (9), with auditwatchkit_net, invisnet and mwbody1 re-pinned; mutants
+  `tools/mutants/gatecrowd.json` (38).
 
 ## At sea - the sea serpent (SERPENT1, 2026-10-04)
 

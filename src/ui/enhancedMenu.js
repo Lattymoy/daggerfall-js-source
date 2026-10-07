@@ -124,6 +124,7 @@ import { uiSkin, SKIN_NAMES, isEnhanced } from '../systems/uiSkin.js';   // FD1:
 import { getPref, setPref, isOpen, setOpen } from '../systems/uiPrefs.js';
 import { TOUCH_BUTTON_SLOTS, touchButtonSlots, nextTouchButton, touchButtonChoices } from './touchButtons.js';   // TOUCH-BUTTONS: the corner's three slots
 import { DEFAULT_SERVER } from '../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
+import { GATE_CROWD_TIERS } from '../net/gateCrowd.js';   // GATE-CROWD: how many other players a gate's court draws
 import { replacementCount } from '../systems/musicReplacement.js';   // M-EXT: the packs card reports what the pick covers
 import { brandMark } from './brandMark.js';   // INTRO2: Mac's supplied logo, shared with the final splash
 import { soundReplacementCount } from '../systems/soundReplacer.js';   // SNDREP1: the sound pack's count
@@ -2381,6 +2382,10 @@ function peerSpritesCard() {
   c.append(prefRow('peerClassSprites', 'Animated sprite', 'On: the sprite above. Off: the paperdoll.', { home: true }));
   c.append(prefRow('peerAttackSounds', 'Attack sounds', 'On: hear other players\u2019 weapon swings. Off: silent, no matter how close.', { home: true }));   // PEER-FS1: the two peer-sound switches, beside the sprite one
   c.append(prefRow('peerFootsteps', 'Footstep sounds', 'On: hear other players\u2019 footsteps as they walk. Off: silent, no matter how close.', { home: true }));
+  // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): a crowded court, thinned
+  c.append(choiceRow('gateCrowd', 'Crowd in an Oblivion Gate',
+    'In a gate\u2019s court, only this many other players are drawn: the nearest, and your party always. The fight is the same either way.',
+    GATE_CROWD_TIERS.map((n) => [n, n ? `Nearest ${n}` : 'Everyone']), { home: true }));
   // SPELL-GIFT (2026-09-27, Tabitha: "Allow casting of buffs on players outside party"): the receiver's say
   c.append(prefRow('acceptStrangerSpells', 'Spells from strangers',
     'On: players outside your party can cast healing and protective spells on you - Heal, Regenerate, Cure, Fortify, '
