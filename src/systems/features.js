@@ -712,6 +712,36 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'realForests', initial: true, online: true }),
   }),
+  // VERGE1 (2026-10-07, Mac: "Making sure objects, like trees, avoid pathways and roads. Currently they slightly
+  // overlap"): THE VERGE - a wilderness flat stands only where nothing of it reaches over a road or a track: the disc of
+  // its widest picture, a Low Poly tree's crown among them, against the painted network (world/roadVerge.js). FORCED ON
+  // ONLINE: where the wild's flats stand is the room's ground - Logging's trees, the herbs, the veins. `?verges=off` the
+  // kill door, offline; scenes/shared.js roadVergesOn composes it.
+  Object.freeze({
+    id: 'road-verges',
+    group: 'world',
+    title: 'Clear roadsides',
+    note: 'Trees, bushes, rocks and herbs keep off the roads and tracks, and no branch hangs over them. Off lets them '
+      + 'grow up to the edge of the road, as Daggerfall does.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'roadVerges', initial: true, online: true }),
+  }),
+  // ECOTONE1 (2026-10-07, Mac: "Making it where bione transitions are insta t and instead fade and transition
+  // naturally into each other"): THE ECOTONE - where map pixels of two climates meet, the ground, the grass and the
+  // wild's flats follow one wandering, patchy border (world/ecotone.js) in place of the pixel's straight edge. FORCED ON
+  // ONLINE: the flats it moves are the room's ground, as the forests' are. `?ecotone=off` the kill door, offline;
+  // scenes/shared.js climateBlendOn composes it.
+  Object.freeze({
+    id: 'climate-blend',
+    group: 'world',
+    title: 'Blended climates',
+    note: 'Where two climates meet, their ground, grass and trees mix across a wide, uneven border instead of changing '
+      + 'along a straight line. Off changes them at a straight edge, as Daggerfall does.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'climateBlend', initial: true, online: true }),
+  }),
   // NEARBY-QUESTS (2026-10-04, Discord: "quests of the game you take from guilds and so on need to be near you on
   // overworld map"): a remote quest site is drawn near the player, within a reach that grows with level
   // (systems/quest/questReach.js; systems/quest/place.js reads it as each new quest picks its sites). The player's own

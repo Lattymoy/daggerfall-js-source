@@ -5,6 +5,7 @@ this section owns renderer specifics.
 
 Current (`src/render/`) - one bullet per module, pinned against the real
 directory by `test/audit18_bible_docs.test.js`:
+- `ecotoneGlsl.js` - ECOTONE1 BLENDED CLIMATES: the ground's share of its neighbours, one GLSL chunk in both terrain programs (renderer.js TERRAIN_FS and the lane's EL_TERRAIN_FS, called right after the tile's own sample) - the twin of `world/ecotone.js` term for term (the hash, the world lattices, the constants), the neighbours' tile sets on units 3-5 (`ECO_UNITS`), each neighbour's slot (`uEcoSide`, `uEcoCorner`) and the pixel's first world tile (`uEcoOrigin`); a pixel with no border is one uniform test. The section ECOTONE1 below
 - `deepWatersRender.js` - DW-C: Iliac Puddle No More's own passes (jet082's shaders, term for term): the SEAFLOOR (opaque, unlit, both faces - the depth band's sand/mid/deep ramp, the climate's texture and palette, the night's ambient boost, the scene tint while the camera is over the sea, the world fog, and the column's share of the top's alpha carried onto it), the SURFACE's top and underside (the top gone while the fog's presentation is under, the underside only then), and the DISTANCE FOG's sky share - a far-plane triangle, multiply then add, over the pixels no program fogs (the fog itself is `fogGlsl.js`'s `dwWaterFog`, in every world program); `03-World/Deep-Waters.md`
 - `oceanHolesRender.js` - OH-C: There's a Hole in the Bottom of the Ocean's pit, drawn beside the sea's passes and on their frame and column uniforms: three discs of the one 48-segment mesh on Unity's Unlit/Color (the flat colour under the world's fog, then the column's share and the sea's distance fog) - the pit's black and the surface's underside with the opaque floors, the surface's core after the sea's top - and the MIASMA, Standard in Fade mode with emission (the puff's alpha, the tint lit as the billboards take the day's light, fogged, no depth write), camera-facing and no larger than maxParticleSize of the view; every vertex input bound by `layout(location)`; `03-World/Ocean-Holes.md`. OH-E's abyss presentation is no pass of its own: it rides the dungeon frame (`scenes/worldModes.js`, `host.abyssPresentation`) - the water fog's colour and ceiling through the context's UnderwaterFog, the Trilight or flat ambient from the darkened dungeon ambient x DungeonAmbientLightScale, the Light spell's candle at half its range and colour, the player's torch left out of the frame's lights
 - `glRelease.js` - GL-LEAK (FIELD BUGS 2026-10-03, `01-Overview/Field-Bugs-2026-10-03.md`): the page's GL contexts let go as it goes - `loseGlContext` (WEBGL_lose_context's one door) and the seat each context's owner fills (`onPageGone`: the renderer, the held map's ink, the gate's veil, the intro), run by main.js's pagehide (`releaseGlContexts`); a leaf, so the entry's reach is unchanged
@@ -1323,6 +1324,133 @@ See `Dynamic-Skies.md` for DS1: BadLuckBurt and carademono's Dynamic Skies mod, 
 See `Seasons-Iliac-Bay.md` for SIB1: RosyTheRascal's Seasons of the Iliac Bay mod, ported 1:1 with permission - the woodland's autumn, spring and winter on the nature flats, its textures read from the player's own copy of the mod (2026-09-05).
 
 `EE9-Surface-Field-Design.md` is the surface field's design - snow that builds, deforms and melts, on the chunker's own grid - written before its code, per the arc's law.
+
+## ECOTONE1 - BLENDED CLIMATES: A BORDER, NOT A LINE (2026-10-07, a port departure)
+
+Mac: *"Making it where bione transitions are insta t and instead fade and
+transition naturally into each other"*.
+
+DFU decides a climate per map pixel (CLIMATE.PAK) and everything that
+follows from it is that pixel's to its edge: the ground's tile set (one
+`sampler2DArray` a terrain draw), the nature archive and how thick the
+trees stand, which tiles grow grass. So 819.2 m of temperate woods met
+desert, or a mountain's grey-green, along a ruler-straight line - and the
+woods' species changed along it too.
+
+**The law** (`world/ecotone.js`, the reason at its head). Every pixel edge
+has a SHARE: a point near it belongs partly to the pixel on either side,
+and the share is one function of where the point stands in the world, so
+the two pixels that draw the same point reckon it alike (four about a
+corner: each takes the product of its two shares).
+- The seam the shares cross at WANDERS: the edge moved by two octaves of
+  value noise, 48 m over 409.6 m bends and 16 m over a 51.2 m hem.
+- Across `ECOTONE.band` (96 m) either side of it the neighbour's chance
+  rises from none to whole, and a patch noise (51.2 m blots, 12.8 m ragged
+  rims) is held against the chance: the far climate comes in as islands
+  that grow and join toward the seam, each rim a few metres soft (`edge`
+  0.06). Two pictures faded into each other read as a smear; patches read
+  as ground, and from afar as a fade.
+- The patch noise is STRETCHED (x2 about a half) before it is held against
+  the chance. Two octaves sum to a hump - nine tenths of the land between
+  0.25 and 0.75 - so the first cut, unstretched over a 48 m band, showed
+  almost none of the neighbour until the seam itself: a ragged LINE, a few
+  metres wide (the probe's first shots). Stretched, the neighbour's share
+  of the land is about its chance across the whole band.
+- Past `ECOTONE_REACH` (160 m) of an edge a share is exactly whole, and a
+  seam with the same climate across it and one climate along the far row
+  is never asked (it moves no weight): only the seams that change
+  something cost anything.
+- The hash is integer on WORLD lattices whose cells divide a pixel's 128
+  tiles, so a pixel's origin is whole cells and the lattice index is exact
+  in GLSL's ints and in JS (`ecoOrigin`, rows counted from map row 512 so
+  every index is positive). Every integer of the chunk says `highp`
+  itself: a fragment stage's ints are mediump unless they say, a phone's
+  mediump int is sixteen bits, and the origin runs to 128,000.
+
+**The ground** - `render/ecotoneGlsl.js` in both terrain programs: after
+the tile's own `textureGrad`, the same record of each neighbour's set (every
+ground archive is the same 56 records, R9), turned and filtered as the
+fragment's own, weighted by the shares; the lane decodes its neighbours as
+it decodes its own (linear light), the classic program blends its display
+values. A 3x3 of pixels holds at most four ground families in a season, so
+three more sets suffice: on units 3-5, free in every terrain program (0 the
+pixel's set, 2 its tilemap, 8-15 the lane's and the cloud's).
+`renderer.drawTerrain`'s `eco` binds them (shadowed across a frame's border
+pixels, forgotten with the other texture shadows) and sets the slots and
+the origin; every other draw sets the one switch off, once a frame. The
+clip variant (FAR-CLIP1) is still the plain program and one line.
+
+**The host** - `scenes/world.js`: the build reads its 3x3 of climates
+(`climates3x3`, a neighbour off the map the pixel's own), loads each
+neighbour's ground set through the one tile-set home (`loadGroundSet`,
+moved out of the build whole - its text the pins read - so the pixel's own
+set and its neighbours' are uploaded, mipped, given the sharpness tier and
+learned for the grass one way) and HOLDS them on the pixel's own place
+(PLACE-LRU), and keeps the slots on the entry (`eco`, `ecoGround`); the
+ground queue draws it (`ecoDraw`, null while a set is missing - the pixel
+then draws its own set alone, as before).
+
+**The wild's flats** - the kernel (`world/terrainNature.js` `withEcotone`)
+gives each tile within reach of a differing edge to the climate that owns
+its middle (`ecotoneOwner` - the shares summed by climate, the pixel's own
+on a tie). The pixel's own tiles keep its own layout untouched (DFU's
+sequential scatter still walks every tile, so every flat it stands is
+DFU's); a neighbour's tile is laid by that climate's rule - its woods
+(FOREST1's dice are the world tile's, so between two wooded climates only
+the species change, never where a flat stands) or, for a desert, DFU's
+scatter law on the tile's own dice (`dfuTiles`: tileDraw 4 and 5, its
+corner, the pixel's elevation scale, the desert's quarter). Those flats
+carry their climate's summer archive; the host stands them in its season's
+set (`getNatureArchive`), and each is that climate's in every way a flat
+is: its batch sways (`floraSwayOf` takes the pixel's set of nature
+archives), its trees are Logging's (and a felled one's stump is its own
+climate's, `scenes/treeHost.js`), its Trees are cover's trunks, Low Poly
+Trees and Seasons of the Iliac Bay stand it by its own (archive, record).
+The cover's tree test now names each archive's summer set - the season's
+own number named none in winter, so a winter wood's trees were cover as
+flats; mended with it.
+
+**The grass** - `keep` and `ground` ask the ground archive that owns the
+blade's root (`borderGround`): its grass records, its puddles, its colour,
+so the field thins out into sand as the ground does.
+
+**Measured** - `tools/ecotoneProbe.mjs`, three synthetic tile sets (green
+woods, sand, a grey-green upland) on a 3x3 drawn through the game's own
+terrain programs on SwiftShader, shots in `tools/shots/ecotone-*.png`:
+across the woods-desert seam the desert's share of the ground is 0 at 110 m
+inside the woods, 0.01 at 100 m, 0.26 at 50 m, 0.55 at the edge, 0.85 at
+40 m past it and whole at 110 m - without the blend a step at the edge. No
+GL error on either lane; all four terrain programs (both lanes, plain and
+clip) compile.
+
+**The switch.** The Features row `climate-blend` ("Blended climates"), on
+by default on the enhanced skin and forced on online (the border moves the
+room's flats - `scenes/shared.js` `climateBlendOn`, read once as the world
+mounts); `?ecotone=off` the kill door, offline. The classic skin keeps
+DFU's straight edge.
+
+**The four hosts.** `scenes/world.js` - wired (above).
+`scenes/exterior.js` - draws one location's own pixel and no neighbour:
+no border to blend (its draw hands no `eco`). `scenes/worldModes.js` and
+`scenes/dungeonContext.js` - no terrain.
+
+**Not covered.** The enhanced WATER surface still takes its body colour
+from its own pixel's set (record 0), so open water two pixels off a coast
+(where CLIMATE.PAK's coastal dilation ends) keeps a straight colour seam.
+The sky, the weather and the footsteps change with the player's pixel, as
+before (the enhanced sky reads no climate; the classic panorama does). The
+far province ring already interpolates its climate colours.
+
+Pinned in `test/ecotone1.test.js` (the law's continuity across edges and
+corners and its measured shape, the GLSL run through `test/glsl.mjs`
+against the JS under two neighbourhoods, the draw's binds on a recording GL,
+the kernel's border tiles, the switch and the host); mutants in
+`tools/mutants/ecotone1.json` (32: 31 dead, 1 recorded equivalent - an
+exact tie of two climates' shares, which smoothstepped noise never makes).
+Not verified here: no ARENA2, so the real world's borders were not walked;
+the ground cost on a real GPU (an extra fetch per neighbour set only inside
+the band) was not measured. A first rendered path: the owner's eyes before
+merge (Incident-2026-09-01).
 
 ## DUNGEON-SEAMS - THE HOLES IN DAGGERFALL'S OWN DUNGEON MODELS, CLOSED (2026-09-26)
 

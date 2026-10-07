@@ -1203,8 +1203,10 @@ test('AUDIT-AIR1: the shadow reset is ONE HOME - six copies of a rule is five ch
   // The bug WAS the sixth copy that never got written. A source pin, so
   // a seventh seam cannot be added with its own hand-copied block.
   const src = readFileSync(new URL('../src/render/renderer.js', import.meta.url), 'utf8');
-  assert.match(src, /_forgetTextureShadows\(\) \{\s*\n\s*this\._tex1Bound = null;\s*\n\s*this\._tex0Bound = null; this\._activeUnit = null;\s*\n\s*this\._sq = \{\};\s*\n\s*this\._tArrayTex = null;\s*\n\s*this\._tTileSize = null;\s*\n(?:\s*\/\/[^\n]*\n)*\s*this\._frameStamp\+\+;\s*\n\s*\}/,
-    'the one home exists and clears all six (LA-COST1: and forgets the four frame blocks, whose lane images sit on units too)');
+  // PIN MOVED (ECOTONE1, 2026-10-07): the terrain's neighbour sets on units 3-5 and the border switch are shadows the
+  // same seams lose, so the one home forgets them too, after the tile size
+  assert.match(src, /_forgetTextureShadows\(\) \{\s*\n\s*this\._tex1Bound = null;\s*\n\s*this\._tex0Bound = null; this\._activeUnit = null;\s*\n\s*this\._sq = \{\};\s*\n\s*this\._tArrayTex = null;\s*\n\s*this\._tTileSize = null;\s*\n\s*\(this\._tEcoTex \?\?= \[null, null, null\]\)\.fill\(null\);[^\n]*\n\s*this\._tEcoOn = null;[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*this\._frameStamp\+\+;\s*\n\s*\}/,
+    'the one home exists and clears all six (LA-COST1: and forgets the four frame blocks, whose lane images sit on units too; ECOTONE1: and the neighbour sets)');
   // nobody clears them by hand any more
   const decl = src.indexOf('_forgetTextureShadows() {');
   const after = src.slice(src.indexOf('\n  }', decl));

@@ -948,7 +948,8 @@ test('LPT1 the hosts: world.js and exterior.js stand the trees behind the mod\'s
     assert.match(src.slice(gibs, wind), /lowPolyTrees/, `${name}: the frame's trees between the gibs and the wind`);
   }
   assert.match(w, /!seasons\.installing && seasons\.lookup\(a, 1\)/, 'the streaming host paints nothing seasonal mid-install (AUDIT LPT B3)');
-  assert.match(w, /if \(lowPolyTrees\) wildFlats\.add\(`\$\{natureArchive\}_\$\{f\.record\}#\$\{i\}`\);/, 'the terrain layout\'s flats marked wild');
+  // PIN MOVED (ECOTONE1, 2026-10-07): by the archive the flat is drawn in - a border's flat is a neighbour climate's
+  assert.match(w, /if \(lowPolyTrees\) wildFlats\.add\(`\$\{archive\}_\$\{f\.record\}#\$\{i\}`\);/, 'the terrain layout\'s flats marked wild');
   assert.match(w, /wild\[i\] = wildFlats\.has\(`\$\{k\}#\$\{i\}`\) \? 1 : 0;\n\s+scales\[i\] = lptVariety\(px, py, c\[0\], c\[2\], !wild\[i\]\)\.scale \/ LPT_SCALE_MAX;/);
   assert.match(x, /buildTreeSet\(0, 0, lptGroups\)/, 'the location host: one set, none of it wild');
   assert.match(x, /lptGroups\.push\(\{ h: lptHandles\.length - 1, centers, wild: null \}\);/);
@@ -968,7 +969,8 @@ test('LPT1 the hosts: world.js and exterior.js stand the trees behind the mod\'s
   assert.match(fr, /set\.ox = p\._t\[0\]; set\.oy = p\._t\[1\]; set\.oz = p\._t\[2\];/, 'each set at its pixel\'s translation this frame');
   assert.match(fr, /_lptOpts\.stamp = FOREST_STAMP\.n;/, 'a felling regathers');
   for (const [name, src] of [['world.js', w], ['exterior.js', x]]) {
-    assert.match(src, /batch\.sway = floraSwayOf\(archive, natureArchive, plain\.h\);/, `${name}: the flat's sway share`);
+    // PIN MOVED (ECOTONE1, 2026-10-07): the streaming host's pixel asks by its nature set (its climate's and a border's)
+    assert.match(src, name === 'world.js' ? /batch\.sway = floraSwayOf\(archive, natureSet, plain\.h\);/ : /batch\.sway = floraSwayOf\(archive, natureArchive, plain\.h\);/, `${name}: the flat's sway share`);
     assert.match(src, /coverProxies\(c, plain, \{ tree:/, `${name}: the flat's cover (AUDIT LPT D3)`);
   }
   assert.ok(LPT_NEAR_M + LPT_BAND_M + LPT_REGATHER_M < 819.2, 'the 3x3 reaches every tree in reach');
