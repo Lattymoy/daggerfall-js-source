@@ -4,7 +4,9 @@
 // written) - and TITLE-R had closed it at 2026-09-23T00:00Z, so the accounts
 // registered since held nothing. The grant is the cutoff moved to the end of
 // the day it was asked, 2026-09-25T00:00Z: every account registered by then
-// holds and may wear it, and past it the title is closed again.
+// holds and may wear it, and past it the title is closed again. FOUNDER5
+// (2026-10-07, PIN MOVED): the end of the 24th on every clock, 2026-09-25T12:00Z
+// (founder5.test.js) - later, so every account this pinned still holds it.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { titlesHeld, titleWorn, equipRefusal, FOUNDER_UNTIL } from '../server-account/src/titles.js';
@@ -15,10 +17,11 @@ test('FOUNDER2: every account registered by the end of 2026-09-24 holds Founder,
   assert.deepEqual(titlesHeld(since, {}), ['founder'], 'registered after TITLE-R closed it: granted now');
   assert.equal(equipRefusal('founder', since, {}), null, 'and it may be worn');
   assert.equal(titleWorn({ ...since, title: 'founder' }, {}), 'founder');
-  const lastSecond = { handle: 'Late', registered_at: Date.UTC(2026, 8, 25) / 1000 };
+  const lastSecond = { handle: 'Late', registered_at: Date.UTC(2026, 8, 25, 12) / 1000 };   // FOUNDER5 (PIN MOVED): 00:00Z then
   assert.deepEqual(titlesHeld(lastSecond, {}), ['founder'], 'the cutoff second is inside');
-  assert.deepEqual(titlesHeld({ handle: 'After', registered_at: Date.UTC(2026, 8, 25) / 1000 + 1 }, {}), [], 'a second past: closed again');
-  assert.equal(FOUNDER_UNTIL, Date.UTC(2026, 8, 25) / 1000);
+  assert.deepEqual(titlesHeld({ handle: 'After', registered_at: Date.UTC(2026, 8, 25, 12) / 1000 + 1 }, {}), [], 'a second past: closed again');
+  assert.equal(FOUNDER_UNTIL, Date.UTC(2026, 8, 25, 12) / 1000);
   assert.deepEqual(titlesHeld({ handle: 'Old', registered_at: 1 }, {}), ['founder'], 'the first founders keep it');
+  assert.deepEqual(titlesHeld({ handle: 'Eve', registered_at: Date.UTC(2026, 8, 25) / 1000 }, {}), ['founder'], 'FOUNDER2\'s own last second is still inside');
   assert.deepEqual(titlesHeld({ created_at: 1, registered_at: null }, {}), [], 'a guest still holds none');
 });

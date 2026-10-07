@@ -76,7 +76,7 @@ mode = "smart"
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct91"
+ACCOUNT_VERSION = "acct92"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -126,6 +126,16 @@ DEVELOPER_HANDLES = "Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG"
 # ingame"): the second, with the same shield and commands. MOD3 (same
 # day, Mac: "Also add Starempire42 as a moderator"): the third.
 MODERATOR_HANDLES = "Asynian,tabbyvish,Starempire42"
+# FOUNDER5 (2026-10-07, Mac: "Can we grant every account before sept 25th
+# the founder title"): THE FOUNDERS BY NAME. Founder is held by every
+# registered account that first played by the end of 24 September on any
+# clock (titles.js FOUNDER_UNTIL), and the service can only know that from
+# what it recorded. A player who played before then where it recorded
+# nothing - a guest's storage cleared, a character never saved to the
+# cloud - is named here: comma-separated handles, case-insensitive, the
+# same as the lines above. It only adds: a founder by the date holds the
+# title whether listed or not. Empty: nobody by name yet.
+FOUNDER_HANDLES = ""
 # TITLE-N (2026-09-24, Mac): the Dungeon Master - the orange title, the
 # die beside the name, and /dm's orange line (the relay reads the right
 # off the `dm` glyph in the signed token, as /red reads `dev`). "This
