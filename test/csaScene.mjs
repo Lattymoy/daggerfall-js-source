@@ -15,6 +15,10 @@ const GALLEON = JSON.parse(readFileSync(new URL('../src/assets/galleon/galleon.j
 const ship = (f) => JSON.parse(readFileSync(new URL(`../src/assets/ships/${f}`, import.meta.url), 'utf8'));
 export const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json'), galleon: GALLEON, carrack: ship('carrack.json'), largeBoat: ship('largeBoat.json') });
 export const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }) });
+/** SHIPS-2: the mod's own Carrack and Large Boat under the galleon - hulls 4 and 1 as the game stands them when the new
+ *  ships' models do not load (test/navalSea.mjs modShipsPool's) - and a context over them. */
+export const MOD_MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json'), galleon: GALLEON });
+export const modCtxFor = (player) => ({ ...ctxFor(player), models: MOD_MODELS });
 
 export function terrain(x, y, { tile = 0 } = {}) {
   return { mapPixelX: x, mapPixelY: y, position: [(x - 10) * 819.2, 0, -(y - 20) * 819.2], tileMap: new Uint8Array(128 * 128).fill(tile << 2), sampleHeight: () => 20 };
@@ -37,7 +41,8 @@ export function scene(opts = {}) {
   };
   let timeScale = opts.timeScale ?? 1;
   const deps = {
-    pool: { models: MODELS, ready: () => true, spawnNow: (boat, p) => { spawnBoat(boat, ctxFor(p)); return boat; }, remove: () => {} },
+    // SHIPS-2: `opts.mod` - the mod's own Carrack and Large Boat (MOD_MODELS), as the game stands them when the new ships' models do not load
+    pool: { models: opts.mod ? MOD_MODELS : MODELS, ready: () => true, spawnNow: (boat, p) => { spawnBoat(boat, (opts.mod ? modCtxFor : ctxFor)(p)); return boat; }, remove: () => {} },
     player: () => ({ position: [...player.position], rotation: [0, Math.sin((player.yaw * Math.PI / 180) / 2), 0, Math.cos((player.yaw * Math.PI / 180) / 2)] }),
     camera: () => ({ position: [0, 50, 0], forward: [0, -1, 0] }),
     currentMapPixel: () => ({ X: 10, Y: world.pixelY }),

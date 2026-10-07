@@ -12,9 +12,9 @@ import {
   QUAY_GAP, QUAY_WIDTH, QUAY_DECK_UP, QUAY_ENDS, PILE_DEPTH, JETTY_MAX, JETTY_LAND, JETTY_WIDTH, STEP_M, RAMP_SLOPE, CARGO_MAX,
   DOCK_REACH_M, DOCK_ANGLE, FAST_M, FAST_DEG, WARP_SPEED, LANTERN_UP, LANTERN_ARM, DOCK_WAY, GANGWAY_SLOPE, GANGWAY_CLEAR, GANGWAY_BACK,
 } from '../src/systems/naval/quays.js';
-import { findHarbour, hullSize, alongside, offsetHarbour, BERTH_HULL } from '../src/systems/naval/shipLife.js';
+import { findHarbour, hullSize, berthSize, alongside, offsetHarbour, BERTH_HULL } from '../src/systems/naval/shipLife.js';
 import { quatOfYaw } from '../src/systems/naval/navalAI.js';
-import { setGalleonStanding } from '../src/systems/naval/navalShips.js';   // GALLEON-HOLDINGS: the mod's galleon as wide as the Carrack
+import { setGalleonStanding, setShipStanding } from '../src/systems/naval/navalShips.js';   // GALLEON-HOLDINGS: the mod's galleon as wide as the Carrack
 import { outOfDeck } from '../src/systems/naval/navalDeck.js';
 import { buildQuayModel, buildGangwayModel } from '../src/world/quayModel.js';
 const JETTY_STEP_T = 1;   // quays.js JETTY_STEP: the shore walked a metre at a time
@@ -36,7 +36,9 @@ const plan0 = (o = {}) => planQuay({ berth: HARBOUR.berths[0], hull: HARBOUR.hul
 
 test('QUAYS THE QUAY ALONG HER BERTH: in the berth\'s frame (+x to the land, +z along the shore), its face her widest and QUAY_GAP off her, QUAY_WIDTH deep, QUAY_ENDS past her bow and her stern, its deck QUAY_DECK_UP over the sea\'s top on piles down to the bed (PILE_DEPTH at most) wherever the ground is under it; the plan unlaid (null) while any ground it reads is not built', () => {
   assert.ok(HARBOUR && HARBOUR.berths.length >= 3, 'the coast\'s harbour');
-  const hw = hullSize(BERTH_HULL).halfWidth;
+  // SHIPS-2: the berth's hull its template's (shipLife.js berthSize - the mod's Carrack: every berth, quay and footprint
+  // as it stood; Mac's carrack lies in toward it as any narrower hull)
+  const hw = berthSize(BERTH_HULL).halfWidth;
   for (const [i, b] of HARBOUR.berths.entries()) {
     const p = planQuay({ berth: b, hull: HARBOUR.hull, key: 'port:1', index: i, seaY: SEA, groundAt: groundOf() });
     assert.ok(p, `berth ${i} laid`);
@@ -47,7 +49,7 @@ test('QUAYS THE QUAY ALONG HER BERTH: in the berth\'s frame (+x to the land, +z 
     assert.ok(Math.abs(back[0] - 3.5) < 1e-9 && Math.abs(back[1] + 7.25) < 1e-9, 'the frame and the scene, both ways');
     assert.equal(p.quay.x0, hw + QUAY_GAP, 'the face her widest and the gap off her');
     assert.equal(p.quay.x1, hw + QUAY_GAP + QUAY_WIDTH);
-    const s = hullSize(BERTH_HULL);
+    const s = berthSize(BERTH_HULL);
     assert.ok(Math.abs((p.quay.z1 - p.quay.z0) - (s.length + 2 * QUAY_ENDS)) < 1e-9, 'past her bow and her stern');
     // her bow along the frame's +z or its -z - the quay covers her either way she lies
     const bow = quayToScene(f, 0, f.zSign * s.bowZ), bowFromBerth = [b.pos[0] + Math.sin(b.yaw) * s.bowZ, b.pos[1] + Math.cos(b.yaw) * s.bowZ];
@@ -167,20 +169,25 @@ test('QUAYS THE MODEL: the plan built in classic textures - the ship\'s own plan
 
 test('QUAYS ALONGSIDE: every hull lies with her side QUAY_GAP off the quay\'s face - the Carrack the berth sounds for at its point, a narrower hull in toward the quay by the difference, the galley out from it', () => {
   const b = HARBOUR.berths[0];
-  const face = (BERTH_HULL === HARBOUR.hull ? hullSize(BERTH_HULL).halfWidth : 0) + QUAY_GAP;
+  const face = (BERTH_HULL === HARBOUR.hull ? berthSize(BERTH_HULL).halfWidth : 0) + QUAY_GAP;
   for (const hull of [0, 1, 2, 3, 4]) {
     const at = alongside(b, hull, HARBOUR.hull);
     const toFace = (b.pos[0] - b.normal[0] * face - at[0]) * -b.normal[0] + (b.pos[1] - b.normal[1] * face - at[1]) * -b.normal[1];
     assert.ok(Math.abs(toFace - (hullSize(hull).halfWidth + QUAY_GAP)) < 1e-9, `hull ${hull}: her side the gap off the face`);
   }
-  assert.deepEqual(alongside(b, 4, HARBOUR.hull), b.pos, 'the Carrack at the berth\'s point');
+  // PIN MOVED (SHIPS-2, 2026-10-07): the berth sounded for the mod's Carrack (berthSize's template, 8.43 m a side) - it
+  // lies at its point where it stands in; Mac's carrack, 6.7 m a side, 1.73 m in toward the quay from it
+  const at4 = alongside(b, 4, HARBOUR.hull);
+  assert.ok(Math.abs(Math.hypot(at4[0] - b.pos[0], at4[1] - b.pos[1]) - (berthSize(4).halfWidth - hullSize(4).halfWidth)) < 1e-9 && Math.abs(berthSize(4).halfWidth - hullSize(4).halfWidth - 1.73) < 1e-9, 'Mac\'s carrack 1.73 m in');
+  setShipStanding(4, false);
+  try { assert.deepEqual(alongside(b, 4, HARBOUR.hull), b.pos, 'the mod\'s Carrack at the berth\'s point'); } finally { setShipStanding(4, true); }
   // PIN MOVED (GALLEON-HOLDINGS): the Small Ship is Mac's galleon, 5.86 m a side to the Carrack's 8.43 - she lies 2.57 m in
   // toward the quay from the berth's point; the mod's galleon, as wide as the Carrack, lies at it where she stands in
   const at2 = alongside(b, 2);
   assert.ok(Math.abs(Math.hypot(at2[0] - b.pos[0], at2[1] - b.pos[1]) - 2.57) < 1e-9, 'Mac\'s galleon 2.57 m in');
   setGalleonStanding(false);
   try { assert.deepEqual(alongside(b, 2), b.pos, 'the mod\'s galleon as wide'); } finally { setGalleonStanding(true); }
-  assert.deepEqual(alongside(b, 4, undefined), b.pos, 'a harbour with no hull is BERTH_HULL\'s');
+  assert.deepEqual(alongside(b, 4, undefined), at4, 'a harbour with no hull is BERTH_HULL\'s');
 });
 
 test('QUAYS DOCKING\'S LAW: the berth her alongside place lies within DOCK_REACH_M of, her bow within DOCK_ANGLE of its line either way, the nearest, a taken one passed over; made fast within FAST_M and FAST_DEG; warped in at DOCK_EASE, never faster than WARP_SPEED, her heading brought round with her', () => {

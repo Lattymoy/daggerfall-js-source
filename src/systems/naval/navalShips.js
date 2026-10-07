@@ -219,7 +219,7 @@ export const HULL_BUILDS = Object.freeze([
   // the other new ship model"): hull 4 is Mac's carrack now (world/carrackModel.js) and every number here is hers, off
   // her own model (test/ships2_carrack.test.js pins each to it), as hull 2's are the galleon's: a gun at each of her ten
   // gunports, its muzzle 9 cm outside her planking in the port - her ports 3.07 to 4.06 m over the sea, her guns on
-  // platforms a step (0.38 m) over her gun deck (1.9576), their axis 0.43 m over the sills - two chasers on swivels on her bow's
+  // platforms a step (0.38 m) over her gun deck's 1.9576 m, their axis 0.43 m over the sills - two chasers on swivels on her bow's
   // deck, the barrels over her quarter rail at her stern. Her box is her hull's, her houses' and her quarter rail's
   // MeshCollider's bounds (her stem's head, her stern rail, her knuckle's half beam, her keel, the aft house's ridge);
   // her deck her main deck, her half beam at it inside her rail's cap. Her rig is each of her five sails as it hangs
