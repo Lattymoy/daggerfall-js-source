@@ -110,22 +110,23 @@ test('CARDS2b the peer\'s seat: the same request at its drawn feet and facing, k
   assert.equal(peerCamera({ ...moving, st: 16 }, [0, 0, 0], 2).move.forward, 0, 'a sitter arriving at the chair does not walk');
 });
 
-test('CARDS2b by source: the body at the seat, the request to the rig, the sender, a hit and Escape', () => {
+test('CARDS2b by source: the pose the seat says, the request to the peers\' rigs, a hit and Escape', () => {
   const wm = read('src/scenes/worldModes.js');
   const has = (src, s, why) => assert.ok(src.includes(s), why ?? s);
-  has(wm, 'mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: cardSeat ? cardSeat.feet : player.bodyFeetAt(), yaw: cardSeat ? cardSeat.yaw : player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });', 'the interior body drawn at the seat');
-  has(wm, '      seat: cardSeat?.rig ?? null }),', 'the rig handed the seat');
-  has(wm, "    cardSeat = { table: i, seat: k, eye: st.eye.slice(), feet: st.feet.slice(), yaw: st.yaw, top: st.top, rig: seatRigInput(st.feet, st.yaw, st.top) };");
+  has(wm, "    cardSeat = { table: i, seat: k, eye: st.eye.slice(), feet: st.feet.slice(), yaw: st.yaw, top: st.top };");
   has(wm, "  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before) standFromCardTable(); });", 'a hit stands you up');
-  has(wm, '    togglePause(doorOpts = {}) {\n      if (cardSeat && !doorOpts.at) { standFromCardTable(); return; }', 'Escape stands you up, first');
+  const esc = wm.indexOf("    if (mode === 'interior' && cardSeat && e.code === 'Escape' && !interiorKeyCtx.uiOverlayActive) { standFromCardTable(); e.preventDefault(); return; }");
+  assert.ok(esc > 0 && esc < wm.indexOf('    // U43: THE ONE DISPATCH.'), 'Escape stands you up, spent above the one dispatch');
   has(wm, '    seatPose: () => (cardSeat ? { feet: cardSeat.feet, yaw: cardSeat.yaw, st: seatTopByte(cardSeat.top) } : null),');
   const arm = read('src/combat/fpArm.js');
-  has(arm, '            climb: thirdClimb(climbWorld, cam) ?? thirdSeat(cam),   // CLIMB6; CARDS2b: or the seat');
+  has(arm, '    if (!(cw && cw.w > 0)) { climbLast = null; return thirdSeat(cam); }', 'the seat rides the climb\'s slot when no climb holds the body');
   has(arm, '    return climbRequestToRig(s.req, { feet: s.origin, yaw: s.yaw, unitsPerMetre: MW_UNITS_PER_METER, weight: rs.weight, height: rs.height });');
   const w = read('src/scenes/world.js');
   has(w, "    if (seated) { const w = sceneToOnline(seated.feet); pose.x = w[0]; pose.y = w[1]; pose.z = w[2]; pose.yaw = seated.yaw; }", 'the pose is the seat\'s, in the room\'s frame');
-  assert.ok(w.indexOf('    const seated = modes?.seatPose?.() ?? null;') > w.indexOf('    sceneToOnline = nativeFrame ? campToWire'), 'after the frame is known');
-  has(w, '      st: seated?.st,   // CARDS2b');
+  const at = w.indexOf('    const seated = modes?.seatPose?.() ?? null;');
+  assert.ok(at > 0 && at > w.indexOf('    sceneToOnline = nativeFrame ? campToWire'), 'after the frame is known');
+  const st = w.indexOf('    if (seated) arm.st = seated.st;');
+  assert.ok(st > 0 && st > w.indexOf('      ...climbPoseOf(player),   // CLIMB5:') && st < w.indexOf('    else online.sendPose({ ...pose, ...arm, ...poseFx() });'), 'the seat byte on the arm, before it is sent');
   const pb = read('src/net/peerBodies.js');
   has(pb, '    b.cam.seat = peer.shown.st ? seatFor(b, f, b.yaw, peer.shown.st) : null;', 'the peer\'s body seated at its drawn feet and facing');
 });

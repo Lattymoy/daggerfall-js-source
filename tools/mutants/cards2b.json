@@ -207,24 +207,6 @@
     ]
   },
   {
-    "name": "SB-host-body-at-capsule",
-    "file": "src/scenes/worldModes.js",
-    "old": "feet: cardSeat ? cardSeat.feet : player.bodyFeetAt(), yaw: cardSeat ? cardSeat.yaw : player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
-    "new": "feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
-    "tests": [
-      "test/cards2b_seated.test.js"
-    ]
-  },
-  {
-    "name": "SB-host-rig-unseated",
-    "file": "src/scenes/worldModes.js",
-    "old": "      seat: cardSeat?.rig ?? null }),",
-    "new": "      seat: null }),",
-    "tests": [
-      "test/cards2b_seated.test.js"
-    ]
-  },
-  {
     "name": "SB-host-hit-sits-on",
     "file": "src/scenes/worldModes.js",
     "old": "  registerPlayerHurtListener('cards-seat', (_e, hurt) => { if (cardSeat && hurt.after < hurt.before) standFromCardTable(); });",
@@ -236,7 +218,7 @@
   {
     "name": "SB-host-escape-pauses",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (cardSeat && !doorOpts.at) { standFromCardTable(); return; }",
+    "old": "    if (mode === 'interior' && cardSeat && e.code === 'Escape' && !interiorKeyCtx.uiOverlayActive) { standFromCardTable(); e.preventDefault(); return; }",
     "new": "",
     "tests": [
       "test/cards2b_seated.test.js"
@@ -254,8 +236,8 @@
   {
     "name": "SB-arm-no-seat",
     "file": "src/combat/fpArm.js",
-    "old": "            climb: thirdClimb(climbWorld, cam) ?? thirdSeat(cam),",
-    "new": "            climb: thirdClimb(climbWorld, cam),",
+    "old": "    if (!(cw && cw.w > 0)) { climbLast = null; return thirdSeat(cam); }",
+    "new": "    if (!(cw && cw.w > 0)) { climbLast = null; return null; }",
     "tests": [
       "test/cards2b_seated.test.js"
     ]
@@ -272,8 +254,8 @@
   {
     "name": "SB-sender-no-st",
     "file": "src/scenes/world.js",
-    "old": "      st: seated?.st,   // CARDS2b",
-    "new": "      // CARDS2b",
+    "old": "    if (seated) arm.st = seated.st;",
+    "new": "    // CARDS2b",
     "tests": [
       "test/cards2b_seated.test.js"
     ]

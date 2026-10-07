@@ -204,7 +204,7 @@ import { preloadListPickerArt } from '../ui/listPicker.js';
 import { getTitle } from '../systems/guilds.js';
 import { getDivine, DIVINES } from '../systems/guildVariants.js';
 import { cardTableSeats, nearestFreeSeat, seatFloorOk, leavesSeat, SEAT_FLOOR_PROBE } from '../world/cardTables.js';   // CARDS2: the tavern's card table and its seats
-import { seatRigInput, seatTopByte } from '../player/seatPose.js';   // CARDS2b: the seated body
+import { seatTopByte } from '../player/seatPose.js';   // CARDS2b: the seat on the pose
 import { registerPlayerHurtListener } from '../characters/playerEntity.js';   // CARDS2b: a hit stands you up
 import { BUILDING_TYPES, isResidence, isTavern } from '../world/buildingNames.js';   // ROAD-B B4: IsTavern joins IsResidence at the door latch
 import { getInteractionMode, setInteractionMode } from '../player/interactionMode.js';   // R1: PlayerActivate.currentMode, the one home
@@ -460,12 +460,13 @@ export function createWorldModes(host) {
   // to a seated eye looking at the table's middle and the view stays first person. The body is given nothing to walk
   // with: whatever would move it - a press, a move key, a jump, the stick, the autorun latch - stands them up first,
   // and the motor runs on unheld (gravity and the crouch edge stay DFU's). The room's end empties the seat.
-  // CARDS2b: the body is drawn AT the seat, facing the table, posed seated (player/seatPose.js through the climb rig's
-  // solver), and the pose the others read says so (`modes.seatPose`, the wire's `st`); the capsule stays where it
-  // stood - a chair is no floor to stand a capsule in. A hit or Escape stands you up too.
+  // CARDS2b: the pose the others read is the SEAT's - its feet, its facing, and the wire's `st` (`modes.seatPose`) - so
+  // their Morrowind bodies draw this player seated (player/seatPose.js through the climb rig's solver); the seat's own
+  // view stays first person (the design's fixed seat view), so this host draws no seated body of its own, and the
+  // capsule stays where it stood - a chair is no floor to stand a capsule in. A hit or Escape stands you up too.
   // THE FOUR HOSTS: this host only. A tavern is an interior; exterior.js, world.js and dungeonContext.js stand no
   // tavern table, and the ?interior viewer (interior.js) has no body to seat.
-  let cardSeat = null;   // { table, seat, eye, feet, yaw, top, rig } while seated
+  let cardSeat = null;   // { table, seat, eye, feet, yaw, top } while seated
   const inTavern = () => isTavern(interiorBuilding?.buildingType ?? BUILDING_TYPES.None);
   /** The host's probe for cardTableSeats: nothing of the room between the table's middle and the seat's eye, and
    *  something to sit over under it. */
@@ -486,7 +487,7 @@ export function createWorldModes(host) {
     const k = nearestFreeSeat(seats, player.pos[0], player.pos[2]);
     if (k < 0) return;
     const st = seats[k];
-    cardSeat = { table: i, seat: k, eye: st.eye.slice(), feet: st.feet.slice(), yaw: st.yaw, top: st.top, rig: seatRigInput(st.feet, st.yaw, st.top) };
+    cardSeat = { table: i, seat: k, eye: st.eye.slice(), feet: st.feet.slice(), yaw: st.yaw, top: st.top };
     cam.yaw = seats[k].yaw;
     cam.pitch = seats[k].pitch;
     say('You take a seat at the card table.');
@@ -1017,8 +1018,7 @@ export function createWorldModes(host) {
     camera: () => ({ pos: player.eyeAt(), yaw: cam.yaw, pitch: cam.pitch, sneaking: !!player.isSneaking, feet: player.pos, climbing: !!(player.climb?.isClimbing || player.mantling || player.onWall),   // HT1
       bob: [0, player.bobOffset ? player.bobOffset[1] : 0],   // IG1: the bob's vertical feeds the first-person offset
       move: motionBagOf(player),   // MW-D26: the movement-settings vector, the reference's own selection source; MW-D39 added the jump-state inputs; WW2: the one bag (a partial copy left the bob's idle gate unsent)
-      climb: climbRigInput(player, cam.yaw),   // CLIMB6: the climb's snapshot - the body's limbs on the stone (player/climbPose.js)
-      seat: cardSeat?.rig ?? null }),   // CARDS2b: the seated body's request (player/seatPose.js) - fpArm's thirdSeat
+      climb: climbRigInput(player, cam.yaw) }),   // CLIMB6: the climb's snapshot - the body's limbs on the stone (player/climbPose.js)
     say,
   });
   // C13: the interior arrow flights (collider late-resolved - each
@@ -9278,12 +9278,13 @@ export function createWorldModes(host) {
     // MW-D25: the modal hosts ride the same Morrowind camera machine as
     // the walk hosts - one eye law, this context's own collider.
     const mwv = mwViewFrame({
-      fpEye: cam.pos, feet: cardSeat ? cardSeat.feet : player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,   // CARDS2b: the third person follows the seated body
+      fpEye: cam.pos, feet: player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,
       dt, riding: !!player.riding,   // AUDIT-EOTB F3/F4: the host's own clock, and the one state only it has
       raycast: (o, d, m) => player.collider?.raycast?.(o, d, m) ?? null,
       spherecast: (o, r, d, m) => { const h = player.collider?.sphereCast?.(o, r, d, m)?.dist; return Number.isFinite(h) ? h : null; },   // MAC-A: castSphere's seam beside the ray - the camera's two obstacle guards are sphere casts (camera.cpp:186, :200)
     });
     if (decorTool.flying()) mwv.eye = cam.pos;   // DECOR1d: the free camera looks from its own eye, never over the body's shoulder
+    if (cardSeat) mwv.eye = cam.pos;   // CARDS2: seated, the seat's own view - first person (Tavern-Cards.md section 2)
     const view = betterAmbience.view(lookAt(mwv.eye, [mwv.eye[0] + fwd[0], mwv.eye[1] + fwd[1], mwv.eye[2] + fwd[2]], [0, 1, 0]));   // BA1: the shaker sits between the follower and the camera
     const aimView = view.slice();   // AUDIT CLIMB-ARC F10: the view the player aims with, before the climb's feel
     host.climbFeel?.view(view, !decorTool.flying() && !mwv.thirdPerson);   // CLIMB4: the climb's pitch, roll and eye - first person, never the decorator's free camera
@@ -9489,7 +9490,7 @@ export function createWorldModes(host) {
     renderer.setClearColor(INTERIOR_CLEAR);   // REVIEW 2026-09-05 (PR #55 review): the world-hosted dungeon/interior frame is THIS one - the host's own setClearColor sits after its `modes.frame` return
     renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame
     renderer.beginFrame(proj, view, INTERIOR_LIGHT_DIR, WORLD_FRAME);   // AUDIT-EL F5: a WORLD frame - the lane replays its records for this one
-    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: cardSeat ? cardSeat.feet : player.bodyFeetAt(), yaw: cardSeat ? cardSeat.yaw : player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones; CARDS2b: seated, at the seat facing the table
+    mwViewDrawBody(canvas, { proj, view, eye: mwv.eye, feet: player.bodyFeetAt(), yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });   // MW-D24; DISC18: the body at the capsule's own feet, not the camera's smoothed ones
     host.drawPeerBodies?.({ proj, view, eye: mwv.eye });   // MWBODY1: the others' bodies, after the player's own
     if (interiorCtx.staticBatch) renderer.drawMesh(interiorCtx.staticBatch, BATCH_IDENTITY, null);   // PERF6: the room's static models, one call per texture
     for (const d of interiorCtx.drawList) if (!d._batched) renderer.drawMesh(d.mesh, d.matrix, interiorCtx.texRemap);
@@ -10797,7 +10798,6 @@ export function createWorldModes(host) {
     // `opts.at` threw the session away (dycaite, 2026-09-16). `pauseOpts`
     // is that reader now, and it survives a null.
     togglePause(doorOpts = {}) {
-      if (cardSeat && !doorOpts.at) { standFromCardTable(); return; }   // CARDS2b: seated, Escape stands you up first (a station's or a page's door names where it opens, and is no Escape)
       if (!pauseDoorReady()) return;
       const { at: pauseAt } = pauseOpts(doorOpts);   // this host's quickLoad takes no position applier, so `setPlayerPos` is read by the dungeon context alone
       // IS1: the interior saves like anywhere else - DFU's ONE
@@ -11048,6 +11048,9 @@ export function createWorldModes(host) {
     if (townTalk?.overlayActive) return;
     // AUDIT 29 D1: an Escape the outer host spent ending a gathering act (world.js marks it) - underground it also paused
     if (e.profActEnded) return;
+    // CARDS2b: seated at a card table with no window up, Escape stands you up and is spent there - as a gathering act's
+    // end spends it above - so the pause menu opens on the next one, standing
+    if (mode === 'interior' && cardSeat && e.code === 'Escape' && !interiorKeyCtx.uiOverlayActive) { standFromCardTable(); e.preventDefault(); return; }
     // U43: THE ONE DISPATCH. GameManager.Update (:509-557) is a single
     // flat chain with no scene gate at all - the window a key opens
     // does not care where the player is standing. The port had three

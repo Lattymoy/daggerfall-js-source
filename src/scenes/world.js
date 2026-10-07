@@ -24295,9 +24295,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       hl: waistLanternPoseBit(playerEntity.lightSource),   // HT-WAIST-NET: a lit lantern hung at the waist, so the others' Morrowind bodies hang it at the hip - absent otherwise, the wire's omission law
       lc: hasActiveEffect(playerEntity, 'light') ? 1 : undefined,   // PEERLIGHT2: my Light spell burns, so the others hang its candle before me - absent otherwise
       lt: torchPoseByte(playerEntity),   // PEERLIGHT1: my lit torch/lantern/candle, so it lights the others' world around me - absent while nothing burns
-      st: seated?.st,   // CARDS2b: seated, and the table's top above the feet - absent standing, the wire's omission law
       ...climbPoseOf(player),   // CLIMB5: my climb and the way my body faces on it, so the others turn me to the wall, pose me off the ground and hear me climb - absent off the wall
     };   // the wire's move bit: 1 walking, 2 running (the peers' bodies pick the clip off it)
+    if (seated) arm.st = seated.st;   // CARDS2b: seated, and the table's top above the feet - absent standing, the wire's omission law
     if (!key) { if (online.room) online.leave(); }   // AUDIT ONLINE D4: a place the host cannot name is no room, not the old one in the wrong frame
     // AUDIT WORLD2 C8: a world room's edge is never a churn - the hold delayed every handover and let one dungeon's stream land in another
     // AUDIT WORLD6b-iii(b) B1/B8: a cell crossing is joined the moment the cell is HELD (the halo's socket promotes in

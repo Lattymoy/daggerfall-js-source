@@ -278,19 +278,24 @@ Mac: **"Continue"**.
   hands on the top to a millionth of a unit (`test/cards2b_seated.test.js` solves it). The seated eye is no longer its
   own guess: `SEATED_EYE_HEIGHT` is the standing eye (motor.js `EYE_HEIGHT`) lowered by the drop, 1.22 m, where the
   seated head is - and CARDS2's seats moved with it.
-- **My body** (`scenes/worldModes.js`). Seated, the body is drawn at the seat facing the table (the capsule stays where
-  it sat down from - a chair is no floor to stand a capsule in), the rig is handed the request (`camera().seat`,
-  fpArm's `thirdSeat`, riding the climb's slot - a sitter never climbs), and the view, first person or third, follows
-  the seated body: CARDS2's forced first person is retired. A hit (any health lost, `registerPlayerHurtListener`) and
-  Escape (the pause door without a station's `at`) stand you up, as the press and a step do.
+- **My view** (`scenes/worldModes.js`). Seated, the view is the seat's own, first person - section 2's fixed seat
+  view - so this host draws no seated body of its own (the capsule stays where it sat down from - a chair is no floor
+  to stand a capsule in). A hit (any health lost, `registerPlayerHurtListener`) and Escape (spent above the one key
+  dispatch, the way a gathering act's end spends it, when no window is up) stand you up, as the press and a step do.
+  (CARDS2b first drew the body at the seat and let the view follow it in third person; the sweep of the host's pins
+  showed that rewrote four hosts' worth of pinned lines - DISC18, CLIMB6 C16, AUDIT 65 XL-4, U43 - for a view the
+  design never asked for, and it was taken back the same day.)
 - **The others' bodies.** The pose a seated player sends is the seat's - the feet and the facing the body is drawn at,
   through the room's own frame (`sceneToOnline`) - and carries `st`, the table's top above the feet in 5 cm steps
   (1..40, `wire.js` `seatOf`, `POSE_SEAT_TOP_MAX`), omitted standing so a standing pose keeps its bytes. `poseChanged`
   sends a sit or a stand at once; `lerpPose` carries it whole; `peerBodies` hands the peer's rig the same request at
-  its drawn feet and facing (`seatFor`, rebuilt only while the arrival eases in) and does not walk it into the chair.
+  its drawn feet and facing (`seatFor`, rebuilt only while the arrival eases in) and does not walk it into the chair;
+  `fpArm`'s `thirdClimb` answers the seat (`thirdSeat`) whenever no climb holds the body - a sitter never climbs.
 - **Relay world176** (NOT YET DEPLOYED): `validPose` relays `st`. An older relay strips it, and the others see the
   sitter standing at the seat. The bump was the sed over the 37 test files with `relayversion.test.js` excluded, and
-  the law's row appended.
+  the law's row appended. The first bump REPLACED `RELAY_VERSION`'s comment - which is the relay's whole version
+  chain, 148 KB of it - with CARDS2b's own sentence; HT-WAIST-NET's pin caught it, the chain was restored with
+  CARDS2b at its head ("world175 before it: ..."), and the undeployed row re-hashed in place.
 - **CARDS2c, open:** the sprite lane. Eye Of The Beholder has no sitting art, so a sprite body - mine in that lane, a
   peer's walker or paperdoll - stands at its seat facing the table.
 - **Not verified in a live tavern** (no ARENA2 here). The pose is verified on the real skeleton, not on screen.

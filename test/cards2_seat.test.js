@@ -125,7 +125,7 @@ test('CARDS2 the interior host\'s seat: the target, the press, the stand, the he
   const over = src.indexOf("    if (mode === 'interior') decorTool.cameraOverride(cam);");
   const seat = src.indexOf("    if (mode === 'interior' && cardSeat) cam.pos = cardSeat.eye.slice();");
   assert.ok(over > 0 && seat > over, 'the seated eye after the body\'s and the decorator\'s');
-  has('      fpEye: cam.pos, feet: cardSeat ? cardSeat.feet : player.feetAt(), yaw: cam.yaw, pitch: cam.pitch,', 'CARDS2b: the view, first or third person, follows the seated body');
+  has("    if (cardSeat) mwv.eye = cam.pos;   // CARDS2: seated, the seat's own view - first person (Tavern-Cards.md section 2)\n    const view = betterAmbience.view(", 'the seat\'s own view, first person, the last word on the eye');
   has("    cardSeat = null;   // CARDS2: and nobody stays seated in a room they left");
   has("(key) => (typeof key === 'string' && key.startsWith('cardtable:') ? { title: 'Card table' } : null)");
   has("    return seatFloorOk(c.raycast(to, [0, -1, 0], SEAT_FLOOR_PROBE));");

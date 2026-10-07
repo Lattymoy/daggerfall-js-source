@@ -3395,7 +3395,7 @@ export function createFpArm() {
    *  fades with the law's weight, held where it was on the body (the hands leave the stone with it). */
   /** CARDS2b: the SEAT's request in the rig - the climb rig's own solver over player/seatPose.js's world request
    *  (`cam.seat`: { origin, yaw, req }), the hips on the chair and the hands on the table. A seated body never climbs,
-   *  so the seat rides the climb's slot when no climb holds it. */
+   *  so the seat rides the climb's slot: thirdClimb answers it whenever no climb holds the body. */
   function thirdSeat(cam) {
     const s = cam && cam.seat;
     if (!s || !s.req || !s.origin) return null;
@@ -3403,7 +3403,7 @@ export function createFpArm() {
     return climbRequestToRig(s.req, { feet: s.origin, yaw: s.yaw, unitsPerMetre: MW_UNITS_PER_METER, weight: rs.weight, height: rs.height });
   }
   function thirdClimb(cw, cam) {
-    if (!(cw && cw.w > 0)) { climbLast = null; return null; }
+    if (!(cw && cw.w > 0)) { climbLast = null; return thirdSeat(cam); }   // CARDS2b: no climb - the seat, if one holds the body
     const snap = cam && cam.climb;
     if (snap && snap.feet) {
       const rs = (built && built.raceScale) || { weight: 1, height: 1 };
@@ -4941,7 +4941,7 @@ export function createFpArm() {
             sampleTrack: tOverlay ? overlaySample : sampleTrack,
             time: poseTime(state),   // MS1: a backhand's window runs backwards
             accumRoot: t.accumRoot,
-            climb: thirdClimb(climbWorld, cam) ?? thirdSeat(cam),   // CLIMB6; CARDS2b: or the seat
+            climb: thirdClimb(climbWorld, cam),   // CLIMB6
           });
           uploadThirdMesh(t);
           // MAC-Q: the body's particle systems, on the clock its parts ride
