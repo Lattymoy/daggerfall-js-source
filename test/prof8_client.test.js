@@ -13,7 +13,7 @@ import {
   fishKind, fishPlan, haulLine, speciesOfHaul, keyRng, bearingWord, haulId, standSchools, NET_WHERE_WORDS, CAST_AHEAD_M, SCHOOL_PICTURE,
 } from '../src/scenes/fishHost.js';
 import { parseNodeKey, haulKey, utcDayOfMs, SCHOOL_R } from '../src/net/nodeLaw.js';
-import { FISH_ACT, tugWindow, HAULS_PER_DAY, PEARL, fishBand } from '../src/net/professionLaw.js';
+import { FISH_ACT, tugWindow, PEARL, fishBand } from '../src/net/professionLaw.js';
 import { setForagingHost } from '../src/systems/foragingInstall.js';
 import { PASSIVE_FISH_SPECIES } from '../src/world/passiveFish.js';
 import { climateToBiome } from '../src/world/underwaterDecorations.js';
@@ -146,7 +146,7 @@ test('PROF8 act: gentle acts - no moment, a plain net after the wait; Esc - noth
 
 // ─── THE KIND ────────────────────────────────────────────────────────
 
-test('PROF8 plan and words: cast the net, or what it needs - the ground\'s refusal, the account\'s forty, the Stores\' room; a school near said; the goods\' line names the species, as Raw Fish, with a Pearl and the scales; the refusal\'s words', () => {
+test('PROF8 plan and words: cast the net, or what it needs - the ground\'s refusal, the Stores\' room (CAP-OFF: never the account\'s forty); a school near said; the goods\' line names the species, as Raw Fish, with a Pearl and the scales; the refusal\'s words', () => {
   const base = { taken: false, counting: false, hauls: 3, rank: 12, storesFull: false };
   assert.deepEqual(fishPlan(base), { harvest: 'fish', verb: 'Cast the net', rest: 'Fishing 12', ready: true });
   assert.equal(fishPlan({ ...base, school: 'a school rises 14 m north' }).rest, 'Fishing 12 - a school rises 14 m north');
@@ -154,14 +154,16 @@ test('PROF8 plan and words: cast the net, or what it needs - the ground\'s refus
   // ground's words were the daylight's too ("the fish bite by daylight (07:00-17:59)"); now a settlement's
   assert.deepEqual(fishPlan({ ...base, where: NET_WHERE_WORDS.town }), { harvest: 'fish', verb: 'Cast the net', rest: 'not in a settlement', ready: false });
   assert.equal(NET_WHERE_WORDS.daylight, undefined, 'no hour has words');
-  assert.deepEqual(fishPlan({ ...base, hauls: HAULS_PER_DAY }), { harvest: 'fish', verb: 'Cast the net', rest: 'Fishing 12 - 40 of 40 hauls today', ready: false, full: true });
+  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): forty hauls said 'Fishing 12 - 40 of 40 hauls today'
+  assert.deepEqual(fishPlan({ ...base, hauls: 400, cap: 40 }), fishPlan(base), 'a day past the old forty: the cast as ready');
   assert.equal(fishPlan({ ...base, storesFull: true }).ready, false);
   assert.equal(fishPlan({ ...base, counting: true }).rest, 'being counted');
   const bass = PASSIVE_FISH_SPECIES.find((s) => s.templateIndex === 9002);
   assert.equal(haulLine({ qty: 2, gem: PEARL.key, extra: 'hide:slaughterfish', extraQty: 1 }, bass), '+2 Largemouth Bass, as Raw Fish, a Pearl and Slaughterfish Scales to your Stores', '5.2\'s toast: "+2 Largemouth Bass, as Raw Fish"');
   assert.equal(haulLine({ qty: 1 }, bass), '+1 Largemouth Bass, as Raw Fish to your Stores');
   assert.equal(haulLine({ qty: 2 }, null), '+2 Raw Fish to your Stores');
-  assert.match(accountRefusalText('prof-fish-cap'), /all the nets a day allows \(40, across your characters\)/);
+  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): the service says it no more - kept, without its forty, for one not yet redeployed
+  assert.match(accountRefusalText('prof-fish-cap'), /^Your account has hauled all the nets a day allows, across your characters\./);
   assert.equal(bearingWord(0, 10), 'north');
   assert.equal(bearingWord(10, 0), 'east');
   assert.equal(bearingWord(-7, -7), 'south-west');
@@ -186,7 +188,7 @@ test('PROF8 species: Deep Waters\' own for the pixel\'s water - drawn from the h
 function fakeBook(o = {}) {
   const taken = new Set();
   return {
-    state: { open: true, hauls: 0, caps: { hauls: 40, stores: 5000 }, ...o },
+    state: { open: true, hauls: 0, caps: { stores: 5000 }, ...o },
     taken: (k) => taken.has(k), counting: () => false, held: () => 0, _take: (k) => taken.add(k),
   };
 }
@@ -224,7 +226,7 @@ test('PROF8 kind: the cast stands ahead of the look only with a Fishing-Net in t
   } finally { setForagingHost(prev); }
 });
 
-test('PROF8 kind: the plan (the page\'s rank, the ground\'s words, the account\'s day), the start (Foraging\'s own refusal first; the act, its ground asked with it), the chip, the notes', () => {
+test('PROF8 kind: the plan (the page\'s rank, the ground\'s words - CAP-OFF: no account\'s day), the start (Foraging\'s own refusal first; the act, its ground asked with it), the chip, the notes', () => {
   let w = world();
   const prev = setForagingHost({ world: () => w, entity: () => null });
   try {
@@ -249,7 +251,7 @@ test('PROF8 kind: the plan (the page\'s rank, the ground\'s words, the account\'
     assert.ok(Math.abs(a.act.state.tugS - tugWindow(true)) < 1e-9, 'an Angler\'s tug');
     assert.deepEqual([a.harvest, a.profession, a.label, a.ask], ['fish', 'fishing', 'E', { climate: WOODS, region: 17 }]);
     assert.equal(a.tool, NET);
-    assert.deepEqual(k.tally(), { n: 5, cap: 40 });
+    assert.deepEqual(k.tally(), { n: 5 });   // PIN MOVED (CAP-OFF): the account's day against no cap - it was { n: 5, cap: 40 }
     assert.equal(k.actNote({ clean: true }), ' (a full net)');
     assert.equal(k.actNote({ clean: false, why: 'missed' }), ' (the tug missed - a plain haul)');
     assert.equal(k.actNote({ clean: false, why: 'slipped' }), ' (the net slipped - a plain haul)');
@@ -340,18 +342,18 @@ test('PROF8 meter: each phase its words - wind (the throw it makes), the wait (o
   hud.setMeter(null);
 });
 
-test('PROF8 book, page, words and wiring: the book keeps the account\'s hauls (the state\'s, an answer\'s, a refusal\'s forty); the page practises Fishing and says its day and how; the host builds the kind over its world', () => {
+test('PROF8 book, page, words and wiring: the book keeps the account\'s hauls (the state\'s, an answer\'s - CAP-OFF: no refusal\'s forty); the page practises Fishing and says its day and how; the host builds the kind over its world', () => {
   const pb = src('src/net/profBook.js');
   assert.match(pb, /applyHauls\(data\?\.hauls\);/);
   assert.match(pb, /applyHauls\(r\.data\?\.hauls\);/);
-  assert.match(pb, /if \(r\?\.error === 'prof-fish-cap'\) state\.hauls = Math\.max\(state\.hauls \?\? 0, state\.caps\?\.hauls \?\? HAULS_PER_DAY\);/);
+  assert.doesNotMatch(pb, /'prof-fish-cap'/, 'no forty to learn');   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills")
   const pp = src('src/ui/profPages.js');
   assert.match(pp, /const PRACTISED = Object\.freeze\(\['herbalism', 'mining', 'hunting', 'fishing',/);
-  assert.match(pp, /Today: \$\{book\.state\.hauls \?\? 0\} of \$\{book\.state\.caps\?\.hauls \?\? HAULS_PER_DAY\} hauls - your account's, across your characters/);
+  assert.match(pp, /Today: \$\{hauls\} haul\$\{hauls === 1 \? '' : 's'\} - your account's, across your characters/);   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): 'of forty'
   const w = src('src/scenes/world.js');
   assert.match(w, /fishKind\(\{ book: profBook, host: \{/);
   assert.match(w, /storm: \(\) => currentWeather\(\) === 'thunder',/);
   assert.match(w, /const item = createFishItem\(species\);\n\s+if \(!item\) return false;\n\s+addItem\(\(playerEntity\.items \?\?= \[\]\), item\);/);
-  assert.match(src('server-account/src/index.js'), /'prof-fish-cap': 409,/);
+  assert.doesNotMatch(src('server-account/src/index.js'), /'prof-fish-cap':/);   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): a status for a refusal said no more
   assert.equal(utcDayOfMs(86_400_000 * 3 + 5), 3);
 });

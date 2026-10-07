@@ -66,7 +66,7 @@ async function stage({ settled = undefined, more = [], nowMs = () => NOON_MS, de
   const S = { prompt: null, said: [] };
   S.e = { stats: { intelligence: 60, agility: 60, strength: 55, endurance: 50, luck: 50 }, fatigue: 1e9, items: [FT.Sickle, FT.Basket, FT.PickAxe, FT.WoodAxe, FT.FishingNet].map((t) => createForagingItem(t)), wagonItems: [] };   // rested (FISH-TIRED)
   const book = {
-    state: { open: true, today: {}, hauls: 0, caps: { harvests: 60, hauls: 40, stores: 5000 } },
+    state: { open: true, today: {}, hauls: 0, caps: { stores: 5000 } },
     stale: () => false, refresh: async () => ({ ok: true }), pixel: () => ({ state: 'none' }), askPixels: async () => [], pump: () => {},
     dungeon: () => null, askDungeon: async () => false, held: () => 0, taken: () => false, counting: () => false,
     track: () => ({ rank: 100, specs: { 50: null, 100: null } }), harvest: () => new Promise(() => {}),

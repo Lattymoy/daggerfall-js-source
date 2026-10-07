@@ -366,7 +366,8 @@ DECIDED (Mac: "tree chopping, picking up ingredients, fishing, etc. Active playe
   less. The new player is never punished, only the good one rewarded.
 - **The honest bound.** The act is played on the client, so it may be lied about. The act's report can move the
   service's roll by at most **one quality step and +50% yield**, never past the character's rank. The node's
-  existence, the daily caps and the dice stay the service's.
+  existence, ~~the daily caps~~ (RETIRED, CAP-OFF, 2026-10-07: no day's cap - the bounds that stand, section 6, are the service's too) and
+  the dice stay the service's.
 - **Others see it.** The pose grows an activity field (tool and act: 4 bits), a relay version with its LAW row: a
   peer sees you swing, kneel, throw and haul. The node's state is each character's own (section 6), so a tree another
   felled still stands for you.
@@ -431,7 +432,7 @@ else Foraging's Fish (1605). A **trophy** is the species' own Deep Waters templa
 
 BOULDERS (FIELD BUGS 2026-10-01, Mac: "Fix the rest"; the service's acct47): the boulders were 1 / 2 / 3 / 1 / 0 / 0 / 1 / 3 - a rock field stood one or two a day in the woods. The fields' pieces now hold a node on each side (ROCK-SHARE, section 23), so the counts are raised; the Swamp and the Rainforest keep none (their Court writs ask no stone).
 
-MORE-NODES (2026-10-02, Mac: "increase all profession nodes", asked: "Double"; the service's acct48): the trees, the herb patches and the veins twice what they were, every climate (the table above). The day's sixty a profession (and the account's bound) are unchanged, so what doubles is how close the next node stands, not what a day yields. A signature region's veins stand in the slots after the climate's (a Mountain's thirteenth, Daggerfall's fifth and sixth in the woods).
+MORE-NODES (2026-10-02, Mac: "increase all profession nodes", asked: "Double"; the service's acct48): the trees, the herb patches and the veins twice what they were, every climate (the table above). The day's sixty a profession (and the account's bound) are unchanged, so what doubles is how close the next node stands, not what a day yields (CAP-OFF, 2026-10-07: the sixty and the account's bound are gone - the nodes and the walk between them are the day's whole bound). A signature region's veins stand in the slots after the climate's (a Mountain's thirteenth, Daggerfall's fifth and sixth in the woods).
 
 GATHER-OW (2026-10-02, Mac: "allow them to appear in the overworld without being overwhelming, maybe a glyph marker showing where a group of them are"; asked: "Groups nearby"): on the Overworld each profession's group on a stood pixel - its nodes not yet worked today, as NODE-MARKS would mark them - is one diamond in its compass colour at their middle, its count beside it ("Mining ×6"), the nearest twelve within 3 km (the land streams three pixels out), read again twice a second; the view's filters have a Gathering switch. Not a click of its own: a click there walks to the ground under it. None with the professions shut, nor underground; Hunting's bodies are no group. `scenes/gatherHost.js` overworldGroups, `systems/travelViewFilters.js`, `ui/travelViewHud.js`, `scenes/world.js` travelViewMarks.
 
@@ -455,20 +456,22 @@ GATHER-OW (2026-10-02, Mac: "allow them to appear in the overworld without being
   Motherlode's own pixel, and a strike asks Mining 25, not tier 6's 90.
 - **Hunting cannot be witnessed** - FACT, a foe's life and death are its spawner's client's alone ("A FOE IS ITS
   SPAWNER'S: the spawner steps it and streams it, everyone else in the cell puppets it", WORLD6b, `src/net/wire.js`;
-  AUDIT 28 replaced a quotation that is nowhere in the tree). So Hunting is the one bounded profession: at most **30 hides a day** an account, of which
-  at most **3** of tiers 5-6; the tier is the foe's the client claims, and the cap is the whole defence. **Fishing**
-  is the other: **40 hauls a day an account** (not a character), the water the client's own claim, the pixel's
+  AUDIT 28 replaced a quotation that is nowhere in the tree). So Hunting is the one bounded profession: ~~at most **30 hides a day** an account, of which~~
+  at most **3** of tiers 5-6 a day an account; the tier is the foe's the client claims, and ~~the cap is the whole defence~~ that
+  bound is the defence of the rare (CAP-OFF, 2026-10-07: the thirty of any tier are gone, Mac's word - the three he kept). **Fishing**
+  is the other: ~~**40 hauls a day an account** (not a character)~~ (RETIRED, CAP-OFF, 2026-10-07: the hour's writes bound it), the water the client's own claim, the pixel's
   climate and region from the witnessed world; an unconfirmed pixel's hauls bring no Pearl and no Slaughterfish.
 - **Gate-touched ground** (4.7) is the day's gate pixel from the witnessed world (SEAT0 3.2), so its veins exist only
   once three fighters' receipts agree where the gate stood.
 - **The harvest**: after the act (section 5), the client asks `{node, kind, character, act, at}` - `kind` is herbs or
   food at a patch (the Basket's second harvest), the node's one kind elsewhere; `at` is the act's end on the shared
-  clock. The service checks the id against the law for today; the cap (**60** harvests a gathering profession a day a
-  character, the Basket's among Herbalism's; Fishing **40** hauls an account); that this character has not taken this
+  clock. The service checks the id against the law for today; ~~the cap (**60** harvests a gathering profession a day a
+  character, the Basket's among Herbalism's; Fishing **40** hauls an account)~~ (RETIRED, CAP-OFF, 2026-10-07); that this character has not taken this
   `(node, kind)`; and **the hour** - `at` no more than 10 minutes past (the queue's bound, section 19) and, for a
   surface node, inside 07:00-17:59 on `sharedClassicMinutes` (`src/net/wire.js`), a pure function the service
   computes itself. It rolls the yield (CSPRNG), applies the act's bounded step, and adds to the Stores as **own**.
-  Travel time is the natural limit; the cap is the honest one.
+  Travel time is the natural limit; ~~the cap is the honest one~~ - and since CAP-OFF the only one: no day's cap stands
+  (CAP-OFF, 2026-10-07, Mac: *"Remove the cap on life skills"*; section 40).
 - **Yields** (before the act): a tree **2-4** logs; a vein **2-3** ore (+ the gem chance); an herb **1-3**; the Basket's food **1**, **1-2** or
   **1-3** by the patch's block (FORAGE0 14.6); a hide **1** (+ the ingredient chance); a haul **1-2** fish; a boulder
   **3-5** Rough Stone. **The order**: the base roll, then the act's step (at most x1.5), then a march's +25% (4.7), then
@@ -520,7 +523,8 @@ laid out for the phone's touch layer as for the desktop.
   choice opens. **HAUL-CARDS** (2026-10-03, below): on the Enhanced Plus skin the goods and the XP are one CARD under
   the crosshair instead, and silver is a card wherever it is struck; the rise, the banner and the refusals keep their
   toasts, and the classic skin keeps every line.
-- **The day's cap**: a chip under the compass - "Logging 34 / 60 today".
+- **The day's ~~cap~~ count**: a chip under the compass - ~~"Logging 34 / 60 today"~~ "Logging 34 - 12 today" (CAP-OFF, 2026-10-07: the
+  count alone, no cap after it).
 - **The Professions tab** (character sheet): a left column in two groups (Gathering, Crafting) - each row the icon,
   name, rank, rank's name and a thin bar; the right pane for the chosen one - XP to the next rank, the specialisation
   cards (choose one), the unlocks by rank (tiers, recipes), today's harvests, and "Crafts above Journeyman: 1 of 2".
@@ -1236,7 +1240,7 @@ of Makers; commissions; regional prices to haul between; and every seat on the m
 
 | Threat | Answer |
 |---|---|
-| A modified client fakes harvests | Node ids from the pure law; service-rolled yields; daily caps (section 6) |
+| A modified client fakes harvests | Node ids from the pure law; service-rolled yields; ~~daily caps~~ the hour's writes (section 6, 20 - CAP-OFF, 2026-10-07: no day's cap) |
 | A modified client fakes a craft | The service crafts; the client only receives (9.1) |
 | A modified client plays a perfect act | Capped at one quality step and +50% yield, never past the rank (5.1) |
 | A save-edited item enters the economy | The Stores are one-way (law 3); only a provenance id's owner lists it, one listing at a time (10.2, 18) |
@@ -1244,10 +1248,10 @@ of Makers; commissions; regional prices to haul between; and every seat on the m
 | Fake gold buys the market | The market is in Marks (10.5); a gold listing is a realm character's alone, bought off its record on the service in the sale's own batch, and what gold bought never becomes Marks (10.8) |
 | Marks inflate | Faucets from witnessed acts, each capped - SILVER-FINDS' two bounded by the day (30 and 20 an account, 10.5); the weekly report; the Bank's spread and every fee burn |
 | A modified client claims loot finds it never opened | SILVER-FINDS: bounded, not witnessed - the service's dice say what a find strikes, and 20 silver an account a UTC day is the most a lie is paid (10.5) |
-| Bots farm nodes | Per-character nodes, daily caps, travel |
+| Bots farm nodes | Per-character nodes, ~~daily caps,~~ travel, the hour's writes (CAP-OFF, 2026-10-07: no day's cap - Mac's call) |
 | A modified client claims a rich node on a pixel nobody walks | The witnessed world: an unconfirmed pixel yields tiers 1-2 only (section 6) |
-| A modified client claims kills it never made | Hunting is bounded, not witnessed: 30 hides a day, 3 of tiers 5-6 (section 6); hides mint no writ's Marks (no Court writ asks for them, section 11) - a hunt finds silver only as every harvest may (SILVER-FINDS: the service's dice, 30 an account a UTC day, 10.5) |
-| A modified client claims hauls from water it is not in | Fishing is bounded: 40 hauls a day an account; no Pearl or Slaughterfish on an unconfirmed pixel; fish mint no writ's Marks (section 6, 11) - a haul finds silver only as every harvest may (SILVER-FINDS, 10.5) |
+| A modified client claims kills it never made | Hunting is bounded, not witnessed: ~~30 hides a day,~~ 3 of tiers 5-6 a day (section 6; CAP-OFF, 2026-10-07: the thirty of any tier gone, the three kept, Mac's word); hides mint no writ's Marks (no Court writ asks for them, section 11) - a hunt finds silver only as every harvest may (SILVER-FINDS: the service's dice, 30 an account a UTC day, 10.5) |
+| A modified client claims hauls from water it is not in | Fishing is bounded: ~~40 hauls a day an account~~ by the hour's writes (CAP-OFF, 2026-10-07); no Pearl or Slaughterfish on an unconfirmed pixel; fish mint no writ's Marks (section 6, 11) - a haul finds silver only as every harvest may (SILVER-FINDS, 10.5) |
 | ~~A modified client gathers at night~~ | RETIRED (ANY-HOUR, 2026-10-01): every client gathers at night - no hour is refused |
 | Marks buy influence (materials bought at their value, then delivered to a seat) | Only **own** units count at their value; bought units at Tribute's rate inside its cap; counter goods never (section 7, 11) |
 | Marks buy XP (a counter's endless goods, each recipe made once for its first-craft bonus - AUDIT 32 S1) | A recipe made wholly of goods only a counter sells earns its craft's XP and no first-craft bonus (3.2) |
@@ -1334,7 +1338,7 @@ of Makers; commissions; regional prices to haul between; and every seat on the m
 | **PROF2b** - BUILT 2026-10-03 (section 38) | The Motherlodes (section 6): three a UTC day on witnessed ground, twenty strikers each, 10 silver and 4-9 of a tier-6 ore, the relay's Watch on the pixel; the warning; the compass from anywhere; Motherlode Sense unlocked. Gate-touched ground (4.7) is still to come: a gate receipt carries no pixel | An Apprentice miner warned ten minutes ahead, walks to the Wrothgarian Mountains, strikes the Motherlode with the Watch's word and finds Orichalcum and 10 silver |
 | **PROF6b** | Found and writ-only recipes (9.1): the Recipe Scroll (695), the found recipes named, a guild's posted recipe reward | Needs a witnessed roll for loot's 1 in 500, and the Motherlode's 1 in 20 (PROF2b built - its roll is PROF6b's) |
 | **PROF7** - SHIPPED 2026-09-30 (live, section 29) | Hunting (the trace), the Skinning Knife (603: its template, its online shelves - law 6's exception, for 603); Outfitting | A bear felled by the player's own blow skinned online, its hides cured and sewn into a Leather Helm in the pack; a shirt in the dye its sewer chose. Needs FORAGE1-2 (shipped: the shelves' registry) |
-| **PROF8** - BUILT 2026-09-30 (section 30) | Fishing with the net (the throw, the tug, the haul) | A haul of Raw Fish from a river, its species named; a Pearl at sea on confirmed ground; forty hauls an account a day. Needs FORAGE1-2 (shipped: the net, and the three-valued water state in both exterior hosts) |
+| **PROF8** - BUILT 2026-09-30 (section 30) | Fishing with the net (the throw, the tug, the haul) | A haul of Raw Fish from a river, its species named; a Pearl at sea on confirmed ground; ~~forty hauls an account a day~~ (CAP-OFF, 2026-10-07: no day's hauls). Needs FORAGE1-2 (shipped: the net, and the three-valued water state in both exterior hosts) |
 | **PROF9** - BUILT 2026-10-02 (section 35) | Cooking | A Hunter's Stew cooked with a clean pan at a fire from the Stores' Raw Meat, Mushroom and Root Bulb, into the pack, eaten for Endurance +5 two hours; a Chef's Feast of the Hearth shared with the party at the table; a Provisioner's dish that never spoils. Needs PROF7 (Raw Meat), PROF8 (Raw Fish), PROF1 (the herbs and the Basket's foods) and C&C's fires |
 | **PROF10** - BUILT 2026-10-02 (section 36) | Jewelcrafting | A Gold Ruby Ring cut with a clean facet at a Gem Store's bench from the Stores' Gold and Ruby, into the pack as DFU's own Ring carrying Gold's and the gem's points (2,160) to the item maker; a Gemcutter's ring at +30%, listed and minted again from the market with its hand; a Lapidary's Siege-cracked Gem set as a Diamond. Needs PROF2 (the metals and gems), PROF8 (the Pearl), PROF7 (Cured Leather), PROF4 (the Wand's planks) and the Seats' Spoils of War |
 | **PROF11** - BUILT 2026-10-01 (section 34) | Masonry | Cut Stone and Mortar at the mason's bench, the chisel clean; the Sculptor's four stone pieces in a home; the Builder's stone and the Fortifier's Walls at a seat's works (SEAT2b). Needs PROF2 (quarrying); SEAT2b and PLOT1 consume what it makes |
@@ -1545,7 +1549,7 @@ what was found (FACT):
   registered account's - the reads too: a guest has no Stores to read. A Court writ pays Marks, so a delivery needs
   `MARKS_OPEN` too. An act's request is found by its id BEFORE the switch is asked: a harvest or a delivery made is
   answered as made though the switch shut after it. The service is `acct19`; the tables are `0027_professions.sql`.
-- **The laws.** `src/net/professionLaw.js` (the thirteen, ranks, XP, tiers, specialisations, the day's cap, the Stores'
+- **The laws.** `src/net/professionLaw.js` (the thirteen, ranks, XP, tiers, specialisations, ~~the day's cap~~ (CAP-OFF, 2026-10-07: none), the Stores'
   cap, the Herbalism acts' numbers, the materials PROF1 stores, the Court writs) and `src/net/nodeLaw.js` (section 6's
   node table, 4.3's herb tables, the seasons, a pixel's day of patches, the yields, the witnessed pixel). Both ends
   read them; recipeLaw.js comes with the first craft (PROF3).
@@ -1742,7 +1746,7 @@ As built:
 
 - **Behind PROF1's switch.** `PROFESSIONS_OPEN`, at `dev`. The service is `acct20`; the tables are `0028_mining.sql`
   (`node_harvests` rebuilt for the kinds `ore` and `stone` and its `gem`; `world_witness` rebuilt for the kind
-  `dungeon`; `prof_smelts`); the route `/v1/prof/smelt`. A harvest's decision is still one INSERT - the day's cap, the
+  `dungeon`; `prof_smelts`); the route `/v1/prof/smelt`. A harvest's decision is still one INSERT - ~~the day's cap~~ (CAP-OFF, 2026-10-07: none), the
   node untaken, the Stores' room - and a gem rides in it, nulled there when the gem's own Stores are full (the ore is
   still given). A smelt's decision is one INSERT too - every input held, the product's room, its bought units read
   before a unit moves - and the spends, the products and the Smithing XP follow it in the same batch.
@@ -2614,12 +2618,13 @@ Mac: **"Do it"** (2026-09-29, PROF7 after the VEIN-NEED fix: "What was next on t
   from the crypto source - its node key `body:<day>:<id>` (`net/nodeLaw.js` bodyKey, read in its one spelling). A body
   another's blow felled is DFU's corpse alone.
 - **Bounded, not witnessed** (6): the id is the client's word and the tier the foe's the client names (`foe`, its
-  MobileTypes value); the account's day - **30 hides, 3 of tiers 5-6** - is the whole defence, **decided in the
-  harvest's own INSERT** (the day's rows of `profession = 'hunting'` an account, its high ones by a new `tier` column -
+  MobileTypes value); the account's day - ~~**30 hides,**~~ **3 of tiers 5-6** (CAP-OFF, 2026-10-07: the thirty gone, the three kept) - is
+  the whole defence, **decided in the harvest's own INSERT** (the day's rows of `profession = 'hunting'` an account, its high ones by a new `tier` column -
   AUDIT 32 L2: their units, the hides, a clean pelt's second among them, the last skinning cut to the day's room; it
   counted the rows, the bodies, so a day ran to 60 hides and its rare three to six).
   A body names no ground, keeps no hours (FORAGE0 14.3: "not Hunting (the knife is not Foraging's, and foes die at
-  night)") and writes no witness. The character's 60 and the account's 120 bound it too, and never bite first.
+  night)") and writes no witness. ~~The character's 60 and the account's 120 bound it too, and never bite first.~~ (CAP-OFF, 2026-10-07:
+  no day's cap bounds it.)
 - **Where a body is a node**: the street's pool and a dungeon's, in the one gathering host (22's law: the host stands
   in the streaming world and its dungeons) - a body felled in a building's interior is DFU's corpse alone. A body is a
   **LOOSE node** (`GatherKind.looseNodesOf`): it carries its own place - the corpse marker's ground on the street
@@ -2744,9 +2749,9 @@ Mac: **"Do it"** (2026-09-29, PROF7 after the VEIN-NEED fix: "What was next on t
   name them (its piece's dye any the crafter sews).
 - **The service** is `acct33`; `0036_hunting.sql` rebuilds the day's harvests for the kind `hide`, the tier the harvest
   was decided at and its second find's count (every row before it carried, tier 0, one), and gives the crafts and the
-  pieces their dye (`CHECK 0-9`). Refusals: `prof-foe` (400: no knife skins that body), `prof-hunt-cap`,
+  pieces their dye (`CHECK 0-9`). Refusals: `prof-foe` (400: no knife skins that body), ~~`prof-hunt-cap`,~~
   `prof-hunt-high` (409: the account's day), `prof-dye` (400). The state answers the account's day (`hunt`) and its
-  bounds (`caps.hides`, `caps.highHides`).
+  bounds (~~`caps.hides`,~~ `caps.highHides`) - CAP-OFF, 2026-10-07: `prof-hunt-cap` and `caps.hides` are gone with the thirty.
 - **Done when**: a bear felled by the player's own blow is skinned online with the knife - its line traced, DFU's Dagger
   in the hand - its hides cured at a Clothing Store's rack (a Tanner's 1:1) and sewn into a Leather Helm in the pack,
   and a shirt in the dye its sewer chose, of the Weavers' Linen; the butchery withdrawn as C&C's Raw Meat - through the
@@ -2803,8 +2808,8 @@ asked). What sections 5.2, 6 and 3.3 left open for PROF8, DECIDED here, and what
 - **Bounded, not witnessed** (6). A haul names no node: its key is the client's own, `haul:<x>:<y>:<day>:<id>` - the map
   pixel cast from, the UTC day, twelve hex digits drawn at the cast (`nodeLaw.js` haulKey, read in its one spelling). The
   service reads the pixel's ground (the witnesses' confirmation for the sea's finds), the day (~~the daylight, every haul,
-  07:00-17:59 on the shared clock - `prof-night`~~ - RETIRED, ANY-HOUR: no hour is refused), and **forty hauls an ACCOUNT a day**, decided in the harvest's own
-  INSERT (`prof-fish-cap`). A haul from an account a week old witnesses its pixel, as any harvest's does - so the sea's
+  07:00-17:59 on the shared clock - `prof-night`~~ - RETIRED, ANY-HOUR: no hour is refused), and ~~**forty hauls an ACCOUNT a day**, decided in the harvest's own
+  INSERT (`prof-fish-cap`)~~ (RETIRED, CAP-OFF, 2026-10-07: no day's hauls). A haul from an account a week old witnesses its pixel, as any harvest's does - so the sea's
   pixels come to be confirmed by those who fish them.
 - **The catch** (5.2). Raw Fish (`food:fish`) into the Stores as own, 1-2 a haul; in 6's order: the roll, a full net's
   x1.5 (the act's bound), a march's +25%, a school's fish (a Netter's two), a Slaughterfish's weight; the fraction a
@@ -3508,7 +3513,7 @@ warning - and left four things open. DECIDED here (the record's, at Mac's instru
   decides: the Motherlode standing at the act's end, its twenty, the account's one a UTC day (`motherlode_strikes`' key),
   the Stores' room; its 4-6 ore (half again clean) into the Stores as the character's own, the XP to Mining, and the
   `motherlode` faucet's 10 silver to the account (its line `motherlode:<day>` - once a day), each by the strike's own
-  nonce. None of the day's sixty harvests is spent. Refusals: `motherlode-closed`, `motherlode-watch`, `motherlode-found`,
+  nonce. None of the day's sixty harvests is spent (CAP-OFF, 2026-10-07: there are none to spend). Refusals: `motherlode-closed`, `motherlode-watch`, `motherlode-found`,
   `motherlode-full`, `prof-rank`, `stores-full`.
 - **Where it stands.** `scenes/mineHost.js` `standMotherlodes`: at the foot of the rock piece nearest its pixel's heart,
   clear of the pixel's veins and boulders by NODE_SPACING_M, else on the stone nearest its heart, else where nature
@@ -3554,12 +3559,54 @@ FIELD BUGS 2026-10-04: it had been left where it was gathered, counted and never
 town, put in and taken out there; law 3 restated over the service's carried count (section 1); a station's shortfall
 put in from what is carried before it spends.
 
+## 40. CAP-OFF - no day's cap on the life skills (BUILT 2026-10-07)
+
+Mac: **"Remove the cap on life skills"**. Asked which of the three - the day's harvests, the rank's ceiling of 100, the
+crafter's limit of two crafts above Journeyman (3.2) - Mac picked the day's; asked whether the two bounds that stand
+between a modified client and an unbounded claim go with it: **"Keep both"**.
+
+- **What went.** A gathering profession's 60 harvests a character a UTC day (the Basket's among Herbalism's) and 120 an
+  account in a craft (AUDIT 29 A3); Fishing's 40 hauls an account; Hunting's 30 hides an account. The service asked them
+  in the harvest's own INSERT and said `prof-cap`, `prof-account-cap`, `prof-fish-cap` and `prof-hunt-cap`; it asks and
+  says none now (`server-account/src/professions.js` harvestNode, the INSERT's parameters renumbered past the four it
+  bound), and the state's `caps` carry no `harvests`, `hides` or `hauls`. The law exports none
+  (`src/net/professionLaw.js`; REFUSALS-LEARNED's `NODE_PROFESSIONS`, read only to close the account's craft, went with
+  them). On the client each node's plan offers its act whatever the day's count (`scenes/mineHost.js`, `treeHost.js`,
+  `herbHost.js`, `fishHost.js`, `huntHost.js`), the book learns nothing from the four refusals (`net/profBook.js`), the
+  gathering host closes no craft (`scenes/gatherHost.js`), the chip under the compass says the count alone - "Mining 34 -
+  12 today" - and the Professions tab's day line too ("Today: 12 harvests"; Fishing's hauls, Hunting's hides beside the
+  rare three - `ui/profPages.js`). The daily reset's line names no gathering limit (`systems/eventTimers.js`).
+- **What stands (Mac's word).** Four veins a day an account in dungeons nobody has vouched for (AUDIT 29 A5: a dungeon's
+  id is the client's word) and three hides of tiers 5-6 an account a day (section 6: the tier is the client's claim) -
+  each still decided in the INSERT and refused at its count, past every old day. And the rest of section 6 and 20: each
+  node once a character a day, the travel between them, the hour's 600 writes (`PROF_OPS_MAX`), the Stores' 5,000 a
+  material, SILVER-FINDS' 30 silver a day from gathering (10.5), the three Court writs a day.
+- **DECIDED.** The four refusals' words stay in the client, without the numbers they no longer hold, for a client that
+  meets a service not yet redeployed - ANY-HOUR's way with `prof-night` (the site's deploy waits for the service's
+  version, so it is a short window). The chip stays: it still says the rank and the day's count while a node is under the
+  look. FACT: what the day bound before is bound by the world now - the nodes and the walk between them - and by the
+  hour's writes; a modified client that invents characters is bounded by the hour alone, as Mac chose. The economy model
+  (Appendix C) moves nothing: its players' harvests are its own assumptions, never read off a cap.
+- **The four hosts.** None changed: the gathering host is `scenes/world.js`'s (its dungeons' veins through
+  `worldModes.js`); `exterior.js` and `dungeonContext.js` build none.
+- **As built**: `src/net/professionLaw.js`, `server-account/src/professions.js`, `server-account/src/index.js` (the four
+  statuses gone), `src/net/accountClient.js`, `src/net/profBook.js`, `src/scenes/gatherHost.js`, the five kinds,
+  `src/ui/profPages.js`, `src/systems/eventTimers.js`; acct91, no migration. Pinned: `test/cap_off.test.js` (5); the pins
+  that held the caps turned to say they are gone, each a PIN MOVED (`prof1_law`, `prof1_service`, `prof2_service`,
+  `prof7_law`, `prof7_service`, `prof8_law`, `prof8_service`, `audit29_service` A3, `audit32_service` L2,
+  `audit32_client` B2, `silverfinds_service`, `fb1001_ground` and `fb1001_audit` REFUSALS-LEARNED, `fb0929h_veinneed`,
+  `fb1001_herbxp`, and the plans' in `prof1_client`, `prof2_client`, `prof4_client`, `prof7_client`, `prof8_client`);
+  the stand-in books' `caps` the shape the service mints. `tools/mutants/cap_off.json` (13, all dead); 25 records the
+  change moved re-aimed by content - or, where their law is gone, turned to put the cap back, which the turned pins kill
+  (`audit29`, `audit32`, `bag1`, `fb1001_ground`, `prof1`, `prof2`, `prof7`, `prof8`). FOUND, not this slice's:
+  `AUDIT29-A17-motherlode-sense-chosen` survives on main as here (PROF2b moved A17's pins to the Sense chosen as any).
+
 ## Appendix A - a day of a gatherer
 
 Ilsa, a Journeyman herbalist and Apprentice miner in Anticlere (a march), sets out at seven (ANY-HOUR: the wilderness keeps no hours now - seven is her habit). The board's Work tab has a
 Court writ for 30 Red Poppies (uncommon, tier 2: 30 x 2 x 1.2 = 72 Marks) and the Market's poppy median is 3. She walks
 the woods east of town: Woodlands pixels, four herb patches each. Kneeling at a Red Rose she holds the sickle steady -
-the meter fills, unbruised. By noon she has 34 Red Poppies (the march's +25%), 60 of 60 of today's herbs, and some 4,000
+the meter fills, unbruised. By noon she has 34 Red Poppies (the march's +25%), 60 of ~~60 of~~ today's herbs (CAP-OFF: and the woods' next patches to pick, if she will), and some 4,000
 Herbalism XP (HERB-XP: every herb at her rank's tier 4 - 60 a herb, 90 unbruised; it was some 1,800). She delivers 30 poppies at Anticlere's board (72 Marks and 112 Renown XP - MERGE 2: 150 at the full rate, before RENOWN-ACCOUNT's three quarters; a Court writ gives no
 influence - only a seat's own writs do), lists 4 Golden Poppies at 12 Marks each, and spends the afternoon at the vein
 on the hill: an Iron vein, the march's +25% on it - two strikes, both on the glint (a clean finish), and an Amber (Woodlands' gem).
@@ -3577,7 +3624,7 @@ At dusk the hub warns of a Motherlode in the Wrothgarian foothills in ten minute
 | Crafts above Journeyman | 2 |
 | Respecialisation | 1,000 Marks, 7 days |
 | Marks value by tier | 1, 2, 4, 6, 9, 14, 40; herbs 1 / 2 / 5 |
-| Daily caps | 60 harvests a gathering profession a character (the Basket's among Herbalism's), and 120 an account (AUDIT 29 - a character is an id the client names); 4 dungeon veins an account in dungeons nobody has vouched for (AUDIT 29); Fishing 40 hauls an account; Hunting 30 hides an account, 3 of tiers 5-6 |
+| Daily caps | ~~60 harvests a gathering profession a character (the Basket's among Herbalism's), and 120 an account (AUDIT 29 - a character is an id the client names);~~ 4 dungeon veins an account in dungeons nobody has vouched for (AUDIT 29); ~~Fishing 40 hauls an account; Hunting 30 hides an account,~~ Hunting 3 hides of tiers 5-6 an account - CAP-OFF, 2026-10-07 (Mac: "Remove the cap on life skills"; the two bounds a modified client's claim needs kept, Mac's word): no day's cap on harvests, hauls or hides (section 40) |
 | Node tiers | 40 / 25 / 15 / 10 / 6 / 4 % |
 | Dungeon veins | 1-4 a day |
 | Motherlodes | 3 a day, 20 characters, 10 Marks, one an account a day, 10 (30) minutes' warning; no hours. PROF2b: each in its own third of the UTC day within its first six hours, standing 2 h; Mining 25; tier 6's act; 4-6 ore, half again clean; a Watch receipt of the pixel issued within 10 minutes of the act's end; the mountains' and the deserts' confirmed pixels first |
@@ -3594,13 +3641,13 @@ At dusk the hub warns of a Motherlode in the Wrothgarian foothills in ten minute
 | Mining | strikes 4 / 5 / 7, glint 1.2-2 s, gem 3% |
 | Herbalism | common 0.8 s, steady 2.5 s, 3 degrees |
 | Hunting | trace 5-9 points, clean 0.8, torn 0.4 (as built, PROF7 - E held: 4 + tier points across 14 degrees, a zigzag of 3; begun within 2.5 degrees; the tolerance 3 degrees, x1.5 at Master, x (INT + AGI) / 2's band, sampled every 0.25 degree of its progress - AUDIT 32 L1; clean 0.6-6 s from the first move; Gentle 1.2 s) |
-| A body (PROF7) | `body:<day>:<12 hex>`, stamped at the player's own kill; a node while the pack holds a Skinning Knife; a hide 1, a clean pelt x1.5, a torn one its part lost; the part one body in four (Big Tooth, Spider's Venom, Giant Scorpion Stinger, Dragon's Scales); the butchery one Raw Meat (the Slaughterfish's Raw Fish), a Butcher's two, a Butcher's meat withdrawn spoiling at half the pace; 30 hides an account a day, 3 of tiers 5-6 (AUDIT 32 L2: hides, not bodies); lapsed at the UTC day's turn (B1); reached at DFU's corpse distance (H7); no ground, no hours, no witness; Hunting XP 15 x tier |
+| A body (PROF7) | `body:<day>:<12 hex>`, stamped at the player's own kill; a node while the pack holds a Skinning Knife; a hide 1, a clean pelt x1.5, a torn one its part lost; the part one body in four (Big Tooth, Spider's Venom, Giant Scorpion Stinger, Dragon's Scales); the butchery one Raw Meat (the Slaughterfish's Raw Fish), a Butcher's two, a Butcher's meat withdrawn spoiling at half the pace; ~~30 hides an account a day,~~ 3 of tiers 5-6 an account a day (AUDIT 32 L2: hides, not bodies; CAP-OFF, 2026-10-07: the thirty gone); lapsed at the UTC day's turn (B1); reached at DFU's corpse distance (H7); no ground, no hours, no witness; Hunting XP 15 x tier |
 | The hides (PROF7) | Rat Pelt 1, Bat Leather 2, Bear Hide 2, Tiger Pelt 3, Spider Silk 3, Scorpion Chitin 4, Slaughterfish Scales 4, Harpy Feathers 5, Dreugh Shell 5, Dragonling Scale 6 (655-664); Cured Leather tier 2, Hardened 5 (665-666); Linen 1, Wool 2, Silk 4, Standard-bearer's Silk 5 (668-671, the last unyielded); a hide 1 kg (Spider Silk and Harpy Feathers 0.25), a bolt 0.5; 8 x the tier's Marks value in gold, a leather and a Silk Bolt x1.5 |
 | The loom (PROF7) | a Clothing Store's, 50 gold a craft, a cure or a weave; a home's `loom` station, 50,000 gold; two hides a leather (tiers 1-3 Cured, 4-6 Hardened), a Tanner's two a unit (a choice at 50); three Spider Silk a Silk Bolt; no XP |
 | Outfitting's recipes (PROF7) | leather armour at Leather - Cuirass 6, Greaves 4, the rest 2 - Cured (rank 10) or Hardened (rank 55, a step); DFU's 76 garments in each cloth - a bolt, two, three, boots a bolt and a Cured Leather; rugs 3 Wool, tapestries 4 Wool, skins 2 and 1 of a pelt; the Fishing-Net 2 Linen; the steps a Tailor's clothing, a Leatherworker's leather armour; XP 20 x tier, +500 the first (AUDIT 32 S1: not the 152 made wholly of Linen and Wool) |
 | A garment's dye (PROF7) | DFU's ten clothing dyes (0-9), chosen at the loom, signed into the record (`u`); every garment (AUDIT 32 L3: the four unchangeable shirts too) |
 | The stitch (PROF7) | eight presses, the beat every 0.75 s, the band 0.2 of it x (AGI + SPD) / 2's band, 0.25 s between presses; all eight on the beat a step |
-| Fishing | throw 0.3-1.5 s / 3-12 m, wait 5-30 s (first and last daylight hour x0.5, storm x2), tug 600 ms (Angler 840), band 20-30%, fill 6 s inside, 20 s, slip 2 s; pearl 1/50 (Pearl Diver x3, Deep-Sea x2), slaughterfish 1/100 (Deep-Sea x2) - at sea on confirmed ground - trophy 1/200; 1-2 fish, a school +1 (Netter +2); schools 2 a pixel a day, 24 spots, 10 m; 40 hauls an account a day; XP at the rank's own tier (PROF8); Raw Fish tier 1, 1 Mark; Pearl tier 5 |
+| Fishing | throw 0.3-1.5 s / 3-12 m, wait 5-30 s (first and last daylight hour x0.5, storm x2), tug 600 ms (Angler 840), band 20-30%, fill 6 s inside, 20 s, slip 2 s; pearl 1/50 (Pearl Diver x3, Deep-Sea x2), slaughterfish 1/100 (Deep-Sea x2) - at sea on confirmed ground - trophy 1/200; 1-2 fish, a school +1 (Netter +2); schools 2 a pixel a day, 24 spots, 10 m; ~~40 hauls an account a day~~ (CAP-OFF, 2026-10-07: none); XP at the rank's own tier (PROF8); Raw Fish tier 1, 1 Mark; Pearl tier 5 |
 | The Basket's food | tier 1, 1 Mark; 15 XP, 22 with all three found (the clean act) |
 | The Basket | three glints of 1.0-1.4 s; clean +50%, two +25% |
 | Stores cap | 5,000 a material |
@@ -3657,7 +3704,9 @@ average, and sends a quarter of it to the Siege Camp.
 
 **The fold (FORAGE0, second review)** changed two assumptions, and the table below is the re-run (ANY-HOUR, 2026-10-01,
 undoes the first: the wilderness keeps no hours, so the 0.73 below is 1 again - the day's caps, 60 a character and 120 an
-account in a craft, bound the harvests as before): **the wilderness
+account in a craft, bound the harvests as before; CAP-OFF, 2026-10-07 lifts those caps, and moves no table here: the players' harvests a
+session are the model's own assumptions (20, 45 and 90 - `tools/seatEconomy.mjs` PROFILES, never read off a cap), and a
+member's influence is bounded by the account's seat week (ACCOUNT_SEAT_WEEK_CAP) as before): **the wilderness
 keeps Foraging's day** - a session's surface harvests happen in the 55 daylight minutes of each 120, and the night
 gathers at half the day's rate (dungeon veins, Hunting), so harvests run at 55/120 + 65/120 x 0.5 = **0.73** of the
 old count; and **Court writs are a fixed supply** (45 regions x 6 x max(1, ceil(active / 100)) a day), which the

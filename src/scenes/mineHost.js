@@ -317,19 +317,18 @@ export function mineRecord(node) {
 
 /**
  * WHAT E DOES AT A VEIN OR A BOULDER, and the prompt that says it: `{ harvest, verb, rest, ready }` - `ready` false with
- * `rest` naming what is missing (worked today, being counted, the day's cap, the rank, the Pick-Axe, the Stores' room);
- * a rank short carries the rank it needs (`needsRank` - VEIN-NEED says the player's own beside it).
+ * `rest` naming what is missing (worked today, being counted, the rank, the Pick-Axe, the Stores' room - CAP-OFF: no
+ * day's cap); a rank short carries the rank it needs (`needsRank` - VEIN-NEED says the player's own beside it).
  * @param {{ node: any, taken: boolean, counting: boolean, rank: number, pick: boolean, storesFull: (key: string) => boolean,
- *   today: number, cap: number, fullWords?: string }} o
+ *   fullWords?: string }} o
  */
-export function minePlan({ node, taken, counting, rank, pick, storesFull, today, cap, fullWords = 'Stores full' }) {   // BAG1: `fullWords` the book's
+export function minePlan({ node, taken, counting, rank, pick, storesFull, fullWords = 'Stores full' }) {   // BAG1: `fullWords` the book's
   const harvest = node.what === 'boulder' ? 'stone' : 'ore';
   const name = node.what === 'boulder' ? 'the stone' : materialLabel(node.material);
   const verb = node.what === 'boulder' ? 'Quarry the stone' : `Mine ${name}`;
   const rankWord = `Mining ${rank}`;
   if (taken) return { harvest, verb: `${node.what === 'boulder' ? 'The stone' : name} - worked today`, rest: '', ready: false };
   if (counting) return { harvest, verb, rest: 'being counted', ready: false };
-  if (today >= cap) return { harvest, verb, rest: `${rankWord} - ${today} of ${cap} today`, ready: false, full: true };
   if (!tierOpen(rank, node.tier)) return { harvest, verb, rest: `needs Mining ${TIER_RANKS[node.tier - 1]}`, ready: false, needsRank: TIER_RANKS[node.tier - 1] };
   if (!pick) return { harvest, verb, rest: 'needs a Pick-Axe', ready: false };
   if (storesFull(node.material)) return { harvest, verb, rest: `${fullWords} - ${materialLabel(node.material)}`, ready: false };
@@ -338,8 +337,7 @@ export function minePlan({ node, taken, counting, rank, pick, storesFull, today,
 
 /**
  * PROF2b: WHAT E DOES AT A MOTHERLODE - minePlan's shape: struck today by this character (or being counted), the
- * account's one found, an Apprentice's Mining (MOTHERLODE_RANK, not tier 6's), the Pick-Axe, the Stores' room. The
- * day's sixty are a vein's; a Motherlode is none of them.
+ * account's one found, an Apprentice's Mining (MOTHERLODE_RANK, not tier 6's), the Pick-Axe, the Stores' room.
  * @param {{ node: any, taken: boolean, counting: boolean, found: boolean, rank: number, pick: boolean, storesFull: (key: string) => boolean, fullWords?: string }} o
  */
 export function motherlodePlan({ node, taken, counting, found, rank, pick, storesFull, fullWords = 'Stores full' }) {   // BAG1
@@ -406,7 +404,6 @@ export function mineKind({ book, lodes = null, marks = null }) {
       const plan = minePlan({
         node: n, taken: book.taken(n.key, harvestOf(n)), counting: book.counting(n.key, harvestOf(n)), rank: rank('mining'),
         pick: !!foragingToolIn(entity, FT.PickAxe), storesFull: (key) => storesFullIn(book, key), fullWords: fullWordsIn(book),   // STORES-ROOM: every origin, as the service counts
-        today: book.state.today?.mining ?? 0, cap: book.state.caps?.harvests ?? 60,
       });
       return { ...plan, profession: 'mining' };
     },

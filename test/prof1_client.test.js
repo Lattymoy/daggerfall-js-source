@@ -255,8 +255,8 @@ test('PROF1 DONE WHEN: an herb picked online reaches DFU\'s potion maker by the 
 
 // ─── THE FACES ───────────────────────────────────────────────────────
 
-test('PROF1 faces: the prompt\'s plan - the herbs first while untaken, the Basket by the choice key; what a patch needs said (rank, Sickle, Basket, the Stores, the day)', () => {
-  const base = { patch: { key: 'k', herb: 19, tier: 2 }, taken: () => false, counting: () => false, basket: false, rank: 10, sickle: true, basketTool: true, storesFull: () => false, herbKeyOf: (h) => `p1:${h}`, today: 0, cap: 60 };
+test('PROF1 faces: the prompt\'s plan - the herbs first while untaken, the Basket by the choice key; what a patch needs said (rank, Sickle, Basket, the Stores - CAP-OFF: never the day)', () => {
+  const base = { patch: { key: 'k', herb: 19, tier: 2 }, taken: () => false, counting: () => false, basket: false, rank: 10, sickle: true, basketTool: true, storesFull: () => false, herbKeyOf: (h) => `p1:${h}` };
   assert.deepEqual(patchPlan(base), { kind: 'herbs', verb: 'Pick Red Rose', rest: 'Herbalism 10', ready: true, both: true });
   assert.equal(patchPlan({ ...base, rank: 9 }).rest, 'needs Herbalism 10');
   assert.equal(patchPlan({ ...base, sickle: false }).rest, 'needs a Sickle');
@@ -266,7 +266,9 @@ test('PROF1 faces: the prompt\'s plan - the herbs first while untaken, the Baske
   assert.equal(patchPlan({ ...base, basket: true, basketTool: false }).rest, 'needs a Basket');
   assert.equal(patchPlan({ ...base, taken: (k) => k === 'herbs' }).kind, 'food', 'herbs taken: E searches');
   assert.equal(patchPlan({ ...base, taken: () => true }).ready, false);
-  assert.equal(patchPlan({ ...base, today: 60 }).ready, false, 'the day\'s sixty spent');
+  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): the day's sixty spent was no ready plan
+  assert.equal(patchPlan({ ...base, today: 600, cap: 60 }).ready, true, 'a day past the old sixty: ready');
+  assert.equal(patchPlan({ ...base, basket: true, today: 600, cap: 60 }).ready, true, 'and the Basket\'s');
 });
 
 test('PROF1 faces: a patch stands where DFU\'s nature would - on grass, not water, not a cliff, never in a town; a cluster of five of the herb\'s own flats', () => {

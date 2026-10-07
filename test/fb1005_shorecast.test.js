@@ -24,7 +24,7 @@ const NET = { items: [{ templateIndex: 1603, currentCondition: 50 }] };
 function beach(eyeZ, { waterAt = ([, , z]) => z > 10 } = {}) {
   const w = { inside: false, insideDungeon: false, insideCastle: false, locationType: 0xffff, inLocationRect: false, hour: 12, climate: 231, region: 31, enemiesNear: false, carriedWeight: 0, maxEncumbrance: 100, swimming: false, exteriorWater: 'None' };
   const prev = setForagingHost({ world: () => w, entity: () => null });
-  const book = { state: { open: true, hauls: 0, caps: { hauls: 40, stores: 5000 } }, taken: () => false, counting: () => false, held: () => 0 };
+  const book = { state: { open: true, hauls: 0, caps: { stores: 5000 } }, taken: () => false, counting: () => false, held: () => 0 };
   const eye = { pos: [0, 1.6, eyeZ], dir: [0, 0, 1] };
   const host = { pixel: () => ({ x: 207, y: 222 }), ground: () => ({ climate: 231, region: 31 }), eye: () => eye, feet: () => [0, 0, eyeZ], hour: () => 12, storm: () => false, climateAt: () => 231, trophy: () => true, day: () => 20731, rand: () => 0.5, busy: () => false, waterAt };
   return { k: fishKind({ book, host }), eye, done: () => setForagingHost(prev) };
@@ -90,7 +90,7 @@ test('SHORE-CAST: a cast the gathering host drops - a window, a door, the helm, 
   const view = { yaw: 0, pitch: 0 };
   const eye = () => ({ pos: [feet[0], 1.6, feet[2]], dir: [0, 0, 1] });
   const w = { inside: false, insideDungeon: false, insideCastle: false, locationType: 0xffff, inLocationRect: false, hour: 12, climate: 231, region: 31, enemiesNear: false, carriedWeight: 0, maxEncumbrance: 100, swimming: false, exteriorWater: 'None' };
-  const book = { state: { open: true, today: {}, hauls: 0, caps: { harvests: 60, hauls: 40, stores: 5000 } }, stale: () => false, refresh: async () => ({ ok: true }), pixel: () => ({ state: 'none' }), askPixels: async () => [], pump: () => {}, dungeon: () => null, askDungeon: async () => false, held: () => 0, taken: () => false, counting: () => false, track: () => ({ rank: 2, specs: { 50: null, 100: null } }), harvest: () => new Promise(() => {}) };
+  const book = { state: { open: true, today: {}, hauls: 0, caps: { stores: 5000 } }, stale: () => false, refresh: async () => ({ ok: true }), pixel: () => ({ state: 'none' }), askPixels: async () => [], pump: () => {}, dungeon: () => null, askDungeon: async () => false, held: () => 0, taken: () => false, counting: () => false, track: () => ({ rank: 2, specs: { 50: null, 100: null } }), harvest: () => new Promise(() => {}) };
   const entity = { stats: { intelligence: 60, agility: 60, strength: 55, endurance: 50, luck: 50 }, fatigue: 1e9, maxFatigue: 1e9, items: NET.items };
   const fish = fishKind({ book, host: { pixel: () => ({ x: PX, y: PY }), ground: () => ({ climate: 231, region: 31 }), eye, feet: () => feet, hour: () => 12, storm: () => false, climateAt: () => 231, trophy: () => true, day: () => 20731, rand: () => 0.5, busy: () => false, waterAt: ([, , z]) => z > 10 } });
   const entry = { px: PX, py: PY, samples: new Float32Array(HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION).fill(0.5), tilemap: new Uint8Array(128 * 128).fill(2), locationRect: null, batches: [] };

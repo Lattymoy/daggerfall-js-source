@@ -56,7 +56,7 @@ async function stage() {
   const S = { said: [], prompt: null, eye: null, eyeHeight: 1.6 };
   S.e = { stats: { intelligence: 60, agility: 60, strength: 55, endurance: 50, luck: 50 }, items: [FT.Sickle, FT.PickAxe, FT.WoodAxe].map((t) => createForagingItem(t)), wagonItems: [] };
   const book = {
-    state: { open: true, today: {}, caps: { harvests: 60, stores: 5000 } },
+    state: { open: true, today: {}, caps: { stores: 5000 } },
     stale: () => false, refresh: async () => ({ ok: true }), pixel: () => ({ state: 'none' }), askPixels: async () => [], pump: () => {},
     dungeon: () => null, askDungeon: async () => false, held: () => 0, taken: () => false, counting: () => false,
     track: (p) => ({ rank: 100, specs: { 50: null, 100: p === 'herbalism' ? S.eye : null } }),
