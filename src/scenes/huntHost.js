@@ -13,7 +13,8 @@
 //   rare hides - 3 of tiers 5-6 a day - the service's defence (CAP-OFF:
 //   the day's thirty hides of any tier are gone).
 //   THE NODE. A stamped body is a node while it lies in its pool (the
-//   street's, or the dungeon's) and the pack holds a Skinning Knife: DFU's
+//   street's, the dungeon's, or - INDOOR-SKIN - a building's: bodiesHere)
+//   and the pack holds a Skinning Knife: DFU's
 //   corpse first, a node only for the one who can skin it - so a body is
 //   never a prompt in the way of a player with no knife. It carries its
 //   own place (`at`, the corpse marker's ground, which the floating origin
@@ -110,6 +111,23 @@ export function bodiesOf(foes, stamps, placeOf, keyOf = () => null) {
     out.push({ key: s.key, foe: s.foe, tier: s.tier, hide: s.hide, at: () => placeOf(f) ?? null, lift: BODY_LIFT, reach: BODY_REACH, lootKey: () => keyOf(f) ?? null });
   }
   return out;
+}
+
+/**
+ * FIELD BUGS 2026-10-07 INDOOR-SKIN ("Cannot skin indoors": a Fighters Guild "Hunt for Giant Rodents" - M0B00Y15's
+ * `Place _house_ local random`, its Giant Rats and Giant Bats stood in a house in town - "their bodies are not able to be
+ * skinned"): THE BODIES WHERE THE PLAYER IS, BY THE ONE POOL THE MODE STANDS THEM IN - the street's, a dungeon's, or a
+ * building's. Each pool answers `{ foes, corpseAt, corpseKeyOf }` (scenes/exteriorFoes.js - the street's and, through
+ * makeInteriorFoes, a building's; scenes/dungeonContext.js). The host asked the dungeon's or else the street's, so a
+ * body felled in a building was looked for among the street's dead: stamped at the kill (the building's pool tells the
+ * kill as the street's does), never found. A mode with no pool standing (a building with none yet) has no bodies.
+ * @param {string} mode the host's mode ('exterior', 'interior', 'dungeon')
+ * @param {{ street?: any, dungeon?: any, interior?: any }} pools @param {{ of: (e: any) => any }} stamps
+ */
+export function bodiesHere(mode, { street = null, dungeon = null, interior = null } = {}, stamps) {
+  const pool = mode === 'dungeon' ? dungeon : mode === 'interior' ? interior : street;
+  if (!pool) return [];
+  return bodiesOf(pool.foes, stamps, (f) => pool.corpseAt?.(f), (f) => pool.corpseKeyOf?.(f));   // AUDIT 32 H3: where it lies, not where it flew
 }
 
 /** A Tracker's marks (3.3): the living animals of a pool within TRACKER_M of `at` - the foes 4.4 skins - as scene XZ.
