@@ -1,0 +1,281 @@
+[
+  {
+    "name": "LOOT17-a-plain-legendary-honed",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const takes = item?.rarity === 'magic' || item?.rarity === 'rare' || (item?.rarity === 'legendary' && item.exalted === true);",
+    "new": "  const takes = item?.rarity === 'magic' || item?.rarity === 'rare' || item?.rarity === 'legendary';",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-a-magic-never-honed",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const takes = item?.rarity === 'magic' || item?.rarity === 'rare' || (item?.rarity === 'legendary' && item.exalted === true);",
+    "new": "  const takes = item?.rarity === 'rare' || (item?.rarity === 'legendary' && item.exalted === true);",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-a-top-line-honed",
+    "file": "src/systems/lootRarity.js",
+    "old": "return !!b && item.affixes[i].value < b[1]; });",
+    "new": "return !!b && item.affixes[i].value <= b[1]; });",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-the-same-again",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const line = { ...old, value: rangeInt(old.value + 1, band[1], rolls) };",
+    "new": "  const line = { ...old, value: rangeInt(old.value, band[1], rolls) };",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-the-whole-band-again",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const line = { ...old, value: rangeInt(old.value + 1, band[1], rolls) };",
+    "new": "  const line = { ...old, value: rangeInt(band[0], band[1], rolls) };",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-the-hone-uncounted",
+    "file": "src/systems/lootRarity.js",
+    "old": "  item.honed = (item.honed | 0) + 1;\n",
+    "new": "",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-the-price-unmoved",
+    "file": "src/systems/lootRarity.js",
+    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([old], item) + affixesWorth([line], item);\n  return line;\n}\n/** LOOT7",
+    "new": "  return line;\n}\n/** LOOT7",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-honed-past-the-top",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (!honeableLines(item).includes(index)) return null;\n  const old = item.affixes[index];\n  const band",
+    "new": "  const old = item.affixes[index];\n  const band",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-magic-two-shards",
+    "file": "src/systems/reforge.js",
+    "old": "  magic: Object.freeze({ shards: 1, gold: 50 }),",
+    "new": "  magic: Object.freeze({ shards: 2, gold: 50 }),",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-rare-cheaper",
+    "file": "src/systems/reforge.js",
+    "old": "  rare: Object.freeze({ shards: 2, gold: 150 }),\n  exalted: Object.freeze({ shards: 4, gold: 500 }),",
+    "new": "  rare: Object.freeze({ shards: 2, gold: 100 }),\n  exalted: Object.freeze({ shards: 4, gold: 500 }),",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-exalted-five",
+    "file": "src/systems/reforge.js",
+    "old": "  exalted: Object.freeze({ shards: 4, gold: 500 }),",
+    "new": "  exalted: Object.freeze({ shards: 5, gold: 500 }),",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-never-doubles",
+    "file": "src/systems/reforge.js",
+    "old": "  const twice = 2 ** Math.max(0, item.honed | 0);",
+    "new": "  const twice = 1;",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-an-exalted-unpriced",
+    "file": "src/systems/reforge.js",
+    "old": "    : item?.rarity === 'legendary' && item.exalted === true ? HONE_PRICE.exalted : null;",
+    "new": "    : null;",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-honed-with-the-switch-off",
+    "file": "src/systems/reforge.js",
+    "old": "  if (!lootRarityOn()) return 'off';\n  const price = honePrice(item);",
+    "new": "  const price = honePrice(item);",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-no-price-no-word",
+    "file": "src/systems/reforge.js",
+    "old": "  const price = honePrice(item);\n  if (!price) return 'not';",
+    "new": "  const price = honePrice(item) ?? { shards: 0, gold: 0 };",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-honed-unknown",
+    "file": "src/systems/reforge.js",
+    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n  if (isEquipped(item)) return 'worn';\n  if (!honeableLines",
+    "new": "  if (isEquipped(item)) return 'worn';\n  if (!honeableLines",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-honed-worn",
+    "file": "src/systems/reforge.js",
+    "old": "  if (isEquipped(item)) return 'worn';\n  if (!honeableLines",
+    "new": "  if (!honeableLines",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-a-record-line-at-the-top",
+    "file": "src/systems/reforge.js",
+    "old": "  if (!honeableLines(item).includes(index)) return affixBand(item, index) ? 'top' : 'line';",
+    "new": "  if (!honeableLines(item).includes(index)) return 'top';",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-honed-without-shards",
+    "file": "src/systems/reforge.js",
+    "old": "  if (shardsHeld(player?.items) < price.shards) return 'shards';\n  if (totalGoldAmount(player) < price.gold) return 'gold';\n  return null;\n}\n/** THE HONE, MADE",
+    "new": "  if (totalGoldAmount(player) < price.gold) return 'gold';\n  return null;\n}\n/** THE HONE, MADE",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-honed-without-gold",
+    "file": "src/systems/reforge.js",
+    "old": "  if (totalGoldAmount(player) < price.gold) return 'gold';\n  return null;\n}\n/** THE HONE, MADE",
+    "new": "  return null;\n}\n/** THE HONE, MADE",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-honed-anywhere",
+    "file": "src/systems/reforge.js",
+    "old": "  if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };\n  const why = honeRefusal",
+    "new": "  if (!player || !Array.isArray(player.items)) return { ok: false, reason: 'gone' };\n  const why = honeRefusal",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-paid-at-the-next-price",
+    "file": "src/systems/reforge.js",
+    "old": "  const price = /** @type {{ shards: number, gold: number }} */ (honePrice(item));\n  const line = honeAffix(item, index, rolls);\n  if (!line) return { ok: false, reason: 'not' };",
+    "new": "  const line = honeAffix(item, index, rolls);\n  const price = /** @type {{ shards: number, gold: number }} */ (honePrice(item));\n  if (!line) return { ok: false, reason: 'not' };",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-the-shards-kept",
+    "file": "src/systems/reforge.js",
+    "old": "  if (!line) return { ok: false, reason: 'not' };\n  spendShards(player.items, price.shards);\n  deductGold(player, price.gold);\n  return { ok: true, line, price };\n}\n/** THE REFORGE, MADE",
+    "new": "  if (!line) return { ok: false, reason: 'not' };\n  deductGold(player, price.gold);\n  return { ok: true, line, price };\n}\n/** THE REFORGE, MADE",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-the-gold-kept",
+    "file": "src/systems/reforge.js",
+    "old": "  if (!line) return { ok: false, reason: 'not' };\n  spendShards(player.items, price.shards);\n  deductGold(player, price.gold);\n  return { ok: true, line, price };\n}\n/** THE REFORGE, MADE",
+    "new": "  if (!line) return { ok: false, reason: 'not' };\n  spendShards(player.items, price.shards);\n  return { ok: true, line, price };\n}\n/** THE REFORGE, MADE",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-the-count-undeclared",
+    "file": "src/systems/itemFields.js",
+    "old": "  honed: int({ min: 1, max: 63 }),   // LOOT17 (bible/06-Systems/Loot-II-Arc.md section 9): the hones a piece has taken - what the next costs (reforge.js honePrice), or absent\n",
+    "new": "",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-the-count-from-nothing",
+    "file": "src/systems/itemFields.js",
+    "old": "  honed: int({ min: 1, max: 63 }),",
+    "new": "  honed: int({ min: 0, max: 63 }),",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-a-press-at-the-top",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      if (hp && hone.includes(i)) {",
+    "new": "      if (hp) {",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-a-refused-press-pressable",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "        if (why) { hb.setAttribute('disabled', ''); hb.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }\n",
+    "new": "",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-the-press-unwired",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "          const done = deps.hone?.(it, i) ?? { ok: false, reason: 'not' };",
+    "new": "          const done = { ok: false, reason: 'not' };",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-the-price-unsaid",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "    if (hp && hone.length) card.append(el('p', 'boundline hone-note', HONE_NOTE(hp)));   // LOOT17\n",
+    "new": "",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  },
+  {
+    "name": "LOOT17-the-host-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "      hone: (item, line) => honePiece(item, line, playerEntity),   // LOOT17: a line taken up its band\n",
+    "new": "",
+    "tests": [
+      "test/loot17_hone.test.js"
+    ]
+  }
+]

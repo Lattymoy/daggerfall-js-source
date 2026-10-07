@@ -1473,6 +1473,29 @@ export function reforgeAffix(item, index, rolls = Math.random) {
   item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([old], item) + affixesWorth([line], item);
   return line;
 }
+// ── LOOT17: the hone ────────────────────────────────────────────────
+/** LOOT17 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 9): THE LINES A HONE MAY TAKE - on a piece the
+ *  Reforge takes (a Magic or Rare piece, an Exalted Legendary), every line a roll made (`affixBand`: a Legendary's record
+ *  lines are its signature, fixed) that stands under its band's top. Indices into `affixes`; none for anything else. */
+export function honeableLines(item) {
+  const takes = item?.rarity === 'magic' || item?.rarity === 'rare' || (item?.rarity === 'legendary' && item.exalted === true);
+  if (!takes || !Array.isArray(item.affixes)) return [];
+  return item.affixes.map((_, i) => i).filter((i) => { const b = affixBand(item, i); return !!b && item.affixes[i].value < b[1]; });
+}
+/** LOOT17: HONE ONE LINE, IN PLACE - its value rolled again from one above it to its band's top: never lower and never
+ *  the same, its kind and its param kept, so its name stands (a name's word reads the tier's band, never the value).
+ *  The price moves by the line's worth, and the piece counts the hone (`honed` - what the next costs). Answers the new
+ *  line, or null (a line no hone may take; nothing changed). */
+export function honeAffix(item, index, rolls = Math.random) {
+  if (!honeableLines(item).includes(index)) return null;
+  const old = item.affixes[index];
+  const band = /** @type {number[]} */ (affixBand(item, index));
+  const line = { ...old, value: rangeInt(old.value + 1, band[1], rolls) };
+  item.affixes = item.affixes.map((a, i) => (i === index ? line : a));
+  item.honed = (item.honed | 0) + 1;
+  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([old], item) + affixesWorth([line], item);
+  return line;
+}
 /** LOOT7 (bible/06-Systems/Loot-Arc.md section 9): what a CHAMPION's corpse source is over a plain foe's - its Legendary
  *  threshold two tiers more and a quarter again (`tier`, `quality`), its Magic and Rare at half (`ladder`, CHAMP-LOOT). */
 export const CHAMPION_SOURCE = Object.freeze({ tier: 2, quality: 1.25, ladder: 0.5 });

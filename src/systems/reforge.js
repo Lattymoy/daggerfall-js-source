@@ -21,6 +21,9 @@
 //     Exalted Legendary's own extra line - rolled again
 //     (lootRarity.js reforgeAffix), for shards and gold; once a piece is
 //     reforged, only that line again.
+//   - LOOT17 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 9):
+//     THE HONE - a line taken up its own band, never lower (lootRarity.js
+//     honeAffix), the price doubling with every hone on the piece.
 //
 // The window (ui/reforgeWindow.js) and the pack card's Salvage button
 // (ui/enhancedInventory.js) draw and ask; everything they do is here.
@@ -28,7 +31,7 @@
 // nothing is reforged.
 // ═══════════════════════════════════════════════════════════════════
 
-import { lootRarityOn, reforgeableLines, reforgeAffix } from './lootRarity.js';
+import { lootRarityOn, reforgeableLines, reforgeAffix, honeableLines, honeAffix, affixBand } from './lootRarity.js';   // LOOT17: and the hone
 import { welkyndShards, isWelkyndShard, WELKYND_SHARD } from './gateSpoils.js';
 import { isBound } from './itemBound.js';
 import { isLocked } from './itemLock.js';
@@ -127,6 +130,48 @@ export function reforgeRefusal(item, index, player) {
   if (shardsHeld(player?.items) < price.shards) return 'shards';
   if (totalGoldAmount(player) < price.gold) return 'gold';
   return null;
+}
+// ── LOOT17: the hone ────────────────────────────────────────────────
+/** What a piece's first hone costs, by its tier - doubled for every hone it has taken (`honed`), so a Perfect Rare is a
+ *  chase with a price. */
+export const HONE_PRICE = Object.freeze({
+  magic: Object.freeze({ shards: 1, gold: 50 }),
+  rare: Object.freeze({ shards: 2, gold: 150 }),
+  exalted: Object.freeze({ shards: 4, gold: 500 }),
+});
+/** A piece's next hone's price, or null for one the hone does not take. */
+export function honePrice(item) {
+  const base = item?.rarity === 'magic' || item?.rarity === 'rare' ? HONE_PRICE[item.rarity]
+    : item?.rarity === 'legendary' && item.exalted === true ? HONE_PRICE.exalted : null;
+  if (!base) return null;
+  const twice = 2 ** Math.max(0, item.honed | 0);
+  return { shards: base.shards * twice, gold: base.gold * twice };
+}
+/** Why a line of a piece may not be honed now, or null: 'off', 'not' (no tier the hone takes), 'unknown', 'worn', 'top'
+ *  (the line stands at its band's top), 'line' (no roll made it - a record's), 'shards', 'gold'. */
+export function honeRefusal(item, index, player) {
+  if (!lootRarityOn()) return 'off';
+  const price = honePrice(item);
+  if (!price) return 'not';
+  if (!itemIsIdentified(item)) return 'unknown';
+  if (isEquipped(item)) return 'worn';
+  if (!honeableLines(item).includes(index)) return affixBand(item, index) ? 'top' : 'line';
+  if (shardsHeld(player?.items) < price.shards) return 'shards';
+  if (totalGoldAmount(player) < price.gold) return 'gold';
+  return null;
+}
+/** THE HONE, MADE: paid at the price before it (the shards, then the gold), the line taken up its band. Answers
+ *  `{ ok: true, line, price }` or `{ ok: false, reason }` with nothing taken. */
+export function honePiece(item, index, player, rolls = Math.random) {
+  if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };
+  const why = honeRefusal(item, index, player);
+  if (why) return { ok: false, reason: why };
+  const price = /** @type {{ shards: number, gold: number }} */ (honePrice(item));
+  const line = honeAffix(item, index, rolls);
+  if (!line) return { ok: false, reason: 'not' };
+  spendShards(player.items, price.shards);
+  deductGold(player, price.gold);
+  return { ok: true, line, price };
 }
 /** THE REFORGE, MADE: paid (the shards, then the gold - DFU's purse-then-letters law), the line rolled again. Answers
  *  `{ ok: true, line, price }` or `{ ok: false, reason }` with nothing taken. */

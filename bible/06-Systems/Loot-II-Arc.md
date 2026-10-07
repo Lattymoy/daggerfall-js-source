@@ -200,8 +200,8 @@ KEPT: the find's reward, paid for. Salvage, the Reforge and the hone take a curs
 
 ## 9. LOOT17 - the hone
 
-At the Reforge, beside each line's Reforge: HONE - the line rolled again within its own band, from its value to the
-band's top (never lower), the kind and the parameter kept. The price doubles with every hone on the piece: a Magic's
+At the Reforge, beside each line's Reforge: HONE - the line rolled again within its own band, from one above its value
+to the band's top (never lower, and never the same - a paid press always moves it), the kind and the parameter kept. The price doubles with every hone on the piece: a Magic's
 first 1 shard and 50 gold, a Rare's 2 and 150, an Exalted's line 4 and 500. A line at its top is not honed. Perfect
 Rare (LOOT2) becomes a chase with a price.
 
@@ -447,3 +447,30 @@ temple's row (its click and its key, no hook no row, the Reforge's row its own, 
 host's hook and the page (the known cursed alone, the drawback and the price, a worn piece's refusal, a short purse's,
 the press, nothing to lift said). `tools/mutants/loot16.json` (71, all dead - the first run's survivor was the pass's own
 guard, which `cursePiece` repeats: what it adds is that a Magic costs a seeded stream no draw, now pinned).
+
+### LOOT17 - the hone (2026-10-07)
+
+`src/systems/lootRarity.js`: `honeableLines` - on a piece the Reforge takes (a Magic or Rare piece, an Exalted
+Legendary), every line a roll made (`affixBand`; a Legendary's record lines are its signature) that stands under its
+band's top; `honeAffix` takes one up its band, from one above its value to the top - never lower and never the same, so
+a paid press always moves it - its kind and param kept, so its name stands (a name's word reads the tier's band, never
+the value); the price moves by the line's worth and the piece counts the hone (`honed`, a declared item field, 1 to 63).
+`src/systems/reforge.js`: `HONE_PRICE` (a Magic's 1 shard and 50 gold, a Rare's 2 and 150, an Exalted's 4 and 500),
+`honePrice` doubled for every hone the piece has taken, `honeRefusal` ('off', 'not', 'unknown', 'worn', 'top', 'line',
+'shards', 'gold') and `honePiece`, paid at the price before it - the shards, then the gold. `src/ui/reforgeWindow.js`
+puts a Hone press beside each line under its top on the Reforge's card, with its price and why not (`HONE_NOTE`,
+`HONED`, the refusal `top`), and `src/scenes/worldModes.js` hands it `honePiece` on the player's own pack. The Reforge's
+rule that only a reforged line may be reforged again binds the Reforge alone: any line under its top may be honed.
+
+Measured through the law over 4,000 seeded Rares honed until none was left: a median of 7 hones to Perfect (254 shards
+and 19,050 gold), a tenth past 10 (2,046 shards); a Magic's, 2 (3 shards and 150 gold). The first hones are cheap and
+always worth one; Perfect is a chase with a price, as the design asked.
+
+Pinned: `test/loot17_hone.test.js` (4) - the lines a hone takes (every rolled line under its top, an Exalted's own line;
+never a record's, a plain or cursed Legendary's, a Common's); the hone over 600 seeds from a line's floor (always up,
+never past the top, every value above reached, the kind, param and name kept, the price by the worth, the count, the
+other lines untouched), one under the top to the top and then nothing, a Rare honed to every top Perfect, an Exalted's
+line from the Legendary band; the price and its doubling, every refusal, the press paid at the price before it and
+nothing taken when refused; the wire's field; the window (a press beside each line under its top and none at the top or
+on an unknown piece, the price on the card, a press that hones and says so, the next price twice, a short purse's word)
+and the host's hook. `tools/mutants/loot17.json` (31, all dead).

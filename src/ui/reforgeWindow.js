@@ -14,12 +14,12 @@
 // dress it as they dress his (the classic skin lays the Broker's own sheet, `brokerSkinCss`). Everything the window does
 // to the world is handed in: the pack, the payer, the reforge and the salvage (systems/reforge.js, which the host
 // calls) - this file draws and asks, and never touches a pack.
-import { rarityAttr, affixLine, reforgeableLines, RARITIES, tierLabel, imprintLine, powerLine, powerOf, legendaryById, curseLine } from '../systems/lootRarity.js';
+import { rarityAttr, affixLine, reforgeableLines, RARITIES, tierLabel, imprintLine, powerLine, powerOf, legendaryById, curseLine, honeableLines } from '../systems/lootRarity.js';
 import { cursedKnown, liftPrice, liftRefusal } from '../systems/lootCurse.js';   // LOOT16: the temple's lifting
 import { codexRows, codexSets, codexCount, imprintChoices, imprintRefusal, IMPRINT_PRICE } from '../systems/lootCodex.js';   // LOOT10: the codex's page and the imprint's
 import { setById } from '../systems/sigilSets.js';
 import { itemIsIdentified } from '../systems/tradeModes.js';
-import { reforgePrice, reforgeRefusal, salvageShards, salvageRefusal, shardsHeld, shardsText } from '../systems/reforge.js';
+import { reforgePrice, reforgeRefusal, salvageShards, salvageRefusal, shardsHeld, shardsText, honePrice, honeRefusal } from '../systems/reforge.js';   // LOOT17: and the hone
 import { inventoryItemImage } from '../systems/itemTemplates.js';
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 import { SLOT_BOX, screenDpr } from './iconFit.js';
@@ -40,7 +40,7 @@ const el = (tag, cls = null, text = null) => {
 
 /** The window's words. */
 export const REFORGE_TITLE = 'The Reforge';
-export const REFORGE_SUB = 'Welkynd Shards and gold roll one line again · a piece salvaged breaks into shards';
+export const REFORGE_SUB = 'Welkynd Shards and gold roll one line again or hone it up its band · a piece salvaged breaks into shards';   // LOOT17: the hone
 export const REFORGE_PAGES = Object.freeze({ reforge: 'Reforge', salvage: 'Salvage', imprint: 'Imprint', codex: 'Codex', lift: 'Lift Curse' });   // LOOT10: the imprint and the codex; LOOT16: the temple's lifting
 /** The pages the guild's window shows when its host names none - never the temple's (LOOT16). */
 export const REFORGE_GUILD_PAGES = Object.freeze(['reforge', 'salvage', 'imprint', 'codex']);
@@ -70,6 +70,7 @@ export const reforgePriceText = (p) => (p ? `${shardsText(p.shards)} and ${p.gol
 export const REFORGE_REFUSALS = Object.freeze({
   off: 'Loot rarity is off', not: 'Nothing the Reforge can roll', unknown: 'Not yet identified - the guild identifies it first',
   worn: 'Take it off first', line: 'Only the line it was reforged on', shards: 'Not enough Welkynd Shards', gold: 'Not enough gold',
+  top: 'At the top of its band',   // LOOT17
   imprinted: 'It has taken a power already', unfound: 'Not a power your codex holds for it',
   gone: 'No longer in your pack', aetheric: 'An Aetheric piece is the Broker\'s to dismantle', artifact: 'An artifact will not break',
   quest: 'A quest\'s item will not break', bound: 'Bound - it will not break', locked: 'Locked - unlock it first',
@@ -87,6 +88,9 @@ export function reforgeLabel(why, price, have, verb = 'Reforge') {
 }
 /** The last word of a press. */
 export const REFORGED = (name, line) => `Reforged: ${name} - ${line}.`;
+export const HONED = (name, line) => `Honed: ${name} - ${line}.`;   // LOOT17
+/** LOOT17: the card's word on the hone's price. */
+export const HONE_NOTE = (price) => `A hone costs ${reforgePriceText(price)} - it doubles with every hone the piece takes, and a line at the top of its band takes none.`;
 export const SALVAGED = (name, n) => `Salvaged: ${name}, for ${shardsText(n)}.`;
 export const BREAK_ASK = (name, n) => `Break ${name} for ${shardsText(n)}? It is gone for good.`;
 
@@ -124,10 +128,11 @@ function injectSkinStyle(doc = document) {
  *   page?: 'reforge'|'salvage'|'imprint'|'codex'|'lift', pages?: string[] | null,
  *   imprint?: ((item: any, recordId: string) => { ok: boolean, reason?: string|null }) | null,
  *   lift?: ((item: any) => { ok: boolean, reason?: string|null }) | null,
+ *   hone?: ((item: any, line: number) => { ok: boolean, reason?: string|null }) | null,
  * }} deps
  *   LOOT10: `pages` the pages this window shows (the guild's all four; the pack's Codex its one), `imprint` the host's
  *   imprint (systems/lootCodex.js imprintPiece). LOOT16: the temple's `['lift']`, and its `lift` (systems/lootCurse.js
- *   liftCurse).
+ *   liftCurse). LOOT17: `hone` the host's hone (systems/reforge.js honePiece).
  * @returns {{ repaint: () => void, unmount: () => void }}
  */
 export function mountReforgeWindow(host, deps) {
@@ -271,6 +276,8 @@ export function mountReforgeWindow(host, deps) {
     card.append(el('h3', null, nameOf(it)));
     const may = reforgeableLines(it);
     const price = reforgePrice(it);
+    const hone = honeableLines(it);   // LOOT17
+    const hp = honePrice(it);
     const ul = el('ul', 'rarity');
     ul.append(el('li', null, tierLabel(it)));
     if (!itemIsIdentified(it)) {   // its lines are not known yet - the guild's Identify first, and the card says nothing of them
@@ -297,11 +304,27 @@ export function mountReforgeWindow(host, deps) {
         };
         li.append(btn);
       }
+      if (hp && hone.includes(i)) {   // LOOT17: the hone, beside the line's Reforge - a line under its band's top
+        const why = honeRefusal(it, i, payer);
+        const hb = el('button', 'act broker-buy hone-press', reforgeLabel(why, hp, have, 'Hone'));
+        hb.setAttribute('type', 'button');
+        hb.setAttribute('aria-label', why ? `${affixLine(it, i)}: ${REFORGE_REFUSALS[why] ?? ''}` : `Hone ${affixLine(it, i)} for ${reforgePriceText(hp)}`);
+        if (why) { hb.setAttribute('disabled', ''); hb.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
+        hb.onclick = (e) => {
+          e.stopPropagation();
+          if (why) return;
+          const done = deps.hone?.(it, i) ?? { ok: false, reason: 'not' };
+          if (done.ok) say(true, HONED(nameOf(it), affixLine(it, i))); else say(false, REFORGE_REFUSALS[done.reason ?? ''] ?? 'The Reforge will not take that.');
+          render();
+        };
+        li.append(hb);
+      }
       ul.append(li);
     });
     card.append(ul);
     if (Number.isInteger(it.reforged)) card.append(el('p', 'boundline', 'Reforged once - only that line may be rolled again.'));
     else if (price) card.append(el('p', 'boundline', `A reforge costs ${reforgePriceText(price)}. Once a line is reforged, only it may be again.`));
+    if (hp && hone.length) card.append(el('p', 'boundline hone-note', HONE_NOTE(hp)));   // LOOT17
     body.append(card);
   };
   /** LOOT10: THE CODEX - every Legendary record, found and not, then the Aetheric sets; a row pressed shows it whole. */
