@@ -1338,7 +1338,8 @@ test('AUDIT-WH H3: both pools and both above-ground hosts are wired to that ladd
   // `isCorpse` in `corpseKeyOf`, a body's loot key for the knife's
   // search, the sixth; the watch's pool has neither, a guard's body is
   // never skinned.
-  for (const [f, readers] of [['src/scenes/exteriorFoes.js', 7], ['src/scenes/cityGuards.js', 5]]) {
+  // PI1 (PIN MOVED): and Physical Items' bodies (corpseMarker.js physicalCorpseSources), in both pools - one reader more each.
+  for (const [f, readers] of [['src/scenes/exteriorFoes.js', 8], ['src/scenes/cityGuards.js', 6]]) {
     const src = read(f);
     assert.match(src, /const corpseLens = \{/, `${f}: one identity, not three`);
     // AUDIT-WH2 L5: A COUNT IS NOT A LAW. This was `=== 4`, and four
@@ -1349,7 +1350,8 @@ test('AUDIT-WH H3: both pools and both above-ground hosts are wired to that ladd
     // and LOOT-STACK's pile tab (corpseMarker.js pileBody), the fourth.
     // A reader that stops passing it now fails here.
     assert.equal((src.match(/corpseLens\b/g) ?? []).length, readers,
-      `${f}: declared once, read by the targets, the namer, the contents and the pile tab${readers > 5 ? ', where a body lies and its loot\'s key' : ''}`);
+      `${f}: declared once, read by the targets, the namer, the contents, the pile tab and the physical items' bodies${readers > 6 ? ', where a body lies and its loot\'s key' : ''}`);
+    assert.match(src, /physicalCorpseSources\((?:foes|guards), '(?:foe|guard)Corpse', corpseLens\)/, `${f}: Physical Items' bodies walk the pool under the lens`);
     assert.match(src, /corpseLootTargets\((?:foes|guards), '(?:foe|guard)Corpse', corpseLens\)/,
       `${f}: the TARGETS walk the pool under the lens`);
     assert.equal((src.match(/corpseEntryFor\((?:foes|guards), key, '(?:foe|guard)Corpse', corpseLens\)/g) ?? []).length, 3,

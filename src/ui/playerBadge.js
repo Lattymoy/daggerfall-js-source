@@ -523,6 +523,10 @@ export const badgeCss = () => [
   // SHADOW-FANG: a gradient title's word (the card wraps it in .acttitleword) - the button keeps the plain colour
   ...TITLES.filter((t) => TITLE_GRADIENT[t]).map((t) => `.card button.acttitle.${badgeClass('tl', t)} .acttitleword { ${wordCss(t)} }`),
   ...GLYPHS.map((g) => `.card .acctglyph.${badgeClass('gl', g)} .acctglyphart { color: ${cssRgba(GLYPH_RGBA[g])}; }`),
+  // PROFILE-MENU: the title the profile's plate says it wears (ui/enhancedAccount.js plateFacts) - the button's colour,
+  // and a gradient title's word painted as the button's is
+  ...TITLES.map((t) => `.card .acctworntitle.${badgeClass('tl', t)} { color: ${cssRgba(TITLE_RGBA[t])}; }`),
+  ...TITLES.filter((t) => TITLE_GRADIENT[t]).map((t) => `.card .acctworntitle.${badgeClass('tl', t)} .acctwornword { ${wordCss(t)} }`),
   // WB9g: an aura's button wears the Gatebreaker's own fire - the Broker's two pieces are one family of colour - its
   // word (.actauraword, the aura's name: a title's word rule stays one per gradient title) painted as that title's is.
   // AEGIS: each aura in ITS title's paint (AURA_PAINT) - the Oblivion Ward in the Aegis of Oblivion's violets

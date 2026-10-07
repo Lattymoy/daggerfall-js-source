@@ -206,7 +206,7 @@ import { skinCard } from './skinCard.js';   // DISC23-B2: the skin, on the profi
 import { saveTile, cloudStateOf, saveFromCard, newerBackup } from './saveTile.js';   // TILE1 (Mac: "a detailed tile based design for your saves... showing your portrait and character information"), and ACC2c's card-shaped save
 import { loadFace } from './facePortrait.js';
 import { timersMark, timersWindow, anchorBeside } from './enhancedTimers.js';   // TIMERS1: the hourglass beside the profile mark, and its window
-import { profileBadge, portraitSave, liveCharacter } from './profileBadge.js';   // PROFILE1: the mark is the last character's portrait   // TILE1: the character's face, the one home chargen also reads
+import { profileBadge, portraitSave, liveCharacter, characterLine } from './profileBadge.js';   // PROFILE1: the mark is the last character's portrait   // TILE1: the character's face, the one home chargen also reads
 import { cloudIo, cloudList, pushSlot, pullSlot, removeCloudSlot, cloudOnly, slotKeyOf, cloudRefusalText } from '../systems/cloudSaves.js';   // ACC2: the backup a tile can offer, AUDIT-312 F1's delete, and ACC2c's download of a save that is only up there
 import { serviceBase, storedSession } from '../net/accountClient.js';
 import { isBountyQuestId, abandonBountyQuest, shareBountyQuest, bountyQuestShareable } from '../systems/bountyJournal.js';   // BOUNTY1: a bounty in the journal - its Abandon and its Share
@@ -971,7 +971,14 @@ function accountBody() {
     storage: appStorage(),
     onChange: () => card?.paint(),
   });
-  card = accountCard(document, flow, { onClose: () => { accountOpen = false; render(); } });
+  // PROFILE-MENU: the card's plate wears the corner mark's portrait and says whose face it is - the same character
+  // the mark shows (profileCharacter), its face asked for as a COPY (the mark and a save tile may draw this very face)
+  const save = profileCharacter();
+  card = accountCard(document, flow, {
+    onClose: () => { accountOpen = false; render(); },
+    face: save ? loadFace(save, { scale: 2, copy: true }) : null,
+    character: save ? `Playing ${characterLine(save)}` : null,
+  });
   host.append(card.root);
   // Not awaited: the door must be on screen before the service is
   // asked anything, and `start` catches its own refusals. The guard is
@@ -990,10 +997,15 @@ const signedIn = () => !!storedSession(appStorage());
  *  it does not. PROFILE1 (Mac: "more like a profile icon less like a
  *  button"): a PORTRAIT - the last character's face (ui/profileBadge.js),
  *  asked for as a promise so the door never waits on a CIF read. */
+/** PROFILE2: the character the profile shows - paused, the one being PLAYED (the newest save may be another's); at the
+ *  door, the newest finished save. PROFILE-MENU: one answer for the mark and the card it opens. */
+function profileCharacter() {
+  return mode === 'pause' ? liveCharacter(playerEntity) : newestPortraitSave();
+}
+
 function profileMark() {
   const who = storedSession(appStorage());
-  // PROFILE2: paused, the portrait is the character being PLAYED (the newest save may be another's)
-  const save = mode === 'pause' ? liveCharacter(playerEntity) : newestPortraitSave();
+  const save = profileCharacter();
   return profileBadge(document, {
     session: who,
     save,
@@ -3548,7 +3560,10 @@ function renderHome() {
     // so the hook is structural: doorbtn plus the section id, which
     // is what a probe actually means when it says New Game.
     const b = el('button', `doorbtn door-${id}`);
-    b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label), el('span', 'px-c', '\u25c6'));
+    // AUDIT PLUS-MENU M2: the diamonds stand at rest under Plus (MENU_CSS), so they are drawing, not words - hidden from
+    // a reader, or every door was named "◆ Continue ◆"
+    const dia = () => { const d = el('span', 'px-c', '\u25c6'); d.setAttribute('aria-hidden', 'true'); return d; };
+    b.append(dia(), document.createTextNode(label), dia());
     b.onclick = RAIL_ACTS[id] ? () => onAction(RAIL_ACTS[id]) : () => go(id);
     menu.append(b);
   }

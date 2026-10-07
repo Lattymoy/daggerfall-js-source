@@ -6835,6 +6835,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (Number.isFinite(d)) p0[1] -= d;
     return p0;
   };
+  // PI1 (Physical Items, scenes/physicalItemsLayer.js): THE STREET'S HALF of the layer the pool stands - the world's
+  // collider for the flights, the encounter pool's and the watch's bodies, the pack's wearer for the pictures, and the
+  // take's own hooks (the quest resolver, the pickup cards, the map's reveal). Read at the frame, never here.
+  droppedLoot.physical.attach({
+    collider: () => collider,
+    corpses: () => [...exteriorFoes.physicalCorpses(), ...cityGuards.physicalCorpses()],
+    identity: () => playerEntity,
+    getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null,
+    took: (moved, who) => showPickups(moved, who),
+    say: (l) => townTalk.say(l),
+    revealMap() { return revealLocation('readMap'); },   // useHooks' own reveal (U44), named as a method: that bag's line is a cite's anchor
+    paused: () => !!gamePaused(),   // AUDIT PI1 L10: the flights hold while the game does (this host's one pause answer)
+  });
   // T3d: the Where-is directory follows the player's LOCATION PIXEL
   // (DFU's TalkManager builds its list for PlayerGPS.CurrentLocation).
   // On pixel crossing, townTalk's topics swap to the new pixel's
@@ -8047,7 +8060,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // choice is never silent): said
     const choose = model.choose;
     model.choose = (id) => { if (!model.live() || !choose(id)) townTalk.say(`${model.given ?? 'It'} is gone.`); };
-    const w = makeInventoryWindow({ fate: model, loot: { items: () => [], playerOwned: false } });   // a body's door: the loot window, its fate side alone
+    // AUDIT PI1 H4: no shift-drop from a fate's pack - it opens indoors and underground too, where the street's pool is not the floor
+    const w = makeInventoryWindow({ fate: model, loot: { items: () => [], playerOwned: false }, physicalDropOn: () => false });   // a body's door: the loot window, its fate side alone
     if (!w) return false;
     const mounted = !!modes?.mountWindow?.(w);
     if (!mounted) (w.dispose?.bind(w) ?? w._closeSilently?.bind(w))?.();   // a slot already held: the window built for it put away again
@@ -11685,6 +11699,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     // container's x and z and takes only the new pile's own y.
     onDrop: (items, icon = null, at = null) => droppedLoot.dropPile(
       items, containerDropPos(at, dropFeet()), `${playerTravelPixel().x},${playerTravelPixel().y}`, icon),
+    // PI1: Physical Items' shift-drop - each item its own pile, laid out ahead of the player (droppedLoot.js dropPhysical)
+    physicalDropOn: () => droppedLoot.physical.on(),
+    physicalDrop: (items) => droppedLoot.dropPhysical(items, dropFeet(), [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)], `${playerTravelPixel().x},${playerTravelPixel().y}`),
     ...extra,
   });
   /** MAC-E's corpse door - the pool's own `takeLoot` (the empty body's
@@ -28511,6 +28528,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           // down to the same art.
           // AUDIT 65 MC-2: ActivateLootContainer's own refusal (:868-873)
           else if (dropKey && _dropPick.distance > _dropPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT);
+          // PI1: an item standing as itself is taken on the press (Physical Items' TryPickup) - no window
+          else if (dropKey && droppedLoot.physical.owns(dropKey)) droppedLoot.physical.pick(dropKey, playerEntity);
           else if (dropKey && inventoryDoorReady()) {
               // U8e: a pile under the ray opens the inventory WITH the
               // pile as the remote target (Remove defaults - the OnPush law)

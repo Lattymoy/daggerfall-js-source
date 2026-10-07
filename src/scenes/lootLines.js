@@ -18,10 +18,16 @@
 // A find is `{ root, items }`: the crown of its sprite (a billboard is
 // bottom-anchored - render/bounds.js - so its crown is its feet and its
 // height) and the list it holds, read live.
+//
+// PI1 (Physical Items, scenes/physicalItemsLayer.js): an item standing in
+// the world as itself is its own find (`own`), its line out of its own
+// picture - the world boss's spoils' form - and the body or pile it lies
+// for no longer counts it toward its own line.
 // ═══════════════════════════════════════════════════════════════════
 
 import { SpoilsGlowRenderer } from '../render/spoilsGlow.js';
 import { bestRarity, RARITIES, lootRarityOn } from '../systems/lootRarity.js';
+import { isPresented } from '../systems/physicalItems.js';   // PI1: the items that stand as themselves
 
 /** The most lines a frame stands, and how far from the eye a find may be (metres). */
 export const LOOT_LINES_MAX = 8;
@@ -40,7 +46,7 @@ export function pickLootLines(finds, eye, { max = LOOT_LINES_MAX, reach = LOOT_L
   for (const f of finds) {
     const root = f?.root;
     if (!Array.isArray(root) || root.length !== 3 || !root.every(Number.isFinite) || !Array.isArray(f.items) || !f.items.length) continue;
-    const tier = bestRarity(f.items);
+    const tier = bestRarity(f.own ? f.items : f.items.filter((it) => !isPresented(it)));   // PI1: a standing item's line is its own
     if (!tier || (RARITIES[tier]?.rank ?? 0) < RARITIES.rare.rank) continue;
     const d = Math.hypot(root[0] - eye[0], root[1] - eye[1], root[2] - eye[2]);
     if (!(d <= reach)) continue;

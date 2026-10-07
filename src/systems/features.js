@@ -218,6 +218,9 @@ export const MOD_CURATED = Object.freeze({
   'immersive-travel': Object.freeze([
     'General.DisableNormalTravel', 'General.DailyCarriageFee', 'General.RegionLockedCarriages', 'ShipTravel.DisableShipTravelOutsideDocks',
   ]),
+  // PI1: the four a player reaches for first - whether a body's gear lands round it, how hard it is thrown out, and the
+  // two sizes most read (a weapon's and an armour piece's). The categories and the per-piece sizes stay in the mod's pane.
+  'physical-items': Object.freeze(['Enemy Loot.Physical Enemy Drops', 'Enemy Loot.Impulse Strength', 'Item Sizes.Weapons', 'Item Sizes.Armor']),
   'travel-options': Object.freeze([
     'CautiousTravel.PlayerControlledCautiousTravel', 'StopAtInnsTravel.PlayerControlledInnsTravel', 'ShipTravel.OnlyFromPorts',
     'GeneralOptions.LocationPause',
@@ -917,6 +920,10 @@ export const FEATURES = Object.freeze([
   // The runtime reads its switches every frame (HandleSettingsChanged is
   // the mod's own listener); turning it off recalls the pair to you.
   modFeature('horse-cart-and-cargo', 'Takes effect at once.', 'world'),
+  // PI1 (2026-10-07): PHYSICAL ITEMS - `world`, as Horse Cart and Cargo: what it changes is what lies in it. The layer
+  // reads its switch and its settings every frame (scenes/physicalItemsLayer.js); a size lands on the items that stand
+  // after it (the mod's "Applies to newly created visuals").
+  modFeature('physical-items', 'Takes effect at once; a new size on the items that land after it.', 'world'),
   // WS1 (2026-09-17): WEAPON SHEATHING - Greatness7's scabbards and the
   // OpenMW mechanism, on the port's Morrowind third-person body. The
   // switch is the port's own pref (the mod ships no settings of its own);

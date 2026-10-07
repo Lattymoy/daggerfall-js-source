@@ -1205,6 +1205,72 @@ ${badgeCss()}
   color: #f2c46b; background: rgba(242, 196, 107, 0.1); border: 1px solid rgba(242, 196, 107, 0.8); margin-right: 0.35em; }
 .card h3 .acctrenown:empty { display: none; }   /* AUDIT RENOWN1 UI-8: an empty box is never drawn, whatever the script above it does */
 
+/* ═══ PROFILE-MENU: THE SIGNED-IN CARD IS A PROFILE ════════════════
+   (2026-10-07, Mac: "organize and detail the player profile (the top
+   right icon section)".) ui/enhancedAccount.js draws it in the order a
+   player reads one - WHO (the plate), WHAT THEY HAVE DONE (the record,
+   the characters), WHAT THEY WEAR, THE ACCOUNT - each a section under a
+   head of its own. Paint here; under Plus the record's tiles play the
+   kit's panel role (ui/enhancedFrame.js). */
+.card.acctin { display: flex; flex-direction: column; gap: 16px; }
+/* THE PLATE: the portrait over the name, on the window's one axis. */
+.card .acctplate { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+  padding-bottom: 16px; border-bottom: 1px solid var(--iron); }
+.card .acctportrait { position: relative; flex: none; width: 88px; height: 88px; border-radius: 50%; overflow: hidden;
+  border: 3px solid var(--brass); background: radial-gradient(circle at 50% 38%, #1b2029 0%, #0a0c11 72%);
+  box-shadow: 0 0 0 2px var(--iron), 0 3px 10px rgba(0,0,0,0.65); }
+.card .acctportrait canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%;
+  image-rendering: pixelated; }
+.card .acctportrait.hasface { background: #0a0c11; }   /* the face fills the well - no night glow behind it */
+.card .acctsilhouette { position: absolute; inset: 0; }
+.card .acctsilhouette::before { content: ''; position: absolute; left: 31%; top: 16%; width: 38%; height: 40%;
+  border-radius: 48% 48% 44% 44%; background: #3a424d; }
+.card .acctsilhouette::after { content: ''; position: absolute; left: 12%; top: 58%; width: 76%; height: 60%;
+  border-radius: 50% 50% 0 0; background: #3a424d; }
+.card .acctident { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; max-width: 100%; }
+.card .acctident h3 { margin: 0; overflow-wrap: anywhere; }
+/* the title worn, in its own colour (the badge rule below), and the glyphs shown */
+.card .acctworn { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 10px; }
+.card .acctworntitle { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+.card .acctwornword, .card button.acttitle .acttitleword { display: inline-block; }
+.card h3 .acctname { vertical-align: middle; }
+.card .acctworn .acctglyph { gap: 0; }
+.card .acctworn .acctglyphart { width: 18px; height: 18px; }
+.card .acctcharline { font-size: 13px; color: var(--dim); overflow-wrap: anywhere; }
+/* THE SECTIONS: two columns where the window is wide, one where it is not (a container, so the WINDOW's width says) */
+.card.acctin { container-type: inline-size; }
+.card .acctgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+/* AUDIT PROFILE-MENU P2: two columns only where both have something in them (ui/enhancedAccount.js marks the grid) */
+@container (min-width: 600px) { .card .acctgrid.acctgrid2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; } }
+.card .acctcol { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.card .acctsec { min-width: 0; }
+.card .acctsec .acctwear, .card .acctsec ul.acctfacts { margin-bottom: 0; }
+/* a section's head: the heading caps between two engraved wings */
+.card .acctsechead { display: flex; align-items: center; gap: 10px; margin: 0 0 8px;
+  font-size: 12px; font-weight: 400; letter-spacing: 0.22em; text-indent: 0.22em; text-transform: uppercase; color: var(--brass); }
+.card .acctsechead::before, .card .acctsechead::after { content: ''; flex: 1; height: 1px; background: var(--iron); }
+/* THE RECORD: a tile a deed - the figure large, its name small under it */
+.card ul.acctfacts.acctrecord { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.card ul.acctfacts.acctrecord li { flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  padding: 10px 8px; border: 2px solid var(--iron); background: rgba(0,0,0,0.25); text-align: center; }
+.card ul.acctfacts.acctrecord li:last-child { border-bottom: 2px solid var(--iron); }
+.card ul.acctfacts.acctrecord .acctkey { order: 2; flex: none; font-size: 11px; letter-spacing: 0.12em; }
+.card ul.acctfacts.acctrecord .acctval { order: 1; flex: none; font-size: 17px; line-height: 1.2; }
+.card ul.acctfacts.acctrecord .acctbar { order: 3; flex: none; margin-top: 4px; }
+/* the duels' tile takes the row: its figure is words, and its bar is the share won */
+.card ul.acctfacts.acctrecord li:has(.acctbar) { grid-column: 1 / -1; }
+.card ul.acctfacts.acctrecord li:has(.acctbar) .acctval { font-size: 15px; }
+/* THE CHARACTERS: a row each, the way to the next level drawn under it */
+.card ul.acctfacts.acctchars li { flex-wrap: wrap; gap: 6px 12px; }
+.card ul.acctfacts.acctchars .acctkey { display: none; }
+.card ul.acctfacts.acctchars .acctval { font-size: 14px; }
+/* THE BAR: a meter in the skin's brass, the browser's own <progress> told how to draw (ACC1e: no style from script) */
+.card progress.acctbar { -webkit-appearance: none; appearance: none; display: block; flex: 1 0 100%; width: 100%; height: 8px;
+  margin: 2px 0 0; border: 1px solid var(--iron); background: #0b0e12; color: var(--brass); }
+.card progress.acctbar::-webkit-progress-bar { background: #0b0e12; }
+.card progress.acctbar::-webkit-progress-value { background: linear-gradient(180deg, #f3cf86 0 2px, #c08a3e 2px 5px, #7a5424 5px); }
+.card progress.acctbar::-moz-progress-bar { background: linear-gradient(180deg, #f3cf86 0 2px, #c08a3e 2px 5px, #7a5424 5px); }
+
 /* ═══ THE RECOVERY CODE ═══════════════════════════════════════════
    THE ONE MOMENT THIS STRING EXISTS. Email is completely optional
    (Mac), so there is no address to send a reset to and this code IS
@@ -2337,6 +2403,43 @@ ${SUPPORT_MARKS_CSS}
 /* The card inside brings its own frame, and a box inside a box reads
    as a mistake - the window IS the frame here. */
 .px-win.px-acctwin .card.acct { border: 0; background: none; padding: 0; margin: 0; }
+/* PROFILE-MENU: signed in, the window widens for the profile's two columns, and the sections read as ledgers - a
+   key left and its value right - under the plate that keeps the window's one axis. */
+.px-win.px-acctwin:has(.card.acct.acctin) { max-height: min(720px, calc(100dvh - clamp(270px, 33vh, 400px) - 84px)); }
+/* AUDIT PROFILE-MENU P2: wide only for two columns - a profile with one has nothing to stand beside it */
+.px-win.px-acctwin:has(.acctgrid2) { width: min(820px, 94vw); }
+/* AUDIT PROFILE-MENU P1: A SHORT SCREEN GIVES IT THE HEIGHT, as SHORT-TOUCH gives the sign-in window - the stage drops its
+   deep top padding there, but the rule above still took the 270px it no longer has: a landscape phone (844x390) drew a
+   window 36px tall, and 740x360 one of 6 */
+@media (max-height: 560px) { .px-win.px-acctwin:has(.card.acct.acctin) { max-height: calc(100dvh - 20px); } }
+/* AUDIT PROFILE-MENU P4: CLOSE IS ALWAYS IN REACH. The profile is long, and its row of presses (Change password, Sign out,
+   Close) stood under all of it - 470px of scrolling on a phone to put the window away. It stands at the window's foot,
+   over a fade of the window's own ink, wherever the body is scrolled. */
+.px-win.px-acctwin .card.acct.acctin .acts { position: sticky; bottom: 0; z-index: 1; padding-bottom: 20px;
+  background: linear-gradient(180deg, transparent, var(--ink) 16px); }
+/* the body's own foot padding is the bar's (scrolled words show through a scroller's padding, under a bar stuck above it) */
+.px-win.px-acctwin:has(.card.acct.acctin) .px-body { padding-bottom: 0; }
+/* a phone: the four presses two to a row, not four rows of the screen */
+@media (max-width: 480px) {
+  .px-win.px-acctwin .card.acct.acctin .acts { gap: 8px; }
+  .px-win.px-acctwin .card.acct.acctin .acts .act { flex: 1 1 40%; min-width: 0; padding-left: 8px; padding-right: 8px; }
+}
+.px-over .px-win.px-acctwin:has(.card.acct.acctin) { max-height: min(760px, 86dvh); }
+/* a phone: the window is the screen's, the door shut behind it - over the corner marks and the menu, which read through
+   a 0.6 scrim under a window too short to cover them */
+@media (max-width: 480px) {
+  .px-stage.px-acctstage { padding: max(10px, env(safe-area-inset-top)) 8px max(10px, env(safe-area-inset-bottom)); background: rgba(8,10,15,0.88); }
+  .px-win.px-acctwin, .px-win.px-acctwin:has(.card.acct.acctin) { width: 100%; max-height: calc(100dvh - 20px); }
+  .px-win.px-acctwin .px-body { padding: 18px 16px 20px; }
+}
+.px-win.px-acctwin .card.acct.acctin .acctsec { text-align: left; }
+.px-win.px-acctwin .card.acct.acctin ul.acctfacts li { justify-content: space-between; }
+.px-win.px-acctwin .card.acct.acctin ul.acctfacts .acctval { text-align: right; }
+.px-win.px-acctwin .card.acct.acctin ul.acctfacts.acctrecord li { justify-content: center; }
+.px-win.px-acctwin .card.acct.acctin ul.acctfacts.acctrecord .acctval { text-align: center; }
+.px-win.px-acctwin .card.acct.acctin ul.acctfacts.acctchars .acctval { text-align: left; }
+.px-win.px-acctwin .card.acct.acctin .acctwearrow { justify-content: flex-start; }
+.px-win.px-acctwin .card.acct.acctin .acts { padding-top: 14px; border-top: 1px solid var(--iron); }
 
 /* DISC23-B2 (Mac: "a choosable skin system in the menu player profile
    system itself"): THE SKIN, under the account on the same axis. No box
@@ -2432,6 +2535,8 @@ ${SUPPORT_MARKS_CSS}
 /* AUDIT TIMERS1 UI-4: STONE'S LIGHT GROUND (AUDIT MERGE-PLUS D3's law) - the window takes the theme's panel, and Stone's
    light grey left the dim words at 2.6:1 and the where line at 3.0; lifted past 4.5:1 over a hard black drop. */
 :root[data-plus-theme="stone"] .px-timerswin { --dim: #e2dccd; --brass: #ffd98a; text-shadow: 1px 1px 0 rgba(5,6,8,0.85); }
+/* AUDIT PROFILE-MENU P3: the profile on Stone's light ground, the same lift - its tiles' names read 2.3:1 and its heads 2.6:1 */
+:root[data-plus-theme="stone"] .px-acctwin { --dim: #e2dccd; --brass: #ffd98a; text-shadow: 1px 1px 0 rgba(5,6,8,0.85); }
 :root[data-plus-theme="stone"] .px-timerswin .tm-where { color: #fbf8f0; }
 :root[data-plus-theme="stone"] .px-timerswin .tm-count { color: #ffe3a6; }
 :root[data-plus-theme="stone"] .px-timerswin .tm-row.live .tm-count { color: #c8ffd6; }
