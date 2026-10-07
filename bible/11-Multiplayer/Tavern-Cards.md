@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, written before a line of it is built (2026-10-07). Nothing here ships yet. Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"). Mac answered
 four of section 9's five questions the same day; the card art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -170,7 +170,7 @@ Each ships alone and is verifiable without the next.
 
 | Slice | What it builds |
 |---|---|
-| **CARDS1** | The deck law, pure and DOM-free, one home for both ends: the 52-card deck, the unbiased shuffle, the Hold'em evaluator, the betting round's state machine, side pots. Pins deepEqual against hand tables; mutants. |
+| **CARDS1** SHIPPED | The deck law, pure and DOM-free, one home for both ends: the 52-card deck, the unbiased shuffle, the Hold'em evaluator, the betting round's state machine, side pots. Pins deepEqual against hand tables; mutants. |
 | **CARDS2** | The table: tavern table models measured and listed here, the seat (activation, the seat view, held movement, standing up), the seated pose for both bodies, peers drawn seated. Offline, alone at the table. |
 | **CARDS3** | The card bodies: the plate, the pass, the deal arcs, the flip, the slide and settle, the fanned hand and the peek, the chips. Frame cost measured on the probe. |
 | **CARDS4** | Offline Hold'em: the patrons, their temperaments and purses, gold stakes. The first playable game. |
@@ -188,3 +188,39 @@ Each ships alone and is verifiable without the next.
 3. **Gold stakes.** ANSWERED: real gold (offline the purse, online escrowed).
 4. **Offline play.** ANSWERED: tavern patrons play.
 5. **The card art.** OPEN: who paints the cards, and in what style? Needed by CARDS8, not before.
+
+## 10. CARDS1 (2026-10-07): the cards' law
+
+Mac, after CARDS0's answers: **"Do it"**.
+
+`src/net/cardLaw.js` - pure, DOM-free, one home for both ends, the way `net/dice.js` is the dice's. Nothing draws, sits
+or deals yet; the relay (CARDS5) and the patrons (CARDS4) will read it.
+
+- **The card** is an integer 0..51 - rank `c % 13` (the deuce 0 .. the ace 12), suit `Math.floor(c / 13)` (clubs,
+  diamonds, hearts, spades) - and is written `As`, `Td`, `2c` (`cardText`, `parseCard`).
+- **The shuffle** (`shuffleDeck`) is Fisher-Yates from the top, each swap partner drawn from 0..i by the dice's own
+  unbiased draw. ONE HOME: the rejection sample that lived inside `rollDice` is now `drawBelow(m, rand32)` in
+  `net/dice.js`, `rollDice` and `shuffleDeck` both call it, and the test sweeps `cardLaw.js` for a second `2 ** 32`.
+  The two dice mutants on those lines (`DC-rejection-dropped`, `DC-face-off-by-one`) were re-aimed by content and
+  still die (31 of 31). `net/dice.js` is relay law, so its bytes moved the relay's hash: `world175` (TEXT-F1, NOT YET
+  DEPLOYED) was re-hashed in place in `test/relayversion.test.js`, the way AUDIT 657 and LEGACY7 re-hashed undeployed
+  rows - no roll changed, so no new version.
+- **The hand's rank** (`rankFive`, `bestHand`, `compareHands`): nine categories, each with its tie-break ranks, the
+  wheel topped by its five, no straight round the corner, the best five of seven by trying all twenty-one.
+- **The pots** (`sidePots`): a layer per level some seat put in, contested by the seats still in that reached it; a
+  layer the same seats contest as the one below joins it, so a folded blind is chips in a pot and never a pot; an
+  uncalled bet is a top layer only its owner contests, so it goes home.
+- **The hand** (`newHand`, `legalActions`, `act`, `timeoutAction`, `viewFor`): No-Limit Hold'em as a casino deals
+  it. Heads-up the button posts the small blind and acts first before the flop, last after it. The deal is one card
+  at a time from the seat left of the button; a burn before each street. A short big blind is still a full big blind
+  to call. The minimum raise is the last full raise and resets to the big blind each street. A seat that already acted
+  may raise again only when the raising since its action adds up to a full raise - so one short all-in does not
+  re-open the betting and two that add up do. A seat with nobody left to bet against is never asked to act unless it
+  faces a bet; the board then runs out. At the showdown each pot goes to its best hand, a split's odd chips one each
+  from the seat left of the button; a hand won uncontested shows nothing. Every step returns a NEW state - a refused
+  action is `null` and changes nothing, which is what lets a relay keep the last good one. `viewFor` is what a seat
+  may see: its own hole cards, another's only shown down and still in, never the deck or the burns.
+- **Pins:** `test/cards1_cardlaw.test.js`, 14 tests, deepEqual against hand tables and whole hands played through.
+  `tools/mutants/cards1.json`: 40 mutants, 40 dead. Two survived the first pass - `parseCard` reading a capital suit,
+  and the minimum bet carried from one street to the next - and each was pinned.
+- **Ledger:** section A row TAVERN CARDS - THE CARDS' LAW.
