@@ -44,7 +44,7 @@
 // THE CEILING. The shaper is handed DFU's height as DFU stands it -
 // clamped at MAX_TERRAIN_HEIGHT - and the lift stops rising at the
 // heightmap's 7-bit top, so nothing stands over LANDFORM_CEILING. Real
-// ground never reaches either (its bytes stop at 110); WOODS.WLD's one
+// ground never reaches either (its bytes stop at 109); WOODS.WLD's one
 // byte over 127 does - a 255 at map pixel (470, 355), in the sea off
 // Tigonus, which DFU stands as a 1.9 km pillar clamped flat at its
 // ceiling and the landforms stand at theirs, 3 km, not 5.
@@ -163,9 +163,9 @@ export function reliefByteHeight(byte) {
  * same blend (blendLocationTerrain itself, over the field): exact over a town's levelled ground, exact in the wild.
  * AUDIT LANDFORMS B2: with the world's `landforms` the field is the kernel's own shaped samples less DFU's, so a road's
  * cut and fill and a river's channel are followed too; it was the lift alone, and a record from before the row stood
- * up to 29.8 m over a road's cut (a fall that kills) - on the real data now 1.6 m over at worst, 2.0 m under (the
- * mod's SmoothRoads, which smooths DFU's own road and not the level bed). Without them, the lift alone (no network).
- * Not followed: World of Daggerfall's flatten.
+ * up to 29.8 m over a road's cut (a fall billing over 120 HP) - on the real data now 1.6 m over at worst, 2.0 m under
+ * (the mod's SmoothRoads, which smooths DFU's own road and not the level bed). Without them, the lift alone (no
+ * network). Not followed: World of Daggerfall's flatten.
  * @param {object} woods - the sampler's three-method surface.
  * @param {number} px
  * @param {number} py
