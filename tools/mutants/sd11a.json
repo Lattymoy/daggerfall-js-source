@@ -1,0 +1,691 @@
+[
+  {
+    "name": "SD11A-L2F1-the-hand-a-mirror",
+    "file": "src/world/sdHall.js",
+    "old": "  const x = [y[1] * n[2] - y[2] * n[1], y[2] * n[0] - y[0] * n[2], y[0] * n[1] - y[1] * n[0]];",
+    "new": "  const x = [n[1] * y[2] - n[2] * y[1], n[2] * y[0] - n[0] * y[2], n[0] * y[1] - n[1] * y[0]];",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the hand's own +x n x y: a mirror, its faces wound away from the eye"
+  },
+  {
+    "name": "SD11A-L2F1-a-sign-wound-away",
+    "file": "src/world/sdHall.js",
+    "old": "  return [T(bl), T(add(bl, mul(UP, h))), T(add(br, mul(UP, h))), T(br)];",
+    "new": "  return [T(br), T(add(br, mul(UP, h))), T(add(bl, mul(UP, h))), T(bl)];",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "every upright face wound the other way: the dial, the sign and the plaques face the stone, culled, their pictures mirrored"
+  },
+  {
+    "name": "SD11A-L2F1-the-plaque-mirrored",
+    "file": "src/world/sdHall.js",
+    "old": "0, SD_ORRERY.z + SD_PLAQUE.r * Math.cos(b)], n, R: [-n[2], 0, n[0]] };",
+    "new": "0, SD_ORRERY.z + SD_PLAQUE.r * Math.cos(b)], n, R: [n[2], 0, -n[0]] };",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a plaque's right lookAt's: its tablet read mirrored, wound away"
+  },
+  {
+    "name": "SD11A-L2F1-the-notch-wound-away",
+    "file": "src/world/sdHall.js",
+    "old": "f.tri(SD_REALM_BRASS_RECORD, T(tip), T(add(add(tip, [0, 0.12, 0]), mul(R, -0.07))), T(add(add(tip, [0, 0.12, 0]), mul(R, 0.07))), [0.5, 0], [0, 1], [1, 1]);",
+    "new": "f.tri(SD_REALM_BRASS_RECORD, T(tip), T(add(add(tip, [0, 0.12, 0]), mul(R, 0.07))), T(add(add(tip, [0, 0.12, 0]), mul(R, -0.07))), [0.5, 0], [1, 1], [0, 1]);",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the notch over the twelfth hour wound away from the eye: culled"
+  },
+  {
+    "name": "SD11A-L2F2-the-stones-not-solid",
+    "file": "src/scenes/sdHall.js",
+    "old": "const floors = hallFloorTris(), solids = hallSolidTris(), tris",
+    "new": "const floors = hallFloorTris(), solids = new Float32Array(0), tris",
+    "tests": [
+      "test/sd11a_scenes.test.js",
+      "test/sd6c_hall.test.js"
+    ],
+    "why": "the stones and plaques off the collider: walked through"
+  },
+  {
+    "name": "SD11A-L2F2-the-plaques-not-solid",
+    "file": "src/world/sdHall.js",
+    "old": "    boxQuads(at, R, n, 0.07, 0.07, SD_PLAQUE.post).forEach(tri2);\n    tri2(uprightQuad(plaqueFaceFoot(k), R, SD_PLAQUE.w, SD_PLAQUE.h));\n",
+    "new": "",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the plaques' posts and tablets off the collider"
+  },
+  {
+    "name": "SD11A-L2F2-turned-from-behind",
+    "file": "src/scenes/sdHall.js",
+    "old": "      if (!beforeStone(i, at[0], at[2])) { say(SD_HALL_TEXT.front); return true; }",
+    "new": "      if (false) { say(SD_HALL_TEXT.front); return true; }",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a handle turned from behind its stone"
+  },
+  {
+    "name": "SD11A-L2F2-inside-the-face-before-it",
+    "file": "src/world/sdHall.js",
+    "old": "  return (x - at[0]) * n[0] + (z - at[2]) * n[2] > SD_STONE_SIZE.d / 2;",
+    "new": "  return (x - at[0]) * n[0] + (z - at[2]) * n[2] > -SD_STONE_SIZE.d / 2;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the slab's own depth counted before its face"
+  },
+  {
+    "name": "SD11A-L2F3-the-hall-a-window",
+    "file": "src/scenes/sdHall.js",
+    "old": "renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission, { white: true }); }",
+    "new": "renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission); }",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the hall's glows a window's mask: tinted by DFU's day colour"
+  },
+  {
+    "name": "SD11A-L2F3-the-steps-a-window",
+    "file": "src/scenes/sdSteps.js",
+    "old": "renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission, { white: true }); }",
+    "new": "renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission); }",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the Steps' glows a window's mask"
+  },
+  {
+    "name": "SD11A-L2F3-the-echoes-a-window",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission, { white: true }); }",
+    "new": "renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission); }",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the Echoes' glows a window's mask"
+  },
+  {
+    "name": "SD11A-L2F3-the-realm-a-window",
+    "file": "src/scenes/worldModes.js",
+    "old": "renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission, { white: true }); }",
+    "new": "renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission); }",
+    "tests": [
+      "test/sd11a_scenes.test.js",
+      "test/sd5a_realm.test.js"
+    ],
+    "why": "the realm's own five glows a window's mask"
+  },
+  {
+    "name": "SD11A-L2F4-the-walk-over-the-dial",
+    "file": "src/world/sdRealm.js",
+    "old": "export const walkFarZ = (x) => islandEdgeZ(SD_ORRERY.x, SD_ORRERY.z, SD_ORRERY.r, x, -1);",
+    "new": "export const walkFarZ = (x) => SD_WALK.z1 + 0 * x;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the walk to z 25 again, over the dial's floor in its plane"
+  },
+  {
+    "name": "SD11A-L2F4-an-end-straight-across",
+    "file": "src/world/sdRealm.js",
+    "old": "    const xs = walkXs(x - h, x + h);",
+    "new": "    const xs = [x - h, x + h];",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the walk's ends straight across, over the island where its edge bends"
+  },
+  {
+    "name": "SD11A-L2F5-the-sign-over-the-dial",
+    "file": "src/world/sdHall.js",
+    "old": "export const SD_EMBLEM = Object.freeze({ y: 2.34, half: 0.25 });",
+    "new": "export const SD_EMBLEM = Object.freeze({ y: 2.2, half: 0.28 });",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the sign back over the dial's twelfth hour, the two fighting"
+  },
+  {
+    "name": "SD11A-L2F6-the-left-kerb-down",
+    "file": "src/world/sdRealm.js",
+    "old": "xa = Math.min(xi, xo), xb = Math.max(xi, xo);",
+    "new": "xa = xi, xb = xo;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the left kerb's top wound down: culled"
+  },
+  {
+    "name": "SD11A-L2F6-the-underside-up",
+    "file": "src/world/sdRealm.js",
+    "old": "    f.quad(SD_REALM_ROOT_RECORD, down(d), down(c), down(b), down(a), [0, 0], [0, 4], [1, 4], [1, 0]);",
+    "new": "    f.quad(SD_REALM_ROOT_RECORD, down(a), down(b), down(c), down(d), [0, 0], [0, 4], [1, 4], [1, 0]);",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the walk's underside facing up"
+  },
+  {
+    "name": "SD11A-L2F6-no-lip-inside",
+    "file": "src/world/sdRealm.js",
+    "old": "    f.quad(SD_REALM_BRASS_RECORD, C(xi1, 0, zi1), C(xi1, SD_RIM_H, zi1), C(xi0, SD_RIM_H, zi0), C(xi0, 0, zi0), [0, 0], [0, 0.1], [1, 0.1], [1, 0]);\n",
+    "new": "",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the lips without their inner side"
+  },
+  {
+    "name": "SD11A-L2F6-a-kerb-a-lid",
+    "file": "src/world/sdRealm.js",
+    "old": "      f.quad(SD_REALM_BRASS_RECORD, P(xa, 0, false), P(xa, H, false), P(xa, H, true), P(xa, 0, true), [0, 0], [0, 0.1], [4, 0.1], [4, 0]);   // toward -x\n",
+    "new": "",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a kerb without its side"
+  },
+  {
+    "name": "SD11A-L2F7-the-raw-azimuth",
+    "file": "src/render/sdSky.js",
+    "old": "  return sin(az * 3.0 + dfbm(vec2(cos(az), sin(az)) * (0.7 + 2.0 * e) + vec2(cos(drift), sin(drift)) * 0.7, 4) * 4.0 + drift);",
+    "new": "  return sin(az * 3.0 + dfbm(vec2(az * 1.3, e * 2.0) + vec2(cos(drift), sin(drift)) * 0.7, 4) * 4.0 + drift);",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the aurorae's noise off the raw azimuth again: a seam toward -z"
+  },
+  {
+    "name": "SD11A-L2F8-blood-on-a-mover-the-wall",
+    "file": "src/combat/bloodMarks.js",
+    "old": "          if (onMover(col, wall)) continue;   // AUDIT SD II (L2 F8): it met a surface that moves\n",
+    "new": "",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a mark laid on a surface that moves, left hanging as it moves on"
+  },
+  {
+    "name": "SD11A-L2F8-blood-on-a-mover-the-floor",
+    "file": "src/combat/bloodMarks.js",
+    "old": "      if (onMover(col, h)) continue;   // AUDIT SD II (L2 F8): a surface that moves takes no mark\n",
+    "new": "",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a mark laid on a surface that moves, left hanging as it moves on"
+  },
+  {
+    "name": "SD11A-L2F8-blood-on-a-mover-the-pool",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (onMover(col, h)) return null;   // AUDIT SD II (L2 F8): nor one that moves\n",
+    "new": "",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a mark laid on a surface that moves, left hanging as it moves on"
+  },
+  {
+    "name": "SD11A-L2F8-blood-on-a-mover-the-print",
+    "file": "src/combat/bloodMarks.js",
+    "old": "    if (onMover(col, h)) return null;   // AUDIT SD II (L2 F8): a foot on a surface that moves prints nothing, and picks nothing up\n",
+    "new": "",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a mark laid on a surface that moves, left hanging as it moves on"
+  },
+  {
+    "name": "SD11A-L2F8-every-surface-still",
+    "file": "src/combat/bloodMarks.js",
+    "old": "export const onMover = (col, h) => h?.key != null && !!col?.bucketPose?.(h.key);",
+    "new": "export const onMover = (col, h) => false && h?.key != null && !!col?.bucketPose?.(h.key);",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "no surface ever moves: marks on the steps again"
+  },
+  {
+    "name": "SD11A-L2F9-the-hall-boxes-each-ask",
+    "file": "src/scenes/sdHall.js",
+    "old": "      return draws && o ? targetList : NONE;",
+    "new": "      return draws && o ? [...targetList] : NONE;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the hall's activation boxes a fresh list each ask"
+  },
+  {
+    "name": "SD11A-L2F9-the-breath-seen-a-frame",
+    "file": "src/scenes/sdSteps.js",
+    "old": "    breathSeen(_now[0], _breath);",
+    "new": "    Object.assign(_breath, breathSeen(_now[0]));",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the breath's sight made each frame"
+  },
+  {
+    "name": "SD11A-L2F9-a-step-choosing-its-number",
+    "file": "src/scenes/sdSteps.js",
+    "old": "    if (solid) st.T[1] = y; else st.T[1] = SD_STEP_GONE_Y;",
+    "new": "    st.T[1] = solid ? y : SD_STEP_GONE_Y;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a choice of a made number and a whole one: a number made a step a frame"
+  },
+  {
+    "name": "SD11A-L2F9-a-blow-ended-a-new-table",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "      if (blowMet.size) blowMet.clear();",
+    "new": "      blowMet.clear();",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "an empty Set cleared every frame: a new table a frame"
+  },
+  {
+    "name": "SD11A-L2F9-a-still-body-posed-again",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "    if (!d.hidden && was[0] === p.x && was[1] === p.z && was[2] === p.yw && was[3] === p.sink && was[4] === scale) return;\n",
+    "new": "",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a body standing as it stood, its matrix made again every frame"
+  },
+  {
+    "name": "SD11A-L2F9-the-remnant-pose-made",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "place(remDraw, remnantPose(s, t, _remPose), 1);",
+    "new": "place(remDraw, remnantPose(s, t), 1);",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the Remnant's pose made each frame"
+  },
+  {
+    "name": "SD11A-L2F9-the-echo-poses-made",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "place(echoDraws[e], echoPose(s, e, t, _echoPose), ECHO_SCALE);",
+    "new": "place(echoDraws[e], echoPose(s, e, t), ECHO_SCALE);",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "an Echo's pose made each frame"
+  },
+  {
+    "name": "SD11A-L2F9-the-end-a-hypot",
+    "file": "src/scenes/sdEnd.js",
+    "old": "dx * dx + dy * dy + dz * dz > SD_STEP_JUMP_M * SD_STEP_JUMP_M;",
+    "new": "Math.hypot(dx, dy, dz) > SD_STEP_JUMP_M;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the jump's length by Math.hypot: a list of its numbers a frame"
+  },
+  {
+    "name": "SD11A-L2F9-the-portal-a-hypot",
+    "file": "src/world/sdDungeon.js",
+    "old": "  return dx * dx + dz * dz <= reach * reach && feet[1] >= at[1] - SD_STEP_M && feet[1] <= at[1] + height;",
+    "new": "  return Math.hypot(dx, dz) <= reach && feet[1] >= at[1] - SD_STEP_M && feet[1] <= at[1] + height;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the portal's reach by Math.hypot: a list a portal a frame"
+  },
+  {
+    "name": "SD11A-L2F9-the-end-boxes-each-ask",
+    "file": "src/scenes/sdEnd.js",
+    "old": "    targets() { return _targets; },",
+    "new": "    targets() { return [..._targets]; },",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the End's activation boxes a fresh list each ask"
+  },
+  {
+    "name": "SD11A-L2F9-the-feet-a-copy",
+    "file": "src/scenes/sdEnd.js",
+    "old": "lastFeet[0] = feet[0]; lastFeet[1] = feet[1]; lastFeet[2] = feet[2]; hasLast = true;",
+    "new": "lastFeet.splice(0, 3, feet[0], feet[1], feet[2]); hasLast = true;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the last feet copied in a fresh list a frame"
+  },
+  {
+    "name": "SD11A-L2F9-the-lamps-sorted-by-a-closure",
+    "file": "src/world/sdRealm.js",
+    "old": "  for (let i = 1; i < L.length; i++) {\n    const l = L[i], dl = (l.x - ex) ** 2 + (l.z - ez) ** 2;\n    let j = i - 1;\n    while (j >= 0 && (L[j].x - ex) ** 2 + (L[j].z - ez) ** 2 > dl) { L[j + 1] = L[j]; j--; }\n    L[j + 1] = l;\n  }\n",
+    "new": "  L.sort((a, b) => (a.x - ex) ** 2 + (a.z - ez) ** 2 - ((b.x - ex) ** 2 + (b.z - ez) ** 2));\n",
+    "tests": [
+      "test/sd11a_scenes.test.js",
+      "test/sd5a_realm.test.js"
+    ],
+    "why": "the lamps sorted by a comparator closed over the eye, a frame"
+  },
+  {
+    "name": "SD11A-L2F9-the-views-each-frame",
+    "file": "src/world/sdRealm.js",
+    "old": "  let v = H.views.get(m);",
+    "new": "  let v = null;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the frame's light views made each frame"
+  },
+  {
+    "name": "SD11A-L2F9-the-lights-fresh",
+    "file": "src/world/sdRealm.js",
+    "old": "  return _realmLight;\n};",
+    "new": "  return { tri: { ...tri, sky: [...tri.sky] }, key };\n};",
+    "tests": [
+      "test/sd5a_realm.test.js"
+    ],
+    "why": "the realm's light a fresh object a frame"
+  },
+  {
+    "name": "SD11A-L2F9-the-sky-basis-made",
+    "file": "src/render/sdSky.js",
+    "old": "b = sdSkyBasisInto(view, proj, this._b);",
+    "new": "b = sdSkyBasisInto(view, proj, { right: [0, 0, 0], up: [0, 0, 0], fwd: [0, 0, 0], lens: [0, 0, 0, 0] });",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the sky's basis four lists a frame"
+  },
+  {
+    "name": "SD11A-L2F9-the-blows-with-nothing-in-flight",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "      if (!sdAnyInFlight(s) && !pools.length) { inFire = false; shapes = NONE; fall(s, t); return; }\n",
+    "new": "",
+    "tests": [
+      "test/sd11a_scenes.test.js",
+      "test/sd8d_remnant_blows.test.js"
+    ],
+    "why": "no fight, and its lists made every frame"
+  },
+  {
+    "name": "SD11A-L2F9-an-echos-blow-never-in-flight",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "  if (ec) for (let k = 0; k < ec.length; k++) if (ec[k].h > 0 && ec[k].atk) return true;\n",
+    "new": "",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "an Echo's blow alone in flight: the driver idles, the blow never judged or shown"
+  },
+  {
+    "name": "SD11A-L2F9-the-hours-blow-never-in-flight",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "  if (s.rem?.atk || s.clk) return true;",
+    "new": "  if (s.rem?.atk) return true;",
+    "tests": [
+      "test/sd11a_scenes.test.js",
+      "test/sd8d_remnant_blows.test.js"
+    ],
+    "why": "the Hour's own blow alone in flight: the driver idles, the Pulse never struck"
+  },
+  {
+    "name": "SD11A-L2F10-never-posed-before-the-draws",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (isSdRealm(dungeonLoc) && !dungeonCtx.uiOverlayActive) dungeonCtx.sdPose?.(dt, player.pos);",
+    "new": "      void 0;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the hall and the arena never posed before the world pass"
+  },
+  {
+    "name": "SD11A-L2F10-framed-in-drawFoes-again",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (sdEnd) sdEndFrame(playerFeet);   // SD4b: a Super dungeon's Rift and Return - stood, the Return's boss asked, the step\n",
+    "new": "    if (sdEnd) sdEndFrame(playerFeet);   // SD4b: a Super dungeon's Rift and Return - stood, the Return's boss asked, the step\n    if (sdHall) sdHallFrame(dt, playerFeet);\n",
+    "tests": [
+      "test/sd11a_scenes.test.js",
+      "test/sd6c_hall.test.js"
+    ],
+    "why": "the hall framed in drawFoes again, after the world pass: a frame late"
+  },
+  {
+    "name": "SD11A-L2F11-the-hidden-drawn",
+    "file": "src/scenes/worldModes.js",
+    "old": "for (const d of dungeonCtx.dynamicDraws) if (!d.hidden) renderer.drawMesh(",
+    "new": "for (const d of dungeonCtx.dynamicDraws) renderer.drawMesh(",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a hidden draw drawn, and its shadow recorded"
+  },
+  {
+    "name": "SD11A-L2F11-a-gone-step-drawn",
+    "file": "src/scenes/sdSteps.js",
+    "old": " st.draw.hidden = !seen; }",
+    "new": " }",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a gone step never says it is hidden"
+  },
+  {
+    "name": "SD11A-L2F11-a-hidden-body-drawn",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "  const hide = (d) => { if (d && !d.hidden) { d.object.matrix.set(ZERO); d.hidden = true; } };",
+    "new": "  const hide = (d) => { if (d && !d.hidden) { d.object.matrix.set(ZERO); } };",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a body put away never says it is hidden"
+  },
+  {
+    "name": "SD11A-L2F11-a-body-never-drawn-again",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "remnantMatrix(SD_REALM_ORIGIN[0] + SD_ARENA.x + p.x, SD_REALM_ORIGIN[1] - p.sink, SD_REALM_ORIGIN[2] + SD_ARENA.z + p.z, p.yw, scale, d.object.matrix);\n    d.hidden = false;",
+    "new": "remnantMatrix(SD_REALM_ORIGIN[0] + SD_ARENA.x + p.x, SD_REALM_ORIGIN[1] - p.sink, SD_REALM_ORIGIN[2] + SD_ARENA.z + p.z, p.yw, scale, d.object.matrix);",
+    "tests": [
+      "test/sd11a_scenes.test.js",
+      "test/sd8c_remnant_page.test.js"
+    ],
+    "why": "a body shown again still says it is hidden: never drawn"
+  },
+  {
+    "name": "SD11A-L2F11-the-breath-drawn-between",
+    "file": "src/scenes/sdSteps.js",
+    "old": "    if (!_breath.dir) { if (!breathDraw.hidden) { m.fill(0); breathDraw.hidden = true; } return; }",
+    "new": "    if (!_breath.dir) { m.fill(0); return; }",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the breath between gusts never says it is hidden"
+  },
+  {
+    "name": "SD11A-L2F12-the-arch-a-pow",
+    "file": "src/render/sdSky.js",
+    "old": "  float curve = 0.14 + 0.36 * arch * arch;",
+    "new": "  float curve = 0.14 + 0.36 * pow(arch, 2.0);",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "Wayrest's arches a pow of a negative: undefined in GLSL ES, NaN on D3D"
+  },
+  {
+    "name": "SD11A-L2F12-the-gleam-unguarded",
+    "file": "src/render/auraRing.js",
+    "old": "    float gleam = pow(max(0.5 + 0.5 * cos(a - 0.6), 0.0), 6.0);",
+    "new": "    float gleam = pow(0.5 + 0.5 * cos(a - 0.6), 6.0);",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the gleam a pow of a cos a hair under -1"
+  },
+  {
+    "name": "SD11A-L2F14-no-post",
+    "file": "src/world/sdRealm.js",
+    "old": "    lampBoxQuads(p, SD_LAMP_POST_W, 0, SD_LAMP_H - SD_LAMP_HEAD).forEach((q, i) => f.quad(SD_REALM_BRASS_RECORD, q[0], q[1], q[2], q[3], ...(i < 4 ? LAMP_SIDE_UV : PILLAR_TOP_UV)));\n",
+    "new": "",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a light over no post"
+  },
+  {
+    "name": "SD11A-L2F14-no-head",
+    "file": "src/world/sdRealm.js",
+    "old": "    lampBoxQuads(p, SD_LAMP_HEAD, SD_LAMP_H - SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD).forEach((q) => f.quad(SD_HALL_GLOW_RECORD.brass, q[0], q[1], q[2], q[3], ...PILLAR_TOP_UV));\n",
+    "new": "",
+    "tests": [
+      "test/sd11a_scenes.test.js",
+      "test/sd5a_realm.test.js"
+    ],
+    "why": "a lamp with no head alight"
+  },
+  {
+    "name": "SD11A-L2F14-a-head-over-its-near-plane",
+    "file": "src/world/sdRealm.js",
+    "old": "export const SD_LAMP_HEAD = 0.09;",
+    "new": "export const SD_LAMP_HEAD = 0.12;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a head past its light's shadow near plane: it shadows its own light"
+  },
+  {
+    "name": "SD11A-L2F14-the-posts-off-the-collider",
+    "file": "src/world/sdRealm.js",
+    "old": "  out.set(lamps, floors.length + pillars.length);\n",
+    "new": "",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the lamps' posts off the collider: walked through"
+  },
+  {
+    "name": "SD11A-L2F15-the-face-in-raw-azimuth",
+    "file": "src/render/sdSky.js",
+    "old": "  return t * (acos(clamp(dot(d, CENTRE), -1.0, 1.0)) / max(length(t), 1e-6)) / ${f6(SD_CLOCK_FACE.r)};",
+    "new": "  return vec2(atan(d.x, d.z) - ${f6(SD_CLOCK_FACE.az)}, asin(clamp(d.y, -1.0, 1.0)) - ${f6(SD_CLOCK_FACE.elev)}) / ${f6(SD_CLOCK_FACE.r)};",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the clock-face laid out in raw azimuth and elevation: narrower than tall"
+  },
+  {
+    "name": "SD11A-L2F15-the-shards-hung-low",
+    "file": "src/render/sdSky.js",
+    "old": "export const SD_SHARD_TOP = SD_CLOCK_TOP + SD_SHARD_CLEAR + Math.max(...SD_SKY_SHARDS.map((s) => s.depth));",
+    "new": "export const SD_SHARD_TOP = 1.02;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the shards hung where Daggerfall's spires crossed the ring"
+  },
+  {
+    "name": "SD11A-L2F16-the-snap-empty-at-once",
+    "file": "src/scenes/sdHall.js",
+    "old": "    if (!first && w.x) { frayFullUntil = now() + SD_FRAY_FULL_MS; setFray(SD_FRAY_RING.steps); }\n    else if (!(now() < frayFullUntil)) setFray(w.f);",
+    "new": "    setFray(w.f);",
+    "tests": [
+      "test/sd6c_hall.test.js"
+    ],
+    "why": "the snap's arc from 47 straight to none"
+  },
+  {
+    "name": "SD11A-L2F16-full-for-ever",
+    "file": "src/scenes/sdHall.js",
+    "old": "      if (frayFullUntil !== -Infinity && now() >= frayFullUntil) { frayFullUntil = -Infinity; setFray(frayWant); }",
+    "new": "      void frayWant;",
+    "tests": [
+      "test/sd6c_hall.test.js"
+    ],
+    "why": "the snap's full arc never put out"
+  },
+  {
+    "name": "SD11A-L2F17-the-word-kept",
+    "file": "src/scenes/world.js",
+    "old": "    if (!inRealm) _sdHall = null;",
+    "new": "    if (false) _sdHall = null;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the hall's word kept out of the realm: the next visit turns from it, and chimes its Concord again"
+  },
+  {
+    "name": "SD11A-L2F18-the-wrong-way",
+    "file": "src/world/sdSteps.js",
+    "old": "  if (u < span) { out.dir = gustSign(n); out.k = u / span; }",
+    "new": "  if (u < span) { out.dir = -gustSign(n); out.k = u / span; }",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the breath seen blowing against its gust"
+  },
+  {
+    "name": "SD11A-L2F18-shown-between-gusts",
+    "file": "src/world/sdSteps.js",
+    "old": "  if (u < span) { out.dir = gustSign(n); out.k = u / span; } else { out.dir = 0; out.k = 0; }",
+    "new": "  out.dir = gustSign(n); out.k = u / SD_GUST_EVERY;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the breath seen between gusts"
+  },
+  {
+    "name": "SD11A-L2F18-standing-still",
+    "file": "src/scenes/sdSteps.js",
+    "old": "    translate(m, SD_REALM_ORIGIN[0] + _breath.dir * (_breath.k - 0.5) * SD_BREATH.sweep, SD_REALM_ORIGIN[1], SD_REALM_ORIGIN[2]);",
+    "new": "    translate(m, SD_REALM_ORIGIN[0], SD_REALM_ORIGIN[1], SD_REALM_ORIGIN[2]);",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the streaks standing still in a gust"
+  },
+  {
+    "name": "SD11A-L2F18-never-turned",
+    "file": "src/scenes/sdSteps.js",
+    "old": "    m[0] = _breath.dir;\n",
+    "new": "",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "the streaks never turned the way the breath blows"
+  },
+  {
+    "name": "SD11A-L2F18-never-seen",
+    "file": "src/scenes/sdSteps.js",
+    "old": "      breathMesh = make(buildBreathModel());",
+    "new": "      breathMesh = null;",
+    "tests": [
+      "test/sd11a_scenes.test.js",
+      "test/sd7b_steps.test.js"
+    ],
+    "why": "the breath heard alone again"
+  },
+  {
+    "name": "SD11A-L4F1-the-span-the-fall-crosses",
+    "file": "src/scenes/sdSteps.js",
+    "old": "      if (body.grounded) lastSpan = on ? on.s.span : span;",
+    "new": "      lastSpan = span;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "cast back by the span the fall crosses the void's floor over: a run off a span's end cast forward"
+  },
+  {
+    "name": "SD11A-L4F1-a-checkpoint-not-stood-on",
+    "file": "src/scenes/sdSteps.js",
+    "old": "lastSpan = on ? on.s.span : span;",
+    "new": "lastSpan = on ? on.s.span : lastSpan;",
+    "tests": [
+      "test/sd11a_scenes.test.js"
+    ],
+    "why": "a checkpoint stood on never counted as its span"
+  }
+]

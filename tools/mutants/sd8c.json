@@ -254,8 +254,8 @@
   {
     "name": "SD8C-a-frame-not-ending-the-blow",
     "file": "src/scenes/sdRemnant.js",
-    "old": "      blowMet.clear();   // a frame ends my blow\n",
-    "new": "",
+    "old": "      if (blowMet.size) blowMet.clear();   // a frame ends my blow",
+    "new": "      // a frame ends my blow",
     "tests": [
       "test/sd8c_remnant_page.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SD8C-drawn-outside-time",
     "file": "src/scenes/sdRemnant.js",
-    "old": "  if (s.ph === 2) return { x: B.x, z: B.z, yw: B.yw, sink: 0, shown: false };   // outside time",
-    "new": "  if (s.ph === 2) return { x: B.x, z: B.z, yw: B.yw, sink: 0, shown: true };   // outside time",
+    "old": "  if (s.ph === 2) return posed(out, B.x, B.z, B.yw, 0, false);   // outside time",
+    "new": "  if (s.ph === 2) return posed(out, B.x, B.z, B.yw, 0, true);   // outside time",
     "tests": [
       "test/sd8c_remnant_page.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SD8C-an-echo-unscaled",
     "file": "src/scenes/sdRemnant.js",
-    "old": "      for (let e = 0; e < echoDraws.length; e++) place(echoDraws[e], echoPose(s, e, t), remnantScale(true));",
-    "new": "      for (let e = 0; e < echoDraws.length; e++) place(echoDraws[e], echoPose(s, e, t), 1);",
+    "old": "      for (let e = 0; e < echoDraws.length; e++) place(echoDraws[e], echoPose(s, e, t, _echoPose), ECHO_SCALE);",
+    "new": "      for (let e = 0; e < echoDraws.length; e++) place(echoDraws[e], echoPose(s, e, t, _echoPose), 1);",
     "tests": [
       "test/sd8c_remnant_page.test.js"
     ]

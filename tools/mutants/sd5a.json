@@ -83,8 +83,8 @@
   {
     "name": "SD5A-the-lamps-outside-the-rims",
     "file": "src/world/sdRealm.js",
-    "old": "LAMP_H, cz + Math.sin(a) * (r - 1));",
-    "new": "LAMP_H, cz + Math.sin(a) * (r + 2));",
+    "old": "0, cz + Math.sin(a) * (r - 1)]);",
+    "new": "0, cz + Math.sin(a) * (r + 2)]);",
     "tests": [
       "test/sd5a_realm.test.js"
     ]

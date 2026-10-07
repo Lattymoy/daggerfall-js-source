@@ -245,5 +245,5 @@ test('SD9e THE HOST: world.js keeps the Hour\'s pool under its own keys - the du
   assert.match(w, /sdRealmLights: \(\) => sdSpoilsPool\?\.lights\(\) \?\? \[\],/);
   assert.match(w, /\.\.\.\(gateCourt\?\.batches\(\) \?\? \[\]\), \.\.\.\(sdSpoilsPool\?\.batches\(\) \?\? \[\]\),/);
   assert.match(w, /lines = !!sdSpoilsPool\?\.drawPass\(proj, view, eye, t, fog\); if \(blows \|\| lines\) renderer\.markForeignPass\(\);/);
-  assert.match(m, /withCourtLights\(_dgLit, \[\.\.\.\(host\.sdRealmLights\?\.\(\) \?\? \[\]\), \.\.\.realmLightsNear\(cam\.pos\)\]\)/);
+  assert.match(m, /realmLightsWith\(_dgLit, host\.sdRealmLights\?\.\(\) \?\? NO_LIGHTS, cam\.pos\)/);   // AUDIT SD II (L2 F9 - PIN MOVED): the spoils' light before the lamps, into the realm's own arrays
 });

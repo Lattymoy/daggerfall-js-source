@@ -433,8 +433,11 @@ export function turningWheelAngle(t) {
   const s = Math.floor(t), e = Math.min(1, (t - s) / TURNING_STEP_S);
   return Math.PI * 2 * TURNING_HZ.wheel * (s + e * e * (3 - 2 * e));
 }
-/** The dial's turn at `t`: backwards, smoothly. Pure. */
-export const turningDialAngle = (t) => -Math.PI * 2 * TURNING_HZ.dial * t;
+/** The dial's turn at `t`: backwards, smoothly - ANTICLOCKWISE as the eye sees the ground, as the Hour's sky's hands turn
+ *  (render/sdSky.js). Pure. AUDIT SD II (L2 F13): the ground's angle (atan(p.y, p.x), p = (x, z) about the feet) grows
+ *  anticlockwise on the screen - +x right and +z up it, the one mirror's law (world/mat4.js) - so BACK is the angle
+ *  growing; it fell, and the dial turned clockwise, forward. */
+export const turningDialAngle = (t) => Math.PI * 2 * TURNING_HZ.dial * t;
 
 /** AEGIS: HOW EACH AURA IS DRAWN - its kind in the shader (`uAura`), its ring's radius, its wall's height and how many
  *  symbols float off it (the third draw - none for the fire). A pin walks AURAS and requires one each. SHADOW-CLOAK: and,
@@ -751,10 +754,10 @@ vec3 turningGround(vec2 p) {
     float spoke = clamp((${(TURNING_SPOKE_M / 2).toFixed(4)} - across) / px + 0.5, 0.0, 1.0) * turnBand(r, ${TURNING_HUB_R.toFixed(3)} - px, ${(TURNING_R - TURNING_RIM_M).toFixed(3)} + px, px);
     float brass = max(max(rim, tooth), max(hub, spoke));
     // its gleam - a light that does not turn, the teeth catching it as they pass under it
-    float gleam = pow(0.5 + 0.5 * cos(a - 0.6), 6.0);
+    float gleam = pow(max(0.5 + 0.5 * cos(a - 0.6), 0.0), 6.0);   // AUDIT SD II (L2 F12): never a pow of a negative (a cos a hair under -1)
     col += brass * (TH_BRASS * 0.8 + TH_LIGHT * 0.45 * gleam);
     // THE DIAL outside it, turning BACK: a line of gold and the Hour's twelve marks, the Hour's own the longer
-    float d = a + uTime * TAU ${hzGlsl(TURNING_HZ.dial)};   // the dial's own angle (turningDialAngle: it turns back)
+    float d = a - uTime * TAU ${hzGlsl(TURNING_HZ.dial)};   // the dial's own angle (turningDialAngle: it turns back - AUDIT SD II, L2 F13: as the eye sees it)
     float hr = fract(d / TAU * ${TURNING_MARKS.toFixed(1)} + 0.5) - 0.5;   // across the nearest hour's mark, in hours
     float first = 1.0 - step(0.5, mod(floor(fract(d / TAU) * ${TURNING_MARKS.toFixed(1)} + 0.5), ${TURNING_MARKS.toFixed(1)}));   // the Hour's own
     float markLen = ${TURNING_MARK_M.toFixed(3)} * (1.0 + first);

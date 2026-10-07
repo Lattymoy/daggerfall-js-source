@@ -11,8 +11,8 @@
   {
     "name": "SD9C-the-dial-forward-in-law",
     "file": "src/render/auraRing.js",
-    "old": "export const turningDialAngle = (t) => -Math.PI * 2 * TURNING_HZ.dial * t;",
-    "new": "export const turningDialAngle = (t) => Math.PI * 2 * TURNING_HZ.dial * t;",
+    "old": "export const turningDialAngle = (t) => Math.PI * 2 * TURNING_HZ.dial * t;",
+    "new": "export const turningDialAngle = (t) => -Math.PI * 2 * TURNING_HZ.dial * t;",
     "tests": [
       "test/sd9c_turning.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD9C-the-dial-forward",
     "file": "src/render/auraRing.js",
-    "old": "    float d = a + uTime * TAU ${hzGlsl(TURNING_HZ.dial)};",
-    "new": "    float d = a - uTime * TAU ${hzGlsl(TURNING_HZ.dial)};",
+    "old": "    float d = a - uTime * TAU ${hzGlsl(TURNING_HZ.dial)};",
+    "new": "    float d = a + uTime * TAU ${hzGlsl(TURNING_HZ.dial)};",
     "tests": [
       "test/sd9c_turning.test.js"
     ]

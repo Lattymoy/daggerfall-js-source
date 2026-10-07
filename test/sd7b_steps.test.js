@@ -139,7 +139,7 @@ test('SD7b STOOD: once - a mesh a kind and the checkpoints\', a draw and a MOVER
   assert.equal(r.stand(), true);
   assert.equal(r.stand(), false, 'once');
   assert.deepEqual(r.uploads.map(([a, rec]) => [a, rec]), [[SD_REALM_ARCHIVE, SD_STEPS_CRACKED_RECORD], [SD_REALM_ARCHIVE, SD_STEPS_BEAT_RECORD]]);
-  assert.equal(r.draws.length, 1 + SD_STEPS_COURSE.length, 'the checkpoints and every step');
+  assert.equal(r.draws.length, 1 + SD_STEPS_COURSE.length + 1, 'the checkpoints, every step and (AUDIT SD II, L2 F18 - PIN MOVED) the breath\'s streaks');
   assert.equal(r.buckets.size, SD_STEPS_COURSE.length + 1);
   for (const s of SD_STEPS_COURSE) {
     const bk = r.buckets.get(sdStepKey(s.i));
@@ -150,7 +150,7 @@ test('SD7b STOOD: once - a mesh a kind and the checkpoints\', a draw and a MOVER
   assert.equal(r.buckets.get(SD_CHECKS_KEY).t, null, 'the checkpoints still');
   assert.equal(sdStepKey(7), 'sd:step:7');
   r.steps.clear();
-  assert.equal(r.dropped.length, SD_STEP_KINDS.length + 1, 'every mesh freed');
+  assert.equal(r.dropped.length, SD_STEP_KINDS.length + 2, 'every mesh freed (the breath\'s streaks\' too)');
   assert.equal(r.steps.ride(T0, 1 / 60, null), null, 'cleared: nothing rides');
 });
 
@@ -300,19 +300,25 @@ test('SD7b THE WARP\'S BREATH: over the Crumble a body is moved through the reso
   assert.equal(ticks.length, Math.floor((0.5 + 4) / SD_BEAT_HALF), 'a tick each half beat');
 });
 
-test('SD7b THE VOID: a body fallen past y -30 is answered with its span\'s checkpoint - A over the Drift, B over the Beat, C over the Crumble - the moan heard; above it, or under a window, or anywhere before the first step, nothing (mutants: every fall to A; the void heard nowhere)', () => {
+test('SD7b THE VOID: a body fallen past y -30 is answered with the checkpoint of the span it last STOOD in - A over the Drift, B over the Beat, C over the Crumble - the moan heard; any fall caught, one that stood on no span answered with A; above it, or under a window, nothing (mutants: every fall to A; the void heard nowhere)', () => {
+  // AUDIT SD II (L4 F1 - PIN MOVED): the span the body stood in, never the one its fall crosses the void's floor over;
+  // and no fall goes uncaught - this pin held that a fall before the first step was answered with nothing
   const r = rig();
   r.stand();
   const [A, B, C] = SD_CHECKPOINTS;
-  const cases = [[step(3).z, A], [step(9).z, B], [step(14).z, B], [step(22).z, C], [C.z + 1, C]];
-  for (const [z, to] of cases) {
+  const cases = [[step(3), A], [step(9), B], [step(14), B], [step(22), C], [{ i: null, y: C.y, z: C.z + 1 }, C]];
+  for (const [s, to] of cases) {
+    r.steps.ride(T0 + 2, 1 / 60, body(0, s.y, s.z, { groundKey: s.i == null ? SD_CHECKS_KEY : sdStepKey(s.i) }));   // stood there
     r.sounds.length = 0;
-    assert.deepEqual(r.steps.ride(T0 + 2, 1 / 60, body(1, -31, z, { grounded: false })), realmToDungeon(to.x, to.y, to.z), `z ${z}`);
+    assert.deepEqual(r.steps.ride(T0 + 2, 1 / 60, body(1, -31, s.z, { grounded: false })), realmToDungeon(to.x, to.y, to.z), `z ${s.z}`);
     assert.deepEqual(r.sounds.map((x) => x.rec), [SD_STEPS_SOUNDS.moan]);
   }
   assert.equal(r.steps.ride(T0 + 2, 1 / 60, body(1, -29, step(3).z, { grounded: false })), null, 'still above it');
   assert.equal(r.steps.ride(T0 + 2, 1 / 60, body(1, -31, step(3).z, { grounded: false }), false), null, 'a window held');
-  assert.equal(r.steps.ride(T0 + 2, 1 / 60, body(1, -31, 42, { grounded: false })), null, 'the Orrery is the edge\'s');
+  const hall = rig();
+  hall.stand();
+  hall.steps.ride(T0 + 2, 1 / 60, body(0, 0, 42, { groundKey: 'sd:realm' }));   // the Orrery's floor
+  assert.deepEqual(hall.steps.ride(T0 + 2, 1 / 60, body(1, -31, 42, { grounded: false })), realmToDungeon(A.x, A.y, A.z), 'stood on no span: A');
   assert.equal(SD_STEPS_TEXT.cast, 'The Hour casts you back.');
 });
 

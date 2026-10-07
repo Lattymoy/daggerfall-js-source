@@ -13,14 +13,14 @@ import { SD_REALM_ORIGIN } from '../src/net/sdBrain.js';
 import { SD_REALM_FLOORS, realmClamp, SD_REALM_ARCHIVE } from '../src/world/sdRealm.js';
 import {
   stoneFrame, stonePoint, plaqueFrame, handleFoot, handleBox, plaqueBox, handMatrix, dialCentre, buildHallModel, buildHandModel,
-  buildLitModel, buildFrayModel, buildBridgeModel, hallFloorTris, SD_STONE_SIZE, SD_DIAL, SD_HAND, SD_HANDLE, SD_PLAQUE, SD_LIT_RING,
+  buildLitModel, buildFrayModel, buildBridgeModel, hallFloorTris, hallSolidTris, SD_STONE_SIZE, SD_DIAL, SD_HAND, SD_HANDLE, SD_PLAQUE, SD_LIT_RING,
   SD_FRAY_RING, SD_BRIDGE, SD_FIRST_STEP, SD_HALL_FLOORS,
 } from '../src/world/sdHall.js';
 import {
   hallArt, hallFaceArt, hallEmblemArt, hallPlaqueArt, hallGlowArt, SD_SIGNS, SD_PIPS, SD_HALL_FACE_RECORD, SD_HALL_EMBLEM_RECORD,
   SD_HALL_PLAQUE_RECORD, SD_HALL_GLOW_RECORD, SD_GLOW_COLORS, SD_HALL_ART_SIZE, SD_EMBLEM_SIZE,
 } from '../src/world/sdHallArt.js';
-import { createSdHall, sdStoneKey, sdPlaqueKey, SD_HALL_TEXT, SD_HALL_SOUNDS, SD_HAND_RATE } from '../src/scenes/sdHall.js';
+import { createSdHall, sdStoneKey, sdPlaqueKey, SD_HALL_TEXT, SD_HALL_SOUNDS, SD_HAND_RATE, SD_FRAY_FULL_MS } from '../src/scenes/sdHall.js';
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const near = (a, b, e = 1e-6) => a.every((v, i) => Math.abs(v - b[i]) < e);
@@ -29,14 +29,18 @@ const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const overlap = (p, q) => [0, 1, 2].every((k) => p.min[k] < q.max[k] && q.min[k] < p.max[k]);
 const bearing = (x, z) => ((Math.atan2(x - SD_ORRERY.x, z - SD_ORRERY.z) * 180) / Math.PI + 360) % 360;
 
-test('SD6c the layout: each stone faces the hall\'s centre, its right the right of one who faces it (render/mat4 lookAt\'s); its two handles on its face, the right forward; no handle\'s box near another\'s; the plaques on the rim, numbered clockwise from the walk in, none on the walk in or the way on (mutants: a stone turned away; the handles swapped)', () => {
+test('SD6c the layout: each stone faces the hall\'s centre, its right the right of one who faces it as the screen shows it (the game\'s own camRight - AUDIT SD II: it was lookAt\'s, the mirror\'s); its two handles on its face, the right forward; no handle\'s box near another\'s; the plaques on the rim, numbered clockwise from the walk in, none on the walk in or the way on (mutants: a stone turned away; the handles swapped)', () => {
   for (let i = 0; i < SD_STONES.length; i++) {
     const { at, n, R } = stoneFrame(i);
     const toCentre = [SD_ORRERY.x - at[0], 0, SD_ORRERY.z - at[2]], l = Math.hypot(toCentre[0], toCentre[2]);
     assert.ok(near(n, [toCentre[0] / l, 0, toCentre[2] / l]), 'facing the centre');
-    assert.ok(near(cross(R, [0, 1, 0]), n), 'R x up = n: a face across R and up looks along n');
-    // one who faces it looks along -n; lookAt's right for that eye is up x (eye - centre) = up x n
-    assert.ok(near(cross([0, 1, 0], n), R), 'R is the right of one who faces it');
+    assert.ok(near(cross([0, 1, 0], R), n), 'up x R = n: a face across R and up looks along n');
+    // AUDIT SD II (L2 F1 - PIN MOVED): one who faces it looks along -n, and the game's camera's right for that eye is
+    // (cos yaw, 0, -sin yaw) with its look (sin yaw, 0, cos yaw) (scenes/worldModes.js) - n x up, which mat4's one mirror
+    // puts on screen-RIGHT. This pin read lookAt's right, up x n - the right BEFORE the mirror, the screen's left.
+    const yaw = Math.atan2(-n[0], -n[2]);
+    assert.ok(near([Math.sin(yaw), 0, Math.cos(yaw)], n.map((v) => -v)), 'the eye looks at the face');
+    assert.ok(near([Math.cos(yaw), 0, -Math.sin(yaw)], R), 'R is the right of one who faces it, as the screen shows it');
     const right = handleFoot(i, 1), left = handleFoot(i, -1);
     assert.ok(dot([right[0] - at[0], 0, right[2] - at[2]], R) > 0.5 && dot([left[0] - at[0], 0, left[2] - at[2]], R) < -0.5, 'the right handle on the right');
     for (const p of [right, left]) assert.ok(Math.abs(dot([p[0] - at[0], 0, p[2] - at[2]], R)) < SD_STONE_SIZE.w / 2, 'on the face, within the slab');
@@ -205,8 +209,8 @@ test('SD6c THE SET: stood once - the hall, a hand on each dial, the bridge hidde
   assert.ok(r.uploads.length >= 16 && r.uploads.every(([a]) => a === SD_REALM_ARCHIVE));
   assert.equal(r.draws.length, 1 + SD_STONES.length + 1, 'the hall, six hands, the bridge');
   const bridge = r.draws[r.draws.length - 1];
-  assert.ok(bridge.object.matrix.every((v) => v === 0), 'the bridge hidden');
-  assert.deepEqual(r.floors, [['sd:hall', hallFloorTris().length]]);
+  assert.ok(bridge.object.matrix.every((v) => v === 0) && bridge.hidden === true, 'the bridge hidden');   // AUDIT SD II (L2 F11): and says so - no draw
+  assert.deepEqual(r.floors, [['sd:hall', hallFloorTris().length + hallSolidTris().length]]);   // AUDIT SD II (L2 F2 - PIN MOVED): the stones and plaques solid with the floors
   // the first word: where the stones ARE
   const st0 = [3, 11, 5, 0, 7, 9];
   r.hall.frame(0.016, atStone(0), { k: 'pz', s: 1, st: st0, f: 4, lit: 2, ok: false });
@@ -229,9 +233,12 @@ test('SD6c THE SET: stood once - the hall, a hand on each dial, the bridge hidde
   assert.ok(SD_HAND_RATE >= 1 / (SD_STONE_SETTLE_MS / 1000), 'an hour inside the gear\'s settling');
   assert.deepEqual(r.hall.counts, { lit: 3, fray: 5 });
   assert.ok(r.dropped.length >= 2, 'the old dial and fray freed');
-  // the snap
+  // the snap - AUDIT SD II (L2 F16 - PIN MOVED): the arc all the way round for a moment, then empty
   r.hall.frame(0.016, atStone(0), { k: 'pz', s: 1, st: st0, f: 0, lit: 2, ok: false, i: 0, a: 1, id: 'peer-x', q: 2, x: 1 });
   assert.ok(r.sounds.some((x) => x.rec === SD_HALL_SOUNDS.toll), 'the toll');
+  assert.equal(r.hall.counts.fray, SD_FRAY_RING.steps, 'full at the snap');
+  r.tick(SD_FRAY_FULL_MS);
+  r.hall.frame(0.016, atStone(0), null);
   assert.equal(r.hall.counts.fray, 0);
   assert.equal(r.draws.length, 1 + 6 + 1 + 1, 'no fray to draw');
   // another slot's word: nothing
@@ -243,6 +250,7 @@ test('SD6c THE SET: stood once - the hall, a hand on each dial, the bridge hidde
   assert.ok(r.sounds.some((x) => x.rec === SD_HALL_SOUNDS.chime));
   assert.deepEqual(r.said, [SD_HALL_TEXT.concord]);
   assert.deepEqual([...bridge.object.matrix], [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], 'the bridge laid');
+  assert.equal(bridge.hidden, false, 'and drawn');
   r.hall.clear();
   assert.ok(r.dropped.length >= 5, 'every mesh freed');
 });
@@ -331,7 +339,9 @@ test('SD6c the hosts by source: the dungeon host stands the hall in the Hour alo
   const D = read('src/scenes/dungeonContext.js');
   assert.match(D, /const sdHall = _sdRealm \? createSdHall\(\{ renderer, audio, s: dfLocation\.sdRealm, onTurn: \(i, a\) => !!opts\.sdTurn\?\.\(i, a\), say: \(t\) => setMidScreenText\(t\) \}\) : null;/);
   assert.match(D, /if \(playerFeet && !_sdHallStood\) \{ _sdHallStood = true; sdHall\.stand\(\{ dynamicDraws, collider \}\); \}\n\s+sdHall\.frame\(dt, playerFeet \?\? null, opts\.sdHallWord\?\.\(\) \?\? null\);/);
-  assert.match(D, /if \(sdEnd\) sdEndFrame\(playerFeet\);[^\n]*\n\s+if \(sdHall\) sdHallFrame\(dt, playerFeet\);/);
+  // AUDIT SD II (L2 F10 - PIN MOVED): framed before the world pass (sdPose, the mode machine's), never in drawFoes after it
+  assert.match(D, /sdPose\(dt, playerFeet\) \{\n\s+if \(sdHall\) sdHallFrame\(dt, playerFeet\);/);
+  assert.doesNotMatch(D, /if \(sdHall\) sdHallFrame\(dt, playerFeet\);   \/\/ SD6c/);
   assert.match(D, /if \(sdHall\) targets\.push\(\.\.\.sdHall\.targets\(\)\);/);
   assert.match(D, /\(key\) => sdHall\?\.hoverName\(key\) \?\? null,/);
   assert.match(D, /sdPress\(key\) \{ return !!sdEnd\?\.press\(key\) \|\| !!sdHall\?\.press\(key\); \},/);

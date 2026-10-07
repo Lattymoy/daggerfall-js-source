@@ -69,6 +69,7 @@ export const SD_BLOW_CUES = Object.freeze({
 });
 
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
+const NONE = Object.freeze([]);
 /** AUDIT SD: A BODY'S OWN BLOW - the Stomp, the Hand, the Volley, the Remnant's or an Echo's: a foe's blow for the one
  *  power that answers a world boss (systems/sigilSetPowers.js setBossStruck, Gearward); never the Hour's unresisted magic
  *  over the whole floor (the Pulse, the Reset, the End), nor the burning brass. */
@@ -130,6 +131,14 @@ export function sdPoolShapes(pools, now) {
   }
   return out;
 }
+/** AUDIT SD II (L2 F9): whether any blow is in flight in fight `s` - sdBlowsInFlight's own reading, with no list made. */
+export function sdAnyInFlight(s) {
+  if (!s || !(s.fi > 0) || s.lost || s.fell) return false;
+  if (s.rem?.atk || s.clk) return true;
+  const ec = s.ec;
+  if (ec) for (let k = 0; k < ec.length; k++) if (ec[k].h > 0 && ec[k].atk) return true;
+  return false;
+}
 /** Every blow in flight in fight `s`, with the body it is of: the Remnant's, each Echo's standing, the Hour's own. */
 export function sdBlowsInFlight(s) {
   const out = [];
@@ -155,8 +164,8 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
   let fellFi = 0, chartAt = null, chartFell = null, endSaid = 0;
   /** AUDIT SD: the fight the marks are of - a blow's number begins again in every fight, so a fresh one's are its own */
   let marksFi = 0;
-  /** @type {any[]} */
-  let shapes = [];
+  /** @type {readonly any[]} */
+  let shapes = NONE;
 
   const play = (c, at) => { if (!c || !audio || !at) return; try { audio.play3d?.(c.clip, at, c.volume, { maxDistance: c.reach, distanceModel: 'linear', pitch: c.pitch }); } catch { /* a sound is never the fight */ } };
   const bodyAt = (s, b, t) => {
@@ -239,11 +248,13 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     frame() {
       const s = link.state(), t = link.now();
       if (s.fi !== marksFi) { marksFi = s.fi; marks.clear(); pools = []; inFire = false; }   // AUDIT SD: a fight lost and a fresh one begun - the last one's numbers are not this one's
+      const t0 = prevT ?? t;
+      prevT = t;
+      // AUDIT SD II (L2 F9): no blow in flight and no brass burning - nothing to judge or show, and nothing made for it
+      if (!sdAnyInFlight(s) && !pools.length) { inFire = false; shapes = NONE; fall(s, t); return; }
       const f = feet(), e = player(), alive = !!f && !!e && e.health > 0;
       let at = null;
       if (alive) { const [rx, , rz] = dungeonToRealm(f[0], f[1], f[2]); at = arenaOf(rx, rz); }
-      const t0 = prevT ?? t;
-      prevT = t;
       const out = [];
       for (const { b, atk } of sdBlowsInFlight(s)) {
         blow(s, b, atk, t, t0, alive ? at : null);

@@ -18,6 +18,7 @@ import {
   turningWheelAngle, turningDialAngle,
 } from '../src/render/auraRing.js';
 import { glslFunctions, GlslDiscard } from './glsl.mjs';
+import { lookAt, perspective, mirrorProjectionX, multiply } from '../src/world/mat4.js';
 
 const { subtle } = webcrypto;
 const TAU = Math.PI * 2;
@@ -69,7 +70,18 @@ test('SD9c THE LOOK\'S LAW: the seventh kind, added whole (no shade, no mesh, no
   let last = -Infinity;
   for (let t = 0; t <= AURA_CLOCK_PERIOD; t += 0.05) { const a = turningWheelAngle(t); assert.ok(a >= last - 1e-12, `never back (${t})`); last = a; }
   assert.ok(Math.abs(turningWheelAngle(AURA_CLOCK_PERIOD) - 2 * TAU) < 1e-9, 'two turns over the clock: whole at the wrap');
-  assert.ok(turningDialAngle(10) < 0 && Math.abs(turningDialAngle(AURA_CLOCK_PERIOD) + TAU) < 1e-9, 'the dial turns back, one turn');
+  // AUDIT SD II (L2 F13 - PIN MOVED): BACK AS THE EYE SEES IT, never the math sign. Through the game's own camera
+  // (world/mat4.js lookAt and its one mirror) a mark on the ground's dial - at (cos a, sin a) of (x, z) about the feet -
+  // turns ANTICLOCKWISE on the screen, as the Hour's sky's hands do (render/sdSky.js: sin(back), cos(back) of (azimuth,
+  // elevation), back falling); this pin read turningDialAngle < 0, and the dial turned clockwise - forward - on the screen
+  const vp = multiply(mirrorProjectionX(perspective(Math.PI / 3, 1.6, 0.05, 500)), lookAt([0, 1.7, -1.2], [0, 0, 0], [0, 1, 0]));
+  const onScreen = (p) => { const w = vp[3] * p[0] + vp[7] * p[1] + vp[11] * p[2] + vp[15]; return [(vp[0] * p[0] + vp[4] * p[1] + vp[8] * p[2] + vp[12]) / w, (vp[1] * p[0] + vp[5] * p[1] + vp[9] * p[2] + vp[13]) / w]; };
+  const feet = onScreen([0, 0, 0]);
+  const screenAngle = (a) => { const s = onScreen([Math.cos(a) * TURNING_DIAL_R, 0, Math.sin(a) * TURNING_DIAL_R]); return Math.atan2(s[1] - feet[1], s[0] - feet[0]); };
+  let turned = 0;
+  for (let t = 0; t < 30; t += 1) { const d = screenAngle(turningDialAngle(t + 1)) - screenAngle(turningDialAngle(t)); turned += Math.atan2(Math.sin(d), Math.cos(d)); }
+  assert.ok(turned > 0.5, `the dial turns back - anticlockwise on the screen (${turned.toFixed(3)} rad in 30 s)`);
+  assert.ok(Math.abs(Math.abs(turningDialAngle(AURA_CLOCK_PERIOD)) - TAU) < 1e-9, 'one turn over the clock');
   assert.deepEqual(TURNING_RGB.gold, TITLE_RGBA.hourbreaker.slice(0, 3), 'the Hourbreaker\'s gold');
   assert.match(AURA_FS, /if \(uAura == 6\) \{ vec3 c = uKind == 0 \? turningGround\(vP\) : turningWall\(vP\);/);
 });
@@ -133,7 +145,8 @@ test('SD9c THE DIAL AND THE LIGHT, the shader RUN: the Hour\'s twelve marks on t
   }
   const deep = TURNING_DIAL_R - TURNING_MARK_M * 1.5;
   assert.ok(lum(at(0, polar(deep, d), { t })) > lum(at(0, polar(deep, d + TAU / TURNING_MARKS), { t })) + 0.3, 'the Hour\'s own mark the longer');
-  assert.ok(lum(at(0, polar(markR, d + 0.25 * TAU / TURNING_MARKS + TAU * TURNING_HZ.dial * 3), { t: t + 3 })) < 0.3, 'it turned back, not on');
+  const d3 = turningDialAngle(t + 3), on3 = d - (d3 - d);   // AUDIT SD II (L2 F13 - PIN MOVED): where its law stands it, and where the other way would
+  assert.ok(lum(at(0, polar(markR, d3), { t: t + 3 })) > 0.5 && lum(at(0, polar(markR, on3), { t: t + 3 })) < 0.3, 'it turned back, not on');
   // the light at the feet, breathing
   const feet = [0.02, 0.02];
   assert.ok(lum(at(0, feet)) > 0.3 && lum(at(0, feet)) > lum(at(0, [0.45, 0])) , 'brightest at the feet');
