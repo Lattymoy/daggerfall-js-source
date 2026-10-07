@@ -559,8 +559,8 @@
   {
     "name": "ARENA2-MARKS-KEPT",
     "file": "src/systems/arenaMove.js",
-    "old": "    cacheScene(cache, to, { lootContainers: out.crate.length ? [{ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 }] : [], frame: 'building' });",
-    "new": "    cacheScene(cache, to, { lootContainers: out.crate.length ? [{ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 }] : [], frame: 'building', hiddenBase: ['bed:2'] });",
+    "old": "    cacheScene(cache, to, stampLayout({ lootContainers: out.crate.length ? [{ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 }] : [], frame: 'building' }, layout));",
+    "new": "    cacheScene(cache, to, stampLayout({ lootContainers: out.crate.length ? [{ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 }] : [], frame: 'building', hiddenBase: ['bed:2'] }, layout));",
     "tests": [
       "test/arena2_move.test.js"
     ]
