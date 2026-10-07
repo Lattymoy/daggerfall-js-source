@@ -280,13 +280,20 @@ export function createMarketTab(m, ui) {
   async function open() {
     // MARKET-AUDIT P4: the opening settle reads as the read does - its kept acts may take a while, never a blank tab
     const settling = m.book.pending || arrived().length ? (st.loading = true, ui.rerender(), settle()) : null;
-    await Promise.all([load(false), settling]);
+    // AUDIT 657 B4: a read the prefetch was refused is asked again - the book keeps a failed read its minute too, and the
+    // first press said "did not load" of a market back up since (a read still under way is joined, as before)
+    const again = prefetchFailed;
+    prefetchFailed = false;
+    await Promise.all([load(again), settling]);
   }
   /** BOARD-UI (Mac: "Enhance the speed at which the notice board and market loads"): the first view read as the board
    *  opens, before its tab is pressed - the book's minute's cache answers the press, or joins the read under way. Draws
    *  nothing. */
+  let prefetchFailed = false;
   function prefetch() {
-    try { Promise.resolve(m.book.read(st.view, q(), { force: false })).catch(() => {}); } catch { /* the press reads it */ }
+    try {
+      Promise.resolve(m.book.read(st.view, q(), { force: false })).then((r) => { prefetchFailed = !r?.ok; }, () => { prefetchFailed = true; });
+    } catch { /* the press reads it */ }
   }
   const go = (view) => { ui.hush?.(); st.view = view; st.picked = null; st.family = null; st.tier = 0; st.data = m.book.cached(view, q()); load(false); };   // MARKET-AUDIT U6: the last act's word is its view's
   /** An act through the window's door; its word, then the view read again - a press the market says has moved too. */
@@ -719,10 +726,11 @@ export function createMarketTab(m, ui) {
         : worth() > MARKET_WORTH_MAX ? `A listing is worth at most ${priceText(MARKET_WORTH_MAX, cur)} - list fewer, or ask less.`   // MARKET-AUDIT: never offered to be refused
         // GOLD-MARKET: no fee now - each sale pays its share and the tax; the gold is held for the seller to collect
         // MARKET-ANY: a piece from the pack - where it goes, and why gold alone
-        : st.list.kind === 'item' ? `No fee. Up for 72 hours on every board. If it sells you get ${goldGets} (after 1% and ${saleTax(100)}% tax), collected at a bank. It leaves your pack now and comes back if it does not sell.`
-        : gold ? `No fee. Up for 72 hours on every board. If it all sells you get ${goldGets} (after 1% and ${saleTax(100)}% tax), collected at a bank. Goods bought with silver, and pieces made with them, sell only for silver.`
+        // AUDIT 657 B9: the 1% is a fee - the sale's (goldSaleOf), never the listing's
+        : st.list.kind === 'item' ? `No fee to list. Up for 72 hours on every board. If it sells you get ${goldGets} (after a 1% fee and ${saleTax(100)}% tax), collected at a bank. It leaves your pack now and comes back if it does not sell.`
+        : gold ? `No fee to list. Up for 72 hours on every board. If it all sells you get ${goldGets} (after a 1% fee and ${saleTax(100)}% tax), collected at a bank. Goods bought with silver, and pieces made with them, sell only for silver.`
         : st.list.kind === 'auction'
-          ? `Fee ${marksText(fee)}, kept if you cancel (only before the first bid). Runs ${AUCTION_S / 3600} hours on every board; each bid beats the last by ${AUCTION_RAISE_PCT}%, and a bid in the last ${AUCTION_LATE_S / 60} minutes adds ${AUCTION_ADD_S / 60}. You get the top bid, less ${less}${pct == null ? ' and any Tithe' : ''}.`
+          ? `Fee ${marksText(fee)}, kept if you cancel (only before the first bid). Runs ${AUCTION_S / 3600} hours on every board; each bid beats the last by ${AUCTION_RAISE_PCT}%, and a bid in the last ${AUCTION_LATE_S / 60} minutes adds ${AUCTION_ADD_S / 60} minutes. You get the top bid, less ${less}${pct == null ? ' and any Tithe' : ''}.`
           : `Fee ${marksText(fee)}, kept if you cancel. Up for 72 hours on every board. If it all sells you get ${marksText(sellerGets(worth(), pct ?? 0))}, after ${less}${pct == null ? ', before any Tithe' : ''}.`;
       b.disabled = ui.busy() || full || !can() || (!gold && short(fee));
     };
@@ -907,12 +915,14 @@ export function createMarketTab(m, ui) {
   /** The tab's body. BOARD-UI: Your silver and the views at the top, the road under them, then the view. */
   function body() {
     const box = el('div', 'notice-cork market-body');
-    box.append(walletNode(), viewsNode());
+    // AUDIT 30 U11: the service's own word - a shut market, or a session to sign in again for. AUDIT 657 B12: and alone -
+    // the silver's strip stood over it, "Your silver: -", for a market that reads no silver
+    const shut = !!st.error && !st.data && SHUT.includes(st.error);
+    if (!shut) box.append(walletNode());
+    box.append(viewsNode());
     const road = roadNode();
     if (road) box.append(road);
     if (st.error && !st.data) {
-      // AUDIT 30 U11: the service's own word - a shut market, or a session to sign in again for
-      const shut = SHUT.includes(st.error);
       const p = el('p', 'notice-empty', shut ? accountRefusalText(st.error) : st.error === 'offline' || st.error === 'server'
         ? MARKET_WORDS.slow : accountRefusalText(st.error));
       if (!shut) p.append(button('notice-retry', 'Try again', () => load(true)));

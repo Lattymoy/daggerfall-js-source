@@ -908,7 +908,7 @@
   {
     "name": "PROF5-window-market-always",
     "file": "src/ui/noticeWindow.js",
-    "old": "  const marketShown = () => !!marketHost && (marketHost.book?.state?.open !== false || tab === 'market');",
+    "old": "  const marketShown = () => !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market');",
     "new": "  const marketShown = () => !!marketHost;",
     "tests": [
       "test/prof5_client.test.js"

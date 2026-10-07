@@ -236,11 +236,11 @@ test('AUDIT SEATS-3 D2: the market read names its board, the book keeps the list
   t.book.state.counts = { listings: 37, orders: 0 };
   await mine(t);
   assert.equal(buttons(t.root).find((b) => b.textContent === 'List').disabled, true);
-  assert.match(t.root.textContent, /You have 37 listings up - the most allowed here\./);
+  assert.match(t.root.textContent, /You have 37 listings up - the most allowed here\./);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the words cut
   t.book.state.listingsMax = null;
   t.book.state.counts = { listings: MARKET_LISTINGS_MAX, orders: 0 };
   await mine(t);
-  assert.match(t.root.textContent, new RegExp(`You have ${MARKET_LISTINGS_MAX} listings up`), 'a service that says none: the old cap');
+  assert.match(t.root.textContent, new RegExp(`You have ${MARKET_LISTINGS_MAX} listings up`), 'a service that says none: the old cap');   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the words cut
   assert.match(accountRefusalText('market-listings-max'), /as many listings up as this board allows/);
 });
 
@@ -268,7 +268,7 @@ test('AUDIT SEATS-3 D3: a board\'s Tithe as the seats\' list says it (its bailiw
   }
   const w = src('src/scenes/world.js');
   assert.match(w, /tithe: \(\) => \(seatBook\?\.open === true \? boardTithePct\(seatBook\.data\?\.seats \?\? \[\], region, \[town\.px, town\.py\]\) : null\),/);
-  assert.match(src('src/ui/marketTab.js'), /You get the top bid, less \$\{less\}\$\{pct == null \? ' and any Tithe' : ''\}\./);
+  assert.match(src('src/ui/marketTab.js'), /You get the top bid, less \$\{less\}\$\{pct == null \? ' and any Tithe' : ''\}\./);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the terms one line
 });
 
 test('AUDIT SEATS-3 D6: at a crown the holder\'s Officer is told its Saturday slot, whatever the window, and offered no window lever; a palace\'s lever as ever (mutants: the default\'s Wednesday at a crown; the lever shown)', async () => {

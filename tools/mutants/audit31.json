@@ -729,8 +729,8 @@
   {
     "name": "AUDIT31-tab-hint-add-late",
     "file": "src/ui/marketTab.js",
-    "old": "adds ${AUCTION_ADD_S / 60}. You get the top bid",
-    "new": "adds ${AUCTION_LATE_S / 60}. You get the top bid",
+    "old": "adds ${AUCTION_ADD_S / 60} minutes. You get the top bid",
+    "new": "adds ${AUCTION_LATE_S / 60} minutes. You get the top bid",
     "tests": [
       "test/prof5b_client.test.js"
     ],

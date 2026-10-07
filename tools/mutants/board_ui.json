@@ -121,8 +121,8 @@
   {
     "name": "BOARD-UI-the-read-after-the-settle",
     "file": "src/ui/marketTab.js",
-    "old": "    await Promise.all([load(false), settling]);",
-    "new": "    await settling; await load(false);",
+    "old": "    await Promise.all([load(again), settling]);",
+    "new": "    await settling; await load(again);",
     "tests": [
       "test/board_ui.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "BOARD-UI-the-wallet-at-the-foot",
     "file": "src/ui/marketTab.js",
-    "old": "    box.append(walletNode(), viewsNode());",
-    "new": "    box.append(viewsNode(), walletNode());",
+    "old": "    if (!shut) box.append(walletNode());\n    box.append(viewsNode());",
+    "new": "    box.append(viewsNode());\n    if (!shut) box.append(walletNode());",
     "tests": [
       "test/board_ui.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "BOARD-UI-the-guide-a-palace-always",
     "file": "src/ui/seatTab.js",
-    "old": "influence, for ${n(CLAIM_FEE[t])} silver from its treasury.",
-    "new": "influence, for ${n(CLAIM_FEE.palace)} silver from its treasury.",
+    "old": "whose treasury can pay ${n(CLAIM_FEE[t])} silver.",
+    "new": "whose treasury can pay ${n(CLAIM_FEE.palace)} silver.",
     "tests": [
       "test/board_ui.test.js"
     ]

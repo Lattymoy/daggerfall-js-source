@@ -10978,10 +10978,10 @@ as `acct61`, and main's own `acct47` (BOULDERS) and `acct48` (MORE-NODES) are di
   hub's circle, the names kept clear of it (`markReach`); a crown in its kingdom's metal over a crown seat; a March's
   thin second ring half in each claiming crown's metal, a Free Land's green; the Charter's line in the map's box.
 - **The banners** (3.4; `src/scenes/seatBanners.js`): anchors measured where a seat town's pixel is built - the
-  palace door's two (GUILD1d's measure), a banner at each city gate on its town side beside a post, a pennant over each
-  rumour board (never a bounty board; since ONE-BOARD over the town's one Notice Board, Professions-Arc 10.11), at most 8 - hung with the kingdom's plain banner (a March's two claimants'
-  metals, a Free Land's none) on GUILD1d's cloth pass, the halls' and the seats' banners the nearest sixteen together
-  (`world.js` bannersHung). `ui/heraldryArt.js` draws a plain banner (two colours, no device).
+  palace door's two (GUILD1d's measure), a banner at each city gate on its town side beside a post, a pennant over the
+  town's one Notice Board (ONE-BOARD, Professions-Arc 10.11), at most 8 - hung with the kingdom's plain banner (a March's
+  two claimants' metals, a Free Land's none) on GUILD1d's cloth pass, the halls' and the seats' banners the nearest
+  sixteen together (`world.js` bannersHung). `ui/heraldryArt.js` draws a plain banner (two colours, no device).
 - **Four hosts**: `world.js` WIRED; `worldModes.js` and `dungeonContext.js` stand no street; `exterior.js` (the fixed
   city) FLAGGED - it runs no account service, so no seat is open there.
 
@@ -14930,16 +14930,20 @@ maker's mark and a name the Item Maker gave a piece.
 **The reader** (`src/net/nameFilter.js` maskText, textCaught). A name is one word, read whole; a sentence read whole
 hides every word in it - stage 1 drops the spaces, so "you are an ass" is `youareanass`, where `ass` stands alone
 nowhere. So a line is read word by word, each word through NAME-F1's two readings and its lists, and a word caught is
-starred letter for letter. The line's length, spaces and punctuation stand, so a bound measured before holds after, and
+starred letter for letter. The line's spaces and punctuation stand and it never grows (one star a letter - a letter
+past the Basic Plane is two UTF-16 units and one star, AUDIT 657 D9), so a bound measured before holds after, and
 the mask is idempotent - a starred word has no letters left. Three differences from a name's verdict: the server's own
 words (IMPERSONATION) are not read ("ask a mod" is a sentence); a word spelled a letter at a time (`f u c k`,
 `f.u.c.k`) is read as the run of its letters; a word's own sentence marks are read off it (`fuck!` - a leet `!` inside
 a word is its `i`, at its end the sentence's). A number is not read (`8008`). The lists moved for prose and names
 alike: the compounds a sentence reaches for, which no boundary finds in one word (`asshole`, `arsehole`, `bullshit`,
-`dickhead`, `dipshit`, `dumbass`, `shithead`); `nigga` with the slurs; and ANYWHERE - the words no English word holds
-innocently (`fuck`, `cocksuck`, `faggot`, `nigga`, `nigger`), read anywhere inside a word, so `motherfucker` is caught
-where a boundary let it pass, in a name as in a line. Every name the port quotes in its own source - an item, a
-place, a book - reads unchanged (the pin walks `src/`).
+`dickhead`, `dipshit`, `dumbass`, `shithead`); `nigga` with the slurs; and ANYWHERE - the words a boundary only ever let past
+(`fuck`, `cocksuck`, `faggot`, `nigga`, `nigger`), read anywhere inside a word, so `motherfucker` is caught
+where a boundary let it pass, in a name as in a line. Two English words hold one innocently - snigger and niggard - and a listed word
+and a tail spell ordinary words (spiced, cocky, pricked, a booby trap): each is read as itself (AUDIT 657 T1,
+`net/nameFilter.js` INNOCENT). Every capitalised name the port quotes in its own source - an item, a place, a book, a
+ship - reads unchanged (AUDIT 657's pin parses `src/` and reads all of them, some 6,950; TEXT-F1's read a `name:` key's
+alone, and the Spices shop, the Spiced ships and Spicy Grilled Lizard were starred).
 
 **Starred, where.** `src/net/wire.js` sanitizeChat - a chat line, a red line, a narration: on the sender's machine, at
 the relay's parse and on every reader's - and wordsLine - a letter's subject and lines (`src/net/letterLaw.js`), so a
@@ -14965,8 +14969,8 @@ of theirs moved.
 - **Pinned**: `test/text_filter.test.js` (9 - two of them through the real service: a note, a notice, a guild note and
   a letter kept and read starred; a rank's word refused and said); `tools/mutants/text_filter.json` (17, all dead).
   PIN MOVED: chatroster_namefilter (NAME-F2's import line), mail1 (wordsLine is still visibleText's, its words
-  starred), legacy7_wed (WED_RELAY_MIN is world174, the relay having moved on), the relay's version pins and the
-  account's. Re-aimed: eight mutant records whose lines moved (audit30, fb1004d_knight_house, gatekeys, guild1e, guild2,
+  starred), legacy7_wed (WED_RELAY_MIN is world174, the relay having moved on), audit26_questitem (F077's soul-trap pin
+  reads the name line through shownItemName - b8ded8cb; AUDIT 657 D7), the relay's version pins and the account's. Re-aimed: eight mutant records whose lines moved (audit30, fb1004d_knight_house, gatekeys, guild1e, guild2,
   mail1, prof3, soc1).
 - **Not done here**: a private surface - a waypoint kept to oneself, an automap note, a save's name - is not read: no
   other player sees it. A letter already in a box is kept as it was written (one reader, private); every letter sent
@@ -14987,8 +14991,8 @@ stand on one line, never inside the name; the glyphs on a row of their own under
 race and class; the record as one row of plaques, each its own words; the waiting or the silence, said under the head
 before the gap it explains; then the sheet beside what they wear, and what they wear in its parts - in hand (a shield
 with the sword), armour, clothing, jewellery - each piece by its own group (net/wire.js LOOK_GROUPS), a pair worn in two
-slots of one name ONE row under the plural with both names (gearGroups - the card said "Ring" twice, ten such pairs to
-a full look). The card is wider (560px), so a long piece's name keeps its line.
+slots of one name ONE row under the plural with both names (gearGroups - the card said "Ring" twice, eight such pairs to
+a full look, AUDIT 657 D8). The card is wider (560px), so a long piece's name keeps its line.
 
 The probe builds the widest card a player can be shown - every glyph, a Renown at RENOWN_MAX, the longest tag the guild
 law takes, every plaque, the widest outfit - and reads it at a desktop's width, a narrow window's and a phone's, on the

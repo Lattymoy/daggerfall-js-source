@@ -201,7 +201,12 @@ export function createVendorTab(v, ui) {
     const chosen = st.good;
     const go = button('primary market-post', ui.busy() ? 'Putting up...' : 'Put up for sale', () => act(() => v.put(chosen, st.price)));
     go.disabled = ui.busy() || !chosen;
-    box.append(sel, el('span', 'notice-label', 'Price in gold'), price, go, el('p', 'notice-tip', VENDOR_TEXT.stockTip));
+    // AUDIT 657 B3: its fields under their names, as the List form's (marketTab.js field) - BOARD-UI stood that form's
+    // fields in a column, and this form, in its dress, stood its select and its press each the window's width
+    const field = (name, input, cls = '') => { const f = el('label', `market-field${cls ? ` ${cls}` : ''}`); f.append(el('span', 'notice-label', name), input); return f; };
+    const fields = el('div', 'market-fields');
+    fields.append(field('Piece', sel, 'market-field-wide'), field('Price in gold', price), go);
+    box.append(fields, el('p', 'notice-tip', VENDOR_TEXT.stockTip));
     return box;
   }
 

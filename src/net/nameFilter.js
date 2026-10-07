@@ -162,13 +162,39 @@ export const SLURS = Object.freeze([
 export const IMPERSONATION = Object.freeze(['admin', 'moderator', 'mod', 'staf', 'sistem', 'ofical', 'server']);
 
 /** TEXT-F1 (2026-10-07): THE WORDS NO WORD HIDES INNOCENTLY - read ANYWHERE inside a word, where the lists above are read
- *  standing alone (stage 2, so `cumberland` keeps its `cum`). No English word holds one of these, so a boundary was only
- *  ever the way past: `motherfucker` and `xXfaggotlordXx` stood beside no padding and passed. Each list its kind, as
- *  LISTS reads them; written normalised. */
+ *  standing alone (stage 2, so `cumberland` keeps its `cum`). Two English words hold one innocently (AUDIT 657 T1:
+ *  INNOCENT, below, reads them out first); for the rest a boundary was only ever the way past: `motherfucker` and
+ *  `xXfaggotlordXx` stood beside no padding and passed. Each list its kind, as LISTS reads them; written normalised. */
 export const ANYWHERE = Object.freeze([
   Object.freeze({ kind: 'slur', words: Object.freeze(['faggot', 'nigga', 'nigger']) }),
   Object.freeze({ kind: 'crude', words: Object.freeze(['cocksuck', 'fuck']) }),
 ]);
+
+/** AUDIT 657 T1 (= D1): THE WORDS THAT HOLD A LISTED ONE INNOCENTLY. TEXT-F1 said no English word holds an ANYWHERE
+ *  word, and two do - `snigger` and `niggard`, and every word made of them (sniggering, niggardly) - so names NAME-F1
+ *  let through (Snigger, Niggardly) were refused, and "he gave a snigger" was starred. A sentence reads a listed word's
+ *  tails too (stage 2's `s`, `ed`, `y`), and the ordinary words a listed word and a tail spell were starred with them:
+ *  "spiced wine", "a booby trap", "don't get cocky", "pricked his finger", a merchant's "dicker" (the dictionary's run is
+ *  in the AUDIT 657 record). Each is read OUT before the ANYWHERE words are looked for, in a name and a sentence alike,
+ *  and a sentence's word that IS one is never read against the lists. A name's verdict on the rest is NAME-F1's,
+ *  unmoved: a name is chosen and stays, and `Cocky` was refused before. Written normalised. Never a word a list holds,
+ *  and never one whose plain reading is the insult as often as not (`chink`, `knob`, `prick` stay listed). */
+export const INNOCENT = Object.freeze(['snigger', 'niggard', 'spicy', 'spiced', 'spices', 'titter', 'titters', 'titer', 'titers',
+  'booby', 'cocky', 'cocked', 'cocking', 'dicker', 'dickers', 'knobby', 'knobbed', 'pricked', 'pricking', 'spunky']);
+/** The ANYWHERE word a normalised reading holds - either reading, its innocent words read out of it first (a space
+ *  where each stood, so no word is found across the gap) - as `{ kind, word }`, or null (AUDIT 657 T1). */
+function anywhereIn(flat) {
+  const holds = (plain) => {
+    const stretched = collapseRuns(plain);
+    for (const { kind, words } of ANYWHERE) {
+      const word = words.find((w) => plain.includes(w) || stretched.includes(w));
+      if (word) return { kind, word };
+    }
+    return null;
+  };
+  // the innocent words read out only where a word was found: most words hold none, and are read once
+  return holds(flat) && holds(INNOCENT.reduce((s, w) => s.split(w).join(' '), flat));
+}
 
 /** Every entry must survive normalisation unchanged - lowercase
  *  letters only - or it is an entry that can never match. Checked in
@@ -227,11 +253,9 @@ export function checkName(name) {
   const flat = normaliseName(raw);
   if (!flat) return { ok: false, kind: 'empty', word: '', reason: 'A name needs some letters in it.' };
   const stretched = collapseRuns(flat);
-  // TEXT-F1: a word no word hides innocently, anywhere in either reading
-  for (const { kind, words } of ANYWHERE) {
-    const word = words.find((w) => flat.includes(w) || stretched.includes(w));
-    if (word) return { ok: false, kind, word, reason: `That name reads as "${word}". Please pick another.` };
-  }
+  // TEXT-F1: a word no word hides innocently, anywhere in either reading - AUDIT 657 T1: the innocent words read out first
+  const any = anywhereIn(flat);
+  if (any) return { ok: false, kind: any.kind, word: any.word, reason: `That name reads as "${any.word}". Please pick another.` };
   for (const { kind, words } of LISTS) {
     for (const word of words) {
       // BOTH readings - see collapseRuns for why they are two - and
@@ -317,10 +341,13 @@ export function entryVerdict(...candidates) {
 // A number is a number (`8008` is somebody's sum) and is not read.
 //
 // The mask keeps every character that is not a letter of a caught word,
-// so a line's length, its spaces and its punctuation stand: a bound
-// measured before it holds after it. It is idempotent - a starred word
-// has no letters left to catch - so a line cleaned twice (the sender's,
-// the relay's, the reader's) reads once.
+// a star for each letter, so a line's spaces and its punctuation stand
+// and it never grows: a bound measured before it holds after it (AUDIT
+// 657 D9: never LONGER, rather than the same length - a letter past the
+// Basic Plane, a mathematical bold one, is two UTF-16 units and one
+// star). It is idempotent - a starred word has no letters left to catch
+// - so a line cleaned twice (the sender's, the relay's, the reader's)
+// reads once.
 //
 // Where it runs: net/wire.js sanitizeChat (every chat line, on both ends
 // and at the relay) and wordsLine (a letter's lines, a note's, a guild
@@ -329,24 +356,35 @@ export function entryVerdict(...candidates) {
 // class, a maker's mark, an item's new name - are judged by `textCaught`
 // and refused or let go instead, as a name is.
 
-/** A character a word is spelled in: a letter, a digit or a mark of the leet alphabet. Anything else stands between
- *  words. */
-const isWordChar = (ch) => /[\p{L}\p{N}]/u.test(ch) || LEET.has(ch);
-/** The leet marks a sentence puts at a word's edge - an opening bracket, a closing bang, a bar or a plus. */
-const EDGE_HEAD = new Set(['!', '|', '(', '<', '+']);
+/** A character a word is spelled in: a letter, its accents, a digit or a mark of the leet alphabet. Anything else stands
+ *  between words. AUDIT 657 T2: a letter's own combining accent is the letter's - it stood between words, so a word
+ *  spelled with one (`u` and U+0301, the accent stage 1 folds away) read as two halves, and neither was the word. */
+const isWordChar = (ch) => /[\p{L}\p{M}\p{N}]/u.test(ch) || LEET.has(ch);
+/** The leet marks a sentence puts at a word's edge - an opening bracket, a closing bang, a bar or a plus; and AUDIT 657
+ *  T3, an at sign before a name (`@word` read only as `aword`, so a word said at someone passed). */
+const EDGE_HEAD = new Set(['!', '|', '(', '<', '+', '@']);
 const EDGE_TAIL = new Set(['!', '|', '+']);
 /** The lists a sentence is read against: the slurs and the crude words, never the server's words. */
 const TEXT_LISTS = Object.freeze([{ kind: 'slur', words: SLURS }, { kind: 'crude', words: CRUDE }]);
 /** The longest run of letters spelled one at a time that is read as a word. */
 const SPELLED_MAX = 12;
+/** Every word a sentence's lists read (AUDIT 657 T5's pre-check). */
+const SENTENCE_WORDS = Object.freeze([...ANYWHERE.flatMap((g) => g.words), ...SLURS, ...CRUDE]);
+/** AUDIT 657 T5: whether `letters` hold a word a sentence's lists read, in either reading. Every reading of a shorter
+ *  run is the start of the longer run's reading, so a run that holds none has no window that is caught. */
+const mayHold = (letters) => {
+  const flat = normaliseName(letters), stretched = collapseRuns(flat);
+  return SENTENCE_WORDS.some((w) => flat.includes(w) || stretched.includes(w));
+};
 
 /** One word, as a sentence writes it: the list word it reads as, or null. */
 function wordCaught(word) {
   if (/^\p{N}+$/u.test(word)) return null;
   const flat = normaliseName(word);
-  if (!flat) return null;
+  if (!flat || INNOCENT.includes(flat)) return null;   // AUDIT 657 T1: an ordinary word, read as itself
+  const any = anywhereIn(flat);
+  if (any) return any.word;
   const stretched = collapseRuns(flat);
-  for (const { words } of ANYWHERE) for (const w of words) if (flat.includes(w) || stretched.includes(w)) return w;
   for (const { words } of TEXT_LISTS) for (const w of words) if (standsAlone(flat, w) || standsAlone(stretched, w)) return w;
   return null;
 }
@@ -383,17 +421,24 @@ function caughtWords(text) {
     }
     if (word) { out.push({ from, to, word }); taken.add(k); }
   });
-  // a word spelled a letter at a time - a run of one-letter words, each a letter, none caught already
-  const single = (k) => k < words.length && !taken.has(k) && words[k].to - words[k].from === 1 && /\p{L}/u.test(cps[words[k].from]);
+  // a word spelled a letter at a time - a run of one-letter words, each a letter (with its accents, AUDIT 657 T2), none
+  // caught already
+  const letterOf = (w) => cps.slice(w.from, w.to).join('');
+  const single = (k) => k < words.length && !taken.has(k) && /^\p{L}\p{M}*$/u.test(letterOf(words[k]));
   for (let k = 0; k < words.length;) {
     if (!single(k)) { k++; continue; }
     let end = k;
     while (single(end)) end++;
     for (let i = k; i < end;) {
       let hit = 0;
-      for (let j = i + 3; j <= Math.min(end, i + SPELLED_MAX); j++) {
-        const word = wordCaught(words.slice(i, j).map((w) => cps[w.from]).join(''));
-        if (word) { for (let x = i; x < j; x++) out.push({ ...words[x], word }); hit = j; break; }
+      const last = Math.min(end, i + SPELLED_MAX);
+      // AUDIT 657 T5: the longest window read once first - every window a reading of its own cost a 240-letter chat line
+      // of one-letter words 7 ms at the relay; a window holds a word only where the longest one from its letter does
+      if (mayHold(words.slice(i, last).map(letterOf).join(''))) {
+        for (let j = i + 3; j <= last; j++) {
+          const word = wordCaught(words.slice(i, j).map(letterOf).join(''));
+          if (word) { for (let x = i; x < j; x++) out.push({ ...words[x], word }); hit = j; break; }
+        }
       }
       i = hit || i + 1;
     }

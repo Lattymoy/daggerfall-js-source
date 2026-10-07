@@ -17,16 +17,16 @@
 // readability"): the same parts, each on its own panel under its own name, in the order a reader asks them - the
 // Charter (who holds it, how firmly, the Tithe and Edict); This week (the phase on a strip - Muster, Reckoning,
 // Turning - and its clock, the Season, the Tide); the battle; the standings, each guild's bar toward what it needs (the
-// claim, or the holder's defence); your guild (its pledge, your part, the levers); the holder's orders; the Works;
-// Fealty and Pacts; HOW THE SEAT WAR WORKS, five steps folded under one line (its numbers the law's own); and the
-// Chronicle.
+// claim, or the holder's defence); your guild (its pledge, your part, the levers, its Fealty and Pacts - AUDIT 657 B10);
+// the holder's orders; the Works; HOW THE SEAT WAR WORKS, five steps folded under one line (its counts the law's own);
+// and the Chronicle.
 //
 // Every act goes through the window's one-at-a-time door (`ui.run`), and the standings are read again after each.
 import { HALL_OF_RECORDS_SHUT } from '../systems/onlineHomes.js';   // AUDIT-SEATS: the Hall of Records' words where it cannot be read
 import { accountRefusalText } from '../net/accountClient.js';
 import {
   seatInfoLine, seatWeekLine, seatStandingLine, seatNoStandingsLine, seatMineLines, seatTributeLine, seatMay,
-  SEAT_PLEDGE_WORDS, SEAT_PLEDGE_REGIONS_MAX, TRIBUTE_MARKS_PER_INFLUENCE, CLAIM_THRESHOLD, CLAIM_FEE, CONTESTED_MARGIN, ACCOUNT_SEAT_WEEK_CAP,
+  SEAT_PLEDGE_WORDS, SEAT_PLEDGE_REGIONS_MAX, TRIBUTE_MARKS_PER_INFLUENCE, CLAIM_THRESHOLD, CLAIM_FEE, CONTESTED_MARGIN, ACCOUNT_SEAT_WEEK_CAP, SEAT_MEMBER_WAIT_S,
   seatHolderLine, seatBattleLine, seatClaimLine, chronicleLine, SEAT_RELINQUISH_WORDS,
   seatRuleLine, seatHoldingLines, edictLine, edictMayFollow, edictForTier, royalTourneyLines, EDICTS, seatTitheCap, SEAT_LEVER_RANKS, BOUNTY_MARKS,
   politicsRows, POLITICS_ACTS, seasonLine, guildWords,
@@ -82,8 +82,10 @@ export function seatGuide(seat) {
   const n = (x) => Number(x).toLocaleString('en-US');
   return [
     ['Pledge', `In the Muster, a guild's Officers or Guildmaster pledge it to one seat a region, in up to ${SEAT_PLEDGE_REGIONS_MAX} regions. Pledges lock at the Reckoning, Friday 18:00 UTC.`],
-    ['Earn', `Members 7 days in the guild earn influence in the seat's region: walking the town (the Watch), closing Dagon's Breaches, a home in the town, Renown, seat writs and Tribute. One account counts for at most ${n(ACCOUNT_SEAT_WEEK_CAP)} a week at a seat.`],
-    ['Claim', `At the Turning, Sunday 18:00 UTC, an unheld Charter goes to the top guild with ${n(CLAIM_THRESHOLD[t])} influence, for ${n(CLAIM_FEE[t])} silver from its treasury. Two guilds within ${Math.round(CONTESTED_MARGIN * 100)}% of each other meet in a Tourney for it.`],
+    // AUDIT 657 B9: Tribute is the Guildmaster's, paid from the treasury - never a member's earning; D6: the wait the law's
+    ['Earn', `Members ${n(SEAT_MEMBER_WAIT_S / 86400)} days in the guild earn influence in the seat's region: walking the town (the Watch), closing Dagon's Breaches, a home in the town, Renown and seat writs. The Guildmaster adds Tribute from the treasury. One account counts for at most ${n(ACCOUNT_SEAT_WEEK_CAP)} a week at a seat.`],
+    // AUDIT 657 B9: the law's taker - the strongest past the line whose treasury holds the fee (townSeatLaw.js turningPlan)
+    ['Claim', `At the Turning, Sunday 18:00 UTC, an unheld Charter goes to the strongest guild with at least ${n(CLAIM_THRESHOLD[t])} influence whose treasury can pay ${n(CLAIM_FEE[t])} silver. Two guilds within ${Math.round(CONTESTED_MARGIN * 100)}% of each other meet in a Tourney for it.`],
     ['Siege', `A held Charter is challenged by beating the holder's defence with at least ${n(CLAIM_THRESHOLD[t])}: the strongest challenger wins a Right of Siege, fought in the holder's battle window. Sign for your side on this tab.`],
     ['Hold', 'The holder sets the Tithe and an Edict and pays upkeep each week. Keeping the town raises its Standing; a Standing of nought brings revolt.'],
   ];

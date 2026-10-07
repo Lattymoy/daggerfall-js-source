@@ -201,8 +201,11 @@ export function mountNoticeBoard(host, deps) {
   const workShown = () => !!work && work.book?.state?.open === true;
   // PROF5: the Market tab - its own state and views, the window's one-at-a-time door and its status line
   const marketHost = deps.market ?? null;
-  // MARKET-AUDIT U4: a market that shuts while its tab is read stays the tab, its shut word said (AUDIT 30 U11) - it vanished
-  const marketShown = () => !!marketHost && (marketHost.book?.state?.open !== false || tab === 'market');
+  // MARKET-AUDIT U4: a market that shuts while its tab is read stays the tab, its shut word said (AUDIT 30 U11) - it vanished.
+  // AUDIT 657 B5: and a Market the board showed as it opened stays for this opening - the board's own read of the market
+  // (BOARD-UI's prefetch) can hear it is shut before the tab is pressed, and the tab went with no word; pressed, it says why
+  const marketAtOpen = !!marketHost && marketHost.book?.state?.open !== false;
+  const marketShown = () => !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market');
   // AUDIT 30 U12: the market's door is its own - a board read under way never greys Buy, and a market act never the board
   let marketBusy = false;
   const market = marketHost ? createMarketTab(marketHost, {

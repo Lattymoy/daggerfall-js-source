@@ -233,7 +233,7 @@ test('SEAT1a the banners: the palace door\'s two, a gate\'s on its town side bes
   assert.deepEqual(b.top, [0.5, 2 + BOARD_PENNANT_RISE_M, 0.1]);
   const frames = new Map([[makeBuildingKey(1, 2, 1), { at: [0, 0, 0], box: [-5, 0, -5, 5, 8, 5], door: { a: [-1, 0, 5], b: [1, 0, 5] } }]]);
   const boards = [{ local: I, box: [0, 0, 0, 1, 2, 0.2] }, { local: I, box: [3, 0, 0, 4, 2, 0.2] }];
-  const all = seatBannerAnchors({ frames, palaceKeys: [makeBuildingKey(1, 2, 1)], gates: [gate], boards, notice: 0, centre: [0, 20] });
+  const all = seatBannerAnchors({ frames, palaceKeys: [makeBuildingKey(1, 2, 1)], gates: [gate], boards, notice: 0, centre: [0, 20] });   // AUDIT 657 D7: ONE-BOARD (PIN MOVED): the pennant over the one Notice Board, by its index
   assert.equal(all.length, 4, 'the door\'s two, the gate\'s one, the Notice Board\'s one');
   assert.deepEqual(all[3], boardPennantAnchor(boards[0]), 'ONE-BOARD: the pennant over the Notice Board itself');
   assert.equal(seatBannerAnchors({ boards, notice: -1, centre: [0, 20] }).length, 0, 'no Notice Board, no pennant');

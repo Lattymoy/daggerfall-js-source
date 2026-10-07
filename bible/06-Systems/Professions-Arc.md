@@ -963,10 +963,10 @@ Mac: **"Go"**. What the design above left open, DECIDED here (the record's, at M
 
 - **Which boards.** Online, the town's Notice Board opens it - once the account service has said the board is open to
   this account (`BOARD_OPEN`). ONE-BOARD (10.11): one board a town, the rumour board nearest its middle; NOTICE1 made
-  every board BOUNTY1 did not take one, and a town of three boards or more stood two. Until it has, and offline, the board is DFU's
+  every board BOUNTY1 did not take one, and a town of three boards or more stood two or three (AUDIT 657 D2). Until it has, and offline, the board is DFU's
   rumour box byte for byte (ROAD A9's pins hold). The town underfoot is read on arrival, so the first press knows.
 - **A board is its town's.** A note is pinned to the TOWN - its MAPS.BSA map id, unsigned (regionHubs.js's key) - so
-  every rumour board in a town shows the same notes, and a board stood later for a hub is the same board.
+  the town's Notice Board shows it wherever that board stands, and a board stood later for a hub is the same board.
 - **The Notices tab, in its order**: the rumour (DFU's sign; its name row is the window's heading), the bounty board's
   line, the server's word under the red seal (the Oblivion Gate while it stands - the map's own mark, WB1 - and the
   developers' notices), then the players' notes, newest first.
@@ -1127,11 +1127,12 @@ of the board for better organization, instruction and readability"**.
   give two), and NOTICE1 made every board left a Notice Board - so a town of three boards or more stood two or three,
   each with its "3 new", its mark on the town map and, at a seat, its pennant. Now one (`systems/bountyBoard.js`
   noticeBoardIndex): of the boards BOUNTY1 left, the one nearest the town's middle (`townCentreOf`, the mean of its
-  buildings' places - the board the siege field already takes for its Market, `systems/siegeField.js`), the first by
-  position on a tie. The rest stay Daggerfall's rumour boards, as every board is offline; BOUNTY1's split is untouched.
-  Every seam reads it through one memo a pixel (`scenes/world.js` noticeBoardOf): the press, the count over the board,
-  the town underfoot, the town map (`ui/townMapMarks.js` townBoardRows takes the index), a seat's pennant
-  (`scenes/seatBanners.js` seatBannerAnchors' `notice`). It names itself "Notice Board" on hover while the board is open
+  buildings' places), the first by position on a tie. The rest stay Daggerfall's rumour boards, as every board is
+  offline; BOUNTY1's split is untouched. Every seam reads the one law with the same inputs: the press, the count over
+  the board, the town underfoot and the town map (`ui/townMapMarks.js` townBoardRows takes the index) through one memo a
+  pixel (`scenes/world.js` noticeBoardOf); a seat's pennant at the build's own measure (`scenes/seatBanners.js`
+  seatBannerAnchors' `notice`); and the siege field's Market banner (`systems/siegeField.js` - its own walk until AUDIT
+  657 B7, which broke a tie by the boards' order). It names itself "Notice Board" on hover while the board is open
   to the account (`scenes/worldModes.js`), DFU's "Bulletin Board" otherwise. THE FOUR HOSTS: `world.js` WIRED (the
   streets' boards, through `noticeBoardOf`); `worldModes.js` WIRED (the hover's name - the exterior ray it runs for the
   streaming host); `exterior.js` keeps DFU's board, as NOTICE1 left it (no board book on the bench); `dungeonContext.js`
@@ -1139,7 +1140,8 @@ of the board for better organization, instruction and readability"**.
 - **Readable.** MEASURED in Chromium (`tools/noticeBoardProbe.mjs`, every tab at 1280x800 and 390x760): the tab strip
   ran off a phone's edge ("VENDO..."), Guilds and Seat beyond reach - it scrolls sideways now (its scrollbar hidden the
   Arena window's way, `scrollbar-width: none`, the one value CURSOR-EDGE allows) and never shrinks (once it scrolled, a
-  tall tab squeezed it to a sliver); the cards stand straight (a tilted pixel face blurs) and as tall as their own words
+  tall tab squeezed it to a sliver; the chosen tab's line and the focus ring stand inside the tab, AUDIT 657 B1 - the
+  strip clips what stands past it); the cards stand straight (a tilted pixel face blurs) and as tall as their own words
   (a row stretched every Court writ to the guild writ's height); the words a step larger; words that sit on the cork sit
   on a dark panel (`.notice-panel` - bone ink on the cork's grain read about 3:1). Each tab names its count: the
   Notices' new since this device last read the board, the Work tab's writs open.
@@ -1152,15 +1154,18 @@ of the board for better organization, instruction and readability"**.
   named over the rows; the Weavers' and the Apothecaries' counters folded under one line, "Suppliers - fixed prices,
   straight into your Stores" (the Apothecaries' sixteen stood under every Materials read), kept open across a redraw;
   My listings in named parts (the List form, Your listings, auctions, bids, buy orders); each form's fields under their
-  names; the Vendors tab's columns named as the Market's (`ui/vendorTab.js`). FOUND: the List press wore
-  `market-list`, the lists' own class, whose rule took its padding - a 36px sliver since PROF5; and in a field a select
-  took AUDIT 31 U14's 160px flex-basis as its height.
+  names (a stall's "Put up a piece" form's too, AUDIT 657 B3); the Vendors tab's columns named as the Market's
+  (`ui/vendorTab.js`). FOUND: the List press wore `market-list`, the lists' own class, whose rule took its padding - a
+  36px sliver since PROF5. And in this slice's own labelled field a select took AUDIT 31 U14's 160px flex-basis as its
+  height - the slice's own, found before it shipped.
 - **Faster.** The window and its tabs are a lazy chunk fetched at the first press - on the deployed site a round trip
   before anything drew. It is one of the chunks the one home warms in idle time once the world boots
-  (`ui/enhancedChunk.js` WARM_CHUNKS, MENU1-WARM), so the first press finds it in the module map; the door still mounts
+  (`ui/enhancedChunk.js` WARM_CHUNKS, MENU1-WARM - the tenth of thirteen, one an idle callback), so a press after the
+  warm finds it in the module map, and one in the boot's first moments may still wait for it; the door still mounts
   it through `mountEnhancedChunk` (MENU1: no door fetches a chunk on its own - the whole suite caught a fetch-ahead of
   the door's own on this branch). The Market's first view is read as the board opens (`prefetch`), so its tab answers
-  from the book's minute's cache; its opening settle no longer holds the read back (a settle that moves anything lets
+  from the book's minute's cache (a read that early one was refused is asked again on the press, AUDIT 657 B4); its
+  opening settle no longer holds the read back (a settle that moves anything lets
   the cache go, and a read it overtook asks again - AUDIT 30 C6, `net/marketBook.js` read). The Seat tab asks its works
   beside the standings, never after their answer.
 - **Fewer words.** Each tab's fixed words in one table (`BOARD_WORDS`, `MARKET_WORDS`, `SEAT_TAB_WORDS`, `VENDOR_TEXT`),
@@ -1177,11 +1182,13 @@ of the board for better organization, instruction and readability"**.
   holder's defence at a held one; none on the holder's row - its influence is its defence); your guild (its pledge,
   your part, the levers, Fealty and Pacts); the holder's orders (the Tithe and Edict, the battle window, the Charter
   given up); the Works; HOW THE SEAT WAR WORKS, five steps folded under one line - Pledge, Earn, Claim, Siege, Hold -
-  every number in them the law's own (`ui/seatTab.js` seatGuide); and the Chronicle. Who sees each lever is unchanged.
+  its counts the law's own (`ui/seatTab.js` seatGuide: the claim's line and fee, the Tourney's margin, the account's
+  cap, the pledge's regions, the members' wait - AUDIT 657 D6; the Reckoning's and the Turning's hours as the week line
+  says them); and the Chronicle. Who sees each lever is unchanged.
 
 Code: the files above, `ui/workTab.js`, `ui/vendorTab.js`, `net/townSeatLaw.js` (the tab's own two lines) and
 `ui/enhancedPlusStyle.js` (NOTICE_CSS, PROF_CSS). Pins: `test/board_ui.test.js` (10); the pins whose words were cut
-moved with them, each marked PIN MOVED. Mutants: `tools/mutants/board_ui.json`, 33, all dead; twenty-five records
+moved with them, each marked PIN MOVED (AUDIT 657 D7 marked the twelve that were not). Mutants: `tools/mutants/board_ui.json`, 33, all dead; twenty-five records
 re-aimed by content and judged again (24 dead, AUDIT31-tab-hint-add-late equivalent as recorded); and the 294 records
 over the code the slice touched judged whole - 291 dead, one equivalent as recorded, two survivors that survive on main
 the same (`shadowreach.json` world-peer-gate-still-skips and `perfon2.json` PERF-ON2-the-peers-are-submitted-uncut-again:
@@ -1315,7 +1322,7 @@ of Makers; commissions; regional prices to haul between; and every seat on the m
 |---|---|---|
 | **PROF0** | This record | - |
 | **MARKS1** - SHIPPED 2026-09-28 (at `dev`) | Marks: balances, the guild Marks treasury, the ledger, the Bank's exchange, the weekly report; the first faucet is the gate's receipts (Court writs come with PROF1's Stores - a writ filled from the pack would be a save item bought with Marks) | Every faucet capped and pinned; gold never becomes Marks, pinned |
-| **NOTICE1** - SHIPPED 2026-09-28 (at `dev`) | The Notice Board (10.7): a town's rumour boards open it online (BOUNTY1's bounty boards stay the hunts), the rumour pinned first and the bounty board's line under it; the server's word; the Notices tab; player notes, their button, reports and moderation; the count over the board. The Work tab moved to PROF1 | Offline a rumour board is byte-for-byte DFU's (the ROAD A9 pins hold) |
+| **NOTICE1** - SHIPPED 2026-09-28 (at `dev`) | The Notice Board (10.7): a town's rumour board opens it online - one a town since ONE-BOARD (10.11), the one nearest its middle (BOUNTY1's bounty boards stay the hunts), the rumour pinned first and the bounty board's line under it; the server's word; the Notices tab; player notes, their button, reports and moderation; the count over the board. The Work tab moved to PROF1 | Offline a rumour board is byte-for-byte DFU's (the ROAD A9 pins hold) |
 | **NOTICE1b** | Boards stood where a hub lacks one (10.1), if `tools/boardCount.mjs` names any; a seat's with SEAT1 | Mac's run of the measure |
 | **PROF1** - SHIPPED 2026-09-28 (at `dev`, section 22) | The Stores; **Herbalism** with its act; the board's **Work tab**; the Professions and Stores tabs, the prompt, the meter, the toasts; the Sickle and the Basket's search; withdraw to pack; **Court writs** (section 11); FORAGE0 law 6's online exception - the six tools shelve online whatever the switch says. **Needs FORAGE1-2 (shipped)**, MARKS1 and NOTICE1 (FORAGE0 17) | An herb picked online reaches DFU's potion maker by the pack |
 | **PROF2** - SHIPPED 2026-09-28 (at `dev`, section 23) | Mining and Quarrying with their acts; the dungeon veins and the witnessed dungeon; gems; smelting at a forge (a smith's, or a home's forge station); ores and ingots (610-630) and stone (673-674); the Prospector's compass; metal and stone writs. Motherlodes and gate-touched ground are PROF2b. Needs FORAGE1-2 (shipped: the Pick-Axe) | Veins placed on rock fields; signatures by kingdom |

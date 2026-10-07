@@ -1024,7 +1024,11 @@ export const NOTICE_CSS = `/* ── NOTICE1: THE NOTICE BOARD ── */
   scrollbar-width: none; }
 .notice-tab { flex: none; padding: 8px 12px 6px; font-family: inherit; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase;
   white-space: nowrap; color: #b9ab93; background: none; border: 0; }
-.notice-tab.on { color: #f3cf86; border-bottom: 2px solid #c08a3e; margin-bottom: -2px; }
+.notice-tab.on { color: #f3cf86; box-shadow: inset 0 -2px 0 #c08a3e; }
+/* AUDIT 657 B1: the chosen tab's line and the focus ring inside the tab - the strip scrolls sideways now, so it clips
+   whatever stands past it (the line was a border pulled 2px below the strip, and drew nothing) */
+.notice-tab:focus-visible { outline: 2px solid #f3cf86; outline-offset: -2px; }
+@media (forced-colors: active) { .notice-tab.on { outline: 2px solid Highlight; outline-offset: -2px; } }   /* a shadow is painted over there */
 .notice-tabcount { margin-left: 6px; padding: 0 5px; font-size: 11px; letter-spacing: 0.04em; color: #fff4dc; background: #9b2d1f; }
 /* TOAST-SPLIT: the cork and the italic line are the board's own classes - .notice-body and .notice-hint are the HUD
    toasts' (ui/enhancedNotice.js), and a rule on either dressed both. */
@@ -1718,6 +1722,9 @@ export const PROF_CSS = `/* ── PROF1: THE PROFESSIONS ── */
 @media (max-width: 640px) { .market-row, .market-piece { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .market-row > b { grid-column: 1 / -1; }
   .market-line, .market-listhead { display: none; }
   .market-counter { grid-template-columns: minmax(0, 1fr); }
+  /* AUDIT 657 B2: a counter's row on two lines at a phone's width - its name on the first, the price, the count and the
+     press under it; four columns left the name none, a letter a line */
+  .market-counterrow { grid-template-columns: minmax(0, 1fr) 4.5em auto; } .market-counterrow > b { grid-column: 1 / -1; }
   .market-views { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
   .market-viewgroup { flex: none; flex-wrap: nowrap; }
   .market-view { flex: none; white-space: nowrap; }

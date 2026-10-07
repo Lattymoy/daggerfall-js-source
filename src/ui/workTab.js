@@ -234,7 +234,7 @@ export function createWorkTab(w, ui) {
     const bar = el('div', 'writ-take');
     const own = data?.guild?.id === x.guild?.id && !contractPaidMay(data.guild.rank);
     bar.append(el('span', 'work-none', own ? 'Officers and the Guildmaster are not paid by their own guild\'s contracts.'
-      : `Fight off a raid on a town here: paid when the raid is counted, less ${marksText(saleTax(x.pay))} tax.`));
+      : `Strike a raider in a town here and stay until it is cleansed: paid when the raid is counted, less ${marksText(saleTax(x.pay))} tax.`));   // AUDIT 657 B6: what earns it said (raidLaw.js - a blow struck, and the town stood in at the cleanse)
     if (x.may) bar.append(withdrawContract(x));
     li.append(bar, el('span', 'notice-seal', ''));
     return li;

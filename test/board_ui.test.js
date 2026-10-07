@@ -220,8 +220,9 @@ test('BOARD-UI the Seat tab: its parts each on a panel under its name, in order 
   const n = (x) => x.toLocaleString('en-US');
   assert.match(steps[0][1], new RegExp(`in up to ${SEAT_PLEDGE_REGIONS_MAX} regions\\. Pledges lock at the Reckoning, Friday 18:00 UTC\\.`));
   assert.match(steps[1][1], new RegExp(`at most ${n(ACCOUNT_SEAT_WEEK_CAP)} a week at a seat`));
-  assert.match(steps[2][1], new RegExp(`${n(CLAIM_THRESHOLD.palace)} influence, for ${n(CLAIM_FEE.palace)} silver from its treasury\\. Two guilds within 10% of each other meet in a Tourney`));
-  assert.match(seatGuide({ tier: 'crown' })[2][1], new RegExp(`${n(CLAIM_THRESHOLD.crown)} influence, for ${n(CLAIM_FEE.crown)} silver`));
+  // AUDIT 657 B9 (PIN MOVED): the law's taker - the strongest past the line whose treasury can pay the fee
+  assert.match(steps[2][1], new RegExp(`the strongest guild with at least ${n(CLAIM_THRESHOLD.palace)} influence whose treasury can pay ${n(CLAIM_FEE.palace)} silver\\. Two guilds within 10% of each other meet in a Tourney`));
+  assert.match(seatGuide({ tier: 'crown' })[2][1], new RegExp(`${n(CLAIM_THRESHOLD.crown)} influence whose treasury can pay ${n(CLAIM_FEE.crown)} silver`));
   assert.match(steps[3][1], new RegExp(`at least ${n(CLAIM_THRESHOLD.palace)}: the strongest challenger wins a Right of Siege`));
 });
 

@@ -29,7 +29,7 @@
   {
     "name": "TEXT-F1-the-anywhere-words-read-alone",
     "file": "src/net/nameFilter.js",
-    "old": "  for (const { words } of ANYWHERE) for (const w of words) if (flat.includes(w) || stretched.includes(w)) return w;\n",
+    "old": "  const any = anywhereIn(flat);\n  if (any) return any.word;\n",
     "new": "",
     "tests": [
       "test/text_filter.test.js"
@@ -56,7 +56,7 @@
   {
     "name": "TEXT-F1-a-name-read-for-the-anywhere-words-no-more",
     "file": "src/net/nameFilter.js",
-    "old": "    if (word) return { ok: false, kind, word, reason: `That name reads as \"${word}\". Please pick another.` };\n",
+    "old": "  if (any) return { ok: false, kind: any.kind, word: any.word, reason: `That name reads as \"${any.word}\". Please pick another.` };\n",
     "new": "",
     "tests": [
       "test/text_filter.test.js"

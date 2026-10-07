@@ -198,5 +198,5 @@ test('CROWN2 THE WIRING BY SOURCE: the world hands the seat book a red line\'s d
   const idx = readFileSync(new URL('../server-account/src/index.js', import.meta.url), 'utf8');
   assert.match(idx, /red: await redOf\(ctx\.db, nowS\)/);
   const tab = readFileSync(new URL('../src/ui/seatTab.js', import.meta.url), 'utf8');
-  assert.match(tab, /if \(data\.mine\?\.politics\) mine\.append\(politicsNode\(data\.mine\.politics, SEAT_LEVER_RANKS\.includes\(data\.mine\.rank\)\)\);/);
+  assert.match(tab, /if \(data\.mine\?\.politics\) mine\.append\(politicsNode\(data\.mine\.politics, SEAT_LEVER_RANKS\.includes\(data\.mine\.rank\)\)\);/);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): Fealty and Pacts drawn under Your guild
 });

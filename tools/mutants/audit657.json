@@ -1,0 +1,223 @@
+[
+  {
+    "name": "AUDIT657-T1-the-innocent-never-read-out",
+    "file": "src/net/nameFilter.js",
+    "old": "return holds(flat) && holds(INNOCENT.reduce((s, w) => s.split(w).join(' '), flat));",
+    "new": "return holds(flat);",
+    "tests": [
+      "test/audit657_filter.test.js"
+    ],
+    "why": "snigger and niggard read as the words they hold, in names and sentences"
+  },
+  {
+    "name": "AUDIT657-T1-a-sentences-innocent-word-read",
+    "file": "src/net/nameFilter.js",
+    "old": "if (!flat || INNOCENT.includes(flat)) return null;   // AUDIT 657 T1: an ordinary word, read as itself",
+    "new": "if (!flat) return null;",
+    "tests": [
+      "test/audit657_filter.test.js"
+    ],
+    "why": "spiced wine starred again"
+  },
+  {
+    "name": "AUDIT657-T1-an-innocent-word-lost",
+    "file": "src/net/nameFilter.js",
+    "old": "'snigger', 'niggard', 'spicy', 'spiced', 'spices',",
+    "new": "'snigger', 'niggard', 'spicy', 'spices',",
+    "tests": [
+      "test/audit657_filter.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-T2-the-marks-no-words",
+    "file": "src/net/nameFilter.js",
+    "old": "const isWordChar = (ch) => /[\\p{L}\\p{M}\\p{N}]/u.test(ch) || LEET.has(ch);",
+    "new": "const isWordChar = (ch) => /[\\p{L}\\p{N}]/u.test(ch) || LEET.has(ch);",
+    "tests": [
+      "test/audit657_filter.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-T2-an-accented-letter-no-spelled-letter",
+    "file": "src/net/nameFilter.js",
+    "old": "/^\\p{L}\\p{M}*$/u.test(letterOf(words[k]))",
+    "new": "/^\\p{L}$/u.test(letterOf(words[k]))",
+    "tests": [
+      "test/audit657_filter.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-T3-the-at-sign-no-edge",
+    "file": "src/net/nameFilter.js",
+    "old": "const EDGE_HEAD = new Set(['!', '|', '(', '<', '+', '@']);",
+    "new": "const EDGE_HEAD = new Set(['!', '|', '(', '<', '+']);",
+    "tests": [
+      "test/audit657_filter.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-T5-every-window-read",
+    "file": "src/net/nameFilter.js",
+    "old": "if (mayHold(words.slice(i, last).map(letterOf).join(''))) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/audit657_filter.test.js"
+    ],
+    "why": "the ratio pin: every window read costs about thirty times a line of prose"
+  },
+  {
+    "name": "AUDIT657-T4-a-ships-name-read-whole",
+    "file": "src/systems/fleet.js",
+    "old": "const caught = v.ok ? textCaught(s) : null;",
+    "new": "const caught = null;",
+    "tests": [
+      "test/audit657_filter.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-B1-the-line-under-the-strip",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".notice-tab.on { color: #f3cf86; box-shadow: inset 0 -2px 0 #c08a3e; }",
+    "new": ".notice-tab.on { color: #f3cf86; border-bottom: 2px solid #c08a3e; margin-bottom: -2px; }",
+    "tests": [
+      "test/audit657_board.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-B1-the-ring-left-to-the-browser",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".notice-tab:focus-visible { outline: 2px solid #f3cf86; outline-offset: -2px; }",
+    "new": ".notice-tab:focus-visible { }",
+    "tests": [
+      "test/audit657_board.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-B1-the-forced-colours-outline-gone",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "@media (forced-colors: active) { .notice-tab.on { outline: 2px solid Highlight; outline-offset: -2px; } }",
+    "new": "@media (forced-colors: active) { }",
+    "tests": [
+      "test/audit657_board.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-B2-four-columns-at-a-phones-width",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".market-counterrow { grid-template-columns: minmax(0, 1fr) 4.5em auto; } .market-counterrow > b { grid-column: 1 / -1; }",
+    "new": "/* none */",
+    "tests": [
+      "test/audit657_board.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-B3-the-stalls-controls-loose",
+    "file": "src/ui/vendorTab.js",
+    "old": "fields.append(field('Piece', sel, 'market-field-wide'), field('Price in gold', price), go);\n    box.append(fields, el('p', 'notice-tip', VENDOR_TEXT.stockTip));",
+    "new": "box.append(sel, price, go, el('p', 'notice-tip', VENDOR_TEXT.stockTip));",
+    "tests": [
+      "test/audit657_board.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-B4-a-refused-early-read-answers-the-press",
+    "file": "src/ui/marketTab.js",
+    "old": "const again = prefetchFailed;",
+    "new": "const again = false;",
+    "tests": [
+      "test/audit657_board.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-B4-the-early-reads-refusal-unheard",
+    "file": "src/ui/marketTab.js",
+    "old": "Promise.resolve(m.book.read(st.view, q(), { force: false })).then((r) => { prefetchFailed = !r?.ok; }, () => { prefetchFailed = true; });",
+    "new": "Promise.resolve(m.book.read(st.view, q(), { force: false })).catch(() => {});",
+    "tests": [
+      "test/audit657_board.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-B5-the-tab-hidden-on-the-early-read",
+    "file": "src/ui/noticeWindow.js",
+    "old": "(marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market')",
+    "new": "(marketHost.book?.state?.open !== false || tab === 'market')",
+    "tests": [
+      "test/audit657_board.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-B12-the-silver-over-a-shut-market",
+    "file": "src/ui/marketTab.js",
+    "old": "if (!shut) box.append(walletNode());",
+    "new": "box.append(walletNode());",
+    "tests": [
+      "test/audit657_board.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-B6-the-raid-cards-condition-cut",
+    "file": "src/ui/workTab.js",
+    "old": "`Strike a raider in a town here and stay until it is cleansed: paid when the raid is counted, less ${marksText(saleTax(x.pay))} tax.`",
+    "new": "`Fight off a raid on a town here: paid when the raid is counted, less ${marksText(saleTax(x.pay))} tax.`",
+    "tests": [
+      "test/audit657_board.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-B7-the-fields-own-walk",
+    "file": "src/systems/siegeField.js",
+    "old": "const at = noticeBoardIndex(boards, bounty, centre);",
+    "new": "const at = boards.reduce((b, x, i) => (bounty.has(i) || (b >= 0 && Math.hypot(...boxMid(x.box).map((v, k) => v - centre[k])) >= Math.hypot(...boxMid(boards[b].box).map((v, k) => v - centre[k]))) ? b : i), -1);",
+    "tests": [
+      "test/audit657_board.test.js"
+    ],
+    "why": "the field walking the boards in their order, a tie the first index"
+  },
+  {
+    "name": "AUDIT657-B9-no-fee-said-of-a-fee",
+    "file": "src/ui/marketTab.js",
+    "old": "st.list.kind === 'item' ? `No fee to list. Up for 72 hours on every board. If it sells you get ${goldGets} (after a 1% fee",
+    "new": "st.list.kind === 'item' ? `No fee. Up for 72 hours on every board. If it sells you get ${goldGets} (after a 1% fee",
+    "tests": [
+      "test/audit657_board.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-B9-the-late-bids-unit-dropped",
+    "file": "src/ui/marketTab.js",
+    "old": "adds ${AUCTION_ADD_S / 60} minutes. You get",
+    "new": "adds ${AUCTION_ADD_S / 60}. You get",
+    "tests": [
+      "test/audit657_board.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-B9-the-top-guild-at-the-line",
+    "file": "src/ui/seatTab.js",
+    "old": "goes to the strongest guild with at least ${n(CLAIM_THRESHOLD[t])} influence whose treasury can pay ${n(CLAIM_FEE[t])} silver.",
+    "new": "goes to the top guild with ${n(CLAIM_THRESHOLD[t])} influence, for ${n(CLAIM_FEE[t])} silver from its treasury.",
+    "tests": [
+      "test/audit657_board.test.js",
+      "test/board_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-B9-tribute-a-members-earning",
+    "file": "src/ui/seatTab.js",
+    "old": "a home in the town, Renown and seat writs. The Guildmaster adds Tribute from the treasury.",
+    "new": "a home in the town, Renown, seat writs and Tribute.",
+    "tests": [
+      "test/audit657_board.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT657-D4-the-guides-fold-forgotten",
+    "file": "src/ui/seatTab.js",
+    "old": "guide.open = guideOpen;",
+    "new": "guide.open = false;",
+    "tests": [
+      "test/audit657_board.test.js"
+    ]
+  }
+]
