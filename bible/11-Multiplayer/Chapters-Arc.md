@@ -4,7 +4,7 @@
 record at his instruction ("You make the best decisions" - section 14). CHAP1 BUILT (2026-10-07, Mac: "Continue"; its
 record is at the foot, and where it narrowed section 3 the section says so); AUDIT CHAP (2026-10-07, Mac: "Lets do a deep
 audit on everything so far before we continue") read CHAP0 and CHAP1 through five lenses and fixed what they found
-(`01-Overview/Audit-Chapters.md`) - one narrowing of Mac's own Authority call is his to confirm (R1, below). CHAP2 is
+(`01-Overview/Audit-Chapters.md`) - one narrowing of Mac's own Authority call, which he confirmed (R1, below: "Approved"). CHAP2 is
 next.** Every claim about today's code was read off the tree at
 `9ed5a681` and is cited by file and symbol, never by line, so the page survives the next merge.
 
@@ -29,13 +29,14 @@ page reuses rather than rebuilds), `06-Systems/Professions-Arc.md` (PROF0 - Mark
 | Seasons | Should chapter state shift in seasons? | **"Seasonal events"** - schisms, coups, new guildmasters each Season, driven by what players did; personal rank carries over |
 | Offline | What does offline play get? | **"DFU 1:1"** - offline stays exactly as it is; the overhaul is online's alone, as the Professions are |
 
-**FOR MAC (AUDIT CHAP R1): the Authority call as built.** The service owns the twenty-two REPUTATIONS. It does not own
+**DECIDED (Mac), 2026-10-07: "Approved" (AUDIT CHAP R1) - the Authority call as built.** The service owns the twenty-two REPUTATIONS. It does not own
 the guild book: a join, an expulsion and the rank review are acts of DFU's law on the client (`guilds.js`), so the book
 stays the save's, and the service RECORDS each membership with its own clock (the tenure) and bounds each rank by its
 own reputation (`rollRankCapOf` - a rank never past what the Roll's number needs). The rank law therefore runs on the
 service's numbers, but it runs on the client. This narrows your "online rank and reputation live on the account
-service", and is yours to confirm or overrule; the alternative, writing the service's book over the client's, breaks
-DFU's guild objects for nothing a rival can lose.
+service", and Mac confirmed it; the alternative, writing the service's book over the client's, breaks DFU's guild
+objects for nothing a rival can lose. The line it draws for every later slice: a reward that membership or rank ALONE
+would earn asks the service's numbers (the Roll's reputation, its tenure), never the client's book.
 
 ## How to read this page
 
@@ -141,7 +142,7 @@ save may keep writing them (a realm character never loads offline - Realm decisi
 unchanged. BUILT (CHAP1), narrowed: the MEMBERSHIPS are not written over. A join, an expulsion and the rank review are
 acts of DFU's law on the client, so the book stays the save's and the Roll records it with the service's own clock -
 the tenure is the thing only the service can vouch for - and each recorded rank is bounded by the Roll's own reputation
-(AUDIT CHAP S5, `rollRankCapOf`; R1 at the head of this page is Mac's to confirm).
+(AUDIT CHAP S5, `rollRankCapOf`; R1 at the head of this page, which Mac confirmed).
 
 THE KEPT ADOPTION (AUDIT CHAP C1/C2/C4). Every adoption is kept in the save as a mod-save record (`ChaptersRoll`: the
 Roll's sequence and its twenty-two). The next page's first read, finding the Roll still at that sequence, knows that
@@ -541,6 +542,6 @@ it now stands: a pace with what it leaves owed, a cap that is a customs crossing
 adoption in the save in place of a claim as the page goes, a write that stands under its own tag with the lease asked
 inside it, a rank bounded by the Roll's reputation. `test/audit_chap1.test.js` (22) pins every fix, and
 `tools/mutants/audit_chap1.json` (49) mutates it; `tools/mutants/chap1.json` holds 25 (eleven re-aimed by content, the
-page-leave one retired with the code it held). One narrowing of Mac's Authority call is his to confirm (R1, at the
-head of the page).
+page-leave one retired with the code it held). One narrowing of Mac's Authority call, which he confirmed (R1, at the
+head of the page: "Approved").
 

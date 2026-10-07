@@ -86,11 +86,12 @@ and differs only where something is owed).
 
 ## Recorded
 
-- **R1 - FOR MAC.** Mac's Authority call reads "online rank and reputation live on the account service". As built the
+- **R1 - CONFIRMED BY MAC ("Approved", 2026-10-07).** Mac's Authority call reads "online rank and reputation live on the account service". As built the
   service owns the twenty-two reputations and RECORDS the memberships and ranks (tenure by its own clock, each rank
   bounded by its reputation); the book and the rank review stay DFU's law on the client, run over the service's
   numbers. Writing the service's book over the client's would break DFU's guild objects for nothing a rival can lose.
-  The arc page carries this at its head for Mac to confirm or overrule.
+  Asked, Mac approved it; the arc page carries it at its head as his decision, with the line it draws: a reward that
+  membership or rank alone would earn asks the service's numbers, never the client's book.
 - **S2 - the seed is the save's word.** A character's first read seeds from what its own client wrote into its save,
   as every claim is the client's word. What it buys is bounded as a claim's is - a personal rank and a standing at the
   gate - and the tenure begins at the seed, so a seat is still fourteen days and witnessed Merit away. Realm phase 3,
