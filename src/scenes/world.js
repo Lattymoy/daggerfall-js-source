@@ -2160,7 +2160,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const grassNormalScratch = [0, 1, 0];   // GRASS-LIT2: the slope's answer, one array for every blade (the placer copies it)
   let gustPhase = 0, gustWind = [0, 0];   // AUDIT MEADOW1: the gust wave's phase the crossings carried, and the wind it was last drawn under (systems/windDrive.js gustClock)
   let hccGroundMoved = null;   // DISC20-C: the horse-cart pool's re-stand over a pixel just built - bound once the pool is (the boot's first pixel builds before it)
-  let campsGroundMoved = null;   // AUDIT LANDFORMS II G1: the camps' ride on a rebuilt pixel's ground - bound once the pool is, as the carts'
+  let rideGround = null;   // AUDIT LANDFORMS II G1/G2: what rides a rebuilt pixel's ground - bound once the pools and the player are (BOOT-TDZ2)
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door. A draw only: nothing here tells the game where water is.
   const waterOn = waterSwitchOn();   // FT6: the one composition (render/waterSurface.js)
@@ -5501,8 +5501,7 @@ export async function bootWorld(canvas, renderer, params, status) {
         return (at(ix, iz) * (1 - sx) * (1 - sz) + at(ix + 1, iz) * sx * (1 - sz) + at(ix, iz + 1) * (1 - sx) * sz + at(ix + 1, iz + 1) * sx * sz) * worldHeight;
       };
       const moved = (x, z) => groundIn(now, x, z) - groundIn(groundWas, x, z);
-      for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, campsGroundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);
-      if (_seasonHoldKey === key && walkMode && playerSpawned && player.grounded) player.pos[1] += moved(player.pos[0], player.pos[2]);
+      rideGround?.(t, key, moved);
     }
     if (homeTown) _homeLookV = -1;   // HOME-LOOK (AUDIT): a town's pixel stood after the registry moved is painted by the next refresh
     // AUDIT-TO1 B3: the second hook. BOOT-TDZ2: THE MOD IS ASKED FIRST,
@@ -7099,7 +7098,6 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   hcc.setPeerLook((id) => (_hiddenPeers.has(id) ? 'hidden' : (_veils.get(id) ?? null)));   // AUDIT (pre-merge) I-B: a concealed owner's team is concealed with it (last frame's word - the pool steps before the peers sync)
   hccGroundMoved = hcc.groundMoved;   // DISC20-C
-  campsGroundMoved = camps.groundMoved;   // AUDIT LANDFORMS II G1
   const hccRuntime = createHorseCartRuntime({
     ready: () => walkMode && playerSpawned && !_teleporting && !_traveling,   // TryGetGameManager: a game in progress, the player standing, the world up
     transport: {
@@ -9785,6 +9783,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       },
     },
   });
+  // AUDIT LANDFORMS II G1/G2: what rides a rebuilt pixel's ground, bound here, once the pools and the player stand -
+  // BOOT-TDZ2: the boot's first build publishes before they are declared, and the network lands inside it on most
+  // boots, so read from the publish they were a dead zone (the boot died on `droppedLoot`: AUDIT LANDFORMS II K1).
+  // Nothing lies on the ground before this.
+  rideGround = (t, key, moved) => {
+    for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, camps.groundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);
+    if (_seasonHoldKey === key && walkMode && playerSpawned && player.grounded) player.pos[1] += moved(player.pos[0], player.pos[2]);
+  };
 
   // ═══ ARENA2 (2026-10-02, Mac: "Players can choose to watch AI fights ... and climb esclating tiers of opponents";
   // "During fights, the crowd is present and can cheer/boo you"): THE ARENA'S BOUTS ON THIS SCREEN ═══════════════════

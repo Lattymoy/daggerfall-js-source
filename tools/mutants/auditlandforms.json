@@ -570,7 +570,7 @@
       "test/terrainscale1.test.js"
     ],
     "equivalent": true,
-    "why": "every caller passes scaleOf(...), which is never 0 or undefined: the was > 0 guard cannot bind"
+    "why": "every caller passes a scale that is never 0 or undefined - world.js its scaleOf(...) at each of its six, and worldModes its legacy interior cache's own (data.terrainScale > 0 ? data.terrainScale : DEFAULT_TERRAIN_SCALE) through the host's restandSceneHeight: the was > 0 guard cannot bind (AUDIT LANDFORMS II J13: this named world.js's alone)"
   },
   {
     "name": "AUDIT-LANDFORMS-D-promotion-ghosts-uncut",
@@ -1223,7 +1223,7 @@
   {
     "name": "AUDIT-LANDFORMS-II-G2-player-left",
     "file": "src/scenes/world.js",
-    "old": "      if (_seasonHoldKey === key && walkMode && playerSpawned && player.grounded) player.pos[1] += moved(player.pos[0], player.pos[2]);\n",
+    "old": "    if (_seasonHoldKey === key && walkMode && playerSpawned && player.grounded) player.pos[1] += moved(player.pos[0], player.pos[2]);\n",
     "new": "",
     "tests": [
       "test/auditlandforms.test.js"
@@ -1235,6 +1235,16 @@
     "old": "&& playerSpawned && player.grounded) player.pos[1] += moved(",
     "new": "&& playerSpawned) player.pos[1] += moved(",
     "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-K1-the-publish-reads-the-pools",
+    "file": "src/scenes/world.js",
+    "old": "      rideGround?.(t, key, moved);\n",
+    "new": "      for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, camps.groundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);\n",
+    "tests": [
+      "test/bootorder.test.js",
       "test/auditlandforms.test.js"
     ]
   },

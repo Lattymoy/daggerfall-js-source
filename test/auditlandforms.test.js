@@ -887,6 +887,8 @@ function rebuildHost(vars) {
   const scope = new Proxy(vars, { has: (t, k) => !KEEP.has(k), get: (t, k) => (k === Symbol.unscopables ? undefined : k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
   const fns = new Function('scope', `with (scope) { ${DESTROY}\n${SWEEP}\n return { destroyPixel, sweepRoadless }; }`)(scope);
   const publish = new Function('scope', `with (scope) { ${WORLD.slice(i, j)} }`);
+  // the rides, bound as the boot binds them once the pools and the player stand (BOOT-TDZ2, K1)
+  new Function('scope', `with (scope) { ${sliceTo('  rideGround = (t, key, moved) => {', '\n  };\n')} }`)(scope);
   // the publish's own names ride the scope: under `with` the stand-in answers before a parameter would
   return { ...fns, publish: (px, py) => { Object.assign(vars, { px, py, key: `${px},${py}` }); publish(scope); } };
 }
