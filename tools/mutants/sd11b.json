@@ -245,7 +245,7 @@
   {
     "name": "SD11b-L7M2-seen-anywhere",
     "file": "src/net/sdRemnant.js",
-    "old": "if (p && inArena(b.x, b.z, POSE_SLACK)) { p.seenAt = now; restoreShare(f, p); }",
+    "old": "if (p && inArena(b.x, b.z, SD_ARENA_SLACK)) { p.seenAt = now; restoreShare(f, p); }",
     "new": "if (p) { p.seenAt = now; restoreShare(f, p); }",
     "tests": [
       "test/sd11b_relay.test.js"

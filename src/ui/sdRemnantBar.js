@@ -12,7 +12,7 @@
 // Ledger A (SUPER-DUNGEONS).
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_PHASE_AT, SD_PHASE_NAMES, SD_ECHO_PAIR_MS, windupFor } from '../net/sdRemnant.js';
 import { SD_ARENA } from '../net/sdBrain.js';
-import { sdBlowDone } from '../net/sdFightLink.js';
+import { sdBlowDone, sdHourOver } from '../net/sdFightLink.js';
 import { countdownText } from '../net/gateLaw.js';
 import { FELL_HOLD_MS, FELL_FADE_MS } from './gateBossBar.js';
 import { LOW_HEALTH } from '../world/gateBoss.js';
@@ -104,7 +104,7 @@ export function remnantBarModel(s, now) {
     name: SD_BAR_TEXT.name, title: SD_PHASE_NAMES[s.ph - 1] ?? '', epithet: '', epithetColor: null, marksView: null, trials: '',
     frac, marks: [...SD_PHASE_AT], phase: s.ph, spent: SD_PHASE_AT.map((_, i) => s.ph > i + 1),
     warded, fallen: !!s.fell, callout,
-    wrath: s.fell ? null : s.ended ? SD_BAR_TEXT.ended : toEnd <= SD_ENDS_WARN_MS ? SD_BAR_TEXT.endsIn(countdownText(toEnd)) : null,
+    wrath: s.fell ? null : sdHourOver(s, now) ? SD_BAR_TEXT.ended : toEnd <= SD_ENDS_WARN_MS ? SD_BAR_TEXT.endsIn(countdownText(toEnd)) : null,   // AUDIT SD II (L4 F3): ended at its moment - its wind-up still counts down, and still takes blows
     wrathNear: !s.fell && (!!s.ended || toEnd <= SD_ENDS_NEAR_MS),
     fighters: s.n | 0, fightersLine: SD_BAR_TEXT.fighters(s.n | 0),
     host: ec ? SD_BAR_TEXT.echoes(chip(ec[0], 0), chip(ec[1], 1)) : null,

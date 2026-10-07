@@ -7,8 +7,9 @@
 // client then finds the same pixel from the map files it holds alike:
 //   1. THE CITY. The region's populated places ranked as its hub is chosen (systems/regionHubs.js hubClaim: a city
 //      over a town over a village, the one named for its region, then the largest - "where population is at its
-//      most" in its second sense). With no region (-1, nobody to count) the candidates are the Bay's SD_GREAT_CITIES
-//      largest cities, and the slot's roll picks one.
+//      most" in its second sense). With no region (-1, nobody to count) the candidates are the Bay's first
+//      SD_GREAT_CITIES cities by that same claim (one named for its region, then the most blocks, then the most
+//      buildings), and the slot's roll picks one.
 //   2. THE SITE. Around the city, a pixel the gate's own scan calls suitable (land, no location on it or its eight
 //      neighbours, no spawned dungeon rolled there, a province's) whose NEAREST fast-travel town is that city - two to
 //      four pixels out (GATE_TOWN_MIN_PX..GATE_TOWN_MAX_PX), a ride from its gates. The slot's roll picks among them;
@@ -27,7 +28,9 @@ import { hubClaim, outranks } from './regionHubs.js';
 import { sdRoll, sdNameOf } from '../net/sdLaw.js';
 import { synthesizeDungeonLocation, spawnClearance, SPAWN_CLEARANCE_M, SALT_MAX } from '../world/spawnedDungeons.js';
 
-/** With no region the census could name, the Hollow rises by one of the Bay's this-many largest cities. */
+/** With no region the census could name, the Hollow rises by one of the Bay's first this-many cities by the hubs' own claim
+ *  (systems/regionHubs.js hubClaim: its kind, named for its region, its blocks, its buildings - AUDIT SD II: "largest"
+ *  it is not; a city named for its region outranks a larger one). */
 export const SD_GREAT_CITIES = 8;
 /** A Hollow's template has at least this many blocks - a deep place, whatever size the world lays it at. */
 export const SD_TEMPLATE_MIN_BLOCKS = 12;
@@ -35,7 +38,8 @@ export const SD_TEMPLATE_MIN_BLOCKS = 12;
 export const SD_TEMPLATE_TYPES = Object.freeze([LOCATION_TYPES.DungeonLabyrinth, LOCATION_TYPES.DungeonKeep]);
 /** The Hollows' map-id salts sit above this (spawned dungeons roll with salt 1, world/spawnedDungeons.js WORLD_SALT). */
 export const SD_SALT_BASE = 2048;
-/** A slot's map-id salt: 2049..4095, a slot's own until the 2048th Hollow after it. */
+/** A slot's map-id salt: 2049..4095, a slot's own until the 2047th Hollow after it (AUDIT SD II, L4 C4: the period is
+ *  2047 - slots 1 and 2048 share 2049). */
 export const sdSalt = (s) => SD_SALT_BASE + 1 + ((Math.max(1, s | 0) - 1) % (SALT_MAX - SD_SALT_BASE));
 
 const W = 1000;
@@ -44,7 +48,7 @@ export const pixelOfLoc = (loc) => { const id = (Number(loc?.mapTableData?.mapId
 
 /**
  * The cities a Hollow in region `r` may rise by, best first (the hubs' claim, then the lower region): the region's
- * populated places, or with `r` -1 the Bay's SD_GREAT_CITIES largest cities.
+ * populated places, or with `r` -1 the Bay's first SD_GREAT_CITIES cities by that claim.
  * @param {Iterable<any>} locations every location, each with its regionIndex and locationIndex
  * @param {number} r
  * @param {{ isBase?: (loc:any) => boolean, regionNameOf?: (r:number) => string }} [o]

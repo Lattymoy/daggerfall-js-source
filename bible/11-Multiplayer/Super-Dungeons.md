@@ -245,8 +245,9 @@ Six Ending-stones stand on a ring in the hall, each carved with one of the Bay's
   turns its partners too - some forward, some back, some by two. The gearing is not shown; it is learned by turning.
 - **The answer.** The Concord is reached when every stone stands at its true hour. The plaques say what the true hours
   are, in riddles: some plainly (*"Daggerfall keeps the third hour."*), most against each other (*"Wayrest keeps the
-  hour Sentinel keeps, and two more."*, *"The Underking stands opposite Orsinium."*, *"Read the Blades from twelve
-  backwards and you read Daggerfall."*). Together they fix every hour, and only one way.
+  hour Sentinel keeps, and two more."*, *"The Underking stands opposite Orsinium."*, *"The Blades stands as far before
+  twelve as Daggerfall stands past it."* - SD11e: it read *"Read the Blades from twelve backwards and you read
+  Daggerfall."*, which also reads 13 - h). Together they fix every hour, and only one way.
 - **What the hall tells you.** The dial lights one segment for each stone that stands at its true hour - how many, not
   which.
 - **The fray.** Every turn frays the Hour. At 48 turns it snaps back: every stone returns to where it began, and the
@@ -309,14 +310,17 @@ it runs the Warden.
 **Health.** Each fighter who enters brings `SD_TTK_S` (420 s) x `dpsRef(lv)` x 1.25 to its health - nearly twice the
 Warden's share - added at its current fraction (the gate's `joinFight` law), at the level its token signs (`cl`, its
 character's own - AUDIT SD II, L7 M2: the page's claim stands only from a service that signs none). A fighter is in the
-fight while its pose stands in the arena; one away from it 30 s takes its share out, and brings it back as it returns.
+fight while its pose stands in the arena (`SD_ARENA_SLACK`, 1.5 m past its rim - never the Steps: SD11e); one away from
+it 30 s takes its share out, and brings it back as it returns.
 The same caps on how much a blow is believed (the gate's buckets), one seat per account, 256 fighters at most - and the
 realm's door admits 256 accounts, a full one freeing the seat of one with no socket in it and no seat in its LIVING fight
 (the gate's AUDIT WB A1 law; AUDIT SD II, L3 F3: a lost or stale fight seats nobody), guests 64 of them at most (L7 M3).
 
 **Phase one - The Walking Hour (100% to 70%).**
-- *Brass Stomp* - a 7 m circle, then a shock ring rolling out to 22 m that must be JUMPED.
-- *The Hour-Hand* - a beam from its chest sweeping 180 degrees over 4 s; stay ahead of the hand or behind a pillar.
+- *Brass Stomp* - a 7 m circle, then a shock ring rolling out to 22 m that must be JUMPED (from the circle's rim - what
+  the circle strikes the ring does not; it strikes where its front's centre crosses a body on the ground: SD11e).
+- *The Hour-Hand* - a beam from its chest sweeping 180 degrees over 4 s; stay ahead of the hand or behind a pillar. As it
+  gathers, the beam stands at the edge it will sweep from (SD11e).
 - *Gear Volley* - five spinning gears thrown at five fighters, 3 m circles where they land, burning brass for 6 s.
 - *Mantella Pulse* - every 30 s, the whole arena: 12% of health, +2% each pulse, no save.
 
@@ -328,15 +332,20 @@ blows, faster (80% wind-ups); the Hour-Hand sweeps from both.
 **Phase three - The Last Moment (35% to 0).** The Remnant returns, faster. Every 50 s it winds up THE RESET (8 s): Heart
 crystals rise around the arena (3, plus one per two living fighters, at most 8). Break them all before it lands and it
 is stunned for 8 s and takes 1.5x; leave one and the Reset lands - 70% of everyone's health, no save - and it heals 8%.
+The Hearts rise as near as their count needs: 6 m from the centre out to 2 m more for each past the first (6-10 m for
+three, 6-20 m for eight), never in its body (SD11e: they rose 8-22 m out however few, and a lone fighter in melee lost
+three Resets in four to the walk).
 
 **The Hour Ends.** Fifteen minutes after the first blow, the Hour ends: every 2 s, 99% of everyone's health. A group that
-cannot finish it in fifteen minutes does not.
+cannot finish it in fifteen minutes does not. Its word stops every body 2 s before it lands; a blow lands until its moment
+and none after it, whether or not the realm's beat has said so (SD11e - the gate's midnight).
 
 Read and amended in the law (SD8a): the Echoes' "half of what is left" is half of what is left to the break's end (35%),
 so the two together are the phase, and a blow on either comes off the whole; while both stand each fights with the Stomp
 and the Volley, and the Hour-Hand is the pair's - every 14 s from both at once, each holding for the other, gold turning
-one way and silver the other (left to each, the two fell out of step and the Hand came from one); one left alone fights
-with all three. The Mantella Pulse is the Hour's own clock, not the Walking Hour's alone: every 30 s from the wake through
+one way and silver the other (left to each, the two fell out of step and the Hand came from one) - but both at ONE
+fighter standing beyond the two, silver turns gold's way, so the two beams cross it the same way (SD11e: from either side
+they closed on it, and from the arena's south end no run escaped them); one left alone fights with all three. The Mantella Pulse is the Hour's own clock, not the Walking Hour's alone: every 30 s from the wake through
 every phase, the heart beating whether it is struck or not. "The first blow" is the Remnant's own, at the opening's end
 (8 s after the first fighter's `in`): a fight nobody strikes still ends. A blow cannot take it past the phase it is in
 before the turn. The Hearts hold three seconds of the living's reference damage between them. And a fight no living
@@ -984,7 +993,8 @@ slot alike on the relay and every page:
   order). Amended from the design's `L*U`, whose diagonal is not one.
 - **The riddles and the truth**: two stones said plainly, then each later stone tied to one known before it - an offset
   (*"Wayrest keeps the hour Sentinel keeps, and two more."*), opposite (*"The Underking stands opposite Orsinium."*),
-  or a mirror through twelve (*"Read the Blades from twelve backwards and you read Daggerfall."*) - so each clue is true
+  or a mirror through twelve (*"Read the Blades from twelve backwards and you read Daggerfall."* - SD11e's words now,
+  *"The Blades stands as far before twelve as Daggerfall stands past it."*) - so each clue is true
   by its making (`sdRiddleHolds`, `sdRiddleText`), shuffled onto the six plaques.
 - **The start**: drawn until the shortest way to the truth is `SD_TRUTH_TURNS_MIN` 12 to `SD_TRUTH_TURNS_MAX` 24 turns.
 - **One turn judged** (`orreryStep`, the relay's): the stone one hour, its partners by their gears, the fray one more,
@@ -1226,12 +1236,13 @@ origin - `arenaOf`).
   its health; both fallen within it - the Last Moment, at 35%, the Remnant back at the centre after 2.5 s. The pair's
   Hour-Hand every 14 s from both at once (`pairHand`).
 - **The Last Moment**: wind-ups 80%, its walk a quarter faster; the Reset 50 s after its return and 50 s after each ended
-  (8 s, never shortened, called once the blow in flight is done): the Hearts rise (`heartCountFor`, on a ring 8-22 m out,
-  6 m apart, 3 m clear of every pillar, `heartHpFor`); all broken - stunned 8 s, x1.5, the next 50 s after the stun; one
+  (8 s, never shortened, called once the blow in flight is done): the Hearts rise (`heartCountFor`, on a ring 8-22 m out
+  - SD11e: as wide as their count, `heartRingFor` -, 6 m apart, 3 m clear of every pillar, `heartHpFor`); all broken - stunned 8 s, x1.5, the next 50 s after the stun; one
   left - it lands and heals 8%. The Hearts take no blow in its last half second (`heartsOpen`).
 - **The Hour's own blows** (body `SD_BODY.hour`): the Pulse every 30 s from the wake, numbered (`pulsePct` - 12% and 2%
   more each); the Hour Ends 15 minutes after the wake, every 2 s from then - and nothing else is done or believed.
-- **The geometry both ends judge by**: the Stomp's ring rolling out (`stompRingAt`, `ringPassed` - its front's width), the
+- **The geometry both ends judge by**: the Stomp's ring rolling out (`stompRingAt`, `ringPassed` - its front's width;
+  SD11e: its front's centre, `stompFrontAt`), the
   Hour-Hand's turn (`handAngleAt`, `handSwept` - the beam's width at the body's distance, its length), and a pillar's shade
   (`behindPillar` - the four squares on the diagonals, `SD_PILLARS`).
 - **The frames** (the `sd` frame's kinds SD8b will carry): `atk {b, i, a, at, x, z, yw, tg, sw?, n?}`, `mv {b, ...}`, `hp`,
@@ -1920,6 +1931,45 @@ the arena), `test/sd8d_remnant_blows.test.js` (the call's count, the fall to all
 readouts' words), `test/sd10b_audit.test.js`, `test/sd11b_relay.test.js`, `test/sd11c_page.test.js` (the voice in their
 rigs), `test/tier1_dungeontiers.test.js` (the plaque's article), `test/wb6c_gate_veil.test.js` (the step's look),
 `test/relayversion.test.js` (`world176` re-hashed in place - `net/sdLaw.js` is in the bundle).
+
+#### SD11e - the laws
+
+| | what was wrong | now |
+|---|---|---|
+| L4 F2 | THE PAIRED HAND A PINCER. Each Echo aims at its own chosen - threat first, so often both at one fighter, and always at a solo - and gold always turned one way and silver the other: for a fighter standing beyond both (the arena's south end, where the Steps deliver everyone) the two beams closed on it from either side, and staying ahead of one ran into the other. The real law's first pair Hand at a solo there left no run and no pillar to escape at any build; an escape search over 309 geometries (six Echo pairs, the real one among them, by a 6 m grid of fighters; runs of one and two waypoints after a 0.25 s reaction, both beams judged every 1/60 s, each caster's shade its own) found none in 5 at the default build, 9 at a modest one (Speed 40, Running 20) and 30 at the weakest (Speed 10, Running 0) | BOTH AT ONE FIGHTER, THE TWO BEAMS CROSS IT THE SAME WAY: silver turns gold's way when the fighter stands beyond the two (the angle at it under square), the other way when it stands between (`net/sdRemnant.js` `pairWay`, `pairHand`) - no run now in 0, 1 and 3 of the 309. Both turned one way, the report's fix as written, is the same pincer for a fighter between them (0, 1 and 8); silver 2 s late scores 0, 0 and 1, but it splits the pair's one moment (the wind-up the page draws, the bar's callout, each Echo holding for the other) - the Hand stays from both at once |
+| L4 F3 | THE END'S WIND-UP REFUSED. The End's word, 2 s before it lands, set `ended`, and every blow asked `ended`: a finishing blow 1.5 s before the End landed nothing - a race to the wire lost its last two seconds | the bodies stop at the word; a blow is refused by the clock, `now >= endsAt` (`over` - the gate's AUDIT WBX R5), and nobody new comes in from the word (`closed`); the page believes the same (`net/sdFightLink.js` `sdHourOver`: counted in, a blow goes out through the wind-up - `joined`, `scenes/sdRemnant.js` `remnantOpenAt`, `target`), and its bar counts the End down to its moment (`ui/sdRemnantBar.js` - it said *"The Hour has ended"* at the word) |
+| L4 F4 | A BLOW PAST THE END. The three refusals knew the End only by the beat's word, and the relay applies a blow with no beat before it: a beat stalled 2.1 s short of the End and a blow 3 s past it felled the Remnant after its Hour, its receipts minted | the time guard in all three - the Remnant's, an Echo's, a Heart's (`over`, the gate's AUDIT WBX R6) |
+| L4 F5 | THE DISC AND THE RING BOTH. The ring's band began 0.6 m inside the disc: a grounded body 6.4-7 m out at the landing took both (80% and 22) - the near-miss at the rim the heaviest hit of all | the ring rolls out from the disc's rim; what the disc strikes it does not (`ringPassed`) |
+| L4 F6 | A STALE SPAN JUDGED. Only a landing was refused late; the ring and the beam took whatever span the page judged from its last frame drawn - a tab hidden across a Stomp's landing and shown 2.5 s on was struck by its ring, one 4.9 s into a Hand by its beam | a rolling part over a span that ends SD_STRIKE_LATE_MS past it is done, with no hit (`net/sdStrike.js` `sdBlowVerdict`'s `stale` - the gate's rolling charge's law) |
+| L4 F7 | THE RING UNJUMPABLE RUNNING OUT WITH IT. Its 1.2 m band was judged whole, on any grounded frame inside it: a body running out with it stayed under it longer than a jump stays aloft (0.43 s) - from 7.5 m out no jump cleared it at 7.1-10.2 m/s, the default build (7.59) to Speed 80, Running 60 | judged ONCE, the frame its front's centre crosses me, on that frame's ground - where I stood the frame before kept (`ro`), so one running in through it is never past its centre unjudged (`stompFrontAt`, `ringPassed`): a jump clears it at every speed, at 60 frames a second and 30 |
+| L4 F8 | A HEART IN ITS BODY. The Hearts kept from each other and the pillars, never from the Remnant: one rose inside its 2.2 m body in 4.1% of Resets, overlapping it in 8% | none within `SD_REM.r + SD_HEART.r + 1` of it (none in 1,600 Resets of eight); a floor too crowded for the dice lays its ring at the ring's middle, turned so the Remnant stands between two (`raiseHearts`) |
+| L4 F9 | THE RESET A TRAVEL RACE (a design call: section 10 called it a damage race). The Hearts rose 8-22 m out however few: hearts.mjs's method (2,000 real Resets a cell, the Remnant anywhere in the 24 m square about the centre, each fighter beside it, the shortest order at reference damage) - one fighter in melee could not break its three in the 7.5 s they stand in 72% of Resets at the default build, 82% at a modest one; two in 27% and 41%; on a second draw at the weakest build, 93%, 76% and (three) 58%. Each lost is 70% of everyone's health and 8% healed | THE RING AS WIDE AS THEIR COUNT: 6 m out, 2 m more for each Heart past the first (`heartRingFor`; `SD_HEART.ring` 6-20, `per` 2 - 6-10 m for three, 6-20 m for eight): one fighter 0% at the default build and 0.7% at a modest one, two 0% and 0%; at the weakest, 19%, 3% and 9%. A ranged party never lost one |
+| L4 F10 | THE HAND'S WAY UNSAID. Its wind-up drew a symmetric half-circle, and the Remnant's way is a coin's (`sw` on the wire all along): a straight run the wrong way met it in 74 of 651 geometries at the weakest build; known from the word, one straight run escaped every one | the beam stands at the edge its sweep begins from as it gathers - a `lane` beside the half-circle (`scenes/sdRemnantBlows.js` `sdTelegraphShapes`); the gate's telegraph pass (`render/gateTelegraph.js`) unchanged |
+| L4 C1 | THE HAND CHOSEN PAST ITS BEAM. Its range 40 m past its body, its beam 34 m from its chest: a chosen 34-42 m off was swept by a beam that never reached it | its range the beam's length less its body (`SD_HAND_LEN`) |
+| L4 C2 | THE STEPS IN THE ARENA. The gate's POSE_SLACK (3 m) reached the last Crumble step's last 0.6 m (28.4-29 m from the centre): the Pulse, the Reset and the End struck there, the realm counted the body present, and its `in` was taken - SD8d says nobody on the Steps | the arena's own slack (`SD_ARENA_SLACK`, 1.5 m - a pose's age at a run; the arena's edge is the motor's clamp, so no body on it stands past its rim): every point of every Crumble step, and a body hanging its capsule off the last, is off the arena - for the law, the page's blows and the relay's `in` |
+| L4 C4, C5, C6 | `sdSalt`'s comment kept a slot's salt its own "until the 2048th Hollow after it" (the period is 2047); the mirror riddle, *"Read the Blades from twelve backwards and you read Daggerfall."*, reads 13 - h as well as the law's 12 - h; `sdNameOf` would expand a `$&` in a city's name | the comment says 2047th; *"The Blades stands as far before twelve as Daggerfall stands past it."* (`net/sdBrain.js` `sdRiddleText`); a replacer |
+| docs | `sdFell`'s comment said `n` is "how many earned it"; `SD_GREAT_CITIES` the Bay's "largest" cities | `n` is every seat its fight took - the realm's `fell.n`, the gone and the cast-out with the rest (section 2's table says so already); the Bay's first eight cities by the hubs' own claim (`systems/regionHubs.js` `hubClaim` - one named for its region outranks a larger) |
+
+L4 F1 and F1b were SD11a's, and so was C3 (`spanAt`'s comment says near edges). L4 C7 - `orreryStep` on a state with no
+`f` - is unreachable: the relay's `_sdHallOf` holds `f` to a whole 0-48.
+
+**Said so, not changed:**
+- The escape search still finds no run for 1 of the 309 at a modest build - a fighter at the rim with one beam to
+  reach it, the other 36 m off - and 3 at the weakest, which the old law failed in 30: the weakest build's own reach.
+- In melee alone, the weakest build (Speed 10, Running 0) still loses one Reset in five: a party's reach is its own.
+
+Pins: `test/sd11e_laws.test.js` (12 - the paired Hand by the escape search, beyond and between; the End's wind-up, the
+law's and the page's; nothing past the End; the disc and the ring; the ring jumped running out and run in through once;
+no stale span; no Heart in its body; the ring by count, and a lone melee fighter's every Reset made; the Hand's way as
+it gathers; its range; nobody on the Steps; the words and the comments); `tools/mutants/sd11e.json` (37, all dead).
+RE-AIMED BY CONTENT, each still dead: `sd1.json`, `sd11b.json`, `sd11c.json`, `sd8a.json` (4), `sd8b.json`, `sd8c.json`
+(3), `sd8d.json` (3) - one now the other way, the law itself turned (`SD8A-the-ring-no-width`: the ring has no width to
+lose, and its mutant puts the band back); and every other record on the files this slice touched (243) re-judged, all
+still dead. PINS MOVED: `test/sd6a_orrery.test.js` (the mirror riddle's words), `test/sd8a_remnant.test.js` (the pair's
+ways by `pairWay`; the ring's front's centre stops at 22 m), `test/sd8b_fight.test.js` (the relay's import of the arena's
+slack), `test/sd8d_remnant_blows.test.js` (the End at the rim, within the arena's slack), `test/relayversion.test.js`
+(`world176` re-hashed in place - `net/sdRemnant.js`, `net/sdLaw.js`, `net/sdBrain.js` and the relay's `in` are in the
+bundle).
 
 ### SD-ONELIFE - shipped 2026-10-07 (one life a Hollow)
 

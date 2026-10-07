@@ -162,8 +162,8 @@
   {
     "name": "SD1-the-city-left-in-the-name",
     "file": "src/net/sdLaw.js",
-    "old": "  return city ? name.replace('{city}', city) : SD_NAMES[0];",
-    "new": "  return name.replace('{city}', city);",
+    "old": "  return city ? name.replace('{city}', () => city) : SD_NAMES[0];",
+    "new": "  return name.replace('{city}', () => city);",
     "tests": [
       "test/sd1_sdlaw.test.js"
     ],

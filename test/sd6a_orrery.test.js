@@ -107,7 +107,7 @@ test('SD6a the riddles\' words - the design\'s own four forms (mutants: more and
   assert.equal(sdRiddleText({ kind: 'offset', a: 5, b: 3, k: -4 }), 'The Blades keeps the hour Orsinium keeps, and four fewer.');
   assert.equal(sdRiddleText({ kind: 'offset', a: 1, b: 5, k: 0 }), 'Sentinel keeps the hour the Blades keeps.');
   assert.equal(sdRiddleText({ kind: 'opposite', a: 4, b: 3 }), 'The Underking stands opposite Orsinium.');
-  assert.equal(sdRiddleText({ kind: 'mirror', a: 5, b: 0 }), 'Read the Blades from twelve backwards and you read Daggerfall.');
+  assert.equal(sdRiddleText({ kind: 'mirror', a: 5, b: 0 }), 'The Blades stands as far before twelve as Daggerfall stands past it.');   // AUDIT SD II (SD11e, PIN MOVED): L4 C5 - "read from twelve backwards" also read 13 - h
   assert.ok(sdRiddleHolds({ kind: 'mirror', a: 5, b: 0 }, [3, 0, 0, 0, 0, 9]) && !sdRiddleHolds({ kind: 'mirror', a: 5, b: 0 }, [3, 0, 0, 0, 0, 3]));
   assert.ok(sdRiddleHolds({ kind: 'opposite', a: 4, b: 3 }, [0, 0, 0, 10, 4, 0]) && !sdRiddleHolds({ kind: 'opposite', a: 4, b: 3 }, [0, 0, 0, 10, 5, 0]));
   assert.ok(sdRiddleHolds({ kind: 'offset', a: 2, b: 1, k: 2 }, [0, 11, 1, 0, 0, 0]));

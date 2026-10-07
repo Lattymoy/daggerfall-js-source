@@ -21,8 +21,8 @@
 //       arena, GOLD and SILVER, each with half of what is left to the break's end. They must fall within SD_ECHO_PAIR_MS
 //       of each other: one left alone that long rises again with half its health. While both stand each fights with the
 //       Stomp and the Volley, faster (SD_FAST), and every SD_ECHO_HAND_EVERY_MS the Hour-Hand sweeps from both at once -
-//       each holds for the other, then both turn it, gold one way and silver the other; one left alone fights with all
-//       three.
+//       each holds for the other, then both turn it, gold one way and silver the other (both at one fighter beyond the
+//       two, gold's way - pairWay); one left alone fights with all three.
 //     3 THE LAST MOMENT (35% to 0) - it returns, faster; every SD_RESET_EVERY_MS it winds up THE RESET while Hearts rise
 //       about the arena (heartCountFor the living): every one broken before it lands and it is stunned SD_STUN_MS and
 //       takes SD_STUN_HIT_X; one left and it lands - SD_RESET_PCT of everyone's health, no save - and it heals
@@ -85,11 +85,18 @@ export const SD_RESET_EVERY_MS = 50_000;
 export const SD_RESET_PCT = 0.7;
 export const SD_RESET_HEAL = 0.08;
 /** THE HEARTS the Reset raises: 3, and one for every two living fighters, 8 at most; their body; where they rise (a ring
- *  about the centre, so far apart, so far from a pillar); their health - SD_HEART.teamS seconds of the living's reference
- *  damage between them, SD_HEART.min at least each. They take no blow in the Reset's last SD_HEARTS_CLOSE_MS. */
+ *  about the centre - heartRingFor their count - so far apart, so far from a pillar); their health - SD_HEART.teamS
+ *  seconds of the living's reference damage between them, SD_HEART.min at least each. They take no blow in the Reset's
+ *  last SD_HEARTS_CLOSE_MS. */
 export const SD_HEARTS = Object.freeze([3, 8]);
 export const heartCountFor = (n) => Math.max(SD_HEARTS[0], Math.min(SD_HEARTS[1], SD_HEARTS[0] + Math.floor(Math.max(0, n) / 2)));
-export const SD_HEART = Object.freeze({ r: 0.9, h: 2.4, ring: Object.freeze([8, 22]), gap: 6, pillarGap: 3, teamS: 3, min: 20 });
+export const SD_HEART = Object.freeze({ r: 0.9, h: 2.4, ring: Object.freeze([6, 20]), per: 2, gap: 6, pillarGap: 3, teamS: 3, min: 20 });
+/** AUDIT SD II (L4 F9): the ring `n` Hearts rise on - SD_HEART.ring's near edge, its far edge SD_HEART.per metres out for
+ *  each Heart past the first (the whole ring at the most): 6-10 m for three, 6-20 m for eight. They rose 8-22 m out
+ *  however few they were, and the Reset was a race a small melee party lost: one fighter in melee at reference damage
+ *  could not reach and break its three in the 7.5 s they stand in 72% of Resets at the default build (82% at a modest
+ *  one), two their four in 27% (41%) - none now (0.7% at a modest one). */
+export const heartRingFor = (n) => [SD_HEART.ring[0], Math.min(SD_HEART.ring[1], SD_HEART.ring[0] + SD_HEART.per * Math.max(0, n - 1))];
 export const heartHpFor = (lvs, n) => Math.max(SD_HEART.min, Math.round((SD_HEART.teamS * lvs.reduce((s, lv) => s + dpsRef(lv), 0)) / Math.max(1, n)));
 export const SD_HEARTS_CLOSE_MS = 500;
 export const SD_STUN_MS = 8000;
@@ -118,9 +125,12 @@ export const SD_PILLARS = Object.freeze([0, 1, 2, 3].map((k) => { const a = Math
 // `pct` is the share of the STRUCK player's own maximum health and `base` the points on top; `aim` where it is laid,
 // `range` how near (past its body) its chosen must be, `w` its weight in the choice; `windup` from the word to the
 // landing, `active` the landing's span, `recover` its stillness after.
+/** The Hour-Hand's beam, from its chest - and so its reach past its body. AUDIT SD II (L4 C1): its `range` was 40, and a
+ *  chosen 34-42 m off was swept by a beam that never reached it. */
+const SD_HAND_LEN = 34;
 export const SD_BLOWS = Object.freeze({
   stomp: Object.freeze({ id: 0, key: 'stomp', name: 'Brass Stomp', windup: 1800, active: 1500, recover: 1200, shape: 'stomp', r: 7, r1: 22, wave: 10, width: 1.2, pct: 0.5, base: 14, ringPct: 0.3, ringBase: 8, aim: 'self', range: 5, w: 2 }),
-  hand: Object.freeze({ id: 1, key: 'hand', name: 'The Hour-Hand', windup: 1600, active: 4000, recover: 1000, shape: 'sweep', len: 34, width: 3, arc: Math.PI, pct: 0.45, base: 12, aim: 'target', range: 40, w: 2 }),
+  hand: Object.freeze({ id: 1, key: 'hand', name: 'The Hour-Hand', windup: 1600, active: 4000, recover: 1000, shape: 'sweep', len: SD_HAND_LEN, width: 3, arc: Math.PI, pct: 0.45, base: 12, aim: 'target', range: SD_HAND_LEN - SD_REM.r, w: 2 }),
   volley: Object.freeze({ id: 2, key: 'volley', name: 'Gear Volley', windup: 2000, active: 300, recover: 900, shape: 'disc', r: 3, max: 5, pct: 0.4, base: 10, aim: 'players', range: 40, w: 2, pool: Object.freeze({ r: 3, ms: 6000, pct: 0.06, base: 3 }) }),
   pulse: Object.freeze({ id: 3, key: 'pulse', name: 'Mantella Pulse', windup: 2500, active: 300, recover: 0, shape: 'all', pct: SD_PULSE_PCT, base: 0, aim: 'all', range: 999, w: 0 }),
   reset: Object.freeze({ id: 4, key: 'reset', name: 'The Reset', windup: 8000, active: 600, recover: 1800, shape: 'all', pct: SD_RESET_PCT, base: 0, aim: 'all', range: 999, w: 0 }),
@@ -148,6 +158,11 @@ const r2 = (v) => Math.round(v * 100) / 100;
 export const arenaOf = (x, z) => [x - SD_ARENA.x, z - SD_ARENA.z];
 /** Whether a point of the arena's frame stands on it (`pad` past its rim). */
 export const inArena = (x, z, pad = 0) => Number.isFinite(x) && Number.isFinite(z) && Math.hypot(x, z) <= SD_ARENA.r + pad;
+/** AUDIT SD II (L4 C2): how far past its rim a pose still stands in the fight - a fifth of a second at a run (a pose's
+ *  age). The gate's POSE_SLACK (3) reached the Steps: the last Crumble step's last 0.6 m stand 28.4 m from the arena's
+ *  centre, and the Pulse, the Reset and the End struck there, the realm counted the body present and took its `in` -
+ *  where SD8d says "nobody on the Steps". The arena's edge is the motor's clamp, so no body on it stands past its rim. */
+export const SD_ARENA_SLACK = 1.5;
 /** A point kept within `r` of the arena's centre. */
 export function keepInArena(x, z, r) {
   const d = Math.hypot(x, z);
@@ -159,12 +174,20 @@ export function stompRingAt(atk, now) {
   if (!(k >= 0 && k <= A.active)) return null;
   return Math.min(A.r1, A.r + (A.wave * k) / 1000);
 }
-/** Whether the STOMP's ring passed a body `d` metres from its centre between `t0` and `t1` - its front's whole width. */
-export function ringPassed(atk, d, t0, t1) {
-  const A = SD_BLOWS.stomp, a = Math.max(t0, atk.at), b = Math.min(t1, atk.at + A.active);
-  if (!(b >= a)) return false;
-  const r0 = A.r + (A.wave * (a - atk.at)) / 1000, r1 = A.r + (A.wave * (b - atk.at)) / 1000;
-  return d >= r0 - A.width / 2 && d <= Math.min(A.r1, r1) + A.width / 2;
+/** The STOMP's ring: its front's centre at `now`, held to its roll (the disc's rim before it, `r1` after). */
+export function stompFrontAt(atk, now) {
+  const A = SD_BLOWS.stomp;
+  return Math.min(A.r1, A.r + (A.wave * Math.min(A.active, Math.max(0, now - atk.at))) / 1000);
+}
+/** Whether the STOMP's ring passed a body `d` metres from its centre between `t0` and `t1`: its front's CENTRE crossed it -
+ *  the body outside the front at `t0` (`was` - by default where it stands at `t1`) and not at `t1`. AUDIT SD II (L4 F5,
+ *  F7): the front's whole width was the test - its inner half reached 0.6 m inside the disc, and a body 6.4-7 m out at the
+ *  landing took the disc and the ring both; and the 1.2 m band rode over a body running out with it longer than a jump
+ *  stays aloft. Out from the disc's rim: what the disc struck the ring does not. */
+export function ringPassed(atk, d, t0, t1, was = d > stompFrontAt(atk, t0)) {
+  const A = SD_BLOWS.stomp;
+  if (!(Math.min(t1, atk.at + A.active) >= Math.max(t0, atk.at))) return false;
+  return was && d <= stompFrontAt(atk, t1);
 }
 /** The HOUR-HAND's beam at `now`: its bearing from where it was cast (null outside its sweep). */
 export function handAngleAt(atk, now) {
@@ -239,12 +262,17 @@ export function newRemnantFight(s, fi, now) {
     lastHpAt: 0, lastHpSent: -1, ecSent: '', ecSentAt: 0, lastStateAt: now, lastTickAt: now,
   };
 }
-/** A fight no new blow changes: fallen, lost, or past its Hour. */
-const over = (f) => !!(f.fell || f.lost || f.ended);
+/** A fight no new blow changes: fallen, lost, or past its Hour - BY THE CLOCK. AUDIT SD II (L4 F3, F4): it read the beat's
+ *  `ended`, which the End's word sets 2 s before it lands - a finishing blow in that wind-up landed nothing - and which a
+ *  beat that stalls past `endsAt` never sets, so a blow between beats felled it after its Hour (the gate's AUDIT WBX R5
+ *  and R6: midnight is the Wrath's, whether or not a beat has said so yet). */
+const over = (f, now) => !!(f.fell || f.lost || now >= f.endsAt);
+/** A fight that takes nobody new: over, or its End said. */
+const closed = (f, now) => over(f, now) || !!f.ended;
 /** The fight's floor in its phase: no blow takes it past the phase it is in. */
 const floorOf = (f) => (f.phase === 1 ? SD_PHASE_AT[0] * f.max : f.phase === 2 ? SD_PHASE_AT[1] * f.max : 0);
 /** Whether the Remnant can be struck now: awake, inside time, not past its return. */
-export const remnantOpen = (f, now) => !over(f) && now >= f.op && f.phase !== 2 && now >= (f.outUntil ?? 0);
+export const remnantOpen = (f, now) => !over(f, now) && now >= f.op && f.phase !== 2 && now >= (f.outUntil ?? 0);
 /** THE DRAGON BREAK'S POOL kept true: its health is the break's floor and what the Echoes stand for - a share coming or
  *  going (a newcomer, a retired fighter) moves the whole at the fraction it stands at, and the Echoes with it. */
 function rescaleEchoes(f) {
@@ -265,10 +293,10 @@ export function joinRemnant(f, sub, name, lv, now, present = null) {
   const known = f.players[sub];
   if (known) {
     if (typeof name === 'string' && name) known.name = name.slice(0, 24);
-    if (!over(f)) { known.seenAt = now; restoreShare(f, known); rescaleEchoes(f); }
+    if (!closed(f, now)) { known.seenAt = now; restoreShare(f, known); rescaleEchoes(f); }
     return true;
   }
-  if (over(f)) return false;
+  if (closed(f, now)) return false;
   if (Object.keys(f.players).length >= SD_FIGHTERS_MAX && !freeSeat(f, present)) return false;
   const level = clampLv(lv), share = SD_TTK_S * dpsRef(level) * SD_SHARE_X, frac = standsAt(f), fresh = frac >= 1;
   f.max += share;
@@ -282,7 +310,7 @@ export function joinRemnant(f, sub, name, lv, now, present = null) {
   return true;
 }
 
-const poseIn = (pose) => !!pose && Number.isFinite(pose.x) && Number.isFinite(pose.z) && inArena(pose.x, pose.z, POSE_SLACK);
+const poseIn = (pose) => !!pose && Number.isFinite(pose.x) && Number.isFinite(pose.z) && inArena(pose.x, pose.z, SD_ARENA_SLACK);
 const struck = (f, sub, p, got) => { if (got > 0) { f.threat[sub] = (f.threat[sub] ?? 0) + got; p.hits = (p.hits ?? 0) + 1; p.best = Math.max(p.best ?? 0, got); } };
 
 /**
@@ -322,7 +350,7 @@ const echoesOf = (f) => (f.ec ? f.ec.map((E) => [Math.ceil(E.h), Math.ceil(E.m),
 export function applyEchoHit(f, sub, e, d, r, pose, now, seq = null) {
   const out = [];
   const p = f.players[sub], E = f.phase === 2 && f.ec && Number.isInteger(e) ? f.ec[e] ?? null : null;
-  if (!p || over(f) || !E || !(E.h > 0) || now < E.up || !Number.isFinite(d) || !(d > 0)) return out;
+  if (!p || over(f, now) || !E || !(E.h > 0) || now < E.up || !Number.isFinite(d) || !(d > 0)) return out;
   if (!spendBlow(p, now, seq, `e${e}`)) return out;
   if (!poseIn(pose)) return out;
   if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, E.body.x, E.body.z) - SD_ECHO.r > MELEE_REACH + POSE_SLACK) return out;
@@ -352,7 +380,7 @@ export const heartsOpen = (f, now) => !!f.rem.atk && f.rem.atk.a === SD_BLOWS.re
 export function applyHeartHit(f, sub, c, d, r, pose, now, seq = null) {
   const out = [];
   const p = f.players[sub], X = f.cx, q = X && Number.isInteger(c) ? X.c[c] ?? null : null;
-  if (!p || over(f) || !q || !(q.h > 0) || !Number.isFinite(d) || !(d > 0) || !heartsOpen(f, now)) return out;
+  if (!p || over(f, now) || !q || !(q.h > 0) || !Number.isFinite(d) || !(d > 0) || !heartsOpen(f, now)) return out;
   if (!spendBlow(p, now, seq, `x${c}`)) return out;
   if (!poseIn(pose)) return out;
   if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, q.x, q.z) - SD_HEART.r > MELEE_REACH + POSE_SLACK) return out;
@@ -461,36 +489,50 @@ function beatBody(f, b, B, now, here, rng, out, { hold = false, pair = false } =
   if (B.mv) { B.mv = null; out.push(mvFrame(b, B, now)); }
   begin(f, b, B, chooseAttack(can, rng), now, target, here, rng, out);
 }
+/** The way silver's Hour-Hand turns beside gold's (gold the way the bearing grows): the other - unless both are at ONE
+ *  fighter standing beyond the two (the angle at it less than square), then gold's own. Either way the two beams cross
+ *  that fighter going the same way. AUDIT SD II (L4 F2): silver always turned the other way, and for a fighter beyond
+ *  both - the arena's south end, where the Steps deliver everyone - the two beams closed on it from either side: no run
+ *  and no pillar escaped them at any build (the escape search over 309 geometries: 5 with none at the default build, 9
+ *  at a modest one, 30 at the weakest; 0, 1 and 3 now). Both turned one way is the same pincer for a fighter between. */
+export function pairWay(G, S, T) {
+  if (!T) return -1;
+  return (T.x - G.x) * (T.x - S.x) + (T.z - G.z) * (T.z - S.z) > 0 ? 1 : -1;
+}
 /** THE PAIR'S HOUR-HAND: both Echoes free (their blows done), it sweeps from both at once - each at its own chosen, gold
- *  the way the bearing grows and silver the other - and the next is SD_ECHO_HAND_EVERY_MS on. */
+ *  the way the bearing grows and silver as pairWay says - and the next is SD_ECHO_HAND_EVERY_MS on. */
 function pairHand(f, standing, now, here, rng, out) {
-  for (const X of standing) {
-    const b = X.e === 0 ? SD_BODY.gold : SD_BODY.silver, B = X.body;
+  const aims = standing.map((X) => { stepWalk(X.body, now); return (X.body.tg ? here.find((o) => o.sub === X.body.tg) : null) ?? chooseTarget(f, here, rng); });
+  const one = aims.length === 2 && !!aims[0] && aims[0].sub === aims[1]?.sub;
+  const way = one ? pairWay(standing[0].body, standing[1].body, aims[0]) : -1;
+  standing.forEach((X, k) => {
+    const b = X.e === 0 ? SD_BODY.gold : SD_BODY.silver, B = X.body, target = aims[k];
     if (B.atk) { B.runA = B.atk.a === B.lastA ? B.runA + 1 : 1; B.lastA = B.atk.a; B.freeAt = now; B.atk = null; }
-    stepWalk(B, now);
     if (B.mv) { B.mv = null; out.push(mvFrame(b, B, now)); }
-    const target = (B.tg ? here.find((o) => o.sub === B.tg) : null) ?? chooseTarget(f, here, rng);
-    if (!target) continue;
+    if (!target) return;
     B.tg = target.sub; B.tgAt = now;
-    begin(f, b, B, SD_BLOWS.hand, now, target, here, rng, out);
-  }
+    begin(f, b, B, SD_BLOWS.hand, now, target, here, rng, out, b === SD_BODY.silver ? way : 0);
+  });
   f.ecHandAt = now + SD_ECHO_HAND_EVERY_MS;
 }
 
-/** THE HEARTS rise as the Reset is called: heartCountFor the living, about the arena (SD_HEART.ring, SD_HEART.gap apart,
- *  clear of the pillars - the dice's, the relay's), each heartHpFor them. Said once (`cx`), their health as it falls
- *  (`cxh`), each one's breaking (`cxb`). */
+/** THE HEARTS rise as the Reset is called: heartCountFor the living, about the arena (heartRingFor them, SD_HEART.gap
+ *  apart, clear of the pillars and of the Remnant - the dice's, the relay's), each heartHpFor them. Said once (`cx`),
+ *  their health as it falls (`cxh`), each one's breaking (`cxb`). */
 function raiseHearts(f, now, here, rng, out) {
   const n = heartCountFor(here.length), m = heartHpFor(here.map((b) => f.players[b.sub].lv), n), spots = [];
-  const [r0, r1] = SD_HEART.ring;
+  const [r0, r1] = heartRingFor(n), B = f.rem, clear = SD_REM.r + SD_HEART.r + 1;
   for (let tries = 0; spots.length < n && tries < n * 80; tries++) {
     const a = rng() * Math.PI * 2, r = Math.sqrt(r0 * r0 + rng() * (r1 * r1 - r0 * r0));
     const x = r2(Math.sin(a) * r), z = r2(Math.cos(a) * r);
     if (spots.some((q) => dist(q[0], q[1], x, z) < SD_HEART.gap)) continue;
     if (SD_PILLARS.some(([px, pz]) => dist(px, pz, x, z) < SD_HEART.pillarGap)) continue;
+    if (dist(B.x, B.z, x, z) < clear) continue;   // AUDIT SD II (L4 F8): a Heart rose inside its body in 4% of Resets
     spots.push([x, z]);
   }
-  for (let k = spots.length; k < n; k++) { const a = (k / n) * Math.PI * 2 + Math.PI / 8; spots.push([r2(Math.sin(a) * 12), r2(Math.cos(a) * 12)]); }   // a floor too crowded for the dice: a ring
+  // a floor too crowded for the dice: a ring at the ring's middle, turned so the Remnant stands between two (L4 F8)
+  const rm = (r0 + r1) / 2, a0 = Math.atan2(B.x, B.z) + Math.PI / n;
+  for (let k = spots.length; k < n; k++) { const a = a0 + (k / n) * Math.PI * 2; spots.push([r2(Math.sin(a) * rm), r2(Math.cos(a) * rm)]); }
   f.cx = { i: f.rem.atk.i, m, c: spots.map(([x, z]) => ({ x, z, h: m })) };
   f.cxSent = cxKey(f.cx); f.cxSentAt = now;
   out.push({ k: 'cx', i: f.cx.i, m, c: spots.map((q) => [q[0], q[1]]) });
@@ -534,14 +576,14 @@ export function stepRemnant(f, now, bodies, rng) {
   const dt = Math.min(STEP_MAX_MS, Math.max(0, now - f.lastTickAt));
   f.lastTickAt = now;
   if (f.fell || f.lost) return out;
-  const here = bodies.filter((b) => !b.dead && f.players[b.sub] && inArena(b.x, b.z, POSE_SLACK));
+  const here = bodies.filter((b) => !b.dead && f.players[b.sub] && inArena(b.x, b.z, SD_ARENA_SLACK));
   for (const b of here) f.players[b.sub].stoodMs += dt;
   if (here.length) { f.liveMs += dt; f.emptySince = null; } else if (f.emptySince == null) f.emptySince = now;
   for (const b of bodies) { const p = f.players[b.sub]; if (!p) continue; if (b.dead && !p.down) p.falls = (p.falls ?? 0) + 1; p.down = !!b.dead; }
   // AUDIT SD II (L7 M2): a fighter is SEEN while its pose stands in the arena (alive or fallen there) - anywhere else in
   // the realm it is away, and its share leaves the Remnant ABSENT_RETIRE_MS on: four who said `in` and walked back to
   // the Threshold kept 34,000 health each in the Remnant from there, and six such made the Hour unwinnable for eight
-  for (const b of bodies) { const p = f.players[b.sub]; if (p && inArena(b.x, b.z, POSE_SLACK)) { p.seenAt = now; restoreShare(f, p); } }
+  for (const b of bodies) { const p = f.players[b.sub]; if (p && inArena(b.x, b.z, SD_ARENA_SLACK)) { p.seenAt = now; restoreShare(f, p); } }
   for (const p of Object.values(f.players)) if (!p.retired && now - (p.seenAt ?? p.joinedAt) > ABSENT_RETIRE_MS) retireShare(f, p);
   rescaleEchoes(f);
   // LOST: nobody living has stood in the arena this long - the next fight is fresh. AUDIT SD: and an Hour ENDED is lost

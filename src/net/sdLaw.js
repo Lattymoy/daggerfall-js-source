@@ -93,7 +93,8 @@ export function sdFind(rec, now, name) {
   return /** @type {SdRecord} */ ({ ...rec, ph: 'found', foundAt: now, fb: sanitizeName(name) });
 }
 
-/** The boss fell: kept with the top fighter's name and how many earned it; the collapse, then the rest, from now. */
+/** The boss fell: kept with the top fighter's name and how many fought it (`n` - every seat its fight took, the realm's
+ *  `fell.n`: the gone and the cast-out with the rest); the collapse, then the rest, from now. */
 export function sdFell(rec, now, { top = '', n = 0 } = {}) {
   if (!rec || sdPhase(rec, now) !== 'found') return null;
   const count = Number.isSafeInteger(n) ? Math.max(0, Math.min(SD_FIGHTERS_MAX, n)) : 0;
@@ -191,7 +192,7 @@ export const SD_NAMES = Object.freeze([
 export function sdNameOf(s, city = '') {
   const name = SD_NAMES[sdRoll(s, 2) % SD_NAMES.length];
   if (!name.includes('{city}')) return name;
-  return city ? name.replace('{city}', city) : SD_NAMES[0];
+  return city ? name.replace('{city}', () => city) : SD_NAMES[0];   // AUDIT SD II (L4 C6): a replacer - a name's `$&` is a name
 }
 
 // ═══ THE ROOM ═════════════════════════════════════════════════════════

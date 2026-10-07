@@ -121,12 +121,14 @@ const sdCap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 export const sdHourWord = (h) => SD_HOUR_WORDS[sdHour(Math.round(h))];
 
 /** A riddle's words. Kinds: `plain` (a keeps hour h), `offset` (a keeps b's hour and k more - k -5 to 5), `opposite`
- *  (a stands six hours from b), `mirror` (a read from twelve backwards is b). */
+ *  (a stands six hours from b), `mirror` (a stands as far before twelve as b stands past it - 12 - h). */
 export function sdRiddleText(c) {
   const A = SD_STONES[c.a].name, B = c.b != null ? SD_STONES[c.b].name : '';
   if (c.kind === 'plain') return `${sdCap(A)} keeps the ${sdHourWord(c.h)} hour.`;
   if (c.kind === 'opposite') return `${sdCap(A)} stands opposite ${B}.`;
-  if (c.kind === 'mirror') return `Read ${A} from twelve backwards and you read ${B}.`;
+  // AUDIT SD II (L4 C5): it said "Read A from twelve backwards and you read B", which counts twelve as the first and reads
+  // as 13 - h beside the law's 12 - h
+  if (c.kind === 'mirror') return `${sdCap(A)} stands as far before twelve as ${B} stands past it.`;
   if (c.k === 0) return `${sdCap(A)} keeps the hour ${B} keeps.`;
   return `${sdCap(A)} keeps the hour ${B} keeps, and ${SD_COUNT_WORDS[Math.abs(c.k)]} ${c.k > 0 ? 'more' : 'fewer'}.`;
 }
