@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 
 import { standService, T0 } from './accountDb.mjs';
 import { herbPatches, nodeKey, WITNESS } from '../src/net/nodeLaw.js';
-import { HARVESTS_PER_DAY } from '../src/net/professionLaw.js';
+import { herbKey, STORES_MAX } from '../src/net/professionLaw.js';
 import { sharedClassicMinutes } from '../src/net/wire.js';
 import {
   MARKS_FAUCETS, MARKS_KINDS, MARKS_MAX, MARKS_COMBAT, MARKS_OPS_MAX, utcDay, gatherFindOf, FIND_KINDS, findChanceOf, lootFindOf,
@@ -121,7 +121,7 @@ test('SILVER-FINDS a harvest\'s find: the service\'s dice - its last two draws, 
   assert.equal(s.balance(mac), 7);
 });
 
-test('SILVER-FINDS a harvest asked twice: the same request answers its find again - one line, one balance, and so after the switch shut (AUDIT 28 M2); a harvest the day refused finds nothing (the find is struck by the harvest\'s own row alone) (mutants: the repeat unsaid; the switch before the line; the row\'s guard)', async () => {
+test('SILVER-FINDS a harvest asked twice: the same request answers its find again - one line, one balance, and so after the switch shut (AUDIT 28 M2); a harvest refused in its own INSERT (the Stores full) finds nothing (the find is struck by the harvest\'s own row alone) (mutants: the repeat unsaid; the switch before the line; the row\'s guard)', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
   const id = rid('harv');
@@ -136,12 +136,13 @@ test('SILVER-FINDS a harvest asked twice: the same request answers its find agai
   const shut = await steered([], 0, () => s.harvest(mac, { id, p }));
   assert.deepEqual([shut.r.body.repeat, shut.r.body.marks], [true, first.r.body.marks], 'a find made, answered whatever the switch says now');
   s.env.MARKS_OPEN = 'on';
-  // the character's day of harvests spent: the next is refused before its row - and its find with it
-  const stmt = s.raw.prepare(`INSERT INTO node_harvests (day, node, kind, player, char_id, profession, material, qty, xp, at, rid, n)
-    VALUES (?, ?, 'herbs', ?, ?, 'herbalism', 'p1:18', 1, 1, ?, ?, ?)`);
-  for (let i = 1; i < HARVESTS_PER_DAY; i++) stmt.run(TODAY, `herb:filler:${i}`, mac.id, mac.character, NOON, `fill-${i}`, `n${i}`);
+  // the Stores full of the next patch's herb: it is refused in its own INSERT, before its row - and its find with it.
+  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): the refusal here was the character's day of
+  // sixty spent (`prof-cap`), decided in the same INSERT - there is no day's cap to spend now
+  s.raw.prepare(`INSERT INTO prof_stores (player, char_id, material, origin, qty) VALUES (?, ?, ?, 'own', ?)
+    ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = excluded.qty`).run(mac.id, mac.character, herbKey(PATCHES[1].herb, ANTICLERE), STORES_MAX);
   const refused = await steered([], 0, () => s.harvest(mac, { p: PATCHES[1] }));
-  assert.equal(refused.r.body.error, 'prof-cap');
+  assert.equal(refused.r.body.error, 'stores-full');
   assert.deepEqual([s.lines('gather').length, s.balance(mac)], [1, 2], 'no row, no find');
 });
 

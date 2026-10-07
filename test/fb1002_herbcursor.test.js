@@ -53,7 +53,7 @@ async function stage() {
   const S = { asked: [], said: [], meter: null, pointer: [], input: NONE };
   S.e = { stats: { intelligence: 62, strength: 55, agility: 50, endurance: 50, luck: 45 }, items: [FT.Basket, FT.Sickle, FT.PickAxe].map((t) => createForagingItem(t)), wagonItems: [], fatigue: 40 * FATIGUE_MULTIPLIER, health: 20, maxHealth: 100, magicka: 5, maxMagicka: 50 };
   const book = S.book = {
-    state: { open: true, today: {}, caps: { harvests: 60, stores: 5000 } },
+    state: { open: true, today: {}, caps: { stores: 5000 } },
     stale: () => false, refresh: async () => ({ ok: true }), pixel: () => ({ state: 'none' }), askPixels: async () => [], pump: () => {},
     dungeon: () => null, askDungeon: async () => false, held: () => 0, taken: () => false, counting: () => false,
     track: () => ({ rank: 100, specs: { 50: null, 100: null } }),

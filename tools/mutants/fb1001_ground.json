@@ -126,13 +126,14 @@
     ]
   },
   {
-    "name": "REFUSALS-LEARNED-the-account-cap-forgotten",
+    "name": "REFUSALS-LEARNED-the-account-cap-learned-again",
     "file": "src/net/profBook.js",
-    "old": "    if (r?.error === 'prof-account-cap') state.closed.set(",
-    "new": "    if (false) state.closed.set(",
+    "old": "    if (r?.error === 'prof-deep-cap') state.closed.set('deep', dayOf(now()));",
+    "new": "    if (r?.error === 'prof-account-cap') state.closed.set('account:mining', dayOf(now()));\n    if (r?.error === 'prof-deep-cap') state.closed.set('deep', dayOf(now()));",
     "tests": [
       "test/fb1001_ground.test.js"
-    ]
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the account's day in a craft is gone and the pin turned - an old service's `prof-account-cap` closes nothing. The mutant closes the craft again. It was the mutant that forgot it."
   },
   {
     "name": "REFUSALS-LEARNED-the-deep-cap-forgotten",
@@ -146,11 +147,12 @@
   {
     "name": "REFUSALS-LEARNED-the-state-never-read-again",
     "file": "src/net/profBook.js",
-    "old": "    if (r?.error === 'prof-cap' || r?.error === 'stores-full' || r?.error === 'carried-full') state.reread = true;",
+    "old": "    if (r?.error === 'stores-full' || r?.error === 'carried-full') state.reread = true;",
     "new": "",
     "tests": [
       "test/fb1001_ground.test.js"
-    ]
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the Stores' refusals alone read the state again."
   },
   {
     "name": "REFUSALS-LEARNED-stale-never-asks-it",

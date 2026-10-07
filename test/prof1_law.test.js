@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 
 import {
   PROFESSIONS, RANK_NAMES, xpForRank, rankOfXp, rankName, TIER_RANKS, tierOpen, topTierOf, harvestXp, writXp, PROF_XP_MAX,
-  SPECIALISATIONS, SPEC_RANKS, RESPEC, specOk, specsAt, HARVESTS_PER_DAY, STORES_MAX, HERB_ACT, BASKET_ACT, ACT_BANDS, actBand,
+  SPECIALISATIONS, SPEC_RANKS, RESPEC, specOk, specsAt, STORES_MAX, HERB_ACT, BASKET_ACT, ACT_BANDS, actBand,
   basketStep, PLANT_GROUP_TEMPLATES, regionPlantGroup, plantGroupFor, herbKey, FOOD_KEYS, foodKey, TIER_VALUES, HERB_VALUES,
   courtWritCount, COURT_WRITS_PER_DAY, WRIT_UNITS, writPay, writRenown, profSwitchOf, PROF_RID_RE, professionOfFamily,
 } from '../src/net/professionLaw.js';
@@ -73,8 +73,7 @@ test('PROF1 law: every profession offers two specialisations at 50 and two at 10
   assert.deepEqual(specsAt(null, 5), { 50: null, 100: null });
 });
 
-test('PROF1 law: the day and the Stores - 60 harvests a gathering profession, 5,000 a material; the Herbalism acts\' numbers; the bands; the Basket\'s step (PROF0 5.2, FORAGE0 14.4, 14.6, Appendix B)', () => {
-  assert.equal(HARVESTS_PER_DAY, 60);
+test('PROF1 law: the Stores - 5,000 a material (CAP-OFF: the day\'s 60 harvests a gathering profession are gone - test/cap_off.test.js); the Herbalism acts\' numbers; the bands; the Basket\'s step (PROF0 5.2, FORAGE0 14.4, 14.6, Appendix B)', () => {
   assert.equal(STORES_MAX, 5000);
   assert.deepEqual(HERB_ACT, { commonS: 0.8, steadyS: 2.5, steadyDeg: 3, moveM: 0.25, botanist: 1.5 });
   assert.deepEqual([BASKET_ACT.finds, BASKET_ACT.glintS, BASKET_ACT.masterGlintS], [3, 1.0, 1.4]);

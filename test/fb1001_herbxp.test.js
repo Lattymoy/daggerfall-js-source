@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 
 import { standService, T0 } from './accountDb.mjs';
 import { herbPatches, nodeKey } from '../src/net/nodeLaw.js';
-import { harvestXp, herbXpTier, haulTier, topTierOf, tierOpen, xpForRank, HARVESTS_PER_DAY, PROF_RANK_MAX } from '../src/net/professionLaw.js';
+import { harvestXp, herbXpTier, haulTier, topTierOf, tierOpen, xpForRank, PROF_RANK_MAX } from '../src/net/professionLaw.js';
 import { utcDay } from '../src/net/marksLaw.js';
 
 const DAY = 86_400;
@@ -55,10 +55,11 @@ test('HERB-XP law: a herb is picked at the highest tier the rank opens, as a hau
   }
   // the wall, as the herb's own tier reckoned it past rank 70: a quarter of 15, of 45 and of 67
   assert.deepEqual([harvestXp(1, 70, false), harvestXp(2, 70, true), harvestXp(3, 70, true)], [3, 11, 16]);
-  // 70 to 100 now, a plain herb every one of the day's sixty: some nine days, where it was more than a hundred
-  const plain = (lo, hi) => (xpForRank(hi) - xpForRank(lo)) / (HARVESTS_PER_DAY * harvestXp(herbXpTier(lo), lo, false));
-  const days = plain(70, 90) + plain(90, 100);
-  assert.ok(days > 8 && days < 10, `${days.toFixed(1)} days`);
+  // 70 to 100 now, a plain herb a harvest: some 537, nine of the old days of sixty - where it was more than a hundred
+  // days. CAP-OFF (2026-10-07): no day bounds them now, so the pin counts the harvests (the same bound, 480 to 600)
+  const plain = (lo, hi) => (xpForRank(hi) - xpForRank(lo)) / harvestXp(herbXpTier(lo), lo, false);
+  const harvests = plain(70, 90) + plain(90, 100);
+  assert.ok(harvests > 480 && harvests < 600, `${harvests.toFixed(1)} harvests`);
 });
 
 test('HERB-XP service: at rank 70 an uncommon herb picked clean is worth 135 and a common one 90 (they were 11 and 3); the row keeps the herb\'s own tier; at rank 0 a common herb is 15 as ever (mutants: the herb\'s own tier; the node\'s tier lost from the row)', async () => {

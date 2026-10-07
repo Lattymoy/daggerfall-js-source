@@ -1,7 +1,7 @@
 // PROF8 (2026-09-30, Mac: "Continue the arc"; "XP follows your rank") - FISHING WITH THE NET, AS THE SERVICE KEEPS IT: a
 // haul's key the client's own (`haul:<x>:<y>:<day>:<id>`) - bounded, not witnessed - its Raw Fish into the Stores as own,
 // worked at the rank's own tier; a full net x1.5, a school's fish; at sea on ground the witnesses confirmed a Pearl and a
-// Slaughterfish's scales, a trophy anywhere (said again to an answer asked twice); forty hauls an ACCOUNT a day; the
+// Slaughterfish's scales, a trophy anywhere (said again to an answer asked twice); an ACCOUNT's hauls a day counted, past forty (CAP-OFF); the
 // daylight kept; the pixel witnessed. Driven through the real Worker over node:sqlite with every migration applied
 // (test/accountDb.mjs). bible/06-Systems/Professions-Arc.md 30.
 import { test } from 'node:test';
@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 
 import { standService, T0 } from './accountDb.mjs';
 import { haulKey, pixelReport, SEA_REGION } from '../src/net/nodeLaw.js';
-import { harvestXp, xpForRank, HAULS_PER_DAY, haulTier, PEARL } from '../src/net/professionLaw.js';
+import { harvestXp, xpForRank, haulTier, PEARL } from '../src/net/professionLaw.js';
 import { sharedClassicMinutes } from '../src/net/wire.js';
 import { utcDay } from '../src/net/marksLaw.js';
 
@@ -79,9 +79,9 @@ test('PROF8 service: a haul - Raw Fish into the Stores as own, 1-2 of them; Fish
   const b = await s.call('/v1/prof/harvest', body, mac.secret);
   assert.deepEqual([b.body.repeat, b.body.qty, b.body.node], [true, a.body.qty, a.body.node]);
   assert.deepEqual((await s.call('/v1/prof/harvest', { ...body, rid: rid() }, mac.secret)).body, { error: 'node-taken' }, 'a haul\'s key is one haul');
-  // the state says the day and the bound
+  // the state says the day - CAP-OFF: and no bound after it
   const st = await s.call('/v1/prof/state', { character: mac.character }, mac.secret);
-  assert.deepEqual([st.body.hauls, st.body.caps.hauls], [4, HAULS_PER_DAY]);
+  assert.deepEqual([st.body.hauls, st.body.caps.hauls], [4, undefined]);
 });
 
 test('PROF8 service: at sea on ground the witnesses confirmed, a Pearl and a Slaughterfish\'s scales (a fish more); a trophy anywhere, said again to an answer asked twice; on unconfirmed ground or inland, no Pearl and no scales', async () => {
@@ -109,17 +109,20 @@ test('PROF8 service: at sea on ground the witnesses confirmed, a Pearl and a Sla
   assert.equal(lied.body.qty, 1, 'a school past the two is none');
 });
 
-test('PROF8 service: forty hauls an ACCOUNT a day - the forty-first refused, on another character too; the kind and the key\'s one spelling; hauled by night too (ANY-HOUR); the pixel witnessed by a haul', async () => {
+test('PROF8 service: an ACCOUNT\'s hauls a day past forty (CAP-OFF) - the forty-first credited, on another character too, the account\'s count said; the kind and the key\'s one spelling; hauled by night too (ANY-HOUR); the pixel witnessed by a haul', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
-  for (let i = 0; i < HAULS_PER_DAY; i++) {
+  for (let i = 0; i < 40; i++) {
     const r = await s.haul(mac, { x: 320 + (i % 5) });
     assert.equal(r.status, 200, `haul ${i + 1}: ${JSON.stringify(r.body)}`);
   }
+  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): the account's day held forty hauls - the
+  // forty-first was `prof-fish-cap`, on another character too
   const over = await s.haul(mac);
-  assert.deepEqual([over.status, over.body], [409, { error: 'prof-fish-cap' }]);
+  assert.deepEqual([over.status, over.body.hauls], [200, 41], JSON.stringify(over.body));
   const alt = { ...mac, character: 'char-mac-alt' };
-  assert.deepEqual((await s.haul(alt)).body, { error: 'prof-fish-cap' }, 'the account\'s forty, not a character\'s');
+  const other = await s.haul(alt);
+  assert.deepEqual([other.status, other.body.hauls], [200, 42], 'the account\'s hauls, counted across its characters');
   const ann = await s.registered('Ann');
   assert.deepEqual((await s.haul(ann, { kind: 'hide' })).body, { error: 'prof-kind' });
   const day = utcDay(NOON);

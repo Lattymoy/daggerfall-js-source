@@ -55,7 +55,7 @@
 // Pure - the door, the storage, the clock and the ids are handed in - so
 // the pins drive it without a network.
 // ═══════════════════════════════════════════════════════════════════
-import { HARVEST_LATE_S, HIDES_PER_DAY, HIGH_HIDES_PER_DAY, HAULS_PER_DAY, NODE_PROFESSIONS, WITHDRAW_MAX, smeltRecipe } from './professionLaw.js';   // PROF8: the day's forty hauls; BAG1: a work's inputs
+import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs
 import { CARRIED_MAX, DEPOSIT_MAX, carriedUsable, carriedTotal, clampCarried } from './bagLaw.js';   // BAG1: what a character carries, counted
 import { recipeById, recipeInputs } from './recipeLaw.js';   // BAG1: a craft's inputs, moved in from the bag first
 import { potionById, brewSpends } from './alchemyLaw.js';   // BAG1: a brew's
@@ -146,13 +146,14 @@ export function createProfBook({ door, storage = null, character = () => null, n
     caps: /** @type {any} */ (null),
     /** PROF3: the account's Marks as the smith's stock last answered them, or null */
     marks: /** @type {number|null} */ (null),
-    /** PROF7: the account's hides today, every character's together (PROF0 6: 30, of them 3 of tiers 5-6) */
+    /** PROF7: the account's hides today, every character's together, and of them those of tiers 5-6 (PROF0 6: 3 a day -
+     *  CAP-OFF: the day's thirty of any tier are gone) */
     hunt: { hides: 0, high: 0 },
-    /** PROF8: the account's hauls today (40 a day, every character's together) */
+    /** PROF8: the account's hauls today, every character's together (CAP-OFF: no longer bounded) */
     hauls: 0,
-    /** REFUSALS-LEARNED: the state to be read again (a refusal said the day's count or the Stores moved elsewhere) */
+    /** REFUSALS-LEARNED: the state to be read again (a refusal said the Stores or the carried count moved elsewhere) */
     reread: false,
-    /** REFUSALS-LEARNED: what the account's refusals closed, by key (`account:<profession>`, `deep`) -> the UTC day */
+    /** REFUSALS-LEARNED: what the account's refusals closed, by key (`deep` - CAP-OFF: no `account:<profession>`) -> the UTC day */
     closed: new Map(),
   };
   const account = () => { try { return door.account?.() ?? null; } catch { return null; } };
@@ -350,8 +351,8 @@ export function createProfBook({ door, storage = null, character = () => null, n
       if (state.reread && now() - state.readAt >= PROF_REFRESH_BACKOFF_MS) return true;   // REFUSALS-LEARNED
       return state.day !== dayOf(now()) && now() - state.readAt >= PROF_REFRESH_BACKOFF_MS;
     },
-    /** REFUSALS-LEARNED: whether today a refusal closed `key` for the account - `account:<profession>` (the account's
-     *  day in that craft, every character's), or `deep` (its veins in dungeons nobody has vouched for). */
+    /** REFUSALS-LEARNED: whether today a refusal closed `key` for the account - `deep` (its veins in dungeons nobody has
+     *  vouched for). CAP-OFF: the account's day in a craft (`account:<profession>`) closes nothing - there is none. */
     closed(key) { return state.closed.get(key) === dayOf(now()); },
     /** A track as the service last said it (never null: a profession not worked yet is at nothing). */
     track(profession) { return state.tracks.get(profession) ?? { profession, xp: 0, rank: 0, specs: { 50: null, 100: null }, respec: null }; },
@@ -899,17 +900,14 @@ export function createProfBook({ door, storage = null, character = () => null, n
     shutBy(r);
     if (r?.error === 'node-taken') state.taken.add(`${h.node}|${h.kind}`);
     // REFUSALS-LEARNED (AUDIT 2026-10-01 part four): WHAT A REFUSAL SAYS OF THE DAY IS KEPT - the plan went on offering
-    // the act as ready, the act played, the tool wore, and the same refusal came every try. The character's day or the
-    // Stores filled elsewhere (another device): the state is read again. The account's day in the craft, or its veins in
-    // dungeons nobody has vouched for - counts the state does not carry: closed until the UTC day turns.
-    if (r?.error === 'prof-cap' || r?.error === 'stores-full' || r?.error === 'carried-full') state.reread = true;   // AUDIT2 BAG1 K9: and the carried count's own
-    if (r?.error === 'prof-account-cap') state.closed.set(`account:${NODE_PROFESSIONS[parseNodeKey(h.node)?.kind] ?? ''}`, dayOf(now()));
+    // the act as ready, the act played, the tool wore, and the same refusal came every try. The Stores filled elsewhere
+    // (another device): the state is read again. Its veins in dungeons nobody has vouched for - a count the state does not
+    // carry: closed until the UTC day turns. CAP-OFF: the character's day and the account's day in a craft are no more.
+    if (r?.error === 'stores-full' || r?.error === 'carried-full') state.reread = true;   // AUDIT2 BAG1 K9: and the carried count's own
     if (r?.error === 'prof-deep-cap') state.closed.set('deep', dayOf(now()));
     staleGround(h.node);   // GROUND-STALE: a refusal (`prof-rank` on a node the client stood within the rank) is the stale ground's word too
-    // AUDIT 32 B2: the account's day as the refusal says it - the book counted what this device saw, and another
+    // AUDIT 32 B2: the account's rare hides as the refusal says them - the book counted what this device saw, and another
     // character (or device) of the account may have taken the rest; a knife worn on every try until the next day's read
-    if (r?.error === 'prof-hunt-cap') state.hunt = { ...(state.hunt ?? { hides: 0, high: 0 }), hides: Math.max(state.hunt?.hides ?? 0, state.caps?.hides ?? HIDES_PER_DAY) };
-    if (r?.error === 'prof-fish-cap') state.hauls = Math.max(state.hauls ?? 0, state.caps?.hauls ?? HAULS_PER_DAY);   // PROF8: the day's forty, as the service says
     if (r?.error === 'prof-hunt-high') state.hunt = { ...(state.hunt ?? { hides: 0, high: 0 }), high: Math.max(state.hunt?.high ?? 0, state.caps?.highHides ?? HIGH_HIDES_PER_DAY) };
     return { ok: false, error: r?.error ?? 'server' };
   }

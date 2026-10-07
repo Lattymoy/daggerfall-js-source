@@ -50,7 +50,7 @@ function pixelEntry(px, py) {
 async function stage(pixels = [[405, 150]]) {
   const S = { now: NOON_MS, taken: new Set(), open: true, shift: [0, 0, 0] };
   const book = {
-    state: { open: true, today: {}, caps: { harvests: 60, stores: 5000 } },
+    state: { open: true, today: {}, caps: { stores: 5000 } },
     stale: () => false, refresh: async () => ({ ok: true }), pixel: () => ({ state: 'none' }), askPixels: async () => [], pump: () => {},
     dungeon: () => null, askDungeon: async () => false, held: () => 0, taken: (key) => S.taken.has(key), counting: () => false,
     track: () => ({ rank: 100, specs: { 50: null, 100: null } }), harvest: () => new Promise(() => {}),

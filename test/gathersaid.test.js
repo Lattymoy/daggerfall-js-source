@@ -56,7 +56,7 @@ function rig({ answer, rank = 49 } = {}) {
   const clock = { ms: NOON * 1000 };
   const door = {
     account: () => 'acct-1',
-    state: async () => ({ ok: true, data: { day, character: 'c1', tracks: [{ profession: 'mining', xp: xpForRank(rank), rank, specs: { 50: null, 100: null } }], today: {}, taken: [], stores: [], caps: { harvests: 60, stores: 5000 } } }),
+    state: async () => ({ ok: true, data: { day, character: 'c1', tracks: [{ profession: 'mining', xp: xpForRank(rank), rank, specs: { 50: null, 100: null } }], today: {}, taken: [], stores: [], caps: { stores: 5000 } } }),
     pixels: async (c, px) => ({ ok: true, data: { pixels: px.map(([x, y]) => ({ x, y, state: 'none' })), dungeons: [] } }),
     harvest: async (b) => { asked.push(b); return answer(b, asked.length); },
   };
