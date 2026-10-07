@@ -950,7 +950,7 @@ test('LPT1 the hosts: world.js and exterior.js stand the trees behind the mod\'s
   assert.match(w, /!seasons\.installing && seasons\.lookup\(a, 1\)/, 'the streaming host paints nothing seasonal mid-install (AUDIT LPT B3)');
   // PIN MOVED (ECOTONE1, 2026-10-07): by the archive the flat is drawn in - a border's flat is a neighbour climate's
   assert.match(w, /if \(lowPolyTrees\) wildFlats\.add\(`\$\{archive\}_\$\{f\.record\}#\$\{i\}`\);/, 'the terrain layout\'s flats marked wild');
-  assert.match(w, /wild\[i\] = wildFlats\.has\(`\$\{k\}#\$\{i\}`\) \? 1 : 0;\n\s+scales\[i\] = lptVariety\(px, py, c\[0\], c\[2\], !wild\[i\]\)\.scale \/ LPT_SCALE_MAX;/);
+  assert.match(w, /wild\[i\] = wildFlats\.has\(`\$\{k\}#\$\{i\}`\) \? 1 : 0;\n\s+const v = lptVariety\(px, py, c\[0\], c\[2\], !wild\[i\]\)\.scale;\n[^\n]*\n\s+scales\[i\] = \(fit \? Math\.min\(v, fit\[i\]\) : v\) \/ LPT_SCALE_MAX;/);   // PIN MOVED (LPT-FIT): the variety read into `v`, the far picture the lesser of it and the tree's fit
   assert.match(x, /buildTreeSet\(0, 0, lptGroups\)/, 'the location host: one set, none of it wild');
   assert.match(x, /lptGroups\.push\(\{ h: lptHandles\.length - 1, centers, wild: null \}\);/);
   assert.match(w, /lowPolyTrees: lptGroups\.length \? \{ px, py, ox: 0, oy: 0, oz: 0, handles: lptHandles, groups: lptGroups, trees: null, centers: null \} : null/);

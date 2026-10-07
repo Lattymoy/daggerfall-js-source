@@ -2351,7 +2351,11 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
       if (!onWatch && !f.dead && _sharedFoe(f)) { const n = fightN(f); if (n > 1) r.n = n; }   // AUDIT PSCALE1: how many fight it - every reader weighs its hits by the owner's count
       if (!onWatch && f.dead && typeof f._trapBy === 'string') { r.j = f._trapBy; r.q = f._trapQ | 0; }   // STRIKE-SHARED: whose soul trap was on it as it fell, and the trap's chance
       if (heirOf && !onWatch && !f.dead) {
-        const h = heirOf(f) ?? null;
+        // REVENANT-HEIR (Discord, 2026-10-07: "I got them to Elite Level V and I thought they'd kneel but they just keeled
+        // over and died"): MY REVENANT IS NEVER HANDED ON - its record is this character's alone (revenantById), so an
+        // heir's copy read a plain foe: no last stand, no will, no kneel, a corpse and a closed fight nobody's record
+        // heard. It goes with me, as a watchman goes with his own
+        const h = f.entity?.revenant?.id ? null : (heirOf(f) ?? null);
         const items = h ? validLootList(f.entity?.items ?? []) : null;
         f._heir = items ? h : null;
         if (f._heir) { r.e = h; r.it = items; }

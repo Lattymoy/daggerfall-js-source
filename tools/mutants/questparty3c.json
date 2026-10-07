@@ -172,7 +172,7 @@
   {
     "name": "QP3C-handover-names-none",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      if (heirOf && !f.dead) { const h = heirOf(f) ?? null; f._heir = h; if (h) r.e = h; }",
+    "old": "      if (heirOf && !f.dead) { const h = f.entity?.revenant?.id ? null : (heirOf(f) ?? null); f._heir = h; if (h) r.e = h; }",
     "new": "      void heirOf;",
     "tests": ["test/questparty3c.test.js"]
   },
