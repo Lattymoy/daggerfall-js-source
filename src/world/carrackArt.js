@@ -27,7 +27,7 @@
 // Each picture is `{ width, height, data }`, RGBA top-down (a PNG's order) for textureReplacement.js's vendored-art door.
 // Not a DFU member. Ledger A (SHIPS-2).
 import {
-  C, picture, put, get, mix, noise, planks, band, sliceOf, GALLEON_TEX_SIZE, TEX as GALLEON_TEX, GALLEON_TILE,
+  C, picture, put, get, mix, paintNoise as noise, planks, paintBand as band, liverySlice as sliceOf, GALLEON_TEX_SIZE, TEX as GALLEON_TEX, GALLEON_TILE,
   hullBottomArt, hullInnerArt, deckArt, trimArt, sparArt, ironArt, canvasArt, ropeArt, giltArt, grateArt, lidArt, doorArt,
   beamsArt, darkArt, underDeckArt,
 } from './galleonArt.js';
@@ -47,12 +47,12 @@ export const TEX = Object.freeze({
 });
 /** The pictures she shares with the galleon (painted by its own painters, under its numbers) - all but her shutter's
  *  and her ports' throats, which wear her strake's blue (`carrackArt`). */
-export const SHARED = Object.freeze(['hullBottom', 'hullInner', 'deck', 'trim', 'spar', 'iron', 'canvas', 'rope', 'gilt', 'grate', 'door', 'beams', 'underDeck']);
+const SHARED = Object.freeze(['hullBottom', 'hullInner', 'deck', 'trim', 'spar', 'iron', 'canvas', 'rope', 'gilt', 'grate', 'door', 'beams', 'underDeck']);
 
 /** Her side's livery spans these heights (her frame), keel to her bow's rail: five slices of 2.9 m, the galleon's
  *  density (her keel 4.588 under the sea, her bow's rail 9.748 over it). */
-export const HULL_SIDE_Y0 = -4.7;
-export const HULL_SIDE_Y1 = 9.8;
+const HULL_SIDE_Y0 = -4.7;
+const HULL_SIDE_Y1 = 9.8;
 /** The liveries as their slices: `y0..y1` cut into `recs.length` bands of 64 rows each, `recs` top down. The transom's
  *  over her upper stern (its faces 3.56 to 8.63); a house's from under its sill to over its eaves (7.735 to 10.9); the
  *  quarter rail's over the rail (7.957 to 9.557). */
@@ -81,7 +81,7 @@ const rowAt = (y, y0, y1, H) => Math.round(((y1 - y) / (y1 - y0)) * H);
 const line = (img, y, col) => { for (let x = 0; x < img.width; x++) put(img, x, y, col); };
 
 /** Her side's livery: 64 x 320, its rows her height from HULL_SIDE_Y1 (row 0) to HULL_SIDE_Y0 - worn as its five slices. */
-export function hullSideLivery() {
+function hullSideLivery() {
   const W = 64, H = 64 * BANDS.hullSide.recs.length;
   const img = picture(W, H);
   const rowOf = (y) => rowAt(y, HULL_SIDE_Y0, HULL_SIDE_Y1, H);
@@ -125,7 +125,7 @@ export function hullSideLivery() {
 const noise1 = (seed, W, H) => noise(seed, W, H, 8, Math.max(8, H / 8));
 
 /** Her side, slice `k` of five (0 her rail's, 4 her keel's): 64 x 64. */
-export const hullSideArt = (k) => sliceOf(hullSideLivery(), k);
+const hullSideArt = (k) => sliceOf(hullSideLivery(), k);
 
 /** Her transom's livery: 64 x 128, its rows from BANDS.transom.y1 down - the strake's blue carried up her stern, a
  *  gallery of leaded windows (a gilt frame each, the glass dark by day) over her gun deck's after end, an ochre name
@@ -167,7 +167,7 @@ export function transomLivery() {
   return img;
 }
 /** Her transom, slice `k` of two (0 the cap's): 64 x 64. */
-export const transomArt = (k) => sliceOf(transomLivery(), k);
+const transomArt = (k) => sliceOf(transomLivery(), k);
 
 /** The glow her stern gallery's glass gives off at night: its panes alone, warm, on black (renderer.uploadEmissionTexture)
  *  - the transom's livery's, cut as its picture is (`carrackGlow`). */

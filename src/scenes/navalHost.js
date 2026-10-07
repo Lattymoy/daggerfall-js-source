@@ -489,7 +489,9 @@ export function rigBoxesOf(boat) {
   const lp = mo.localPosition ?? [0, 0, 0];
   const at = (p) => [p[0] - lp[0], p[1] - lp[1], p[2] - lp[2]];   // the root's frame in her mesh object's
   const hangs = (k) => { const s = boat.Sails?.[k]; return !s || (s.activeSelf && !animatorOf(s)?.GetBool('Stowed')); };
-  return rig.filter((box) => /** @type {any} */ (box).sail == null || hangs(/** @type {any} */ (box).sail)).map((box) => {
+  // SHIPS-2: a box of another sail plan than hers is not her canvas (her Booms and Sails are her own plan's)
+  const plan = (box) => /** @type {any} */ (box).variant == null || /** @type {any} */ (box).variant === (boat.variant ?? 0);
+  return rig.filter((box) => plan(box) && (/** @type {any} */ (box).sail == null || hangs(/** @type {any} */ (box).sail))).map((box) => {
     const [mn, mx] = box, b = /** @type {any} */ (box);
     if (b.obb) return orientedBox(multiply(m, mat4FromQuatPos(quatAngleAxis(b.obb.pitch, [1, 0, 0]), at(b.obb.c)), new Float32Array(16)), [0, 0, 0], b.obb.h);
     const c = at([(mn[0] + mx[0]) / 2, (mn[1] + mx[1]) / 2, (mn[2] + mx[2]) / 2]), h = [(mx[0] - mn[0]) / 2, (mx[1] - mn[1]) / 2, (mx[2] - mn[2]) / 2];

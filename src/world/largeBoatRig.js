@@ -58,7 +58,7 @@ export const LARGE_BOAT_RIG = Object.freeze({
 });
 const R = LARGE_BOAT_RIG;
 /** Her mast's (and above its head the topmast's) corners' reach from its axis at height `y`. */
-export function mastRadius(y) {
+function mastRadius(y) {
   const m = R.mast, t = R.topmast;
   if (y > m.topY) return t.footR + (t.headR - t.footR) * (y - t.footY) / (t.topY - t.footY);
   return m.footR + (m.headR - m.footR) * (y - m.footY) / (m.topY - m.footY);
@@ -94,7 +94,7 @@ export const PLANS = Object.freeze([
 const MOST_SAILS = Math.max(...PLANS.map((p) => p.sails.length));
 /** Her skinned renderers' bakes (world/galleonRig.js BAKE's law): her running rope every frame, each canvas from its
  *  own timer - its place in its plan. */
-export const BAKE = Object.freeze({ rope: Object.freeze({ everyFrame: true }), canvasTimer: (k) => Math.fround(k * FIX_DEFORMATIONS_INTERVAL / MOST_SAILS) });
+const BAKE = Object.freeze({ rope: Object.freeze({ everyFrame: true }), canvasTimer: (k) => Math.fround(k * FIX_DEFORMATIONS_INTERVAL / MOST_SAILS) });
 
 // ── the stays ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -163,7 +163,7 @@ export function gaffTopsailPose(sail, pose) {
  *  its foot, the gaff up to its peak, their jaws about her mast, and the peak halyard up into the masthead (or the
  *  topmast's head, `headY`) on its axis - none where `headY` is null (plan 5: a square topsail braced round sweeps
  *  through any line from the topmast to the gaff's peak). */
-export function gaffSparsGeometry(sail, headY) {
+function gaffSparsGeometry(sail, headY) {
   const bench = new MeshBench(LARGE_BOAT_ARCHIVE);
   const mastR = mastRadius(sail.boomY), z0 = -(mastR + 0.03);
   prism(bench, TEX.spar, [0, 0.12, z0], [0, 0.12, -sail.boomLen], 0.075, 0.055, 8, { tileV: LARGE_BOAT_TILE.spar[1], smooth: true });
@@ -197,7 +197,7 @@ export function staysGeometry(which) {
 
 /** The running rope's belays (her frame; the starboard one, the port its mirror): the large square sail's braces on her
  *  stern rail's cap at her quarter, the staysails' sheets on her gunwale's cap abreast of their clews. */
-export const BELAYS = Object.freeze({
+const BELAYS = Object.freeze({
   squareBrace: Object.freeze([1.735, R.sternCapY, -3.6]),
   staySheet: Object.freeze([1.7, R.gunwaleY, 1.6]),
 });
@@ -222,7 +222,7 @@ export function buildLargeBoatRig(cx) {
     const boomOf = (name, y) => { if (!booms.has(name)) { const b = nodeOf(name, { p: [m.x, y, m.z] }); booms.set(name, b); kids.push(b); } return booms.get(name); };
     const headY = plan.top ? R.topmast.topY - 0.1 : m.topY - 0.12;
     plan.sails.forEach((s, k) => {
-      const key = `V${v}${s.name.replace(/[^A-Za-z0-9]/g, '')}`;
+      const key = sailKey(v, s.name);
       timers.set(key, k);
       if (s.kind === 'square') {
         const d = mastRadius(s.yardY) + 0.17;
@@ -235,7 +235,7 @@ export function buildLargeBoatRig(cx) {
         boom.children.push(sail, yard, armP, armS);
         // the large square sail's braces, aft to her stern rail's cap at her quarters
         if (s.yardY < m.topY) {
-          for (const [arm, side] of [[armP, -1], [armS, 1]]) {
+          for (const [arm, side] of /** @type {const} */ ([[armP, -1], [armS, 1]])) {
             const name = `${key}Brace${side > 0 ? 'Starboard' : 'Port'}`;
             const p = [side * BELAYS.squareBrace[0], BELAYS.squareBrace[1], BELAYS.squareBrace[2]];
             const belay = nodeOf(`${name}Belay`, { p });
@@ -285,6 +285,11 @@ export function buildLargeBoatRig(cx) {
   return { variants, kids: [], clips, overrides };
 }
 
+/** A sail's key in plan `v` (its meshes', its clips' and its parts' nodes' names): the mod's name without 'Skiff' and
+ *  without 'Sail' - Come Sail Away's walk takes EVERY node whose name holds 'Sail' (but its bones, its mesh) for a sail
+ *  (systems/comeSailAwayBoat.js getBoatTransforms), so a yard, a spar, a brace or a belay named for its sail's mod
+ *  name would be counted in her Sails, her power and her toggles. */
+export const sailKey = (v, name) => `V${v}${name.replace(/^Skiff/, '').replace(/Sail/g, '').replace(/[^A-Za-z0-9]/g, '')}`;
 /** A mesh registered once by key on the prefab's bench. */
 function mesh(key, geometry, cx) { if (!cx.meshes?.[key]) cx.mesh(key, geometry); return key; }
 /** A drawn mesh's components (a MeshFilter and its renderer) over a mesh already registered. */

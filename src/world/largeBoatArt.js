@@ -16,7 +16,7 @@
 //
 // Each picture is `{ width, height, data }`, RGBA top-down. Not a DFU member. Ledger A (SHIPS-2).
 import {
-  C, picture, put, mix, noise, band, planks, GALLEON_TEX_SIZE, TEX as GALLEON_TEX, GALLEON_TILE,
+  C, picture, put, mix, paintNoise as noise, paintBand as band, planks, GALLEON_TEX_SIZE, TEX as GALLEON_TEX, GALLEON_TILE,
   hullBottomArt, hullInnerArt, deckArt, trimArt, sparArt, ironArt, canvasArt, ropeArt, giltArt, grateArt, lidArt, doorArt,
   beamsArt, darkArt, underDeckArt,
 } from './galleonArt.js';
@@ -33,11 +33,11 @@ export const TEX = Object.freeze({
   hullSide0: 0, transom0: 6,
 });
 /** The pictures she shares with the galleon (painted by its own painters, under its numbers). */
-export const SHARED = Object.freeze(['hullBottom', 'hullInner', 'deck', 'trim', 'spar', 'iron', 'canvas', 'rope', 'gilt', 'grate', 'lid', 'door', 'beams', 'dark', 'underDeck']);
+const SHARED = Object.freeze(['hullBottom', 'hullInner', 'deck', 'trim', 'spar', 'iron', 'canvas', 'rope', 'gilt', 'grate', 'lid', 'door', 'beams', 'dark', 'underDeck']);
 
 /** Her side's livery spans these heights (her frame): her keel (-0.615) to her gunwale's cap (2.249), one slice. */
-export const HULL_SIDE_Y0 = -0.66;
-export const HULL_SIDE_Y1 = 2.26;
+const HULL_SIDE_Y0 = -0.66;
+const HULL_SIDE_Y1 = 2.26;
 /** The liveries as their slices (world/carrackArt.js BANDS's shape): her side's and her transom's, keel to gunwale. */
 export const BANDS = Object.freeze({
   hullSide: Object.freeze({ y0: HULL_SIDE_Y0, y1: HULL_SIDE_Y1, recs: Object.freeze([TEX.hullSide0]) }),
@@ -76,7 +76,7 @@ function clinker(img, y0, y1, h, seed, base) {
 
 /** Her side: 64 x 64 over her height - the tarred bottom, the white boot line, oiled pine clinker strakes, the green
  *  sheer strake with its white line, the black gunwale. */
-export function hullSideArt() {
+function hullSideArt() {
   const S = GALLEON_TEX_SIZE, img = picture(S, S);
   const weed = noise(0xb51, S, S, 8, 8);
   const wl = rowOf(0);
@@ -92,7 +92,7 @@ export function hullSideArt() {
 }
 
 /** Her transom: her side's strakes round her stern, and a carved ochre name board on them. 64 x 64. */
-export function transomArt() {
+function transomArt() {
   const img = hullSideArt();
   const y0 = rowOf(1.55), y1 = rowOf(1.2);
   for (let y = y0; y <= y1; y++) for (let x = 8; x < 56; x++) {

@@ -316,8 +316,9 @@ export function lateenSparsGeometry(sail, mast, archive = undefined) {
   for (let k = 0; k <= N; k++) { const a = Math.PI / 2 + (k / N) * Math.PI * 2; ring.push([Math.sin(a) * -r, dy, Math.cos(a) * r]); }
   rope(bench, TEX.rope, ring, rr);
   rope(bench, TEX.rope, [[-r, dy, 0], [slings[0] + sail.yardR[0] * 0.7, -sail.yardR[0] * 0.26, 0]], rr);
-  // the halyard, from the slings up into the masthead on its axis
-  rope(bench, TEX.rope, [add(slings, [0, sail.yardR[0], 0]), [0, mast.top - 0.15 - y0, 0]], rr * 0.86);
+  // the halyard, from the slings up to the masthead's face on their side (SHIPS-2: to its axis it went into the mast
+  // half way up - the slings stand off the mast, which tapers: led to its face it lies outside the mast all the way)
+  rope(bench, TEX.rope, [add(slings, [0, sail.yardR[0], 0]), [-(mast.radius(mast.top - 0.15) + rr), mast.top - 0.15 - y0, 0]], rr * 0.86);
   return bench.finish();
 }
 

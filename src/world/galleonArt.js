@@ -113,7 +113,7 @@ export const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) 
 export const shade = (c, k) => [c[0] * k, c[1] * k, c[2] * k];
 
 /** Tileable value noise over a w x h picture, `cx` by `cy` lattice cells across it. */
-export function noise(seed, w, h, cx, cy) {
+function noise(seed, w, h, cx, cy) {
   const r = mulberry32(seed);
   const lat = Float32Array.from({ length: cx * cy }, () => r());
   const at = (i, j) => lat[(((j % cy) + cy) % cy) * cx + (((i % cx) + cx) % cx)];
@@ -166,17 +166,21 @@ export function planks(img, { y0 = 0, y1 = img.height, ph = 8, lenMin = 24, lenM
 }
 
 /** GALLEON-2: a livery's slice `k` (top down) - its rows k*64 .. k*64+63, a 64 x 64 picture of its own. */
-export function sliceOf(img, k) {
+function sliceOf(img, k) {
   const S = GALLEON_TEX_SIZE, out = picture(S, S);
   out.data.set(img.data.subarray(k * S * S * 4, (k + 1) * S * S * 4));
   return out;
 }
 
 /** A row band filled with one colour, a little noise on it. */
-export function band(img, y0, y1, col, seed, amp = 0.06) {
+function band(img, y0, y1, col, seed, amp = 0.06) {
   const n = noise(seed, img.width, img.height, 8, 8);
   for (let y = y0; y < y1; y++) for (let x = 0; x < img.width; x++) put(img, x, y, shade(col, 1 - amp + 2 * amp * n(x, y)));
 }
+/** SHIPS-2: the painter's tools for the other ships' painters (world/carrackArt.js, world/largeBoatArt.js), under names
+ *  of their own - `noise`, `band` and `sliceOf` are other things elsewhere (systems/arenaSound.js,
+ *  render/lightClusters.js). */
+export { noise as paintNoise, band as paintBand, sliceOf as liverySlice };
 
 // ── the pictures ─────────────────────────────────────────────────────────────────────────────────────────────────────
 

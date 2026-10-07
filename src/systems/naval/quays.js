@@ -107,7 +107,7 @@ export const QUAY_KERB_H = 0.15;
  */
 export const GANGWAY_SIDE = Object.freeze([
   Object.freeze([0.95, 0.7]),    // 0 Rowboat - on her gunwale (0.63 m up at 0.9 m out)
-  Object.freeze([1.75, 1.36]),   // 1 Large Boat - on her gunwale (1.27 m up at 1.7-1.8 m out)
+  Object.freeze([1.9, 2.26]),    // 1 Large Boat - SHIPS-2: Mac's Tiny Ship: on her gunwale's cap at its outer edge (1.89 out, 2.25 up)
   Object.freeze([5.45, 6.7]),    // 2 Small Ship - Mac's galleon: the entry port in her waist's bulwark, her side 5.33 m out there
   Object.freeze([9.2, 10.75]),   // 3 Large Galley - her upper deck (she never docks - DOCK_REFUSED)
   Object.freeze([6.21, 8.32]),   // 4 Carrack - SHIPS-2: Mac's carrack: the entry port in her waist's bulwark, its sill 7.94 up and 6.09 out
@@ -118,10 +118,13 @@ export const MOD_SMALL_SHIP_GANGWAY = Object.freeze([7.65, 4.14]);
 /** SHIPS-2: the mod's own Carrack's - her main deck's port, her side 7.45-7.5 m out there - hull 4's while it stands in
  *  for Mac's carrack (navalShips.js MOD_CARRACK_BUILD). */
 export const MOD_CARRACK_GANGWAY = Object.freeze([7.65, 4.14]);
+/** SHIPS-2: the mod's own Large Boat's - on its gunwale (1.27 m up at 1.7-1.8 m out) - hull 1's while it stands in for
+ *  Mac's Tiny Ship (navalShips.js MOD_LARGE_BOAT_BUILD). */
+export const MOD_LARGE_BOAT_GANGWAY = Object.freeze([1.75, 1.36]);
 /** SHIPS-2: the mod's own gangway of each hull a ship of the port's stands in for. */
-export const MOD_GANGWAYS = Object.freeze({ 2: MOD_SMALL_SHIP_GANGWAY, 4: MOD_CARRACK_GANGWAY });
+export const MOD_GANGWAYS = Object.freeze({ 1: MOD_LARGE_BOAT_GANGWAY, 2: MOD_SMALL_SHIP_GANGWAY, 4: MOD_CARRACK_GANGWAY });
 /** GALLEON-HOLDINGS: where a gangway meets `hull` - GANGWAY_SIDE's, but the mod's own ship's wherever its is the build
- *  that stands (SHIPS-2: the galleon's and the carrack's). */
+ *  that stands (SHIPS-2: the galleon's, the carrack's and the large boat's). */
 export const gangwaySide = (hull) => (MOD_GANGWAYS[hull] && hullBuild(hull) === MOD_BUILDS[hull] ? MOD_GANGWAYS[hull] : GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);
 /** AUDIT HOLDINGS Q2: the hulls no quay takes - a Large Galley (93 m) is half again a Carrack's berth, and rows in and
  *  out as the sea's own never moor (shipLife.js). */

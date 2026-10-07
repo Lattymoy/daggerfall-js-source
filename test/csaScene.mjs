@@ -11,7 +11,9 @@ const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
 // GALLEON (2026-10-01): hull 2 the new galleon over the mod's, as the game's loader stands her (comeSailAwayModels.js) -
 // the pool's own models (navalSea.mjs, a file fetch) and these are one ship
 const GALLEON = JSON.parse(readFileSync(new URL('../src/assets/galleon/galleon.json', import.meta.url), 'utf8'));
-export const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json'), galleon: GALLEON });
+// SHIPS-2 (2026-10-07): and hull 4 the new carrack, hull 1 the new large boat, as the loader stands them
+const ship = (f) => JSON.parse(readFileSync(new URL(`../src/assets/ships/${f}`, import.meta.url), 'utf8'));
+export const MODELS = comeSailAwayModels({ prefabs: json('prefabs.json'), meshes: json('meshes.json'), bin: new Uint8Array(readFileSync(new URL('meshes.bin', DIR))), materials: json('materials.json'), animation: json('animation.json'), galleon: GALLEON, carrack: ship('carrack.json'), largeBoat: ship('largeBoat.json') });
 export const ctxFor = (player) => ({ models: MODELS, player: () => player, billboardSize: () => [0.8, 1.6], modelBounds: () => ({ min: [-1, 0, -1], max: [1, 1, 1] }) });
 
 export function terrain(x, y, { tile = 0 } = {}) {

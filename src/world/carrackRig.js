@@ -68,13 +68,13 @@ export const CARRACK_RIG = Object.freeze({
 });
 const MASTS = CARRACK_RIG.masts;
 /** A mast's corners' distance from its axis at height `y` (its taper, the bake's). */
-export function mastRadius(mast, y) {
+function mastRadius(mast, y) {
   const R = CARRACK_RIG;
   return R.footR + (R.headR - R.footR) * (y - R.footY) / (MASTS[mast].top - R.footY);
 }
 /** A point on a mast's side face (`s` +1 starboard, -1 port) at height `y`: the face's middle (world/galleonRig.js
  *  mastSideFace's - the masts are the galleon's pentagon). */
-export function mastSideFace(mast, y, s) {
+function mastSideFace(mast, y, s) {
   const r = mastRadius(mast, y);
   return [s * 0.7694 * r, y, MASTS[mast].z - 0.25 * r];
 }
@@ -107,21 +107,21 @@ export const SAILS = Object.freeze([
  *  lateen's along its foot. */
 export { GRID };
 /** A clip's length (s), the galleon's. */
-export const SAIL_CLIP_S = 1;
+const SAIL_CLIP_S = 1;
 /** Her skinned renderers' bakes (world/galleonRig.js BAKE's law): her running rope every frame, each canvas on the
  *  mod's tenth of a second from its own timer - the k-th sail's k fifths of it. */
-export const BAKE = Object.freeze({ rope: Object.freeze({ everyFrame: true }), canvasTimer: (k) => Math.fround(k * FIX_DEFORMATIONS_INTERVAL / SAILS.length) });
+const BAKE = Object.freeze({ rope: Object.freeze({ everyFrame: true }), canvasTimer: (k) => Math.fround(k * FIX_DEFORMATIONS_INTERVAL / SAILS.length) });
 
 /** How far before its mast's axis a square sail's yard hangs (its boom's frame z): the mast's radius at the yard and a
  *  yard's thickness with a hand's room - the spritsail's under its slings. */
-export const yardOffset = (sail) => (sail.mast === 'bowsprit' ? 0 : mastRadius(sail.mast, sail.yardY) + 0.24);
+const yardOffset = (sail) => (sail.mast === 'bowsprit' ? 0 : mastRadius(sail.mast, sail.yardY) + 0.24);
 /** Where a square sail's boom pivots (her frame): its mast's axis at its yard's height - the spritsail's under the
  *  bowsprit at its slings. */
 export const boomPivot = (sail) => [0, sail.yardY, sail.mast === 'bowsprit' ? sail.z : MASTS[sail.mast].z];
 /** Where a yard's lifts are made fast, in its boom's frame: its masthead 0.12 m under its top on its axis (the main
  *  course's and the main topsail's both - the course's pass behind the topsail's canvas); the spritsail's into the
  *  bowsprit's underside over its slings. */
-export function liftHead(sail) {
+function liftHead(sail) {
   if (sail.mast === 'bowsprit') return [0, bowspritUnderAt(sail.z)[1] - sail.yardY, 0];
   return [0, MASTS[sail.mast].top - 0.12 - sail.yardY, 0];
 }
@@ -142,14 +142,14 @@ export const MIZZEN = Object.freeze({ z: MASTS.mizzen.z, top: MASTS.mizzen.top, 
  * there). The main channel is clear of her entry port (aft of it) and of every gunport's shutter swung up (they stand
  * under 4.2).
  */
-export const CHANNELS = Object.freeze({
+const CHANNELS = Object.freeze({
   fore: Object.freeze({ feet: Object.freeze([10.75, 11.4, 12.05]), headY: 16.1, inX: 6.1075, plateX: Object.freeze([6.1698, 6.1744, 6.179]) }),
   main: Object.freeze({ feet: Object.freeze([1.2, 1.8, 2.4, 3.0]), headY: 19.3, inX: 6.0858, plateX: Object.freeze([6.1022, 6.1064, 6.1107, 6.1149]) }),
   topY: 8.4, thick: 0.14, width: 0.52, deadeyeR: 0.11, deadeyeH: 0.22, chainDrop: 0.42,
 });
 /** Where each shroud stands: its head on its mast's side face, its foot on the deadeye on its channel (the galleon's
  *  shroudLines' shape). */
-export function shroudLines() {
+function shroudLines() {
   const lines = [];
   const C = CHANNELS;
   for (const s of [-1, 1]) {
@@ -164,7 +164,7 @@ export function shroudLines() {
   return lines;
 }
 /** The ratlines: a rung across each neighbouring pair of a mast's shrouds every 0.42 m, each end on its shroud's line. */
-export function ratlineLines() {
+function ratlineLines() {
   const out = [];
   const lines = shroudLines();
   for (const mast of ['main', 'fore']) for (const s of [-1, 1]) {
@@ -184,7 +184,7 @@ export function ratlineLines() {
  * lateen's forward arm at every swing; the bobstay from the bowsprit's underside, aft of the spritsail's slings, to her
  * stem.
  */
-export function stayLines() {
+function stayLines() {
   const foreHead = 16.6, mainHead = 19.9, mainFoot = 13.4, mizzenHead = 19.9, mizzenFoot = 14.1;
   const B = CARRACK_RIG.bowsprit;
   const endTop = add(B.end, scl(norm([0, B.end[2] - B.heel[2], -(B.end[1] - B.heel[1])]), B.endR));   // its top corner
@@ -198,7 +198,7 @@ export function stayLines() {
 
 /** Her standing rigging, still in her frame, a mesh a piece (the galleon's AUDIT GN-R15): each mast's shrouds with their
  *  deadeyes, ratlines and channels, the stays and the bobstay, and the flagstaff over her main masthead. */
-export function standingRiggingGeometry() {
+function standingRiggingGeometry() {
   const lines = shroudLines(), rungs = ratlineLines();
   const C = CHANNELS;
   const shrouds = (mast) => {
@@ -228,7 +228,7 @@ export function standingRiggingGeometry() {
  * waist forward of her entry port (under her lateen's sweep: test/ships2_carrack.test.js); the spritsail's to her bow's
  * rail where it narrows to her stem.
  */
-export const BELAYS = Object.freeze({
+const BELAYS = Object.freeze({
   spritBrace: Object.freeze([2.5, 9.29, 21.0]),
   foreBrace: Object.freeze([5.95, CARRACK_RIG.railY, 7.4]),
   foreSheet: Object.freeze([5.95, CARRACK_RIG.railY, 13.5]),

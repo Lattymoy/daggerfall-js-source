@@ -91,7 +91,7 @@ export const LARGE_BOAT_BATTERIES = Object.freeze({
 
 /** Which picture a face of a baked part of hers wears, and how it lies on it (world/carrackModel.js faceSkin's law):
  *  `{ rec, uv(p) }`, or `{ band, u(p) }` a face of her livery. */
-export function faceSkin(role, n, c) {
+function faceSkin(role, n, c) {
   const tiled = (rec, key = keyOf(rec)) => ({ rec, uv: (p) => planarUv(p, n, LARGE_BOAT_TILE[key]) });
   const banded = (name) => ({ band: BANDS[name], u: (p) => planarUv(p, n, [LARGE_BOAT_TILE[name][0], 1])[0] });
   const up = n[1] > 0.7, down = n[1] < -0.7;

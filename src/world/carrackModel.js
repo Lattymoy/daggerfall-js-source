@@ -86,7 +86,7 @@ export const DRIVE_TRIGGER_AT = Object.freeze([HELM.hub[0], HELM.hub[1], HELM.hu
 
 /** Her board triggers' middles abeam (their boxes 3 m a side, the mod's): each cube's inner face 4 cm outside her
  *  entry port's outer jamb and her side under it (AUDIT GN-P4's law - never into her planking). */
-export const BOARD_X = MEASURED.hullOuterX + 1.5 + 0.04;
+const BOARD_X = MEASURED.hullOuterX + 1.5 + 0.04;
 /** Where her rope ladders hang and her board lands, along her: the entry port's fore part - its ropes and rungs 7 cm
  *  inside its fore jamb (0.7075), and 7 cm forward of gunport 2's shutter (swung up, it reaches z 0.028). */
 export const LADDER_Z = 0.35;
@@ -107,15 +107,20 @@ export const LID = Object.freeze({
 export const LID_SILL_ROW = LID.rows.indexOf(MEASURED.portSillY);
 
 /** Her guns: the galleon's gun (world/galleonModel.js gunGeometry - its axis 1.16 m over its foot) on a platform at
- *  each port, its top `platformY` so the gun's axis is the port's middle (her ports' sills stand 1.11 m over her gun
- *  deck, the galleon's 0.48); run out its muzzle 9 cm outside her planking at the knuckle, run in 1.1 m inboard to load.
+ *  each port (her ports' sills stand 1.11 m over her gun deck, the galleon's 0.48), its top `platformY` a step over her
+ *  gun deck - PLATFORM_RISE, under the deck lens's DECK_STEP, so her gun deck beside a platform stays her floor and a
+ *  body on a platform's end stands aboard (systems/naval/navalDeck.js: a wall rising more than a step walls a floor;
+ *  at 0.445 m, the port's middle, the floor round each platform's ends fell out and its ends read ashore) - and the
+ *  gun's axis 6.5 cm under the port's middle, 0.43 m over its sill; run out its muzzle 9 cm outside her planking at the
+ *  knuckle, run in 1.1 m inboard to load.
  *  Her chasers on their swivels at `chaserZ` on her bow's deck, a metre inboard of its flared bulwark's inner skin (the
  *  deck narrows to 1.8 m across at z 21), their barrels `chaserY` - over her bow's cap (8.87 to 9.47 there) and, laid
  *  6 degrees down, 0.3 m over it forward. */
 const AXIS_OVER_FOOT = GALLEON_GUN.axisY - GALLEON_MEASURED.gunDeckY;
+const PLATFORM_RISE = 0.38;
 export const GUN = Object.freeze({
-  axisY: (MEASURED.portSillY + MEASURED.portTopY) / 2,
-  platformY: (MEASURED.portSillY + MEASURED.portTopY) / 2 - AXIS_OVER_FOOT,
+  axisY: MEASURED.gunDeckY + PLATFORM_RISE + AXIS_OVER_FOOT,
+  platformY: MEASURED.gunDeckY + PLATFORM_RISE,
   runOutX: MEASURED.hullOuterX + 0.09 - GALLEON_GUN.muzzleX, runInX: MEASURED.hullOuterX + 0.09 - GALLEON_GUN.muzzleX - 1.1,
   muzzleX: GALLEON_GUN.muzzleX, chaserY: 9.95, chaserZ: 19.5,
 });
@@ -134,7 +139,7 @@ export const CARRACK_BATTERIES = Object.freeze({
 /** Which picture a face of a baked part of hers wears, and how it lies on it: `{ rec, uv(p) }`, or a face of a livery
  *  `{ band, u(p) }` - the livery's slices by height (world/carrackArt.js BANDS) that world/galleonModel.js
  *  bakedPartGeometry cuts the face into (the galleon's R14 law). */
-export function faceSkin(role, n, c) {
+function faceSkin(role, n, c) {
   const tiled = (rec, key = keyOf(rec)) => ({ rec, uv: (p) => planarUv(p, n, CARRACK_TILE[key]) });
   const banded = (name) => ({ band: BANDS[name], u: (p) => planarUv(p, n, [CARRACK_TILE[name][0], 1])[0] });
   const up = n[1] > 0.7, down = n[1] < -0.7;
@@ -229,7 +234,7 @@ export function lidFitOf(hull, s = 1) {
  * { geometry, xh, collider }: `collider` its board's two plates from the hinge to the sill over the port (AUDIT
  * GN-P10's - solid, and no face of it level: her deck's bake reads every collider).
  */
-export function lidGeometry(s, fit) {
+function lidGeometry(s, fit) {
   const bench = new MeshBench(CARRACK_ARCHIVE);
   const R = LID.rows.length, K = LID.cols.length, t = LID.thick;
   const xh = Math.max(...fit[0]);
@@ -279,7 +284,7 @@ export function platformGeometry(s, z) {
  *  descends along z - treads, a stringer each side and a manrope over each from its foot up the stair's line to 0.95 m
  *  over her deck at the hatchway's edge, made fast there to the coaming (a house stands over each of her hatchways, so
  *  no cover shuts on it - the galleon's AUDIT GN-P2). */
-export function companionGeometry(topZ, dir, halfX = 0.8, pitch = 48) {
+function companionGeometry(topZ, dir, halfX = 0.8, pitch = 48) {
   const bench = new MeshBench(CARRACK_ARCHIVE);
   const top = MEASURED.mainDeckY, bottom = MEASURED.gunDeckY;
   const rise = 0.3, steps = Math.round((top - bottom) / rise);
@@ -323,7 +328,7 @@ export function mirroredX(g) {
 
 /** The binnacle before her wheel: a box, its gilt cap and its lamp's hood, under the helmsman's sight lines over the
  *  wheel (the galleon's AUDIT GN-P1 heights over her deck). */
-export function helmPedestalGeometry() {
+function helmPedestalGeometry() {
   const bench = new MeshBench(CARRACK_ARCHIVE);
   const [hx, hy, hz] = HELM.hub, y0 = MEASURED.mainDeckY;
   box(bench, TEX.trim, [hx, y0 + 0.48, hz + 0.42], [0.26, 0.48, 0.22], { tile: CARRACK_TILE.trim });
@@ -436,7 +441,7 @@ export function carrackPrefab(bake, csa, base = csa.components.length) {
   // pair is (CarrackDoor.003 and .004) - the starboard leaf the port one mirrored, on its own clips (it turns the other way)
   const d = M.houseDoor;
   const foot = d.y0 + 0.01, leafW = d.halfX - 0.03, leafH = d.y1 - 0.01 - foot;
-  for (const [s, side] of [[-1, 'Port'], [1, 'Starboard']]) {
+  for (const [s, side] of /** @type {const} */ ([[-1, 'Port'], [1, 'Starboard']])) {
     const leaf = own(s < 0 ? doorLeafGeometry(leafW, leafH) : mirroredX(doorLeafGeometry(leafW, leafH)));
     kids.push(meshNode(`HouseDoor${side}`, `carrack:door${side}`, leaf, { collider: true, p: [s * (d.halfX - 0.02), foot, d.z - DOOR_THICK / 2], c: [animator(s < 0 ? 'Door Controller' : 'carrack2/DoorStarboard')], kids: [nodeOf('DoorTrigger')] }));
   }
@@ -536,6 +541,7 @@ export const TAFFRAIL_Z = -23.05;
  *  `yawDeg` (Unity's: +z toward +x) so it lies flattest along her bow's flare (its stock and ring piece, 1.6 m across its
  *  node unturned, along her side: turned every 10 degrees round, -150 stands its node nearest her side, 0.61 m off it -
  *  unturned, 1.6 m), and stood out so EVERY vertex of both clears her outer planking by 2 cm or more (the galleon's AUDIT
- *  GN-P3 law; test/ships2_carrack.test.js measures it on the mod's own mesh): its node over her main deck's height, its
- *  cable's head under her bow's rail. */
-export const ANCHOR = Object.freeze({ yawDeg: -150, weighed: Object.freeze([4.334, 7.2, 18.2]), letGo: Object.freeze([4.094, 7.2, 18.2]) });
+ *  GN-P3 law) and no edge of either crosses a face of hers (test/ships2_carrack.test.js measures it on the mod's own
+ *  mesh - its vertices clear at 4.094, the let-go anchor's shank under the water crossed her bow's swell between them,
+ *  and stood 0.1 m further out it clears): its node over her main deck's height, its cable's head under her bow's rail. */
+export const ANCHOR = Object.freeze({ yawDeg: -150, weighed: Object.freeze([4.334, 7.2, 18.2]), letGo: Object.freeze([4.244, 7.2, 18.2]) });
