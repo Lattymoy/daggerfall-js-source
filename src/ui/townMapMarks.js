@@ -5,10 +5,10 @@
 // toggleExteriorAutomap) hands them in through the door (ui/townMapDoor.js). The enhanced town map only - the classic
 // exterior automap is DFU's own window and draws DFU's marks alone, as DISC23-A left the party's bodies.
 //
-//   A NOTICE BOARD is a town board (model 41739, world/rmbLayout.js isBulletinBoard) that is not one of its bounty
-//   boards (systems/bountyBoard.js questBoardIndices), while the Notice Board is open (NOTICE1: online, BOARD_OPEN) -
-//   the same boards noticeCountPoints floats a town's unread count over. It stands in the street, so its mark stands
-//   where it does: the middle of its box, in the location's own frame (metres, the frame the player's `local` is in).
+//   A NOTICE BOARD is the town board (model 41739, world/rmbLayout.js isBulletinBoard) that is its Notice Board -
+//   ONE-BOARD's one a town (systems/bountyBoard.js noticeBoardIndex) - while the Notice Board is open (NOTICE1: online,
+//   BOARD_OPEN): the board noticeCountPoints floats a town's unread count over. It stands in the street, so its mark
+//   stands where it does: the middle of its box, in the location's own frame (metres, the frame the player's `local` is in).
 //
 //   A PLAYER'S HOUSING is a building a player owns in this town: an online home (HOME1, systems/onlineHomes.js, the
 //   service's registry - the player's own, and every other player's, named as its door names it: homeDoorTitle), or
@@ -49,21 +49,16 @@ export function readTownHomes(fn) {
 }
 
 /**
- * The town's Notice Boards, off the host's record of its map pixel (`p`: scenes/world.js's built pixel - its `boards`,
- * pixel-local boxes [minX, minY, minZ, maxX, maxY, maxZ], and its `locOrigin`): every board that is not a bounty board
- * (`bountyAt`, the indices questBoardIndices took), at the middle of its box and at its foot, in the location's frame.
+ * The town's Notice Board, off the host's record of its map pixel (`p`: scenes/world.js's built pixel - its `boards`,
+ * pixel-local boxes [minX, minY, minZ, maxX, maxY, maxZ], and its `locOrigin`): the board at `notice` (its index,
+ * noticeBoardIndex's - ONE-BOARD), at the middle of its box and at its foot, in the location's frame. A list, empty for
+ * none.
  */
-export function townBoardRows(p, bountyAt, unseen = 0) {
+export function townBoardRows(p, notice, unseen = 0) {
   const o = p?.locOrigin;
-  if (!Array.isArray(p?.boards) || !finite3(o)) return [];
-  const label = boardMarkLabel(unseen);
-  const out = [];
-  p.boards.forEach((b, i) => {
-    const box = b?.box;
-    if (bountyAt?.has?.(i) || !Array.isArray(box) || box.length < 6) return;
-    out.push({ feet: [(box[0] + box[3]) / 2 - o[0], box[1] - o[1], (box[2] + box[5]) / 2 - o[2]], label });
-  });
-  return out;
+  const box = Array.isArray(p?.boards) && Number.isInteger(notice) ? p.boards[notice]?.box : null;
+  if (!finite3(o) || !Array.isArray(box) || box.length < 6) return [];
+  return [{ feet: [(box[0] + box[3]) / 2 - o[0], box[1] - o[1], (box[2] + box[5]) / 2 - o[2]], label: boardMarkLabel(unseen) }];
 }
 
 /**

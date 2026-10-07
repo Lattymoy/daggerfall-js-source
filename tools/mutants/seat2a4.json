@@ -524,8 +524,8 @@
  {
   "name": "SEAT2a4-field-bounty",
   "file": "src/systems/siegeField.js",
-  "old": "    if (bounty.has(i) || !Array.isArray(b?.box) || b.box.length < 6) return;",
-  "new": "    if (!Array.isArray(b?.box) || b.box.length < 6) return;",
+  "old": "  const at = noticeBoardIndex(boards, bounty, centre);",
+  "new": "  const at = noticeBoardIndex(boards, new Set(), centre);",
   "tests": [
    "test/seat2a_siege_play.test.js"
   ]
@@ -533,8 +533,8 @@
  {
   "name": "SEAT2a4-field-nearest",
   "file": "src/systems/siegeField.js",
-  "old": "    if (d < near) { near = d; market = m; }",
-  "new": "    if (d > -1 && near === Infinity) { near = d; market = m; }",
+  "old": "  const market = at >= 0 && boards[at].box.length >= 6 ? boxMid(boards[at].box) : centre;",
+  "new": "  const market = at >= 0 && boards[at].box.length >= 6 ? boxMid(boards[0].box) : centre;",
   "tests": [
    "test/seat2a_siege_play.test.js"
   ]

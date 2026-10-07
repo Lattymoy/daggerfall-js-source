@@ -209,8 +209,9 @@ DECIDED (Mac, the Holdings plan: "the holder's banners and colours in the city")
 - **The anchors**, derived from the town's own RMB layout (`src/world/rmbLayout.js`), at most 8 a town:
   1. one beside each city gate model (the gate's two posts, the banner on the town side);
   2. two flanking the palace's door (the building record's position and facing);
-  3. one pennant above each Notice Board - a town's rumour boards, every board BOUNTY1 did not take for its bounty
-     board (PROF0 10.1, `systems/bountyBoard.js` questBoardIndices; AUDIT 28: this said "each bulletin board");
+  3. one pennant above the town's Notice Board - ONE-BOARD's one a town, the rumour board nearest its middle (PROF0
+     10.1, 10.11; `systems/bountyBoard.js` noticeBoardIndex; AUDIT 28: this said "each bulletin board", and until
+     ONE-BOARD it was every board BOUNTY1 did not take);
   4. crown seats: two more at the castle's entrance in the city.
 - **The banner**: the port's own cloth quad, 1 wide by 3 tall (in DFU's scale, a man's height and a half), its
   field the holder's first colour, a border in the second, the device centred; it sways on the weather's wind
@@ -219,7 +220,7 @@ DECIDED (Mac, the Holdings plan: "the holder's banners and colours in the city")
 - **Nothing offline**: offline the town is DFU's, with no banner.
 
 BUILT (SEAT1a; scenes/seatBanners.js): anchors 1-3 as written - a banner at each city gate (on its town side, beside a
-post), the palace door's two (GUILD1d's measure of a building's first door record), a pennant over each rumour board -
+post), the palace door's two (GUILD1d's measure of a building's first door record), a pennant over the Notice Board -
 at most 8, measured where the pixel is built; the kingdom's plain banner (townSeatLaw.js seatPlainBanner; a March's its
 two claimants' metals, field and border), drawn by GUILD1d's cloth pass. BUILT since (CASTLE-GATE, 2026-10-02; Online-Arc CASTLE-GATE): anchor 4, the crown
 seats' two at the castle's entrance in the city - the lowest of the pixel's dungeon-entrance doors

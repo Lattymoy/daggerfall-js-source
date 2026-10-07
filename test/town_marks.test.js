@@ -70,19 +70,17 @@ test('TOWN-MARKS the reading: a board with no place and a home with no building 
   assert.equal(boardMarkLabel(3), 'Notice Board: 3 new', 'the town\'s unread count, as the board floats it (boardLaw unseenText)');
 });
 
-test('TOWN-MARKS the boards: every board of the town\'s but its bounty boards, at the middle and foot of its box, in the location\'s frame (mutants: a bounty board marked; the origin not taken off; the box\'s corner, not its middle)', () => {
+test('TOWN-MARKS the boards: the town\'s one Notice Board (ONE-BOARD), at the middle and foot of its box, in the location\'s frame (mutants: another board marked; the origin not taken off; the box\'s corner, not its middle)', () => {   // AUDIT 657 D7: ONE-BOARD (PIN MOVED): the one Notice Board marked, never every board the split left
   const p = {
     locOrigin: [100, 5, 200],
     boards: [{ box: [110, 5, 210, 112, 9, 214] }, { box: [150, 6, 260, 154, 10, 262] }, { box: [300, 5, 300, 302, 9, 302] }],
   };
-  assert.deepEqual(townBoardRows(p, new Set([1]), 2), [
-    { feet: [11, 0, 12], label: 'Notice Board: 2 new' },
-    { feet: [201, 0, 101], label: 'Notice Board: 2 new' },
-  ]);
-  assert.deepEqual(townBoardRows(p, new Set(), 0).map((r) => r.feet), [[11, 0, 12], [52, 1, 61], [201, 0, 101]]);
-  assert.deepEqual(townBoardRows({ boards: p.boards }, new Set()), [], 'no origin, no frame');
-  assert.deepEqual(townBoardRows({ locOrigin: [0, 0, 0] }, new Set()), []);
-  assert.deepEqual(townBoardRows({ locOrigin: [0, 0, 0], boards: [{ box: [1, 2] }, {}] }, new Set()), []);
+  assert.deepEqual(townBoardRows(p, 2, 2), [{ feet: [201, 0, 101], label: 'Notice Board: 2 new' }], 'one mark, never every board the bounty split left');
+  assert.deepEqual(townBoardRows(p, 1, 0).map((r) => r.feet), [[52, 1, 61]]);
+  assert.deepEqual(townBoardRows(p, -1, 0), [], 'no Notice Board, no mark');
+  assert.deepEqual(townBoardRows({ boards: p.boards }, 0), [], 'no origin, no frame');
+  assert.deepEqual(townBoardRows({ locOrigin: [0, 0, 0] }, 0), []);
+  assert.deepEqual(townBoardRows({ locOrigin: [0, 0, 0], boards: [{ box: [1, 2] }, {}] }, 0), []);
 });
 
 test('TOWN-MARKS the housing: an online home, the player\'s and every other player\'s, named as its door names it; the bank\'s house only in its own town (mutants: another town\'s house of the same key marked; the home read as the player\'s; offline homes asked)', () => {
@@ -224,7 +222,7 @@ test('TOWN-MARKS the wiring: the door hands the marks to the enhanced town map; 
   assert.match(w, /townHomes: \(\) => townHomeRows\(\{\n\s*buildings: summaries, mapId: dfLoc\.mapTableData\?\.mapId, regionIndex: dfLoc\.regionIndex, houses: playerEntity\.houses \?\? null,\n\s*homeAt: onlineHomes \? \(mapId, buildingKey\) => \{\n\s*const h = onlineHomes\.homeAt\(mapId, buildingKey\);\n[^\n]*\n\s*return h && isVendorWaypoint\(mapId, buildingKey\) \? \{ \.\.\.h, own: false, owner: vendorWaypointLabel\(h\.owner\) \} : h;\n\s*\} : null,\n\s*\}\),/);
   assert.match(w, /townHomesVersion: \(\) => \(onlineHomes\?\.version\(\) \?\? 0\) \+ vendorWaypointVersion\(\) \* 100_000,[^\n]*\n\s*\}\)\);\n\s*onlineHomes\?\.ensure\(dfLoc\.mapTableData\?\.mapId\);/);
   const marks = w.slice(w.indexOf('const townBoardMarks = (p) => {'));
-  assert.match(marks, /^const townBoardMarks = \(p\) => \{\n\s*if \(!noticeBook \|\| noticeBook\.open !== true \|\| !p\?\.boards\?\.length \|\| !p\.location\) return \[\];\n\s*const bountyAt = boardSplitOf\(p\);\n\s*const town = noticeTownOf\(p\.px, p\.py, bountyAt\.size > 0\);\n\s*return town \? townBoardRows\(p, bountyAt, noticeBook\.unseen\(town\.mapId\)\) : \[\];/);
+  assert.match(marks, /^const townBoardMarks = \(p\) => \{\n\s*if \(!noticeBook \|\| noticeBook\.open !== true \|\| !p\?\.boards\?\.length \|\| !p\.location\) return \[\];\n\s*const town = noticeTownOf\(p\.px, p\.py, boardSplitOf\(p\)\.size > 0\);\n\s*return town \? townBoardRows\(p, noticeBoardOf\(p\), noticeBook\.unseen\(town\.mapId\)\) : \[\];/);   // AUDIT 657 D7: ONE-BOARD (PIN MOVED): the index the town map takes
   // the classic exterior automap is DFU's own window: it draws DFU's marks alone
   assert.doesNotMatch(src('src/ui/exteriorAutomapWindow.js'), /townBoards|townHomes|paintBoardMark|paintHomeMark/);
 });

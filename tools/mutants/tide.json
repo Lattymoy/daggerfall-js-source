@@ -387,7 +387,7 @@
  {
   "name": "TIDE-tab-line",
   "file": "src/ui/seatTab.js",
-  "old": "      if (tide) body.append(el('p', 'notice-seat-week notice-seat-tide', tide));\n",
+  "old": "      if (tide) week.append(el('p', 'notice-seat-week notice-seat-tide', tide));\n",
   "new": "",
   "tests": [
    "test/tide_client.test.js"

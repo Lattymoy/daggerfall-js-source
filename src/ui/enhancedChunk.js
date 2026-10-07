@@ -183,6 +183,7 @@ export const WARM_CHUNKS = Object.freeze([
   () => import('./enhancedTrade.js'),
   () => import('./enhancedTavern.js'),
   () => import('./enhancedMerchantPanel.js'),
+  () => import('./noticeWindow.js'),   // BOARD-UI: a town's Notice Board - online's, its tabs (the Market, the Work, the Seat) with it
   () => import('./brokerWindow.js'),   // SET7: the Sigil Broker's window - online's, and last: the gate is the rarest door
   () => import('./navalPlunderWindow.js'),   // NAV-F: a taken ship's plunder window - rarer still: a prize is a won sea fight
   () => import('./navalYardWindow.js'),   // AUDIT NAV1: the shipwright's - a port's, after a fight

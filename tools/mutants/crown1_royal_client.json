@@ -499,7 +499,7 @@
  {
   "name": "CROWN1C-tab-node",
   "file": "src/ui/seatTab.js",
-  "old": "      if (data.royal) body.append(royalNode(data.royal));",
+  "old": "        if (data.royal) b.append(royalNode(data.royal));\n",
   "new": "",
   "tests": [
    "test/crown1_royal_client.test.js"

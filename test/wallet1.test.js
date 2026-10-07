@@ -46,6 +46,8 @@ async function withDomAsync(fn) {
     for (const [k, [had, v]] of Object.entries(saved)) { if (had) globalThis[k] = v; else delete globalThis[k]; }
   }
 }
+/** WALLET-UI: the silver row's figure in a wallet sheet (ui/enhancedInventory.js walletSheet). */
+const silverOf = (sheet) => sheet.querySelectorAll('.wallet-row').find((r) => r.dataset.key === 'silver').children[1].textContent;
 const pack = () => {
   const embers = Object.assign(sigilStone(), { stackCount: 12 });
   const shards = welkyndShards(40);
@@ -200,9 +202,13 @@ test('WALLET1 the sheet: the wallet picked says its currencies, and each piece i
     press(/Wallet/);
     const sheet = host.querySelector('.walletsheet');
     assert.ok(sheet, 'the sheet');
-    assert.match(text(sheet), /Gold: 1,240/);
-    assert.match(text(sheet), /Letters of credit: 2, worth 12,000 gold/);
-    assert.match(text(sheet), /Deadlands Embers: 12/);
+    // PIN MOVED (WALLET-UI): the sheet is the ledger - each part under its name, a row a currency with its label and its
+    // figure apart, a letter's worth under its count (it read the classic box's lines, one paragraph each)
+    assert.deepEqual(sheet.querySelectorAll('.wallet-head').map((h) => h.textContent), ['Coin', 'In the wallet']);
+    assert.deepEqual(sheet.querySelectorAll('.wallet-row').map((r) => [r.dataset.key, ...r.children.map((c) => c.textContent)]),
+      [['gold', 'Gold', '1,240'], ['silver', 'Silver', 'kept by your account online'], ['letters', 'Letters of credit', '2'],
+        ['embers', 'Deadlands Embers', '12'], ['shards', 'Welkynd Shards', '40']]);
+    assert.deepEqual(sheet.querySelectorAll('.wallet-note').map((n) => n.textContent), ['worth 12,000 gold']);
     const pieces = sheet.querySelectorAll('button');
     assert.equal(pieces.length, 4, 'a row for each piece it holds');
     pieces.find((b) => /Deadlands Ember/.test(text(b))).onclick({});
@@ -243,10 +249,11 @@ test('WALLET1 the sheet\'s silver: asked afresh of the host once a mount, as the
       };
       const first = open();
       // PIN MOVED (AUDIT 625 W5): online and not known yet, the page is ASKING - the offline words were the wrong ones
-      assert.match(text(first.sheet()), /Silver: asking your account/, 'not known yet');
+      // PIN MOVED (WALLET-UI): the silver is the ledger's own row - its figure, or why there is none
+      assert.equal(silverOf(first.sheet()), 'asking your account', 'not known yet');
       assert.equal(asked, 1, 'asked as the sheet first shows');
       answer(); await flush();
-      assert.match(text(first.sheet()), /Silver: 35/, 'redrawn with the answer');
+      assert.equal(silverOf(first.sheet()), '35', 'redrawn with the answer');
       first.sheet().querySelectorAll('button')[0].onclick({});
       first.press(/^\s*Wallet\s*$/);
       assert.ok(first.sheet(), 'the sheet again');
@@ -259,7 +266,7 @@ test('WALLET1 the sheet\'s silver: asked afresh of the host once a mount, as the
       assert.equal(second.sheet(), null, 'a piece\'s own card');
       answer(); await flush();
       second.press(/^\s*Wallet\s*$/);
-      assert.match(text(second.sheet()), /Silver: 35/, 'the answer that landed under a piece is the sheet\'s when the player comes back');
+      assert.equal(silverOf(second.sheet()), '35', 'the answer that landed under a piece is the sheet\'s when the player comes back');
       assert.equal(asked, 2, 'and nothing asked again');
       second.view.unmount();
     });
