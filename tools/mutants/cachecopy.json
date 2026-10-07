@@ -109,5 +109,32 @@
     "tests": [
       "test/cachecopy.test.js"
     ]
+  },
+  {
+    "name": "CACHE-COPY-the-check-twin-drifting",
+    "file": "src/tools/depthCopyCheck.js",
+    "old": "export const patternOf = (x, y, layer, round) => (x * 7 + y * 13 + layer * 31 + round * 101) % 4093;",
+    "new": "export const patternOf = (x, y, layer, round) => (x * 8 + y * 13 + layer * 31 + round * 101) % 4093;",
+    "tests": [
+      "test/cachecopy.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-COPY-the-check-control-unread",
+    "file": "src/tools/depthCopyCheck.js",
+    "old": "  if (r.control.wrong !== r.texels || r.control.otherLayer !== r.texels) return",
+    "new": "  if (false) return",
+    "tests": [
+      "test/cachecopy.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-COPY-the-check-blit-before-the-draw",
+    "file": "src/tools/depthCopyCheck.js",
+    "old": "  if (r.draw.wrong) return",
+    "new": "  if (r.draw.wrong && !r.blit.wrong) return",
+    "tests": [
+      "test/cachecopy.test.js"
+    ]
   }
 ]

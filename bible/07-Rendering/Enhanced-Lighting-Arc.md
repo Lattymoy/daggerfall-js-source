@@ -2112,10 +2112,25 @@ the cache's movers take it - one silhouette in its old pose one frame longer (2 
 255 at most). Not verified on Direct3D: there is no Windows GPU here. The cause is ANGLE's source read, not a capture,
 and the fix takes the path away rather than depending on what any driver does with it.
 
+**On the machines that flickered** (Mac, the same day: "Ive noticed certain nivida cards have the issue. Like rapid
+flickering, epileptic inducing"). The undefined read is every card's - ANGLE's one NVIDIA depth workaround
+(`depthStencilBlitExtraCopy`) sits in `Blit11::copyAndConvert`, the stencil staging copy, not in `copyDepth` - and what
+a driver makes of it differs. A lamp with a mover by it (a townsman, the player's own card) is copied every frame under
+Steady shadows, so a driver whose read changes frame to frame strobes it; a lamp with nothing moving is copied when its
+cache rebuilds, the room's blink. Because it strobes, the fix should be seen on such a card before it ships to one, and
+nobody should have to watch the strobe to see it: `tools/fixtures/depth-copy-check.html` (under `npm run dev`;
+`src/tools/depthCopyCheck.js`) fills a cache-shaped array (72 layers) with a known depth in every texel, copies it both
+ways on the machine's own GPU - the old blit, and the draw with shadowPass.js's own `DEPTH_COPY_VS`/`DEPTH_COPY_FS` -
+and counts the texels that come back wrong, round after round on a new pattern (a strobe changes the count), offscreen.
+Each round's CONTROL - the draw aimed one layer off on purpose - must be found wrong in every texel as another layer's
+value, or the page says its numbers mean nothing. On SwiftShader (`tools/depthCopyProbe.mjs`): both copies exact over
+4,718,592 texels, the control wrong in all of them. Its verdict on an affected card is the confirmation this record
+could not make.
+
 **The four hosts.** No host changed: the copy is the renderer's shadow pass, under `scenes/exterior.js`,
 `scenes/world.js`, `scenes/worldModes.js` (interiors) and `scenes/dungeonContext.js` alike.
 
-`test/cachecopy.test.js` (4); `tools/mutants/cachecopy.json` (12, all dead). Pins moved: sc1_shadowcache, audit_lighting,
+`test/cachecopy.test.js` (5); `tools/mutants/cachecopy.json` (15, all dead). Pins moved: sc1_shadowcache, audit_lighting,
 audit_reach, shadowreach and disc24c_self_shadow count the copy program's draws where they counted `blitFramebuffer`;
-el1_enhancedlighting's lane install compiles 24 and its row has no Shadow cache part; perfurl_doors and sc1 read the door
+el1_enhancedlighting's lane install compiles 24 (farclip1's 24 + 2) and its row has no Shadow cache part; perfurl_doors and sc1 read the door
 on again; antiflicker keeps EMPTY-HOLD's constant alone, and its four CACHE-OFF mutants went with the code they mutated.

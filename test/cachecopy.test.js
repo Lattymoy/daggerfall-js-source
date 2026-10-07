@@ -12,8 +12,10 @@
 // Pinned on the fake GL: the copy is a triangle a face with the copy program into the slot's own live layer, reading
 // its own layer of the cache bound on unit 0, under ALWAYS with LESS put back and the cache unbound - no blit; the copy
 // shader fetches its own texel at highp and writes it as the fragment's depth over a triangle that covers the face; the
-// door is SC1's again (on unless `?shadowcache=off` - no device switch, no Features part, a page's renderer on); and the
-// copy binds its array through the renderer's tracked binder, so a replay after it draws with its own.
+// door is SC1's again (on unless `?shadowcache=off` - no device switch, no Features part, a page's renderer on); the
+// copy binds its array through the renderer's tracked binder, so a replay after it draws with its own; and the GPU check
+// (tools/fixtures/depth-copy-check.html, for the machines that flickered) copies with the shipped shaders, reads back
+// with a twin of the pattern its shader writes, and names a blind check, then a wrong draw copy, before anything else.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Renderer, WORLD_FRAME } from '../src/render/renderer.js';
@@ -21,6 +23,8 @@ import { EL_LANE, syncLightingLane } from '../src/render/enhancedLighting.js';
 import { DEPTH_COPY_VS, DEPTH_COPY_FS, SHADOW_POINT_SIZE, shadowCacheOn } from '../src/render/shadowPass.js';
 import { SHADOW_TUNING } from '../src/render/shadowPass.js';
 import { PREF_DEFAULTS, setPref, _resetForTests as resetPrefs } from '../src/systems/uiPrefs.js';
+import { readFileSync } from 'node:fs';
+import { PATTERN_GLSL, patternOf, unitsOf, CLEARED, verdictOf } from '../src/tools/depthCopyCheck.js';
 SHADOW_TUNING.override = false;   // EL8's schedule: the two lamps nearest the eye redraw every frame
 
 const I = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -183,4 +187,26 @@ test('CACHE-COPY: the copy binds its empty vertex array through the renderer\'s 
     assert.ok(copies >= 12 && draws > 0, `frame ${f}: two lamps copied and the man drawn over them (${copies} copies, ${draws} draws)`);
   }
   assert.ok(man.vao, 'the man has an array of his own');
+});
+
+test('CACHE-COPY: the GPU check for the machines that flickered (tools/fixtures/depth-copy-check.html, src/tools/depthCopyCheck.js) copies with shadowPass.js\'s own copy shaders - never a restated pair - reads back with a JS twin of the very pattern its shader writes, two layers\' values thousands of 24-bit units apart, and its verdict names a blind check first, then a wrong draw copy, before the blit (mutants: the twin drifting from the shader; the control not read; the verdict reading the blit before the draw copy)', () => {
+  const mod = readFileSync(new URL('../src/tools/depthCopyCheck.js', import.meta.url), 'utf8');
+  assert.match(mod, /^import \{ DEPTH_COPY_VS, DEPTH_COPY_FS \} from '\.\.\/render\/shadowPass\.js';$/m, 'the shipped pair, one home');
+  assert.equal(/gl_FragDepth = texelFetch\(/.test(mod), false, 'no copy shader of its own');
+  const page = readFileSync(new URL('../tools/fixtures/depth-copy-check.html', import.meta.url), 'utf8');
+  assert.match(page, /import \{ runDepthCopyCheck, verdictOf \} from '\/src\/tools\/depthCopyCheck\.js';/);
+  // the twin: the shader's coefficients, read off its own text, give the JS pattern at every texel, layer and round
+  const m = /\(p\.x \* (\d+) \+ p\.y \* (\d+) \+ layer \* (\d+) \+ round \* (\d+)\) % (\d+)/.exec(PATTERN_GLSL);
+  assert.ok(m, 'the shader\'s pattern');
+  const [a, b, c, d, n] = m.slice(1).map(Number);
+  for (const [x, y, l, r] of [[0, 0, 0, 0], [127, 3, 71, 3], [511, 511, 5, 7], [64, 200, 40, 1]]) assert.equal(patternOf(x, y, l, r), (x * a + y * b + l * c + r * d) % n, `(${x}, ${y}) layer ${l} round ${r}`);
+  assert.ok(unitsOf(n - 1) < CLEARED, 'every value below the clear\'s');
+  for (let l = 0; l < 72; l++) assert.ok(Math.abs(unitsOf(patternOf(9, 9, l, 2)) - unitsOf(patternOf(9, 9, (l + 1) % 72, 2))) > 1000, `layers ${l} and ${l + 1} told apart`);
+  // the verdict's order
+  const r = (blit, draw, control = 10, other = control) => ({ error: 0, texels: 10, blit: { wrong: blit, byRound: [blit] }, draw: { wrong: draw }, control: { wrong: control, otherLayer: other } });
+  assert.match(verdictOf(r(0, 0, 9)), /^THE CHECK COULD NOT SEE A WRONG COPY/, 'a control not wholly wrong: a blind check');
+  assert.match(verdictOf(r(0, 0, 10, 4)), /^THE CHECK COULD NOT SEE A WRONG COPY/, 'and every wrong texel told as another layer\'s');
+  assert.match(verdictOf(r(10, 3)), /^THE DRAW COPY CAME BACK WRONG HERE/, 'a wrong draw copy before a wrong blit');
+  assert.match(verdictOf(r(10, 0)), /^The old blit is broken on this GPU \(10 of 10 texels wrong\) and the draw copy is exact/);
+  assert.match(verdictOf(r(0, 0)), /^Both copies exact/);
 });
