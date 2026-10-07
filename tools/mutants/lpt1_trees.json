@@ -931,11 +931,12 @@
   {
     "name": "LPT1-flats-unscaled",
     "file": "src/scenes/world.js",
-    "old": "scales[i] = lptVariety(px, py, c[0], c[2], !wild[i]).scale / LPT_SCALE_MAX;",
-    "new": "scales[i] = 1;",
+    "old": "          const v = lptVariety(px, py, c[0], c[2], !wild[i]).scale;",
+    "new": "          const v = LPT_SCALE_MAX;",
     "tests": [
       "test/lpt1_lowpolytrees.test.js"
-    ]
+    ],
+    "note": "LPT-FIT (2026-10-07, PIN MOVED): the variety is read into `v` and the far picture takes the lesser of it and the tree's fit; the mutant still drops DFU's variety."
   },
   {
     "name": "LPT1-set-at-pixel-local",

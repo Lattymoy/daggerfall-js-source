@@ -288,7 +288,7 @@ test('AUDIT LIVED1 L/P/Q (K5, U5, U6/R7): a due-by says the time left in words t
 test('AUDIT LIVED1 M/N/O/S (U1, U2, U3, U8): the words fit their screens - the nightfall on its own HUD row, the tavern\'s own-time offer in two rows, the default skin\'s rest card says the clock line, and a loiter waits', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /function sayWithNightfall\(text\) \{ townTalk\.say\(text\); const nf = worldNightfallText\(\); if \(nf\) townTalk\.say\(nf\); \}/);
-  assert.equal((w.match(/sayWithNightfall\(SUNLIGHT_TRAVEL_TEXT\);|sayWithNightfall\(ftb\.text\);/g) ?? []).length, 4, 'both map-door rungs - and the driver\'s map\'s two online (AUDIT IT1 W2, PIN MOVED)');
+  assert.equal((w.match(/sayWithNightfall\(cfb\.text\);|sayWithNightfall\(ftb\.text\);/g) ?? []).length, 4, 'both map-door rungs - and the driver\'s map\'s two online (AUDIT IT1 W2, PIN MOVED; HOOD-CAREER, PIN MOVED: the career rung is careerFastTravelBlock\'s)');
   // the classic tavern: two rows, split at the play's bracket
   const own = 200 * D + 10 * H;
   const tav = new TavernWindow({

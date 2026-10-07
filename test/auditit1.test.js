@@ -364,7 +364,7 @@ test('AUDIT IT1 L1/W2/W6: the driver\'s map reads PlayerGPS\'s region (politic 6
   const open = w.slice(w.indexOf('function openImmersiveMap(kind) {'), w.indexOf('function openTeleportMap() {'));
   assert.match(open, /if \(\(modes\?\.mode \?\? 'exterior'\) !== 'exterior'\) \{ townTalk\.say\(CANNOT_TRAVEL_INDOORS_TEXT\); return null; \}/);
   assert.match(open, /if \(!travelMapDoorReady\(\)\) \{ townTalk\.say\('\(the travel map art is unavailable\)'\); return null; \}/);
-  assert.match(open, /if \(sharedClockOn\(\)\) \{\s*\n\s*const nowMin = Math\.floor\(skyMinutes\(\)\);\s*\n\s*if \(careerSunDamage\(playerEntity\.career\) && isDayFromMinutes\(nowMin\)\) \{ sayWithNightfall\(SUNLIGHT_TRAVEL_TEXT\); return null; \}\s*\n\s*const ftb = racialFastTravelBlock\(playerEntity, nowMin\);\s*\n\s*if \(ftb\) \{ sayWithNightfall\(ftb\.text\); if \(ftb\.hint\) townTalk\.say\(ftb\.hint\); return null; \}/);
+  assert.match(open, /if \(sharedClockOn\(\)\) \{\s*\n\s*const nowMin = Math\.floor\(skyMinutes\(\)\);\s*\n\s*const cfb = careerFastTravelBlock\(playerEntity, nowMin\);[^\n]*\n\s*if \(cfb\) \{ sayWithNightfall\(cfb\.text\); if \(cfb\.hint\) townTalk\.say\(cfb\.hint\); return null; \}\s*\n\s*const ftb = racialFastTravelBlock\(playerEntity, nowMin\);\s*\n\s*if \(ftb\) \{ sayWithNightfall\(ftb\.text\); if \(ftb\.hint\) townTalk\.say\(ftb\.hint\); return null; \}/);   // PIN MOVED (HOOD-CAREER): the career rung is careerFastTravelBlock's, its hood's hint after DFU's line
   // ...and it is the clamp's own condition: the arrival clamp runs exactly where this does not
   assert.match(w, /if \(clamp > 0 && !sharedClockOn\(\)\) \{/);
 });

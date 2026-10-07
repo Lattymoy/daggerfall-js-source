@@ -189,7 +189,7 @@ import { createTravelJunctionMap } from '../ui/travelJunctionMap.js';
 import { drawEnhancedTravelControl, hideEnhancedTravelControl } from '../ui/enhancedTravelControl.js';
 import { drawEnhancedHelm, hideEnhancedHelm, enhancedHelmMounted, enhancedHelmBar, helmPadGesture, helmPadPrompts } from '../ui/enhancedHelm.js';   // CSA-L: Come Sail Away's helm on screen (Enhanced Plus); NAV-F: its bar, which the sea's target card stands under
 import { setTimeScale as setWorldTimeScale, timeScale as worldTimeScale, resetTimeScale, MAX_TIME_SCALE } from '../systems/timeScale.js';   // W1's classic art window + U61's overworld, one door
-import { racialRestBlock, racialFastTravelBlock, racialSunAverse, cureVampirism, SUNLIGHT_TRAVEL_TEXT } from '../systems/vampirism.js';   // AUDIT 64 F21: the career rung and the racial one show the SAME sunlightDamageFastTravelDay box (DaggerfallUI.cs:619, VampirismEffect.cs:202); VAMP-HOOD: the racial arm's hood
+import { racialRestBlock, racialFastTravelBlock, careerFastTravelBlock, racialSunAverse, cureVampirism } from '../systems/vampirism.js';   // AUDIT 64 F21: the career rung and the racial one show the SAME sunlightDamageFastTravelDay box (DaggerfallUI.cs:619, VampirismEffect.cs:202); VAMP-HOOD: the racial arm's hood; HOOD-CAREER: the career's
 import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of BOTH the rest and the fast-travel press   // V2b: the vampire's rest and daylight gates; V2d: $CUREVAM's cure arm
 import { cureLycanthropy, racialSuppressPopulationSpawns, racialSuppressTalk, lycanthropeMoveSound, isTransformedLycanthrope } from '../systems/lycanthropy.js';   // V2d: $CUREWER's cure arm; V4: the transformed gates; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
 import { setRacialQuestHost } from '../systems/racialQuests.js';   // V2d: the quest-start seam (the machine is this host's)
@@ -197,7 +197,7 @@ import { setCrimeGuildQuestHost, setCrimeGuildClock, tallyCrimeGuildRequirements
 import { randomCemeteryLocationIndex } from '../systems/infection.js';   // V2e: GetRandomCemetery's pick half
 import { MEMBERSHIP_STATUS } from '../systems/quest/questLists.js';   // V2d: the vampire clan pool asks as a Member
 import { prepareQuestShare, prepareShareData, shareSignature, receiveSharedQuest, SHARE_REFUSAL_TEXT, shareRefusalText, sayShareRefusal } from '../systems/questShare.js';   // QUEST1: the chronicle's own Share button, and the party frame it answers
-import { careerSunDamage } from '../systems/passiveSpecials.js';   // AUDIT 64 F20/F21: Career.DamageFromSunlight, the travel door's own rung and the arrival clamp's second arm
+import { careerSunAverse } from '../systems/passiveSpecials.js';   // AUDIT 64 F20: Career.DamageFromSunlight, the arrival clamp's second arm - HOOD-CAREER: under a bare head
 import { buildMapDict, locationSummaryAt as travelLocationSummaryAt } from '../systems/mapDirectory.js';   // W1: ContentReader's map dict; TO1: the junction map's own reads
 import { dilateCoastalClimate, smoothLocationNeighbourhood } from '../world/terrainHelper.js';   // AUDIT 58 F4
 import { stampResidenceQuestNames, registerExteriorAutomapConsoleCommands } from '../ui/exteriorAutomapWindow.js';   // D5: the quest-residence plate name; E3: ExteriorAutoMapConsoleCommands
@@ -253,7 +253,8 @@ import { LPT_SCALE_MAX, lptVariety, buildTreeSet } from '../world/lowPolyTrees.j
 import { realForestsOn, FOREST_HIDDEN_LOCATION_TYPES, roadVergesOn, climateBlendOn } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide; VERGE1: the clear roadsides' switch; ECOTONE1: the blended climates'
 import { landformsOn } from './shared.js';   // LANDFORM1-3: the Landforms switch
 import { createLandforms, landformLiftField, cliffFadeAt } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
-import { vergeClear, natureReach } from '../world/roadVerge.js';   // VERGE1: a wild flat's footprint off the roads
+import { vergeClear, natureReach, pathTileMask, lptFitCap } from '../world/roadVerge.js';   // VERGE1: a wild flat's footprint off the roads; LPT-FIT: every Low Poly tree's crown off them
+import { LPT_CROWNS } from '../world/lptCrowns.js';   // LPT-FIT: the drawn prototype's crown, turned (its radial reach)
 import { ecotoneOwner, ecoOrigin } from '../world/ecotone.js'; import { MAP_W, MAP_H } from '../world/roadNetwork.js';   // ECOTONE1: a border point's owner, the pixel's lattice origin, the map's edges
 import { insideRocks, forestAt } from '../world/terrainNature.js';   // FOREST1 (AUDIT F1): a wood's flats keep out of the rock pieces; GRASS-LIT2: the shot hook's woods
 import { huntKind, createBodyStamps, bodiesOf, trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks
@@ -334,7 +335,7 @@ import { TIDE_EFFECTS } from '../net/tideLaw.js';   // SEASON1 part two: a Storm
 import { hallOfRecordsWindow } from '../ui/hallOfRecords.js';   // SEASON1 part three: a seat's Chronicle as a book (Seats-Arc 9.2)
 import { hasSpecialAbility, SPECIAL_ABILITY } from '../systems/rest.js';   // F-slice: the NoRegen restore gate
 import { locationCompassDirection, buildingCompassDirection, findFactionByTypeAndRegion, directionHintString } from '../systems/talk.js';   // wave 26: %di's remote arm + the region-faction search; the LOCAL arm beside it; SPAWNED-DUNGEONS2b: the same eight-word compass
-import { seasonValue, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString, isDayFromMinutes } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes
+import { seasonValue, MINUTES_PER_DAY, dateFromClassicMinutes, dateTimeString, midDateTimeString } from '../systems/gameDate.js';   // AUDIT 23 (wts-1); Q4-v: the notebook's header shapes
 import { regionPriceAdjustment, worldPriceTiltOf, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from '../systems/shopStock.js';   // Q4-v: CreateGold's regional term (the shops' own producer); U41: Items.Contains(Transportation, ...)
 import { getNameBankOfRegion, getRandomFullName } from '../characters/nameHelper.js';   // AUDIT 23 (characters-5); AUDIT 58: MacroHelper.GetRandomFullName, one home
 import { createHitEffects, setSplashObserver } from './hitEffects.js';
@@ -5219,6 +5220,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (lowPolyTreesFrame - AUDIT LPT B10)
     const lptHandles = [], lptGroups = [];
     made.lptHandles = lptHandles;   // BUILD-FAIL1
+    let lptPathMask = null;   // LPT-FIT: the pixel's path tiles, made at its first fitted tree
     // ECOTONE1: the pixel's nature archives - its own and any a border stood - each the flora (it sways, it is the forest
     // a tree is felled in, its Trees are cover's trunks) and each named by its summer archive (the Tree table's key; the
     // season's own number named none in winter, so a winter wood's trees were cover as flats - mended with it)
@@ -5242,11 +5244,19 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (far) {
         lowPolyTrees.acquire(far); lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes
         const scales = new Float32Array(centers.length), wild = new Uint8Array(centers.length);
+        // LPT-FIT (Mac: "roads still show on roads and pathways. You're not taking the entire model into account"):
+        // under clear roadsides every tree here - a location's as well as the wild's - is drawn no wider than the room
+        // its root has from the pixel's roads, tracks and streets (world/roadVerge.js lptFitCap): its crown, turned
+        const crown = verges ? (LPT_CROWNS[lpt.key] ?? 0) : 0;
+        if (crown > 0 && !lptPathMask) lptPathMask = pathTileMask(tilemap, paths);
+        const fit = crown > 0 ? new Float32Array(centers.length) : null;
         centers.forEach((c, i) => {
           wild[i] = wildFlats.has(`${k}#${i}`) ? 1 : 0;
-          scales[i] = lptVariety(px, py, c[0], c[2], !wild[i]).scale / LPT_SCALE_MAX;
+          const v = lptVariety(px, py, c[0], c[2], !wild[i]).scale;
+          if (fit) fit[i] = lptFitCap(lptPathMask, vergeNet, px, py, c[0], c[2], crown, v);
+          scales[i] = (fit ? Math.min(v, fit[i]) : v) / LPT_SCALE_MAX;
         });
-        lptGroups.push({ h: lptHandles.length - 1, centers, wild });
+        lptGroups.push({ h: lptHandles.length - 1, centers, wild, fit });
         const batch = renderer.createBillboardBatch(archive, far.record, far.size, centers, { scales });
         batch.lptProto = far;
         batch.farH = plain.h;   // AUDIT LPT A8/B1: MAC1's far rings stand the trees they stood - the flat's height, not the picture's
@@ -13672,8 +13682,9 @@ export async function bootWorld(canvas, renderer, params, status) {
         // VAMP-DAY left it the career's: passiveSpecials.js:"sinks?.hurt?.(SUN_DAMAGE_AMOUNT)").
         // VAMP-HOOD: the racial arm asks the hood (vampirism.js
         // racialSunAverse), so a hooded vampire lands in the day it
-        // travelled into; the career's arm is its own and stands.
-        sunAverse: racialSunAverse(playerEntity) || careerSunDamage(playerEntity.career),
+        // travelled into; HOOD-CAREER: and so does the career's arm
+        // (passiveSpecials.js careerSunAverse).
+        sunAverse: racialSunAverse(playerEntity) || careerSunAverse(playerEntity),
       });
       if (clamp > 0 && !sharedClockOn()) { setSyntheticTimeIncrease(true); playerTicker.advance(clamp); }   // AUDIT 63 F13: the arrival clamp is inside DFU's one shielded Update too
       _lastEncMinutes = Math.floor(playerTicker.ownMinutes);   // X-slice: PreventEnemySpawns parity - no spawn catch-up for the traveled window
@@ -14653,10 +14664,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // so the box says the same sentence.
     // LIVED1: online the day cannot be rested away - a rest moves the character's own clock, not the sky - so both
     // rungs add when the world's night falls, in real minutes (worldTick.js worldNightfallText; nothing offline).
-    if (careerSunDamage(playerEntity.career) && isDayFromMinutes(nowMin)) {
-      sayWithNightfall(SUNLIGHT_TRAVEL_TEXT);
-      return false;
-    }
+    // HOOD-CAREER: a bare-headed career - a raised hood opens the door (vampirism.js careerFastTravelBlock), and the
+    // refusal says so after DFU's line, as the racial rung's does.
+    const cfb = careerFastTravelBlock(playerEntity, nowMin);
+    if (cfb) { sayWithNightfall(cfb.text); if (cfb.hint) townTalk.say(cfb.hint); return false; }
     // V2b: CheckFastTravel at the map's own door, where DFU calls it
     // (DaggerfallUI.cs:625) - a sun-damaged override cannot fast
     // travel by day, and the refusal is the override's own line.
@@ -14727,7 +14738,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // pushed past that door as the mod pushes it, refuses the same, said the same.
     if (sharedClockOn()) {
       const nowMin = Math.floor(skyMinutes());
-      if (careerSunDamage(playerEntity.career) && isDayFromMinutes(nowMin)) { sayWithNightfall(SUNLIGHT_TRAVEL_TEXT); return null; }
+      const cfb = careerFastTravelBlock(playerEntity, nowMin);   // HOOD-CAREER: bare-headed
+      if (cfb) { sayWithNightfall(cfb.text); if (cfb.hint) townTalk.say(cfb.hint); return null; }
       const ftb = racialFastTravelBlock(playerEntity, nowMin);
       if (ftb) { sayWithNightfall(ftb.text); if (ftb.hint) townTalk.say(ftb.hint); return null; }
     }
@@ -22663,8 +22675,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!(playerEntity.health > 0) || worldMoveBusy()) return PARTY_TRAVEL_TEXT.off;
     if (duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]) || navalHostileNear()) return CANNOT_TRAVEL_ENEMIES_TEXT;   // NAV-H: a hostile ship in reach too
     const nowMin = Math.floor(skyMinutes());   // TIME1: the sky's sun
-    if (careerSunDamage(playerEntity.career) && isDayFromMinutes(nowMin)) return withNightfall(SUNLIGHT_TRAVEL_TEXT);
-    const sun = racialFastTravelBlock(playerEntity, nowMin)?.text ?? null;
+    const sun = (careerFastTravelBlock(playerEntity, nowMin) ?? racialFastTravelBlock(playerEntity, nowMin))?.text ?? null;   // HOOD-CAREER: the career's rung first, as the door asks it
     return sun ? withNightfall(sun) : null;   // LIVED1: the door's own words, and when the world's night falls
   }
   /** PARTY-TRAVEL: the journey itself - the travel popup's own order (ui/travelPopUp.js tick): the screen smashed to

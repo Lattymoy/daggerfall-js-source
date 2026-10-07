@@ -797,3 +797,58 @@ end, the herbs, the veins and the Motherlode, the switch and the host);
 mutants in `tools/mutants/verge1.json` (23, all dead). Not verified here:
 no ARENA2, so the real roads were not walked and the classic pictures' half
 widths (read at runtime from the TEXTURE files) were not measured.
+
+## LPT-FIT - the whole tree fits its room (2026-10-07, a port departure)
+
+Mac, after VERGE1 shipped: *"roads still show on roads and pathways. You're
+not taking the entire model into account"*, and of what: *"the low poly
+trees"*, *"everywhere"*.
+
+VERGE1 asked the WILD flats, and only them. A location's own trees - the
+nature flats of a town's, a farm's, a tavern's or a temple's RMB blocks,
+`scenes/world.js`'s location loop, and road pixels are full of locations -
+went to `addFlat` unasked, where DFU's block designer had set a two-metre
+picture beside a street. Low Poly Trees stands its whole 3D tree on every
+one of them, a crown of 5 to 15 m, over the location's streets and over the
+paved ring Basic Roads lays round it ("Paint roads around locations").
+Nothing asked the streets either: they are the location's own tiles, not the
+network's band.
+
+**The law** (`world/roadVerge.js`): every Low Poly tree is DRAWN no wider than
+the room its root has. A scale, never a move - the trunk, its collider and
+cover, Logging's tree and the room's ground stay where DFU stands the flat,
+and the mod draws the tree smaller, as it draws it at all, on the player's
+own client.
+
+- The room (`lptFitCap`) is the nearer of the pixel's path tiles and the
+  network's band (`roadRoom`, for a road crossing the pixel's edge). The
+  path tiles (`pathTileMask`) are the tiles the painter wrote or marked
+  (GRASS-PATH1's mask, a track over dirt among them) and the 56-tile set's
+  road records 46/47/55, turned or not - the painter's three, which a
+  location's streets wear too. The marching squares never write those three
+  (`terrainTiles.js`'s lookup), so on a finished tilemap they are a road or a
+  street. A root's distance is to each tile's square (`tileRoom`).
+- The crown is the drawn prototype's TURNED crown (`world/lptCrowns.js`,
+  each mesh's farthest vertex across the ground), never its box's half
+  width, which a turned tree outreaches by up to 1.41.
+- The tree is drawn at the lesser of its own variety (`lptVariety`: 0.6 to
+  1.4 in the wild, 1 in a location) and room over crown, never under
+  `LPT_FIT_FLOOR` (0.2): a tree whose root stands on a path is a sapling,
+  never nothing, because its collider stands there.
+- Both pictures take it: the far picture's per-flat scale and the near set
+  (`world/lowPolyTrees.js` `buildTreeSet`, the group's `fit`).
+
+**The switch** is VERGE1's, "Clear roadsides" (on by default on the
+enhanced skin, forced on online): off, every tree is drawn at its variety.
+
+**The four hosts.** `scenes/world.js` - wired. `scenes/exterior.js` (the
+fixed town bench) lays one location's ground in its own frame and paints no
+roads, so it fits no tree (not wired: its location tilemap is the bench's
+own, and its streets were never asked of a road). `scenes/worldModes.js` and
+`scenes/dungeonContext.js` stand no terrain trees.
+
+Pinned in `test/lptfit.test.js` (5: the mask off the painter's own pixel and
+the lookup, the room, the cap, the set, the host); `test/lpt1_lowpolytrees`'s
+host pin moved; mutants `tools/mutants/lptfit.json` (15, all dead) and
+`LPT1-flats-unscaled` re-aimed. Not verified here: no ARENA2, so no real
+town was walked.
