@@ -426,11 +426,11 @@ export function questBoardIndices(boards) {
   return out;
 }
 
-/** ONE-BOARD (2026-10-06, Mac: "Some towns have double notice boards"): THE TOWN'S ONE NOTICE BOARD. Online, every board
- *  questBoardIndices left was a Notice Board, so a town of three boards or more stood two or three, each with its own
- *  count, map mark and pennant. Now one: of the boards left, the one nearest `centre` (the town's middle on the ground,
- *  [x, z]), the first by position on a tie or with no centre. The rest stay Daggerfall's rumour boards, as every board
- *  is offline. Pure.
+/** THE RUMOUR BOARD NEAREST THE TOWN'S MIDDLE: of the boards questBoardIndices left, the one nearest `centre` (the
+ *  town's middle on the ground, [x, z]), the first by position on a tie or with no centre - the board the siege field
+ *  takes for its Market (systems/siegeField.js). ONE-BOARD (2026-10-06) made it the town's one Notice Board online;
+ *  ONE-BOARD REVERTED (2026-10-07, Mac: revert "just that change") made every board questBoardIndices left a Notice
+ *  Board again, and this the field's alone. Pure.
  *  @param {Array<{box:number[]}>} boards pixel-local boxes, as questBoardIndices reads them
  *  @param {Set<number>} [bounty] the indices questBoardIndices took
  *  @param {number[]|null} [centre]

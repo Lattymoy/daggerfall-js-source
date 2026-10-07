@@ -2,8 +2,8 @@
   {
     "name": "VAMPDAY-the-day-is-the-night-the-defect",
     "file": "src/systems/vampirism.js",
-    "old": "export const vampireStatMod = (clockMinutes) => (playerInSunlight(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD);",
-    "new": "export const vampireStatMod = (clockMinutes) => VAMPIRE_STAT_MOD;",
+    "old": "(sunAverse && playerInSunlight(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD)",
+    "new": "(VAMPIRE_STAT_MOD)",
     "tests": [
       "test/vampday.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "VAMPDAY-the-day-is-merely-plain",
     "file": "src/systems/vampirism.js",
-    "old": "export const vampireStatMod = (clockMinutes) => (playerInSunlight(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD);",
-    "new": "export const vampireStatMod = (clockMinutes) => (playerInSunlight(clockMinutes) ? 0 : VAMPIRE_STAT_MOD);",
+    "old": "(sunAverse && playerInSunlight(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD)",
+    "new": "(sunAverse && playerInSunlight(clockMinutes) ? 0 : VAMPIRE_STAT_MOD)",
     "tests": [
       "test/vampday.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "VAMPDAY-the-round-ignores-the-hour",
     "file": "src/systems/vampirism.js",
-    "old": "  const mod = vampireStatMod(skyMinutes);",
+    "old": "  const mod = vampireStatMod(skyMinutes, racialSunAverse(entity));",
     "new": "  const mod = VAMPIRE_STAT_MOD;",
     "tests": [
       "test/vampday.test.js"

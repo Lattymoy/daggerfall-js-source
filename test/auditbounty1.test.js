@@ -98,7 +98,7 @@ test('AUDIT BOUNTY1 B4: the relay pins say who moved it - BOUNTY1 + AUDIT 28 (wo
 test('AUDIT BOUNTY1 B5: the board\'s press and its plaque ride the streaming host alone; the fixed city and the standalone dungeon keep DFU\'s board', () => {
   const m = read('src/scenes/worldModes.js');
   assert.match(m, /if \(aabb\.bounty && openBountyBoard\?\.\(aabb\.bounty\)\) return;/, 'a bounty board\'s press opens the window, before the rumour');
-  assert.match(m, /title: bd\?\.bounty \? BOUNTY_BOARD_TEXT : bd\?\.named \? NOTICE_BOARD_TEXT : BULLETIN_BOARD_TEXT/, 'and names itself on hover (ONE-BOARD: the Notice Board too, while it is open)');
+  assert.match(m, /title: bd\?\.bounty \? BOUNTY_BOARD_TEXT : bd\?\.named \? NOTICE_BOARD_TEXT : BULLETIN_BOARD_TEXT/, 'and names itself on hover (ONE-BOARD: a Notice Board too, while it is open)');
   const w = read('src/scenes/world.js');
   assert.match(w, /openBountyBoard: \(town\) => bountyHost\?\.openBoard\(town\) \?\? false,/, 'the streaming host hands the press to the bounty host');
   assert.match(w, /\.\.\.\(bountyAt\.has\(i\) \? \{ bounty: \{ px: p\.px, py: p\.py, name: p\.location \} \} : \{\}\),/, 'and marks the half of the boards that post bounties');

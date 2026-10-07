@@ -47,15 +47,6 @@
     "note": "HOOD-SAID (FIELD BUGS 2026-09-30, PIN MOVED): the line names the pack card's Raise hood now; the robe is still what the mutant drops."
   },
   {
-    "name": "VAMPHOOD-the-hood-lifts-the-day-too",
-    "file": "src/systems/vampirism.js",
-    "old": "  const mod = vampireStatMod(skyMinutes);",
-    "new": "  const mod = racialSunAverse(entity) ? vampireStatMod(skyMinutes) : VAMPIRE_STAT_MOD;",
-    "tests": [
-      "test/fb0929_vampirehood.test.js"
-    ]
-  },
-  {
     "name": "VAMPHOOD-the-clamp-asks-the-flag",
     "file": "src/scenes/world.js",
     "old": "        sunAverse: racialSunAverse(playerEntity) || careerSunDamage(playerEntity.career),",
@@ -96,6 +87,33 @@
     "file": "src/systems/survival/temperature.js",
     "old": "HOODED_ROBES.has(chest.templateIndex) && (chest.variant ?? 0) === 1) hood = true;",
     "new": "HOODED_ROBES.has(chest.templateIndex) && (chest.variant ?? 0) === 0) hood = true;",
+    "tests": [
+      "test/fb0929_vampirehood.test.js"
+    ]
+  },
+  {
+    "name": "HOODSUN-the-stats-ask-no-hood",
+    "file": "src/systems/vampirism.js",
+    "old": "  const mod = vampireStatMod(skyMinutes, racialSunAverse(entity));",
+    "new": "  const mod = vampireStatMod(skyMinutes);",
+    "tests": [
+      "test/fb0929_vampirehood.test.js"
+    ]
+  },
+  {
+    "name": "HOODSUN-the-arm-ignored",
+    "file": "src/systems/vampirism.js",
+    "old": "(sunAverse && playerInSunlight(clockMinutes) ?",
+    "new": "(playerInSunlight(clockMinutes) ?",
+    "tests": [
+      "test/fb0929_vampirehood.test.js"
+    ]
+  },
+  {
+    "name": "HOODSUN-the-hood-read-backwards",
+    "file": "src/systems/vampirism.js",
+    "old": "  const mod = vampireStatMod(skyMinutes, racialSunAverse(entity));",
+    "new": "  const mod = vampireStatMod(skyMinutes, !racialSunAverse(entity));",
     "tests": [
       "test/fb0929_vampirehood.test.js"
     ]

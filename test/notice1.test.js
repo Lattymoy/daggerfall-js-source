@@ -408,9 +408,7 @@ test('NOTICE1 the cards hang in their order - the rumour first, the bounty board
 test('NOTICE1 the wiring: a rumour board carries its town to the press online; the press opens the Notice Board only once the service said it is open, else DFU\'s box and a read; offline the board carries nothing and is DFU\'s byte for byte; one door, one mount', () => {
   const w = src('src/scenes/world.js');
   const m = src('src/scenes/worldModes.js');
-  assert.match(w, /\.\.\.\(i === noticeAt \? \{ notice: noticeTown, named: noticeBook\.open === true \} : \{\}\),/, 'ONE-BOARD: the town\'s one Notice Board, never every board the bounty split left');
-  assert.match(w, /const noticeAt = noticeTown \? noticeBoardOf\(p\) : -1;/);
-  assert.match(w, /const noticeBoardOf = \(p\) => \(p\._noticeBoard \?\?= noticeBoardIndex\(p\.boards \?\? \[\], boardSplitOf\(p\), townCentreOf\(p\.homeFrames\)\)\);/, 'one law, worked out once a pixel');
+  assert.match(w, /\.\.\.\(!bountyAt\.has\(i\) && noticeTown \? \{ notice: noticeTown, named: noticeBook\.open === true \} : \{\}\),/, 'every board that is not a bounty board');   // ONE-BOARD REVERTED (PIN MOVED)
   assert.match(w, /const noticeTown = noticeBook && p\.location \? noticeTownOf\(p\.px, p\.py, bountyAt\.size > 0\) : null;/, 'online alone (the book is online\'s)');
   assert.match(w, /const noticeBook = params\.has\('online'\)\s*\n\s*\? createNoticeBook\(/);
   assert.match(w, /if \(noticeBook\.open !== true\) \{ noticeBook\.read\(town\.mapId\); return false; \}/, 'not yet open: DFU\'s box, and the read that settles it');

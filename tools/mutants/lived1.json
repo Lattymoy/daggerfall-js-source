@@ -56,8 +56,8 @@
   {
     "name": "LIVED1-the-vampires-day-reads-their-own-clock",
     "file": "src/systems/vampirism.js",
-    "old": "  const mod = vampireStatMod(skyMinutes);",
-    "new": "  const mod = vampireStatMod(nowMinutes);",
+    "old": "  const mod = vampireStatMod(skyMinutes, racialSunAverse(entity));",
+    "new": "  const mod = vampireStatMod(nowMinutes, racialSunAverse(entity));",
     "tests": [
       "test/lived1.test.js",
       "test/vampday.test.js"
