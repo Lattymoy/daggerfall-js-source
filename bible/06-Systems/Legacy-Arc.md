@@ -268,6 +268,12 @@ finishChargen`, `test/legacychoice.test.js`, `tools/mutants/legacychoice.json`):
   A claim lapses when its claimant dies or retires, and the list then lies as they LEFT it (A3). Another member's log
   names whose search it is. The bones go back into their own list or stay in the character's keeping - the pack, the
   wagon, the bag - and into no chest, pile or ground (H4).
+- **The load's repairs reach what the line hands down (ITEM-WALK B, 2026-10-07).** A bequest reaches its heir at birth
+  with no load, and the remains open where they lie, from the line's record, which may be the device's copy rather than
+  a save's (`mergeFamily`). The load's one-time item repairs (`systems/save.js` repairItemLists: DISC21-A, WEAPON-POOL,
+  DISC29-B, WB12a, RARITY-WEAR) run on each bequest piece as it is paid (`payEstateOf`), and on a remains list as it
+  opens, before its claim's mark is taken, so opening it still claims nothing. A save's copy of the record is walked
+  at every load besides (`heldItemLists`). `05-Combat/Physical-Combat-Overhaul.md` ITEM-WALK.
 
 ## 8. MARRIAGE, CHILDREN AND SURNAMES
 
