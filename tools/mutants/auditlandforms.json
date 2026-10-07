@@ -372,8 +372,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-profile-read-off-the-shaping-pixel",
     "file": "src/world/landforms.js",
-    "old": "const { base, noise } = termsOf(s.qx, s.qy);",
-    "new": "const { base, noise } = termsOf(px, py);",
+    "old": "const { base, noise, cliff } = termsOf(s.qx, s.qy);",
+    "new": "const { base, noise, cliff } = termsOf(px, py);",
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js"
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-profile-not-ocean-floored",
     "file": "src/world/landforms.js",
-    "old": "prof[k] = Math.min(Math.max(macro, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT) + reliefLift(low);",
-    "new": "prof[k] = Math.min(macro, MAX_TERRAIN_HEIGHT) + reliefLift(low);",
+    "old": "prof[k] = Math.min(Math.max(macro, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT) +",
+    "new": "prof[k] = Math.min(macro, MAX_TERRAIN_HEIGHT) +",
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js"
@@ -404,8 +404,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-lift-of-whole-height",
     "file": "src/world/landforms.js",
-    "old": "const land = h + reliefLift(low);",
-    "new": "const land = h + reliefLift(h);",
+    "old": "const land = h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low));",
+    "new": "const land = h + (cliff ? reliefLift(h) * cliff(x, y) : reliefLift(h));",
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js"

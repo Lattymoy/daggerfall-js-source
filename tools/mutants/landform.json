@@ -66,8 +66,8 @@
   {
     "name": "LANDFORM-profile-unlifted",
     "file": "src/world/landforms.js",
-    "old": "prof[k] = Math.min(Math.max(macro, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT) + reliefLift(low);",
-    "new": "prof[k] = Math.min(Math.max(macro, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);",
+    "old": "MAX_TERRAIN_HEIGHT) + (cliff ? reliefLift(low) * cliff(lx, ly) : reliefLift(low));",
+    "new": "MAX_TERRAIN_HEIGHT);",
     "tests": [
       "test/landform.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "LANDFORM-ceiling-road-graded-to-the-raw-macro",
     "file": "src/world/landforms.js",
-    "old": "prof[k] = Math.min(Math.max(macro, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT) + reliefLift(low);",
-    "new": "prof[k] = Math.max(macro, SCALED_OCEAN_ELEVATION) + reliefLift(low);",
+    "old": "prof[k] = Math.min(Math.max(macro, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT) +",
+    "new": "prof[k] = Math.max(macro, SCALED_OCEAN_ELEVATION) +",
     "tests": [
       "test/landform.test.js"
     ]
