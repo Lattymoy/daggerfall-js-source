@@ -1,0 +1,52 @@
+[
+  {
+    "name": "SHIPS2-B-a-role-dropped",
+    "file": "tools/bakeCarrack.mjs",
+    "old": "  'Cylinder.017': role('aftStep', [[-13.403, 10.189, 4.271], [-9.991, 13.774, 6.416]]),\n",
+    "new": "",
+    "tests": [
+      "test/ships2_bake.test.js"
+    ],
+    "why": "an object of hers named in no role: her bake refuses the scene"
+  },
+  {
+    "name": "SHIPS2-B-the-frame-unread",
+    "file": "tools/shipBake.mjs",
+    "old": "(z - frame.waterline) * frame.scale",
+    "new": "z * frame.scale",
+    "tests": [
+      "test/ships2_bake.test.js"
+    ],
+    "why": "her heights the scene's, not over her waterline: neither file re-made"
+  },
+  {
+    "name": "SHIPS2-B-the-centreline-unread",
+    "file": "tools/shipBake.mjs",
+    "old": "(frame.centreline - y) * frame.scale",
+    "new": "(-y) * frame.scale",
+    "tests": [
+      "test/ships2_bake.test.js"
+    ],
+    "why": "her centreline the scene's Y 0: her hull off her centreline"
+  },
+  {
+    "name": "SHIPS2-B-a-skip-unchecked",
+    "file": "tools/shipBake.mjs",
+    "old": "      if (fault) throw new Error(fault);\n",
+    "new": "",
+    "tests": [
+      "test/ships2_bake.test.js"
+    ],
+    "why": "an object of hers said to be skipped, baked without it"
+  },
+  {
+    "name": "SHIPS2-B-the-box-unchecked",
+    "file": "tools/shipBake.mjs",
+    "old": "    if (!(off <= BOX_SLACK)) throw",
+    "new": "    if (false) throw",
+    "tests": [
+      "test/ships2_bake.test.js"
+    ],
+    "why": "a role whose object has moved baked as it stands"
+  }
+]

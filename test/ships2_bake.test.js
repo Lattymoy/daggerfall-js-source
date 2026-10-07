@@ -35,7 +35,7 @@ test('SHIPS-2 THE BAKES: Mac\'s one scene baked to each ship\'s frame is each fi
   }
 });
 
-test('SHIPS-2 ONE SCENE, TWO SHIPS: every object of Mac\'s scene is read by one ship and skipped by the other, or skipped by both - none read twice, none unread; and a scene moved under a spec is refused - an object standing out of the box it was read in, an object no spec names (mutants: a skip unchecked, the box unchecked)', () => {
+test('SHIPS-2 ONE SCENE, TWO SHIPS: every object of Mac\'s scene is read by one ship and skipped by the other, or skipped by both - none read twice, none unread; and a scene moved under a spec is refused - an object standing out of the box it was read in, an object no spec names, an object of hers said to be skipped (mutants: a skip unchecked, the box unchecked)', () => {
   const objects = sceneObjects(tree).map((o) => o.name);
   const reads = (spec, n) => !!spec.roles[n], skips = (spec, n) => !!spec.skip[n];
   for (const n of objects) {
@@ -50,4 +50,7 @@ test('SHIPS-2 ONE SCENE, TWO SHIPS: every object of Mac\'s scene is read by one 
   // an object no spec names
   const { [name]: _gone, ...fewer } = LARGE_BOAT_SPEC.roles;
   assert.throws(() => bakeScene(bytes, { ...LARGE_BOAT_SPEC, roles: fewer }, tree), /plays no role aboard/);
+  // an object of hers said to be skipped as standing outside her band: refused, it stands in it
+  const { 'Cylinder.026': _mast, ...noMast } = LARGE_BOAT_SPEC.roles;
+  assert.throws(() => bakeScene(bytes, { ...LARGE_BOAT_SPEC, roles: noMast, skip: { ...LARGE_BOAT_SPEC.skip, 'Cylinder.026': { band: true } } }, tree), /was to stand outside her band/);
 });

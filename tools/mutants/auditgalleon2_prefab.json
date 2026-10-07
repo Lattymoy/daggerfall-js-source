@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-GN2-PF4-her-model-after-the-five",
     "file": "src/systems/comeSailAwayModels.js",
-    "old": "    const hers = galleonUrl ? get(galleonUrl, false).then(",
-    "new": "    const hers = galleonUrl ? new Promise((r) => setTimeout(r, 60)).then(() => get(galleonUrl, false)).then(",
+    "old": "    const own = (url) => (url ? get(url, false).then(",
+    "new": "    const own = (url) => (url ? new Promise((r) => setTimeout(r, 60)).then(() => get(url, false)).then(",
     "tests": [
       "test/auditgalleon2_prefab.test.js"
     ],
@@ -32,7 +32,7 @@
   {
     "name": "AUDIT-GN2-PF4-built-every-time",
     "file": "src/systems/comeSailAwayModels.js",
-    "old": "  if (_built && _built.sha256 === galleon.sha256 && _built.bake === bake && _built.base === base && _built.old === old) return _built.built;\n",
+    "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old) return was.built;\n",
     "new": "",
     "tests": [
       "test/auditgalleon2_prefab.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "AUDIT-GN2-PF4-keyed-by-the-hash-alone",
     "file": "src/systems/comeSailAwayModels.js",
-    "old": "_built.sha256 === galleon.sha256 && _built.bake === bake && ",
-    "new": "_built.sha256 === galleon.sha256 && ",
+    "old": "was.sha256 === json.sha256 && was.bake === bake && ",
+    "new": "was.sha256 === json.sha256 && ",
     "tests": [
       "test/auditgalleon2_prefab.test.js",
       "test/galleon_model.test.js"
@@ -53,8 +53,8 @@
   {
     "name": "AUDIT-GN2-PF4-another-table-its-components",
     "file": "src/systems/comeSailAwayModels.js",
-    "old": " && _built.base === base && _built.old === old) return",
-    "new": " && _built.old === old) return",
+    "old": " && was.base === base && was.old === old) return",
+    "new": " && was.old === old) return",
     "tests": [
       "test/auditgalleon2_prefab.test.js"
     ],
@@ -63,7 +63,7 @@
   {
     "name": "AUDIT-GN2-PF4-another-table-its-galleon",
     "file": "src/systems/comeSailAwayModels.js",
-    "old": " && _built.old === old) return",
+    "old": " && was.old === old) return",
     "new": ") return",
     "tests": [
       "test/auditgalleon2_prefab.test.js"

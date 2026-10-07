@@ -143,6 +143,19 @@ test('SHIPS-2 LARGE BOAT HER PLANS SAIL: placed by the runtime with each plan an
     const set = pts();
     const moved = set.filter((p, k) => Math.hypot(...sub(p, furled[k])) > 0.3).length;
     assert.ok(moved > set.length / 2, `plan ${v}: the canvas comes down off its spars (${moved} of ${set.length})`);
+    // and each sail's own canvas, not the rest's
+    // in the sail's own frame - its boom braced round moves the whole of it
+    const at = (n) => {
+      const M = n.worldMatrix();
+      return [...n.walk()].filter((b) => /^B\d+$/.test(b.name)).map((b) => { const m = b.worldMatrix(), d = [m[12] - M[12], m[13] - M[13], m[14] - M[14]]; return [0, 1, 2].map((c) => M[c * 4] * d[0] + M[c * 4 + 1] * d[1] + M[c * 4 + 2] * d[2]); });
+    };
+    s.rt.LowerSails(); frames(16);
+    const stowed = boat.Sails.map(at);
+    s.rt.RaiseSails(); frames(16);
+    boat.Sails.forEach((n, i) => {
+      const now = at(n), sail = now.filter((p, k) => Math.hypot(...sub(p, stowed[i][k])) > 0.3).length;
+      assert.ok(now.length && sail > now.length / 2, `plan ${v}, ${n.name}: its canvas comes down (${sail} of ${now.length})`);
+    });
     s.rt.LowerSails();
     frames(16);
     assert.ok(boat.Sails.every((n) => animatorOf(n).GetBool('Stowed') === true), `plan ${v}: lowered, furled`);
@@ -174,7 +187,7 @@ test('SHIPS-2 LARGE BOAT HER RIG SWEPT CLEAR: every plan, every canvas at every 
 
 // ── her fits ───────────────────────────────────────────────────────────────────────────────────────────────────────
 
-test('SHIPS-2 LARGE BOAT HER PARTS FIT: her rudder turned 35 degrees either way about her raked post clears her hull, her stern rail and her step; her tiller rides over her stern rail\'s cap; the mod\'s anchor stowed on her foredeck, its cargo forward of her mast and her bow swivel each stand clear of her hull and her bowsprit; her swivels\' posts and her lanterns\' poles stand on her caps, crossing them only at the cap (mutants: the anchor at the stem, the bow swivel in the bowsprit, the rudder about the vertical)', () => {
+test('SHIPS-2 LARGE BOAT HER PARTS FIT: her rudder turned 35 degrees either way about her raked post clears her hull, her stern rail and her step; her tiller rides over her stern rail\'s cap; the mod\'s anchor stowed on her foredeck, its cargo forward of her mast and her bow swivel each stand clear of her hull and her bowsprit; her swivels\' posts and her lanterns\' poles stand on her caps, crossing them only at the cap (mutants: the anchor forward into her bow, the bow swivel in the bowsprit, the tiller off level)', () => {
   const parts = drawn(0);
   const one = (name) => parts.find((p) => p.name === name);
   const tris = (p, m = p.m) => trisOf(geometryOf(p.key), m);
@@ -186,7 +199,18 @@ test('SHIPS-2 LARGE BOAT HER PARTS FIT: her rudder turned 35 degrees either way 
   }
   const end = tillerEnd();
   assert.ok(end[1] - 0.05 > MEASURED.sternRail.capY + 0.05, 'the tiller over her stern rail\'s cap');
-  for (const name of ['SkiffAnchor', 'SkiffCargo']) assert.deepEqual(crossings(tris(one(name)), hull), [], `${name} clear of her hull`);
+  // the tiller drawn level to its end, where tillerEnd says (the helmsman's hand, the DriveTrigger over it)
+  const g = geometryOf(rudder.key);
+  let fore = null;
+  for (let i = 0; i < g.positions.length; i += 3) {
+    const p = [g.positions[i], g.positions[i + 1], g.positions[i + 2], 1], m = rudder.m;
+    const w = [0, 1, 2].map((r) => m[r] * p[0] + m[4 + r] * p[1] + m[8 + r] * p[2] + m[12 + r]);
+    if (!fore || w[2] > fore[2]) fore = w;
+  }
+  assert.ok(Math.abs(fore[2] - end[2]) < 0.06 && Math.abs(fore[1] - end[1]) < 0.06, `the tiller's end drawn at its end (${fore.map((v) => v.toFixed(3))})`);
+  for (const name of ['SkiffAnchor', 'SkiffCargo']) {
+    for (const [what, T] of [['her hull', hull], ['her bowsprit', sprit], ['her bow swivel', tris(one('SwivelBow'))]]) assert.deepEqual(crossings(tris(one(name)), T), [], `${name} clear of ${what}`);
+  }
   near(one('SkiffAnchor').m[14], ANCHOR_Z, 1e-6, 'the anchor where ANCHOR_Z stows it');
   assert.deepEqual(crossings(tris(one('SwivelBow')), sprit), [], 'the bow swivel clear of her bowsprit');
   for (const name of ['SwivelBow', 'SwivelStarboard0', 'SwivelPort2', 'LanternHookStandPoleTall']) {

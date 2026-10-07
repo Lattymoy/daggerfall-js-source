@@ -76,8 +76,8 @@
   {
     "name": "GALLEON-loader-no-fallback",
     "file": "src/systems/comeSailAwayModels.js",
-    "old": "      if (!galleon) throw e;\n",
-    "new": "      throw e;\n",
+    "old": "      if (!answer.ok) { log?.warn?.(",
+    "new": "      if (!answer.ok) { throw answer.error; log?.warn?.(",
     "tests": [
       "test/galleon_model.test.js"
     ]

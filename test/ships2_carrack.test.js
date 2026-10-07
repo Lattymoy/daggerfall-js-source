@@ -150,6 +150,12 @@ test('SHIPS-2 CARRACK HER SHUTTERS FIT HER SIDE: each shut shutter\'s inner face
   }
   assert.ok(gap < 0.03, `the widest gap ${gap.toFixed(4)} m`);
   assert.ok(bite > -0.025, `the deepest bite ${bite.toFixed(4)} m`);
+  // each station on its own side's planking to the bit - her hull is not her mirror (2.4 cm apart at a station), so a
+  // side fitted off the other is off - and the sill's row read a millimetre under the sill, on her side under the port
+  for (const s of [1, -1]) lidFitOf(hullPart, s).forEach((F, i) => LID.rows.forEach((y, r) => LID.cols.forEach((dz, k) => {
+    const side = sideAt(hullPart, r === LID_SILL_ROW ? y - 0.001 : y, MEASURED.portZ[i] + dz, s);
+    if (side != null) assert.equal(F[r][k], side, `side ${s}, port ${i}, row ${r}, station ${k}`);
+  })));
 });
 
 test('SHIPS-2 CARRACK HER DOORS AND SHUTTERS OPEN AND CLOSE: her middle house\'s doorway a pair of leaves - each with its DoorTrigger, the port leaf on the mod\'s Door Controller and the starboard on its own mirrored clips, swinging the other way; every shutter on its side\'s clips, up on its hinge (mutants: one leaf, the leaves swinging alike, a shutter unclipped)', () => {
@@ -174,7 +180,7 @@ test('SHIPS-2 CARRACK HER HELM: a wheel on its pedestal before the helmsman\'s p
   const left = Object.keys(clips).filter((k) => /^carrack2\/Rudder Sailing Left/.test(k)), right = Object.keys(clips).filter((k) => /^carrack2\/Rudder Sailing Right/.test(k));
   assert.ok(left.length >= 1 && right.length >= 1);
   const hard = (names) => names.map((n) => turn(n, 'HelmRudder')[1]).reduce((a, b) => (Math.abs(b) > Math.abs(a) ? b : a), 0);
-  near(Math.abs(hard(left)), RUDDER_DEG, 1e-6, 'hard over to port');
+  near(hard(left), RUDDER_DEG, 1e-6, 'hard over to port: her rudder\'s after edge to port, the mod\'s Left (the galleon\'s and the large boat\'s +y)');
   assert.ok(Math.sign(hard(left)) === -Math.sign(hard(right)), 'the sides the other way');
   assert.deepEqual(find(built.prefab, 'DriveTrigger').position, [...DRIVE_TRIGGER_AT]);
   const stand = find(built.prefab, 'DrivePosition').position;
@@ -200,6 +206,19 @@ test('SHIPS-2 CARRACK HER RIG: five sails by Come Sail Away\'s names - a small s
   assert.ok(boat.Sails.every((n) => animatorOf(n).GetBool('Stowed') === false), 'raised: every sail set');
   const set = pts();
   assert.ok(set.filter((p, k) => Math.hypot(...sub(p, furled[k])) > 0.5).length > set.length / 2, 'the canvas comes down off its spars');
+  // and each sail's own canvas, not the rest's
+  // in the sail's own frame - its boom braced round moves the whole of it
+  const at = (n) => {
+    const M = n.worldMatrix();
+    return [...n.walk()].filter((b) => /^B\d+$/.test(b.name)).map((b) => { const m = b.worldMatrix(), d = [m[12] - M[12], m[13] - M[13], m[14] - M[14]]; return [0, 1, 2].map((c) => M[c * 4] * d[0] + M[c * 4 + 1] * d[1] + M[c * 4 + 2] * d[2]); });
+  };
+  s.rt.LowerSails(); frames(16);
+  const stowed = boat.Sails.map(at);
+  s.rt.RaiseSails(); frames(16);
+  boat.Sails.forEach((n, i) => {
+    const now = at(n), moved = now.filter((p, k) => Math.hypot(...sub(p, stowed[i][k])) > 0.3).length;
+    assert.ok(now.length && moved > now.length / 2, `${n.name}: its canvas comes down (${moved} of ${now.length})`);
+  });
   s.rt.LowerSails();
   frames(16);
   assert.ok(boat.Sails.every((n) => animatorOf(n).GetBool('Stowed') === true), 'lowered: furled');
@@ -227,6 +246,14 @@ test('SHIPS-2 CARRACK HER PARTS FIT: her rudder turned 35 degrees either way abo
     const m = multiply(rudder.m, mat4FromQuatPosScale(quatAngleAxis(deg, [0, 1, 0]), [0, 0, 0], [1, 1, 1]), new Float32Array(16));
     assert.deepEqual(crossings(trisOf(geometryOf(rudder.key), m), hullTris), [], `the rudder at ${deg}`);
   }
+  // turned about her sternpost: the hull's two vertices on her centreline at its foot and its head
+  const post = [];
+  for (let i = 0; i < hullPart.positions.length; i += 3) {
+    const [x, y, z] = [hullPart.positions[i], hullPart.positions[i + 1], hullPart.positions[i + 2]];
+    if (Math.abs(x) < 1e-4 && z < -20 && [-3.1146, 3.5587].some((h) => Math.abs(y - h) < 1e-3)) post.push(z);
+  }
+  assert.ok(post.length >= 2, 'her sternpost\'s foot and head');
+  for (const z of post) near(find(built.prefab, 'HelmRudder').position[2], z, 1e-3, 'her rudder hung on her sternpost');
   for (const s of [1, -1]) {
     const L = ropeLadderGeometry(s);
     for (let i = 0; i < L.positions.length; i += 3) {
