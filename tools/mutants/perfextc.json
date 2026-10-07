@@ -766,8 +766,8 @@
  {
   "name": "PERF-EXT26-the-worker-copies-the-grid-back-instead-of-transferring",
   "file": "src/world/terrainGenWorker.js",
-  "old": "    globalThis.postMessage({ t: 'grid', id: m.id, positions, normals }, [positions.buffer, normals.buffer]);",
-  "new": "    globalThis.postMessage({ t: 'grid', id: m.id, positions, normals });",
+  "old": "    globalThis.postMessage({ t: 'grid', id: m.id, positions, normals, bed }, transfer);",
+  "new": "    globalThis.postMessage({ t: 'grid', id: m.id, positions, normals, bed });",
   "tests": [
    "test/restrideworker.test.js"
   ]
@@ -784,8 +784,8 @@
  {
   "name": "PERF-EXT26-the-worker-builds-a-different-grid",
   "file": "src/world/terrainGenWorker.js",
-  "old": "    const { positions, normals } = restrideGrid({ ...m, woods, roads, sites, climates });",
-  "new": "    const { positions, normals } = restrideGrid({ ...m, woods, roads, sites, climates, stride: 4 });",
+  "old": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, climates });",
+  "new": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, climates, stride: 4 });",
   "tests": [
    "test/restrideworker.test.js"
   ]
@@ -838,8 +838,8 @@
  {
   "name": "PERF-EXT26-the-grid-law-drops-the-ghost-rows",
   "file": "src/world/terrainGen.js",
-  "old": "  return buildTerrainGrid(samples, stride, ghostSampler(woods, px, py, HEIGHTMAP_DIMENSION, lf));",
-  "new": "  return buildTerrainGrid(samples, stride, () => 0);",
+  "old": "  const grid = buildTerrainGrid(samples, stride, ghost);",
+  "new": "  const grid = buildTerrainGrid(samples, stride, () => 0);",
   "tests": [
    "test/restrideworker.test.js",
    "test/terrainworker.test.js"

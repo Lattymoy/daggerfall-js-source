@@ -269,7 +269,7 @@ test('EV7: the world host rides the client and the pinned build contracts stand'
   // last act of the build, after the GL uploads and the collider
   const bp = world.slice(world.indexOf('async function buildPixel'), world.indexOf('function restrideTerrain'));
   assert.ok(bp.lastIndexOf('built.set(key,') > bp.lastIndexOf('collider.addMesh'), 'publish follows the collider');
-  assert.ok(bp.includes('renderer.createTerrainSurface(positions, normals'), 'GL consumes the reply on this thread');
+  assert.ok(bp.includes('renderer.createTerrainSurface(carved?.positions ?? positions, carved?.normals ?? normals'), 'GL consumes the reply on this thread');   // PIN MOVED (WATER-NEXT 2): the reply's grid, carved under the water for the eye - AUDIT WATER-NEXT P1: carved by the kernel, on the worker
   // AUDIT EV F-SIM1: one build per pixel, ever in flight - the cache
   // answers a finished pixel, the in-flight map answers a flying one
   // with the SAME promise, so a teleport overlapping a pump build (or

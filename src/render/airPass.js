@@ -1480,6 +1480,7 @@ export class AirPass {
     const gl = this.gl;
     gl.deleteTexture(k.tex); for (const d of k.depths) gl.deleteTexture(d); for (const f of k.fbos) gl.deleteFramebuffer(f);
     if (k.aoDepth) { gl.deleteTexture(k.aoDepth); gl.deleteFramebuffer(k.aoFbo); }   // GRASS-LIT
+    if (k.uwFbo) { gl.deleteTexture(k.uwColor); gl.deleteTexture(k.uwDepth); gl.deleteFramebuffer(k.uwFbo); }   // WATER-NEXT 2
   }
   /**
    * GRASS-LIT (2026-10-01): THE OCCLUSION'S DEPTH, TAKEN BEFORE THE GRASS. The AO is read off the frame's depth at the
@@ -1514,6 +1515,43 @@ export class AirPass {
     gl.bindFramebuffer(gl.FRAMEBUFFER, F.fbo);   // the frame's own, read and draw, as the world left it
     F.aoTaken = true;
     return true;
+  }
+  /**
+   * WATER-NEXT 2 (2026-10-07): WHAT LIES UNDER THE WATER. The water refracts the scene behind its surface and measures
+   * the water's depth off it - and the frame's colour and depth are the very images it draws into, which no program
+   * may sample while they are bound. So, once a world frame, before its first water draw: one blit of both into a
+   * copy of the frame's own formats (the colour LINEAR, the depth NEAREST - a blit of depth must be). The water reads
+   * the copy; the frame goes on as it stood. A no-op with no frame bound.
+   * @returns {{color: WebGLTexture, depth: WebGLTexture, w: number, h: number}|null}
+   */
+  snapshotUnderWater() {
+    const F = this.frame;
+    if (!F || !this.f || !this.fresh) return null;
+    const gl = this.gl;
+    if (!F.uwFbo) {
+      const tex = (fmt, filter) => {
+        const t = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, t);
+        gl.texStorage2D(gl.TEXTURE_2D, 1, fmt, F.w, F.h);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        return t;
+      };
+      F.uwColor = tex(gl.RGBA8, gl.LINEAR);
+      F.uwDepth = tex(gl.DEPTH_COMPONENT24, gl.NEAREST);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+      F.uwFbo = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, F.uwFbo);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, F.uwColor, 0);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, F.uwDepth, 0);
+    }
+    gl.bindFramebuffer(gl.READ_FRAMEBUFFER, F.fbo);
+    gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, F.uwFbo);
+    gl.blitFramebuffer(0, 0, F.w, F.h, 0, 0, F.w, F.h, gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT, gl.NEAREST);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, F.fbo);   // the frame's own, read and draw, as the world left it
+    return { color: F.uwColor, depth: F.uwDepth, w: F.w, h: F.h };
   }
   /** PERF-SCALE (the review): free a slot's frame image - the world stopped drawing into an image of its own (retro
    *  off, the render scale back at 100%; Renderer._dropWorldImage), so the image-sized frame is not held for the rest

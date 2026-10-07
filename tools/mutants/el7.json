@@ -173,8 +173,8 @@
   {
     "name": "water-classic-on-lane",
     "file": "src/render/renderer.js",
-    "old": "    const laneWater = !!(this._lane?.shadows && this.waterSurfaceProgramLane && this._shadows);",
-    "new": "    const laneWater = false;",
+    "old": "    const laneWater = !!(this._lane?.shadows && this.waterSurfaceProgramLane && this._shadows);   // EL7: the lane's water receives the sun map",
+    "new": "    const laneWater = false;   // EL7: the lane's water receives the sun map",
     "tests": [
       "test/el7_polish.test.js"
     ]
@@ -182,7 +182,7 @@
   {
     "name": "water-no-map-upload",
     "file": "src/render/renderer.js",
-    "old": "    if (laneWater) this._shadows.upload(L.shadow);   // EL7: the maps and the receiver's uniforms\n",
+    "old": "    if (L === this._wsLane && this._shadows) this._shadows.upload(L.shadow);   // EL7: the maps and the receiver's uniforms - the lane's program\n",
     "new": "",
     "tests": [
       "test/el7_polish.test.js"

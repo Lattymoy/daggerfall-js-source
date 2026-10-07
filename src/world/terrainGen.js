@@ -29,6 +29,7 @@ import { paintRoads, smoothRoadHeights, pathCorners } from './roadPainter.js';
 import { MAP_W } from './roadNetwork.js';
 import { applyPicks } from './wodLocationLoader.js';   // WOD2: World of Daggerfall's smoothing arms
 import { createLandforms } from './landforms.js';   // LANDFORM1-3: the port's own terrain, inside the kernel
+import { waterBedOf, bedHalo, bedNearEdge } from './waterBed.js';   // AUDIT WATER-NEXT P1: the bed under the water, carved with the grid; F2: across its seams
 
 /**
  * The whole CPU side of one streamed pixel, in buildPixel's own order:
@@ -70,7 +71,7 @@ import { createLandforms } from './landforms.js';   // LANDFORM1-3: the port's o
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
  *   nature: Array<{record:number,x:number,y:number,z:number}>, beach: ?Float32Array}}
  */
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, climates = null, wod = null, forests = null, landform = false, ecotone = null }) {
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false }) {
   // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
   // are the same roads; restrideGrid's ghost rows take the same landforms, so the edge normals read the shaped ground.
   // LANDFORM4: and the sites this kernel holds (landforms.js landformSites, the client's to hand both threads); LANDFORM6:
@@ -129,8 +130,9 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // only ever computed there), every other from 0.
   const wodResult = wod && wod.picks.length ? applyPicks(samples, wod.picks, hasLocation ? avg : 0) : null;
   if (classic && wodResult) applyPicks(classic, wod.picks);   // AUDIT LANDFORMS II H2: DFU's nature reads the ground a site levelled (above) - so the beach it asks is DFU's own samples levelled by the same picks
-  const grid = restrideGrid({ woods, px, py, stride, samples, landforms });   // PERF-EXT26: the one grid law, the restride's too
   const tilemapBytes = convertTilemap(tilemap);
+  // PERF-EXT26: the one grid law, the restride's too; AUDIT WATER-NEXT P1: and the bed under its water, carved here
+  const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null });
   const nature = layoutNature(samples, tilemap, {
     mapPixelX: px,
     mapPixelY: py,
@@ -163,7 +165,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     // still stand on the shaped ground.
     beach: classic,
   });
-  return { samples, tilemap, positions: grid.positions, normals: grid.normals, tilemapBytes, avg, nature,
+  return { samples, tilemap, positions: grid.positions, normals: grid.normals, bed: grid.bed, tilemapBytes, avg, nature,
     paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says
     // ROADS 25: whether a network was PRESENT when this pixel was painted.
     // The network loads asynchronously and the world starts building at
@@ -186,10 +188,28 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
  * on the main thread is, by construction.
  * LANDFORM1-3: the ghost rows are the neighbours' SHAPED ground - `landforms` when the caller holds them (the build
  * above), else made here from `landform` and the network (a promotion: the host's job, the worker's own network).
- * @param {{ woods: object, px: number, py: number, stride?: number, samples: Float32Array, landform?: boolean, roads?: ?object, sites?: ?Uint8Array, climates?: ?Uint8Array, landforms?: ?object }} job
- * @returns {{ positions: Float32Array, normals: Float32Array }}
+ * AUDIT WATER-NEXT P1 (2026-10-07, Mac: "ensure ... performance is unaffected"): `bed` - the converted TileMap to carve
+ * the water's bed by (world/waterBed.js), or null for none - and the answer carries it (`bed`: the depths and the carved
+ * ground, null where no vertex is under water) beside the grid as it stood. WATER-NEXT 2 carved on the host's thread at
+ * every build and restride, 0.3 ms for a pixel with no water at all and a millisecond or two for a coast's; here it rides
+ * the worker with the grid it carves, the build's, the promotion's and the restride's alike.
+ * @param {{ woods: object, px: number, py: number, stride?: number, samples: Float32Array, landform?: boolean, roads?: ?object, sites?: ?Uint8Array, climates?: ?Uint8Array, landforms?: ?object, bed?: ?Uint8Array }} job
+ * @returns {{ positions: Float32Array, normals: Float32Array, bed: ?{depths: Float32Array, sheetDepths: Float32Array, positions: Float32Array, normals: Float32Array} }}
  */
-export function restrideGrid({ woods, px, py, stride = 1, samples, landform = false, roads = null, sites = null, climates = null, landforms = null }) {
+export function restrideGrid({ woods, px, py, stride = 1, samples, landform = false, roads = null, sites = null, climates = null, landforms = null, bed = null }) {   // AUDIT WATER-NEXT P1: `bed` the TileMap to carve by
   const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, climates }) : null);
-  return buildTerrainGrid(samples, stride, ghostSampler(woods, px, py, HEIGHTMAP_DIMENSION, lf));
+  const ghost = ghostSampler(woods, px, py, HEIGHTMAP_DIMENSION, lf);
+  const grid = buildTerrainGrid(samples, stride, ghost);
+  // AUDIT WATER-NEXT F2: a near grid's bed reads its neighbours' tiles across the seams (the ghost is their own kernel),
+  // where its water comes near an edge
+  const halo = bed && stride === 1 && bedNearEdge(bed) ? bedHalo(ghost, px, py) : null;
+  return { positions: grid.positions, normals: grid.normals, bed: bed ? gridBed(grid, bed, stride, halo) : null };
+}
+
+/** AUDIT WATER-NEXT P1: a grid's bed as the kernel answers it - the depths, the sheet's depths and the carved ground, the
+ *  grid untouched, and the seam's halo it was carved with (F2: kept by the host for a re-carve); null where no vertex is
+ *  under water (world/waterBed.js waterBedOf). The host's re-carve (Deep Waters' TileMap) takes the same shape. */
+export function gridBed(grid, bytes, stride = 1, halo = null) {
+  const carved = waterBedOf(grid, bytes, { stride, halo });
+  return carved ? { depths: carved.depths, sheetDepths: carved.sheetDepths, positions: carved.ground.positions, normals: carved.ground.normals, halo } : null;
 }

@@ -33,6 +33,11 @@ import { perlinNoise } from './perlin.js';
 import { UMRandom } from '../formats/umRandom.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION } from './terrainSampler.js';
 
+/** MeshReader.cs:487: an RMB ground record at or past this is a random marker, not a tile of the set (the tileset has
+ *  56 records). AUDIT WATER-NEXT m8: ONE home - the stamp below, rmbLayout.js buildGroundTilemap, the fixed town's
+ *  tilemap (scenes/exterior.js) and PUDDLE-DRY (puddleDry.js) each carried their own 56. */
+export const GROUND_RECORD_LIMIT = 56;
+
 export const WORLD_MAP_TILE_DIM = 128; // MapsFile.WorldMapTileDim
 const TILE_DATA_DIM = WORLD_MAP_TILE_DIM + 1;
 const MAX_WORLD_TILE_COORD_Z = 64000; // MapsFile.MaxWorldTileCoordZ
@@ -128,6 +133,15 @@ export function createLookupTable() {
 
 const LOOKUP_TABLE = createLookupTable();
 
+/** AssignTilesJob's march for one tile, from its four corners' tileData (b0 its (0,0), b1 (1,0), b2 (0,1), b3 (1,1)) -
+ *  the raw tile byte. AUDIT WATER-NEXT F2: exported, so the water's bed can read a neighbour's tiles across a seam by
+ *  the same law (world/waterBed.js bedHalo). */
+export function marchTile(b0, b1, b2, b3) {
+  const shape = (b0 & 1) | ((b1 & 1) << 1) | ((b2 & 1) << 2) | ((b3 & 1) << 3);
+  const ring = (b0 + b1 + b2 + b3) >> 2;
+  return LOOKUP_TABLE[shape | (ring << 4)];
+}
+
 /**
  * WATER1's arithmetic, one home (LW-DRY, 2026-10-05: the living world's dry ground reads it too - world/dryGround.js).
  * A stored sample's height is the reference's float: the sampler's float32 sample times MaxTerrainHeight, rounded back
@@ -170,24 +184,24 @@ export function generateTileData(heightmapData, mapPixelX, mapPixelY, hDim = HEI
     // rounded to float32 and compared against the reference's float32
     // thresholds (terrainSampler.js: the constants are the floats), which
     // is the arithmetic the reference does.
-    const height = sampleHeight(heightmapData[hy + hx * hDim]);
-
-    if (isWaterHeight(height)) {
-      tileData[index] = WATER;
-      continue;
-    }
-    // A little +/- randomness so the beach line isn't too regular.
-    const jitter = UMRandom.createFromIndex(index >>> 0).nextFloatRange(-BEACH_JITTER, BEACH_JITTER);
-    if (height <= Math.fround(SCALED_BEACH_ELEVATION + jitter)) {
-      tileData[index] = DIRT;
-      continue;
-    }
-
-    const latitude = mapPixelX * WORLD_MAP_TILE_DIM + x;
-    const longitude = MAX_WORLD_TILE_COORD_Z - mapPixelY * WORLD_MAP_TILE_DIM + y;
-    tileData[index] = getWeightedRecord(noiseWeight(latitude, longitude));
+    tileData[index] = tileDataAt(sampleHeight(heightmapData[hy + hx * hDim]), x, y, mapPixelX, mapPixelY);
   }
   return tileData;
+}
+
+/**
+ * GenerateTileDataJob's body for one corner (x, y) of a pixel's 129x129 grid, from its sample's height (`sampleHeight`).
+ * AUDIT WATER-NEXT F2: lifted out of the loop above (the loop calls it, unchanged), so a neighbour's corner is classified
+ * by the same law, its own index's jitter and its own latitude (world/waterBed.js bedHalo).
+ */
+export function tileDataAt(height, x, y, mapPixelX, mapPixelY) {
+  if (isWaterHeight(height)) return WATER;
+  // A little +/- randomness so the beach line isn't too regular.
+  const jitter = UMRandom.createFromIndex((x + y * TILE_DATA_DIM) >>> 0).nextFloatRange(-BEACH_JITTER, BEACH_JITTER);
+  if (height <= Math.fround(SCALED_BEACH_ELEVATION + jitter)) return DIRT;
+  const latitude = mapPixelX * WORLD_MAP_TILE_DIM + x;
+  const longitude = MAX_WORLD_TILE_COORD_Z - mapPixelY * WORLD_MAP_TILE_DIM + y;
+  return getWeightedRecord(noiseWeight(latitude, longitude));
 }
 
 /**
@@ -207,13 +221,7 @@ export function assignTiles(tileData, tilemapData, march = true) {
     if (tilemapData[index] !== 0) continue;
     if (march) {
       const tdIdx = x + y * tdDim; // JobA.Idx(x, y, tdDim)
-      const b0 = tileData[tdIdx];
-      const b1 = tileData[tdIdx + 1];
-      const b2 = tileData[tdIdx + tdDim];
-      const b3 = tileData[tdIdx + tdDim + 1];
-      const shape = (b0 & 1) | ((b1 & 1) << 1) | ((b2 & 1) << 2) | ((b3 & 1) << 3);
-      const ring = (b0 + b1 + b2 + b3) >> 2;
-      tilemapData[index] = LOOKUP_TABLE[shape | (ring << 4)];
+      tilemapData[index] = marchTile(tileData[tdIdx], tileData[tdIdx + 1], tileData[tdIdx + tdDim], tileData[tdIdx + tdDim + 1]);
     } else {
       tilemapData[index] = tileData[x + y * tdDim];
     }
@@ -279,7 +287,7 @@ export function setLocationTiles(dfLocation, mapsFile, blocksFile, tilemapData) 
           const tile = groundTiles[tileX][(RMB_TILES_PER_BLOCK - 1) - tileY];
           const xpos = tilePos.x + blockX * RMB_TILES_PER_BLOCK + tileX;
           const ypos = tilePos.y + blockY * RMB_TILES_PER_BLOCK + tileY;
-          if (tile.textureRecord < 56) {
+          if (tile.textureRecord < GROUND_RECORD_LIMIT) {
             if (xpos < xmin) xmin = xpos;
             if (xpos > xmax) xmax = xpos;
             if (ypos < ymin) ymin = ypos;

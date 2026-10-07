@@ -92,8 +92,8 @@
   {
     "name": "LANDFORM4-worker-grid-unpulled",
     "file": "src/world/terrainGenWorker.js",
-    "old": "    const { positions, normals } = restrideGrid({ ...m, woods, roads, sites, climates });",
-    "new": "    const { positions, normals } = restrideGrid({ ...m, woods, roads, climates });",
+    "old": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, sites, climates });",
+    "new": "    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads, climates });",
     "tests": [
       "test/landform45.test.js"
     ]

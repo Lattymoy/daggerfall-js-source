@@ -1,0 +1,110 @@
+[
+  {
+    "name": "PUDDLEDRY-no-tile-dried",
+    "file": "src/world/puddleDry.js",
+    "old": "  for (const [x, y, bits] of plan) groundTiles[x][y] = tileOf(bits);",
+    "new": "  for (const [x, y, bits] of plan) void bits;",
+    "tests": [
+      "test/puddledry.test.js"
+    ]
+  },
+  {
+    "name": "PUDDLEDRY-the-least-common",
+    "file": "src/world/puddleDry.js",
+    "old": "        for (const [bits, n] of count) if (n > most) { most = n; best = bits; }",
+    "new": "        let fewest = Infinity; for (const [bits, n] of count) if (n < fewest) { fewest = n; best = bits; }",
+    "tests": [
+      "test/puddledry.test.js"
+    ]
+  },
+  {
+    "name": "PUDDLEDRY-the-turn-dropped",
+    "file": "src/world/puddleDry.js",
+    "old": "const tileOf = (bitfield) => ({\n  tileBitfield: bitfield,",
+    "new": "const tileOf = (bitfield) => ({\n  tileBitfield: bitfield & 0x3f,",
+    "tests": [
+      "test/puddledry.test.js"
+    ]
+  },
+  {
+    "name": "PUDDLEDRY-the-size-rule-only",
+    "file": "src/world/puddleDry.js",
+    "old": "      if (patch.length > 1 && !patch.every(([px, py]) => PUDDLE.has(at(px, py).textureRecord))) continue;",
+    "new": "      if (patch.length > 1) continue;",
+    "tests": [
+      "test/puddledry.test.js"
+    ]
+  },
+  {
+    "name": "PUDDLEDRY-the-art-rule-only",
+    "file": "src/world/puddleDry.js",
+    "old": "      if (patch.length > 1 && !patch.every(([px, py]) => PUDDLE.has(at(px, py).textureRecord))) continue;",
+    "new": "      if (!patch.every(([px, py]) => PUDDLE.has(at(px, py).textureRecord))) continue;",
+    "tests": [
+      "test/puddledry.test.js"
+    ]
+  },
+  {
+    "name": "PUDDLEDRY-every-patch-dried",
+    "file": "src/world/puddleDry.js",
+    "old": "      if (patch.length > 1 && !patch.every(([px, py]) => PUDDLE.has(at(px, py).textureRecord))) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/puddledry.test.js"
+    ]
+  },
+  {
+    "name": "PUDDLEDRY-the-shore-ring-apart",
+    "file": "src/world/puddleDry.js",
+    "old": "  return waterCorners(convertTile(tile.tileBitfield), WATER_DRAW_MASK_TABLE) !== 0;",
+    "new": "  return waterCorners(convertTile(tile.tileBitfield), WATER_DRAW_MASK_TABLE) === 0xF;",
+    "tests": [
+      "test/puddledry.test.js"
+    ]
+  },
+  {
+    "name": "PUDDLEDRY-the-once-unkept",
+    "file": "src/world/puddleDry.js",
+    "old": "  if (!Array.isArray(groundTiles) || groundTiles.length !== DIM || _dried.has(groundTiles)) return 0;",
+    "new": "  if (!Array.isArray(groundTiles) || groundTiles.length !== DIM) return 0;",
+    "tests": [
+      "test/puddledry.test.js"
+    ]
+  },
+  {
+    "name": "PUDDLEDRY-a-marker-read-as-ground",
+    "file": "src/world/puddleDry.js",
+    "old": "          if (!n || n.textureRecord >= RECORD_LIMIT || groundTileWet(n)) continue;",
+    "new": "          if (!n || groundTileWet(n)) continue;",
+    "tests": [
+      "test/puddledry.test.js"
+    ]
+  },
+  {
+    "name": "PUDDLEDRY-a-wet-neighbour-taken",
+    "file": "src/world/puddleDry.js",
+    "old": "          if (!n || n.textureRecord >= RECORD_LIMIT || groundTileWet(n)) continue;",
+    "new": "          if (!n || n.textureRecord >= RECORD_LIMIT) continue;",
+    "tests": [
+      "test/puddledry.test.js"
+    ]
+  },
+  {
+    "name": "PUDDLEDRY-the-mods-block-undried",
+    "file": "src/formats/blocksFile.js",
+    "old": "      return dryBlock(replacement);",
+    "new": "      return replacement;",
+    "tests": [
+      "test/puddledry.test.js"
+    ]
+  },
+  {
+    "name": "PUDDLEDRY-the-files-block-undried",
+    "file": "src/formats/blocksFile.js",
+    "old": "    return dryBlock(this._blocks[block].dfBlock);",
+    "new": "    return this._blocks[block].dfBlock;",
+    "tests": [
+      "test/puddledry.test.js"
+    ]
+  }
+]
