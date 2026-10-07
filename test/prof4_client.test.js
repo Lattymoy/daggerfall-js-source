@@ -226,9 +226,10 @@ test('PROF4 trees: a pixel\'s trees stand at the forest\'s own tree flats, the n
   assert.equal(moved.length, 3, 'nothing felled then or now: untouched');
   assert.deepEqual([...new Set(stood.map((q) => q.material))].sort(), ['log:oak', 'log:pine'], 'PINE-SHARE: an unconfirmed Woodlands pixel stands its Oak and Pine');
   const node = stood.find((q) => q.material === 'log:oak');
-  const plan = (o) => treePlan({ node, taken: false, counting: false, rank: 10, axe: true, storesFull: () => false, today: 0, cap: 60, ...o });
+  const plan = (o) => treePlan({ node, taken: false, counting: false, rank: 10, axe: true, storesFull: () => false, ...o });
   assert.deepEqual(plan({}), { harvest: 'logs', verb: 'Chop Oak', rest: `Logging 10 - ${chopsFor(2)} chops`, ready: true });
-  assert.deepEqual([plan({ rank: 9 }).rest, plan({ axe: false }).rest, plan({ taken: true }).rest, plan({ today: 60 }).rest], ['needs Logging 10', 'needs a Wood-Axe', 'felled today', 'Logging done for today (60)']);
+  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): sixty today said 'Logging done for today (60)'
+  assert.deepEqual([plan({ rank: 9 }).rest, plan({ axe: false }).rest, plan({ taken: true }).rest, plan({ today: 600, cap: 60 }).ready], ['needs Logging 10', 'needs a Wood-Axe', 'felled today', true]);
   assert.deepEqual({ ...AXE_HAND }, { group: 'Weapons', templateIndex: 128, material: 0 });
   assert.deepEqual([axeHandFrame(0), axeHandFrame(1), axeHandFrame(0.01)], [{ state: 'Idle', frame: 0 }, { state: 'StrikeDownRight', frame: 0 }, { state: 'StrikeDownRight', frame: 4 }]);
 });
@@ -243,7 +244,7 @@ test('PROF4 host: the tree targeted, E starts the Wood-Axe\'s ring (DFU\'s War A
     let taken = [];
     const door = {
       account: () => 'acct-1',
-      state: async () => ({ ok: true, data: { day, character: 'c1', tracks: [{ profession: 'logging', xp: xpForRank(10), rank: 10, specs: { 50: null, 100: null } }], today: {}, taken, stores: [], caps: { harvests: 60, stores: 5000 } } }),
+      state: async () => ({ ok: true, data: { day, character: 'c1', tracks: [{ profession: 'logging', xp: xpForRank(10), rank: 10, specs: { 50: null, 100: null } }], today: {}, taken, stores: [], caps: { stores: 5000 } } }),
       pixels: async (c, px) => ({ ok: true, data: { pixels: px.map(([x, y]) => ({ x, y, state: 'none' })), dungeons: [] } }),
       harvest: async (b) => { asked.push(b); taken = [`${b.node}|logs`]; return { ok: true, data: { node: b.node, kind: b.kind, material: 'log:oak', qty: 3, xp: 30, extra: 'wood:resin', extraStore: { material: 'wood:resin', own: 1, bought: 0 }, track: { profession: 'logging', xp: xpForRank(10) + 30, rank: 10 }, today: 1 } }; },
     };

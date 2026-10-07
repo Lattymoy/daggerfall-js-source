@@ -1,11 +1,12 @@
 // FIELD BUGS 2026-10-06c GUARD-WINDOW (bible/01-Overview/Field-Bugs-2026-10-06c.md; Aru on Discord: "So I picked up the
 // quest, the three hours passed, the mage disappeared, but no enemies showed up, so now I can't complete it ... I even
-// wondered around to check if the assassins would spawn"). N0B20Y02, "Protect an Honored Mage": `until _S.12_ performed:
-// pc at _magesguild_ set _S.01_`, and `_S.01_` sends the three Nightblades once, at a random point in their first 55
-// minutes; `_S.12_` (three hours) hides the mage, and the reward waits on both. REST8 read `_S.12_` as a delay, and online
-// a delay is cut to the short wait - 24 minutes: the mage was hidden before the attack more often than not, and a guard
-// who stepped out in those two real minutes had `_S.01_` cleared for good. A deadline by hand now (ONLINE_DEADLINES):
-// the guard keeps its three hours, played, and the attack always comes inside it. The real script, parsed and ticked.
+// wondered around to check if the assassins would spawn"). N0B20Y02, "Protect an Honored Mage": `until _S.12_
+// performed: pc at _magesguild_ set _S.01_`, and `_S.01_` sends the three Nightblades once, at a random point in their
+// first 55 minutes (online since WAVE-WAIT, inside the short wait); `_S.12_` (three hours) hides the mage, and the
+// reward waits on both. REST8 read `_S.12_` as a delay, and online a delay is cut to the short wait - 24 minutes: the
+// mage was hidden before the attack more often than not, and a guard who stepped out in those two real minutes had
+// `_S.01_` cleared for good. A deadline by hand now (ONLINE_DEADLINES): the guard keeps its three hours, played, and
+// the attack always comes inside it. The real script, parsed and ticked.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -37,7 +38,7 @@ function guard(online) {
     showPopup() {}, getQuestSourceLines: () => lines, sharedClock: () => online, world,
   }).parseQuestShape('N0B20Y02');
   q.hooks.world = world;   // the shape's parse is headless (no scene); the running host hands the spawn seam
-  q.rolls = () => 0;   // the worst case: no backdate - the wave a full 55 minutes after the guard begins
+  q.rolls = () => 0;   // the worst case: no backdate - the wave a full interval after the guard begins (55 minutes; online 24)
   return { q, now, waves };
 }
 

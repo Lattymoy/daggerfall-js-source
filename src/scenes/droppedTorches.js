@@ -485,6 +485,20 @@ export function createDroppedTorches({
       if (fl.batch) fl.batch.origin = fl.pos;
     }
   }
+  /** AUDIT LANDFORMS II G1: THE GROUND MOVED UNDER A PIXEL - a rebuild the reference never makes (the road network
+   *  landing, which the landforms cut metres into the land; a late World of Daggerfall pack; the gate's clearing) -
+   *  and what lies in its box [x0, x1) x [z0, z1) rides it by `dy(x, z)`, the ground's own move under it (world.js's
+   *  publish). Left where it lay, a dropped light hung over a cut or lay buried in a fill - up to 28 m - and the next save kept it so. */
+  function groundMoved(x0, z0, x1, z1, dy) {
+    for (const d of dropped) {
+      if (!(d.pos[0] >= x0 && d.pos[0] < x1 && d.pos[2] >= z0 && d.pos[2] < z1)) continue;
+      const m = dy(d.pos[0], d.pos[2]);
+      if (!m) continue;
+      d.pos[1] += m;
+      if (d.batch) { renderer.destroyBillboardBatch(d.batch); d.batch = renderer.createBillboardBatch(DROPPED_ARCHIVE, d.record, d.size, [d.pos]); d.batch.frame = d.anim?.frame ?? 0; }
+      d.loop?.move?.(d.pos);
+    }
+  }
   /** HandheldTorchesSaveData (0x4c34 / 0x4cc8): position, time and template of each; restored by spawning each. */
   const snapshot = (toWorld = (p) => p) => dropped.filter((d) => d.template).map((d) => { const p = toWorld(d.pos); return { position: [p[0], p[1], p[2]], time: d.time, itemTemplateIndex: d.template }; });
   function restore(list, fromWorld = (p) => p) {
@@ -498,7 +512,7 @@ export function createDroppedTorches({
   }
 
   return {
-    spawnLightSource, spawnLightSourceProjectile, tick, lights, batches, targets, hoverName, activate, destroyAll, collectPixel, offsetAll, snapshot, restore,
+    spawnLightSource, spawnLightSourceProjectile, tick, lights, batches, targets, hoverName, activate, destroyAll, collectPixel, offsetAll, groundMoved, snapshot, restore,
     igniteFoe, foeBurning,
     get dropped() { return dropped; }, get projectiles() { return projectiles; },
     setOnPickedUp(fn) { onPickedUp = typeof fn === 'function' ? fn : null; },

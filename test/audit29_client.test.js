@@ -15,7 +15,7 @@ const noWait = () => Promise.resolve();
 const memStorage = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)) }; };
 const DAY_MS = 86_400_000;
 const T = 20500 * DAY_MS + 12 * 3600_000;
-const okState = (day = 20500, extra = {}) => ({ ok: true, data: { day, character: 'c1', tracks: [], today: {}, taken: [], stores: [], caps: { harvests: 60, stores: 5000 }, ...extra } });
+const okState = (day = 20500, extra = {}) => ({ ok: true, data: { day, character: 'c1', tracks: [], today: {}, taken: [], stores: [], caps: { stores: 5000 }, ...extra } });
 
 test('AUDIT 29 C1: the state is read one at a time - presses while a read is on the wire share it; a failed read is not asked again for its backoff', async () => {
   let asked = 0, t = T;

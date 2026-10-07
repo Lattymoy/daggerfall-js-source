@@ -72,6 +72,9 @@ function handle(m) {
     }
     // PERF-EXT26: a promotion's grid needs no network, so it never waits
     // behind one, and it answers by its id - never through the jobs' FIFO.
+    // LANDFORM1-3: unless it is the landforms' grid - its ghost rows are cut
+    // along the network, so it waits for the one the pixel was cut along.
+    if (m.t === 'grid' && m.landform && pendingRoads) { pendingRoads.then(() => handle(m)); return; }
     if (m.t === 'grid') { answerGrid(m); return; }
     // ROADS 19: a job that arrives while the network is still loading
     // waits for it, so no chunk is ever generated roadless.
@@ -85,6 +88,7 @@ function handle(m) {
     const out = generatePixelTerrain({ ...m, woods, roads });
     const transfer = [out.samples.buffer, out.tilemap.buffer, out.positions.buffer, out.normals.buffer, out.tilemapBytes.buffer];
     if (out.paths) transfer.push(out.paths.buffer);   // GRASS-PATH1: null on a roadless pixel, and a null is not a buffer
+    if (out.beach) transfer.push(out.beach.buffer);   // AUDIT LANDFORMS II H2: a location's DFU blend, with the row on
     globalThis.postMessage({ t: 'done', ...out }, transfer);
   } catch (e) {
     globalThis.postMessage({ t: 'error', message: e?.message ?? String(e) });
@@ -99,7 +103,9 @@ function handle(m) {
 function answerGrid(m) {
   try {
     if (!woods) throw new Error('terrain worker got a grid before init');
-    const { positions, normals } = restrideGrid({ ...m, woods });
+    // LANDFORM1-3: the ghost rows are the shaped ground when the job carries the Landforms row, cut along this
+    // worker's own network - the one its jobs paint
+    const { positions, normals } = restrideGrid({ ...m, woods, roads });
     globalThis.postMessage({ t: 'grid', id: m.id, positions, normals }, [positions.buffer, normals.buffer]);
   } catch (e) {
     globalThis.postMessage({ t: 'gridError', id: m.id, message: e?.message ?? String(e) });

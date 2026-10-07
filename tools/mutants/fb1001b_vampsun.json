@@ -2,8 +2,8 @@
   {
     "name": "FB1001b-the-day-is-the-hours-again-the-defect",
     "file": "src/systems/vampirism.js",
-    "old": "export const vampireStatMod = (clockMinutes) => (playerInSunlight(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD);",
-    "new": "export const vampireStatMod = (clockMinutes) => (isDayFromMinutes(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD);",
+    "old": "(sunAverse && playerInSunlight(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD)",
+    "new": "(sunAverse && isDayFromMinutes(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD)",
     "tests": [
       "test/fb1001b_vampsun.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "FB1001b-no-sun-reaches-the-street",
     "file": "src/systems/vampirism.js",
-    "old": "export const vampireStatMod = (clockMinutes) => (playerInSunlight(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD);",
-    "new": "export const vampireStatMod = (clockMinutes) => (playerInSunlight(clockMinutes) ? VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD);",
+    "old": "(sunAverse && playerInSunlight(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD)",
+    "new": "(sunAverse && playerInSunlight(clockMinutes) ? VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD)",
     "tests": [
       "test/fb1001b_vampsun.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FB1001b-out-of-the-sun-is-merely-plain",
     "file": "src/systems/vampirism.js",
-    "old": "export const vampireStatMod = (clockMinutes) => (playerInSunlight(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD);",
-    "new": "export const vampireStatMod = (clockMinutes) => (playerInSunlight(clockMinutes) ? -VAMPIRE_STAT_MOD : 0);",
+    "old": "(sunAverse && playerInSunlight(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD)",
+    "new": "(sunAverse && playerInSunlight(clockMinutes) ? -VAMPIRE_STAT_MOD : 0)",
     "tests": [
       "test/fb1001b_vampsun.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "FB1001b-the-round-always-weak",
     "file": "src/systems/vampirism.js",
-    "old": "  const mod = vampireStatMod(skyMinutes);",
+    "old": "  const mod = vampireStatMod(skyMinutes, racialSunAverse(entity));",
     "new": "  const mod = -VAMPIRE_STAT_MOD;",
     "tests": [
       "test/fb1001b_vampsun.test.js"

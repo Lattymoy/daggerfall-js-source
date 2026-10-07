@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import {
   extractArmRecords, isArmRecords, ARM_RECORDS_VERSION, ARM_GMST_IDS, GMST_SNEAK_DELTA,
   bodyParts, raceRecords, armorRecords, clothingRecords, weaponRecords, lightRecords, gmstValue,
+  magicEffectRecords, vfxStaticRecords,   // MW-SPELLFX1
 } from '../src/formats/mwFirstPerson.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -46,6 +47,15 @@ const wpdt = (type, speed) => {
 // MW-D51: LHDT is 24 bytes, flags at 20 (Dynamic 1, Carry 2, Negative 4,
 // Flicker 8, Fire 16, ...).
 const lhdt = (flags) => { const b = new Uint8Array(24); new DataView(b.buffer).setInt32(20, flags, true); return Array.from(b); };
+// MW-SPELLFX1: MEDT is 36 bytes - school, base cost, flags, red, green, blue, size, speed, size cap
+const medt = ({ school = 2, flags = 0, rgb = [255, 64, 0], speed = 1.5 } = {}) => {
+  const b = new Uint8Array(36);
+  const dv = new DataView(b.buffer);
+  dv.setInt32(0, school, true); dv.setFloat32(4, 5, true); dv.setInt32(8, flags, true);
+  dv.setInt32(12, rgb[0], true); dv.setInt32(16, rgb[1], true); dv.setInt32(20, rgb[2], true);
+  dv.setFloat32(24, 1, true); dv.setFloat32(28, speed, true); dv.setFloat32(32, 50, true);
+  return Array.from(b);
+};
 const handBuilt = () => new Uint8Array([
   ...rec('TES3', [sub('HEDR', new Array(300).fill(0))]),
   ...rec('GMST', [sub('NAME', z('fSomethingElse')), sub('FLTV', u32(0))]),
@@ -63,6 +73,13 @@ const handBuilt = () => new Uint8Array([
   ...rec('LIGH', [sub('NAME', z('Torch')), sub('MODL', [...enc('l'), 0x5c, ...z('light_torch.nif')]), sub('FNAM', z('Torch')), sub('LHDT', lhdt(1 | 2 | 16))]),   // MW-D51: carriable, fire
   ...rec('LIGH', [sub('NAME', z('light_sconce')), sub('MODL', [...enc('l'), 0x5c, ...z('sconce.nif')]), sub('LHDT', lhdt(1))]),   // a wall light: not carriable
   ...rec('LIGH', [sub('NAME', z('modelless_light'))]),   // no MODL: dropped
+  ...rec('MGEF', [sub('INDX', u32(14)), sub('MEDT', medt({ flags: 0x10 | 0x800 })), sub('ITEX', z('s\\tx_s_fire.dds')), sub('PTEX', z('vfx_firealpha00A.tga')), sub('CVFX', z('VFX_DestructCast')), sub('BVFX', z('VFX_DestructBolt')), sub('HVFX', z('VFX_DestructHit')), sub('AVFX', z('VFX_DestructArea')), sub('DESC', z('burns'))]),   // MW-SPELLFX1
+  ...rec('MGEF', [sub('INDX', u32(75)), sub('MEDT', medt({ school: 5, rgb: [0, 255, 0] })), sub('CVFX', z('VFX_RestoreCast')), sub('HVFX', z('Restore_Glow'))]),   // a hit an MGEF names off the VFX_ family
+  ...rec('MGEF', [sub('MEDT', medt())]),   // no INDX: dropped
+  ...rec('STAT', [sub('NAME', z('VFX_DestructCast')), sub('MODL', [...enc('e'), 0x5c, ...z('magic_cast_dst.nif')])]),
+  ...rec('STAT', [sub('NAME', z('VFX_Hands')), sub('MODL', [...enc('e'), 0x5c, ...z('magic_hands_std.nif')])]),
+  ...rec('STAT', [sub('NAME', z('restore_glow')), sub('MODL', [...enc('e'), 0x5c, ...z('magic_hit_rst.nif')])]),
+  ...rec('STAT', [sub('NAME', z('furn_chair_01')), sub('MODL', [...enc('f'), 0x5c, ...z('chair.nif')])]),   // furniture: not an effect's
   ...rec('LAND', [sub('DATA', [1, 2, 3])]),   // a kind nobody asks about
 ]);
 
@@ -74,6 +91,8 @@ const sixWays = (bytes) => ({
   clothes: clothingRecords(bytes),
   weapons: weaponRecords(bytes),
   lights: lightRecords(bytes),   // MW-D51
+  magicEffects: magicEffectRecords(bytes),   // MW-SPELLFX1
+  statics: vfxStaticRecords(bytes),   // MW-SPELLFX1
   gmst: Object.fromEntries(ARM_GMST_IDS.map((id) => [id, gmstValue(bytes, id)]).filter(([, v]) => v !== null)),
 });
 
@@ -96,6 +115,14 @@ test('MW-LOAD: extractArmRecords equals the six per-kind readers on every fixtur
   assert.deepEqual(one.weapons.map((w) => [w.id, w.type, w.speed]), [['iron_dagger', 1, 1.25]]);
   assert.deepEqual(one.lights.map((l) => [l.id, l.model, l.carry, l.fire]), [['torch', 'l/light_torch.nif', true, true], ['light_sconce', 'l/sconce.nif', false, false]], 'MW-D51: LIGH id lowercased, model with forward slashes, the carry and fire bits off LHDT flags; a modelless light is dropped');
   assert.deepEqual(one.gmst, { [GMST_SNEAK_DELTA]: 10 }, 'the FIRST GMST wins (gmstValue’s rule) and unasked ids are not carried');
+  // MW-SPELLFX1: the magic effects - index, school, the three modifiable flags alone, the colour, the speed, the
+  // particle texture as written, the four visuals' ids lowercased - and the statics an effect is drawn with
+  assert.deepEqual(one.magicEffects.map((m) => [m.index, m.school, m.flags, m.color, m.speed, m.particle, m.casting, m.bolt, m.hit, m.area]), [
+    [14, 2, 0x800, [255, 64, 0], 1.5, 'vfx_firealpha00A.tga', 'vfx_destructcast', 'vfx_destructbolt', 'vfx_destructhit', 'vfx_destructarea'],
+    [75, 5, 0, [0, 255, 0], 1.5, '', 'vfx_restorecast', '', 'restore_glow', ''],
+  ], 'Harmful (0x10) is a hard-coded flag the legacy format does not let a file set; NegativeLight is the file\'s');
+  assert.deepEqual(one.statics, [{ id: 'vfx_destructcast', model: 'e/magic_cast_dst.nif' }, { id: 'vfx_hands', model: 'e/magic_hands_std.nif' }, { id: 'restore_glow', model: 'e/magic_hit_rst.nif' }],
+    'the VFX_ family and the id an MGEF names; furniture stays in the master');
 });
 
 test('MW-LOAD: the answer survives JSON whole, and the envelope is refused when it is not this shape', () => {
@@ -112,7 +139,9 @@ test('MW-LOAD: the answer survives JSON whole, and the envelope is refused when 
   // a master that carries nothing the build asks for still answers the shape
   const empty = extractArmRecords(new Uint8Array([...rec('TES3', [sub('HEDR', new Array(300).fill(0))])]));
   assert.ok(isArmRecords(empty));
-  assert.deepEqual(empty, { version: ARM_RECORDS_VERSION, parts: [], races: [], armors: [], clothes: [], weapons: [], lights: [], gmst: {} });
+  assert.deepEqual(empty, { version: ARM_RECORDS_VERSION, parts: [], races: [], armors: [], clothes: [], weapons: [], lights: [], magicEffects: [], statics: [], gmst: {} });
+  assert.equal(isArmRecords({ ...back, magicEffects: undefined }), false, 'MW-SPELLFX1: a set from before the magic effects (v3) is not this shape - and its version says so first');
+  assert.equal(isArmRecords({ ...back, version: 3 }), false, 'MW-SPELLFX1: the version moved past it, so a v3 set is refused before its shape is read');
   assert.equal(isArmRecords({ ...back, lights: undefined }), false, 'MW-D51: a set from before the lights (v1) is not this shape - and its version says so first');
   // the GMST list is the build's, spelled once
   assert.deepEqual([...ARM_GMST_IDS], [GMST_SNEAK_DELTA]);
@@ -127,6 +156,7 @@ test('MW-LOAD: the per-kind readers ride the same per-record functions as the on
     ['BODY', 'readBodyPart', 'bodyParts'], ['RACE', 'readRace', 'raceRecords'],
     ['ARMO', 'readArmor', 'armorRecords'], ['CLOT', 'readClothing', 'clothingRecords'],
     ['WEAP', 'readWeapon', 'weaponRecords'], ['LIGH', 'readLight', 'lightRecords'], ['GMST', 'readGmst', 'gmstValue'],
+    ['MGEF', 'readMagicEffect', 'magicEffectRecords'], ['STAT', 'readStatic', 'vfxStaticRecords'],   // MW-SPELLFX1
   ]) {
     assert.match(src, new RegExp(`case '${kind}': \\{?[\\s\\S]{0,40}?${reader}\\(bytes, rec\\)`), `${kind}: the one pass calls ${reader}`);
     const fn = src.slice(src.indexOf(`export function ${walker}(`));

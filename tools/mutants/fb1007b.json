@@ -1,0 +1,576 @@
+[
+  {
+    "name": "FB1007B-TOWER-FLOORS-REVERTED",
+    "file": "src/world/interiorLayout.js",
+    "old": "    } else if (obj.objectType === FLOOR_MODEL_TYPE) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/fb1007b_towerfloors.test.js"
+    ],
+    "why": "the field bug itself: a floor model placed as DFU places any model, centred on the storey it is written at"
+  },
+  {
+    "name": "FB1007B-FLOOR-NOT-STOOD",
+    "file": "src/world/interiorLayout.js",
+    "old": "      py = -obj.yPos * GLOBAL_SCALE + -lowestY(model);",
+    "new": "      py = -obj.yPos * GLOBAL_SCALE;",
+    "tests": [
+      "test/fb1007b_towerfloors.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-FLOOR-TYPE-THIRTEEN",
+    "file": "src/world/interiorLayout.js",
+    "old": "export const FLOOR_MODEL_TYPE = 5;",
+    "new": "export const FLOOR_MODEL_TYPE = 13;",
+    "tests": [
+      "test/fb1007b_towerfloors.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-LOWEST-IS-HIGHEST",
+    "file": "src/world/interiorLayout.js",
+    "old": "    if (verts[i] < bottomY) bottomY = verts[i];",
+    "new": "    if (verts[i] > bottomY) bottomY = verts[i];",
+    "tests": [
+      "test/fb1007b_towerfloors.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-CLASSIC-CLIMBS-TRAVELLING",
+    "file": "src/player/climbing.js",
+    "old": "        || c.travelling   // CLIMB-TRAVEL",
+    "new": "        || false   // CLIMB-TRAVEL",
+    "tests": [
+      "test/fb1007b_climbtravel.test.js"
+    ],
+    "why": "the field bug in the classic lane: the abort ladder never hears the journey"
+  },
+  {
+    "name": "FB1007B-MOTOR-DROPS-TRAVEL",
+    "file": "src/player/motor.js",
+    "old": "      travelling: !!this.travelling?.(),   // CLIMB-TRAVEL: nor at a journey's pace",
+    "new": "      travelling: false,   // CLIMB-TRAVEL: nor at a journey's pace",
+    "tests": [
+      "test/fb1007b_climbtravel.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-ENHANCED-CLIMBS-TRAVELLING",
+    "file": "src/player/motor.js",
+    "old": "    const unheld = this.levitating || this.riding || this.paralyzed || !!this.travelling?.();",
+    "new": "    const unheld = this.levitating || this.riding || this.paralyzed;",
+    "tests": [
+      "test/fb1007b_climbtravel.test.js"
+    ],
+    "why": "the field bug in the enhanced lane: the wall held, and taken, at a journey's pace"
+  },
+  {
+    "name": "FB1007B-HOST-UNWIRED",
+    "file": "src/scenes/world.js",
+    "old": "carriedWeight: () => carriedWeight(playerEntity), travelling: () => travellingOutdoors(), climbing:",
+    "new": "carriedWeight: () => carriedWeight(playerEntity), climbing:",
+    "tests": [
+      "test/fb1007b_climbtravel.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-KEYS-TRAVEL-ON-WALL",
+    "file": "src/scenes/world.js",
+    "old": " && !csaBoatUnderMe() && !(player.climb?.isClimbing || player.mantling || player.onWall || player.holdPending),",
+    "new": " && !csaBoatUnderMe(),",
+    "tests": [
+      "test/fb1007b_climbtravel.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-HOLD-SHARED",
+    "file": "src/scenes/world.js",
+    "old": "      key = ident?.private ? privateRoomHere(ident) : ident?.solo ? null : roomKeyFor({",
+    "new": "      key = ident?.private ? privateRoomHere(ident) : roomKeyFor({",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ],
+    "why": "the field bug itself: every character in Privateer's Hold in the one world room"
+  },
+  {
+    "name": "FB1007B-HOLD-UNMARKED",
+    "file": "src/scenes/worldModes.js",
+    "old": "...(isTutorialHold(dungeonLoc) ? { solo: true } : {}) })",
+    "new": "...({}) })",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-START-CELL-Y-UNREAD",
+    "file": "src/systems/startDungeon.js",
+    "old": "px.y === getInt('Startup', 'StartCellY')",
+    "new": "true",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-START-CELL-HARDCODED",
+    "file": "src/systems/startDungeon.js",
+    "old": "px.x === getInt('Startup', 'StartCellX')",
+    "new": "px.x === 109",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-PH1-OWN-READING",
+    "file": "src/scenes/worldModes.js",
+    "old": "            const isPrivateersHold = isStartDungeon(dfLocation);",
+    "new": "            const isPrivateersHold = false;",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-SEAT-NEVER-MOVES",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    family.seat = { ...t, at: Math.max((Number(family.seat?.at) || 0) + 1, Math.floor(deps.wall?.() ?? Date.now())) };\n",
+    "new": "",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "why": "the field bug itself: the seat the first town took, for good"
+  },
+  {
+    "name": "FB1007B-SEAT-UNSTAMPED",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    family.seat = { ...t, at: Math.max((Number(family.seat?.at) || 0) + 1, Math.floor(deps.wall?.() ?? Date.now())) };",
+    "new": "    family.seat = { ...t };",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-SEAT-HERE-ALREADY",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    return t && !(t.loc === family.seat?.loc && t.region === family.seat?.region) ? t : null;",
+    "new": "    return t ?? null;",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-SEAT-OVER-SUCCESSION",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!family || past || family.pending || !deps.on() || !p || !isAlive(p) || !playedHere(p)) return null;\n    const t = deps.town(deps.here());\n    return t &&",
+    "new": "    if (!family || past || !deps.on() || !p || !isAlive(p) || !playedHere(p)) return null;\n    const t = deps.town(deps.here());\n    return t &&",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-SEAT-MERGED-BY-REV",
+    "file": "src/systems/legacy/store.js",
+    "old": "  if (other.seat && (!mine.seat || (Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0))) mine.seat = { ...other.seat };",
+    "new": "  if (!mine.seat && other.seat) mine.seat = { ...other.seat };",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "why": "the merge as it was: the newer copy by rev keeps its seat, a stale tab's old seat over the move"
+  },
+  {
+    "name": "FB1007B-SEAT-STAMP-UNREAD",
+    "file": "src/systems/legacy/family.js",
+    "old": "      ...(Number(rec.seat.at) > 0 ? { at: Math.floor(Number(rec.seat.at)) } : {}) } : null,",
+    "new": "      } : null,",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-SEAT-ONE-PRESS",
+    "file": "src/ui/familyPages.js",
+    "old": "      if (!armed) { _armed = 'seat';",
+    "new": "      if (false) { _armed = 'seat';",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-SEAT-PROVIDER-UNWIRED",
+    "file": "src/scenes/world.js",
+    "old": "    familySeatHere: () => legacyHost?.familySeatHere() ?? null,",
+    "new": "    familySeatHere: () => null,",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ]
+  },
+  {
+    "name": "FB1007B-AUDIT-S1-NAMED-BY-SEAT",
+    "file": "src/systems/legacy/store.js",
+    "old": "  const houseName = String(mine.surname ?? '').trim() || String(other.surname ?? '').trim();",
+    "new": "  const houseName = String(mine.surname ?? '').trim();",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S1: a nameless copy named for the moved seat - the house's name flipped"
+  },
+  {
+    "name": "FB1007B-AUDIT-S1-BLOOD-UNNAMED",
+    "file": "src/systems/legacy/store.js",
+    "old": "  if (houseName) nameHouse(mine, houseName);",
+    "new": "  if (houseName) mine.surname = houseName;",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S1: the house named, a member a stale save left nameless left so"
+  },
+  {
+    "name": "FB1007B-AUDIT-S2-STAMP-BEHIND",
+    "file": "src/scenes/legacyHost.js",
+    "old": "at: Math.max((Number(family.seat?.at) || 0) + 1, Math.floor(deps.wall?.() ?? Date.now())) };",
+    "new": "at: Math.floor(deps.wall?.() ?? Date.now()) };",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S2: a move on a clock behind the seat's stamp loses every merge"
+  },
+  {
+    "name": "FB1007B-AUDIT-S3-PAST-UNGUARDED",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!family || past || family.pending || !deps.on() || !p || !isAlive(p) || !playedHere(p)) return null;",
+    "new": "    if (!family || family.pending || !deps.on() || !p || !isAlive(p) || !playedHere(p)) return null;",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S3: the past played back moves the seat"
+  },
+  {
+    "name": "FB1007B-AUDIT-S3-OFF-UNGUARDED",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!family || past || family.pending || !deps.on() || !p || !isAlive(p) || !playedHere(p)) return null;",
+    "new": "    if (!family || past || family.pending || !p || !isAlive(p) || !playedHere(p)) return null;",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S3: Legacy off, the seat moves"
+  },
+  {
+    "name": "FB1007B-AUDIT-S3-DEAD-UNGUARDED",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!family || past || family.pending || !deps.on() || !p || !isAlive(p) || !playedHere(p)) return null;",
+    "new": "    if (!family || past || family.pending || !deps.on() || !p || !playedHere(p)) return null;",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S3: the one played dead moves the seat"
+  },
+  {
+    "name": "FB1007B-AUDIT-S3-NOT-PLAYED-HERE",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!family || past || family.pending || !deps.on() || !p || !isAlive(p) || !playedHere(p)) return null;",
+    "new": "    if (!family || past || family.pending || !deps.on() || !p || !isAlive(p)) return null;",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S3: another character's page moves the line's seat"
+  },
+  {
+    "name": "FB1007B-AUDIT-S3-REGION-IGNORED",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    return t && !(t.loc === family.seat?.loc && t.region === family.seat?.region) ? t : null;",
+    "new": "    return t && !(t.loc === family.seat?.loc) ? t : null;",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S3: a town of the seat's name in another region refused"
+  },
+  {
+    "name": "FB1007B-AUDIT-S3-MOVE-RENAMES",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    const nameTaken = nameAtSeat(family);",
+    "new": "    family.surname = `of ${t.loc}`; const nameTaken = nameAtSeat(family);",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S3: a move renames the house for its new seat"
+  },
+  {
+    "name": "FB1007B-AUDIT-S3-FAIL-WORD-AS-OK",
+    "file": "src/ui/familyPages.js",
+    "old": "      _seatSaid = r.ok ? { ok: true, text: `${here.loc} is your family's seat now.` } : { ok: false, text: r.why ?? 'Not now.' };",
+    "new": "      _seatSaid = { ok: true, text: `${here.loc} is your family's seat now.` };",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S3: a refused move said as made"
+  },
+  {
+    "name": "FB1007B-AUDIT-S3-DISARM-KEEPS-WORD",
+    "file": "src/ui/familyPages.js",
+    "old": "export function disarmFamilyPages() { _said = null; _armed = null; _seatSaid = null; }",
+    "new": "export function disarmFamilyPages() { _said = null; _armed = null; }",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S3: the armed word outlives another page's press"
+  },
+  {
+    "name": "FB1007B-AUDIT-S3-RESET-KEEPS-WORD",
+    "file": "src/ui/familyPages.js",
+    "old": "_homeSaid = null; _seatSaid = null; }",
+    "new": "_homeSaid = null; }",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S3: the armed word outlives the visit"
+  },
+  {
+    "name": "FB1007B-AUDIT-S4-FOCUS-FALLS",
+    "file": "src/ui/familyPages.js",
+    "old": "    if (_armed !== 'seat') { n.setAttribute('tabindex', '-1'); n.setAttribute('data-focus', 'fam-seat-said'); setTimeout(() => n.focus?.({ preventScroll: true }), 0); _seatSaid = null; }",
+    "new": "    if (_armed !== 'seat') _seatSaid = null;",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S4: the keyboard falls to the page after the move"
+  },
+  {
+    "name": "FB1007B-AUDIT-S5-NO-HINT",
+    "file": "src/ui/familyPages.js",
+    "old": "  } else if (prov.moveFamilySeat && family.seat?.loc && !family.pending && me && isAlive(me) && !prov.past?.()) {",
+    "new": "  } else if (false) {",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S5: the page silent where the move is not offered"
+  },
+  {
+    "name": "FB1007B-AUDIT-S5-HINT-WHILE-PENDING",
+    "file": "src/ui/familyPages.js",
+    "old": "family.seat?.loc && !family.pending && me && isAlive(me)",
+    "new": "family.seat?.loc && me && isAlive(me)",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S5: a move hinted while a Succession waits"
+  },
+  {
+    "name": "FB1007B-AUDIT-S5-HINT-IN-THE-PAST",
+    "file": "src/ui/familyPages.js",
+    "old": "me && isAlive(me) && !prov.past?.()) {",
+    "new": "me && isAlive(me)) {",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b S5: a move hinted in the past played back"
+  },
+  {
+    "name": "FB1007B-AUDIT-C1-JOURNEY-INDOORS",
+    "file": "src/scenes/world.js",
+    "old": "  const travellingOutdoors = () => wildTravelling() && (modes?.mode ?? 'exterior') === 'exterior';",
+    "new": "  const travellingOutdoors = () => wildTravelling();",
+    "tests": [
+      "test/fb1007b_climbtravel.test.js"
+    ],
+    "note": "AUDIT FB1007b C1: the keys' stale travel holds every wall indoors"
+  },
+  {
+    "name": "FB1007B-AUDIT-C2-SETS-OUT-FROM-A-WALL",
+    "file": "src/scenes/world.js",
+    "old": "    if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return false; }   // AUDIT FB1007b C2\n",
+    "new": "",
+    "tests": [
+      "test/fb1007b_climbtravel.test.js"
+    ],
+    "note": "AUDIT FB1007b C2: the view's click sets out from a wall"
+  },
+  {
+    "name": "FB1007B-AUDIT-C2-MAP-UNGATED",
+    "file": "src/scenes/world.js",
+    "old": "    if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return true; }\n",
+    "new": "",
+    "tests": [
+      "test/fb1007b_climbtravel.test.js"
+    ],
+    "note": "AUDIT FB1007b C2: the map's walked trip sets out from a wall"
+  },
+  {
+    "name": "FB1007B-AUDIT-C2-FAST-TRAVEL-INSTEAD",
+    "file": "src/scenes/world.js",
+    "old": "    if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return true; }",
+    "new": "    if (climbingNow()) { tvSay(TRAVEL_VIEW_TEXT.climbing); return false; }",
+    "tests": [
+      "test/fb1007b_climbtravel.test.js"
+    ],
+    "note": "AUDIT FB1007b C2: refused, the pick falls through to DFU's fast travel"
+  },
+  {
+    "name": "FB1007B-AUDIT-C3-PENDING-ON-FOOT",
+    "file": "src/scenes/world.js",
+    "old": " || player.onWall || player.holdPending),   // CLIMB-TRAVEL",
+    "new": " || player.onWall),   // CLIMB-TRAVEL",
+    "tests": [
+      "test/fb1007b_climbtravel.test.js"
+    ],
+    "note": "AUDIT FB1007b C3: a load's hold read as a body on foot"
+  },
+  {
+    "name": "FB1007B-AUDIT-C3-PENDING-UNSAID",
+    "file": "src/player/motor.js",
+    "old": "  get holdPending() { return !!this._pkRestore; }",
+    "new": "  get holdPending() { return false; }",
+    "tests": [
+      "test/fb1007b_climbtravel.test.js"
+    ],
+    "note": "AUDIT FB1007b C3: the motor never says a hold waits"
+  },
+  {
+    "name": "FB1007B-AUDIT-C4-RESTORE-UNGATED",
+    "file": "src/player/motor.js",
+    "old": "      if (on && !unheld && !this._wall) this._pkRetake(r);",
+    "new": "      if (on && !this._wall) this._pkRetake(r);",
+    "tests": [
+      "test/fb1007b_climbtravel.test.js"
+    ],
+    "note": "AUDIT FB1007b C4: a load's hold taken mid-journey, to be let go the same step (the climb lens's survivor)"
+  },
+  {
+    "name": "FB1007B-AUDIT-H1-SETTING-KEYS-SOLO",
+    "file": "src/scenes/worldModes.js",
+    "old": "...(isTutorialHold(dungeonLoc) ? { solo: true } : {}) })",
+    "new": "...(isStartDungeon(dungeonLoc) ? { solo: true } : {}) })",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ],
+    "note": "AUDIT FB1007b H1: a player's own start cell takes any dungeon out of the shared world"
+  },
+  {
+    "name": "FB1007B-AUDIT-H1-SHIPPED-X-UNREAD",
+    "file": "src/systems/startDungeon.js",
+    "old": "  return !!px && px.x === SHIPPED_START_CELL.x && px.y === SHIPPED_START_CELL.y;",
+    "new": "  return !!px && px.y === SHIPPED_START_CELL.y;",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ],
+    "note": "AUDIT FB1007b H1: every dungeon on the Hold's row solo"
+  },
+  {
+    "name": "FB1007B-AUDIT-H1-SHIPPED-Y-UNREAD",
+    "file": "src/systems/startDungeon.js",
+    "old": "  return !!px && px.x === SHIPPED_START_CELL.x && px.y === SHIPPED_START_CELL.y;",
+    "new": "  return !!px && px.x === SHIPPED_START_CELL.x;",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ],
+    "note": "AUDIT FB1007b H1: every dungeon on the Hold's column solo"
+  },
+  {
+    "name": "FB1007B-AUDIT-H2-NO-MEMORY",
+    "file": "src/scenes/world.js",
+    "old": "    else if (id?.solo) _soloMemory = { mapId: id.mapId, shared: modes?.placeSharedWorld() };",
+    "new": "    else if (id?.solo) _soloMemory = null;",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ],
+    "note": "AUDIT FB1007b H2: the Hold built whole at every entry, its loot rolled anew"
+  },
+  {
+    "name": "FB1007B-AUDIT-H2-LOAD-REMEMBERS",
+    "file": "src/scenes/world.js",
+    "old": "    if (_loading) _soloMemory = null;\n    else if (id?.solo)",
+    "new": "    if (id?.solo)",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ],
+    "note": "AUDIT FB1007b H2: a load's leave keeps the abandoned run's memory"
+  },
+  {
+    "name": "FB1007B-AUDIT-H2-RESET-REMEMBERS",
+    "file": "src/scenes/world.js",
+    "old": "    _soloMemory = null;   // AUDIT FB1007b H2: nor the tutorial dungeon's memory - the loaded character's time is the save's\n",
+    "new": "",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ],
+    "note": "AUDIT FB1007b H2: the load's reset keeps the memory"
+  },
+  {
+    "name": "FB1007B-AUDIT-H3-STAFF-TO-THE-HOLD",
+    "file": "src/scenes/world.js",
+    "old": "    if (identity?.solo) return { error: 'unavailable' };\n",
+    "new": "",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ],
+    "note": "AUDIT FB1007b H3: staff sent to an empty copy of the Hold"
+  },
+  {
+    "name": "FB1007B-AUDIT-H4-HUB-CLOCK-UNHEARD",
+    "file": "src/scenes/world.js",
+    "old": "      if (tab.room === SOCIAL_ROOM) link.onClock = (offsetMs) => online?.onClock?.(offsetMs);\n",
+    "new": "",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ],
+    "note": "AUDIT FB1007b H4: in the Hold the relay's clock is never heard"
+  },
+  {
+    "name": "FB1007B-AUDIT-H5-LOCAL-SILENT",
+    "file": "src/scenes/world.js",
+    "old": "    if (tabId === 'local' && soloHere()) return why(SOLO_LOCAL_TEXT);   // AUDIT FB1007b H5: said, never kept in the field in silence\n",
+    "new": "",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ],
+    "note": "AUDIT FB1007b H5: a Local line kept in the field, nothing said"
+  },
+  {
+    "name": "FB1007B-AUDIT-H5-NOT-CONNECTED",
+    "file": "src/scenes/world.js",
+    "old": "      : soloHere() ? PAGE_NO_READERS_TEXT   // AUDIT FB1007b H5: in the Hold, connected and alone - never \"not connected\"\n",
+    "new": "",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ],
+    "note": "AUDIT FB1007b H5: a page held out in the Hold says \"You are not connected.\""
+  },
+  {
+    "name": "FB1007B-AUDIT-H5-WITH-ME",
+    "file": "src/ui/partyPanel.js",
+    "old": "  && !((p.in ?? 0) === 1 && p.px === SHIPPED_START_CELL.x && p.py === SHIPPED_START_CELL.y);",
+    "new": "  && true;",
+    "tests": [
+      "test/fb1007b_holdsolo.test.js"
+    ],
+    "note": "AUDIT FB1007b H5: two members each in their own Hold read as together"
+  },
+  {
+    "name": "FB1007B-AUDIT-T2-SEAT-BY-REGION-ONLY",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    return t && !(t.loc === family.seat?.loc && t.region === family.seat?.region) ? t : null;",
+    "new": "    return t && !(t.region === family.seat?.region) ? t : null;",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b T2: every town of the seat's region refused"
+  },
+  {
+    "name": "FB1007B-AUDIT-T3-SAVE-MOVE-LOST",
+    "file": "src/scenes/legacyHost.js",
+    "old": "  else if (saved.seat && (Number(saved.seat.at) || 0) > (Number(out.seat?.at) || 0)) out.seat = { ...saved.seat };\n",
+    "new": "",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b T3: the store's copy newer, the save's later move lost"
+  },
+  {
+    "name": "FB1007B-AUDIT-T3-ANY-MOVE-WINS",
+    "file": "src/systems/legacy/store.js",
+    "old": "(Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0)",
+    "new": "(Number(other.seat.at) || 0) > 0",
+    "tests": [
+      "test/fb1007b_familyseat.test.js"
+    ],
+    "note": "AUDIT FB1007b T3: an earlier move stood over a later one"
+  }
+]

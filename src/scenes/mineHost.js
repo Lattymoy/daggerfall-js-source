@@ -123,7 +123,7 @@ function footTargets(box, x, z) {
 }
 /** The stone tile nearest (tx, ty) within `reach` tiles where nature could stand, or null - VEIN-CLEAR: never a tile
  *  whose stand is inside a rock piece (`rocks`); VERGE1: nor one `clear` refuses (natureStandsAt's road question). */
-function nearestStone(samples, tilemap, locationRect, tx, ty, reach, rocks, clear = null) {
+function nearestStone(samples, tilemap, locationRect, tx, ty, reach, rocks, clear = null, beach = null) {
   let best = null, bestD = Infinity;
   for (let dy = -reach; dy <= reach; dy++) {
     for (let dx = -reach; dx <= reach; dx++) {
@@ -132,7 +132,7 @@ function nearestStone(samples, tilemap, locationRect, tx, ty, reach, rocks, clea
       const x = tx + dx, y = ty + dy;
       if (x < 0 || y < 0 || x >= WORLD_MAP_TILE_DIM || y >= WORLD_MAP_TILE_DIM) continue;
       if ((tilemap[y * WORLD_MAP_TILE_DIM + x] & 0x3f) !== 3) continue;
-      const at = natureStandsAt(samples, tilemap, locationRect, x, y, clear);
+      const at = natureStandsAt(samples, tilemap, locationRect, x, y, clear, beach);
       if (at && !insideRocks(rocks, at.x, at.z)) { best = at; bestD = d; }
     }
   }
@@ -147,9 +147,9 @@ function nearestStone(samples, tilemap, locationRect, tx, ty, reach, rocks, clea
  * foot keeps the piece's own clearance (ROADS-CLEAR).
  * @param {{ px: number, py: number, day: number, climate: number, region?: number|null, confirmed?: boolean,
  *   samples: Float32Array, tilemap: Uint8Array, locationRect?: any, rocks?: number[][],
- *   verge?: ((x: number, z: number, reach: number) => boolean)|null }} p
+ *   verge?: ((x: number, z: number, reach: number) => boolean)|null, beach?: ?Float32Array }} p
  */
-export function standMineNodes({ px, py, day, climate, region = null, confirmed = false, samples, tilemap, locationRect = null, rocks = [], verge = null }) {
+export function standMineNodes({ px, py, day, climate, region = null, confirmed = false, samples, tilemap, locationRect = null, rocks = [], verge = null, beach = null }) {
   const out = [];
   const pieces = rocks ?? [];
   const clear = verge ? (x, z) => verge(x, z, MINE_MARKS.vein.w / 2) : null;   // VERGE1
@@ -200,7 +200,7 @@ export function standMineNodes({ px, py, day, climate, region = null, confirmed 
         // piece of it - a vein stood inside the rock, glowing and marked, that no look could reach (the ray to it is the
         // rock's); it stands on the nearest stone outside every piece, as a rock's foot does (AUDIT 29 C11)
         const outside = (a) => (a && !insideRocks(rocks ?? [], a.x, a.z) ? a : null);
-        const at = nearestStone(samples, tilemap, locationRect, tx, ty, VEIN_STONE_REACH, rocks ?? [], clear) ?? outside(natureStandsAt(samples, tilemap, locationRect, tx, ty, clear));
+        const at = nearestStone(samples, tilemap, locationRect, tx, ty, VEIN_STONE_REACH, rocks ?? [], clear, beach) ?? outside(natureStandsAt(samples, tilemap, locationRect, tx, ty, clear, beach));
         if (at) local = [at.x, at.y, at.z];
       }
       if (!local) continue;
@@ -221,7 +221,7 @@ const LODE_SEARCH_STEP = 4;
  * chat and on every compass, and on no ground - the service picks pixels with no map (the witnesses' word on the ground
  * is all it reads), and the witnesses' pixels are the ones folk walk, about the towns.
  */
-function standAnywhere(samples, tilemap, locationRect, rocks, clear = null) {
+function standAnywhere(samples, tilemap, locationRect, rocks, clear = null, beach = null) {
   const c = Math.floor(WORLD_MAP_TILE_DIM / 2);
   const tiles = [];
   for (let y = LODE_SEARCH_STEP / 2; y < WORLD_MAP_TILE_DIM; y += LODE_SEARCH_STEP) {
@@ -229,7 +229,7 @@ function standAnywhere(samples, tilemap, locationRect, rocks, clear = null) {
   }
   tiles.sort((a, b) => a.d - b.d || a.y - b.y || a.x - b.x);
   for (const { x, y } of tiles) {
-    const at = natureStandsAt(samples, tilemap, locationRect, x, y, clear);
+    const at = natureStandsAt(samples, tilemap, locationRect, x, y, clear, beach);
     if (at && onPixel(at.x, at.z) && !insideRocks(rocks, at.x, at.z)) return at;
   }
   return null;
@@ -242,9 +242,9 @@ function standAnywhere(samples, tilemap, locationRect, rocks, clear = null) {
  * VERGE1: `verge`, when handed, keeps a heap that stands on the stone off the roads by its glow's half width
  * (MOTHERLODE_MARK) - the heart is where a pixel's roads meet, and its nearest stone was often on the verge.
  * @param {{ lodes: any[], samples: Float32Array, tilemap: Uint8Array, locationRect?: any, rocks?: number[][], taken?: number[][],
- *   verge?: ((x: number, z: number, reach: number) => boolean)|null }} p
+ *   verge?: ((x: number, z: number, reach: number) => boolean)|null, beach?: ?Float32Array }} p
  */
-export function standMotherlodes({ lodes, samples, tilemap, locationRect = null, rocks = [], taken = [], verge = null }) {
+export function standMotherlodes({ lodes, samples, tilemap, locationRect = null, rocks = [], taken = [], verge = null, beach = null }) {
   const out = [];
   const pieces = rocks ?? [];
   const stone = verge ? (x, z) => verge(x, z, MOTHERLODE_MARK.w / 2) : null;   // VERGE1
@@ -267,8 +267,8 @@ export function standMotherlodes({ lodes, samples, tilemap, locationRect = null,
       // no clear foot at a piece: the stone nearest its heart, else where nature stands there - a Motherlode stands
       // wherever its pixel can hold it, a vein beside it or not (it is the day's one; a vein moves aside for none)
       const t = Math.floor(WORLD_MAP_TILE_DIM / 2);
-      const at = nearestStone(samples, tilemap, locationRect, t, t, VEIN_STONE_REACH, pieces, stone) ?? natureStandsAt(samples, tilemap, locationRect, t, t, stone)
-        ?? standAnywhere(samples, tilemap, locationRect, pieces, stone);
+      const at = nearestStone(samples, tilemap, locationRect, t, t, VEIN_STONE_REACH, pieces, stone, beach) ?? natureStandsAt(samples, tilemap, locationRect, t, t, stone, beach)
+        ?? standAnywhere(samples, tilemap, locationRect, pieces, stone, beach);
       if (at && onPixel(at.x, at.z) && !insideRocks(pieces, at.x, at.z)) local = [at.x, at.y, at.z];
     }
     if (!local) continue;
@@ -317,19 +317,18 @@ export function mineRecord(node) {
 
 /**
  * WHAT E DOES AT A VEIN OR A BOULDER, and the prompt that says it: `{ harvest, verb, rest, ready }` - `ready` false with
- * `rest` naming what is missing (worked today, being counted, the day's cap, the rank, the Pick-Axe, the Stores' room);
- * a rank short carries the rank it needs (`needsRank` - VEIN-NEED says the player's own beside it).
+ * `rest` naming what is missing (worked today, being counted, the rank, the Pick-Axe, the Stores' room - CAP-OFF: no
+ * day's cap); a rank short carries the rank it needs (`needsRank` - VEIN-NEED says the player's own beside it).
  * @param {{ node: any, taken: boolean, counting: boolean, rank: number, pick: boolean, storesFull: (key: string) => boolean,
- *   today: number, cap: number, fullWords?: string }} o
+ *   fullWords?: string }} o
  */
-export function minePlan({ node, taken, counting, rank, pick, storesFull, today, cap, fullWords = 'Stores full' }) {   // BAG1: `fullWords` the book's
+export function minePlan({ node, taken, counting, rank, pick, storesFull, fullWords = 'Stores full' }) {   // BAG1: `fullWords` the book's
   const harvest = node.what === 'boulder' ? 'stone' : 'ore';
   const name = node.what === 'boulder' ? 'the stone' : materialLabel(node.material);
   const verb = node.what === 'boulder' ? 'Quarry the stone' : `Mine ${name}`;
   const rankWord = `Mining ${rank}`;
   if (taken) return { harvest, verb: `${node.what === 'boulder' ? 'The stone' : name} - worked today`, rest: '', ready: false };
   if (counting) return { harvest, verb, rest: 'being counted', ready: false };
-  if (today >= cap) return { harvest, verb, rest: `${rankWord} - ${today} of ${cap} today`, ready: false, full: true };
   if (!tierOpen(rank, node.tier)) return { harvest, verb, rest: `needs Mining ${TIER_RANKS[node.tier - 1]}`, ready: false, needsRank: TIER_RANKS[node.tier - 1] };
   if (!pick) return { harvest, verb, rest: 'needs a Pick-Axe', ready: false };
   if (storesFull(node.material)) return { harvest, verb, rest: `${fullWords} - ${materialLabel(node.material)}`, ready: false };
@@ -338,8 +337,7 @@ export function minePlan({ node, taken, counting, rank, pick, storesFull, today,
 
 /**
  * PROF2b: WHAT E DOES AT A MOTHERLODE - minePlan's shape: struck today by this character (or being counted), the
- * account's one found, an Apprentice's Mining (MOTHERLODE_RANK, not tier 6's), the Pick-Axe, the Stores' room. The
- * day's sixty are a vein's; a Motherlode is none of them.
+ * account's one found, an Apprentice's Mining (MOTHERLODE_RANK, not tier 6's), the Pick-Axe, the Stores' room.
  * @param {{ node: any, taken: boolean, counting: boolean, found: boolean, rank: number, pick: boolean, storesFull: (key: string) => boolean, fullWords?: string }} o
  */
 export function motherlodePlan({ node, taken, counting, found, rank, pick, storesFull, fullWords = 'Stores full' }) {   // BAG1
@@ -373,6 +371,7 @@ export function mineKind({ book, lodes = null, marks = null }) {
     nodesOf({ px, py, day, info, confirmed, entry }) {
       const stone = {
         samples: entry.samples, tilemap: entry.tilemap, locationRect: entry.locationRect ?? entry.wodSite ?? null, rocks: entry.rocks ?? [],   // AUDIT 29 C8
+        beach: entry.beach ?? null,   // AUDIT LANDFORMS II H2: the beach line DFU's own blend draws in a town's pixel
         verge: entry.verge ?? null,   // VERGE1: off the roads
       };
       const nodes = standMineNodes({ px, py, day, climate: info.climate, region: info.region, confirmed, ...stone });
@@ -406,7 +405,6 @@ export function mineKind({ book, lodes = null, marks = null }) {
       const plan = minePlan({
         node: n, taken: book.taken(n.key, harvestOf(n)), counting: book.counting(n.key, harvestOf(n)), rank: rank('mining'),
         pick: !!foragingToolIn(entity, FT.PickAxe), storesFull: (key) => storesFullIn(book, key), fullWords: fullWordsIn(book),   // STORES-ROOM: every origin, as the service counts
-        today: book.state.today?.mining ?? 0, cap: book.state.caps?.harvests ?? 60,
       });
       return { ...plan, profession: 'mining' };
     },

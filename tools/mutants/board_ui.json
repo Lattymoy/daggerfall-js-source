@@ -27,32 +27,31 @@
     ]
   },
   {
-    "name": "ONE-BOARD-the-press-on-every-board-left",
+    "name": "ONE-BOARD-REVERTED-the-press-on-the-bounty-boards-too",
     "file": "src/scenes/world.js",
-    "old": "...(i === noticeAt ? { notice: noticeTown, named: noticeBook.open === true } : {}),",
-    "new": "...(!bountyAt.has(i) && noticeTown ? { notice: noticeTown, named: noticeBook.open === true } : {}),",
+    "old": "...(!bountyAt.has(i) && noticeTown ? { notice: noticeTown, named: noticeBook.open === true } : {}),",
+    "new": "...(noticeTown ? { notice: noticeTown, named: noticeBook.open === true } : {}),",
     "tests": [
       "test/board_ui.test.js",
       "test/notice1.test.js"
     ]
   },
   {
-    "name": "ONE-BOARD-the-count-over-every-board",
+    "name": "ONE-BOARD-REVERTED-the-count-over-the-bounty-boards-too",
     "file": "src/scenes/world.js",
-    "old": "        if (i !== at) return;",
+    "old": "        if (bountyAt.has(i)) return;",
     "new": "        if (i === -1) return;",
     "tests": [
       "test/board_ui.test.js"
     ]
   },
   {
-    "name": "ONE-BOARD-the-memo-unshared",
+    "name": "ONE-BOARD-REVERTED-the-town-underfoot-with-every-board-a-bounty-board",
     "file": "src/scenes/world.js",
-    "old": "  const noticeBoardOf = (p) => (p._noticeBoard ??= noticeBoardIndex(p.boards ?? [], boardSplitOf(p), townCentreOf(p.homeFrames)));",
-    "new": "  const noticeBoardOf = (p) => (p._noticeBoard ??= noticeBoardIndex(p.boards ?? [], boardSplitOf(p), null));",
+    "old": "return bountyAt.size < p.boards.length ? noticeTownOf(",
+    "new": "return bountyAt.size <= p.boards.length ? noticeTownOf(",
     "tests": [
-      "test/board_ui.test.js",
-      "test/notice1.test.js"
+      "test/board_ui.test.js"
     ]
   },
   {

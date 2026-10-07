@@ -38,8 +38,8 @@
   {
     "name": "TS1-far-ring-on-the-prefab",
     "file": "src/render/farRing.js",
-    "old": "Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION) * STREAMING_TERRAIN_SCALE;",
-    "new": "Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION) * 1.5;",
+    "old": "Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION)) * STREAMING_TERRAIN_SCALE;",
+    "new": "Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION)) * 1.5;",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TS1-restand-inverted",
     "file": "src/scenes/world.js",
-    "old": "(was / STREAMING_TERRAIN_SCALE - 1)",
-    "new": "(STREAMING_TERRAIN_SCALE / was - 1)",
+    "old": "const r = was > 0 ? was / STREAMING_TERRAIN_SCALE : 1;",
+    "new": "const r = was > 0 ? STREAMING_TERRAIN_SCALE / was : 1;",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TS1-restand-keeps-compensation",
     "file": "src/scenes/world.js",
-    "old": "return y - (h - state.compensation[1]) * (was",
-    "new": "return y - h * (was",
+    "old": "return y - (h - state.compensation[1] - now) * (r - 1)",
+    "new": "return y - (h - now) * (r - 1)",
     "tests": [
       "test/terrainscale1.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TS1-restand-unbuilt-untouched",
     "file": "src/scenes/world.js",
-    "old": "    return y * (STREAMING_TERRAIN_SCALE / was);",
-    "new": "    return y;",
+    "old": "    return y * (was > 0 ? STREAMING_TERRAIN_SCALE / was : 1) + now;",
+    "new": "    return y + now;",
     "tests": [
       "test/terrainscale1.test.js"
     ]

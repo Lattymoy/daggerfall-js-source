@@ -29,8 +29,8 @@
   {
     "name": "TOWN-MARKS-a-bounty-board-marked",
     "file": "src/ui/townMapMarks.js",
-    "old": "  const box = Array.isArray(p?.boards) && Number.isInteger(notice) ? p.boards[notice]?.box : null;",
-    "new": "  const box = Array.isArray(p?.boards) ? p.boards[0]?.box : null;",
+    "old": "    if (bountyAt?.has?.(i) || !Array.isArray(box)",
+    "new": "    if (!Array.isArray(box)",
     "tests": [
       "test/town_marks.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TOWN-MARKS-the-unread-count-dropped",
     "file": "src/ui/townMapMarks.js",
-    "old": "label: boardMarkLabel(unseen) }];",
-    "new": "label: boardMarkLabel(0) }];",
+    "old": "  const label = boardMarkLabel(unseen);",
+    "new": "  const label = boardMarkLabel(0);",
     "tests": [
       "test/town_marks.test.js"
     ]

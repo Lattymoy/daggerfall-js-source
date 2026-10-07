@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 
 import { standService, T0 } from './accountDb.mjs';
 import { herbPatches, nodeKey, utcDayOfMs, pixelKey } from '../src/net/nodeLaw.js';
-import { herbKey, rankOfXp, writXp, HARVESTS_PER_DAY, STORES_MAX, COURT_WRITS_PER_DAY, RESPEC, xpForRank } from '../src/net/professionLaw.js';
+import { herbKey, rankOfXp, writXp, STORES_MAX, COURT_WRITS_PER_DAY, RESPEC, xpForRank } from '../src/net/professionLaw.js';
 import { sharedClassicMinutes } from '../src/net/wire.js';
 import { utcDay } from '../src/net/marksLaw.js';
 import { RENOWN_TRACKS_MAX } from '../src/net/renown.js';   // RENOWN-CHAR: a writ's Renown makes a track only under the tracks' bound
@@ -86,7 +86,7 @@ test('PROF1 service: a character\'s state - thirteen tracks at nothing, no Store
   assert.equal(r.tracks.length, 13);
   assert.deepEqual(r.tracks.find((t) => t.profession === 'herbalism'), { profession: 'herbalism', xp: 0, rank: 0, specs: { 50: null, 100: null }, respec: null });
   assert.deepEqual([r.stores, r.taken, r.today, r.writs], [[], [], {}, { today: 0, max: 3 }]);
-  assert.deepEqual(r.caps, { harvests: HARVESTS_PER_DAY, stores: STORES_MAX, withdraw: 200, hides: 30, highHides: 3, hauls: 40 });   // PROF7 moved it: Hunting's day, the account's; PROF8: Fishing's
+  assert.deepEqual(r.caps, { stores: STORES_MAX, withdraw: 200, highHides: 3 });   // PROF7 moved it: Hunting's day, the account's; PROF8: Fishing's; CAP-OFF: no day's harvests, hides or hauls
   assert.deepEqual(r.hunt, { hides: 0, high: 0 });
   assert.equal(r.hauls, 0);   // PROF8: the account's hauls today
   assert.equal(r.day, utcDay(_now));
@@ -168,15 +168,18 @@ test('PROF1 service: the rank - an uncommon herb wants Herbalism 10; unbruised i
   assert.equal(common.body.xp, 30, 'a common herb comes up by hand: no moment, no bruise - 15 x 2, never the clean act\'s +50%');
 });
 
-test('PROF1 service: the day\'s cap - sixty harvests a character, the sixty-first refused; the Stores\' room - full refuses, nearly full cuts the yield to fit', async (t) => {
+test('PROF1 service: no day\'s cap (CAP-OFF) - sixty harvests a character today and the sixty-first is credited, the day counted on; the Stores\' room - full refuses, nearly full cuts the yield to fit', async (t) => {
   const s = await stand();
   const mac = await s.registered('Mac');
   const day = utcDay(_now);
   const ins = s.raw.prepare(`INSERT INTO node_harvests (day, node, kind, player, char_id, profession, material, qty, xp, at, rid, n)
     VALUES (?, ?, 'herbs', ?, ?, 'herbalism', 'p1:9', 1, 15, ?, ?, 'x')`);
-  for (let i = 0; i < HARVESTS_PER_DAY; i++) ins.run(day, `herb:1:1:${day}:${i}x`, mac.id, mac.character, _now, `seed-${i}-xxxx`);
+  for (let i = 0; i < 60; i++) ins.run(day, `herb:1:1:${day}:${i}x`, mac.id, mac.character, _now, `seed-${i}-xxxx`);
   const p = patchOfTier(1);
-  assert.deepEqual((await s.call('/v1/prof/harvest', harvestBody(mac, p), mac.secret)).body, { error: 'prof-cap' });
+  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): the sixty-first was refused, `prof-cap`
+  const past = await s.call('/v1/prof/harvest', harvestBody(mac, p), mac.secret);
+  assert.equal(past.status, 200, JSON.stringify(past.body));
+  assert.equal(past.body.today, 61, 'the sixty-first credited, the day counted on');
   const ann = await s.registered('Ann');
   const key = herbKey(p.herb, ANTICLERE);
   s.give(ann, key, 'bought', STORES_MAX);

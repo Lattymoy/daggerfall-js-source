@@ -220,6 +220,7 @@ export function mintPiece({ recipe, quality, seed, maker = null, marked = false,
 export function asMinted(item) {
   if (!item?.provenance || item.legendary || item.customEnchantments?.length) return false;
   if (item.reforged !== undefined || item.imprint !== undefined) return false;   // AUDIT LOOT F3: a line the Reforge rolled again, a power imprinted - the record mints neither
+  if (item.honed !== undefined) return false;   // AUDIT LOOT II C1: nor a line honed past its roll (LOOT17) - the market's mint would hand back the roll, the shards and the gold gone
   if ((item.foodStage ?? 0) > 0) return false;   // PROF9: a dish spoiled since it was cooked - the record mints it fresh
   const e = item.enchantments ?? [];
   if (item.rarity !== 'rare') return e.length === 0;

@@ -1,0 +1,413 @@
+[
+  {
+    "name": "LOOT18-clothes-no-junk",
+    "file": "src/systems/itemJunk.js",
+    "old": "export const JUNK_GROUPS = Object.freeze(['Weapons', 'Armor', 'Jewellery', 'MensClothing', 'WomensClothing']);",
+    "new": "export const JUNK_GROUPS = Object.freeze(['Weapons', 'Armor', 'Jewellery']);",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-a-quest-item-junked",
+    "file": "src/systems/itemJunk.js",
+    "old": "JUNK_GROUPS.includes(item.group) && !item.questItem && !isBound(item);",
+    "new": "JUNK_GROUPS.includes(item.group) && !isBound(item);",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-a-bound-piece-junked",
+    "file": "src/systems/itemJunk.js",
+    "old": "JUNK_GROUPS.includes(item.group) && !item.questItem && !isBound(item);",
+    "new": "JUNK_GROUPS.includes(item.group) && !item.questItem;",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-junk-keeps-the-lock",
+    "file": "src/systems/itemJunk.js",
+    "old": "  if (on) { item.junk = true; setLocked(item, false); } else delete item.junk;",
+    "new": "  if (on) { item.junk = true; } else delete item.junk;",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-cleared-is-a-false",
+    "file": "src/systems/itemJunk.js",
+    "old": "  if (on) { item.junk = true; setLocked(item, false); } else delete item.junk;",
+    "new": "  if (on) { item.junk = true; setLocked(item, false); } else item.junk = false;",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-lock-keeps-the-junk",
+    "file": "src/systems/itemJunk.js",
+    "old": "  if (isLocked(item)) setJunk(item, false);",
+    "new": "  void isLocked;",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-mark-undeclared",
+    "file": "src/systems/itemFields.js",
+    "old": "  junk: bool(),\n",
+    "new": "",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-card-lock-keeps-the-junk",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    k.onclick = () => { toggleLocked(picked); lockLiftsJunk(picked); notice = null; render(); };",
+    "new": "    k.onclick = () => { toggleLocked(picked); notice = null; render(); };",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-a-worn-piece-junked",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (side === 'local' && !line.equipped && junkable(picked)) {",
+    "new": "  if (side === 'local' && junkable(picked)) {",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-picture-unmarked",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (isJunk(item)) node.dataset.junk = '';   // LOOT18: a junk piece's picture is dimmed (the sheet's own)\n",
+    "new": "",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-card-unsaid",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "  if (isJunk(picked)) into.append(el('p', 'boundline junkline', JUNK_LINE));   // LOOT18: the lock's line style, without its padlock\n",
+    "new": "",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-counter-at-a-buy",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (!selling()) return [];\n  const equipped = deps.isEquipped ?? (() => false);\n  const held = remoteItems();\n  return (deps.packItems?.() ?? []).filter((it) => isJunk(it)",
+    "new": "  const equipped = deps.isEquipped ?? (() => false);\n  const held = remoteItems();\n  return (deps.packItems?.() ?? []).filter((it) => isJunk(it)",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-a-worn-piece-sold",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "filter((it) => isJunk(it) && !equipped(it) && !held.includes(it) && !saleRefused(it)",
+    "new": "filter((it) => isJunk(it) && !held.includes(it) && !saleRefused(it)",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-a-bound-piece-sold",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "filter((it) => isJunk(it) && !equipped(it) && !held.includes(it) && !saleRefused(it)",
+    "new": "filter((it) => isJunk(it) && !equipped(it) && !held.includes(it)",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-counter-takes-anything",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "    && localListAccepts(mode, it, { accepts: deps.accepts, enchanted: deps.enchanted }) && junkStages(it));\n}",
+    "new": "    && junkStages(it));\n}",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II B3): the count reads the click's own law (junkStages) beside it."
+  },
+  {
+    "name": "LOOT18-no-confirm",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  modeAction();   // the counter's own price and its confirm\n",
+    "new": "",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-a-press-for-nothing",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "  if (junk.length) {\n    const j = el('button', 'act sell-junk'",
+    "new": "  if (true) {\n    const j = el('button', 'act sell-junk'",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-every-magic-for-one",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "    if (magics.length < 2) { if (asking === EVERY_MAGIC) { dropAsk(); drawNote(); } return; }",
+    "new": "    if (magics.length < 1) { if (asking === EVERY_MAGIC) { dropAsk(); drawNote(); } return; }",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II B4): a lapsed ask's question drawn away with it."
+  },
+  {
+    "name": "LOOT18-every-magic-the-locked-too",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "    const magics = rows.filter((it) => it.rarity === 'magic' && !salvageRefusal(it));",
+    "new": "    const magics = rows.filter((it) => it.rarity === 'magic');",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-every-magic-unasked",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      if (asking !== EVERY_MAGIC) { asking = EVERY_MAGIC; say(false, EVERY_MAGIC_ASK(magics.length, shards)); render(); return; }\n",
+    "new": "",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-every-magic-no-keep",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      keep.onclick = (e) => { e.stopPropagation(); asking = null; note = null; render(); };\n      head.append(keep);",
+    "new": "      keep.onclick = (e) => { e.stopPropagation(); };\n      head.append(keep);",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-junk-taken",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (isJunk(item)) return true;\n",
+    "new": "",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-a-quest-item-left",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (!item || item.questItem) return false;",
+    "new": "  if (!item) return false;",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-tier-with-the-ladder-off",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (!(floor > 0) || !lootRarityOn() || !JUNK_GROUPS.includes(item.group) || isAmmunition(item)) return false;",
+    "new": "  if (!(floor > 0) || !JUNK_GROUPS.includes(item.group) || isAmmunition(item)) return false;",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-gold-left",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (!(floor > 0) || !lootRarityOn() || !JUNK_GROUPS.includes(item.group) || isAmmunition(item)) return false;",
+    "new": "  if (!(floor > 0) || !lootRarityOn() || isAmmunition(item)) return false;",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-a-quiver-left",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (!(floor > 0) || !lootRarityOn() || !JUNK_GROUPS.includes(item.group) || isAmmunition(item)) return false;",
+    "new": "  if (!(floor > 0) || !lootRarityOn() || !JUNK_GROUPS.includes(item.group)) return false;",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-dfu-magic-left",
+    "file": "src/systems/quickLoot.js",
+    "old": "  if (!item.rarity && isEnchanted(item)) return false;   // DFU's own magic item: no rung of the ladder, and worth the take\n",
+    "new": "",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-floor-itself-left",
+    "file": "src/systems/quickLoot.js",
+    "old": "  return rarityRank(item) < floor;",
+    "new": "  return rarityRank(item) <= floor;",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-magic-plus-is-rare-plus",
+    "file": "src/systems/quickLoot.js",
+    "old": "export const QUICK_LOOT_FLOORS = Object.freeze({ all: 0, magic: RARITIES.magic.rank, rare: RARITIES.rare.rank });",
+    "new": "export const QUICK_LOOT_FLOORS = Object.freeze({ all: 0, magic: RARITIES.rare.rank, rare: RARITIES.rare.rank });",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-take-all-unfiltered",
+    "file": "src/systems/quickLoot.js",
+    "old": "      if (takeAllLeaves(it)) { left++; continue; }   // LOOT18: the row's tier and the player's junk stay on the pile\n",
+    "new": "",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-what-stayed-unsaid",
+    "file": "src/systems/quickLoot.js",
+    "old": "    if (left) refusal = { ...(refusal ?? {}), text: [refusal?.text, QUICK_LOOT_LEFT(left)].filter(Boolean).join(' ') };   // LOOT18: said as the rows that stayed are\n",
+    "new": "",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-part-magic-first",
+    "file": "src/systems/features.js",
+    "old": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickLootTier', initial: 'all', online: 'player' })]),",
+    "new": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickLootTier', initial: 'magic', online: 'player' })]),",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-compare-with-nothing",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (!known.length) return null;\n  const key = (a) => `${a.id}:${a.param ?? ''}`;",
+    "new": "  const key = (a) => `${a.id}:${a.param ?? ''}`;",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-compare-the-unknown-worn",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const known = (replaces ?? []).filter((r) => r && r !== item && identified(r));",
+    "new": "  const known = (replaces ?? []).filter((r) => r && r !== item);",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-compare-an-unknown-piece",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (!lootRarityOn() || !item || !identified(item)) return null;\n  const known",
+    "new": "  if (!lootRarityOn() || !item) return null;\n  const known",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-compare-with-the-switch-off",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (!lootRarityOn() || !item || !identified(item)) return null;\n  const known",
+    "new": "  if (!item || !identified(item)) return null;\n  const known",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-delta-backwards",
+    "file": "src/systems/lootRarity.js",
+    "old": "delta: carried.has(k) ? value - sumIn(theirs, k) : null",
+    "new": "delta: carried.has(k) ? sumIn(theirs, k) - value : null",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A5): a row a kind."
+  },
+  {
+    "name": "LOOT18-a-shared-line-lost",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const lost = [...carried].filter((k) => !own.has(k)).map((k) => {",
+    "new": "  const lost = [...carried].map((k) => {",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-replaced-resist-kept",
+    "file": "src/systems/lootRarity.js",
+    "old": "      const rolledThen = Math.max(0, worn.rolled - out.rolled + inn.rolled);",
+    "new": "      const rolledThen = Math.max(0, worn.rolled + inn.rolled);",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A8): the after-state split rolled from Aetheric."
+  },
+  {
+    "name": "LOOT18-the-cap-unread",
+    "file": "src/systems/lootRarity.js",
+    "old": "then: rolledCounts(rolledThen, Math.max(0, worn.own - out.own + inn.own)) };",
+    "new": "then: rolledThen };",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A8): the cap read beside the Aetheric's, after."
+  },
+  {
+    "name": "LOOT18-the-chip-unsigned",
+    "file": "src/ui/armourCard.js",
+    "old": "r.delta > 0 ? `▲${r.delta}` : r.delta < 0 ? `▼${-r.delta}` : '='",
+    "new": "r.delta > 0 ? `${r.delta}` : r.delta < 0 ? `${-r.delta}` : '='",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-new-unsaid",
+    "file": "src/ui/armourCard.js",
+    "old": "    li.append(r.delta == null ? el('span', 'cmp-d new', 'new') :",
+    "new": "    li.append(r.delta == null ? el('span', 'cmp-d new', '') :",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-count-unsaid",
+    "file": "src/ui/armourCard.js",
+    "old": "    if (r.resist) li.append(el('span', 'cmp-note', `${r.resist.now}% → ${r.resist.then}% counts`));\n",
+    "new": "",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-lost-unlisted",
+    "file": "src/ui/armourCard.js",
+    "old": "  for (const t of lines.lost) {\n    const li = el('li', 'cmp-line lost');",
+    "new": "  for (const t of []) {\n    const li = el('li', 'cmp-line lost');",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "LOOT18-the-card-draws-none",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    const lc = lineCompareBlock(deps.entity, picked, wear); if (lc) into.append(lc);   // LOOT18: and its lines against theirs\n",
+    "new": "",
+    "note": "Re-aimed by content (AUDIT LOOT II B6): the card makes one comparison and hands it to both blocks.",
+    "tests": [
+      "test/loot18_seen.test.js"
+    ]
+  }
+]

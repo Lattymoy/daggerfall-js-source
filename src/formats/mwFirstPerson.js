@@ -167,7 +167,8 @@ export { MW_BODY_PARTS, isFirstPersonId } from './mwEsmFile.js';
 import { MW_BODY_PARTS, isFirstPersonId } from './mwEsmFile.js';
 import FACE_TABLE from './mwFaceTable.json' with { type: 'json' };
 import { GRAPH_ROOT, ACCUM_ROOT_NAMES } from './mwSkin.js';
-import { transferSkin, sourceSkin, fitLift, liftBatch, fitShift, shiftBatch, rebindSkin } from './mwSkinTransfer.js';   // MW-BRIG2: a worn model skinned from the body under it; MW-BRIG3: and fitted onto it; MW-STEEL1: kept to its scene's body, and worn on another skeleton
+import { transferSkin, sourceSkin, fitLift, liftBatch, fitShift, shiftBatch, rebindSkin, bindPoseMats } from './mwSkinTransfer.js';   // MW-BRIG2: a worn model skinned from the body under it; MW-BRIG3: and fitted onto it; MW-STEEL1: kept to its scene's body, and worn on another skeleton; MW-STEEL2: solved in the pose the body was bound in
+import { affineOfTransform } from './mwAffine.js';   // MW-STEEL2: a skeleton file's own inverse binds
 import { getTextKeyTime, animVelocity } from './mwAnim.js';
 import { mat33Mul } from './mwNifMesh.js';   // AUDIT 68 S11-affine-dup: the one row-major 3x3 product
 import { applyClimbRig } from '../combat/climbRig.js';   // CLIMB6: the climb's pose on the rig's own bones
@@ -967,6 +968,73 @@ function readLight(bytes, rec) {
   return e.id && e.model ? e : null;
 }
 
+/**
+ * MW-SPELLFX1: A MAGIC EFFECT (MGEF - components/esm3/loadmgef.cpp MagicEffect::load): INDX the effect's index; MEDT its
+ * 36 bytes - school, base cost, flags, red, green, blue, size, speed, size cap; then, in any order, the icon and the
+ * particle texture, four sounds, the four visuals by id (CVFX casting, BVFX bolt, HVFX hit, AVFX area) and the
+ * description. The effects layer reads the colour, the speed, the flags' NegativeLight, the particle texture and the
+ * visuals (formats/mwSpellFx.js); nothing else is kept. The legacy format's own rule on the flags (only the three
+ * modifiable bits are the file's) stands: the hard-coded rest is not read here, so it is not stored.
+ */
+function readMagicEffect(bytes, rec) {
+  const e = { index: -1, school: 0, flags: 0, color: [255, 255, 255], speed: 1, particle: '', casting: '', bolt: '', hit: '', area: '' };
+  for (const sub of subrecords(bytes, rec)) {
+    const dv = () => new DataView(bytes.buffer, bytes.byteOffset + sub.start, sub.len);
+    if (sub.name === 'INDX' && sub.len >= 4) e.index = dv().getInt32(0, true);
+    else if (sub.name === 'MEDT') {
+      if (sub.len < 36) continue;   // refused, not read past
+      const d = dv();
+      e.school = d.getInt32(0, true);
+      e.flags = d.getInt32(8, true) & (0x200 | 0x400 | 0x800);   // AllowSpellmaking | AllowEnchanting | NegativeLight
+      e.color = [d.getInt32(12, true), d.getInt32(16, true), d.getInt32(20, true)];
+      e.speed = d.getFloat32(28, true);
+    } else if (sub.name === 'PTEX') e.particle = zstr(bytes, sub.start, sub.len);
+    else if (sub.name === 'CVFX') e.casting = zstr(bytes, sub.start, sub.len).toLowerCase();
+    else if (sub.name === 'BVFX') e.bolt = zstr(bytes, sub.start, sub.len).toLowerCase();
+    else if (sub.name === 'HVFX') e.hit = zstr(bytes, sub.start, sub.len).toLowerCase();
+    else if (sub.name === 'AVFX') e.area = zstr(bytes, sub.start, sub.len).toLowerCase();
+  }
+  return e.index >= 0 && e.index < 256 ? e : null;
+}
+
+export function magicEffectRecords(bytes) {
+  const out = [];
+  for (const rec of walkEsm(bytes)) {
+    if (rec.type !== 'MGEF') continue;
+    const e = readMagicEffect(bytes, rec);
+    if (e) out.push(e);
+  }
+  return out;
+}
+
+/** MW-SPELLFX1: a STAT's id and mesh - kept for the statics an effect is drawn with: every id that begins VFX_ (each
+ *  visual the masters' MGEFs name, OpenMW's VFX_Default* and VFX_Hands among them) and any other id an MGEF in the
+ *  SAME file names. A mod's MGEF naming a non-VFX_ static of another file is not found - recorded. */
+function readStatic(bytes, rec) {
+  const e = { id: '', model: '' };
+  for (const sub of subrecords(bytes, rec)) {
+    if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
+    else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
+  }
+  return e.id && e.model ? e : null;
+}
+export const VFX_STATIC_PREFIX = 'vfx_';
+/** The statics kept, out of a file's STATs (`byId`, last record of an id wins) and the ids its MGEFs name. */
+function vfxStatics(byId, effects) {
+  const named = new Set(effects.flatMap((m) => [m.casting, m.bolt, m.hit, m.area]).filter(Boolean));
+  return [...byId.values()].filter((e) => e.id.startsWith(VFX_STATIC_PREFIX) || named.has(e.id));
+}
+
+export function vfxStaticRecords(bytes) {
+  const byId = new Map();
+  const effects = [];
+  for (const rec of walkEsm(bytes)) {
+    if (rec.type === 'STAT') { const e = readStatic(bytes, rec); if (e) byId.set(e.id, e); }
+    else if (rec.type === 'MGEF') { const m = readMagicEffect(bytes, rec); if (m) effects.push(m); }
+  }
+  return vfxStatics(byId, effects);
+}
+
 export function lightRecords(bytes) {
   const out = [];
   for (const rec of walkEsm(bytes)) {
@@ -1217,7 +1285,7 @@ export const ARM_GMST_IDS = Object.freeze([GMST_SNEAK_DELTA]);
 /** MW-LOAD: the SHAPE of extractArmRecords' answer. Bumped whenever a
  *  reader above changes what it returns, so a derived set written by
  *  an older build is refused and re-extracted rather than read wrong. */
-export const ARM_RECORDS_VERSION = 3;   // MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept
+export const ARM_RECORDS_VERSION = 4;   // MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics
 
 /**
  * MW-LOAD: EVERY record the arm build reads, in ONE pass of the master.
@@ -1239,8 +1307,9 @@ export const ARM_RECORDS_VERSION = 3;   // MW-D51: + the LIGH records (a set wit
  */
 export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
   const want = new Set(gmst.map((id) => String(id).toLowerCase()));
-  const out = { version: ARM_RECORDS_VERSION, parts: [], races: [], armors: [], clothes: [], weapons: [], lights: [], gmst: {} };
+  const out = { version: ARM_RECORDS_VERSION, parts: [], races: [], armors: [], clothes: [], weapons: [], lights: [], magicEffects: [], statics: [], gmst: {} };
   const races = new Map();
+  const statics = new Map();   // MW-SPELLFX1: every STAT, until the file's MGEFs have said which they name
   for (const rec of walkEsm(bytes)) {
     switch (rec.type) {
       case 'BODY': out.parts.push(readBodyPart(bytes, rec)); break;
@@ -1249,6 +1318,8 @@ export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
       case 'CLOT': { const e = readClothing(bytes, rec); if (e) out.clothes.push(e); break; }
       case 'WEAP': { const e = readWeapon(bytes, rec); if (e) out.weapons.push(e); break; }
       case 'LIGH': { const e = readLight(bytes, rec); if (e) out.lights.push(e); break; }   // MW-D51
+      case 'MGEF': { const e = readMagicEffect(bytes, rec); if (e) out.magicEffects.push(e); break; }   // MW-SPELLFX1
+      case 'STAT': { const e = readStatic(bytes, rec); if (e) statics.set(e.id, e); break; }   // MW-SPELLFX1
       case 'GMST': {
         const g = readGmst(bytes, rec);
         if (want.has(g.name) && !Object.hasOwn(out.gmst, g.name)) out.gmst[g.name] = g.value;
@@ -1258,6 +1329,7 @@ export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
     }
   }
   out.races = [...races.entries()];
+  out.statics = vfxStatics(statics, out.magicEffects);   // MW-SPELLFX1: the VFX_ family and whatever this file's MGEFs name
   return out;
 }
 
@@ -1266,7 +1338,7 @@ export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
  *  a torn one, answers false and is re-extracted. */
 export function isArmRecords(r) {
   return !!r && typeof r === 'object' && r.version === ARM_RECORDS_VERSION
-    && ['parts', 'races', 'armors', 'clothes', 'weapons', 'lights'].every((k) => Array.isArray(r[k]))
+    && ['parts', 'races', 'armors', 'clothes', 'weapons', 'lights', 'magicEffects', 'statics'].every((k) => Array.isArray(r[k]))
     && !!r.gmst && typeof r.gmst === 'object';
 }
 
@@ -1968,8 +2040,10 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources
   }
 
   let skeleton;
+  let skeletonNif;   // MW-STEEL2: kept - its own skins say the pose the body was bound in (skeletonBindSkins)
   try {
-    skeleton = mod.buildSkeleton(mod.parseNif(skeletonBytes));
+    skeletonNif = mod.parseNif(skeletonBytes);
+    skeleton = mod.buildSkeleton(skeletonNif);
   } catch (err) {
     return { ok: false, stage: 'skeleton', error: err.message };
   }
@@ -1989,13 +2063,14 @@ export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources
       notes.push(`bones: ${src.name}: ${err.message}`);
     }
   }
-  bindPartsInto({ pieces, notes, effects, skeleton, fns: mod }, parts);
+  bindPartsInto({ pieces, notes, effects, skeleton, skeletonNif, fns: mod }, parts);
   const assembly = {
     ok: pieces.length > 0,
     pieces,
     effects,   // MAC-Q: the parts' particle systems, placed like their rigid shapes
     notes,
     skeleton,
+    skeletonNif,   // MW-STEEL2: for a part bound later on the live assembly (a swap) that solves in the bind pose
     // The resolved readers ride along so the per-frame call is SYNCHRONOUS.
     // A dynamic import inside a requestAnimationFrame body is a promise per
     // frame; this function already paid for them once.
@@ -2614,11 +2689,13 @@ function bindSkinnedFromBody(assembly, part, bones) {
   let nif;
   try { nif = mod.parseNif(part.bytes); } catch (err) { notes.push(`${part.slot}: ${err.message}`); return; }
   // MW-STEEL1: THE SKELETON THE GARMENT IS SOLVED ON - the assembly's own, or (`solveOn`) the one its body was fitted
-  // on: the first person's gauntlets are solved on the third-person skeleton, the T-pose Mac's scene stands in, and
-  // worn on the first-person one by their bones' names (rebindSkin, below).
+  // on: the first person's gauntlets are solved on the third-person skeleton - in the pose its skins were bound in,
+  // the T-pose Mac's scene stands in (MW-STEEL2, below) - and worn on the first-person one by their bones' names
+  // (rebindSkin, below).
   let skeleton = assembly.skeleton;
+  let skeletonNif = assembly.skeletonNif ?? null;
   if (part.solveOn) {
-    try { skeleton = mod.buildSkeleton(mod.parseNif(part.solveOn)); } catch (err) { notes.push(`${part.slot}: the skeleton it is fitted on: ${err.message}`); return; }
+    try { skeletonNif = mod.parseNif(part.solveOn); skeleton = mod.buildSkeleton(skeletonNif); } catch (err) { notes.push(`${part.slot}: the skeleton it is fitted on: ${err.message}`); return; }
   }
   /** The body parts named, bound as the body binds them, as skins - each tagged with its slot. */
   const bindBodies = (list, label) => {
@@ -2657,7 +2734,23 @@ function bindSkinnedFromBody(assembly, part, bones) {
   let garment;
   try { garment = mod.bindPart(skeleton, nif, bones[0] ? { attachBone: bones[0] } : {}); } catch (err) { notes.push(`${part.slot}: ${err.message}`); return; }
   const pose = mod.poseSkeleton(skeleton, null, null, 0, {});
-  const ctx = { skeleton, pose, mats: mod.skelMats(skeleton, pose, GRAPH_ROOT), skinBatch: mod.skinBatch };
+  let mats = mod.skelMats(skeleton, pose, GRAPH_ROOT);
+  // MW-STEEL2: SOLVED IN THE POSE THE BODY WAS BOUND IN, for a piece modelled on it (`solvePose: 'bind'` - the steel
+  // plate, fitted on a T-posed body). The skeleton file's rest is the idle's first frame on retail data, the arms
+  // hanging, and a T-posed gauntlet solved there copies the shoulder (bindPoseMats). The fit and the transfer below
+  // read the same ctx, so the piece is fitted and skinned on the T-posed body and moves by the skin it copied; the
+  // per-frame pose is the animation's as before. A body with no skin to read a bind from keeps the rest, and says so.
+  if (part.solvePose === 'bind') {
+    const bp = bindPoseMats(skeleton, [...sources, ...(skeletonNif ? skeletonBindSkins(skeletonNif, skeleton) : [])], mats);
+    if (bp) {
+      mats = bp.mats;
+      notes.push(`${part.slot}: solved in the body's bind pose (anchored at ${bp.anchors.join(', ')}; ${bp.placed} bones placed by their binds`
+        + `${bp.spread > BIND_SPREAD_NOTE ? `; its skins disagree by up to ${bp.spread.toFixed(1)}` : ''})`);
+    } else {
+      notes.push(`${part.slot}: no skin to read the bind pose from - solved in the skeleton's rest`);
+    }
+  }
+  const ctx = { skeleton, pose, mats, skinBatch: mod.skinBatch };
   let worn = [...garment.attached, ...garment.skinned];
   // MW-BRIG3: ONTO THE WEARER FIRST - its top to the top of the part it hides - and only then skinned from the body
   // there, so every vertex copies the skin of the body it now actually covers.
@@ -2706,6 +2799,35 @@ function bindSkinnedFromBody(assembly, part, bones) {
     }
   }
   if (missing.size) notes.push(`${part.slot}: this skeleton has no bone ${[...missing].map((b) => `"${b}"`).join(', ')} - those influences are skipped (rule 40)`);
+}
+
+/** MW-STEEL2: past this many units of disagreement between one skin's bones (bindPoseMats `spread`), the bind note
+ *  says so - a body whose parts were not bound in one pose is a body the solve cannot trust. */
+export const BIND_SPREAD_NOTE = 0.5;
+
+/**
+ * MW-STEEL2: THE SKINS A SKELETON FILE CARRIES FOR ITSELF - retail's "Tri Shadow", skinned over the whole Bip01 chain
+ * and never drawn (rule 59 skips it by name) - as bone lists on `skeleton`, matched by name as bindPart matches a
+ * part's: what its inverse binds say of the pose the body was bound in, for the bones no worn part's skin reaches.
+ * No vertices: a bind pose needs only the binds.
+ */
+export function skeletonBindSkins(nif, skeleton) {
+  const out = [];
+  for (const rec of nif?.records ?? []) {
+    if (!rec || (rec.type !== 'NiTriShape' && rec.type !== 'NiTriStrips') || !(rec.skin >= 0)) continue;
+    const si = nif.records[rec.skin];
+    const sd = si && si.data >= 0 ? nif.records[si.data] : null;
+    if (!sd?.bones) continue;
+    const bones = [];
+    (si.bones ?? []).forEach((boneRef, i) => {
+      const name = String(nif.records[boneRef]?.name || '').toLowerCase();
+      const ref = skeleton.byName.get(name);
+      const bt = sd.bones[i]?.transform;
+      if (ref !== undefined && bt) bones.push({ ref, name, invBind: affineOfTransform(bt) });
+    });
+    if (bones.length) out.push({ name: rec.name || '', positions: null, skin: { bones } });
+  }
+  return out;
 }
 
 /** MW-STEEL1: the side of the body an ARMO_PART names ('right hand', 'left pauldron'), or null for one it does not. */

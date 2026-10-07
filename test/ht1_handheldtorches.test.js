@@ -878,7 +878,8 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   }
   assert.match(world, /if \(collectLoose\) droppedTorches\.collectPixel\(key\);/, 'world: a dropped torch is a loose object, swept with its pixel');
   assert.match(world, /droppedTorches\.offsetAll\(r\.offset\);/, 'world: the recenter');
-  assert.match(world, /droppedTorches: droppedTorches\.snapshot\(\(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, pos\[1\] - state\.compensation\[1\], wc\.z\]; \}\),/, 'world: the save data in world coordinates');
+  // AUDIT LANDFORMS C1 MOVED THIS PIN: the height compensation-free and in DFU's frame (groundFrameHeight)
+  assert.match(world, /droppedTorches: droppedTorches\.snapshot\(\(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, groundFrameHeight\(pos\[1\] - state\.compensation\[1\], pos\[0\], pos\[2\]\), wc\.z\]; \}\),/, 'world: the save data in world coordinates');
   assert.match(world, /droppedTorches\.restore\(restandAt\('position'\)\(w\.droppedTorches\), \(p\) => \{ const \[lx, lz\] = state\.localFromWorld\(p\[0\], p\[2\]\); return \[lx, p\[1\] \+ state\.compensation\[1\], lz\]; \}\);/, 'world: restored into the local frame');   // TERRAIN-SCALE1: stood again on today's ground first
   assert.match(world, /droppedTorches\.restore\(arrived\.droppedTorches\.map\(/, 'world: the F9 envelope too');   // TERRAIN-SCALE1: stood again on today's ground
   // the interior mode
@@ -1023,7 +1024,7 @@ test('TORCH-VIS (the ladder): a lit hand draws while merely sheathed, the weapon
   // the sheathed case, and a readied spell, a cast in flight and an equip countdown all still hide the torch
   assert.match(rig, /const torchOnly = !shown\(\) && !spellArmed\(\) && !fpsSpellCasting\.isPlayingAnim\s*\n\s*&& \(entity\?\.equipCountdown \?\? 0\) <= 0 && isHeldLight\(entity\?\.lightSource\)\s*\n\s*&& \(!fpArm\.active\(\) \|\| fpArm\.torchShown\(\)\)\s*\n\s*&& !lanternAtWaist\(entity\?\.lightSource\);/,
     'the exception names every leg of shown() it does NOT relax, asks the mod\'s own light test, and lets the Morrowind arm veto a light it has no art for - HT-WAIST: and a lantern at the waist, which no hand holds');
-  assert.match(rig, /if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly && !shieldRect && !gunSliding\)\) return;/, 'the gate takes the exception, and paralysis still takes everything (MAP-FIELD put the held sheet\'s own leg beside the torch\'s, SW1b the shield\'s, FIELD-GUN13 the gun still sliding out of frame - the same law, four things that are not a drawn weapon)');
+  assert.match(rig, /if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly && !shieldRect && !gunSliding && !armCasts\)\) return;/, 'the gate takes the exception, and paralysis still takes everything (MAP-FIELD put the held sheet\'s own leg beside the torch\'s, SW1b the shield\'s, FIELD-GUN13 the gun still sliding out of frame, MW-CAST1 the Morrowind arm\'s casting hands - the same law, five things that are not a drawn weapon)');
   // and the weapon stays hidden: the return sits AFTER the torch hand and BEFORE the clone and the sprite
   const draw = rig.slice(rig.indexOf('const torchOnly ='));
   const torchAt = draw.indexOf('handheld.draw(renderer, c, fpTint)');

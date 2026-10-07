@@ -98,7 +98,8 @@ export function findAnimGroup(groups, name) {
 
 // --- tracks ----------------------------------------------------------------
 
-function trackFromController(nif, ctrl) {
+/** MW-SPELLFX1: exported - an effect mesh's keyframed nodes are sampled by the same track (formats/mwVfx.js). */
+export function trackFromController(nif, ctrl) {
   const data = deref(nif, ctrl.data);
   if (!data || data.type !== 'NiKeyframeData') return null;
   return {

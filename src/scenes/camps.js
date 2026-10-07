@@ -675,6 +675,21 @@ export function createCamps({
     }
     if (_bedroll) { _bedroll.pos[0] += dx; _bedroll.pos[1] += dy; _bedroll.pos[2] += dz; }   // AUDIT REST F10: the laid spot rides the origin too
   }
+  /** AUDIT LANDFORMS II G1: THE GROUND MOVED UNDER A PIXEL - a rebuild the reference never makes (the road network
+   *  landing, which the landforms cut metres into the land; a late World of Daggerfall pack; the gate's clearing) -
+   *  and what lies in its box [x0, x1) x [z0, z1) rides it by `dy(x, z)`, the ground's own move under it (world.js's
+   *  publish). Left where it lay, a camp hung over a cut or lay buried in a fill - up to 28 m - and the next save kept it so. */
+  function groundMoved(x0, z0, x1, z1, dy) {
+    const inBox = (p) => p[0] >= x0 && p[0] < x1 && p[2] >= z0 && p[2] < z1;
+    for (const c of camps) {
+      if (c.rec.deck || !inBox(c.rec.pos)) continue;   // DECK-CAMP: a deck's camp rides her, never the ground
+      const d = dy(c.rec.pos[0], c.rec.pos[2]);
+      if (!d) continue;
+      c.rec.pos[1] += d;
+      if (c.batch) remount(c);
+    }
+    if (_bedroll && inBox(_bedroll.pos)) _bedroll.pos[1] += dy(_bedroll.pos[0], _bedroll.pos[2]);
+  }
   /** This player's own camps for the save and the scene cache, in the host's frame. */
   const snapshot = (toWorld = (p) => p) => own().map((rec) => { const p = toWorld(rec.pos); return { ...rec, pos: [p[0], p[1], p[2]] }; });
   function restore(list, fromWorld = (p) => p) {
@@ -779,7 +794,7 @@ export function createCamps({
   return {
     placeItem, ride, tick, tend, batches, lights, draw, targets, hoverName, activate, openMenu, openCook, byFire, fireNear, spendNightNear,   // DECK-CAMP: ride
     restPointAt, bedrollNear, packOwnFires,   // REST6; AUDIT REST F1
-    destroyAll, dropOwn, collectPixel, offsetAll, snapshot, restore, wireRecords, applyOwner, sweepOwners, sweepColdAbsent,
+    destroyAll, dropOwn, collectPixel, offsetAll, groundMoved, snapshot, restore, wireRecords, applyOwner, sweepOwners, sweepColdAbsent,
     get camps() { return camps; }, own,
   };
 }

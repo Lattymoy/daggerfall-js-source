@@ -38,11 +38,12 @@
   {
     "name": "AUDITLOOT-F1-wire-unfitted",
     "file": "src/systems/lootRarity.js",
-    "old": "=== item.group && powerFits(item, powerOf(item.imprint)));",
-    "new": "=== item.group && !!powerOf(item.imprint));",
+    "old": "recordFitsGroup(legendaryById(item.imprint), item) && powerFits(item, powerOf(item.imprint)));",
+    "new": "recordFitsGroup(legendaryById(item.imprint), item) && !!powerOf(item.imprint));",
     "tests": [
       "test/auditloot.test.js"
-    ]
+    ],
+    "note": "LOOT15 (RE-AIMED BY CONTENT): a record's group is read through recordFitsGroup now - the wardrobe's six land on either cut of clothing (bible/06-Systems/Loot-II-Arc.md section 7); the law it pins unmoved."
   },
   {
     "name": "AUDITLOOT-F2-a-made-piece-breaks",
@@ -254,10 +255,11 @@
   {
     "name": "AUDITLOOT-F8-imprint-of-the-thirty",
     "file": "src/systems/lootCodex.js",
-    "old": "  ? allLegendaries().filter((r) => r.group === item.group",
-    "new": "  ? allLegendaries().slice(0, 30).filter((r) => r.group === item.group",
+    "old": "  ? allLegendaries().filter((r) => recordFitsGroup(r, item)",
+    "new": "  ? allLegendaries().slice(0, 30).filter((r) => recordFitsGroup(r, item)",
     "tests": [
       "test/auditloot.test.js"
-    ]
+    ],
+    "note": "LOOT15 (RE-AIMED BY CONTENT): a record's group is read through recordFitsGroup now - the wardrobe's six land on either cut of clothing (bible/06-Systems/Loot-II-Arc.md section 7); the law it pins unmoved."
   }
 ]

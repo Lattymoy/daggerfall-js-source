@@ -298,7 +298,9 @@ test('ROAD-Ar (R2): the compensation restore is an ENCODING here, not a plan fie
   // The host half: setRecallAnchor takes the compensation OUT and
   // anchorLanding puts the live one back, so the two are inverse.
   const world = read('src/scenes/world.js');
-  assert.match(world, /y: pf\[1\] - state\.compensation\[1\],/,
+  // AUDIT LANDFORMS C1 MOVED THIS PIN: compensation-free and in DFU's frame - groundFrameHeight takes the Landforms
+  // row's lift off, and anchorLanding's restandHeight puts it back on
+  assert.match(world, /y: groundFrameHeight\(pf\[1\] - state\.compensation\[1\], pf\[0\], pf\[2\]\),/,
     'the anchor height must be stored compensation-free');
   assert.match(world, /return \[lx, restandHeight\(a\.y \?\? 2, lx, lz, scaleOf\(a\.terrainScale\)\) \+ state\.compensation\[1\], lz\];/,
     'and anchorLanding must re-add the LIVE compensation (TERRAIN-SCALE1: to the height stood again on today\'s ground)');

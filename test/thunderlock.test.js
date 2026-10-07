@@ -1086,7 +1086,7 @@ test('FIELD-GUN13 #3 - the weapon rides in, it does not pop', () => {
   for (const other of ['!spellArmed()', '!fpsSpellCasting.isPlayingAnim', 'equipCountdown', '!eotbHidesWeapon()', '!fpArm.active()']) {
     assert.ok(gate.includes(other), `AUDIT-FIELD F1: the gate must re-state ${other} - empty hands stay empty`);
   }
-  assert.match(src, /if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly && !shieldRect && !gunSliding\)\) return;/);
+  assert.match(src, /if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly && !shieldRect && !gunSliding && !armCasts\)\) return;/);   // PIN MOVED (MW-CAST1): the casting hands' leg beside the gun's
   assert.match(src, /if \(!shown\(\) && !gunSliding\) return;/);
   assert.match(src, /if \(gunSliding && !shown\(\)\) return;/,
     'and nothing below the gun’s own arm draws on a sliding frame');

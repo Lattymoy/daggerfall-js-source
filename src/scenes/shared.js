@@ -829,6 +829,15 @@ export function realForestsOn(search) {
   const row = onlineForcedPref('realForests', search) ?? getPref('realForests');
   return !!row && (isOnlinePage(search) || isEnhanced(search));
 }
+/** LANDFORM1-3: THE LANDFORMS' SWITCH - the Features row (`landforms`) on the enhanced skin, and on for everyone online
+ *  whatever their skin: it is the ground itself, and a room agrees on its ground (realForestsOn's shape). `?landforms=off`
+ *  the kill door, offline. The world host reads it once, at its mount (a flip reaches the next world). Off - and on the
+ *  classic skin - the kernel is DFU's to the bit. */
+export function landformsOn(search) {
+  if (pageParam('landforms', search) === 'off' && !isOnlinePage(search)) return false;
+  const row = onlineForcedPref('landforms', search) ?? getPref('landforms');
+  return !!row && (isOnlinePage(search) || isEnhanced(search));
+}
 
 /** VERGE1: THE CLEAR ROADSIDES' SWITCH - the Features row (`roadVerges`) on the enhanced skin, and on for everyone
  *  online whatever their skin: where the wild's flats stand is the room's ground (realForestsOn's shape). `?verges=off`
@@ -1244,6 +1253,18 @@ export function applyNightStars(bmp, random) {
   return bmp;
 }
 
+/** LOOT15: the most the wardrobe takes off a fall's damage and off the minute's fatigue drain (%). */
+export const WARDROBE_FALL_MOST = 75;
+export const WARDROBE_FATIGUE_MOST = 50;
+/** A PLAYER'S FALL, BILLED - DFU's trunc(HPPerMetre * (distance - threshold)) past the threshold (AcrobatMotor
+ *  .CheckFallingDamage :214-222), the Pilgrim's Sandals' Long Road off it (LOOT15: `fallLess`, the loot ladder's fold's -
+ *  entity._mods, empty with the ladder off - at most WARDROBE_FALL_MOST). The ONE home of the bill: applyFallLanding's
+ *  three hosts and the dungeon's own landing (dungeonContext.js reportActivity) read it - AUDIT LOOT II A1: the dungeon
+ *  billed its own and the Long Road was dead below ground. */
+export function playerFallDamage(entity, distance) {
+  const less = Math.min(WARDROBE_FALL_MOST, Math.max(0, Number(entity?._mods?.fallLess) || 0)) / 100;
+  return Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD) * (1 - less));
+}
 /** AcrobatMotor.CheckFallingDamage (:214-222) + PlayerHealth
  *  .ApplyPlayerFallDamage, verbatim: past fallingDamageThreshold the
  *  fall bills HPPerMetre * (distance - threshold), truncated; past
@@ -1274,7 +1295,7 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null, 
   // -1 the streaming world reports off terrain (indoors, dungeons).
   if (inOutdoorWater) return;
   if (distance > FALL_DAMAGE_THRESHOLD) {
-    const dmg = Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD));
+    const dmg = playerFallDamage(entity, distance);   // LOOT15 (bible/06-Systems/Loot-II-Arc.md section 7): the bill, the Long Road off it
     // AUDIT 21 (hosts lane, F6): the no-`hurt` arm went through the ONE
     // damage door now, so a fatal fall outdoors or in a building raises the
     // death screen instead of leaving you walking around at 0 HP.
@@ -1808,6 +1829,12 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
  *  ONE home: dungeonContext kept a second copy whose comment said the
  *  port had no source for the flag, which had stopped being true. */
 export function fatigueLossMultiplierFor(entity) {
+  // LOOT15 (bible/06-Systems/Loot-II-Arc.md section 7): the Pilgrim's Sandals' Long Road - the loot ladder's fold's
+  // `fatigueLess` (entity._mods; empty with the ladder off), at most WARDROBE_FATIGUE_MOST off, laid over the career's
+  // and the tart's below (still the one home: the helper is this function's alone, PROF9's lines as they stood)
+  return careerTartFatigueLoss(entity) * (1 - Math.min(WARDROBE_FATIGUE_MOST, Math.max(0, Number(entity?._mods?.fatigueLess) || 0)) / 100);
+}
+function careerTartFatigueLoss(entity) {
   // PROF9 (Professions-Arc.md 35): an Orchard Tart's stamina - every minute's drain divided by 1.2 while it lasts
   // (systems/cookItems.js dishStaminaFactor), laid over the career's own
   const tart = dishStaminaFactor(entity);

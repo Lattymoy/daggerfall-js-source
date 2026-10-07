@@ -18,7 +18,7 @@ const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 function seaNet(busy) {
   const w = { inside: false, insideDungeon: false, insideCastle: false, locationType: 0xffff, inLocationRect: false, hour: 12, climate: 223, region: 17, enemiesNear: false, carriedWeight: 0, maxEncumbrance: 100, swimming: false, exteriorWater: 'None' };
   const prev = setForagingHost({ world: () => w, entity: () => null });
-  const book = { state: { open: true, hauls: 0, caps: { hauls: 40, stores: 5000 } }, taken: () => false, counting: () => false, held: () => 0 };
+  const book = { state: { open: true, hauls: 0, caps: { stores: 5000 } }, taken: () => false, counting: () => false, held: () => 0 };
   const host = { pixel: () => ({ x: 300, y: 200 }), ground: () => ({ climate: 223, region: 17 }), eye: () => ({ pos: [0, 1.6, 0], dir: [0, 0, 1] }), feet: () => [0, 0, 0], hour: () => 12, storm: () => false, climateAt: () => 223, trophy: () => true, day: () => 20724, rand: () => 0.5, busy };
   return { k: fishKind({ book, host }), done: () => setForagingHost(prev) };
 }

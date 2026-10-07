@@ -272,6 +272,8 @@ export const NIF_BLEND_MODES = Object.freeze([
   'SRC_ALPHA', 'ONE_MINUS_SRC_ALPHA', 'DST_ALPHA', 'ONE_MINUS_DST_ALPHA', 'SRC_ALPHA_SATURATE',
 ]);
 export const nifBlendMode = (mode) => NIF_BLEND_MODES[mode] ?? 'SRC_ALPHA';
+/** MW-SPELLFX1: the model a world-space stream is drawn with. */
+const WORLD_IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);   // a typed array cannot be frozen; nothing writes it
 
 // Character fragment: the mesh path's lighting + fog verbatim, sampling
 // the rig's vertex color instead of a texture (C4b - no alpha cutout: rig
@@ -2984,6 +2986,27 @@ export class Renderer {
     if (!effect.count) return;
     gl.bindBuffer(gl.ARRAY_BUFFER, effect.vbo);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, packed.subarray ? packed.subarray(0, effect.count * effect.floats) : packed);
+  }
+
+  /** MW-SPELLFX1: free a texture createCharacterTexture made - render/vfxGpu.js owns its effects' textures and frees
+   *  them here, forgetting the one the unit-0 shadow may still be speaking for. */
+  releaseCharacterTexture(tex) {
+    if (!tex) return;
+    if (this._tex0Bound === tex) this._tex0Bound = null;
+    this.gl.deleteTexture(tex);
+  }
+
+  /** MW-SPELLFX1: MORROWIND'S SPELL EFFECTS IN THE WORLD PASS (scenes/mwMagicFx.js) - particle effects whose streams
+   *  are already in world space (formats/mwVfx.js), drawn with the identity model through the character path's own
+   *  particle draw: the NIF's blend function and depth flags, depth-tested against the world. Both faces, as the
+   *  impact pass draws them (render/spellImpactFx.js): an effect's shells are seen from inside and out, and the
+   *  Morrowind-to-world mirror turns every triangle over. The baseline's CULL_FACE comes back after. */
+  drawWorldParticleEffects(list) {
+    if (!list || !list.length) return;
+    const gl = this.gl;
+    gl.disable(gl.CULL_FACE);
+    this._drawParticleEffects({ effects: list }, WORLD_IDENTITY);
+    gl.enable(gl.CULL_FACE);
   }
 
   releaseParticleEffect(effect) {

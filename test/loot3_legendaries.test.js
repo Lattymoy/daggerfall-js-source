@@ -100,7 +100,7 @@ test('LOOT3: named like an artifact, read whole; the Broker\'s base and the Test
   assert.deepEqual(brokerStock(41).map((o) => o.item.name), brokerStock(41).map((o) => o.item.name), 'a day\'s stock is still its day\'s');
   const entity = { isPlayer: true, items: [], stats: {}, skills: new Array(35).fill(30), level: 5, career: {} };
   const added = seedTestLoot(entity, lcg(3));
-  const legs = added.filter((i) => i.rarity === 'legendary' && i.isIdentified && !i.exalted).map((i) => i.legendary).sort();
-  assert.deepEqual(legs, LR.LEGENDARIES.map((l) => l.id).sort(), 'the room shows each once');
+  const legs = added.filter((i) => i.rarity === 'legendary' && i.isIdentified && !i.exalted && !i.cursed).map((i) => i.legendary).sort();   // LOOT16: the cursed one is the room's extra, as the Exalted is
+  assert.deepEqual(legs, [...LR.LEGENDARIES, ...LR.WARDROBE_LEGENDARIES].map((l) => l.id).sort(), 'the room shows each once - LOOT15: and the wardrobe\'s six beside the thirty');
   _resetForTests();
 });

@@ -59,7 +59,7 @@ function stand({ swimming = true, share = 1 } = {}) {
   const prev = setForagingHost({ world: () => w, entity: () => entity });
   const taken = new Set();
   const book = {   // an account book that answers every haul at once
-    state: { open: true, hauls: 0, caps: { hauls: 40, stores: 5000 } },
+    state: { open: true, hauls: 0, caps: { stores: 5000 } },
     stale: () => false, refresh: async () => ({ ok: true }), pixel: () => ({ state: 'none' }), askPixels: async () => [], pump: () => {},
     dungeon: () => null, askDungeon: async () => false, taken: (k) => taken.has(k), counting: () => false, held: () => 0,
     track: () => ({ rank: 0, specs: { 50: null, 100: null } }),

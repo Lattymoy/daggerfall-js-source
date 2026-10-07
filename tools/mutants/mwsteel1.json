@@ -92,8 +92,8 @@
   {
     "name": "MWSTEEL1-fit-not-carried",
     "file": "src/formats/mwItemMap.js",
-    "old": "          ...(own.fit ? { fit: own.fit, fitFrom: own.fitFrom } : {}) });",
-    "new": "          }); void own.fit;",
+    "old": "          ...(own.fit ? { fit: own.fit, fitFrom: own.fitFrom } : {}),   // MW-STEEL1: kept to the body its scene carries",
+    "new": "          ...{},   // MW-STEEL1: kept to the body its scene carries",
     "tests": [
       "test/mwsteel1.test.js"
     ]

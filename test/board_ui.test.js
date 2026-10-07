@@ -2,7 +2,8 @@
 // Including each of the tabs"; "Enhance the speed at which the notice board and market loads"; "Enhance organization of
 // the market"; "Reduce overusage of bloated text. Less AI like text"; "Enhance the guild war tab of the board for better
 // organization, instruction and readability"): ONE NOTICE BOARD A TOWN (systems/bountyBoard.js noticeBoardIndex, read by
-// every seam of the hosts), the board's tabs laid out to be read (ui/noticeWindow.js, ui/marketTab.js, ui/seatTab.js),
+// every seam of the hosts - REVERTED 2026-10-07: every board BOUNTY1 did not take a Notice Board again, the helper the
+// siege field's alone), the board's tabs laid out to be read (ui/noticeWindow.js, ui/marketTab.js, ui/seatTab.js),
 // the reads set out early and side by side, the words cut. The record: bible/06-Systems/Professions-Arc.md 10.11.
 import './chargenDom.mjs';
 import { test } from 'node:test';
@@ -33,7 +34,7 @@ const EMPTY = { notes: [], notices: [], me: {} };
 /** A board at x (and z), a box a metre on a side. */
 const at = (x, z = 0) => ({ box: [x, 0, z, x + 1, 2, z + 1] });
 
-test('ONE-BOARD the town\'s one Notice Board: of the boards BOUNTY1 left, the one nearest the town\'s middle - the first by position on a tie or with no middle; a lone board is it; none where every board posts bounties (mutants: every board left; the bounty test; the nearest; the tie)', () => {
+test('ONE-BOARD the rumour board nearest the town\'s middle (the siege field\'s Market since ONE-BOARD REVERTED): of the boards BOUNTY1 left, the one nearest the town\'s middle - the first by position on a tie or with no middle; a lone board is it; none where every board posts bounties (mutants: every board left; the bounty test; the nearest; the tie)', () => {
   assert.equal(noticeBoardIndex([at(5)]), 0, 'a lone board keeps its notices');
   const two = [at(40), at(10)];
   assert.deepEqual([...questBoardIndices(two)], [1], 'by position: the board at 10 posts the bounties');
@@ -55,18 +56,17 @@ test('ONE-BOARD the town\'s one Notice Board: of the boards BOUNTY1 left, the on
   assert.equal(noticeBoardIndex(null), -1);
 });
 
-test('ONE-BOARD the hosts: the press, the count over the board, the town the player stands in, the town map and a seat\'s pennant all read the one law - one Notice Board a town, named on hover while it is open (mutants: each seam back on every board the split left)', () => {
+test('ONE-BOARD REVERTED the hosts (2026-10-07, Mac: revert "just that change"): the press, the count over the board, the town the player stands in, the town map and a seat\'s pennant are every board BOUNTY1 did not take again, each named on hover while the board is open (mutants: the bounty boards taken too; the count over one; the town underfoot with every board a bounty board; the pennant over the bounty boards)', () => {
   const w = src('src/scenes/world.js');
-  assert.match(w, /const noticeBoardOf = \(p\) => \(p\._noticeBoard \?\?= noticeBoardIndex\(p\.boards \?\? \[\], boardSplitOf\(p\), townCentreOf\(p\.homeFrames\)\)\);/);
-  assert.match(w, /const noticeAt = noticeTown \? noticeBoardOf\(p\) : -1;/);
-  assert.match(w, /\.\.\.\(i === noticeAt \? \{ notice: noticeTown, named: noticeBook\.open === true \} : \{\}\),/);
+  assert.doesNotMatch(w, /noticeBoardOf|noticeBoardIndex/, 'no one-board law in the host');
+  assert.match(w, /\.\.\.\(!bountyAt\.has\(i\) && noticeTown \? \{ notice: noticeTown, named: noticeBook\.open === true \} : \{\}\),/);
   const count = w.slice(w.indexOf('const noticeCountPoints = ('), w.indexOf('const partyMarkers = ('));
-  assert.match(count, /const at = noticeBoardOf\(p\);\n\s*if \(at < 0\) continue;/);
-  assert.match(count, /if \(i !== at\) return;/);
-  assert.doesNotMatch(count, /bountyAt/, 'the count over one board, never every board the split left');
-  assert.match(w, /return noticeBoardOf\(p\) >= 0 \? noticeTownOf\(p\.px, p\.py, boardSplitOf\(p\)\.size > 0\) : null;/);
-  assert.match(w, /return town \? townBoardRows\(p, noticeBoardOf\(p\), noticeBook\.unseen\(town\.mapId\)\) : \[\];/);
-  assert.match(w, /notice: noticeBoardIndex\(pixelBoards, pixelBoardSplit, townCentreOf\(pixelHomeFrames\)\),/, 'the pennant: the build\'s own measure, the same law');
+  assert.match(count, /const bountyAt = boardSplitOf\(p\);\n\s*if \(bountyAt\.size >= p\.boards\.length\) continue;/);
+  assert.match(count, /if \(bountyAt\.has\(i\)\) return;/, 'the count over every Notice Board in range');
+  assert.match(w, /const bountyAt = boardSplitOf\(p\);\n\s*return bountyAt\.size < p\.boards\.length \? noticeTownOf\(p\.px, p\.py, bountyAt\.size > 0\) : null;/);
+  assert.match(w, /return town \? townBoardRows\(p, bountyAt, noticeBook\.unseen\(town\.mapId\)\) : \[\];/);
+  assert.match(w, /boards: pixelBoards, bounty: pixelBoardSplit,/, 'the pennants: every rumour board\'s');
+  assert.match(src('src/scenes/seatBanners.js'), /boards\.forEach\(\(b, i\) => \{ if \(!bounty\.has\(i\)\) add\(boardPennantAnchor\(b\)\); \}\);/);
   assert.match(src('src/scenes/worldModes.js'), /const NOTICE_BOARD_TEXT = 'Notice Board';/);
 });
 

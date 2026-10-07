@@ -561,11 +561,16 @@ export const FEATURES = Object.freeze([
     id: 'quick-loot',
     group: 'loot',
     title: 'Quick loot',
-    note: 'Loot without opening a window: the mouse wheel moves through the list, Activate takes one item and '
-      + 'one key takes everything, so you never stop aiming. Off uses the inventory window.',
+    note: 'Loot without a window: the wheel moves through the list, Activate takes one item and one key takes all '
+      + '(Take gear sets which gear; Junk is left). Off uses the inventory window.',   // LOOT18: the take-all's tier and the junk, in the FT15 budget
     effect: 'Takes effect at once.',
     kinds: Object.freeze(['enhanced']),
-    control: Object.freeze({ store: 'prefs', key: 'quickLoot', initial: true, online: 'player' }),   // the player's own: it stands nothing, rolls nothing and is not on the wire - the same category chatHidden is (OL1)
+    control: Object.freeze({
+      store: 'prefs', key: 'quickLoot', initial: true, online: 'player',   // the player's own: it stands nothing, rolls nothing and is not on the wire - the same category chatHidden is (OL1)
+      // LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): the take-all's tier - a part, the player's own
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickLootTier', initial: 'all', online: 'player' })]),
+      parts: Object.freeze([Object.freeze({ key: 'quickLootTier', label: 'Take gear', tiers: Object.freeze([['all', 'All'], ['magic', 'Magic+'], ['rare', 'Rare+']]) })]),
+    }),
   }),
   // LR1 (2026-09-14): LOOT RARITY - the port's own item ladder
   // (systems/lootRarity.js): Common, Magic, Rare, Legendary, with
@@ -711,6 +716,21 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'realForests', initial: true, online: true }),
+  }),
+  // LANDFORM1-3 (2026-10-06, Mac: "Can we adjust the heightmap to be more of this? and allow roads to carve through
+  // terrian and caverns without breaking anything and rivers to actually have depth"): LANDFORMS - the small heightmap
+  // stands taller, roads are graded into the land, rivers lie in channels (world/landforms.js, inside the terrain's
+  // kernel). FORCED ON ONLINE: it is the ground the room stands on. `?landforms=off` the kill door, offline;
+  // scenes/shared.js landformsOn composes it.
+  Object.freeze({
+    id: 'landforms',
+    group: 'world',
+    title: 'Landforms',
+    note: 'Mountains and high ground stand taller, as the map draws them. Roads are cut level into hillsides and built up '
+      + 'over hollows, and rivers run in channels below their banks. Off keeps Daggerfall\u2019s own ground.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'landforms', initial: true, online: true }),
   }),
   // VERGE1 (2026-10-07, Mac: "Making sure objects, like trees, avoid pathways and roads. Currently they slightly
   // overlap"): THE VERGE - a wilderness flat stands only where nothing of it reaches over a road or a track: the disc of
@@ -934,6 +954,20 @@ export const FEATURES = Object.freeze([
     effect: 'Takes effect at once with the Morrowind body.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'mwSteelHelm', initial: 'closed', online: 'player', tiers: Object.freeze([['closed', 'Closed'], ['open', 'Open']]) }),
+  }),
+  // MW-SPELLFX1 (2026-10-07, Mac: "We need to implement morrowind spell casting effects and animations"): Morrowind's
+  // spell effects - the casting effects and the glowing hands as a cast starts, the bolt it flies as, the hit and the
+  // burst - off the player's own masters (scenes/mwMagicFx.js). On by default, the Morrowind body's own look. The
+  // VIEWER'S, as the sheathing is: it is how this machine draws a spell - mine and every peer's - and it never reaches
+  // the wire. Read at every effect's spawn; off clears the effects running.
+  Object.freeze({
+    id: 'mw-spell-effects',
+    group: 'combat',
+    title: 'Morrowind Spell Effects',
+    note: 'With Morrowind data, spells look as they do in Morrowind: a swirl and glowing hands as you cast, the bolt in flight, the hit and the burst. Off, the classic missiles fly alone.',
+    effect: 'Takes effect at once.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwSpellEffects', initial: true, online: 'player' }),
   }),
   // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING - the first
   // Morrowind mod, and the only row whose effect line has to say NEXT

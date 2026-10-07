@@ -193,7 +193,7 @@ export function calculateCastCost(spell, casterEntity, { portMods = true } = {})
   if (sp < CAST_COST_FLOOR) sp = CAST_COST_FLOOR;
   if (portMods && casterEntity?.isPlayer && _costMods.size) {
     for (const fn of _costMods.values()) {
-      try { const n = fn(casterEntity, sp); if (Number.isFinite(n)) sp = Math.max(1, Math.round(n)); } catch { /* a set is not the cast's problem */ }
+      try { const n = fn(casterEntity, sp, spell); if (Number.isFinite(n)) sp = Math.max(1, Math.round(n)); } catch { /* a set is not the cast's problem */ }   // LOOT15: and the spell, for a power that reads its school
     }
   }
   return { gold, sp };

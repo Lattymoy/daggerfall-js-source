@@ -116,6 +116,7 @@ import { regionPowerUpdate } from './regionPower.js';
 import { runSurvivalMinutes, clearSurvivalMods, pauseSurvival } from './survival/needs.js';   // SURV1: the needs, a world minute at a time; AUDIT SURV A: and the drains dropped when the feed stops; AUDIT SURV-TIERS: and paused while Off
 import { installSurvivalIcons } from './survival/items.js';   // SURV2: the templates register at its import; the icons here
 import { installThunderlockIcons } from './thunderlock.js';   // THUNDERLOCK: same wire - the import IS the registration (AUDIT-THUNDERLOCK F1)
+import './ayleidStones.js';   // LOOT21: the Ayleid stones - their rows, their late finds and their uses register at its import
 import { installSurvivalLoot } from './survival/loot.js';   // SURV2: the corpse's food
 import { survivalOn, corpseFoodOn } from './survival/switch.js';   // SURV2: the one switch; CORPSE-FOOD: and the body's food, the room's online
 /** :462 - `% 10080`, seven days of game minutes. */
@@ -1311,6 +1312,14 @@ export const sharedWallMs = (classicMinutes) => (_sharedWall && Number.isFinite(
 // [AUDIT LIVED1b U6: OL3's `realTimeText` and `sharedRealTimeText` - a classic minute as this machine's wall-clock words
 // - went with their last reader (LIVED1 moved the room's and the loan's words to the character's clock); the gates
 // and the raids read `sharedWallMs` itself.]
+/** BANISH-SKY (bible/06-Systems/Online-Waits.md WAIT4): a span of the world's (event) clock said as the REAL time it is
+ *  online - the event clock runs on the wall whether or not the player plays ("about 30 real hours", "about 40 real
+ *  minutes"), rounded up as the nightfall words round; null offline, where the days are DFU's own words. */
+export function worldSpanRealWords(eventMinutes) {
+  if (!_sharedClock || !Number.isFinite(eventMinutes) || eventMinutes <= 0) return null;
+  const real = Math.max(1, Math.ceil(eventMinutes / ONLINE_MINUTES_PER_MS / 60000));
+  return real >= 120 ? `about ${Math.ceil(real / 60)} real hours` : `about ${real} real minute${real === 1 ? '' : 's'}`;
+}
 /** LIVED1: THE SUN IS EVERYONE'S. A single player waits out the day with a rest; online a rest moves their own clock
  *  and not the sky, so a refusal that waits on the night (the vampire's CheckFastTravel, a sun-damaged career's box)
  *  says when the world's night falls, in real minutes. Null offline, or when it is night. TIME1: the SKY's night, timed

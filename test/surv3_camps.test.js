@@ -355,7 +355,10 @@ test('SURV3: by source - the three hosts stand the pool, feed the race, draw the
   assert.doesNotMatch(world, /camps\.collectPixel\(key\)/, 'AUDIT SURV B: the streaming sweep spares a placed camp');
   // AUDIT SURV-TIERS (the third pass): the save's two converters are named once, for the save, the load and the teleport
   assert.match(world, /const campToNatives = \(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, pos\[1\] - state\.compensation\[1\], wc\.z\]; \};/);
-  assert.equal((world.match(/camps: camps\.snapshot\(campToNatives\)/g) ?? []).length, 1, 'the save envelope alone carries the camps (AUDIT SURV B: the scene cache no longer does)');
+  // AUDIT LANDFORMS C1 MOVED THIS PIN: the save's camps go through campToRecord - campToNatives with the height in DFU's
+  // frame (the Landforms row's lift taken off)
+  assert.equal((world.match(/camps: camps\.snapshot\(campToRecord\)/g) ?? []).length, 1, 'the save envelope alone carries the camps (AUDIT SURV B: the scene cache no longer does)');
+  assert.match(world, /const campToRecord = \(pos\) => \{ const n = campToNatives\(pos\); return \[n\[0\], groundFrameHeight\(n\[1\], pos\[0\], pos\[2\]\), n\[2\]\]; \};/);
   assert.doesNotMatch(world, /camps\.restore\(arrived\.camps,/); assert.match(world, /camps\.restore\(restandAt\('pos'\)\(w\.camps\),/);   // TERRAIN-SCALE1: stood again on today's ground
   assert.match(world, /camps\.offsetAll\(r\.offset\);/);
   assert.match(world, /if \(cell && full\) frame\.c = camps\.wireRecords\(campToWire\);/, 'my camps ride my full foes frame (AUDIT SURV B: an empty list too)');

@@ -33,7 +33,7 @@
 // runs the mints and pins that no undeclared key appears.
 
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
-import { validAffix, RARITY_ORDER } from './lootRarity.js';
+import { validAffix, RARITY_ORDER, SOCKET_VALUES } from './lootRarity.js';
 import { validSigil } from './sigil.js';   // SIGIL1
 
 /** The longest string a field carries; the wire's own bound (loot.js LOOT_STR_MAX reads it). */
@@ -112,10 +112,15 @@ export const ITEM_FIELDS = Object.freeze({
   untaken: bool(),   // LOOT8 (bible/06-Systems/Loot-Arc.md section 10): a piece a source door rolled that no player has taken - true or absent; its first take clears it and counts for the drought
   reforged: int({ min: 0, max: 15 }),   // LOOT9 (bible/06-Systems/Loot-Arc.md section 11): the one line the Reforge has rolled again (its index) - only it may be again
   imprint: str(),   // LOOT10 (bible/06-Systems/Loot-Arc.md section 12): a Rare's imprinted power - a Legendary record's id of its own group (loot.js validLootItem: lootRarity.js validImprint)
+  honed: int({ min: 1, max: 63 }),   // LOOT17 (bible/06-Systems/Loot-II-Arc.md section 9): the hones a piece has taken - what the next costs (reforge.js honePrice), or absent
+  cursed: rec(validEnchantment),   // LOOT16 (bible/06-Systems/Loot-II-Arc.md section 8): a cursed find's drawback - the enchantment the temple lifts, or absent (loot.js validLootItem: lootRarity.js validCurse)
+  socket: oneOf(SOCKET_VALUES),   // LOOT20 (bible/06-Systems/Loot-II-Arc.md section 12): a piece's socket - 'empty' or the gem set in it, or absent (loot.js validLootItem: lootRarity.js validSocket)
   // SIGIL1: an online win's sigil (systems/sigil.js) - its power, the fight that won it, what it has drunk
   sigil: rec(validSigil),
   // LOCK1: the player's lock (systems/itemLock.js) - true, or absent
   locked: bool(),
+  // LOOT18 (bible/06-Systems/Loot-II-Arc.md section 10): the player's junk mark (systems/itemJunk.js) - true, or absent
+  junk: bool(),
   // SS4: a piece bound to its owner by how it was won (systems/itemBound.js - the Sigil Broker's wares) - true, or absent
   bound: bool(),
   // SS5: the Sigil Stones the Broker took for a ware (systems/sigilBroker.js brokerStock) - its dismantle's measure
