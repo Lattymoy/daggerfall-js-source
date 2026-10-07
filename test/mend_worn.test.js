@@ -3,8 +3,8 @@
 // DFU's law since 2022 (RepairsObjects.cs:86-101). The port's default pack is Roleplay & Realism's: its kit worn to
 // 30-75%, its loot at 20-75%, beside the port's own pieces whose condition is their uses. So every tick went to the
 // oldest worn thing carried and nothing worn was seen to mend, and WEAPON-POOL's pools left a weapon a point a tick.
-// Now: what is worn first, the most worn first, then the pack (the repair kit's order - one export); never a quiver,
-// never what a smith refuses (fuel, doses); a weapon on the pool mends the share a classic dagger did, 32 a tick.
+// Now: what is worn first, the most worn first, then the pack (the repair kit's order - one export); never what a
+// smith refuses (a quiver, a light's fuel, a supply's doses); a weapon on the pool mends a classic dagger's share, 32.
 // Every piece is minted by its real producer, and the rounds are the pump's.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

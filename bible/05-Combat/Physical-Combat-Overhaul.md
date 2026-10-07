@@ -476,7 +476,7 @@ change, 6846029b4, "RepairsObjects should repair all items in inventory". From 2
 which the class's own comment records as classic's: "Only equipped items will receive repairs ... Priority is based on
 equip order enumeration". The port ran the 2022 law verbatim, and three things in the port made it invisible:
 
-- **The pack.** Roleplay & Realism: Items is on by default. Its kit is worn to 30-75% (shoes carried ahead of the gear),
+- **The pack.** Roleplay & Realism: Items is on by default. Its kit is worn to 30-75% (a runner's shoes ahead of the gear),
   and its loot and its shelves come at 20-75%, books among them. So the first damaged piece was rarely one the player
   wore. The pins' own fixture is the mod's kit for Running, Long Blade and Streetwise, put on: DFU's walk mends the shoes.
 - **What a smith refuses.** The walk reads no `isNotRepairable`. DFU sets it on the Arrow (minted at 0) and the four
