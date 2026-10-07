@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { waterBedDepths, carveBed, waterBedOf, flatGrid, bedProfile, BED_DEPTH, BED_RAMP, TILE } from '../src/world/waterBed.js';
+import { waterBedDepths, carveBed, waterBedOf, flatGrid, bedProfile, BED_DEPTH, BED_RAMP, TILE_UNITS } from '../src/world/waterBed.js';
 import { buildTerrainGrid } from '../src/world/terrainSurface.js';
 import { HEIGHTMAP_DIMENSION } from '../src/world/terrainSampler.js';
 import { buildWaterIndices } from '../src/render/waterSurface.js';
@@ -23,9 +23,9 @@ test('WATER-NEXT 2 the profile: nothing at the bank, the whole depth past the ra
   assert.equal(bedProfile(1), 1);
   assert.equal(bedProfile(3), 1, 'never past the bed\'s depth');
   assert.equal(bedProfile(0.5), 0.5, 'halfway down at half the ramp');
-  assert.ok(BED_DEPTH * bedProfile(TILE / BED_RAMP) < 1.1, 'a tile from the bank, the water is still shallow enough to see into');
+  assert.ok(BED_DEPTH * bedProfile(TILE_UNITS / BED_RAMP) < 1.1, 'a tile from the bank, the water is still shallow enough to see into');
   assert.ok(bedProfile(0.25) - bedProfile(0) < bedProfile(0.5) - bedProfile(0.25), 'the shelf falls slower than the slope');
-  assert.deepEqual([BED_DEPTH, BED_RAMP, TILE], [4, 19.2, 6.4]);
+  assert.deepEqual([BED_DEPTH, BED_RAMP, TILE_UNITS], [4, 19.2, 6.4]);
 });
 
 test('WATER-NEXT 2 the depths: a vertex is wet only where every tile meeting it is water at that corner; a dry map has no bed; the bank is 0 and the heart of a lake the bed\'s depth (mutants: one vote enough; the chamfer\'s diagonal; the map\'s edge read as dry)', () => {
@@ -36,14 +36,14 @@ test('WATER-NEXT 2 the depths: a vertex is wet only where every tile meeting it 
   assert.equal(at(2, 8), 0, 'the bank: a dry tile meets it');
   assert.equal(at(14, 8), 0);
   assert.ok(at(3, 8) > 0 && at(3, 8) < BED_DEPTH, 'one cell in: under water, not yet deep');
-  assert.ok(Math.abs(at(3, 8) - BED_DEPTH * bedProfile(TILE / BED_RAMP)) < 1e-5, 'a step of the chamfer is one cell');
+  assert.ok(Math.abs(at(3, 8) - BED_DEPTH * bedProfile(TILE_UNITS / BED_RAMP)) < 1e-5, 'a step of the chamfer is one cell');
   assert.ok(Math.abs(at(8, 8) - BED_DEPTH) < 1e-6, 'the heart: the whole depth');
   assert.equal(at(3, 8), at(13, 8), 'the same cell from either bank, the same depth');
   assert.equal(at(8, 3), at(3, 8), 'and from a bank across the grid\'s other axis');
   // an island: one dry tile in open water - the vertex off its corner has its bank on the DIAGONAL, the chamfer's 4
   const isle = waterBedDepths(map(16, (x, z) => !(x === 8 && z === 8)), { tileDim: 16 });
   assert.equal(isle[9 * 17 + 9], 0, 'the island\'s corner is a bank');
-  assert.ok(Math.abs(isle[10 * 17 + 10] - BED_DEPTH * bedProfile((4 / 3) * TILE / BED_RAMP)) < 1e-5, 'the diagonal step is 4/3 of a cell');
+  assert.ok(Math.abs(isle[10 * 17 + 10] - BED_DEPTH * bedProfile((4 / 3) * TILE_UNITS / BED_RAMP)) < 1e-5, 'the diagonal step is 4/3 of a cell');
   // one tile of water: no vertex is under it - the stream lies on its ground, as WATER1's
   assert.equal(waterBedDepths(map(16, (x, z) => x === 8 && z === 8), { tileDim: 16 }), null);
   // the sea to the map's edge: the edge is no bank (a pixel's seam is not dammed)

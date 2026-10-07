@@ -9,7 +9,8 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { BlocksFile } from '../src/formats/blocksFile.js';
-import { dryPuddles, groundTileWet, PUDDLE_RECORDS } from '../src/world/puddleDry.js';
+import { dryPuddles, groundTileWet } from '../src/world/puddleDry.js';
+import { PUDDLE_RECORDS } from '../src/world/puddleMask.js';
 import { SHALLOW_WHOLE, SHALLOW_DRAWN } from '../src/world/waterCorners.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -25,7 +26,8 @@ function ground(paint) {
 }
 const bits = (g, x, y) => g[x][y].tileBitfield;
 
-test('PUDDLE-DRY the puddle records: DFU\'s shallow-water art (SHALLOW_WHOLE) and WATER-DRAW1\'s (SHALLOW_DRAWN), one list', () => {
+test('PUDDLE-DRY the puddle records: DFU\'s shallow-water art (SHALLOW_WHOLE) and WATER-DRAW1\'s (SHALLOW_DRAWN), one list, WATER-PUDDLE\'s own (audit24: one home)', () => {
+  assert.match(read('src/world/puddleDry.js'), /import \{ PUDDLE_RECORDS \} from '\.\/puddleMask\.js';/);
   assert.deepEqual(PUDDLE_RECORDS, [...SHALLOW_WHOLE, ...SHALLOW_DRAWN].sort((a, b) => a - b));
   assert.deepEqual(PUDDLE_RECORDS, [8, 9, 23, 33, 34, 35, 36]);
 });

@@ -27,7 +27,7 @@ export const BED_DEPTH = 4.0;
 /** How far from the bank the bed reaches its depth, world units (three tiles). */
 export const BED_RAMP = 19.2;
 /** A tile's side, world units. */
-export const TILE = 6.4;
+export const TILE_UNITS = 6.4;
 
 /** 0..1 off the bank: a smoothstep - a shallow shelf off the bank (where clear water shows its bed), the slope
  *  steepest between, the middle flat. The real game's first shots (the moat) took an ease-out: a tile from the bank
@@ -92,7 +92,7 @@ export function waterBedDepths(bytes, { stride = 1, tileDim = 128, width = tileD
       }
     }
   }
-  const unit = (stride * TILE) / 3;   // a chamfer step of 3 is one grid cell
+  const unit = (stride * TILE_UNITS) / 3;   // a chamfer step of 3 is one grid cell
   const out = new Float32Array(n);
   for (let i = 0; i < n; i++) out[i] = wet[i] ? BED_DEPTH * bedProfile(Math.min(d[i], BIG) * unit / BED_RAMP) : 0;
   return out;
@@ -120,8 +120,8 @@ export function carveBed(positions, normals, depths, gx, gz) {
     for (const edge of edges) for (let i = 0; i < gx; i++, o++) p[o * 3 + 1] -= depths[edge(i)];
   }
   const y = (x, z) => p[(Math.max(0, Math.min(gz - 1, z)) * gx + Math.max(0, Math.min(gx - 1, x))) * 3 + 1];
-  const cellX = gx > 1 ? positions[3] - positions[0] : TILE;
-  const cellZ = gz > 1 ? positions[gx * 3 + 2] - positions[2] : TILE;
+  const cellX = gx > 1 ? positions[3] - positions[0] : TILE_UNITS;
+  const cellZ = gz > 1 ? positions[gx * 3 + 2] - positions[2] : TILE_UNITS;
   for (let z = 0; z < gz; z++) {
     for (let x = 0; x < gx; x++) {
       const i = z * gx + x;
@@ -155,7 +155,7 @@ export function waterBedOf(grid, bytes, o = {}) {
 
 /** A flat grid `width` x `height` tiles at height `y` (the fixed town's ground, which DFU lays as one flat quad), the
  *  terrain's vertex order and triangulation (terrainSurface.js buildTerrainIndices), so a bed can be carved in it. */
-export function flatGrid(width, height, y, cell = TILE) {
+export function flatGrid(width, height, y, cell = TILE_UNITS) {
   const gx = width + 1, gz = height + 1;
   const positions = new Float32Array(gx * gz * 3), normals = new Float32Array(gx * gz * 3);
   for (let z = 0, o = 0; z < gz; z++) {
