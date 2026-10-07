@@ -11,8 +11,8 @@
   {
     "name": "YARDLIGHT-at-middle",
     "file": "src/scenes/homeYards.js",
-    "old": "  return { light: YARD_LAMP, lift: size.h };",
-    "new": "  return { light: YARD_LAMP, lift: size.h / 2 };",
+    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h + YARD_LAMP_RAISE * k };",
+    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h / 2 + YARD_LAMP_RAISE * k };",
     "tests": [
       "test/yardlight.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "YARDLIGHT-before-its-picture",
     "file": "src/scenes/homeYards.js",
-    "old": "  if (piece?.flat?.[0] !== LIGHTS_ARCHIVE || !(size?.h > 0)) return null;\n  return { light: YARD_LAMP, lift: size.h };",
-    "new": "  if (piece?.flat?.[0] !== LIGHTS_ARCHIVE) return null;\n  return { light: YARD_LAMP, lift: size?.h ?? 0 };",
+    "old": "  if (piece?.flat?.[0] !== LIGHTS_ARCHIVE || !(size?.h > 0)) return null;",
+    "new": "  if (piece?.flat?.[0] !== LIGHTS_ARCHIVE) return null;",
     "tests": [
       "test/yardlight.test.js"
     ]
@@ -78,7 +78,8 @@
     "new": "    const law = lampOf ? (lampOf(piece, entry.size) ?? { light: piece.light, lift }) : { light: piece.light, lift };",
     "tests": [
       "test/yardlight.test.js"
-    ]
+    ],
+    "why": "A defensive pin: no producer mints a lit yard piece (decorYardPieceOf refuses one, the decorator strips it outside), so in the shipping game this mutant changes nothing - the host law must still answer for the piece alone (AUDIT YARD-LIGHT, lens C)."
   },
   {
     "name": "YARDLIGHT-lift-ignored",
@@ -101,16 +102,7 @@
   {
     "name": "YARDLIGHT-yard-unlit",
     "file": "src/scenes/homeYards.js",
-    "old": "      roomLights: () => y.lamps, lampOf: yardLampOf,",
-    "new": "      lampOf: yardLampOf,",
-    "tests": [
-      "test/yardlight.test.js"
-    ]
-  },
-  {
-    "name": "YARDLIGHT-far-lit",
-    "file": "src/scenes/homeYards.js",
-    "old": "      if (eye && y !== cur?.yard) { const o = originOf(y); if (Math.hypot(o[0] - eye[0], o[2] - eye[2]) > YARD_DRAW_M) continue; }",
+    "old": "      lampOf: yardLampOf,\n",
     "new": "",
     "tests": [
       "test/yardlight.test.js"
@@ -128,7 +120,7 @@
   {
     "name": "YARDLIGHT-host-unwired",
     "file": "src/scenes/world.js",
-    "old": "    if (lightsOnAt(minute)) for (const l of yards?.lamps() ?? []) csaLit.push({ x: l.x, y: l.y, z: l.z, range: worldLightAnimator.ranges[yardLampSlot(l.decor) % worldLightAnimator.ranges.length], color: CITY_LIGHT_COLOR_F32 });\n",
+    "old": "      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit);\n",
     "new": "",
     "tests": [
       "test/yardlight.test.js"
@@ -137,8 +129,8 @@
   {
     "name": "YARDLIGHT-host-by-day",
     "file": "src/scenes/world.js",
-    "old": "    if (lightsOnAt(minute)) for (const l of yards?.lamps() ?? []) csaLit.push(",
-    "new": "    for (const l of yards?.lamps() ?? []) csaLit.push(",
+    "old": "      const wodSel = wodLit || csaLit.length ? _wodSelect(0, _csaFill(wodLit ? _wodFill(0) : 0, csaLit)) : null;",
+    "new": "      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit);\n      const wodSel = wodLit || csaLit.length ? _wodSelect(0, _csaFill(wodLit ? _wodFill(0) : 0, csaLit)) : null;",
     "tests": [
       "test/yardlight.test.js"
     ]
@@ -146,17 +138,17 @@
   {
     "name": "YARDLIGHT-host-white",
     "file": "src/scenes/world.js",
-    "old": "range: worldLightAnimator.ranges[yardLampSlot(l.decor) % worldLightAnimator.ranges.length], color: CITY_LIGHT_COLOR_F32 });",
-    "new": "range: worldLightAnimator.ranges[yardLampSlot(l.decor) % worldLightAnimator.ranges.length], color: [1, 1, 1] });",
+    "old": "_yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit);",
+    "new": "_yardRows, worldLightAnimator.ranges, new Float32Array([1, 1, 1]), csaLit);",
     "tests": [
       "test/yardlight.test.js"
     ]
   },
   {
     "name": "YARDLIGHT-host-steady",
-    "file": "src/scenes/world.js",
-    "old": "range: worldLightAnimator.ranges[yardLampSlot(l.decor) % worldLightAnimator.ranges.length], color: CITY_LIGHT_COLOR_F32 });",
-    "new": "range: CITY_LIGHT_RANGE, color: CITY_LIGHT_COLOR_F32 });",
+    "file": "src/scenes/homeYards.js",
+    "old": "    e.range = animRanges[l.slot % animRanges.length] * (l.range / CITY_LIGHT_RANGE);",
+    "new": "    e.range = l.range;",
     "tests": [
       "test/yardlight.test.js"
     ]
