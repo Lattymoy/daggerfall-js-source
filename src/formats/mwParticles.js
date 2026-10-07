@@ -382,7 +382,7 @@ export function createParticleSystem(desc, { rolls = Math.random } = {}) {
    *  affine that carries the particle node's space into the frame the
    *  particles are kept in - identity under LocalSpace, the caller's
    *  world under the absolute frame. */
-  function emit(dt, frame) {
+  function emit(dt, frame, eToPs = emitterToPs) {
     if (!enabled || frozen) return 0;
     const n = count(dt);
     let made = 0;
@@ -394,8 +394,8 @@ export function createParticleSystem(desc, { rolls = Math.random } = {}) {
         color: [c.initialColor[0], c.initialColor[1], c.initialColor[2]], colorA: c.initialColor[3], alpha: 1,
       };
       shoot(p);
-      p.pos = affineApply(emitterToPs, p.pos[0], p.pos[1], p.pos[2]);
-      p.vel = affineRotate(emitterToPs, p.vel[0], p.vel[1], p.vel[2]);
+      p.pos = affineApply(eToPs, p.pos[0], p.pos[1], p.pos[2]);
+      p.vel = affineRotate(eToPs, p.vel[0], p.vel[1], p.vel[2]);
       if (frame) { p.pos = affineApply(frame, p.pos[0], p.pos[1], p.pos[2]); p.vel = affineRotate(frame, p.vel[0], p.vel[1], p.vel[2]); }
       particles.push(p);
       made++;
@@ -482,13 +482,15 @@ export function createParticleSystem(desc, { rolls = Math.random } = {}) {
      * the ABSOLUTE reference frame only: the particle node's frame in the
      * space the caller keeps world particles in; null keeps them local.
      */
-    update(dt, clock = null, frame = null) {
+    update(dt, clock = null, frame = null, emitterFrame = null) {
       if (clock === null || clock === undefined) { frozen = true; return; }
       const t = controllerTime(c, clock);
       frozen = false;
       enabled = t >= c.emitStart && t < c.emitStop;   // ParticleSystemController (nifosg/controller.cpp:594-604)
       if (unsupported) return;
-      emit(dt, frame);
+      // MW-SPELLFX1: `emitterFrame` is the emitter's frame in the particle node's space THIS frame (orthonormalised, as
+      // :548 takes it) - an effect mesh keyframes the node its emitter rides; null is the file's own, as the torch's
+      emit(dt, frame, emitterFrame ? affineOrthoNormalize(emitterFrame) : emitterToPs);
       operate(dt, frame);
       age(dt);
     },

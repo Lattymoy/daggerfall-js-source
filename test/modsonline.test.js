@@ -30,9 +30,12 @@
 // so `Enabled` (whose network is painted) and `SmoothRoads` (whether
 // the beds are smoothed at all) decide where the ground IS. Two
 // players who disagree stand on two floors along every road in the
-// Bay. `RiversAndStreams` does NOT: it paints tiles the smoother
+// Bay. `RiversAndStreams` did NOT: it paints tiles the smoother
 // never looks at, and the third test here MEASURES that rather than
-// asserting it.
+// asserting it. LANDFORM3 (2026-10-06, Mac: "Yes rivers should be
+// online") made it ground anyway - the landforms' kernel cuts every
+// painted river into the land (test/landform.test.js measures that
+// half) - so it is the room's now too, and on.
 //
 // AND THE OLD LANE HAD THIS BACKWARDS. It forced `Enabled` and left
 // `SmoothRoads` - a DIAL - to the player, so the heights have been
@@ -69,16 +72,22 @@ test('MODS-ONLINE-2: every vendored mod is classified, and the only keys the lan
   // value the port ships - the room's floor is the mod's own floor, not
   // a number invented here; the port's own default where it ships one
   // (WEAR-VANILLA: Roleplay Realism's equipDamage, which the mod ships on).
+  // ONE KEY IS FORCED PAST ITS DEFAULT, BY NAME, and to a value the mod
+  // itself offers: LANDFORM3's rivers (Mac: "Yes rivers should be
+  // online") - the room holding the shipped off would have no rivers.
+  const PAST_DEFAULT = { 'roads-hazelnut': { RiversAndStreams: true } };
   for (const [vendor, keys] of Object.entries(ONLINE_ROOM_MOD_KEYS)) {
     for (const [key, value] of Object.entries(keys)) {
       const def = MOD_SETTINGS[vendor]?.keys?.[key];
       assert.ok(def, `${vendor}/${key} is a declared switch`);
-      assert.equal(value, def.default, `${vendor}/${key} is forced to the port's shipped default`);
+      const named = PAST_DEFAULT[vendor] && Object.hasOwn(PAST_DEFAULT[vendor], key);
+      assert.equal(value, named ? PAST_DEFAULT[vendor][key] : def.default, `${vendor}/${key} is forced to the port's shipped default${named ? ' - or, named, past it' : ''}`);
+      if (named) assert.notEqual(value, def.default, `${vendor}/${key} is named because it is past its default`);
     }
   }
 });
 
-test('MODS-ONLINE-4: every mod switch is the player\'s online, except the forty-six the room owns', () => {
+test('MODS-ONLINE-4: every mod switch is the player\'s online, except the forty-seven the room owns', () => {
   for (const [vendor, def] of Object.entries(MOD_SETTINGS)) {
     for (const key of Object.keys(def.keys)) {
       const room = ONLINE_ROOM_MOD_KEYS[vendor] && Object.hasOwn(ONLINE_ROOM_MOD_KEYS[vendor], key);
@@ -91,7 +100,7 @@ test('MODS-ONLINE-4: every mod switch is the player\'s online, except the forty-
   // The whole shelf, counted, so a mod quietly re-forced shows up as a
   // number rather than as a player's complaint.
   const forced = Object.values(ONLINE_ROOM_MOD_KEYS).reduce((n, keys) => n + Object.keys(keys).length, 0);
-  assert.equal(forced, 46, 'the lane forces forty-six mod switches in the whole shelf');   // IT1: Immersive Travel's Enabled (its carriages stand at the gates) and its DisableNormalTravel held off (the map's trips stay walked)   // TRAVEL-ONLINE: Travel Options' Enabled and its two journey dials - no instant travel online; AUDIT T1: and its ports rule   // WD3: Beautiful Villages' and Beautiful Cities' Enabled - the towns themselves   // RAID2: World Events - Raiding Parties' Enabled, the world's raids   // OH-A: Ocean Holes' three - its switch, the pits' rate and the seafloor hole's size (the fifth floor)   // DW-D: Iliac Puddle No More's thirteen - the sea and its depth (the fourth floor), the deep's foes and loot, its swim and breath rules   // DS1: Detailed Ships' Enabled, the ships' shared deck   // MODS-ONLINE-5: one ruleset per room - RR's six combat overrides and its intensive training   // RRI1/RR1 (merged 2026-09-23): five of Roleplay & Realism: Items' (the items that change hands) and two of Roleplay & Realism's (the location, the host's foes)   // WOD1: World of Daggerfall's Enabled, the second floor
+  assert.equal(forced, 47, 'the lane forces forty-seven mod switches in the whole shelf');   // LANDFORM3: Basic Roads' RiversAndStreams, the rivers cut into the land   // IT1: Immersive Travel's Enabled (its carriages stand at the gates) and its DisableNormalTravel held off (the map's trips stay walked)   // TRAVEL-ONLINE: Travel Options' Enabled and its two journey dials - no instant travel online; AUDIT T1: and its ports rule   // WD3: Beautiful Villages' and Beautiful Cities' Enabled - the towns themselves   // RAID2: World Events - Raiding Parties' Enabled, the world's raids   // OH-A: Ocean Holes' three - its switch, the pits' rate and the seafloor hole's size (the fifth floor)   // DW-D: Iliac Puddle No More's thirteen - the sea and its depth (the fourth floor), the deep's foes and loot, its swim and breath rules   // DS1: Detailed Ships' Enabled, the ships' shared deck   // MODS-ONLINE-5: one ruleset per room - RR's six combat overrides and its intensive training   // RRI1/RR1 (merged 2026-09-23): five of Roleplay & Realism: Items' (the items that change hands) and two of Roleplay & Realism's (the location, the host's foes)   // WOD1: World of Daggerfall's Enabled, the second floor
   // MODS-ONLINE-4 (Mac: "What about player balance?"): the two GROUND
   // switches, and the three that spend somebody else's evening - the
   // host's dungeon foes (meaner monsters, the overhaul) and a roll that
@@ -124,9 +133,12 @@ test('MODS-ONLINE-2: a declared key is an OWN key - the lane and the store both 
   assert.equal(onlineForcedModSetting('roads-hazelnut', 'SmoothRoads', '?online=1'), true);
 });
 
-test('MODS-ONLINE-2 by execution: the smoothing MOVES the ground and rivers do not - which is why one is forced and the other is free', () => {
-  // The claim the whole classification rests on, measured on the real
-  // smoother rather than argued in a comment above it.
+test('MODS-ONLINE-2 by execution: the smoothing MOVES the ground and the water tiles do not - the smoother\'s half of the road switches\' reason', () => {
+  // The claim the whole classification rested on, measured on the real
+  // smoother rather than argued in a comment above it. LANDFORM3 moved
+  // the river switch to the room for the KERNEL's cut, not the
+  // smoother's (test/landform.test.js measures that half); this half -
+  // the smoother never moves a river's height - still holds.
   const hDim = 129, tDim = 128;
   const flat = () => Float32Array.from({ length: hDim * hDim }, (_, i) => (i % 7) * 3);   // a ground with relief, so an average can move it
   const map = (tile) => { const t = new Uint8Array(tDim * tDim); for (let y = 20; y < 100; y++) t[y * tDim + 64] = tile; return t; };
@@ -138,7 +150,7 @@ test('MODS-ONLINE-2 by execution: the smoothing MOVES the ground and rivers do n
   assert.notDeepEqual(Array.from(road), Array.from(flat()), 'SmoothRoads on and off are two different floors');
 
   // RIVERS AND STREAMS: every tile either table can write, and the
-  // smoother touches none of them - so the dial is paint, not ground.
+  // smoother touches none of them - to the smoother the dial is paint.
   const waterTiles = [...new Set([...RIVER_TILES, ...STREAM_TILES].flatMap((r) => r ?? []))].filter((t) => t !== 0);
   assert.ok(waterTiles.length >= 9, 'the water tables were read');
   for (const tile of waterTiles) {

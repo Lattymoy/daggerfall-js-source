@@ -14,7 +14,7 @@ import { readFileSync } from 'node:fs';
 import { isOnlinePage, ONLINE_FORCED_PREFS, ONLINE_PLAYERS_OWN_PREFS, onlineForcedPref, onlineForcedModSetting, ONLINE_ROOM_MOD_KEYS, ONLINE_PLAYERS_OWN_MODS } from '../src/systems/onlineLane.js';
 import { uiSkin, isEnhanced } from '../src/systems/uiSkin.js';
 import { PREF_DEFAULTS, getPref, setPref, _resetForTests } from '../src/systems/uiPrefs.js';
-import { MOD_SETTINGS, modSetting, setModSetting, _resetModSettings } from '../src/systems/modSettings.js';
+import { MOD_SETTINGS, modSetting, setModSetting, _resetModSettings, onlineModSetting } from '../src/systems/modSettings.js';
 
 const rd = (p) => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 /** Run `fn` on a page whose URL is `search` (node has no location; the read paths read globalThis.location.search). */
@@ -73,7 +73,7 @@ test('MODS-ONLINE-2: a mod the player turned off is OFF online too - only the ro
       assert.equal(modSetting(vendor, 'Enabled'), ground, `${vendor} online is ${ground ? "the room's ground" : "the player's own off"}`);
     }
     assert.equal(modSetting('roads-hazelnut', 'SmoothRoads'), true, 'the smoothing is the room\'s floor, not a dial - it was the hole');
-    assert.equal(modSetting('roads-hazelnut', 'RiversAndStreams'), false, 'and the water is paint, so it is still the player\'s');
+    assert.equal(modSetting('roads-hazelnut', 'RiversAndStreams'), true, 'LANDFORM3: and the rivers, cut into the land, are the room\'s ground too - on');
     assert.equal(modSetting('dynamic-skies', 'densitySetting'), 3, 'a mod\'s own dial is the player\'s');
   });
   for (const vendor of Object.keys(MOD_SETTINGS)) assert.equal(modSetting(vendor, 'Enabled'), false, `${vendor}: offline again, the store as the player left it`);
@@ -108,18 +108,24 @@ test('OL1 - THE FUTURE HALF: every boolean switch the port declares is either fo
   for (const vendor of Object.keys(ONLINE_ROOM_MOD_KEYS)) assert.ok(MOD_SETTINGS[vendor], `${vendor} is a vendored mod`);
   assert.equal(onlineForcedModSetting('world-tooltips', 'Enabled', '?online=1'), undefined,
     'a purely local readout is not the room\'s business');
-  // THE CONTRAST THIS LINE EXISTS TO DRAW has been re-aimed twice, and
-  // each time because the mod it named turned out not to be the room's
-  // after a reading. It named `dynamic-skies` (which only PAINTS a
-  // weather WORLD5 already shares), then `meanerMonsters` (whose stats
-  // are minted where a foe SPAWNS, so a peer steps a puppet under the
-  // owner's numbers). MODS-ONLINE-2 aims it at the one thing in the
+  // THE CONTRAST THIS LINE EXISTS TO DRAW has been re-aimed three times,
+  // each time because the switch it named turned out to be the room's
+  // after all. It named `dynamic-skies` (which only PAINTS a weather
+  // WORLD5 already shares), then `meanerMonsters` (whose stats are
+  // minted where a foe SPAWNS, so a peer steps a puppet under the
+  // owner's numbers). MODS-ONLINE-2 aimed it at the one thing in the
   // whole shelf that is not a rule anybody applies but the floor
-  // everybody stands on - and a floor cannot be two.
+  // everybody stands on - and a floor cannot be two - beside the river
+  // switch, which only painted. LANDFORM3 (2026-10-06, Mac: "Yes rivers
+  // should be online") cut the painted rivers into the land, so they
+  // are floor too; the roads that are only DRAWN - on the travel map's
+  // page - are the contrast now.
   assert.equal(onlineForcedModSetting('roads-hazelnut', 'SmoothRoads', '?online=1'), true,
     '...and the switch that moves the TERRAIN HEIGHTS is the room\'s');
-  assert.equal(onlineForcedModSetting('roads-hazelnut', 'RiversAndStreams', '?online=1'), undefined,
-    '...while the one beside it that only paints tiles is not');
+  assert.equal(onlineForcedModSetting('roads-hazelnut', 'RiversAndStreams', '?online=1'), true,
+    '...and so is the one beside it, now that a painted river is cut into the land');
+  assert.equal(onlineModSetting('immersive-travel', 'General.DrawRoads', '?online=1'), undefined,
+    '...while the roads a map only draws on its page are the player\'s');
   assert.equal(onlineForcedPref('enhancedAI', '?online=1'), true);
   assert.equal(onlineForcedPref('enhancedAI', ''), undefined);
   assert.equal(onlineForcedPref('grassDensity', '?online=1'), undefined);

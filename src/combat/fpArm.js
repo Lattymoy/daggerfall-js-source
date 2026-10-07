@@ -67,6 +67,7 @@ import {
   movementAnimState, composeMovementGroup, MOVEMENT_FALLBACK_SPEED, MOVEMENT_SPEED_CAP, turnAnimSpeed,
   jumpAnimState,
   sourcesKeyTime, sourceVelocityOf,
+  magicEffectRecords, vfxStaticRecords,   // MW-SPELLFX1: the magic effects and the statics their visuals are
 } from '../formats/mwFirstPerson.js';
 import { PART_BONES, dfRaceKeyOf } from '../formats/mwNpc.js';
 import { portraitFeatures, headFeatures, hairFeatures, matchFace, FACE_MATCH_VERSION } from '../formats/mwFaceMatch.js';
@@ -93,6 +94,10 @@ import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry in
 import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperCorners, normaliseHeldPose, HELD_POSE_DEFAULT } from './heldPose.js';
 import { farthestVertexIndex, posedVertex, viewOffsetOf, worldPointOf } from './rigMuzzle.js';   // AUDIT FIELD-GUN-MW F2: where the barrel ends, off the posed piece
 import { createLanternSwing, stepLanternSwing, lanternSwingMatrix } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law both bodies feed
+import { vfxOf, createVfx, vfxCapacity, vfxTextures } from '../formats/mwVfx.js';   // MW-SPELLFX1: an effect mesh, running
+import { spellFxPlan } from '../formats/mwSpellFx.js';   // MW-SPELLFX1: which visuals a spell wears
+import { effectSchool } from '../systems/spellcost.js';   // MW-SPELLFX1: a family the mapping does not name is drawn as its school
+import { createVfxGpu } from '../render/vfxGpu.js';   // MW-SPELLFX1: an effect's streams on the GPU
 
 // MW-LOAD (2026-09-08, Mac: "improve the load time when Morrowind assets
 // are enabled"): THE ARCHIVE IS OPENED, NOT READ, AND THIS FILE IS ITS
@@ -393,6 +398,19 @@ export function clipCompletion(state) {
   const span = state.stopTime - state.startTime;
   if (span > 0) return (state.time - state.startTime) / span;
   return state.playing ? 0 : 1;
+}
+
+/** MW-PACE1: the fastest and the slowest a paced attack section runs (file seconds a second), and the least time
+ *  left a section is fitted into - a blow already late finishes as fast as the cap lets it, never in one frame. */
+export const BLOW_RATE_MAX = 12;
+export const BLOW_RATE_MIN = 0.1;
+export const BLOW_LEFT_MIN = 1 / 60;
+
+/** MW-PACE1: a section's rate - its file span over the seconds left to it, held to the bounds. A span that is no
+ *  span plays at 1 (it has nothing to fit). */
+export function blowRate(span, left) {
+  if (!(span > 0)) return 1;
+  return Math.min(BLOW_RATE_MAX, Math.max(BLOW_RATE_MIN, span / Math.max(left, BLOW_LEFT_MIN)));
 }
 
 /**
@@ -949,6 +967,8 @@ export function armRecordsOf(records, kind) {
     case 'clothes': return records.clothes;
     case 'weapons': return records.weapons;
     case 'lights': return records.lights;   // MW-D51
+    case 'magicEffects': return records.magicEffects ?? [];   // MW-SPELLFX1
+    case 'statics': return records.statics ?? [];   // MW-SPELLFX1
     case 'gmst-sneak': return { v: Object.hasOwn(records.gmst, GMST_SNEAK_DELTA) ? records.gmst[GMST_SNEAK_DELTA] : null };
     default: throw new Error(`fpArm: no derived answer for walk kind "${kind}" (MW-LOAD)`);
   }
@@ -1669,6 +1689,7 @@ export function ownBodyPart(add, rows, find, solveOn = null) {
   return {
     skinFrom: read(p.skinFrom), fitTo: add.fitTo ?? null,
     ...(add.fit ? { fit: add.fit, fitFrom: read(p.fitFrom) } : {}),
+    ...(add.solvePose ? { solvePose: add.solvePose } : {}),   // MW-STEEL2: the pose it is solved in - the body's bind, for the plate
     ...(solveOn ? { solveOn } : {}),
   };
 }
@@ -2020,6 +2041,13 @@ export async function buildFpArm({
     // MW-D51: THE LIGHT RECORDS, the same walk - a lit torch's mesh is
     // named by a LIGH record the way a blade's is by a WEAP.
     const allLights = esmBytes.flatMap((e) => walk(e, 'lights', lightRecords));
+    // MW-SPELLFX1: THE MAGIC EFFECTS AND THE STATICS THEIR VISUALS ARE, the same walk - a later master's record of an
+    // index or an id replaces an earlier one's, which is the load order
+    const magic = { effects: new Map(), statics: new Map() };
+    for (const e of esmBytes) {
+      for (const m of walk(e, 'magicEffects', magicEffectRecords)) magic.effects.set(m.index, m);
+      for (const st of walk(e, 'statics', vfxStaticRecords)) magic.statics.set(st.id, st.model);
+    }
     // RULE 32(a)'s GMST, read from the player's own data. Later masters
     // override earlier ones, so the LAST .esm that carries it wins -
     // which is the load order, not a preference.
@@ -2155,8 +2183,9 @@ export async function buildFpArm({
     // firstPersonPartGroup). A human's worn adds keep the arm-bone filter (fpWornAdds).
     const fpAdds = werewolf ? firstPersonPartGroup(robe, parts, female).adds : fpWornAdds(worn.adds);
     // MW-STEEL1: A WORN MODEL OF THE PORT'S OWN IN FIRST PERSON (the steel gauntlets) is skinned from the THIRD-person
-    // body and solved on the third-person skeleton - the T-pose Mac's scene stands in, measured by the same fit - and
-    // worn on this rig by its bones' names (mwFirstPerson.js bindSkinnedFromBody `solveOn`). The first person's own
+    // body and solved on the third-person skeleton - in its skins' bind, the T-pose Mac's scene stands in (MW-STEEL2:
+    // not the skeleton file's rest, which hangs the arms), measured by the same fit - and worn on this rig by its
+    // bones' names (mwFirstPerson.js bindSkinnedFromBody `solveOn`). The first person's own
     // rest is not that pose, and its hand is a different mesh; the bones are the same bones.
     const ownFp = fpAdds.filter((a) => a.skinFrom);
     const tpRows = ownFp.length ? playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch }) : [];
@@ -2245,6 +2274,7 @@ export async function buildFpArm({
     // archives and records this build used, kept on the result so an
     // icon never re-walks an esm.
     const catalog = { archives, parts, armors, clothes, weapons: allWeapons, gen };
+    catalog.magic = magic;   // MW-SPELLFX1: and the magic the world's spell effects draw with
     // MW-D24: the THIRD-PERSON BODY, while the same archives are open.
     // Its refusal is a note on the card, never the arm's refusal.
     const third = arm.ok
@@ -2686,11 +2716,70 @@ export function stepRigEffects(assembly, { dt, clock = null, hidden = () => fals
   return live;
 }
 
+/** MW-SPELLFX1: A VISUAL'S MESH PATH, off the catalog: a STAT the masters name, or a WEAP - the reference makes a bolt
+ *  out of whatever record its id names (projectilemanager.cpp launchMagicBolt). Null for an id nothing names. */
+const CATALOG_WEAPONS = new WeakMap();
+export function mwVisualModel(cat, id) {
+  const key = String(id || '').toLowerCase();
+  if (!cat || !key) return null;
+  const st = cat.magic?.statics?.get(key);
+  if (st) return `meshes/${st}`;
+  let w = CATALOG_WEAPONS.get(cat);
+  if (!w) { w = new Map((cat.weapons ?? []).map((r) => [r.id, r.model])); CATALOG_WEAPONS.set(cat, w); }
+  return w.has(key) ? `meshes/${w.get(key)}` : null;
+}
+
+/** MW-SPELLFX1: A SPELL'S PLAN off the catalog (formats/mwSpellFx.js spellFxPlan), its families read by their own
+ *  Daggerfall school. Null without the magic records. */
+export function mwSpellPlan(cat, spell) {
+  if (!cat?.magic?.effects?.size) return null;
+  return spellFxPlan(spell, cat.magic.effects, (id) => mwVisualModel(cat, id), { schoolOf: effectSchool });
+}
+
+/** MW-SPELLFX1: AN EFFECT MESH OUT OF THE ARM'S OWN ARCHIVES - read through the build's catalog, the bytes through
+ *  loadFromArchives, the effect through formats/mwVfx.js. Memoised per data generation and path; a read that did not
+ *  land (a lazy archive that never got the bytes) is not the generation's answer and is asked again next time. */
+const EFFECT_MESH_CACHE = new Map();
+export function loadMwEffectMesh(cat, path) {
+  if (!cat || !path) return Promise.resolve(null);
+  const key = `${cat.gen}:${path}`;
+  const hit = EFFECT_MESH_CACHE.get(key);
+  if (hit) return hit;
+  const job = (async () => {
+    await loadFromArchives(cat.archives, [path]);
+    const arc = (cat.archives ?? []).find((a) => a.has(path));
+    if (!arc || (typeof arc.loaded === 'function' && !arc.loaded(path))) return null;
+    try { return vfxOf(parseNif(arc.get(path).slice())); } catch { return null; }
+  })();
+  if (cat.gen !== null && cat.gen !== undefined) {
+    EFFECT_MESH_CACHE.set(key, job);
+    job.then((d) => { if (!d) EFFECT_MESH_CACHE.delete(key); });
+  }
+  return job;
+}
+
+/** MW-SPELLFX1: an effect's textures - the mesh's own and the particle texture it may wear - through the arm's two
+ *  texture doors: preloadArmTextures (rule 36's ladder, decoded off the thread) and collectArmTextures (the warning
+ *  image a texture the archives lack draws as). A Map from file to entry. */
+export async function loadMwEffectTextures(cat, files) {
+  const pieces = [...new Set((files ?? []).filter(Boolean))].map((f) => ({ material: { textureFile: f } }));
+  if (!cat || !pieces.length) return new Map();
+  await preloadArmTextures(pieces, cat.archives, cat.gen);
+  return collectArmTextures(pieces, cat.archives, cat.gen);
+}
+
+/** MW-SPELLFX1: VFX_Hands' two bones (character.cpp :1606-1612). */
+export const VFX_HAND_BONES = Object.freeze(['bip01 l hand', 'bip01 r hand']);
+
 export function createFpArm() {
   let renderer = null;
   let camera = null;
   let built = null;
   const listeners = new Set();   // MW-D36
+  // MW-SPELLFX1: THE CASTING HANDS' GLOW - VFX_Hands on both hands, one running effect per hand, each on the view it
+  // was cast in (`first` the arm, `third` the body) and the mesh it hangs on
+  const castFx = [];
+  let castFxGen = 0;   // bumped by a teardown: a glow still loading lands dead
   let pendingWorn = null;        // PX25: the worn table that arrived mid-build
   let pendingWerewolf = null;    // WEREWOLF1: the form that arrived mid-build
   let pendingWeapon = null;      // PX26: the hand that arrived mid-build
@@ -2765,6 +2854,8 @@ export function createFpArm() {
   let turnDir = 0;
   let upper = UPPER_BODY.None;
   let spellReady = false;        // MW-D39: a spell is readied (the stance)
+  let unreadyAfterCast = false;  // MW-CAST1: the spell went (its ready cleared) mid-cast - the stance drops when the cast ends
+  let castReleased = false;      // MW-CAST1: the cast crossed its "<type> release" - consumed by takeCastRelease
   // MW-D51: THE HELD TORCH. `torchLit` is the game's word (a lit
   // Daggerfall torch in PlayerEntity.LightSource, handed over per frame
   // by weaponRig's setTorch); the state/source/group triple is the
@@ -2879,6 +2970,10 @@ export function createFpArm() {
   let shootReleased = false;
   let holdWindUp = false;
   let resetIdleOnAttackEnd = false;
+  // MW-PACE1: the blow the classic machine is striking - its schedule (characters/weaponStates.js blowSchedule:
+  // `hitAt` and `seconds` from its first frame), how far into it the arm is (`clock`), and the playing section's
+  // `rate`. Null while the arm keeps the record's own pace (a bow, a peer with no schedule, a viewer).
+  let blowPlan = null;
   // mAimingFactor (npcanimation.cpp:712-719). It is STATE, not a
   // per-frame function: it snaps to 1 while aiming and ramps back down
   // at 0.5 a second, so it has to survive between frames.
@@ -2957,6 +3052,7 @@ export function createFpArm() {
   const ready = () => !!(built && built.ok && (actionState || movementState || jumpState || idleState) && renderer);
 
   function releaseGpu(m) {
+    releaseCastFx((c) => c.mesh === m);   // MW-SPELLFX1: the glow on this mesh lets go of its own textures first
     if (m && renderer && renderer.gl) {
       const gl = renderer.gl;
       gl.deleteVertexArray(m.vao);
@@ -2973,6 +3069,64 @@ export function createFpArm() {
     }
   }
   function releaseMesh() { releaseGpu(mesh); mesh = null; }
+
+  /** MW-SPELLFX1: release the glows `which` picks (all of them by default), GPU and all. */
+  function releaseCastFx(which = () => true) {
+    for (let i = castFx.length - 1; i >= 0; i--) {
+      const c = castFx[i];
+      if (!which(c)) continue;
+      c.gpu?.release();
+      castFx.splice(i, 1);
+    }
+  }
+
+  /** MW-SPELLFX1: VFX_HANDS AT THE CAST'S START (character.cpp :1593-1613) - on both hands of the body the player is
+   *  looking through, wearing the spell's LAST effect's particle texture. The mesh and its textures load through the
+   *  catalog's doors; a glow that lands after the arm was torn down, or with the Morrowind spell effects switched off,
+   *  is dropped. A spell this arm cannot plan (no magic records, no VFX_Hands) glows nothing. */
+  function spawnCastHands(spell) {
+    if (!spell || getPref('mwSpellEffects') === false) return;
+    const cat = built && built.ok ? built.catalog : null;
+    const plan = mwSpellPlan(cat, spell);
+    if (!plan?.hands) return;
+    const gen = castFxGen;
+    const view = viewMode === 'third' && thirdBuilt && thirdBuilt.ok ? 'third' : 'first';
+    (async () => {
+      const desc = await loadMwEffectMesh(cat, plan.hands.model);
+      if (!desc) return;
+      const textures = await loadMwEffectTextures(cat, [...vfxTextures(desc), plan.hands.texture]);
+      if (gen !== castFxGen || !built || built.catalog !== cat) return;
+      for (const bone of VFX_HAND_BONES) {
+        castFx.push({ view, bone, fx: createVfx(desc, { textureOverride: plan.hands.texture }), textures, capacity: vfxCapacity(desc), gpu: null, mesh: null });
+      }
+    })().catch(() => { /* a glow never costs the cast */ });
+  }
+
+  /** MW-SPELLFX1: one frame of the glows on `view`'s rig - each placed on its hand (the bone's own frame in the rig,
+   *  which is the "world" its sparks are kept in, as the torch's are), packed, and hung on the mesh's effects AFTER the
+   *  parts' own, which keep their slots (stepRigEffects indexes them). A glow whose hand the rig lacks, whose mesh
+   *  changed, or whose clock ran out is released. */
+  function stepCastFx(view, assembly, target, dt) {
+    if (!castFx.length || !target) return;
+    let changed = false;
+    for (let i = castFx.length - 1; i >= 0; i--) {
+      const c = castFx[i];
+      if (c.view !== view) continue;
+      const ref = assembly?.skeleton?.byName.get(c.bone);
+      const bone = ref !== undefined ? assembly.mats?.get(ref) : null;
+      if ((c.mesh && c.mesh !== target) || !bone) { c.gpu?.release(); castFx.splice(i, 1); changed = true; continue; }
+      const r = c.fx.update(dt, { place: bone });
+      if (r.done) { c.gpu?.release(); castFx.splice(i, 1); changed = true; continue; }
+      if (!renderer) continue;
+      if (!c.gpu) { c.gpu = createVfxGpu(renderer, c.textures, c.capacity); c.mesh = target; changed = true; }
+      c.gpu.sync(r.streams);
+    }
+    const own = (assembly?.effects ?? []).length;
+    const mine = castFx.filter((c) => c.view === view && c.mesh === target && c.gpu).flatMap((c) => c.gpu.effects());
+    if (!changed && (target.effects?.length ?? 0) === own + mine.length) return;
+    const head = Array.from({ length: own }, (_, i) => target.effects?.[i] ?? null);   // the parts' slots, filled or not
+    target.effects = [...head, ...mine];
+  }
 
   /** SHADOW-FANG: THE WEREWOLF'S SKIN, applied on the way to the GPU (characters/werewolfSkin.js). The decoded
    *  texture is TEXTURE_CACHE's and shared by every rig on the page - this body's and every peer's - so the skin
@@ -3312,9 +3466,14 @@ export function createFpArm() {
   function effectHidden(eff) {
     if (eff.slot === 'torch') return !torchVisible();
     if (eff.slot === HIP_LIGHT_SLOT) return !hipVisible();   // HT-WAIST
-    if (eff.slot === 'weapon') return !weaponShown;
+    if (eff.slot === 'weapon') return !weaponInHand();
     return false;
   }
+  /** MW-CAST1: THE HANDS CAST EMPTY. OpenMW shows no weapon for the Spell stance - showWeapons is false while the
+   *  weapon type is Spell (character.cpp: the equip of a spell never attaches one; Morrowind-Rules.md [C] "equip
+   *  attach") - so a readied spell, and a cast still in the hands, put the weapon out of them on both rigs. */
+  const spellStance = () => spellReady || upper === UPPER_BODY.Casting;
+  const weaponInHand = () => weaponShown && !spellStance();
   function refreshTorch(force = false) {
     if (!torchVisible()) { torchState = null; torchSource = null; torchGroup = null; return; }
     if (!force && torchState && torchState.playing) return;
@@ -3590,6 +3749,10 @@ export function createFpArm() {
     // Daggerfall's machine that owns damage; what changes is WHEN it is
     // allowed to say so for a bow the arm is animating.
     else if (action === 'shoot release') { arrowShown = false; shootReleased = true; }
+    // MW-CAST1: THE SPELL LEAVES HERE - "<type> release" in the spellcast group, where OpenMW casts it
+    // (character.cpp handleTextKey: `groupname == "spellcast" && action == mAttackType + " release"`). Signalled, as
+    // MW-D42 signals the bow's; Daggerfall's engine still resolves the spell (fpsSpellCasting holds its release for it).
+    else if (upper === UPPER_BODY.Casting && attackType && action === `${attackType} release`) castReleased = true;
   }
 
   /** PREPAREHIT's strength half (character.cpp:1250-1259), which is the
@@ -3612,6 +3775,9 @@ export function createFpArm() {
     const k = attackKeys(attackType, attackStrength, { reversed: attackReversed });
     const startPoint = releaseSkip(rig().keys, weaponGroup, attackType, attackStrength);
     if (!playAction(k.release.start, k.release.stop, startPoint, k.reversed)) beginFollow();
+    // MW-PACE1: the release ENDS on the blow - "<type> hit" - so it is fitted to the machine's hit, from where the
+    // arm is now: a wind-up that ran a frame long is made up here, not carried into the damage.
+    else if (blowPlan) blowPlan.rate = blowRate(actionState.stopTime - actionState.time, blowPlan.hitAt - blowPlan.clock);
   }
 
   /** AttackRelease -> AttackEnd (:1793-1812): the follow-through, whose
@@ -3621,6 +3787,8 @@ export function createFpArm() {
     upper = UPPER_BODY.AttackEnd;
     const k = attackKeys(attackType, attackStrength, { reversed: attackReversed });
     if (!playAction(k.follow.start, k.follow.stop, 0, k.reversed)) endAttack();
+    // MW-PACE1: and the follow-through ends where the machine's blow does, so the next blow finds the arm ready.
+    else if (blowPlan) blowPlan.rate = blowRate(actionState.stopTime - actionState.time, blowPlan.seconds - blowPlan.clock);
   }
 
   /** AttackEnd -> WeaponEquipped (:1821-1856). */
@@ -3630,7 +3798,24 @@ export function createFpArm() {
     reloadCrossbow();
     upper = UPPER_BODY.WeaponEquipped;
     attackType = null;
+    blowPlan = null;
     if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
+  }
+
+  /**
+   * MW-PACE1: A BLOW'S PACE, said ahead. The machine has begun a strike and `blow` says when its hit lands and when
+   * it is done; the wind-up runs at the rate that brings the playhead from "<type> start" through the release to its
+   * "<type> hit" by `hitAt`, and each later section is re-fitted from where the arm stands when it begins (beginRelease,
+   * beginFollow). Null - the record's pace - for a shot (the bow's hit waits for the arm's own "shoot release",
+   * MW-D42), a held wind-up, or a schedule that says nothing.
+   */
+  function blowPace(blow, k) {
+    if (!blow || attackType === MW_SHOOT_ATTACK || holdWindUp) return null;
+    if (!(blow.hitAt > 0) || !(blow.seconds >= blow.hitAt) || !Number.isFinite(blow.seconds)) return null;
+    const span = (a, b) => { const t0 = keyTime(a); const t1 = keyTime(b); return t0 >= 0 && t1 > t0 ? t1 - t0 : 0; };
+    const toHit = (actionState ? actionState.stopTime - actionState.startTime : 0) + span(k.release.start, k.release.stop);
+    if (!(toHit > 0)) return null;
+    return { seconds: blow.seconds, hitAt: blow.hitAt, clock: 0, rate: blowRate(toHit, blow.hitAt) };
   }
 
   /** character.cpp:1827-1829 - the end of Equipping, AttackEnd or
@@ -3687,7 +3872,10 @@ export function createFpArm() {
         actionState = null;
         actionSource = null;
         upper = sheathed ? UPPER_BODY.None : UPPER_BODY.WeaponEquipped;
+        attackType = null;
         if (resetIdleOnAttackEnd) { resetIdleOnAttackEnd = false; resetIdle(); }
+        // MW-CAST1: the spell went while the hands still cast - the stance it left drops now, not mid-motion
+        if (unreadyAfterCast) { unreadyAfterCast = false; spellReady = false; refreshWeaponGroup(); resetIdle(); resetMovement(); }
         break;
       default:
         if (actionState) actionState = null;
@@ -3850,6 +4038,7 @@ export function createFpArm() {
       adoptMemoGeneration(memoGenOf);   // AUDIT 68 S08-fparm-gen-cache-leak: a bumped generation's memos go with the rig
       pendingBuild = null; lastBuildOpts = null;
       buildingOpts = null;   // MW-EARLY: the build in flight lands dead, so it stands for nobody - a door after this builds again
+      castFxGen += 1; releaseCastFx();   // MW-SPELLFX1: the casting hands' glow goes with the rig, and one still loading lands dead
       releaseMesh(); built = null; packed = null;
       held = null; heldMemo = null; lastFrame = null; drewLast = false;   // MAP3: the sheet goes with the rig
       releaseThirdMesh(); thirdBuilt = null; thirdPacked = null; viewMode = 'first';
@@ -4222,8 +4411,13 @@ export function createFpArm() {
      * Daggerfall's swing has no charge, so the button is never "still
      * held at max attack".
      */
-    attack(strike, { hold = false } = {}) {
+    attack(strike, { hold = false, blow = null } = {}) {
       if (!built || !built.ok || sheathed) return null;
+      // MW-PACE1: A BLOW IN THE FOLLOW-THROUGH IS CUT FOR THE NEXT. The machine starts a strike only from Idle, so
+      // a strike arriving here is a blow it has already finished; refusing it (the reference's gate, which knows no
+      // second clock) drew one blow in two at a high Speed, the second landing on an arm at rest. The wind-up and the
+      // release are still never cut - the blow they carry has not landed.
+      if (upper === UPPER_BODY.AttackEnd) endAttack();
       if (upper !== UPPER_BODY.WeaponEquipped) return null;
       // MW-D16: the SHOOT test is the weapon CLASS, not a flag the
       // caller passes:
@@ -4272,8 +4466,10 @@ export function createFpArm() {
         upper = UPPER_BODY.WeaponEquipped;
         attackType = null;
         holdWindUp = false;
+        blowPlan = null;
         return null;
       }
+      blowPlan = blowPace(blow, k);
       return type;
     },
 
@@ -4508,12 +4704,17 @@ export function createFpArm() {
       const want = !!ready;
       // WEREWOLF1 (AUDIT E6): "Werewolfs can not cast spells" - MechanicsManager::setWerewolf drops a readied spell
       // (mechanicsmanagerimp.cpp:1888-1890), and the wolf readies none
-      if (!built || !built.ok || spellReady === want || (want && built.werewolf)) return false;
+      if (!built || !built.ok || (want && built.werewolf)) return false;
+      if (want) unreadyAfterCast = false;
+      if (spellReady === want) return false;
+      // MW-CAST1: A CAST IN FLIGHT FINISHES. Daggerfall clears the readied spell AT the release
+      // (EntityEffectManager.PlayerSpellCasting_OnReleaseFrame :2136-2141), so this un-ready arrives mid-cast on every
+      // spell that goes - and the arm used to take it for an abort and drop the cast there, two tenths of a second into
+      // Morrowind's motion. A cast plays to its "<type> stop" in the reference whatever its spell did; the stance it
+      // came from drops when it ends (stepUpper). An abort cannot reach here mid-cast: the cast is not begun until the
+      // click, and from the click Daggerfall's own castInProgress holds the ready to the release.
+      if (!want && upper === UPPER_BODY.Casting) { unreadyAfterCast = true; return false; }
       spellReady = want;
-      // A cast in flight is abandoned by an un-ready (the spell was
-      // aborted): the arm returns to its stance rather than finishing
-      // an animation for a spell that is not going out.
-      if (!want && upper === UPPER_BODY.Casting) { actionState = null; actionSource = null; upper = sheathed ? UPPER_BODY.None : UPPER_BODY.WeaponEquipped; }   // AUDIT WORLD C2: a sheathed caster's stance is None
       refreshWeaponGroup();
       resetIdle();
       resetMovement();
@@ -4555,6 +4756,8 @@ export function createFpArm() {
       if (!spellReady) { spellReady = true; refreshWeaponGroup(); resetIdle(); resetMovement(); }
       const type = spellAttackType(rangeType);
       attackType = type;
+      castReleased = false;   // MW-CAST1: this cast's own release, not a stale one
+      unreadyAfterCast = false;
       attackReversed = false;   // MS1: a cast has no side
       attackStrength = 1;
       resetIdleOnAttackEnd = true;
@@ -4569,6 +4772,31 @@ export function createFpArm() {
       }
       return true;
     },
+
+    /** MW-SPELLFX1: VFX_Hands for the cast that just started - the world's spell effects (scenes/mwMagicFx.js) hand
+     *  the spell over at the cast's own start, which is where the reference adds it (character.cpp :1593-1613). Only
+     *  while a cast is in flight: hands that did not start one do not glow. */
+    castHands(spell) {
+      if (!built || !built.ok || upper !== UPPER_BODY.Casting) return false;
+      spawnCastHands(spell);
+      return true;
+    },
+
+    /** MW-SPELLFX1: the catalog the world's spell effects draw with (scenes/mwMagicFx.js) - the build's archives, its
+     *  decode memo and its magic records - or null for an arm with none. */
+    mwMagicCatalog() { return built && built.ok && built.catalog?.magic?.effects?.size ? built.catalog : null; },
+    /** MW-SPELLFX1: the glows running, for a pin. */
+    castFxCount() { return castFx.length; },
+
+    /** MW-CAST1: has the cast crossed its "<type> release" since last asked? CONSUMING, as takeShootRelease is. */
+    takeCastRelease() {
+      if (!castReleased) return false;
+      castReleased = false;
+      return true;
+    },
+
+    /** MW-CAST1: are the hands still in a cast - the section between "<type> start" and "<type> stop"? */
+    castInFlight() { return !!built && built.ok && upper === UPPER_BODY.Casting; },
 
     /** The held bow comes up. Everything else releases itself. */
     /** MW-D42: has the arm crossed "shoot release" since last asked?
@@ -4635,7 +4863,11 @@ export function createFpArm() {
           || upper === UPPER_BODY.AttackRelease || upper === UPPER_BODY.AttackEnd;
         const weapSpeed = attacking && built.weapon && Number.isFinite(built.weapon.speed)
           ? built.weapon.speed : 1;
-        advanceClip(actionState, (actionSource || rig()).keys, dt * weapSpeed, onActionKey);
+        // MW-PACE1: a blow with a schedule runs on the MACHINE's clock instead - the section's fitted rate, the
+        // blow's own clock advanced beside it (blowPace). The record's pace is the fallback, unchanged.
+        const paced = attacking && blowPlan;
+        if (paced) blowPlan.clock += dt;
+        advanceClip(actionState, (actionSource || rig()).keys, dt * (paced ? blowPlan.rate : weapSpeed), onActionKey);
         stepUpper();
       }
       // MW-D39: jump refreshes BEFORE movement, the reference's own
@@ -4705,13 +4937,14 @@ export function createFpArm() {
           uploadThirdMesh(t);
           // MAC-Q: the body's particle systems, on the clock its parts ride
           stepRigEffects(t.arm, { dt: effectsDt, clock: tOverlay ? overlayClock : poseTime(state), renderer, mesh: thirdMesh, textures: t.textures, hidden: effectHidden });
+          stepCastFx('third', t.arm, thirdMesh, effectsDt);   // MW-SPELLFX1: the casting hands' glow
           frames++;   // the POSED frames - a skipped one is not a frame the skin saw
         }
         if (!thirdMesh) return;   // never posed yet: nothing to hide
         // Rule 57 hides on the SAME flags: sheathed vanilla shows no
         // weapon on the body, and the arrow follows the shoot keys.
         for (const r of thirdMesh.ranges) {
-          if (r.slot === 'weapon') r.hidden = !weaponShown || climbHands;   // CLIMB6: no weapon in hands on the stone
+          if (r.slot === 'weapon') r.hidden = !weaponInHand() || climbHands;   // CLIMB6: no weapon in hands on the stone; MW-CAST1: nor in casting ones
           else if (r.slot === 'arrow') r.hidden = !arrowShown;
           else if (r.slot === 'torch') r.hidden = !torchVisible();   // MW-D51
           else if (r.slot === HIP_LIGHT_SLOT) r.hidden = !hipVisible();   // HT-WAIST: lit, and never the carried-left rule
@@ -4811,6 +5044,7 @@ export function createFpArm() {
       // MAC-Q: the arm's particle systems - the torch's flame - on the
       // same clock the pose took, placed on the rig that was just posed
       stepRigEffects(built.arm, { dt, clock: fOverlay ? overlayClock : poseTime(state), renderer, mesh, textures: built.textures, hidden: effectHidden });
+      stepCastFx('first', built.arm, mesh, dt);   // MW-SPELLFX1: the casting hands' glow
       // NpcAnimation::showWeapons - the reference REMOVES the part
       // (removeIndividualPart(PRT_Weapon), npcanimation.cpp:981) and
       // re-adds it on show. This port keeps the vertices and flips a
@@ -4819,7 +5053,7 @@ export function createFpArm() {
       // change the buffer's length every time you drew or sheathed,
       // orphaning the ranges the textures hang on.
       for (const r of mesh.ranges) {
-        if (r.slot === 'weapon') r.hidden = !weaponShown;
+        if (r.slot === 'weapon') r.hidden = !weaponInHand();   // MW-CAST1: the casting hands are empty
         else if (r.slot === 'arrow') r.hidden = !arrowShown;
         else if (r.slot === 'torch') r.hidden = !torchVisible();   // MW-D51: the same hide-not-remove, on the carried-left rule
         else if (r.slot === 'paper') r.hidden = !held;
@@ -5337,6 +5571,8 @@ export function createFpArm() {
         weapon: built && built.ok ? built.weapon : null,
         spellReady,                       // MW-D39
         casting: upper === UPPER_BODY.Casting,
+        weaponInHand: weaponInHand(),     // MW-CAST1: the casting hands are empty
+        unreadyAfterCast,                 // MW-CAST1: the spell went mid-cast - the stance drops at the cast's end
         raceScale: built && built.ok ? built.raceScale : null,
         worn: built && built.ok ? built.worn : null,
         face: built && built.ok ? built.face : null,
@@ -5354,6 +5590,7 @@ export function createFpArm() {
         aimFactor,
         attackType,
         attackReversed: reversedNow(),   // MS1: the backhand in flight
+        blow: blowPlan ? { ...blowPlan } : null,   // MW-PACE1: the machine's blow this one is paced to, and how far in
         sheathed,
         sneaking,
         sneakDelta: built && built.ok ? built.sneakDelta : null,

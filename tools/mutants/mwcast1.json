@@ -1,0 +1,85 @@
+[
+  {
+    "name": "MWCAST1-no-release-key",
+    "file": "src/combat/fpArm.js",
+    "old": "    else if (upper === UPPER_BODY.Casting && attackType && action === `${attackType} release`) castReleased = true;",
+    "new": "    else if (upper === UPPER_BODY.Casting && attackType && action === `${attackType} stop`) castReleased = true;",
+    "tests": [
+      "test/mwcast1.test.js"
+    ]
+  },
+  {
+    "name": "MWCAST1-the-unready-aborts-the-cast",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (!want && upper === UPPER_BODY.Casting) { unreadyAfterCast = true; return false; }",
+    "new": "      if (false) { unreadyAfterCast = true; return false; }",
+    "tests": [
+      "test/mwcast1.test.js"
+    ]
+  },
+  {
+    "name": "MWCAST1-the-stance-outlives-the-cast",
+    "file": "src/combat/fpArm.js",
+    "old": "        if (unreadyAfterCast) { unreadyAfterCast = false; spellReady = false; refreshWeaponGroup(); resetIdle(); resetMovement(); }",
+    "new": "        if (unreadyAfterCast) { unreadyAfterCast = false; }",
+    "tests": [
+      "test/mwcast1.test.js"
+    ]
+  },
+  {
+    "name": "MWCAST1-the-weapon-in-the-casting-hand",
+    "file": "src/combat/fpArm.js",
+    "old": "  const spellStance = () => spellReady || upper === UPPER_BODY.Casting;",
+    "new": "  const spellStance = () => spellReady;",
+    "tests": [
+      "test/mwcast1.test.js"
+    ],
+    "equivalent": true,
+    "why": "Belt and braces: castSpell latches spellReady before the cast plays and readySpell(false) defers while the hands cast (unreadyAfterCast), so no path reaches Casting with spellReady false today. The leg says what OpenMW's showWeapons says - the spell stance, the cast included - and keeps saying it if either latch ever changes."
+  },
+  {
+    "name": "MWCAST1-the-release-not-consumed",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (!castReleased) return false;\n      castReleased = false;\n      return true;",
+    "new": "      return castReleased;",
+    "tests": [
+      "test/mwcast1.test.js"
+    ]
+  },
+  {
+    "name": "MWCAST1-held-for-ever",
+    "file": "src/combat/fpsSpellCasting.js",
+    "old": "      if (this._hold() || this._heldAge >= HELD_RELEASE_MAX_S) { this._hold = null; released = true; this._raiseRelease(); }",
+    "new": "      if (this._hold()) { this._hold = null; released = true; this._raiseRelease(); }",
+    "tests": [
+      "test/mwcast1.test.js"
+    ]
+  },
+  {
+    "name": "MWCAST1-frame-five-goes-anyway",
+    "file": "src/combat/fpsSpellCasting.js",
+    "old": "      if (this.currentFrame === RELEASE_FRAME && !this._hold) { released = true; this._raiseRelease(); }",
+    "new": "      if (this.currentFrame === RELEASE_FRAME) { released = true; this._raiseRelease(); }",
+    "tests": [
+      "test/mwcast1.test.js"
+    ]
+  },
+  {
+    "name": "MWCAST1-the-rig-never-holds",
+    "file": "src/combat/weaponRig.js",
+    "old": "      return fpsSpellCasting.playOneShot(element, onRelease, armCasts ? { hold: () => fpArm.takeCastRelease() || !fpArm.castInFlight() } : {});",
+    "new": "      return fpsSpellCasting.playOneShot(element, onRelease, {});",
+    "tests": [
+      "test/mwcast1.test.js"
+    ]
+  },
+  {
+    "name": "MWCAST1-the-casting-arm-hidden",
+    "file": "src/combat/weaponRig.js",
+    "old": "      if (paralyzed || (!shown() && !torchOnly && !sheetOnly && !shieldRect && !gunSliding && !armCasts)) return;",
+    "new": "      if (paralyzed || (!shown() && !torchOnly && !sheetOnly && !shieldRect && !gunSliding)) return;",
+    "tests": [
+      "test/mwcast1.test.js"
+    ]
+  }
+]

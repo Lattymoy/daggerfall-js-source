@@ -829,6 +829,15 @@ export function realForestsOn(search) {
   const row = onlineForcedPref('realForests', search) ?? getPref('realForests');
   return !!row && (isOnlinePage(search) || isEnhanced(search));
 }
+/** LANDFORM1-3: THE LANDFORMS' SWITCH - the Features row (`landforms`) on the enhanced skin, and on for everyone online
+ *  whatever their skin: it is the ground itself, and a room agrees on its ground (realForestsOn's shape). `?landforms=off`
+ *  the kill door, offline. The world host reads it once, at its mount (a flip reaches the next world). Off - and on the
+ *  classic skin - the kernel is DFU's to the bit. */
+export function landformsOn(search) {
+  if (pageParam('landforms', search) === 'off' && !isOnlinePage(search)) return false;
+  const row = onlineForcedPref('landforms', search) ?? getPref('landforms');
+  return !!row && (isOnlinePage(search) || isEnhanced(search));
+}
 
 /** VERGE1: THE CLEAR ROADSIDES' SWITCH - the Features row (`roadVerges`) on the enhanced skin, and on for everyone
  *  online whatever their skin: where the wild's flats stand is the room's ground (realForestsOn's shape). `?verges=off`

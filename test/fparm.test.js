@@ -3025,8 +3025,9 @@ test('MW-D39: readySpell and castSpell are the two doors, and neither gates the 
   assert.equal((src.match(/animWeaponType\(built\.mwType, sheathed, spellReady\)/g) || []).length, 5,
     'idle, movement (x2), the weapon group and the torch\'s carried-left rule (MW-D51) must all read the spell stance');
   assert.match(src, /readySpell\(ready\) \{[\s\S]*?refreshWeaponGroup\(\);\n      resetIdle\(\);\n      resetMovement\(\);/);
-  // a cast in flight is abandoned by an un-ready (an aborted spell)
-  assert.match(src, /if \(!want && upper === UPPER_BODY\.Casting\)/);
+  // PIN MOVED (MW-CAST1): an un-ready mid-cast is the spell GOING - Daggerfall clears the ready at its release - so
+  // the cast finishes and the stance drops at its end (it used to be taken for an abort and dropped mid-motion)
+  assert.match(src, /if \(!want && upper === UPPER_BODY\.Casting\) \{ unreadyAfterCast = true; return false; \}/);
   // the cast plays the group's own section and lands back in the stance
   assert.match(src, /if \(!playAction\(`\$\{type\} start`, `\$\{type\} stop`, 0\)\)/);
   assert.match(src, /case UPPER_BODY\.Casting:\n\s+\/\/ MW-D39[\s\S]*?upper = UPPER_BODY\.WeaponEquipped;/);
@@ -3056,7 +3057,9 @@ test('MW-D39: the hosts wire it through the rig\u2019s one door, on the referenc
   // ROAD-E6 moved the moment: the door is CastReadySpell's PlayOneShot
   // (:430-435), it takes the release handler the engine parks its
   // resolution on, and it ANSWERS - false when PlayOneShot refused.
-  assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\n\s+cast\.n = \(cast\.n \+ 1\) & 0xffff; cast\.rangeType = rangeType \| 0;[^\n]*\n\s+(?:eotbBody\.cast\(\);[^\n]*\n\s+)?fpArm\.castSpell\(rangeType\);\n\s+return fpsSpellCasting\.playOneShot\(element, onRelease\);/,
+  // PIN MOVED (MW-CAST1): the door now asks whether the Morrowind arm on screen took the cast, and if it did the release
+  // waits for its "<type> release" (fpsSpellCasting's hold) - still ONE door, the range, the element and the release
+  assert.match(rig, /castSpellAnim: \(rangeType, element, onRelease = null\) => \{\n\s+cast\.n = \(cast\.n \+ 1\) & 0xffff; cast\.rangeType = rangeType \| 0;[^\n]*\n\s+(?:eotbBody\.cast\(\);[^\n]*\n\s+)?const armCasts = fpArm\.castSpell\(rangeType\) && \(fpArm\.active\(\) \|\| fpArm\.thirdActive\(\)\);\n(?:\s*\/\/[^\n]*\n)*\s+return fpsSpellCasting\.playOneShot\(element, onRelease, armCasts \? \{ hold: \(\) => fpArm\.takeCastRelease\(\) \|\| !fpArm\.castInFlight\(\) \} : \{\}\);/,
     'the cast must have one door, and it carries the range, the element and the release');
   for (const host of ['src/scenes/dungeonContext.js', 'src/scenes/world.js']) {
     const h = readFileSync(host, 'utf8');
@@ -3064,7 +3067,8 @@ test('MW-D39: the hosts wire it through the rig\u2019s one door, on the referenc
     // it hangs off the CAST moment - which since ROAD-E6 is the
     // startCastAnim dep (the spend), not onCastReadySpell (the release
     // the engine now parks on the animation's fifth frame).
-    assert.match(h, /startCastAnim: \(sp, onRelease\) => !?!?weaponRig\??\.?castSpellAnim\??\.?\(sp\?\.rangeType, sp\?\.element, onRelease\)/,
+    // MW-CAST1: world.js asks the LIVE rig (the interior's indoors), so its count reaches the pose
+    assert.match(h, /startCastAnim: \(sp, onRelease\) => !?!?(?:\(modes\?\.liveArm\?\.\(\)\?\.rig \?\? weaponRig\)|weaponRig)\??\.?castSpellAnim\??\.?\(sp\?\.rangeType, sp\?\.element, onRelease\)/,
       `${host} does not hand the cast its range and its release`);
     assert.ok(!/castSpellAnim/.test(h.slice(h.indexOf('onNewReadySpell'), h.indexOf('startCastAnim'))),
       `${host} casts on the READY moment - the spell has not gone yet`);

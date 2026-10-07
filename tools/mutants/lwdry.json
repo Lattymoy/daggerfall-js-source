@@ -213,8 +213,8 @@
   {
     "name": "LW-DRY-nature-own-product",
     "file": "src/world/terrainNature.js",
-    "old": "      const height = sampleHeight(heightmapData[hy + hx * hDim]);",
-    "new": "      const height = Math.fround(heightmapData[hy + hx * hDim] * MAX_TERRAIN_HEIGHT);",
+    "old": "      const height = sampleHeight((opts.beach ?? heightmapData)[hy + hx * hDim]);",
+    "new": "      const height = Math.fround((opts.beach ?? heightmapData)[hy + hx * hDim] * MAX_TERRAIN_HEIGHT);",
     "tests": [
       "test/terrain.test.js"
     ],
