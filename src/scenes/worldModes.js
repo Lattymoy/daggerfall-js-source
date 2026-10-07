@@ -102,7 +102,7 @@ import { immersiveFootsteps } from '../systems/immersiveFootsteps.js';
 import { betterAmbience, classicFootstepAllowed } from '../systems/betterAmbience.js';   // BA1: Better Ambience - the shake, the dungeon's fog and light, the reverb, the indoor rain, its own stride   // IF1: Immersive Footsteps owns the stride and the three landing sounds once its clips are in (DisableVanillaFootsteps)
 import { applyFog, DUNGEON_FOG } from '../render/underwaterFog.js';
 import { gateArenaLocation, gateArenaBlocks, isGateArena, buildCourtModel, buildWalkSlabModel, walkSlabs, slabMatrix, courtFloorTris, courtLightsNear, withCourtLights, courtExitDoor, courtDoorAabb, COURT_ARCHIVE, COURT_FOG, COURT_TEXT } from '../world/gateArena.js';   // WB3b: the Burning Court - a level made in code on this host's dungeon arm
-import { isSdRealm, sdRealmLocation, sdRealmBlocks, buildRealmModel, realmFloorTris, realmLightsNear, realmLighting, SD_REALM_ARCHIVE, SD_REALM_FOG } from '../world/sdRealm.js';   // SD5a: the Shattered Hour, a made level as the court is
+import { isSdRealm, sdRealmLocation, sdRealmBlocks, buildRealmModel, realmColliderTris, realmLightsNear, realmLighting, SD_REALM_ARCHIVE, SD_REALM_FOG } from '../world/sdRealm.js';   // SD5a: the Shattered Hour, a made level as the court is
 import { realmArt } from '../world/sdRealmArt.js';   // SD5a: its art, made in code
 import { sdRoomKey } from '../net/sdLaw.js';   // SD5a: its room, the relay's realm
 import { isBound } from '../systems/itemBound.js';   // AUDIT SS: the keyed shelf sells no bound piece
@@ -7940,7 +7940,7 @@ export function createWorldModes(host) {
       } catch (e) { console.warn('[sd] the Hour would not build', e?.message ?? e); _realmMesh = null; }
     }
     if (_realmMesh) ctx.dynamicDraws.push({ gpu: _realmMesh, object: { matrix: identity() } });
-    const tris = realmFloorTris();
+    const tris = realmColliderTris();   // SD8c: the floors and the arena's pillars
     const n = tris.length / 3;
     const idx = n > 65535 ? new Uint32Array(n) : new Uint16Array(n);
     for (let i = 0; i < n; i++) idx[i] = i;
@@ -8147,6 +8147,9 @@ export function createWorldModes(host) {
           sdTurn: (i, a) => host.sdTurn?.(i, a) ?? false,   // SD6c: a turn of the Orrery's stones - sent by the outer host (scenes/world.js), judged by the realm
           sdHallWord: () => host.sdHallWord?.() ?? null,   // SD6c: the realm's latest word on the Orrery's hall
           sdClock: () => host.deadlandsSeconds?.() ?? performance.now() / 1000,   // SD7b: the realm's anchored clock, the Unmoored Steps' (the sky's own)
+          sdFight: () => host.sdFight?.() ?? null,   // SD8c: the Last Moment's fight as the page holds it (net/sdFightLink.js) - the outer host's
+          sdFightIn: () => !!host.sdFightIn?.(),   // SD8c: my `in`, down my socket in the realm
+          sdBlow: (k, f) => !!host.sdBlow?.(k, f),   // SD8c: a blow of mine on the Remnant, an Echo or a Heart, out to the realm
           sdWayBack: () => host.sdWayBack?.(),   // SD5a: the Shattered Hour's way back through its Rift - the outer host's (scenes/world.js)   // SD4b: the outer host's word on a Super dungeon's Rift and Return - off the hub's record, its realm's door
           timers: (o) => host.timers?.(o) ?? null,   // TIMERS1: the dungeon's pause face reads the world host's source
           // CASTLE1: the world host's load, for a save the dungeon's own

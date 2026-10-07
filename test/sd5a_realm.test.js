@@ -278,7 +278,7 @@ test('SD5a the world host by source: the Rift\'s door; the doors out of the Hour
   assert.match(w, /if \(!player\.arena && modes\?\.sdRealmSlot\?\.\(\) != null\) player\.arena = sdConcordHere\(\) \? _realmArenaBridged : _realmArena;/);   // SD6c (PIN MOVED): the Concord's bridge among its floors
   assert.match(w, /inside: \(loc\) => \(modes\?\.mode \?\? 'exterior'\) === 'dungeon' && \(modes\?\.dungeonLocation\?\.sdSlot === loc\?\.sdSlot \|\| modes\?\.dungeonLocation\?\.sdRealm === loc\?\.sdSlot\),/);
   // a room that will not have me: out before the Hollow's door with the relay's own words, once
-  assert.match(w, /const sdFrame = \(\) => \{ try \{ sdHost\?\.frame\(\); \} catch \(e\) \{[^\n]*\} sdRealmFrame\(\); \};/);
+  assert.match(w, /const sdFrame = \(\) => \{ try \{ sdHost\?\.frame\(\); \} catch \(e\) \{[^\n]*\} sdRealmFrame\(\); sdFightFrame\(\); \};/);   // PIN MOVED (SD8c): the Remnant's fight after the realm's
   assert.match(w, /if \(_sdOut \|\| !online\?\.terminal \|\| !\(playerEntity\.health > 0\) \|\| modes\?\.deathUp\?\.\(\)\) return;\n\s+_sdOut = true;\n\s+gateVeil\?\.flash\(\);\n\s+if \(modes\?\.unstuck\?\.\(\)\) setMidScreenText\(\/\^The Hour \/\.test\(online\.error \?\? ''\) \? online\.error : SD_REALM_TEXT\.lost\);/);
   assert.match(read('src/world/dungeonLabel.js'), /export const madeDungeon = \(loc\) => isGateArena\(loc\) \|\| isArenaFloor\(loc\) \|\| isArenaUndercroft\(loc\) \|\| isSdRealm\(loc\);/);
   assert.match(read('bible/11-Multiplayer/Super-Dungeons.md'), /### SD5a - shipped 2026-10-07/);

@@ -12,9 +12,9 @@
 //     start marker, on the Threshold - no model, no door, no foe marker, no water.
 //   - THE HOUR ITSELF (`buildRealmModel`): its floors - the Threshold, the walk, the Orrery's hall and its dial, the Last
 //     Moment's arena and its four pillars - each an island hanging in the void on a root of dark stone; the port's own
-//     geometry and art (pseudo-archive SD_REALM_ARCHIVE, `realmArt`), its floors to the collider (`realmFloorTris`), its
-//     lamps to the light list (`realmLights`), its edges to the motor (`realmClamp`). Its sky is no mesh:
-//     render/sdSky.js paints it.
+//     geometry and art (pseudo-archive SD_REALM_ARCHIVE, `realmArt`), its floors to the collider (`realmFloorTris`; SD8c:
+//     its pillars too, `realmPillarTris` - `realmColliderTris` the two), its lamps to the light list (`realmLights`), its
+//     edges to the motor (`realmClamp`). Its sky is no mesh: render/sdSky.js paints it.
 //
 // THE FRAME is net/sdBrain.js's (SD_REALM_ORIGIN and the stages): metres, the dungeon's own, every floor's top at y 0,
 // laid along +z. The players arrive on the Threshold facing +z - the Orrery ahead, the Rift home at their backs.
@@ -172,18 +172,26 @@ export function buildRealmModel() {
   realmIsland(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_DIAL_RECORD, { lean: -3, uvOf: (x, z) => [0.5 + (x - SD_ORRERY.x) / (2 * R), 0.5 + (z - SD_ORRERY.z) / (2 * R)] });
   // the Last Moment: the arena, and its four pillars on the diagonals
   realmIsland(f, SD_ARENA.x, SD_ARENA.z, SD_ARENA.r, SD_REALM_ARENA_RECORD, { lean: 4 });
-  for (let k = 0; k < 4; k++) {
-    const a = Math.PI / 4 + (k * Math.PI) / 2;
-    const px = SD_ARENA.x + Math.cos(a) * SD_PILLAR_R, pz = SD_ARENA.z + Math.sin(a) * SD_PILLAR_R, w = SD_PILLAR_W / 2;
-    const C = (dx, y, dz) => realmToDungeon(px + dx, y, pz + dz);
-    const corners = [[-w, -w], [w, -w], [w, w], [-w, w]];
-    for (let i = 0; i < 4; i++) {
-      const [ax, az] = corners[i], [bx, bz] = corners[(i + 1) % 4];
-      f.quad(SD_REALM_BRASS_RECORD, C(ax, 0, az), C(ax, SD_PILLAR_H, az), C(bx, SD_PILLAR_H, bz), C(bx, 0, bz), [0, 0], [0, SD_PILLAR_H / 3], [1, SD_PILLAR_H / 3], [1, 0]);
-    }
-    f.quad(SD_REALM_BRASS_RECORD, C(-w, SD_PILLAR_H, -w), C(-w, SD_PILLAR_H, w), C(w, SD_PILLAR_H, w), C(w, SD_PILLAR_H, -w), [0, 0], [0, 1], [1, 1], [1, 0]);
-  }
+  for (let k = 0; k < 4; k++) pillarQuads(k).forEach((q, i) => f.quad(SD_REALM_BRASS_RECORD, q[0], q[1], q[2], q[3], ...(i < 4 ? PILLAR_SIDE_UV : PILLAR_TOP_UV)));
   return packRealmFaces(f);
+}
+const PILLAR_SIDE_UV = [[0, 0], [0, SD_PILLAR_H / 3], [1, SD_PILLAR_H / 3], [1, 0]];
+const PILLAR_TOP_UV = [[0, 0], [0, 1], [1, 1], [1, 0]];
+/** THE ARENA'S PILLAR `k` - on the diagonals, SD_PILLAR_R out, a square SD_PILLAR_W across and SD_PILLAR_H tall: its four
+ *  sides and its top as quads (four corners each, the dungeon's frame, wound to face out) - one geometry for its draw and
+ *  (SD8c) its collider. */
+function pillarQuads(k) {
+  const a = Math.PI / 4 + (k * Math.PI) / 2;
+  const px = SD_ARENA.x + Math.cos(a) * SD_PILLAR_R, pz = SD_ARENA.z + Math.sin(a) * SD_PILLAR_R, w = SD_PILLAR_W / 2;
+  const C = (dx, y, dz) => realmToDungeon(px + dx, y, pz + dz);
+  const corners = [[-w, -w], [w, -w], [w, w], [-w, w]];
+  const out = [];
+  for (let i = 0; i < 4; i++) {
+    const [ax, az] = corners[i], [bx, bz] = corners[(i + 1) % 4];
+    out.push([C(ax, 0, az), C(ax, SD_PILLAR_H, az), C(bx, SD_PILLAR_H, bz), C(bx, 0, bz)]);
+  }
+  out.push([C(-w, SD_PILLAR_H, -w), C(-w, SD_PILLAR_H, w), C(w, SD_PILLAR_H, w), C(w, SD_PILLAR_H, -w)]);
+  return out;
 }
 
 /** A faces() build packed into renderer.createMesh's model shape - the realm's records, sorted (SD6c: the hall's too). */
@@ -222,6 +230,21 @@ export function realmFloorTris() {
   const a = realmToDungeon(x - h, 0, z0), b = realmToDungeon(x - h, 0, z1), c = realmToDungeon(x + h, 0, z1), d = realmToDungeon(x + h, 0, z0);
   out.push(...a, ...b, ...c, ...a, ...c, ...d);
   return new Float32Array(out);
+}
+
+/** SD8c (Super-Dungeons.md section 10): THE ARENA'S PILLARS, FOR THE COLLIDER - each one's sides and top, so a body stands
+ *  behind one out of the Hour-Hand's sweep (net/sdRemnant.js behindPillar - the same squares) and never walks through it. */
+export function realmPillarTris() {
+  const out = [];
+  for (let k = 0; k < 4; k++) for (const [a, b, c, d] of pillarQuads(k)) out.push(...a, ...b, ...c, ...a, ...c, ...d);
+  return new Float32Array(out);
+}
+/** What the realm stands on the collider: its floors and its pillars, one bucket. */
+export function realmColliderTris() {
+  const floors = realmFloorTris(), pillars = realmPillarTris(), out = new Float32Array(floors.length + pillars.length);
+  out.set(floors);
+  out.set(pillars, floors.length);
+  return out;
 }
 
 /**

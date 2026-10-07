@@ -4335,7 +4335,8 @@ function serpentOutOf(m) {
 //   client -> realm: {t:'sd', k:'in', lv, bv}          (I fight: my level, my game's brain)
 //                    {t:'sd', k:'hit', q, d, r}        (a blow on the Remnant - my blow's number, its damage, its kind)
 //                    {t:'sd', k:'ehit', e, q, d, r}    (on Echo e, 0 GOLD or 1 SILVER)  |  {t:'sd', k:'xhit', c, q, d, r} (on Heart c)
-//   realm -> client: {t:'sd', k:'st', ...}             (the whole fight - net/sdRemnant.js remnantStateOf - at the `in`, every 5 s)
+//   realm -> client: {t:'sd', k:'st', ..., me?}        (the whole fight - net/sdRemnant.js remnantStateOf - at the `in`, every 5 s;
+//                                                       SD8c: `me` 1 in the answer to my own `in` alone - I am in it)
 //                    {k:'mv', b, x, z, tx, tz, v, at} | {k:'atk', b, i, a, at, x, z, yw, tg, sw?, n?}  (a body's walk and blow:
 //                    b 0 the Remnant, 1 GOLD, 2 SILVER, 3 the Hour) | {k:'hp', h, m} | {k:'ph', n, at, up} | {k:'ec', e, at,
 //                    d?, n?, r?} (the Echoes - one fallen and by whom, one risen) | {k:'cx', i, m, c} | {k:'cxh', i, h} |
@@ -4488,7 +4489,7 @@ function validSdFightOut(m) {
       }
       const clk = m.clk == null ? null : sdAtk(m.clk), cx = m.cx == null ? null : sdCx(m.cx, true), fell = m.fell == null ? null : gateFell(m.fell);
       if ((m.clk != null && (!clk || clk.b !== SD_BODIES - 1)) || (m.cx != null && !cx) || (m.fell != null && !fell)) return null;
-      return { k: 'st', s: m.s, fi: m.fi, ph: m.ph, h: m.h, m: m.m, op: m.op, ou: m.ou, rem, ec, clk, pu: m.pu, pa: m.pa, ends: m.ends, ended: m.ended, cx, su: m.su, rk: m.rk, n: m.n, fell, lost: m.lost };
+      return { k: 'st', s: m.s, fi: m.fi, ph: m.ph, h: m.h, m: m.m, op: m.op, ou: m.ou, rem, ec, clk, pu: m.pu, pa: m.pa, ends: m.ends, ended: m.ended, cx, su: m.su, rk: m.rk, n: m.n, fell, lost: m.lost, ...(m.me === 1 ? { me: 1 } : {}) };   // SD8c: `me` - the answer to my own `in`
     }
     case 'mv': { const mv = intIn(m.b, 0, SD_BODIES - 2) ? sdMove(m) : null; return mv ? { k: 'mv', b: m.b, ...mv } : null; }
     case 'atk': { const a = sdAtk(m); return a ? { k: 'atk', ...a } : null; }

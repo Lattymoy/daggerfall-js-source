@@ -126,6 +126,14 @@ export const BOSS_BAR_CSS = `
 .wb-boss-bar.intro .wb-boss-name { animation: wb-name-in 250ms ease-out; }
 @keyframes wb-fill-in { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 @keyframes wb-name-in { from { opacity: 0; letter-spacing: 0.3em; } }
+/* SD8c: the Brass Remnant's bar - the same readout in the Hour's brass (its model's \`theme\`, ui/sdRemnantBar.js) */
+.wb-boss-bar.brass { color: #f2e2bc; }
+.wb-boss-bar.brass .wb-boss-name { color: #e8c060; text-shadow: 0 0 3px #000, 0 0 10px rgba(230,180,70,0.5); }
+.wb-boss-bar.brass .wb-boss-sub { color: #d8c49a; }
+.wb-boss-bar.brass .wb-boss-track { border-color: rgba(230,190,90,0.55); background: rgba(16,12,4,0.75); }
+.wb-boss-bar.brass .wb-boss-fill { background: linear-gradient(180deg, #ffd977 0%, #b8862a 55%, #4a3208 100%); }
+.wb-boss-bar.brass .wb-boss-tag { background: rgba(16,12,4,0.55); border-color: rgba(230,190,90,0.25); }
+.wb-boss-bar.brass .wb-boss-wrath { color: #ffd2a0; border-color: rgba(255,160,80,0.55); }
 /* SERPENT1: the sea serpent's bar - the same readout in the sea's colours (its model's \`theme\`, ui/serpentBar.js) */
 .wb-boss-bar.sea { color: #d6efe8; }
 .wb-boss-bar.sea .wb-boss-name { color: #8fe3cf; text-shadow: 0 0 3px #000, 0 0 10px rgba(40,200,170,0.5); }
@@ -202,7 +210,7 @@ export function bossBarModel(s, now, boss, aimed = null) {
 let root = null, parts = null;
 /** What the node shows, so each part is written only when it changes - every field unlike any model's, so a fight's
  *  first draw writes the whole bar (WB13c: a fight gone resets it, and the next fight's bar never shows the last's). */
-const SHOWN = () => ({ vis: '', name: null, sub: null, subColor: null, marks: null, spent: null, ticks: null, spentAt: null, spentNew: null,
+const SHOWN = () => ({ vis: '', name: null, sub: null, subColor: null, marks: null, spent: null, ticks: null, spentAt: null, spentNew: null, marksAt: null,
   frac: -1, ghost: -1, g: null, at: null, warded: null, breakAt: null, rootCls: null,
   callout: null, calloutColor: null, calloutCls: null, calloutT: -1, inAt: null, outAt: null, dagon: false, move: false,
   tags: [null, null, null, null], wrathNear: null, alpha: -1, introAt: null });
@@ -301,6 +309,11 @@ export function drawGateBossBar(model, { hidden = false, doc = globalThis.docume
     const all = view ? [view.aspect, ...view.trials] : [];
     parts.chips.forEach((c, i) => writeChip(c, all[i] ?? null));
   }
+  // SD8c: THE PHASE MARKS WHERE THE MODEL CUTS THEM (the Brass Remnant turns at 70% and 35%, not the gate's thirds) -
+  // written when they change, never a frame
+  const at = Array.isArray(model.marks) && model.marks.length === parts.ticks.length ? model.marks : PHASE_AT;
+  const marksAt = at.join(',');
+  if (marksAt !== shown.marksAt) { shown.marksAt = marksAt; parts.ticks.forEach((tick, i) => { tick.style.left = `${(at[i] * 100).toFixed(1)}%`; }); }
   // WB13c: THE PHASE MARKS SPENT as he passes them - each flashes as it is crossed (never one spent before I came)
   const spent = (model.spent ?? []).map((x) => (x ? 1 : 0)).join('');
   if (spent !== shown.spent) {

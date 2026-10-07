@@ -317,6 +317,8 @@ import { findSerpentSite } from '../systems/serpentSite.js';   // SERPENT1: wher
 import { createSerpentLink } from '../net/serpentLink.js'; import { readSerpentReceipt } from '../net/serpentReceipt.js';   // SERPENT1: the cell's words of its fight, folded; a receipt's day, seed and earning
 import { createSerpentHost } from './serpentHost.js';   // SERPENT1: the client's half of the fight - the `in`, the volleys, the blows on my ship, the coil and the whirl
 import { SerpentRenderer } from '../render/serpentRender.js';   // SERPENT1: its body over and under the sea, its telegraphs, the maelstrom and the venom
+import { createSdFightLink } from '../net/sdFightLink.js';   // SD8c: the realm's fight as the page holds it
+import { remnantBarModel, sdBarNear } from '../ui/sdRemnantBar.js';   // SD8c: the Brass Remnant's bar, the gate's in brass
 import { serpentBarModel } from '../ui/serpentBar.js'; import { drawGateBossBar } from '../ui/gateBossBar.js';   // SERPENT1: its boss bar, in the sea's colours - the gate's bar, its one node
 import { playSerpentSound } from '../systems/serpentSounds.js';   // SERPENT1: its voice - DAGGER.SND's own, pitched for its size
 import { serpentSpoilsList, serpentSpoilsDay, SERPENT_SPOILS_KEYS, SERPENT_SPOILS_TEXT, SERPENT_SPOILS_RECORDS_MAX } from '../systems/serpentSpoils.js';   // SERPENT1: the Old Coil's hoard
@@ -19299,6 +19301,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     online.onWed = (id, d, sub = null, sc = null) => { wedMgr.onFrame(id, d, sub, sc); };   // LEGACY7 part three: a wed frame at me - the wedding's law decides; AUDIT LEGACY III O1: `sc` their realm character as the relay stamped it
     online.onGate = (g) => gateLink?.word(g);   // WB3b: the court's room's word about its boss
     online.onSdHall = (w) => sdHallHeard(w);   // SD6c: the realm's word on the Orrery's hall - the stones, the fray, the Concord; the snap's lash
+    online.onSdFight = (w) => sdFightHeard(w);   // SD8c: the realm's word on the Last Moment's fight
     online.onSerpent = (w) => serpentLink?.word(w);   // SERPENT1: the sea serpent's cell's word (on my cell's socket or a halo's) - its fight, its swim, its blows, my receipt
     online.onRaid = (f, room) => raidRelayWord(f, room);   // RAID3: a town cell's word about its raid - the ledger, the cleanse, my receipt
     online.onRite = (w) => riteHost?.onBroken(w);   // WB12d: the hub's broken rite
@@ -21178,7 +21181,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD2b: the Hollow stood or taken down, its find, its lines. SD2d: called from the online frame, above the modal
    *  return, in every mode - a Hollow's end reaches a player standing inside it. It stood in the exterior's half of the
    *  frame, which the dungeon's frame never reaches: underground nothing moved the Hollow on. */
-  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } sdRealmFrame(); };
+  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } sdRealmFrame(); sdFightFrame(); };
   /** SD5a: OUT OF AN HOUR THAT WILL NOT HAVE ME - its room's hello refused for good (the Rift's own words, SD3's
    *  _sdAdmit: the Hour full, or closed) or its socket replaced: cast out before the Hollow's door (the mode machine's own
    *  exit - the realm's way out lands there) with the relay's words, once, as the court casts out (ejectFromCourt) -
@@ -21270,6 +21273,33 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     setMidScreenText(SD_STEPS_TEXT.cast);
   }
+  /** SD8c (Super-Dungeons.md section 10): THE LAST MOMENT'S FIGHT, as the page holds it (net/sdFightLink.js) - online alone:
+   *  the realm's words folded (from the realm I stand in, its own slot's), its turns said over the screen, my place in it
+   *  kept; the arena's set reads it (dungeonContext.js, through the mode machine) and sends my `in` and my blows by the
+   *  doors below. Out of the realm it is forgotten. */
+  const sdFightLink = params.has('online') ? createSdFightLink({ now: () => Date.now() + _sharedOffsetMs, say: (t) => setMidScreenText(t) }) : null;
+  let _sdFightHeld = false, _sdBarUp = false;
+  function sdFightHeard(w) {
+    const slot = modes?.sdRealmSlot?.();
+    if (!sdFightLink || slot == null || (w.k === 'st' && w.s !== slot)) return;
+    _sdFightHeld = true;
+    sdFightLink.word(w);
+  }
+  /** One online frame of the fight: forgotten out of the realm; its bar (ui/sdRemnantBar.js - the gate's, in brass) over
+   *  the screen while I stand near the arena and its fight is one to fight, put away otherwise. */
+  const sdFightFrame = () => {
+    if (!sdFightLink) return;
+    const inRealm = modes?.sdRealmSlot?.() != null;
+    if (!inRealm && _sdFightHeld) { sdFightLink.leave(); _sdFightHeld = false; }
+    let bar = null;
+    if (inRealm) {
+      const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
+      if (sdBarNear(x, z)) bar = remnantBarModel(sdFightLink.state(), sdFightLink.now());
+    }
+    if (bar || _sdBarUp) { drawGateBossBar(bar, { hidden: gamePaused() || !!townTalk.hudHidden }); _sdBarUp = !!bar; }
+  };
+  /** No online frame: the Remnant's bar put away. */
+  const sdFightAway = () => { if (_sdBarUp) { drawGateBossBar(null); _sdBarUp = false; } };
   /** The hall's word for the realm I stand in, or null; and whether its Concord holds (the edge widens with it). */
   const sdHallWord = () => (_sdHall && _sdHall.s === modes?.sdRealmSlot?.() ? _sdHall : null);
   const sdConcordHere = () => !!sdHallWord()?.ok;
@@ -24771,6 +24801,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     sdTurn: (i, a) => !!online?.sendSdTurn?.(i, a),   // SD6c: a turn of the Orrery's stones, down my socket in the realm
     sdHallWord: () => sdHallWord(),   // SD6c: the realm's latest word on the hall, for the hall's set
     sdCastBack: () => sdCastBack(),   // SD7b: the Unmoored Steps' void - stood back on the checkpoint, what it costs
+    sdFight: () => sdFightLink,   // SD8c: the Last Moment's fight as the page holds it, for the arena's set
+    sdFightIn: () => !!online?.sendSdIn?.(playerEntity.level),   // SD8c: my `in` - my level, my game's brain
+    sdBlow: (k, f) => !!online?.sendSdBlow?.(k, f),   // SD8c: a blow of mine on the Remnant, an Echo or a Heart, out to the realm
     sdHollowDoors: (h) => buildingDoors.filter((d) => d.pixelKey === h?.key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map((d) => d.door),   // SD5a: out of the Hour - a death, its end - before the Hollow's door
     // D-ONLINE1: the death screen's door for the deaths this host does
     // not present itself (a dungeon's, a building interior's -
@@ -27619,7 +27652,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (oceanHoles) { _ohTime += gamePaused() ? 0 : dt * worldTimeScale(); oceanHoles.checkSettings(); ohAbyss?.update(); }
     csaDrawHelmPanel();   // CSA-L: the helm panel, once a frame in every mode
     spoilsRecoverFrame();   // WB5: a boss's spoils no save holds, back to their character as it stands up - before it can save, online or not
-    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (_peerCandleLights.length) peerCandlesFrame([], dt);   /* PEERLIGHT2: offline, no one's candle stays lit */ serpentAway(!onlineOn); /* SERPENT1: its bar put away - offline, my ship let go of its coil */ if (!onlineOn && modes?.gateArenaDay?.() != null) { ejectFromCourt(COURT_TEXT.collapse); gateCourt?.leave(); /* AUDIT SS: and its floor into the pack - online, the frame's own court does it */ } if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; if (!player.arena) player.arena = arenaBouts.ring(); /* ARENA2: my bout's ring on the arena's sand */ siegeHud?.hide(); /* AUDIT-SEATS C1: no online frame (a load, a spawn), no battle's tick - its HUD hidden, never frozen; the next tick draws it again */ }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
+    if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (_peerCandleLights.length) peerCandlesFrame([], dt);   /* PEERLIGHT2: offline, no one's candle stays lit */ serpentAway(!onlineOn); /* SERPENT1: its bar put away - offline, my ship let go of its coil */ sdFightAway(); /* SD8c: and the Remnant's */ if (!onlineOn && modes?.gateArenaDay?.() != null) { ejectFromCourt(COURT_TEXT.collapse); gateCourt?.leave(); /* AUDIT SS: and its floor into the pack - online, the frame's own court does it */ } if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; if (!player.arena) player.arena = arenaBouts.ring(); /* ARENA2: my bout's ring on the arena's sand */ siegeHud?.hide(); /* AUDIT-SEATS C1: no online frame (a load, a spawn), no battle's tick - its HUD hidden, never frozen; the next tick draws it again */ }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
     deadlandsAirFrame();   // WB6b: after the court's ways out have run, online or not - the frame it is gone is the frame its air falls silent
     if (onlineOn && playerSpawned && (seatOut() || townTalk.overlay instanceof DeathScreen || modes?.deathUp?.())) { siegeHud?.hide(); siegeNpcs?.leave(); }   // AUDIT SEATS-2 C4: the dead and a tab out of the seat draw no battle - the online frame returns before its tick
     arenaFrame(dt);   // ARENA2: the bout on the city's floor or the instance's - before the modal return, so the instance's runs too

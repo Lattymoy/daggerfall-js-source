@@ -4915,7 +4915,7 @@ export class Room {
       const present = new Set();
       for (const [, b] of this._all()) if (b.sub && b.id) present.add(b.sub);
       if (!joinRemnant(f, a.sub, a.name ?? '', m.lv, now, present)) { no(f.ended ? SD_NO_WORDS[1] : SD_NO_WORDS[2]); return; }
-      this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f) }));
+      this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f), me: 1 }));   // SD8c: `me` - the page blows into a fight that answered it alone
       await this._sdFightSave(f, now, true);
       await this._sdFightArm(now);
       return;

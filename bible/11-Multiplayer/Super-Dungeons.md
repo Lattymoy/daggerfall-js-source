@@ -426,10 +426,11 @@ WATCH-FIX, SERPENT3, LEGACY7 and TEXT-F1 at the merges). SD6b shipped `pz` each 
 `pz {s,st,f,lit,ok,i?,a?,id?,q?,x?}` (the turn that made it so, its turner and number, and `x` when the Hour snapped
 back). SD8b shipped the fight: `in`, `hit`, `ehit {e,...}`, `xhit {c,...}` in, under the fight's own bucket (`sdFightGate`,
 the gate's 16 a second) and its brain's number (`SD_BRAIN_V` 1 - `no` below `SD_BRAIN_MIN`); out, the whole fight (`st` -
-`net/sdRemnant.js remnantStateOf`, numbered `fi`), each body's `mv` and `atk` (its `b`: 0 the Remnant, 1 GOLD, 2 SILVER, 3
-the Hour), `hp`, `ph {n,at,up}`, `ec {e,at,d?,n?,r?}`, the Hearts' `cx`, `cxh` (their health - the gate's `cxh`, which the
-table above left out) and `cxb`, `stun`, `fell`, `lost {at}` (a fight lost - the table above had none: the next `in` makes a
-fresh one) and `no {m}`; and the realm's door to the hub, `/internal/sd/fell`.
+`net/sdRemnant.js remnantStateOf`, numbered `fi`; SD8c: `me` 1 in the realm's answer to an `in` it counted, alone),
+each body's `mv` and `atk` (its `b`: 0 the Remnant, 1 GOLD, 2 SILVER, 3 the Hour), `hp`, `ph {n,at,up}`, `ec
+{e,at,d?,n?,r?}`, the Hearts' `cx`, `cxh` (their health - the gate's `cxh`, which the table above left out) and `cxb`,
+`stun`, `fell`, `lost {at}` (a fight lost - the table above had none: the next `in` makes a fresh one) and `no {m}`; and
+the realm's door to the hub, `/internal/sd/fell`.
 
 ## 15. The four hosts
 
@@ -1193,3 +1194,61 @@ ROOM_CALL_MS); `tools/mutants/sd6b.json`'s `pz` unknown re-aimed by content (the
 
 SD8c next: the Remnant on the page - the colossus, its Echoes and Hearts drawn, the telegraphs, the bar, the blows sent
 through the three seams and the Remnant's own judged on the struck player's machine.
+
+### SD8c - shipped 2026-10-07 (the Brass Remnant on the page)
+
+Section 10 on the page: the fight seen and struck. Its blows on the player are SD8d's (the telegraphs, and each judged on the
+struck player's own machine) - here they are named on the bar alone.
+
+- **The fight as the page holds it** (`net/sdFightLink.js`, the gate's link's shape): the realm's words folded, pure
+  (`foldSdFight`) - each body where its walk takes it (`sdBodyAt`, the law's own walk), facing its way or its aim, its blow
+  in flight until it is done (`sdBlowDone` - the law says no word for a blow's end); the Dragon Break stops the Remnant
+  where it stood; the Last Moment stands it at the centre, its first Reset 50 s on; an Echo falls where it stood and rises
+  again at its spot; the stun clears the Hearts. Read and amended from the law, which lets two things go without a word:
+  the Reset's Hearts are gone as it LANDS (`sdHeartsOf` reads them off the clock), and the Hour's End stops every body (the
+  page stops them as the End is said - within a beat of the law's own moment). Pinned by whole simulated fights: every word
+  the law says, through the wire, keeps the page's state the law's at every beat.
+- **My place in it**: my `in` is due standing alive in the arena until the realm ANSWERS it - the realm's answer to an
+  `in` it counted carries `me` 1 (section 14, SD8c), never the state it fans on the beat or says at a hello - so a page
+  whose `in` the realm dropped (its pose a step behind its feet, not yet in the arena) never takes a fanned state for an
+  answer and sends a blow the realm would call junk. Every 2 s at most (`SD_IN_RETRY_MS`); never into a fight fallen or
+  past its Hour; again into a fight lost, or a fresh one; a refusal said once and standing for the fight it was said in
+  (an older game's and a closed Hour's for the visit). The turns said over the screen as they come (the Dragon Break, an
+  Echo felled by name, an Echo risen, the Last Moment, the stun, the loss). Out of the realm, all forgotten.
+- **The arena's set** (`scenes/sdRemnant.js`, the dungeon host's, as the hall's): the Remnant, the GOLD and SILVER Echoes and
+  eight Hearts (`world/sdRemnantModel.js`; the Echoes' metals `world/sdRemnantArt.js`, records 23 and 24), each a draw
+  placed every frame where the fight says (`remnantPose`, `echoPose`): waiting at its start with no fight to fight;
+  walking; kneeling while stunned; gone outside time in the Dragon Break and risen out of the floor at the centre for
+  the Last Moment; sinking away where it fell; an Echo rising at its spot and sinking where it fell; a Heart standing
+  and turning while the Reset winds up.
+- **My blows, the gate's three seams**: in the Hour the dungeon context asks the set where it asked the court - the
+  Remnant as the boss (`target`: warded asleep and while it rises at its return; none outside time, fallen, past its
+  Hour, or in a fight that never answered me), the Echoes as the host's bodies (`echoTargets`), the Hearts as the
+  crystals' (`heartTargets`, until the Reset's last half second) - each with the gate's stand-ins over an Iron Atronach's
+  look (a thing of metal, never swayed), so the swing, the shaft and the spell meet them by the port's own law; each blow's
+  number out to the realm (`hit`, `ehit`, `xhit` - whole points, one number a blow across the bodies it meets).
+- **The bar** (`ui/sdRemnantBar.js` - the gate's, in brass): its name over the phase it fights in; its turns cut at 70%
+  and 35% (`ui/gateBossBar.js`'s marks follow the model now - they were laid once, at the gate's thirds); warded while it
+  cannot be struck ("It stirs" before its wake, "Outside time" in the break); the Hour's own blow called first, then a
+  stun, the Reset with its Hearts left and its seconds, its own blows, an Echo's by name; the Echoes' health; the next
+  Reset; the Hour's end in its last five minutes; Felled, then faded. Over the screen near the arena alone.
+- **The pillars stand**: the arena's four pillars on the realm's collider (`world/sdRealm.js` `realmPillarTris`, one
+  geometry with their draw) - the same squares the Hour-Hand's shade is judged by (`behindPillar`): a body stands behind
+  one, never walks through it.
+
+THE FOUR HOSTS: `scenes/dungeonContext.js` WIRED (the set, framed beside the hall; the three seams and their doors in the
+Hour); `scenes/worldModes.js` WIRED (the fight and the two doors handed down; the pillars with the floors);
+`scenes/world.js` WIRED (the link, online alone; the realm's fight words from its own slot; my `in` with my level and my
+blows; the fight forgotten out of the realm; the bar); `scenes/exterior.js` FLAGGED (no Hour offline).
+
+Pins: `test/sd8c_remnant_page.test.js` (11 - the page follows the law; the fold word by word; my place in the fight; the
+realm's `me`; the set; my `in` and my blows; the bar; the bar's marks; the bodies made; the pillars; the hosts by source);
+`tools/mutants/sd8c.json` (53, all dead - two survived at first: a blow into a fight that never answered me, which
+the opening refused anyway, and a frame ending my blow, which a second meeting of the same body hid; each pinned on its
+own now). PINS MOVED: `test/wb4b_gate_blows.test.js`, `test/wb9c_gate_reckoning.test.js`,
+`test/wb11_gate_host.test.js` (the three seams answered by the Remnant in the Hour); `test/sd5a_realm.test.js` (the
+fight's frame after the realm's); `test/relayversion.test.js` - `world176` re-hashed in place (`me`);
+`tools/mutants/wb4b.json`'s shut door re-aimed by content.
+
+SD8d next: its blows on me - the telegraphs on the arena's floor, each judged on my own machine (the ring jumped, the
+Hand outrun or shaded, the Volley's discs and its burning brass, the Pulse, the Reset, the End), its sounds, its fall.

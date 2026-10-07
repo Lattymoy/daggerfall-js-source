@@ -241,6 +241,7 @@ import { dungeonEndOf } from '../world/dungeonEnd.js';   // SD4b: RVN7d's lair l
 import { createSdEnd } from './sdEnd.js';   // SD4b: a Super dungeon's Rift and Return
 import { createSdHall } from './sdHall.js';   // SD6c: the Orrery's hall in the Shattered Hour
 import { createSdSteps } from './sdSteps.js';   // SD7b: the Unmoored Steps in the Shattered Hour
+import { createSdRemnant } from './sdRemnant.js';   // SD8c: the Brass Remnant in the Shattered Hour
 import { SD_NO_RIFT } from '../net/sdLaw.js';   // SD4b: the Rift's word when nobody can answer it
 import { isSdRealm, SD_REALM_TEXT, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - a made place, its refusals, its way back
 import { realmToDungeon } from '../net/sdBrain.js';   // SD5a: the realm's frame
@@ -1799,6 +1800,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!sdSteps) return null;
     if (!_sdStepsStood) { _sdStepsStood = true; sdSteps.stand({ dynamicDraws, collider }); }
     return sdSteps.ride(opts.sdClock?.() ?? performance.now() / 1000, dt, body, live);
+  }
+  // SD8c (Super-Dungeons.md section 10): THE BRASS REMNANT in the Shattered Hour (scenes/sdRemnant.js) - the Remnant, its
+  // Echoes and the Reset's Hearts, stood the first frame I stand here and placed every frame where the realm's fight (the
+  // outer host's link) says; my `in` said through the outer host as I stand in the arena; and in the Hour it is the gate's
+  // three seams below (gateBossBody, gateHostBodies, gateCrystalBodies) - my blows on it out to the realm, not the court
+  const sdRemnant = _sdRealm ? createSdRemnant({ renderer, link: () => opts.sdFight?.() ?? null, sendIn: () => !!opts.sdFightIn?.(), sendBlow: (k, f) => !!opts.sdBlow?.(k, f), alive: () => playerEntity.health > 0 }) : null;
+  let _sdRemnantStood = false;
+  /** One frame of the arena: stood once I stand here, then my `in` and the bodies. */
+  function sdRemnantFrame(dt, playerFeet) {
+    if (playerFeet && !_sdRemnantStood) { _sdRemnantStood = true; sdRemnant.stand({ dynamicDraws }); }
+    sdRemnant.frame(dt, playerFeet ?? null);
   }
   /** SD5a: where a player coming back through the Rift is stood - the Return's place, beside it (kept as it stands). */
   let _sdLanding = null;
@@ -4010,7 +4022,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // is computed here by the game's own law and its number goes out (`opts.onBossHit`), the relay's caps deciding what
   // lands. Co-op's law turned about: the striker's machine says the number, the room holds the health.
   function gateBossBody() {
-    const b = opts.gateBoss?.() ?? null;
+    const b = sdRemnant ? sdRemnant.target() : opts.gateBoss?.() ?? null;   // SD8c: in the Hour, the Brass Remnant
     if (!b || !b.entity || !Array.isArray(b.feet) || !(b.height > 0) || !(b.radius > 0)) return null;
     b.entity.warded = !!b.warded;   // AUDIT SETS L4: his ward on his stand-in too - a blow it turns spends no set power (sigilSetPowers.js setBlow)
     return {
@@ -4026,7 +4038,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // the game's own law against its stand-in (world/gateBoss.js crystalStandIn - unarmoured: a crystal does not dodge)
   // and its number goes out (`opts.onCrystalHit`), the relay's caps deciding what lands (net/gateBrain.js applyCrystalHit).
   function gateCrystalBodies() {
-    const list = opts.gateCrystals?.() ?? null;
+    const list = sdRemnant ? sdRemnant.heartTargets() : opts.gateCrystals?.() ?? null;   // SD8c: in the Hour, the Reset's Hearts
     if (!Array.isArray(list) || !list.length) return [];
     const out = [];
     for (const q of list) {
@@ -4036,7 +4048,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return out;
   }
   /** A blow's number on a crystal, out to the relay through the court's door; answers whether it went. */
-  const landOnCrystal = (cr, damage, r) => !!opts.onCrystalHit?.({ c: cr.crystal, d: damage, r });
+  const landOnCrystal = (cr, damage, r) => (sdRemnant ? sdRemnant.heartHit({ c: cr.crystal, d: damage, r }) : !!opts.onCrystalHit?.({ c: cr.crystal, d: damage, r }));   // SD8c: a Heart's, to the realm
   /** A swing of mine that met a crystal: the glass rings (the court voices it - scenes/gateCourt.js), the number out. */
   function swingOnCrystal(cr, damage) {
     if (damage > 0) landOnCrystal(cr, damage, HIT_KINDS.Melee);
@@ -4064,7 +4076,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // blood laddered against their own whole (`bloodOf`: AUDIT WB11 W5 - the stand-in's health nothing can empty threw the
   // lowest rung at every blow).
   function gateHostBodies() {
-    const list = opts.gateHost?.() ?? null;
+    const list = sdRemnant ? sdRemnant.echoTargets() : opts.gateHost?.() ?? null;   // SD8c: in the Hour, the Dragon Break's Echoes
     if (!Array.isArray(list) || !list.length) return [];
     const out = [];
     for (const q of list) {
@@ -4074,7 +4086,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     return out;
   }
   /** A blow's number on one of his host, out to the relay through the court's door; answers whether it went. */
-  const landOnHost = (hb, damage, r) => !!opts.onHostHit?.({ i: hb.host, d: damage, r });
+  const landOnHost = (hb, damage, r) => (sdRemnant ? sdRemnant.echoHit({ i: hb.host, d: damage, r }) : !!opts.onHostHit?.({ i: hb.host, d: damage, r }));   // SD8c: an Echo's, to the realm
   /** Its middle, where a blow on it sounds and splashes. */
   const hostChest = (hb) => [hb.ai.feet[0], hb.ai.feet[1] + hb.ai.centreOffset, hb.ai.feet[2]];
   /** A swing of mine that met one of his host (resolveHit's own verdict and number): a zero blow's parry as its mobile
@@ -4168,7 +4180,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   /** A blow's number on him, out to the relay through the court's door; answers whether it went. */
   function landOnBoss(boss, damage, r) {
     if (boss.warded) { wardTurns(boss); return false; }
-    return !!opts.onBossHit?.({ d: damage, r });
+    return sdRemnant ? sdRemnant.hit({ d: damage, r }) : !!opts.onBossHit?.({ d: damage, r });   // SD8c: the Remnant's, to the realm
   }
   /** A swing of mine that met him (resolveHit's own verdict and number): the ward's ring, a zero blow's parry - he parries
    *  as his mobile does - or the hit's sound and splash at him and the number out; OnWeaponHitEntity either way. */
@@ -6962,6 +6974,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (playerFeet && !_lairAsked) { _lairAsked = true; standLairRevenant().catch(() => null); }
     if (sdEnd) sdEndFrame(playerFeet);   // SD4b: a Super dungeon's Rift and Return - stood, the Return's boss asked, the step
     if (sdHall) sdHallFrame(dt, playerFeet);   // SD6c: the Orrery's hall - stood, its word heard, its hands turned
+    if (sdRemnant) sdRemnantFrame(dt, playerFeet);   // SD8c: the Brass Remnant - stood, my `in`, its bodies placed
     if (_blockWaterOverride && playerFeet && blockAtXZ(playerFeet[0], playerFeet[2]) !== _blockWaterOverride.block) _blockWaterOverride = null;   // OH-D: a new block reads its own level   // ROAD-H H2: the enemy AoC blast reads the player's live capsule through castEnemySpell
     // ENHANCED AI 3b: ONE BAKE PER DUNGEON, off the frame, once the
     // player's feet are known - they are the anchor, the component the
@@ -10136,6 +10149,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       sdEnd?.clear();   // SD4b: the Rift and the Return, and the bell
       sdHall?.clear();   // SD6c: the hall's meshes
       sdSteps?.clear();   // SD7b: the Steps' meshes
+      sdRemnant?.clear();   // SD8c: the Remnant's
       // NT1 (F214): the context minted its own cast engine; a spell in
       // flight at the exit owned a batch nothing else can reach.
       magic.handReadyTo(opts.outerCastEngine?.() ?? null);   // CAST-USE (AUDIT part five CU1): a ready held at the way out (the door, a Recall, a load) goes with the player

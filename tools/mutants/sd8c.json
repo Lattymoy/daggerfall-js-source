@@ -1,0 +1,480 @@
+[
+  {
+    "name": "SD8C-a-walk-keeps-its-blow",
+    "file": "src/net/sdFightLink.js",
+    "old": "  return { ...B, x: w.x, z: w.z, mv, atk: null, yw: turn ?",
+    "new": "  return { ...B, x: w.x, z: w.z, mv, atk: B.atk, yw: turn ?",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-break-not-stopping-it",
+    "file": "src/net/sdFightLink.js",
+    "old": "      if (w.n === 2) return { ...s, ph: 2, rem: stopped(s.rem, w.at), heardAt: now };",
+    "new": "      if (w.n === 2) return { ...s, ph: 2, rem: s.rem, heardAt: now };",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-an-echo-risen-where-it-fell",
+    "file": "src/net/sdFightLink.js",
+    "old": "        let B = !had || w.r === k ? echoAt(k) : had;",
+    "new": "        let B = !had ? echoAt(k) : had;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-an-echo-fallen-walking",
+    "file": "src/net/sdFightLink.js",
+    "old": "        if (had && w.d === k) B = stopped(B, w.at);   // fallen where it stood\n",
+    "new": "",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-stun-keeps-the-hearts",
+    "file": "src/net/sdFightLink.js",
+    "old": "    case 'stun': return { ...s, su: w.until, stunAt: w.at, rem: stopped(s.rem, w.at), cx: null,",
+    "new": "    case 'stun': return { ...s, su: w.until, stunAt: w.at, rem: stopped(s.rem, w.at), cx: s.cx,",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-end-leaves-them-walking",
+    "file": "src/net/sdFightLink.js",
+    "old": "        return { ...s, clk: atkOf(w), ended: w.at, rem: stopped(s.rem, at),",
+    "new": "        return { ...s, clk: atkOf(w), ended: w.at, rem: s.rem,",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-end-unsaid",
+    "file": "src/net/sdFightLink.js",
+    "old": "        if (w.a !== SD_BLOWS.end.id || s.ended) return { ...s, clk: atkOf(w), heardAt: now };",
+    "new": "        if (true) return { ...s, clk: atkOf(w), heardAt: now };",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-fall-where-it-began",
+    "file": "src/net/sdFightLink.js",
+    "old": "      return { ...s, fell: { at: w.at, top: w.top, n: w.n, ...(w.dm ? { dm: w.dm } : {}) }, rem: stopped(s.rem, w.at), h: 0,",
+    "new": "      return { ...s, fell: { at: w.at, top: w.top, n: w.n, ...(w.dm ? { dm: w.dm } : {}) }, rem: { ...s.rem, mv: null, atk: null }, h: 0,",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-chart-lost",
+    "file": "src/net/sdFightLink.js",
+    "old": "      if (s.fell) return w.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: w.dm }, heardAt: now } : { ...s, heardAt: now };",
+    "new": "      if (s.fell) return { ...s, heardAt: now };",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-last-moment-no-reset-clock",
+    "file": "src/net/sdFightLink.js",
+    "old": "h: Math.min(s.h, SD_PHASE_AT[1] * s.m), rk: w.up + SD_RESET_FIRST_MS, heardAt: now };",
+    "new": "h: Math.min(s.h, SD_PHASE_AT[1] * s.m), rk: s.rk, heardAt: now };",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-a-word-before-the-state",
+    "file": "src/net/sdFightLink.js",
+    "old": "  if (!s.fi) return s;   // nothing but a whole state starts a fight\n",
+    "new": "",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-walk-unbounded",
+    "file": "src/net/sdFightLink.js",
+    "old": "  const along = Math.min(len, (Math.max(0, now - m.at) / 1000) * m.v);",
+    "new": "  const along = (Math.max(0, now - m.at) / 1000) * m.v;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-hearts-outlive-the-reset",
+    "file": "src/net/sdFightLink.js",
+    "old": "  return s?.cx && a && a.a === SD_BLOWS.reset.id && a.i === s.cx.i && now < a.at ? s.cx : null;",
+    "new": "  return s?.cx && a && a.a === SD_BLOWS.reset.id && a.i === s.cx.i ? s.cx : null;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-any-state-an-answer",
+    "file": "src/net/sdFightLink.js",
+    "old": "      if (w.k === 'st' && w.me === 1) { mine = state.fi; refused = null; }",
+    "new": "      if (w.k === 'st') { mine = state.fi; refused = null; }",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-no-retry-gap",
+    "file": "src/net/sdFightLink.js",
+    "old": "      return t - inAt >= SD_IN_RETRY_MS;",
+    "new": "      return true;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-a-refusal-for-good-lapsing",
+    "file": "src/net/sdFightLink.js",
+    "old": "      if (refused && (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost))) return false;",
+    "new": "      if (refused && refused.fi === state.fi && refused.lost === state.lost) return false;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-a-refusal-never-lapsing",
+    "file": "src/net/sdFightLink.js",
+    "old": "      if (refused && (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost))) return false;",
+    "new": "      if (refused) return false;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-in-after-the-fall",
+    "file": "src/net/sdFightLink.js",
+    "old": "      if (state.fi > 0 && !state.lost && (state.fell || state.ended || mine === state.fi)) return false;",
+    "new": "      if (state.fi > 0 && !state.lost && mine === state.fi) return false;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-joined-to-a-lost-fight",
+    "file": "src/net/sdFightLink.js",
+    "old": "    joined: () => state.fi > 0 && mine === state.fi && !state.lost && !state.fell && !state.ended,",
+    "new": "    joined: () => state.fi > 0 && mine === state.fi,",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-turns-unsaid",
+    "file": "src/net/sdFightLink.js",
+    "old": "      if (w.k === 'ph' && was.fi) say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak : SD_FIGHT_TEXT.lastMoment);",
+    "new": "      if (w.k === 'ph' && was.fi) { /* unsaid */ }",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-in-from-anywhere",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "        if (inArena(ax, az) && L.inDue(t) && sendIn()) L.sentIn(t);",
+    "new": "        if (L.inDue(t) && sendIn()) L.sentIn(t);",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-in-not-marked",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "        if (inArena(ax, az) && L.inDue(t) && sendIn()) L.sentIn(t);",
+    "new": "        if (inArena(ax, az) && L.inDue(t)) sendIn();",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-dead-say-in",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "      if (L && feet && alive()) {",
+    "new": "      if (L && feet) {",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-blows-into-a-fight-that-never-answered",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "      if (!L?.joined() || !remnantOpenAt(s, t) || !Object.values(HIT_KINDS).includes(r)) return false;",
+    "new": "      if (!L || !remnantOpenAt(s, t) || !Object.values(HIT_KINDS).includes(r)) return false;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-a-body-for-a-stranger",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "      if (!L?.joined() || s.fell || s.ended || s.ph === 2) return null;",
+    "new": "      if (!L || s.fell || s.ended || s.ph === 2) return null;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-never-warded",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "      return { feet: arenaToDungeon(p.x, p.z), yaw: p.yw, height: SD_REM.h, radius: SD_REM.r, warded: !remnantOpenAt(s, t),",
+    "new": "      return { feet: arenaToDungeon(p.x, p.z), yaw: p.yw, height: SD_REM.h, radius: SD_REM.r, warded: false,",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-each-blow-its-own-number",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "    if (!blowMet.size || blowMet.has(who)) { blowSeq = (blowSeq + 1) & 0x7fffffff; blowMet.clear(); }",
+    "new": "    { blowSeq = (blowSeq + 1) & 0x7fffffff; blowMet.clear(); }",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-one-number-for-all",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "    if (!blowMet.size || blowMet.has(who)) { blowSeq = (blowSeq + 1) & 0x7fffffff; blowMet.clear(); }",
+    "new": "    if (!blowMet.size) { blowSeq = (blowSeq + 1) & 0x7fffffff; blowMet.clear(); }",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-a-frame-not-ending-the-blow",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "      blowMet.clear();   // a frame ends my blow\n",
+    "new": "",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-no-kneel",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "  const kneel = now < s.su ? SD_KNEEL_M : 0;",
+    "new": "  const kneel = 0;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-drawn-outside-time",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "  if (s.ph === 2) return { x: B.x, z: B.z, yw: B.yw, sink: 0, shown: false };   // outside time",
+    "new": "  if (s.ph === 2) return { x: B.x, z: B.z, yw: B.yw, sink: 0, shown: true };   // outside time",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-fall-left-standing",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "    const sink = (Math.max(0, now - s.fell.at) / SD_REM_SINK_MS) * SD_REM.h;",
+    "new": "    const sink = 0;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-no-rising-at-its-return",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "  const rising = now < s.ou ? Math.min(1, (s.ou - now) / SD_BREAK_MS) * SD_REM.h : 0;",
+    "new": "  const rising = 0;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-hearts-never-close",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "  return live(s) && !s.fell && !!sdHeartsOf(s, now) && now < s.rem.atk.at - SD_HEARTS_CLOSE_MS;",
+    "new": "  return live(s) && !s.fell && !!sdHeartsOf(s, now);",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-a-rising-echo-struck",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "        if (!(E.h > 0) || t < E.up) continue;",
+    "new": "        if (!(E.h > 0)) continue;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-an-echo-unscaled",
+    "file": "src/scenes/sdRemnant.js",
+    "old": "      for (let e = 0; e < echoDraws.length; e++) place(echoDraws[e], echoPose(s, e, t), remnantScale(true));",
+    "new": "      for (let e = 0; e < echoDraws.length; e++) place(echoDraws[e], echoPose(s, e, t), 1);",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-gates-marks",
+    "file": "src/ui/sdRemnantBar.js",
+    "old": "    frac, marks: [...SD_PHASE_AT], phase: s.ph,",
+    "new": "    frac, marks: [0.66, 0.33], phase: s.ph,",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-hours-blow-behind",
+    "file": "src/ui/sdRemnantBar.js",
+    "old": "    if (s.clk && !sdBlowDone(s.clk, now)) callout = callOf(s.clk, s.ph, SD_BODY.hour, now);\n    else if (asleep)",
+    "new": "    if (false) callout = callOf(s.clk, s.ph, SD_BODY.hour, now);\n    else if (asleep)",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-end-never-counted",
+    "file": "src/ui/sdRemnantBar.js",
+    "old": "    wrath: s.fell ? null : s.ended ? SD_BAR_TEXT.ended : toEnd <= SD_ENDS_WARN_MS ?",
+    "new": "    wrath: s.fell ? null : s.ended ? SD_BAR_TEXT.ended : false ?",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-unwarded-asleep",
+    "file": "src/ui/sdRemnantBar.js",
+    "old": "  const warded = !s.fell && (asleep || outside);",
+    "new": "  const warded = !s.fell && outside;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-bar-from-afar",
+    "file": "src/ui/sdRemnantBar.js",
+    "old": " <= SD_ARENA.r + SD_BAR_NEAR_M;",
+    "new": " <= SD_ARENA.r + SD_BAR_NEAR_M + 5;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-echoes-unsaid",
+    "file": "src/ui/sdRemnantBar.js",
+    "old": "    host: ec ? SD_BAR_TEXT.echoes(",
+    "new": "    host: false ? SD_BAR_TEXT.echoes(",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-marks-laid-once",
+    "file": "src/ui/gateBossBar.js",
+    "old": "  if (marksAt !== shown.marksAt) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-pillars-left-off",
+    "file": "src/world/sdRealm.js",
+    "old": "  out.set(pillars, floors.length);\n",
+    "new": "",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-a-pillar-out-of-its-square",
+    "file": "src/world/sdRealm.js",
+    "old": "  const px = SD_ARENA.x + Math.cos(a) * SD_PILLAR_R, pz = SD_ARENA.z + Math.sin(a) * SD_PILLAR_R, w = SD_PILLAR_W / 2;",
+    "new": "  const px = SD_ARENA.x + Math.cos(a) * SD_PILLAR_R, pz = SD_ARENA.z + Math.sin(a) * SD_PILLAR_R, w = SD_PILLAR_W;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-no-me",
+    "file": "server/src/index.js",
+    "old": "      this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f), me: 1 }));",
+    "new": "      this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f) }));",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-me-at-every-hello",
+    "file": "server/src/index.js",
+    "old": "!this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(sf) }))) return;",
+    "new": "!this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(sf), me: 1 }))) return;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-wire-drops-me",
+    "file": "src/net/wire.js",
+    "old": "lost: m.lost, ...(m.me === 1 ? { me: 1 } : {}) };",
+    "new": "lost: m.lost };",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-any-me",
+    "file": "src/net/wire.js",
+    "old": "...(m.me === 1 ? { me: 1 } : {}) };",
+    "new": "...(m.me != null ? { me: 1 } : {}) };",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-court-in-the-hour",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const b = sdRemnant ? sdRemnant.target() : opts.gateBoss?.() ?? null;",
+    "new": "    const b = opts.gateBoss?.() ?? null;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js",
+      "test/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-another-slots-state",
+    "file": "src/scenes/world.js",
+    "old": "    if (!sdFightLink || slot == null || (w.k === 'st' && w.s !== slot)) return;",
+    "new": "    if (!sdFightLink || slot == null) return;",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-bar-never-put-away",
+    "file": "src/scenes/world.js",
+    "old": "    if (bar || _sdBarUp) { drawGateBossBar(bar,",
+    "new": "    if (bar) { drawGateBossBar(bar,",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  },
+  {
+    "name": "SD8C-the-realm-floors-alone",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const tris = realmColliderTris();   // SD8c: the floors and the arena's pillars",
+    "new": "    const tris = realmColliderTris().subarray(0, 0);   // SD8c: the floors and the arena's pillars",
+    "tests": [
+      "test/sd8c_remnant_page.test.js"
+    ]
+  }
+]
