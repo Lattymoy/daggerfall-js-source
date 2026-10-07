@@ -38,8 +38,8 @@
   {
     "name": "VAMPDAY-the-sun-still-burns",
     "file": "src/systems/passiveSpecials.js",
-    "old": "    && careerSunDamage(career)\n",
-    "new": "    && (careerSunDamage(career) || override?.sunDamage)\n",
+    "old": "    && careerSunAverse(entity)\n",
+    "new": "    && (careerSunAverse(entity) || override?.sunDamage)\n",
     "tests": [
       "test/vampday.test.js"
     ]
