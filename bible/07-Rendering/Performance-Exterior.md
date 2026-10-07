@@ -949,12 +949,17 @@ season's re-skin or a late World of Daggerfall pack. So:
   quickload kept drawing the old place's cells within 315 m of the new
   eye, at the old heights, until the first crossing threw them away.
 
-**What still moves at a crossing, as it always did.** In the pixel style
-each tuft's sprite variant is `hash(root * 0.37)` of the scene root and
-the gust's wave reads `dot(root, wdir)` - both are the lab's shader text
-(GR1's byte-exact law) and both jump by the offset on the crossing frame.
-The vanish, the three-second regrow and the reshuffle are gone; those two
-are named, not claimed away.
+**What moved at a crossing until AUDIT MEADOW1 (2026-10-06), and moves no
+more.** In the pixel style each tuft's sprite variant was `hash(root *
+0.37)` of the scene root (a GRASS-PX edit, not the lab's text) and the
+gust's wave reads `dot(root, wdir)` (the lab's): both jumped by the offset
+on the crossing frame, and the meadow's cards turned and flipped by the
+same hash. The tuft's seed is its place in its cell now (`hash(aPA.xy *
+64)`, the packed lane no shift touches), and the world host hands the wave
+a clock that carries the shift's phase (`systems/windDrive.js`
+`gustClock`) - the flats' wave with it, so the trees stand still under a
+crossing too (`07-Rendering/Rendering.md`, AUDIT MEADOW1). The vanish, the
+three-second regrow and the reshuffle were gone already.
 
 **The four hosts.** The grass field lives in `scenes/world.js` alone -
 wired. `scenes/exterior.js`, `scenes/worldModes.js` and

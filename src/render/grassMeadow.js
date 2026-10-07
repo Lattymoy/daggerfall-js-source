@@ -60,12 +60,18 @@ export const MEADOW_CELL = 64;
  *  at 60 near: from any side two of them are open to the eye - two cards read flat when one stands edge-on - at three
  *  quarters the vertices of the trees' four. */
 export const MEADOW_CARDS = 3;
-/** ...and two at 90 past MEADOW_NEAR_AT of the range, where a tuft is a few pixels tall and its third card is not a
- *  thing any eye can find - two thirds of the vertices on nine tenths of the field's tufts */
+/** ...and two past MEADOW_NEAR_AT of the range, where a tuft is a few pixels tall and its third card is not a thing
+ *  any eye can find - two thirds of the vertices on 94 of the 114 cells a walker's eye draws at the shipped range,
+ *  three quarters of its tufts (tools/meadowProbe.mjs). AUDIT MEADOW1: the near set's
+ *  FIRST TWO (60 degrees apart), not two of their own at 90 - every far tuft turned a card a sixth of a turn at the
+ *  handover, a whole cell at once */
 export const MEADOW_CARDS_FAR = 2;
-/** where the far cards take over, as a share of the draw range (a cell's nearest point past it): 75 m at the shipped
- *  300, where a half-metre tuft stands under ten pixels at 1080p */
+/** where the far cards take over, as a share of the draw range: 75 m at the shipped 300, where a half-metre tuft
+ *  stands under ten pixels at 1080p */
 export const MEADOW_NEAR_AT = 0.25;
+/** AUDIT MEADOW1: ...over a band this share of the range wide, TUFT BY TUFT - each drops its third card at its own
+ *  distance in the band (a hash of its seed), so no cell thins at once; a cell draws the far set only past the band */
+export const MEADOW_NEAR_BAND = 0.05;
 /** a meadow sprite stands for THIS many of the lab's blades - the host submits one in this many of each cell's
  *  (the placer's order is random, so a prefix is a uniform share), as the pixel style submits one in
  *  PX_BLADES_PER_TUFT. A sprite is a whole tuft of a dozen blades, not three to five. */
@@ -75,14 +81,17 @@ export const MEADOW_BLADES_PER_TUFT = 3;
  * The five, in atlas order (tools/bakeMeadow.mjs SOURCES). `scale` is the card's side over the lab's blade height:
  * a tuft's drawn height is about three quarters of its cell, so 4/3 stands the tall tuft as tall as the lab's blade;
  * the bush stands at 2.25 - half a metre to a metre and a half of bush over the lab's height law. `stiff` is the
- * share of the sway and the lean a card takes: a bush is woody, and leans a third as far as grass.
+ * share of its own standing lean a card takes: a bush is woody, and stands a third as crooked as grass. `sway` is its
+ * share of the WIND's lean (AUDIT MEADOW1, Mac: "have the wind sway effect the new foilage, like it does the trees"):
+ * the trees' own shares (systems/windDrive.js floraSwayOf) - the grass sways whole, as a tall flora record does, and
+ * the bush six tenths, as the world's bushes and shrubs do.
  */
 export const MEADOW_VARIANTS = Object.freeze([
-  Object.freeze({ name: 'tall', scale: 4 / 3, stiff: 1 }),
-  Object.freeze({ name: 'short', scale: 4 / 3, stiff: 1 }),
-  Object.freeze({ name: 'flowers', scale: 4 / 3, stiff: 1 }),
-  Object.freeze({ name: 'dry', scale: 4 / 3, stiff: 1 }),
-  Object.freeze({ name: 'bush', scale: 2.25, stiff: 0.3 }),
+  Object.freeze({ name: 'tall', scale: 4 / 3, stiff: 1, sway: 1 }),
+  Object.freeze({ name: 'short', scale: 4 / 3, stiff: 1, sway: 1 }),
+  Object.freeze({ name: 'flowers', scale: 4 / 3, stiff: 1, sway: 1 }),
+  Object.freeze({ name: 'dry', scale: 4 / 3, stiff: 1, sway: 1 }),
+  Object.freeze({ name: 'bush', scale: 2.25, stiff: 0.3, sway: 0.6 }),
 ]);
 export const MEADOW_BUSH = 4;
 export const MEADOW_FLOWERS = 2;
@@ -148,9 +157,6 @@ export function meadowTexel(art, ground, artGround) {
   const k = Math.min(1, Math.max(0, (art[1] - Math.max(art[0], art[2])) * MEADOW_GREEN_EDGE));
   return art.map((a, i) => a * (lum + (s[i] - lum) * k));
 }
-/** the luminance ramp's rungs in the meadow (the pixel style's PX_RAMP_STEPS is 8): the art carries its own palette,
- *  so the lit colour is banded only finely - the day's light in steps, the sprite's shading kept */
-export const MEADOW_RAMP_STEPS = 24;
 
 /** the style the row's word names. Neither of the two older words is the row's default, the meadow - the same
  *  fallback the settings pane draws for a value that is no tier */
@@ -175,27 +181,83 @@ export function meadowPick(r, tint) {
   return { variant, scale: MEADOW_VARIANTS[variant].scale * at(MEADOW_PATCH_SCALE), lush };
 }
 
-/** the most a card's side can be over its blade's height - the box a cell is culled by must hold it */
-export const MEADOW_MAX_SCALE = Math.max(...MEADOW_VARIANTS.map((v) => v.scale)) * MEADOW_PATCH_SCALE[1];
-/** the lab's static lean, per axis (the placer draws (rnd - 0.5) * 0.5): the most a card's top is carried sideways
- *  over its side is this on both axes, times its stiffness - plus a hair for the wind's push */
-const LEAN_MAX = Math.hypot(0.25, 0.25) + 0.02;
-/** the most a card reaches sideways from its root, over its blade's height: half its side plus its lean */
-export const MEADOW_REACH = Math.max(...MEADOW_VARIANTS.map((v) => v.scale * MEADOW_PATCH_SCALE[1] * (0.5 + LEAN_MAX * v.stiff)));
-
 /**
- * The card corners: `cards` vertical quads, two triangles each in labBladeCorners' winding, three floats a vertex -
- * the corner's x and y (0..1), and its card's TURN as a share of a half-turn (k / cards), plus one on every other
- * card, which the vertex stage draws mirrored. So the stage needs no count: the near array's three cards and the far
- * array's two are turned and mirrored by what they carry.
+ * AUDIT MEADOW1: A SPRITE'S DRAWN BOX - the least rectangle of its own square that holds every texel it draws, as
+ * shares of the square: u0..u1 across, v0..v1 up from its foot. A card is cut to it (the vertex stage maps its corners
+ * into it), so no fragment is shaded where the sprite has no texel: a whole card was 52 to 85 per cent air. The cut
+ * loses nothing - the uv stays the corner's own place on the card, so every texel lands where it did - and a mirrored
+ * card is the card turned about its root, not its texture flipped, so an off-centre box holds both ways.
+ * @param {{ width: number, height: number, rows: readonly string[] }} sprite
  */
-export function meadowCardCorners(cards = MEADOW_CARDS) {
-  const out = [];
+export function meadowSpriteBox(sprite) {
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  sprite.rows.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] === '.') continue;
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    }
+  });
+  if (x1 < x0) return { u0: 0.5, u1: 0.5, v0: 0, v1: 0 };   // a sprite of air: a card of no area, which draws nothing
+  return { u0: x0 / sprite.width, u1: (x1 + 1) / sprite.width, v0: (sprite.height - 1 - y1) / sprite.height, v1: (sprite.height - y0) / sprite.height };
+}
+/** the five's boxes, in atlas order */
+export const MEADOW_BOXES = Object.freeze(MEADOW_SPRITES.map((s) => Object.freeze(meadowSpriteBox(s))));
+
+/** AUDIT MEADOW1: THE TUFT'S OWN SEED - the hash of its place in its CELL (the packed position lane, 0..1 of the cell's
+ *  frame) times this. The world position re-rolled every tuft's turn and mirror at each shift of the floating origin
+ *  (PERF-EXT21 moves a slot's frame and never its lanes), every map pixel crossed; the lane is the one place a shift
+ *  never touches. 64 keeps the hash's float32 fract honest (64 x 456.21 is under 2^15). */
+export const MEADOW_SEED = 64;
+
+/** AUDIT MEADOW1: the least a slope's normal stands up when a card is sheared to it (the lane holds a normal to
+ *  GRASS_SLOPE_SPAN, so this is a guard and never binds on a normal the pack wrote) */
+export const MEADOW_SLOPE_FLOOR = 0.3;
+
+/** the lab's own wind law (LAB_GRASS_VS): the lean a metre a second of wind gives a blade's top, over its height, and
+ *  the most of it a gust adds (push = |wind| x (0.55 + gust x 0.75), gust 0..1) */
+export const LAB_LEAN_PER_PUSH = 0.055;
+export const LAB_GUST_MAX = 0.55 + 0.75;
+/** the lab's own standing lean, per axis (the lean lane holds +-LEAN_SPAN / 2 = 0.25): the most it carries a card's
+ *  top sideways, over its side */
+const LEAN_MAX = Math.hypot(0.25, 0.25);
+
+/** THE BOX A CELL IS CULLED BY must hold its cards, which stand taller and reach wider than any blade - over the
+ *  blade's height, the most a card's top stands (its scale, the lush patch's, the share of its side its sprite fills) */
+export const MEADOW_TOP = Math.max(...MEADOW_VARIANTS.map((v, i) => v.scale * MEADOW_PATCH_SCALE[1] * MEADOW_BOXES[i].v1));
+/** ...the most a card reaches sideways from its root, standing: the wider half of its box plus its own lean at its top */
+export const MEADOW_REACH = Math.max(...MEADOW_VARIANTS.map((v, i) => {
+  const b = MEADOW_BOXES[i];
+  return v.scale * MEADOW_PATCH_SCALE[1] * (Math.max(0.5 - b.u0, b.u1 - 0.5) + LEAN_MAX * v.stiff * b.v1 * b.v1);
+}));
+/** ...and how much further a metre a second of wind carries it, at a full gust - the frame's wind is the host's, so
+ *  the reach is too (LabGrassRenderer._drawVisibleSlots): a gale leans the field further than any standing lean */
+export const MEADOW_WIND_REACH = Math.max(...MEADOW_VARIANTS.map((v, i) => v.scale * MEADOW_PATCH_SCALE[1] * LAB_LEAN_PER_PUSH * LAB_GUST_MAX * v.sway * MEADOW_BOXES[i].v1 ** 2));
+
+/** AUDIT MEADOW1: the slots a card's corners take in its array - four, and two no index names. The cards are drawn
+ *  INDEXED, so a corner two triangles share is shaded once; and both of a card's triangles end on slot 2, the corner
+ *  they share, so it is the provoking vertex of both (GL's last-vertex convention) and the only one of the card's whose
+ *  `gl_VertexID % 3 == 2` - the one vertex a card that reads the root's sun and lanterns (GRASS-LIT's law). Six vertex
+ *  invocations a card were four, and its two map reads one. */
+export const MEADOW_CARD_SLOTS = 6;
+/**
+ * The card corners: `cards` vertical quads, MEADOW_CARD_SLOTS slots each, three floats a slot - the corner's x and y
+ * (0..1), and its card's TURN as a share of a half-turn (k / of), plus one on every other card, which the vertex
+ * stage draws mirrored. So the stage needs no count: the near array's three cards and the far array's two are turned
+ * and mirrored by what they carry. Slots 4 and 5 are never indexed.
+ */
+export function meadowCardCorners(cards = MEADOW_CARDS, of = cards) {
+  const out = new Float32Array(cards * MEADOW_CARD_SLOTS * 3);
   for (let k = 0; k < cards; k++) {
-    const t = k / cards + (k % 2);
-    out.push(0, 0, t, 1, 0, t, 1, 1, t, 0, 0, t, 1, 1, t, 0, 1, t);
+    const t = k / of + (k % 2);   // AUDIT MEADOW1: `of` the set it is the first `cards` of - the far set is the near's first two
+    [[0, 0], [1, 0], [1, 1], [0, 1], [0, 0], [0, 0]].forEach(([x, y], s) => out.set([x, y, t], (k * MEADOW_CARD_SLOTS + s) * 3));
   }
-  return new Float32Array(out);
+  return out;
+}
+/** ...and their triangles, labBladeCorners' winding: (0, 1, 2) and (3, 0, 2), both ending on the shared corner */
+export function meadowCardIndices(cards = MEADOW_CARDS) {
+  const out = new Uint16Array(cards * 6);
+  for (let k = 0; k < cards; k++) out.set([0, 1, 2, 3, 0, 2].map((s) => k * MEADOW_CARD_SLOTS + s), k * 6);
+  return out;
 }
 
 /**

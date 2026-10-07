@@ -668,10 +668,11 @@ directory by `test/audit18_bible_docs.test.js`:
   out of EL_GLSL byte for byte) and each light's map where it has one
   (`shadowOfLight`, the flats' reader, at the sun's lift), in the
   provoking vertex alone, handed down `flat` as `vPoint`; the fragment
-  adds it beside R12 (the stage holds 220 uniform vectors at most -
-  221 since MEADOW1's switch, `uArt` - counting every scalar whole and
-  off the code, not its comments - 233 if a driver keeps the two const
-  face tables as uniforms - of the 256 WebGL2 promises; pinned). A
+  adds it beside R12 (the stage holds 221 uniform vectors at most - 220
+  at GRASS-LIT2, MEADOW1's switch `uArt` the one since - counting every
+  scalar whole and off the code, not its comments; 233 if a driver keeps
+  the two const face tables as uniforms - of the 256 WebGL2 promises;
+  pinned). A
   lantern at night: the blade beside it drew
   0.21-0.52x the lit ground and draws 1.06-1.21x (`tools/
   grassLightProbe.mjs`; AUDIT GRASS-LIT2: the numbers first written
@@ -768,7 +769,8 @@ directory by `test/audit18_bible_docs.test.js`:
   lab's blade a choice away; PREF1's shelf stores no default, so every
   player who never chose moves with it). His five sprites - a tall green
   tuft, the same tuft cut short, flowers, a dry tuft (32x32) and a bush
-  (64x64) - are committed as he supplied them under
+  (64x64), his own pixel art with no ARENA2 pixel in it (his word, AUDIT
+  MEADOW1) - are committed as he supplied them under
   `src/assets/grass/source/` (`test/doctrine.test.js` rows) and baked by
   `tools/bakeMeadow.mjs` into `render/meadowArt.js`, each its palette and
   its rows as letters, so the atlas is built at boot with nothing to fetch
@@ -794,23 +796,29 @@ directory by `test/audit18_bible_docs.test.js`:
   stage through `test/glsl.mjs` at all 256 bytes over eight patches and
   holds it to the twin. A sprite stands for `MEADOW_BLADES_PER_TUFT` (3)
   of the lab's blades. (2) NOT A BILLBOARD: CARDS, AS LOW POLY TREES
-  STANDS ITS BUSHES. The mod's bushes are a star of vertical cards through
-  the centre, each the same side view (`504_27`: four at 45 degrees, read
-  off the vendored mesh); a meadow tuft is three such cards at 60 degrees,
-  square (the texels are) and at a yaw of its own FIXED IN THE WORLD - the
-  pixel style's root hash - so walking round a tuft turns its edges to the
-  eye, which is the look. Past `MEADOW_NEAR_AT` of the range (75 m at
-  300, where a tuft is under ten pixels) a cell binds a two-card array
-  instead: each corner carries its card's turn as a share of a half-turn,
+  STANDS ITS BUSHES. The mod's bushes stand on a star of vertical cards
+  through the centre, each the same side view (`504_27`: four at 45
+  degrees under a crown of two stacked pyramids, read off the vendored
+  mesh); a meadow tuft is three such cards at 60 degrees, square (the
+  texels are) and at a yaw of its own FIXED IN THE WORLD - off its place in
+  its cell since AUDIT MEADOW1 (below), the scene's root having re-rolled it
+  at every crossing - so walking round a tuft turns its edges to the eye,
+  which is the look. Past `MEADOW_NEAR_AT` of the range (75 m at 300,
+  where a tuft is under ten pixels) a tuft drops its third card (AUDIT
+  MEADOW1: tuft by tuft across a band, the far set the near set's first
+  two): each corner carries its card's turn as a share of a half-turn,
   plus one on every other card, which is drawn mirrored, so one stage
-  serves both arrays without a count. A bush leans a third as far as
-  grass (`stiff`). Each card is shaded by the trees' own face law (BB_VS,
-  AUDIT LPT A2: clamp(0.72 + 0.28 x its face against the light, 0.5, 1))
-  on the sun's light and the moon's, the face the eye sees, over the
-  blade's own lambert about the ground - so a meadow at noon is lit as its
-  ground is, and a low sun picks the facets out without a face going under
-  half (a first cut lit each card by its face's own lambert, and at dusk
-  the cards turned to the sun stood as bright slabs on a dark ground).
+  serves both arrays without a count. A bush stands a third as crooked as
+  grass (`stiff`; AUDIT MEADOW1: and sways the trees' six tenths of the
+  wind). Each card is shaded by the trees' own face law (BB_VS, AUDIT LPT
+  A2: clamp(0.72 + 0.28 x its face against the light, 0.5, 1)) on the
+  sun's light and the moon's, the face the eye sees, over the blade's own
+  lambert about the ground, by the light's height (AUDIT MEADOW1: the law
+  alone took 0.28 off every upright card at noon) - so a meadow at noon is
+  lit as its ground is, and a low sun picks the facets out without a face
+  going under half (a first cut lit each card by its face's own lambert,
+  and at dusk the cards turned to the sun stood as bright slabs on a dark
+  ground).
   (3) HIS COLOURS, ON THE GROUND'S. His green (75, 106, 69 across the
   tall tuft) is lighter and bluer than every grass tile - the default
   skin's temperate base is 49, 73, 39 (Vanilla Enhanced's 302_2, measured;
@@ -822,42 +830,160 @@ directory by `test/audit18_bible_docs.test.js`:
   green over its larger other channel, x12): a leaf takes the tile's hue,
   a petal or a dry stalk keeps his and takes only the ground's light. His
   green lands where the pixel tuft's middle does - a shade over the tile,
-  in every climate and season - and the far field still gives way to the
-  tile's mean. The luminance ramp is 24 rungs, not 8: the art carries its
-  own palette. THE ATLAS is eight 64-texel cells (512 x 64, a power of two
+  whatever the tile (the law's, within `MEADOW_SHIFT`; pinned on Vanilla
+  Enhanced's temperate base and two other greens) - and the far field
+  still gives way to the tile's mean. No luminance ramp (AUDIT MEADOW1):
+  the art carries its own palette. THE ATLAS is eight 64-texel cells (512 x 64, a power of two
   so every level halves; three cells air), each sprite's foot on row 0, a
   32-pixel sprite at two texels a pixel - so its first level is his own
   picture again - and THE CHAIN is the pixel sheet's coverage law taken
   PER SPRITE: each keeps the share of its own cell it covered (a far
   flower tuft as sparse as a near one, the bush as full), a kept block
   takes its covered texels' MEAN, and every sprite keeps a texel while it
-  is one wide; ten levels to 1x1. A cell's culling box now holds the
-  tallest card (`MEADOW_MAX_SCALE` of its tallest blade up,
-  `MEADOW_REACH` out) off the height the lane DECODES, and the pack's
-  decode frame is still the blades' own bounds. The vertex stage holds 221
-  uniform vectors at most (the GRASS-LIT2 count, plus `uArt`). THE HOSTS:
+  is one wide; ten levels to 1x1. The meadow's frustum test widens the
+  blades' own box by its cards' reach and top (AUDIT MEADOW1, below -
+  MEADOW1 had widened every style's), and the pack's decode frame is still
+  the blades' own bounds. The vertex stage holds 221 uniform vectors at
+  most (the GRASS-LIT2 count, plus `uArt`). THE HOSTS:
   `scenes/world.js` draws it through the same `labGrass.draw` call (the
   row's word read every frame - a uniform, no reload); `scenes/exterior.js`
   (the fixed city), `scenes/worldModes.js` (interiors) and
   `scenes/dungeonContext.js` hold no grass field, as before. COST, on the
   probe's real GL (`tools/meadowProbe.mjs`, SwiftShader; the counts exact,
   never the milliseconds) at the shipped 300 m from a walker's eye: the
-  meadow submits 161,808 tufts, 2.14M vertices (16 near cells on three
-  cards, 98 on two), where the pixel style submits 242,663 tufts and 1.46M
-  and the smooth 6.80M (`tools/grassFieldProbe.mjs`); three cards
-  everywhere were 2.91M, two everywhere 1.94M. The probe photographs a
-  walker's eye, close up, from above (the flower and dry patches), at
-  dusk (the facets), the horizon, and the default lane beside the
-  classic, each beside the pixel style. `test/grassmeadow.test.js` (10);
-  `tools/mutants/meadow1.json` (30, 30 dead); five of `grasspx.json`'s
-  records re-aimed by content at the lines the meadow shares (its unit,
-  its counts, its divisor, the row's default, the stats hook), and every
-  list aimed at the grass's files rerun: 492 dead, 0 survived.
+  meadow submitted 161,808 tufts, 2.14M vertices (16 near cells on three
+  cards, 98 on two), where the pixel style submitted 242,663 tufts and
+  1.46M - both on MEADOW1's widened box, which drew the pixel style 3.7 per
+  cent over its own; three cards everywhere were 2.91M, two everywhere
+  1.94M (AUDIT MEADOW1 has the numbers since, and the fill). The probe
+  photographs a walker's eye, close up, from above (the flower and dry
+  patches), at dusk (the facets), the horizon, and the default lane
+  beside the classic; the eye and the lane beside the pixel style.
+  `test/grassmeadow.test.js` (10; 15 since AUDIT MEADOW1);
+  `tools/mutants/meadow1.json` (30, 30 dead; 80 since); five of
+  `grasspx.json`'s records re-aimed by content at the lines the meadow
+  shares (its unit, its counts, its divisor, the row's default, the stats
+  hook), and the lists aimed at the grass's files rerun: 492 dead, 0
+  survived (those lists not named here; AUDIT MEADOW1's rerun gives its
+  own).
   **The lesson: the owner's art is the art, and the ground is still the
   ground - his green takes the tile's, his petals stay his, and the cards
   light by the trees' own law, because the meadow stands among them.**
+  **AUDIT MEADOW1 (2026-10-06, Mac: "These are my art. Please audit
+  everything and ensure performance is perfect"; then "Let's have our
+  grass tufts off by default also, and have the wind sway effect the new
+  foilage, like it does the trees"; three read-only lenses - the GPU, the
+  host, the pins and the docs - and every fix measured on the probe).**
+  HIS OWN ART: the five sprites are his pixel art, no ARENA2 pixel in them
+  (his word; `test/doctrine.test.js`'s rows say so). THE GRASS IS OFF BY
+  DEFAULT (`grassDensity` 0: no renderer, no field, no atlas until a player
+  picks Full, Half or Quarter; the style a player gets is still the
+  meadow). PREF1's shelf holds no default, so everyone on the old Full
+  moves with it, and a shelf from before PREF1 - whose `grassDensity: 1`
+  was the shelf's own writing - moves too (`systems/uiPrefs.js`); a Half,
+  a Quarter or an Off anywhere was chosen and stands. THE FIELD SWAYS WITH
+  THE TREES: the world host hands the trees' own switch (`floraSwayOn() &&
+  wd.on`, as `setFlatWind` takes it), and a field it holds still takes no
+  wind at all - `uWindV` 0 in every style, the standing lean kept - so the
+  Wind row's part is `Sway` now, the trees' and the grass's. A bush takes
+  the trees' share of the wind for a short flora record (`floraSwayOf`'s
+  six tenths, where MEADOW1 gave it a third), its standing lean still a
+  third (`stiff`; `sway` beside it), and a card is lit by the lean it
+  stands at. THE GUST WAVE STANDS STILL UNDER A CROSSING: the grass's gust
+  and the flats' are one wave, sin(clock x 1.7 - along x 0.35 + its phase),
+  `along` a root's SCENE position down the wind - so every map pixel crossed
+  moved every blade, tuft and tree to another place on it, and the field
+  snapped to a new pose in one frame (up to 0.46 of a card's side in a
+  clear day's wind; since PERF-EXT21 kept the field across a crossing). The
+  world host carries the shift's phase into the clock it hands both
+  (`systems/windDrive.js` `gustPhaseAfterShift`, `gustClock`), so the wave
+  stands still under a crossing and the grass and the trees ride it
+  together. A TUFT'S SEED IS ITS PLACE IN ITS CELL: its yaw and mirror were
+  `hash(root * 0.37)`, the scene's root, which the shift moves 819.2 m -
+  98.8% of tufts turned their cards and half flipped at every crossing.
+  They hash the packed position lane now (`hash(aPA.xy * 64)`, which no
+  shift touches; even over 200,000 positions, chi-squared 18 on 15), and
+  the pixel style's tuft choice, which re-rolled the same way (86.7% of
+  tufts, a GRASS-PX edit and not the lab's text), takes the same seed.
+  THE FILL: a card was 52 to 85 per cent air (the tall tuft drew 30% of its
+  square, the short 21%, the flowers 15%, the dry 22%, the bush 48%), and
+  the meadow rasterised 4.1 times the pixel style's fragments. Each card is
+  cut to its sprite's drawn box now (`MEADOW_BOXES`, 46 to 77 per cent of
+  the square): the uv stays the corner's own place on the card, so every
+  texel lands where it did, and a mirrored card is the card turned about
+  its root rather than its texture flipped, so a box off the centre holds
+  both ways. THE VERTICES: the cards are drawn INDEXED
+  (`meadowCardIndices`), each corner shaded once where six vertices a card
+  ran, and both of a card's triangles end on the corner they share - the
+  provoking vertex of both, and the one corner of the card the stage's
+  `gl_VertexID % 3 == 2` names (`MEADOW_CARD_SLOTS`: two slots a card no
+  index names keep the blades' residue), so the root's sun and lanterns
+  are read once a card, not twice; twelve vertices a near tuft where
+  eighteen ran, eight a far one where twelve. THE BOX: MEADOW1 had widened
+  EVERY style's box by the cards' reach, which drew the pixel and smooth
+  styles 3.7 and 4.7 per cent more vertices from a walker's eye (11 per
+  cent on grassFieldProbe's own frame) and moved their fade and their
+  level of detail; the box is the blades' own again for every use, and
+  the meadow widens it for the frustum alone - by its cards' standing
+  reach (`MEADOW_REACH`), by the frame's WIND (`MEADOW_WIND_REACH` a metre a
+  second at a full gust: MEADOW1's "hair for the wind's push" was 0.02 of a
+  height where a clear day's wind leans a card 0.34 to 0.8, so cells at the
+  screen's edges were culled with their cards in view), by the slope its
+  cards are sheared to, and up to its tallest card (`MEADOW_TOP`) off the
+  height the stage decodes. The pin runs the stage at the wind slider's
+  top over every sprite, card and corner, the steepest standing lean and a
+  slope: every corner stands inside, and the farthest reaches 0.93 to 0.96
+  of the bound. THE SPRITE STYLES DRAW UNBLENDED: their every kept
+  fragment's alpha is exactly 1, so blending was the same picture for a
+  read of the target a pixel. THE MEADOW HAS NO RAMP: its palette is his
+  shading, and 24 rungs folded his shades a rung apart into one (and cost
+  two pow a fragment). THE LOOKS: an upright card turned edge-on is
+  squeezed across, and the GPU's level by the squeezed axis filled it solid
+  - a needle a pixel wide and up to its whole square tall, some 1,200 a
+  frame of 8 px or more from a walker's eye - so a card samples at its
+  HEIGHT's level (`textureLod`, the cell's 64 texels times the uv's steeper
+  step up it a pixel). A card's foot is sheared to the ground's own plane
+  (the decoded normal; a level foot hung a bush's downhill end a quarter
+  metre off a 20-degree hillside). The trees' face law is taken by the
+  light's HEIGHT (`mix(1, face, |light.xz|)`): every card is upright, so
+  the law alone took 0.28 off the whole meadow at noon, where a tree's
+  up-turned faces take it whole; a light overhead lights the cards as their
+  ground, and the facets come as it sinks - the moon's by the moon. The
+  third card goes TUFT BY TUFT across `MEADOW_NEAR_BAND` (5% of the range
+  past `MEADOW_NEAR_AT`, each tuft at its own distance off its seed), and
+  the far set is the near set's first two: a whole cell had turned a card a
+  sixth of a turn and dropped another in one frame. MEASURED
+  (`tools/meadowProbe.mjs`, and its fill pass new: the shipped vertex
+  stage again through a counting fragment stage, additive into a float
+  target with no depth and no discard, so the sum is every fragment the
+  rasteriser hands the fragment stage before any early-Z; a walker's eye,
+  960x540, the shipped 300 m): the meadow was 161,808 tufts, 2.14M
+  vertices and 4.05M fragments, and is 160,176, 1.44M and 2.21M (a third
+  fewer vertices, 45% fewer fragments) - about the pixel style's own
+  vertices; the pixel style was 242,663 tufts and 1.46M and is 234,084 and
+  1.40M, main's own again, its 0.99M fragments unmoved; the smooth was
+  8.79M vertices and is 8.39M, its 0.38M fragments unmoved. THE PINS (the
+  third lens): two card-array mutants that scrambled every tuft had
+  survived (the corners read at the blades' stride, the turn never
+  enabled) - the arrays are read back now through the pointers they set
+  and held to `meadowCardCorners` and `meadowCardIndices`; the shares,
+  scales and colour numbers are held exactly, and the byte grid's counts
+  ([72, 118, 2, 61, 3] a poor patch, [147, 63, 35, 5, 6] a lush one -
+  tall, short, flowers, dry, bush); which blocks the chain keeps is held
+  to the law's order; the moon is shaded under its own direction and the
+  mirror read over 400 tufts. `test/grassmeadow.test.js` (15) and one in
+  `test/pref1_shelf.test.js`; `tools/mutants/meadow1.json` (80 - the 30 of
+  MEADOW1, re-aimed by content where their lines moved, and 50 of the
+  audit's - 80 dead); `blood1.json`'s one record and three of
+  `grasspx.json`'s re-aimed by content; and every other record aimed at a
+  file this touched or naming a test it moved, gathered from 47 lists into
+  one (`node tools/mutate.mjs --jobs 4` over 311 records): 310 dead, 0
+  survived, 1 equivalent as recorded.
+  **The lesson: a card is its picture's box, not its square; and whatever
+  rides the floating origin is measured in a frame the shift does not
+  move.**
 - `grassPixelArt.js` - GRASS-PX THE TUFT SHEET: eight 8x16 tufts (GRASS-PX4; 16x32 until 2026-09-22, and the laws are written as fractions of the tuft so the old size still builds through `buildTuftSheet({ w, h })`) built at boot from a seed (one-texel stalks bending as height squared, four tones with one highlight texel, alpha 0 or 255), their coverage mip chain (max alpha per block, never an average, down to 1x1), the pixel style's numbers (8 Hz sway, 24 lean steps, 3x tuft width, 8-step ramp, 4 tint bands) and `pixelGrass()`, the row's word; the shader edits themselves are `GRASSPX_VS_EDITS` / `GRASSPX_FS_EDITS` in labGrass.js.
-- `grassMeadow.js` - MEADOW1 THE MEADOW: the owner's five sprites as a grass style - `MEADOW_VARIANTS` (each sprite's card scale over the lab's blade and its stiffness), the patch's shares and size (`MEADOW_SHARES`, `MEADOW_LUSH`, `MEADOW_PATCH_SCALE`) and `meadowPick`, the law's JS twin; the atlas (`buildMeadowAtlas`, eight 64-texel cells, the foot on row 0) and its per-sprite coverage chain (`buildMeadowMips`); the cards (`meadowCardCorners`: each corner's turn as a share of a half-turn, +1 when mirrored; `MEADOW_CARDS` 3 near, `MEADOW_CARDS_FAR` 2 past `MEADOW_NEAR_AT`); the trees' face law (`MEADOW_FACE`); the colour's anchor (`MEADOW_GREEN`, `meadowArtGround`, `MEADOW_SHIFT`, `MEADOW_GREEN_EDGE`, `meadowTexel` the fragment's twin); and `meadowGrass()`, the row's word. The shader edits are `GRASSMEADOW_VS_EDITS` / `GRASSMEADOW_FS_EDITS` in labGrass.js.
+- `grassMeadow.js` - MEADOW1 THE MEADOW: the owner's five sprites as a grass style - `MEADOW_VARIANTS` (each sprite's card scale over the lab's blade, its standing lean's share `stiff` and, AUDIT MEADOW1, its wind's share `sway`, the trees' own), the patch's shares and size (`MEADOW_SHARES`, `MEADOW_LUSH`, `MEADOW_PATCH_SCALE`) and `meadowPick`, the law's JS twin; the atlas (`buildMeadowAtlas`, eight 64-texel cells, the foot on row 0) and its per-sprite coverage chain (`buildMeadowMips`); each sprite's drawn box (`meadowSpriteBox`, `MEADOW_BOXES` - a card is cut to it) and the tuft's seed off its cell's lane (`MEADOW_SEED`); the cards (`meadowCardCorners`: each corner's turn as a share of a half-turn, +1 when mirrored, `MEADOW_CARD_SLOTS` six a card, and `meadowCardIndices`, both triangles ending on the shared corner; `MEADOW_CARDS` 3 near, `MEADOW_CARDS_FAR` 2 - the near set's first two - handed over tuft by tuft across `MEADOW_NEAR_BAND` past `MEADOW_NEAR_AT`); the box a cell's cards need (`MEADOW_TOP`, `MEADOW_REACH`, `MEADOW_WIND_REACH` off the lab's own `LAB_LEAN_PER_PUSH` and `LAB_GUST_MAX`, `MEADOW_SLOPE_FLOOR`); the trees' face law (`MEADOW_FACE`); the colour's anchor (`MEADOW_GREEN`, `meadowArtGround`, `MEADOW_SHIFT`, `MEADOW_GREEN_EDGE`, `meadowTexel` the fragment's twin); and `meadowGrass()`, the row's word. The shader edits are `GRASSMEADOW_VS_EDITS` / `GRASSMEADOW_FS_EDITS` in labGrass.js.
 - `meadowArt.js` - MEADOW1: GENERATED by `tools/bakeMeadow.mjs` from the owner's PNGs under `src/assets/grass/source/` - each sprite's palette and its rows, one letter a texel; never edited by hand, held to the bake and the PNGs by `test/grassmeadow.test.js`.
 - `spoilsGlow.js` - WB5: a fallen boss's spoils at rest, each in a BEAM of its tier's colour rising from a HALO on the floor (Loot Rarity's own colours - the first place a rarity is drawn in the world), a Legendary's and an Artifact's taller and pulsing. One foreign pass drawn beside the Burning Court's telegraph (the same seam), on the duel wall's law: fixed geometry placed by uniforms, added onto the frame, no depth written, fogged.
 - `deadlands.js` - WB6a: the Deadlands round the Burning Court - THE SKY, painted per pixel on one triangle at the far plane (a churning overcast lit from below; Oblivion's VORTEX over the great tower, turning whole and pouring inward; the BEAM up into its eye; black Daedric TOWERS with horns and a crown; three rings of JAGGED RIDGES hazier the further, with falls of fire; seeded LIGHTNING in the deck), and THE SEA, a disc of moving fire (crust plates on molten channels, glowing cracks, a slow pulse) whose rim becomes exactly the sky's horizon, so no edge is ever seen. One foreign pass in the dungeon arm after the court's solid geometry and before its flats (PERF2's law: the sea depth-tested, the sky tested at the far plane and never written); and the court's own light (`courtLighting` - a trilight red above and fire-orange below, the vortex's key light from behind the boss). WB6b: THE AIR'S LIFE (`drawLife`, after the telegraph in the court's pass - one vertex a mote: embers off the sea from past the court's edge and off its braziers, turning with the drift of the air, and ash falling through it; depth-tested and never written, the ash laid over premultiplied and the embers added; the world image's own height sizes the motes, RETRO1's `worldViewportPx` as the bolts read it); a strike LIGHTS THE COURT (`courtLighting(flash)`: the trilight's sky flares and the key swings toward it); `flashOfSlot`, the one answer the sky's flash and the thunder (scenes/deadlandsAir.js) read, on slots whole over the period; and the hosts hand the relay's clock (world.js `deadlandsSeconds`), so it is one moment on every screen. The land and the floor's shards round the court are court draws, not this pass (world/deadlandsLand.js, stood by worldModes' `standDeadlands`).
@@ -943,7 +1069,11 @@ directory by `test/audit18_bible_docs.test.js`:
   the climate's nature archive is tagged (`floraSwayOf`: a tree whole, a
   bush six tenths; people, lights, signs, foes and every indoor flat 0),
   which is the shader's off switch, so an interior or a dungeon that
-  never sets the wind draws as before. Three rows on the Features home
+  never sets the wind draws as before. (AUDIT MEADOW1, 2026-10-06: the
+  grass field's wind follows the same switch - a field the flats' switch
+  holds still takes none - and the world host hands the flats and the
+  grass one clock, the gust wave's phase carried across the floating
+  origin, `windDrive.js` `gustClock`.) Three rows on the Features home
   (`wind-wisps`, `wind-sound`, `flora-sway`; on by default, the player's
   own online), read every frame; `?wisps=off`, `?windaudio=off`,
   `?sway=off` the kill doors. ENHANCED ONLY: under the classic sky the

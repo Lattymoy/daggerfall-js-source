@@ -67,11 +67,12 @@
  {
   "name": "GRASSPX-the-tuft-index-is-unclamped-so-a-phase-of-one-samples-past-the-sheet",
   "file": "src/render/labGrass.js",
-  "old": "      + '  vVar = min(floor(hash(root * 0.37) * uPxVariants), uPxVariants - 1.0);   // GRASS AUDIT 1: the prelude\\'s hash, scaled to keep its float32 fract honest',",
-  "new": "      + '  vVar = floor(hash(root * 0.37) * uPxVariants);   // GRASS AUDIT 1: the prelude\\'s hash, scaled to keep its float32 fract honest',",
+  "old": "      + '  vVar = min(floor(hash(aPA.xy * 64.0) * uPxVariants), uPxVariants - 1.0);   // GRASS AUDIT 1: the prelude\\'s hash, its float32 fract honest; AUDIT MEADOW1: of the cell\\'s lane, not the scene\\'s root - every tuft re-rolled at each map pixel crossed',",
+  "new": "      + '  vVar = floor(hash(aPA.xy * 64.0) * uPxVariants);   // GRASS AUDIT 1: the prelude\\'s hash, its float32 fract honest; AUDIT MEADOW1: of the cell\\'s lane, not the scene\\'s root - every tuft re-rolled at each map pixel crossed',",
   "tests": [
    "test/grasspx.test.js"
-  ]
+  ],
+  "why": "AUDIT MEADOW1 re-aimed by content: the seed is the cell's lane now"
  },
  {
   "name": "GRASSPX-the-air-texel-is-not-discarded",
@@ -240,21 +241,22 @@
  {
   "name": "AUDIT-GRASSPX-the-sprite-is-the-gust-phase",
   "file": "src/render/labGrass.js",
-  "old": "vVar = min(floor(hash(root * 0.37) * uPxVariants), uPxVariants - 1.0);",
+  "old": "vVar = min(floor(hash(aPA.xy * 64.0) * uPxVariants), uPxVariants - 1.0);",
   "new": "vVar = min(floor(aPC.a * uPxVariants), uPxVariants - 1.0);",
   "tests": [
    "test/grasspx.test.js"
-  ]
+  ],
+  "why": "AUDIT MEADOW1 re-aimed by content: the seed is the cell's lane now"
  },
  {
   "name": "AUDIT-GRASSPX-the-step-counts-are-gated-so-smooth-is-NaN",
   "file": "src/render/labGrass.js",
-  "old": "    gl.uniform1f(u.uPxVariants, meadow ? MEADOW_SLOTS : this.pxVariants);\n    gl.uniform1f(u.uPxSteps, meadow ? MEADOW_RAMP_STEPS : PX_RAMP_STEPS);\n    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);\n    if (pixel) {",
-  "new": "    if (pixel) {\n    gl.uniform1f(u.uPxVariants, meadow ? MEADOW_SLOTS : this.pxVariants);\n    gl.uniform1f(u.uPxSteps, meadow ? MEADOW_RAMP_STEPS : PX_RAMP_STEPS);\n    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);",
+  "old": "    gl.uniform1f(u.uPxVariants, meadow ? MEADOW_SLOTS : this.pxVariants);\n    gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);\n    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);\n    if (pixel) {",
+  "new": "    if (pixel) {\n    gl.uniform1f(u.uPxVariants, meadow ? MEADOW_SLOTS : this.pxVariants);\n    gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);\n    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);",
   "tests": [
    "test/grasspx.test.js"
   ],
-  "why": "MEADOW1 re-aimed by content: the counts are the meadow's or the pixel style's."
+  "why": "MEADOW1 re-aimed by content: the counts are the meadow's or the pixel style's; AUDIT MEADOW1: the step count is the pixel style's alone again (the meadow skips the ramp in its fragment stage)"
  },
  {
   "name": "AUDIT-GRASSPX-the-smooth-style-binds-the-sheet",

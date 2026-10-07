@@ -319,11 +319,14 @@ test('WIND3 the hosts: both exterior hosts read the one wind once a frame, feed 
     const modal = s.indexOf('if (modes.frame(dt, now)) {');
     assert.ok(s.slice(modal, modal + 900).includes('windAudio.stop();'), `${host}: silent indoors`);
     assert.ok(s.indexOf('windAudio.stop();') < s.indexOf('windAudio.update(wd, dt, windSoundOn());'), `${host}: the modal branch returns before the exterior tick`);
-    one(/renderer\.setFlatWind\(floraSwayOn\(\) && wd\.on \? \[wd\.windV\[0\], wd\.windV\[1\], now \/ 1000, wd\.gust\] : null\);[^\n]*\n\s*renderer\.drawBillboards\(/g, 'the flats\' wind, right before their draw');
+    // PIN MOVED (AUDIT MEADOW1): the world host hands the wave the clock its floating-origin crossings carried (windDrive.js
+    // gustClock, so the flats and the grass stand still under a crossing); the exterior host has no floating origin
+    const clock = host === 'src/scenes/world.js' ? 'windClock' : 'now \\/ 1000';
+    one(new RegExp(`renderer\\.setFlatWind\\(floraSwayOn\\(\\) && wd\\.on \\? \\[wd\\.windV\\[0\\], wd\\.windV\\[1\\], ${clock}, wd\\.gust\\] : null\\);[^\\n]*\\n\\s*renderer\\.drawBillboards\\(`, 'g'), 'the flats\' wind, right before their draw');
     assert.equal((s.match(/batch\.sway = floraSwayOf\(archive, natureArchive, (sib\.)?size\.h\);/g) || []).length, 2, `${host}: the season's batch and the classic one tagged`);
     for (const imp of ["from '../systems/windDrive.js'", "from '../render/windWisps.js'", "from '../systems/windAudio.js'"]) assert.ok(s.includes(imp), `${host}: imports ${imp}`);
   }
-  assert.match(rd('src/scenes/world.js'), /\{ dir: wd\.dir, speed: wd\.slider \* wd\.gust, windV: wd\.windV \}/, 'the grass takes the same answer');
+  assert.match(rd('src/scenes/world.js'), /\{ dir: wd\.dir, speed: wd\.slider \* wd\.gust, windV: wd\.windV, sway: floraSwayOn\(\) && wd\.on \}/, 'the grass takes the same answer');   // PIN MOVED (AUDIT MEADOW1): and the flats' own switch
 });
 
 test('WIND3 records: the rendering page, the features arc, the ledger\'s wind row and the testing row', () => {
