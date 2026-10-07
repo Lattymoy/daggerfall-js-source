@@ -16,6 +16,7 @@ import { wodOn, wodLightColors } from '../world/worldOfDaggerfall.js';   // WOD4
 import { PRIVATEERS_HOLD_BLOCK, HOLD_MODELS, HOLD_FLATS, holdModelMatrix, holdFireLights, rollHoldFoes } from '../world/wodPrivateersHold.js';   // WOD4: the camp at Privateer's Hold
 import { frameBegin, frameEnd, frameAbort } from '../systems/frameClock.js';   // PERF1: the frame's script time; AUDIT-WH2 L1-F4: and the door an early return takes
 import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate - a held frame re-arms before the clock and the input frame
+import { deliverOwedShots } from '../ui/screenshot.js';   // SHOT1: a PrintScreen shot is read at this host's frame foot, after its last draw
 import { SKY_CLEAR } from '../render/renderer.js'; import { centreFromFeet } from '../characters/enemyAnchor.js';   // REVIEW 2026-09-05: one line, so the cites below it hold
 import { FlatAnimator, armFlatAnim } from '../render/flatAnimation.js';   // FA1: the flats that move
 import { racialSuppressPopulationSpawns, racialSuppressTalk, lycanthropeMoveSound } from '../systems/lycanthropy.js';   // V4: the transformed gates; LM1: the 4-20s move-sound loop; DISC10-E L3: the inventory refusal moved INTO the window door
@@ -4946,6 +4947,7 @@ export async function bootExterior(canvas, renderer, params, status) {
       hccTick(dt, now);   // AUDIT HCC H1: the runtime's LateUpdate indoors too
       townTalk.frame(dt);
       renderer.resolveFrame();   // AUDIT RETRO1 E5/C8 (second pass F1/J2): this host's modal foot too - world.js's has it
+      deliverOwedShots();   // SHOT1: the PrintScreen shots owed to a drawn frame, read from this one (ui/screenshot.js)
       // DISC29-D (Skeptikali on Discord: a dungeon at 99.9% CPU, and a counter that could not say whose): the indoor
       // foot is a WHOLE frame - the interior or the dungeon, its foes, its draw - so it takes its sample, and the FPS
       // counter's script time reads indoors as it does outside. AUDIT-WH2 L1-F4 closed it unsampled, for the frame that
@@ -6034,6 +6036,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything
     renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
+    deliverOwedShots();   // SHOT1: the PrintScreen shots owed to a drawn frame, read from this one (ui/screenshot.js)
 
     frames++;
     if (shotMode) window.__frame++;   // T1: probes frame-sync (the process doctrine - sleeps sample stale state). AUDIT 17e F37: INCREMENT - assigning `frames` undid worldModes' modal-frame increments, so the counter ran backwards after an overlay and frame-synced probes stalled.

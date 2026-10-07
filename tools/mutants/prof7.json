@@ -1107,8 +1107,8 @@
   {
     "name": "PROF7-world-dungeon-bodies-street",
     "file": "src/scenes/world.js",
-    "old": "? bodiesOf(modes?.dungeonCtx?.foes, bodyStamps, (f) => modes?.dungeonCtx?.corpseAt?.(f),",
-    "new": "? bodiesOf(exteriorFoes.foes, bodyStamps, (f) => modes?.dungeonCtx?.corpseAt?.(f),",
+    "old": "{ street: exteriorFoes, dungeon: modes?.dungeonCtx, interior: modes?.interiorFoes }, bodyStamps);",
+    "new": "{ street: exteriorFoes, dungeon: exteriorFoes, interior: modes?.interiorFoes }, bodyStamps);",
     "tests": [
       "test/prof7_client.test.js"
     ]
