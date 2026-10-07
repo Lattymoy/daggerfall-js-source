@@ -44,7 +44,7 @@ async function underground({ rank = 0, pick = true } = {}) {
   const tracks = [{ profession: 'mining', xp: xpForRank(rank), rank, specs: { 50: null, 100: null } }];
   const door = {
     account: () => 'acct-1',
-    state: async () => ({ ok: true, data: { day, character: 'c1', tracks, today: {}, taken: [], stores: [], caps: { harvests: 60, stores: 5000 } } }),
+    state: async () => ({ ok: true, data: { day, character: 'c1', tracks, today: {}, taken: [], stores: [], caps: { stores: 5000, withdraw: 200, highHides: 3 } } }),
     pixels: async () => ({ ok: true, data: { pixels: [], dungeons: [] } }),
     harvest: async () => ({ ok: false, error: 'offline' }),
   };
@@ -157,19 +157,21 @@ test('VEIN-NEED: what a node says for each thing it lacks - the rank with the pl
   } finally { setForagingHost(null); }
   // the words, off each kind's own plan (the kinds mark a rank that is short: `needsRank`)
   const silver = { what: 'dvein', tier: 3, material: 'metal:silver' };
-  const mine = (o) => ({ ...minePlan({ node: silver, taken: false, counting: false, rank: 0, pick: true, storesFull: () => false, today: 0, cap: 60, ...o }), profession: 'mining' });
+  const mine = (o) => ({ ...minePlan({ node: silver, taken: false, counting: false, rank: 0, pick: true, storesFull: () => false, ...o }), profession: 'mining' });
   assert.equal(needLine(mine({}), () => 0), 'Mine Silver: needs Mining 25 - your Mining is 0');
   assert.equal(mine({}).needsRank, 25);
   assert.equal(needLine(mine({ rank: 25 }), () => 25), '', 'ready: nothing to say');
   assert.equal(needLine(mine({ counting: true }), () => 0), 'That gathering is being counted.');
   assert.equal(needLine(mine({ taken: true }), () => 0), '', 'worked today: its prompt says so, and it is no target');
-  assert.equal(needLine(mine({ rank: 25, today: 60 }), () => 25), 'Mine Silver: Mining 25 - 60 of 60 today');
+  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): sixty today said 'Mine Silver: Mining 25 - 60 of 60
+  // today'; the plan asks no day now, so a day past it is no need
+  assert.equal(needLine(mine({ rank: 25, today: 600, cap: 60 }), () => 25), '', 'a day past the old sixty: ready, nothing to say');
   assert.equal(needLine(mine({ rank: 25, storesFull: () => true }), () => 25), 'Mine Silver: Stores full - Silver');
   const oak = { tier: 3, material: 'log:oak' };
-  const tree = treePlan({ node: oak, taken: false, counting: false, rank: 4, axe: true, storesFull: () => false, today: 0, cap: 60 });
+  const tree = treePlan({ node: oak, taken: false, counting: false, rank: 4, axe: true, storesFull: () => false });
   assert.equal(tree.needsRank, 25);
   assert.match(needLine({ ...tree, profession: 'logging' }, () => 4), /^Chop \w+: needs Logging 25 - your Logging is 4$/);
-  const herb = patchPlan({ patch: { herb: 1, tier: 2 }, taken: () => false, counting: () => false, basket: false, rank: 3, sickle: true, basketTool: false, storesFull: () => false, herbKeyOf: () => null, today: 0, cap: 60 });
+  const herb = patchPlan({ patch: { herb: 1, tier: 2 }, taken: () => false, counting: () => false, basket: false, rank: 3, sickle: true, basketTool: false, storesFull: () => false, herbKeyOf: () => null });
   assert.equal(herb.needsRank, 10);
   assert.match(needLine({ ...herb, profession: 'herbalism' }, () => 3), /^Pick .+: needs Herbalism 10 - your Herbalism is 3$/);
   assert.equal(needLine(null, () => 0), '');

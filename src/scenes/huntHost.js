@@ -10,7 +10,8 @@
 //   4.4 skins is stamped there with its id - the UTC day and twelve hex
 //   digits drawn at the kill (net/nodeLaw.js bodyKey). Hunting is bounded,
 //   not witnessed (PROF0 6): the id is the client's word and the account's
-//   day - 30 hides, 3 of tiers 5-6 - the service's whole defence.
+//   rare hides - 3 of tiers 5-6 a day - the service's defence (CAP-OFF:
+//   the day's thirty hides of any tier are gone).
 //   THE NODE. A stamped body is a node while it lies in its pool (the
 //   street's, or the dungeon's) and the pack holds a Skinning Knife: DFU's
 //   corpse first, a node only for the one who can skin it - so a body is
@@ -31,7 +32,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { bodyKey, utcDayOfMs } from '../net/nodeLaw.js';
 import {
-  hideOfFoe, tierOpen, TIER_RANKS, knifeBand, SKINNING_KNIFE, KNIFE_CHECKS, KNIFE_REFUSALS, HIDES_PER_DAY, HIGH_HIDES_PER_DAY,
+  hideOfFoe, tierOpen, TIER_RANKS, knifeBand, SKINNING_KNIFE, KNIFE_CHECKS, KNIFE_REFUSALS, HIGH_HIDES_PER_DAY,
   HIGH_HIDE_TIER, TRACKER_M, KNIFE_WHERE, KNIFE_WHERE_WORDS, TRACE_ACT, storesFullIn, fullWordsIn,
 } from '../net/professionLaw.js';
 import { enemyDisplayName } from '../characters/enemyBasics.js';
@@ -128,14 +129,14 @@ const foeName = (mobileType) => enemyDisplayName(mobileType) ?? 'body';
 
 /**
  * WHAT E DOES AT A BODY, and the prompt that says it: `{ harvest, verb, rest, ready }` - `ready` false with `rest`
- * naming what is missing (skinned, being counted, the ground the knife never works - AUDIT 32 H4, the account's day, its
- * rare hides, the rank, the Stores' room); a rank short carries the rank it needs (VEIN-NEED). `loot` - the choice key's
+ * naming what is missing (skinned, being counted, the ground the knife never works - AUDIT 32 H4, the account's rare
+ * hides, the rank, the Stores' room - CAP-OFF: no day's cap); a rank short carries the rank it needs (VEIN-NEED). `loot` - the choice key's
  * pick: the body's loot, the press handed on. `where` - the knife's ground refusal (KNIFE_WHERE_WORDS), or null;
  * `steep` - the body lies under the player's feet, its line below the look's reach (AUDIT 32 H7).
  * @param {{ body: any, taken: boolean, counting: boolean, rank: number, storesFull: (key: string) => boolean,
- *   hides: number, high: number, loot?: boolean, where?: string|null, steep?: boolean, fullWords?: string }} o
+ *   high: number, loot?: boolean, where?: string|null, steep?: boolean, fullWords?: string }} o
  */
-export function huntPlan({ body, taken, counting, rank, storesFull, hides, high, loot = false, where = null, steep = false, fullWords = 'Stores full' }) {   // BAG1: `fullWords` the book's
+export function huntPlan({ body, taken, counting, rank, storesFull, high, loot = false, where = null, steep = false, fullWords = 'Stores full' }) {   // BAG1: `fullWords` the book's
   const name = foeName(body.foe);
   const harvest = 'hide';
   const verb = `Skin the ${name}`;
@@ -145,7 +146,6 @@ export function huntPlan({ body, taken, counting, rank, storesFull, hides, high,
   if (counting) return { harvest, verb, rest: 'being counted', ready: false };
   if (where) return { harvest, verb, rest: where, ready: false };
   if (steep) return { harvest, verb, rest: 'step back', ready: false };
-  if (hides >= HIDES_PER_DAY) return { harvest, verb, rest: `${rankWord} - ${hides} of ${HIDES_PER_DAY} hides today`, ready: false, full: true };
   if (body.tier >= HIGH_HIDE_TIER && high >= HIGH_HIDES_PER_DAY) return { harvest, verb, rest: `${high} of ${HIGH_HIDES_PER_DAY} rare hides today`, ready: false, full: true };
   if (!tierOpen(rank, body.tier)) return { harvest, verb, rest: `needs Hunting ${TIER_RANKS[body.tier - 1]}`, ready: false, needsRank: TIER_RANKS[body.tier - 1] };
   if (storesFull(body.hide)) return { harvest, verb, rest: `${fullWords} - ${materialLabel(body.hide)}`, ready: false };
@@ -182,7 +182,7 @@ export function huntKind({ book, bodies, openLoot = null }) {
       const hunt = book.state.hunt ?? { hides: 0, high: 0 };
       const plan = huntPlan({
         body: b, taken: book.taken(b.key, 'hide'), counting: book.counting(b.key, 'hide'), rank: rank('hunting'),
-        storesFull: (key) => storesFullIn(book, key), fullWords: fullWordsIn(book), hides: hunt.hides ?? 0, high: hunt.high ?? 0,   // STORES-ROOM: every origin, as the service counts
+        storesFull: (key) => storesFullIn(book, key), fullWords: fullWordsIn(book), high: hunt.high ?? 0,   // STORES-ROOM: every origin, as the service counts
         where: actChecksRefusal(KNIFE_WHERE, KNIFE_WHERE_WORDS),   // AUDIT 32 H4: a settlement or the sea - E the loot's
         steep: Number.isFinite(pitch) && pitch < BODY_STEEPEST_DEG,   // AUDIT 32 H7: stood over, its line out of the look's reach
       });
@@ -195,7 +195,7 @@ export function huntKind({ book, bodies, openLoot = null }) {
       const skin = { ...this.plan(b, ctx), id: 'hide' };
       if (!searchable(b)) return [skin];
       const key = openLoot ? b.lootKey() : null;
-      const search = huntPlan({ body: b, taken: false, counting: false, rank: 0, storesFull: () => false, hides: 0, high: 0, loot: true });
+      const search = huntPlan({ body: b, taken: false, counting: false, rank: 0, storesFull: () => false, high: 0, loot: true });
       return [skin, { ...search, profession: 'hunting', id: 'search', ...(key ? { open: () => openLoot?.(key) } : {}) }];
     },
     start(b, plan, { entity, rank, keyLabel, tool = null, byPress = false }) {
@@ -217,8 +217,8 @@ export function huntKind({ book, bodies, openLoot = null }) {
         hand: (a) => (a.tool ? KNIFE_HAND : null),
       };
     },
-    /** The account's day, as the chip says it: its hides against the day's 30. */
-    tally: () => ({ n: book.state.hunt?.hides ?? 0, cap: book.state.caps?.hides ?? HIDES_PER_DAY }),
+    /** The account's day, as the chip says it: its hides today (CAP-OFF: against no cap). */
+    tally: () => ({ n: book.state.hunt?.hides ?? 0 }),
     cleanNote: () => ' (a clean pelt)',
     /** AUDIT 32 P10: the trace's end said - a clean pelt, a torn one (its part lost), or a true line drawn too quick or
      *  too slow to be clean; a torn pelt and a mistimed one went unsaid. */

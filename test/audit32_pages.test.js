@@ -47,7 +47,7 @@ function pages(over = {}, heldIn = {}) {
   const held = new Map(Object.entries({ 'ingot:iron': 9, 'metal:tin': 9, 'cloth:linen': 9, 'hide:rat': 4, ...heldIn }));
   const tracks = new Map([['outfitting', { profession: 'outfitting', xp: xpForRank(60), rank: 60, specs: { 50: null, 100: null } }], ['smithing', { profession: 'smithing', xp: xpForRank(60), rank: 60, specs: { 50: null, 100: null } }], ['hunting', { profession: 'hunting', xp: 0, rank: 0, specs: { 50: null, 100: null } }]]);
   const book = {
-    state: { open: true, day: 1, character: 'c', account: 'a', readAt: Date.now(), stores: new Map(), tracks, today: {}, caps: { hides: 30, highHides: 3 }, hunt: { hides: 0, high: 0 } }, stale: () => false, refresh: async () => ({ ok: true }),
+    state: { open: true, day: 1, character: 'c', account: 'a', readAt: Date.now(), stores: new Map(), tracks, today: {}, caps: { highHides: 3 }, hunt: { hides: 0, high: 0 } }, stale: () => false, refresh: async () => ({ ok: true }),
     held: (k) => held.get(k) ?? 0, store: (k) => ({ material: k, own: held.get(k) ?? 0, bought: 0 }),
     track: (p) => tracks.get(p) ?? { profession: p, xp: 0, rank: 0, specs: { 50: null, 100: null } }, materials: () => [], pendingWithdrawals: 0, pendingCrafts: 0,
   };

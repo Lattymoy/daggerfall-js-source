@@ -15,7 +15,7 @@ import { standService, T0, sessionStorageOf } from './accountDb.mjs';
 import { accountProf, SESSION_KEY, accountRefusalText } from '../src/net/accountClient.js';
 import { createProfBook } from '../src/net/profBook.js';
 import { bodyKey, parseNodeKey, utcDayOfMs } from '../src/net/nodeLaw.js';
-import { xpForRank, SKINNING_KNIFE, TRACE_ACT, KNIFE_REFUSALS, HIDES_PER_DAY, TRACKER_M } from '../src/net/professionLaw.js';
+import { xpForRank, SKINNING_KNIFE, TRACE_ACT, KNIFE_REFUSALS, TRACKER_M } from '../src/net/professionLaw.js';
 import { TOOL_LIFE, recipeById } from '../src/net/recipeLaw.js';
 import { createBodyStamps, bodiesOf, trackerMarks, huntPlan, huntKind, KNIFE_HAND, BODY_REACH, bodyId } from '../src/scenes/huntHost.js';
 import { createGatherHost, aimAt, storesWhereLine } from '../src/scenes/gatherHost.js';
@@ -220,17 +220,18 @@ test('PROF7 bodies: the player\'s own kill stamps a foe 4.4 skins - today\'s key
   assert.deepEqual(trackerMarks(pool, [0, 0, 0]), [[10, 10], [0, TRACKER_M]]);
 });
 
-test('PROF7 plan: what E does at a body - the knife skins; the act choice key searches the body instead (its loot DFU\'s, untouched); skinned, being counted, the account\'s day and its rare hides, the rank and the Stores\' room each said', () => {
+test('PROF7 plan: what E does at a body - the knife skins; the act choice key searches the body instead (its loot DFU\'s, untouched); skinned, being counted, the account\'s rare hides, the rank and the Stores\' room each said - no day\'s thirty (CAP-OFF)', () => {
   const body = { foe: MOBILE_TYPES.GrizzlyBear, tier: 2, hide: 'hide:bear' };
-  const plan = (o = {}) => huntPlan({ body, taken: false, counting: false, rank: 10, storesFull: () => false, hides: 0, high: 0, ...o });
+  const plan = (o = {}) => huntPlan({ body, taken: false, counting: false, rank: 10, storesFull: () => false, high: 0, ...o });
   assert.deepEqual(plan(), { harvest: 'hide', verb: 'Skin the Grizzly Bear', rest: 'Hunting 10', ready: true });
   assert.deepEqual(plan({ loot: true }), { harvest: 'hide', verb: 'Search the Grizzly Bear', rest: '', ready: false, loot: true });
   assert.deepEqual([plan({ taken: true }).verb, plan({ taken: true }).rest], ['The Grizzly Bear - skinned', '']);
   assert.equal(plan({ counting: true }).rest, 'being counted');
-  assert.deepEqual([plan({ hides: HIDES_PER_DAY }).rest, plan({ hides: HIDES_PER_DAY }).full], [`Hunting 10 - ${HIDES_PER_DAY} of ${HIDES_PER_DAY} hides today`, true]);
+  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): thirty hides today said 'Hunting 10 - 30 of 30 hides today'
+  assert.deepEqual(plan({ hides: 300 }), plan(), 'a day past the old thirty: as ready as none');
   assert.equal(plan({ high: 3 }).ready, true, 'a bear is no rare hide');
   const harpy = { foe: MOBILE_TYPES.Harpy, tier: 5, hide: 'hide:harpy' };
-  assert.equal(huntPlan({ body: harpy, taken: false, counting: false, rank: 60, storesFull: () => false, hides: 3, high: 3 }).rest, '3 of 3 rare hides today');
+  assert.equal(huntPlan({ body: harpy, taken: false, counting: false, rank: 60, storesFull: () => false, high: 3 }).rest, '3 of 3 rare hides today');
   assert.deepEqual([plan({ rank: 9 }).rest, plan({ rank: 9 }).needsRank], ['needs Hunting 10', 10]);
   assert.match(plan({ storesFull: (k) => k === 'hide:bear' }).rest, /^Stores full - /);
 });
@@ -240,7 +241,7 @@ test('PROF7 host: a body is a node only while the pack holds a knife; targeted w
   let taken = [];
   const door = {
     account: () => 'acct-1',
-    state: async () => ({ ok: true, data: { day: utcDayOfMs(NOON * 1000), character: 'c1', tracks: [{ profession: 'hunting', xp: xpForRank(10), rank: 10, specs: { 50: null, 100: null } }], today: {}, taken, stores: [], caps: { harvests: 60, stores: 5000, hides: 30, highHides: 3 }, hunt: { hides: 4, high: 0 } } }),
+    state: async () => ({ ok: true, data: { day: utcDayOfMs(NOON * 1000), character: 'c1', tracks: [{ profession: 'hunting', xp: xpForRank(10), rank: 10, specs: { 50: null, 100: null } }], today: {}, taken, stores: [], caps: { stores: 5000, withdraw: 200, highHides: 3 }, hunt: { hides: 4, high: 0 } } }),
     pixels: async () => ({ ok: true, data: { pixels: [], dungeons: [] } }),
     harvest: async (b) => {
       asked.push(b); taken = [`${b.node}|hide`];
@@ -260,7 +261,7 @@ test('PROF7 host: a body is a node only while the pack holds a knife; targeted w
     h.entity.items.push(knifeOf());
     h.host.tick(0.016);
     assert.equal(h.host.target?.node.kind, 'body');
-    assert.equal(h.said.chip, 'Hunting 10 - 4 / 30 today', 'the account\'s day on the chip');
+    assert.equal(h.said.chip, 'Hunting 10 - 4 today', 'the account\'s day on the chip');   // PIN MOVED (CAP-OFF): '4 / 30 today'
     // PROF-MENU: the list's search lit - the press passes on to the body's loot, and says nothing of its own
     h.lit = 'search';
     assert.deepEqual([h.host.press(), h.host.sayNeed()], [false, false]);
@@ -378,7 +379,8 @@ test('PROF7 pieces: the loom\'s - leather armour DFU\'s at Leather with the qual
   const knife = mintPiece({ recipe: 'knife:iron', quality: 0, seed: 0 }, PROV);
   assert.deepEqual([net.templateIndex, net.maxCondition, knife.group, knife.templateIndex, knife.name, knife.maxCondition], [1603, TOOL_LIFE[3], 'UselessItems2', 603, 'Skinning Knife', TOOL_LIFE[0]]);
   assert.match(LOOM_KEPT_TEXT, /last stitch/);
-  assert.match(accountRefusalText('prof-hunt-cap'), /hides a day allows \(30, across your characters\)/);
+  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): the service says it no more - kept, without its thirty, for one not yet redeployed
+  assert.equal(accountRefusalText('prof-hunt-cap'), 'Your account has taken all the hides a day allows, across your characters.');
   assert.match(accountRefusalText('prof-hunt-high'), /rare hides/);
   assert.match(accountRefusalText('prof-dye'), /cannot be dyed/);
   assert.match(accountRefusalText('prof-foe'), /No knife/);
@@ -393,7 +395,7 @@ test('PROF7 pages: the Loom at a Clothing Store - the cures for the hides held a
   const held = new Map([['hide:bear', 4], ['hide:spider', 3], ['leather:cured', 1]]);
   const tracks = new Map([['outfitting', { profession: 'outfitting', xp: xpForRank(10), rank: 10, specs: { 50: null, 100: null } }], ['hunting', { profession: 'hunting', xp: xpForRank(60), rank: 60, specs: { 50: 'tanner', 100: null } }], ['smithing', { profession: 'smithing', xp: 0, rank: 0, specs: { 50: null, 100: null } }]]);
   const book = {
-    state: { open: true, day: 1, character: 'c', account: 'a', readAt: Date.now(), stores: new Map(), tracks, today: {}, caps: { hides: 30, highHides: 3 }, hunt: { hides: 7, high: 1 } }, stale: () => false, refresh: async () => ({ ok: true }),
+    state: { open: true, day: 1, character: 'c', account: 'a', readAt: Date.now(), stores: new Map(), tracks, today: {}, caps: { highHides: 3 }, hunt: { hides: 7, high: 1 } }, stale: () => false, refresh: async () => ({ ok: true }),
     held: (k) => held.get(k) ?? 0, store: (k) => ({ material: k, own: held.get(k) ?? 0, bought: 0 }),
     track: (p) => tracks.get(p) ?? { profession: p, xp: 0, rank: 0, specs: { 50: null, 100: null } }, materials: () => [], pendingWithdrawals: 0, pendingCrafts: 0,
     choose: async () => ({ ok: true }),
@@ -485,7 +487,7 @@ test('PROF7 pages: the Loom at a Clothing Store - the cures for the hides held a
   };
   const hunting = page('Hunting');
   assert.doesNotMatch(hunting, /not practised/);
-  assert.match(hunting, /Today: 7 of 30 hides, 1 of 3 of tiers 5-6 - your account's, across your characters/);
+  assert.match(hunting, /Today: 7 hides, 1 of 3 of tiers 5-6 - your account's, across your characters/);   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): '7 of 30 hides'
   assert.match(hunting, /Waits on a trophy to stand as/);
   assert.match(hunting, /Harpy Feathers, Dreugh Shell/);
   const outfitting = page('Outfitting');
@@ -535,7 +537,8 @@ test('PROF7 wiring: the street and the dungeon stamp and list their bodies for H
   assert.match(b, /\.\.\.\(h\.foe === undefined \? \{\} : \{ foe: h\.foe \}\),/);
   assert.match(b, /applyStore\(r\.data\?\.extraStore\);/);
   const idx = src('server-account/src/index.js');
-  assert.match(idx, /'prof-hunt-cap': 409, 'prof-hunt-high': 409, 'prof-foe': 400, 'prof-dye': 400,/);
+  assert.match(idx, /'prof-hunt-high': 409, 'prof-foe': 400, 'prof-dye': 400,/);   // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): no 'prof-hunt-cap'
+  assert.doesNotMatch(idx, /'prof-hunt-cap':/);
   const c = src('src/net/accountClient.js');
   // SEAT2b part two (PIN MOVED): and the held town the station stands in (`seat`, its crafting halls' steps)
   assert.match(c, /craft: \(character, recipe, clean, name, rid, heartwood = false, dye = null, seat = null, cracked = false\) => post\('\/v1\/prof\/craft', \{ character, recipe, clean, name, rid, heartwood, \.\.\.\(dye == null \? \{\} : \{ dye \}\), \.\.\.\(seat == null \? \{\} : \{ seat \}\), \.\.\.\(cracked === true \? \{ cracked: true \} : \{\}\) \}\),/);   // PIN MOVED (PROF10): a Lapidary's `cracked` gem

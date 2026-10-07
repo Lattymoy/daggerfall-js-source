@@ -83,12 +83,12 @@ export function patchFlats(patch) {
  * WHAT E DOES AT A PATCH, and the prompt that says it: `{ kind, verb, rest, ready, needsRank? }` - `kind` 'herbs' or 'food'
  * (the choice key's pick, the herbs first while untaken); `ready` false with `rest` naming what is missing, and a rank
  * short the rank it needs (VEIN-NEED). TOOL-USE: `only` - a tool's Use asks `basket`'s harvest alone (the Sickle the
- * herbs, the Basket the food): taken, it says so, never the other harvest's act.
+ * herbs, the Basket the food): taken, it says so, never the other harvest's act. CAP-OFF: no day's cap.
  * @param {{ patch: any, taken: (k: string) => boolean, counting: (k: string) => boolean, basket: boolean, rank: number,
  *   sickle: boolean, basketTool: boolean, storesFull: (key: string) => boolean, herbKeyOf: (t: number) => string,
- *   today: number, cap: number, only?: boolean, fullWords?: string }} o
+ *   only?: boolean, fullWords?: string }} o
  */
-export function patchPlan({ patch, taken, counting, basket, rank, sickle, basketTool, storesFull, herbKeyOf, today, cap, only = false, fullWords = 'Stores full' }) {   // BAG1: `fullWords` the book's
+export function patchPlan({ patch, taken, counting, basket, rank, sickle, basketTool, storesFull, herbKeyOf, only = false, fullWords = 'Stores full' }) {   // BAG1: `fullWords` the book's
   const herbsLeft = !taken('herbs') && !counting('herbs');
   const foodLeft = !taken('food') && !counting('food');
   let kind = basket ? 'food' : 'herbs';
@@ -100,7 +100,6 @@ export function patchPlan({ patch, taken, counting, basket, rank, sickle, basket
   if (!herbsLeft && !foodLeft) return { kind, verb: `${name} - gathered today`, rest: counting('herbs') || counting('food') ? 'being counted' : '', ready: false, both: false };
   // TOOL-USE: the tool's own harvest gone, the other left
   if (!(kind === 'food' ? foodLeft : herbsLeft)) return { kind, verb: kind === 'food' ? 'Search with the Basket' : `Pick ${name}`, rest: counting(kind) ? 'being counted' : 'gathered today', ready: false, both };
-  if (today >= cap) return { kind, verb: kind === 'food' ? 'Search with the Basket' : `Pick ${name}`, rest: `${rankWord} - ${today} of ${cap} today`, ready: false, both, full: true };
   if (kind === 'food') {
     if (!basketTool) return { kind, verb: 'Search with the Basket', rest: 'needs a Basket', ready: false, both };
     return { kind, verb: 'Search with the Basket', rest: rankWord, ready: true, both };
@@ -128,7 +127,6 @@ export function herbKind({ book }) {
       patch: p, taken: (k) => book.taken(p.key, k), counting: (k) => book.counting(p.key, k), basket, only,
       rank: rank('herbalism'), sickle: !!foragingToolIn(entity, FT.Sickle), basketTool: !!foragingToolIn(entity, FT.Basket),
       storesFull: (key) => storesFullIn(book, key), fullWords: fullWordsIn(book), herbKeyOf: (h) => herbKey(h, info?.region ?? 0),   // STORES-ROOM: every origin, as the service counts
-      today: book.state.today?.herbalism ?? 0, cap: book.state.caps?.harvests ?? 60,
     });
     return { ...plan, harvest: plan.kind, profession: 'herbalism' };
   };

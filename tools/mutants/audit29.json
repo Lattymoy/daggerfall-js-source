@@ -75,22 +75,26 @@
     ]
   },
   {
-    "name": "AUDIT29-A3-no-account-day",
+    "name": "AUDIT29-A3-the-account-day-again",
     "file": "server-account/src/professions.js",
-    "old": "        AND (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND profession = ?9 AND day = ?6) < ?16\n",
-    "new": "",
+    "old": "      WHERE (?15 = 0 OR",
+    "new": "      WHERE (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND profession = ?9 AND day = ?6) < 120\n        AND (?15 = 0 OR",
     "tests": [
-      "test/audit29_service.test.js"
-    ]
+      "test/audit29_service.test.js",
+      "test/cap_off.test.js"
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): A3's account day is gone and its pin turned (a fifth character's harvest past 120 is credited) - the mutant puts the day back, and the turned pins kill it. It was the mutant that removed the day."
   },
   {
     "name": "AUDIT29-A5-invented-dungeons-unbounded",
     "file": "server-account/src/professions.js",
-    "old": "        AND (?17 = 0 OR (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND day = ?6 AND deep_unconfirmed = 1) < ?18)\n",
-    "new": "",
+    "old": "(?15 = 0 OR (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND day = ?6 AND deep_unconfirmed = 1) < ?16)",
+    "new": "1",
     "tests": [
-      "test/audit29_service.test.js"
-    ]
+      "test/audit29_service.test.js",
+      "test/cap_off.test.js"
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the bound kept - the WHERE's first now, its numbers ?15 and ?16."
   },
   {
     "name": "AUDIT29-A4-a-dissent-unwritten",
@@ -113,11 +117,12 @@
   {
     "name": "AUDIT29-A14-the-harvest-xp-offered",
     "file": "server-account/src/professions.js",
-    "old": "        MAX(0, MIN(?12, ?19 - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?4 AND profession = ?9), 0))),",
+    "old": "        MAX(0, MIN(?12, ?17 - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?4 AND profession = ?9), 0))),",
     "new": "        ?12,",
     "tests": [
       "test/audit29_service.test.js"
-    ]
+    ],
+    "note": "CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\") (PIN MOVED, re-aimed by content): the track's bound is ?17 now."
   },
   {
     "name": "AUDIT29-A14-the-smelt-xp-offered",
