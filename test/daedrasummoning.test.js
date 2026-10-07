@@ -239,7 +239,7 @@ test('DAEDRA1: every box the coven and the summoning show goes THROUGH the walk'
   assert.match(modes, /const rows = \(id\) => expandRowValues\(rawRows\(id\), null, null\);/,
     'the coven expands every record it shows');
   // the flow's own, with the prince riding it
-  assert.match(modes, /const say = \(id, d = daedra\) => expandRowValues\(rows\?\.\(id\) \?\? \[\], summonMacroValues\(d\), null\);/,
+  assert.match(modes, /const say = \(id, d = daedra, part = \(record\) => record\) => expandRowValues\(part\(rows\?\.\(id\) \?\? \[\]\), summonMacroValues\(d\), null\);/,
     'and the summoning adds %dae to it');
   // ONE READ PER BOX: these records carry random variants, so a
   // `say(id).length ? say(id) : fallback` would roll twice

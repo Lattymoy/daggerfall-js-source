@@ -261,7 +261,7 @@ import { goldAmount, totalGoldAmount, deductGold, addGold, payUndoable, setCrime
 import { getReputation, getFlag, setFlag, FACTION_FLAGS } from '../systems/factionRep.js';
 // G7: the last unbuilt guild service - the summoning calendar, the
 // cost, Sheogorath's hijack and the roll.
-import { daedraForSummoner, attemptSummoning, SUMMON_TEXT, DAEDRIC_FOES, summonMacroValues, summonsByName, summonByNameBoxes } from '../systems/daedraSummoning.js';   // IF: the punishment table; DAEDRA1: %dae's one source
+import { daedraForSummoner, attemptSummoning, SUMMON_TEXT, DAEDRIC_FOES, summonMacroValues, summonsByName, summonByNameBoxes, summonQuestionRows } from '../systems/daedraSummoning.js';   // IF: the punishment table; DAEDRA1: %dae's one source
 import { expandRowValues } from '../systems/quest/questMacros.js';   // DAEDRA1: MH1's one walk, with the shared context riding it
 import { currentWeather } from '../systems/weatherSim.js';   // AUDIT AT F3: the WORD; its flags come from weather.js's one derivation
 import { weatherFlags } from '../world/weather.js';   // AUDIT AT F3: WeatherManager's four public flags, derived once from SetWeather's switch
@@ -5082,7 +5082,7 @@ export function createWorldModes(host) {
       // context. It wraps whichever `rows` the caller handed in - the
       // coven's or the guild's - rather than replacing it, so each
       // keeps whatever it already resolved.
-      const say = (id, d = daedra) => expandRowValues(rows?.(id) ?? [], summonMacroValues(d), null);   // MACRO-ONE: the world answers %dat and %pcn
+      const say = (id, d = daedra, part = (record) => record) => expandRowValues(part(rows?.(id) ?? []), summonMacroValues(d), null);   // MACRO-ONE: the world answers %dat and %pcn; AUDIT WAITS S4: `part` cuts the raw record before its one walk
       // ...and ONE read per box. Several of these records carry random
       // variants (BOX1's law: a textId box reads its record once), so a
       // `say(id).length ? say(id) : fallback` would roll the record
@@ -5090,25 +5090,29 @@ export function createWorldModes(host) {
       const box = (id, d, fallback) => { const r = say(id, d); return r.length ? r : [{ text: fallback, center: true }]; };
       // SUMMON-NAME (bible/06-Systems/Online-Waits.md WAIT3): online the temple's and the guild's summoner calls the prince
       // the player names, on any day - a sky year is fifteen real days, and the day of the year was a wait nobody could
-      // rest through (daedraSummoning.js summonsByName). The coven's popup (it hands its own summonerFactionId) keeps its
-      // daily draw, and a picker with no art yet falls back to DFU's day.
-      const byName = summonerFactionId == null && listPickerArtLoaded()
+      // rest through (daedraSummoning.js summonsByName). A coven keeps its daily draw and Glenmoril its Hircine - told
+      // apart by the summoner's faction, as DFU's own service tells them (AUDIT WAITS S5) - and a picker with no art yet
+      // falls back to DFU's day.
+      const byName = listPickerArtLoaded()
         && summonsByName({ factionId: summonerId, factionType: (summoner?.type ?? null), online: sharedClockOn() });
       if (!daedra && !byName) return { rows: box(SUMMON_TEXT.notToday, null, 'This is not a summoning day.') };
-      // WeatherManager.IsRaining / IsStorming - thunder is a STORM
-      // and not rain, which is what makes Sheogorath's day distinct
-      // from Sanguine's four.
-      //
-      // AUDIT AT F3: through `world/weather.js` weatherFlags, which is
-      // the ONE derivation of WeatherManager's four public flags from
-      // SetWeather's own switch. This arm used to spell two of them
-      // inline off the weather enum - correct, and a second reading of
-      // a DFU member (ONE DFU MEMBER, ONE EXPORT). AT1 wrote the shared
-      // one for Ambient Text's WeatherKey and its record said this copy
-      // had been folded into it; it had not. It is now.
-      const weather = weatherFlags(currentWeather());
       /** The Yes: the summoning of `called` - the popup's answer (a box, or null once a window is dispatched). */
       const summon = (called) => {
+        // WeatherManager.IsRaining / IsStorming - thunder is a STORM
+        // and not rain, which is what makes Sheogorath's day distinct
+        // from Sanguine's four.
+        //
+        // AUDIT AT F3: through `world/weather.js` weatherFlags, which is
+        // the ONE derivation of WeatherManager's four public flags from
+        // SetWeather's own switch. This arm used to spell two of them
+        // inline off the weather enum - correct, and a second reading of
+        // a DFU member (ONE DFU MEMBER, ONE EXPORT). AT1 wrote the shared
+        // one for Ambient Text's WeatherKey and its record said this copy
+        // had been folded into it; it had not. It is now.
+        //
+        // AUDIT WAITS S1: read at the Yes, the sky the summoning is made
+        // under - SUMMON-NAME's list can stand open while it turns.
+        const weather = weatherFlags(currentWeather());
         const r = attemptSummoning({
           daedra: called,
           summonerRep: getReputation(store, summonerId),
@@ -5195,8 +5199,10 @@ export function createWorldModes(host) {
         return { rows: [{ text: `${r.daedra.name} answers your summons.`, center: true }] };
       };
       if (byName) {
-        // SUMMON-NAME: the sixteen by name, then DFU's question about the one named - a flow, whose boxes take a list
-        flow = new ServiceFlowWindow(summonByNameBoxes(summon, (rows, d) => expandRowValues(rows, summonMacroValues(d), null)), {
+        // SUMMON-NAME: the sixteen by name, then DFU's question about the one named - a flow, whose boxes take a list.
+        // AUDIT WAITS S4: the question is record 481's own words from its second sentence - cut from the raw record and
+        // walked once with the prince picked, through `say` as every box in this flow is
+        flow = new ServiceFlowWindow(summonByNameBoxes(summon, (d) => say(SUMMON_TEXT.areYouSure, d, summonQuestionRows)), {
           onClose: () => closeSelf(),
         });
         return flow;

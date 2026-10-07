@@ -162,8 +162,10 @@ export const LOCKED_EXTERIOR_DOOR_TEXT = 'Locked.';
 // (below, `onlineReliefBuilding`), and every building it does not name
 // keeps the exact R1 rules.
 //
-// The staffing answer is data on purpose. Today the existing shop
-// people remain the visible staff. A later presentation slice can use
+// The staffing answer is data on purpose. Today each relieved
+// building's own people - the shop's, and the guild hall's, the bank's,
+// the library's and the palace's since OL5 and OL6 (AUDIT WAITS O4) -
+// remain the visible staff at night. A later presentation slice can use
 // ONLINE_SHIFT for a distinct night clerk without guessing from the
 // clock or changing the access law again.
 /**

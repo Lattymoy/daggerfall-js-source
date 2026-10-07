@@ -16,7 +16,7 @@
 //     EXCLUDES index 0 - so a coven can never draw Hircine, who is
 //     Glenmoril's alone. The stored index and day live on the player.
 //   - EVERYONE ELSE (temples, the Mages Guild) summons whoever's
-//     summoning day it is, and nobody at all on the other 349.
+//     summoning day it is, and nobody at all on the other 344.
 //
 // THE COST IS THE SUMMONER'S REPUTATION, INVERTED: 200000 - rep*1000.
 // At rep 0 that is two hundred thousand gold; at the +100 ceiling it
@@ -84,15 +84,15 @@ export const SUMMON_TEXT = Object.freeze({
 /**
  * SUMMON-NAME (2026-10-07, bible/06-Systems/Online-Waits.md WAIT3; Mac: "Take care of this", over the sweep of the
  * waits still long online). DFU's temple and Mages Guild answer one prince on his own day of the year and nobody on the
- * other 344 (`daedraForSummoner` below, unchanged); a single player waits a rest of seconds for the day. Online the day
- * is the sky's (TIME1) and no rest moves the sky: since SKY-SLOW a sky year is fifteen real days, so a prince answered
- * for one real hour in fifteen days, and between Vaernima's day (190) and Nocturnal's (248) nobody answered anywhere
- * for fifty-eight real hours. For the reason OL4 gave the shops their night shift - a schedule no player can wait out
- * by resting is a real-time lockout - online the summoner calls the prince the player NAMES, on any day. The rest is
- * DFU's whole: the price off the summoner's own regard, the chance off the prince's (and his weather's favour),
- * Sheogorath's gatecrash, the prince met before, the gold gone before the roll, the quest he offers. A witches' coven
- * keeps its own law - one prince a day, drawn (the event clock's day online, TIME1), Glenmoril's always Hircine - and
- * offline nothing moves.
+ * other 344 (`daedraForSummoner` below, unchanged); a single player rests out the days to his, minutes of it. Online
+ * the day is the sky's (TIME1) and no rest moves the sky: since SKY-SLOW a sky year is fifteen real days, so a prince
+ * answered for one real hour in fifteen days, and between Vaernima's day (190) and Nocturnal's (248) no temple and no
+ * Mages Guild answered for 57 real hours (a coven still draws its prince of the day). For the reason OL4 gave the shops
+ * their night shift - a schedule no player can wait out by resting is a real-time lockout - online the summoner calls
+ * the prince the player NAMES, on any day. The rest is DFU's whole: the price off the summoner's own regard, the chance
+ * off the prince's (and his weather's favour), Sheogorath's gatecrash, the prince met before, the gold gone before the
+ * roll, the quest he offers. A witches' coven keeps its own law - one prince a day, drawn (the event clock's day
+ * online, TIME1), Glenmoril's always Hircine - and offline nothing moves.
  */
 export const summonsByName = ({ factionId = 0, factionType = null, online = false } = {}) => !!online
   && factionId !== GLENMORIL_WITCHES && factionType !== WITCHES_COVEN_TYPE;
@@ -100,20 +100,39 @@ export const summonsByName = ({ factionId = 0, factionType = null, online = fals
 export const PRINCES_BY_NAME = Object.freeze([...DAEDRA].sort((a, b) => a.name.localeCompare(b.name)));
 /** SUMMON-NAME: the question online. Record 481 opens "Today is %dat, the day of summoning for %dae", which online
  *  is false on every day but his; its own next words ask the question, and are the box - DFU's rows from "Do you",
- *  its breaks and its "you life" kept. */
+ *  its breaks and its "you life" kept. The vendored record's words, for a record that has no second sentence. */
 export const SUMMON_BY_NAME_ROWS = Object.freeze([
   Object.freeze({ text: 'Do you, %pcn, wish', center: true }),
   Object.freeze({ text: 'to risk you life and very soul by summoning', center: true }),
   Object.freeze({ text: '%dae into our mundane world?', center: true }),
 ]);
+/** SUMMON-NAME (AUDIT WAITS S4): the question as the game's own record 481 words it - its rows from the end of its first
+ *  sentence on, breaks and alignment kept, so the box says what the record says wherever the record was read from (a
+ *  translation's TEXT.RSC); SUMMON_BY_NAME_ROWS, the vendored record's own, when it has no second sentence. Rows are
+ *  the reader's (`{ text, center }`, or a plain string) and read before %dae is resolved - the first sentence holds
+ *  only %dat and %dae, neither of which writes a full stop. */
+export function summonQuestionRows(record) {
+  const rows = Array.isArray(record) ? record : [];
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const text = typeof row === 'string' ? row : String(row?.text ?? '');
+    const end = /[.!?](?:\s+|$)/.exec(text);
+    if (!end) continue;
+    const rest = text.slice(end.index + end[0].length);
+    const tail = [...(rest ? [typeof row === 'string' ? rest : { ...row, text: rest }] : []), ...rows.slice(i + 1)];
+    return tail.length ? tail : SUMMON_BY_NAME_ROWS;
+  }
+  return SUMMON_BY_NAME_ROWS;
+}
 /** SUMMON-NAME: the online flow's boxes (guildServiceWindows.js ServiceFlowWindow's shapes) - the sixteen by name, then
  *  the question about the one picked. `summon(daedra)` is the host's Yes, the popup's own answer (a box, or null once a
- *  window is dispatched), wrapped into the flow's list; `expand(rows, daedra)` resolves %dae and %pcn. */
-export function summonByNameBoxes(summon, expand = (rows) => rows) {
+ *  window is dispatched), wrapped into the flow's list; `ask(daedra)` is the question's rows about him, read and walked
+ *  once for its box (the host's: record 481 cut by summonQuestionRows, then %dae and %pcn resolved). */
+export function summonByNameBoxes(summon, ask = () => SUMMON_BY_NAME_ROWS) {
   return [{
     picker: PRINCES_BY_NAME.map((d) => d.name),
     onPick: (i) => [{
-      rows: expand(SUMMON_BY_NAME_ROWS, PRINCES_BY_NAME[i]),
+      rows: ask(PRINCES_BY_NAME[i]),
       buttons: 'YesNo',
       onYes: () => { const next = summon(PRINCES_BY_NAME[i]); return next ? [next] : null; },
     }],

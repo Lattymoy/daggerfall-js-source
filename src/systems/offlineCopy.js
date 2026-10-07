@@ -28,6 +28,7 @@
 
 import { QUEST_OWN_SECOND_KEYS, QUEST_WORLD_SECOND_KEYS, shiftQuestStamps, markOwnClock } from './quest/questStamps.js';
 import { LEGACY_VENDOR } from './legacy/family.js';
+import { skyOfEventLaw, eventOfSkyLaw } from './skyCalendar.js';   // AUDIT WAITS B1: a banishment's days are the sky's calendar's
 
 /** AUDIT LIVED1b F3 (S4): a save's clock - classic minutes, an unsigned count below 2^31 (4,000 years of the calendar;
  *  DFU's is a uint) - or null for anything else. The doors and the load (save.js restorePlayer) read the envelope's
@@ -87,6 +88,21 @@ function rebaseWorldStamps(copy, delta, days, { questOwn = false } = {}) {
 }
 const daysBetween = (to, from) => Math.floor(Math.floor(to) / 1440) - Math.floor(Math.floor(from) / 1440);
 
+/** AUDIT WAITS B1 (BANISH-SKY, bible/06-Systems/Online-Waits.md WAIT4): A BANISHMENT'S END crosses a door as the days
+ *  the player was told. Online it is a stamp on the event clock whose days are the sky's calendar (standing.js
+ *  banishmentEnd); offline it is a stamp on the one clock, which is the calendar. Neither door moved it - REP3 came
+ *  after LIVED1's doors - so carried offline a term stood as far off as the world ran ahead of the character (a
+ *  character two hundred days behind read 215 days left), and carried online it was read against the world's calendar -
+ *  lifted at once for a character behind the world, held too long for one ahead of it. `toEnd` maps an end across; a
+ *  term not yet stamped (AUDIT REP F2) stays so, and the first trusted read gives it its thirty days. The sky's law is
+ *  read as the law has it (skyCalendar.js skyOfEventLaw / eventOfSkyLaw): an online save's stamps were taken under it,
+ *  whatever this page has installed. */
+function moveBanishments(copy, toEnd) {
+  for (const r of Array.isArray(copy.regionConditions) ? copy.regionConditions : []) {
+    if (r && typeof r === 'object' && Number.isFinite(r.b)) r.b = toEnd(r.b);
+  }
+}
+
 /** AUDIT LIVED1b R1 (A2, O3, S3): World Events - Raiding Parties' record (raidingParties.js RAIDING_PARTIES_VENDOR) is the
  *  SHARED day's roll online - its `lastSelectedDay` and every raid's day and minutes on the world's clock - and the mod
  *  rolls only on a LATER day offline: a copy a hundred and fifty days behind the world met no raid until its calendar
@@ -118,6 +134,8 @@ export function offlineCopyOf(snap) {
   if (own === null || world === null) return copy;
   if (copy.modData && typeof copy.modData === 'object') delete copy.modData[RAID_RECORD_VENDOR];   // AUDIT LIVED1b R1
   rebaseWorldStamps(copy, Math.floor(own) - Math.floor(world), daysBetween(own, world), { questOwn: 'legacy' });   // classic minutes: the character's clock less the world's
+  // AUDIT WAITS B1: the sky's days a banishment has left become days of the one clock
+  moveBanishments(copy, (b) => Math.floor(own) + (skyOfEventLaw(b) - skyOfEventLaw(Math.floor(world))));
   if (copy.quest) markOwnClock(copy.quest, Math.floor(own) * 60);   // TIME3: every countdown is on the character's clock now
   return copy;
 }
@@ -142,6 +160,8 @@ export function onlineCopyOf(snap, worldNow) {
   copy.joinFresh = true;
   if (own === null) return copy;
   rebaseWorldStamps(copy, Math.floor(worldNow) - Math.floor(own), daysBetween(worldNow, own));   // TIME3: the countdowns stay - the one clock is the character's
+  // AUDIT WAITS B1: the one clock's days a banishment has left become the sky's, from the world's minute now
+  moveBanishments(copy, (b) => eventOfSkyLaw(skyOfEventLaw(Math.floor(worldNow)) + (b - Math.floor(own))));
   if (copy.quest) markOwnClock(copy.quest, Math.floor(own) * 60);
   return copy;
 }

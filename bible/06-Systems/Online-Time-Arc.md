@@ -208,7 +208,7 @@ migration.
 | Interior light and its night ambient | `interior.js`, `worldModes.js` (`isNight(worldMinutes() % 1440)`) |
 | The season's ground, the climate season, the herbs' and the writs' season | `world.js` and `exterior.js` (`refreshSeason`, `climateSeasonFromMinutes`, `seasonValue`); `net/nodeLaw.js dayDate` (with the account service, section 4) |
 | The air's month and hour for survival, the forager's month (the hunter's winter too, until HUNT-OUT removed the hunt, 2026-10-04) | `world.js`, `exterior.js`, `dungeonContext.js` (the air); `monthValue` into `foragingInstall.js` |
-| The calendar: holidays and Suns Rest, Heart's Day, the kitchen's hours, the temple's cure days, the Witches Festival's spell price, the holiday's words on entering a town, a Daedra prince's summoning day | `worldModes.js` (`getHolidayId`, `worldNow`, `dayOfYearFromMinutes`, the spellbook's `classicMinutes`), `world.js`. The coven's once-a-day re-roll is a stamp and stays on the event clock. [SUMMON-NAME, 2026-10-07 (`Online-Waits.md` WAIT3): online the temple's and the guild's summoner calls the prince the player names, so the day gates nothing there; offline and at a coven, as here] |
+| The calendar: holidays and Suns Rest, Heart's Day, the kitchen's hours, the temple's cure days, the Witches Festival's spell price, the holiday's words on entering a town, a Daedra prince's summoning day | `worldModes.js` (`getHolidayId`, `worldNow`, `dayOfYearFromMinutes`, the spellbook's `classicMinutes`), `world.js`. The coven's once-a-day re-roll is a stamp and stays on the event clock. [SUMMON-NAME, 2026-10-07 (`Online-Waits.md` WAIT3): online the temple's and the guild's summoner calls the prince the player names, so the day gates nothing there while the list's art is loaded (without it the summoner falls back to the day - AUDIT WAITS S3); offline and at a coven, as here] |
 | Opening hours, locks by the hour, who is inside | `worldModes.js` (`_hour`, `resolveBuildingUnlocked`), `characters/interiorPeople.js` [online the relieved buildings - OL4's shops, OL5's guild hall, OL6's bank, library and palace (`Online-Waits.md` WAIT1) - stand on the shift whatever the hour] |
 | The curses' and the careers' sun and moon | the rounds' `skyMinutes` (`worldTick.js`, the four hosts), `world.js`' sun rungs and party-travel refusal, `dungeonContext.js`' sunlight seam |
 | Night's spawns, and the overworld's bands at night | `encounters.js`, `campEncounters.js` (`skyMinutes`); `world.js` `bandNight` |
@@ -712,4 +712,6 @@ terms; 9 is new and not built.
   the palace on the shift), WAVE-WAIT (a wave the quest waits on first comes inside the short wait), SUMMON-NAME (online
   the summoner calls the prince the player names) and BANISH-SKY (a banishment's thirty days are the sky's calendar's).
   Its OPEN holds what is still a call: Loiter and the night interval, the holidays, the full moon, banishment's length,
-  the relay's cadences.
+  the relay's cadences. AUDIT WAITS the same day (Mac: "audit this. needs to be perfect"; `Online-Waits.md` section 7):
+  25 findings, all paid - among them a re-set wave read as a first arrival, a banishment the lane doors never moved,
+  and a term sized by the sky's rate on its first day.

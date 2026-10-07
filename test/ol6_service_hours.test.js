@@ -15,6 +15,7 @@ import {
 import { peopleAreVisible, updateNpcPresence } from '../src/characters/interiorPeople.js';
 import { isShop } from '../src/systems/shopStock.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
+import { HOLIDAYS } from '../src/systems/holidays.js';
 import { setSharedClock } from '../src/systems/worldTick.js';
 import { skyMinutesPerMsAt } from '../src/net/skyLaw.js';
 
@@ -84,4 +85,20 @@ test('OL6: why - on the sky DFU\'s hours were a real-time lockout of 42.5 minute
   assert.equal(lockout(BUILDING_TYPES.Bank), 42.5);
   assert.equal(lockout(BUILDING_TYPES.Palace), 45);
   assert.equal(lockout(BUILDING_TYPES.Library), 25);
+});
+
+test('OL6 (AUDIT WAITS O1): DFU\'s own rows for the three, as PlayerActivate.cs:91-106 has them - the bank 8 to 15, the library 9 to 23, the palace 10 to 16 - and Suns Rest, a SHOP closure, shuts none of them, offline or online', () => {
+  assert.deepEqual(ADDED.map((t) => [OPEN_HOURS[t], CLOSE_HOURS[t]]), [[8, 15], [9, 23], [10, 16]]);
+  for (const type of ADDED) {
+    for (const online of [false, true]) {
+      assert.deepEqual(buildingHoursState(type, { hour: OPEN_HOURS[type], holidayId: HOLIDAYS.Suns_Rest, online }),
+        { open: true, classicOpen: true, staffing: SHOP_STAFFING.CLASSIC }, `type ${type} on Suns Rest at its opening hour, ${online ? 'online' : 'offline'}`);
+    }
+    assert.equal(buildingHoursState(type, { hour: CLOSE_HOURS[type], holidayId: HOLIDAYS.Suns_Rest, online: false }).open, false,
+      `type ${type} shuts at its own hour on the holiday offline, not before`);
+  }
+  // a shop beside them: Suns Rest shuts it in DFU, and online the shift covers the holiday as it covers the night (OL4)
+  assert.equal(buildingHoursState(BUILDING_TYPES.Alchemist, { hour: 12, holidayId: HOLIDAYS.Suns_Rest, online: false }).open, false);
+  assert.deepEqual(buildingHoursState(BUILDING_TYPES.Alchemist, { hour: 12, holidayId: HOLIDAYS.Suns_Rest, online: true }),
+    { open: true, classicOpen: false, staffing: SHOP_STAFFING.ONLINE_SHIFT });
 });

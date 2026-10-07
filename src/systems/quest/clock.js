@@ -289,20 +289,22 @@ export function clockIsDeadline(quest, clock) {
 }
 
 /** WAVE-WAIT (2026-10-07, bible/06-Systems/Online-Waits.md WAIT2; Mac: "Take care of this", over the sweep of the waits
- *  still long online): A WAVE THE QUEST WAITS ON. A wave (`create foe` / `send ... every N minutes`) runs on played time
- *  online (WORLD7's step, QCLOCK-WORLD's lived charge - a rest spends none of it), and REST8 left its interval whole as
- *  pacing. Pacing it is, for a wave that harasses: its gap is the player's breathing space, and the corpus's long ones
- *  are all of that kind - K'avar's archers (2000 minutes), the knights on the totem (1300), the Sx100 ambushes, the
- *  thieves and the posses. But one wave is not pacing, it is the quest's next page: the King of Worms (S0000021) is mute
- *  until his zombie messenger is killed (`killed 1 _zombie_` -> `when _S.02_ and _S.15_` -> his offer), and it is sent
- *  `every 1410 minutes` - up to 117 real minutes of play, about an hour on average, before a main-quest giver would
- *  speak, and nothing the player could do brought it sooner. THE READING: a wave whose foe's KILL a quest waits on - the
- *  `killed` task, and what it reaches through a positive `when` (`reached`, the clock reading's own walk), offers the
- *  quest (a Prompt) or settles it (a reward, TrainPc, the next quest). Of the corpus's waves two read so: S0000021's
- *  messenger, and N0B20Y02's Nightblades (the guard's reward waits on their three deaths - 55 minutes, inside the guard's
- *  three hours). Every other wave's kill reaches a word at most (`say`), or nothing: the posse's, the bribe path's
- *  knights and barbarians (`when _S.07_ and _yes_` says a line). An `injured` reader is the foe's own cry, not the
- *  quest's page, and is not read. */
+ *  still long online): A WAVE THE QUEST WAITS ON. A wave (`create foe` / `send ... every N minutes`) runs on played
+ *  time online (WORLD7's step, QCLOCK-WORLD's lived charge - a rest spends none of it), and REST8 left its interval
+ *  whole as pacing. Pacing it is, for a wave that harasses: its gap is the player's breathing space, and the corpus's
+ *  long ones are nearly all of that kind - K'avar's archers (2000 minutes), the knights on the totem (1300), the Sx100
+ *  ambushes, the thieves and the posses. But a wave can be the quest's next page instead: the King of Worms (S0000021)
+ *  makes his offer only once his zombie messenger is killed (`killed 1 _zombie_` -> `when _S.02_ and _S.15_` -> the
+ *  prompt; his mute ends earlier, when `_S.06_` sends it), and it is sent `every 1410 minutes` - up to 117.5 real
+ *  minutes of play, about an hour on average, before a main-quest giver would offer, and nothing the player could do
+ *  brought it sooner. THE READING: a wave whose foe's KILL a quest waits on - the `killed` task, and what it reaches
+ *  through a positive `when` (`reached`, the clock reading's own walk), offers the quest (a Prompt) or settles it (a
+ *  reward, TrainPc, the next quest). Of the corpus's 241 waves 27 read so, and 25 of them already come inside the short
+ *  wait (every one to fifteen minutes); the two longer are S0000021's messenger and N0B20Y02's Nightblades (the guard's
+ *  reward waits on their three deaths - 55 minutes, inside the guard's three hours). Every longer wave the reading
+ *  leaves (42) is pacing: 39 have no `killed` reader at all, and the other three's kills only say a line or end their
+ *  own wave - the posse's, the bribe path's knights and barbarians (`when _S.07_ and _yes_` says a line). An `injured`
+ *  reader is the foe's own cry, not the quest's page, and is not read. */
 export function waveIsAwaited(quest, foeName) {
   if (!foeName || !quest?.tasks) return false;
   for (const [tn, t] of quest.tasks) {
@@ -348,10 +350,11 @@ export function waveIsAwaited(quest, foeName) {
  *  guard %g2 for 3 hours starting immediately"). Its end only hides the sleeping mage, and the reward waits on it
  *  (`when _S.03_ and _S.12_`), so it reads as "a reward after a wait"; but the three hours are the guard itself: `until
  *  _S.12_ performed: pc at _magesguild_ set _S.01_`, and `_S.01_` sends the three Nightblades once, at a random point in
- *  their first 55 minutes. Cut to the short wait the guard lasted 24 minutes - the mage was gone before the attack more
- *  often than not, and a guard who stepped out of the hall in those two real minutes had `_S.01_` cleared by the `pc at`
- *  for good (it is never set again once the window shuts): the killers never came and the quest could not be finished.
- *  A deadline, it keeps its three hours, played. 272 and 127. */
+ *  their first 55 minutes (online, since WAVE-WAIT above, inside the short wait). Cut to the short wait the guard lasted
+ *  24 minutes - the mage was gone before the attack more often than not, and a guard who stepped out of the hall in
+ *  those two real minutes had `_S.01_` cleared by the `pc at` for good (it is never set again once the window shuts):
+ *  the killers never came and the quest could not be finished. A deadline, it keeps its three hours, played. 272 and
+ *  127. */
 export const ONLINE_DEADLINES = Object.freeze({
   $CUREWER: Object.freeze(['huntstart']),
   $CUREVAM: Object.freeze(['huntstart']),

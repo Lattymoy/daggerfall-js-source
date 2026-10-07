@@ -145,7 +145,6 @@ import { MERCHANTS_FACTION_ID } from './guilds.js';   // AUDIT ALL E8: no Mercha
 import { REGION_COUNT } from './regionConditions.js';   // ECON1: the world's walk is region-major, as DFU's
 import { ONLINE_EPOCH_MINUTES, ONLINE_MINUTES_PER_MS } from '../net/wire.js';   // ECON1: the world's economy begins the day the online world stood at the classic start
 import { rollClimateWeathersForDay, evolveClimateWeathers } from './weatherSim.js';
-import { setBanishmentCalendar } from './standing.js';   // BANISH-SKY: a banishment's thirty days are the calendar's the player sees - the sky's rate, installed with the clock
 import { setSkyCalendar } from './skyCalendar.js';   // TIME1: the weather's season and hour are the sky's, switched on with the sky      // WeatherManager.SetClimateWeathers (:419); CLK2: the enhanced lane's hourly evolution
 import { seededRng } from './wind.js';   // WORLD6b: the shared day's own generator for the region's walk
 import { removeExpiredRooms } from './tavern.js';                 // PlayerEntity.RemoveExpiredRentedRooms (:257)
@@ -1233,7 +1232,6 @@ export function setSharedClock(source, wallOf = null, { sky = null, skyWall = nu
   _skySource = _sharedClock && typeof sky === 'function' ? sky : null;
   _skyWall = _skySource && typeof skyWall === 'function' ? skyWall : null;
   setSkyCalendar(!!_skySource);   // TIME1: an event minute reads the sky's date while a sky stands
-  setBanishmentCalendar(_skyWall ? skyPerWorldMinute : null);   // BANISH-SKY: and a banishment's thirty days are the sky's
   _sharedLastTick = null;
   _worldWalked = [];   // AUDIT LIVED1 I, LIVED1b P3: a new session's world arms start at its first reading
   _sharedClockHeard = false;   // AUDIT LIVED1b P4: and it has not heard the relay's clock yet
@@ -1313,27 +1311,19 @@ export const sharedWallMs = (classicMinutes) => (_sharedWall && Number.isFinite(
 // [AUDIT LIVED1b U6: OL3's `realTimeText` and `sharedRealTimeText` - a classic minute as this machine's wall-clock words
 // - went with their last reader (LIVED1 moved the room's and the loan's words to the character's clock); the gates
 // and the raids read `sharedWallMs` itself.]
+/** BANISH-SKY (bible/06-Systems/Online-Waits.md WAIT4): a span of the world's (event) clock said as the REAL time it is
+ *  online - the event clock runs on the wall whether or not the player plays ("about 30 real hours", "about 40 real
+ *  minutes"), rounded up as the nightfall words round; null offline, where the days are DFU's own words. */
+export function worldSpanRealWords(eventMinutes) {
+  if (!_sharedClock || !Number.isFinite(eventMinutes) || eventMinutes <= 0) return null;
+  const real = Math.max(1, Math.ceil(eventMinutes / ONLINE_MINUTES_PER_MS / 60000));
+  return real >= 120 ? `about ${Math.ceil(real / 60)} real hours` : `about ${real} real minute${real === 1 ? '' : 's'}`;
+}
 /** LIVED1: THE SUN IS EVERYONE'S. A single player waits out the day with a rest; online a rest moves their own clock
  *  and not the sky, so a refusal that waits on the night (the vampire's CheckFastTravel, a sun-damaged career's box)
  *  says when the world's night falls, in real minutes. Null offline, or when it is night. TIME1: the SKY's night, timed
  *  through the sky's own inverse - at the sky's rate, which the event clock's ONLINE_MINUTES_PER_MS no longer is (it
  *  would have said four times too long); a sky with no inverse installed is timed at the wire's one rate. */
-/** BANISH-SKY (bible/06-Systems/Online-Waits.md WAIT4): the sky's minutes per world (event) minute now - 2 online since
- *  SKY-SLOW (a sky day is half an event day), read off the sky's own inverse so a later rate is read as it stands; 1
- *  offline and with no sky installed (one clock). A term the player is told in the calendar's days is sized by it. */
-export function skyPerWorldMinute() {
-  if (!_sharedClock || !_skySource || !_skyWall) return 1;
-  const skyNow = skyMinutes();
-  const ms = _skyWall(skyNow + MINUTES_PER_DAY) - _skyWall(skyNow);
-  return ms > 0 ? MINUTES_PER_DAY / (ms * ONLINE_MINUTES_PER_MS) : 1;
-}
-/** BANISH-SKY: a span of the world's (event) clock said in real time, which it is online - it runs on the wall whether or
- *  not the player plays ("about 28 hours", "about 40 minutes"); null offline, where the days are DFU's own. */
-export function worldSpanRealWords(worldMinutes) {
-  if (!_sharedClock || !Number.isFinite(worldMinutes) || worldMinutes <= 0) return null;
-  const real = Math.max(1, Math.ceil(worldMinutes / ONLINE_MINUTES_PER_MS / 60000));
-  return real >= 120 ? `about ${Math.ceil(real / 60)} hours` : `about ${real} minute${real === 1 ? '' : 's'}`;
-}
 export function worldNightfallText() {
   if (!_sharedClock) return null;
   const sky = skyMinutes();

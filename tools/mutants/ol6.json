@@ -65,5 +65,41 @@
       "test/ol6_service_hours.test.js",
       "test/lockpicking.test.js"
     ]
+  },
+  {
+    "name": "OL6-O1-the-bank-opens-at-nine",
+    "file": "src/systems/buildingLocks.js",
+    "old": "export const OPEN_HOURS = Object.freeze([7, 8, 9, 8, 0, 9, 10, 10, 9, 6, 9, 11, 9, 9, 0, 0, 10, 0, 6, 6, 6, 6, 6, 6, 0]);",
+    "new": "export const OPEN_HOURS = Object.freeze([7, 8, 9, 9, 0, 9, 10, 10, 9, 6, 9, 11, 9, 9, 0, 0, 10, 0, 6, 6, 6, 6, 6, 6, 0]);",
+    "tests": [
+      "test/ol6_service_hours.test.js"
+    ]
+  },
+  {
+    "name": "OL6-O1-the-palace-shuts-at-seventeen",
+    "file": "src/systems/buildingLocks.js",
+    "old": "export const CLOSE_HOURS = Object.freeze([22, 16, 19, 15, 25, 21, 19, 20, 18, 23, 23, 23, 20, 20, 25, 25, 16, 0, 18, 18, 18, 18, 18, 18, 25]);",
+    "new": "export const CLOSE_HOURS = Object.freeze([22, 16, 19, 15, 25, 21, 19, 20, 18, 23, 23, 23, 20, 20, 25, 25, 17, 0, 18, 18, 18, 18, 18, 18, 25]);",
+    "tests": [
+      "test/ol6_service_hours.test.js"
+    ]
+  },
+  {
+    "name": "OL6-O1-the-library-shuts-at-midnight",
+    "file": "src/systems/buildingLocks.js",
+    "old": "export const CLOSE_HOURS = Object.freeze([22, 16, 19, 15, 25, 21, 19, 20, 18, 23, 23, 23, 20, 20, 25, 25, 16, 0, 18, 18, 18, 18, 18, 18, 25]);",
+    "new": "export const CLOSE_HOURS = Object.freeze([22, 16, 19, 15, 25, 21, 19, 20, 18, 23, 24, 23, 20, 20, 25, 25, 16, 0, 18, 18, 18, 18, 18, 18, 25]);",
+    "tests": [
+      "test/ol6_service_hours.test.js"
+    ]
+  },
+  {
+    "name": "OL6-O1-suns-rest-shuts-every-relieved-building",
+    "file": "src/systems/buildingLocks.js",
+    "old": "  const holidayClosed = shop && holidayId === HOLIDAYS.Suns_Rest;",
+    "new": "  const holidayClosed = relieved && holidayId === HOLIDAYS.Suns_Rest;",
+    "tests": [
+      "test/ol6_service_hours.test.js"
+    ]
   }
 ]

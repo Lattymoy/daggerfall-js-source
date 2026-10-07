@@ -136,7 +136,7 @@ const SITES = [
   ['src/scenes/worldModes.js', 'const rows = (id) => expandGuildRows(', 'walk'],
   ['src/scenes/worldModes.js', 'const spyRows = rows?.(SPYMASTER_GREETING_TEXT_ID)', 'seam', 'src/scenes/worldModes.js'],
   ['src/scenes/worldModes.js', 'const refusal = rows?.(decision.textId)', 'seam', 'src/scenes/worldModes.js'],
-  ['src/scenes/worldModes.js', 'const say = (id, d = daedra) => expandRowValues(', 'walk'],
+  ['src/scenes/worldModes.js', 'const say = (id, d = daedra, part = (record) => record) => expandRowValues(', 'walk'],
   ['src/scenes/worldModes.js', ': (rows?.(decision.textId ?? decision.result)', 'seam', 'src/scenes/worldModes.js'],
   ['src/scenes/worldModes.js', "return { rows: rows?.(decision.textId) ?? [{ text: 'I have a house for you.'", 'seam', 'src/scenes/worldModes.js'],
   ['src/scenes/worldModes.js', 'const rows = (id) => townTalk?.lines?.(id) ?? [];', 'plain', { ids: [24, 33] }],

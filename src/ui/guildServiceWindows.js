@@ -408,10 +408,11 @@ function standingOffers(entity, deps, tail) {
   const { regionIndex = null, regionName = 'this region', ownNow = () => 0, worldNow = ownNow, worldWords = () => null } = deps;
   if (regionIndex == null) return tail;
   const offers = [];
-  if (isBanished(entity, regionIndex, worldNow())) {
+  const now = worldNow();   // AUDIT WAITS B8: one reading of the world's calendar for the whole offer
+  if (isBanished(entity, regionIndex, now)) {
     const price = pardonPrice(entity, regionIndex);
-    const left = banishmentLeft(entity, regionIndex, worldNow());
-    const days = banishmentDaysLeft(entity, regionIndex, worldNow());   // BANISH-SKY: the days of the calendar the player sees
+    const left = banishmentLeft(entity, regionIndex, now);
+    const days = banishmentDaysLeft(entity, regionIndex, now);   // BANISH-SKY: the days of the calendar the player sees
     const real = Number.isFinite(left) ? worldWords(left) : null;   // BANISH-SKY: online, what those days are on the wall
     offers.push({
       price,

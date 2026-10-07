@@ -38,7 +38,7 @@
  {
   "name": "DAEDRA1-the-summoning-loses-its-prince",
   "file": "src/scenes/worldModes.js",
-  "old": "      const say = (id, d = daedra) => expandRowValues(rows?.(id) ?? [], summonMacroValues(d), null);",
+  "old": "      const say = (id, d = daedra, part = (record) => record) => expandRowValues(part(rows?.(id) ?? []), summonMacroValues(d), null);",
   "new": "      const say = (id) => rows?.(id) ?? [];",
   "tests": [
    "test/daedrasummoning.test.js"
