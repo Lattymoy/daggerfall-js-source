@@ -275,7 +275,7 @@ test('SD5a the world host by source: the Rift\'s door; the doors out of the Hour
   assert.match(w, /if \(modes\?\.sdRealmSlot\?\.\(\) != null\) \{ setMidScreenText\(SD_REALM_TEXT\.noRecall\); return; \}/);
   assert.ok(w.indexOf('SD_REALM_TEXT.noRecall') > w.indexOf('async function recallToAnchor()') && w.indexOf('SD_REALM_TEXT.noRecall') < w.indexOf('const anchor = playerEntity.anchorPosition;'), 'before the anchor is read');
   assert.match(w, /\n\s+setCourtRules\(modes\?\.gateArenaDay\?\.\(\) != null\);\n\s+if \(modes\?\.sdRealmSlot\?\.\(\) != null\) setCourtRules\(true\);/);
-  assert.match(w, /if \(!player\.arena && modes\?\.sdRealmSlot\?\.\(\) != null\) player\.arena = _realmArena;/);
+  assert.match(w, /if \(!player\.arena && modes\?\.sdRealmSlot\?\.\(\) != null\) player\.arena = sdConcordHere\(\) \? _realmArenaBridged : _realmArena;/);   // SD6c (PIN MOVED): the Concord's bridge among its floors
   assert.match(w, /inside: \(loc\) => \(modes\?\.mode \?\? 'exterior'\) === 'dungeon' && \(modes\?\.dungeonLocation\?\.sdSlot === loc\?\.sdSlot \|\| modes\?\.dungeonLocation\?\.sdRealm === loc\?\.sdSlot\),/);
   // a room that will not have me: out before the Hollow's door with the relay's own words, once
   assert.match(w, /const sdFrame = \(\) => \{ try \{ sdHost\?\.frame\(\); \} catch \(e\) \{[^\n]*\} sdRealmFrame\(\); \};/);

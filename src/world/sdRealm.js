@@ -129,7 +129,7 @@ const tileUv = (x, z) => [x / SD_FLOOR_TILE_M, z / SD_FLOOR_TILE_M];
  * brass lip round the rim, and its root - a cone of dark stone from the rim down SD_ROOT_DEPTH into the void, its point a
  * little off centre so no two hang alike.
  */
-function island(f, cx, cz, r, rec, { uvOf = tileUv, lean = 0 } = {}) {
+export function realmIsland(f, cx, cz, r, rec, { uvOf = tileUv, lean = 0 } = {}) {
   const C = (x, y, z) => realmToDungeon(cx + x, y, cz + z);
   const tip = C(lean, -SD_ROOT_DEPTH - r * 0.6, lean * 0.5);
   for (let k = 0; k < SD_ISLAND_SIDES; k++) {
@@ -151,7 +151,7 @@ function island(f, cx, cz, r, rec, { uvOf = tileUv, lean = 0 } = {}) {
  */
 export function buildRealmModel() {
   const f = faces();
-  island(f, SD_THRESHOLD.x, SD_THRESHOLD.z, SD_THRESHOLD.r, SD_REALM_FLOOR_RECORD, { lean: 1.5 });
+  realmIsland(f, SD_THRESHOLD.x, SD_THRESHOLD.z, SD_THRESHOLD.r, SD_REALM_FLOOR_RECORD, { lean: 1.5 });
   // the walk: a slab of the floor's stone between brass kerbs, from the Threshold's rim into the Orrery's
   {
     const { x, z0, z1, halfW: h } = SD_WALK, t = 0.8;
@@ -169,9 +169,9 @@ export function buildRealmModel() {
   }
   // the Orrery's hall: its floor the Hour-dial, one face over the whole disc (the dial's art is the disc's)
   const R = SD_ORRERY.r;
-  island(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_DIAL_RECORD, { lean: -3, uvOf: (x, z) => [0.5 + (x - SD_ORRERY.x) / (2 * R), 0.5 + (z - SD_ORRERY.z) / (2 * R)] });
+  realmIsland(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_DIAL_RECORD, { lean: -3, uvOf: (x, z) => [0.5 + (x - SD_ORRERY.x) / (2 * R), 0.5 + (z - SD_ORRERY.z) / (2 * R)] });
   // the Last Moment: the arena, and its four pillars on the diagonals
-  island(f, SD_ARENA.x, SD_ARENA.z, SD_ARENA.r, SD_REALM_ARENA_RECORD, { lean: 4 });
+  realmIsland(f, SD_ARENA.x, SD_ARENA.z, SD_ARENA.r, SD_REALM_ARENA_RECORD, { lean: 4 });
   for (let k = 0; k < 4; k++) {
     const a = Math.PI / 4 + (k * Math.PI) / 2;
     const px = SD_ARENA.x + Math.cos(a) * SD_PILLAR_R, pz = SD_ARENA.z + Math.sin(a) * SD_PILLAR_R, w = SD_PILLAR_W / 2;
@@ -186,8 +186,8 @@ export function buildRealmModel() {
   return packRealmFaces(f);
 }
 
-/** A faces() build packed into renderer.createMesh's model shape - the realm's records, sorted. */
-function packRealmFaces(f) {
+/** A faces() build packed into renderer.createMesh's model shape - the realm's records, sorted (SD6c: the hall's too). */
+export function packRealmFaces(f) {
   const recs = [...f.byRec.keys()].sort((a, b) => a - b);
   const count = recs.reduce((n, r) => n + f.byRec.get(r).p.length / 3, 0);
   const positions = new Float32Array(count * 3), normals = new Float32Array(count * 3), uvs = new Float32Array(count * 2);

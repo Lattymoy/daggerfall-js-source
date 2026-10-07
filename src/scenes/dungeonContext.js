@@ -239,6 +239,7 @@ import { ELITE_FOE_MULTIPLIER, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE, ELITE_LOO
 import { superFoeLevel, scaleSuperFoe, SUPER_ELITE_FOES, SUPER_LOOT_OPTS, SUPER_LOOT_DROP_MULT, SUPER_LOOT_QUALITY_MULT, sdEndMarks, sdRiftPlace, sdReturnPlace } from '../world/sdDungeon.js';   // SD4a: a Super dungeon's difficulty; SD4b: its end's place
 import { dungeonEndOf } from '../world/dungeonEnd.js';   // SD4b: RVN7d's lair law, lifted - the lair's stand and a Super dungeon's end read one law
 import { createSdEnd } from './sdEnd.js';   // SD4b: a Super dungeon's Rift and Return
+import { createSdHall } from './sdHall.js';   // SD6c: the Orrery's hall in the Shattered Hour
 import { SD_NO_RIFT } from '../net/sdLaw.js';   // SD4b: the Rift's word when nobody can answer it
 import { isSdRealm, SD_REALM_TEXT, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - a made place, its refusals, its way back
 import { realmToDungeon } from '../net/sdBrain.js';   // SD5a: the realm's frame
@@ -1777,6 +1778,16 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // every client. Pressed, or walked into (scenes/sdEnd.js).
   const sdEnd = _superTier ? createSdEnd({ renderer, audio, onRift: () => sdRiftStep(), onReturn: () => sdReturnStep() })
     : _sdRealm ? createSdEnd({ renderer, audio, riftTo: SD_REALM_TEXT.wayBack, onRift: () => opts.sdWayBack?.() }) : null;   // SD5a: the Shattered Hour's way back - the same Rift, at its Threshold's back
+  // SD6c (Super-Dungeons.md section 8): THE ORRERY'S HALL in the Shattered Hour (scenes/sdHall.js) - its stones,
+  // plaques, dial and bridge, stood the first frame I stand here; a handle's turn sent through the outer host (the realm
+  // judges it), the realm's word on the hall read from it every frame
+  const sdHall = _sdRealm ? createSdHall({ renderer, audio, s: dfLocation.sdRealm, onTurn: (i, a) => !!opts.sdTurn?.(i, a), say: (t) => setMidScreenText(t) }) : null;
+  let _sdHallStood = false;
+  /** One frame of the hall: stood once I stand here, then the realm's word heard and the hands turned. */
+  function sdHallFrame(dt, playerFeet) {
+    if (playerFeet && !_sdHallStood) { _sdHallStood = true; sdHall.stand({ dynamicDraws, collider }); }
+    sdHall.frame(dt, playerFeet ?? null, opts.sdHallWord?.() ?? null);
+  }
   /** SD5a: where a player coming back through the Rift is stood - the Return's place, beside it (kept as it stands). */
   let _sdLanding = null;
   let _sdEndAsked = false, _sdEndCheckAt = 0;
@@ -6938,6 +6949,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // layout stood, every seam this host builds made)
     if (playerFeet && !_lairAsked) { _lairAsked = true; standLairRevenant().catch(() => null); }
     if (sdEnd) sdEndFrame(playerFeet);   // SD4b: a Super dungeon's Rift and Return - stood, the Return's boss asked, the step
+    if (sdHall) sdHallFrame(dt, playerFeet);   // SD6c: the Orrery's hall - stood, its word heard, its hands turned
     if (_blockWaterOverride && playerFeet && blockAtXZ(playerFeet[0], playerFeet[2]) !== _blockWaterOverride.block) _blockWaterOverride = null;   // OH-D: a new block reads its own level   // ROAD-H H2: the enemy AoC blast reads the player's live capsule through castEnemySpell
     // ENHANCED AI 3b: ONE BAKE PER DUNGEON, off the frame, once the
     // player's feet are known - they are the anchor, the component the
@@ -7972,6 +7984,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     targets.push(...droppedTorches.targets());   // HT1: the dropped torches, at the mod's 3.2
     targets.push(...camps.targets());   // SURV3: the fires, at the same 3.2
     if (sdEnd) targets.push(...sdEnd.targets());   // SD4b: the Rift and the Return, at a door's reach
+    if (sdHall) targets.push(...sdHall.targets());   // SD6c: the stones' handles and the Ledger plaques
     return targets;
   }
 
@@ -8198,6 +8211,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     (key) => droppedTorches.hoverName?.(key) ?? null,   // HT1, through the mod's extension API
     (key) => camps.hoverName?.(key) ?? null,            // SURV3/HEARTH1, likewise
     (key) => sdEnd?.hoverName(key) ?? null,             // SD4b: the Rift and the Return
+    (key) => sdHall?.hoverName(key) ?? null,            // SD6c: a stone's handle, a Ledger plaque
     (key, hit) => composeNamer(_hostNamers)(key, hit),  // ...and whatever the host stands
     _dungeonHoverName,                                  // ...then the mod's own ladder (.cs:285-296)
   ]);
@@ -9838,7 +9852,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       renderer.destroyBatch(batch);
     },
     /** SD4b: a press on a Super dungeon's Rift or Return - the press ladder's `sdrift:` / `sdreturn:` arm (worldModes.js). */
-    sdPress(key) { return !!sdEnd?.press(key); },
+    sdPress(key) { return !!sdEnd?.press(key) || !!sdHall?.press(key); },   // SD6c: and the Orrery's hall
     /** SD5a: where a player back from the Shattered Hour is stood - beside this Hollow's Rift (stood now if the first frame
      *  has not stood it yet); null in any other dungeon. */
     sdRiftLanding() {
@@ -10105,6 +10119,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       droppedLoot._piles.length = 0;
       portals.clear();   // COMPANION-PORTAL: the portals standing own a batch each and leave with the dungeon
       sdEnd?.clear();   // SD4b: the Rift and the Return, and the bell
+      sdHall?.clear();   // SD6c: the hall's meshes
       // NT1 (F214): the context minted its own cast engine; a spell in
       // flight at the exit owned a batch nothing else can reach.
       magic.handReadyTo(opts.outerCastEngine?.() ?? null);   // CAST-USE (AUDIT part five CU1): a ready held at the way out (the door, a Recall, a load) goes with the player

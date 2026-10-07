@@ -933,3 +933,51 @@ source); `tools/mutants/sd6b.json` (25, all dead). PINS MOVED: `test/sd3_relay.t
 
 SD6c next: the hall on the page - the stones and their hands, the plaques, the dial, the lash, and the bridge the
 Concord lays.
+
+### SD6c - shipped 2026-10-07 (the Orrery's hall on the page)
+
+Section 8 on the page - the dungeon host's set for the Hour's puzzle (`scenes/sdHall.js`), as `scenes/sdEnd.js` is for its
+Rift. The realm judges every turn (SD6b); this shows what the realm says.
+
+- **The hall, made** (`world/sdHall.js`; its art made in code, `world/sdHallArt.js`, the realm's own archive after the
+  Hour's five records): six Ending-stones on the hall's ring, each facing its centre - a slab of dark stone under a brass
+  cap, its dial at chest height with a brass notch over the twelfth hour (built, so no picture can turn it), its sign
+  above (the lion's face, the sun, the ship, the tusk, the crown of bone, the dragon), and TWO HANDLES: the right (as
+  you face it) turns it forward, the left back - the activation ray takes boxes, and a stone's face split in halves
+  would overlap where it stands at a slant. Each stone's hand is its own mesh on its own matrix (`handMatrix`): clockwise
+  as one facing the stone sees it, a proper turn, never a mirror. Six Ledger plaques of bronze on posts round the rim,
+  facing in, numbered in pips as a die is (no numeral to read backwards), none on the walk in or the way on. Past the
+  hall on its way on hangs the first step of the Unmoored Steps (SD7's first island).
+- **The dial's light and the fray**: the six segments the Hour-dial carries, lit in the Mantella's green - one for each
+  stone at its true hour, how many and not which, clockwise from the twelfth (`buildLitModel`); and an ember arc just
+  inside the rim, a step a turn, all the way round at the snap (`buildFrayModel`) - each rebuilt as the realm's counts
+  change.
+- **Heard**: the hall reads the realm's latest word each frame (the world host keeps it - `onSdHall`). The first word is
+  where the stones ARE: the hands are put there. A later one sets them going the short way round at the gear's pace (an
+  hour inside the 700 ms the realm settles a stone in), with a clunk at the turned stone and a lesser one at each
+  partner it moved; the snap's toll (the ship's bell, low); the Concord's chime and its line.
+- **Pressed**: a handle turns its stone from within reach (the realm's own law, `stoneInReach` - else *"Stand closer to
+  the stone."*), never inside its gear's settling, never after the Concord. Its plaque names the stone, its sign, its
+  hour and the handle's way. A Ledger plaque's riddle shows on the plaque as the ray finds it, and is said when pressed.
+- **The lash** (the world host, `sdHallHeard`): a word that says the Hour snapped back lashes me if I stand in the hall -
+  a quarter of my health, no shield taking it (`hurtPlayer`'s `bypassShield`) - and *"The Hour snaps back."* is said to
+  everyone in the realm.
+- **The Concord's bridge**: a band of light from the hall's rim to the first step, laid as the Concord is heard. Its
+  floor and the step's stand in the collider from the first; the edge keeps a body off them until the Concord adds them
+  (`SD_HALL_FLOORS` - the world host widens its edge then).
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the realm's word kept and handed to the hall, the lash, the edge widened with
+the Concord, a turn sent - `sdTurn`, `sdHallWord`); `scenes/worldModes.js` WIRED (the handles' and plaques' keys routed
+to the dungeon host's press, the turn and the word forwarded); `scenes/dungeonContext.js` WIRED (the hall made for the
+Hour alone, stood, framed, its targets, names and presses, freed); `scenes/exterior.js` FLAGGED - no Hour opens on the
+bench.
+
+Pins: `test/sd6c_hall.test.js` (9 - the layout, the hand's turn, the models, the floors and the edge, the art, the set
+over a fake renderer, the press, the world host's hall run from its own text, the hosts by source);
+`tools/mutants/sd6c.json` (33, all dead). PINS MOVED: `test/relayversion.test.js` - `world175` re-hashed in place for the
+hour's word (`sdHourWord`, which the riddles now speak with); `test/sd4b_rift.test.js` (the dungeon host's press and the
+mode machine's route take the hall's keys too) and `test/sd5a_realm.test.js` (the edge widened with the Concord);
+`tools/mutants/sd4b.json`'s press-unrouted and `sd5a.json`'s dial and edge re-aimed by content (the island builder is
+exported as `realmIsland` for the first step).
+
+SD7 next: the Unmoored Steps (section 9) - from the first step, three spans over the void on the realm's clock.

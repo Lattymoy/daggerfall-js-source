@@ -8135,6 +8135,8 @@ export function createWorldModes(host) {
           // had nothing to read and its Load pane never refused online.
           dungeonOnline: () => host.dungeonOnline?.() ?? false,
           superRift: (s) => host.superRift?.(s) ?? null,
+          sdTurn: (i, a) => host.sdTurn?.(i, a) ?? false,   // SD6c: a turn of the Orrery's stones - sent by the outer host (scenes/world.js), judged by the realm
+          sdHallWord: () => host.sdHallWord?.() ?? null,   // SD6c: the realm's latest word on the Orrery's hall
           sdWayBack: () => host.sdWayBack?.(),   // SD5a: the Shattered Hour's way back through its Rift - the outer host's (scenes/world.js)   // SD4b: the outer host's word on a Super dungeon's Rift and Return - off the hub's record, its realm's door
           timers: (o) => host.timers?.(o) ?? null,   // TIMERS1: the dungeon's pause face reads the world host's source
           // CASTLE1: the world host's load, for a save the dungeon's own
@@ -8609,7 +8611,7 @@ export function createWorldModes(host) {
       activateStaticNpc((dungeonCtx.npcTargets?.() ?? [])[Number(key.split(':')[1])]);   // WORLD-HOVER: the `person:` index is the registered producer's, so the handler reads THAT list - a second local copy is how the two drift
       return true;
     }
-    if (key.startsWith('sdrift:') || key.startsWith('sdreturn:')) { dungeonCtx.sdPress?.(key); return true; }   // SD4b: a Super dungeon's Rift and Return (Super-Dungeons.md section 6) - the context's own
+    if (key.startsWith('sdrift:') || key.startsWith('sdreturn:') || key.startsWith('sdstone:') || key.startsWith('sdplaque:')) { dungeonCtx.sdPress?.(key); return true; }   // SD4b: a Super dungeon's Rift and Return (Super-Dungeons.md section 6) - the context's own
     if (key.startsWith('questflat:')) {
       // DQ1: buildingKey is 0 down here - StaticNPC reads it from the
       // runtime data and a dungeon has no building, the same reason

@@ -288,8 +288,11 @@ import { createSdHost } from './sdHost.js';   // SD2b: the Hollow in the world -
 import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
 import { SdOmenPassRenderer } from '../render/sdOmenPass.js';   // SD2c: the Hollow's omen, the gate's beacon in brass
 import { SD_CAST_OUT_LINE, sdRoomKey } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room
-import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
+import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG, SD_REALM_FLOORS } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
 import { SdSkyRenderer } from '../render/sdSky.js';   // SD5b: the Hour's sky
+import { SD_HALL_FLOORS } from '../world/sdHall.js';   // SD6c: the bridge and the first step, the Concord's floors
+import { SD_HALL_TEXT } from './sdHall.js';   // SD6c: the snap's line
+import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH } from '../net/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall
 import { sdRiftWord, sdReturnStands } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
 import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/lootDataTables.js';   // WB12d: the casket's pile, undrawn
@@ -19179,6 +19182,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     online.onDuel = (id, d, sub = null) => { duelMgr.onFrame(id, d, sub); };
     online.onWed = (id, d, sub = null, sc = null) => { wedMgr.onFrame(id, d, sub, sc); };   // LEGACY7 part three: a wed frame at me - the wedding's law decides; AUDIT LEGACY III O1: `sc` their realm character as the relay stamped it
     online.onGate = (g) => gateLink?.word(g);   // WB3b: the court's room's word about its boss
+    online.onSdHall = (w) => sdHallHeard(w);   // SD6c: the realm's word on the Orrery's hall - the stones, the fray, the Concord; the snap's lash
     online.onSerpent = (w) => serpentLink?.word(w);   // SERPENT1: the sea serpent's cell's word (on my cell's socket or a halo's) - its fight, its swim, its blows, my receipt
     online.onRaid = (f, room) => raidRelayWord(f, room);   // RAID3: a town cell's word about its raid - the ledger, the cleanse, my receipt
     online.onRite = (w) => riteHost?.onBroken(w);   // WB12d: the hub's broken rite
@@ -20678,6 +20682,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _gateFloor = { xa: [], now: 0, none: Object.freeze([]) };
   const _courtArena = courtArena(_gateFloor.none, 0);
   const _realmArena = realmArena();   // SD5a: the Shattered Hour's floors, as far as they are laid
+  const _realmArenaBridged = realmArena([...SD_REALM_FLOORS, ...SD_HALL_FLOORS]);   // SD6c: and with the Concord, the bridge and the first step
   const gateCourt = gateLink ? createGateCourt({
     renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, link: gateLink, spoils: spoilsPool,
     now: () => Date.now() + _sharedOffsetMs,
@@ -21123,6 +21128,25 @@ export async function bootWorld(canvas, renderer, params, status) {
     });
     return true;
   }
+  /** SD6c (Super-Dungeons.md section 8): THE ORRERY'S HALL, as its realm says it - the last word (the stones, the fray,
+   *  the dial, the Concord), kept for the hall's set to read every frame (dungeonContext.js, through the mode machine).
+   *  A word that says the Hour SNAPPED BACK lashes me if I stand in the hall - a quarter of my health, no save (no shield
+   *  takes it) - and is said to everyone in the realm. */
+  let _sdHall = null;
+  function sdHallHeard(w) {
+    _sdHall = w;
+    if (w.x !== 1 || modes?.sdRealmSlot?.() !== w.s) return;
+    const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
+    if (playerEntity.health > 0 && inOrreryHall(x, z)) {
+      const dmg = Math.max(1, Math.round((playerEntity.maxHealth ?? 0) * SD_FRAY_LASH));
+      hurtPlayer(playerEntity, dmg, { bypassShield: true });
+      flashPlayerDamage(dmg);
+    }
+    setMidScreenText(SD_HALL_TEXT.snap);
+  }
+  /** The hall's word for the realm I stand in, or null; and whether its Concord holds (the edge widens with it). */
+  const sdHallWord = () => (_sdHall && _sdHall.s === modes?.sdRealmSlot?.() ? _sdHall : null);
+  const sdConcordHere = () => !!sdHallWord()?.ok;
   /** SD2c: THE HOLLOW'S OMEN (render/sdOmenPass.js) - a column of brass-gold light over a Super dungeon's pixel from its
    *  rise to its end (sdHost omen: the record's own light), seen from SD_OMEN_PX map pixels round, outside alone. Its foot
    *  is the built ground under the Hollow's centre, or on a pixel not built yet the terrain sampler's own kernel there
@@ -21364,7 +21388,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // WB3b: the court's floor is a ring the body cannot leave - WB9b: the three courts' floor, as far as the walkways
     // between them are laid (one arena, its crossings and clock refilled each frame)
     if (!player.arena && modes?.gateArenaDay?.() != null) { _courtArena.xa = gateLink?.state()?.xa ?? _gateFloor.none; _courtArena.now = Date.now() + _sharedOffsetMs; player.arena = _courtArena; }
-    if (!player.arena && modes?.sdRealmSlot?.() != null) player.arena = _realmArena;   // SD5a: the Hour's floors are an edge the body cannot leave - the void under them
+    if (!player.arena && modes?.sdRealmSlot?.() != null) player.arena = sdConcordHere() ? _realmArenaBridged : _realmArena;   // SD5a: the Hour's floors are an edge the body cannot leave - the void under them; SD6c: with the Concord, the bridge and the first step among them
     if (!player.arena) player.arena = arenaBouts.ring(); if (!player.arena) { const s = arenaOnline?.session?.(); player.arena = standsRail(modes?.arenaFloorStage?.()?.centre?.() ?? null, player.feetAt()[1], !!s && (s.state ? s.state.h === 1 : !!s.host)); }   // ARENA2: my bout's ring on the arena's sand (the duel's clamp); HOTFIX 1003i: else the stands' rail - no watcher jumps down onto the sand (the session's host may)
     duelPrompt?.render();
   };
@@ -24619,6 +24643,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     dungeonOnline: () => onlineOn,   // AUDIT WORLD34 B2: online, the dungeon that gets built is the ROOM's - one layout (SD-ONLINE: the world's size for it)
     superRift: (s) => sdRiftOf(s),   // SD4b: a Super dungeon's Rift and Return - their word off the hub's record, the realm's door
     sdWayBack: () => sdWayBack(),   // SD5a: the Shattered Hour's way back, through its Rift into the Hollow
+    sdTurn: (i, a) => !!online?.sendSdTurn?.(i, a),   // SD6c: a turn of the Orrery's stones, down my socket in the realm
+    sdHallWord: () => sdHallWord(),   // SD6c: the realm's latest word on the hall, for the hall's set
     sdHollowDoors: (h) => buildingDoors.filter((d) => d.pixelKey === h?.key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map((d) => d.door),   // SD5a: out of the Hour - a death, its end - before the Hollow's door
     // D-ONLINE1: the death screen's door for the deaths this host does
     // not present itself (a dungeon's, a building interior's -

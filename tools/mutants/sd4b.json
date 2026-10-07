@@ -264,8 +264,8 @@
   {
     "name": "SD4B-the-press-unrouted",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (key.startsWith('sdrift:') || key.startsWith('sdreturn:')) { dungeonCtx.sdPress?.(key); return true; }",
-    "new": "    if (key.startsWith('sdrift:')) { dungeonCtx.sdPress?.(key); return true; }",
+    "old": "    if (key.startsWith('sdrift:') || key.startsWith('sdreturn:') || key.startsWith('sdstone:') || key.startsWith('sdplaque:')) { dungeonCtx.sdPress?.(key); return true; }",
+    "new": "    if (key.startsWith('sdrift:') || key.startsWith('sdstone:') || key.startsWith('sdplaque:')) { dungeonCtx.sdPress?.(key); return true; }",
     "tests": [
       "test/sd4b_rift.test.js"
     ]

@@ -38,8 +38,8 @@
   {
     "name": "SD5A-the-dial-off-the-hall",
     "file": "src/world/sdRealm.js",
-    "old": "island(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_DIAL_RECORD,",
-    "new": "island(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_FLOOR_RECORD,",
+    "old": "realmIsland(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_DIAL_RECORD,",
+    "new": "realmIsland(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_FLOOR_RECORD,",
     "tests": [
       "test/sd5a_realm.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SD5A-the-edge-lost",
     "file": "src/scenes/world.js",
-    "old": "    if (!player.arena && modes?.sdRealmSlot?.() != null) player.arena = _realmArena;",
-    "new": "    if (false) player.arena = _realmArena;",
+    "old": "    if (!player.arena && modes?.sdRealmSlot?.() != null) player.arena = sdConcordHere() ? _realmArenaBridged : _realmArena;",
+    "new": "    if (false) player.arena = sdConcordHere() ? _realmArenaBridged : _realmArena;",
     "tests": [
       "test/sd5a_realm.test.js"
     ]
