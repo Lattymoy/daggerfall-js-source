@@ -2,8 +2,8 @@
   {
     "name": "SD10-a-mark-twice",
     "file": "src/scenes/sdHost.js",
-    "old": "  return due < said ? due : null;",
-    "new": "  return due <= said ? due : null;",
+    "old": "  for (const m of SD_COLLAPSE_WARN_MS) if (left <= m) due = m;\n  return due < said ? due : null;",
+    "new": "  for (const m of SD_COLLAPSE_WARN_MS) if (left <= m) due = m;\n  return due <= said ? due : null;",
     "tests": [
       "test/sd10_collapse.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD10-the-way-home-unsaid",
     "file": "src/scenes/sdHost.js",
-    "old": "`The Hour is breaking - it collapses in ${t}. The way home stands where the Remnant fell.`",
-    "new": "`The Hour is breaking - it collapses in ${t}.`",
+    "old": "`The Hour collapses in ${t}. The way home opens where the Remnant fell.`",
+    "new": "`The Hour collapses in ${t}.`",
     "tests": [
       "test/sd10_collapse.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "SD10-out-with-no-veil",
     "file": "src/scenes/world.js",
-    "old": "    gateVeil?.flash();\n    if (!modes?.unstuck?.()) return false;",
+    "old": "    gateVeil?.flash('brass');\n    if (!modes?.unstuck?.()) return false;",
     "new": "    if (!modes?.unstuck?.()) return false;",
     "tests": [
       "test/sd10_collapse.test.js"
@@ -173,7 +173,7 @@
   {
     "name": "SD10-the-readouts-unvoiced",
     "file": "src/scenes/world.js",
-    "old": "    warn: (text) => setMidScreenText(text),\n",
+    "old": "    warn: (text) => sdSay(text, SD_VOICE_RANK.readout),   // AUDIT SD II (SD11d): the readouts wait for the fight's turns and the floor's words\n",
     "new": "",
     "tests": [
       "test/sd10_collapse.test.js"

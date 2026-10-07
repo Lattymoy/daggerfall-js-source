@@ -1783,7 +1783,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // SD6c (Super-Dungeons.md section 8): THE ORRERY'S HALL in the Shattered Hour (scenes/sdHall.js) - its stones,
   // plaques, dial and bridge, stood the first frame I stand here; a handle's turn sent through the outer host (the realm
   // judges it), the realm's word on the hall read from it every frame
-  const sdHall = _sdRealm ? createSdHall({ renderer, audio, s: dfLocation.sdRealm, onTurn: (i, a) => !!opts.sdTurn?.(i, a), say: (t) => setMidScreenText(t) }) : null;
+  const sdHall = _sdRealm ? createSdHall({ renderer, audio, s: dfLocation.sdRealm, onTurn: (i, a) => !!opts.sdTurn?.(i, a), say: (t) => { if (!opts.sdSay?.(t)) setMidScreenText(t); } }) : null;   // AUDIT SD II (SD11d): through the Hour's voice
   let _sdHallStood = false;
   /** One frame of the hall: stood once I stand here, then the realm's word heard and the hands turned. */
   function sdHallFrame(dt, playerFeet) {
@@ -1840,7 +1840,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     const w = sdEndWord();
     const word = w ? w.word : SD_NO_RIFT;
     if (word == null && w?.enter?.()) return;
-    setMidScreenText(word ?? SD_NO_RIFT);
+    if (!opts.sdSay?.(word ?? SD_NO_RIFT)) setMidScreenText(word ?? SD_NO_RIFT);   // AUDIT SD II (SD11d): through the Hour's voice
   }
   /** Into the Return: back to the way in - the start marker's landing, through the dungeon's own teleport door. */
   function sdReturnStep() {

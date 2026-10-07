@@ -298,9 +298,9 @@ test('SD4b the host\'s steps, run from its own text: into the Rift its word firs
   const body = `${fn('sdRiftStep')}\n${fn('sdReturnStep')}\nreturn { sdRiftStep, sdReturnStep };`;
   const make = (host) => {
     const said = [], tp = [];
-    const f = new Function('sdEndWord', 'setMidScreenText', 'SD_NO_RIFT', 'api', 'actions', body)(
+    const f = new Function('sdEndWord', 'setMidScreenText', 'SD_NO_RIFT', 'api', 'actions', 'opts', body)(   // AUDIT SD II (SD11d, PIN MOVED): `opts` - a host with no voice, the label itself
       () => host, (t) => said.push(t), SD_NO_RIFT,
-      { startSpawn: (o) => (o?.preferEnterMarker === false ? [1, 2, 3] : [9, 9, 9]) }, { onTeleport: ({ pos }) => tp.push(pos) });
+      { startSpawn: (o) => (o?.preferEnterMarker === false ? [1, 2, 3] : [9, 9, 9]) }, { onTeleport: ({ pos }) => tp.push(pos) }, {});
     return { ...f, said, tp };
   };
   const through = make({ word: null, returns: true, enter: () => true });

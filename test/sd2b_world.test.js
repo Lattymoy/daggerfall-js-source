@@ -155,8 +155,9 @@ test('SD2b the lines: the find, the kill and the fading said once each, to every
   host.frame();
   assert.equal(s.lines.length, 2, 'the collapse after a kill says nothing more');
   // a second Hollow fades unbeaten - its line said with the region's name when the world never placed it
+  // (AUDIT SD II, L6 - PIN MOVED: a FOUND one; the rise is said to nobody, so a fade never found says nothing)
   const { s: s2, host: h2 } = harness({ scanReady: false });
-  const r2 = sdRise(sdFirst(T0 - 20 * M), T0 - 10 * M, 0);
+  const r2 = sdFind(sdRise(sdFirst(T0 - 20 * M), T0 - 10 * M, 0), T0 - 9 * M, 'Mara');
   h2.heard({ k: 'ev', ...r2 });
   s2.clock = r2.until;
   h2.heard({ k: 'ev', ...sdGone(r2, s2.clock) });
@@ -165,6 +166,14 @@ test('SD2b the lines: the find, the kill and the fading said once each, to every
   s2.clock += SD_LINE_WAIT_MS;
   h2.frame();
   assert.deepEqual(s2.lines, ['The Hour closes over an Abyss Dungeon, unbroken.'], 'past the wait: said, never lost');
+  const { s: s3, host: h3 } = harness({ scanReady: true });
+  const r3 = sdRise(sdFirst(T0 - 20 * M), T0 - 10 * M, 0);
+  h3.heard({ k: 'ev', ...r3 });
+  s3.clock = r3.until;
+  h3.heard({ k: 'ev', ...sdGone(r3, s3.clock) });
+  s3.clock += SD_LINE_WAIT_MS;
+  h3.frame();
+  assert.deepEqual(s3.lines, [], 'a Hollow never found fades unsaid');
 });
 
 test('SD2b one Hollow at a time: an older slot\'s word is no word; the next slot\'s Hollow stands once the last is down - and not while the player still stands in the last (mutants: an older word kept; two at once)', () => {

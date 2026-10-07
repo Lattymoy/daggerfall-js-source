@@ -428,7 +428,7 @@
   {
     "name": "SD11b-L7H2-page-the-refusal-unsaid",
     "file": "src/scenes/world.js",
-    "old": "    if (w.w === 1) { setMidScreenText(SD_TURN_WAIT_LINE); return; }",
+    "old": "    if (w.w === 1) { sdSay(SD_TURN_WAIT_LINE); return; }",
     "new": "    void 0;",
     "tests": [
       "test/sd11b_relay.test.js"

@@ -335,8 +335,8 @@
   {
     "name": "SD8C-the-hours-blow-behind",
     "file": "src/ui/sdRemnantBar.js",
-    "old": "    if (s.clk && !sdBlowDone(s.clk, now)) callout = callOf(s.clk, s.ph, SD_BODY.hour, now);\n    else if (asleep)",
-    "new": "    if (false) callout = callOf(s.clk, s.ph, SD_BODY.hour, now);\n    else if (asleep)",
+    "old": "    else if (clk) callout = callOf(clk, s.ph, SD_BODY.hour, now);",
+    "new": "    else if (false) callout = callOf(clk, s.ph, SD_BODY.hour, now);",
     "tests": [
       "test/sd8c_remnant_page.test.js"
     ]

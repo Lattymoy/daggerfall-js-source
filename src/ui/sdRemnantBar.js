@@ -10,7 +10,7 @@
 //
 // `remnantBarModel` is pure - the fight's state and the relay's clock in, the gate bar's model out. Not a DFU member.
 // Ledger A (SUPER-DUNGEONS).
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_PHASE_AT, SD_PHASE_NAMES, windupFor } from '../net/sdRemnant.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_PHASE_AT, SD_PHASE_NAMES, SD_ECHO_PAIR_MS, windupFor } from '../net/sdRemnant.js';
 import { SD_ARENA } from '../net/sdBrain.js';
 import { sdBlowDone } from '../net/sdFightLink.js';
 import { countdownText } from '../net/gateLaw.js';
@@ -27,6 +27,8 @@ export const SD_BAR_TEXT = Object.freeze({
   name: 'The Brass Remnant',
   stirs: (secs) => `It stirs - ${secs}s`,
   outside: 'Outside time - strike the Echoes',
+  returns: (secs) => `It returns - ${secs}s`,   // AUDIT SD II (L6 F10): the Last Moment's return, the Echoes gone
+  rises: (e, secs) => `${e === 0 ? 'Gold' : 'Silver'} rises in ${secs}s`,   // AUDIT SD II (L6 F6): the pair's window
   stunned: (secs) => `Stunned - ${secs}s`,
   reset: (left, n, secs) => `The Reset - ${left} of ${n} ${n === 1 ? 'Heart' : 'Hearts'} - ${secs}s`,
   echo: (e, name) => `${e === 0 ? 'Gold' : 'Silver'} Echo: ${name}`,
@@ -40,6 +42,8 @@ export const SD_BAR_TEXT = Object.freeze({
 /** The bar stands over the screen while I stand this near the arena's rim (metres - the realm's frame). */
 export const SD_BAR_NEAR_M = 20;
 export const sdBarNear = (x, z) => Number.isFinite(x) && Number.isFinite(z) && Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <= SD_ARENA.r + SD_BAR_NEAR_M;
+/** AUDIT SD II (L6 F6): a fallen Echo's rising pulses on the bar its last this many ms. */
+export const SD_ECHO_RISE_NEAR_MS = 5000;
 /** The Hour's end counts down this close to it, and pulses in its last minute. */
 export const SD_ENDS_WARN_MS = 5 * 60 * 1000;
 export const SD_ENDS_NEAR_MS = 60 * 1000;
@@ -67,20 +71,33 @@ export function remnantBarModel(s, now) {
   if (!s.fell) {
     const rem = s.rem?.atk && !sdBlowDone(s.rem.atk, now) ? s.rem.atk : null;
     const echo = (s.ec ?? []).map((E, e) => (E.h > 0 && E.atk && !sdBlowDone(E.atk, now) ? { e, atk: E.atk } : null)).find(Boolean) ?? null;
-    if (s.clk && !sdBlowDone(s.clk, now)) callout = callOf(s.clk, s.ph, SD_BODY.hour, now);
-    else if (asleep) callout = { text: SD_BAR_TEXT.stirs(Math.ceil((s.op - now) / 1000)), color: SD_BAR_CSS.ward, t: null, dagon: false, move: false };
-    else if (stunned) callout = { text: SD_BAR_TEXT.stunned(Math.ceil((s.su - now) / 1000)), color: SD_BAR_CSS.stun, t: null, dagon: false, move: false };
+    // AUDIT SD II (L6 F1): THE ONE CALLOUT, BY WHAT CAN BE DONE ABOUT IT - the Reset's Hearts, then a body's blow still
+    // winding up, then the Hour's own (the Pulse, the End - nothing turns them aside), the stun, a blow landed and
+    // sweeping. The Pulse came first: the Reset's countdown went for its 2.8 s in 38% of Resets, and 92 of 1,373 Stomps
+    // were never named
+    const clk = s.clk && !sdBlowDone(s.clk, now) ? s.clk : null;
+    const fallen = s.ph === 2 && s.ec ? s.ec.findIndex((E) => !(E.h > 0) && E.dn > 0) : -1;
+    if (asleep) callout = { text: SD_BAR_TEXT.stirs(Math.ceil((s.op - now) / 1000)), color: SD_BAR_CSS.ward, t: null, dagon: false, move: false };
     else if (rem && rem.a === SD_BLOWS.reset.id && s.cx && now < rem.at) {
       const left = s.cx.c.filter((q) => q[2] > 0).length;
       callout = callOf(rem, s.ph, SD_BODY.remnant, now, SD_BAR_TEXT.reset(left, s.cx.c.length, Math.ceil((rem.at - now) / 1000)));
-    } else if (rem && s.ph !== 2) callout = callOf(rem, s.ph, SD_BODY.remnant, now);
+    } else if (rem && s.ph !== 2 && now < rem.at) callout = callOf(rem, s.ph, SD_BODY.remnant, now);
+    else if (echo && now < echo.atk.at) callout = callOf(echo.atk, s.ph, SD_BODY.gold + echo.e, now, SD_BAR_TEXT.echo(echo.e, SD_BLOW_BY_ID[echo.atk.a].name));
+    else if (clk) callout = callOf(clk, s.ph, SD_BODY.hour, now);
+    else if (stunned) callout = { text: SD_BAR_TEXT.stunned(Math.ceil((s.su - now) / 1000)), color: SD_BAR_CSS.stun, t: null, dagon: false, move: false };
+    else if (rem && s.ph !== 2) callout = callOf(rem, s.ph, SD_BODY.remnant, now);
     else if (echo) callout = callOf(echo.atk, s.ph, SD_BODY.gold + echo.e, now, SD_BAR_TEXT.echo(echo.e, SD_BLOW_BY_ID[echo.atk.a].name));
-    else if (outside) callout = { text: SD_BAR_TEXT.outside, color: SD_BAR_CSS.ward, t: null, dagon: false, move: false };
+    else if (fallen >= 0) callout = { text: SD_BAR_TEXT.rises(fallen, Math.max(0, Math.ceil((s.ec[fallen].dn + SD_ECHO_PAIR_MS - now) / 1000))), color: SD_BAR_CSS.ward, t: null, dagon: false, move: false };
+    else if (s.ph === 2) callout = { text: SD_BAR_TEXT.outside, color: SD_BAR_CSS.ward, t: null, dagon: false, move: false };
+    else if (outside) callout = { text: SD_BAR_TEXT.returns(Math.max(0, Math.ceil((s.ou - now) / 1000))), color: SD_BAR_CSS.ward, t: null, dagon: false, move: false };
   }
   const toEnd = Number.isFinite(s.ends) && s.ends > 0 ? s.ends - now : Infinity;
   const since = s.fell ? Math.max(0, now - s.fell.at) : 0;
   const alpha = s.fell ? Math.max(0, Math.min(1, 1 - (since - FELL_HOLD_MS) / FELL_FADE_MS)) : 1;
   const ec = !s.fell && s.ph === 2 && s.ec ? s.ec : null;
+  // AUDIT SD II (L6 F6): a fallen Echo's chip counts to its rising, pulsing at the last (it said "fallen" and no time)
+  const riseIn = (E) => (E.h > 0 || !(E.dn > 0) ? null : Math.max(0, E.dn + SD_ECHO_PAIR_MS - now));
+  const chip = (E, e) => { const r = riseIn(E); return r === null ? SD_BAR_TEXT.echoLeft(E.h, E.m) : SD_BAR_TEXT.rises(e, Math.ceil(r / 1000)).replace(/^(Gold|Silver) /, ''); };
   const resetComing = !s.fell && !s.ended && s.ph >= 3 && s.rk > now && !(s.rem?.atk?.a === SD_BLOWS.reset.id && !sdBlowDone(s.rem.atk, now));
   return {
     theme: 'brass', ringCss: SD_BAR_CSS.ring,
@@ -90,7 +107,8 @@ export function remnantBarModel(s, now) {
     wrath: s.fell ? null : s.ended ? SD_BAR_TEXT.ended : toEnd <= SD_ENDS_WARN_MS ? SD_BAR_TEXT.endsIn(countdownText(toEnd)) : null,
     wrathNear: !s.fell && (!!s.ended || toEnd <= SD_ENDS_NEAR_MS),
     fighters: s.n | 0, fightersLine: SD_BAR_TEXT.fighters(s.n | 0),
-    host: ec ? SD_BAR_TEXT.echoes(SD_BAR_TEXT.echoLeft(ec[0].h, ec[0].m), SD_BAR_TEXT.echoLeft(ec[1].h, ec[1].m)) : null,
+    host: ec ? SD_BAR_TEXT.echoes(chip(ec[0], 0), chip(ec[1], 1)) : null,
+    hostNear: !!ec && ec.some((E) => { const r = riseIn(E); return r !== null && r <= SD_ECHO_RISE_NEAR_MS; }),
     reckonIn: resetComing ? SD_BAR_TEXT.resetIn(countdownText(s.rk - now)) : null,
     alpha: Math.round(alpha * 20) / 20, now, low: !s.fell && frac > 0 && frac < LOW_HEALTH,
   };

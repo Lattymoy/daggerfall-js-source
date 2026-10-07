@@ -110,8 +110,8 @@
   {
     "name": "SD8D-the-reset-unsaid",
     "file": "src/scenes/sdRemnantBlows.js",
-    "old": "if (A === SD_BLOWS.reset) say(SD_BLOWS_TEXT.reset);",
-    "new": "if (false) say(SD_BLOWS_TEXT.reset);",
+    "old": "if (A === SD_BLOWS.reset) say(SD_BLOWS_TEXT.reset(s.cx?.c?.length ?? 0), false, SD_HEARTS_KEY);",
+    "new": "if (false) say(SD_BLOWS_TEXT.reset(0));",
     "tests": [
       "test/sd8d_remnant_blows.test.js"
     ]

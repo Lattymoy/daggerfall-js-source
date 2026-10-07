@@ -36,12 +36,26 @@ export function sdCollapseDue(left, said = Infinity) {
   for (const m of SD_COLLAPSE_WARN_MS) if (left <= m) due = m;
   return due < said ? due : null;
 }
-/** Its words: in the Hour, the way home named at the first; in the Hollow, the Hollow's. Pure. */
+/** Its words: in the Hour, the way home named at the first; in the Hollow, the Hollow's. Pure. AUDIT SD II (L6 F2, F21):
+ *  WB13b's - no dash asides; and the way home OPENS where it fell (it said "stands" four seconds before it rose). */
 export function sdCollapseLine(left, { hour = false, first = false } = {}) {
   const t = countdownText(left);
-  if (hour) return first ? `The Hour is breaking - it collapses in ${t}. The way home stands where the Remnant fell.` : `The Hour collapses in ${t}.`;
-  return first ? `The Hour is broken - the Hollow collapses in ${t}.` : `The Hollow collapses in ${t}.`;
+  if (hour) return first ? `The Hour collapses in ${t}. The way home opens where the Remnant fell.` : `The Hour collapses in ${t}.`;
+  return first ? `The Hour is broken. The Hollow collapses in ${t}.` : `The Hollow collapses in ${t}.`;
 }
+/** AUDIT SD II (L6 F5): THE FADE'S READOUTS - a Hollow unbeaten closes at its `until` and casts out whoever stands in it
+ *  or its Hour, mid-blow; whoever stands there is told as it nears, at each of these marks, ms (the first said with
+ *  what is left whenever they are first inside it). */
+export const SD_FADE_WARN_MS = Object.freeze([300_000, 60_000, 30_000, 10_000]);
+/** The fade's readout owed now (sdCollapseDue's law over SD_FADE_WARN_MS), or null. Pure. */
+export function sdFadeDue(left, said = Infinity) {
+  if (!(left > 0) || left > SD_FADE_WARN_MS[0]) return null;
+  let due = SD_FADE_WARN_MS[0];
+  for (const m of SD_FADE_WARN_MS) if (left <= m) due = m;
+  return due < said ? due : null;
+}
+/** Its words. Pure. */
+export const sdFadeReadout = (left, { hour = false } = {}) => `${hour ? 'The Hour' : 'The Hollow'} closes in ${countdownText(left)}.`;
 
 /** @typedef {import('../net/wire.js').SdRecord} SdRecord */
 
@@ -83,8 +97,8 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
   let foundSentAt = -Infinity, foundSentS = 0;
   /** SD2d: the slot whose Hollow this player was cast out of - once a slot. */
   let castOutS = 0;
-  /** SD10: the collapse's last readout said - its slot and its mark. */
-  let warned = { s: 0, at: Infinity };
+  /** SD10: the collapse's last readout said - its slot and its mark. AUDIT SD II (L6 F5): and the fade's. */
+  let warned = { s: 0, at: Infinity }, fadeWarned = { s: 0, at: Infinity };
 
   /** The Hollow a record names, found once a slot; null while the scan is not ready (it is warmed). */
   function hollowOf(r) {
@@ -113,7 +127,7 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
     const t = now();
     if (rec.ph === 'found' && !(was && was.s === rec.s && (was.ph === 'found' || was.ph === 'fell'))) owed.push({ kind: 'found', rec, at: t });
     if (rec.ph === 'fell' && !(was && was.s === rec.s && was.ph === 'fell')) owed.push({ kind: 'fell', rec, at: t });
-    if (rec.ph === 'gone' && rec.fellAt == null && was && was.s === rec.s && was.ph !== 'gone') owed.push({ kind: 'fade', rec, at: t });
+    if (rec.ph === 'gone' && rec.fellAt == null && rec.foundAt != null && was && was.s === rec.s && was.ph !== 'gone') owed.push({ kind: 'fade', rec, at: t });   // AUDIT SD II (L6): a FOUND Hollow's fade - one never found was news to nobody
   }
 
   /** The lines owed, said once the Hollow's place is known - or, past SD_LINE_WAIT_MS, with the region's name. */
@@ -157,6 +171,12 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
       const left = rec.fellAt + SD_COLLAPSE_MS - t;
       const due = sdCollapseDue(left, warned.s === rec.s ? warned.at : Infinity);
       if (due != null) { const first = warned.s !== rec.s; warned = { s: rec.s, at: due }; warn(sdCollapseLine(left, { hour: inHour(), first })); }
+    }
+    // AUDIT SD II (L6 F5): THE FADE'S READOUTS - to whoever stands in a Hollow (or its Hour) its time is running out on
+    if ((phase === 'risen' || phase === 'found') && stood && stood.s === rec?.s && Number.isFinite(rec.until) && inside(stood.loc)) {
+      const left = rec.until - t;
+      const due = sdFadeDue(left, fadeWarned.s === rec.s ? fadeWarned.at : Infinity);
+      if (due != null) { fadeWarned = { s: rec.s, at: due }; warn(sdFadeReadout(left, { hour: inHour() })); }
     }
     // the find: at its door, while the record says risen - again every SD_FOUND_RESEND_MS until the hub's word moves it
     if (phase === 'risen' && stood && stood.s === rec?.s && (foundSentS !== stood.s || t - foundSentAt >= SD_FOUND_RESEND_MS)) {

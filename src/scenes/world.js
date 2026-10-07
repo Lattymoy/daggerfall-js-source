@@ -324,6 +324,7 @@ import { SerpentRenderer } from '../render/serpentRender.js';   // SERPENT1: its
 import { createSdFightLink } from '../net/sdFightLink.js';   // SD8c: the realm's fight as the page holds it
 import { createSdRemnantBlows } from './sdRemnantBlows.js';   // SD8d: its blows on me - seen, heard, judged on my feet
 import { remnantBarModel, sdBarNear } from '../ui/sdRemnantBar.js';   // SD8c: the Brass Remnant's bar, the gate's in brass
+import { createSdVoice, SD_VOICE_RANK } from './sdVoice.js';   // AUDIT SD II (SD11d): the Hour's lines over the screen, paced
 import { serpentBarModel } from '../ui/serpentBar.js'; import { drawGateBossBar } from '../ui/gateBossBar.js';   // SERPENT1: its boss bar, in the sea's colours - the gate's bar, its one node
 import { playSerpentSound } from '../systems/serpentSounds.js';   // SERPENT1: its voice - DAGGER.SND's own, pitched for its size
 import { serpentSpoilsList, serpentSpoilsDay, SERPENT_SPOILS_KEYS, SERPENT_SPOILS_TEXT, SERPENT_SPOILS_RECORDS_MAX } from '../systems/serpentSpoils.js';   // SERPENT1: the Old Coil's hoard
@@ -12875,7 +12876,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  mode's inside half, one record. */
   function setRecallAnchor() {
     if (modes?.gateArenaDay?.() != null) { setMidScreenText(COURT_TEXT.noMark); return; }   // WB3b: a mark in a place that ends with the day
-    if (modes?.sdRealmSlot?.() != null) { setMidScreenText(SD_REALM_TEXT.noMark); return; }   // SD5a: nor in the Shattered Hour
+    if (modes?.sdRealmSlot?.() != null) { sdSay(SD_REALM_TEXT.noMark); return; }   // SD5a: nor in the Shattered Hour
     const inside = modes?.anchorContext?.() ?? { worldContext: WORLD_CONTEXT.Exterior, local: null, buildingKey: 0, interior: null };
     const pf = walkMode && playerSpawned ? player.pos : cam.pos;
     // A DUNGEON's local frame is its own, so its world coordinates
@@ -12944,7 +12945,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT ARENA-LADDER A5: NO RECALL OFF THE SAND - my bout holds me as its doors do (the duel's law: no door, no rest, no
     // travel). Recall tore the floor down under a losing bout, which went unsaid: no loss, no run lost, the climb untouched.
     if (arenaBouts.holds()) { townTalk.say(ARENA_TEXT.refuse.travel); return; }
-    if (modes?.sdRealmSlot?.() != null) { setMidScreenText(SD_REALM_TEXT.noRecall); return; }   // SD5a (Super-Dungeons.md section 7): nothing answers a Recall in the Hour - its ways are the Rift's
+    if (modes?.sdRealmSlot?.() != null) { sdSay(SD_REALM_TEXT.noRecall); return; }   // SD5a (Super-Dungeons.md section 7): nothing answers a Recall in the Hour - its ways are the Rift's
     const anchor = playerEntity.anchorPosition;
     const plan = teleportPlan(anchor, {
       ...(modes?.insideContext?.() ?? { insideBuilding: false, insideDungeon: false, buildingKey: 0 }),
@@ -13509,7 +13510,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // this is idempotent rather than a second mercy.
       if (!(playerEntity.health > 0)) { reviveForPlay(playerEntity); surfacePlayer(); }
       ohAbyss?.onRespawnerComplete();   // OH-D: the port's own respawn - a respawn anywhere but the bound abyss clears it, as the respawner's does
-      if (diedInHour) { gateVeil?.flash(); kind = 'hour'; }   // AUDIT SD II (L6 F4): the Hour's veil, and its own words
+      if (diedInHour) { gateVeil?.flash('brass'); kind = 'hour'; }   // AUDIT SD II (L6 F4): the Hour's veil, and its own words
       townTalk.showOverlay(new ActionTextBox([respawnFlavorText(kind), deathPenaltyText(goldLost), took?.line].filter(Boolean)));   // DEATH-PENALTY: and what the fall cost; RVN8: and what it took
     }).catch((e) => {
       // RISE-STUCK: A RISE THAT THREW STILL RISES. The heal ran first
@@ -20935,12 +20936,31 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD9e: THE BRASS REMNANT'S SPOILS (systems/sdSpoils.js) - thrown on the arena's floor from where it fell
    *  (scenes/sdSpoils.js, the court's burst), under keys of their own; a spent receipt said to the hub as its slot, so no
    *  other tab or device gives it again. Made online or not, as the pools are: it keeps the crash's records a save clears. */
+  /** AUDIT SD II (L6 F2, F3, F13; SD11d): THE HOUR'S VOICE (scenes/sdVoice.js) - every line the arc says over the
+   *  screen, each standing for its length and none cut by a less urgent one: the fight's turns, then the floor's words,
+   *  then the readouts. `sdNearArena` - (L6 F15) the fight's lines are said to whoever stands near its arena (the Steps
+   *  heard the Dragon Break and the End, which never touch them). */
+  const sdVoice = createSdVoice({ show: (t, secs) => setMidScreenText(t, secs), now: () => performance.now() });
+  const sdSay = (t, rank = SD_VOICE_RANK.turn, key = null) => { sdVoice.say(t, rank, key); return true; };
+  const sdNearArena = () => {
+    if (modes?.sdRealmSlot?.() == null) return false;
+    const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
+    return sdBarNear(x, z);
+  };
+  let _sdVoiceIn = false;
+  /** One frame of the voice - and what waits let go as the Hour is left (a readout of a collapse I am out of). */
+  const sdVoiceFrame = () => {
+    const inHour = modes?.sdRealmSlot?.() != null;
+    if (_sdVoiceIn && !inHour) sdVoice.clear();
+    _sdVoiceIn = inHour;
+    sdVoice.frame();
+  };
   const sdSpoilsPool = createSpoilsPool({
     renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio,
     ray: (from, dir, len) => { const c = modes?.dungeonCtx?.collider; const h = c?.raycastHit ? c.raycastHit(from, dir, len) : { dist: c?.raycast?.(from, dir, len) ?? Infinity, normal: null }; return Number.isFinite(h?.dist) ? h : null; },   // the Hour's own floors and pillars
     // AUDIT SD II (L6 F14): what the floor still held, gathered as I leave, said in the chat - over the screen it took the
     // place of the way home's line, or the cast-out's, a frame after it was said
-    now: () => Date.now() + _sharedOffsetMs, take: takeSpoil, say: (text) => (text === SD_SPOILS_TEXT.gathered ? chatNotice(text) : setMidScreenText(text)),
+    now: () => Date.now() + _sharedOffsetMs, take: takeSpoil, say: (text) => (text === SD_SPOILS_TEXT.gathered ? chatNotice(text) : sdSay(text, SD_VOICE_RANK.note)),
     store: _spoilsStore, who: () => characterIdOf(playerEntity),
     iconOf: (item) => itemIconColor32(item, { identity: playerEntity }),
     onSpent: (day) => { const s = sdSpoilsSlot(day); return s == null || socialLink()?.sendSdSpent?.(s) === true; },   // AUDIT SD II (L5 F4): whether it went
@@ -21452,14 +21472,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (!(playerEntity.health > 0) || modes?.deathUp?.()) return false;
       const hour = modes?.sdRealmSlot?.() != null;
       if (!modes?.unstuck?.()) return false;
-      if (hour) gateVeil?.flash();
-      setMidScreenText(SD_CAST_OUT_LINE);
+      if (hour) gateVeil?.flash('brass');
+      sdSay(SD_CAST_OUT_LINE);
       return true;
     },
     // AUDIT SD II (L1 F3): the Hollow or the Hour I stand in, by the dungeon I stand in - its end judged against it
     standing: () => ((modes?.mode ?? 'exterior') === 'dungeon' ? (modes?.dungeonLocation?.sdSlot ?? modes?.dungeonLocation?.sdRealm ?? null) : null),
     // SD10: the collapse's readouts over the screen, in the Hour's words while I stand in it
-    warn: (text) => setMidScreenText(text),
+    warn: (text) => sdSay(text, SD_VOICE_RANK.readout),   // AUDIT SD II (SD11d): the readouts wait for the fight's turns and the floor's words
     inHour: () => modes?.sdRealmSlot?.() != null,
   }) : null;
   /** SD5b: the Hour's sky pass - built the first time the Hour is drawn; null when it would not build (its sky then the
@@ -21472,7 +21492,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD2b: the Hollow stood or taken down, its find, its lines. SD2d: called from the online frame, above the modal
    *  return, in every mode - a Hollow's end reaches a player standing inside it. It stood in the exterior's half of the
    *  frame, which the dungeon's frame never reaches: underground nothing moved the Hollow on. */
-  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } sdRealmFrame(); sdFightFrame(); };
+  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } sdRealmFrame(); sdFightFrame(); sdVoiceFrame(); };
   /** SD5a: OUT OF AN HOUR THAT WILL NOT HAVE ME - its room's hello refused for good (the Rift's own words, SD3's
    *  _sdAdmit: the Hour full, or closed) or its socket replaced: cast out before the Hollow's door (the mode machine's own
    *  exit - the realm's way out lands there) with the relay's words, once, as the court casts out (ejectFromCourt) -
@@ -21482,8 +21502,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (modes?.sdRealmSlot?.() == null) { _sdOut = false; return; }
     if (_sdOut || !online?.terminal || !(playerEntity.health > 0) || modes?.deathUp?.()) return;
     _sdOut = true;
-    gateVeil?.flash();
-    if (modes?.unstuck?.()) setMidScreenText(/^The Hour /.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);
+    gateVeil?.flash('brass');   // AUDIT SD II (L6 F8): out of the Hour in its own brass
+    if (modes?.unstuck?.()) sdSay(/^The Hour /.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);
   };
   /** SD4b (Super-Dungeons.md section 6): a Super dungeon's end, for the dungeon host (through the mode machine) - the
    *  Rift's own word off the hub's record for the Hollow's slot `s` (null: step through), whether the Return still stands
@@ -21519,16 +21539,16 @@ export async function bootWorld(canvas, renderer, params, status) {
     modes?.stepThroughFire(async () => {
       if ((modes?.mode ?? 'exterior') !== 'dungeon' || !(playerEntity.health > 0)) return false;
       const word = sdRiftOf(s)?.word;
-      if (word) { setMidScreenText(word); return false; }
+      if (word) { sdSay(word); return false; }
       modes?.forceExitToExterior();
       await _teleportToPixel(hollow.px, hollow.py);
       // AUDIT SD II (L1 F3): its word asked again after the walk - the end may have overtaken the step (outside, at its pixel)
       const late = sdRiftOf(s)?.word;
-      if (late) { setMidScreenText(late); return false; }
+      if (late) { sdSay(late); return false; }
       if (await modes?.enterSdRealm?.({ s, hollow, site })) { _sdEntered.add(s); return true; }   // AUDIT SD: through - its Rift admits me again in its collapse
-      setMidScreenText(SD_REALM_TEXT.lost);   // the realm would not build: outside, at the Hollow's pixel
+      sdSay(SD_REALM_TEXT.lost);   // the realm would not build: outside, at the Hollow's pixel
       return false;
-    });
+    }, 'brass');   // AUDIT SD II (L6 F8): through the Hour's own veil
     return true;
   }
   /** SD10 (Super-Dungeons.md section 11's collapse): WHERE THE WAY HOME STANDS - where the Remnant fell, once its body has
@@ -21547,9 +21567,9 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  gathered as the Hour is left. Answers whether it carried me. */
   function sdWayHome() {
     if (!isSdRealm(modes?.dungeonLocation) || !(playerEntity.health > 0) || modes?.deathUp?.()) return false;
-    gateVeil?.flash();
+    gateVeil?.flash('brass');
     if (!modes?.unstuck?.()) return false;
-    setMidScreenText(SD_HOME_TEXT.taken);
+    sdSay(SD_HOME_TEXT.taken);
     return true;
   }
   /** SD5a: BACK THROUGH THE RIFT - out of the Hour and into its Hollow, beside its Rift, under the veil: the realm left,
@@ -21570,7 +21590,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       const at = modes?.dungeonCtx?.sdRiftLanding?.();
       if (at) modes?.setPlayerLocalPosition?.(at);
       return true;
-    });
+    }, 'brass');   // AUDIT SD II (L6 F8)
     return true;
   }
   /** SD6c (Super-Dungeons.md section 8): THE ORRERY'S HALL, as its realm says it - the last word (the stones, the fray,
@@ -21583,7 +21603,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   function sdHallHeard(w) {
     _sdHall = w;
     if (modes?.sdRealmSlot?.() !== w.s) return;
-    if (w.w === 1) { setMidScreenText(SD_TURN_WAIT_LINE); return; }
+    if (w.w === 1) { sdSay(SD_TURN_WAIT_LINE); return; }
     if (w.x !== 1) return;
     const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
     if (playerEntity.health > 0 && inOrreryHall(x, z) && !!online?.id && (w.ls ?? []).includes(online.id)) {
@@ -21591,7 +21611,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       hurtPlayer(playerEntity, dmg, { bypassShield: true });
       flashPlayerDamage(dmg);
     }
-    setMidScreenText(SD_HALL_TEXT.snap);
+    sdSay(SD_HALL_TEXT.snap);
   }
   /** SD7b: THE HOUR CASTS ME BACK (the mode machine has stood me on my span's checkpoint - scenes/sdSteps.js): what the
    *  void costs, a share of my health no shield takes, and the line. */
@@ -21601,13 +21621,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       hurtPlayer(playerEntity, dmg, { bypassShield: true });
       flashPlayerDamage(dmg);
     }
-    setMidScreenText(SD_STEPS_TEXT.cast);
+    sdSay(SD_STEPS_TEXT.cast);
   }
   /** SD8c (Super-Dungeons.md section 10): THE LAST MOMENT'S FIGHT, as the page holds it (net/sdFightLink.js) - online alone:
    *  the realm's words folded (from the realm I stand in, its own slot's), its turns said over the screen, my place in it
    *  kept; the arena's set reads it (dungeonContext.js, through the mode machine) and sends my `in` and my blows by the
    *  doors below. Out of the realm it is forgotten. */
-  const sdFightLink = params.has('online') ? createSdFightLink({ now: () => Date.now() + _sharedOffsetMs, say: (t) => setMidScreenText(t) }) : null;
+  const sdFightLink = params.has('online') ? createSdFightLink({ now: () => Date.now() + _sharedOffsetMs, say: (t, key) => { if (sdNearArena()) sdSay(t, SD_VOICE_RANK.turn, key); } }) : null;   // AUDIT SD II (L6 F15): to whoever stands near its arena
   let _sdFightHeld = false, _sdBarUp = false;
   /** SD8d (Super-Dungeons.md section 10): ITS BLOWS ON ME (scenes/sdRemnantBlows.js) - each one on the arena's floor as it
    *  winds up and lands, heard, and judged on my own feet through the dungeon context's door (the gate court's way); its
@@ -21618,7 +21638,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     grounded: () => !!player.grounded,
     player: () => playerEntity,
     strike: (dmg, how) => { modes?.dungeonCtx?.strikePlayer?.(dmg, how); },   // the door every blow lands by, the court's
-    say: (t) => setMidScreenText(t, courtSaySeconds(t)),
+    say: (t, everyone = false, key = null) => { if (everyone || sdNearArena()) sdSay(t, SD_VOICE_RANK.turn, key); },   // AUDIT SD II (L6 F15): near its arena - its fall to the whole Hour
     me: () => (online ? online.name ?? null : null),   // my row of the chart
     hudHidden: () => gamePaused() || !!townTalk.hudHidden,
   }) : null;
@@ -21631,7 +21651,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     receipt: (slot) => _sdReceipts.get(slot) ?? null,
     level: () => playerEntity.level ?? 1,
     feet: () => (playerSpawned && modes?.sdRealmSlot?.() != null ? player.feetAt() : null),
-    say: (t) => setMidScreenText(t),
+    say: (t) => sdSay(t, SD_VOICE_RANK.note),
   }) : null;
   /** SD9e: the floor a press, a plaque and the ray ask of - the Hour's pool in the Hour, the court's anywhere else (the two
    *  are never stood in at once). */
@@ -25181,6 +25201,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     sdWayHome: () => sdWayHome(),   // SD10: the way home, out of the Hour to the Hollow's door
     sdHomeAt: () => sdHomeAt(),   // SD10: where it stands - where the Remnant fell, its body sunk
     sdTurn: (i, a) => !!online?.sendSdTurn?.(i, a),   // SD6c: a turn of the Orrery's stones, down my socket in the realm
+    sdSay: (t, rank) => sdSay(t, rank),   // AUDIT SD II (SD11d): the Hour's voice, for the hall and the Rift
     sdHallWord: () => sdHallWord(),   // SD6c: the realm's latest word on the hall, for the hall's set
     sdCastBack: () => sdCastBack(),   // SD7b: the Unmoored Steps' void - stood back on the checkpoint, what it costs
     sdFight: () => sdFightLink,   // SD8c: the Last Moment's fight as the page holds it, for the arena's set

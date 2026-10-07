@@ -92,8 +92,8 @@
   {
     "name": "SD2b-the-fading-after-a-kill",
     "file": "src/scenes/sdHost.js",
-    "old": "if (rec.ph === 'gone' && rec.fellAt == null && was",
-    "new": "if (rec.ph === 'gone' && was",
+    "old": "if (rec.ph === 'gone' && rec.fellAt == null && rec.foundAt != null && was",
+    "new": "if (rec.ph === 'gone' && rec.foundAt != null && was",
     "tests": [
       "test/sd2b_world.test.js"
     ],

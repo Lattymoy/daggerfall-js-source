@@ -119,6 +119,9 @@ export const BOSS_BAR_CSS = `
 .wb-boss-tag { padding: 0 6px; line-height: 16px; background: rgba(20,4,2,0.55); border: 1px solid rgba(255,120,60,0.22); opacity: 0.9; }
 .wb-boss-wrath { color: #ff9a7a; border-color: rgba(255,90,60,0.55); opacity: 1; }
 .wb-boss-wrath.near { color: #fff0e8; background: rgba(150,14,8,0.85); animation: wb-wrath-near 500ms ease-in-out infinite alternate; }
+.wb-boss-host.near { color: #fff6dc; animation: wb-wrath-near 500ms ease-in-out infinite alternate; }
+.wb-boss-bar.brass .wb-boss-host.near { animation-name: wb-brass-near; }
+@keyframes wb-brass-near { from { background: rgba(90,64,10,0.8); } to { background: rgba(170,128,30,0.95); } }
 @keyframes wb-wrath-near { from { background: rgba(110,8,6,0.8); } to { background: rgba(190,20,12,0.95); } }
 .wb-boss-bar.intro .wb-boss-fill { animation: wb-fill-in 700ms cubic-bezier(.2,.7,.3,1); }
 .wb-boss-bar.low .wb-boss-fill { animation: wb-low 650ms ease-in-out infinite alternate; }
@@ -213,7 +216,7 @@ let root = null, parts = null;
 const SHOWN = () => ({ vis: '', name: null, sub: null, subColor: null, marks: null, spent: null, ticks: null, spentAt: null, spentNew: null, marksAt: null,
   frac: -1, ghost: -1, g: null, at: null, warded: null, breakAt: null, rootCls: null,
   callout: null, calloutColor: null, calloutCls: null, calloutT: -1, inAt: null, outAt: null, dagon: false, move: false,
-  tags: [null, null, null, null], wrathNear: null, alpha: -1, introAt: null });
+  tags: [null, null, null, null], wrathNear: null, hostNear: null, alpha: -1, introAt: null });
 let shown = SHOWN();
 
 function build(doc) {
@@ -259,7 +262,7 @@ function build(doc) {
   callout.append(calloutText, move, calloutLine);
   // WB13c: the foot's chips - the court's fighters, his host standing, the next Reckoning and the Wrath's countdown
   const foot = part('wb-boss-foot');
-  const tags = ['wb-boss-tag', 'wb-boss-tag', 'wb-boss-tag', 'wb-boss-tag wb-boss-wrath'].map((cls) => { const t = part(cls, 'span'); t.style.display = 'none'; return t; });
+  const tags = ['wb-boss-tag', 'wb-boss-tag wb-boss-host', 'wb-boss-tag', 'wb-boss-tag wb-boss-wrath'].map((cls) => { const t = part(cls, 'span'); t.style.display = 'none'; return t; });
   foot.append(...tags);
   root.append(name, sub, track, marks, callout, foot);
   (doc.body ?? doc.documentElement)?.append(root);
@@ -371,6 +374,9 @@ export function drawGateBossBar(model, { hidden = false, doc = globalThis.docume
   }
   const near = !!model.wrath && !!model.wrathNear;
   if (near !== shown.wrathNear) { shown.wrathNear = near; parts.tags[3].className = near ? 'wb-boss-tag wb-boss-wrath near' : 'wb-boss-tag wb-boss-wrath'; }
+  // AUDIT SD II (L6 F6): the host's chip pulses as its own clock runs out (the Hour's fallen Echo rising)
+  const hostNear = !!model.host && !!model.hostNear && !model.fallen;
+  if (hostNear !== shown.hostNear) { shown.hostNear = hostNear; parts.tags[1].className = hostNear ? 'wb-boss-tag wb-boss-host near' : 'wb-boss-tag wb-boss-host'; }
 }
 
 /** The page is going (a test's reset): the node leaves with it. */

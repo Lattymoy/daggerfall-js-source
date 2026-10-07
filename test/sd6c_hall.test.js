@@ -307,7 +307,7 @@ function worldHall({ slot = 4, at = [0, 0, SD_ORRERY.z], health = 80, max = 100 
   const env = {
     modes: { sdRealmSlot: () => slot }, player: { pos: realmToDungeon(...at) }, playerEntity,
     hurtPlayer: (e, n, o) => { log.push(['hurt', n, !!o?.bypassShield]); e.health -= n; }, flashPlayerDamage: (n) => log.push(['flash', n]),
-    setMidScreenText: (t) => log.push(['said', t]), sdDungeonToRealm: dungeonToRealm, inOrreryHall, SD_FRAY_LASH, SD_HALL_TEXT,
+    setMidScreenText: (t) => log.push(['said', t]), sdSay: (t) => log.push(['said', t]), sdDungeonToRealm: dungeonToRealm, inOrreryHall, SD_FRAY_LASH, SD_HALL_TEXT,   // AUDIT SD II (SD11d, PIN MOVED): through the Hour's voice
     online: { id: 'peer-me' }, SD_TURN_WAIT_LINE: 'wait',   // AUDIT SD II (PIN MOVED, L7 H2): the lash falls on whom the snap names
   };
   const body = `let _sdHall = null;\n${fn('sdHallHeard')}\n${line(/ {2}const sdHallWord = [^\n]*\n/)}${line(/ {2}const sdConcordHere = [^\n]*\n/)}return { sdHallHeard, sdHallWord, sdConcordHere };`;
@@ -338,7 +338,7 @@ test('SD6c the world host\'s hall, run from its own text: the realm\'s word kept
 
 test('SD6c the hosts by source: the dungeon host stands the hall in the Hour alone, frames it, offers its handles and plaques, names them, presses them and frees it; the mode machine routes the keys and forwards the turn and the word; the world host hears the realm, lashes, widens the edge with the Concord and sends the turn', () => {
   const D = read('src/scenes/dungeonContext.js');
-  assert.match(D, /const sdHall = _sdRealm \? createSdHall\(\{ renderer, audio, s: dfLocation\.sdRealm, onTurn: \(i, a\) => !!opts\.sdTurn\?\.\(i, a\), say: \(t\) => setMidScreenText\(t\) \}\) : null;/);
+  assert.match(D, /const sdHall = _sdRealm \? createSdHall\(\{ renderer, audio, s: dfLocation\.sdRealm, onTurn: \(i, a\) => !!opts\.sdTurn\?\.\(i, a\), say: \(t\) => \{ if \(!opts\.sdSay\?\.\(t\)\) setMidScreenText\(t\); \} \}\) : null;/);   // AUDIT SD II (SD11d, PIN MOVED): through the Hour's voice
   assert.match(D, /if \(playerFeet && !_sdHallStood\) \{ _sdHallStood = true; sdHall\.stand\(\{ dynamicDraws, collider \}\); \}\n\s+sdHall\.frame\(dt, playerFeet \?\? null, opts\.sdHallWord\?\.\(\) \?\? null\);/);
   // AUDIT SD II (L2 F10 - PIN MOVED): framed before the world pass (sdPose, the mode machine's), never in drawFoes after it
   assert.match(D, /sdPose\(dt, playerFeet\) \{\n\s+if \(sdHall\) sdHallFrame\(dt, playerFeet\);/);

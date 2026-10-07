@@ -237,7 +237,7 @@
   {
     "name": "SD4B-the-refusal-unsaid",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    setMidScreenText(word ?? SD_NO_RIFT);\n",
+    "old": "    if (!opts.sdSay?.(word ?? SD_NO_RIFT)) setMidScreenText(word ?? SD_NO_RIFT);   // AUDIT SD II (SD11d): through the Hour's voice\n",
     "new": "",
     "tests": [
       "test/sd4b_rift.test.js"

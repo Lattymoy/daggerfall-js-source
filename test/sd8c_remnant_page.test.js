@@ -488,12 +488,16 @@ test('SD8c THE BAR: the Brass Remnant\'s name over the phase it fights in, its h
   // the Hour's own first
   const P = SD_BLOWS.pulse;
   const pulse = foldSdFight(hand, validSdOut({ k: 'atk', b: SD_BODY.hour, i: 4, a: P.id, at: at + 500, x: 0, z: 0, yw: 0, tg: [], n: 0 }), T0);
-  assert.equal(remnantBarModel(pulse, at - 100).callout.text, P.name, 'the Pulse over its own blow');
+  // AUDIT SD II (L6 F1, PIN MOVED): a body's blow still winding up over the Hour's own (the Pulse took the callout from
+  // what could be dodged); once it has landed, the Pulse
+  assert.equal(remnantBarModel(pulse, at - 100).callout.text, A.name, 'its own blow, still winding up, over the Pulse');
+  assert.equal(remnantBarModel(pulse, at + 100).callout.text, P.name, 'landed: the Pulse');
   // the break: warded, outside time, an Echo's blow by name, the Echoes' health
   let brk = foldSdFight(s0, validSdOut({ k: 'ph', n: 2, at: T0 + 20_000, up: T0 + 22_500 }), T0 + 20_000);
   brk = foldSdFight(brk, validSdOut({ k: 'ec', e: [[25, 50, T0 + 22_500, 0], [0, 50, T0 + 22_500, T0 + 30_000]], d: 1, n: 'A', at: T0 + 30_000 }), T0 + 30_000);
   const b = remnantBarModel(brk, T0 + 31_000);
-  assert.deepEqual([b.warded, b.callout.text, b.host, b.spent, b.title], [true, SD_BAR_TEXT.outside, SD_BAR_TEXT.echoes('50%', 'fallen'), [true, false], SD_PHASE_NAMES[1]]);
+  // AUDIT SD II (L6 F6, PIN MOVED): a fallen Echo's rising counted, in the callout and its chip (it said "fallen")
+  assert.deepEqual([b.warded, b.callout.text, b.host, b.hostNear, b.spent, b.title], [true, SD_BAR_TEXT.rises(1, 14), SD_BAR_TEXT.echoes('50%', 'rises in 14s'), false, [true, false], SD_PHASE_NAMES[1]]);
   const V = SD_BLOWS.volley, vat = T0 + 34_000;
   const gv = foldSdFight(brk, validSdOut({ k: 'atk', b: SD_BODY.gold, i: 8, a: V.id, at: vat, x: -9, z: 2, yw: 0, tg: [[1, 1]] }), T0);
   const gc = remnantBarModel(gv, vat - 100).callout;
@@ -654,7 +658,7 @@ test('SD8c THE HOSTS, by source: the dungeon context makes the arena\'s set in t
   assert.match(M, /sdBlow: \(k, f\) => !!host\.sdBlow\?\.\(k, f\),/);
   assert.match(M, /const tris = realmColliderTris\(\);/);
   const W = read('src/scenes/world.js');
-  assert.match(W, /const sdFightLink = params\.has\('online'\) \? createSdFightLink\(\{ now: \(\) => Date\.now\(\) \+ _sharedOffsetMs, say: \(t\) => setMidScreenText\(t\) \}\) : null;/);
+  assert.match(W, /const sdFightLink = params\.has\('online'\) \? createSdFightLink\(\{ now: \(\) => Date\.now\(\) \+ _sharedOffsetMs, say: \(t, key\) => \{ if \(sdNearArena\(\)\) sdSay\(t, SD_VOICE_RANK\.turn, key\); \} \}\) : null;/);   // AUDIT SD II (L6 F15, SD11d, PIN MOVED): its lines near its arena, through the Hour's voice
   assert.match(W, /online\.onSdFight = \(w\) => sdFightHeard\(w\);/);
   assert.match(W, /if \(!sdFightLink \|\| slot == null \|\| \(w\.k === 'st' && w\.s !== slot\)\) return;/);
   assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); sdBlows\?\.leave\(\); _sdFightHeld = false; \}/);   // PIN MOVED (SD8d): its blows forgotten with it

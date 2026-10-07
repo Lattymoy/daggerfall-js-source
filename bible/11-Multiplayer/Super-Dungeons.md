@@ -677,8 +677,9 @@ map files - the gate's scan, warmed if it is not ready, and the game's own rows 
 pixel while the record's phase stands it (`frame`), then taken down - never from under a player standing in it, and the
 next slot's not before; the find said at its mouth - within SD_FOUND_NEAR_M of the dungeon entrance its pixel's blocks
 stood - to the cell its pixel is in while the record says `risen`, again every SD_FOUND_RESEND_MS until the hub's word
-moves it; and the lines everyone online hears - the find, the kill, the fading - each once, a rise to nobody, a line
-whose place the scan has not found yet waiting for it (its city's name) and past SD_LINE_WAIT_MS said with the region's.
+moves it; and the lines everyone online hears - the find, the kill, the fading (a found Hollow's alone - AUDIT SD II:
+one never found faded as news to nobody who had heard of it) - each once, a rise to nobody, a line whose place the scan
+has not found yet waiting for it (its city's name) and past SD_LINE_WAIT_MS said with the region's.
 
 `scenes/world.js`: the host made online alone and framed every frame; the hub link's `onSd`; the Hollow's cities and
 templates kept over the game's own rows before they go (`_sdCityRows` - the populated places, `hubClaim`;
@@ -894,10 +895,11 @@ dungeon host with a level made in code - never a fifth host.
   why), map (no automap slot either), a Mark and a Recall (*"Nothing answers a Recall in the Shattered Hour."*), and
   regeneration (`courtRules`, switched on in the Hour). No drip, no door, no fire of the dungeon's own.
 - **The way in** (`scenes/world.js sdEnterRealm`, the Rift's door - SD4b's `enter`): under the veil (the gate's, the
-  design's), the Rift's word asked once more (the Hour can close while the veil does), the Hollow left as a teleport
-  leaves a dungeon, the player put at its pixel outside (the staff teleport's way - the street streamed, so the way out
-  has a door to land before), then the realm built and entered (`scenes/worldModes.js enterSdRealm`), facing the Orrery.
-  Its room is the relay's realm, `sd:<s>`, whose hello asks the Rift's law again (SD3's `_sdAdmit`).
+  design's - in the Hour's own brass, its toll and its chime, AUDIT SD II), the Rift's word asked once more (the Hour
+  can close while the veil does), the Hollow left as a teleport leaves a dungeon, the player put at its pixel outside
+  (the staff teleport's way - the street streamed, so the way out has a door to land before), then the realm built and
+  entered (`scenes/worldModes.js enterSdRealm`), facing the Orrery. Its room is the relay's realm, `sd:<s>`, whose hello
+  asks the Rift's law again (SD3's `_sdAdmit`).
 - **The way back** (`sdWayBack`): the Hollow's own Rift at the Threshold's back (*The Rift - To the Hollow*), pressed or
   walked into - under the veil, out of the Hour, to the Hollow's pixel, into the Hollow by its door, stood beside its
   Rift (the Return's place, `dungeonContext.js sdRiftLanding`). A Hollow gone meanwhile: outside, at its pixel.
@@ -1310,7 +1312,9 @@ struck player's own machine) - here they are named on the bar alone.
   answer and sends a blow the realm would call junk. Every 2 s at most (`SD_IN_RETRY_MS`); never into a fight fallen or
   past its Hour; again into a fight lost, or a fresh one; a refusal said once and standing for the fight it was said in
   (an older game's and a closed Hour's for the visit). The turns said over the screen as they come (the Dragon Break, an
-  Echo felled by name, an Echo risen, the Last Moment, the stun, the loss). Out of the realm, all forgotten.
+  Echo felled by name, an Echo risen, the Last Moment, each Heart broken by name with how many stand, the stun, the
+  loss) - through the Hour's voice, each its length, to whoever stands near the arena (AUDIT SD II, SD11d). Out of the
+  realm, all forgotten.
 - **The arena's set** (`scenes/sdRemnant.js`, the dungeon host's, as the hall's): the Remnant, the GOLD and SILVER
   Echoes and eight Hearts (`world/sdRemnantModel.js`; the Echoes' metals `world/sdRemnantArt.js`, records 23 and 24),
   each a draw placed where the fight says before the world pass draws it (`remnantPose`, `echoPose`, in `sdPose` - AUDIT
@@ -1325,10 +1329,12 @@ struck player's own machine) - here they are named on the bar alone.
   look (a thing of metal, never swayed), so the swing, the shaft and the spell meet them by the port's own law; each blow's
   number out to the realm (`hit`, `ehit`, `xhit` - whole points, one number a blow across the bodies it meets).
 - **The bar** (`ui/sdRemnantBar.js` - the gate's, in brass): its name over the phase it fights in; its turns cut at 70%
-  and 35% (`ui/gateBossBar.js`'s marks follow the model now - they were laid once, at the gate's thirds); warded while it
-  cannot be struck ("It stirs" before its wake, "Outside time" in the break); the Hour's own blow called first, then a
-  stun, the Reset with its Hearts left and its seconds, its own blows, an Echo's by name; the Echoes' health; the next
-  Reset; the Hour's end in its last five minutes; Felled, then faded. Over the screen near the arena alone.
+  and 35% (`ui/gateBossBar.js`'s marks follow the model now - they were laid once, at the gate's thirds); warded while
+  it cannot be struck ("It stirs" before its wake, "Outside time" in the break); the Reset with its Hearts left and its
+  seconds first, then a blow still winding up (its own, then an Echo's by name), the Hour's own, the stun, a blow landed
+  (AUDIT SD II: the Hour's own came first and took the Reset's countdown); a fallen Echo's rising counted, its chip
+  pulsing its last five seconds, and the Remnant's return (*"It returns - 3s"*); the Echoes' health; the next Reset; the
+  Hour's end in its last five minutes; Felled, then faded. Over the screen near the arena alone.
 - **The pillars stand**: the arena's four pillars on the realm's collider (`world/sdRealm.js` `realmPillarTris`, one
   geometry with their draw) - the same squares the Hour-Hand's shade is judged by (`behindPillar`): a body stands behind
   one, never walks through it.
@@ -1374,9 +1380,12 @@ by that client); the relay never learns who was struck.
   its beam where it stands in its sweep; the Volley's marks; the Hour's own over the whole floor (the Reset's and the
   End's in Dagon's edge); the burning brass coming up and dying down.
 - **Heard and said**: each blow's wind-up at its word and its landing where it lands (DAGGER.SND's own, pitched for a
-  colossus of brass); the Reset gathering ("break its Hearts!") and the Hour's End, each once.
+  colossus of brass); the Reset called with its count (*"The Reset! Break all 5 Hearts!"*) and the Hour's End, each
+  once; each Heart's rise, hit, shatter and ring, the gate's crystals' own cues (AUDIT SD II - they rose and broke in
+  silence).
 - **Its fall**: its body's thud and the line, once a fight; then the fight's damage chart (the gate's own,
-  `ui/gateDamageChart.js`) from the realm's word of the fall.
+  `ui/gateDamageChart.js`) from the realm's word of the fall - its column the Hearts, in the Hour's brass; the line to
+  the whole Hour (AUDIT SD II).
 
 THE FOUR HOSTS: `scenes/world.js` WIRED (the blows made online beside the link - my feet in the Hour, the motor's ground,
 my entity, the dungeon context's strike door; framed in the realm, forgotten out of it; the floor's hook);
@@ -1628,9 +1637,11 @@ three minutes between were missing was a way out and a clock. No relay or accoun
 - **The readouts** (`scenes/sdHost.js` `sdCollapseDue`, `sdCollapseLine`, `SD_COLLAPSE_WARN_MS`): whoever stands in the
   Hollow or its Hour while it collapses is told how long is left - at the fall (or the first frame they stand inside
   during it, with what is left), then at a minute, thirty seconds and ten - each once a slot, never one already passed,
-  over the screen; in the Hour its first names the way home, in the Hollow the Hollow's own words. The countdown is the
-  gate's own (`countdownText` - seconds rounded up, never 0:00 while time is left). The Timers row already counted it
-  (SD2c: "<name> collapses").
+  over the screen, after the fight's turns and the floor's words (the Hour's voice, SD11d); in the Hour its first names
+  where the way home opens, in the Hollow the Hollow's own words. A Hollow unbeaten counts its fade the same way, at
+  five minutes, one, thirty seconds and ten (`sdFadeDue`, `sdFadeReadout` - AUDIT SD II). The countdown is the gate's
+  own (`countdownText` - seconds rounded up, never 0:00 while time is left). The Timers row already counted it (SD2c:
+  "<name> collapses").
 - **Not done, said so**: the design's "the Hollow sinks into its pixel" - a location's blocks have no sink in this port;
   at its end the Hollow is taken down (SD2b's unstand) the frame nobody stands in it, its column of light out with its
   phase (SD2c).
@@ -1873,3 +1884,39 @@ away and back; never thrice running), `test/sd11b_relay.test.js` (+1 - the relay
 `test/sd9e_spoils.test.js` (the spent word answered; the receipt kept whichever link; a checkpoint as I leave),
 `test/sd10b_audit.test.js` (the same), `test/wb5b_gate_claim.test.js` (the card's four), `test/world1.test.js` (the exit's
 window, its slot popped first - still inside the function).
+
+#### SD11d - what the player reads, hears and sees
+
+| | what was wrong | now |
+|---|---|---|
+| L6 F1 | THE PULSE TOOK THE BAR. The bar's one callout went to the Hour's own blow first: in 40 simulated fights 123 of 320 Resets lost their countdown for 2.2 s, and 92 of 1,373 Stomps were never named | THE ONE CALLOUT BY WHAT CAN BE DONE ABOUT IT: the Reset's Hearts and seconds, then a blow still winding up (the Remnant's, an Echo's), the Hour's own, the stun, a blow landed (`ui/sdRemnantBar.js`) |
+| L6 F2, F3, F13 | LINES OVER LINES. DFU's label holds one line and each write replaced the last: at the kill the fall, the collapse's first readout and the spoils took it within 1.2 s (the fall stood 144 ms); the second Echo's fall stood 250 ms under the Last Moment's; every line stood 1.5 s whatever its length (the Dragon Break's order needs 3.1) | THE HOUR'S VOICE (`scenes/sdVoice.js`): every line the arc says over the screen stands for its length (WB13e's `courtSaySeconds`) and is never cut by a less urgent one - the fight's turns, then the floor's words, then the readouts, each rank in the order said; a line that waited past its life is let go; a thread (the Hearts) says itself anew in its own place; what waits is let go as the Hour is left |
+| L6 F5 | THE FADE UNCOUNTED. A Hollow unbeaten closes at its `until` and casts out whoever is in it, mid-blow - with no countdown anywhere inside | its readouts at five minutes, one, thirty seconds and ten, once each, to whoever stands in it or its Hour (`sdFadeDue`, `sdFadeReadout`) |
+| L6 F6 | THE PAIR'S WINDOW UNCLOCKED. The Dragon Break's 15 s showed "Gold fallen" and no time | *"Gold rises in 12s"* on the callout and the chip, the chip pulsing its last five seconds (`hostNear`) |
+| L6 F7 | THE HEARTS IN SILENCE. They rose, took blows and broke without a sound or a word, and the call gave no count | the call counts them (*"The Reset! Break all 5 Hearts!"*); the gate's crystals' cues - rise (heard live alone), hit, shatter and ring - each where its Heart stands, the last too, broken in the stun's own word; each broken said by whom and how many stand (*"Ann breaks a Heart. 2 remain."*), the last its own words, then *"The Reset breaks! Strike now!"* |
+| L6 F8 | OBLIVION'S FIRE. Every step into and out of the Hour was Dagon's fire and its roar - Mac, of the Hour: *"not oblivion, something different"* | the veil takes a look (`ui/gateVeil.js` `cover(look)`, `flash(look)`; `render/gateVeil.js` `uTheme`): the Hour's in brass with the Mantella's green eye, closing on the Orrery's toll over the deep wind and opening on a gear's clunk and the Concord's chime; the gate's fire unchanged |
+| L6 F10 | "STRIKE THE ECHOES" WITH NONE THERE. For the Last Moment's 2.5 s return the bar said "Outside time" | *"It returns - 3s"* |
+| L6 F11 | "CRYSTALS" IN DAGON'S RED. The Remnant's damage chart named its Hearts' column "Crystals", in the court's fire | "Hearts", in the Hour's brass (`damageChartModel`'s `crystals` and `theme`) |
+| L6 F15 | THE FIGHT HEARD ON THE STEPS. The fight's lines reached everyone in the Hour - the Dragon Break and the End to a body mid-jump on the Crumble | to whoever stands where the bar stands (`sdNearArena`); its fall to the whole Hour |
+| L6 F20 | "IN THE BRASS HOLLOW" CAPITAL. Every Hollow's name begins "The", and kept its capital mid-sentence and on its plaque | small inside a line (`net/sdLaw.js` `sdNameIn`; the plaque's *"To the Brass Hollow"*) |
+| L6 F21 | WB13b'S WORDS BROKEN. Dash asides, comment and shouting: *"The Remnant steps outside time - strike down the GOLD and SILVER Echoes together."*, *"The Reset gathers - break its Hearts!"*, *"The Hour is breaking - it collapses in 3:00. The way home stands where the Remnant fell."* (said four seconds before it rose) | the event, then what to do: *"The Dragon Break! Strike down the Gold and Silver Echoes together."*, *"The Reset! Break all 5 Hearts!"*, *"The Hour collapses in 3:00. The way home opens where the Remnant fell."*, *"The Concord! A bridge of light opens."* - a law over every line the arc says |
+| L6 F23 | THE END ON THE RESET'S PITCH. Their wind-ups on one clip stood 3.2 semitones apart (WB13d asks four) | the End at 0.236 |
+| L6 | AN UNFOUND HOLLOW'S FADE SAID. Its rise is said to nobody, and its fade was said to everyone | a found Hollow's fade alone |
+| L2 (the gate's) | A POW OF A NEGATIVE in the shaders the Hour draws through - the veil's throat, the telegraph's lip and wave | squared |
+
+L6 F24 (the fighters' count) was SD11b's present share. L6 F9, F16 and the Rift plaque's count (F5) are the scenes'
+(SD11e); F19 and F22 are the words' and the docs'.
+
+Pins: `test/sd11d_words.test.js` (15 - the voice; a thread; the kill read whole; the hosts through the voice, from
+their text; the bar's one callout; the Echo's clock and the return; the Hearts heard and said; five Hearts in a second;
+the fade counted; near the arena, from the host's text; the Hour's own veil; the chart in brass; a Hollow's name small;
+WB13b's words over the arc; the End's pitch and no pow); `tools/mutants/sd11d.json` (71). RE-AIMED BY CONTENT:
+`sd10.json` (4), `sd11b.json`, `sd11c.json` (6), `sd2b.json`, `sd2d.json`, `sd4b.json`, `sd5a.json` (3), `sd8c.json`,
+`sd8d.json`, `wb6c.json`. PINS MOVED: `test/sd1_sdlaw.test.js` (the names), `test/sd2b_world.test.js` (a found Hollow's
+fade), `test/sd2d_castout.test.js` (the cast-out under the brass), `test/sd4b_rift.test.js` (the Rift's word through the
+voice), `test/sd5a_realm.test.js` (the Hour's lines and veil), `test/sd6c_hall.test.js` (the hall's say),
+`test/sd7b_steps.test.js`, `test/sd8c_remnant_page.test.js` (the bar's order, the Echo's clock, the fight's lines near
+the arena), `test/sd8d_remnant_blows.test.js` (the call's count, the fall to all), `test/sd10_collapse.test.js` (the
+readouts' words), `test/sd10b_audit.test.js`, `test/sd11b_relay.test.js`, `test/sd11c_page.test.js` (the voice in their
+rigs), `test/tier1_dungeontiers.test.js` (the plaque's article), `test/wb6c_gate_veil.test.js` (the step's look),
+`test/relayversion.test.js` (`world176` re-hashed in place - `net/sdLaw.js` is in the bundle).

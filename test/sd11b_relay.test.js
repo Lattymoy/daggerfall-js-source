@@ -696,7 +696,7 @@ test('SD11b THE PAGE LASHES WHOM THE REALM NAMES (L7 H2): a snap\'s word lashes 
   const said = [], hurt = [];
   const [hx, , hz] = realmToDungeon(SD_ORRERY.x, 0, SD_ORRERY.z - 5);
   const env = {
-    modes: { sdRealmSlot: () => 4 }, setMidScreenText: (t) => said.push(t), sdDungeonToRealm: dungeonToRealm,
+    modes: { sdRealmSlot: () => 4 }, setMidScreenText: (t) => said.push(t), sdSay: (t) => said.push(t), sdDungeonToRealm: dungeonToRealm,   // AUDIT SD II (SD11d, PIN MOVED): through the Hour's voice
     player: { pos: [hx, 0, hz] }, playerEntity: { health: 100, maxHealth: 100 }, inOrreryHall, SD_FRAY_LASH,
     hurtPlayer: (e, d) => hurt.push(d), flashPlayerDamage: () => {}, online: { id: 'peer-me' },
     SD_HALL_TEXT: { snap: 'The Hour snaps back.' }, SD_TURN_WAIT_LINE,

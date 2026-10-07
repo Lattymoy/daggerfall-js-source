@@ -79,9 +79,9 @@ test('SD10 THE READOUTS\' LAW: the readout owed is the least mark at or above wh
   assert.equal(sdCollapseDue(9_000, 10_000), null);
   assert.equal(sdCollapseDue(0, Infinity), null, 'out: nothing');
   assert.equal(sdCollapseDue(-5, Infinity), null);
-  assert.equal(sdCollapseLine(SD_COLLAPSE_MS, { hour: true, first: true }), 'The Hour is breaking - it collapses in 3:00. The way home stands where the Remnant fell.');
+  assert.equal(sdCollapseLine(SD_COLLAPSE_MS, { hour: true, first: true }), 'The Hour collapses in 3:00. The way home opens where the Remnant fell.');   // AUDIT SD II (L6 F2, F21, PIN MOVED): WB13b's words; the way home opens there
   assert.equal(sdCollapseLine(30_000, { hour: true }), 'The Hour collapses in 0:30.');
-  assert.equal(sdCollapseLine(150_400, { first: true }), 'The Hour is broken - the Hollow collapses in 2:31.');
+  assert.equal(sdCollapseLine(150_400, { first: true }), 'The Hour is broken. The Hollow collapses in 2:31.');   // AUDIT SD II (PIN MOVED)
   assert.equal(sdCollapseLine(9_100), 'The Hollow collapses in 0:10.', 'rounded up - never 0:00 while time is left');
 });
 
@@ -93,7 +93,7 @@ test('SD10 THE READOUTS IN THE HOLLOW: whoever stands in the Hollow while it col
   assert.deepEqual(h.s.warned, [], 'outside: nothing');
   h.s.inside = true;
   h.host.frame(); h.host.frame();
-  assert.deepEqual(h.s.warned, ['The Hour is broken - the Hollow collapses in 3:00.'], 'at the fall, once');
+  assert.deepEqual(h.s.warned, ['The Hour is broken. The Hollow collapses in 3:00.'], 'at the fall, once');   // AUDIT SD II (PIN MOVED)
   h.s.clock = T0 + H + SD_COLLAPSE_MS - 60_000;
   h.host.frame(); h.host.frame();
   h.s.hour = true;   // through the Rift, into the Hour
@@ -102,7 +102,7 @@ test('SD10 THE READOUTS IN THE HOLLOW: whoever stands in the Hollow while it col
   h.s.clock = T0 + H + SD_COLLAPSE_MS - 10_000;
   h.host.frame(); h.host.frame();
   assert.deepEqual(h.s.warned, [
-    'The Hour is broken - the Hollow collapses in 3:00.', 'The Hollow collapses in 1:00.', 'The Hour collapses in 0:30.', 'The Hour collapses in 0:10.',
+    'The Hour is broken. The Hollow collapses in 3:00.', 'The Hollow collapses in 1:00.', 'The Hour collapses in 0:30.', 'The Hour collapses in 0:10.',
   ]);
   h.s.clock = T0 + H + SD_COLLAPSE_MS;
   h.host.heard({ k: 'ev', ...sdGone(k, h.s.clock) });
@@ -115,7 +115,7 @@ test('SD10 THE READOUTS IN THE HOLLOW: whoever stands in the Hollow while it col
   g.s.inside = true; g.s.hour = true;
   g.s.clock = T0 + H + SD_COLLAPSE_MS - 45_000;
   g.host.frame();
-  assert.deepEqual(g.s.warned, ['The Hour is breaking - it collapses in 0:45. The way home stands where the Remnant fell.']);
+  assert.deepEqual(g.s.warned, ['The Hour collapses in 0:45. The way home opens where the Remnant fell.']);   // AUDIT SD II (PIN MOVED)
 });
 
 // ── the way home ─────────────────────────────────────────────────────
@@ -177,9 +177,9 @@ test('SD10 THE HOSTS: the dungeon host stands the Hour\'s way home where the out
   assert.match(M2, /sdHomeAt: \(\) => host\.sdHomeAt\?\.\(\) \?\? null,/);
   const W = strip(read('src/scenes/world.js'));
   assert.match(W, /const sdHomeAt = \(\) => \{\n\s*const s = sdFightLink\?\.state\(\);\n\s*if \(!s\?\.fell \|\| sdFightLink\.now\(\) < s\.fell\.at \+ SD_REM_SINK_MS\) return null;\n[^\n]*\n\s*if \(_sdHome\?\.fell !== s\.fell\.at\) \{ const \[x, z\] = clearOfPillars\(s\.rem\.x, s\.rem\.z\); _sdHome = \{ fell: s\.fell\.at, at: sdRealmToDungeon\(SD_ARENA\.x \+ x, 0, SD_ARENA\.z \+ z\) \}; \}\n\s*return _sdHome\.at;\n\s*\};/);   // AUDIT SD: one place a fall, clear of the pillars (PIN MOVED)
-  assert.match(W, /function sdWayHome\(\) \{\n\s*if \(!isSdRealm\(modes\?\.dungeonLocation\) \|\| !\(playerEntity\.health > 0\) \|\| modes\?\.deathUp\?\.\(\)\) return false;\n\s*gateVeil\?\.flash\(\);\n\s*if \(!modes\?\.unstuck\?\.\(\)\) return false;\n\s*setMidScreenText\(SD_HOME_TEXT\.taken\);/);
+  assert.match(W, /function sdWayHome\(\) \{\n\s*if \(!isSdRealm\(modes\?\.dungeonLocation\) \|\| !\(playerEntity\.health > 0\) \|\| modes\?\.deathUp\?\.\(\)\) return false;\n\s*gateVeil\?\.flash\('brass'\);\n\s*if \(!modes\?\.unstuck\?\.\(\)\) return false;\n\s*sdSay\(SD_HOME_TEXT\.taken\);/);   // AUDIT SD II (SD11d, PIN MOVED): the Hour's brass veil, its voice
   assert.match(W, /sdWayHome: \(\) => sdWayHome\(\),/);
   assert.match(W, /sdHomeAt: \(\) => sdHomeAt\(\),/);
-  assert.match(W, /warn: \(text\) => setMidScreenText\(text\),/);
+  assert.match(W, /warn: \(text\) => sdSay\(text, SD_VOICE_RANK\.readout\),/);   // AUDIT SD II (SD11d, PIN MOVED): the readouts through the Hour's voice, after its turns
   assert.match(W, /inHour: \(\) => modes\?\.sdRealmSlot\?\.\(\) != null,/);
 });

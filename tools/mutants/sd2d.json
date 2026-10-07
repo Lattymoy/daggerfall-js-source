@@ -29,7 +29,7 @@
   {
     "name": "SD2D-the-line-unsaid",
     "file": "src/scenes/world.js",
-    "old": "      setMidScreenText(SD_CAST_OUT_LINE);\n      return true;\n    },",
+    "old": "      sdSay(SD_CAST_OUT_LINE);\n      return true;\n    },",
     "new": "      return true;\n    },",
     "tests": [
       "test/sd2d_castout.test.js"

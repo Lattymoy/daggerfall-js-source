@@ -146,7 +146,7 @@
   {
     "name": "SD5A-the-word-not-asked-again",
     "file": "src/scenes/world.js",
-    "old": "      const word = sdRiftOf(s)?.word;\n      if (word) { setMidScreenText(word); return false; }\n",
+    "old": "      const word = sdRiftOf(s)?.word;\n      if (word) { sdSay(word); return false; }\n",
     "new": "",
     "tests": [
       "test/sd5a_realm.test.js"
@@ -164,8 +164,8 @@
   {
     "name": "SD5A-a-Recall-out-of-the-Hour",
     "file": "src/scenes/world.js",
-    "old": "    if (modes?.sdRealmSlot?.() != null) { setMidScreenText(SD_REALM_TEXT.noRecall); return; }",
-    "new": "    if (false) { setMidScreenText(SD_REALM_TEXT.noRecall); return; }",
+    "old": "    if (modes?.sdRealmSlot?.() != null) { sdSay(SD_REALM_TEXT.noRecall); return; }",
+    "new": "    if (false) { sdSay(SD_REALM_TEXT.noRecall); return; }",
     "tests": [
       "test/sd5a_realm.test.js"
     ]
@@ -173,7 +173,7 @@
   {
     "name": "SD5A-left-in-a-room-that-refused-me",
     "file": "src/scenes/world.js",
-    "old": "    if (modes?.unstuck?.()) setMidScreenText(/^The Hour /.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);",
+    "old": "    if (modes?.unstuck?.()) sdSay(/^The Hour /.test(online.error ?? '') ? online.error : SD_REALM_TEXT.lost);",
     "new": "    void SD_REALM_TEXT;",
     "tests": [
       "test/sd5a_realm.test.js"

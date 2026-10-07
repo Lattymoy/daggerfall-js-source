@@ -35,6 +35,9 @@ export const SD_FIGHT_EMPTY = Object.freeze({
 /** How long the page waits for the realm's answer before it says its `in` again (and between two at most). */
 export const SD_IN_RETRY_MS = 2000;
 
+/** AUDIT SD II (L6 F7, SD11d): the Reset's Hearts' thread - its call and each Heart broken say it anew (the page's voice,
+ *  scenes/sdVoice.js `key`): the newer count takes the older's place, never queued behind it. */
+export const SD_HEARTS_KEY = 'hearts';
 /** The realm's refusals (net/wire.js SD_NO_WORDS) as the player reads them; and the fight's turns, said once each. */
 export const SD_FIGHT_TEXT = Object.freeze({
   no: Object.freeze({
@@ -43,11 +46,15 @@ export const SD_FIGHT_TEXT = Object.freeze({
     'the arena is full': 'The arena is full.',
     'an older Hour': 'Your game is older than this Hour. Leave it, then reload or update the app to fight.',   // AUDIT SD II (L1 F5, L6 F12): it said "save" where the Hour refuses a save
   }),
-  dragonBreak: 'The Dragon Break! The Remnant steps outside time - strike down the GOLD and SILVER Echoes together.',
+  // AUDIT SD II (L6 F21, SD11d): WB13b's words - the event, then what to do; no dash asides, no shouted names, nothing
+  // the bar already says (it was "The Remnant steps outside time - strike down the GOLD and SILVER Echoes together.")
+  dragonBreak: 'The Dragon Break! Strike down the Gold and Silver Echoes together.',
   lastMoment: 'The Last Moment! The Remnant returns.',
   echoFell: (name, e) => `${name} fells the ${e === 0 ? 'Gold' : 'Silver'} Echo.`,
   echoRose: (e) => `The ${e === 0 ? 'Gold' : 'Silver'} Echo rises again!`,
-  stunned: 'The Reset is broken! The Remnant is stunned.',
+  stunned: 'The Reset breaks! Strike now!',   // the bar says "Stunned - 8s"
+  // AUDIT SD II (L6 F7): each Heart broken, said - the gate's crystals' words (gateCourt.js COURT_RECKON_TEXT.shattered)
+  heartBroken: (who, left) => (left > 0 ? `${who || 'A fighter'} breaks a Heart. ${left} ${left === 1 ? 'remains' : 'remain'}.` : `${who || 'A fighter'} breaks the last Heart!`),
   lost: 'The Hour turns back. The Remnant waits.',
 });
 /** The refusals the page never says its `in` again after, this visit (the rest wait for another fight). */
@@ -163,8 +170,9 @@ export function foldSdFight(s, w, now) {
 
 /**
  * The link: the fight's state, its turns said, and my place in it.
- * @param {{ now: () => number, say?: (text: string) => void, onRefused?: (why: string) => void }} deps
- *   `now` the relay's clock; `say` a line over the screen; `onRefused` the realm's word refusing my `in`.
+ * @param {{ now: () => number, say?: (text: string, key?: string) => void, onRefused?: (why: string) => void }} deps
+ *   `now` the relay's clock; `say` a line over the screen (`key` its thread - SD_HEARTS_KEY); `onRefused` the realm's word
+ *   refusing my `in`.
  */
 export function createSdFightLink({ now, say = () => {}, onRefused = () => {} }) {
   /** @type {Readonly<SdFightState>} */
@@ -189,6 +197,7 @@ export function createSdFightLink({ now, say = () => {}, onRefused = () => {} })
       if (w.k === 'ph' && was.fi) say(w.n === 2 ? SD_FIGHT_TEXT.dragonBreak : SD_FIGHT_TEXT.lastMoment);
       else if (w.k === 'ec' && was.fi) { if (w.d != null && w.n) say(SD_FIGHT_TEXT.echoFell(w.n, w.d)); else if (w.r != null) say(SD_FIGHT_TEXT.echoRose(w.r)); }
       else if (w.k === 'stun' && was.fi) say(SD_FIGHT_TEXT.stunned);
+      else if (w.k === 'cxb' && was.fi && was.cx?.i === w.i && (was.cx.c[w.c]?.[2] ?? 0) > 0) say(SD_FIGHT_TEXT.heartBroken(w.n, state.cx ? state.cx.c.filter((q) => q[2] > 0).length : 0), SD_HEARTS_KEY);   // AUDIT SD II (L6 F7): a Heart broken, by whom, and how many stand
       else if (w.k === 'lost' && was.fi && !was.lost) say(SD_FIGHT_TEXT.lost);
     },
     /** The fight's state now. */

@@ -32,7 +32,7 @@ export const SD_HALL_TEXT = Object.freeze({
   front: 'Stand before the stone\'s face.',
   still: 'The Concord holds. The stones will not turn again.',
   snap: 'The Hour snaps back.',
-  concord: 'The Concord! The endings stand as one, and a bridge of light opens.',
+  concord: 'The Concord! A bridge of light opens.',   // AUDIT SD II (L6 F21): WB13b's - the event and what it opens ("The endings stand as one" commented)
   plaque: (k) => `Ledger Plaque ${['I', 'II', 'III', 'IV', 'V', 'VI'][k]}`,
   hour: (h) => `Its hand stands at the ${sdHourWord(h)} hour.`,
 });

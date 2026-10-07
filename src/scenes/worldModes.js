@@ -7884,12 +7884,12 @@ export function createWorldModes(host) {
    *  under it), then the veil opened on whatever stands, whatever `go` answered or threw. One step at a time: a second
    *  asked while one is under way is refused. No veil (offline, a page with no WebGL2) - the step unveiled. */
   let _stepping = false;
-  async function stepThroughFire(go) {
+  async function stepThroughFire(go, look = 'fire') {
     const veil = host.gateVeil?.() ?? null;
     if (_stepping) return false;
     _stepping = true;
     try {
-      if (veil) await veil.cover();
+      if (veil) await veil.cover(look);   // AUDIT SD II (L6 F8): the step's own veil - the Hour's brass for the Rift's
       return await go();
     } finally {
       _stepping = false;
@@ -8169,6 +8169,7 @@ export function createWorldModes(host) {
           dungeonOnline: () => host.dungeonOnline?.() ?? false,
           superRift: (s) => host.superRift?.(s) ?? null,
           sdTurn: (i, a) => host.sdTurn?.(i, a) ?? false,   // SD6c: a turn of the Orrery's stones - sent by the outer host (scenes/world.js), judged by the realm
+          sdSay: (t, rank) => host.sdSay?.(t, rank) ?? false,   // AUDIT SD II (SD11d): the Hour's voice - the outer host's
           sdHallWord: () => host.sdHallWord?.() ?? null,   // SD6c: the realm's latest word on the Orrery's hall
           sdClock: () => host.deadlandsSeconds?.() ?? performance.now() / 1000,   // SD7b: the realm's anchored clock, the Unmoored Steps' (the sky's own)
           sdFight: () => host.sdFight?.() ?? null,   // SD8c: the Last Moment's fight as the page holds it (net/sdFightLink.js) - the outer host's

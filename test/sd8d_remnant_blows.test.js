@@ -229,7 +229,7 @@ test('SD8d THE BRASS BURNS, THE HOUR STRIKES: the Volley\'s landing strikes once
   rs.word({ k: 'ph', n: 3, at: T0 + 18_000, up: T0 + 19_000 });
   rs.word({ k: 'atk', b: 0, i: 31, a: R.id, at: A0 + 8000, x: 0, z: 0, yw: 0, tg: [] });
   rs.to(A0);
-  assert.deepEqual(rs.said, [SD_BLOWS_TEXT.reset], 'said as it gathers');
+  assert.deepEqual(rs.said, [SD_BLOWS_TEXT.reset(0)], 'said as it gathers');   // AUDIT SD II (L6 F7, PIN MOVED): the call counts its Hearts - none heard yet here
   rs.word({ k: 'stun', until: A0 + 9000, at: A0 + 1000 });
   rs.across(A0 + 1000, A0 + 9000, 100);
   assert.deepEqual(rs.struck, [], 'broken: it never lands');
@@ -291,7 +291,7 @@ test('SD8d THE HOSTS, by source: the world host makes the blows online beside th
   const W = read('src/scenes/world.js');
   assert.match(W, /const sdBlows = sdFightLink \? createSdRemnantBlows\(\{/);
   assert.match(W, /feet: \(\) => \(playerSpawned && modes\?\.sdRealmSlot\?\.\(\) != null \? player\.feetAt\(\) : null\),\n\s+grounded: \(\) => !!player\.grounded,/);
-  assert.match(W, /strike: \(dmg, how\) => \{ modes\?\.dungeonCtx\?\.strikePlayer\?\.\(dmg, how\); \},[^\n]*\n\s+say: \(t\) => setMidScreenText\(t, courtSaySeconds\(t\)\),/);
+  assert.match(W, /strike: \(dmg, how\) => \{ modes\?\.dungeonCtx\?\.strikePlayer\?\.\(dmg, how\); \},[^\n]*\n\s+say: \(t, everyone = false, key = null\) => \{ if \(everyone \|\| sdNearArena\(\)\) sdSay\(t, SD_VOICE_RANK\.turn, key\); \},/);   // AUDIT SD II (L6 F15, SD11d, PIN MOVED): near its arena, its fall to the whole Hour, through the Hour's voice
   assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); sdBlows\?\.leave\(\); _sdFightHeld = false; \}/);
   assert.match(W, /if \(inRealm\) \{ try \{ sdBlows\?\.frame\(\); \}/);
   assert.match(W, /drawSdTelegraph: \(\{ proj, view, eye \}\) => \{ const t = performance\.now\(\) \/ 1000, fog = courtFogNow\(\); const blows = !!sdBlows\?\.drawPass\(proj, view, eye, t, fog\), lines = !!sdSpoilsPool\?\.drawPass\(proj, view, eye, t, fog\); if \(blows \|\| lines\) renderer\.markForeignPass\(\); \},/);   // SD9e: and its spoils' loot lines, in the same pass (PIN MOVED)

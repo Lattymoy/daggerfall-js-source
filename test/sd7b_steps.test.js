@@ -426,6 +426,7 @@ function worldCast({ health = 80, max = 100 } = {}) {
     playerEntity, SD_CAST_BACK_LOSS, SD_STEPS_TEXT,
     hurtPlayer: (e, n, o) => { log.push(['hurt', n, !!o?.bypassShield]); e.health -= n; }, flashPlayerDamage: (n) => log.push(['flash', n]),
     setMidScreenText: (t) => log.push(['said', t]),
+    sdSay: (t) => log.push(['said', t]),   // AUDIT SD II (SD11d, PIN MOVED): through the Hour's voice
   };
   return { sdCastBack: new Function(...Object.keys(env), `${text}\nreturn sdCastBack;`)(...Object.values(env)), log };
 }

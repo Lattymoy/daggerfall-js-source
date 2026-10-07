@@ -111,7 +111,7 @@ function hollowRig({ templates = () => sdTemplates([LAB], isMainStoryDungeon), r
     get mode() { return s.mode; }, get dungeonLocation() { return s.loc; }, deathUp: () => s.deathUp, sdRealmSlot: () => s.realmSlot,
     unstuck: () => { log.push('unstuck'); return s.exits; },
   };
-  const env = { playerEntity, modes, setMidScreenText: (t) => log.push(['said', t]), SD_CAST_OUT_LINE, gateVeil: { flash: () => log.push('veil') } };
+  const env = { playerEntity, modes, setMidScreenText: (t) => log.push(['said', t]), sdSay: (t) => log.push(['said', t]), SD_CAST_OUT_LINE, gateVeil: { flash: () => log.push('veil') } };
   const castOut = evalIn(hostProp('castOut'), env);
   const inside = evalIn(hostProp('inside'), env);
   const standing = evalIn(hostProp('standing'), env);
@@ -264,7 +264,7 @@ function riftHost({ rec, hollow, storage = memStorage(), entered = true } = {}) 
   };
   const env = {
     sdHost: { record: () => h.rec, hollow: () => hollow }, _sharedOffsetMs: 0, sdRiftWord, sdReturnStands, modes, playerEntity: { health: 10 },
-    INTERIOR_SEASON: 3, SD_REALM_TEXT, setMidScreenText: (t) => log.push(['said', t]), _sdEntered: enteredOf(storage),
+    INTERIOR_SEASON: 3, SD_REALM_TEXT, setMidScreenText: (t) => log.push(['said', t]), sdSay: (t) => log.push(['said', t]), _sdEntered: enteredOf(storage),
     _teleportToPixel: async () => { log.push('pixel'); if (h.onWalk) h.rec = h.onWalk; },
   };
   const body = `${constOf('sdRiftOf')}\n${fnOf('sdEnterRealm')}\nreturn { sdRiftOf, sdEnterRealm };`;
@@ -612,16 +612,16 @@ test('SD11c A DEATH IN THE HOUR IS THE HOUR\'S, AND THE FLOOR\'S LAST WORDS GO T
   const go = w.indexOf('Promise.resolve().then(async () => {', at);
   const out = w.indexOf('if (mode !== \'exterior\') modes?.forceExitToExterior();', go);
   assert.ok(at > 0 && go > at && out > go, 'read before the exit');
-  assert.match(w.slice(out, out + 4000), /if \(diedInHour\) \{ gateVeil\?\.flash\(\); kind = 'hour'; \}\s*\n\s*townTalk\.showOverlay\(new ActionTextBox\(\[respawnFlavorText\(kind\), deathPenaltyText\(goldLost\), took\?\.line\]\.filter\(Boolean\)\)\);/);
+  assert.match(w.slice(out, out + 4000), /if \(diedInHour\) \{ gateVeil\?\.flash\('brass'\); kind = 'hour'; \}\s*\n\s*townTalk\.showOverlay\(new ActionTextBox\(\[respawnFlavorText\(kind\), deathPenaltyText\(goldLost\), took\?\.line\]\.filter\(Boolean\)\)\);/);
   assert.equal(respawnFlavorText('hour', () => 0), SD_REALM_TEXT.died, 'the Hour\'s own kind of waking');
   assert.equal(respawnFlavorText('hour', () => 0.999), SD_REALM_TEXT.died);
   // the Hour's pool's voice, from its own text
   const from = W.indexOf('const sdSpoilsPool = createSpoilsPool({');
   const line = W.slice(from, W.indexOf('\n  });', from)).split('\n').find((l) => l.includes('say: (text) =>'));
-  const sayText = /say: (\(text\) => \(text === SD_SPOILS_TEXT\.gathered \? chatNotice\(text\) : setMidScreenText\(text\)\))/.exec(line)?.[1];
+  const sayText = /say: (\(text\) => \(text === SD_SPOILS_TEXT\.gathered \? chatNotice\(text\) : sdSay\(text, SD_VOICE_RANK\.note\)\))/.exec(line)?.[1];   // (SD11d, PIN MOVED): the rest through the Hour's voice
   assert.ok(sayText, 'its say');
   const log = [];
-  const say = evalIn(sayText, { SD_SPOILS_TEXT, chatNotice: (t) => log.push(['chat', t]), setMidScreenText: (t) => log.push(['screen', t]) });
+  const say = evalIn(sayText, { SD_SPOILS_TEXT, SD_VOICE_RANK: { note: 1 }, chatNotice: (t) => log.push(['chat', t]), sdSay: (t) => log.push(['screen', t]) });
   say(SD_SPOILS_TEXT.gathered);
   say('No spoils.');
   assert.deepEqual(log, [['chat', SD_SPOILS_TEXT.gathered], ['screen', 'No spoils.']]);

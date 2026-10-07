@@ -32,8 +32,8 @@
   {
     "name": "SD11c-L1F2-the-refused-way-out-said",
     "file": "src/scenes/world.js",
-    "old": "      if (!modes?.unstuck?.()) return false;\n      if (hour) gateVeil?.flash();",
-    "new": "      modes?.unstuck?.();\n      if (hour) gateVeil?.flash();",
+    "old": "      if (!modes?.unstuck?.()) return false;\n      if (hour) gateVeil?.flash('brass');",
+    "new": "      modes?.unstuck?.();\n      if (hour) gateVeil?.flash('brass');",
     "tests": [
       "test/sd11c_page.test.js",
       "test/sd2d_castout.test.js"
@@ -51,8 +51,8 @@
   {
     "name": "SD11c-L1F9-no-veil",
     "file": "src/scenes/world.js",
-    "old": "      if (hour) gateVeil?.flash();\n      setMidScreenText(SD_CAST_OUT_LINE);",
-    "new": "      void hour;\n      setMidScreenText(SD_CAST_OUT_LINE);",
+    "old": "      if (hour) gateVeil?.flash('brass');\n      sdSay(SD_CAST_OUT_LINE);",
+    "new": "      void hour;\n      sdSay(SD_CAST_OUT_LINE);",
     "tests": [
       "test/sd11c_page.test.js",
       "test/sd2d_castout.test.js"
@@ -97,7 +97,7 @@
   {
     "name": "SD11c-L1F3-asked-before-the-walk-alone",
     "file": "src/scenes/world.js",
-    "old": "      const late = sdRiftOf(s)?.word;\n      if (late) { setMidScreenText(late); return false; }\n",
+    "old": "      const late = sdRiftOf(s)?.word;\n      if (late) { sdSay(late); return false; }\n",
     "new": "",
     "tests": [
       "test/sd11c_page.test.js"
@@ -401,7 +401,7 @@
   {
     "name": "SD11c-L6F4-no-veil",
     "file": "src/scenes/world.js",
-    "old": "      if (diedInHour) { gateVeil?.flash(); kind = 'hour'; }",
+    "old": "      if (diedInHour) { gateVeil?.flash('brass'); kind = 'hour'; }",
     "new": "      if (diedInHour) { kind = 'hour'; }",
     "tests": [
       "test/sd11c_page.test.js"
@@ -410,8 +410,8 @@
   {
     "name": "SD11c-L6F4-the-dungeons-words",
     "file": "src/scenes/world.js",
-    "old": "      if (diedInHour) { gateVeil?.flash(); kind = 'hour'; }",
-    "new": "      if (diedInHour) { gateVeil?.flash(); }",
+    "old": "      if (diedInHour) { gateVeil?.flash('brass'); kind = 'hour'; }",
+    "new": "      if (diedInHour) { gateVeil?.flash('brass'); }",
     "tests": [
       "test/sd11c_page.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "SD11c-L6F14-over-the-screen",
     "file": "src/scenes/world.js",
-    "old": "say: (text) => (text === SD_SPOILS_TEXT.gathered ? chatNotice(text) : setMidScreenText(text)),",
-    "new": "say: (text) => setMidScreenText(text),",
+    "old": "say: (text) => (text === SD_SPOILS_TEXT.gathered ? chatNotice(text) : sdSay(text, SD_VOICE_RANK.note)),",
+    "new": "say: (text) => sdSay(text, SD_VOICE_RANK.note),",
     "tests": [
       "test/sd11c_page.test.js"
     ]

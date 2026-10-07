@@ -115,8 +115,8 @@ test('SD2d a Hollow that fades unbeaten casts out too, and the next slot\'s rise
 test('SD2d the world host: the cast-out is the dungeon\'s own way out (the mode machine\'s exit, drained at its safe point: PositionPlayerToDungeonExit\'s landing) with the closing line, the dead left to their death\'s door; the host frames above the modal return, in every mode; the find is the street\'s (mutants: the line unsaid; the dead cast out; the host framed outdoors alone)', () => {
   const w = read('src/scenes/world.js');
   // AUDIT SD II (L1 F2, F9, PIN MOVED): it answers whether it acted (the host asks again until it does), and out of the
-  // Hour under its veil
-  assert.match(w, /castOut: \(\) => \{\n {6}if \(!\(playerEntity\.health > 0\) \|\| modes\?\.deathUp\?\.\(\)\) return false;\n {6}const hour = modes\?\.sdRealmSlot\?\.\(\) != null;\n {6}if \(!modes\?\.unstuck\?\.\(\)\) return false;\n {6}if \(hour\) gateVeil\?\.flash\(\);\n {6}setMidScreenText\(SD_CAST_OUT_LINE\);\n {6}return true;\n {4}\},/);
+  // Hour under its veil - (SD11d, PIN MOVED) the Hour's own brass, the line through the Hour's voice
+  assert.match(w, /castOut: \(\) => \{\n {6}if \(!\(playerEntity\.health > 0\) \|\| modes\?\.deathUp\?\.\(\)\) return false;\n {6}const hour = modes\?\.sdRealmSlot\?\.\(\) != null;\n {6}if \(!modes\?\.unstuck\?\.\(\)\) return false;\n {6}if \(hour\) gateVeil\?\.flash\('brass'\);\n {6}sdSay\(SD_CAST_OUT_LINE\);\n {6}return true;\n {4}\},/);
   assert.equal(SD_CAST_OUT_LINE, 'The Hour closes, and the Hollow folds in on itself behind you.');
   const online = w.indexOf('  const onlineFrame = (now, dt) => {');
   const frameAt = w.indexOf('    sdFrame();   // SD2b');

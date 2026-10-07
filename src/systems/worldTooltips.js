@@ -484,7 +484,7 @@ export function staticDoorName(kind, {
   if (kind === 'dungeonEntrance' && Object.hasOwn(DUNGEON_TIER_TEXT, tier ?? '')) {
     const name = String(locationName ?? '').replace(/^Elite /, '');
     const subs = [];
-    if (name) subs.push(`To ${name}`);
+    if (name) subs.push(`To ${tier === 'super' ? name.replace(/^The /, 'the ') : name}`);   // AUDIT SD II (L6 F20): "To the Brass Hollow"
     if (size) subs.push(String(size));
     return { title: DUNGEON_TIER_TEXT[tier], subs };
   }

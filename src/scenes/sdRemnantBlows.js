@@ -21,11 +21,11 @@ import { SD_ARENA, realmToDungeon, dungeonToRealm } from '../net/sdBrain.js';
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, windupFor, stompRingAt, handAngleAt, arenaOf } from '../net/sdRemnant.js';
 import { POOL_TICK_MS } from '../net/gateBrain.js';
 import { strikeDamage } from '../net/gateStrike.js';
-import { sdBodyAt } from '../net/sdFightLink.js';
+import { sdBodyAt, SD_HEARTS_KEY } from '../net/sdFightLink.js';
 import { sdBlowVerdict, sdVolleyPools, sdPoolUnder } from '../net/sdStrike.js';
 import { GateTelegraphRenderer, TELEGRAPH_KIND, TELEGRAPH_EDGE, TELEGRAPH_EDGE_DAGON, TELEGRAPH_STYLE, TELEGRAPH_POOL, TELEGRAPH_FLASH_MS, TELEGRAPH_POINTS_MAX } from '../render/gateTelegraph.js';
 import { damageChartModel, drawGateDamageChart, DAMAGE_CHART_DELAY_MS, DAMAGE_CHART_MS } from '../ui/gateDamageChart.js';
-import { BODY_FALL, BURNING, THUNDER_ROLL, SWING_LOW, CRYSTAL_CLIPS } from '../world/gateBoss.js';
+import { BODY_FALL, BURNING, THUNDER_ROLL, SWING_LOW, CRYSTAL_CLIPS, BOSS_CUES } from '../world/gateBoss.js';
 
 /** Each blow's colour on the floor (linear rgb) - the brass's for its own, the Mantella's green for the Hour's, red for
  *  the End. */
@@ -46,19 +46,25 @@ export const SD_TELEGRAPH_FLOOR = Object.freeze({ r: SD_ARENA.r, courts: Object.
 export const SD_ARENA_CENTRE = Object.freeze(realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z));
 /** Its words. */
 export const SD_BLOWS_TEXT = Object.freeze({
-  reset: 'The Reset gathers - break its Hearts!',
+  // AUDIT SD II (L6 F7, F21): the call counts its Hearts, as the gate's Reckoning counts its crystals (it was "The Reset
+  // gathers - break its Hearts!")
+  reset: (n) => (n > 0 ? `The Reset! Break all ${n} Hearts!` : 'The Reset! Break its Hearts!'),
   end: 'The Hour Ends.',
   fell: 'The Brass Remnant is undone.',
   boss: 'The Brass Remnant',
+  hearts: 'Hearts',   // AUDIT SD II (L6 F11): the chart's column - it said "Crystals"
   burning: 'burning brass',
 });
 /** ITS SOUNDS (DAGGER.SND records, as the gate's - `clip` an index, `pitch` down for its size): each blow's wind-up at
  *  its word and its landing, where it lands (`at`: its body, its marks, or the arena's heart), and its fall. */
 const cue = (clip, pitch, volume, reach, at = 'body') => Object.freeze({ clip, pitch, volume, reach, at });
+/** AUDIT SD II (L6 F7): a Reset's Hearts rising are heard only this soon after its call, ms (the gate's RECKON_LATE_MS
+ *  law - heard live, never a stale one at a hello). */
+export const SD_HEART_LATE_MS = 2000;
 export const SD_BLOW_CUES = Object.freeze({
   windup: Object.freeze({
     stomp: cue(BODY_FALL, 0.5, 1.3, 60), hand: cue(CRYSTAL_CLIPS.hit, 0.42, 1.4, 80), volley: cue(CRYSTAL_CLIPS.hit, 0.7, 1.3, 60),
-    pulse: cue(THUNDER_ROLL, 0.4, 1.4, 120, 'heart'), reset: cue(THUNDER_ROLL, 0.3, 2.0, 160, 'heart'), end: cue(THUNDER_ROLL, 0.25, 2.2, 200, 'heart'),
+    pulse: cue(THUNDER_ROLL, 0.4, 1.4, 120, 'heart'), reset: cue(THUNDER_ROLL, 0.3, 2.0, 160, 'heart'), end: cue(THUNDER_ROLL, 0.236, 2.2, 200, 'heart'),   // AUDIT SD II (L6 F23): four semitones under the Reset's (WB13d's law - 0.25 was 3.2 apart)
   }),
   land: Object.freeze({
     stomp: cue(BODY_FALL, 0.28, 2.0, 80), hand: cue(SWING_LOW, 0.4, 1.6, 80), volley: cue(BODY_FALL, 0.8, 1.4, 50, 'marks'),
@@ -154,7 +160,7 @@ export function sdBlowsInFlight(s) {
  * when I am not in the Hour), `grounded()` whether I stand on the ground, `player()` my entity, `strike(dmg, how)` the
  * dungeon context's door, `say` a line, `me()` my name on the relay (my row of the chart), `hudHidden()` the HUD's hide.
  * @param {{ gl?: any, audio?: any, link: any, feet?: () => (number[]|null), grounded?: () => boolean, player?: () => any,
- *   strike?: (dmg: number, how: any) => void, say?: (t: string) => void, me?: () => (string|null), hudHidden?: () => boolean }} deps
+ *   strike?: (dmg: number, how: any) => void, say?: (t: string, everyone?: boolean, key?: string) => void, me?: () => (string|null), hudHidden?: () => boolean }} deps
  */
 export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () => null, grounded = () => true, player = () => null, strike = () => {}, say = () => {}, me = () => null, hudHidden = () => false }) {
   let pass = null, passTried = false;
@@ -198,7 +204,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
       marks.set(atk.i, m);
       if (marks.size > 32) marks.delete(marks.keys().next().value);
     }
-    if (!m.cued) { m.cued = true; if (t < atk.at) { sound(SD_BLOW_CUES.windup[A.key], s, b, atk, t); if (A === SD_BLOWS.reset) say(SD_BLOWS_TEXT.reset); } }
+    if (!m.cued) { m.cued = true; if (t < atk.at) { sound(SD_BLOW_CUES.windup[A.key], s, b, atk, t); if (A === SD_BLOWS.reset) say(SD_BLOWS_TEXT.reset(s.cx?.c?.length ?? 0), false, SD_HEARTS_KEY); } }
     if (A === SD_BLOWS.end && endSaid !== s.fi && t < atk.at) { endSaid = s.fi; say(SD_BLOWS_TEXT.end); }
     if (!m.landed && t >= atk.at) {
       m.landed = true;
@@ -228,16 +234,45 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     burnAt = t;
     land(SD_BLOWS_TEXT.burning, p.pct, p.base);
   }
+  /** AUDIT SD II (L6 F7): THE HEARTS HEARD - the gate's crystals' own cues (world/gateBoss.js BOSS_CUES), each where its
+   *  Heart stands: their rise with the Reset's call (heard live alone - SD_HEART_LATE_MS), a blow on one, and one broken
+   *  (its shatter, and the ring after it). They rose, took blows and broke in silence. */
+  let heartsOf = null;
+  const broke = (p) => { play(BOSS_CUES.crystalBreak, p); play(BOSS_CUES.crystalRing, p); };
+  function hearts(s, t) {
+    const X = s.cx;
+    if (!X || s.fell || s.lost) {
+      // the LAST Heart breaks in the stun's own word: the realm fans its `cxb` and the stun together, and the stun takes
+      // the Hearts with it - the ones this screen last saw standing were broken, and are heard so (a Reset that landed
+      // stuns nothing: its Hearts go unheard, as they went unbroken)
+      if (heartsOf && !X && s.fi === heartsOf.fi && s.su > t && s.stunAt >= heartsOf.called) for (let k = 0; k < heartsOf.h.length; k++) if (heartsOf.h[k] > 0) broke(heartsOf.p[k]);
+      heartsOf = null;
+      return;
+    }
+    if (!heartsOf || heartsOf.fi !== s.fi || heartsOf.i !== X.i) {
+      const called = s.rem?.atk?.a === SD_BLOWS.reset.id ? s.rem.atk.at - SD_BLOWS.reset.windup : -Infinity;
+      heartsOf = { fi: s.fi, i: X.i, h: X.c.map((q) => q[2]), p: X.c.map((q) => realmToDungeon(SD_ARENA.x + q[0], 1.2, SD_ARENA.z + q[1])), called };
+      if (t - called <= SD_HEART_LATE_MS) for (const p of heartsOf.p) play(BOSS_CUES.crystalRise, p);
+      return;
+    }
+    for (let k = 0; k < X.c.length; k++) {
+      const q = X.c[k], was = heartsOf.h[k] ?? 0;
+      heartsOf.h[k] = q[2];
+      if (!(q[2] < was)) continue;
+      if (q[2] > 0) play(BOSS_CUES.crystalHit, heartsOf.p[k]);
+      else broke(heartsOf.p[k]);
+    }
+  }
   /** Its fall, an event: its body's thud and the line, once a fight; then the fight's damage chart. */
   function fall(s, t) {
     if (s.fell && fellFi !== s.fi) {
       fellFi = s.fi;
       chartAt = t; chartFell = s.fell;
-      if (t - s.fell.at < 5000) { play(SD_BLOW_CUES.fall, bodyAt(s, SD_BODY.remnant, s.fell.at)); say(SD_BLOWS_TEXT.fell); }
+      if (t - s.fell.at < 5000) { play(SD_BLOW_CUES.fall, bodyAt(s, SD_BODY.remnant, s.fell.at)); say(SD_BLOWS_TEXT.fell, true); }   // AUDIT SD II (L6 F15): its fall to the whole Hour
     }
     if (chartAt !== null) {
       if (s.fell && s.fell !== chartFell) chartFell = s.fell;   // the realm's word may bring the chart after the first
-      const model = damageChartModel(chartFell, { boss: SD_BLOWS_TEXT.boss, me: me(), since: chartAt, now: t });
+      const model = damageChartModel(chartFell, { boss: SD_BLOWS_TEXT.boss, me: me(), since: chartAt, now: t, crystals: SD_BLOWS_TEXT.hearts, theme: 'brass' });   // AUDIT SD II (L6 F11): its Hearts, in brass
       drawGateDamageChart(model, { hidden: hudHidden() });
       if (!model && t - chartAt >= DAMAGE_CHART_DELAY_MS + DAMAGE_CHART_MS) chartAt = null;   // its span over: put away
     }
@@ -250,6 +285,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
       if (s.fi !== marksFi) { marksFi = s.fi; marks.clear(); pools = []; inFire = false; }   // AUDIT SD: a fight lost and a fresh one begun - the last one's numbers are not this one's
       const t0 = prevT ?? t;
       prevT = t;
+      hearts(s, t);   // AUDIT SD II (SD11d): before the idle return - the stun that breaks the last Heart ends every blow in flight
       // AUDIT SD II (L2 F9): no blow in flight and no brass burning - nothing to judge or show, and nothing made for it
       if (!sdAnyInFlight(s) && !pools.length) { inFire = false; shapes = NONE; fall(s, t); return; }
       const f = feet(), e = player(), alive = !!f && !!e && e.health > 0;
@@ -282,6 +318,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     leave() {
       marks.clear(); pools = []; inFire = false; prevT = null; shapes = [];
       marksFi = 0; fellFi = 0; endSaid = 0;   // AUDIT SD: the next Hollow's Hour numbers its fights from 1 again
+      heartsOf = null;
       if (chartAt !== null) { chartAt = null; drawGateDamageChart(null); }
     },
   };
