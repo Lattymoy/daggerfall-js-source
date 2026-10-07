@@ -1,0 +1,471 @@
+[
+  {
+    "name": "AUDIT-PI1-R1-a-layer-frees-its-own",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "  if (n > 0) { m.set(record, n); return; }",
+    "new": "  if (false) { m.set(record, n); return; }",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-R1-uploaded-per-holder",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "if (cached === false || (cached === undefined && n === 1))",
+    "new": "if (true)",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-R2-mw-at-256",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "export const PI_MW_PX = 64;",
+    "new": "export const PI_MW_PX = 256;",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-R2-classic-first",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "morrowind().catch(() => null).then((got) => { mwMissed = stamp != null && !got; return got ?? classic(); })",
+    "new": "classic().catch(() => null).then((got) => { mwMissed = stamp != null && !got; return got ?? morrowind(); })",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-R7-empty-render-kept",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "    if (!hasVisible(colors)) return null;",
+    "new": "    if (false) return null;",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-R9-mw-miss-never-again",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "if (mwMissed && p.tries < PI_RETRY_MAX) p.retryAt",
+    "new": "if (false) p.retryAt",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-R6-reask-drops-the-picture",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "      } else if (p.batch) {",
+    "new": "      } else if (false) {",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-L7-none-never-again",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "        presentItem(p.item, false);\n        if (p.tries < PI_RETRY_MAX)",
+    "new": "        presentItem(p.item, false);\n        if (false)",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-R3-no-bleed",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "const cut = bleedEdges(cropTo(colors, width, box), box.w, box.h);",
+    "new": "const cut = cropTo(colors, width, box);",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-R3-alpha-bled",
+    "file": "src/systems/physicalItems.js",
+    "old": "c[i * 4 + 2] = fill[k + 3]; owned[i] = 1;",
+    "new": "c[i * 4 + 2] = fill[k + 3]; c[i * 4 + 3] = 255; owned[i] = 1;",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-R4-dressed-once",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "if (redress && p.batch) dress(p);",
+    "new": "if (false && redress && p.batch) dress(p);",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-R5-presented-at-mint",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "  proxies.set(p.id, p);\n    askPicture(p);",
+    "new": "  proxies.set(p.id, p);\n    presentItem(item, true);\n    askPicture(p);",
+    "tests": [
+      "test/pi1_physicalitems.test.js",
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-R5-presents-unpictured",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "return !!p && p.batch != null; },",
+    "new": "return !!p; },",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-F2-casts-a-card-shadow",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "    p.batch.noShadow = true;",
+    "new": "    p.batch.noShadow = false;",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I1-scatter-point-as-is",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "const at = constrainMove(start, [g.pos[0] + off[0], start[1], g.pos[2] + off[2]], H / 2, H, rayHit);",
+    "new": "const at = [g.pos[0] + off[0], start[1], g.pos[2] + off[2]];",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I1-constrain-to-the-face",
+    "file": "src/systems/physicalItems.js",
+    "old": "const go = Math.max(0, hit.dist - skin - PI_CONSTRAIN.skin);",
+    "new": "const go = hit.dist;",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I1-constrain-no-slide",
+    "file": "src/systems/physicalItems.js",
+    "old": "    if (!n) break;\n    const left",
+    "new": "    break;\n    const left",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-L6-probe-from-half-a-metre",
+    "file": "src/systems/physicalItems.js",
+    "old": "const floor = ground(b.pos[0], b.pos[1] + PI_PROBE_LIFT, b.pos[2]);",
+    "new": "const floor = ground(b.pos[0], b.pos[1] + 0.5, b.pos[2]);",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-L6-no-ceiling",
+    "file": "src/systems/physicalItems.js",
+    "old": "  if (b.vel[1] > 0 && wall) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I2-quick-loot-part",
+    "file": "src/systems/quickLoot.js",
+    "old": "if (wholeStack && plan.amount < (item.stackCount ?? 1)) return { refusal: REFUSAL.cannotCarry };",
+    "new": "if (false) return { refusal: REFUSAL.cannotCarry };",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I2-press-takes-a-part",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "took: host.took ?? null, wholeStack: true });",
+    "new": "took: host.took ?? null, wholeStack: false });",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-H2-told-on-a-refusal",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "      if (moved) {\n",
+    "new": "      if (true) {\n",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I11-summoned-map-read",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "      if (isSummoned(p.item)) { say(CANNOT_REMOVE_ITEM_TEXT); return true; }",
+    "new": "",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-maps-packed-where-read",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "        if (typeof host.revealMap === 'function') {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-maps-none-left-unsaid",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "if (!name) say(USE_TEXT.readMapFail);",
+    "new": "if (false) say(USE_TEXT.readMapFail);",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-H3-key-left-armed",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "try { quickLootSpend(); } catch",
+    "new": "try { /* left armed */ } catch",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-H7-paws-take",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "if (beast) { say(beast.text); return true; }",
+    "new": "if (false) { say(beast.text); return true; }",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-H7-no-silver",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "if (g.silver != null) silverFindAt('corpse', g.silver);",
+    "new": "if (false) silverFindAt('corpse', g.silver);",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-H8-release-every-emptied",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "if (backing?.kind === 'pile' && backing.pile && !backing.pile.items.length) removePile(backing.pile);",
+    "new": "if (backing?.kind === 'pile') releaseEmptied();",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-H5-deck-leaves-them",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "      if (dx || dy || dz) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-L4-thrown-again",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "        if (oi >= 0) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-L15-feed-throw-is-none",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "try { list = host.corpses?.() ?? []; } catch { return; }",
+    "new": "try { list = host.corpses?.() ?? []; } catch { list = []; }",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-L15-plaque-of-a-gone-item",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "return p && listOf(p)?.includes(p.item) ? [p.item] : null;",
+    "new": "return p ? [p.item] : null;",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-L10-flown-under-the-window",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "fly(paused ? 0 : dt);",
+    "new": "fly(dt);",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I3-one-footprint",
+    "file": "src/systems/physicalItems.js",
+    "old": "export const dropRadius = (worldH) => Math.max(PI_FOOTPRINT.min, worldH * PI_FOOTPRINT.share);",
+    "new": "export const dropRadius = (worldH) => PI_FOOTPRINT.min + 0 * worldH;",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I5-first-face-down",
+    "file": "src/systems/physicalItems.js",
+    "old": "if (best == null || Math.abs(h.y - refY) < Math.abs(best - refY)) best = h.y;",
+    "new": "if (best == null) best = h.y;",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I5-steep-face-a-floor",
+    "file": "src/systems/physicalItems.js",
+    "old": "    if (!(h.ny >= PI_FLOOR_PROBE.floorNormalY)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I5-no-path-check",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "return !(Number.isFinite(d) && d < l - PI_PATH.skin);",
+    "new": "return true || d;",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I6-the-ray-reach",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "distance: RAY_DISTANCE, reach: PI_REACH });",
+    "new": "distance: RAY_DISTANCE, reach: 2.5 });",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I10-infinity-the-default",
+    "file": "src/systems/physicalItems.js",
+    "old": "typeof pct === 'number' && !Number.isNaN(pct)",
+    "new": "Number.isFinite(pct)",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-D1g-fresh-window-open",
+    "file": "src/systems/physicalItems.js",
+    "old": "at - t <= PI_FRESH_MS",
+    "new": "at - t < PI_FRESH_MS",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-H6-restored-as-a-bag",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "inactive: false, ...(s.physical ? { physical: true, settled: true } : {}) };",
+    "new": "inactive: false };",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-recentre-twice",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "      for (const g of groups.values()) { g.pos[0] += dx; g.pos[1] += dy; g.pos[2] += dz; }\n",
+    "new": "",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-ground-move-twice",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "{ const d = dy(g.pos[0], g.pos[2]); if (d) g.pos[1] += d; }",
+    "new": "{ const d = dy(g.pos[0], g.pos[2]); if (false) g.pos[1] += d; }",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I4-shoulder-in-the-air",
+    "file": "src/systems/physicalItems.js",
+    "old": "    if (b.settled || !b.nearGround) return;",
+    "new": "    if (b.settled) return;",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I4-shoulder-over-under",
+    "file": "src/systems/physicalItems.js",
+    "old": "          if (Math.abs((b.pos[1] + b.h / 2) - (o.pos[1] + o.h / 2)) >= (b.h + o.h) / 2 + S.query) continue;\n",
+    "new": "",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I4-settled-no-neighbour",
+    "file": "src/systems/physicalItems.js",
+    "old": "  bodies.forEach((o, i) => {\n    const k",
+    "new": "  bodies.forEach((o, i) => {\n    if (o.settled) return;\n    const k",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-I12-tie-flipped",
+    "file": "src/systems/physicalItems.js",
+    "old": "dx = bi < oi ? -1 : 1;",
+    "new": "dx = bi < oi ? 1 : -1;",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-H4-fate-drops",
+    "file": "src/scenes/world.js",
+    "old": "playerOwned: false }, physicalDropOn: () => false });",
+    "new": "playerOwned: false } });",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-H7-unreadable-stands",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (u && _lootUnreadable.has(lootKeyOf(u))) return null;\n",
+    "new": "",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-D1f-watch-indoors-unseen",
+    "file": "src/scenes/worldModes.js",
+    "old": ", ...(interiorGuards?.physicalCorpses?.() ?? [])]",
+    "new": "]",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PI1-L10-world-never-paused",
+    "file": "src/scenes/world.js",
+    "old": "    paused: () => !!gamePaused(),   // AUDIT PI1 L10",
+    "new": "    paused: () => false,   // AUDIT PI1 L10",
+    "tests": [
+      "test/audit_pi1.test.js"
+    ]
+  }
+]

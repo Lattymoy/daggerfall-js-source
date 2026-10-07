@@ -56,7 +56,9 @@ test('MAC-O6 + ES1 + SND1 by source: the enhanced inventory plays DoTransferItem
   const inv = rd('src/ui/enhancedInventory.js');
   const cues = inv.match(/^  audio\.playOneShot\(plan\.sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/gm) ?? [];
   assert.equal(cues.length, 2, 'take and store, each unguarded');
-  assert.equal((inv.match(/audio\.playOneShot\(/g) ?? []).length, 2, 'and no other cue in this window');
+  // PI1 (PIN MOVED): and the shift-drop's, DoTransferItem's own cue on its own transfer (systems/physicalItems.js shiftDrop's sound)
+  assert.match(inv, /^  audio\.playOneShot\(r\.sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/m, 'the shift-drop sounds, unguarded');
+  assert.equal((inv.match(/audio\.playOneShot\(/g) ?? []).length, 3, 'and no other cue in this window');
   assert.doesNotMatch(inv, /enhancedSoundsOn\(\)\) audio\.playOneShot\(plan\.sound/, 'the take cue is no longer behind the Enhanced sounds switch');
   // the classic window's own call is the reference, unchanged
   assert.match(rd('src/ui/nativeInventory.js'), /audio\.playOneShot\(plan\.sound === 'gold' \? SOUND\.GoldPieces : SOUND\.ButtonClick, 1\);/, 'the classic window plays it always, as DFU does');

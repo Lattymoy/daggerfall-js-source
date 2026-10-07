@@ -1,0 +1,17 @@
+{
+  "ModTitle": "Physical Items",
+  "ModVersion": "0.1.29",
+  "ModAuthor": "demifiend000",
+  "ContactInfo": "romansoldier98@gmail.com",
+  "DFUnity_Version": "1.1.1",
+  "ModDescription": "Inventory-sprite world items with shift-drop, corpse proxies, pickup, placement, and persistence.",
+  "GUID": "8764ae71-a464-4a5e-b646-fbc464670137",
+  "Files": [],
+  "Dependencies": [
+    {
+      "Name": "daggerfall.harmony",
+      "IsOptional": false,
+      "IsPeer": false
+    }
+  ]
+}
