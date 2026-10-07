@@ -32,6 +32,7 @@ import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
 import { POTION_TEMPLATE_INDEX, validLootItem } from '../src/systems/loot.js';
 import { goldStack, isGoldPieces } from '../src/systems/inventory.js';
 import { mintPiece } from '../src/systems/smithItems.js';
+import { isWelkyndStone, isVarlaStone } from '../src/systems/ayleidStones.js';   // LOOT21: imported, the late finds are registered - as the game's worldTick.js has them
 
 const on = () => { _resetForTests(); setPref('lootRarity', true); };
 const off = () => { _resetForTests(); setPref('lootRarity', false); };
@@ -254,14 +255,18 @@ test('LOOT14: the doors - the host door rolls its garments after every draw it m
   // so WHICH piece a curse lands on is the stream's after them; a piece's own draws - its tier, its name, the lines it was
   // minted with - are its seed's, and that is what is compared (a curse's line, its last, set aside)
   const ownLines = (it) => JSON.stringify(it.cursed ? it.affixes.slice(0, -1) : it.affixes ?? null);
+  // PIN MOVED (LOOT21, section 13): a late find - an Ayleid stone - may follow the garments, the door's very last draw
+  // (law 9), so the pieces are the list's first two and the garments its next two, by place, and what follows is a stone
+  const lateFind = (it) => isWelkyndStone(it) || isVarlaStone(it);
   for (let seed = 1; seed < 40; seed++) {
     const alone = pieces();
     LR.rollLootRarity(alone, src, { rolls: lcg(seed) });
     const dressed = [...pieces(), garment(155), garment(195)];
     LR.rollLootRarity(dressed, src, { rolls: lcg(seed) });
     assert.deepEqual(dressed.slice(0, 2).map((it) => [it.rarity ?? null, it.name, ownLines(it)]),
-      alone.map((it) => [it.rarity ?? null, it.name, ownLines(it)]), `seed ${seed}: the other pieces are their seed's`);
-    for (const g of dressed.slice(2)) assert.equal(g.untaken, true, 'a garment the door rolled is marked for the drought');
+      alone.slice(0, 2).map((it) => [it.rarity ?? null, it.name, ownLines(it)]), `seed ${seed}: the other pieces are their seed's`);
+    for (const g of dressed.slice(2, 4)) assert.equal(g.untaken, true, 'a garment the door rolled is marked for the drought');
+    assert.ok(dressed.slice(4).every(lateFind) && alone.slice(2).every(lateFind), `seed ${seed}: after them, only a late find`);
   }
   // a garment the door rolled is a garment of its tier: over enough seeds, the colours come
   const tiers = new Set();
