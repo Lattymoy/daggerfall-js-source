@@ -299,8 +299,8 @@
   {
     "name": "LOOT20-a-locked-gem-spent",
     "file": "src/systems/reforge.js",
-    "old": "const looseGem = (it, gem) => gemOf(it) === gem && !isLocked(it) && !isEquipped(it);",
-    "new": "const looseGem = (it, gem) => gemOf(it) === gem && !isEquipped(it);",
+    "old": "const looseGem = (it, gem) => gemKindOf(it) === gem && !isLocked(it) && !isEquipped(it);",
+    "new": "const looseGem = (it, gem) => gemKindOf(it) === gem && !isEquipped(it);",
     "tests": [
       "test/loot20_sockets.test.js"
     ]

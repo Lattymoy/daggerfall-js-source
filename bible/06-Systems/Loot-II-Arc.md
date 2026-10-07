@@ -557,7 +557,7 @@ walked with a record of the family already lit: it walks another family's now).
 `src/systems/lootRarity.js`: `SOCKET_PER_MILLE` (a Rare 150, a Legendary 300), `SOCKET_GROUPS` (a weapon, armour, a
 jewel - never a garment: a gem's resistance or a blow's fire is a line of fight, which LOOT14's pool keeps off the
 clothes), `SOCKET_EMPTY` and `socket`, a declared item field (`SOCKET_VALUES`); `GEM_IDS` and `GEM_NAMES` - DFU's eight
-gems in their templates' order, the Gems group's 0 to 7 (`gemOf`) - and `GEM_LINES`, the design's table, each line of a
+gems in their templates' order, the Gems group's 0 to 7 (`gemKindOf`) - and `GEM_LINES`, the design's table, each line of a
 kind the port already reads (`elemental`, `leech`, `damage`, `stat`, `resist`). `socketPass` gives a socket after the
 curse's pass at the host door and a body's kit; `setGem` appends the gem's line to `affixes`, marked with its gem, and
 names the socket, the price by the line's worth; `unsetGem` takes it off and the socket is empty - the gem shatters.

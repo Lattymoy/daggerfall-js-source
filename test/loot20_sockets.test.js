@@ -61,9 +61,9 @@ test('LOOT20: DFU\'s eight gems and their lines - a weapon\'s blow, every other 
     const w = LR.gemLine(sword(), g), o = LR.gemLine(ring(), g);
     assert.deepEqual([[w.id, w.param, w.value], [o.id, o.param, o.value]], want[g], g);
     assert.ok(LR.validAffix(w) && LR.validAffix(o) && w.gem === g && o.gem === g);
-    assert.equal(LR.gemOf(gem(g)), g);
+    assert.equal(LR.gemKindOf(gem(g)), g);
   }
-  assert.equal(LR.gemOf(sword()), null);
+  assert.equal(LR.gemKindOf(sword()), null);
   assert.equal(LR.gemLine(sword(), 'opal'), null);
   // set, in place: the line after the piece's own, the socket named, the price by its worth
   const it = socketed(ring);

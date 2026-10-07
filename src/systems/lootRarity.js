@@ -1480,7 +1480,7 @@ export const GEM_LINES = Object.freeze({
   malachite: Object.freeze({ weapon: Object.freeze({ id: 'stat', param: 'strength', value: 4 }), other: Object.freeze({ id: 'stat', param: 'endurance', value: 4 }) }),
 });
 /** A gem item's id, or null for anything else. */
-export const gemOf = (item) => (item?.group === 'Gems' && Number.isInteger(item.templateIndex) ? GEM_IDS[item.templateIndex] ?? null : null);
+export const gemKindOf = (item) => (item?.group === 'Gems' && Number.isInteger(item.templateIndex) ? GEM_IDS[item.templateIndex] ?? null : null);
 /** Whether a piece carries a socket, empty or set; the gem set in it, or null. */
 export const hasSocket = (item) => SOCKET_VALUES.includes(item?.socket);
 export const socketGem = (item) => (GEM_IDS.includes(item?.socket) ? item.socket : null);

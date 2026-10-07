@@ -35,7 +35,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { lootRarityOn, reforgeableLines, reforgeAffix, honeableLines, honeAffix, affixBand } from './lootRarity.js';   // LOOT17: and the hone
-import { GEM_IDS, gemOf, hasSocket, socketGem, setGem, unsetGem } from './lootRarity.js';   // LOOT20: the sockets
+import { GEM_IDS, gemKindOf, hasSocket, socketGem, setGem, unsetGem } from './lootRarity.js';   // LOOT20: the sockets
 import { welkyndShards, isWelkyndShard, WELKYND_SHARD } from './gateSpoils.js';
 import { isBound } from './itemBound.js';
 import { isLocked } from './itemLock.js';
@@ -185,7 +185,7 @@ export function honePiece(item, index, player, rolls = Math.random) {
 export const SET_GEM_PRICE = 100;
 /** A gem item the setting may take: of its kind, unlocked and not worn - the shards' own law (a gem is a jewel a slot
  *  takes too). */
-const looseGem = (it, gem) => gemOf(it) === gem && !isLocked(it) && !isEquipped(it);
+const looseGem = (it, gem) => gemKindOf(it) === gem && !isLocked(it) && !isEquipped(it);
 /** The pack's loose gems, by kind: `{ ruby: 2, ... }`. */
 export const gemsHeld = (items) => Object.fromEntries(GEM_IDS.map((g) => [g, (Array.isArray(items) ? items : []).reduce((n, it) => n + (looseGem(it, g) ? (it.stackCount ?? 1) : 0), 0)]));
 /** Take one loose gem of a kind out of a pack (a stack shrinks, a last one goes). Answers whether it could. */
