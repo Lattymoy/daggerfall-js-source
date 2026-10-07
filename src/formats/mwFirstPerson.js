@@ -2825,7 +2825,7 @@ export function skeletonBindSkins(nif, skeleton) {
       const bt = sd.bones[i]?.transform;
       if (ref !== undefined && bt) bones.push({ ref, name, invBind: affineOfTransform(bt) });
     });
-    if (bones.length) out.push({ name: rec.name || '', positions: null, skin: { bones } });
+    if (bones.length) out.push({ name: rec.name || '', positions: null, skin: { bones, frame: 'skeleton' } });   // MW-STEEL3: its mesh is the skeleton's
   }
   return out;
 }
