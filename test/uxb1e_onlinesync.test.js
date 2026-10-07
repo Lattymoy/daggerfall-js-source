@@ -66,13 +66,13 @@ test('UXB1-E: a sync writes only what differs, each into its own store, keeps wh
   const before = onlineSyncPlan({ search: '' });
   // SD-ONLINE (PIN MOVED): the world's sizes are forced on online and off by default, so a fresh profile differs there too
   assert.deepEqual(before.filter((r) => !r.same).map((r) => r.id).sort(), [
-    'mods:pcaao/Enabled', 'mods:roleplay-realism/RefinedTraining.intensiveTraining',
+    'mods:pcaao/Enabled', 'mods:roads-hazelnut/RiversAndStreams', 'mods:roleplay-realism/RefinedTraining.intensiveTraining',
     'prefs:enhancedAI', 'prefs:enhancedWater', 'prefs:worldDungeonSizes',
     'settings:Controls/AllowMagicRepairs', 'settings:Experimental/SmallerDungeons',
-  ]);
+  ]);   // LANDFORM3: the room's rivers are on, past the mod's shipped off - so a fresh store differs there too
   const rec = applyOnlineSync(before, { now: 1234 });
   assert.equal(rec.at, 1234);
-  assert.equal(rec.rows.length, 7);
+  assert.equal(rec.rows.length, 8);   // (the merge of main's LANDFORMS: its rivers and SD-ONLINE's sizes, both)
   assert.equal(getPref('enhancedAI'), true);
   assert.equal(getPref('enhancedWater'), true);
   assert.equal(getPref('worldDungeonSizes'), true, 'SD-ONLINE: offline play at the world\'s sizes');
@@ -80,6 +80,7 @@ test('UXB1-E: a sync writes only what differs, each into its own store, keeps wh
   assert.equal(getBool('Experimental', 'SmallerDungeons'), false);
   assert.equal(modSetting('pcaao', 'Enabled'), true);
   assert.equal(modSetting('roleplay-realism', 'RefinedTraining.intensiveTraining'), false);
+  assert.equal(modSetting('roads-hazelnut', 'RiversAndStreams'), true, 'LANDFORM3: the rivers come home on');
   assert.ok(onlineSyncPlan({ search: '' }).every((r) => r.same), 'synced: nothing differs');
   // the settings were SAVED - a reload reads them back
   resetSettings();
@@ -89,7 +90,7 @@ test('UXB1-E: a sync writes only what differs, each into its own store, keeps wh
   assert.equal(applyOnlineSync(onlineSyncPlan({ search: '' })), null, 'a second sync with nothing to do writes nothing');
   assert.ok(lastOnlineSync(), '...and leaves the undo standing');
 
-  assert.equal(undoOnlineSync(), 7);
+  assert.equal(undoOnlineSync(), 8);   // (the merge of main's LANDFORMS: its rivers and SD-ONLINE's sizes, both)
   assert.equal(getPref('enhancedAI'), false);
   assert.equal(getPref('enhancedWater'), false);
   assert.equal(getPref('worldDungeonSizes'), false);
@@ -98,6 +99,7 @@ test('UXB1-E: a sync writes only what differs, each into its own store, keeps wh
   assert.equal(getBool('Experimental', 'SmallerDungeons'), true, 'saved back');
   assert.equal(modSetting('pcaao', 'Enabled'), false);
   assert.equal(modSetting('roleplay-realism', 'RefinedTraining.intensiveTraining'), true);
+  assert.equal(modSetting('roads-hazelnut', 'RiversAndStreams'), false, '...and go back to the mod\'s shipped off');
   assert.equal(lastOnlineSync(), null, 'the undo is spent');
   assert.equal(undoOnlineSync(), 0);
 });

@@ -46,7 +46,9 @@ const MAX_MAP_PIXEL_Y = 500; // MapsFile.MaxMapPixelY
 // private copy of the 8 is how the ring would silently diverge from
 // the streamed law it claims to share.
 export const BASE_HEIGHT_SCALE = 8;
-const NOISE_MAP_SCALE = 4;
+/** LANDFORM2: exported - the landforms grade a road to the kernel's own macro height, and a second literal of this 4
+ *  is how the two would part (Home.md, ONE DFU MEMBER, ONE EXPORT). */
+export const NOISE_MAP_SCALE = 4;
 const EXTRA_NOISE_SCALE = 10;
 // WATER-AUDIT (2026-09-08): THE REFERENCE'S FLOATS. `3.4f * baseHeightScale`
 // is 27.200000762939453 in C#, not the double 27.2 - and the tile job's
@@ -87,9 +89,65 @@ export function getNoise(x, y, frequency, amplitude, persistance, octaves, seed 
  * `groundNoise` false leaves out the extra ground-noise term (never negative), so every sample is at
  * or under the real one - a strict LOWER bound for less than half the cost (spawnedDungeons.js's
  * dry-ground gate); the default is the reference's kernel, unchanged.
+ * LANDFORM1: `landform` is world/landforms.js's createLandforms - the port's own terrain, the Features row
+ * `landforms` - asked once for this pixel's shaper, which takes every sample over the beach line with the parts it is
+ * made of. null (the default, and every classic caller) is DFU's kernel, the same arithmetic in the same order.
+ * AUDIT LANDFORMS D3: `classic`, an array of hDim x hDim, takes DFU's own sample beside each shaped one the closure
+ * answers at a whole sample (generateSamples' loop, the one caller that passes it) - the classic line's value to the bit.
  * @returns {(x: number, y: number) => number} normalized sample.
  */
-export function sampleKernel(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION, groundNoise = true) {
+export function sampleKernel(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION, groundNoise = true, landform = null, classic = null) {
+  const { base, noise } = kernelTerms(woods, mapPixelX, mapPixelY, hDim);
+  const shape = landform ? landform.pixel(mapPixelX, mapPixelY) : null;
+
+  return (x, y) => {
+    {
+      let scaledHeight = 0;
+
+      // Bicubic sample small height map for base terrain elevation.
+      const baseHeight = base(x, y);
+      scaledHeight += baseHeight * BASE_HEIGHT_SCALE;
+
+      // Bicubic sample large height map for noise mask over terrain features.
+      const noiseHeight = noise(x, y);
+      scaledHeight += noiseHeight * NOISE_MAP_SCALE;
+
+      // Additional noise mask for small terrain features at ground level.
+      let ground = 0;
+      if (groundNoise) {
+        const noisex = mapPixelX * (hDim - 1) + x;
+        const noisey = (MAX_MAP_PIXEL_Y - mapPixelY) * (hDim - 1) + y;
+        const lowFreq = getNoise(noisex, noisey, 0.3, 0.5, 0.5, 1);
+        const highFreq = getNoise(noisex, noisey, 0.9, 0.5, 0.5, 1);
+        ground = (lowFreq * highFreq) * EXTRA_NOISE_SCALE;
+        scaledHeight += ground;
+      }
+
+      // Clamp lower values to ocean elevation.
+      if (scaledHeight < SCALED_OCEAN_ELEVATION) scaledHeight = SCALED_OCEAN_ELEVATION;
+
+      // LANDFORM1: the shaped ground has no ceiling at 1 - a mountain the landforms raise stands over the
+      // reference's normalising height rather than flattening against it. The shaper is handed DFU's height as DFU
+      // stands it, clamped at its ceiling (landforms.js THE CEILING: WOODS.WLD's one glitch byte is the only ground over it).
+      if (shape) {
+        const h = scaledHeight < MAX_TERRAIN_HEIGHT ? scaledHeight : MAX_TERRAIN_HEIGHT;
+        if (classic) classic[x * hDim + y] = h / MAX_TERRAIN_HEIGHT;   // AUDIT LANDFORMS D3: the line below's value - h is over the ocean's floor and at most 1539, so its clamps are moot
+        return Math.max(0, shape(x, y, h, baseHeight * BASE_HEIGHT_SCALE, ground) / MAX_TERRAIN_HEIGHT);
+      }
+      return Math.min(1, Math.max(0, scaledHeight / MAX_TERRAIN_HEIGHT));
+    }
+  };
+}
+
+/**
+ * The kernel's two bicubic terms for one map pixel, its window reads done once - the small heightmap's (`base`, in
+ * WOODS bytes, before BASE_HEIGHT_SCALE) and the large heightmap's (`noise`, before NOISE_MAP_SCALE), each answering
+ * any (x, y) in the pixel's sample space, a fraction between samples included. sampleKernel is built on these two and
+ * nothing else; LANDFORM2's path profiles read the same two at points along a road (world/landforms.js), so the macro
+ * height a road bed is graded to is the kernel's own, never a second copy of DFU's interpolation.
+ * @returns {{ base: (x: number, y: number) => number, noise: (x: number, y: number) => number }}
+ */
+export function kernelTerms(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION) {
   // Divisor ensures continuous 0-1 range of height samples.
   const div = (hDim - 1) / 3;
   const sd = 4;
@@ -99,49 +157,29 @@ export function sampleKernel(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMEN
   const shmAt = (r, c) => shm[r + c * sd]; // JobA.Idx
   const lhmAt = (r, c) => lhm[r + c * ld];
 
-  return (x, y) => {
-    {
-      const rx = x / div;
-      const ry = y / div;
-      const ix = Math.floor(rx);
-      const iy = Math.floor(ry);
-      const sfracx = x / (hDim - 1);
-      const sfracy = y / (hDim - 1);
-      const fracx = (x - ix * div) / div;
-      const fracy = (y - iy * div) / div;
-      let scaledHeight = 0;
-
-      // Bicubic sample small height map for base terrain elevation.
-      let x1 = cubicInterpolator(shmAt(0, 3), shmAt(1, 3), shmAt(2, 3), shmAt(3, 3), sfracx);
-      let x2 = cubicInterpolator(shmAt(0, 2), shmAt(1, 2), shmAt(2, 2), shmAt(3, 2), sfracx);
-      let x3 = cubicInterpolator(shmAt(0, 1), shmAt(1, 1), shmAt(2, 1), shmAt(3, 1), sfracx);
-      let x4 = cubicInterpolator(shmAt(0, 0), shmAt(1, 0), shmAt(2, 0), shmAt(3, 0), sfracx);
-      const baseHeight = cubicInterpolator(x1, x2, x3, x4, sfracy);
-      scaledHeight += baseHeight * BASE_HEIGHT_SCALE;
-
-      // Bicubic sample large height map for noise mask over terrain features.
-      x1 = cubicInterpolator(lhmAt(ix, iy + 0), lhmAt(ix + 1, iy + 0), lhmAt(ix + 2, iy + 0), lhmAt(ix + 3, iy + 0), fracx);
-      x2 = cubicInterpolator(lhmAt(ix, iy + 1), lhmAt(ix + 1, iy + 1), lhmAt(ix + 2, iy + 1), lhmAt(ix + 3, iy + 1), fracx);
-      x3 = cubicInterpolator(lhmAt(ix, iy + 2), lhmAt(ix + 1, iy + 2), lhmAt(ix + 2, iy + 2), lhmAt(ix + 3, iy + 2), fracx);
-      x4 = cubicInterpolator(lhmAt(ix, iy + 3), lhmAt(ix + 1, iy + 3), lhmAt(ix + 2, iy + 3), lhmAt(ix + 3, iy + 3), fracx);
-      const noiseHeight = cubicInterpolator(x1, x2, x3, x4, fracy);
-      scaledHeight += noiseHeight * NOISE_MAP_SCALE;
-
-      // Additional noise mask for small terrain features at ground level.
-      if (groundNoise) {
-        const noisex = mapPixelX * (hDim - 1) + x;
-        const noisey = (MAX_MAP_PIXEL_Y - mapPixelY) * (hDim - 1) + y;
-        const lowFreq = getNoise(noisex, noisey, 0.3, 0.5, 0.5, 1);
-        const highFreq = getNoise(noisex, noisey, 0.9, 0.5, 0.5, 1);
-        scaledHeight += (lowFreq * highFreq) * EXTRA_NOISE_SCALE;
-      }
-
-      // Clamp lower values to ocean elevation.
-      if (scaledHeight < SCALED_OCEAN_ELEVATION) scaledHeight = SCALED_OCEAN_ELEVATION;
-
-      return Math.min(1, Math.max(0, scaledHeight / MAX_TERRAIN_HEIGHT));
-    }
+  const base = (x, y) => {
+    const sfracx = x / (hDim - 1);
+    const sfracy = y / (hDim - 1);
+    const x1 = cubicInterpolator(shmAt(0, 3), shmAt(1, 3), shmAt(2, 3), shmAt(3, 3), sfracx);
+    const x2 = cubicInterpolator(shmAt(0, 2), shmAt(1, 2), shmAt(2, 2), shmAt(3, 2), sfracx);
+    const x3 = cubicInterpolator(shmAt(0, 1), shmAt(1, 1), shmAt(2, 1), shmAt(3, 1), sfracx);
+    const x4 = cubicInterpolator(shmAt(0, 0), shmAt(1, 0), shmAt(2, 0), shmAt(3, 0), sfracx);
+    return cubicInterpolator(x1, x2, x3, x4, sfracy);
   };
+  const noise = (x, y) => {
+    const rx = x / div;
+    const ry = y / div;
+    const ix = Math.floor(rx);
+    const iy = Math.floor(ry);
+    const fracx = (x - ix * div) / div;
+    const fracy = (y - iy * div) / div;
+    const x1 = cubicInterpolator(lhmAt(ix, iy + 0), lhmAt(ix + 1, iy + 0), lhmAt(ix + 2, iy + 0), lhmAt(ix + 3, iy + 0), fracx);
+    const x2 = cubicInterpolator(lhmAt(ix, iy + 1), lhmAt(ix + 1, iy + 1), lhmAt(ix + 2, iy + 1), lhmAt(ix + 3, iy + 1), fracx);
+    const x3 = cubicInterpolator(lhmAt(ix, iy + 2), lhmAt(ix + 1, iy + 2), lhmAt(ix + 2, iy + 2), lhmAt(ix + 3, iy + 2), fracx);
+    const x4 = cubicInterpolator(lhmAt(ix, iy + 3), lhmAt(ix + 1, iy + 3), lhmAt(ix + 2, iy + 3), lhmAt(ix + 3, iy + 3), fracx);
+    return cubicInterpolator(x1, x2, x3, x4, fracy);
+  };
+  return { base, noise };
 }
 
 /**
@@ -150,10 +188,13 @@ export function sampleKernel(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMEN
  * @param {number} mapPixelX
  * @param {number} mapPixelY
  * @param {number} hDim - heightmap dimension (default 129).
+ * @param {?object} [landform] - LANDFORM1: world/landforms.js's createLandforms, or null for DFU's kernel.
+ * @param {?Float32Array} [classic] - AUDIT LANDFORMS D3: with a `landform`, filled with DFU's own samples in the same
+ *   pass - generateSamples(woods, mapPixelX, mapPixelY, hDim) to the bit, for the tiles a location's blend classifies.
  * @returns {Float32Array} normalized samples; sample(x, y) = out[x * hDim + y].
  */
-export function generateSamples(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION) {
-  const kernel = sampleKernel(woods, mapPixelX, mapPixelY, hDim);
+export function generateSamples(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION, landform = null, classic = null) {
+  const kernel = sampleKernel(woods, mapPixelX, mapPixelY, hDim, true, landform, classic);
   const data = new Float32Array(hDim * hDim);
   for (let x = 0; x < hDim; x++) {
     for (let y = 0; y < hDim; y++) {
@@ -176,15 +217,17 @@ export function generateSamples(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DI
  * not reflected here, so a normal at the seam of a blended pixel can
  * differ slightly from the neighbor's own - strictly better than the
  * one-sided difference it replaces, and recorded in the EV arc.
+ * LANDFORM1: a neighbour's kernel takes the same `landform` the pixel was built with - the landforms are a pure
+ * function of world position, so the ghost row IS the neighbour's shaped ground, and a seam's normals agree.
  * @returns {(x: number, y: number) => number} normalized sample.
  */
-export function ghostSampler(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION) {
+export function ghostSampler(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMENSION, landform = null) {
   const span = hDim - 1;
   const kernels = new Map();
   const kernelAt = (dx, dy) => {
     const key = `${dx},${dy}`;
     let k = kernels.get(key);
-    if (!k) kernels.set(key, k = sampleKernel(woods, mapPixelX + dx, mapPixelY + dy, hDim));
+    if (!k) kernels.set(key, k = sampleKernel(woods, mapPixelX + dx, mapPixelY + dy, hDim, true, landform));
     return k;
   };
   return (x, y) => {

@@ -2087,6 +2087,23 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     _onNavalClear?.();   // NAV-G: and the ships they stand
   }
 
+  /** AUDIT LANDFORMS II G1: THE GROUND MOVED UNDER A PIXEL - a rebuild the reference never makes (the road network
+   *  landing, which the landforms cut metres into the land; a late World of Daggerfall pack; the gate's clearing) - and
+   *  a body lying in its box [x0, x1) x [z0, z1) rides it by `dy(x, z)` (world.js's publish): its marker, which is where
+   *  the body is drawn and searched (the lens's feetOf reads it). The living walk on whatever is there. */
+  function groundMoved(x0, z0, x1, z1, dy) {
+    for (const c of corpseBatches) {
+      if (!(c.pos[0] >= x0 && c.pos[0] < x1 && c.pos[2] >= z0 && c.pos[2] < z1)) continue;
+      const d = dy(c.pos[0], c.pos[2]);
+      if (!d) continue;
+      c.pos[1] += d;
+      renderer.destroyBatch(c.batch);
+      c.batch = renderer.createBillboardBatch(c.archive, c.record, c.size, [c.pos]);
+      c.batch.frame = 0;   // FA1 slice 3: a REBUILT batch is a new object - it needs the frame too
+      if (c.elite) markEliteCorpseBatch(c.batch, c.elitePhase);   // ELITE FOES: ...and its outline, in step with itself
+    }
+  }
+
   /** AUDIT 17e F23: the floating-origin recenter shifts everything. */
   function offsetAll(offset) {
     for (const f of foes) {
@@ -3085,7 +3102,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
   /** DROPS-AUDIT CAMP-CAP: the encounter slots still free, the spawns in flight counted. */
   const encounterRoom = () => MAX_ACTIVE_ENCOUNTER_FOES - activeCount() - spawning.filter((s) => s.capped).length;
 
-  return { foes, spawnFoe, damageFoe, encounterRoom, newCampId, noticedPlayer, partyHit, healFoe, pendingFeet: () => spawning.map((p) => p.feet), handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, pileBody: (key) => pileBody(corpseEntryFor(foes, key, 'foeCorpse', corpseLens)), corpseAt: corpseLens.feetOf, corpseKeyOf: (f) => (corpseLens.isCorpse(f) && !f.corpseDisabled ? `foeCorpse:${idOf(f)}` : null), snapshotWorld, restoreWorld, destroy,   // LOOT-STACK: a body as the loot window's tab; PROF7: where a body lies, the lens's one home (Hunting's bodies); AUDIT 32 H8: its loot's key while it may be searched
+  return { foes, spawnFoe, damageFoe, encounterRoom, newCampId, noticedPlayer, partyHit, healFoe, pendingFeet: () => spawning.map((p) => p.feet), handleAttackFromPlayer, attackFromPlayer, update, resolvePlayerHit, poisonFoe, batches, offsetAll, activeCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, groundMoved, pileBody: (key) => pileBody(corpseEntryFor(foes, key, 'foeCorpse', corpseLens)), corpseAt: corpseLens.feetOf, corpseKeyOf: (f) => (corpseLens.isCorpse(f) && !f.corpseDisabled ? `foeCorpse:${idOf(f)}` : null), snapshotWorld, restoreWorld, destroy,   // LOOT-STACK: a body as the loot window's tab; PROF7: where a body lies, the lens's one home (Hunting's bodies); AUDIT 32 H8: its loot's key while it may be searched
     /** AUDIT 39: CleanupUntrackedObjects' enemy half (StreamingWorld.cs
      *  :1624-1635), which a teleport reaches too through
      *  ClearStreamingWorld -> CollectLooseObjects(true) (:993-998) -

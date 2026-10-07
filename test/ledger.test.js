@@ -339,10 +339,14 @@ test('AUDIT 58 F5 ledger: the RE-INTEGRATED road system has its own section A ro
   // block, which is the whole point of the pin. His data (setRoadsData),
   // ours when his will not load, and ours when the player has turned the
   // mod off - every path ends at a network, none of them at no roads.
-  assert.equal(wiring.length, 3, 'all three road wires are in that block');
-  assert.equal(wiring.filter((l) => /setRoadsData\(/.test(l)).length, 1, 'one of them is his');
-  assert.equal(wiring.filter((l) => /setRoads\(settlementsOf\(maps\)/.test(l)).length, 2,
-    'and two fall to the port\u2019s own network - the mod off, and the mod unloadable');
+  // PIN MOVED (AUDIT LANDFORMS C3): FIVE, the same law. Online his arrays are
+  // asked again before ours stands in (retryModRoads), so his land late on a
+  // second wire, and ours stands in on a third once every try has failed -
+  // still inside this block, still every path ending at a network.
+  assert.equal(wiring.length, 5, 'all five road wires are in that block');
+  assert.equal(wiring.filter((l) => /setRoadsData\(/.test(l)).length, 2, 'two of them are his - at once, and late online');
+  assert.equal(wiring.filter((l) => /setRoads\(settlementsOf\(maps\)/.test(l)).length, 3,
+    'and three fall to the port\u2019s own network - the mod off, the mod unloadable, and online once every try failed');
   assert.equal(host.split('\n').filter((l) => /terrainGen\.setRoads(Data)?\(/.test(l)).length, wiring.length,
     'and world.js holds no road wire OUTSIDE that block - every one of them is in the ungated statement above');
 

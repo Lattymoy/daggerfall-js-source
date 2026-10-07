@@ -148,8 +148,8 @@
   {
     "name": "VERGE1-stone-search-unasked",
     "file": "src/scenes/mineHost.js",
-    "old": "      const at = natureStandsAt(samples, tilemap, locationRect, x, y, clear);\n      if (at && !insideRocks(rocks, at.x, at.z)) { best = at; bestD = d; }",
-    "new": "      const at = natureStandsAt(samples, tilemap, locationRect, x, y);\n      if (at && !insideRocks(rocks, at.x, at.z)) { best = at; bestD = d; }",
+    "old": "      const at = natureStandsAt(samples, tilemap, locationRect, x, y, clear, beach);\n      if (at && !insideRocks(rocks, at.x, at.z)) { best = at; bestD = d; }",
+    "new": "      const at = natureStandsAt(samples, tilemap, locationRect, x, y, null, beach);\n      if (at && !insideRocks(rocks, at.x, at.z)) { best = at; bestD = d; }",
     "tests": [
       "test/verge1.test.js"
     ]

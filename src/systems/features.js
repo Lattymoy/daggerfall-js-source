@@ -745,6 +745,21 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'realForests', initial: true, online: true }),
   }),
+  // LANDFORM1-3 (2026-10-06, Mac: "Can we adjust the heightmap to be more of this? and allow roads to carve through
+  // terrian and caverns without breaking anything and rivers to actually have depth"): LANDFORMS - the small heightmap
+  // stands taller, roads are graded into the land, rivers lie in channels (world/landforms.js, inside the terrain's
+  // kernel). FORCED ON ONLINE: it is the ground the room stands on. `?landforms=off` the kill door, offline;
+  // scenes/shared.js landformsOn composes it.
+  Object.freeze({
+    id: 'landforms',
+    group: 'world',
+    title: 'Landforms',
+    note: 'Mountains and high ground stand taller, as the map draws them. Roads are cut level into hillsides and built up '
+      + 'over hollows, and rivers run in channels below their banks. Off keeps Daggerfall\u2019s own ground.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'landforms', initial: true, online: true }),
+  }),
   // VERGE1 (2026-10-07, Mac: "Making sure objects, like trees, avoid pathways and roads. Currently they slightly
   // overlap"): THE VERGE - a wilderness flat stands only where nothing of it reaches over a road or a track: the disc of
   // its widest picture, a Low Poly tree's crown among them, against the painted network (world/roadVerge.js). FORCED ON

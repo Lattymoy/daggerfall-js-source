@@ -72,5 +72,7 @@ test('MAC3: a jump on a slope still leaves the ground - the floor snap keeps the
   assert.equal(landings, 1, 'and came down once');
   // the arm's shape, so the gate cannot quietly widen
   const src = readFileSync(new URL('../src/player/collider.js', import.meta.url), 'utf8');
-  assert.match(src, /if \(snap && dy <= 0 && !out\.grounded && feet\[1\] > floor && feet\[1\] - floor <= STEP_OFFSET\) \{/, 'the floor snap rides the mesh snap\'s gate and reach');
+  // PIN MOVED (AUDIT LANDFORMS II I3): the floor's reach is the mesh snap's STEP_OFFSET or the run's own fall at the slope
+  // limit, whichever is further - an ordinary step's is STEP_OFFSET as it was; a journey's scaled step follows its road
+  assert.match(src, /const floorReach = Math\.max\(STEP_OFFSET, Math\.hypot\(feet\[0\] - beforeX, feet\[2\] - beforeZ\) \* TAN_SLOPE_LIMIT\);\n {4}if \(snap && dy <= 0 && !out\.grounded && feet\[1\] > floor && feet\[1\] - floor <= floorReach\) \{/, 'the floor snap rides the mesh snap\'s gate and reach');
 });

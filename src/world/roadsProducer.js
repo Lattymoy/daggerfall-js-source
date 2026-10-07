@@ -108,18 +108,52 @@ export function basicRoadsPathsPoint(net, x, y) {
   return (net.roads[i] | net.tracks[i]) & 0xff;
 }
 
-export async function loadModRoads(fetchFn = globalThis.fetch, urls = MOD_ROADS) {
+/** AUDIT LANDFORMS II G3: how long one of his files may take to arrive (each asked in turn) before the ask counts as
+ *  failed. A fetch has no timeout of its own: one that never answered never settled, so the page stood roadless for the
+ *  session - offline the port's own network never stood in, and online C3's retry never asked again. */
+export const MOD_ROADS_FETCH_TIMEOUT_MS = 30000;
+
+export async function loadModRoads(fetchFn = globalThis.fetch, urls = MOD_ROADS, timeoutMs = MOD_ROADS_FETCH_TIMEOUT_MS) {
   if (!fetchFn) return null;
   try {
     const out = {};
     for (const [k, url] of Object.entries(urls)) {
-      const r = await fetchFn(url);
-      if (!r || !r.ok) return null;
-      const b = new Uint8Array(await r.arrayBuffer());
-      if (b.length !== MAP_WIDTH * MAP_HEIGHT) return null;   // the wrong file, or a truncated one, is no file
-      out[k] = b;
+      // raced, so a fetch that ignores its signal times out too; the file's body inside the same span
+      const ac = typeof globalThis.AbortController === 'function' ? new globalThis.AbortController() : null;
+      let timer = null;
+      const late = new Promise((_, no) => { timer = setTimeout(() => { ac?.abort(); no(new Error(`${url}: no answer in ${timeoutMs} ms`)); }, timeoutMs); });
+      try {
+        const r = await Promise.race([fetchFn(url, ac ? { signal: ac.signal } : undefined), late]);
+        if (!r || !r.ok) return null;
+        const b = new Uint8Array(await Promise.race([r.arrayBuffer(), late]));
+        if (b.length !== MAP_WIDTH * MAP_HEIGHT) return null;   // the wrong file, or a truncated one, is no file
+        out[k] = b;
+      } finally { clearTimeout(timer); }
     }
     let n = 0; for (const v of out.roads) if (v) n++;
     return { ...out, source: 'basic-roads', stats: { source: 'basic-roads', roadPixels: n } };
   } catch { return null; }
+}
+
+/** AUDIT LANDFORMS C3: how many more times an online page asks for Basic Roads' arrays after the first ask failed. */
+export const MOD_ROADS_RETRY_MAX = 12;
+
+/**
+ * AUDIT LANDFORMS C3: Basic Roads' arrays asked again in the background after a failed load - 5 s after, then doubling
+ * to a minute between tries (WOD6's backoff, worldOfDaggerfall.js), `max` more tries. Online a room's ground is cut along
+ * HIS network (the lane forces the mod), so the host asks again rather than stand one client on the port's own.
+ * @param {object} [o]
+ * @param {(ms: number) => Promise<void>} [o.wait] - the pause before each try
+ * @param {(tries: number, ms: number) => void} [o.onTry] - told before each pause
+ * @returns {Promise<?object>} his arrays (loadModRoads' shape), or null once every try failed
+ */
+export async function retryModRoads({ fetchFn = globalThis.fetch, urls = MOD_ROADS, wait = (ms) => new Promise((r) => setTimeout(r, ms)), max = MOD_ROADS_RETRY_MAX, onTry = null } = {}) {
+  for (let tries = 0; tries < max; tries++) {
+    const ms = Math.min(60000, 5000 * 2 ** tries);
+    onTry?.(tries, ms);
+    await wait(ms);
+    const his = await loadModRoads(fetchFn, urls);
+    if (his) return his;
+  }
+  return null;
 }

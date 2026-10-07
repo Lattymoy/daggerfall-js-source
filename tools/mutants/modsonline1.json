@@ -2,7 +2,7 @@
   {
     "name": "the-ground-is-freed-with-everything-else",
     "file": "src/systems/onlineLane.js",
-    "old": "  'roads-hazelnut': Object.freeze({\n    Enabled: true,        // which network is painted, and so which beds are smoothed\n    SmoothRoads: true,    // whether the beds are smoothed at all - the dial that gave the floor away\n  }),",
+    "old": "  'roads-hazelnut': Object.freeze({\n    Enabled: true,        // which network is painted, and so which beds are smoothed\n    SmoothRoads: true,    // whether the beds are smoothed at all - the dial that gave the floor away\n    RiversAndStreams: true,   // LANDFORM3: whether rivers are painted, and so cut into the land - on, past the mod's shipped off (above)\n  }),",
     "new": "",
     "tests": [
       "test/modsonline.test.js",
@@ -20,10 +20,10 @@
     ]
   },
   {
-    "name": "the-water-is-forced-though-it-moves-no-height",
+    "name": "the-water-is-freed-though-it-moves-the-ground",
     "file": "src/systems/onlineLane.js",
-    "old": "    SmoothRoads: true,    // whether the beds are smoothed at all - the dial that gave the floor away",
-    "new": "    SmoothRoads: true,\n    RiversAndStreams: false,",
+    "old": "    RiversAndStreams: true,   // LANDFORM3:",
+    "new": "    // RiversAndStreams: true,   // LANDFORM3:",
     "tests": [
       "test/modsonline.test.js"
     ]

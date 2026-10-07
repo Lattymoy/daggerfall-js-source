@@ -82,21 +82,29 @@ function surface(node) {
 // `entry.npcs.length` - and a third dead zone sat behind that sentence
 // until AUDIT-FIELD went looking. So each entry carries the source the
 // claim rests on, and the claim fails with it.
+//
+// AUDIT LANDFORMS II K1: AND EVERY EXCUSE IS ITS OWN FUNCTION'S. The third
+// field names the functions whose reads the excuse covers - a read of the
+// same name anywhere else on the first build's path is a new read, and no
+// excuse. The list once blessed a name down every function: the publish
+// came to read `droppedLoot` itself (the rides on a rebuilt pixel's ground)
+// and this gate passed, while the boot died on it whenever the network
+// landed inside the first build - every boot on a fast connection.
 const ALLOWED = {
   // buildPixelNow -> destroyPixel. NOT "on a rebuild only": :1458's ROADS
   // 25a arm tears down during the FIRST build whenever the road network
   // lands mid-build, which on a fast connection is every boot. What makes
   // these four safe is that every read of them is behind `if (collectLoose)`
   // and that call site passes it false.
-  droppedLoot: ['destroyPixel, and only under collectLoose', 'collectLoose: false'],
-  droppedTorches: ['destroyPixel, and only under collectLoose', 'collectLoose: false'],
-  cityGuards: ['destroyPixel, and only under collectLoose', 'collectLoose: false'],
-  exteriorFoes: ['destroyPixel, and only under collectLoose', 'collectLoose: false'],
+  droppedLoot: ['destroyPixel, and only under collectLoose - and standWodPile, which stands only the piles an unload carried (collectLoose); the sweep carries none', 'collectLoose: false', ['destroyPixel', 'standWodPile']],
+  droppedTorches: ['destroyPixel, and only under collectLoose', 'collectLoose: false', ['destroyPixel']],
+  cityGuards: ['destroyPixel, and only under collectLoose', 'collectLoose: false', ['destroyPixel']],
+  exteriorFoes: ['destroyPixel, and only under collectLoose', 'collectLoose: false', ['destroyPixel']],
   // BOOT-TDZ2: the playerTravelPixel() reads, behind the mod's own guard -
   // with no mod there is nothing to initialise and the call never happens.
-  walkMode: ['playerTravelPixel, behind the travelOptions guard', 'if (travelOptions && dfLocation) {'],
-  player: ['playerTravelPixel, behind the travelOptions guard', 'if (travelOptions && dfLocation) {'],
-  cam: ['playerTravelPixel, behind the travelOptions guard', 'if (travelOptions && dfLocation) {'],
+  walkMode: ['playerTravelPixel, behind the travelOptions guard', 'if (travelOptions && dfLocation) {', ['playerTravelPixel']],
+  player: ['playerTravelPixel, behind the travelOptions guard', 'if (travelOptions && dfLocation) {', ['playerTravelPixel']],
+  cam: ['playerTravelPixel, behind the travelOptions guard', 'if (travelOptions && dfLocation) {', ['playerTravelPixel']],
 };
 
 test('BOOT-TDZ2: nothing the boot walk runs reads a binding the boot walk has not declared - the gate the two dead-zone crashes deserved (mutants: hook-asks-the-pixel-first, travel-options-declared-late)', () => {
@@ -167,4 +175,30 @@ test('BOOT-TDZ2: nothing the boot walk runs reads a binding the boot walk has no
     assert.ok(builder.includes(guard),
       `${nm} is excused as "${why}", and the guard that excuse rests on (${guard}) is no longer in the pixel builder`);
   }
+
+  // AUDIT LANDFORMS II K1: and each excused name is read only where its
+  // excuse was written - every function the first build can reach, and the
+  // boot walk's own statements before it, asked who reads it
+  const readers = new Map();
+  const note = (nm, where) => { if (!(nm in ALLOWED)) return; if (!readers.has(nm)) readers.set(nm, new Set()); readers.get(nm).add(where); };
+  const visited = new Set();
+  const visit = (name) => {
+    if (visited.has(name)) return;
+    visited.add(name);
+    const f = fns.get(name) ?? arrows.get(name);
+    if (!f) return;
+    const { ids, calls } = surface(f.body);
+    for (const nm of ids) note(nm, name);
+    for (const c of calls) visit(c);
+  };
+  body.slice(0, buildAt + 1).forEach((n) => {
+    if (n.type === 'FunctionDeclaration') return;
+    if (n.type === 'VariableDeclaration' && n.kind !== 'var' && n.declarations.every((d) => !d.init || isFn(d.init))) return;
+    const { ids, calls } = surface(n);
+    for (const nm of ids) note(nm, `the boot walk (line ${lineOf(n.start)})`);
+    for (const c of calls) visit(c);
+  });
+  const stray = [];
+  for (const [nm, where] of readers) for (const w of where) if (!ALLOWED[nm][2].includes(w)) stray.push(`${nm}: read in ${w}, excused in ${ALLOWED[nm][2].join(', ')} alone`);
+  assert.deepEqual(stray, [], 'an excused name read where its excuse does not reach - a dead zone the allow-list would have blessed');
 });

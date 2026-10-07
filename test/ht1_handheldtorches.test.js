@@ -878,7 +878,8 @@ test('HT1: the five hosts - each owns a pool, feeds the rig its raw keys and the
   }
   assert.match(world, /if \(collectLoose\) droppedTorches\.collectPixel\(key\);/, 'world: a dropped torch is a loose object, swept with its pixel');
   assert.match(world, /droppedTorches\.offsetAll\(r\.offset\);/, 'world: the recenter');
-  assert.match(world, /droppedTorches: droppedTorches\.snapshot\(\(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, pos\[1\] - state\.compensation\[1\], wc\.z\]; \}\),/, 'world: the save data in world coordinates');
+  // AUDIT LANDFORMS C1 MOVED THIS PIN: the height compensation-free and in DFU's frame (groundFrameHeight)
+  assert.match(world, /droppedTorches: droppedTorches\.snapshot\(\(pos\) => \{ const wc = state\.worldCoords\(pos\); return \[wc\.x, groundFrameHeight\(pos\[1\] - state\.compensation\[1\], pos\[0\], pos\[2\]\), wc\.z\]; \}\),/, 'world: the save data in world coordinates');
   assert.match(world, /droppedTorches\.restore\(restandAt\('position'\)\(w\.droppedTorches\), \(p\) => \{ const \[lx, lz\] = state\.localFromWorld\(p\[0\], p\[2\]\); return \[lx, p\[1\] \+ state\.compensation\[1\], lz\]; \}\);/, 'world: restored into the local frame');   // TERRAIN-SCALE1: stood again on today's ground first
   assert.match(world, /droppedTorches\.restore\(arrived\.droppedTorches\.map\(/, 'world: the F9 envelope too');   // TERRAIN-SCALE1: stood again on today's ground
   // the interior mode
