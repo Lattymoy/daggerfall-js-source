@@ -4,8 +4,8 @@
 // like tree chopping, picking up ingredients, fishing, etc. Active player
 // involvement and actual UI integration for life skills") - THE
 // PROFESSIONS' LAW: the thirteen, their ranks and XP, the tiers, the
-// specialisations, the day's cap, the Stores, Herbalism's two acts, the
-// materials the Stores hold, and the Court writs. The record is
+// specialisations, the day (no cap since CAP-OFF), the Stores, Herbalism's
+// two acts, the materials the Stores hold, and the Court writs. The record is
 // bible/06-Systems/Professions-Arc.md (PROF0) 3, 5, 7, 11 and 22.
 //
 // ONLINE ONLY. Daggerfall has no crafting skill and its three makers use
@@ -215,20 +215,18 @@ export function specsAt(row, nowS) {
 
 // ─── THE DAY, THE STORES, THE RATE (PROF0 6, 7, 20) ──────────────────
 
-/** Harvests a gathering profession gives a character a UTC day - the Basket's among Herbalism's (FORAGE0 14.6). */
-export const HARVESTS_PER_DAY = 60;
-/** AUDIT 29 A3: and an account a UTC day, a profession - two characters' days. A character is an id the client names,
- *  so the character's sixty alone bounded nothing: invented ids filled a day each. */
-export const HARVESTS_PER_ACCOUNT_DAY = 2 * HARVESTS_PER_DAY;
+// CAP-OFF (2026-10-07, Mac: "Remove the cap on life skills"): NO DAY'S CAP. A gathering profession gave a character 60
+// harvests a UTC day and an account 120 (AUDIT 29 A3), Fishing 40 hauls an account and Hunting 30 hides; none is counted
+// now. A day is bounded by the world - each node once a character a UTC day (PROF0 6), the travel between them - and by
+// the hour's writes (PROF_OPS_MAX). Two bounds stand, asked by Mac, because they bound a modified client's claim and no
+// player's progress: the veins of a dungeon nobody has vouched for (below) and Hunting's rare hides (HIGH_HIDES_PER_DAY).
+
 /** AUDIT 29 A5: the veins an account may work a UTC day in dungeons nobody has vouched for - one dungeon's most. A
  *  dungeon's id is the client's word, and an unconfirmed dungeon's least (Silver, tier 3, at any hour) was worth more
- *  than any unconfirmed pixel; a confirmed dungeon is bounded by the day's sixty alone. */
+ *  than any unconfirmed pixel; a confirmed dungeon is bounded by its own veins (1-4 a day, each once a character). */
 export const DEEP_UNCONFIRMED_PER_DAY = 4;
 /** The Stores hold at most this many of any one material, own and bought together. */
 export const STORES_MAX = 5000;
-/** REFUSALS-LEARNED (AUDIT 2026-10-01 part four): the profession each node kind is worked under - the service's own
- *  (server-account/src/professions.js NODE_HARVESTS), so a refusal heard for a node names its profession. */
-export const NODE_PROFESSIONS = Object.freeze({ herb: 'herbalism', vein: 'mining', boulder: 'mining', dvein: 'mining', tree: 'logging', body: 'hunting', haul: 'fishing' });
 /** STORES-ROOM (AUDIT 2026-10-01 part four): WHETHER A MATERIAL'S STORES ARE FULL AS THE SERVICE COUNTS THEM - every
  *  origin, own, bought and gold-bought alike (professions.js cuts a yield to the room over all three). The gathering
  *  kinds read `held` - what a station may spend, never gold's (GOLD-MARKET's wall) - so with 4,000 own and 1,000 bought
@@ -506,9 +504,9 @@ export const HIDE_TEMPLATES = Object.freeze([...HIDES, CURED_LEATHER, HARDENED_L
 
 // ─── HUNTING (PROF0 5.2, 6, 29) ──────────────────────────────────────
 
-/** The day's hides an ACCOUNT takes (PROF0 6: Hunting is bounded, not witnessed - the tier is the client's claim, and the
- *  cap is the whole defence), and of them the most of tiers `HIGH_HIDE_TIER` and past it. */
-export const HIDES_PER_DAY = 30;
+/** The day's hides of tiers `HIGH_HIDE_TIER` and past it an ACCOUNT takes (PROF0 6: Hunting is bounded, not witnessed -
+ *  the tier is the client's claim, and this is the defence of the rare). CAP-OFF: the day's thirty hides of any tier are
+ *  gone - a hide below the rare is bounded by the hour's writes (PROF_OPS_MAX) alone. */
 export const HIGH_HIDES_PER_DAY = 3;
 export const HIGH_HIDE_TIER = 5;
 /** A body's DFU part (4.4): one body in four, lost with a torn pelt (PROF0 29). */
@@ -546,8 +544,8 @@ export const GROUND_WHERE_WORDS = Object.freeze({ town: 'not in a settlement' })
 // ─── PROF8: FISHING WITH THE NET (PROF0 5.2, 6; Appendix B) ─────────
 //
 // The Fishing-Net is Foraging's own (1603, FORAGE0 6.4: in water, swimming, or at sea). A haul names no node: like
-// Hunting, Fishing is BOUNDED, NOT WITNESSED - forty hauls an account a day - its pixel the client's word, read for the
-// ground the witnesses confirmed (the sea's finds) and its day.
+// Hunting, Fishing is BOUNDED, NOT WITNESSED - by the hour's writes (CAP-OFF: its forty hauls an account a day are gone)
+// - its pixel the client's word, read for the ground the witnesses confirmed (the sea's finds) and its day.
 
 /** The catch in the Stores: Raw Fish (FOOD_KEYS), tier 1, a Mark (5.2) - the species named in the toast alone. */
 export const FISH_KEY = 'food:fish';
@@ -555,8 +553,6 @@ export const FISH_KEY = 'food:fish';
 export const PEARL = dfu('gem:pearl', 'gems', gemTierOfPrice(150), 'MiscellaneousIngredients2', 77);
 /** A Slaughterfish in the net: its scales (PROF7's hide), and its body the heaviest haul - a fish more. */
 export const SLAUGHTERFISH_SCALES = 'hide:slaughterfish';
-/** Hauls an ACCOUNT a day (PROF0 6) - not a character's: Fishing's whole bound. */
-export const HAULS_PER_DAY = 40;
 /** A haul's fish before the act (PROF0 6). */
 export const HAUL_YIELD = Object.freeze([1, 2]);
 /** A school's fish on top (PROF0 6) - a Netter's two (3.3). */

@@ -57,14 +57,14 @@
     ]
   },
   {
-    "name": "PROF1-7-the-day-seventy",
+    "name": "PROF1-7-the-day-exported-again",
     "file": "src/net/professionLaw.js",
-    "old": "export const HARVESTS_PER_DAY = 60;",
-    "new": "export const HARVESTS_PER_DAY = 70;",
+    "old": "export const DEEP_UNCONFIRMED_PER_DAY = 4;",
+    "new": "export const HARVESTS_PER_DAY = 60;\nexport const DEEP_UNCONFIRMED_PER_DAY = 4;",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/prof1_service.test.js"
-    ]
+      "test/cap_off.test.js"
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the law exports no day's cap - the mutant exports the sixty again. It was the mutant that made the day seventy."
   },
   {
     "name": "PROF1-8-the-stores-unbounded",
@@ -310,13 +310,15 @@
     ]
   },
   {
-    "name": "PROF1-35-the-day-uncapped",
+    "name": "PROF1-35-the-day-capped-again",
     "file": "server-account/src/professions.js",
-    "old": "      WHERE (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND char_id = ?4 AND profession = ?9 AND day = ?6) < ?14",
-    "new": "      WHERE 1 = 1",
+    "old": "      WHERE (?15 = 0 OR",
+    "new": "      WHERE (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND char_id = ?4 AND profession = ?9 AND day = ?6) < 60\n        AND (?15 = 0 OR",
     "tests": [
-      "test/prof1_service.test.js"
-    ]
+      "test/prof1_service.test.js",
+      "test/cap_off.test.js"
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the character's day of sixty is gone and the pin turned (the sixty-first credited) - the mutant asks the sixty again. It was the mutant that uncapped the day."
   },
   {
     "name": "PROF1-36-the-stores-overflow",

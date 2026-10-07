@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 
 import { haulKey, parseNodeKey, haulYield, haulFinds, haulAtSea, SEA_REGION, schoolSpots, SCHOOL_SPOTS, SCHOOLS_PER_PIXEL, SCHOOL_R, material, MARCH_MULT } from '../src/net/nodeLaw.js';
 import {
-  HAULS_PER_DAY, HAUL_YIELD, SCHOOL_FISH, FISH_CHANCE, FISH_ACT, FISH_KEY, PEARL, SLAUGHTERFISH_SCALES, haulTier, fishBand, tugWindow, waitMult, throwM,
+  HAUL_YIELD, SCHOOL_FISH, FISH_CHANCE, FISH_ACT, FISH_KEY, PEARL, SLAUGHTERFISH_SCALES, haulTier, fishBand, tugWindow, waitMult, throwM,
   harvestXp, topTierOf, TIER_RANKS, TIER_VALUES, MINED_KEYS, PROF_RANK_MAX, SPECIALISATIONS, ACT_YIELD_MAX,
 } from '../src/net/professionLaw.js';
 import { SEA_REGION as FORAGING_SEA_REGION, FT } from '../src/systems/foragingLaw.js';
@@ -98,7 +98,6 @@ test('PROF8 law: the act\'s numbers (Appendix B) - the throw 3-12 m over a 0.3-1
   assert.equal(fishBand(0), 0.2);
   assert.equal(fishBand(100), 0.3);
   assert.ok(Math.abs(fishBand(50) - 0.25) < 1e-9);
-  assert.equal(HAULS_PER_DAY, 40);
 });
 
 test('PROF8 law: the day\'s schools - two a pixel, each SCHOOL_SPOTS candidate places in [0, 1), the clock\'s and the same for every client; the next day, other places', () => {

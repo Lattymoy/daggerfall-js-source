@@ -1,0 +1,119 @@
+[
+  {
+    "name": "AUDITYL-cap-lifted",
+    "file": "src/scenes/homeYards.js",
+    "old": "export const YARD_LAMPS_MAX = 8;",
+    "new": "export const YARD_LAMPS_MAX = 60;",
+    "tests": [
+      "test/audityardlight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITYL-cap-unread",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      if (n >= max) break;\n",
+    "new": "",
+    "tests": [
+      "test/audityardlight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITYL-cap-order",
+    "file": "src/scenes/decorRoom.js",
+    "old": "    for (const e of standing.values()) {\n      if (n >= max) break;",
+    "new": "    for (const e of [...standing.values()].reverse()) {\n      if (n >= max) break;",
+    "tests": [
+      "test/audityardlight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITYL-distance-cut",
+    "file": "src/scenes/homeYards.js",
+    "old": "    for (const y of yards.values()) y.pool.pushLights(_lamps, YARD_LAMPS_MAX);",
+    "new": "    for (const y of yards.values()) { const o = originOf(y), e = deps.eye?.(); if (e && Math.hypot(o[0] - e[0], o[2] - e[2]) > YARD_DRAW_M) continue; y.pool.pushLights(_lamps, YARD_LAMPS_MAX); }",
+    "tests": [
+      "test/audityardlight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITYL-before-tick",
+    "file": "src/scenes/world.js",
+    "old": "      worldLightAnimator.tick(dt);\n      // YARD-LIGHT: the yards' lamps - the town's own (homeYards.js yardLampOf: an outdoor lamp is the town's) - scene lights beside\n      // the quays', never the player's extras; in the lanterns' hours and colour, each on the town's flicker at its slot (AUDIT\n      // YARD-LIGHT L3: after the tick, as the street reads it) at its own reach, rows refilled in place (L4: PERF-LIGHTS' law)\n      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit);\n",
+    "new": "      if (yards) yardLampRows(yards.lamps(), _yardRows, worldLightAnimator.ranges, CITY_LIGHT_COLOR_F32, csaLit);\n      worldLightAnimator.tick(dt);\n",
+    "tests": [
+      "test/audityardlight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITYL-rows-unpooled",
+    "file": "src/scenes/homeYards.js",
+    "old": "    const e = rows[i] ?? (rows[i] = { x: 0, y: 0, z: 0, range: 0, color: null });",
+    "new": "    const e = { x: 0, y: 0, z: 0, range: 0, color: null };",
+    "tests": [
+      "test/audityardlight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITYL-raise-dropped",
+    "file": "src/scenes/homeYards.js",
+    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h + YARD_LAMP_RAISE * k };",
+    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h };",
+    "tests": [
+      "test/audityardlight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITYL-raise-unscaled",
+    "file": "src/scenes/homeYards.js",
+    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h + YARD_LAMP_RAISE * k };",
+    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h + YARD_LAMP_RAISE };",
+    "tests": [
+      "test/audityardlight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITYL-reach-unscaled",
+    "file": "src/scenes/homeYards.js",
+    "old": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range * k, slot: yardLampSlot(piece.id) }, lift: size.h + YARD_LAMP_RAISE * k };",
+    "new": "  return { light: { ...YARD_LAMP, range: YARD_LAMP.range, slot: yardLampSlot(piece.id) }, lift: size.h + YARD_LAMP_RAISE * k };",
+    "tests": [
+      "test/audityardlight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITYL-reach-unread",
+    "file": "src/scenes/homeYards.js",
+    "old": "    e.range = animRanges[l.slot % animRanges.length] * (l.range / CITY_LIGHT_RANGE);",
+    "new": "    e.range = animRanges[l.slot % animRanges.length];",
+    "tests": [
+      "test/audityardlight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITYL-yards-one",
+    "file": "src/scenes/homeYards.js",
+    "old": "    for (const y of yards.values()) y.pool.pushLights(_lamps, YARD_LAMPS_MAX);",
+    "new": "    for (const y of yards.values()) { y.pool.pushLights(_lamps, YARD_LAMPS_MAX); break; }",
+    "tests": [
+      "test/audityardlight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITYL-recentre-y",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      if (e.light) { e.light.x += d[0]; e.light.y += d[1]; e.light.z += d[2]; }",
+    "new": "      if (e.light) { e.light.x += d[0]; e.light.z += d[2]; }",
+    "tests": [
+      "test/audityardlight.test.js"
+    ]
+  },
+  {
+    "name": "AUDITYL-recentre-z",
+    "file": "src/scenes/decorRoom.js",
+    "old": "      if (e.light) { e.light.x += d[0]; e.light.y += d[1]; e.light.z += d[2]; }",
+    "new": "      if (e.light) { e.light.x += d[0]; e.light.y += d[1]; }",
+    "tests": [
+      "test/audityardlight.test.js"
+    ]
+  }
+]

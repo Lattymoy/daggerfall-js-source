@@ -85,14 +85,14 @@
     ]
   },
   {
-    "name": "PROF8-sixty-hauls",
+    "name": "PROF8-hauls-exported-again",
     "file": "src/net/professionLaw.js",
-    "old": "export const HAULS_PER_DAY = 40;",
-    "new": "export const HAULS_PER_DAY = 60;",
+    "old": "export const HAUL_YIELD = Object.freeze([1, 2]);",
+    "new": "export const HAULS_PER_DAY = 40;\nexport const HAUL_YIELD = Object.freeze([1, 2]);",
     "tests": [
-      "test/prof8_law.test.js",
-      "test/prof8_service.test.js"
-    ]
+      "test/cap_off.test.js"
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the law exports no day's forty - the mutant exports it again. It was the mutant that made the day sixty."
   },
   {
     "name": "PROF8-wait-no-hours",
@@ -115,22 +115,25 @@
     ]
   },
   {
-    "name": "PROF8-svc-forty-unasked",
+    "name": "PROF8-svc-forty-asked-again",
     "file": "server-account/src/professions.js",
-    "old": "        AND (?9 <> 'fishing' OR ${hauled} < ?26)   -- PROF8: the account's forty hauls\n",
-    "new": "",
+    "old": "        AND ?11 - ${stored} >= 1`)",
+    "new": "        AND (?9 <> 'fishing' OR (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND profession = 'fishing' AND day = ?6) < 40)\n        AND ?11 - ${stored} >= 1`)",
     "tests": [
-      "test/prof8_service.test.js"
-    ]
+      "test/prof8_service.test.js",
+      "test/cap_off.test.js"
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the account's forty hauls are gone and the pin turned (the forty-first credited) - the mutant asks the forty again. It was the mutant that left them unasked."
   },
   {
-    "name": "PROF8-svc-cap-unsaid",
+    "name": "PROF8-svc-cap-said-again",
     "file": "server-account/src/professions.js",
-    "old": "  if (isHaul && (await haulsToday(db, player.id, day)) >= HAULS_PER_DAY) return { error: 'prof-fish-cap' };   // PROF8\n",
-    "new": "",
+    "old": "    if (tier >= HIGH_HIDE_TIER && hunt.high >= HIGH_HIDES_PER_DAY) return { error: 'prof-hunt-high' };\n  }\n",
+    "new": "    if (tier >= HIGH_HIDE_TIER && hunt.high >= HIGH_HIDES_PER_DAY) return { error: 'prof-hunt-high' };\n  }\n  if (isHaul && (await haulsToday(db, player.id, day)) >= 40) return { error: 'prof-fish-cap' };\n",
     "tests": [
-      "test/prof8_service.test.js"
-    ]
+      "test/cap_off.test.js"
+    ],
+    "note": "RETIRED by CAP-OFF (2026-10-07, Mac: \"Remove the cap on life skills\"): the service says `prof-fish-cap` no more - the mutant says it again for a haul past forty the INSERT refused (a full Stores), where the Stores' own word stands. It was the mutant that left it unsaid."
   },
   {
     "name": "PROF8-svc-any-school",

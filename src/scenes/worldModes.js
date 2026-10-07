@@ -76,7 +76,7 @@ import { collectHearths } from '../systems/survival/hearth.js';   // AUDIT HEART
 import { lanternColor, dungeonAmbient, dungeonTrilight, dungeonFog } from '../render/enhancedLighting.js';   // EL1: the world host installed the lane; this reads it; EL4: the dark; AUDIT-EL F6: the fog with it
 import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
-import { worldMinutes, skyMinutes, setWorldMinutes, ownMinutes, ownTimeLeftText, ownTimeLeftShort, sharedClockOn, trustedWorldMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it; LIVED1: the character's own clock, and its deadlines said in their time; AUDIT LIVED1b K1: the collapse box's guard is online's
+import { worldMinutes, skyMinutes, setWorldMinutes, ownMinutes, ownTimeLeftText, ownTimeLeftShort, sharedClockOn, trustedWorldMinutes, worldSpanRealWords } from '../systems/worldTick.js';   // AUDIT 23 (C12): the one clock; G4's probe moves it; LIVED1: the character's own clock, and its deadlines said in their time; AUDIT LIVED1b K1: the collapse box's guard is online's
 import { exhaustionOutcome, EXHAUSTED_IN_WATER } from '../systems/rest.js';   // AUDIT 23 (C5)
 import { ActionTextBox } from '../ui/actionText.js';   // AUDIT 23 (C5)
 import { registerPresenter, hudText } from '../systems/notify.js';   // ENH-NOTICE3: the modal modes' slot, offered to the one door every message goes through
@@ -229,7 +229,7 @@ import { expandGuildRows } from '../systems/guildServiceActions.js';   // MACROS
 import { hallAccessAnytime } from '../systems/guildServices.js';
 import { resolveVariantGuild } from '../systems/guildVariants.js';
 import { getBool, getInt } from '../systems/settings.js';   // R1: InstantRepairs / AllowMagicRepairs go LIVE
-import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';   // PH1: Privateer's Hold identity check, the classic start's own pixel math
+import { isStartDungeon, isTutorialHold } from '../systems/startDungeon.js';   // PH1: the classic start's own cell; HOLD-SOLO: Privateer's Hold, the shipped one's (AUDIT FB1007b H1)
 import { reviveForPlay } from '../systems/deathRespawn.js';   // PH1: the in-place respawn's own heal, the SAME fraction world.js's own online respawn uses
 import { reducedRepairCost } from '../systems/guildServices.js';   // R1: FightersGuild.ReducedRepairCost finds its caller
 import {
@@ -261,7 +261,7 @@ import { goldAmount, totalGoldAmount, deductGold, addGold, payUndoable, setCrime
 import { getReputation, getFlag, setFlag, FACTION_FLAGS } from '../systems/factionRep.js';
 // G7: the last unbuilt guild service - the summoning calendar, the
 // cost, Sheogorath's hijack and the roll.
-import { daedraForSummoner, attemptSummoning, SUMMON_TEXT, DAEDRIC_FOES, summonMacroValues } from '../systems/daedraSummoning.js';   // IF: the punishment table; DAEDRA1: %dae's one source
+import { daedraForSummoner, attemptSummoning, SUMMON_TEXT, DAEDRIC_FOES, summonMacroValues, summonsByName, summonByNameBoxes, summonQuestionRows } from '../systems/daedraSummoning.js';   // IF: the punishment table; DAEDRA1: %dae's one source
 import { expandRowValues } from '../systems/quest/questMacros.js';   // DAEDRA1: MH1's one walk, with the shared context riding it
 import { currentWeather } from '../systems/weatherSim.js';   // AUDIT AT F3: the WORD; its flags come from weather.js's one derivation
 import { weatherFlags } from '../world/weather.js';   // AUDIT AT F3: WeatherManager's four public flags, derived once from SetWeather's switch
@@ -5082,114 +5082,135 @@ export function createWorldModes(host) {
       // context. It wraps whichever `rows` the caller handed in - the
       // coven's or the guild's - rather than replacing it, so each
       // keeps whatever it already resolved.
-      const say = (id, d = daedra) => expandRowValues(rows?.(id) ?? [], summonMacroValues(d), null);   // MACRO-ONE: the world answers %dat and %pcn
+      const say = (id, d = daedra, part = (record) => record) => expandRowValues(part(rows?.(id) ?? []), summonMacroValues(d), null);   // MACRO-ONE: the world answers %dat and %pcn; AUDIT WAITS S4: `part` cuts the raw record before its one walk
       // ...and ONE read per box. Several of these records carry random
       // variants (BOX1's law: a textId box reads its record once), so a
       // `say(id).length ? say(id) : fallback` would roll the record
       // twice and could show the second roll's text.
       const box = (id, d, fallback) => { const r = say(id, d); return r.length ? r : [{ text: fallback, center: true }]; };
-      if (!daedra) return { rows: box(SUMMON_TEXT.notToday, null, 'This is not a summoning day.') };
-      // WeatherManager.IsRaining / IsStorming - thunder is a STORM
-      // and not rain, which is what makes Sheogorath's day distinct
-      // from Sanguine's four.
-      //
-      // AUDIT AT F3: through `world/weather.js` weatherFlags, which is
-      // the ONE derivation of WeatherManager's four public flags from
-      // SetWeather's own switch. This arm used to spell two of them
-      // inline off the weather enum - correct, and a second reading of
-      // a DFU member (ONE DFU MEMBER, ONE EXPORT). AT1 wrote the shared
-      // one for Ambient Text's WeatherKey and its record said this copy
-      // had been folded into it; it had not. It is now.
-      const weather = weatherFlags(currentWeather());
+      // SUMMON-NAME (bible/06-Systems/Online-Waits.md WAIT3): online the temple's and the guild's summoner calls the prince
+      // the player names, on any day - a sky year is fifteen real days, and the day of the year was a wait nobody could
+      // rest through (daedraSummoning.js summonsByName). A coven keeps its daily draw and Glenmoril its Hircine - told
+      // apart by the summoner's faction, as DFU's own service tells them (AUDIT WAITS S5) - and a picker with no art yet
+      // falls back to DFU's day.
+      const byName = listPickerArtLoaded()
+        && summonsByName({ factionId: summonerId, factionType: (summoner?.type ?? null), online: sharedClockOn() });
+      if (!daedra && !byName) return { rows: box(SUMMON_TEXT.notToday, null, 'This is not a summoning day.') };
+      /** The Yes: the summoning of `called` - the popup's answer (a box, or null once a window is dispatched). */
+      const summon = (called) => {
+        // WeatherManager.IsRaining / IsStorming - thunder is a STORM
+        // and not rain, which is what makes Sheogorath's day distinct
+        // from Sanguine's four.
+        //
+        // AUDIT AT F3: through `world/weather.js` weatherFlags, which is
+        // the ONE derivation of WeatherManager's four public flags from
+        // SetWeather's own switch. This arm used to spell two of them
+        // inline off the weather enum - correct, and a second reading of
+        // a DFU member (ONE DFU MEMBER, ONE EXPORT). AT1 wrote the shared
+        // one for Ambient Text's WeatherKey and its record said this copy
+        // had been folded into it; it had not. It is now.
+        //
+        // AUDIT WAITS S1: read at the Yes, the sky the summoning is made
+        // under - SUMMON-NAME's list can stand open while it turns.
+        const weather = weatherFlags(currentWeather());
+        const r = attemptSummoning({
+          daedra: called,
+          summonerRep: getReputation(store, summonerId),
+          summonerGuildGroup: summoner?.ggroup ?? null,
+          // DAEDRA2 (2026-09-22): GetGoldAmount, which is coins PLUS
+          // letters of credit (PlayerEntity.cs:1313-1316) - because
+          // the PAYMENT four lines below is `deductGold`, which is
+          // DeductGoldAmount and DOES spend letters. Gating on coins
+          // alone turned a character with a 200,000-gold letter away
+          // as too poor from a bill the very next line could settle.
+          // AUDIT 26 F103-F105/F178 named this fault class and fixed
+          // it in banking; this is another of its seams.
+          gold: totalGoldAmount(playerEntity),
+          daedraRep: (fid) => getReputation(store, fid),
+          hasSummoned: (fid) => getFlag(store, fid, FACTION_FLAGS.Summoned),
+          ...weather,
+        });
+        if (r.kind === 'poor') {
+          return { rows: [{ text: `The summoning would cost ${r.cost} gold.`, center: true }] };
+        }
+        // The gold goes BEFORE the roll and is not refunded: you paid
+        // for the summoning, not for the prince turning up.
+        deductGold(playerEntity, r.cost);
+        surfacePlayer();
+        if (r.kind === 'failed') {
+          // IF: a coven's failure spawns daedric foes ON YOU -
+          // DaggerfallQuestPopupWindow.cs:257, Range(1,4) of one
+          // type at 4..64 units. The SAME CreateFoeSpawner call as
+          // the summoning window's refusal, so it takes the same
+          // door with its own numbers.
+          if (r.spawnFoes) {
+            spawnDaedricPunishment({
+              count: COVEN_FAIL_FOE_COUNT[0] + Math.floor(Math.random() * (COVEN_FAIL_FOE_COUNT[1] + 1 - COVEN_FAIL_FOE_COUNT[0])),
+              minDistance: 4, maxDistance: 64,
+            });
+          }
+          return { rows: box(SUMMON_TEXT.failed, r.daedra, 'The daedra does not answer.') };
+        }
+        if (r.kind === 'greeting') {
+          // the PRINCE WHO ANSWERED is %dae here, not the one the day
+          // named - Sheogorath's hijack means those differ 5% of the time
+          return { rows: box(r.textId, r.daedra, `${r.daedra.name} has met you before.`) };
+        }
+        setFlag(store, r.daedra.factionId, r.flag);
+        const offered = questBridge?.offerDaedricQuest?.(r.quest, summonerId) ?? null;
+        // G7b: the prince's own .FLC window carries the OFFER step -
+        // DaggerfallDaedraSummonedWindow, the film with the offer
+        // read over it in four-line chunks. The step has ONE
+        // consumer: the film window when the FLC loads, the box
+        // chain when it cannot (never traps). The fetch is async,
+        // so the service window closes now and the summons appears
+        // on arrival - DFU's own push replaces the popup the same
+        // way.
+        const mountBoxes = () => {
+          // DAEDRA1: the prince's own offer is a TEXT.RSC record like
+          // any other and was handed over raw here too
+          const boxes = offered ? questBridge.offerBoxes(offered, (id) => say(id, r.daedra)) : [];
+          if (!boxes.length || !guildServiceArtLoaded() || !_shopFont) return;
+          let offerWin = null;
+          offerWin = new ServiceFlowWindow(boxes, {
+            onClose: () => closeSpellWindow(offerWin),
+          });
+          mountServiceWindow(offerWin);
+        };
+        if (offered?.kind === 'offer' && r.daedra.video) {
+          fetchBytes(r.daedra.video).then((bytes) => {
+            let sw = null;
+            sw = new DaedraSummonedWindow({
+              flcBytes: bytes, flcName: r.daedra.video, offerStep: offered,
+              // IF: the refusal's punishment is REAL now - 3-5 daedra
+              // at 8..64 units (:125), wherever the player stands.
+              spawnRefusalFoes: () => spawnDaedricPunishment({
+                count: REFUSAL_FOE_COUNT[0] + Math.floor(Math.random() * (REFUSAL_FOE_COUNT[1] + 1 - REFUSAL_FOE_COUNT[0])),
+                minDistance: 8, maxDistance: 64,
+              }),
+              onClose: () => closeSpellWindow(sw),
+            });  sw = enhancedWindow(sw, 'daedra');   // PORT4: the enhanced skin's face; the classic window unchanged
+            if (!sw.flc.readyToPlay) { mountBoxes(); return; }
+            mountServiceWindow(sw);
+          }).catch(() => mountBoxes());
+          return null;
+        }
+        if (offered) { mountBoxes(); return null; }
+        return { rows: [{ text: `${r.daedra.name} answers your summons.`, center: true }] };
+      };
+      if (byName) {
+        // SUMMON-NAME: the sixteen by name, then DFU's question about the one named - a flow, whose boxes take a list.
+        // AUDIT WAITS S4: the question is record 481's own words from its second sentence - cut from the raw record and
+        // walked once with the prince picked, through `say` as every box in this flow is
+        flow = new ServiceFlowWindow(summonByNameBoxes(summon, (d) => say(SUMMON_TEXT.areYouSure, d, summonQuestionRows)), {
+          onClose: () => closeSelf(),
+        });
+        return flow;
+      }
       return {
         rows: box(SUMMON_TEXT.areYouSure, daedra, 'Are you sure you wish to attempt this?'),
         buttons: 'YesNo',
-        onYes: () => {
-          const r = attemptSummoning({
-            daedra,
-            summonerRep: getReputation(store, summonerId),
-            summonerGuildGroup: summoner?.ggroup ?? null,
-            // DAEDRA2 (2026-09-22): GetGoldAmount, which is coins PLUS
-            // letters of credit (PlayerEntity.cs:1313-1316) - because
-            // the PAYMENT four lines below is `deductGold`, which is
-            // DeductGoldAmount and DOES spend letters. Gating on coins
-            // alone turned a character with a 200,000-gold letter away
-            // as too poor from a bill the very next line could settle.
-            // AUDIT 26 F103-F105/F178 named this fault class and fixed
-            // it in banking; this is another of its seams.
-            gold: totalGoldAmount(playerEntity),
-            daedraRep: (fid) => getReputation(store, fid),
-            hasSummoned: (fid) => getFlag(store, fid, FACTION_FLAGS.Summoned),
-            ...weather,
-          });
-          if (r.kind === 'poor') {
-            return { rows: [{ text: `The summoning would cost ${r.cost} gold.`, center: true }] };
-          }
-          // The gold goes BEFORE the roll and is not refunded: you paid
-          // for the summoning, not for the prince turning up.
-          deductGold(playerEntity, r.cost);
-          surfacePlayer();
-          if (r.kind === 'failed') {
-            // IF: a coven's failure spawns daedric foes ON YOU -
-            // DaggerfallQuestPopupWindow.cs:257, Range(1,4) of one
-            // type at 4..64 units. The SAME CreateFoeSpawner call as
-            // the summoning window's refusal, so it takes the same
-            // door with its own numbers.
-            if (r.spawnFoes) {
-              spawnDaedricPunishment({
-                count: COVEN_FAIL_FOE_COUNT[0] + Math.floor(Math.random() * (COVEN_FAIL_FOE_COUNT[1] + 1 - COVEN_FAIL_FOE_COUNT[0])),
-                minDistance: 4, maxDistance: 64,
-              });
-            }
-            return { rows: box(SUMMON_TEXT.failed, r.daedra, 'The daedra does not answer.') };
-          }
-          if (r.kind === 'greeting') {
-            // the PRINCE WHO ANSWERED is %dae here, not the one the day
-            // named - Sheogorath's hijack means those differ 5% of the time
-            return { rows: box(r.textId, r.daedra, `${r.daedra.name} has met you before.`) };
-          }
-          setFlag(store, r.daedra.factionId, r.flag);
-          const offered = questBridge?.offerDaedricQuest?.(r.quest, summonerId) ?? null;
-          // G7b: the prince's own .FLC window carries the OFFER step -
-          // DaggerfallDaedraSummonedWindow, the film with the offer
-          // read over it in four-line chunks. The step has ONE
-          // consumer: the film window when the FLC loads, the box
-          // chain when it cannot (never traps). The fetch is async,
-          // so the service window closes now and the summons appears
-          // on arrival - DFU's own push replaces the popup the same
-          // way.
-          const mountBoxes = () => {
-            // DAEDRA1: the prince's own offer is a TEXT.RSC record like
-            // any other and was handed over raw here too
-            const boxes = offered ? questBridge.offerBoxes(offered, (id) => say(id, r.daedra)) : [];
-            if (!boxes.length || !guildServiceArtLoaded() || !_shopFont) return;
-            let offerWin = null;
-            offerWin = new ServiceFlowWindow(boxes, {
-              onClose: () => closeSpellWindow(offerWin),
-            });
-            mountServiceWindow(offerWin);
-          };
-          if (offered?.kind === 'offer' && r.daedra.video) {
-            fetchBytes(r.daedra.video).then((bytes) => {
-              let sw = null;
-              sw = new DaedraSummonedWindow({
-                flcBytes: bytes, flcName: r.daedra.video, offerStep: offered,
-                // IF: the refusal's punishment is REAL now - 3-5 daedra
-                // at 8..64 units (:125), wherever the player stands.
-                spawnRefusalFoes: () => spawnDaedricPunishment({
-                  count: REFUSAL_FOE_COUNT[0] + Math.floor(Math.random() * (REFUSAL_FOE_COUNT[1] + 1 - REFUSAL_FOE_COUNT[0])),
-                  minDistance: 8, maxDistance: 64,
-                }),
-                onClose: () => closeSpellWindow(sw),
-              });  sw = enhancedWindow(sw, 'daedra');   // PORT4: the enhanced skin's face; the classic window unchanged
-              if (!sw.flc.readyToPlay) { mountBoxes(); return; }
-              mountServiceWindow(sw);
-            }).catch(() => mountBoxes());
-            return null;
-          }
-          if (offered) { mountBoxes(); return null; }
-          return { rows: [{ text: `${r.daedra.name} answers your summons.`, center: true }] };
-        },
+        onYes: () => summon(daedra),
       };
     }
     if (destination === 'guildServiceReceiveHouse') {
@@ -5445,6 +5466,7 @@ export function createWorldModes(host) {
         // REP3/REP4: the temple's pardon and penance, for the law of the temple's own region
         regionIndex: b?.regionIndex ?? null, regionName: REGION_NAMES[b?.regionIndex] ?? 'this region',
         ownNow: () => ownMinutes(), worldNow: () => trustedWorldMinutes(),   // AUDIT REP F2: the pardon's term on the relay's calendar
+        worldWords: worldSpanRealWords,   // BANISH-SKY: and online the term said in real time too
       });
     } else if (destination === 'guildServiceCureDisease') {
       flow = buildCureDiseaseFlow(playerEntity, guild, membership, {
@@ -8030,10 +8052,7 @@ export function createWorldModes(host) {
           // branch could not fire for a real dungeon death and always
           // fell through to host.onlineRespawn.
           onlineRespawn: () => {
-            const mt = dfLocation?.mapTableData;
-            const px = mt && Number.isFinite(mt.longitude) && Number.isFinite(mt.latitude)
-              ? longitudeLatitudeToMapPixel(mt.longitude, mt.latitude) : null;
-            const isPrivateersHold = !!px && px.x === getInt('Startup', 'StartCellX') && px.y === getInt('Startup', 'StartCellY');
+            const isPrivateersHold = isStartDungeon(dfLocation);
             // AUDIT LEGACY B5: an offline death Project Legacy will raise is a respawn too - here, at the start marker,
             // never a city or temple a fresh character has not walked to (D-ONLINE2's own reason)
             const legacyRise = host.legacyWillRise?.() ?? false;
@@ -11285,7 +11304,7 @@ export function createWorldModes(host) {
     // ONLINE1: what the host needs to name the room - the mounted dungeon's
     // location, the interior's building; null in the exterior
     // ARENA4: the floor's instance standing a relay's bout is that bout's room (`arena:b<id>`)
-    roomIdentity: () => (mode === 'dungeon' ? (isGateArena(dungeonLoc) ? { kind: 'gate', day: dungeonLoc.gate } : isArenaFloor(dungeonLoc) && dungeonLoc.arenaBout ? { kind: 'arena', o: dungeonLoc.arenaBout } : { kind: 'dungeon', mapId: dungeonLoc?.mapTableData?.mapId ?? null, regionIndex: dungeonLoc?.regionIndex ?? -1, name: dungeonLoc?.name ?? '' })   // WB3b: the court's room is its gate's own
+    roomIdentity: () => (mode === 'dungeon' ? (isGateArena(dungeonLoc) ? { kind: 'gate', day: dungeonLoc.gate } : isArenaFloor(dungeonLoc) && dungeonLoc.arenaBout ? { kind: 'arena', o: dungeonLoc.arenaBout } : { kind: 'dungeon', mapId: dungeonLoc?.mapTableData?.mapId ?? null, regionIndex: dungeonLoc?.regionIndex ?? -1, name: dungeonLoc?.name ?? '', ...(isTutorialHold(dungeonLoc) ? { solo: true } : {}) })   // WB3b: the court's room is its gate's own; HOLD-SOLO (FIELD BUGS 2026-10-07b): the tutorial dungeon is every character's own - `solo`, which world.js keys no room (AUDIT FB1007b H1: the shipped start's, never a setting's)
       : mode === 'interior' ? { kind: 'interior', buildingKey: interiorBuilding?.buildingKey ?? 0, layout: _visitLayout, ...(interiorCabin ? { boatUid: interiorCabin.uid } : {}), ...(_intShared?.owned ? { private: true, privateRoom: privateVisitRoom } : {}) } : null),   // personal interiors share presence in an owner-specific room, never world memory/loot
     get dungeonLocation() { return dungeonLoc; },   // B2: playerInside's dungeon arm
     /** X7: the Identify SPELL's window (Identify.cs:71-76 pushes the

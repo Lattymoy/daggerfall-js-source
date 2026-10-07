@@ -876,6 +876,10 @@ walk-in start is held (`player/motor.js` _freeStart, `pk.hold` - `scenes/shared.
 world host's), and its count begins again when it lets go. A jump's grab, a mantle, the hang and the shimmy are not
 held. `test/fb1001_climbnode.test.js` (4); `tools/mutants/fb1001_climbnode.json` (6, all dead).
 
+CLIMB-TRAVEL (FIELD BUGS 2026-10-07b) holds more than this: while a journey or the keys' travel runs, the motor's
+`travelling` stands beside levitation and the saddle in `unheld` - no climb begins (a move under way finishes), and a
+hold lets go, a hold a load carried among them (`06-Systems/Travel-View.md` CLIMB-TRAVEL, AUDIT FB1007b).
+
 ## AUDIT CLIMB-FIELD (2026-10-01): THE CLIMB ON DAGGERFALL'S OWN ROOFS
 
 Mac: *"Can you audit our integration of enhanced climbing? You cant mantle the bottom of roofs, you get stuck. You cant

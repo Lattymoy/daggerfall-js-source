@@ -229,7 +229,7 @@ elsewhere.
   room, its door facing out as every exterior door does. Where that door is the interior door nearest the enter
   marker, TransitionInterior's landing (the door, 0.75 along its normal) stood the player outside the room's
   one-sided shell over nothing, falling for good in the black: 146 of the packs' 10,309 entries (Warvale's `GENRAS00`
-  #1, #2 and #7), and 18 of Daggerfall's own 11,452. Each of DFU's two landing arms takes only a spot with a floor
+  #1, #2 and #7), and 16 of Daggerfall's own 11,452 (18 until TOWER-FLOORS, `01-Overview/Field-Bugs-2026-10-07b.md`). Each of DFU's two landing arms takes only a spot with a floor
   under it now, in DFU's own order, so no landing DFU makes on a floor moves (`player/enterExit.js` `interiorLanding`'s
   `standsAt`); a room with nowhere to stand is refused in DFU's own words, "This house has nothing of value."; and a
   body ten metres under a room's lowest triangle is stood back at its door (FIELD BUGS 2026-10-04d VOID-ENTRY).

@@ -203,7 +203,7 @@ function stage({ online = true, open = true } = {}) {
   registerPlayerKillListener('touchhold-test', (e) => { stamps.stamp(e); });
   const foes = [];
   const book = {
-    state: { open: true, today: {}, hunt: { hides: 0, high: 0 }, caps: { harvests: 60, stores: 5000, hides: 30 } },
+    state: { open: true, today: {}, hunt: { hides: 0, high: 0 }, caps: { stores: 5000 } },
     stale: () => false, refresh: async () => ({ ok: true }), pixel: () => null, askPixels: async () => [], pump: () => {},
     dungeon: () => null, askDungeon: async () => false, held: () => 0, taken: () => false, counting: () => false,
     track: () => ({ rank: 100, specs: { 50: null, 100: null } }),

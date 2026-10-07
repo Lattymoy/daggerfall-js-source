@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 
 import {
   HIDES, hideOfFoe, BEAR_HIDE, PARTS, CURED_LEATHER, HARDENED_LEATHER, LINEN, WOOL, SILK, STANDARD_SILK, CLOTHS, HIDE_TEMPLATES,
-  HIDES_PER_DAY, HIGH_HIDES_PER_DAY, HIGH_HIDE_TIER, PART_CHANCE, BUTCHERY, HIDE_YIELD, ACT_YIELD_MAX, TRACKER_M, SKINNING_KNIFE,
+  HIGH_HIDES_PER_DAY, HIGH_HIDE_TIER, PART_CHANCE, BUTCHERY, HIDE_YIELD, ACT_YIELD_MAX, TRACKER_M, SKINNING_KNIFE,
   KNIFE_CHECKS, KNIFE_REFUSALS, TRACE_ACT, tracePoints, traceTolerance, knifeBand, CURE_RECIPES, WEAVE_RECIPES, WORK_RECIPES,
   smeltRecipe, workPer, workSpecRank, LOOM_FEE, FOOD_KEYS, materialOf, minedMaterial, withdrawable, NO_PACK_FORM, specOk,
   SPECIALISATIONS, MINED_KEYS, actBand, gemTierOfPrice, professionOfFamily,
@@ -81,8 +81,8 @@ test('PROF7 law: the leathers (665 Cured tier 2, 666 Hardened tier 5) and the cl
 
 // ─── HUNTING'S DAY AND A BODY (PROF0 6) ──────────────────────────────
 
-test('PROF7 law: Hunting is bounded, not witnessed - 30 hides an account a day, 3 of tiers 5-6; a body\'s key its day and twelve hex digits in their one spelling; a hide one, a clean pelt x1.5 (the fraction the dice\'s); the part one body in four, lost with a torn pelt; the butchery one, a Butcher\'s two', () => {
-  assert.deepEqual([HIDES_PER_DAY, HIGH_HIDES_PER_DAY, HIGH_HIDE_TIER, PART_CHANCE, HIDE_YIELD, ACT_YIELD_MAX, TRACKER_M], [30, 3, 5, 0.25, 1, 1.5, 100]);
+test('PROF7 law: Hunting is bounded, not witnessed - 3 hides of tiers 5-6 an account a day (CAP-OFF: the 30 of any tier gone); a body\'s key its day and twelve hex digits in their one spelling; a hide one, a clean pelt x1.5 (the fraction the dice\'s); the part one body in four, lost with a torn pelt; the butchery one, a Butcher\'s two', () => {
+  assert.deepEqual([HIGH_HIDES_PER_DAY, HIGH_HIDE_TIER, PART_CHANCE, HIDE_YIELD, ACT_YIELD_MAX, TRACKER_M], [3, 5, 0.25, 1, 1.5, 100]);
   assert.deepEqual({ ...BUTCHERY }, { meat: 1, butcher: 2 });
   const key = bodyKey({ day: 20833, id: '0123456789ab' });
   assert.equal(key, 'body:20833:0123456789ab');

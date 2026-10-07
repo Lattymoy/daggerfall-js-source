@@ -135,7 +135,7 @@ import { dateFromClassicMinutes, dateString, dateTimeString } from '../systems/g
 // PX5: the pause clock reads THE ONE CLOCK directly (AUDIT 23 C2's
 // law - every host already reads this same module), so no host seam
 // is needed and no host can drift.
-import { worldMinutes, skyMinutes, trustedWorldMinutes } from '../systems/worldTick.js';
+import { worldMinutes, skyMinutes, trustedWorldMinutes, worldSpanRealWords } from '../systems/worldTick.js';
 import { BUILD_TAG } from '../buildTag.js';
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { repaintKeepingScroll } from './domRepaint.js';
@@ -157,7 +157,7 @@ import { swornBodyOf } from '../systems/revenantCompanions.js';   // COMPANION-R
 import { enemyDisplayName } from '../characters/enemyBasics.js';   // REVENANT-PAGE: a revenant's kind   // REVENANT-PAGE: the foes that have earned your name
 import { affiliations } from '../systems/affiliations.js';
 import { legalRepOf } from '../systems/court.js';   // REP5: the law, region by region
-import { banishmentLeft, KNOWN_CRIMINAL_BELOW, pardonPrice, challengeFine } from '../systems/standing.js';
+import { banishmentLeft, banishmentDaysLeft, KNOWN_CRIMINAL_BELOW, pardonPrice, challengeFine } from '../systems/standing.js';
 import { legalStandingWord } from '../systems/legalBands.js';
 import { REGION_NAMES } from '../formats/mapsTables.js';   // GUILD-REP: the sheet's Affiliations box, on the Standing page
 import { hudLocked, setHudLocked, resetHudLayout, hudBarsSplit, setHudBarsSplit } from './hudLayout.js';   // HUD-MOVE: Lock UI and Reset UI
@@ -1131,7 +1131,7 @@ function paneOnline(body) {
   // agreeing to are still on the surface they enter through, where a
   // page in the bible cannot reach them.
   const foot = el('div', 'card svonlinefoot');
-  foot.append(el('p', 'meta', 'Everyone plays their own save, and you can see and talk to each other anywhere. Dungeons and buildings are shared: enemies, doors, levers and every chest, shelf or cupboard someone has opened are the same for everyone, and stay that way. In towns and the wilds you share who is around: what one player meets, everyone nearby sees and can fight, and those monsters can hurt you too. ' + skyDayWords() + ' The world\u2019s clock and sky run on real time: resting, travelling, jail time or training don\u2019t move them, so a quest that waits for a time of day waits for the world\u2019s, and a full moon holds a lycanthrope for its night alone. Your character also keeps their own time: it runs while you play, resting, travelling, jail time and training use it, and it stops while you are logged off. Your wounds, spells, hunger, diseases, curses, guild ranks, rented rooms, loans and repairs run on it. Quest timers run on the world\u2019s clock while you play: resting, waiting and travelling don\u2019t spend a quest\u2019s days, and time logged off never counts. A quest that only makes you wait - a letter, a meeting, \u201ccome back in a few days\u201d - moves on after a couple of minutes of play. You rest at a fire, a tent or a bed: a night passes at once, at most once every ten minutes of play, and your party within 15 metres sleeps it with you. Every enhancement is on for everyone in the shared world, but your UI is your own, with chat, friends, the party and trading in their own panels. Most mods stay your choice online. A few are the room\u2019s: the ones that change the ground, the ones that change monsters and loot, and the rules everyone plays by. The Mods page marks each one.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door; QCLOCK-WORLD: the quests' clock; REST8: the short wait; REST9: the rest act and the party's night
+  foot.append(el('p', 'meta', 'Everyone plays their own save, and you can see and talk to each other anywhere. Privateer\u2019s Hold, where every character begins, is each player\u2019s own. Dungeons and buildings are shared: enemies, doors, levers and every chest, shelf or cupboard someone has opened are the same for everyone, and stay that way. In towns and the wilds you share who is around: what one player meets, everyone nearby sees and can fight, and those monsters can hurt you too. ' + skyDayWords() + ' The world\u2019s clock and sky run on real time: resting, travelling, jail time or training don\u2019t move them, so a quest that waits for a time of day waits for the world\u2019s, and a full moon holds a lycanthrope for its night alone. Your character also keeps their own time: it runs while you play, resting, travelling, jail time and training use it, and it stops while you are logged off. Your wounds, spells, hunger, diseases, curses, guild ranks, rented rooms, loans and repairs run on it. Quest timers run on the world\u2019s clock while you play: resting, waiting and travelling don\u2019t spend a quest\u2019s days, and time logged off never counts. A quest that only makes you wait - a letter, a meeting, \u201ccome back in a few days\u201d - moves on after a couple of minutes of play. You rest at a fire, a tent or a bed: a night passes at once, at most once every ten minutes of play, and your party within 15 metres sleeps it with you. Every enhancement is on for everyone in the shared world, but your UI is your own, with chat, friends, the party and trading in their own panels. Most mods stay your choice online. A few are the room\u2019s: the ones that change the ground, the ones that change monsters and loot, and the rules everyone plays by. The Mods page marks each one.'));   // AUDIT WORLD5 C12: the shared clock, said at the door; OL1: the lane, said at the door; QCLOCK-WORLD: the quests' clock; REST8: the short wait; REST9: the rest act and the party's night
   foot.append(field('Relay', 'onlineServer', DEFAULT_SERVER, 200));
   body.append(foot);
   body.append(onlineSyncCard());   // UXB1-E: under the rules it copies
@@ -4226,8 +4226,9 @@ export function lawRows(entity, worldNow) {
     // AUDIT REP F2: NaN is a banishment whose term is not known yet (online, the relay's clock unheard) - still a row
     const left = banishmentLeft(entity, i, worldNow);
     if (rep === 0 && left === 0) continue;
-    const days = Math.ceil(left / 1440);
-    const term = Number.isFinite(left) ? `, ${days} day${days === 1 ? '' : 's'} left` : '';
+    const days = banishmentDaysLeft(entity, i, worldNow);   // BANISH-SKY: the days of the calendar the player sees
+    const real = Number.isFinite(left) ? worldSpanRealWords(left) : null;   // ...and online what they are on the wall
+    const term = Number.isFinite(left) ? `, ${days} day${days === 1 ? '' : 's'} left${real ? `, ${real}` : ''}` : '';
     // the price of each: a pardon at the region's temple, a stop's fine on the street
     const note = left !== 0 ? `banished${term} (a pardon: ${pardonPrice(entity, i)} gold)`
       : rep < KNOWN_CRIMINAL_BELOW ? `known to the watch (a stop: ${challengeFine(entity, i, { worldNow })} gold)` : '';

@@ -89,6 +89,16 @@ test('LEGACY-NAME the host names the house as it notes the seat - the founder\'s
   mergeFacts(stale, f);
   assert.equal(stale.surname, 'of Sentinel');
   assert.ok(stale.people.every((p) => p.surname === 'of Sentinel'));
+  // AUDIT FB1007b S1: the name comes from the copy that holds it (test/fb1007b_familyseat.test.js) - and where neither
+  // does (a copy that noted its seat before houses were named for it), the merge names the house for the seat
+  const unnamed = JSON.parse(JSON.stringify(stale));
+  unnamed.surname = '';
+  for (const p of unnamed.people) p.surname = '';
+  const hold = JSON.parse(JSON.stringify(unnamed));
+  hold.seat = null;
+  mergeFacts(hold, unnamed);
+  assert.equal(hold.surname, 'of Sentinel');
+  assert.ok(hold.people.every((p) => p.surname === 'of Sentinel'));
 });
 
 test('LEGACY-NAME the words: a seat\'s house says itself once - the pages, the sheet, the founding, the heirloom, the wedding, the news; a nameless house says no blank; the news never doubles a member\'s surname', () => {

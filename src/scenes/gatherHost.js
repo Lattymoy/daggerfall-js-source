@@ -55,7 +55,7 @@ import { utcDayOfMs, pixelKey, parseNodeKey } from '../net/nodeLaw.js';
 import { TERRAIN_SIZE } from '../world/terrainSampler.js';
 /** A map pixel's side in the scene (metres). */
 const PIXEL_M = TERRAIN_SIZE;
-import { rankName, professionName, HARVESTS_PER_ACCOUNT_DAY, DEEP_UNCONFIRMED_PER_DAY } from '../net/professionLaw.js';
+import { rankName, professionName, DEEP_UNCONFIRMED_PER_DAY } from '../net/professionLaw.js';
 import { wearForagingTool } from '../systems/foragingInstall.js';
 import { materialCountLabel } from '../systems/profItems.js';
 import { accountRefusalText } from '../net/accountClient.js';
@@ -216,8 +216,8 @@ export function aimAt(eyePos, at, view) {
  *   `{ key, at: () => number[]|null, lift?, reach?, yields? }`, `at` the node's scene place now (Hunting's bodies), above
  *   ground or below; the start's `ask` rides the harvest (the body's foe). `yields` - CAST-LOOK: a node that stands
  *   wherever the look is (Fishing's cast) is the target only when no other node in the cone is seen
- * @property {() => { n: number, cap: number }} [tally] PROF7: the day's count the chip says, where it is not the
- *   character's harvests against 60 (Hunting's: the account's hides against 30)
+ * @property {() => { n: number }} [tally] PROF7: the day's count the chip says, where it is not the character's
+ *   harvests (Hunting's: the account's hides; Fishing's its hauls) - CAP-OFF: a count, against no cap
  * @property {(data: any) => string} [storesLine] PROF8: the goods' one line in the kind's own words (a haul's species)
  * @property {(key: string, error: (string|null)) => void} [refused] AUDIT SILVER-WAYS D2: a harvest refused - the node's key
  *   and the service's word - so a kind learns what the refusal says of its node (REFUSALS-LEARNED)
@@ -497,9 +497,9 @@ export function createGatherHost(deps) {
    *  holds it, as a tool's Use does (TOUCH-HOLD) - the kind's start reads it beside `tool`. */
   const ctxFor = (t, tool = null, byPress = false) => ({ entity: deps.entity(), info: t.info, book, rank, specs, keyLabel: deps.keyLabel, pitch: t.pitch ?? null, tool, byPress });
   /** REFUSALS-LEARNED (AUDIT 2026-10-01 part four): A PLAN THE SERVICE HAS REFUSED TODAY IS NO READY PLAN - the account's
-   *  day in the craft (every character's), or its veins in dungeons nobody has vouched for: counts the state does not
-   *  carry, so the book keeps what the refusal said (net/profBook.js `closed`) and the prompt says it, never an act played
-   *  and a tool worn for the same refusal again. */
+   *  veins in dungeons nobody has vouched for: a count the state does not carry, so the book keeps what the refusal said
+   *  (net/profBook.js `closed`) and the prompt says it, never an act played and a tool worn for the same refusal again.
+   *  CAP-OFF: the account's day in a craft closes nothing - there is none. */
   function planFor(t, tool = null) {
     return learned(t, kindOf(t.node)?.plan(t.node, ctxFor(t, tool)) ?? null);
   }
@@ -509,7 +509,6 @@ export function createGatherHost(deps) {
     const where = plan?.ready ? (kindOf(t.node)?.where?.(t.node) ?? null) : null;   // SETTLE-SAID
     if (where) return { ...plan, ready: false, rest: where };
     if (!plan?.ready || typeof book.closed !== 'function') return plan;
-    if (book.closed(`account:${plan.profession}`)) return { ...plan, ready: false, rest: `${HARVESTS_PER_ACCOUNT_DAY} today across your characters` };
     if (t.node.what === 'dvein' && book.closed('deep')) {
       const fact = t.dungeon && dungeon ? book.dungeon(dungeon.id) : null;
       if (fact?.state !== 'confirmed' && fact?.state !== 'disputed') return { ...plan, ready: false, rest: `${DEEP_UNCONFIRMED_PER_DAY} veins today in dungeons nobody has vouched for` };
@@ -922,8 +921,8 @@ export function createGatherHost(deps) {
       }
       chipLeft = Math.max(0, chipLeft - dt);
       const cp = chipProfession;
-      const tally = (cp && kindOfProfession(cp)?.tally?.()) || { n: book.state.today?.[cp] ?? 0, cap: book.state.caps?.harvests ?? 60 };   // PROF7: Hunting's day is the account's
-      hud.setChip(chipLeft > 0 && cp ? `${professionName(cp)} ${rank(cp)} - ${tally.n} / ${tally.cap} today` : null);
+      const tally = (cp && kindOfProfession(cp)?.tally?.()) || { n: book.state.today?.[cp] ?? 0 };   // PROF7: Hunting's day is the account's
+      hud.setChip(chipLeft > 0 && cp ? `${professionName(cp)} ${rank(cp)} - ${tally.n} today` : null);   // CAP-OFF: the day's count, no cap after it
       hud.frame(dt);
       syncPointer();   // HERB-CURSOR: an act this frame ended - finished, walked off, a window over it
     },

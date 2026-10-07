@@ -47,7 +47,7 @@ async function stand({ nowS, specs = { 50: null, 100: null }, slowTexture = fals
   let taken = [];
   const door = {
     account: () => 'acct-1',
-    state: async () => (door.shut ? { ok: false, error: 'prof-closed' } : { ok: true, data: { day: day(), character: 'c1', tracks: [{ profession: 'logging', xp: xpForRank(rank), rank, specs }], today: {}, taken, stores: [], caps: { harvests: 60, stores: 5000 } } }),
+    state: async () => (door.shut ? { ok: false, error: 'prof-closed' } : { ok: true, data: { day: day(), character: 'c1', tracks: [{ profession: 'logging', xp: xpForRank(rank), rank, specs }], today: {}, taken, stores: [], caps: { stores: 5000 } } }),
     pixels: async (c, px) => ({ ok: true, data: { pixels: px.map(([x, y]) => ({ x, y, state: 'none' })), dungeons: [] } }),
     harvest: async (b) => { taken = [`${b.node}|logs`]; return { ok: true, data: { node: b.node, kind: b.kind, material: 'log:oak', qty: 3, xp: 30, track: { profession: 'logging', xp: xpForRank(rank) + 30, rank }, today: 1 } }; },
   };

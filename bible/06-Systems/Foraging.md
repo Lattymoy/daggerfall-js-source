@@ -738,7 +738,9 @@ Replaces PROF0's rod (the cast, the bite, the reel), DECIDED:
   in total, and the net comes in with the plain haul.
 - **The yield**: **1-2 fish** of Deep Waters' species for the water (PROF0 5.2's "what bites"), +50% on a clean haul;
   a Pearl 1 haul in 50 at sea (Pearl Diver x3), a Slaughterfish 1 in 100 (the heaviest haul), a trophy 1 in 200.
-- **The cap**: **40 hauls a day an account** - a haul names no node, so Fishing is bounded, not witnessed (PROF0 6).
+- **The cap**: ~~**40 hauls a day an account**~~ - a haul names no node, so Fishing is bounded, not witnessed (PROF0 6) -
+  RETIRED (CAP-OFF, 2026-10-07, Mac: *"Remove the cap on life skills"*): no day's hauls; the hour's writes bound it
+  (`06-Systems/Professions-Arc.md` section 40).
 - **Into the Stores** as **Raw Fish**, the species named in the toast (PROF0 5.2).
 - Specialisation names follow: **Angler** - the tug window +40%.
 
@@ -934,7 +936,7 @@ takes the road to the Prison two pixels north: its dungeon veins do not care abo
 | Shelves | tools 27% General Store, 11% Pawn Shop; Mushroom, Egg 40% / 16% |
 | Online wait | 8 s a game hour (`WAIT_PER_HOUR`) |
 | Act bands | x0.85 / 1.00 / 1.15 / 1.30 |
-| Net | throw 0.3-1.5 s, 3-12 m; wait 5-30 s (first and last daylight hour x0.5, storm x2); tug 600 ms; band 20-30%; 20 s; slip 2 s; 1-2 fish as Raw Fish; 40 hauls a day an account |
+| Net | throw 0.3-1.5 s, 3-12 m; wait 5-30 s (first and last daylight hour x0.5, storm x2); tug 600 ms; band 20-30%; 20 s; slip 2 s; 1-2 fish as Raw Fish; ~~40 hauls a day an account~~ (CAP-OFF, 2026-10-07: none) |
 | Basket (online) | 1 / 1-2 / 1-3 finds; three glints of 1.0-1.4 s; clean +50%, two +25% |
 | Crafted tools | Crude 37, Standard 50, Fine 57, Superior 65, Masterwork 65 uses |
 | Skinning Knife | 603: 0.5 kg, 50 HP, 100 gold, rarity 10, online shelves only |
