@@ -47,7 +47,7 @@ import { modSettingIfDeclared, modSettingsOf, modSettingsGeneration } from '../s
 import {
   chooseTable, deathTable, ORIENTATIONS, orientationFor, facingFor, boatForwardOf, frameTime, speedMod, frameCount, isFootstepFrame,
   stateFor, STATE_TABLES, STRING, meleeAnimTickTime, RANGED_TICK, SPELL_TICK, LYCAN_TICK, DEATH_TICK,
-  usesPingPong, pingPongFrames, forwardFrames, holdDrawFrames, pingPongTickFrames, mirrorFlips, mirrorRevertTime,
+  meleeStrokeFrames, forwardFrames, holdDrawFrames, mirrorFlips, mirrorRevertTime,
   DELAYED_FRAMES, ORIENTATION_TIME, signedAngleY, tableMoveSpeed, portrayedYaw,
 } from './eotbBillboard.js';
 import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, flipRows, worldOrderColors } from './eotbSprite.js';
@@ -124,7 +124,6 @@ function look() {
     turnToView: s['Graphics.TurnToView'] ?? 2,
     attackStrings: s['Graphics.AttackStrings'] ?? 3,
     mirrorTime: s['Graphics.MirrorTime'] ?? 3,
-    pingPongOffset: s['Graphics.PingPongOffset'] ?? 1,
     visibility: s['Graphics.FirstPersonBillboard'] ?? 1,       // [IL] `visibility`: 0 none, 1 "Shadows Only", 2 visible
     torchOffset: s['Graphics.TorchOffset'] ?? 1,                // [IL] `torchOffset`: 0 vanilla, 1 billboard, 2 selfie
     syncFootsteps: s['Animation.SyncFootsteps'] !== false,
@@ -252,7 +251,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   let died = false;
   let mirrorCount = 0;
   let mirrorTimer = 0;
-  let pingpongCount = 0;
+  let strokeCount = 0;          // ONE-STROKE: the body's own blow count, for a rig that names none (swingN)
   let footstepAlt = false;
   let hasPlayedFootstep = false;
   let wasGrounded = false;
@@ -448,9 +447,8 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   }
 
   // ── the one-shots ─────────────────────────────────────────────────
-  /** [IL] The three coroutines, one record: `PlayAnimationCoroutine`
-   *  (frames forward, `freeze` skips the closing UpdateOrientation),
-   *  `PlayAnimationPingPongCoroutine` (the order pre-computed), and
+  /** [IL] The coroutines, one record: `PlayAnimationCoroutine`
+   *  (frames forward, `freeze` skips the closing UpdateOrientation) and
    *  `PlayAnimationHoldCoroutine` (draw down to 0, hold while the swing
    *  is held, release forward). StartCoroutine runs the body to its
    *  first yield at once, so the first frame paints in the same
@@ -479,16 +477,13 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     const c = isAnimating;
     // IL_5d77-IL_5dd9 (PlayAnimationCoroutine): under Mirror or Mixed a
     // melee clip bumps the mirror count and resets its clock, ANY other
-    // clip - the loose, the cast, the death - zeroes the count; under
-    // Mixed every clip bumps the ping-pong count. The ping-pong
-    // coroutine (IL_5f23-IL_5f35) bumps that count alone; the hold
-    // coroutine (IL_614d-IL_615c) keeps no counts at all.
-    if (c.kind === 'forward') {
-      if (cfg.attackStrings === STRING.Mirror || cfg.attackStrings === STRING.Mixed) {
-        if (c.table === 'AttackMelee' || c.table === 'AttackMeleeLycan') { mirrorTimer = 0; mirrorCount++; } else mirrorCount = 0;
-      }
-      if (cfg.attackStrings === STRING.Mixed) pingpongCount++;
-    } else if (c.kind === 'pingpong' && cfg.attackStrings === STRING.Mixed) pingpongCount++;
+    // clip - the loose, the cast, the death - zeroes the count; the hold
+    // coroutine (IL_614d-IL_615c) keeps no counts at all. ONE-STROKE: the
+    // ping-pong count went with the ping-pong (eotbBillboard.js
+    // meleeStrokeFrames).
+    if (c.kind === 'forward' && (cfg.attackStrings === STRING.Mirror || cfg.attackStrings === STRING.Mixed)) {
+      if (c.table === 'AttackMelee' || c.table === 'AttackMeleeLycan') { mirrorTimer = 0; mirrorCount++; } else mirrorCount = 0;
+    }
     isAnimating = null;
     if (!c.freeze) updateOrientation(true);
   }
@@ -505,8 +500,10 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     endClip();
   }
   /** [IL] `PlayMeleeAttackAnimation` (IL_5050-IL_514e): never in the
-   *  saddle, never over a clip; PingPong by `usesPingPong`; the tick is
-   *  the weapon's own.
+   *  saddle, never over a clip; the tick is the weapon's own. ONE-STROKE:
+   *  the blow's own stroke (`meleeStrokeFrames` - the rig's blow count, or
+   *  the body's own where the rig names none), over the weapon's whole
+   *  animation; the IL's ping-pong arm is retired.
    *
    *  AUDIT DISC28 AR-2: THE WEAPON'S OWN, overrides and all. [IL]
    *  `GetMeleeAnimTickTime` (IL_545c-IL_548e) hands FormulaHelper
@@ -521,10 +518,8 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     if (last.riding || isAnimating) return null;
     const n = frameCount('AttackMelee');
     const animTime = getMeleeWeaponAnimTime(last.liveSpeed, last.animCtx);
-    if (usesPingPong(cfg.attackStrings, pingpongCount)) {
-      return startClip('AttackMelee', pingPongFrames(n, cfg.pingPongOffset), meleeAnimTickTime(animTime, pingPongTickFrames(n, cfg.pingPongOffset)), { kind: 'pingpong' });
-    }
-    return startClip('AttackMelee', forwardFrames(n), meleeAnimTickTime(animTime, n));
+    const frames = meleeStrokeFrames(n, Number.isInteger(last.swingN) ? last.swingN : strokeCount++);
+    return startClip('AttackMelee', frames, meleeAnimTickTime(animTime, frames.length));
   }
   function playRangedAttack() {
     if (last.riding || isAnimating) return null;
@@ -749,13 +744,13 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
 
   /** [IL] `Initialize` (IL_3b10-IL_3c8c), ToggleBillboard's call: the
    *  settings taken, `died` cleared, a clip in flight stopped, the
-   *  Mirror and PingPong counts zeroed, the table the last one or Idle,
+   *  Mirror count zeroed (ONE-STROKE: the PingPong count is retired), the table the last one or Idle,
    *  the vanilla stride disabled or restored, one forced orientation. */
   function initialize() {
     cfg = look();
     died = false;
     isAnimating = null;
-    mirrorCount = 0; mirrorTimer = 0; pingpongCount = 0;
+    mirrorCount = 0; mirrorTimer = 0;
     stateCurrent = stateLast ?? 'Idle';
     vanillaDisabled = cfg.syncFootsteps;
     updateOrientation(true);
@@ -1002,7 +997,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       active: activeFlag, FP, table: stateCurrent, orientation: lastOrientation, frame: frameCurrent, ready: firstUp, cached: tex.size,
       shown: shown ? { ...shown } : null, pending: pending.map((p) => ({ ...p })),
       clip: isAnimating ? { table: isAnimating.table, frames: [...isAnimating.frames], i: isAnimating.i, kind: isAnimating.kind, phase: isAnimating.phase, interval: isAnimating.interval, freeze: isAnimating.freeze } : null,
-      mirrorCount, mirrorTimer, pingpongCount, died, animating, currentAngle, orientationTimer, orientationChosen,   // SPRITE-FLICKER
+      mirrorCount, mirrorTimer, strokeCount, died, animating, currentAngle, orientationTimer, orientationChosen,   // SPRITE-FLICKER
       lastMoveDirection: lastMoveDirection ? [...lastMoveDirection] : null, last: { ...last }, hasPlayedFootstep, footstepAlt, wasGrounded,
       material: material(), placed: place(),
       lantern: { hangs: lanternHangs(), shown: lanternShown(), swing: { fore: lantern.swing.fore, side: lantern.swing.side }, batch: !!lantern.batch },   // HT-WAIST; HT-WAIST-BACK: hangs, and drawn

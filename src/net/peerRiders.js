@@ -25,7 +25,7 @@
 // ('AttackMeleeLycan' at LYCAN_TICK, the mob's strike DISC12 showed). The hand-off is unchanged: until the art is up
 // (or when it failed, or the build has none) `isRiding` stays false and remotePlayers' DISC12 enemy sprite stands for
 // them - a beast is never nothing. (DISC23-B's walkers leave a beast to this layer: `pose.wb` skips them.)
-import { orientationFor, portrayedYaw, frameCount, frameTime, chooseTable, speedMod, LYCAN_TICK, meleeAnimTickTime, RANGED_TICK, SPELL_TICK } from '../player/eotbBillboard.js';
+import { orientationFor, portrayedYaw, frameCount, frameTime, chooseTable, speedMod, LYCAN_TICK, meleeAnimTickTime, meleeStrokeFrames, forwardFrames, RANGED_TICK, SPELL_TICK } from '../player/eotbBillboard.js';
 import { getMeleeWeaponAnimTime } from '../characters/weaponStates.js';
 import { EOTB_FOOT_SET_COUNT } from '../player/classSkins.js';   // PEERFX3: a class skin is a set past the mod's
 import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, flipRows, worldOrderColors } from '../player/eotbSprite.js';
@@ -300,11 +300,13 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
  *  the stat's range, since a peer's Speed is not on the wire (the local body times its own swing by its own). */
 export const PEER_SWING_SPEED = 50;
 /** DISC23-B: the one-shot a pose edge starts - the arm's three counters (world.js `arm`), each the clip EOTB plays
- *  for that act (eotbBody.js's own doors: PlayMeleeAttackAnimation, the loose, the cast), with its own frame tick. */
+ *  for that act (eotbBody.js's own doors: PlayMeleeAttackAnimation, the loose, the cast), with its own frame tick.
+ *  `frames(count)` is the clip's frames for the counter's new value: ONE-STROKE - a blow is the stroke its count
+ *  names (eotbBillboard.js meleeStrokeFrames, the count the swinger's own body read), over the weapon's animation. */
 export const WALK_ONE_SHOTS = Object.freeze([
-  Object.freeze({ field: 'an', table: 'AttackMelee', tick: () => meleeAnimTickTime(getMeleeWeaponAnimTime(PEER_SWING_SPEED), frameCount('AttackMelee')) }),
-  Object.freeze({ field: 'ar', table: 'AttackRanged', tick: () => RANGED_TICK }),
-  Object.freeze({ field: 'cn', table: 'AttackSpell', tick: () => SPELL_TICK }),
+  Object.freeze({ field: 'an', table: 'AttackMelee', frames: (n) => meleeStrokeFrames(frameCount('AttackMelee'), n), tick: (frames) => meleeAnimTickTime(getMeleeWeaponAnimTime(PEER_SWING_SPEED), frames.length) }),
+  Object.freeze({ field: 'ar', table: 'AttackRanged', frames: () => forwardFrames(frameCount('AttackRanged')), tick: () => RANGED_TICK }),
+  Object.freeze({ field: 'cn', table: 'AttackSpell', frames: () => forwardFrames(frameCount('AttackSpell')), tick: () => SPELL_TICK }),
 ]);
 
 /**
@@ -368,7 +370,10 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
       // whatever a session of swinging left them at)
       if (r.last) {
         for (const o of WALK_ONE_SHOTS) {
-          if ((pose[o.field] | 0) !== r.last[o.field]) { r.shot = { table: o.table, tick: o.tick() }; r.table = o.table; r.frame = 0; r.clock = 0; }
+          if ((pose[o.field] | 0) !== r.last[o.field]) {
+            const frames = o.frames(pose[o.field] | 0);
+            if (frames.length) { r.shot = { table: o.table, tick: o.tick(frames), frames, i: 0 }; r.table = o.table; r.frame = frames[0]; r.clock = 0; }
+          }
         }
       }
       r.last = { an: pose.an | 0, ar: pose.ar | 0, cn: pose.cn | 0 };
@@ -377,7 +382,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
         r.clock += step;
         while (r.shot && r.clock >= r.shot.tick) {
           r.clock -= r.shot.tick;
-          if (++r.frame >= frameCount(r.shot.table)) { r.shot = null; r.table = null; r.frame = 0; r.clock = 0; }
+          if (++r.shot.i >= r.shot.frames.length) { r.shot = null; r.table = null; r.frame = 0; r.clock = 0; } else r.frame = r.shot.frames[r.shot.i];
         }
       }
       // [IL] LoopIdleBillboard's frame time: a run halves the frame (IL_41d4-IL_422a)
