@@ -73,6 +73,7 @@ import { mwRaceId } from '../formats/mwNpc.js';
 import { CAPSULE_HEIGHT } from '../player/motor.js';
 import { peerStubEntity, lookKey } from './remotePlayers.js';
 import { POSE_STRIKES } from './wire.js';   // MAC7 #1: the swing's kind, by the wire's index
+import { HIT_FRAME_MELEE, MELEE_NUM_FRAMES } from '../characters/weaponStates.js';   // MW-PACE1: where in a blow its hit lands
 import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap, which cannot loop
 import { JUMP_UNITS, stepPeerPace } from './peerPace.js'; import { peerBodyYaw, peerClimbing, peerMoving, PeerClimbTrack } from './peerClimb.js';   // HT-WAIST-BACK: the pace law, lifted - the walkers' lanterns swing off it too; CLIMB5: the climb's facing and pose
 
@@ -93,6 +94,24 @@ export const SWAP_MARGIN = 1.25;
 export const BODY_REBUILD_MS = 10000;
 /** A strike the rig refused (an equip in flight, a shot still releasing) is asked again this many frames, then dropped (AUDIT WORLD C3). */
 export const PENDING_FRAMES = 60;
+/** MW-PACE1 (Mac: "Morrowind attack animations don't scale with attack speed/multiple attacks when attack speed is
+ *  high"): A PEER'S BLOW, PACED BY ITS OWN GAPS. The wire carries a swing's count and kind, not the sender's Speed - but
+ *  a held button keeps swinging (WeaponSwingMode 2), and the sender's machine starts each blow the frame after the last
+ *  is done, so the gap between two counts IS the sender's blow. A burst's shortest gap paces its blows (a pause in a
+ *  fight only lengthens a gap), its hit two fifths in (the machine's HIT_FRAME_MELEE of MELEE_NUM_FRAMES); a gap past
+ *  PEER_BLOW_MAX_S (seconds) ends the burst, and its first blow keeps the record's pace. The bounds: the slowest blow
+ *  the swing law draws (characters/weaponStates.js SWING_FRAME_MAX, 2 s) with a pose's lag on top, and under the
+ *  fastest (0.45 s) by a pose's jitter. */
+export const PEER_BLOW_MIN_S = 0.3;
+export const PEER_BLOW_MAX_S = 2.2;
+/** The burst's pace after a gap of `gapS` seconds (null: none yet), and the schedule a blow is fitted into. Pure. */
+export function peerBlowPace(pace, gapS) {
+  if (!(gapS >= 0) || gapS > PEER_BLOW_MAX_S) return null;
+  const g = Math.max(PEER_BLOW_MIN_S, gapS);
+  return pace == null ? g : Math.min(pace, g);
+}
+export const peerBlow = (pace) => (pace == null ? null
+  : { seconds: pace, hitAt: (pace * HIT_FRAME_MELEE) / MELEE_NUM_FRAMES.StrikeDown });
 /** The drawn yaw eases toward the pose's at this rate (a second) - a turn the rig can see every frame, not one that stops between poses. */
 export const YAW_EASE = 12;
 /** PEER-CADENCE (2026-09-22, Mac: "look for ways to improve online performance"): how many frames apart a body's
@@ -623,13 +642,17 @@ export class PeerBodies {
           if (shown.wd === 2) { b.rig.release?.(); b.held = false; b.pending = { strike: 'StrikeUp', hold: true, left: PENDING_FRAMES }; }
           else b.pending = null;
         } else {
+          // MW-PACE1: the gap since the last count, which paces the burst this blow belongs to
+          const at = this._now();
+          b.blowPace = peerBlowPace(b.swingAt == null ? null : b.blowPace, b.swingAt == null ? -1 : (at - b.swingAt) / 1000);
+          b.swingAt = at;
           // C3: the strike is KEPT until the rig takes it - the equip that setSheathed started this very frame
           // refuses it, and a consumed count was a blow never played - for PENDING_FRAMES and no more
-          b.pending = drawn ? { strike: POSE_STRIKES[shown.as | 0] ?? 'StrikeDown', hold: shown.wd === 2, left: PENDING_FRAMES } : null;
+          b.pending = drawn ? { strike: POSE_STRIKES[shown.as | 0] ?? 'StrikeDown', hold: shown.wd === 2, left: PENDING_FRAMES, blow: peerBlow(b.blowPace) } : null;
         }
       }
       if (b.pending && b.pending.left-- > 0) {
-        if (b.rig.attack?.(b.pending.strike, { hold: b.pending.hold })) { b.held = b.pending.hold; b.pending = null; }
+        if (b.rig.attack?.(b.pending.strike, { hold: b.pending.hold, blow: b.pending.blow ?? null })) { b.held = b.pending.hold; b.pending = null; }
       } else b.pending = null;
       if (cn !== b.cast) { b.cast = cn; b.rig.castSpell?.(shown.cr | 0); }
     }

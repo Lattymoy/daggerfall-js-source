@@ -884,7 +884,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
   /** MAC7 #2: the wire's cast - { n, rangeType }, counted at castSpellAnim, the one door both lanes' hands come through. */
   const cast = { n: 0, rangeType: 2, element: 4 };   // SPELLFX1: and the element, so a peer can draw the missile
   const shot = { n: 0 };   // SPELLFX1: arrows loosed from a BOW, for the wire (a gun's orb is not counted - peers draw a shaft)
-  function fpAttack(strike) {
+  function fpAttack(strike, dt = 0) {
     swing.n = (swing.n + 1) & 0xffff; swing.strike = strike;
     // EOTB-IL: the sprite's one-shots are no longer started here - the
     // mod POLLS FPSWeapon.IsAttacking in its own LateUpdate (IL_3eee),
@@ -894,7 +894,9 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     // MW-D16: no `bow` flag. The arm derives "shoot" from its own
     // weapon CLASS, which is what the reference tests - and which also
     // catches MarksmanThrown, a type that shoots without being a bow.
-    fpArm.attack(strike, { hold: m.isBow && m.state === 'StrikeUp' });
+    // MW-PACE1: and the blow's own clock - the machine just began this strike, so its schedule (when the hit lands,
+    // when it is done, at this frame's dt) is the one the arm fits its wind-up, release and follow into.
+    fpArm.attack(strike, { hold: m.isBow && m.state === 'StrikeUp', blow: playerWeapon.strikeSchedule(dt) });
   }
 
   // WEAPON-VIS1: a live call count, not a guess - see window.__weaponDebug
@@ -1339,8 +1341,10 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
      *  in which case the engine resolves on the spot. */
     castSpellAnim: (rangeType, element, onRelease = null) => {
       cast.n = (cast.n + 1) & 0xffff; cast.rangeType = rangeType | 0; cast.element = Number.isInteger(element) && element >= 0 && element <= 4 ? element : 4;   // MAC7 #2: the wire's cast, counted before either lane's own gate. EOTB-IL: the sprite's cast is polled off FPSSpellCasting.IsPlayingAnim (IL_3f57), not called from here
-      fpArm.castSpell(rangeType);
-      return fpsSpellCasting.playOneShot(element, onRelease);
+      const armCasts = fpArm.castSpell(rangeType) && (fpArm.active() || fpArm.thirdActive());
+      // MW-CAST1: the Morrowind hands on screen cast the spell - it leaves on their "<type> release", or when they stop
+      // casting without one (fpsSpellCasting's hold, and its ceiling); the classic lane's frame 5 is untouched
+      return fpsSpellCasting.playOneShot(element, onRelease, armCasts ? { hold: () => fpArm.takeCastRelease() || !fpArm.castInFlight() } : {});
     },
     playerWeapon,
     swing,   // MAC7 #1: { n, strike } - the count and the kind of the last strike started, for the wire
@@ -1521,7 +1525,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       const strike = !paralyzed && c && canAttack
         ? playerWeapon.gesture(_dx, _dy, _held, dt, Math.max(c.clientWidth, c.clientHeight), { cancelHeld: activateHeld() })   // AUDIT 28 W12
         : null;
-      if (strike) fpAttack(strike);
+      if (strike) fpAttack(strike, dt);
       _dx = 0; _dy = 0;
       // AUDIT 23 (C9): the strike-ENTRY whoosh is gone - DFU plays the
       // swing sound at the HIT FRAME of a swing that hit no enemy
@@ -1963,7 +1967,11 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
       const gunSliding = !!c && thunderlockHeld() && thunderlockSliding()
         && !spellArmed() && !fpsSpellCasting.isPlayingAnim && (entity?.equipCountdown ?? 0) <= 0
         && !eotbHidesWeapon() && !fpArm.active();
-      if (paralyzed || (!shown() && !torchOnly && !sheetOnly && !shieldRect && !gunSliding)) return;
+      // MW-CAST1: THE CASTING HANDS ARE THE ARM'S. A readied spell hides the weapon (shown()'s HasReadySpell leg), and
+      // that hid the Morrowind arm with it - the hands in the spell stance and the whole cast were never on screen in
+      // first person. The arm draws them; the classic hands above are the other lane's.
+      const armCasts = fpArm.active() && (spellArmed() || fpsSpellCasting.isPlayingAnim || fpArm.castInFlight());
+      if (paralyzed || (!shown() && !torchOnly && !sheetOnly && !shieldRect && !gunSliding && !armCasts)) return;
       // THE ONE SEAM. The arm draws whole and RETURNS, or it is inactive
       // and the classic sprite draws exactly as it always has. The return
       // is load-bearing: without it both composite and the player sees a

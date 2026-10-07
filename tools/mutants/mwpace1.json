@@ -1,0 +1,93 @@
+[
+  {
+    "name": "MWPACE1-no-ceiling-on-the-rate",
+    "file": "src/combat/fpArm.js",
+    "old": "  return Math.min(BLOW_RATE_MAX, Math.max(BLOW_RATE_MIN, span / Math.max(left, BLOW_LEFT_MIN)));",
+    "new": "  return Math.max(BLOW_RATE_MIN, span / Math.max(left, BLOW_LEFT_MIN));",
+    "tests": [
+      "test/mwpace1.test.js"
+    ]
+  },
+  {
+    "name": "MWPACE1-release-forgets-the-clock",
+    "file": "src/combat/fpArm.js",
+    "old": "    else if (blowPlan) blowPlan.rate = blowRate(actionState.stopTime - actionState.time, blowPlan.hitAt - blowPlan.clock);",
+    "new": "    else if (blowPlan) blowPlan.rate = blowRate(actionState.stopTime - actionState.time, blowPlan.hitAt);",
+    "tests": [
+      "test/mwpace1.test.js"
+    ],
+    "note": "A wind-up that ran a frame long is made up in the release only if the release is fitted from where the arm stands."
+  },
+  {
+    "name": "MWPACE1-follow-ends-on-the-hit",
+    "file": "src/combat/fpArm.js",
+    "old": "    else if (blowPlan) blowPlan.rate = blowRate(actionState.stopTime - actionState.time, blowPlan.seconds - blowPlan.clock);",
+    "new": "    else if (blowPlan) blowPlan.rate = blowRate(actionState.stopTime - actionState.time, blowPlan.hitAt - blowPlan.clock);",
+    "tests": [
+      "test/mwpace1.test.js"
+    ]
+  },
+  {
+    "name": "MWPACE1-a-shot-is-paced",
+    "file": "src/combat/fpArm.js",
+    "old": "    if (!blow || attackType === MW_SHOOT_ATTACK || holdWindUp) return null;",
+    "new": "    if (!blow || holdWindUp) return null;",
+    "tests": [
+      "test/mwpace1.test.js"
+    ]
+  },
+  {
+    "name": "MWPACE1-the-follow-refuses-the-next-blow",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (upper === UPPER_BODY.AttackEnd) endAttack();\n      if (upper !== UPPER_BODY.WeaponEquipped) return null;",
+    "new": "      if (upper !== UPPER_BODY.WeaponEquipped) return null;",
+    "tests": [
+      "test/mwpace1.test.js"
+    ]
+  },
+  {
+    "name": "MWPACE1-the-record-pace-always",
+    "file": "src/combat/fpArm.js",
+    "old": "        const paced = attacking && blowPlan;",
+    "new": "        const paced = false && attacking && blowPlan;",
+    "tests": [
+      "test/mwpace1.test.js"
+    ]
+  },
+  {
+    "name": "MWPACE1-the-schedule-unquantised",
+    "file": "src/characters/weaponStates.js",
+    "old": "  const step = dt > 0 ? Math.max(1, Math.ceil(tick / dt - 1e-9)) * dt : tick;",
+    "new": "  const step = tick;",
+    "tests": [
+      "test/mwpace1.test.js"
+    ]
+  },
+  {
+    "name": "MWPACE1-the-unarmed-left-is-five",
+    "file": "src/characters/weaponStates.js",
+    "old": "    return { seconds: LEFT_UNARMED_ANIMS.length * step, hitAt: (LEFT_UNARMED_ANIMS.indexOf(HIT_FRAME_MELEE) + 1) * step, step };",
+    "new": "    return { seconds: 5 * step, hitAt: HIT_FRAME_MELEE * step, step };",
+    "tests": [
+      "test/mwpace1.test.js"
+    ]
+  },
+  {
+    "name": "MWPACE1-the-peer-takes-the-last-gap",
+    "file": "src/net/peerBodies.js",
+    "old": "  return pace == null ? g : Math.min(pace, g);",
+    "new": "  return g;",
+    "tests": [
+      "test/mwpace1.test.js"
+    ]
+  },
+  {
+    "name": "MWPACE1-a-pause-never-ends-the-burst",
+    "file": "src/net/peerBodies.js",
+    "old": "  if (!(gapS >= 0) || gapS > PEER_BLOW_MAX_S) return null;",
+    "new": "  if (!(gapS >= 0)) return null;",
+    "tests": [
+      "test/mwpace1.test.js"
+    ]
+  }
+]

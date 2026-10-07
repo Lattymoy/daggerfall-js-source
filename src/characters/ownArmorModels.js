@@ -77,25 +77,38 @@ const HEAD_FIT = Object.freeze([AT_HEAD]);
 const BOOT_FIT = Object.freeze([Object.freeze({ ...AT_NECK, z: null }), ON_FEET]);
 const slotsOf = (fit) => Object.freeze([...new Set(fit.map((r) => r.to))]);
 
-const part = (p, model, hides = null) => Object.freeze({ part: p, model, ...(hides ? { hides: Object.freeze(hides) } : {}) });
+const part = (p, model, hides = null, skinFrom = null) => Object.freeze({
+  part: p, model, ...(hides ? { hides: Object.freeze(hides) } : {}), ...(skinFrom ? { skinFrom: Object.freeze(skinFrom) } : {}),
+});
+/** MW-STEEL2: every steel piece is solved in the body's BIND pose (formats/mwSkinTransfer.js bindPoseMats) - Mac's
+ *  plate was fitted on a T-posed body, and the T-pose is the skins' bind, not the skeleton file's rest (the idle's
+ *  first frame, arms hanging, on retail data): solved in the rest, every gauntlet copied the shoulder. */
+export const STEEL_SOLVE_POSE = 'bind';
 const steel = (id, name, templateIndex, { skinFrom, fit, parts, styles = null }) => Object.freeze({
   id, name, templateIndex, material: ARMOR_MATERIAL.Steel,
-  skinFrom: Object.freeze(skinFrom), fit, fitFrom: slotsOf(fit), parts: Object.freeze(parts),
+  skinFrom: Object.freeze(skinFrom), fit, fitFrom: slotsOf(fit), parts: Object.freeze(parts), solvePose: STEEL_SOLVE_POSE,
   ...(styles ? { styles: Object.freeze(styles) } : {}),
 });
 
 /** MW-STEEL1: Mac's steel plate, piece by piece (tools/bakeSteelPlate.mjs bakes the meshes). Each piece fills the
  *  ARMO_PART slots a retail piece of its shape fills, so the priority law and the skin shadows are the ordinary path:
- *  the cuirass the cuirass (the breastplate alone - Mac: "its just the breastplate and leg armor"); each gauntlet its
+ *  the cuirass the cuirass, and (MW-STEEL2, its painting come: "This is the missing texture for the morrowind steel
+ *  armor's skirt") the plate skirt under it Morrowind's skirt slot - modelled from the same cuirass mesh as the
+ *  breastplate, skinned from the groin and the thighs it hangs over, shadowing nothing (ARMO_PART's skirt row), so a
+ *  clothing skirt worn over it takes the slot at its higher priority as the law says; each gauntlet its
  *  hand, hiding the wrist and forearm under it; the greaves the upper legs;
  *  each pauldron its pauldron; each boot its foot, hiding the ankle and knee. The helm fills the HAIR slot, which
  *  hides the hair and leaves the head - the open helm shows the face, and the closed one's eye slit looks onto it. */
+/** MW-STEEL2: the body the plate skirt hangs over - the groin, and the thighs its plates move with at a stride. */
+export const STEEL_SKIRT_SKIN_FROM = Object.freeze(['groin', 'upperleg']);
+
 function steelPlate() {
   const helmClosed = Object.freeze([part('hair', 'steel_plate_helm_closed.nif')]);
   const helmOpen = Object.freeze([part('hair', 'steel_plate_helm_open.nif')]);
   return [
     steel('daggerfall_steel_cuirass', 'Steel Cuirass', CLASSIC_ARMOR_TEMPLATE.Cuirass, {
-      skinFrom: ['chest', 'groin', 'upperarm'], fit: NECK_FIT, parts: [part('cuirass', 'steel_plate_cuirass.nif')],
+      skinFrom: ['chest', 'groin', 'upperarm'], fit: NECK_FIT,
+      parts: [part('cuirass', 'steel_plate_cuirass.nif'), part('skirt', 'steel_plate_skirt.nif', null, STEEL_SKIRT_SKIN_FROM)],
     }),
     steel('daggerfall_steel_gauntlets', 'Steel Gauntlets', CLASSIC_ARMOR_TEMPLATE.Gauntlets, {
       skinFrom: ['hand', 'wrist', 'forearm', 'upperarm'], fit: NECK_FIT,

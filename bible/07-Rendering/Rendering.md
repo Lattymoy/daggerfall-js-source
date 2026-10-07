@@ -1256,6 +1256,7 @@ directory by `test/audit18_bible_docs.test.js`:
   centimetres apart are drawn at - the surface film (Iliac Puddle No More's
   top, WATER1) over the ground, Come Sail Away's breakers over the film.
 - `underwaterFog.js` - ROAD-B B3: UnderwaterFog.UpdateFog, the submerged fog/tint law shared by the dungeon and exterior hosts
+- `vfxGpu.js` - MW-SPELLFX1: a Morrowind effect's streams on the GPU - one particle effect per stream (formats/mwVfx.js packs a mesh's triangles and its sparks alike), its texture set by file each frame and owned here, released whole; the arm's VFX_Hands and the world's spell effects (scenes/mwMagicFx.js, drawn by `Renderer.drawWorldParticleEffects`) each drive one
 - `windowEmission.js` - R2 window emission.
 - `precipitation.js` - R13 rain/snow + storm lightning. TWO PROFILES,
   TWO PROGRAMS (AUDIT 58 f3/render): the classic pass is DFU's cap on

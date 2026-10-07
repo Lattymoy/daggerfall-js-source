@@ -167,7 +167,7 @@ test('WEREWOLF1 (AUDIT C2) a robe with no MODL: Clothing::load reads MODL as opt
   assert.equal(robe?.model, '', 'kept, with no ground mesh');
   assert.equal(robe.parts.length, 5);
   assert.deepEqual(extractArmRecords(fx.esm).clothes.map((c) => c.id), clothingRecords(fx.esm).map((c) => c.id), 'the derived set reads the same');
-  assert.equal(ARM_RECORDS_VERSION, 3, 'a set extracted before is refused and extracted again');
+  assert.ok(ARM_RECORDS_VERSION > 2, 'a set extracted before is refused and extracted again');   // PIN MOVED (MW-SPELLFX1): C2 moved the version to 3 and the magic effects on to 4 - the law is C2's, past 2
   const res = await buildFpArm({ race: 'fprace', werewolf: true, deps: fx.deps });
   assert.equal(res.ok, true, `${res.stage}: ${res.error}`);
   assert.equal(res.third?.ok, true);

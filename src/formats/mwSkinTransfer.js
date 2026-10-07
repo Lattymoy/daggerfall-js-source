@@ -12,8 +12,9 @@
 //
 // The fix is to stop having two transforms. Each garment vertex copies the skin of the body vertex nearest it - the
 // same bones, the same weights, the same inverse binds, the same skin transform - and its own position is solved so
-// that, in the pose the modeller fitted it in (the skeleton at rest), that skin puts it exactly where it was
-// authored. From then on it is drawn by skinBatch, the one door the body itself goes through, so every frame it moves
+// that, in the pose the modeller fitted it in, that skin puts it exactly where it was authored. That pose was taken
+// to be the skeleton at rest; MW-STEEL2 (below, bindPoseMats) found that a piece modelled on a T-posed body was fitted
+// in the body's BIND pose, which retail's rest is not, and such a piece names it (`solvePose: 'bind'`). From then on it is drawn by skinBatch, the one door the body itself goes through, so every frame it moves
 // by precisely the transform the skin under it moves by. It is the "copy bone weights" every armour fitter uses,
 // with the reference's own skinning doing the rest.
 //
@@ -32,6 +33,8 @@
 // garment's top meets the top of the body part it hides, in the same rest pose the skin is solved in.
 
 import { GRAPH_ROOT } from './mwSkin.js';
+import { affineMul, affineOfTransform } from './mwAffine.js';
+import { affineInverse } from './mwParticles.js';   // MW-STEEL2: the cofactor inverse, not a third copy
 
 const IDENT_TRANSFORM = Object.freeze({ rotation: [1, 0, 0, 0, 1, 0, 0, 0, 1], translation: [0, 0, 0], scale: 1 });
 
@@ -50,6 +53,7 @@ export function sourceSkin(batch, { attachRef = null, mirrored = false, boneOffs
     skinned: true,
     skin: {
       skeletonRoot: GRAPH_ROOT, rootBone: GRAPH_ROOT, transform: IDENT_TRANSFORM, shapeTransform: null,
+      rigid: true,   // MW-STEEL2: its "inverse bind" is the rigid placement, not a bind - it says nothing of a bind pose
       // MW-STEEL1: the attach bone's NAME rides with its ref, so a garment skinned from this part can be worn on
       // another skeleton (rebindSkin) - a skinned part's bones carry theirs already
       bones: [{ ref: attachRef, name: String(attachName || '').toLowerCase(), invBind: { a, t }, indices: Array.from({ length: n }, (_, i) => i), weights: new Array(n).fill(1) }],
@@ -150,13 +154,130 @@ export function shiftBatch(batch, shift) {
   return { ...batch, positions };
 }
 
+/** MW-STEEL2: an inverse bind's inverse - mwParticles.js's cofactor inverse (the general one of the two AUDIT 68 S11
+ *  kept), or null for a singular bind, which that one answers as zero. */
+export function affineInvert(m) {
+  const inv = affineInverse(m);
+  return inv.a.some((v) => v !== 0) ? inv : null;
+}
+
+/**
+ * MW-STEEL2 (2026-10-07, Mac: "The new steel armor T-poses ingame"): THE POSE THE BODY WAS BOUND IN.
+ *
+ * MW-STEEL1 solved the plate's fit and its transfer in the skeleton FILE's rest, on the premise that Morrowind's
+ * base_anim rests in a T-pose ("the main skeleton t-posing in the horizontal" - an OpenMW forum reading of a Blender
+ * importer's display, not of the file). It does not: the vendored retail hierarchy (xbase_anim_sh.nif) stores the
+ * idle's first frame - the arms hanging, the right leg forward - in its node transforms, and the T-pose lives only in
+ * the skins' inverse binds (its "Tri Shadow" binds the right hand level with the shoulder, 46.6 out; the rest stands it
+ * at x 16.1, z 75.7). Mac's plate was fitted on a T-posed body, so solved in the rest every gauntlet vertex found the
+ * SHOULDER nearest, copied the upper arm, and stood out level at shoulder height while the arm moved: a T-pose.
+ *
+ * The bind pose is read off the skins themselves. Within one skin every bone's term maps that skin's mesh to the same
+ * place at bind - it is what a bind is - so for two bones b and c it binds, P_c = P_b o IB_b o IB_c^-1, whatever the
+ * skin's own transforms and whatever frame its mesh is authored in (retail's are part-local, MW-D21). From an anchor
+ * the relation runs out through every skin to every bone they reach. The anchor is the ROOT-MOST bone a skin binds (the
+ * pelvis, on a body), placed by translation alone - its origin on its rest origin, its axes the skin's (the modeller's
+ * upright frame, which a rest's lean would tilt and a translation-only fit could never take back out). Bones no
+ * placed skin reaches are another group: its own root-most bone anchors it the same way. `skins` are the body's own
+ * first, so where a part's bones are its own it is drawn exactly as it was bound; then any further (the skeleton
+ * file's own, which reach every bone and join the groups into one bind); a skin made from a RIGID part (sourceSkin's
+ * `rigid`) binds nothing. Every node no skin binds rides its parent: P_n = P_parent o rest local - the part nodes
+ * ("Right Forearm"), the weapon bones, the root above the anchor.
+ *
+ * `restMats` is the skeleton's rest in graph space (skeletonSpaceMatrices). Answers `{ mats, anchors, placed, spread }`
+ * - every node's graph matrix in the bind pose, the anchors' names (one a group), how many bones a bind placed, and the
+ * most two of one skin's bones disagree about where its mesh stands (units, at the mesh's farthest corner - 0 for a
+ * body bound in one pose) - or null when no skin binds a bone of this skeleton (a rigid body: the caller keeps the rest
+ * and says so).
+ */
+export function bindPoseMats(skeleton, skins, restMats) {
+  const lists = (skins ?? []).filter((x) => x?.skin && !x.skin.rigid).map((x) => ({
+    bones: (x.skin.bones ?? []).filter((b) => b.ref != null && skeleton.nodes.has(b.ref) && b.invBind),
+    positions: x.positions ?? null,
+  })).filter((l) => l.bones.length);
+  if (!lists.length) return null;
+  const depthOf = new Map();
+  const depth = (ref) => {
+    if (depthOf.has(ref)) return depthOf.get(ref);
+    const node = skeleton.nodes.get(ref);
+    const d = node && node.parent >= 0 && skeleton.nodes.has(node.parent) ? depth(node.parent) + 1 : 0;
+    depthOf.set(ref, d);
+    return d;
+  };
+  const bind = new Map();
+  const anchors = [];
+  for (;;) {
+    // the next group's anchor: the root-most bone a skin binds that nothing has placed (the first skin's on a tie)
+    let anchor = null;
+    for (const l of lists) for (const b of l.bones) if (!bind.has(b.ref) && (!anchor || depth(b.ref) < depth(anchor.ref))) anchor = b;
+    if (!anchor) break;
+    const inv = affineInvert(anchor.invBind);
+    const rest = restMats.get(anchor.ref);
+    if (!inv || !rest) { bind.set(anchor.ref, rest ?? { a: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]), t: [0, 0, 0] }); continue; }
+    bind.set(anchor.ref, { a: inv.a, t: [rest.t[0], rest.t[1], rest.t[2]] });
+    anchors.push(skeleton.nodes.get(anchor.ref)?.name ?? null);
+    // each pass places every bone a skin with a placed bone binds - the body's own skins first in every pass
+    for (let grew = true; grew;) {
+      grew = false;
+      for (const l of lists) {
+        const known = l.bones.find((b) => bind.has(b.ref));
+        if (!known) continue;
+        const mesh = affineMul(bind.get(known.ref), known.invBind);   // this skin's mesh, placed
+        for (const b of l.bones) {
+          if (bind.has(b.ref)) continue;
+          const bi = affineInvert(b.invBind);
+          if (!bi) continue;
+          bind.set(b.ref, affineMul(mesh, bi));
+          grew = true;
+        }
+      }
+    }
+  }
+  const mats = new Map();
+  const matOf = (ref) => {
+    if (mats.has(ref)) return mats.get(ref);
+    let m = bind.get(ref);
+    if (!m) {
+      const node = skeleton.nodes.get(ref);
+      m = node && node.parent >= 0 && skeleton.nodes.has(node.parent)
+        ? affineMul(matOf(node.parent), affineOfTransform(node.rest))
+        : (restMats.get(ref) ?? { a: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]), t: [0, 0, 0] });
+    }
+    mats.set(ref, m);
+    return m;
+  };
+  for (const ref of skeleton.nodes.keys()) matOf(ref);
+  // how far one skin's bones disagree about where its mesh stands - a body bound in one pose says 0
+  let spread = 0;
+  for (const l of lists) {
+    const frames = l.bones.map((b) => affineMul(bind.get(b.ref), b.invBind));
+    if (frames.length < 2) continue;
+    const far = farCorner(l.positions);
+    const at = (f) => [0, 1, 2].map((k) => f.a[k * 3] * far[0] + f.a[k * 3 + 1] * far[1] + f.a[k * 3 + 2] * far[2] + f.t[k]);
+    const p0 = at(frames[0]);
+    for (const f of frames.slice(1)) { const q = at(f); spread = Math.max(spread, Math.hypot(q[0] - p0[0], q[1] - p0[1], q[2] - p0[2])); }
+  }
+  return { mats, anchors, placed: bind.size, spread };
+}
+
+/** The farthest vertex of a mesh from its origin - where a disagreement about the mesh's place shows most. */
+function farCorner(positions) {
+  let best = [0, 0, 0]; let bd = -1;
+  for (let i = 0; positions && i + 2 < positions.length; i += 3) {
+    const d = positions[i] * positions[i] + positions[i + 1] * positions[i + 1] + positions[i + 2] * positions[i + 2];
+    if (d > bd) { bd = d; best = [positions[i], positions[i + 1], positions[i + 2]]; }
+  }
+  return best;
+}
+
 /**
  * MW-STEEL1: A SKIN SOLVED ON ONE SKELETON, WORN ON ANOTHER. A transferred garment's skin is bone-relative - each
  * influence an inverse bind against a bone named in it, in graph space (bindPart's GRAPH_ROOT) - so the same batch is
  * drawn on any skeleton carrying those bones, posed by that skeleton's own animation. Each bone's ref is looked up by
  * its NAME in `skeleton`; a name it lacks is a null ref, skipped in the blend as rule 40 skips a missing bone, and
  * returned so the caller can say so. The first person wears its gauntlets this way: solved on the third-person
- * skeleton the plate was fitted on (a T-pose, as Mac's scene is), drawn on the first-person one.
+ * skeleton, in the bind pose the plate was fitted on (MW-STEEL2: the T-pose is the skins' bind - retail's skeleton
+ * rests with its arms hanging), drawn on the first-person one.
  */
 export function rebindSkin(batch, skeleton) {
   const missing = [];
