@@ -30,6 +30,11 @@ export const SD_COLLAPSE_MS = 3 * 60 * 1000;
 export const SD_COOLDOWN_MS = 2 * 3600 * 1000;
 /** A hub with no record waits this long before the first rise - a fresh deploy does not raise one the instant it wakes. */
 export const SD_FIRST_RISE_MS = 10 * 60 * 1000;
+/** AUDIT SD II (L3 F4): how long past a found, unbeaten Hollow's `until` the hub waits before it says the fade - three of a
+ *  realm's tells of a fall (wire.js SD_TELL_RETRY_MS), so a kill landed in the Hour's last seconds, still being told, is
+ *  heard as the kill it was and not overtaken by "unbroken". Every client reads the fade from `until` itself; this is
+ *  the hub's word alone. */
+export const SD_FADE_GRACE_MS = 15_000;
 /** A region needs this many distinct verified accounts in it for the census to choose it. */
 export const SD_CENSUS_MIN = 2;
 /** The one salt every client and the relay roll a Hollow's choices with. */
@@ -111,6 +116,9 @@ export function sdGone(rec, now) {
 export function sdDue(rec, now) {
   if (!rec) return { act: 'first' };
   const p = sdPhase(rec, now);
+  // AUDIT SD II (L3 F4): a FOUND Hollow's fade waits SD_FADE_GRACE_MS past its `until` - a fall told meanwhile wins (one
+  // never found has no realm, and no fight to fall)
+  if (p === 'gone' && rec.ph === 'found' && now < rec.until + SD_FADE_GRACE_MS) return { act: null, at: rec.until + SD_FADE_GRACE_MS };
   if (p === 'gone' && rec.ph !== 'gone' && rec.s) return { act: 'gone' };
   if (p === 'gone') return now >= rec.next ? { act: 'rise' } : { act: null, at: rec.next };
   return { act: null, at: rec.fellAt != null ? rec.fellAt + SD_COLLAPSE_MS : rec.until };
@@ -157,8 +165,11 @@ export function sdNearSite(claim, pose) {
 }
 /**
  * May the relay believe a find - a pose near the claimed pixel's centre (sdNearSite), for the record's slot while it has
- * risen. It cannot tell a true site from a false one (it has no map data): a forged find can only say "found" a little
- * early, and never places the Hollow anywhere.
+ * risen. It cannot tell a true site from a false one (it has no map data), and could not stop a forger if it could: every
+ * client places the Hollow itself, so a script stands its pose at the true door as easily as at a false one. A forged
+ * find never places the Hollow anywhere, but it says "found" - and opens the realm - as early as the rise itself (AUDIT
+ * SD II, L7 H1: this said "a little early"). What bounds a forger past it is the fight's numbers, as at the gate
+ * (Super-Dungeons.md section 4).
  * @param {SdRecord|null|undefined} rec
  * @param {number} now
  * @param {{ s:number, px:number, py:number }} claim

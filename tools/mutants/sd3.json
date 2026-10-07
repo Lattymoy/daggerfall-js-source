@@ -62,8 +62,8 @@
   {
     "name": "SD3-the-first-beat-rises",
     "file": "server/src/index.js",
-    "old": "if (due.act === 'first') { await this._sdSave(sdFirst(now)); continue; }",
-    "new": "if (due.act === 'first') { await this._sdSave({ ...sdFirst(now), next: now }); continue; }",
+    "old": ": sdFirst(now)); continue; }",
+    "new": ": { ...sdFirst(now), next: now }); continue; }",
     "tests": [
       "test/sd3_relay.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "SD3-a-refusal-told-for-ever",
     "file": "server/src/index.js",
-    "old": "return !!res && (res.ok || (res.status >= 400 && res.status < 500));",
-    "new": "return !!res && res.ok;",
+    "old": "if (!res || !(res.ok || (res.status >= 400 && res.status < 500))) return null;",
+    "new": "if (!res || !res.ok) return null;",
     "tests": [
       "test/sd3_relay.test.js"
     ],

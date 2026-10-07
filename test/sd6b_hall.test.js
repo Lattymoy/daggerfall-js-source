@@ -68,8 +68,13 @@ test('SD6b the wire: `pz` each way - a turn (which stone, which way, its number)
   assert.equal(parseClient(JSON.stringify({ t: 'sd', k: 'pz', i: 9, a: 1, q: 3 }), { hasHello: true }).error, 'bad sd');
   const hall = { k: 'pz', s: 4, st: [0, 11, 3, 4, 5, 6], f: 48, lit: 6, ok: true };
   assert.deepEqual(validSdOut(hall), hall);
-  assert.deepEqual(validSdOut({ ...hall, ok: false, f: 0, i: 1, a: -1, id: 'peer-ann', q: 9, x: 1 }), { ...hall, ok: false, f: 0, i: 1, a: -1, id: 'peer-ann', q: 9, x: 1 });
-  assert.deepEqual(validSdOut({ ...hall, x: 2 }), hall, 'a snap is 1 or nothing');
+  // AUDIT SD II (PIN MOVED, L7 H2): a snap names the peers its lash falls on - a snap without a list lashes nobody, and a
+  // name that is no peer id is dropped; a refused turner's word (`w`) is 1 or nothing
+  assert.deepEqual(validSdOut({ ...hall, ok: false, f: 0, i: 1, a: -1, id: 'peer-ann', q: 9, x: 1 }), { ...hall, ok: false, f: 0, i: 1, a: -1, id: 'peer-ann', q: 9, x: 1, ls: [] });
+  assert.deepEqual(validSdOut({ ...hall, ok: false, f: 0, i: 1, a: -1, id: 'peer-ann', q: 9, x: 1, ls: ['peer-ann', 'x', 7, 'peer-bo'] }).ls, ['peer-ann', 'peer-bo']);
+  assert.deepEqual(validSdOut({ ...hall, x: 2, ls: ['peer-ann'] }), hall, 'a snap is 1 or nothing - and its list with it');
+  assert.deepEqual(validSdOut({ ...hall, w: 1 }), { ...hall, w: 1 });
+  assert.deepEqual(validSdOut({ ...hall, w: 2 }), hall, 'a refusal is 1 or nothing');
   for (const bad of [{ st: [0, 1, 2, 3, 4] }, { st: [0, 1, 2, 3, 4, 12] }, { st: [0, 1, 2, 3, 4, -1] }, { f: SD_PZ_FRAY_MAX + 1 }, { lit: 7 }, { ok: 1 }, { s: 0 }, { i: 1 }, { i: 6, a: 1 }, { id: 'x' }, { q: -2 }])
     assert.equal(validSdOut({ ...hall, ...bad }), null, JSON.stringify(bad));
   // the bucket: SD_PZ_HZ a second from a page, a turn deeper at the relay
@@ -132,7 +137,8 @@ test('SD6b THE FRAY AND THE CONCORD: the 48th turn snaps the hall back and says 
     for (let k = 0; k < SD_FRAY_MAX; k++) { await turnAt(0, 1); last = orreryStep(o, want, 0, 1); want = last; if (want.ok) break; }
     assert.ok(!want.ok, 'one stone alone never makes it');
     const snap = halls(at[5]).at(-1);
-    assert.deepEqual(snap, { t: 'sd', k: 'pz', s: rec.s, st: [...o.start], f: 0, lit: orreryLit(o, o.start), ok: false, i: 0, a: 1, id: 'peer-s0', q: SD_FRAY_MAX, x: 1 });
+    // AUDIT SD II (PIN MOVED, L7 H2): and names whom it lashes - the one who turned this thread and brought it no nearer
+    assert.deepEqual(snap, { t: 'sd', k: 'pz', s: rec.s, st: [...o.start], f: 0, lit: orreryLit(o, o.start), ok: false, i: 0, a: 1, id: 'peer-s0', q: SD_FRAY_MAX, x: 1, ls: ['peer-s0'] });
     // now the way: each stone the short way round to its share, the stone no other turn moves first
     const t = orrerySolve(o, o.start);
     for (let p = 5; p >= 0; p--) { const i = o.order[p]; for (let k = 0; k < sdTurnsFor(t[i]); k++) await turnAt(i, sdHour(t[i]) <= 6 ? 1 : -1); }

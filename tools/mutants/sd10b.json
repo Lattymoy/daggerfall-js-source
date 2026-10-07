@@ -344,8 +344,8 @@
   {
     "name": "AUDIT-SD-R2-never-freed",
     "file": "server/src/index.js",
-    "old": "      if (idle < 0) return SD_NO_FULL;\n      realm.in.splice(idle, 1);",
-    "new": "      return SD_NO_FULL;",
+    "old": "    if (realm.in.length >= SD_FIGHTERS_MAX && !free(() => true)) return SD_NO_FULL;",
+    "new": "    if (realm.in.length >= SD_FIGHTERS_MAX) return SD_NO_FULL;",
     "tests": [
       "test/sd10b_audit.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "AUDIT-SD-R2-a-present-accounts-freed",
     "file": "server/src/index.js",
-    "old": "const idle = realm.in.findIndex((x) => !present.has(x) && !f?.players?.[x]);",
-    "new": "const idle = realm.in.findIndex((x) => !f?.players?.[x]);",
+    "old": "      const i = realm.in.findIndex((x) => pick(x) && !present.has(x) && !living?.players?.[x]);",
+    "new": "      const i = realm.in.findIndex((x) => pick(x) && !living?.players?.[x]);",
     "tests": [
       "test/sd10b_audit.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "AUDIT-SD-R2-a-fighters-freed",
     "file": "server/src/index.js",
-    "old": "const idle = realm.in.findIndex((x) => !present.has(x) && !f?.players?.[x]);",
-    "new": "const idle = realm.in.findIndex((x) => !present.has(x));",
+    "old": "      const i = realm.in.findIndex((x) => pick(x) && !present.has(x) && !living?.players?.[x]);",
+    "new": "      const i = realm.in.findIndex((x) => pick(x) && !present.has(x));",
     "tests": [
       "test/sd10b_audit.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "AUDIT-SD-R3-the-non-answer-kept",
     "file": "server/src/index.js",
-    "old": "    if (rec !== undefined) this._sdLive = { s, at: now, rec };",
-    "new": "    this._sdLive = { s, at: now, rec };",
+    "old": "now - had.missAt < SD_LIVE_MISS_MS) return kept;",
+    "new": "now - had.missAt < SD_LIVE_FRESH_MS) return kept;",
     "tests": [
       "test/sd10b_audit.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "AUDIT-SD-R6-the-fall-at-the-hearing",
     "file": "server/src/index.js",
-    "old": "const fell = sdFell(rec, Math.min(c.at, Date.now()), { top: c.top, n: c.n });",
-    "new": "const fell = sdFell(rec, Date.now(), { top: c.top, n: c.n });",
+    "old": "const fell = sdFell(was, Math.min(c.at, Date.now()), { top: c.top, n: c.n });",
+    "new": "const fell = sdFell(was, Date.now(), { top: c.top, n: c.n });",
     "tests": [
       "test/sd10b_audit.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "AUDIT-SD-R6-the-fall-ahead",
     "file": "server/src/index.js",
-    "old": "const fell = sdFell(rec, Math.min(c.at, Date.now()), { top: c.top, n: c.n });",
-    "new": "const fell = sdFell(rec, c.at, { top: c.top, n: c.n });",
+    "old": "const fell = sdFell(was, Math.min(c.at, Date.now()), { top: c.top, n: c.n });",
+    "new": "const fell = sdFell(was, c.at, { top: c.top, n: c.n });",
     "tests": [
       "test/sd10b_audit.test.js"
     ]
@@ -452,7 +452,7 @@
   {
     "name": "AUDIT-SD-R6-blows-past-the-hour",
     "file": "server/src/index.js",
-    "old": "    const live = await this._sdLiveOf(s, now);\n    if (live !== undefined && !(live && live.s === s && sdHolds(live, now))) return;\n",
+    "old": "    if (live !== undefined && !(live && live.s === s && sdHolds(live, now))) return;\n",
     "new": "",
     "tests": [
       "test/sd10b_audit.test.js"

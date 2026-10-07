@@ -210,6 +210,7 @@ test('SD3 the find: the cell believes its own socket\'s pose near the claimed pi
     assert.equal((await doorTell({ s: 9, px: PX })).status, 400, 'a body the hub will never take');
     // a hub that refuses a find FOR GOOD (a 4xx) is not told it again: the cell lets it go
     W.world.ROOMS.get = (id) => (id === SOCIAL_ROOM ? { fetch: async () => new Response('bad', { status: 400 }) } : get(id));
+    W.set(Date.now() + 10 * 60_000);   // AUDIT SD II (PIN MOVED, L7 M4): the hub's last word on its slot grown old - another slot's find is told
     const cy = cell.connect(); await cell.hello(cy, 'peer-cy', doorPose(12), { name: 'Cy' });
     await cell.raw(cy, JSON.stringify({ t: 'sd', k: 'found', s: rec.s + 1, px: PX, py: PY }));
     assert.equal(cell.store.get(SD_FOUND_KEY), undefined, 'refused for good: let go');
@@ -251,7 +252,7 @@ test('SD3 the realm: the Worker mints `sd:<s>` only for the slot the hub\'s reco
     const realm = W.world.room(sdRoomKey(rec.s));
     const a = realm.connect(); await realm.hello(a, 'peer-a', null, { name: 'Ann' });
     assert.equal(a.closed, null, 'a newcomer while found');
-    assert.deepEqual(realm.store.get(SD_REALM_KEY), { s: rec.s, in: ['acct-peer-a'] });
+    assert.deepEqual(realm.store.get(SD_REALM_KEY), { s: rec.s, in: ['acct-peer-a'], gu: ['acct-peer-a'] });   // AUDIT SD II (PIN MOVED, L7 M3): and the guests among them
     const a2 = realm.connect(); await realm.hello(a2, 'peer-a2', null, { name: 'Ann', tokenSub: 'acct-peer-a' });
     assert.equal(a.closed?.reason, 'replaced', 'one seat an account');
     // the boss falls: the record says fell (the realm's own slice says it in SD8 - here, the hub's record moved)
@@ -355,9 +356,13 @@ test('SD3 the relay by source: the hub\'s alarm beats the director beside the sw
   const asked = r.indexOf('const rec = await sdLiveAsk(env.ROOMS, s);');
   assert.ok(upgrade > 0 && asked > upgrade, 'the hub asked after the socket\'s own check');
   for (const [path, fn] of [['SD_INTERNAL_CENSUS', '_sdCensusInternal()'], ['SD_INTERNAL_FOUND', '_sdFoundInternal(request)'], ['SD_INTERNAL_LIVE', '_sdLiveInternal()']]) assert.ok(r.includes(`if (path === ${path}) return this.${fn};`), path);
-  assert.match(r, /const linked = isRegionRoom\(a\.key\) && who\.kind === 'linked' \? \{ lk: 1 \} : \{\};/);
+  assert.match(r, /const linked = \(isRegionRoom\(a\.key\) \|\| realmRoom\) && who\.kind === 'linked' \? \{ lk: 1 \} : \{\};/);   // AUDIT SD II (PIN MOVED, L7 H2): and a realm's
   assert.match(r, /if \(b\.id && b\.lk && typeof b\.sub === 'string' && b\.sub\) subs\.add\(b\.sub\);/);
-  assert.match(r, /if \(isSdRoom\(a\.key\)\) \{ const no = await this\._sdAdmit\(a\.key, who\.subject, now\); if \(no === SD_NO_BUSY\) \{ this\._refuse\(ws, 'busy', CLOSE_BUSY\); return; \} if \(no\) \{ this\._refuse\(ws, no\); return; \} \}/);
+  // AUDIT SD II (PIN MOVED, L7 M1/M3): the realm's own gate after the token, by account, then the admission - a guest as one
+  assert.match(r, /if \(realmRoom\) \{\n {8}const known = !!who\.subject && \(await this\._sdRealmOf\(sdSlotOfRoom\(a\.key\)\)\)\.in\.includes\(who\.subject\);\n {8}gate = await this\._battleHelloGate\(who\.subject \?\? m\.id, known \? 'fighter' : 'watch', now\);/);
+  assert.match(r, /const no = await this\._sdAdmit\(a\.key, who\.subject, now, who\.kind !== 'linked'\);/);
+  assert.match(r, /if \(no === SD_NO_BUSY\) \{ this\._refuse\(ws, 'busy', CLOSE_BUSY\); return; \}/);
+  assert.match(r, /if \(!battle && !floor && !realmRoom\) \{/);
   const on = read('src/net/online.js');
   assert.match(on, /if \(r && isSocialRoom\(room\)\) this\._deliver\('sd', \(\) => this\.onSd\?\.\(r, room\)\);/);
   assert.match(on, /this\.serpentOk = !!h\.serpentOk; this\.sdOk = !!h\.sdOk;/);

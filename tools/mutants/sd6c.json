@@ -236,8 +236,8 @@
   {
     "name": "SD6C-the-lash-on-everyone",
     "file": "src/scenes/world.js",
-    "old": "    if (playerEntity.health > 0 && inOrreryHall(x, z)) {",
-    "new": "    if (playerEntity.health > 0) {",
+    "old": "playerEntity.health > 0 && inOrreryHall(x, z) && !!online",
+    "new": "playerEntity.health > 0 && !!online",
     "tests": [
       "test/sd6c_hall.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD6C-another-realm's-snap",
     "file": "src/scenes/world.js",
-    "old": "    if (w.x !== 1 || modes?.sdRealmSlot?.() !== w.s) return;",
-    "new": "    if (w.x !== 1) return;",
+    "old": "    if (modes?.sdRealmSlot?.() !== w.s) return;\n",
+    "new": "",
     "tests": [
       "test/sd6c_hall.test.js"
     ]

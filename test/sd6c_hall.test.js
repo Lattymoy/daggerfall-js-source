@@ -300,13 +300,14 @@ function worldHall({ slot = 4, at = [0, 0, SD_ORRERY.z], health = 80, max = 100 
     modes: { sdRealmSlot: () => slot }, player: { pos: realmToDungeon(...at) }, playerEntity,
     hurtPlayer: (e, n, o) => { log.push(['hurt', n, !!o?.bypassShield]); e.health -= n; }, flashPlayerDamage: (n) => log.push(['flash', n]),
     setMidScreenText: (t) => log.push(['said', t]), sdDungeonToRealm: dungeonToRealm, inOrreryHall, SD_FRAY_LASH, SD_HALL_TEXT,
+    online: { id: 'peer-me' }, SD_TURN_WAIT_LINE: 'wait',   // AUDIT SD II (PIN MOVED, L7 H2): the lash falls on whom the snap names
   };
   const body = `let _sdHall = null;\n${fn('sdHallHeard')}\n${line(/ {2}const sdHallWord = [^\n]*\n/)}${line(/ {2}const sdConcordHere = [^\n]*\n/)}return { sdHallHeard, sdHallWord, sdConcordHere };`;
   return { ...new Function(...Object.keys(env), body)(...Object.values(env)), log, playerEntity };
 }
 
 test('SD6c the world host\'s hall, run from its own text: the realm\'s word kept for the realm I stand in; the snap lashes me in the hall a quarter of my health, no shield taking it, and says so; outside the hall it only says so; the Concord widens the edge (mutants: the lash on everyone; the lash shielded; another realm\'s word taken)', () => {
-  const word = { k: 'pz', s: 4, st: [1, 2, 3, 4, 5, 6], f: 0, lit: 1, ok: false, i: 0, a: 1, id: 'peer-x', q: 9, x: 1 };
+  const word = { k: 'pz', s: 4, st: [1, 2, 3, 4, 5, 6], f: 0, lit: 1, ok: false, i: 0, a: 1, id: 'peer-x', q: 9, x: 1, ls: ['peer-me'] };   // AUDIT SD II (PIN MOVED): naming me
   const inHall = worldHall();
   inHall.sdHallHeard(word);
   assert.deepEqual(inHall.log, [['hurt', 25, true], ['flash', 25], ['said', SD_HALL_TEXT.snap]]);

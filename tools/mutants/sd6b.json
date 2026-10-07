@@ -110,8 +110,8 @@
   {
     "name": "SD6B-a-number-taken-twice",
     "file": "server/src/index.js",
-    "old": "    if (m.q <= (meter.pzq ?? -1)) return;\n",
-    "new": "",
+    "old": "    if (m.q <= (meter.pzq ?? -1) || hall.ok || ",
+    "new": "    if (hall.ok || ",
     "tests": [
       "test/sd6b_hall.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD6B-the-settling-skipped",
     "file": "server/src/index.js",
-    "old": "    if (now - hall.last[m.i] < SD_STONE_SETTLE_MS) return;\n",
-    "new": "",
+    "old": " || now - hall.last[m.i] < SD_STONE_SETTLE_MS) return;",
+    "new": ") return;",
     "tests": [
       "test/sd6b_hall.test.js"
     ]
@@ -164,7 +164,7 @@
   {
     "name": "SD6B-the-snap-unsaid",
     "file": "server/src/index.js",
-    "old": "{ i: m.i, a: m.a, id: a.id, q: m.q, ...(res.x ? { x: 1 } : {}) }",
+    "old": "{ i: m.i, a: m.a, id: a.id, q: m.q, ...lash }",
     "new": "{ i: m.i, a: m.a, id: a.id, q: m.q }",
     "tests": [
       "test/sd6b_hall.test.js"

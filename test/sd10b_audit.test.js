@@ -517,12 +517,19 @@ async function withRealm(fn, { concord = true } = {}) {
 }
 
 test('AUDIT SD A HUB THAT DOES NOT ANSWER IS NO CLOSED HOUR: a realm\'s ask of the hub that goes unanswered (busy, away - a deploy\'s hello storm) refuses a hello as busy, which the page tries again - never "The Hour has closed.", which is for good - and is asked again at the next hello, not believed for its freshness; an `in` meanwhile goes unanswered (the page says it again), and a blow is never stopped by it (mutants: no answer read as closed; the non-answer kept; the `in` refused for good; the blow stopped)', async () => {
-  await withRealm(async ({ realm, down, beat }) => {
+  await withRealm(async ({ realm, down, beat, step }) => {
     down(true);
     const ann = realm.connect(); await realm.hello(ann, 'peer-ann', inArenaAt(0, -12), { name: 'Ann' });
     assert.deepEqual(ann.closed, { code: CLOSE_BUSY, reason: 'busy' }, 'busy: try again');
     assert.ok(!ann.sent.some((m) => m.t === 'error' && m.m === SD_NO_CLOSED));
     down(false);
+    // AUDIT SD II (PIN MOVED, L3 F2): a miss is not asked again for SD_LIVE_MISS_MS (2 s - the page's own busy back-off is
+    // longer) - inside it the next hello is busy unasked; past it, asked, and in at once: the non-answer is never kept
+    const asked = realm.room._sdLive;
+    const early = realm.connect(); await realm.hello(early, 'peer-ann', inArenaAt(0, -12), { name: 'Ann' });
+    assert.deepEqual(early.closed, { code: CLOSE_BUSY, reason: 'busy' }, 'inside the back-off: busy, the hub unasked');
+    assert.equal(realm.room._sdLive, asked, 'not asked again');
+    step(2000);
     const ann2 = realm.connect(); await realm.hello(ann2, 'peer-ann', inArenaAt(0, -12), { name: 'Ann' });
     assert.equal(ann2.closed, null, 'the hub answers again: in at once - its non-answer was never kept');
     // an `in` while the hub does not answer: nothing said, no fight made

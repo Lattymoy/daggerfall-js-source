@@ -192,7 +192,7 @@
   {
     "name": "SD8B-a-newcomer-after-the-kill",
     "file": "server/src/index.js",
-    "old": "    if ((await this._sdFightOf())?.fell) return SD_NO_CLOSED;",
+    "old": "    if (f?.fell) return SD_NO_CLOSED;",
     "new": "    if (false) return SD_NO_CLOSED;",
     "tests": [
       "test/sd8b_fight.test.js"
@@ -201,8 +201,8 @@
   {
     "name": "SD8B-no-fight-at-the-hello",
     "file": "server/src/index.js",
-    "old": "const sf = await this._sdFightOf(); if (sf && !sf.lost",
-    "new": "const sf = await this._sdFightOf(); if (false && sf && !sf.lost",
+    "old": "    if (!sf || sf.lost || sf.s !== s) return true;",
+    "new": "    return true;",
     "tests": [
       "test/sd8b_fight.test.js"
     ]

@@ -159,7 +159,15 @@ against the slot's law (section 4) or in the realm's own frame (sections 8-10).
   the map (its ring), the compass (inside 1 km), the Timers window and the notice boards.
 
 A forged `found` (a client claiming a pixel that is not the site) cannot place the Hollow anywhere else - every client
-places it from its own map files - and can only flip the record a little early.
+places it from its own map files. But it can say "found" - and open the realm - as early as the rise itself, and no check
+the relay could make would stop it: every client holds the site, so a script stands its pose at the true door as easily
+as at a false one (AUDIT SD II, L7 H1 - this said "a little early"). What bounds a forger past the find is the fight's
+numbers, the gate's law (`World-Bosses.md` section 9: a page owns its body, and may refuse a boss's blows): one account
+alone faces one share and deals at most three times its reference, so a modified client that refuses the Hour's blows
+and steps over the Orrery and the Steps can fell an empty Hour's Remnant in about three minutes - and its fall collapses
+the Hollow for everyone. AUDIT SD II closed what such a script would need a second account for (the stones' rights,
+section 8; the signed level and the arena's share, section 10; the seats), and moderation has every name: the finder's,
+each turner's, each fighter's. Whether a Hollow should need company to collapse is put to Mac (section 16, SD11).
 
 ## 5. The dungeon - Super
 
@@ -241,7 +249,14 @@ Six Ending-stones stand on a ring in the hall, each carved with one of the Bay's
 - **What the hall tells you.** The dial lights one segment for each stone that stands at its true hour - how many, not
   which.
 - **The fray.** Every turn frays the Hour. At 48 turns it snaps back: every stone returns to where it began, and the
-  Hour lashes everyone in the hall (25% of their health, no save). Turning at random does not get there.
+  Hour lashes those in the hall whose turns since the last snap did not bring it nearer (25% of their health, no save) -
+  a hand that mended another's turns, or never touched a stone, stands (AUDIT SD II, L7 H2: it was everyone in the hall,
+  a griefer's weapon). Turning at random does not get there.
+- **The stones' rights** (AUDIT SD II, L7 H2). The thread is the hall's, and no one hand spends it: every turn moves
+  the road to the Concord by exactly one, and a turner that has turned the long way six times since the last snap is
+  refused while anyone else has turned in the last minute - *"The stones will not answer you while others turn them."*
+  A lone learner is never held, and a solver who knows the way never is; every guest turns as one (a guest is one
+  click). One griefer spends at most a dozen turns of the forty-eight.
 - **New every time.** The gearing, the starting hours, the true hours and the riddles are drawn from the slot's seed,
   so no Hollow's answer is another's.
 
@@ -253,8 +268,9 @@ first, a chain from two plain clues, each later clue a true bijection tying a ne
 true hours `T` are their unique solution (pinned by brute force over all 12^6 configurations); the start `P0` is drawn
 until the shortest way from it, `t = M^-1 (T - P0)`, is 12 to 24 turns - room under the fray to learn and err. The relay holds the
 stones, the fray and the Concord; a turn is `{t:'sd',k:'pz',i,a,q}` from a fighter whose pose is within reach of stone
-`i`, one turn per stone per 700 ms (the gear settling), at most 3 a second per account. The Concord, once reached, is
-kept for the slot.
+`i`, one turn per stone per 700 ms (the gear settling), at most 3 a second per account, under the stones' rights
+(`orreryMayTurn` - judged and refused by the relay, which tells the refused turner alone, `w`). The Concord, once
+reached, is kept for the slot.
 
 ## 9. The Unmoored Steps - the platforming
 
@@ -288,9 +304,12 @@ of shattered soul-gem light - the Mantella's echo. The relay runs it (`net/sdRem
 it runs the Warden.
 
 **Health.** Each fighter who enters brings `SD_TTK_S` (420 s) x `dpsRef(lv)` x 1.25 to its health - nearly twice the
-Warden's share - added at its current fraction (the gate's `joinFight` law). The same caps on how much a blow is
-believed (the gate's buckets), one seat per account, 256 fighters at most - and the realm's door admits 256 accounts,
-a full one freeing the seat of one with no socket in it and no seat in its fight (the gate's AUDIT WB A1 law).
+Warden's share - added at its current fraction (the gate's `joinFight` law), at the level its token signs (`cl`, its
+character's own - AUDIT SD II, L7 M2: the page's claim stands only from a service that signs none). A fighter is in the
+fight while its pose stands in the arena; one away from it 30 s takes its share out, and brings it back as it returns.
+The same caps on how much a blow is believed (the gate's buckets), one seat per account, 256 fighters at most - and the
+realm's door admits 256 accounts, a full one freeing the seat of one with no socket in it and no seat in its LIVING fight
+(the gate's AUDIT WB A1 law; AUDIT SD II, L3 F3: a lost or stale fight seats nobody), guests 64 of them at most (L7 M3).
 
 **Phase one - The Walking Hour (100% to 70%).**
 - *Brass Stomp* - a 7 m circle, then a shock ring rolling out to 22 m that must be JUMPED.
@@ -440,21 +459,24 @@ One new frame type, `sd` (`net/wire.js`: `SD_KINDS`, `validSdIn`, `validSdOut`, 
 | client -> cell | `found {s,px,py}` |
 | client -> `sd:<s>` | `in {lv,bv}`, `pz {i,a,q}`, `hit {q,d,r}`, `ehit {e,q,d,r}` (an Echo), `xhit {c,q,d,r}` (a Heart) |
 | hub -> client | `ev {s,ph,r,at,foundAt?,fb?,fellAt?,top?,n?,until,next}`, `rcpt {r}` |
-| `sd:<s>` -> client | `st` (the whole state), `pz {st,f,lit,ok}`, `mv`, `atk`, `hp`, `ph`, `ec` (Echoes), `cx`/`cxb`/`stun` (Hearts), `fell`, `rcpt`, `no {m}` |
+| `sd:<s>` -> client | `st` (the whole state), `pz {st,f,lit,ok,ls?,w?}`, `mv`, `atk`, `hp`, `ph`, `ec` (Echoes), `cx`/`cxb`/`stun` (Hearts), `fell`, `rcpt`, `no {m}` |
 
 Internal doors (object to object): `/internal/sd/census`, `/internal/sd/found`, `/internal/sd/live`, `/internal/sd/fell`.
 The Worker mints an `sd:<s>` object only for the slot the hub's record names and only while it is `found` or `fell`
 (the gate's `gateHolds` law, read from the hub through `/internal/sd/live`). A hub that does not answer that ask is no
 answer, never "no record": the realm refuses a hello as busy (`CLOSE_BUSY`, which the page tries again - never
 *"The Hour has closed."*, which casts a fighter out for good), leaves an `in` unanswered (the page says it again), stops
-no blow, and asks again at the next - it keeps only an answer.
+no blow, and asks again - one ask in flight, a miss not asked again for 2 s, and the last answer standing through misses
+five minutes (AUDIT SD II, L3 F2: every frame asked on its own, and a miss threw a good record away); a hello is refused
+busy only by a realm that never had one.
 
 SD3 shipped the first of the table: `found` (client -> cell) and `ev` (hub -> client); the rest arrive with the slices
 that use them (SD6's `pz`, SD8's fight, SD9's receipts), each extending `SD_KINDS`/`SD_OUT_KINDS` under the arc's one
 relay version while it is undeployed - `world176` now (`world171` on the branch, renumbered past main's CRYSTAL-FIST,
 WATCH-FIX, SERPENT3, LEGACY7 and TEXT-F1 at the merges). SD6b shipped `pz` each way - the realm's out frame is the hall,
 `pz {s,st,f,lit,ok,i?,a?,id?,q?,x?}` (the turn that made it so, its turner and number, and `x` when the Hour snapped
-back). SD8b shipped the fight: `in`, `hit`, `ehit {e,...}`, `xhit {c,...}` in, under the fight's own bucket (`sdFightGate`,
+back - AUDIT SD II: with `ls`, the peers its lash falls on; and `w` 1, to a turner alone, when the stones refused its
+turn). SD8b shipped the fight: `in`, `hit`, `ehit {e,...}`, `xhit {c,...}` in, under the fight's own bucket (`sdFightGate`,
 the gate's 16 a second) and its brain's number (`SD_BRAIN_V` 1 - `no` below `SD_BRAIN_MIN`); out, the whole fight (`st` -
 `net/sdRemnant.js remnantStateOf`, numbered `fi`; SD8c: `me` 1 in the realm's answer to an `in` it counted, alone),
 each body's `mv` and `atk` (its `b`: 0 the Remnant, 1 GOLD, 2 SILVER, 3 the Hour), `hp`, `ph {n,at,up}`, `ec
@@ -1622,12 +1644,15 @@ are said as they stand now (6, 10, 11 and 14).
 
 **Said so, not changed:**
 - R7: a dead realm's storage (`sdfight` with its receipts and chart, `sdorrery`, `sdrealm`) is never cleared - small,
-  one set a Hollow, and a slot is never used twice; the object sleeps.
+  one set a Hollow, and a slot is never used twice; the object sleeps. (AUDIT SD II, L5 F2: "never used twice" held
+  only while the hub's record read back - the hub keeps its highest slot now, SD11b.)
 - The Orrery's gearing is drawn from the public slot (`orreryOf`), so a page can compute its answer, and any account - a
   guest's too - may turn its stones and fray it. The relay judges the turns; the riddles are for the players who read
-  them.
+  them. (AUDIT SD II, L7 H2: one such hand held the Concord off for good - the stones' rights now, SD11b.)
 - The level an `in` says is the page's, clamped - the gate's own law (a realm's socket carries no signed level, as the
   serpent's `cl` is): an account may claim the top and stand idle in the arena, its share standing while it stands.
+  (AUDIT SD II, L7 M2: it did carry one - the token's `cl`, which the realm dropped - and a share stood from anywhere in
+  the realm; the level is the token's now, and the share the arena's, SD11b.)
 - The hub keeps a kill's receipts whether or not its record took the fall: the realm's signed word is the kill's, and
   with R6 the two agree but for a hub that did not answer at the very end.
 - Gearward spends its winding in the set's damage step, before the loot's evasion and a Shield's pool: a blow then
@@ -1646,3 +1671,62 @@ dead). RE-AIMED BY CONTENT, each still dead: `sd4b.json` (2), `sd6c.json`, `sd7a
 `test/sd10_collapse.test.js`); the relay's (`test/sd3_relay.test.js` - the busy refusal; `test/sd8b_fight.test.js`,
 `test/sd8c_remnant_page.test.js`, `test/sd9a_receipt.test.js` - their realms past the Concord);
 `test/relayversion.test.js` (`world176` re-hashed in place).
+
+### SD11 - AUDIT SD II (the arc audited again, eight lenses)
+
+Mac, 2026-10-07: *"Let's do a deep comprehensive audit and ensure perfection"* - and, of what follows it, *"The detail
+needs to exceed that of the oblivion gates. These are the pinnacle of the hardest content in the game, and the most
+detail of anything we've developed thus far"*. Eight lenses over the arc as SD10b left it (`37854801`): the hosts'
+lifecycle; the realm's scenes and how they render; the relay; the pure laws and the balance; the rewards and the
+account; what the player reads, hears and sees; security, cheating and griefing; and these pages against the code, with
+the tests' gaps found by probe mutants (66 aimed at laws no record covered; 31 lived). Each finding was reproduced on
+the arc's own code - by the lens's own script, and every HIGH and MEDIUM again before it was fixed. What was real is
+fixed and pinned, slice by slice below; what was not is said so. The relay stays `world176`, re-hashed in place
+(undeployed).
+
+#### SD11b - the relay
+
+| | what was wrong | now |
+|---|---|---|
+| L3 F1 | TWO `in`s, TWO FIGHTS. Two fighters' `in`s that awaited the hub together each read the fight before the await and each made a fresh one, numbered alike; the last replaced the first's fighter, whose page fought on believing itself in - its blows junk until its socket was closed for them | the fight read again after the last await and decided with none between (`_sdFightFrame`); a blow whose fight was replaced while it awaited is dropped, never junk |
+| L3 F2, L7 M5 | THE HUB ASKED EVERY FRAME. Each frame, hello and turn asked the hub on its own while the realm's answer was stale - a full realm's 4,096 asks a second into the one object every tab holds, the worst when it struggled - and a miss threw a good record away: a fighter was refused busy for a record held a moment before | one ask in flight, every frame meanwhile waiting on it; a miss not asked again for 2 s (`SD_LIVE_MISS_MS`); the last answer standing through misses five minutes (`SD_LIVE_KEEP_MS` - its phases are its own instants); busy only for a realm that never had one |
+| L3 F3, L7 M3 | THE SEATS WERE STILL FOR LIFE. A lost or stale fight's fighters kept their seats; and a socket idling in the realm holds its seat for as long as it stays - 256 guest sockets kept the Hour full for an hour | only a LIVING fight's fighters hold seats; guests hold at most `SD_GUEST_SEATS` (64) of the 256 (`_sdAdmit`; the realm's list keeps its guests, `gu`) |
+| L3 F4 | A KILL IN THE LAST SECONDS WAS "UNBROKEN". The hub said a found Hollow's fade at its `until`, before a kill landed in the Hour's last seconds was told (the realm retries every 5 s); and a fall heard after the fade was refused | the fade said `SD_FADE_GRACE_MS` (15 s) past `until` (`net/sdLaw.js` `sdDue` - a found Hollow's alone; an unfound one has no realm), and a fall told after it, landed before `until`, taken over it at its own instant |
+| L3 F5, F8 | A HELLO WOKE NOTHING. A realm that had emptied slept, its living fight frozen until someone's `in` or blow; a stale fight was told to a newcomer as if it lived; an earner whose page reloaded inside the hub's hold heard its fallen fight's receipt nowhere | a hello arms a living fight's beat, finds a stale one lost (the next `in` the fresh one), and hands a fallen one's earner its receipt (`_sdHelloFight`) |
+| L3 F6 | THE FALL TOLD TWICE. The fall's own tell and the beat's retry raced, and the hub was told twice (its receipts handed twice) | one tell in flight (`_sdTellFellOnce`) |
+| L3 F7, L5 F2 | A SLOT COULD BE USED TWICE. A record that would not read back (a law's bound moved; a region past the count) started the director from slot 0 again, and every realm, receipt, spent mark and claim the old numbers held answered the new Hollows - the old fall, *claimed*, no spoils | the hub keeps the highest slot it ever raised with its record, in one write (`sdslot`, wire.js `SD_SLOT_KEY`), and a first beat starts from it |
+| L5 F3 | A HELD RECEIPT WAITED FOR A LATER HELLO. An earner who stood in the realm at the kill is held from the hub's hand two minutes (the floor spends it) - and nothing handed it on: a page that crashed at the kill and came back inside the hold heard of its spoils hours later | the hub keeps the held (`sdheld`, `SD_HELD_KEY`), arms its alarm for their hold's end, and hands each still unspent to its account's newest socket (`_sdHeldBeat`) |
+| L7 M1 | A STRANGER SHUT THE REALM'S DOOR. The realm spent its hello gate before the token was read: forty junk tokens a second kept a fighter whose socket blinked out of her own fight (0 of 60 tries admitted), and every newcomer with her | the gate after the token, by account (`_battleHelloGate` - a battle's and a floor's law): an account the realm admitted before waits on itself alone |
+| L7 M2 | A CLAIMED LEVEL, A PARKED SHARE. The `in`'s level was the page's claim though the realm's token signs the character's (`cl`): a claim of 60 from level 5 brought a 34,125 share, a claim of 1 from level 60 bought the feat's whole roll for 63 points dealt; and a fighter counted present anywhere in the realm kept its share in the Remnant from the Threshold - six such made the Hour unwinnable for eight | the level the token's (`cl`, attached at a realm's hello as at a cell's; a claim stands only from a service that signs none); a fighter seen while its pose stands in the arena (`net/sdRemnant.js` `stepRemnant`), its share out 30 s after it leaves |
+| L7 M4 | A FIND TOLD EVERY FRAME. The cell told the hub again for a slot it had told and the hub had answered: one account in forty cells made forty hub requests a second | a slot told once, and a find for any slot but the one the hub's last answer named not told while that answer is fresh (`SD_FIND_KNOWN_MS`, ten minutes - the rite's AUDIT WB12d R4 law: a word that moves nothing tells nothing) |
+| L7 L1 | A BLOW JUDGED AT ITS ARRIVAL. A blow waited on the hub, then spent the purse at the instant it arrived: an earlier blow's answer coming after a later one's moved the purse's clock backwards and refilled the same seconds twice (1,755 dealt over 5.25 s where the law allows 1,024) | a blow, an `in` and a turn judged at the instant they are judged |
+| L7 L2 | `spent` FOR ANY SLOT. A `spent` naming a slot the hub had not raised was a storage write - one a frame for a rising slot | nothing past the hub's own slot |
+| L7 H2 | ONE HAND HELD THE ORRERY. The fray is the hall's one thread, and any account could spend it: a guest turning whichever stone had settled the long way held the Concord off in every one of 200 slots against a perfect team of six, and its snaps lashed the hall to death about every thirty seconds | THE STONES' RIGHTS (section 8; `net/sdBrain.js` `orreryMayTurn`): every turn moves the road by exactly one, and a turner that has lengthened it `SD_TURN_LONG_MAX` (6) times since the last snap turns no more while another has turned in the last minute - a lone learner never held, a solver who knows the way never; every guest ONE turner; the refused told so (`w`, at most every 4 s); the snap lashes only those it names (`ls` - who turned and brought it no nearer: a mender stands) |
+
+**The relay's untested arms** (the probe mutants that lived): the Echoes' and the Hearts' blows through the realm (G1),
+the fall's tell retried until the hub hears it (G4), the dead in the arena (G8), the director's retry and its re-read
+after the census (G9), the `in` refused in words, over and full (G11) - each pinned now.
+
+**Said so, not changed:**
+- L7 H1: A SCRIPT ALONE IN AN HOUR (section 4). A modified client with a guest's token can forge the find at the rise,
+  solve the Orrery from the public slot, step over the Steps, refuse the Hour's blows and fell the Remnant in about three
+  minutes - the fight's own numbers (one share; three times the reference), the gate's law - and its fall collapses the
+  Hollow for everyone. Every fight in the port trusts a page with its body; what this audit closed is everything such a
+  script would need a second account for. Whether a Hollow should need company to collapse - two registered accounts
+  with a part in its fight, say - changes who can win it alone, and is put to Mac.
+- L7 L3: the census can be steered by registered accounts helloing into one region's channel at the public `next` -
+  section 3's stated limit.
+- A determined group of REGISTERED accounts can still spend the Orrery's thread, each its own six - moderation's: every
+  turn carries its turner.
+
+Pins: `test/sd11b_relay.test.js` (22 - two `in`s, one fight, one ask; a blow whose fight was replaced; a missed answer;
+a lost fight seats nobody; the guests' sixty-four; a kill told late; a hello wakes its fight; the fall told once and
+until heard; a slot never used twice; a held receipt handed on; the realm's door; the level and the share, and their
+law; a find told once; no spent past the hub's slot; the stones' rights, their law and the realm's; the Echoes' and the
+Hearts' blows; the dead and the `in` refused; the director's retry and re-read; the relay by source; the page lashes whom
+the realm names); `tools/mutants/sd11b.json` (55, all dead). RE-AIMED BY CONTENT, each still dead: `sd3.json` (2),
+`sd6b.json` (3), `sd6c.json` (2), `sd8b.json` (2), `sd8c.json`, `sd10b.json` (7), `audit1003b.json`,
+`audit_seats_relay.json`, `serpent1_audit.json`. PINS MOVED: `test/sd3_relay.test.js` (the realm's list keeps its guests;
+the hello's gate after the token; a find told once the hub's word has grown old), `test/sd6b_hall.test.js` (the snap
+names whom it lashes; `w`), `test/sd6c_hall.test.js` (the lash on whom the snap names), `test/sd10b_audit.test.js` (a
+miss's back-off), `test/relayversion.test.js` (`world176` re-hashed in place).

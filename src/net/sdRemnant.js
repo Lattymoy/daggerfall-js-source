@@ -538,7 +538,10 @@ export function stepRemnant(f, now, bodies, rng) {
   for (const b of here) f.players[b.sub].stoodMs += dt;
   if (here.length) { f.liveMs += dt; f.emptySince = null; } else if (f.emptySince == null) f.emptySince = now;
   for (const b of bodies) { const p = f.players[b.sub]; if (!p) continue; if (b.dead && !p.down) p.falls = (p.falls ?? 0) + 1; p.down = !!b.dead; }
-  for (const b of bodies) { const p = f.players[b.sub]; if (p) { p.seenAt = now; restoreShare(f, p); } }
+  // AUDIT SD II (L7 M2): a fighter is SEEN while its pose stands in the arena (alive or fallen there) - anywhere else in
+  // the realm it is away, and its share leaves the Remnant ABSENT_RETIRE_MS on: four who said `in` and walked back to
+  // the Threshold kept 34,000 health each in the Remnant from there, and six such made the Hour unwinnable for eight
+  for (const b of bodies) { const p = f.players[b.sub]; if (p && inArena(b.x, b.z, POSE_SLACK)) { p.seenAt = now; restoreShare(f, p); } }
   for (const p of Object.values(f.players)) if (!p.retired && now - (p.seenAt ?? p.joinedAt) > ABSENT_RETIRE_MS) retireShare(f, p);
   rescaleEchoes(f);
   // LOST: nobody living has stood in the arena this long - the next fight is fresh. AUDIT SD: and an Hour ENDED is lost
@@ -643,7 +646,9 @@ export function remnantStateOf(f) {
     ec: f.ec ? f.ec.map((E) => ({ h: Math.ceil(E.h), m: Math.ceil(E.m), up: E.up, dn: E.downAt ?? 0, ...bodyOf(E.e === 0 ? SD_BODY.gold : SD_BODY.silver, E.body) })) : null,
     clk: f.clock ? atkFrameOf(SD_BODY.hour, f.clock) : null, pu: f.pulses, pa: f.pulseAt, ends: f.endsAt, ended: f.ended ? f.ended.at : 0,
     cx: f.cx ? { i: f.cx.i, m: f.cx.m, c: f.cx.c.map((q) => [q.x, q.z, Math.ceil(q.h)]) } : null,
-    su: f.stunUntil > 0 ? f.stunUntil : 0, rk: f.resetAt > 0 ? f.resetAt : 0, n: Object.keys(f.players).length,
+    // AUDIT SD II (L6 F24): `n` the fighters whose share stands in it now - the bar's "N in the arena" (every seat the
+    // fight ever took counted the cast-out and the gone)
+    su: f.stunUntil > 0 ? f.stunUntil : 0, rk: f.resetAt > 0 ? f.resetAt : 0, n: Object.values(f.players).filter((p) => !p.retired).length,
     fell: f.fell ? { at: f.fell.at, top: f.fell.top, n: f.fell.n, ...(f.fell.dm ? { dm: f.fell.dm } : {}) } : null,
     lost: f.lost ? f.lost.at : 0,
   };

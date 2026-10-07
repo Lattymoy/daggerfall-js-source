@@ -739,7 +739,7 @@
   {
     "name": "AUDIT-SERPENT-E4-cl-attached",
     "file": "server/src/index.js",
-    "old": "const charLv = isCellRoom(a.key) && Number.isSafeInteger(who.cl) && who.cl >= 1 ? { cl: who.cl } : {};",
+    "old": "const charLv = (isCellRoom(a.key) || realmRoom) && Number.isSafeInteger(who.cl) && who.cl >= 1 ? { cl: who.cl } : {};",
     "new": "const charLv = {};",
     "tests": [
       "test/serpent1_auditrelay.test.js"

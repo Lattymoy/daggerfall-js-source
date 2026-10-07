@@ -296,7 +296,7 @@ import { SD_HALL_FLOORS } from '../world/sdHall.js';   // SD6c: the bridge and t
 import { SD_HALL_TEXT, SD_HALL_SOUNDS } from './sdHall.js';   // SD6c: the snap's line; SD9d: the hall's clunk and toll, the Brass's powers' sounds
 import { SD_STEPS_FLOORS, SD_CAST_BACK_LOSS } from '../world/sdSteps.js';   // SD7b: the Steps' band and the arena, the Concord's floors too; what the void costs
 import { SD_STEPS_TEXT } from './sdSteps.js';   // SD7b: the cast-back's line
-import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH, SD_ARENA, realmToDungeon as sdRealmToDungeon } from '../net/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall; SD10: the arena, where the way home stands
+import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH, SD_ARENA, realmToDungeon as sdRealmToDungeon, SD_TURN_WAIT_LINE } from '../net/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall; SD10: the arena, where the way home stands; AUDIT SD II (L7 H2): a turn the stones refused
 import { SD_REM_SINK_MS } from './sdRemnant.js';   // SD10: the way home rises once the Remnant's body has sunk
 import { SD_HOME_TEXT } from './sdEnd.js';   // SD10: the way home's words
 import { sdRiftWord, sdReturnStands } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
@@ -21338,13 +21338,17 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SD6c (Super-Dungeons.md section 8): THE ORRERY'S HALL, as its realm says it - the last word (the stones, the fray,
    *  the dial, the Concord), kept for the hall's set to read every frame (dungeonContext.js, through the mode machine).
    *  A word that says the Hour SNAPPED BACK lashes me if I stand in the hall - a quarter of my health, no save (no shield
-   *  takes it) - and is said to everyone in the realm. */
+   *  takes it) - and is said to everyone in the realm. AUDIT SD II (L7 H2): it lashes me only if the realm names me (`ls`
+   *  - I turned this thread and brought the Concord no nearer: whoever mended a griefer's turns, or never touched a stone,
+   *  stands); a word to me alone that the stones refused my turn (`w`) says why. */
   let _sdHall = null;
   function sdHallHeard(w) {
     _sdHall = w;
-    if (w.x !== 1 || modes?.sdRealmSlot?.() !== w.s) return;
+    if (modes?.sdRealmSlot?.() !== w.s) return;
+    if (w.w === 1) { setMidScreenText(SD_TURN_WAIT_LINE); return; }
+    if (w.x !== 1) return;
     const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
-    if (playerEntity.health > 0 && inOrreryHall(x, z)) {
+    if (playerEntity.health > 0 && inOrreryHall(x, z) && !!online?.id && (w.ls ?? []).includes(online.id)) {
       const dmg = Math.max(1, Math.round((playerEntity.maxHealth ?? 0) * SD_FRAY_LASH));
       hurtPlayer(playerEntity, dmg, { bypassShield: true });
       flashPlayerDamage(dmg);

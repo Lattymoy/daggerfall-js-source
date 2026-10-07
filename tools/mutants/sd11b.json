@@ -1,0 +1,500 @@
+[
+  {
+    "name": "SD11b-L3F1-the-fight-not-read-again",
+    "file": "server/src/index.js",
+    "old": "      f = this._sdFight ?? null;\n",
+    "new": "",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F2-every-frame-its-own-ask",
+    "file": "server/src/index.js",
+    "old": "    if (this._sdAsking?.s === s) return this._sdAsking.p;",
+    "new": "    void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F1-the-blow-on-the-old-fight",
+    "file": "server/src/index.js",
+    "old": "    if (this._sdFight !== f) return;\n    now = Date.now();",
+    "new": "    now = Date.now();",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7L1-the-blow-at-its-arrival",
+    "file": "server/src/index.js",
+    "old": "    if (this._sdFight !== f) return;\n    now = Date.now();",
+    "new": "    if (this._sdFight !== f) return;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F2-no-back-off",
+    "file": "server/src/index.js",
+    "old": "    if (had && had.missAt != null && now - had.missAt < SD_LIVE_MISS_MS) return kept;",
+    "new": "    void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F2-the-last-answer-thrown-away",
+    "file": "server/src/index.js",
+    "old": "const kept = had && had.rec !== undefined && now - had.at < SD_LIVE_KEEP_MS ? had.rec : undefined;",
+    "new": "const kept = undefined;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F2-kept-for-ever",
+    "file": "server/src/index.js",
+    "old": "now - had.at < SD_LIVE_KEEP_MS ? had.rec : undefined;",
+    "new": "true ? had.rec : undefined;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F3-any-fight-seats-its-players",
+    "file": "server/src/index.js",
+    "old": "const living = f && !f.lost && !f.fell && now - (f.lastTickAt ?? 0) < SD_LOST_MS ? f : null;",
+    "new": "const living = f;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7M3-guests-uncounted",
+    "file": "server/src/index.js",
+    "old": "    if (sub && guest && realm.in.filter((x) => guests.has(x)).length >= SD_GUEST_SEATS && !free((x) => guests.has(x))) return SD_NO_FULL;",
+    "new": "    void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7M3-a-registered-account-a-guest",
+    "file": "server/src/index.js",
+    "old": "const no = await this._sdAdmit(a.key, who.subject, now, who.kind !== 'linked');",
+    "new": "const no = await this._sdAdmit(a.key, who.subject, now, true);",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F4-the-fade-kept-over-the-kill",
+    "file": "server/src/index.js",
+    "old": "const was = rec.ph === 'gone' && rec.fellAt == null && rec.foundAt != null && c.at < rec.until ? { ...rec, ph: 'found' } : rec;",
+    "new": "const was = rec;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F4-no-grace",
+    "file": "src/net/sdLaw.js",
+    "old": "  if (p === 'gone' && rec.ph === 'found' && now < rec.until + SD_FADE_GRACE_MS) return { act: null, at: rec.until + SD_FADE_GRACE_MS };",
+    "new": "  void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F4-a-grace-for-the-unfound",
+    "file": "src/net/sdLaw.js",
+    "old": "if (p === 'gone' && rec.ph === 'found' && now < rec.until + SD_FADE_GRACE_MS)",
+    "new": "if (p === 'gone' && rec.ph !== 'gone' && rec.s && rec.fellAt == null && now < rec.until + SD_FADE_GRACE_MS)",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F5-the-beat-unarmed",
+    "file": "server/src/index.js",
+    "old": "    if (!sf.fell) { await this._sdFightArm(now); return true; }",
+    "new": "    if (!sf.fell) return true;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F5-the-stale-fight-said",
+    "file": "server/src/index.js",
+    "old": "    if (!sf.fell && now - sf.lastTickAt >= SD_LOST_MS) { sf.lost = { at: now }; await this._sdFightSave(sf, now, true); return true; }",
+    "new": "    void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F8-the-receipt-unhanded",
+    "file": "server/src/index.js",
+    "old": "    return !r || this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r }));",
+    "new": "    return true;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F6-two-tells-in-flight",
+    "file": "server/src/index.js",
+    "old": "    if (this._sdFellTelling) return this._sdFellTelling;",
+    "new": "    void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L8G4-the-retry-unarmed",
+    "file": "server/src/index.js",
+    "old": "    if (f.said && !f.told) { await this.state.storage.setAlarm(now + SD_TELL_RETRY_MS); return true; }",
+    "new": "    void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L8G4-the-retry-never-told",
+    "file": "server/src/index.js",
+    "old": "      else if (f.said && !f.told) await this._sdTellFellOnce(f, now);",
+    "new": "      else void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F7-the-mark-unkept",
+    "file": "server/src/index.js",
+    "old": "    await this.state.storage.put({ [SD_KEY]: rec, [SD_SLOT_KEY]: hw });",
+    "new": "    await this.state.storage.put(SD_KEY, rec);",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L3F7-the-first-beat-from-zero",
+    "file": "server/src/index.js",
+    "old": "if (due.act === 'first') { const hw = await this._sdHwOf(); await this._sdSave(hw > 0 ? { ...sdFirst(now), s: hw } : sdFirst(now)); continue; }",
+    "new": "if (due.act === 'first') { await this._sdSave(sdFirst(now)); continue; }",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L5F3-never-handed-on",
+    "file": "server/src/index.js",
+    "old": "      for (const [sub] of held.filter(([, at]) => at <= now)) { const s = socks.get(sub); if (s) { this._noSdRcpt.delete(sub); await this._sdReceiptTo(s[0], sub, now); } }",
+    "new": "      void socks;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L5F3-handed-though-spent",
+    "file": "server/src/index.js",
+    "old": "if (s) { this._noSdRcpt.delete(sub); await this._sdReceiptTo(s[0], sub, now); }",
+    "new": "if (s) { const v = await this.state.storage.get(sdReceiptKey(sub)); this._send(s[0], JSON.stringify({ t: 'sd', k: 'rcpt', r: v?.r ?? '' })); }",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L5F3-the-alarm-unarmed",
+    "file": "server/src/index.js",
+    "old": "      await this._hubArm(Math.min(...held.map(([, at]) => at)));",
+    "new": "      void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7M1-the-gate-before-the-token",
+    "file": "server/src/index.js",
+    "old": "if (!battle && !floor && !realmRoom) {",
+    "new": "if (!battle && !floor) {",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7M2-the-claim-believed",
+    "file": "server/src/index.js",
+    "old": "const lv = Number.isSafeInteger(a.cl) && a.cl >= 1 ? a.cl : m.lv;",
+    "new": "const lv = m.lv;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7M2-the-realm-unsigned",
+    "file": "server/src/index.js",
+    "old": "const charLv = (isCellRoom(a.key) || realmRoom) && Number.isSafeInteger(who.cl)",
+    "new": "const charLv = isCellRoom(a.key) && Number.isSafeInteger(who.cl)",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7M2-seen-anywhere",
+    "file": "src/net/sdRemnant.js",
+    "old": "if (p && inArena(b.x, b.z, POSE_SLACK)) { p.seenAt = now; restoreShare(f, p); }",
+    "new": "if (p) { p.seenAt = now; restoreShare(f, p); }",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L6F24-every-seat-counted",
+    "file": "src/net/sdRemnant.js",
+    "old": "n: Object.values(f.players).filter((p) => !p.retired).length",
+    "new": "n: Object.keys(f.players).length",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7M4-told-every-frame",
+    "file": "server/src/index.js",
+    "old": "    if (this._sdTold?.has(m.s)) return;",
+    "new": "    void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7M4-the-hubs-slot-unread",
+    "file": "server/src/index.js",
+    "old": "    if (known && now - known.at < SD_FIND_KNOWN_MS && m.s !== known.s) return;",
+    "new": "    void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7L2-any-slot-written",
+    "file": "server/src/index.js",
+    "old": "    if (!(slot <= ((await this._sdOf())?.s ?? 0))) return;",
+    "new": "    void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-the-rights-unasked",
+    "file": "server/src/index.js",
+    "old": "    if (!orreryMayTurn(R, who, now)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-the-refusal-unsaid",
+    "file": "server/src/index.js",
+    "old": "{ meter.pzw = now; this._send(ws, this._sdHallWord(hall, { w: 1 })); }",
+    "new": "{ meter.pzw = now; }",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-said-every-press",
+    "file": "server/src/index.js",
+    "old": "if (!(now - (meter.pzw ?? -Infinity) < SD_PZ_WAIT_SAY_MS))",
+    "new": "if (true)",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-the-guest-its-own",
+    "file": "server/src/index.js",
+    "old": "const R = this._sdRightsOf(s), who = orreryTurnerOf(a.sub, !a.lk);",
+    "new": "const R = this._sdRightsOf(s), who = orreryTurnerOf(a.sub, false);",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-the-snap-unnamed",
+    "file": "server/src/index.js",
+    "old": "const lash = res.x ? { x: 1, ls: orreryLashed(R, SD_FIGHTERS_MAX) } : {};",
+    "new": "const lash = res.x ? { x: 1 } : {};",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-a-fresh-thread-never",
+    "file": "server/src/index.js",
+    "old": "    if (res.x) this._sdRights = { s, R: orreryRightsFresh() };   // the snap begins a fresh thread",
+    "new": "    void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-law-held-alone-too",
+    "file": "src/net/sdBrain.js",
+    "old": "  for (const [k, v] of Object.entries(R.by)) if (k !== who && now - v.at < SD_TURN_COMPANY_MS) return false;\n  return true;",
+    "new": "  return false;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-law-company-forgotten",
+    "file": "src/net/sdBrain.js",
+    "old": "if (k !== who && now - v.at < SD_TURN_COMPANY_MS) return false;",
+    "new": "if (k !== who) return false;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-law-the-menders-lashed",
+    "file": "src/net/sdBrain.js",
+    "old": ".filter(([, net]) => net >= 0)",
+    "new": ".filter(() => true)",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-law-the-long-way-uncounted",
+    "file": "src/net/sdBrain.js",
+    "old": "  if (after > road) me.long++;",
+    "new": "  void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-law-the-thread-unbounded",
+    "file": "src/net/sdBrain.js",
+    "old": "  if (!me || me.long < SD_TURN_LONG_MAX) return true;",
+    "new": "  if (!me || me.long < SD_TURN_LONG_MAX * 4) return true;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-wire-the-list-dropped",
+    "file": "src/net/wire.js",
+    "old": "      out.ls = Array.isArray(m.ls) ? m.ls.filter((x) => typeof x === 'string' && ID_RE.test(x)).slice(0, SD_FIGHTERS_MAX) : [];",
+    "new": "      out.ls = [];",
+    "tests": [
+      "test/sd11b_relay.test.js",
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-wire-the-list-unfiltered",
+    "file": "src/net/wire.js",
+    "old": "m.ls.filter((x) => typeof x === 'string' && ID_RE.test(x))",
+    "new": "m.ls",
+    "tests": [
+      "test/sd11b_relay.test.js",
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-wire-the-refusal-dropped",
+    "file": "src/net/wire.js",
+    "old": "    if (m.w === 1) out.w = 1;",
+    "new": "    void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js",
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-page-the-whole-hall-lashed",
+    "file": "src/scenes/world.js",
+    "old": " && !!online?.id && (w.ls ?? []).includes(online.id)) {",
+    "new": ") {",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L7H2-page-the-refusal-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "    if (w.w === 1) { setMidScreenText(SD_TURN_WAIT_LINE); return; }",
+    "new": "    void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L8G1-ehit-to-the-hearts",
+    "file": "server/src/index.js",
+    "old": "if (m.k === 'ehit') this._sdFightFan(applyEchoHit(f, a.sub, m.e, m.d, m.r, pose, now, m.q));",
+    "new": "if (m.k === 'ehit') this._sdFightFan(applyHeartHit(f, a.sub, m.e, m.d, m.r, pose, now, m.q));",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L8G1-the-echos-fall-unfanned",
+    "file": "server/src/index.js",
+    "old": "if (m.k === 'ehit') this._sdFightFan(applyEchoHit(f, a.sub, m.e, m.d, m.r, pose, now, m.q));",
+    "new": "if (m.k === 'ehit') applyEchoHit(f, a.sub, m.e, m.d, m.r, pose, now, m.q);",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L8G1-xhit-dropped",
+    "file": "server/src/index.js",
+    "old": "else if (m.k === 'xhit') this._sdFightFan(applyHeartHit(f, a.sub, m.c, m.d, m.r, pose, now, m.q));",
+    "new": "else if (m.k === 'xhit') void 0;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L8G8-the-dead-flag-unread",
+    "file": "server/src/index.js",
+    "old": "const c = this._arenaPoseOf(b.pose); return { sub: b.sub, x: c.x, z: c.z, dead: !!b.pose.dd }",
+    "new": "const c = this._arenaPoseOf(b.pose); return { sub: b.sub, x: c.x, z: c.z, dead: false }",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L8G11-the-refusals-unsaid",
+    "file": "server/src/index.js",
+    "old": "if (!joinRemnant(f, a.sub, a.name ?? '', lv, now, present)) { no(f.ended ? SD_NO_WORDS[1] : SD_NO_WORDS[2]); return; }",
+    "new": "if (!joinRemnant(f, a.sub, a.name ?? '', lv, now, present)) return;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L8G9-the-beats-retry-unarmed",
+    "file": "server/src/index.js",
+    "old": "} catch (e) { console.warn('[sd] beat failed', e?.message ?? e); await this._hubArm(now + SD_BEAT_RETRY_MS); }",
+    "new": "} catch (e) { console.warn('[sd] beat failed', e?.message ?? e); }",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  },
+  {
+    "name": "SD11b-L8G9-the-record-not-read-again",
+    "file": "server/src/index.js",
+    "old": "          const cur = await this._sdOf();",
+    "new": "          const cur = rec;",
+    "tests": [
+      "test/sd11b_relay.test.js"
+    ]
+  }
+]

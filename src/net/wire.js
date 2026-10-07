@@ -4329,8 +4329,9 @@ function serpentOutOf(m) {
 //   client -> cell:  {t:'sd', k:'found', s, px, py}
 //   hub -> client:   {t:'sd', k:'ev', s, ph, r, at, until, next, foundAt?, fb?, fellAt?, top?, n?}
 //   client -> realm: {t:'sd', k:'pz', i, a, q}                                 (stone i, a +1 forward or -1 back, my turn's number)
-//   realm -> client: {t:'sd', k:'pz', s, st, f, lit, ok, i?, a?, id?, q?, x?}   (the stones, the fray, the dial's count, the
-//                    Concord; the turn and its turner's id and number; x 1 when the Hour snapped back and lashed the hall)
+//   realm -> client: {t:'sd', k:'pz', s, st, f, lit, ok, i?, a?, id?, q?, x?, ls?, w?}   (the stones, the fray, the dial's
+//                    count, the Concord; the turn and its turner's id and number; x 1 when the Hour snapped back - AUDIT SD
+//                    II, L7 H2: and `ls` the peers it lashes; `w` 1, to one turner alone, when the stones refused its turn)
 // SD8b: in the realm, THE LAST MOMENT'S FIGHT (net/sdRemnant.js the law, the relay its runner - the gate's own shape):
 //   client -> realm: {t:'sd', k:'in', lv, bv}          (I fight: my level, my game's brain)
 //                    {t:'sd', k:'hit', q, d, r}        (a blow on the Remnant - my blow's number, its damage, its kind)
@@ -4520,18 +4521,24 @@ function validSdFightOut(m) {
   }
 }
 /** The relay's sd word, projected for the client: `{k:'ev', ...record}` - a Hollow that rose (slot 1 or later; the hub's
- *  first beat is its own) - or (SD6b) `{k:'pz', s, st, f, lit, ok, i?, a?, id?, q?, x?}`, the realm's Orrery - or null. */
+ *  first beat is its own) - or (SD6b) `{k:'pz', s, st, f, lit, ok, i?, a?, id?, q?, x?, ls?, w?}`, the realm's Orrery -
+ *  or null. */
 export function validSdOut(m) {
   if (!m || typeof m !== 'object' || !SD_OUT_KINDS.includes(m.k)) return null;
   if (m.k === 'pz') {
     if (!intIn(m.s, 1, SD_SLOT_MAX) || !Array.isArray(m.st) || m.st.length !== SD_PZ_STONES || !m.st.every((h) => intIn(h, 0, SD_PZ_HOURS - 1))) return null;
     if (!intIn(m.f, 0, SD_PZ_FRAY_MAX) || !intIn(m.lit, 0, SD_PZ_STONES) || typeof m.ok !== 'boolean') return null;
-    /** @type {{ k: 'pz', s: number, st: number[], f: number, lit: number, ok: boolean, i?: number, a?: number, id?: string, q?: number, x?: 1 }} */
+    /** @type {{ k: 'pz', s: number, st: number[], f: number, lit: number, ok: boolean, i?: number, a?: number, id?: string, q?: number, x?: 1, ls?: string[], w?: 1 }} */
     const out = { k: 'pz', s: m.s, st: [...m.st], f: m.f, lit: m.lit, ok: m.ok };
     if (m.i != null) { if (!intIn(m.i, 0, SD_PZ_STONES - 1) || (m.a !== 1 && m.a !== -1)) return null; out.i = m.i; out.a = m.a; }
     if (m.id != null) { if (typeof m.id !== 'string' || !ID_RE.test(m.id)) return null; out.id = m.id; }
     if (m.q != null) { if (!intIn(m.q, 0, SD_PZ_Q_MAX)) return null; out.q = m.q; }
-    if (m.x === 1) out.x = 1;
+    if (m.x === 1) {
+      out.x = 1;
+      // AUDIT SD II (L7 H2): the snap's lash names its peers - a snap word without a list lashes nobody
+      out.ls = Array.isArray(m.ls) ? m.ls.filter((x) => typeof x === 'string' && ID_RE.test(x)).slice(0, SD_FIGHTERS_MAX) : [];
+    }
+    if (m.w === 1) out.w = 1;
     return out;
   }
   if (m.k !== 'ev') return validSdFightOut(m);   // SD8b: the realm's fight
@@ -4555,6 +4562,13 @@ export const SD_REALM_KEY = 'sdrealm';
 export const SD_ORRERY_KEY = 'sdorrery';
 /** SD8b: where a realm keeps its fight (net/sdRemnant.js newRemnantFight's record - outside every swept prefix). */
 export const SD_FIGHT_KEY = 'sdfight';
+/** AUDIT SD II (L3 F7, L5 F2): where the hub keeps the highest slot it ever raised, beside its record - a slot is a
+ *  Hollow's whole identity (its realm's object, its receipts' and spoils' keys), so a record that could not be read back
+ *  must never number the next Hollow from one again. */
+export const SD_SLOT_KEY = 'sdslot';
+/** AUDIT SD II (L5 F3): where the hub keeps the receipts it holds from an earner's hellos while the realm's floor spends
+ *  them - `[[account, until], ...]` - so each is handed on when its hold lapses, not at some later hello. */
+export const SD_HELD_KEY = 'sdheld';
 /** SD8b: a realm's fall as told to the hub - the slot, the moment, the best fighter's name, how many fought - projected, or
  *  null. SD9a: and its receipts (`rc` - [account, receipt] each, the wire's own receipts alone) and who stood in the realm
  *  at the kill (`here` - their spoils are its floor's). */

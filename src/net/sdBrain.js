@@ -73,8 +73,9 @@ export const SD_STONE_POS = Object.freeze(SD_STONE_BEARINGS.map((b) => Object.fr
 /** A player within this of a stone (metres, on the floor) turns it; the relay allows a pose's lag over it. */
 export const SD_STONE_REACH = 3;
 export const SD_STONE_REACH_SLACK = 1;
-/** The fray: every turn frays the Hour, and at this many it snaps back - and lashes everyone in the hall this share of
- *  their health, no save. */
+/** The fray: every turn frays the Hour, and at this many it snaps back - and lashes this share of their health, no save,
+ *  those in the hall whose turns since the last snap did not bring the Concord nearer (AUDIT SD II, L7 H2: the realm
+ *  names them - orreryLashed; it was the whole hall, a griefer's weapon on everyone mending his turns). */
 export const SD_FRAY_MAX = 48;
 export const SD_FRAY_LASH = 0.25;
 /** One turn a stone in this long (the gear settling), and at most this many turns a second from an account. */
@@ -212,7 +213,8 @@ export const orreryShortest = (o, st) => sdWayTurns(orrerySolve(o, st));
 export const orreryFresh = (o) => ({ st: [...o.start], f: 0, ok: false });
 /**
  * ONE TURN JUDGED - the relay's: the stones after it, the fray, how many stand true, the Concord, and whether the Hour
- * snapped back (`x`: the stones to the start, the fray to nothing, the hall lashed). Null once the Concord holds.
+ * snapped back (`x`: the stones to the start, the fray to nothing, the thread's idle hands lashed - orreryLashed). Null
+ * once the Concord holds.
  */
 export function orreryStep(o, state, i, a) {
   if (state.ok) return null;
@@ -221,6 +223,47 @@ export function orreryStep(o, state, i, a) {
   if (!ok && f >= SD_FRAY_MAX) { st = [...o.start]; f = 0; x = true; }
   return { st, f, ok, x, lit: orreryLit(o, st) };
 }
+/**
+ * AUDIT SD II (L7 H2): THE STONES' RIGHTS - who may turn while others turn. The fray is the hall's one thread and any
+ * hand could spend it: one account (a guest, one click) turning whichever stone had settled the way that lengthened the
+ * road held the Concord off for good, and snapped the hall back about forty times in five minutes (the auditor's sweep:
+ * every one of 200 slots, against a perfect team of six). Every turn moves the road (orreryShortest) by exactly one -
+ * a turn changes its own stone's share of the way alone, the gearing's back-substitution cancelling the rest - so a turn
+ * either brings the Concord nearer or puts it further off, and the law counts the second. A turner that has lengthened
+ * the road SD_TURN_LONG_MAX times this thread turns no more while another turner has turned within SD_TURN_COMPANY_MS:
+ * a lone learner is never held (the thread is all theirs), a solver who knows the way is never held (its turns shorten
+ * it), and a griefer spends at most a dozen of the forty-eight - six turns the wrong way and their six mendings - however
+ * it alternates. Guests turn as ONE turner (orreryTurnerOf - the census's law: a guest is one click). A turn refused is
+ * nothing (no fray, no word but the refusal) and reads nothing a turn's own word does not already carry. The state is
+ * the realm's, in memory, fresh at every snap: `{ by: { [turner]: { long, at } }, ids: { [peer id]: net } }`.
+ */
+export const SD_TURN_LONG_MAX = 6;
+export const SD_TURN_COMPANY_MS = 60_000;
+/** The line a refused turner reads. */
+export const SD_TURN_WAIT_LINE = 'The stones will not answer you while others turn them.';
+/** A thread's rights, fresh. */
+export const orreryRightsFresh = () => ({ by: /** @type {Record<string, { long: number, at: number }>} */ ({}), ids: /** @type {Record<string, number>} */ ({}) });
+/** Who a turn is counted to: a registered account by its own name, every guest as one. */
+export const orreryTurnerOf = (sub, guest) => (guest ? 'guests' : `a:${sub}`);
+/** May `who` turn at `now`? */
+export function orreryMayTurn(R, who, now) {
+  const me = R.by[who];
+  if (!me || me.long < SD_TURN_LONG_MAX) return true;
+  for (const [k, v] of Object.entries(R.by)) if (k !== who && now - v.at < SD_TURN_COMPANY_MS) return false;
+  return true;
+}
+/** A turn by `who` (its socket's peer `id`) taken at `now`: `road` the fewest turns to the Concord before it, `after`
+ *  after it. */
+export function orreryTurned(R, who, id, road, after, now) {
+  const me = R.by[who] ?? (R.by[who] = { long: 0, at: 0 });
+  if (after > road) me.long++;
+  me.at = now;
+  if (typeof id === 'string' && id) R.ids[id] = (R.ids[id] ?? 0) + Math.sign(after - road);
+}
+/** Whom the snap lashes: the peers who turned this thread and did not bring the Concord nearer by it, net - at most
+ *  `max`. */
+export const orreryLashed = (R, max = 256) => Object.entries(R.ids).filter(([, net]) => net >= 0).map(([id]) => id).slice(0, max);
+
 /** Whether a pose (the realm's frame) reaches stone `i` - the relay allowing `slack` for a pose's lag. A pose that is no
  *  number reaches nothing (NaN compares false). */
 export const stoneInReach = (i, x, z, slack = 0) => Math.hypot(x - SD_STONE_POS[i].x, z - SD_STONE_POS[i].z) <= SD_STONE_REACH + slack;
