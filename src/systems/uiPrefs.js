@@ -201,6 +201,12 @@ export function loadPrefs() {
         // diamond's style, and so stays Off. Diamond was the old default and left no trace: it moves to the hotbar
         // with everyone who never chose.
         if ((p[SHELF_STAMP] ?? 0) < 2 && p.quickbarStyle === undefined && p.quickslots === false) _prefs.quickbarStyle = 'quickbar';
+        // AUDIT MEADOW1 (2026-10-06, Mac: "Let's have our grass tufts off by default also"): THE GRASS WENT OFF BY
+        // DEFAULT (features.js 'grass', grassDensity 1 to 0). This shelf writes no default, so everyone who never chose
+        // moves with it - but a shelf written before PREF1 wrote its day's defaults as if they were answers, and its
+        // `grassDensity: 1` is the old Full default, not a choice: it moves too. Half, Quarter and Off stored there were
+        // chosen, and stand.
+        if (p[SHELF_STAMP] === undefined && p.grassDensity === 1) _prefs.grassDensity = PREF_DEFAULTS.grassDensity;
         // EE1: a shelf written before Enhanced Environments existed
         // carries only the old sky answer. It becomes the new key's,
         // ONCE - only when the new key is absent - so a player who has

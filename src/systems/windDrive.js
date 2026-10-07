@@ -78,6 +78,26 @@ export function windDrive(sky, tsec, dt = 0) {
 
 /** The wind with nothing in it - what a consumer takes when its switch is
  *  off, so it winds down through the same path it winds up. */
+/** AUDIT MEADOW1 (2026-10-06, the GPU lens of Mac's "audit everything"): THE GUST WAVE IS CARRIED ACROSS THE FLOATING
+ *  ORIGIN. The grass's gust (render/labGrass.js LAB_GRASS_VS) and the flats' (render/renderer.js BB_VS) are one wave,
+ *  sin(clock x GUST_RATE - along x GUST_K + its own phase), `along` a root's SCENE position down the wind - and every
+ *  map pixel crossed moves the scene by the shift, so every blade, tuft and tree took a new place on the wave in one
+ *  frame: the whole field snapped to another pose (up to 0.46 of a card's side at a clear day's wind). The world host
+ *  carries the shift's phase into the clock it hands the wave instead (gustClock), so the wave stands still under a
+ *  crossing, and the grass and the trees stay on the one wave. */
+export const GUST_RATE = 1.7;
+export const GUST_K = 0.35;
+/** the wave's phase after a shift of the origin by `offset` ([dx, dy, dz]) under `windV` (the frame's rate - its
+ *  heading the shaders' own, (1, 0) when it is still), kept in 0..2pi */
+export function gustPhaseAfterShift(phase, offset, windV) {
+  const l = Math.hypot(windV[0], windV[1]);
+  const dx = l > 1e-4 ? windV[0] / l : 1, dz = l > 1e-4 ? windV[1] / l : 0;
+  const p = (phase + GUST_K * (offset[0] * dx + offset[2] * dz)) % (2 * Math.PI);
+  return p < 0 ? p + 2 * Math.PI : p;
+}
+/** the clock the wave is handed: the frame's seconds, and the phase the crossings carried */
+export const gustClock = (tsec, phase) => tsec + phase / GUST_RATE;
+
 export const WIND_NONE = Object.freeze({ on: false, w: [0, 0], dir: [1, 0], slider: 0, strength01: 0, gust: 1, windV: [0, 0], step: [0, 0] });
 
 // ── THE FLATS' SWAY ──────────────────────────────────────────────────

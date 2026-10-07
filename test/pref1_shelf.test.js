@@ -114,3 +114,22 @@ test('PREF1: the open map and resetPrefs still work over the narrower shelf', ()
   assert.deepEqual(shelf().skin, undefined, 'and does not write the default back as one');
   assert.deepEqual(P.isOpen('video', 'stored'), false, 'reset clears the map too');
 });
+
+test('AUDIT MEADOW1 (Mac: "Let\'s have our grass tufts off by default also"): THE GRASS WENT OFF BY DEFAULT - a shelf from before PREF1 wrote the old Full default as if it were an answer, and it moves with everyone who never chose; a stamped shelf\'s Full was pressed, and Half, Quarter or Off anywhere was chosen, and they stand (mutant: the old shelf\'s Full kept)', () => {
+  assert.equal(P.PREF_DEFAULTS.grassDensity, 0, 'Off by default');
+  withShelf({ skin: 'enhanced' });
+  assert.equal(P.getPref('grassDensity'), 0, 'nothing stored: Off');
+  withShelf({ grassDensity: 1 });
+  assert.equal(P.getPref('grassDensity'), 0, 'an unstamped Full is the old default the shelf wrote: it moves');
+  for (const v of [0.5, 0.25, 0]) {
+    withShelf({ grassDensity: v });
+    assert.equal(P.getPref('grassDensity'), v, `an unstamped ${v} was chosen: it stands`);
+  }
+  for (const rev of [1, 2]) {
+    withShelf({ grassDensity: 1, _rev: rev });
+    assert.equal(P.getPref('grassDensity'), 1, `a rev ${rev} shelf writes no default, so its Full was pressed: it stands`);
+  }
+  P.setPref('showFps', true);
+  reload();
+  assert.equal(P.getPref('grassDensity'), 1, '...and is written back as the choice it is');
+});

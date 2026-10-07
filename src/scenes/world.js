@@ -217,7 +217,7 @@ import { createBreather, frameFitBudget } from '../systems/buildBreather.js';   
 import { pieceIndex } from '../render/labGrass.js';   // PERF8: the piece under a point, by arithmetic
 import { meterFor } from '../render/perfMeter.js';   // GRASS2: the field gets a zone of its own - it was inside the world's
 import { LabGrassRenderer, createGrassField, grassRecordsOf, tileMeanColour, discSlotCount, LAB_GRASS, LAB_DIM, GRASS_TONES, GRASS_TONES_CLASSIC } from '../render/labGrass.js';   // GR1: the lab's grass, byte for byte; PERF-EXT20: the field's slot count, warmed at mount
-import { windDrive, floraSwayOf, floraSwayOn } from '../systems/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
+import { windDrive, floraSwayOf, floraSwayOn, gustPhaseAfterShift, gustClock } from '../systems/windDrive.js';   // WIND3: the one wind in every consumer's units; the flats' sway
 import { WindWispsRenderer, wispsOn, SAND_LOOK } from '../render/windWisps.js';   // WIND3: the wind, seen; WEATHER2d: the sandstorm's sand in the same program
 import { createWindAudio, windSoundOn } from '../systems/windAudio.js';   // WIND3: the wind, heard
 import { placeFoeFreely, PLACE_FOE_DEFAULTS } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
@@ -2074,6 +2074,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   let labGrassField = null;   // GR5: the world-anchored field, filled a cell or two a frame
   if (labGrass) discSlotCount(LAB_GRASS.span);   // PERF-EXT20: the field's one sweep, paid here behind the loading screen - every createGrassField after reads the memo
   const grassNormalScratch = [0, 1, 0];   // GRASS-LIT2: the slope's answer, one array for every blade (the placer copies it)
+  let gustPhase = 0, gustWind = [0, 0];   // AUDIT MEADOW1: the gust wave's phase the crossings carried, and the wind it was last drawn under (systems/windDrive.js gustClock)
   let hccGroundMoved = null;   // DISC20-C: the horse-cart pool's re-stand over a pixel just built - bound once the pool is (the boot's first pixel builds before it)
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door. A draw only: nothing here tells the game where water is.
@@ -16374,7 +16375,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     };
     /** GRASS-LOOK probe: the field painted with other tones (render/labGrass.js GRASS_TONES' shape, four [r, g, b]
      *  ratios), or the shipped ones again with none */
-    window.__grassTones = (tones, classic = false) => { if (labGrass) labGrass[classic ? 'tonesClassic' : 'tones'] = new Float32Array((tones ?? (classic ? GRASS_TONES_CLASSIC : GRASS_TONES)).flat()); return !!labGrass; };   // GRASS-LIT2: or the classic lane's
+    window.__grassTones = (tones, classic = false) => { if (labGrass) labGrass.setTones(tones ?? (classic ? GRASS_TONES_CLASSIC : GRASS_TONES), classic); return !!labGrass; };   // GRASS-LIT2: or the classic lane's; AUDIT MEADOW1: the meadow's art ground with them
     /** GRASS-LIT2 probe (tools/grassLookProbe.mjs): the heart of the deepest wood in the built pixels - the tile whose
      *  `r`-tile square reads the most forest (FOREST1's field, terrainNature.js forestAt) on ground the archive grows
      *  grass on, its feet and its pixel, the square's mean forest, and the pixel's origin. Where to look down on a wood
@@ -28307,6 +28308,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // three lines up says "everything else holding a WORLD position
       // must follow the origin too" and then listed four of five.
       magic.offsetAll(r.offset);
+      gustPhase = gustPhaseAfterShift(gustPhase, r.offset, gustWind);   // AUDIT MEADOW1: the grass's and the trees' gust wave stands still under the crossing
       // EV1: the two recenter misses the jitter lane found - the
       // stride anchor (a spurious footstep per crossing) and the
       // stillness gate's last-position (one false "moving" frame).
@@ -28543,6 +28545,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     if (fx.changed) wxFrom = wxNow;
     wxNow = enhancedFront ? blendTerms(wxFrom, fallTerms(weatherTerms(), fx.intensity, weather, FALL_LIGHT), fx.t) : weatherTerms();   // RAIN-SPRINKLE: a sprinkle looks like one
     const wd = windDrive(sky, now / 1000, dt);   // WIND3: the frame's wind in every consumer's units, read once
+    gustWind = wd.windV;
+    const windClock = gustClock(now / 1000, gustPhase);   // AUDIT MEADOW1: the gust wave's clock, carried across the crossings - the flats' and the grass's one
     // A3: the exterior ambience (WeatherAmbientEffects 5/25) - the
     // weather/time preset per WeatherManager.SetAmbientEffects.
     audio.setListener(cam.pos, tvf ? [viewFwd[0], 0, viewFwd[2]] : fwd);   // TV1: the traveller's ears, the screen's left and right
@@ -29073,7 +29077,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     renderer.drawFoeTelegraphs?.(drawableBlows(tacticsNow(), walkMode && playerSpawned ? player.pos : cam.pos));   // TACT4: a foe's wind-up on the ground, under the bodies
     bloodMarks.draw(camRight, UP_Y);   // BLOOD1a: the marks go down BEFORE the billboards, so a body standing in its own blood is over it and not under it. ABOVE setFlatWind for the reason its own neighbour gives: WIND3 pins the wind and the draw as ADJACENT.
     if (lowPolyTrees) lowPolyTreesFrame(cullOn ? _planes : null);   // LPT1: the near 3D trees, for the flats' call below (AFTER the gibs' call above, which would spend them)
-    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], now / 1000, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)
+    renderer.setFlatWind(floraSwayOn() && wd.on ? [wd.windV[0], wd.windV[1], windClock, wd.gust] : null);   // WIND3: the flats lean with the one wind; the flora batches carry their share (sway)
     renderer.drawBillboards(allBatches, camRight, bbUp);
     if (magic.batches().length) renderer.drawBillboards(magic.batches(), camRight, bbUp);   // M2: spell missiles
     magic.drawFx?.();   // IMPACTFX: the spells' landings in light, over their flashes
@@ -29501,7 +29505,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       };
       if (!labGrassField) labGrassField = createGrassField(labGrass, { keep, ground, slope, density: grassDensity });   // PERF1: the pref's fraction of the lab's field
       labGrassField.update(ex, ez, keep, ground, slope);
-      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, vertsPerBlade: labGrass._oneQuad ? labGrass.vertsFar : labGrass.verts, nearPixels: nearPieces().length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0,   // GRASS AUDIT 1: `verts` below is the near blade's; `vertsPerBlade` is the frame's. PERF-URL: `cells` and `slots` had been swallowed by this comment - the hook answered without them
+      window.__grassStats = () => ({ blades: labGrass.count, drawn: labGrass.drawn, vertsPerBlade: labGrass._meadow ? labGrass.vertsCards : labGrass._oneQuad ? labGrass.vertsFar : labGrass.verts, nearPixels: nearPieces().length, cells: labGrassField?.live.size ?? 0, slots: labGrassField?.slots ?? 0,   // GRASS AUDIT 1: `verts` below is the near blade's; `vertsPerBlade` is the frame's (MEADOW1: a near tuft's cards in the meadow). PERF-URL: `cells` and `slots` had been swallowed by this comment - the hook answered without them
         perCell: labGrass.perCell, range: LAB_GRASS.range, height: LAB_GRASS.height, verts: labGrass.verts,
         // GRASS2: what the field HOLDS, against what a slot-sized draw
         // would have submitted - the pad, measured rather than assumed.
@@ -29515,7 +29519,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       // the same numbers by construction.
       meterFor(renderer.gl)?.mark('grass');   // GRASS2
       renderer.snapshotAoDepth();   // GRASS-LIT: the AO reads the world without the field (render/airPass.js snapshotAoDepth)
-      labGrass.draw(proj, view, new Float32Array(cam.pos), now / 1000,
+      labGrass.draw(proj, view, new Float32Array(cam.pos), windClock,
         // WIND4 (Mac: "grass doesnt get darker at night"): the WHOLE of
         // the scene's light, not three of its five terms - the sun's
         // SCALE is what sets with the sun, and the moon is what is left
@@ -29533,7 +29537,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
           // GRASS-LIT2: the frame's lanterns, torches and candles - the list the ground took, its display colours (the
           // grass decodes them under the lane, as the rest)
           points: renderer._pointLights, pointColors: renderer._pointColorData(renderer._pointLights.length >> 2, true) },
-        { dir: wd.dir, speed: wd.slider * wd.gust, windV: wd.windV },
+        { dir: wd.dir, speed: wd.slider * wd.gust, windV: wd.windV, sway: floraSwayOn() && wd.on },   // AUDIT MEADOW1: the trees' sway switch - the meadow sways while they do
         LAB_GRASS.range, getPref('grassStyle'));   // GRASS-PX: the row's word, read live - the style is a uniform, so it flips without a reload
       // GRASS2: the field had been inside the WORLD's span, which is the
       // one number that cannot say whether the grass is worth what it
