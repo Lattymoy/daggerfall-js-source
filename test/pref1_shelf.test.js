@@ -115,21 +115,21 @@ test('PREF1: the open map and resetPrefs still work over the narrower shelf', ()
   assert.deepEqual(P.isOpen('video', 'stored'), false, 'reset clears the map too');
 });
 
-test('AUDIT MEADOW1 (Mac: "Let\'s have our grass tufts off by default also"): THE GRASS WENT OFF BY DEFAULT - a shelf from before PREF1 wrote the old Full default as if it were an answer, and it moves with everyone who never chose; a stamped shelf\'s Full was pressed, and Half, Quarter or Off anywhere was chosen, and they stand (mutant: the old shelf\'s Full kept)', () => {
-  assert.equal(P.PREF_DEFAULTS.grassDensity, 0, 'Off by default');
+test('GRASS-ON (Mac: "Can you please turn grass on by default"): THE GRASS IS FULL BY DEFAULT AGAIN - nothing stored is Full, and AUDIT MEADOW1\'s adoption went with its Off: no shelf\'s value moves - an unstamped Full is the default again, and an Off, a Half or a Quarter anywhere was pressed while Full was the default, and stands, an Off written back as the choice it is (mutant: the grass off by default)', () => {
+  assert.equal(P.PREF_DEFAULTS.grassDensity, 1, 'Full by default');
   withShelf({ skin: 'enhanced' });
-  assert.equal(P.getPref('grassDensity'), 0, 'nothing stored: Off');
-  withShelf({ grassDensity: 1 });
-  assert.equal(P.getPref('grassDensity'), 0, 'an unstamped Full is the old default the shelf wrote: it moves');
-  for (const v of [0.5, 0.25, 0]) {
-    withShelf({ grassDensity: v });
-    assert.equal(P.getPref('grassDensity'), v, `an unstamped ${v} was chosen: it stands`);
+  assert.equal(P.getPref('grassDensity'), 1, 'nothing stored: Full');
+  for (const rev of [undefined, 1, 2]) {
+    for (const v of [1, 0.5, 0.25, 0]) {
+      withShelf(rev === undefined ? { grassDensity: v } : { grassDensity: v, _rev: rev });
+      assert.equal(P.getPref('grassDensity'), v, `${rev === undefined ? 'an unstamped' : `a rev ${rev}`} shelf's ${v} stands`);
+    }
   }
-  for (const rev of [1, 2]) {
-    withShelf({ grassDensity: 1, _rev: rev });
-    assert.equal(P.getPref('grassDensity'), 1, `a rev ${rev} shelf writes no default, so its Full was pressed: it stands`);
-  }
+  withShelf({ grassDensity: 0, _rev: 2 });
   P.setPref('showFps', true);
   reload();
-  assert.equal(P.getPref('grassDensity'), 1, '...and is written back as the choice it is');
+  assert.equal(P.getPref('grassDensity'), 0, '...an Off is written back as the choice it is');
+  assert.equal(shelf().grassDensity, 0);
+  P.setPref('grassDensity', 1);
+  assert.equal(shelf().grassDensity, undefined, 'and a press back to Full is the default, which the shelf does not write');
 });

@@ -863,7 +863,7 @@ directory by `test/audit18_bible_docs.test.js`:
   patches), at dusk (the facets), the horizon, and the default lane
   beside the classic; the eye and the lane beside the pixel style.
   `test/grassmeadow.test.js` (10; 15 since AUDIT MEADOW1);
-  `tools/mutants/meadow1.json` (30, 30 dead; 80 since); five of
+  `tools/mutants/meadow1.json` (30, 30 dead; 80 since, and 78 since GRASS-ON); five of
   `grasspx.json`'s records re-aimed by content at the lines the meadow
   shares (its unit, its counts, its divisor, the row's default, the stats
   hook), and the lists aimed at the grass's files rerun: 492 dead, 0
@@ -878,10 +878,12 @@ directory by `test/audit18_bible_docs.test.js`:
   foilage, like it does the trees"; three read-only lenses - the GPU, the
   host, the pins and the docs - and every fix measured on the probe).**
   HIS OWN ART: the five sprites are his pixel art, no ARENA2 pixel in them
-  (his word; `test/doctrine.test.js`'s rows say so). THE GRASS IS OFF BY
+  (his word; `test/doctrine.test.js`'s rows say so). THE GRASS WENT OFF BY
   DEFAULT (`grassDensity` 0: no renderer, no field, no atlas until a player
   picks Full, Half or Quarter; the style a player gets is still the
-  meadow). PREF1's shelf holds no default, so everyone on the old Full
+  meadow) - until GRASS-ON put the full field back the next day (below),
+  and the adoption this sentence goes on to tell went with the Off.
+  PREF1's shelf holds no default, so everyone on the old Full
   moves with it, and a shelf from before PREF1 - whose `grassDensity: 1`
   was the shelf's own writing - moves too (`systems/uiPrefs.js`); a Half,
   a Quarter or an Off anywhere was chosen and stands. THE FIELD SWAYS WITH
@@ -985,6 +987,71 @@ directory by `test/audit18_bible_docs.test.js`:
   **The lesson: a card is its picture's box, not its square; and whatever
   rides the floating origin is measured in a frame the shift does not
   move.**
+  **GRASS-ON (2026-10-07, Mac: "Can you please turn grass on by default",
+  then "People are also saying it really has bad performance").** THE
+  GRASS IS FULL BY DEFAULT AGAIN (`features.js` 'grass', `grassDensity` 1,
+  PERF1's own default; the meadow still the style a player gets). AUDIT
+  MEADOW1's adoption in `systems/uiPrefs.js` went with its Off, and nothing
+  stored moves back: the shelf writes no default, so a stored Off, Half or
+  Quarter was pressed while Full was the default and stands, and an
+  unstamped shelf's Full is the default again; an Off pressed - or
+  re-saved - in the day Off was the default was the default then, so the
+  shelf dropped it, and that player is on Full with everyone else. AND
+  CHEAPER TO DRAW, the picture unchanged. THE PROVOKING VERTEX: the field
+  hands `vVar`, `vSun` and `vPoint` down `flat`, read in each triangle's
+  provoking vertex alone (GRASS-LIT's law) - GL's LAST, WebGL's default.
+  Direct3D provokes from the FIRST, so ANGLE on Windows - every browser
+  there, and the desktop app's Electron - keeps GL's convention for a
+  program with a flat varying by drawing it through a geometry shader that
+  copies the last vertex's flats onto the other two: every triangle of
+  every grass draw - some 0.7 million a frame of the meadow at Full from
+  a walker's eye on all-grass ground, the heaviest geometry outdoors
+  (ANGLE's Metal backend emulates the convention too).
+  WEBGL_provoking_vertex is how a page takes the native convention: where
+  the browser offers it the field draws under the FIRST-vertex one and
+  puts GL's back after its draws. Each triangle is listed provoking corner
+  first (`provokeFirst`: (a, b, c) to (c, a, b), the same winding - the
+  cards' own indices turned, a blade's corners through a turned list of
+  them in order, drawn indexed), so the corner the stage reads
+  (`gl_VertexID % 3 == 2`) provokes under either convention and the
+  stage's text is unchanged. A browser without the extension draws as it
+  always did, and so does `?provoke=last` - the door to time the field
+  both ways on a machine's own GPU (`?perf=zones`, its `grass` span). NOT
+  TIMED HERE: SwiftShader offers no WEBGL_provoking_vertex and this session
+  had no Windows GPU, so the geometry shader's cost is ANGLE's documented
+  behaviour, not a measurement; the turned lists are held on the stage's
+  own text (test/glsl.mjs: the root's sun from the first corner of each
+  turned triangle and from the last of each as GL lists it). NEAREST
+  FIRST: the cells in view are found, then drawn - in a sprite style
+  nearest first (an insertion over a hundred or so cells: stable, nothing
+  allocated a frame). A sprite style is opaque (AUDIT MEADOW1: unblended,
+  every kept alpha 1), so its picture is the nearest fragment whatever the
+  order, and the depth test throws a hidden tuft away before it is shaded
+  only once what hides it is drawn; the smooth style blends, so its order
+  is its picture, and it keeps the slots'. A level of detail is a cell's
+  distance, so the near cards and the far are bound once a frame each.
+  MEASURED on SwiftShader (960x540, the shipped 300 m, the committed
+  renderer beside this one): the fragments each order WRITES, depth-tested
+  through the sprite's alpha - 17.8% fewer from a walker's eye in the
+  meadow (418,010 to 343,589), 18.2% at the horizon, 19.4% turned, 25.2%
+  grazing, 3.5% from above, and the pixel style alike (17.7, 17.6, 17.2,
+  23.0 and 3.6%); the frames pixel-identical in all three styles but four
+  pixels in two meadow frames, where two cards stood at one depth and the
+  order broke the tie. SwiftShader's own frame did not move (2.5 s, its
+  vertex stage on the CPU), which is why the fill is counted, not timed.
+  `test/grass_on.test.js` (6); the default's pins moved back in perf1,
+  ft7_quality, ft18_features and grassmeadow (PIN MOVED), and AUDIT
+  MEADOW1's shelf pin in `test/pref1_shelf.test.js` replaced, one for one;
+  `tools/mutants/grass_on.json` (16, 16 dead); meadow1.json's two default
+  records retired with the laws they held (78 now), and grass2.json's
+  centre-budget record and grasspx.json's lab-text record re-aimed by
+  content; every other record aimed at the three files this touched,
+  gathered into one (`node tools/mutate.mjs --jobs 4` over 275 records):
+  274 dead, 0 survived, 1 equivalent as recorded
+  (AUDIT-GRASSLIT2-C-lane-compare-flipped, the lane's 0-or-1 switch).
+  **The lesson: a convention a backend has to emulate is paid where the
+  geometry is heaviest - ask for the native one, and list the geometry so
+  either convention reads the same corner.**
 - `grassPixelArt.js` - GRASS-PX THE TUFT SHEET: eight 8x16 tufts (GRASS-PX4; 16x32 until 2026-09-22, and the laws are written as fractions of the tuft so the old size still builds through `buildTuftSheet({ w, h })`) built at boot from a seed (one-texel stalks bending as height squared, four tones with one highlight texel, alpha 0 or 255), their coverage mip chain (max alpha per block, never an average, down to 1x1), the pixel style's numbers (8 Hz sway, 24 lean steps, 3x tuft width, 8-step ramp, 4 tint bands) and `pixelGrass()`, the row's word; the shader edits themselves are `GRASSPX_VS_EDITS` / `GRASSPX_FS_EDITS` in labGrass.js.
 - `grassMeadow.js` - MEADOW1 THE MEADOW: the owner's five sprites as a grass style - `MEADOW_VARIANTS` (each sprite's card scale over the lab's blade, its standing lean's share `stiff` and, AUDIT MEADOW1, its wind's share `sway`, the trees' own), the patch's shares and size (`MEADOW_SHARES`, `MEADOW_LUSH`, `MEADOW_PATCH_SCALE`) and `meadowPick`, the law's JS twin; the atlas (`buildMeadowAtlas`, eight 64-texel cells, the foot on row 0) and its per-sprite coverage chain (`buildMeadowMips`); each sprite's drawn box (`meadowSpriteBox`, `MEADOW_BOXES` - a card is cut to it) and the tuft's seed off its cell's lane (`MEADOW_SEED`); the cards (`meadowCardCorners`: each corner's turn as a share of a half-turn, +1 when mirrored, `MEADOW_CARD_SLOTS` six a card, and `meadowCardIndices`, both triangles ending on the shared corner; `MEADOW_CARDS` 3 near, `MEADOW_CARDS_FAR` 2 - the near set's first two - handed over tuft by tuft across `MEADOW_NEAR_BAND` past `MEADOW_NEAR_AT`); the box a cell's cards need (`MEADOW_TOP`, `MEADOW_REACH`, `MEADOW_WIND_REACH` off the lab's own `LAB_LEAN_PER_PUSH` and `LAB_GUST_MAX`, `MEADOW_SLOPE_FLOOR`); the trees' face law (`MEADOW_FACE`); the colour's anchor (`MEADOW_GREEN`, `meadowArtGround`, `MEADOW_SHIFT`, `MEADOW_GREEN_EDGE`, `meadowTexel` the fragment's twin); and `meadowGrass()`, the row's word. The shader edits are `GRASSMEADOW_VS_EDITS` / `GRASSMEADOW_FS_EDITS` in labGrass.js.
 - `meadowArt.js` - MEADOW1: GENERATED by `tools/bakeMeadow.mjs` from the owner's PNGs under `src/assets/grass/source/` - each sprite's palette and its rows, one letter a texel; never edited by hand, held to the bake and the PNGs by `test/grassmeadow.test.js`.

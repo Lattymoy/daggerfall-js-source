@@ -1,0 +1,154 @@
+[
+  {
+    "name": "GRASS-ON-the-grass-off-by-default",
+    "file": "src/systems/features.js",
+    "old": "key: 'grassDensity', initial: 1,",
+    "new": "key: 'grassDensity', initial: 0,",
+    "tests": [
+      "test/grass_on.test.js",
+      "test/pref1_shelf.test.js",
+      "test/grassmeadow.test.js",
+      "test/perf1.test.js",
+      "test/ft7_quality.test.js",
+      "test/ft18_features.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-half-by-default",
+    "file": "src/systems/features.js",
+    "old": "key: 'grassDensity', initial: 1,",
+    "new": "key: 'grassDensity', initial: 0.5,",
+    "tests": [
+      "test/grass_on.test.js",
+      "test/pref1_shelf.test.js",
+      "test/perf1.test.js",
+      "test/ft7_quality.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-the-extension-never-asked",
+    "file": "src/render/labGrass.js",
+    "old": "this._pv = provoke ? (gl.getExtension('WEBGL_provoking_vertex') ?? null) : null;",
+    "new": "this._pv = null;",
+    "tests": [
+      "test/grass_on.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-the-door-not-heard-by-the-field",
+    "file": "src/render/labGrass.js",
+    "old": "this._pv = provoke ? (gl.getExtension('WEBGL_provoking_vertex') ?? null) : null;",
+    "new": "this._pv = gl.getExtension('WEBGL_provoking_vertex') ?? null;",
+    "tests": [
+      "test/grass_on.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-the-door-shut",
+    "file": "src/scenes/world.js",
+    "old": "new LabGrassRenderer(renderer.gl, { provoke: pageParam('provoke') !== 'last' })",
+    "new": "new LabGrassRenderer(renderer.gl, { provoke: true })",
+    "tests": [
+      "test/grass_on.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-the-first-convention-never-set",
+    "file": "src/render/labGrass.js",
+    "old": "    if (pv) pv.provokingVertexWEBGL(pv.FIRST_VERTEX_CONVENTION_WEBGL);",
+    "new": "",
+    "tests": [
+      "test/grass_on.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-gls-convention-not-put-back",
+    "file": "src/render/labGrass.js",
+    "old": "    if (pv) pv.provokingVertexWEBGL(pv.LAST_VERTEX_CONVENTION_WEBGL);",
+    "new": "",
+    "tests": [
+      "test/grass_on.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-the-cards-list-unturned",
+    "file": "src/render/labGrass.js",
+    "old": "cards ? (first ? provokeFirst(cardIndices) : cardIndices)",
+    "new": "cards ? cardIndices",
+    "tests": [
+      "test/grass_on.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-the-blades-unlisted",
+    "file": "src/render/labGrass.js",
+    "old": ": (first ? provokeFirst(Uint16Array.from({ length: n }, (_, i) => i)) : null);",
+    "new": ": null;",
+    "tests": [
+      "test/grass_on.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-the-blades-drawn-without-their-list",
+    "file": "src/render/labGrass.js",
+    "old": "      else if (this._pv) gl.drawElementsInstanced(gl.TRIANGLES, verts, gl.UNSIGNED_SHORT, 0, budget);",
+    "new": "      else if (false) gl.drawElementsInstanced(gl.TRIANGLES, verts, gl.UNSIGNED_SHORT, 0, budget);",
+    "tests": [
+      "test/grass_on.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-the-turn-the-wrong-way",
+    "file": "src/render/labGrass.js",
+    "old": "out[t] = indices[t + 2]; out[t + 1] = indices[t]; out[t + 2] = indices[t + 1];",
+    "new": "out[t] = indices[t + 1]; out[t + 1] = indices[t + 2]; out[t + 2] = indices[t];",
+    "tests": [
+      "test/grass_on.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-the-stage-reads-another-corner",
+    "file": "src/render/labGrass.js",
+    "old": "vSun = (gl_VertexID % 3 == 2 && uSunScale > 0.0)",
+    "new": "vSun = (gl_VertexID % 3 == 0 && uSunScale > 0.0)",
+    "tests": [
+      "test/grass_on.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-no-order",
+    "file": "src/render/labGrass.js",
+    "old": "    if (this._oneQuad) {\n      for (let i = 1; i < shown; i++) {",
+    "new": "    if (false) {\n      for (let i = 1; i < shown; i++) {",
+    "tests": [
+      "test/grass_on.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-the-smooth-style-ordered",
+    "file": "src/render/labGrass.js",
+    "old": "    if (this._oneQuad) {\n      for (let i = 1; i < shown; i++) {",
+    "new": "    if (true) {\n      for (let i = 1; i < shown; i++) {",
+    "tests": [
+      "test/grass_on.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-the-farthest-first",
+    "file": "src/render/labGrass.js",
+    "old": "for (; j >= 0 && near[order[j]] > d; j--)",
+    "new": "for (; j >= 0 && near[order[j]] < d; j--)",
+    "tests": [
+      "test/grass_on.test.js"
+    ]
+  },
+  {
+    "name": "GRASS-ON-a-tie-turned-over",
+    "file": "src/render/labGrass.js",
+    "old": "for (; j >= 0 && near[order[j]] > d; j--)",
+    "new": "for (; j >= 0 && near[order[j]] >= d; j--)",
+    "tests": [
+      "test/grass_on.test.js"
+    ]
+  }
+]
