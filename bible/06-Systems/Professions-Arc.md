@@ -2851,7 +2851,12 @@ asked). What sections 5.2, 6 and 3.3 left open for PROF8, DECIDED here, and what
 - **Where** (5.1): the cast stands just ahead of the look while the pack holds an unbroken Fishing-Net and the player
   stands in the net's water (Foraging's own `netHasWater`: in water, swimming, at sea); never underground, and never
   while the hands are the ship's (HELM-NET, FIELD BUGS 2026-10-02, Cruor: "Gets in the way especially when trying to aim
-  bow guns" - the kind's host `busy`: a helm, laid guns, a boarding; a deck stood on still fishes). Its prompt
+  bow guns" - the kind's host `busy`: a helm, laid guns, a boarding; a deck stood on still fishes). The cast's own point
+  is over water the feet would swim in (SHORE-CAST, FIELD BUGS 2026-10-05) and at the water's level: no more than
+  CAST_OVER_WATER_M (5.5 m) over the surface under it (HIGH-CAST, FIELD BUGS 2026-10-07, the Discord: "fishing popup
+  shows up wayy too early" from a cliff over the sea, and "I couldn't get it off my screen when on my ship") - so a deck
+  fishes looking down over the side (the carrack's, the highest, stands its lowest cast 5.01 m over the sea), a level
+  look from a ship's high deck and any look from a cliff stand none, and the shore's level look still does. Its prompt
   says the ground's refusal first (in here, a settlement, the dark), the account's forty, the Stores' room; the start asks
   Foraging's full checks for the net, with its own lines ("You cannot fish with enemies nearby!").
 - **The service**: **acct41**, migration `0042_fishing.sql` (`node_harvests` rebuilt: the kind `fish`, and `trophy`). The
