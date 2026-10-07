@@ -401,7 +401,9 @@ The Worker mints an `sd:<s>` object only for the slot the hub's record names and
 
 SD3 shipped the first of the table: `found` (client -> cell) and `ev` (hub -> client); the rest arrive with the slices
 that use them (SD6's `pz`, SD8's fight, SD9's receipts), each extending `SD_KINDS`/`SD_OUT_KINDS` under the arc's one
-relay version while it is undeployed.
+relay version while it is undeployed. SD6b shipped `pz` each way - the realm's out frame is the hall,
+`pz {s,st,f,lit,ok,i?,a?,id?,q?,x?}` (the turn that made it so, its turner and number, and `x` when the Hour snapped
+back).
 
 ## 15. The four hosts
 
@@ -893,3 +895,41 @@ counting a stone's own unknown turn, which is nought - re-aimed at a gear read t
 the reach that NaN already refuses - the guard is gone).
 
 SD6b next: the relay judges the turns - the `pz` frame, the realm's stones in its storage, the Concord kept.
+
+### SD6b - shipped 2026-10-07 (the relay judges the Orrery)
+
+Sections 8 and 14 on the relay - still `world175`, the arc's one version while it is undeployed.
+
+- **The frame** (`net/wire.js`): `pz` each way. A turn, `{k:'pz', i, a, q}` - the stone, 1 forward or -1 back, the
+  turn's number - from a page to its realm (`validSdIn`); the hall, `{k:'pz', s, st, f, lit, ok, i?, a?, id?, q?, x?}` -
+  the six hours, the fray, the dial's count, the Concord, the turn that made it so with its turner's id and number, and
+  `x` when the Hour snapped back - from the realm (`validSdOut`). Its bounds are the Orrery's own numbers kept on the
+  wire (`SD_PZ_STONES`, `SD_PZ_HOURS`, `SD_PZ_FRAY_MAX`, `SD_PZ_HZ` - the wire imports no law; pinned equal to
+  `net/sdBrain.js`'s). Its own bucket: three turns a second from a page (`sdPzGate`), a turn deeper at the relay
+  (`sdPzRelayGate`).
+- **The judgement** (`server/src/index.js _sdTurn`): in a realm alone (a turn anywhere else is junk), on the hall's own
+  bucket, routed before the find's; from a verified account alive in the realm, its OWN pose within reach of the stone
+  (`stoneInReach`, a metre's slack for a pose's lag), the Hour still holding its slot (the hub's record, as the hello
+  asks it), the stone's gear settled (700 ms since its last turn), the turn's number past the socket's last (a word
+  said twice is one turn). Then the Orrery's law turns it (`orreryStep`), the hall is kept (`sdorrery`, read back when
+  the object wakes), and every soul in the realm hears it. A refused turn is nothing - no word, no strike - and after
+  the Concord every turn is nothing.
+- **The hall at the hello**: after the world path's welcome (a realm's hello is a world room's, not a channel's), the
+  realm says its hall as it stands - so a soul entering mid-puzzle, or after the Concord, sees the stones where they
+  are.
+- **The page** (`net/online.js`): `sendSdTurn(i, a)` down my own socket in the realm, at a relay that keeps it,
+  numbered, three a second; `onSdHall` hears the hall from my own realm alone (a hub's or another room's is dropped; a
+  realm never says the record).
+
+THE FOUR HOSTS: none wired - the hall's page is SD6c's. `scenes/world.js` FLAGGED (it will hand the hall to the realm's
+stones and their turns to `sendSdTurn`); `scenes/worldModes.js`, `scenes/dungeonContext.js` and `scenes/exterior.js`
+FLAGGED.
+
+Pins: `test/sd6b_hall.test.js` (6 - the wire; a turn judged end to end over the fake world: the hall at the hello, a
+turn from reach kept and said to all, out of reach, the settling, a number said twice, the dead, a turn in a cell; the
+fray's snap and the Concord, kept past an eviction and heard by a newcomer; the Hour closed; the session; the relay by
+source); `tools/mutants/sd6b.json` (25, all dead). PINS MOVED: `test/sd3_relay.test.js` reads two kinds each way;
+`test/relayversion.test.js` - `net/sdBrain.js` joins the relay's bundle, and `world175` is re-hashed in place (undeployed).
+
+SD6c next: the hall on the page - the stones and their hands, the plaques, the dial, the lash, and the bridge the
+Concord lays.

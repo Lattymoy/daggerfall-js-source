@@ -1722,7 +1722,7 @@ export function parseClient(text, { hasHello = false } = {}) {
     const r = validRiteIn(m);
     return r ? { t: 'rite', ...r } : { error: 'bad rite' };
   }
-  if (m.t === 'sd') {   // SD3: a word on the Super dungeon - `found`, to the cell its Hollow stands in - projected by validSdIn; the cell and the hub judge it (net/sdLaw.js)
+  if (m.t === 'sd') {   // SD3: a word on the Super dungeon - `found`, to the cell its Hollow stands in - projected by validSdIn; the cell and the hub judge it (net/sdLaw.js). SD6b: `pz`, a turn in the realm's Orrery (net/sdBrain.js)
     if (!hasHello) return { error: 'sd before hello' };
     const r = validSdIn(m);
     return r ? { t: 'sd', ...r } : { error: 'bad sd' };
@@ -4319,9 +4319,14 @@ function serpentOutOf(m) {
 // it answers (SD_INTERNAL_FOUND); the hub believes it while its record says `risen` for that slot. Before a Hollow rises
 // the hub asks the 62 region channels how many verified accounts stand in each (SD_INTERNAL_CENSUS) - once a rise, never
 // on a timer. A Hollow's realm is a room of its own (`sd:<s>`), minted only while the hub's record holds it
-// (SD_INTERNAL_LIVE).
+// (SD_INTERNAL_LIVE). SD6b: in the realm, THE ORRERY OF ENDINGS - a turn of an Ending-stone (`pz`), judged by the realm
+// from the socket's own pose (net/sdBrain.js orreryStep), and the hall's stones, fray, dial and Concord said back to every
+// soul in it - after each turn, and to each at its hello.
 //   client -> cell:  {t:'sd', k:'found', s, px, py}
 //   hub -> client:   {t:'sd', k:'ev', s, ph, r, at, until, next, foundAt?, fb?, fellAt?, top?, n?}
+//   client -> realm: {t:'sd', k:'pz', i, a, q}                                 (stone i, a +1 forward or -1 back, my turn's number)
+//   realm -> client: {t:'sd', k:'pz', s, st, f, lit, ok, i?, a?, id?, q?, x?}   (the stones, the fray, the dial's count, the
+//                    Concord; the turn and its turner's id and number; x 1 when the Hour snapped back and lashed the hall)
 /** The first relay that keeps the Super dungeon. An older one CLOSES the socket on the frame, so a client says none to
  *  it - and its hub says no record, so a client stands no Hollow. */
 export const SD_RELAY_MIN = 175;   // world175 - the Super Dungeons arc's one version (world171 on its branch, then world172; main's CRYSTAL-FIST took world171, its WATCH-FIX world172, SERPENT3 world173 and LEGACY7 world174)
@@ -4367,25 +4372,49 @@ export function validSdRecord(v) {
   return out;
 }
 
-/** What a client may say: `found`, to the cell its Hollow stands in. */
-export const SD_KINDS = Object.freeze(['found']);
-/** What the relay says: `ev`, the hub's record (a client drops any other kind). */
-export const SD_OUT_KINDS = Object.freeze(['ev']);
+/** What a client may say: `found`, to the cell its Hollow stands in; `pz` (SD6b), a turn in the realm's Orrery. */
+export const SD_KINDS = Object.freeze(['found', 'pz']);
+/** What the relay says: `ev`, the hub's record; `pz` (SD6b), the realm's Orrery (a client drops any other kind). */
+export const SD_OUT_KINDS = Object.freeze(['ev', 'pz']);
+/** SD6b: the Orrery's numbers the wire bounds by - net/sdBrain.js's own (its stones, their hours, the fray's most; the wire
+ *  imports no law, so they are pinned equal there) - and a turn's number's bound. */
+export const SD_PZ_STONES = 6;
+export const SD_PZ_HOURS = 12;
+export const SD_PZ_FRAY_MAX = 48;
+export const SD_PZ_Q_MAX = 2 ** 31 - 1;
+/** SD6b: a hall's turns' own bucket - SD_PZ_HZ a second from an account (net/sdBrain.js SD_TURN_HZ; one seat an account in
+ *  a realm), the relay's a turn deeper (the rite's law, AUDIT WB12d L4). */
+export const SD_PZ_HZ = 3;
+export const sdPzGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SD_PZ_HZ);
+export const sdPzRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SD_PZ_HZ, SD_PZ_HZ + 1);
 /** The sd frames' own bucket: a finder says its word once and again while it stands at the door (net/sdLaw.js
  *  SD_FOUND_RESEND_MS) - a word a second is room to spare. The relay's is deeper (the rite's law, AUDIT WB12d L4). */
 export const SD_HZ_MAX = 1;
 export const sdGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SD_HZ_MAX);
 export const SD_RELAY_BURST = 3;
 export const sdRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SD_HZ_MAX, SD_RELAY_BURST);
-/** A client's sd word, projected: `{k:'found', s, px, py}` - the slot it found and the map pixel it stands on - or null. */
+/** A client's sd word, projected: `{k:'found', s, px, py}` - the slot it found and the map pixel it stands on - or (SD6b)
+ *  `{k:'pz', i, a, q}` - the stone it turns, which way, its turn's number - or null. */
 export function validSdIn(m) {
   if (!m || typeof m !== 'object' || !SD_KINDS.includes(m.k)) return null;
+  if (m.k === 'pz') return intIn(m.i, 0, SD_PZ_STONES - 1) && (m.a === 1 || m.a === -1) && intIn(m.q, 0, SD_PZ_Q_MAX) ? { k: 'pz', i: m.i, a: m.a, q: m.q } : null;
   return intIn(m.s, 1, SD_SLOT_MAX) && intIn(m.px, 0, 999) && intIn(m.py, 0, 499) ? { k: 'found', s: m.s, px: m.px, py: m.py } : null;
 }
 /** The relay's sd word, projected for the client: `{k:'ev', ...record}` - a Hollow that rose (slot 1 or later; the hub's
- *  first beat is its own) - or null. */
+ *  first beat is its own) - or (SD6b) `{k:'pz', s, st, f, lit, ok, i?, a?, id?, q?, x?}`, the realm's Orrery - or null. */
 export function validSdOut(m) {
   if (!m || typeof m !== 'object' || !SD_OUT_KINDS.includes(m.k)) return null;
+  if (m.k === 'pz') {
+    if (!intIn(m.s, 1, SD_SLOT_MAX) || !Array.isArray(m.st) || m.st.length !== SD_PZ_STONES || !m.st.every((h) => intIn(h, 0, SD_PZ_HOURS - 1))) return null;
+    if (!intIn(m.f, 0, SD_PZ_FRAY_MAX) || !intIn(m.lit, 0, SD_PZ_STONES) || typeof m.ok !== 'boolean') return null;
+    /** @type {{ k: 'pz', s: number, st: number[], f: number, lit: number, ok: boolean, i?: number, a?: number, id?: string, q?: number, x?: 1 }} */
+    const out = { k: 'pz', s: m.s, st: [...m.st], f: m.f, lit: m.lit, ok: m.ok };
+    if (m.i != null) { if (!intIn(m.i, 0, SD_PZ_STONES - 1) || (m.a !== 1 && m.a !== -1)) return null; out.i = m.i; out.a = m.a; }
+    if (m.id != null) { if (typeof m.id !== 'string' || !ID_RE.test(m.id)) return null; out.id = m.id; }
+    if (m.q != null) { if (!intIn(m.q, 0, SD_PZ_Q_MAX)) return null; out.q = m.q; }
+    if (m.x === 1) out.x = 1;
+    return out;
+  }
   const r = validSdRecord(m);
   return r && r.s > 0 ? { k: 'ev', ...r } : null;
 }
@@ -4400,6 +4429,8 @@ export const SD_TELL_RETRY_MS = 5000;
 export const SD_KEY = 'sdev';
 export const SD_FOUND_KEY = 'sdfound';
 export const SD_REALM_KEY = 'sdrealm';
+/** SD6b: where a realm keeps its Orrery's hall - `{ s, st, f, ok, last }` (outside every swept prefix). */
+export const SD_ORRERY_KEY = 'sdorrery';
 /**
  * A cell's find, as told to the hub - the claim (`s`, `px`, `py`), the finder's pose as the cell's socket stood it (`x`,
  * `z`, the MapsFile frame) and name (`fb`) - projected, or null. The hub judges it against its record (net/sdLaw.js

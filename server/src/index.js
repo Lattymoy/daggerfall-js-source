@@ -268,8 +268,9 @@ import { owIdInCell, owRowInCell, owRowSane, owFoldSpent, owFoldRows, owRowsBehi
 
 import { serpentGate, validSerpentOut, SERPENT_INTERNAL_FELL, SERPENT_TELL_RETRY_MS, SERPENT_FIGHT_KEY, SERPENT_FIGHTS_KEY, SERPENT_SITES_MAX, serpentFightId, SERPENT_FELLS_KEY, SERPENT_FELLS_MAX, SERPENT_RC_PREFIX } from './relay.js';   // SERPENT1: the serpent's frame and its doors (the wire's, through relay.js - walked last, as ever)
 import { roomOf, parseClient, inRange, poseGate, chatGate, redGate, dmGate, muteGate, tokenGate, rosterFor, badged, isChatRoom, isWorldRoom, isCellRoom, streamsFoes, hitOwnerOf, worldFrameMaxFor, CELL_FRAME_RECORDS_MAX, HELLO_HZ_MAX, CHAT_HELLO_HZ_MAX, CHAT_ROOM_HZ_MAX, SOCKETS_MAX, CHAT_SOCKETS_MAX, DROP_STRIKES_MAX, CHAT_STRIKES_MAX, WORLD_MIN_MS, WORLD_CHUNK, WORLD_TTL_MS, WORLD_PREFIX, FOES_PREFIX, OWN_PREFIX, foesGate, byteGate, FOES_ROOM_BYTES_PER_S, HIT_ROOM_HZ_MAX, ACT_ROOM_HZ_MAX, ACT_ROOM_BYTES_PER_S, actGate, MAX_FRAME_BYTES, CLOSE_REPLACED, CLOSE_POLICY, CLOSE_BUSY, HIT_ROOM_BYTES_PER_S, whoGate, whoIdOf, WHO_ROOM_HZ_MAX, poseFan, poseChanged, RELAY_VERSION, KEEPALIVE_FAN_MS, ACT_SENDER_BYTES_PER_S, CHAT_ROSTER_MAX, isSocialRoom, socialGate, partyGate, SOCIAL_ROOM_HZ_MAX, FRIENDS_MAX, PENDING_MAX, PARTY_MAX, PARTY_INVITES_MAX, INVITE_TTL_MS, PARTY_OFFLINE_MS, ACCOUNT_TABS_MAX, mintPartyId, SOCIAL_REPEAT_MS, ACCOUNT_IDLE_MS, ACCOUNT_SWEEP_MS, SWEEP_STEP_MS, SWEEP_PAGE, questShareGate, amapShareGate, AMAP_ROOM_HZ_MAX, QUEST_ROOM_HZ_MAX, QUEST_ROOM_BYTES_PER_S, QUEST_PREFIX, QUEST_FRAME_MAX, tradeGate, TRADE_ROOM_HZ_MAX, TRADE_ROOM_BYTES_PER_S, castGate, CAST_HZ_MAX, CAST_DEST_SENDERS_MAX, parkGate, parkKey, parkKeyOf, PARK_KEY_RE, parkRegistryRoom, cellRoomOfWire, PARK_INTERNAL_REG, PARK_INTERNAL_DROP, PARK_CELL_MAX, PARK_ACCOUNT_MAX, PARK_TTL_MS, PARK_REFRESH_MS, PARTY_CHAT_ROOM_HZ_MAX, rollGate, rollDice, cardGate, pageGate, duelGate, DUEL_HZ_MAX, wedGate, WED_HZ_MAX, renownGate, renownRoomGate, lookGate, eventGate, EVENT_KEY, validLiveEvent, gateGate, siegeGate, SIEGE_IN_MS, GATE_INTERNAL_FELL, SOCIAL_ROOM, validGateOut, HELLO_WAIT_MS, GATE_TELL_RETRY_MS, gateReceiptKey, GATE_BRAIN_MIN, GATE_HERE_HOLD_MS, guildGate, guildRoomGate, GUILD_CHAT_ROOM_HZ_MAX, SEAT_ELSEWHERE, raidGate, RAID_INTERNAL_CLEAN, RAID_INTERNAL_DAY, RAID_DAY_ASK_MS, raidTownsGate, RAID_TELL_RETRY_MS, RAID_CLEANS_MAX, RAID_LEDGER_PREFIX, raidLedgerKey, RAID_RC_PREFIX, raidReceiptKeyOf, RAID_RC_KEEP, RAID_RC_KEEP_MS, mapPixelOfWire, validRaidOut, worldRoom, sharedClassicMinutes, wallMsForClassicMinutes, isRegionRoom, travHubGate, travRoomGate, TRAV_STALE_MS, TRAV_WELCOME_MAX, owGate, owRoomGate, OW_LEDGER_KEY, REALM_DOOR_WORD, riteRelayGate, validRiteOut, sanitizeName, RITE_INTERNAL_BROKEN, RITE_INTERNAL_DAY, RITE_TELL_RETRY_MS, RITE_KEY, RITE_BY_MAX, RITE_CIRCLES_MAX, RITE_HUB_CIRCLES_MAX, RITE_ASK_EVERY_MS, RITE_ASK_TIMEOUT_MS, arenaGate } from './relay.js';
-import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, SD_REGION_COUNT, SD_FIGHTERS_MAX } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
+import { validSdRecord, sdRelayGate, validSdFoundTell, chatRegionRoom, SD_INTERNAL_CENSUS, SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_TELL_RETRY_MS, SD_KEY, SD_FOUND_KEY, SD_REALM_KEY, SD_REGION_COUNT, SD_FIGHTERS_MAX, sdPzRelayGate, SD_ORRERY_KEY } from './relay.js';   // SD3: the Super dungeon's frame, its record and its doors (the wire's, through relay.js)
 import { sdFirst, sdRise, sdFind, sdGone, sdDue, pickSdRegion, sdFindBelieved, sdNearSite, sdHolds, sdAdmits, isSdRoom, sdSlotOfRoom, SD_NO_CLOSED, SD_NO_FULL } from '../../src/net/sdLaw.js';   // SD3: the Super dungeon's law - the director's moves, the census's pick, the find, the realm's room
+import { orreryOf, orreryStep, orreryLit, orreryFresh, stoneInReach, dungeonToRealm, SD_STONES, SD_HOURS, SD_FRAY_MAX, SD_STONE_REACH_SLACK, SD_STONE_SETTLE_MS } from '../../src/net/sdBrain.js';   // SD6b: the Orrery's law - the realm judges every turn by it
 
 // AUDIT WORLD34 D4: the relay names itself in /health. SLAM13 (AUDIT SLAM A5): the name lives in net/wire.js, so the
 // welcome can carry it; /health reads it through the import above. LOCALDEV1: it is NOT re-exported from this module -
@@ -1647,6 +1648,9 @@ export class Room {
           for (const [id, f] of fights) if (b && !f.fell && !f.gone && this._serpentHears(id, f, b)) { await this._serpentArm(Date.now()); break; }
         } catch (e) { console.warn('[serpent] hello arm failed', e?.message ?? e); }
       }
+      // SD6b: the Orrery's hall as it stands - the stones, the fray, the dial and the Concord - to a soul entering the Hour,
+      // after the welcome that resets its session
+      if (isSdRoom(a.key)) { try { if (!this._send(ws, this._sdHallWord(await this._sdHallOf(sdSlotOfRoom(a.key))))) return; } catch (e) { console.warn('[sd] hall word failed', e?.message ?? e); } }
       if (unseen) return;   // HOTFIX 1003f: a floor's hello said as anyone's - a private session's stranger's to nobody (a member's join says it: `_sessionShow`)
       const join = JSON.stringify(badged({ t: 'join', id: m.id, name: who.name, look: m.look, pose: this._drawn({ sub: who.subject, pose: m.pose }, a.key).pose }, who));   // AUDIT-SEATS T2: and a spectator's join stands it nowhere
       for (const [other, b] of [...this._all()]) if (other !== ws && b.id && (!S || S.members[b.sub])) this._send(other, join);   // AUDIT PRE-MERGE 1003b R4: a member's to the members alone
@@ -2041,6 +2045,14 @@ export class Room {
       // SD3: A HOLLOW FOUND - from a player at a risen Super dungeon's door, to the CELL it stands in (the rite's law): on its
       // own bucket, in a cell alone (anywhere else junk), said under the VERIFIED name
       const now = Date.now();
+      // SD6b: A TURN OF AN ENDING-STONE - in a Hollow's realm alone (anywhere else junk), on the hall's own bucket, judged
+      // by the Orrery's law from where the socket's own pose stands (_sdTurn)
+      if (m.k === 'pz') {
+        if (!this._spend(ws, now, sdPzRelayGate, 'sdPzBucket', 'sdPzDrops', 'too many turns')) return;
+        if (!isSdRoom(a.key)) { this._junk(ws); return; }
+        try { await this._sdTurn(ws, a, m, now); } catch (e) { console.warn('[sd] turn failed', e?.message ?? e); }
+        return;
+      }
       if (!this._spend(ws, now, sdRelayGate, 'sdBucket', 'sdDrops', 'too many sd frames')) return;
       if (!isCellRoom(a.key)) { this._junk(ws); return; }
       try { await this._sdFoundWord(ws, a, m, now); } catch (e) { console.warn('[sd] word failed', e?.message ?? e); }
@@ -4783,6 +4795,50 @@ export class Room {
     if (realm.in.length >= SD_FIGHTERS_MAX) return SD_NO_FULL;
     if (sub) { realm.in.push(sub); await this.state.storage.put(SD_REALM_KEY, realm); }
     return null;
+  }
+  /** SD6b: THE ORRERY'S HALL in a realm - `{ s, st, f, ok, last }`: the stones' hours, the fray, the Concord, and each
+   *  stone's last turn (the relay's clock) - the instance's, else storage's, else fresh from the slot's law. */
+  async _sdHallOf(s) {
+    if (this._sdHall === undefined || this._sdHall.s !== s) {
+      const v = await this.state.storage.get(SD_ORRERY_KEY);
+      const hour = (h) => Number.isInteger(h) && h >= 0 && h < SD_HOURS;
+      const kept = v && v.s === s && Array.isArray(v.st) && v.st.length === SD_STONES.length && v.st.every(hour) && Number.isInteger(v.f)
+        && v.f >= 0 && v.f <= SD_FRAY_MAX && typeof v.ok === 'boolean' && Array.isArray(v.last) && v.last.length === SD_STONES.length && v.last.every(Number.isSafeInteger);
+      if (this._sdHall === undefined || this._sdHall.s !== s) this._sdHall = kept ? { s, st: [...v.st], f: v.f, ok: v.ok, last: [...v.last] } : { s, ...orreryFresh(orreryOf(s)), last: SD_STONES.map(() => 0) };
+    }
+    return this._sdHall;
+  }
+  /** SD6b: the hall said - its stones, fray, dial and Concord, and a turn's own fields when one made it so. */
+  _sdHallWord(hall, turn = {}) {
+    return JSON.stringify({ t: 'sd', k: 'pz', s: hall.s, st: hall.st, f: hall.f, lit: orreryLit(orreryOf(hall.s), hall.st), ok: hall.ok, ...turn });
+  }
+  /**
+   * SD6b: A TURN OF AN ENDING-STONE, JUDGED (Super-Dungeons.md section 8): from a verified account alive in the realm, its
+   * own pose within reach of the stone (a metre's slack for a pose's lag), the Hour still holding its slot, the stone's
+   * gear settled (SD_STONE_SETTLE_MS since its last turn), the turn's number past the last this socket made (a word said
+   * twice is one turn) - then the Orrery's law turns it, the hall is kept, and every soul in the realm hears the stones,
+   * the fray, the dial and the Concord, with the turn and its turner (`x` when the Hour snapped back and lashed the hall).
+   * Anything else is nothing: no word, no strike. Once the Concord holds, a turn is nothing.
+   */
+  async _sdTurn(ws, a, m, now) {
+    if (typeof a.sub !== 'string' || !a.sub || !a.pose || a.pose.dd) return;
+    const s = sdSlotOfRoom(a.key), o = orreryOf(s);
+    if (!o) return;
+    const meter = this._meterOf(ws);
+    if (m.q <= (meter.pzq ?? -1)) return;
+    const [x, , z] = dungeonToRealm(a.pose.x, a.pose.y ?? 0, a.pose.z);
+    if (!stoneInReach(m.i, x, z, SD_STONE_REACH_SLACK)) return;
+    const rec = await this._sdLiveOf(s, now);
+    if (!rec || rec.s !== s || !sdHolds(rec, now)) return;
+    const hall = await this._sdHallOf(s);
+    if (now - hall.last[m.i] < SD_STONE_SETTLE_MS) return;
+    const res = orreryStep(o, hall, m.i, m.a);
+    if (!res) return;
+    meter.pzq = m.q;
+    hall.st = res.st; hall.f = res.f; hall.ok = res.ok; hall.last[m.i] = now;
+    await this.state.storage.put(SD_ORRERY_KEY, hall);
+    const word = this._sdHallWord(hall, { i: m.i, a: m.a, id: a.id, q: m.q, ...(res.x ? { x: 1 } : {}) });
+    for (const [other, b] of [...this._all()]) if (b.id) this._send(other, word);
   }
 
   // ───────────────────────────── RAID3: A TOWN'S RAID ─────────────────────────────

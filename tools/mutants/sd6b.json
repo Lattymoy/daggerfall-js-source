@@ -1,0 +1,227 @@
+[
+  {
+    "name": "SD6B-pz-unknown",
+    "file": "src/net/wire.js",
+    "old": "export const SD_KINDS = Object.freeze(['found', 'pz']);",
+    "new": "export const SD_KINDS = Object.freeze(['found']);",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-a-seventh-stone",
+    "file": "src/net/wire.js",
+    "old": "  if (m.k === 'pz') return intIn(m.i, 0, SD_PZ_STONES - 1) && ",
+    "new": "  if (m.k === 'pz') return intIn(m.i, 0, SD_PZ_STONES) && ",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-a-turn-of-two-hours",
+    "file": "src/net/wire.js",
+    "old": "(m.a === 1 || m.a === -1) && intIn(m.q, 0, SD_PZ_Q_MAX) ? { k: 'pz', i: m.i, a: m.a, q: m.q } : null;",
+    "new": "Number.isInteger(m.a) && intIn(m.q, 0, SD_PZ_Q_MAX) ? { k: 'pz', i: m.i, a: m.a, q: m.q } : null;",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-a-hall-of-five",
+    "file": "src/net/wire.js",
+    "old": "|| !Array.isArray(m.st) || m.st.length !== SD_PZ_STONES ||",
+    "new": "|| !Array.isArray(m.st) || m.st.length > SD_PZ_STONES ||",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-fray-past-its-most",
+    "file": "src/net/wire.js",
+    "old": "    if (!intIn(m.f, 0, SD_PZ_FRAY_MAX) || ",
+    "new": "    if (!intIn(m.f, 0, SD_PZ_FRAY_MAX + 1) || ",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-a-turn-without-its-way",
+    "file": "src/net/wire.js",
+    "old": "    if (m.i != null) { if (!intIn(m.i, 0, SD_PZ_STONES - 1) || (m.a !== 1 && m.a !== -1)) return null; out.i = m.i; out.a = m.a; }",
+    "new": "    if (m.i != null) { if (!intIn(m.i, 0, SD_PZ_STONES - 1)) return null; out.i = m.i; out.a = m.a; }",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-a-bad-turner",
+    "file": "src/net/wire.js",
+    "old": "    if (m.id != null) { if (typeof m.id !== 'string' || !ID_RE.test(m.id)) return null; out.id = m.id; }",
+    "new": "    if (m.id != null) { if (typeof m.id !== 'string') return null; out.id = m.id; }",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-bucket-unbounded",
+    "file": "src/net/wire.js",
+    "old": "export const SD_PZ_HZ = 3;",
+    "new": "export const SD_PZ_HZ = 30;",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-relay's-bucket-the-page's",
+    "file": "src/net/wire.js",
+    "old": "export const sdPzRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SD_PZ_HZ, SD_PZ_HZ + 1);",
+    "new": "export const sdPzRelayGate = (bucket, nowMs) => tokenGate(bucket, nowMs, SD_PZ_HZ);",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-turn-on-the-find's-bucket",
+    "file": "server/src/index.js",
+    "old": "      if (m.k === 'pz') {\n        if (!this._spend(ws, now, sdPzRelayGate,",
+    "new": "      if (m.k === 'pz' && false) {\n        if (!this._spend(ws, now, sdPzRelayGate,",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-turn-in-a-cell",
+    "file": "server/src/index.js",
+    "old": "        if (!isSdRoom(a.key)) { this._junk(ws); return; }\n        try { await this._sdTurn(ws, a, m, now); }",
+    "new": "        try { await this._sdTurn(ws, a, m, now); }",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-dead-turning",
+    "file": "server/src/index.js",
+    "old": "    if (typeof a.sub !== 'string' || !a.sub || !a.pose || a.pose.dd) return;\n    const s = sdSlotOfRoom(a.key), o = orreryOf(s);",
+    "new": "    if (typeof a.sub !== 'string' || !a.sub || !a.pose) return;\n    const s = sdSlotOfRoom(a.key), o = orreryOf(s);",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-a-number-taken-twice",
+    "file": "server/src/index.js",
+    "old": "    if (m.q <= (meter.pzq ?? -1)) return;\n",
+    "new": "",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-reach-unasked",
+    "file": "server/src/index.js",
+    "old": "    if (!stoneInReach(m.i, x, z, SD_STONE_REACH_SLACK)) return;\n",
+    "new": "",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-Hour-unasked",
+    "file": "server/src/index.js",
+    "old": "    const rec = await this._sdLiveOf(s, now);\n    if (!rec || rec.s !== s || !sdHolds(rec, now)) return;\n    const hall",
+    "new": "    const hall",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-settling-skipped",
+    "file": "server/src/index.js",
+    "old": "    if (now - hall.last[m.i] < SD_STONE_SETTLE_MS) return;\n",
+    "new": "",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-hall-not-kept",
+    "file": "server/src/index.js",
+    "old": "    await this.state.storage.put(SD_ORRERY_KEY, hall);\n",
+    "new": "",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-turner-unnamed",
+    "file": "server/src/index.js",
+    "old": "{ i: m.i, a: m.a, id: a.id, q: m.q, ",
+    "new": "{ i: m.i, a: m.a, q: m.q, ",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-snap-unsaid",
+    "file": "server/src/index.js",
+    "old": "{ i: m.i, a: m.a, id: a.id, q: m.q, ...(res.x ? { x: 1 } : {}) }",
+    "new": "{ i: m.i, a: m.a, id: a.id, q: m.q }",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-hall-unsaid-at-the-hello",
+    "file": "server/src/index.js",
+    "old": "      if (isSdRoom(a.key)) { try { if (!this._send(ws, this._sdHallWord(await this._sdHallOf(sdSlotOfRoom(a.key))))) return; } catch (e) { console.warn('[sd] hall word failed', e?.message ?? e); } }\n",
+    "new": "",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-Concord-forgotten-on-a-wake",
+    "file": "server/src/index.js",
+    "old": "? { s, st: [...v.st], f: v.f, ok: v.ok, last: [...v.last] }",
+    "new": "? { s, st: [...v.st], f: v.f, ok: false, last: [...v.last] }",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-a-turn-from-a-cell",
+    "file": "src/net/online.js",
+    "old": "    if (!w || !this.sdOk || !isSdRoom(this.room) || this.status !== 'open' || !this._ws) return false;\n    const gate = sdPzGate(",
+    "new": "    if (!w || !this.sdOk || this.status !== 'open' || !this._ws) return false;\n    const gate = sdPzGate(",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-hall-heard-from-anywhere",
+    "file": "src/net/online.js",
+    "old": "      if (r?.k === 'pz') { if (room === this.room && isSdRoom(room)) this._deliver(",
+    "new": "      if (r?.k === 'pz') { if (true) this._deliver(",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-turns-unnumbered",
+    "file": "src/net/online.js",
+    "old": "    this._sdPzBucket = gate.bucket; this._sdTurnQ = w.q; this.stats.sent++;",
+    "new": "    this._sdPzBucket = gate.bucket; this.stats.sent++;",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  },
+  {
+    "name": "SD6B-the-page's-bucket-unspent",
+    "file": "src/net/online.js",
+    "old": "    this._sdPzBucket = gate.bucket; this._sdTurnQ = w.q; this.stats.sent++;",
+    "new": "    this._sdTurnQ = w.q; this.stats.sent++;",
+    "tests": [
+      "test/sd6b_hall.test.js"
+    ]
+  }
+]
