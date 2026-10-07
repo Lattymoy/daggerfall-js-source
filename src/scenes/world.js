@@ -55,7 +55,7 @@ import { cityFloorCentre, standsRail, SAND_R } from '../world/arenaFloor.js';   
 import { ARENA_TEXT } from '../systems/arenaText.js';   // ARENA1: the Daggerfall Bank's letter
 import { moveArenaRecords, arenaHomeFor, emptyArenaScene } from '../systems/arenaMove.js';   // ARENA1: a deed whose house the arena took, moved once; ARENA4b: and an online home, by its owner's client
 import { loadModWorldData, ensureWorldDataPack, worldDataPacksMissing } from './modWorldData.js';   // RR3b; WD3: a pack a save's pins let in
-import { configureLayoutPins, layoutRecordsOf, pinsFrom, setLayoutPins, admitPinnedPacks, stampLayout, layoutStampOfPixel, HOME_LAYOUTS_WAIT_MS, HOME_LAYOUTS_RETRIES, PINS_DROPPED_LINE } from '../systems/layoutPins.js';   // WD3: a town keeps the layout a save's things were made in
+import { configureLayoutPins, layoutRecordsOf, pinsFrom, setLayoutPins, admitPinnedPacks, stampLayout, layoutStampOfPixel, layoutStampOfMapId, HOME_LAYOUTS_WAIT_MS, HOME_LAYOUTS_RETRIES, PINS_DROPPED_LINE } from '../systems/layoutPins.js';   // WD3: a town keeps the layout a save's things were made in; FIELD BUGS 2026-10-07 CRATE-LAYOUT: a moved home's town, as it stands
 import { DFPalette } from '../formats/dfPalette.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, getPixelFromPixelID, REGION_RACES, LOCATION_TYPES, CLIMATES, REGION_NAMES } from '../formats/mapsFile.js';   // SPAWNED-DUNGEONS1: the ocean gate and the synthesized location's region name
 import { questTracker } from '../ui/questTracker.js';   // GUIDE5: the quest the player follows - its places, marked
@@ -13844,7 +13844,7 @@ export async function bootWorld(canvas, renderer, params, status) {
           held, isActiveQuestBuilding: (b) => !!questBridge?.machine?.isActiveQuestBuilding?.(now.mapId, b.buildingKey, b.buildingType),
         }),
         nameOf: (key) => now.summaries.find((b) => b.buildingKey === key)?.name ?? '',
-        emptyScene: (from, to) => emptyArenaScene(scenes, homeSceneName(now.mapId, from), homeSceneName(now.mapId, to)),
+        emptyScene: (from, to) => emptyArenaScene(scenes, homeSceneName(now.mapId, from), homeSceneName(now.mapId, to), { layout: layoutStampOfMapId(now.mapId) }),   // FIELD BUGS 2026-10-07 CRATE-LAYOUT: the new house's record in the layout the homes' towns stand in - the one it was picked in, and is visited in
         hooks: {
           giveOwn: arenaGiveOwn, credit: arenaRefund,
           discover: (key, hall) => { now.forgetCell(); const b = now.summaries.find((x) => x.buildingKey === key); if (b) discoverBuilding(now.locId, b, hall ? null : `${playerEntity.name ?? ''}'s residence`); },   // a hall found, never named a residence

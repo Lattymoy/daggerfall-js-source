@@ -80,7 +80,7 @@ test('SELL-AS-FOUND: online, repairing a found piece to sell it never pays - the
     assert.equal(checked, 108);
     // the field's own Daedric longsword, found at 20% (the roll's low end): it was +2,592 at Mercantile 40 / Personality 50
     const sword = addPileLootExtras([weaponOfMaterial(120, 9)], 'J', at(0), { online: false })[0];
-    assert.deepEqual([sword.value, sword.currentCondition, sword.maxCondition], [23040, 1280, 6400]);
+    assert.deepEqual([sword.value, sword.currentCondition, sword.maxCondition], [23040, 2560, 12800]);   // WEAPON-POOL: 1280 of 6400 on the row's pool
     const c = { quality: 10, skills: { mercantile: 40, personality: 50 } };
     assert.equal(quote('Sell', sword, c), 1728, 'as found');
     assert.equal(quote('Sell', mended(sword), c), 1728, 'whole, as found');
@@ -108,6 +108,6 @@ test('SELL-AS-FOUND: the mark is a declared field - a whole number, never under 
   assert.equal(validItemField('foundCondition', 1280), 1280);
   assert.equal(validItemField('foundCondition', -1), undefined);
   const sword = addPileLootExtras([weaponOfMaterial(120, 9)], 'J', at(0), { online: false })[0];
-  assert.equal(validLootItem(JSON.parse(JSON.stringify(sword)))?.foundCondition, 1280, 'a trade, a chest, a market listing carry it');
+  assert.equal(validLootItem(JSON.parse(JSON.stringify(sword)))?.foundCondition, 2560, 'a trade, a chest, a market listing carry it');   // WEAPON-POOL: 1280 on the row's pool
   assert.equal(validLootItem({ ...sword, foundCondition: 'whole' }), null, 'a forged mark is not an item');
 });
