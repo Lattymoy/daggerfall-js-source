@@ -61,7 +61,7 @@ function affineInverse(m) {
   return { a: inv, t };
 }
 
-function quatToMat33(q) {
+export function quatToMat33(q) {   // MW-SPELLFX1: exported - an effect mesh's keyframed node takes the same rotation
   const [w, x, y, z] = q;
   return Float32Array.from([
     1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y),

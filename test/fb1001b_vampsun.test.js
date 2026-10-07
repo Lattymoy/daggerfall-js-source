@@ -210,9 +210,9 @@ test('FB1001b: a DUNGEON - dungeonContext\'s own registration (a town\'s crypt o
 
 test('FB1001b: ONE sun - the curse\'s -20 asks passiveSpecials.js playerInSunlight (PlayerEnterExit.IsPlayerInSunlight\'s one port) and keeps no hour of its own; THE FOUR HOSTS answer it', () => {
   const src = read('src/systems/vampirism.js');
-  assert.match(src, /^import \{ playerInSunlight \} from '\.\/passiveSpecials\.js';/m, 'the seam\'s reader, imported');
+  assert.match(src, /^import \{ playerInSunlight, careerSunAverse \} from '\.\/passiveSpecials\.js';/m, 'the seam\'s reader, imported');   // PIN MOVED (HOOD-CAREER): beside the career's hooded rung
   const law = src.slice(src.indexOf('export const vampireStatMod'), src.indexOf('\n', src.indexOf('export const vampireStatMod')));
-  assert.equal(law, 'export const vampireStatMod = (clockMinutes) => (playerInSunlight(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD);',
+  assert.equal(law, 'export const vampireStatMod = (clockMinutes, sunAverse = true) => (sunAverse && playerInSunlight(clockMinutes) ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD);   // HOOD-SUN: a raised hood (racialSunAverse false) keeps the sun off',   // PIN MOVED (HOOD-SUN): the hood's arm
     'the day\'s -20 is the sun\'s, the +20 DFU\'s everywhere else - never the hour alone');
   // world.js's street and exterior.js are served by the mode machine each builds; it and the dungeon context register
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) assert.match(read(host), /createWorldModes\(\{/, `${host} builds the mode machine`);

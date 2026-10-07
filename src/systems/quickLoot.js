@@ -46,16 +46,40 @@ import { setClassicLootFrame } from './classicLootFrame.js';   // DISC22-C: a le
 import { getPref } from './uiPrefs.js';
 import { itemNameParts, itemStatRows } from './itemInfo.js';   // RF6: the long name's name part, the same one the plaque's rows wear; QUICK-LOOT-STATS: and the rows the lit one says about itself
 import { nextSelection, selectedRow, hoverItemAt } from './worldHover.js';   // the fold's LAW and the row -> item walk, both driven there
-import { planTake, applyTransfer, sendQuestItemClick } from './itemTransfer.js';   // QL-WEIGHT1: the window's own plan and move - the carry gate, the summoned and quest guards, the split, the gold door
+import { planTake, applyTransfer, sendQuestItemClick, REFUSAL } from './itemTransfer.js';   // QL-WEIGHT1: the window's own plan and move - the carry gate, the summoned and quest guards, the split, the gold door
 import { isMap } from './useItem.js';   // the map the window USES rather than takes (F156) - left for the window here
 import { racialSuppressInventory } from './lycanthropy.js';   // DISC10-E L3: the beast takes nothing into a pack it cannot open
 import { audio } from './audio.js';   // SND1: the take's own sound
 import { SOUND } from './soundClips.js';
+import { lootRarityOn, rarityRank, RARITIES } from './lootRarity.js';   // LOOT18: the take-all's tier
+import { isJunk, JUNK_GROUPS } from './itemJunk.js';   // LOOT18: and the player's junk; the gear groups
+import { isAmmunition } from './itemTemplates.js';   // LOOT18: a quiver is a supply, always taken
+import { isEnchanted } from './inventory.js';   // LOOT18: and DFU's own magic item, whatever its tier reads
 
 /** The player's own switch (features.js, `quick-loot`). Off is
  *  Daggerfall's loot exactly: the activate key opens the window it has
  *  always opened and the plaque stays the readout Arc A shipped. */
 export const quickLootOn = () => !!getPref('quickLoot');
+
+/** LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): THE TAKE-ALL'S TIER - the quick-loot row's
+ *  part (features.js, `quickLootTier`): 'all' takes every piece of gear, 'magic' leaves a Common piece on the pile,
+ *  'rare' a Common and a Magic one. Gear is what the ladder grades (a weapon, armour, a jewel, a garment - never a
+ *  quiver); gold, supplies, a quest's items, DFU's own magic items and everything else are always taken. With the ladder
+ *  off there is no tier to read and the part leaves nothing (Off is DFU exactly). A junk piece (systems/itemJunk.js) is
+ *  the player's word that it goes, and the take-all always leaves it. A row the player lights and takes is taken
+ *  whatever it is: the part is the take-all's. */
+export const QUICK_LOOT_TIER = 'quickLootTier';
+export const QUICK_LOOT_FLOORS = Object.freeze({ all: 0, magic: RARITIES.magic.rank, rare: RARITIES.rare.rank });
+export function takeAllLeaves(item) {
+  if (!item || item.questItem) return false;
+  if (isJunk(item)) return true;
+  const floor = QUICK_LOOT_FLOORS[getPref(QUICK_LOOT_TIER)] ?? 0;
+  if (!(floor > 0) || !lootRarityOn() || !JUNK_GROUPS.includes(item.group) || isAmmunition(item)) return false;
+  if (!item.rarity && isEnchanted(item)) return false;   // DFU's own magic item: no rung of the ladder, and worth the take
+  return rarityRank(item) < floor;
+}
+/** LOOT18: what the take-all's line adds for the pieces it left. */
+export const QUICK_LOOT_LEFT = (n) => `${n} left by your quick-loot filter.`;
 
 /** What the HUD says when a row goes into the pack. The name is the
  *  row's own word, so the line and the row the player was looking at
@@ -103,7 +127,7 @@ function takeSound() {
   if (_tookSound) audio.playOneShot(_tookSound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
   _tookSound = null;
 }
-function takeThrough(playerEntity, items, item, getQuest, moved = null) {
+function takeThrough(playerEntity, items, item, getQuest, moved = null, wholeStack = false) {
   if (isMap(item)) return null;
   // WHERE-ROBES (FIELD BUGS 2026-10-04c): a row taken here IS the remote list's click with no window around it, and that
   // click's first act is the quest's (DaggerfallInventoryWindow.cs:2027-2037) - before the plan, as DFU sends it before
@@ -111,6 +135,9 @@ function takeThrough(playerEntity, items, item, getQuest, moved = null) {
   sendQuestItemClick(item, getQuest);
   const plan = planTake(item, { bag: playerEntity.items ?? [], entity: playerEntity, getQuest });
   if (!plan.ok) return { refusal: plan.refusal };
+  // PI1 (AUDIT PI1 I2): Physical Items' press takes the whole stack or nothing (CanCarryWholeStack [IL_858c] ->
+  // "cannotCarryAnymore") - quick loot's own take keeps CanCarryAmount's part
+  if (wholeStack && plan.amount < (item.stackCount ?? 1)) return { refusal: REFUSAL.cannotCarry };
   if (plan.sound === 'gold' || !_tookSound) _tookSound = plan.sound === 'gold' ? 'gold' : 'click';
   const got = applyTransfer(item, plan, items, (playerEntity.items ??= []), { entity: playerEntity, toPlayer: true }) ?? item;
   moved?.push({ item: got, count: plan.amount });   // PICKUP-FEED: the plan's amount, not the record's - gold answers the pile's own row, whose stack is what STAYED
@@ -346,14 +373,16 @@ export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQue
     // QL-WEIGHT1: what fits is taken and counted; the first row that does
     // not is the line said when nothing fitted at all, and the rows left
     // stay on the pile for the window or the next press.
-    let n = 0, refusal = null;
+    let n = 0, refusal = null, left = 0;
     const moved = [];   // PICKUP-FEED: what this press put in the pack, in the order it went
     _tookSound = null;
     for (const it of [...items]) {
+      if (takeAllLeaves(it)) { left++; continue; }   // LOOT18: the row's tier and the player's junk stay on the pile
       const got = takeThrough(playerEntity, items, it, getQuest, moved);
       if (got?.refusal) { refusal ??= got.refusal; continue; }
       if (got) n += 1;
     }
+    if (left) refusal = { ...(refusal ?? {}), text: [refusal?.text, QUICK_LOOT_LEFT(left)].filter(Boolean).join(' ') };   // LOOT18: said as the rows that stayed are
     // AUDIT QL-WEIGHT1: a count with rows LEFT says why they stayed, on the same line - "You take 2 items." over a
     // pile that still holds three read as a door that stuck, with the reason unsaid
     takeSound();   // SND1
@@ -366,9 +395,24 @@ export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQue
   }
   const item = quickLootItemAt(key, items);
   if (!item) return null;
+  return takeOneItem(playerEntity, items, item, say, { getQuest, took });   // PI1: the one-item take, one home (below)
+}
+
+/**
+ * PI1 (Physical Items - scenes/physicalItemsLayer.js): ONE ITEM, NO WINDOW. The press on an item lying in the world as
+ * itself takes it through this file's one-item door (`takeThrough`: the quest click, planTake's summoned refusal and
+ * carry check, gold into the purse) - the mod's own TryPickup (vendor/physical-items, [IL_847c]) asks the same
+ * questions, and these are the port's answers to them. No switch and no armed key: the item is the press's target.
+ * Answers the item moved, QUICK_LOOT_REFUSED (the refusal said), or null for a map - the caller's (planTake's map arm
+ * reads it, never moves it). Quick loot's own one-row take is this (quickLootTake above): one law for one item.
+ * `wholeStack` (the press's): the whole stack or nothing - the mod's CanCarryWholeStack, where quick loot takes the part
+ * that fits.
+ */
+export function takeOneItem(playerEntity, items, item, say = () => {}, { getQuest = null, took = null, wholeStack = false } = {}) {
+  if (!playerEntity || !Array.isArray(items) || !items.includes(item)) return null;
   _tookSound = null;
   const moved = [];
-  const got = takeThrough(playerEntity, items, item, getQuest, moved);
+  const got = takeThrough(playerEntity, items, item, getQuest, moved, wholeStack);
   if (got?.refusal) { say(got.refusal.text); return QUICK_LOOT_REFUSED; }
   if (got) { takeSound(); if (!shownBy(took, moved, playerEntity)) say(tookItemText(got)); }   // SND1; PICKUP-FEED: the card, or the line
   return got;

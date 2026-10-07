@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-B1-duel-opponent-giftable",
     "file": "src/scenes/world.js",
-    "old": "!(duelMgr.fighting && p.id === duelMgr.opponent)\n    && ",
-    "new": "",
+    "old": "openPeers(list, isPartyMate).filter((p) => !(duelMgr.fighting && p.id === duelMgr.opponent));",
+    "new": "openPeers(list, isPartyMate);",
     "tests": [
       "test/audit27d.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AUDIT-B3-concealed-stranger-giftable",
     "file": "src/scenes/world.js",
-    "old": "\n    && !(p.cv && !(social?.party && social.isPartyPeer(p.id))));",
-    "new": ");",
+    "old": "const giftablePeers = (list) => openPeers(list, isPartyMate).filter(",
+    "new": "const giftablePeers = (list) => (list ?? []).filter(",
     "tests": [
       "test/audit27d.test.js"
     ]

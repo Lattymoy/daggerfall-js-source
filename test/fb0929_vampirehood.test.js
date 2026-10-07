@@ -15,13 +15,13 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   createVampirismCurse, racialFastTravelBlock, racialSunAverse, vampirismMagicRound,
-  SUNLIGHT_TRAVEL_TEXT, VAMPIRE_HOOD_TEXT,
+  SUNLIGHT_TRAVEL_TEXT, VAMPIRE_HOOD_TEXT, VAMPIRE_STATS, VAMPIRE_STAT_MOD,
 } from '../src/systems/vampirism.js';
 import { VAMPIRE_CLANS } from '../src/systems/infection.js';
 import { createRandomClothing, ITEM_GROUPS } from '../src/systems/loot.js';
 import { createTempItem, CREATE_ITEM_ROWS } from '../src/systems/createItem.js';
 import { equipItem } from '../src/systems/equip.js';
-import { nextVariant } from '../src/systems/useItem.js';
+import { nextVariant, toggleHood } from '../src/systems/useItem.js';
 import { EQUIP_SLOTS } from '../src/characters/paperdoll.js';
 import { arrivalClampMinutes } from '../src/systems/travel.js';
 import { MINUTES_PER_DAY, isDayFromMinutes } from '../src/systems/gameDate.js';
@@ -107,8 +107,8 @@ test('VAMP-HOOD: the arrival clamp\'s racial arm asks the same hood - a hooded v
   assert.equal(racialSunAverse(v), false, 'hooded: it does not');
   assert.equal(arrivalClampMinutes(at(12), { sunAverse: racialSunAverse(v) }), 0, 'no push');
   // world.js is the one caller: the racial arm through the law, the career's Damage from Sunlight beside it untouched
-  assert.match(read('src/scenes/world.js'), /sunAverse: racialSunAverse\(playerEntity\) \|\| careerSunDamage\(playerEntity\.career\),/,
-    'HasVampirism() || Career.DamageFromSunlight (DaggerfallTravelPopUp.cs:351), the first arm hooded');
+  assert.match(read('src/scenes/world.js'), /sunAverse: racialSunAverse\(playerEntity\) \|\| careerSunAverse\(playerEntity\),/,
+    'HasVampirism() || Career.DamageFromSunlight (DaggerfallTravelPopUp.cs:351), both arms hooded');   // PIN MOVED (HOOD-CAREER): the career's arm asks the hood too
 });
 
 test('VAMP-HOOD online: the door reads the shared clock, whose day is one real hour - bare-headed the vampire waits it out, hooded it travels', () => {
@@ -133,17 +133,33 @@ test('VAMP-HOOD online: the door reads the shared clock, whose day is one real h
   const world = read('src/scenes/world.js');
   assert.match(world, /const ftb = racialFastTravelBlock\(playerEntity, nowMin\);\n\s*if \(ftb\) \{ sayWithNightfall\(ftb\.text\); if \(ftb\.hint\) townTalk\.say\(ftb\.hint\); return false; \}/,   // GUIDE2: the door answers the journal's Show on map
     'the map door speaks the hint after the refusal');
-  assert.match(world, /const sun = racialFastTravelBlock\(playerEntity, nowMin\)\?\.text \?\? null;\n\s*return sun \? withNightfall\(sun\) : null;/, 'the party\'s refusal');
+  assert.match(world, /const sun = \(careerFastTravelBlock\(playerEntity, nowMin\) \?\? racialFastTravelBlock\(playerEntity, nowMin\)\)\?\.text \?\? null;[^\n]*\n\s*return sun \? withNightfall\(sun\) : null;/, 'the party\'s refusal');   // PIN MOVED (HOOD-CAREER): the career's rung first, both hooded
 });
 
-test('VAMP-HOOD: the hood is the sun\'s, not the day\'s - a hooded vampire\'s seven stats are still 20 down at noon (VAMP-DAY)', () => {
+test('HOOD-SUN (2026-10-07, Mac: "The vampire cloak and hood doesn\'t work ingame for shielding against the sun"): the hood shields the stats too - bare-headed in the street\'s sun at noon the seven stats are 20 down (VAMP-DAY), the hood raised they are DFU\'s +20, lowered 20 down again; a hood in the pack shields nothing (mutants: the stats ask no hood; the hood read backwards)', () => {   // PIN MOVED (HOOD-SUN): VAMP-HOOD left the -20 under a hood
   const v = vampire();
   const cloak = casualCloak();
   equipItem(v, cloak);
+  const seven = (n) => VAMPIRE_STATS.map((s) => [s, n]);
+  const stats = () => VAMPIRE_STATS.map((s) => [s, v.racialOverride.statMods[s]]);
+  vampirismMagicRound(v, { nowMinutes: at(12) });
+  assert.deepEqual(stats(), seven(-VAMPIRE_STAT_MOD), 'hood down in the street at noon: the sun\'s -20');
   nextVariant(cloak);
   assert.equal(racialFastTravelBlock(v, at(12)), null, 'hooded');
   vampirismMagicRound(v, { nowMinutes: at(12) });
-  assert.equal(v.racialOverride.statMods.strength, -20, 'the weak hours hold under a hood in the street\'s sun - indoors and underground there is none (FIELD BUGS 2026-10-01b)');
+  assert.deepEqual(stats(), seven(VAMPIRE_STAT_MOD), 'hood up at noon: no sun reaches the curse - DFU\'s +20, as under a roof');
+  vampirismMagicRound(v, { nowMinutes: at(23) });
+  assert.deepEqual(stats(), seven(VAMPIRE_STAT_MOD), 'and by night, as ever');
+  toggleHood(cloak);   // the Enhanced pack's Lower hood (HOOD-SAID)
+  assert.equal(racialSunAverse(v), true, 'lowered');
+  vampirismMagicRound(v, { nowMinutes: at(12) });
+  assert.deepEqual(stats(), seven(-VAMPIRE_STAT_MOD), 'the hood lowered: the sun\'s again');
+  const w = vampire();
+  const packed = casualCloak();
+  nextVariant(packed);
+  w.items.push(packed);
+  vampirismMagicRound(w, { nowMinutes: at(12) });
+  assert.equal(w.racialOverride.statMods.strength, -VAMPIRE_STAT_MOD, 'a raised hood in the pack, not worn: the sun\'s -20');
 });
 
 test('VAMP-HOOD: ONE hood law - vampirism reads survival/temperature.js cloakState and names no hooded garment of its own; THE FOUR HOSTS', () => {

@@ -65,7 +65,7 @@
   {
     "name": "WK-N4-unbuilt-carrack-lit",
     "file": "src/scenes/navalHost.js",
-    "old": ": hull !== HULL.Carrack);",
+    "old": ": !(hull === HULL.Carrack && hullBuild(hull) === MOD_BUILDS[HULL.Carrack]));",
     "new": ": true);",
     "tests": [
       "test/auditwatchkit_sea.test.js"

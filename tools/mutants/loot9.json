@@ -363,11 +363,12 @@
   {
     "name": "LOOT9-price-stays",
     "file": "src/systems/lootRarity.js",
-    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([old]) + affixesWorth([line]);\n",
+    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([old], item) + affixesWorth([line], item);\n",
     "new": "\n",
     "tests": [
       "test/loot9_reforge.test.js"
-    ]
+    ],
+    "note": "LOOT14 (RE-AIMED BY CONTENT): the price line reads a garment's half (bible/06-Systems/Loot-II-Arc.md section 6) - the law it pins unmoved."
   },
   {
     "name": "LOOT9-line-unmarked",

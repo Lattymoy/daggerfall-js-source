@@ -319,7 +319,11 @@ test('AUDIT NAV2 F24 a galley turns her stem on a low hull only where her great 
 test('AUDIT NAV2 F24 a galley fights a low hull from outside her dead zone: a war galley and a bold pirate sloop, each the other\'s captain, in p04\'s eight geometries and winds - the sloop closing to her own 55 m, inside the galley\'s broadside\'s 57 - the galley opens the range hard, lays no gun inside it, and fires in every one within 90 s, lying inside it under a third of the time (mutants: the dead zone not opened, laid inside the dead zone)', () => {
   const WINDS = [[0.6, 0, 0.8], [-1.2, 0, 0.5], [0, 0, -1.5], [1.4, 0, -0.4]];
   const dz = layMin(HULL.LargeGalley, 'starboard', HULL.LargeBoat);
-  near(dz, 57, 2, 'the broadside\'s dead zone on a Large Boat');
+  // PIN MOVED (SHIPS-2, 2026-10-07): a Large Boat is Mac's Tiny Ship - her gunwale a metre over the mod's boat's - and
+  // the galley's broadside lays on her from 53 m (57 on the mod's boat): the sloop closes to her own 50 now
+  // (navalShips.js SHIP_CLASSES), inside it as her 55 was inside the 57
+  near(dz, 53, 2, 'the broadside\'s dead zone on a Large Boat');
+  assert.ok(classById('pirateSloop').range < dz, 'the sloop fights inside it');
   const T = 300, late = [];
   let inside = 0;
   for (let k = 0; k < 8; k++) {
@@ -521,7 +525,9 @@ test('AUDIT NAV2 F25 the fighting power is the time each ship needs to make the 
   const sloop = C('pirateSloop'), cutter = C('navyCutter'), galley = C('navyGalley'), brig = C('pirateBrig');
   // her hits by the other's size: the same battery strikes a Small Ship far oftener than a Large Boat
   const long = batteryOf(HULL.SmallShip, 'starboard');
-  assert.ok(hitShare(long, 0.75, HULL.SmallShip) > 1.8 * hitShare(long, 0.75, HULL.LargeBoat), `${hitShare(long, 0.75, HULL.SmallShip).toFixed(2)} against ${hitShare(long, 0.75, HULL.LargeBoat).toFixed(2)}`);
+  // PIN MOVED (SHIPS-2, 2026-10-07): a Large Boat is Mac's Tiny Ship, a metre taller than the mod's boat - hit 0.70 as
+  // often as a Small Ship where the mod's was 0.49
+  assert.ok(hitShare(long, 0.75, HULL.SmallShip) > 1.3 * hitShare(long, 0.75, HULL.LargeBoat), `${hitShare(long, 0.75, HULL.SmallShip).toFixed(2)} against ${hitShare(long, 0.75, HULL.LargeBoat).toFixed(2)}`);
   assert.ok(hitShare(long, 0.75, HULL.LargeBoat) > hitShare(long, 0.3, HULL.LargeBoat), 'and a crack crew\'s oftener than a green one\'s');
   // by her men: the sloop's swivels take two a ball - she makes a cutter strike by her crew long before her hull
   const byMen = strikeTime(sloop, cutter);
@@ -534,7 +540,8 @@ test('AUDIT NAV2 F25 the fighting power is the time each ship needs to make the 
   assert.ok(strikeTime(fightingPower({ ...cutter, crewShare: 0.5 }), sloop) > strikeTime(cutter, sloop), 'her men thinned, her guns load slower');
   assert.ok(strikeTime(fightingPower({ ...mine, crewed: false }), sloop) > strikeTime(mine, sloop), 'single-handed, slower');
   // no fire from a battery that cannot lay where the other fights: a war galley's great guns (91 m) and broadside (57 m)
-  // on a Large Boat that fights at 55 m - none; one that stands off at 100 m, both
+  // on a Large Boat that fights at 55 m - none; one that stands off at 100 m, both. PIN MOVED (SHIPS-2, 2026-10-07): on
+  // Mac's Tiny Ship 85 m and 53 m, the sloop at her 50 (F24)
   assert.equal(strikeTime(galley, sloop), Infinity);
   assert.ok(Number.isFinite(strikeTime(galley, fightingPower({ ...sloop, range: 100 }))));
   // the odds: the sloop masters the war galley; the cutter is no longer the sloop's master fifteen to one

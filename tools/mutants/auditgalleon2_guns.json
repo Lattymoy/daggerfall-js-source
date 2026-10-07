@@ -39,7 +39,7 @@
   {
     "name": "AUDIT-GN2-GN2-at-rest-with-her-guns-still-out",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "if (s.x[i] !== RUN_IN_X || kick > 0) rest = false;",
+    "old": "if (s.x[i] !== s.inX[i] || kick > 0) rest = false;",
     "new": "if (kick > 0) rest = false;",
     "tests": [
       "test/auditgalleon2_guns.test.js"
@@ -102,7 +102,7 @@
   {
     "name": "AUDIT-GN2-GN5-guns-left-out",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": " s.x.fill(RUN_IN_X); }",
+    "old": " s.x = [...s.inX]; }",
     "new": " }",
     "tests": [
       "test/auditgalleon2_guns.test.js"

@@ -902,7 +902,7 @@ test('PARTY-TRAVEL host by source: world.js wires the session - the map door\'s 
   assert.match(bag, /\.\.\.travelFareDeps\(\),/, 'both maps read the same bag the party prices with');
   const refusal = w.slice(w.indexOf('function partyTravelRefusal() {'), w.indexOf('const partyTravelJourney'));
   assert.match(refusal, /if \(duelEnemyNear\(\) \|\| areEnemiesNearby\(\[\.\.\.cityGuards\.guards, \.\.\.exteriorFoes\.foes\]\) \|\| navalHostileNear\(\)\) return CANNOT_TRAVEL_ENEMIES_TEXT;/, 'the door\'s own rungs, in its own words (NAV-H: a hostile ship in reach among them)');
-  assert.match(refusal, /const sun = racialFastTravelBlock\(playerEntity, nowMin\)\?\.text \?\? null;\s*\n\s*return sun \? withNightfall\(sun\) : null;/, 'the door\'s own words, and (LIVED1) when the world\'s night falls');
+  assert.match(refusal, /const sun = \(careerFastTravelBlock\(playerEntity, nowMin\) \?\? racialFastTravelBlock\(playerEntity, nowMin\)\)\?\.text \?\? null;[^\n]*\n\s*return sun \? withNightfall\(sun\) : null;/, 'the door\'s own words, and (LIVED1) when the world\'s night falls');   // PIN MOVED (HOOD-CAREER): the career's rung and the racial one, both hooded, in the door's order
   const travel = w.slice(w.indexOf('async function fastTravelTo(pick, opts, computed)'), w.indexOf('\n  }\n', w.indexOf('async function fastTravelTo(pick, opts, computed)')));
   assert.match(travel, /resolveArrival: partyArrival \? async \(fallback\)/, 'party landing is validated before the teleport commits');
   const core = w.slice(w.indexOf('async function _teleportToPixel('), w.indexOf('let _teleporting = false;'));

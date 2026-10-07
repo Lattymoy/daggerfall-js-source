@@ -1,5 +1,5 @@
 // SD9b (2026-10-07, the Super Dungeons arc; bible/11-Multiplayer/Super-Dungeons.md section 11): THE HOURS BROKEN - the
-// account service's claim of an `h1` (server-account/src/sds.js claimSd, migration 0087): one row a (slot, account), a
+// account service's claim of an `h1` (server-account/src/sds.js claimSd, migration 0088): one row a (slot, account), a
 // guest's fought and not counted, Hourbreaker and The Turning Hour rolled off the receipt's seed on the first write alone
 // and held for good on the row (`sd_honours`); the route behind a session, the count on the cards; the title held, worn
 // and signed; the client's call and the device's book (net/sdClaims.js); the world host's seams.
@@ -272,8 +272,8 @@ test('SD9b the hosts and the service by source: the world host keeps a book onli
   assert.match(idx, /if \(path === '\/v1\/sd\/claim' && request\.method === 'POST'\) \{/);
   assert.match(idx, /sds: await sdRecordOf\(ctx, who\.player\.id\)/);
   assert.match(idx, /sds: await sdRecordOf\(ctx, body\.id\)/);
-  assert.match(src('server-account/migrations/0087_sd_kills.sql'), /PRIMARY KEY \(slot, account\)/);
-  assert.match(src('server-account/migrations/0087_sd_kills.sql'), /ALTER TABLE players ADD COLUMN sd_honours INTEGER NOT NULL DEFAULT 0;/);
+  assert.match(src('server-account/migrations/0088_sd_kills.sql'), /PRIMARY KEY \(slot, account\)/);
+  assert.match(src('server-account/migrations/0088_sd_kills.sql'), /ALTER TABLE players ADD COLUMN sd_honours INTEGER NOT NULL DEFAULT 0;/);
   const deploy = src('.github/workflows/account-deploy.yml');
   for (const p of ['src/net/sdReceipt.js', 'src/systems/wind.js']) assert.ok(deploy.includes(`- "${p}"`), `${p} deploys the service`);
 });

@@ -1,0 +1,107 @@
+[
+  {
+    "name": "LPTFIT-the-records-unread",
+    "file": "src/world/roadVerge.js",
+    "old": "    out[i] = (paths && paths[i]) || rec === TILE.road || rec === TILE.roadDirt || rec === TILE.roadGrass ? 1 : 0;",
+    "new": "    out[i] = (paths && paths[i]) ? 1 : 0;",
+    "tests": ["test/lptfit.test.js"]
+  },
+  {
+    "name": "LPTFIT-the-mask-unread",
+    "file": "src/world/roadVerge.js",
+    "old": "    out[i] = (paths && paths[i]) || rec === TILE.road || rec === TILE.roadDirt || rec === TILE.roadGrass ? 1 : 0;",
+    "new": "    out[i] = rec === TILE.road || rec === TILE.roadDirt || rec === TILE.roadGrass ? 1 : 0;",
+    "tests": ["test/lptfit.test.js"]
+  },
+  {
+    "name": "LPTFIT-the-turn-read-as-a-record",
+    "file": "src/world/roadVerge.js",
+    "old": "    const rec = tilemap[i] & 0x3f;",
+    "new": "    const rec = tilemap[i];",
+    "tests": ["test/lptfit.test.js"]
+  },
+  {
+    "name": "LPTFIT-the-squares-far-edge",
+    "file": "src/world/roadVerge.js",
+    "old": "      const dx = Math.max(tx * TILE_M - x, 0, x - (tx + 1) * TILE_M);",
+    "new": "      const dx = Math.max(tx * TILE_M - x, 0, x - tx * TILE_M);",
+    "tests": ["test/lptfit.test.js"]
+  },
+  {
+    "name": "LPTFIT-the-tiles-centre-not-square",
+    "file": "src/world/roadVerge.js",
+    "old": "      const dz = Math.max(tz * TILE_M - z, 0, z - (tz + 1) * TILE_M);",
+    "new": "      const dz = Math.abs((tz + 0.5) * TILE_M - z);",
+    "tests": ["test/lptfit.test.js"]
+  },
+  {
+    "name": "LPTFIT-the-search-one-tile-short",
+    "file": "src/world/roadVerge.js",
+    "old": "  const n = Math.ceil(reach / TILE_M);",
+    "new": "  const n = Math.ceil(reach / TILE_M) - 1;",
+    "tests": ["test/lptfit.test.js"]
+  },
+  {
+    "name": "LPTFIT-the-cap-unfloored",
+    "file": "src/world/roadVerge.js",
+    "old": "  return room >= reach ? Infinity : Math.max(LPT_FIT_FLOOR, room / crown);",
+    "new": "  return room >= reach ? Infinity : room / crown;",
+    "tests": ["test/lptfit.test.js"]
+  },
+  {
+    "name": "LPTFIT-the-cap-never-binds",
+    "file": "src/world/roadVerge.js",
+    "old": "  return room >= reach ? Infinity : Math.max(LPT_FIT_FLOOR, room / crown);",
+    "new": "  return Infinity;",
+    "tests": ["test/lptfit.test.js"]
+  },
+  {
+    "name": "LPTFIT-the-band-unasked",
+    "file": "src/world/roadVerge.js",
+    "old": "  if (net) room = Math.min(room, roadRoom(net, px, py, x, z, reach));",
+    "new": "  if (net) room = Math.min(room, reach);",
+    "tests": ["test/lptfit.test.js"]
+  },
+  {
+    "name": "LPTFIT-the-tiles-unasked",
+    "file": "src/world/roadVerge.js",
+    "old": "  let room = mask ? tileRoom(mask, x, z, reach) : reach;",
+    "new": "  let room = reach;",
+    "tests": ["test/lptfit.test.js"]
+  },
+  {
+    "name": "LPTFIT-the-fit-unread",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "g.fit ? Math.min(v.scale, g.fit[i]) : v.scale",
+    "new": "v.scale",
+    "tests": ["test/lptfit.test.js"]
+  },
+  {
+    "name": "LPTFIT-the-greater-taken",
+    "file": "src/world/lowPolyTrees.js",
+    "old": "g.fit ? Math.min(v.scale, g.fit[i]) : v.scale",
+    "new": "g.fit ? Math.max(v.scale, Math.min(g.fit[i], 9)) : v.scale",
+    "tests": ["test/lptfit.test.js"]
+  },
+  {
+    "name": "LPTFIT-the-host-fits-the-wild-alone",
+    "file": "src/scenes/world.js",
+    "old": "          if (fit) fit[i] = lptFitCap(lptPathMask, vergeNet, px, py, c[0], c[2], crown, v);",
+    "new": "          if (fit) fit[i] = wild[i] ? lptFitCap(lptPathMask, vergeNet, px, py, c[0], c[2], crown, v) : Infinity;",
+    "tests": ["test/lptfit.test.js"]
+  },
+  {
+    "name": "LPTFIT-the-box-crown",
+    "file": "src/scenes/world.js",
+    "old": "        const crown = verges ? (LPT_CROWNS[lpt.key] ?? 0) : 0;",
+    "new": "        const crown = verges ? lpt.size.w / 2 : 0;",
+    "tests": ["test/lptfit.test.js"]
+  },
+  {
+    "name": "LPTFIT-the-far-picture-unfitted",
+    "file": "src/scenes/world.js",
+    "old": "          scales[i] = (fit ? Math.min(v, fit[i]) : v) / LPT_SCALE_MAX;",
+    "new": "          scales[i] = v / LPT_SCALE_MAX;",
+    "tests": ["test/lptfit.test.js"]
+  }
+]

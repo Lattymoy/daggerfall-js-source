@@ -99,7 +99,7 @@ const IL = {
   'PlayerBillboard::PlayDeathAnimation': { port: 'playDeath', mod: 'eotbBody.js' },
   'PlayerBillboard::PlayAnimationCoroutine': { port: 'startClip', mod: 'eotbBody.js' },   // EOTB-IL: the forward kind, stepped by advanceClip
   'PlayerBillboard::PlayAnimationHoldCoroutine': { port: 'holdPhase', mod: 'eotbBody.js' },   // EOTB-IL: the draw then the held last frame (holdDrawFrames)
-  'PlayerBillboard::PlayAnimationPingPongCoroutine': { port: 'pingPongFrames', mod: 'eotbBillboard.js' },   // EOTB-IL: forward while i < n/2 + offset, then down to 1 (pingPongTickFrames ticks)
+  'PlayerBillboard::PlayAnimationPingPongCoroutine': { port: null, why: 'no twin: RETIRED by ONE-STROKE (2026-10-07, Mac: "attacking plays only one animation") - a blow plays one of the swing’s two strokes (eotbBillboard.js meleeStrokeFrames), and the ping-pong was a second movement. It was ported (forward while i < n/2 + offset, then down to 1) and is deleted, a departure in the Ledger.' },
   'PlayerBillboard::GetMeleeAnimTickTime': { port: 'meleeAnimTickTime', mod: 'eotbBillboard.js' },   // EOTB-IL: animTime * 5 / frames
   'PlayerBillboard::UpdateBillboard': { port: 'updateBillboard', mod: 'eotbBody.js' },   // EOTB-IL: the frame/orientation/table write the batch reads
   'PlayerBillboard::UpdateBillboardDelayed': { port: 'updateBillboardDelayed', mod: 'eotbBody.js' },
@@ -137,8 +137,8 @@ test('AUDIT-EOTB scope: the inventory is whole, and every row has a verdict', ()
   // EOTB-IL: there is one evidence class now. A row marked otherwise
   // is a reading made without the assembly, and the assembly is here.
   for (const [k, v] of PORTED) assert.equal(v.evidence, undefined, `${k}: every port is read off the IL`);
-  assert.equal(PORTED.length, 47, 'forty-seven of sixty-one');   // CSA-J: OnUpdateSailing and ModCompatibilityChecking's Come Sail Away arm
-  assert.equal(NOT.length, 14, 'fourteen with no twin here');
+  assert.equal(PORTED.length, 46, 'forty-six of sixty-one');   // CSA-J: OnUpdateSailing and ModCompatibilityChecking's Come Sail Away arm; ONE-STROKE retired the ping-pong
+  assert.equal(NOT.length, 15, 'fifteen with no twin here');
 });
 
 test('EOTB-IL scope: the table is checked AGAINST THE DUMP - every row is an authored method, and no authored method is missing', () => {
@@ -254,13 +254,13 @@ test('AUDIT-EOTB scope: THE DEAD EXPORTS - what is ported, exported, and called 
 test('AUDIT-EOTB scope: the bible page states THIS table, and no record says 1:1 as a claim', () => {
   const page = rd('bible/06-Systems/Eye-Of-The-Beholder.md');
   assert.match(page, /\*\*61 authored methods\*\*/, 'the page states the inventory this table holds');
-  assert.match(page, /\*\*forty-seven\b/i, 'and how many of them are ported');   // CSA-J: OnUpdateSailing and ModCompatibilityChecking's boat arm
-  assert.match(page, /\*\*fourteen\b/i, 'and how many have no twin');
+  assert.match(page, /\*\*forty-six\b/i, 'and how many of them are ported');   // CSA-J: OnUpdateSailing and ModCompatibilityChecking's boat arm; ONE-STROKE: less the ping-pong
+  assert.match(page, /\*\*fifteen\b/i, 'and how many have no twin');
   assert.match(page, /test\/eotb_scope\.test\.js/, 'and points at this file');
 
   // Every IL name the page's no-twin list mentions must be a row
   // here with no port - so the prose cannot drift from the table.
-  const section = page.split(/\*\*Fourteen (?:have )?no twin\*\*/)[1]?.split('\n## ')[0] ?? '';
+  const section = page.split(/\*\*Fifteen (?:have )?no twin\*\*/)[1]?.split('\n## ')[0] ?? '';
   assert.ok(section.length > 200, 'the page carries the list');
   const named = [...section.matchAll(/`([A-Za-z_][\w]*)`/g)].map((m) => m[1]);
   assert.ok(named.length >= 10, 'and names methods in it');

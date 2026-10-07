@@ -32,7 +32,9 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  corpseSource, rarityRank, lootRarityOn, rarityEligible, rollRarity, applyRarity, lastPass, legendaryFindMult,
+  corpseSource, rarityRank, lootRarityOn, rarityEligible, rollRarity, applyRarity, lastPass, legendaryFindMult, isGarment, RARITIES,
+  cursePass,   // LOOT16
+  socketPass,   // LOOT20
 } from './lootRarity.js';
 import { isGoldPieces } from './inventory.js';
 import { isPotion } from './useItem.js';   // CAP-SUPPLIES: a potion IS the glass bottle - DFU's IsPotion, its one export (AUDIT 625 L7)
@@ -106,7 +108,13 @@ export function isLootSupply(item) {
   return false;
 }
 /** The cap's order, best first: a Magic-or-better piece by its tier, then a supply, then the rest. */
-const capRank = (it) => { const r = rarityRank(it); return r > 0 ? 1 + r : (isLootSupply(it) ? 1 : 0); };
+// LOOT14 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 6): a GARMENT below Legendary ranks under a supply
+// and over a plain piece - a Magic shirt never pushes a Potion of Healing off a three-piece body (LOOT-EASE's call)
+const GARMENT_UNDER_SUPPLY = 0.5;
+// AUDIT LOOT II A9: with the ladder on - off, a garment ranks as it always did (a DFU magic shirt, Magic by its
+// enchantment, over a potion: law 6)
+const garmentRank = (it) => (lootRarityOn() && isGarment(it) && rarityRank(it) > 0 && rarityRank(it) < RARITIES.legendary.rank ? GARMENT_UNDER_SUPPLY : null);
+const capRank = (it) => { const r = rarityRank(it); const g = garmentRank(it); if (g != null) return g; return r > 0 ? 1 + r : (isLootSupply(it) ? 1 : 0); };
 
 /**
  * CAP A LIST IN PLACE: gold first (every coin stack folded into the first - one item, its count the sum), then a quest's
@@ -174,12 +182,20 @@ export function capFoeLoot(entity) {
  *    foe's kit rolls the plain ladder now, never a boss's multiplied one (`boss: false`) or an Elite Dungeon's quality;
  *    their better ladders stay their carried loot's. A revenant never: its list holds a player's own pieces.
  */
-export function rollCorpseKit(entity, { rolls = Math.random, luck = 50 } = {}) {
+export function rollCorpseKit(entity, opts = {}) {
+  const kit = [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)];   // LOOT14: the garments after every draw the kit made
+  cursePass(kit, opts.rolls ?? Math.random);   // LOOT16: a body's own Rares and Legendaries, one in twelve cursed - after all of it
+  socketPass(kit, opts.rolls ?? Math.random);   // LOOT20: and a socket, after the curse
+  return kit;
+}
+/** The first arc's kit roll, whole: every piece of the kit but its garments. */
+function rollKitPieces(entity, { rolls = Math.random, luck = 50 } = {}) {
   if (!lootRarityOn() || !entity || !Array.isArray(entity.items) || entity.revenant) return [];
   const source = { ...corpseSource(ENEMY_BASICS[entity.mobileType] ?? null, entity.level, entity.mobileType), boss: false, weights: plainFoeRarityWeights() };   // RENOWN-LOOT: the death's roller's Renown; AUDIT 625 L3: the plain ladder for every foe
   const find = legendaryFindMult();
   const minted = [];
   entity.items.forEach((it, i) => {
+    if (isGarment(it)) return;   // LOOT14: the kit's garments roll after all of this (rollKitGarments)
     if (!it || it.untaken === true || !rarityEligible(it)) return;   // AUDIT 625 L1: no mark - the kit the spawn's roll passed by
     const piece = { ...it, untaken: true };   // AUDIT 625 L2: a copy in the body; the table's piece stays as it was minted
     entity.items[i] = piece;
@@ -188,4 +204,25 @@ export function rollCorpseKit(entity, { rolls = Math.random, luck = 50 } = {}) {
   });
   lastPass(minted, rolls);
   return minted;
+}
+/** LOOT14 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 6): THE KIT'S GARMENTS - the shirt, the breeches, the
+ *  cloak a foe wore, on the same ladder and source as its kit (AUDIT 625's laws whole: unmarked is kit, a COPY laddered,
+ *  every foe's, never a revenant's), each copy marked; then their own last pass. After every draw the kit made. */
+function rollKitGarments(entity, { rolls = Math.random, luck = 50 } = {}) {
+  if (!lootRarityOn() || entity?.revenant || !Array.isArray(entity?.items)) return [];
+  // the kit's own source, as its pieces' (AUDIT 625 L3: the plain ladder at the roller's Renown, never a boss's)
+  const kit = corpseSource(ENEMY_BASICS[entity.mobileType] ?? null, entity.level, entity.mobileType);
+  kit.boss = false;
+  kit.weights = plainFoeRarityWeights();
+  const find = legendaryFindMult();
+  const dressed = [];
+  entity.items.forEach((g, i) => {
+    if (!isGarment(g) || g.untaken === true || !rarityEligible(g)) return;
+    const copy = { ...g, untaken: true };
+    entity.items[i] = copy;
+    const rung = rollRarity({ ...kit, luck, find }, rolls);
+    if (rung !== 'common') { applyRarity(copy, rung, rolls, null, { family: kit.family ?? null }); dressed.push(copy); }
+  });
+  lastPass(dressed, rolls);
+  return dressed;
 }

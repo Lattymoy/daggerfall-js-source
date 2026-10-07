@@ -1537,8 +1537,8 @@ Hourbreaker and The Turning Hour on that first write.
 
 ### SD9b - shipped 2026-10-07 (the claim, the Hours broken and Hourbreaker)
 
-Section 11's claim, on the account service - `acct92` (acct91 on its branch, renumbered past main's CAP-OFF at the
-merge), migration 0087; the relay's `world176` re-hashed in place (the
+Section 11's claim, on the account service - `acct93` (acct91 on its branch, renumbered past main's CAP-OFF and then
+FOUNDER5 at the merges), migration 0088 (0087 until FOUNDER5's `0087_founder_live` took the number on main); the relay's `world176` re-hashed in place (the
 token's titles).
 
 - **The claim** (`server-account/src/sds.js` `claimSd`, `POST /v1/sd/claim` behind a session - the gate's `claimGate`
@@ -1572,7 +1572,7 @@ unchanged; `scenes/exterior.js` FLAGGED (no Hour offline).
 
 Pins: `test/sd9b_claim.test.js` (8 - the roll; the claim; the grants; the worker; the client's call; the device's
 book; the words and the cards; the hosts and the service by source); `tools/mutants/sd9b.json` (34, all dead - at first one hung: a roll that drew once for both grants could never give the aura alone, and the pins' search for such a seed looped; it is bounded now, and fails).
-PINS MOVED: `ACCOUNT_VERSION` acct91 (acct92 since the merge past CAP-OFF) in the fifteen files that hold it and
+PINS MOVED: `ACCOUNT_VERSION` acct91 (acct92 since the merge past CAP-OFF, acct93 since the merge past FOUNDER5) in the fifteen files that hold it and
 `server-account/wrangler.toml`;
 `test/duel_record.test.js` (the Inspect card's record carries the Hours); the vocabulary's newest (`test/acc3titles`,
 `test/aegis`, `test/primarch`, `test/crystalfist` - Hourbreaker after the Crystal Fist); `test/relayversion.test.js`

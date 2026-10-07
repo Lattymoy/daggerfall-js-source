@@ -218,6 +218,22 @@ export function corpseLootTargets(entries, keyPrefix, { isCorpse, feetOf, idOf =
 }
 
 /**
+ * PI1 (Physical Items, scenes/physicalItemsLayer.js): THE BODIES WHOSE ITEMS STAND ROUND THEM - the pool's own lootable
+ * bodies (`isCorpse`, not disabled), once the marker has landed (its foot is where they are thrown from), and never a
+ * peer's puppet (its list lives on its owner's side - lootFinds' own rule). `{ entity, pos, key }`, the list read live,
+ * the key the pool's own (`corpseLootTargets`' - an index where the pool has no `idOf`).
+ */
+export function physicalCorpseSources(entries, keyPrefix, { isCorpse, feetOf, idOf = null }) {
+  const out = [];
+  (entries ?? []).forEach((e, i) => {
+    if (!isCorpse(e) || e.corpseDisabled || e.puppet || !e.corpseMarker) return;
+    const pos = feetOf(e);
+    if (pos) out.push({ entity: e.entity, pos, key: `${keyPrefix}:${idOf ? idOf(e) : i}` });
+  });
+  return out;
+}
+
+/**
  * WORLD-HOVER: WHICH BODY a corpse key names, off the same entry list
  * and the same identity `corpseLootTargets` above mints its keys from.
  *

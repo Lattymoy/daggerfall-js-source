@@ -71,7 +71,7 @@ import { getSeed, setSeed, srand } from '../formats/dfRandom.js';
 import { personalityFor, isPersonality, personalityLabel, voiceLine, beastBody, possessive, MUTE_KINDS } from './revenantPersonality.js';   // REVENANT-VOICE: who it is, and how it talks
 // FEUD, Part B (bible/12-Enhanced-AI/Feud-Arc.md sections 12-26): what a revenant remembers - its record's new fields and
 // the draws it is born with (systems/revenantFeud.js), and the fight's ledger (systems/feudLedger.js, a leaf)
-import { ADAPT_HOW, DESERT, deserterSplit, LOYALTY, movedLoyalty, ROUT, FESTER, festersOn, WRATH_MAX, idStream, TOOK_MAX, LAIR_RING_R, RUMOR_CHANCE, RUMOR_PX, RUMOR_WEAK, RUMOR_NAMED, RUMOR_HINTS, weaknessKind, lairAfter, sameLair, feudFields, newFeudFields, feudScars, withScars, weaponFeudClass, drawSignature, sanitizeLoyalty, hashStr, SIG_RANK, lessonOf, withLesson, adaptEdge, adaptBlowClass, ADAPT, isWeakBlow, metalOf, WEAK, WEAK_NAMES, FLINCH_LINES, FLINCH_HEALTH, WEAKNESS_ELEMENTS, signatureStamp } from './revenantFeud.js';
+import { ADAPT_HOW, DESERT, deserterSplit, LOYALTY, movedLoyalty, ROUT, FESTER, festersOn, WRATH_MAX, idStream, TOOK_MAX, LAIR_RING_R, RUMOR_CHANCE, RUMOR_PX, RUMOR_WEAK, RUMOR_NAMED, RUMOR_HINTS, weaknessKind, lairAfter, sameLair, feudFields, newFeudFields, feudScars, withScars, weaponFeudClass, drawSignature, sanitizeLoyalty, hashStr, SIG_RANK, lessonOf, withLesson, adaptEdge, adaptBlowClass, ADAPT, isWeakBlow, metalOf, willMatters, WEAK, WEAK_NAMES, FLINCH_LINES, FLINCH_HEALTH, WEAKNESS_ELEMENTS, signatureStamp } from './revenantFeud.js';
 import { tagHit, HIT_TAGS } from '../ui/hitNumbers.js';   // RVN3: the "Weakness" word on my blow's number
 import { SOUND } from './soundClips.js';   // RVN3: the hiss of a weakness found
 import { revenantSay as sayRevenant } from './revenantVoice.js';   // RVN3: the reveal's card (the re-export below binds no local name)
@@ -92,12 +92,24 @@ export const REVENANT_FLEE_HEALTH = 0.2;
 /** ...and runs on this roll: a "very small chance" for an elite or a champion, a better one for a revenant already. */
 export const REVENANT_FLEE_CHANCE = 0.05;
 export const REVENANT_FLEE_CHANCE_REVENANT = 0.15;
+/** FLIGHT-FIRST (2026-10-07, Mac: "Player death shouldnt be the common way of revenant growth, it should be more common
+ *  for revenants to flee instead of being easily captured"): a revenant UNDER ITS WILL'S RANK (revenantFeud.js
+ *  WILL_RANK) has no will to tear away on at the killing blow - its flight is how it lives. It breaks at this share of
+ *  its health (one blow rarely carries it past the line, as it did the fifth) and runs on this roll. */
+export const REVENANT_FLEE_HEALTH_YOUNG = 0.35;
+export const REVENANT_FLEE_CHANCE_YOUNG = 0.8;
 /** How long a fleeing foe runs (the motor's flee, characters/enemyMotor.js) - out of reach when it ends, it escapes. */
 export const REVENANT_FLEE_SECONDS = 8;
+/** FLIGHT-FIRST: ...at this share of its walk (every special foe's run, a revenant's or not). A foe's walk (4.5-6 m/s) never outran a running player (8.1 m/s at Speed
+ *  and Running 50), so every flight was run down and knelt; running for its life it gets away from a chase on foot,
+ *  unless the chaser is a fast runner or brings it down from range. */
+export const REVENANT_FLEE_PACE = 2;
 /** ...or the moment it is this far from the player. */
 export const REVENANT_ESCAPE_DISTANCE = 45;
-/** ...or its run spent past this far (metres). Spent nearer - chased down - it is CORNERED: it turns and fights. */
-export const REVENANT_ESCAPE_NEAR = 20;
+/** ...or its run spent past this far (metres). Spent nearer - chased down - it is CORNERED: it turns and fights.
+ *  FLIGHT-FIRST: 12 (it was 20) - its run's lead on a chaser at Speed and Running 50 is about 17 m, and that is a
+ *  flight that got away, not one run down; a fast runner (about 9 m/s and up) still corners it. */
+export const REVENANT_ESCAPE_NEAR = 12;
 /** How many slain revenants a character's page keeps (the newest); older ones, and the forgotten, leave a tombstone. */
 export const REVENANT_FALLEN_MAX = 12;
 /** How many tombstones are kept - each one id and a revision, so an older save never raises what was put down. */
@@ -547,13 +559,15 @@ registerEntityFold('revenant', (entity) => {
 // ...and a Silver-scarred one's silver double gone (both cores ask, formulas.js silverDoubles)
 registerSilverDoubleVeto('revenant', (target) => target?.revenant?.edge?.silverScarred === true);
 
-/** THE FLEE ROLL: does this special foe, under REVENANT_FLEE_HEALTH of its health for the first time, run? */
+/** FLIGHT-FIRST: a revenant under its will's rank - its flight its one way out (the line and the roll below). */
+const youngRevenant = (entity) => !!entity?.revenant && !willMatters(entity.revenant.rank);
+/** THE FLEE ROLL: does this special foe, under its line for the first time, run? */
 export function rollRevenantFlee(entity, rolls = Math.random) {
   if (!revenantCandidate(entity)) return false;
-  return rolls() < (entity.revenant ? REVENANT_FLEE_CHANCE_REVENANT : REVENANT_FLEE_CHANCE);
+  return rolls() < (!entity.revenant ? REVENANT_FLEE_CHANCE : youngRevenant(entity) ? REVENANT_FLEE_CHANCE_YOUNG : REVENANT_FLEE_CHANCE_REVENANT);
 }
-/** Under the line? (a foe's own share of its health; a dead one never) */
-export const revenantFleeHealth = (entity) => !!entity && entity.health > 0 && entity.health < (entity.maxHealth || 1) * REVENANT_FLEE_HEALTH;
+/** Under the line? (a foe's own share of its health - a young revenant's higher, FLIGHT-FIRST; a dead one never) */
+export const revenantFleeHealth = (entity) => !!entity && entity.health > 0 && entity.health < (entity.maxHealth || 1) * (youngRevenant(entity) ? REVENANT_FLEE_HEALTH_YOUNG : REVENANT_FLEE_HEALTH);
 
 /**
  * THE FLEE, ONE LAW FOR EVERY POOL (scenes/exteriorFoes.js, scenes/dungeonContext.js): one frame of a foe record
@@ -580,7 +594,7 @@ export function revenantFleeStep(f, feet, { onMe = () => true, mayRun = true, ro
   f._fleeRolled = true;
   if (!rollRevenantFlee(f.entity, rolls)) return null;
   f.fleeing = true;
-  f.ai.flee(feet, REVENANT_FLEE_SECONDS);
+  f.ai.flee(feet, REVENANT_FLEE_SECONDS, REVENANT_FLEE_PACE);   // FLIGHT-FIRST: running for its life
   return 'start';
 }
 

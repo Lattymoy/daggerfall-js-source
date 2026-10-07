@@ -35,9 +35,12 @@
 //   is fitted onto the wearer by them at bind time (formats/mwSkinTransfer.js fitShift), as MW-BRIG3 fitted the
 //   brigandine by the chest - the same lesson, that a modeller's scene is not the skeleton's rest, learned before.
 //
-//   ONE OBJECT IS NOT THE SET'S. The scene keeps a skirt of plates under the breastplate (`Imperial_Silver_Cuirass_67_Male
-//   .011`, painted from a "steelpelvis" texture that never came) - asked, Mac: "That was never apart of the set its just
-//   the breastplate and leg armor". It is stripped at --import with the reference body (NOT_IN_SET) and never baked.
+//   THE SKIRT CAME WITH ITS PAINTING (MW-STEEL2, 2026-10-07, Mac: "This is the missing texture for the morrowind steel
+//   armor's skirt"). The scene keeps a skirt of plates under the breastplate (`Imperial_Silver_Cuirass_67_Male.011`,
+//   modelled from the same cuirass mesh as the breastplate, `.009`), painted from a "steelpelvis" texture that MW-STEEL1
+//   never had - so it was stripped at --import then, Mac having said "That was never apart of the set". The painting
+//   came, and the skirt is a piece now: `Steel_Plate_Skirt.png` is Mac's steelpelvis picture, and the skirt is baked
+//   from the open helm's export like every shared piece (both of Mac's exports carry it, the same to the vertex).
 //
 //   THE CLOSED HELM IS TWO PICTURES ON ONE PART. Its shell wears the helm's texture and its visor and plume the
 //   faceplate's, so its NIF carries two shapes (tools/nifWrite.mjs meshesToNif). The second export is committed as the
@@ -68,6 +71,7 @@ export const TEXTURES = Object.freeze({
   boot: 'src/assets/mw/source/Steel_Plate_Boot.png',           // BOOTS\DefaultMaterial_2D_View_<UDIM>.png
   helm: 'src/assets/mw/source/Steel_Plate_Helm.png',           // helmet\DefaultMaterial_2D_View_<UDIM>.png
   visor: 'src/assets/mw/source/Steel_Plate_Visor.png',         // helmetface\DefaultMaterial_2D_View_<UDIM>.png
+  skirt: 'src/assets/mw/source/Steel_Plate_Skirt.png',         // steelpelvis\material_2.013_2D_View_<UDIM>.png (MW-STEEL2)
 });
 
 /** The DDS's name as the NIFs spell it: a BARE file, which `correctTexturePath` re-roots under `textures/` (the
@@ -83,10 +87,6 @@ export const SETTINGS = Object.freeze({ placement: 'scene', forward: '+y', up: '
 /** The reference body in Mac's scene - stripped from the committed sources, its bounds kept. */
 export const REFERENCE_PARTS = Object.freeze({ head: 'Breton_Male.003', neck: 'Breton_Male.006' });
 
-/** What the scene keeps and the set does not wear - stripped at --import with the reference body. Mac, asked about the
- *  plate skirt under the breastplate: "That was never apart of the set its just the breastplate and leg armor". */
-export const NOT_IN_SET = Object.freeze(['Imperial_Silver_Cuirass_67_Male.011']);
-
 /** How far (any coordinate of its box) an object may stand from where its piece was read. */
 export const BOX_SLACK = 0.02;
 
@@ -98,6 +98,7 @@ const piece = (id, file, shapes) => Object.freeze({ id, file, shapes: Object.fre
  */
 export const PIECES = Object.freeze([
   piece('cuirass', 'open', [shape('Imperial_Silver_Cuirass_67_Male.009', 'cuirass', [[-14.42, -11.94, 78.8], [14.42, 11.46, 115.42]])]),
+  piece('skirt', 'open', [shape('Imperial_Silver_Cuirass_67_Male.011', 'skirt', [[-14.42, -11.98, 64.55], [14.42, 12.17, 86.93]])]),
   piece('pauldron_right', 'open', [shape('Breton_Male.009 Remeshed.001', 'pauldron', [[7.44, -7.71, 107.59], [30.56, 6.17, 117.66]])]),
   piece('pauldron_left', 'open', [shape('Breton_Male.009 Remeshed.003', 'pauldron', [[-30.56, -7.71, 107.59], [-7.44, 6.17, 117.66]])]),
   piece('gauntlet_right', 'open', [shape('Imperial_Steel_Left_Gauntlet_20_Male', 'gauntlet', [[27.03, -5.81, 106.44], [59.04, 4.56, 115.56]])]),
@@ -189,9 +190,9 @@ export function importSteelPlate(a, b) {
   const reference = measureReference(trees.open);
   const refNames = Object.values(REFERENCE_PARTS);
   const closedKeep = new Set(PIECES.filter((p) => p.file === 'closed').flatMap((p) => p.shapes.map((s) => s.object)));
-  const open = stripFbx(openBytes, { drop: [...refNames, ...NOT_IN_SET] }).bytes;
+  const open = stripFbx(openBytes, { drop: refNames }).bytes;
   const closed = stripFbx(closedBytes, { drop: helmOf(closedBytes).filter((n) => !closedKeep.has(n)) }).bytes;
-  return { open, closed, reference, shared: shared.filter((n) => !refNames.includes(n) && !NOT_IN_SET.includes(n)) };
+  return { open, closed, reference, shared: shared.filter((n) => !refNames.includes(n)) };
 }
 
 const save = (path, bytes) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, bytes); };

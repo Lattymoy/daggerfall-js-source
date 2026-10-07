@@ -188,16 +188,28 @@ test('DISC23-B: a swing, a loosed shaft and a cast each play their clip ONCE - a
     w.sync([at({ ...before, [o.field]: before[o.field] + 1 })], toScene, { eye: [4, 1, 20], dt: 0 });
     const r = w.walkers.get('p1');
     assert.equal(r.table, o.table, `${o.field} plays ${o.table}`);
-    // the whole clip, then back to standing
-    const n = frameCount(o.table);
-    w.sync([at({ ...before, [o.field]: before[o.field] + 1 })], toScene, { eye: [4, 1, 20], dt: o.tick() * (n - 0.5) });
+    // the whole clip, then back to standing (ONE-STROKE: a swing's clip is the stroke its count names)
+    const frames = o.frames(before[o.field] + 1), n = frames.length, tick = o.tick(frames);
+    assert.equal(n, o.field === 'an' ? frameCount(o.table) / 2 : frameCount(o.table));
+    w.sync([at({ ...before, [o.field]: before[o.field] + 1 })], toScene, { eye: [4, 1, 20], dt: tick * (n - 0.5) });
     assert.equal(r.table, o.table, 'still swinging on its last frame');
-    w.sync([at({ ...before, [o.field]: before[o.field] + 1 })], toScene, { eye: [4, 1, 20], dt: o.tick() });
+    assert.equal(r.frame, frames.at(-1));
+    w.sync([at({ ...before, [o.field]: before[o.field] + 1 })], toScene, { eye: [4, 1, 20], dt: tick });
     assert.equal(r.table, 'Idle', 'and done');
     // put the counter back so the next one starts from the same place
     w.sync([at(before)], toScene, { eye: [4, 1, 20], dt: 0 });
     w.sync([at(before)], toScene, { eye: [4, 1, 20], dt: 10 });
   }
+  // ONE-STROKE: the stroke a peer's swing draws is the one its count names - the count the swinger's own body read
+  // (weaponRig swingN, sent as `an`), so both screens show the same half of the swing
+  const strokes = [];
+  for (const an of [42, 43, 44]) {
+    w.sync([at({ an, ar: 0, cn: 0 })], toScene, { eye: [4, 1, 20], dt: 0 });
+    const r = w.walkers.get('p1');
+    strokes.push([r.frame, r.shot.frames]);
+    w.sync([at({ an, ar: 0, cn: 0 })], toScene, { eye: [4, 1, 20], dt: 10 });
+  }
+  assert.deepEqual(strokes, [[0, [0, 1, 2]], [3, [3, 4, 5]], [0, [0, 1, 2]]]);
 });
 
 test('DISC23-B: who is NOT a walker - a Morrowind body on this screen, a rider, a beast, the dying, a look with no set, the card on the doll', async () => {

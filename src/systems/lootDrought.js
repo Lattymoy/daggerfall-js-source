@@ -28,7 +28,7 @@
 // and the finder answers 1.
 // ═══════════════════════════════════════════════════════════════════
 
-import { lootRarityOn, registerLegendaryFind, rarityRank, RARITIES } from './lootRarity.js';
+import { lootRarityOn, registerLegendaryFind, rarityRank, RARITIES, isGarment, legendariesFor } from './lootRarity.js';
 import { registerTakeListener } from './inventory.js';
 import { registerModSaveData } from './modSaveData.js';
 
@@ -46,11 +46,15 @@ export const droughtOf = () => _drought;
 export const droughtMult = (d = _drought) => Math.min(DROUGHT_MAX_MULT, 1 + DROUGHT_STEP_MULT * Math.floor(Math.max(0, Number(d) || 0) / DROUGHT_STEP));
 
 /** THE TAKE: a piece a source door rolled and nobody took before - its mark cleared, the drought one more below
- *  Legendary, emptied at Legendary or better. Answers whether it counted. */
+ *  Legendary, emptied at Legendary or better. Answers whether it counted. AUDIT LOOT II A10: a garment counts only if it
+ *  could have been a Legendary - one of the eighteen templates the wardrobe's six are cut on; a cheap shirt off every
+ *  body filled the drought toward its x3 for a ladder it never stood on (the mark still clears: it is the door's word
+ *  that the piece was rolled). */
 export function noteTaken(item) {
   if (!item || item.untaken !== true) return false;
   delete item.untaken;
   if (!lootRarityOn()) return false;
+  if (isGarment(item) && !legendariesFor(item).length) return false;
   _drought = rarityRank(item) >= RARITIES.legendary.rank ? 0 : Math.min(DROUGHT_MAX, _drought + 1);
   return true;
 }

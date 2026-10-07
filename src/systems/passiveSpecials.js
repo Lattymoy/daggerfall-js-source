@@ -8,7 +8,7 @@
 // arms, which had stood open since E1 and are answered here: the two
 // readers below are wired into the enchant ctx at world.js:"V2c filled inSunlight/inHolyPlace"
 // off the host seam that worldModes.js:"now: () => Math.floor(skyMinutes())" and dungeonContext.js:"const _prevPassiveHost"
-// register (bible/01-Overview/Port-Ledger.md:802 strikes the pair
+// register (bible/01-Overview/Port-Ledger.md:805 strikes the pair
 // through as closed, V2c 2026-08-27).
 //
 // THE TWO FLAGS ARE SMALL LAWS, verbatim:
@@ -39,6 +39,7 @@ import { isDayFromMinutes } from './gameDate.js';
 import { SPECIAL_ABILITY_BITS, REGENERATION_FLAGS } from './specialAdvantages.js';
 import { renownMpOf } from './renownLayer.js';   // AUDIT RENOWN1 GAME-5: the magery's third is of Daggerfall's own maximum, never the online layer
 import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration
+import { cloakState } from './survival/temperature.js';   // HOOD-CAREER: the ONE "is the hood up" - the felt temperature's, never a second list
 
 // PassiveSpecialsEffect.cs:35-40, verbatim.
 export const SUN_DAMAGE_AMOUNT = 12;
@@ -77,6 +78,15 @@ export const playerInHolyPlace = () => !!(_host?.isHolyPlace?.() ?? false);
 // ── THE CAREER READS (the CFG bitfields the port's careers carry) ─
 const bitfield = (career) => career?.abilityFlagsAndSpellPointsBitfield ?? 0;
 export const careerSunDamage = (career) => !!(bitfield(career) & SPECIAL_ABILITY_BITS.sunDamage);
+/** HOOD-CAREER (2026-10-07, Mac: "Wearing a hood should protect you from the disadvantage of being damaged by
+ *  sunlight"): whether the sun reaches the career's Damage from Sunlight - its CFG bit, UNLESS the wearer's hood is
+ *  up (survival/temperature.js cloakState, the one hood law VAMP-HOOD's racial arm reads: vampirism.js
+ *  racialSunAverse). THE PORT'S DEPARTURE from DFU, which reads the bit bare: every rule the bit keys asks this -
+ *  the burn below, the travel map's door and the arrival clamp (world.js). A hood in the pack shields nothing. */
+export function careerSunAverse(entity) {
+  if (!careerSunDamage(entity?.career)) return false;
+  return !cloakState(entity.equip?.slots ?? null).hood;
+}
 export const careerHolyDamage = (career) => !!(bitfield(career) & SPECIAL_ABILITY_BITS.holyDamage);
 /** SetLightMagery at bits 6-7, SetDarknessMagery at bits 8-9
  *  (specialAdvantages.js:"const v = secondary === 'unableToUseMagicInDaylight'"'s own writes): 1 = unable, 2 =
@@ -120,8 +130,9 @@ export function passiveSpecialsMagicRound(entity, { nowMinutes = 0, clockMinutes
   // VAMP-DAY: the vampire's day is its -20 on the stats instead
   // (vampirism.js vampireStatMod); its override still carries the flag
   // for the travel rules, and a save's old curse burns no more.
+  // HOOD-CAREER: never under a raised hood (careerSunAverse).
   if (nowMinutes % SUN_DAMAGE_PER_ROUNDS === 0
-    && careerSunDamage(career)
+    && careerSunAverse(entity)
     && playerInSunlight(clockMinutes)) {
     sinks?.hurt?.(SUN_DAMAGE_AMOUNT);
   }

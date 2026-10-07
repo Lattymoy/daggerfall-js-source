@@ -1,0 +1,67 @@
+[
+  {
+    "name": "ONE-STROKE-every-blow-the-first-stroke",
+    "file": "src/player/eotbBillboard.js",
+    "old": "  const from = (((blow | 0) % 2) + 2) % 2 ? half : 0;",
+    "new": "  const from = 0;",
+    "tests": [
+      "test/eotb_billboard.test.js",
+      "test/eotb_audit2.test.js",
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "ONE-STROKE-the-second-stroke-loses-the-odd-frame",
+    "file": "src/player/eotbBillboard.js",
+    "old": "  return Array.from({ length: from ? len - half : half }, (_, i) => from + i);",
+    "new": "  return Array.from({ length: half }, (_, i) => from + i);",
+    "tests": [
+      "test/eotb_billboard.test.js"
+    ]
+  },
+  {
+    "name": "ONE-STROKE-the-body-plays-both-strokes",
+    "file": "src/player/eotbBody.js",
+    "old": "    const frames = meleeStrokeFrames(n, Number.isInteger(last.swingN) ? last.swingN : strokeCount++);",
+    "new": "    const frames = forwardFrames(n);",
+    "tests": [
+      "test/eotb_audit2.test.js"
+    ]
+  },
+  {
+    "name": "ONE-STROKE-the-body-ignores-the-rig-count",
+    "file": "src/player/eotbBody.js",
+    "old": "    const frames = meleeStrokeFrames(n, Number.isInteger(last.swingN) ? last.swingN : strokeCount++);",
+    "new": "    const frames = meleeStrokeFrames(n, strokeCount++);",
+    "tests": [
+      "test/eotb_audit2.test.js"
+    ]
+  },
+  {
+    "name": "ONE-STROKE-the-body-stroke-ticks-as-the-whole-swing",
+    "file": "src/player/eotbBody.js",
+    "old": "    return startClip('AttackMelee', frames, meleeAnimTickTime(animTime, frames.length));",
+    "new": "    return startClip('AttackMelee', frames, meleeAnimTickTime(animTime, n));",
+    "tests": [
+      "test/eotb_audit2.test.js"
+    ]
+  },
+  {
+    "name": "ONE-STROKE-a-peer-draws-the-first-stroke-whatever-the-count",
+    "file": "src/net/peerRiders.js",
+    "old": "frames: (n) => meleeStrokeFrames(frameCount('AttackMelee'), n),",
+    "new": "frames: (n) => meleeStrokeFrames(frameCount('AttackMelee'), 0),",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  },
+  {
+    "name": "ONE-STROKE-a-peer-plays-both-strokes",
+    "file": "src/net/peerRiders.js",
+    "old": "frames: (n) => meleeStrokeFrames(frameCount('AttackMelee'), n),",
+    "new": "frames: () => forwardFrames(frameCount('AttackMelee')),",
+    "tests": [
+      "test/disc23b_eotb_sprites.test.js"
+    ]
+  }
+]

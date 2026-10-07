@@ -418,13 +418,14 @@ const PUBLIC_ALLOWLIST = new Map([
   // exports of one scene (New_Ship.fbx, the open helm; New_Ship1.fbx, the closed). His scene also carried the body it
   // was fitted on - Morrowind's own Breton head and neck, out of a "Morrowind_TPose_Models" pack - and those are
   // Bethesda's meshes, so they are NOT committed: tools/fbxStrip.mjs took them out, every other record byte for byte,
-  // and only their bounds are kept (characters/ownArmorModels.js STEEL_PLATE_SCENE). A plate skirt under the
-  // breastplate went with them - Mac: "That was never apart of the set" (bakeSteelPlate.mjs NOT_IN_SET). The armour itself is Mac's export
+  // and only their bounds are kept (characters/ownArmorModels.js STEEL_PLATE_SCENE). MW-STEEL2 (2026-10-07): the plate
+  // skirt under the breastplate, stripped with them while its painting was missing, is kept since Mac sent the picture
+  // ("This is the missing texture for the morrowind steel armor's skirt"), and baked like the rest. The armour itself is Mac's export
   // as given; three of its objects are named for the meshes they were modelled from (Imperial_Silver_Cuirass_67_Male,
   // Imperial_Steel_Left_Gauntlet_20_Male, Breton_Male), so whether the geometry and the paintings are his own work or
   // carry a licence of their own is Mac's to confirm (bible/04-Characters/Steel-Plate.md). tools/bakeSteelPlate.mjs
   // re-makes every mesh and texture below from these sources, and test/mwsteel1.test.js holds it to the bytes.
-  ['src/assets/mw/source/Steel_Plate.fbx', "SUPPLIED - Mac's Blender export of the steel plate with the open helm (New_Ship.fbx, 2026-10-06), the Morrowind Breton head and neck it was fitted on and the skirt not of the set stripped out by tools/fbxStrip.mjs; committed so the files below are a DERIVATION the gate can re-run"],
+  ['src/assets/mw/source/Steel_Plate.fbx', "SUPPLIED - Mac's Blender export of the steel plate with the open helm (New_Ship.fbx, 2026-10-06), the Morrowind Breton head and neck it was fitted on stripped out by tools/fbxStrip.mjs (the plate skirt kept since MW-STEEL2); committed so the files below are a DERIVATION the gate can re-run"],
   ['src/assets/mw/source/Steel_Plate_Closed_Helm.fbx', "SUPPLIED - the closed helm and its visor out of Mac's second export (New_Ship1.fbx, 2026-10-06), every other object stripped by tools/fbxStrip.mjs (the shared pieces are the first export's, measured the same); a DERIVATION's source"],
   ['src/assets/mw/source/Steel_Plate_Cuirass.png', "SUPPLIED - the breastplate's painting as Mac sent it (his steelbreastplate texture), committed as its DDS's source"],
   ['src/assets/mw/source/Steel_Plate_Pauldron.png', "SUPPLIED - the pauldrons' painting as Mac sent it (his steelpauldrons texture), committed as its DDS's source"],
@@ -433,7 +434,9 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/mw/source/Steel_Plate_Boot.png', "SUPPLIED - the boots' painting as Mac sent it (his BOOTS texture), committed as its DDS's source"],
   ['src/assets/mw/source/Steel_Plate_Helm.png', "SUPPLIED - the helm's painting as Mac sent it (his helmet texture), committed as its DDS's source"],
   ['src/assets/mw/source/Steel_Plate_Visor.png', "SUPPLIED - the closed helm's visor and plume, painted as Mac sent it (his helmetface texture), committed as its DDS's source"],
+  ['src/assets/mw/source/Steel_Plate_Skirt.png', "SUPPLIED - the plate skirt's painting as Mac sent it (the steelpelvis texture, 2026-10-07 - MW-STEEL2), committed as its DDS's source"],
   ['src/assets/mw/meshes/steel_plate_cuirass.nif', 'SUPPLIED - the steel plate\'s breastplate, baked to a Morrowind NIF by tools/bakeSteelPlate.mjs (skinned from the body at bind time); a Bethesda format - the geometry Mac\'s export as given'],
+  ['src/assets/mw/meshes/steel_plate_skirt.nif', 'SUPPLIED - the steel plate\'s skirt of plates under the breastplate, baked by tools/bakeSteelPlate.mjs (MW-STEEL2; skinned from the body at bind time); a Bethesda format - the geometry Mac\'s export as given'],
   ['src/assets/mw/meshes/steel_plate_pauldron_right.nif', 'SUPPLIED - the steel plate\'s right pauldron, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
   ['src/assets/mw/meshes/steel_plate_pauldron_left.nif', 'SUPPLIED - the steel plate\'s left pauldron, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
   ['src/assets/mw/meshes/steel_plate_gauntlet_right.nif', 'SUPPLIED - the steel plate\'s right gauntlet, baked by tools/bakeSteelPlate.mjs; a Bethesda format - the geometry Mac\'s export as given'],
@@ -451,6 +454,7 @@ const PUBLIC_ALLOWLIST = new Map([
   ['src/assets/mw/textures/steel_plate_boot.dds', 'SUPPLIED - Steel_Plate_Boot.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
   ['src/assets/mw/textures/steel_plate_helm.dds', 'SUPPLIED - Steel_Plate_Helm.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
   ['src/assets/mw/textures/steel_plate_visor.dds', 'SUPPLIED - Steel_Plate_Visor.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
+  ['src/assets/mw/textures/steel_plate_skirt.dds', 'SUPPLIED - Steel_Plate_Skirt.png mip-chained to an uncompressed DDS by tools/meshTexture.mjs writeDds; no ARENA2 or Morrowind pixel in it'],
   // GALLEON (2026-10-01): the new galleon, Mac's own model of hull 2 (the
   // Small Ship), supplied as three Blender exports of one scene - the same
   // geometry, only their creation stamps differ, so one is committed. The
@@ -460,7 +464,15 @@ const PUBLIC_ALLOWLIST = new Map([
   // carry no file at all: world/galleonArt.js paints them at load, from
   // nothing but numbers - no ARENA2 pixel.
   ['src/assets/galleon/source/New_Ship.fbx', "SUPPLIED - Mac's Blender export of the new galleon (2026-10-01; his second, New_Ship_Even_EVEN_newer.fbx, over it 2026-10-02), committed so galleon.json is a DERIVATION the gate can re-run"],
-  ['src/assets/galleon/galleon.json', 'SUPPLIED - New_Ship.fbx baked to the boat\'s frame by tools/bakeGalleon.mjs; geometry only, no ARENA2 or Come Sail Away data'],  ['src/assets/sunbaby/todd.jpg', 'SUPPLIED - a photograph of Todd Howard that Mac supplied for the sun baby event (SUNBABY3, 2026-10-04), cropped to the face and recompressed by ImageMagick; no ARENA2 pixel in it - a third-party photo, not the port own art, kept at his explicit request'],
+  ['src/assets/galleon/galleon.json', 'SUPPLIED - New_Ship.fbx baked to the boat\'s frame by tools/bakeGalleon.mjs; geometry only, no ARENA2 or Come Sail Away data'],
+  // SHIPS-2 (2026-10-07, Mac: "implement both of these new ship placement models"): MAC'S CARRACK AND HIS TINY SHIP,
+  // supplied as three Blender exports - New_Ship_2.fbx, New_Ship_2_Shutter.fbx and Tiny_Ship.fbx, the newest holding
+  // both ships and the shutter in their places, so it alone is committed. tools/bakeCarrack.mjs and
+  // tools/bakeLargeBoat.mjs re-make their JSON from it (tools/shipBake.mjs), and test/ships2_bake.test.js holds both
+  // to the bytes. Their pictures carry no file: world/carrackArt.js and world/largeBoatArt.js paint them at load.
+  ['src/assets/ships/source/Tiny_Ship.fbx', "SUPPLIED - Mac's Blender export of the new carrack and the new large boat in one scene (2026-10-07; the newest of the three he sent), committed so carrack.json and largeBoat.json are DERIVATIONS the gate can re-run"],
+  ['src/assets/ships/carrack.json', 'SUPPLIED - Tiny_Ship.fbx\'s carrack baked to the boat\'s frame by tools/bakeCarrack.mjs; geometry only, no ARENA2 or Come Sail Away data'],
+  ['src/assets/ships/largeBoat.json', 'SUPPLIED - Tiny_Ship.fbx\'s large boat baked to the boat\'s frame by tools/bakeLargeBoat.mjs; geometry only, no ARENA2 or Come Sail Away data'],  ['src/assets/sunbaby/todd.jpg', 'SUPPLIED - a photograph of Todd Howard that Mac supplied for the sun baby event (SUNBABY3, 2026-10-04), cropped to the face and recompressed by ImageMagick; no ARENA2 pixel in it - a third-party photo, not the port own art, kept at his explicit request'],
   // MEADOW1 (2026-10-06, Mac: "These are 4 textures I want to blend into our grass system", then a bush): THE
   // MEADOW'S FIVE SPRITES, supplied by Mac as indexed PNGs and committed as he supplied them. Nothing ships them:
   // tools/bakeMeadow.mjs bakes them into render/meadowArt.js, and test/grassmeadow.test.js holds that module to

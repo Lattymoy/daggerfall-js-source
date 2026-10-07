@@ -40,7 +40,8 @@ products ARE Magic-tier items; the port never re-rolls them. A DFU
 magic item is not eligible to roll a second tier.
 
 Eligible: a weapon that is not an arrow, a piece of armour, a piece of
-jewellery. Never a quest item, an artifact, an item already enchanted,
+jewellery - and since LOOT14 a garment, on a pool of its own
+(`Loot-II-Arc.md` section 6). Never a quest item, an artifact, an item already enchanted,
 an item that already rolled (one roll per item, ever - LR4), or a worn
 one. A FOE's list carries its worn kit too (`hostCombat.equipEnemy`
 pushes every equipped piece into `entity.items` and onto the equip
@@ -66,10 +67,13 @@ Magic - computed by `rarityChances` from:
   pile: `INTERIOR_RARITY_TIER` (4);
 - **the source's kind** - a pile pays 1.3x a corpse; a BOSS (any
   Daedra, or a monster of level 18 or over) pays 2.5x;
-- **luck** - the player's live luck, `LUCK_PER_POINT` (2) per mille
-  per point over 50, and the same under.
+- **luck** - the player's live luck, a MULTIPLIER since LOOT13
+  (`Loot-II-Arc.md` section 5): 1% of every threshold a point over 50,
+  1% less a point under, from half at 0 to half again at 100
+  (`luckMult`). It was 2 per mille a point ADDED, which was the whole of
+  a Legendary's threshold: a rat at Luck 65 out-dropped a tier-8 corpse.
 
-Each threshold is `base + perTier * tier`, times the kind, plus luck,
+Each threshold is `base + perTier * tier`, times the kind and the luck,
 never over its cap:
 
 | tier | base | per tier | cap |
@@ -97,7 +101,7 @@ word takes in the name, and a banded range per tier (`AFFIX_RANGES`):
 | armor | armour | prefix | 3-6 | 6-12 | 12-20 | points OFF a blow's chance to land ON THE PARTS THE PIECE COVERS (`equip.armorBodyParts`: a shield its SHIELD_PARTS, a piece its slot's part - as the material's armour value lands) - the hit formula's armour term (FormulaHelper.cs:1158's slot), PCAAO's own read too, and the paperdoll's per-part numbers. LR4: the first cut was entity-wide, and seven Rare pieces made the player unhittable |
 | weight (%) | armour, jewellery | prefix | 10-20 | 20-35 | 35-50 | `entityMaxEncumbrance`, the same multiplier IncreasedWeightAllowance rides |
 | stat | all | suffix | 2-5 | 5-10 | 10-15 | `liveStat` - an attribute, by name |
-| resist (%) | armour, jewellery | suffix | 10-20 | 20-35 | 35-50 | `savingThrow`, per element the spell carries, in the biography's slot |
+| resist (%) | armour, jewellery | suffix | 10-20 | 20-35 | 35-50 | `savingThrow`, per element the spell carries, in the biography's slot - the rolled lines together counted to 45 an element since LOOT12 (`Loot-II-Arc.md` section 4: two Rares at +25 had made a body immune) |
 | skill | all | suffix | 5-10 | 10-20 | 20-30 | `skillValue` - a skill, by id |
 
 Magic rolls one or two, Rare three or four (guaranteed a prefix AND a
@@ -209,6 +213,16 @@ snapshot copies items as they are); `affixes` joins
 `LOOT_ARRAY_FIELDS`, so a peer's string there is refused as a string
 `enchantments` is (AUDIT WORLD4 B1). An older save carries neither
 field and reads Common.
+
+The Loot arc II (`Loot-II-Arc.md`) adds four fields, each declared in
+`systems/itemFields.js` and absent on every piece that has none - so
+an older save and an older peer read as before: `cursed` (LOOT16, a
+cursed find's drawback - `validCurse`), `honed` (LOOT17, the hones a
+piece has taken), `junk` (LOOT18, the player's mark - the lock's twin)
+and `socket` (LOOT20, 'empty' or the gem set in it - `validSocket`; a
+set gem's line rides `affixes` marked with its gem). A known curse is
+read on the tier line ("Cursed Rare"), as the Exalted is: a variant of
+its rung, never a rung of its own (the arc's law 7).
 
 ## The Test Room door
 

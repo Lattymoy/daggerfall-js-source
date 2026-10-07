@@ -1526,6 +1526,14 @@ wielder the port does not know keeps DFU's line: a foe's machine (DFU never asks
 - and a sprite foe's blow lands on its own frame), a peer's walker at PEER_SWING_SPEED 50, the viewers. The bow's draw
 (0.0625 s a frame), its cooldown and the Thunderlock's clock are their own.
 
+**And the Morrowind arm reads the machine** (MW-PACE1, 2026-10-07, Mac: "Morrowind attack animations don't scale with
+attack speed/multiple attacks when attack speed is high"). The arm used to play a blow at its WEAP record's own pace,
+so at a high Speed the machine began its next blow while the arm was still in the last, and one blow in two was drawn.
+At a strike's first frame the machine says when its hit lands and when the blow is done (`characters/weaponStates.js`
+blowSchedule, at that frame's dt; `combat/playerWeapon.js` strikeSchedule; `combat/weaponRig.js` fpAttack), and the arm
+fits its wind-up and release to the hit and its follow-through to the end (`02-Formats/Morrowind-Rules.md` MW-PACE1). A
+peer's body paces its blows by the burst's own gaps. A declared departure: Ledger A (MW-PACE1).
+
 **Measured on the real rig** (60 fps, the machine's one step a frame; the mods at their defaults - Items' weaponBalance
 answering - and, in brackets, with both mods off): an average fighter's longsword 1.08 s a blow (1.17; DFU at 50: 1.0);
 Speed 75 and a saber 0.92 s (0.92; 0.83 from Strength 56 up - AUDIT PRE-MERGE 0929 S4); live Speed 95 - the report's werewolf - with a dagger 1.71 a second (1.71; DFU: 3.3);

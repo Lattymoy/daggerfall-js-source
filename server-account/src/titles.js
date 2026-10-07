@@ -16,7 +16,8 @@
 //
 //   FOUNDER   your registered account first played by FOUNDER_UNTIL -
 //             its row's first contact, or (FOUNDER4) the first contact of
-//             a row it shares a character with (`first_played_at`).
+//             a row it shares a character with (`first_played_at`) - or
+//             (FOUNDER5) your handle is in the service's FOUNDER_HANDLES.
 //   DEVELOPER your handle is in the service's DEVELOPER_HANDLES.
 //   SPROUT    your account is younger than SPROUT_S.
 //   DEV       the same list as the Developer title.
@@ -117,8 +118,34 @@ import { SD_HONOUR_TITLE, SD_HONOUR_AURA } from './sds.js';   // SD9b: the Hour'
  *  played may now be proven by ANOTHER row - one it shares a character
  *  with (migration 0078 `first_played_at`): a guest in one browser who
  *  registered in another place, the desktop app's own storage above all,
- *  first played when that guest did. */
-export const FOUNDER_UNTIL = 1_790_294_400;
+ *  first played when that guest did.
+ *
+ *  FOUNDER5 (2026-10-07, Mac: "Can we grant every account before sept 25th
+ *  the founder title. Ive tried this multiple times and its never worked";
+ *  asked how, "Time zone + name list"): BEFORE THE 25TH WHEREVER THE PLAYER
+ *  WAS. 00:00Z on the 25th is 8pm on the 24th in New York and 5pm in Los
+ *  Angeles, so a player in the Americas who first played that evening -
+ *  before the 25th on their own clock - held nothing. The instant moves to
+ *  the end of the 24th on the last clock to reach the 25th (UTC-12):
+ *  2026-09-25T12:00:00Z. It moves LATER only, so nobody who holds it loses
+ *  it. And what no record proves, a name does: FOUNDER_HANDLES (below). */
+export const FOUNDER_UNTIL = 1_790_337_600;
+
+/** FOUNDER5: THE FOUNDERS BY NAME - the players who played before the 25th
+ *  where no record the service keeps can say so (a guest's storage cleared,
+ *  a character never saved to the cloud, play on a device that never
+ *  linked to the account). A list in config, the developers' law: Mac
+ *  grants one by a reviewed, deployed edit. It adds and never takes away -
+ *  a founder by the date holds it whether or not they are listed. */
+export function founderHandles(env) {
+  return handleList(env?.FOUNDER_HANDLES);
+}
+
+/** FOUNDER5: is this player a founder by name? A guest has no handle, so
+ *  it never is - Founder stays a registered account's alone. */
+export const isNamedFounder = (player, env) =>
+  typeof player?.handle === 'string' && !!player.handle
+  && founderHandles(env).has(player.handle.toLowerCase());
 
 /** How long the sprout stays on a new account: two weeks, in seconds,
  *  spelled as the arithmetic rather than as 1209600 so a reader can
@@ -259,6 +286,7 @@ export function titlesHeld(player, env) {
   // moment it registers. The guard stays first: D1 gives a guest a NULL
   // `registered_at`, and Math.min reads null as 0.
   if (Number.isFinite(player?.registered_at) && firstPlayed(player) <= FOUNDER_UNTIL) held.push('founder');
+  if (!held.includes('founder') && isNamedFounder(player, env)) held.push('founder');   // FOUNDER5: or by name
   if (isDeveloper(player, env)) held.push('developer');
   for (const t of Object.keys(TIER_LISTS)) if (holdsTier(t, player, env)) held.push(t);   // TITLE-N
   // WB9g: AND THE BROKER'S - a title bought with Sigil Stones, held because the sale is recorded on the row (0037). A

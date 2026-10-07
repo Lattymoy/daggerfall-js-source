@@ -3890,7 +3890,43 @@ map by day and its arrival is not pushed to dusk. Bare-headed, the
 door says DFU's line and then "Raise the hood of a cloak or robe to
 travel by day." Online this was the whole wait: the shared clock's day
 is one real hour, and no rest or trip moves it. The day's -20 is the
-street's sun on the stats (FIELD BUGS 2026-10-01b), and stays under a hood.
+street's sun on the stats (FIELD BUGS 2026-10-01b).
+
+HOOD-SUN (2026-10-07, Mac: "The vampire cloak and hood doesn't work ingame for shielding against the sun") - the hood shields the stats too. VAMP-HOOD let a raised hood lift the travel
+rules alone, so a hooded vampire in the street at noon still stood 20
+down - since VAMP-DAY the sun's only bite, and the one the player sees.
+`systems/vampirism.js` vampirismMagicRound now hands vampireStatMod
+racialSunAverse, the one hood law: under a raised hood the street's sun
+reaches the curse no more than a roof's, and the vampire has DFU's +20;
+bare-headed, the -20 stands; a hood in the pack shields nothing.
+`test/fb0929_vampirehood.test.js` (its stats pin moved),
+`test/fb1001b_vampsun.test.js` (the law's line); mutants
+`tools/mutants/vamphood.json` (three added), the vampday, fb1001b_vampsun
+and lived1 records re-aimed by content - all dead.
+
+HOOD-CAREER (2026-10-07, Mac: "Wearing a hood should protect you from the disadvantage of being damaged by sunlight") -
+the hood shields the career too. A custom class with "Damage / From
+Sunlight" (DFCareer's CFG bit 16, chargen's pick or a classic save's)
+still burned 12 every 4th round in the street under a raised hood, and
+its two travel rules - DFU's career box at the map's door
+(DaggerfallUI.cs:614-621) and the arrival clamp's second arm
+(DaggerfallTravelPopUp.cs:350-351) - read the bit bare. Every rule the
+bit keys asks `systems/passiveSpecials.js` careerSunAverse now: the bit,
+UNLESS the wearer's hood is up (survival/temperature.js cloakState, the
+one hood law the racial arm reads). The burn (PassiveSpecialsEffect's
+DamageFromSunlight) asks it; the map door, the party's refusal and the
+driver's map online ask `systems/vampirism.js` careerFastTravelBlock -
+the racial rung's shape, DFU's line bare-headed and the hood's way out
+after it, never reading the racial override; the arrival clamp's
+career arm asks careerSunAverse. A hood in the pack shields nothing;
+under a roof and by night nothing burns, as in DFU. THE FOUR HOSTS: the
+burn rides worldTick's round in every host; the door and the clamp are
+world.js's alone (exterior.js mounts no map, the interior and dungeon
+hosts are inside, where the door refuses first). `test/hoodcareer.test.js`
+(4); pins moved in `audit64_travel`, `auditit1`, `auditlived1`,
+`fb0929_vampirehood`, `fb1001b_vampsun` and `partyArrivalTransaction`;
+mutants `tools/mutants/hoodcareer.json` (9), and the vamphood, vampday
+and auditit1 records re-aimed by content - 61 judged, all dead.
 
 THE SEAM IS REGISTERED BY THE MODE MACHINE. worldModes owns mode and
 interiorBuilding for BOTH town pages - world.js and exterior.js each

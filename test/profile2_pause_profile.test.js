@@ -40,7 +40,8 @@ test('PROFILE2: paused, the portrait is the character being PLAYED - its race, s
 test('PROFILE2: the pause face carries the mark and its window - the window innermost, and the door reads the live character only when paused', () => {
   const menu = src('src/ui/enhancedMenu.js');
   const mark = menu.slice(menu.indexOf('function profileMark()'), menu.indexOf('function profileMark()') + 600);
-  assert.match(mark, /const save = mode === 'pause' \? liveCharacter\(playerEntity\) : newestPortraitSave\(\);/);
+  assert.match(mark, /const save = profileCharacter\(\);/);   // PROFILE-MENU: PIN MOVED - the law is one function the card asks too
+  assert.match(menu, /function profileCharacter\(\) \{\n  return mode === 'pause' \? liveCharacter\(playerEntity\) : newestPortraitSave\(\);\n\}/);
   const pause = menu.slice(menu.indexOf('stage.append(pauseWindow());'), menu.indexOf('stage.append(pauseWindow());') + 2400);
   assert.match(pause, /home\.append\(profileMark\(\)\);/, 'the mark over the game');
   assert.match(pause, /if \(accountOpen\) \{\s*\n\s*const acct = el\('div', 'px-stage px-acctstage'\);\s*\n\s*acct\.append\(accountWindow\(\)\);/, 'the same window the door opens: the account and the Skin card');

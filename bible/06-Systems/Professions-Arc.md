@@ -776,9 +776,8 @@ etc".
   off, and the Notices tab pins one line under the rumour: "The town's bounties are posted on its Bounty Board." A
   board stood for a seat or hub (below) is a Notice Board. The Work tab's black Bounty seal is a WRIT (section 11),
   never a board's hunt; the two share a colour because both are a price on a beast's head.
-- **Online, the town's one Notice Board** (ONE-BOARD, 10.11): of the boards BOUNTY1 did not take, the one nearest the
-  town's middle, a lone board included; the others stay DFU's rumour boards. DFU's reach gate still applies (256
-  classic units).
+- **Online, a rumour board opens the Notice Board** - every board of a town that is not a bounty board, a lone board
+  included (ONE-BOARD REVERTED, 10.11). DFU's reach gate still applies (256 classic units).
 - **Every seat and hub has one.** A seat or hub whose blocks place no board gets one: the same DFU model, drawn from
   the player's own ARENA2 at runtime, stood at an anchor derived from the town's layout - the market square (the open
   block nearest the town's centre), else beside the palace door. SEAT-COUNT counts them.
@@ -965,12 +964,12 @@ recruitment**, a **duel challenge**, or a **commission** (section 11; BUILT, PRO
 
 Mac: **"Go"**. What the design above left open, DECIDED here (the record's, at Mac's instruction), and what was found:
 
-- **Which boards.** Online, the town's Notice Board opens it - once the account service has said the board is open to
-  this account (`BOARD_OPEN`). ONE-BOARD (10.11): one board a town, the rumour board nearest its middle; NOTICE1 made
-  every board BOUNTY1 did not take one, and a town of three boards or more stood two or three (AUDIT 657 D2). Until it has, and offline, the board is DFU's
+- **Which boards.** Online, every board of a town that is not a bounty board opens the Notice Board - once the account
+  service has said the board is open to this account (`BOARD_OPEN`). Until it has, and offline, the board is DFU's
   rumour box byte for byte (ROAD A9's pins hold). The town underfoot is read on arrival, so the first press knows.
+  (ONE-BOARD, 10.11, made it one board a town; ONE-BOARD REVERTED put every board back.)
 - **A board is its town's.** A note is pinned to the TOWN - its MAPS.BSA map id, unsigned (regionHubs.js's key) - so
-  the town's Notice Board shows it wherever that board stands, and a board stood later for a hub is the same board.
+  every Notice Board in a town shows the same notes, and a board stood later for a hub is the same board.
 - **The Notices tab, in its order**: the rumour (DFU's sign; its name row is the window's heading), the bounty board's
   line, the server's word under the red seal (the Oblivion Gate while it stands - the map's own mark, WB1 - and the
   developers' notices), then the players' notes, newest first.
@@ -1120,15 +1119,15 @@ and reproduced each finding before it was fixed (`test/marketaudit.test.js`, `to
   family is chosen in its query; the JS filter after it is belt-and-braces. `test/marketaudit2.test.js`,
   `tools/mutants/marketaudit2.json`.
 
-### 10.11 BOARD-UI - one Notice Board a town, and the board laid out to be read (2026-10-06)
+### 10.11 BOARD-UI - one Notice Board a town (reverted 2026-10-07), and the board laid out to be read (2026-10-06)
 
 Mac: **"Some towns have double notice boards"**; **"We need to overhaul the notice boards to enhance readability,
 Including each of the tabs"**; **"Enhance the speed at which the notice board and market loads"**; **"Enhance
 organization of the market"**; **"Reduce overusage of bloated text. Less AI like text"**; **"Enhance the guild war tab
 of the board for better organization, instruction and readability"**.
 
-- **ONE-BOARD - the double boards.** FACT: BOUNTY1 takes every other board of a town by position (two give one, five
-  give two), and NOTICE1 made every board left a Notice Board - so a town of three boards or more stood two or three,
+- **ONE-BOARD - the double boards** (REVERTED 2026-10-07, below; this is the record of what it did).
+  FACT: BOUNTY1 takes every other board of a town by position (two give one, five give two), and NOTICE1 made every board left a Notice Board - so a town of three boards or more stood two or three,
   each with its "3 new", its mark on the town map and, at a seat, its pennant. Now one (`systems/bountyBoard.js`
   noticeBoardIndex): of the boards BOUNTY1 left, the one nearest the town's middle (`townCentreOf`, the mean of its
   buildings' places), the first by position on a tie. The rest stay Daggerfall's rumour boards, as every board is
@@ -1141,6 +1140,16 @@ of the board for better organization, instruction and readability"**.
   streets' boards, through `noticeBoardOf`); `worldModes.js` WIRED (the hover's name - the exterior ray it runs for the
   streaming host); `exterior.js` keeps DFU's board, as NOTICE1 left it (no board book on the bench); `dungeonContext.js`
   stands no board.
+- **ONE-BOARD REVERTED** (2026-10-07, Mac: "We recently made a change reducing the amount of notice boards in cities and
+  id like to revert just that change"). Every board BOUNTY1 did not take is a Notice Board again, as NOTICE1 built it:
+  the press, the count over each board, the town underfoot, a mark on the town map for each (`ui/townMapMarks.js`
+  townBoardRows takes BOUNTY1's split again) and a seat's pennant over each (`scenes/seatBanners.js` seatBannerAnchors'
+  `bounty` again); `scenes/world.js` noticeBoardOf is gone. Kept: the hover's "Notice Board" (now every Notice Board's,
+  while the board is open) and `systems/bountyBoard.js` noticeBoardIndex, the siege field's Market alone (AUDIT 657 B7's
+  tie law). The rest of BOARD-UI stands. Pins: `test/board_ui.test.js`'s host test pins every board, and the pins
+  ONE-BOARD moved in `notice1`, `seat1a_client` and `town_marks` moved back (each PIN MOVED); mutants: three
+  `board_ui.json` records re-aimed at the restored seams, and `seat1a.json`, `town_marks.json` and
+  `audit_seats3_world.json` aimed where they stood before ONE-BOARD - all dead.
 - **Readable.** MEASURED in Chromium (`tools/noticeBoardProbe.mjs`, every tab at 1280x800 and 390x760): the tab strip
   ran off a phone's edge ("VENDO..."), Guilds and Seat beyond reach - it scrolls sideways now (its scrollbar hidden the
   Arena window's way, `scrollbar-width: none`, the one value CURSOR-EDGE allows) and never shrinks (once it scrolled, a
@@ -1326,7 +1335,7 @@ of Makers; commissions; regional prices to haul between; and every seat on the m
 |---|---|---|
 | **PROF0** | This record | - |
 | **MARKS1** - SHIPPED 2026-09-28 (at `dev`) | Marks: balances, the guild Marks treasury, the ledger, the Bank's exchange, the weekly report; the first faucet is the gate's receipts (Court writs come with PROF1's Stores - a writ filled from the pack would be a save item bought with Marks) | Every faucet capped and pinned; gold never becomes Marks, pinned |
-| **NOTICE1** - SHIPPED 2026-09-28 (at `dev`) | The Notice Board (10.7): a town's rumour board opens it online - one a town since ONE-BOARD (10.11), the one nearest its middle (BOUNTY1's bounty boards stay the hunts), the rumour pinned first and the bounty board's line under it; the server's word; the Notices tab; player notes, their button, reports and moderation; the count over the board. The Work tab moved to PROF1 | Offline a rumour board is byte-for-byte DFU's (the ROAD A9 pins hold) |
+| **NOTICE1** - SHIPPED 2026-09-28 (at `dev`) | The Notice Board (10.7): a town's rumour boards open it online - every board BOUNTY1 did not take (ONE-BOARD REVERTED, 10.11; BOUNTY1's bounty boards stay the hunts), the rumour pinned first and the bounty board's line under it; the server's word; the Notices tab; player notes, their button, reports and moderation; the count over the board. The Work tab moved to PROF1 | Offline a rumour board is byte-for-byte DFU's (the ROAD A9 pins hold) |
 | **NOTICE1b** | Boards stood where a hub lacks one (10.1), if `tools/boardCount.mjs` names any; a seat's with SEAT1 | Mac's run of the measure |
 | **PROF1** - SHIPPED 2026-09-28 (at `dev`, section 22) | The Stores; **Herbalism** with its act; the board's **Work tab**; the Professions and Stores tabs, the prompt, the meter, the toasts; the Sickle and the Basket's search; withdraw to pack; **Court writs** (section 11); FORAGE0 law 6's online exception - the six tools shelve online whatever the switch says. **Needs FORAGE1-2 (shipped)**, MARKS1 and NOTICE1 (FORAGE0 17) | An herb picked online reaches DFU's potion maker by the pack |
 | **PROF2** - SHIPPED 2026-09-28 (at `dev`, section 23) | Mining and Quarrying with their acts; the dungeon veins and the witnessed dungeon; gems; smelting at a forge (a smith's, or a home's forge station); ores and ingots (610-630) and stone (673-674); the Prospector's compass; metal and stone writs. Motherlodes and gate-touched ground are PROF2b. Needs FORAGE1-2 (shipped: the Pick-Axe) | Veins placed on rock fields; signatures by kingdom |

@@ -163,7 +163,7 @@ import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor, playerWeaponHit
 import { mintSharedStamp, hitPoisonOf, hitSpellOf, hitSpellFields, HIT_ARROWS_MAX, respawnDue, wallMsForClassicMinutes, validFoeRecord, validSharedFoe, FOE_HEALTH_MAX, FOES_FRAME_MAX, CELL_FRAME_RECORDS_MAX } from '../net/wire.js';   // AUDIT ONCRASH1 B4a/A3: the stream's door and the memory's, which this host had neither of   // WORLD8: the hour's respawn   // AUDIT WORLD6a B7: the memory's stamp, from the wire's one mint
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, nearbyLootRecords, restFullyHealed, createRestDeps, fatigueLossMultiplierFor, realmSaveSink} from './shared.js';
+import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, nearbyLootRecords, restFullyHealed, createRestDeps, fatigueLossMultiplierFor, realmSaveSink, playerFallDamage} from './shared.js';
 import { sayRealmSave } from '../systems/realmSaves.js';   // REALM P1.3: a save online lands in the realm; AUDIT REALM2 C2: said once it has
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { preloadBookArt } from '../ui/bookReader.js'; import { makeOpenBookHook } from '../ui/bookDoor.js';   // B1; EB1: the reader's ONE door
@@ -2155,6 +2155,28 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   //    ui/input.js now passes the code through for a native window,
   //    exactly as townTalk's seam has since G2.
   const droppedLoot = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });
+  // PI1 (Physical Items, scenes/physicalItemsLayer.js): THE DUNGEON'S HALF of the layer - its collider, its searchable
+  // bodies (`corpse:<i>`, the pool's own keys - a dungeon's foe list is never spliced), the pack's wearer, the take's
+  // hooks, the outer host's reveal for a map, and the ROOM's word on a take: a body is the world room's container, so an
+  // item taken off one is published as the quick door's take is (WORLD4 / LOOT-REGEN). Read at the frame.
+  droppedLoot.physical.attach({
+    collider: () => collider,
+    // AUDIT PI1 H7: a body whose room word this build cannot read stands no items (its window refuses it too); its
+    // silver is rolled by the room's own name for it (silverFindKey - SILVER-FINDS' door)
+    corpses: () => foes.map((f, i) => {
+      if (!lootableBody(f) || !f.corpsePos || f.corpseDisabled) return null;
+      const key = `corpse:${i}`, u = roomLootKey(key);
+      if (u && _lootUnreadable.has(lootKeyOf(u))) return null;
+      return { entity: f.entity, pos: f.corpsePos, key, silver: silverFindKey(key, 'corpse', i) };
+    }).filter(Boolean),
+    identity: () => playerEntity,
+    getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null,
+    took: (moved, who) => showPickups(moved, who),
+    say: (l) => hudText.add(l),
+    revealMap: opts.revealMap ? () => opts.revealMap() : null,
+    taken: (b) => { if (b?.kind === 'corpse' && b.key) { const q = roomLootKey(b.key); if (q) publishLoot(q); } },
+    paused: () => dungeonPaused(),   // AUDIT PI1 L10: the flights hold while a window does
+  });
   preloadInventoryArt({ renderer, fetchBytes, palette });
   preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0/01I0 + the ICON/MASK sheets warm at boot
     .catch((e) => console.warn('[spellbook] classic spellbook art unavailable:', e?.message ?? e));
@@ -2368,6 +2390,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       onDrop: (items, icon = null, at = null) => (lastPlayerFeet
         ? droppedLoot.dropPile(items, containerDropPos(at, [...lastPlayerFeet]), null, icon)
         : console.warn('[loot] dropped before the first frame; no ground position yet')),
+      // PI1: Physical Items' shift-drop - each item its own pile, laid out ahead of the player (droppedLoot.js dropPhysical)
+      physicalDropOn: () => droppedLoot.physical.on() && !!lastPlayerFeet,
+      physicalDrop: (items) => droppedLoot.dropPhysical(items, [...lastPlayerFeet], [Math.sin(_fpYaw), 0, Math.cos(_fpYaw)]),
       // WORLD4: what is LEFT goes to the room on the close - the same moment DFU frees an emptied container's flat,
       // and the moment the taking is finished rather than half done
       onClose: () => { onEmptied?.(); if (lootKey) { _lootOpenKey = null; publishLoot(lootKey); } droppedLoot.releaseEmptied(); surfacePlayer(); },   // AUDIT WORLD4 C1: the window is closed before the close's word goes, so the room's next word may land
@@ -5057,7 +5082,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       if (f._ownSeq == null) f._ownSeq = ++_ownSeq;
       const r = roomRecord(f, f._ownSeq, full || !!heirOf);
       if (!r) continue;
-      if (heirOf && !f.dead) { const h = heirOf(f) ?? null; f._heir = h; if (h) r.e = h; }
+      if (heirOf && !f.dead) { const h = f.entity?.revenant?.id ? null : (heirOf(f) ?? null); f._heir = h; if (h) r.e = h; }   // REVENANT-HEIR (exteriorFoes' twin): my revenant (a lair's stand) is never handed on - an heir holds no record of it, and killed it as a plain foe
       out.push(r); src.push([f, qt]);
     }
     let whole = full || !!heirOf;
@@ -5958,6 +5983,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       camps: camps.snapshot(),   // SURV3: my fires, the same law
       droppedLoot: droppedLoot._piles.map((p) => ({
         pos: [...p.pos], archive: p.archive, record: p.record, items: p.items.map((it) => ({ ...it })),
+        ...(p.physical ? { physical: true } : {}),   // AUDIT PI1 H6: a shift-drop stays one - restorePiles lays it back lying
       })),
       actions: actions.collectSaveData(),
       // AUDIT 63 F30: PlayerEnterExit.PlayerTeleportedIntoDungeon.
@@ -8967,7 +8993,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // THREE hosts use - flashes for this exact reason; only a
       // dungeon fall was silent, behind a stale pending comment.
       if (fell > FALL_DAMAGE_THRESHOLD) {
-        const _fallDmg = Math.trunc(FALL_HP_PER_METRE * (fell - FALL_DAMAGE_THRESHOLD));
+        const _fallDmg = playerFallDamage(playerEntity, fell);   // AUDIT LOOT II A1: shared.js's one bill, the Long Road off it
         hurtPlayer(_fallDmg);
         flashPlayerDamage(_fallDmg);   // BA1: RemoveHealth carries the amount
         if (!immersiveFootsteps.applyPlayerFallDamage()) audio.playOneShot(SOUND.FallDamage, FOOTSTEP_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:307-311; IF1: the mod's Hard_Landing_2 when it owns the stride
@@ -9928,6 +9954,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  back here (player/lootStack.js lootPile) - a tab's open, which
      *  quick loot does not take on. */
     takeLoot(key, mode = 'grab', pileKeys = null) {
+      if (droppedLoot.physical.owns(key)) return droppedLoot.physical.pick(key, playerEntity) ? 1 : 0;   // PI1: an item standing as itself is taken on the press
       const [kind, iStr] = key.split(':');
       const i = Number(iStr);
       if (kind === 'droppedTorch') return droppedTorches.activate(key, mode) ? 1 : 0;   // HT1: PickUpLightSource
@@ -10156,6 +10183,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // is still warming cannot mint onto the orphan.
       for (const p of droppedLoot._piles) { p.dead = true; if (p.batch) renderer.destroyBillboardBatch(p.batch); }
       droppedLoot._piles.length = 0;
+      droppedLoot.physical.destroy();   // PI1: and the items standing as themselves - their batches and their pictures
       portals.clear();   // COMPANION-PORTAL: the portals standing own a batch each and leave with the dungeon
       sdEnd?.clear();   // SD4b: the Rift and the Return, and the bell
       sdHall?.clear();   // SD6c: the hall's meshes

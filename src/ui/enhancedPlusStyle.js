@@ -924,7 +924,8 @@ export const BROKER_CSS = `/* ── SET7: THE SIGIL BROKER'S WINDOW (ui/brokerW
 }`;
 /** AUDIT LOOT F6: THE REFORGE'S WINDOW (ui/reforgeWindow.js) - the Broker's shape, so his sheet lays it; these are the rules
  *  his window never needed: the pages' tabs (the chosen one the kit's brass `.on`), the Codex's rows of words alone (his
- *  grid put them in its 48px picture column), the salvage's Keep under its Break, and a card's line with its press. The
+ *  grid put them in its 48px picture column) and the Scry page's (LOOT19), the salvage's Keep under its Break, and a
+ *  card's line with its press. The
  *  classic skin lays it beside his sheet (reforgeWindow.js), the Plus sheet carries it. */
 export const REFORGE_CSS = `/* ── LOOT9/LOOT10: THE REFORGE'S WINDOW (ui/reforgeWindow.js) ── */
 .reforge-tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 16px 0; }
@@ -933,9 +934,12 @@ export const REFORGE_CSS = `/* ── LOOT9/LOOT10: THE REFORGE'S WINDOW (ui/ref
 .broker-offer.codex-set { cursor: default; }
 .broker-offer.codex-row .broker-set, .broker-offer.codex-set .broker-set { white-space: normal; }   /* a hint and a set's pieces read whole, a phone's too */
 .broker-offer.codex-row:not(.found) .broker-name { color: #8d8270; }
+.broker-offer.scry-row > .broker-offer-body { grid-column: 1 / span 2; }   /* AUDIT LOOT II B2: a family's row has no picture - its words take the frame's column too (a phone's as well), its price and press where his stand */
+.broker-offer.scry-row .broker-set { white-space: normal; }   /* the haunts read whole */
 .broker-offer > .reforge-keep { grid-column: 4; }
 .reforge-card .reforge-line, .imprint-card .imprint-choice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; margin: 2px 0; }
 .reforge-card .reforge-press, .imprint-card .imprint-press { width: auto; flex: 0 0 auto; }
+.reforge-card .hone-press { width: auto; flex: 0 0 auto; }   /* LOOT17: the hone's press, beside the line's Reforge */
 @media (max-width: 720px) {
   .reforge-tabs { padding: 6px 12px 0; }
   .broker-offer > .reforge-keep { grid-column: 3; grid-row: 3; }   /* the Broker's phone rule spans every press over two rows: Keep sat on Break it */
@@ -1925,6 +1929,10 @@ ${ARENA_WINDOW_CSS}
 .card .lockline, .card .boundline, .pack-shell .card p.lockline, .pack-shell .card p.boundline { margin: 6px 0 4px; font-size: 12px; letter-spacing: 0.04em; color: #f3cf86; text-shadow: 1px 1px 0 #050608; }
 .card .lockline::before { content: ''; display: inline-block; width: 11px; height: 11px; margin-right: 6px; vertical-align: -1px;
   background: ${LOCK_GLYPH_URL} center / contain no-repeat; }
+/* ── LOOT18: A JUNK PIECE (systems/itemJunk.js) - its picture dimmed and greyed wherever it is drawn; the card says it in
+   words, in the lock's line style without the padlock, muted. */
+.pack-shell [data-junk] .tile > *, .trade-shell [data-junk] .tile > *, .ptrade-shell [data-junk] .tile > * { opacity: 0.5; filter: grayscale(0.7); }
+.card .junkline, .pack-shell .card p.junkline { color: #a89f88; }
 `;
 
 /** AUDIT MERGE-PLUS D3: the lane's words on Stone's light grey (ONLINE_DRESS_CSS, last) - each 4.5:1 or better over
@@ -2169,10 +2177,45 @@ export const ARMOUR_CSS = `
 .card .cmp .cmp-d.up { color: #74d9a0; }
 .card .cmp .cmp-d.down { color: #d98074; }
 .card .cmp .cmp-d.same { color: #a89f88; }
+/* LOOT18: the lines a wear would change - a line a row, its chip at its end; a lost line struck through */
+.card .cmp-lines .cmp-linelist { list-style: none; margin: 0; padding: 0; }
+.card .cmp-lines .cmp-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; margin: 1px 0; }
+.card .cmp-lines .cmp-d.new { color: #f3cf86; }
+.card .cmp-lines .cmp-line.lost .cmp-v { text-decoration: line-through; color: #a89f88; }
+.card .cmp-lines .cmp-note { flex-basis: 100%; font-size: 11px; color: #a89f88; }
 `;
 
 /** The layers that stand OVER the kit on purpose, in order - each outranks the kit's stone at the same weight. */
 export const OVER_KIT_CSS = [ITEM_FRAME_CSS, ONLINE_DRESS_CSS];
+
+/** PLUS-MENU (2026-10-07, Mac: "give the main menu the enhanced plus UI treatment"): THE FRONT DOOR IN STONE AND BRASS.
+ *  The door was the one enhanced screen the kit never reached - eight words floating on the night, the About plaque and
+ *  the profile mark carved while the doors themselves were bare. The doors play the kit's BUTTON role now
+ *  (ui/enhancedFrame.js: raised stone, brass under the pointer and the pad, sunk while held, every Plus colour's
+ *  ground), one width a column so the list reads as one carved rail; this gives them the 2px edge the role paints (the
+ *  padding gives back what the edge takes, so a door is the box it was) and keeps the diamonds standing, dim stone at
+ *  rest and the classic gold on the door under the pointer. The rule under the wordmark is gilt. */
+export const MENU_CSS = `
+/* ── PLUS-MENU: THE DOORS ── */
+/* AUDIT PLUS-MENU M1: the stage's own width, never the viewport's - a phone's stage keeps 24px a side, and 100vw - 32px
+   ran the rail 8px past it, so the whole door panned sideways under a thumb */
+.px-home .px-menu { width: min(384px, 100%); align-items: stretch; gap: 8px; }
+.px-menu .doorbtn { justify-content: space-between; border: 2px solid; padding: 6px 24px; }
+.px-menu .doorbtn .px-c { visibility: visible; color: #5a5446; text-shadow: 1px 1px 0 #050608; }
+.px-menu .doorbtn:hover .px-c, .px-menu .doorbtn:focus-visible .px-c { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* AUDIT PLUS-MENU M4: on Stone's light ground the dim stone diamond was gone (1.2:1) - the lit stone, at rest only */
+:root[data-plus-theme="stone"] .px-menu .doorbtn:not(:hover):not(:focus-visible) .px-c { color: #9a9079; }
+/* a phone: the doors at the 44px tap floor and a size down, so the rail stands above the foot's plaques on a tall phone
+   (the stage still scrolls where it cannot - PX8) */
+@media (max-width: 480px) {
+  .px-home .px-menu { gap: 6px; }
+  .px-menu .doorbtn { padding: 2px 16px; min-height: 44px; font-size: 22px; }
+}
+/* the rule under the wordmark: two gilt bars fading out from the gem */
+.px-home .px-rule::before, .px-home .px-rule::after { height: 2px; opacity: 1; box-shadow: 0 1px 0 #050608; }
+.px-home .px-rule::before { background: linear-gradient(90deg, transparent, #7a5424 45%, #f3cf86); }
+.px-home .px-rule::after { background: linear-gradient(90deg, #f3cf86, #7a5424 55%, transparent); }
+`;
 
 export const PLUS_CSS = `${VITALS_CSS}
 ${PLUS_FIX_CSS}
@@ -2184,6 +2227,7 @@ ${LV2_CSS}
 ${MOTION_CSS}
 ${LAYOUT_CSS}
 ${ARMOUR_CSS}
+${MENU_CSS}
 /* FRAME1: LAST, on purpose - see ui/enhancedFrame.js */
 ${FRAME_CSS}
 /* RARITY-UI + SIGIL-UI, then PLUS-DRESS: after the kit - each outranks the kit's stone at the same weight */

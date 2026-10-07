@@ -1,0 +1,94 @@
+[
+  {
+    "name": "MWSTEEL2-solved-in-the-rest",
+    "file": "src/characters/ownArmorModels.js",
+    "old": "export const STEEL_SOLVE_POSE = 'bind';",
+    "new": "export const STEEL_SOLVE_POSE = 'rest';",
+    "tests": [
+      "test/mwsteel2.test.js"
+    ],
+    "note": "The fault itself: a T-posed gauntlet solved where retail's arms hang copies the shoulder."
+  },
+  {
+    "name": "MWSTEEL2-the-bind-never-asked",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "  if (part.solvePose === 'bind') {\n    const bp = bindPoseMats(",
+    "new": "  if (part.solvePose === 'never') {\n    const bp = bindPoseMats(",
+    "tests": [
+      "test/mwsteel2.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL2-the-skeleton-file-says-nothing",
+    "file": "src/formats/mwFirstPerson.js",
+    "old": "    const bp = bindPoseMats(skeleton, [...sources, ...(skeletonNif ? skeletonBindSkins(skeletonNif, skeleton) : [])], mats);",
+    "new": "    const bp = bindPoseMats(skeleton, [...sources], mats);",
+    "tests": [
+      "test/mwsteel2.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL2-the-bind-composed-backwards",
+    "file": "src/formats/mwSkinTransfer.js",
+    "old": "          bind.set(b.ref, affineMul(mesh, bi));",
+    "new": "          bind.set(b.ref, affineMul(bi, mesh));",
+    "tests": [
+      "test/mwsteel2.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL2-the-anchor-not-at-its-rest",
+    "file": "src/formats/mwSkinTransfer.js",
+    "old": "    bind.set(anchor.ref, framed ? { a: inv.a, t: [rest.t[0], rest.t[1], rest.t[2]] } : { a: Float32Array.from(rest.a), t: [rest.t[0], rest.t[1], rest.t[2]] });",
+    "new": "    bind.set(anchor.ref, framed ? inv : { a: Float32Array.from(rest.a), t: [rest.t[0], rest.t[1], rest.t[2]] });",
+    "tests": [
+      "test/mwsteel2.test.js"
+    ],
+    "note": "The anchor's translation is the skeleton's rest: a bind read off an inverse alone sits the body where its mesh's origin was exported."
+  },
+  {
+    "name": "MWSTEEL2-the-leaf-bone-anchors",
+    "file": "src/formats/mwSkinTransfer.js",
+    "old": "      for (const l of lists) if (l.framed === pass) for (const b of l.bones) if (!bind.has(b.ref) && (!anchor || depth(b.ref) < depth(anchor.ref))) anchor = b;",
+    "new": "      for (const l of lists) if (l.framed === pass) for (const b of l.bones) if (!bind.has(b.ref) && (!anchor || depth(b.ref) > depth(anchor.ref))) anchor = b;",
+    "tests": [
+      "test/mwsteel2.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL2-a-rigid-part-binds",
+    "file": "src/formats/mwSkinTransfer.js",
+    "old": "  const lists = (skins ?? []).filter((x) => x?.skin && !x.skin.rigid).map((x) => ({",
+    "new": "  const lists = (skins ?? []).filter((x) => x?.skin).map((x) => ({",
+    "tests": [
+      "test/mwsteel2.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL2-the-skirt-from-the-cuirass-body",
+    "file": "src/formats/mwItemMap.js",
+    "old": "skinFrom: p.skinFrom ?? own.skinFrom, fitTo:",
+    "new": "skinFrom: own.skinFrom, fitTo:",
+    "tests": [
+      "test/mwsteel2.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL2-the-skirt-skinned-from-the-chest",
+    "file": "src/characters/ownArmorModels.js",
+    "old": "export const STEEL_SKIRT_SKIN_FROM = Object.freeze(['groin', 'upperleg']);",
+    "new": "export const STEEL_SKIRT_SKIN_FROM = Object.freeze(['chest']);",
+    "tests": [
+      "test/mwsteel2.test.js"
+    ]
+  },
+  {
+    "name": "MWSTEEL2-the-solve-pose-not-carried",
+    "file": "src/formats/mwItemMap.js",
+    "old": "          ...(own.solvePose ? { solvePose: own.solvePose } : {}) });",
+    "new": "          }); void own.solvePose;",
+    "tests": [
+      "test/mwsteel2.test.js"
+    ]
+  }
+]

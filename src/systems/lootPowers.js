@@ -40,7 +40,9 @@
 // is the sets' (his ward turns a blow whole; his strikes carry no mark).
 // ═══════════════════════════════════════════════════════════════════
 
-import { registerWeaponBlowMod } from './entityMods.js';
+import { registerWeaponBlowMod, registerEntityFold, newMods, EMPTY_MODS } from './entityMods.js';
+import { effectSchool } from './spellcost.js';   // LOOT15: Stendarr's Mercy reads a spell's school
+import { hoodUp } from './survival/temperature.js';   // LOOT15: Unseen reads the hood (HOOD-SAID's one law)
 import { registerPlayerStrikeListener, enemyEntityGroup, ENEMY_GROUPS } from '../combat/formulas.js';
 import { registerSpellCostMod } from './spellcost.js';
 import { registerPlayerBlowLanded, pendingPlayerBlow, REACH_RISE_M } from './sigilSetPowers.js';
@@ -382,13 +384,19 @@ export function lootKill(foe) {
 }
 
 // ── the cast: focus ─────────────────────────────────────────────────
+/** LOOT15: a spell OF a school - every effect it carries that school's (a heal-and-burn is no Restoration spell). */
+export const spellOfSchool = (spell, school) => {
+  const fx = (spell?.effects ?? []).filter((e) => e && e.type > -1);
+  return fx.length > 0 && fx.every((e) => effectSchool(e) === school);
+};
 /** MY spell's magicka: the focus I wear off it, summed under the cap. */
-export function lootCastCost(entity, sp) {
+export function lootCastCost(entity, sp, spell = null) {
   if (!mine(entity)) return sp;
   let pct = Math.min(FOCUS_CAP, wornSum(entity, 'focus'));
   for (const { power: p } of wornPowers(entity)) {   // LOOT5: the Direnni Staff wielded, the Archmage's Loop
     if (p.kind === 'conduit') pct += p.less;
     else if (p.kind === 'mastery') pct += Number.isFinite(entity.magicka) && entity.maxMagicka > 0 && entity.magicka < entity.maxMagicka / 2 ? p.low : p.less;
+    else if (p.kind === 'school' && spellOfSchool(spell, p.school)) pct += p.less;   // LOOT15: Stendarr's Mercy
   }
   pct = Math.min(SPELL_CUT_MOST, pct);
   return pct > 0 ? (sp * (100 - pct)) / 100 : sp;
@@ -426,6 +434,29 @@ export function lootFind() {
   return powerKind(me, 'fortune')?.mult ?? 1;
 }
 
+// ── LOOT15: the wardrobe's powers, folded ─────────────────────────
+/** LOOT15 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 7): THE ROAD'S AND THE COURT'S POWERS are FOLDED onto
+ *  MY entity (systems/entityMods.js), so the leaves that read them stay import-free - survival's felt temperature (the
+ *  degrees, survival/needs.js through wardrobeCtx), DRESS1's standing (clothingStanding.js), the shared fatigue and fall
+ *  laws (scenes/shared.js), skillValue. A power counts once (wornPowers); nothing for anyone but me, with the switch off,
+ *  or in a duel. Unseen answers the hood of the piece that carries it - the hood up, 25 Stealth; down, none. */
+export function wardrobeFold(entity) {
+  const powers = wornPowers(entity);
+  if (!powers.length) return EMPTY_MODS;
+  let mods = null;
+  const m = () => (mods ??= newMods());
+  for (const { power: p, item } of powers) {
+    switch (p.kind) {
+      case 'climate': m().heatDegrees += p.heat ?? 0; m().coldDegrees += p.cold ?? 0; break;
+      case 'longroad': m().fatigueLess += p.fatigue ?? 0; m().fallLess += p.fall ?? 0; break;
+      case 'bearing': { const s = m().standing; for (let g = 0; g < s.length; g++) s[g] += p.standing ?? 0; break; }
+      case 'hood': if (hoodUp(item)) m().skills[p.skill] = (m().skills[p.skill] ?? 0) + (p.more ?? 0); break;
+      default: break;
+    }
+  }
+  return mods ?? EMPTY_MODS;
+}
+
 // ── registered at import ───────────────────────────────────────────
 export const LOOT_POWERS = 'lootPowers';
 registerWeaponBlowMod(LOOT_POWERS, lootBlow);
@@ -439,6 +470,7 @@ registerPlayerKillListener(LOOT_POWERS, lootKill);
 registerAbsorptionChance(LOOT_POWERS, lootAbsorbChance);
 registerMagicRoundHook(LOOT_POWERS, lootRound);
 registerLegendaryFind(LOOT_POWERS, lootFind);
+registerEntityFold(LOOT_POWERS, wardrobeFold);   // LOOT15
 
 /** LOOT5: THE HUD'S CHIPS for the powers now, beside the sets' (scenes/world.js hands both to the HUD) - each
  *  `{ key, set: 'legendary', name, text, state }`: Flow's and Bedrock's stacks and seconds, Dawnward's charges, a

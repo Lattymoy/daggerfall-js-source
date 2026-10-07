@@ -29,7 +29,7 @@
 import { verifySdReceipt } from '../../src/net/sdReceipt.js';
 import { seededRng } from '../../src/systems/wind.js';
 
-/** The account's grants on its row (`players.sd_honours`, migration 0087), bit by bit. */
+/** The account's grants on its row (`players.sd_honours`, migration 0088), bit by bit. */
 export const SD_HONOUR_TITLE = 1;
 export const SD_HONOUR_AURA = 2;
 /** How often a kill's first write grants each: Hourbreaker one in four, The Turning Hour one in eight. */

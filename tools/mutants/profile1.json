@@ -79,8 +79,8 @@
   {
     "name": "P1-door-shares-the-tile-canvas",
     "file": "src/ui/enhancedMenu.js",
-    "old": "face: save ? loadFace(save, { scale: 2, copy: true }) : null,",
-    "new": "face: save ? loadFace(save, { scale: 2 }) : null,",
+    "old": "face: save ? loadFace(save, { scale: 2, copy: true }) : null,   // a COPY",
+    "new": "face: save ? loadFace(save, { scale: 2 }) : null,   // a COPY",
     "tests": ["test/profile1_badge.test.js"]
   },
   {

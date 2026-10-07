@@ -312,9 +312,10 @@ export function standKin(m, at, yaw, id, rand) {
 /** One revenant fight to its end (or `seconds`): the player 4 m off its front; `weak` - the player's weapon is of its
  *  weakness (else its weakness is fire, which a blade never strikes). FEUD HARNESS: `band` its band about it (its rank's),
  *  `flight` its flight, as the pools give them; `order` whom I strike - 'master' (it first) or 'band' (its band first);
- *  `chase` whether I run after it when it runs (false: I stand, and let it go).
+ *  `chase` whether I run after it when it runs (false: I stand, and let it go); `runner` my run when I do (FLIGHT-FIRST:
+ *  m/s - Speed and Running 50's by default, a fast runner's to run a young revenant's flight down).
  *  Answers how it ended ('knelt', 'tore' - its will held - 'fled' - it escaped - or 'time'), when (s), and its counts. */
-export function revenantFight({ type = M.Orc, weapon = 'Longsword', rank = 3, mode = 'trade', weak = false, seconds = 240, seed = 1, band = true, flight = true, order = 'master', chase = true } = {}) {
+export function revenantFight({ type = M.Orc, weapon = 'Longsword', rank = 3, mode = 'trade', weak = false, seconds = 240, seed = 1, band = true, flight = true, order = 'master', chase = true, runner = RUN } = {}) {
   const rand = seeded(seed);
   const was = Math.random, wasOn = getPref('lootRarity'), wasDf = getSeed();
   Math.random = rand;
@@ -395,7 +396,7 @@ export function revenantFight({ type = M.Orc, weapon = 'Longsword', rank = 3, mo
       const d = Math.hypot(fx, fz);   // where it stood as I stepped - my step before the foes' (the frame's order)
       const chasing = f.fleeing && !prey;
       if (d > REACH - CLOSE && T >= down.downUntil && (chase || !chasing) && !(mode === 'dodge' && blows.some((lb) => T < lb.land + CLASSIC_UPDATE_INTERVAL))) {
-        const k = Math.min((chasing ? RUN : WALK) * DT, d - (REACH - CLOSE)) / d;
+        const k = Math.min((chasing ? runner : WALK) * DT, d - (REACH - CLOSE)) / d;
         p[0] += fx * k; p[2] += fz * k;
       }
       if (T >= down.downUntil) swingT += DT;   // AUDIT FEUD 2: knocked down, the swing stands (the rig's `paralyzed`)
@@ -447,10 +448,14 @@ export function revenantCell(opts, fights) {
   const ts = rows.map((x) => x.t).sort((a, b) => a - b);
   const n = (end) => rows.filter((x) => x.end === end).length;
   const sum = (k) => rows.reduce((a, x) => a + x[k], 0);
+  // FLIGHT-FIRST: the fights brought to their end - knelt or torn away, never one it fled (a flight now gets away from a
+  // runner at Speed and Running 50: it is no kill, and its will decided nothing)
+  const ended = rows.filter((x) => x.end === 'knelt' || x.end === 'tore');
   return {
     raw: { mean: sum('t') / fights, hitsOnMe: sum('hitsOnMe') / fights },   // AUDIT FEUD 2: the verdict's ratios, unrounded
     fights, knelt: n('knelt'), tore: n('tore'), time: n('time'),
     kneel: +(n('knelt') / fights).toFixed(3),
+    will: ended.length ? +(n('knelt') / ended.length).toFixed(3) : null,   // FLIGHT-FIRST: knelt, of the fights its will decided
     mean: +(ts.reduce((a, x) => a + x, 0) / fights).toFixed(2), median: ts[Math.floor(fights / 2)],
     stood: rows.filter((x) => x.stood).length, staggers: +(rows.reduce((a, x) => a + x.staggers, 0) / fights).toFixed(2),
     perfect: +(rows.reduce((a, x) => a + x.perfect, 0) / fights).toFixed(2), hitsOnMe: +(rows.reduce((a, x) => a + x.hitsOnMe, 0) / fights).toFixed(2),
@@ -467,17 +472,20 @@ export function revenantCell(opts, fights) {
 }
 
 /** AUDIT FEUD 2: RVN's targets read off a measure's cells (`duel` the rank-3 cells, `ranks` the longsword's by rank) -
- *  the reference longsword's; each ratio from the cells' unrounded means. */
-export function feudVerdict(duel, ranks) {
+ *  the reference longsword's; each ratio from the cells' unrounded means. FLIGHT-FIRST: `weight` the cells a rank's
+ *  weight is read off - ranks 1 and 5 never running (a young revenant's flight ends most of its fights now, and the
+ *  time to a flight, or to the quick kills it leaves, is no measure of how hard it is to bring down). */
+export function feudVerdict(duel, ranks, weight = ranks) {
   const at = (weapon, mode, weak) => duel.find((x) => x.weapon === weapon && x.mode === mode && x.weak === weak);
   const T = FEUD_TARGETS;
-  const ratio = (mode) => +(ranks.find((x) => x.mode === mode && x.rank === 5).raw.mean / ranks.find((x) => x.mode === mode && x.rank === 1).raw.mean).toFixed(2);
+  const ratio = (mode) => +(weight.find((x) => x.mode === mode && x.rank === 5).raw.mean / weight.find((x) => x.mode === mode && x.rank === 1).raw.mean).toFixed(2);
   const ref = 'Longsword';
   const verdict = {
     DODGE_PAYS: { struck: +(at(ref, 'dodge', false).raw.hitsOnMe / at(ref, 'trade', false).raw.hitsOnMe).toFixed(3), time: +(at(ref, 'dodge', false).raw.mean / at(ref, 'trade', false).raw.mean).toFixed(3), held: at(ref, 'dodge', false).raw.hitsOnMe <= T.DODGE_SPARES * at(ref, 'trade', false).raw.hitsOnMe && at(ref, 'dodge', false).raw.mean <= at(ref, 'trade', false).raw.mean },
-    WILL_WEAK: { kneel: at(ref, 'trade', true).kneel, held: at(ref, 'trade', true).kneel >= T.KNEEL_WEAK },
-    WILL_DODGE: { kneel: at(ref, 'dodge', false).kneel, held: at(ref, 'dodge', false).kneel >= T.KNEEL_DODGE },
-    WILL_TRADE: { kneel: at(ref, 'trade', false).kneel, held: at(ref, 'trade', false).kneel <= T.KNEEL_TRADE_MAX },
+    // FLIGHT-FIRST: the will's three read the fights its will decided (`will`, its escapes apart)
+    WILL_WEAK: { kneel: at(ref, 'trade', true).will, held: at(ref, 'trade', true).will >= T.KNEEL_WEAK },
+    WILL_DODGE: { kneel: at(ref, 'dodge', false).will, held: at(ref, 'dodge', false).will >= T.KNEEL_DODGE },
+    WILL_TRADE: { kneel: at(ref, 'trade', false).will, held: at(ref, 'trade', false).will <= T.KNEEL_TRADE_MAX },
     RANKS: { trade: ratio('trade'), dodge: ratio('dodge'), held: ['trade', 'dodge'].every((m) => ratio(m) >= T.RANK_RATIO[0] && ratio(m) <= T.RANK_RATIO[1]) },
   };
   return verdict;
@@ -497,8 +505,11 @@ export function measureFeud({ fights = 1000, weapons = ['Dagger', 'Longsword', '
   const beside = [];
   for (const rank of [3, 5]) for (const mode of ['trade', 'dodge']) beside.push({ weapon: 'Longsword', mode, rank, order: 'band', ...revenantCell({ weapon: 'Longsword', mode, rank, order: 'band' }, fights) });
   for (const mode of ['trade', 'dodge']) beside.push({ weapon: 'Longsword', mode, rank: 3, order: 'alone', ...revenantCell({ weapon: 'Longsword', mode, rank: 3, band: false, flight: false }, fights) });
-  const verdict = feudVerdict(duel, ranks);
-  return { fights, duel, ranks, beside, verdict };
+  // FLIGHT-FIRST: a rank's weight - ranks 1 and 5, never running
+  const weight = [];
+  for (const mode of ['trade', 'dodge']) for (const rank of [1, 5]) weight.push({ weapon: 'Longsword', mode, rank, ...revenantCell({ weapon: 'Longsword', mode, rank, flight: false }, fights) });
+  const verdict = feudVerdict(duel, ranks, weight);
+  return { fights, duel, ranks, beside, weight, verdict };
 }
 
 if (isMain(import.meta.url)) {
@@ -525,9 +536,11 @@ if (isMain(import.meta.url)) {
     const pct = (v) => `${(v * 100).toFixed(1).padStart(5)}%`;
     const runBand = (x) => `ran ${x.flights} (fled ${x.fled}, cornered ${x.cornered}, caught ${x.caught}, stood running ${x.stoodInFlight})  band ${x.band}: swings ${x.bandSwings} wind-ups ${x.bandWindups} landed ${x.bandHits} slain ${x.bandSlain} rallied ${x.rallied} portal ${x.portal}`;
     console.log(`\nTHE REVENANT (an Orc revenant with its band, ${fr.fights} fights a cell, to its end): how it ended, the time to the end, its staggers and my perfect dodges a fight; its flight and its band`);
-    for (const x of fr.duel) console.log(`  ${x.weapon.padEnd(10)} rank ${x.rank} ${x.mode.padEnd(6)} ${x.weak ? 'its weakness' : 'plain       '}  knelt ${pct(x.kneel)}  mean ${String(x.mean).padStart(6)} s  median ${String(x.median).padStart(7)} s  staggers ${x.staggers}  two+ ${pct(x.twoStaggers)}  perfect ${x.perfect}  wind-ups ${x.windups}  blows on me ${x.hitsOnMe}  ${runBand(x)}`);
+    for (const x of fr.duel) console.log(`  ${x.weapon.padEnd(10)} rank ${x.rank} ${x.mode.padEnd(6)} ${x.weak ? 'its weakness' : 'plain       '}  knelt ${pct(x.kneel)} (${x.will == null ? '-' : pct(x.will)} of those its will decided)  mean ${String(x.mean).padStart(6)} s  median ${String(x.median).padStart(7)} s  staggers ${x.staggers}  two+ ${pct(x.twoStaggers)}  perfect ${x.perfect}  wind-ups ${x.windups}  blows on me ${x.hitsOnMe}  ${runBand(x)}`);
     console.log('\nTHE RANKS (a Longsword): the time to the end');
     for (const x of fr.ranks) console.log(`  rank ${x.rank} ${x.mode.padEnd(6)} knelt ${pct(x.kneel)}  mean ${String(x.mean).padStart(6)} s  median ${String(x.median).padStart(7)} s  stood ${x.stood}  ${runBand(x)}`);
+    console.log('\nTHE RANKS\' WEIGHT (a Longsword, never running - RANKS reads these): the time to the end');
+    for (const x of fr.weight) console.log(`  rank ${x.rank} ${x.mode.padEnd(6)} knelt ${pct(x.kneel)}  mean ${String(x.mean).padStart(6)} s  median ${String(x.median).padStart(7)} s`);
     console.log('\nBESIDE THE TARGETS (a Longsword): its band first; alone and never running (as AUDIT FEUD 2 measured)');
     for (const x of fr.beside) console.log(`  rank ${x.rank} ${x.mode.padEnd(6)} ${x.order.padEnd(6)} knelt ${pct(x.kneel)}  mean ${String(x.mean).padStart(6)} s  median ${String(x.median).padStart(7)} s  blows on me ${x.hitsOnMe}  ${runBand(x)}`);
     console.log('\nRVN TARGETS');

@@ -15,7 +15,7 @@ import { verifyToken, importPublicKeyB64 } from '../src/net/identityToken.js';
 import { ACCEPTED } from '../src/net/legalLaw.js';   // TERMS1: a request that makes an account carries the versions ticked
 
 const DAY = 24 * 60 * 60;
-const CUT = Date.UTC(2026, 8, 25) / 1000;
+const CUT = Date.UTC(2026, 8, 25, 12) / 1000;   // FOUNDER5 (PIN MOVED): 00:00Z until the end of the 24th on every clock
 
 test('FOUNDER3: an account that first played by the cutoff holds Founder whenever it registered (mutants: registration again; the later stamp; first contact exclusive)', () => {
   const since = { handle: 'Played', created_at: CUT - 3 * DAY, registered_at: CUT + 2 * DAY, title: null };
@@ -24,7 +24,7 @@ test('FOUNDER3: an account that first played by the cutoff holds Founder wheneve
   assert.equal(titleWorn({ ...since, title: 'founder' }, {}), 'founder');
   assert.deepEqual(titlesHeld({ handle: 'Dot', created_at: CUT, registered_at: CUT + DAY }, {}), ['founder'], 'first played in the cutoff second');
   assert.deepEqual(titlesHeld({ handle: 'New', created_at: CUT + 1, registered_at: CUT + 1 }, {}), [], 'first played a second past it: none');
-  assert.equal(FOUNDER_UNTIL, CUT, 'the instant did not move');
+  assert.equal(FOUNDER_UNTIL, CUT, 'the instant FOUNDER5 moved later, so nobody lost it');
 });
 
 test('FOUNDER3: a row with no birth stamp is judged by its registration, as before (mutants: no birth a founder; the birth alone)', () => {

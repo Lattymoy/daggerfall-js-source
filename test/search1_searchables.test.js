@@ -118,7 +118,11 @@ test('FOE-CAP: the plain ladder - white the rule, blue rare, yellow very rare, o
   const plain = rarityChances({ tier: 8, weights: PLAIN_FOE_RARITY_WEIGHTS });
   assert.deepEqual(plain, { magic: 90, rare: 15.6, legendary: 0.75 });
   assert.deepEqual(rarityChances({ tier: 0, weights: PLAIN_FOE_RARITY_WEIGHTS }), { magic: 50, rare: 6, legendary: 0.15 }, 'the floor');
-  assert.deepEqual(rarityChances({ tier: 8, luck: 70, weights: PLAIN_FOE_RARITY_WEIGHTS }), { magic: 130, rare: 38, legendary: 3 }, 'luck to the ceilings: yellow 3.8%, orange 0.3%');
+  // LOOT13 (bible/06-Systems/Loot-II-Arc.md section 5): luck leans on the source's odds - Luck 70 is a fifth more of each, where
+  // the additive 2 per mille a point took a tier-8 foe to every ceiling (yellow 3.8%, orange 0.3% - the orange twenty times over)
+  const leaned = rarityChances({ tier: 8, luck: 70, weights: PLAIN_FOE_RARITY_WEIGHTS });
+  for (const k of ['magic', 'rare', 'legendary']) assert.ok(Math.abs(leaned[k] - plain[k] * 1.2) < 1e-9, `LOOT13: luck 70 leans ${k} a fifth`);
+  assert.ok(leaned.rare < PLAIN_FOE_RARITY_WEIGHTS.rare.cap && leaned.legendary < PLAIN_FOE_RARITY_WEIGHTS.legendary.cap, 'LOOT13: luck alone no longer reaches the ceilings');
   assert.deepEqual(PLAIN_FOE_RARITY_WEIGHTS, {
     magic: { base: 50, perTier: 5, cap: 190 }, rare: { base: 6, perTier: 1.2, cap: 38 }, legendary: { base: 0.15, perTier: 0.075, cap: 3 },
   });
