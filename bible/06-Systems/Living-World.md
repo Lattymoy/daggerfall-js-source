@@ -1630,6 +1630,62 @@ class's sprite was a fighter's on the road alone (LW3's armed walk, LW0 decision
   `residentWalker.js`, `travellerSprites.js`), of `lw3` and `lw8` whole, and naming `lw8_indoors`, re-judged: 374 dead,
   two equivalent as recorded.
 
+## LW-DAWN - a day's cache keeps the day beside it (2026-10-07)
+
+A screenshot in Daggerfall - 1 fps, "script 6179.8 ms", the game's own frame 6377 ms of it ("in frame"; "before" 1.6,
+"stream" 0.0, so neither the browser nor the world's build) - and the ask: "Something is killing CPU performance".
+
+- **The storm** (`livingTown.js` `_plans`, `_roadsOf`, `peopleOf`, `_walksFrom`). The town's plans, the roads' word
+  for a day (the host's `tripsOf`, world.js `livingTripsOf`: the town's trips, its visitors, its holders and its news
+  of NEWS_DAYS), its people and its walks by their door (LW-SPACE's file) each kept ONE day. From the day's turn at
+  four a reader asks two. WATCH-DAY's morning walk out (`dayPlan.js morningWalk`) is a watchman's first entry of the
+  day and leaves before the turn, and a company's file is read off the day a walk leaves in (`_fileOf`, by
+  `dayOf(e.t0)`: the walk both days carry is matched by its walker and its minute), so while the street read today
+  that watchman's walk read yesterday's walks - for the whole town, each plan asked for yesterday, its roads read
+  again; and the next walker read today's, and all of it again. A walker owing minutes across the turn (the
+  politeness gate's, a pause) reads yesterday's plan as well. On the synthetic great city carried across four
+  (`tools/livingPerfProbe.mjs`, THE DAY'S TURN) that was 605 plans made a frame and 5.8 road reads from five past
+  four to six, with the road read stubbed to nothing; in the game each read is the host's whole read, and a great
+  city's plans are its own. Offline a slow frame moves the clock a tenth of a second at most (world.js's frame), so
+  the two hours lasted as long as the frames were slow; online the sky's dawn comes every real hour (TIME1), and its
+  two hours are five real minutes.
+- **The day beside it** (`swapDay`, `besideDay`). Each of the four keeps the day it replaced beside it (`other`, one
+  deep - a third day lets the first go), and a read of that day is a swap: no plan made, no road read, the same plan,
+  word, list and walks as before. A day made again (a home moved, a crew's arrival moved) keeps its neighbour. A day
+  planned before its roads were known is planned again once they are, at the front as before or kept beside another
+  day (`_roadsOf`: the kept one let go), and the other day it kept stays.
+- **A berth no street comes near** (`dockSpot`, `_harbourMiss`). LW5's dock of a port with no Ship building is the
+  street nearest its harbour's berth within HARBOUR_RING, and a berth with none was sounded again at every census and
+  every sailor's plan - the whole ring, cell by cell (8 ms on the synthetic great city), four times a second. A miss
+  is the berth's cell's (the ring is the cell's): sounded once; another cell afresh.
+- **Measured** (`tools/livingPerfProbe.mjs`, THE DAY'S TURN - the great city built at ten to four, half a minute a
+  frame, its census read every frame, the player at the square; frames from five past four to six, before / after):
+
+  | | before | after |
+  |---|---|---|
+  | plans made a frame | 605 | 0 |
+  | the roads' word read a frame (stubbed: no cost) | 5.8 | 0 |
+  | the frame, mean / p99 / worst | 9.2 / 17.6 / 25.5 ms | 2.7 / 4.2 / 5.4 ms |
+
+  The street is the same, frame for frame: seat by seat, hashed, before and after, across the turn at thirty times
+  the clock, at half past four, at six and at noon, the politeness gate holding some.
+- **Recorded, not changed: a crowded spot's places** (LW-SPACE, `meetups.js aloneStands`). One alone whose own place
+  is taken searches the rings about the spot out to SPACE_FAR_M, each place against every one placed before, so a
+  spot's laying grows as the cube of its crowd: measured alone, 100 at one spot 33 ms, 200 0.27 s, 400 1.7 s (in a lane
+  whose street refuses most of the ring, 0.2, 1.1 and 4.0 s). It is laid again whenever the spot's people change, on
+  the census's beat. Since LW-SPREAD the most of a town at one spot is 11.6 on average over its sample and 24 at the
+  most (Daggerfall's evening, 6 at a point of its square), and the synthetic great city lays 4 ms a beat at the worst,
+  so it is not this report's; it is the next one's if a spot ever gathers hundreds.
+- **The four hosts.** LW-DAWN is the living town's core (`livingTown.js`): `scenes/world.js` stands the street it runs
+  (no host change; its frame's clock is the cap above); `scenes/worldModes.js` - the rooms read the town's people, its
+  lodgers and who is inside (`lodgersAt`, `insideAt`) through the same caches, kept the same; `scenes/exterior.js` -
+  FLAGGED as LW2 has it: the fixed-city page keeps DFU's walkers; `scenes/dungeonContext.js` - no town.
+- **Pinned** by `test/lwdawn_caches.test.js` (5: the two doors; the great city across the turn - the turn plans the
+  day once, the morning walk read off the day before, then no plan and no road read a frame; each cache's other day
+  kept and served as it was; a day planned before its roads planned again wherever it is kept; the berth sounded
+  once) and `tools/mutants/lwdawn.json` (19, all dead); the probe's row fails before the change. The 206 records of
+  the lists on `livingTown.js` re-judged on it: 205 dead, one equivalent as recorded (LW8-inside-outdoor).
+
 ## The four hosts
 
 - `scenes/world.js` - WIRED (LW2 the towns, LW3 the roads and the Overworld).
