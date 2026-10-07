@@ -40,6 +40,13 @@
 // is the footing DFU gives (a lifted ground noise is 25-metre spikes).
 // The lift is a function of `low` alone, so the far ring - which reads
 // the same byte at a pixel's centre - takes it too (farRing.js).
+// THE CEILING. The shaper is handed DFU's height as DFU stands it -
+// clamped at MAX_TERRAIN_HEIGHT - and the lift stops rising at the
+// heightmap's 7-bit top, so nothing stands over LANDFORM_CEILING. Real
+// ground never reaches either (its bytes stop at 110); WOODS.WLD's one
+// byte over 127 does - a 255 at map pixel (470, 355), in the sea off
+// Tigonus, which DFU stands as a 1.9 km pillar clamped flat at its
+// ceiling and the landforms stand at theirs, 3 km, not 5.
 //
 // LANDFORM2 - THE ROADS ARE CUT IN. A road or a track is graded to the
 // kernel's macro height (both bicubic terms, the lift, no ground noise)
@@ -60,17 +67,18 @@
 // of on the field; on a hillside the low bank is a levee, never lower
 // than the land at the river's own centre line. The player swims on that film as DFU swims them
 // (MAC2's law: the swim is where the surface is drawn), so nothing about
-// water changes but where it lies. Online the river switch is each
-// player's own (onlineLane.js: "a river paints tiles and never moves a
-// height"), so the host hands `rivers: false` there and that sentence
-// stays true.
+// water changes but where it lies. A river is cut wherever it is painted
+// and nowhere else - the network's `water`, the mod's own switch. Online
+// that switch is the room's (2026-10-06, Mac: "Yes rivers should be
+// online" - onlineLane.js ONLINE_ROOM_MOD_KEYS): a river cut into the
+// land is ground, and a room stands on one ground.
 //
 // ALL THE DIALS ARE IN ONE PLACE, LANDFORM_DIALS (ROAD_DIALS' rule).
 // Distances are in samples (6.4 m), heights in the kernel's units
 // (1.25 m - STREAMING_TERRAIN_SCALE).
 // ═══════════════════════════════════════════════════════════════════
 
-import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, HEIGHTMAP_DIMENSION, kernelTerms } from './terrainSampler.js';
+import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, kernelTerms } from './terrainSampler.js';
 import { BEACH_JITTER, blendLocationTerrain } from './terrainTiles.js';
 import { DIR_DELTA, MAP_W, MAP_H } from './roadNetwork.js';
 
@@ -113,19 +121,26 @@ const LAYERS = Object.freeze([
 const smooth01 = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 const smoothstep = (a, b, v) => smooth01((v - a) / (b - a));
 
+/** The small heightmap's top as `low`: WOODS.WLD's bytes are 7-bit, and DFU's MAX_TERRAIN_HEIGHT is built on 127. */
+const LOW_TOP = 127 * BASE_HEIGHT_SCALE;
+
 /**
  * LANDFORM1: how far the small heightmap lifts a sample, in kernel units. `low` is the kernel's small-heightmap term
  * (the bicubic byte times BASE_HEIGHT_SCALE). Nothing up to `from` over the knee, then `gain * e` eased in over
- * [from, full] - smooth, never negative, rising with `low`.
+ * [from, full] - smooth, never negative, rising with `low` up to the heightmap's 7-bit top and level past it.
  * @param {number} low
  * @returns {number}
  */
 export function reliefLift(low) {
   const { from, full, gain } = LANDFORM_DIALS.relief;
-  const e = low - LANDFORM_KNEE;
+  const e = (low < LOW_TOP ? low : LOW_TOP) - LANDFORM_KNEE;
   if (!(e > from)) return 0;
   return gain * e * smooth01((e - from) / (full - from));
 }
+
+/** LANDFORM1: the highest the landforms stand anything, in kernel units - DFU's ceiling and the most the lift adds
+ *  (about 3,020 m). Only WOODS.WLD's one glitch byte reaches it (the header, THE CEILING). */
+export const LANDFORM_CEILING = MAX_TERRAIN_HEIGHT + reliefLift(LOW_TOP);
 
 /** LANDFORM1: a map-pixel byte's macro height with the lift, in kernel units - the far ring's law (farRing.js
  *  ringHeight), max(byte * 8, ocean) plus the lift its own `low` earns. */
@@ -191,15 +206,15 @@ export function landformLiftField(woods, px, py, locationRect = null, hDim = HEI
  * @param {?{roads: Uint8Array, tracks: Uint8Array, rivers?: ?Uint8Array, streams?: ?Uint8Array, water?: boolean}} [o.roads]
  *   - the network; null shapes the relief alone (a world whose network has not landed yet - ROADS 25 rebuilds the
  *   pixels it painted without one, and they come back cut).
- * @param {boolean} [o.rivers] - whether rivers and streams are cut. They are cut only where they are PAINTED (the
- *   network's `water`, RiversAndStreams) - a channel with no water in it is a ditch.
+ *   Rivers and streams are cut where they are PAINTED and only there (the network's `water`, RiversAndStreams - the
+ *   room's online): a channel with no water in it is a ditch. `rivers` answers whether they are.
  * @param {number} [o.hDim]
  * @returns {{ pixel: (px: number, py: number) => (x: number, y: number, h: number, low: number, g: number) => number, rivers: boolean }}
  */
-export function createLandforms({ woods, roads = null, rivers = false, hDim = HEIGHTMAP_DIMENSION } = {}) {
+export function createLandforms({ woods, roads = null, hDim = HEIGHTMAP_DIMENSION } = {}) {
   const span = hDim - 1;
   const half = span / 2;
-  const cutRivers = !!(rivers && roads?.water);
+  const cutRivers = !!roads?.water;
   const nets = LAYERS.map((l) => (l.water && !cutRivers ? null : roads?.[l.key] ?? null));
   return { pixel: (px, py) => pixelShaper(woods, nets, px, py, span, half, hDim), rivers: cutRivers };
 }
@@ -262,7 +277,7 @@ function pixelShaper(woods, nets, px, py, span, half, hDim) {
       const b = base(lx, ly);
       const low = b * BASE_HEIGHT_SCALE;
       const macro = low + noise(lx, ly) * NOISE_MAP_SCALE;
-      prof[k] = Math.max(macro, SCALED_OCEAN_ELEVATION) + reliefLift(low);
+      prof[k] = Math.min(Math.max(macro, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT) + reliefLift(low);   // DFU's macro as DFU stands it
     }
     return (s.prof = prof);
   };

@@ -70,6 +70,21 @@ them is 25-metre spikes). The shaped samples have no ceiling at 1: a raised
 mountain stands over the reference's normalising height instead of flattening
 against it.
 
+THE CEILING (2026-10-07, found on the real WOODS.WLD). The shaper is handed
+DFU's height as DFU stands it - clamped at MAX_TERRAIN_HEIGHT, 1539 - and the
+lift is level past the heightmap's 7-bit top (`low` 8 x 127, the byte DFU's
+ceiling is built on), so nothing stands over `LANDFORM_CEILING`, DFU's ceiling
+plus the most the lift adds (2416 units, about 3,020 m). Real ground never
+reaches either: its bytes stop at 110 and DFU's kernel never meets its own
+ceiling on them. WOODS.WLD's one byte over 127 does - a 255 at map pixel
+(470, 355), in the sea off Tigonus (the "High Rock sea coast" region), among
+bytes of 2 to 15. DFU's kernel stands it as a 1.9 km pillar, flat at its
+ceiling, over the four pixels that share that corner; unclamped and lifted it
+was a 5.1 km needle. Now it stands at the landforms' ceiling as DFU stands it
+at its own, and the re-stand's lift stays exactly what the landforms added
+there too. A road graded across it is graded to DFU's macro as DFU stands it.
+Whether the pillar should stand at all is a separate question (it is DFU's).
+
 On a stand-in heightmap made from the picture (scratch only, nothing kept):
 the land's median 459 m unchanged, the 90th percentile 1,180 -> 1,567 m, the
 peaks 1,924 -> about 3,000 m; the steepest macro slope 11 -> 20 degrees.
@@ -133,13 +148,23 @@ flat in a channel with banks above it instead of on the field. The player swims
 on that film as DFU swims them (MAC2's law: the swim is where the surface is
 drawn), so nothing about water changes but where it lies.
 
-Rivers are cut only where they are PAINTED (the network's `water`,
-RiversAndStreams - a channel with no water in it is a ditch), and NEVER
-ONLINE: the river switch is each player's own there (`systems/onlineLane.js`,
-"a river paints tiles and never moves a height"), so the host hands the job
-`rivers: false` online and that sentence stays true. Roads and tracks are cut
-online: the room already agrees on its network (Enabled and SmoothRoads are the
-room's).
+Rivers are cut where they are PAINTED and nowhere else (the network's
+`water`, RiversAndStreams - a channel with no water in it is a ditch): the job
+carries no river switch of its own, so the painter's switch is the cut's.
+
+ONLINE TOO (2026-10-06, Mac, asked whether the channels should reach a room:
+*"Yes rivers should be online"*). This slice first kept them out: the river
+switch was each player's own online (`systems/onlineLane.js`: "a river paints
+tiles and never moves a height"), and a channel one player cut and another did
+not would stand two players on two floors. A river cut into the land IS ground,
+so the switch is the room's now - in `ONLINE_ROOM_MOD_KEYS` beside Enabled and
+SmoothRoads, the roads' own reason - and the room's rivers are ON, past the
+mod's shipped off: a room that held the mod's default would have no rivers at
+all. It is the one key the room forces past its default, named so in
+`test/modsonline.test.js`. The old sentence was true of Basic Roads' smoother
+and still is (its pin still measures it); it is the landforms' kernel that
+moves the height. Offline the switch stays the player's, off as the mod ships
+it, and the online sync (UXB1-E) copies the room's on home with the rest.
 
 WATER2 (THE BASIN, 07-Rendering/Water-Arc.md) was reverted on 2026-09-12 with a
 lesson: the eye was never in the loop. It lowered the drawn ground under a
@@ -175,6 +200,30 @@ interior cache is in its building's frame and moves with the ground.
   Roads.md's MODS AUDIT); it stands its one city on the location's flat ground, so its saves carry no stamp - DFU's
   ground, which is the ground it stands on.
 
+## ON THE REAL WOODS.WLD (2026-10-07)
+
+Measured on the freeware data (`tools/fetch-data.sh`) and the vendored Basic
+Roads network, in scratch, with the slice's own functions:
+
+- THE KNEE: 400 coastal pixels, 6,656,400 samples (1,632,017 at or under the
+  knee) - 0 violations. THE SEAMS: 38,700 shared edge samples beside path
+  pixels - 0 differ.
+- THE RELIEF, one sample at each land pixel's centre (319,785 pixels): the
+  median 484 m unchanged; the 75th percentile 786 -> 834 m, the 90th 1,109 ->
+  1,353 m, the 99th 1,369 -> 1,867 m; the highest real ground 1,689 -> 2,673 m
+  (the Dragontail summit, pixel (943, 470)); 45.8% of the land lifted by more
+  than a metre. Over the whole Bay at two samples a pixel, only the glitch's
+  four samples moved with THE CEILING.
+- THE ROADS, 300 straight road and track pixels: the bed's tilt across its
+  painted tiles median 0.75 -> 0.01 m, 95th percentile 2.78 -> 0.35 m, worst
+  11.5 -> 2.3 m; the cut under the centre line median 0.8 m, worst 1.9 m (the
+  ground noise taken away); an embankment's height median 0.6 m, worst 12.8 m
+  (a level shoulder on a steep hillside); the grade along the road median
+  2.9% either way, 95th percentile 10.7 -> 11.2%.
+- THE RIVERS, 199 straight inland river pixels: the floor level across its
+  painted width (median spread 0.00 m), 2.2 m under the lower bank top (median;
+  95th percentile 2.7 m).
+
 ## RESIDUES, NAMED
 
 - Deep Waters' cap repaints a coastal pixel's above-sea water tiles as land
@@ -190,9 +239,9 @@ interior cache is in its building's frame and moves with the ground.
 - At the far ring classes (stride 2 and 4) a cut a few samples wide is
   sampled, not drawn - a painted road was already so.
 - Online, the room's memory (WORLD1) carries heights with no stamp, as it
-  carried no terrain scale. The row is forced on for every player at once and
-  a room forgets when it empties, so its heights change ground together, at
-  the deploy.
+  carried no terrain scale. The row and the river switch are forced on for
+  every player at once and a room forgets when it empties, so its heights
+  change ground together, at the deploy.
 - NOT SEEN IN THE GAME. The container this was built in carries no ARENA2;
   the shapes were checked on the picture as a stand-in heightmap and on the
   real Basic Roads network, never on the real WOODS.WLD. WATER2's lesson
@@ -204,10 +253,11 @@ interior cache is in its building's frame and moves with the ground.
 classifier's tiles equal, no step where a road or a river meets the beach, the
 shaper at its worst), the lift and the ring, every seam and ghost row, the road
 graded level to the macro height and the land untouched past its verge, the
-river's floor and its levee, the causeway, rivers off and online, the build's
-edge normals, a point's lift against the real pipeline in a town, the re-stand
-both ways, the stamps, the switch, the host's wiring, the worker byte for byte.
-`tools/mutants/landform.json` - 35 mutants, 34 dead and 1 recorded equivalent
+river's floor and its levee, the causeway, rivers off and the room's switch
+online, the build's edge normals, a point's lift against the real pipeline in a town, the re-stand
+both ways, the stamps, the switch, the host's wiring, the worker byte for byte,
+and THE CEILING (a glitch byte in a lowland, a road graded across it).
+`tools/mutants/landform.json` - 40 mutants, 39 dead and 1 recorded equivalent
 (the knee's early return: the coast fade is zero at the knee, so it is the law
 said plainly and a fast path for the sea). The TERRAIN-SCALE1, PERF-EXT26 and
 EV4 pins that read the lines the slice changed now read the new lines.

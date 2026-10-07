@@ -2362,7 +2362,9 @@ rather than argued: `SMOOTHED_TILES` is `{46, 0xff}` - the road bed -
 and the painter lays a road before it ever considers water, so a river
 paints tiles and never moves a height. The pin runs the real smoother
 over every tile the river and stream tables can write and reads the
-heights back unchanged.
+heights back unchanged. (LANDFORM3, 2026-10-06: it is in it now, on -
+the landforms cut a painted river into the land; the section at the
+foot of this page.)
 
 **What the player sees.** The Mods pane's line used to be the lane's
 ("On while online - the shared world is the enhanced lane, whole"),
@@ -14918,3 +14920,27 @@ on that player's own machine at its landing - the world boss's law (`net/gateStr
 at a peer it hunts as at its owner; the owner's own view of the peer's feet decides only its foe's punish window. A
 peer's blow on a foe winding up carries its class (`wc`, `hitClassOf`) so the owner's poise meter weighs it as its own.
 
+
+## LANDFORM3 - the rivers are the room's (2026-10-06)
+
+Mac, asked whether the landforms' river channels (`03-World/Landforms.md`)
+should reach a room: *"Yes rivers should be online."* The landforms are forced
+on online, and they cut every PAINTED river and stream into the land - so
+Basic Roads' `RiversAndStreams` decides where the ground is beside every river
+in the Bay, which is the roads' own reason (MODS-ONLINE-2, above), and it joins
+`Enabled` and `SmoothRoads` in `ONLINE_ROOM_MOD_KEYS`. It is forced ON, past
+the mod's shipped off: a room that held the default would have no rivers at
+all. That makes it the one room key forced past its shipped default, and the
+pin that holds every other key to its default names it (`test/modsonline.test.js`
+PAST_DEFAULT). The smoother's measurement above still holds - the smoother
+never moves a river's height - and `test/landform.test.js` measures the
+kernel's half: the switch moves the ground under a river. The Mods pane locks
+the row online with the ground's words; offline it stays the player's, off as
+shipped, and the online sync (UXB1-E) copies the room's on home with the rest.
+The landforms' job lost its own river flag: the painter's switch is the cut's.
+
+Pins: `test/landform.test.js`, `test/modsonline.test.js` (the count, 47; the
+named key), `test/onlinelane.test.js` (the contrast re-aimed a third time, at
+the roads a travel map only draws), `test/uxb1e_onlinesync.test.js`; mutants:
+`tools/mutants/landform.json` (37: 36 dead, 1 equivalent as recorded).
+Not verified in a browser: no online session exists in this container.

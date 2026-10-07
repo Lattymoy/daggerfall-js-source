@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
 import { generateSamples, ghostSampler, sampleKernel, kernelTerms, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, DEFAULT_TERRAIN_SCALE, SCALED_OCEAN_ELEVATION } from '../src/world/terrainSampler.js';
-import { createLandforms, reliefLift, reliefByteHeight, landformLift, LANDFORM_KNEE, LANDFORM_FLOOR, LANDFORM_DIALS } from '../src/world/landforms.js';
+import { createLandforms, reliefLift, reliefByteHeight, landformLift, LANDFORM_KNEE, LANDFORM_FLOOR, LANDFORM_DIALS, LANDFORM_CEILING } from '../src/world/landforms.js';
 import { generateTileData, BEACH_JITTER } from '../src/world/terrainTiles.js';
 import { generatePixelTerrain, restrideGrid } from '../src/world/terrainGen.js';
 import { DIR } from '../src/world/roadNetwork.js';
@@ -20,6 +20,7 @@ import { FEATURES, checkFeature } from '../src/systems/features.js';
 import { getPref, setPref } from '../src/systems/uiPrefs.js';
 import { setUiSkin, uiSkin } from '../src/systems/uiSkin.js';
 import { onlineForcedPref } from '../src/systems/onlineLane.js';
+import { onlineModSetting } from '../src/systems/modSettings.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { makeAnchor } from '../src/systems/teleportAnchor.js';
 import { createSceneCache, cacheScene, restoreCachedScene, snapshotSceneCache, restoreSceneCache } from '../src/systems/sceneCache.js';
@@ -71,7 +72,7 @@ function network({ water = true } = {}) {
   return n;
 }
 const NET = network();
-const LF = createLandforms({ woods, roads: NET, rivers: true });
+const LF = createLandforms({ woods, roads: NET });
 const RELIEF = createLandforms({ woods });   // the lift alone: no network to cut along
 const at = (s, x, y) => s[x * H + y];
 
@@ -129,7 +130,7 @@ test('LANDFORM1: the small heightmap is lifted - nothing under the median land, 
   assert.ok(Math.abs(reliefLift(LANDFORM_KNEE + 550) - 0.9 * 550 * 0.5) < 1e-9, 'half-way up the rise, half the gain');
   assert.ok(Math.abs(reliefLift(LANDFORM_KNEE + 375) - 0.9 * 375 * 0.15625) < 1e-9, 'a quarter of the way, eased (smoothstep), not a straight ramp');
   assert.ok(Math.abs(reliefLift(LANDFORM_KNEE + 900) - 0.9 * 900) < 1e-9, 'fully risen');
-  assert.ok(Math.abs(reliefLift(LANDFORM_KNEE + 1000) - 0.9 * 1000) < 1e-9);
+  assert.ok(Math.abs(reliefLift(LANDFORM_KNEE + 950) - 0.9 * 950) < 1e-9);
   let last = 0;
   for (let low = 0; low <= 1100; low += 0.5) { const l = reliefLift(low); assert.ok(l >= last - 1e-12, `never falls (${low})`); assert.ok(l - last < 2, `never jumps (${low})`); last = l; }
   // the ring: a byte's macro height with the same lift; untouched with the row off; the lowlands the same either way
@@ -147,6 +148,40 @@ test('LANDFORM1: the small heightmap is lifted - nothing under the median land, 
   assert.ok(Math.max(...shaped) > 1, 'a raised mountain stands over the reference\'s normalising height, not flattened against it');
   const low = generateSamples(woods, 150, 100), lowShaped = generateSamples(woods, 150, 100, H, RELIEF);
   assert.ok(low.every((v, i) => Object.is(v, lowShaped[i])), 'a lowland pixel with no path near it is DFU\'s to the bit');
+});
+
+test('LANDFORM1: nothing stands over the ceiling - the shaper takes DFU\'s height as DFU clamps it and the lift is level past the 7-bit top, so WOODS.WLD\'s one glitch byte stands at the landforms\' ceiling as DFU stands it at its own', () => {
+  // the shipped file carries one byte over 127: a 255 at map pixel (470, 355), in the sea off Tigonus - DFU's
+  // kernel stands it at its ceiling, a 1.9 km pillar; unclamped and lifted it was 5 km
+  assert.equal(LANDFORM_CEILING, MAX_TERRAIN_HEIGHT + reliefLift(127 * 8));
+  assert.ok(Math.abs(LANDFORM_CEILING * STREAMING_TERRAIN_SCALE - 3020.06) < 0.01, 'about 3 km');
+  assert.equal(reliefLift(255 * 8), reliefLift(127 * 8), 'the lift is level past the top');
+  assert.ok(reliefLift(126 * 8) < reliefLift(127 * 8), '...and rising up to it');
+  const bytes = WOODS_BYTES.slice();
+  bytes[new DataView(bytes.buffer).getUint32(28, true) + 400 * MAP_WIDTH + 150] = 255;   // in a lowland, as the shipped one is
+  const glitch = new WoodsFile();
+  assert.equal(glitch.load(bytes), true);
+  // a road down the diagonal through the byte's own sample - (150, 400)'s south-east corner - so its grade is read there
+  const net = network();
+  net.roads[400 * MAP_WIDTH + 150] |= DIR.SE | DIR.NW;
+  net.roads[401 * MAP_WIDTH + 151] |= DIR.SE | DIR.NW;
+  const cut = createLandforms({ woods: glitch, roads: net }), relief = createLandforms({ woods: glitch });
+  let dfuTop = 0, top = 0, roadAtCorner = 0, worst = 0;
+  for (const [px, py] of [[150, 400], [151, 400], [150, 401], [151, 401], [149, 400]]) {
+    const v = generateSamples(glitch, px, py, H, null), r = generateSamples(glitch, px, py, H, relief), c = generateSamples(glitch, px, py, H, cut);
+    const { base } = kernelTerms(glitch, px, py, H);
+    for (let x = 0; x < H; x += 4) for (let y = 0; y < H; y += 4) {
+      const i = x * H + y;
+      dfuTop = Math.max(dfuTop, v[i]); top = Math.max(top, r[i], c[i]);
+      worst = Math.max(worst, Math.abs((r[i] - v[i]) * UNIT - reliefLift(base(x, y) * 8)));
+    }
+    if (px === 150 && py === 400) roadAtCorner = c[128 * H];
+  }
+  assert.equal(dfuTop, 1, 'DFU stands the glitch at its ceiling');
+  assert.ok(Math.abs(top * UNIT - LANDFORM_CEILING) < 1e-3, `the landforms stand it at theirs (${(top * UNIT).toFixed(2)})`);
+  assert.ok(Math.abs(roadAtCorner * UNIT - LANDFORM_CEILING) < 1e-3, 'a road graded over it is graded to the same - DFU\'s macro as DFU stands it');
+  assert.ok(worst < 1e-3, `and the lift the re-stand puts on is still exactly what the landforms added (${worst})`);
+  assert.ok(Math.abs(reliefByteHeight(255) - 255 * 8 - reliefLift(127 * 8)) < 1e-9, 'the ring takes the same lift');
 });
 
 test('LANDFORM1-3: a seam is one number from both pixels - every shared edge and corner, across the road, the river, the stream and the diagonal track; and the ghost rows are the neighbour\'s shaped ground', () => {
@@ -203,7 +238,7 @@ test('LANDFORM2: a road is graded level across to the kernel\'s own macro height
   }
 });
 
-test('LANDFORM3: a river\'s water lies level across its whole painted width, under its banks - and with the rivers off, or online, there is no channel', () => {
+test('LANDFORM3: a river\'s water lies level across its whole painted width, under its banks - with the rivers off there is no channel, and online the switch is the room\'s, on', () => {
   const px = 300, py = 255, x = 20;   // twenty samples west of the road that crosses it
   const cut = generateSamples(woods, px, py, H, LF);
   const lifted = generateSamples(woods, px, py, H, RELIEF);
@@ -214,22 +249,24 @@ test('LANDFORM3: a river\'s water lies level across its whole painted width, und
   for (let y = 64 - flat; y <= 64 + flat; y++) assert.ok(Math.abs(at(cut, x, y) * UNIT - floor) < 0.02, `y=${y}: the water's floor, ${(drop * STREAMING_TERRAIN_SCALE).toFixed(1)} m under the land it is graded to`);
   for (const y of [61, 67]) assert.ok(at(cut, x, y) * UNIT > floor + 0.2, `y=${y}: the bank stands over the water`);
   assert.ok(at(lifted, x, 64) * UNIT - floor > drop, 'the channel is cut into the field');
-  // rivers off (RiversAndStreams): painted nowhere, cut nowhere; online (the river switch is each player's): the same
+  // rivers off (RiversAndStreams): painted nowhere, cut nowhere - so the switch MOVES THE GROUND, and online, where a
+  // room stands on one ground, it is the room's: on (2026-10-06, Mac: "Yes rivers should be online")
   const dry = network({ water: false });
-  const off = generateSamples(woods, px, py, H, createLandforms({ woods, roads: dry, rivers: true }));
-  const online = generateSamples(woods, px, py, H, createLandforms({ woods, roads: NET, rivers: false }));
-  for (let y = 54; y <= 74; y++) {
-    assert.ok(Object.is(at(off, x, y), at(lifted, x, y)), `y=${y}: no painted river, no channel`);
-    assert.ok(Object.is(at(online, x, y), at(lifted, x, y)), `y=${y}: online, no channel`);
-  }
-  assert.ok(!Object.is(at(online, 64, 30), at(lifted, 64, 30)), 'online the road is still cut - the room agrees on its network');
-  assert.equal(createLandforms({ woods, roads: dry, rivers: true }).rivers, false);
+  const off = generateSamples(woods, px, py, H, createLandforms({ woods, roads: dry }));
+  for (let y = 54; y <= 74; y++) assert.ok(Object.is(at(off, x, y), at(lifted, x, y)), `y=${y}: no painted river, no channel`);
+  assert.ok(at(off, x, 64) - at(cut, x, 64) > 0, 'the river switch moves the ground under the river');
+  assert.ok(!Object.is(at(off, 64, 30), at(lifted, 64, 30)), 'and the road is cut either way');
+  assert.equal(createLandforms({ woods, roads: dry }).rivers, false);
   assert.equal(LF.rivers, true);
+  assert.equal(onlineModSetting('roads-hazelnut', 'RiversAndStreams', '?online=1'), true, 'online the room\'s rivers are painted, and so cut (onlineLane.js ONLINE_ROOM_MOD_KEYS)');
+  assert.equal(onlineModSetting('roads-hazelnut', 'RiversAndStreams', ''), undefined, 'offline the switch is the player\'s');
   // where the road crosses it the road wins, as its paint does: a causeway level across at the road's own grade
   for (const rx of [63, 64, 65]) assert.ok(Math.abs(at(cut, rx, 64) * UNIT - macro(64, 64) * UNIT) < 0.02, `x=${rx}: the road over the river`);
-  // the pipeline online - the job's rivers false - cuts the road and leaves the river as DFU painted it
-  const piped = generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), climateType: 231, roads: { ...NET, smooth: false }, landform: { rivers: false } }).samples;
-  for (let y = 54; y <= 74; y++) assert.ok(Object.is(at(piped, x, y), at(lifted, x, y)), `the online job, y=${y}: no channel`);
+  // the pipeline - the same job online and off - cuts the river wherever its network paints one
+  const piped = generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), climateType: 231, roads: { ...NET, smooth: false }, landform: true }).samples;
+  for (let y = 54; y <= 74; y++) assert.ok(Object.is(at(piped, x, y), at(cut, x, y)), `the job, y=${y}: the channel`);
+  const pipedDry = generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), climateType: 231, roads: { ...dry, smooth: false }, landform: true }).samples;
+  for (let y = 54; y <= 74; y++) assert.ok(Object.is(at(pipedDry, x, y), at(lifted, x, y)), `the job with the rivers off, y=${y}: no channel`);
   // a stream: level across its two painted tiles, a metre under
   assert.deepEqual(Object.values(LANDFORM_DIALS.stream), [1, 1.25, 4, 0.8]);
   const s = generateSamples(woods, 312, 248, H, LF), sm = sampleKernel(woods, 312, 248, H, false, RELIEF);
@@ -237,8 +274,8 @@ test('LANDFORM3: a river\'s water lies level across its whole painted width, und
 });
 
 test('LANDFORM1-3: the build\'s own grid reads the shaped ground past its edges - its edge normals are the neighbours\' cut ground, not DFU\'s', () => {
-  const out = generatePixelTerrain({ woods, px: 300, py: 250, tilemap: new Uint8Array(128 * 128), climateType: 231, roads: NET, landform: { rivers: true } });
-  const want = restrideGrid({ woods, px: 300, py: 250, stride: 1, samples: out.samples, landform: { rivers: true }, roads: NET });
+  const out = generatePixelTerrain({ woods, px: 300, py: 250, tilemap: new Uint8Array(128 * 128), climateType: 231, roads: NET, landform: true });
+  const want = restrideGrid({ woods, px: 300, py: 250, stride: 1, samples: out.samples, landform: true, roads: NET });
   assert.deepEqual([...out.normals], [...want.normals]);
   const raw = restrideGrid({ woods, px: 300, py: 250, stride: 1, samples: out.samples });
   assert.notDeepEqual([...out.normals], [...raw.normals], 'and those differ from the raw ghost rows where the road crosses the edge');
@@ -248,7 +285,7 @@ test('LANDFORM1: a point\'s lift is the lift field taken through the location\'s
   const px = 330, py = 250;   // on the mountain's flank, where the lift is large and uneven (its bytes under the 7-bit top)
   const rect = { xMin: 40, xMax: 80, yMin: 50, yMax: 90 };
   const run = (landform) => generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), locationRect: rect, hasLocation: true, climateType: 231, landform }).samples;
-  const dfu = run(null), shaped = run({ rivers: false });
+  const dfu = run(false), shaped = run(true);
   for (const [sx, sy] of [[60, 70], [41, 51], [79, 89], [20, 70], [60, 110], [5, 5], [120, 20], [100, 100]]) {
     const want = (at(shaped, sx, sy) - at(dfu, sx, sy)) * UNIT;
     assert.ok(Math.abs(landformLift(woods, px, py, sx, sy, rect) - want) < 0.05, `(${sx},${sy}): ${landformLift(woods, px, py, sx, sy, rect).toFixed(3)} vs the pipeline's ${want.toFixed(3)}`);
@@ -256,14 +293,14 @@ test('LANDFORM1: a point\'s lift is the lift field taken through the location\'s
   assert.ok(Math.abs(landformLift(woods, px, py, 60, 70, rect) - landformLift(woods, px, py, 45, 55, rect)) < 1e-6, 'the whole levelled ground rises as one');
   assert.ok(landformLift(woods, px, py, 60, 70, rect) > 50, 'and it rises');
   assert.ok(Math.abs(landformLift(woods, px, py, 60, 70) - landformLift(woods, px, py, 45, 55)) > 1, 'where the wild lift is uneven over the same two points');
-  const wild = generatePixelTerrain({ woods, px, py: 230, tilemap: new Uint8Array(128 * 128), climateType: 231, landform: { rivers: false } }).samples;
-  const wildDfu = generatePixelTerrain({ woods, px, py: 230, tilemap: new Uint8Array(128 * 128), climateType: 231, landform: null }).samples;
+  const wild = generatePixelTerrain({ woods, px, py: 230, tilemap: new Uint8Array(128 * 128), climateType: 231, landform: true }).samples;
+  const wildDfu = generatePixelTerrain({ woods, px, py: 230, tilemap: new Uint8Array(128 * 128), climateType: 231, landform: false }).samples;
   assert.ok(Math.abs(landformLift(woods, px, 230, 33, 77) - (at(wild, 33, 77) - at(wildDfu, 33, 77)) * UNIT) < 1e-3, 'in the wild: reliefLift of the kernel\'s own small-heightmap term');
 });
 
 /** world.js's own restandHeight, sliced and run against a stub ground (terrainscale1.test.js's harness, with the
  *  landforms' two reads). */
-function restander({ ground, comp = 0, landform = null, lift = () => 0 }) {
+function restander({ ground, comp = 0, landform = false, lift = () => 0 }) {
   const i = WORLD.indexOf('  const restandHeight = (y, x, z, was, wasLand = false) => {');
   const j = WORLD.indexOf('  // Building doors (P3)', i);
   assert.ok(i > 0 && j > i);
@@ -274,17 +311,17 @@ function restander({ ground, comp = 0, landform = null, lift = () => 0 }) {
 
 test('LANDFORM1: a height written on the other ground stands again on today\'s - its own height over the ground, the landforms\' lift at its own spot put on or taken off', () => {
   const L = 140, g = 500;   // the lift at the spot, and DFU's ground there
-  const on = restander({ ground: (x) => (x < 1000 ? g + L : null), comp: 21, landform: { rivers: true }, lift: () => L });
+  const on = restander({ ground: (x) => (x < 1000 ? g + L : null), comp: 21, landform: true, lift: () => L });
   assert.equal(on.landOf(true), true); assert.equal(on.landOf(undefined), false); assert.equal(on.landOf('yes'), false);
   assert.equal(on.restandHeight(g + 3, 10, 10, 1.25, false), g + 3 + L, 'a save from before the row, loaded with it on: lifted');
   assert.equal(on.restandHeight(g + 3, 5000, 10, 1.25, false), g + 3 + L, '...where the ground is not built too');
   assert.equal(on.restandHeight(g + L + 3, 10, 10, 1.25, true), g + L + 3, 'written on the landforms: untouched');
   // the scale's arm and the land's together: a 1.5 save of DFU's ground, now on the landforms at 1.25
   const sample = 0.3, gOld = sample * MAX_TERRAIN_HEIGHT * 1.5, gNew = sample * MAX_TERRAIN_HEIGHT * 1.25;
-  const both = restander({ ground: (x) => (x < 1000 ? gNew + L : null), comp: 21, landform: { rivers: true }, lift: () => L });
+  const both = restander({ ground: (x) => (x < 1000 ? gNew + L : null), comp: 21, landform: true, lift: () => L });
   assert.ok(Math.abs(both.restandHeight(gOld + 6.5, 10, 10, 1.5, false) - (gNew + L + 6.5)) < 1e-6, 'on a roof on the old scale: the same 6.5 over today\'s ground');
   assert.ok(Math.abs(both.restandHeight(gOld, 5000, 10, 1.5, false) - (gNew + L)) < 1e-6, 'unbuilt: the ratio on DFU\'s part, the lift on top');
-  const off = restander({ ground: (x) => (x < 1000 ? g : null), comp: 21, landform: null, lift: () => L });
+  const off = restander({ ground: (x) => (x < 1000 ? g : null), comp: 21, landform: false, lift: () => L });
   assert.equal(off.restandHeight(g + L + 3, 10, 10, 1.25, true), g + 3, 'a landforms save loaded with the row off: the lift taken off');
   assert.equal(off.restandHeight(g + L + 3, 5000, 10, 1.25, true), g + 3);
   assert.equal(off.restandHeight(123.4, 10, 10, 1.25, false), 123.4, 'DFU\'s ground both ways: untouched');
@@ -332,7 +369,8 @@ test('LANDFORM1-3: the switch is the Features row on the enhanced skin, the room
 });
 
 test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promotion with it, raises the ring and the beacon by it, and stamps every save with it', () => {
-  assert.match(WORLD, /const landform = landformsOn\(\) \? Object\.freeze\(\{ rivers: !params\.has\('online'\) \}\) : null;/, 'once, at the mount - and online no river is cut');
+  assert.match(WORLD, /\n  const landform = landformsOn\(\);\n/, 'once, at the mount - the same job online and off: the room\'s river switch decides online');
+  assert.match(WORLD, /const landformsHere = \(\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\) \}\) : null\);/, 'this thread\'s landforms, over its own network');
   assert.equal((WORLD.match(/landformsOn\(/g) ?? []).length, 1);
   assert.match(WORLD, /\n      landform,   \/\/ LANDFORM1-3: the shaped ground, cut along the kernel's own network\n    \}\);/, 'the pixel job');
   assert.match(WORLD, /terrainGen\.grid\(\{ px: p\.px, py: p\.py, stride: 1, samples: p\.samples, landform \}\)/, 'the promotion off the thread');
@@ -349,7 +387,8 @@ test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promo
   assert.match(WORLD, /restandHeight\(p\[1\], x, z, savedScale, savedLand\)/, 'the camps left outside');
   assert.match(WORLD, /return restandHeight\(y, x, z, was, wasLand\); \};\n    droppedLoot\.restoreWorld\(arrived/, 'the exterior scene cache');
   const tg = src('src/world/terrainGen.js');
-  assert.match(tg, /const landforms = landform \? createLandforms\(\{ woods, roads, rivers: !!landform\.rivers \}\) : null;\n  const samples = generateSamples\(woods, px, py, HEIGHTMAP_DIMENSION, landforms\);/, 'the kernel cuts along the network the painter paints');
+  assert.match(tg, /const landforms = landform \? createLandforms\(\{ woods, roads \}\) : null;\n  const samples = generateSamples\(woods, px, py, HEIGHTMAP_DIMENSION, landforms\);/, 'the kernel cuts along the network the painter paints');
+  assert.match(tg, /const lf = landforms \?\? \(landform \? createLandforms\(\{ woods, roads \}\) : null\);/, 'and a promotion\'s ghost rows along the same');
   assert.match(src('src/world/terrainGenWorker.js'), /if \(m\.t === 'grid' && m\.landform && pendingRoads\) \{ pendingRoads\.then\(\(\) => handle\(m\)\); return; \}/, 'a landforms promotion waits for the network its pixel was cut along');
 });
 
@@ -362,15 +401,15 @@ test('LANDFORM1-3: the worker cuts what this thread cuts - a job and a promotion
     globalThis.onmessage({ data: { t: 'init', woodsBytes: WOODS_BYTES.slice() } });
     const copy = (n) => ({ roads: n.roads.slice(), tracks: n.tracks.slice(), rivers: n.rivers.slice(), streams: n.streams.slice(), water: n.water, smooth: n.smooth });
     globalThis.onmessage({ data: { t: 'roads', net: copy(NET) } });
-    const job = { px: 300, py: 255, stride: 1, tilemap: new Uint8Array(128 * 128), climateType: 231, landform: { rivers: true } };
+    const job = { px: 300, py: 255, stride: 1, tilemap: new Uint8Array(128 * 128), climateType: 231, landform: true };
     globalThis.onmessage({ data: { t: 'job', ...job, tilemap: job.tilemap.slice() } });
     const done = posted.findLast((m) => m.t === 'done');
     const here = generatePixelTerrain({ woods, roads: NET, ...job });
     assert.deepEqual([...done.samples], [...here.samples], 'the samples');
     assert.deepEqual([...done.normals], [...here.normals], 'the edge normals - the ghost rows cut too');
-    globalThis.onmessage({ data: { t: 'grid', id: 3, px: 300, py: 255, stride: 4, samples: here.samples, landform: { rivers: true } } });
+    globalThis.onmessage({ data: { t: 'grid', id: 3, px: 300, py: 255, stride: 4, samples: here.samples, landform: true } });
     const grid = posted.findLast((m) => m.t === 'grid');
-    const want = restrideGrid({ woods, px: 300, py: 255, stride: 4, samples: here.samples, landform: { rivers: true }, roads: NET });
+    const want = restrideGrid({ woods, px: 300, py: 255, stride: 4, samples: here.samples, landform: true, roads: NET });
     assert.deepEqual([...grid.normals], [...want.normals], 'a promotion\'s ghost rows are cut along the same network');
   } finally { globalThis.postMessage = prevPost; globalThis.onmessage = prevOn; }
 });

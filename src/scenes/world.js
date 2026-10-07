@@ -1195,13 +1195,12 @@ export async function bootWorld(canvas, renderer, params, status) {
   // and a flip of the row reaches the next world.
   const forests = realForestsOn();
   // LANDFORM1-3: THE LANDFORMS (world/landforms.js) - read once, as the world mounts, the forests' way: every pixel of a
-  // world stands on one ground. The job's whole input is whether rivers are cut, and online they never are: the river
-  // switch is each player's own there (onlineLane.js: "a river paints tiles and never moves a height"), and a river
-  // that moved a height would stand two players on two floors. Off, every kernel is DFU's to the bit.
-  const landform = landformsOn() ? Object.freeze({ rivers: !params.has('online') }) : null;
+  // world stands on one ground. A river is cut where it is painted (the network's `water`); online the river switch is
+  // the room's (onlineLane.js ONLINE_ROOM_MOD_KEYS), so the room stands on one ground. Off, every kernel is DFU's to the bit.
+  const landform = landformsOn();
   /** LANDFORM1-3: this thread's landforms - the gate's beacon and the save's re-stand read them over the network this
    *  thread holds, the same arrays the worker cuts along. */
-  const landformsHere = () => (landform ? createLandforms({ woods, roads: terrainGen.roads(), rivers: landform.rivers }) : null);
+  const landformsHere = () => (landform ? createLandforms({ woods, roads: terrainGen.roads() }) : null);
   const wodOpened = wod
     ? wod.open().then(() => true, (e) => { console.warn(`[wod] World of Daggerfall did not open: ${e?.message ?? e}`); return false; })
     : Promise.resolve(false);

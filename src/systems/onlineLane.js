@@ -242,11 +242,21 @@ export function onlineForcedPref(key, search) {
  * `Enabled` bought the room nothing while its own dial gave the floor
  * away. So the table is by KEY, not by mod.
  *
- * `RiversAndStreams` is NOT here, and that is measured too:
+ * `RiversAndStreams` WAS NOT HERE, and that was measured too:
  * SMOOTHED_TILES is {46, 0xff} - the road and track beds - and the
  * painter lays a road before it ever considers water (roadPainter
- * paintRoads), so a river paints tiles and never moves a height. It is
- * paint, and paint is the player's.
+ * paintRoads), so a river painted tiles and never moved a height. It
+ * was paint, and paint is the player's.
+ *
+ * LANDFORM3 (2026-10-06, Mac: "Yes rivers should be online"): IT IS
+ * GROUND NOW. The landforms (world/landforms.js - the room's ground,
+ * forced on below) cut every painted river and stream into the land,
+ * so the river switch decides where the ground IS beside every river
+ * in the Bay - the roads' own reason - and it is the room's. And the
+ * room's rivers are ON, past the mod's shipped off: a room that held
+ * the mod's default would have no rivers at all, and the channels are
+ * what Mac asked to see online. (The smoother still moves no river's
+ * height; the kernel's cut does - test/landform.test.js measures it.)
  *
  * MODS-ONLINE-4 (2026-09-22, Mac: "What about player balance?"): AND
  * THE READING ABOVE ANSWERED THE WRONG QUESTION FOR THREE OF THEM.
@@ -292,6 +302,7 @@ export const ONLINE_ROOM_MOD_KEYS = Object.freeze({
   'roads-hazelnut': Object.freeze({
     Enabled: true,        // which network is painted, and so which beds are smoothed
     SmoothRoads: true,    // whether the beds are smoothed at all - the dial that gave the floor away
+    RiversAndStreams: true,   // LANDFORM3: whether rivers are painted, and so cut into the land - on, past the mod's shipped off (above)
   }),
   // WOD1 (2026-09-23): the second floor. World of Daggerfall levels the
   // ground under every camp and rock field it stands (LocationLoader.cs

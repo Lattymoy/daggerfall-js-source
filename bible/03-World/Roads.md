@@ -695,5 +695,6 @@ Mac: "allow roads to carve through terrian and caverns without breaking anything
 not just lying flat on land." Behind the Features row `landforms` (`03-World/Landforms.md`), the terrain's kernel grades
 every road and track level across along the network's own centre lines - the ones this painter paints - cut into the
 hillside and built up over a hollow, and lays every painted river and stream in a channel under its banks. The painter
-and SmoothRoads are untouched and run after it. Online the rivers are not cut, so the MODS-ONLINE reading above - a
-river paints tiles and never moves a height - stays true in a room.
+and SmoothRoads are untouched and run after it. Online the rivers are cut too (Mac: "Yes rivers should be online"):
+the MODS-ONLINE reading - a river paints tiles and never moves a height - is still true of this smoother, but the
+landforms' cut moves it, so RiversAndStreams is the room's now, ON (`06-Systems/Online-Arc.md`, LANDFORM3).

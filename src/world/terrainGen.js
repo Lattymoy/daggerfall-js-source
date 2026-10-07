@@ -54,19 +54,18 @@ import { createLandforms } from './landforms.js';   // LANDFORM1-3: the port's o
  *   Real forests switch (null off, DFU's scatter): the climate's summer
  *   nature archive, and whether the pixel's location is a place the woods
  *   hide (a dungeon, a shrine) rather than one they draw back from (a town).
- * @param {?{rivers: boolean}} [job.landform] - LANDFORM1-3: the Landforms
- *   row (null off, DFU's kernel): the relief, the paths cut into the land
- *   with this kernel's own network, and whether rivers are cut (never
- *   online, where the river switch is each player's own).
+ * @param {boolean} [job.landform] - LANDFORM1-3: the Landforms row (off,
+ *   DFU's kernel): the relief, and the paths cut into the land with this
+ *   kernel's own network - its rivers where they are painted.
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
  *   nature: Array<{record:number,x:number,y:number,z:number}>}}
  */
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, wod = null, forests = null, landform = null }) {
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, wod = null, forests = null, landform = false }) {
   // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
   // are the same roads; restrideGrid's ghost rows take the same landforms, so the edge normals read the shaped ground.
-  const landforms = landform ? createLandforms({ woods, roads, rivers: !!landform.rivers }) : null;
+  const landforms = landform ? createLandforms({ woods, roads }) : null;
   const samples = generateSamples(woods, px, py, HEIGHTMAP_DIMENSION, landforms);
   let avg = 0;
   if (hasLocation) {
@@ -160,10 +159,10 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
  * on the main thread is, by construction.
  * LANDFORM1-3: the ghost rows are the neighbours' SHAPED ground - `landforms` when the caller holds them (the build
  * above), else made here from `landform` and the network (a promotion: the host's job, the worker's own network).
- * @param {{ woods: object, px: number, py: number, stride?: number, samples: Float32Array, landform?: ?{rivers: boolean}, roads?: ?object, landforms?: ?object }} job
+ * @param {{ woods: object, px: number, py: number, stride?: number, samples: Float32Array, landform?: boolean, roads?: ?object, landforms?: ?object }} job
  * @returns {{ positions: Float32Array, normals: Float32Array }}
  */
-export function restrideGrid({ woods, px, py, stride = 1, samples, landform = null, roads = null, landforms = null }) {
-  const lf = landforms ?? (landform ? createLandforms({ woods, roads, rivers: !!landform.rivers }) : null);
+export function restrideGrid({ woods, px, py, stride = 1, samples, landform = false, roads = null, landforms = null }) {
+  const lf = landforms ?? (landform ? createLandforms({ woods, roads }) : null);
   return buildTerrainGrid(samples, stride, ghostSampler(woods, px, py, HEIGHTMAP_DIMENSION, lf));
 }

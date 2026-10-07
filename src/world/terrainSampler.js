@@ -125,8 +125,9 @@ export function sampleKernel(woods, mapPixelX, mapPixelY, hDim = HEIGHTMAP_DIMEN
       if (scaledHeight < SCALED_OCEAN_ELEVATION) scaledHeight = SCALED_OCEAN_ELEVATION;
 
       // LANDFORM1: the shaped ground has no ceiling at 1 - a mountain the landforms raise stands over the
-      // reference's normalising height rather than flattening against it.
-      if (shape) return Math.max(0, shape(x, y, scaledHeight, baseHeight * BASE_HEIGHT_SCALE, ground) / MAX_TERRAIN_HEIGHT);
+      // reference's normalising height rather than flattening against it. The shaper is handed DFU's height as DFU
+      // stands it, clamped at its ceiling (landforms.js THE CEILING: WOODS.WLD's one glitch byte is the only ground over it).
+      if (shape) return Math.max(0, shape(x, y, scaledHeight < MAX_TERRAIN_HEIGHT ? scaledHeight : MAX_TERRAIN_HEIGHT, baseHeight * BASE_HEIGHT_SCALE, ground) / MAX_TERRAIN_HEIGHT);
       return Math.min(1, Math.max(0, scaledHeight / MAX_TERRAIN_HEIGHT));
     }
   };
