@@ -286,7 +286,9 @@ test('REVENANT-FATE the wire and the doors: a record says `yd` kneeling and `ex`
   const w = read('src/scenes/world.js'), m = read('src/scenes/worldModes.js'), d = read('src/scenes/dungeonContext.js');
   assert.match(w, /openFate: \(rec\) => openRevenantFate\(rec\),/, 'the street');
   assert.equal((m.match(/openFate: \(rec\) => !!host\.openRevenantFate\?\.\(rec\),/g) ?? []).length, 2, 'a building and a dungeon');
-  assert.match(w, /const w = makeInventoryWindow\(\{ fate: model, loot: \{ items: \(\) => \[\], playerOwned: false \} \}\);/, 'the loot window itself');
+  // PIN MOVED (AUDIT PI1 H4): the fate window also says no to Physical Items' shift-drop - it opens indoors and
+  // underground too, where the street's pool is not the floor
+  assert.match(w, /const w = makeInventoryWindow\(\{ fate: model, loot: \{ items: \(\) => \[\], playerOwned: false \}, physicalDropOn: \(\) => false \}\);/, 'the loot window itself');
   // PIN MOVED (RVN3: an unbroken will tears away instead - the same gate)
   assert.match(d, /if \(opts\.fates && !_whole && \(!onlineRoom\(\) \|\| !isRoomFoe\(foe\)\) && revenantMayYield\(foe\)\) \{ if \(revenantWillHolds\(foe\)\) tearAwayDungeonFoe\(foe\); else yieldDungeonFoe\(foe\); return; \}/, 'underground: the player\'s alone');
   // underground a held foe decides nothing and animates nothing of its own, but is still DRAWN - the kneel, the burn

@@ -1218,7 +1218,8 @@ test('PX21c / WORLD-HOVER: the plaque names a pile without opening it, on the ta
   for (const kind of ["'loot'", "'corpse'", "'droppedLoot'"]) {
     assert.ok(ctx.slice(ctx.indexOf('lootContents(key) {'), ctx.indexOf('takeLoot(key) {')).includes(kind), `${kind} resolves`);
   }
-  assert.match(read('src/scenes/droppedLoot.js'), /const contents = \(key\) => piles\.find\(\(p\) => `droppedLoot:\$\{p\.id\}` === key/);
+  // PI1 (PIN MOVED): a key Physical Items owns is a standing item's - its pile of one - and every other is the pile's as before
+  assert.match(read('src/scenes/droppedLoot.js'), /const contents = \(key\) => \(physical\.owns\(key\) \? physical\.contents\(key\) : piles\.find\(\(p\) => `droppedLoot:\$\{p\.id\}` === key/);
   // ...and it leaves with the host that raised it.
   // ...after NT1's dead latch, which is pinned as the FIRST act of
   // destroy - the first draft put the teardown ahead of it and

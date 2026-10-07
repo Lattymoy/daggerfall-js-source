@@ -42,7 +42,7 @@ test('AUDIT SPELL-GIFT B6: a cure may leave an incubating infection be - the str
 });
 
 test('AUDIT SPELL-GIFT B1 + B3 + B5: a gift never lands on the opponent of the duel I fight (a duel\'s beneficial spell stays home), nor on a CONCEALED stranger (INVIS-NET: named aloud and given to), a concealed mate still a mate; the marks say who is a mate, mates first - a blast\'s burst went to the room\'s first strangers (mutants: each dropped)', () => {
-  assert.match(W, /const giftablePeers = \(list\) => \(list \?\? \[\]\)\.filter\(\(p\) => !\(duelMgr\.fighting && p\.id === duelMgr\.opponent\)\s*\n\s*&& !\(p\.cv && !\(social\?\.party && social\.isPartyPeer\(p\.id\)\)\)\);/);
+  assert.match(W, /const giftablePeers = \(list\) => openPeers\(list, isPartyMate\)\.filter\(\(p\) => !\(duelMgr\.fighting && p\.id === duelMgr\.opponent\)\);/);   // CONCEAL-MATE: the concealed-stranger law is openPeers' now (test/concealmate.test.js)
   assert.match(W, /const hit = pickPeerInFront\(eye \?\? cam\.pos, dir \?\? socialFwd\(\), giftablePeers\(peersNear\(\)\), reach, rayPersonDistance\);/, 'the crosshair\'s pick');
   assert.match(W, /const marks = giftablePeers\(near\)\.filter\(\(p\) => online\.reachesPeer\?\.\(p\.id\) && \(mateOf\(p\.id\) \|\| strangers\)\)\s*\n\s*\.map\(\(p\) => \(\{ \.\.\.p, mate: mateOf\(p\.id\), name: [^\n]*\n\s*return \[\.\.\.marks\.filter\(\(m\) => m\.mate\), \.\.\.marks\.filter\(\(m\) => !m\.mate\)\];/, 'the marks, mates first');
   assert.match(src('src/scenes/hostMagic.js'), /out\.push\(\{ ally: true, mate: q\.mate !== false, id: q\.id,/, 'the engine keeps the word');

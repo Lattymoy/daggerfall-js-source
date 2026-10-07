@@ -17,7 +17,7 @@ import { verifyToken, importPublicKeyB64 } from '../src/net/identityToken.js';
 import { ACCEPTED } from '../src/net/legalLaw.js';
 
 const DAY = 24 * 60 * 60;
-const CUT = Date.UTC(2026, 8, 25) / 1000;
+const CUT = Date.UTC(2026, 8, 25, 12) / 1000;   // FOUNDER5 (PIN MOVED): 00:00Z until the end of the 24th on every clock
 const FILE = '0078_founder_links.sql';
 const MIGRATIONS = readdirSync(new URL('../server-account/migrations', import.meta.url)).filter((f) => f.endsWith('.sql')).sort();
 const sql = (f) => readFileSync(new URL(`../server-account/migrations/${f}`, import.meta.url), 'utf8');
@@ -39,7 +39,7 @@ test('FOUNDER4 the law: a registered account whose first_played_at is by the cut
   assert.deepEqual(titlesHeld({ ...late, first_played_at: 'x' }, {}), [], 'a stamp that is not a number is no stamp');
   assert.deepEqual(titlesHeld({ ...late, handle: null, registered_at: null, first_played_at: CUT - 4 * DAY }, {}), [], 'a guest holds none, linked or not');
   assert.deepEqual(titlesHeld({ handle: 'Since', created_at: CUT - DAY, registered_at: CUT + DAY, first_played_at: CUT + 5 * DAY }, {}), ['founder'], 'a later link never takes it from a row that first played in time');
-  assert.equal(FOUNDER_UNTIL, CUT, 'the instant did not move');
+  assert.equal(FOUNDER_UNTIL, CUT, 'the instant FOUNDER5 moved later, so nobody lost it');
 });
 
 // ── THE MIGRATION, over a seeded database ───────────────────────────

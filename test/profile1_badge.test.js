@@ -106,6 +106,8 @@ test('PROFILE1: it is drawn as a portrait, not a button - no box, a round rimmed
   // because the Continue pane's tile may draw the same face on the same screen
   const menu = readFileSync(new URL('../src/ui/enhancedMenu.js', import.meta.url), 'utf8');
   const door = menu.slice(menu.indexOf('function profileMark()'), menu.indexOf('function profileMark()') + 500);
-  assert.match(door, /const save = mode === 'pause' \? liveCharacter\(playerEntity\) : newestPortraitSave\(\);/, 'the door: the newest finished save (PROFILE2: paused, the character being played; AUDIT SLOTS2 S1: portraitSave\'s law, read only as far as its answer)');
+  // PROFILE-MENU: the law in one function the mark and the card it opens both ask (PIN MOVED: it was the mark's own line)
+  assert.match(door, /const save = profileCharacter\(\);/, 'the mark asks the one law');
+  assert.match(menu, /function profileCharacter\(\) \{\n  return mode === 'pause' \? liveCharacter\(playerEntity\) : newestPortraitSave\(\);\n\}/, 'the door: the newest finished save (PROFILE2: paused, the character being played; AUDIT SLOTS2 S1: portraitSave\'s law, read only as far as its answer)');
   assert.match(door, /face: save \? loadFace\(save, \{ scale: 2, copy: true \}\) : null,/);
 });

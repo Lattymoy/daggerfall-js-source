@@ -86,6 +86,7 @@ import {
 // window no longer carries the settings or quest-resource imports it
 // needed to run that rung itself.
 import { planStore, planTake, applyTransfer, planDropGold, WAGON_KG_LIMIT as WAGON_KG_LIMIT_LOCAL, HOW_MANY_ITEMS, SPLIT_INPUT_MAX, parseSplitAmount, splitRequired, sendQuestItemClick } from '../systems/itemTransfer.js';
+import { shiftDrop } from '../systems/physicalItems.js';   // PI1: Physical Items' shift-drop, one law for both packs
 // U57: which list is the remote one, and what opening and closing
 // this window decide.
 import {
@@ -930,6 +931,19 @@ export class NativeInventoryWindow {
     return t === REMOTE_TARGET_TYPES.Wagon || (t === REMOTE_TARGET_TYPES.Loot && this.hooks.loot?.storage === true);
   }
 
+  /** PI1: THE SHIFT-DROP - the row's piece into the world as itself (systems/physicalItems.js shiftDrop: the ground's
+   *  guards, then the whole stack onto the host's own `physicalDrop`). Its refusals are this window's; a map is read as a
+   *  Remove's is (F156). */
+  _physicalDrop(slot) {
+    this._clampScroll();
+    const it = this._filtered()[this.scroll + slot];
+    if (!it) return;
+    const r = shiftDrop(it, { items: this.hooks.items(), entity: this.hooks.entity, getQuest: this.hooks.getQuest ?? null, dropRefusal: this.hooks.dropRefusal ?? null, drop: (list) => this.hooks.physicalDrop?.(list) });
+    if (r.refusal) { this._refuse(r.refusal); return; }
+    if (r.map) { this._use(it, this.hooks.items()); return; }
+    audio.playOneShot(r.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // DoTransferItem's own cue
+  }
+
   /** `whole` (SHIFT-STOW): the Remove moves what the plan allows - the whole stack, or what the store still takes -
    *  without TransferItem's split popup. */
   _pick(slot, mode = this.mode, whole = false) {
@@ -1564,6 +1578,9 @@ export class NativeInventoryWindow {
       // SHIFT-STOW: Shift and the left button on a pack row put the whole stack into the player's own store beside it
       // (the wagon, their storage) whatever the action mode - Remove's own transfer, with no how-many popup
       if (hit.kind === 'slot' && !right && this._shiftDown && this._shiftStores()) this._pick(hit.slot, 'remove', true);   // (the middle button never reaches here - _middleClick answers it above)
+      // PI1 (Physical Items): Shift with no store of the player's beside the list drops the piece in the world as itself
+      // (LocalItemListScroller_OnItemLeftClick's prefix [IL_0528] - any remote target but a reward tray)
+      else if (hit.kind === 'slot' && !right && this._shiftDown && !this.chooseOne && this.hooks.physicalDropOn?.()) this._physicalDrop(hit.slot);
       else if (hit.kind === 'slot') this._pick(hit.slot, mode);
       // MAC-N2: a press ON the thumb latches the drag (VerticalScrollBar
       // .Update :110-113) - button 0 alone, as GetMouseButton(0) is.
