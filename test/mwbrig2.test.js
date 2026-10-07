@@ -198,7 +198,8 @@ test('MW-BRIG2: the item - the Steel Brigandine Jerkin, one piece worn as a cuir
     if (m === ARMOR_MATERIAL.Steel) continue;
     assert.equal(ownArmorModelFor({ templateIndex: RRI_JERKIN_TEMPLATE, material: m }), null, `${name} jerkin keeps its retail cuirass`);
   }
-  assert.equal(ownArmorModelFor({ templateIndex: 102, material: ARMOR_MATERIAL.Steel }), null, 'the classic Steel Cuirass is untouched');
+  // MW-STEEL1: the classic Steel Cuirass wears Mac's steel plate now (mwsteel1.test.js) - its own model, never the brigandine
+  assert.equal(ownArmorModelFor({ templateIndex: 102, material: ARMOR_MATERIAL.Steel })?.id, 'daggerfall_steel_cuirass', 'the classic Steel Cuirass is the steel plate\'s, not the brigandine\'s');
   const worn = composeWornArmor({ pieces: [STEEL_JERKIN], armors: [], bodyPool: [] });
   assert.deepEqual(worn.notes, []);
   assert.deepEqual(worn.adds.map((a) => [a.partName, a.bones.join(), a.model, [...a.skinFrom].join()]), [['cuirass', 'chest', 'brigandine_steel.nif', 'chest,groin,upperleg,knee']]);
@@ -209,11 +210,15 @@ test('MW-BRIG2: the item - the Steel Brigandine Jerkin, one piece worn as a cuir
     assert.equal(ownMwDataPath(`../assets/mw/${path}`), path);
   }
   assert.ok(itemMapCoverage().some((c) => c.kind === 'own' && c.own === 'ownArmorModels' && c.material === 'Steel'));
-  // The build loads the body under it - shadowed or not - and hands it to the binder with the part.
+  // The build loads the body under it - shadowed or not - and hands it to the binder with the part. MW-STEEL1: through
+  // ownBodyPaths and ownBodyPart, the one reading the third person's body and the first person's gauntlets share.
   const fp = sourceText('src/combat/fpArm.js');
-  assert.match(fp, /const bodyUnder = \(add\) => \(add\.skinFrom \?\? \[\]\)\.flatMap\(\(slot\) => rows\n/);
+  assert.match(fp, /const under = \(slots\) => \(slots \?\? \[\]\)\.flatMap\(\(slot\) => rows\n/);
+  assert.match(fp, /return \{ skinFrom: under\(add\.skinFrom\), fitFrom: under\(add\.fitFrom\) \};/);
+  assert.match(fp, /const bodyUnder = \(add\) => \{ const p = ownBodyPaths\(add, rows\); return \[\.\.\.p\.skinFrom, \.\.\.p\.fitFrom\]; \};/);
   assert.match(fp, /\.\.\.worn\.adds\.flatMap\(bodyUnder\)\.map\(\(b\) => b\.path\),   \/\/ MW-BRIG2/);
-  assert.match(fp, /\.\.\.\(row\.skinFrom \? \{ skinFrom: bodyUnder\(row\)/);
+  assert.match(fp, /\.\.\.ownBodyPart\(row, rows, find\) \}\);/);
+  assert.match(fp, /if \(!add\.skinFrom\) return \{\};\n  const read = \(list\) => list\.map\(\(b\) => \(\{ slot: b\.slot, bytes: find\(b\.path\)\?\.get\(b\.path\)\?\.slice\(\) \}\)\)\.filter\(\(b\) => b\.bytes\);/);
 });
 
 test('MW-BRIG2: the shipped files are re-made from the committed sources, byte for byte, and read back', () => {

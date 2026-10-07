@@ -2680,7 +2680,7 @@ export function tileStates(f) {   // FT18: exported for the All off pins, which 
       const found = c.tiers.findIndex(([v]) => String(v) === cur);
       const at = found >= 0 ? found : fallback;
       return { labels: c.tiers.map(([, l]) => l), at, locked,
-        set: (i) => (c.write ?? ((v) => setPref(c.key, v)))(c.tiers[i][0]) };
+        set: (i) => { (c.write ?? ((v) => setPref(c.key, v)))(c.tiers[i][0]); TILE_AFTER[c.key]?.(); } };   // MW-STEEL1: a choice's after-step too (the Steel Helm)
     }
     return { labels: ['Off', 'On'], at: getPref(c.key) ? 1 : 0, locked,
       set: (i) => { setPref(c.key, i === 1); TILE_AFTER[c.key]?.(); } };
@@ -2727,13 +2727,15 @@ export function classicSegment(f, st) {
  *  standing body: the Morrowind card's own row that did it stopped drawing at FT13 (the key moved here, and
  *  `prefRow` answers nothing for a moved key), so since then the tile wrote the pref and the body kept the old
  *  holster until the next build - while the row's effect line promised it at once. */
+const rebuildMorrowindBody = async () => {
+  if (!morrowindDataCount() || !playerEntity?.chargenDone) return;   // MWA4: attached is on - a character in play wears it
+  const { buildArmsFor } = await import('../combat/weaponRig.js');
+  await buildArmsFor(playerEntity);
+  render();
+};
 const TILE_AFTER = Object.freeze({
-  mwSheathing: async () => {
-    if (!morrowindDataCount() || !playerEntity?.chargenDone) return;   // MWA4: attached is on - a character in play wears it
-    const { buildArmsFor } = await import('../combat/weaponRig.js');
-    await buildArmsFor(playerEntity);
-    render();
-  },
+  mwSheathing: rebuildMorrowindBody,
+  mwSteelHelm: rebuildMorrowindBody,   // MW-STEEL1: the steel helm's style, closed or open, on the standing body at once
 });
 
 /**

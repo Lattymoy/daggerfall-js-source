@@ -167,7 +167,7 @@ export { MW_BODY_PARTS, isFirstPersonId } from './mwEsmFile.js';
 import { MW_BODY_PARTS, isFirstPersonId } from './mwEsmFile.js';
 import FACE_TABLE from './mwFaceTable.json' with { type: 'json' };
 import { GRAPH_ROOT, ACCUM_ROOT_NAMES } from './mwSkin.js';
-import { transferSkin, sourceSkin, fitLift, liftBatch } from './mwSkinTransfer.js';   // MW-BRIG2: a worn model skinned from the body under it; MW-BRIG3: and fitted onto it
+import { transferSkin, sourceSkin, fitLift, liftBatch, fitShift, shiftBatch, rebindSkin } from './mwSkinTransfer.js';   // MW-BRIG2: a worn model skinned from the body under it; MW-BRIG3: and fitted onto it; MW-STEEL1: kept to its scene's body, and worn on another skeleton
 import { getTextKeyTime, animVelocity } from './mwAnim.js';
 import { mat33Mul } from './mwNifMesh.js';   // AUDIT 68 S11-affine-dup: the one row-major 3x3 product
 import { applyClimbRig } from '../combat/climbRig.js';   // CLIMB6: the climb's pose on the rig's own bones
@@ -2610,36 +2610,46 @@ export function armPieceRows(pieces) {
  */
 function bindSkinnedFromBody(assembly, part, bones) {
   const mod = assembly.fns;
-  const { skeleton, pieces, notes } = assembly;
+  const { pieces, notes } = assembly;
   let nif;
   try { nif = mod.parseNif(part.bytes); } catch (err) { notes.push(`${part.slot}: ${err.message}`); return; }
-  const sources = [];
-  const slotOf = new Map();   // MW-BRIG3: which body part each source is, for the fit
-  for (const src of part.skinFrom) {
-    let srcNif;
-    try { srcNif = mod.parseNif(src.bytes); } catch (err) { notes.push(`${part.slot}: body ${src.slot}: ${err.message}`); continue; }
-    let tookNameless = false;
-    for (const bone of src.bones ?? mod.PART_BONES[src.slot] ?? []) {
-      if (!skeleton.byName.has(bone.toLowerCase())) continue;
-      let bound;
-      try { bound = mod.bindPart(skeleton, srcNif, { attachBone: bone }); } catch { continue; }
-      for (const b of bound.skinned) {
-        const nameless = !String(b.name || '').trim();
-        if (nameless ? tookNameless : !shapeMatchesBone(b.name, bone)) continue;
-        if (nameless) tookNameless = true;
-        sources.push(b);
-        slotOf.set(b, src.slot);
-      }
-      if (bound.skinned.length) continue;   // a rig file's rigid shapes are not drawn (MW-D31), so they are no body
-      const ref = skeleton.byName.get(bone.toLowerCase());
-      const mirrored = (skeleton.nodes.get(ref)?.name ?? '').includes('Left');
-      for (const b of bound.attached) {
-        const skin = sourceSkin(b, { attachRef: bound.attachRef, mirrored, boneOffset: bound.boneOffset || null });
-        sources.push(skin);
-        slotOf.set(skin, src.slot);
+  // MW-STEEL1: THE SKELETON THE GARMENT IS SOLVED ON - the assembly's own, or (`solveOn`) the one its body was fitted
+  // on: the first person's gauntlets are solved on the third-person skeleton, the T-pose Mac's scene stands in, and
+  // worn on the first-person one by their bones' names (rebindSkin, below).
+  let skeleton = assembly.skeleton;
+  if (part.solveOn) {
+    try { skeleton = mod.buildSkeleton(mod.parseNif(part.solveOn)); } catch (err) { notes.push(`${part.slot}: the skeleton it is fitted on: ${err.message}`); return; }
+  }
+  /** The body parts named, bound as the body binds them, as skins - each tagged with its slot. */
+  const bindBodies = (list, label) => {
+    const out = [];
+    for (const src of list ?? []) {
+      let srcNif;
+      try { srcNif = mod.parseNif(src.bytes); } catch (err) { notes.push(`${part.slot}: ${label} ${src.slot}: ${err.message}`); continue; }
+      let tookNameless = false;
+      for (const bone of src.bones ?? mod.PART_BONES[src.slot] ?? []) {
+        if (!skeleton.byName.has(bone.toLowerCase())) continue;
+        let bound;
+        try { bound = mod.bindPart(skeleton, srcNif, { attachBone: bone }); } catch { continue; }
+        for (const b of bound.skinned) {
+          const nameless = !String(b.name || '').trim();
+          if (nameless ? tookNameless : !shapeMatchesBone(b.name, bone)) continue;
+          if (nameless) tookNameless = true;
+          out.push({ skin: b, slot: src.slot });
+        }
+        if (bound.skinned.length) continue;   // a rig file's rigid shapes are not drawn (MW-D31), so they are no body
+        const ref = skeleton.byName.get(bone.toLowerCase());
+        const mirrored = (skeleton.nodes.get(ref)?.name ?? '').includes('Left');
+        for (const b of bound.attached) {
+          out.push({ skin: sourceSkin(b, { attachRef: bound.attachRef, mirrored, boneOffset: bound.boneOffset || null, attachName: bone }), slot: src.slot });
+        }
       }
     }
-  }
+    return out;
+  };
+  const bodies = bindBodies(part.skinFrom, 'body');
+  const sources = bodies.map((b) => b.skin);
+  const slotOf = new Map(bodies.map((b) => [b.skin, b.slot]));   // MW-BRIG3: which body part each source is, for the fit
   if (!sources.length) {
     notes.push(`${part.slot}: no body part to skin it from (${part.skinFrom.map((x) => x.slot).join(', ') || 'none named'}) - not drawn`);
     return;
@@ -2661,15 +2671,48 @@ function bindSkinnedFromBody(assembly, part, bones) {
       notes.push(`${part.slot}: no ${part.fitTo} to fit it to - drawn at its baked height`);
     }
   }
+  // MW-STEEL1: KEPT TO THE BODY ITS SCENE CARRIES - each rule's part measured on the wearer (fitFrom's bodies, or the
+  // ones it is skinned from), the garment moved by what the wearer's differs from the scene's, before it is skinned.
+  if (part.fit?.length) {
+    const anchors = new Map();
+    for (const b of [...bodies, ...bindBodies(part.fitFrom, 'fit')]) {
+      if (!anchors.has(b.slot)) anchors.set(b.slot, []);
+      anchors.get(b.slot).push(b.skin);
+    }
+    const fit = fitShift(worn, anchors, part.fit, ctx);
+    const named = [...new Set(part.fit.map((r) => r.to))].join(' and ');
+    if (fit) {
+      worn = worn.map((g) => shiftBatch(g, fit.shift));
+      notes.push(`${part.slot}: fitted to the ${fit.by.map((b) => `${b.to} (${b.axes.join('')})`).join(' and ')} - moved `
+        + `${fit.shift.map((v) => v.toFixed(1)).join(', ')}`);
+    } else {
+      notes.push(`${part.slot}: no ${named} to fit it to - drawn where its scene put it`);
+    }
+  }
+  const missing = new Set();
   for (const g of worn) {
-    for (const batch of transferSkin(g, sources, ctx)) {
+    for (const solved of transferSkin(g, sources, ctx, { side: sideOfPart(part.partName) })) {   // MW-STEEL1: a sided piece keeps to its half
+      let batch = solved;
+      // MW-STEEL1: solved on another skeleton - worn on this one by its bones' names
+      if (skeleton !== assembly.skeleton) {
+        const r = rebindSkin(solved, assembly.skeleton);
+        batch = r.batch;
+        for (const m of r.missing) missing.add(m);
+      }
       pieces.push({ slot: part.slot, bone: bones[0] ?? null, kind: 'skinned', mirrored: false,
         batch, source: null, attachRef: null,
         uvs: batch.uvs || null, colors: null, material: batch.material || null,
         positions: new Float32Array(batch.positions.length), indices: batch.indices });
     }
   }
+  if (missing.size) notes.push(`${part.slot}: this skeleton has no bone ${[...missing].map((b) => `"${b}"`).join(', ')} - those influences are skipped (rule 40)`);
 }
+
+/** MW-STEEL1: the side of the body an ARMO_PART names ('right hand', 'left pauldron'), or null for one it does not. */
+export const sideOfPart = (name) => {
+  const m = /^(right|left) /.exec(String(name || '').toLowerCase());
+  return m ? m[1] : null;
+};
 
 /** MW-D16: bake a part's pre-transform into its authored vertices. Null
  *  is the common case and returns the array untouched, so nothing pays
