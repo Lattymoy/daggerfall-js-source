@@ -66,6 +66,7 @@ import { isTextEntryTarget, keyEdges, noteKeyDown, noteKeyUp, beginInputFrame, p
 import { armUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: one door in front of every way out of a running game   // AUDIT 39r: the mouse half of the held set
 import { createActivateGate, activateFrame, setClickDelay } from '../systems/activateGate.js';   // A8: PlayerActivate's ActivateCenterObject frame
 import { capturePendingScreenshot } from '../systems/saveSlots.js';   // SS1: the context arms the shot, THIS loop delivers it
+import { deliverOwedShots } from '../ui/screenshot.js';   // SHOT1: and the PrintScreen key's, the same way
 import { routeLargeHudClick, activeMouseOverLargeHUD, trackLargeHudPointer } from '../ui/hudLarge.js';   // U45: the bar's eleven panels; ROAD-Ar: and the guard that stops them being world clicks too
 import { worldViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // ROAD-E E5: ViewportChanger - the docked bar shrinks the world pass (RETRO1: and retro mode's aspect correction pillarboxes it)
 import { createLockOn, LOCK_PICK_DISTANCE } from '../player/lockOn.js';   // TI1: touch lock-on
@@ -1150,6 +1151,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
       if (shotMode) window.__frame = frames;
       renderer.resolveFrame();   // AUDIT RETRO1 E5/C8: a frame that drew no screen quad (the enhanced skin, a sheathed weapon) is shown NOW, not at the next beginFrame
       capturePendingScreenshot(canvas);   // SS1: a save armed under an overlay still lands its shot
+      deliverOwedShots();   // SHOT1: the PrintScreen shots owed to a drawn frame, read from this one (ui/screenshot.js)
       frameAbort();   // AUDIT-WH2 L1-F4: the frame never reached frameEnd - close the token, take no sample
       requestAnimationFrame(frame);
       return;   // U2b/U3: hold gameplay, keep the loop (AUDIT 18 F5: the overlay's own clock still runs - DFU's RestWindow.Update ticks on realtime under timeScale 0)
@@ -1175,6 +1177,7 @@ export async function bootDungeon(canvas, renderer, params, status) {
     // draw (preserveDrawingBuffer false - the buffer is only this
     // task's to read).
     capturePendingScreenshot(canvas);
+    deliverOwedShots();   // SHOT1: the PrintScreen shots owed to a drawn frame, read from this one (ui/screenshot.js)
     frameEnd();   // PERF1
     requestAnimationFrame(frame);
   }

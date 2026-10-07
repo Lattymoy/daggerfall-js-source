@@ -791,8 +791,21 @@ export function mountNoticeBoard(host, deps) {
     try { n.focus?.({ preventScroll: true }); } catch { n.focus?.(); }
     if (k.at && k.at[0] != null) { try { n.setSelectionRange(k.at[0], k.at[1]); } catch { /* none to set */ } }
   }
+  /** CRASH-BLUR (from play, 2026-10-07: "NotFoundError: Failed to execute 'replaceChildren' ... Perhaps it was moved in a
+   *  'blur' event handler"): a paint asked for WHILE one paints is coalesced, never run inside it. Emptying the window
+   *  takes a focused list out of the document, the browser blurs it as it goes, and the Market's answer held for that
+   *  list (marketTab.js's redraw) repaints on that blur - a second replaceChildren inside the first emptied the window
+   *  under it, and the first threw on the node already gone. The inner ask is kept and drawn once the outer is done. */
+  let painting = false, paintAgain = false;
   function render() {
     if (!alive) return;
+    if (painting) { paintAgain = true; return; }
+    painting = true;
+    try {
+      do { paintAgain = false; paint(); } while (paintAgain && alive);
+    } finally { painting = false; }
+  }
+  function paint() {
     const kept = keptOf();
     win.replaceChildren();
     win.append(...header());

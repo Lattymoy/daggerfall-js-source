@@ -9430,7 +9430,8 @@ took: three town homes a character, no upkeep.
   under one name the first offline visit would have thrown my things away. The scene is made permanent at the
   purchase and again at every entry (a purchase on a page never saved would otherwise leave it unkept). SOMEONE
   ELSE'S home is not a stranger's house: its cupboards are shut ("This belongs to <owner>."), nothing restocks,
-  nothing is stolen. Any player's home has no residents and greets no one.
+  nothing is stolen. Any player's home has no residents - none after a rest either (HALL-FOLK, below) - and greets
+  no one.
 - **The room.** An online home keeps its relay room (an owned offline house or a ship keeps none, as before), so its
   owner and their guests stand in it together and its doors are shared - but the room carries NO LOOT
   (`world/interiorShared.js`, the bag's `home`): its memory names no cupboard, a peer's word about one never lands
@@ -15216,3 +15217,40 @@ Of every location in the world, the start cell holds one: Daggerfall's Privateer
 
 - **Pinned**: `test/fb1007b_holdsolo.test.js` (9; one gated on ARENA2); `tools/mutants/fb1007b.json` (its
   FB1007B-HOLD / START-CELL / PH1 records and the audit's H records). Record: `01-Overview/Field-Bugs-2026-10-07b.md`.
+
+## HALL-FOLK (2026-10-07, FIELD BUGS 2026-10-07, a player's report "NPCs in purchased guild halls") - a player's room keeps its residents out after a rest
+
+"Sometimes there are NPCs in the player guild halls. It's ok that you can't remove everything or decorate from scratch,
+but it is a bit annoying if the NPCs don't disappear. And I think they are supposed to (because they do when you purchase
+a regular player Home)."
+
+A guild's hall is an online home (GUILD1d: a row of the homes table, its character the guild's own mark), and its
+door already stood none of the house's people: the interior host reads the town's answer once (`home`, latched as
+`interiorHome`), and AddPeople's owned arm hides every resident of a home, anyone's
+(`worldModes.js:"isHouseOwned: (key) => home !== null || isHouseOwned("`). Every way in takes that one answer - the
+door, a load made inside, a tenant's room - in the one interior host (`scenes/worldModes.js`), which both town hosts
+build.
+
+The "sometimes" was the REST. The rest window's close runs DaggerfallInterior.UpdateNpcPresence (ROAD-B B5,
+`characters/interiorPeople.js` updateNpcPresence), which stands every person of the building back up when its hours
+pass, and never asks who owns it: DFU's own law, written for the bank's deed. A House2, House3 or House4 is open 6-18,
+so any rest by day - a night's sleep in the hall's own beds (GUILD1d made a member's hall their bed), or the window
+opened and shut - put the house's old residents back in the hall, and on either skin (the enhanced window closes through
+the same dep). A HouseForSale, House1, House5 and House6 never pass that law, which is why a home seemed to keep them
+out: the same re-roll stood them back up in a House2-4 home too.
+
+THE FIX (`worldModes.js:"if (interiorHome || privateVisitRoom) return;"`): the host's re-roll refuses a player's
+room online - the visit's home, any player's, a hall among them, and a tenant's private room - before it asks the law:
+the build's own answer, latched with the room. Nothing else moved. DFU's law is untouched: offline, a House2-4 bought
+from the bank still takes its people back by day, as DFU's does (B5's note, corrected - it called that harmless). A
+shut stranger's house rested in by day still opens its door to its people.
+
+The four hosts: `scenes/worldModes.js` WIRED (the interior host, the only one inside a building, so the only one that
+owes the dep); `scenes/world.js` hands it the homes registry (`onlineHomes`) and is otherwise untouched;
+`scenes/exterior.js` builds the same interior host with no registry (offline, DFU's law alone); `scenes/dungeonContext.js`
+has no building and no re-roll (DFU's guard is IsPlayerInsideBuilding). Not reproduced and left as HOME1 decided: a town
+that has not answered within the door's bound (`waitFor`) stands Daggerfall's house, its residents with it, for that
+visit.
+
+- **Pinned**: `test/fb1007_hallfolk.test.js` (4) - over the account service's own answer and the real mode machine;
+  `tools/mutants/fb1007hallfolk.json` (4, all killed).
