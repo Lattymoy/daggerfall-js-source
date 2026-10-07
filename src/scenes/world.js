@@ -287,6 +287,7 @@ import { createRiteHost, RITE_TEXT } from './riteHost.js';   // WB12d: the faith
 import { createSdHost } from './sdHost.js';   // SD2b: the Hollow in the world - the hub's record in, the Hollow stood at its pixel, the find, the lines
 import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
 import { SdOmenPassRenderer } from '../render/sdOmenPass.js';   // SD2c: the Hollow's omen, the gate's beacon in brass
+import { SD_CAST_OUT_LINE } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out
 import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/lootDataTables.js';   // WB12d: the casket's pile, undrawn
 import { createSigilBroker } from './sigilBrokerPool.js';   // SET7: the Sigil Broker - her body, her box and name, her press; BROKER-CAGE: caged at the faithful's circle
@@ -21030,11 +21031,19 @@ export async function bootWorld(canvas, renderer, params, status) {
       _sdDoorAt = { key, gen: doorGeneration, at: e ? doorWorldPosition(e.door) : null };
       return _sdDoorAt.at;
     },
-    feet: () => (walkMode && playerSpawned ? player.feetAt() : null),
+    feet: () => (walkMode && playerSpawned && _mode() === 'exterior' ? player.feetAt() : null),   // SD2d: the find is the street's - the host frames in every mode now
     sendFound: (word, cell) => !!online?.sendSdFound?.(word, cell),
     say: (text) => chatNotice(text),
     regionName: (r) => (r >= 0 ? maps.getRegionName(r) : ''),
+    // SD2d: its end with me inside - cast out before its door by the dungeon's own way out (the mode machine's exit,
+    // drained at its safe point: PositionPlayerToDungeonExit's landing) and the closing line said; a dead player is the
+    // death's (its own door wakes them), and the Hollow goes the frame they are out
+    castOut: () => { if (!(playerEntity.health > 0) || modes?.deathUp?.()) return; if (modes?.unstuck?.()) setMidScreenText(SD_CAST_OUT_LINE); },
   }) : null;
+  /** SD2b: the Hollow stood or taken down, its find, its lines. SD2d: called from the online frame, above the modal
+   *  return, in every mode - a Hollow's end reaches a player standing inside it. It stood in the exterior's half of the
+   *  frame, which the dungeon's frame never reaches: underground nothing moved the Hollow on. */
+  const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } };
   /** SD2c: THE HOLLOW'S OMEN (render/sdOmenPass.js) - a column of brass-gold light over a Super dungeon's pixel from its
    *  rise to its end (sdHost omen: the record's own light), seen from SD_OMEN_PX map pixels round, outside alone. Its foot
    *  is the built ground under the Hollow's centre, or on a pixel not built yet the terrain sampler's own kernel there
@@ -23910,6 +23919,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     mail?.poll();   // MAIL1: a look at the letterbox when one is due - before the dead return, as the chat's heartbeat is
     gateFrame();   // WB1: the Oblivion Gate's omen - its line when a new moment comes, before the dead return (the omen speaks to the dead too)
     serpentFrame();   // SERPENT1: the sea serpent's sighting (to the dead too), and on the street its fight and its bar
+    sdFrame();   // SD2b: the Hollow stood or taken down, its find, its lines - SD2d: in every mode, so its end reaches a player inside it
     renownTracker?.tick();   // RENOWN1: what this character earned, to the account service when a report is due
     peerMenuFrame();   // PEERMENU1: the bind's hold timer
     peerFxFrame();   // PEERFX1: the others' blows and hurts, played
@@ -28835,7 +28845,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // WB2: the gate stood for this frame - before the lights (its fire lights the ground) and the world pass (its stone)
     try { if (gatePool?.frame(dt)) warmGateVeil(); } catch (e) { console.warn('[gate] pool', e?.message ?? e); }   // AUDIT WB D5: a gate stands - the step's veil is built ahead
     try { sigilBroker?.frame(dt); } catch (e) { console.warn('[broker] pool', e?.message ?? e); }   // SET7: the Broker stands where the clock stands her - BROKER-CAGE: in her cage at the faithful's circle
-    try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); }   // SD2b: the Hollow stood or taken down, its find, its lines
     try { riteHost?.frame(); } catch (e) { console.warn('[rite] host', e?.message ?? e); }   // WB12d: the faithful's circle, before the lights (its braziers light the ground)
     try { if (_mode() === 'exterior' && !_loading) harbourBook.step(now / 1000); } catch (e) { console.warn('[harbours] book', e?.message ?? e); }   // HARBOUR-BOOK: the port near the player sounded, before its quays stand
     if (_mode() === 'exterior') camps.ride(dt);   // DECK-CAMP: the camps on a boat's deck posed off her - after she moved, before the lights (a fire's) and the world pass

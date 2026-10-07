@@ -22,12 +22,12 @@
   {
     "name": "SD2b-the-ground-pulled",
     "file": "src/scenes/sdHost.js",
-    "old": "if (stood && (!h || h.s !== stood.s) && !inside(stood.loc))",
-    "new": "if (stood && (!h || h.s !== stood.s))",
+    "old": "      if (!inside(stood.loc)) { unstand(stood.key); stood = null; }",
+    "new": "      if (true) { unstand(stood.key); stood = null; }",
     "tests": [
       "test/sd2b_world.test.js"
     ],
-    "note": "Never from under a player standing in it."
+    "note": "Never from under a player standing in it. SD2d (re-aimed by content): the guard has a line of its own beside the cast-out."
   },
   {
     "name": "SD2b-found-from-afar",

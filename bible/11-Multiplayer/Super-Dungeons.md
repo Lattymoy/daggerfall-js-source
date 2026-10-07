@@ -639,3 +639,33 @@ Timers label (the Super dungeon's row beside the serpent's) and `test/audit18_bi
 UI.md counts `sdMapMark.js`, Systems.md `sdOmen.js`.
 
 Next: a save inside a Hollow and the cast-out at its end (SD2d).
+
+### SD2d - shipped 2026-10-06 (a Hollow's end, and a save inside one)
+
+The ground is never pulled from under a player (SD2b) - and they do not stay in a Hollow that has ended. When its record
+stops standing it (its collapse's end after the kill, its fading unbeaten, or a later slot's word) while the player is
+inside, `scenes/sdHost.js` casts them out once (`castOut`, the host's seam, `castOutS` its slot); the next frame finds
+them outside and takes it down. The world host's cast-out is the dungeon's own way out - the mode machine's exit
+(`modes.unstuck`), drained at its safe point into `exitDungeonNow`, PositionPlayerToDungeonExit's landing before its
+door - with the closing line, *"The Hour closes, and the Hollow folds in on itself behind you."* (sdLaw.js
+SD_CAST_OUT_LINE); a player dead inside is the death's (its own door wakes them, and the Hollow goes when they are out).
+
+THE HOST FRAMES IN EVERY MODE NOW. SD2b framed it in the exterior's half of the world host's frame, which the modal
+return never reaches: underground, nothing moved the Hollow on - its end could not have reached a player inside it, and
+its lines waited for them to walk out. It runs in the online frame beside the gate's and the serpent's, above the modal
+return; the find stays the street's (`feet` answers outside alone).
+
+A SAVE INSIDE A HOLLOW is ONLINE-UNDERGROUND-LOAD1's, unchanged: an online page never puts a character back inside a
+dungeon - it wakes them at the nearest temple, town or graveyard to the dungeon's pixel, and a Hollow's save names its
+own (the clone stands at its site - `world/spawnedDungeons.js` gives it the site's longitude and latitude, which
+`dungeonContext.js dungeonHome` writes), so the wake is by the city it stood by, whether or not the Hollow still stands.
+Offline (an offline copy's load) no Hollow stands to enter, and the load lands at its door.
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the cast-out, the frame, the find's street); `scenes/worldModes.js` WIRED by
+its own door (`unstuck`, `exitDungeonNow` - no line of it changed); `scenes/dungeonContext.js` FLAGGED - the save's
+dungeon home is its own, unchanged; `scenes/exterior.js` FLAGGED - the bench is offline.
+
+Pins: `test/sd2d_castout.test.js` (4); `tools/mutants/sd2d.json` (8, all dead). `tools/mutants/sd2b.json`'s
+SD2b-the-ground-pulled re-aimed by content (the guard has a line of its own beside the cast-out; all 17 dead).
+
+The Hollow's world half is whole: SD4 makes it Super - its difficulty, its end, the Rift and the Return.

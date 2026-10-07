@@ -1,0 +1,75 @@
+[
+  {
+    "name": "SD2D-never-cast-out",
+    "file": "src/scenes/sdHost.js",
+    "old": "      else if (castOutS !== stood.s) { castOutS = stood.s; castOut(stood.key); }\n",
+    "new": "",
+    "tests": [
+      "test/sd2d_castout.test.js"
+    ]
+  },
+  {
+    "name": "SD2D-cast-out-every-frame",
+    "file": "src/scenes/sdHost.js",
+    "old": "      else if (castOutS !== stood.s) { castOutS = stood.s; castOut(stood.key); }",
+    "new": "      else { castOutS = stood.s; castOut(stood.key); }",
+    "tests": [
+      "test/sd2d_castout.test.js"
+    ]
+  },
+  {
+    "name": "SD2D-cast-out-while-it-stands",
+    "file": "src/scenes/sdHost.js",
+    "old": "    if (stood && (!h || h.s !== stood.s)) {\n      if (!inside(stood.loc))",
+    "new": "    if (stood) {\n      if (!inside(stood.loc))",
+    "tests": [
+      "test/sd2d_castout.test.js"
+    ]
+  },
+  {
+    "name": "SD2D-the-line-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "if (modes?.unstuck?.()) setMidScreenText(SD_CAST_OUT_LINE); },",
+    "new": "modes?.unstuck?.(); },",
+    "tests": [
+      "test/sd2d_castout.test.js"
+    ]
+  },
+  {
+    "name": "SD2D-the-dead-cast-out",
+    "file": "src/scenes/world.js",
+    "old": "    castOut: () => { if (!(playerEntity.health > 0) || modes?.deathUp?.()) return; if (modes?.unstuck?.())",
+    "new": "    castOut: () => { if (modes?.unstuck?.())",
+    "tests": [
+      "test/sd2d_castout.test.js"
+    ]
+  },
+  {
+    "name": "SD2D-framed-outdoors-alone",
+    "file": "src/scenes/world.js",
+    "old": "    sdFrame();   // SD2b: the Hollow stood or taken down, its find, its lines - SD2d: in every mode, so its end reaches a player inside it\n",
+    "new": "",
+    "tests": [
+      "test/sd2d_castout.test.js"
+    ]
+  },
+  {
+    "name": "SD2D-the-find-indoors",
+    "file": "src/scenes/world.js",
+    "old": "    feet: () => (walkMode && playerSpawned && _mode() === 'exterior' ? player.feetAt() : null),",
+    "new": "    feet: () => (walkMode && playerSpawned ? player.feetAt() : null),",
+    "tests": [
+      "test/sd2d_castout.test.js"
+    ]
+  },
+  {
+    "name": "SD2D-the-clone-at-the-templates-pixel",
+    "file": "src/world/spawnedDungeons.js",
+    "old": "    mapTableData: { ...template.mapTableData, mapId, longitude: ll.x, latitude: ll.y },",
+    "new": "    mapTableData: { ...template.mapTableData, mapId },",
+    "tests": [
+      "test/sd2d_castout.test.js"
+    ],
+    "note": "A save inside a Hollow names the pixel its clone stands at (dungeonContext.js dungeonHome) - the wake searches round it."
+  }
+]

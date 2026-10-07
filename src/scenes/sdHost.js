@@ -10,7 +10,9 @@
 // find, the kill, the fading. A rise is said to nobody: it is a find.
 //
 // THE GROUND IS NEVER PULLED FROM UNDER A PLAYER: a Hollow whose record says gone stays in the index while the player
-// stands in its dungeon (TTL1's own law for a spawn), and goes when they leave.
+// stands in its dungeon (TTL1's own law for a spawn), and goes when they leave. SD2d: and they do not stay - its end
+// casts them out before its door once (`castOut`, the host's: the dungeon's own way out, the closing line), and the
+// next frame finds them outside and takes it down.
 //
 // Pure but for its seams, which the world host hands in (scenes/world.js). Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { sdPhase, sdStands, sdFoundLine, sdFellLine, sdFadeLine, SD_FOUND_NEAR_M, SD_FOUND_RESEND_MS } from '../net/sdLaw.js';
@@ -39,9 +41,10 @@ export const SD_LINE_WAIT_MS = 30_000;
  *   sendFound: (word: {s:number, px:number, py:number}, cell: string) => boolean,
  *   say: (text: string) => void,
  *   regionName?: (r: number) => string,
+ *   castOut?: (key: string) => void,
  * }} o
  */
-export function createSdHost({ now, scan, warmScan = () => {}, cities, templates, where, stand, unstand, inside, door, feet, sendFound, say, regionName = () => '' }) {
+export function createSdHost({ now, scan, warmScan = () => {}, cities, templates, where, stand, unstand, inside, door, feet, sendFound, say, regionName = () => '', castOut = () => {} }) {
   /** @type {SdRecord|null} */
   let rec = null;
   let heardAny = false;
@@ -53,6 +56,8 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
   /** The lines owed until the Hollow's place is known (its city's name): `{ kind, rec, at }`. */
   const owed = [];
   let foundSentAt = -Infinity, foundSentS = 0;
+  /** SD2d: the slot whose Hollow this player was cast out of - once a slot. */
+  let castOutS = 0;
 
   /** The Hollow a record names, found once a slot; null while the scan is not ready (it is warmed). */
   function hollowOf(r) {
@@ -104,8 +109,12 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
     const t = now();
     const phase = sdPhase(rec, t);
     const h = sdStands(phase) ? hollowOf(rec) : null;
-    // what stood and should not: down - unless the player stands in it (the ground is never pulled from under them)
-    if (stood && (!h || h.s !== stood.s) && !inside(stood.loc)) { unstand(stood.key); stood = null; }
+    // what stood and should not: down - unless the player stands in it (the ground is never pulled from under them), and
+    // then they are cast out before its door, once (SD2d); the next frame finds them outside
+    if (stood && (!h || h.s !== stood.s)) {
+      if (!inside(stood.loc)) { unstand(stood.key); stood = null; }
+      else if (castOutS !== stood.s) { castOutS = stood.s; castOut(stood.key); }
+    }
     if (h && !stood) { stand(h.key, h.loc); stood = { s: h.s, key: h.key, loc: h.loc }; }
     // the find: at its door, while the record says risen - again every SD_FOUND_RESEND_MS until the hub's word moves it
     if (phase === 'risen' && stood && stood.s === rec?.s && (foundSentS !== stood.s || t - foundSentAt >= SD_FOUND_RESEND_MS)) {
