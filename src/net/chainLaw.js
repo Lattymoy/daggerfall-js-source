@@ -147,13 +147,13 @@ export function chainPlan(inputs, held, { track = () => null, room = () => Infin
   /**
    * `n` of `key` covered into `p` - held first, then by its works. Strict: answers false and leaves `p` as it was where
    * it cannot. Lenient: covers what it can, books the rest `short` at the bottom of the chain, and answers true.
-   * @param {Plan} p @param {string} key @param {number} n @param {number} depth @param {string[]} path @param {boolean} lenient
+   * @param {Plan} p @param {string} key @param {number} n @param {number} depth @param {boolean} lenient
    */
-  const cover = (p, key, n, depth, path, lenient) => {
+  const cover = (p, key, n, depth, lenient) => {
     let left = p.use(key, n);
     if (left === 0) return true;
-    const works = depth < CHAIN_DEPTH && !path.includes(key) ? producersOf(key).filter((r) => workOpen(r, rankOf(r))) : [];
-    const below = [...path, key];
+    // the depth bounds the recursion (no work's product is its own input - CHAIN_WORKS has no cycle)
+    const works = depth < CHAIN_DEPTH ? producersOf(key).filter((r) => workOpen(r, rankOf(r))) : [];
     for (const r of works) {
       const per = perOf(r);
       // the most units of this work the held can carry - a work that covers u units covers fewer, the bound searched -
@@ -162,7 +162,7 @@ export function chainPlan(inputs, held, { track = () => null, room = () => Infin
       while (lo < hi) {
         const mid = Math.ceil((lo + hi) / 2);
         const t = p.clone();
-        if (r.inputs.every((/** @type {any} */ inp) => cover(t, inp.key, inp.n * mid, depth + 1, below, false))) { best = { t, mid }; lo = mid; } else hi = mid - 1;
+        if (r.inputs.every((/** @type {any} */ inp) => cover(t, inp.key, inp.n * mid, depth + 1, false))) { best = { t, mid }; lo = mid; } else hi = mid - 1;
       }
       if (best && best.mid > 0) {
         best.t.works.push({ id: r.id, count: best.mid });
@@ -179,7 +179,7 @@ export function chainPlan(inputs, held, { track = () => null, room = () => Infin
     if (r) {
       const per = perOf(r), count = Math.ceil(left / per);
       if (count * per > p.roomFor(key)) p.full.set(key, (p.full.get(key) ?? 0) + count * per);
-      for (const inp of r.inputs) cover(p, inp.key, inp.n * count, depth + 1, below, true);
+      for (const inp of r.inputs) cover(p, inp.key, inp.n * count, depth + 1, true);
       p.works.push({ id: r.id, count });
       p.produce(key, count * per, left);
     } else p.short.set(key, (p.short.get(key) ?? 0) + left);
@@ -189,12 +189,8 @@ export function chainPlan(inputs, held, { track = () => null, room = () => Infin
   const asked = (inputs ?? []).filter((inp) => typeof inp?.key === 'string' && units(inp?.n) > 0);
   // F2: every input's held units taken first; the works plan only what is left of each
   const rest = asked.map((inp) => ({ key: inp.key, n: p.use(inp.key, units(inp.n)) }));
-  for (const inp of rest) {
-    if (inp.n === 0) continue;
-    const t = p.clone();
-    if (cover(t, inp.key, inp.n, 0, [], false)) p.take(t);
-    else cover(p, inp.key, inp.n, 0, [], true);
-  }
+  // lenient: each work covers all it can strictly first, so a coverable input is covered as a strict pass would
+  for (const inp of rest) if (inp.n > 0) cover(p, inp.key, inp.n, 0, true);
   const list = (/** @type {Map<string, number>} */ m) => [...m].map(([key, n]) => ({ key, n }));
   return { ok: p.short.size === 0 && p.full.size === 0, works: chainWorks(p.works), spent: list(p.spent), short: list(p.short), full: list(p.full) };
 }
@@ -219,7 +215,7 @@ export const chainNeeded = (/** @type {Need[]} */ inputs, /** @type {(key: strin
 
 /**
  * What a chain refined, said after the craft it ran for (the station's answer): "Refined first: Iron Ingot x3, Charcoal x3,
- * Steel Ingot x3 (+120 Smithing XP)." - `refined` the book's (`{ id, count, xp }` a work asked), `name` a material's
+ * Steel Ingot x3 (+90 Smithing XP)." - `refined` the book's (`{ id, count, xp }` a work asked), `name` a material's
  * label, `track` the book's (the yield a unit of work made, where the book kept no `made` - the service's own and bought).
  * Empty where nothing was refined.
  * @param {{ id: string, count: number, xp?: number, made?: number }[]|null|undefined} refined

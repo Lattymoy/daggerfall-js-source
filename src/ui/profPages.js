@@ -1336,7 +1336,7 @@ function drawWorkbench(detail, rerender, { el, divider }) {
   const stand = standings((x) => {
     const sp = spendsOf(x, book, false);
     const open = !x.later && recipeOpen(x, rank), can = open && craftable(x, held, sp);
-    return { open, can, raw: open && !can && fromRaw(sp, book), share: heldShare(sp, held) };   // CRAFT1: made from raw
+    return { open, can, raw: open && !can && fromRaw(sp, book), share: heldShare(sp, held) };   // CRAFT1: made from raw (a log sawn first)
   });
   patternRows(detail, el, list, _bench, rerender, { stand, word: (x, s) => (x.later ? LATER_WORDS.SEAT2 : s.open ? makeWord(s.can, s.raw) : `rank ${x.rank}`), locked: planing });
   const r = pickedIn(list, _bench);

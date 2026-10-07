@@ -83,8 +83,8 @@
   {
     "name": "CRAFT1-book-chain-always",
     "file": "src/net/profBook.js",
-    "old": "        if (r0 && chain !== false && chainNeeded(",
-    "new": "        if (r0 && chainNeeded(",
+    "old": "        if (r0 && chain !== false && recipeOpen(",
+    "new": "        if (r0 && recipeOpen(",
     "tests": [
       "test/craft1_chain.test.js"
     ]
@@ -251,5 +251,222 @@
       "test/craft1_chain.test.js",
       "test/audit32_pages.test.js"
     ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R1-stay-unasked",
+    "file": "src/net/profBook.js",
+    "old": "const s = await book.smelt(w.id, w.count, { stay: true });",
+    "new": "const s = await book.smelt(w.id, w.count, {});",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R4-track-unhanded",
+    "file": "src/net/profBook.js",
+    "old": "const plan = chainPlan(inputs, (k) => book.held(k), { track: (p) => book.track(p), room:",
+    "new": "const plan = chainPlan(inputs, (k) => book.held(k), { room:",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-aside-rank-ungated",
+    "file": "src/net/profBook.js",
+    "old": "if (r0 && chain !== false && recipeOpen(r0, t0?.rank ?? 0, t0?.specs) && chainNeeded(",
+    "new": "if (r0 && chain !== false && chainNeeded(",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R5-elsewhere-unsaid",
+    "file": "src/net/profBook.js",
+    "old": "refined, stopped: w.id, ...(s?.elsewhere ? { elsewhere: true } : {}) };",
+    "new": "refined, stopped: w.id };",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R5-material-unsaid",
+    "file": "src/net/profBook.js",
+    "old": "return { ok: false, error: s?.error ?? 'offline', material: s?.material, moved:",
+    "new": "return { ok: false, error: s?.error ?? 'offline', moved:",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R5-refined-unsaid-after",
+    "file": "src/net/profBook.js",
+    "old": "moved: ready.moved ?? 0, ...(refined.length ? { refined } : {}) };",
+    "new": "moved: ready.moved ?? 0 };",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R2-anvil-locked-anyway",
+    "file": "src/ui/profPages.js",
+    "old": "    const row = el('button', `prof-recipe${state.pattern === pt.id ? ' on' : ''}${s.can || s.raw ? '' : ' prof-locked'}`);",
+    "new": "    const row = el('button', `prof-recipe${state.pattern === pt.id ? ' on' : ''}${s.can ? '' : ' prof-locked'}`);",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ],
+    "note": "CRAFT2: re-aimed by content - the stations' rows are patternRows' now, one lock for them all."
+  },
+  {
+    "name": "AUDIT-CRAFT1-R2-bench-locked-anyway",
+    "file": "src/ui/profPages.js",
+    "old": "    return { open, can, raw: open && !can && fromRaw(sp, book), share: heldShare(sp, held) };   // CRAFT1: made from raw (a log sawn first)",
+    "new": "    return { open, can, raw: false, share: heldShare(sp, held) };   // CRAFT1: made from raw (a log sawn first)",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ],
+    "note": "CRAFT2: re-aimed by content - the workbench's standing its raw."
+  },
+  {
+    "name": "AUDIT-CRAFT1-R2-loom-locked-anyway",
+    "file": "src/ui/profPages.js",
+    "old": "    return { open, can, raw: open && !can && fromRaw(x.inputs, book), share: heldShare(x.inputs, held) };   // CRAFT1: made from raw",
+    "new": "    return { open, can, raw: false, share: heldShare(x.inputs, held) };   // CRAFT1: made from raw",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ],
+    "note": "CRAFT2: re-aimed by content - the loom's standing its raw."
+  },
+  {
+    "name": "AUDIT-CRAFT1-R2-mason-locked-anyway",
+    "file": "src/ui/profPages.js",
+    "old": "${_mason.picked === r.id ? ' on' : ''}${can || raw ? '' : ' prof-locked'}",
+    "new": "${_mason.picked === r.id ? ' on' : ''}${can ? '' : ' prof-locked'}",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R2-jewel-locked-anyway",
+    "file": "src/ui/profPages.js",
+    "old": "${_jewel.picked === r.id ? ' on' : ''}${can || raw ? '' : ' prof-locked'}",
+    "new": "${_jewel.picked === r.id ? ' on' : ''}${can ? '' : ' prof-locked'}",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R2-bench-word",
+    "file": "src/ui/profPages.js",
+    "old": "x.later ? LATER_WORDS.SEAT2 : s.open ? makeWord(s.can, s.raw)",
+    "new": "x.later ? LATER_WORDS.SEAT2 : s.open ? makeWord(s.can, false)",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ],
+    "note": "CRAFT2: re-aimed by content - the workbench's pattern word."
+  },
+  {
+    "name": "AUDIT-CRAFT1-R2-mason-word",
+    "file": "src/ui/profPages.js",
+    "old": "open ? makeWord(can, raw) : 'a Sculptor\\'s'",
+    "new": "open ? makeWord(can, false) : 'a Sculptor\\'s'",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R2-loom-raw",
+    "file": "src/ui/profPages.js",
+    "old": "    const b = el('button', `prof-family${x.id === r.id ? ' on' : ''}${s.can || s.raw ? '' : ' prof-locked'}`,",
+    "new": "    const b = el('button', `prof-family${x.id === r.id ? ' on' : ''}${s.can ? '' : ' prof-locked'}`,",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ],
+    "note": "CRAFT2: re-aimed by content - a material made from raw unlocked in its box (the loom's Cured Leather)."
+  },
+  {
+    "name": "AUDIT-CRAFT1-R2-jewel-raw",
+    "file": "src/ui/profPages.js",
+    "old": "    const raw = open && !can && fromRaw(r.inputs, book);   // CRAFT1\n    const row = el('button', `prof-recipe${_jewel.picked",
+    "new": "    const raw = false;\n    const row = el('button', `prof-recipe${_jewel.picked",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R2-rank-locked-raw",
+    "file": "src/ui/profPages.js",
+    "old": "raw: open && !can && fromRaw(x.inputs, book), share",
+    "new": "raw: !can && fromRaw(x.inputs, book), share",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ],
+    "note": "CRAFT2: re-aimed by content - the loom's standing: a material past the rank never from raw."
+  },
+  {
+    "name": "AUDIT-CRAFT1-R3-note-yield",
+    "file": "src/ui/profPages.js",
+    "old": "w.count * chainYield(r, (prof) => book.track(prof))",
+    "new": "w.count * r.per",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R3-note-verbs",
+    "file": "src/ui/profPages.js",
+    "old": "['burn', 'saw', 'cure', 'weave', 'cut', 'mix'].includes(v)",
+    "new": "['burn', 'cure'].includes(v)",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R3-answer-yield",
+    "file": "src/net/chainLaw.js",
+    "old": ": w.count * chainYield(r, track);",
+    "new": ": w.count * r.per;",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R3-answer-sum",
+    "file": "src/net/chainLaw.js",
+    "old": "made.set(r.out, (made.get(r.out) ?? 0) + n);",
+    "new": "made.set(r.out, n);",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R7-lenient-spare",
+    "file": "src/net/chainLaw.js",
+    "old": "      p.produce(key, count * per, left);",
+    "new": "      p.produce(key, count * per, count * per);",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-R7-depth-guard",
+    "file": "src/net/chainLaw.js",
+    "old": "const works = depth < CHAIN_DEPTH ? producersOf(key)",
+    "new": "const works = depth < 99 ? producersOf(key)",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ],
+    "equivalent": true,
+    "why": "no work's product is any work's input below the Steel's Iron Ingot and Charcoal (two deep; CHAIN_WORKS has no cycle), so a deeper bound plans the same - the guard holds the recursion for a table that grows one; CHAIN_DEPTH's value is pinned and CRAFT1-law-one-deep kills a shallower one"
+  },
+  {
+    "name": "AUDIT-CRAFT1-R7-chain-needed-guard",
+    "file": "src/net/profBook.js",
+    "old": "&& chainNeeded(inputs, (k) => book.held(k))) {",
+    "new": "&& true) {",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ],
+    "equivalent": true,
+    "why": "a plan of inputs every one held asks no work (chainPlan takes the held first; its works are none), so the guard only spares a plan's cost - the behaviour is the same"
   }
 ]

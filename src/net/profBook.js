@@ -57,7 +57,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs
 import { CARRIED_MAX, DEPOSIT_MAX, carriedUsable, carriedTotal, clampCarried } from './bagLaw.js';   // BAG1: what a character carries, counted
-import { recipeById, recipeInputs } from './recipeLaw.js';   // BAG1: a craft's inputs, moved in from the bag first
+import { recipeById, recipeInputs, recipeOpen } from './recipeLaw.js';   // BAG1: a craft's inputs, moved in from the bag first; AUDIT CRAFT1: whether the rank opens it
 import { potionById, brewSpends } from './alchemyLaw.js';   // BAG1: a brew's
 import { chainPlan, chainNeeded, storesRoom } from './chainLaw.js';   // CRAFT1: the works a craft's inputs want first
 import { pixelKey, parseNodeKey } from './nodeLaw.js';
@@ -644,7 +644,10 @@ export function createProfBook({ door, storage = null, character = () => null, n
         // CRAFT1: the chain's works first, their products kept in the Stores for the craft
         /** @type {{ id: string, count: number, xp: number, made: number }[]} */
         const refined = [];
-        if (r0 && chain !== false && chainNeeded(inputs, (k) => book.held(k))) {
+        // AUDIT CRAFT1 (the review's aside): never a chain for a recipe the rank does not open - its works would run, and
+        // the craft be refused `prof-rank` after them; the craft is asked as ever and the service says so
+        const t0 = r0 ? book.track(r0.profession ?? 'smithing') : null;
+        if (r0 && chain !== false && recipeOpen(r0, t0?.rank ?? 0, t0?.specs) && chainNeeded(inputs, (k) => book.held(k))) {
           const plan = chainPlan(inputs, (k) => book.held(k), { track: (p) => book.track(p), room: (k) => storesRoom(book.store(k)) });
           // a plan that cannot cover them asks no work - the craft is asked as ever, and the service says what is short
           if (plan.ok) for (const w of plan.works) {
