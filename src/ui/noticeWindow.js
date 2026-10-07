@@ -50,6 +50,7 @@ import {
   BOUNTY_BOARD_LINE, noteIsNew,
 } from '../net/boardLaw.js';
 import { accountRefusalText } from '../net/accountClient.js';   // PROF1: a writ's refusal, in words
+import { hallPosterName } from '../net/npcChapterLaw.js';   // CHAP2a: a hall writ's guild, named
 import { movedFirstText } from '../net/bagLaw.js';   // AUDIT2 BAG1 K8: what went into the Stores before a refusal
 import { createMarketTab } from './marketTab.js';   // PROF5: the Market tab
 import { createWorkTab } from './workTab.js';   // PROF6: the Work tab's guild writs and commissions
@@ -457,12 +458,16 @@ export function mountNoticeBoard(host, deps) {
     render();
   }
 
-  /** A Court writ's card: its need, pay and Renown, its time left, what the Stores hold of it, and Take. */
+  /** A Court writ's card: its need, pay and Renown, its time left, what the Stores hold of it, and Take. CHAP2a: a hall
+   *  writ's the same, under the guild's seal and name (npcChapterLaw.js hallPosterName) - its pay its guild's standing too. */
   function writNode(w) {
-    const li = el('li', `notice-card notice-writ seal-court${w.state !== 'open' ? ' done' : ''}`);
-    li.append(el('span', 'notice-pin'), el('span', 'writ-kind', 'Court writ'));
-    li.append(el('p', 'writ-need', `The Court of ${work.regionName} needs ${w.qty} ${work.countName(w.material, w.qty)}`));
-    li.append(el('p', 'writ-pay', `Pays ${w.pay.toLocaleString('en-US')} silver, ${w.renown.toLocaleString('en-US')} Renown`));
+    const poster = w.kind === 'hall' ? hallPosterName(w.faction) ?? 'guild' : null;
+    const li = el('li', `notice-card notice-writ ${poster ? 'seal-guild' : 'seal-court'}${w.state !== 'open' ? ' done' : ''}`);
+    li.append(el('span', 'notice-pin'), el('span', 'writ-kind', poster ? 'Hall writ' : 'Court writ'));
+    li.append(el('p', 'writ-need', poster
+      ? `Wanted: ${w.qty} ${work.countName(w.material, w.qty)}, for the ${poster} in ${work.regionName}`
+      : `The Court of ${work.regionName} needs ${w.qty} ${work.countName(w.material, w.qty)}`));
+    li.append(el('p', 'writ-pay', `Pays ${w.pay.toLocaleString('en-US')} silver, ${w.renown.toLocaleString('en-US')} Renown${poster ? ` and standing with the ${poster}` : ''}`));
     li.append(el('p', 'writ-left', w.state === 'mine' ? 'Taken by you' : w.state === 'taken' ? 'Filled by another' : timeLeftText(w.expiresAt, nowS())));
     const held = work.book.held(w.material);
     const take = el('div', 'writ-take');
@@ -471,7 +476,7 @@ export function mountNoticeBoard(host, deps) {
       const b = button('primary notice-take', 'Take', () => takeWrit(w));
       b.disabled = busy || workBusy || held < w.qty || full;   // AUDIT 31 B10: nor while a guild writ's or a commission's act is out
       if (held < w.qty) b.title = work.book.carrying?.() ? 'Not enough - your Stores, Materials Bag and pack together' : 'Not enough in your Stores';   // BAG1; AUDIT BAG1: and the pack
-      else if (full) b.title = 'You have filled today\'s Court writs';
+      else if (full) b.title = 'You have filled today\'s writs';   // CHAP2a: the Court's and the halls' one allowance
       take.append(b);
     }
     take.append(el('span', null, `${held.toLocaleString('en-US')} ${work.book.carrying?.() ? 'held' : 'in your Stores'}`));   // BAG1: the Stores' and what is carried
@@ -499,7 +504,7 @@ export function mountNoticeBoard(host, deps) {
     const body = el('div', 'notice-cork');
     // BOARD-UI: the day's count above the cards - under the last card it stood off the bottom of a long list
     const today = writs?.today ?? { filled: work.book.state.writs?.today ?? 0, max: work.book.state.writs?.max ?? 3 };
-    body.append(el('p', 'notice-worktoday', `Court writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));
+    body.append(el('p', 'notice-worktoday', `${(writs?.writs ?? []).some((w) => w.kind === 'hall') ? 'Writs' : 'Court writs'} today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));
     const grid = el('ul', 'notice-grid');
     grid.setAttribute('role', 'list');
     const list = writs?.writs ?? [];

@@ -608,8 +608,9 @@ import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, kn
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry, renownStruckAt } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
+import { createHallBook, hallFactionsOf } from '../net/npcHallBook.js';   // CHAP2a: a town's guild halls, witnessed as I walk in
 import { createRollTracker, rollEntityDoors } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
-import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save
+import { rollCeilingLine, rollKeptOf, ROLL_KEPT_VENDOR, hallPosterName } from '../net/npcChapterLaw.js';   // AUDIT CHAP: the pace's line; the last adoption, kept in the save; CHAP2a: a hall writ's guild, named
 import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
 import { pickRegionHubs, hubAtMapId, hubArrivalLine } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub
 import { deriveTownSeats, seatAtMapId } from '../systems/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
@@ -1463,6 +1464,12 @@ export async function bootWorld(canvas, renderer, params, status) {
       // CROWN2: a Pact broken early, said in red on every tab as the server's own line (RED1) - offered again while there is no chat yet
       onRed: (line) => (redChat ? redChat(line) : false),
     })
+    : null;
+  // CHAP2a (Chapters-Arc 4): the guild halls of the towns this client walks into, reported once a UTC day a town while
+  // the Chapters are open to this account (net/npcHallBook.js; the entry edge is revealMemberGuildHalls'). Online only -
+  // offline a town is DFU's.
+  const hallBook = params.has('online')
+    ? createHallBook({ door: accountRoll({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }), storage: appStorage() })
     : null;
   /** CROWN2: where the seats' red lines are said - set once the chat is (it is made later in the scene). */
   let redChat = null;
@@ -15417,7 +15424,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  (BuildingDirectory.GetBuildingsOfFaction, :147-154), which is the
    *  summaries walk the town map builds from, not the talk directory's
    *  doors. */
-  const revealMemberGuildHalls = () => {
+  const revealMemberGuildHalls = ({ witness = false } = {}) => {
     const px = playerTravelPixel();
     const key = `${px.x},${px.y}`;
     const dfLoc = locationIndex.get(key);
@@ -15442,6 +15449,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     Promise.resolve(townTalk.ensureFactions?.()).then(() => {
       revealGuildHallsOnMap(activeMemberships(playerEntity), locationId, buildings,
         { factionName: (id) => townTalk.factionDict?.get(id)?.name ?? '' });
+      // CHAP2a (Chapters-Arc 4): and online, at the entry edge, the town's guild halls read off these same buildings are
+      // reported - once a UTC day a town, the Chapters' witnesses (net/npcHallBook.js). A town with none reports nothing.
+      if (witness && hallBook) {
+        const factions = hallFactionsOf(buildings, townTalk.factionDict ?? null);
+        if (factions.length) hallBook.witness({ key: dfLoc.mapTableData.mapId >>> 0, region: dfLoc.regionIndex, factions });
+      }
     }).catch(() => {});
   };
   // A2: the exterior automap's own dispatch half (DaggerfallUI.cs
@@ -23190,7 +23203,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // PROF6 (FOUND): the XP is the writ's material's profession's - a metal writ's Mining, a wood writ's Logging - never
     // always Herbalism's, as this line said since PROF2 (the answer's track names it)
     const prof = professionName(d.track?.profession) || 'profession';
-    return `Writ filled: ${Number(d.pay ?? 0).toLocaleString('en-US')} silver struck to your account, ${Number(d.renown?.credited ?? 0).toLocaleString('en-US')} Renown and ${Number(d.pay ?? 0) * 2} ${prof} XP.${rose}`;
+    // CHAP2a (Chapters-Arc 4): a hall writ's guild remembers it - the service moved the Roll, and the tracker asks for its
+    // word at once (net/npcRollTracker.js refresh), so the standing on this page is the Roll's before the next claim
+    const hall = d.writ?.kind === 'hall' && !d.repeat ? hallPosterName(d.writ.faction) : null;
+    if (hall) rollTracker?.refresh();
+    return `Writ filled: ${Number(d.pay ?? 0).toLocaleString('en-US')} silver struck to your account, ${Number(d.renown?.credited ?? 0).toLocaleString('en-US')} Renown and ${Number(d.pay ?? 0) * 2} ${prof} XP.${hall ? ` The ${hall} will remember it.` : ''}${rose}`;
   };
   /** NOTICE1: the server's word on the Oblivion Gate while it stands - the map's own mark (WB1), under the red seal. */
   const noticeGateCard = () => {
@@ -29502,7 +29519,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // or Dark Brotherhood member's RegisterEvents subscribes to
         // (ThievesGuild.cs:197-206, handler :227-229), so the hall
         // reveal follows the member into every town.
-        revealMemberGuildHalls();
+        revealMemberGuildHalls({ witness: onlineOn });   // CHAP2a: and the town's halls witnessed, online
         // HUB1: walking into a region's hub says so, online - "Daggerfall, capital of the Kingdom of Daggerfall."
         // SEAT1a (Seats-Arc 3.3): a seat town says its Charter instead - "Anticlere. Its Charter is unheld." - and this
         // client, standing in it, reports the seat it derived (once a day; net/townSeatBook.js witness)

@@ -34,6 +34,13 @@
 // moved on this page (`values0`, the standing as the page first saw it):
 // nothing is ever claimed twice.
 //
+// CHAP2a: A HALL WRIT'S CREDIT IS ASKED FOR. A hall writ delivered moves
+// the Roll on the service alone (+2 to its guild, professions.js
+// deliverWrit), so the host asks `refresh()`: the next tick claims even
+// with nothing moved here, and the answer - the Roll's word - is adopted
+// as every answer is. Nothing is claimed twice: an empty claim moves
+// nothing, and rollAdopt keeps what moved here and was not sent.
+//
 // A CLAIM THE NETWORK LOST IS SENT AGAIN AS IT WAS - the same id, the same
 // lines - so a claim that landed while its answer was lost is answered as
 // a repeat and never credited twice; what moved since rides the next one.
@@ -115,7 +122,7 @@ export function createRollTracker({
   let pending = null;
   /** @type {string | null} */
   let stopped = null;
-  let busy = false, nextAt = 0, wait = ROLL_RETRY_MS, lastSentAt = -Infinity;
+  let busy = false, nextAt = 0, wait = ROLL_RETRY_MS, lastSentAt = -Infinity, asked = false;
   /** @type {string | null} */
   let heldKey = null;
 
@@ -153,8 +160,8 @@ export function createRollTracker({
     const deltas = rollDeltasOf(cur, /** @type {Record<number, number>} */ (base));
     const list = members();
     const key = rollMembersKey(list);
-    if (!Object.keys(deltas).length && (key === null || key === heldKey)) return null;
-    if (now() - lastSentAt < ROLL_CLAIM_MS) return null;
+    if (!asked && !Object.keys(deltas).length && (key === null || key === heldKey)) return null;
+    if (!asked && now() - lastSentAt < ROLL_CLAIM_MS) return null;   // CHAP2a: a refresh is asked at once (a writ's, three a day)
     pending = { rid: rid(), deltas, members: list };
     return pending;
   };
@@ -167,6 +174,7 @@ export function createRollTracker({
     const r = await io.claim(id, ls, c.rid, c.deltas, c.members);
     if (!r.ok) return fail(r.error);   // kept: sent again as it was
     pending = null;
+    asked = false;
     adopt(from, c.deltas, r.data.roll);
     const credited = r.data.credited ?? {};
     const cut = Object.keys(c.deltas).map(Number).filter((f) => c.deltas[f] > 0 && (credited[f] ?? c.deltas[f]) < c.deltas[f]);
@@ -186,6 +194,11 @@ export function createRollTracker({
       (base ? claim(id, ls, values) : first(id, ls, values))
         .catch(() => fail('server'))
         .finally(() => { busy = false; });
+    },
+    /** CHAP2a: the Roll moved on the service (a hall writ's credit) - the next tick claims, and the answer is adopted. */
+    refresh() {
+      if (stopped || !base) return;   // before the first read the read itself answers the Roll
+      asked = true;   // a failure's wait still holds: the claim goes when the service is asked again
     },
     get held() { return base != null; },
     get stopped() { return stopped; },

@@ -282,12 +282,12 @@
   {
     "name": "KNIGHT-HOUSE-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct93';",
+    "old": "export const ACCOUNT_VERSION = 'acct94';",
     "new": "export const ACCOUNT_VERSION = 'acct76';",
     "tests": [
       "test/fb1004d_knight_house.test.js"
     ],
-    "note": "A deploy that did not happen looks like one that did. SERPENT1 (PIN MOVED, re-aimed by content at its merge of main): acct78. GLOBAL-MARKET (PIN MOVED): acct79. SHADOW-CLOAK (PIN MOVED at its merges of main, past SERPENT1 and GLOBAL-MARKET): acct80. SERAPH-WINGS (PIN MOVED): acct81. AUDIT ARENA-LADDER (PIN MOVED at its merges of main, past GLOBAL-MARKET, SHADOW-CLOAK and SERAPH-WINGS): acct82. CRYSTAL-FIST (PIN MOVED): acct83. SERPENT-SET / SILVER-FINDS (PIN MOVED at its merge of main, past CRYSTAL-FIST): acct84 - re-aimed by content. YARD-SHED (PIN MOVED, re-aimed by content): acct85. YARD-HEIGHT (PIN MOVED, re-aimed by content): acct86. LEGACY7 (PIN MOVED at its merges of main, past SERPENT-SET's acct84, YARD-SHED's acct85 and YARD-HEIGHT's acct86): acct87. STORM-SHED, STORM-SHED 2 and TEXT-F1 (PIN MOVED): acct88 to acct90. CAP-OFF (PIN MOVED, re-aimed by content): acct91. FOUNDER5 (PIN MOVED, re-aimed by content): acct92. CHAP1 (PIN MOVED, re-aimed by content): acct93."
+    "note": "A deploy that did not happen looks like one that did. SERPENT1 (PIN MOVED, re-aimed by content at its merge of main): acct78. GLOBAL-MARKET (PIN MOVED): acct79. SHADOW-CLOAK (PIN MOVED at its merges of main, past SERPENT1 and GLOBAL-MARKET): acct80. SERAPH-WINGS (PIN MOVED): acct81. AUDIT ARENA-LADDER (PIN MOVED at its merges of main, past GLOBAL-MARKET, SHADOW-CLOAK and SERAPH-WINGS): acct82. CRYSTAL-FIST (PIN MOVED): acct83. SERPENT-SET / SILVER-FINDS (PIN MOVED at its merge of main, past CRYSTAL-FIST): acct84 - re-aimed by content. YARD-SHED (PIN MOVED, re-aimed by content): acct85. YARD-HEIGHT (PIN MOVED, re-aimed by content): acct86. LEGACY7 (PIN MOVED at its merges of main, past SERPENT-SET's acct84, YARD-SHED's acct85 and YARD-HEIGHT's acct86): acct87. STORM-SHED, STORM-SHED 2 and TEXT-F1 (PIN MOVED): acct88 to acct90. CAP-OFF (PIN MOVED, re-aimed by content): acct91. FOUNDER5 (PIN MOVED, re-aimed by content): acct92. CHAP1 (PIN MOVED, re-aimed by content): acct93. CHAP2a (PIN MOVED, re-aimed by content): acct94."
   },
   {
     "name": "KNIGHT-HOUSE-column-unadded",

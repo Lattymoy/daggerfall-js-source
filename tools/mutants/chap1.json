@@ -213,13 +213,13 @@
   {
     "name": "CHAP1-TAB-MINUTE",
     "file": "src/net/npcRollTracker.js",
-    "old": "if (now() - lastSentAt < ROLL_CLAIM_MS) return null;",
+    "old": "if (!asked && now() - lastSentAt < ROLL_CLAIM_MS) return null;",
     "new": "if (false) return null;",
     "tests": [
       "test/chap1_roll.test.js",
       "test/audit_chap1.test.js"
     ],
-    "note": "AUDIT CHAP: re-aimed by content at the code the audit rewrote."
+    "note": "CHAP2a: re-aimed by content - a refresh is asked inside the minute."
   },
   {
     "name": "CHAP1-TAB-RESEND",

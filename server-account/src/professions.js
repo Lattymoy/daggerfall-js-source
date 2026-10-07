@@ -85,6 +85,10 @@ import { fortTiersOf } from './seatForts.js';   // SEAT2b part two: the halls st
 import { RAM_KIT } from '../../src/net/professionLaw.js';   // SEAT2b part two: a siege work's place in the Stores
 import { SIEGE_GEM } from '../../src/net/professionLaw.js';   // PROF10: a Lapidary's Siege-cracked Gem, spent for a piece's gem
 import { CARRIED_MAX, DEPOSIT_MAX, CLAMP_ORDER, DEPOSIT_ORDERS, CARRIED_ROW_DAYS, heldOk, seenOk, depositOrderOk } from '../../src/net/bagLaw.js';   // BAG1: what a character carries, counted
+import { hallWrits, hallWritCount, hallWritId, hallHidden, HALL_WRIT_REP } from '../../src/net/npcChapterLaw.js';   // CHAP2a: a chapter's hall writs and what one pays its guild
+import { MAX_REPUTATION, GUILD_FACTION_IDS } from '../../src/systems/guildFactions.js';   // CHAP2a: a hall writ's reputation, inside DFU's bound; the hidden two
+import { regionChapters } from './npcHalls.js';   // CHAP2a: the region's chapters, witnessed
+import { chaptersOpenFor } from './npcRoll.js';   // CHAP2a: hall writs while the Roll is open to the account
 
 const DAY_S = 86_400;
 /** The pixels one read may ask after - a streamed 5 x 5. */
@@ -1252,7 +1256,7 @@ export async function buyStock(ctx, player, env, { character, material: key, qty
 
 /** A writ as the Work tab reads it: `state` open, mine (filled by this account) or taken. */
 const writView = (w, me) => ({
-  id: w.id, kind: w.kind, region: Number(w.region), material: w.material, tier: Number(w.tier), qty: Number(w.qty),
+  id: w.id, kind: w.kind, region: Number(w.region), faction: Number(w.faction ?? 0), material: w.material, tier: Number(w.tier), qty: Number(w.qty),
   pay: Number(w.pay), renown: Number(w.renown), expiresAt: Number(w.expires_at),
   state: !w.filled_by ? 'open' : w.filled_by === me ? 'mine' : 'taken',
 });
@@ -1284,18 +1288,44 @@ async function activeBefore(db, dayStartS) {
  * nothing yet, and nothing is written down - a later read posts once there is ground.
  */
 async function postWrits(db, day, region, nowS) {
-  if (await db.prepare('SELECT 1 FROM writ_days WHERE day = ?1 AND region = ?2').bind(day, region).first()) return;
+  const courtDone = !!(await db.prepare('SELECT 1 FROM writ_days WHERE day = ?1 AND region = ?2').bind(day, region).first());
+  // CHAP2a: and the region's chapters' hall writs, written down once a day beside the Court's (hall_writ_days) - none
+  // while the region has no witnessed chapter, so a chapter confirmed later in the day posts that day
+  const hallDone = !!(await db.prepare('SELECT 1 FROM hall_writ_days WHERE day = ?1 AND region = ?2').bind(day, region).first());
+  if (courtDone && hallDone) return;
   const table = regionWritTable(region, await regionGround(db, region), daySeason(day));
   if (!table.length) return;
   const active = await activeBefore(db, day * DAY_S);
-  const writs = courtWrits(day, region, courtWritCount(active), table);
   const expires = (day + 1) * DAY_S;
-  await db.batch([
-    db.prepare('INSERT OR IGNORE INTO writ_days (day, region, active, posted, at) VALUES (?1, ?2, ?3, ?4, ?5)').bind(day, region, active, writs.length, nowS),
-    ...writs.map((w) => db.prepare(`INSERT OR IGNORE INTO writs (id, kind, day, region, slot, material, tier, qty, pay, renown, expires_at)
-      VALUES (?1, 'court', ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)`)
-      .bind(`c:${day}:${region}:${w.slot}`, day, region, w.slot, w.material, w.tier, w.units, w.pay, w.renown, expires)),
-  ]);
+  const stmts = [];
+  if (!courtDone) {
+    const writs = courtWrits(day, region, courtWritCount(active), table);
+    stmts.push(
+      db.prepare('INSERT OR IGNORE INTO writ_days (day, region, active, posted, at) VALUES (?1, ?2, ?3, ?4, ?5)').bind(day, region, active, writs.length, nowS),
+      ...writs.map((w) => db.prepare(`INSERT OR IGNORE INTO writs (id, kind, day, region, slot, material, tier, qty, pay, renown, expires_at)
+        VALUES (?1, 'court', ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)`)
+        .bind(`c:${day}:${region}:${w.slot}`, day, region, w.slot, w.material, w.tier, w.units, w.pay, w.renown, expires)),
+    );
+  }
+  const chapters = hallDone ? [] : await regionChapters(db, region, nowS * 1000);
+  if (chapters.length) {
+    const halls = chapters.flatMap((f) => hallWrits(day, region, f, hallWritCount(active), table).map((w) => ({ ...w, faction: f })));
+    stmts.push(
+      db.prepare('INSERT OR IGNORE INTO hall_writ_days (day, region, posted, at) VALUES (?1, ?2, ?3, ?4)').bind(day, region, halls.length, nowS),
+      ...halls.map((w) => db.prepare(`INSERT OR IGNORE INTO writs (id, kind, day, region, faction, slot, material, tier, qty, pay, renown, expires_at)
+        VALUES (?1, 'hall', ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)`)
+        .bind(hallWritId(day, region, w.faction, w.slot), day, region, w.faction, w.slot, w.material, w.tier, w.units, w.pay, w.renown, expires)),
+    );
+  }
+  if (stmts.length) await db.batch(stmts);
+}
+
+/** CHAP2a: the hidden guilds (npcChapterLaw.js hallHidden) this character is a member of on its Roll - their chapters'
+ *  writs are its alone. None for a character with no Roll. */
+async function hiddenMemberships(db, player, character) {
+  const { results = [] } = await db.prepare(`SELECT faction_id FROM npc_roll WHERE char_id = ?1 AND player = ?2 AND member = 1
+    AND faction_id IN (${GUILD_FACTION_IDS.ThievesGuild}, ${GUILD_FACTION_IDS.DarkBrotherhood})`).bind(character, player).all();
+  return new Set(results.map((r) => Number(r.faction_id)));
 }
 
 /** THE WORK TAB'S WRITS for a region's board: today's Court writs, each open, mine or taken, and the account's day. */
@@ -1305,10 +1335,14 @@ export async function listWrits({ db, nowS }, player, env, { character, region }
   if (!regionOk(region)) return { error: 'bad-region' };
   const day = utcDay(nowS);
   await postWrits(db, day, region, nowS);
-  const { results = [] } = await db.prepare('SELECT * FROM writs WHERE day = ?1 AND region = ?2 ORDER BY slot').bind(day, region).all();
+  const { results = [] } = await db.prepare('SELECT * FROM writs WHERE day = ?1 AND region = ?2 ORDER BY kind, faction, slot').bind(day, region).all();
+  const halls = chaptersOpenFor(player, env);   // CHAP2a: a chapter's writs only where the Roll is open to the account
+  // and a hidden guild's to its members alone (and the one who filled it)
+  const hidden = halls && results.some((w) => w.kind === 'hall' && hallHidden(Number(w.faction))) ? await hiddenMemberships(db, player.id, character) : null;
+  const shown = (w) => w.kind !== 'hall' || (halls && (!hallHidden(Number(w.faction)) || hidden?.has(Number(w.faction)) || w.filled_by === player.id));
   return {
     region, day, endsAt: (day + 1) * DAY_S,
-    writs: results.map((w) => writView(w, player.id)),
+    writs: results.filter(shown).map((w) => writView(w, player.id)),
     today: { filled: await writsToday(db, player.id, day), max: COURT_WRITS_PER_DAY },
   };
 }
@@ -1355,6 +1389,9 @@ export async function deliverWrit(ctx, player, env, { character, id, rid } = {})
   if (w.filled_by === player.id) return answer(w, { repeat: true });
   if (Number(w.day) !== day || Number(w.expires_at) <= nowS) return { error: 'writ-expired' };
   if (w.filled_by) return { error: 'writ-taken' };
+  if (w.kind === 'hall' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };   // CHAP2a
+  // CHAP2a: a hidden guild's writ is no writ to a character not its member on the Roll - as its listing never showed it
+  if (w.kind === 'hall' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(db, player.id, character)).has(Number(w.faction))) return { error: 'no-writ' };
   if (await overRate(ctx, `prof:${player.id}`, PROF_OPS_MAX, PROF_OPS_WINDOW_S)) return { error: 'prof-rate' };
   const m = material(w.material);
   const prof = professionOfFamily(m?.family);
@@ -1393,6 +1430,18 @@ export async function deliverWrit(ctx, player, env, { character, id, rid } = {})
       SELECT ?1, ?2, NULL, MIN(?7, renown), NULL, ?3, ?3 FROM writs WHERE id = ?5 AND n = ?6 AND renown > 0
         AND NOT EXISTS (SELECT 1 FROM renown_tracks WHERE player = ?1 AND char_id = ?2)
         AND ${renownHeldSql('?1')} < ?8`).bind(player.id, character, nowS, rid, id, nonce, RENOWN_XP_MAX, RENOWN_TRACKS_MAX),
+    // CHAP2a: A HALL WRIT'S GUILD REMEMBERS - HALL_WRIT_REP to the posting guild on the deliverer's Roll, where it has one: a
+    // witnessed act (the units the Stores gave), so outside the claims' pace and never owed past DFU's 100. The Roll's
+    // head moves under this delivery's own tag (the nonce), so a claim that read the Roll before it is refused its write
+    // (npcRoll.js: `roll-busy`, asked again) and never writes over the credit
+    ...(w.kind === 'hall' ? [
+      db.prepare(`UPDATE npc_roll_heads SET seq = seq + 1, tag = ?3, updated_at = ?4 WHERE char_id = ?2 AND player = ?1 AND EXISTS (SELECT 1 FROM writs WHERE id = ?5 AND n = ?3)`)
+        .bind(player.id, character, nonce, nowS, id),
+      db.prepare(`UPDATE npc_roll SET rep = MIN(?4, rep + ?3), owed = MAX(0, MIN(owed, ?4 - MIN(?4, rep + ?3)))
+        WHERE char_id = ?2 AND player = ?1 AND faction_id = (SELECT faction FROM writs WHERE id = ?5 AND n = ?6)
+          AND EXISTS (SELECT 1 FROM npc_roll_heads WHERE char_id = ?2 AND tag = ?6)`)
+        .bind(player.id, character, HALL_WRIT_REP, MAX_REPUTATION, id, nonce),
+    ] : []),
   ]);
   const now = await db.prepare('SELECT * FROM writs WHERE id = ?').bind(id).first();
   if (now?.n === nonce) {

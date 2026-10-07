@@ -55,7 +55,7 @@ import { isDeveloper } from './titles.js';
 import { REALM_ID_RE, LEASE_RE } from './realm.js';
 import {
   ROLL_FACTIONS, ROLL_EVENTS_KEEP_S, chaptersSwitchOf, rollRidOf, rollSeedOk, rollDeltasOk, rollMembersOk, rollSeedCapOf, rollSeedOf,
-  rollCredit, rollDrain, rollRankCapOf,
+  rollCredit, rollDrain, rollRankCapOf, joinRecordable,
 } from '../../src/net/npcChapterLaw.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 
@@ -263,7 +263,9 @@ export async function claimRoll({ db, nowS, rand }, player, body) {
       line = { ...line, rep: c.rep, gainedDay: c.gainedDay, gained: c.gained, owed: c.owed };
     }
     if (ranks) {
-      const member = ranks.has(f);
+      // CHAP2a (AUDIT CHAP R1's line, Mac: "Approved"): a NEW membership is recorded only where the Roll's own reputation
+      // with the guild meets DFU's join (`joinRecordable`) - one already on the Roll stays, whatever its standing since
+      const member = ranks.has(f) && (row.member || joinRecordable(line.rep));
       // the tenure: kept while a member stays one, begun the first time the service sees one, ended when it leaves; the
       // rank never past what the Roll's own reputation allows (AUDIT CHAP S5)
       line = {

@@ -1,0 +1,353 @@
+[
+  {
+    "name": "CHAP2-WRIT-SCALE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "Math.ceil(Math.max(0, Number(active) || 0) / 100));",
+    "new": "Math.ceil(Math.max(0, Number(active) || 0) / 200));",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-WRIT-FLOOR",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "=> 2 * Math.max(1, Math.ceil(",
+    "new": "=> 2 * Math.max(0, Math.ceil(",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-REP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "export const HALL_WRIT_REP = 2;",
+    "new": "export const HALL_WRIT_REP = 3;",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-KINDS",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "const from = own.length ? own : table;",
+    "new": "const from = table;",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-OWN-DICE",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "return courtWrits(day, region, count, from, (slot, k) => gateHash(HALL_WRIT_SALT, day, region, faction, slot, k) / 4294967296);",
+    "new": "return courtWrits(day, region, count, from);",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-REPORT-DUP",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "  if (sorted.length !== factions.length) return null;\n",
+    "new": "",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-JOIN-FLOOR",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "rollRep(rep) >= RANK_REQ_REPUTATION[0];",
+    "new": "rollRep(rep) > RANK_REQ_REPUTATION[0];",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-HALL-KIND",
+    "file": "src/net/npcHallBook.js",
+    "old": "if (!id || (b?.buildingType !== BUILDING_TYPES.GuildHall && b?.buildingType !== BUILDING_TYPES.Temple)) continue;",
+    "new": "if (!id) continue;",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-HIDDEN",
+    "file": "src/net/npcHallBook.js",
+    "old": "if (isRollFaction(f) && !HIDDEN.has(f)) out.add(f);",
+    "new": "if (isRollFaction(f)) out.add(f);",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-NO-DICT",
+    "file": "src/net/npcHallBook.js",
+    "old": "  if (!factionDict) return [];\n",
+    "new": "",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-BOOK-DAY",
+    "file": "src/net/npcHallBook.js",
+    "old": "      if (t[String(h.key)] === dayNow()) return false;\n",
+    "new": "",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-BOOK-STOP",
+    "file": "src/net/npcHallBook.js",
+    "old": "      if (HALL_STOPS.includes(r?.error)) stopped = true;\n",
+    "new": "",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-GUEST",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  if (accountKind(player) !== 'linked') return { error: 'halls-need-account' };\n",
+    "new": "",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-WITNESS-SWITCH",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  if (!chaptersOpenFor(player, env)) return { error: 'chapters-closed' };\n",
+    "new": "",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-WITNESS-AGE",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  if (!witnessOf(player, nowS)) return { ok: true, counted: false, why: 'young' };\n",
+    "new": "",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-FIRST-STANDS",
+    "file": "server-account/src/npcHalls.js",
+    "old": "INSERT OR IGNORE INTO world_witness",
+    "new": "INSERT OR REPLACE INTO world_witness",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-CACHE",
+    "file": "server-account/src/npcHalls.js",
+    "old": "  if (kept && nowMs - kept.at < CHAPTERS_KEPT_MS) return kept.chapters;\n",
+    "new": "",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-CONFIRMED",
+    "file": "server-account/src/npcHalls.js",
+    "old": "if (factConfirmed(f) && f.region === region)",
+    "new": "if (f.region === region)",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-REGION",
+    "file": "server-account/src/npcHalls.js",
+    "old": "if (factConfirmed(f) && f.region === region)",
+    "new": "if (factConfirmed(f))",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-POST-NO-CHAPTER",
+    "file": "server-account/src/professions.js",
+    "old": "  if (chapters.length) {",
+    "new": "  if (!hallDone) {",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-LIST-SWITCH",
+    "file": "server-account/src/professions.js",
+    "old": "const shown = (w) => w.kind !== 'hall' || (halls && (",
+    "new": "const shown = (w) => w.kind !== 'hall' || (true && (",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-DELIVER-SWITCH",
+    "file": "server-account/src/professions.js",
+    "old": "  if (w.kind === 'hall' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };",
+    "new": "  void chaptersOpenFor;",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-CREDIT",
+    "file": "server-account/src/professions.js",
+    "old": "    ...(w.kind === 'hall' ? [",
+    "new": "    ...(false ? [",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-HEAD",
+    "file": "server-account/src/professions.js",
+    "old": "SET seq = seq + 1, tag = ?3, updated_at = ?4 WHERE char_id = ?2 AND player = ?1 AND EXISTS (SELECT 1 FROM writs",
+    "new": "SET seq = seq, tag = ?3, updated_at = ?4 WHERE char_id = ?2 AND player = ?1 AND EXISTS (SELECT 1 FROM writs",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-CAP",
+    "file": "server-account/src/professions.js",
+    "old": "UPDATE npc_roll SET rep = MIN(?4, rep + ?3), owed",
+    "new": "UPDATE npc_roll SET rep = MAX(?4, rep + ?3), owed",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-OWED",
+    "file": "server-account/src/professions.js",
+    "old": "owed = MAX(0, MIN(owed, ?4 - MIN(?4, rep + ?3)))",
+    "new": "owed = MAX(0, owed + 0 * ?4)",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-FACTION",
+    "file": "server-account/src/professions.js",
+    "old": "AND faction_id = (SELECT faction FROM writs WHERE id = ?5 AND n = ?6)",
+    "new": "AND faction_id = (SELECT 40 FROM writs WHERE id = ?5 AND n = ?6)",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-JOIN",
+    "file": "server-account/src/npcRoll.js",
+    "old": "const member = ranks.has(f) && (row.member || joinRecordable(line.rep));",
+    "new": "const member = ranks.has(f);",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-MEMBER-STAYS",
+    "file": "server-account/src/npcRoll.js",
+    "old": "const member = ranks.has(f) && (row.member || joinRecordable(line.rep));",
+    "new": "const member = ranks.has(f) && joinRecordable(line.rep);",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-REFRESH",
+    "file": "src/net/npcRollTracker.js",
+    "old": "      asked = true;   // a failure's wait",
+    "new": "      asked = false;   // a failure's wait",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-REFRESH-MINUTE",
+    "file": "src/net/npcRollTracker.js",
+    "old": "if (!asked && now() - lastSentAt < ROLL_CLAIM_MS) return null;",
+    "new": "if (now() - lastSentAt < ROLL_CLAIM_MS) return null;",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-REFRESH-ONCE",
+    "file": "src/net/npcRollTracker.js",
+    "old": "    pending = null;\n    asked = false;\n",
+    "new": "    pending = null;\n",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-WIRE-ENTRY",
+    "file": "src/scenes/world.js",
+    "old": "revealMemberGuildHalls({ witness: onlineOn });",
+    "new": "revealMemberGuildHalls();",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-WIRE-REFRESH",
+    "file": "src/scenes/world.js",
+    "old": "    if (hall) rollTracker?.refresh();\n",
+    "new": "",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-HIDDEN-LIST",
+    "file": "server-account/src/professions.js",
+    "old": "(!hallHidden(Number(w.faction)) || hidden?.has(Number(w.faction)) || w.filled_by === player.id)",
+    "new": "(true || hidden?.has(Number(w.faction)) || w.filled_by === player.id)",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-HIDDEN-MEMBER",
+    "file": "server-account/src/professions.js",
+    "old": "|| hidden?.has(Number(w.faction)) ||",
+    "new": "|| false ||",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-HIDDEN-DELIVER",
+    "file": "server-account/src/professions.js",
+    "old": "!(await hiddenMemberships(db, player.id, character)).has(Number(w.faction))) return { error: 'no-writ' };",
+    "new": "false) return { error: 'no-writ' };",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-HIDDEN-LAW",
+    "file": "src/net/npcChapterLaw.js",
+    "old": "faction === GUILD_FACTION_IDS.ThievesGuild || faction === GUILD_FACTION_IDS.DarkBrotherhood;",
+    "new": "faction === GUILD_FACTION_IDS.ThievesGuild;",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  },
+  {
+    "name": "CHAP2-HIDDEN-MEMBER-ROW",
+    "file": "server-account/src/professions.js",
+    "old": "WHERE char_id = ?1 AND player = ?2 AND member = 1\n",
+    "new": "WHERE char_id = ?1 AND player = ?2\n",
+    "tests": [
+      "test/chap2_halls.test.js"
+    ]
+  }
+]

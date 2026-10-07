@@ -52,6 +52,8 @@
 
 import { GUILD_FACTION_IDS, DIVINES, ORDERS, MIN_REPUTATION, MAX_REPUTATION, RANK_REQ_REPUTATION } from '../systems/guildFactions.js';
 import { MARKS_RID_RE } from './marksLaw.js';
+import { gateHash } from './gateLaw.js';   // CHAP2a: a hall writ's own dice
+import { courtWrits, material, regionOk } from './nodeLaw.js';   // CHAP2a: the Court's writ law, the material families, a region
 
 /** The twenty-two guild factions the Roll keeps, by id, ascending. */
 export const ROLL_FACTIONS = Object.freeze([...Object.values(GUILD_FACTION_IDS), ...Object.values(DIVINES), ...Object.values(ORDERS)]
@@ -287,3 +289,108 @@ export const rollMembersKey = (/** @type {{ f: number, rank: number }[] | null} 
 export const rollFactionName = (/** @type {unknown} */ raw) => (typeof raw === 'string' && raw ? raw.replace(/^The /, 'the ') : 'the guild');
 /** THE PACE SAID (AUDIT CHAP D2): a gain the day's room cut is owed, not lost - the line says the rest will follow. */
 export const rollCeilingLine = (/** @type {unknown} */ raw) => `Your standing with ${rollFactionName(raw)} rises no further today. The rest will follow in the days to come.`;
+
+// ═══ CHAP2a - THE HALLS AND THEIR WRITS (Chapters-Arc section 4) ═════
+//
+// A CHAPTER is one of the twenty-two in one region where it keeps a hall. The servers never hold game data, so a hall
+// is WITNESSED as a seat is (Seats-Arc 3.2, nodeLaw.js witnessedFact): a client standing in a town reports the halls it
+// read off the town's own buildings - one report a location, `[mapId, region, factions]`, its factions the town's halls
+// resolved to the twenty-two - and three registered accounts agreeing confirm it. A chapter's HALL WRITS are the
+// Court's writ law (nodeLaw.js courtWrits) drawn from the chapter's own dice over the region's witnessed table, narrowed
+// to the guild's own kinds of material; they share the Court's three a day (CALL 8) and pay as a Court writ pays, and a
+// delivery credits HALL_WRIT_REP to the posting guild on the deliverer's Roll - a witnessed act, outside the claims' pace.
+
+/** The witnessed fact's kind (world_witness.kind) - not `hall`, which `server-account/src/halls.js` keeps for the
+ *  players' own guild halls (GUILD1d). */
+export const HALL_WITNESS_KIND = 'npchall';
+/** A hall report an account may send in an hour (the seats' own bound, SEAT_WITNESS_REPORTS_HOUR). */
+export const HALL_WITNESS_HOUR = 24;
+/** The reputation a delivered hall writ credits to its guild, on the deliverer's Roll. */
+export const HALL_WRIT_REP = 2;
+/** A chapter's writs a UTC day: two, scaled by the server's active accounts as the Court's are (CHAP2a narrowed the
+ *  record's `courtWritCount` - six a chapter, five chapters a region, would post thirty a region a day). */
+export const hallWritCount = (/** @type {unknown} */ active) => 2 * Math.max(1, Math.ceil(Math.max(0, Number(active) || 0) / 100));
+/** A hall writ's own salt for gateHash - never the Court's (nodeLaw.js WRIT_SALT). */
+export const HALL_WRIT_SALT = 0x4a11;
+/** A hall writ's id: the day, the region, the guild faction and the slot. */
+export const hallWritId = (/** @type {number} */ day, /** @type {number} */ region, /** @type {number} */ faction, /** @type {number} */ slot) => `h:${day}:${region}:${faction}:${slot}`;
+
+/** THE KINDS OF MATERIAL A GUILD ASKS FOR (nodeLaw.js material families): the Fighters Guild and the knightly orders
+ *  arms and armour - metal and wood; the Mages Guild reagents - herbs and metal; the temples and the Dark Brotherhood
+ *  herbs (remedies, and their poisons); the Thieves Guild whatever its fences can move. */
+export function hallFamiliesOf(/** @type {number} */ faction) {
+  if (faction === GUILD_FACTION_IDS.FightersGuild) return ['metals', 'wood'];
+  if (faction === GUILD_FACTION_IDS.MagesGuild) return ['herbs', 'metals'];
+  if (faction === GUILD_FACTION_IDS.ThievesGuild) return ['metals', 'herbs', 'wood', 'stone'];
+  if (faction === GUILD_FACTION_IDS.DarkBrotherhood) return ['herbs'];
+  if (/** @type {number[]} */ (Object.values(DIVINES)).includes(faction)) return ['herbs'];
+  if (/** @type {number[]} */ (Object.values(ORDERS)).includes(faction)) return ['metals', 'wood'];
+  return [];
+}
+
+/** THE HIDDEN TWO: the Thieves Guild's and the Dark Brotherhood's halls are kept from everyone but their members (DFU's
+ *  ThievesGuild.cs/DarkBrotherhood.cs reveal them on joining), so their chapters' writs are posted to their members on
+ *  the Roll alone. */
+export const hallHidden = (/** @type {unknown} */ faction) => faction === GUILD_FACTION_IDS.ThievesGuild || faction === GUILD_FACTION_IDS.DarkBrotherhood;
+
+/** The orders as DFU captions their halls (Internal_Strings en id 63 - systems/topicTree.js REGIONAL_BUILDING_NAMES). */
+const ORDER_NAMES = Object.freeze({
+  Raven: 'Order of the Raven', Dragon: 'Knights of the Dragon', Owl: 'Knights of the Owl', Candle: 'Order of the Candle',
+  Flame: 'Knights of the Flame', Horn: 'Host of the Horn', Rose: 'Knights of the Rose', Wheel: 'Knights of the Wheel',
+  Scarab: 'Order of the Scarab', Hawk: 'Knights of the Hawk',
+});
+/** A CHAPTER'S NAME on its writs - the guild as DFU names its hall ("Mages Guild", "Knights of the Dragon"); a temple
+ *  by its divine's whole name ("Temple of Zenithar", where DFU's caption cut it to "Zen"). Null for no guild faction. */
+export function hallPosterName(/** @type {number} */ faction) {
+  if (faction === GUILD_FACTION_IDS.FightersGuild) return 'Fighters Guild';
+  if (faction === GUILD_FACTION_IDS.MagesGuild) return 'Mages Guild';
+  if (faction === GUILD_FACTION_IDS.ThievesGuild) return 'Thieves Guild';
+  if (faction === GUILD_FACTION_IDS.DarkBrotherhood) return 'Dark Brotherhood';
+  const divine = Object.keys(DIVINES).find((k) => DIVINES[/** @type {keyof typeof DIVINES} */ (k)] === faction);
+  if (divine) return `Temple of ${divine}`;
+  const order = Object.keys(ORDERS).find((k) => ORDERS[/** @type {keyof typeof ORDERS} */ (k)] === faction);
+  return order ? ORDER_NAMES[/** @type {keyof typeof ORDER_NAMES} */ (order)] : null;
+}
+
+/**
+ * A CHAPTER'S WRITS FOR THE DAY: `table` the region's witnessed writ table (nodeLaw.js regionWritTable), narrowed to the
+ * guild's own kinds (the whole table where the region yields none of them), drawn by the Court's law from the chapter's
+ * own dice. Each `{ slot, material, tier, units, pay, renown }`, as a Court writ is.
+ * @param {number} day @param {number} region @param {number} faction @param {number} count @param {any[]} table
+ */
+export function hallWrits(day, region, faction, count, table) {
+  if (!isRollFaction(faction) || !table?.length) return [];
+  const families = hallFamiliesOf(faction);
+  const own = table.filter((m) => families.includes(material(m.material)?.family));
+  const from = own.length ? own : table;
+  return courtWrits(day, region, count, from, (slot, k) => gateHash(HALL_WRIT_SALT, day, region, faction, slot, k) / 4294967296);
+}
+
+/** A HALL REPORT, validated and made canonical: `{ key, region, factions }` - the location's map id (an unsigned 32-bit
+ *  integer), its region, and its halls' factions, the twenty-two alone, each once, ascending, at least one - or null. */
+export function hallReportOf(/** @type {any} */ raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const { key, region, factions } = raw;
+  if (!Number.isSafeInteger(key) || key < 0 || key > 0xffffffff || !regionOk(region)) return null;
+  if (!Array.isArray(factions) || !factions.length || factions.length > ROLL_FACTIONS.length) return null;
+  if (!factions.every(isRollFaction)) return null;
+  const sorted = [...new Set(factions)].sort((a, b) => a - b);
+  if (sorted.length !== factions.length) return null;
+  return { key, region, factions: sorted };
+}
+/** A hall report's canonical bytes - one answer, one text, so witnesses agree byte for byte. */
+export const hallReportText = (/** @type {{ key: number, region: number, factions: number[] }} */ h) => JSON.stringify([h.key, h.region, h.factions]);
+/** A witnessed hall report read back - its text canonical, or null (witnessedFact's `parse`). */
+export function parseHallReport(/** @type {unknown} */ text) {
+  if (typeof text !== 'string') return null;
+  let v;
+  try { v = JSON.parse(text); } catch { return null; }
+  if (!Array.isArray(v) || v.length !== 3) return null;
+  const h = hallReportOf({ key: v[0], region: v[1], factions: v[2] });
+  return h && hallReportText(h) === text ? h : null;
+}
+
+/** THE JOIN THE SERVICE RECORDS (AUDIT CHAP R1's line; Mac: "Approved"): a new membership only where the Roll's own
+ *  reputation with the guild meets rank 0's need - DFU's join asks no less. */
+export const joinRecordable = (/** @type {unknown} */ rep) => rollRep(rep) >= RANK_REQ_REPUTATION[0];
+

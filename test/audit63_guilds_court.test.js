@@ -200,13 +200,13 @@ test('AUDIT 63 F9: a Thieves Guild member\'s hideout is revealed under its FACTI
 
 test('AUDIT 63 F9: BOTH exterior hosts drive the reveal, at DFU\'s own moments', () => {
   const world = read('../src/scenes/world.js');
-  assert.ok(/const revealMemberGuildHalls = \(\) =>/.test(world));
+  assert.ok(/const revealMemberGuildHalls = \(\{ witness = false \} = \{\}\) =>/.test(world));   // PIN MOVED (CHAP2a): and, at the entry edge online, the town's halls witnessed off the same buildings
   // Join (ThievesGuild.cs:168-173) - guildInitiationQuestEnded is the
   // port's only door into either guild
   assert.ok(/initiated\.length\) revealMemberGuildHalls\(\)/.test(world));
   // and the location-rect entry the same host already edges on (F062)
   const rect = world.slice(world.indexOf('_inRect && !_wasInLocationRect'));
-  assert.ok(rect.slice(0, 900).includes('revealMemberGuildHalls()'),
+  assert.ok(rect.slice(0, 900).includes('revealMemberGuildHalls({ witness: onlineOn })'),   // PIN MOVED (CHAP2a)
     'the enter-rect edge is where RegisterEvents subscribed (:200)');
   // review round: the name is GetAffiliation's FACTION.TXT read
   // (Guild.cs:170-176), whose "unknown-guild" fallback (:175) answers a

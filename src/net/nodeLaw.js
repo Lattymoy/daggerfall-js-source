@@ -668,7 +668,9 @@ const writUnit = (day, region, slot, k) => gateHash(WRIT_SALT, day, region, slot
  * @param {number} day @param {number} region @param {number} count
  * @param {Array<{ material: string, tier: number, value: number }>} table
  */
-export function courtWrits(day, region, count, table) {
+/** CHAP2a: `draw(slot, k)` the writ's own dice - the Court's by default; a chapter's hall writs (npcChapterLaw.js
+ *  hallWrits) draw the same law from their own salt and faction. */
+export function courtWrits(day, region, count, table, draw = (/** @type {number} */ slot, /** @type {number} */ k) => writUnit(day, region, slot, k)) {
   if (!table?.length) return [];
   const tiers = [...new Set(table.map((m) => m.tier))].sort((a, b) => a - b);
   const high = tiers.filter((t) => t >= 5);
@@ -679,15 +681,15 @@ export function courtWrits(day, region, count, table) {
     if (slot === 0 || !low.length) tier = high.length ? high[high.length - 1] : tiers[tiers.length - 1];   // AUDIT 29 A10: the highest, as said
     else {
       const w = low.map((t) => WRIT_TIER_WEIGHTS[t - 1]);
-      let at = writUnit(day, region, slot, 1) * w.reduce((a, b) => a + b, 0);
+      let at = draw(slot, 1) * w.reduce((a, b) => a + b, 0);
       tier = low[low.length - 1];
       for (let i = 0; i < low.length; i++) { if (at < w[i]) { tier = low[i]; break; } at -= w[i]; }
     }
     const of = table.filter((m) => m.tier === tier);
-    const m = of[Math.floor(writUnit(day, region, slot, 2) * of.length)];
+    const m = of[Math.floor(draw(slot, 2) * of.length)];
     const [lo, hi] = WRIT_UNITS[tier];
     const steps = (hi - lo) / 10 + 1;
-    const units = lo + 10 * Math.floor(writUnit(day, region, slot, 3) * steps);
+    const units = lo + 10 * Math.floor(draw(slot, 3) * steps);
     out.push({ slot, material: m.material, tier, units, pay: writPay(units, m.value), renown: writRenown(tier, units) });
   }
   return out;

@@ -104,6 +104,7 @@
 // CHAPTERS_OPEN lets the account in (npcRoll.js; the law src/net/npcChapterLaw.js):
 //   POST /v1/chapters/roll { character, lease, seed? } -> { roll, from, seeded? } | { roll: null }   (seeded once from the save - a customs crossing from the epoch capped; what is owed paid)
 //   POST /v1/chapters/claim { character, lease, rid, deltas, members } -> { roll, credited } | { roll, repeat }   (a loss whole, a gain at the day's pace and the rest owed)
+//   POST /v1/chapters/witness { hall: { key, region, factions } } -> { ok, counted, why? }   (CHAP2a: a town's guild halls, witnessed as a seat is)
 // ARENA4b, the arena online's second half: a bout's Renown on its claim, and the homes the arena displaced:
 //   POST /v1/arena/claim { receipt, character?, name? } -> { ...ARENA4's, renown?, order? }   (a ladder win, a rated players' win)
 //   POST /v1/arena/attempt { tier, bout, room } -> { ticket, tier, bout, room, forfeits } | 409 { error: 'order', ladder } | 403 { error: 'ladder-needs-account' }   (AUDIT ARENA-LADDER: a ladder attempt's ticket, for one room)
@@ -174,6 +175,7 @@ import { arenaSeasonOf } from '../../src/net/arenaLaw.js';
 import { sendLetter, inboxOf, readLetter, deleteLetter } from './letters.js';   // MAIL1: the letters' routes
 import { reportRenownXp, renownTrackOf, renownTracksOf, renownCharacterOk } from './renownTracks.js';   // RENOWN1: Renown's track - RENOWN-CHAR: a character's again
 import { chaptersOpenFor, readRoll, claimRoll } from './npcRoll.js';   // CHAP1: the Roll - a realm character's standing with Daggerfall's guilds
+import { witnessHall } from './npcHalls.js';   // CHAP2a: a town's guild halls, witnessed
 import { claimRaid, raidRecordOf } from './raids.js';   // RAID4: the towns defended
 import { claimSerpent, serpentRecordOf } from './serpents.js';   // SERPENT1: the serpents slain
 import { claimHome, releaseHome, setHomeEntry, homesInTown, homesOf, setHomeLook, homeLayoutsKept, arenaMoveHome, arenaMovesOf, arenaMoveSeen, holdDeed } from './homes.js';   // HOME1: the online homes' routes; HOME-LOOK: its outside; WD3: the towns' layouts; ARENA4b: the homes the arena displaced, moved; FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held
@@ -282,6 +284,7 @@ const PASS_STATUS = Object.freeze({ 'not-developer': 403, 'no-player': 404, ambi
  *  again - AUDIT CHAP R12: this said the lease was asked again too), a tombstone 410. */
 const ROLL_STATUS = Object.freeze({
   'chapters-closed': 403, 'no-realm-character': 404, 'no-data': 404, lease: 409, 'roll-unseeded': 409, 'roll-busy': 409, dead: 410,
+  'halls-need-account': 403, 'halls-rate': 429,   // CHAP2a: a hall's witness - a guest's, or past the hour's
 });
 /** GUILD1: each guild refusal's status - a bad shape 400 (the default), the wrong rank or too little Renown 403, a
  *  thing that is not there 404, a conflict with what is 409, the hour's writes spent 429. */
@@ -1030,10 +1033,12 @@ const service = {
       // session's, the character must be its own and standing, and the
       // lease the playing tab's. Behind CHAPTERS_OPEN; shut, the save keeps
       // the standing as it did before CHAP1.
-      if (path === '/v1/chapters/roll' || path === '/v1/chapters/claim') {
+      if (path === '/v1/chapters/roll' || path === '/v1/chapters/claim' || path === '/v1/chapters/witness') {
         if (request.method !== 'POST') return no('method', 405, origin);
         if (!chaptersOpenFor(who.player, env)) return no('chapters-closed', 403, origin);
-        const r = path === '/v1/chapters/roll' ? await readRoll(ctx, who.player, body) : await claimRoll(ctx, who.player, body);
+        // CHAP2a: and a town's guild halls witnessed, as a seat is (npcHalls.js)
+        const r = path === '/v1/chapters/witness' ? await witnessHall(ctx, who.player, env, body)
+          : path === '/v1/chapters/roll' ? await readRoll(ctx, who.player, body) : await claimRoll(ctx, who.player, body);
         if ('error' in r) return no(r.error, /** @type {Record<string, number>} */ (ROLL_STATUS)[r.error] ?? 400, origin);
         return json(r, 200, origin);
       }

@@ -397,7 +397,7 @@ export const REFUSALS = Object.freeze({
   'no-writ': 'That writ is no longer posted.',
   'writ-taken': 'Another has already filled that writ.',
   'writ-expired': 'That writ has run out.',
-  'writ-cap': `You have filled ${COURT_WRITS_PER_DAY} Court writs today - the most a day allows.`,
+  'writ-cap': `You have filled ${COURT_WRITS_PER_DAY} writs today - the most a day allows.`,   // CHAP2a: the Court's and the halls' one allowance
   'prof-spec': 'That specialisation is not one this craft offers.',
   'prof-respec-pending': `A change of specialisation is already on its way (${RESPEC.days} days).`,
   'prof-rate': 'You have done a great deal at your crafts this hour. Try again later.',
@@ -604,6 +604,10 @@ export const REFUSALS = Object.freeze({
   'roll-claim': 'Your standing with the guilds could not be sent. The game may need updating.',
   'roll-unseeded': 'The realm has not read your standing with the guilds yet. It will try again.',
   'roll-busy': 'Your standing with the guilds was being written. It will try again.',
+  // CHAP2a: a town's guild halls, witnessed (server-account/src/npcHalls.js) - asked quietly, said only if ever shown
+  'halls-need-account': 'Only a registered account can vouch for a town\'s guild halls.',
+  'bad-hall': 'That town\'s guild halls could not be read. The game may need updating.',
+  'halls-rate': 'You have vouched for enough towns this hour.',
 });
 
 /** The sentence for a refusal, never `undefined` and never the raw
@@ -1338,6 +1342,8 @@ export function accountRoll({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
   return {
     read: (character, lease, seed = null) => post('/v1/chapters/roll', { character, lease, ...(seed ? { seed } : {}) }),
     claim: (character, lease, rid, deltas, members) => post('/v1/chapters/claim', { character, lease, rid, deltas, members }),
+    /** CHAP2a: the town this client stands in, its guild halls read off its own buildings (npcHallBook.js) */
+    witness: (hall) => post('/v1/chapters/witness', { hall }),
   };
 }
 

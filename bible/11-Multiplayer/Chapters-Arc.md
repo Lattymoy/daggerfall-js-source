@@ -241,6 +241,46 @@ on the Work tab beside the Court's.
   as a guild writ's is today (PROF0 11, AUDIT 31 R6). A delivery earns Merit only where it is witnessed as a seat
   writ's must be (Seats-Arc 4.2); until then it pays Marks and reputation alone.
 
+BUILT, CHAP2a (2026-10-07, Mac: "Do it") - the delivery half, and where it narrowed the above:
+
+- **A chapter is a region's.** A guild with a confirmed hall in ANY town of a region is a chapter there, and its writs
+  stand on every board of the region beside the Court's - the Court's writs are a region's already, and a board that
+  showed a guild's writs in one town and not the next would ask the player to learn the map's halls first.
+- **The halls witnessed** (`npchall`, as a seat is - Seats-Arc 3.2): a town's report is `[mapId, region, factions]`,
+  the guild factions it keeps a hall of, read off the town's own buildings - a Guild Hall or a Temple whose faction
+  resolves to a guild through DFU's group dispatch (`createGuildForGroup` over `guildGroupOfFaction`), and for the
+  Thieves Guild and the Dark Brotherhood a building carrying their own faction (what their reveal reads); never a
+  GeneralPopulace door. The client reports a town once a UTC day as it walks in (`net/npcHallBook.js`), only once the
+  faction file is read (half an answer would stand against the whole one), and a town with no hall reports nothing.
+  Three registered accounts a week old confirm it (`WITNESS`); each account's first answer stands; 24 towns an hour an
+  account. The limit is the seats': three week-old accounts can name a hall that is not there - the writs it would
+  post pay inside the same three a day.
+- **Supply narrowed**: `hallWritCount(active)` = `2 x max(1, ceil(active / 100))` a chapter a day, not the Court's 6 -
+  a region can hold a dozen chapters, and six each would bury the Court's. Strength's bands wait on CHAP3.
+- **Their kinds**: the Court's law (`courtWrits`) over the region's witnessed table, narrowed to the guild's own
+  families (`hallFamiliesOf`: the Fighters' metals and wood, the Mages' herbs and metals, the temples' and the
+  Brotherhood's herbs, the orders' metals and wood, the Thieves' all four), the whole table where the region yields none
+  of them; each chapter's own dice (`gateHash` under `HALL_WRIT_SALT`), so no two chapters post the same day. A writ's
+  id is `h:day:region:faction:slot`; it rides the Court's `writs` table (kind `hall`, its `faction`) and its day's
+  posting is `hall_writ_days` (migration `0089_npc_halls`). Receipt writs (a gate, a raid, the serpent, a camp) and the
+  Thieves Guild's fence in another town are CHAP2b's.
+- **Pay**: as a Court writ - its Marks, its Renown, twice the pay in the material's profession's XP - and `+2`
+  (`HALL_WRIT_REP`) to the posting guild on the deliverer's Roll, in the delivery's own batch: a witnessed act (the
+  Stores gave the units), so outside the claims' pace, never past 100, what is owed trimmed to the room left. The Roll's
+  head moves under the delivery's tag, so a claim that read it before is refused its write (`roll-busy`) and asked
+  again; the playing tab asks the Roll's word at once (`npcRollTracker.js` `refresh`). A deliverer with no Roll is paid
+  and nothing more. No Merit until CHAP3.
+- **The hidden two**: the Thieves Guild's and the Dark Brotherhood's chapters post their writs to their members on the
+  Roll alone (`hallHidden`; a standing is no membership) - DFU keeps their halls from everyone else until they join, so
+  a board that named them to a stranger would tell what Daggerfall hides. To anyone else such a writ is no writ
+  (`no-writ`). A character with no Roll never sees them.
+- **The limit as decided**: one allowance, `COURT_WRITS_PER_DAY` - the decision's own `writs` count, which already
+  counted every kind.
+- **The join** (3.4): the Roll records a NEW membership only where its reputation with that guild meets DFU's join
+  (`joinRecordable`: `RANK_REQ_REPUTATION[0]`, 0); a member already on the Roll stays whatever its standing since.
+- **Behind `CHAPTERS_OPEN`** with the Roll: witnessing, a hall writ's listing and its delivery each ask it; shipped
+  `dev`. Offline nothing changes: DFU 1:1.
+
 ## 5. Merit and Strength (CHAP3)
 
 ### 5.1 Merit
@@ -402,7 +442,9 @@ DECIDED.
 1. **CHAP1 - the Roll.** BUILT (2026-10-07). The service owns the twenty-two factions' reputation and records the
    memberships for realm characters; the layer; the bounded claims and the daily ceiling; customs' cap. Port-Ledger
    section A row added.
-2. **CHAP2 - hall writs.** The chapters derived and witnessed; their writs on the board; the pay.
+2. **CHAP2 - hall writs.** The chapters derived and witnessed; their writs on the board; the pay. CHAP2a BUILT
+   (2026-10-07): the halls witnessed, the delivery writs, the +2, the join's floor (section 4). CHAP2b: the receipt
+   writs.
 3. **CHAP3 - Merit and Strength.** The week's Merit, the Turning's Strength, the bands on the halls' prices, the sheet.
 4. **CHAP4 - the seats.** Ranks 8 and 9 contested; the titles; the Focus; the Chronicle's rows.
 5. **CHAP5 - the living world reads the sheet.** The hall's people, the lines, the roll.
@@ -469,7 +511,10 @@ is Mac's to overrule.
 | A recorded rank | never past what the Roll's reputation needs (`rollRankCapOf` over `RANK_REQ_REPUTATION`, AUDIT CHAP S5) | 3.2 |
 | Writs an account a UTC day | 3, hall and Court together (`COURT_WRITS_PER_DAY`) | 4 |
 | Receipt writ's own Marks | 0 | 4 |
-| Writ supply | `6 x max(1, ceil(active / 100))`, x0.5 Failing, x1.5 Thriving | 4 |
+| Writ supply | `6 x max(1, ceil(active / 100))`, x0.5 Failing, x1.5 Thriving - CHAP2a: `2 x max(1, ceil(active / 100))` a chapter (`hallWritCount`) until Strength | 4 |
+| A hall witnessed | kind `npchall`, three accounts a week old (`WITNESS`), 24 towns an hour an account (`HALL_WITNESS_HOUR`), a town once a UTC day a device | 4 |
+| A region's chapters kept | 60 seconds an isolate (`CHAPTERS_KEPT_MS`) | 4 |
+| The join's floor | 0 (`RANK_REQ_REPUTATION[0]`, `joinRecordable`) | 3.4 |
 | Merit tenure | 7 days | 5.1 |
 | Merit cap | 600 an account a chapter a week | 5.1 |
 | Strength | 0-100, start 50; `+ min(10, merit / target)`; -3 an idle week; halfway to 50 at a Season's end | 5.2 |
@@ -545,3 +590,38 @@ inside it, a rank bounded by the Roll's reputation. `test/audit_chap1.test.js` (
 page-leave one retired with the code it held). One narrowing of Mac's Authority call, which he confirmed (R1, at the
 head of the page: "Approved").
 
+## CHAP2a - the halls and their writs, as built (2026-10-07, Mac: "Do it")
+
+The second slice's delivery half; section 4 carries the law and every narrowing (BUILT, CHAP2a).
+
+- **The law.** `src/net/npcChapterLaw.js`: the hall report and its canonical text (`hallReportOf`, `hallReportText`,
+  `parseHallReport` - one answer a town, so witnesses agree byte for byte), the hidden two (`hallHidden`), a chapter's
+  writs (`hallWritCount`,
+  `hallFamiliesOf`, `hallWrits` over `nodeLaw.js` `courtWrits`, whose dice became an argument), their ids, the +2, the
+  join's floor (`joinRecordable`) and a chapter's name on its writs (`hallPosterName` - DFU's captions, a temple by its
+  divine's whole name).
+- **The service.** `server-account/src/npcHalls.js`: `POST /v1/chapters/witness` (a registered account's report, under
+  the Chapters' switch and its own hour) and `regionChapters` (every guild a confirmed town of the region names, each
+  town read over all its reports, kept by the isolate a minute). `professions.js`: the day's hall writs written down
+  beside the Court's (`hall_writ_days`), listed to an account the Chapters are open to (a hidden guild's to its
+  members on the Roll), delivered as a Court writ is
+  with the Roll's +2 in the same batch. `npcRoll.js`: the join's floor. Migration `0089_npc_halls` rebuilds
+  `world_witness` (the kind) and `writs` (the kind and the faction). The service is `acct94`; deploy it before the
+  site.
+- **The client.** `src/net/npcHallBook.js` (a town's halls off `buildingSummaries`' rows, reported once a day a town),
+  built in `scenes/world.js` online and asked at the town's entry edge off the guild-hall reveal's own buildings;
+  `ui/noticeWindow.js` (a hall writ's card under the guild's seal: "Wanted: 30 Oak Logs, for the Fighters Guild in
+  Anticlere", paying "... and standing with the Fighters Guild"); `world.js` `profWritTaken` ("The Fighters Guild will
+  remember it.") and the tracker's `refresh`.
+- **Pins.** `test/chap2_halls.test.js`, 16 tests: the law against literals; a town's halls off a fake faction file
+  (a hall by its group, a temple through its templar order, the hidden two by their own faction, a commoner's door and
+  a shop never, none before the file); the hall book's day and its stops; the service over the real migrations - a
+  guest, the switch at the route and in the module, the age, the first answer, the hour; a region's chapters
+  (confirmation, a split, a town confirmed elsewhere, the minute's keep); the board's hall writs at dev, the hidden
+  two's to their members alone; a delivery's
+  pay, its +2, the head, the cap and the owed, the shared three; the join; the tab's refresh; and the wiring.
+  `tools/mutants/chap2.json`: 39 mutants, 39 dead - four (a chapter's own dice, the module's switch, the region a town
+  is confirmed for, a standing read as a membership) survived their first run, and each has its pin. Three older
+  records (`board_ui.json`, `chap1.json`, `prof6.json`) re-aimed by content at the lines this slice moved; the
+  `writ-cap` sentence names the writs, not the Court's (`test/prof1_client.test.js`, PIN MOVED); the reveal's call at
+  the entry edge carries the witness (`test/audit63_guilds_court.test.js`, `test/hub1.test.js`, PIN MOVED).
