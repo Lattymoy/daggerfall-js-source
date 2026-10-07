@@ -178,7 +178,10 @@ once, when the world loads; `?trees=off` the kill door. VERGE1
 (2026-10-07, `03-World/Roads.md`) reads the mod's CROWNS off the vendored
 files (`world/lptCrowns.js`, baked by `tools/bakeLptCrowns.mjs`) on every
 client, the switch on or off, to keep a wild flat's footprint off the
-roads: where a tree stands still never hangs on the switch.
+roads: where a tree stands still never hangs on the switch. LPT-FIT
+(2026-10-07, `03-World/Roads.md`) draws every tree - a location's too - no
+wider than the room its root has from the roads, tracks and streets: a
+scale under the tree's own variety, never a move.
 
 ## Performance
 

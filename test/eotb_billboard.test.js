@@ -9,7 +9,7 @@ import {
   ARCHIVE_FOOT, ARCHIVE_HORSE, ARCHIVE_LYCAN, lycanArchive, tableArchive,
   stateFor, roundToInt, orientationFor, signedAngleY, facingFor, frameTime, speedMod, isFootstepFrame,
   FRAME_TIME_ON_FOOT, FRAME_TIME_RIDING, chooseTable, deathTable, spriteKey, GALLOP_SPEED,
-  STRING, meleeAnimTickTime, usesPingPong, pingPongFrames, forwardFrames, holdDrawFrames, pingPongTickFrames,
+  STRING, meleeAnimTickTime, meleeStrokeFrames, forwardFrames, holdDrawFrames,
   mirrorFlips, MIRROR_TABLES, mirrorRevertTime, autoToggleRows, DELAYED_FRAMES, ORIENTATION_TIME,
 } from '../src/player/eotbBillboard.js';
 
@@ -277,23 +277,18 @@ test('EOTB3: ReadyStance decides WHEN a drawn weapon shows, and 1 really does dr
   assert.equal(chooseTable({ stopped: true, spellcasting: true, readyStance: 0 }), 'Idle', 'the spell stance is gated by it too');
 });
 
-test('EOTB-IL: the one-shots’ arithmetic - the melee tick, PingPong’s order and its every-fourth under Mixed, the hold’s draw', () => {
+test('EOTB-IL: the one-shots’ arithmetic - the melee tick, ONE-STROKE’s halves, the hold’s draw', () => {
   // GetMeleeAnimTickTime (IL_545c-IL_549c): the weapon's frame time times five over the clip's frames
   assert.equal(meleeAnimTickTime(0.2, 6), 0.2 * 5 / 6);
   assert.equal(meleeAnimTickTime(0.2, 5), 0.2, 'a five-frame clip runs at the weapon’s own tick');
-  // PlayMeleeAttackAnimation's choice (IL_507c-IL_509f)
-  assert.equal(usesPingPong(STRING.PingPong, 3), true);
-  assert.equal(usesPingPong(STRING.Mirror, 0), false);
-  assert.equal(usesPingPong(STRING.None, 0), false);
-  assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 7, 8].map((n) => usesPingPong(STRING.Mixed, n)),
-    [true, false, false, false, true, false, false, false, true], 'Mixed: the first swing and every fourth after it - never a coin toss');
-  // the ping-pong order (IL_5e45-IL_5f21): forward while i < n/2 + offset, then back down to 1
-  assert.deepEqual(pingPongFrames(6, 1), [0, 1, 2, 3, 3, 2, 1], 'the six-frame swing at the shipped offset');
-  assert.deepEqual(pingPongFrames(5, 1), [0, 1, 2, 2, 1]);
-  assert.deepEqual(pingPongFrames(6, 0), [0, 1, 2, 2, 1]);
-  assert.deepEqual(pingPongFrames(6, 3), [0, 1, 2, 3, 4, 5, 5, 4, 3, 2, 1]);
-  assert.deepEqual(pingPongFrames(6, -3), [], 'an offset that empties the forward run empties the clip');
-  assert.equal(pingPongTickFrames(6, 1), 7, 'and its tick is spread over the frames it shows');
+  // ONE-STROKE (Mac: "attacking plays only one animation"): a blow plays ONE of the swing's two strokes, by its count's
+  // parity - the six-frame swing is frames 0-2 and 3-5; the IL's ping-pong (0 1 2 3 3 2 1) is retired
+  assert.deepEqual([0, 1, 2, 3].map((k) => meleeStrokeFrames(6, k)), [[0, 1, 2], [3, 4, 5], [0, 1, 2], [3, 4, 5]]);
+  assert.deepEqual(meleeStrokeFrames(6), [0, 1, 2], 'no count named: the first stroke');
+  assert.deepEqual(meleeStrokeFrames(6, -1), [3, 4, 5], 'a negative count keeps its parity');
+  assert.deepEqual([meleeStrokeFrames(5, 0), meleeStrokeFrames(5, 1)], [[0, 1], [2, 3, 4]], 'an odd clip: the first stroke the shorter half, and no frame lost');
+  assert.deepEqual([meleeStrokeFrames(1, 1), meleeStrokeFrames(0, 0)], [[0], []], 'under two frames is one stroke');
+  assert.equal(meleeAnimTickTime(0.2, meleeStrokeFrames(6, 1).length), 0.2 * 5 / 3, 'a stroke runs over the weapon\'s whole animation');
   assert.deepEqual(forwardFrames(4), [0, 1, 2, 3]);
   // the hold's draw (IL_5fa5-IL_6020): decremented before it is shown - n-2 down to 0, then held on 0
   assert.deepEqual(holdDrawFrames(4), [2, 1, 0]);

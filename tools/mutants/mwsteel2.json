@@ -39,8 +39,8 @@
   {
     "name": "MWSTEEL2-the-anchor-not-at-its-rest",
     "file": "src/formats/mwSkinTransfer.js",
-    "old": "    bind.set(anchor.ref, { a: inv.a, t: [rest.t[0], rest.t[1], rest.t[2]] });",
-    "new": "    bind.set(anchor.ref, inv);",
+    "old": "    bind.set(anchor.ref, framed ? { a: inv.a, t: [rest.t[0], rest.t[1], rest.t[2]] } : { a: Float32Array.from(rest.a), t: [rest.t[0], rest.t[1], rest.t[2]] });",
+    "new": "    bind.set(anchor.ref, framed ? inv : { a: Float32Array.from(rest.a), t: [rest.t[0], rest.t[1], rest.t[2]] });",
     "tests": [
       "test/mwsteel2.test.js"
     ],
@@ -49,8 +49,8 @@
   {
     "name": "MWSTEEL2-the-leaf-bone-anchors",
     "file": "src/formats/mwSkinTransfer.js",
-    "old": "    for (const l of lists) for (const b of l.bones) if (!bind.has(b.ref) && (!anchor || depth(b.ref) < depth(anchor.ref))) anchor = b;",
-    "new": "    for (const l of lists) for (const b of l.bones) if (!bind.has(b.ref) && (!anchor || depth(b.ref) > depth(anchor.ref))) anchor = b;",
+    "old": "      for (const l of lists) if (l.framed === pass) for (const b of l.bones) if (!bind.has(b.ref) && (!anchor || depth(b.ref) < depth(anchor.ref))) anchor = b;",
+    "new": "      for (const l of lists) if (l.framed === pass) for (const b of l.bones) if (!bind.has(b.ref) && (!anchor || depth(b.ref) > depth(anchor.ref))) anchor = b;",
     "tests": [
       "test/mwsteel2.test.js"
     ]

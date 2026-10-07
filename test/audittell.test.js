@@ -68,7 +68,7 @@ test('AUDIT TELL B1: a wind-up nobody stepped tells nothing and holds nothing - 
   for (const st of ['dash', 'chain']) assert.equal(breakWindup({ feet: [0, 0, 0], vitals: () => null, _tac: { state: st, dash: {}, seen: T } }), true, `a ${st}`);
   const em = rd('src/characters/enemyMotor.js');
   assert.match(em, /if \(!this\.canAct && this\._tac\?\.state && !locked\) breakWindup\(this\);/, 'the motor breaks it where the foe cannot act');
-  assert.match(em, /flee\(fromFeet, seconds\) \{\n\s*breakWindup\(this\);/, 'and where it routs');
+  assert.match(em, /flee\(fromFeet, seconds, pace = 1\) \{\n\s*breakWindup\(this\);/, 'and where it routs');   // FLIGHT-FIRST: its run's pace
   assert.match(rd('src/ai/tactics.js'), /const skipped = !!ai\._tacSkipped \|\| unseen\(s, now\);/, 'a gap on the foes\' clock is a step it did not decide');
 });
 

@@ -522,8 +522,10 @@ export const LPT_INSTANCE_FLOATS = 5;
  * eye's 3x3 is ever read). `groups` - one a far-picture batch: `{ h, centers, wild }` - the handle's index, the
  * batch's centres (pixel-local, the flats' own arrays) and which of them are the terrain's own (a Uint8Array, 1 wild;
  * null - none: a location's flats). Answers `{ trees, centers }`: LPT_SET_FLOATS a tree and each tree's centre.
+ * LPT-FIT: and `fit` - the largest each tree may be drawn (world/roadVerge.js lptFitCap; absent, no cap): its variety
+ * is drawn under it, so its crown keeps off the roads and streets beside it.
  * @param {number} px @param {number} py the pixel
- * @param {{ h: number, centers: number[][], wild: Uint8Array|null }[]} groups
+ * @param {{ h: number, centers: number[][], wild: Uint8Array|null, fit?: Float32Array|null }[]} groups
  */
 export function buildTreeSet(px, py, groups) {
   let n = 0;
@@ -533,7 +535,7 @@ export function buildTreeSet(px, py, groups) {
   for (const g of groups) {
     g.centers.forEach((c, i) => {
       const v = lptVariety(px, py, c[0], c[2], !(g.wild && g.wild[i]));
-      trees.set([g.h, c[0], c[1], c[2], v.scale, v.yaw], k * LPT_SET_FLOATS);
+      trees.set([g.h, c[0], c[1], c[2], g.fit ? Math.min(v.scale, g.fit[i]) : v.scale, v.yaw], k * LPT_SET_FLOATS);   // LPT-FIT
       centers[k++] = c;
     });
   }

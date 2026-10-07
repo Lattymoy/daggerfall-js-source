@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-IT1-W2-the-sun-online-unasked",
     "file": "src/scenes/world.js",
-    "old": "    if (sharedClockOn()) {\n      const nowMin = Math.floor(skyMinutes());\n      if (careerSunDamage(playerEntity.career) && isDayFromMinutes(nowMin)) { sayWithNightfall(SUNLIGHT_TRAVEL_TEXT); return null; }",
-    "new": "    if (false) {\n      const nowMin = Math.floor(skyMinutes());\n      if (careerSunDamage(playerEntity.career) && isDayFromMinutes(nowMin)) { sayWithNightfall(SUNLIGHT_TRAVEL_TEXT); return null; }",
+    "old": "    if (sharedClockOn()) {\n      const nowMin = Math.floor(skyMinutes());\n      const cfb = careerFastTravelBlock(playerEntity, nowMin);   // HOOD-CAREER: bare-headed",
+    "new": "    if (false) {\n      const nowMin = Math.floor(skyMinutes());\n      const cfb = careerFastTravelBlock(playerEntity, nowMin);   // HOOD-CAREER: bare-headed",
     "tests": [
       "test/auditit1.test.js"
     ]
