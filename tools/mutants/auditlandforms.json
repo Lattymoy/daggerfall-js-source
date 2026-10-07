@@ -809,8 +809,8 @@
   {
     "name": "AUDIT-LANDFORMS-C1-anchor-raw",
     "file": "src/scenes/world.js",
-    "old": "y: groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),   // AUDIT LANDFORMS C1: DFU's frame\n      terrainScale",
-    "new": "y: pf[1] - state.compensation[1],   // AUDIT LANDFORMS C1: DFU's frame\n      terrainScale",
+    "old": "y: inDungeon ? pf[1] - state.compensation[1] : groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),\n      terrainScale",
+    "new": "y: pf[1] - state.compensation[1],\n      terrainScale",
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js",
@@ -872,8 +872,8 @@
   {
     "name": "AUDIT-LANDFORMS-B1-never-bound",
     "file": "src/scenes/world.js",
-    "old": "  _liftLocationAt = (x, y) => (locationIndex.get(`${x},${y}`)?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(x, y));\n",
-    "new": "\n",
+    "old": "  const _liftLocationAt = (x, y) => (locationIndex.get(`${x},${y}`)?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(x, y));\n",
+    "new": "  const _liftLocationAt = (x, y) => locationIndex.get(`${x},${y}`);\n",
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js"
@@ -1011,6 +1011,60 @@
     "new": ": '-'}`;",
     "tests": [
       "test/landform.test.js",
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-F1-the-probe-skips-the-roll",
+    "file": "src/scenes/world.js",
+    "old": "?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(x, y));",
+    "new": "?.spawned && tvSpawnGone(x, y) ? null : locationIndex.get(`${x},${y}`));",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-F3-cleared-whole",
+    "file": "src/scenes/world.js",
+    "old": "      if (_liftFields.size >= LIFT_FIELDS_KEPT) _liftFields.delete(_liftFields.keys().next().value);   // the longest unasked\n",
+    "new": "      if (_liftFields.size >= LIFT_FIELDS_KEPT) _liftFields.clear();\n",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-F3-never-touched",
+    "file": "src/scenes/world.js",
+    "old": "    if (field) _liftFields.delete(key);   // asked again: the last to be let go\n    else {",
+    "new": "    if (field) { /* kept where it stood */ } else {",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-F3-the-old-eight",
+    "file": "src/scenes/world.js",
+    "old": "  const LIFT_FIELDS_KEPT = 32;",
+    "new": "  const LIFT_FIELDS_KEPT = 8;",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-F3-rects-cleared-whole",
+    "file": "src/scenes/world.js",
+    "old": "        if (_liftRects.size >= LIFT_FIELDS_KEPT) _liftRects.delete(_liftRects.keys().next().value);   // the longest unasked\n",
+    "new": "        if (_liftRects.size >= 8) _liftRects.clear();\n",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-F4-dungeon-asked-the-lift",
+    "file": "src/scenes/world.js",
+    "old": "y: inDungeon ? pf[1] - state.compensation[1] : groundFrameHeight(",
+    "new": "y: groundFrameHeight(",
+    "tests": [
       "test/auditlandforms.test.js"
     ]
   }

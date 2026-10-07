@@ -144,7 +144,8 @@ test('AUDIT LANDFORMS C1: every exterior height a record carries is written in D
     ['guards: cityGuards.snapshotWorld((pos) => state.worldCoords(pos)).map((sg) => ({ ...sg, y: groundFrameNative(sg.nativeX, sg.nativeZ, sg.y - state.compensation[1]) })),', 1, 'its guards'],
     ['const shed = (rows) => (rows ?? []).map((r) => ({ ...r, y: groundFrameNative(r.nativeX, r.nativeZ, r.y - state.compensation[1]) }));', 1, 'the inside pools'],
     ['.map((sp) => ({ ...sp, containerType: LOOT_CONTAINER_TYPES.DroppedLoot, y: groundFrameNative(sp.nativeX, sp.nativeZ, sp.y - state.compensation[1]) })),', 1, 'the scene cache\'s piles'],
-    ['y: groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),   // AUDIT LANDFORMS C1: DFU\'s frame\n      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground that height stands on', 1, 'the anchor'],
+    // PIN MOVED (AUDIT LANDFORMS II F4): a dungeon's anchor keeps its own frame's feet - it lands on `local` alone
+    ['y: inDungeon ? pf[1] - state.compensation[1] : groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),\n      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground that height stands on', 1, 'the anchor'],
     ['pos: [player.pos[0], groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) + state.compensation[1], player.pos[2]], yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE }', 1, 'the ship\'s deck'],
     ['outerCampsSave: () => camps.snapshot(campToRecord),', 1, 'a dungeon\'s outer camps'],
     ['const campToRecord = (pos) => { const n = campToNatives(pos); return [n[0], groundFrameHeight(n[1], pos[0], pos[2]), n[2]]; };', 1, 'a camp as a record keeps it'],
@@ -222,17 +223,19 @@ test('AUDIT LANDFORMS C1: the quickload and the camps left outside stand every h
 // ---- B1/A1, D1: the lift a record takes ----------------------------------------------------------------------------------
 
 /** world.js's landformLiftAt, sliced and run over a real streaming frame, recentred: `bind` sets what its pixels not built
- *  yet will stand (_liftLocationAt), as the boot binds it. */
-function liftAtHost({ built = new Map(), index = new Map(), rects = new Map(), net = { at: NET } } = {}) {
-  const body = between('  const _liftFields = new Map();', '  /** AUDIT LANDFORMS C1/B4: A HEIGHT GOES INTO A RECORD IN DFU\'S FRAME.');
+ *  yet will stand (_liftLocationAt - the index alone until bound; PIN MOVED, AUDIT LANDFORMS II F1/F3: the probe is
+ *  declared with the spawned dungeons' own, and the slice starts at the fields' cap), `fields` counts the fields made. */
+function liftAtHost({ built = new Map(), index = new Map(), rects = new Map(), net = { at: NET }, fields = { made: 0 } } = {}) {
+  const body = between('  const LIFT_FIELDS_KEPT = ', '  /** AUDIT LANDFORMS C1/B4: A HEIGHT GOES INTO A RECORD IN DFU\'S FRAME.');
   const state = new StreamingWorldState();
   state.init(329, 251);
   state.compensation = [37.5, 12, -91.25];
   const heightCell = TERRAIN_SIZE / (H - 1);
   const asked = [];
   const setLocationTiles = (loc, maps, blocks, tilemap) => { asked.push(loc.name); assert.equal(tilemap.length, 128 * 128); return rects.get(loc.name) ?? null; };
-  const host = new Function('state', 'woods', 'built', 'locationIndex', 'setLocationTiles', 'maps', 'blocks', 'TERRAIN_SIZE', 'heightCell', 'MAP_WIDTH', 'MAP_HEIGHT', 'landformLiftField', 'STREAMING_TERRAIN_SCALE', 'HEIGHTMAP_DIMENSION', 'terrainGen', 'landformsHere',
-    `${body}\nreturn { landformLiftAt, bind: (f) => { _liftLocationAt = f; } };`)(state, woods, built, index, setLocationTiles, {}, {}, TERRAIN_SIZE, heightCell, MAP_WIDTH, MAP_HEIGHT, landformLiftField, STREAMING_TERRAIN_SCALE, H, { roads: () => net.at }, () => createLandforms({ woods, roads: net.at }));
+  const counted = (...a) => { fields.made += 1; return landformLiftField(...a); };
+  const host = new Function('state', 'woods', 'built', 'locationIndex', 'setLocationTiles', 'maps', 'blocks', 'TERRAIN_SIZE', 'heightCell', 'MAP_WIDTH', 'MAP_HEIGHT', 'landformLiftField', 'STREAMING_TERRAIN_SCALE', 'HEIGHTMAP_DIMENSION', 'terrainGen', 'landformsHere', '_liftLocationAt',
+    `${body}\nreturn { landformLiftAt, bind: (f) => { _liftLocationAt = f; } };`)(state, woods, built, index, setLocationTiles, {}, {}, TERRAIN_SIZE, heightCell, MAP_WIDTH, MAP_HEIGHT, counted, STREAMING_TERRAIN_SCALE, H, { roads: () => net.at }, () => createLandforms({ woods, roads: net.at }), (x, y) => index.get(`${x},${y}`));
   const scene = (px, py, sx, sy) => { const t = state.pixelTranslation(px, py); return [t[0] + sx * heightCell, t[2] + sy * heightCell]; };
   return { ...host, scene, asked, state };
 }
@@ -288,12 +291,12 @@ test('AUDIT LANDFORMS B1: a pixel not built yet is asked what its build will sta
   const h = liftAtHost({ rects: new Map([['Spawn', rect]]) });
   const [x, z] = h.scene(px, py, 60, 60);
   const wild = landformLift(woods, px, py, 60, 60, null, H, LF) * STREAMING_TERRAIN_SCALE;
-  assert.ok(Math.abs(h.landformLiftAt(x, z) - wild) < 1e-9, 'before the boot binds the probe: the index alone');
+  assert.ok(Math.abs(h.landformLiftAt(x, z) - wild) < 1e-9, 'a probe that answers the index alone: the wild lift');
   h.bind((qx, qy) => (qx === px && qy === py ? spawn : null));
   assert.ok(Math.abs(h.landformLiftAt(x, z) - landformLift(woods, px, py, 60, 60, rect, H, LF) * STREAMING_TERRAIN_SCALE) < 1e-9, 'bound: the spawn\'s rect');
   // the binding itself: _locationToBuild's answer, side-effect free
-  const line = WORLD.match(/\n {2}(_liftLocationAt = \(x, y\) => [^\n]*;)/);
-  assert.ok(line, 'the boot binds it');
+  const line = WORLD.match(/\n {2}const (_liftLocationAt = \(x, y\) => [^\n]*;)/);   // PIN MOVED (AUDIT LANDFORMS II F1): declared, not bound later
+  assert.ok(line, 'the boot declares it');
   const probe = (index, gone, at) => new Function('locationIndex', 'tvSpawnGone', 'tvLocationAt', `let _liftLocationAt = null; ${line[1]}\nreturn _liftLocationAt;`)(index, gone, at);
   const town = { name: 'Town' }, rolled = { name: 'Rolled', spawned: true };
   const index = new Map([['1,1', town], ['2,2', spawn]]), before = [...index];
@@ -305,7 +308,7 @@ test('AUDIT LANDFORMS B1: a pixel not built yet is asked what its build will sta
   assert.equal(ask(3, 3), rolled, 'a pixel the index has not met: the roll\'s spawn');
   assert.equal(ask(4, 4), null);
   assert.deepEqual([...index], before, 'and the index is as it was');
-  assert.match(WORLD, /const tvLocationAt = \(x, y\) => locationIndex\.get\(`\$\{x\},\$\{y\}`\) \?\? \(params\.has\('online'\) && spawnsDungeon\(_spawnSalt, x, y\) \? tvSpawnAt\(x, y\) : null\);\n(?: {2}\/\/[^\n]*\n)* {2}_liftLocationAt = /, 'bound right where the probe stands');
+  assert.match(WORLD, /const tvLocationAt = \(x, y\) => locationIndex\.get\(`\$\{x\},\$\{y\}`\) \?\? \(params\.has\('online'\) && spawnsDungeon\(_spawnSalt, x, y\) \? tvSpawnAt\(x, y\) : null\);\n(?: {2}\/?\*{1,2}[^\n]*\n| {3}\*[^\n]*\n)* {2}const _liftLocationAt = /, 'declared right where the probe stands');
 });
 
 test('AUDIT LANDFORMS B2: a record\'s frame follows the cuts - the field is the pipeline\'s own shaped ground less DFU\'s, a road\'s cut and fill and a river\'s channel with the lift, in the wild and through a town\'s blend', () => {
@@ -601,4 +604,80 @@ test('AUDIT LANDFORMS D9: a landforms promotion waits for the network in flight,
     const want = restrideGrid({ woods, px: 300, py: 250, stride: 4, samples, landform: true, roads: null });
     assert.deepEqual([...posted.find((m) => m.id === 1).normals], [...want.normals]);
   } finally { globalThis.postMessage = prevPost; globalThis.onmessage = prevOn; }
+});
+
+// ==== AUDIT LANDFORMS II (2026-10-07, Mac: "Do another deep audit on this") ==============================================
+// The second audit, of the slice and the first audit's fixes (its record: bible/01-Overview/Audit-Landforms.md, AUDIT
+// LANDFORMS II). Every pin below fails on the code as it stood (c532321f).
+
+/** bootWorld's own statements, in the order the boot runs them. */
+const bootStatements = () => {
+  const ast = acorn.parse(WORLD, { ecmaVersion: 'latest', sourceType: 'module' });
+  const boot = ast.body.map((n) => (n.type === 'ExportNamedDeclaration' ? n.declaration : n)).find((d) => d?.id?.name === 'bootWorld');
+  return boot.body.body.map((st) => WORLD.slice(st.start, st.end));
+};
+
+test('AUDIT LANDFORMS II F1: what a pixel not built yet will stand - a spawn included - is the whole answer before the boot\'s load (online the only load) stands a single record, and is never made again after it', () => {
+  const stmts = bootStatements();
+  const load = stmts.findIndex((t) => t.includes('await worldQuickLoad({ ...bootLoadPick, snap });'));
+  assert.ok(load > 0, 'the boot\'s load door');
+  const makes = stmts.map((t, i) => [i, t]).filter(([, t]) => /^(?:(?:let|const) )?_liftLocationAt = /.test(t));
+  const before = makes.filter(([i]) => i < load);
+  assert.ok(before.length, 'made before the load');
+  assert.deepEqual(makes.filter(([i]) => i > load).map(([, t]) => t), [], 'and not bound again after it');
+  // the one standing when the load runs, run: the index's place, and the spawn the roll stands that the index does not
+  // hold until its pixel builds (_locationToBuild's answer) - it was the index alone there
+  const spawn = { name: 'Spawn', spawned: true }, town = { name: 'Town' };
+  const index = new Map([['1,1', town]]);
+  const probe = new Function('locationIndex', 'tvSpawnGone', 'tvLocationAt', `${before.at(-1)[1].replace(/^(?:let|const) /, 'let ')}\nreturn _liftLocationAt;`)(
+    index, () => false, (x, y) => index.get(`${x},${y}`) ?? (x === 3 ? spawn : null));
+  assert.equal(probe(1, 1), town);
+  assert.equal(probe(3, 3), spawn, 'a spawn not in the index yet: its own place, not the wild');
+});
+
+test('AUDIT LANDFORMS II F3: a pixel\'s lift field is kept for the next save - nine towns asked twice make nine fields, not eighteen; past the cap the longest unasked is let go, never the whole memo', () => {
+  const fields = { made: 0 }, rect = { xMin: 50, xMax: 70, yMin: 50, yMax: 70 };
+  const towns = [...Array(9).keys()].map((i) => [300 + i, 250]);
+  const index = new Map(towns.map(([px, py], i) => [`${px},${py}`, { name: `T${i}`, exterior: { exteriorData: {} }, mapTableData: {} }]));
+  const h = liftAtHost({ index, rects: new Map(towns.map((_, i) => [`T${i}`, rect])), fields });
+  const save = () => { for (const [px, py] of towns) h.landformLiftAt(...h.scene(px, py, 60, 60)); };
+  save();
+  assert.equal(fields.made, 9, 'the first save makes each town\'s field');
+  save();
+  assert.equal(fields.made, 9, 'the second makes none again - a town\'s is a kernel pass on this thread, and the memo cleared whole at eight made all nine again at every save');
+  assert.deepEqual(h.asked, towns.map((_, i) => `T${i}`), 'nor asks a rect again');
+  // the cap: past it the longest unasked is let go, and only it - a field asked again is the last to go
+  const wild = { made: 0 }, w = liftAtHost({ fields: wild });
+  const P = (i) => w.scene(200 + i, 300, 10, 10);
+  for (let i = 0; i < 33; i++) w.landformLiftAt(...P(i));
+  assert.equal(wild.made, 33, 'the 33rd lets the first go');
+  w.landformLiftAt(...P(1));
+  assert.equal(wild.made, 33, 'the second is kept, and asked again it is the last to go');
+  w.landformLiftAt(...P(33));
+  w.landformLiftAt(...P(1));
+  assert.equal(wild.made, 34, 'a 34th lets the third go, not the second');
+  w.landformLiftAt(...P(2));
+  w.landformLiftAt(...P(0));
+  assert.equal(wild.made, 36, 'the first and the third were let go');
+});
+
+test('AUDIT LANDFORMS II F4: an anchor set in a dungeon keeps its feet in the dungeon\'s own frame - the lift is never asked of a dungeon point as if it stood outside; outside and in a building it goes in DFU\'s frame', () => {
+  const asked = [];
+  const anchorOf = (worldContext) => {
+    let anchor = null;
+    mount(`${fnOf('setRecallAnchor')}\nreturn setRecallAnchor;`, {
+      modes: { gateArenaDay: () => null, anchorContext: () => ({ worldContext, local: [1, 2, 3], buildingKey: 0, interior: null }) },
+      WORLD_CONTEXT: { Nothing: 'Nothing', Exterior: 'Exterior', Interior: 'Interior', Dungeon: 'Dungeon' },
+      walkMode: true, playerSpawned: true, player: { pos: [123.5, 40, 77.25] }, cam: { pos: [0, 0, 0], yaw: 0.5, pitch: 0.1 },
+      state: { current: { x: 5, y: 6 }, compensation: [0, 10, 0], worldCoords: (p) => ({ x: p[0] + 1000, z: p[2] + 2000 }) },
+      playerTravelPixel: () => ({ x: 5, y: 6 }), mapPixelToWorldCoords: () => ({ x: 0, z: 0 }), playerEntity: {},
+      makeAnchor: (a) => (anchor = a), groundFrameHeight: (y, x, z) => { asked.push([x, z]); return y - 7; }, STREAMING_TERRAIN_SCALE,
+    })();
+    return anchor;
+  };
+  assert.equal(anchorOf('Dungeon').y, 30, 'a dungeon\'s: its feet as they stood, compensation off');
+  assert.deepEqual(asked, [], 'and no lift asked of a dungeon-local point');
+  assert.equal(anchorOf('Exterior').y, 23);
+  assert.equal(anchorOf('Interior').y, 23, 'a building\'s frame is the exterior\'s: DFU\'s frame');
+  assert.deepEqual(asked, [[123.5, 77.25], [123.5, 77.25]]);
 });

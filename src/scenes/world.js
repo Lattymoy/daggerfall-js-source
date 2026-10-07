@@ -2018,6 +2018,35 @@ export async function bootWorld(canvas, renderer, params, status) {
       regionIndex, regionName: REGION_NAMES[regionIndex], politic: maps.getPoliticIndex(px, py), climate: getWorldClimateSettings(maps.getClimateIndex(px, py)),
     }, elite: isEliteSpawn(_spawnSalt, px, py) });   // ELITE: the same hash on every client
   }
+  /** AUDIT OW4 D2: HAS A SPAWN'S TIME RUN OUT - the spawned feature's own test (spawnedDungeonAt's: the ledger's two
+   *  clocks, never while the player is in it), asked NOW: the index lets an expired spawn go only when its pixel next
+   *  builds, and until then its plate stood and its walk went. AUDIT OW5b D2: gone FROM THE GROUND - one standing on built
+   *  ground stands until that ground is next built (_locationToBuild takes it out then), and its plate stands with it.
+   *  FIELD BUGS 29h (SPAWN-PLATE; the Discord: "Elite Dungeons that despawn stay on map ... no entrance anymore but are
+   *  still marked"): standing on the ground is the BUILD's word - whether the pixel stood a location, never that it is
+   *  built. A pixel built after the clock ran out is built EMPTY, and read as built it kept its found plate (the store
+   *  files a spawn for good) and its walk to bare grass whenever the traveller came within the grid. */
+  const tvSpawnGone = (x, y) => { const key = `${x},${y}`; return _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key) && built.get(key)?.location == null; };
+  /** AUDIT OW4 D4: WHAT spawnedDungeonAt WOULD STAND on a pixel it has not built - its own gates (the sea, a path across
+   *  the pixel, the clocks; the roll and the page are asked by the caller) and its clone, with none of its writes (the
+   *  index, the ledger's first sight, the roads' provisional keys): a far found spawn is marked, never built. */
+  function tvSpawnAt(px, py) {
+    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py) || tvSpawnGone(px, py)) return null;
+    const roads = terrainGen.roads();
+    return roads && !pathFreePixel(roads, px, py) ? null : _spawnCloneAt(px, py);
+  }
+  /** AUDIT OW5b D3: WHAT STANDS ON A PIXEL, built or not - the index's place, else the spawn its roll would stand (online,
+   *  side-effect free: tvSpawnAt). A member walking to the leader's spawn read the index alone, and a far spawn their own
+   *  pixels had never built was a bare spot to them. */
+  const tvLocationAt = (x, y) => locationIndex.get(`${x},${y}`) ?? (params.has('online') && spawnsDungeon(_spawnSalt, x, y) ? tvSpawnAt(x, y) : null);
+  /** AUDIT LANDFORMS B1: landformLiftAt's pixels not built yet - what the build will stand there: the index's place, else
+   *  online the spawn its roll stands; one past its time with nobody in it is built empty (_locationToBuild), read here
+   *  without taking it out of the index. AUDIT LANDFORMS II F1: declared here, beside the build's own answer, so it is the
+   *  whole answer before anything can ask it. It was bound beside the Overworld's probes, far below the boot's load
+   *  (`await worldQuickLoad({ ...bootLoadPick, snap })`) - online the only load - so that load stood a spawn's records on
+   *  the wild lift and every later save wrote them on the spawn's: a camp at a spawned dungeon drifted by up to 24 m a
+   *  session (the Citadel of Copperton), and a camp is never stood again. */
+  const _liftLocationAt = (x, y) => (locationIndex.get(`${x},${y}`)?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(x, y));
 
   // U31 / THE CLASSIC START. StartGameBehaviour (:371-401) does not
   // resolve the start by NAME - it reads a map pixel out of settings
@@ -4109,18 +4138,19 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** LANDFORM1: how far the landforms move DFU's ground at a scene point, in world units (world/landforms.js
    *  landformLift - the kernel's own shaped ground less DFU's over the network this thread holds, the cuts with the
    *  lift (AUDIT LANDFORMS B2), over the location rect of the pixel's build, so a town's levelled ground is exact).
-   *  What the row puts there, read while it is on. A pixel's field is kept for the next record a load
-   *  stands on it (a few pixels at most - one arrival's; dropped whole past eight). AUDIT LANDFORMS B1: the rect is the
-   *  build's for a pixel not built yet too - the one setLocationTiles will stamp (tvTownRects' own fallback). A load
-   *  stands records before their pixels stream in (its camps anywhere in the world, a neighbour's piles), and the wild
-   *  lift it took there was up to 203 m off a location's levelled ground (Tamarilyn Coven; 1,036 of 15,251 locations
-   *  over a metre at the rect's centre), into a camp that is never stood again. */
+   *  What the row puts there, read while it is on. A pixel's field is kept for the next record a save or a load stands
+   *  on it - the last LIFT_FIELDS_KEPT pixels asked, the longest unasked let go first (AUDIT LANDFORMS II F3: dropped
+   *  whole past eight, a save whose records stood on nine pixels made every field again - a town's is a kernel pass,
+   *  146 ms for nine on the main thread and 0.4-0.6 s for sixteen - at every save, online every two-minute checkpoint).
+   *  AUDIT LANDFORMS B1: the rect is the build's for a pixel not built yet too - the one setLocationTiles will stamp
+   *  (tvTownRects' own fallback). A load stands records before their pixels stream in (its camps anywhere in the world, a
+   *  neighbour's piles), and the wild lift it took there was up to 203 m off a location's levelled ground (Tamarilyn
+   *  Coven; 1,036 of 15,251 locations over a metre at the rect's centre), into a camp that is never stood again. */
+  const LIFT_FIELDS_KEPT = 32;   // a town's field is 129 x 129 floats (66 KB): 2 MB at the most
   const _liftFields = new Map();
-  /** AUDIT LANDFORMS B1: what a pixel not built yet will stand when it is - the index's place, else online the spawn its
-   *  roll stands (_locationToBuild's answer, asked side-effect free). Bound where the Overworld's probe stands, far down
-   *  this boot (it reads consts declared there); until then the index alone. */
-  let _liftLocationAt = (x, y) => locationIndex.get(`${x},${y}`);
-  const _liftRects = new Map();   // ...and the rect that build will stamp, kept per pixel while the same place stands there
+  /** ...and the rect that build will stamp, kept per pixel while the same place stands there (a spawn's clone is made
+   *  afresh at each ask, so a spawn's is asked again - 50 us, against its field's kernel pass) */
+  const _liftRects = new Map();
   const landformLiftAt = (x, z) => {
     const c = state.compensation;
     const px = state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE);
@@ -4134,17 +4164,20 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (had && had.loc === loc) rect = had.rect;
       else {
         if (loc?.exterior?.exteriorData && loc.mapTableData) rect = setLocationTiles(loc, maps, blocks, new Uint8Array(128 * 128)) ?? null;
-        if (_liftRects.size >= 8) _liftRects.clear();
+        _liftRects.delete(`${px},${py}`);
+        if (_liftRects.size >= LIFT_FIELDS_KEPT) _liftRects.delete(_liftRects.keys().next().value);   // the longest unasked
         _liftRects.set(`${px},${py}`, { loc, rect });
       }
     }
     // AUDIT LANDFORMS B2: the field follows the cuts, so it is the network's too - made again once the network lands
     const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0}`;
     let field = _liftFields.get(key);
-    if (!field) {
-      if (_liftFields.size >= 8) _liftFields.clear();
-      _liftFields.set(key, field = landformLiftField(woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere()));
+    if (field) _liftFields.delete(key);   // asked again: the last to be let go
+    else {
+      if (_liftFields.size >= LIFT_FIELDS_KEPT) _liftFields.delete(_liftFields.keys().next().value);   // the longest unasked
+      field = landformLiftField(woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere());
     }
+    _liftFields.set(key, field);
     return field((x - t[0]) / heightCell, (z - t[2]) / heightCell) * STREAMING_TERRAIN_SCALE;
   };
   /** AUDIT LANDFORMS C1/B4: A HEIGHT GOES INTO A RECORD IN DFU'S FRAME. With the row on the ground at (x, z) stands
@@ -12776,7 +12809,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       // free frame survives any recenter between the set and the cast.
       // So there is no restore call here and no compensation on the
       // anchor - see makeAnchor's note, which is where the law lives.
-      y: groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),   // AUDIT LANDFORMS C1: DFU's frame
+      // AUDIT LANDFORMS C1: DFU's frame - outside, and in a building (the exterior's frame); a dungeon's feet are its own
+      // frame's, and its anchor lands on `local` alone (AUDIT LANDFORMS II F4: they were asked the lift as a scene point)
+      y: inDungeon ? pf[1] - state.compensation[1] : groundFrameHeight(pf[1] - state.compensation[1], pf[0], pf[2]),
       terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground that height stands on
       local: inside.local,
       yaw: cam.yaw, pitch: cam.pitch,
@@ -26236,30 +26271,6 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
    *  store's is its name too. Nothing else - a spawn not yet said is not marked (that feature never says one next door). */
   const tvSpawnFound = (s) => hasDiscoveredLocationId(s.loc.mapTableData.mapId);
   const tvSpawnKnown = (s) => tvSpawnFound(s) || _announcedSpawnPixels.has(`${s.x},${s.y}`);
-  /** AUDIT OW4 D2: HAS A SPAWN'S TIME RUN OUT - the spawned feature's own test (spawnedDungeonAt's: the ledger's two
-   *  clocks, never while the player is in it), asked NOW: the index lets an expired spawn go only when its pixel next
-   *  builds, and until then its plate stood and its walk went. AUDIT OW5b D2: gone FROM THE GROUND - one standing on built
-   *  ground stands until that ground is next built (_locationToBuild takes it out then), and its plate stands with it.
-   *  FIELD BUGS 29h (SPAWN-PLATE; the Discord: "Elite Dungeons that despawn stay on map ... no entrance anymore but are
-   *  still marked"): standing on the ground is the BUILD's word - whether the pixel stood a location, never that it is
-   *  built. A pixel built after the clock ran out is built EMPTY, and read as built it kept its found plate (the store
-   *  files a spawn for good) and its walk to bare grass whenever the traveller came within the grid. */
-  const tvSpawnGone = (x, y) => { const key = `${x},${y}`; return _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key) && built.get(key)?.location == null; };
-  /** AUDIT OW4 D4: WHAT spawnedDungeonAt WOULD STAND on a pixel it has not built - its own gates (the sea, a path across
-   *  the pixel, the clocks; the roll and the page are asked by the caller) and its clone, with none of its writes (the
-   *  index, the ledger's first sight, the roads' provisional keys): a far found spawn is marked, never built. */
-  function tvSpawnAt(px, py) {
-    if (maps.getClimateIndex(px, py) === CLIMATES.Ocean || !_spawnGround(px, py) || tvSpawnGone(px, py)) return null;
-    const roads = terrainGen.roads();
-    return roads && !pathFreePixel(roads, px, py) ? null : _spawnCloneAt(px, py);
-  }
-  /** AUDIT OW5b D3: WHAT STANDS ON A PIXEL, built or not - the index's place, else the spawn its roll would stand (online,
-   *  side-effect free: tvSpawnAt). A member walking to the leader's spawn read the index alone, and a far spawn their own
-   *  pixels had never built was a bare spot to them. */
-  const tvLocationAt = (x, y) => locationIndex.get(`${x},${y}`) ?? (params.has('online') && spawnsDungeon(_spawnSalt, x, y) ? tvSpawnAt(x, y) : null);
-  // AUDIT LANDFORMS B1: landformLiftAt's pixels not built yet - what the build will stand there, a spawn included; one past
-  // its time with nobody in it is built empty (_locationToBuild), read here without taking it out of the index
-  _liftLocationAt = (x, y) => (locationIndex.get(`${x},${y}`)?.spawned && tvSpawnGone(x, y) ? null : tvLocationAt(x, y));
   /** AUDIT OW4 D4: the found spawns within the far range that the index does not hold (filedSpawns) - online alone, as
    *  the spawns are (spawnedDungeonAt's own gate). The store files a spawn under its pixel's id (spawnedMapId). */
   const tvFiledSpawns = (at) => (params.has('online') ? filedSpawns({ at, rolls: (x, y) => spawnsDungeon(_spawnSalt, x, y),
