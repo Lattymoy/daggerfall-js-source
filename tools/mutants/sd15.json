@@ -20,7 +20,7 @@
   {
     "name": "SD15-the-ring-never-called",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "      if (d > front && d - front <= SD_JUMP_CALL_M && (!jump || atk.at < jump.at)) jump = { at: atk.at, name: A.name };\n",
+    "old": "      if (d > front && d - front <= SD_JUMP_CALL_M && (!jump || atk.at < jump.at)) jump = { at: atk.at, name: A.name, el: blowShape(atk)?.el ?? null };\n",
     "new": "",
     "tests": [
       "test/sd15_read.test.js"

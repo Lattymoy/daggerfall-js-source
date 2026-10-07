@@ -143,7 +143,7 @@ test('SD15 THE HOUR\'S CARD - in brass, never Dagon\'s red: one node made on the
   assert.equal(root.style.display, 'none', 'hidden with the HUD');
   destroySdTitleCard();
   assert.match(W, /const peril = playerEntity\.health > 0 \? sdPerilAt\(s, now, x - SD_ARENA\.x, z - SD_ARENA\.z, cam\.yaw\) : null;/);
-  assert.match(W, /ground = sdGroundModel\(\{ burning: !!sdBlows\?\.burning\?\.\(\), now, peril \}\);/);
+  assert.match(W, /ground = sdGroundModel\(\{ burning: !!sdBlows\?\.burning\?\.\(\), el: sdBlows\?\.burningEl\?\.\(\) \?\? null, now, peril \}\);/);   // SD18b (PIN MOVED): in its element
   assert.match(W, /const beat = sdBeats\.frame\(s, now\);\n\s*card = beat \? titleCardModel\(beat, now\) : null;\n\s*\} else sdBeats\.leave\(\);/);
   assert.match(W, /if \(ground \|\| _sdGroundUp\) \{ drawGateGround\(ground, \{ hidden \}\); _sdGroundUp = !!ground; \}/);
   assert.match(W, /if \(card \|\| _sdCardUp\) \{ drawSdTitleCard\(card, \{ hidden \}\); _sdCardUp = !!card; \}/);

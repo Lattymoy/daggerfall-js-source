@@ -164,8 +164,8 @@
   {
     "name": "SD8D-a-strike-without-its-base",
     "file": "src/scenes/sdRemnantBlows.js",
-    "old": "    strike(strikeDamage(pct, e.maxHealth, base), { name });",
-    "new": "    strike(strikeDamage(pct, e.maxHealth, 0), { name });",
+    "old": "    const dmg = strikeDamage(pct, e.maxHealth, base);",
+    "new": "    const dmg = strikeDamage(pct, e.maxHealth, 0);",
     "tests": [
       "test/sd8d_remnant_blows.test.js"
     ]

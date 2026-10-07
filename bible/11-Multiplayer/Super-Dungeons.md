@@ -393,7 +393,13 @@ the time), *the Short Hour* (it Ends at twelve minutes), *the Hardened Hearts* (
 harder than the last), *the Unending Reset* (every 40 s) and *the Twin Hands* (the pair's Hand every 10 s). The relay
 runs the fight by its profile (`net/sdRemnant.js` `sdFightProfile`) and stamps each blow whose shape they change with
 the change (`sh` - its radius, ring, sweep, pool, wind-up, Pulse step and element), so every screen judges, draws and
-reads the blow the relay threw; the state carries the marks (`mk`) for the rest.
+reads the blow the relay threw; the state carries the marks (`mk`) for the rest. They are seen (SD18b,
+`ui/sdMarksView.js`): the gate's own marks card as a fighter steps into the Hour (its Ending's signature, element and
+light, its omens, each its own sign and how to meet it - nine seconds, low on the right) and its row under the Remnant's
+bar all fight long; its wake's card names the Ending it keeps; its own blows' colours lean to its element and its brass
+burns in it - rimed, charged, venomed or soul-lit, the gate's own grains; a strike in its element is softened by the
+struck player's resistance to it (the gate's saving throw; magic's added for the Underking); its stone glows in its
+light in the Orrery's hall, and the fray's arc goes round once by the Hollow's own snap.
 
 **How its blows are seen** (SD16, `scenes/sdFx.js`). Each landing and turn is a burst of sparks on the gate's own spark
 pass (`render/gateFx.js`) in the Hour's own 17 kinds and colours - the Stomp at its feet and its ring's dust as it
@@ -2355,3 +2361,33 @@ recorded: the ring's closing check - the walk's first ring closes at every seat 
 `test/sd8b_fight.test.js` (the Volley's marks at most Sunfall's seven), `test/relayversion.test.js` (the graph, the
 hash). Records re-aimed by content (22): `sd15.json` (3), `sd17.json` (2), `sd6a.json` (2), `sd8a.json` (6),
 `sd8b.json`, `sd8c.json` (3), `sd8d.json` (5) - each run again, every one dead.
+
+### SD18b - shipped 2026-10-07 (the marks seen)
+
+The gate shows the Warden's marks on a card as a fighter steps in and in a row under his bar, and his aspect colours and
+names his ground (WB9a, WB9d); SD18a gave the Hour its marks and showed none. `ui/sdMarksView.js`:
+
+- **The view and the card** (`sdMarksViewOf`, `sdMarksCardModel`): the gate's own shapes - the Ending first (its
+signature, element, light, `Resist <element> to blunt its own blows and brass.` and its own tip), then each omen - drawn
+by the gate's card (`drawGateMarksCard`) and bar (`ui/gateBossBar.js`) with the Hour's own signs (`SD_MARK_ICONS` - the
+six stones' and the nine omens'; `markIconHtml` draws a mark's own path, the gate's table for its own). The card stands
+`SD_MARKS_ARRIVE_MS` (9 s) as a fighter steps into the Hour, coming up and fading; the world never hides it as the
+street's card (the line that put the gate's card away off the street now spares the Hour). Under the bar, the row and
+the omens' line; the phase's name stays over it.
+- **The wake** (`sdWakeText`): *The Brass Remnant - <signature> - the Ending of <stone>*.
+- **The element on the floor** (`scenes/sdRemnantBlows.js`): `sdTint` leans the Remnant's own blows' colours
+`SD_TINT_LEAN` (35%) to the element's (each keeps its own, to be told apart; the Hour's own blows untouched, the Reset's
+red edge kept); its brass in the element's colour, grain (`SD_ELEMENT_STYLE` - the gate's fire, frost, shock and poison;
+magic the light's crackle) and name (`SD_ELEMENT_GROUND` - *Burning*, *Rimed*, *Charged*, *Venomed*, *Soul-lit brass*),
+under the crosshair too (`sdGroundModel`, `burningEl`).
+- **The strike** (`save`): a hit or a bite in the element is softened by the struck player's own resistance - the
+world's door is the gate's saving throw (`GATE_SAVES`, magic added) - and lands as that element (its cast, its shake:
+the dungeon context's strike door, magic's cast added); a plain blow never asks.
+- **The hall**: the Ending's own stone lit in its light (`sdEndingStoneLight` - in the Hour's light channel, breathing
+on the hall's clock), and the fray's arc round once by the Hollow's own snap (36 for the Fraying).
+
+Pins: `test/sd18b_seen.test.js` (6 - the view; the card and the world's; the bar and the wake; the element on the floor;
+the strike; the hall); `tools/mutants/sd18b.json` (25). PINS MOVED: `test/sd11a_scenes.test.js`,
+`test/sd11c_page.test.js` (the marks card in the fight's rigs), `test/sd15_read.test.js` (the ground in its element),
+`test/sd16_fx.test.js`, `test/sd9e_spoils.test.js` (the stone's light after the landings'); records re-aimed by content:
+`sd10b.json` (3), `sd11a.json` (2), `sd15.json`, `sd8d.json` - each run again, dead.

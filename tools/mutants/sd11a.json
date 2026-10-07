@@ -590,8 +590,8 @@
   {
     "name": "SD11A-L2F16-the-snap-empty-at-once",
     "file": "src/scenes/sdHall.js",
-    "old": "    if (!first && w.x) { frayFullUntil = now() + SD_FRAY_FULL_MS; setFray(SD_FRAY_RING.steps); }\n    else if (!(now() < frayFullUntil)) setFray(w.f);",
-    "new": "    setFray(w.f);",
+    "old": "    if (!first && w.x) { frayFullUntil = now() + SD_FRAY_FULL_MS; setFray(SD_FRAY_RING.steps); }\n    else if (!(now() < frayFullUntil)) setFray(frayArc(w.f));",
+    "new": "    setFray(frayArc(w.f));",
     "tests": [
       "test/sd6c_hall.test.js"
     ],
@@ -600,7 +600,7 @@
   {
     "name": "SD11A-L2F16-full-for-ever",
     "file": "src/scenes/sdHall.js",
-    "old": "      if (frayFullUntil !== -Infinity && now() >= frayFullUntil) { frayFullUntil = -Infinity; setFray(frayWant); }",
+    "old": "      if (frayFullUntil !== -Infinity && now() >= frayFullUntil) { frayFullUntil = -Infinity; setFray(frayArc(frayWant)); }",
     "new": "      void frayWant;",
     "tests": [
       "test/sd6c_hall.test.js"

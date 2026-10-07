@@ -233,5 +233,5 @@ test('SD16 THE BURSTS AS THE SPARK PASS TAKES THEM: sixteen at most, the oldest 
   assert.match(W, /if \(inRealm\) \{ try \{ sdFx\?\.frame\(\); \} catch/);
   assert.match(W, /sdRemVoice\?\.leave\(\); sdFx\?\.leave\(\); _sdFightHeld = false;/);
   assert.match(W, /const sparks = !!\(sdFx && sdFightLink && sdFx\.draw\(renderer\.gl, proj, view, eye, sdFightLink\.now\(\), fog, renderer\.worldViewportPx\?\.\[3\]\)\); const beams = [^\n]*; const beam = [^\n]*; if \(blows \|\| lines \|\| motes \|\| sparks \|\| beam\) renderer\.markForeignPass\(\);/);   // SD17 (PIN MOVED): the Hour-Hand's beam after the sparks
-  assert.match(W, /fx = sdFx && sdFightLink \? sdFx\.lights\(sdFightLink\.now\(\)\) : \[\];\n\s+return fx\.length \? \[\.\.\.lit, \.\.\.fx\] : lit;/);
+  assert.match(W, /fx = sdFx && sdFightLink \? sdFx\.lights\(sdFightLink\.now\(\)\) : \[\];\n[^\n]*\n\s+return fx\.length \|\| stone \? \[\.\.\.lit, \.\.\.fx, \.\.\.\(stone \? \[stone\] : \[\]\)\] : lit;/);   // SD18b (PIN MOVED): and the Ending's stone
 });

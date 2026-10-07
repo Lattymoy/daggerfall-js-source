@@ -79,6 +79,13 @@ export function markIconSvg(id, size = 14) {
   return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><path ${paint} d="${I.d}"/></svg>`;
 }
 
+/** SD18b: a mark's sign - its own path when it carries one (the Hour's marks - ui/sdMarksView.js), else the table's. */
+export function markIconHtml(m, size = 14) {
+  if (!m?.path) return markIconSvg(m?.id, size);
+  const paint = m.fill ? 'fill="currentColor"' : 'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"';
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true"><path ${paint} d="${m.path}"/></svg>`;
+}
+
 /**
  * THE NIGHT'S MARKS AS THEY ARE SHOWN, from a fight's marks (`md` - the relay's word inside the court, the day's draw
  * outside: net/gateLaw.js gateModsOf) - or null for the Warden unmarked (an older relay's fight shows no row). The
@@ -214,7 +221,7 @@ function build(doc) {
 function writeRow(r, m, first) {
   if (!m) { r.n.style.display = 'none'; return; }
   r.n.style.display = '';
-  r.icon.innerHTML = markIconSvg(m.id, 20);
+  r.icon.innerHTML = markIconHtml(m, 20);   // SD18b: the Hour's own signs
   r.icon.style.color = m.kind === 'aspect' ? m.color : '#ffb27a';
   r.name.textContent = m.kind === 'aspect' ? `${m.name} - ${m.element}` : m.name;
   r.name.style.color = m.kind === 'aspect' ? m.color : '';

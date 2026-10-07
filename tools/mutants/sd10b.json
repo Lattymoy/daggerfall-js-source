@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-SD-C7-the-reset-marked-as-the-bodys",
     "file": "src/scenes/sdRemnantBlows.js",
-    "old": "land(A.name, h.pct, h.base, bodysBlow(A));",
-    "new": "land(A.name, h.pct, h.base, b !== SD_BODY.hour);",
+    "old": "land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);",
+    "new": "land(A.name, h.pct, h.base, b !== SD_BODY.hour, h.el ?? null);",
     "tests": [
       "test/sd10b_audit.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AUDIT-SD-C7-the-brass-marked",
     "file": "src/scenes/sdRemnantBlows.js",
-    "old": "    land(SD_BLOWS_TEXT.burning, p.pct, p.base);",
-    "new": "    land(SD_BLOWS_TEXT.burning, p.pct, p.base, true);",
+    "old": "    land(p.el ? SD_ELEMENT_GROUND[p.el] : SD_BLOWS_TEXT.burning, p.pct, p.base, false, p.el ?? null);",
+    "new": "    land(p.el ? SD_ELEMENT_GROUND[p.el] : SD_BLOWS_TEXT.burning, p.pct, p.base, true, p.el ?? null);",
     "tests": [
       "test/sd10b_audit.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-SD-C7-an-echos-unmarked",
     "file": "src/scenes/sdRemnantBlows.js",
-    "old": "land(A.name, h.pct, h.base, bodysBlow(A));",
-    "new": "land(A.name, h.pct, h.base, bodysBlow(A) && b === SD_BODY.remnant);",
+    "old": "land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);",
+    "new": "land(A.name, h.pct, h.base, bodysBlow(A) && b === SD_BODY.remnant, h.el ?? null);",
     "tests": [
       "test/sd10b_audit.test.js"
     ]

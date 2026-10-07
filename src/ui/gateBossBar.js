@@ -25,7 +25,7 @@ import { telegraphAt } from '../net/gateStrike.js';
 import { countdownText } from '../net/gateLaw.js';
 import { attackColor, crystalColor, STUN_COLOR, WARD_COLOR } from '../world/gateBoss.js';
 import { GATE_RING_CSS } from './gateMapMark.js';
-import { marksViewOf, markIconSvg } from './gateMarksView.js';   // WB9a: the night's marks under his health, each its sign and name
+import { marksViewOf, markIconHtml } from './gateMarksView.js';   // WB9a: the night's marks under his health, each its sign and name
 import { stepGhost } from './barLoss.js';   // WB13c: the trailing damage segment, the vitals' own
 import { LOW_HEALTH } from '../world/gateBoss.js';   // WB13e: the bar pulses under his low health
 import { injectEnhancedFonts } from './enhancedStyle.js';   // WB13c: the classic face, loaded by the gate's own screens
@@ -273,7 +273,7 @@ function build(doc) {
 function writeChip(c, m) {
   if (!m) { c.chip.style.display = 'none'; return; }
   c.chip.style.display = '';
-  c.icon.innerHTML = markIconSvg(m.id, 12);
+  c.icon.innerHTML = markIconHtml(m, 12);   // SD18b: the Hour's own signs
   c.icon.style.color = m.kind === 'aspect' ? m.color : '#ffb27a';
   c.label.textContent = m.name;
   c.label.style.color = m.kind === 'aspect' ? m.color : '';

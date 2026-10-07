@@ -11,6 +11,7 @@
 // `remnantBarModel` is pure - the fight's state and the relay's clock in, the gate bar's model out. Not a DFU member.
 // Ledger A (SUPER-DUNGEONS).
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_PHASE_AT, SD_PHASE_NAMES, atkWindup, profileOf } from '../net/sdRemnant.js';
+import { sdMarksViewOf, sdOmensLine } from './sdMarksView.js';   // SD18b
 import { SD_ARENA } from '../net/sdBrain.js';
 import { sdBlowDone, sdHourOver } from '../net/sdFightLink.js';
 import { countdownText } from '../net/gateLaw.js';
@@ -101,7 +102,9 @@ export function remnantBarModel(s, now) {
   const resetComing = !s.fell && !s.ended && s.ph >= 3 && s.rk > now && !(s.rem?.atk?.a === SD_BLOWS.reset.id && !sdBlowDone(s.rem.atk, now));
   return {
     theme: 'brass', ringCss: SD_BAR_CSS.ring,
-    name: SD_BAR_TEXT.name, title: SD_PHASE_NAMES[s.ph - 1] ?? '', epithet: '', epithetColor: null, marksView: null, trials: '',
+    // SD18b: the Hour's marks under its health - its Ending's signature in its light, then its omens (ui/sdMarksView.js); the
+    // phase's name kept over the bar (the Ending is the row's)
+    name: SD_BAR_TEXT.name, title: SD_PHASE_NAMES[s.ph - 1] ?? '', epithet: '', epithetColor: null, marksView: sdMarksViewOf(s.mk), trials: s.mk ? sdOmensLine(s.mk) : '',
     frac, marks: [...SD_PHASE_AT], phase: s.ph, spent: SD_PHASE_AT.map((_, i) => s.ph > i + 1),
     warded, fallen: !!s.fell, callout,
     wrath: s.fell ? null : sdHourOver(s, now) ? SD_BAR_TEXT.ended : toEnd <= SD_ENDS_WARN_MS ? SD_BAR_TEXT.endsIn(countdownText(toEnd)) : null,   // AUDIT SD II (L4 F3): ended at its moment - its wind-up still counts down, and still takes blows

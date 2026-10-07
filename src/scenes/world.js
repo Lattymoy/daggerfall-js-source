@@ -329,6 +329,8 @@ import { SdMotesRenderer } from '../render/sdMotes.js';   // SD14c: the Hour's m
 import { sdPerilAt, sdGroundModel, createSdBeats } from './sdArenaRead.js';   // SD15: the arena read - in it, and the fight's beats
 import { createSdFx } from './sdFx.js';   // SD16: the blows seen - bursts, shakes and lights
 import { sdBeamDraws } from './sdRemnantRig.js';   // SD17: the Hour-Hand's beam in the air
+import { sdMarksCardModel, sdEndingStoneLight } from '../ui/sdMarksView.js';   // SD18b: the Hour's marks as a fighter steps in, and its Ending's stone lit
+import { sdMarksOf, sdEndingOf } from '../net/sdMarks.js';   // SD18b: a Hollow's marks by its slot
 import { SdBeamRenderer } from '../render/sdBeam.js';
 import { drawSdTitleCard } from '../ui/sdTitleCard.js';   // SD15: the Hour's own card
 import { titleCardModel } from '../ui/gateTitleCard.js';   // SD15: the card's pure model, the Warden's
@@ -933,6 +935,7 @@ const GATE_SAVES = Object.freeze({
   frost: Object.freeze([ELEMENTS.Frost, EFFECT_FLAGS.Frost]),
   shock: Object.freeze([ELEMENTS.Shock, EFFECT_FLAGS.Shock]),
   poison: Object.freeze([ELEMENTS.DiseaseOrPoison, EFFECT_FLAGS.Poison]),
+  magic: Object.freeze([ELEMENTS.Magic, EFFECT_FLAGS.Magic]),   // SD18b: the Underking's Ending - the Remnant's blows in magic
 });
 
 // Milestone 9 scene: floating-origin streaming world. Terrain pixels
@@ -21192,7 +21195,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     siegeHerald?.tick();   // AUDIT-SEATS G1: the battles announced in red, at their marks
     if (townTalk.overlay instanceof DeathScreen || modes?.deathUp?.()) { leaveBattle(); _watchedFrom = null; }   // AUDIT-SEATS C1: the dead fight in no battle - its HUD stood frozen over the death screen (the battle's tick is the living online frame's); G4: and a spectator's spot is the respawn's to replace
     if (gatePool && (modes?.mode ?? 'exterior') !== 'exterior') drawGateBanner(null);   // WB2: the countdown is the street's; the pool's own frame runs there alone
-    if (gatePool && (modes?.mode ?? 'exterior') !== 'exterior' && modes?.gateArenaDay?.() == null) drawGateMarksCard(null);   // WB9a: the gate's card is the street's, the court draws its own - anywhere else, none
+    if (gatePool && (modes?.mode ?? 'exterior') !== 'exterior' && modes?.gateArenaDay?.() == null && modes?.sdRealmSlot?.() == null) drawGateMarksCard(null);   // WB9a: the gate's card is the street's, the court draws its own - anywhere else, none (SD18b: the Hour draws its own marks on it)
     // WB3b: the court stands until its gate's day is over - then it comes apart around whoever is in it, who land
     // before the gate; out of it, its state is forgotten (its falls and receipts are kept)
     const courtDay = modes?.gateArenaDay?.() ?? null;
@@ -21698,6 +21701,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  doors below. Out of the realm it is forgotten. */
   const sdFightLink = params.has('online') ? createSdFightLink({ now: () => Date.now() + _sharedOffsetMs, say: (t, key) => { if (sdNearArena()) sdSay(t, SD_VOICE_RANK.turn, key); } }) : null;   // AUDIT SD II (L6 F15): to whoever stands near its arena
   let _sdFightHeld = false, _sdBarUp = false, _sdGroundUp = false, _sdCardUp = false;   // SD15: the ground's rim and the Hour's card up
+  let _sdMarksSince = null, _sdMarksUp = false;   // SD18b: when I stepped into the Hour (its marks' card), and the card up
   const sdBeats = createSdBeats();   // SD15: the fight's turns, as this page sees them
   /** SD8d (Super-Dungeons.md section 10): ITS BLOWS ON ME (scenes/sdRemnantBlows.js) - each one on the arena's floor as it
    *  winds up and lands, heard, and judged on my own feet through the dungeon context's door (the gate court's way); its
@@ -21711,6 +21715,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     say: (t, everyone = false, key = null) => { if (everyone || sdNearArena()) sdSay(t, SD_VOICE_RANK.turn, key); },   // AUDIT SD II (L6 F15): near its arena - its fall to the whole Hour
     me: () => (online ? online.name ?? null : null),   // my row of the chart
     hudHidden: () => gamePaused() || !!townTalk.hudHidden,
+    save: (e, el) => { const w = GATE_SAVES[el]; return w ? savingThrow(w[0], w[1], e) : 100; },   // SD18b: the throw against its Ending's element (the gate's)
   }) : null;
   /** SD14a (Super-Dungeons.md section 10): ITS VOICE (scenes/sdRemnantVoice.js) - its body and its Echoes heard, off the
    *  fight this page holds: strides, growls, grunts, its wake and its turns, the stun, the release of each blow, a Volley
@@ -21766,20 +21771,29 @@ export async function bootWorld(canvas, renderer, params, status) {
       // SD15: THE ARENA READ (scenes/sdArenaRead.js) - a blow still to land on my feet, and the burning brass under them,
       // on the gate's own rim and warning; the fight's turns on the Hour's own card
       const peril = playerEntity.health > 0 ? sdPerilAt(s, now, x - SD_ARENA.x, z - SD_ARENA.z, cam.yaw) : null;
-      ground = sdGroundModel({ burning: !!sdBlows?.burning?.(), now, peril });
+      ground = sdGroundModel({ burning: !!sdBlows?.burning?.(), el: sdBlows?.burningEl?.() ?? null, now, peril });   // SD18b: in its element
       const beat = sdBeats.frame(s, now);
       card = beat ? titleCardModel(beat, now) : null;
     } else sdBeats.leave();
+    // SD18b: THE HOUR'S MARKS (ui/sdMarksView.js) - its Ending and its omens on the gate's own card as I step into the Hour
+    let marks = null;
+    if (inRealm) {
+      const nowMs = performance.now();
+      if (_sdMarksSince === null) _sdMarksSince = nowMs;
+      marks = sdMarksCardModel(sdFightLink.state()?.mk ?? sdMarksOf(modes.sdRealmSlot()), { since: _sdMarksSince, now: nowMs });
+    } else _sdMarksSince = null;
     const hidden = gamePaused() || !!townTalk.hudHidden;
     if (bar || _sdBarUp) { drawGateBossBar(bar, { hidden }); _sdBarUp = !!bar; }
     if (ground || _sdGroundUp) { drawGateGround(ground, { hidden }); _sdGroundUp = !!ground; }
     if (card || _sdCardUp) { drawSdTitleCard(card, { hidden }); _sdCardUp = !!card; }
+    if (marks || _sdMarksUp) { drawGateMarksCard(marks, { hidden }); _sdMarksUp = !!marks; }   // SD18b
   };
   /** No online frame: the Remnant's bar put away. */
   const sdFightAway = () => {
     if (_sdBarUp) { drawGateBossBar(null); _sdBarUp = false; }
     if (_sdGroundUp) { drawGateGround(null); _sdGroundUp = false; }   // SD15
     if (_sdCardUp) { drawSdTitleCard(null); _sdCardUp = false; }
+    if (_sdMarksUp) { drawGateMarksCard(null); _sdMarksUp = false; }   // SD18b
   };
   /** The hall's word for the realm I stand in, or null; and whether its Concord holds (the edge widens with it). */
   const sdHallWord = () => (_sdHall && _sdHall.s === modes?.sdRealmSlot?.() ? _sdHall : null);
@@ -25170,7 +25184,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     takeSpoil: (key) => !!floorPool()?.pick(key),
     sdRealmLights: () => {   // SD9e: its spoils' light, first in the Hour's channel; SD16: and its landings' flashes
       const lit = sdSpoilsPool?.lights() ?? [], fx = sdFx && sdFightLink ? sdFx.lights(sdFightLink.now()) : [];
-      return fx.length ? [...lit, ...fx] : lit;
+      const stone = sdEndingStoneLight(modes?.sdRealmSlot?.() ?? null, deadlandsSeconds());   // SD18b: the Ending's stone in the hall
+      return fx.length || stone ? [...lit, ...fx, ...(stone ? [stone] : [])] : lit;
     },
     // WB6a: the Deadlands' sea and sky, in the dungeon arm's world pass after the court's solid geometry - in the court's
     // own air (the renderer's fog as it set it for the court, the sky's light following the lane's with the fog's colour)

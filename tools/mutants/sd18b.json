@@ -1,0 +1,227 @@
+[
+  {
+    "name": "SD18B-the-ending-last",
+    "file": "src/ui/sdMarksView.js",
+    "old": "    aspect: Object.freeze({ id: E.id, kind: 'aspect', name: E.sig,",
+    "new": "    aspect: Object.freeze({ id: E.id, kind: 'trial', name: E.sig,",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-shock-said-lightning-to-resist",
+    "file": "src/ui/sdMarksView.js",
+    "old": "tip: `Resist ${el === 'Lightning' ? 'shock' : el.toLowerCase()} to blunt",
+    "new": "tip: `Resist ${el.toLowerCase()} to blunt",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-view-made-every-frame",
+    "file": "src/ui/sdMarksView.js",
+    "old": "  if (had) return had;\n  const E = sdEndingOf(mk), el",
+    "new": "  const E = sdEndingOf(mk), el",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-no-sign",
+    "file": "src/ui/sdMarksView.js",
+    "old": "color: sdEndingCss(E.id), path: I.d, fill: I.fill }),",
+    "new": "color: sdEndingCss(E.id) }),",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-card-never-goes",
+    "file": "src/ui/sdMarksView.js",
+    "old": "  if (!(age >= 0) || age >= SD_MARKS_ARRIVE_MS) return null;",
+    "new": "  if (!(age >= 0)) return null;",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-card-never-fades",
+    "file": "src/ui/sdMarksView.js",
+    "old": "const alpha = Math.min(1, age / 250, (SD_MARKS_ARRIVE_MS - age) / SD_MARKS_FADE_MS);",
+    "new": "const alpha = Math.min(1, age / 250);",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-stone-the-first",
+    "file": "src/ui/sdMarksView.js",
+    "old": "const k = E ? SD_STONES.findIndex((st) => st.key === E.id) : -1;",
+    "new": "const k = E ? 0 : -1;",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-stone-still",
+    "file": "src/ui/sdMarksView.js",
+    "old": "SD_STONE_LIGHT.breathe * Math.sin(t * Math.PI * 2 * SD_STONE_LIGHT.hz));",
+    "new": "SD_STONE_LIGHT.breathe * Math.sin(0));",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-card-the-tables'-signs",
+    "file": "src/ui/gateMarksView.js",
+    "old": "  r.icon.innerHTML = markIconHtml(m, 20);",
+    "new": "  r.icon.innerHTML = markIconSvg(m.id, 20);",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-own-signs-unfilled",
+    "file": "src/ui/gateMarksView.js",
+    "old": "  const paint = m.fill ? 'fill=\"currentColor\"' : 'fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"';\n  return `<svg viewBox=\"0 0 24 24\" width=\"${size}\" height=\"${size}\" aria-hidden=\"true\"><path ${paint} d=\"${m.path}\"/></svg>`;",
+    "new": "  const paint = 'fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"';\n  return `<svg viewBox=\"0 0 24 24\" width=\"${size}\" height=\"${size}\" aria-hidden=\"true\"><path ${paint} d=\"${m.path}\"/></svg>`;",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-no-row",
+    "file": "src/ui/sdRemnantBar.js",
+    "old": "marksView: sdMarksViewOf(s.mk), trials: s.mk ? sdOmensLine(s.mk) : '',",
+    "new": "marksView: null, trials: '',",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-wake-the-table's",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "show('wake', s.op, sdWakeText(s.mk));",
+    "new": "show('wake', s.op, SD_BEAT_TEXT.wake);",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-ground-plain",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "ground: (el && SD_ELEMENT_GROUND[el]) || SD_BURNING_GROUND,",
+    "new": "ground: SD_BURNING_GROUND,",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-untinted",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "    color: sdTint(A.key, S.el), style:",
+    "new": "    color: SD_BLOW_COLOR[A.key], style:",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-tint-whole",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "  if (!c) { c = Object.freeze(base.map((v, i) => v + (E[i] - v) * SD_TINT_LEAN)); _tints.set(k, c); }",
+    "new": "  if (!c) { c = E; _tints.set(k, c); }",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-pool-fire",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "color: SD_ELEMENT_COLOR[g[0].el] ?? SD_POOL_COLOR, style: SD_ELEMENT_STYLE[g[0].el] ?? TELEGRAPH_STYLE.fire,",
+    "new": "color: SD_POOL_COLOR, style: TELEGRAPH_STYLE.fire,",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-unsaved",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "    strike(el ? savedShare(dmg, save(e, el)) : dmg, el ? { name, el } : { name });",
+    "new": "    strike(dmg, el ? { name, el } : { name });",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-unelemented",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "    strike(el ? savedShare(dmg, save(e, el)) : dmg, el ? { name, el } : { name });",
+    "new": "    strike(el ? savedShare(dmg, save(e, el)) : dmg, { name });",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-hit's-element-dropped",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "    for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);",
+    "new": "    for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A), null);",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-brass-unnamed",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "    land(p.el ? SD_ELEMENT_GROUND[p.el] : SD_BLOWS_TEXT.burning, p.pct, p.base, false, p.el ?? null);",
+    "new": "    land(SD_BLOWS_TEXT.burning, p.pct, p.base, false, p.el ?? null);",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-arc-forty-eight",
+    "file": "src/scenes/sdHall.js",
+    "old": "Math.round((f * SD_FRAY_RING.steps) / (o?.fray ?? SD_FRAY_MAX))",
+    "new": "Math.round((f * SD_FRAY_RING.steps) / SD_FRAY_MAX)",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-no-magic-save",
+    "file": "src/scenes/world.js",
+    "old": "  magic: Object.freeze([ELEMENTS.Magic, EFFECT_FLAGS.Magic]),   // SD18b: the Underking's Ending - the Remnant's blows in magic\n",
+    "new": "",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-card-hidden-as-the-street's",
+    "file": "src/scenes/world.js",
+    "old": " && modes?.sdRealmSlot?.() == null) drawGateMarksCard(null);",
+    "new": ") drawGateMarksCard(null);",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-the-card-never-drawn",
+    "file": "src/scenes/world.js",
+    "old": "    if (marks || _sdMarksUp) { drawGateMarksCard(marks, { hidden }); _sdMarksUp = !!marks; }   // SD18b\n",
+    "new": "",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  },
+  {
+    "name": "SD18B-no-stone",
+    "file": "src/scenes/world.js",
+    "old": "      const stone = sdEndingStoneLight(modes?.sdRealmSlot?.() ?? null, deadlandsSeconds());",
+    "new": "      const stone = null;",
+    "tests": [
+      "test/sd18b_seen.test.js"
+    ]
+  }
+]

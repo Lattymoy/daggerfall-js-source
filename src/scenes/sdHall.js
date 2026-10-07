@@ -17,7 +17,7 @@
 //     handle turns it. A Ledger plaque's riddle shows on its plaque as the ray finds it, and is said when it is pressed.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { orreryOf, SD_STONES, SD_STONE_SETTLE_MS, stoneInReach, dungeonToRealm, sdHour, sdHourWord } from '../net/sdBrain.js';
+import { orreryOf, SD_STONES, SD_STONE_SETTLE_MS, SD_FRAY_MAX, stoneInReach, dungeonToRealm, sdHour, sdHourWord } from '../net/sdBrain.js';
 import { SD_REALM_ARCHIVE } from '../world/sdRealm.js';
 import { hallArt } from '../world/sdHallArt.js';
 import { buildHallModel, buildHandModel, buildLitModel, buildFrayModel, buildBridgeModel, hallFloorTris, hallSolidTris, handMatrix, handleBox, plaqueBox, dialCentre, beforeStone, SD_PLAQUE, SD_FRAY_RING } from '../world/sdHall.js';
@@ -99,6 +99,8 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
     return d;
   };
   const setLit = (n) => { if (n === lit && (litDraw || n === 0)) return; lit = n; const old = litMesh; litMesh = make(buildLitModel(n)); litDraw = swap(litDraw, litMesh); drop(old); };
+  /** SD18b: the fray's arc goes round once by its Hollow's own snap (the Fraying's thirty-six) - its steps for `f` turns. */
+  const frayArc = (f) => Math.min(SD_FRAY_RING.steps, Math.round((f * SD_FRAY_RING.steps) / (o?.fray ?? SD_FRAY_MAX)));
   const setFray = (f) => { if (f === fray && (frayDraw || f === 0)) return; fray = f; const old = frayMesh; frayMesh = make(buildFrayModel(f)); frayDraw = swap(frayDraw, frayMesh); drop(old); };
 
   /** A word from the realm, heard once: the hands set going, the sounds, the dial, the Concord. */
@@ -118,7 +120,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
     // AUDIT SD II (L2 F16): the snap shows the arc all the way round for a moment, then empty - the word's own count
     frayWant = w.f;
     if (!first && w.x) { frayFullUntil = now() + SD_FRAY_FULL_MS; setFray(SD_FRAY_RING.steps); }
-    else if (!(now() < frayFullUntil)) setFray(w.f);
+    else if (!(now() < frayFullUntil)) setFray(frayArc(w.f));
     if (w.ok && !ok) {
       ok = true;
       if (bridgeDraw) { bridgeDraw.object.matrix = identity(); bridgeDraw.hidden = false; }
@@ -157,7 +159,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
       hasFeet = !!pos;
       if (pos) { feet[0] = pos[0]; feet[1] = pos[1]; feet[2] = pos[2]; }
       if (w && w !== word && o && w.s === s && Array.isArray(w.st)) { word = w; hear(w); }
-      if (frayFullUntil !== -Infinity && now() >= frayFullUntil) { frayFullUntil = -Infinity; setFray(frayWant); }   // AUDIT SD II (L2 F16): the full arc's moment over
+      if (frayFullUntil !== -Infinity && now() >= frayFullUntil) { frayFullUntil = -Infinity; setFray(frayArc(frayWant)); }   // AUDIT SD II (L2 F16): the full arc's moment over
       const step = Math.max(0, dt) * rate;
       for (let i = 0; i < hands.length; i++) {
         const d = way(shown[i], want[i]);

@@ -21,7 +21,7 @@ import { setBossStruck } from '../systems/sigilSetPowers.js';   // AUDIT SD: a b
 import { SD_ARENA, realmToDungeon, dungeonToRealm } from '../net/sdBrain.js';
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, atkWindup, blowShape, stompRingAt, handAngleAt, arenaOf } from '../net/sdRemnant.js';
 import { POOL_TICK_MS } from '../net/gateBrain.js';
-import { strikeDamage } from '../net/gateStrike.js';
+import { strikeDamage, savedShare } from '../net/gateStrike.js';
 import { sdBodyAt, SD_HEARTS_KEY } from '../net/sdFightLink.js';
 import { sdBlowVerdict, sdVolleyPools, sdPoolUnder } from '../net/sdStrike.js';
 import { GateTelegraphRenderer, TELEGRAPH_KIND, TELEGRAPH_EDGE, TELEGRAPH_EDGE_DAGON, TELEGRAPH_STYLE, TELEGRAPH_POOL, TELEGRAPH_FLASH_MS, TELEGRAPH_POINTS_MAX } from '../render/gateTelegraph.js';
@@ -42,6 +42,26 @@ export const SD_BLOW_STYLE = Object.freeze({
 });
 /** The brass burning where the Volley fell. */
 export const SD_POOL_COLOR = Object.freeze([1.0, 0.45, 0.16]);
+/** SD18b: AN ENDING'S ELEMENT ON THE FLOOR (net/sdMarks.js) - its colour (the brass burning, frozen, charged, venomed or
+ *  soul-lit), its ground's grain (render/gateTelegraph.js TELEGRAPH_STYLE - the gate's own aspects' grains; magic the
+ *  light's crackle), its ground's name, and how far its own blows' colours lean to it (they keep their own, to be told
+ *  apart). */
+export const SD_ELEMENT_COLOR = Object.freeze({
+  fire: SD_POOL_COLOR, frost: Object.freeze([0.5, 0.82, 1.0]), shock: Object.freeze([0.7, 0.76, 1.0]), poison: Object.freeze([0.5, 0.95, 0.25]), magic: Object.freeze([0.78, 0.5, 1.0]),
+});
+export const SD_ELEMENT_STYLE = Object.freeze({ fire: TELEGRAPH_STYLE.fire, frost: TELEGRAPH_STYLE.frost, shock: TELEGRAPH_STYLE.shock, poison: TELEGRAPH_STYLE.poison, magic: TELEGRAPH_STYLE.shock });
+export const SD_ELEMENT_GROUND = Object.freeze({ fire: 'Burning brass', frost: 'Rimed brass', shock: 'Charged brass', poison: 'Venomed brass', magic: 'Soul-lit brass' });
+export const SD_TINT_LEAN = 0.35;
+const _tints = new Map();
+/** A blow's colour on the floor in element `el` (none: its own) - kept, one a pair. */
+export function sdTint(key, el) {
+  const base = SD_BLOW_COLOR[key] ?? SD_BLOW_COLOR.stomp, E = el ? SD_ELEMENT_COLOR[el] : null;
+  if (!E) return base;
+  const k = `${key}:${el}`;
+  let c = _tints.get(k);
+  if (!c) { c = Object.freeze(base.map((v, i) => v + (E[i] - v) * SD_TINT_LEAN)); _tints.set(k, c); }
+  return c;
+}
 /** The arena as the telegraph pass's floor: one, its centre the frame's origin. */
 export const SD_TELEGRAPH_FLOOR = Object.freeze({ r: SD_ARENA.r, courts: Object.freeze([Object.freeze([0, 0])]) });
 export const SD_ARENA_CENTRE = Object.freeze(realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z));
@@ -101,9 +121,10 @@ export function sdTelegraphShapes(atk, b, phase, now, out = []) {
   const S = blowShape(atk);   // SD18a: the blow its frame says - its Hollow's marks
   const w = atkWindup(atk, A, phase, b), since = now - (atk.at - w), after = now - atk.at, span = Math.max(S.active, 1);
   if (since < 0 || after >= span + TELEGRAPH_FLASH_MS) return out;
+  // SD18b: its colour leaning to its Ending's element (sdTint)
   const common = {
     t: w > 0 ? clamp01(since / w) : 1, flash: after >= 0 ? 1 : 0, alpha: after > span ? clamp01(1 - (after - span) / TELEGRAPH_FLASH_MS) : 1,
-    color: SD_BLOW_COLOR[A.key], style: SD_BLOW_STYLE[A.key], edge: A === SD_BLOWS.reset || A === SD_BLOWS.end ? TELEGRAPH_EDGE_DAGON : TELEGRAPH_EDGE,
+    color: sdTint(A.key, S.el), style: SD_BLOW_STYLE[A.key], edge: A === SD_BLOWS.reset || A === SD_BLOWS.end ? TELEGRAPH_EDGE_DAGON : TELEGRAPH_EDGE,
     since: Math.max(0, since) / 1000, span: Math.max(0.001, w / 1000), after: after >= 0 ? after / 1000 : -1,
     body: b === SD_BODY.remnant ? SD_REM.r : SD_ECHO.r,
   };
@@ -140,9 +161,9 @@ export function sdPoolShapes(pools, now) {
   const live = pools.filter((p) => now >= p.from && now < p.until);
   const out = [];
   for (let k = 0; k < live.length; k += TELEGRAPH_POINTS_MAX) {
-    const g = live.slice(k, k + TELEGRAPH_POINTS_MAX);
+    const g = live.slice(k, k + TELEGRAPH_POINTS_MAX);   // SD18b: the brass in its Ending's element - its colour and grain
     const alpha = Math.max(...g.map((p) => clamp01(Math.min((now - p.from) / 150, (p.until - now) / 1000))));
-    out.push(shapeOf(TELEGRAPH_KIND.discs, { r: g[0].r, points: g.map((p) => [p.x, p.z]), alpha, color: SD_POOL_COLOR, style: TELEGRAPH_STYLE.fire, pool: TELEGRAPH_POOL.ground, since: Math.max(0, now - Math.min(...g.map((p) => p.from))) / 1000 }));
+    out.push(shapeOf(TELEGRAPH_KIND.discs, { r: g[0].r, points: g.map((p) => [p.x, p.z]), alpha, color: SD_ELEMENT_COLOR[g[0].el] ?? SD_POOL_COLOR, style: SD_ELEMENT_STYLE[g[0].el] ?? TELEGRAPH_STYLE.fire, pool: TELEGRAPH_POOL.ground, since: Math.max(0, now - Math.min(...g.map((p) => p.from))) / 1000 }));
   }
   return out;
 }
@@ -169,13 +190,14 @@ export function sdBlowsInFlight(s) {
  * when I am not in the Hour), `grounded()` whether I stand on the ground, `player()` my entity, `strike(dmg, how)` the
  * dungeon context's door, `say` a line, `me()` my name on the relay (my row of the chart), `hudHidden()` the HUD's hide.
  * @param {{ gl?: any, audio?: any, link: any, feet?: () => (number[]|null), grounded?: () => boolean, player?: () => any,
- *   strike?: (dmg: number, how: any) => void, say?: (t: string, everyone?: boolean, key?: string) => void, me?: () => (string|null), hudHidden?: () => boolean }} deps
+ *   strike?: (dmg: number, how: any) => void, say?: (t: string, everyone?: boolean, key?: string) => void, me?: () => (string|null), hudHidden?: () => boolean,
+ *   save?: (e: any, el: string) => number }} deps - SD18b: `save(entity, el)` the share (0-100) a strike in element `el` lands
  */
-export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () => null, grounded = () => true, player = () => null, strike = () => {}, say = () => {}, me = () => null, hudHidden = () => false }) {
+export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () => null, grounded = () => true, player = () => null, strike = () => {}, say = () => {}, me = () => null, hudHidden = () => false, save = () => 100 }) {
   let pass = null, passTried = false;
   /** each blow by its number: what of it has been judged, whether it is done, heard and said */
   const marks = new Map();
-  let prevT = null, pools = [], inFire = false, burnAt = -Infinity, outAt = -Infinity;
+  let prevT = null, pools = [], inFire = false, burnAt = -Infinity, outAt = -Infinity, fireEl = null;
   let fellFi = 0, chartAt = null, chartFell = null, endSaid = 0;
   /** AUDIT SD: the fight the marks are of - a blow's number begins again in every fight, so a fresh one's are its own */
   let marksFi = 0;
@@ -197,11 +219,13 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
   /** A strike on me (the living alone reach here - the frame's own law): its share of my own health and its base, through
    *  the door every blow lands by. AUDIT SD: `blow` a body's own (`bodysBlow`), marked as a world boss's blow for the one
    *  set power that answers it (systems/sigilSetPowers.js). */
-  function land(name, pct, base, blow = false) {
+  function land(name, pct, base, blow = false, el = null) {
     const e = player();
     if (!e) return;
     if (blow) setBossStruck();
-    strike(strikeDamage(pct, e.maxHealth, base), { name });
+    const dmg = strikeDamage(pct, e.maxHealth, base);
+    // SD18b: its Ending's element - my resistance to it softens it (the gate's saving throw), and it lands as that element
+    strike(el ? savedShare(dmg, save(e, el)) : dmg, el ? { name, el } : { name });
   }
   /** One blow's frame: heard at its word and its landing, the Reset and the End said, judged on my feet. */
   function blow(s, b, atk, t, t0, at) {
@@ -226,7 +250,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     const v = sdBlowVerdict(atk, at[0], at[1], t0, t, grounded(), m.seen);
     m.seen = v.seen;
     m.done = v.done;
-    for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A));
+    for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);
   }
   /** THE BURNING BRASS - a bite each POOL_TICK_MS I stand in it, the first a tick after I stepped in (the gate's law: a
    *  step out shorter than a tick keeps the count it had). */
@@ -235,13 +259,14 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     if (!pools.length || !at || !alive) { inFire = false; return; }
     const p = sdPoolUnder(pools, at[0], at[1], t);
     if (!p) { if (inFire) { inFire = false; outAt = t; } return; }
+    fireEl = p.el ?? null;
     if (!inFire) {
       inFire = true;
       if (t - outAt >= POOL_TICK_MS) { const f = feet(); if (f) play(SD_BLOW_CUES.pool, f); burnAt = t; return; }
     }
     if (t - burnAt < POOL_TICK_MS) return;
     burnAt = t;
-    land(SD_BLOWS_TEXT.burning, p.pct, p.base);
+    land(p.el ? SD_ELEMENT_GROUND[p.el] : SD_BLOWS_TEXT.burning, p.pct, p.base, false, p.el ?? null);
   }
   /** AUDIT SD II (L6 F7): THE HEARTS HEARD - the gate's crystals' own cues (world/gateBoss.js BOSS_CUES), each where its
    *  Heart stands: their rise with the Reset's call (heard live alone - SD_HEART_LATE_MS), a blow on one, and one broken
@@ -326,6 +351,8 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     /** Out of the Hour: its marks and its brass forgotten, the chart put away. */
     /** SD15: whether I stand in the burning brass this frame (the arena read's rim). */
     burning: () => inFire,
+    /** SD18b: the element of the brass I stand in (null: plain fire, or none). */
+    burningEl: () => (inFire ? fireEl : null),
     leave() {
       marks.clear(); pools = []; inFire = false; prevT = null; shapes = [];
       marksFi = 0; fellFi = 0; endSaid = 0;   // AUDIT SD: the next Hollow's Hour numbers its fights from 1 again
