@@ -102,14 +102,20 @@ test('MW-STEEL2: bindPoseMats - P_c = P_b o IB_b o IB_c^-1 through a skin, a gro
   const B = bonesAt([0, 0, 0]);
   const ib = (name) => ({ a: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]), t: B[name].map((v) => -v) });
   const ref = (name) => skeleton.byName.get(name.toLowerCase());
-  const skinOf = (names) => ({ positions: Float32Array.from([1, 2, 3]), skin: { bones: names.map((n) => ({ ref: ref(n), name: n.toLowerCase(), invBind: ib(n) })) } });
-  // two groups: the right arm, and the neck - no bone shared between them
-  const bp = bindPoseMats(skeleton, [skinOf(['Bip01 R UpperArm', 'Bip01 R Forearm', 'Bip01 R Hand']), skinOf(['Bip01 Spine2', 'Bip01 Neck'])], rest);
-  assert.deepEqual(bp.anchors, ['Bip01 Spine2', 'Bip01 R UpperArm'], 'the root-most bone first, then the next group\'s');
-  assert.equal(bp.placed, 5);
+  const skinOf = (names, frame) => ({ positions: Float32Array.from([1, 2, 3]), skin: { bones: names.map((n) => ({ ref: ref(n), name: n.toLowerCase(), invBind: ib(n) })), ...(frame ? { frame } : {}) } });
+  // two groups: the neck, and the right arm from its shoulder - no bone shared between them
+  const bp = bindPoseMats(skeleton, [skinOf(['Bip01 R Clavicle', 'Bip01 R UpperArm', 'Bip01 R Forearm', 'Bip01 R Hand']), skinOf(['Bip01 Spine2', 'Bip01 Neck'])], rest);
+  assert.deepEqual(bp.anchors, ['Bip01 Spine2', 'Bip01 R Clavicle'], 'the root-most bone first, then the next group\'s');
+  assert.equal(bp.placed, 6);
   assert.deepEqual(Array.from(bp.mats.get(ref('Bip01 R Forearm')).t), B['Bip01 R Forearm'], 'the forearm bound where its skin says - out level, not hanging');
   assert.ok(rest.get(ref('Bip01 R Forearm')).t[2] < B['Bip01 R Forearm'][2] - 10, 'where the rest hangs it');
   assert.equal(bp.spread, 0);
+  // MW-STEEL3: a body skin's frame is its own, so its group stands on its anchor's whole REST - an arm anchored at the
+  // upper arm (its own skin's root-most bone) hangs as the rest hangs it; the skeleton's own skin anchors with its axes
+  const own = bindPoseMats(skeleton, [skinOf(['Bip01 R UpperArm', 'Bip01 R Forearm'])], rest);
+  assert.deepEqual(Array.from(own.mats.get(ref('Bip01 R Forearm')).t).map((v) => +v.toFixed(4)), Array.from(rest.get(ref('Bip01 R Forearm')).t).map((v) => +v.toFixed(4)), 'a body skin anchored at a turned bone stands on its rest');
+  const framed = bindPoseMats(skeleton, [skinOf(['Bip01 R UpperArm', 'Bip01 R Forearm'], 'skeleton')], rest);
+  assert.deepEqual(Array.from(framed.mats.get(ref('Bip01 R Forearm')).t), B['Bip01 R Forearm'], 'the skeleton\'s own skin anchors with its own axes');
   // a bind that disagrees with itself says by how much
   const torn = skinOf(['Bip01 R UpperArm', 'Bip01 R Forearm']);
   torn.skin.bones[1].invBind = { ...torn.skin.bones[1].invBind, t: torn.skin.bones[1].invBind.t.map((v, k) => v + (k === 2 ? 2 : 0)) };

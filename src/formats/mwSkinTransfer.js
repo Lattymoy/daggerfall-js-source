@@ -175,14 +175,25 @@ export function affineInvert(m) {
  * The bind pose is read off the skins themselves. Within one skin every bone's term maps that skin's mesh to the same
  * place at bind - it is what a bind is - so for two bones b and c it binds, P_c = P_b o IB_b o IB_c^-1, whatever the
  * skin's own transforms and whatever frame its mesh is authored in (retail's are part-local, MW-D21). From an anchor
- * the relation runs out through every skin to every bone they reach. The anchor is the ROOT-MOST bone a skin binds (the
- * pelvis, on a body), placed by translation alone - its origin on its rest origin, its axes the skin's (the modeller's
- * upright frame, which a rest's lean would tilt and a translation-only fit could never take back out). Bones no
- * placed skin reaches are another group: its own root-most bone anchors it the same way. `skins` are the body's own
- * first, so where a part's bones are its own it is drawn exactly as it was bound; then any further (the skeleton
- * file's own, which reach every bone and join the groups into one bind); a skin made from a RIGID part (sourceSkin's
- * `rigid`) binds nothing. Every node no skin binds rides its parent: P_n = P_parent o rest local - the part nodes
- * ("Right Forearm"), the weapon bones, the root above the anchor.
+ * the relation runs out through every skin to every bone they reach. `skins` are the body's own first, so where a
+ * part's bones are its own it is drawn exactly as it was bound; then any further (the skeleton file's own, which reach
+ * every bone and join the groups into one bind); a skin made from a RIGID part (sourceSkin's `rigid`) binds nothing.
+ * Every node no skin binds rides its parent: P_n = P_parent o rest local - the part nodes ("Right Forearm"), the
+ * weapon bones, the root above the anchor.
+ *
+ * MW-STEEL3 (2026-10-07, Mac: "Morrowind integration bugs. I am so tired of us not getting this right", over a
+ * player's screenshot - the gauntlets in a V over the helm, the arms hanging in the robe under them): THE ANCHOR'S
+ * FRAME IS ONLY KNOWN FOR THE SKELETON'S OWN SKIN. P_b o IB_b is the frame the skin's MESH is authored in, and the
+ * relation above says nothing of it - so the anchor's axes are a claim about that frame. The skeleton file's own skin
+ * ("Tri Shadow", `frame: 'skeleton'` - skeletonBindSkins) is authored in the skeleton's frame, and its bind stands
+ * upright on retail (the hands level with the shoulders): its root-most bone takes the bind's rotation and its rest
+ * origin (the modeller's upright frame, which a rest's lean would tilt), and it is asked FIRST, whatever a body skin
+ * binds. A body part's mesh is part-local (MW-D21 - "a torso on the ground"), so its frame is unknown: MW-STEEL2 took
+ * it for the skeleton's, and a body skin that binds a bone as shallow as the Tri Shadow's anchor (a skin may list
+ * bones it does not weight - the pelvis, Bip01) won the tie, the body's skins coming first, and the whole bind turned
+ * with that part's frame: every gauntlet copied the clavicle and stood off the arm. A group no skeleton skin reaches
+ * is anchored at its root-most bone's whole REST - no frame claimed - and the relation, which is frame-free, carries
+ * it from there.
  *
  * `restMats` is the skeleton's rest in graph space (skeletonSpaceMatrices). Answers `{ mats, anchors, placed, spread }`
  * - every node's graph matrix in the bind pose, the anchors' names (one a group), how many bones a bind placed, and the
@@ -194,6 +205,7 @@ export function bindPoseMats(skeleton, skins, restMats) {
   const lists = (skins ?? []).filter((x) => x?.skin && !x.skin.rigid).map((x) => ({
     bones: (x.skin.bones ?? []).filter((b) => b.ref != null && skeleton.nodes.has(b.ref) && b.invBind),
     positions: x.positions ?? null,
+    framed: x.skin.frame === 'skeleton',   // MW-STEEL3: authored in the skeleton's frame - the one anchor whose axes are known
   })).filter((l) => l.bones.length);
   if (!lists.length) return null;
   const depthOf = new Map();
@@ -207,14 +219,20 @@ export function bindPoseMats(skeleton, skins, restMats) {
   const bind = new Map();
   const anchors = [];
   for (;;) {
-    // the next group's anchor: the root-most bone a skin binds that nothing has placed (the first skin's on a tie)
+    // the next group's anchor: the root-most bone a skin binds that nothing has placed (the first skin's on a tie) -
+    // a skeleton skin's before any body skin's (MW-STEEL3)
     let anchor = null;
-    for (const l of lists) for (const b of l.bones) if (!bind.has(b.ref) && (!anchor || depth(b.ref) < depth(anchor.ref))) anchor = b;
+    let framed = false;
+    for (const pass of [true, false]) {
+      for (const l of lists) if (l.framed === pass) for (const b of l.bones) if (!bind.has(b.ref) && (!anchor || depth(b.ref) < depth(anchor.ref))) anchor = b;
+      if (anchor) { framed = pass; break; }
+    }
     if (!anchor) break;
     const inv = affineInvert(anchor.invBind);
     const rest = restMats.get(anchor.ref);
     if (!inv || !rest) { bind.set(anchor.ref, rest ?? { a: Float32Array.from([1, 0, 0, 0, 1, 0, 0, 0, 1]), t: [0, 0, 0] }); continue; }
-    bind.set(anchor.ref, { a: inv.a, t: [rest.t[0], rest.t[1], rest.t[2]] });
+    // MW-STEEL3: the skeleton's skin's axes and the rest's origin; a body skin's frame is part-local, so its whole rest
+    bind.set(anchor.ref, framed ? { a: inv.a, t: [rest.t[0], rest.t[1], rest.t[2]] } : { a: Float32Array.from(rest.a), t: [rest.t[0], rest.t[1], rest.t[2]] });
     anchors.push(skeleton.nodes.get(anchor.ref)?.name ?? null);
     // each pass places every bone a skin with a placed bone binds - the body's own skins first in every pass
     for (let grew = true; grew;) {
