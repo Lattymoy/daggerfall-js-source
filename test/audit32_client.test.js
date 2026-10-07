@@ -320,7 +320,7 @@ test('AUDIT 32 wiring: a flyer\'s body where its corpse lies (H3); no click thro
   assert.match(w, /const openHuntLoot = \(key\) => \(modeNow\(\) === 'interior' \? modes\?\.openInteriorBody\?\.\(key\)\n\s*: key\.startsWith\('foeCorpse:'\) \? openBodyLoot\(key\) : modes\?\.dungeonCtx\?\.takeLoot\(key, getInteractionMode\(\)\)\);/, 'H8');
   // PIN MOVED (AUDIT PROF-541 R2-C2): B4's own busy words gone - one latch holds every craft and brew, so the book's word
   // names none (test/prof12_client.test.js R2-C2)
-  assert.match(w, /xp: 'Carpentry' \}/, 'B4');
+  assert.match(w, /kept: BENCH_KEPT_TEXT, xp: professionName\('carpentry'\) \}/, 'B4');   // PIN MOVED (CRAFT3): the workbench's XP word is its discipline's craft's name (professionName - Building), no literal
   assert.match(w, /xp: 'Smithing' \}\);/);
   assert.match(src('src/systems/inputActions.js'), /\['ActChoice', 'At a profession node: the next of its acts on the list'\]/, 'R1');   // PROF-MENU: the key steps the node's list
   const idx = src('server-account/src/index.js');

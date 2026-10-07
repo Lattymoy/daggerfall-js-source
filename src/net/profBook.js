@@ -55,10 +55,12 @@
 // Pure - the door, the storage, the clock and the ids are handed in - so
 // the pins drive it without a network.
 // ═══════════════════════════════════════════════════════════════════
-import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs
+import { HARVEST_LATE_S, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, smeltRecipe, trackOf } from './professionLaw.js';   // PROF7: the day's rare hides (CAP-OFF: no day's cap); BAG1: a work's inputs
 import { CARRIED_MAX, DEPOSIT_MAX, carriedUsable, carriedTotal, clampCarried } from './bagLaw.js';   // BAG1: what a character carries, counted
-import { recipeById, recipeInputs } from './recipeLaw.js';   // BAG1: a craft's inputs, moved in from the bag first
+import { recipeById, recipeInputs, recipeOpen } from './recipeLaw.js';   // BAG1: a craft's inputs, moved in from the bag first; AUDIT CRAFT1: whether the rank opens it
 import { potionById, brewSpends } from './alchemyLaw.js';   // BAG1: a brew's
+import { chainPlan, chainNeeded, storesRoom } from './chainLaw.js';   // CRAFT1: the works a craft's inputs want first
+import { temperableRecipe, temperCost } from './temperLaw.js';   // CRAFT4: a temper's input, moved in from the bag first
 import { pixelKey, parseNodeKey } from './nodeLaw.js';
 import { accountRefusalText } from './accountClient.js';
 import { ASK_AGAIN_NOW, jittered } from './backoff.js';   // SCALE1: asks again spread out, and never at once into a minute's refusal
@@ -355,7 +357,8 @@ export function createProfBook({ door, storage = null, character = () => null, n
      *  vouched for). CAP-OFF: the account's day in a craft (`account:<profession>`) closes nothing - there is none. */
     closed(key) { return state.closed.get(key) === dayOf(now()); },
     /** A track as the service last said it (never null: a profession not worked yet is at nothing). */
-    track(profession) { return state.tracks.get(profession) ?? { profession, xp: 0, rank: 0, specs: { 50: null, 100: null }, respec: null }; },
+    /** A track as the service said it - CRAFT3: a discipline's its craft's ('jewelcrafting' the Smithing track). */
+    track(profession) { const p = trackOf(profession); return state.tracks.get(p) ?? { profession: p, xp: 0, rank: 0, specs: { 50: null, 100: null }, respec: null }; },
     /** One material's count in the Stores, own and bought (GOLD-MARKET: and `gold`, bought with gold, where held). */
     store(material) { return state.stores.get(material) ?? { material, own: 0, bought: 0 }; },
     /** What a station, a craft or a writ may spend of it - never what gold bought (GOLD-MARKET's wall). BAG1: the Stores'
@@ -624,9 +627,14 @@ export function createProfBook({ door, storage = null, character = () => null, n
      * so a lost answer is asked again (the same id, the same pieces) and `mint` makes them on the answer, once: the tab
      * that lets the craft go mints it (AUDIT 29 C5's law). One at a time. AUDIT 30 C4: `fee` the station's gold, kept with
      * the craft and handed to `mint` with it - the tab that mints the pieces pays it, whenever the answer comes.
-     * @returns {Promise<{ ok: boolean, data?: any, error?: string, kept?: boolean, elsewhere?: boolean }>}
+     * CRAFT1 (bible/06-Systems/Professions-Arc.md 41): THE CHAIN - inputs the Stores and what is carried lack are made
+     * first by the works chainLaw plans from what is held, each the service's own smelt kept in the Stores (`stay`), in
+     * the plan's order; a plan that cannot cover them asks no work (the craft is asked as before - the book's view of the
+     * Stores is not the service's, and the service says what is short), and a work refused stops the craft with the
+     * works before it done (`refined`). `chain: false` asks none.
+     * @returns {Promise<{ ok: boolean, data?: any, error?: string, kept?: boolean, elsewhere?: boolean, refined?: { id: string, count: number, xp: number, made: number }[] }>}
      */
-    async craft(recipe, { clean = false, name = null, heartwood = false, fee = 0, dye = null, seat = null, cracked = false } = {}, mint) {
+    async craft(recipe, { clean = false, name = null, heartwood = false, fee = 0, dye = null, seat = null, cracked = false, chain = true } = {}, mint) {
       if (_craftBusy) return { ok: false, error: 'prof-busy' };
       const key = slot();
       const c = character();
@@ -634,9 +642,30 @@ export function createProfBook({ door, storage = null, character = () => null, n
       _craftBusy = (async () => {
         // BAG1: what the Stores lack, from the bag and the pack first - the anvil's route spends the Stores
         const r0 = recipeById(recipe);
-        const ready = r0 ? await book.ensureInStores(recipeInputs(r0, { heartwood: heartwood === true, joiner: book.track(r0.profession ?? 'smithing').specs?.[50] === 'joiner', cracked: cracked === true })) : { ok: true };
+        const inputs = r0 ? recipeInputs(r0, { heartwood: heartwood === true, joiner: book.track(r0.profession ?? 'smithing').specs?.[50] === 'joiner', cracked: cracked === true }) : [];
+        // CRAFT1: the chain's works first, their products kept in the Stores for the craft
+        /** @type {{ id: string, count: number, xp: number, made: number }[]} */
+        const refined = [];
+        // AUDIT CRAFT1 (the review's aside): never a chain for a recipe the rank does not open - its works would run, and
+        // the craft be refused `prof-rank` after them; the craft is asked as ever and the service says so
+        const t0 = r0 ? book.track(r0.profession ?? 'smithing') : null;
+        if (r0 && chain !== false && recipeOpen(r0, t0?.rank ?? 0, t0?.specs) && chainNeeded(inputs, (k) => book.held(k))) {
+          const plan = chainPlan(inputs, (k) => book.held(k), { track: (p) => book.track(p), room: (k) => storesRoom(book.store(k)) });
+          // a plan that cannot cover them asks no work - the craft is asked as ever, and the service says what is short
+          if (plan.ok) for (const w of plan.works) {
+            const s = await book.smelt(w.id, w.count, { stay: true });
+            if (!s?.ok) {
+              // AUDIT CRAFT1 F2: a work refused for what the Stores hold says the book's view is not the service's (an answer
+              // lost, a press elsewhere) - read again, so the page stops offering the plan it cannot make
+              if (s?.error === 'stores-short' || s?.error === 'stores-gold' || s?.error === 'stores-full') state.reread = true;
+              return { ok: false, error: s?.error ?? 'offline', material: s?.material, moved: s?.moved ?? 0, refined, stopped: w.id, ...(s?.elsewhere ? { elsewhere: true } : {}) };   // F4: the work it stopped at
+            }
+            refined.push({ id: w.id, count: w.count, xp: Number(s.data?.xp) || 0, made: (Number(s.data?.own) || 0) + (Number(s.data?.bought) || 0) });   // AUDIT CRAFT1 F4: what the service made
+          }
+        }
+        const ready = r0 ? await book.ensureInStores(inputs) : { ok: true };
         // AUDIT2 BAG1 K5: never `kept` - no craft was kept; an unanswered put-in is said as such (`deposit-kept`)
-        if (!ready.ok) return { ok: false, error: ready.error ?? 'materials-short', material: ready.material, moved: ready.moved ?? 0 };
+        if (!ready.ok) return { ok: false, error: ready.error ?? 'materials-short', material: ready.material, moved: ready.moved ?? 0, ...(refined.length ? { refined } : {}) };
         const w = { rid: rid(), recipe, clean: clean === true, name: typeof name === 'string' ? name : null, character: c, heartwood: heartwood === true,   // PROF4: a Heartwood for a plank
           fee: Number.isSafeInteger(fee) && fee > 0 ? fee : 0, ...(Number.isInteger(dye) ? { dye } : {}),   // PROF7: a garment's dye
           ...(Number.isSafeInteger(seat) && seat >= 0 ? { seat } : {}),   // SEAT2b part two: the held town the station stands in (its crafting halls' steps)
@@ -644,7 +673,8 @@ export function createProfBook({ door, storage = null, character = () => null, n
         const kept = keptOf(key);
         kept.crafts.push(w);
         writeKept(kept, key);
-        return craftOne(w, key, mint);
+        const res = await craftOne(w, key, mint);
+        return refined.length ? { ...res, refined } : res;
       })().finally(() => { _craftBusy = null; });
       return _craftBusy;
     },
@@ -695,6 +725,50 @@ export function createProfBook({ door, storage = null, character = () => null, n
           ? door.disenchant(c, provenance, m.id, realm)
           : Promise.resolve({ ok: false, error: 'elsewhere', elsewhere: true });
         const r = realm ? await Promise.resolve().then(once).catch(() => ({ ok: false, error: 'offline' })) : await ask(once);
+        m.promise = null;
+        if (!keptAnswer(r) && r?.error !== 'elsewhere') ids.delete(key);
+        if (origin !== slot()) return { ...r, elsewhere: true };
+        if (r?.ok) { applyStore(r.data?.store); applyTrack(r.data?.track); } else shutBy(r);
+        return r;
+      })();
+      return m.promise;
+    },
+    /** CRAFT4: A TEMPER (Professions-Arc 41.7) - a piece of `recipe` a quality step better than `quality`, half the
+     *  recipe's main input from the Stores; a made piece names its `provenance` (its record re-signed - the answer's
+     *  `record`). The id is the ask's own until an answer comes, so a press after a lost answer is the same temper, and
+     *  its answer (`repeat`) the one the piece takes. Answers the service's answer; the Stores and the track moved. */
+    async temper(recipe, quality, provenance = null) {
+      const c = character();
+      if (!c) return { ok: false, error: 'prof-character' };
+      const origin = slot();
+      const key = `temper|${origin}|${recipe}|${quality}|${provenance ?? ''}`;
+      const m = idFor(key, PROF_QUEUE_MS);
+      if (m.promise) return m.promise;
+      m.promise = (async () => {
+        // BAG1: what the Stores lack, from the bag and the pack first - as a craft's
+        const r0 = recipeById(recipe);
+        const ready = temperableRecipe(r0) ? await book.ensureInStores([temperCost(r0)]) : { ok: true };
+        if (!ready.ok) { m.promise = null; ids.delete(key); return { ok: false, error: ready.error ?? 'materials-short', material: ready.material, moved: ready.moved ?? 0 }; }
+        const r = await ask(() => door.temper(c, recipe, quality, provenance, m.id), origin);
+        m.promise = null;
+        if (!keptAnswer(r) && r?.error !== 'elsewhere') ids.delete(key);
+        if (origin !== slot()) return { ...r, elsewhere: true };
+        if (r?.ok) { for (const s of r.data?.stores ?? []) applyStore(s); applyTrack(r.data?.track); } else shutBy(r);
+        return r;
+      })();
+      return m.promise;
+    },
+    /** CRAFT4: A REFORGE WITH ESSENCE (Professions-Arc 41.7) - an Enchanter's: 2 Arcane Essence for a Magic piece's line,
+     *  5 for a Rare's, answered the seed the line is rolled again with. Kept as a temper is. */
+    async reforge(tier) {
+      const c = character();
+      if (!c) return { ok: false, error: 'prof-character' };
+      const origin = slot();
+      const key = `reforge|${origin}|${tier}`;
+      const m = idFor(key, PROF_QUEUE_MS);
+      if (m.promise) return m.promise;
+      m.promise = (async () => {
+        const r = await ask(() => door.reforge(c, tier, m.id), origin);
         m.promise = null;
         if (!keptAnswer(r) && r?.error !== 'elsewhere') ids.delete(key);
         if (origin !== slot()) return { ...r, elsewhere: true };
@@ -791,12 +865,14 @@ export function createProfBook({ door, storage = null, character = () => null, n
     /** A recipe `count` times at the forge. The id is kept until an answer comes, so a press after a lost answer is the
      *  same smelt, never a second. Answers the service's answer; the Stores and Smithing's track moved with it. PROF11:
      *  or a mason's work at the bench, `clean` the chisel's report (the service reads it only where the work has the act;
-     *  a press after a lost answer is the same work, whatever its chisel). */
-    async smelt(recipe, count, { clean = false } = {}) {
+     *  a press after a lost answer is the same work, whatever its chisel). CRAFT1: `stay` keeps what it made in the
+     *  Stores - a chain's work, whose product the craft after it spends there - asked under its own id key (AUDIT CRAFT1
+     *  F1: a station's press of the same work and count shared the chain's id, and was answered its kept products). */
+    async smelt(recipe, count, { clean = false, stay = false } = {}) {
       const c = character();
       if (!c) return { ok: false, error: 'prof-character' };
       const owner = slot();
-      const key = `smelt|${owner}|${recipe}|${count}`;
+      const key = `${stay === true ? 'chain' : 'smelt'}|${owner}|${recipe}|${count}`;
       const m = idFor(key, PROF_QUEUE_MS);
       if (m.promise) return m.promise;
       m.promise = (async () => {
@@ -810,7 +886,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
         if (owner !== slot()) return { ok: false, error: 'elsewhere', elsewhere: true };
         if (r?.ok) { for (const s of r.data?.stores ?? []) applyStore(s); applyTrack(r.data?.track); } else shutBy(r);
         // BAG1: AND WHAT IT MADE INTO THE BAG OR THE PACK - as much as fits; the rest stays in the Stores, said
-        if (r?.ok && carry && work) r.data.put = await carryOut(work.out, (Number(r.data.own) || 0) + (Number(r.data.bought) || 0));
+        if (r?.ok && carry && work && stay !== true) r.data.put = await carryOut(work.out, (Number(r.data.own) || 0) + (Number(r.data.bought) || 0));
         return r;
       })();
       // AUDIT2 BAG1 K13: a press whose put-in or carry-out threw lets the id go - a rejected promise held it for good, and
@@ -828,6 +904,7 @@ export function createProfBook({ door, storage = null, character = () => null, n
       const c = character();
       if (!c) return { ok: false, error: 'prof-character' };
       const from = this.track(profession).specs?.[rank] ?? null;
+      profession = trackOf(profession);   // CRAFT3: asked of the craft's track
       const owner = slot();
       const key = `spec|${owner}|${profession}|${rank}|${spec}|${from ?? ''}`;
       const m = idFor(key, PROF_QUEUE_MS);

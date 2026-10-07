@@ -29,7 +29,10 @@ test('SEAT2b part two THE SIEGEWRIGHT\'S DAY: a project begun by a Siegewright s
   assert.equal(fortStandsAt(NaN, 1, { siegewright: true }), null);
   assert.deepEqual([isSiegewright({ 100: 'siegewright' }), isSiegewright({ 100: 'master-joiner' }), isSiegewright({ 50: 'siegewright' }), isSiegewright(null)], [true, false, false, false]);
   assert.equal(specOk('carpentry', 100, 'siegewright'), true);
-  assert.equal(SPECIALISATIONS.carpentry[100][0].later, undefined);
+  // PIN MOVED (CRAFT3, Professions-Arc 41): Carpentry is a discipline of Building - the Siegewright Building's choice at 100
+  assert.equal(SPECIALISATIONS.carpentry, undefined, 'no track of its own');
+  assert.equal(SPECIALISATIONS.building[100].find((s) => s.id === 'siegewright')?.later, undefined);
+  assert.equal(specOk('building', 100, 'siegewright'), true);
 });
 
 test('SEAT2b part two WHAT THE WATCHTOWERS SEE: every challenger at or past half the holder\'s defence (tier 1) or a quarter (tier 2), the most dangerous first; never the holder, never without towers or a defence; the word names the seat, the guild and the share (mutants: the share; at the line; the holder; the order; the words)', () => {

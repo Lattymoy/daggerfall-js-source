@@ -22,7 +22,7 @@ import {
   asks, shut, trackView, trackRow, storeOf, spendableSql, spendStatements, seatStepsFor,
 } from './professions.js';
 import { dice } from './unitRoll.js';   // SILVER-FINDS: the service's dice moved below professions.js and marks.js
-import { rankOfXp, specsAt, craftXpCap, STORES_MAX, PROF_OPS_MAX, PROF_OPS_WINDOW_S, ARCANE_ESSENCE } from '../../src/net/professionLaw.js';
+import { rankOfXp, specsAt, craftXpCap, STORES_MAX, PROF_OPS_MAX, PROF_OPS_WINDOW_S, ARCANE_ESSENCE, trackOf } from '../../src/net/professionLaw.js';
 import { FIRST_CRAFT_XP, recipeById, PROVENANCE_RE } from '../../src/net/recipeLaw.js';
 import {
   potionById, brewSpends, brewCount, potentChance, potentPct, potentAble, brewXp, brewFirstPays, DISTILLER,
@@ -31,6 +31,7 @@ import {
 import { prepareRealmRecord, realmActFirst, recordMovedOf, mustChange, dropObjects, dropIfUnnamed } from './realm.js';   // AUDIT PROF-541 B2: a realm character's piece out of its record
 import { takeTradeGoods, tradeableRecord } from '../../src/net/realmTradeLaw.js';   // AUDIT PROF-541 B2: as MARKET-ANY's listGood takes a record's piece
 import { pieceListable } from '../../src/net/marketLaw.js';   // AUDIT PROF-541 R2-S6: what the market lists is what disenchants
+import { reforgeEssence, REFORGE_RANK } from '../../src/net/temperLaw.js';   // CRAFT4: the Reforge with Essence
 
 const HERB_RE = /^p[12]:\d+$/;
 
@@ -38,7 +39,8 @@ const HERB_RE = /^p[12]:\d+$/;
 async function tracksOf(db, player, character, profession, nowS) {
   const { results: tracks = [] } = await db.prepare('SELECT * FROM prof_tracks WHERE player = ?1 AND char_id = ?2').bind(player, character).all();
   const ranks = Object.fromEntries(tracks.map((t) => [t.profession, rankOfXp(Number(t.xp))]));
-  return { ranks, rank: ranks[profession] ?? 0, specs: specsAt(tracks.find((t) => t.profession === profession), nowS) };
+  const craft = trackOf(profession);   // CRAFT3: Alchemy's track Provisioning's
+  return { ranks, rank: ranks[craft] ?? 0, specs: specsAt(tracks.find((t) => t.profession === craft), nowS) };
 }
 
 // ─── THE BREW (9.3) ──────────────────────────────────────────────────
@@ -121,7 +123,7 @@ export async function brewAtStation(ctx, player, env, { character, potion: id, k
     // laid on when the character has brewed none of the potion
     db.prepare(`INSERT OR IGNORE INTO prof_brews (player, rid, char_id, potion, keys, count, potent, unbruised, steps, xp, first, at, n)
       SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8, ?9,
-        MAX(0, MIN(?10 + f * ?11, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = 'alchemy'), 0))),
+        MAX(0, MIN(?10 + f * ?11, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = '${trackOf('alchemy')}'), 0))),
         f, ?12, ?13
       FROM (SELECT CASE WHEN ?11 > 0 AND NOT EXISTS (SELECT 1 FROM prof_brews WHERE player = ?1 AND char_id = ?2 AND potion = ?4) THEN 1 ELSE 0 END AS f)
       WHERE ${held.join(' AND ')}`).bind(...binds),   // AUDIT PROF-541 B6: `first` only where the first time pays (brewFirstPays), as smeltAtForge's
@@ -136,7 +138,7 @@ export async function brewAtStation(ctx, player, env, { character, potion: id, k
     })),
     // the XP the decision credited, under the crafter's limit
     db.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at)
-      SELECT ?1, ?2, 'alchemy', MIN(?4, xp), ?5 FROM prof_brews WHERE player = ?1 AND rid = ?3 AND n = ?6
+      SELECT ?1, ?2, '${trackOf('alchemy')}', MIN(?4, xp), ?5 FROM prof_brews WHERE player = ?1 AND rid = ?3 AND n = ?6
       ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = MAX(prof_tracks.xp, MIN(?4, prof_tracks.xp + excluded.xp)), updated_at = excluded.updated_at`)
       .bind(player.id, character, rid, cap, nowS, nonce),
   ]);
@@ -265,4 +267,54 @@ export async function disenchantPiece(ctx, player, env, { character, provenance,
   const room = await storeOf(db, player.id, character, ARCANE_ESSENCE.key);
   if (room.own + room.bought + (room.gold ?? 0) + essence > STORES_MAX) return { error: 'stores-full', material: ARCANE_ESSENCE.key };
   return { error: 'prof-piece-busy' };
+}
+
+// ─── CRAFT4: THE REFORGE WITH ESSENCE (Professions-Arc 41.7) ─────────
+
+/** A Reforge with Essence's answer, read back from its row. */
+async function reforgeAnswer(db, player, row, nowS, extra = {}) {
+  return {
+    ok: true, ...extra, tier: row.tier, essence: Number(row.essence), seed: Number(row.seed),
+    track: trackView(await trackRow(db, player.id, row.char_id, 'enchanting'), 'enchanting', nowS),
+    store: await storeOf(db, player.id, row.char_id, ARCANE_ESSENCE.key),
+  };
+}
+
+/**
+ * A REFORGE WITH ESSENCE (CRAFT4, Professions-Arc 41.2 and 41.7): `{ character, tier, rid }` - an Enchanter of rank 50
+ * (temperLaw REFORGE_RANK; `prof-rank`) spends 2 Arcane Essence for a Magic piece's line or 5 for a Rare's (temperLaw
+ * reforgeEssence - Legendary and up, none: law 7, `prof-reforge`), never gold's units, and is answered the seed the line
+ * is rolled again with - the service's CSPRNG, as a craft's quality is its roll. The service cannot see the pack: the
+ * piece and its line are the client's (systems/lootRarity.js reforgeAffix - the Loot arc's own Reforge: one line, and
+ * once a piece is reforged, that line alone), the save's word as the Mages Guild's reforge is; the Essence is the bound.
+ * DECIDED: no XP - the Essence's XP was its disenchanting's. Refused: the Essence short (`stores-short`, `stores-gold`).
+ */
+export async function reforgeWithEssence(ctx, player, env, { character, tier, rid } = {}) {
+  const { db, nowS, rand } = ctx;
+  const refused = asks(player, { character, rid });
+  if (refused) return refused;
+  const prior = await db.prepare('SELECT * FROM prof_reforges WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
+  if (prior) return reforgeAnswer(db, player, prior, nowS, { repeat: true });
+  const closed = shut(player, env);
+  if (closed) return closed;
+  const essence = reforgeEssence(tier);
+  if (!essence) return { error: 'prof-reforge' };
+  if (await overRate(ctx, `prof:${player.id}`, PROF_OPS_MAX, PROF_OPS_WINDOW_S)) return { error: 'prof-rate' };
+  const { rank } = await tracksOf(db, player.id, character, 'enchanting', nowS);
+  if (rank < REFORGE_RANK) return { error: 'prof-rank' };
+  const seed = Math.floor(dice(rand) * 4294967296);
+  const nonce = mintId(rand);
+  await db.batch([
+    // THE DECISION: the Essence held, never gold's units
+    db.prepare(`INSERT OR IGNORE INTO prof_reforges (player, rid, char_id, tier, essence, seed, at, n)
+      SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8 WHERE ${spendableSql('?1', '?2', '?9')} >= ?5`)
+      .bind(player.id, character, rid, tier, essence, seed, nowS, nonce, ARCANE_ESSENCE.key),
+    // the Essence out, bought first
+    ...spendStatements(db, { player: player.id, character, materialSql: '?3', qtySql: '?4', guard: 'EXISTS (SELECT 1 FROM prof_reforges WHERE player = ?1 AND rid = ?5 AND n = ?6)', binds: [ARCANE_ESSENCE.key, essence, rid, nonce] }),
+  ]);
+  const made = await db.prepare('SELECT * FROM prof_reforges WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
+  if (made?.n === nonce) return reforgeAnswer(db, player, made, nowS);
+  if (made) return reforgeAnswer(db, player, made, nowS, { repeat: true });
+  const st = await storeOf(db, player.id, character, ARCANE_ESSENCE.key);
+  return { error: st.own + st.bought + (st.gold ?? 0) >= essence ? 'stores-gold' : 'stores-short', material: ARCANE_ESSENCE.key };
 }

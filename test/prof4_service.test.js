@@ -178,7 +178,7 @@ test('PROF4 service: a log burnt to a Charcoal at the forge (a Charcoal Burner\'
   assert.deepEqual(s.stores(mac, 'log:oak'), [['own', 4]]);
   assert.deepEqual((await s.call('/v1/prof/smelt', sawBody, mac.secret)).body.repeat, true);
   assert.deepEqual(s.stores(mac, 'plank:oak'), [['own', 6]], 'once');
-  assert.equal(s.xpOf(mac, 'logging') + s.xpOf(mac, 'smithing') + s.xpOf(mac, 'carpentry'), 0, 'a log\'s XP was its fall\'s');
+  assert.equal(s.xpOf(mac, 'logging') + s.xpOf(mac, 'smithing') + s.xpOf(mac, 'building'), 0, 'a log\'s XP was its fall\'s');   // PIN MOVED (CRAFT3): Carpentry's XP is the Building track's row
   s.setXp(mac, xpForRank(100), 'logging', { spec100: 'charcoal-burner' });
   const burner = await s.call('/v1/prof/smelt', { character: mac.character, recipe: 'burn:oak', count: 1, rid: rid() }, mac.secret);
   assert.equal(burner.body.own, 2, 'a Charcoal Burner\'s two');
@@ -196,25 +196,26 @@ test('PROF4 service: a log burnt to a Charcoal at the forge (a Charcoal Burner\'
 test('PROF4 service: a Small Oak Table made - three Oak Planks spent, the piece written (DFU\'s 225) with its record, Carpentry XP 20 x 2 and the first craft\'s 500; a Joiner\'s half the planks; a Heartwood for a plank and a step (one with nothing else); a Master Joiner\'s mark on every piece', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
-  s.setXp(mac, xpForRank(10), 'carpentry');
+  // PIN MOVED (CRAFT3): a workbench's work reads and raises the Building track (Carpentry's craft) - every track seeded here is 'building', and the track answered names it
+  s.setXp(mac, xpForRank(10), 'building');
   s.give(mac, 'plank:oak', 'own', 3);
   const r = await steered(0x00, () => s.call('/v1/prof/craft', craft(mac, 'table-small:oak'), mac.secret));
   assert.equal(r.status, 200, JSON.stringify(r.body));
-  assert.deepEqual([r.body.quality, r.body.xp, r.body.first, r.body.marked, r.body.track.profession], [0, 20 * 2 + FIRST_CRAFT_XP, true, false, 'carpentry'], 'margin 0, the roll\'s foot: Crude');
+  assert.deepEqual([r.body.quality, r.body.xp, r.body.first, r.body.marked, r.body.track.profession], [0, 20 * 2 + FIRST_CRAFT_XP, true, false, 'building'], 'margin 0, the roll\'s foot: Crude');   // PIN MOVED (CRAFT3): the track answered is the craft's, Building
   assert.deepEqual(s.stores(mac, 'plank:oak'), []);
-  assert.equal(s.xpOf(mac, 'carpentry'), xpForRank(10) + 540);
+  assert.equal(s.xpOf(mac, 'building'), xpForRank(10) + 540);   // PIN MOVED (CRAFT3): credited to the Building row
   const [{ provenance, record }] = r.body.pieces;
   assert.match(provenance, PROVENANCE_RE);
   const row = s.raw.prepare('SELECT * FROM products WHERE provenance = ?').get(provenance);
   assert.deepEqual([row.template, row.material, row.recipe, row.marked], [225, 0, 'table-small:oak', 0]);
   assert.equal(readProductRecord(record).r, 'table-small:oak');
   // a Joiner: half the planks, rounded up
-  s.setXp(mac, xpForRank(50), 'carpentry', { spec50: 'joiner' });
+  s.setXp(mac, xpForRank(50), 'building', { spec50: 'joiner' });
   s.give(mac, 'plank:oak', 'own', 3);
   await s.call('/v1/prof/craft', craft(mac, 'table-small:oak'), mac.secret);
   assert.deepEqual(s.stores(mac, 'plank:oak'), [['own', 1]], 'two of three spent');
   // a Heartwood for a plank: one step, and spent in the plank's place
-  s.setXp(mac, xpForRank(10), 'carpentry');
+  s.setXp(mac, xpForRank(10), 'building');
   s.give(mac, 'plank:oak', 'own', 2);
   s.give(mac, 'wood:heartwood', 'own', 1);
   const h = await steered(0x00, () => s.call('/v1/prof/craft', craft(mac, 'table-small:oak', { heartwood: true }), mac.secret));
@@ -223,7 +224,7 @@ test('PROF4 service: a Small Oak Table made - three Oak Planks spent, the piece 
   const noWood = await s.call('/v1/prof/craft', craft(mac, 'table-small:oak', { heartwood: true }), mac.secret);
   assert.deepEqual(noWood.body, { error: 'stores-short' });
   // a Master Joiner: the mark at any quality
-  s.setXp(mac, xpForRank(100), 'carpentry', { spec100: 'master-joiner' });
+  s.setXp(mac, xpForRank(100), 'building', { spec100: 'master-joiner' });
   s.give(mac, 'plank:oak', 'own', 2);
   const mj = await s.call('/v1/prof/craft', craft(mac, 'chair:oak'), mac.secret);
   assert.deepEqual([mj.body.marked, mj.body.maker], [true, 'Silverthorn']);
@@ -245,9 +246,9 @@ test('PROF4 service: arrows are twenty at no quality (their record -1), one piec
   assert.deepEqual([a.body.quality, a.body.count, a.body.pieces.length, readProductRecord(a.body.pieces[0].record).q], [-1, 1, 1, -1]);
   assert.deepEqual(s.stores(mac, 'p1:8'), []);
   assert.deepEqual((await s.call('/v1/prof/craft', craft(mac, 'arrows:south'), mac.secret)).body.error, 'stores-short', 'the southern Twigs are another material');
-  s.setXp(mac, xpForRank(RAM_KIT_RANK), 'carpentry');
+  s.setXp(mac, xpForRank(RAM_KIT_RANK), 'building');   // PIN MOVED (CRAFT3): Carpentry's rank is the Building track's
   assert.deepEqual((await s.call('/v1/prof/craft', craft(mac, 'ramkit:oak'), mac.secret)).body, { error: 'stores-short' });   // SEAT2b part two (PIN MOVED): made now - refused for its inputs alone
-  s.setXp(mac, 0, 'carpentry');
+  s.setXp(mac, 0, 'building');   // PIN MOVED (CRAFT3): the Building track
   s.give(mac, 'plank:oak', 'own', 3);
   assert.deepEqual((await s.call('/v1/prof/craft', craft(mac, 'table-small:oak'), mac.secret)).body, { error: 'prof-rank' }, 'Oak asks Carpentry 10');
   // the furnisher's stock: Linen at two Marks, bought
@@ -278,7 +279,8 @@ test('PROF4 service: a crafted table set down in a home - its provenance kept wh
   const ann = await s.registered('Ann');
   const house = await s.seatHome(mac, home());
   assert.equal(house.status, 200);
-  s.setXp(mac, xpForRank(100), 'carpentry', { spec100: 'master-joiner' });
+  // PIN MOVED (CRAFT3): a workbench's work reads the Building track (Carpentry's craft) - every track seeded here is 'building'
+  s.setXp(mac, xpForRank(100), 'building', { spec100: 'master-joiner' });
   s.give(mac, 'plank:oak', 'own', 3);
   const made = await s.call('/v1/prof/craft', craft(mac, 'table-small:oak'), mac.secret);
   const pv = made.body.pieces[0].provenance;
@@ -289,14 +291,14 @@ test('PROF4 service: a crafted table set down in a home - its provenance kept wh
   const read = await s.call('/v1/homes/decor', HOME, ann.secret);
   assert.equal(read.body.pieces.find((p) => p.id === 'tb1').item.mk, 'Silverthorn', 'a visitor reads the mark');
   // an unmarked piece: its id kept, no mark
-  s.setXp(mac, xpForRank(10), 'carpentry');
+  s.setXp(mac, xpForRank(10), 'building');
   s.give(mac, 'plank:oak', 'own', 3);
   const plainMade = await steered(0x00, () => s.call('/v1/prof/craft', craft(mac, 'table-small:oak'), mac.secret));
   const pv2 = plainMade.body.pieces[0].provenance;
   const r2 = await s.call('/v1/homes/decor/place', at({ piece: piece({ t: 225, g: 8, pv: pv2, mk: 'Silverthorn' }, { id: 'tb2' }) }), mac.secret);
   assert.deepEqual([r2.body.piece.item.pv, r2.body.piece.item.mk], [pv2, undefined], 'a Crude table carries no mark');
   // another's id: dropped - and a forged one, and one of another template
-  s.setXp(ann, xpForRank(100), 'carpentry', { spec100: 'master-joiner' });
+  s.setXp(ann, xpForRank(100), 'building', { spec100: 'master-joiner' });
   s.give(ann, 'plank:oak', 'own', 3);
   const annMade = await s.call('/v1/prof/craft', craft(ann, 'table-small:oak', { name: 'Ann' }), ann.secret);
   const theirs = await s.call('/v1/homes/decor/place', at({ piece: piece({ t: 225, g: 8, pv: annMade.body.pieces[0].provenance, mk: 'Ann' }, { id: 'tb3' }) }), mac.secret);
@@ -304,7 +306,7 @@ test('PROF4 service: a crafted table set down in a home - its provenance kept wh
   const forged = await s.call('/v1/homes/decor/place', at({ piece: piece({ t: 225, g: 8, pv: '00000000deadbeef', mk: 'Silverthorn' }, { id: 'tb4' }) }), mac.secret);
   assert.deepEqual([forged.body.piece.item.pv, forged.body.piece.item.mk], [undefined, undefined]);
   // AUDIT 30 S6: a piece of its own, standing nowhere - the first table stands at tb1, and one id stands once
-  s.setXp(mac, xpForRank(100), 'carpentry', { spec100: 'master-joiner' });
+  s.setXp(mac, xpForRank(100), 'building', { spec100: 'master-joiner' });
   s.give(mac, 'plank:oak', 'own', 3);
   const pv3 = (await s.call('/v1/prof/craft', craft(mac, 'table-small:oak'), mac.secret)).body.pieces[0].provenance;
   const other = await s.call('/v1/homes/decor/place', at({ piece: piece({ t: 221, g: 8, pv: pv3, mk: 'Silverthorn' }, { id: 'tb5' }) }), mac.secret);

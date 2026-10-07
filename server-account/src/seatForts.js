@@ -29,7 +29,7 @@ import { seatWeekOf, seatKeyOk, SEAT_LEVER_RANKS, SEAT_EDICTS_HOUR } from '../..
 import { FORT_WORKS, fortWork, fortMaxTier, fortMayRaise, fortNeeds, fortStandsAt, fortWanting, marketHallListings, marketHallTitheCap, campSpent } from '../../src/net/fortLaw.js';
 import { MARKET_LISTINGS_MAX } from '../../src/net/marketLaw.js';
 import { TITHE_CAP } from '../../src/net/townSeatLaw.js';
-import { specsAt, isBuilder as isBuilderSpec, isFortifier as isFortifierSpec, isSiegewright as isSiegewrightSpec } from '../../src/net/professionLaw.js';
+import { specsAt, trackOf, isBuilder as isBuilderSpec, isFortifier as isFortifierSpec, isSiegewright as isSiegewrightSpec } from '../../src/net/professionLaw.js';
 
 const weekAt = (nowS) => seatWeekOf(nowS * 1000);
 const ORDER = new Map(FORT_WORKS.map((w, i) => [w.id, i]));
@@ -138,7 +138,7 @@ export async function fortTiersOf(db, key, nowS) {
 /** A character's choices in `profession` now (professionLaw.js specsAt over its track's row). */
 async function specsOf(db, player, character, profession, nowS) {
   const row = await db.prepare('SELECT spec50, spec100, respec_rank, respec_to, respec_at FROM prof_tracks WHERE player = ? AND char_id = ? AND profession = ?')
-    .bind(player, character, profession).first();
+    .bind(player, character, trackOf(profession)).first();   // CRAFT3: Masonry's and Carpentry's choices are Building's
   return specsAt(row ? { ...row, respec_rank: row.respec_rank == null ? null : Number(row.respec_rank), respec_at: row.respec_at == null ? null : Number(row.respec_at) } : null, nowS);
 }
 /** Whether `character` of `player` is a Builder (Masonry 50) now. */
@@ -335,7 +335,7 @@ export async function fortifierAt(db, week, key, nowS, seasonWeek) {
   if (walls <= 0) return null;
   if (await db.prepare('SELECT 1 FROM town_seat_fortifier WHERE season = ? AND key = ?').bind(seasonWeek, key).first()) return null;
   const { results = [] } = await db.prepare(`SELECT r.account, t.spec50, t.spec100, t.respec_rank, t.respec_to, t.respec_at FROM town_seat_rosters r
-    JOIN prof_tracks t ON t.player = r.account AND t.char_id = r.char_id AND t.profession = 'masonry'
+    JOIN prof_tracks t ON t.player = r.account AND t.char_id = r.char_id AND t.profession = '${trackOf('masonry')}'
     WHERE r.week = ? AND r.key = ? AND r.side = 'defend' ORDER BY r.at, r.account`).bind(week, key).all();
   for (const row of results) {
     const specs = specsAt({ ...row, respec_rank: row.respec_rank == null ? null : Number(row.respec_rank), respec_at: row.respec_at == null ? null : Number(row.respec_at) }, nowS);
@@ -350,7 +350,7 @@ export async function fortifierAt(db, week, key, nowS, seasonWeek) {
  */
 export async function siegewrightAt(db, week, key, nowS) {
   const { results = [] } = await db.prepare(`SELECT r.account, t.spec50, t.spec100, t.respec_rank, t.respec_to, t.respec_at FROM town_seat_rosters r
-    JOIN prof_tracks t ON t.player = r.account AND t.char_id = r.char_id AND t.profession = 'carpentry'
+    JOIN prof_tracks t ON t.player = r.account AND t.char_id = r.char_id AND t.profession = '${trackOf('carpentry')}'
     WHERE r.week = ? AND r.key = ? AND r.side = 'attack' ORDER BY r.at, r.account`).bind(week, key).all();
   for (const row of results) {
     const specs = specsAt({ ...row, respec_rank: row.respec_rank == null ? null : Number(row.respec_rank), respec_at: row.respec_at == null ? null : Number(row.respec_at) }, nowS);
