@@ -417,8 +417,8 @@
   {
     "name": "PROF4-record-arrows-quality",
     "file": "src/net/productRecord.js",
-    "old": "(!takesQuality(r) ? c.q !== -1 : c.q < 0 || c.q > MASTERWORK)",
-    "new": "(r.kind === 'kit' ? c.q !== -1 : c.q < 0 || c.q > MASTERWORK)",
+    "old": "(!rollsQuality(r) ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))",
+    "new": "(r.kind === 'kit' ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))",
     "tests": [
       "test/prof4_law.test.js",
       "test/prof4_service.test.js"

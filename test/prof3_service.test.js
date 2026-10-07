@@ -118,13 +118,14 @@ test('PROF3 service: a craft refused - the rank, the inputs (naming the short on
   s.give(mac, 'ingot:iron', 'own', 2);
   s.give(mac, 'leather:cured', 'own', 2);
   const kit = await s.call('/v1/prof/craft', craft(mac, 'kit:iron'), mac.secret);
-  assert.deepEqual([kit.body.quality, kit.body.pieces.length], [-1, 1]);
+  // PIN MOVED (CRAFT5, Professions-Arc 41.8): a kit's craft rolls a quality - its reach (a Superior's nine tenths)
+  assert.deepEqual([Number.isInteger(kit.body.quality) && kit.body.quality >= 0 && kit.body.quality <= 4, kit.body.pieces.length], [true, 1]);
   s.setXp(mac, xpForRank(100), 'smithing', { spec100: 'quartermaster' });
   const two = await s.call('/v1/prof/craft', craft(mac, 'kit:iron'), mac.secret);
-  assert.deepEqual([two.body.quality, two.body.count, two.body.pieces.length], [-1, 2, 2]);
+  assert.deepEqual([Number.isInteger(two.body.quality) && two.body.quality >= 0, two.body.count, two.body.pieces.length], [true, 2, 2]);
   assert.notEqual(two.body.pieces[0].provenance, two.body.pieces[1].provenance);
   assert.deepEqual(s.stores(mac, 'ingot:iron'), [], 'two kits, one ingot');
-  assert.equal(readProductRecord(two.body.pieces[1].record).q, -1);
+  assert.equal(readProductRecord(two.body.pieces[1].record).q, two.body.quality, 'PIN MOVED (CRAFT5): signed at its quality');
   // the crafter's limit: two crafts past Journeyman hold Smithing at 50
   // PIN MOVED (CRAFT3): Alchemy and Cooking are one track (Provisioning) - the two crafts past Journeyman are Provisioning and Building, seeded under the craft's id
   s.setXp(mac, xpForRank(60), 'provisioning');

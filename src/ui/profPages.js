@@ -65,7 +65,7 @@ import {
   enchantDiscountPct, DISENCHANTER, disenchantXp, essenceOf,
 } from '../net/alchemyLaw.js';   // PROF12: Alchemy's brew, Enchanting's layer and Disenchanting
 import {
-  RECIPES, recipeOpen, qualityOdds, QUALITY_NAMES, HEAT_ACT, takesQuality, recipeInputs, takesHeartwood, PLANE_ACT, STITCH_ACT,
+  RECIPES, recipeOpen, qualityOdds, QUALITY_NAMES, HEAT_ACT, takesQuality, rollsQuality, recipeInputs, takesHeartwood, PLANE_ACT, STITCH_ACT,
   GARMENT_DYES, MASONRY_RECIPES, CHISEL_ACT, chiselStrikes, chiselMarkS, SCULPTOR,   // PROF11: the Sculptor's stone and the chisel
   COOKING_RECIPES, dishOf, dishEffectText, dishHand, craftCount, cookXp, panCount, panWindow, HAND_PROVISIONER,   // PROF9: the fire's dishes and the pan
   JEWELCRAFTING_RECIPES, JEWEL_PIECES, jewelBases, jewelHand, jewelPointsPct, jewelPoints, takesCracked, masterworkSpec, facetCount,
@@ -1179,10 +1179,11 @@ function drawAnvil(detail, rerender, { el, divider }) {
     }
     const chain = chainNote(box, el, p, book, spends);   // CRAFT1: the works it runs first
     _anvil.chained = chain?.ok === true;   // AUDIT CRAFT1 F1: a craft pressed now runs its chain - the work rows held under it
-    if (takesQuality(r) && recipeOpen(r, rank)) {
+    if (rollsQuality(r) && recipeOpen(r, rank)) {   // CRAFT5: a Repair Kit's quality too
       const odds = qualityOdds(rank - r.rank, { masterwright: specs[100] === 'masterwright' });
       box.append(el('p', 'px-note', `Your rank ${rank}, margin ${rank - r.rank}: ${odds.map((o, q) => (o ? `${QUALITY_NAMES[q]} ${o}` : null)).filter(Boolean).join(' | ')}. A clean heat is a step better.`));
-    } else if (!takesQuality(r)) box.append(el('p', 'px-note', 'A Repair Kit mends a quarter of a piece\'s condition, up to three quarters, once - a weapon or armour of its metal.'));
+    }
+    if (r.kind === 'kit') box.append(el('p', 'px-note', KIT_REACH_LINE));
     heartwoodToggle(box, el, r, book, _anvil, rerender, striking);   // PROF4: a Heartwood for a plank - the axes, hammers, shields, the Spade
     const gentle = getPref('gentleActs') === true;
     const elsewhere = handsAt(_anvil);   // AUDIT 32 P2
@@ -2489,6 +2490,8 @@ function drawEnchantingStation(detail, rerender, { el, divider }) {
 
 // ─── CRAFT4: THE TEMPER AND THE REFORGE WITH ESSENCE (bible/06-Systems/Professions-Arc.md 41.7) ─────
 
+/** CRAFT5 (Professions-Arc 41.8): what a Repair Kit's box says - its work, and the reach its quality gives. */
+export const KIT_REACH_LINE = 'A Repair Kit mends a quarter of a piece\'s condition, once - a weapon or armour of its metal - up to three quarters of it, or nine tenths from a Superior or Masterwork kit.';
 /** What the temper says it is, at the anvil and at the loom. */
 export const TEMPER_HOW = (where) => (where === 'loom'
   ? 'A tailor tempers leather armour or a garment a quality step better, up to Superior - found or made, Rare or below - for half its recipe\'s leather or bolts, at that recipe\'s rank.'

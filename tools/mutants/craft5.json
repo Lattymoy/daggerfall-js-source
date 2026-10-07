@@ -1,0 +1,218 @@
+[
+  {
+    "name": "CRAFT5-law-high-reach",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const KIT_CEILING_HIGH = 0.9;",
+    "new": "export const KIT_CEILING_HIGH = 0.75;",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-law-high-at-fine",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const KIT_HIGH_QUALITY = 3;",
+    "new": "export const KIT_HIGH_QUALITY = 2;",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-law-high-at-masterwork",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const KIT_HIGH_QUALITY = 3;",
+    "new": "export const KIT_HIGH_QUALITY = 4;",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-law-reach-any",
+    "file": "src/net/recipeLaw.js",
+    "old": "(Number.isInteger(kit?.quality) && kit.quality >= KIT_HIGH_QUALITY ? KIT_CEILING_HIGH : KIT_CEILING)",
+    "new": "(kit?.quality >= KIT_HIGH_QUALITY - 2 ? KIT_CEILING_HIGH : KIT_CEILING)",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-law-reach-float",
+    "file": "src/net/recipeLaw.js",
+    "old": "(Number.isInteger(kit?.quality) && kit.quality >= KIT_HIGH_QUALITY ? KIT_CEILING_HIGH : KIT_CEILING)",
+    "new": "(kit?.quality >= 1.5 ? KIT_CEILING_HIGH : KIT_CEILING)",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-law-kit-rolls-none",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const rollsQuality = (r) => takesQuality(r) || r?.kind === 'kit';",
+    "new": "export const rollsQuality = (r) => takesQuality(r);",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-law-arrows-roll",
+    "file": "src/net/recipeLaw.js",
+    "old": "export const rollsQuality = (r) => takesQuality(r) || r?.kind === 'kit';",
+    "new": "export const rollsQuality = (r) => takesQuality(r) || r?.kind === 'kit' || r?.kind === 'arrows';",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-lines-kit-75",
+    "file": "src/net/recipeLaw.js",
+    "old": "up to ${Math.round(kitReach(item) * 100)}%, once`;",
+    "new": "up to ${Math.round(KIT_CEILING * 100)}%, once`;",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-lines-kit-no-quality",
+    "file": "src/net/recipeLaw.js",
+    "old": "    return Number.isInteger(item.quality) && item.quality >= 0 && item.quality <= MASTERWORK ? [QUALITY_NAMES[item.quality], reach] : [reach];",
+    "new": "    return [reach];",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-record-kit-none",
+    "file": "src/net/productRecord.js",
+    "old": "(c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))",
+    "new": "(c.q < 0 || c.q > MASTERWORK))",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-record-kit-past",
+    "file": "src/net/productRecord.js",
+    "old": "(c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))",
+    "new": "(c.q < -1 || c.q > MASTERWORK + 1))",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-record-arrows-q",
+    "file": "src/net/productRecord.js",
+    "old": "(!rollsQuality(r) ? c.q !== -1 :",
+    "new": "(!rollsQuality(r) ? c.q > 0 :",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-svc-kit-unrolled",
+    "file": "server-account/src/professions.js",
+    "old": "  const quality = rollsQuality(r)   // CRAFT5: a Repair Kit's too - its quality its reach\n",
+    "new": "  const quality = r.kind !== 'kit' && rollsQuality(r)   // CRAFT5: a Repair Kit's too - its quality its reach\n",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-mint-kit-no-quality",
+    "file": "src/systems/smithItems.js",
+    "old": "    if (Number.isInteger(quality) && quality >= 0) item.quality = Math.min(MASTERWORK, quality);   // CRAFT5: its quality its reach (kitReach) - none for a kit made before\n",
+    "new": "",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-mint-kit-none-zero",
+    "file": "src/systems/smithItems.js",
+    "old": "    if (Number.isInteger(quality) && quality >= 0) item.quality = Math.min(MASTERWORK, quality);",
+    "new": "    if (Number.isInteger(quality)) item.quality = Math.max(0, Math.min(MASTERWORK, quality));",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-ceiling-any-kit",
+    "file": "src/systems/smithItems.js",
+    "old": "export const kitCeiling = (it, kit = null) => Math.floor(it.maxCondition * kitReach(kit));",
+    "new": "export const kitCeiling = (it, kit = null) => Math.floor(it.maxCondition * kitReach(null));",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-gives-own",
+    "file": "src/systems/smithItems.js",
+    "old": "export const kitGives = (it, kit = null) => kitCeiling(it, kit) - it.currentCondition > Math.floor(it.maxCondition / 100);",
+    "new": "export const kitGives = (it, kit = null) => kitCeiling(it) - it.currentCondition > Math.floor(it.maxCondition / 100);",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-targets-own",
+    "file": "src/systems/smithItems.js",
+    "old": "kitMends(metal, it) && kitGives(it, kit))   // KIT-CEILING",
+    "new": "kitMends(metal, it) && kitGives(it))   // KIT-CEILING",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-use-own",
+    "file": "src/systems/smithItems.js",
+    "old": "  it.currentCondition = Math.min(kitCeiling(it, kit),",
+    "new": "  it.currentCondition = Math.min(kitCeiling(it),",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-heldback-own",
+    "file": "src/systems/smithItems.js",
+    "old": "it.currentCondition < it.maxCondition && !kitGives(it, kit));",
+    "new": "it.currentCondition < it.maxCondition && !kitGives(it));",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-text-three-quarters",
+    "file": "src/systems/smithItems.js",
+    "old": "  if (!done && kitHeldBack(item, pack).length > 0) return { kind: 'repairKit', text: kitCeilingText(item), refused: true };",
+    "new": "  if (!done && kitHeldBack(item, pack).length > 0) return { kind: 'repairKit', text: KIT_CEILING_TEXT, refused: true };",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-text-crafted-kit",
+    "file": "src/systems/smithItems.js",
+    "old": "  const word = !marked && Number.isInteger(it.quality) ? `${QUALITY_NAMES[it.quality]} ` : '';",
+    "new": "  const word = !marked && Number.isInteger(it.quality) && !Number.isInteger(it.kitMetal) ? `${QUALITY_NAMES[it.quality]} ` : '';",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-pages-kit-odds",
+    "file": "src/ui/profPages.js",
+    "old": "    if (rollsQuality(r) && recipeOpen(r, rank)) {   // CRAFT5: a Repair Kit's quality too",
+    "new": "    if (takesQuality(r) && recipeOpen(r, rank)) {   // CRAFT5: a Repair Kit's quality too",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT5-pages-kit-reach",
+    "file": "src/ui/profPages.js",
+    "old": "    if (r.kind === 'kit') box.append(el('p', 'px-note', KIT_REACH_LINE));\n",
+    "new": "",
+    "tests": [
+      "test/craft5_consumables.test.js"
+    ]
+  }
+]

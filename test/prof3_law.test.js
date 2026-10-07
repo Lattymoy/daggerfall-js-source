@@ -123,7 +123,10 @@ test('PROF3 law: the product record - p1, signed with the identity key, read by 
   assert.deepEqual(await verifyProductRecord(rec.replace(/^p1/, 'w1'), kp.publicKey, { subtle }), { ok: false, why: 'version' });
   for (const k of ['n', 'k', 't', 'o', 'd', 'b', 'w', 'y', 'e']) assert.equal(productRecordValid({ ...what, i: 1, [k]: 1 }), false, `a record never carries ${k}`);
   assert.equal(productRecordValid({ ...what, i: 1, q: 5 }), false);
-  assert.equal(productRecordValid({ ...what, i: 1, r: 'kit:iron', q: 0 }), false, 'a kit has no quality');
+  // PIN MOVED (CRAFT5, Professions-Arc 41.8): a kit's craft rolls a quality now (its reach) - a kit made before none
+  assert.equal(productRecordValid({ ...what, i: 1, r: 'kit:iron', q: 0 }), true, 'a kit its quality');
+  assert.equal(productRecordValid({ ...what, i: 1, r: 'kit:iron', q: 5 }), false, 'never past Masterwork');
+  assert.equal(productRecordValid({ ...what, i: 1, q: -1 }), false, 'a piece that takes a quality always carries one - only a kit made before none');
   assert.equal(productRecordValid({ ...what, i: 1, r: 'kit:iron', q: -1, m: null }), true);
   assert.equal(productRecordValid({ ...what, i: 1, p: '00FF00FF00FF00FF' }), false, 'lower-case hex');
   await assert.rejects(mintProductRecord({ ...what, r: 'staff:iron' }, null, { subtle, nowS: 1 }), /refused/);

@@ -1014,8 +1014,8 @@
   {
     "name": "PROF12-svc-dish-no-halls",
     "file": "server-account/src/professions.js",
-    "old": "  const halls = takesQuality(r) || r.kind === 'dish' ? await seatStepsFor(",
-    "new": "  const halls = takesQuality(r) ? await seatStepsFor(",
+    "old": "  const halls = rollsQuality(r) || r.kind === 'dish' ? await seatStepsFor(",
+    "new": "  const halls = rollsQuality(r) ? await seatStepsFor(",
     "tests": [
       "test/prof12_apothecary.test.js"
     ]

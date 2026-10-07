@@ -3649,7 +3649,7 @@ between a modified client and an unbounded claim go with it: **"Keep both"**.
   (`audit29`, `audit32`, `bag1`, `fb1001_ground`, `prof1`, `prof2`, `prof7`, `prof8`). FOUND, not this slice's:
   `AUDIT29-A17-motherlode-sense-chosen` survives on main as here (PROF2b moved A17's pins to the Sense chosen as any).
 
-## 41. CRAFT0 - fewer moving parts, a crafter worth seeking (DECIDED 2026-10-07); CRAFT1 - the chain, as built (BUILT 2026-10-07); CRAFT2 - patterns, as built (BUILT 2026-10-07); CRAFT3 - five crafts, as built (BUILT 2026-10-07); CRAFT4 - tempering and reforging, as built (BUILT 2026-10-07)
+## 41. CRAFT0 - fewer moving parts, a crafter worth seeking (DECIDED 2026-10-07); CRAFT1 - the chain, as built (BUILT 2026-10-07); CRAFT2 - patterns, as built (BUILT 2026-10-07); CRAFT3 - five crafts, as built (BUILT 2026-10-07); CRAFT4 - tempering and reforging, as built (BUILT 2026-10-07); CRAFT5 - the consumables, as built (BUILT 2026-10-07)
 
 Mac: **"How could we enhance the profession element of the game while reducing complexity and making crafting more
 viable"**; given the five proposals below, **"This is amazing. Lets do it"**. Each is DECIDED (Mac) as a direction; the
@@ -3933,6 +3933,46 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   host. `tools/mutants/craft4.json` (71: 67 dead, 4 equivalent as recorded - two by the tables' order, one by the
   recipes a temper takes, one a race). PIN MOVED: `accountworker` (0089's two tables), `prof3_law` (a found piece a
   temper raised says its quality), `prof11_client` (the loom's Temper beside it).
+
+### 41.8 CRAFT5 - the consumables, leaned into, as built (BUILT 2026-10-07)
+
+- **A Repair Kit's quality, its reach** - DECIDED (41.2: "a Superior or Masterwork Repair Kit"): a kit's craft ROLLS a
+  quality now, as a piece's does (`src/net/recipeLaw.js` `rollsQuality` - every piece that takes one, and the kit; the
+  margin's odds, a clean heat's step, a seat's crafting halls'), and its quality is its REACH alone, never its condition
+  or its weight: `kitReach` - a Superior or Masterwork kit mends a piece up to **0.90** of its condition
+  (`KIT_CEILING_HIGH`, from `KIT_HIGH_QUALITY` 3), every other kit `KIT_CEILING`'s 0.75 (a field kit, a smith's below
+  Superior, a kit made before kits took a quality). The work stays a quarter a use (`KIT_REPAIR`). The kit stays out of
+  everything `takesQuality` rules: a commission names no least quality for a kit, and a Masterwork kit is no auction's.
+  A Masterwork kit carries its maker's mark ("Mac's Steel Repair Kit").
+- **The record**: `src/net/productRecord.js` - a kit's record carries its quality, 0 to 4, or -1 for one made before
+  CRAFT5 (still valid - every kit already in the world mints as it did); arrows -1 as ever.
+- **The service**: `server-account/src/professions.js` `craftAtAnvil` rolls a kit's quality (`rollsQuality`), its
+  crafting halls' steps with it; the products row and the signed record at it. No migration (`products.quality` was -1
+  to 4 from the first).
+- **The piece**: `src/systems/smithItems.js` - a kit minted at its record's quality; `kitCeiling(it, kit)` and
+  `kitGives(it, kit)` read the kit's own reach, so the targets, the mend, the pieces held back and the refusal
+  (`kitCeilingText` - "Even a Superior kit mends nothing past nine tenths") are the kit's. `recipeLaw.js pieceLines`: a
+  kit's card its quality and its reach ("Superior", "... up to 90%, once"); `craftedText` its quality word. The anvil's kit
+  box its odds and the reach (`profPages.js` `KIT_REACH_LINE`).
+- **A dish's buff and a Potent potion stand together - MEASURED, already** (41.2: "TO MEASURE first"): a dish lays its
+  Fortify Attribute entries in its own bundle with no spell settings (`cookItems.js feedEffect`), and a potion's Fortify
+  finds an incumbent only of its own stat AND settings (`effects.js` applySpell, `findInc`) - so a Potent Orc Strength
+  over the Feast of the Hearth is its own entry, the sum of both read (`liveStat`), either order; a dish eaten again
+  takes off its own bundle alone (`renewDish`). Nothing built: pinned.
+- **Arrows a Building product** - MEASURED, already: every arrow recipe is Carpentry's work at the workbench, and
+  Carpentry's track is Building's since CRAFT3 (41.6). Nothing built: pinned.
+- **The four hosts**: none touched - the kit's use is the item handler's on every host (`smithItems.js
+  installSmithing`), the anvil the pages'.
+- **The account version**: `ACCOUNT_VERSION` acct93 (`server-account/src/service.js`, `wrangler.toml`) for CRAFT2 to
+  CRAFT5's service, once.
+- **As built**: `src/net/recipeLaw.js`, `src/net/productRecord.js`, `src/systems/smithItems.js`, `src/ui/profPages.js`,
+  `server-account/src/professions.js`, `server-account/src/service.js`, `server-account/wrangler.toml`. Pinned:
+  `test/craft5_consumables.test.js` (5) - the done-when (a Superior kit mends a Steel Longsword at 70% to 90%, a Standard
+  one to 75%; a Masterwork's 90%; a field kit and a kit made before 75%; a piece at 80% a Superior kit's; the card, the
+  word, the refusal), the law and the record, a kit's craft through the real Worker answered and signed at a quality,
+  the dish and the Potent potion measured, the anvil's box. `tools/mutants/craft5.json` (24, all dead). PIN MOVED:
+  `prof3_law` (a kit's record its quality), `prof3_service` (a kit's craft answered a quality), `repair_rate` (the
+  anvil's kit line), and the account version's pins (acct93).
 
 ## Appendix A - a day of a gatherer
 

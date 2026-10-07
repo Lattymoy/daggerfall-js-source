@@ -59,7 +59,7 @@ import {
   workSpecOk,   // PROF12: a Transmuter's transmutation asks its choice
 } from '../../src/net/professionLaw.js';
 import {
-  recipeById, recipeOpen, qualityOdds, rollQuality, qualitySteps, craftQuality, takesQuality, craftXp, craftCount,
+  recipeById, recipeOpen, qualityOdds, rollQuality, qualitySteps, craftQuality, rollsQuality, craftXp, craftCount,
   makerMark, FIRST_CRAFT_XP, firstCraftPays, firstCraftKin, recipeInputs, takesHeartwood, carriesMark, dyeOk,
   masonXp,   // PROF11: the mason's bench's XP
   cookXp, dishHand,   // PROF9: a dish's XP and its cook's hand
@@ -1148,8 +1148,8 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
   const inputs = recipeInputs(r, { heartwood: wood, joiner: specs[50] === 'joiner', cracked: crack });
   // SEAT2b part two: the seat's crafting halls' steps, where the crafter's guild holds the town it crafts in (seatStepsFor)
   // PROF12: and a dish's - the Apothecary's step a dish's XP (recipeLaw cookXp: a clean pan's half again, a step each)
-  const halls = takesQuality(r) || r.kind === 'dish' ? await seatStepsFor(db, player.id, character, seat, prof, nowS) : 0;
-  const quality = takesQuality(r)
+  const halls = rollsQuality(r) || r.kind === 'dish' ? await seatStepsFor(db, player.id, character, seat, prof, nowS) : 0;
+  const quality = rollsQuality(r)   // CRAFT5: a Repair Kit's too - its quality its reach
     ? craftQuality(rollQuality(dice(rand), qualityOdds(rank - r.rank, { masterwright: masterworkSpec(specs[100], r) })), qualitySteps(r, { clean: clean === true, spec50: specs[50], heartwood: wood }) + halls)
     : -1;
   // SEAT2b part two (PROF0 4.8: "690 | Ram Kit | Stores (a siege work)"): A SIEGE WORK goes into the crafter's Stores, never

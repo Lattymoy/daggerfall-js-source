@@ -77,7 +77,7 @@
 // set gem's own price with it.
 // ═══════════════════════════════════════════════════════════════════
 import {
-  recipeById, QUALITY_EFFECTS, TOOL_LIFE, MASTERWORK, REPAIR_KIT_TEMPLATE, KIT_REPAIR, FIELD_KIT_REPAIR, KIT_CEILING, INGOT_MATERIAL, ARMOR_PLATE,
+  recipeById, QUALITY_EFFECTS, TOOL_LIFE, MASTERWORK, REPAIR_KIT_TEMPLATE, KIT_REPAIR, FIELD_KIT_REPAIR, KIT_CEILING, kitReach, INGOT_MATERIAL, ARMOR_PLATE,
   ARMOR_CHAIN, PROVENANCE_RE, makerMark, QUALITY_NAMES,
   jewelPoints, jewelPointsPct,   // PROF10: a piece of jewellery's points and its worth
   jewelHandOk,   // AUDIT PROF-541 J6: the hand a piece keeps, one its recipe takes
@@ -173,6 +173,7 @@ export function mintPiece({ recipe, quality, seed, maker = null, marked = false,
     item.value = kitValue(minedMaterial(r.metal).tier);
     item.recipe = r.id;   // AUDIT 31 H3: the recipe it was minted of, read before any look-alike's
     item.provenance = provenance;
+    if (Number.isInteger(quality) && quality >= 0) item.quality = Math.min(MASTERWORK, quality);   // CRAFT5: its quality its reach (kitReach) - none for a kit made before
     if (mark) item.maker = mark;
     return item;
   }
@@ -311,13 +312,14 @@ export function kitMends(m, item) {
   return false;
 }
 /** KIT-CEILING: the condition no kit mends a piece past - three quarters of it (recipeLaw.js KIT_CEILING), ROUNDED DOWN:
- *  an Iron Dagger's 50 stops at 37 (74%), never 38 (76% - the overhaul's sharp band, pcaao.js, the smith's to give). */
-export const kitCeiling = (it) => Math.floor(it.maxCondition * KIT_CEILING);
+ *  an Iron Dagger's 50 stops at 37 (74%), never 38 (76% - the overhaul's sharp band, pcaao.js, the smith's to give).
+ *  CRAFT5: `kit` the kit's own reach - a Superior or Masterwork kit's nine tenths (recipeLaw.js kitReach). */
+export const kitCeiling = (it, kit = null) => Math.floor(it.maxCondition * kitReach(kit));
 /** AUDIT ECON R2: WHETHER A KIT HAS ANYTHING TO GIVE A PIECE - more than a hundredth of its condition below the ceiling.
  *  A piece a kit mended stops AT the ceiling, and a blow later stood a point or two under it: worn, it came first in
  *  the order, and the hotbar, the classic pack's no-art fallback and the chooser's focused first row spent a whole kit
  *  on it - "The Daedric Longsword is mended: 75% to 75%." - with a flail at 20% beside it. */
-export const kitGives = (it) => kitCeiling(it) - it.currentCondition > Math.floor(it.maxCondition / 100);
+export const kitGives = (it, kit = null) => kitCeiling(it, kit) - it.currentCondition > Math.floor(it.maxCondition / 100);
 /**
  * MEND-AIM: THE PIECES A KIT COULD MEND in `items`, in the order it takes them unaimed - what is WORN first (the player's
  * own gear, never a piece of loot carried to sell), then the rest, each the lowest share of its condition left first.
@@ -328,7 +330,7 @@ export const kitGives = (it) => kitCeiling(it) - it.currentCondition > Math.floo
 export function repairKitTargets(kit, items) {
   if (!kit || kit.templateIndex !== REPAIR_KIT_TEMPLATE || !Array.isArray(items)) return [];
   const metal = kit.fieldKit === true ? FIELD_KIT : kit.kitMetal;   // REPAIR-EASE: a field kit mends any metal, by less
-  return items.filter((it) => it !== kit && kitMends(metal, it) && kitGives(it))   // KIT-CEILING: below it, by more than a hundredth
+  return items.filter((it) => it !== kit && kitMends(metal, it) && kitGives(it, kit))   // KIT-CEILING: below it, by more than a hundredth (CRAFT5: the kit's own)
     .sort(mendOrder);   // MEND-WORN: the order's one home, Repairs Objects' too (itemTemplates.js)
 }
 /**
@@ -348,7 +350,7 @@ export function useRepairKit(kit, items, { target = null, pack = items } = {}) {
   const it = target == null ? want[0] : want.includes(target) ? target : null;
   if (!it) return null;
   const before = conditionShare(it), from = conditionPercentage(it);
-  it.currentCondition = Math.min(kitCeiling(it), it.currentCondition + Math.ceil(it.maxCondition * (kit.fieldKit === true ? FIELD_KIT_REPAIR : KIT_REPAIR)));   // KIT-CEILING: never past three quarters
+  it.currentCondition = Math.min(kitCeiling(it, kit), it.currentCondition + Math.ceil(it.maxCondition * (kit.fieldKit === true ? FIELD_KIT_REPAIR : KIT_REPAIR)));   // KIT-CEILING: never past three quarters - CRAFT5: nine tenths, a Superior or Masterwork kit's
   const i = items.indexOf(kit);
   if (i >= 0) items.splice(i, 1);
   return { item: it, before, after: conditionShare(it), from, to: conditionPercentage(it) };
@@ -357,12 +359,16 @@ export function useRepairKit(kit, items, { target = null, pack = items } = {}) {
  *  R5: "three quarters", never "75%" - the smallest pieces stop at 74% (an Iron Dagger's 37 of 50), and were refused
  *  as "past 75%" under a card that read 74%. */
 export const KIT_CEILING_TEXT = 'A kit mends nothing past three quarters. A smith can do the rest.';
+/** CRAFT5: a Superior or Masterwork kit's - its nine tenths. */
+export const KIT_CEILING_HIGH_TEXT = 'Even a Superior kit mends nothing past nine tenths. A smith can do the rest.';
+/** CRAFT5: the refusal the kit's own reach says. @param {any} kit */
+export const kitCeilingText = (kit) => (kitReach(kit) === KIT_CEILING ? KIT_CEILING_TEXT : KIT_CEILING_HIGH_TEXT);
 /** KIT-CEILING: the pieces of the kit's metal it holds back - worn below whole, and at its ceiling or within a hundredth
  *  of it (kitGives). Read in the player's own pack (`localItems`), whichever list the kit was used from. */
 const kitHeldBack = (kit, items) => {
   if (!kit || kit.templateIndex !== REPAIR_KIT_TEMPLATE || !Array.isArray(items)) return [];
   const metal = kit.fieldKit === true ? FIELD_KIT : kit.kitMetal;
-  return items.filter((it) => it !== kit && kitMends(metal, it) && it.currentCondition < it.maxCondition && !kitGives(it));
+  return items.filter((it) => it !== kit && kitMends(metal, it) && it.currentCondition < it.maxCondition && !kitGives(it, kit));
 };
 /** The kit's metal's word, for its refusal ("Nothing of Mithril here wants mending."). */
 export const kitMetalName = (kit) => METALS[kit?.kitMetal] ?? 'its metal';
@@ -391,7 +397,7 @@ export function repairKitUse(item, collection, { target = null, chooseTarget = f
   // KIT-CEILING: pieces the kit could take held back at three quarters - say so, rather than that none wants mending.
   // AUDIT ECON R3: and each refusal is a REFUSAL - the kit is kept, and the hotbar (quickslots.js) says it and never
   // strikes gold under it, which it did once a refusal became the answer for any gear between 75% and whole
-  if (!done && kitHeldBack(item, pack).length > 0) return { kind: 'repairKit', text: KIT_CEILING_TEXT, refused: true };
+  if (!done && kitHeldBack(item, pack).length > 0) return { kind: 'repairKit', text: kitCeilingText(item), refused: true };   // CRAFT5: the kit's own reach
   if (!done) return { kind: 'repairKit', text: item?.fieldKit === true ? 'Nothing here wants mending.' : `Nothing of ${kitMetalName(item)} here wants mending.`, refused: true };   // REPAIR-EASE
   // AUDIT 30 C8: a marked piece's name is its maker's - "Silverthorn's Longsword", never "The Silverthorn's"
   const long = itemLongName(done.item);
@@ -441,7 +447,7 @@ export function craftedText(pieces) {
   // a piece whose name is its maker's mark ("Silverthorn's Mithril Longsword") takes no article and no quality word -
   // PROF4 found PROF3 saying "an Silverthorn's..." whenever the maker's name began with a vowel
   const marked = typeof it.maker === 'string' && it.maker && (it.quality === MASTERWORK || it.marked === true);
-  const word = !marked && Number.isInteger(it.quality) && !Number.isInteger(it.kitMetal) ? `${QUALITY_NAMES[it.quality]} ` : '';
+  const word = !marked && Number.isInteger(it.quality) ? `${QUALITY_NAMES[it.quality]} ` : '';   // CRAFT5: a kit's quality too - its reach
   const one = marked ? name : `${/^[AEIOU]/.test(word || name) ? 'an' : 'a'} ${word}${name}`;
   if (isCraftedFurniture(it)) return `You made ${one} - it waits among your things for a room to stand in`;
   return pieces.length > 1 ? `You made ${pieces.length} ${name}s` : `You made ${one}`;

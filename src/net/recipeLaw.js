@@ -108,6 +108,15 @@ export const KIT_REPAIR = 0.25;
  *  field kit or a smith's, mends a piece past three quarters of its condition - the overhaul's normal band (a blade at
  *  61-75% strikes at its own damage); the sharp edge above it is a smith's work. */
 export const KIT_CEILING = 0.75;
+/** CRAFT5 (bible/06-Systems/Professions-Arc.md 41.8): A SUPERIOR OR MASTERWORK Repair Kit - a smith's best - mends up to
+ *  nine tenths of a piece's condition (41.2, DECIDED); every other kit (a field kit, a smith's below Superior, a kit made
+ *  before kits took a quality) the three quarters above. */
+export const KIT_CEILING_HIGH = 0.9;
+/** CRAFT5: the quality a kit's reach rises at - Superior (QUALITY_NAMES[3]). */
+export const KIT_HIGH_QUALITY = 3;
+/** CRAFT5: the share of a piece's condition a kit mends it to - a Superior or Masterwork kit's nine tenths, any other's
+ *  three quarters. @param {any} kit */
+export const kitReach = (kit) => (Number.isInteger(kit?.quality) && kit.quality >= KIT_HIGH_QUALITY ? KIT_CEILING_HIGH : KIT_CEILING);
 
 /** The metals a recipe is made in: every ingot but the Daedric's and the Warforged's for the tools (Iron alone). */
 const SMITH_INGOTS = Object.freeze(INGOTS.map((i) => i.key));
@@ -689,6 +698,10 @@ export const TOOL_LIFE = Object.freeze([37, 50, 57, 65, 65]);
 /** Whether a recipe's piece takes a quality at all: a Repair Kit does not (it is measured by its work); PROF4: nor
  *  arrows (DFU mints a quiver at condition 0 - nothing for a quality to act on) nor the Ram Kit (a siege work). */
 export const takesQuality = (r) => r.kind !== 'kit' && r.kind !== 'arrows' && r.kind !== 'siege' && r.kind !== 'dish';   // PROF9: nor a dish - it is eaten, and its worth is its effect
+/** CRAFT5 (Professions-Arc 41.8): whether a recipe's craft ROLLS a quality - every piece that takes one, and a Repair Kit,
+ *  whose quality is its reach (kitReach), never its condition or its weight; the kit stays out of everything takesQuality
+ *  rules (a commission's least quality, an auction's Masterwork). */
+export const rollsQuality = (r) => takesQuality(r) || r?.kind === 'kit';
 /** PROF4: a Master Joiner's furniture carries the maker's mark at any quality (PROF0 3.3); a Masterwork always does. */
 export const carriesMark = (r, quality, spec100 = null) => quality === MASTERWORK || (r?.family === 'furniture' && spec100 === 'master-joiner');
 
@@ -903,7 +916,10 @@ export function pieceLines(item, points = null) {
   if (item?.fieldKit === true) return [`Mends ${Math.round(FIELD_KIT_REPAIR * 100)}% of a weapon's or armour's condition, up to ${Math.round(KIT_CEILING * 100)}%, once`];   // REPAIR-EASE: a looted kit has no provenance; KIT-CEILING
   // CRAFT4: a found piece a temper raised says its quality (temperLaw.js - Fine or Superior; a found piece is Standard)
   if (!item || typeof item.provenance !== 'string' || !PROVENANCE_RE.test(item.provenance)) return Number.isInteger(item?.quality) && item.quality > 1 && item.quality < MASTERWORK ? [QUALITY_NAMES[item.quality]] : [];
-  if (Number.isInteger(item.kitMetal)) return [`Mends a quarter of a ${METAL_WORDS[item.kitMetal] ?? ''} piece's condition, up to ${Math.round(KIT_CEILING * 100)}%, once`];   // KIT-CEILING
+  if (Number.isInteger(item.kitMetal)) {   // KIT-CEILING; CRAFT5: a kit's quality its reach
+    const reach = `Mends a quarter of a ${METAL_WORDS[item.kitMetal] ?? ''} piece's condition, up to ${Math.round(kitReach(item) * 100)}%, once`;
+    return Number.isInteger(item.quality) && item.quality >= 0 && item.quality <= MASTERWORK ? [QUALITY_NAMES[item.quality], reach] : [reach];
+  }
   if (recipeById(item.recipe)?.kind === 'dish') {   // PROF9: a dish says what it does, its keeping and its cook
     const out = [dishEffectText(dishOf(item.recipe), item.chef === true ? HAND_CHEF : null)];
     if (item.noRot === true) out.push('Never spoils');
