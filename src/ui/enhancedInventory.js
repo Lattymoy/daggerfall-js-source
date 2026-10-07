@@ -96,7 +96,7 @@ import {
   equipItem, unequipSlot, equipTableOf, isEquipped,
   isForbiddenEquip, isBrokenItem, getEquipSlot, bodyPartForSlot,   // getEquipSlot - Mac (2026-09-18): Wear only where a slot would take it; bodyPartForSlot - AC-COMPARE: GetBodyPartForEquipSlot, the part a worn panel stands for
 } from '../systems/equip.js';
-import { armourBadge, armourPlaque, compareBlock } from './armourCard.js';   // AC-COMPARE: the doll's numbers on the map, the overall figure, the card's comparison
+import { armourBadge, armourPlaque, compareBlock, lineCompareBlock } from './armourCard.js';   // AC-COMPARE: the doll's numbers on the map, the overall figure, the card's comparison
 import { statFlip } from './statsCard.js';   // STATS-CARD: the paperdoll's flip side, its Stats button
 import {
   itemWeight, isEnchanted, totalWeight, addItem, goldStack,
@@ -137,6 +137,7 @@ import { validSigil } from '../systems/sigil.js';   // SIGIL-UI: the tile's corn
 import { setCard, setStrip, markSetFrame } from './setCard.js';   // SET5: a set piece's set on its card, the worn sets on the doll's column, a set piece's rune
 import { setIdOf, setById, setLines, setSigilLines } from '../systems/sigilSets.js';   // CARD-FIT U4/U10: a set piece and its sigil in a line each
 import { isLocked, toggleLocked, lockRefuses, lockedText, LOCKED_LINE } from '../systems/itemLock.js';   // LOCK1
+import { isJunk, junkable, toggleJunk, lockLiftsJunk, JUNK_LINE } from '../systems/itemJunk.js';   // LOOT18
 import { isBound, BOUND_LINE, boundRefusesPut, boundText, isPackOnly, packOnlyText } from '../systems/itemBound.js';   // SS1: a bound piece says so on its card   // SS3: and goes nowhere but the wagon and the player's own storage
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
@@ -2370,6 +2371,7 @@ export function markItemFrame(node, item) {
   if (validSigil(item?.sigil)) node.dataset.sigil = '';   // every frame here is a fresh node per render - nothing to take off
   markSetFrame(node, item);   // SET5: a set piece's rune wears its set's colour (ui/setCard.js)
   if (isLocked(item)) node.dataset.locked = '';   // LOCK1: the padlock in the picture's corner (the sheet's own)
+  if (isJunk(item)) node.dataset.junk = '';   // LOOT18: a junk piece's picture is dimmed (the sheet's own)
   return node;
 }
 
@@ -2917,6 +2919,7 @@ function infoCard(picked, side, ready = render, { body = false } = {}) {
   { const sb = sigilCard(picked); if (sb) into.append(sb); }
   { const set = setCard(picked, deps.entity, itemLongName); if (set) into.append(set); }   // SET5: its set - the places worn, the stage, its tiers (ui/setCard.js)
   if (isLocked(picked)) into.append(el('p', 'lockline', LOCKED_LINE));   // LOCK1
+  if (isJunk(picked)) into.append(el('p', 'boundline junkline', JUNK_LINE));   // LOOT18: the lock's line style, without its padlock
   if (isBound(picked)) into.append(el('p', 'boundline', BOUND_LINE));   // SS1: the lock's line style, without its padlock
   const dl = el('dl', 'stats');
   // CARD-FIT: each pair in its own group, so a narrow card flows them two a line and never breaks a pair across two
@@ -2957,6 +2960,7 @@ function infoCard(picked, side, ready = render, { body = false } = {}) {
   // armour a wear moves, each set against what is worn now in green or red (ui/armourCard.js). A pack piece or a loot
   // row's; a worn piece is what is worn, and has none.
   { const cmp = compareBlock(deps.entity, picked, (it) => itemLongName(it, { getQuest: deps.getQuest ?? null })); if (cmp) into.append(cmp); }
+  { const lc = lineCompareBlock(deps.entity, picked); if (lc) into.append(lc); }   // LOOT18: and its lines against theirs
   return { c, line, big };
 }
 
@@ -3057,8 +3061,15 @@ function itemActs(picked, side, { qty = true } = {}) {
   // so the padlock is seen to close
   if (side === 'local') {
     const k = el('button', 'act', isLocked(picked) ? 'Unlock' : 'Lock');
-    k.onclick = () => { toggleLocked(picked); notice = null; render(); };
+    k.onclick = () => { toggleLocked(picked); lockLiftsJunk(picked); notice = null; render(); };   // LOOT18: locked, its junk mark lifted
     acts.append(k);
+  }
+  // LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): JUNK, beside the lock - gear in the pack, not
+  // worn; a shop's Sell junk puts every such piece on its counter, and quick loot's take-all leaves one where it lies
+  if (side === 'local' && !line.equipped && junkable(picked)) {
+    const j = el('button', 'act', isJunk(picked) ? 'Not junk' : 'Junk');
+    j.onclick = () => { toggleJunk(picked); notice = null; render(); };
+    acts.append(j);
   }
   // SS5 (Mac: "The ability to dismantle in the inventory and recieve back sigil stones", the Broker's wares alone): a
   // ware in the pack is DISMANTLED for a share of its price (systems/sigilBroker.js), asked first - it is gone for good.

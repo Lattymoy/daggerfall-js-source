@@ -153,11 +153,13 @@ export function honeRefusal(item, index, player) {
   if (!lootRarityOn()) return 'off';
   const price = honePrice(item);
   if (!price) return 'not';
-  if (!itemIsIdentified(item)) return 'unknown';
+  const known = itemIsIdentified(item);
+  if (!known) return 'unknown';
   if (isEquipped(item)) return 'worn';
   if (!honeableLines(item).includes(index)) return affixBand(item, index) ? 'top' : 'line';
-  if (shardsHeld(player?.items) < price.shards) return 'shards';
-  if (totalGoldAmount(player) < price.gold) return 'gold';
+  const purse = { shards: shardsHeld(player?.items), gold: totalGoldAmount(player) };
+  if (purse.shards < price.shards) return 'shards';
+  if (purse.gold < price.gold) return 'gold';
   return null;
 }
 /** THE HONE, MADE: paid at the price before it (the shards, then the gold), the line taken up its band. Answers
@@ -169,8 +171,9 @@ export function honePiece(item, index, player, rolls = Math.random) {
   const price = /** @type {{ shards: number, gold: number }} */ (honePrice(item));
   const line = honeAffix(item, index, rolls);
   if (!line) return { ok: false, reason: 'not' };
-  spendShards(player.items, price.shards);
-  deductGold(player, price.gold);
+  const { shards, gold } = price;
+  spendShards(player.items, shards);
+  deductGold(player, gold);
   return { ok: true, line, price };
 }
 /** THE REFORGE, MADE: paid (the shards, then the gold - DFU's purse-then-letters law), the line rolled again. Answers

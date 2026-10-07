@@ -118,6 +118,8 @@ export const ITEM_FIELDS = Object.freeze({
   sigil: rec(validSigil),
   // LOCK1: the player's lock (systems/itemLock.js) - true, or absent
   locked: bool(),
+  // LOOT18 (bible/06-Systems/Loot-II-Arc.md section 10): the player's junk mark (systems/itemJunk.js) - true, or absent
+  junk: bool(),
   // SS4: a piece bound to its owner by how it was won (systems/itemBound.js - the Sigil Broker's wares) - true, or absent
   bound: bool(),
   // SS5: the Sigil Stones the Broker took for a ware (systems/sigilBroker.js brokerStock) - its dismantle's measure

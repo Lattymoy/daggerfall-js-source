@@ -1493,7 +1493,8 @@ export function honeAffix(item, index, rolls = Math.random) {
   const line = { ...old, value: rangeInt(old.value + 1, band[1], rolls) };
   item.affixes = item.affixes.map((a, i) => (i === index ? line : a));
   item.honed = (item.honed | 0) + 1;
-  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([old], item) + affixesWorth([line], item);
+  const was = Number.isFinite(item.value) ? item.value : itemBaseValue(item);
+  item.value = was + affixesWorth([line], item) - affixesWorth([old], item);
   return line;
 }
 /** LOOT7 (bible/06-Systems/Loot-Arc.md section 9): what a CHAMPION's corpse source is over a plain foe's - its Legendary
@@ -1641,6 +1642,40 @@ export function rolledResistOf(entity, element) {
     for (const a of it.affixes) if (validAffix(a) && a.id === 'resist' && a.param === element) worn += a.value | 0;
   }
   return { worn, counts: Math.min(RESIST_CAP, worn) };
+}
+/** LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): A PIECE'S LINES AGAINST WHAT IT WOULD REPLACE
+ *  (`replaces`, the worn pieces a wear would take off - ui/armourCard.js wearComparison's). For each of its lines, the
+ *  same line - its kind and its param - summed over them, and the difference (`delta`, null for a line they lack: new);
+ *  then each line they carry and it does not (`lost`, its label at their sum). A resistance line also says what of its
+ *  element the wearer's rolled gear counts now and would count after (`resist` - LOOT12's cap, so a line past it reads
+ *  as the nothing it adds). Null with the switch off, while the piece is unknown, or with nothing known to set it
+ *  against; a worn piece not yet identified is set aside (its lines are not known). */
+export function lineComparison(entity, item, replaces = []) {
+  if (!lootRarityOn() || !item || !identified(item)) return null;
+  const known = (replaces ?? []).filter((r) => r && r !== item && identified(r));
+  if (!known.length) return null;
+  const key = (a) => `${a.id}:${a.param ?? ''}`;
+  const mine = (Array.isArray(item.affixes) ? item.affixes : []).filter(validAffix);
+  const theirs = known.flatMap((r) => (Array.isArray(r.affixes) ? r.affixes : []).filter(validAffix));
+  const sumOf = (k) => theirs.reduce((n, a) => n + (key(a) === k ? a.value : 0), 0);
+  const carried = new Set(theirs.map(key));
+  const own = new Set(mine.map(key));
+  const rolled = (pieces, element) => pieces.filter((p) => ROLLED_TIERS.includes(p.rarity)).flatMap((p) => p.affixes ?? [])
+    .reduce((n, a) => n + (validAffix(a) && a.id === 'resist' && a.param === element ? a.value : 0), 0);
+  const rows = mine.map((a) => {
+    const row = { text: affixLabel(a), delta: carried.has(key(a)) ? a.value - sumOf(key(a)) : null, resist: null };
+    if (a.id === 'resist') {
+      const now = rolledResistOf(entity, a.param);
+      const then = now.worn - rolled(known, a.param) + rolled([item], a.param);
+      row.resist = { now: now.counts, then: Math.min(RESIST_CAP, Math.max(0, then)) };
+    }
+    return row;
+  });
+  const lost = [...carried].filter((k) => !own.has(k)).map((k) => {
+    const a = theirs.find((x) => key(x) === k);
+    return affixLabel({ ...a, value: Math.min(sumOf(k), AFFIX_RANGES[a.id].legendary[1]) });
+  });
+  return { rows, lost };
 }
 /** The weapon's own damage affix over its rolled damage, truncated. */
 export function affixWeaponDamage(weapon, damage) {

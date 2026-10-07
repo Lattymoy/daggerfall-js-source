@@ -474,3 +474,50 @@ line from the Legendary band; the price and its doubling, every refusal, the pre
 nothing taken when refused; the wire's field; the window (a press beside each line under its top and none at the top or
 on an unknown piece, the price on the card, a press that hones and says so, the next price twice, a short purse's word)
 and the host's hook. `tools/mutants/loot17.json` (31, all dead).
+
+### LOOT18 - seen: the line compare, the junk and the filter (2026-10-07)
+
+**The line compare.** `src/systems/lootRarity.js` `lineComparison(entity, item, replaces)`: each of a known piece's
+lines against the same line - its kind and its param - summed over the known pieces a wear would replace (`delta`, or
+null for a line they lack), their lines it would lose (`lost`, at their sum), and on a resistance line what of its
+element the wearer's rolled gear counts now and would count after, under LOOT12's cap (`resist`); null with the switch
+off, while the piece is unknown, or with no known piece to set it against (a worn piece not yet identified is set
+aside). `src/ui/armourCard.js` `lineCompareBlock` draws it under AC-COMPARE's numbers - `▲6`, `▼5`, `new`, a lost line
+struck through and `lost`, a resistance line's "20% → 15% counts" - over `wearComparison`'s own replaced pieces, so a
+second sword that would go to a free off-hand (DFU's EquipItem) compares with nothing; `src/ui/enhancedInventory.js`
+`infoCard` hangs it under the compare block.
+
+**Junk.** `src/systems/itemJunk.js` (new), the lock's twin: `junk: true` (a declared item field), on gear alone
+(`JUNK_GROUPS` - never a quest's item or a bound one, which no counter takes); marked, a piece's lock is lifted, and
+locked (`lockLiftsJunk`, the card's Lock), its mark is - the later word stands. The pack's card offers Junk beside the
+lock on a piece in the pack, not worn, says `JUNK_LINE`, and the picture of a junk piece is dimmed and greyed
+(`data-junk`, the Plus sheet). `src/ui/enhancedTrade.js`: at a Sell or Sell Magic counter the footer's `Sell junk (n)`
+lays every junk piece the counter would take (not worn, accepted by the shop, its sale not refused) on the counter in
+one press, by the counter's own click law, and opens the counter's own price and YesNo confirm; never at a Buy.
+
+**Salvage every Magic.** `src/ui/reforgeWindow.js`: at the head of the Salvage page, with two Magic pieces or more the
+page could break now (not worn, locked or bound), one press that asks first (`EVERY_MAGIC_ASK`, "Break them all" /
+"Keep") and then salvages each through the host's own salvage (`SALVAGED_EVERY`).
+
+**Quick loot by tier.** The quick-loot row carries a part (`src/systems/features.js`, `quickLootTier`: All, Magic+,
+Rare+; All the default - the take-all as it was), and its note says it inside FT15's budget. `src/systems/quickLoot.js`
+`takeAllLeaves`: the take-all leaves gear (`JUNK_GROUPS`, never a quiver) under the part's rung and every junk piece;
+gold, supplies, a quest's items and DFU's own magic items are always taken; with the ladder off there is no rung to read
+and only the junk is left. What the filter left is said as the rows that stayed are ("N left by your quick-loot
+filter.", `QUICK_LOOT_LEFT`), and a press that took nothing is handled - no window opens over a pile the player's own
+filter left. A row the player lights and takes is taken whatever it is: the part is the take-all's.
+
+**What moved.** One record was re-aimed by content (`quickloot.json` QUICK-LOOT-the-bulk-take-walks-the-list-it-is-
+splicing: the filter stands between the walk and its take), its law unmoved. LOOT17's hone had copied five of LOOT9's
+anchored lines (the refusal's unknown, shards and gold, the press's payment, the price's move); they are written in
+their own words now, so each LOOT9 record names its one site again, and LOOT17's records follow.
+
+Pinned: `test/loot18_seen.test.js` (6) - the mark's law (gear alone, the lock's twin both ways, the field the wire
+carries and no other shape of it); the pack's card (Junk beside the lock, the line, the picture's mark, the lock lifting
+it; local unworn gear alone); the counter (two of five on it whole and the counter's confirm - a worn, a bound and a
+kept piece left; none at a Buy, none where the shop takes none); Salvage every Magic (the three it may break and never
+the locked one or the Rare, asked first, Keep, through the host's own salvage, none for one); quick loot by tier (the
+row's part and its default, each rung over one pile - what stays, what is always taken, the line - nothing taken said
+and handled, the ladder off, a lit row taken whatever it is, a quest's item never the filter's); and the line compare
+(up, new, down, lost, the resistance count and its cap, nothing to compare with, an unknown piece either side, off) and
+its block on the card. `tools/mutants/loot18.json` (45, all dead).

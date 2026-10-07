@@ -62,6 +62,7 @@ import { isTextEntryTarget } from './input.js';
 import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../systems/inventory.js';   // AUDIT UXB1 F4: addItem, a returning lot's merge
 import { isFurnishing } from '../systems/decorFurnish.js';   // DECOR2b: furniture is delivered, never carried
 import { lockRefuses, lockedText } from '../systems/itemLock.js';   // LOCK1: a locked piece is not for sale
+import { isJunk } from '../systems/itemJunk.js';   // LOOT18: Sell junk
 import { isBound, boundText } from '../systems/itemBound.js';   // SS4: nor a bound one - a Sigil Stone, the Broker's wares
 import { getBool } from '../systems/settings.js';   // UXB1-K: InstantRepairs - no clock to count down
 import { dateFromClassicMinutes, dateString } from '../systems/gameDate.js';
@@ -620,6 +621,43 @@ function quickSellSelected() {
   render();
 }
 
+/** LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): THE JUNK THIS COUNTER WOULD TAKE NOW - every
+ *  junk piece of the pack (systems/itemJunk.js) the Sell list shows on any tab (not worn, a piece this shop's counter
+ *  accepts, not yet on it) and whose sale is not refused (locked, bound). None outside a Sell. */
+function junkForCounter() {
+  if (!selling()) return [];
+  const equipped = deps.isEquipped ?? (() => false);
+  const held = remoteItems();
+  return (deps.packItems?.() ?? []).filter((it) => isJunk(it) && !equipped(it) && !held.includes(it) && !saleRefused(it)
+    && localListAccepts(mode, it, { accepts: deps.accepts, enchanted: deps.enchanted }));
+}
+/** LOOT18: SELL JUNK - every such piece onto the counter in one press, whole, each by the counter's own click law (a
+ *  piece the law would not stage stays in the pack), and then the counter's own price and confirm: the footer's Sell, the
+ *  YesNo box it always asks. Answers how many it laid. */
+function sellJunk() {
+  let laid = 0;
+  for (const item of junkForCounter()) {
+    const d = localClickDecision(mode, item, {
+      inBasket: (i) => basket.includes(i),
+      allowMagicRepairs: deps.allowMagicRepairs ?? false,
+      usingIdentifySpell: deps.usingIdentifySpell ?? false,
+      wagonLoaded: (deps.entity?.wagonItems ?? []).length > 0,
+      bagLoaded: (deps.entity?.bagItems ?? []).length > 0,
+      usedWagon: null,
+    });
+    if (d.kind !== 'stage' || isSummoned(item) || questTransferRefused(item, { fromLocal: true, toWagon: false, getQuest: deps.getQuest ?? null })) continue;
+    clearLightSourceOnLeave(item, deps.entity, true);
+    move(item, deps.packItems(), remoteItems());
+    laid++;
+  }
+  selected = null;
+  if (!laid) { render(); return 0; }
+  playTransferSound();
+  modeAction();   // the counter's own price and its confirm
+  render();
+  return laid;
+}
+
 /** The footer's one primary button, doing whichever of its jobs the
  *  moment calls for: a quick-sell candidate sells it outright; any
  *  other pending selection (a single click's tooltip, not yet moved)
@@ -871,6 +909,12 @@ function footer() {
     steal.disabled = !(stealCost() > 0);
     steal.onclick = doSteal;
     bar.append(steal);
+  }
+  const junk = junkForCounter();   // LOOT18: the pack's junk, onto the counter in one press
+  if (junk.length) {
+    const j = el('button', 'act sell-junk', `Sell junk (${junk.length})`);
+    j.onclick = sellJunk;
+    bar.append(j);
   }
   const clearBtn = el('button', 'act', 'Clear');
   clearBtn.onclick = () => { clear(); render(); };

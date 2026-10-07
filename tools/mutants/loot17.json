@@ -56,8 +56,8 @@
   {
     "name": "LOOT17-the-price-unmoved",
     "file": "src/systems/lootRarity.js",
-    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([old], item) + affixesWorth([line], item);\n  return line;\n}\n/** LOOT7",
-    "new": "  return line;\n}\n/** LOOT7",
+    "old": "  item.value = was + affixesWorth([line], item) - affixesWorth([old], item);\n",
+    "new": "",
     "tests": [
       "test/loot17_hone.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "LOOT17-honed-unknown",
     "file": "src/systems/reforge.js",
-    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n  if (isEquipped(item)) return 'worn';\n  if (!honeableLines",
-    "new": "  if (isEquipped(item)) return 'worn';\n  if (!honeableLines",
+    "old": "  const known = itemIsIdentified(item);\n  if (!known) return 'unknown';\n",
+    "new": "",
     "tests": [
       "test/loot17_hone.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LOOT17-honed-without-shards",
     "file": "src/systems/reforge.js",
-    "old": "  if (shardsHeld(player?.items) < price.shards) return 'shards';\n  if (totalGoldAmount(player) < price.gold) return 'gold';\n  return null;\n}\n/** THE HONE, MADE",
-    "new": "  if (totalGoldAmount(player) < price.gold) return 'gold';\n  return null;\n}\n/** THE HONE, MADE",
+    "old": "  if (purse.shards < price.shards) return 'shards';\n",
+    "new": "",
     "tests": [
       "test/loot17_hone.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "LOOT17-honed-without-gold",
     "file": "src/systems/reforge.js",
-    "old": "  if (totalGoldAmount(player) < price.gold) return 'gold';\n  return null;\n}\n/** THE HONE, MADE",
-    "new": "  return null;\n}\n/** THE HONE, MADE",
+    "old": "  if (purse.gold < price.gold) return 'gold';\n",
+    "new": "",
     "tests": [
       "test/loot17_hone.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "LOOT17-the-shards-kept",
     "file": "src/systems/reforge.js",
-    "old": "  if (!line) return { ok: false, reason: 'not' };\n  spendShards(player.items, price.shards);\n  deductGold(player, price.gold);\n  return { ok: true, line, price };\n}\n/** THE REFORGE, MADE",
-    "new": "  if (!line) return { ok: false, reason: 'not' };\n  deductGold(player, price.gold);\n  return { ok: true, line, price };\n}\n/** THE REFORGE, MADE",
+    "old": "  spendShards(player.items, shards);\n",
+    "new": "",
     "tests": [
       "test/loot17_hone.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "LOOT17-the-gold-kept",
     "file": "src/systems/reforge.js",
-    "old": "  if (!line) return { ok: false, reason: 'not' };\n  spendShards(player.items, price.shards);\n  deductGold(player, price.gold);\n  return { ok: true, line, price };\n}\n/** THE REFORGE, MADE",
-    "new": "  if (!line) return { ok: false, reason: 'not' };\n  spendShards(player.items, price.shards);\n  return { ok: true, line, price };\n}\n/** THE REFORGE, MADE",
+    "old": "  deductGold(player, gold);\n",
+    "new": "",
     "tests": [
       "test/loot17_hone.test.js"
     ]

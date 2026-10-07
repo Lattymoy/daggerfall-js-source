@@ -93,6 +93,11 @@ export const HONED = (name, line) => `Honed: ${name} - ${line}.`;   // LOOT17
 export const HONE_NOTE = (price) => `A hone costs ${reforgePriceText(price)} - it doubles with every hone the piece takes, and a line at the top of its band takes none.`;
 export const SALVAGED = (name, n) => `Salvaged: ${name}, for ${shardsText(n)}.`;
 export const BREAK_ASK = (name, n) => `Break ${name} for ${shardsText(n)}? It is gone for good.`;
+/** LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): SALVAGE EVERY MAGIC - one press, asked first. */
+export const EVERY_MAGIC = 'every-magic';
+export const EVERY_MAGIC_LABEL = (n) => `Salvage every Magic (${n})`;
+export const EVERY_MAGIC_ASK = (n, shards) => `Break all ${n} Magic pieces for ${shardsText(shards)}? They are gone for good.`;
+export const SALVAGED_EVERY = (n, shards) => `Salvaged ${n} Magic piece${n === 1 ? '' : 's'}, for ${shardsText(shards)}.`;
 
 /** An item's classic picture fitted to the row's box, or null while it loads (`onReady` repaints when it lands). */
 function classicPicture(item, wearer, onReady) {
@@ -226,6 +231,7 @@ export function mountReforgeWindow(host, deps) {
       ? items.filter((it) => reforgePrice(it) && reforgeableLines(it).length)
       : items.filter((it) => salvageShards(it) > 0 && !['aetheric', 'artifact', 'quest', 'off'].includes(salvageRefusal(it) ?? ''));
     if (!rows.includes(picked)) picked = page === 'reforge' ? rows[0] ?? null : null;
+    if (page === 'salvage') everyMagic(rows);   // LOOT18
     if (!rows.length) {
       const empty = el('li', 'broker-insignia-head reforge-empty', page === 'reforge' ? 'Nothing in your pack the Reforge takes - a Magic or Rare piece, or an Exalted Legendary.' : 'Nothing in your pack that will break - a Magic piece or better the ladder graded.');
       empty.setAttribute('role', 'presentation');
@@ -327,6 +333,36 @@ export function mountReforgeWindow(host, deps) {
     if (hp && hone.length) card.append(el('p', 'boundline hone-note', HONE_NOTE(hp)));   // LOOT17
     body.append(card);
   };
+  /** LOOT18: SALVAGE EVERY MAGIC, at the head of the Salvage page - every Magic piece the page could break now (not worn,
+   *  locked or bound), in one press that asks first ("Break them all" / "Keep"), through the host's own salvage a piece
+   *  at a time. Two at the least: one is its own row's press. */
+  function everyMagic(rows) {
+    const magics = rows.filter((it) => it.rarity === 'magic' && !salvageRefusal(it));
+    if (magics.length < 2) { if (asking === EVERY_MAGIC) asking = null; return; }
+    const shards = magics.reduce((n, it) => n + salvageShards(it), 0);
+    const head = el('li', 'broker-insignia-head salvage-every');
+    head.setAttribute('role', 'presentation');
+    const btn = el('button', 'act broker-buy every-magic', asking === EVERY_MAGIC ? 'Break them all' : EVERY_MAGIC_LABEL(magics.length));
+    btn.setAttribute('type', 'button');
+    btn.setAttribute('aria-label', asking === EVERY_MAGIC ? EVERY_MAGIC_ASK(magics.length, shards) : `${EVERY_MAGIC_LABEL(magics.length)} for ${shardsText(shards)}`);
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      if (asking !== EVERY_MAGIC) { asking = EVERY_MAGIC; say(false, EVERY_MAGIC_ASK(magics.length, shards)); render(); return; }
+      asking = null;
+      let n = 0, got = 0;
+      for (const it of magics) { const done = deps.salvage(it); if (done?.ok) { n++; got += done.shards ?? salvageShards(it); } }
+      say(n > 0, n ? SALVAGED_EVERY(n, got) : 'Nothing would break.');
+      render();
+    };
+    head.append(btn);
+    if (asking === EVERY_MAGIC) {
+      const keep = el('button', 'act broker-buy reforge-keep', 'Keep');
+      keep.setAttribute('type', 'button');
+      keep.onclick = (e) => { e.stopPropagation(); asking = null; note = null; render(); };
+      head.append(keep);
+    }
+    list.append(head);
+  }
   /** LOOT10: THE CODEX - every Legendary record, found and not, then the Aetheric sets; a row pressed shows it whole. */
   let pickedRec = null;
   const head2 = (text) => { const h = el('li', 'broker-insignia-head codex-head', text); h.setAttribute('role', 'presentation'); return h; };
