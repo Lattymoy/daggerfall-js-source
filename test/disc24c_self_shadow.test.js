@@ -70,15 +70,16 @@ function room(lights) {
   };
   return { r, sp: r.shadows, self, frame, setEye: (x, y, z) => { view = eyeAt(x, y, z); } };
 }
-/** The draws into slot k's live layers this frame, the blits into them, and whether the player's card (drawn at
- *  `selfX`) was one of the draws. */
+/** The draws into slot k's live layers this frame, the cache's faces copied into them (CACHE-COPY: a triangle each with
+ *  the copy program - SC1's blit until 2026-10-07), and whether the player's card (drawn at `selfX`) was one of the draws. */
 function slotWork(sp, calls, k, selfX = 0) {
   const fbos = new Set(sp.pointFbos.slice(k * 6, k * 6 + 6));
-  let into = false, draws = 0, blits = 0, self = 0, origin = null;
+  let into = false, draws = 0, blits = 0, self = 0, origin = null, prog = null;
   for (const c of calls) {
     if (c[0] === 'bindFramebuffer' && c[1] === 36160) into = fbos.has(c[2]);
-    else if (c[0] === 'bindFramebuffer' && c[1] === 36009) { if (fbos.has(c[2])) blits++; }
     else if (c[0] === 'bindFramebuffer') into = false;
+    else if (c[0] === 'useProgram') prog = c[1];
+    else if (c[0] === 'drawArrays' && into && prog === sp.programs.copy.p) blits++;
     else if (c[0] === 'uniform3f' && c[1] === 'uOrigin') origin = c[2];
     else if (c[0] === 'drawElements' && into) { draws++; if (origin === selfX) self++; origin = null; }
   }
