@@ -32,7 +32,7 @@ import { SKILL_NAMES, permanentSkillValue } from '../systems/skills.js';
 import { trainingMax } from '../systems/guildServices.js';   // RR2: the cap the refined price scales against
 import { rrTrainingCost, rrIntensiveCost, rrIntensiveOffered, RR_WEEK_BUTTON, RR_INTENSIVE_DAYS, RR_INTENSIVE_SKILL_POINTS, RR_TRAINING_LINES } from '../systems/rrRealism.js';   // RR2: GuildServiceTrainingRR's laws
 import { goldAmount, totalGoldAmount, deductGold } from '../systems/court.js';   // AUDIT-RR F24: GetGoldAmount (PlayerEntity.cs:1313-1316) counts letters of credit
-import { isBanished, pardonPrice, grantPardon, penanceHelps, penancePrice, doPenance, banishmentLeft } from '../systems/standing.js';   // REP3/REP4: the temple speaks for a bad name
+import { isBanished, pardonPrice, grantPardon, penanceHelps, penancePrice, doPenance, banishmentLeft, banishmentDaysLeft } from '../systems/standing.js';   // REP3/REP4: the temple speaks for a bad name
 import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
 
 /** The prompt DFU shows beside the donation field, from its
@@ -405,17 +405,20 @@ export function buildDonationFlow(entity, store, divineFactionId, deps) {
  *  never the field; only a No goes on to it. Answers the chain's first boxes; `tail` is what a No past the last offer
  *  opens. */
 function standingOffers(entity, deps, tail) {
-  const { regionIndex = null, regionName = 'this region', ownNow = () => 0, worldNow = ownNow } = deps;
+  const { regionIndex = null, regionName = 'this region', ownNow = () => 0, worldNow = ownNow, worldWords = () => null } = deps;
   if (regionIndex == null) return tail;
   const offers = [];
-  if (isBanished(entity, regionIndex, worldNow())) {
+  const now = worldNow();   // AUDIT WAITS B8: one reading of the world's calendar for the whole offer
+  if (isBanished(entity, regionIndex, now)) {
     const price = pardonPrice(entity, regionIndex);
-    const left = banishmentLeft(entity, regionIndex, worldNow());
-    const days = Math.ceil(left / 1440);
+    const left = banishmentLeft(entity, regionIndex, now);
+    const days = banishmentDaysLeft(entity, regionIndex, now);   // BANISH-SKY: the days of the calendar the player sees
+    const real = Number.isFinite(left) ? worldWords(left) : null;   // BANISH-SKY: online, what those days are on the wall
     offers.push({
       price,
       // AUDIT REP F2: online before the relay's clock is heard the term is not known - the priest does not guess it
       rows: [...line(Number.isFinite(left) ? `You are banished from ${regionName} for ${days} more day${days === 1 ? '' : 's'}.` : `You are banished from ${regionName}.`),
+        ...(real ? line(`(${real})`) : []),
         ...line(`For ${price} gold the temple will plead for your pardon. Will you pay?`)],
       grant: () => { grantPardon(entity, regionIndex, ownNow()); return line(`You are pardoned. You may walk the streets of ${regionName} again.`); },
     });

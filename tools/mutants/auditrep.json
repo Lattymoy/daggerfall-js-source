@@ -29,8 +29,8 @@
   {
     "name": "AUDITREP-F2-the-court-stamps-NaN",
     "file": "src/systems/standing.js",
-    "old": "Number.isFinite(worldNow) ? worldNow + BANISHMENT_MINUTES : null",
-    "new": "worldNow + BANISHMENT_MINUTES",
+    "old": "Number.isFinite(worldNow) ? banishmentEnd(worldNow) : null",
+    "new": "banishmentEnd(worldNow)",
     "tests": [
       "test/auditrep.test.js"
     ]

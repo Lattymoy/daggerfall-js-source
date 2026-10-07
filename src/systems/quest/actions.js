@@ -58,6 +58,7 @@ import { dfuEffectKeyOf } from '../spellEffects.js';   // QG1: CastEffectDo's ke
 import { setLocationVariant, setNewLocationVariant, setBlockVariant, setBuildingVariant, makeLocationKey, NO_VARIANT } from '../worldDataVariants.js';   // RR3: WorldUpdate's registry
 import { ONLINE_GUARD_WINDOWS, guardWindowStep } from './onlineGuard.js';   // GUARD-ONLINE: a guarded quest's window online is its arrival's
 import { raisedSince } from './questStamps.js';   // TIME3: a wave's interval charges a raise whole
+import { waveIsAwaited, questWaitsShort, ONLINE_DELAY_SECONDS } from './clock.js';   // WAVE-WAIT: a wave the quest waits on comes on the short wait online
 import { stringHash } from '../../formats/netRuntime.js';   // VERMIN-SHARED: a shared copy's pick, seeded (a leaf)
 import { seededFirst } from '../wind.js';   // VERMIN-SHARED: the port's one seeded die (imports nothing)
 /** TIME3 (bible/06-Systems/Online-Time-Arc.md 6.3): the SKY a quest reads an hour, a date or a season on - its own
@@ -2203,6 +2204,8 @@ export class CreateFoe extends ActionTemplate {
     this.isSendAction = false;
     this._lastTick = null;   // WORLD7: the last tick's world seconds - transient, so a resume forgives the time since the save to one played step
     this._lastRaised = null;   // TIME3: the session's raised seconds at that tick - transient with it
+    this._awaited = null;   // WAVE-WAIT: whether the quest waits on this wave (clock.js waveIsAwaited) - read once, transient
+    this._arrived = false;   // AUDIT WAITS W3: a wave of it has come this session - transient, and a re-set does not clear it
     // transient scene state (CreateFoe.cs:37-39) - NOT save state:
     // an in-flight wave is lost on save/load, as in DFU
     this.spawnInProgress = false;
@@ -2282,6 +2285,25 @@ export class CreateFoe extends ActionTemplate {
    *  draw is unconditional; floor(r * 0) is 0 either way. */
   _range(n) { return Math.floor((this.parentQuest?.rolls ?? Math.random)() * n); }
 
+  /** WAVE-WAIT (bible/06-Systems/Online-Waits.md WAIT2): how long the wave's first arrival may wait - its interval
+   *  (DFU's Range(0, interval) backdate, below), or, online and until the wave has come, the short wait
+   *  (ONLINE_DELAY_SECONDS: 24 of the character's minutes, about two real minutes of play) for a wave the quest waits
+   *  on (clock.js waveIsAwaited, read once). The waves after it keep the script's interval - once the messenger has
+   *  come, the gap is the script's pacing again. Offline, and for every wave the quest does not wait on, the interval:
+   *  DFU's draw whole. AUDIT WAITS W3: "has come" outlives a re-set. A task set again re-arms its wave whole
+   *  (InitialiseOnSet, CreateFoe.cs:61-65) - N0B20Y02's `pc at` clears and sets `_S.01_` each time the guard steps out
+   *  of the hall and back - and read off the counter it reset, every return was a first arrival: a guard stepping out
+   *  of the hall for a minute every twenty met twice the waves of Nightblades online that the same guard meets offline
+   *  (6.1 to 2.8 over 400 rolls; 3.3 now, the first come sooner). A wave has come once its arming counted one
+   *  (spawnCounter - saved, and zeroed by a re-set), one arrived this session (`_arrived` - a re-set leaves it, a load
+   *  forgets it), or its foe has a kill on record (Foe.killCount, saved with the quest: a load never forgets it). */
+  _firstArrivalSeconds() {
+    if (this.spawnCounter > 0 || this._arrived || !questWaitsShort(this.parentQuest)) return this.spawnInterval;
+    this._awaited ??= waveIsAwaited(this.parentQuest, this.foeSymbol?.name);
+    if (!this._awaited || (this.parentQuest.getFoe(this.foeSymbol)?.killCount ?? 0) > 0) return this.spawnInterval;
+    return Math.min(this.spawnInterval, ONLINE_DELAY_SECONDS);
+  }
+
   update(_caller) {
     const world = this.parentQuest.hooks?.world;
     if (!world?.createFoeGameObjects) return;   // headless / spawn seam absent - the charter
@@ -2302,7 +2324,9 @@ export class CreateFoe extends ActionTemplate {
     // spends the world's played time alone, the Clock's own law (quest/clock.js chargeSeconds) [SUPERSEDES TIME3's raise
     // spent whole]
     const raisedNow = this.parentQuest.raisedSeconds?.() ?? null;
-    if (this.lastSpawnTime === 0) { this.lastSpawnTime = gameSeconds - this._range(this.spawnInterval); this._lastTick = gameSeconds; }
+    // WAVE-WAIT: the wave's first arrival - its interval, or online the short wait for a wave the quest waits on
+    const first = this._firstArrivalSeconds();
+    if (this.lastSpawnTime === 0) { this.lastSpawnTime = gameSeconds - (this.spawnInterval - first) - this._range(first); this._lastTick = gameSeconds; }
     // AUDIT WORLD7/8 A3: a marker AHEAD of the world (an offline save loaded online is game-weeks past the shared
     // calendar; the relay's welcome can correct the clock backwards) spawned nothing for the whole offset - a
     // backward gap online is a resume too: the marker stands here. A6: the marker moves on the in-flight path as well
@@ -2310,6 +2334,10 @@ export class CreateFoe extends ActionTemplate {
     else if (this._lastTick == null) { if (Number.isFinite(step) && (gameSeconds - this.lastSpawnTime > step || gameSeconds < this.lastSpawnTime)) this.lastSpawnTime = gameSeconds; this._lastTick = gameSeconds; }   // a resume past a step: the time away is forgiven whole and the first wave waits a full interval from here (OL3's standing-up arm)
     else if (Number.isFinite(step) && gameSeconds < this._lastTick) { this.lastSpawnTime = gameSeconds; this._lastTick = gameSeconds; }
     else { const raised = Number.isFinite(step) ? Math.min(raisedSince(raisedNow, this._lastRaised), gameSeconds - this._lastTick) : 0; const forgiven = Math.max(0, gameSeconds - this._lastTick - raised - step) + raised; if (forgiven > 0) this.lastSpawnTime += forgiven; this._lastTick = gameSeconds; }
+    // WAVE-WAIT: until it has come, an awaited wave is never further away than the short wait - after a resume, a load
+    // that stamped `now` (restoreSaveData's quirk: a full interval), or an attempt that brought nothing (a failed roll, a
+    // hidden foe, a wave kept off, a wave lost in flight) it comes inside one, not a whole interval on (AUDIT WAITS W7)
+    if (first < this.spawnInterval && !this.spawnInProgress) this.lastSpawnTime = Math.min(this.lastSpawnTime, gameSeconds - (this.spawnInterval - first));   // (never while one is in flight: it is coming)
     this._lastRaised = raisedNow;
 
     // Max spawns reached - cleared only by a set/rearm
@@ -2319,6 +2347,7 @@ export class CreateFoe extends ActionTemplate {
     if (this.spawnInProgress && this.pendingFoesSpawned >= this.pendingFoes.length) {
       this.spawnInProgress = false;
       this.spawnCounter++;
+      this._arrived = true;   // AUDIT WAITS W3: come - a re-set's re-arm is the script's pacing from here
       return;
     }
 

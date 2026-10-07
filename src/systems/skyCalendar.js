@@ -10,8 +10,8 @@
 // A LEAF: worldTick.js's setSharedClock switches it on with the sky it installs (and off with the clock), so the
 // weather's modules read it without importing the tick module and the side effects its import carries. Off - offline,
 // or a shared clock installed with no sky (a test's bare source) - an event minute is its own sky minute, the one rate.
-import { skyClassicMinutes } from '../net/skyLaw.js';
-import { wallMsForClassicMinutes } from '../net/wire.js';
+import { skyClassicMinutes, wallMsForSkyMinutes } from '../net/skyLaw.js';
+import { wallMsForClassicMinutes, sharedClassicMinutes } from '../net/wire.js';
 
 let _on = false;
 
@@ -28,3 +28,14 @@ export const skyMinuteOfEvent = (eventMinutes) => (_on && Number.isFinite(eventM
  *  reader floors: a stamp a fraction of a second before the sky's midnight is still that day. The stamp itself when
  *  off, untouched. */
 export const skySecondsOfEvent = (eventSeconds) => (_on && Number.isFinite(eventSeconds) ? skyClassicMinutes(wallMsForClassicMinutes(eventSeconds / 60)) * 60 : eventSeconds);
+
+/** BANISH-SKY (bible/06-Systems/Online-Waits.md WAIT4): the two directions as the LAW has them, whatever is installed -
+ *  the sky's minute at the instant the event clock reads `eventMinutes`, and the event clock's minute at the instant the
+ *  sky reads `skyMinutes`. Pure functions of the relay's clock, exact across every change of the sky's rate. The doors
+ *  between the lanes (offlineCopy.js) read an online save's stamps with them: they were taken under the law, whatever
+ *  this page has installed. */
+export const skyOfEventLaw = (eventMinutes) => skyClassicMinutes(wallMsForClassicMinutes(eventMinutes));
+export const eventOfSkyLaw = (skyMinutes) => sharedClassicMinutes(wallMsForSkyMinutes(skyMinutes));
+/** BANISH-SKY: the event clock's minute at the instant the sky reads `skyMinutes` - a term the player is told in the
+ *  sky's days (a banishment's thirty), stamped as every term is on the event clock. The minute itself when off. */
+export const eventMinuteOfSky = (skyMinutes) => (_on && Number.isFinite(skyMinutes) ? eventOfSkyLaw(skyMinutes) : skyMinutes);
