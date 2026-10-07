@@ -289,7 +289,7 @@ test('FAR-CLIP1: on a coast the port\'s own terrain pipeline builds, every clipp
 
 test('FAR-CLIP1: the world draws a pixel whose TileMap the cap patched with the clip program and every other with the plain one, the patched pixels after the rest, and builds the clip program as the mod mounts; the byte has one home; the other three hosts draw no carved sea (mutants: every pixel plain; the cull\'s pixels only; every pixel clipped; unsorted; clipped first; no warm)', () => {
   const w = rd('src/scenes/world.js');
-  assert.match(w, /renderer\.drawTerrain\(p\.dwTerrain \?\? p\.terrain, pixelMatrix,[^\n]*\n\s+renderer\.tileArrays\.get\(p\.groundArchive\), p\.tilemapTex, 6\.4, !!p\._dwBytes\);/,
+  assert.match(w, /renderer\.drawTerrain\(p\.dwTerrain \?\? p\.terrain, pixelMatrix,[^\n]*\n\s+renderer\.tileArrays\.get\(p\.groundArchive\), p\.tilemapTex, 6\.4, !!p\._dwBytes, ecoDraw\(p\)\);/,   // ECOTONE1: PIN MOVED - the border pixel's neighbours ride after the clip
     'the ground of a pixel the cap patched (dwSetTilemap\'s `_dwBytes`: its TileMap on the texture) draws with the clip program, as the mod swaps the material of each terrain it clips');
   assert.match(w, /renderer\.setCloudShadow\(sky\?\.cloudShadow \?\? null\);\n\s+if \(deepWaters\) groundQueue\.sort\(dwClipLast\);[^\n]*\n\s+for \(const p of groundQueue\) \{/, 'the queue is ordered before the drain');
   const cmp = w.match(/function dwClipLast\(a, b\) \{ (return [^}]+) \}/);

@@ -173,8 +173,8 @@
   {
     "name": "FAR-CLIP1-world-every-pixel-plain",
     "file": "src/scenes/world.js",
-    "old": "p.tilemapTex, 6.4, !!p._dwBytes);",
-    "new": "p.tilemapTex, 6.4);",
+    "old": "p.tilemapTex, 6.4, !!p._dwBytes, ecoDraw(p));",
+    "new": "p.tilemapTex, 6.4, false, ecoDraw(p));",
     "tests": [
       "test/farclip1.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "FAR-CLIP1-world-the-culls-pixels-only",
     "file": "src/scenes/world.js",
-    "old": "p.tilemapTex, 6.4, !!p._dwBytes);",
-    "new": "p.tilemapTex, 6.4, !!p.dwTerrain);",
+    "old": "p.tilemapTex, 6.4, !!p._dwBytes, ecoDraw(p));",
+    "new": "p.tilemapTex, 6.4, !!p.dwTerrain, ecoDraw(p));",
     "tests": [
       "test/farclip1.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "FAR-CLIP1-world-every-pixel-clipped",
     "file": "src/scenes/world.js",
-    "old": "p.tilemapTex, 6.4, !!p._dwBytes);",
-    "new": "p.tilemapTex, 6.4, true);",
+    "old": "p.tilemapTex, 6.4, !!p._dwBytes, ecoDraw(p));",
+    "new": "p.tilemapTex, 6.4, true, ecoDraw(p));",
     "tests": [
       "test/farclip1.test.js"
     ]

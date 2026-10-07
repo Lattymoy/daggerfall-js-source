@@ -250,7 +250,9 @@ import { mineKind } from './mineHost.js'; import { nodeCompassPoints } from '../
 import { treeKind, isTreeRecord, FOREST_STAMP } from './treeHost.js';   // PROF4: Logging's trees - the forest's own - a kind in it; LPT1: the felled trees' count, the near 3D trees' regather
 import { createLowPolyTrees } from '../systems/lowPolyTreesAssets.js';   // LPT1: Low Poly Trees - the host's one door
 import { LPT_SCALE_MAX, lptVariety, buildTreeSet } from '../world/lowPolyTrees.js'; import { naturePicture } from '../world/naturePicture.js';   // LPT1: each tree's own draw, and a near pixel's set; AUDIT 05b A12: which picture a nature flat stands as, every host's one choice
-import { realForestsOn, FOREST_HIDDEN_LOCATION_TYPES } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide
+import { realForestsOn, FOREST_HIDDEN_LOCATION_TYPES, roadVergesOn, climateBlendOn } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide; VERGE1: the clear roadsides' switch; ECOTONE1: the blended climates'
+import { vergeClear, natureReach } from '../world/roadVerge.js';   // VERGE1: a wild flat's footprint off the roads
+import { ecotoneOwner, ecoOrigin } from '../world/ecotone.js'; import { MAP_W, MAP_H } from '../world/roadNetwork.js';   // ECOTONE1: a border point's owner, the pixel's lattice origin, the map's edges
 import { insideRocks, forestAt } from '../world/terrainNature.js';   // FOREST1 (AUDIT F1): a wood's flats keep out of the rock pieces; GRASS-LIT2: the shot hook's woods
 import { huntKind, createBodyStamps, bodiesOf, trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks
 import { fishKind } from './fishHost.js';   // PROF8: Fishing's casts and schools - a kind in it
@@ -1192,6 +1194,36 @@ export async function bootWorld(canvas, renderer, params, status) {
   // once, as the world mounts: every pixel of a world stands one forest,
   // and a flip of the row reaches the next world.
   const forests = realForestsOn();
+  // VERGE1: CLEAR ROADSIDES (world/roadVerge.js) - read once, as the world mounts, as the forests are: where the wild's
+  // flats stand is one law for a world, and a flip of the row reaches the next.
+  const verges = roadVergesOn();
+  // ECOTONE1: BLENDED CLIMATES (world/ecotone.js) - read once, as the world mounts: the border a pixel's ground, grass and
+  // nature follow is one law for a world.
+  const ecotones = climateBlendOn();
+  /** ECOTONE1: a pixel's 3x3 of climates (getWorldClimateSettings), indexed (dz + 1) * 3 + (dx + 1) - dx east, dz north
+   *  (the map row py - dz) - a neighbour off the map wearing the pixel's own (`own`, its settings). */
+  const climates3x3 = (px, py, own) => {
+    const out = new Array(9);
+    for (let dz = -1; dz <= 1; dz++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const x = px + dx, y = py - dz;
+        out[(dz + 1) * 3 + dx + 1] = (dx === 0 && dz === 0) || x < 0 || y < 0 || x >= MAP_W || y >= MAP_H ? own : getWorldClimateSettings(maps.getClimateIndex(x, y));
+      }
+    }
+    return out;
+  };
+  /** VERGE1: a nature archive's classic pictures' half widths (m), by record - DFU's own record size
+   *  (classicBillboardSize), never a replacement's: where a flat stands is the same on every client. */
+  const natureHalfWidths = new Map();
+  const halfWidthsOf = async (archive) => {
+    let hw = natureHalfWidths.get(archive);
+    if (!hw) {
+      const t = await getTexture(archive);
+      hw = Float64Array.from({ length: t.recordCount }, (_, r) => classicBillboardSize(t, r).w / 2);
+      natureHalfWidths.set(archive, hw);
+    }
+    return hw;
+  };
   const wodOpened = wod
     ? wod.open().then(() => true, (e) => { console.warn(`[wod] World of Daggerfall did not open: ${e?.message ?? e}`); return false; })
     : Promise.resolve(false);
@@ -4144,6 +4176,79 @@ export async function bootWorld(canvas, renderer, params, status) {
     floor: TRAVEL_LOOKAHEAD, margin: TRAVEL_LOOKAHEAD_MARGIN,
   });
   const inFlight = new Map();
+  /** ECOTONE1: a border pixel's neighbours for its ground's draw (renderer.drawTerrain's `eco`) - their sets as the
+   *  renderer holds them now. Null for a pixel with none, and while any of them is missing (the pixel's hold keeps them,
+   *  so only a set dropped under a rebuild): the ground draws its own set alone then, as before the blend. */
+  const ecoDraw = (p) => {
+    const e = p.eco;
+    if (!e) return null;
+    for (let k = 0; k < 3; k++) {
+      const a = e.archives[k];
+      e.tex[k] = a == null ? null : renderer.tileArrays.get(a) ?? null;
+      if (a != null && !e.tex[k]) return null;
+    }
+    return e;
+  };
+  /** ECOTONE1: the ground archive that owns a border pixel's pixel-local point (metres) - the climate the ground's border
+   *  gives it (world/ecotone.js ecotoneOwner over the pixel's 3x3, `ecoGround`), so a blade grows, and takes its colour,
+   *  where the ground under it is drawn from. */
+  const borderGround = (p, x, z) => {
+    const g = p.ecoGround;
+    const [dx, dz] = ecotoneOwner(p.px, p.py, x, z, (ax, az) => g[(az + 1) * 3 + ax + 1]);
+    return g[(dz + 1) * 3 + dx + 1];
+  };
+  /** R9: A GROUND ARCHIVE'S TILE SET, ready for a pixel's draw and its grass - held by the pixel's place (`hold`, its
+   *  PLACE-LRU door), uploaded once (a texture mod's set first), the ground-sharpness tier on every cached set, and the
+   *  grass's three tables learned. The pixel's own archive, and ECOTONE1's neighbours' at a climate border (the sets
+   *  the ground's border samples - render/ecotoneGlsl.js). Moved here whole from the build, so both ask one home. */
+  const loadGroundSet = async (groundArchive, hold) => {
+    hold.tileArray(groundArchive); const groundTex = await getTexture(groundArchive);   // FIELD BUGS 2026-10-04d PLACE-LRU: held BEFORE the cache is asked, so no sweep in the await frees what this pixel will draw
+    if (!renderer.tileArrays.has(groundArchive)) {
+      // GROUND1/VE2: the tile set a texture mod or pack dresses the archive with (TextureReader.GetTerrainTextureArray) first
+      const modLayers = await dfmodGroundLayers(groundArchive, groundTex);
+      const classic = [];
+      for (let r = 0; r < groundTex.recordCount; r++) {
+        classic.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
+      }
+      // GROUND1-W: a mod's tile set takes its puddles' shapes from the classic records (carryPuddleMask)
+      const layers = modLayers ? carryPuddleMask(modLayers, markPuddleWater(classic)) : classic;
+      renderer.uploadTileArray(groundArchive, modLayers ? layers : markPuddleWater(layers));   // WATER-PUDDLE: a puddle record's water in its layer's alpha
+      // AUDIT GRASS-LIT2 B2: the grass's colours off THESE layers - the ones drawn - and not a second ask of the mod
+      // door, whose cache a mod indexed mid-session empties (another decode, maybe another mod's tiles than these)
+      if (labGrass) groundDrawnMeans.set(groundArchive, modLayers ? modLayers.map(tileMeanColour) : null);
+    }
+    renderer.applyGroundSharpness();   // GRAIN AUDIT 1: the ground-sharpness tier lands on THIS load, on every cached archive - the cache outlives the scene
+    // GR1: which of this archive's records are GRASS, from its own texels -
+    // roads excluded by record, and a winter archive has no green base so
+    // it yields none. AUDIT 49 F3: learned whenever MISSING, not only on a
+    // tile-cache miss - the tile array cache lives on the renderer and
+    // outlives this scene, so an archive the exterior host had uploaded
+    // came back here cached, skipped the block above, and grew no grass.
+    // GRASS-LIT2: the tile set that is DRAWN - an attached texture mod's (GROUND1, the cached promise the upload above
+    // asked) - is what the grass's colour is taken off; asked BEFORE the three below are learned, so all three land in
+    // one step and no pixel places a field against records whose colours are still on their way
+    // AUDIT GRASS-LIT2 B2: the means taken at the upload above when it ran in this scene; asked of the door only for a
+    // tile array an earlier scene uploaded (the renderer's cache outlives the scene)
+    const drawnMeans = grassRecords.has(groundArchive) ? null
+      : groundDrawnMeans.has(groundArchive) ? groundDrawnMeans.get(groundArchive)
+      : (await dfmodGroundLayers(groundArchive, groundTex))?.map(tileMeanColour) ?? null;
+    if (!grassRecords.has(groundArchive)) {
+      const layers = [];
+      for (let r = 0; r < groundTex.recordCount; r++) layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
+      grassRecords.set(groundArchive, grassRecordsOf(layers));
+      groundPuddles.set(groundArchive, markPuddleWater(layers));   // WATER-PUDDLE: the blades ask the mask the pass draws by
+      // GR4: each record's MEAN colour, for the grass root that stands on
+      // it - averaged once, rather than sampled per blade. AUDIT 68 S17:
+      // learned here, beside grassRecords (the tile cache outlives the
+      // scene), and off the color32's texels - it read the object's length.
+      // GRASS-LIT2: off the mod's tile where one dresses the archive - the
+      // ground a blade stands in is the one drawn. Which records are grass
+      // stays the classic file's question: a record means the same tile
+      // under any picture of it.
+      groundMeanColour.set(groundArchive, drawnMeans ?? layers.map(tileMeanColour));
+    }
+  };
+
   async function buildPixel(px, py) {
     const key = `${px},${py}`;
     if (built.has(key)) return built.get(key);
@@ -4275,6 +4380,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     }
     const climate = getWorldClimateSettings(maps.getClimateIndex(px, py));
     const climateBase = climate.climateType;
+    // ECOTONE1: the pixel's neighbours' climates, when the blend is on - the kernel lays a border's tiles by the climate
+    // that owns them, and the ground below draws the same border
+    const near = ecotones ? climates3x3(px, py, climate) : null;
+    const natureBorder = near && near.some((c) => c.natureArchive !== climate.natureArchive || c.climateType !== climateBase)
+      ? { nature: near.map((c) => c.natureArchive), type: near.map((c) => c.climateType) } : null;
     // EV4: the far ring builds strided with its skirt; the kernel's
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
@@ -4285,6 +4395,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       wod: wodPicks ? { picks: wodPicks.map((p) => ({ flatten: p.flatten, rect: p.rect, hide: !wodPiecewise(p.prefabName), bounds: forests ? wodSiteFootprint(p.prefab, p.rect) : null })) } : null,
       // FOREST1: the woods' archive (the climate's summer one, which names its Trees) and whether this pixel's place is one they hide
       forests: forests ? { archive: climate.natureArchive, hidden: FOREST_HIDDEN_LOCATION_TYPES.has(dfLocation?.mapTableData?.locationType) } : null,
+      ecotone: natureBorder,   // ECOTONE1: null unless a neighbour's nature differs
     });
     // DW-B: HandlePromote's synchronous arm - a pixel beside the player's is
     // promoted now, on the Deep Waters worker while this build lays out, and
@@ -4305,53 +4416,32 @@ export async function bootWorld(canvas, renderer, params, status) {
     const townClimateArchive = townClimateBase === climateBase ? climateArchive : (archive, record) => applyClimate(archive, record, townClimateBase, season);
     const groundArchive = getTerrainGroundArchive(climate, season);   // the TERRAIN member, Desert winter-guarded (TerrainMaterialProvider.cs:126-133)
     const natureArchive = getNatureArchive(climate.natureArchive, season);
+    // VERGE1 (Mac: "Making sure objects, like trees, avoid pathways and roads. Currently they slightly overlap"): THE
+    // ROADS THIS PIXEL WAS PAINTED WITH - none when the kernel painted none (the roads sweep builds it again when the
+    // network lands) - and the half widths of the climate's own pictures, its summer set's (a season moves no flat)
+    const vergeNet = verges && withRoads ? terrainGen.roads() : null;
+    const vergeHalf = new Map();   // ECOTONE1: by summer archive - a border's flats are a neighbour climate's
+    if (vergeNet) for (const a of new Set([climate.natureArchive, ...nature.map((f) => f.archive).filter((a) => a != null)])) vergeHalf.set(a, await halfWidthsOf(a));
+    let vergeOff = 0;
 
     // R9 tilemap pass: shared-index height grid + per-pixel tilemap
-    // texture + one cached texture array per ground archive.
-    pipeline.tileArray(groundArchive); const groundTex = await getTexture(groundArchive);   // FIELD BUGS 2026-10-04d PLACE-LRU: held BEFORE the cache is asked, so no sweep in the await frees what this pixel will draw
-    if (!renderer.tileArrays.has(groundArchive)) {
-      // GROUND1/VE2: the tile set a texture mod or pack dresses the archive with (TextureReader.GetTerrainTextureArray) first
-      const modLayers = await dfmodGroundLayers(groundArchive, groundTex);
-      const classic = [];
-      for (let r = 0; r < groundTex.recordCount; r++) {
-        classic.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
-      }
-      // GROUND1-W: a mod's tile set takes its puddles' shapes from the classic records (carryPuddleMask)
-      const layers = modLayers ? carryPuddleMask(modLayers, markPuddleWater(classic)) : classic;
-      renderer.uploadTileArray(groundArchive, modLayers ? layers : markPuddleWater(layers));   // WATER-PUDDLE: a puddle record's water in its layer's alpha
-      // AUDIT GRASS-LIT2 B2: the grass's colours off THESE layers - the ones drawn - and not a second ask of the mod
-      // door, whose cache a mod indexed mid-session empties (another decode, maybe another mod's tiles than these)
-      if (labGrass) groundDrawnMeans.set(groundArchive, modLayers ? modLayers.map(tileMeanColour) : null);
-    }
-    renderer.applyGroundSharpness();   // GRAIN AUDIT 1: the ground-sharpness tier lands on THIS load, on every cached archive - the cache outlives the scene
-    // GR1: which of this archive's records are GRASS, from its own texels -
-    // roads excluded by record, and a winter archive has no green base so
-    // it yields none. AUDIT 49 F3: learned whenever MISSING, not only on a
-    // tile-cache miss - the tile array cache lives on the renderer and
-    // outlives this scene, so an archive the exterior host had uploaded
-    // came back here cached, skipped the block above, and grew no grass.
-    // GRASS-LIT2: the tile set that is DRAWN - an attached texture mod's (GROUND1, the cached promise the upload above
-    // asked) - is what the grass's colour is taken off; asked BEFORE the three below are learned, so all three land in
-    // one step and no pixel places a field against records whose colours are still on their way
-    // AUDIT GRASS-LIT2 B2: the means taken at the upload above when it ran in this scene; asked of the door only for a
-    // tile array an earlier scene uploaded (the renderer's cache outlives the scene)
-    const drawnMeans = grassRecords.has(groundArchive) ? null
-      : groundDrawnMeans.has(groundArchive) ? groundDrawnMeans.get(groundArchive)
-      : (await dfmodGroundLayers(groundArchive, groundTex))?.map(tileMeanColour) ?? null;
-    if (!grassRecords.has(groundArchive)) {
-      const layers = [];
-      for (let r = 0; r < groundTex.recordCount; r++) layers.push(groundTex.getColor32(groundTex.getDFBitmap(r, 0), 0));
-      grassRecords.set(groundArchive, grassRecordsOf(layers));
-      groundPuddles.set(groundArchive, markPuddleWater(layers));   // WATER-PUDDLE: the blades ask the mask the pass draws by
-      // GR4: each record's MEAN colour, for the grass root that stands on
-      // it - averaged once, rather than sampled per blade. AUDIT 68 S17:
-      // learned here, beside grassRecords (the tile cache outlives the
-      // scene), and off the color32's texels - it read the object's length.
-      // GRASS-LIT2: off the mod's tile where one dresses the archive - the
-      // ground a blade stands in is the one drawn. Which records are grass
-      // stays the classic file's question: a record means the same tile
-      // under any picture of it.
-      groundMeanColour.set(groundArchive, drawnMeans ?? layers.map(tileMeanColour));
+    // texture + one cached texture array per ground archive (loadGroundSet).
+    await loadGroundSet(groundArchive, pipeline);
+    // ECOTONE1: and at a climate border the neighbours' sets, held by this pixel as its own is - which set each of
+    // its eight neighbours wears (0 its own, 1-3 the sets on the terrain program's units 3-5), and its lattice origin
+    const groundNear = near ? near.map((c) => getTerrainGroundArchive(c, season)) : null;
+    let eco = null;
+    if (groundNear?.some((a) => a !== groundArchive)) {
+      const archives = [...new Set(groundNear.filter((a) => a !== groundArchive))];
+      for (const a of archives) await loadGroundSet(a, pipeline);
+      const slot = (k) => (groundNear[k] === groundArchive ? 0 : archives.indexOf(groundNear[k]) + 1);
+      const [ox, oz] = ecoOrigin(px, py);
+      eco = {
+        archives: [archives[0] ?? null, archives[1] ?? null, archives[2] ?? null], tex: [null, null, null],
+        side: Int32Array.of(slot(3), slot(5), slot(1), slot(7)),   // W, E, S, N - the 3x3's (dz + 1) * 3 + (dx + 1)
+        corner: Int32Array.of(slot(0), slot(2), slot(6), slot(8)),   // SW, SE, NW, NE
+        origin: Int32Array.of(ox, oz, 1),
+      };
     }
     const terrain = renderer.createTerrainSurface(positions, normals,
       stride === 1 ? TERRAIN_INDICES : TERRAIN_INDICES_LOD);
@@ -4877,6 +4967,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       }
       for (const f of place.flats) {
         if (pointNearPath(_roadsNow, px, py, f.base[0] * UNITS_PER_METRE, f.base[2] * UNITS_PER_METRE, WOD_PIECE_ROAD_CLEAR)) { _wodOffRoad++; continue; }   // ROADS-CLEAR: and a flat on one
+        // VERGE1: and under clear roadsides, nor one whose picture reaches the road - its half width (its own scale on
+        // DFU's record size) past the pieces' margin, the wild's flats' disc
+        if (vergeNet && !vergeClear(vergeNet, px, py, f.base[0], f.base[2], WOD_PIECE_ROAD_CLEAR / UNITS_PER_METRE + ((await halfWidthsOf(f.archive))[f.record] ?? 0) * f.scale.x)) { _wodOffRoad++; continue; }
         if (pointNearGate(gateClear, px, py, f.base[0], f.base[2], WOD_FLAT_GATE_CLEAR_M)) { gateLedger.refused = true; _wodOffGate++; continue; }   // GATE-CLEAR: and one in the gate's clearing
         gateLedger.reach.push(f.base[0], f.base[2], f.base[0], f.base[2], WOD_FLAT_GATE_CLEAR_M);
         if (f.scale.x === 1 && f.scale.y === 1) addFlat(f.archive, f.record, f.base[0], f.base[1], f.base[2]);
@@ -4926,6 +5019,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // a Tree by the climate's summer archive, each its group and its place in it: Logging's trees stand at them
     const pixelTrees = [];
     const wildFlats = new Set();   // LPT1: the terrain's own nature flats (`${group}#${i}`) - DFU's terrain variety is theirs, a location's flat takes none
+    const borderNature = new Map();   // ECOTONE1: a neighbour climate's nature archive the border stood here -> its summer archive
     for (const f of nature) {
       // GATE-CLEAR (AUDIT FOREST1 F5): the day's Oblivion Gate keeps its clearing of nature as it keeps it of World of
       // Daggerfall's flats - a tree no longer stands through the plinth or the Sigil Broker (the sweep builds the
@@ -4933,9 +5027,14 @@ export async function bootWorld(canvas, renderer, params, status) {
       // round - DFU's own scatter, with the switch off, is left as DFU lays it
       if (pointNearGate(gateClear, px, py, f.x, f.z, WOD_FLAT_GATE_CLEAR_M)) continue;
       if (forests && insideRocks(pixelRocks, f.x, f.z)) continue;
-      const i = addFlat(natureArchive, f.record, f.x, f.y, f.z);
-      if (lowPolyTrees) wildFlats.add(`${natureArchive}_${f.record}#${i}`);   // LPT1
-      if (isTreeRecord(climate.natureArchive, f.record)) pixelTrees.push({ id: pixelTrees.length, group: `${natureArchive}_${f.record}`, i, x: f.x, y: f.y, z: f.z, wood: f.wood ?? 0 });   // FOREST1: how wooded its tile is - Logging's trees stand in the woods
+      // ECOTONE1: a border's flat is its own climate's - the summer archive the kernel names, worn in the season's set
+      const base = f.archive ?? climate.natureArchive, archive = f.archive == null ? natureArchive : getNatureArchive(f.archive, season);
+      // VERGE1: and none reaches over a road or a track - the disc of its widest picture (world/roadVerge.js)
+      if (vergeNet && !vergeClear(vergeNet, px, py, f.x, f.z, natureReach(vergeHalf.get(base)[f.record] ?? 0, base, f.record, px, py, f.x, f.z))) { vergeOff++; continue; }
+      if (archive !== natureArchive) borderNature.set(archive, base);
+      const i = addFlat(archive, f.record, f.x, f.y, f.z);
+      if (lowPolyTrees) wildFlats.add(`${archive}_${f.record}#${i}`);   // LPT1
+      if (isTreeRecord(base, f.record)) pixelTrees.push({ id: pixelTrees.length, group: `${archive}_${f.record}`, i, x: f.x, y: f.y, z: f.z, wood: f.wood ?? 0, base, archive });   // FOREST1: how wooded its tile is - Logging's trees stand in the woods; ECOTONE1: and whose climate it is (its stump)
     }
     // WOD4: THE CAMP AT PRIVATEER'S HOLD (world/wodPrivateersHold.js).
     // DungeonExterior finds the block by name and PrivateersHold.Start
@@ -4995,6 +5094,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (lowPolyTreesFrame - AUDIT LPT B10)
     const lptHandles = [], lptGroups = [];
     made.lptHandles = lptHandles;   // BUILD-FAIL1
+    // ECOTONE1: the pixel's nature archives - its own and any a border stood - each the flora (it sways, it is the forest
+    // a tree is felled in, its Trees are cover's trunks) and each named by its summer archive (the Tree table's key; the
+    // season's own number named none in winter, so a winter wood's trees were cover as flats - mended with it)
+    const natureSet = new Set([natureArchive, ...borderNature.keys()]);
+    const natureBase = (a) => (a === natureArchive ? climate.natureArchive : borderNature.get(a));
     for (const [k, centers] of groups) {
       await breather.breathe();   // PERF-EXT23: a flat group a breath - its texture is a cached promise, a microtask, and gave no frame back
       const [archive, record] = k.split('_').map(Number);
@@ -5022,33 +5126,33 @@ export async function bootWorld(canvas, renderer, params, status) {
         batch.lptProto = far;
         batch.farH = plain.h;   // AUDIT LPT A8/B1: MAC1's far rings stand the trees they stood - the flat's height, not the picture's
         batch._box = flatBatchAabb(centers, far.size);
-        batch.sway = floraSwayOf(archive, natureArchive, plain.h);
+        batch.sway = floraSwayOf(archive, natureSet, plain.h);
         _lptSway.set(lpt, Math.max(_lptSway.get(lpt) ?? 0, batch.sway));
         unionBox(batch._box);
         batches.push(batch);
-        if (archive === natureArchive) forestGroups.set(k, { batch, centers, size: far.size, scales });   // PROF4: a felled tree's batch - it falls as its far picture
-        if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) }));
+        if (natureSet.has(archive)) forestGroups.set(k, { batch, centers, size: far.size, scales });   // PROF4: a felled tree's batch - it falls as its far picture
+        if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain, { tree: natureSet.has(archive) && isTreeRecord(natureBase(archive), record) }));
         continue;
       }
       if (sib) {   // uploaded under the install's key, with no mip chain (AUDIT 61) - world/naturePicture.js
         const batch = renderer.createBillboardBatch(archive, rkey, sib.size, centers);
         batch._box = flatBatchAabb(centers, sib.size);   // EV3
-        batch.sway = floraSwayOf(archive, natureArchive, sib.size.h);   // WIND3: the season's trees lean too
+        batch.sway = floraSwayOf(archive, natureSet, sib.size.h);   // WIND3: the season's trees lean too
         unionBox(batch._box);
         batches.push(batch);
-        if (archive === natureArchive) forestGroups.set(k, { batch, centers, size: sib.size });   // PROF4: a felled tree's batch
-        if (isCoverFlat(archive, record, sib.size)) for (const c of centers) coverItems.push(...coverProxies(c, sib.size, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) }));   // AUDIT TACT B2: a tree's trunk and crown
+        if (natureSet.has(archive)) forestGroups.set(k, { batch, centers, size: sib.size });   // PROF4: a felled tree's batch
+        if (isCoverFlat(archive, record, sib.size)) for (const c of centers) coverItems.push(...coverProxies(c, sib.size, { tree: natureSet.has(archive) && isTreeRecord(natureBase(archive), record) }));   // AUDIT TACT B2: a tree's trunk and crown
         continue;
       }
       const size = plain;   // the record, uploaded (world/naturePicture.js)
       const batch = renderer.createBillboardBatch(archive, record, size, centers);
       batch._box = flatBatchAabb(centers, size);   // EV3
-      batch.sway = floraSwayOf(archive, natureArchive, size.h);   // WIND3: the flora lean with the wind, nothing else does
+      batch.sway = floraSwayOf(archive, natureSet, size.h);   // WIND3: the flora lean with the wind, nothing else does
       unionBox(batch._box);
       armFlatAnim(batch, t, archive, record, flatAnims, uploadRecordFrame);
       batches.push(batch);
-      if (archive === natureArchive) forestGroups.set(k, { batch, centers, size });   // PROF4: a felled tree's batch
-      if (isCoverFlat(archive, record, size)) for (const c of centers) coverItems.push(...coverProxies(c, size, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) }));   // AUDIT TACT B2: a tree's trunk and crown
+      if (natureSet.has(archive)) forestGroups.set(k, { batch, centers, size });   // PROF4: a felled tree's batch
+      if (isCoverFlat(archive, record, size)) for (const c of centers) coverItems.push(...coverProxies(c, size, { tree: natureSet.has(archive) && isTreeRecord(natureBase(archive), record) }));   // AUDIT TACT B2: a tree's trunk and crown
     }
     // WOD2: the scaled flats - billboardSize times the object's own scale.
     for (const { archive, record, scale, centers } of scaledGroups.values()) {
@@ -5184,6 +5288,13 @@ export async function bootWorld(canvas, renderer, params, status) {
       wodLights: pixelWodLights,   // WOD2: the mod's AddLight lights, pixel-local, lit at every hour
       wodSite,     // WOD2: the levelled rect in tile space (grass keeps off it), null on a pixel with no site
       rocks: pixelRocks,   // PROF2: its rock fields' standing pieces (pixel-local boxes) - Mining's veins and boulders stand at them
+      // VERGE1: the road's question for a gathering node (a herb patch, a vein on the stone, a Motherlode) - its reach,
+      // pixel-local - and how many of the wild's flats the verge refused (a probe's count); null without clear roadsides
+      verge: vergeNet ? (x, z, reach) => vergeClear(vergeNet, px, py, x, z, reach) : null,
+      vergeOff,
+      // ECOTONE1: a border pixel's neighbours for its ground's draw (drawTerrain's `eco`), and its 3x3's ground archives
+      // for the grass's border; null for a pixel whose neighbours all wear its own set
+      eco, ecoGround: eco ? groundNear : null,
       // PROF4: its forest - the tree flats (a batch drawn for each) Logging's trees stand at, the summer archive that names
       // them and the archive they are drawn from, and their groups' batches where a felled tree is sunk
       forest: { base: climate.natureArchive, archive: natureArchive, trees: pixelTrees.filter((t) => forestGroups.has(t.group)), groups: forestGroups },
@@ -28991,7 +29102,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       if (p.deepWaters?.hide) continue;   // DW-C: DeepWaterTerrainCapRenderer.Apply - a pure-ocean pixel's drawHeightmap = false
       const pixelMatrix = p._pixelMatrix;
       renderer.drawTerrain(p.dwTerrain ?? p.terrain, pixelMatrix,   // DW-C: what the cap clipped whole is out of the index set (the cull)
-        renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, !!p._dwBytes);   // FAR-CLIP1: and the rest of its clip is the clip program's - DeepWaterTerrainCapRenderer.ApplyWaterTexelClip's material, per terrain it patched
+        renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4, !!p._dwBytes, ecoDraw(p));   // FAR-CLIP1: and the rest of its clip is the clip program's - DeepWaterTerrainCapRenderer.ApplyWaterTexelClip's material, per terrain it patched; ECOTONE1: a border pixel's neighbours' sets
     }
     if (deepWaters) drawDeepWatersFloors(groundQueue);   // DW-C: the seafloor, opaque, under the ground's holes (the sky's foreign span, below, covers it)
     if (oceanHoles) drawOceanHolesOpaque(groundQueue);   // OH-C: the pit's black and the surface's underside, with the floors
@@ -29437,7 +29548,10 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const ti = tz * TERRAIN_TILE_DIM + tx;
         const byte = p.tilemapBytes[ti];
         const rec = byte >> 2;
-        if (rec === 0 || !grass || !grass.has(rec)) return null;
+        // ECOTONE1: at a climate border the root stands in the climate the ground's border gives it - its grass, its puddles
+        const ga = p.ecoGround ? borderGround(p, lx, lz) : p.groundArchive;
+        const g = ga === p.groundArchive ? grass : grassRecords.get(ga);
+        if (rec === 0 || !g || !g.has(rec)) return null;
         // GRASS-PATH1 (2026-09-19, Mac: "Grass shouldnt be on dirt
         // paths"): the road painter's own mask. A track across grass
         // writes 10/11/12/51 - the SAME records the natural dirt-grass
@@ -29466,7 +29580,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         // its own art is water - the pass draws it so now, and a blade
         // refused the whole tile left its dry ground bald.
         if (waterCorners(byte, WATER_DRAW_MASK_TABLE)) {
-          const puddle = PUDDLE_RECORDS.includes(rec) ? groundPuddles.get(p.groundArchive)?.[rec] : null;
+          const puddle = PUDDLE_RECORDS.includes(rec) ? groundPuddles.get(ga)?.[rec] : null;
           if (!puddle || puddleWetAt(puddle, byte, lx / 6.4 - tx, lz / 6.4 - tz)) return null;
         }
         // GRASS3: the height of the surface that is DRAWN, not a
@@ -29492,7 +29606,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
         const lx = x - t[0]; const lz = z - t[2];
         const tx = Math.floor(lx / 6.4); const tz = Math.floor(lz / 6.4);
         const rec = p.tilemapBytes[tz * TERRAIN_TILE_DIM + tx] >> 2;
-        return groundMeanColour.get(p.groundArchive)?.[rec] ?? null;
+        return groundMeanColour.get(p.ecoGround ? borderGround(p, lx, lz) : p.groundArchive)?.[rec] ?? null;   // ECOTONE1: the border's
       };
       // GRASS-LIT2: the ground's normal under a blade - the drawn surface's own (the near grid's vertex normals over the
       // triangle the root stands in), so a field on a hillside is lit as the hillside is. Written into one scratch; the
