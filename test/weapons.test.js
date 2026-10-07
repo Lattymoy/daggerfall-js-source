@@ -16,7 +16,7 @@ import { STEEL_RAMP } from '../src/characters/pieces/pieceLoft.js';
 // Witness against the DFU source (ItemEnums, ItemBuilder,
 // DaggerfallUnityItem.GetWeaponMaterialModifier, FormulaHelper
 // CalculateWeaponMin/MaxDamage): every constant pinned byte-exact.
-test('weapons: verbatim DFU data pins', () => {
+test('weapons: verbatim DFU data pins - and the one condition pool WEAPON-POOL departs to (ApplyWeaponMaterial\'s condition on 1,600, not the row)', () => {
   assert.equal(WEAPONS.Dagger, 113);
   assert.equal(WEAPONS.Longsword, 120);
   assert.equal(WEAPONS.Arrow, 131);
@@ -44,11 +44,13 @@ test('weapons: verbatim DFU data pins', () => {
   // ported row: baseWeight 4.5, hitPoints 800, basePrice 15):
   // value 15*3*512; weight quarter-kg rule with Unity's half-to-EVEN
   // round (trunc(4.5*4)=18, *5=90, /4=22.5 -> 22 -> 5.5kg);
-  // condition trunc(800*32/4).
+  // condition trunc(800*32/4) - WEAPON-POOL (2026-10-06): the one pool
+  // every weapon type shares stands in the row's 800, trunc(1600*32/4)
+  // (test/weaponpool.test.js).
   const d = buildWeapon(WEAPONS.Longsword, WEAPON_MATERIALS.Daedric);
   assert.equal(d.value, 15 * 3 * 512);
   assert.equal(d.weightInKg, 5.5);
-  assert.equal(d.maxCondition, Math.trunc((800 * 32) / 4));
+  assert.equal(d.maxCondition, Math.trunc((1600 * 32) / 4));
   assert.equal(d.currentCondition, d.maxCondition);
   assert.equal(d.dyeColor, DYE_COLORS.Daedric);
   const fem = buildWeapon(WEAPONS.Longsword, WEAPON_MATERIALS.Iron, { female: true });
@@ -88,7 +90,7 @@ test('weapons: verbatim DFU data pins', () => {
     assert.deepEqual([w.minDamage, w.maxDamage, w.weightInKg, w.isOneHanded], exp, nm);
   }
   assert.equal(c.value, 30 * 3 * 512);
-  assert.equal(c.maxCondition, Math.trunc((1400 * 32) / 4));
+  assert.equal(c.maxCondition, Math.trunc((1600 * 32) / 4));   // WEAPON-POOL: the one pool, not the Claymore's row of 1400
 });
 
 test('sword piece: grip-baked, armL, point-forward carry (+45 seat)', () => {

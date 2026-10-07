@@ -33,14 +33,15 @@ test('AUDIT 23 items-3/4: Arrow is 131 and Helm is 107 (ItemEnums.cs:230/:202)',
   assert.equal(TEMPLATES.Helm, 107);
 });
 
-test('AUDIT 23 items-5: every factory mints condition = template hitPoints, material-scaled', () => {
+test('AUDIT 23 items-5: every factory mints condition = template hitPoints (a weapon\'s the one pool, WEAPON-POOL), material-scaled', () => {
   // DaggerfallUnityItem.cs:566-567 + SetItemPropertiesByMaterial:651-652.
   const torch = mintCondition({ group: 'UselessItems2', templateIndex: 247 });
   assert.equal(torch.maxCondition, 50);
   assert.equal(torch.currentCondition, 50);
-  // weapons scale: Dagger hitPoints 50, Daedric mult 32 -> 50*32/4 = 400
+  // weapons scale: Dagger hitPoints 50, Daedric mult 32 -> 50*32/4 = 400 - and since WEAPON-POOL (2026-10-06) the one
+  // pool every weapon type shares stands in the row's 50: 1600*32/4 = 12800 (test/weaponpool.test.js)
   const dagger = createWeapon(113, 9);
-  assert.equal(dagger.maxCondition, 400);
+  assert.equal(dagger.maxCondition, 12800);
   // plate armor scales: Cuirass 4096, Dwarven (0x0204) mult 12 -> 12288
   const cuirass = mintCondition({ group: 'Armor', templateIndex: 102, material: 0x0204 });
   assert.equal(cuirass.maxCondition, 12288);

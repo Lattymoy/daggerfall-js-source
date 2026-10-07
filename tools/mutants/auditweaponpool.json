@@ -1,0 +1,56 @@
+[
+  {
+    "name": "AUDIT-WEAPON-POOL-P1-found-mark-left-behind",
+    "file": "src/systems/conditionRepair.js",
+    "old": "  if (Number.isInteger(it.foundCondition)) it.foundCondition = share(it.foundCondition);",
+    "new": "",
+    "tests": [
+      "test/auditweaponpool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WEAPON-POOL-P2-no-move-before-wear",
+    "file": "src/systems/equip.js",
+    "old": "  repoolWeapon(item);\n",
+    "new": "",
+    "tests": [
+      "test/auditweaponpool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WEAPON-POOL-P3-booked-job-moved",
+    "file": "src/systems/conditionRepair.js",
+    "old": "it.artifact || it.repairData != null || !Object.isExtensible(it)",
+    "new": "it.artifact || !Object.isExtensible(it)",
+    "tests": [
+      "test/auditweaponpool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WEAPON-POOL-P4-classic-artifact-moved",
+    "file": "src/systems/conditionRepair.js",
+    "old": "it.magic || it.artifact || it.repairData",
+    "new": "it.magic || it.repairData",
+    "tests": [
+      "test/auditweaponpool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WEAPON-POOL-P6-group-test-on-armour-alone",
+    "file": "src/systems/conditionRepair.js",
+    "old": "if (!it || it.group !== 'Weapons' || it.magic",
+    "new": "if (!it || it.group === 'Armor' || it.magic",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WEAPON-POOL-P7-neighbours-row-read",
+    "file": "src/systems/conditionRepair.js",
+    "old": "[ITEM_TEMPLATES[templateIndex]?.hitPoints,",
+    "new": "[ITEM_TEMPLATES[templateIndex - 1]?.hitPoints,",
+    "tests": [
+      "test/weaponpool.test.js"
+    ]
+  }
+]
