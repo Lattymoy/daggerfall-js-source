@@ -154,7 +154,9 @@ addGroundPlane = FALSE - the stamped terrain tilemap IS the ground;
 marker cells (>= 56) stay unstamped and take generated tiles.
 Integration pins for pixel (207,213): avg 0.166147 / max 0.171953, rect
 {11,116,11,116}, 9989 stamped, post-blend s(64,64) = avg with corners
-untouched, post-assign histogram 2:8173 / 1:3142 / 46:1706 / 11:899,
+untouched, post-assign histogram 2:8183 / 1:3173 / 46:1717 / 11:905
+(PUDDLE-DRY's: the city's 61 puddle tiles are ground; it was
+2:8173 / 1:3142 / 46:1706 / 11:899 - AUDIT WATER-NEXT m5),
 climate 231 -> ground 302. Pins in test/terrain.test.js.
 AUDIT NOTE (M7 audit): the 64-entry marching-squares lookup was
 machine-verified against a source-parsed reconstruction - identical

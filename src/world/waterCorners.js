@@ -125,6 +125,15 @@ export const WATER_MASK_TABLE = buildWaterMaskTable();
  *  eye. The law's, plus SHALLOW_DRAWN. */
 export const WATER_DRAW_MASK_TABLE = buildWaterMaskTable(true);
 
+/** The depth a water sheet without a bed stands for (a one-tile stream, the water on ground never carved - world/waterBed.js):
+ *  shallow, tinted, and never a shore. AUDIT WATER-NEXT H2: its one home is this leaf - the kernel's worker writes it into a
+ *  sheet's depths and the renderer sets it as a constant, and the leaf is on both their roads already (a home in
+ *  world/waterBed.js put one more file on the page's boot, test/boot2.test.js). */
+export const NO_BED_DEPTH = 1.2;
+/** AUDIT WATER-NEXT H2: a sheet vertex over ground that was never carved carries this - NO_BED_DEPTH, negated: the water
+ *  shader reads its magnitude as the depth (the tint) and its sign as "no bed under it", which takes no swell. */
+export const SHEET_NO_BED = -NO_BED_DEPTH;
+
 /** The table packed eight nibbles to a uint, as the shader's
  *  `uvec4 uWaterMask[8]` takes it: entry i is word i >> 3, nibble i & 7. */
 export function packWaterMask(table = WATER_MASK_TABLE) {

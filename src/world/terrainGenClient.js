@@ -203,8 +203,8 @@ export class TerrainGenClient {
    * CLONED to it - the pixel keeps its own, for the grass, the ground
    * under the feet and a fallback. Always resolves: a worker failure or
    * death builds that grid here instead.
-   * @param {{ px: number, py: number, stride: number, samples: Float32Array }} job
-   * @returns {Promise<{ positions: Float32Array, normals: Float32Array }>}
+   * @param {{ px: number, py: number, stride: number, samples: Float32Array, bed?: ?Uint8Array }} job
+   * @returns {Promise<{ positions: Float32Array, normals: Float32Array, bed: ?object }>}
    */
   grid(job) {
     if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, ...job }));   // LANDFORM1-3: the fallback's own network
@@ -224,7 +224,7 @@ export class TerrainGenClient {
       g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, ...g.job }));
       return;
     }
-    g.resolve({ positions: m.positions, normals: m.normals });
+    g.resolve({ positions: m.positions, normals: m.normals, bed: m.bed ?? null });   // AUDIT WATER-NEXT P1: the bed the worker carved
   }
 
   _answer(m) {

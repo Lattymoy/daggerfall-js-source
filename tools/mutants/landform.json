@@ -210,8 +210,8 @@
   {
     "name": "LANDFORM-build-ghost-rows-raw",
     "file": "src/world/terrainGen.js",
-    "old": "const grid = restrideGrid({ woods, px, py, stride, samples, landforms });",
-    "new": "const grid = restrideGrid({ woods, px, py, stride, samples });",
+    "old": "const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null });",
+    "new": "const grid = restrideGrid({ woods, px, py, stride, samples, bed: bed ? tilemapBytes : null });",
     "tests": [
       "test/landform.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "LANDFORM-worker-grid-no-network",
     "file": "src/world/terrainGenWorker.js",
-    "old": "const { positions, normals } = restrideGrid({ ...m, woods, roads });",
-    "new": "const { positions, normals } = restrideGrid({ ...m, woods });",
+    "old": "const { positions, normals, bed } = restrideGrid({ ...m, woods, roads });",
+    "new": "const { positions, normals, bed } = restrideGrid({ ...m, woods });",
     "tests": [
       "test/landform.test.js"
     ]

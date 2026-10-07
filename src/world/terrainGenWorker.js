@@ -89,6 +89,7 @@ function handle(m) {
     const transfer = [out.samples.buffer, out.tilemap.buffer, out.positions.buffer, out.normals.buffer, out.tilemapBytes.buffer];
     if (out.paths) transfer.push(out.paths.buffer);   // GRASS-PATH1: null on a roadless pixel, and a null is not a buffer
     if (out.beach) transfer.push(out.beach.buffer);   // AUDIT LANDFORMS II H2: a location's DFU blend, with the row on
+    if (out.bed) transfer.push(out.bed.depths.buffer, out.bed.sheetDepths.buffer, out.bed.positions.buffer, out.bed.normals.buffer, ...(out.bed.halo ? [out.bed.halo.bits.buffer] : []));   // AUDIT WATER-NEXT P1: the bed, carved here
     globalThis.postMessage({ t: 'done', ...out }, transfer);
   } catch (e) {
     globalThis.postMessage({ t: 'error', message: e?.message ?? String(e) });
@@ -105,8 +106,10 @@ function answerGrid(m) {
     if (!woods) throw new Error('terrain worker got a grid before init');
     // LANDFORM1-3: the ghost rows are the shaped ground when the job carries the Landforms row, cut along this
     // worker's own network - the one its jobs paint
-    const { positions, normals } = restrideGrid({ ...m, woods, roads });
-    globalThis.postMessage({ t: 'grid', id: m.id, positions, normals }, [positions.buffer, normals.buffer]);
+    const { positions, normals, bed } = restrideGrid({ ...m, woods, roads });
+    const transfer = [positions.buffer, normals.buffer];
+    if (bed) transfer.push(bed.depths.buffer, bed.sheetDepths.buffer, bed.positions.buffer, bed.normals.buffer, ...(bed.halo ? [bed.halo.bits.buffer] : []));   // AUDIT WATER-NEXT P1: and its bed
+    globalThis.postMessage({ t: 'grid', id: m.id, positions, normals, bed }, transfer);
   } catch (e) {
     globalThis.postMessage({ t: 'gridError', id: m.id, message: e?.message ?? String(e) });
   }
