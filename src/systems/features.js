@@ -924,6 +924,20 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['mod']),
     control: Object.freeze({ store: 'prefs', key: 'mwSheathing', initial: true, online: 'player' }),
   }),
+  // MW-STEEL1 (2026-10-06, Mac: "the armor replacement of the morrowind steel armor with a varient to toggle the helmet
+  // type"): the steel plate's helm, two ways - closed (a visor and a plume) or open (a nasal helm, the face showing).
+  // Mac's answers: a switch here beside Weapon Sheathing, closed by default. The VIEWER'S, as the sheathing is: it is
+  // how this machine draws a steel helm - the player's and every peer's - and it never reaches the wire. Read where the
+  // worn set is composed (combat/fpArm.js); the tile rebuilds the body at once (ui/enhancedMenu.js TILE_AFTER).
+  Object.freeze({
+    id: 'steel-helm',
+    group: 'combat',
+    title: 'Steel Helm',
+    note: 'With the Morrowind body, a Steel Helm is worn closed, with a visor and a plume, or open, a nasal helm that shows the face.',
+    effect: 'Takes effect at once with the Morrowind body.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'mwSteelHelm', initial: 'closed', online: 'player', tiers: Object.freeze([['closed', 'Closed'], ['open', 'Open']]) }),
+  }),
   // ORL1 (2026-09-17): OBLIVION-REMASTER-LIKE LEVELING - the first
   // Morrowind mod, and the only row whose effect line has to say NEXT
   // CHARACTER. Every other mod's switch lands on the running game; this
