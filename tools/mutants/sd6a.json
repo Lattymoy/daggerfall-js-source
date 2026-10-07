@@ -110,8 +110,8 @@
   {
     "name": "SD6A-the-snap-on-the-Concord",
     "file": "src/net/sdBrain.js",
-    "old": "  if (!ok && f >= SD_FRAY_MAX) { st = [...o.start]; f = 0; x = true; }",
-    "new": "  if (f >= SD_FRAY_MAX) { st = [...o.start]; f = 0; x = true; }",
+    "old": "  if (!ok && f >= (o.fray ?? SD_FRAY_MAX)) { st = [...o.start]; f = 0; x = true; }",
+    "new": "  if (f >= (o.fray ?? SD_FRAY_MAX)) { st = [...o.start]; f = 0; x = true; }",
     "tests": [
       "test/sd6a_orrery.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD6A-the-snap-keeps-the-fray",
     "file": "src/net/sdBrain.js",
-    "old": "  if (!ok && f >= SD_FRAY_MAX) { st = [...o.start]; f = 0; x = true; }",
-    "new": "  if (!ok && f >= SD_FRAY_MAX) { st = [...o.start]; x = true; }",
+    "old": "  if (!ok && f >= (o.fray ?? SD_FRAY_MAX)) { st = [...o.start]; f = 0; x = true; }",
+    "new": "  if (!ok && f >= (o.fray ?? SD_FRAY_MAX)) { st = [...o.start]; x = true; }",
     "tests": [
       "test/sd6a_orrery.test.js"
     ]

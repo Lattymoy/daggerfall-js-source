@@ -23,7 +23,7 @@
 // Pure: the scene (scenes/sdRemnant.js) stands the parts by `rigMatrices`, the gears by `gearMatrix`, and the world's
 // pass draws the beams (render/sdBeam.js). Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { SD_ARENA, SD_REALM_ORIGIN, realmToDungeon } from '../net/sdBrain.js';
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, SD_BREAK_MS, windupFor, behindPillar } from '../net/sdRemnant.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, SD_BREAK_MS, atkWindup, blowShape, behindPillar } from '../net/sdRemnant.js';
 import { sdBodyAt } from '../net/sdFightLink.js';
 import { SD_REMNANT_BODY } from '../world/sdRemnantModel.js';
 import { SD_STRIDE_M, SD_ECHO_STRIDE_M, SD_SLIP_FRAC, SD_RELEASE_MS } from './sdRemnantVoice.js';
@@ -186,12 +186,12 @@ function resetting(out, A, a, t, t0) {
 function blowing(out, s, who, Bd, t) {
   const a = Bd.atk, A = a ? SD_BLOW_BY_ID[a.a] : null;
   if (!A || !Number.isFinite(a.at)) return;
-  const w = windupFor(A, s.ph, who >= 0 ? SD_BODY.gold + who : SD_BODY.remnant), t0 = a.at - w;
+  const w = atkWindup(a, A, s.ph, who >= 0 ? SD_BODY.gold + who : SD_BODY.remnant), t0 = a.at - w, S = blowShape(a);   // SD18a: the blow its frame says
   if (t < t0) return;
-  if (A === SD_BLOWS.stomp) stomping(out, A, a, t, t0, w);
-  else if (A === SD_BLOWS.hand) sweeping(out, A, a, t, t0, w);
+  if (A === SD_BLOWS.stomp) stomping(out, S, a, t, t0, w);
+  else if (A === SD_BLOWS.hand) sweeping(out, S, a, t, t0, w);
   else if (A === SD_BLOWS.volley) throwing(out, a, t, t0, w);
-  else if (A === SD_BLOWS.reset) resetting(out, A, a, t, t0);
+  else if (A === SD_BLOWS.reset) resetting(out, S, a, t, t0);
 }
 
 /**
@@ -309,7 +309,7 @@ export function sdGearsAt(s, t) {
   for (let who = -1; who < (s.ec?.length ?? 0); who++) {
     const Bd = who < 0 ? s.rem : s.ec[who], a = Bd?.atk;
     if (!a || a.a !== SD_BLOWS.volley.id || (who >= 0 && !(Bd.h > 0))) continue;
-    const w = windupFor(SD_BLOWS.volley, s.ph, who < 0 ? SD_BODY.remnant : SD_BODY.gold + who), fl = gearFlightOf(w), go = a.at - fl;
+    const w = atkWindup(a, SD_BLOWS.volley, s.ph, who < 0 ? SD_BODY.remnant : SD_BODY.gold + who), fl = gearFlightOf(w), go = a.at - fl;
     if (!(t >= go && t < a.at)) continue;
     const r = handAt(s, who, 0, go), l = handAt(s, who, 1, go);
     if (!r || !l) continue;
@@ -342,12 +342,14 @@ export function sdBeamsAt(s, t) {
   const A = SD_BLOWS.hand;
   for (let who = -1; who < (s.ec?.length ?? 0); who++) {
     const Bd = who < 0 ? s.rem : s.ec[who], a = Bd?.atk;
-    if (!a || a.a !== A.id || !(t >= a.at && t < a.at + A.active) || (who >= 0 && !(Bd.h > 0))) continue;
-    const k = (t - a.at) / A.active, bearing = a.yw + (a.sw ?? 1) * (A.arc * k - A.arc / 2);
+    if (!a || a.a !== A.id) continue;
+    const S = blowShape(a);   // SD18a: the Turning Tide's wider, longer sweep
+    if (!(t >= a.at && t < a.at + S.active) || (who >= 0 && !(Bd.h > 0))) continue;
+    const k = (t - a.at) / S.active, bearing = a.yw + (a.sw ?? 1) * (S.arc * k - S.arc / 2);
     const reach = beamReach(a.x, a.z, bearing, A.len), hand = handAt(s, who, 0, t);
     if (!hand) continue;
     if (out === NONE) out = [];
-    out.push({ a: hand, b: [a.x + Math.sin(bearing) * reach, SD_BEAM_END_Y, a.z + Math.cos(bearing) * reach], k, who, bearing, reach });
+    out.push({ a: hand, b: [a.x + Math.sin(bearing) * reach, SD_BEAM_END_Y, a.z + Math.cos(bearing) * reach], k, who, bearing, reach, active: S.active });
   }
   return out;
 }
@@ -356,10 +358,10 @@ export function sdBeamsAt(s, t) {
 export const SD_BEAM_FADE_MS = Object.freeze([120, 220]);
 /** THE BEAMS AS THE PASS DRAWS THEM (render/sdBeam.js): `{ a, b, alpha }` in the DUNGEON's frame. Pure. */
 export function sdBeamDraws(s, t) {
-  const A = SD_BLOWS.hand, to = (p) => realmToDungeon(SD_ARENA.x + p[0], p[1], SD_ARENA.z + p[2]), beams = sdBeamsAt(s, t);
+  const to = (p) => realmToDungeon(SD_ARENA.x + p[0], p[1], SD_ARENA.z + p[2]), beams = sdBeamsAt(s, t);
   if (!beams.length) return NONE;
   return beams.map((g) => {
-    const ms = g.k * A.active, alpha = Math.min(1, ms / SD_BEAM_FADE_MS[0], (A.active - ms) / SD_BEAM_FADE_MS[1]);
+    const ms = g.k * g.active, alpha = Math.min(1, ms / SD_BEAM_FADE_MS[0], (g.active - ms) / SD_BEAM_FADE_MS[1]);
     return { a: to(g.a), b: to(g.b), alpha: Math.max(0, alpha) };
   });
 }

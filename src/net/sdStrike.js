@@ -19,8 +19,11 @@
 // the gate's AUDIT WB B7 law): the relay never learns who was struck, and a stale verdict would be a blow nobody saw. Nor
 // a rolling part (the ring, the beam) over a span that ends SD_STRIKE_LATE_MS past it (AUDIT SD II, L4 F6).
 //
+// SD18a: every number is the blow's own as its frame says it (net/sdRemnant.js blowShape - its Hollow's marks), and a
+// strike of the Remnant's or an Echo's own blow, or of the brass one leaves burning, carries its Ending's element (`el`).
+//
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_RESET_PCT, SD_END_PCT, SD_ARENA_SLACK, pulsePct, stompFrontAt, ringPassed, handSwept, behindPillar, inArena } from './sdRemnant.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_RESET_PCT, SD_END_PCT, SD_ARENA_SLACK, pulsePctOf, blowShape, stompFrontAt, ringPassed, handSwept, behindPillar, inArena } from './sdRemnant.js';
 import { STRIKE_LATE_MS } from './gateStrike.js';
 
 /** A landing first seen later than this is not judged (the gate's). */
@@ -34,12 +37,13 @@ const dist = (ax, az, bx, bz) => Math.hypot(ax - bx, az - bz);
  * ground this frame.
  * @param {any} atk a blow as the page holds it ({a, at, x, z, yw, tg, sw?, n?}) @param {number} px @param {number} pz
  * @param {number} t0 @param {number} t1 @param {boolean} grounded @param {Record<string, boolean>} [seen]
- * @returns {{ hits: Array<{part: string, pct: number, base: number}>, seen: Record<string, boolean>, done: boolean }}
+ * @returns {{ hits: Array<{part: string, pct: number, base: number, el?: string}>, seen: Record<string, boolean>, done: boolean }}
  */
 export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}) {
   const A = atk ? SD_BLOW_BY_ID[atk.a] : null;
   const hits = [], out = { ...seen };
   if (!A) return { hits, seen: out, done: true };
+  const S = blowShape(atk), el = S.el ? { el: S.el } : null;   // SD18a: its own numbers and element
   if (t1 < atk.at) return { hits, seen: out, done: false };   // still winding up
   const late = t1 - atk.at > SD_STRIKE_LATE_MS;
   const landing = (part) => {   // the landing's moment, judged once - never one first seen long after
@@ -47,7 +51,7 @@ export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}) {
     out[part] = true;
     return !late;
   };
-  const end = atk.at + Math.max(A.active, 0);
+  const end = atk.at + Math.max(S.active, 0);
   // AUDIT SD II (L4 F6): a rolling part over a span that ends this late past it is done, with no hit - the gate's rolling
   // charge's law (net/gateStrike.js strikeVerdict). A tab hidden across a Stomp's landing and shown 2.5 s on was struck by
   // its ring, one shown 4.9 s into a Hand by its beam: the page judges the span from the last frame it drew
@@ -55,7 +59,7 @@ export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}) {
   switch (A.shape) {
     case 'stomp': {
       const d = dist(px, pz, atk.x, atk.z);
-      if (landing('disc') && d <= A.r) hits.push({ part: 'disc', pct: A.pct, base: A.base });
+      if (landing('disc') && d <= S.r) hits.push({ part: 'disc', pct: A.pct, base: A.base, ...el });
       // AUDIT SD II (L4 F7): the ring judged ONCE, the frame its front's centre crosses me, on that frame's ground - where
       // I stood the frame before kept (`ro`: outside its front), so a body running out with it is crossed once and one
       // running in through it is never past its centre unjudged. The band was judged whole, on any grounded frame inside
@@ -65,7 +69,7 @@ export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}) {
         out.ro = d > stompFrontAt(atk, t1);
         if (ringPassed(atk, d, t0, t1, was)) {
           out.ring = true;
-          if (grounded) hits.push({ part: 'ring', pct: A.ringPct, base: A.ringBase });
+          if (grounded) hits.push({ part: 'ring', pct: A.ringPct, base: A.ringBase, ...el });
         }
       }
       return { hits, seen: out, done: t1 > end };
@@ -73,16 +77,16 @@ export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}) {
     case 'sweep': {
       if (!out.beam && !stale && t0 <= end && handSwept(atk, px, pz, Math.max(t0, atk.at), t1) && !behindPillar(atk.x, atk.z, px, pz)) {
         out.beam = true;
-        hits.push({ part: 'beam', pct: A.pct, base: A.base });
+        hits.push({ part: 'beam', pct: A.pct, base: A.base, ...el });
       }
       return { hits, seen: out, done: !!out.beam || t1 > end };
     }
     case 'disc': {
-      if (landing('discs') && (atk.tg ?? []).some((q) => dist(px, pz, q[0], q[1]) <= A.r)) hits.push({ part: 'discs', pct: A.pct, base: A.base });
+      if (landing('discs') && (atk.tg ?? []).some((q) => dist(px, pz, q[0], q[1]) <= S.r)) hits.push({ part: 'discs', pct: A.pct, base: A.base, ...el });
       return { hits, seen: out, done: true };
     }
     case 'all': {
-      const pct = A === SD_BLOWS.pulse ? pulsePct(atk.n ?? 0) : A === SD_BLOWS.reset ? SD_RESET_PCT : SD_END_PCT;
+      const pct = A === SD_BLOWS.pulse ? pulsePctOf(atk) : A === SD_BLOWS.reset ? SD_RESET_PCT : SD_END_PCT;   // SD18a: a Restless Pulse's own step
       if (landing('all') && inArena(px, pz, SD_ARENA_SLACK)) hits.push({ part: 'all', pct, base: A.base });   // AUDIT SD II (L4 C2): never the Steps
       return { hits, seen: out, done: true };
     }
@@ -90,12 +94,13 @@ export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}) {
   }
 }
 
-/** THE BURNING BRASS a Gear Volley leaves where it lands - a pool at each mark (`SD_BLOWS.volley.pool`), from its landing
- *  for its span. Pure. */
+/** THE BURNING BRASS a Gear Volley leaves where it lands - a pool at each mark (its frame's pool - SD18a: Sunfall's and the
+ *  Burning Brass's longer and wider - in its element), from its landing for its span. Pure. */
 export function sdVolleyPools(atk) {
-  const A = SD_BLOWS.volley, P = A.pool;
+  const A = SD_BLOWS.volley;
   if (!atk || atk.a !== A.id) return [];
-  return (atk.tg ?? []).map((q) => ({ x: q[0], z: q[1], r: P.r, from: atk.at, until: atk.at + P.ms, pct: P.pct, base: P.base }));
+  const S = blowShape(atk), P = S.pool;
+  return (atk.tg ?? []).map((q) => ({ x: q[0], z: q[1], r: P.r, from: atk.at, until: atk.at + P.ms, pct: P.pct, base: P.base, ...(S.el ? { el: S.el } : {}) }));
 }
 /** The pool I stand in at `now`, or null. Pure. */
 export function sdPoolUnder(pools, px, pz, now) {

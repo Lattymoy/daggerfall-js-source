@@ -4,6 +4,7 @@
 // fanned, a blow believed from the socket's own pose), a lost fight made fresh by the next `in`, the fall said once and
 // told to the hub - whose record falls with it - and the page's half: the words sent down my own socket, the fight heard
 // from my own realm alone.
+import { SD_ENDINGS } from '../src/net/sdMarks.js';   // SD18a (PIN MOVED): Sunfall's seven
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -72,7 +73,7 @@ test('SD8b THE WIRE: the fight\'s words each way, projected and bounded - an `in
   assert.equal(SD_FIGHT_BLOWS, SD_BLOW_BY_ID.length);
   assert.equal(SD_ECHOES, SD_ECHO_SPOTS.length);
   assert.equal(SD_HEARTS_MAX, SD_HEARTS[1]);
-  assert.equal(SD_TARGETS_MAX, SD_BLOWS.volley.max);
+  assert.equal(SD_TARGETS_MAX, Math.max(SD_BLOWS.volley.max, ...SD_ENDINGS.map((e) => e.law.volleyMax ?? 0)), 'the most marks a Volley throws - SD18a: Sunfall\'s seven');   // PIN MOVED (SD18a)
   assert.ok(SD_ARENA_BOUND >= SD_ARENA.r + POSE_SLACK, 'the whole arena and its slack');
   assert.equal(SD_BRAIN_V, 1); assert.ok(SD_BRAIN_MIN <= SD_BRAIN_V);
   // in
@@ -105,7 +106,7 @@ test('SD8b THE WIRE: the fight\'s words each way, projected and bounded - an `in
   const atk = atkFrameOf(SD_BODY.gold, { i: 9, a: SD_BLOWS.hand.id, at: T0 + 5, x: -9, z: 2, yw: 0.5, tg: [], sw: -1 });
   assert.deepEqual(validSdOut(atk), atk);
   assert.deepEqual(validSdOut(atkFrameOf(SD_BODY.hour, { i: 9, a: SD_BLOWS.pulse.id, at: T0 + 5, x: 0, z: 0, yw: 0, tg: [], n: 3 })).n, 3);
-  for (const bad of [{ b: 4 }, { a: 6 }, { sw: 2 }, { tg: [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]] }, { tg: [[0, SD_ARENA_BOUND + 1]] }, { i: 0 }])
+  for (const bad of [{ b: 4 }, { a: 6 }, { sw: 2 }, { tg: Array.from({ length: SD_TARGETS_MAX + 1 }, () => [0, 0]) }, { tg: [[0, SD_ARENA_BOUND + 1]] }, { i: 0 }])
     assert.equal(validSdOut({ ...atk, ...bad }), null, JSON.stringify(bad));
   assert.deepEqual(validSdOut({ k: 'mv', b: 2, x: 1, z: 2, tx: 3, tz: 4, v: 3, at: T0 }), { k: 'mv', b: 2, x: 1, z: 2, tx: 3, tz: 4, v: 3, at: T0 });
   assert.equal(validSdOut({ k: 'mv', b: 3, x: 1, z: 2, tx: 3, tz: 4, v: 3, at: T0 }), null, 'the Hour does not walk');

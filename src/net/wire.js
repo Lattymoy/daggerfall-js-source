@@ -177,6 +177,7 @@ import { ribbonClaimOk } from './heraldryLaw.js';   // SEASON1 part two: a Seaso
 import { GUILD_TAG_RE } from './guildLaw.js';   // GUILD1c: a guild's tag is badged beside the name - guildLaw.js imports nothing, so the worker's graph stays flat
 import { RAID_KEY_RE, RAID_SIG_RE, RAID_TARGET_MIN, RAID_TARGET_MAX, RAID_TYPES, RAID_WORD_KILLS_MAX, RAID_ACCOUNTS_MAX, RAID_TOP_MAX, RAID_TOWNS_SHA_RE, RAID_TOWNS_CHUNK, RAID_TOWNS_CHUNKS_MAX } from './raidLaw.js';   // RAID3: a town raid's law - raidLaw.js imports nothing, so the worker's graph stays flat
 import { SIEGE_HIT, SIEGE_WORK_IDS, SIEGE_RAMS_MAX, SIEGE_WORK_TIER_MAX, siegeGateVitality, siegeRamVitality, isSiegeNpcId, SIEGE_NPC_MAX, SIEGE_NPC_KINDS } from './siegeRef.js';   // PVP-REF: a siege's blow kinds - siegeRef.js imports nothing, so the worker's graph stays flat; SEAT2b part two (b): the works a blow may name; part two (c): the relay's own fighters
+import { validSdMarks, SD_ELEMENTS } from './sdMarks.js';   // SD18a: a Hollow's marks and its blows' elements - sdMarks.js imports nothing, so the worker's graph stays
 import { validArenaIn, validArenaOut } from './arenaLaw.js';   // ARENA4: the arena's words both ways - arenaLaw.js imports nothing, so the worker's graph stays flat
 import { readHouse } from './houseLaw.js';   // LEGACY7 part two: a house rides a row - houseLaw.js imports nothing, so the worker's graph stays flat
 import { validGateMods, GATE_FEEDS_MAX } from './gateMods.js';   // WB8b: the Warden's marks on a gate's state - gateMods.js imports nothing, so the worker's graph stays flat
@@ -4419,7 +4420,7 @@ export const SD_BODIES = 4;
 export const SD_FIGHT_BLOWS = 6;
 export const SD_ECHOES = 2;
 export const SD_HEARTS_MAX = 8;
-export const SD_TARGETS_MAX = 5;
+export const SD_TARGETS_MAX = 7;   // SD18a: Sunfall's seven (net/sdMarks.js)
 /** SD8b: why a realm refuses an `in` - the Hour closed, the fight over (fallen, or past its Hour), the arena full, a game
  *  whose brain is older than the realm's. */
 export const SD_NO_WORDS = Object.freeze(['the Hour has closed', 'the fight is over', 'the arena is full', 'an older Hour']);
@@ -4458,12 +4459,29 @@ export function validSdIn(m) {
 const sdXZ = (v) => finite(v) && Math.abs(v) <= SD_ARENA_BOUND;
 const sdMove = (mv) => (mv && typeof mv === 'object' && [mv.x, mv.z, mv.tx, mv.tz].every(sdXZ) && finite(mv.v) && mv.v >= 0 && mv.v <= 20 && gateMs(mv.at)
   ? { x: mv.x, z: mv.z, tx: mv.tx, tz: mv.tz, v: mv.v, at: mv.at } : null);
+/** SD18a: a blow's shape as its Hollow's marks changed it (net/sdRemnant.js blowShape) - each key its own bound, an
+ *  element the known ones' - or null for a shape that is not one. */
+const SD_SHAPE_BOUNDS = Object.freeze({ r: [1, 15], r1: [1, 40], wave: [1, 40], arc: [0.1, 2 * Math.PI], active: [0, 20_000], pr: [0.5, 10], pm: [0, 60_000], w: [0, 20_000], ps: [0, 0.2] });
+const sdShape = (sh) => {
+  if (!sh || typeof sh !== 'object' || Array.isArray(sh)) return null;
+  /** @type {Record<string, any>} */
+  const out = {};
+  for (const [k, v] of Object.entries(sh)) {
+    if (k === 'el') { if (!SD_ELEMENTS.includes(v)) return null; out.el = v; continue; }
+    const b = SD_SHAPE_BOUNDS[k];
+    if (!b || !finite(v) || v < b[0] || v > b[1]) return null;
+    out[k] = v;
+  }
+  return Object.keys(out).length ? out : null;
+};
 const sdAtk = (a) => {
   if (!a || typeof a !== 'object' || !intIn(a.b, 0, SD_BODIES - 1) || !Number.isSafeInteger(a.i) || a.i < 1 || !intIn(a.a, 0, SD_FIGHT_BLOWS - 1)) return null;
   if (!gateMs(a.at) || !sdXZ(a.x) || !sdXZ(a.z) || !finite(a.yw) || Math.abs(a.yw) > 8 || !Array.isArray(a.tg) || a.tg.length > SD_TARGETS_MAX) return null;
   if (!a.tg.every((p) => Array.isArray(p) && p.length === 2 && sdXZ(p[0]) && sdXZ(p[1]))) return null;
   if ((a.sw != null && a.sw !== 1 && a.sw !== -1) || (a.n != null && !intIn(a.n, 0, 9999))) return null;
-  return { b: a.b, i: a.i, a: a.a, at: a.at, x: a.x, z: a.z, yw: a.yw, tg: a.tg.map((p) => [p[0], p[1]]), ...(a.sw != null ? { sw: a.sw } : {}), ...(a.n != null ? { n: a.n } : {}) };
+  const sh = a.sh == null ? null : sdShape(a.sh);
+  if (a.sh != null && !sh) return null;
+  return { b: a.b, i: a.i, a: a.a, at: a.at, x: a.x, z: a.z, yw: a.yw, tg: a.tg.map((p) => [p[0], p[1]]), ...(a.sw != null ? { sw: a.sw } : {}), ...(a.n != null ? { n: a.n } : {}), ...(sh ? { sh } : {}) };
 };
 /** A body as the state says it - its blow (if any) its own. */
 const sdBody = (B, b) => {
@@ -4498,7 +4516,7 @@ function validSdFightOut(m) {
       }
       const clk = m.clk == null ? null : sdAtk(m.clk), cx = m.cx == null ? null : sdCx(m.cx, true), fell = m.fell == null ? null : gateFell(m.fell);
       if ((m.clk != null && (!clk || clk.b !== SD_BODIES - 1)) || (m.cx != null && !cx) || (m.fell != null && !fell)) return null;
-      return { k: 'st', s: m.s, fi: m.fi, ph: m.ph, h: m.h, m: m.m, op: m.op, ou: m.ou, rem, ec, clk, pu: m.pu, pa: m.pa, ends: m.ends, ended: m.ended, cx, su: m.su, rk: m.rk, n: m.n, fell, lost: m.lost, ...(m.me === 1 ? { me: 1 } : {}) };   // SD8c: `me` - the answer to my own `in`
+      return { k: 'st', s: m.s, fi: m.fi, ph: m.ph, h: m.h, m: m.m, op: m.op, ou: m.ou, rem, ec, clk, pu: m.pu, pa: m.pa, ends: m.ends, ended: m.ended, cx, su: m.su, rk: m.rk, n: m.n, fell, lost: m.lost, ...(m.me === 1 ? { me: 1 } : {}), ...(validSdMarks(m.mk) ? { mk: [...m.mk] } : {}) };   // SD8c: `me` - the answer to my own `in`; SD18a: `mk` its Hollow's marks
     }
     case 'mv': { const mv = intIn(m.b, 0, SD_BODIES - 2) ? sdMove(m) : null; return mv ? { k: 'mv', b: m.b, ...mv } : null; }
     case 'atk': { const a = sdAtk(m); return a ? { k: 'atk', ...a } : null; }

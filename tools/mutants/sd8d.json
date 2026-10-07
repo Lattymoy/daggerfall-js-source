@@ -2,8 +2,8 @@
   {
     "name": "SD8D-the-ring-on-the-airborne",
     "file": "src/net/sdStrike.js",
-    "old": "          if (grounded) hits.push({ part: 'ring', pct: A.ringPct, base: A.ringBase });",
-    "new": "          hits.push({ part: 'ring', pct: A.ringPct, base: A.ringBase });",
+    "old": "          if (grounded) hits.push({ part: 'ring', pct: A.ringPct, base: A.ringBase, ...el });",
+    "new": "          hits.push({ part: 'ring', pct: A.ringPct, base: A.ringBase, ...el });",
     "tests": [
       "test/sd8d_remnant_blows.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "SD8D-the-disc-unbounded",
     "file": "src/net/sdStrike.js",
-    "old": "      if (landing('disc') && d <= A.r) hits.push(",
+    "old": "      if (landing('disc') && d <= S.r) hits.push(",
     "new": "      if (landing('disc')) hits.push(",
     "tests": [
       "test/sd8d_remnant_blows.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "SD8D-a-strike-a-disc",
     "file": "src/net/sdStrike.js",
-    "old": "      if (landing('discs') && (atk.tg ?? []).some((q) => dist(px, pz, q[0], q[1]) <= A.r)) hits.push({ part: 'discs', pct: A.pct, base: A.base });",
-    "new": "      if (landing('discs')) for (const q of atk.tg ?? []) if (dist(px, pz, q[0], q[1]) <= A.r) hits.push({ part: 'discs', pct: A.pct, base: A.base });",
+    "old": "      if (landing('discs') && (atk.tg ?? []).some((q) => dist(px, pz, q[0], q[1]) <= S.r)) hits.push({ part: 'discs', pct: A.pct, base: A.base, ...el });",
+    "new": "      if (landing('discs')) for (const q of atk.tg ?? []) if (dist(px, pz, q[0], q[1]) <= S.r) hits.push({ part: 'discs', pct: A.pct, base: A.base, ...el });",
     "tests": [
       "test/sd8d_remnant_blows.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD8D-the-pulse-not-growing",
     "file": "src/net/sdStrike.js",
-    "old": "      const pct = A === SD_BLOWS.pulse ? pulsePct(atk.n ?? 0) :",
-    "new": "      const pct = A === SD_BLOWS.pulse ? pulsePct(0) :",
+    "old": "      const pct = A === SD_BLOWS.pulse ? pulsePctOf(atk) :",
+    "new": "      const pct = A === SD_BLOWS.pulse ? pulsePctOf({ n: 0 }) :",
     "tests": [
       "test/sd8d_remnant_blows.test.js"
     ]
@@ -209,7 +209,7 @@
   {
     "name": "SD8D-the-echo-not-faster",
     "file": "src/scenes/sdRemnantBlows.js",
-    "old": "  const w = windupFor(A, phase, b), since = now - (atk.at - w),",
+    "old": "  const w = atkWindup(atk, A, phase, b), since = now - (atk.at - w),",
     "new": "  const w = A.windup, since = now - (atk.at - w),",
     "tests": [
       "test/sd8d_remnant_blows.test.js"

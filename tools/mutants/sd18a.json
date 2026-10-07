@@ -1,0 +1,382 @@
+[
+  {
+    "name": "SD18A-an-ending-twice-running",
+    "file": "src/net/sdMarks.js",
+    "old": "const p = ring[k % ring.length], e = ends[(k + Math.floor(k / ring.length)) % ends.length];",
+    "new": "const p = ring[k % ring.length], e = ends[Math.floor(k / ring.length) % ends.length];",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-omens-shared-running",
+    "file": "src/net/sdMarks.js",
+    "old": "if (used[k] || !apart(last, pairs[k])) continue;",
+    "new": "if (used[k]) continue;",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-ring-never-closed",
+    "file": "src/net/sdMarks.js",
+    "old": "if (ring.length === pairs.length) return apart(pairs[ring[ring.length - 1]], pairs[ring[0]]);",
+    "new": "if (ring.length === pairs.length) return true;",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ],
+    "equivalent": true,
+    "why": "the walk's first ring closes at every seat count from 6 to 12 (measured: disjointRing under this mutant, each closed) - the check guards a ring the fixed order never finds; the cycle's own wrap is pinned (c[215] against c[0])"
+  },
+  {
+    "name": "SD18A-the-slot-from-nought",
+    "file": "src/net/sdMarks.js",
+    "old": "const c = sdMarksCycle(), k = Math.floor(Number(s) || 0) - 1;",
+    "new": "const c = sdMarksCycle(), k = Math.floor(Number(s) || 0);",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-a-doubled-omen-valid",
+    "file": "src/net/sdMarks.js",
+    "old": "&& sdOmensOf(mk).length === SD_OMENS_A_HOLLOW && mk[1] !== mk[2];",
+    "new": "&& sdOmensOf(mk).length === SD_OMENS_A_HOLLOW;",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-multipliers-overwritten",
+    "file": "src/net/sdMarks.js",
+    "old": "out[k] = k.endsWith('X') && out[k] != null ? out[k] * v : v;",
+    "new": "out[k] = v;",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-brazen-hide-forgotten",
+    "file": "src/net/sdRemnant.js",
+    "old": "SD_SHARE_X * profileOf(f).hpX, frac",
+    "new": "SD_SHARE_X, frac",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-short-hour-forgotten",
+    "file": "src/net/sdRemnant.js",
+    "old": "pulseAt: op + P.pulseMs, endsAt: op + P.endsMs,",
+    "new": "pulseAt: op + P.pulseMs, endsAt: op + SD_ENDS_MS,",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-hungering-heart-once",
+    "file": "src/net/sdRemnant.js",
+    "old": "f.pulses++; f.pulseAt += profileOf(f).pulseMs; }",
+    "new": "f.pulses++; f.pulseAt += SD_PULSE_EVERY_MS; }",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-gears-unquickened",
+    "file": "src/net/sdRemnant.js",
+    "old": "const P = profileOf(f), w = CHOSEN.includes(A) && P.windX !== 1 ? Math.round(windupFor(A, f.phase, b) * P.windX) : windupFor(A, f.phase, b);",
+    "new": "const P = profileOf(f), w = windupFor(A, f.phase, b);",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-shape-unsaid",
+    "file": "src/net/sdRemnant.js",
+    "old": "until: at + active + A.recover, ...(way ? { sw: way } : {}), ...(sh ? { sh } : {}) };",
+    "new": "until: at + active + A.recover, ...(way ? { sw: way } : {}) };",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-shape-off-the-wire",
+    "file": "src/net/sdRemnant.js",
+    "old": "...(Number.isInteger(a.n) ? { n: a.n } : {}), ...(a.sh ? { sh: { ...a.sh } } : {}) };",
+    "new": "...(Number.isInteger(a.n) ? { n: a.n } : {}) };",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-no-element",
+    "file": "src/net/sdRemnant.js",
+    "old": "    if (P.el) sh.el = P.el;\n",
+    "new": "",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-reset-quickened-too",
+    "file": "src/net/sdRemnant.js",
+    "old": "  if (CHOSEN.includes(A)) {\n    if (P.el) sh.el = P.el;",
+    "new": "  if (true) {\n    if (P.el) sh.el = P.el;",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-pulse-step-unsaid",
+    "file": "src/net/sdRemnant.js",
+    "old": "  if (A === SD_BLOWS.pulse && P.pulseStep !== SD_PULSE_STEP) sh.ps = P.pulseStep;\n",
+    "new": "",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-hardened-hearts-forgotten",
+    "file": "src/net/sdRemnant.js",
+    "old": "heartHpFor(here.map((b) => f.players[b.sub].lv), n) * profileOf(f).heartX)",
+    "new": "heartHpFor(here.map((b) => f.players[b.sub].lv), n))",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-dragon-break-fifteen",
+    "file": "src/net/sdRemnant.js",
+    "old": "now - X.downAt < profileOf(f).pairMs) continue;",
+    "new": "now - X.downAt < SD_ECHO_PAIR_MS) continue;",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-unending-reset-fifty",
+    "file": "src/net/sdRemnant.js",
+    "old": "f.resetAt = f.outUntil + profileOf(f).resetFirstMs;",
+    "new": "f.resetAt = f.outUntil + SD_RESET_FIRST_MS;",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-sunfall-five",
+    "file": "src/net/sdRemnant.js",
+    "old": "    tg = live.slice(0, P.volleyMax).map(",
+    "new": "    tg = live.slice(0, A.max).map(",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-tusk-at-its-old-pace",
+    "file": "src/net/sdRemnant.js",
+    "old": "return b === SD_BODY.remnant ? P.remSpeed * (f.phase >= 3 ? SD_LAST_SPEED_X : 1) : P.echoSpeed;",
+    "new": "return b === SD_BODY.remnant ? SD_REM.speed * (f.phase >= 3 ? SD_LAST_SPEED_X : 1) : P.echoSpeed;",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-frame-unread",
+    "file": "src/net/sdRemnant.js",
+    "old": "  if (!A || !atk.sh) return A;\n",
+    "new": "  return A;\n",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-ring-the-tables",
+    "file": "src/net/sdRemnant.js",
+    "old": "  const A = sized(atk, SD_BLOWS.stomp);\n  return Math.min(A.r1,",
+    "new": "  const A = SD_BLOWS.stomp;\n  return Math.min(A.r1,",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-sweep-the-tables",
+    "file": "src/net/sdRemnant.js",
+    "old": "  const A = sized(atk, SD_BLOWS.hand), d = dist(x, z, atk.x, atk.z);",
+    "new": "  const A = SD_BLOWS.hand, d = dist(x, z, atk.x, atk.z);",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-wind-up-the-law's",
+    "file": "src/net/sdRemnant.js",
+    "old": "export const atkWindup = (atk, A, phase, body) => (atk?.sh?.w != null ? atk.sh.w : windupFor(A, phase, body));",
+    "new": "export const atkWindup = (atk, A, phase, body) => windupFor(A, phase, body);",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-marks-off-the-state",
+    "file": "src/net/sdRemnant.js",
+    "old": "    ...(f.mk ? { mk: [...f.mk] } : {}),   // SD18a: its Hollow's marks - every screen's profile of it\n",
+    "new": "",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-a-hit-unelemented",
+    "file": "src/net/sdStrike.js",
+    "old": "const S = blowShape(atk), el = S.el ? { el: S.el } : null;",
+    "new": "const S = blowShape(atk), el = null;",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-tusk-disc-the-tables",
+    "file": "src/net/sdStrike.js",
+    "old": "      if (landing('disc') && d <= S.r) hits.push(",
+    "new": "      if (landing('disc') && d <= A.r) hits.push(",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-pool-the-tables",
+    "file": "src/net/sdStrike.js",
+    "old": "  const S = blowShape(atk), P = S.pool;",
+    "new": "  const S = blowShape(atk), P = A.pool;",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-any-shape",
+    "file": "src/net/wire.js",
+    "old": "    if (!b || !finite(v) || v < b[0] || v > b[1]) return null;",
+    "new": "    if (!finite(v)) return null;",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-any-element",
+    "file": "src/net/wire.js",
+    "old": "    if (k === 'el') { if (!SD_ELEMENTS.includes(v)) return null; out.el = v; continue; }",
+    "new": "    if (k === 'el') { out.el = v; continue; }",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-shape-dropped",
+    "file": "src/net/wire.js",
+    "old": "...(a.n != null ? { n: a.n } : {}), ...(sh ? { sh } : {}) };",
+    "new": "...(a.n != null ? { n: a.n } : {}) };",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-any-marks",
+    "file": "src/net/wire.js",
+    "old": ", ...(validSdMarks(m.mk) ? { mk: [...m.mk] } : {}) };",
+    "new": ", ...(m.mk ? { mk: [...m.mk] } : {}) };",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-link-forgets-its-marks",
+    "file": "src/net/sdFightLink.js",
+    "old": "      mk: w.mk ?? null,   // SD18a: its Hollow's marks\n",
+    "new": "",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-link-drops-the-shape",
+    "file": "src/net/sdFightLink.js",
+    "old": "...(w.n != null ? { n: w.n } : {}), ...(w.sh != null ? { sh: w.sh } : {}) });",
+    "new": "...(w.n != null ? { n: w.n } : {}) });",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-stun's-reset-fifty",
+    "file": "src/net/sdFightLink.js",
+    "old": "rk: w.until + profileOf(s).resetMs, heardAt: now };",
+    "new": "rk: w.until + 50_000, heardAt: now };",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-rises-again-at-fifteen",
+    "file": "src/ui/sdRemnantBar.js",
+    "old": "(s.ec[fallen].dn + profileOf(s).pairMs - now)",
+    "new": "(s.ec[fallen].dn + 15_000 - now)",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-card-at-fifteen",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "show('break', t, { ...SD_BEAT_TEXT.break, sub: sdBreakSub(profileOf(s).pairMs) }, '#e8c060');",
+    "new": "show('break', t, SD_BEAT_TEXT.break, '#e8c060');",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-read-the-tables",
+    "file": "src/scenes/sdArenaRead.js",
+    "old": "  const S = blowShape(atk) ?? A;   // SD18a: the blow its frame says\n",
+    "new": "  const S = A;\n",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-floor-the-tables",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "  const S = blowShape(atk);   // SD18a: the blow its frame says - its Hollow's marks\n",
+    "new": "  const S = A;\n",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-tide-unturned",
+    "file": "src/scenes/sdRemnantRig.js",
+    "old": "    const S = blowShape(a);   // SD18a: the Turning Tide's wider, longer sweep\n",
+    "new": "    const S = A;\n",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-the-fray-forty-eight",
+    "file": "src/net/sdBrain.js",
+    "old": "fray: sdMarksLaw(sdMarksOf(s)).fray ?? SD_FRAY_MAX });",
+    "new": "fray: SD_FRAY_MAX });",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  },
+  {
+    "name": "SD18A-a-fight-unmarked",
+    "file": "server/src/index.js",
+    "old": "newRemnantFight(s, (f?.fi ?? 0) + 1, now, sdMarksOf(s));",
+    "new": "newRemnantFight(s, (f?.fi ?? 0) + 1, now);",
+    "tests": [
+      "test/sd18a_marks.test.js"
+    ]
+  }
+]

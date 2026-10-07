@@ -17,7 +17,7 @@
 // Pure but for the beats' memory. The arena's frame throughout (x, z from its centre). Not a DFU member. Ledger A
 // (SUPER-DUNGEONS).
 import { SD_ARENA } from '../net/sdBrain.js';
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, windupFor, stompFrontAt, handSwept, behindPillar, SD_ECHO_PAIR_MS } from '../net/sdRemnant.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, atkWindup, blowShape, profileOf, stompFrontAt, handSwept, behindPillar, SD_ECHO_PAIR_MS } from '../net/sdRemnant.js';
 import { TELEGRAPH_NOW_MS } from '../render/gateTelegraph.js';
 import { screenBearing } from './gateCourt.js';
 import { SD_BLOW_COLOR } from './sdRemnantBlows.js';
@@ -35,10 +35,12 @@ export const SD_JUMP_CALL_M = 3;
 export const SD_BEAT_LATE_MS = 1500;
 /** The Hour's last minute. */
 export const SD_BEAT_LAST_MS = 60 * 1000;
+/** The Dragon Break's charge, by the window its pair falls in (SD18a: the Dragon's Break's ten seconds). */
+export const sdBreakSub = (ms) => `Gold and silver - fell them within ${Math.round(ms / 1000)} seconds`;
 /** The words on the card. */
 export const SD_BEAT_TEXT = Object.freeze({
   wake: Object.freeze({ kicker: 'The Shattered Hour', main: 'The Brass Remnant', sub: 'What the Warp kept of the Numidium' }),
-  break: Object.freeze({ kicker: 'II', main: 'The Dragon Break', sub: `Gold and silver - fell them within ${SD_ECHO_PAIR_MS / 1000} seconds` }),
+  break: Object.freeze({ kicker: 'II', main: 'The Dragon Break', sub: sdBreakSub(SD_ECHO_PAIR_MS) }),
   moment: Object.freeze({ kicker: 'III', main: 'The Last Moment', sub: 'Break its Hearts before the Reset lands' }),
   last: Object.freeze({ kicker: 'The Hour', main: 'Ends in one minute', sub: '' }),
   fell: Object.freeze({ kicker: 'The Brass Remnant', main: 'Undone', sub: '' }),
@@ -67,9 +69,10 @@ export function sdWayOut(inside, fx, fz) {
 /** Whether (x, z) is in blow `atk`'s ground still to strike at `t` - the Stomp's disc, the Hand's sweep from `t` on
  *  (shade a pillar's), a Volley's mark; null for a shape that is not a place. */
 function insideOf(A, atk, t) {
-  if (A === SD_BLOWS.stomp) return (x, z) => Math.hypot(x - atk.x, z - atk.z) <= A.r;
-  if (A === SD_BLOWS.hand) return (x, z) => handSwept(atk, x, z, Math.max(t, atk.at), atk.at + A.active) && !behindPillar(atk.x, atk.z, x, z);
-  if (A === SD_BLOWS.volley) return (x, z) => (atk.tg ?? []).some((q) => Math.hypot(x - q[0], z - q[1]) <= A.r);
+  const S = blowShape(atk) ?? A;   // SD18a: the blow its frame says
+  if (A === SD_BLOWS.stomp) return (x, z) => Math.hypot(x - atk.x, z - atk.z) <= S.r;
+  if (A === SD_BLOWS.hand) return (x, z) => handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active) && !behindPillar(atk.x, atk.z, x, z);
+  if (A === SD_BLOWS.volley) return (x, z) => (atk.tg ?? []).some((q) => Math.hypot(x - q[0], z - q[1]) <= S.r);
   return null;
 }
 
@@ -87,7 +90,7 @@ export function sdPerilAt(s, t, fx, fz, yaw = null) {
   for (const [b, atk] of blows) {
     const A = SD_BLOW_BY_ID[atk.a];
     if (!A || !Number.isFinite(atk.at)) continue;
-    const w = windupFor(A, s.ph, b), end = atk.at + Math.max(A.active, 0);
+    const w = atkWindup(atk, A, s.ph, b), end = atk.at + Math.max((blowShape(atk) ?? A).active, 0);
     if (A === SD_BLOWS.stomp && t >= atk.at && t <= end) {
       const d = Math.hypot(fx - atk.x, fz - atk.z), front = stompFrontAt(atk, t);
       if (d > front && d - front <= SD_JUMP_CALL_M && (!jump || atk.at < jump.at)) jump = { at: atk.at, name: A.name };
@@ -128,7 +131,7 @@ export function createSdBeats() {
       if (awake && !k.awake && t - s.op < SD_BEAT_LATE_MS) show('wake', s.op, SD_BEAT_TEXT.wake);
       k.awake = awake;
       if (s.ph !== k.ph) {
-        if (s.ph === 2) show('break', t, SD_BEAT_TEXT.break, '#e8c060');
+        if (s.ph === 2) show('break', t, { ...SD_BEAT_TEXT.break, sub: sdBreakSub(profileOf(s).pairMs) }, '#e8c060');
         else if (s.ph === 3) show('moment', t, SD_BEAT_TEXT.moment, '#9cffc8');
         k.ph = s.ph;
       }

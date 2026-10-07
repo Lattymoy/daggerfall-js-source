@@ -34,11 +34,16 @@
 //   Every blow is a share of the STRUCK player's own health and a base (the gate's law), judged on the struck player's own
 //   machine from the words said here (stompRingAt, handSwept, behindPillar - the geometry both ends read); the relay
 //   never learns who was struck. No element: no resistance answers any of it.
+//   SD18a: A HOLLOW'S MARKS (net/sdMarks.js - its Ending and two omens, by its slot) retune the fight: its profile
+//   (sdFightProfile) the numbers the relay runs it by, and each blow whose shape they change carries the change on its
+//   own frame (`sh` - blowShape), with its Ending's element on the Remnant's and Echoes' own blows: every screen judges
+//   the blow the relay threw. A fight with no marks is the table's, frame for frame.
 //
 // The fight's frame is the ARENA's: its centre the origin, the realm's axes (net/sdBrain.js SD_ARENA; arenaOf).
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_ARENA, SD_PILLAR_R, SD_PILLAR_W } from './sdBrain.js';
+import { SD_ARENA, SD_PILLAR_R, SD_PILLAR_W, SD_FRAY_MAX } from './sdBrain.js';
+import { sdMarksLaw, sdEndingOf, validSdMarks } from './sdMarks.js';
 import { SD_FIGHTERS_MAX } from './sdLaw.js';
 import {
   dpsRef, clampLv, BUCKET_DEPTH_X, GATE_HIT_HZ_MAX, HIT_KINDS, MELEE_REACH, POSE_SLACK, ABSENT_RETIRE_MS, THREAT_PICK,
@@ -143,6 +148,73 @@ export const SD_BLOW_BY_ID = Object.freeze(Object.values(SD_BLOWS).sort((a, b) =
 const CHOSEN = Object.freeze([SD_BLOWS.stomp, SD_BLOWS.hand, SD_BLOWS.volley]);
 /** A blow's wind-up for `body` in `phase`: the Echoes' and the Last Moment's faster; the clock's and the Reset never. */
 export const windupFor = (A, phase, body) => (CHOSEN.includes(A) && (body === SD_BODY.gold || body === SD_BODY.silver || phase >= 3) ? Math.round(A.windup * SD_FAST) : A.windup);
+/** SD18a: A BLOW AS ITS FRAME SAYS IT - the table's numbers with what its Hollow's marks changed (`atk.sh`: the Stomp's
+ *  `r`, `r1`, `wave`; the Hand's `arc`, `active`; the Volley's pool `pr`, `pm`; `w` its wind-up; `ps` a Pulse's step; `el`
+ *  its element) - the table's own entry when nothing changed. Pure (one a frame, kept). */
+const _shapes = new WeakMap();
+/** @returns {any} */
+export function blowShape(atk) {
+  const A = /** @type {any} */ (atk ? SD_BLOW_BY_ID[atk.a] ?? null : null);
+  if (!A || !atk.sh) return A;
+  let S = _shapes.get(atk);
+  if (S) return S;
+  const sh = atk.sh, pick = (k, v) => (sh[k] != null ? sh[k] : v);
+  S = Object.freeze({
+    ...A, r: pick('r', A.r), r1: pick('r1', A.r1), wave: pick('wave', A.wave), arc: pick('arc', A.arc), active: pick('active', A.active), el: sh.el ?? null,
+    ...(A.pool ? { pool: Object.freeze({ ...A.pool, r: pick('pr', A.pool.r), ms: pick('pm', A.pool.ms) }) } : {}),
+  });
+  _shapes.set(atk, S);
+  return S;
+}
+/** A shape-bearing frame's numbers, else blow `A`'s own (a frame without its kind - the geometry's callers - reads A's). */
+const sized = (atk, A) => (atk && atk.sh ? blowShape(atk) ?? A : A);
+/** SD18a: a blow's wind-up as its frame says it (`sh.w`), else the law's (windupFor). */
+export const atkWindup = (atk, A, phase, body) => (atk?.sh?.w != null ? atk.sh.w : windupFor(A, phase, body));
+/** SD18a: a Pulse's share as its frame says it (`sh.ps` its step), else pulsePct's. */
+export const pulsePctOf = (atk) => (atk?.sh?.ps != null ? SD_PULSE_PCT + atk.sh.ps * Math.max(0, Math.floor(Number(atk.n) || 0)) : pulsePct(atk?.n ?? 0));
+
+/** SD18a: THE FIGHT'S PROFILE - the numbers the relay runs it by as its marks (net/sdMarks.js) set them; with none, the
+ *  table's own. Pure, frozen and kept by its marks. */
+const _profiles = new Map();
+export function sdFightProfile(mk = null) {
+  const key = validSdMarks(mk) ? mk.join(',') : '';
+  const had = _profiles.get(key);
+  if (had) return had;
+  const L = key ? sdMarksLaw(mk) : {}, x = (k) => L[k] ?? 1, S = SD_BLOWS.stomp, H = SD_BLOWS.hand, V = SD_BLOWS.volley;
+  const P = Object.freeze({
+    mk: key ? Object.freeze([...mk]) : null, el: key ? sdEndingOf(mk)?.el ?? null : null,
+    hpX: x('hpX'), windX: x('windX'), heartX: x('heartX'),
+    endsMs: L.endsMs ?? SD_ENDS_MS, pulseMs: L.pulseMs ?? SD_PULSE_EVERY_MS, pulseStep: L.pulseStep ?? SD_PULSE_STEP,
+    resetMs: L.resetMs ?? SD_RESET_EVERY_MS, resetFirstMs: L.resetMs ?? SD_RESET_FIRST_MS,
+    pairMs: L.pairMs ?? SD_ECHO_PAIR_MS, pairHandMs: L.pairHandMs ?? SD_ECHO_HAND_EVERY_MS,
+    remSpeed: SD_REM.speed * x('remSpeedX'), echoSpeed: SD_ECHO.speed * x('echoSpeedX'),
+    volleyMax: L.volleyMax ?? V.max, fray: L.fray ?? SD_FRAY_MAX,
+    stomp: Object.freeze({ r: L.stompR ?? S.r, r1: L.stompR1 ?? S.r1, wave: L.stompWave ?? S.wave }),
+    hand: Object.freeze({ arc: L.handArc ?? H.arc, active: L.handActive ?? H.active }),
+    pool: Object.freeze({ r: V.pool.r * x('poolRX'), ms: Math.round(V.pool.ms * x('poolMsX')) }),
+  });
+  _profiles.set(key, P);
+  return P;
+}
+/** A fight's profile (its kept marks'). */
+export const profileOf = (f) => sdFightProfile(f?.mk ?? null);
+/** SD18a: what blow `A` begun with wind-up `w` carries on its frame under profile `P` - only what differs from the
+ *  table, or null. */
+export function shapeStamp(P, A, w) {
+  /** @type {Record<string, any>} */
+  const sh = {};
+  if (CHOSEN.includes(A)) {
+    if (P.el) sh.el = P.el;
+    if (P.windX !== 1) sh.w = w;
+  }
+  const S = SD_BLOWS.stomp, H = SD_BLOWS.hand, V = SD_BLOWS.volley;
+  if (A === S) { if (P.stomp.r !== S.r) sh.r = P.stomp.r; if (P.stomp.r1 !== S.r1) sh.r1 = P.stomp.r1; if (P.stomp.wave !== S.wave) sh.wave = P.stomp.wave; }
+  if (A === H) { if (P.hand.arc !== H.arc) sh.arc = P.hand.arc; if (P.hand.active !== H.active) sh.active = P.hand.active; }
+  if (A === V) { if (P.pool.r !== V.pool.r) sh.pr = P.pool.r; if (P.pool.ms !== V.pool.ms) sh.pm = P.pool.ms; }
+  if (A === SD_BLOWS.pulse && P.pulseStep !== SD_PULSE_STEP) sh.ps = P.pulseStep;
+  return Object.keys(sh).length ? sh : null;
+}
+
 /** The blows `gap` metres past its body allows - the last one left out when another is open, never a REPEAT_MAX+1th time
  *  running (`run`, how many times running the last was used): nothing then, and it walks in. `pair`: an Echo whose pair
  *  stands - the Hour-Hand is the pair's, not its own. */
@@ -171,13 +243,13 @@ export function keepInArena(x, z, r) {
 }
 /** The STOMP's ring: how far out its front stands at `now` (null outside its roll). */
 export function stompRingAt(atk, now) {
-  const A = SD_BLOWS.stomp, k = now - atk.at;
+  const A = sized(atk, SD_BLOWS.stomp), k = now - atk.at;
   if (!(k >= 0 && k <= A.active)) return null;
   return Math.min(A.r1, A.r + (A.wave * k) / 1000);
 }
 /** The STOMP's ring: its front's centre at `now`, held to its roll (the disc's rim before it, `r1` after). */
 export function stompFrontAt(atk, now) {
-  const A = SD_BLOWS.stomp;
+  const A = sized(atk, SD_BLOWS.stomp);
   return Math.min(A.r1, A.r + (A.wave * Math.min(A.active, Math.max(0, now - atk.at))) / 1000);
 }
 /** Whether the STOMP's ring passed a body `d` metres from its centre between `t0` and `t1`: its front's CENTRE crossed it -
@@ -186,20 +258,20 @@ export function stompFrontAt(atk, now) {
  *  landing took the disc and the ring both; and the 1.2 m band rode over a body running out with it longer than a jump
  *  stays aloft. Out from the disc's rim: what the disc struck the ring does not. */
 export function ringPassed(atk, d, t0, t1, was = d > stompFrontAt(atk, t0)) {
-  const A = SD_BLOWS.stomp;
+  const A = sized(atk, SD_BLOWS.stomp);
   if (!(Math.min(t1, atk.at + A.active) >= Math.max(t0, atk.at))) return false;
   return was && d <= stompFrontAt(atk, t1);
 }
 /** The HOUR-HAND's beam at `now`: its bearing from where it was cast (null outside its sweep). */
 export function handAngleAt(atk, now) {
-  const A = SD_BLOWS.hand, k = (now - atk.at) / A.active;
+  const A = sized(atk, SD_BLOWS.hand), k = (now - atk.at) / A.active;
   if (!(k >= 0 && k <= 1)) return null;
   return wrapYaw(atk.yw + (atk.sw ?? 1) * (-A.arc / 2 + A.arc * k));
 }
 /** Whether the HOUR-HAND swept over a body at (x, z) between `t0` and `t1`: within its length, the beam's width at that
  *  distance about the body's bearing crossed by the sweep. Shade is behindPillar's, apart. */
 export function handSwept(atk, x, z, t0, t1) {
-  const A = SD_BLOWS.hand, d = dist(x, z, atk.x, atk.z);
+  const A = sized(atk, SD_BLOWS.hand), d = dist(x, z, atk.x, atk.z);
   if (d > A.len) return false;
   const k0 = Math.max(0, (t0 - atk.at) / A.active), k1 = Math.min(1, (t1 - atk.at) / A.active);
   if (!(k1 >= k0)) return false;
@@ -234,12 +306,14 @@ const newBody = (x, z, yw) => ({ x, z, yw, mv: null, atk: null, lastA: -1, runA:
 /**
  * A fresh fight in slot `s`, its number `fi` (the room's count - every screen knows a fresh one by it): nobody in it, the
  * Remnant at SD_REM_START facing the way in, no health until someone brings some; it wakes at `op`.
- * @param {number} s @param {number} fi @param {number} now
+ * @param {number} s @param {number} fi @param {number} now @param {any} [mk] its Hollow's marks (SD18a)
  */
-export function newRemnantFight(s, fi, now) {
-  const op = now + SD_OPENING_MS;
+export function newRemnantFight(s, fi, now, mk = null) {
+  const op = now + SD_OPENING_MS, P = sdFightProfile(mk);
   return {
     v: 1, s, fi, startedAt: now, op, phase: 1, hp: 0, max: 0,
+    /** SD18a: its Hollow's marks (net/sdMarks.js), kept with it - its profile (profileOf) */
+    ...(P.mk ? { mk: [...P.mk] } : {}),
     rem: newBody(SD_REM_START[0], SD_REM_START[1], Math.PI), outUntil: 0,
     /** @type {null | Array<{e: number, h: number, m: number, up: number, downAt: number | null, body: ReturnType<typeof newBody>}>} */
     ec: null,
@@ -247,7 +321,7 @@ export function newRemnantFight(s, fi, now) {
     ecHandAt: 0,
     seq: 0,
     /** the Hour's blow in flight (the Pulse, the End), how many Pulses there have been, and when the next comes */
-    clock: null, pulses: 0, pulseAt: op + SD_PULSE_EVERY_MS, endsAt: op + SD_ENDS_MS,
+    clock: null, pulses: 0, pulseAt: op + P.pulseMs, endsAt: op + P.endsMs,
     /** @type {{at: number} | null} */
     ended: null,
     /** the next Reset (0 none armed), the Hearts of the one in flight ({i, m, c: [{x, z, h}]}), the stun */
@@ -299,7 +373,7 @@ export function joinRemnant(f, sub, name, lv, now, present = null) {
   }
   if (closed(f, now)) return false;
   if (Object.keys(f.players).length >= SD_FIGHTERS_MAX && !freeSeat(f, present)) return false;
-  const level = clampLv(lv), share = SD_TTK_S * dpsRef(level) * SD_SHARE_X, frac = standsAt(f), fresh = frac >= 1;
+  const level = clampLv(lv), share = SD_TTK_S * dpsRef(level) * SD_SHARE_X * profileOf(f).hpX, frac = standsAt(f), fresh = frac >= 1;   // SD18a: the Brazen Hide's
   f.max += share;
   f.hp += share * frac;
   rescaleEchoes(f);
@@ -397,7 +471,7 @@ export function applyHeartHit(f, sub, c, d, r, pose, now, seq = null) {
     f.rem.atk = null; f.rem.mv = null; f.rem.tg = null;
     f.stunUntil = now + SD_STUN_MS;
     f.rem.nextAt = f.stunUntil;
-    f.resetAt = f.stunUntil + SD_RESET_EVERY_MS;
+    f.resetAt = f.stunUntil + profileOf(f).resetMs;
     out.push({ k: 'stun', until: f.stunUntil, at: now });
   }
   return out;
@@ -424,7 +498,7 @@ function stepWalk(B, now) {
   [B.x, B.z] = keepInArena(m.x + ((m.tx - m.x) / len) * along, m.z + ((m.tz - m.z) / len) * along, SD_REM.keep);
 }
 const bodyR = (b) => (b === SD_BODY.remnant ? SD_REM.r : SD_ECHO.r);
-const speedOf = (f, b) => (b === SD_BODY.remnant ? SD_REM.speed * (f.phase >= 3 ? SD_LAST_SPEED_X : 1) : SD_ECHO.speed);
+const speedOf = (f, b) => { const P = profileOf(f); return b === SD_BODY.remnant ? P.remSpeed * (f.phase >= 3 ? SD_LAST_SPEED_X : 1) : P.echoSpeed; };
 const mvFrame = (b, B, now) => ({ k: 'mv', b, x: r2(B.mv ? B.mv.x : B.x), z: r2(B.mv ? B.mv.z : B.z), tx: r2(B.mv ? B.mv.tx : B.x), tz: r2(B.mv ? B.mv.tz : B.z), v: B.mv ? B.mv.v : 0, at: B.mv ? B.mv.at : now });
 /** A body walks at its chosen, stopping short by its body and a little - a new segment said when its goal moved far or
  *  long enough ago (the gate's law). */
@@ -441,20 +515,21 @@ function walkToward(f, b, B, target, now, out) {
 }
 /** A blow as the wire says it. */
 export function atkFrameOf(b, a) {
-  return { k: 'atk', b, i: a.i, a: a.a, at: a.at, x: r2(a.x), z: r2(a.z), yw: r2(a.yw), tg: a.tg.map((q) => [r2(q[0]), r2(q[1])]), ...(a.sw ? { sw: a.sw } : {}), ...(Number.isInteger(a.n) ? { n: a.n } : {}) };
+  return { k: 'atk', b, i: a.i, a: a.a, at: a.at, x: r2(a.x), z: r2(a.z), yw: r2(a.yw), tg: a.tg.map((q) => [r2(q[0]), r2(q[1])]), ...(a.sw ? { sw: a.sw } : {}), ...(Number.isInteger(a.n) ? { n: a.n } : {}), ...(a.sh ? { sh: { ...a.sh } } : {}) };
 }
 /** Begin a blow: where it lands and when, said now so every screen draws its wind-up at once. */
 function begin(f, b, B, A, now, target, here, rng, out, sw = 0) {
-  const at = now + windupFor(A, f.phase, b);
+  const P = profileOf(f), w = CHOSEN.includes(A) && P.windX !== 1 ? Math.round(windupFor(A, f.phase, b) * P.windX) : windupFor(A, f.phase, b);   // SD18a: the Quickened Gears'
+  const at = now + w, sh = shapeStamp(P, A, w), active = A === SD_BLOWS.hand ? P.hand.active : A.active;
   if (target) B.yw = Math.atan2(target.x - B.x, target.z - B.z);
   let tg = [];
   if (A === SD_BLOWS.volley) {
     const live = [...here];
     for (let i = live.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)) % (i + 1); const t = live[i]; live[i] = live[j]; live[j] = t; }
-    tg = live.slice(0, A.max).map((o) => keepInArena(o.x, o.z, SD_ARENA.r - 1));
+    tg = live.slice(0, P.volleyMax).map((o) => keepInArena(o.x, o.z, SD_ARENA.r - 1));   // SD18a: Sunfall's seven
   }
   const way = A === SD_BLOWS.hand ? (sw || (b === SD_BODY.silver ? -1 : b === SD_BODY.gold ? 1 : rng() < 0.5 ? 1 : -1)) : 0;
-  B.atk = { i: ++f.seq, a: A.id, at, x: B.x, z: B.z, yw: B.yw, tg, until: at + A.active + A.recover, ...(way ? { sw: way } : {}) };
+  B.atk = { i: ++f.seq, a: A.id, at, x: B.x, z: B.z, yw: B.yw, tg, until: at + active + A.recover, ...(way ? { sw: way } : {}), ...(sh ? { sh } : {}) };
   out.push(atkFrameOf(b, B.atk));
 }
 /** One body's beat: its blow in flight held to its end; then a breath; then its chosen, and a blow it allows - else a
@@ -514,14 +589,14 @@ function pairHand(f, standing, now, here, rng, out) {
     B.tg = target.sub; B.tgAt = now;
     begin(f, b, B, SD_BLOWS.hand, now, target, here, rng, out, b === SD_BODY.silver ? way : 0);
   });
-  f.ecHandAt = now + SD_ECHO_HAND_EVERY_MS;
+  f.ecHandAt = now + profileOf(f).pairHandMs;   // SD18a: the Twin Hands'
 }
 
 /** THE HEARTS rise as the Reset is called: heartCountFor the living, about the arena (heartRingFor them, SD_HEART.gap
  *  apart, clear of the pillars and of the Remnant - the dice's, the relay's), each heartHpFor them. Said once (`cx`),
  *  their health as it falls (`cxh`), each one's breaking (`cxb`). */
 function raiseHearts(f, now, here, rng, out) {
-  const n = heartCountFor(here.length), m = heartHpFor(here.map((b) => f.players[b.sub].lv), n), spots = [];
+  const n = heartCountFor(here.length), m = Math.round(heartHpFor(here.map((b) => f.players[b.sub].lv), n) * profileOf(f).heartX), spots = [];   // SD18a: the Hardened Hearts'
   const [r0, r1] = heartRingFor(n), B = f.rem, clear = SD_REM.r + SD_HEART.r + 1;
   for (let tries = 0; spots.length < n && tries < n * 80; tries++) {
     const a = rng() * Math.PI * 2, r = Math.sqrt(r0 * r0 + rng() * (r1 * r1 - r0 * r0));
@@ -564,7 +639,8 @@ function stateFrame(f, now, out) {
 }
 /** The Hour's own blow begun (the Pulse, the End): the whole arena, from no body. */
 function clockBlow(f, A, at, out, n = null) {
-  f.clock = { i: ++f.seq, a: A.id, at, x: 0, z: 0, yw: 0, tg: [], until: at + A.active, ...(Number.isInteger(n) ? { n } : {}) };
+  const sh = shapeStamp(profileOf(f), A, A.windup);   // SD18a: the Restless Pulse's step
+  f.clock = { i: ++f.seq, a: A.id, at, x: 0, z: 0, yw: 0, tg: [], until: at + A.active, ...(Number.isInteger(n) ? { n } : {}), ...(sh ? { sh } : {}) };
   out.push(atkFrameOf(SD_BODY.hour, f.clock));
 }
 
@@ -613,7 +689,7 @@ export function stepRemnant(f, now, bodies, rng) {
   // THE MANTELLA PULSE - the clock's, every SD_PULSE_EVERY_MS from the wake, whatever the phase
   const P = SD_BLOWS.pulse;
   if (f.clock && now >= f.clock.until) f.clock = null;
-  if (!f.clock && now >= f.pulseAt - P.windup) { clockBlow(f, P, f.pulseAt, out, f.pulses); f.pulses++; f.pulseAt += SD_PULSE_EVERY_MS; }
+  if (!f.clock && now >= f.pulseAt - P.windup) { clockBlow(f, P, f.pulseAt, out, f.pulses); f.pulses++; f.pulseAt += profileOf(f).pulseMs; }   // SD18a: the Hungering Heart's
   // THE DRAGON BREAK: it steps outside time, and the Echoes rise with half of what is left to the break's end each
   if (f.phase === 1 && f.max > 0 && f.hp <= SD_PHASE_AT[0] * f.max) {
     f.phase = 2;
@@ -635,11 +711,11 @@ export function stepRemnant(f, now, bodies, rng) {
       f.hp = Math.min(f.hp, SD_PHASE_AT[1] * f.max);
       f.outUntil = now + SD_BREAK_MS;
       f.rem = { ...newBody(0, 0, Math.PI), nextAt: f.outUntil };
-      f.resetAt = f.outUntil + SD_RESET_FIRST_MS;
+      f.resetAt = f.outUntil + profileOf(f).resetFirstMs;   // SD18a: the Unending Reset's
       out.push({ k: 'ph', n: 3, at: now, up: f.outUntil });
     } else {
       for (const X of f.ec) {
-        if (X.h > 0 || X.downAt == null || now - X.downAt < SD_ECHO_PAIR_MS) continue;
+        if (X.h > 0 || X.downAt == null || now - X.downAt < profileOf(f).pairMs) continue;   // SD18a: the Dragon's Break's
         X.h = X.m / 2;
         f.hp += X.h;
         X.downAt = null;
@@ -663,7 +739,7 @@ export function stepRemnant(f, now, bodies, rng) {
       f.cx = null;
       f.hp = Math.min(f.max, f.hp + SD_RESET_HEAL * f.max);
     }
-    if (B.atk && B.atk.a === SD_BLOWS.reset.id && now >= B.atk.until) { f.resetAt = now + SD_RESET_EVERY_MS; }
+    if (B.atk && B.atk.a === SD_BLOWS.reset.id && now >= B.atk.until) { f.resetAt = now + profileOf(f).resetMs; }
     if (f.phase === 3 && !B.atk && f.resetAt > 0 && now >= f.resetAt && now >= B.nextAt) {
       stepWalk(B, now);
       if (B.mv) { B.mv = null; out.push(mvFrame(SD_BODY.remnant, B, now)); }
@@ -694,5 +770,6 @@ export function remnantStateOf(f) {
     su: f.stunUntil > 0 ? f.stunUntil : 0, rk: f.resetAt > 0 ? f.resetAt : 0, n: Object.values(f.players).filter((p) => !p.retired).length,
     fell: f.fell ? { at: f.fell.at, top: f.fell.top, n: f.fell.n, ...(f.fell.dm ? { dm: f.fell.dm } : {}) } : null,
     lost: f.lost ? f.lost.at : 0,
+    ...(f.mk ? { mk: [...f.mk] } : {}),   // SD18a: its Hollow's marks - every screen's profile of it
   };
 }

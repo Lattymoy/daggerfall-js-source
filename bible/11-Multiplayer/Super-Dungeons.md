@@ -378,6 +378,23 @@ health makes it safe; the pulses and the Reset are unresisted magic, so no resis
 paralysed, slowed, charmed, reflected or soul-trapped; nothing regenerates in the Hour; the Reset is a damage race and
 the Dragon Break a coordination race; the Hour Ends is a clock. It is meant to be lost, many times, before it is won.
 
+**Its marks** (SD18a, `net/sdMarks.js`). Each Hollow's Hour keeps one of six ENDINGS - the Orrery's own stones - and two
+of nine OMENS, its place in a cycle of 216 by its slot (6 Endings x 36 pairs of omens, past the gate's 144; no two
+Hollows running share an Ending or an omen, and every Ending meets every pair once). The Ending sets the element of the
+Remnant's and its Echoes' own blows (the Stomp, the Hour-Hand, the Volley and the brass it leaves; the Pulse, the Reset
+and the End stay no-one's) and its signature: **Daggerfall**, the Lion's Roar (shock - the Stomp's ring rolls out to the
+arena's rim at 13 m/s); **Sentinel**, Sunfall (fire - seven gears, the brass burning half again as long); **Wayrest**,
+the Turning Tide (frost - the Hour-Hand sweeps three quarters of the arena over five seconds); **Orsinium**, the Tusk
+(poison - it walks 40% faster, its Stomp 8.5 m); **the Underking**, the Hungering Heart (magic - the Mantella pulses
+every 22 s); **the Blades**, the Dragon's Break (fire - its Echoes walk a fifth faster and must fall within ten
+seconds). The omens: *the Brazen Hide* (a quarter more health), *the Quickened Gears* (its own blows wind up in 85% of
+the time), *the Short Hour* (it Ends at twelve minutes), *the Hardened Hearts* (half again as much), *the Burning Brass*
+(twice as long, a third wider), *the Fraying* (the Orrery snaps at 36 turns), *the Restless Pulse* (each four points
+harder than the last), *the Unending Reset* (every 40 s) and *the Twin Hands* (the pair's Hand every 10 s). The relay
+runs the fight by its profile (`net/sdRemnant.js` `sdFightProfile`) and stamps each blow whose shape they change with
+the change (`sh` - its radius, ring, sweep, pool, wind-up, Pulse step and element), so every screen judges, draws and
+reads the blow the relay threw; the state carries the marks (`mk`) for the rest.
+
 **How its blows are seen** (SD16, `scenes/sdFx.js`). Each landing and turn is a burst of sparks on the gate's own spark
 pass (`render/gateFx.js`) in the Hour's own 17 kinds and colours - the Stomp at its feet and its ring's dust as it
 rolls, the Hour-Hand's light out of the chest, the Volley's gears at each mark, the Pulse, the Reset and the End over
@@ -2305,3 +2322,36 @@ stun's slump, the Hand's raised arm and the Volley's throw never showed - fixed 
 `test/sd8c_remnant_page.test.js`, `test/sd11a_scenes.test.js` (the draws after the Hearts), `test/sd14c_motes.test.js`,
 `test/sd16_fx.test.js`, `test/sd8d_remnant_blows.test.js`, `test/sd9e_spoils.test.js` (the beam after the sparks);
 `sd8c.json` SD8C-an-echo-unscaled re-aimed by content.
+
+### SD18a - shipped 2026-10-07 (the Hour's marks)
+
+The gate's Warden wears one of four aspects and two of nine trials, a cycle of 144 (WB8b); every Hour was the same Hour.
+Now each Hollow keeps one of six Endings and two of nine omens (section 10's *Its marks*):
+
+- **The marks** (`net/sdMarks.js`, a leaf the relay bundles): `SD_ENDINGS` (the Orrery's stones, in its order - each an
+element, a light for SD18b, a signature and its law), `SD_OMENS` (9), `sdMarksCycle` (216: Hollow `k` keeps pair `k mod
+36` of a ring of the omens' pairs in which neighbours share no omen - `disjointRing`, a depth-first walk - and Ending
+`(k + floor(k / 36)) mod 6`, the Endings' order and the omens' seats the salt's shuffles), `sdMarksOf(slot)`,
+`validSdMarks`, `sdMarksLaw` (multipliers multiplied: Sunfall's and the Burning Brass's brass burns three times as
+long).
+- **The profile** (`net/sdRemnant.js` `sdFightProfile`, `profileOf`): the numbers the relay runs the fight by - health,
+wind-ups, the End, the Pulse's beat and step, the Reset's, the pair's window and Hand, the walks, Sunfall's seven, the
+fray, the Stomp's disc and ring, the Hand's sweep, the pool - the table's own with no marks. The fight is born with its
+marks (`newRemnantFight(s, fi, now, mk)`) and keeps them; its state says them (`mk`).
+- **The stamped shape** (`shapeStamp`, `blowShape`, `atkWindup`, `pulsePctOf`): each blow whose shape the marks change
+carries only the change on its own frame - `r`, `r1`, `wave`, `arc`, `active`, `pr`, `pm`, `w`, `ps`, `el` - and the
+geometry both ends read (`stompRingAt`, `stompFrontAt`, `ringPassed`, `handAngleAt`, `handSwept`), the strike law
+(`net/sdStrike.js` - every hit and every pool its element), the floor's telegraph, the arena read, the bar, the rig and
+the beam read it. A fight with no marks frames as it always did - no `sh` anywhere.
+- **The wire** (`net/wire.js`): a shape's keys each their own bound and an element the known ones' (`sdShape` - anything
+else refuses the frame), a state's `mk` projected when it is a set of marks, `SD_TARGETS_MAX` 7 (Sunfall's). The link
+keeps both, and reads its Reset's clock after a stun or the Last Moment's return by the profile.
+- **The relay** births every fight with its slot's marks (`sdMarksOf(s)`); the Orrery frays by them
+(`orreryOf(s).fray`). Relay world176 re-hashed in place (undeployed): `net/sdMarks.js` joined the bundle.
+
+Pins: `test/sd18a_marks.test.js` (5 - the marks and the cycle; the profile and the stamps; the law under its marks; the
+blow its frame says; the wire, the page, the Orrery and the relay); `tools/mutants/sd18a.json` (42, one equivalent as
+recorded: the ring's closing check - the walk's first ring closes at every seat count from 6 to 12). PINS MOVED:
+`test/sd8b_fight.test.js` (the Volley's marks at most Sunfall's seven), `test/relayversion.test.js` (the graph, the
+hash). Records re-aimed by content (22): `sd15.json` (3), `sd17.json` (2), `sd6a.json` (2), `sd8a.json` (6),
+`sd8b.json`, `sd8c.json` (3), `sd8d.json` (5) - each run again, every one dead.

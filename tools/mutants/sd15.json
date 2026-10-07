@@ -2,7 +2,7 @@
   {
     "name": "SD15-the-disc-unread",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "  if (A === SD_BLOWS.stomp) return (x, z) => Math.hypot(x - atk.x, z - atk.z) <= A.r;\n",
+    "old": "  if (A === SD_BLOWS.stomp) return (x, z) => Math.hypot(x - atk.x, z - atk.z) <= S.r;\n",
     "new": "",
     "tests": [
       "test/sd15_read.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "SD15-the-shade-ignored",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + A.active) && !behindPillar(atk.x, atk.z, x, z);",
-    "new": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + A.active);",
+    "old": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active) && !behindPillar(atk.x, atk.z, x, z);",
+    "new": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active);",
     "tests": [
       "test/sd15_read.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD15-the-beams-past-read",
     "file": "src/scenes/sdArenaRead.js",
-    "old": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + A.active) && !behindPillar",
-    "new": "handSwept(atk, x, z, atk.at, atk.at + A.active) && !behindPillar",
+    "old": "handSwept(atk, x, z, Math.max(t, atk.at), atk.at + S.active) && !behindPillar",
+    "new": "handSwept(atk, x, z, atk.at, atk.at + S.active) && !behindPillar",
     "tests": [
       "test/sd15_read.test.js"
     ]

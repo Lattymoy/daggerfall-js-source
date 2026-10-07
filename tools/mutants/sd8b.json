@@ -129,8 +129,8 @@
   {
     "name": "SD8B-the-number-not-moved",
     "file": "server/src/index.js",
-    "old": "newRemnantFight(s, (f?.fi ?? 0) + 1, now);",
-    "new": "newRemnantFight(s, 1, now);",
+    "old": "newRemnantFight(s, (f?.fi ?? 0) + 1, now, sdMarksOf(s));",
+    "new": "newRemnantFight(s, 1, now, sdMarksOf(s));",
     "tests": [
       "test/sd8b_fight.test.js"
     ]

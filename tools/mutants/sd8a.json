@@ -119,7 +119,7 @@
   {
     "name": "SD8A-the-volley-at-everyone",
     "file": "src/net/sdRemnant.js",
-    "old": "    tg = live.slice(0, A.max).map(",
+    "old": "    tg = live.slice(0, P.volleyMax).map(",
     "new": "    tg = live.map(",
     "tests": [
       "test/sd8a_remnant.test.js"
@@ -146,7 +146,7 @@
   {
     "name": "SD8A-no-rise",
     "file": "src/net/sdRemnant.js",
-    "old": "        if (X.h > 0 || X.downAt == null || now - X.downAt < SD_ECHO_PAIR_MS) continue;",
+    "old": "        if (X.h > 0 || X.downAt == null || now - X.downAt < profileOf(f).pairMs) continue;",
     "new": "        if (true) continue;",
     "tests": [
       "test/sd8a_remnant.test.js"
@@ -200,7 +200,7 @@
   {
     "name": "SD8A-the-pair-at-once-again",
     "file": "src/net/sdRemnant.js",
-    "old": "  f.ecHandAt = now + SD_ECHO_HAND_EVERY_MS;",
+    "old": "  f.ecHandAt = now + profileOf(f).pairHandMs;",
     "new": "  f.ecHandAt = now;",
     "tests": [
       "test/sd8a_remnant.test.js"
@@ -263,7 +263,7 @@
   {
     "name": "SD8A-the-next-reset-forgotten",
     "file": "src/net/sdRemnant.js",
-    "old": "    f.resetAt = f.stunUntil + SD_RESET_EVERY_MS;",
+    "old": "    f.resetAt = f.stunUntil + profileOf(f).resetMs;",
     "new": "    f.resetAt = 0;",
     "tests": [
       "test/sd8a_remnant.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "SD8A-last-moment-not-faster",
     "file": "src/net/sdRemnant.js",
-    "old": "SD_REM.speed * (f.phase >= 3 ? SD_LAST_SPEED_X : 1) : SD_ECHO.speed",
-    "new": "SD_REM.speed : SD_ECHO.speed",
+    "old": "P.remSpeed * (f.phase >= 3 ? SD_LAST_SPEED_X : 1) : P.echoSpeed",
+    "new": "P.remSpeed : P.echoSpeed",
     "tests": [
       "test/sd8a_remnant.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SD8A-the-pulse-from-the-birth",
     "file": "src/net/sdRemnant.js",
-    "old": "clock: null, pulses: 0, pulseAt: op + SD_PULSE_EVERY_MS,",
-    "new": "clock: null, pulses: 0, pulseAt: now + SD_PULSE_EVERY_MS,",
+    "old": "clock: null, pulses: 0, pulseAt: op + P.pulseMs,",
+    "new": "clock: null, pulses: 0, pulseAt: now + P.pulseMs,",
     "tests": [
       "test/sd8a_remnant.test.js"
     ]

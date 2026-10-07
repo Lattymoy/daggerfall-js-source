@@ -19,6 +19,7 @@
 // jump (world/sdSteps.js) is 145 m long.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
+import { sdMarksLaw, sdMarksOf } from './sdMarks.js';   // SD18a: a Hollow's marks - a leaf, so the relay's bundle takes it
 
 /** The Threshold's centre in the dungeon's frame: the made block's middle (RDB_SIDE / 2 either way), the floor at y 0. */
 export const SD_REALM_ORIGIN = Object.freeze([25.6, 0, 25.6]);
@@ -195,7 +196,7 @@ export function orreryOf(s) {
   do { start = Array.from({ length: n }, () => sdPick(r, SD_HOURS)); way = solveGear(order, gear, start, truth); }
   while (sdWayTurns(way) < SD_TRUTH_TURNS_MIN || sdWayTurns(way) > SD_TRUTH_TURNS_MAX);
   const riddles = sdShuffle(r, clues).map((c) => Object.freeze({ ...c, text: sdRiddleText(c) }));
-  const o = Object.freeze({ s, order: Object.freeze(order), gear: Object.freeze(gear.map((g) => Object.freeze(g))), start: Object.freeze(start), way: Object.freeze(way), truth: Object.freeze(truth), riddles: Object.freeze(riddles) });
+  const o = Object.freeze({ s, order: Object.freeze(order), gear: Object.freeze(gear.map((g) => Object.freeze(g))), start: Object.freeze(start), way: Object.freeze(way), truth: Object.freeze(truth), riddles: Object.freeze(riddles) , fray: sdMarksLaw(sdMarksOf(s)).fray ?? SD_FRAY_MAX });   // SD18a: the Fraying's thirty-six
   if (orreryCache.size >= 64) orreryCache.delete(orreryCache.keys().next().value);
   orreryCache.set(s, o);
   return o;
@@ -222,7 +223,7 @@ export function orreryStep(o, state, i, a) {
   if (state.ok) return null;
   let st = orreryTurn(o, state.st, i, a), f = state.f + 1, x = false;
   const ok = orreryConcord(o, st);
-  if (!ok && f >= SD_FRAY_MAX) { st = [...o.start]; f = 0; x = true; }
+  if (!ok && f >= (o.fray ?? SD_FRAY_MAX)) { st = [...o.start]; f = 0; x = true; }   // SD18a: its Hollow's fray
   return { st, f, ok, x, lit: orreryLit(o, st) };
 }
 /**

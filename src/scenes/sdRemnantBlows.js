@@ -19,7 +19,7 @@
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { setBossStruck } from '../systems/sigilSetPowers.js';   // AUDIT SD: a body's blow, marked for Gearward
 import { SD_ARENA, realmToDungeon, dungeonToRealm } from '../net/sdBrain.js';
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, windupFor, stompRingAt, handAngleAt, arenaOf } from '../net/sdRemnant.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, atkWindup, blowShape, stompRingAt, handAngleAt, arenaOf } from '../net/sdRemnant.js';
 import { POOL_TICK_MS } from '../net/gateBrain.js';
 import { strikeDamage } from '../net/gateStrike.js';
 import { sdBodyAt, SD_HEARTS_KEY } from '../net/sdFightLink.js';
@@ -98,7 +98,8 @@ const shapeOf = (kind, o) => ({
 export function sdTelegraphShapes(atk, b, phase, now, out = []) {
   const A = atk ? SD_BLOW_BY_ID[atk.a] : null;
   if (!A) return out;
-  const w = windupFor(A, phase, b), since = now - (atk.at - w), after = now - atk.at, span = Math.max(A.active, 1);
+  const S = blowShape(atk);   // SD18a: the blow its frame says - its Hollow's marks
+  const w = atkWindup(atk, A, phase, b), since = now - (atk.at - w), after = now - atk.at, span = Math.max(S.active, 1);
   if (since < 0 || after >= span + TELEGRAPH_FLASH_MS) return out;
   const common = {
     t: w > 0 ? clamp01(since / w) : 1, flash: after >= 0 ? 1 : 0, alpha: after > span ? clamp01(1 - (after - span) / TELEGRAPH_FLASH_MS) : 1,
@@ -109,14 +110,14 @@ export function sdTelegraphShapes(atk, b, phase, now, out = []) {
   const origin = [atk.x, atk.z];
   switch (A.shape) {
     case 'stomp': {
-      if (after < TELEGRAPH_FLASH_MS) out.push(shapeOf(TELEGRAPH_KIND.disc, { ...common, origin, r: A.r, alpha: after > 0 ? clamp01(1 - after / TELEGRAPH_FLASH_MS) : 1 }));
+      if (after < TELEGRAPH_FLASH_MS) out.push(shapeOf(TELEGRAPH_KIND.disc, { ...common, origin, r: S.r, alpha: after > 0 ? clamp01(1 - after / TELEGRAPH_FLASH_MS) : 1 }));
       const front = stompRingAt(atk, now);
       if (front != null) out.push(shapeOf(TELEGRAPH_KIND.ring, { ...common, origin, r0: Math.max(0, front - A.width / 2), r1: front + A.width / 2, t: 1 }));
       break;
     }
     case 'sweep': {
       if (after < 0) {
-        out.push(shapeOf(TELEGRAPH_KIND.cone, { ...common, origin, yaw: atk.yw, r: A.len, halfArc: A.arc / 2 }));
+        out.push(shapeOf(TELEGRAPH_KIND.cone, { ...common, origin, yaw: atk.yw, r: A.len, halfArc: S.arc / 2 }));
         // AUDIT SD II (L4 F10): and the hand standing where its sweep begins - the way it turns (`sw`), which the
         // half-circle alone never showed: the Remnant's is a coin's, and a straight run the wrong way met it
         const a0 = handAngleAt(atk, atk.at);
@@ -127,7 +128,7 @@ export function sdTelegraphShapes(atk, b, phase, now, out = []) {
       if (a != null) out.push(shapeOf(TELEGRAPH_KIND.lane, { ...common, origin, end: [atk.x + Math.sin(a) * A.len, atk.z + Math.cos(a) * A.len], halfW: A.width / 2 }));
       break;
     }
-    case 'disc': out.push(shapeOf(TELEGRAPH_KIND.discs, { ...common, r: A.r, points: (atk.tg ?? []).slice(0, TELEGRAPH_POINTS_MAX).map((q) => [q[0], q[1]]) })); break;
+    case 'disc': out.push(shapeOf(TELEGRAPH_KIND.discs, { ...common, r: S.r, points: (atk.tg ?? []).slice(0, TELEGRAPH_POINTS_MAX).map((q) => [q[0], q[1]]) })); break;
     case 'all': out.push(shapeOf(TELEGRAPH_KIND.all, { ...common })); break;
     default: break;
   }
@@ -216,7 +217,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     if (A === SD_BLOWS.end && endSaid !== s.fi && t < atk.at) { endSaid = s.fi; say(SD_BLOWS_TEXT.end); }
     if (!m.landed && t >= atk.at) {
       m.landed = true;
-      if (t - atk.at < 400 + Math.max(A.active, 0)) {
+      if (t - atk.at < 400 + Math.max(blowShape(atk).active, 0)) {
         sound(SD_BLOW_CUES.land[A.key], s, b, atk, t);
         if (A === SD_BLOWS.volley) pools.push(...sdVolleyPools(atk));
       }

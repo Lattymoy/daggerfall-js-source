@@ -12,7 +12,7 @@
 // answered me.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_REM_START, SD_ECHO_SPOTS, SD_PHASE_AT, SD_RESET_FIRST_MS, SD_RESET_EVERY_MS, keepInArena } from './sdRemnant.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_REM_START, SD_ECHO_SPOTS, SD_PHASE_AT, keepInArena, profileOf } from './sdRemnant.js';
 
 /**
  * @typedef {{ x: number, z: number, yw: number, mv: {x: number, z: number, tx: number, tz: number, v: number, at: number}|null, atk: any }} SdBody
@@ -20,7 +20,7 @@ import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_REM_START, SD_ECHO_SPOTS, 
  * @typedef {{ fi: number, s: number, ph: number, h: number, m: number, op: number, ou: number, rem: SdBody,
  *   ec: SdEcho[]|null, clk: any, pu: number, pa: number, ends: number, ended: number,
  *   cx: {i: number, m: number, c: number[][]}|null, su: number, stunAt: number, rk: number, n: number,
- *   fell: {at: number, top: string[], n: number, dm?: any}|null, lost: number, heardAt: number }} SdFightState
+ *   fell: {at: number, top: string[], n: number, dm?: any}|null, lost: number, heardAt: number, mk?: string[]|null }} SdFightState
  *   `fi` the fight's number (0: none heard), `rem` the Remnant's body, `ec` the Echoes' (the Dragon Break's - each its
  *   health, its whole, when it stands and when it fell), `clk` the Hour's own blow in flight (the Pulse, the End), `cx`
  *   the Reset's Hearts ([x, z, health] each), `su` the stun's end and `stunAt` its moment, `rk` the next Reset.
@@ -32,7 +32,7 @@ export const sdHourOver = (s, now) => !!s && s.ends > 0 && now >= s.ends;
 /** The empty state: no fight heard. @type {Readonly<SdFightState>} */
 export const SD_FIGHT_EMPTY = Object.freeze({
   fi: 0, s: 0, ph: 1, h: 0, m: 0, op: 0, ou: 0, rem: STILL, ec: null, clk: null, pu: 0, pa: 0, ends: 0, ended: 0,
-  cx: null, su: 0, stunAt: 0, rk: 0, n: 0, fell: null, lost: 0, heardAt: 0,
+  cx: null, su: 0, stunAt: 0, rk: 0, n: 0, fell: null, lost: 0, heardAt: 0, mk: null,
 });
 
 /** How long the page waits for the realm's answer before it says its `in` again (and between two at most). */
@@ -102,7 +102,7 @@ const walked = (B, w) => {
 };
 /** A blow's word on a body: it stands where it struck from, facing its aim. */
 const struck = (B, w) => ({ ...B, x: w.x, z: w.z, yw: w.yw, mv: null, atk: atkOf(w) });
-const atkOf = (w) => ({ b: w.b, i: w.i, a: w.a, at: w.at, x: w.x, z: w.z, yw: w.yw, tg: w.tg, ...(w.sw != null ? { sw: w.sw } : {}), ...(w.n != null ? { n: w.n } : {}) });
+const atkOf = (w) => ({ b: w.b, i: w.i, a: w.a, at: w.at, x: w.x, z: w.z, yw: w.yw, tg: w.tg, ...(w.sw != null ? { sw: w.sw } : {}), ...(w.n != null ? { n: w.n } : {}), ...(w.sh != null ? { sh: w.sh } : {}) });   // SD18a: its shape
 /** An Echo fresh at its spot (risen, or risen again), facing the way in. */
 const echoAt = (e) => ({ x: SD_ECHO_SPOTS[e][0], z: SD_ECHO_SPOTS[e][1], yw: Math.PI, mv: null, atk: null });
 
@@ -125,6 +125,7 @@ export function foldSdFight(s, w, now) {
       clk: w.clk ?? null, pu: w.pu, pa: w.pa, ends: w.ends, ended: w.ended,
       cx: w.cx ? { i: w.cx.i, m: w.cx.m, c: w.cx.c.map((q) => [q[0], q[1], q[2]]) } : null,
       su: w.su, stunAt: same && s.su === w.su ? s.stunAt : w.su ? now : 0, rk: w.rk, n: w.n, fell: w.fell ?? null, lost: w.lost, heardAt: now,
+      mk: w.mk ?? null,   // SD18a: its Hollow's marks
     };
   }
   if (!s.fi) return s;   // nothing but a whole state starts a fight
@@ -149,7 +150,7 @@ export function foldSdFight(s, w, now) {
     case 'hp': return { ...s, h: w.h, m: w.m, heardAt: now };
     case 'ph':
       if (w.n === 2) return { ...s, ph: 2, rem: stopped(s.rem, w.at), heardAt: now };
-      return { ...s, ph: 3, ec: null, ou: w.up, rem: { x: 0, z: 0, yw: Math.PI, mv: null, atk: null }, h: Math.min(s.h, SD_PHASE_AT[1] * s.m), rk: w.up + SD_RESET_FIRST_MS, heardAt: now };
+      return { ...s, ph: 3, ec: null, ou: w.up, rem: { x: 0, z: 0, yw: Math.PI, mv: null, atk: null }, h: Math.min(s.h, SD_PHASE_AT[1] * s.m), rk: w.up + profileOf(s).resetFirstMs, heardAt: now };
     case 'ec': {
       const ec = w.e.map((t, k) => {
         const had = s.ec?.[k] ?? null;
@@ -162,7 +163,7 @@ export function foldSdFight(s, w, now) {
     case 'cx': return { ...s, cx: { i: w.i, m: w.m, c: w.c.map((q) => [q[0], q[1], w.m]) }, heardAt: now };
     case 'cxh': return s.cx && s.cx.i === w.i ? { ...s, cx: { ...s.cx, c: s.cx.c.map((q, k) => [q[0], q[1], Number.isFinite(w.h[k]) ? w.h[k] : q[2]]) }, heardAt: now } : s;
     case 'cxb': return s.cx && s.cx.i === w.i && s.cx.c[w.c] ? { ...s, cx: { ...s.cx, c: s.cx.c.map((q, k) => (k === w.c ? [q[0], q[1], 0] : q)) }, heardAt: now } : s;
-    case 'stun': return { ...s, su: w.until, stunAt: w.at, rem: stopped(s.rem, w.at), cx: null, rk: w.until + SD_RESET_EVERY_MS, heardAt: now };
+    case 'stun': return { ...s, su: w.until, stunAt: w.at, rem: stopped(s.rem, w.at), cx: null, rk: w.until + profileOf(s).resetMs, heardAt: now };
     case 'fell':
       if (s.fell) return w.dm && !s.fell.dm ? { ...s, fell: { ...s.fell, dm: w.dm }, heardAt: now } : { ...s, heardAt: now };
       return { ...s, fell: { at: w.at, top: w.top, n: w.n, ...(w.dm ? { dm: w.dm } : {}) }, rem: stopped(s.rem, w.at), h: 0, clk: null, cx: null, heardAt: now };

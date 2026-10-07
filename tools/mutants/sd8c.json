@@ -83,8 +83,8 @@
   {
     "name": "SD8C-the-last-moment-no-reset-clock",
     "file": "src/net/sdFightLink.js",
-    "old": "h: Math.min(s.h, SD_PHASE_AT[1] * s.m), rk: w.up + SD_RESET_FIRST_MS, heardAt: now };",
-    "new": "h: Math.min(s.h, SD_PHASE_AT[1] * s.m), rk: s.rk, heardAt: now };",
+    "old": "rk: w.up + profileOf(s).resetFirstMs, ",
+    "new": "rk: s.rk, ",
     "tests": [
       "test/sd8c_remnant_page.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "SD8C-the-wire-drops-me",
     "file": "src/net/wire.js",
-    "old": "lost: m.lost, ...(m.me === 1 ? { me: 1 } : {}) };",
-    "new": "lost: m.lost };",
+    "old": "lost: m.lost, ...(m.me === 1 ? { me: 1 } : {}), ",
+    "new": "lost: m.lost, ",
     "tests": [
       "test/sd8c_remnant_page.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "SD8C-any-me",
     "file": "src/net/wire.js",
-    "old": "...(m.me === 1 ? { me: 1 } : {}) };",
-    "new": "...(m.me != null ? { me: 1 } : {}) };",
+    "old": "...(m.me === 1 ? { me: 1 } : {}), ...(validSdMarks",
+    "new": "...(m.me != null ? { me: 1 } : {}), ...(validSdMarks",
     "tests": [
       "test/sd8c_remnant_page.test.js"
     ]

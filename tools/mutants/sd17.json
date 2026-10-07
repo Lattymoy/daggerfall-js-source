@@ -182,8 +182,8 @@
   {
     "name": "SD17-an-echo-winds-up-slow",
     "file": "src/scenes/sdRemnantRig.js",
-    "old": "const w = windupFor(A, s.ph, who >= 0 ? SD_BODY.gold + who : SD_BODY.remnant), t0 = a.at - w;",
-    "new": "const w = windupFor(A, s.ph, SD_BODY.remnant), t0 = a.at - w;",
+    "old": "const w = atkWindup(a, A, s.ph, who >= 0 ? SD_BODY.gold + who : SD_BODY.remnant), t0 = a.at - w",
+    "new": "const w = atkWindup(a, A, s.ph, SD_BODY.remnant), t0 = a.at - w",
     "tests": [
       "test/sd17_body.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SD17-the-beam-on-the-facing",
     "file": "src/scenes/sdRemnantRig.js",
-    "old": "const k = (t - a.at) / A.active, bearing = a.yw + (a.sw ?? 1) * (A.arc * k - A.arc / 2);",
-    "new": "const k = (t - a.at) / A.active, bearing = a.yw;",
+    "old": "const k = (t - a.at) / S.active, bearing = a.yw + (a.sw ?? 1) * (S.arc * k - S.arc / 2);",
+    "new": "const k = (t - a.at) / S.active, bearing = a.yw;",
     "tests": [
       "test/sd17_body.test.js"
     ]
