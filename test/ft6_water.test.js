@@ -40,7 +40,7 @@ test('FT6: the switch - the enhanced skin, the pref, and ?water=off as the kill 
 test('FT6: both exterior hosts read the one composition and hold no copy of it; the indoor hosts have no water to switch', () => {
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     const s = read(f);
-    assert.match(s, /waterSwitchOn \} from '\.\.\/render\/waterSurface\.js';/, `${f} imports the switch`);
+    assert.match(s, /waterSwitchOn(, buildWaterIndices)? \} from '\.\.\/render\/waterSurface\.js';/, `${f} imports the switch`);   // PIN MOVED (WATER-NEXT 2): the town builds its own water quads beside it
     assert.match(s, /const waterOn = waterSwitchOn\(\)/, `${f} reads it`);
     assert.ok(!/getPref\('enhancedWater'\)/.test(s), `${f} holds no copy of the composition`);
   }

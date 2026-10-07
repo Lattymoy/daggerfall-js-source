@@ -11,6 +11,7 @@ import { EnhancedSkyRenderer, skyState, sunSkyDirection } from '../render/enhanc
 import { waterUniforms, buildWaterIndices } from '../render/waterSurface.js';
 import { WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';   // WATER-DRAW1: the lab is the PASS's lab
 import { buildTerrainGrid, buildTerrainIndices, convertTilemap, TERRAIN_TILE_DIM } from '../world/terrainSurface.js';
+import { waterBedOf } from '../world/waterBed.js';
 import { generateTileData, assignTiles } from '../world/terrainTiles.js';
 import { HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, SCALED_OCEAN_ELEVATION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE } from '../world/terrainSampler.js';
 import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind.js';
@@ -58,7 +59,8 @@ assignTiles(tileData, tilemap, true);
 const tilemapBytes = convertTilemap(tilemap);
 const tilemapTex = renderer.uploadTilemapTexture(tilemapBytes, TERRAIN_TILE_DIM);
 const grid = buildTerrainGrid(heightmap, 1);
-const terrain = renderer.createTerrainSurface(grid.positions, grid.normals, buildTerrainIndices(1));
+const bed = waterBedOf(grid, tilemapBytes, { stride: 1 });   // WATER-NEXT 2: the bed under the lab's water, as the hosts carve it
+const terrain = renderer.createTerrainSurface(bed?.ground.positions ?? grid.positions, bed?.ground.normals ?? grid.normals, buildTerrainIndices(1));
 // sixty-four flat tiles: water, dirt, grass, stone, and every shore
 // record a mix of the two it joins, so a shape reads even without the art
 const layers = [];
@@ -88,8 +90,9 @@ const ARCHIVE = 302;
 renderer.uploadTileArray(ARCHIVE, layers);
 // WATER-AUDIT: the water's own quads over the terrain's vertices, as the hosts draw it
 const waterIndices = buildWaterIndices(tilemapBytes, 1);
-const water = waterIndices ? renderer.createWaterSurface(terrain, waterIndices) : null;
+const water = waterIndices ? renderer.createWaterSheet(waterIndices, bed ? { positions: bed.sheet, depths: bed.sheetDepths } : { terrain }) : null;   // AUDIT WATER-NEXT H2: the sheet's own depths
 const hasWater = !!water;
+renderer.waterBed = hasWater;   // AUDIT WATER-NEXT G15: the lab's ground under its water is a bed, as the hosts draw it (render/waterBedGlsl.js)
 
 const t0 = performance.now();
 const TILE_MATRICES = [];

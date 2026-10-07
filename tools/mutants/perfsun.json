@@ -174,8 +174,8 @@
   {
     "name": "AUDIT-F3-the-water-pin-counts-diff-again-instead-of-the-variable-that-bears-the-load",
     "file": "src/render/waterSurface.js",
-    "old": "  float spec = pow(max(dot(n, H), 0.0), 180.0) * uSunScale * shadow;",
-    "new": "  float spec = pow(max(dot(n, H), 0.0), 180.0) * shadow;",
+    "old": "  float spec = pow(max(dot(n, H), 0.0), 180.0) * uSunScale * shadow * (1.0 - foam);",
+    "new": "  float spec = pow(max(dot(n, H), 0.0), 180.0) * shadow * (1.0 - foam);",
     "tests": [
       "test/perfsun_fragment.test.js"
     ]

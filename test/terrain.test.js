@@ -278,10 +278,15 @@ test('terrain: Daggerfall city on terrain - integration pins', { skip: skipReal 
     hist.set(r, (hist.get(r) || 0) + 1);
   }
   // Grass fill dominates outside the walls; roads (46) and city dirt hold.
-  assert.equal(hist.get(2), 8173);
-  assert.equal(hist.get(1), 3142);
-  assert.equal(hist.get(46), 1706);
-  assert.equal(hist.get(11), 899);
+  // PIN MOVED (PUDDLE-DRY, world/puddleDry.js): DFU's stamp gives 8173 grass, 3142 dirt, 1706 road and 899 of record
+  // 11; the city's 61 puddle tiles (records 8: 17, 9: 33, 23: 11) are served dry, as the ground round each - 10 grass,
+  // 31 dirt, 11 road, 6 of record 11, 2 of 47, 1 of 10
+  assert.equal(hist.get(2), 8183);
+  assert.equal(hist.get(1), 3173);
+  assert.equal(hist.get(46), 1717);
+  assert.equal(hist.get(11), 905);
+  assert.equal(hist.get(8) ?? 0, 0, 'no puddle art left in the city');
+  assert.equal(hist.get(23), 1, 'record 23 left only where it meets a shore');
 
   // Per-pixel climate: Woodlands ground archive 302.
   assert.equal(maps.getClimateIndex(207, 213), 231);
@@ -480,7 +485,10 @@ test('WATER1: a sea clamped to the ocean elevation is WATER through generateTile
   // LW-DRY: the arithmetic one home, the tile job's and the living world's dry ground's (world/dryGround.js) - PIN MOVED
   assert.match(src, /export const sampleHeight = \(sample\) => Math\.fround\(sample \* MAX_TERRAIN_HEIGHT\);/, 'the height is the reference\'s float');
   assert.match(src, /export const isWaterHeight = \(height\) => height <= SCALED_OCEAN_ELEVATION;/, 'against the reference\'s float threshold');
-  assert.match(src, /const height = sampleHeight\(heightmapData\[hy \+ hx \* hDim\]\);\s+if \(isWaterHeight\(height\)\) \{/, 'the tile job\'s own');
+  // PIN MOVED (AUDIT WATER-NEXT F2): the job's body is tileDataAt, one corner at a time, so the water's bed can classify a
+  // neighbour's corner across a seam by the same law
+  assert.match(src, /tileData\[index\] = tileDataAt\(sampleHeight\(heightmapData\[hy \+ hx \* hDim\]\), x, y, mapPixelX, mapPixelY\);/, 'the tile job\'s own');
+  assert.match(src, /export function tileDataAt\(height, x, y, mapPixelX, mapPixelY\) \{\n\s*if \(isWaterHeight\(height\)\) return WATER;/, 'the corner\'s water, first');
   // AUDIT LW-DRY: the nature scatter's three beach reads go through the one home - the product written out nowhere else
   const nature = readFileSync(new URL('../src/world/terrainNature.js', import.meta.url), 'utf8');
   // PIN MOVED (AUDIT LANDFORMS II H2): the beach line asked of DFU's own blend where the terrain job hands one (a location's
@@ -488,7 +496,7 @@ test('WATER1: a sea clamped to the ocean elevation is WATER through generateTile
   assert.equal((nature.match(/sampleHeight\(\((?:opts\.)?beach \?\? heightmapData\)\[hy \+ hx \* hDim\]\)/g) || []).length, 4, 'the scatter reads the sample\'s height as the tile job does (ECOTONE1: and the border tile\'s DFU law, dfuTiles, the fourth)');
   assert.doesNotMatch(nature, /Math\.fround\([^;]*\* MAX_TERRAIN_HEIGHT\)/, 'and writes the product out nowhere itself');
   assert.equal(SCALED_OCEAN_ELEVATION, Math.fround(27.2), 'which the shared constant IS (WATER-AUDIT: 3.4f * 8 in C#)');
-  assert.match(src, /if \(height <= Math\.fround\(SCALED_BEACH_ELEVATION \+ jitter\)\) \{/, 'and the beach the same');
+  assert.match(src, /if \(height <= Math\.fround\(SCALED_BEACH_ELEVATION \+ jitter\)\) return DIRT;/, 'and the beach the same');   // PIN MOVED (AUDIT WATER-NEXT F2): tileDataAt's
   // WATER-AUDIT: the jitter is float32 per operation, as NextFloat(min, max) is
   assert.match(readFileSync(new URL('../src/formats/umRandom.js', import.meta.url), 'utf8'), /return Math\.fround\(Math\.fround\(this\.nextFloat\(\) \* Math\.fround\(max - min\)\) \+ min\);/);
 });

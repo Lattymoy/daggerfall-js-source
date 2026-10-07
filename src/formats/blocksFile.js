@@ -16,6 +16,7 @@
 
 import { BsaFile, DIRECTORY_TYPES } from './bsaFile.js';
 import { worldDataDoor } from './worldDataDoor.js';   // RR3b: WorldDataReplacement's four asks (BlocksFile.cs:214, :273, :385, :850)
+import { dryPuddles } from '../world/puddleDry.js';   // PUDDLE-DRY: a town's puddles are dry ground, served so to every reader
 
 export const BLOCK_TYPES = Object.freeze({
   Unknown: 0,
@@ -117,6 +118,10 @@ export function readBuildingData(view, pos) {
     quality: view.getUint8(pos + 25),
   };
 }
+
+/** PUDDLE-DRY (world/puddleDry.js): the block as the port serves it - an RMB's puddles dried, once; readClassicBlock
+ *  keeps BLOCKS.BSA's bytes. */
+const dryBlock = (dfBlock) => { dryPuddles(dfBlock?.rmbBlock?.fldHeader?.groundData?.groundTiles); return dfBlock; };
 
 export class BlocksFile {
   constructor() {
@@ -262,10 +267,10 @@ export class BlocksFile {
     const replacement = block >= 0 ? worldDataDoor()?.getDFBlockReplacementData(block, this.getBlockName(block)) : null;
     if (replacement) {
       if (this._blocks && this._blocks.length > block) this._blocks[block] = { name: replacement.name, bytes: null, view: null, dfBlock: replacement };
-      return replacement;
+      return dryBlock(replacement);
     }
     if (!this.loadBlock(block)) return null;
-    return this._blocks[block].dfBlock;
+    return dryBlock(this._blocks[block].dfBlock);
   }
 
   /** DFBlock by name, using the alternate-name search when unresolved. */

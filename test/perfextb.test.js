@@ -444,7 +444,9 @@ function waterScene(lane) {
   const arrays = [null, arrA, arrA, arrB, arrB, arrB, arrA, arrA, arrB, arrA];
   const rows = arrays.map((arr, i) => {
     const m = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, i * 819.2, 0, 0, 1]);
-    return [r.createWaterSurface(r.createTerrainSurface(P, N, IX), IX), m, arr, { id: `tilemap${i}` }];
+    // AUDIT WATER-NEXT m9: the sheets the hosts mint (createWaterSheet) - a bed's own buffers on the odd rows, the
+    // terrain's position buffer and the constant depth on the even
+    return [i % 2 ? r.createWaterSheet(IX, { positions: P, depths: new Float32Array([0, 1.5, 2, 4]) }) : r.createWaterSheet(IX, { terrain: r.createTerrainSurface(P, N, IX) }), m, arr, { id: `tilemap${i}` }];
   });
   r.setLighting(new Float32Array([0.3, 0.3, 0.35]), 0.8, new Float32Array([1, 0.9, 0.8]));
   const lights = new Float32Array(20 * 4); for (let i = 0; i < 20; i++) lights.set([i, 3, -i, 12], i * 4);
@@ -455,7 +457,7 @@ function waterScene(lane) {
   return { H, r, rows, wu };
 }
 
-test('PERF-EXT13: every visible pixel\'s water in ONE call - ten water pixels through drawWaterSurfaces upload uView, uProj, uTime, uLift, uSunScale and uOpacity ONCE each, set the polygon offset once, and uModel ten times, in at most 150 GL calls (the base: no list at all, and the one-surface path 70 a pixel)', () => {
+test('PERF-EXT13: every visible pixel\'s water in ONE call - ten water pixels through drawWaterSurfaces upload uView, uProj, uTime, uLift, uSunScale and uSwell ONCE each, set the polygon offset once, and uModel ten times, in at most 150 GL calls (the base: no list at all, and the one-surface path 70 a pixel)', () => {
   assert.equal(typeof Renderer.prototype.drawWaterSurfaces, 'function', 'the list door exists');
   for (const lane of [false, true]) {
     const { H, r, rows, wu } = waterScene(lane);
@@ -463,7 +465,7 @@ test('PERF-EXT13: every visible pixel\'s water in ONE call - ten water pixels th
     r.drawWaterSurfaces(rows, rows.length, 6.4, wu);
     const n = (k) => H.byName[k] ?? 0;
     for (const u of ['uView', 'uProj']) assert.equal(n(`uniformMatrix4fv:${u}`), 1, `${lane ? 'lane' : 'classic'}: ${u} once`);
-    for (const u of ['uTime', 'uLift', 'uSunScale', 'uOpacity']) assert.equal(n(`uniform1f:${u}`), 1, `${lane ? 'lane' : 'classic'}: ${u} once`);
+    for (const u of ['uTime', 'uLift', 'uSunScale', 'uSwell']) assert.equal(n(`uniform1f:${u}`), 1, `${lane ? 'lane' : 'classic'}: ${u} once`);   // PIN MOVED (WATER-NEXT 2): the one opacity is gone, the swell is the frame's
     assert.equal(n('polygonOffset'), 1, 'the offset once');
     assert.equal(n('uniformMatrix4fv:uModel'), 10, 'a matrix a pixel');
     assert.equal(H.draws.length, 10, 'a draw a pixel');
@@ -476,7 +478,7 @@ test('PERF-EXT13: every visible pixel\'s water in ONE call - ten water pixels th
   }
   // and the host hands them over so: collected in the walk, ONE call after it, none inside it
   const w = rd('src/scenes/world.js');
-  const pass = w.slice(w.indexOf('    if (waterOn) {\n      const wu = waterUniforms('), w.indexOf('renderer.drawBillboards(allBatches, camRight, UP_Y);'));
+  const pass = w.slice(w.indexOf('    if (waterOn) {\n      stirRipples(dt, now);   // WATER-NEXT 4\n      const wu = _waterU = waterUniforms('), w.indexOf('renderer.drawBillboards(allBatches, camRight, UP_Y);'));
   assert.equal((pass.match(/renderer\.drawWaterSurfaces\(/g) || []).length, 1, 'one list call a frame');
   assert.doesNotMatch(pass, /renderer\.drawWaterSurface\(/, 'no pixel draws its own');
   assert.match(pass, /for \(const p of built\.values\(\)\) \{[\s\S]*?\}\s*\n\s*renderer\.drawWaterSurfaces\(_waterRows, n, 6\.4, wu\);/, 'after the walk, not in it');
