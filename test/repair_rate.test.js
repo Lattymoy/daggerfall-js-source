@@ -76,7 +76,8 @@ test('KIT-CEILING: no kit mends a piece past three quarters - 60% to 75%, 70% to
   assert.deepEqual(repairKitUse(whole, [whole, at(sword(), 100)]), { kind: 'repairKit', text: 'Nothing here wants mending.', refused: true });
   // AUDIT ECON R4/R5: the ceiling is ROUNDED DOWN - an Iron Dagger's 50 stopped at 37 (74%), never 38 (76%, the sharp
   // band), and at 37 it is refused in words that do not say 75%. WEAPON-POOL (2026-10-06): every weapon's pool is a
-  // multiple of 400 now, at any material and quality, so three quarters of one is whole; a smith's Fine Buckler (512 x
+  // multiple of four now, at any material and quality (AUDIT WEAPON-POOL P9: 400 per step of the ladder, and the smith's
+  // 0.75, 1.15 and 1.3 of that), so three quarters of one is whole; a smith's Fine Buckler (512 x
   // 1.15 = 588.8, so 589) is a piece whose three quarters is not - it stops at 441 (74.9%), never 442
   const buckler = mintPiece({ recipe: 'buckler:iron', quality: 2, seed: 1 }, '0000000000000001');
   assert.equal(buckler.maxCondition, 589);

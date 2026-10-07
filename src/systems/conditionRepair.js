@@ -24,10 +24,19 @@
 // ladder (mintCondition's arithmetic), on Daggerfall's row or on Roleplay & Realism: Items' patch of it (a Tanto at
 // 40), and through the smith's quality for a made piece (smithItems.js mintPiece). Such a piece moves to what the same
 // mint gives now, its condition the same share of it: a broken piece stays broken and a worn one stays as worn - no
-// repair rides in. A piece that matches no old mint is left as it is: a magic item's or an artifact's uses (MAGIC.DEF's
-// own number, not its type's), ammunition, a piece already on the pool (the Warhammer's row was), and an enchanted piece
-// There's a Hole in the Bottom of the Ocean raised a material, which keeps the old material's condition. Idempotent: a
-// moved piece is on the pool, and a second load finds nothing to move.
+// repair rides in. SELL-AS-FOUND's mark is a condition too, and moves by the same share (AUDIT WEAPON-POOL P1: left on
+// the row's pool, a found dagger sold online at a 32nd of its share). Left as it is: a magic item's or an artifact's
+// uses (MAGIC.DEF's own number, not its type's - a classic save's artifact is marked `artifact` alone, P4), ammunition
+// (its mint is its row's either side), a piece already on the pool (the Warhammer's row was), a piece at a smith (P3:
+// DFU re-derives a booked job's days from its missing points at the next drop-off, so a moved job would wait up to 13
+// times as long - it comes back whole on its row and moves at its first wear), and a piece matching no old mint. That
+// last is mostly an enchanted piece There's a Hole in the Bottom of the Ocean raised a material, which keeps the old
+// material's condition - unless that number is what a row gave at the new one (a Battle Axe's or a Claymore's, at a few
+// steps of the ladder), and then it moves to the new material's pool, as the same piece unenchanted would be re-minted.
+// TWO DOORS (P2): the load walks the lists the save's repairs walk, and lowerCondition (equip.js) moves a weapon before
+// it wears - so a piece from any store the load does not walk (hung in a room, a revenant's take, a quest's prize, an
+// heir's bequest, a market or vault record, an old build's trade) is on the pool before a point of the old pool is
+// spent. Idempotent: a moved piece is on the pool, and nothing finds it to move again.
 
 import { mintCondition, ITEM_TEMPLATES, templateByIndex } from './itemTemplates.js';
 import { ARROW_TEMPLATE } from './inventory.js';
@@ -86,24 +95,35 @@ function mintedOn(pool, it) {
 }
 
 /**
- * WEAPON-POOL: move every weapon in `items` minted on its row's pool to the one pool, its condition the same share.
- * Ammunition needs no guard: its mint is its row's either side, so it is always on its pool already.
+ * WEAPON-POOL: move ONE weapon minted on its row's pool to the one pool, its condition (and SELL-AS-FOUND's mark) the
+ * same share. Ammunition needs no guard: its mint is its row's either side, so it is always on its pool already.
+ * @param {any} it
+ * @returns {boolean} whether it moved
+ */
+export function repoolWeapon(it) {
+  // a magic item's condition is its uses (a classic save's artifact carries `artifact` alone - AUDIT WEAPON-POOL P4); a
+  // piece at a smith keeps its booked job (P3); a frozen record cannot be written
+  if (!it || it.group !== 'Weapons' || it.magic || it.artifact || it.repairData != null || !Object.isExtensible(it)
+    || !Number.isFinite(it.currentCondition)) return false;
+  const max = it.maxCondition;
+  const pool = mintedOn(mintCondition({ group: 'Weapons', templateIndex: it.templateIndex }).maxCondition, it);
+  if (pool === max || !rowPools(it.templateIndex).some((hp) => mintedOn(hp, it) === max)) return false;
+  // the same share: a whole piece whole, a broken one broken - and the pool is never below a row's, so a worn piece
+  // is never rounded to either
+  const share = (/** @type {number} */ n) => Math.round((n * pool) / max);
+  it.currentCondition = share(it.currentCondition);
+  if (Number.isInteger(it.foundCondition)) it.foundCondition = share(it.foundCondition);   // P1: the online counter reads it over the maximum
+  it.maxCondition = pool;
+  return true;
+}
+
+/**
+ * WEAPON-POOL: move every weapon in `items` minted on its row's pool to the one pool (repoolWeapon).
  * @param {any[]} items
  * @returns {number} how many were moved
  */
 export function repoolWeaponConditions(items) {
   let n = 0;
-  for (const it of Array.isArray(items) ? items : []) {
-    // a magic item's condition is its uses (an artifact is minted magic too); a frozen record cannot be written
-    if (!it || it.group !== 'Weapons' || it.magic || !Object.isExtensible(it) || !Number.isFinite(it.currentCondition)) continue;
-    const max = it.maxCondition;
-    const pool = mintedOn(mintCondition({ group: 'Weapons', templateIndex: it.templateIndex }).maxCondition, it);
-    if (pool === max || !rowPools(it.templateIndex).some((hp) => mintedOn(hp, it) === max)) continue;
-    // the same share: a whole piece whole, a broken one broken - and the pool is never below a row's, so a worn piece
-    // is never rounded to either
-    it.currentCondition = Math.round((it.currentCondition * pool) / max);
-    it.maxCondition = pool;
-    n++;
-  }
+  for (const it of Array.isArray(items) ? items : []) if (repoolWeapon(it)) n++;
   return n;
 }

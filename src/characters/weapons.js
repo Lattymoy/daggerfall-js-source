@@ -76,11 +76,14 @@ export const conditionMultipliersByMaterial = Object.freeze([4, 6, 6, 8, 12, 16,
  *  less than it had - and its material multiplies it as it always has (the ladder above: x1 iron to x8 Daedric).
  *  Daggerfall's rows run from 50 (Dagger, Tanto, Short Bow) to 1,600, and every condition cost is flat: a
  *  Cast-When-Strikes strike's 10 broke an iron dagger in 5 strikes and an iron warhammer in 160, a Cast-When-Held
- *  item's 1 every four game minutes ran the dagger dry in 200 and the warhammer in 6,400, and a 20-damage blow's 2
- *  broke a short bow in 25. The light weapons and the bows spent more time broken than drawn, and a Legendary rolled
- *  on one (Worm's Tooth is a Dagger or a Tanto) carried its strike for five blows. Ammunition keeps its row's:
+ *  spell's casting cost at its first equip (5 at the least; the loot's held spells about 120-160, Loot-Rarity.md's
+ *  watch item 9) broke the dagger the moment it went on (AUDIT WEAPON-POOL P5), and a 20-damage blow's 2 broke a
+ *  short bow in 25. The light weapons and the bows spent more time broken than drawn, and a Legendary rolled on one
+ *  carried its power for a few blows or none: Worm's Tooth (a Dagger or a Tanto) its strike for five, Nightwhisper on
+ *  a Dagger or a Tanto its held Chameleon not past the equip, at that cost. Ammunition keeps its row's:
  *  CreateWeapon's arrow arm runs no material pass. The rows stay Daggerfall's - itemTemplates.js mintCondition reads
- *  this in their place, and conditionRepair.js repoolWeaponConditions moves a piece minted on its row. A departure
+ *  this in their place, and conditionRepair.js repoolWeapon moves a piece minted on its row, at a load or before
+ *  its first wear. A departure
  *  (Ledger A, WEAPON-POOL). */
 export const WEAPON_CONDITION_POOL = 1600;
 

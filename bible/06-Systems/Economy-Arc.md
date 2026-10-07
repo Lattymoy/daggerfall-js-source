@@ -161,13 +161,17 @@ current design "does not work in an enjoyable manner"):
   damage-scaled price, a full repair is a fifth of the smith's asking price
   for the piece: still a craftsman's fee (a broken Daedric longsword, 9,216
   gold before the haggle at a middling smith - 5,184 to 6,372 asked), not a
-  punishment for using the gear. With the wear above, its upkeep is 3.3-6.4
-  gold a landed hit (17.4-24.0 before the triage) - half that since
-  WEAPON-POOL doubled the longsword's pool, the price being the share.
+  punishment for using the gear. Its upkeep was 3.3-6.4 gold a landed hit
+  at WEAR-TWICE's doubled wear (17.4-24.0 before the triage); the price
+  being the share, DFU's own amount since WEAR-ONE halves it, and
+  WEAPON-POOL's doubled longsword pool halves it again - about 0.8-1.6
+  (derived, not measured again; AUDIT WEAPON-POOL P9).
 - **Kits stay partial** (KIT-CEILING, `src/systems/smithItems.js`): a field
   kit or a smith-made kit mends a piece no further than three quarters of its
-  condition (rounded down: an Iron Dagger's 1,600 stops at 1,200 - its 50
-  stopped at 37 before WEAPON-POOL). Three quarters
+  condition (rounded down: a smith's Fine Buckler's 589 stops at 441; an
+  Iron Dagger's 50 stopped at 37 before WEAPON-POOL, which made every weapon
+  pool a multiple of four, so a weapon's three quarters is whole - 1,600
+  stops at 1,200). Three quarters
   is the edge of the overhaul's normal band for a blade (61-75% strikes at
   its own damage) and for armour; the 1.1 and 1.3 of a sharp edge come back
   at the smith's. (A blunt weapon's normal band runs to 91%, so a smith adds

@@ -16,7 +16,7 @@ import { STEEL_RAMP } from '../src/characters/pieces/pieceLoft.js';
 // Witness against the DFU source (ItemEnums, ItemBuilder,
 // DaggerfallUnityItem.GetWeaponMaterialModifier, FormulaHelper
 // CalculateWeaponMin/MaxDamage): every constant pinned byte-exact.
-test('weapons: verbatim DFU data pins', () => {
+test('weapons: verbatim DFU data pins - and the one condition pool WEAPON-POOL departs to (ApplyWeaponMaterial\'s condition on 1,600, not the row)', () => {
   assert.equal(WEAPONS.Dagger, 113);
   assert.equal(WEAPONS.Longsword, 120);
   assert.equal(WEAPONS.Arrow, 131);

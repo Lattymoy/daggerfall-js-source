@@ -147,12 +147,15 @@ mints a weapon's condition from its row's hitPoints through the material
 ladder (x4 iron to x32 Daedric, over 4), and the rows run from 50 (Dagger,
 Tanto, Short Bow) to 1,600 (Warhammer), so every flat cost picked a type:
 a Cast-When-Strikes strike's 10 broke an iron dagger in 5 strikes and an
-iron warhammer in 160, a Cast-When-Held item's 1 every four magic rounds
-ran them dry in 200 rounds and in 6,400, and 25 blows of 20 damage broke an
-iron short bow. The stronger the player, the deeper each blow's bill, and
-the light weapons and the bows spent more time broken than drawn - a
-Legendary rolled on one (Worm's Tooth is a Dagger or a Tanto) carried its
-strike for five blows. Every weapon type now mints from the Warhammer's
+iron warhammer in 160, a Cast-When-Held spell's casting cost at its first
+equip (5 at the least; the loot's held spells about 120-160,
+`06-Systems/Loot-Rarity.md` watch item 9) broke an iron dagger the moment
+it went on, before its 1 every four magic rounds (1 in 60 resting), and 25
+blows of 20 damage broke an iron short bow. The stronger the player, the
+deeper each blow's bill, and the light weapons and the bows spent more time
+broken than drawn - a Legendary rolled on one carried its power for a few
+blows or none: Worm's Tooth (a Dagger or a Tanto) its strike for five,
+Nightwhisper on a Dagger or a Tanto its held Chameleon not past the equip. Every weapon type now mints from the Warhammer's
 1,600, the deepest row, so no type has less than it had
 (`characters/weapons.js` `WEAPON_CONDITION_POOL`, read by
 `systems/itemTemplates.js` `mintCondition` in the row's place), and the
@@ -162,10 +165,11 @@ elven, 4,800 dwarven, 6,400 mithril, 8,000 adamantium, 9,600 ebony,
 stays DFU's. Roleplay & Realism: Items' weapon patches and its two
 weapons, and the Thunderlock, take the pool too; ammunition keeps its row
 (CreateWeapon's arrow arm runs no material pass), armour its own, a magic
-item and an artifact their uses. A save's weapons move to the pool on
-load at the same share - a broken piece stays broken
-(`systems/conditionRepair.js` `repoolWeaponConditions`). Ledger A,
-WEAPON-POOL; `test/weaponpool.test.js`.
+item and an artifact their uses. A save's weapons move to the pool at the
+same share - a broken piece stays broken - on load, and any piece the load
+does not reach before its first wear (`systems/conditionRepair.js`
+`repoolWeapon`, `systems/equip.js` `lowerCondition`; AUDIT WEAPON-POOL,
+below). Ledger A, WEAPON-POOL; `test/weaponpool.test.js`.
 
 A soft weapon still wears by what it deals: an iron blade on a Ghost does
 nothing in DFU and wears nothing, and does a little under the soft-material
@@ -321,3 +325,89 @@ same `playerReflexes`-or-target fallback its stock core does, which
 hands the player's in every fight the player is in. The break message
 on a foe's gear follows the stock port (DFU's ItemBreaks pops it for
 any owner). Pins: 24 in `test/pcaao.test.js`.
+
+## AUDIT WEAPON-POOL (2026-10-06, Mac: "Audit this") - WEAPON-POOL read again before it merges
+
+Three independent lanes, each a cold read of the PR (#656) against its committed tree, with repros: who mints and who
+reads a weapon's condition (every producer, every reader in points); the migration's reach (every place a save, the
+relay or the account service keeps a weapon, every load path, the boot order, the fingerprint); and what the change
+says and pins (every claim computed, every page it left, its pins mutated past their 23 records). Every finding was
+reproduced before it was fixed. FOUND, each fixed and pinned (`test/auditweaponpool.test.js` 4, `test/weaponpool.test.js`
+4; `tools/mutants/auditweaponpool.json` 6 of 6 dead, `weaponpool.json` re-aimed by content, 23 of 23):
+
+- **MEDIUM - P1: SELL-AS-FOUND's mark stayed on the row's pool.** Roleplay & Realism: Items marks a found piece's
+  condition as `foundCondition`, and online the counter pays no more than that share (`systems/tradeModes.js`
+  saleConditionPercentage). The migration moved the condition and the maximum and left the mark: a dagger found at 25
+  of 50 became 800 of 1,600 marked 25 - sold online at 1%, a 32nd of its share, mended or not. FIXED
+  (`systems/conditionRepair.js` repoolWeapon): the mark moves by the same share.
+- **MEDIUM - P2: a weapon outside the load's lists wore on its row's pool.** The load walks the lists its repairs walk,
+  and a weapon came back into the pack mid-session, on its row's pool, from everywhere else: hung in a room (a scene's
+  `decorOwn`), a revenant's take and its sworn companion's pack (mod data), a quest's prize (`snap.quest`), an heir's
+  remains and bequest (Project Legacy - paid at the heir's birth, with no load at all), a living foe's or a guard's
+  kit, and a record the account service or the relay hands back (a market good, a vendor's stock, the guild vault, a
+  trade, the room's memory, an old build's mint). A Worm's Tooth a revenant handed back still broke in five strikes,
+  before any load could move it. FIXED (`systems/equip.js` lowerCondition, the one door every blow, strike, held bill and
+  duel wears through): a weapon still on its row's pool moves before a point is taken - the same law, idempotent, and
+  nothing for a piece already moved. The load still moves the bulk; the rest moves at its first wear, and until then
+  its share, its price and a kit's share of it are what they will be.
+- **LOW - P3: a job booked before the update would have waited up to 13 times as long.** With Instant Repairs off, DFU
+  re-derives every unfinished job's time from its missing points when another piece is left at the same smith, and a
+  job never shortens (`systems/repairService.js` updateRepairTimes): moved onto the pool, a broken Daedric dagger booked
+  for a day became 12.8 days' work, 13.3 stretched by the queue. FIXED: a piece at a smith (`repairData`) is left; it
+  comes back whole on its row and moves at its first wear.
+- **LOW - P4: a classic save's artifact could take the pool.** The guard read `magic` alone, and its comment said an
+  artifact is minted magic too - the classic importer (`systems/classicSave.js` classicItemFromRecord) marks it
+  `artifact` and never `magic`, so an artifact whose uses were what its row gave (a Daedric dagger's 400) moved, its
+  uses x32. FIXED: `artifact` is read too.
+- **MEDIUM - P5: the Cast-When-Held numbers were never reached in play.** "200 rounds and 6,400" pinned the payload on a
+  piece never equipped; the first equip bills the spell's classic casting cost in condition (assignHeldSpell - 5 at
+  the least, the loot's held spells about 120-160), so an iron dagger broke the moment it went on, and the pool's keeps
+  1,600 less the bill and runs four rounds a point of the rest. FIXED: the law's comment, this page's WEAPON-POOL
+  paragraph, the Ledger row, the Testing row, and the pin - through assignHeldSpell (159 billed, 1,441 left, 5,764
+  rounds).
+- **MEDIUM - P6: the weapons-only guard was pinned only against deletion.** Turned on armour alone it survived every
+  suite that loads a save: a shirt's 200, an amulet's 800 and a torch's 50 would each have been read as a weapon on its
+  row and moved to 1,600. FIXED: clothing, jewellery and a torch stand beside the cuirass in the pin.
+- **LOW - P7: the classic row's fingerprint was pinned on a Tanto whose 50 is the Dagger's beside it** - a row read one
+  off survived. FIXED: with the mod on, a classic Short Bow (beside a War Axe's 800) and a Wakizashi (beside a
+  Shortsword's 300) move too.
+- **LOW - P8: a page the change left was false.** `05-Combat/Dwarven-Thunderlock.md` gave the gun's condition as 90, and
+  `systems/thunderlock.js` its reason; it holds 4,800 at Dwarven. FIXED.
+- **LOW - P9: five sentences the change wrote, or left, were not true as written.** "Every weapon pool a multiple of
+  400" (the repair_rate row and its pin's comment: a Fine dagger is 1,840 - a multiple of four, which is what keeps
+  three quarters whole); Economy-Arc's "half that" upkeep stood on WEAR-TWICE's 3.3-6.4, which WEAR-ONE had already
+  halved; its kit example (1,600 to 1,200) showed no rounding; the REPAIR-RATE row's pins still named the Iron Dagger's
+  37 of 50; and the weapons suite's row and title said "verbatim DFU" over two assertions of the departure. FIXED, each
+  in its place.
+
+RECORDED, not changed - what a deeper pool does by design (Mac: "if we actually want to encourage different builds we
+can't keep the numbers as is"), and what is left for another pass:
+
+- **The overhaul's sharp edge lasts with the pool.** Condition-based effectiveness (on by default) strikes x1.3 at 92%
+  and up and x1.1 at 76-91%, and blunts a blade below 61%; a share lasts as many more blows as the pool is deeper, so an
+  iron dagger strikes at x1.3 for 65 blows of 20 damage (it was 3), and a long bow for 16 times its old count - as a
+  warhammer always did.
+- **Two point-by-point enchantments scale the other way.** Repairs Objects mends 1 point every four rounds on the first
+  worn piece, so a dagger found at 20% holds it 32 times as long; Item Deteriorates (a side effect that pays 3,000,
+  1,500 or 500 points) wears 1 every four rounds, so a dagger taking it lasts 6,400 rounds (it was 200) for the same
+  credit.
+- **Repair days where repairs are not instant** (Instant Repairs is the default): 1,000 points a day, so a broken
+  Daedric weapon of any type is 12.8 days (a Daedric dagger was one).
+- **An enchanted piece There's a Hole in the Bottom of the Ocean raised a material** keeps its old material's pool -
+  unless that number is what a row gave at the new one (a Battle Axe raised to elven or mithril, a Claymore to
+  Daedric), and then it moves to the new material's pool, as the same piece unenchanted is re-minted.
+- **A classic MAGIC.DEF piece** (enchantments, and neither mark) whose uses happen to equal an old mint still moves: it
+  cannot be told from a classic piece the player enchanted.
+- **Not this change's, for its own pass:** the load's other repairs (DISC21-A's mint, DISC29-B's names, RARITY-WEAR)
+  walk the same lists, so they miss the stores P2 names - a piece is repaired at a later load once it is back in the
+  pack, or never; and customs' walk (`net/realmGoldLaw.js` stashedItemLists) misses a revenant companion's pack.
+
+Checked and found sound: every weapon mint runs through mintCondition (the loot factories, shops, enemies and Roleplay
+& Realism's, quests, the biography, the starting kit, the smith, the spell, the trophy, the spoils, the Broker, the
+Aetheric pieces, the Thunderlock and its pellet, the market's re-mint, the duel, the ocean's re-mint); no weapon reader
+takes a template's hitPoints but the mint, the viewer and the migration, and every other reader takes a share; nothing
+in `src/net` mints a condition, and neither service's bundle reaches a changed file; the templates the fingerprint
+needs are registered before the first load (save.js reaches thunderlock.js, and Roleplay & Realism's rows are laid at
+every host's start); an equipped weapon is the moved object (the repool runs before the equip table is rebuilt and the
+held enchantments restarted); quickslots keep no condition; `quality` is the smith's alone; furnishings hold furniture
+alone; a guild's shelf holds no weapon a mint gives.
