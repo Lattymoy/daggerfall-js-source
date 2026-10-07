@@ -29,7 +29,7 @@ import { TownPopulation } from '../src/systems/townPopulation.js';
 import { ResidentWalker } from '../src/characters/residentWalker.js';
 import { MobilePerson, PERSON_MOVE_SPEED } from '../src/characters/mobilePerson.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
-import { DAY_MIN } from '../src/systems/livingWorld/dayPlan.js';
+import { DAY_MIN, DAY_START_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { planRoute } from '../src/systems/travelRoute.js';
 import { diversAt, fallenIn, CALENDAR_MPM, NATIVE_PER_M, partiesNear } from '../src/systems/livingWorld/trips.js';
 import { createLivingRoads } from '../src/scenes/livingRoads.js';
@@ -95,6 +95,33 @@ function fill(blocks, hour) {
   return Infinity;
 }
 
+/**
+ * LW-DAWN: THE GREAT CITY CARRIED ACROSS THE DAY'S TURN - built at ten to four, the clock half a minute a frame and the
+ * census read every frame (the morning's first two hours in 250 frames), the player at the square: the plans made and the
+ * roads asked a frame from five past four to six (WATCH-DAY's morning walk out, read off the day before), and the frames.
+ */
+function dawn(blocks) {
+  const { nav, buildings, doors } = synthTown({ blocksW: blocks, blocksH: blocks });
+  const turn = 100 * DAY_MIN + DAY_START_MIN, clock = { t: turn - 10 };
+  let reads = 0;
+  const town = new LivingTown(nav, { town: { mapId: 13000 + blocks, blocks: blocks * blocks, region: 17, people: 3, port: false }, buildings, doors,
+    makePerson: (archive, guard) => new ResidentWalker(nav, { archive, guard, frameCount: () => 4, groundY: () => 0.25 }),
+    clock: () => clock.t, rate: () => RATE, mpm: PERSON_MOVE_SPEED / RATE,
+    tripsOf: () => { reads++; return { away: new Map(), visitors: [], holders: new Map() }; } });
+  const sq = town.places.square, at = [sq?.x ?? 0, 0, sq?.z ?? 0], times = [];
+  let plans = 0, asked = 0;
+  while (clock.t < turn + 120) {
+    const gen = town._planGen, r = reads;
+    clock.t += 0.5;
+    const a = now();
+    town.update(0.25, at, 0, at, true);
+    const f = now() - a;
+    if (clock.t < turn + 5) continue;
+    times.push(f); plans += town._planGen - gen; asked += reads - r;
+  }
+  return { plans: plans / times.length, reads: asked / times.length, frame: stats(times) };
+}
+
 console.log('THE STREET (living vs DFU\'s pool on the same town; the player crossing it for a minute)');
 for (const blocks of [3, 8]) {
   for (const hour of [8, 13, 19]) {
@@ -110,6 +137,14 @@ for (const blocks of [3, 8]) {
 for (const [blocks, hour] of [[6, 8.5], [8, 8.5]]) {
   const s = fill(blocks, hour);
   check(s <= 2.5, `${blocks}x${blocks} at ${hour}: every resident near on the street within 2.5 s (${s} s)`);
+}
+
+console.log('THE DAY\'S TURN (the great city carried across four, its census read every frame)');
+{
+  dawn(8);   // warm
+  const D = dawn(8);
+  console.log(`  8x8 04:05-06:00  plans made a frame ${D.plans.toFixed(2)}, road reads a frame ${D.reads.toFixed(2)}, frame mean ${ms(D.frame.mean)} p99 ${ms(D.frame.p99)} max ${ms(D.frame.max)}`);
+  check(D.plans === 0 && D.reads === 0, `the great city from five past four: no plan made, no road read (${D.plans.toFixed(2)}, ${D.reads.toFixed(2)} a frame)`);
 }
 
 console.log('THE ROADS');

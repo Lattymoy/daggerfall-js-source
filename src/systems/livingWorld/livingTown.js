@@ -49,6 +49,7 @@ import { townCensus, isHome, watchShiftSize } from './census.js';
 import { dayPlan, entryAt, isOutdoor, DAY_START_MIN, DAY_MIN } from './dayPlan.js';
 import { townClassOf, stillRoleOf, stillFlatOf } from './looks.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
+import { NAV_CELL } from '../../world/cityNavigation.js';   // LW-DAWN: a berth's cell
 import { createPathBook, pointOnLine } from './townPaths.js';
 import { spotCircles, circleLine, circlesStands, aloneStand, aloneStands, ROUND_S, GATHER_BEAT_S, lineMinutes, ALONE_FAR_M, SPACE_M } from './meetups.js';
 import { LIVING_GREETINGS, LIVING_KEEPSAKE, WATCH_GREETINGS, watchBand, fillLine, firstNameOf } from './lines.js';
@@ -189,6 +190,39 @@ export const WITNESS_M = LINE_RANGE;
  *  gone round). */
 export const DEED_KNOWN_MIN = 60;
 
+// LW-DAWN (2026-10-07, a screenshot in Daggerfall - 1 fps, "script 6179.8 ms" - and the ask: "Something is killing CPU
+// performance"): A DAY'S CACHE KEEPS THE DAY BESIDE IT.
+// The plans (`_plans`), the roads' word (`_roads`), the people (`_people`) and the walks by their door (`_departures`)
+// each kept ONE day, and from the day's turn at four a reader asks two: WATCH-DAY's morning walk is today's first entry
+// and leaves before the turn, so a company's file (`_fileOf`) is read off yesterday's walks while everything else reads
+// today's - and a walker owing minutes across the turn reads yesterday's plan. Each change of day threw the other away:
+// the whole town planned again and the roads read again, twice over for each such walker, every frame from four until
+// the walk's end at six (the synthetic great city carried across four: 605 plans made a frame and 5.8 road reads, none
+// at noon - tools/livingPerfProbe.mjs). Offline a slow frame moves the clock a tenth of a second at most (world.js's
+// frame), so the two hours lasted as long as the frames were slow; online the sky's dawn comes every real hour (TIME1)
+// and its two hours are five real minutes. Now the day each cache replaced is kept beside it (`other`, one deep) and a
+// read of it is a swap.
+
+/** LW-DAWN: the day kept beside a day's cache entry (`cur.other`), brought to the front for `day` with `cur` kept beside
+ *  it in its turn - or null when that is not `day`'s.
+ *  @template {{ day: number, other?: any }} T @param {T|null|undefined} cur @param {number} day @returns {T|null} */
+export function swapDay(cur, day) {
+  const o = cur?.other;
+  if (!cur || !o || o.day !== day) return null;
+  cur.other = null;
+  o.other = cur;
+  return o;
+}
+
+/** LW-DAWN: what a new cache entry for `day` keeps beside it - the entry it replaces when that was another day's, else
+ *  the day that one kept (a day made again keeps its neighbour) - one deep, never a chain.
+ *  @template {{ day: number, other?: any }} T @param {T|null|undefined} cur @param {number} day @returns {T|null} */
+export function besideDay(cur, day) {
+  const o = !cur ? null : cur.day !== day ? cur : (cur.other ?? null);
+  if (o) o.other = null;
+  return o;
+}
+
 /**
  * @typedef {import('./census.js').Resident} Resident
  * @typedef {import('./dayPlan.js').Entry} Entry
@@ -261,7 +295,7 @@ export class LivingTown {
     this.maxPopulation = maxPopulationFor(o.town.blocks);
     /** @type {Row[]} */
     this.pool = [];
-    /** @type {Map<string, { day: number, plan: Entry[], roads?: boolean, inT?: number, home?: number|null }>} */
+    /** @type {Map<string, { day: number, plan: Entry[], roads?: boolean, inT?: number, home?: number|null, other?: any }>} LW-DAWN `other`: the day kept beside it */
     this._plans = new Map();
     this._paths = createPathBook(nav);
     this._timer = Infinity;
@@ -283,7 +317,7 @@ export class LivingTown {
     /** LW-SPACE: a count of the plans made (a company's file is read again when one changes), and each day's walks by
      *  where they leave from @type {number} */
     this._planGen = 0;
-    /** @type {{ day: number, gen: number, from: Map<string, { t0: number, id: string, e: Entry }[]> } | null} */
+    /** @type {{ day: number, gen: number, from: Map<string, { t0: number, id: string, e: Entry }[]>, other?: any } | null} LW-DAWN `other`: the day kept beside it */
     this._departures = null;
     /** @type {Map<string, { t: number, said: boolean }>} when each last came by the player (the clock's minute), and
      *  whether they spoke (LW-TALK: one who kept quiet speaks when the player stops before them) */
@@ -307,7 +341,7 @@ export class LivingTown {
     this._live = [];
     /** @type {{ person: any, out: any }[]} */
     this._rows = [];
-    /** LW4: today's people, kept while the roads' word for the day stands (LEGACY-HOME: and the list beyond the census). @type {{ day: number, roads: any, extra?: readonly Resident[]|null, list: Resident[] } | null} */
+    /** LW4: today's people, kept while the roads' word for the day stands (LEGACY-HOME: and the list beyond the census). @type {{ day: number, roads: any, extra?: readonly Resident[]|null, list: Resident[], other?: any } | null} LW-DAWN `other`: the day kept beside it */
     this._people = null;
     /** AUDIT LEGACY II P7: the town's houses with a door, listed once (homeFor). @type {number[]|null} */
     this._homes = null;
@@ -315,6 +349,8 @@ export class LivingTown {
     this._crewOf = new Map();
     /** LW5: the dock found off the harbour (a port with no Ship building), once found. @type {any} */
     this._harbourDock = null;
+    /** LW-DAWN: the berth's cell no street lies within HARBOUR_RING of - sounded once, not at every census. @type {string|null} */
+    this._harbourMiss = null;
   }
 
   /** LW5: the town's dock - a Ship building's, else the street nearest its harbour's berth (once the harbour is
@@ -324,8 +360,14 @@ export class LivingTown {
     if (this._harbourDock) return this._harbourDock;
     const h = this.o.harbour?.() ?? null;
     if (!h) return null;
+    // LW-DAWN: a berth no street comes near is sounded once - the search is the whole ring, cell by cell (8 ms on the
+    // synthetic great city), and a port with no dock asked it at every census and at every sailor's plan. By its cell:
+    // the ring is the cell's, and the host's berth comes back a hair off after a floating-origin shift
+    const berth = `${Math.floor(h.x / NAV_CELL)},${Math.floor(h.z / NAV_CELL)}`;
+    if (this._harbourMiss === berth) return null;
     this._harbourDock = harbourDock(this.nav, this.places, h.x, h.z);
     if (this._harbourDock) { this.places.dock.push(this._harbourDock); this._plans.clear(); }
+    if (!this._harbourDock) this._harbourMiss = berth;
     return this._harbourDock;
   }
 
@@ -348,10 +390,12 @@ export class LivingTown {
   /** A resident's day - a traveller's bent round its trips, a visitor's round its stay. @param {Resident} res @param {number} day */
   planOf(res, day) {
     let e = this._plans.get(res.id);
+    if (e && e.day !== day) { const o = swapDay(e, day); if (o) this._plans.set(res.id, e = o); }   // LW-DAWN: the other day, kept
     const crew = this._crewOf.get(res.id) ?? null;
     // AUDIT LEGACY II B3: a resident whose HOME changed (Project Legacy's line moved into a house bought, or to the home
     // the player marked) is planned again at once - kept by the day alone, they slept the rest of it in the old house
     if (!e || e.day !== day || e.home !== res.home || (crew && !(Math.abs((e.inT ?? -Infinity) - crew.inT) <= CREW_REPLAN_MIN))) {   // LW5: a crew's arrival read off two clocks: replanned only when it moved
+      const other = besideDay(e, day);   // LW-DAWN
       const roads = this._roadsOf(day);
       const visit = roads?.visitorOf.get(res.id) ?? null;
       let plan;
@@ -362,7 +406,7 @@ export class LivingTown {
         const D0 = day * DAY_MIN + DAY_START_MIN;
         const away = [{ t0: D0 - DAY_MIN, t1: crew.inT, exit: dock, armed: false }, { t0: crew.outT, t1: D0 + 2 * DAY_MIN, exit: dock, armed: false }];
         plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, visitor: true, home: this._lodging(res), away });
-        e = { day, plan, roads: true, inT: crew.inT, home: res.home };
+        e = { day, plan, roads: true, inT: crew.inT, home: res.home, other };
         this._planGen++;
         this._plans.set(res.id, e);
         return e.plan;
@@ -376,7 +420,7 @@ export class LivingTown {
         const away = (roads?.away.get(res.id) ?? []).map((w) => ({ t0: w.t0, t1: w.t1, exit: w.dock ? (this.dockSpot() ?? exitToward(this.places, w.yaw)) : exitToward(this.places, w.yaw), armed: w.armed }));   // LW5b: a passage leaves by the dock
         plan = dayPlan(res, this.places, day, { mpm: this.o.mpm, away, watch: this._watchSize });
       }
-      e = { day, plan, roads: !!roads, home: res.home };
+      e = { day, plan, roads: !!roads, home: res.home, other };
       this._planGen++;
       this._plans.set(res.id, e);
     }
@@ -388,12 +432,20 @@ export class LivingTown {
   _roadsOf(day) {
     if (!this.o.tripsOf) return null;
     if (this._roads?.day === day) return this._roads;
+    const kept = swapDay(this._roads, day);   // LW-DAWN: the other day's word, kept - not asked of the host again
+    if (kept) return (this._roads = kept);
     const got = this.o.tripsOf(day);
     if (!got) return null;
     this._roads = { day, away: got.away, visitorOf: new Map(got.visitors.map((v) => [v.res.id, v])), visitors: got.visitors.map((v) => v.res),
-      holders: got.holders ?? null, news: got.news ?? null, places: got.places ?? null };   // LW4: who holds each traveller's place today; the town's news of the road; LW-TALK: its towns
+      holders: got.holders ?? null, news: got.news ?? null, places: got.places ?? null,   // LW4: who holds each traveller's place today; the town's news of the road; LW-TALK: its towns
+      other: besideDay(this._roads, day) };   // LW-DAWN
     this._people = null;
-    for (const [id, e] of this._plans) if (e.day === day && !e.roads) this._plans.delete(id);   // planned before the roads were known: again
+    for (const [id, e] of this._plans) {
+      // planned before the roads were known: again (LW-DAWN: the other day kept beside it stays, and one kept beside
+      // another day's goes)
+      if (e.day === day && !e.roads) { if (e.other) this._plans.set(id, e.other); else this._plans.delete(id); }
+      else if (e.other?.day === day && !e.other.roads) e.other = null;
+    }
     return this._roads;
   }
 
@@ -428,6 +480,7 @@ export class LivingTown {
     const roads = this._roadsOf(day);
     const v = roads?.visitors;
     const extra = this.o.extraPeople?.(day, this) ?? null;
+    if (this._people && this._people.day !== day) this._people = swapDay(this._people, day) ?? this._people;   // LW-DAWN: the other day's, kept
     if (this._people?.day === day && this._people.roads === roads && this._people.extra === extra) return this._people.list;
     const h = roads?.holders;
     const hold = this.o.holderOf;
@@ -438,7 +491,7 @@ export class LivingTown {
       return !x ? [] : [x.id === r.id ? r : { ...x, home: r.home }];
     }) : this.residents;
     const list = v?.length || extra?.length ? own.concat(v ?? [], extra ?? []) : own;
-    this._people = { day, roads, extra, list };
+    this._people = { day, roads, extra, list, other: besideDay(this._people, day) };   // LW-DAWN
     return list;
   }
 
@@ -570,6 +623,7 @@ export class LivingTown {
   /** LW-SPACE: the day's walks by where they leave from, each list in order (the earlier first, then the lower id) -
    *  made again when a plan does. @param {number} day */
   _walksFrom(day) {
+    if (this._departures && this._departures.day !== day) this._departures = swapDay(this._departures, day) ?? this._departures;   // LW-DAWN: the other day's, kept
     const d = this._departures;
     if (d && d.day === day && d.gen === this._planGen) return d.from;
     /** @type {Map<string, { t0: number, id: string, e: Entry }[]>} */
@@ -583,7 +637,7 @@ export class LivingTown {
       }
     }
     for (const list of from.values()) list.sort((a, b) => a.t0 - b.t0 || (a.id < b.id ? -1 : 1));
-    this._departures = { day, gen: this._planGen, from };
+    this._departures = { day, gen: this._planGen, from, other: besideDay(this._departures, day) };   // LW-DAWN
     return from;
   }
 

@@ -85,7 +85,7 @@ import {
 import { enchantmentRowCost } from './enchanting.js';   // AUDIT PROF-541 J4: a Rare roll the piece's points hold
 import { minedMaterial } from '../net/professionLaw.js';
 import { weaponOfMaterial, armorOfMaterial, createWeapon } from '../combat/enemyEquipment.js';
-import { setItemFields, mintCondition, templateByIndex, registerItemUseHandler, conditionPercentage } from './itemTemplates.js';   // AUDIT ECON R2: the card's own percentage
+import { setItemFields, mintCondition, templateByIndex, registerItemUseHandler, conditionPercentage, conditionShare, mendOrder } from './itemTemplates.js';   // AUDIT ECON R2: the card's own percentage; MEND-WORN: the mend order's one home
 import { registerTabledLootHandler, registerEnemyLootExtra } from './loot.js';   // REPAIR-EASE: the field kit's two loot doors
 import { itemLongName } from './itemInfo.js';
 import './profTemplates.js';   // the Repair Kit's row (692), registered with the ores and ingots
@@ -255,7 +255,6 @@ export function kitMends(m, item) {
   if (item.group === 'Armor') return item.material === ARMOR_PLATE + m || (m === 1 && item.material === ARMOR_CHAIN);
   return false;
 }
-const conditionShare = (it) => it.currentCondition / it.maxCondition;
 /** KIT-CEILING: the condition no kit mends a piece past - three quarters of it (recipeLaw.js KIT_CEILING), ROUNDED DOWN:
  *  an Iron Dagger's 50 stops at 37 (74%), never 38 (76% - the overhaul's sharp band, pcaao.js, the smith's to give). */
 export const kitCeiling = (it) => Math.floor(it.maxCondition * KIT_CEILING);
@@ -274,9 +273,8 @@ export const kitGives = (it) => kitCeiling(it) - it.currentCondition > Math.floo
 export function repairKitTargets(kit, items) {
   if (!kit || kit.templateIndex !== REPAIR_KIT_TEMPLATE || !Array.isArray(items)) return [];
   const metal = kit.fieldKit === true ? FIELD_KIT : kit.kitMetal;   // REPAIR-EASE: a field kit mends any metal, by less
-  const worn = (it) => (it.equipSlot != null ? 1 : 0);
   return items.filter((it) => it !== kit && kitMends(metal, it) && kitGives(it))   // KIT-CEILING: below it, by more than a hundredth
-    .sort((a, b) => worn(b) - worn(a) || conditionShare(a) - conditionShare(b));
+    .sort(mendOrder);   // MEND-WORN: the order's one home, Repairs Objects' too (itemTemplates.js)
 }
 /**
  * A KIT USED (PROF0 9.3: "repairs 25% of an item's condition, once"): the piece it is AIMED at (MEND-AIM), or unaimed the

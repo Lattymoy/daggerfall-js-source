@@ -116,7 +116,7 @@ test('E1 pump: CastWhenHeld wear (4 normal / 60 resting), HealthLeech\'s daily l
   assert.deepEqual(hurt, [], 'used within the day - no leech');
   enchantmentMagicRound(w3, 8, { nowMinutes: MINUTES_PER_DAY + 2, ctx: { hurtSelf: (n) => hurt.push(n) } });
   assert.deepEqual(hurt, [1], 'past a day unused - the leech runs');
-  // RepairsObjects: player only, first damaged item, enchanted skipped without the setting
+  // RepairsObjects: player only, one piece a tick (MEND-WORN: the most worn worn piece first - test/mend_worn.test.js), enchanted skipped without the setting
   const damaged = { name: 'Sword', templateIndex: 120, currentCondition: 50, maxCondition: 100 };
   const enchDamaged = item(T.PotentVs, 0, { currentCondition: 10, equipSlot: null });
   const rep = wearer([enchDamaged, damaged, item(T.RepairsObjects, -1)], { isPlayer: true });

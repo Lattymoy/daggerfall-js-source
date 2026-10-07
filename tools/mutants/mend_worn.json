@@ -1,0 +1,137 @@
+[
+  {
+    "name": "MEND-WORN-dfu-walk",
+    "file": "src/systems/enchantments.js",
+    "old": "      const it = repairsObjectsTarget(entity.items, { allowMagicRepairs: ctx?.allowMagicRepairs ?? false });\n      if (!it) return;\n      repoolWeapon(it);\n      it.currentCondition = Math.min(it.maxCondition, it.currentCondition + (mendsOnPool(it) ? POOL_WEAPON_MEND : CONDITION_AMOUNT));\n",
+    "new": "      for (const it of entity.items ?? []) {\n        if (it && it.currentCondition != null && it.maxCondition != null && it.currentCondition < it.maxCondition) {\n          if (isEnchantedItem(it) && !(ctx?.allowMagicRepairs ?? false)) continue;\n          it.currentCondition += 1;\n          return;\n        }\n      }\n",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  },
+  {
+    "name": "MEND-WORN-pack-order",
+    "file": "src/systems/enchantments.js",
+    "old": "    if (!best || mendOrder(it, best) < 0) best = it;",
+    "new": "    if (!best) best = it;",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  },
+  {
+    "name": "MEND-WORN-order-worn-dropped",
+    "file": "src/systems/itemTemplates.js",
+    "old": "export const mendOrder = (a, b) => wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
+    "new": "export const mendOrder = (a, b) => conditionShare(a) - conditionShare(b);",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  },
+  {
+    "name": "MEND-WORN-order-least-worn",
+    "file": "src/systems/itemTemplates.js",
+    "old": "wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
+    "new": "wornFirst(b) - wornFirst(a) || conditionShare(b) - conditionShare(a);",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  },
+  {
+    "name": "MEND-WORN-smiths-refusal-unread",
+    "file": "src/systems/enchantments.js",
+    "old": "    if (templateByIndex(it.templateIndex)?.isNotRepairable) continue;\n",
+    "new": "",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  },
+  {
+    "name": "MEND-WORN-magic-unasked",
+    "file": "src/systems/enchantments.js",
+    "old": "    if (isEnchantedItem(it) && !allowMagicRepairs) continue;\n",
+    "new": "",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  },
+  {
+    "name": "MEND-WORN-a-point-on-the-pool",
+    "file": "src/systems/enchantments.js",
+    "old": "it.currentCondition + (mendsOnPool(it) ? POOL_WEAPON_MEND : CONDITION_AMOUNT));",
+    "new": "it.currentCondition + CONDITION_AMOUNT);",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  },
+  {
+    "name": "MEND-WORN-uses-on-the-pool",
+    "file": "src/systems/enchantments.js",
+    "old": "const mendsOnPool = (it) => it.group === 'Weapons' && !it.magic && !it.artifact;",
+    "new": "const mendsOnPool = (it) => it.group === 'Weapons' && !it.artifact;",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  },
+  {
+    "name": "MEND-WORN-artifact-on-the-pool",
+    "file": "src/systems/enchantments.js",
+    "old": "const mendsOnPool = (it) => it.group === 'Weapons' && !it.magic && !it.artifact;",
+    "new": "const mendsOnPool = (it) => it.group === 'Weapons' && !it.magic;",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  },
+  {
+    "name": "MEND-WORN-past-its-condition",
+    "file": "src/systems/enchantments.js",
+    "old": "      it.currentCondition = Math.min(it.maxCondition, it.currentCondition + (mendsOnPool(it) ? POOL_WEAPON_MEND : CONDITION_AMOUNT));",
+    "new": "      it.currentCondition = it.currentCondition + (mendsOnPool(it) ? POOL_WEAPON_MEND : CONDITION_AMOUNT);",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  },
+  {
+    "name": "MEND-WORN-row-pool-kept",
+    "file": "src/systems/enchantments.js",
+    "old": "      repoolWeapon(it);\n      it.currentCondition = Math.min(",
+    "new": "      it.currentCondition = Math.min(",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  },
+  {
+    "name": "MEND-WORN-another-rows-share",
+    "file": "src/systems/enchantments.js",
+    "old": "export const POOL_WEAPON_MEND = Math.round(WEAPON_CONDITION_POOL / ITEM_TEMPLATES[WEAPONS.Dagger].hitPoints);",
+    "new": "export const POOL_WEAPON_MEND = Math.round(WEAPON_CONDITION_POOL / ITEM_TEMPLATES[WEAPONS.Long_Bow].hitPoints);",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  },
+  {
+    "name": "MEND-WORN-a-foes-ring",
+    "file": "src/systems/enchantments.js",
+    "old": "      if (!entity.isPlayer || round % CONDITION_PER_ROUNDS !== 0) return;",
+    "new": "      if (round % CONDITION_PER_ROUNDS !== 0) return;",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  },
+  {
+    "name": "MEND-WORN-every-round",
+    "file": "src/systems/enchantments.js",
+    "old": "      if (!entity.isPlayer || round % CONDITION_PER_ROUNDS !== 0) return;",
+    "new": "      if (!entity.isPlayer) return;",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  },
+  {
+    "name": "MEND-WORN-kit-own-order",
+    "file": "src/systems/smithItems.js",
+    "old": "    .sort(mendOrder);",
+    "new": "    .sort((a, b) => a.currentCondition / a.maxCondition - b.currentCondition / b.maxCondition);",
+    "tests": [
+      "test/mend_worn.test.js"
+    ]
+  }
+]

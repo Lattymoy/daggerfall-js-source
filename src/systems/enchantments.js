@@ -63,6 +63,9 @@ import { applyDressStanding } from './clothingStanding.js';   // DRESS1 (2026-09
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 63 F6: PlayerEntity.cs:128-129 sizes reactionMods at socialGroupCount = 11
 import { regenBarred } from './courtRules.js';   // WBX6: the Burning Court keeps no regeneration
+import { ITEM_TEMPLATES, templateByIndex, mendOrder } from './itemTemplates.js';   // MEND-WORN: the mend order's one home, and the smith's refusal
+import { WEAPONS, WEAPON_CONDITION_POOL } from '../characters/weapons.js';   // MEND-WORN: a pool weapon's tick is the classic Dagger's share
+import { repoolWeapon } from './conditionRepair.js';   // MEND-WORN: a weapon on its row's pool moves before a mend on the pool, as before a wear
 export { ENCHANTMENT_TYPES };
 
 /** EnchantmentSettings.ClassicType (DaggerfallUnityItem.cs:1316-1320).
@@ -85,6 +88,7 @@ export const PAYLOAD = Object.freeze({
 // at the arm that spends it).
 export const REGEN_PER_ROUNDS = 4;            // RegensHealth.cs:25 (VampiricEffect.cs:27 shares the value)
 export const CONDITION_PER_ROUNDS = 4;        // RepairsObjects.cs:25 / ItemDeteriorates.cs:29
+export const CONDITION_AMOUNT = 1;            // RepairsObjects.cs:26 (MEND-WORN: a pool weapon's is POOL_WEAPON_MEND)
 export const DAMAGE_PER_ROUNDS = 4;           // UserTakesDamage.cs:27
 export const TIME_LEECH_PER_ROUNDS = 4;       // HealthLeech.cs:27
 export const LEECH_CAST_AMOUNT = 16;          // HealthLeech.cs:29
@@ -324,6 +328,43 @@ export function mobileAffinityMatches(mobileType, paramType) {
     || (paramType === AFFINITY_PARAM.Animals && affinity === 'Animal');
 }
 
+// ---- MEND-WORN: what a Repairs Objects tick mends -------------------
+// MEND-WORN (2026-10-07, Mac: "Now we just gotta fix the 'repairs objects' not working"). DFU mends the FIRST damaged
+// piece in the whole pack, in the pack's order, by a point (RepairsObjects.cs:86-101 - 6846029b4, 2022: "RepairsObjects
+// should repair all items in inventory"; its loop before walked the equip table, which the class's own comment records
+// as classic's: "Only equipped items will receive repairs"). The port's default pack is Roleplay & Realism's - its kit
+// worn to 30-75%, loot and shelves at 20-75% with the books among them - beside the port's own pieces that keep their
+// uses in their condition (a tent's nights, a campfire's fuel). So every tick went to the oldest worn thing carried and
+// nothing the player wore was seen to mend; and WEAPON-POOL's pools (1,600 to 12,800) left a weapon a point a tick, a
+// 32nd of what a dagger had. The departures (Port-Ledger A, MEND-WORN): the mend order below, nothing a smith will not
+// repair, and a pool weapon's tick.
+
+/** MEND-WORN: what one tick mends on a weapon whose condition is WEAPON-POOL's pool (Mac, asked: "Weapons as a classic
+ *  dagger") - the share a classic Dagger's point was of its row (Daggerfall's Dagger, 50), on the pool: 1,600 / 50 =
+ *  32, iron 2% a tick and Daedric 0.25%, so no weapon type mends slower than it did. A magic item's or an artifact's
+ *  condition is its uses, not the pool (loot.js), and keeps DFU's point, as every other piece does. */
+export const POOL_WEAPON_MEND = Math.round(WEAPON_CONDITION_POOL / ITEM_TEMPLATES[WEAPONS.Dagger].hitPoints);
+const mendsOnPool = (it) => it.group === 'Weapons' && !it.magic && !it.artifact;
+
+/** MEND-WORN: THE PIECE A REPAIRS OBJECTS TICK MENDS in `items` (the pack), or null. Among the pieces below their
+ *  condition that a repair may touch, the mend order's first (itemTemplates.js mendOrder, the repair kit's: WORN first,
+ *  then the pack, each the lowest share left first, ties in the pack's order). Never what a smith refuses as not
+ *  repairable (repairService.js repairRefusal) - DFU's own flag on the quiver it mints at 0 and on the lights, whose
+ *  condition is their fuel (Arrow, Torch, Lantern, Candle, Holy Candle), and the port's on the Dwemer Pellet, a
+ *  campfire's nights and the rest items' doses (AUDIT REST II H7). RepairsObjects.cs reads no such flag, so a lit
+ *  torch first in the pack was refuelled as it burned. An enchanted piece only under AllowMagicRepairs
+ *  (RepairsObjects.cs:93). */
+export function repairsObjectsTarget(items, { allowMagicRepairs = false } = {}) {
+  let best = null;
+  for (const it of Array.isArray(items) ? items : []) {
+    if (!it || !Number.isFinite(it.currentCondition) || !Number.isFinite(it.maxCondition) || !(it.currentCondition < it.maxCondition)) continue;
+    if (templateByIndex(it.templateIndex)?.isNotRepairable) continue;
+    if (isEnchantedItem(it) && !allowMagicRepairs) continue;
+    if (!best || mendOrder(it, best) < 0) best = it;
+  }
+  return best;
+}
+
 // ---- the payload registry -------------------------------------------
 // One row per classic type: the payload flags VERBATIM from each
 // class's SetProperties, and the arms. An arm returns
@@ -471,21 +512,21 @@ const REGISTRY = new Map([
     flags: PAYLOAD.Held,
     constant({ param, mods }) { mods.weightAllowanceMult = Math.max(mods.weightAllowanceMult, param === 1 ? 0.5 : 0.25); },
   }],
-  /** RepairsObjects.cs - MagicRound, player only: every 4 rounds +1
-   *  condition on the FIRST damaged item found, skipping enchanted
-   *  items unless the AllowMagicRepairs setting says otherwise; one
-   *  item per tick (the C# returns inside the loop). */
+  /** RepairsObjects.cs - MagicRound, player only: every 4 rounds ONE
+   *  piece mends (the C# returns inside its loop). MEND-WORN: the
+   *  piece is repairsObjectsTarget's - what is worn first, the most
+   *  worn first - by POOL_WEAPON_MEND on a pool weapon and DFU's
+   *  point on the rest, never past its condition; a weapon still on
+   *  its row's pool moves to the one pool first, as it does before a
+   *  wear (equip.js lowerCondition). */
   [T.RepairsObjects, {
     flags: PAYLOAD.Held,   // RepairsObjects.cs:35
     magicRound({ round, entity, ctx }) {
       if (!entity.isPlayer || round % CONDITION_PER_ROUNDS !== 0) return;
-      for (const it of entity.items ?? []) {
-        if (it && it.currentCondition != null && it.maxCondition != null && it.currentCondition < it.maxCondition) {
-          if (isEnchantedItem(it) && !(ctx?.allowMagicRepairs ?? false)) continue;
-          it.currentCondition += 1;
-          return;
-        }
-      }
+      const it = repairsObjectsTarget(entity.items, { allowMagicRepairs: ctx?.allowMagicRepairs ?? false });
+      if (!it) return;
+      repoolWeapon(it);
+      it.currentCondition = Math.min(it.maxCondition, it.currentCondition + (mendsOnPool(it) ? POOL_WEAPON_MEND : CONDITION_AMOUNT));
     },
   }],
   /** AbsorbsSpells.cs - Held constant: IsAbsorbingSpells. */
