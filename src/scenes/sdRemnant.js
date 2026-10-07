@@ -123,9 +123,9 @@ export function remnantOpenAt(s, now) {
  * The arena's set. `link()` the fight's link (net/sdFightLink.js createSdFightLink - null offline), `sendIn()` my `in`
  * down my socket (true when it left), `sendBlow(k, fields)` a blow (the wire's `hit`, `ehit`, `xhit`), `alive()` whether
  * I live.
- * @param {{ renderer?: any, link?: () => any, sendIn?: () => boolean, sendBlow?: (k: string, fields: any) => boolean, alive?: () => boolean }} deps
+ * @param {{ renderer?: any, link?: () => any, sendIn?: () => boolean, sendBlow?: (k: string, fields: any) => boolean, alive?: () => boolean, ending?: string|null }} deps - SD18c: `ending` its Hollow's (net/sdMarks.js) - the light its heart, eyes and Hearts burn with
  */
-export function createSdRemnant({ renderer = null, link = () => null, sendIn = () => false, sendBlow = () => false, alive = () => true }) {
+export function createSdRemnant({ renderer = null, link = () => null, sendIn = () => false, sendBlow = () => false, alive = () => true, ending = null }) {
   /** @type {any[]|null} the dungeon's draws, as stood into */
   let draws = null;
   /** every mesh made, to free (SD17: each body's parts, the Hearts', the gears') */
@@ -180,8 +180,8 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
       ensureSdRemnantArt(renderer);
       const add = (mesh) => { if (!mesh) return null; const d = { gpu: mesh, object: { matrix: new Float32Array(ZERO) }, hidden: true, posed: new Float64Array(5) }; draws.push(d); return d; };
       // SD17: each body its parts - the pelvis first (the body's own draw, where the bodies always stood), the rest after
-      const bodies = ['brass', 'gold', 'silver'].map((metal) => buildRemnantParts(metal).map(make));
-      const heartMesh = make(buildHeartModel());
+      const bodies = ['brass', 'gold', 'silver'].map((metal) => buildRemnantParts(metal, ending).map(make));
+      const heartMesh = make(buildHeartModel(ending));
       remDraw = add(bodies[0][0]);
       echoDraws.push(add(bodies[1][0]), add(bodies[2][0]));
       for (let c = 0; c < SD_HEARTS[1]; c++) heartDraws.push(add(heartMesh));

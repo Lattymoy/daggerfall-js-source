@@ -13,7 +13,7 @@
 import { faces } from './gateModel.js';
 import { packRealmFaces, SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD } from './sdRealm.js';
 import { SD_HALL_GLOW_RECORD } from './sdHallArt.js';
-import { SD_REMNANT_GOLD_RECORD, SD_REMNANT_SILVER_RECORD } from './sdRemnantArt.js';
+import { SD_REMNANT_GOLD_RECORD, SD_REMNANT_SILVER_RECORD, SD_REMNANT_ENDING_RECORD } from './sdRemnantArt.js';
 import { SD_REM, SD_ECHO, SD_HEART } from '../net/sdRemnant.js';
 
 /** Its parts, its own frame, at the Remnant's own height (an Echo is scaled to its own - remnantScale). */
@@ -60,8 +60,13 @@ function shard(f, rec, cx, cz, lo, wy, hi, r) {
  *  scenes/sdRemnantRig.js SD_RIG_PARTS turns - its right leg (at -x: it faces +z), its left, the torso (the cage, the
  *  heart, the shoulders), the head and its eyes, its right arm, its left. */
 export const SD_REMNANT_PARTS = Object.freeze(['pelvis', 'legR', 'legL', 'torso', 'head', 'armR', 'armL']);
-/** Every face of a body, each into the collector `into(part)` answers for its part. */
-function emitRemnant(metal, into) {
+/** SD18c: the light a body's heart and eyes burn with - its Hollow's Ending's (world/sdRemnantArt.js), else the Mantella's
+ *  green and the brass's gold. */
+export const heartRecordOf = (ending) => SD_REMNANT_ENDING_RECORD[ending] ?? SD_REMNANT_HEART_RECORD;
+export const eyeRecordOf = (ending) => SD_REMNANT_ENDING_RECORD[ending] ?? SD_REMNANT_EYE_RECORD;
+/** Every face of a body, each into the collector `into(part)` answers for its part (SD18c: its heart and eyes in `ending`'s
+ *  light). */
+function emitRemnant(metal, into, ending = null) {
   const B = SD_REMNANT_BODY, W = SD_REMNANT_WEAR[metal];
   // the legs, the hip
   for (const s of [-1, 1]) box(into(s < 0 ? 'legR' : 'legL'), W.metal, s * B.legX, 0, 0, B.legW, B.legH, B.legD);
@@ -73,7 +78,7 @@ function emitRemnant(metal, into) {
     const a = (k / B.bars) * Math.PI * 2;
     box(f, W.metal, Math.cos(a) * B.cageRX, cy0, Math.sin(a) * B.cageRZ, B.bar, B.cageH, B.bar);
   }
-  shard(f, SD_REMNANT_HEART_RECORD, 0, 0, B.heartY - B.heartR, B.heartY, B.heartY + B.heartR, B.heartR);
+  shard(f, heartRecordOf(ending), 0, 0, B.heartY - B.heartR, B.heartY, B.heartY + B.heartR, B.heartR);
   // the shoulders, the arms hanging from them, the head and its eyes
   const sy = cy0 + B.cageH;
   box(f, W.metal, 0, sy, 0, B.shoulderW, B.shoulderH, B.shoulderD);
@@ -83,20 +88,20 @@ function emitRemnant(metal, into) {
   box(f, W.joint, 0, hy, 0, B.headW, headH, B.headD);
   for (const s of [-1, 1]) {
     const ex = s * B.eyeX, ey = hy + B.eyeY, ez = B.headD / 2 + 0.01;
-    f.quad(SD_REMNANT_EYE_RECORD, [ex - B.eyeW / 2, ey, ez], [ex + B.eyeW / 2, ey, ez], [ex + B.eyeW / 2, ey + B.eyeH, ez], [ex - B.eyeW / 2, ey + B.eyeH, ez], [0, 0], [1, 0], [1, 1], [0, 1]);
+    f.quad(eyeRecordOf(ending), [ex - B.eyeW / 2, ey, ez], [ex + B.eyeW / 2, ey, ez], [ex + B.eyeW / 2, ey + B.eyeH, ez], [ex - B.eyeW / 2, ey + B.eyeH, ez], [0, 0], [1, 0], [1, 1], [0, 1]);
   }
 }
 /** THE REMNANT (or an Echo, in `metal` 'gold' or 'silver'), one mesh in its own frame. */
-export function buildRemnantModel(metal = 'brass') {
+export function buildRemnantModel(metal = 'brass', ending = null) {
   const f = faces();
-  emitRemnant(metal, () => f);
+  emitRemnant(metal, () => f, ending);
   return packRealmFaces(f);
 }
 /** SD17: THE REMNANT AS ITS PARTS (SD_REMNANT_PARTS' order), each a mesh in the body's own frame - stood whole, they are
  *  buildRemnantModel's faces, every one. */
-export function buildRemnantParts(metal = 'brass') {
+export function buildRemnantParts(metal = 'brass', ending = null) {
   const fs = Object.fromEntries(SD_REMNANT_PARTS.map((n) => [n, faces()]));
-  emitRemnant(metal, (n) => fs[n]);
+  emitRemnant(metal, (n) => fs[n], ending);
   return SD_REMNANT_PARTS.map((n) => packRealmFaces(fs[n]));
 }
 /** SD17: A GEAR of the Volley - a brass cog SD_GEAR.r across with SD_GEAR.teeth teeth, SD_GEAR.d thick, its disc in the
@@ -119,9 +124,9 @@ export function buildGearModel() {
   return packRealmFaces(f);
 }
 /** A HEART of the Reset: a shard of the heart's own light, SD_HEART tall and across, its waist low. */
-export function buildHeartModel() {
+export function buildHeartModel(ending = null) {
   const f = faces();
-  shard(f, SD_REMNANT_HEART_RECORD, 0, 0, 0, SD_HEART.h * 0.35, SD_HEART.h, SD_HEART.r);
+  shard(f, heartRecordOf(ending), 0, 0, 0, SD_HEART.h * 0.35, SD_HEART.h, SD_HEART.r);   // SD18c: in its Ending's light
   return packRealmFaces(f);
 }
 

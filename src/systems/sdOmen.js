@@ -16,6 +16,7 @@ import { sdPhase, sdStands, sdMarked, SD_COLLAPSE_MS } from '../net/sdLaw.js';
 import { timerText } from './eventTimers.js';
 import { pixelOfLoc } from './sdSite.js';
 import { MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS } from './rumorMill.js';
+import { sdMarksOf, sdEndingOf } from '../net/sdMarks.js';   // SD18c: the Ending a Hollow keeps, by its slot
 
 /** How far the column is seen, map pixels (Chebyshev) - section 4's twelve. */
 export const SD_OMEN_PX = 12;
@@ -67,7 +68,8 @@ export function sdMapMark(rec, hollow, now) {
   if (!rec || !sdMarked(phase) || !hollow?.site || hollow.s !== rec.s) return null;
   const name = String(hollow.loc?.name ?? 'An Abyss Dungeon');
   const words = sdStateWords(rec, now);
-  const lines = [`Near ${hollow.site.cityName || 'the Iliac Bay'}`, ...(rec.fb ? [`Found by ${rec.fb}`] : []), ...(words ? [words[0].toUpperCase() + words.slice(1)] : [])];
+  const E = sdEndingOf(sdMarksOf(rec.s));   // SD18c: the Ending it keeps, on its card
+  const lines = [`Near ${hollow.site.cityName || 'the Iliac Bay'}`, ...(E ? [`It keeps the Ending of ${E.stone}`] : []), ...(rec.fb ? [`Found by ${rec.fb}`] : []), ...(words ? [words[0].toUpperCase() + words.slice(1)] : [])];
   return { day: rec.s, cx: hollow.site.px + 0.5, cy: hollow.site.py + 0.5, r: SD_RING_R, label: words ? `${name} - ${words}` : name, phase, tip: { title: `${name}, an Abyss Dungeon`, lines } };
 }
 
@@ -79,8 +81,17 @@ export function sdNoticeCard(mark, cityName) {
   return { subject: 'Abyss Dungeon', body: words ? `${where} ${words[0].toUpperCase()}${words.slice(1)}.` : where };
 }
 
-/** The taverns' word of it (section 4). */
-export const sdRumorLine = (city) => `They say the air goes brass-coloured past the walls of ${city} at dusk, and a bell rings where there is no bell.`;
+/** SD18c: what the taverns say of a Hollow by the Ending it keeps - the omen that goes with it. */
+export const SD_ENDING_RUMOR = Object.freeze({
+  daggerfall: 'a lion roars where there is no lion',
+  sentinel: 'the sun goes down twice',
+  wayrest: 'the tide comes in where there is no sea',
+  orsinium: 'something heavy walks just under the earth',
+  underking: 'the dead in their barrows turn their heads toward it',
+  blades: 'a dragon\'s shadow crosses where no dragon flies',
+});
+/** The taverns' word of it (section 4) - SD18c: the omen its Ending sends, else the bell where there is no bell. */
+export const sdRumorLine = (city, ending = null) => `They say the air goes brass-coloured past the walls of ${city} at dusk, and ${SD_ENDING_RUMOR[ending] ?? 'a bell rings where there is no bell'}.`;
 
 /**
  * "Any news?" asked in the city a standing Hollow stands by (`here` my map pixel), while it has risen or been found -
@@ -102,5 +113,5 @@ export function sdRumor(rec, hollow, now, here, session, { rolls = Math.random }
   if (!((session.numAnswersGivenTellMeAboutOrRumors | 0) < MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS || session.isSpyMaster)) return null;
   if (!(rolls() < SD_RUMOR_CHANCE)) return null;
   session.numAnswersGivenTellMeAboutOrRumors = (session.numAnswersGivenTellMeAboutOrRumors | 0) + 1;
-  return sdRumorLine(hollow.site.cityName || 'the city');
+  return sdRumorLine(hollow.site.cityName || 'the city', sdMarksOf(rec.s)[0]);
 }

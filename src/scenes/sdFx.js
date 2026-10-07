@@ -23,6 +23,9 @@ import { GateFxRenderer, FX_BURST_MS, FX_BURSTS_MAX, FX_LIGHT_MS } from '../rend
 import { SD_REM_SINK_MS } from './sdRemnant.js';
 import { SD_SLIP_FRAC } from './sdRemnantVoice.js';
 import { clearOfPillars } from './sdSpoils.js';
+import { sdEndingOf } from '../net/sdMarks.js';
+/** SD18c: the Hearts' and the stun's light - its Hollow's Ending's (net/sdMarks.js), else the Mantella's. */
+export const sdHeartColorOf = (s) => sdEndingOf(s?.mk)?.light ?? SD_FX_COLOR.heart;
 
 const kind = (share, power, grit, light = null) => Object.freeze({ share, power, grit, ...(light ? { light: Object.freeze(light) } : {}) });
 /** THE BURSTS: each kind's share of the sparks, its power, whether it is the brass's grit, and the light it throws
@@ -133,7 +136,7 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
       if (awake && !k.awake && t - s.op < SD_FX_LATE_MS) { const r = rem(0.1); add(r.p, s.op, SD_FX_KINDS.wake, SD_FX_COLOR.brass); felt('wake', r.x, r.z); }
       k.awake = awake;
       const stun = t < s.su;
-      if (stun && !k.stun) { const r = rem(SD_REM.h * 0.6); add(r.p, t, SD_FX_KINDS.stun, SD_FX_COLOR.heart); felt('stun', r.x, r.z); }
+      if (stun && !k.stun) { const r = rem(SD_REM.h * 0.6); add(r.p, t, SD_FX_KINDS.stun, sdHeartColorOf(s)); felt('stun', r.x, r.z); }
       k.stun = stun;
       if (!k.slipped && s.m > 0 && s.h / s.m < SD_SLIP_FRAC) { k.slipped = true; add(rem(SD_REM.h * 0.5).p, t, SD_FX_KINDS.slip, SD_FX_COLOR.brass); }
       // its Echoes risen and broken
@@ -148,7 +151,7 @@ export function createSdFx({ link, feet = () => null, shake = () => {} }) {
       });
       if (!s.ec) k.ec = [];
       // the Hearts risen and broken - the last one's break and the Hearts' going in one word (the stun's) seen as one
-      const X = s.cx, heart = (q, kd) => add(where(q[0], 1.2, q[1]), t, kd, SD_FX_COLOR.heart);
+      const X = s.cx, heart = (q, kd) => add(where(q[0], 1.2, q[1]), t, kd, sdHeartColorOf(s));
       if (X && X.i !== k.cx) {
         k.cx = X.i; k.hearts = X.c.map((q) => q[2]); k.cxc = X.c;
         for (const q of X.c) heart(q, SD_FX_KINDS.heartRise);

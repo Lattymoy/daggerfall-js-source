@@ -2391,3 +2391,24 @@ the strike; the hall); `tools/mutants/sd18b.json` (25). PINS MOVED: `test/sd11a_
 `test/sd11c_page.test.js` (the marks card in the fight's rigs), `test/sd15_read.test.js` (the ground in its element),
 `test/sd16_fx.test.js`, `test/sd9e_spoils.test.js` (the stone's light after the landings'); records re-aimed by content:
 `sd10b.json` (3), `sd11a.json` (2), `sd15.json`, `sd8d.json` - each run again, dead.
+
+### SD18c - shipped 2026-10-07 (the Ending's light and word)
+
+SD18b put a Hollow's Ending on its card, its row and its floor; the colossus itself still burned the Mantella's green in
+every Hollow, and no one outside the Hour heard which Ending it kept.
+
+- **Its light** (`world/sdRemnantArt.js` `SD_REMNANT_ENDING_RECORD`, records 25-30, `endingLightArt`): one picture an
+Ending - its colour, and as much again its own light - uploaded with the Echoes' metals. The Remnant's heart and eyes,
+its Echoes' and the Reset's Hearts burn with it (`world/sdRemnantModel.js` `heartRecordOf`, `eyeRecordOf`;
+`buildRemnantParts(metal, ending)`, `buildHeartModel(ending)`): the scene builds its bodies by the Ending the dungeon
+context hands it from the realm's own slot (`sdMarksOf(dfLocation.sdRealm)[0]`); with none, the Mantella's green and the
+brass's gold as they were.
+- **Its sparks** (`scenes/sdFx.js` `sdHeartColorOf`): the Hearts risen and broken and the stun in the Ending's light.
+- **Its word** (`systems/sdOmen.js`): the taverns tell the omen its Ending sends (`SD_ENDING_RUMOR` - a lion roars where
+there is no lion; the sun goes down twice; the tide comes in where there is no sea; something heavy walks just under the
+earth; the dead in their barrows turn their heads toward it; a dragon's shadow crosses where no dragon flies - the bell
+where none is kept), and its card on the held map says *It keeps the Ending of <stone>*.
+
+Pins: `test/sd18c_endings.test.js` (4 - the lights; the bodies and the scene; the sparks; the word);
+`tools/mutants/sd18c.json` (13). PINS MOVED: `test/sd8c_remnant_page.test.js` (the art's records; the context's birth of
+the scene), `test/sd2c_omen.test.js` (the map card's line, the rumor by the slot's Ending).

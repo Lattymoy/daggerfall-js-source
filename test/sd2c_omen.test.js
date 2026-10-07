@@ -3,6 +3,7 @@
 // over its pixel seen from SD_OMEN_PX round and a word in the taverns of its city; once found, its ring on the held map,
 // its mark on the compass inside SD_COMPASS_M, its row in the Timers window and its note under the red seal, until it
 // is gone.
+import { sdMarksOf, sdEndingOf } from '../src/net/sdMarks.js';   // SD18c (PIN MOVED): a Hollow's Ending in its words
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -62,7 +63,7 @@ test('SD2c the ring: none while it has only risen (a find), its own pixel\'s onc
   const f = sdFind(r, T0 + H, 'Mara');
   const m = sdMapMark(f, HOLLOW, T0 + H + 1000);
   assert.deepEqual({ ...m, tip: null }, { day: 1, cx: 303.5, cy: 202.5, r: SD_RING_R, label: 'The Stopped Bell - fades in 1d 22h', phase: 'found', tip: null });
-  assert.deepEqual(m.tip, { title: 'The Stopped Bell, an Abyss Dungeon', lines: ['Near Copperham', 'Found by Mara', 'Fades in 1d 22h'] });
+  assert.deepEqual(m.tip, { title: 'The Stopped Bell, an Abyss Dungeon', lines: ['Near Copperham', `It keeps the Ending of ${sdEndingOf(sdMarksOf(1)).stone}`, 'Found by Mara', 'Fades in 1d 22h'] });   // SD18c (PIN MOVED): the Ending it keeps
   assert.equal(sdStateWords(f, T0 + H + 1000), 'fades in 1d 22h');
   const k = sdFell(f, T0 + 3 * H, { top: 'Mara', n: 2 });
   assert.equal(sdMapMark(k, HOLLOW, T0 + 3 * H + 1000).label, 'The Stopped Bell - collapsing');
@@ -112,20 +113,20 @@ test('SD2c the taverns: "Any news?" in the city it stands by, while it has risen
   const here = { px: 300, py: 200 };
   const ses = () => ({ numAnswersGivenTellMeAboutOrRumors: 0 });
   const s1 = ses();
-  assert.equal(sdRumor(r, HOLLOW, T0 + M, here, s1, { rolls: () => 0 }), sdRumorLine('Copperham'));
+  assert.equal(sdRumor(r, HOLLOW, T0 + M, here, s1, { rolls: () => 0 }), sdRumorLine('Copperham', sdMarksOf(1)[0]));
   assert.equal(s1.numAnswersGivenTellMeAboutOrRumors, 1, 'the person\'s answer spent');
-  assert.equal(sdRumorLine('Copperham'), 'They say the air goes brass-coloured past the walls of Copperham at dusk, and a bell rings where there is no bell.');
+  assert.equal(sdRumorLine('Copperham'), 'They say the air goes brass-coloured past the walls of Copperham at dusk, and a bell rings where there is no bell.');   // SD18c: a Hollow with no Ending
   assert.equal(sdRumor(r, HOLLOW, T0 + M, here, ses(), { rolls: () => SD_RUMOR_CHANCE }), null, 'the chance not met');
   assert.equal(sdRumor(r, HOLLOW, T0 + M, { px: 301, py: 200 }, ses(), { rolls: () => 0 }), null, 'not in its city');
   assert.equal(sdRumor(r, HOLLOW, T0 + M, { px: 300, py: 201 }, ses(), { rolls: () => 0 }), null);
   const f = sdFind(r, T0 + H, 'Mara');
-  assert.equal(sdRumor(f, HOLLOW, T0 + 2 * H, here, ses(), { rolls: () => 0 }), sdRumorLine('Copperham'), 'found: still the talk of the town');
+  assert.equal(sdRumor(f, HOLLOW, T0 + 2 * H, here, ses(), { rolls: () => 0 }), sdRumorLine('Copperham', sdMarksOf(1)[0]), 'found: still the talk of the town');
   const k = sdFell(f, T0 + 3 * H, { top: 'Mara', n: 2 });
   assert.equal(sdRumor(k, HOLLOW, T0 + 3 * H + M, here, ses(), { rolls: () => 0 }), null, 'broken: no more omens');
   const spent = { numAnswersGivenTellMeAboutOrRumors: MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS };
   assert.equal(sdRumor(r, HOLLOW, T0 + M, here, spent, { rolls: () => 0 }), null, 'no news left in them');
   assert.equal(spent.numAnswersGivenTellMeAboutOrRumors, MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS, 'and none spent');
-  assert.equal(sdRumor(r, HOLLOW, T0 + M, here, { ...spent, isSpyMaster: true }, { rolls: () => 0 }), sdRumorLine('Copperham'), 'the spymaster has more');
+  assert.equal(sdRumor(r, HOLLOW, T0 + M, here, { ...spent, isSpyMaster: true }, { rolls: () => 0 }), sdRumorLine('Copperham', sdMarksOf(1)[0]), 'the spymaster has more');
   assert.equal(sdRumor(r, { ...HOLLOW, s: 2 }, T0 + M, here, ses(), { rolls: () => 0 }), null, 'another slot\'s Hollow');
   assert.equal(sdRumor(r, HOLLOW, T0 + M, null, ses(), { rolls: () => 0 }), null);
 });
@@ -174,7 +175,7 @@ test('SD2c the host: its ring, its column and its word read the record it heard 
   assert.equal(o.light, 1, 'ten minutes risen: whole');
   assert.equal(host.mapMark(), null, 'risen: a find');
   const ses = { numAnswersGivenTellMeAboutOrRumors: 0 };
-  assert.equal(host.rumor({ px: 300, py: 200 }, ses, { rolls: () => 0 }), sdRumorLine('Copperham'), 'its city\'s taverns');
+  assert.equal(host.rumor({ px: 300, py: 200 }, ses, { rolls: () => 0 }), sdRumorLine('Copperham', sdMarksOf(1)[0]), 'its city\'s taverns');
   const f = sdFind(r, T0, 'Mara');
   host.heard({ k: 'ev', ...f });
   host.frame();

@@ -587,7 +587,7 @@ test('SD8c THE BODIES MADE: the Remnant its own height from its feet, its body w
   assert.ok(det > 0, 'a proper turn - never a mirror');
   assert.ok(near(Math.atan2(fwd[0] - 5, fwd[2] + 3), Math.PI / 2), 'the law\'s bearing: atan2(dx, dz)');
   // the metals
-  assert.deepEqual(remnantArt().map(([rec]) => rec), [SD_REMNANT_GOLD_RECORD, SD_REMNANT_SILVER_RECORD]);
+  assert.deepEqual(remnantArt().map(([rec]) => rec), [SD_REMNANT_GOLD_RECORD, SD_REMNANT_SILVER_RECORD, 25, 26, 27, 28, 29, 30]);   // SD18c (PIN MOVED): and each Ending's light
   const others = [SD_STEPS_CRACKED_RECORD, SD_STEPS_BEAT_RECORD, ...Object.values(SD_HALL_GLOW_RECORD), SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD];
   assert.ok([SD_REMNANT_GOLD_RECORD, SD_REMNANT_SILVER_RECORD].every((r) => !others.includes(r)), 'records of their own');
   const g = echoMetalArt('gold'), s = echoMetalArt('silver');
@@ -644,7 +644,7 @@ test('SD8c THE PILLARS STAND: the arena\'s four pillars on the collider, their s
 
 test('SD8c THE HOSTS, by source: the dungeon context makes the arena\'s set in the Hour alone, frames it beside the hall, clears it, and in the Hour answers the gate\'s three seams with it - the Remnant, its Echoes, the Reset\'s Hearts - and their doors out to the realm; the mode machine hands it the fight and the two doors and stands the pillars with the floors; the world host keeps the link online, hears the realm\'s fight words from its own slot, sends my `in` with my level and my blows, forgets the fight out of the realm and draws the bar near the arena (mutants: each seam left the court\'s; the bar never put away)', () => {
   const D = read('src/scenes/dungeonContext.js');
-  assert.match(D, /const sdRemnant = _sdRealm \? createSdRemnant\(\{ renderer, link: \(\) => opts\.sdFight\?\.\(\) \?\? null, sendIn: \(\) => !!opts\.sdFightIn\?\.\(\), sendBlow: \(k, f\) => !!opts\.sdBlow\?\.\(k, f\), alive: \(\) => playerEntity\.health > 0 \}\) : null;/);
+  assert.match(D, /const sdRemnant = _sdRealm \? createSdRemnant\(\{ renderer, link: \(\) => opts\.sdFight\?\.\(\) \?\? null, sendIn: \(\) => !!opts\.sdFightIn\?\.\(\), sendBlow: \(k, f\) => !!opts\.sdBlow\?\.\(k, f\), alive: \(\) => playerEntity\.health > 0, ending: sdMarksOf\(dfLocation\.sdRealm\)\[0\] \}\) : null;/);   // SD18c (PIN MOVED): its Hollow's Ending
   assert.match(D, /if \(sdHall\) sdHallFrame\(dt, playerFeet\);[^\n]*\n\s+if \(sdRemnant\) sdRemnantFrame\(dt, playerFeet\);/);
   assert.match(D, /if \(playerFeet && !_sdRemnantStood\) \{ _sdRemnantStood = true; sdRemnant\.stand\(\{ dynamicDraws \}\); \}/);
   assert.match(D, /sdRemnant\?\.clear\(\);/);
