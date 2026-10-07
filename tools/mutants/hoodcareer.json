@@ -1,0 +1,83 @@
+[
+  {
+    "name": "HOODCAREER-the-burn-asks-no-hood",
+    "file": "src/systems/passiveSpecials.js",
+    "old": "    && careerSunAverse(entity)\n",
+    "new": "    && careerSunDamage(career)\n",
+    "tests": [
+      "test/hoodcareer.test.js"
+    ]
+  },
+  {
+    "name": "HOODCAREER-the-hood-keeps-nothing-off",
+    "file": "src/systems/passiveSpecials.js",
+    "old": "  return !cloakState(entity.equip?.slots ?? null).hood;",
+    "new": "  return true;",
+    "tests": [
+      "test/hoodcareer.test.js"
+    ]
+  },
+  {
+    "name": "HOODCAREER-the-hood-read-backwards",
+    "file": "src/systems/passiveSpecials.js",
+    "old": "  return !cloakState(entity.equip?.slots ?? null).hood;",
+    "new": "  return cloakState(entity.equip?.slots ?? null).hood;",
+    "tests": [
+      "test/hoodcareer.test.js"
+    ]
+  },
+  {
+    "name": "HOODCAREER-every-class-is-sun-averse",
+    "file": "src/systems/passiveSpecials.js",
+    "old": "  if (!careerSunDamage(entity?.career)) return false;\n  return !cloakState",
+    "new": "  return !cloakState",
+    "tests": [
+      "test/hoodcareer.test.js"
+    ]
+  },
+  {
+    "name": "HOODCAREER-the-door-asks-the-bit",
+    "file": "src/systems/vampirism.js",
+    "old": "  if (!careerSunAverse(entity)) return null;",
+    "new": "  if (!(entity?.career?.abilityFlagsAndSpellPointsBitfield & 16)) return null;",
+    "tests": [
+      "test/hoodcareer.test.js"
+    ]
+  },
+  {
+    "name": "HOODCAREER-the-door-opens-by-day",
+    "file": "src/systems/vampirism.js",
+    "old": "  if (!careerSunAverse(entity)) return null;\n  if (!isDayFromMinutes(nowMinutes)) return null;",
+    "new": "  if (!careerSunAverse(entity)) return null;\n  if (isDayFromMinutes(nowMinutes)) return null;",
+    "tests": [
+      "test/hoodcareer.test.js"
+    ]
+  },
+  {
+    "name": "HOODCAREER-the-refusal-says-no-more",
+    "file": "src/systems/vampirism.js",
+    "old": "  return { text: SUNLIGHT_TRAVEL_TEXT, hint };",
+    "new": "  return { text: SUNLIGHT_TRAVEL_TEXT };",
+    "tests": [
+      "test/hoodcareer.test.js"
+    ]
+  },
+  {
+    "name": "HOODCAREER-the-clamp-asks-the-bit",
+    "file": "src/scenes/world.js",
+    "old": "        sunAverse: racialSunAverse(playerEntity) || careerSunAverse(playerEntity),",
+    "new": "        sunAverse: racialSunAverse(playerEntity) || !!(playerEntity.career?.abilityFlagsAndSpellPointsBitfield & 16),",
+    "tests": [
+      "test/hoodcareer.test.js"
+    ]
+  },
+  {
+    "name": "HOODCAREER-the-door-says-no-hint",
+    "file": "src/scenes/world.js",
+    "old": "    if (cfb) { sayWithNightfall(cfb.text); if (cfb.hint) townTalk.say(cfb.hint); return false; }",
+    "new": "    if (cfb) { sayWithNightfall(cfb.text); return false; }",
+    "tests": [
+      "test/audit64_travel.test.js"
+    ]
+  }
+]

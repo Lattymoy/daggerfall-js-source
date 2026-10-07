@@ -1,0 +1,38 @@
+[
+  {
+    "name": "SPRITE-FLICKER-the-walk-clock-repaints-the-view-on-screen",
+    "file": "src/player/eotbBody.js",
+    "old": "        updateBillboardDelayed(frameCurrent, orientationChosen, stateCurrent);   // SPRITE-FLICKER: the IL's lastOrientation",
+    "new": "        updateBillboardDelayed(frameCurrent, lastOrientation, stateCurrent);",
+    "tests": [
+      "test/eotb_body.test.js"
+    ]
+  },
+  {
+    "name": "SPRITE-FLICKER-the-table-change-repaints-the-view-on-screen",
+    "file": "src/player/eotbBody.js",
+    "old": "    if (stateLast !== stateCurrent || (animating && !isAnimating)) updateBillboardDelayed(frameCurrent, orientationChosen, stateCurrent);   // SPRITE-FLICKER",
+    "new": "    if (stateLast !== stateCurrent || (animating && !isAnimating)) updateBillboardDelayed(frameCurrent, lastOrientation, stateCurrent);",
+    "tests": [
+      "test/eotb_body.test.js"
+    ]
+  },
+  {
+    "name": "SPRITE-FLICKER-the-mirror-revert-repaints-the-view-on-screen",
+    "file": "src/player/eotbBody.js",
+    "old": "          updateBillboardDelayed(frameCurrent, orientationChosen, stateCurrent);   // SPRITE-FLICKER",
+    "new": "          updateBillboardDelayed(frameCurrent, lastOrientation, stateCurrent);",
+    "tests": [
+      "test/eotb_body.test.js"
+    ]
+  },
+  {
+    "name": "SPRITE-FLICKER-the-choice-never-recorded",
+    "file": "src/player/eotbBody.js",
+    "old": "    orientationChosen = o;   // SPRITE-FLICKER",
+    "new": "    ;",
+    "tests": [
+      "test/eotb_body.test.js"
+    ]
+  }
+]

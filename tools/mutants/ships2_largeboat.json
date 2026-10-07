@@ -1,0 +1,292 @@
+[
+  {
+    "name": "SHIPS2-L-a-part-keyed-by-its-sails-name",
+    "file": "src/world/largeBoatRig.js",
+    "old": ".replace(/^Skiff/, '').replace(/Sail/g, '')",
+    "new": ".replace(/^Skiff/, '')",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her yards and belays named for their sail: the walk counts them among her Sails"
+  },
+  {
+    "name": "SHIPS2-L-a-plan-dropped",
+    "file": "src/world/largeBoatRig.js",
+    "old": "  Object.freeze({ top: true, sails: Object.freeze([{ ...largeSquare, boom: 'SkiffLargeSquareBoom', name: 'SkiffLargeSquareSail' }, { ...smallSquare, boom: 'SkiffSmallSquareBoom', name: 'SkiffSmallSquareSail' }]) }),\n]);",
+    "new": "]);",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "the mod's seventh plan gone"
+  },
+  {
+    "name": "SHIPS2-L-a-sail-out-of-the-mods-order",
+    "file": "src/world/largeBoatRig.js",
+    "old": "Object.freeze([{ ...smallSquare, boom: 'SkiffSmallSquareBoom', name: 'SkiffSmallSquareSail' }, { ...lateen, boom: 'SkiffLateenBoom', name: 'SkiffLargeLateenSail' }])",
+    "new": "Object.freeze([{ ...lateen, boom: 'SkiffLateenBoom', name: 'SkiffLargeLateenSail' }, { ...smallSquare, boom: 'SkiffSmallSquareBoom', name: 'SkiffSmallSquareSail' }])",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "plan 3's first square sail not the mod's first"
+  },
+  {
+    "name": "SHIPS2-L-a-plans-sails-mis-sorted",
+    "file": "src/world/largeBoatRig.js",
+    "old": "Object.freeze([{ ...smallGaff(5.75, 6.1), boom: 'SkiffSmallGaffBoom', name: 'SkiffSmallGaffSail2' }, { ...smallStay, name: 'SkiffSmallStaySail' }])",
+    "new": "Object.freeze([{ ...smallStay, name: 'SkiffSmallStaySail' }, { ...smallGaff(5.75, 6.1), boom: 'SkiffSmallGaffBoom', name: 'SkiffSmallGaffSail2' }])",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "plan 1's Sails another order than the mod's boat's"
+  },
+  {
+    "name": "SHIPS2-L-the-canvas-still",
+    "file": "src/world/largeBoatRig.js",
+    "old": "const poses = { stowed: squareSailPose(s, d, 0, 'stowed'), left: squareSailPose(s, d, 0, 'aback'), center: squareSailPose(s, d, 0, 'center'), right: squareSailPose(s, d, 0, 'full') };",
+    "new": "const poses = { stowed: squareSailPose(s, d, 0, 'stowed'), left: squareSailPose(s, d, 0, 'stowed'), center: squareSailPose(s, d, 0, 'stowed'), right: squareSailPose(s, d, 0, 'stowed') };",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her square canvas furled however it is made"
+  },
+  {
+    "name": "SHIPS2-L-the-topsails-yard-under-the-stay",
+    "file": "src/world/largeBoatRig.js",
+    "old": "const smallSquare = Object.freeze({ kind: 'square', yardY: 8.8,",
+    "new": "const smallSquare = Object.freeze({ kind: 'square', yardY: 9.3,",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her topsail's yard into her topmast stay"
+  },
+  {
+    "name": "SHIPS2-L-the-forestays-foot-at-the-end",
+    "file": "src/world/largeBoatRig.js",
+    "old": "export const FORESTAY_IN = 0.35;",
+    "new": "export const FORESTAY_IN = 0;",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her forestay and topmast stay crossing at the bowsprit's end"
+  },
+  {
+    "name": "SHIPS2-L-the-gaff-topsails-luff-through-the-cap",
+    "file": "src/world/largeBoatRig.js",
+    "old": "-(capR + 0.06)]",
+    "new": "-(capR - 0.04)]",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her gaff topsail's luff through her masthead's cap"
+  },
+  {
+    "name": "SHIPS2-L-plan-5s-peak-halyard",
+    "file": "src/world/largeBoatRig.js",
+    "old": "        const topsail = plan.sails.some((x) => x.kind === 'square' && x.yardY > m.topY);",
+    "new": "        const topsail = false;",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "plan 5's large gaff's peak halyard through her square topsail braced round"
+  },
+  {
+    "name": "SHIPS2-L-the-anchor-forward-into-her-bow",
+    "file": "src/world/largeBoatModel.js",
+    "old": "export const ANCHOR_Z = 3.4;",
+    "new": "export const ANCHOR_Z = 4.4;",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "the mod's anchor stowed a metre forward: its flukes through her ceiling where her bow narrows"
+  },
+  {
+    "name": "SHIPS2-L-the-bow-swivel-in-the-bowsprit",
+    "file": "src/world/largeBoatModel.js",
+    "old": "bow: Object.freeze([-0.35, 5.3]) });",
+    "new": "bow: Object.freeze([0, 5.9]) });",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her bow swivel on her stem, in her bowsprit's heel"
+  },
+  {
+    "name": "SHIPS2-L-the-tiller-off-level",
+    "file": "src/world/largeBoatModel.js",
+    "old": "const d = sub(p, MEASURED.postFoot), a = (-POST_RAKE_DEG * Math.PI) / 180,",
+    "new": "const d = sub(p, MEASURED.postFoot), a = 0,",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her tiller built in the post's frame unturned: raked with the post, its end off the helmsman's hand"
+  },
+  {
+    "name": "SHIPS2-L-the-helm-sides-swapped",
+    "file": "src/world/largeBoatModel.js",
+    "old": "[['Rudder Sailing Left', RUDDER_DEG], ['Rudder Sailing Right', -RUDDER_DEG]",
+    "new": "[['Rudder Sailing Left', -RUDDER_DEG], ['Rudder Sailing Right', RUDDER_DEG]",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her tiller put over the wrong way sailing"
+  },
+  {
+    "name": "SHIPS2-L-a-state-unswapped",
+    "file": "src/world/largeBoatModel.js",
+    "old": "    swaps.push([`clips/${state}`, name]);",
+    "new": "    if (state !== 'Rudder Rowing Left') swaps.push([`clips/${state}`, name]);",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "rowing to port she steers on the mod's own rudder's clip"
+  },
+  {
+    "name": "SHIPS2-L-the-post-unraked",
+    "file": "src/world/largeBoatModel.js",
+    "old": "kids: [nodeOf('RudderPost', { p: M.postFoot, r: [Math.sin((POST_RAKE_DEG * Math.PI) / 360), 0, 0, Math.cos((POST_RAKE_DEG * Math.PI) / 360)], kids: [",
+    "new": "kids: [nodeOf('RudderPost', { p: M.postFoot, r: [0, 0, 0, 1], kids: [",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her rudder turned about the vertical, not her post"
+  },
+  {
+    "name": "SHIPS2-L-a-muzzle-at-the-post",
+    "file": "src/world/largeBoatModel.js",
+    "old": "Object.freeze([SWIVELS.postX + SWIVELS.muzzle, SWIVELS.y, z])",
+    "new": "Object.freeze([SWIVELS.postX, SWIVELS.y, z])",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her swivels' balls leaving from their posts"
+  },
+  {
+    "name": "SHIPS2-L-the-bows-on-her-stem",
+    "file": "src/world/largeBoatModel.js",
+    "old": "Object.freeze([SWIVELS.bow[0], SWIVELS.y, SWIVELS.bow[1] + SWIVELS.muzzle])",
+    "new": "Object.freeze([0, SWIVELS.y, SWIVELS.bow[1] + SWIVELS.muzzle])",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her bow swivel's muzzle off its barrel, on her stem"
+  },
+  {
+    "name": "SHIPS2-L-the-mods-boats-numbers-back",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "broadside: Object.freeze([[2.65, 2.62, -2.3], [2.65, 2.62, 0.3], [2.65, 2.62, 2.3]]",
+    "new": "broadside: Object.freeze([[1.8, 1.3, -2.3], [2.05, 1.3, 0.3], [1.8, 1.3, 2.3]]",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "HULL_BUILDS' large boat's swivels the mod's boat's"
+  },
+  {
+    "name": "SHIPS2-L-a-box-of-no-plan",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "[-1.09, 2.72, -5.04], [0.22, 4.91, 4.5], 0, 0)",
+    "new": "[-1.09, 2.72, -5.04], [0.22, 4.91, 4.5], 0, 9)",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her lateen's box of a plan she has not"
+  },
+  {
+    "name": "SHIPS2-L-a-box-short-of-its-canvas",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "[-1.09, 2.72, -5.04], [0.22, 4.91, 4.5], 0, 0)",
+    "new": "[-1.09, 2.72, -5.04], [0.22, 4.31, 4.5], 0, 0)",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her lateen's head out of its rig box"
+  },
+  {
+    "name": "SHIPS2-L-every-plans-boxes-stood",
+    "file": "src/scenes/navalHost.js",
+    "old": "const plan = (box) => /** @type {any} */ (box).variant == null ||",
+    "new": "const plan = (box) => true ||",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "a ball meeting the canvas of a plan she is not setting"
+  },
+  {
+    "name": "SHIPS2-L-a-picture-seeded-off-the-clock",
+    "file": "src/world/largeBoatArt.js",
+    "old": "const weed = noise(0xb51, S, S, 8, 8);",
+    "new": "const weed = noise(Math.floor(Math.random() * 1e6), S, S, 8, 8);",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her side another on every client"
+  },
+  {
+    "name": "SHIPS2-L-registered-twice",
+    "file": "src/world/largeBoatArt.js",
+    "old": "  if (_registered) return 0;\n  _registered = true;\n",
+    "new": "",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her pictures added to the texture door every scene"
+  },
+  {
+    "name": "SHIPS2-L-a-picture-off-64",
+    "file": "src/world/largeBoatArt.js",
+    "old": "[TEX.transom0, transomArt()]",
+    "new": "[TEX.transom0, picture(32, 32)]",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her transom a picture of another size"
+  },
+  {
+    "name": "SHIPS2-L-a-face-on-no-picture",
+    "file": "src/world/largeBoatModel.js",
+    "old": "    case 'mast': case 'bowsprit': return tiled(TEX.spar);",
+    "new": "    case 'mast': case 'bowsprit': return { rec: 99, uv: () => [0, 0] };",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "her mast drawn on a record nothing paints"
+  },
+  {
+    "name": "SHIPS2-L-one-ships-failure-failing-the-rest",
+    "file": "src/systems/comeSailAwayModels.js",
+    "old": "        log?.warn?.(`[come-sail-away] the new ${ship.title} would not build - ${standsAs}`, e);",
+    "new": "        throw e;",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "a ship that will not build leaves no boat standing"
+  },
+  {
+    "name": "SHIPS2-L-the-warning-dropped",
+    "file": "src/systems/comeSailAwayModels.js",
+    "old": "      if (!answer.ok) { log?.warn?.(`[come-sail-away] the new ${ship.title} did not load - ${standsAs}`, answer.error); return; }",
+    "new": "      if (!answer.ok) return;",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "a ship fallen back to the mod's without a word"
+  },
+  {
+    "name": "SHIPS2-L-the-fallbacks-build-dropped",
+    "file": "src/systems/naval/navalShips.js",
+    "old": "export const MOD_BUILDS = Object.freeze({ 1: MOD_LARGE_BOAT_BUILD, 2: MOD_SMALL_SHIP_BUILD, 4: MOD_CARRACK_BUILD });",
+    "new": "export const MOD_BUILDS = Object.freeze({ 2: MOD_SMALL_SHIP_BUILD, 4: MOD_CARRACK_BUILD });",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "the mod's own boat standing in her build"
+  },
+  {
+    "name": "SHIPS2-L-the-fallbacks-gangway-dropped",
+    "file": "src/systems/naval/quays.js",
+    "old": "export const MOD_GANGWAYS = Object.freeze({ 1: MOD_LARGE_BOAT_GANGWAY, ",
+    "new": "export const MOD_GANGWAYS = Object.freeze({ ",
+    "tests": [
+      "test/ships2_largeboat.test.js"
+    ],
+    "why": "the mod's own boat on her gangway"
+  }
+]

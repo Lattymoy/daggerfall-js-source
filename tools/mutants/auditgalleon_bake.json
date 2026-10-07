@@ -233,7 +233,7 @@
   },
   {
     "name": "AUDITGN-B1-scene-coordinates",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "  const corners = poly.map((vi) => object.local[vi]);\n",
     "new": "  const corners = poly.map((vi) => object.scene[vi]);\n",
     "tests": ["test/auditgalleon_bake.test.js", "test/galleon_model.test.js"],
@@ -241,7 +241,7 @@
   },
   {
     "name": "AUDITGN-B1-mirror-unwound",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "    for (const [a, b, c] of tris) { triangles.push(ring[a], ring[c], ring[b]); triangleOf.push(p); }\n",
     "new": "    for (const [a, b, c] of tris) { triangles.push(ring[a], ring[b], ring[c]); triangleOf.push(p); }\n",
     "tests": ["test/auditgalleon_bake.test.js", "test/galleon_model.test.js"],
@@ -249,7 +249,7 @@
   },
   {
     "name": "AUDITGN-B5-mirror-unrefused",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "    if (!(det > 0)) throw new Error(`${name}'s transform",
     "new": "    if (det < -Infinity) throw new Error(`${name}'s transform",
     "tests": ["test/auditgalleon_bake.test.js"],
@@ -257,7 +257,7 @@
   },
   {
     "name": "AUDITGN-B5-rotation-offset-unread",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "['PostRotation', [0, 0, 0]], ['RotationOffset', [0, 0, 0]], ['RotationPivot', [0, 0, 0]],",
     "new": "['PostRotation', [0, 0, 0]], ['RotationPivot', [0, 0, 0]],",
     "tests": ["test/auditgalleon_bake.test.js"],
@@ -265,7 +265,7 @@
   },
   {
     "name": "AUDITGN-B5-scaling-offset-unread",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "  ['ScalingOffset', [0, 0, 0]], ['ScalingPivot', [0, 0, 0]],\n",
     "new": "  ['ScalingPivot', [0, 0, 0]],\n",
     "tests": ["test/auditgalleon_bake.test.js"],
@@ -273,7 +273,7 @@
   },
   {
     "name": "AUDITGN-B5-axes-unread",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "  assertExportAxes(tree);\n",
     "new": "",
     "tests": ["test/auditgalleon_bake.test.js"],
@@ -281,7 +281,7 @@
   },
   {
     "name": "AUDITGN-B5-front-axis-unread",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "{ UpAxis: 1, UpAxisSign: 1, FrontAxis: 2, FrontAxisSign: 1, CoordAxis: 0, CoordAxisSign: 1 }",
     "new": "{ UpAxis: 1, UpAxisSign: 1, CoordAxis: 0, CoordAxisSign: 1 }",
     "tests": ["test/auditgalleon_bake.test.js"],
@@ -289,7 +289,7 @@
   },
   {
     "name": "AUDITGN-B5-box-slack-widened",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "export const BOX_SLACK = 0.02;",
     "new": "export const BOX_SLACK = 0.05;",
     "tests": ["test/auditgalleon_bake.test.js"],
@@ -297,7 +297,7 @@
   },
   {
     "name": "AUDITGN-B5-box-unread",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "    if (!(off <= BOX_SLACK)) throw new Error(",
     "new": "    if (off < -1) throw new Error(",
     "tests": ["test/auditgalleon_bake.test.js"],
@@ -313,15 +313,15 @@
   },
   {
     "name": "AUDITGN-B6-origin-unchecked",
-    "file": "tools/bakeGalleon.mjs",
-    "old": "      if (o.origin[1] !== FRAME.centreline) throw new Error(",
+    "file": "tools/shipBake.mjs",
+    "old": "      if (o.origin[1] !== spec.frame.centreline) throw new Error(",
     "new": "      if (false) throw new Error(",
     "tests": ["test/auditgalleon_bake.test.js"],
     "why": "a hull moved a centimetre off her centreline baked lopsided"
   },
   {
     "name": "AUDITGN-B6-quarter-turn-unread",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": ".map(Number).map(quarterTurn));",
     "new": ".map(Number));",
     "tests": ["test/auditgalleon_bake.test.js", "test/galleon_model.test.js"],
@@ -329,7 +329,7 @@
   },
   {
     "name": "AUDITGN-B7-split-miscounted",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "    if (poly.length > 3) split++;\n",
     "new": "    if (poly.length > 4) split++;\n",
     "tests": ["test/auditgalleon_bake.test.js", "test/galleon_model.test.js"],

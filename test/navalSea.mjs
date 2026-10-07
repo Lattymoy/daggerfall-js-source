@@ -31,6 +31,21 @@ export async function readyPool() {
   _pool = await freshPool();
   return _pool;
 }
+/**
+ * SHIPS-2 (2026-10-07): THE MOD'S OWN SHIPS FALLEN BACK - a pool whose new carrack's and new large boat's models do not
+ * load, so hulls 4 and 1 are Come Sail Away's own Carrack and Large Boat, as the game stands them then
+ * (systems/comeSailAwayModels.js) - the hulls the deck's and the boarding's laws were found on (the Carrack's cargo
+ * doors, her forecastle's stair, her five doors). Its preload stands the builds with it (navalShips.js setShipStanding);
+ * `restore()` stands the new ships' again. A pool of its own, never the shared one.
+ */
+export async function modShipsPool() {
+  const { CARRACK_MODEL_URL, LARGE_BOAT_MODEL_URL } = await import('../src/systems/comeSailAwayModels.js');
+  const { setShipStanding } = await import('../src/systems/naval/navalShips.js');
+  const fetchFn = async (url) => (url === CARRACK_MODEL_URL || url === LARGE_BOAT_MODEL_URL ? { ok: false, status: 404 } : fileFetch(url));
+  const pool = createComeSailAwayPool({ renderer: standInRenderer(), pipeline: standInPipeline(), fetchFn, log: { warn() {} } });
+  assert.equal(await pool.preload(), true);
+  return { pool, restore: () => { setShipStanding(4, true); setShipStanding(1, true); } };
+}
 /** A pool of its own - one client's, in a room of several (test/navalRoom.mjs). */
 export async function freshPool() {
   const pool = createComeSailAwayPool({ renderer: standInRenderer(), pipeline: standInPipeline(), fetchFn: fileFetch, log: { warn() {} } });

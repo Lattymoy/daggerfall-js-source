@@ -33,7 +33,7 @@ import { NATIVE_PIXEL, nativeOfPixel, pixelOfNative } from '../src/systems/seaRa
 import { LINER_STAND_M, LINER_DROP_M, LINERS_MAX, LINER_LOOKAHEAD_M, LINER_PORT_M, SHIP_FADE_S } from '../src/scenes/navalHost.js';
 import { DENSITY } from '../src/systems/naval/navalDirector.js';
 import { SHIP_STATES } from '../src/systems/naval/navalDamage.js';
-import { findHarbour } from '../src/systems/naval/shipLife.js';
+import { findHarbour, alongside } from '../src/systems/naval/shipLife.js';
 import { hash32 } from '../src/world/spawnedDungeons.js';
 import { mulberry32 } from '../src/combat/bloodArt.js';
 import { sea } from './navalSea.mjs';
@@ -295,7 +295,9 @@ test('SEA-LANES STEERED BY HER LANE: under way, out of her berth through the har
   const r = e.ship.errand;
   assert.deepEqual([r.kind, r.harbour, r.berth], ['moored', PORT.key, harbour.berths.length - 1]);
   const b = harbour.berths[r.berth];
-  assert.ok(Math.hypot(e.ship.pos[0] - b.pos[0], e.ship.pos[2] - b.pos[1]) < 0.5 && e.ship.sails === 0, 'at the berth, sails stowed');
+  // (SHIPS-2: alongside it - Mac's carrack lies 1.73 m in toward its quay from the berth's point, sounded for the mod's)
+  const along = alongside(b, 4, harbour.hull);
+  assert.ok(Math.hypot(e.ship.pos[0] - along[0], e.ship.pos[2] - along[1]) < 0.5 && e.ship.sails === 0, 'at the berth, sails stowed');
   assert.equal(r.until, Infinity, 'moored till her clock sails her on (AUDIT BAY A6 PIN MOVED: her dwell\'s end, on the shared clock, as her own)');
   // under way: through the mouth first
   const sail = under('L1-2.0.3', 77, 0, 100, { classId: 'merchantCarrack', from: HERE, to: GLEN, leg: [[0, 100], [0, -3000]], yaw: Math.PI });

@@ -13,7 +13,7 @@ import { createSeaShip, stepCaptain, WIND_RATED, HEAR_S, FLEE_RANGE, RUN_ON_S, E
 import { HULL } from '../src/systems/naval/navalShips.js';
 import { HOSTILE_NEAR_M } from '../src/scenes/navalHost.js';
 import { Boat, setLights } from '../src/systems/comeSailAwayBoat.js';
-import { sea, readyPool } from './navalSea.mjs';
+import { sea, readyPool, modShipsPool } from './navalSea.mjs';
 import { room } from './navalRoom.mjs';
 
 const WORLD = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
@@ -93,20 +93,32 @@ test('AUDIT WK-N3 by night a merchantman that ran from a dark pirate runs on RUN
 // ── N4: the lanterns a hull carries ────────────────────────────────────────────────────────────────────────────────
 
 test('AUDIT WK-N4 a hull is lit only by lanterns she carries: Come Sail Away\'s carrack prefab has none, so a merchant carrack sails dark by night - her contact unlit, a dark ship to every captain - while a galleon at the lights\' hour is lit (mutants: the lanterns unasked, the unbuilt carrack lit)', async () => {
+  // SHIPS-2 (2026-10-07): the carrack without lanterns is the mod's own - hull 4 as the game stands it when Mac's
+  // carrack's model will not load (test/navalSea.mjs modShipsPool); Mac's carries seven, and is lit
+  const mod = await modShipsPool();
+  try {
+    const counts = [0, 1, 2, 3, 4].map((hull) => mod.pool.spawnNow(Object.assign(new Boat(hull, 0), { uid: 900 + hull }), { position: [hull * 200, 0, 5000], rotation: [0, 0, 0, 1] }).Lights.length);
+    assert.equal(counts[HULL.Carrack], 0, 'the mod\'s carrack carries no lantern');
+    for (const hull of [HULL.Rowboat, HULL.LargeBoat, HULL.SmallShip, HULL.LargeGalley]) assert.ok(counts[hull] > 0, `hull ${hull} carries lanterns`);
+    const h = await sea({ hull: HULL.SmallShip, pool: mod.pool, where: NIGHT, settings: { ShipsAtSea: 'off', Boarders: false } });
+    const carrack = h.host._sea.get(h.host.spawnShip('merchantCarrack', { range: 400, bearing: 1 }));
+    const galleon = h.host._sea.get(h.host.spawnShip('merchantGalleon', { range: 400, bearing: -1 }));
+    h.run(0.3);
+    const lit = (e) => h.host._contacts().find((c) => c.id === e.id)?.lit;
+    assert.equal(lit(carrack), false, 'no lanterns, no light');
+    assert.equal(lit(galleon), true);
+    // a carrack not yet built is judged by her hull
+    carrack.boat = null;
+    assert.equal(lit(carrack), false);
+  } finally { mod.restore(); }
   const pool = await readyPool();
-  const counts = [0, 1, 2, 3, 4].map((hull) => pool.spawnNow(Object.assign(new Boat(hull, 0), { uid: 900 + hull }), { position: [hull * 200, 0, 5000], rotation: [0, 0, 0, 1] }).Lights.length);
-  assert.equal(counts[HULL.Carrack], 0, 'the carrack carries no lantern');
-  for (const hull of [HULL.Rowboat, HULL.LargeBoat, HULL.SmallShip, HULL.LargeGalley]) assert.ok(counts[hull] > 0, `hull ${hull} carries lanterns`);
+  assert.equal(pool.spawnNow(Object.assign(new Boat(HULL.Carrack, 0), { uid: 904 }), { position: [800, 0, 5000], rotation: [0, 0, 0, 1] }).Lights.length, 7, 'Mac\'s carrack carries seven');
   const h = await sea({ hull: HULL.SmallShip, where: NIGHT, settings: { ShipsAtSea: 'off', Boarders: false } });
   const carrack = h.host._sea.get(h.host.spawnShip('merchantCarrack', { range: 400, bearing: 1 }));
-  const galleon = h.host._sea.get(h.host.spawnShip('merchantGalleon', { range: 400, bearing: -1 }));
   h.run(0.3);
-  const lit = (e) => h.host._contacts().find((c) => c.id === e.id)?.lit;
-  assert.equal(lit(carrack), false, 'no lanterns, no light');
-  assert.equal(lit(galleon), true);
-  // a carrack not yet built is judged by her hull
+  assert.equal(h.host._contacts().find((c) => c.id === carrack.id)?.lit, true, 'Mac\'s carrack lit');
   carrack.boat = null;
-  assert.equal(lit(carrack), false);
+  assert.equal(h.host._contacts().find((c) => c.id === carrack.id)?.lit, true, 'and judged lit by her hull, not yet built');
   // my own carrack's switch lights nothing either
   assert.match(HOST, /lit: !!boat\.LightOn && carriesLanterns\(boat, boat\.hull\),/);
 });

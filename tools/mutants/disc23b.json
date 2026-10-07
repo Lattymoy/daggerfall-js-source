@@ -101,8 +101,8 @@
   {
     "name": "D23B-clip-never-ends",
     "file": "src/net/peerRiders.js",
-    "old": "if (++r.frame >= frameCount(r.shot.table)) { r.shot = null; r.table = null; r.frame = 0; r.clock = 0; }",
-    "new": "if (++r.frame >= frameCount(r.shot.table)) { r.frame = 0; }",
+    "old": "if (++r.shot.i >= r.shot.frames.length) { r.shot = null; r.table = null; r.frame = 0; r.clock = 0; }",
+    "new": "if (++r.shot.i >= r.shot.frames.length) { r.shot.i = 0; }",
     "tests": [
       "test/disc23b_eotb_sprites.test.js"
     ]

@@ -72,7 +72,7 @@
   {
     "name": "GALLEON-WEIGHT-ratio",
     "file": "src/systems/naval/navalShips.js",
-    "old": "? MOD_SMALL_SHIP_BUILD.broadside.length / Math.max(1, hullBuild(hull).broadside.length) : 1);",
+    "old": "? MOD_BUILDS[hull].broadside.length / Math.max(1, hullBuild(hull).broadside.length) : 1);",
     "new": "? 1 : 1);",
     "tests": [
       "test/crewhold.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "GALLEON-WEIGHT-sides",
     "file": "src/systems/naval/navalShips.js",
-    "old": "(hull === HULL.SmallShip && (side === 'starboard' || side === 'port')",
-    "new": "(hull === HULL.SmallShip",
+    "old": "(MOD_BUILDS[hull] && (side === 'starboard' || side === 'port')",
+    "new": "(MOD_BUILDS[hull]",
     "tests": [
       "test/crewhold.test.js"
     ],
@@ -132,7 +132,7 @@
   {
     "name": "GALLEON-WEIGHT-strikeTime",
     "file": "src/systems/naval/navalAI.js",
-    "old": "const w = a.player ? playerBatteryWeight(a.hull, side) : 1;",
+    "old": "const w = shipBatteryWeight(a.hull, side, !!a.player);",
     "new": "const w = 1;",
     "tests": [
       "test/crewhold.test.js"
@@ -152,7 +152,7 @@
   {
     "name": "GALLEON-WEIGHT-my-volley",
     "file": "src/scenes/navalHost.js",
-    "old": "const weight = isMine(shooter) ? playerBatteryWeight(hull, solution.side) : 1;",
+    "old": "const weight = shipBatteryWeight(hull, solution.side, isMine(shooter));",
     "new": "const weight = 1;",
     "tests": [
       "test/crewhold.test.js"

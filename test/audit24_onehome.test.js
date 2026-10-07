@@ -62,6 +62,12 @@ const HOMONYMS = new Map([
   ['ARENA_BEASTS', "the game's set of beast mobiles vs the relay's beast bodies by mobile (their keys pinned equal by arena4_client)"],
   ['seasonOf', "a town seat's season from a week and its zero vs the arena's eight-week season from a day"],
   ['stateWord', "a relay bout's state on the wire (net/arenaBrain.js) vs a bounty row's state in its window's words (ui/bountyWindow.js)"],
+  // SHIPS-2: the port's ships each carry their own measures under one name - the galleon's (world/galleonModel.js,
+  // galleonRig.js, galleonArt.js), the carrack's (carrackModel.js, carrackRig.js, carrackArt.js) and the large boat's
+  // (largeBoatModel.js, largeBoatRig.js, largeBoatArt.js): three ships, three things each, read as `ship.MEASURED`.
+  // None is a DFU member. And the prefab builders' node maker (world/shipKit.js) is not the walk's node finder.
+  ...['TEX', 'BANDS', 'MEASURED', 'HELM', 'DRIVE_TRIGGER_AT', 'LID', 'GUN', 'ANCHOR', 'SAILS', 'ropeLadderGeometry', 'stayLines'].map((name) => [name, "each ship of the port's own (world/galleonModel.js, carrackModel.js, largeBoatModel.js and their rigs and art)"]),
+  ['nodeOf', "a prefab builder's new node (world/shipKit.js) vs the walk's node by name under a parent (systems/comeSailAwayBoat.js)"],
 ]);
 
 test('audit24 wave24: no symbol is DECLARED in two modules without a reason', async () => {
@@ -167,7 +173,9 @@ test('audit24 wave24: the duplicate-declaration count does not grow', () => {
   // dep). Renaming either would put the port's name further from DFU's
   // than the collision costs; recorded in HOMONYMS above.
   // 30 at the arena merge, the same deliberate edit: ARENA_BEASTS, seasonOf and stateWord, two things each, recorded in
-  // HOMONYMS above.
+  // HOMONYMS above. 42 at SHIPS-2, the same deliberate edit: the carrack's and the large boat's own measures under the
+  // galleon's names (each ship's MEASURED, HELM, GUN... - eleven) and the prefab builders' nodeOf, recorded in HOMONYMS
+  // above; their modules export nothing else the galleon's do.
   const files = walk('src/');
   const decl = new Map();
   for (const f of files) {
@@ -178,8 +186,8 @@ test('audit24 wave24: the duplicate-declaration count does not grow', () => {
     }
   }
   const dupes = [...decl.entries()].filter(([, v]) => v.size > 1);
-  assert.ok(dupes.length <= 30,
-    `${dupes.length} symbols are declared in more than one module (the ratchet is 30):\n  `
+  assert.ok(dupes.length <= 42,
+    `${dupes.length} symbols are declared in more than one module (the ratchet is 42):\n  `
     + dupes.map(([n, v]) => `${n}  ${[...v].join(' ')}`).join('\n  '));
 });
 

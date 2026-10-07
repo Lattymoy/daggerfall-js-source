@@ -1,7 +1,7 @@
 [
   {
     "name": "GALLEON-bake-fill-strays",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "  if (fault) throw new Error(`${object.name} polygon #${k} (${poly.length} corners): Blender's cut does not tile it",
     "new": "  if (false) throw new Error(`${object.name} polygon #${k} (${poly.length} corners): Blender's cut does not tile it",
     "tests": [
@@ -39,8 +39,8 @@
   {
     "name": "GALLEON-guns-never-run-in",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "        const want = laid ? RUN_OUT_X : RUN_IN_X;",
-    "new": "        const want = RUN_OUT_X;",
+    "old": "        const want = laid ? s.outX[i] : s.inX[i];",
+    "new": "        const want = s.outX[i];",
     "tests": [
       "test/galleon_model.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "GALLEON-loader-no-fallback",
     "file": "src/systems/comeSailAwayModels.js",
-    "old": "      if (!galleon) throw e;\n",
-    "new": "      throw e;\n",
+    "old": "      if (!answer.ok) { log?.warn?.(",
+    "new": "      if (!answer.ok) { throw answer.error; log?.warn?.(",
     "tests": [
       "test/galleon_model.test.js"
     ]
@@ -129,7 +129,7 @@
   },
   {
     "name": "GALLEON2-centreline-unread",
-    "file": "tools/bakeGalleon.mjs",
+    "file": "tools/shipBake.mjs",
     "old": "  return [(frame.centreline - y) * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];\n",
     "new": "  return [-y * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];\n",
     "tests": [
@@ -139,9 +139,9 @@
   },
   {
     "name": "GALLEON2-twin-baked",
-    "file": "tools/bakeGalleon.mjs",
-    "old": "    if (skip) {\n      if (skip.twin) {\n",
-    "new": "    if (skip && !skip.twin) {\n      if (skip.twin) {\n",
+    "file": "tools/shipBake.mjs",
+    "old": "    if (skip) {\n      const fault = skipFault(o, skip, byName, spec);\n",
+    "new": "    if (skip && !skip.twin) {\n      const fault = skipFault(o, skip, byName, spec);\n",
     "tests": [
       "test/galleon_model.test.js"
     ],

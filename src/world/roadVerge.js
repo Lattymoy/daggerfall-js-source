@@ -40,6 +40,7 @@ import { PATH_HALF_WIDTH, UNITS_PER_METRE } from './roadClearance.js';
 import { LPT_CROWNS } from './lptCrowns.js';
 import { lptVariety } from './lowPolyTrees.js';
 import { getNatureArchive, SEASON } from './climateSwaps.js';
+import { TILE } from './roadPainter.js';
 
 /** A path's half width (m): Basic Roads paints a road or a track two tiles wide about its line. */
 export const PATH_HALF_M = PATH_HALF_WIDTH / UNITS_PER_METRE;
@@ -104,4 +105,76 @@ export function lptCrownOf(baseArchive, record) {
 export function natureReach(halfWidth, baseArchive, record, px, py, x, z) {
   const crown = lptCrownOf(baseArchive, record);
   return Math.max(halfWidth, crown > 0 ? crown * lptVariety(px, py, x, z, false).scale : 0);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// LPT-FIT (2026-10-07, Mac: "roads still show on roads and pathways. You're not taking the entire model into account")
+// - THE WHOLE TREE FITS ITS ROOM. VERGE1 refuses a WILD flat whose reach touches the road band, and that was all it
+// asked: a location's own trees (a town's, a farm's, a tavern's RMB blocks - and road pixels are full of them) stand
+// where DFU's block designer set a two-metre picture beside a street, and Low Poly Trees stands a 5-15 m crown on each.
+// Nothing asked those of the road, nor of the location's own streets, nor of the paved ring Basic Roads lays round a
+// town. So every Low Poly tree is drawn no wider than the room its root has: the nearest road, track or street tile of
+// its pixel (pathTileMask) and, for the band crossing a pixel's edge, the network's (roadRoom). It is a scale, never a
+// move - the trunk, its collider, Logging's tree and the room's ground stay where they stand; the mod draws the tree
+// smaller, as it draws it at all, on the player's own client.
+// ═══════════════════════════════════════════════════════════════════
+
+/** A terrain tile (m): 128 to a map pixel. */
+export const TILE_M = PIXEL_M / 128;
+/** The smallest a fitted tree is drawn, of its prototype: a tree whose root stands on a path is a sapling, never
+ *  nothing - its trunk's collider and its cover stand where DFU stands the flat, so it is never an invisible post. */
+export const LPT_FIT_FLOOR = 0.2;
+
+/**
+ * THE PIXEL'S PATH TILES (128x128, 1 = a path): a tile the road painter wrote or marked (GRASS-PATH1's mask - a track
+ * laid over dirt among them, VERGE1), or one of the 56-tile set's road records, 46/47/55 - the painter's three, which
+ * a location's own streets wear too. The marching squares never write those three (terrainTiles.js's lookup), so on a
+ * finished tilemap they are a road or a street and nothing else.
+ * @param {Uint8Array} tilemap the pixel's finished tilemap (bits 6/7 the rotate and flip) @param {?Uint8Array} paths
+ */
+export function pathTileMask(tilemap, paths = null) {
+  const out = new Uint8Array(tilemap.length);
+  for (let i = 0; i < tilemap.length; i++) {
+    const rec = tilemap[i] & 0x3f;
+    out[i] = (paths && paths[i]) || rec === TILE.road || rec === TILE.roadDirt || rec === TILE.roadGrass ? 1 : 0;
+  }
+  return out;
+}
+
+/**
+ * How far (m) a pixel-local point - x east, z north, from the pixel's south-west corner - stands from the nearest path
+ * tile of its pixel (each tile the square [tx, tx + 1) x [ty, ty + 1) tiles, row 0 the south); `reach` when none comes
+ * nearer, 0 on one.
+ * @param {Uint8Array} mask pathTileMask's @param {number} x @param {number} z @param {number} reach (m)
+ */
+export function tileRoom(mask, x, z, reach) {
+  if (!(reach > 0)) return Math.max(0, reach);
+  const n = Math.ceil(reach / TILE_M);
+  const cx = Math.floor(x / TILE_M), cz = Math.floor(z / TILE_M);
+  let room = reach;
+  for (let tz = Math.max(0, cz - n); tz <= Math.min(127, cz + n); tz++) {
+    for (let tx = Math.max(0, cx - n); tx <= Math.min(127, cx + n); tx++) {
+      if (!mask[tz * 128 + tx]) continue;
+      const dx = Math.max(tx * TILE_M - x, 0, x - (tx + 1) * TILE_M);
+      const dz = Math.max(tz * TILE_M - z, 0, z - (tz + 1) * TILE_M);
+      const d = Math.hypot(dx, dz);
+      if (d < room) room = d;
+    }
+  }
+  return room;
+}
+
+/**
+ * THE LARGEST A LOW POLY TREE MAY BE DRAWN at a root (its prototype's scale times this; the tree's own variety is
+ * drawn under it): its room over its crown, never under LPT_FIT_FLOOR - Infinity where the crown is unknown (0).
+ * @param {?Uint8Array} mask pathTileMask's (null - no tiles asked) @param {?object} net the roads (null - no band asked)
+ * @param {number} px @param {number} py @param {number} x @param {number} z the root, pixel-local (m)
+ * @param {number} crown the prototype's crown (m, at its prefab's scale) @param {number} widest the largest scale drawn
+ */
+export function lptFitCap(mask, net, px, py, x, z, crown, widest) {
+  if (!(crown > 0)) return Infinity;
+  const reach = crown * widest;
+  let room = mask ? tileRoom(mask, x, z, reach) : reach;
+  if (net) room = Math.min(room, roadRoom(net, px, py, x, z, reach));
+  return room >= reach ? Infinity : Math.max(LPT_FIT_FLOOR, room / crown);
 }

@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-GN2-PF2-the-switch-stamps-nothing",
     "file": "src/systems/naval/navalShips.js",
-    "old": "export function setGalleonStanding(on) { if (galleonStanding !== !!on) stamp++; galleonStanding = !!on; }",
-    "new": "export function setGalleonStanding(on) { galleonStanding = !!on; }",
+    "old": "export function setShipStanding(hull, on) { if (standing[hull] !== !!on) stamp++; standing[hull] = !!on; }",
+    "new": "export function setShipStanding(hull, on) { standing[hull] = !!on; }",
     "tests": [
       "test/auditgalleon2_sea.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-GN2-RG3-every-box-whatever-the-sails",
     "file": "src/scenes/navalHost.js",
-    "old": "  return rig.filter((box) => /** @type {any} */ (box).sail == null || hangs(/** @type {any} */ (box).sail)).map((box) => {",
-    "new": "  return rig.map((box) => {",
+    "old": "  return rig.filter((box) => plan(box) && (/** @type {any} */ (box).sail == null || hangs(/** @type {any} */ (box).sail))).map((box) => {",
+    "new": "  return rig.filter((box) => plan(box)).map((box) => {",
     "tests": [
       "test/auditgalleon2_sea.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-GN2-RG3-a-boom-box-names-no-sail",
     "file": "src/systems/naval/navalShips.js",
-    "old": "const onBoom = (k, pivot, min, max, sail) => [min, max, { boom: k, pivot: Object.freeze(pivot), sail }];",
-    "new": "const onBoom = (k, pivot, min, max, sail) => [min, max, { boom: k, pivot: Object.freeze(pivot) }];",
+    "old": "const onBoom = (k, pivot, min, max, sail, variant = null) => [min, max, { boom: k, pivot: Object.freeze(pivot), sail, ",
+    "new": "const onBoom = (k, pivot, min, max, sail, variant = null) => [min, max, { boom: k, pivot: Object.freeze(pivot), ",
     "tests": [
       "test/auditgalleon2_sea.test.js"
     ]

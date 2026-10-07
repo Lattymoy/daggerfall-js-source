@@ -4,7 +4,7 @@
 `src/formats/mwItemMap.js` (composeWornArmor) + `src/formats/mwSkinTransfer.js` (fitShift, the sided transferSkin,
 rebindSkin, bindPoseMats) + `src/formats/mwFirstPerson.js` (bindSkinnedFromBody, skeletonBindSkins) +
 `src/combat/fpArm.js` (ownBodyPaths, ownBodyPart) + `src/systems/features.js` (the Steel Helm row)
-(MW-STEEL1, Mac, 2026-10-06; MW-STEEL2, the skirt and the bind pose, 2026-10-07)
+(MW-STEEL1, Mac, 2026-10-06; MW-STEEL2, the skirt and the bind pose, 2026-10-07; MW-STEEL3, the bind's anchor, 2026-10-07)
 
 > "These 2 files are for the armor replacement of the morrowind steel armor with a varient to toggle the helmet type"
 
@@ -180,8 +180,9 @@ over it at its higher priority, as over a retail cuirass's.
 vendored hierarchy, `vendor/weapon-sheathing/.../xbase_anim_sh.nif`); the T-pose lives only in the skins' inverse binds.
 MW-STEEL1's pins stood on a rig whose rest WAS a T-pose over a rigid body, so none could tell the rest from the bind.
 `bindPoseMats` (mwSkinTransfer.js) recovers the bind: within one skin every bone's bind is fixed by any other's,
-P_c = P_b o IB_b o IB_c^-1; a group of bones the skins connect is anchored at its root-most bone, standing on that bone's
-rest ORIGIN (the bind's rotation, the rest's place - so the bound body stands on the floor the rest stands on), and
+P_c = P_b o IB_b o IB_c^-1; a group of bones the skins connect is anchored at its root-most bone - the skeleton file's
+own skin's first (MW-STEEL3, below), standing on that bone's rest ORIGIN with the bind's rotation, so the bound body
+stands on the floor the rest stands on; a group only a body part's skin reaches stands on its anchor's whole rest - and
 grows through every skin that touches it; a bone no skin binds rides its parent's bind by its own rest local. The skins
 read are the worn parts' own and the skeleton file's own "Tri Shadow" (`skeletonBindSkins` - skinned over the whole
 Bip01 chain and never drawn, rule 59), which binds the bones no part reaches; a rigid part's "inverse bind" is its
@@ -224,3 +225,42 @@ after-step a choice's write now takes as a switch's does); a peer's body takes i
   `Imperial_Steel_Left_Gauntlet_20_Male`, and `Breton_Male` for the greaves and pauldrons), and the paintings came from
   folders under Mac's Downloads; whether the geometry and the paintings are his own work or carry a licence of their own
   is **Mac's to confirm**, as the brigandine's is. The doctrine rows call them SUPPLIED and claim no more.
+
+## MW-STEEL3: the bind's anchor stands in the skeleton's frame
+
+Mac, 2026-10-07: "Morrowind integration bugs. I am so tired of us not getting this right", over a player's screenshot
+(AverageDoggo: "OOF the arms are mega borked") - third person, a robe over the steel plate, a staff in the hanging right
+hand, and both gauntlets floating in a V over the helm.
+
+**The arms hung; the gauntlets did not follow them.** The robe's sleeves hang at the sides and the staff is in the right
+hand at the hip, so the bones were where the idle put them. The pieces drawn off the body were MW-STEEL2's: the plate
+solved in the bind. What placed them is `bindPoseMats`' anchor. The relation P_c = P_b o IB_b o IB_c^-1 is
+frame-free - it says where every bone stands relative to another - but the ANCHOR's axes were taken from its skin as
+though the skin's mesh were authored in the skeleton's frame. The skeleton file's own "Tri Shadow" is (its bind stands
+upright on the vendored retail file). A retail body part is not: its mesh is part-local (Morrowind-Rules.md MW-D21, "a
+torso on the ground"). And a skin may list bones it does not weight: one that lists the pelvis (or Bip01, above it)
+wins the tie at the anchor, because the body's own skins come first so a part is drawn as it was bound - and the
+whole bind turns with one part's frame. (This tree carries no retail body part to read their bone lists from; the
+fault reproduces exactly so on retail's own skeleton, below, and on nothing else this session could find.) Every gauntlet then found the clavicle nearest, copied it, and was
+drawn wherever that turned bind carried it; the breastplate's skirt stood beside the left shoulder.
+
+**Why every pin passed.** plateRig.mjs stands every bone unturned and authors every skin in the skeleton's own frame -
+the one condition under which the two frames coincide (MW-D20's lesson, verbatim: "every fixture's root was IDENTITY
+... the exact conditions under which three spaces coincide. Retail data holds none of them."). The premise pin read the
+Tri Shadow on retail's file and nothing else; no pin ever put a retail-shaped body on retail's skeleton.
+
+**The fix** (`mwSkinTransfer.js` bindPoseMats, `mwFirstPerson.js` skeletonBindSkins): the skeleton file's own skins say
+so (`frame: 'skeleton'`), and they anchor FIRST - their root-most bone, the bind's rotation and the rest's origin, as
+MW-STEEL2 meant - whatever a body skin lists. A group no skeleton skin reaches is anchored at its root-most bone's
+whole REST, claiming no frame, and the relation carries it out from there. The first person's gauntlets are solved
+through the same door on the third-person skeleton, so they move with it.
+
+**The pins** stand on retail's own skeleton (`test/fixtures/mw/retailRig.mjs`): the vendored hierarchy with every
+bone's rest turned as retail's are, the part nodes, its own Tri Shadow verbatim, and a skinned body bound in that Tri
+Shadow's T-pose with real rotated inverse binds, authored part-local and listing the pelvis. The true bind there is
+built by hand from the Tri Shadow, not by the code under test. `test/mwsteel3.test.js`: both gauntlets copy their own
+forearm and hand and lie within 5 units of the hanging arm (MW-STEEL2's anchor: the clavicle copied, 34 units off),
+hold it through a turn of the elbow, come out the same whatever frame the body is authored in, with and without the Tri
+Shadow; the Tri Shadow's pelvis anchors though a body skin lists Bip01 above it; and the breastplate and its skirt
+stand centred on the torso, the skirt about the pelvis. `tools/mutants/mwsteel3.json` (7, all dead); two MW-STEEL2
+records re-aimed by content.

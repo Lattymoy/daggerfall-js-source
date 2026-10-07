@@ -5,8 +5,8 @@ sprite and the cart, read off the shipped assembly's IL - **EOTB-IL
 (2026-09-16)**: the assembly is in the tree now, every law in the arc
 cites its IL offset, and the two things Mac saw (the frame chopping,
 the sprite turning the wrong way) were both in it. See "What is and is
-not ported" below for the count - forty-seven of sixty-one authored
-methods (CSA-J added two), fourteen with no twin here, checkable in
+not ported" below for the count - forty-six of sixty-one authored
+methods (CSA-J added two, ONE-STROKE retired one), fifteen with no twin here, checkable in
 `test/eotb_scope.test.js` - and the EOTB-IL section at the foot for
 the findings. Vendor record and the permission line:
 `vendor/eye-of-the-beholder/README.md`. Registry row:
@@ -36,7 +36,7 @@ coroutine state machines, the event accessors and the three
 compiler-lifted lambdas are struck. AUDIT-EOTB, writing without the
 assembly, had counted 62 and listed a `PlayerBillboard::InitializeTextures`
 that does not exist; the texture walk is the state's alone. The port
-implements **forty-seven** of them, every one read off the IL:
+implements **forty-six** of them, every one read off the IL:
 
 | IL method | here |
 |---|---|
@@ -59,7 +59,7 @@ implements **forty-seven** of them, every one read off the IL:
 | `get_frameTime`, `get_sizeMod` | `frameTime`, `sizeMod` |
 | `PlayFootstep`, `EnableVanillaFootsteps`, `DisableVanillaFootsteps` | `playFootstep`, `initialize` (eotbBody.js) → `systems/footsteps.js`'s `spriteStep` arm |
 | the six `Play*Animation` | `playMeleeAttack`, `playRangedAttack`, `playRangedAttackHold`, `playSpellAttack`, `playLycanAttack`, `playDeath` |
-| the three coroutines | `startClip` / `holdPhase` (eotbBody.js), `pingPongFrames` (eotbBillboard.js), stepped by `advanceClip` |
+| the forward and hold coroutines | `startClip` / `holdPhase` (eotbBody.js), stepped by `advanceClip` (the ping-pong is retired - ONE-STROKE, below) |
 | `GetMeleeAnimTickTime` | `meleeAnimTickTime` - `animTime * 5 / frames` |
 | `UpdateBillboard`, `UpdateBillboardDelayed`, `UpdateBillboardDelayedCoroutine` | `updateBillboard`, `updateBillboardDelayed`, `runDelayed` - the three-frame queue |
 | `UpdateMaterial` | `material` - invisible / shade / blending |
@@ -67,8 +67,9 @@ implements **forty-seven** of them, every one read off the IL:
 | `InitializeTextures` (state) | `preload` |
 | `Update`, `LateUpdate` (billboard) | `update`, `lateUpdate` |
 
-**Fourteen have no twin**, every one a row in `test/eotb_scope.test.js`
-with its reason: the Unity lifecycle and component methods (`Awake` on
+**Fifteen have no twin**, every one a row in `test/eotb_scope.test.js`
+with its reason: `PlayAnimationPingPongCoroutine`, ported and then RETIRED by
+ONE-STROKE (a blow plays one stroke; the ping-pong was a second movement); the Unity lifecycle and component methods (`Awake` on
 both types, `Init`, `get_pivotLocal`, `get_IsReady`, `SetKeyFromText`,
 `SpawnBillboard`, the billboard's `FixedUpdate` - the TravelOptions
 hook); the mesh and material handling the port's billboard batch
@@ -1089,3 +1090,65 @@ archive's), `classRecordScale` (`player/classSkins.js`) is read by `spriteOffset
 of every view of every sheet against its group's median found no other (the next lowest, 1524's hurt record 11, is 0.88
 and a standing pose). Pins: `test/skin2_class_skins.test.js` ACRO-SHORT (the exact 110 pixels, the sweep, her idle
 wheel through `spriteFor`); mutants `tools/mutants/skin2.json` +5. `01-Overview/Field-Bugs-2026-09-27.md`.
+
+## SPRITE-FLICKER (2026-10-07): the view that went back
+
+Mac: "I notice with eye of the beholder sprite movement, it's very finicky when moving and then switching to run at
+angles. Like it flickers like it doesn't know which direction it wants to face."
+
+**What it was.** Every repaint the sprite makes waits three frames (`UpdateBillboardDelayed`, DELAYED_FRAMES), and each
+one carries the orientation it is to paint, taken when it is QUEUED. UpdateOrientation queues the view it chose; the
+walk clock, a table change and the mirror revert queue `lastOrientation` - the view UpdateBillboard last painted, which
+is the OLD one for the three frames a turn is in flight. One queued in those three frames lands after the turn and
+paints the old view back: the new view for a frame, the old one until the next tenth-of-a-second check
+(ORIENTATION_TIME), then the new one again. A run halves the walk's frame (`speedMod`), so the clock met a turn twice as
+often - driven in node through the real body, a strafe pressed while running blinked back 41 times in 120 at 60 fps,
+17 at a walk. The table change (Idle to Move, a start at an angle) and the mirror revert land in the turn's own frame
+instead, so they show no blink: they hold the turn back that tenth. The IL does the same (`LoopIdleBillboard` hands
+`UpdateBillboardDelayed` the field), so this is the mod's own behaviour, not a misreading of it.
+
+**The change.** `eotbBody.js` keeps `orientationChosen`, written by UpdateOrientation every time it snaps, and those
+three repaints queue it in place of `lastOrientation`; the comparison that decides whether a turn repaints at all still
+reads `lastOrientation`, as the IL's does. The clips keep the IL's field - they paint at once, so the view they paint
+never undoes a later choice. A DEPARTURE from the assembly, the fifth, recorded in the Ledger row. Nothing else in the
+sprite's turning moved: the wheel, the 0.1 s throttle, the three-frame delay and the facing are the IL's. The peers'
+sprites (`net/peerRiders.js`) paint their view at once and queue nothing, so they never had it.
+
+**Pins.** `test/eotb_body.test.js` SPRITE-FLICKER: three sweeps - the strafe pressed at 24 phases of the run clock and
+the orientation clock, a start at an angle at 12, the camera turned across the mirror revert at 14 - each held to one
+law, that from three frames after UpdateOrientation's choice the view on screen is that choice. `state()` reports
+`orientationChosen` for it. `tools/mutants/spriteflicker.json` 4 - 4 dead, each by its own sweep (the earlier cut of the
+pin, "the view never goes back", let the table change and the revert survive: their stale paint lands in the turn's
+own frame and never shows a blink). Not verified in a browser.
+
+## ONE-STROKE (2026-10-07): a blow is one stroke
+
+Mac: "Also, can we make it where attacking plays only one animation. Like for example the base sprite when attacking
+plays an entire 2 swing follow-through." Asked which stroke and whether to keep the mod's swing as a setting, Mac took
+the strokes alternating, and no setting.
+
+**What the art is.** Every swing record the bundle ships is six frames, and every one of them - the mod's sixteen
+on-foot sets and the class skins alike, seen side by side - is TWO strokes, frames 0-2 and 3-5: a slash and then an
+overhead chop on the swords, two chops on the axes and hammers, a sweep and its return on the staves, a slash and then
+a stab on the daggers. The mod plays all six for every blow (`PlayAnimationCoroutine`), or under PingPong and Mixed
+the first four forward and back again (`PlayAnimationPingPongCoroutine`, Mixed's every fourth swing - the shipped
+default) - two movements a blow either way, against the first-person weapon's one.
+
+**The change.** `eotbBillboard.js` `meleeStrokeFrames(n, blow)`: an even blow plays the first half of the clip, an odd
+one the second, so a chain of blows still shows the whole string, one stroke a click; an odd clip gives its first
+stroke the shorter half, and a clip under two frames is one stroke. The blow is the rig's count (`weaponRig.js`
+`swingN`), and the body keeps its own (`strokeCount`) only for a rig that names none. The stroke runs over the
+weapon's whole animation - `meleeAnimTickTime(animTime, 3)`, five-thirds of the weapon's tick a frame - so a blow
+still lasts as long as the swing it stands beside. A peer's swing (`net/peerRiders.js` `WALK_ONE_SHOTS`) plays the
+stroke its `an` names, which is the same count, so both screens draw the same half.
+
+**What it retires.** The ping-pong: `usesPingPong`, `pingPongFrames`, `pingPongTickFrames` and the ping-pong count
+are deleted, and `PlayAnimationPingPongCoroutine` moves to the no-twin rows of `test/eotb_scope.test.js` (forty-six
+ported, fifteen with no twin). `Graphics.PingPongOffset` is inert, and `Graphics.AttackStrings`' PingPong plays as None
+and Mixed as Mirror - both say so on the pane. Mirror is untouched: the stance still mirrors after a swing. A
+DEPARTURE from the assembly, the sixth, recorded in the Ledger row.
+
+**Pins.** `test/eotb_billboard.test.js` (the halves, the parity, an odd clip, the tick), `test/eotb_audit2.test.js`
+(the body's clip is one stroke under Mixed, alternating, by the rig's count where it names one, at five-thirds of the
+weapon's tick), `test/disc23b_eotb_sprites.test.js` (a peer's stroke by `an`); `tools/mutants/onestroke.json`.
+`tools/mutants/disc23b.json`'s clip-never-ends record re-aimed at the shot's own frames. Not verified in a browser.

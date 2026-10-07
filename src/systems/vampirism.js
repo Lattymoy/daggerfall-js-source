@@ -91,7 +91,7 @@ import { SOUND } from './soundClips.js';   // V5: the gendered attack voices
 import { endVampireQuests } from './racialQuests.js';   // V2d: the cure's P0* tombstone sweep
 import { cloakState } from './survival/temperature.js';   // VAMP-HOOD: the ONE "is the hood up" - the felt temperature's, never a second list
 import { isEnhanced } from './uiSkin.js';   // HOOD-SAID: the hint names the skin's own button
-import { playerInSunlight } from './passiveSpecials.js';   // FIELD BUGS 2026-10-01b: the day's -20 is the SUN's - IsPlayerInSunlight, the one seam every host registers
+import { playerInSunlight, careerSunAverse } from './passiveSpecials.js';   // FIELD BUGS 2026-10-01b: the day's -20 is the SUN's - IsPlayerInSunlight, the one seam every host registers; HOOD-CAREER: the career's hooded rung
 
 /** VampirismEffect.VampirismCurseKey (:33). */
 export const VAMPIRISM_CURSE_KEY = 'Vampirism-Curse';
@@ -419,6 +419,19 @@ export function racialFastTravelBlock(entity, nowMinutes = 0) {
   if (!racialSunAverse(entity)) return null;
   if (!isDayFromMinutes(nowMinutes)) return null;
   return { text: SUNLIGHT_TRAVEL_TEXT, hint: isEnhanced() ? VAMPIRE_HOOD_TEXT : VAMPIRE_HOOD_TEXT_CLASSIC };   // HOOD-SAID: the skin's own button
+}
+
+/** The career rung at the travel map's door - DaggerfallUI.cs:614-621,
+ *  `Career.DamageFromSunlight && WorldTime.Now.IsDay` shows the same
+ *  sunlightDamageFastTravelDay box - HOOD-CAREER: bare-headed, as the
+ *  racial rung above (passiveSpecials.js careerSunAverse). Answers null,
+ *  or the refusal and the hood's `hint`, the racial rung's shape. It
+ *  never reads the racial override: the two rungs are DFU's two. */
+export function careerFastTravelBlock(entity, nowMinutes = 0) {
+  if (!careerSunAverse(entity)) return null;
+  if (!isDayFromMinutes(nowMinutes)) return null;
+  const hint = isEnhanced() ? VAMPIRE_HOOD_TEXT : VAMPIRE_HOOD_TEXT_CLASSIC;   // HOOD-SAID: the skin's own button
+  return { text: SUNLIGHT_TRAVEL_TEXT, hint };
 }
 
 /**

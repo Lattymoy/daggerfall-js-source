@@ -38,7 +38,7 @@
   {
     "name": "GH-the-stand-in-takes-hers",
     "file": "src/systems/naval/quays.js",
-    "old": "export const gangwaySide = (hull) => (hullBuild(hull) === MOD_SMALL_SHIP_BUILD ? MOD_SMALL_SHIP_GANGWAY : GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);",
+    "old": "export const gangwaySide = (hull) => (MOD_GANGWAYS[hull] && hullBuild(hull) === MOD_BUILDS[hull] ? MOD_GANGWAYS[hull] : GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);",
     "new": "export const gangwaySide = (hull) => (GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);",
     "tests": [
       "test/galleonholdings.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "GH-hers-takes-the-stand-ins",
     "file": "src/systems/naval/quays.js",
-    "old": "export const gangwaySide = (hull) => (hullBuild(hull) === MOD_SMALL_SHIP_BUILD ? MOD_SMALL_SHIP_GANGWAY : GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);",
-    "new": "export const gangwaySide = (hull) => (hull === 2 ? MOD_SMALL_SHIP_GANGWAY : GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);",
+    "old": "export const gangwaySide = (hull) => (MOD_GANGWAYS[hull] && hullBuild(hull) === MOD_BUILDS[hull] ? MOD_GANGWAYS[hull] : GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);",
+    "new": "export const gangwaySide = (hull) => (MOD_GANGWAYS[hull] ? MOD_GANGWAYS[hull] : GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);",
     "tests": [
       "test/galleonholdings.test.js"
     ]
