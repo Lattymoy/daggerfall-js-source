@@ -47,6 +47,14 @@
 //   Shed Skin                  the HURT listener: a foe's blow that takes me under its line heals me
 //                              (systems/playerHeal.js, the loot's own heal)
 //
+// SD9d (2026-10-07) - THE BRASS OF NUMIDIUM, the Brass Remnant's own (bible/11-Multiplayer/Super-Dungeons.md section 11),
+// through the same seams:
+//   Dwemer Brass               the FOLD (magic and shock resistance)
+//   Gearward                   the DAMAGE modifier: while the gear is wound, a foe's BLOW (the door's mark - never a
+//                              fall, a poison's round or a spell) lands its share lighter, and the gear winds again
+//   The Hour Turns             a DEATH SAVE (Unbroken's door, tried after it): the killing blow leaves me at 1, and the
+//                              HURT listener heals its share as the door says so (the loot's own heal)
+//
 // THE CLOCK is real seconds (performance.now): an online session never
 // pauses, and a recovery is a thing a player times with a watch. What a
 // power remembers (a recovery, a halving window, the Rampage) lives here
@@ -88,13 +96,15 @@ const fresh = () => ({
   coils: new WeakMap(),               // SERPENT-SET: Sethrakul's Coilscale (4) - AUDIT 625 P3: each foe's own coil, entity -> { n, until }
   coilFoe: null,                      // the foe my last landed blow coiled - the one the states say
   shedReady: 0,                       // SERPENT-SET: Sethrakul's Coilscale (6)
+  gearReady: 0,                       // SD9d: the Brass of Numidium (4) - when the gear is wound again
+  hourReady: 0, hourHeal: 0,          // SD9d: the Brass of Numidium (6) - its recovery, and the heal its save owes
   recovering: new Set(),              // the powers whose "ready again" is still to be said
 });
 let _s = fresh();
 /** The host's voice (scenes/world.js): a line on the HUD, and a sound by the power's name ('unbroken', 'wrath',
  *  'eventide'; RAID4b 'mark', 'ward'; SERPENT-SET 'shed'). The line defaults to the HUD's own door; the sound to none. */
 let _say = (line) => { hudText(line); };
-let _sound = null;
+let _sound = null;   // SD9d: and 'gear', 'hour'
 export function setSetPowersVoice({ say = null, sound = null } = {}) {
   if (typeof say === 'function') _say = say;
   _sound = typeof sound === 'function' ? sound : null;
@@ -140,6 +150,8 @@ export function setFold(entity) {
   if (hide) { add(m().stats, 'endurance', hide.endurance); add(m().skills, SKILLS.BluntWeapon, hide.blunt); }
   const scale = t.get('coilscale')?.[0];   // SERPENT-SET: Sea-Scale
   if (scale) { add(m().resist, 'frost', scale.frost); add(m().stats, 'endurance', scale.endurance); }
+  const brass = t.get('numidium')?.[0];   // SD9d: Dwemer Brass
+  if (brass) { add(m().resist, 'magic', brass.magic); add(m().resist, 'shock', brass.shock); }
   return mods ?? EMPTY_MODS;
 }
 
@@ -325,11 +337,22 @@ export function setDamageMod(entity, dmg) {
     _s.ward -= took;
     d -= took;
   }
+  // SD9d: GEARWARD - a foe's blow (the door's mark, never a fall or a spell) while the gear is wound lands lighter, in whole
+  // points, and the gear winds again
+  const gear = d > 0 && _pending ? tierOf(entity, 'numidium', 1) : null;
+  if (gear) {
+    const now = _now();
+    if (now >= _s.gearReady) {
+      d -= Math.round((d * gear.lighter) / 100);
+      _s.gearReady = now + gear.recover;
+      sound('gear');
+    }
+  }
   return d;
 }
 export function setDeathSave(entity) {
   const v = tierOf(entity, 'malacath', 2);
-  if (!v) return false;
+  if (!v) return hourTurns(entity);   // SD9d: no Bulwark worn - the Brass's own save (the two are never worn at once: 6 and 6 is past nine places)
   const now = _now();
   if (now < _s.unbrokenReady) return false;
   _s.unbrokenReady = now + v.recover;
@@ -337,6 +360,20 @@ export function setDeathSave(entity) {
   _s.recovering.add('unbroken');
   say(`Unbroken! Damage halved for ${v.halved} s.`);   // WB13b
   sound('unbroken');
+  return true;
+}
+
+/** SD9d, THE HOUR TURNS: a blow that would kill me does not - the door leaves me at 1 - and, as it says so (setHurt), its
+ *  share of my health returns; then it recovers. */
+function hourTurns(entity) {
+  const v = tierOf(entity, 'numidium', 2);
+  if (!v) return false;
+  const now = _now();
+  if (now < _s.hourReady) return false;
+  _s.hourReady = now + v.recover;
+  _s.hourHeal = v.heal;
+  _s.recovering.add('hour');
+  sound('hour');
   return true;
 }
 
@@ -365,6 +402,15 @@ export function setHurt(entity, { before, after, saved = false }) {
   if (!entity?.isPlayer || entity.peer) return;
   const blow = _pending;
   _pending = null;
+  // SD9d: THE HOUR TURNS - the death it turned back said, and its share of my health returned, as the door left me at 1
+  // (whatever dealt it: the save is a death save's, a fall's as a blow's)
+  if (saved && _s.hourHeal > 0) {
+    const share = _s.hourHeal;
+    _s.hourHeal = 0;
+    const max = entity?.maxHealth;
+    const healed = max > 0 ? healMine(entity, (max * share) / 100) : 0;
+    say(healed > 0 ? `The Hour Turns! ${healed} health returns.` : 'The Hour Turns!');
+  }
   if (!blow) return;   // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath
   if (before - after > 0) for (const fn of _landed.values()) { try { fn(entity, blow.attacker, before - after); } catch { /* the loot is not the blow's problem */ } }   // LOOT4
   spite(entity, blow, before - after);
@@ -523,6 +569,7 @@ const READY = Object.freeze({
   eventide: { at: () => _s.eventideReady, line: 'Eventide is ready again.', set: 'nocturnal', tier: 2 },
   ward: { at: () => _s.wardReady, line: 'Iron Hide is ready again.', set: 'orcsbane', tier: 2, spent: () => !(_s.ward > 0) },   // RAID4b
   shed: { at: () => _s.shedReady, line: 'Shed Skin is ready again.', set: 'coilscale', tier: 2 },   // SERPENT-SET
+  hour: { at: () => _s.hourReady, line: 'The Hour Turns is ready again.', set: 'numidium', tier: 2 },   // SD9d
 });
 export function setRound(entity) {
   if (!entity?.isPlayer || entity.peer || !_s.recovering.size) return;
@@ -564,6 +611,8 @@ export function setPowerStates(now = _now()) {
     markLeft: markedFoe(now) ? left(_s.markUntil) : 0, ward: _s.ward, wardRecoverLeft: left(_s.wardReady),
     // SERPENT-SET: Constrict's stacks and window, Shed Skin's recovery
     coil: coilStacks(now), coilLeft: coilStacks(now) ? left(_s.coils.get(_s.coilFoe).until) : 0, shedRecoverLeft: left(_s.shedReady),
+    // SD9d: Gearward's winding, The Hour Turns' recovery
+    gearLeft: left(_s.gearReady), hourRecoverLeft: left(_s.hourReady),
   };
 }
 
@@ -595,6 +644,8 @@ export function setHudChips(entity, now = _now()) {
   }
   // SERPENT-SET: Shed Skin's recovery, while it recovers
   if (t.get('coilscale')?.[2] && st.shedRecoverLeft) out.push({ key: 'shed', set: 'coilscale', name: 'Shed Skin', text: time(st.shedRecoverLeft), state: 'recovering' });
+  // SD9d: The Hour Turns' recovery, while it recovers
+  if (t.get('numidium')?.[2] && st.hourRecoverLeft) out.push({ key: 'hour', set: 'numidium', name: 'The Hour Turns', text: time(st.hourRecoverLeft), state: 'recovering' });
   return out;
 }
 

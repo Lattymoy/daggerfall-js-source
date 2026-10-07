@@ -331,11 +331,14 @@ own seed, how it was earned, the admitted level. The hub keeps each as `sdrc:<su
 | THE BRASS OF NUMIDIUM | one piece, one time in three (rolled last, so the other rolls never move) |
 
 **THE BRASS OF NUMIDIUM** - a new Aetheric set (`systems/aetheric.js`, `systems/sigilSets.js`): Dwarven pieces, the
-Dwemer's brass, nine records - helm, cuirass, gauntlets, greaves, boots, pauldrons; longsword, war axe, staff. Its set
-law (online only, asleep in duels, the Sigil Sets' rules):
-- 2 pieces: +10% resist magic and shock;
-- 4 pieces: GEARWARD - every 12 s, the next blow that lands on you is 30% lighter;
-- 6 pieces: THE HOUR TURNS - once a minute, a blow that would kill you does not, and you are healed a quarter.
+Dwemer's brass, nine records in the places' order - the seven body pieces, a round shield and a ONE-HANDED Longsword,
+so all nine are worn at once (SD9d: the design had named a longsword, a war axe and a staff - three weapons for the one
+place a set counts; `Sigil-Sets.md` section 6d). Its set law (online only, asleep in duels, the Sigil Sets' rules -
+every number a whole pair from Faint to Ascendant, the design's own numbers the Ascendant end):
+- 2 pieces: DWEMER BRASS - +4 -> +10 resist magic and shock;
+- 4 pieces: GEARWARD - the next foe's blow that lands on you is 15% -> 30% lighter; the gear winds again in 18 -> 12 s;
+- 6 pieces: THE HOUR TURNS - a blow that would kill you does not, and 15% -> 25% of your health returns; it recovers
+  in 90 -> 60 s.
 
 **The title and the aura (account service).** `POST /v1/sd/claim` verifies the `h1` receipt, writes one row per
 (slot, account) and, ON THAT FIRST WRITE ONLY, rolls from the receipt's seed: the title **Hourbreaker** one time in
@@ -1427,3 +1430,43 @@ order across the held auras, which now hold the Hour's grant too. The strip's ki
 radiance's, so `primarch.json`'s kindling record keeps one site.
 
 SD9d next: the spoils thrown from where the Remnant fell.
+
+### SD9d - shipped 2026-10-07 (The Brass of Numidium)
+
+Section 11's set, whole but for the roll that pays it: the spoils (SD9e) roll it last. SD9c named the spoils next;
+the set came first, so the spoils' last roll is final when it is written. No relay or account change - a set is the
+client's law, and the wire's check of an Aetheric piece reads every record already.
+
+- **The law** (`systems/sigilSets.js` `numidium`; `systems/sigil.js` names it after the serpent's): Aetheric, naming
+  no raiding party; its patron no Daedra but Kagrenac, the Tonal Architect who built the Walking Brass; its colour
+  the Hourbreaker's brass (`ui/playerBadge.js` `HOUR_BRASS`). Dwemer Brass, Gearward and The Hour Turns at 2, 4 and 6
+  pieces (`Sigil-Sets.md` section 6d). Gearward's winding is its `recover`, as every timed power's is (CARD-FIT: never
+  in the brief's words - the card's own tag, and a line says it after the brief).
+- **The records** (`systems/aetheric.js` `NUMIDIUM_SET_PIECES`): nine of Dwarven make in the places' order - section
+  11's amendment: the design's longsword, war axe and staff were three weapons for one place, so a round shield and a
+  one-handed Longsword stand where they stood. Every affix at the Legendary band's top and the Hour-Hand's blow the
+  sigil's greatest - the Regalia's measure: the hardest fight in the game pays what the gate's Warden does. One
+  resistance of an element at most, and never magic or shock (the 2-piece tier's). `AETHERIC_RECORDS` ends with them,
+  so the Test Room's ladder and the Codex take them with no word of their own. `rollNumidiumPiece` - a third of the
+  time, the same seed choosing which; one roll when nothing drops, two when a piece does - waits for the spoils.
+- **The powers** (`systems/sigilSetPowers.js`, through SET2's seams): Dwemer Brass in the fold. Gearward in the damage
+  modifier: while the gear is wound a foe's blow (the door's mark - never a fall, a poison's round or a spell) lands
+  its share lighter in whole points, and the gear winds again. The Hour Turns a death save, tried when no Bulwark
+  answers (the two are never worn at once: six and six is past nine places) - the door leaves me at 1, and the hurt
+  listener returns its share through the one heal a power gives as the door says so; a fall's death is turned back
+  too, as every death save's is. The round says it ready again, the HUD's chip shows its recovery, the states carry
+  Gearward's winding and its recovery.
+- **The voice** (`scenes/world.js`): the Orrery hall's own sounds (`scenes/sdHall.js` `SD_HALL_SOUNDS`) - the gear's
+  clunk for Gearward, the low bell's toll for The Hour Turns.
+
+THE FOUR HOSTS: as the Coilscale's - the powers ride SET2's seams, which every host's combat already calls; the one
+host-side wiring is `scenes/world.js`'s voice, which `scenes/worldModes.js`'s interiors and `scenes/dungeonContext.js`'s
+dungeons sound through; `scenes/exterior.js`, the offline town page, registers no sets' voice.
+
+Pins: `test/sd9d_numidium.test.js` (8 - the law; the records; minted and checked; the drop; Dwemer Brass; Gearward;
+The Hour Turns; the host); `tools/mutants/sd9d.json` (44, all dead). PINS MOVED: the sets' lists (`test/set1_law`,
+`test/serpentset` - the Brass after the Coilscale, its records after the serpent's) and the powers' states and voice
+(`test/set3_powers`); three records re-aimed by content (`set1.json`'s order, `serpentset.json`'s set and its
+records).
+
+SD9e next: the spoils thrown from where the Remnant fell.

@@ -293,7 +293,7 @@ import { SD_CAST_OUT_LINE, sdRoomKey } from '../net/sdLaw.js';   // SD2d: a Holl
 import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG, SD_REALM_FLOORS } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
 import { SdSkyRenderer } from '../render/sdSky.js';   // SD5b: the Hour's sky
 import { SD_HALL_FLOORS } from '../world/sdHall.js';   // SD6c: the bridge and the first step, the Concord's floors
-import { SD_HALL_TEXT } from './sdHall.js';   // SD6c: the snap's line
+import { SD_HALL_TEXT, SD_HALL_SOUNDS } from './sdHall.js';   // SD6c: the snap's line; SD9d: the hall's clunk and toll, the Brass's powers' sounds
 import { SD_STEPS_FLOORS, SD_CAST_BACK_LOSS } from '../world/sdSteps.js';   // SD7b: the Steps' band and the arena, the Concord's floors too; what the void costs
 import { SD_STEPS_TEXT } from './sdSteps.js';   // SD7b: the cast-back's line
 import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH } from '../net/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall
@@ -1022,6 +1022,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     else if (name === 'mark') audio.playOneShot(SOUND.DrawWeapon, 1);   // RAID4b: No Escape - a blade drawn for the next of them
     else if (name === 'ward') audio.playOneShot(SOUND.EquipMaceOrHammer, 1);   // RAID4b: Iron Hide - iron closing over you
     else if (name === 'shed') audio.playOneShot(SOUND.SplashLarge, 1);   // SERPENT-SET: Shed Skin - the old skin into the sea
+    else if (name === 'gear') audio.playOneShotId(SD_HALL_SOUNDS.clunk, 1);   // SD9d: Gearward - the gear catching the blow (the Orrery's own clunk)
+    else if (name === 'hour') audio.playOneShotId(SD_HALL_SOUNDS.toll, 1);   // SD9d: The Hour Turns - the Hour's bell, turned back
   } });
   // A1: THE TEXTURE SEASON IS THE CALENDAR'S, NOT A URL PARAM.
   // Every production site in the reference reads the world clock -

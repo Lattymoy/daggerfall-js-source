@@ -99,7 +99,7 @@ const swing = (e, weapon, target, n = 100) => { const d = setBlow(weapon, n, e, 
 // ─── THE LAW ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 test('SERPENT-SET the law: Sethrakul\'s Coilscale after the raids\' three - Aetheric, Satakal its patron, no raiding party\'s, never a world set; Sea-Scale, Constrict and Shed Skin at 2, 4 and 6 pieces, each a whole pair from Faint to Ascendant, every brief inside BRIEF_MAX at every stage (mutants: the set out of the record; a world set; a raid\'s; a tier\'s number)', () => {
-  assert.deepEqual(SIGIL_SET_IDS.slice(-1), ['coilscale'], 'the serpent\'s own, after the raids\'');
+  assert.deepEqual(SIGIL_SET_IDS.slice(-2), ['coilscale', 'numidium'], 'the serpent\'s own, after the raids\' - SD9d\'s Brass of Numidium after it (PIN MOVED)');
   const s = setById('coilscale');
   assert.deepEqual([s.id, s.name, s.prince, s.colour, s.aetheric, 'raid' in s, s.role],
     ['coilscale', "Sethrakul's Coilscale", 'Satakal', '#3a9ad9', true, false, 'The Old Coil, shed and worn']);
@@ -144,7 +144,7 @@ test('SERPENT-SET the records: nine in the places\' order - the seven body piece
   const resists = SERPENT_SET_PIECES.flatMap((r) => r.affixes.filter((a) => a.id === 'resist').map((a) => a.param));
   assert.ok(!resists.includes('frost'), 'never frost - Sea-Scale carries it');
   assert.equal(new Set(resists).size, resists.length, 'one resistance of an element at most');
-  assert.deepEqual(AETHERIC_RECORDS, [...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES]);
+  assert.deepEqual(AETHERIC_RECORDS.slice(0, REGALIA.length + RAID_SET_PIECES.length + SERPENT_SET_PIECES.length), [...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES], 'then SD9d\'s Brass of Numidium (PIN MOVED)');
   assert.equal(new Set(AETHERIC_RECORDS.map((r) => r.id)).size, AETHERIC_RECORDS.length, 'every id its own');
 });
 

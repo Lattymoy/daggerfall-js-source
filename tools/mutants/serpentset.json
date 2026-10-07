@@ -2,12 +2,13 @@
   {
     "name": "SERPENT-SET-set-out-of-the-record",
     "file": "src/systems/sigil.js",
-    "old": "'thieftaker', 'orcsbane', 'coilscale']);",
-    "new": "'thieftaker', 'orcsbane']);",
+    "old": "'thieftaker', 'orcsbane', 'coilscale', 'numidium']);",
+    "new": "'thieftaker', 'orcsbane', 'numidium']);",
     "why": "the set no sigil may name: every Coilscale piece refused off the wire",
     "tests": [
       "test/serpentset.test.js"
-    ]
+    ],
+    "note": "SD9d (PIN MOVED): the Brass of Numidium after the serpent's - re-aimed by content."
   },
   {
     "name": "SERPENT-SET-a-world-set",
@@ -112,12 +113,13 @@
   {
     "name": "SERPENT-SET-not-a-record",
     "file": "src/systems/aetheric.js",
-    "old": "export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES]);",
-    "new": "export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES]);",
+    "old": "export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES]);",
+    "new": "export const AETHERIC_RECORDS = Object.freeze([...REGALIA, ...RAID_SET_PIECES, ...NUMIDIUM_SET_PIECES]);",
     "why": "a Coilscale piece no reader knows - forged to the wire",
     "tests": [
       "test/serpentset.test.js"
-    ]
+    ],
+    "note": "SD9d (PIN MOVED): the Brass of Numidium's records after the serpent's - re-aimed by content."
   },
   {
     "name": "SERPENT-SET-the-chance",

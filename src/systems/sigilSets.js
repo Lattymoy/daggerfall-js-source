@@ -251,6 +251,25 @@ export const SIGIL_SETS = Object.freeze({
         (v) => `Under ${Math.round(SHED_BELOW * 100)}%: shed skin, heal ${v.heal}%`),
     ]),
   }),
+  // SD9d (2026-10-07, the Super Dungeons arc; bible/11-Multiplayer/Super-Dungeons.md section 11): THE BRASS OF NUMIDIUM -
+  // an Aetheric set no world drop, shelf or Broker rolls; the Brass Remnant's spoils carry a piece one time in three
+  // (systems/sdSpoils.js). Its patron is no Daedra: Kagrenac, the Tonal Architect who built the Walking Brass. Its colour
+  // the Hourbreaker's brass (ui/playerBadge.js HOUR_BRASS).
+  numidium: Object.freeze({
+    id: 'numidium', name: 'The Brass of Numidium', prince: 'Kagrenac', colour: '#b5862f', aetheric: true,
+    role: 'What the Warp kept of the Walking Brass',
+    tiers: Object.freeze([
+      tier(2, 'dwemer-brass', 'Dwemer Brass', { magic: [4, 10], shock: [4, 10] },
+        (v) => `+${v.magic} magic resistance, +${v.shock} shock resistance`,
+        (v) => `+${v.magic} magic, +${v.shock} shock resist`),
+      tier(4, 'gearward', 'Gearward', { lighter: [15, 30], recover: [18, 12] },
+        (v) => `The gear catches the next foe's blow that lands on you: it is ${v.lighter}% lighter, and the gear winds again. Recovers in ${v.recover} s`,
+        (v) => `A foe's blow ${v.lighter}% lighter`),
+      tier(6, 'hour-turns', 'The Hour Turns', { heal: [15, 25], recover: [90, 60] },
+        (v) => `A blow that would kill you does not: the Hour turns back, and ${v.heal}% of your health returns. Recovers in ${v.recover} s`,
+        (v) => `Death turned back, heal ${v.heal}%`),
+    ]),
+  }),
 });
 /** The sets of the world (the four any win may roll), and every set, in the registry's order. */
 export const WORLD_SET_IDS = Object.freeze(Object.values(SIGIL_SETS).filter((s) => !s.aetheric).map((s) => s.id));

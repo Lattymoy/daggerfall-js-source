@@ -1,0 +1,398 @@
+[
+  {
+    "name": "SD9D-set-out-of-the-record",
+    "file": "src/systems/sigil.js",
+    "old": "'orcsbane', 'coilscale', 'numidium']);",
+    "new": "'orcsbane', 'coilscale']);",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-a-world-set",
+    "file": "src/systems/sigilSets.js",
+    "old": "prince: 'Kagrenac', colour: '#b5862f', aetheric: true,",
+    "new": "prince: 'Kagrenac', colour: '#b5862f', aetheric: false,",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-a-raid-set",
+    "file": "src/systems/sigilSets.js",
+    "old": "aetheric: true,\n    role: 'What the Warp kept of the Walking Brass',",
+    "new": "aetheric: true, raid: 3,\n    role: 'What the Warp kept of the Walking Brass',",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-another-brass",
+    "file": "src/systems/sigilSets.js",
+    "old": "prince: 'Kagrenac', colour: '#b5862f',",
+    "new": "prince: 'Kagrenac', colour: '#b5862e',",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-brass-number",
+    "file": "src/systems/sigilSets.js",
+    "old": "{ magic: [4, 10], shock: [4, 10] },",
+    "new": "{ magic: [4, 10], shock: [5, 10] },",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-share-number",
+    "file": "src/systems/sigilSets.js",
+    "old": "{ lighter: [15, 30], recover: [18, 12] },",
+    "new": "{ lighter: [20, 30], recover: [18, 12] },",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-winding-number",
+    "file": "src/systems/sigilSets.js",
+    "old": "{ lighter: [15, 30], recover: [18, 12] },",
+    "new": "{ lighter: [15, 30], recover: [12, 12] },",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-heal-number",
+    "file": "src/systems/sigilSets.js",
+    "old": "{ heal: [15, 25], recover: [90, 60] },",
+    "new": "{ heal: [10, 25], recover: [90, 60] },",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-recovery-number",
+    "file": "src/systems/sigilSets.js",
+    "old": "{ heal: [15, 25], recover: [90, 60] },",
+    "new": "{ heal: [15, 25], recover: [60, 60] },",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-a-brief-past-its-line",
+    "file": "src/systems/sigilSets.js",
+    "old": "(v) => `Death turned back, heal ${v.heal}%`),",
+    "new": "(v) => `Death itself turned back, and ${v.heal}% of your health returns`),",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-off-the-top",
+    "file": "src/systems/aetheric.js",
+    "old": "const t = (id, param) => (param === undefined ? { id, value: top(id) } : { id, param, value: top(id) });",
+    "new": "const t = (id, param) => (param === undefined ? { id, value: top(id) } : { id, param, value: top(id) - 1 });",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-a-doubled-element",
+    "file": "src/systems/aetheric.js",
+    "old": "[t('armor'), t('stat', 'endurance'), t('resist', 'frost')],",
+    "new": "[t('armor'), t('stat', 'endurance'), t('resist', 'fire')],",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-a-shock-piece",
+    "file": "src/systems/aetheric.js",
+    "old": "[t('armor'), t('stat', 'intelligence'), t('resist', 'fire')],",
+    "new": "[t('armor'), t('stat', 'intelligence'), t('resist', 'shock')],",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-make",
+    "file": "src/systems/aetheric.js",
+    "old": "'numidium', 'Dwarven', SIGIL_POWER_MAX, affixes, lore);",
+    "new": "'numidium', 'Ebony', SIGIL_POWER_MAX, affixes, lore);",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-blow-under-the-top",
+    "file": "src/systems/aetheric.js",
+    "old": "'numidium', 'Dwarven', SIGIL_POWER_MAX, affixes, lore);",
+    "new": "'numidium', 'Dwarven', SIGIL_POWER_MAX - 1, affixes, lore);",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-a-two-handed-blade",
+    "file": "src/systems/aetheric.js",
+    "old": "brass('hour-hand', 'The Hour-Hand', 'Weapons', 120,",
+    "new": "brass('hour-hand', 'The Hour-Hand', 'Weapons', 121,",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-a-kite-shield",
+    "file": "src/systems/aetheric.js",
+    "old": "brass('gear-face', 'The Gear-Face', 'Armor', 110,",
+    "new": "brass('gear-face', 'The Gear-Face', 'Armor', 111,",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-order",
+    "file": "src/systems/aetheric.js",
+    "old": "brass('hands', \"The Tonal Architect's Hands\", 'Armor', 103,",
+    "new": "brass('hands', \"The Tonal Architect's Hands\", 'Armor', 104,",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-not-a-record",
+    "file": "src/systems/aetheric.js",
+    "old": "...SERPENT_SET_PIECES, ...NUMIDIUM_SET_PIECES]);",
+    "new": "...SERPENT_SET_PIECES]);",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-chance",
+    "file": "src/systems/aetheric.js",
+    "old": "export const NUMIDIUM_SET_CHANCE = 1 / 3;",
+    "new": "export const NUMIDIUM_SET_CHANCE = 1 / 4;",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-line-inclusive",
+    "file": "src/systems/aetheric.js",
+    "old": "  if (!(rolls() < NUMIDIUM_SET_CHANCE)) return null;",
+    "new": "  if (!(rolls() <= NUMIDIUM_SET_CHANCE)) return null;",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-pick",
+    "file": "src/systems/aetheric.js",
+    "old": "NUMIDIUM_SET_PIECES[Math.min(NUMIDIUM_SET_PIECES.length - 1, Math.floor(rolls() * NUMIDIUM_SET_PIECES.length))]",
+    "new": "NUMIDIUM_SET_PIECES[Math.min(NUMIDIUM_SET_PIECES.length - 1, Math.floor(rolls() * (NUMIDIUM_SET_PIECES.length - 1)))]",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-brass-element",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "if (brass) { add(m().resist, 'magic', brass.magic); add(m().resist, 'shock', brass.shock); }",
+    "new": "if (brass) { add(m().resist, 'fire', brass.magic); add(m().resist, 'shock', brass.shock); }",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-brass-one-element",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "if (brass) { add(m().resist, 'magic', brass.magic); add(m().resist, 'shock', brass.shock); }",
+    "new": "if (brass) { add(m().resist, 'magic', brass.magic); }",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-gearward-on-a-fall",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  const gear = d > 0 && _pending ? tierOf(entity, 'numidium', 1) : null;",
+    "new": "  const gear = d > 0 ? tierOf(entity, 'numidium', 1) : null;",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-gearward-never-winds",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "      _s.gearReady = now + gear.recover;",
+    "new": "      _s.gearReady = now;",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-gearward-share-doubled",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "      d -= Math.round((d * gear.lighter) / 100);",
+    "new": "      d -= Math.round((d * gear.lighter) / 50);",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-gearward-points-unwhole",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "      d -= Math.round((d * gear.lighter) / 100);",
+    "new": "      d -= (d * gear.lighter) / 100;",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-gearward-wound-late",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "    if (now >= _s.gearReady) {",
+    "new": "    if (now > _s.gearReady) {",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-gearward-silent",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "      sound('gear');\n",
+    "new": "",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-hour-never-turns",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  if (!v) return hourTurns(entity);",
+    "new": "  if (!v) return false;",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-hour-at-five",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  const v = tierOf(entity, 'numidium', 2);\n  if (!v) return false;",
+    "new": "  const v = tierOf(entity, 'numidium', 1);\n  if (!v) return false;",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-hour-never-recovers",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  _s.hourReady = now + v.recover;",
+    "new": "  _s.hourReady = now;",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-heal-lost",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  _s.hourHeal = v.heal;",
+    "new": "  _s.hourHeal = 0;",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-heal-doubled",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "    const healed = max > 0 ? healMine(entity, (max * share) / 100) : 0;",
+    "new": "    const healed = max > 0 ? healMine(entity, (max * share) / 50) : 0;",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-hour-unsaid",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "    say(healed > 0 ? `The Hour Turns! ${healed} health returns.` : 'The Hour Turns!');",
+    "new": "    say('The Hour Turns!');",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-a-blows-alone",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  if (saved && _s.hourHeal > 0) {\n    const share = _s.hourHeal;\n    _s.hourHeal = 0;\n    const max = entity?.maxHealth;\n    const healed = max > 0 ? healMine(entity, (max * share) / 100) : 0;\n    say(healed > 0 ? `The Hour Turns! ${healed} health returns.` : 'The Hour Turns!');\n  }\n  if (!blow) return;   // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath\n",
+    "new": "  if (!blow) return;   // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath\n  if (saved && _s.hourHeal > 0) {\n    const share = _s.hourHeal;\n    _s.hourHeal = 0;\n    const max = entity?.maxHealth;\n    const healed = max > 0 ? healMine(entity, (max * share) / 100) : 0;\n    say(healed > 0 ? `The Hour Turns! ${healed} health returns.` : 'The Hour Turns!');\n  }\n",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-hour-silent",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  _s.recovering.add('hour');\n  sound('hour');\n",
+    "new": "  _s.recovering.add('hour');\n",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-never-recovering",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  _s.recovering.add('hour');\n",
+    "new": "",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-never-said-ready",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  hour: { at: () => _s.hourReady, line: 'The Hour Turns is ready again.', set: 'numidium', tier: 2 },",
+    "new": "  hour: { at: () => _s.hourReady, line: '', set: 'numidium', tier: 2 },",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-no-chip",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  if (t.get('numidium')?.[2] && st.hourRecoverLeft) out.push({ key: 'hour', set: 'numidium', name: 'The Hour Turns', text: time(st.hourRecoverLeft), state: 'recovering' });\n",
+    "new": "",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-winding-unread",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "    gearLeft: left(_s.gearReady), hourRecoverLeft: left(_s.hourReady),",
+    "new": "    gearLeft: 0, hourRecoverLeft: left(_s.hourReady),",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-no-clunk",
+    "file": "src/scenes/world.js",
+    "old": "    else if (name === 'gear') audio.playOneShotId(SD_HALL_SOUNDS.clunk, 1);",
+    "new": "    else if (name === 'gear') audio.playOneShotId(SD_HALL_SOUNDS.chime, 1);",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  },
+  {
+    "name": "SD9D-the-sounds-crossed",
+    "file": "src/scenes/world.js",
+    "old": "    else if (name === 'hour') audio.playOneShotId(SD_HALL_SOUNDS.toll, 1);",
+    "new": "    else if (name === 'hour') audio.playOneShotId(SD_HALL_SOUNDS.clunk, 1);",
+    "tests": [
+      "test/sd9d_numidium.test.js"
+    ]
+  }
+]
