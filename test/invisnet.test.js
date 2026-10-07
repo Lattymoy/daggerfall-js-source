@@ -18,6 +18,7 @@ import { concealBits, concealFlagsOfBits, concealmentFlags } from '../src/system
 import { fakeRoom } from './fakeRoom.mjs';
 import { fakeSocketClass } from './fakeSocket.mjs';
 import { RemotePlayers } from '../src/net/remotePlayers.js';
+import { openPeers, pickPeerInFront, SOCIAL_REACH } from '../src/player/socialPick.js';   // CONCEAL-MATE
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const P = { x: 1, y: 2, z: 3, yaw: 0, pitch: 0, mv: 0 };
@@ -143,7 +144,7 @@ test('INVIS-NET by source: the host packs my concealment onto every pose; on the
   assert.match(w, /seen\.push\(d\);\n\s*\}\n\s*peerCandlesFrame\(seen, dt\);/, 'the candles off the seen');
   assert.doesNotMatch(w, /peerCandlesFrame\(drawable/, 'never off the whole list');
   assert.match(w, /out\.push\(\{ id: p\.id, feet: onlineToScene\(p\.shown\), height: _peerHeights\.get\(p\.id\), cv: p\.shown\?\.cv \| 0 \}\);/, 'the peers the foes read carry it');
-  assert.match(w, /pickPeerInFront\(eye, dir, \(peersNear\(\) \?\? \[\]\)\.filter\(\(q\) => !q\.cv\), SOCIAL_REACH, rayPersonDistance\);/, 'the F door and the plaque skip a concealed peer');
+  assert.match(w, /pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\), SOCIAL_REACH, rayPersonDistance\);/, 'the F door and the plaque skip a concealed peer (CONCEAL-MATE: a stranger - a mate stays open)');
 });
 
 // ---- AUDIT (the pre-merge audit, 2026-09-27, Mac: "Audit before we merge"): what else named or showed a concealed player.
@@ -171,6 +172,44 @@ test('AUDIT pre-merge I-A + I-E + I-F by source: a building\'s sheet opens the b
   assert.match(w, /const partyOnMaps = \(\) => partyNear\(\)\.filter\(\(m\) => !_hiddenPeers\.has\(m\.id\)\);/);
   assert.match(w, /townParty: \(\) => partyOnMaps\(\)\.map\(/, 'the town map');
   assert.match(w, /partyNear: \(\) => partyOnMaps\(\),/, 'the dungeon\'s and the building\'s plans');
-  assert.match(w, /if \(tabId === 'local'\) return localRosterSource\(s, \(peersNear\(\) \?\? \[\]\)\.filter\(\(q\) => !q\.cv\), player\.feetAt\(\)\);/, 'the Nearby list');
-  assert.match(w, /return near\.filter\(\(p\) => !p\.cv\)\.map\(\(p\) => \(\{ id: p\.id, name: peerName\(p\.id\)/, 'the page\'s readers');
+  assert.match(w, /if \(tabId === 'local'\) return localRosterSource\(s, openPeers\(peersNear\(\), isPartyMate\), player\.feetAt\(\)\);/, 'the Nearby list');
+  assert.match(w, /return openPeers\(near, isPartyMate\)\.map\(\(p\) => \(\{ id: p\.id, name: peerName\(p\.id\)/, 'the page\'s readers');
+});
+
+// ---- CONCEAL-MATE (2026-10-07, a player: "you're not interactable with party members - would be a QoL if you can interact
+// with at least your party members while chameleon or shadow form, invis etc on"): a concealed player stays open to their
+// own party - the F key and its plaque, the Nearby list, a page, a gift - and to nobody else.
+
+test('CONCEAL-MATE executed: openPeers keeps every open player and a concealed party mate (invisible, blending, a shade, all three), drops a concealed stranger, and with no party test drops every concealed one - the F key\'s pick then finds the mate', () => {
+  const near = [
+    { id: 'open-0001', feet: [0, 0, -2] },
+    { id: 'mate-0002', feet: [0, 0, -3], cv: 1 },
+    { id: 'mate-0003', feet: [0, 0, -4], cv: 2 },
+    { id: 'mate-0004', feet: [0, 0, -5], cv: 4 },
+    { id: 'mate-0005', feet: [0, 0, -6], cv: 7 },
+    { id: 'strg-0006', feet: [0, 0, -1], cv: 2 },
+    { id: 'zero-0007', feet: [0, 0, -7], cv: 0 },
+  ];
+  const mates = new Set(['mate-0002', 'mate-0003', 'mate-0004', 'mate-0005']);
+  const isMate = (id) => mates.has(id);
+  assert.deepEqual(openPeers(near, isMate).map((p) => p.id), ['open-0001', 'mate-0002', 'mate-0003', 'mate-0004', 'mate-0005', 'zero-0007'], 'every open player and every concealed mate, in order - never the concealed stranger');
+  assert.deepEqual(openPeers(near, null).map((p) => p.id), ['open-0001', 'zero-0007'], 'no party: the concealed are nobody\'s');
+  assert.deepEqual(openPeers(near, () => 1).map((p) => p.id), ['open-0001', 'zero-0007'], 'a truthy non-true answer is not a mate');
+  assert.deepEqual(openPeers(null, isMate), [], 'no list: nobody');
+  assert.deepEqual(openPeers([null, undefined, near[0]], isMate), [near[0]], 'holes skipped');
+  // the pick itself: the concealed stranger stands NEAREST on the ray, and is not the one pressed; a mate is
+  const along = (cam, fwd, feet) => -feet[2];
+  const onlyConcealed = near.filter((p) => p.cv);
+  assert.equal(pickPeerInFront([0, 0, 0], [0, 0, -1], openPeers(onlyConcealed, isMate), SOCIAL_REACH, along)?.peer.id, 'mate-0002', 'the invisible mate is pressed');
+  assert.equal(pickPeerInFront([0, 0, 0], [0, 0, -1], openPeers(onlyConcealed, () => false), SOCIAL_REACH, along), null, 'out of the party, nobody is');
+});
+
+test('CONCEAL-MATE by source: every social door reads ONE law (openPeers over the host\'s party test) - the F key and its plaque, the Nearby list, a page\'s readers and a gift - and the party test is the session\'s own', () => {
+  const w = rd('src/scenes/world.js');
+  assert.match(w, /function isPartyMate\(id\) \{ return !!social\?\.party && social\.isPartyPeer\(id\); \}/, 'a mate is a member of my party, and nobody without one');
+  assert.match(w, /pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\), SOCIAL_REACH, rayPersonDistance\);/, 'the F key and the plaque');
+  assert.match(w, /localRosterSource\(s, openPeers\(peersNear\(\), isPartyMate\), player\.feetAt\(\)\)/, 'the Nearby list');
+  assert.match(w, /return openPeers\(near, isPartyMate\)\.map\(/, 'a page\'s readers');
+  assert.match(w, /const giftablePeers = \(list\) => openPeers\(list, isPartyMate\)\.filter\(/, 'a gift');
+  assert.doesNotMatch(w, /\.filter\(\((?:q|p)\) => !(?:q|p)\.cv\)/, 'no door keeps its own copy of the old law');
 });
