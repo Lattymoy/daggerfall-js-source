@@ -118,7 +118,8 @@ export const FRAME_ROLES = {
     'body .dfnaval-plate', 'body .dfnaval-card',
     'body .bounty-card',   // BOUNTY1: the notice read whole, the reward box
     'body .arena-plate',   // ARENA2: the versus bar's plate - a stone panel over the sand
-    'body .aw-card'],   // ARENA3: the Arena window's cards - a bout, a tier, a banner, a board, a rule   // ARENA2: the versus bar's plate - a stone panel over the sand
+    'body .aw-card',
+    '.px-win .card.acctin ul.acctfacts.acctrecord li'],   // PROFILE-MENU: the profile's record, a tile a deed   // ARENA3: the Arena window's cards - a bout, a tier, a banner, a board, a rule   // ARENA2: the versus bar's plate - a stone panel over the sand
   // panels that carry a brass edge on the left as their own mark
   panelAccent: ['body .rvncard', '.notice', '.inputbox', 'body .dfsocial-toast', 'body .dfdecor-bar'],   // PLUS-DRESS: the two that wore a brass line
   button: ['.port-host .port-btn', '.pack-shell .statflip-btn', '.inv-info .act', '.pbind .act', '.px-sys .act', '.shell .act', '.px-win .card .act', '.pack-shell .act', '.px-setwrap .act',
@@ -160,7 +161,10 @@ export const FRAME_ROLES = {
     // PLUS-DRESS: the page's, the F-menu's (its Cancel stays a line of text), the duel's and the decorator's
     'body .dfpage-btn', 'body .dfpeer-btn:not(.cancel)', 'body .dfduel-btn', 'body .dfprofile-duel', 'body .dfdecor-btn', 'body .dfdecor-open',
     'body .dfprofile-wed',   // LEGACY7 part three: the inspect card's Propose
-    'body .dfnaval-btn'],   // NAV-F: the plunder window's presses
+    'body .dfnaval-btn',   // NAV-F: the plunder window's presses
+    // PLUS-MENU (2026-10-07, Mac: "give the main menu the enhanced plus UI treatment"): the front door's doors and the
+    // System tab's list - stone slabs that go brass under the pointer, as every other Plus press does
+    '.px-menu .doorbtn', '.px-menu.px-compact button'],
   primary: ['.lv-ok', '.hmroot .act:not(.hmtool)', 'body .dfdecor-place', 'body .bounty-shell .act.primary', 'body .lgs-shell .act.primary', 'body .notice-shell .act.primary',
     'body .aw-shell .act.primary',   // ARENA3: Fight and the wager placed - what the window is for   // BOUNTY1: Take bounty and Take the reward in brass   // PLUS-MAP: the map's tools are plain stone   // PLUS-DRESS: Place is what the decorator is for
     'body .dfnaval-take'],   // NAV-F: Take all (and a raid's Sail on) - what the plunder window is for
@@ -677,6 +681,86 @@ export const FRAME_CSS = `${frameCss()}
 /* ── PLUS2: THE COLOURS (after the kit, so a theme's ground wins by the page attribute) ── */
 ${THEME_CSS}
 `;
+
+/**
+ * PLUS-SITE (2026-10-07, Mac: "do the same thing for our website. A proper detailed overhaul"): THE KIT, FOR THE PAGE
+ * THAT RUNS NO SCRIPT AND CARRIES NO PICTURE.
+ *
+ * The website (index.html) wears the game's tokens, faces and night, injected at serve and build by
+ * scripts/landingHtml.mjs - and now the game's stone and brass too, the same roles in the same tones as this kit: what
+ * you PRESS is a raised stone slab that goes brass (Play, the one press the page is for, in brass), a section is a
+ * carved window, a box inside it a panel, a figure's socket a well. Generated here from FRAME_TONES, so the site and
+ * the game cannot carve two different stones.
+ *
+ * ONE DIFFERENCE, AND IT IS THE PAGE'S LAW: the site may carry no url() (test/landing.test.js - a page about the game
+ * draws nothing but CSS), and the game's window frame is a picture (frameSvg's border-image). So a window here is cut
+ * from borders and shadows - the lit and shaded bevel, the outline, the engraved inner line, the hard drop - and its
+ * brass fittings, rivet and all, are solid gradients laid at its four corners on a pseudo-element. Paint, like the kit:
+ * no width, padding or size is written here; the page's own sheet gives each box its edge and room.
+ */
+export const SITE_ROLES = Object.freeze({
+  window: ['main > section'],
+  header: ['main > section > h2'],
+  panel: ['.cols > div', '.grid > div', '.step', '.qa > div'],
+  button: ['.plaque', '.ask', '.doorlinks a'],
+  primary: ['.doorplaques .plaque:first-child'],
+  well: ['.step::before'],
+});
+/** The fitting's side: frameSvg's own F (11) and its outline, at the site's scale - large enough to read at a corner. */
+export const SITE_FITTING = 16;
+/** One brass fitting's layers at a corner (`x`, `y` the background-position keywords), top first: the rivet's lit
+ *  pixel and its dark ring, the brass body lit along its top and left and shaded along its bottom and right, and the
+ *  outline under all of it - frameSvg's fitting, drawn square in solid gradients. */
+const fittingAt = (x, y, t = T) => {
+  const F = SITE_FITTING;
+  const at = (c, dx, dy, w, h) => `linear-gradient(${c}, ${c}) ${x} ${dx}px ${y} ${dy}px / ${w}px ${h}px no-repeat`;
+  const r = F / 2 - 3;   // the rivet's ring, 6px, centred
+  return [
+    at(t.brassHi, r + 2, r + 2, 2, 2), at(t.brassDark, r, r, 6, 6),
+    at(t.brassHi, 1, 1, F - 2, 2), at(t.brassHi, 1, 1, 2, F - 2),
+    at(t.brassLo, 1, F - 3, F - 2, 2), at(t.brassLo, F - 3, 1, 2, F - 2),
+    at(t.brass, 1, 1, F - 2, F - 2), at(t.outline, 0, 0, F, F),
+  ];
+};
+export function siteKitCss(r = SITE_ROLES, t = T) {
+  const pressable = [...r.button, ...r.primary];
+  const fittings = [['left', 'top'], ['right', 'top'], ['left', 'bottom'], ['right', 'bottom']].flatMap(([x, y]) => fittingAt(x, y, t));
+  return `/* ── PLUS-SITE: THE STONE-AND-BRASS KIT (ui/enhancedFrame.js siteKitCss), the game's tones ── */
+/* WINDOW - carved stone: the bevel lit from the top left, the outline, the engraved line inside, the hard drop */
+${list(r.window)} {
+  border-color: ${t.stoneHi} ${t.stoneDim} ${t.stoneDark} ${t.stoneLit};
+  background: ${GRAIN}, ${t.ground};
+  box-shadow: 0 0 0 1px ${t.outline}, 0 0 0 3px ${t.stoneLo}, 0 0 0 4px ${t.outline}, inset 0 0 0 1px ${t.outline},
+    inset 0 0 0 2px #16140f, 6px 6px 0 4px rgba(0,0,0,0.42); }
+/* ...and its brass fittings, one at each corner, standing over the stone as the game's do */
+${list(r.window, '::before')} {
+  content: ''; position: absolute; inset: -${SITE_FITTING / 2 + 2}px; pointer-events: none;
+  background: ${fittings.join(',\n    ')}; }
+/* HEADER - the band that names a window: a lit ground over a groove */
+${list(r.header)} {
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0) 70%);
+  box-shadow: 0 2px 0 ${t.outline}, 0 3px 0 ${t.groove}; }
+/* PANEL - a box inside a window: a stone bevel and an engraved inner line */
+${list(r.panel)} {
+  border-color: ${RAISED};
+  background-color: ${t.groundPanel};
+  box-shadow: ${RING}, inset 0 0 0 1px rgba(5,6,8,0.75), inset 0 3px 0 -1px rgba(255,255,255,0.04), 3px 3px 0 1px rgba(0,0,0,0.4); }
+/* BUTTON + PRIMARY - raised; brass under the pointer and the keyboard; sunk while held */
+${list(pressable)} {
+  border-color: ${RAISED};
+  background-color: ${t.groundButton}; background-image: ${LIT_BAND};
+  box-shadow: ${RING}, 2px 2px 0 1px rgba(0,0,0,0.45); }
+${list(r.primary)} { border-color: ${BRASS}; background-color: #2a2217; }
+${list(pressable, ':hover')},
+${list(pressable, ':focus-visible')} { border-color: ${BRASS}; background-color: ${t.groundButtonHi}; background-image: ${LIT_BAND}; }
+${list(r.primary, ':hover')}, ${list(r.primary, ':focus-visible')} { background-color: #3a2e1c; }
+${list(pressable, ':active')} { border-color: ${SUNK}; translate: 1px 1px; box-shadow: ${RING}, inset 2px 2px 0 rgba(0,0,0,0.5); }
+/* WELL - sunk into the surface */
+${list(r.well)} { border-color: ${SUNK}; background-color: rgba(4,5,7,0.7); box-shadow: ${RING}, inset 2px 2px 0 rgba(0,0,0,0.5); }
+@media (prefers-reduced-motion: reduce) { ${list(pressable, ':active')} { translate: none; } }
+`;
+}
+export const SITE_KIT_CSS = siteKitCss();
 
 /**
  * LAYOUT1: THE BUTTON ROWS. The one part of the kit that DOES move

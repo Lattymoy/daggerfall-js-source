@@ -2188,6 +2188,35 @@ export const ARMOUR_CSS = `
 /** The layers that stand OVER the kit on purpose, in order - each outranks the kit's stone at the same weight. */
 export const OVER_KIT_CSS = [ITEM_FRAME_CSS, ONLINE_DRESS_CSS];
 
+/** PLUS-MENU (2026-10-07, Mac: "give the main menu the enhanced plus UI treatment"): THE FRONT DOOR IN STONE AND BRASS.
+ *  The door was the one enhanced screen the kit never reached - eight words floating on the night, the About plaque and
+ *  the profile mark carved while the doors themselves were bare. The doors play the kit's BUTTON role now
+ *  (ui/enhancedFrame.js: raised stone, brass under the pointer and the pad, sunk while held, every Plus colour's
+ *  ground), one width a column so the list reads as one carved rail; this gives them the 2px edge the role paints (the
+ *  padding gives back what the edge takes, so a door is the box it was) and keeps the diamonds standing, dim stone at
+ *  rest and the classic gold on the door under the pointer. The System tab's list over a game is dressed the same. The
+ *  rule under the wordmark is gilt. */
+export const MENU_CSS = `
+/* ── PLUS-MENU: THE DOORS ── */
+.px-menu:not(.px-compact) { width: min(384px, calc(100vw - 32px)); align-items: stretch; gap: 8px; }
+.px-menu .doorbtn { justify-content: space-between; border: 2px solid; padding: 6px 24px; }
+.px-menu.px-compact { align-items: stretch; gap: 8px; width: min(380px, 100%); margin-inline: auto; }
+.px-menu.px-compact button { justify-content: space-between; border: 2px solid; padding: 4px 20px; }
+.px-menu .doorbtn .px-c, .px-menu.px-compact button .px-c { visibility: visible; color: #5a5446; text-shadow: 1px 1px 0 #050608; }
+.px-menu .doorbtn:hover .px-c, .px-menu .doorbtn:focus-visible .px-c,
+.px-menu.px-compact button:hover .px-c, .px-menu.px-compact button:focus-visible .px-c { color: rgb(243,239,44); text-shadow: 2px 2px 0 rgb(93,77,12); }
+/* a phone: the doors at the 44px tap floor and a size down, so the rail stands above the foot's plaques on a tall phone
+   (the stage still scrolls where it cannot - PX8) */
+@media (max-width: 480px) {
+  .px-menu:not(.px-compact) { gap: 6px; }
+  .px-menu .doorbtn { padding: 2px 16px; min-height: 44px; font-size: 22px; }
+}
+/* the rule under the wordmark: two gilt bars fading out from the gem */
+.px-home .px-rule::before, .px-home .px-rule::after { height: 2px; opacity: 1; box-shadow: 0 1px 0 #050608; }
+.px-home .px-rule::before { background: linear-gradient(90deg, transparent, #7a5424 45%, #f3cf86); }
+.px-home .px-rule::after { background: linear-gradient(90deg, #f3cf86, #7a5424 55%, transparent); }
+`;
+
 export const PLUS_CSS = `${VITALS_CSS}
 ${PLUS_FIX_CSS}
 ${TRAVEL_CSS}
@@ -2198,6 +2227,7 @@ ${LV2_CSS}
 ${MOTION_CSS}
 ${LAYOUT_CSS}
 ${ARMOUR_CSS}
+${MENU_CSS}
 /* FRAME1: LAST, on purpose - see ui/enhancedFrame.js */
 ${FRAME_CSS}
 /* RARITY-UI + SIGIL-UI, then PLUS-DRESS: after the kit - each outranks the kit's stone at the same weight */

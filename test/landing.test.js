@@ -385,14 +385,22 @@ test('U63: the page is the pixel face\'s own idioms, not the shell it replaced',
   assert.match(css, /rgb\(243,239,44\)/, 'the classic shadowed-label pair, for what is live');
   assert.match(css, /text-shadow: 2px 2px 0 rgb\(93,77,12\)/);
   assert.match(skin, /color: rgb\(243,239,44\); text-shadow: 2px 2px 0 rgb\(93,77,12\)/, '...which is the menu\'s pair');
-  // TWO box SHAPES, and both are plaques: the .plaque rule (worn by
-  // the door's Play/Install pair - DA shipped the downloadable app
-  // and its Install stands beside Play, same shape) and the asks' .ask
-  // at the top right, worn by Patreon's and Ko-fi's alike (SUPPORT1) -
-  // the same shape the About plaque has on the home face, which is what
-  // makes a box read as a plaque here. Nothing else declares a box.
+  // TWO PLAQUE SHAPES: the .plaque rule (worn by the door's Play/Install
+  // pair - DA shipped the downloadable app and its Install stands beside
+  // Play, same shape) and the asks' .ask at the top right, worn by
+  // Patreon's and Ko-fi's alike (SUPPORT1) - the same shape the About
+  // plaque has on the home face. PLUS-SITE (2026-10-07, Mac: "do the same
+  // thing for our website"): those two keep the About plaque's own edge
+  // as the page's fallback, and every OTHER box the page declares is one
+  // of the game kit's roles - a section a window, a box in it a panel, a
+  // numeral a well, the section links pressed slabs - whose edge carries
+  // NO colour of the page's own: the stone is the kit's, injected
+  // (test/plus_menu_site.test.js holds the kit). PIN MOVED: this counted
+  // the plaque edge as the page's only box.
   const boxes = (css.match(/border: 2px solid #7d7460/g) ?? []).length;
-  assert.equal(boxes, 2, 'the plaque shape and the asks\' shape - no third box rule, not even a second ask');
+  assert.equal(boxes, 2, 'the plaque shape and the asks\' shape - no third plaque rule, not even a second ask');
+  const colourless = [...css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/border: \d+px solid(?=;)/g)].length;
+  assert.ok(colourless >= 6, `the kit's boxes give their edge and no colour (${colourless})`);
   assert.match(css, /\.plaque \{/);
   assert.match(css, /\.ask \{/);
   // The door's three, exactly: Play into the browser, Install onto the

@@ -19023,3 +19023,63 @@ from outside the HUD styles a class the HUD writes - and, given the field's bare
 read source text, where a JS read like `b.empty` stood as a selector. PIN MOVED: `ui3_status`, `discord5`, `nav_f_ui`,
 `tools/uiStatusProbe.mjs`; re-aimed: `tools/mutants/ui3.json` UI3-never-beside and UI3-never-stepped-aside,
 `tools/mutants/discord5.json` D5-HOTSLOT-empty-chip-hidden.
+
+## PROFILE-MENU, PLUS-MENU, PLUS-SITE - the profile organised, the front door and the website in stone and brass (2026-10-07, Mac: "I want to organize and detail the player profile (the top right icon section), give the main menu the enhanced plus UI treatment and do the same thing for our website. A proper detailed overhaul")
+
+Three surfaces the Plus refresh had never reached, done as one pass because they are one look: the card the corner
+portrait opens, the doors under the wordmark, and the page in front of the game.
+
+**PROFILE-MENU - the card is a profile** (`ui/enhancedAccount.js`, its sheet in `ui/enhancedStyle.js`). Signed in, the
+account card was one centred column of eleven key-and-value rows - who you are, what you have done and what the account
+is, all at one weight - with the Renown rows wrapping to three lines on a phone, where the window also stood from the
+top of the screen to its middle with the menu reading through the scrim under it. It reads now in the order a player
+looks:
+
+- **The plate**: the portrait the corner mark wears - the same character (`ui/enhancedMenu.js` `profileCharacter`, one
+  function the mark and the card both ask: paused, the one being played; at the door, the newest finished save), its face
+  asked for as a copy and drawn once (a face that lands after the card is up repaints it, and the same canvas moves into
+  every repaint's well) - with the hooded silhouette until then, and for good with none. Under it the name with its
+  Renown (the heading RENOWN1 pinned, unchanged), the title worn in the colour it wears over a head (`.acctworntitle`,
+  walked out of the vocabulary beside the button's rule in `ui/playerBadge.js` `badgeCss`), the glyphs shown (a hidden
+  one is not worn, so not drawn), and "Playing <name> · level N".
+- **Record**: a tile a deed - duels, breaches closed, towns defended, serpents slain, silver - the figure large and its
+  name under it; the duels' tile takes the row, with the share won drawn (`<progress>`, said in words to a reader).
+- **Characters**: each Renown row as it was written (RENOWN-BAR's words), with the way to the next level drawn under it;
+  a full bar at the cap.
+- **Wardrobe**: ACC3c's pickers, unchanged, under their head.
+- **Account**: the facts ACC4 pinned (username, kind, registered, time played) and the Patreon row beside them.
+
+Each section stands only once a row is in it (ACC1e: no heading over an empty box) and says no fact twice. Two columns
+where the window is wide (a container query on the card - the WINDOW's width decides), one on a phone; the window widens
+for the profile (`:has(.card.acct.acctin)`) and keeps clear of the foot's plaques under the wordmark; on a phone the
+stage is the screen's, under a heavier scrim. Under Plus a deed's tile is a panel (`ui/enhancedFrame.js` panel role).
+The card still brings no design language of its own - no style from script, no colour - so the bars are the browser's
+`<progress>` told how to draw by the sheet.
+
+**PLUS-MENU - the doors in stone** (`ui/enhancedPlusStyle.js` `MENU_CSS`). The front door was the one enhanced screen
+the kit never reached: eight words floating on the night while the About plaque, the asks and the profile mark were
+carved. The doors (`.doorbtn`) and the System tab's list (`.px-menu.px-compact`) play the kit's BUTTON role now - raised
+stone, brass under the pointer and the pad, sunk while held, and every Plus colour's ground, since the theme rules are
+walked out of the same role list. `MENU_CSS` gives them the 2px edge the role paints and the padding gives it back, so a
+door is the box it was (the pin reads both rules and does the sum); one width a column so the list reads as one rail;
+the diamonds stand at rest in dim stone and light the classic gold on the door under the pointer; a phone's doors sit at
+the 44px floor a size down, so the rail stands above the foot's plaques on a tall phone (PX8's scroll still holds where
+it cannot). The rule under the wordmark is gilt.
+
+**PLUS-SITE - the website in the game's stone** (`ui/enhancedFrame.js` `siteKitCss`, injected by
+`scripts/landingHtml.mjs` as `#plus-kit`). The site wears the kit's roles in the kit's tones: a section is a carved
+window with its name on the lit band at its head, a box inside it a panel (the three columns, the nine features, each
+step, each question with its answer - the `<dl>`s' pairs now stand a `<div>` each), a step's numeral sits in a well, and
+what you press is a stone slab that goes brass - Play, the one press the page is for, in brass, and the section links
+pressed slabs too. The page's law holds: no `url()` (the game's window frame is a picture, `frameSvg`, so the site's is
+cut from borders and shadows, and its four brass fittings are solid gradients on a pseudo-element, rivet and all), no
+colour of the page's own (each box the page declares gives its edge and room and names no colour - the kit's stone is
+injected after the page's sheet, as the night and the marks are), and the plaque and the ask keep the About plaque's
+edge as their fallback. One source: the site's stone and the game's are both `FRAME_TONES`.
+
+`test/plus_menu_site.test.js` (7); `tools/mutants/plus_menu_site.json` (24 dead). PIN MOVED: `landing` U63 (the plaque
+edge was the page's only box; the kit's boxes give their edge and no colour), `profile1_badge` and
+`profile2_pause_profile` (the character's law is `profileCharacter`, which the card asks too). Re-aimed:
+`tools/mutants/renown1.json` RENOWN1-heading-changed-for-everyone (the heading lands in the plate),
+`tools/mutants/profile2.json` P2-live-portrait-is-the-newest-save (the law's new home), and `tools/mutants/profile1.json`
+P1-door-shares-the-tile-canvas (the card asks for the face as a copy too, so the record names the mark's own line).

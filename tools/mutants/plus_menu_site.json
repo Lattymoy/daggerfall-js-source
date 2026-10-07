@@ -1,0 +1,218 @@
+[
+  {
+    "name": "PROFILE-MENU-sections-out-of-order",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "      grid.append(deeds, kept);",
+    "new": "      grid.append(kept, deeds);",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-MENU-a-section-drawn-empty",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "const keep = (into, sec) => { if (rows.children.length) into.append(sec); };",
+    "new": "const keep = (into, sec) => { into.append(sec); };",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-MENU-the-plate-on-a-form",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "root.className = signedIn ? 'card acct acctin' : 'card acct';",
+    "new": "root.className = 'card acct acctin';",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-MENU-the-bar-the-losses-share",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "bar(won, won + lost,",
+    "new": "bar(lost, won + lost,",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-MENU-the-bar-max-the-levels-whole",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "bar(p.need > 0 ? p.into : 1, p.need > 0 ? p.need : 1,",
+    "new": "bar(p.need > 0 ? p.into : 1, p.need > 0 ? p.xp : 1,",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-MENU-the-cap-an-empty-bar",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "bar(p.need > 0 ? p.into : 1,",
+    "new": "bar(p.need > 0 ? p.into : 0,",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-MENU-a-hidden-glyph-drawn",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "glyphBadges(w).filter((g) => !off.includes(g.key));",
+    "new": "glyphBadges(w);",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-MENU-the-late-face-never-drawn",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "if (art) { faceArt = art; if (flow.stage === 'in') paint(); }",
+    "new": "if (art) { faceArt = art; }",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-MENU-the-titles-class-dropped",
+    "file": "src/ui/enhancedAccount.js",
+    "old": "el('span', `acctworntitle ${badgeClass('tl', worn)}`)",
+    "new": "el('span', 'acctworntitle')",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-MENU-the-plates-title-colourless",
+    "file": "src/ui/playerBadge.js",
+    "old": "  ...TITLES.map((t) => `.card .acctworntitle.${badgeClass('tl', t)} { color: ${cssRgba(TITLE_RGBA[t])}; }`),\n",
+    "new": "  ...[],\n",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-MENU-the-windows-width",
+    "file": "src/ui/enhancedStyle.js",
+    "old": "{ width: min(820px, 94vw); max-height: min(720px,",
+    "new": "{ width: min(500px, 92vw); max-height: min(720px,",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-MENU-the-phone-not-given-the-screen",
+    "file": "src/ui/enhancedStyle.js",
+    "old": ".px-stage.px-acctstage { padding: max(10px, env(safe-area-inset-top)) 8px",
+    "new": ".px-stage.px-acctstage { padding: max(10px, env(safe-area-inset-top)) 16px",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-MENU-a-tile-not-a-panel-under-Plus",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "    '.px-win .card.acctin ul.acctfacts.acctrecord li'],",
+    "new": "    ],",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-MENU-the-card-shares-the-marks-canvas",
+    "file": "src/ui/enhancedMenu.js",
+    "old": "    face: save ? loadFace(save, { scale: 2, copy: true }) : null,\n    character:",
+    "new": "    face: save ? loadFace(save, { scale: 2 }) : null,\n    character:",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-MENU-the-doors-out-of-the-role",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "    '.px-menu .doorbtn', '.px-menu.px-compact button'],",
+    "new": "    '.px-menu.px-compact button'],",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-MENU-the-edge-without-the-padding-given-back",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".px-menu .doorbtn { justify-content: space-between; border: 2px solid; padding: 6px 24px; }",
+    "new": ".px-menu .doorbtn { justify-content: space-between; border: 2px solid; padding: 8px 26px; }",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-MENU-the-sheet-after-the-kit",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": "${ARMOUR_CSS}\n${MENU_CSS}\n/* FRAME1: LAST, on purpose - see ui/enhancedFrame.js */\n${FRAME_CSS}",
+    "new": "${ARMOUR_CSS}\n/* FRAME1: LAST, on purpose - see ui/enhancedFrame.js */\n${FRAME_CSS}\n${MENU_CSS}",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-MENU-the-diamonds-hidden",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".px-menu .doorbtn .px-c, .px-menu.px-compact button .px-c { visibility: visible;",
+    "new": ".px-menu .doorbtn .px-c, .px-menu.px-compact button .px-c { visibility: hidden;",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-SITE-the-kit-not-injected",
+    "file": "scripts/landingHtml.mjs",
+    "old": "      { tag: 'style', attrs: { id: 'plus-kit' }, children: SITE_KIT_CSS, injectTo: 'head' },\n",
+    "new": "",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-SITE-a-picture-in-the-kit",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "  background: ${GRAIN}, ${t.ground};",
+    "new": "  background: ${GRAIN}, url(stone.png), ${t.ground};",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-SITE-a-fitting-missing",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "[['left', 'top'], ['right', 'top'], ['left', 'bottom'], ['right', 'bottom']]",
+    "new": "[['left', 'top'], ['right', 'top'], ['left', 'bottom']]",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-SITE-play-plain-stone",
+    "file": "src/ui/enhancedFrame.js",
+    "old": "  primary: ['.doorplaques .plaque:first-child'],",
+    "new": "  primary: [],",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-SITE-a-section-with-no-edge",
+    "file": "index.html",
+    "old": "main > section { position: relative; border: 4px solid;",
+    "new": "main > section { position: relative;",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  },
+  {
+    "name": "PLUS-SITE-a-pair-outside-its-panel",
+    "file": "index.html",
+    "old": "<div><dt>Saves</dt>",
+    "new": "<dt>Saves</dt>",
+    "tests": [
+      "test/plus_menu_site.test.js"
+    ]
+  }
+]
