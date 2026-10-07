@@ -37,6 +37,7 @@
 
 import { inArenaCell, arenaRecordDisplaced, ARENA_REGION } from '../world/arenaCity.js';
 import { interiorSceneName, cacheScene, containsPermanentScene, addPermanentScene, removePermanentScene } from './sceneCache.js';
+import { stampLayout } from './layoutPins.js';   // FIELD BUGS 2026-10-07 CRATE-LAYOUT: the new house's record, in the layout it was picked in
 import { isResidence } from '../world/buildingNames.js';
 import { templateByIndex } from './itemTemplates.js';   // ARENA-FIX 11: a torch left burning, back into an item
 import { homeCandidate } from './onlineHomes.js';   // ARENA4b: the buildings an online home may be
@@ -102,8 +103,22 @@ export function droppedLightItem(t) {
  * things (to give back), the gold the placed pieces cost (to pay back whole), the items put in the new house's chest,
  * how many pieces were placed, how many furniture marks were dropped, and (ARENA-FIX 11) how many burning lights were
  * put out and carried. Pure on the cache.
+ *
+ * FIELD BUGS 2026-10-07 HOME-WIPE (the Discord: "all the stuff I kept in them seems to have disappeared!" - "it ate a
+ * bunch of aetherics/legendaries"): THE NEW HOUSE'S OWN SCENE IS NEVER WRITTEN OVER. An online move is emptied again at
+ * every boot until it is said read (systems/onlineHomes.js moveArenaHomes, "harmless: a scene emptied once is gone"),
+ * and a read lost to a refused checkpoint or a failed `arena-seen` - the account service's overloads of 2026-10-06 - left
+ * it unread. By then the old scene was gone and the new home was the owner's, kept: the emptying of nothing cached an
+ * empty record over it, every chest, storage piece, own thing and floor of the new home, and the boot's checkpoint wrote
+ * that to the realm. A permanent `to` is the owner's record: what is carried joins its first container, and nothing
+ * carried leaves it as it stands. An ordinary `to` is a stranger's visit, gone as the world moving on takes it.
+ * CRATE-LAYOUT: a record made here is stamped with `layout`, the layout the new house's town is visited in - offline the
+ * deed's own (moveArenaRecords), online the homes' towns' (world.js moveArenaHomesOnline) - so the next visit restores it
+ * (worldModes.js restoreInteriorScene holds back a record of another layout). Unstamped, it read as Daggerfall's own
+ * town, and a city standing in Beautiful Cities kept the crate back from its owner. A record already standing keeps its
+ * own stamp.
  */
-export function emptyArenaScene(cache, from, to) {
+export function emptyArenaScene(cache, from, to, { layout = null } = {}) {
   const out = { own: [], refund: 0, crate: [], pieces: 0, hidden: 0, lights: 0 };
   if (!cache?.scenes) return out;
   const moved = (name) => name === from || name.startsWith(`${from}|`);
@@ -121,10 +136,18 @@ export function emptyArenaScene(cache, from, to) {
   }
   for (const name of [...cache.permanent]) if (moved(name)) { permanent = true; cache.permanent.delete(name); }
   removePermanentScene(cache, from);
-  if (out.crate.length || permanent || containsPermanentScene(cache, to)) {
-    cacheScene(cache, to, { lootContainers: out.crate.length ? [{ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 }] : [], frame: 'building' });
-    if (permanent) addPermanentScene(cache, to);
+  const kept = containsPermanentScene(cache, to) ? cache.scenes.get(to) ?? null : null;   // HOME-WIPE: the owner's record
+  if (kept) {
+    if (out.crate.length) {
+      const lc = kept.lootContainers;   // every entry is copySceneEntry's: the list is always there
+      const chest = lc.find((c) => c?.key === ARENA_CRATE_KEY);
+      if (chest) { chest.items = [...(Array.isArray(chest.items) ? chest.items : []), ...out.crate.map(copyItem)]; chest.crate = true; }
+      else lc.push({ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 });
+    }
+  } else if (out.crate.length || permanent) {
+    cacheScene(cache, to, stampLayout({ lootContainers: out.crate.length ? [{ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 }] : [], frame: 'building' }, layout));   // CRATE-LAYOUT
   }
+  if (permanent) addPermanentScene(cache, to);
   return out;
 }
 
@@ -142,7 +165,7 @@ export function moveArenaRecords({ houses, summaries, oldTypeOf, held = new Set(
   const from = slot.buildingKey;
   const to = arenaHouseFor({ mapId: slot.mapId, oldKey: from, oldType: oldTypeOf?.(from) ?? null }, summaries, { held, isActiveQuestBuilding });
   if (!to) return null;
-  const emptied = scenes ? emptyArenaScene(scenes, interiorSceneName(slot.mapId, from), interiorSceneName(slot.mapId, to.buildingKey)) : { own: [], refund: 0, crate: [] };
+  const emptied = scenes ? emptyArenaScene(scenes, interiorSceneName(slot.mapId, from), interiorSceneName(slot.mapId, to.buildingKey), { layout: slot.layout ?? null }) : { own: [], refund: 0, crate: [] };   // FIELD BUGS 2026-10-07 CRATE-LAYOUT: the deed's layout - the one its town is pinned to, and visited in
   slot.buildingKey = to.buildingKey;
   if (emptied.own.length) hooks.giveOwn?.(emptied.own);
   if (emptied.refund > 0) hooks.refund?.(emptied.refund);

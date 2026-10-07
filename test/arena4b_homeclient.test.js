@@ -223,7 +223,9 @@ test('ARENA4b the host: world.js moves the online homes once a boot, after the h
   // before the boot walk reached `let playerSpawned`'s old line, and the wait above read it in its dead zone
   assert.ok(w.indexOf('let playerSpawned = false, _bootLoaded = false;') > 0 && w.indexOf('let playerSpawned = false, _bootLoaded = false;') < w.indexOf('const landing = takeHomeLayouts(heard);'), 'the world-stands flag declared before the boot\'s first landing reads it');
   assert.ok(fn.includes('arenaHomeFor({ mapId: now.mapId, oldKey: from, oldType: now.oldTypeOf(from) }, now.summaries'), 'the offline rule over the city as it stands');
-  assert.ok(fn.includes('emptyArenaScene(scenes, homeSceneName(now.mapId, from), homeSceneName(now.mapId, to))'), 'the online home\'s own scene');
+  // FIELD BUGS 2026-10-07 CRATE-LAYOUT (PIN MOVED): and the new house's record stamped in the layout the homes' towns
+  // stand in (test/fb1007_homewipe.test.js)
+  assert.ok(fn.includes('emptyArenaScene(scenes, homeSceneName(now.mapId, from), homeSceneName(now.mapId, to), { layout: layoutStampOfMapId(now.mapId) })'), 'the online home\'s own scene');
   assert.ok(fn.includes('realmGoldAct({ ...o, session: realmSession, checkpoint: () => onlineCheckpoint() })'), 'inside the realm\'s act');
   assert.ok(fn.includes('credit: arenaRefund') && fn.includes('giveOwn: arenaGiveOwn'), 'the offline move\'s own doors');
   assert.ok(fn.includes('checkpoint: () => onlineCheckpointLanded(),   // the emptied scene in the save'), 'the save written before a move is said read (AUDIT PRE-MERGE 1003 O10: landed - the realm\'s answer to its put)');

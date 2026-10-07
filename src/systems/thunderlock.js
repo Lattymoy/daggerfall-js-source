@@ -71,8 +71,11 @@ export const ART = Object.freeze({ weaponArchive: THUNDERLOCK_ARCHIVE, ammoArchi
  * `basePrice` 480 puts it above a Long Bow's 20 by two orders - it is
  * a Dwemer machine, not a bent stick - and the pellet at 4 is twice an
  * arrow's 2. `hitPoints` 90 is a shade under a bow's 100: the thing
- * has a firing chamber. `isOneHanded` false, because both hands are on
- * it in the art the lab settled.
+ * has a firing chamber - a row's number only since WEAPON-POOL
+ * (2026-10-06, AUDIT WEAPON-POOL P8), which mints every weapon from
+ * one pool: the gun holds what a bow does, 4,800 at Dwarven
+ * (characters/weapons.js WEAPON_CONDITION_POOL). `isOneHanded` false,
+ * because both hands are on it in the art the lab settled.
  */
 export const THUNDERLOCK_TEMPLATES = Object.freeze([
   {
