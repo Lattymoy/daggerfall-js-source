@@ -498,7 +498,7 @@ test('SD11c THE SPENT WORD IS OWED UNTIL IT GOES (L5 F4): a spend whose word cou
   const w = strip(W);
   assert.match(w, /onSpent: \(day\) => socialLink\(\)\?\.sendGateSpent\?\.\(day\) === true,\s*\n\s*me: _accountGates\.me,/);
   assert.match(w, /onSpent: \(day\) => \{ const s = sdSpoilsSlot\(day\); return s == null \|\| socialLink\(\)\?\.sendSdSpent\?\.\(s\) === true; \},\s*\n\s*me: _accountGates\.me,/);
-  assert.match(w, /gateClaims\?\.tick\(\);\s*\n\s*resendSpentWords\(\);/, 'on the gate frame');
+  assert.match(w, /gateClaims\?\.tick\(\);\s*\n\s*if \(gateOmen\) reportGateSite\(\);\s*\n\s*resendSpentWords\(\);/, 'on the gate frame');   // (PIN MOVED: after DISCORD-GATES' report, whose own pin holds its line to the claims' tick)
 });
 
 // ── L5 F6: a week for each account ─────────────────────────────────────

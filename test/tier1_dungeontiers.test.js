@@ -35,7 +35,7 @@ const loc = (n, mapId, extra = {}) => ({
 
 test('TIER1: the law - three tiers, their words, read off the location; null without a dungeon', () => {
   assert.deepEqual([...DUNGEON_TIERS], ['regular', 'elite', 'super']);
-  assert.deepEqual({ ...DUNGEON_TIER_TEXT }, { regular: 'Regular Dungeon', elite: 'Elite Dungeon', super: 'Super Dungeon' });
+  assert.deepEqual({ ...DUNGEON_TIER_TEXT }, { regular: 'Regular Dungeon', elite: 'Elite Dungeon', super: 'Abyss Dungeon' });   // ABYSS-NAME (PIN MOVED): the player's word for the tier the code calls super
   assert.deepEqual({ ...DUNGEON_SIZE_TEXT }, { small: 'Small', medium: 'Medium', large: 'Large' });
   for (const t of [DUNGEON_TIERS, DUNGEON_TIER_TEXT, DUNGEON_SIZE_TEXT]) assert.ok(Object.isFrozen(t));
   assert.equal(dungeonTier(loc(10, 1)), 'regular');
@@ -80,7 +80,7 @@ test('TIER1: the size - the BUILT dungeon\'s, by its block count, as the room bu
   assert.ok(Object.isFrozen(a));
   assert.equal(dungeonTierLabel({ hasDungeon: false }), null);
   assert.equal(tierPhrase(a), 'Elite Dungeon, Medium');
-  assert.equal(tierPhrase({ text: 'Super Dungeon', size: null }), 'Super Dungeon', 'no size known: the tier alone');
+  assert.equal(tierPhrase({ text: 'Abyss Dungeon', size: null }), 'Abyss Dungeon', 'no size known: the tier alone');
   assert.equal(tierPhrase(null), '');
 });
 
@@ -103,7 +103,7 @@ test('TIER1: the words on the overworld - the sight line names the tier, the pla
   assert.equal(dungeonSightLine(410, 'North'), 'You see a Dungeon 410 metres to the North!');
   assert.equal(dungeonSightLine(410, 'North', 'regular'), 'You see a Dungeon 410 metres to the North!');
   assert.equal(dungeonSightLine(410, 'North', 'elite'), 'You see an Elite Dungeon 410 metres to the North!');
-  assert.equal(dungeonSightLine(410, 'North', 'super'), 'You see a Super Dungeon 410 metres to the North!');
+  assert.equal(dungeonSightLine(410, 'North', 'super'), 'You see an Abyss Dungeon 410 metres to the North!');
   const w = rd('src/scenes/world.js');
   assert.match(w, /tvSay\(dungeonSightLine\(Math\.hypot\(dx, dz\), _capitalize\(directionHintString\(dx, dz\)\), dungeonTier\(loc\)\), 5\);/);
   assert.match(w, /const tier = params\.has\('online'\) \? tierPhrase\(dungeonTierLabel\(p\.summary\.loc\)\) : '';[^\n]*\n\s*marks\.push\(\{ key: p\.key, at: tvSceneKept\(p, p\.x, p\.z, TV_PLACE_LIFT\), label: p\.summary\.name, \.\.\.\(tier \? \{ sub: tier \} : \{\}\), kind: 'place',/, 'a place plate: the tier under a dungeon\'s name, online');
@@ -118,7 +118,7 @@ test('TIER1: the words on the overworld - the sight line names the tier, the pla
 test('TIER1: the plaque - a named tier titles the mouth, the way in and the size beneath; no tier, the mod\'s own', () => {
   assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'Privateer\'s Hold', tier: 'regular', size: 'Large' }), { title: 'Regular Dungeon', subs: ['To Privateer\'s Hold', 'Large'] });
   assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'Elite Old Ruin (10,20)', tier: 'elite', size: 'Small' }), { title: 'Elite Dungeon', subs: ['To Old Ruin (10,20)', 'Small'] });
-  assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'The Brass Hollow', tier: 'super', size: null }), { title: 'Super Dungeon', subs: ['To The Brass Hollow'] });
+  assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'The Brass Hollow', tier: 'super', size: null }), { title: 'Abyss Dungeon', subs: ['To The Brass Hollow'] });
   assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'Privateer\'s Hold' }), { title: 'To\nPrivateer\'s Hold' }, 'offline: the mod\'s own');
   assert.deepEqual(staticDoorName('dungeonEntrance', { locationName: 'Privateer\'s Hold', tier: 'toString' }), { title: 'To\nPrivateer\'s Hold' }, 'a tier is one of the three, never the prototype\'s');
   assert.deepEqual(staticDoorName('buildingExit', { locationName: 'Daggerfall', tier: 'regular' }), { title: 'To\nDaggerfall' }, 'a tier is a dungeon mouth\'s alone');

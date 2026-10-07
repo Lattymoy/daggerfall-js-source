@@ -12,6 +12,6 @@
  *  red, the serpent's sea-green, the party's green and every dot. */
 export const SD_RING_MAP_CSS = '#e8b24a';
 export const SD_FILL_CSS = 'rgba(232, 178, 74, 0.16)';
-export const SD_LEGEND_TEXT = 'Super Dungeon';
+export const SD_LEGEND_TEXT = 'Abyss Dungeon';   // ABYSS-NAME: the player's word for a Super dungeon
 /** The painter's colours (ui/inkMap.js paintGateRing's `ink`). */
 export const SD_MAP_INK = Object.freeze({ ring: SD_RING_MAP_CSS, fill: SD_FILL_CSS });

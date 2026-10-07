@@ -83,8 +83,8 @@
   {
     "name": "SD2C-the-note-without-its-state",
     "file": "src/systems/sdOmen.js",
-    "old": "  return { subject: 'Super Dungeon', body: words ? `${where} ${words[0].toUpperCase()}${words.slice(1)}.` : where };",
-    "new": "  return { subject: 'Super Dungeon', body: where };",
+    "old": "  return { subject: 'Abyss Dungeon', body: words ? `${where} ${words[0].toUpperCase()}${words.slice(1)}.` : where };",
+    "new": "  return { subject: 'Abyss Dungeon', body: where };",
     "tests": [
       "test/sd2c_omen.test.js"
     ]

@@ -124,7 +124,7 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
       if (!h && t - o.at < SD_LINE_WAIT_MS && !(memo && memo.s === o.rec.s && memo.none)) return;
       owed.shift();
       const near = h?.site?.cityName || regionName(o.rec.r) || 'the Iliac Bay';
-      const name = h?.loc?.name || 'a Super Dungeon';
+      const name = h?.loc?.name || 'an Abyss Dungeon';
       if (o.kind === 'found') say(sdFoundLine({ who: o.rec.fb || 'Someone', near }));
       else if (o.kind === 'fell') say(sdFellLine({ top: o.rec.top || 'Someone', n: o.rec.n ?? 1, name }));
       else say(sdFadeLine({ name }));

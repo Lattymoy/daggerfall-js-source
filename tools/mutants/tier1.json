@@ -134,7 +134,7 @@
   {
     "name": "TIER1-a-Super-sighted-as-a-Dungeon",
     "file": "src/world/spawnedDungeons.js",
-    "old": "tier === 'super' ? 'a Super Dungeon' : ",
+    "old": "tier === 'super' ? 'an Abyss Dungeon' : ",
     "new": "",
     "tests": [
       "test/tier1_dungeontiers.test.js",

@@ -144,7 +144,7 @@ test('SD2b the lines: the find, the kill and the fading said once each, to every
   assert.deepEqual(s.lines, [], 'owed until its city is known');
   s.scanReady = true;
   host.frame();
-  assert.deepEqual(s.lines, ['Mara has found a Super Dungeon near Copperham!'], 'once, near its city');
+  assert.deepEqual(s.lines, ['Mara has found an Abyss Dungeon near Copperham!'], 'once, near its city');
   const fell = sdFell(found, T0 + M, { top: 'Ann', n: 3 });
   host.heard({ k: 'ev', ...fell });
   host.frame();
@@ -164,7 +164,7 @@ test('SD2b the lines: the find, the kill and the fading said once each, to every
   assert.deepEqual(s2.lines, [], 'waiting on the scan');
   s2.clock += SD_LINE_WAIT_MS;
   h2.frame();
-  assert.deepEqual(s2.lines, ['The Hour closes over a Super Dungeon, unbroken.'], 'past the wait: said, never lost');
+  assert.deepEqual(s2.lines, ['The Hour closes over an Abyss Dungeon, unbroken.'], 'past the wait: said, never lost');
 });
 
 test('SD2b one Hollow at a time: an older slot\'s word is no word; the next slot\'s Hollow stands once the last is down - and not while the player still stands in the last (mutants: an older word kept; two at once)', () => {

@@ -149,13 +149,13 @@ against the slot's law (section 4) or in the realm's own frame (sections 8-10).
   pixel within 12 (the gate's beacon pass, its colours its own). A traveller in the city it stands by hears it in the
   taverns: *"They say the air goes brass-coloured past the walls of <city> at dusk, and a bell rings where there is no
   bell."* No map mark, no compass mark: it must be found.
-- **The sighting.** Within 600 m, Elite's own sight line: *"You see a Super Dungeon 340 metres to the north-west!"*
+- **The sighting.** Within 600 m, Elite's own sight line: *"You see an Abyss Dungeon 340 metres to the north-west!"*
 - **The finding.** The first player to stand within 25 m of its door sends `{t:'sd',k:'found',s,px,py}` to the cell
   room it stands in. The cell believes it only from its own socket's pose within SD_FOUND_RADIUS_M of the claimed
   pixel's centre (a spawned dungeon stands centred in its pixel, so the relay checks it without map data), and keeps it
   - the first finder's - until the hub answers (`/internal/sd/found`, told again on the cell's alarm). The hub believes
   it while its record says `risen` for that slot, asking the pose again; it sets `found`, keeps the finder's VERIFIED
-  name, and fans it: *"<name> has found a Super Dungeon near <city>!"* From then on everyone online sees it on
+  name, and fans it: *"<name> has found an Abyss Dungeon near <city>!"* From then on everyone online sees it on
   the map (its ring), the compass (inside 1 km), the Timers window and the notice boards.
 
 A forged `found` (a client claiming a pixel that is not the site) cannot place the Hollow anywhere else - every client
@@ -402,7 +402,7 @@ where a player stands, so a step under the veil that lands after it is cast out 
 
 One law, `dungeonTier(loc)` (`systems/dungeonTier.js`, a leaf): `'super'` for a Hollow, `'elite'` for an Elite spawn,
 `'regular'` for every other dungeon - and null for a place that is not a dungeon. Its words, `DUNGEON_TIER_TEXT`:
-**Regular Dungeon**, **Elite Dungeon**, **Super Dungeon** - and, beside them since the world's sizes (section 13), the
+**Regular Dungeon**, **Elite Dungeon**, **Abyss Dungeon** (ABYSS-NAME, below) - and, beside them since the world's sizes (section 13), the
 dungeon's SIZE, **Small**, **Medium** or **Large**, by the built dungeon's block count as the room builds it online
 (`world/dungeonLabel.js dungeonTierLabel`, which gives no label to the places the port made: the Burning Court, the
 arena's floor, its undercroft). One phrase everywhere: *Elite Dungeon, Small*. Said online, where the tiers differ;
@@ -414,11 +414,19 @@ offline every dungeon is DFU's. Shown:
   Dungeon, Small)*, and the I-key box opens with it, before DFU's own refusal;
 - **the overworld plates** (TV6): a found dungeon's place plate carries the phrase under its name, a far plate before
   its distance;
-- **the sight line**: *You see an Elite Dungeon 340 metres to the north-west!* - and a Super's, *a Super Dungeon*;
+- **the sight line**: *You see an Elite Dungeon 340 metres to the north-west!* - and a Super's, *an Abyss Dungeon*;
 - **on entering**: one line, the phrase (either skin - online is the port's own game).
 
 Not on the classic travel map, automap or logbook: they are native windows, and DFU has no such word (the NATIVE-WINDOW
 RULE).
+
+ABYSS-NAME (2026-10-07, Mac: *"Btw lets rename Super Dungeons to Abyss Dungeons (Keep the code in tact, this is for
+player facing putposes)"*): THE PLAYER READS **ABYSS DUNGEON** wherever the game said Super Dungeon - the tier's words
+(the entrance plaque, the held map, the overworld plates, the line on entering), the sight line (*an Abyss Dungeon*),
+the find's line to everyone online (`net/sdLaw.js` `sdFoundLine`), the held map's legend, the ring's card, the notice
+board's note, the Timers row and its label, and a Hollow's line said before its place is known (*an Abyss Dungeon*).
+The code keeps its names - the tier `super`, `superTier`, `sd*`, the SUPER-DUNGEONS arc and its slices - and so does
+this page: where it says Super, the player reads Abyss.
 
 ## 13. The world's dungeon sizes, the online law (SD-ONLINE)
 
@@ -678,7 +686,7 @@ templates kept over the game's own rows before they go (`_sdCityRows` - the popu
 `sweepSdLate` - sweepWodLate's shape, after the gate's clearing); the spawn ledger never notes a Hollow's first sight
 (`_spawnSeen` - the dungeon's door and the roll's) nor its clear (`_noteSpawnCleared`): a Hollow's life is the hub's
 record, not a spawn's two clocks; a Hollow is otherwise a spawned dungeon - the build, the plates, the Overworld's lists
-and the sight line (TIER1's "a Super Dungeon") take it as one.
+and the sight line (TIER1's "an Abyss Dungeon") take it as one.
 
 Known, recorded: the Hollow's site does not ask the road network (a road-crossed pixel is the spawns' rule) - the network
 lands after the boot on its own time, and a site that waited for it would differ between a client that asked before and
@@ -713,7 +721,7 @@ pure over the hub's record and the Hollow the host stood, the relay's clock hand
   one answer spent as the mill's own and the revenant's are, asked before both (the world host's getNewsOrRumors).
 - **Once found, news.** The held map's ring on its own pixel (`sdMapMark`, SD_RING_R - a place now, not an area; the
   gate's mark's shape, read by `ui/gateMapMark.js readGateMark` and painted by `ui/inkMap.js paintGateRing` in
-  `ui/sdMapMark.js`'s brass, its legend "Super Dungeon", its card its name, its city, its finder and its state); the
+  `ui/sdMapMark.js`'s brass, its legend "Abyss Dungeon", its card its name, its city, its finder and its state); the
   compass's round brass mark inside SD_COMPASS_M (1 km) of its centre, outside (`ui/enhancedHud.js drawSdMark`); the
   Timers window's `super` row - "<name> stands", counting to its fading, then "<name> collapses" to the collapse's end
   (`systems/eventTimers.js`; none while it has only risen); and the notice boards' note under the red seal after the

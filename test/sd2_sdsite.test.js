@@ -135,7 +135,7 @@ test('SD2: the Hollow - the template cloned on the site under the slot\'s own id
   assert.equal(h.dungeon.blocks.length, 14, 'the template\'s blocks, whatever size the world lays it at');
   assert.equal(template.name, 'Castle Necromoghan', 'the template untouched');
   assert.equal(dungeonTier(h), 'super', 'TIER1 reads it Super');
-  assert.equal(dungeonTierLabel(h).text, 'Super Dungeon');
+  assert.equal(dungeonTierLabel(h).text, 'Abyss Dungeon');   // ABYSS-NAME (PIN MOVED)
   assert.equal(sdHollowLocation(null, site, template), null);
   assert.equal(sdHollowLocation(rec, site, null), null);
 });

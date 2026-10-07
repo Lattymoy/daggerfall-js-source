@@ -77,7 +77,7 @@ export function eventTimerRows(src) {
   // while it stands, its collapse after the kill. Where it stands is the host's (`place`, its city), and its name.
   const sdRec = src?.sd?.rec ?? null;
   const sdNow = sdPhase(sdRec, now);
-  const sdName = src?.sd?.name || 'The Super Dungeon';
+  const sdName = src?.sd?.name || 'The Abyss Dungeon';
   const sdWhere = src?.sd?.place ? `Near ${src.sd.place}` : null;
   if (sdNow === 'found') live(`sd:${sdRec.s}`, 'super', `${sdName} stands`, sdRec.until, sdWhere, 'Found - it fades unbroken when this runs out');
   else if (sdNow === 'fell') live(`sd:${sdRec.s}`, 'super', `${sdName} collapses`, sdRec.fellAt + SD_COLLAPSE_MS, sdWhere, 'Its Hour is broken - it folds in on itself when this runs out');

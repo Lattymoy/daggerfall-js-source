@@ -22,7 +22,7 @@ export function timersMark(doc, { onOpen, open = false }) {
   const b = doc.createElement('button');
   b.type = 'button';
   b.className = 'px-timersmark';
-  b.setAttribute('aria-label', 'Timers: gates, the sea serpent, the Super dungeon, raids, battles and resets');   // SD2c: its row
+  b.setAttribute('aria-label', 'Timers: gates, the sea serpent, the Abyss Dungeon, raids, battles and resets');   // SD2c: its row
   b.setAttribute('aria-haspopup', 'dialog');   // AUDIT TIMERS1 UI-6
   b.setAttribute('aria-expanded', open ? 'true' : 'false');
   b.title = 'Timers';

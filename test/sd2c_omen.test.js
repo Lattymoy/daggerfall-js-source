@@ -62,7 +62,7 @@ test('SD2c the ring: none while it has only risen (a find), its own pixel\'s onc
   const f = sdFind(r, T0 + H, 'Mara');
   const m = sdMapMark(f, HOLLOW, T0 + H + 1000);
   assert.deepEqual({ ...m, tip: null }, { day: 1, cx: 303.5, cy: 202.5, r: SD_RING_R, label: 'The Stopped Bell - fades in 1d 22h', phase: 'found', tip: null });
-  assert.deepEqual(m.tip, { title: 'The Stopped Bell, a Super Dungeon', lines: ['Near Copperham', 'Found by Mara', 'Fades in 1d 22h'] });
+  assert.deepEqual(m.tip, { title: 'The Stopped Bell, an Abyss Dungeon', lines: ['Near Copperham', 'Found by Mara', 'Fades in 1d 22h'] });
   assert.equal(sdStateWords(f, T0 + H + 1000), 'fades in 1d 22h');
   const k = sdFell(f, T0 + 3 * H, { top: 'Mara', n: 2 });
   assert.equal(sdMapMark(k, HOLLOW, T0 + 3 * H + 1000).label, 'The Stopped Bell - collapsing');
@@ -75,13 +75,13 @@ test('SD2c the ring: none while it has only risen (a find), its own pixel\'s onc
   assert.deepEqual(read.tip.lines, m.tip.lines);
   assert.notEqual(gateMarkKey(read), gateMarkKey(readGateMark(() => sdMapMark(f, HOLLOW, T0 + 3 * H), { width: 1000, height: 500 })), 'its words tick: a new key, a repaint');
   assert.equal(SD_RING_MAP_CSS, SD_MAP_INK.ring);
-  assert.equal(SD_LEGEND_TEXT, 'Super Dungeon');
+  assert.equal(SD_LEGEND_TEXT, 'Abyss Dungeon');   // ABYSS-NAME (PIN MOVED): the player's word, here and below
 });
 
 test('SD2c the note under the red seal: the ring\'s own words - its name, its city, its state; none without a ring; the board hangs it after the gate\'s (mutants: the state dropped; hung without a ring)', () => {
   const f = sdFind(rise(), T0 + H, 'Mara');
   const card = sdNoticeCard(sdMapMark(f, HOLLOW, T0 + H + 1000), 'Copperham');
-  assert.deepEqual(card, { subject: 'Super Dungeon', body: 'The Stopped Bell, near Copperham. Fades in 1d 22h.' });
+  assert.deepEqual(card, { subject: 'Abyss Dungeon', body: 'The Stopped Bell, near Copperham. Fades in 1d 22h.' });
   assert.equal(sdNoticeCard(null, 'Copperham'), null);
   const cards = noticeCards({ town: { name: 'Copperham' }, gate: { subject: 'Dagon\'s Breach', body: 'Near Copperham.' }, sd: card });
   assert.deepEqual(cards.map((c) => [c.key, c.seal]), [['gate', 'server'], ['sd', 'server']]);
@@ -99,7 +99,7 @@ test('SD2c the Timers row: none while it has only risen, its fading once found, 
   assert.equal(c.title, 'The Stopped Bell collapses');
   assert.equal(c.until, k.fellAt + SD_COLLAPSE_MS);
   assert.deepEqual(rows(k, k.fellAt + SD_COLLAPSE_MS), [], 'gone');
-  assert.deepEqual(rows(f, T0 + 2 * H, { name: null, place: null }).map((x) => [x.title, x.where]), [['The Super Dungeon stands', null]], 'its name and city not known yet');
+  assert.deepEqual(rows(f, T0 + 2 * H, { name: null, place: null }).map((x) => [x.title, x.where]), [['The Abyss Dungeon stands', null]], 'its name and city not known yet');
   assert.deepEqual(eventTimerRows({ now: T0 }).filter((x) => x.kind === 'super'), [], 'offline: no record');
   assert.deepEqual(TIMER_KINDS.slice(0, 3), ['gate', 'serpent', 'super']);
   assert.match(read('src/ui/enhancedStyle.js'), /\.px-timerswin \.tm-super \{ --tm-kind: \$\{SD_RING_MAP_CSS\}; \}/, 'its row in the ring\'s brass');

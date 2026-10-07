@@ -41,7 +41,7 @@ test('ELITE: the clone keeps the template look, says Elite in its name and carri
   assert.strictEqual(elite.dungeon.blocks, template.dungeon.blocks, 'same blocks - the same look');
   assert.deepEqual(elite.exterior.exteriorData.blockNames, template.exterior.exteriorData.blockNames);
   assert.match(dungeonSightLine(410, 'North', 'elite'), /^You see an Elite Dungeon 410 metres to the North!$/);   // PIN MOVED (TIER1): the tier, not a flag
-  assert.match(dungeonSightLine(410, 'North', 'super'), /^You see a Super Dungeon 410 metres to the North!$/);
+  assert.match(dungeonSightLine(410, 'North', 'super'), /^You see an Abyss Dungeon 410 metres to the North!$/);
   assert.match(dungeonSightLine(410, 'North'), /^You see a Dungeon 410 metres/);
 });
 

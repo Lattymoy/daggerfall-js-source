@@ -209,7 +209,7 @@ export const sdSlotOfRoom = (key) => (isSdRoom(key) ? Number(String(key).slice(3
 //
 // What the chat says at a Hollow's moments - each client says its own off the fanned record. A Hollow's rise is said
 // to nobody: it is a find.
-export const sdFoundLine = ({ who, near }) => `${who} has found a Super Dungeon near ${near}!`;
+export const sdFoundLine = ({ who, near }) => `${who} has found an Abyss Dungeon near ${near}!`;   // ABYSS-NAME (Mac: "lets rename Super Dungeons to Abyss Dungeons"): the player's word; the code's stays `super`
 export const sdFellLine = ({ top, n, name }) => (n > 1 ? `${top} and ${n - 1} ${n === 2 ? 'other' : 'others'} broke the Hour in ${name}. It collapses.` : `${top} broke the Hour in ${name}. It collapses.`);
 export const sdFadeLine = ({ name }) => `The Hour closes over ${name}, unbroken.`;
 export const SD_CAST_OUT_LINE = 'The Hour closes, and the Hollow folds in on itself behind you.';

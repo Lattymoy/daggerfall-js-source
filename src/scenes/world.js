@@ -20954,8 +20954,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   const gateFrame = () => {
     try { gateOmen?.frame(); } catch (e) { console.warn('[gate] frame', e?.message ?? e); }
     gateClaims?.tick();   // WB5b: what the account service has not counted yet, offered again on its own clock
-    resendSpentWords();   // AUDIT SD II (L5 F4): the spent words a pool still owes the hub
     if (gateOmen) reportGateSite();   // DISCORD-GATES: where the gate stands, to the hub
+    resendSpentWords();   // AUDIT SD II (L5 F4): the spent words a pool still owes the hub
     raidClaims?.tick();   // RAID4: and the raids' receipts, on theirs
     if (profBook?.state.open === true) { try { motherlodeBook?.tick({ sense: profBook.track('mining').specs?.[100] === 'motherlode-sense' }); } catch (e) { console.warn('[motherlode] frame', e?.message ?? e); } }   // PROF2b: the day's Motherlodes read, warned of and stood
     if (seatBook?.claimWatchDue()) seatBook.claimWatch();   // SEAT1b: the Watch's kept ticks, claimed a claim's worth or ten minutes at a time   // AUDIT-SEATS C12: asked in sync first - no Promise a frame
