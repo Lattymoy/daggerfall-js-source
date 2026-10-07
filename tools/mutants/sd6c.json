@@ -128,7 +128,7 @@
   {
     "name": "SD6C-the-first-word-turned-to",
     "file": "src/scenes/sdHall.js",
-    "old": "    if (first) for (let i = 0; i < want.length; i++) shown[i] = want[i];",
+    "old": "    if (first) for (let i = 0; i < want.length; i++) { shown[i] = want[i]; if (hands[i]) hands[i].object.matrix = handMatrix(i, shown[i]); }",
     "new": "",
     "tests": [
       "test/sd6c_hall.test.js"

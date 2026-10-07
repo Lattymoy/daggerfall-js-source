@@ -334,10 +334,13 @@ async function sdLiveAsk(rooms, s) {
   if (!rooms?.idFromName || !rooms?.get) return null;
   try {
     const res = await rooms.get(rooms.idFromName(SOCIAL_ROOM)).fetch(new Request(`https://relay.internal${SD_INTERNAL_LIVE}`, { method: 'POST', body: JSON.stringify({ s }), signal: AbortSignal.timeout(ROOM_CALL_MS) }));
-    if (!res?.ok) return null;
+    if (!res?.ok) return undefined;   // AUDIT SD: no answer is not "no record" - the hub busy or away, asked again
     return validSdRecord((await res.json())?.rec);
-  } catch (e) { console.warn('[sd] live', e?.message ?? e); return null; }
+  } catch (e) { console.warn('[sd] live', e?.message ?? e); return undefined; }
 }
+/** AUDIT SD: a realm's refusal while the hub does not answer - the hello's busy close, which the page tries again (never
+ *  "The Hour has closed.", which is for good: a deploy's hello storm cast fighters out mid-fight). */
+const SD_NO_BUSY = 'busy';
 
 export default {
   async fetch(request, env) {
@@ -1460,7 +1463,7 @@ export class Room {
       // stands, one who entered it before (a reconnect, a fighter cast out and back) until it is gone - asked before anything
       // is written (the gate's law; the Worker asked the hub already, and this is the object's own word for a socket that
       // opened a moment before the Hour closed)
-      if (isSdRoom(a.key)) { const no = await this._sdAdmit(a.key, who.subject, now); if (no) { this._refuse(ws, no); return; } }
+      if (isSdRoom(a.key)) { const no = await this._sdAdmit(a.key, who.subject, now); if (no === SD_NO_BUSY) { this._refuse(ws, 'busy', CLOSE_BUSY); return; } if (no) { this._refuse(ws, no); return; } }   // AUDIT SD: the hub not answering - busy, tried again
       if (floor) {
         gate = await this._battleHelloGate(who.subject ?? m.id, (await this._floorOwn(a.key, who.subject)) ? 'fighter' : 'watch', now);   // AUDIT PRE-MERGE 1003b R2
         if (!gate.pass) { this._refuse(ws, 'busy', CLOSE_BUSY); return; }
@@ -4800,7 +4803,7 @@ export class Room {
     const had = this._sdLive;
     if (had && had.s === s && now - had.at < SD_LIVE_FRESH_MS) return had.rec;
     const rec = await sdLiveAsk(this.env?.ROOMS, s);
-    this._sdLive = { s, at: now, rec };
+    if (rec !== undefined) this._sdLive = { s, at: now, rec };   // AUDIT SD: a hub that did not answer is asked again, not believed for SD_LIVE_FRESH_MS
     return rec;
   }
   /** The accounts a realm has admitted - `{ s, in: [sub] }` - the instance's, else storage's. */
@@ -4816,12 +4819,22 @@ export class Room {
   async _sdAdmit(key, sub, now) {
     const s = sdSlotOfRoom(key);
     const rec = await this._sdLiveOf(s, now);
+    if (rec === undefined) return SD_NO_BUSY;   // AUDIT SD: no answer - try again
     if (!rec || rec.s !== s || !sdHolds(rec, now)) return SD_NO_CLOSED;
     const realm = await this._sdRealmOf(s);
     if (sub && realm.in.includes(sub)) return null;
     if (!sdAdmits(rec, now)) return SD_NO_CLOSED;
     if ((await this._sdFightOf())?.fell) return SD_NO_CLOSED;   // SD8b: the realm knows its own kill before the hub's word comes round
-    if (realm.in.length >= SD_FIGHTERS_MAX) return SD_NO_FULL;
+    if (realm.in.length >= SD_FIGHTERS_MAX) {
+      // AUDIT SD: THE SEATS FREE THEMSELVES (the gate's AUDIT WB A1 law): a full realm frees one held by an account with no
+      // socket here and no seat in its fight - a hello alone (a guest's, a watcher's) no longer holds a seat for the
+      // Hollow's whole life. (A receipt is a fighter's, and a newcomer after the kill was refused above.)
+      const f = await this._sdFightOf();
+      const present = new Set([...this._all()].map(([, b]) => b.sub).filter(Boolean));
+      const idle = realm.in.findIndex((x) => !present.has(x) && !f?.players?.[x]);
+      if (idle < 0) return SD_NO_FULL;
+      realm.in.splice(idle, 1);
+    }
     if (sub) { realm.in.push(sub); await this.state.storage.put(SD_REALM_KEY, realm); }
     return null;
   }
@@ -4921,21 +4934,29 @@ export class Room {
       const no = (w) => { this._send(ws, JSON.stringify({ t: 'sd', k: 'no', m: w })); };
       if (!(m.bv >= SD_BRAIN_MIN)) { no(SD_NO_WORDS[3]); return; }
       const rec = await this._sdLiveOf(s, now);
+      if (rec === undefined) return;   // AUDIT SD: the hub did not answer - unanswered, the page says its `in` again
       if (!rec || rec.s !== s || !sdHolds(rec, now)) { no(SD_NO_WORDS[0]); return; }
       if (typeof a.sub !== 'string' || !a.sub || !a.pose || a.pose.dd) return;
+      if (!(await this._sdHallOf(s)).ok) return;   // AUDIT SD: past the Orrery alone - the Concord lays the only way to the arena
       const at = this._arenaPoseOf(a.pose);
       if (!inArena(at.x, at.z, POSE_SLACK)) return;   // from the arena alone
       if (f?.fell) { this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f) })); if (f.rc?.[a.sub]) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r: f.rc[a.sub] })); return; }   // SD9a: and its receipt again
-      if (!f || f.lost || now - f.lastTickAt >= SD_LOST_MS) f = this._sdFight = newRemnantFight(s, (f?.fi ?? 0) + 1, now);
+      const fresh = !f || f.lost || now - f.lastTickAt >= SD_LOST_MS;
+      if (fresh) f = this._sdFight = newRemnantFight(s, (f?.fi ?? 0) + 1, now);
+      const known = !!f.players[a.sub];
       const present = new Set();
       for (const [, b] of this._all()) if (b.sub && b.id) present.add(b.sub);
       if (!joinRemnant(f, a.sub, a.name ?? '', m.lv, now, present)) { no(f.ended ? SD_NO_WORDS[1] : SD_NO_WORDS[2]); return; }
       this._send(ws, JSON.stringify({ t: 'sd', ...remnantStateOf(f), me: 1 }));   // SD8c: `me` - the page blows into a fight that answered it alone
-      await this._sdFightSave(f, now, true);
+      await this._sdFightSave(f, now, fresh || !known);   // AUDIT SD: a known fighter's `in` again is no write (the gate's AUDIT WB A3)
       await this._sdFightArm(now);
       return;
     }
     if (!f || !f.players[a.sub]) { this._junk(ws); return; }
+    // AUDIT SD: no blow lands once the Hour no longer holds its slot (a page that stayed past its cast-out) - a hub that does
+    // not answer stops none
+    const live = await this._sdLiveOf(s, now);
+    if (live !== undefined && !(live && live.s === s && sdHolds(live, now))) return;
     const pose = a.pose && !a.pose.dd ? this._arenaPoseOf(a.pose) : null;
     if (m.k === 'ehit') this._sdFightFan(applyEchoHit(f, a.sub, m.e, m.d, m.r, pose, now, m.q));
     else if (m.k === 'xhit') this._sdFightFan(applyHeartHit(f, a.sub, m.c, m.d, m.r, pose, now, m.q));
@@ -5013,8 +5034,8 @@ export class Room {
     if (!c) return json({ ok: false }, 400);
     const rec = await this._sdOf();
     if (rec && rec.s === c.s) {
-      const fell = sdFell(rec, Date.now(), { top: c.top, n: c.n });
-      if (fell) { await this._sdSave(fell); this._sdFan(fell); }
+      const fell = sdFell(rec, Math.min(c.at, Date.now()), { top: c.top, n: c.n });   // AUDIT SD: at the fall's own instant - a kill heard late is no kill after its Hour
+      if (fell) { await this._sdSave(fell); this._sdFan(fell); await this._sdArm(Date.now()); }   // AUDIT SD: and the director's next move armed from it (its collapse, its rest)
     }
     await this._sdKeepReceipts(c, Date.now());   // SD9a
     return json({ ok: true });

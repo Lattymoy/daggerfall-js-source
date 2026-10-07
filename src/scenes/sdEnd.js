@@ -147,6 +147,9 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
   let bell = null;
   let wasRift = null, wasRet = null, lastFeet = null, lastAt = -Infinity;
   const born = now();
+  /** AUDIT SD: the batches as the draw asks for them - one list, made again only when a portal stands or goes */
+  let _batches = NONE;
+  const rebatch = () => { _batches = rift || ret ? [rift?.batch, ret?.batch].filter(Boolean) : NONE; };
 
   const batchAt = (archive, at, w, h) => {
     if (!renderer?.createBillboardBatch) return null;
@@ -165,6 +168,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
       if (rift || !r?.at) return false;
       rift = { at: [...r.at], size: r.size, batch: batchAt(RIFT_ARCHIVE, r.at, r.size, r.size) };
       if (retAt) ret = { at: [...retAt], batch: batchAt(RETURN_ARCHIVE, retAt, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };
+      rebatch();
       bell = startRiftBell(audio, [r.at[0], r.at[1] + r.size / 2, r.at[2]]);
       return true;
     },
@@ -173,10 +177,11 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
       if (ret || !at) return false;
       ret = { at: [...at], batch: batchAt(RETURN_ARCHIVE, at, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };
       wasRet = null;
+      rebatch();
       return true;
     },
     /** The Return goes out (the boss fell) - for good: it never stands again in this dungeon. */
-    returnOut() { if (!ret) return; free(ret.batch); ret = null; wasRet = null; },
+    returnOut() { if (!ret) return; free(ret.batch); ret = null; wasRet = null; rebatch(); },
     /** One frame: the frames turn; the step into either, handed to the host. */
     frame(feet) {
       const t = now();
@@ -215,14 +220,14 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
       return false;
     },
     /** Their batches, drawn with the place's foes. */
-    batches: () => (rift || ret ? [rift?.batch, ret?.batch].filter(Boolean) : NONE),
+    batches: () => _batches,
     /** Where they stand (tests, the host's own questions). */
     get rift() { return rift ? { at: [...rift.at], size: rift.size } : null; },
     get ret() { return ret ? { at: [...ret.at] } : null; },
     /** Gone with the dungeon: the batches freed, the bell stopped. */
     clear() {
       free(rift?.batch); free(ret?.batch);
-      rift = null; ret = null;
+      rift = null; ret = null; _batches = NONE;
       try { bell?.stop?.(); } catch { /* stopped */ }
       bell = null;
     },

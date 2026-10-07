@@ -337,7 +337,7 @@ test('SD4b the hosts by source: the dungeon stands them for a Super dungeon alon
   assert.ok(arm > 0 && arm < W.indexOf("    if (!key.startsWith('exit:')) {\n      dungeonCtx.actions.activate(key"), 'before the press falls through to the action objects');
   assert.match(W, /superRift: \(s\) => host\.superRift\?\.\(s\) \?\? null,/);
   const w = read('src/scenes/world.js');
-  assert.match(w, /return \{ word: sdRiftWord\(rec, s, now\), returns: sdReturnStands\(rec, s, now\), enter: \(\) => sdEnterRealm\(s\) \};/);   // SD5a (PIN MOVED): the realm's door - the step through to the Shattered Hour
+  assert.match(w, /return \{ word: sdRiftWord\(rec, s, now, \{ entered: _sdEntered\.has\(s\) \}\), returns: sdReturnStands\(rec, s, now\), enter: \(\) => sdEnterRealm\(s\) \};/);   // SD5a (PIN MOVED): the realm's door - the step through to the Shattered Hour
   assert.match(w, /const rec = sdHost\.record\(\), now = Date\.now\(\) \+ _sharedOffsetMs;/, 'the hub\'s record, on the shared clock the Hollow\'s host reads');
   assert.match(w, /superRift: \(s\) => sdRiftOf\(s\),/);
   assert.match(read('bible/11-Multiplayer/Super-Dungeons.md'), /### SD4b - shipped 2026-10-07/);

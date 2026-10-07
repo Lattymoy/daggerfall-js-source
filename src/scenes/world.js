@@ -329,7 +329,7 @@ import { createSerpentClaims } from '../net/serpentClaims.js';   // SERPENT1: it
 import { createSdClaims } from '../net/sdClaims.js';   // SD9b: the Hour's receipts carried to the account service
 import { readSdReceipt } from '../net/sdReceipt.js';   // SD9e: my Hour receipt, read for its spoils
 import { SD_SPOILS_KEYS, SD_SPOILS_RECORDS_MAX, SD_SPOILS_TEXT, sdSpoilsDay, sdSpoilsSlot, sdSpoilsList } from '../systems/sdSpoils.js';   // SD9e: the Brass Remnant's spoils
-import { createSdSpoils } from './sdSpoils.js';   // SD9e: thrown from where it fell
+import { createSdSpoils, clearOfPillars } from './sdSpoils.js';   // SD9e: thrown from where it fell; AUDIT SD: the way home clear of the arena's pillars
 import { slainLine, serpentBossOf, serpentBossById, sameSerpentSite, SERPENT_NATIVE_PER_M } from '../net/serpentLaw.js';   // SERPENT1: the hub's word of its kill, in the chat (AUDIT SERPENT S1: my own site's alone)
 import { createGateCourt, courtSaySeconds } from './gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
 import { DeadlandsRenderer, skyGain, anchoredClock } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
@@ -19471,6 +19471,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (tab.room === SOCIAL_ROOM) link.onSerpent = (w) => serpentLink?.word(w);   // SERPENT1: the hub's word of a sea serpent's kill, Bay-wide, and the day's at my hello
       if (tab.room === SOCIAL_ROOM) link.onRite = (w) => riteHost?.onBroken(w);   // WB12d: the hub's word of a broken rite, and at my hello
       if (tab.room === SOCIAL_ROOM) link.onSd = (w) => sdHost?.heard(w);   // SD2b: the hub's record of the Super dungeon - at my hello and at every move
+      if (tab.room === SOCIAL_ROOM) link.onSdReceipt = (r, room) => { sdClaims?.add(r); sdSpoilsReceipt(r, room); };   // AUDIT SD: the hub's hand of my Hour receipt - at the kill when I stood outside its realm, and at my hello - to the account service and the spoils, as the realm's is
       if (tab.room === SOCIAL_ROOM) link.onRaid = (f, room) => (f.k === 'tw' ? offerRaidTowns(link, f.h) : raidRelayWord(f, room));   // RAID3: the hub's word of a cleanse anywhere, and the day's at my hello; RAID-ROLL: its ask for the towns table
       if (tab.id === 'region') {   // TV3: the region's travellers, into the book
         link.onTraveller = (f) => travellerBook.put(f, Date.now());
@@ -20784,9 +20785,19 @@ export async function bootWorld(canvas, renderer, params, status) {
     const c = readSdReceipt(r);
     if (!c) return;
     if (isSdRoom(room) && modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }
+    grantSdSpoils(c);
+  }
+  /** Its spoils straight into the pack - once a receipt and account (the pool refuses one already thrown or given). */
+  function grantSdSpoils(c) {
     const level = spoilsLevel(playerEntity.level ?? 1, c.l);
     spoilsLock(() => sdSpoilsPool.grant({ day: sdSpoilsDay(c.d), acct: c.s, roll: () => sdSpoilsList(c.c, level), text: SD_SPOILS_TEXT.granted }))
       .catch((e) => console.warn('[sd] spoils', e?.message ?? e));
+  }
+  /** AUDIT SD: OUT OF THE REALM, a receipt kept for a burst that never came (left before it - the way back, a death, the
+   *  Hour's end) is its spoils straight into the pack, not a week's wait for the hub's next hello. */
+  function sdReceiptsLeft() {
+    for (const r of _sdReceipts.values()) { const c = readSdReceipt(r); if (c) grantSdSpoils(c); }
+    _sdReceipts.clear();
   }
   function grantSerpentSpoils(entry) {
     const c = readSerpentReceipt(entry?.r);
@@ -21251,10 +21262,13 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  Rift's own word off the hub's record for the Hollow's slot `s` (null: step through), whether the Return still stands
    *  (until the boss falls), and the realm's door (SD5a: the step through to the Shattered Hour, taken under the veil).
    *  Null offline - no Hollow stands there. */
+  /** AUDIT SD: the Hollows' slots whose Hour I went through, this session - during its collapse the Rift admits me again
+   *  (world/sdDungeon.js sdRiftWord's `entered`; the realm keeps me as it does - SD4b, section 6). */
+  const _sdEntered = new Set();
   const sdRiftOf = (s) => {
     if (!sdHost) return null;
     const rec = sdHost.record(), now = Date.now() + _sharedOffsetMs;
-    return { word: sdRiftWord(rec, s, now), returns: sdReturnStands(rec, s, now), enter: () => sdEnterRealm(s) };
+    return { word: sdRiftWord(rec, s, now, { entered: _sdEntered.has(s) }), returns: sdReturnStands(rec, s, now), enter: () => sdEnterRealm(s) };
   };
   /** SD5a (Super-Dungeons.md section 7): THROUGH THE RIFT - out of the Hollow and into the Shattered Hour, under the veil
    *  (scenes/worldModes.js stepThroughFire): the Hollow left as a teleport leaves a dungeon, the player at its pixel
@@ -21273,24 +21287,21 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (word) { setMidScreenText(word); return false; }
       modes?.forceExitToExterior();
       await _teleportToPixel(hollow.px, hollow.py);
-      if (await modes?.enterSdRealm?.({ s, hollow, site })) return true;
+      if (await modes?.enterSdRealm?.({ s, hollow, site })) { _sdEntered.add(s); return true; }   // AUDIT SD: through - its Rift admits me again in its collapse
       setMidScreenText(SD_REALM_TEXT.lost);   // the realm would not build: outside, at the Hollow's pixel
       return false;
     });
     return true;
   }
-  /** SD5a: BACK THROUGH THE RIFT - out of the Hour and into its Hollow, beside its Rift, under the veil: the realm left,
-   *  the player at the Hollow's pixel outside, the Hollow entered by its own door (startInDungeon - the door at this
-   *  pixel) and stood beside its Rift (the Return's place - dungeonContext.js sdRiftLanding). A Hollow gone meanwhile, or
-   *  a door that would not open: outside, at its pixel. */
   /** SD10 (Super-Dungeons.md section 11's collapse): WHERE THE WAY HOME STANDS - where the Remnant fell, once its body has
    *  sunk (scenes/sdRemnant.js SD_REM_SINK_MS), on the arena's floor, for as long as the fight this page holds says it
-   *  fell - one place a fight; null otherwise (the dungeon host takes it down). */
+   *  fell - one place a fall; null otherwise (the dungeon host takes it down). */
   let _sdHome = null;
   const sdHomeAt = () => {
     const s = sdFightLink?.state();
     if (!s?.fell || sdFightLink.now() < s.fell.at + SD_REM_SINK_MS) return null;
-    if (_sdHome?.fi !== s.fi) _sdHome = { fi: s.fi, at: sdRealmToDungeon(SD_ARENA.x + s.rem.x, 0, SD_ARENA.z + s.rem.z) };
+    // AUDIT SD: one place a FALL (its instant - a fight's number begins again in every Hollow's Hour), clear of the pillars
+    if (_sdHome?.fell !== s.fell.at) { const [x, z] = clearOfPillars(s.rem.x, s.rem.z); _sdHome = { fell: s.fell.at, at: sdRealmToDungeon(SD_ARENA.x + x, 0, SD_ARENA.z + z) }; }
     return _sdHome.at;
   };
   /** SD10: THE WAY HOME, walked into or pressed - out of the Hour under the veil, before the Hollow's door outside (the
@@ -21303,6 +21314,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     setMidScreenText(SD_HOME_TEXT.taken);
     return true;
   }
+  /** SD5a: BACK THROUGH THE RIFT - out of the Hour and into its Hollow, beside its Rift, under the veil: the realm left,
+   *  the player at the Hollow's pixel outside, the Hollow entered by its own door (startInDungeon - the door at this
+   *  pixel) and stood beside its Rift (the Return's place - dungeonContext.js sdRiftLanding). A Hollow gone meanwhile, or
+   *  a door that would not open: outside, at its pixel. */
   function sdWayBack() {
     const loc = modes?.dungeonLocation;
     if (!isSdRealm(loc) || !modes?.stepThroughFire) return false;
@@ -21390,6 +21405,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const sdFightFrame = () => {
     if (!sdFightLink) return;
     const inRealm = modes?.sdRealmSlot?.() != null;
+    if (!inRealm && _sdReceipts.size) sdReceiptsLeft();   // AUDIT SD: a receipt that never burst - its spoils into the pack
     if (!inRealm && _sdFightHeld) sdSpoilsBurst?.leave();   // SD9e: whatever is still on the arena's floor into the pack
     if (!inRealm && _sdFightHeld) { sdFightLink.leave(); sdBlows?.leave(); _sdFightHeld = false; }
     if (inRealm) { try { sdBlows?.frame(); } catch (e) { console.warn('[sd] blows', e?.message ?? e); } }   // SD8d: its blows on me

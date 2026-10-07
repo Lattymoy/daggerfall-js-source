@@ -110,8 +110,8 @@
   {
     "name": "SD7B-the-swing-not-followed",
     "file": "src/scenes/sdSteps.js",
-    "old": "const [rx, ry, rz] = stepAt(s, t);",
-    "new": "const [rx, ry, rz] = [s.x, s.y, s.z];",
+    "old": "    stepAt(s, t, _at);",
+    "new": "    _at[0] = s.x; _at[1] = s.y; _at[2] = s.z;",
     "tests": [
       "test/sd7b_steps.test.js"
     ]

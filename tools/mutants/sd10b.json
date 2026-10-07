@@ -1,0 +1,488 @@
+[
+  {
+    "name": "AUDIT-SD-C1-the-hubs-hand-unheard",
+    "file": "src/scenes/world.js",
+    "old": "if (tab.room === SOCIAL_ROOM) link.onSdReceipt = (r, room) => { sdClaims?.add(r); sdSpoilsReceipt(r, room); };",
+    "new": "void 0;",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C1-kept-for-a-week",
+    "file": "src/scenes/world.js",
+    "old": "    if (!inRealm && _sdReceipts.size) sdReceiptsLeft();",
+    "new": "    if (false && _sdReceipts.size) sdReceiptsLeft();",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C1-granted-every-frame",
+    "file": "src/scenes/world.js",
+    "old": "if (c) grantSdSpoils(c); }\n    _sdReceipts.clear();",
+    "new": "if (c) grantSdSpoils(c); }",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C2-the-marks-kept",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "{ marksFi = s.fi; marks.clear(); pools = []; inFire = false; }",
+    "new": "{ marksFi = s.fi; pools = []; inFire = false; }",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C2-the-brass-kept",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "{ marksFi = s.fi; marks.clear(); pools = []; inFire = false; }",
+    "new": "{ marksFi = s.fi; marks.clear(); inFire = false; }",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C3-the-falls-number-kept",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "      marksFi = 0; fellFi = 0; endSaid = 0;",
+    "new": "      marksFi = 0; endSaid = 0;",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C3-the-ends-number-kept",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "      marksFi = 0; fellFi = 0; endSaid = 0;",
+    "new": "      marksFi = 0; fellFi = 0;",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C3-home-by-the-fights-number",
+    "file": "src/scenes/world.js",
+    "old": "if (_sdHome?.fell !== s.fell.at) { const [x, z] = clearOfPillars(s.rem.x, s.rem.z); _sdHome = { fell: s.fell.at,",
+    "new": "if (_sdHome?.fell !== s.fi) { const [x, z] = clearOfPillars(s.rem.x, s.rem.z); _sdHome = { fell: s.fi,",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C5-home-in-a-pillar",
+    "file": "src/scenes/world.js",
+    "old": "const [x, z] = clearOfPillars(s.rem.x, s.rem.z);",
+    "new": "const [x, z] = [s.rem.x, s.rem.z];",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C4-entered-unpassed",
+    "file": "src/scenes/world.js",
+    "old": "sdRiftWord(rec, s, now, { entered: _sdEntered.has(s) })",
+    "new": "sdRiftWord(rec, s, now)",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C4-the-step-unremembered",
+    "file": "src/scenes/world.js",
+    "old": "if (await modes?.enterSdRealm?.({ s, hollow, site })) { _sdEntered.add(s); return true; }",
+    "new": "if (await modes?.enterSdRealm?.({ s, hollow, site })) { return true; }",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C4-remembered-unbuilt",
+    "file": "src/scenes/world.js",
+    "old": "if (await modes?.enterSdRealm?.({ s, hollow, site })) { _sdEntered.add(s); return true; }",
+    "new": "_sdEntered.add(s); if (await modes?.enterSdRealm?.({ s, hollow, site })) { return true; }",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C5-the-long-way-out",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "    if (half - Math.abs(dx) < half - Math.abs(dz)) x = px",
+    "new": "    if (half - Math.abs(dx) > half - Math.abs(dz)) x = px",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C5-the-margin-lost",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "  const half = SD_PILLAR_W / 2 + margin;",
+    "new": "  const half = SD_PILLAR_W / 2;",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C5-the-spew-from-inside",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "const [px, pz] = clearOfPillars(pose.x, pose.z, 0.3);",
+    "new": "const [px, pz] = [pose.x, pose.z];",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C5-a-body-s-width",
+    "file": "src/scenes/sdSpoils.js",
+    "old": "export const SD_PILLAR_CLEAR_M = 1.2;",
+    "new": "export const SD_PILLAR_CLEAR_M = 0.4;",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-a-portal-stood-unlisted",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      if (retAt) ret = { at: [...retAt], batch: batchAt(RETURN_ARCHIVE, retAt, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };\n      rebatch();",
+    "new": "      if (retAt) ret = { at: [...retAt], batch: batchAt(RETURN_ARCHIVE, retAt, SD_RETURN_SIZE.w, SD_RETURN_SIZE.h) };",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-the-way-home-unlisted",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      wasRet = null;\n      rebatch();",
+    "new": "      wasRet = null;",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-a-gone-one-listed",
+    "file": "src/scenes/sdEnd.js",
+    "old": "ret = null; wasRet = null; rebatch(); },",
+    "new": "ret = null; wasRet = null; },",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-the-list-past-the-clear",
+    "file": "src/scenes/sdEnd.js",
+    "old": "      rift = null; ret = null; _batches = NONE;",
+    "new": "      rift = null; ret = null;",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-a-hand-drawn-at-its-start",
+    "file": "src/scenes/sdHall.js",
+    "old": "{ shown[i] = want[i]; if (hands[i]) hands[i].object.matrix = handMatrix(i, shown[i]); }",
+    "new": "{ shown[i] = want[i]; }",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-a-matrix-every-frame",
+    "file": "src/scenes/sdHall.js",
+    "old": "        if (d === 0) continue;",
+    "new": "",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-a-steps-place-every-frame",
+    "file": "src/scenes/sdSteps.js",
+    "old": "    stepAt(s, t, _at);",
+    "new": "    const _at = stepAt(s, t);",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C6-the-scratch-unused",
+    "file": "src/world/sdSteps.js",
+    "old": "export function stepAt(s, t, out = [0, 0, 0]) {",
+    "new": "export function stepAt(s, t, out) {\n  out = [0, 0, 0];",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-the-boss-unanswered",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "const gear = d > 0 && (_pending || _pendingBoss) ? tierOf",
+    "new": "const gear = d > 0 && _pending ? tierOf",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-the-mark-unmade",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "    if (blow) setBossStruck();\n",
+    "new": "",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-the-mark-lying",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  _pendingBoss = _now() - _bossBlowAt <= BLOW_WINDOW_S;\n  _bossBlowAt = -Infinity;",
+    "new": "  _pendingBoss = _now() - _bossBlowAt <= BLOW_WINDOW_S;",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-the-window-unread",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  _pendingBoss = _now() - _bossBlowAt <= BLOW_WINDOW_S;",
+    "new": "  _pendingBoss = _bossBlowAt > -Infinity;",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-a-reach-power-hears-the-boss",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "  _pending = landedBlow();\n  _pendingBoss",
+    "new": "  _pending = landedBlow() ?? (_now() - _bossBlowAt <= BLOW_WINDOW_S ? { attacker: null } : null);\n  _pendingBoss",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-the-hours-magic-marked",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "export const bodysBlow = (A) => !!A && A.shape !== 'all';",
+    "new": "export const bodysBlow = (A) => !!A;",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-the-reset-marked-as-the-bodys",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "land(A.name, h.pct, h.base, bodysBlow(A));",
+    "new": "land(A.name, h.pct, h.base, b !== SD_BODY.hour);",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-the-brass-marked",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "    land(SD_BLOWS_TEXT.burning, p.pct, p.base);",
+    "new": "    land(SD_BLOWS_TEXT.burning, p.pct, p.base, true);",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C7-an-echos-unmarked",
+    "file": "src/scenes/sdRemnantBlows.js",
+    "old": "land(A.name, h.pct, h.base, bodysBlow(A));",
+    "new": "land(A.name, h.pct, h.base, bodysBlow(A) && b === SD_BODY.remnant);",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C8-nothing-spends-the-gear",
+    "file": "src/systems/sigilSetPowers.js",
+    "old": "      if (cut > 0) {",
+    "new": "      if (cut >= 0) {",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C9-the-hollow-re-laid",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  if (dungeonTier(dfLocation) === 'super') return 'full';\n",
+    "new": "",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-C9-the-tier-unread",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  if (dungeonTier(dfLocation) === 'super') return 'full';",
+    "new": "  if (dfLocation.superTier) return 'full';",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R1-an-ended-fight-never-lost",
+    "file": "src/net/sdRemnant.js",
+    "old": "if ((f.emptySince != null && now - f.emptySince >= SD_LOST_MS) || (f.ended && now - f.ended.at >= SD_LOST_MS)) {",
+    "new": "if (f.emptySince != null && now - f.emptySince >= SD_LOST_MS) {",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R1-lost-a-beat-late",
+    "file": "src/net/sdRemnant.js",
+    "old": "(f.ended && now - f.ended.at >= SD_LOST_MS)",
+    "new": "(f.ended && now - f.ended.at > SD_LOST_MS)",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R2-never-freed",
+    "file": "server/src/index.js",
+    "old": "      if (idle < 0) return SD_NO_FULL;\n      realm.in.splice(idle, 1);",
+    "new": "      return SD_NO_FULL;",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R2-a-present-accounts-freed",
+    "file": "server/src/index.js",
+    "old": "const idle = realm.in.findIndex((x) => !present.has(x) && !f?.players?.[x]);",
+    "new": "const idle = realm.in.findIndex((x) => !f?.players?.[x]);",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R2-a-fighters-freed",
+    "file": "server/src/index.js",
+    "old": "const idle = realm.in.findIndex((x) => !present.has(x) && !f?.players?.[x]);",
+    "new": "const idle = realm.in.findIndex((x) => !present.has(x));",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R3-a-busy-hub-read-as-none",
+    "file": "server/src/index.js",
+    "old": "    if (!res?.ok) return undefined;",
+    "new": "    if (!res?.ok) return null;",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R3-no-answer-read-as-closed",
+    "file": "server/src/index.js",
+    "old": "    if (rec === undefined) return SD_NO_BUSY;",
+    "new": "    if (rec === undefined) return SD_NO_CLOSED;",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R3-busy-closed-for-good",
+    "file": "server/src/index.js",
+    "old": "if (no === SD_NO_BUSY) { this._refuse(ws, 'busy', CLOSE_BUSY); return; }",
+    "new": "if (no === SD_NO_BUSY) { this._refuse(ws, 'busy'); return; }",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R3-the-non-answer-kept",
+    "file": "server/src/index.js",
+    "old": "    if (rec !== undefined) this._sdLive = { s, at: now, rec };",
+    "new": "    this._sdLive = { s, at: now, rec };",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R3-the-in-refused",
+    "file": "server/src/index.js",
+    "old": "      if (rec === undefined) return;   // AUDIT SD: the hub did not answer",
+    "new": "      // AUDIT SD: the hub did not answer",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R3-the-blow-stopped",
+    "file": "server/src/index.js",
+    "old": "    if (live !== undefined && !(live && live.s === s && sdHolds(live, now))) return;",
+    "new": "    if (!(live && live.s === s && sdHolds(live, now))) return;",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R6-the-fall-at-the-hearing",
+    "file": "server/src/index.js",
+    "old": "const fell = sdFell(rec, Math.min(c.at, Date.now()), { top: c.top, n: c.n });",
+    "new": "const fell = sdFell(rec, Date.now(), { top: c.top, n: c.n });",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R6-the-fall-ahead",
+    "file": "server/src/index.js",
+    "old": "const fell = sdFell(rec, Math.min(c.at, Date.now()), { top: c.top, n: c.n });",
+    "new": "const fell = sdFell(rec, c.at, { top: c.top, n: c.n });",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R4-the-director-unarmed",
+    "file": "server/src/index.js",
+    "old": "if (fell) { await this._sdSave(fell); this._sdFan(fell); await this._sdArm(Date.now()); }",
+    "new": "if (fell) { await this._sdSave(fell); this._sdFan(fell); }",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R6-blows-past-the-hour",
+    "file": "server/src/index.js",
+    "old": "    const live = await this._sdLiveOf(s, now);\n    if (live !== undefined && !(live && live.s === s && sdHolds(live, now))) return;\n",
+    "new": "",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R5-every-in-written",
+    "file": "server/src/index.js",
+    "old": "await this._sdFightSave(f, now, fresh || !known);",
+    "new": "await this._sdFightSave(f, now, true);",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R5-a-newcomer-unwritten",
+    "file": "server/src/index.js",
+    "old": "await this._sdFightSave(f, now, fresh || !known);",
+    "new": "await this._sdFightSave(f, now, fresh);",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SD-R8-the-concord-unasked",
+    "file": "server/src/index.js",
+    "old": "      if (!(await this._sdHallOf(s)).ok) return;",
+    "new": "",
+    "tests": [
+      "test/sd10b_audit.test.js"
+    ]
+  }
+]

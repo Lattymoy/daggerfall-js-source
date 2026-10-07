@@ -541,8 +541,10 @@ export function stepRemnant(f, now, bodies, rng) {
   for (const b of bodies) { const p = f.players[b.sub]; if (p) { p.seenAt = now; restoreShare(f, p); } }
   for (const p of Object.values(f.players)) if (!p.retired && now - (p.seenAt ?? p.joinedAt) > ABSENT_RETIRE_MS) retireShare(f, p);
   rescaleEchoes(f);
-  // LOST: nobody living has stood in the arena this long - the next fight is fresh
-  if (f.emptySince != null && now - f.emptySince >= SD_LOST_MS) {
+  // LOST: nobody living has stood in the arena this long - the next fight is fresh. AUDIT SD: and an Hour ENDED is lost
+  // SD_LOST_MS after its End, whoever's pose still says it stands there - a tab frozen in the arena held a fight nobody
+  // could win, and the next could never begin
+  if ((f.emptySince != null && now - f.emptySince >= SD_LOST_MS) || (f.ended && now - f.ended.at >= SD_LOST_MS)) {
     f.lost = { at: now };
     out.push({ k: 'lost', at: now });
     return out;

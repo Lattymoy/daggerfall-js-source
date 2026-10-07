@@ -357,7 +357,7 @@ test('SD3 the relay by source: the hub\'s alarm beats the director beside the sw
   for (const [path, fn] of [['SD_INTERNAL_CENSUS', '_sdCensusInternal()'], ['SD_INTERNAL_FOUND', '_sdFoundInternal(request)'], ['SD_INTERNAL_LIVE', '_sdLiveInternal()']]) assert.ok(r.includes(`if (path === ${path}) return this.${fn};`), path);
   assert.match(r, /const linked = isRegionRoom\(a\.key\) && who\.kind === 'linked' \? \{ lk: 1 \} : \{\};/);
   assert.match(r, /if \(b\.id && b\.lk && typeof b\.sub === 'string' && b\.sub\) subs\.add\(b\.sub\);/);
-  assert.match(r, /if \(isSdRoom\(a\.key\)\) \{ const no = await this\._sdAdmit\(a\.key, who\.subject, now\); if \(no\) \{ this\._refuse\(ws, no\); return; \} \}/);
+  assert.match(r, /if \(isSdRoom\(a\.key\)\) \{ const no = await this\._sdAdmit\(a\.key, who\.subject, now\); if \(no === SD_NO_BUSY\) \{ this\._refuse\(ws, 'busy', CLOSE_BUSY\); return; \} if \(no\) \{ this\._refuse\(ws, no\); return; \} \}/);
   const on = read('src/net/online.js');
   assert.match(on, /if \(r && isSocialRoom\(room\)\) this\._deliver\('sd', \(\) => this\.onSd\?\.\(r, room\)\);/);
   assert.match(on, /this\.serpentOk = !!h\.serpentOk; this\.sdOk = !!h\.sdOk;/);

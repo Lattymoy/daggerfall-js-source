@@ -165,7 +165,7 @@
   {
     "name": "SD4B-the-Return-kept",
     "file": "src/scenes/sdEnd.js",
-    "old": "    returnOut() { if (!ret) return; free(ret.batch); ret = null; wasRet = null; },",
+    "old": "    returnOut() { if (!ret) return; free(ret.batch); ret = null; wasRet = null; rebatch(); },",
     "new": "    returnOut() { if (!ret) return; free(ret.batch); },",
     "tests": [
       "test/sd4b_rift.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "SD4B-the-word-off-no-record",
     "file": "src/scenes/world.js",
-    "old": "    return { word: sdRiftWord(rec, s, now), returns:",
-    "new": "    return { word: sdRiftWord(null, s, now), returns:",
+    "old": "    return { word: sdRiftWord(rec, s, now, { entered: _sdEntered.has(s) }), returns:",
+    "new": "    return { word: sdRiftWord(null, s, now, { entered: _sdEntered.has(s) }), returns:",
     "tests": [
       "test/sd4b_rift.test.js"
     ]

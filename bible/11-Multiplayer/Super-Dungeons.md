@@ -49,8 +49,12 @@ So, as decided here (each decision is argued in its section):
 - **The Breach's architecture, copied, not edited.** The realm is a made level like the Burning Court
   (`world/gateArena.js`); its puzzle, its fight and its feat are a pure brain the relay runs (Option B, as
   `net/gateBrain.js`); the feat is a signed receipt the account service claims (as `net/gateReceipt.js`). The gate's
-  own modules are not changed: SERPENT1's rule (`Sea-Serpent.md`), so the ~60 suites and ~700 mutant records that pin
-  the gate's bytes stay as they are.
+  own modules are reused, not rewritten (SERPENT1's rule, `Sea-Serpent.md`): where the arc needed one to do more it
+  widened a seam whose default is the gate's own bytes - `net/gateBrain.js` exports its hand and purse (`spendBlow`,
+  `spendPurse` - SD8a), the boss bar cuts its marks where a model says (`ui/gateBossBar.js` - SD8c), the telegraph pass
+  draws over another floor (`render/gateTelegraph.js` - SD8d), the spoils pool takes a `roll` and its own `gathered`
+  words (`scenes/spoilsPool.js` - SD9e) - and the gate's records those seams moved were re-aimed by content (`wb4.json`,
+  `wb4b.json`, `wb9f.json`), never weakened.
 - **A puzzle the relay judges** - the Orrery of Endings, a geared lock over twelve hours whose answer is written in
   riddles that change with every Hollow (section 8); **a course the clock drives** - the Unmoored Steps, drifting,
   phasing and crumbling platforms over the void (section 9); **a fight that tests a build** - the Brass Remnant, three
@@ -83,7 +87,7 @@ Ledger A rows are SD-ONLINE (the world's dungeon sizes online), TIER1 (the label
    ─► THE LAST MOMENT (the Brass Remnant: relay brain, 250 ms beat)
    │ the kill ─► RECEIPT `h1` per earner ─► spoils rolled on the receipt's seed; the account claims title/aura chance
    ▼
- COLLAPSE: ph 'fell' ─► 3 minutes ─► 'gone' (every client: the Hollow sinks, anyone inside is cast out) ─► cooldown
+ COLLAPSE: ph 'fell' ─► 3 minutes ─► 'gone' (every client: the Hollow is taken down, anyone inside is cast out) ─► cooldown
 ```
 
 ## 2. The director - one record in the hub
@@ -98,7 +102,7 @@ The hub (`chat:world`, the room every online tab holds) keeps the Super dungeon'
 | `r` | the region the census chose (0..61), or -1: the Bay's great cities (section 3) |
 | `at` | when it rose (relay ms) |
 | `foundAt`, `fb` | when it was found, and by whom (the finder's display name; never an account id) |
-| `fellAt`, `top`, `n` | when its boss fell, the top fighter's name, how many earned the feat |
+| `fellAt`, `top`, `n` | when its boss fell, the top fighter's name, how many fought it (every seat in its fight - the gate's and the serpent's own count) |
 | `until` | when an unbeaten Hollow fades: `at + SD_LIFETIME_MS` |
 | `next` | when the next may rise: `fellAt + SD_COLLAPSE_MS + SD_COOLDOWN_MS` (or `until + SD_COOLDOWN_MS`) |
 
@@ -127,12 +131,14 @@ about its limit, as the rite is: a region is the one a client says it stands in.
 **The city (client, every client the same).** `systems/sdSite.js`, over the game's own MAPS.BSA rows (a mod's addition
 is not on every client - HUB1's rule):
 
-1. The candidates are the populated places of region `r` - its cities first, then towns - ranked by size: the city's
-   RMB block count, then its building count (the ranking `systems/regionHubs.js` already makes, with the same
-   tie-breaks). With `r = -1` the candidates are the Bay's eight largest cities, and the slot's hash picks one.
-2. Around the chosen city, the site is a land pixel at Chebyshev distance 2 to 5, with no location on it or its eight
-   neighbours, not a spawned dungeon's pixel, and not under water (the gate's own site tests, `systems/gateSite.js`).
-   The slot's hash picks among the pixels that pass; with none, the next city down the ranking is tried.
+1. The candidates are the populated places of region `r`, ranked as its hub is chosen (`systems/regionHubs.js`
+   `hubClaim`): a city over a hamlet over a village, then the one named for its region, then its RMB blocks, then its
+   buildings. With `r = -1` the candidates are the Bay's first eight cities by that ranking (`SD_GREAT_CITIES`), and the
+   slot's hash picks one.
+2. Around the chosen city, the site is a pixel the gate's own scan calls suitable (`systems/gateSite.js`: land, no
+   location on it or its eight neighbours, not a spawned dungeon's pixel) whose nearest fast-travel town is that city -
+   two to four pixels out (`GATE_TOWN_MIN_PX`..`GATE_TOWN_MAX_PX`). The slot's hash picks among the pixels that pass;
+   with none, the next city down the ranking is tried.
 
 The relay never knows the pixel - it has no map data - and needs not: everything that must be judged is judged by pose
 against the slot's law (section 4) or in the realm's own frame (sections 8-10).
@@ -158,8 +164,9 @@ places it from its own map files - and can only flip the record a little early.
 ## 5. The dungeon - Super
 
 The Hollow is a spawned dungeon (`synthesizeDungeonLocation`, the Elite's), cloned from a template dungeon the slot's
-hash picks from the region's (or the Bay's) labyrinths and keeps of at least 12 blocks, laid WHOLE - the world's
-sizes (section 13) are not drawn for it: the feat is the longest walk its template has. It is named from the slot: *The Brass Hollow*, *The Stopped
+hash picks from the Bay's labyrinths and keeps of at least 12 blocks with a spawn's clearance, never the main story's
+(`systems/sdSite.js` `sdTemplates`), laid WHOLE (`world/smallerDungeons.js` `dungeonSizeFor`, by the tier law) - the
+world's sizes (section 13) are not drawn for it: the feat is the longest walk its template has. It is named from the slot: *The Brass Hollow*, *The Stopped
 Bell*, *The Unwound Halls*, *The Clockless Deep*, *The Hour's Wound*, *The Splintered Keep*, *The Last Bell of
 <city>*, *The Hollow Under <city>*.
 
@@ -181,10 +188,12 @@ The difficulty word is the location's (`loc.superTier`), read by one law (`dunge
 **The end** is the dungeon's enemy or start marker farthest from its entrance (RVN7's lair law, the one law
 `dungeonEndOf` both the Rift and the Return read), on a floor the collider finds, the same on every client.
 
-- **The Rift** - the large otherworldly portal: a 7 m ring of brass light turning slowly about a black-gold membrane,
+- **The Rift** - the large otherworldly portal: a ring of brass light up to 7 m across - as large as its hall allows,
+  never under 2.6 m (`world/sdDungeon.js` `sdRiftFit`) - turning slowly about a black-gold membrane,
   its sound a bell heard under water. Pressing it (or walking into it) steps the player through to the Shattered Hour
   (the veil, `ui/gateVeil.js`), if the realm room admits them (`found` or later, before `gone`). Refusals are said in
-  words an old client already understands: *"The Rift will not take you yet."* / *"The Hour has closed."*
+  words an old client already understands: *"The Rift will not take you yet."* / *"The Hour has closed."* During the
+  collapse it refuses a newcomer and admits again whoever went through it this session, as the realm keeps them.
 - **The Return** - a small portal of pale light beside it: it carries the player back to the dungeon's entrance (the
   start marker), and stands until the boss falls. With the kill the Hollow collapses (section 11) and the Return goes
   out with it.
@@ -198,7 +207,8 @@ Bay's people crowd thickest, their many souls press the world thin, and a dungeo
 of the Warp - a Hollow - whose deepest hall opens on the Hour.
 
 The realm is a made level (`world/sdRealm.js`, the Court's pattern: a made location `0x7ffff200`, block index 900200,
-pseudo-archives 38151-38159) laid along +Z in the dungeon's frame:
+one pseudo-archive, 38151 - records 0-4 the realm's, 5-20 the Orrery's hall, 21-22 the Steps, 23-24 the Echoes) laid
+along +Z in the dungeon's frame:
 
 | stage | where | what |
 |---|---|---|
@@ -279,7 +289,8 @@ it runs the Warden.
 
 **Health.** Each fighter who enters brings `SD_TTK_S` (420 s) x `dpsRef(lv)` x 1.25 to its health - nearly twice the
 Warden's share - added at its current fraction (the gate's `joinFight` law). The same caps on how much a blow is
-believed (the gate's buckets), one seat per account, 256 fighters at most.
+believed (the gate's buckets), one seat per account, 256 fighters at most - and the realm's door admits 256 accounts,
+a full one freeing the seat of one with no socket in it and no seat in its fight (the gate's AUDIT WB A1 law).
 
 **Phase one - The Walking Hour (100% to 70%).**
 - *Brass Stomp* - a 7 m circle, then a shock ring rolling out to 22 m that must be JUMPED.
@@ -307,7 +318,9 @@ with all three. The Mantella Pulse is the Hour's own clock, not the Walking Hour
 every phase, the heart beating whether it is struck or not. "The first blow" is the Remnant's own, at the opening's end
 (8 s after the first fighter's `in`): a fight nobody strikes still ends. A blow cannot take it past the phase it is in
 before the turn. The Hearts hold three seconds of the living's reference damage between them. And a fight no living
-fighter has stood in for 30 s is LOST - the next is fresh: it is meant to be lost, many times.
+fighter has stood in for 30 s is LOST - the next is fresh: it is meant to be lost, many times; so is one whose Hour has
+Ended, 30 s after its End, whoever's last pose still stands in it. The fight's door asks the realm's Concord (no `in`
+before the Orrery is set), and no blow lands once the hub's record no longer holds the slot.
 
 **What it asks of a build.** Its blows are shares of the struck player's own health (the gate's law), so no amount of
 health makes it safe; the pulses and the Reset are unresisted magic, so no resistance makes it safe; it cannot be
@@ -321,10 +334,11 @@ fighter who EARNED it (dealt 2% of their own share, or stood alive half the figh
 `h1` signed with the relay's key: `{d:s, b, s:account, c:seed, x, l}` - the slot, the boss, the account, the relay's
 own seed, how it was earned, the admitted level. The hub keeps each as `sdrc:<sub>` for the week a receipt lives.
 
-**The spoils (client, from the receipt's seed).** Thrown from where it fell (the gate's spoils pool, its keys its own -
-SD9e: `systems/sdSpoils.js` rolls them, `scenes/sdSpoils.js` throws them a moment into the fall from the cage of its
-chest toward the fighter, kept on the arena's floor; a receipt that comes outside the realm is its spoils straight into
-the pack). A fighter who dealt and one who stood are paid alike, as the gate pays them:
+**The spoils (client, from the receipt's seed).** Thrown from where it fell, clear of a pillar it fell into (the gate's
+spoils pool, its keys its own - SD9e: `systems/sdSpoils.js` rolls them, `scenes/sdSpoils.js` throws them a moment into
+the fall from the cage of its chest toward the fighter, kept on the arena's floor; a receipt that comes outside the
+realm - the hub's, heard on the hub's own link - is its spoils straight into the pack, and so is my realm's own whose
+throw never came, as I leave the Hour). A fighter who dealt and one who stood are paid alike, as the gate pays them:
 
 | | |
 |---|---|
@@ -339,7 +353,9 @@ so all nine are worn at once (SD9d: the design had named a longsword, a war axe 
 place a set counts; `Sigil-Sets.md` section 6d). Its set law (online only, asleep in duels, the Sigil Sets' rules -
 every number a whole pair from Faint to Ascendant, the design's own numbers the Ascendant end):
 - 2 pieces: DWEMER BRASS - +4 -> +10 resist magic and shock;
-- 4 pieces: GEARWARD - the next foe's blow that lands on you is 15% -> 30% lighter; the gear winds again in 18 -> 12 s;
+- 4 pieces: GEARWARD - the next foe's blow that lands on you is 15% -> 30% lighter; the gear winds again in 18 -> 12 s
+  (the Brass Remnant's own blows and its Echoes' - never the Hour's magic - are a foe's for it alone, `Sigil-Sets.md`
+  section 8);
 - 6 pieces: THE HOUR TURNS - a blow that would kill you does not, and 15% -> 25% of your health returns; it recovers
   in 90 -> 60 s.
 
@@ -351,7 +367,7 @@ the spoils' draws off the same seed; the grants are laid on the account's row, `
 row alone, and read off it as the Broker's sale is - so every badge the service mints carries them with no other read.)
 
 **The collapse.** The kill sets the record `fell`; for `SD_COLLAPSE_MS` (3 minutes) the realm stands so the spoils can
-be taken and a way home rises where the Remnant fell (to the Hollow's door, OUTSIDE). Then `gone`: on every client the
+be taken and a way home rises where the Remnant fell, clear of the pillars (to the Hollow's door, OUTSIDE). Then `gone`: on every client the
 Hollow sinks into its pixel, its column of light goes out, and anyone still in the Hollow or the Hour is cast out
 before its door: *"The Hour closes, and the Hollow folds in on itself behind you."* (SD10a: the way home is the
 Return's pale light, risen once the Remnant's body has sunk; whoever stands in the Hollow or the Hour is told how long
@@ -407,7 +423,7 @@ the room's law:
   the other, and two pages in one room would trade blows on each other's foe i. So a re-laid dungeon stands in a room
   of its own, `dungeon:m<id>.s` or `dungeon:m<id>.m`, as a building's room is its layout's (WD3): named off the BUILD
   (`builtDungeonSize`), admitted by the wire's one room law at both ends (`WORLD_ROOM`, `DUNGEON_ROOM_TAGS` - a relay
-  change, `world172`). A dungeon built whole keeps `dungeon:m<id>`, and its memory - and shares it, rightly, with an
+  change, `world176` - section 14). A dungeon built whole keeps `dungeon:m<id>`, and its memory - and shares it, rightly, with an
   older page, which lays the same whole dungeon. (This page first said each frame would carry the layout's size, `lz`,
   and a receiver refuse another's; a room per layout needs no receiver to refuse anything, and an old page's blows -
   which carry no stamp - cannot reach a re-laid room at all.)
@@ -420,7 +436,7 @@ One new frame type, `sd` (`net/wire.js`: `SD_KINDS`, `validSdIn`, `validSdOut`, 
 
 | from -> to | kinds |
 |---|---|
-| client -> hub | `site {s,px,py,pl}` (the herald's vote), `spent {s}` |
+| client -> hub | `spent {s}` |
 | client -> cell | `found {s,px,py}` |
 | client -> `sd:<s>` | `in {lv,bv}`, `pz {i,a,q}`, `hit {q,d,r}`, `ehit {e,q,d,r}` (an Echo), `xhit {c,q,d,r}` (a Heart) |
 | hub -> client | `ev {s,ph,r,at,foundAt?,fb?,fellAt?,top?,n?,until,next}`, `rcpt {r}` |
@@ -428,7 +444,10 @@ One new frame type, `sd` (`net/wire.js`: `SD_KINDS`, `validSdIn`, `validSdOut`, 
 
 Internal doors (object to object): `/internal/sd/census`, `/internal/sd/found`, `/internal/sd/live`, `/internal/sd/fell`.
 The Worker mints an `sd:<s>` object only for the slot the hub's record names and only while it is `found` or `fell`
-(the gate's `gateHolds` law, read from the hub through `/internal/sd/live`).
+(the gate's `gateHolds` law, read from the hub through `/internal/sd/live`). A hub that does not answer that ask is no
+answer, never "no record": the realm refuses a hello as busy (`CLOSE_BUSY`, which the page tries again - never
+*"The Hour has closed."*, which casts a fighter out for good), leaves an `in` unanswered (the page says it again), stops
+no blow, and asks again at the next - it keeps only an answer.
 
 SD3 shipped the first of the table: `found` (client -> cell) and `ev` (hub -> client); the rest arrive with the slices
 that use them (SD6's `pz`, SD8's fight, SD9's receipts), each extending `SD_KINDS`/`SD_OUT_KINDS` under the arc's one
@@ -455,7 +474,7 @@ bucket; the realm's tell to the hub carries its receipts (`rc`, [account, receip
 | `scenes/world.js` | WIRED: the record, the omen and sighting, the found word, the Hollow at its pixel, the map/compass/timers, the realm's link, court, spoils, receipts, the veil, the ejections, the labels' entry line |
 | `scenes/worldModes.js` | WIRED: `enterSdRealm` / the way home, the realm's per-frame arm (lighting, fog, sky, the Orrery, the Steps, the arena), the dungeon's exit to the Hollow's door |
 | `scenes/dungeonContext.js` | WIRED: the Super difficulty, the end (`dungeonEndOf`), the Rift and the Return, the realm's bodies (the Remnant, the Echoes, the Hearts) behind the gate's three seams, the refusals |
-| `scenes/exterior.js` | FLAGGED: the `?exterior` bench is offline; there is no Super dungeon offline. Its plaque reads the tier law and says Regular. |
+| `scenes/exterior.js` | FLAGGED: the `?exterior` bench is offline; there is no Super dungeon offline. Its plaque is the World Tooltips mod's own *To <name>* - the tiers are said online alone (section 12). |
 
 ## 16. Slices and their records
 
@@ -463,7 +482,7 @@ bucket; the realm's tell to the hub carries its receipts (`rc`, [account, receip
 |---|---|
 | SD-ONLINE | section 13 |
 | TIER1 | section 12 |
-| SD1 | `net/sdLaw.js`: slots, the record's law, the census pick, the spot law, the room key |
+| SD1 | `net/sdLaw.js`: slots, the record's law, the census pick, the find's check (`sdFindBelieved`), the room key |
 | SD2 | `systems/sdSite.js` and the Hollow at its pixel: the city, the site, the clone, the omen, the sighting, the plaque |
 | SD3 | the relay: the director, the census, the found word, the realm room, the wire, `RELAY_VERSION` |
 | SD4 | the Super dungeon: its difficulty, its end, the Rift and the Return |
@@ -492,7 +511,8 @@ online does; `systems/onlineSync.js` copies the forced rows home. The room: `net
 dungeon's `size`, the mode machine's identity carries `builtDungeonSize(dungeonLoc)` and the world host hands it on;
 `net/wire.js` admits `dungeon:m<id>.m` and `.s` (`WORLD_ROOM`, `DUNGEON_ROOM_TAGS`, `dungeonRoomTag`), so
 RELAY_VERSION is `world172` - the arc's one version, re-hashed in place while it is undeployed (`world171` on its branch,
-renumbered past main's CRYSTAL-FIST at the merge).
+renumbered past main's CRYSTAL-FIST at the merge; `world176` now, past WATCH-FIX, SERPENT3, LEGACY7 and TEXT-F1 at later
+merges - section 14).
 
 The slice was first built as "medium everywhere online" (Mac's first word) and turned to the world's mix the same hour
 on his second; nothing of the first shape shipped but the room per layout, which both needed.
@@ -503,8 +523,8 @@ in the medium and the small rooms, the relay's Room keeping each size's memory a
 `test/dsize1_mediumdungeons.test.js`, `test/ft1_smallerdungeons.test.js`, `test/auditworld34.test.js`,
 `test/uxb1e_onlinesync.test.js`, `test/features.test.js`, `test/ft18_features.test.js` (PINS MOVED);
 `tools/mutants/sdonline.json` (13) and `tools/mutants/dsize1.json` (27), all dead. Deploy: relay first (a page of this
-build on a relay before `world172` joins a `.s` or `.m` room the relay keeps no world for - presence alone, every player
-stepping their own foes - which is safe, and is why the order matters).
+build on a relay before `world172` - `world176` now - joins a `.s` or `.m` room the relay keeps no world for - presence
+alone, every player stepping their own foes - which is safe, and is why the order matters).
 
 Leaves: an older page in a dungeon the world re-lays stands in the whole dungeon's room, apart from this build's
 players, until it reloads. Offline, a dungeon no quest holds follows the switches unless the world's sizes are asked
@@ -574,10 +594,11 @@ they ship.
 
 ### SD3 - shipped 2026-10-05 (the relay)
 
-Sections 2-4 and 14 on the relay - `world172` (`world171` on the branch; main's CRYSTAL-FIST took it at the merge).
+Sections 2-4 and 14 on the relay - `world172` (`world171` on the branch; main's CRYSTAL-FIST took it at the merge;
+`world176` now - section 14).
 
 - **The frame** (`net/wire.js`): `sd`, one kind each way so far - `found {s, px, py}` to a cell (`validSdIn`, behind
-  `relaySupportsSd`: a relay before `world172` closes the socket on it) and `ev` from the hub (`validSdOut`: the record,
+  `relaySupportsSd`: a relay before `world172` - `world176` now - closes the socket on it) and `ev` from the hub (`validSdOut`: the record,
   a Hollow that rose). The record's projection, `validSdRecord`, moved here from `net/sdLaw.js` beside the frame that
   carries it (wire.js imports no law; the law imports it) - `sdLaw.js` re-exports it unchanged. Its own buckets
   (`sdGate`, the relay's deeper `sdRelayGate`), its doors and its storage keys (`sdev`, `sdfound`, `sdrealm` - outside
@@ -1550,8 +1571,78 @@ THE FOUR HOSTS: the way home is the dungeon host's (`scenes/dungeonContext.js`, 
 machine's doors (`scenes/worldModes.js` `sdWayHome`, `sdHomeAt`) to the world host's (`scenes/world.js`); the readouts
 are the Hollow host's, which frames in every mode (SD2d), voiced by the world host. `scenes/exterior.js` has no Hollow.
 
-Pins: `test/sd10_collapse.test.js` (5 - the readouts' law; the readouts in the Hollow and the Hour; the way home; the
+Pins: `test/sd10_collapse.test.js` (4 - the readouts' law; the readouts in the Hollow and the Hour; the way home; the
 hosts by source); `tools/mutants/sd10.json` (21, all dead). PINS MOVED: the Hour's Rift set (`test/sd5a` - its way
 home with it).
 
 SD10b next: the arc's audit.
+
+### SD10b - shipped 2026-10-07 (AUDIT SD: the arc's audit)
+
+Four lenses over the arc as SD10a left it (`eb38ce2c`) - the page; the relay and the law; the claim, the set and the
+spoils; and these pages against the code - each finding traced by hand before anything changed. What was real is fixed
+and pinned; what was not is said so below. The relay stays `world176`, re-hashed in place (undeployed); no account change.
+
+**The page**
+
+| | what was wrong | now |
+|---|---|---|
+| C1 | THE HUB'S HAND OF A RECEIPT WAS DROPPED. The hub hands an earner's Hour receipt down its own socket - the chat tab's link in `chat:world`, a session apart from the world's - at the kill to one who stood outside the realm (dead and waking at a temple, gone by the way back) and at every hello for its week; that link heard the gate's, the serpent's, the rite's and the record's words but never `onSdReceipt`, so those earners had no spoils, no *Hours broken*, no Hourbreaker or Turning Hour roll, and a page that crashed before its throw had no way back to them | heard on the hub's link as the world's session hears the realm's (`scenes/world.js`), to the account service and the spoils; and a receipt my realm handed me, kept for a throw that never came (I left first), is its spoils straight into the pack as I leave the Hour (`sdReceiptsLeft`), once |
+| C2 | A FRESH FIGHT'S BLOWS WERE NEVER JUDGED. The driver remembered a blow by its number alone, and the law numbers each fight's blows from 1 (`seq`): after a lost fight, every blow of the next numbered as one already judged passed through whoever stood in the Hour - unheard, unshown, never struck - and the last fight's brass kept burning | the marks and the brass are the fight's own (`scenes/sdRemnantBlows.js` - forgotten as a fresh fight is heard) |
+| C3 | THE NEXT HOUR SAID NOTHING. The fall's line, thud and damage chart and the End's line were said once a fight NUMBER, and every Hollow's Hour numbers its fights from 1: the next Hollow's kill in the same page session was silent and its chart never shown; and the way home stood where the LAST Hollow's Remnant fell | the driver forgets them as the Hour is left; the way home is one place a FALL (keyed by its instant) |
+| C4 | THE RIFT SHUT ON ITS OWN FIGHTERS. During the collapse the Rift refuses a newcomer and admits whoever went through before (SD4b's `entered`, as the realm keeps them) - but the host never passed `entered`, so a fighter who stepped back into the Hollow was told *"The Hour has closed."* | the host remembers the Hollows whose Hour it went through this session, and says so |
+| C5 | INSIDE A PILLAR. The Remnant's walk never minds the four pillars, so where it fell can be inside one: the way home stood inside a pillar's square, out of reach, and the spoils were thrown from inside it | both put out of the square the shortest way (`scenes/sdSpoils.js` `clearOfPillars` - the way home `SD_PILLAR_CLEAR_M` clear of its side, the throw 0.3 m) |
+| C6 | MADE A FRAME FOR NOTHING (AUDIT WB D10's law). The Rift's and the Return's batch list was made every draw; the Orrery's six hand matrices every frame at rest; each of the 23 Steps' places twice a frame | the list made as a portal stands or goes; a hand's matrix as it turns (and drawn where its stone is at the first word - which had ridden on the redraw); the Steps' places into one scratch (`world/sdSteps.js` `stepAt`'s `out`) |
+| C7 | GEARWARD NEVER MET THE FIGHT ITS SET DROPS IN. The Remnant strikes through the court's door - no attack formula, no struck tail (AUDIT SET P-L9, SETS L4: no reach power answers a world boss) - so its own set's Gearward read every Stomp, Hand and Volley as a fall | a body's own blow (the Stomp, the Hand, the Volley - the Remnant's or an Echo's; never the Hour's unresisted magic over the whole floor, the Pulse, the Reset and the End, nor the burning brass) is marked as a world boss's as it lands (`scenes/sdRemnantBlows.js` `bodysBlow`, `setBossStruck`), and Gearward alone reads that mark (`Sigil-Sets.md` section 8); the Warden's court marks nothing - the gate's bytes are untouched |
+| C8 | A CUT OF NOTHING SPENT THE GEAR. A blow too small to lighten by a whole point (3 or less at Faint) still wound the gear for 18 s, with its clunk | no cut, no winding |
+| C9 | A HOLLOW WAS RE-LAID ONLINE. `dungeonSizeFor` online answered the world's size for every dungeon, the Hollow's too: of 400 slots, 92 were laid small and 196 medium - against sections 1, 5 and 13 and the feat | whole, by the tier law, online and off (`world/smallerDungeons.js`); the arc is undeployed, so no page ever laid one otherwise |
+
+**The relay and the law**
+
+| | what was wrong | now |
+|---|---|---|
+| R1 | AN ENDED HOUR WAS NEVER LOST while any fighter's last pose stood alive in the arena (a frozen tab; a page that never applies the End's blows): the realm beat on, every newcomer was told the fight is over, and no fresh one could begin until that socket closed - perhaps for the Hollow's whole life | lost `SD_LOST_MS` after its End (`net/sdRemnant.js` `stepRemnant`) |
+| R2 | THE REALM'S 256 SEATS WERE FOR LIFE. Every hello - a guest's, a watcher's - took a seat on the realm's list and nothing gave it back: a few hundred guest tokens made *"The Hour is full."* for every real player until the Hollow faded | a full realm frees the seat of an account with no socket in it and no seat in its fight (the gate's AUDIT WB A1 law) |
+| R3 | THE HUB'S SILENCE CLOSED THE HOUR. The realm's ask of the hub answered `null` for no answer - read as "no record", *"The Hour has closed."*, a policy close the page takes as final - and kept it 10 s: a deploy's hello storm could cast every fighter reconnecting in that window out of the fight | no answer is a busy close the page retries (`CLOSE_BUSY`), an `in` unanswered, a blow not stopped, and never kept |
+| R4 | THE DIRECTOR SLEPT THROUGH THE COLLAPSE. A kill never re-armed the hub's alarm, armed for the Hour's own end or the sweep's six hours: the collapse's end and the next rise waited on it - the two hours' rest up to six | armed from the fall (`_sdFellInternal`) |
+| R5 | EVERY `in` A WRITE. A known fighter's `in` again (its retry, a second tab - up to `SD_FIGHT_HZ` a second) forced the whole fight to storage (the gate's AUDIT WB A3) | written for a fresh fight or a newcomer alone |
+| R6 | A KILL HEARD LATE WAS NO KILL. The hub judged the realm's word at its own hearing: a kill a moment before the Hour's end, told on the retry after it, was announced unbroken; and a page that stayed in the realm past its cast-out could still fell the Remnant | the fall at its own instant, never later than the hub's now; no blow lands once the hub's record no longer holds the slot |
+| R8 | THE FIGHT SKIPPED THE PUZZLE. An `in` never asked the realm's Concord, which the relay holds: a page that never set the Orrery (the bridge is the page's) fought anyway | no `in` before the Concord |
+
+**The docs** - fourteen places these pages said what the code does not; the first was C9, fixed in the code. Section
+1's gate modules "not changed" (four slices widened a seam of the gate's - named there now); section 1's diagram, the
+Hollow "sinks" (it is taken down); section 2's `n`, "how many earned the feat" (how many fought - every seat, as the
+gate and the serpent count); section 3's ranking (the hubs' own claim) and its site "2 to 5" pixels out (two to four,
+its nearest town the city); section 5's template "from the region's" (the Bay's, with a spawn's clearance, never the
+main story's); section 6's "7 m" Rift (up to 7 m, as its hall allows); section 7's archive range (one archive, records
+0-24); section 13's and the ledger's SD-ONLINE row's `world172` (`world176`; the SD-ONLINE and SD3 records keep theirs,
+marked); section 14's `site` vote for a herald that was never built (struck); section 15's offline plaque (the mod's own
+*To <name>*); section 16's SD1 "spot law" (the find's check); SD10a's test count (4). And the sections the fixes moved
+are said as they stand now (6, 10, 11 and 14).
+
+**Said so, not changed:**
+- R7: a dead realm's storage (`sdfight` with its receipts and chart, `sdorrery`, `sdrealm`) is never cleared - small,
+  one set a Hollow, and a slot is never used twice; the object sleeps.
+- The Orrery's gearing is drawn from the public slot (`orreryOf`), so a page can compute its answer, and any account - a
+  guest's too - may turn its stones and fray it. The relay judges the turns; the riddles are for the players who read
+  them.
+- The level an `in` says is the page's, clamped - the gate's own law (a realm's socket carries no signed level, as the
+  serpent's `cl` is): an account may claim the top and stand idle in the arena, its share standing while it stands.
+- The hub keeps a kill's receipts whether or not its record took the fall: the realm's signed word is the kill's, and
+  with R6 the two agree but for a hub that did not answer at the very end.
+- Gearward spends its winding in the set's damage step, before the loot's evasion and a Shield's pool: a blow then
+  evaded or absorbed has spent it. Where it sits beside evasion is a design call, left as SD9d made it.
+- The claim's *"The Hour names you Hourbreaker."* is said again when a later kill rolls a title already held (the
+  answer is what the kill rolled, as SD9b documents).
+- The Remnant's telegraph shapes and the driver's lists are made each frame - a handful of small objects while blows
+  fly; the gate's court refills its own (AUDIT WB11 C8), and the arena's are left for a follow-up.
+
+Pins: `test/sd10b_audit.test.js` (17 - a fresh fight's blows; the next Hour's lines; the way home one place a fall; the
+Rift's memory; the receipts wherever they come; clear of the pillars; nothing made a frame for nothing; Gearward and the
+world boss; the body's blows alone; a Hollow whole; an ended Hour lost; the hub's silence; no blow past the Hour; the
+fall at its instant; the seats; no write for a known `in`; past the Orrery alone); `tools/mutants/sd10b.json` (54, all
+dead). RE-AIMED BY CONTENT, each still dead: `sd4b.json` (2), `sd6c.json`, `sd7a.json`, `sd7b.json`, `sd8a.json`,
+`sd8b.json` (3), `sd9d.json` (3). PINS MOVED: the world host's (`test/sd4b_rift.test.js`, `test/sd5a_realm.test.js`,
+`test/sd10_collapse.test.js`); the relay's (`test/sd3_relay.test.js` - the busy refusal; `test/sd8b_fight.test.js`,
+`test/sd8c_remnant_page.test.js`, `test/sd9a_receipt.test.js` - their realms past the Concord);
+`test/relayversion.test.js` (`world176` re-hashed in place).

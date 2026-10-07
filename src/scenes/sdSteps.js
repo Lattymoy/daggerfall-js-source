@@ -17,7 +17,7 @@
 //     the void's floor answered with its span's checkpoint - the outer host stands it there and takes what it costs.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { realmToDungeon, dungeonToRealm } from '../net/sdBrain.js';
+import { realmToDungeon, dungeonToRealm, SD_REALM_ORIGIN } from '../net/sdBrain.js';
 import { SD_STEPS_COURSE, SD_BEAT_HALF, SD_CRUMBLE_DELAY, SD_CRUMBLE_BACK, SD_GUST_EVERY, stepAt, beatStands, beatBlinks, crumbleAfter, gustAt, inBreath, inVoid, spanAt, castBackTo } from '../world/sdSteps.js';
 import { SD_STEP_KINDS, buildStepModel, stepTris, buildChecksModel, checkFloorTris } from '../world/sdStepsModel.js';
 import { stepsArt } from '../world/sdStepsArt.js';
@@ -42,6 +42,8 @@ export const SD_BEAT_BLINK_HZ = 8;
 export const SD_CRUMBLE_SEEN = 40;
 /** The longest frame the breath pushes for (s) - a hitch is not a gale. */
 const BREATH_DT_MAX = 0.1;
+/** AUDIT SD: a step's place, the frame's one scratch (a frame is one call deep - nothing awaits between its uses). */
+const _at = [0, 0, 0];
 
 const _uploaded = new WeakSet();
 /** The Steps' pictures, uploaded once a renderer - albedo and their own light. */
@@ -84,8 +86,8 @@ export function createSdSteps({ renderer = null, audio = null } = {}) {
     const s = st.s;
     st.was[0] = st.T[0]; st.was[1] = st.T[1]; st.was[2] = st.T[2];
     st.wasSolid = st.solid;
-    const [rx, ry, rz] = stepAt(s, t);
-    const [x, y, z] = realmToDungeon(rx, ry, rz);
+    stepAt(s, t, _at);   // AUDIT SD: in place, and realmToDungeon's own sum - a frame of 23 steps makes nothing
+    const x = SD_REALM_ORIGIN[0] + _at[0], y = SD_REALM_ORIGIN[1] + _at[1], z = SD_REALM_ORIGIN[2] + _at[2];
     let solid = true, seen = true, drawY = y, sx = 0, sz = 0;
     if (s.kind === 'beat') {
       solid = beatStands(s, t);

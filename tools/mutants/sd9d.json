@@ -218,7 +218,7 @@
   {
     "name": "SD9D-gearward-on-a-fall",
     "file": "src/systems/sigilSetPowers.js",
-    "old": "  const gear = d > 0 && _pending ? tierOf(entity, 'numidium', 1) : null;",
+    "old": "  const gear = d > 0 && (_pending || _pendingBoss) ? tierOf(entity, 'numidium', 1) : null;",
     "new": "  const gear = d > 0 ? tierOf(entity, 'numidium', 1) : null;",
     "tests": [
       "test/sd9d_numidium.test.js"
@@ -236,8 +236,8 @@
   {
     "name": "SD9D-gearward-share-doubled",
     "file": "src/systems/sigilSetPowers.js",
-    "old": "      d -= Math.round((d * gear.lighter) / 100);",
-    "new": "      d -= Math.round((d * gear.lighter) / 50);",
+    "old": "      const cut = Math.round((d * gear.lighter) / 100);",
+    "new": "      const cut = Math.round((d * gear.lighter) / 50);",
     "tests": [
       "test/sd9d_numidium.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD9D-gearward-points-unwhole",
     "file": "src/systems/sigilSetPowers.js",
-    "old": "      d -= Math.round((d * gear.lighter) / 100);",
-    "new": "      d -= (d * gear.lighter) / 100;",
+    "old": "      const cut = Math.round((d * gear.lighter) / 100);",
+    "new": "      const cut = (d * gear.lighter) / 100;",
     "tests": [
       "test/sd9d_numidium.test.js"
     ]

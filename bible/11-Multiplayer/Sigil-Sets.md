@@ -263,7 +263,7 @@ Greaves of the Unmade Stride, Boots of the Unmoored Step, The Gear-Face (Round S
 | pieces | ability | Faint -> Ascendant |
 |---|---|---|
 | 2 | **Dwemer Brass** - magic and shock resistance | +4 -> +10 each |
-| 4 | **Gearward** - the next foe's blow that lands on you is lighter, in whole points; then the gear winds again (its recovery, the card's tag). A fall, a poison's round or a spell is never lightened and never unwinds it | 15% -> 30%; recovers 18 -> 12 s |
+| 4 | **Gearward** - the next foe's blow that lands on you is lighter, in whole points; then the gear winds again (its recovery, the card's tag). A fall, a poison's round or a spell is never lightened and never unwinds it, nor is a blow too small to lighten by a whole point; the Brass Remnant's own blows and its Echoes' are a foe's for it, never the Hour's magic (section 8) | 15% -> 30%; recovers 18 -> 12 s |
 | 6 | **The Hour Turns** - a blow that would kill you does not: you are left at 1 and that share of your health returns at once; then it must recover. A death save, as Unbroken is - a fall's death is turned back too - and never worn with the Bulwark (six and six is past nine places) | 15% -> 25%; recovers 90 -> 60 s |
 
 The Hour Turns heals through the one heal a power gives (`systems/playerHeal.js`). The HUD's chip shows its recovery.
@@ -321,6 +321,13 @@ gold - a stone's only worth is at its own vendor.
   him, and his fall is no kill of the Rampage's or Eventide's. The court is the gate's own fight. AUDIT SETS L4: and so
   Riposte and Blood for Blood never arm off his strikes, No Escape and Iron Hide never trigger on his fall, and Run Them
   Down never reads him under half (his stand-in holds a billion); a blow his ward turns aside spends no power.
+- The Brass Remnant is out of every reach power's reach as the Warden is (its strikes land through the court's door,
+  no struck tail) - but one power answers it (AUDIT SD): its own set's Gearward, which would otherwise never meet the
+  fight that drops it. A body's own blow - the Stomp, the Hand, the Volley, the Remnant's or an Echo's; never the Hour's
+  unresisted magic over the whole floor (the Pulse, the Reset, the End), never the burning brass - is marked as a world
+  boss's as it lands (`scenes/sdRemnantBlows.js` `bodysBlow` -> `setBossStruck`), taken by the damage door as it
+  opens, and read by Gearward alone: Spite, the Wrath, Riposte, Blood for Blood and Shed Skin hear no foe in it, and the
+  loot's blow listeners none. The Warden's court marks nothing (its bytes are the gate's).
 - AUDIT SETS M2: a client older than RAID4b cannot read a raid set's sigil. A room's container word it cannot read is
   now marked unreadable and never landed, claimed, closed over or opened - from this build on; a tab still running a
   build before it refuses the list and claims the container with its own roll, as it did. The relay's deploy drops
@@ -945,3 +952,11 @@ the states), the nine records (`systems/aetheric.js` `NUMIDIUM_SET_PIECES`, `NUM
 `AETHERIC_RECORDS` ends with them) and the voice (`scenes/world.js`: the Orrery hall's gear and its low bell). The
 wire's check is the raid sets' (AUDIT SETS L6). Pinned: `test/sd9d_numidium.test.js`; `tools/mutants/sd9d.json` (44,
 all dead).
+
+### AUDIT SD - Gearward and the world boss (2026-10-07)
+
+`Super-Dungeons.md`'s SD10b (C7, C8). The Remnant's blows came through the court's door with no foe's mark, so Gearward
+never answered the fight its set drops in; now a body's own blow (never the Hour's magic) is marked as a world boss's
+(`setBossStruck`, taken as the door opens, a blow's window old at most) and Gearward alone reads it (section 8). And a
+blow too small to lighten by a whole point no longer spends the winding. Pinned: `test/sd10b_audit.test.js`; `tools/mutants/sd10b.json` (its C7 and
+C8 records, all dead); `tools/mutants/sd9d.json`'s Gearward records re-aimed by content.

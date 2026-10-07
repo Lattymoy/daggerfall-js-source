@@ -113,10 +113,13 @@ export function spanAt(z) {
   return -1;
 }
 
-/** A step's top-centre at `t` (the realm's anchored seconds), the realm's frame: the Drift's swing across x. */
-export function stepAt(s, t) {
-  if (s.kind !== 'drift') return [s.x, s.y, s.z];
-  return [s.x + s.amp * Math.sin((2 * Math.PI * t) / s.period + s.phase), s.y, s.z];
+/** A step's top-centre at `t` (the realm's anchored seconds), the realm's frame: the Drift's swing across x. AUDIT SD: into
+ *  `out` when one is given - the page's frame makes nothing. */
+export function stepAt(s, t, out = [0, 0, 0]) {
+  out[0] = s.kind === 'drift' ? s.x + s.amp * Math.sin((2 * Math.PI * t) / s.period + s.phase) : s.x;
+  out[1] = s.y;
+  out[2] = s.z;
+  return out;
 }
 /** Whether a Beat step stands at `t` (the others always do): solid SD_BEAT_SOLID of every SD_BEAT_CYCLE, from its own
  *  half beat. */

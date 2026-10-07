@@ -30,6 +30,7 @@ import { isEnhanced } from '../systems/uiSkin.js';   // DSIZE1: the medium size 
 import { getPref } from '../systems/uiPrefs.js';   // DSIZE1: ...and the player's ask (the `medium-dungeons` row)
 import { isOnlinePage } from '../systems/onlineLane.js';   // AUDIT DELVE E4 / SD-ONLINE: online the quest's stamp is the world's sizes
 import { seededFirst } from '../systems/wind.js';   // SD-ONLINE: the port's one seeded die - a dungeon's online size, the same on every client
+import { dungeonTier } from '../systems/dungeonTier.js';   // AUDIT SD: a Hollow, by the one tier law
 
 /** QuestSmallerDungeonsState (DaggerfallUnityEnums.cs:758-763) -
  *  NotSet, DISABLED, ENABLED, in that order. F-B3 (self-audit 2): the
@@ -172,6 +173,9 @@ export function dungeonSizeFor(dfLocation, { questMachine = null,
   // Master's ring and the Keeper's Hall stand by their distance out from the stair over Kamer's 32 blocks, and a five-
   // block plus of random ones drawn from his list would stand the pit in a cellar and the Hall nowhere. Main story's rule.
   if (isArenaUndercroft(dfLocation)) return 'full';
+  // AUDIT SD (Super-Dungeons.md section 5): A HOLLOW IS LAID WHOLE - its feat is the longest walk its template has, the
+  // world's sizes are for the Bay's own dungeons; online, offline, whatever a setting or a quest says.
+  if (dungeonTier(dfLocation) === 'super') return 'full';
   // AUDIT WORLD34 B2: ONLINE, ONE LAYOUT. The room's stream, its acts and its memory address foes, doors and piles by
   // their index in the layout, and the layout was a per-client SETTING (or a quest's frozen copy of one): a five-block
   // client and a full-dungeon client shared one `_locationKey`, accepted each other's frames, and landed them on the

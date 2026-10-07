@@ -11,8 +11,8 @@
 // SEEN BY THIS PLAYER ALONE, as the court's are: every fighter's spoils are their own seed's, on their own screen.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_ARENA, realmToDungeon } from '../net/sdBrain.js';
-import { SD_REM } from '../net/sdRemnant.js';
+import { SD_ARENA, SD_PILLAR_W, realmToDungeon } from '../net/sdBrain.js';
+import { SD_REM, SD_PILLARS } from '../net/sdRemnant.js';
 import { readSdReceipt } from '../net/sdReceipt.js';
 import { remnantPose } from './sdRemnant.js';
 import { spoilsLevel } from './spoilsPool.js';
@@ -27,6 +27,22 @@ export const SD_SPEW_CHEST = 0.55;
 export const SD_SPEW_LOW_M = 1;
 /** They come to rest this far inside the arena's edge at most - never off it into the void. */
 export const SD_SPEW_RIM_M = 2;
+/** AUDIT SD: how far clear of a pillar's square a place on the arena's floor is put (the way home's own half-width and a
+ *  body's), m. */
+export const SD_PILLAR_CLEAR_M = 1.2;
+/** AUDIT SD: A PLACE CLEAR OF THE ARENA'S PILLARS - the Remnant's walk never minds them, so where it fell can be inside one
+ *  (the same squares the Hour-Hand's shade is judged by): put out of the square the shortest way, `margin` clear of its
+ *  side. Answers `[x, z]`, the arena's frame. Pure. */
+export function clearOfPillars(x, z, margin = SD_PILLAR_CLEAR_M) {
+  const half = SD_PILLAR_W / 2 + margin;
+  for (const [px, pz] of SD_PILLARS) {
+    const dx = x - px, dz = z - pz;
+    if (Math.abs(dx) >= half || Math.abs(dz) >= half) continue;
+    if (half - Math.abs(dx) < half - Math.abs(dz)) x = px + (dx < 0 ? -half : half);
+    else z = pz + (dz < 0 ? -half : half);
+  }
+  return [x, z];
+}
 /** The floor they are kept to (world/gateSpew.js keepLaunch's `{ centre, r, floorY }`): the arena's, in the dungeon's
  *  frame. */
 export const SD_SPOILS_KEEP = Object.freeze({ centre: Object.freeze(realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z)), r: SD_ARENA.r - SD_SPEW_RIM_M, floorY: realmToDungeon(0, 0, 0)[1] });
@@ -50,7 +66,8 @@ export function createSdSpoils({ link, pool, slot, receipt, level, feet = () => 
         if (c && c.d === here) {
           spewedFi = s.fi;
           const pose = remnantPose(s, s.fell.at + SD_SPEW_AT_MS);
-          const at = realmToDungeon(SD_ARENA.x + pose.x, Math.max(SD_SPEW_LOW_M, SD_REM.h * SD_SPEW_CHEST - pose.sink), SD_ARENA.z + pose.z);
+          const [px, pz] = clearOfPillars(pose.x, pose.z, 0.3);   // AUDIT SD: never out of a pillar's inside
+          const at = realmToDungeon(SD_ARENA.x + px, Math.max(SD_SPEW_LOW_M, SD_REM.h * SD_SPEW_CHEST - pose.sink), SD_ARENA.z + pz);
           const f = feet();
           const bearing = f ? Math.atan2(f[0] - at[0], f[2] - at[2]) : pose.yw;
           const lv = spoilsLevel(level(), c.l);   // AUDIT WBX S2: never past the level the fight admitted

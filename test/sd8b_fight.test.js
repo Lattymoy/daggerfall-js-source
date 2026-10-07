@@ -56,6 +56,7 @@ async function withRealm(fn) {
       await cell.raw(mara, JSON.stringify({ t: 'sd', k: 'found', s: rec.s, px: PX, py: PY }));
       assert.equal(hub.store.get(SD_KEY).ph, 'found');
       const realm = world.room(sdRoomKey(rec.s));
+      { const h = await realm.room._sdHallOf(rec.s); h.ok = true; await realm.room.state.storage.put('sdorrery', h); }   // AUDIT SD: past the Orrery, kept as a realm keeps it - the fight's door asks its Concord (PIN MOVED)
       /** Beat the realm's alarm while it is armed, up to `ms` of the clock. */
       const beat = async (ms) => { const end = clock + ms; while (realm.alarm.at != null && realm.alarm.at <= end) { clock = Math.max(clock, realm.alarm.at); await realm.fire(); } clock = end; };
       await fn({ world, hub, hws, cell, realm, rec, beat, step: (ms) => { clock += ms; }, now: () => clock });

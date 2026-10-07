@@ -120,8 +120,8 @@
   {
     "name": "SD8B-a-lost-fight-kept",
     "file": "server/src/index.js",
-    "old": "      if (!f || f.lost || now - f.lastTickAt >= SD_LOST_MS) f = this._sdFight = newRemnantFight(",
-    "new": "      if (!f) f = this._sdFight = newRemnantFight(",
+    "old": "      const fresh = !f || f.lost || now - f.lastTickAt >= SD_LOST_MS;",
+    "new": "      const fresh = !f;",
     "tests": [
       "test/sd8b_fight.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "SD8B-a-blow-before-in-not-junk",
     "file": "server/src/index.js",
-    "old": "    if (!f || !f.players[a.sub]) { this._junk(ws); return; }\n    const pose = a.pose && !a.pose.dd ? this._arenaPoseOf(a.pose) : null;",
-    "new": "    if (!f) { this._junk(ws); return; }\n    const pose = a.pose && !a.pose.dd ? this._arenaPoseOf(a.pose) : null;",
+    "old": "    if (!f || !f.players[a.sub]) { this._junk(ws); return; }\n    // AUDIT SD: no blow lands once the Hour no longer holds its slot",
+    "new": "    if (!f) { this._junk(ws); return; }\n    // AUDIT SD: no blow lands once the Hour no longer holds its slot",
     "tests": [
       "test/sd8b_fight.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "SD8B-the-hubs-record-left-standing",
     "file": "server/src/index.js",
-    "old": "      if (fell) { await this._sdSave(fell); this._sdFan(fell); }",
-    "new": "      if (false) { await this._sdSave(fell); this._sdFan(fell); }",
+    "old": "      if (fell) { await this._sdSave(fell); this._sdFan(fell); await this._sdArm(Date.now()); }",
+    "new": "      if (false) { await this._sdSave(fell); this._sdFan(fell); await this._sdArm(Date.now()); }",
     "tests": [
       "test/sd8b_fight.test.js"
     ]

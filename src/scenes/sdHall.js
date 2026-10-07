@@ -94,7 +94,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
     const first = !heard;
     heard = true;
     for (let i = 0; i < want.length; i++) want[i] = w.st[i];
-    if (first) for (let i = 0; i < want.length; i++) shown[i] = want[i];   // where the stones ARE, not a turn to them
+    if (first) for (let i = 0; i < want.length; i++) { shown[i] = want[i]; if (hands[i]) hands[i].object.matrix = handMatrix(i, shown[i]); }   // where the stones ARE, not a turn to them (AUDIT SD: drawn there now - a hand at rest is never drawn again)
     rate = w.x ? SD_SNAP_RATE : SD_HAND_RATE;
     if (!first && w.i != null && o) {
       lastTurn[w.i] = now();
@@ -136,6 +136,7 @@ export function createSdHall({ renderer = null, audio = null, s, now = () => per
       const step = Math.max(0, dt) * rate;
       for (let i = 0; i < hands.length; i++) {
         const d = way(shown[i], want[i]);
+        if (d === 0) continue;   // AUDIT SD: a hand at rest keeps its matrix - none made a frame for nothing
         shown[i] = Math.abs(d) <= step ? want[i] : sdHour(shown[i] + Math.sign(d) * step);
         hands[i].object.matrix = handMatrix(i, shown[i]);
       }

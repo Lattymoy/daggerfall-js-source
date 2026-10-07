@@ -339,13 +339,16 @@ export function setDamageMod(entity, dmg) {
   }
   // SD9d: GEARWARD - a foe's blow (the door's mark, never a fall or a spell) while the gear is wound lands lighter, in whole
   // points, and the gear winds again
-  const gear = d > 0 && _pending ? tierOf(entity, 'numidium', 1) : null;
+  const gear = d > 0 && (_pending || _pendingBoss) ? tierOf(entity, 'numidium', 1) : null;   // AUDIT SD: and a world boss's blow
   if (gear) {
     const now = _now();
     if (now >= _s.gearReady) {
-      d -= Math.round((d * gear.lighter) / 100);
-      _s.gearReady = now + gear.recover;
-      sound('gear');
+      const cut = Math.round((d * gear.lighter) / 100);
+      if (cut > 0) {   // AUDIT SD: a blow too small to lighten by a whole point spends no winding
+        d -= cut;
+        _s.gearReady = now + gear.recover;
+        sound('gear');
+      }
     }
   }
   return d;
@@ -382,9 +385,17 @@ function hourTurns(entity) {
 // it lying, and the next hurt inside the window - an orc's Fireball, a poison's round - was read as that blow: the
 // Wrath's Nova on a spell, Spite paying a rat for a fall.
 let _pending = null;
+/** AUDIT SD: A WORLD BOSS'S BLOW. The Brass Remnant strikes through the court's door, never the attack formula's struck
+ *  tail, so its blows carry no foe's mark - no reach power answers a world boss (Sigil-Sets.md section 8). The one
+ *  power its own set brings to the fight it drops in, Gearward, reads this mark of its own instead (scenes/
+ *  sdRemnantBlows.js marks each of the body's blows as it lands); nothing else does. */
+let _bossBlowAt = -Infinity, _pendingBoss = false;
+export function setBossStruck() { _bossBlowAt = _now(); }
 function setDoorOpen(entity) {
   if (!entity?.isPlayer || entity.peer) return;
   _pending = landedBlow();
+  _pendingBoss = _now() - _bossBlowAt <= BLOW_WINDOW_S;
+  _bossBlowAt = -Infinity;
 }
 /** LOOT4 (the Loot arc, bible/06-Systems/Loot-Arc.md section 6): THE BLOW THIS HURT CARRIES - the foe's blow the door
  *  took as it opened (`{ attacker }`), or null: a fall, a poison's round, a spell. Read by a damage modifier asked before
@@ -402,6 +413,7 @@ export function setHurt(entity, { before, after, saved = false }) {
   if (!entity?.isPlayer || entity.peer) return;
   const blow = _pending;
   _pending = null;
+  _pendingBoss = false;   // AUDIT SD: the boss's mark is this hurt's alone
   // SD9d: THE HOUR TURNS - the death it turned back said, and its share of my health returned, as the door left me at 1
   // (whatever dealt it: the save is a death save's, a fall's as a blow's)
   if (saved && _s.hourHeal > 0) {
@@ -651,4 +663,4 @@ export function setHudChips(entity, now = _now()) {
 
 /** Tests only: a clock of their own (seconds), and every power fresh. */
 export function _setSetPowersClockForTests(fn) { _now = typeof fn === 'function' ? fn : () => performance.now() / 1000; }
-export function _resetSetPowersForTests() { _s = fresh(); _carry = new WeakMap(); _blow = null; _holdOwed = 0; _say = (line) => { hudText(line); }; _sound = null; }
+export function _resetSetPowersForTests() { _s = fresh(); _carry = new WeakMap(); _blow = null; _bossBlowAt = -Infinity; _pendingBoss = false; _holdOwed = 0; _say = (line) => { hudText(line); }; _sound = null; }

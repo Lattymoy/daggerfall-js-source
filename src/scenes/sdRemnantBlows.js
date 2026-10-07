@@ -16,6 +16,7 @@
 //     (ui/gateDamageChart.js, the gate's own).
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
+import { setBossStruck } from '../systems/sigilSetPowers.js';   // AUDIT SD: a body's blow, marked for Gearward
 import { SD_ARENA, realmToDungeon, dungeonToRealm } from '../net/sdBrain.js';
 import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_ECHO, windupFor, stompRingAt, handAngleAt, arenaOf } from '../net/sdRemnant.js';
 import { POOL_TICK_MS } from '../net/gateBrain.js';
@@ -68,6 +69,10 @@ export const SD_BLOW_CUES = Object.freeze({
 });
 
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
+/** AUDIT SD: A BODY'S OWN BLOW - the Stomp, the Hand, the Volley, the Remnant's or an Echo's: a foe's blow for the one
+ *  power that answers a world boss (systems/sigilSetPowers.js setBossStruck, Gearward); never the Hour's unresisted magic
+ *  over the whole floor (the Pulse, the Reset, the End), nor the burning brass. */
+export const bodysBlow = (A) => !!A && A.shape !== 'all';
 /** A shape in the gate pass's own form, its fields the kind does not read set to nothing. */
 const shapeOf = (kind, o) => ({
   kind, origin: [0, 0], yaw: 0, r: 0, halfArc: 0, body: SD_REM.r, end: [0, 0], halfW: 0, r0: 0, r1: 0, points: [], n: 0,
@@ -148,6 +153,8 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
   const marks = new Map();
   let prevT = null, pools = [], inFire = false, burnAt = -Infinity, outAt = -Infinity;
   let fellFi = 0, chartAt = null, chartFell = null, endSaid = 0;
+  /** AUDIT SD: the fight the marks are of - a blow's number begins again in every fight, so a fresh one's are its own */
+  let marksFi = 0;
   /** @type {any[]} */
   let shapes = [];
 
@@ -164,10 +171,12 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     else play(c, bodyAt(s, b, t));
   };
   /** A strike on me (the living alone reach here - the frame's own law): its share of my own health and its base, through
-   *  the door every blow lands by. */
-  function land(name, pct, base) {
+   *  the door every blow lands by. AUDIT SD: `blow` a body's own (`bodysBlow`), marked as a world boss's blow for the one
+   *  set power that answers it (systems/sigilSetPowers.js). */
+  function land(name, pct, base, blow = false) {
     const e = player();
     if (!e) return;
+    if (blow) setBossStruck();
     strike(strikeDamage(pct, e.maxHealth, base), { name });
   }
   /** One blow's frame: heard at its word and its landing, the Reset and the End said, judged on my feet. */
@@ -193,7 +202,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     const v = sdBlowVerdict(atk, at[0], at[1], t0, t, grounded(), m.seen);
     m.seen = v.seen;
     m.done = v.done;
-    for (const h of v.hits) land(A.name, h.pct, h.base);
+    for (const h of v.hits) land(A.name, h.pct, h.base, bodysBlow(A));
   }
   /** THE BURNING BRASS - a bite each POOL_TICK_MS I stand in it, the first a tick after I stepped in (the gate's law: a
    *  step out shorter than a tick keeps the count it had). */
@@ -229,6 +238,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     /** One frame of the arena on this screen: the blows heard, judged, shown; the brass burning; its fall. */
     frame() {
       const s = link.state(), t = link.now();
+      if (s.fi !== marksFi) { marksFi = s.fi; marks.clear(); pools = []; inFire = false; }   // AUDIT SD: a fight lost and a fresh one begun - the last one's numbers are not this one's
       const f = feet(), e = player(), alive = !!f && !!e && e.health > 0;
       let at = null;
       if (alive) { const [rx, , rz] = dungeonToRealm(f[0], f[1], f[2]); at = arenaOf(rx, rz); }
@@ -260,6 +270,7 @@ export function createSdRemnantBlows({ gl = null, audio = null, link, feet = () 
     /** Out of the Hour: its marks and its brass forgotten, the chart put away. */
     leave() {
       marks.clear(); pools = []; inFire = false; prevT = null; shapes = [];
+      marksFi = 0; fellFi = 0; endSaid = 0;   // AUDIT SD: the next Hollow's Hour numbers its fights from 1 again
       if (chartAt !== null) { chartAt = null; drawGateDamageChart(null); }
     },
   };

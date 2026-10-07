@@ -308,7 +308,7 @@
   {
     "name": "SD8A-never-lost",
     "file": "src/net/sdRemnant.js",
-    "old": "  if (f.emptySince != null && now - f.emptySince >= SD_LOST_MS) {",
+    "old": "  if ((f.emptySince != null && now - f.emptySince >= SD_LOST_MS) || (f.ended && now - f.ended.at >= SD_LOST_MS)) {",
     "new": "  if (false) {",
     "tests": [
       "test/sd8a_remnant.test.js"
