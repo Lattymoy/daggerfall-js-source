@@ -8099,6 +8099,7 @@ export function createWorldModes(host) {
           // context, so the dungeon's own togglePause (dungeonContext.js)
           // had nothing to read and its Load pane never refused online.
           dungeonOnline: () => host.dungeonOnline?.() ?? false,
+          superRift: (s) => host.superRift?.(s) ?? null,   // SD4b: the outer host's word on a Super dungeon's Rift and Return - off the hub's record, its realm's door
           timers: (o) => host.timers?.(o) ?? null,   // TIMERS1: the dungeon's pause face reads the world host's source
           // CASTLE1: the world host's load, for a save the dungeon's own
           // door finds was taken somewhere else (dungeonContext.js
@@ -8570,6 +8571,7 @@ export function createWorldModes(host) {
       activateStaticNpc((dungeonCtx.npcTargets?.() ?? [])[Number(key.split(':')[1])]);   // WORLD-HOVER: the `person:` index is the registered producer's, so the handler reads THAT list - a second local copy is how the two drift
       return true;
     }
+    if (key.startsWith('sdrift:') || key.startsWith('sdreturn:')) { dungeonCtx.sdPress?.(key); return true; }   // SD4b: a Super dungeon's Rift and Return (Super-Dungeons.md section 6) - the context's own
     if (key.startsWith('questflat:')) {
       // DQ1: buildingKey is 0 down here - StaticNPC reads it from the
       // runtime data and a dungeon has no building, the same reason

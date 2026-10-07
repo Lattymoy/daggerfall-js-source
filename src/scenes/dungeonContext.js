@@ -236,7 +236,10 @@ import { collectDungeonEnemies, expandEliteEnemies, enemyHierarchyOrder } from '
 import { isOnlinePage } from '../systems/onlineLane.js';   // ELITE FOES: online play only
 import { elitesAllowed, pickDungeonElites, promoteEliteFoe, grantEliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, eliteCorpseSize } from '../systems/eliteFoes.js';   // ELITE FOES: 3-4 champions in an Elite Dungeon
 import { ELITE_FOE_MULTIPLIER, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE, ELITE_LOOT_DROP_MULT, ELITE_LOOT_QUALITY_MULT } from '../world/spawnedDungeons.js';   // ELITE: an elite spawn's foe count and strength
-import { superFoeLevel, scaleSuperFoe, SUPER_ELITE_FOES, SUPER_LOOT_OPTS, SUPER_LOOT_DROP_MULT, SUPER_LOOT_QUALITY_MULT } from '../world/sdDungeon.js';   // SD4a: a Super dungeon's difficulty
+import { superFoeLevel, scaleSuperFoe, SUPER_ELITE_FOES, SUPER_LOOT_OPTS, SUPER_LOOT_DROP_MULT, SUPER_LOOT_QUALITY_MULT, sdEndMarks, sdRiftPlace, sdReturnPlace } from '../world/sdDungeon.js';   // SD4a: a Super dungeon's difficulty; SD4b: its end's place
+import { dungeonEndOf } from '../world/dungeonEnd.js';   // SD4b: RVN7d's lair law, lifted - the lair's stand and a Super dungeon's end read one law
+import { createSdEnd } from './sdEnd.js';   // SD4b: a Super dungeon's Rift and Return
+import { SD_NO_RIFT } from '../net/sdLaw.js';   // SD4b: the Rift's word when nobody can answer it
 import { dungeonTier } from '../systems/dungeonTier.js';   // SD4a: the location's tier, the one law (TIER1)
 import { ENEMY_BASICS, enemyDisplayName } from '../characters/enemyBasics.js';
 import { foeTitle } from '../systems/foeTitle.js';   // FOE-TITLE: what a revenant, a champion or an elite is called
@@ -1708,7 +1711,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (!r) return null;
     const from = dungeon.enterMarker ?? dungeon.startMarker ?? null;
     const marks = (_layoutEnemies ?? []).filter((m) => Number.isFinite(m?.x) && Number.isFinite(m?.z));
-    const far = from && marks.length ? marks.reduce((a, m) => (Math.hypot(m.x - from.x, m.z - from.z) > Math.hypot(a.x - from.x, a.z - from.z) ? m : a)) : marks[0] ?? null;
+    const far = dungeonEndOf(from, marks);   // SD4b: the law lifted to world/dungeonEnd.js - a Super dungeon's Rift stands by it too
     if (!far) { releaseRevenantStand(r); return null; }
     const sp = spotAbout([far.x, far.y, far.z], 4) ?? { x: far.x, y: far.y, z: far.z };
     const so = revenantSpawnOptions(r, effectiveLevel(playerEntity));
@@ -1765,6 +1768,47 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   }
   // ── REVENANT-FATE underground: the open world's law (scenes/exteriorFoes.js), for a foe of the player's alone ─────
   const portals = createPortalSet({ renderer, audio });   // COMPANION-PORTAL: this place's own, drawn with its foes
+  // SD4b (bible/11-Multiplayer/Super-Dungeons.md section 6): A SUPER DUNGEON'S END - the Rift (to the Shattered Hour,
+  // where its word admits) and the Return (to the way in, until the boss falls), stood the first frame I stand here at
+  // the end the lair's law finds (world/dungeonEnd.js), as wide as its hall lets them (world/sdDungeon.js) - the same on
+  // every client. Pressed, or walked into (scenes/sdEnd.js).
+  const sdEnd = _superTier ? createSdEnd({ renderer, audio, onRift: () => sdRiftStep(), onReturn: () => sdReturnStep() }) : null;
+  let _sdEndAsked = false, _sdEndCheckAt = 0;
+  /** The outer host's word on this Hollow's end (world.js, through the mode machine): { word, returns, enter }, or null. */
+  const sdEndWord = () => opts.superRift?.(dfLocation?.sdSlot) ?? null;
+  /** Stand them: the end's foot under its marker, the Rift a step or two about it where its hall is widest, the Return
+   *  beside it - every ray this dungeon's own collider. */
+  function standSdEnd() {
+    if (!sdEnd || !collider) return;
+    const end = dungeonEndOf(dungeon.enterMarker ?? dungeon.startMarker ?? null, sdEndMarks(_layoutEnemies, dungeon.blocks));
+    if (!end) return;
+    const probe = {
+      floor: (at) => { const d = collider.raycast([at[0], at[1] + 1, at[2]], [0, -1, 0], 3); return Number.isFinite(d) ? at[1] + 1 - d : null; },
+      ray: (o, dir, max) => { const d = collider.raycast(o, dir, max); return Number.isFinite(d) ? d : null; },
+    };
+    const rift = sdRiftPlace(floorLanding(collider, [end.x, end.y + 0.2, end.z]), probe);
+    sdEnd.stand({ rift, retAt: sdReturnPlace(rift, probe) });
+  }
+  /** Into the Rift: its own word first (the outer host's, off the hub's record) - through to the Shattered Hour where it
+   *  admits and the realm's door takes me (SD5), else its refusal said. */
+  function sdRiftStep() {
+    const w = sdEndWord();
+    const word = w ? w.word : SD_NO_RIFT;
+    if (word == null && w?.enter?.()) return;
+    setMidScreenText(word ?? SD_NO_RIFT);
+  }
+  /** Into the Return: back to the way in - the start marker's landing, through the dungeon's own teleport door. */
+  function sdReturnStep() {
+    const at = api.startSpawn({ preferEnterMarker: false });
+    if (at) actions.onTeleport?.({ pos: at });
+  }
+  /** One frame: stood once I stand here; the Return out once its boss falls (asked once a second); the step. */
+  function sdEndFrame(playerFeet) {
+    if (playerFeet && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }
+    const t = performance.now();
+    if (sdEnd.ret && t >= _sdEndCheckAt) { _sdEndCheckAt = t + 1000; const w = sdEndWord(); if (w && !w.returns) sdEnd.returnOut(); }
+    sdEnd.frame(playerFeet ?? null);
+  }
   const fateSay = (ev) => { if (ev) revenantSay(ev, (l) => hudText.add(l)); };
   /** It yields: held at 1, kneeling, its plea said. */
   function yieldDungeonFoe(f) {
@@ -6885,6 +6929,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // RVN7d (bible/12-Enhanced-AI/Feud-Arc.md 18.4): a revenant at home - asked once, the first frame I stand here (the
     // layout stood, every seam this host builds made)
     if (playerFeet && !_lairAsked) { _lairAsked = true; standLairRevenant().catch(() => null); }
+    if (sdEnd) sdEndFrame(playerFeet);   // SD4b: a Super dungeon's Rift and Return - stood, the Return's boss asked, the step
     if (_blockWaterOverride && playerFeet && blockAtXZ(playerFeet[0], playerFeet[2]) !== _blockWaterOverride.block) _blockWaterOverride = null;   // OH-D: a new block reads its own level   // ROAD-H H2: the enemy AoC blast reads the player's live capsule through castEnemySpell
     // ENHANCED AI 3b: ONE BAKE PER DUNGEON, off the frame, once the
     // player's feet are known - they are the anchor, the component the
@@ -7500,6 +7545,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     droppedLoot.tickFlats(dt);   // FA1 slice 3
     portals.tick(eye);   // COMPANION-PORTAL
     const _dropBatches = [...droppedLoot.batches(), ...portals.batches()];   // COMPANION-PORTAL: the portals ride the drops' pass
+    if (sdEnd) _dropBatches.push(...sdEnd.batches());   // SD4b: the Rift and the Return ride it as the portals do
     const _spellBatches = magic.batches();   // M3: player spell missiles
     // BLOOD1 AUDIT 3: the ring is NOT drawn here. It was - inside this
     // gate - and both dungeon hosts already draw the context's pool by
@@ -7917,6 +7963,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     targets.push(...droppedLoot.lootTargets());   // U26: the player's own drops
     targets.push(...droppedTorches.targets());   // HT1: the dropped torches, at the mod's 3.2
     targets.push(...camps.targets());   // SURV3: the fires, at the same 3.2
+    if (sdEnd) targets.push(...sdEnd.targets());   // SD4b: the Rift and the Return, at a door's reach
     return targets;
   }
 
@@ -8142,6 +8189,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   const _namer = composeNamer([
     (key) => droppedTorches.hoverName?.(key) ?? null,   // HT1, through the mod's extension API
     (key) => camps.hoverName?.(key) ?? null,            // SURV3/HEARTH1, likewise
+    (key) => sdEnd?.hoverName(key) ?? null,             // SD4b: the Rift and the Return
     (key, hit) => composeNamer(_hostNamers)(key, hit),  // ...and whatever the host stands
     _dungeonHoverName,                                  // ...then the mod's own ladder (.cs:285-296)
   ]);
@@ -9778,6 +9826,8 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       billboardBatches.splice(i, 1);
       renderer.destroyBatch(batch);
     },
+    /** SD4b: a press on a Super dungeon's Rift or Return - the press ladder's `sdrift:` / `sdreturn:` arm (worldModes.js). */
+    sdPress(key) { return !!sdEnd?.press(key); },
     dungeonActivationTargets() {
       // effects ride their precomputed aabb (crash fix, audit 2026-08-16)
       return composeActivationTargets([...activationTargets(actions.objects), ...lootTargets()], _hostTargets);
@@ -10036,6 +10086,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       for (const p of droppedLoot._piles) { p.dead = true; if (p.batch) renderer.destroyBillboardBatch(p.batch); }
       droppedLoot._piles.length = 0;
       portals.clear();   // COMPANION-PORTAL: the portals standing own a batch each and leave with the dungeon
+      sdEnd?.clear();   // SD4b: the Rift and the Return, and the bell
       // NT1 (F214): the context minted its own cast engine; a spell in
       // flight at the exit owned a batch nothing else can reach.
       magic.handReadyTo(opts.outerCastEngine?.() ?? null);   // CAST-USE (AUDIT part five CU1): a ready held at the way out (the door, a Recall, a load) goes with the player

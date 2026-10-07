@@ -288,6 +288,7 @@ import { createSdHost } from './sdHost.js';   // SD2b: the Hollow in the world -
 import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
 import { SdOmenPassRenderer } from '../render/sdOmenPass.js';   // SD2c: the Hollow's omen, the gate's beacon in brass
 import { SD_CAST_OUT_LINE } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out
+import { sdRiftWord, sdReturnStands } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
 import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/lootDataTables.js';   // WB12d: the casket's pile, undrawn
 import { createSigilBroker } from './sigilBrokerPool.js';   // SET7: the Sigil Broker - her body, her box and name, her press; BROKER-CAGE: caged at the faithful's circle
@@ -21044,6 +21045,15 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  return, in every mode - a Hollow's end reaches a player standing inside it. It stood in the exterior's half of the
    *  frame, which the dungeon's frame never reaches: underground nothing moved the Hollow on. */
   const sdFrame = () => { try { sdHost?.frame(); } catch (e) { console.warn('[sd] host', e?.message ?? e); } };
+  /** SD4b (Super-Dungeons.md section 6): a Super dungeon's end, for the dungeon host (through the mode machine) - the
+   *  Rift's own word off the hub's record for the Hollow's slot `s` (null: step through), whether the Return still stands
+   *  (until the boss falls), and the realm's door. The door is SD5's (the Shattered Hour): none yet, so a Rift that would
+   *  admit says it will not take you. Null offline - no Hollow stands there. */
+  const sdRiftOf = (s) => {
+    if (!sdHost) return null;
+    const rec = sdHost.record(), now = Date.now() + _sharedOffsetMs;
+    return { word: sdRiftWord(rec, s, now), returns: sdReturnStands(rec, s, now), enter: () => false };
+  };
   /** SD2c: THE HOLLOW'S OMEN (render/sdOmenPass.js) - a column of brass-gold light over a Super dungeon's pixel from its
    *  rise to its end (sdHost omen: the record's own light), seen from SD_OMEN_PX map pixels round, outside alone. Its foot
    *  is the built ground under the Hollow's centre, or on a pixel not built yet the terrain sampler's own kernel there
@@ -24529,6 +24539,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     legacyWillRise: () => legacyHost?.willRise() ?? false,   // AUDIT LEGACY B5: Project Legacy will raise this death - Privateer's Hold's start-marker arm takes it offline too
     legacyRiseLine: () => { const o = legacyHost?.deathOutcome(); return o?.kind === 'rise' ? o.line : null; },   // ...and presents the outcome there: the toll's word
     dungeonOnline: () => onlineOn,   // AUDIT WORLD34 B2: online, the dungeon that gets built is the ROOM's - one layout (SD-ONLINE: the world's size for it)
+    superRift: (s) => sdRiftOf(s),   // SD4b: a Super dungeon's Rift and Return - their word off the hub's record, the realm's door
     // D-ONLINE1: the death screen's door for the deaths this host does
     // not present itself (a dungeon's, a building interior's -
     // worldModes.js). False (not handled) when this session is not

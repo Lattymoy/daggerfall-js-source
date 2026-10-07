@@ -21,6 +21,8 @@
 //
 // Online only, as the Hollow is. Not a DFU member. Ledger A (SUPER-DUNGEONS).
 
+import { sdPhase, SD_NO_RIFT, SD_NO_CLOSED } from '../net/sdLaw.js';
+
 /** Health and damage multipliers for a Super dungeon's foes (the Elite's x2 and x2). */
 export const SUPER_HEALTH_SCALE = 4;
 export const SUPER_DAMAGE_SCALE = 2.5;
@@ -57,3 +59,160 @@ export function scaleSuperFoe(entity) {
 
 /** A Super dungeon's loot for a foe's body (hostCombat.spawnEnemyLoot's options) - the Elite's shape, at +50%. */
 export const SUPER_LOOT_OPTS = Object.freeze({ lootDropMult: SUPER_LOOT_DROP_MULT, lootQualityMult: SUPER_LOOT_QUALITY_MULT });
+
+// ── SD4b: THE END, THE RIFT AND THE RETURN (section 6) ─────────────────────────────────────────────────────────────
+//
+// THE END is the dungeon's enemy or start marker farthest from its entrance (world/dungeonEnd.js dungeonEndOf, RVN7d's
+// lair law), on the floor the collider finds under it - the same on every client. THE RIFT stands there: a ring of brass
+// light about a black-gold membrane, SD_RIFT_SIZE_M across at most - as wide and as tall as its hall lets it stand
+// (`sdRiftPlace`, which looks a step or two about the end for the widest hall), never under SD_RIFT_MIN_M. THE RETURN
+// stands beside it, a small portal of pale light, until the boss falls (`sdReturnStands`); it carries the player back
+// to the dungeon's entrance, the start marker. Pressing either, or walking into it, takes it. The Rift asks its own word
+// first (`sdRiftWord`): the realm's room admits a newcomer while the Hollow is found, and one who entered before until
+// it is gone (the relay's _sdAdmit, SD3) - the client's own Rift says the same refusals before it asks, in words an old
+// client already understands.
+
+/** The Rift's ring across (m) at its most, the least it is drawn in a low or narrow hall, and the air it keeps from the
+ *  hall's ceiling and walls. */
+export const SD_RIFT_SIZE_M = 7;
+export const SD_RIFT_MIN_M = 2.6;
+export const SD_RIFT_AIR_M = 0.3;
+/** How far the place's rays reach (m), and how far about the end it looks for a wider hall (m, then twice it). */
+export const SD_RIFT_PROBE_M = 12;
+export const SD_RIFT_SHIFT_M = 1.5;
+/** Chest height (m) - the walls are asked there, so a step or a floor seam is never a wall. A step (m): a spot on
+ *  another floor than the end's is not the end's hall. */
+export const SD_CHEST_M = 1.2;
+export const SD_STEP_M = 0.6;
+/** How near its axis a body steps into the Rift (m); the Return's, and its size (m). */
+export const SD_RIFT_REACH_M = 1.2;
+export const SD_RETURN_REACH_M = 0.7;
+export const SD_RETURN_SIZE = Object.freeze({ w: 1.3, h: 2.3 });
+/** How far past the Rift's rim the Return stands (m). */
+export const SD_RETURN_GAP_M = 1.2;
+/** The plaque's words (World Tooltips' title and its row). */
+export const SD_END_TEXT = Object.freeze({ rift: 'The Rift', riftTo: 'To the Shattered Hour', ret: 'The Return', retTo: 'To the way in' });
+
+/**
+ * The end's candidates: the layout's enemy markers (each once - a list's Elite copies left out) and every block's start
+ * markers, in the dungeon's frame ({ x, y, z }).
+ * @param {Array<{ x: number, y: number, z: number, eliteCopy?: boolean }> | null | undefined} enemies
+ * @param {Array<{ originX?: number, originZ?: number, layout?: { startMarkers?: Array<{ x: number, y: number, z: number }> } }> | null | undefined} blocks
+ */
+export function sdEndMarks(enemies, blocks) {
+  const out = [];
+  for (const e of enemies ?? []) if (e && !e.eliteCopy && Number.isFinite(e.x) && Number.isFinite(e.z)) out.push({ x: e.x, y: e.y, z: e.z });
+  for (const b of blocks ?? []) {
+    for (const m of b?.layout?.startMarkers ?? []) {
+      if (Number.isFinite(m?.x) && Number.isFinite(m?.z)) out.push({ x: m.x + (b.originX ?? 0), y: m.y, z: m.z + (b.originZ ?? 0) });
+    }
+  }
+  return out;
+}
+
+/** The ring's size in a hall `headroom` metres high (floor to ceiling) whose nearest wall is `clear` metres off its axis:
+ *  SD_RIFT_SIZE_M at most, the hall's own less its air, never under SD_RIFT_MIN_M. An unmeasured side asks nothing. */
+export function sdRiftFit(headroom, clear) {
+  const h = Number.isFinite(headroom) ? headroom - SD_RIFT_AIR_M : SD_RIFT_SIZE_M;
+  const w = Number.isFinite(clear) ? 2 * (clear - SD_RIFT_AIR_M) : SD_RIFT_SIZE_M;
+  return Math.max(SD_RIFT_MIN_M, Math.min(SD_RIFT_SIZE_M, h, w));
+}
+
+const BEARINGS = Object.freeze(Array.from({ length: 8 }, (_, k) => Object.freeze([Math.cos((k * Math.PI) / 4), 0, Math.sin((k * Math.PI) / 4)])));
+
+/**
+ * @typedef {{ floor: (at: number[]) => (number | null), ray: (from: number[], dir: number[], max: number) => (number | null) }} SdProbe
+ *   the collider's answers: `floor` the floor's height under a point (null: none near), `ray` the clear distance along a
+ *   unit direction (null: nothing within `max`)
+ */
+
+/** The ring a spot's hall stands (sdRiftFit over the ceiling's ray and the eight walls' at chest height). */
+function fitAt(at, probe) {
+  const up = probe.ray([at[0], at[1] + 0.1, at[2]], [0, 1, 0], SD_RIFT_PROBE_M);
+  let clear = Infinity;
+  for (const dir of BEARINGS) {
+    const d = probe.ray([at[0], at[1] + SD_CHEST_M, at[2]], dir, SD_RIFT_PROBE_M);
+    if (d != null) clear = Math.min(clear, d);
+  }
+  return sdRiftFit(up == null ? Infinity : up + 0.1, clear);
+}
+
+/** A spot `r` metres along `dir` from `from` on its own floor - a clear line at chest height to it and a floor within a
+ *  step of `from`'s - or null. */
+function besideOn(from, dir, r, probe) {
+  if (probe.ray([from[0], from[1] + SD_CHEST_M, from[2]], dir, r + SD_RIFT_AIR_M) != null) return null;
+  const x = from[0] + dir[0] * r, z = from[2] + dir[2] * r;
+  const y = probe.floor([x, from[1], z]);
+  return y != null && Math.abs(y - from[1]) <= SD_STEP_M ? [x, y, z] : null;
+}
+
+/**
+ * THE RIFT'S PLACE: about the end's `foot` ([x, y, z], the floor under the end's marker), the spot whose hall stands the
+ * widest ring - the end itself, then eight bearings at SD_RIFT_SHIFT_M and at twice it, on the end's own floor (the first
+ * of a tie, so every client stands the same). Answers { at: the ring's foot, size }.
+ * @param {number[]} foot
+ * @param {SdProbe} probe
+ */
+export function sdRiftPlace(foot, probe) {
+  let best = { at: [foot[0], foot[1], foot[2]], size: fitAt(foot, probe) };
+  for (const r of [SD_RIFT_SHIFT_M, 2 * SD_RIFT_SHIFT_M]) {
+    for (const dir of BEARINGS) {
+      if (best.size >= SD_RIFT_SIZE_M) return best;
+      const at = besideOn(foot, dir, r, probe);
+      if (!at) continue;
+      const size = fitAt(at, probe);
+      if (size > best.size) best = { at, size };
+    }
+  }
+  return best;
+}
+
+/**
+ * THE RETURN'S PLACE: beside the Rift - SD_RETURN_GAP_M past its rim on the first bearing (east, then round) whose line
+ * is clear and whose floor is the ring's own; else a metre and a half out on the first such bearing; else on the ring's
+ * own foot. Answers its foot [x, y, z].
+ * @param {{ at: number[], size: number }} rift
+ * @param {SdProbe} probe
+ */
+export function sdReturnPlace(rift, probe) {
+  for (const r of [rift.size / 2 + SD_RETURN_GAP_M, 1.5]) {
+    for (const dir of BEARINGS) {
+      const at = besideOn(rift.at, dir, r, probe);
+      if (at) return at;
+    }
+  }
+  return [rift.at[0], rift.at[1], rift.at[2]];
+}
+
+/**
+ * The Rift's own word before it asks (section 6): null - step through; else its refusal. Not yet found, or the hub's
+ * record not heard: "The Rift will not take you yet." The Hour closed - the slot gone or another's - or closing to a
+ * newcomer after its boss fell: "The Hour has closed." `entered`: this player went through before (the realm's room
+ * keeps them until it is gone).
+ * @param {import('../net/sdLaw.js').SdRecord | null | undefined} rec
+ * @param {number} s the Hollow's slot
+ * @param {number} now
+ */
+export function sdRiftWord(rec, s, now, { entered = false } = {}) {
+  if (!rec) return SD_NO_RIFT;
+  if (rec.s !== s) return SD_NO_CLOSED;
+  const ph = sdPhase(rec, now);
+  if (ph === 'found' || (ph === 'fell' && entered)) return null;
+  return ph === 'risen' ? SD_NO_RIFT : SD_NO_CLOSED;
+}
+
+/** The Return stands until the boss falls: while its slot's record is risen or found - and while no record has been
+ *  heard (nothing says it fell). */
+export function sdReturnStands(rec, s, now) {
+  if (!rec) return true;
+  if (rec.s !== s) return false;
+  const ph = sdPhase(rec, now);
+  return ph === 'risen' || ph === 'found';
+}
+
+/** Whether `feet` stand in a portal whose foot is `at`: within `reach` of its axis across the floor, between its foot
+ *  (less a step) and its top. */
+export function inSdPortal(feet, at, reach, height) {
+  if (!feet || !at) return false;
+  return Math.hypot(feet[0] - at[0], feet[2] - at[2]) <= reach && feet[1] >= at[1] - SD_STEP_M && feet[1] <= at[1] + height;
+}

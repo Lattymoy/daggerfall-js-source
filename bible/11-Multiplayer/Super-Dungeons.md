@@ -711,3 +711,51 @@ read the Super's arm beside theirs - `test/elitedungeons.test.js` (the expansion
 options.
 
 SD4b is next: the end, the Rift and the Return.
+
+### SD4b - shipped 2026-10-07 (the end, the Rift and the Return)
+
+Section 6, in the dungeon host.
+
+- **The end** is the dungeon's enemy or start marker farthest from its entrance across the floor plan (the layout's
+  enemy markers, an Elite copy left out, and every block's start markers - `sdEndMarks`). The law is RVN7d's lair law,
+  lifted out of `scenes/dungeonContext.js` into `world/dungeonEnd.js` (`dungeonEndOf`): the lair's stand reads it now
+  too, so the two are one law. Pure: the same markers give the same end on every client, and a tie keeps the first.
+- **The Rift** stands on the floor the collider finds under the end - or a step or two about it, where its hall is
+  widest (`sdRiftPlace`: the end itself, then eight bearings at 1.5 m and 3 m, each on the end's own floor and reached
+  by a clear line at chest height). It is as wide and as tall as that hall lets it stand (`sdRiftFit`): 7 m at most,
+  the hall's own height and twice its nearest wall less 0.3 m of air, never under 2.6 m - a 7 m ring would be cut by
+  the ceiling of most of Daggerfall's halls. Its look (`scenes/sdEnd.js riftFrame`): a ring of brass light in eight
+  teeth, turning an eighth of a turn every sixteen frames, about a near-black membrane with slow gold swirling in it.
+  It is made once per renderer, as the companion's portal is, and is self-lit, so it glows the same underground. Its
+  sound (`systems/sdRiftSound.js`) is a bell heard under water: DAGGER.SND's ship's bell slowed and pitched down near a
+  sixth, its echo behind it and the bubbles faint beneath, darkened, wavering and looped at the ring's middle through
+  the engine's own low-pass - made from the player's archive, as the Arena's crowd is.
+- **The Return** stands beside it (`sdReturnPlace`: 1.2 m past the ring's rim on the first clear bearing, east first;
+  else 1.5 m out; else on the ring's foot): a small oval of pale light. It carries the player back to the way in - the
+  start marker's landing, through the dungeon's own teleport door (`actions.onTeleport`, DFU's teleport actions'
+  handler). It goes out when the boss falls (`sdReturnStands`, asked once a second) and never stands again in that
+  dungeon.
+- **Pressed, or walked into.** Each stands in the activation ray at a door's reach (`sdrift:0`, `sdreturn:0` - the mode
+  machine's press ladder routes them before the action objects) with its words on the plaque (*The Rift - To the
+  Shattered Hour*, *The Return - To the way in*). A step into either is asked once - outside, then inside, the Portal
+  Stones' latch - and a jump into it (a door, a teleport) or a gap in the frames is no step.
+- **The Rift's word** (`sdRiftWord`), off the hub's record for the Hollow's slot (the world host's `superRift`, through
+  the mode machine): through while the Hollow is found, and after the kill only for one who went in before (the realm's
+  room keeps them until it is gone, SD3's `_sdAdmit`); before the find, or with no record heard, *"The Rift will not
+  take you yet."*; gone, another slot's, or a newcomer after the kill, *"The Hour has closed."* Said mid-screen. Where
+  it admits, the realm's door takes the player - SD5's (the Shattered Hour). Until SD5 there is no door, so an admitting
+  Rift says it will not take you yet.
+
+THE FOUR HOSTS: `scenes/dungeonContext.js` WIRED (the end, the Rift and the Return, their step, press, plaque and
+draw); `scenes/worldModes.js` WIRED (the press arm, the `superRift` forward); `scenes/world.js` WIRED (`sdRiftOf` - the
+word off the hub's record on the shared clock); `scenes/exterior.js` FLAGGED - the bench is offline, and no Super
+dungeon stands there.
+
+Pins: `test/sd4b_rift.test.js` (10 - the laws over a model hall, the art, the set over a fake renderer and engine, the
+step, the bell, the host's two steps run from its own text, the hosts by source); `tools/mutants/sd4b.json` (32, all
+dead - one survived at first, the bell's own darkening, which a loose bound on the darkness let pass; the bound is the
+measured one now). PIN MOVED: `test/rvn7d_stand.test.js` reads the lair's stand through `dungeonEndOf`, and
+`tools/mutants/rvn7d.json`'s RVN7d-the-nearest is re-aimed at the law's new home, killed there by this slice's test;
+`test/nudedecor.test.js` names the new billboard host (`scenes/sdEnd.js` - a portal, no person).
+
+SD5 is next: the Shattered Hour - the made level, its sky, the way in and out.
