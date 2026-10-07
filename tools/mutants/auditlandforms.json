@@ -474,7 +474,7 @@
   {
     "name": "AUDIT-LANDFORMS-D-ring-normal-x-unlifted",
     "file": "src/render/farRing.js",
-    "old": "const nx = ringHeight(byteAt(px - 1, py), relief) - ringHeight(byteAt(px + 1, py), relief);",
+    "old": "const nx = heightOf(px - 1, py) - heightOf(px + 1, py);",
     "new": "const nx = ringHeight(byteAt(px - 1, py)) - ringHeight(byteAt(px + 1, py));",
     "tests": [
       "test/landform.test.js",
@@ -485,7 +485,7 @@
   {
     "name": "AUDIT-LANDFORMS-D-ring-normal-z-unlifted",
     "file": "src/render/farRing.js",
-    "old": "const nz = ringHeight(byteAt(px, py + 1), relief) - ringHeight(byteAt(px, py - 1), relief);",
+    "old": "const nz = heightOf(px, py + 1) - heightOf(px, py - 1);",
     "new": "const nz = ringHeight(byteAt(px, py + 1)) - ringHeight(byteAt(px, py - 1));",
     "tests": [
       "test/landform.test.js",
@@ -1154,6 +1154,97 @@
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-I1-never-faded",
+    "file": "src/world/landforms.js",
+    "old": "const land = h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low));",
+    "new": "const land = h + reliefLift(low);",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-I1-profile-unfaded",
+    "file": "src/world/landforms.js",
+    "old": "+ (cliff ? reliefLift(low) * cliff(lx, ly) : reliefLift(low));",
+    "new": "+ reliefLift(low);",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-I1-from-the-sea",
+    "file": "src/world/landforms.js",
+    "old": "cliff: Object.freeze({ from: 1, full: 3 }),",
+    "new": "cliff: Object.freeze({ from: 0, full: 3 }),",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-I1-full-two-in",
+    "file": "src/world/landforms.js",
+    "old": "cliff: Object.freeze({ from: 1, full: 3 }),",
+    "new": "cliff: Object.freeze({ from: 1, full: 2 }),",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-I1-beach-byte-land",
+    "file": "src/world/landforms.js",
+    "old": "byteAt(qx + dx, qy + dy) * BASE_HEIGHT_SCALE <= LANDFORM_KNEE",
+    "new": "byteAt(qx + dx, qy + dy) * BASE_HEIGHT_SCALE < SCALED_BEACH_ELEVATION",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-I1-unquantized",
+    "file": "src/world/landforms.js",
+    "old": "out[d2] = Math.round(smooth01((Math.sqrt(d2) - from) / (full - from)) * 1024) / 1024;",
+    "new": "out[d2] = smooth01((Math.sqrt(d2) - from) / (full - from));",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-I1-window-shifted",
+    "file": "src/world/landforms.js",
+    "old": "const v = cliffFadeAt(byteAt, px - 2 + r, py - 2 + c);",
+    "new": "const v = cliffFadeAt(byteAt, px - 1 + r, py - 2 + c);",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-I1-never-near-the-sea",
+    "file": "src/world/landforms.js",
+    "old": "  if (whole) return null;",
+    "new": "  if (true) return null;",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-I1-ring-unfaded",
+    "file": "src/render/farRing.js",
+    "old": "const heightOf = relief ? (x, y) => ringHeight(byteAt(x, y), true, cliffFadeAt(byteAt, clampX(x), clampY(y))) :",
+    "new": "const heightOf = relief ? (x, y) => ringHeight(byteAt(x, y), true) :",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LANDFORMS-II-I1-view-unfaded",
+    "file": "src/scenes/world.js",
+    "old": "return [x, ringHeight(byte, !!landform, fade)",
+    "new": "return [x, ringHeight(byte, !!landform)",
+    "tests": [
+      "test/auditlandforms.test.js",
+      "test/landform.test.js"
     ]
   },
   {

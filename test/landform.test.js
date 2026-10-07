@@ -123,7 +123,7 @@ test('LANDFORM1: nothing stands over the ceiling - the shaper takes DFU\'s heigh
   assert.equal(reliefLift(255 * 8), reliefLift(127 * 8), 'the lift is level past the top');
   assert.ok(reliefLift(126 * 8) < reliefLift(127 * 8), '...and rising up to it');
   const bytes = WOODS_BYTES.slice();
-  bytes[new DataView(bytes.buffer).getUint32(28, true) + 400 * MAP_WIDTH + 150] = 255;   // in a lowland, as the shipped one is
+  bytes[new DataView(bytes.buffer).getUint32(28, true) + 400 * MAP_WIDTH + 150] = 255;   // in a lowland with no sea byte within three pixels - the shipped one has one a diagonal step off, where the lift fades (AUDIT LANDFORMS II I1)
   const glitch = new WoodsFile();
   assert.equal(glitch.load(bytes), true);
   // a road down the diagonal through the byte's own sample - (150, 400)'s south-east corner - so its grade is read there
@@ -356,7 +356,7 @@ test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promo
   assert.match(WORLD, /grid = restrideGrid\(\{ woods, px: p\.px, py: p\.py, stride, samples: p\.samples, landform, roads: terrainGen\.roads\(\) \}\)/, 'and on it');
   assert.match(WORLD, /_gateKernel = sampleKernel\(woods, px, py, HEIGHTMAP_DIMENSION, true, landformsHere\(\)\);/, 'the gate\'s beacon stands on the shaped ground');
   assert.match(WORLD, /relief: !!landform,   \/\/ LANDFORM1: the ring stands the massifs/, 'the far ring');
-  assert.match(WORLD, /ringHeight\(byte, !!landform\)/, 'the travel view past the built grid');
+  assert.match(WORLD, /ringHeight\(byte, !!landform, fade\)/, 'the travel view past the built grid');   // PIN MOVED (AUDIT LANDFORMS II I1): faded beside the sea, as the ring is
   // AUDIT LANDFORMS C1 MOVED THESE PINS: they read a stamp - every record is DFU's frame now, the row's lift put back on at
   // every read (test/auditlandforms.test.js runs each path, row on and off)
   assert.match(WORLD, /const today = was === STREAMING_TERRAIN_SCALE && !landform;/, 'the quickload');

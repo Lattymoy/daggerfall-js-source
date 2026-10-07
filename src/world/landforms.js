@@ -39,15 +39,28 @@
 // that term is lifted: the large heightmap's hills and the ground noise
 // keep DFU's scale, so the massifs grow and the footing under a walker
 // is the footing DFU gives (a lifted ground noise is 25-metre spikes).
-// The lift is a function of `low` alone, so the far ring - which reads
-// the same byte at a pixel's centre - takes it too (farRing.js).
+// THE LIFT FADES BESIDE THE SEA (AUDIT LANDFORMS II I1, Mac: "Is it too
+// steep?", then "Go ahead"). The lift steepens a slope by up to 2.8
+// times, most where the land already rises fastest, and nowhere does it
+// rise faster than out of the sea: Menevia's plateau (bytes of 75 a pixel
+// from the sea) stood its rim at 70 degrees, a road down it dropped a
+// walker 95 m, and every 51 m grade over 63 degrees the lift made new lay
+// within three map pixels of a sea byte. So the lift is faded by its
+// distance to the sea: none within a pixel of it, all of it three pixels
+// in (`cliff`), a byte node's fade read through the kernel's own bicubic
+// window - the rim stands as DFU stands it and the plateau behind it rises
+// to its whole lift. The lift is a function of `low` and the bytes about
+// it alone, so the far ring - which reads the same byte at a pixel's
+// centre - takes it too, faded the same (farRing.js, cliffFadeAt).
 // THE CEILING. The shaper is handed DFU's height as DFU stands it -
 // clamped at MAX_TERRAIN_HEIGHT - and the lift stops rising at the
 // heightmap's 7-bit top, so nothing stands over LANDFORM_CEILING. Real
 // ground never reaches either (its bytes stop at 109); WOODS.WLD's one
 // byte over 127 does - a 255 at map pixel (470, 355), in the sea off
 // Tigonus, which DFU stands as a 1.9 km pillar clamped flat at its
-// ceiling and the landforms stand at theirs, 3 km, not 5.
+// ceiling. Unfaded the landforms stood it at theirs, 3 km, not 5; beside
+// the sea the lift fades (AUDIT LANDFORMS II I1), and a sea byte lies a
+// diagonal step from it, so it keeps a ninth of the lift: about 2.5 km.
 //
 // LANDFORM2 - THE ROADS ARE CUT IN. A road or a track is graded to the
 // kernel's macro height (both bicubic terms, the lift, no ground noise)
@@ -85,7 +98,7 @@
 // (1.25 m - STREAMING_TERRAIN_SCALE).
 // ═══════════════════════════════════════════════════════════════════
 
-import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, kernelTerms, sampleKernel, generateSamples } from './terrainSampler.js';
+import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, kernelTerms, sampleKernel, generateSamples, cubicInterpolator } from './terrainSampler.js';
 import { BEACH_JITTER, blendLocationTerrain } from './terrainTiles.js';
 import { DIR_DELTA, MAP_W, MAP_H } from './roadNetwork.js';
 
@@ -121,6 +134,9 @@ export const LANDFORM_DIALS = Object.freeze({
   // AUDIT LANDFORMS II I2: how much steeper than its hillside a road's or a track's bank may stand (a grade, rise over
   // run) - its cut and fill are held to the smooth land within what a bank of its width carries at that (bankHold)
   bankGrade: 0.5,
+  // AUDIT LANDFORMS II I1: the lift beside the sea - none at a byte node within `from` map pixels of a sea byte, all of it
+  // from `full`, a smoothstep between (cliffFadeAt)
+  cliff: Object.freeze({ from: 1, full: 3 }),
 });
 
 /** The four path layers in lerp order, with the network field each reads; `ford`, a layer the water is painted over
@@ -135,14 +151,83 @@ const LAYERS = Object.freeze([
 const smooth01 = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 const smoothstep = (a, b, v) => smooth01((v - a) / (b - a));
 
+/** AUDIT LANDFORMS II I1: the fade at a byte node by its squared distance (in map pixels) to the nearest sea byte, past
+ *  the last entry 1 - smoothstep(from, full, d) in 1024ths: the kernel's cubic over values of so few bits is exact, so
+ *  a pixel's edge, read through its own window and its neighbour's, is one number from both (THE SEAMS). */
+const CLIFF_FADE = (() => {
+  const { from, full } = LANDFORM_DIALS.cliff;
+  const out = new Float64Array(Math.floor(full * full) + 1);
+  for (let d2 = 0; d2 < out.length; d2++) out[d2] = Math.round(smooth01((Math.sqrt(d2) - from) / (full - from)) * 1024) / 1024;
+  return out;
+})();
+const CLIFF_REACH = Math.ceil(LANDFORM_DIALS.cliff.full);
+
+/**
+ * AUDIT LANDFORMS II I1: how much of the lift a byte node keeps beside the sea - 0 within `cliff.from` map pixels of a
+ * sea byte (one whose `low` stands at or under the knee: the beach line's own byte, 5, and under), 1 from `cliff.full`,
+ * a smoothstep between in 1024ths. A pure function of the bytes about the node.
+ * @param {(x: number, y: number) => number} byteAt - the small heightmap's byte, its coordinates clamped to the map as
+ *   WOODS.WLD's own reader clamps them
+ * @param {number} qx
+ * @param {number} qy
+ * @returns {number}
+ */
+export function cliffFadeAt(byteAt, qx, qy) {
+  let best = CLIFF_FADE.length;
+  for (let dy = -CLIFF_REACH; dy <= CLIFF_REACH; dy++) {
+    for (let dx = -CLIFF_REACH; dx <= CLIFF_REACH; dx++) {
+      const d2 = dx * dx + dy * dy;
+      if (d2 < best && byteAt(qx + dx, qy + dy) * BASE_HEIGHT_SCALE <= LANDFORM_KNEE) best = d2;
+    }
+  }
+  return best < CLIFF_FADE.length ? CLIFF_FADE[best] : 1;
+}
+
+/**
+ * AUDIT LANDFORMS II I1: the lift's fade over one pixel's samples - its sixteen byte nodes' cliffFadeAt through the
+ * kernel's own bicubic window (terrainSampler.js kernelTerms' `base`, the same nodes and the same arithmetic), or null
+ * where every node keeps its whole lift (all but the coasts).
+ * @param {object} woods
+ * @param {number} px
+ * @param {number} py
+ * @param {number} hDim
+ * @returns {?(x: number, y: number) => number}
+ */
+function cliffFade(woods, px, py, hDim) {
+  const x0 = px - 2 - CLIFF_REACH, y0 = py - 2 - CLIFF_REACH, side = 4 + 2 * CLIFF_REACH;
+  const win = woods.getHeightMapValuesRange1Dim(x0, y0, side);
+  const byteAt = (x, y) => win[(x - x0) + (y - y0) * side];
+  const f = new Float64Array(16);
+  let whole = true;
+  for (let c = 0; c < 4; c++) {
+    for (let r = 0; r < 4; r++) {
+      const v = cliffFadeAt(byteAt, px - 2 + r, py - 2 + c);
+      f[r + c * 4] = v;
+      if (v !== 1) whole = false;
+    }
+  }
+  if (whole) return null;
+  const at = (r, c) => f[r + c * 4];
+  return (x, y) => {
+    const sx = x / (hDim - 1), sy = y / (hDim - 1);
+    const x1 = cubicInterpolator(at(0, 3), at(1, 3), at(2, 3), at(3, 3), sx);
+    const x2 = cubicInterpolator(at(0, 2), at(1, 2), at(2, 2), at(3, 2), sx);
+    const x3 = cubicInterpolator(at(0, 1), at(1, 1), at(2, 1), at(3, 1), sx);
+    const x4 = cubicInterpolator(at(0, 0), at(1, 0), at(2, 0), at(3, 0), sx);
+    const v = cubicInterpolator(x1, x2, x3, x4, sy);
+    return v <= 0 ? 0 : v >= 1 ? 1 : v;
+  };
+}
+
 /**
  * AUDIT LANDFORMS II I2: A BANK IS NEVER A LAUNCH RAMP. How far a road's or a track's cut or fill may part from the smooth
  * land, in kernel units: what its bank (`bank` samples, its smoothstep peaking at 1.5 over the width) climbs at
  * `bankGrade` over the hillside. Level across, a bench on a steep hillside stood banks about twice the hillside's grade -
  * 72 degrees, 19 m tall, on a 53-degree hillside at (627, 282) - and a run down across one launched into falls of 20 to
  * 49 m where DFU's ground is safe. Held, a bank is never more than `bankGrade` steeper than its hillside; the bed stays
- * level wherever its cut is under the hold (every straight road of 400 sampled on the real data; 10 of 1,500 path
- * pixels move at all). A river's or a stream's floor is never held - its water is level.
+ * level wherever its cut is under the hold and leans with a hillside too steep for it (2 of 300 straight roads sampled
+ * on the real data, the most 0.98 m across the painted tiles; 10 of 1,500 path pixels move at all). A river's or a
+ * stream's floor is never held - its water is level.
  * @param {{bank: number}} dial
  * @param {number} span - the pixel's samples less one (128)
  */
@@ -170,10 +255,11 @@ export function reliefLift(low) {
 export const LANDFORM_CEILING = MAX_TERRAIN_HEIGHT + reliefLift(LOW_TOP);
 
 /** LANDFORM1: a map-pixel byte's macro height with the lift, in kernel units - the far ring's law (farRing.js
- *  ringHeight), max(byte * 8, ocean) plus the lift its own `low` earns. */
-export function reliefByteHeight(byte) {
+ *  ringHeight), max(byte * 8, ocean) plus the lift its own `low` earns, faded beside the sea by the node's own
+ *  cliffFadeAt (AUDIT LANDFORMS II I1). */
+export function reliefByteHeight(byte, fade = 1) {
   const low = byte * BASE_HEIGHT_SCALE;
-  return Math.max(low, SCALED_OCEAN_ELEVATION) + reliefLift(low);
+  return Math.max(low, SCALED_OCEAN_ELEVATION) + reliefLift(low) * fade;
 }
 
 /**
@@ -270,11 +356,12 @@ function pixelShaper(woods, nets, px, py, span, half, hDim) {
   // its (x, 128) is (px, py - 1)'s (x, 0) - one number each, from either pixel
   const ox = px * span;
   const oy = (MAP_H - py) * span;
+  const cliff = cliffFade(woods, px, py, hDim);   // AUDIT LANDFORMS II I1: the lift's fade beside the sea, null inland
   const terms = new Map();
   const termsOf = (qx, qy) => {
     const k = qy * MAP_W + qx;
     let t = terms.get(k);
-    if (!t) terms.set(k, t = kernelTerms(woods, qx, qy, hDim));
+    if (!t) terms.set(k, t = { ...kernelTerms(woods, qx, qy, hDim), cliff: cliffFade(woods, qx, qy, hDim) });   // AUDIT LANDFORMS II I1
     return t;
   };
   // Each layer's segments within its reach of this pixel's box, in ONE global order - by pixel row, column, then the
@@ -314,14 +401,14 @@ function pixelShaper(woods, nets, px, py, span, half, hDim) {
   // kernel's two bicubic terms of the pixel the arm belongs to, the lift, no ground noise; between them, linear.
   const profileOf = (s) => {
     if (s.prof) return s.prof;
-    const { base, noise } = termsOf(s.qx, s.qy);
+    const { base, noise, cliff } = termsOf(s.qx, s.qy);
     const prof = new Float64Array(half + 1);
     for (let k = 0; k <= half; k++) {
       const lx = half + s.dx * k, ly = half + s.dy * k;
       const b = base(lx, ly);
       const low = b * BASE_HEIGHT_SCALE;
       const macro = low + noise(lx, ly) * NOISE_MAP_SCALE;
-      prof[k] = Math.min(Math.max(macro, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT) + reliefLift(low);   // DFU's macro as DFU stands it
+      prof[k] = Math.min(Math.max(macro, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT) + (cliff ? reliefLift(low) * cliff(lx, ly) : reliefLift(low));   // DFU's macro as DFU stands it; the lift faded beside the sea (AUDIT LANDFORMS II I1)
     }
     return (s.prof = prof);
   };
@@ -345,7 +432,7 @@ function pixelShaper(woods, nets, px, py, span, half, hDim) {
    */
   return (x, y, h, low, g) => {
     if (!(h > LANDFORM_KNEE)) return h;   // the knee: DFU's own height, the sea and the beach whole
-    const land = h + reliefLift(low);
+    const land = h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low));   // AUDIT LANDFORMS II I1: faded beside the sea
     if (!layers.length) return land;
     const gx = ox + x, gy = oy + y;
     let touched = false;

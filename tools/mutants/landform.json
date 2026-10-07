@@ -237,7 +237,7 @@
   {
     "name": "LANDFORM-ring-unlifted",
     "file": "src/render/farRing.js",
-    "old": "positions[o + 1] = ringHeight(byte, relief);",
+    "old": "positions[o + 1] = heightOf(px, py);",
     "new": "positions[o + 1] = ringHeight(byte);",
     "tests": [
       "test/landform.test.js"

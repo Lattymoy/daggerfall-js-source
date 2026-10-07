@@ -9,7 +9,7 @@ import * as acorn from 'acorn';
 
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
 import { generateSamples, sampleKernel, kernelTerms, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, TERRAIN_SIZE } from '../src/world/terrainSampler.js';
-import { createLandforms, reliefLift, landformLift, landformLiftField, LANDFORM_DIALS, LANDFORM_KNEE, LANDFORM_FLOOR } from '../src/world/landforms.js';
+import { createLandforms, reliefLift, landformLift, landformLiftField, cliffFadeAt, LANDFORM_DIALS, LANDFORM_KNEE, LANDFORM_FLOOR } from '../src/world/landforms.js';
 import { generatePixelTerrain, restrideGrid } from '../src/world/terrainGen.js';
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../src/world/waterCorners.js';
 import { DIR, DIR_DELTA } from '../src/world/roadNetwork.js';
@@ -23,7 +23,7 @@ import { _setTimeScaleForTest, TRAVEL_ROAD_RATE } from '../src/systems/timeScale
 import { TRANSPORT_MODES } from '../src/systems/transport.js';
 import { createDroppedLoot } from '../src/scenes/droppedLoot.js';
 import { natureStandsAt, layoutNature, groundAt } from '../src/world/terrainNature.js';
-import { sampleHeight } from '../src/world/terrainTiles.js';
+import { sampleHeight, blendLocationTerrain, calcAvgMaxHeight, generateTileData } from '../src/world/terrainTiles.js';
 
 const H = HEIGHTMAP_DIMENSION;
 const UNIT = MAX_TERRAIN_HEIGHT;
@@ -352,24 +352,26 @@ test('AUDIT LANDFORMS B2: a record\'s frame follows the cuts - the field is the 
 
 // ---- D3: the tiles ---------------------------------------------------------------------------------------------------------
 
-test('AUDIT LANDFORMS D3: the landforms move the ground, never a tile - a coastal town\'s blend classifies DFU\'s own samples, so its beach stands where DFU\'s does however far the massif behind it lifts the town', () => {
-  // a sea cliff: bytes of 120 east of x = 104 across rows 140..160, so pixel (104, 150) runs from the beach up a massif
-  // the relief lifts, and its mean - the town's levelled ground - with it
-  const bytes = syntheticWoodsBytes();
-  const hm = new DataView(bytes.buffer).getUint32(28, true);
-  for (let y = 140; y <= 160; y++) for (let x = 104; x <= 110; x++) bytes[hm + y * MAP_WIDTH + x] = 120;
-  const cliff = load(bytes);
-  const px = 104, py = 150, rect = { xMin: 48, xMax: 80, yMin: 48, yMax: 80 };
-  const run = (landform) => generatePixelTerrain({ woods: cliff, px, py, tilemap: new Uint8Array(128 * 128), locationRect: rect, hasLocation: true, climateType: 231, roads: NET, landform });
+test('AUDIT LANDFORMS D3: the landforms move the ground, never a tile - a coastal town\'s blend classifies DFU\'s own samples, so its beach stands where DFU\'s does however far the landforms move the town\'s mean', () => {
+  // the fixture's river out to sea through a shore town at (103, 300): its channel moves the pixel's mean, and the blend
+  // carries that across the beach line. (It was a massif lifting a sea cliff's town; beside the sea the lift fades now -
+  // AUDIT LANDFORMS II I1 - so a beach pixel's own lift is nothing, and the cuts are what move a coastal town's mean.)
+  const px = 103, py = 300, rect = { xMin: 40, xMax: 88, yMin: 40, yMax: 88 };
+  const run = (landform) => generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), locationRect: rect, hasLocation: true, climateType: 231, roads: NET, landform });
   const dfu = run(false), shaped = run(true);
-  assert.ok((at(shaped.samples, 64, 64) - at(dfu.samples, 64, 64)) * UNIT > 100, 'the town stands on the lifted mean');
-  let beach = 0, moved = 0;
+  let crossed = 0, moved = 0;
   for (let i = 0; i < dfu.tilemapBytes.length; i++) if (dfu.tilemapBytes[i] !== shaped.tilemapBytes[i]) moved++;
-  for (let x = 0; x < H; x++) for (let y = 0; y < H; y++) if (at(dfu.samples, x, y) * UNIT <= LANDFORM_KNEE && at(shaped.samples, x, y) > at(dfu.samples, x, y) + 0.05 / UNIT) beach++;
-  assert.ok(beach > 10, `the blend carries the lift down onto the beach (${beach} samples)`);
+  for (let x = 0; x < H; x++) for (let y = 0; y < H; y++) if ((at(dfu.samples, x, y) * UNIT <= LANDFORM_KNEE) !== (at(shaped.samples, x, y) * UNIT <= LANDFORM_KNEE)) crossed++;
+  // the shaped blend's own tiles would part from DFU's
+  const own = generateSamples(woods, px, py, H, LF);
+  blendLocationTerrain(own, calcAvgMaxHeight(own)[0], rect);
+  const ownTiles = generateTileData(own, px, py), dfuTiles = generateTileData(dfu.samples, px, py);
+  let would = 0;
+  for (let i = 0; i < ownTiles.length; i++) if (ownTiles[i] !== dfuTiles[i]) would++;
+  assert.ok(crossed > 3 && would > 10, `the blend carries the cut across the beach line at ${crossed} samples, and the shaped blend's own tiles would part at ${would}`);
   assert.equal(moved, 0, 'and not one tile moves with it');
   // the kernel's classic output is DFU's generateSamples to the bit, beside a cut pixel's shaped samples
-  for (const [qx, qy, w] of [[px, py, cliff], [300, 255, woods], [101, 300, woods]]) {
+  for (const [qx, qy, w] of [[px, py, woods], [300, 255, woods], [101, 300, woods]]) {
     const classic = new Float32Array(H * H);
     const shapedHere = generateSamples(w, qx, qy, H, createLandforms({ woods: w, roads: NET }), classic);
     const plain = generateSamples(w, qx, qy);
@@ -430,11 +432,29 @@ test('AUDIT LANDFORMS C4: the ground\'s online note names the rivers - their row
  *  layer's reach grade the floor together - weight (1 - d/reach)^2 / (d^2 + 1/4)^2, the nearest all but alone, an arm the
  *  sample lies beyond the end of all but standing down; then the floor (`drop` under for water), its bank to the top (the
  *  smooth land, or a levee for water), the verge back to the land; the layers lerped in paint order, a channel the
- *  water's (E2), the coast fading it all out, nothing under min(land, LANDFORM_FLOOR). */
+ *  water's (E2), the coast fading it all out, nothing under min(land, LANDFORM_FLOOR). The lift itself fades beside the
+ *  sea (AUDIT LANDFORMS II I1): at each byte node smoothstep(1, 3, d) of its distance to the nearest sea byte (one whose
+ *  `low` is at or under the knee), in 1024ths, through the kernel's own bicubic window - stated here by handing
+ *  kernelTerms a heightmap of those fades. */
 function lawOf(net, px, py, w = woods, { held = true } = {}) {
   const span = H - 1, half = span / 2;
   const sm = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
   const step = (a, b, v) => sm((v - a) / (b - a));
+  const fadeNode = (nx, ny) => {
+    const win = w.getHeightMapValuesRange1Dim(nx - 3, ny - 3, 7);
+    let d = Infinity;
+    for (let j = 0; j < 7; j++) for (let i = 0; i < 7; i++) if (win[i + j * 7] * 8 <= LANDFORM_KNEE) d = Math.min(d, Math.hypot(i - 3, j - 3));
+    return Math.round(sm((d - 1) / 2) * 1024);
+  };
+  const fades = {
+    getHeightMapValuesRange1Dim: (x0, y0, dim) => Float64Array.from({ length: dim * dim }, (_, k) => fadeNode(x0 + (k % dim), y0 + Math.floor(k / dim))),
+    getLargeHeightMapValuesRange: () => new Float64Array(81),
+  };
+  const cliffs = new Map();
+  const cliffOf = (qx, qy) => {
+    if (!cliffs.has(`${qx},${qy}`)) { const { base } = kernelTerms(fades, qx, qy); cliffs.set(`${qx},${qy}`, (x, y) => Math.min(1, Math.max(0, base(x, y) / 1024))); }
+    return cliffs.get(`${qx},${qy}`);
+  };
   // AUDIT LANDFORMS II J1: a track is a ford - the water is painted over it - so the channel is the water's on its bed too
   const layers = [['streams', LANDFORM_DIALS.stream, true], ['rivers', LANDFORM_DIALS.river, true], ['tracks', LANDFORM_DIALS.track, false, true], ['roads', LANDFORM_DIALS.road, false]]
     .filter(([key, , water]) => net[key] && (!water || net.water))
@@ -446,7 +466,7 @@ function lawOf(net, px, py, w = woods, { held = true } = {}) {
           const { base, noise } = kernelTerms(w, qx, qy);
           const prof = Array.from({ length: half + 1 }, (_, k) => {
             const lx = half + mdx * k, ly = half - mdy * k, low = base(lx, ly) * 8;
-            return Math.min(Math.max(low + noise(lx, ly) * 4, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT) + reliefLift(low);
+            return Math.min(Math.max(low + noise(lx, ly) * 4, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT) + reliefLift(low) * cliffOf(qx, qy)(lx, ly);
           });
           const len = half * Math.hypot(mdx, mdy);
           arms.push({ ax: qx * span + half, ay: (MAP_HEIGHT - qy) * span + half, ux: (mdx * half) / len, uy: (-mdy * half) / len, len, prof });
@@ -458,7 +478,7 @@ function lawOf(net, px, py, w = woods, { held = true } = {}) {
     });
   return (x, y, h, low, g) => {
     if (!(h > LANDFORM_KNEE)) return h;
-    const land = h + reliefLift(low);
+    const land = h + reliefLift(low) * cliffOf(px, py)(x, y);
     const gx = px * span + x, gy = (MAP_HEIGHT - py) * span + y;
     const near = layers.map(({ dial, reach, arms, hold }) => {
       let dmin = Infinity, ws = 0, wf = 0;
@@ -500,6 +520,7 @@ test('AUDIT LANDFORMS D8: the law, written out, is the shaper - at every sample 
   assert.deepEqual(JSON.parse(JSON.stringify(LANDFORM_DIALS)), {
     relief: { from: 200, full: 900, gain: 0.9 }, stream: { flat: 1, bank: 1.25, verge: 4, drop: 0.8 }, river: { flat: 2, bank: 1.5, verge: 6, drop: 1.92 },
     track: { flat: 1.25, bank: 2, verge: 5, drop: 0 }, road: { flat: 1.25, bank: 2.5, verge: 6, drop: 0 }, coast: 12, bankGrade: 0.5,
+    cliff: { from: 1, full: 3 },   // PIN MOVED (AUDIT LANDFORMS II I1)
   });
   const pixels = [[350, 200], [351, 200], [352, 200], [352, 201], [352, 204], [353, 200], [354, 200], [354, 199], [354, 196], [355, 199],
     [356, 204], [357, 203], [358, 202], [358, 201], [358, 200], [300, 250], [300, 255], [301, 255], [293, 241], [312, 248], [312, 252], [100, 200], [101, 300], [102, 300]];
@@ -1109,4 +1130,66 @@ test('AUDIT LANDFORMS II J7: online the host asks Basic Roads again on the retry
     assert.deepEqual(all, [5000, 10000, 20000, 40000, ...Array(8).fill(60000)]);
     assert.equal(asked.length, MOD_ROADS_RETRY_MAX);
   } finally { globalThis.fetch = realFetch; }
+});
+
+test('AUDIT LANDFORMS II I1: the lift fades beside the sea - a sea cliff\'s rim stands as DFU stands it and the plateau behind it takes its whole lift three map pixels in, no slope steeper than DFU\'s; a road over it, the far ring and every seam the same', () => {
+  // Menevia's own shape: a plateau of 75 straight out of the fixture's sea at x = 100, rows 420..440, the sea beside it at
+  // the beach line's own byte (5, still the sea's); a road west to east down over its rim
+  const bytes = syntheticWoodsBytes(), hm = new DataView(bytes.buffer).getUint32(28, true);
+  for (let y = 420; y <= 440; y++) { bytes[hm + y * MAP_WIDTH + 99] = 5; for (let x = 100; x <= 112; x++) bytes[hm + y * MAP_WIDTH + x] = 75; }
+  const cw = load(bytes), byteAt = (x, y) => cw.getHeightMapValue(x, y);
+  const net = network();
+  for (let x = 96; x <= 108; x++) net.roads[430 * MAP_WIDTH + x] |= DIR.E | DIR.W;
+  const CUT = createLandforms({ woods: cw, roads: net }), RELIEF_ALONE = createLandforms({ woods: cw });
+  // the byte nodes: the sea's and the rim's none of the lift, two in half, three in all of it - in 1024ths, so the
+  // kernel's cubic over them is exact (a node a diagonal or a knight's move from the sea too)
+  assert.deepEqual([98, 99, 100, 101, 102, 103].map((x) => cliffFadeAt(byteAt, x, 430)), [0, 0, 0, 0.5, 1, 1]);
+  const lone = (x, y) => (x === 0 && y === 0 ? 0 : 75);
+  for (const [dx, dy] of [[1, 1], [2, 1], [2, 2]]) {
+    const f = cliffFadeAt(lone, dx, dy), d = Math.hypot(dx, dy), t = (d - 1) / 2;
+    assert.ok(Number.isInteger(f * 1024) && Math.abs(f - t * t * (3 - 2 * t)) <= 1 / 2048, `${dx},${dy}: ${f}`);
+  }
+  // the rim's own pixel (its samples run from the sea's node to the rim's) stands as DFU stands it; three nodes in, the
+  // relief's whole lift
+  const dfuAt = (px) => generateSamples(cw, px, 430), reliefAt = (px) => generateSamples(cw, px, 430, H, RELIEF_ALONE);
+  const face = reliefAt(100), faceDfu = dfuAt(100);
+  assert.ok(face.every((v, i) => Object.is(v, faceDfu[i])), 'the cliff face: DFU\'s ground to the bit');
+  const { base } = kernelTerms(cw, 103, 430), inland = reliefAt(103), plain = dfuAt(103);
+  for (let x = 0; x <= 128; x += 8) for (let y = 0; y <= 128; y += 8) {
+    const want = Math.min(plain[x * H + y] * UNIT + reliefLift(base(x, y) * 8), Infinity);
+    assert.ok(Math.abs(inland[x * H + y] * UNIT - want) < 1e-3, `three nodes in, the whole lift (${x},${y})`);
+  }
+  // no 51 m grade across the plateau's rim steeper than DFU's own (it stood at 2.8 times it, unfaded)
+  const steepest = (get) => {
+    let g = 0;
+    for (let px = 99; px <= 104; px++) {
+      const smp = get(px);
+      for (let y = 0; y <= 128; y += 8) for (let x = 0; x + 8 <= 128; x += 8) g = Math.max(g, Math.abs(smp[(x + 8) * H + y] - smp[x * H + y]) * UNIT * 1.25 / 51.2);
+    }
+    return g;
+  };
+  const gDfu = steepest(dfuAt), gFaded = steepest(reliefAt);
+  assert.ok(gDfu > 1 && gFaded <= gDfu * 1.02, `the rim's steepest grade ${gFaded.toFixed(2)} against DFU's ${gDfu.toFixed(2)}`);
+  // a road down over the rim is graded to the faded ground (the written-out law states the fade on its own), every sample
+  for (const px of [99, 100, 101, 102, 103]) {
+    const shape = CUT.pixel(px, 430), law = lawOf(net, px, 430, cw), terms = kernelTerms(cw, px, 430);
+    for (let x = 0; x <= 128; x += 2) for (let y = 0; y <= 128; y += 2) {
+      const low = terms.base(x, y) * 8, h = Math.min(Math.max(low + terms.noise(x, y) * 4, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);
+      assert.ok(Math.abs(shape(x, y, h, low, 0) - law(x, y, h, low, 0)) < 1e-9, `${px},430 (${x},${y}): the shaper against the law`);
+    }
+  }
+  // the far ring stands the rim's node as DFU stands it and the plateau's three in at the whole lift - and so the view
+  const ring = buildFarRingGrid({ heightBytes: cw.heightMapBuffer, mapWidth: MAP_WIDTH, mapHeight: MAP_HEIGHT, climateAt: () => 231, baseX: 104, baseY: 430, radius: 6, relief: true });
+  const ringY = (x) => ring.positions[((430 - 430 + 6) * 13 + (x - 104 + 6)) * 3 + 1];
+  assert.equal(ringY(100), Math.fround(ringHeight(75)), 'the rim\'s node: no lift');
+  assert.equal(ringY(101), Math.fround(ringHeight(75, true, 0.5)));
+  assert.equal(ringY(103), Math.fround(ringHeight(75, true)), 'three in: the whole lift');
+  assert.match(WORLD, /cliffFadeAt\(\(bx, by\) => woods\.getHeightMapValue\(bx, by\), px\.x, px\.y\) : 1;[^\n]*\n\s+return \[x, ringHeight\(byte, !!landform, fade\)/, 'the travel view past the grid fades it the same');
+  // and every edge across the fade, a road over it, is one number from both pixels
+  const cut = (px, py) => generateSamples(cw, px, py, H, CUT);
+  for (const px of [99, 100, 101, 102]) {
+    const a = cut(px, 430), b = cut(px + 1, 430), n = cut(px, 429);
+    for (let y = 0; y <= 128; y++) assert.ok(Object.is(a[128 * H + y], b[0 * H + y]), `${px}|${px + 1},430 at y ${y}`);
+    for (let x = 0; x <= 128; x++) assert.ok(Object.is(a[x * H + 128], n[x * H + 0]), `${px},430|429 at x ${x}`);
+  }
 });

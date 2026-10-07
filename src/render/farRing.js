@@ -48,7 +48,7 @@
 
 import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE } from '../world/terrainSampler.js';
 import { overworldTint, BASE_HEIGHT_SCALE } from '../ui/overworldModel.js';
-import { reliefByteHeight } from '../world/landforms.js';   // LANDFORM1: the landforms' lift on a pixel's byte
+import { reliefByteHeight, cliffFadeAt } from '../world/landforms.js';   // LANDFORM1: the landforms' lift on a pixel's byte; AUDIT LANDFORMS II I1: faded beside the sea
 import { perspective, mirrorProjectionX } from '../world/mat4.js';
 import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
 
@@ -63,9 +63,10 @@ export const RING_HAZE_HOLD = 0.85;
 
 /** The streamed law's own macro height for one map-pixel byte. LANDFORM1: with `relief` (the Landforms row), the
  *  landforms' lift on it - world/landforms.js reliefByteHeight, the same lift the streamed kernel puts on the byte's own
- *  small-heightmap term - so the horizon stands the massifs the ground it hands over to stands. */
-export const ringHeight = (byte, relief = false) =>
-  (relief ? reliefByteHeight(byte) : Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION)) * STREAMING_TERRAIN_SCALE;
+ *  small-heightmap term - so the horizon stands the massifs the ground it hands over to stands; `fade`, the byte node's
+ *  own cliffFadeAt beside the sea (AUDIT LANDFORMS II I1), as the kernel fades it. */
+export const ringHeight = (byte, relief = false, fade = 1) =>
+  (relief ? reliefByteHeight(byte, fade) : Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION)) * STREAMING_TERRAIN_SCALE;
 
 /**
  * The ring's vertex grid: (2R+1)^2 vertices at map-pixel centres,
@@ -93,6 +94,8 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
   const clampX = (x) => Math.max(0, Math.min(mapWidth - 1, x));
   const clampY = (y) => Math.max(0, Math.min(mapHeight - 1, y));
   const byteAt = (x, y) => heightBytes[clampY(y) * mapWidth + clampX(x)];
+  // AUDIT LANDFORMS II I1: each node's lift faded beside the sea as the kernel fades it - from the same clamped bytes
+  const heightOf = relief ? (x, y) => ringHeight(byteAt(x, y), true, cliffFadeAt(byteAt, clampX(x), clampY(y))) : (x, y) => ringHeight(byteAt(x, y));
   let o = 0;
   for (let j = 0; j < side; j++) {
     const py = baseY - radius + j;
@@ -100,11 +103,11 @@ export function buildFarRingGrid({ heightBytes, mapWidth, mapHeight, climateAt, 
       const px = baseX - radius + i;
       const byte = byteAt(px, py);
       positions[o] = (px - baseX + 0.5) * TERRAIN_SIZE;
-      positions[o + 1] = ringHeight(byte, relief);
+      positions[o + 1] = heightOf(px, py);
       positions[o + 2] = -(py - baseY - 0.5) * TERRAIN_SIZE;
       // central differences; +py is -z, so the z slope negates
-      const nx = ringHeight(byteAt(px - 1, py), relief) - ringHeight(byteAt(px + 1, py), relief);
-      const nz = ringHeight(byteAt(px, py + 1), relief) - ringHeight(byteAt(px, py - 1), relief);
+      const nx = heightOf(px - 1, py) - heightOf(px + 1, py);
+      const nz = heightOf(px, py + 1) - heightOf(px, py - 1);
       const ny = 2 * TERRAIN_SIZE;
       const l = Math.hypot(nx, ny, nz);
       normals[o] = nx / l;
