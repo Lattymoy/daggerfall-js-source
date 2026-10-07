@@ -380,8 +380,9 @@
   {
     "name": "LOOT15-the-drain-whole",
     "file": "src/scenes/shared.js",
-    "old": "  const tart = dishStaminaFactor(entity) * (1 - Math.min(WARDROBE_FATIGUE_MOST, Math.max(0, Number(entity?._mods?.fatigueLess) || 0)) / 100);",
-    "new": "  const tart = dishStaminaFactor(entity);",
+    "old": "  return careerTartFatigueLoss(entity) * (1 - Math.min(WARDROBE_FATIGUE_MOST, Math.max(0, Number(entity?._mods?.fatigueLess) || 0)) / 100);",
+    "new": "  return careerTartFatigueLoss(entity);",
+    "note": "Re-aimed by content (the whole suite's fourth finding): PROF9 pins its tart line verbatim, so the Long Road is laid over the career's and the tart's in the exported function and PROF9's lines stand in its helper; the law is the same.",
     "tests": [
       "test/loot15_garments.test.js"
     ]
