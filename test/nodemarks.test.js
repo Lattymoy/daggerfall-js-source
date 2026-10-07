@@ -61,7 +61,7 @@ async function rig({ specs = {}, taken = [], knife = true, body = null, extra = 
   const entry = { px: 400, py: 150, samples, tilemap: new Uint8Array(128 * 128).fill(2), locationRect: null, batches: [], rocks };
   const door = {
     account: () => 'acct-1',
-    state: async () => ({ ok: true, data: { day: DAY, character: 'c1', tracks: [{ profession: 'mining', xp: 0, rank: 0, specs: { 50: specs[50] ?? null, 100: null } }], today: {}, taken, stores: [], caps: { harvests: 60, stores: 5000 } } }),
+    state: async () => ({ ok: true, data: { day: DAY, character: 'c1', tracks: [{ profession: 'mining', xp: 0, rank: 0, specs: { 50: specs[50] ?? null, 100: null } }], today: {}, taken, stores: [], caps: { stores: 5000 } } }),
     pixels: async (c, px) => ({ ok: true, data: { pixels: px.map(([x, y]) => ({ x, y, state: 'none' })), dungeons: [] } }),
     harvest: async () => ({ ok: false, error: 'offline' }),
   };

@@ -47,9 +47,8 @@ import { MARKS_MAX, MARKS_BANK, MARKS_MOVE_MAX } from './marksLaw.js';   // MARK
 import { NOTES_LIVE_MAX, NOTE_DAYS, NOTICE_DAYS_MAX } from './boardLaw.js';   // NOTICE1: the bounds its refusals name
 import { SIGN_WHY, SIEGE_WHY, ROYAL_WHY, FEALTY_WHY, SELLSWORD_FEE_MAX } from './townSeatLaw.js';   // SEAT2a: the rosters' refusals in the board's own words; the fee's bound
 import {
-  HARVESTS_PER_DAY, HARVESTS_PER_ACCOUNT_DAY, DEEP_UNCONFIRMED_PER_DAY, STORES_MAX, WITHDRAW_MAX, COURT_WRITS_PER_DAY, RESPEC,
-  HIDES_PER_DAY, HIGH_HIDES_PER_DAY, HAULS_PER_DAY,
-} from './professionLaw.js';   // PROF1: the bounds its refusals name; PROF7: Hunting's day
+  DEEP_UNCONFIRMED_PER_DAY, STORES_MAX, WITHDRAW_MAX, COURT_WRITS_PER_DAY, RESPEC, HIGH_HIDES_PER_DAY,
+} from './professionLaw.js';   // PROF1: the bounds its refusals name; PROF7: Hunting's rare hides (CAP-OFF: no day's cap)
 import {
   GUILD_FOUND_RENOWN, GUILD_MEMBERS_MAX, GUILD_NAME_MIN, GUILD_NAME_MAX, GUILD_RANK_NAME_MAX, GUILD_MOVE_MAX,
   GUILD_RENAME_GOLD,
@@ -347,9 +346,11 @@ export const REFUSALS = Object.freeze({
   'prof-late': 'That gathering reached the counting-houses too late to count.',
   'prof-night': 'You need daylight to gather effectively!',   // ANY-HOUR: the service says it no more - kept for one not yet redeployed
   'prof-rank': 'Your craft is not yet skilled enough for that.',
-  'prof-cap': `You have gathered all a day allows (${HARVESTS_PER_DAY}).`,
+  // CAP-OFF (2026-10-07): the day's cap's four - this one, `prof-account-cap`, `prof-hunt-cap` and `prof-fish-cap` - the
+  // service says no more; kept, without the numbers it no longer holds, for one not yet redeployed
+  'prof-cap': 'You have gathered all a day allows.',
   // AUDIT 29
-  'prof-account-cap': `Your account has gathered all a day allows in this craft (${HARVESTS_PER_ACCOUNT_DAY}, across your characters).`,
+  'prof-account-cap': 'Your account has gathered all a day allows in this craft, across your characters.',
   'prof-deep-cap': `Dungeons nobody has vouched for give you ${DEEP_UNCONFIRMED_PER_DAY} veins a day.`,
   'prof-spec-stale': 'Your specialisation changed elsewhere. Look again before you choose.',
   'prof-spec-taken': 'A specialisation was chosen there already. Look again.',
@@ -374,8 +375,8 @@ export const REFUSALS = Object.freeze({
   'prof-busy': 'Your hands are busy with another craft.',
   'prof-later': 'That is made when the sieges come.',   // PROF4: the Ram Kit (PROF0 25)
   // PROF7: Hunting's day - the account's, every character's together (PROF0 6)
-  'prof-hunt-cap': `Your account has taken all the hides a day allows (${HIDES_PER_DAY}, across your characters).`,
-  'prof-fish-cap': `Your account has hauled all the nets a day allows (${HAULS_PER_DAY}, across your characters). The water rests until midnight UTC.`,   // PROF8
+  'prof-hunt-cap': 'Your account has taken all the hides a day allows, across your characters.',   // CAP-OFF: kept for one not yet redeployed
+  'prof-fish-cap': 'Your account has hauled all the nets a day allows, across your characters. The water rests until midnight UTC.',   // PROF8; CAP-OFF: kept, as above
   'prof-hunt-high': `Your account has taken all the rare hides a day allows (${HIGH_HIDES_PER_DAY}, across your characters).`,
   'prof-foe': 'No knife takes a hide from that body.',
   'prof-dye': 'That cannot be dyed so.',

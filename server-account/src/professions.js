@@ -18,10 +18,11 @@
 //
 // A node's id is real by the law (nodeLaw.js - a hash of the pixel and
 // the UTC day); the act's end is the request's, ten minutes at most past
-// (ANY-HOUR: no hour of it is refused); the cap, the Stores' room and the
-// dice are the service's. The act's report moves the roll by its bounded
-// step only (PROF0 5.1: a bruise one less, the Basket's +50% at most) -
-// the tool, its wear, the foe and the load are the client's courtesy.
+// (ANY-HOUR: no hour of it is refused); the Stores' room and the dice are
+// the service's (CAP-OFF: no day's cap). The act's report moves the roll
+// by its bounded step only (PROF0 5.1: a bruise one less, the Basket's
+// +50% at most) - the tool, its wear, the foe and the load are the
+// client's courtesy.
 //
 // ═══ ONE STATEMENT DECIDES, AND A REQUEST ASKED TWICE IS ONE ════════
 //
@@ -48,11 +49,11 @@ import { MARKS_MAX, utcDay, gatherFindOf } from '../../src/net/marksLaw.js';
 import { renownForXp, RENOWN_XP_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
 import {
   PROFESSIONS, isProfession, rankOfXp, tierOpen, harvestXp, writXp, specOk, specsAt, SPEC_RANKS, RESPEC,
-  HARVESTS_PER_DAY, STORES_MAX, WITHDRAW_MAX, PROF_OPS_MAX, PROF_OPS_WINDOW_S, HARVEST_LATE_S, HARVEST_EARLY_S,
+  STORES_MAX, WITHDRAW_MAX, PROF_OPS_MAX, PROF_OPS_WINDOW_S, HARVEST_LATE_S, HARVEST_EARLY_S,
   PROF_RID_RE, PROF_XP_MAX, profSwitchOf, basketStep, herbKey, professionOfFamily, courtWritCount, COURT_WRITS_PER_DAY,
-  glintsMax, smeltRecipe, SMELT_MAX, smeltXp, craftXpCap, HARVESTS_PER_ACCOUNT_DAY, DEEP_UNCONFIRMED_PER_DAY,
-  stockOf, STOCK_MAX, withdrawable, cutsMax, workPer, workSpecRank, hideOfFoe, HIDES_PER_DAY, HIGH_HIDES_PER_DAY, HIGH_HIDE_TIER,
-  HAULS_PER_DAY, HAUL_YIELD, FISH_KEY, haulTier,   // PROF8
+  glintsMax, smeltRecipe, SMELT_MAX, smeltXp, craftXpCap, DEEP_UNCONFIRMED_PER_DAY,   // CAP-OFF: no day's cap to import
+  stockOf, STOCK_MAX, withdrawable, cutsMax, workPer, workSpecRank, hideOfFoe, HIGH_HIDES_PER_DAY, HIGH_HIDE_TIER,
+  HAUL_YIELD, FISH_KEY, haulTier,   // PROF8
   herbXpTier,   // HERB-XP
   workOpen,   // PROF11: a mason's work asks its rank
   workSpecOk,   // PROF12: a Transmuter's transmutation asks its choice
@@ -236,7 +237,7 @@ export async function profState({ db, nowS }, player, env, { character } = {}) {
     writs: { today: await writsToday(db, player.id, day), max: COURT_WRITS_PER_DAY },
     hunt: await huntToday(db, player.id, day),   // PROF7: the account's hides today (PROF0 6)
     hauls: await haulsToday(db, player.id, day),   // PROF8: the account's hauls today (PROF0 6)
-    caps: { harvests: HARVESTS_PER_DAY, stores: STORES_MAX, withdraw: WITHDRAW_MAX, hides: HIDES_PER_DAY, highHides: HIGH_HIDES_PER_DAY, hauls: HAULS_PER_DAY },
+    caps: { stores: STORES_MAX, withdraw: WITHDRAW_MAX, highHides: HIGH_HIDES_PER_DAY },   // CAP-OFF: no day's harvests, hides or hauls
   };
 }
 
@@ -348,14 +349,15 @@ function traceOf(act) {
   const clean = act?.clean === true, torn = act?.torn === true;
   return { clean: clean && !torn, torn: torn && !clean };
 }
-/** PROF7 - the account's hides today (PROF0 6: 30, of them 3 of tiers 5-6), every character's together. AUDIT 32 L2: the
- *  hides - the rows' units, a clean pelt's second among them - where it counted the bodies, so a day ran to 60. */
+/** PROF7 - the account's hides today, and of them those of tiers 5-6 (PROF0 6: 3 a day - CAP-OFF: the day's thirty of any
+ *  tier are said, not bounded), every character's together. AUDIT 32 L2: the hides - the rows' units, a clean pelt's
+ *  second among them - where it counted the bodies. */
 async function huntToday(db, player, day) {
   const r = await db.prepare(`SELECT COALESCE(SUM(qty), 0) AS n, COALESCE(SUM(CASE WHEN tier >= ?3 THEN qty ELSE 0 END), 0) AS high
     FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?2`).bind(player, day, HIGH_HIDE_TIER).first();
   return { hides: Number(r?.n ?? 0), high: Number(r?.high ?? 0) };
 }
-/** PROF8 - the account's hauls today (PROF0 6: 40), every character's together - the rows, a haul each. */
+/** PROF8 - the account's hauls today (CAP-OFF: said, no longer bounded), every character's together - the rows, a haul each. */
 async function haulsToday(db, player, day) {
   const r = await db.prepare("SELECT COUNT(*) AS n FROM node_harvests WHERE player = ?1 AND profession = 'fishing' AND day = ?2").bind(player, day).first();
   return Number(r?.n ?? 0);
@@ -382,13 +384,14 @@ function cutsOf(act, tier, lumberjack) {
  * at a tree), the act's end on the shared clock (epoch seconds)
  * and the request's id. The id must be today's and real by the law; `at` at most ten minutes past, at any hour (ANY-HOUR,
  * 2026-10-01, Mac: "Remove the time limit for professions. Should be available at any time"); the ground as the witnesses confirmed it, or taken at the claim's word at the least it is worth (a
- * pixel's tiers 1-2 and no march or signature; a dungeon's tier 3 and no gem); the tier inside the rank; the day's cap
- * and the Stores' room decided in the harvest's own INSERT. The yield, and a gem, are the service's dice.
+ * pixel's tiers 1-2 and no march or signature; a dungeon's tier 3 and no gem); the tier inside the rank; the Stores'
+ * room decided in the harvest's own INSERT - CAP-OFF (2026-10-07, Mac: "Remove the cap on life skills"): no day's cap.
+ * The yield, and a gem, are the service's dice.
  *
  * PROF7: A BODY (`body:<day>:<id>`, kind `hide`, `foe` the DFU MobileTypes of the body the client says its own blow
  * felled; the act `{ clean, torn }` - the Skinning Knife's trace). Hunting is bounded, not witnessed (PROF0 6): a body
- * names no ground, keeps no hours and writes no witness, the tier is the foe's the client claims - and the account's day
- * is the whole defence, 30 hides and 3 of them of tiers 5-6, decided in the same INSERT.
+ * names no ground, keeps no hours and writes no witness, the tier is the foe's the client claims - and the account's rare
+ * hides are its defence, 3 of tiers 5-6 a day, decided in the same INSERT (CAP-OFF: the day's thirty of any tier are gone).
  */
 export async function harvestNode(ctx, player, env, body = {}) {
   const { db, nowS, rand } = ctx;
@@ -560,38 +563,34 @@ export async function harvestNode(ctx, player, env, body = {}) {
   const deepUnconfirmed = deep && !confirmed ? 1 : 0;
   const mine = 'player = ?1 AND rid = ?2 AND n = ?3';
   const stored = `COALESCE((SELECT SUM(qty) FROM ${T} WHERE player = ?1 AND char_id = ?4 AND material = ?5), 0)`;   // BAG1: the count it lands in
-  const storedExtra = `COALESCE((SELECT SUM(qty) FROM ${T} WHERE player = ?1 AND char_id = ?4 AND material = ?20), 0)`;
-  // PROF7: Hunting's day, in hides (AUDIT 32 L2) - the account's, and its tiers 5-6
-  const hunted = "COALESCE((SELECT SUM(qty) FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?6), 0)";
-  const huntedHigh = "COALESCE((SELECT SUM(qty) FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?6 AND tier >= ?23), 0)";
-  // PROF8: Fishing's day - the account's hauls, a row each (PROF0 6: 40)
-  const hauled = "(SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND profession = 'fishing' AND day = ?6)";
+  const storedExtra = `COALESCE((SELECT SUM(qty) FROM ${T} WHERE player = ?1 AND char_id = ?4 AND material = ?18), 0)`;
+  // PROF7: Hunting's rare hides today, in hides (AUDIT 32 L2) - the account's, of tiers 5-6. CAP-OFF: its day of thirty
+  // hides of any tier, and Fishing's of forty hauls, are counted no more
+  const huntedHigh = "COALESCE((SELECT SUM(qty) FROM node_harvests WHERE player = ?1 AND profession = 'hunting' AND day = ?6 AND tier >= ?20), 0)";
   await db.batch([
     // BAG1: the carried count cut to what the pack and the bag hold of it, before the decision reads its room
     // AUDIT BAG1 B2/B3: and only the material the held count is of (`heldKey` - a herb, a log, a hide: the client names
     // the node's own; the Basket's roll is the service's, named nowhere), while the client's view is current, before a twin
     ...(heldNow != null && body?.heldKey === key2 ? clampStatements(db, { player: player.id, character, material: key2, held: heldNow, rid, seen,
       twin: 'NOT EXISTS (SELECT 1 FROM node_harvests WHERE player = ?1 AND rid = ?5)' }) : []),
-    // THE DECISION: today's cap for the profession (the character's, and the account's - AUDIT 29 A3), a dungeon nobody
-    // vouched for within its four (A5), PROF7: Hunting's day for the account - 30 hides, 3 of tiers 5-6 (PROF0 6), the
-    // hide cut to the day's room as to the Stores' (AUDIT 32 L2) - the node not yet taken (the key), room in the Stores -
-    // the yield cut to it, the XP to what the track can take (A14: the answer says what was credited); the second find
-    // kept where one of it fits, its count cut to its room (AUDIT 32 S3: a Butcher's two at 4,999 were both lost)
+    // THE DECISION: a dungeon nobody vouched for within its four (AUDIT 29 A5), PROF7: Hunting's rare hides for the
+    // account - 3 of tiers 5-6 (PROF0 6), a rare hide cut to their day's room as to the Stores' (AUDIT 32 L2) - the node not
+    // yet taken (the key), room in the Stores - the yield cut to it, the XP to what the track can take (A14: the answer
+    // says what was credited); the second find kept where one of it fits, its count cut to its room (AUDIT 32 S3: a
+    // Butcher's two at 4,999 were both lost). CAP-OFF: no day's cap - a character's sixty in a profession, an account's
+    // 120 (A3), Hunting's thirty hides and Fishing's forty hauls are asked no more
     db.prepare(`INSERT OR IGNORE INTO node_harvests (day, node, kind, player, char_id, profession, material, qty, xp, gem, at, rid, n, deep_unconfirmed, extra, tier, extra_qty, trophy, carry)
       SELECT ?6, ?7, ?8, ?1, ?4, ?9, ?5, MIN(?10, ?11 - ${stored},
-          CASE WHEN ?9 = 'hunting' THEN ?21 - ${hunted} ELSE ?10 END, CASE WHEN ?9 = 'hunting' AND ?22 >= ?23 THEN ?24 - ${huntedHigh} ELSE ?10 END),
-        MAX(0, MIN(?12, ?19 - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?4 AND profession = ?9), 0))),
-        CASE WHEN COALESCE((SELECT SUM(qty) FROM ${T} WHERE player = ?1 AND char_id = ?4 AND material = ?15), 0) < ?11 THEN ?15 END, ?13, ?2, ?3, ?17,
-        CASE WHEN ${storedExtra} < ?11 THEN ?20 END, ?22, CASE WHEN ${storedExtra} < ?11 THEN MIN(?25, ?11 - ${storedExtra}) ELSE 1 END, ?27, ?28
-      WHERE (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND char_id = ?4 AND profession = ?9 AND day = ?6) < ?14
-        AND (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND profession = ?9 AND day = ?6) < ?16
-        AND (?17 = 0 OR (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND day = ?6 AND deep_unconfirmed = 1) < ?18)
-        AND (?9 <> 'hunting' OR (${hunted} < ?21 AND (?22 < ?23 OR ${huntedHigh} < ?24)))
-        AND (?9 <> 'fishing' OR ${hauled} < ?26)   -- PROF8: the account's forty hauls
+          CASE WHEN ?9 = 'hunting' AND ?19 >= ?20 THEN ?21 - ${huntedHigh} ELSE ?10 END),
+        MAX(0, MIN(?12, ?17 - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?4 AND profession = ?9), 0))),
+        CASE WHEN COALESCE((SELECT SUM(qty) FROM ${T} WHERE player = ?1 AND char_id = ?4 AND material = ?14), 0) < ?11 THEN ?14 END, ?13, ?2, ?3, ?15,
+        CASE WHEN ${storedExtra} < ?11 THEN ?18 END, ?19, CASE WHEN ${storedExtra} < ?11 THEN MIN(?22, ?11 - ${storedExtra}) ELSE 1 END, ?23, ?24
+      WHERE (?15 = 0 OR (SELECT COUNT(*) FROM node_harvests WHERE player = ?1 AND day = ?6 AND deep_unconfirmed = 1) < ?16)
+        AND (?9 <> 'hunting' OR ?19 < ?20 OR ${huntedHigh} < ?21)
         AND ?11 - ${stored} >= 1`)
-      .bind(player.id, rid, nonce, character, key2, day, node, kind, profession, kept, ROOM, xp, at, HARVESTS_PER_DAY, gem,
-        HARVESTS_PER_ACCOUNT_DAY, deepUnconfirmed, DEEP_UNCONFIRMED_PER_DAY, PROF_XP_MAX, extra,
-        HIDES_PER_DAY, tier, HIGH_HIDE_TIER, HIGH_HIDES_PER_DAY, extraQty, HAULS_PER_DAY, trophy, carry ? 1 : 0),
+      .bind(player.id, rid, nonce, character, key2, day, node, kind, profession, kept, ROOM, xp, at, gem,
+        deepUnconfirmed, DEEP_UNCONFIRMED_PER_DAY, PROF_XP_MAX, extra,
+        tier, HIGH_HIDE_TIER, HIGH_HIDES_PER_DAY, extraQty, trophy, carry ? 1 : 0),
     db.prepare(`INSERT INTO ${T} (player, char_id, material, origin, qty)
       SELECT player, char_id, material, 'own', qty FROM node_harvests WHERE ${mine}
       ON CONFLICT (player, char_id, material, origin) DO UPDATE SET qty = ${T}.qty + excluded.qty`).bind(player.id, rid, nonce),
@@ -632,15 +631,11 @@ export async function harvestNode(ctx, player, env, body = {}) {
   if (made) return harvestAnswer(db, made, nowS, { repeat: true, ...(await gatherMarksOf(ctx, player, env, rid)) });   // the same request, racing itself
   if (await db.prepare('SELECT 1 FROM node_harvests WHERE day = ?1 AND node = ?2 AND kind = ?3 AND player = ?4 AND char_id = ?5')
     .bind(day, node, kind, player.id, character).first()) return { error: 'node-taken' };
-  if (((await todayOf(db, player.id, character, day))[profession] ?? 0) >= HARVESTS_PER_DAY) return { error: 'prof-cap' };
-  const acct = await db.prepare('SELECT COUNT(*) AS n FROM node_harvests WHERE player = ?1 AND profession = ?2 AND day = ?3').bind(player.id, profession, day).first();
-  if (Number(acct?.n ?? 0) >= HARVESTS_PER_ACCOUNT_DAY) return { error: 'prof-account-cap' };
-  if (isBody) {   // PROF7: Hunting's day (PROF0 6)
+  // CAP-OFF: no day's cap to say - `prof-cap`, `prof-account-cap`, `prof-hunt-cap` and `prof-fish-cap` are said no more
+  if (isBody) {   // PROF7: Hunting's rare hides (PROF0 6)
     const hunt = await huntToday(db, player.id, day);
-    if (hunt.hides >= HIDES_PER_DAY) return { error: 'prof-hunt-cap' };
     if (tier >= HIGH_HIDE_TIER && hunt.high >= HIGH_HIDES_PER_DAY) return { error: 'prof-hunt-high' };
   }
-  if (isHaul && (await haulsToday(db, player.id, day)) >= HAULS_PER_DAY) return { error: 'prof-fish-cap' };   // PROF8
   if (deepUnconfirmed) {
     const d = await db.prepare('SELECT COUNT(*) AS n FROM node_harvests WHERE player = ?1 AND day = ?2 AND deep_unconfirmed = 1').bind(player.id, day).first();
     if (Number(d?.n ?? 0) >= DEEP_UNCONFIRMED_PER_DAY) return { error: 'prof-deep-cap' };

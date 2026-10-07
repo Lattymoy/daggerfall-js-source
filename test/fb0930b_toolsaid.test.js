@@ -95,7 +95,7 @@ async function stage({ online = true, open = true, world = {}, rank = 100, under
   S.e.items.push(...[...PROFESSION_TOOLS, FT.Spade].map((t) => S.tools[t]));
   const fresh = Object.fromEntries(PROFESSION_TOOLS.map((t) => [t, S.tools[t].currentCondition]));
   const book = S.book = {
-    state: { open: true, today: {}, hauls: 0, caps: { harvests: 60, stores: 5000, hauls: 40 } },
+    state: { open: true, today: {}, hauls: 0, caps: { stores: 5000 } },
     stale: () => false, refresh: async () => ({ ok: true }), pixel: () => ({ state: 'none' }), askPixels: async () => [], pump: () => {},
     dungeon: () => null, askDungeon: async () => false, held: () => 0,
     taken: (k, h) => S.taken.has(`${k}|${h}`), counting: (k, h) => S.counting.has(`${k}|${h}`),

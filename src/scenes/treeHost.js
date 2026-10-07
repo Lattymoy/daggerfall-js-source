@@ -126,15 +126,15 @@ export function sinkFelled(forest, sunk, renderer) {
   }
 }
 
-/** A tree's plan: what E does at it, or what it needs (a rank short: the rank, `needsRank` - VEIN-NEED). */
-export function treePlan({ node, taken, counting, rank, axe, storesFull, today, cap, lumberjack = false, fullWords = 'Stores full' }) {   // BAG1: `fullWords` the book's
+/** A tree's plan: what E does at it, or what it needs (a rank short: the rank, `needsRank` - VEIN-NEED). CAP-OFF: no day's
+ *  cap - a tree is felled once a character a day, and that is the whole of the day's bound. */
+export function treePlan({ node, taken, counting, rank, axe, storesFull, lumberjack = false, fullWords = 'Stores full' }) {   // BAG1: `fullWords` the book's
   const name = materialLabel(node.material).replace(/ Log$/, '');
   const verb = `Chop ${name}`;
   const rankWord = `Logging ${rank} - ${chopsFor(node.tier, lumberjack)} chops`;   // AUDIT 30 A8: a Lumberjack's two fewer, as the act counts them
   if (taken || counting) return { harvest: 'logs', verb, rest: 'felled today', ready: false };
   if (!tierOpen(rank, node.tier)) return { harvest: 'logs', verb, rest: `needs Logging ${TIER_RANKS[node.tier - 1]}`, ready: false, needsRank: TIER_RANKS[node.tier - 1] };
   if (!axe) return { harvest: 'logs', verb, rest: 'needs a Wood-Axe', ready: false };
-  if (today >= cap) return { harvest: 'logs', verb, rest: `Logging done for today (${cap})`, ready: false };
   if (storesFull(node.material)) return { harvest: 'logs', verb, rest: `${fullWords} - ${materialLabel(node.material)}`, ready: false };
   return { harvest: 'logs', verb, rest: rankWord, ready: true };
 }
@@ -192,7 +192,6 @@ export function treeKind({ book, renderer = null, flatBatchAabb = null, getTextu
         node: n, taken: book.taken(n.key, 'logs'), counting: book.counting(n.key, 'logs'), rank: rank('logging'),
         lumberjack: specs?.('logging')?.[50] === 'lumberjack',
         axe: !!foragingToolIn(entity, FT.WoodAxe), storesFull: (key) => storesFullIn(book, key), fullWords: fullWordsIn(book),   // STORES-ROOM: every origin, as the service counts
-        today: book.state.today?.logging ?? 0, cap: book.state.caps?.harvests ?? 60,
       });
       return { ...plan, profession: 'logging' };
     },

@@ -1,7 +1,7 @@
 // AUDIT 32 (2026-09-30, Mac: "Audit this") - PROF7'S BOOKS AND HOSTS AS THE AUDIT FOUND THEM (src/scenes/huntHost.js,
 // gatherHost.js, world.js, worldModes.js, dungeonContext.js, exteriorFoes.js; src/net/profBook.js): a body lapses at the
-// UTC day's turn, as the service lets its key (B1/H1); a refusal that says the account's day is full raises the book's
-// count to it (B2); an answer heard after a character switch is its own character's (B5); a dungeon with no identity is
+// UTC day's turn, as the service lets its key (B1/H1); a refusal that says the account's rare hides are spent raises the
+// book's count to them (B2; CAP-OFF: the day's thirty, the other refusal it said, is gone); an answer heard after a character switch is its own character's (B5); a dungeon with no identity is
 // still one the host stands in, its bodies nodes, and a dungeon body names no ground (H2, H9); at sea the knife never
 // works, so E is the loot's (H4); a body is reached as DFU reaches its corpse, and stood over asks a step back (H7); the
 // choice key's search opens the body's own loot by its key, never a search of nothing (H8); the trace's end said (P10);
@@ -16,7 +16,7 @@ import { readFileSync } from 'node:fs';
 
 import { createProfBook } from '../src/net/profBook.js';
 import { utcDayOfMs } from '../src/net/nodeLaw.js';
-import { xpForRank, SKINNING_KNIFE, TRACE_ACT, HIDES_PER_DAY, HIGH_HIDES_PER_DAY } from '../src/net/professionLaw.js';
+import { xpForRank, SKINNING_KNIFE, TRACE_ACT, HIGH_HIDES_PER_DAY } from '../src/net/professionLaw.js';
 import { createBodyStamps, bodiesOf, huntKind, BODY_REACH, BODY_STEEPEST_DEG } from '../src/scenes/huntHost.js';
 import { createGatherHost, aimAt } from '../src/scenes/gatherHost.js';
 import { registerPlayerKillListener, reportPlayerKill } from '../src/systems/playerKills.js';
@@ -38,7 +38,7 @@ const TODAY = 20_833;
 function doorOf({ harvest, hunt = { hides: 0, high: 0 }, day = TODAY } = {}) {
   return {
     account: () => 'acct-1',
-    state: async () => ({ ok: true, data: { day, character: 'c1', tracks: [{ profession: 'hunting', xp: xpForRank(100), rank: 100, specs: { 50: null, 100: null } }], today: {}, taken: [], stores: [], caps: { harvests: 60, stores: 5000, hides: HIDES_PER_DAY, highHides: HIGH_HIDES_PER_DAY }, hunt } }),
+    state: async () => ({ ok: true, data: { day, character: 'c1', tracks: [{ profession: 'hunting', xp: xpForRank(100), rank: 100, specs: { 50: null, 100: null } }], today: {}, taken: [], stores: [], caps: { stores: 5000, withdraw: 200, highHides: HIGH_HIDES_PER_DAY }, hunt } }),
     pixels: async () => ({ ok: true, data: { pixels: [], dungeons: [] } }),
     harvest: harvest ?? (async () => ({ ok: false, error: 'offline' })),
   };
@@ -123,20 +123,28 @@ test('AUDIT 32 B1/H1: a body lapses at the UTC day\'s turn - its stamp none, no 
   } finally { h.done(); setForagingHost(null); }
 });
 
-// ─── B2: THE ACCOUNT'S DAY AS A REFUSAL SAYS IT ──────────────────────
+// ─── B2: THE ACCOUNT'S RARE HIDES AS A REFUSAL SAYS THEM ─────────────
 
-test('AUDIT 32 B2: a refusal that says the account\'s day is full raises the book\'s count to it - the plan says so, and the next body is no ready node', async () => {
-  for (const [error, which, foe] of [['prof-hunt-cap', 'hides', MOBILE_TYPES.Rat], ['prof-hunt-high', 'high', MOBILE_TYPES.Harpy]]) {
-    const door = doorOf({ harvest: async () => ({ ok: false, error }) });
-    const book = await ready(door);
+test('AUDIT 32 B2: a refusal that says the account\'s rare hides are spent raises the book\'s count to them - the plan says so, and the next rare body is no ready node, while a body below the rare is; CAP-OFF: the day\'s thirty, an old service\'s `prof-hunt-cap`, raises nothing and closes no body (mutant: the old refusal learned again)', async () => {
+  setForagingHost({ world: () => WILDS });
+  try {
+    const bodyAt = (foe, tier, id) => ({ foe, tier, hide: 'hide:rat', key: `body:${TODAY}:${id}`, lootKey: () => null });
+    const book = await ready(doorOf({ harvest: async () => ({ ok: false, error: 'prof-hunt-high' }) }));
     assert.deepEqual(book.state.hunt, { hides: 0, high: 0 }, 'this device saw none');
-    const r = await book.harvest({ node: `body:${TODAY}:0123456789ab`, kind: 'hide', act: { clean: false }, at: TODAY * 86_400 + 3600, foe });
-    assert.equal(r.error, error);
-    assert.equal(book.state.hunt[which], which === 'hides' ? HIDES_PER_DAY : HIGH_HIDES_PER_DAY, `${error}: the day as the service says it`);
+    const r = await book.harvest({ node: `body:${TODAY}:0123456789ab`, kind: 'hide', act: { clean: false }, at: TODAY * 86_400 + 3600, foe: MOBILE_TYPES.Harpy });
+    assert.equal(r.error, 'prof-hunt-high');
+    assert.equal(book.state.hunt.high, HIGH_HIDES_PER_DAY, 'the rare hides as the service says them');
     const kind = huntKind({ book, bodies: () => [] });
-    const plan = kind.plan({ foe, tier: foe === MOBILE_TYPES.Harpy ? 5 : 1, hide: 'hide:rat', key: `body:${TODAY}:0123456789ac`, lootKey: () => null }, { rank: () => 100, keyLabel: () => 'R' });
-    assert.equal(plan.ready, false, `${error}: the next body says the day is full`);
-  }
+    const ctx = { rank: () => 100, keyLabel: () => 'R' };
+    assert.equal(kind.plan(bodyAt(MOBILE_TYPES.Harpy, 5, '0123456789ac'), ctx).ready, false, 'the next rare body says the day is full');
+    assert.equal(kind.plan(bodyAt(MOBILE_TYPES.Rat, 1, '0123456789ad'), ctx).ready, true, 'a body below the rare: ready');
+    // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): `prof-hunt-cap` raised the hides to the day's
+    // thirty and every next body said the day was full; a service not yet redeployed may still say it - it moves nothing
+    const old = await ready(doorOf({ harvest: async () => ({ ok: false, error: 'prof-hunt-cap' }) }));
+    assert.equal((await old.harvest({ node: `body:${TODAY}:0123456789ae`, kind: 'hide', act: { clean: false }, at: TODAY * 86_400 + 3600, foe: MOBILE_TYPES.Rat })).error, 'prof-hunt-cap');
+    assert.deepEqual(old.state.hunt, { hides: 0, high: 0 }, 'nothing raised');
+    assert.equal(huntKind({ book: old, bodies: () => [] }).plan(bodyAt(MOBILE_TYPES.Rat, 1, '0123456789af'), ctx).ready, true, 'the next body ready');
+  } finally { setForagingHost(null); }
 });
 
 // ─── B5: AN ANSWER IS ITS OWN CHARACTER'S ────────────────────────────

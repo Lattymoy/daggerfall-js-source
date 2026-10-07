@@ -139,7 +139,7 @@ test('FOOT-IN (the audit of ROCK-FOOT): a node stands on its own pixel - a piece
   assert.ok(p.every((n) => n.local[0] >= 0 && n.local[0] <= E && n.local[2] >= 0 && n.local[2] <= E));
   // the real gathering host over the pixel with the piece over its edge: the player on the next pixel's ground, a metre
   // and a half from the boulder, looking at it - the target (a node past the edge was lit and never found)
-  const book = { state: { open: true, today: {}, caps: { harvests: 60, stores: 5000 } }, stale: () => false, refresh: async () => ({ ok: true }), pixel: () => ({ state: 'none' }),
+  const book = { state: { open: true, today: {}, caps: { stores: 5000 } }, stale: () => false, refresh: async () => ({ ok: true }), pixel: () => ({ state: 'none' }),
     askPixels: async () => [], pump: () => {}, dungeon: () => null, askDungeon: async () => false, held: () => 0, taken: () => false, counting: () => false,
     track: () => ({ rank: 100, specs: { 50: null, 100: null } }), harvest: () => new Promise(() => {}) };
   const entry = { px: PX, py: PY, samples, tilemap: grass, locationRect: null, batches: [], rocks: over };

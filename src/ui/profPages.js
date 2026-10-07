@@ -50,7 +50,7 @@
 import { clampCarried, carriedTotal, DEPOSIT_MAX, BAG_WORDS } from '../net/bagLaw.js';   // BAG1: what a character carries
 import {
   PROFESSIONS, SPECIALISATIONS, SPEC_RANKS, RESPEC, xpForRank, rankName, PROF_RANK_MAX, TIER_RANKS, CRAFTS_ABOVE_JOURNEYMAN,
-  JOURNEYMAN_RANK, MATERIAL_FAMILIES, HARVESTS_PER_DAY, HIDES_PER_DAY, HIGH_HIDES_PER_DAY, HAULS_PER_DAY, WITHDRAW_MAX, professionName, SMELT_RECIPES, SMELT_MAX, FORGE_FEE,
+  JOURNEYMAN_RANK, MATERIAL_FAMILIES, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, professionName, SMELT_RECIPES, SMELT_MAX, FORGE_FEE,
   withdrawable, stockOf, STOCK_MAX, BURN_RECIPES, SAW_RECIPES, WORKBENCH_FEE, WOODS, workPer, workSpecRank, CURE_RECIPES,
   WEAVE_RECIPES, LOOM_FEE, CLOTHS, WEAVERS_STOCK, STANDARD_SILK,
   MASON_RECIPES, MASON_FEE, workOpen,   // PROF11: the mason's bench
@@ -466,14 +466,16 @@ export function drawProfessionsPage(detail, rerender, kit) {
   const practised = PRACTISED.includes(_sel);
   if (!practised) pane.append(el('p', 'px-note', PARTLY[_sel] ?? 'This profession is not practised in the Bay yet.'));
   if (_sel === 'hunting') {
-    // PROF7: Hunting's day is the account's (PROF0 6) - its hides, every character's together, and the rare ones
+    // PROF7: Hunting's day is the account's (PROF0 6) - its hides, every character's together, and the rare ones (CAP-OFF:
+    // the hides a count, the rare ones' three the day's one bound)
     const h = book.state.hunt ?? { hides: 0, high: 0 };
-    pane.append(el('p', 'prof-today', `Today: ${h.hides} of ${book.state.caps?.hides ?? HIDES_PER_DAY} hides, ${h.high} of ${book.state.caps?.highHides ?? HIGH_HIDES_PER_DAY} of tiers 5-6 - your account's, across your characters`));
+    pane.append(el('p', 'prof-today', `Today: ${h.hides} hide${h.hides === 1 ? '' : 's'}, ${h.high} of ${book.state.caps?.highHides ?? HIGH_HIDES_PER_DAY} of tiers 5-6 - your account's, across your characters`));
     // TOUCH-HOLD: the knife's Use, as the Sickle's - it holds the knife, so the line is drawn with no key held
     pane.append(el('p', 'px-note', 'Skin a body you killed with a Skinning Knife in your pack: hold the use key at the start of the line and drag the knife along it. Using the knife from your hotbar or a quick slot holds it for you - just follow the line with your view. The body\'s list also lets you search it.'));
   } else if (_sel === 'fishing') {
-    // PROF8: Fishing's day is the account's too (PROF0 6) - its hauls, every character's together
-    pane.append(el('p', 'prof-today', `Today: ${book.state.hauls ?? 0} of ${book.state.caps?.hauls ?? HAULS_PER_DAY} hauls - your account's, across your characters`));
+    // PROF8: Fishing's day is the account's too (PROF0 6) - its hauls, every character's together (CAP-OFF: a count)
+    const hauls = book.state.hauls ?? 0;
+    pane.append(el('p', 'prof-today', `Today: ${hauls} haul${hauls === 1 ? '' : 's'} - your account's, across your characters`));
     pane.append(el('p', 'px-note', FISHING_HOW));
   } else if (_sel === 'enchanting') {
     // PROF12: Enchanting's layer said where its rank is read - the item maker's gold, and what raises it
@@ -481,7 +483,8 @@ export function drawProfessionsPage(detail, rerender, kit) {
   } else if (_sel === 'alchemy') {
     pane.append(el('p', 'px-note', ALCHEMY_HOW));
   } else if (PROFESSIONS.find((x) => x.id === _sel)?.kind === 'gathering' && practised) {
-    pane.append(el('p', 'prof-today', `Today: ${book.state.today?.[_sel] ?? 0} of ${book.state.caps?.harvests ?? HARVESTS_PER_DAY} harvests`));
+    const today = book.state.today?.[_sel] ?? 0;   // CAP-OFF: the day's harvests, a count against no cap
+    pane.append(el('p', 'prof-today', `Today: ${today} harvest${today === 1 ? '' : 's'}`));
     if (GATHER_HOW[_sel]) pane.append(el('p', 'px-note', GATHER_HOW[_sel]));   // TOOL-SAID
   }
   // THE SPECIALISATIONS: two cards a rank, the chosen one lit; a change of mind pressed twice

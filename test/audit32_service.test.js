@@ -1,5 +1,6 @@
 // AUDIT 32 (2026-09-30, Mac: "Audit this") - PROF7 AS THE SERVICE KEEPS IT, AUDITED: Hunting's day counts HIDES - a
-// clean pelt's second among them - and the last skinning of the day is cut to its room, the rare hides' the same (L2);
+// clean pelt's second among them - and the last skinning of the rare hides is cut to their room (L2; CAP-OFF: the day's
+// thirty of any tier, whose room the last skinning was cut to as well, are gone - the pin turned to say so);
 // a body's ground is never read nor witnessed, so a hand-built one is no 500 (S2); a second find is kept where one of it
 // fits, its count cut to its room - a Butcher's two at 4,999 Raw Meat were both lost (S3); a body's foe is refused before
 // the hour's acts are spent (S4); a weave answers no track, where it answered Smithing's (S5); the Weavers' cloth alone
@@ -11,7 +12,7 @@ import assert from 'node:assert/strict';
 
 import { standService, T0 } from './accountDb.mjs';
 import { bodyKey } from '../src/net/nodeLaw.js';
-import { xpForRank, HIDES_PER_DAY, HIGH_HIDES_PER_DAY, STORES_MAX } from '../src/net/professionLaw.js';
+import { xpForRank, HIGH_HIDES_PER_DAY, STORES_MAX } from '../src/net/professionLaw.js';
 import { sharedClassicMinutes } from '../src/net/wire.js';
 import { utcDay } from '../src/net/marksLaw.js';
 
@@ -64,24 +65,27 @@ const skin = (who, foe, extra = {}) => ({
 
 // ─── L2: HUNTING'S DAY IS HIDES ──────────────────────────────────────
 
-test('AUDIT 32 L2: Hunting\'s day counts hides, a clean pelt\'s second among them - the last skinning cut to the day\'s room, the rare hides\' the same; the state and the answer say hides', async () => {
+test('AUDIT 32 L2: Hunting\'s day counts hides, a clean pelt\'s second among them - the rare hides\' last skinning cut to their room; the state and the answer say hides. CAP-OFF: no day\'s room for the rest - a clean pelt past the old thirty whole, a sixteenth body of two credited', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
   s.setXp(mac, xpForRank(100), 'hunting');
-  // 29 hides taken: a clean pelt that rolls its second is cut to the one the day has room for
-  s.hunted(mac, HIDES_PER_DAY - 1);
+  // PIN MOVED (CAP-OFF, 2026-10-07 - Mac: "Remove the cap on life skills"): 29 hides taken, a clean pelt that rolled its
+  // second was cut to the one the day had room for, and the next refused (`prof-hunt-cap`). No room is the day's now
+  s.hunted(mac, 29);
   const last = await steered(0, () => s.call('/v1/prof/harvest', skin(mac, MOB.Rat, { act: { clean: true } }), mac.secret));
   assert.equal(last.status, 200, JSON.stringify(last.body));
-  assert.deepEqual([last.body.qty, last.body.hunt], [1, { hides: HIDES_PER_DAY, high: 0 }], 'the thirtieth hide, and no thirty-first');
-  assert.deepEqual((await s.call('/v1/prof/harvest', skin(mac, MOB.Rat), mac.secret)).body, { error: 'prof-hunt-cap' });
+  assert.deepEqual([last.body.qty, last.body.hunt], [2, { hides: 31, high: 0 }], 'the clean pelt whole - the thirtieth hide and the thirty-first');
+  const next = await s.call('/v1/prof/harvest', skin(mac, MOB.Rat), mac.secret);
+  assert.deepEqual([next.status, next.body.hunt.hides], [200, 32], JSON.stringify(next.body));
 
-  // fifteen clean pelts of two are the day's thirty: a sixteenth body is refused
+  // fifteen clean pelts of two were the day's thirty, a sixteenth body refused: now credited, the day counted in hides
   const ann = await s.registered('Ann');
   s.setXp(ann, xpForRank(100), 'hunting');
-  s.hunted(ann, HIDES_PER_DAY / 2, 2);
-  assert.deepEqual((await s.call('/v1/prof/harvest', skin(ann, MOB.Rat), ann.secret)).body, { error: 'prof-hunt-cap' }, 'fifteen bodies, thirty hides');
+  s.hunted(ann, 15, 2);
+  const sixteenth = await s.call('/v1/prof/harvest', skin(ann, MOB.Rat), ann.secret);
+  assert.deepEqual([sixteenth.status, sixteenth.body.hunt], [200, { hides: 31, high: 0 }], 'fifteen bodies of two and one more: thirty-one hides');
   const st = (await s.call('/v1/prof/state', { character: ann.character }, ann.secret)).body;
-  assert.deepEqual(st.hunt, { hides: HIDES_PER_DAY, high: 0 });
+  assert.deepEqual(st.hunt, { hides: 31, high: 0 });
 
   // the rare hides: two taken, a clean Harpy's second cut to the third
   const bo = await s.registered('Cyrus');
