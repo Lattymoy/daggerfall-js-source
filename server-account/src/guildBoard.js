@@ -32,6 +32,7 @@ import { mintId, isMuted, overRate } from './accounts.js';
 import { guildActorOf } from './guilds.js';
 import { boardOpenFor } from './board.js';
 import { heraldryOfRow } from './halls.js';
+import { maskText } from '../../src/net/nameFilter.js';   // TEXT-F1: a guild note kept before the filter, starred as it is read
 import { HALL_POWERS, hallMay } from '../../src/net/hallLaw.js';
 import {
   GUILD_NOTES_LIVE_MAX, GUILD_NOTES_SHOWN, NOTE_DAY_S, NOTES_PINNED_MAX, BOARD_OPS_MAX, BOARD_WINDOW_S, NOTE_ID_RE,
@@ -54,7 +55,7 @@ async function liveCount(db, guildId, author, nowS) {
 
 /** A note as a member sees it: never its account, only the member who pinned it. */
 const noteView = (n, me) => ({
-  id: n.id, from: n.author_name, subject: n.subject, body: n.body, at: n.at, expiresAt: n.expires_at,
+  id: n.id, from: n.author_name, subject: maskText(n.subject), body: maskText(n.body), at: n.at, expiresAt: n.expires_at,   // TEXT-F1
   mine: n.author === me.player,
 });
 

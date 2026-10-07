@@ -292,7 +292,7 @@
   {
     "name": "PLACE-LRU-world-ground-held-after-the-ask",
     "file": "src/scenes/world.js",
-    "old": "    pipeline.tileArray(groundArchive); const groundTex",
+    "old": "    hold.tileArray(groundArchive); const groundTex",
     "new": "    const groundTex",
     "tests": [
       "test/fb1004d_placelru.test.js"

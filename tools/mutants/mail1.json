@@ -264,8 +264,8 @@
   {
     "name": "LAW-own-characters",
     "file": "src/net/wire.js",
-    "old": "export const wordsLine = (line) => visibleText(String(line ?? '').replace(/\\t/g, ' ')).replace(/\\s+/g, ' ').trim();",
-    "new": "export const wordsLine = (line) => String(line ?? '').replace(/\\t/g, ' ').replace(/\\s+/g, ' ').trim();",
+    "old": "export const wordsLine = (line) => maskText(visibleText(String(line ?? '').replace(/\\t/g, ' ')).replace(/\\s+/g, ' ').trim());",
+    "new": "export const wordsLine = (line) => maskText(String(line ?? '').replace(/\\t/g, ' ').replace(/\\s+/g, ' ').trim());",
     "tests": [
       "test/mail1.test.js",
       "test/journal1.test.js"

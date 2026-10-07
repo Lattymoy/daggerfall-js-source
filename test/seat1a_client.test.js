@@ -233,8 +233,10 @@ test('SEAT1a the banners: the palace door\'s two, a gate\'s on its town side bes
   assert.deepEqual(b.top, [0.5, 2 + BOARD_PENNANT_RISE_M, 0.1]);
   const frames = new Map([[makeBuildingKey(1, 2, 1), { at: [0, 0, 0], box: [-5, 0, -5, 5, 8, 5], door: { a: [-1, 0, 5], b: [1, 0, 5] } }]]);
   const boards = [{ local: I, box: [0, 0, 0, 1, 2, 0.2] }, { local: I, box: [3, 0, 0, 4, 2, 0.2] }];
-  const all = seatBannerAnchors({ frames, palaceKeys: [makeBuildingKey(1, 2, 1)], gates: [gate], boards, bounty: new Set([1]), centre: [0, 20] });
-  assert.equal(all.length, 4, 'the door\'s two, the gate\'s one, the rumour board\'s one - never the bounty board\'s');
+  const all = seatBannerAnchors({ frames, palaceKeys: [makeBuildingKey(1, 2, 1)], gates: [gate], boards, notice: 0, centre: [0, 20] });   // AUDIT 657 D7: ONE-BOARD (PIN MOVED): the pennant over the one Notice Board, by its index
+  assert.equal(all.length, 4, 'the door\'s two, the gate\'s one, the Notice Board\'s one');
+  assert.deepEqual(all[3], boardPennantAnchor(boards[0]), 'ONE-BOARD: the pennant over the Notice Board itself');
+  assert.equal(seatBannerAnchors({ boards, notice: -1, centre: [0, 20] }).length, 0, 'no Notice Board, no pennant');
   const many = seatBannerAnchors({ gates: Array(12).fill(gate), centre: [0, 20] });
   assert.equal(many.length, SEAT_BANNERS_MAX);
   assert.deepEqual(townCentreOf(new Map([[1, { at: [2, 0, 4] }], [2, { at: [4, 0, 8] }]])), [3, 6]);
@@ -263,7 +265,7 @@ test('SEAT1a the hosts by source: the boot pass derives the seats over the hubs\
   assert.match(w, /if \(seat\) \{ townTalk\.say\(seatArrivalLine\(seat\), 5\); seatBook\.witness\(seat\); \}\n\s*else if \(hub\) townTalk\.say\(hubArrivalLine\(hub\), 5\);/);
   assert.match(w, /seatAt: seatBook \? \(summary\) => seatHere\(summary\?\.mapID \?\? summary\?\.mapId\) : null,/);
   assert.match(w, /const seatAnchors = pixelBoardSplit \? seatBannerAnchors\(\{/);
-  assert.match(w, /gates: pixelGates\.map\(\(g\) => \(\{ local: g\.local, box: g\.entry\?\._box \}\)\), boards: pixelBoards, bounty: pixelBoardSplit,/);   // PIN MOVED (AUDIT SEATS-3 F5): the anchors' own, not the siege field's
+  assert.match(w, /gates: pixelGates\.map\(\(g\) => \(\{ local: g\.local, box: g\.entry\?\._box \}\)\), boards: pixelBoards,\n\s*notice: noticeBoardIndex\(pixelBoards, pixelBoardSplit, townCentreOf\(pixelHomeFrames\)\),/);   // PIN MOVED (AUDIT SEATS-3 F5): the anchors' own, not the siege field's
   assert.match(w, /const pixelBoardSplit = dfLocation && locBlocks && seatAtMapId\(townSeats, dfLocation\.mapTableData\?\.mapId\) \? boardSplitOf\(\{ boards: pixelBoards \}\) : null;/, 'BOUNTY1\'s split through its one memo (AUDIT 28 H8)');
   assert.match(w, /if \(isBulletinBoard\(placed\.modelIdNum\)\) pixelBoards\.push\(\{ box, local \}\);/);
   // PIN MOVED (AUDIT SEATS-3): the halls' and the seats' merged into one kept list (C4: no spread a frame)

@@ -591,8 +591,8 @@
   {
     "name": "SEAT2b-works-lever-any-rank",
     "file": "src/ui/seatTab.js",
-    "old": "          lever: data.mine?.guild === holder.guild.id && SEAT_LEVER_RANKS.includes(data.mine?.rank),",
-    "new": "          lever: data.mine?.guild === holder.guild.id,",
+    "old": "      const ruling = !!holder && data.mine?.guild === holder.guild.id && SEAT_LEVER_RANKS.includes(data.mine?.rank);",
+    "new": "      const ruling = !!holder && data.mine?.guild === holder.guild.id;",
     "tests": [
       "test/seat2b_client.test.js"
     ]
@@ -600,8 +600,8 @@
   {
     "name": "SEAT2b-works-lever-any-guild",
     "file": "src/ui/seatTab.js",
-    "old": "          lever: data.mine?.guild === holder.guild.id && SEAT_LEVER_RANKS.includes(data.mine?.rank),",
-    "new": "          lever: SEAT_LEVER_RANKS.includes(data.mine?.rank),",
+    "old": "      const ruling = !!holder && data.mine?.guild === holder.guild.id && SEAT_LEVER_RANKS.includes(data.mine?.rank);",
+    "new": "      const ruling = !!holder && SEAT_LEVER_RANKS.includes(data.mine?.rank);",
     "tests": [
       "test/seat2b_client.test.js"
     ]
@@ -636,7 +636,7 @@
   {
     "name": "SEAT2b-works-unread",
     "file": "src/ui/seatTab.js",
-    "old": "    try { f = r.data && book.forts ? await book.forts(seat.key) : null; } catch { f = null; }",
+    "old": "    try { f = r.data && works ? await works : null; } catch { f = null; }",
     "new": "    f = null;",
     "tests": [
       "test/seat2b_client.test.js"

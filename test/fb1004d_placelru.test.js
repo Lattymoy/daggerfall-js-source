@@ -366,7 +366,10 @@ test('PLACE-LRU THE FOUR HOSTS: the world host holds each pixel and lets it go; 
   assert.match(W, /const pipeline = createDataPipeline\(\{ renderer, arch, palette \}\); const holdPixel = \(key\) => \(\{ \.\.\.pipeline, \.\.\.pipeline\.holdPlace\('pixel', key\) \}\);/, 'the pixel\'s view of the pipeline');
   assert.match(W, /breather\.reset\(\);[^\n]*\n\s*const key = `\$\{px\},\$\{py\}`, pipeline = holdPixel\(key\), \{ getGpuMesh, uploadRecord, uploadRecordFrame \} = pipeline;/, 'the build\'s doors and `pipeline` are the pixel\'s, from its first line');
   assert.match(W, /const seedTilemap = new Uint8Array\(128 \* 128\); made\.placeHold = pipeline;/, 'BUILD-FAIL1\'s ledger carries the hold');
-  assert.match(W, /pipeline\.tileArray\(groundArchive\); const groundTex = await getTexture\(groundArchive\);[^\n]*\n\s*if \(!renderer\.tileArrays\.has\(groundArchive\)\)/, 'the ground held before the cache is asked');
+  // ECOTONE1: PIN MOVED - the tile set's one home (loadGroundSet) holds through the pixel's door it is handed, the
+  // build's own `pipeline`, for its own set and every border neighbour's
+  assert.match(W, /hold\.tileArray\(groundArchive\); const groundTex = await getTexture\(groundArchive\);[^\n]*\n\s*if \(!renderer\.tileArrays\.has\(groundArchive\)\)/, 'the ground held before the cache is asked');
+  assert.match(W, /await loadGroundSet\(groundArchive, pipeline\);/, '...the pixel\'s own, held by the pixel');
   assert.match(W, /\n\s*placeHold: pipeline,\n\s*location: dfLocation \? dfLocation\.name : null,/, 'the published pixel carries its hold');
   assert.match(W, /console\.warn\(`\[roads\] pixel \$\{key\} painted without the network twice - kept as painted`\);\n\s*\}\n\s*const entry = built\.get\(key\); pipeline\.settle\(\);/, 'and settles it once it stands (past the roads retry, which tears it down and builds again)');
   const destroy = W.slice(W.indexOf('function destroyPixel(px, py'), W.indexOf('// --- Streaming state + player'));

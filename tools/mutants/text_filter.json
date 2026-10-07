@@ -1,0 +1,155 @@
+[
+  {
+    "name": "TEXT-F1-the-line-read-whole",
+    "file": "src/net/nameFilter.js",
+    "old": "    while (j < cps.length && isWordChar(cps[j])) j++;",
+    "new": "    while (j < cps.length) j++;",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-the-spelled-let-pass",
+    "file": "src/net/nameFilter.js",
+    "old": "    if (!single(k)) { k++; continue; }",
+    "new": "    { k++; continue; }",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-a-mark-starred-with-its-word",
+    "file": "src/net/nameFilter.js",
+    "old": "    while (to > from && EDGE_TAIL.has(cps[to - 1])) to--;\n",
+    "new": "",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-the-anywhere-words-read-alone",
+    "file": "src/net/nameFilter.js",
+    "old": "  const any = anywhereIn(flat);\n  if (any) return any.word;\n",
+    "new": "",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-the-server-words-read",
+    "file": "src/net/nameFilter.js",
+    "old": "const TEXT_LISTS = Object.freeze([{ kind: 'slur', words: SLURS }, { kind: 'crude', words: CRUDE }]);",
+    "new": "const TEXT_LISTS = Object.freeze([{ kind: 'slur', words: SLURS }, { kind: 'crude', words: CRUDE }, { kind: 'impersonation', words: IMPERSONATION }]);",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-a-number-read",
+    "file": "src/net/nameFilter.js",
+    "old": "  if (/^\\p{N}+$/u.test(word)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-a-name-read-for-the-anywhere-words-no-more",
+    "file": "src/net/nameFilter.js",
+    "old": "  if (any) return { ok: false, kind: any.kind, word: any.word, reason: `That name reads as \"${any.word}\". Please pick another.` };\n",
+    "new": "",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-the-chat-unstarred",
+    "file": "src/net/wire.js",
+    "old": "  return maskText(s.trim());",
+    "new": "  return s.trim();",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-the-words-unstarred",
+    "file": "src/net/wire.js",
+    "old": "=> maskText(visibleText(String(line",
+    "new": "=> String(visibleText(String(line",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-the-class-kept",
+    "file": "src/net/wire.js",
+    "old": " && !textCaught(look.class) ? look.class.trim() : null;",
+    "new": " ? look.class.trim() : null;",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-the-typed-name-raw",
+    "file": "src/systems/itemInfo.js",
+    "old": "    shown = maskText(name);",
+    "new": "    shown = name;",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-the-mark-kept",
+    "file": "src/net/recipeLaw.js",
+    "old": "  return n && !textCaught(n) ? n : null;",
+    "new": "  return n;",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-the-board-read-raw",
+    "file": "server-account/src/board.js",
+    "old": "subject: maskText(n.subject), body: maskText(n.body),",
+    "new": "subject: n.subject, body: n.body,",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-the-notices-read-raw",
+    "file": "server-account/src/board.js",
+    "old": "subject: maskText(x.subject), body: maskText(x.body),",
+    "new": "subject: x.subject, body: x.body,",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-the-guild-board-read-raw",
+    "file": "server-account/src/guildBoard.js",
+    "old": "subject: maskText(n.subject), body: maskText(n.body),",
+    "new": "subject: n.subject, body: n.body,",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-the-rank-word-let-pass",
+    "file": "server-account/src/guilds.js",
+    "old": "  if (caught) return { error: 'guild-rank-word', word: caught };\n",
+    "new": "",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  },
+  {
+    "name": "TEXT-F1-the-rank-word-unsaid",
+    "file": "server-account/src/index.js",
+    "old": "(r.error === 'guild-name-word' || r.error === 'guild-rank-word') && typeof r.word === 'string'",
+    "new": "r.error === 'guild-name-word' && typeof r.word === 'string'",
+    "tests": [
+      "test/text_filter.test.js"
+    ]
+  }
+]

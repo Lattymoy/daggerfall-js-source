@@ -704,3 +704,92 @@ stands on when his arrays do not load - and online that one failed fetch stood a
 than its room's. Online `loadModRoads`' failure is asked again (`retryModRoads`, WOD6's backoff: 5 s, doubling to a
 minute, twelve more tries); the pixels stand roadless meanwhile and the roads sweep rebuilds them when the arrays land
 (ROADS 25). The generated network stands in only once every try has failed; offline it stands in at once, as before.
+
+## VERGE1 - clear roadsides: nothing of the wild stands over a road (2026-10-07, a port departure)
+
+Mac: *"Making sure objects, like trees, avoid pathways and roads. Currently
+they slightly overlap"*.
+
+Every placer of the wild's flats asked ONE TILE - the one the flat's root
+stands on - and never how wide the thing standing there was:
+
+- DFU's scatter (`world/terrainNature.js` `dfuScatter`, Real forests off,
+  and every desert) roots each flat on its tile's south-west CORNER, so on
+  a road's east and north sides the root is the road's edge and half the
+  picture hangs over it;
+- Real forests (FOREST1) roots each inside its own tile, 0.64-5.76 m from
+  a road tile beside it;
+- Low Poly Trees stands a crown about that root - the temperate woods'
+  Trees reach 5.5 to 11 m (504's nine Tree records, summer: 9.68, 7.24,
+  8.5, 8.96, 9.25, 10.88, 11.14, 5.8, 5.52 m), more at the tree's own
+  scale (0.6-1.4).
+
+**The law** (`world/roadVerge.js`): a wild flat stands only where the DISC
+of its reach touches no road or track.
+
+- The road is Basic Roads' band - two tiles, 6.4 m either side of the line
+  from the pixel's centre to the edge or corner its compass bit names
+  (`PATH_HALF_M`), the network ROADS-CLEAR reads, asked of the pixel and
+  of every pixel a band within reach of the point runs through
+  (`roadRoom`). Measured as a disc to a segment: ROADS-CLEAR's grown
+  square reaches a diagonal road 1.41 times as far as a straight one. A
+  diagonal's painted road is narrower than its band (its flanks are half
+  tiles, 4.5 m from the line), so a diagonal's verge is up to 1.9 m wider
+  than its art. The band carries the tracks laid over dirt, which the
+  painter writes nothing for.
+- The reach is the widest anything stands there on any client
+  (`natureReach`): the classic picture's half width (DFU's own record size,
+  `rmbFlats.js` `classicBillboardSize`, never a replacement's) or the crown
+  Low Poly Trees stands for the record - the summer tree's or the winter
+  one's, the wider, so a season moves no flat (`lptCrownOf`) - at the
+  tree's own scale (`lptVariety`, a function of where it stands). Where the
+  wild's flats stand is the room's ground online, and Low Poly Trees is the
+  player's own (it draws the trees, it never moves them), so the crowns
+  are read off the vendored files into `world/lptCrowns.js`
+  (`tools/bakeLptCrowns.mjs`, 253 prototypes: each mesh's farthest vertex
+  across the ground under the prefab's scale, rounded up to the
+  centimetre) and keep a flat off the road on a client that draws none.
+
+**Where it is asked** - `scenes/world.js`, the nature loop: after the
+Oblivion Gate's clearing and the rock pieces, of the network the kernel
+painted with (`withRoads` - none when it painted none; the roads sweep
+builds the pixel again when the network lands). DFU's scatter and the woods
+alike, and a climate border's flats (ECOTONE1, `07-Rendering/Rendering.md`)
+by their own climate's pictures. Then:
+
+- a World of Daggerfall flat that ROADS-CLEAR stood (its root 2 m off the
+  band) keeps its picture's half width, at its own scale, off it too;
+- the gathering nodes that stand where DFU's nature would
+  (`natureStandsAt`'s `clear`, the pixel's `entry.verge`): a herb patch by
+  its glow's half width (`PATCH_MARK`, 1.1 m), a vein on the stone by its
+  own (`MINE_MARKS.vein`, 0.8 m - the stone's search, `nearestStone`, goes
+  on to the nearest the road leaves it), a Motherlode by its heap's
+  (`MOTHERLODE_MARK`, 1.7 m - a pixel's heart is where its roads meet, and
+  its nearest stone was often on the verge). A node at a rock piece's foot
+  keeps the piece's own clearance.
+
+**AUDIT FOREST1 F8, which never held.** F8 kept the woods off a track laid
+over dirt by the painter's `paths` mask, and the mask never named one:
+`TRACK_TILES`' dirt column is NO_CHANGE, the one NO_CHANGE in any of the
+four tables, and `tile()` returned before it marked. A track over dirt is
+marked now and still not written - the tile stays the ground's, and the
+painter's answer (not painted) is the mod's. So the woods (`layoutForests`),
+the grass and the home yards (ROAD-LOT) keep off it too.
+
+**The switch.** The Features row `road-verges` ("Clear roadsides"), on by
+default on the enhanced skin and forced on online (`scenes/shared.js`
+`roadVergesOn`, read once as the world mounts); `?verges=off` the kill
+door, offline. The classic skin offline stands DFU's flats where DFU stands
+them.
+
+**The four hosts.** `scenes/world.js` - wired (above). `scenes/exterior.js`
+- stands one location's town flats and their low-poly trees, paints no
+roads and lays no wild nature: nothing to clear. `scenes/worldModes.js` and
+`scenes/dungeonContext.js` - no terrain nature.
+
+Pinned in `test/verge1.test.js` (the band's geometry, across pixels and at
+the map's edge, the reach and the crowns' bake byte for byte, F8 end to
+end, the herbs, the veins and the Motherlode, the switch and the host);
+mutants in `tools/mutants/verge1.json` (23, all dead). Not verified here:
+no ARENA2, so the real roads were not walked and the classic pictures' half
+widths (read at runtime from the TEXTURE files) were not measured.

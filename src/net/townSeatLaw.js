@@ -378,9 +378,9 @@ export function seatMineLines(seat, mine, nameOf = () => null) {
   else if (here.held) out.push(`Your guild holds ${nameOf(here.key) ?? 'another seat'} in this region, and is pledged to it.`);
   else if (here.key === seat.key) out.push(`Your guild is pledged to ${seat.name}.`);
   else out.push(`Your guild is pledged to ${nameOf(here.key) ?? 'another seat'} in this region.`);
-  if (!mine.seasoned) out.push('You count for your guild\'s seats after 7 days in it.');
+  if (!mine.seasoned) out.push('You count for your guild after 7 days in it.');
   else if (mine.bound && mine.bound !== mine.guild) out.push('Your account fights for another guild this week.');
-  else if (here?.key === seat.key) out.push(`Your week here: ${mine.influence.toLocaleString('en-US')} of ${ACCOUNT_SEAT_WEEK_CAP.toLocaleString('en-US')}.`);
+  else if (here?.key === seat.key) out.push(`Your influence here this week: ${mine.influence.toLocaleString('en-US')} of ${ACCOUNT_SEAT_WEEK_CAP.toLocaleString('en-US')}.`);   // BOARD-UI: what the number is
   return out;
 }
 /** What the pledge buttons say. */
@@ -390,10 +390,10 @@ export const SEAT_PLEDGE_WORDS = Object.freeze({
   drop: 'Take the pledge down',
   full: `Your guild has pledged in ${SEAT_PLEDGE_REGIONS_MAX} regions this week.`,
 });
-/** Tribute's line for the guildmaster: its room in Drakes. */
+/** Tribute's line for the guildmaster: its room in silver. BOARD-UI: in plain words. */
 export const seatTributeLine = (room) => (room > 0
-  ? `Tribute: up to ${room.toLocaleString('en-US')} silver more this week (1 influence per ${TRIBUTE_MARKS_PER_INFLUENCE}, burnt).`
-  : 'Tribute: your guild has no room for more this week. Tribute is at most a fifth of a guild\'s week at a seat.');
+  ? `Tribute: up to ${room.toLocaleString('en-US')} silver more this week, 1 influence per ${TRIBUTE_MARKS_PER_INFLUENCE} silver (the silver is spent).`
+  : 'Tribute: no room left this week - it is at most a fifth of your guild\'s influence here.');
 
 // ═══ SEAT1c: THE TURNING (SEAT0 5.2, Appendix B) ════════════════════
 // The week settles the first time anything asks about any seat after its boundary - never a job that runs - in one

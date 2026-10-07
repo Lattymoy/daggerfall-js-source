@@ -109,7 +109,9 @@ test('WATER-PUDDLE: the CPU\'s turn is the pass\'s, texel for texel, and the gra
   // the placer: the corner table first (the rare water tile), then the puddle's own mask, from the layers the pass uploads
   const world = rd('src/scenes/world.js');
   assert.match(world, /groundPuddles\.set\(groundArchive, markPuddleWater\(layers\)\);/);
-  assert.match(world, /if \(waterCorners\(byte, WATER_DRAW_MASK_TABLE\)\) \{\n\s+const puddle = PUDDLE_RECORDS\.includes\(rec\) \? groundPuddles\.get\(p\.groundArchive\)\?\.\[rec\] : null;\n\s+if \(!puddle \|\| puddleWetAt\(puddle, byte, lx \/ 6\.4 - tx, lz \/ 6\.4 - tz\)\) return null;\n\s+\}/);
+  // PIN MOVED (ECOTONE1, 2026-10-07): the puddles of the set the root stands in (`ga`, keep's ground archive - at a climate
+  // border the neighbour's the ground's border gives the point; the pixel's own everywhere else)
+  assert.match(world, /if \(waterCorners\(byte, WATER_DRAW_MASK_TABLE\)\) \{\n\s+const puddle = PUDDLE_RECORDS\.includes\(rec\) \? groundPuddles\.get\(ga\)\?\.\[rec\] : null;\n\s+if \(!puddle \|\| puddleWetAt\(puddle, byte, lx \/ 6\.4 - tx, lz \/ 6\.4 - tz\)\) return null;\n\s+\}/);
 });
 
 const ARENA2 = process.env.ARENA2_PATH;

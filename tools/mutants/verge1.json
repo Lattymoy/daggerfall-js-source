@@ -1,0 +1,211 @@
+[
+  {
+    "name": "VERGE1-half-width-halved",
+    "file": "src/world/roadVerge.js",
+    "old": "export const PATH_HALF_M = PATH_HALF_WIDTH / UNITS_PER_METRE;",
+    "new": "export const PATH_HALF_M = PATH_HALF_WIDTH / UNITS_PER_METRE / 2;",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-arm-end-unclamped",
+    "file": "src/world/roadVerge.js",
+    "old": "const t = Math.min(1, Math.max(0, (qx * ex + qz * ez) / (ex * ex + ez * ez)));",
+    "new": "const t = (qx * ex + qz * ez) / (ex * ex + ez * ez);",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-band-edge-not-taken-off",
+    "file": "src/world/roadVerge.js",
+    "old": "const d = Math.hypot(qx - t * ex, qz - t * ez) - PATH_HALF_M;",
+    "new": "const d = Math.hypot(qx - t * ex, qz - t * ez);",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-north-the-row-below",
+    "file": "src/world/roadVerge.js",
+    "old": "const bits = pathsDataPoint(net, px + ix, py - iz);",
+    "new": "const bits = pathsDataPoint(net, px + ix, py + iz);",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-own-pixel-alone",
+    "file": "src/world/roadVerge.js",
+    "old": "for (let iz = iz0; iz <= iz1; iz++) {",
+    "new": "for (let iz = 0; iz <= 0; iz++) {",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-clear-half",
+    "file": "src/world/roadVerge.js",
+    "old": "export const vergeClear = (net, px, py, x, z, radius) => roadRoom(net, px, py, x, z, radius) >= radius;",
+    "new": "export const vergeClear = (net, px, py, x, z, radius) => roadRoom(net, px, py, x, z, radius) >= radius / 2;",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-winter-crown-unasked",
+    "file": "src/world/roadVerge.js",
+    "old": "for (const season of [SEASON.Summer, SEASON.Winter])",
+    "new": "for (const season of [SEASON.Summer])",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-scale-left-off",
+    "file": "src/world/roadVerge.js",
+    "old": "return Math.max(halfWidth, crown > 0 ? crown * lptVariety(px, py, x, z, false).scale : 0);",
+    "new": "return Math.max(halfWidth, crown > 0 ? crown : 0);",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-picture-unasked",
+    "file": "src/world/roadVerge.js",
+    "old": "return Math.max(halfWidth, crown > 0 ? crown * lptVariety(px, py, x, z, false).scale : 0);",
+    "new": "return Math.max(0, crown > 0 ? crown * lptVariety(px, py, x, z, false).scale : 0);",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-crown-the-axis-reach",
+    "file": "tools/bakeLptCrowns.mjs",
+    "old": "reach = Math.max(reach, Math.hypot(f[o] * sx, f[o + 2] * sz));",
+    "new": "reach = Math.max(reach, Math.abs(f[o] * sx));",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-crown-rounded-down",
+    "file": "tools/bakeLptCrowns.mjs",
+    "old": "out[key] = Math.ceil(reach * 100) / 100;",
+    "new": "out[key] = Math.floor(reach * 100) / 100;",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-F8-mark-dropped",
+    "file": "src/world/roadPainter.js",
+    "old": "if (t === NC) { if (ctx.paths) ctx.paths[ctx.i] = 1; return false; }",
+    "new": "if (t === NC) return false;",
+    "tests": [
+      "test/verge1.test.js",
+      "test/grasspath.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-F8-tile-written",
+    "file": "src/world/roadPainter.js",
+    "old": "if (t === NC) { if (ctx.paths) ctx.paths[ctx.i] = 1; return false; }",
+    "new": "if (t === NC) { if (ctx.paths) ctx.paths[ctx.i] = 1; ctx.tilemap[ctx.i] = 1; return true; }",
+    "tests": [
+      "test/verge1.test.js",
+      "test/grasspath.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-stand-unasked",
+    "file": "src/world/terrainNature.js",
+    "old": "  if (clear && !clear(x * scale, y * scale)) return null;   // VERGE1\n",
+    "new": "",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-herb-reach-wrong",
+    "file": "src/scenes/herbHost.js",
+    "old": "const clear = verge ? (x, z) => verge(x, z, PATCH_MARK.w / 2) : null;",
+    "new": "const clear = verge ? (x, z) => verge(x, z, PATCH_MARK.h / 2) : null;",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-vein-reach-the-lode's",
+    "file": "src/scenes/mineHost.js",
+    "old": "const clear = verge ? (x, z) => verge(x, z, MINE_MARKS.vein.w / 2) : null;   // VERGE1",
+    "new": "const clear = verge ? (x, z) => verge(x, z, MOTHERLODE_MARK.w / 2) : null;   // VERGE1",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-stone-search-unasked",
+    "file": "src/scenes/mineHost.js",
+    "old": "      const at = natureStandsAt(samples, tilemap, locationRect, x, y, clear);\n      if (at && !insideRocks(rocks, at.x, at.z)) { best = at; bestD = d; }",
+    "new": "      const at = natureStandsAt(samples, tilemap, locationRect, x, y);\n      if (at && !insideRocks(rocks, at.x, at.z)) { best = at; bestD = d; }",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-lode-unasked",
+    "file": "src/scenes/mineHost.js",
+    "old": "const stone = verge ? (x, z) => verge(x, z, MOTHERLODE_MARK.w / 2) : null;   // VERGE1",
+    "new": "const stone = null;   // VERGE1",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-kill-door-online",
+    "file": "src/scenes/shared.js",
+    "old": "if (pageParam('verges', search) === 'off' && !isOnlinePage(search)) return false;",
+    "new": "if (pageParam('verges', search) === 'off') return false;",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-off-by-default",
+    "file": "src/systems/features.js",
+    "old": "control: Object.freeze({ store: 'prefs', key: 'roadVerges', initial: true, online: true }),",
+    "new": "control: Object.freeze({ store: 'prefs', key: 'roadVerges', initial: false, online: true }),",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-before-it-painted",
+    "file": "src/scenes/world.js",
+    "old": "const vergeNet = verges && withRoads ? terrainGen.roads() : null;",
+    "new": "const vergeNet = verges ? terrainGen.roads() : null;",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-a-replacement's-size",
+    "file": "src/scenes/world.js",
+    "old": "hw = Float64Array.from({ length: t.recordCount }, (_, r) => classicBillboardSize(t, r).w / 2);",
+    "new": "hw = Float64Array.from({ length: t.recordCount }, (_, r) => billboardSize(t, r).w / 2);",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  },
+  {
+    "name": "VERGE1-site-flat-its-root",
+    "file": "src/scenes/world.js",
+    "old": "WOD_PIECE_ROAD_CLEAR / UNITS_PER_METRE + ((await halfWidthsOf(f.archive))[f.record] ?? 0) * f.scale.x)",
+    "new": "WOD_PIECE_ROAD_CLEAR / UNITS_PER_METRE)",
+    "tests": [
+      "test/verge1.test.js"
+    ]
+  }
+]

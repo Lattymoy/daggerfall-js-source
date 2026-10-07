@@ -340,8 +340,8 @@
   {
     "name": "SEAT1a-bounty-board-pennant",
     "file": "src/scenes/seatBanners.js",
-    "old": "boards.forEach((b, i) => { if (!bounty.has(i)) add(boardPennantAnchor(b)); });",
-    "new": "boards.forEach((b) => { add(boardPennantAnchor(b)); });",
+    "old": "  if (boards[notice]) add(boardPennantAnchor(boards[notice]));",
+    "new": "  boards.forEach((b) => { add(boardPennantAnchor(b)); });",
     "tests": [
       "test/seat1a_client.test.js"
     ]

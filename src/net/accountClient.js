@@ -509,6 +509,7 @@ export const REFUSALS = Object.freeze({
   // GUILD2a (bible/11-Multiplayer/Guild-Overhaul.md): a new name for a price (server-account/src/guilds.js renameGuild)
   'guild-rename-same': 'That is already the guild\'s name and tag.',
   'guild-name-word': 'A guild\'s name and tag may not carry a word the realm keeps out of names.',
+  'guild-rank-word': 'A rank\'s name may not carry a word the realm keeps out of names.',   // TEXT-F1
   'guild-rename-soon': 'The guild took a new name too lately. It may take another a fortnight after the last.',
   'guild-rename-siege': 'The guild is named in a siege or a Tourney this week. It cannot take a new name until the battle is over.',
   'guild-rename-gold': `A new name costs ${GUILD_RENAME_GOLD.toLocaleString('en-US')} gold from the treasury - gold realm characters put in - and the treasury does not hold that much of it.`,

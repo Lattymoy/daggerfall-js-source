@@ -174,7 +174,11 @@ ONLINE_PLAYERS_OWN_MODS`): how a tree is drawn, where the same flat
 stands.
 
 **The switch.** Mods, `low-poly-trees` Enabled (on by default), read
-once, when the world loads; `?trees=off` the kill door.
+once, when the world loads; `?trees=off` the kill door. VERGE1
+(2026-10-07, `03-World/Roads.md`) reads the mod's CROWNS off the vendored
+files (`world/lptCrowns.js`, baked by `tools/bakeLptCrowns.mjs`) on every
+client, the switch on or off, to keep a wild flat's footprint off the
+roads: where a tree stands still never hangs on the switch.
 
 ## Performance
 

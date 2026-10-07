@@ -1,0 +1,65 @@
+[
+  {
+    "name": "WALLET-UI-one-part",
+    "file": "src/systems/walletItem.js",
+    "old": "    { head: 'In the wallet', rows: [",
+    "new": "    { head: 'Coin', rows: [",
+    "tests": [
+      "test/wallet_ui.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-UI-the-worth-in-no-note",
+    "file": "src/systems/walletItem.js",
+    "old": "count('letters', 'Letters of credit', c.letters.count, `worth ${num(c.letters.gold)} gold`)",
+    "new": "count('letters', 'Letters of credit', c.letters.count)",
+    "tests": [
+      "test/wallet_ui.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-UI-an-empty-one-undimmed",
+    "file": "src/systems/walletItem.js",
+    "old": "figure: n ? num(n) : 'none', none: !n,",
+    "new": "figure: n ? num(n) : 'none', none: false,",
+    "tests": [
+      "test/wallet_ui.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-UI-the-silver-counted-as-nought",
+    "file": "src/systems/walletItem.js",
+    "old": "      : { key: 'silver', label: 'Silver', figure: null, none: false, note: SILVER_WHY[c.silverWhy] ?? SILVER_WHY.offline };",
+    "new": "      : { key: 'silver', label: 'Silver', figure: '0', none: false, note: null };",
+    "tests": [
+      "test/wallet_ui.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-UI-the-why-for-a-figure-lost",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "el('span', `wallet-v${r.figure == null ? ' why' : ''}`, r.figure ?? r.note)",
+    "new": "el('span', 'wallet-v', r.figure ?? '-')",
+    "tests": [
+      "test/wallet_ui.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-UI-the-silver-why-said-twice",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "      if (r.figure != null && r.note) box.append(el('p', 'wallet-note', r.note));",
+    "new": "      if (r.note) box.append(el('p', 'wallet-note', r.note));",
+    "tests": [
+      "test/wallet_ui.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-UI-the-empty-one-unmarked",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "      const row = el('div', `wallet-row${r.none ? ' none' : ''}`);",
+    "new": "      const row = el('div', 'wallet-row');",
+    "tests": [
+      "test/wallet_ui.test.js"
+    ]
+  }
+]

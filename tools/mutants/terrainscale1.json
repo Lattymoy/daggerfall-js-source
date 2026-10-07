@@ -29,8 +29,8 @@
   {
     "name": "TS1-nature-on-the-prefab",
     "file": "src/world/terrainNature.js",
-    "old": "  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;",
-    "new": "  const worldHeight = MAX_TERRAIN_HEIGHT * 1.5;",
+    "old": "  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;   // TerrainNature.LayoutNature's terrainScale - the game scene's (TERRAIN-SCALE1)",
+    "new": "  const worldHeight = MAX_TERRAIN_HEIGHT * 1.5;   // TerrainNature.LayoutNature's terrainScale - the game scene's (TERRAIN-SCALE1)",
     "tests": [
       "test/terrainscale1.test.js"
     ]

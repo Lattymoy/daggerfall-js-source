@@ -193,7 +193,9 @@ test('LEGACY7 part three the wire: a wed frame carries a peer, a kind and the ha
   }
   assert.equal(validWedData(null), null);
   assert.equal(validWedData([]), null);
-  assert.equal(WED_RELAY_MIN, Number(/^world(\d+)$/.exec(RELAY_VERSION)[1]), 'this relay is the first that routes it');
+  // PIN MOVED (TEXT-F1): the relay moved on to world175 with no wed change - world174, LEGACY7's, stays the first that routes it
+  assert.equal(WED_RELAY_MIN, 174, 'the LEGACY7 relay is the first that routes it');
+  assert.ok(Number(/^world(\d+)$/.exec(RELAY_VERSION)[1]) >= WED_RELAY_MIN, 'and this relay routes it');
   assert.equal(relaySupportsWed(RELAY_VERSION), true);
   assert.equal(relaySupportsWed(`world${WED_RELAY_MIN - 1}`), false);
   assert.equal(relaySupportsWed(null), false);

@@ -57,12 +57,16 @@ import { createLandforms } from './landforms.js';   // LANDFORM1-3: the port's o
  * @param {boolean} [job.landform] - LANDFORM1-3: the Landforms row (off,
  *   DFU's kernel): the relief, and the paths cut into the land with this
  *   kernel's own network - its rivers where they are painted.
+ * @param {?{nature:number[], type:number[]}} [job.ecotone] - ECOTONE1: the
+ *   3x3 of pixels' climates about this one (world/terrainNature.js
+ *   layoutNature's `ecotone`), null with the Blended climates row off or
+ *   every neighbour this pixel's own climate.
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
  *   nature: Array<{record:number,x:number,y:number,z:number}>}}
  */
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, wod = null, forests = null, landform = false }) {
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, wod = null, forests = null, landform = false, ecotone = null }) {
   // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
   // are the same roads; restrideGrid's ghost rows take the same landforms, so the edge normals read the shaped ground.
   const landforms = landform ? createLandforms({ woods, roads }) : null;
@@ -144,6 +148,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
       ],
       paths,
     } : null,
+    ecotone,   // ECOTONE1: the neighbours' climates - a border's tiles laid by the climate the ground's border gives them
   });
   return { samples, tilemap, positions: grid.positions, normals: grid.normals, tilemapBytes, avg, nature,
     paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says

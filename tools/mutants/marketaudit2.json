@@ -128,8 +128,8 @@
   {
     "name": "MARKET-AUDIT2-settle-blank",
     "file": "src/ui/marketTab.js",
-    "old": "    if (m.book.pending || arrived().length) { st.loading = true; ui.rerender(); await settle(); }",
-    "new": "    if (m.book.pending || arrived().length) await settle();",
+    "old": "(st.loading = true, ui.rerender(), settle())",
+    "new": "settle()",
     "tests": [
       "test/marketaudit2.test.js"
     ]

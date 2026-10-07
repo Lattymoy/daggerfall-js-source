@@ -92,8 +92,8 @@
   {
     "name": "GUILD1e-account-in-the-answer",
     "file": "server-account/src/guildBoard.js",
-    "old": "  id: n.id, from: n.author_name, subject: n.subject,",
-    "new": "  id: n.id, from: n.author_name, author: n.author, subject: n.subject,",
+    "old": "  id: n.id, from: n.author_name, subject: maskText(n.subject),",
+    "new": "  id: n.id, from: n.author_name, author: n.author, subject: maskText(n.subject),",
     "tests": [
       "test/guild1e_service.test.js"
     ]

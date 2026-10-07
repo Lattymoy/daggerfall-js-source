@@ -142,17 +142,37 @@ const num = (/** @type {number} */ n) => Number(n).toLocaleString('en-US');
  *  account that holds none (a guest's, the counting-houses not striking yet). The online wait once said the offline
  *  words. */
 export const SILVER_WHY = Object.freeze({ offline: 'kept by your account online', asking: 'asking your account', none: 'none' });
-/** The wallet's lines, as the classic window's box says them (and the enhanced sheet's figures): every currency, a
- *  `none` where it holds none, the silver's where it is not counted here said why. */
-export function walletLines(/** @type {ReturnType<typeof walletContents>} */ c) {
+/**
+ * WALLET-UI (2026-10-07, Mac: "Polish and organize the ingame wallet item for ease of readability"): THE WALLET'S
+ * LEDGER - its currencies in two parts, the coin (the purse's gold, the account's silver) and what the wallet holds (the
+ * letters of credit, the Deadlands Embers, the Welkynd Shards), each a label and a figure: `none` for one it holds none
+ * of (`none` true), null where the silver is not counted here (its `note` says why), and a `note` where the figure needs
+ * one (what the letters are worth). The enhanced sheet draws the rows; the classic box says each as a line (walletLines) -
+ * one set of words for both.
+ * @param {ReturnType<typeof walletContents>} c
+ */
+export function walletLedger(c) {
+  const count = (/** @type {string} */ key, /** @type {string} */ label, /** @type {number} */ n, /** @type {string|null} */ note = null) =>
+    ({ key, label, figure: n ? num(n) : 'none', none: !n, note: n ? note : null });
+  const silver = c.silver != null ? { key: 'silver', label: 'Silver', figure: num(c.silver), none: false, note: null }
+    : c.silverWhy === 'none' ? { key: 'silver', label: 'Silver', figure: 'none', none: true, note: null }
+      : { key: 'silver', label: 'Silver', figure: null, none: false, note: SILVER_WHY[c.silverWhy] ?? SILVER_WHY.offline };
   return [
-    'Your wallet holds:',
-    `Gold: ${num(c.gold)}`,
-    `Silver: ${c.silver == null ? SILVER_WHY[c.silverWhy] ?? SILVER_WHY.offline : num(c.silver)}`,
-    `Letters of credit: ${c.letters.count ? `${num(c.letters.count)}, worth ${num(c.letters.gold)} gold` : 'none'}`,
-    `Deadlands Embers: ${c.embers ? num(c.embers) : 'none'}`,
-    `Welkynd Shards: ${c.shards ? num(c.shards) : 'none'}`,
+    { head: 'Coin', rows: [{ key: 'gold', label: 'Gold', figure: num(c.gold), none: false, note: null }, silver] },
+    { head: 'In the wallet', rows: [
+      count('letters', 'Letters of credit', c.letters.count, `worth ${num(c.letters.gold)} gold`),
+      count('embers', 'Deadlands Embers', c.embers),
+      count('shards', 'Welkynd Shards', c.shards),
+    ] },
   ];
+}
+/** A ledger row as the classic box says it: its label, then its figure and its note. */
+export const walletLine = (/** @type {{label: string, figure: string|null, note: string|null}} */ r) =>
+  `${r.label}: ${[r.figure, r.note].filter(Boolean).join(', ')}`;
+/** The wallet's lines, as the classic window's box says them: every currency, a `none` where it holds none, the silver's
+ *  where it is not counted here said why - the ledger's rows (walletLedger), a line each. */
+export function walletLines(/** @type {ReturnType<typeof walletContents>} */ c) {
+  return ['Your wallet holds:', ...walletLedger(c).flatMap((part) => part.rows.map(walletLine))];
 }
 
 /** The card's lines (systems/itemInfo.js): what a wallet is for. */

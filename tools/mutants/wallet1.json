@@ -202,8 +202,8 @@
   {
     "name": "WALLET1-lines-silver-unknown",
     "file": "src/systems/walletItem.js",
-    "old": "`Silver: ${c.silver == null ? SILVER_WHY[c.silverWhy] ?? SILVER_WHY.offline : num(c.silver)}`",
-    "new": "`Silver: ${num(c.silver ?? 0)}`",
+    "old": "      : { key: 'silver', label: 'Silver', figure: null, none: false, note: SILVER_WHY[c.silverWhy] ?? SILVER_WHY.offline };",
+    "new": "      : { key: 'silver', label: 'Silver', figure: num(0), none: false, note: null };",
     "why": "an unknown silver said as none",
     "tests": [
       "test/wallet1.test.js"
@@ -212,9 +212,9 @@
   {
     "name": "WALLET1-lines-none",
     "file": "src/systems/walletItem.js",
-    "old": "`Deadlands Embers: ${c.embers ? num(c.embers) : 'none'}`",
-    "new": "`Deadlands Embers: ${num(c.embers)}`",
-    "why": "no embers said as 0",
+    "old": "figure: n ? num(n) : 'none', none: !n",
+    "new": "figure: num(n), none: !n",
+    "why": "nothing held said as 0",
     "tests": [
       "test/wallet1.test.js"
     ]

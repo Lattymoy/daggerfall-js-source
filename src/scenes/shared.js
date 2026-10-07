@@ -838,6 +838,24 @@ export function landformsOn(search) {
   const row = onlineForcedPref('landforms', search) ?? getPref('landforms');
   return !!row && (isOnlinePage(search) || isEnhanced(search));
 }
+
+/** VERGE1: THE CLEAR ROADSIDES' SWITCH - the Features row (`roadVerges`) on the enhanced skin, and on for everyone
+ *  online whatever their skin: where the wild's flats stand is the room's ground (realForestsOn's shape). `?verges=off`
+ *  the kill door, offline. The world host reads it once, at its mount. */
+export function roadVergesOn(search) {
+  if (pageParam('verges', search) === 'off' && !isOnlinePage(search)) return false;
+  const row = onlineForcedPref('roadVerges', search) ?? getPref('roadVerges');
+  return !!row && (isOnlinePage(search) || isEnhanced(search));
+}
+
+/** ECOTONE1: THE BLENDED CLIMATES' SWITCH - the Features row (`climateBlend`) on the enhanced skin, and on for everyone
+ *  online: the border moves the wild's flats, the room's ground (realForestsOn's shape). `?ecotone=off` the kill door,
+ *  offline. The world host reads it once, at its mount. */
+export function climateBlendOn(search) {
+  if (pageParam('ecotone', search) === 'off' && !isOnlinePage(search)) return false;
+  const row = onlineForcedPref('climateBlend', search) ?? getPref('climateBlend');
+  return !!row && (isOnlinePage(search) || isEnhanced(search));
+}
 /** FOREST1: the LocationTypes (DFRegion.cs:66-86) the woods close round - DungeonLabyrinth 4, DungeonKeep 7,
  *  ReligionCult 9, DungeonRuin 10, Graveyard 12, Coven 13. Every other place stands in cleared fields. */
 export const FOREST_HIDDEN_LOCATION_TYPES = Object.freeze(new Set([4, 7, 9, 10, 12, 13]));

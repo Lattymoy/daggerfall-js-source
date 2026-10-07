@@ -31,6 +31,13 @@ const button = (cls, text, onPress) => {
   return b;
 };
 const intOf = (s, lo, hi) => { const n = Math.floor(Number(s)); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : lo; };
+/** BOARD-UI: the column names over the rows - the Market tab's own (`.market-listhead`, its piece rows' columns). */
+const listHead = (names) => {
+  const h = el('div', 'market-listhead market-piece');
+  h.setAttribute('aria-hidden', 'true');
+  for (const n of names) h.append(el('span', null, n));
+  return h;
+};
 /** How long a piece still stands, in days or hours. */
 export function standsText(expiresAt, nowS) {
   const left = Math.max(0, Number(expiresAt) - nowS);
@@ -71,18 +78,18 @@ export function injectVendorStatsCss() {
   document.head?.append(st);
 }
 
-/** The words the stall and the board say. */
+/** The words the stall and the board say. BOARD-UI (Mac: "Reduce overusage of bloated text"): short, and plain. */
 export const VENDOR_TEXT = Object.freeze({
   boardEmpty: 'No trader in this region has anything for sale.',
   searchEmpty: 'No trader\'s goods match that search.',
   stallEmpty: 'The trader has nothing for sale.',
   ownEmpty: 'Your trader has nothing for sale yet. Put up a piece from your pack below.',
-  reading: 'Asking after the traders...',
-  cold: 'The counting-house is not answering. The traders cannot be read now.',
-  boardTip: 'Traders\' goods are bought at their stall, in the owner\'s house. Pick a row to see its stats and set a waypoint there.',
-  noGold: 'Only a character whose gold is kept online trades with a trader.',
+  reading: 'Reading the traders...',
+  cold: 'The traders did not load.',
+  boardTip: 'Bought only at the trader\'s stall, in the owner\'s house. Pick a row for its stats and a waypoint.',
+  noGold: 'Only a character whose gold is kept online can trade here.',
   packEmpty: 'Nothing in your pack can be put up for sale.',
-  stockTip: `A piece put up stands at your trader for ${Math.round(VENDOR_LISTING_S / 86_400)} days, then comes back to you. Collect your takings on the Vendor page (pause menu, under Professions).`,
+  stockTip: `Each piece stays up ${Math.round(VENDOR_LISTING_S / 86_400)} days, then comes back to you. Collect your takings on the Vendor page (pause menu, Professions).`,
 });
 
 /**
@@ -194,7 +201,12 @@ export function createVendorTab(v, ui) {
     const chosen = st.good;
     const go = button('primary market-post', ui.busy() ? 'Putting up...' : 'Put up for sale', () => act(() => v.put(chosen, st.price)));
     go.disabled = ui.busy() || !chosen;
-    box.append(sel, el('span', 'notice-label', 'Price in gold'), price, go, el('p', 'notice-tip', VENDOR_TEXT.stockTip));
+    // AUDIT 657 B3: its fields under their names, as the List form's (marketTab.js field) - BOARD-UI stood that form's
+    // fields in a column, and this form, in its dress, stood its select and its press each the window's width
+    const field = (name, input, cls = '') => { const f = el('label', `market-field${cls ? ` ${cls}` : ''}`); f.append(el('span', 'notice-label', name), input); return f; };
+    const fields = el('div', 'market-fields');
+    fields.append(field('Piece', sel, 'market-field-wide'), field('Price in gold', price), go);
+    box.append(fields, el('p', 'notice-tip', VENDOR_TEXT.stockTip));
     return box;
   }
 
@@ -213,12 +225,14 @@ export function createVendorTab(v, ui) {
     if (!stall) {
       box.append(el('p', 'notice-tip', VENDOR_TEXT.boardTip), searchNode());
       const found = vendorSearch(rows, st.query, { nameOf, townOf });
+      if (found.length) list.append(listHead(['Item', 'Condition', 'Price', 'Sold at']));
       for (const r of found) list.append(...rowNodes(r, { where: true }));
       if (st.data && !found.length) list.append(el('p', 'notice-empty', rows.length ? VENDOR_TEXT.searchEmpty : VENDOR_TEXT.boardEmpty));
       box.append(list);
       return box;
     }
     const own = v.own === true;
+    if (rows.length) list.append(listHead(['Item', 'Condition', 'Price', 'Stays up']));
     for (const r of rows) list.append(...rowNodes(r, { buy: !own && !r.mine, take: own && r.mine }));
     if (st.data && !rows.length) list.append(el('p', 'notice-empty', own ? VENDOR_TEXT.ownEmpty : VENDOR_TEXT.stallEmpty));
     box.append(list);

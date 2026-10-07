@@ -259,8 +259,8 @@
   {
     "name": "INS-gear-out-of-order",
     "file": "src/ui/profileWindow.js",
-    "old": "  for (const [slot, label] of GEAR_ROWS) {\n    const it = bySlot.get(slot);\n    if (it) rows.push({ slot: label, name: itemLongName(it) });\n  }",
-    "new": "  for (const [slot, it] of bySlot) {\n    const label = GEAR_ROWS.find(([s]) => s === slot)?.[1];\n    if (label) rows.push({ slot: label, name: itemLongName(it) });\n  }",
+    "old": "  for (const [slot, label] of GEAR_ROWS) {\n    const it = bySlot.get(slot);\n    if (it) rows.push({ slot: label, name: itemLongName(it), part: gearPartOf(slot, it) });\n  }",
+    "new": "  for (const [slot, it] of bySlot) {\n    const label = GEAR_ROWS.find(([s]) => s === slot)?.[1];\n    if (label) rows.push({ slot: label, name: itemLongName(it), part: gearPartOf(slot, it) });\n  }",
     "tests": ["test/inspect1.test.js"],
     "note": "The gear in the look's own order, not head to foot."
   },
