@@ -222,8 +222,8 @@
   {
     "name": "PROF4-staff-two-planks",
     "file": "src/net/recipeLaw.js",
-    "old": "templateIndex: STAFF_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 3]] })),",
-    "new": "templateIndex: STAFF_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 2]] })),",
+    "old": "templateIndex: STAFF_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 3]], pattern: 'Staff' })),",
+    "new": "templateIndex: STAFF_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 2]], pattern: 'Staff' })),",
     "tests": [
       "test/prof4_law.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "PROF4-shortbow-no-resin",
     "file": "src/net/recipeLaw.js",
-    "old": "templateIndex: SHORT_BOW_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 3], [RESIN.key, 1]] })),",
-    "new": "templateIndex: SHORT_BOW_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 3]] })),",
+    "old": "templateIndex: SHORT_BOW_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 3], [RESIN.key, 1]], pattern: 'Short Bow' })),",
+    "new": "templateIndex: SHORT_BOW_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 3]], pattern: 'Short Bow' })),",
     "tests": [
       "test/prof4_law.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "PROF4-arrows-three-twigs",
     "file": "src/net/recipeLaw.js",
-    "old": "stack: ARROWS_STACK, inputs: [[PINE_PLANK.key, 1], ['ingot:iron', 1], [TWIGS_NORTH, 4]] }),",
-    "new": "stack: ARROWS_STACK, inputs: [[PINE_PLANK.key, 1], ['ingot:iron', 1], [TWIGS_NORTH, 3]] }),",
+    "old": "stack: ARROWS_STACK, inputs: [[PINE_PLANK.key, 1], ['ingot:iron', 1], [TWIGS_NORTH, 4]], pattern: 'Arrows', madeOf: 'northern Twigs' }),",
+    "new": "stack: ARROWS_STACK, inputs: [[PINE_PLANK.key, 1], ['ingot:iron', 1], [TWIGS_NORTH, 3]], pattern: 'Arrows', madeOf: 'northern Twigs' }),",
     "tests": [
       "test/prof4_law.test.js",
       "test/prof4_service.test.js"
@@ -250,8 +250,8 @@
   {
     "name": "PROF4-small-table-four",
     "file": "src/net/recipeLaw.js",
-    "old": "templateIndex: 225 + i, wood: w, inputs: [[plank(w), 3]] })),",
-    "new": "templateIndex: 225 + i, wood: w, inputs: [[plank(w), 4]] })),",
+    "old": "templateIndex: 225 + i, wood: w, inputs: [[plank(w), 3]], pattern: 'Small Table' })),",
+    "new": "templateIndex: 225 + i, wood: w, inputs: [[plank(w), 4]], pattern: 'Small Table' })),",
     "tests": [
       "test/prof4_law.test.js",
       "test/prof4_service.test.js",
@@ -761,8 +761,8 @@
   {
     "name": "PROF4-anvil-lists-basket",
     "file": "src/ui/profPages.js",
-    "old": "export const anvilRecipes = (family, metal) => RECIPES.filter((r) => r.profession === 'smithing' && r.family === family",
-    "new": "export const anvilRecipes = (family, metal) => RECIPES.filter((r) => r.family === family",
+    "old": "export const anvilRecipes = (family, metal = null) => RECIPES.filter((r) => r.profession === 'smithing' && r.family === family",
+    "new": "export const anvilRecipes = (family, metal = null) => RECIPES.filter((r) => r.family === family",
     "tests": [
       "test/prof4_client.test.js"
     ]

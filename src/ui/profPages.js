@@ -52,7 +52,7 @@ import {
   PROFESSIONS, SPECIALISATIONS, SPEC_RANKS, RESPEC, xpForRank, rankName, PROF_RANK_MAX, TIER_RANKS, CRAFTS_ABOVE_JOURNEYMAN,
   JOURNEYMAN_RANK, MATERIAL_FAMILIES, HIGH_HIDES_PER_DAY, WITHDRAW_MAX, professionName, SMELT_RECIPES, SMELT_MAX, FORGE_FEE,
   withdrawable, stockOf, STOCK_MAX, BURN_RECIPES, SAW_RECIPES, WORKBENCH_FEE, WOODS, workPer, workSpecRank, CURE_RECIPES,
-  WEAVE_RECIPES, LOOM_FEE, CLOTHS, WEAVERS_STOCK, STANDARD_SILK,
+  WEAVE_RECIPES, LOOM_FEE, WEAVERS_STOCK, STANDARD_SILK,
   MASON_RECIPES, MASON_FEE, workOpen,   // PROF11: the mason's bench
   JEWEL_FEE,   // PROF10: the jeweller's bench
   ALCHEMY_FEE, ENCHANT_FEE, TRANSMUTE_RECIPES, TRANSMUTER, APOTHECARY_STOCK,   // PROF12: the alchemy and enchanting stations
@@ -70,6 +70,7 @@ import {
   JEWELCRAFTING_RECIPES, JEWEL_PIECES, jewelBases, jewelHand, jewelPointsPct, jewelPoints, takesCracked, masterworkSpec, facetCount,
   facetWindow, LAPIDARY, JEWEL_HAND_GOLDSMITH, JEWEL_HAND_GEMCUTTER, craftXp, gemWord,   // PROF10: the jeweller's pieces and the facet
   recipeById,   // AUDIT PROF12 E2: a disenchant's XP is its piece's recipe's tier
+  patternsOf,   // CRAFT2: a station lists its patterns, the material chosen from what is held
 } from '../net/recipeLaw.js';
 import { createStitchAct } from '../systems/stitchAct.js';
 import { createChiselAct } from '../systems/chiselAct.js';   // PROF11
@@ -216,25 +217,26 @@ export function carryRows(book, carriedHeld) {
 }
 /** PROF2: the forge's counts by recipe, a smelt in flight, and its last word. */
 const _forge = { counts: /** @type {Record<string, number>} */ ({}), busy: false, word: /** @type {string|null} */ (null) };
-/** PROF3: the anvil's family and metal shown, the recipe chosen, the heat being struck, a craft in flight and its word. */
+/** PROF3: the anvil's family shown, the recipe chosen, the heat being struck, a craft in flight and its word. CRAFT2: the
+ *  pattern picked and what the last was made of (`madeOf` - the next pattern's first choice, pickedOf). */
 const _anvil = {
-  family: 'weapons', metal: 'ingot:iron', picked: /** @type {string|null} */ (null), act: /** @type {any} */ (null),
+  family: 'weapons', pattern: /** @type {string|null} */ (null), madeOf: /** @type {string|null} */ (null), picked: /** @type {string|null} */ (null), act: /** @type {any} */ (null),
   busy: false, crafting: false, word: /** @type {string|null} */ (null), els: /** @type {any} */ (null), off: /** @type {(() => void)|null} */ (null),
   strike: /** @type {((e?: any) => void)|null} */ (null), heartwood: false,   // AUDIT 32 P1: strike takes the press's event, its moment
   /** AUDIT 30 A3: the recipe the heat under way makes, and its Heartwood - what the page shows may not be */
   actRecipe: /** @type {string|null} */ (null), actWood: false,
 };
-/** PROF4: the workbench's family and wood shown, the recipe chosen, the plane being drawn, a craft in flight, its word,
- *  the saws' counts and whether a Heartwood stands in for a plank. */
+/** PROF4: the workbench's family shown, the recipe chosen, the plane being drawn, a craft in flight, its word, the saws'
+ *  counts and whether a Heartwood stands in for a plank. CRAFT2: the pattern picked, and what the last was made of. */
 const _bench = {
-  family: 'staves', wood: 'plank:pine', picked: /** @type {string|null} */ (null), act: /** @type {any} */ (null),
+  family: 'staves', pattern: /** @type {string|null} */ (null), madeOf: /** @type {string|null} */ (null), picked: /** @type {string|null} */ (null), act: /** @type {any} */ (null),
   busy: false, crafting: false, word: /** @type {string|null} */ (null), counts: /** @type {Record<string, number>} */ ({}), heartwood: false,
   actRecipe: /** @type {string|null} */ (null), actWood: false,   // AUDIT 30 A3: the plane's own recipe
 };
-/** PROF7: the loom's family, cloth and clothing shown, the recipe chosen, the dye, the stitch being sewn, a craft in
- *  flight and its word, the cures' and the weave's counts. */
+/** PROF7: the loom's family and clothing shown, the recipe chosen, the dye, the stitch being sewn, a craft in flight and
+ *  its word, the cures' and the weave's counts. CRAFT2: the pattern picked, and what the last was made of. */
 const _loom = {
-  family: 'leather', cloth: 'cloth:linen', clothing: /** @type {string|null} */ (null), picked: /** @type {string|null} */ (null),
+  family: 'leather', pattern: /** @type {string|null} */ (null), madeOf: /** @type {string|null} */ (null), clothing: /** @type {string|null} */ (null), picked: /** @type {string|null} */ (null),
   dye: /** @type {number|null} */ (null), act: /** @type {any} */ (null), busy: false, crafting: false, word: /** @type {string|null} */ (null),
   counts: /** @type {Record<string, number>} */ ({}), els: /** @type {any} */ (null), off: /** @type {(() => void)|null} */ (null),
   stitch: /** @type {((e?: any) => void)|null} */ (null),   // AUDIT 32 P1: the press's event, its moment
@@ -248,8 +250,10 @@ const _mason = {
   off: /** @type {(() => void)|null} */ (null), strike: /** @type {((e?: any) => void)|null} */ (null),
   actWhat: /** @type {{ kind: 'work'|'carve', id: string, count: number }|null} */ (null),
 };
-/** PROF9: the fire - the dish chosen, the pan on the fire and what it cooks (`actRecipe`), a dish in flight, its word. */
+/** PROF9: the fire - the dish chosen, the pan on the fire and what it cooks (`actRecipe`), a dish in flight, its word.
+ *  CRAFT2: the dish picked (its pattern), and the herb's way the last was cooked. */
 const _cook = {
+  pattern: /** @type {string|null} */ (null), madeOf: /** @type {string|null} */ (null),
   picked: /** @type {string|null} */ (null), act: /** @type {any} */ (null), crafting: false, word: /** @type {string|null} */ (null),
   els: /** @type {any} */ (null), off: /** @type {(() => void)|null} */ (null), take: /** @type {((e?: any) => void)|null} */ (null),
   actRecipe: /** @type {string|null} */ (null),
@@ -348,6 +352,7 @@ export function resetProfPages() {
   endHeat(); _anvil.word = null; _anvil.picked = null; _anvil.heartwood = false;
   _bench.act?.cancel(); _bench.act = null; _bench.actRecipe = null; _bench.word = null; _bench.picked = null; _bench.counts = {}; _bench.heartwood = false;   // PROF4
   endStitch(); _loom.word = null; _loom.picked = null; _loom.counts = {}; _loom.dye = null;   // PROF7
+  for (const st of [_anvil, _bench, _loom, _cook]) { st.pattern = null; st.madeOf = null; }   // CRAFT2
   endChisel(); _mason.word = null; _mason.picked = null; _mason.counts = {};   // PROF11
   endPan(); _cook.word = null; _cook.picked = null; _cook.crafting = false;   // PROF9
   _anvil.chained = _bench.chained = _loom.chained = _mason.chained = _jewel.chained = false;   // AUDIT CRAFT1 F1
@@ -888,13 +893,9 @@ const r0Charcoal = (book) => book.held('wood:charcoal') < 1;
 
 /** The anvil's families, in its row's order, and the metals a family is made in. */
 export const ANVIL_FAMILIES = Object.freeze([['weapons', 'Weapons'], ['armour', 'Armour'], ['tools', 'Tools'], ['kits', 'Repair Kits']]);
-const METAL_ROW = Object.freeze([
-  ['ingot:iron', 'Iron'], ['ingot:steel', 'Steel'], ['ingot:silver', 'Silver'], ['ingot:moonstone', 'Elven'], ['ingot:dwarven', 'Dwarven'],
-  ['ingot:mithril', 'Mithril'], ['ingot:adamantium', 'Adamantium'], ['ingot:ebony', 'Ebony'], ['ingot:orichalcum', 'Orcish'],
-  ['ingot:daedric', 'Daedric'], ['ingot:warforged', 'Warforged'],
-]);
-/** The recipes the anvil lists for a family at a metal (the tools are Iron's alone; the chain is Steel's). */
-export const anvilRecipes = (family, metal) => RECIPES.filter((r) => r.profession === 'smithing' && r.family === family && (family === 'tools' || r.metal === metal));
+/** The recipes the anvil makes for a family - at a metal where one is named (the tools are Iron's alone; the chain is
+ *  Steel's). CRAFT2: the anvil lists them as patterns (patternsOf), every metal under its piece. */
+export const anvilRecipes = (family, metal = null) => RECIPES.filter((r) => r.profession === 'smithing' && r.family === family && (metal == null || family === 'tools' || r.metal === metal));
 /** PROF4: what a craft spends as this character would spend it - a Joiner's half the planks, a Heartwood for one. */
 const spendsOf = (r, book, heartwood) => recipeInputs(r, { heartwood: heartwood && takesHeartwood(r), joiner: book.track(r.profession)?.specs?.[50] === 'joiner' });
 /** Whether the Stores make a recipe now - its inputs, or (PROF4) what it would spend (`inputs`). */
@@ -939,6 +940,97 @@ export function chainNote(box, el, p, book, inputs) {
   const raw = plan.spent.filter((s) => !inputs.some((i) => i.key === s.key));
   box.append(el('p', 'px-note prof-chain', `Refined first, here: ${[...made].map(([k, n]) => `${k} x${n}`).join(', ')}${raw.length ? ` - from ${raw.map((s) => `${p.name(s.key)} x${s.n}`).join(', ')}` : ''}. Their XP is the works' own; what is left over stays in your Stores.`));
   return plan;
+}
+
+// ─── CRAFT2: PATTERNS, NOT A MATRIX (bible/06-Systems/Professions-Arc.md 41) ─────
+
+/**
+ * @typedef {{ open: boolean, can: boolean, raw: boolean, share: number }} Standing
+ * CRAFT2: a recipe as a station stands it - `open` at the rank, `can` its inputs held as they stand, `raw` made from raw
+ * goods (CRAFT1's chain), and `share` the part of its inputs' units held (0 to 1).
+ */
+/** CRAFT2: a station's standing read once a recipe a draw - `of` the station's own (its spends, its rank, its chain). */
+export function standings(/** @type {(r: any) => Standing} */ of) {
+  const seen = new Map();
+  return (/** @type {any} */ r) => { if (!seen.has(r.id)) seen.set(r.id, of(r)); return /** @type {Standing} */ (seen.get(r.id)); };
+}
+/** CRAFT2: the part of `inputs`' units `held` holds, 0 to 1. */
+export const heldShare = (/** @type {readonly { key: string, n: number }[]} */ inputs, /** @type {(k: string) => number} */ held) => {
+  const all = inputs.reduce((n, i) => n + i.n, 0);
+  return all > 0 ? inputs.reduce((n, i) => n + Math.min(i.n, Math.max(0, held(i.key))), 0) / all : 0;
+};
+/** CRAFT2: how far a standing goes - made now 3, from raw 2, open 1, shut 0. */
+const reach = (/** @type {Standing} */ s) => (!s.open ? 0 : s.can ? 3 : s.raw ? 2 : 1);
+/** The highest-tier first - the table's order among a tier (a pattern stands its materials low first, the Warforged after
+ *  the Daedric). */
+const byTier = (/** @type {readonly any[]} */ rs) => [...rs].sort((a, b) => b.tier - a.tier);
+/**
+ * CRAFT2: WHAT A PICKED PATTERN IS MADE OF, chosen from what is held: what the last craft here was made of (`madeOf`)
+ * where this pattern is made of it and it can be made, now or from raw; else the highest tier made now, then the highest
+ * made from raw; else the open one holding the most of its inputs (the Mithril Longsword for three Mithril Ingots, its
+ * leather still to buy); else the last craft's material, else the pattern's first.
+ * @param {{ recipes: readonly any[] }} pattern @param {(r: any) => Standing} stand @param {string|null} [madeOf]
+ */
+export function pickedOf(pattern, stand, madeOf = null) {
+  const same = pattern.recipes.find((r) => r.madeOf === madeOf) ?? null;
+  if (same && reach(stand(same)) >= 2) return same;
+  const top = byTier(pattern.recipes);
+  const best = top.find((r) => reach(stand(r)) === 3) ?? top.find((r) => reach(stand(r)) === 2);
+  if (best) return best;
+  let most = null;
+  for (const r of top) if (stand(r).open && stand(r).share > 0 && (!most || stand(r).share > stand(most).share)) most = r;
+  return most ?? same ?? pattern.recipes[0];
+}
+/** CRAFT2: the recipe a pattern's row speaks for - the one that goes furthest (the first of the table's among equals),
+ *  or where none is open the lowest rank it asks. */
+export function patternLead(/** @type {{ recipes: readonly any[] }} */ pattern, /** @type {(r: any) => Standing} */ stand) {
+  let lead = pattern.recipes[0];
+  for (const r of pattern.recipes) {
+    const a = reach(stand(r)), b = reach(stand(lead));
+    if (a > b || (a === 0 && b === 0 && r.rank < lead.rank)) lead = r;
+  }
+  return lead;
+}
+/**
+ * CRAFT2: THE PATTERNS A STATION LISTS - each piece once whatever it is made of (recipeLaw patternsOf), its word the
+ * furthest its materials go (`word` the station's own, of the recipe that goes furthest); picking one chooses what it is
+ * made of from what is held (pickedOf).
+ * @param {HTMLElement} detail @param {Function} el @param {readonly any[]} list @param {any} state @param {() => void} rerender
+ * @param {{ stand: (r: any) => Standing, word: (r: any, s: Standing) => string, locked?: boolean }} how
+ */
+export function patternRows(detail, el, list, state, rerender, { stand, word, locked = false }) {
+  for (const pt of patternsOf(list)) {
+    const lead = patternLead(pt, stand);
+    const s = stand(lead);
+    const row = el('button', `prof-recipe${state.pattern === pt.id ? ' on' : ''}${s.can || s.raw ? '' : ' prof-locked'}`);
+    row.type = 'button';
+    row.disabled = locked;
+    row.append(el('b', null, pt.name), el('span', 'prof-split', word(lead, s)));
+    row.onclick = () => { const r = pickedOf(pt, stand, state.madeOf); state.pattern = pt.id; state.picked = r.id; state.madeOf = r.madeOf; rerender(); };
+    detail.append(row);
+  }
+}
+/** CRAFT2: the recipe a station's box is for - the picked one, where it is still of the pattern shown in `list`. */
+export const pickedIn = (/** @type {readonly any[]} */ list, /** @type {any} */ state) => list.find((x) => x.id === state.picked && x.product === state.pattern) ?? null;
+/**
+ * CRAFT2: WHAT THE PICKED PATTERN IS MADE OF, a button each of its materials (none where it is made one way) - the one
+ * chosen marked, one that cannot be made now or from raw dimmed, one past the rank naming the rank it asks.
+ * @param {HTMLElement} box @param {Function} el @param {readonly any[]} list @param {any} r @param {any} state
+ * @param {() => void} rerender @param {(r: any) => Standing} stand @param {boolean} [locked]
+ */
+export function materialRow(box, el, list, r, state, rerender, stand, locked = false) {
+  const made = list.filter((x) => x.product === r.product);
+  if (made.length < 2) return;
+  const row = el('div', 'prof-families prof-metals prof-made');
+  for (const x of made) {
+    const s = stand(x);
+    const b = el('button', `prof-family${x.id === r.id ? ' on' : ''}${s.can || s.raw ? '' : ' prof-locked'}`, s.open ? x.madeOf : `${x.madeOf} - rank ${x.rank}`);
+    b.type = 'button';
+    b.disabled = locked;
+    b.onclick = () => { state.picked = x.id; state.madeOf = x.madeOf; rerender(); };
+    row.append(b);
+  }
+  box.append(row);
 }
 
 /** The heat let go: its loop and its keys. */
@@ -1026,38 +1118,23 @@ function drawAnvil(detail, rerender, { el, divider }) {
     const b = el('button', `prof-family${_anvil.family === id ? ' on' : ''}`, word);
     b.type = 'button';
     b.disabled = striking;
-    b.onclick = () => { _anvil.family = id; _anvil.picked = null; rerender(); };
+    b.onclick = () => { _anvil.family = id; _anvil.picked = null; _anvil.pattern = null; rerender(); };
     fams.append(b);
   }
   detail.append(fams);
-  if (_anvil.family !== 'tools') {
-    const metals = el('div', 'prof-families prof-metals');
-    for (const [id, word] of METAL_ROW) {
-      if (_anvil.family === 'kits' && id === 'ingot:warforged') continue;
-      const b = el('button', `prof-family${_anvil.metal === id ? ' on' : ''}`, word);
-      b.type = 'button';
-      b.disabled = striking;
-      b.onclick = () => { _anvil.metal = id; _anvil.picked = null; rerender(); };
-      metals.append(b);
-    }
-    detail.append(metals);
-  }
-  const list = anvilRecipes(_anvil.family, _anvil.metal);
-  for (const r of list) {
-    const open = recipeOpen(r, rank);
-    const can = open && craftable(r, held, spendsOf(r, book, false));
-    const raw = open && !can && fromRaw(spendsOf(r, book, false), book);   // CRAFT1
-    const row = el('button', `prof-recipe${_anvil.picked === r.id ? ' on' : ''}${can || raw ? '' : ' prof-locked'}`);
-    row.type = 'button';
-    row.disabled = striking;
-    row.append(el('b', null, r.name), el('span', 'prof-split', open ? makeWord(can, raw) : `rank ${r.rank}`));
-    row.onclick = () => { _anvil.picked = r.id; rerender(); };
-    detail.append(row);
-  }
-  const r = list.find((x) => x.id === _anvil.picked);
+  // CRAFT2: the family's patterns, every metal under its piece - the metal chosen from what is held (pickedOf)
+  const list = anvilRecipes(_anvil.family);
+  const stand = standings((x) => {
+    const sp = spendsOf(x, book, false);
+    const open = recipeOpen(x, rank), can = open && craftable(x, held, sp);
+    return { open, can, raw: open && !can && fromRaw(sp, book), share: heldShare(sp, held) };   // CRAFT1: made from raw
+  });
+  patternRows(detail, el, list, _anvil, rerender, { stand, word: (x, s) => (s.open ? makeWord(s.can, s.raw) : `rank ${x.rank}`), locked: striking });
+  const r = pickedIn(list, _anvil);
   if (r) {
     const box = el('div', 'prof-craft');
     box.append(el('b', null, `${r.name} - rank ${r.rank}`));
+    materialRow(box, el, list, r, _anvil, rerender, stand, striking);   // CRAFT2: its metals
     const spends = spendsOf(r, book, _anvil.heartwood);
     for (const inp of spends) {
       const have = held(inp.key);
@@ -1150,8 +1227,9 @@ export const BENCH_FAMILIES = Object.freeze([['staves', 'Staves'], ['bows', 'Bow
 /** The woods a family is shown by - every wood for the staves and bows, DFU's furniture's four and the beds' for the
  *  furniture; none for the rest. */
 const WOODS_OF = Object.freeze({ staves: WOODS.map((w) => `plank:${w.id}`), bows: WOODS.map((w) => `plank:${w.id}`), furniture: ['plank:pine', 'plank:oak', 'plank:cherry', 'plank:mahogany', 'plank:teak'] });
-/** The recipes the workbench lists for a family at a wood. */
-export const benchRecipes = (family, wood) => RECIPES.filter((r) => r.profession === 'carpentry' && r.family === family && (!WOODS_OF[family] || r.wood === wood));
+/** The recipes the workbench makes for a family - at a wood where one is named. CRAFT2: listed as patterns, every wood
+ *  under its piece. */
+export const benchRecipes = (family, wood = null) => RECIPES.filter((r) => r.profession === 'carpentry' && r.family === family && (wood == null || !WOODS_OF[family] || r.wood === wood));
 /** What the plane's board says of its act, for the page and the pins. */
 export const planeWord = (rep) => (rep ? (rep.clean ? 'A clean pass - true to the grain.' : rep.seconds < PLANE_ACT.minS ? 'Too quick - a plane is drawn, not flicked.' : rep.seconds > PLANE_ACT.maxS ? 'Too slow - the stroke wandered.' : 'The plane strayed from the grain.') : '');
 
@@ -1249,38 +1327,23 @@ function drawWorkbench(detail, rerender, { el, divider }) {
     const b = el('button', `prof-family${_bench.family === id ? ' on' : ''}`, word);
     b.type = 'button';
     b.disabled = planing;
-    b.onclick = () => { _bench.family = id; _bench.picked = null; if (WOODS_OF[id] && !WOODS_OF[id].includes(_bench.wood)) _bench.wood = WOODS_OF[id][0]; rerender(); };
+    b.onclick = () => { _bench.family = id; _bench.picked = null; _bench.pattern = null; rerender(); };
     fams.append(b);
   }
   detail.append(fams);
-  if (WOODS_OF[_bench.family]) {
-    const woods = el('div', 'prof-families prof-metals');
-    for (const id of WOODS_OF[_bench.family]) {
-      const b = el('button', `prof-family${_bench.wood === id ? ' on' : ''}`, p.name(id).replace(/ Plank$/, ''));
-      b.type = 'button';
-      b.disabled = planing;
-      b.onclick = () => { _bench.wood = id; _bench.picked = null; rerender(); };
-      woods.append(b);
-    }
-    detail.append(woods);
-  }
-  const list = benchRecipes(_bench.family, _bench.wood);
-  if (!list.length) detail.append(el('p', 'px-note', 'Nothing of that wood.'));
-  for (const r of list) {
-    const open = recipeOpen(r, rank);
-    const can = open && craftable(r, held, spendsOf(r, book, false));
-    const raw = open && !can && fromRaw(spendsOf(r, book, false), book);   // CRAFT1
-    const row = el('button', `prof-recipe${_bench.picked === r.id ? ' on' : ''}${can || raw ? '' : ' prof-locked'}`);
-    row.type = 'button';
-    row.disabled = planing;
-    row.append(el('b', null, r.name), el('span', 'prof-split', r.later ? LATER_WORDS.SEAT2 : open ? makeWord(can, raw) : `rank ${r.rank}`));
-    row.onclick = () => { _bench.picked = r.id; rerender(); };
-    detail.append(row);
-  }
-  const r = list.find((x) => x.id === _bench.picked);
+  // CRAFT2: the family's patterns, every wood (an arrow's fletching) under its piece - chosen from what is held
+  const list = benchRecipes(_bench.family);
+  const stand = standings((x) => {
+    const sp = spendsOf(x, book, false);
+    const open = !x.later && recipeOpen(x, rank), can = open && craftable(x, held, sp);
+    return { open, can, raw: open && !can && fromRaw(sp, book), share: heldShare(sp, held) };   // CRAFT1: made from raw
+  });
+  patternRows(detail, el, list, _bench, rerender, { stand, word: (x, s) => (x.later ? LATER_WORDS.SEAT2 : s.open ? makeWord(s.can, s.raw) : `rank ${x.rank}`), locked: planing });
+  const r = pickedIn(list, _bench);
   if (r) {
     const box = el('div', 'prof-craft');
     box.append(el('b', null, `${r.name} - rank ${r.rank}`));
+    materialRow(box, el, list, r, _bench, rerender, stand, planing);   // CRAFT2: its woods
     const spends = spendsOf(r, book, _bench.heartwood);
     for (const inp of spends) {
       const have = held(inp.key);
@@ -1354,9 +1417,10 @@ function drawWorkbench(detail, rerender, { el, divider }) {
 export const LOOM_FAMILIES = Object.freeze([['leather', 'Leather'], ['clothing', 'Clothing'], ['furnishings', 'Furnishings'], ['tools', 'Tools']]);
 /** DFU's two clothing groups, as the loom's row names them. */
 const CLOTHING_ROW = Object.freeze([['MensClothing', 'Men\'s'], ['WomensClothing', 'Women\'s']]);
-/** The recipes the loom lists for a family - a garment of the cloth and the group shown. */
-export const loomRecipes = (family, cloth, clothing) => RECIPES.filter((r) => r.profession === 'outfitting' && r.family === family
-  && (family !== 'clothing' || (r.cloth === cloth && r.group === clothing)));
+/** The recipes the loom makes for a family - a garment of the group shown, of the cloth where one is named. CRAFT2: listed
+ *  as patterns, every cloth under its garment. */
+export const loomRecipes = (family, cloth = null, clothing = 'MensClothing') => RECIPES.filter((r) => r.profession === 'outfitting' && r.family === family
+  && (family !== 'clothing' || ((cloth == null || r.cloth === cloth) && r.group === clothing)));
 /** A dye's name as the loom says it ("Dark Brown"). */
 export const dyeWord = (dye) => String(DYE_NAMES[dye] ?? dye).replace(/([a-z])([A-Z])/g, '$1 $2');
 
@@ -1448,7 +1512,7 @@ function drawLoom(detail, rerender, { el, divider }) {
     const b = el('button', `prof-family${_loom.family === id ? ' on' : ''}`, word);
     b.type = 'button';
     b.disabled = sewing;
-    b.onclick = () => { _loom.family = id; _loom.picked = null; rerender(); };
+    b.onclick = () => { _loom.family = id; _loom.picked = null; _loom.pattern = null; rerender(); };
     fams.append(b);
   }
   detail.append(fams);
@@ -1459,37 +1523,27 @@ function drawLoom(detail, rerender, { el, divider }) {
       const b = el('button', `prof-family${clothing === id ? ' on' : ''}`, word);
       b.type = 'button';
       b.disabled = sewing;
-      b.onclick = () => { _loom.clothing = id; _loom.picked = null; rerender(); };
-      row.append(b);
-    }
-    for (const c of CLOTHS) {
-      const b = el('button', `prof-family${_loom.cloth === c.key ? ' on' : ''}`, c.name.replace(/ Bolt$/, ''));
-      b.type = 'button';
-      b.disabled = sewing;
-      b.onclick = () => { _loom.cloth = c.key; _loom.picked = null; rerender(); };
+      b.onclick = () => { _loom.clothing = id; _loom.picked = null; _loom.pattern = null; rerender(); };
       row.append(b);
     }
     detail.append(row);
   }
-  const list = loomRecipes(_loom.family, _loom.cloth, clothing);
-  // AUDIT 32 P8: Standard-bearer's Silk says where it comes from - a siege's Spoils (PROF0 4.7), the one door to its 76
-  // garments; AUDIT-SEATS: the sieges yield it now (townSeatLaw.js SIEGE_SPOILS), so no longer "nothing yields it yet"
-  if (_loom.family === 'clothing' && _loom.cloth === STANDARD_SILK.key) detail.append(el('p', 'px-note', `${p.name(_loom.cloth)} comes with the sieges - a Siege Honour's Spoils.`));
-  for (const r of list) {
-    const open = recipeOpen(r, rank);
-    const can = open && craftable(r, held);
-    const raw = open && !can && fromRaw(r.inputs, book);   // CRAFT1
-    const row = el('button', `prof-recipe${_loom.picked === r.id ? ' on' : ''}${can || raw ? '' : ' prof-locked'}`);
-    row.type = 'button';
-    row.disabled = sewing;
-    row.append(el('b', null, r.name), el('span', 'prof-split', open ? makeWord(can, raw) : `rank ${r.rank}`));
-    row.onclick = () => { _loom.picked = r.id; rerender(); };
-    detail.append(row);
-  }
-  const r = list.find((x) => x.id === _loom.picked);
+  // CRAFT2: the family's patterns (a garment of the clothing shown), every cloth or leather under its piece - chosen from
+  // what is held
+  const list = loomRecipes(_loom.family, null, clothing);
+  const stand = standings((x) => {
+    const open = recipeOpen(x, rank), can = open && craftable(x, held);
+    return { open, can, raw: open && !can && fromRaw(x.inputs, book), share: heldShare(x.inputs, held) };   // CRAFT1: made from raw
+  });
+  patternRows(detail, el, list, _loom, rerender, { stand, word: (x, s) => (s.open ? makeWord(s.can, s.raw) : `rank ${x.rank}`), locked: sewing });
+  const r = pickedIn(list, _loom);
   if (r) {
     const box = el('div', 'prof-craft');
     box.append(el('b', null, `${r.name} - rank ${r.rank}`));
+    materialRow(box, el, list, r, _loom, rerender, stand, sewing);   // CRAFT2: its cloths, its leathers, its pelts
+    // AUDIT 32 P8: Standard-bearer's Silk says where it comes from - a siege's Spoils (PROF0 4.7), the one door to its 76
+    // garments; AUDIT-SEATS: the sieges yield it now (townSeatLaw.js SIEGE_SPOILS), so no longer "nothing yields it yet"
+    if (r.cloth === STANDARD_SILK.key) box.append(el('p', 'px-note', `${p.name(r.cloth)} comes with the sieges - a Siege Honour's Spoils.`));
     for (const inp of r.inputs) {
       const have = held(inp.key);
       const line = el('div', `prof-input${have >= inp.n ? '' : ' prof-short'}`);
@@ -1957,20 +2011,17 @@ function drawCookFire(detail, rerender, { el, divider }) {
     _cook.els = { bar, marker, marks: dots, hit };
     if (!_cook.off) _cook.take = panLoop(finishFor(_cook.actRecipe));
   }
-  // THE DISHES (9.3), in the fire's order
-  for (const r of COOKING_RECIPES) {
-    const open = recipeOpen(r, rank, specs), can = open && craftable(r, held);   // the rank the dish asks, and its inputs held
-    const row = el('button', `prof-recipe${_cook.picked === r.id ? ' on' : ''}${can ? '' : ' prof-locked'}`);
-    row.type = 'button';
-    row.disabled = !!_cook.act;
-    row.append(el('b', null, r.name), el('span', 'prof-split', open ? (can ? 'can cook now' : 'wants its inputs') : `rank ${r.rank}`));
-    row.onclick = () => { _cook.picked = r.id; rerender(); };
-    detail.append(row);
-  }
-  const r = COOKING_RECIPES.find((x) => x.id === _cook.picked);
+  // THE DISHES (9.3), in the fire's order - CRAFT2: each dish once, the herb's way chosen from what is held
+  const stand = standings((x) => {
+    const open = recipeOpen(x, rank, specs), can = open && craftable(x, held);   // the rank the dish asks, and its inputs held
+    return { open, can, raw: false, share: heldShare(x.inputs, held) };
+  });
+  patternRows(detail, el, COOKING_RECIPES, _cook, rerender, { stand, word: (x, s) => (s.open ? (s.can ? 'can cook now' : 'wants its inputs') : `rank ${x.rank}`), locked: !!_cook.act });
+  const r = pickedIn(COOKING_RECIPES, _cook);
   if (r) {
     const box = el('div', 'prof-craft');
     box.append(el('b', null, `${r.name} - rank ${r.rank}`));
+    materialRow(box, el, COOKING_RECIPES, r, _cook, rerender, stand, !!_cook.act);   // CRAFT2: the herb's two ways
     for (const inp of r.inputs) {
       const have = held(inp.key);
       const line = el('div', `prof-input${have >= inp.n ? '' : ' prof-short'}`);

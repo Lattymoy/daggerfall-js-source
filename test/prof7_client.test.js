@@ -433,10 +433,13 @@ test('PROF7 pages: the Loom at a Clothing Store - the cures for the hides held a
   press('Clothing');
   assert.ok(buttons().some((b) => b.textContent === 'Women\'s' && b.className.includes(' on')), 'the player\'s own clothing first');
   press('Men\'s');
-  press('Linen');
-  const shirt = buttons().find((b) => b.textContent.startsWith('Linen Short Shirt') && !b.textContent.includes(','));
+  // PIN MOVED (CRAFT2): the loom lists its patterns (a garment of the clothing shown), the cloth chosen in the box - none
+  // held, so its first (Linen)
+  const shirt = buttons().find((b) => b.textContent.startsWith('Short Shirt') && !b.textContent.includes(','));
   assert.match(shirt.textContent, /wants its inputs/);
   shirt.onclick();
+  assert.match(text(), /Linen Short Shirt - rank 0/);
+  assert.deepEqual(buttons().filter((b) => b.parentNode?.className?.includes('prof-made')).map((b) => b.textContent), ['Linen', 'Wool', 'Silk - rank 40', 'Standard-bearer\'s Silk - rank 55'], 'CRAFT2: its four cloths, the two past the rank naming it');
   await press('Buy 2 from the Weavers - 4 silver');
   assert.deepEqual(bought, [['cloth:linen', 2, 'weavers']]);
   assert.deepEqual(GARMENT_WORDS(buttons()), ['Undyed', 'Blue', 'Grey', 'Red', 'Dark Brown', 'Purple', 'Light Brown', 'White', 'Aquamarine', 'Yellow', 'Green']);
@@ -459,8 +462,9 @@ test('PROF7 pages: the Loom at a Clothing Store - the cures for the hides held a
   assert.deepEqual(crafted.at(-1), ['garment-165:linen', false, null]);
   held.set('cloth:linen', 2);
   draw();
-  press('Clothing'); press('Men\'s'); press('Linen');
-  buttons().find((b) => b.textContent.startsWith('Linen Short Shirt, unchangeable')).onclick();
+  press('Clothing'); press('Men\'s');
+  buttons().find((b) => b.textContent.startsWith('Short Shirt, unchangeable')).onclick();   // PIN MOVED (CRAFT2): the pattern, in the Linen held
+  assert.match(text(), /Linen Short Shirt, unchangeable - rank 0/);
   assert.equal(buttons().some((b) => b.textContent === 'Aquamarine'), true, 'AUDIT 32 L3: an unchangeable shirt offers the ten');
   assert.doesNotMatch(text(), /takes no dye/);
   press('Undyed');
@@ -469,8 +473,8 @@ test('PROF7 pages: the Loom at a Clothing Store - the cures for the hides held a
   loom = { kind: 'home', fee: 0 };
   held.delete('cloth:linen');
   draw();
-  press('Clothing'); press('Men\'s'); press('Linen');
-  buttons().find((b) => b.textContent.startsWith('Linen Short Shirt')).onclick();
+  press('Clothing'); press('Men\'s');
+  buttons().find((b) => b.textContent.startsWith('Short Shirt')).onclick();   // PIN MOVED (CRAFT2): the pattern
   assert.equal(buttons().some((b) => /Weavers/.test(b.textContent)), false, 'a home sells nothing');
   assert.match(text(), /Your loom/);
   loom = null;

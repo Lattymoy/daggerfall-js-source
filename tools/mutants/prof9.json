@@ -1519,8 +1519,8 @@
   {
     "name": "PROF541-R2-S7-dish-key",
     "file": "src/net/recipeLaw.js",
-    "old": "r.kind === 'dish' ? r.product : r.id);",
-    "new": "r.kind === 'dish' ? r.id : r.id);",
+    "old": "export const firstCraftKey = (r) => (!r ? null : `${r.product}@${r.tier}`);",
+    "new": "export const firstCraftKey = (r) => (!r ? null : r.kind === 'dish' ? r.id : `${r.product}@${r.tier}`);",
     "tests": [
       "test/prof9_law.test.js",
       "test/prof9_service.test.js"
@@ -1530,8 +1530,8 @@
   {
     "name": "PROF541-R2-S7-dish-prefix",
     "file": "server-account/src/professions.js",
-    "old": "  const keyed = r.kind === 'jewel' || r.kind === 'dish';",
-    "new": "  const keyed = r.kind === 'jewel';",
+    "old": "  const kin = firstCraftKin(r);",
+    "new": "  const kin = r.kind === 'dish' ? [r.id] : firstCraftKin(r);",
     "tests": [
       "test/prof9_service.test.js"
     ],
@@ -1540,8 +1540,8 @@
   {
     "name": "PROF541-R2-S7-plain-ring-prefix",
     "file": "server-account/src/professions.js",
-    "old": "  const keyed = r.kind === 'jewel' || r.kind === 'dish';",
-    "new": "  const keyed = firstCraftKey(r) !== r.id;",
+    "old": "  const kin = firstCraftKin(r);",
+    "new": "  const kin = r.kind === 'jewel' && !r.gem ? [r.id] : firstCraftKin(r);",
     "tests": [
       "test/prof10_service.test.js"
     ],

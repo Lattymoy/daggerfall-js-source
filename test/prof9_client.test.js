@@ -76,7 +76,15 @@ function pageOf(draw0 = drawStoresPage) {
   return {
     draw, text: () => root.textContent, buttons: () => [...root.querySelectorAll('button')], root: () => root,
     button: (label) => [...root.querySelectorAll('button')].find((b) => b.textContent === label) ?? null,
-    dish: (prefix) => [...root.querySelectorAll('button')].find((b) => b.className.includes('prof-recipe') && b.textContent.startsWith(prefix)) ?? null,
+    // PIN MOVED (CRAFT2): the fire lists each dish once, the herb's way chosen in its box - "Hunter's Stew (northern" picks
+    // the dish (where it is not picked, and nothing holds the page) and answers the box's way ("northern Root Bulb")
+    dish: (prefix) => {
+      const [name, way] = prefix.replace(/\)$/, '').split(' (');
+      const row = [...root.querySelectorAll('button')].find((b) => b.className.includes('prof-recipe') && b.textContent.startsWith(name)) ?? null;
+      if (!row || !way) return row;
+      if (!row.className.includes(' on') && !row.disabled) row.onclick();
+      return [...root.querySelectorAll('button')].find((b) => b.parentNode?.className?.includes('prof-made') && b.textContent.startsWith(way)) ?? null;
+    },
     done() { root?.remove?.(); },
   };
 }
@@ -219,11 +227,13 @@ test('PROF9 pages: The Fire - away from one, the word (no dish offered); at one,
     page.done();
     ({ calls } = stubPages());
     page = pageOf();
+    // PIN MOVED (CRAFT2): each dish once, its word the furthest its herb's ways go; the ways in its box
     assert.deepEqual(page.buttons().filter((b) => b.className.includes('prof-recipe')).map((b) => b.textContent), [
-      'Hunter\'s Stew (northern Root Bulb)can cook now', 'Hunter\'s Stew (southern Root Bulb)wants its inputs',
-      'Fisherman\'s Supper (northern Green Leaves)wants its inputs', 'Fisherman\'s Supper (southern Green Leaves)wants its inputs',
-      'Orchard Tart (northern Yellow Berries)rank 10', 'Orchard Tart (southern Yellow Berries)rank 10', 'Feast of the Hearthrank 70',
+      'Hunter\'s Stewcan cook now', 'Fisherman\'s Supperwants its inputs', 'Orchard Tartrank 10', 'Feast of the Hearthrank 70',
     ]);
+    page.dish('Hunter\'s Stew').onclick();
+    assert.match(page.text(), /Hunter's Stew \(northern Root Bulb\) - rank 0/, 'the way whose herb is held');
+    assert.deepEqual(page.buttons().filter((b) => b.parentNode?.className?.includes('prof-made')).map((b) => [b.textContent, b.className.includes('prof-locked')]), [['northern Root Bulb', false], ['southern Root Bulb', true]]);
     page.dish('Hunter\'s Stew (northern').onclick();
     page.button('Cook').onclick();
     assert.equal(page.dish('Hunter\'s Stew (southern').disabled, true, 'nothing else picked while the pan is on');

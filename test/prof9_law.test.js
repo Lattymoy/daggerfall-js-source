@@ -51,8 +51,10 @@ test('PROF9 law: the four dishes of 9.3 (4.8\'s 685-688) - their inputs as 9.3 w
   assert.deepEqual([recipeOpen(recipeById('tart:north'), 9), recipeOpen(recipeById('tart:north'), 10), recipeOpen(recipeById('feast:hearth'), 69), recipeOpen(recipeById('feast:hearth'), 70)], [false, true, false, true]);
   assert.ok(COOKING_RECIPES.every((r) => firstCraftPays(r)), 'gathered goods: the first time\'s 500 pays');
   // AUDIT PROF-541 R2-S7: a dish's first craft its dish's, whichever herb's way - north and south one key
-  assert.deepEqual(COOKING_RECIPES.map((r) => firstCraftKey(r)), ['stew', 'stew', 'supper', 'supper', 'tart', 'tart', 'feast']);
-  assert.deepEqual([firstCraftKey(recipeById('arrows:north')), firstCraftKey(recipeById('ring:gold:ruby'))], ['arrows:north', 'ring:gold'], 'arrows their own id; a jewel its piece and base');
+  // PIN MOVED (CRAFT2): a first craft is its pattern at its tier's - a dish's two herbs' ways one dish still; the three
+  // fletchings one quiver now; a jewel its piece and its base's tier (`ring:gold` is `ring@3`)
+  assert.deepEqual(COOKING_RECIPES.map((r) => firstCraftKey(r)), ['stew@1', 'stew@1', 'supper@1', 'supper@1', 'tart@2', 'tart@2', 'feast@6']);
+  assert.deepEqual([firstCraftKey(recipeById('arrows:north')), firstCraftKey(recipeById('ring:gold:ruby'))], ['arrows@1', 'ring@3'], 'the arrows one pattern; a jewel its piece and base');
 });
 
 test('PROF9 law: a dish takes no quality and lists among the Dishes (a commission names one at no quality; no auction - no Masterwork); a Cook\'s dish two servings (3.3), never a kit\'s or a Quartermaster\'s dish', () => {

@@ -119,7 +119,8 @@ the corpses - FORAGE3), and online the quests' time as a wait (FORAGE4). Foragin
   0, **Apprentice** 25, **Journeyman** 50, **Expert** 75, **Master** 100.
 - XP to reach rank n: **10 x n^2** (Apprentice 6,250; Journeyman 25,000; Expert 56,250; Master 100,000).
 - XP earned: a harvest **15 x tier** (+50% for a clean act); a craft **20 x tier x units**, **+500** the first time
-  a recipe is made; a writ **2 x its Mark value**. A node or recipe more than two tiers below your rank gives a
+  a recipe is made (CRAFT2, 41.5: the first time a PATTERN is made AT A TIER - the first Longsword of tier 6, whichever of
+  its four metals); a writ **2 x its Mark value**. A node or recipe more than two tiers below your rank gives a
   quarter. DECIDED, Mac: "XP follows your rank" - **a haul (PROF8) and a herb (HERB-XP, 2026-10-01 part four) are worked
   at the highest tier the rank opens**: every haul is tier 1 and herbs stop at tier 3, so their own tiers would have
   held Fishing at a Novice's pace and quartered every herb past rank 70 (the Basket's food keeps its tier). DECIDED, AUDIT 32 S1 - Mac: "Whatever you think is best": **no +500 for a recipe made wholly of goods
@@ -3610,7 +3611,7 @@ between a modified client and an unbounded claim go with it: **"Keep both"**.
   (`audit29`, `audit32`, `bag1`, `fb1001_ground`, `prof1`, `prof2`, `prof7`, `prof8`). FOUND, not this slice's:
   `AUDIT29-A17-motherlode-sense-chosen` survives on main as here (PROF2b moved A17's pins to the Sense chosen as any).
 
-## 41. CRAFT0 - fewer moving parts, a crafter worth seeking (DECIDED 2026-10-07); CRAFT1 - the chain, as built (BUILT 2026-10-07)
+## 41. CRAFT0 - fewer moving parts, a crafter worth seeking (DECIDED 2026-10-07); CRAFT1 - the chain, as built (BUILT 2026-10-07); CRAFT2 - patterns, as built (BUILT 2026-10-07)
 
 Mac: **"How could we enhance the profession element of the game while reducing complexity and making crafting more
 viable"**; given the five proposals below, **"This is amazing. Lets do it"**. Each is DECIDED (Mac) as a direction; the
@@ -3637,7 +3638,7 @@ slice is built and pinned on its own (Home's "one feature at a time").
 | Slice | What | Its numbers (DECIDED) |
 |---|---|---|
 | **CRAFT1** | **The chain** - a station plans the refining a craft needs from what is held and runs it before the craft (41.3) | Every work of the forge, workbench, loom and mason's bench (`WORK_RECIPES`), never a transmutation; **never down a tier** (a work whose input is above its product's tier: no wood but Pine burnt to Charcoal, no Tiger cured to Cured Leather, no Dragonling to Hardened) - those stay a deliberate press; the table's first work first; 4 deep; the works pay no station fee of their own (the craft's fee stands) |
-| **CRAFT2** | **Patterns, not a matrix** - the station's window lists ~40 patterns (Longsword, Cuirass, Robe, Ring...) and the material is chosen from what is held; the service's recipes stay as they are | The first-make **+500 moves to a pattern at a tier** (the first Longsword of tier 2, not the first Steel and the first Silver Longsword); AUDIT 32 S1's counter-goods rule kept |
+| **CRAFT2** | **Patterns, not a matrix** - the station's window lists ~40 patterns (Longsword, Cuirass, Robe, Ring...) and the material is chosen from what is held; the service's recipes stay as they are (41.5) | The first-make **+500 moves to a pattern at a tier** (the first Longsword of tier 6, not the first Adamantium, Ebony, Orcish and Warforged Longsword - MEASURED at the build, 41.5: Steel is tier 2 and Silver 3, so the example this cell first gave named two tiers); AUDIT 32 S1's counter-goods rule kept |
 | **CRAFT3** | **Five crafts, not eight** - Smithing (+ Jewelcrafting), **Building** (Carpentry + Masonry), Outfitting, **Provisioning** (Cooking + Alchemy), Enchanting; the five gathering professions stay | A merged track takes the **higher** of its two parents' XP; its choices at 50 and at 100 are its parents' four, one chosen; a character who chose under both keeps the higher track's and re-chooses free; the crafter's limit stays two above Journeyman - of five, a real choice |
 | **CRAFT4** | **Tempering and Reforging** - the crafter improves what loot gives, never past law 7 | **Temper** (Smithing for weapons and metal armour, Outfitting for leather and cloth): **+1 quality step** on any piece of Rare or below, up to **Superior** (a Masterwork stays a maker's), for half the piece's recipe's ingots (or leather, or bolts) of its material, rounded up, at the material's tier's rank; craft XP. **Reforge** (Enchanting 50): one property of a Magic or Rare piece rolled again, for **2** (Magic) or **5** (Rare) Arcane Essence. Legendary, Aetheric, Artifact and Sigil pieces are neither (law 7). A provenance piece's record is re-signed with its new quality, so the market sees what it is; a save's own piece is the save's word, as its condition is - the Stores' spend is the bound |
 | **CRAFT5** | **The consumables, leaned into** | A Superior or Masterwork Repair Kit mends up to **0.90** of a piece's condition (`KIT_CEILING` 0.75 for the rest); a dish's buff and a Potent potion stand together - TO MEASURE first whether either already overwrites the other; arrows a Building product (CRAFT3) |
@@ -3715,6 +3716,55 @@ Kept as they are: the counter's "Buy" beside an input the chain would make (a ch
 `tools/mutants/craft1.json` (28, all dead - +13). PIN MOVED again (the kept word says the chain): `audit30_client` C4 +
 A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each still dead: `audit32` B4, `prof9`'s,
 `prof10`'s and `prof11`'s hands-not-at-the-bench (the hands held under a craft too).
+
+### 41.5 CRAFT2 - patterns, not a matrix, as built (BUILT 2026-10-07, Mac: "Its not finished")
+
+- **The law** - `src/net/recipeLaw.js`: every recipe carries its `pattern` (the piece's word whatever it is made of -
+  "Longsword", "Chain Cuirass", "Arrows", "Hunter's Stew") and its `madeOf` ("Mithril", "Harpy Feathers", "northern
+  Root Bulb"; "" where a pattern is made one way). `patternOf` is the recipe's `product` (`longsword`, `garment-163`,
+  `stew`) - FACT, pinned: no product id is two professions'. `patternsOf(list)` groups a list into its patterns, each
+  once in the list's order, its materials in theirs.
+- **The first-make 500** - `firstCraftKey` is the pattern AT ITS TIER (`longsword@6`), `firstCraftKin` every recipe of it
+  (at most 18 - the Wand at tier 6, two woods and nine gems). It holds both the exceptions the old key carried: AUDIT
+  PROF-541 J7's piece and base (a jewel's base is its tier: `ring@3` is `ring:gold`, whichever gem) and R2-S7's dish (its
+  two herbs' ways one tier). Two firsts became one where a pattern shares a tier: the Wand's two woods, and the Arrows'
+  three fletchings (one quiver, tier 1). AUDIT 32 S1 stands beside it unchanged - FACT, pinned: no pattern at a tier
+  holds both a recipe that pays and one wholly of the counter's goods. MEASURED: 663 recipes pay a first; the firsts
+  they paid were 561 (Smithing 308, Outfitting 182, Carpentry 42, Jewelcrafting 21, Masonry 4, Cooking 4) and are 446
+  (201, 180, 37, 20, 4, 4). The metals that share a tier are tier 4's (Elven, Dwarven) and tier 6's (Adamantium, Ebony,
+  Orcish, Warforged); every other tier is one metal, so the anvil's firsts fall by a third and the loom's barely (each
+  cloth and each leather is its own tier).
+- **The service** - `server-account/src/professions.js` `craftAtAnvil`: the decision's "made before" reads `recipe IN`
+  the kin, one bind a recipe (it was the recipe's own id, or a jewel's and a dish's prefix). The decision binds at most
+  40 (the Wand: 16, two an input, 18 kin) under D1's 100. No migration: `prof_crafts` keeps each craft's recipe as it
+  always did, so a character's history counts as it stands - an Adamantium Longsword made last week is this week's
+  Ebony Longsword's first.
+- **The stations** - `src/ui/profPages.js`: the anvil lists its family's patterns (the Weapons 15, the Armour 18, the
+  Tools 5, the Repair Kit - 39, not 308 rows behind a metal row), the workbench its (13 - the Arrows one pattern, its
+  fletching the material), the loom its (the leathers 7; a garment of the clothing shown - 41 men's, 35 women's - the
+  cloth row gone, the clothing row kept; the furnishings 9; the Fishing-Net), the fire its four dishes (the herb's way
+  the material). `patternRows`: each pattern once, its word the furthest its materials go (`patternLead` - made now,
+  from raw, open, else the lowest rank it asks). `pickedOf`, what a picked pattern is made of: the last craft's
+  material here where this pattern is made of it and it can be made, now or from raw; else the highest tier made now
+  (the Daedric over the Warforged, which the table stands last), then the highest made from raw; else the open one
+  holding the most of its inputs (`heldShare` - the Mithril Longsword for three Mithril Ingots, its leather still to
+  buy); else the last's, else the first. `materialRow` in the box: a button a material, the chosen one marked, one that
+  cannot be made dimmed, one past the rank naming it ("Daedric - rank 90"). Standard-bearer's Silk's word (AUDIT 32 P8)
+  is said in the box when the garment is chosen in it. FACT, unchanged: the mason's bench's four carvings are made one
+  way each, and the jeweller's bench already listed by piece, then base, then gem (PROF10).
+- **The four hosts**: unchanged from CRAFT1 - `scenes/world.js` builds the station pages; `worldModes.js`, `exterior.js`
+  and `dungeonContext.js` build none, so none to wire.
+- **As built**: `src/net/recipeLaw.js`, `server-account/src/professions.js`, `src/ui/profPages.js`. Pinned:
+  `test/craft2_patterns.test.js` (7) - the done-when through the real Worker (an Adamantium Longsword its first, an
+  Ebony one after it none, a Mithril one its own, an Ebony Broadsword its own, a Ghostwood Wand none after an Ironwood
+  one), the law, `pickedOf`, the anvil, the workbench and the loom. `tools/mutants/craft2.json` (24, all dead). FOUND by
+  the mutants: a family turned and turned back kept no pattern by nothing a pin read, and the Silk's word shown under
+  every cloth survived - both pinned. PIN MOVED (the stations list patterns, the material chosen in the box):
+  `prof3_client` and `craft1_chain` the anvil page, `prof4_client` the workbench's, `prof7_client` the loom's,
+  `prof9_client` the fire's (its dish helper picks the dish, then the herb's way), `prof10_client` the fire's dish,
+  `audit30_client` U13 + U20, A2 + A3 and A9, `audit32_pages` P1-P12's shirt and dagger and P8's Silk, `prof9_law` the
+  first-make keys. Re-aimed by content, each still dead: `audit30` A3, `audit32` P8, `audit_seats_open` ASO-loom-note,
+  `prof10` J7's two, `prof4`'s five, `prof7`'s three, `prof9`'s R2-S7 three.
 
 ## Appendix A - a day of a gatherer
 

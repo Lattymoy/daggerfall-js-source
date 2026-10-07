@@ -66,8 +66,9 @@ function pages(over = {}, heldIn = {}) {
   const btn = (words, which = 0) => buttons().filter((b) => b.textContent.startsWith(words))[which];
   return { calls, draw, get root() { return root; }, buttons, btn, text: () => root.textContent, held };
 }
-/** The loom's garment picked: Clothing, Men's, Linen, the Short Shirt. */
-const pickShirt = (p) => { p.btn('Clothing').onclick(); p.btn('Men\'s').onclick(); p.btn('Linen').onclick(); p.btn('Linen Short Shirt').onclick(); };
+/** The loom's garment picked: Clothing, Men's, the Short Shirt, Linen. PIN MOVED (CRAFT2): the pattern, then its cloth in
+ *  the box (Linen chosen already - the cloth held - and pressed to say so). */
+const pickShirt = (p) => { p.btn('Clothing').onclick(); p.btn('Men\'s').onclick(); p.btn('Short Shirt').onclick(); p.btn('Linen').onclick(); };
 
 // ─── P1: A PRESS AT ITS OWN MOMENT ───────────────────────────────────
 
@@ -118,7 +119,7 @@ test('AUDIT 32 P1: a stitch and a strike judged at the press\'s own moment (`lea
 test('AUDIT 32 P2/P4: one act a page - the loom\'s Craft held while the anvil\'s heat is under way, and said; a held key\'s repeats no presses', () => {
   const p = pages();
   try {
-    p.btn('Iron Dagger').onclick();
+    p.btn('Dagger').onclick();   // PIN MOVED (CRAFT2): the pattern - its Iron the metal held
     p.btn('Craft').onclick();   // the anvil's heat begins
     assert.ok(p.btn('Strike'), 'the heat under way');
     pickShirt(p);
@@ -182,6 +183,7 @@ test('AUDIT 32 P8/R4: Standard-bearer\'s Silk says what it waits on; the Outfitt
   const p = pages();
   try {
     p.btn('Clothing').onclick();
+    p.btn('Straps').onclick();   // PIN MOVED (CRAFT2): a garment, then its cloth in the box
     p.btn('Standard-bearer\'s Silk').onclick();
     assert.match(p.text(), /cloth:standard comes with the sieges - a Siege Honour's Spoils\./);   // PIN MOVED (AUDIT-SEATS): the sieges yield it now
     assert.doesNotMatch(p.text(), /Nothing yields it yet/);

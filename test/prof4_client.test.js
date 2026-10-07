@@ -400,13 +400,14 @@ test('PROF4 pages: the Workbench at a Furniture Store - the saws for the logs he
   assert.ok(anvilRecipes('tools', 'ingot:iron').every((r) => r.profession === 'smithing'), 'the Basket is the workbench\'s');
   assert.deepEqual(benchRecipes('furniture', 'plank:oak').map((r) => r.id), ['table-large:oak', 'table-small:oak', 'chair:oak', 'bed-plain-double:oak']);
   press('Furniture');
-  press('plank:oak');
+  // PIN MOVED (CRAFT2): the workbench lists its patterns, the wood chosen in the box - the bed is Oak's alone
   const bed = buttons().find((b) => b.textContent.startsWith('Plain Double Bed'));
   assert.match(bed.textContent, /wants its inputs/, 'no Linen');
   bed.onclick();
   await press('Buy 2 from the furnisher - 4 silver');
   assert.deepEqual(bought, [['cloth:linen', 2]]);
-  press('Small Oak Table');
+  press('Small Table');   // PIN MOVED (CRAFT2): the pattern - in the wood the last craft here was made of, held
+  assert.match(text(), /Small Oak Table - rank 10/);
   assert.match(text(), /Use a Heartwood for a plank - a step better \(1 stored\)/);
   const box = [...root.querySelectorAll('input')].find((i) => i.type === 'checkbox' && /Heartwood/.test(i.parentNode?.textContent ?? ''));
   box.checked = true; box.onchange();
@@ -439,7 +440,7 @@ test('PROF4 pages: the Workbench at a Furniture Store - the saws for the logs he
   bench = { kind: 'home', fee: 0 };
   held.delete('cloth:linen');
   draw();
-  press('Furniture'); press('plank:oak');
+  press('Furniture');
   buttons().find((b) => b.textContent.startsWith('Plain Double Bed')).onclick();
   assert.equal(buttons().some((b) => b.textContent.startsWith('Buy ') && /furnisher/.test(b.textContent)), false, 'a home sells nothing');
   assert.match(text(), /Your workbench/);

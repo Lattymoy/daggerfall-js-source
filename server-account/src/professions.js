@@ -60,7 +60,7 @@ import {
 } from '../../src/net/professionLaw.js';
 import {
   recipeById, recipeOpen, qualityOdds, rollQuality, qualitySteps, craftQuality, takesQuality, craftXp, craftCount,
-  makerMark, FIRST_CRAFT_XP, firstCraftPays, firstCraftKey, recipeInputs, takesHeartwood, carriesMark, dyeOk,
+  makerMark, FIRST_CRAFT_XP, firstCraftPays, firstCraftKin, recipeInputs, takesHeartwood, carriesMark, dyeOk,
   masonXp,   // PROF11: the mason's bench's XP
   cookXp, dishHand,   // PROF9: a dish's XP and its cook's hand
   jewelHand, takesCracked, masterworkSpec, LAPIDARY,   // PROF10: the jeweller's hand, a Lapidary's cracked gem, the Master Jeweller's points
@@ -1143,12 +1143,13 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
     binds.push(inp.key, inp.n);
     held.push(`${spendableSql('?1', '?2', `?${17 + 2 * i}`)} >= ?${18 + 2 * i}`);   // GOLD-MARKET: never gold's units
   });
-  // AUDIT PROF-541 J7: a jewel's first craft its piece and base's (recipeLaw firstCraftKey) - any gem of `ring:gold` made
-  // before is the first; ?{after the inputs} the key. AUDIT PROF-541 R2-S7: a dish's its dish's (`stew` - either herb's way)
-  const fk = `?${binds.length + 1}`;
-  const keyed = r.kind === 'jewel' || r.kind === 'dish';   // a plain ring's key its own id, and still its gems' base
-  const madeBefore = keyed ? `(recipe = ${fk} OR substr(recipe, 1, length(${fk}) + 1) = ${fk} || ':')` : 'recipe = ?4';
-  if (keyed) binds.push(firstCraftKey(r));
+  // CRAFT2 (Professions-Arc 41.2): a first craft is its PATTERN AT ITS TIER's (recipeLaw firstCraftKin) - any recipe of it
+  // made before (the first Ebony Longsword's after an Adamantium one, a Gold Ruby Ring's after a Gold Ring) and this is
+  // none; ?{after the inputs} on, one a recipe. It holds AUDIT PROF-541 J7 (a jewel's piece and base) and R2-S7 (a dish
+  // either herb's way): both are one pattern at one tier
+  const kin = firstCraftKin(r);
+  const madeBefore = `recipe IN (${kin.map((_, i) => `?${binds.length + 1 + i}`).join(', ')})`;
+  binds.push(...kin);
   const decided = 'EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND rid = ?5 AND n = ?6)';
   // AUDIT PROF-541 B7: A PIECE MADE OF BOUGHT GOODS IS BOUGHT - 'marks' (GOLD-MARKET's Drakes, products.bought_with) where
   // any input held a bought unit as the pieces are minted, BEFORE the spends (bought first - the smelt's rule, professionLaw

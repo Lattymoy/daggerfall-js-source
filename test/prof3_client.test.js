@@ -214,10 +214,12 @@ test('PROF3 anvil page: at a smith\'s forge - the families and metals, a recipe\
   const press = (label) => buttons().find((b) => b.textContent.startsWith(label)).onclick();
   assert.match(text(), /The Anvil/);
   assert.match(text(), /The smith's anvil - 50 gold a craft/);
-  press('Mithril');
-  const row = buttons().find((b) => b.textContent.startsWith('Mithril Longsword'));
+  // PIN MOVED (CRAFT2): the anvil lists its patterns, the metal chosen in the box from what is held - none made now, so the
+  // open one holding most of its inputs (the three Mithril Ingots)
+  const row = buttons().find((b) => b.textContent.startsWith('Longsword'));
   assert.match(row.textContent, /wants its inputs/, 'no Cured Leather yet');
   row.onclick();
+  assert.match(text(), /Mithril Longsword - rank 55/);
   assert.match(text(), /Cured Leather|leather:cured/);
   assert.match(text(), /margin 0: Crude 20 \| Standard 60 \| Fine 20/);
   assert.equal(buttons().find((b) => b.textContent === 'Craft').disabled, true);
@@ -240,8 +242,7 @@ test('PROF3 anvil page: at a smith\'s forge - the families and metals, a recipe\
   forge = { kind: 'home', fee: 0 };
   held.delete('leather:cured');
   draw();
-  press('Mithril');
-  buttons().find((b) => b.textContent.startsWith('Mithril Longsword')).onclick();
+  assert.match(text(), /Mithril Longsword - rank 55/, 'CRAFT2: the pattern and its metal kept');
   assert.equal(buttons().some((b) => b.textContent.startsWith('Buy ')), false);
   assert.match(text(), /Your anvil/);
   forge = null;

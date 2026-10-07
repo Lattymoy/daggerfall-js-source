@@ -273,11 +273,13 @@ test('CRAFT1 anvil page: a recipe whose inputs are made from raw says so, its bo
   draw();
   const buttons = () => [...root.querySelectorAll('button')];
   const press = (label) => buttons().find((b) => b.textContent.startsWith(label)).onclick();
-  press('Steel');
-  const row = buttons().find((b) => b.textContent.startsWith('Steel Longsword'));
+  // PIN MOVED (CRAFT2): the anvil lists its patterns, the metal chosen in the box from what is held - the highest tier the
+  // raw goods make (the Steel's, rank 10 - the Iron's too, but lower)
+  const row = buttons().find((b) => b.textContent.startsWith('Longsword'));
   assert.match(row.textContent, /can make from raw/);
   assert.equal(row.className.includes('prof-locked'), false);
   row.onclick();
+  assert.match(root.textContent, /Steel Longsword - rank 10/);
   assert.match(root.textContent, /Refined first, here: smelt ingot:iron x3, burn wood:charcoal x3, smelt ingot:steel x3, cure leather:cured x1 - from metal:iron x6, log:pine x3, hide:rat x2\./);
   const craft = buttons().find((b) => b.textContent === 'Craft');
   assert.equal(craft.disabled, false, 'offered');
@@ -293,9 +295,8 @@ test('CRAFT1 anvil page: a recipe whose inputs are made from raw says so, its bo
   assert.deepEqual(crafted, ['longsword:steel']);
   held.set('metal:iron', 4);
   draw();
-  press('Steel');
-  assert.match(buttons().find((b) => b.textContent.startsWith('Steel Longsword')).textContent, /wants its inputs/);
-  buttons().find((b) => b.textContent.startsWith('Steel Longsword')).onclick();
+  assert.match(buttons().find((b) => b.textContent.startsWith('Longsword')).textContent, /wants its inputs/, 'PIN MOVED (CRAFT2): no metal of the pattern made now or from raw');
+  press('Steel');   // the box's metal
   assert.match(root.textContent, /From raw goods, short of metal:iron x2\./);
   assert.equal(buttons().find((b) => b.textContent === 'Craft').disabled, true);
   setPref('gentleActs', false);

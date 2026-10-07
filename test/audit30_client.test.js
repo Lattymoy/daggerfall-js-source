@@ -319,8 +319,7 @@ test('AUDIT 30 U13 + U20: a station\'s fee the purse cannot meet is not offered,
   const p = pagesAt({ held: { 'ingot:iron': 20, 'metal:tin': 5, 'ore:iron': 10, 'wood:pine': 4 }, tracks: { smithing: 0, mining: 0 }, forge: { kind: 'shop', fee: 25 }, purse: 10 });
   assert.match(p.root.textContent, /The smith asks 25 gold a smelt; you carry 10\./);
   assert.ok(p.buttons().filter((b) => b.textContent === 'Smelt').every((b) => b.disabled), 'refused after the press');
-  p.buttons().find((b) => b.textContent === 'Iron').onclick();
-  p.buttons().find((b) => b.textContent.startsWith('Iron Dagger')).onclick();
+  p.buttons().find((b) => b.textContent.startsWith('Dagger')).onclick();   // PIN MOVED (CRAFT2): the pattern - its Iron the metal held
   assert.equal(p.buttons().find((b) => b.textContent === 'Craft').disabled, true, 'the heat struck, then the smith refused');
   const q = pagesAt({ held: { 'metal:iron': 10, 'log:pine': 4 }, tracks: { smithing: 0, mining: 0, logging: 0 }, forge: { kind: 'home', fee: 0 } });
   const smelts = q.buttons().filter((b) => b.textContent === 'Smelt');
@@ -338,11 +337,11 @@ test('AUDIT 30 U13 + U20: a station\'s fee the purse cannot meet is not offered,
 test('AUDIT 30 A2 + A3: the plane\'s pickers are held while it is drawn and it makes the recipe it began on; a pointer passing with nothing pressed lets go of the pass; a board drawn anew lost its drag', async () => {
   const p = pagesAt({ held: { 'plank:pine': 20 }, tracks: { carpentry: 0 }, workbench: { kind: 'home', fee: 0 } });
   p.buttons().find((b) => b.textContent === 'Staves').onclick();
-  p.buttons().find((b) => b.textContent === 'plank:pine').onclick();
-  p.buttons().find((b) => b.textContent.startsWith('Pine Staff')).onclick();
+  p.buttons().find((b) => b.textContent.startsWith('Staff')).onclick();   // PIN MOVED (CRAFT2): the pattern - its Pine the wood held
   p.buttons().filter((b) => b.textContent === 'Craft' && !b.disabled).at(-1).onclick();
-  const bench = ['Staves', 'Bows', 'Arrows', 'Furniture', 'Tools', 'Siege', 'plank:pine', 'plank:oak'];
-  const rows = p.buttons().filter((b) => /prof-recipe/.test(b.className) || bench.includes(b.textContent));
+  const bench = ['Staves', 'Bows', 'Arrows', 'Furniture', 'Tools', 'Siege'];
+  // PIN MOVED (CRAFT2): the pickers the pattern rows, the families and the box's woods
+  const rows = p.buttons().filter((b) => /prof-recipe/.test(b.className) || bench.includes(b.textContent) || b.parentNode?.className?.includes('prof-made'));
   assert.ok(rows.length > 8 && rows.every((b) => b.disabled), 'another recipe picked mid-pass crafted it, bypassing its readiness');
   let board = p.root.querySelector('.prof-board');
   board.getBoundingClientRect = () => ({ left: 0, top: 0, width: 100, height: 40 });
@@ -362,8 +361,7 @@ test('AUDIT 30 A2 + A3: the plane\'s pickers are held while it is drawn and it m
   // a Quick craft takes the Heartwood the page shows, as the plane's pass does
   const q = pagesAt({ held: { 'plank:pine': 20, 'wood:heartwood': 1 }, tracks: { carpentry: 0 }, workbench: { kind: 'home', fee: 0 } });
   q.buttons().find((b) => b.textContent === 'Staves').onclick();
-  q.buttons().find((b) => b.textContent === 'plank:pine').onclick();
-  q.buttons().find((b) => b.textContent.startsWith('Pine Staff')).onclick();
+  q.buttons().find((b) => b.textContent.startsWith('Staff')).onclick();   // PIN MOVED (CRAFT2): the pattern, in Pine
   const box = [...q.root.querySelectorAll('input')].find((i) => i.type === 'checkbox' && /Heartwood/.test(i.parentNode?.textContent ?? ''));
   box.checked = true; box.onchange();
   await q.buttons().find((b) => b.textContent === 'Quick craft').onclick();
@@ -376,8 +374,7 @@ test('AUDIT 30 A9: the heat\'s Space and Enter are not taken from a text field o
   const orig = globalThis.document.addEventListener;
   globalThis.document.addEventListener = (type, f, o) => { if (type === 'keydown') heard.push(f); return orig.call(globalThis.document, type, f, o); };
   const p = pagesAt({ held: { 'metal:tin': 5, 'ingot:iron': 20 }, tracks: { smithing: 0 }, forge: { kind: 'home', fee: 0 } });
-  p.buttons().find((b) => b.textContent === 'Iron').onclick();
-  p.buttons().find((b) => b.textContent.startsWith('Iron Dagger')).onclick();
+  p.buttons().find((b) => b.textContent.startsWith('Dagger')).onclick();   // PIN MOVED (CRAFT2): the pattern - its Iron the metal held
   p.buttons().find((b) => b.textContent === 'Craft' && !b.disabled).onclick();
   globalThis.document.addEventListener = orig;
   await new Promise((r) => setTimeout(r, 30));

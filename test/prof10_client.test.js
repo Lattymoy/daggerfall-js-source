@@ -353,7 +353,7 @@ test('PROF10 pages: the facet\'s keys - Space stops the turn (a held key\'s repe
     assert.ok(page.text().includes(FACET_DOWN_LINE), 'Escape sets the stone down, nothing spent, said');
     assert.equal(calls.length, 1);
     // one act a page
-    page.recipe('Hunter\'s Stew (northern').onclick();
+    page.recipe('Hunter\'s Stew').onclick();   // PIN MOVED (CRAFT2): the fire lists each dish once
     page.button('Craft').onclick();
     page.draw();
     assert.equal(page.button('Cook').disabled, true, 'the facet holds the fire');

@@ -1546,8 +1546,8 @@
   {
     "name": "PROF541-J7-every-gem-its-first",
     "file": "server-account/src/professions.js",
-    "old": "OR substr(recipe, 1, length(${fk}) + 1) = ${fk} || ':')",
-    "new": "OR 0)",
+    "old": "  const kin = firstCraftKin(r);",
+    "new": "  const kin = [r.id];",
     "tests": [
       "test/prof10_service.test.js"
     ]
@@ -1555,8 +1555,8 @@
   {
     "name": "PROF541-J7-key-the-gem",
     "file": "src/net/recipeLaw.js",
-    "old": "r.id.split(':').slice(0, 2).join(':')",
-    "new": "r.id.split(':').slice(0, 3).join(':')",
+    "old": "export const firstCraftKey = (r) => (!r ? null : `${r.product}@${r.tier}`);",
+    "new": "export const firstCraftKey = (r) => (!r ? null : r.kind === 'jewel' ? r.id : `${r.product}@${r.tier}`);",
     "tests": [
       "test/prof10_service.test.js"
     ]
