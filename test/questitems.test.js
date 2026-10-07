@@ -98,10 +98,11 @@ test('mint: the named/class/template/random arms resolve through the tables to D
   }
   assert.equal(df('a').questItem, undefined, 'the template form is NOT a quest item');
   // ...and every template-backed mint carries SetItem's condition law
-  // (currentCondition = maxCondition = template hitPoints)
+  // (currentCondition = maxCondition = template hitPoints - a weapon's
+  // the one pool every type shares, WEAPON-POOL 2026-10-06)
   assert.equal(df('s').maxCondition, 2000, "Saint's Hair hitPoints");
   assert.equal(df('s').currentCondition, 2000);
-  assert.equal(df('w').maxCondition, 1400, 'Claymore hitPoints');
+  assert.equal(df('w').maxCondition, 1600, 'Claymore: the one weapon pool (WEAPON-POOL), not its row\'s 1400');
   assert.equal(df('a').maxCondition, 1, 'Arrow hitPoints, on the unlinked form too');
 });
 

@@ -142,6 +142,9 @@ const CSA_VENDOR = 'come-sail-away';
 /** The sea fight's record in a save's per-mod slot (scenes/navalHost.js NAVAL_SAVE_VENDOR, pinned equal - the sea's host,
  *  which neither the Online door nor the Worker loads): AUDIT WK-P1, where my companions' packs ride. */
 const NAVAL_VENDOR = 'NavalCombat';
+/** The feud's record in a save's per-mod slot (systems/revenant.js REVENANT_SAVE, pinned equal - the feud's runtime,
+ *  which neither the Online door nor the Worker loads): ITEM-WALK C, where a sworn revenant's pack rides. */
+const REVENANT_VENDOR = 'Revenant';
 
 /**
  * AUDIT REALM F2: WHAT THE PLAYER LEFT IN THE WORLD - every list of the character's own things a save carries outside its
@@ -162,6 +165,11 @@ const NAVAL_VENDOR = 'NavalCombat';
  * storage, systems/naval/crewCompanions.js), saved with the party in the sea's record (navalHost.js getSaveData `party`,
  * each companion's `items`): a container like the hold beside it, which customs and the service's first save never
  * read - a million gold in his pack crossed whole while the same million in the hold was capped.
+ * ITEM-WALK C (2026-10-07, Mac: "Do them now within this PR"): AND A SWORN REVENANT'S PACK - each sworn one's
+ * `companion.items` in the feud's record (revenant.js getSaveData `list`), the storage the player fills as the crew's
+ * (revenantCompanions.js packOf: "Its pack (the companion's storage), as the crew's is"). WK-P1 read the crew's packs
+ * and not this one, so gold and letters in it crossed uncapped. Only a record the load keeps a pack for counts: sworn
+ * and not defeated (revenant.js sanitize). What a revenant took is its own until it falls, and is never counted.
  * @param {any} snap
  */
 export function stashedItemLists(snap) {
@@ -179,6 +187,8 @@ export function stashedItemLists(snap) {
   out.push(...lists(...Object.values(csa?.packedCargoes ?? {})));
   const party = snap?.modData?.[NAVAL_VENDOR]?.party?.party;   // AUDIT WK-P1
   for (const c of Array.isArray(party) ? party : []) out.push(...lists(c?.items));
+  const feud = snap?.modData?.[REVENANT_VENDOR]?.list;   // ITEM-WALK C
+  for (const r of Array.isArray(feud) ? feud : []) if (r?.sworn && !r.defeated) out.push(...lists(r.companion?.items));
   return out;
 }
 /** Every list of the character's own things where liquid wealth can lie, in the order customs takes from them: the
