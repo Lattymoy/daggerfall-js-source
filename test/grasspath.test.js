@@ -269,7 +269,7 @@ test('PERF11: the online frame builds the owner list once, not twice', () => {
 });
 
 test('WATER-DRAW1: the draw and the feet ask different questions, and only the draw’s table moved', async () => {
-  const { WATER_MASK_TABLE, WATER_DRAW_MASK_TABLE, SHALLOW_DRAWN, SHALLOW_WHOLE, buildWaterMaskTable } = await import('../src/world/waterCorners.js');
+  const { WATER_MASK_TABLE, WATER_DRAW_MASK_TABLE, SHALLOW_DRAWN, SHALLOW_WHOLE, ISLAND_DRAWN, CORNER_DRAWN, SHORE_FAMILIES, buildWaterMaskTable } = await import('../src/world/waterCorners.js');
   // The LAW's table is byte-for-byte what it was: the player swims where
   // PlayerMotor.OnShallowWaterTile says and nowhere else.
   assert.deepEqual([...WATER_MASK_TABLE], [...buildWaterMaskTable()], 'the feet’s table is the default build');
@@ -277,10 +277,13 @@ test('WATER-DRAW1: the draw and the feet ask different questions, and only the d
     assert.equal(WATER_MASK_TABLE[r << 2], 0, `record ${r} is NOT water to DFU's motor, and still is not`);
     assert.equal(WATER_DRAW_MASK_TABLE[r << 2], 0xF, `...but the enhanced pass draws it whole`);
   }
-  // and nothing else differs between the two
+  // and nothing else differs between the two - PIN MOVED (WATER-DRAW2, test/waterdraw2.test.js): SHALLOW_DRAWN, the
+  // islands, the corners and the saddles' half turns (each family's fourth record at turns 2 and 3, nothing else of it)
   const diff = [];
-  for (let i = 0; i < 256; i++) if (WATER_MASK_TABLE[i] !== WATER_DRAW_MASK_TABLE[i]) diff.push(i >> 2);
-  assert.deepEqual([...new Set(diff)].sort((a, b) => a - b), [...SHALLOW_DRAWN].sort((a, b) => a - b), 'SHALLOW_DRAWN is the whole of the difference');
+  for (let i = 0; i < 256; i++) if (WATER_MASK_TABLE[i] !== WATER_DRAW_MASK_TABLE[i]) diff.push(i);
+  const saddles = SHORE_FAMILIES.map((f) => f[3]);
+  assert.deepEqual([...new Set(diff.map((i) => i >> 2))].sort((a, b) => a - b), [...SHALLOW_DRAWN, ...ISLAND_DRAWN, ...CORNER_DRAWN, ...saddles].sort((a, b) => a - b), 'SHALLOW_DRAWN and WATER-DRAW2\'s are the whole of the difference');
+  assert.deepEqual(diff.filter((i) => saddles.includes(i >> 2)).map((i) => i & 3), [2, 3, 2, 3, 2, 3], 'a saddle differs only half turned');
   // AUDIT: and it is NOT EMPTY. Every assertion above quantifies over
   // SHALLOW_DRAWN, so emptying it satisfies all of them vacuously and
   // the whole fix reverts with the pins still green. The content is the
