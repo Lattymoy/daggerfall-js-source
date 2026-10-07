@@ -76,6 +76,7 @@ import { PARTY_MAX } from '../net/wire.js';   // PARTY8: the seat count in the t
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
 import { partyFxKey, partyFxAbbrev, partyHealOf } from '../net/partyBuffs.js';   // PARTY-BUFFS: a member's own effects, and the heal they gained
 import { spellIconUrl } from './enhancedArt.js';   // PARTY-BUFFS: the spell's own icon, cut from ICON00I0 as the enhanced spellbook cuts it
+import { SHIPPED_START_CELL } from '../systems/startDungeon.js';   // AUDIT FB1007b H5: the tutorial dungeon's cell - nobody is with anybody there
 
 export const PARTY_STYLE_ID = 'dagger-party-style';
 
@@ -270,7 +271,9 @@ export const HP_DIGITS_BELOW = 50;
  *  the host last composed; none yet means nothing can be said to be with me, and the line is drawn. */
 export const withMe = (p, here) => !!p && !!here
   && p.px === here.px && p.py === here.py && (p.in ?? 0) === (here.in ?? 0)
-  && ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null));
+  && ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null))
+  // AUDIT FB1007b H5: never in the tutorial dungeon - each member there is in their own (HOLD-SOLO)
+  && !((p.in ?? 0) === 1 && p.px === SHIPPED_START_CELL.x && p.py === SHIPPED_START_CELL.y);
 /** The one string a frame compares to know whether my place moved (paintLive) - the coordinates withMe reads. */
 export const hereKeyOf = (h) => (h ? `${h.px},${h.py},${h.in ?? 0},${h.bk ?? ''}` : '');
 

@@ -85,6 +85,9 @@ export const EMOTE_OLD_RELAY_TEXT = 'Actions need the server\'s next update.';
 export const GUILD_OLD_RELAY_TEXT = 'The guild channel needs the server\'s next update.';
 /** GUILD1c: the Guild tab's word while the character is in no guild. */
 export const NO_GUILD_TEXT = 'You are not in a guild.';
+/** AUDIT FB1007b H5: the Local tab's word in a place no one shares - the tutorial dungeon, every character's own
+ *  (HOLD-SOLO): the line went nowhere, silently, and the strip said nothing. */
+export const SOLO_LOCAL_TEXT = 'Nobody can hear you here: Privateer\'s Hold is yours alone.';
 /** CHAT-CHAN: how far a Local line carries, scene units - the distance a peer's NAME is drawn at (net/remotePlayers.js
  *  NAME_RANGE; a pin holds them equal): whoever you can read over a head can hear you, and nobody further. */
 export const CHAT_SAY_RANGE = 60;
