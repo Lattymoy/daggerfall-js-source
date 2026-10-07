@@ -212,7 +212,8 @@ Daggerfall's towers, Sentinel's domes, Wayrest's bridges - the shards of the end
 great clock-face of stars behind the arena whose hands run backwards. The realm's clock is anchored (`anchoredClock`,
 the Deadlands' law) so every screen shows the same moment.
 
-The realm refuses what the Court refuses: rest, save, map, recall, regeneration (`courtRules`).
+The realm refuses what the Court refuses: rest, save, map, recall, regeneration (`courtRules`) - and Levitate (SD7b: a
+Levitate running lifts nothing in the Hour, as in a siege's room; its Steps are walked, not flown).
 
 ## 8. The Orrery of Endings - the puzzle
 
@@ -1029,3 +1030,58 @@ Steps' span and the arena, the arena's floor probes and its nearest lamps at its
 
 SD7b next: the Steps on the page - the slabs and their colliders, moving on the realm's clock and carrying a body that
 stands on one, the Beat's blink and the Crumble's fall, the breath's push, the cast-back, and the edge let go.
+
+### SD7b - shipped 2026-10-07 (the Unmoored Steps on the page)
+
+Section 9 on the page - the dungeon host's set for the Hour's platforming (`scenes/sdSteps.js`), as `scenes/sdHall.js` is
+for its puzzle. Every screen moves the Steps on the realm's anchored clock (the sky's own, the relay's time), so every
+player sees the same step in the same place; what a foot breaks is its own.
+
+- **The steps, made** (`world/sdStepsModel.js`; their art made in code, `world/sdStepsArt.js`, records 21-22 after the
+  hall's): each kind a box in its OWN frame, its top's centre the origin - the realm's frame is the dungeon's moved,
+  never turned - so one mesh serves every step of a kind and each is drawn and collided by a translation alone. The
+  Drift's the Hour's floor on brass; the Beat's a brass plate alight on glowing sides; a riser the floor on brass,
+  reaching from its top past the step it rises from; the Crumble's cracked stone, the void's ember light in its cracks.
+  Top, sides and underside are all in the collider: a body that jumps short meets a side, and a riser's face is the wall
+  run up. The checkpoints B and C are islands as the first step is (`realmIsland` takes a height).
+- **Stood and moved**: a draw and a MOVER's collider bucket for every step (`sd:step:<i>`, its translation read at every
+  query - the step moves, its triangles never do), stood the first frame. Every frame each step is put where the law has
+  it at the realm's now: the Drift swinging; a Beat step there or gone - its bucket sunk far under the void
+  (`SD_STEP_GONE_Y`), its draw hidden - and blinking its last 0.4 s; a Crumble step shuddering from the moment my own foot
+  first stands on it (its grind heard), then its bucket gone and its draw falling, whole again 5 s after.
+- **Ridden BEFORE the motor**: the mode machine asks the set every frame of the dungeon, right after the action movers'
+  ride (`ridePlatform`) and before the motor - so the motor sweeps against the steps where they now are - and a body
+  standing on a step (`groundKey`) is carried with the step's own move, as a deck carries one (`player.carryBy`: the
+  body and both ends of its render span, so a swing is no lerp). A step that went or came back carries nothing; a frame's
+  hitch, or the clock put right, carries the body the step's whole move - it stays on its step.
+  The steps move, and carry, under a window too - the realm's clock runs on.
+- **While the motor runs**: THE WARP'S BREATH over the Crumble - the body moved through the resolver as the movers' ride
+  moves it (the motor's own push stops at every edge; the breath does not), snapped to the ground only when it stands,
+  never more than a tenth of a second's push in a frame - its wind (AmbientWindBlow1) heard once a gust, the second
+  before; the Beat's tick on each half beat, as its steps come back; and THE VOID - a body past y -30 is answered with
+  its span's checkpoint (the void's moan heard): the mode machine stands it there as the action teleport does
+  (`TELEPORT_FREEZE_S`'s settle), and the world host takes 15% of its health, no shield taking it, and says *"The Hour
+  casts you back."*
+- **The edge let go**: with the Concord the realm's edge takes the Steps' band (`SD_STEPS_FREE`, 40 m either way - no
+  fall meets its sides before the void has it) and the arena among its floors (`SD_STEPS_FLOORS`); a body over the
+  Steps is the void's, and the cast-back is the edge.
+- **Levitate warded**: the siege's ward on a running Levitate (AUDIT-SEATS G5) answers in the Hour too - the Steps are
+  walked, not flown, and the Remnant's shock ring will be jumped (section 7 amended).
+- **The engine, run** (the pins): the real motor on the real collider stands two whole swings on the widest-swinging
+  Drift step, carried, never more than a few centimetres off its middle; crosses the widest gap (3.2 m) from a standing
+  start on a 2.4 m step at the weakest build (Speed 10, Running 0, no parkour); runs up a riser at skill 0 with the online
+  page's parkour (CLIMB3's wall run, the hold, the mantle); and falls when a Beat step goes from under it, answered with B.
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the edge widened with the Steps' floors, Levitate warded in the Hour, the
+cast-back's cost and line - `sdCastBack`); `scenes/worldModes.js` WIRED (the ride before the motor, the cast-back stood,
+the realm's clock handed to the dungeon host - `sdClock`); `scenes/dungeonContext.js` WIRED (the Steps made for the Hour
+alone, stood once, ridden on the outer host's clock, freed); `scenes/exterior.js` FLAGGED - no Hour opens on the bench.
+
+Pins: `test/sd7b_steps.test.js` (12 - the steps made; the art; stood; on the realm's clock; carried; the Crumble, my own;
+the Warp's breath and the Beat's tick; the void; the edge; the engine, run; the cast-back from the hosts' own text; the
+hosts by source); `tools/mutants/sd7b.json` (37, all dead - a shudder pinned at float32's precision survived first: the
+pin now asks for a real one). PINS MOVED: `test/sd6c_hall.test.js` (the Concord's floors take the Steps');
+`test/audit_seats_client.test.js` (the ward answers in the Hour too) and `tools/mutants/audit_seats_client.json`'s world
+ward re-aimed by content; `tools/mutants/sd6c.json`'s lash re-aimed by content (the cast-back takes the same two lines).
+
+SD8 next: the Last Moment - the Brass Remnant (section 10), the relay's brain for it, three phases.

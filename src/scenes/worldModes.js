@@ -7924,6 +7924,14 @@ export function createWorldModes(host) {
    *  lights (the dungeon arm). */
   let _realmMesh = null;
   const REALM_BUCKET = 'sd:realm';
+  /** SD7b: A BODY THE HOUR CASTS BACK (the Unmoored Steps' void - scenes/sdSteps.js) stood on its span's checkpoint, the
+   *  action teleport's way (its settle, the eye with it), and the outer host told - the health it costs, its line. */
+  function sdCastBack(at) {
+    player.freezeMotor = TELEPORT_FREEZE_S;
+    player.spawn(at[0], at[1], at[2]);
+    cam.pos = [...player.eye];
+    host.sdCastBack?.();
+  }
   function standSdRealm(ctx) {
     if (!_realmMesh && renderer?.createMesh) {
       try {
@@ -8138,6 +8146,7 @@ export function createWorldModes(host) {
           superRift: (s) => host.superRift?.(s) ?? null,
           sdTurn: (i, a) => host.sdTurn?.(i, a) ?? false,   // SD6c: a turn of the Orrery's stones - sent by the outer host (scenes/world.js), judged by the realm
           sdHallWord: () => host.sdHallWord?.() ?? null,   // SD6c: the realm's latest word on the Orrery's hall
+          sdClock: () => host.deadlandsSeconds?.() ?? performance.now() / 1000,   // SD7b: the realm's anchored clock, the Unmoored Steps' (the sky's own)
           sdWayBack: () => host.sdWayBack?.(),   // SD5a: the Shattered Hour's way back through its Rift - the outer host's (scenes/world.js)   // SD4b: the outer host's word on a Super dungeon's Rift and Return - off the hub's record, its realm's door
           timers: (o) => host.timers?.(o) ?? null,   // TIMERS1: the dungeon's pause face reads the world host's source
           // CASTLE1: the world host's load, for a save the dungeon's own
@@ -8907,6 +8916,11 @@ export function createWorldModes(host) {
     // hosted dungeon dropped the mover delta and the lift penetrated
     // the capsule. The delta applies BEFORE the player's own move.
     if (!overlayHeld) ridePlatform(player, mode === 'dungeon' ? dungeonCtx?.actions : interiorCtx?.actions);
+    // SD7b (Super-Dungeons.md section 9): THE UNMOORED STEPS ride before the motor too - each step stood where the realm's
+    // clock has it and a body on one carried with it (under a window as well: the realm's clock runs on), and while the
+    // motor runs the breath's push and the void's cast-back
+    const sdBack = mode === 'dungeon' ? dungeonCtx?.sdStepsRide?.(dt, player, !overlayHeld) ?? null : null;
+    if (sdBack) sdCastBack(sdBack);
     // AUDIT 26 (hosts-modal): THE MOTOR ITSELF STOPS under a window.
     // PauseGame(true) sets Time.timeScale = 0 (GameManager.cs:600-609),
     // which is not "no input" but no Update and no FixedUpdate at all -

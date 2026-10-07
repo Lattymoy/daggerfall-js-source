@@ -240,6 +240,7 @@ import { superFoeLevel, scaleSuperFoe, SUPER_ELITE_FOES, SUPER_LOOT_OPTS, SUPER_
 import { dungeonEndOf } from '../world/dungeonEnd.js';   // SD4b: RVN7d's lair law, lifted - the lair's stand and a Super dungeon's end read one law
 import { createSdEnd } from './sdEnd.js';   // SD4b: a Super dungeon's Rift and Return
 import { createSdHall } from './sdHall.js';   // SD6c: the Orrery's hall in the Shattered Hour
+import { createSdSteps } from './sdSteps.js';   // SD7b: the Unmoored Steps in the Shattered Hour
 import { SD_NO_RIFT } from '../net/sdLaw.js';   // SD4b: the Rift's word when nobody can answer it
 import { isSdRealm, SD_REALM_TEXT, SD_WAY_BACK_Z, SD_WAY_BACK_SIZE } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - a made place, its refusals, its way back
 import { realmToDungeon } from '../net/sdBrain.js';   // SD5a: the realm's frame
@@ -1787,6 +1788,17 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   function sdHallFrame(dt, playerFeet) {
     if (playerFeet && !_sdHallStood) { _sdHallStood = true; sdHall.stand({ dynamicDraws, collider }); }
     sdHall.frame(dt, playerFeet ?? null, opts.sdHallWord?.() ?? null);
+  }
+  // SD7b (Super-Dungeons.md section 9): THE UNMOORED STEPS in the Shattered Hour (scenes/sdSteps.js) - the course's steps,
+  // stood the first frame the outer host asks, each moved on the realm's clock (the outer host's) and ridden BEFORE the
+  // motor: the outer host asks every frame, beside the action movers' ride, and stands a body the void took back
+  const sdSteps = _sdRealm ? createSdSteps({ renderer, audio }) : null;
+  let _sdStepsStood = false;
+  /** One frame of the Steps, before the motor: the landing of a cast-back, or null. */
+  function sdStepsRide(dt, body, live) {
+    if (!sdSteps) return null;
+    if (!_sdStepsStood) { _sdStepsStood = true; sdSteps.stand({ dynamicDraws, collider }); }
+    return sdSteps.ride(opts.sdClock?.() ?? performance.now() / 1000, dt, body, live);
   }
   /** SD5a: where a player coming back through the Rift is stood - the Return's place, beside it (kept as it stands). */
   let _sdLanding = null;
@@ -9853,6 +9865,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     },
     /** SD4b: a press on a Super dungeon's Rift or Return - the press ladder's `sdrift:` / `sdreturn:` arm (worldModes.js). */
     sdPress(key) { return !!sdEnd?.press(key) || !!sdHall?.press(key); },   // SD6c: and the Orrery's hall
+    /** SD7b: the Unmoored Steps' frame, BEFORE the motor (the mode machine's, beside the movers' ride): the steps moved and
+     *  `body` carried; while `live`, the breath, the touch and the void - the landing of a cast-back, or null. */
+    sdStepsRide(dt, body, live = true) { return sdStepsRide(dt, body, live); },
     /** SD5a: where a player back from the Shattered Hour is stood - beside this Hollow's Rift (stood now if the first frame
      *  has not stood it yet); null in any other dungeon. */
     sdRiftLanding() {
@@ -10120,6 +10135,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       portals.clear();   // COMPANION-PORTAL: the portals standing own a batch each and leave with the dungeon
       sdEnd?.clear();   // SD4b: the Rift and the Return, and the bell
       sdHall?.clear();   // SD6c: the hall's meshes
+      sdSteps?.clear();   // SD7b: the Steps' meshes
       // NT1 (F214): the context minted its own cast engine; a spell in
       // flight at the exit owned a batch nothing else can reach.
       magic.handReadyTo(opts.outerCastEngine?.() ?? null);   // CAST-USE (AUDIT part five CU1): a ready held at the way out (the door, a Recall, a load) goes with the player

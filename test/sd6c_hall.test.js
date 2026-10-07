@@ -343,7 +343,7 @@ test('SD6c the hosts by source: the dungeon host stands the hall in the Hour alo
   const w = read('src/scenes/world.js');
   assert.match(w, /online\.onSdHall = \(w\) => sdHallHeard\(w\);/);
   assert.match(w, /if \(!player\.arena && modes\?\.sdRealmSlot\?\.\(\) != null\) player\.arena = sdConcordHere\(\) \? _realmArenaBridged : _realmArena;/);
-  assert.match(w, /const _realmArenaBridged = realmArena\(\[\.\.\.SD_REALM_FLOORS, \.\.\.SD_HALL_FLOORS\]\);/);
+  assert.match(w, /const _realmArenaBridged = realmArena\(\[\.\.\.SD_REALM_FLOORS, \.\.\.SD_HALL_FLOORS, \.\.\.SD_STEPS_FLOORS\]\);/);   // SD7b (PIN MOVED): and the Steps' band and the arena
   assert.match(w, /sdTurn: \(i, a\) => !!online\?\.sendSdTurn\?\.\(i, a\),/);
   assert.match(w, /sdHallWord: \(\) => sdHallWord\(\),/);
   assert.match(read('bible/11-Multiplayer/Super-Dungeons.md'), /### SD6c - shipped 2026-10-07/);

@@ -100,6 +100,13 @@ export const SD_COURSE_END = COURSE.end;
 /** The band the edge lets go of (world/sdRealm.js realmClamp): from just inside the first step's far edge to just inside
  *  the arena's near edge - the void below is the Hour's own, and the cast-back its edge. */
 export const SD_STEPS_FREE = Object.freeze({ z0: SD_FIRST_STEP.z + SD_FIRST_STEP.r - 0.4, z1: SD_ARENA.z - SD_ARENA.r + 0.4 });
+/** SD7b: the edge's floors past the first step (realmClamp's shapes), laid with the Concord's: that band, so wide no body
+ *  over the Steps meets its sides before the void has it (SD_STEPS_FREE_HALF_W either way), and the arena. */
+export const SD_STEPS_FREE_HALF_W = 40;
+export const SD_STEPS_FLOORS = Object.freeze([
+  Object.freeze({ kind: 'band', x: 0, z0: SD_STEPS_FREE.z0, z1: SD_STEPS_FREE.z1, halfW: SD_STEPS_FREE_HALF_W }),
+  Object.freeze({ kind: 'disc', ...SD_ARENA }),
+]);
 /** The span a z falls in (0 the Drift, 1 the Beat, 2 the Crumble), by the checkpoints' far edges; -1 before A's. */
 export function spanAt(z) {
   for (let k = SD_CHECKPOINTS.length - 1; k >= 0; k--) if (z >= SD_CHECKPOINTS[k].z - SD_CHECKPOINTS[k].r) return k;

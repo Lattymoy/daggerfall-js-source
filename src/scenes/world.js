@@ -294,6 +294,8 @@ import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG, SD_REALM_FLOORS } f
 import { SdSkyRenderer } from '../render/sdSky.js';   // SD5b: the Hour's sky
 import { SD_HALL_FLOORS } from '../world/sdHall.js';   // SD6c: the bridge and the first step, the Concord's floors
 import { SD_HALL_TEXT } from './sdHall.js';   // SD6c: the snap's line
+import { SD_STEPS_FLOORS, SD_CAST_BACK_LOSS } from '../world/sdSteps.js';   // SD7b: the Steps' band and the arena, the Concord's floors too; what the void costs
+import { SD_STEPS_TEXT } from './sdSteps.js';   // SD7b: the cast-back's line
 import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH } from '../net/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall
 import { sdRiftWord, sdReturnStands } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
 import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
@@ -20309,7 +20311,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const inSiegeRoom = () => !!online?.room && online.room === siegeSession?.room();
   /** AUDIT-SEATS G5: the cast engine's word on a spell here (hostMagic.js spellRefusal) - a siege's wards. */
   const battleSpellRefusal = (sp) => (inSiegeRoom() && siegeSpellBarred(sp) ? SIEGE_SPELL_BARRED_TEXT : null);
-  registerLevitateWard(() => inSiegeRoom());   // AUDIT-SEATS G5: a Levitate already running lifts nothing in a siege's room
+  registerLevitateWard(() => inSiegeRoom() || modes?.sdRealmSlot?.() != null);   // AUDIT-SEATS G5: a Levitate already running lifts nothing in a siege's room; SD7b: nor in the Shattered Hour - its Steps are walked, not flown
   /** AUDIT-SEATS G4 (Seats-Arc 6.6, 19: "a free camera (WASD, the mouse, the pad's sticks); nothing they do reaches the
    *  fight"): whether I watch a battle - a siege or a Royal Tourney, on a spectator's pass - from its own room. */
   const spectatingHere = () => {
@@ -20796,7 +20798,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const _gateFloor = { xa: [], now: 0, none: Object.freeze([]) };
   const _courtArena = courtArena(_gateFloor.none, 0);
   const _realmArena = realmArena();   // SD5a: the Shattered Hour's floors, as far as they are laid
-  const _realmArenaBridged = realmArena([...SD_REALM_FLOORS, ...SD_HALL_FLOORS]);   // SD6c: and with the Concord, the bridge and the first step
+  const _realmArenaBridged = realmArena([...SD_REALM_FLOORS, ...SD_HALL_FLOORS, ...SD_STEPS_FLOORS]);   // SD6c: and with the Concord, the bridge and the first step; SD7b: and past it the Steps' band - the void's to take, the cast-back its edge - and the arena
   const gateCourt = gateLink ? createGateCourt({
     renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio, link: gateLink, spoils: spoilsPool,
     now: () => Date.now() + _sharedOffsetMs,
@@ -21257,6 +21259,16 @@ export async function bootWorld(canvas, renderer, params, status) {
       flashPlayerDamage(dmg);
     }
     setMidScreenText(SD_HALL_TEXT.snap);
+  }
+  /** SD7b: THE HOUR CASTS ME BACK (the mode machine has stood me on my span's checkpoint - scenes/sdSteps.js): what the
+   *  void costs, a share of my health no shield takes, and the line. */
+  function sdCastBack() {
+    if (playerEntity.health > 0) {
+      const dmg = Math.max(1, Math.round((playerEntity.maxHealth ?? 0) * SD_CAST_BACK_LOSS));
+      hurtPlayer(playerEntity, dmg, { bypassShield: true });
+      flashPlayerDamage(dmg);
+    }
+    setMidScreenText(SD_STEPS_TEXT.cast);
   }
   /** The hall's word for the realm I stand in, or null; and whether its Concord holds (the edge widens with it). */
   const sdHallWord = () => (_sdHall && _sdHall.s === modes?.sdRealmSlot?.() ? _sdHall : null);
@@ -24758,6 +24770,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     sdWayBack: () => sdWayBack(),   // SD5a: the Shattered Hour's way back, through its Rift into the Hollow
     sdTurn: (i, a) => !!online?.sendSdTurn?.(i, a),   // SD6c: a turn of the Orrery's stones, down my socket in the realm
     sdHallWord: () => sdHallWord(),   // SD6c: the realm's latest word on the hall, for the hall's set
+    sdCastBack: () => sdCastBack(),   // SD7b: the Unmoored Steps' void - stood back on the checkpoint, what it costs
     sdHollowDoors: (h) => buildingDoors.filter((d) => d.pixelKey === h?.key && d.door?.doorType === DOOR_TYPE.DUNGEON_ENTRANCE).map((d) => d.door),   // SD5a: out of the Hour - a death, its end - before the Hollow's door
     // D-ONLINE1: the death screen's door for the deaths this host does
     // not present itself (a dungeon's, a building interior's -

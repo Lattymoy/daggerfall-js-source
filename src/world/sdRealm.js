@@ -127,10 +127,10 @@ const tileUv = (x, z) => [x / SD_FLOOR_TILE_M, z / SD_FLOOR_TILE_M];
 /**
  * One island: its floor a disc of `rec` about (cx, cz) radius `r` (`uvOf` its texture's map, the tile by default), its
  * brass lip round the rim, and its root - a cone of dark stone from the rim down SD_ROOT_DEPTH into the void, its point a
- * little off centre so no two hang alike.
+ * little off centre so no two hang alike. Its floor at the realm's y 0, or `y` (SD7b: the Steps' checkpoints stand high).
  */
-export function realmIsland(f, cx, cz, r, rec, { uvOf = tileUv, lean = 0 } = {}) {
-  const C = (x, y, z) => realmToDungeon(cx + x, y, cz + z);
+export function realmIsland(f, cx, cz, r, rec, { uvOf = tileUv, lean = 0, y: y0 = 0 } = {}) {
+  const C = (x, y, z) => realmToDungeon(cx + x, y0 + y, cz + z);
   const tip = C(lean, -SD_ROOT_DEPTH - r * 0.6, lean * 0.5);
   for (let k = 0; k < SD_ISLAND_SIDES; k++) {
     const a0 = (k / SD_ISLAND_SIDES) * Math.PI * 2, a1 = ((k + 1) / SD_ISLAND_SIDES) * Math.PI * 2;

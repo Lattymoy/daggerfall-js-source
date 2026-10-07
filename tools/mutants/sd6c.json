@@ -245,8 +245,8 @@
   {
     "name": "SD6C-the-lash-shielded",
     "file": "src/scenes/world.js",
-    "old": "      hurtPlayer(playerEntity, dmg, { bypassShield: true });\n      flashPlayerDamage(dmg);",
-    "new": "      hurtPlayer(playerEntity, dmg);\n      flashPlayerDamage(dmg);",
+    "old": "* SD_FRAY_LASH));\n      hurtPlayer(playerEntity, dmg, { bypassShield: true });",
+    "new": "* SD_FRAY_LASH));\n      hurtPlayer(playerEntity, dmg);",
     "tests": [
       "test/sd6c_hall.test.js"
     ]
