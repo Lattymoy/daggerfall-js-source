@@ -463,7 +463,7 @@ test('PERF-EXT13: every visible pixel\'s water in ONE call - ten water pixels th
     r.drawWaterSurfaces(rows, rows.length, 6.4, wu);
     const n = (k) => H.byName[k] ?? 0;
     for (const u of ['uView', 'uProj']) assert.equal(n(`uniformMatrix4fv:${u}`), 1, `${lane ? 'lane' : 'classic'}: ${u} once`);
-    for (const u of ['uTime', 'uLift', 'uSunScale', 'uOpacity']) assert.equal(n(`uniform1f:${u}`), 1, `${lane ? 'lane' : 'classic'}: ${u} once`);
+    for (const u of ['uTime', 'uLift', 'uSunScale', 'uSwell']) assert.equal(n(`uniform1f:${u}`), 1, `${lane ? 'lane' : 'classic'}: ${u} once`);   // PIN MOVED (WATER-NEXT 2): the one opacity is gone, the swell is the frame's
     assert.equal(n('polygonOffset'), 1, 'the offset once');
     assert.equal(n('uniformMatrix4fv:uModel'), 10, 'a matrix a pixel');
     assert.equal(H.draws.length, 10, 'a draw a pixel');
@@ -476,7 +476,7 @@ test('PERF-EXT13: every visible pixel\'s water in ONE call - ten water pixels th
   }
   // and the host hands them over so: collected in the walk, ONE call after it, none inside it
   const w = rd('src/scenes/world.js');
-  const pass = w.slice(w.indexOf('    if (waterOn) {\n      const wu = waterUniforms('), w.indexOf('renderer.drawBillboards(allBatches, camRight, UP_Y);'));
+  const pass = w.slice(w.indexOf('    if (waterOn) {\n      stirRipples(dt);   // WATER-NEXT 4\n      const wu = _waterU = waterUniforms('), w.indexOf('renderer.drawBillboards(allBatches, camRight, UP_Y);'));
   assert.equal((pass.match(/renderer\.drawWaterSurfaces\(/g) || []).length, 1, 'one list call a frame');
   assert.doesNotMatch(pass, /renderer\.drawWaterSurface\(/, 'no pixel draws its own');
   assert.match(pass, /for \(const p of built\.values\(\)\) \{[\s\S]*?\}\s*\n\s*renderer\.drawWaterSurfaces\(_waterRows, n, 6\.4, wu\);/, 'after the walk, not in it');

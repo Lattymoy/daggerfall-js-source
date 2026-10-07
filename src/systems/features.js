@@ -398,11 +398,24 @@ export const FEATURES = Object.freeze([
     id: 'enhanced-water',
     group: 'sight',
     title: 'Enhanced water',
-    note: 'Seas, rivers and ponds look like water: waves that grow with the wind, reflections of the sky and '
-      + 'moon, rain on the surface and a soft shoreline. Off brings back Daggerfall’s flat water.',
+    note: 'Seas, rivers and ponds you can see into: waves that grow with the wind, foam where they meet the shore, '
+      + 'ripples where things move, the sky and the moon on the surface. Off brings back Daggerfall’s flat water.',   // WATER-NEXT: what the water is now
     effect: 'Takes effect when the world next loads.',
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'enhancedWater', initial: true, online: true }),   // WATER1: on by default like the other enhanced visuals; `?water=off` the kill door
+  }),
+  // WATER-NEXT (2026-10-07, the overhaul's plan: "a cheaper setting for a weak GPU"): HOW MUCH THE WATER DRAWS. Full
+  // copies the frame under the water once a frame (the look through it, the depth it measures) and keeps the ripple
+  // field; Simple does neither - the bed, the swell, the foam and the body stand, the blend does the looking-through.
+  Object.freeze({
+    id: 'water-quality',
+    group: 'sight',
+    title: 'Water quality',
+    note: 'How much the enhanced water draws. Full looks through the water to what lies under it and ripples where '
+      + 'things move in it; Simple is lighter on your machine.',
+    effect: 'Takes effect when the world next loads.',
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'waterQuality', initial: 'full', online: 'player', tiers: Object.freeze([['full', 'Full'], ['simple', 'Simple']]) }),   // WATER-NEXT: render/renderer.js waterSimple
   }),
   // EL1 (2026-09-17, the Enhanced Lighting arc, tier one): the renderer's
   // lit world on a linear pipeline - render/enhancedLighting.js carries

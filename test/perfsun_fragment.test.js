@@ -117,7 +117,9 @@ test('PERF-SUN2: the sun’s shadow is not read where the sun cannot reach', () 
   // where uSunScale is zero cannot move a pixel. Found by looking for
   // them all rather than by assuming there was one.
   const shadowUses = water.split('\n').filter((l) => /\bshadow\b/.test(l) && !/float shadow =/.test(l));
-  assert.equal(shadowUses.length, 2, `the water has ${shadowUses.length} consumers of shadow - every one must be under uSunScale`);
+  // PIN MOVED (WATER-NEXT 3): a third - the foam, lit by the sun it lies in, uSunScale on its own line too
+  assert.equal(shadowUses.length, 3, `the water has ${shadowUses.length} consumers of shadow - every one must be under uSunScale`);
+  assert.ok(shadowUses.some((l) => /vec3 foamLit = .*uSunScale \* shadow/.test(l)), 'the foam is the third, and it carries uSunScale itself');
   assert.ok(shadowUses.some((l) => /spec .*uSunScale \* shadow/.test(l)), 'the sun specular is one of them, and it carries uSunScale itself');
   assert.ok(shadowUses.some((l) => /float diff = max\(dot\(n, uLightDir\), 0\.0\) \* shadow;/.test(l)), 'the diffuse term is the other');
   assert.equal((water.match(/\buSunScale\s*\*\s*diff\b/g) ?? []).length, 1, 'and the diffuse term reaches the light exactly once');

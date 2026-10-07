@@ -912,3 +912,98 @@ the swim motor, the townsfolk's paths, Deep Waters' swim, the boats'
 `WaterLevel` (a boat bobs on the waves' own function, drawn only), the
 dungeon's level. WATER2-5's revert is the warning: a look is landed on
 the game page, not the lab.
+
+## WATER-NEXT 2 - THE SURFACE: A SHEET THAT MOVES, A BODY THAT SWALLOWS LIGHT, A BED UNDER IT (2026-10-07)
+
+Mac: *"real translucent water with proper waves and shoreline interactivity completely replacing our current water
+implementation"*, then *"keep building within this pr"* and *"You have autonomy"*. Enhanced skin only (asked); the
+classic lane draws DFU's flat tile as it did. Every step was judged on shots of the real game
+(`tools/waterLookProbe.mjs`, Daggerfall's moat and Sentinel's palace pool and harbour, headless on SwiftShader with
+the player's own ARENA2 - the renders stay out of the tree), THE REVERT's lesson.
+
+**The bed** (`world/waterBed.js`). A grid vertex is wet when every tile meeting it calls that corner water (the
+draw's corner table; a tile past the map's edge is no vote, so a river is not dammed at a pixel's seam); its distance
+to the bank is a 3-4 chamfer; its depth a smoothstep to `BED_DEPTH` (4) over `BED_RAMP` (19.2, three tiles). The
+first cut eased OUT (steep off the bank) and the real moat showed why not: a tile from the bank was already 2.2 deep
+and the shallows were a sliver; the smoothstep leaves a shelf a unit deep a tile out. `carveBed` lowers a COPY of
+the grid the ground uploads and re-lights the slopes it made (a strided grid's skirt goes down with its edge); the
+SHEET keeps the grid as it stood, the bed's depth on attribute 1 (`renderer.createWaterSheet`). DRAWN ONLY: world.js
+`heightAt` reads the samples, the fixed town's feet the tilemap and the flat ground - the player swims, foes stand
+and flats are seated where DFU has them. The streamed world carves at the build and at a restride and keeps the bed
+for Deep Waters' re-index (`dwWaterSurface`); the fixed town lays DFU's one ground quad as a grid of its tiles
+(`flatGrid`) so its moats and ponds have a bed; the lab carves as the hosts do. A grid with no wet vertex (a one-tile
+stream) has no bed: its sheet rides the terrain's own buffer and attribute 1 is the constant `NO_BED_DEPTH` (1.2) -
+shallow, tinted, never a shore.
+
+**The bed's face** (`render/waterBedGlsl.js`). The second shot of the moat was as blue as the first, and the reason
+was under the water: the carved ground still wore Daggerfall's WATER TILE, so the look through clear water was a
+look at more painted water. Where the enhanced water lies (`renderer.waterBed`, set by both hosts from `waterOn`;
+the classic skin never sets it) each water texel of the ground - the corner table's coverage, feathered as the
+water's shore - takes the climate's dirt (record 1, the same texel turned the same way) darkened to silt; a puddle
+record keeps its art. Both terrain programs take the text (TERRAIN_FS and the lane's EL_TERRAIN_FS, decoded).
+
+**The swell** (`render/waterSurface.js` SWELL_TRAINS, SWELL_GLSL, swellAt). Three trains - down the wind, +31 and
+-43 degrees off it - of 48, 31 and 25.6 units (none shorter than four of the sheet's cells), at deep water's own
+speed (omega = sqrt(g k)), their height the wind's: `SWELL_CALM` 0.05 to `SWELL_GALE` 0.34 ("modest,
+weather-driven", as asked). The vertex shader lifts the sheet by it, faded over the bank (`SWELL_DEPTH` 2.5: water
+never lifts off its shore); the fragment shader lights the same field's slope per pixel, with WATER1's finer trains
+and the rain over it; `swellAt` is the same sum for the CPU. The open sea (Deep Waters' sheets: merged rectangles,
+no vertices to move) takes the swell as slope only.
+
+**The body and the look through it.** Water swallows light, red first: Beer-Lambert, `exp(-WATER_ABSORB * path)`,
+`WATER_ABSORB` (0.55, 0.30, 0.22) a unit. What is swallowed is replaced by the water's own colour - the climate's
+water texel averaged by its mip chain, tinted, lit by the ground's light (the sun's share softened: light goes INTO
+water). Under the lane the frame's colour and depth are copied ONCE a frame before the first water draw
+(`AirPass.snapshotUnderWater`, one blit into the frame's own formats; `Renderer.captureUnderWater`; units 7 and 6,
+rebound every draw as the billboards rebind 6): the path is the scene's own depth behind the surface (never less
+than the bed's), the look is pushed by the slope (by more the deeper, less the farther off) and never takes what
+stands in front of the water (a pushed look nearer than the surface takes the straight one). Without a copy (the
+classic lane's frame) the blend makes the same sum: the bed is drawn under the sheet, and the sheet's alpha is the
+share the water hides. Schlick's Fresnel over the sky (capped at 0.85), the sun's, the moon's and the lamps' glints
+(WATER-LIT1), the fog (DW-C's too). The first real boot found `uOpen` an int whose default precision differs between
+the stages (no program built, no frame drawn): the fragment stage declares `precision highp int`.
+
+**The open sea.** From above, Iliac Puddle No More's surface sheets are drawn by the same program (`uOpen`: no
+tilemap, no bed attribute - the path is the depth copy's, the floor the mod carved), in the mod's own place in the
+frame (`Renderer.drawSeaSurfaces`, world.js drawDeepWatersSurfaces), coloured by the camera's climate's water under
+the mod's Top Color; from under it, the mod's own underside as before. The first shots of the open sea (Sentinel's
+harbour) found three things the mod's own near-opaque top had hidden, each fixed: the integer tilemap sampler's unit
+left holding another pass's texture for the sea's rows (WebGL refuses the draw, read or not - 74 errors a boot; the
+unit is emptied for them); the mod's fake water column on its floor (COLUMN_GLSL, the depth the classic set never had,
+its surface texture tiled 128 times) showing through clear water as moire and taking the column twice - off under the
+enhanced water (`columnOn`), which measures the column itself; and the sheets' 6.4-unit cells drawing a staircase over
+the beach - the open sea now fades where it covers no water, so the shore is where its plane meets the sand.
+
+**What it costs, and the Simple tier.** Under the lane the copy is one blit of the frame's colour and depth a frame,
+and the water's fragments read up to four more texels (the copy, its depth twice, the ripple field's slope); SwiftShader's
+milliseconds are nobody's, so the cost on a real GPU is not measured here. The plan's cheaper setting is the
+`water-quality` row (Features, the Enhanced kind, the player's online): Full by default; Simple takes no copy and keeps no
+ripple field (`renderer.waterSimple`) - the bed, the swell, the foam and the body stand, and the blend does the looking
+through, as on the classic lane's frame.
+
+## WATER-NEXT 3 - THE SHORE (2026-10-07)
+
+Foam where the water runs out: over the band `FOAM_DEPTH` (0.22) deep - wider in a wind - whose edge rides the
+swell's own height (`FOAM_RUNUP` 2.2: the crest pushes it up the bank, the trough draws it back), cut into lace by a
+two-octave noise drifting down the wind; on open water in a strong wind the steep crests whiten (`CREST_SLOPE`).
+Lit by the light the water is; opaque where it lies; no glint through it. The first shot (Sentinel's pool) drew a
+solid white rim round a calm pool - the band was 0.55 deep and the lace's threshold let the whole band through; the
+band is narrower and the lace a thread now, thicker only in the shallowest water and a wind. Come Sail Away's sprite
+breakers are retired under the enhanced water (`csaDrawWaves`): it breaks on its own shore, and the breakers - opaque,
+written into the depth a hand over the sea - were what the clear water then showed as its ground, a striped sea.
+
+## WATER-NEXT 4 - THE RIPPLES (2026-10-07)
+
+`world/waterRipples.js`: a damped wave equation (`RIPPLE_DAMPING` 0.975 a step) on a 96-cell grid 48 units across
+round the camera, stepped at a fixed 30 Hz (a stalled frame runs four steps at most), sliding with the eye a whole
+cell at a time so a wake stays where it was left, its edge still water, asleep when still. Stirred where a body
+moves in the water (`stirOf`: a still swimmer's bob, a wader's wake growing with speed to a cap) - the player, by the
+footsteps' own on-water answer, and every boat afloat (Come Sail Away's). The renderer uploads it (R8, 128 still
+water, `RIPPLE_SCALE` a step) only when it moved, on unit 1 - the billboards' emission unit, whose shadow it forgets
+after the bind - and the water adds its slope inside the field, faded at the field's edge. Drawn only.
+
+**Pinned**: `test/waterbed.test.js` (6), `test/waterripples.test.js` (6), `test/waternext.test.js` (7); WATER1's pins
+moved to the new shapes (`water.test.js`, `waterlit1`, `dwc_fog`, `perfextb`, `perfsun_fragment`, `grain1_terrainmip`,
+`ft6_water`, `perf2`, `rr3b` - each PIN MOVED). Mutants: `tools/mutants/waternext.json`, all dead (the first run's four
+survivors - the chamfer's diagonal, the byte bias after a step, unit 1's shadow pinned on a twin line, the gale pinned
+against itself - each pinned).

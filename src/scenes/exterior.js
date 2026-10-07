@@ -32,7 +32,8 @@ import { MapsFile, longitudeLatitudeToMapPixel, REGION_RACES, LOCATION_TYPES, RE
 import { isPlayerInTown } from '../systems/nearbyObjects.js';   // PlayerGPS.IsPlayerInTown, both optional flags
 import { giveOffer } from '../ui/pendingOffer.js';   // AUDIT 58: DaggerfallUI.GiveOffer, the rung in front of the rest press
 import { convertTilemap, isOutdoorWaterTile } from '../world/terrainSurface.js';   // FD1: PlayerTileMapIndex == 0
-import { waterUniforms, tilemapRectHasWater, waterSwitchOn } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the town's ground; WATER-AUDIT: asked over the real extent
+import { waterUniforms, tilemapRectHasWater, waterSwitchOn, buildWaterIndices } from '../render/waterSurface.js';   // WATER1: the enhanced water surface over the town's ground; WATER-AUDIT: asked over the real extent
+import { waterBedOf, flatGrid } from '../world/waterBed.js';   // WATER-NEXT 2: the town's grid and the bed under its water
 import { GROUND_OFFSET, GROUND_TILE_DIM } from '../world/rmbLayout.js';
 import { climbRigInput } from '../player/climbPose.js';   // CLIMB6: the body's limbs on the climb
 import { PlayerMotor, startRestGroundedCheck, motionBagOf } from '../player/motor.js';   // the rest gate's grounded input, one home; WW2: the one motion bag
@@ -907,7 +908,14 @@ export async function bootExterior(canvas, renderer, params, status) {
   // the kill door; a town without a water tile never enters the pass.
   const waterOn = waterSwitchOn()   // FT6: the one composition (render/waterSurface.js)
     && tilemapRectHasWater(tilemapBytes, tilemapDim, loc.width * GROUND_TILE_DIM, loc.height * GROUND_TILE_DIM);   // the padding past the town is zero, and zero is water
-  const groundSurface = (() => {
+  // WATER-NEXT 2: with the water on, DFU's one flat ground quad is laid as a grid of its tiles so a bed can be carved
+  // under the town's ponds and moats (world/waterBed.js - the eye's alone: this host's feet read the tilemap and the
+  // flat ground, never the grid), and the water takes its own sheet over the grid as it stood
+  renderer.waterBed = waterOn;   // WATER-NEXT 2: the ground under the enhanced water is a bed (render/waterBedGlsl.js)
+  renderer.waterSimple = getPref('waterQuality') === 'simple';   // WATER-NEXT: the Water quality row
+  const townGrid = waterOn ? flatGrid(loc.width * GROUND_TILE_DIM, loc.height * GROUND_TILE_DIM, GROUND_OFFSET * 0.025, RMB_SIDE / GROUND_TILE_DIM) : null;
+  const townBed = townGrid ? waterBedOf(townGrid, tilemapBytes, { tileDim: tilemapDim, width: loc.width * GROUND_TILE_DIM, height: loc.height * GROUND_TILE_DIM }) : null;
+  const groundSurface = townGrid ? renderer.createTerrainSurface((townBed?.ground ?? townGrid).positions, (townBed?.ground ?? townGrid).normals, townGrid.indices) : (() => {
     const gy = GROUND_OFFSET * 0.025;
     const gw = loc.width * RMB_SIDE;
     const gh = loc.height * RMB_SIDE;
@@ -917,6 +925,10 @@ export async function bootExterior(canvas, renderer, params, status) {
     return renderer.createTerrainSurface(positions, normals, indices);
   })();
   const identityMatrix = trs(0, 0, 0, 0, 0, 0);
+  const townWater = waterOn ? (() => {
+    const idx = buildWaterIndices(tilemapBytes, 1, undefined, tilemapDim, loc.width * GROUND_TILE_DIM, loc.height * GROUND_TILE_DIM);
+    return idx ? renderer.createWaterSheet(idx, townBed ? { positions: townBed.sheet, depths: townBed.depths } : { terrain: groundSurface }) : null;
+  })() : null;
 
   /** FD1 - the RAW (pre-conversion) tilemap byte under the player,
    *  this host's twin of world.js's FS1 `playerGroundTile`.
@@ -5693,8 +5705,8 @@ export async function bootExterior(canvas, renderer, params, status) {
     }
     // WATER1: THE WATER, after the ground, the models and the arrows and
     // before the first flat - see world.js for the order's reasons.
-    if (waterOn) {
-      renderer.drawWaterSurface(groundSurface, identityMatrix, renderer.tileArrays.get(groundArchive), tilemapTex, 6.4,
+    if (waterOn) {   // WATER-NEXT 2: the town's own sheet (waterOn is the town's has-water too: the sheet is there)
+      renderer.drawWaterSurface(townWater, identityMatrix, renderer.tileArrays.get(groundArchive), tilemapTex, 6.4,
         waterUniforms({ seconds: now / 1000, wind: sky.wind(), rain: precipMode === 'rain' || precipMode === 'storm' ? fx.intensity : 0, sky: sky.waterSky() }),
         tilemapDim);   // WATER-AUDIT: the town's own tilemap side, not 128
     }
