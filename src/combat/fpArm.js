@@ -93,6 +93,7 @@ import { injectSkeletonNodes } from '../formats/mwSkin.js';   // WS1: the dry in
 // the hands hold, and where its corners land on the composite
 import { deltaTracks, heldSampler, paperPiece, refreshPaperSource, projectPaperCorners, normaliseHeldPose, HELD_POSE_DEFAULT } from './heldPose.js';
 import { farthestVertexIndex, posedVertex, viewOffsetOf, worldPointOf } from './rigMuzzle.js';   // AUDIT FIELD-GUN-MW F2: where the barrel ends, off the posed piece
+import { armKickMatrix } from './gunFeel.js';   // MW-GUN-FEEL: the gun's recoil and reload, as one pose over the viewmodel
 import { createLanternSwing, stepLanternSwing, lanternSwingMatrix } from '../systems/lanternSwing.js';   // HT-WAIST: the one swing law both bodies feed
 import { vfxOf, createVfx, vfxCapacity, vfxTextures } from '../formats/mwVfx.js';   // MW-SPELLFX1: an effect mesh, running
 import { spellFxPlan } from '../formats/mwSpellFx.js';   // MW-SPELLFX1: which visuals a spell wears
@@ -2902,6 +2903,9 @@ export function createFpArm() {
   let climbHands = false;
   let heldMemo = null;           // { base, spec, inner, tracks, sampler }
   let lastFrame = null;          // { model, view, proj, rect } - what draw() last composed with
+  /** MW-GUN-FEEL: the gun's kick and reload this frame - `{ pitch, back, down }` (combat/gunFeel.js armGunPose), set by
+   *  the rig (weaponRig.js thunderlockFeel) - or null. */
+  let gunFeel = null;
   let lastThirdModel = null;   // AUDIT FIELD-GUN-MW F2: drawThird's model matrix, for the muzzle in the world
   let drawnArm = null, drawnMats = null;   // SHADOW-CLOAK (AUDIT): the arm and the pose drawThird last drew - a host that poses again before the auras (the dungeon) never hands a cape the next frame's
   /** The muzzle vertex of a weapon piece, found once off its unposed source and kept on the piece. */
@@ -5113,7 +5117,13 @@ export function createFpArm() {
       // ("the weapon ignores the look") are now taken literally.
       const pitch = followCam ? 0 : (cam.pitch || 0);
       const fwd = [0, Math.sin(pitch), -Math.cos(pitch)];
-      const view = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
+      const lens = lookAt(eye, [eye[0] + fwd[0], eye[1] + fwd[1], eye[2] + fwd[2]], [0, 1, 0]);
+      // MW-GUN-FEEL (combat/gunFeel.js): THE GUN'S RECOIL AND ITS RELOAD, over the WHOLE viewmodel in the eye's own axes -
+      // turned about the shoulder, moved back and down - laid in front of the lens, so the arms and the gun move as one
+      // and nothing else in the pass does. Not through the neck (poseAssembly's neckPitch/neckOffset): glued arms take
+      // no look there by IG4's construction, and a kick is not a look. The frame record below carries it, so the muzzle
+      // (weaponMuzzle) and a held sheet's corners stand where the eye sees them.
+      const view = gunFeel ? multiply(armKickMatrix(gunFeel, MW_UNITS_PER_METER), lens, new Float32Array(16)) : lens;
 
       // MW-D23: NO MIRROR. THIS PASS IS ALREADY CHIRALITY-TRUE, and the
       // mirror MW-D9 borrowed from the world pass is what put Mac's
@@ -5225,6 +5235,10 @@ export function createFpArm() {
     followCamera: () => followCam,
     /** WW1: the rig sets the weapon widget's transform over the composite (null: the fullscreen overlay). */
     setScreenTransform(fn) { screenTransform = typeof fn === 'function' ? fn : null; },
+    /** MW-GUN-FEEL: the gun's kick and reload for the next first-person draw (combat/gunFeel.js armGunPose) - a pose
+     *  that moves nothing is none. */
+    setGunFeel(pose) { gunFeel = pose && (pose.pitch || pose.back || pose.down) ? { pitch: +pose.pitch || 0, back: +pose.back || 0, down: +pose.down || 0 } : null; },
+    gunFeel: () => gunFeel,
     screenTransform: () => screenTransform,
     setFollowCamera(v) {
       followCam = !!v;

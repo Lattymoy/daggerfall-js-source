@@ -228,3 +228,59 @@ export function createScreenShake({
   };
   return s;
 }
+
+/**
+ * MW-GUN-FEEL (2026-10-07, Mac: "overhauling the thunderlock in general including the morrowinds gun model and proper
+ * animations"): THE SAME SPRING AND THE SAME RELOAD, ON THE MORROWIND ARM.
+ *
+ * Under the Morrowind arm the gun borrows the crossbow's groups (characters/ownWeaponModels.js animateAs) - and a
+ * crossbow has no kick and loads its bolt on the WIND-UP ("shoot attach", before the release), so after the bang the
+ * hands simply stood still for the gun's 1.7s reload: no recoil, no reload, the pump's two clacks over an idle pose.
+ * The classic sprite has had both since FIELD-GUN6 - the recoil spring above and the reload lower - and this hands
+ * them to the arm as ONE POSE in the eye's own axes, laid over the whole viewmodel at its draw (combat/fpArm.js
+ * setGunFeel): the spring is the SAME spring (the classic one, stepped once, its displacement read here), so a kick Mac
+ * tunes on the lab's panel moves both views; the reload is the cooldown's own clock, from the shot to the weapon's
+ * ready, so the gun comes back up exactly as it can fire again.
+ *
+ * These numbers are JUDGEMENTS, stated as ones, like `roomShake`: the lab's are pixels of a 320x200 sprite and the arm's
+ * are degrees and metres, and no conversion between the two is honest. The spring's 5px peak is 3 degrees of muzzle
+ * climb and 2.5cm into the shoulder; the pump tips the gun 20 degrees down and drops it 12cm - in from the shot over a
+ * fifth of the reload, back up over its last quarter - about the classic dip's weight on a 3D arm.
+ */
+export const ARM_GUN_FEEL = Object.freeze({
+  kickDegPerPx: 0.6, kickBackPerPx: 0.005,
+  reloadPitchDeg: 20, reloadDropM: 0.12, reloadIn: 0.2, reloadOut: 0.25,
+  /** The shoulder the pose turns about, in the eye's own axes (right, up, toward the eye), metres. */
+  pivot: Object.freeze([0, -0.22, -0.32]),
+});
+
+const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+
+/** THE PUMP'S DEPTH, 0..1, at a share of the reload (0 the shot, 1 the weapon ready) - down over `reloadIn`, held,
+ *  back up over the last `reloadOut`, nothing outside the reload. */
+export function reloadDip(share, f = ARM_GUN_FEEL) {
+  if (share == null || !(share > 0) || !(share < 1)) return 0;
+  return smooth(0, f.reloadIn, share) * (1 - smooth(1 - f.reloadOut, 1, share));
+}
+
+/** A spring this damped never quite reaches nought - its tail is 1e-20 of a pixel a second later; under a thousandth
+ *  of a native pixel the arm is at rest, so the arm's pose can be none again. */
+export const ARM_KICK_REST_PX = 1e-3;
+/** The arm's pose for a frame: the spring's displacement (`kickPx`, the classic recoil's own, +up) and the reload's
+ *  share (null outside one) as `{ pitch, back, down }` - radians (+ the muzzle up) and metres. */
+export function armGunPose(kickPx, reloadShare, f = ARM_GUN_FEEL) {
+  const k = Number.isFinite(kickPx) && Math.abs(kickPx) >= ARM_KICK_REST_PX ? kickPx : 0;
+  const d = reloadDip(reloadShare, f);
+  return { pitch: (k * f.kickDegPerPx - d * f.reloadPitchDeg) * (Math.PI / 180), back: k * f.kickBackPerPx, down: d * f.reloadDropM };
+}
+
+/** The pose as a matrix in the VIEW's space (column-major, the port's mat4.js layout; the eye looks down -Z, +Y up):
+ *  turned `pitch` about the shoulder, then moved `back` toward the eye and `down`. `unitsPerMetre` is the rig's scale.
+ *  Laid in front of a view matrix (K x view), it moves the whole viewmodel and nothing else in the pass. */
+export function armKickMatrix({ pitch = 0, back = 0, down = 0 } = {}, unitsPerMetre = 1, pivot = ARM_GUN_FEEL.pivot) {
+  const c = Math.cos(pitch), s = Math.sin(pitch);
+  const py = pivot[1] * unitsPerMetre, pz = pivot[2] * unitsPerMetre;
+  const ty = py - (c * py - s * pz) - down * unitsPerMetre;
+  const tz = pz - (s * py + c * pz) + back * unitsPerMetre;
+  return new Float32Array([1, 0, 0, 0, 0, c, s, 0, 0, -s, c, 0, 0, ty, tz, 1]);
+}

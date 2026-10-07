@@ -1747,7 +1747,9 @@ rendered preview, never against the bone; MW1 and MW3 both say so. Eyes
 on a build decide whether it reads as held and pointing forward. If it
 does not, the fix is a `BoneOffset` node in the bake, not a change to
 the attach. (2) The crossbow animation's timing against the gun's
-1.7 s reload is the same eyes' question.
+1.7 s reload is the same eyes' question. (MW-GUN-FEEL, 2026-10-07, below:
+the reload is the gun's own now - a pump laid over the borrowed groups -
+and the breech no longer opens before the bang.)
 
 **Pins** (`test/fieldgunmwaudit.test.js`, 6): the hold and the voice
 under the arm (held at the click, released with the bang and the flash
@@ -1852,3 +1854,42 @@ finds none.
 A departure of kind (Port-Ledger section A): a shelf carries a thing DFU's never does. **Pins**
 (`test/shoppellets.test.js`, 3; `tools/mutants/shoppellets.json`, 7 dead) - and the four that enumerate a Weapon Smith's,
 an Armorer's or a General Store's shelf moved with it, each saying so.
+
+## MW-GUN-FEEL (2026-10-07): the kick and the reload, under the Morrowind arm
+
+Mac: "overhauling the thunderlock in general including the morrowinds gun model and proper animations."
+
+The arm borrows the crossbow's groups (`animateAs: 10`), and Morrowind's crossbow is the wrong shape at exactly the two
+moments a gun is a gun: it has no KICK, and it loads its bolt on the WIND-UP ("shoot attach", before the release) - so
+after the bang the hands stood still for the whole 1.7 s reload, the pump's two clacks over an idle pose. And the
+clacks rode the machine's cooldown, which begins at its sixth frame (0.43 s after the click) - before a crossbow's
+release - so the breech was heard OPENING BEFORE THE BANG. AUDIT FIELD-GUN-MW recorded that and left it; it is paid.
+
+**One pose over the whole viewmodel** (`combat/gunFeel.js` `armGunPose`, `armKickMatrix`; `combat/fpArm.js`
+`setGunFeel`): the gun's kick and its reload as `{ pitch, back, down }` in the eye's own axes, turned about the shoulder
+(`ARM_GUN_FEEL.pivot`) and laid IN FRONT of the lens at the first-person draw (`K x lens`) - the arms and the gun move
+as one and nothing else in the pass does. Not through the neck (`poseAssembly`'s `neckPitch`/`neckOffset`): glued arms
+take no look there by IG4's construction, and a kick is not a look. The frame record carries the moved view, so the
+muzzle (`weaponMuzzle`) and a held sheet's corners stand where the eye sees them.
+
+**The same spring** (`combat/weaponRig.js` `thunderlockFeel`): the classic lane's recoil (`createRecoil`, Mac's kick 5,
+stiffness 400, damping 36) is stepped once and both views read it - a kick tuned on the lab's panel moves the sprite and
+the arm. Its 5 px peak is 3 degrees of muzzle climb and 2.5 cm into the shoulder; under a thousandth of a pixel
+(`ARM_KICK_REST_PX`) the spring's endless tail is rest, so the arm's pose can be none again.
+
+**The reload is the cooldown's own clock** (`tlReloadFrom`): from the breech's open - the machine's own frames after its
+hit, the smoke clearing, which is exactly when the classic lane's cooldown begins - to the weapon's ready. The pump tips
+the gun 20 degrees down and drops it 12 cm, in over the reload's first fifth and back up over its last quarter
+(`reloadDip`), up exactly as the gun can fire again: the classic sprite's dip on the same span, at about its weight on
+a 3D arm. The open clack waits for the same moment, so under the arm it follows its bang by the classic lane's own beat;
+the classic lane, whose cooldown begins there, hears exactly what it did. Sheathed, a pose is none.
+
+These are JUDGEMENTS stated as ones, like `roomShake` - the lab's numbers are pixels of a 320x200 sprite and the arm's
+are degrees and metres, and no conversion between the two is honest. They are one frozen row, `ARM_GUN_FEEL`, for Mac to
+move once he has seen them on his own Morrowind data; this container has none to look through.
+
+**Pins** (`test/mwgunfeel.test.js`, 5; `tools/mutants/mwgunfeel.json`, 11 dead): the pose (the kick, the pump's shape,
+nothing outside the reload, the tail at rest), the matrix (turned about the shoulder, back toward the eye, down),
+the arm (the drawn view IS `K x lens`, built and drawn on the fixture rig; a still pose is none), the rig under a
+stubbed arm (no clack before the bang, the kick on the shot, the pump at its depth mid-reload, still at the ready) and
+the classic lane unmoved.

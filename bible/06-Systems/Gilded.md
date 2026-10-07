@@ -133,7 +133,12 @@ its mutant (the Hourlock before the Brass) hold the order.
   same occlusion in gold leaf (`tools/meshTexture.mjs` GILDED_BANDS, `tools/bakeThunderlock.mjs`). The preload asks the
   table for both rows (FIELD-GUN-MW2's law).
 
-## 6. The pins
+## 6. The test room, and the pins
+
+The loot test character (`systems/testRoom.js` `seedTestLoot`, "test:loot") carries the Hourlock, minted whole as the
+Brass Remnant drops it, and thirty pellets to hear it toll - after every draw the room made before (LR1's count moved
+with it).
+
 
 `test/gilded1_gilded.test.js` - the rung, the record, the mint, a static roll, no door alters it, the drop, the power
 (the toll and the pellet back), the look, the art and the gold in the hand (a sketch of the idle frame: a glove at the
