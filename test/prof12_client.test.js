@@ -320,7 +320,9 @@ test('PROF12 goods: the Apothecaries\' sixteen withdraw as DFU\'s own ingredient
   assert.deepEqual([mintMaterialItem('essence:arcane')?.templateIndex, materialCountLabel('essence:arcane', 4)], [680, 'Arcane Essence']);
   assert.deepEqual(stockOf('reagent:ichor'), { key: 'reagent:ichor', marks: 4, counter: 'apothecaries' });
   const m = src('src/ui/marketTab.js');
-  assert.match(m, /if \(st\.view === 'materials' && \(m\.apothecaries \?\? \[\]\)\.length\) box\.append\(apothecariesNode\(\)\);/);
+  // BOARD-UI (PIN MOVED): the counters folded under the suppliers' line, which the Materials view hangs
+  assert.match(m, /if \(\(m\.apothecaries \?\? \[\]\)\.length\) box\.append\(apothecariesNode\(\)\);/);
+  assert.match(m, /if \(st\.view === 'materials'\) box\.append\(suppliersNode\(\)\);/);
   assert.match(m, /box\.append\(el\('h4', null, 'The Apothecaries\\' counter'\)\);/);
   assert.match(src('src/scenes/world.js'), /apothecaries: APOTHECARY_STOCK,/);
 });

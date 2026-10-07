@@ -459,14 +459,14 @@ test('MARKET-ANY tab: Goods after the Auctions - each piece its name, condition,
   // a crafted piece: Eve's own alone, the other named
   what.value = 'piece'; what.onchange();
   assert.deepEqual(opts(selects().find((x) => x.getAttribute('aria-label') === 'Crafted piece')).map((o) => o.value), [own.provenance]);
-  assert.match(text(), /1 crafted piece you hold names another owner in its maker's record: only that owner sells it as a crafted piece\. List it as a piece from your pack, for gold\./);
+  assert.match(text(), /1 crafted piece you hold is another player's by its maker's record - only they sell it as crafted\. List it from your pack for gold instead\./);   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the words cut
   // a piece from the pack: the looted pieces and Mac's make; the stone and Eve's own make said
   selects().find((x) => x.getAttribute('aria-label') === 'What to list').value = 'item';
   selects().find((x) => x.getAttribute('aria-label') === 'What to list').onchange();
   const pick = selects().find((x) => x.getAttribute('aria-label') === 'Piece from your pack');
   assert.deepEqual(opts(pick).map((o) => o.textContent), [eve.goods.goodName(weapon), eve.goods.goodName(armour), eve.goods.goodName(theirs)]);
   assert.match(text(), new RegExp(`Not for the market: Deadlands Ember \\(bound to you\\); ${eve.goods.goodName(own)} \\(your own make - list it as a crafted piece\\)\\.`));
-  assert.match(text(), /A piece from your pack sells for gold alone\./);
+  assert.match(text(), /No fee to list\. Up for 72 hours on every board\. If it sells you get \d+ gold \(after a 1% fee and 5% tax\), collected at a bank\. It leaves your pack now and comes back if it does not sell\./);   // AUDIT 657 B9 (PIN MOVED): the 1% the sale's fee; BOARD-UI (PIN MOVED): its form says gold, its terms one line
   assert.equal(selects().some((x) => x.getAttribute('aria-label') === 'Currency'), false, 'no Drakes to choose');
   const price = [...root.querySelectorAll('input')].find((i) => i.getAttribute('data-focus') === 'list-price');
   price.value = '75'; price.oninput();

@@ -262,7 +262,7 @@ test('PROF6 the Work tab: this region\'s guild writs under the guild blue (Deliv
   r2.v.unmount();
   const r3 = workRig({ data: boardData(), pieces: [] });
   await ticks(); byClass(r3.host, 'notice-tab')[1].click(); await ticks();
-  assert.match(byClass(r3.host, 'notice-writ')[2].textContent, /You carry no piece of your make that answers it - unworn, and on no sale\./);
+  assert.match(byClass(r3.host, 'notice-writ')[2].textContent, /You carry no unworn piece of your own make for it\./);   // BOARD-UI (PIN MOVED)
   r3.v.unmount();
 });
 
@@ -279,8 +279,8 @@ test('PROF6 the Work tab\'s forms: an Officer\'s guild writ - the escrow, the pa
   const field = (key) => form().querySelectorAll('input').find((i) => i.getAttribute('data-focus') === key);
   field('writ|units').value = '100'; field('writ|units').oninput();
   field('writ|pay').value = '3'; field('writ|pay').oninput();
-  assert.match(form().textContent, /Holds 300 silver from the guild's treasury \(it holds 5,000 silver\)/);
-  assert.match(form().textContent, /At most 3 silver each - half again the material's worth\./);
+  assert.match(form().textContent, /Holds 300 silver of the treasury's 5,000 silver for up to 7 days\./);   // BOARD-UI (PIN MOVED): the terms one line
+  assert.match(form().textContent, /At most 3 silver each\./);
   assert.match(form().textContent, /Your writ budget this week: 380 silver of 500 silver left\./);
   field('writ|units').value = '200'; field('writ|units').oninput();
   assert.equal(byClass(form(), 'work-post')[0].disabled, true, '600 is past the 380 left');
@@ -298,7 +298,7 @@ test('PROF6 the Work tab\'s forms: an Officer\'s guild writ - the escrow, the pa
   assert.equal(byClass(form(), 'work-post')[0].disabled, true, 'no crafter, no commission');
   who.value = 'Silverthorn'; who.oninput();
   field('comm|pay').value = '900'; field('comm|pay').oninput();
-  assert.match(form().textContent, /the crafter receives it less 45 silver tax/);
+  assert.match(form().textContent, /The crafter gets it, less 45 silver tax, for an unworn piece they made\./);   // BOARD-UI (PIN MOVED)
   byClass(form(), 'work-post')[0].click();
   await ticks();
   assert.deepEqual(calls.at(-1), ['commission', { region: DF, crafter: 'Silverthorn', recipe: 'dagger:iron', quality: 2, pay: 900 }]);
@@ -321,7 +321,7 @@ test('PROF6 the Work tab\'s forms: an Officer\'s guild writ - the escrow, the pa
   await ticks();
   byClass(r.host, 'notice-answer')[0].click();
   await ticks();
-  assert.equal(byClass(r.host, 'notice-tab').find((t) => t.className.includes('on')).textContent, 'Work');
+  assert.equal(byClass(r.host, 'notice-tab').find((t) => t.className.includes('on')).textContent.replace(/\d+$/, ''), 'Work');   // BOARD-UI: beside its count of writs open
   const crafter = byClass(r.host, 'work-form')[0].querySelectorAll('input').find((i) => i.getAttribute('data-focus') === 'comm|crafter');
   assert.equal(crafter.value, 'Silverthorn', 'its author named');
   r.v.unmount();

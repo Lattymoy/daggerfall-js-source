@@ -471,7 +471,7 @@
   {
     "name": "PROF3-name-no-mark",
     "file": "src/systems/itemInfo.js",
-    "old": "  if ((item?.quality === 4 || item?.marked === true) && typeof item.maker === 'string' && item.maker && makerName(item.maker) === item.maker\n    && typeof item.provenance === 'string' && PROVENANCE_RE.test(item.provenance)) return",
+    "old": "  if ((item?.quality === 4 || item?.marked === true) && typeof item.maker === 'string' && item.maker && makerMark(item.maker) === item.maker\n    && typeof item.provenance === 'string' && PROVENANCE_RE.test(item.provenance)) return",
     "new": "  if (false) return",
     "tests": [
       "test/prof3_client.test.js"

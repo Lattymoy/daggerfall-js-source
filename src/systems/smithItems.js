@@ -78,7 +78,7 @@
 // ═══════════════════════════════════════════════════════════════════
 import {
   recipeById, QUALITY_EFFECTS, TOOL_LIFE, MASTERWORK, REPAIR_KIT_TEMPLATE, KIT_REPAIR, FIELD_KIT_REPAIR, KIT_CEILING, INGOT_MATERIAL, ARMOR_PLATE,
-  ARMOR_CHAIN, PROVENANCE_RE, makerName, QUALITY_NAMES,
+  ARMOR_CHAIN, PROVENANCE_RE, makerMark, QUALITY_NAMES,
   jewelPoints, jewelPointsPct,   // PROF10: a piece of jewellery's points and its worth
   jewelHandOk,   // AUDIT PROF-541 J6: the hand a piece keeps, one its recipe takes
 } from '../net/recipeLaw.js';
@@ -150,7 +150,7 @@ function setJewel(item, r, hand) {
 export function mintPiece({ recipe, quality, seed, maker = null, marked = false, dye = null, hand = null }, provenance) {
   const r = recipeById(recipe);
   if (!r || typeof provenance !== 'string' || !PROVENANCE_RE.test(provenance)) return null;
-  const mark = makerName(maker);
+  const mark = makerMark(maker);   // TEXT-F1
   if (r.kind === 'siege') return null;   // PROF4: the Ram Kit is the Stores' (and made with the sieges)
   if (r.kind === 'dish') return mintDish({ recipe, maker, hand }, provenance);   // PROF9: a dish, its cook's hand the record's
   if (r.kind === 'arrows') {

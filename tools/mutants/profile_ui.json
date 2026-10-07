@@ -1,0 +1,83 @@
+[
+  {
+    "name": "PROFILE-UI-nothing-in-hand",
+    "file": "src/ui/profileWindow.js",
+    "old": "export const gearPartOf = (slot, it) => (HAND_SLOTS.has(slot) || it?.group === 'Weapons' ? 'hand'",
+    "new": "export const gearPartOf = (slot, it) => (false ? 'hand'",
+    "tests": [
+      "test/profile_ui.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-UI-the-parts-out-of-order",
+    "file": "src/ui/profileWindow.js",
+    "old": "Object.freeze([['hand', 'In hand'], ['armour', 'Armour'],",
+    "new": "Object.freeze([['armour', 'Armour'], ['hand', 'In hand'],",
+    "tests": [
+      "test/profile_ui.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-UI-a-pair-two-rows",
+    "file": "src/ui/profileWindow.js",
+    "old": "    if (last && last.one === r.slot) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/profile_ui.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-UI-the-plural-unsaid",
+    "file": "src/ui/profileWindow.js",
+    "old": " last.slot = `${r.slot}s`; continue; }",
+    "new": " continue; }",
+    "tests": [
+      "test/profile_ui.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-UI-the-glyphs-beside-the-name",
+    "file": "src/ui/profileWindow.js",
+    "old": "      head.append(glyphs);",
+    "new": "      nm.append(glyphs);",
+    "tests": [
+      "test/profile_ui.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-UI-the-record-as-lines",
+    "file": "src/ui/profileWindow.js",
+    "old": "      for (const [cls, t] of facts) record.append(el('div', `dfprofile-fact ${cls}`, t));",
+    "new": "      for (const [cls, t] of facts) head.append(el('div', `dfprofile-line ${cls}`, t));",
+    "tests": [
+      "test/profile_ui.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-UI-the-waiting-unsaid",
+    "file": "src/ui/profileWindow.js",
+    "old": "    if (v.note) card.append(el('div', 'dfprofile-note', v.note));\n",
+    "new": "",
+    "tests": [
+      "test/profile_ui.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-UI-the-name-line-unwrapped",
+    "file": "src/ui/profileWindow.js",
+    "old": ".dfprofile-name { display: inline-flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 2px 6px;",
+    "new": ".dfprofile-name { display: inline-flex; align-items: center; gap: 6px;",
+    "tests": [
+      "test/profile_ui.test.js"
+    ]
+  },
+  {
+    "name": "PROFILE-UI-the-card-narrow",
+    "file": "src/ui/profileWindow.js",
+    "old": "  width: min(560px, calc(100vw - 28px)); pointer-events: none;",
+    "new": "  width: min(480px, calc(100vw - 28px)); pointer-events: none;",
+    "tests": [
+      "test/profile_ui.test.js"
+    ]
+  }
+]

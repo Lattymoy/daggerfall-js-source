@@ -102,11 +102,11 @@ test('GUILD1e the Guilds tab: the reader\'s guild\'s notes under its banner, the
   const v = mountNoticeBoard(host, { town: { name: 'Daggerfall', mapId: TOWN }, book, guilds: true, character: () => rhea.character });
   await until(() => /pinned here/.test(host.textContent));   // AUDIT SEATS-3 F1: the town's board read
   const tabs = byClass(host, 'notice-tab');
-  assert.deepEqual(tabs.map((x) => x.textContent), ['Notices', 'Guilds']);
+  assert.deepEqual(tabs.map((x) => x.textContent.replace(/\d+$/, '')), ['Notices', 'Guilds'], 'BOARD-UI: a tab\'s count of new notes beside its name');
   tabs[1].onclick();
   await until(() => /on The Silver Hand's board/.test(host.textContent));   // AUDIT SEATS-3 F1: the guild's board read
   const text = host.textContent;
-  assert.match(text, /<SH> The Silver Hand - for its members/);
+  assert.match(text, /<SH> The Silver Hand - members only/);   // BOARD-UI (PIN MOVED)
   assert.match(text, new RegExp(GUILD_BOARD_EMPTY.none('The Silver Hand')));
   assert.match(text, /Recruiting in Daggerfall/);
   const posters = byClass(host, 'notice-poster');

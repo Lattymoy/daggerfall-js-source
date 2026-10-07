@@ -640,8 +640,8 @@
   {
     "name": "PROF6-tab-budget-unsaid",
     "file": "src/ui/workTab.js",
-    "old": "              : officer && escrow > (g.left ?? 0) ? `That is past your writ budget this week (${marksText(g.left ?? 0)} left).` : '');\n      said.textContent = `Holds ${marksText(escrow)} from the guild's treasury (it holds ${marksText(g.marks ?? 0)}) until it is delivered",
-    "new": "              : false ? `That is past your writ budget this week (${marksText(g.left ?? 0)} left).` : '');\n      said.textContent = `Holds ${marksText(escrow)} from the guild's treasury (it holds ${marksText(g.marks ?? 0)}) until it is delivered",
+    "old": "              : officer && escrow > (g.left ?? 0) ? `That is past your writ budget this week (${marksText(g.left ?? 0)} left).` : '');\n      said.textContent = `Holds ${marksText(escrow)} of the treasury's ${marksText(g.marks ?? 0)} for up to 7 days. At most",
+    "new": "              : false ? `That is past your writ budget this week (${marksText(g.left ?? 0)} left).` : '');\n      said.textContent = `Holds ${marksText(escrow)} of the treasury's ${marksText(g.marks ?? 0)} for up to 7 days. At most",
     "tests": [
       "test/prof6_client.test.js"
     ]

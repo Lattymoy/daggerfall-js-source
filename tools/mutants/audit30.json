@@ -410,8 +410,8 @@
   {
     "name": "AUDIT30-U16-the-listed-order",
     "file": "src/ui/marketTab.js",
-    "old": ".sort((a, b) => landed(a) - landed(b) || a.price - b.price);\n      const list = el('div', 'market-rows');\n      for (const r of rows) {\n        list.append(st.view === 'materials'",
-    "new": ".sort((a, b) => a.price - b.price);\n      const list = el('div', 'market-rows');\n      for (const r of rows) {\n        list.append(st.view === 'materials'",
+    "old": ".sort((a, b) => landed(a) - landed(b) || a.price - b.price);\n      const list = el('div', 'market-rows');\n      if (rows.length) list.append(st.view === 'materials'",
+    "new": ".sort((a, b) => a.price - b.price);\n      const list = el('div', 'market-rows');\n      if (rows.length) list.append(st.view === 'materials'",
     "tests": [
       "test/audit30_client.test.js"
     ]
@@ -500,7 +500,7 @@
   {
     "name": "AUDIT30-C7-any-mark-a-name",
     "file": "src/systems/itemInfo.js",
-    "old": "item.maker && makerName(item.maker) === item.maker\n    && typeof item.provenance === 'string' && PROVENANCE_RE.test(item.provenance))",
+    "old": "item.maker && makerMark(item.maker) === item.maker\n    && typeof item.provenance === 'string' && PROVENANCE_RE.test(item.provenance))",
     "new": "item.maker && typeof item.provenance === 'string')",
     "tests": [
       "test/audit30_client.test.js"

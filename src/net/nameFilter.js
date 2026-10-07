@@ -39,10 +39,14 @@
 // caught, so a player with a legitimate name knows what to change and
 // can tell someone the filter is wrong.
 //
-// WHAT IS NOT HERE. Chat lines. Mac asked for names, and a name is not
-// a chat line: it is permanent, it hangs over a player's head in the
-// world, and it is read by everyone who never chose to talk to them. A
-// line scrolls away. `sanitizeChat` is untouched.
+// WHAT WAS NOT HERE, AND IS NOW. Chat lines. Mac asked for names, and a
+// name is not a chat line: it is permanent, it hangs over a player's head
+// in the world, and it is read by everyone who never chose to talk to
+// them. A line scrolls away - so NAME-F1 left `sanitizeChat` untouched.
+// TEXT-F1 (2026-10-07, Mac: "Any human input elements need filtering,
+// including notes") reads a player's WORDS too - see `maskText` at the
+// foot of this file, and why a sentence is starred where a name is
+// refused.
 //
 // Not a DFU member: Daggerfall Unity has no online names. Ledger A row
 // (ONLINE).
@@ -138,17 +142,17 @@ export const collapseRuns = (flat) => String(flat ?? '').replace(/(.)\1+/g, '$1'
  * was refused can be honest about which kind it was.
  */
 export const CRUDE = Object.freeze([
-  'anus', 'arse', 'ass', 'bastard', 'bitch', 'bollock', 'boner', 'boob', 'clit',
-  'cock', 'cum', 'cunt', 'dick', 'dildo', 'fuck', 'jizz', 'knob', 'minge',
-  'nonce', 'penis', 'piss', 'prick', 'pussy', 'scrotum', 'semen', 'shit',
+  'anus', 'arse', 'arsehole', 'ass', 'asshole', 'bastard', 'bitch', 'bollock', 'boner', 'boob', 'bullshit', 'clit',
+  'cock', 'cum', 'cunt', 'dick', 'dickhead', 'dildo', 'dipshit', 'dumbass', 'fuck', 'jizz', 'knob', 'minge',
+  'nonce', 'penis', 'piss', 'prick', 'pussy', 'scrotum', 'semen', 'shit', 'shithead',
   'slut', 'smegma', 'spunk', 'testicle', 'tit', 'twat', 'vagina', 'wank', 'whore',
-]);
+]);   // TEXT-F1: and the compounds a sentence reaches for, which no boundary finds in one word - `asshole`'s `ass` has `hole` after it
 
 /** Slurs and hate terms. Held apart from CRUDE because these are not
  *  a matter of taste and the refusal should not pretend they are.
  *  Written normalised, as above. */
 export const SLURS = Object.freeze([
-  'chink', 'coon', 'dyke', 'fag', 'faggot', 'gook', 'kike', 'nig', 'nigger',
+  'chink', 'coon', 'dyke', 'fag', 'faggot', 'gook', 'kike', 'nig', 'nigga', 'nigger',
   'paki', 'raghead', 'retard', 'spic', 'tard', 'tranny', 'wetback',
 ]);
 
@@ -156,6 +160,41 @@ export const SLURS = Object.freeze([
  *  Not rude, and not allowed either - "Admin" in a chat line is a
  *  social-engineering tool, not an insult. */
 export const IMPERSONATION = Object.freeze(['admin', 'moderator', 'mod', 'staf', 'sistem', 'ofical', 'server']);
+
+/** TEXT-F1 (2026-10-07): THE WORDS NO WORD HIDES INNOCENTLY - read ANYWHERE inside a word, where the lists above are read
+ *  standing alone (stage 2, so `cumberland` keeps its `cum`). Two English words hold one innocently (AUDIT 657 T1:
+ *  INNOCENT, below, reads them out first); for the rest a boundary was only ever the way past: `motherfucker` and
+ *  `xXfaggotlordXx` stood beside no padding and passed. Each list its kind, as LISTS reads them; written normalised. */
+export const ANYWHERE = Object.freeze([
+  Object.freeze({ kind: 'slur', words: Object.freeze(['faggot', 'nigga', 'nigger']) }),
+  Object.freeze({ kind: 'crude', words: Object.freeze(['cocksuck', 'fuck']) }),
+]);
+
+/** AUDIT 657 T1 (= D1): THE WORDS THAT HOLD A LISTED ONE INNOCENTLY. TEXT-F1 said no English word holds an ANYWHERE
+ *  word, and two do - `snigger` and `niggard`, and every word made of them (sniggering, niggardly) - so names NAME-F1
+ *  let through (Snigger, Niggardly) were refused, and "he gave a snigger" was starred. A sentence reads a listed word's
+ *  tails too (stage 2's `s`, `ed`, `y`), and the ordinary words a listed word and a tail spell were starred with them:
+ *  "spiced wine", "a booby trap", "don't get cocky", "pricked his finger", a merchant's "dicker" (the dictionary's run is
+ *  in the AUDIT 657 record). Each is read OUT before the ANYWHERE words are looked for, in a name and a sentence alike,
+ *  and a sentence's word that IS one is never read against the lists. A name's verdict on the rest is NAME-F1's,
+ *  unmoved: a name is chosen and stays, and `Cocky` was refused before. Written normalised. Never a word a list holds,
+ *  and never one whose plain reading is the insult as often as not (`chink`, `knob`, `prick` stay listed). */
+export const INNOCENT = Object.freeze(['snigger', 'niggard', 'spicy', 'spiced', 'spices', 'titter', 'titters', 'titer', 'titers',
+  'booby', 'cocky', 'cocked', 'cocking', 'dicker', 'dickers', 'knobby', 'knobbed', 'pricked', 'pricking', 'spunky']);
+/** The ANYWHERE word a normalised reading holds - either reading, its innocent words read out of it first (a space
+ *  where each stood, so no word is found across the gap) - as `{ kind, word }`, or null (AUDIT 657 T1). */
+function anywhereIn(flat) {
+  const holds = (plain) => {
+    const stretched = collapseRuns(plain);
+    for (const { kind, words } of ANYWHERE) {
+      const word = words.find((w) => plain.includes(w) || stretched.includes(w));
+      if (word) return { kind, word };
+    }
+    return null;
+  };
+  // the innocent words read out only where a word was found: most words hold none, and are read once
+  return holds(flat) && holds(INNOCENT.reduce((s, w) => s.split(w).join(' '), flat));
+}
 
 /** Every entry must survive normalisation unchanged - lowercase
  *  letters only - or it is an entry that can never match. Checked in
@@ -214,6 +253,9 @@ export function checkName(name) {
   const flat = normaliseName(raw);
   if (!flat) return { ok: false, kind: 'empty', word: '', reason: 'A name needs some letters in it.' };
   const stretched = collapseRuns(flat);
+  // TEXT-F1: a word no word hides innocently, anywhere in either reading - AUDIT 657 T1: the innocent words read out first
+  const any = anywhereIn(flat);
+  if (any) return { ok: false, kind: any.kind, word: any.word, reason: `That name reads as "${any.word}". Please pick another.` };
   for (const { kind, words } of LISTS) {
     for (const word of words) {
       // BOTH readings - see collapseRuns for why they are two - and
@@ -275,4 +317,148 @@ export function entryVerdict(...candidates) {
   const name = candidates.map((c) => String(c ?? '').trim()).find((c) => c) ?? '';
   if (!name) return { ok: true, kind: 'fallback', word: '', reason: '' };
   return checkName(name);
+}
+
+// ═══ TEXT-F1: A PLAYER'S WORDS ═════════════════════════════════════
+//
+// Mac (2026-10-07): "Any human input elements need filtering, including
+// notes." A name is one word, read whole. A SENTENCE read whole hides
+// every word in it: stage 1 drops the spaces, so `you are an ass` is
+// `youareanass` and `ass` stands alone nowhere. So a line is read WORD
+// BY WORD - each word through the same two readings and the same lists
+// a name meets - and a word caught is STARRED, letter for letter. Never
+// refused: a line is said, not chosen, and a note or a chat line that
+// will not send over one word is worse than the line with the word
+// starred out. A name is refused (it is chosen, and it stays).
+//
+// Three differences from a name's verdict, each deliberate:
+//   - the server's own words (IMPERSONATION) are not read - "ask a mod"
+//     and "the server restarts at eight" are sentences, not costumes;
+//   - a word spelled a letter at a time (`f u c k`, `f.u.c.k`) is read
+//     as the run of its letters;
+//   - a word's own sentence marks are read off it - a leet `!` inside a
+//     word is its `i` (`sh!t`), at its end it is the sentence's (`fuck!`).
+// A number is a number (`8008` is somebody's sum) and is not read.
+//
+// The mask keeps every character that is not a letter of a caught word,
+// a star for each letter, so a line's spaces and its punctuation stand
+// and it never grows: a bound measured before it holds after it (AUDIT
+// 657 D9: never LONGER, rather than the same length - a letter past the
+// Basic Plane, a mathematical bold one, is two UTF-16 units and one
+// star). It is idempotent - a starred word has no letters left to catch
+// - so a line cleaned twice (the sender's, the relay's, the reader's)
+// reads once.
+//
+// Where it runs: net/wire.js sanitizeChat (every chat line, on both ends
+// and at the relay) and wordsLine (a letter's lines, a note's, a guild
+// note's, a journal page's - net/letterLaw.js, the board and the page
+// law). The name-shaped words a player types - a rank's name, a custom
+// class, a maker's mark, an item's new name - are judged by `textCaught`
+// and refused or let go instead, as a name is.
+
+/** A character a word is spelled in: a letter, its accents, a digit or a mark of the leet alphabet. Anything else stands
+ *  between words. AUDIT 657 T2: a letter's own combining accent is the letter's - it stood between words, so a word
+ *  spelled with one (`u` and U+0301, the accent stage 1 folds away) read as two halves, and neither was the word. */
+const isWordChar = (ch) => /[\p{L}\p{M}\p{N}]/u.test(ch) || LEET.has(ch);
+/** The leet marks a sentence puts at a word's edge - an opening bracket, a closing bang, a bar or a plus; and AUDIT 657
+ *  T3, an at sign before a name (`@word` read only as `aword`, so a word said at someone passed). */
+const EDGE_HEAD = new Set(['!', '|', '(', '<', '+', '@']);
+const EDGE_TAIL = new Set(['!', '|', '+']);
+/** The lists a sentence is read against: the slurs and the crude words, never the server's words. */
+const TEXT_LISTS = Object.freeze([{ kind: 'slur', words: SLURS }, { kind: 'crude', words: CRUDE }]);
+/** The longest run of letters spelled one at a time that is read as a word. */
+const SPELLED_MAX = 12;
+/** Every word a sentence's lists read (AUDIT 657 T5's pre-check). */
+const SENTENCE_WORDS = Object.freeze([...ANYWHERE.flatMap((g) => g.words), ...SLURS, ...CRUDE]);
+/** AUDIT 657 T5: whether `letters` hold a word a sentence's lists read, in either reading. Every reading of a shorter
+ *  run is the start of the longer run's reading, so a run that holds none has no window that is caught. */
+const mayHold = (letters) => {
+  const flat = normaliseName(letters), stretched = collapseRuns(flat);
+  return SENTENCE_WORDS.some((w) => flat.includes(w) || stretched.includes(w));
+};
+
+/** One word, as a sentence writes it: the list word it reads as, or null. */
+function wordCaught(word) {
+  if (/^\p{N}+$/u.test(word)) return null;
+  const flat = normaliseName(word);
+  if (!flat || INNOCENT.includes(flat)) return null;   // AUDIT 657 T1: an ordinary word, read as itself
+  const any = anywhereIn(flat);
+  if (any) return any.word;
+  const stretched = collapseRuns(flat);
+  for (const { words } of TEXT_LISTS) for (const w of words) if (standsAlone(flat, w) || standsAlone(stretched, w)) return w;
+  return null;
+}
+
+/**
+ * THE READER. Every word of `text` the lists catch, as code-point ranges into it - `[from, to)` - with the list word each
+ * reads as. Words are maximal runs of word characters; each is read as written and again without its sentence marks;
+ * then each run of one-letter words is read for a word spelled across it.
+ * @param {string} text
+ */
+function caughtWords(text) {
+  const cps = Array.from(String(text ?? ''));
+  /** @type {{from: number, to: number}[]} */
+  const words = [];
+  for (let i = 0; i < cps.length;) {
+    if (!isWordChar(cps[i])) { i++; continue; }
+    let j = i;
+    while (j < cps.length && isWordChar(cps[j])) j++;
+    words.push({ from: i, to: j });
+    i = j;
+  }
+  /** @type {{from: number, to: number, word: string}[]} */
+  const out = [];
+  const taken = new Set();
+  words.forEach((w, k) => {
+    // the word without its sentence marks first, so a caught word's `!` stays the sentence's; then the word as written
+    let { from, to } = w;
+    while (from < to && EDGE_HEAD.has(cps[from])) from++;
+    while (to > from && EDGE_TAIL.has(cps[to - 1])) to--;
+    let word = from < to ? wordCaught(cps.slice(from, to).join('')) : null;
+    if (!word && (from !== w.from || to !== w.to)) {
+      ({ from, to } = w);
+      word = wordCaught(cps.slice(from, to).join(''));
+    }
+    if (word) { out.push({ from, to, word }); taken.add(k); }
+  });
+  // a word spelled a letter at a time - a run of one-letter words, each a letter (with its accents, AUDIT 657 T2), none
+  // caught already
+  const letterOf = (w) => cps.slice(w.from, w.to).join('');
+  const single = (k) => k < words.length && !taken.has(k) && /^\p{L}\p{M}*$/u.test(letterOf(words[k]));
+  for (let k = 0; k < words.length;) {
+    if (!single(k)) { k++; continue; }
+    let end = k;
+    while (single(end)) end++;
+    for (let i = k; i < end;) {
+      let hit = 0;
+      const last = Math.min(end, i + SPELLED_MAX);
+      // AUDIT 657 T5: the longest window read once first - every window a reading of its own cost a 240-letter chat line
+      // of one-letter words 7 ms at the relay; a window holds a word only where the longest one from its letter does
+      if (mayHold(words.slice(i, last).map(letterOf).join(''))) {
+        for (let j = i + 3; j <= last; j++) {
+          const word = wordCaught(words.slice(i, j).map(letterOf).join(''));
+          if (word) { for (let x = i; x < j; x++) out.push({ ...words[x], word }); hit = j; break; }
+        }
+      }
+      i = hit || i + 1;
+    }
+    k = end;
+  }
+  return { cps, out };
+}
+
+/** The first word in `text` the lists catch, as the list writes it - or null for words that pass. The verdict a
+ *  name-shaped line meets (a rank's name, a custom class, a maker's mark, an item's new name): refused, naming the
+ *  word, as a name is. */
+export function textCaught(text) {
+  const { out } = caughtWords(text);
+  return out.length ? out.reduce((a, b) => (b.from < a.from ? b : a)).word : null;
+}
+
+/** `text` with every caught word starred, letter for letter; every other character as it was. Idempotent. */
+export function maskText(text) {
+  const { cps, out } = caughtWords(text);
+  if (!out.length) return String(text ?? '');
+  for (const { from, to } of out) for (let i = from; i < to; i++) if (isWordChar(cps[i])) cps[i] = '*';
+  return cps.join('');
 }

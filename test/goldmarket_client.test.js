@@ -266,7 +266,7 @@ test('GOLD-MARKET tab: My listings - a gold listing\'s price in gold; the List f
   cur.value = 'gold';
   cur.onchange();
   assert.deepEqual(matOptions(), ['Iron Ore (8)'], 'gold: own and gold\'s - Mithril bought with Drakes lists for none');
-  assert.match(t.text(), /No fee to list: each sale pays 1% and 5% tax out of its price/);
+  assert.match(t.text(), /No fee to list\. Up for 72 hours on every board\. If it all sells you get \d+ gold \(after a 1% fee and 5% tax\), collected at a bank\./);   // AUDIT 657 B9 (PIN MOVED): the 1% the sale's fee; BOARD-UI (PIN MOVED)
   const list = t.buttons().find((b) => b.textContent === 'List');
   assert.equal(list.disabled, false, 'no Drakes fee asked');
   await list.onclick();
@@ -280,7 +280,7 @@ test('GOLD-MARKET refusals: every new word the service says has its sentence', (
   }
   assert.match(accountRefusalText('market-gold-goods'), /pack or back on the market for gold/);
   assert.match(accountRefusalText('market-drakes-goods'), /^Goods bought with silver, and pieces made with them, sell only for silver\./, 'AUDIT PROF-541 R2-S3: a piece made of counter goods is silver\'s, in words');
-  assert.match(readFileSync(new URL('../src/ui/marketTab.js', import.meta.url), 'utf8'), /not goods bought with silver, nor pieces made with them\./, 'AUDIT PROF-541 R2-S3: the gold form\'s own word agrees');
+  assert.match(readFileSync(new URL('../src/ui/marketTab.js', import.meta.url), 'utf8'), /Goods bought with silver, and pieces made with them, sell only for silver\./, 'AUDIT PROF-541 R2-S3: the gold form\'s own word agrees');   // AUDIT 657 D7: BOARD-UI (PIN MOVED): the words cut
 });
 
 // ─── THE WIRING ──────────────────────────────────────────────────────
