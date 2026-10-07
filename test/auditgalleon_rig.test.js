@@ -546,8 +546,12 @@ test('AUDIT GALLEON R5/G9 her rig\'s hit boxes follow her trim: each square sail
   const sb = hullBuild(HULL.SmallShip);
   for (const [mn, mx] of sb.rig) assert.ok(mx[1] > sb.top || mx[2] > sb.bowZ || mn[2] < sb.aftZ || mx[0] > sb.halfWidth || mn[0] < -sb.halfWidth, 'each of her boxes reaches out of her hull\'s box');
   assert.deepEqual(rigBand(sb), [sb.top, Math.max(...sb.rig.map(([, mx]) => mx[1]))], 'the band from her roof to her highest box\'s top');
-  for (const b of HULL_BUILDS.filter((x) => x.hull !== HULL.SmallShip)) for (const box of b.rig) assert.ok(box.boom == null && box.obb == null, `hull ${b.hull}'s boxes as they stood`);
-  for (const hull of [HULL.LargeBoat, HULL.LargeGalley, HULL.Carrack]) {
+  // PIN MOVED (SHIPS-2, 2026-10-07): hulls 4 and 1 are Mac's carrack and Tiny Ship - their boxes ride their booms and
+  // their sails as hers do (test/ships2_carrack.test.js, test/ships2_largeboat.test.js); the galley's stand as they did
+  const theirs = [HULL.SmallShip, HULL.Carrack, HULL.LargeBoat];
+  for (const b of HULL_BUILDS.filter((x) => !theirs.includes(x.hull))) for (const box of b.rig) assert.ok(box.boom == null && box.obb == null, `hull ${b.hull}'s boxes as they stood`);
+  for (const hull of [HULL.Carrack, HULL.LargeBoat]) assert.ok(hullBuild(hull).rig.some((box) => box.boom != null), `hull ${hull}'s boxes ride her booms`);
+  for (const hull of [HULL.LargeGalley]) {
     const h = await sea({ hull });
     h.boat.MeshObject.localRotation = quatEuler(0, 0, 9);
     for (const b of h.boat.Booms) b.localRotation = quatAngleAxis(40, [0, 1, 0]);

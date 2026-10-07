@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
-import { SHIP_TOUGHNESS, PLAYER_CREW_TOUGHNESS, playerBatteryWeight, setGalleonStanding, hullBuild, MOD_SMALL_SHIP_BUILD, GUNS, HULL, SHIP_CLASSES, batteryOf, classById } from '../src/systems/naval/navalShips.js';
+import { SHIP_TOUGHNESS, PLAYER_CREW_TOUGHNESS, playerBatteryWeight, shipBatteryWeight, setShipStanding, setGalleonStanding, hullBuild, MOD_SMALL_SHIP_BUILD, GUNS, HULL, SHIP_CLASSES, batteryOf, classById } from '../src/systems/naval/navalShips.js';
 import { ballMen, playerMen, shotDamage, createShipDamage, HOLED_BONUS, WATERLINE_BAND } from '../src/systems/naval/navalDamage.js';
 import { ramMen, RAM_A_MAN } from '../src/scenes/navalHost.js';
 import { fightingPower, classPower, strikeTime, hitShare, layMin, rangeOfHull, TURN_PER_VOLLEY } from '../src/systems/naval/navalAI.js';
@@ -89,12 +89,23 @@ test('CREW-HOLD measured, on strikeTime\'s own terms: every ship of the line\'s 
   near(emptying(HULL.SmallShip, classById('pirateSloop')).crew, 134, 1, 'a sloop\'s swivels on a galleon\'s men (67 s before)');
 });
 
-test('GALLEON-WEIGHT the law: a player\'s galleon\'s broadside throws the mod\'s six long guns\' weight from her five ports - each ball 6/5 her hull and canvas harm, never her men; her chasers and barrels, every other hull and the mod\'s own galleon standing in throw their own (mutants: the weight, the side, the stand-in, the shot\'s)', () => {
+test('GALLEON-WEIGHT the law: a player\'s galleon\'s broadside throws the mod\'s six long guns\' weight from her five ports - each ball 6/5 her hull and canvas harm, never her men; her chasers and barrels, every other hull and the mod\'s own galleon standing in throw their own - SHIPS-2: and a carrack, a player\'s or a captain\'s, the mod\'s carrack\'s seven from Mac\'s five (mutants: the weight, the side, the stand-in, the shot\'s)', () => {
   assert.equal(hullBuild(HULL.SmallShip).broadside.length, 5, 'Mac\'s galleon: a gun a port');
   assert.equal(MOD_SMALL_SHIP_BUILD.broadside.length, 6, 'the mod\'s: six a side');
   for (const side of ['starboard', 'port']) assert.equal(playerBatteryWeight(HULL.SmallShip, side), 6 / 5);
   for (const side of ['bow', 'stern']) assert.equal(playerBatteryWeight(HULL.SmallShip, side), 1, `her ${side}: as it was`);
-  for (const hull of [HULL.Rowboat, HULL.LargeBoat, HULL.LargeGalley, HULL.Carrack]) for (const side of ['starboard', 'port', 'bow', 'stern']) assert.equal(playerBatteryWeight(hull, side), 1);
+  for (const hull of [HULL.Rowboat, HULL.LargeBoat, HULL.LargeGalley]) for (const side of ['starboard', 'port', 'bow', 'stern']) assert.equal(playerBatteryWeight(hull, side), 1);
+  // SHIPS-2 (2026-10-07): Mac's carrack's five ports throw the mod's carrack's seven (7/5), her chasers and barrels their
+  // own, the mod's own carrack standing in its own seven - and a captain's carrack the same (shipBatteryWeight: her duels
+  // were measured with the mod's seven), where a captain's galleon keeps her five's (hers were measured with them)
+  assert.equal(hullBuild(HULL.Carrack).broadside.length, 5, 'Mac\'s carrack: a gun a port');
+  for (const side of ['starboard', 'port']) assert.equal(playerBatteryWeight(HULL.Carrack, side), 7 / 5);
+  for (const side of ['bow', 'stern']) assert.equal(playerBatteryWeight(HULL.Carrack, side), 1);
+  assert.equal(shipBatteryWeight(HULL.Carrack, 'starboard', false), 7 / 5, 'a captain\'s carrack: the mod\'s seven');
+  assert.equal(shipBatteryWeight(HULL.SmallShip, 'starboard', false), 1, 'a captain\'s galleon: her own five');
+  assert.equal(shipBatteryWeight(HULL.SmallShip, 'starboard', true), 6 / 5, 'a player\'s galleon: the mod\'s six');
+  setShipStanding(HULL.Carrack, false);
+  try { assert.equal(playerBatteryWeight(HULL.Carrack, 'starboard'), 1, 'the mod\'s own carrack standing in: its own seven'); } finally { setShipStanding(HULL.Carrack, true); }
   setGalleonStanding(false);
   try { assert.equal(playerBatteryWeight(HULL.SmallShip, 'starboard'), 1, 'the mod\'s own galleon standing in: her own six guns'); } finally { setGalleonStanding(true); }
   const w = playerBatteryWeight(HULL.SmallShip, 'starboard');
@@ -135,15 +146,16 @@ test('GALLEON-WEIGHT the captains\' reckoning: a player\'s galleon makes a ship 
   assert.equal(strikeTime(classPower(classById('pirateBrig')), target), strikeTime(fightingPower({ ...classPower(classById('pirateBrig')) }), target), 'a captain\'s as tuned');
 });
 
-test('CREW-HOLD and GALLEON-WEIGHT on the host, by source: a captain\'s ball on my boat takes her men as a player\'s crew stands them and strikes with its weight; a galley\'s ram on my boat; the serpent\'s blow through playerMen; my volley and a peer\'s own boat\'s carry the weight, a captain\'s none; my boat\'s measure a player\'s (mutants: each seam)', () => {
+test('CREW-HOLD and GALLEON-WEIGHT on the host, by source: a captain\'s ball on my boat takes her men as a player\'s crew stands them and strikes with its weight; a galley\'s ram on my boat; the serpent\'s blow through playerMen; my volley and a peer\'s own boat\'s carry the weight, a captain\'s none (SHIPS-2: but a captain\'s carrack\'s, the mod\'s seven); my boat\'s measure a player\'s (mutants: each seam)', () => {
   const n = src('scenes/navalHost.js');
   assert.match(n, /const hurt = shotDamage\(gun, zone, \{ braced: st\.guns\.braced, roll: random\(\), tough: PLAYER_CREW_TOUGHNESS, weight: e\.weight \}\);/, 'a ball on my boat');
   assert.match(n, /const hurt = shotDamage\(gun, zone, \{ roll: random\(\), weight: e\.weight \}\);/, 'a ball on a captain\'s ship: her men a captain\'s');
   assert.match(n, /hull: gun\.hull \* \(e\.weight \?\? 1\) \* \(0\.85 \+ 0\.3 \* random\(\)\)/, 'a ball in the serpent');
   assert.match(n, /st\.damage\.apply\(\{ hull: dealt, sail: 0, crew: ramMen\(dealt, random\(\), PLAYER_CREW_TOUGHNESS\) \}, clock\);/, 'a galley\'s ram on my boat');
   assert.match(n, /const men = playerMen\(hurt\.crew \?\? 0, random\(\)\);\n\s+const change = st\.damage\.apply\(\{ \.\.\.hurt, crew: men,/, 'the serpent\'s blow');
-  assert.match(n, /const weight = isMine\(shooter\) \? playerBatteryWeight\(hull, solution\.side\) : 1;[^\n]*\n\s+const launches = volleyLaunches\([^\n]*\{ skill, carry: pose\.velocity, weight \}\);/, 'my volley');
-  assert.match(n, /const weight = v\.shooter < 0 \? playerBatteryWeight\(v\.hull, v\.side\) : 1;[^\n]*\n\s+const launches = volleyLaunches\([^\n]*\{ skill: v\.skill, carry: v\.vel, weight \}\);/, 'a peer\'s own boat\'s volley');
+  // SHIPS-2: by navalShips.js shipBatteryWeight - a player's ship's weight, a captain's carrack's the mod's seven
+  assert.match(n, /const weight = shipBatteryWeight\(hull, solution\.side, isMine\(shooter\)\);[^\n]*\n\s+const launches = volleyLaunches\([^\n]*\{ skill, carry: pose\.velocity, weight \}\);/, 'my volley');
+  assert.match(n, /const weight = shipBatteryWeight\(v\.hull, v\.side, v\.shooter < 0\);[^\n]*\n\s+const launches = volleyLaunches\([^\n]*\{ skill: v\.skill, carry: v\.vel, weight \}\);/, 'a peer\'s own boat\'s volley');
   assert.match(n, /return fightingPower\(\{ hull: boat\.hull, [^\n]*crewed: !!boat\.crewed, player: true \}\);/, 'my boat\'s measure');
   assert.match(n, /crewed: !\(p\.boat && !p\.boat\.crewed\), player: true \}\);/, 'a peer\'s boat\'s measure');
 });

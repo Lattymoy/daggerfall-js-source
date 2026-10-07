@@ -118,11 +118,8 @@ test('AUDIT GALLEON-2 PF4: her prefab is built ONCE A PROCESS - a second world\'
   assert.ok(comeSailAwayModels({ ...modFiles(), galleon: JSON.parse(BAKE_TEXT) }).prefab(GM.GALLEON_PREFAB_ID) === a.prefab(GM.GALLEON_PREFAB_ID), 'the good bake served again');
   // over another mod table - its components a row longer, or its own galleon (whose small things hers are) changed - she
   // is built anew, her components' places in the table her own
-  const changed = modFiles();
-  const findIn = (t, name) => (t.name === name ? t : t.children.reduce((f, k) => f ?? findIn(k, name), null));
-  findIn(changed.prefabs.prefabs[String(GM.GALLEON_PREFAB_ID)], 'Modifiers').position = [0, 0.5, 0];
-  const d = comeSailAwayModels({ ...changed, galleon: JSON.parse(BAKE_TEXT) });
-  assert.deepEqual(d.prefab(GM.GALLEON_PREFAB_ID).children.find((n) => n.name === 'Modifiers').position, [0, 0.5, 0], 'the mod\'s galleon\'s small things as that table has them');
+  // the longer table first, over the cache the good table left - its components' places all that differ (SHIPS-2: each
+  // port ship has its own entry, so a table changed first rebuilds her on that alone)
   const longer = modFiles();
   longer.prefabs.components = [{ type: 'Transform' }, ...longer.prefabs.components];
   const c = comeSailAwayModels({ ...longer, galleon: JSON.parse(BAKE_TEXT) });
@@ -130,6 +127,12 @@ test('AUDIT GALLEON-2 PF4: her prefab is built ONCE A PROCESS - a second world\'
     .components.map((i) => models.components[i]).map((k) => [k.type, k.m_Mesh?.mesh ?? null]);
   assert.deepEqual(hullOf(c), hullOf(a), 'her hull\'s components where her table puts them');
   assert.deepEqual(hullOf(a).map(([t]) => t), ['MeshFilter', 'MeshRenderer', 'MeshCollider']);
+  const changed = modFiles();
+  changed.prefabs.components = [{ type: 'Transform' }, ...changed.prefabs.components];   // the longer table's places: its galleon all that differs
+  const findIn = (t, name) => (t.name === name ? t : t.children.reduce((f, k) => f ?? findIn(k, name), null));
+  findIn(changed.prefabs.prefabs[String(GM.GALLEON_PREFAB_ID)], 'Modifiers').position = [0, 0.5, 0];
+  const d = comeSailAwayModels({ ...changed, galleon: JSON.parse(BAKE_TEXT) });
+  assert.deepEqual(d.prefab(GM.GALLEON_PREFAB_ID).children.find((n) => n.name === 'Modifiers').position, [0, 0.5, 0], 'the mod\'s galleon\'s small things as that table has them');
 });
 
 test('AUDIT GALLEON-2 PF4: the cached prefab is NEVER WRITTEN - boats built on it (spawned, sailed, their doors, hatches and shutters worked, drawn and their sails baked by a pool) leave her tree, her components and every mesh of hers to the byte as built', async () => {

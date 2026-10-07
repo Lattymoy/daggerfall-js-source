@@ -535,6 +535,7 @@ export class EnemyAI {
     // WERE-FRIGHT: the run from a fright (flee, below) - seconds left, and the point it runs from. No run by default.
     this.fleeLeft = 0;
     this.fleeFrom = null;
+    this.fleePace = 1;   // FLIGHT-FIRST: its run's share of its walk (flee, below)
     /** CREW-COMPANIONS: the leader a companion keeps to (the host sets it; null for every other foe). COMPANION-TRAIL:
      *  `trail` the crumbs where the leader walked, oldest first. @type {{ feet: () => (number[]|null), stop?: number, leash?: number, trail?: () => (number[][]|null) }|null} */
     this.follow = null;
@@ -1635,11 +1636,16 @@ export class EnemyAI {
    * pursuer does. It decides nothing and senses nothing while it runs; the pool that frightened it retires it when
    * `fleeLeft` is spent. A blow does not end the run: it shoves the foe as it shoves any (KnockbackMovement, the hurt
    * anim with it), and a frightened man keeps running once the shove is spent.
+   * FLIGHT-FIRST: `pace` - its run at this share of its walk (1, the walk, for every run but the revenants' flee law's:
+   * a special foe running for its life outruns a running player, systems/revenant.js REVENANT_FLEE_PACE).
    */
-  flee(fromFeet, seconds) {
+  flee(fromFeet, seconds, pace = 1) {
     breakWindup(this);   // AUDIT TELL B1: a routed foe's wind-up goes with its fight
     this.fleeFrom = [fromFeet[0], fromFeet[1], fromFeet[2]];
     this.fleeLeft = seconds;
+    this.fleePace = pace > 0 ? pace : 1;
+    this._tacDir = null;   // FLIGHT-FIRST: and the brain's step (TACT2's ring, its back-step) with it - its walk read that
+    this._tacSpeed = 1;    // step before its own way (_walkStep), so a foe that broke while circling ran on round the ring
     // AUDIT WERE-FRIGHT F3: NOT its hostility. IsHostile false is DFU's PASSIVE foe - a blow on one turns the area
     // (MakeEnemiesHostile) and friendly protection spares one from a swing - and a routed foe is neither. The run
     // takes its target, which is all that stops it striking.
@@ -1801,7 +1807,7 @@ export class EnemyAI {
       else { this.yaw = turnTowards(this.yaw, dx, dz); this.moving = false; }   // classic turns in place
     }
     if (paralyzed) this.moving = false;
-    this._walkStep(dt);   // the pursuit's own walk - the watch is the one foe frightened, and it walks
+    this._walkStep(dt, this.fleePace);   // the pursuit's own walk - the watch is frightened and walks; a special foe runs for its life (FLIGHT-FIRST)
   }
 
   /**

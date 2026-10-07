@@ -25,8 +25,8 @@
 // DOCK_ANGLE of the berth's line either way, is WARPED IN by her hands - eased onto it at DOCK_EASE a second. Within
 // FAST_M and FAST_DEG of it she lies MADE FAST: a gangway runs from the quay's face to her rail (`gangwayOf`).
 
-import { alongside, hullSize, BERTH_HULL } from './shipLife.js';
-import { hullBuild, MOD_SMALL_SHIP_BUILD } from './navalShips.js';   // GALLEON-HOLDINGS: hull 2's gangway follows the build that stands
+import { alongside, berthSize, BERTH_HULL } from './shipLife.js';
+import { hullBuild, MOD_BUILDS } from './navalShips.js';   // GALLEON-HOLDINGS: hull 2's gangway follows the build that stands (SHIPS-2: hull 4's too)
 import { hash32 } from '../../world/spawnedDungeons.js';
 import { mulberry32 } from '../../combat/bloodArt.js';
 import { SHORE_TERRAIN_FIT_METERS } from '../../world/deepWaterFloor.js';   // HARBOUR-BOOK: the shelf a pier crosses
@@ -107,17 +107,25 @@ export const QUAY_KERB_H = 0.15;
  */
 export const GANGWAY_SIDE = Object.freeze([
   Object.freeze([0.95, 0.7]),    // 0 Rowboat - on her gunwale (0.63 m up at 0.9 m out)
-  Object.freeze([1.75, 1.36]),   // 1 Large Boat - on her gunwale (1.27 m up at 1.7-1.8 m out)
+  Object.freeze([1.9, 2.26]),    // 1 Large Boat - SHIPS-2: Mac's Tiny Ship: on her gunwale's cap at its outer edge (1.89 out, 2.25 up)
   Object.freeze([5.45, 6.7]),    // 2 Small Ship - Mac's galleon: the entry port in her waist's bulwark, her side 5.33 m out there
   Object.freeze([9.2, 10.75]),   // 3 Large Galley - her upper deck (she never docks - DOCK_REFUSED)
-  Object.freeze([7.65, 4.14]),   // 4 Carrack - her main deck's port, her side 7.45-7.5 m out there
+  Object.freeze([6.21, 8.31]),   // 4 Carrack - SHIPS-2: Mac's carrack: the entry port in her waist's bulwark (its sill 7.94 up and 6.09 out), half a metre over her deck
 ]);
 /** GALLEON-HOLDINGS: the mod's own Small Ship's - her main deck's port, her side 7.5-7.55 m out there - hull 2's
  *  while she stands in for Mac's galleon (navalShips.js MOD_SMALL_SHIP_BUILD, AUDIT GN-G4). */
 export const MOD_SMALL_SHIP_GANGWAY = Object.freeze([7.65, 4.14]);
-/** GALLEON-HOLDINGS: where a gangway meets `hull` - GANGWAY_SIDE's, but the mod's galleon's wherever hers is the
- *  build that stands. */
-export const gangwaySide = (hull) => (hullBuild(hull) === MOD_SMALL_SHIP_BUILD ? MOD_SMALL_SHIP_GANGWAY : GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);
+/** SHIPS-2: the mod's own Carrack's - her main deck's port, her side 7.45-7.5 m out there - hull 4's while it stands in
+ *  for Mac's carrack (navalShips.js MOD_CARRACK_BUILD). */
+export const MOD_CARRACK_GANGWAY = Object.freeze([7.65, 4.14]);
+/** SHIPS-2: the mod's own Large Boat's - on its gunwale (1.27 m up at 1.7-1.8 m out) - hull 1's while it stands in for
+ *  Mac's Tiny Ship (navalShips.js MOD_LARGE_BOAT_BUILD). */
+export const MOD_LARGE_BOAT_GANGWAY = Object.freeze([1.75, 1.36]);
+/** SHIPS-2: the mod's own gangway of each hull a ship of the port's stands in for. */
+export const MOD_GANGWAYS = Object.freeze({ 1: MOD_LARGE_BOAT_GANGWAY, 2: MOD_SMALL_SHIP_GANGWAY, 4: MOD_CARRACK_GANGWAY });
+/** GALLEON-HOLDINGS: where a gangway meets `hull` - GANGWAY_SIDE's, but the mod's own ship's wherever its is the build
+ *  that stands (SHIPS-2: the galleon's, the carrack's and the large boat's). */
+export const gangwaySide = (hull) => (MOD_GANGWAYS[hull] && hullBuild(hull) === MOD_BUILDS[hull] ? MOD_GANGWAYS[hull] : GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);
 /** AUDIT HOLDINGS Q2: the hulls no quay takes - a Large Galley (93 m) is half again a Carrack's berth, and rows in and
  *  out as the sea's own never moor (shipLife.js). */
 export const DOCK_REFUSED = Object.freeze([3]);
@@ -136,7 +144,7 @@ export function quayFrame(berth, hull = BERTH_HULL) {
   const theta = Math.atan2(nz, -nx);
   const fz = Math.sin(berth.yaw) * nz - Math.cos(berth.yaw) * nx;   // her bow along +z (sin theta, cos theta) = (nz, -nx)
   const zSign = fz >= 0 ? 1 : -1;
-  const s = hullSize(hull);
+  const s = berthSize(hull);   // SHIPS-2: the harbour's hull's the berths' template's (shipLife.js berthSize)
   const zAft = zSign > 0 ? s.aftZ : -s.bowZ, zBow = zSign > 0 ? s.bowZ : -s.aftZ;
   return { origin: [berth.pos[0], berth.pos[1]], theta, zSign, halfWidth: s.halfWidth, z0: Math.min(zAft, zBow), z1: Math.max(zAft, zBow) };
 }

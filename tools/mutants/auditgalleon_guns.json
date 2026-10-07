@@ -29,7 +29,7 @@
   {
     "name": "AUDIT-GN-G2-fired-from-where-it-stood",
     "file": "src/systems/naval/galleonGunDeck.js",
-    "old": "      if (s.x[index] < RUN_OUT_X) s.x[index] = RUN_OUT_X;\n",
+    "old": "      if (s.x[index] < s.outX[index]) s.x[index] = s.outX[index];\n",
     "new": "",
     "tests": [
       "test/auditgalleon_guns.test.js"
@@ -119,7 +119,7 @@
   {
     "name": "AUDIT-GN-G4-hull-2-the-new-build-whatever-stands",
     "file": "src/systems/naval/navalShips.js",
-    "old": "(hull === 2 && !galleonStanding ? MOD_SMALL_SHIP_BUILD : HULL_BUILDS[hull] ?? HULL_BUILDS[0])",
+    "old": "(MOD_BUILDS[hull] && !standing[hull] ? MOD_BUILDS[hull] : HULL_BUILDS[hull] ?? HULL_BUILDS[0])",
     "new": "(HULL_BUILDS[hull] ?? HULL_BUILDS[0])",
     "tests": [
       "test/auditgalleon_guns.test.js"
@@ -128,7 +128,7 @@
   {
     "name": "AUDIT-GN-G4-the-pool-never-says",
     "file": "src/scenes/comeSailAwayPool.js",
-    "old": "      if (m) setGalleonStanding(m.galleon);",
+    "old": "setGalleonStanding(m.galleon); ",
     "new": "",
     "tests": [
       "test/auditgalleon_guns.test.js"

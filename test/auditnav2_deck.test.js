@@ -24,7 +24,7 @@ import { CLIMATES } from '../src/formats/mapsFile.js';
 import { SEASON } from '../src/world/climateSwaps.js';
 import { TRANSPORT_MODES } from '../src/systems/transport.js';
 import { MODELS, ctxFor } from './csaScene.mjs';
-import { sea, readyPool, freshPool } from './navalSea.mjs';
+import { sea, readyPool, freshPool, modShipsPool } from './navalSea.mjs';
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const WORLD = src('src/scenes/world.js');
@@ -160,11 +160,16 @@ test('AUDIT NAV2 F32 A SMALL HULL\'S DECK: kept off her walls and her open side,
   }
   assert.ok(counts[1] >= 16, `the Large Boat: room for sixteen (${counts[1]} cells)`);
   assert.ok(counts[0] >= 12, `the Rowboat: her deck whole (${counts[0]} cells)`);
-  const lb = pool.deckOf(1, 0);
-  assert.equal(lb.walkable(0.1, -1.24), true, 'the Large Boat: against her after thwart');
-  assert.equal(lb.walkable(0.1, 1.26), true, 'against her fore thwart');
-  assert.equal(lb.walkable(-0.9, -0.24), false, 'still kept off her side');
-  assert.equal(lb.walkable(1.1, -0.24), false, 'either side');
+  // the thwarts are the mod's own Large Boat's (SHIPS-2: hull 1 as the game stands it when Mac's Tiny Ship's model will
+  // not load - test/navalSea.mjs modShipsPool; his boat has none, her deck open between her mast and her helmsman's step)
+  const mod = await modShipsPool();
+  try {
+    const lb = mod.pool.deckOf(1, 0);
+    assert.equal(lb.walkable(0.1, -1.24), true, 'the Large Boat: against her after thwart');
+    assert.equal(lb.walkable(0.1, 1.26), true, 'against her fore thwart');
+    assert.equal(lb.walkable(-0.9, -0.24), false, 'still kept off her side');
+    assert.equal(lb.walkable(1.1, -0.24), false, 'either side');
+  } finally { mod.restore(); }
   // the big three as they are: PIN MOVED (GALLEON, 2026-10-01) - the Small Ship is the new galleon, her main deck's 736
   // cells and her castle's two flights and roof over them (F34); the Carrack's forecastle joined up its stair (a flight
   // finer than a cell, navalDeck.js `linked`): her 515, the stair's foot at her main deck and the 33 cells up it; the
@@ -183,9 +188,10 @@ test('AUDIT NAV2 F32 A SMALL HULL\'S DECK: kept off her walls and her open side,
   assert.equal(cellsOf(small).filter((c) => Math.abs(c[1] - mainLevel(small)) <= DECK_STEP).length, 664, 'the Small Ship\'s main deck, 664');
   assert.equal(small.count, 838, 'the Small Ship\'s 838, her castle with it');
   assert.equal(pool.deckOf(3, 0).count, 4016, 'the Large Galley\'s 4016');
+  // PIN MOVED (SHIPS-2, 2026-10-07): the Carrack is Mac's carrack - her open deck one level, 1087 cells
   const carrack = pool.deckOf(4, 0);
-  assert.equal(carrack.count, 511, 'the Carrack\'s 511');
-  assert.equal(cellsOf(carrack).filter((c) => Math.abs(c[1] - mainLevel(carrack)) <= DECK_STEP).length, 465, 'her main deck\'s 465, her stair\'s foot among them');
+  assert.equal(carrack.count, 1087, 'the Carrack\'s 1087');
+  assert.equal(cellsOf(carrack).filter((c) => Math.abs(c[1] - mainLevel(carrack)) <= DECK_STEP).length, 1087, 'her main deck\'s every one');
   // her rail: a cell a point
   const w = deckDoors(pool);
   for (let hull = 0; hull < HULL_NAMES.length; hull++) {

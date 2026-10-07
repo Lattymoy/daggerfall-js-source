@@ -16,7 +16,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { scene } from './csaScene.mjs';
-import { readyPool, sea } from './navalSea.mjs';
+import { readyPool, sea, modShipsPool } from './navalSea.mjs';
 import { Boat, animatorOf } from '../src/systems/comeSailAwayBoat.js';
 import { HULL } from '../src/systems/naval/navalShips.js';
 import { resolveNodePointer } from '../src/world/prefabNode.js';
@@ -116,10 +116,15 @@ test('AUDIT GALLEON-2 RG1: her running rope is baked every frame, so every brace
   // the cadence: her rope every frame, her canvas and every other hull's holders on the mod's tenth of a second
   if (!ropes.every((r) => r.fix.everyFrame === true)) bad.push('a rope of hers not baked every frame');
   if (!canvasesOf(boat).every((c) => !c.fix.everyFrame && c.fix.interval === 0.1)) bad.push('her canvas off the tenth');
-  const carrack = pool.spawnNow(new Boat(HULL.Carrack, 0), { position: [400, 0, 0], rotation: [0, 0, 0, 1] });
-  const modFix = [...carrack.GameObject.walk()].map((n) => n.getComponent('FixDeformations')).filter(Boolean);
-  if (!(modFix.length === 5 && modFix.every((f) => f.interval === 0.1 && f.timer === 0 && !('everyFrame' in f)))) bad.push('the mod\'s own holders changed');
-  pool.remove(carrack);
+  // SHIPS-2: the mod's own Carrack (test/navalSea.mjs modShipsPool - hull 4 as the game stands it when the new
+  // carrack's model will not load); Mac's carrack's holders are hers (world/carrackRig.js BAKE: the galleon's law)
+  const mod = await modShipsPool();
+  try {
+    const carrack = mod.pool.spawnNow(new Boat(HULL.Carrack, 0), { position: [400, 0, 0], rotation: [0, 0, 0, 1] });
+    const modFix = [...carrack.GameObject.walk()].map((n) => n.getComponent('FixDeformations')).filter(Boolean);
+    if (!(modFix.length === 5 && modFix.every((f) => f.interval === 0.1 && f.timer === 0 && !('everyFrame' in f)))) bad.push('the mod\'s own holders changed');
+    mod.pool.remove(carrack);
+  } finally { mod.restore(); }
   assert.deepEqual(bad, [], 'every rope\'s drawn end on its bone, every frame');
 });
 
@@ -183,14 +188,18 @@ test('AUDIT GALLEON-2 RG9: her canvases bake on frames of their own - each sail\
     assert.ok(frames[i][0] <= 8, `${canvases[i].name}: its first bake within the mod's first tenth (frame ${frames[i][0]})`);
     assert.deepEqual(gaps[i], [8], `${canvases[i].name}: every eighth frame, the mod's tenth of a second`);
   }
-  // the mod's own: the Carrack's five sails on the one frame, as the C# times them
+  // the mod's own: the Carrack's five sails on the one frame, as the C# times them (SHIPS-2: the mod's own Carrack, as
+  // the game stands it when the new carrack's model will not load - test/navalSea.mjs modShipsPool)
   pool.destroyAll();
-  const carrack = pool.spawnNow(new Boat(HULL.Carrack, 0), { position: [0, 0, 0], rotation: [0, 0, 0, 1] });
-  const theirs = [...carrack.GameObject.walk()].filter((n) => n.getComponent('SkinnedMeshRenderer') && fixOf(n)).map((n) => ({ n, name: n.name, fix: fixOf(n) }));
-  assert.equal(theirs.length, 5, 'the Carrack\'s five sails');
-  const firsts = theirs.map(() => null);
-  for (let f = 1; f <= 10; f++) for (const c of bakedOn(pool, theirs, DT)) { const i = theirs.indexOf(c); if (firsts[i] == null) firsts[i] = f; }
-  assert.deepEqual(firsts, theirs.map(() => 8), 'the mod\'s sails all first bake on the eighth frame');
+  const mod = await modShipsPool();
+  try {
+    const carrack = mod.pool.spawnNow(new Boat(HULL.Carrack, 0), { position: [0, 0, 0], rotation: [0, 0, 0, 1] });
+    const theirs = [...carrack.GameObject.walk()].filter((n) => n.getComponent('SkinnedMeshRenderer') && fixOf(n)).map((n) => ({ n, name: n.name, fix: fixOf(n) }));
+    assert.equal(theirs.length, 5, 'the Carrack\'s five sails');
+    const firsts = theirs.map(() => null);
+    for (let f = 1; f <= 10; f++) for (const c of bakedOn(mod.pool, theirs, DT)) { const i = theirs.indexOf(c); if (firsts[i] == null) firsts[i] = f; }
+    assert.deepEqual(firsts, theirs.map(() => 8), 'the mod\'s sails all first bake on the eighth frame');
+  } finally { mod.restore(); }
 });
 
 /** A placed boat's sail's bones' mean (its MeshObject's frame, her booms home) at each Wind, through the real Animator. */
@@ -210,7 +219,9 @@ function poseMeans(boat, sail, winds) {
 }
 
 test('AUDIT GALLEON-2 TS6: each of her sails is bellied Left and Right the way the mod\'s own sails of its kind are, measured through the Animator on both - a square sail\'s Left aback (abaft its hanging), its Right full (forward), as the Carrack\'s Large Square ("Unstowed Backward" its Left); the gaff\'s and the jib\'s Left to port and Right to starboard, as the mod\'s Large Gaff and Large Staysail; the jib\'s Center Left and Center Right a part of the way, as the mod\'s staysail\'s halves (unpinned: a square\'s aback and full swapped, the gaff\'s or the jib\'s sides swapped, the jib\'s halves full - each survived every pool, Come Sail Away and galleon test) (mutants: those four)', (t) => {
-  const s = scene();
+  // SHIPS-2: the mod's own Carrack and Large Boat (csaScene.mjs `mod`) - hulls 4 and 1 are Mac's carrack and Tiny Ship
+  // now, sailing by these same conventions (test/ships2_carrack.test.js, test/ships2_largeboat.test.js)
+  const s = scene({ mod: true });
   const W = [-1, -0.5, 0, 0.5, 1];
   const mod = {
     square: ['CarrackLargeSquareSail', s.place(HULL.Carrack, 0, [400, 34, 200])],

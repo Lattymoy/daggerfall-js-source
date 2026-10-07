@@ -221,11 +221,13 @@ test('GALLEON THE GUN DECK AT WORK: a battery laid opens its side\'s shutters an
   t = run(t, shot + HOLD_S + 2 - t);
   r = deck.read(boat, t);
   assert.ok(!r.starboard.laid && r.starboard.guns.every((x) => Math.abs(x - RUN_IN_X) < 1e-9) && !r.starboard.open.some(Boolean), 'run in to load, shut');
-  // a hull of another build: none of her nodes, nothing asked
-  const other = s.place(HULL.Carrack, 0);
+  // a hull of another build: none of her nodes, nothing asked (PIN MOVED, SHIPS-2: the Carrack is Mac's New Ship 2 and
+  // carries a gun deck of her own - test/ships2_carrack.test.js - so the Large Boat, her swivels on her caps, is the hull
+  // without one)
+  const other = s.place(HULL.LargeBoat, 0);
   deck.lay(other, 'starboard', t);
   deck.step([other], t + 1);
-  assert.equal(deck.read(other), null, 'a Carrack carries no galleon\'s gun deck');
+  assert.equal(deck.read(other), null, 'a Large Boat carries no galleon\'s gun deck');
 });
 
 test('GALLEON THE HOST STANDS HER GUN DECK: at her armed helm a look to starboard lays her starboard battery - its shutters up, its guns run out, her port side shut - and the release fires it out of those ports, each gun kicking back as its own ball leaves (the shot field\'s muzzle, its index the port\'s) (mutants: the lay unwired, the fired unwired)', async () => {

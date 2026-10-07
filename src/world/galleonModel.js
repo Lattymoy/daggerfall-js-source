@@ -35,9 +35,7 @@
 import { GALLEON_ARCHIVE, TEX, GALLEON_TILE, BANDS } from './galleonArt.js';
 import { MeshBench, colliderOf, prism, rope, box, planarUv, newell, sub, add, scl, dot, cross, norm, len } from './galleonMesh.js';
 import { buildRig, RIG } from './galleonRig.js';
-import { pathHash } from './unityAnimator.js';
-import { mat4FromQuatPosScale } from './quat.js';
-import { multiply } from './mat4.js';
+import { nodeOf, yaw, clone, findNode, constClip, eulerCurve, pointsOf, prefabBench } from './shipKit.js';   // SHIPS-2: the shipwright's kit, every ship's
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // AUDIT GN-P1: Come Sail Away pins the capsule's CENTRE to DrivePosition
 
 /** The prefab she stands in for: Come Sail Away's hull 2 (FIRST_HULL_MODEL_ID + 2). */
@@ -214,17 +212,14 @@ export function faceSkin(role, n, c) {
 }
 const keyOf = (rec) => Object.keys(TEX).find((k) => TEX[k] === rec);
 
-/** The positions of a baked part as points. */
-const pointsOf = (part) => { const out = []; for (let i = 0; i < part.positions.length; i += 3) out.push([part.positions[i], part.positions[i + 1], part.positions[i + 2]]); return out; };
-
 /**
  * A baked part as the port draws it: each polygon's triangles flat on its own normal, wearing its face's picture -
  * moved by `offset` (a hinge's: its part re-based on the node that turns it). GALLEON-2: or several parts of one role
  * as one mesh (`part` a list - her six deck beams), each face its own picture as alone.
  */
-export function bakedPartGeometry(part, { offset = [0, 0, 0], role = Array.isArray(part) ? part[0].role : part.role, keep = null } = {}) {
-  const bench = new MeshBench();
-  for (const one of Array.isArray(part) ? part : [part]) benchPart(bench, one, { offset, role, keep });
+export function bakedPartGeometry(part, { offset = [0, 0, 0], role = Array.isArray(part) ? part[0].role : part.role, keep = null, skin = faceSkin, archive = GALLEON_ARCHIVE } = {}) {
+  const bench = new MeshBench(archive);   // SHIPS-2: another ship's part on her own skin and archive (world/carrackModel.js)
+  for (const one of Array.isArray(part) ? part : [part]) benchPart(bench, one, { offset, role, keep, skin });
   return bench.finish();
 }
 /**
@@ -238,13 +233,13 @@ export function bakedPartGeometry(part, { offset = [0, 0, 0], role = Array.isArr
  * out of their planes (her hull's up to 0.40 m), and lit by each triangle's own normal a polygon's triangles shaded as
  * creases Blender's flat shading never shows.
  */
-function benchPart(bench, part, { offset, role, keep }) {
+export function benchPart(bench, part, { offset, role, keep, skin: skinOf = faceSkin }) {
   const pts = pointsOf(part).map((p) => sub(p, offset));
   const faces = part.polygons.map((poly) => {
     const ring = poly.map((i) => pts[i]);
     const n = norm(newell(ring));
     const c = scl(ring.reduce((a, p) => add(a, p), [0, 0, 0]), 1 / ring.length);
-    return { n, skin: faceSkin(role, n, add(c, offset)) };
+    return { n, skin: skinOf(role, n, add(c, offset)) };
   });
   const cuts = sliceCuts(faces.map((f) => f.skin));
   for (const [k, a, b, cc] of splitAtCorners(part, pts)) {
@@ -339,13 +334,13 @@ function clipY(poly, dy, y, keep) {
 
 /** AUDIT GN-CROWSNEST: a mast's head capped - its top ring (the part's highest corners, in order round them) one face
  *  looking up, in the spar's wood. Onto `bench`, in her frame. */
-export function mastCap(bench, part) {
+export function mastCap(bench, part, skinOf = faceSkin) {
   const pts = pointsOf(part);
   const top = Math.max(...pts.map((p) => p[1]));
   const ring = pts.filter((p) => p[1] > top - 1e-4);
   const c = scl(ring.reduce((a, p) => add(a, p), [0, 0, 0]), 1 / ring.length);
   ring.sort((p, q) => Math.atan2(p[2] - c[2], p[0] - c[0]) - Math.atan2(q[2] - c[2], q[0] - c[0]));
-  const n = [0, 1, 0], skin = faceSkin(part.role, n, c);
+  const n = [0, 1, 0], skin = skinOf(part.role, n, c);
   if ('band' in skin) throw new Error('galleon: a mast wears no livery');
   bench.poly(skin.rec, ring, ring.map((p) => skin.uv(p)), n);
 }
@@ -681,8 +676,6 @@ export function ropeLadderGeometry(s = 1) {
 
 // ── the clips ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
-const constClip = (name, curves) => ({ name, start: 0, stop: 0, sampleRate: 60, loop: true, wrapMode: 0, denseRate: 60, denseBegin: 0, events: [], curves });
-const eulerCurve = (path, e) => ({ path: pathHash(path), attribute: 'euler', components: e.map((v) => ({ constant: Math.fround(v) })) });
 /** A hatch cover lifts on its starboard edge and over, to lie on her deck beside the hatchway. AUDIT GN-P9: 2 degrees
  *  short of flat, so the clips' blend (the shortest turn between shut and open) swings it over to starboard and never
  *  back through the hatchway; its hinge (`hatchHingeDrop`) set so turned this far it rests on its battens 2 mm over her
@@ -728,13 +721,6 @@ export function galleonClips() {
 
 // ── the prefab ─────────────────────────────────────────────────────────────────────────────────────────────────────
 
-/** @typedef {{ p?: readonly number[], r?: readonly number[], s?: readonly number[], c?: number[], kids?: any[], active?: boolean }} NodeOpts */
-/** @param {string} name @param {NodeOpts} [opts] */
-const nodeOf = (name, { p = [0, 0, 0], r = [0, 0, 0, 1], s = [1, 1, 1], c = [], kids = [], active = true } = {}) => ({ name, active, layer: 0, tag: 0, position: [...p], rotation: [...r], scale: [...s], components: c, children: kids });
-const yaw = (deg) => { const a = (deg * Math.PI) / 360; return [0, Math.sin(a), 0, Math.cos(a)]; };
-const clone = (t) => JSON.parse(JSON.stringify(t));
-const findNode = (t, name) => { if (!t) return null; if (t.name === name) return t; for (const c of t.children) { const f = findNode(c, name); if (f) return f; } return null; };
-
 /**
  * The new galleon as Come Sail Away's data: her prefab tree (component indices into `[...csaComponents, ...components]`),
  * the components she adds, her meshes by key (the CSA geometry shape), and the clips and overrides she adds.
@@ -743,29 +729,11 @@ const findNode = (t, name) => { if (!t) return null; if (t.name === name) return
  *   small things are copied out of hull 2's own tree)
  */
 export function galleonPrefab(bake, csa) {
-  const base = csa.components.length;
-  const components = [];
-  /** @type {Record<string, any>} */
-  const meshes = {};
-  const skinnedLater = [];
-  const comp = (c) => { components.push(c); return base + components.length - 1; };
-  const mesh = (key, geometry) => { if (!geometry) throw new Error(`galleon: ${key} built nothing`); meshes[key] = geometry; return key; };
-  const renderer = (geometry) => comp({ type: 'MeshRenderer', m_Enabled: true, materials: geometry.slots.map((s) => ({ ...s })) });
-  /** A node drawing `geometry` (registered as `key`), with a MeshCollider over the same triangles when `collider` -
-   *  or over `colliderGeometry`'s (AUDIT GN-CROWSNEST: a drawing with faces its collider leaves out).
-   *  @param {string} name @param {string} key @param {any} geometry @param {NodeOpts & { collider?: boolean, colliderGeometry?: any }} [opts] */
-  const meshNode = (name, key, geometry, { collider = false, colliderGeometry = geometry, ...opts } = {}) => {
-    mesh(key, geometry);
-    const c = [comp({ type: 'MeshFilter', m_Mesh: { mesh: key } }), renderer(geometry)];
-    if (collider) { mesh(`${key}:collider`, colliderOf(colliderGeometry)); c.push(comp({ type: 'MeshCollider', m_Enabled: true, m_IsTrigger: false, m_Convex: false, m_Mesh: { mesh: `${key}:collider` } })); }
-    return nodeOf(name, { ...opts, c: [...c, ...(opts.c ?? [])] });
-  };
-  const boxCollider = (center, size) => comp({ type: 'BoxCollider', m_Enabled: true, m_IsTrigger: false, m_Center: { x: center[0], y: center[1], z: center[2] }, m_Size: { x: size[0], y: size[1], z: size[2] } });
-  const animator = (controller) => comp({ type: 'Animator', m_Enabled: true, m_Controller: { controller }, m_ApplyRootMotion: false });
-  const cx = {
-    archive: GALLEON_ARCHIVE, mesh, comp,
-    skinned: (node, key, bones, rootBone, materials, rope = false) => skinnedLater.push({ node, key, bones, rootBone, materials, rope }),
-  };
+  // SHIPS-2: her bench is the shipwright's kit's (world/shipKit.js prefabBench - every ship's prefab is built on it): a
+  // node drawing a geometry, with a MeshCollider over the same triangles when `collider` - or over `colliderGeometry`'s
+  // (AUDIT GN-CROWSNEST: a drawing with faces its collider leaves out)
+  const { comp, mesh, renderer, meshNode, boxCollider, animator, skinned, finish, meshes } = prefabBench(csa.components.length, 'galleon');
+  const cx = { archive: GALLEON_ARCHIVE, mesh, comp, skinned };
 
   const part = (role) => { const p = bake.parts.find((x) => x.role === role); if (!p) throw new Error(`galleon: the bake has no ${role}`); return p; };
   /** A baked part drawn and solid - AUDIT GN-CROWSNEST: with `extra` faces built onto its drawing (never its collider,
@@ -977,25 +945,7 @@ export function galleonPrefab(bake, csa) {
   ] });
 
   // ── the skinned renderers' bones, now the tree's paths are known ──
-  const paths = new Map(), rest = new Map();
-  const walk = (n, path, parentM) => {
-    const m = multiply(parentM, mat4FromQuatPosScale(n.rotation, n.position, n.scale), new Float32Array(16));
-    paths.set(n, path); rest.set(n, m);
-    for (const c of n.children) walk(c, `${path}/${c.name}`, m);
-  };
-  walk(root, root.name, new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]));
-  for (const k of skinnedLater) {
-    const at = rest.get(k.node);
-    if (!at) throw new Error('galleon: a skinned renderer outside the tree');
-    // Unity's bind pose: the bone's rest world inverse, times the renderer's rest world
-    const geometry = meshes[k.key];
-    geometry.bindPoses = k.bones.map((b) => multiply(invertRigid(rest.get(b)), at, new Float32Array(16)));
-    k.node.components.push(comp({
-      type: 'SkinnedMeshRenderer', m_Enabled: true, m_Mesh: { mesh: k.key }, m_Materials: k.materials,
-      m_Bones: k.bones.map((b) => ({ node: paths.get(b) })), m_RootBone: k.rootBone ? { node: paths.get(k.rootBone) } : null,
-      m_AABB: { m_Center: { x: geometry.aabb.center[0], y: geometry.aabb.center[1], z: geometry.aabb.center[2] }, m_Extent: { x: geometry.aabb.extent[0], y: geometry.aabb.extent[1], z: geometry.aabb.extent[2] } },
-    }));
-  }
+  const { components } = finish(root);
 
   const own = galleonClips();
   return {
@@ -1020,19 +970,6 @@ export function mergeGeometries(list) {
   }
   return { vertexCount: nv, positions, normals, uvs, indices, subMeshes: [{ startIndex: 0, primitiveCount: ni / 3 }], slots: [], blendIndices: null, bindPoses: null,
     aabb: { center: [0, 1, 2].map((d) => (min[d] + max[d]) / 2), extent: [0, 1, 2].map((d) => (max[d] - min[d]) / 2) } };
-}
-
-/** The inverse of a rotation-translation(-scale-free) column-major 4x4: R^T, -R^T t. */
-function invertRigid(m) {
-  const o = new Float32Array(16);
-  o[0] = m[0]; o[1] = m[4]; o[2] = m[8];
-  o[4] = m[1]; o[5] = m[5]; o[6] = m[9];
-  o[8] = m[2]; o[9] = m[6]; o[10] = m[10];
-  o[12] = -(o[0] * m[12] + o[4] * m[13] + o[8] * m[14]);
-  o[13] = -(o[1] * m[12] + o[5] * m[13] + o[9] * m[14]);
-  o[14] = -(o[2] * m[12] + o[6] * m[13] + o[10] * m[14]);
-  o[15] = 1;
-  return o;
 }
 
 export { len };

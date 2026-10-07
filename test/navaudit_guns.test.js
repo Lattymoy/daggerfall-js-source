@@ -9,7 +9,7 @@ import {
   NO_BEAR_S, BEAR_DEG, PRESENT_SAILS, WIND_RATED, AIM_FREEBOARD, FRIEND_CLEAR,
   createSeaShip, stepCaptain, fireWindow, bearsWithin, layPasses, lineFoul, rigBand, batteryReach, quatOfYaw, velocityOf,
 } from '../src/systems/naval/navalAI.js';
-import { GUNS, BARREL, HULL, HULL_BUILDS, hullBuild, batteryOf, classById } from '../src/systems/naval/navalShips.js';
+import { GUNS, BARREL, HULL, HULL_BUILDS, hullBuild, batteryOf, classById, setShipStanding } from '../src/systems/naval/navalShips.js';
 import {
   createShipDamage, fireOf, SHIP_STATES, STRUCK_AT, FIRE_HP, FIRE_SECONDS, FIRE_STACK, FIRE_SAIL, FIRE_CREW_S,
 } from '../src/systems/naval/navalDamage.js';
@@ -143,13 +143,22 @@ test('AUDIT NAV1 G4 never over her, never short: a lay the carriage cannot depre
   const brig = ship('pirateBrig');
   const low = aimSolution(pose(brig), 'starboard', null, 0, { target: [31, 0, 0], targetY: lb.top * AIM_FREEBOARD });
   assert.ok(layPasses(low, [31, 0, 0], [0, lb.top]) && low.elevation > -3 * DEG, `the Small Ship's low guns (${low.elevation / DEG})`);
-  const b = ship('pirateFlagship');
-  const sol = aimSolution(pose(b), 'starboard', null, 0, { target: [33, 0, 0], targetY: lb.top * AIM_FREEBOARD });
-  assert.ok(layPasses(sol, [33, 0, 0], [0, lb.top]), 'laid low enough at -8');
-  assert.ok(sol.elevation > GUNS.long.minEl * DEG && sol.elevation < -3 * DEG, `below the old -3 (${sol.elevation / DEG})`);
-  const old = { ...sol, launches: sol.muzzles.map((p0) => ({ p0, v0: launchVelocity(sol.dir, -3 * DEG, GUNS.long.speed) })) };
-  assert.equal(layPasses(old, [33, 0, 0], [0, lb.top]), false, 'at -3 it flew over her');
-  assert.equal(layPasses(sol, [33, 0, 0], [0, 0.1]), false, 'the band\'s roof is read');
+  // the mod's own Carrack's broadside (her guns 4.5 m over the sea) at the mod's own Large Boat - SHIPS-2: the hulls the
+  // law was found on, as the game stands them when the new ships' models do not load (navalShips.js setShipStanding)
+  try {
+    setShipStanding(HULL.Carrack, false); setShipStanding(HULL.LargeBoat, false);
+    const modLb = hullBuild(HULL.LargeBoat), b = ship('pirateFlagship');
+    const sol = aimSolution(pose(b), 'starboard', null, 0, { target: [33, 0, 0], targetY: modLb.top * AIM_FREEBOARD });
+    assert.ok(layPasses(sol, [33, 0, 0], [0, modLb.top]), 'laid low enough at -8');
+    assert.ok(sol.elevation > GUNS.long.minEl * DEG && sol.elevation < -3 * DEG, `below the old -3 (${sol.elevation / DEG})`);
+    const old = { ...sol, launches: sol.muzzles.map((p0) => ({ p0, v0: launchVelocity(sol.dir, -3 * DEG, GUNS.long.speed) })) };
+    assert.equal(layPasses(old, [33, 0, 0], [0, modLb.top]), false, 'at -3 it flew over her');
+    assert.equal(layPasses(sol, [33, 0, 0], [0, 0.1]), false, 'the band\'s roof is read');
+  } finally { setShipStanding(HULL.Carrack, true); setShipStanding(HULL.LargeBoat, true); }
+  // SHIPS-2 (2026-10-07): Mac's carrack's guns stand 3.5 m over the sea and Mac's Tiny Ship's gunwale 2.25 - hers
+  // strike a sloop alongside laid 3.45 degrees down, the depression the audit asked still hers to need
+  const mine = aimSolution(pose(ship('pirateFlagship')), 'starboard', null, 0, { target: [33, 0, 0], targetY: lb.top * AIM_FREEBOARD });
+  assert.ok(layPasses(mine, [33, 0, 0], [0, lb.top]) && mine.elevation > GUNS.long.minEl * DEG && mine.elevation < -3 * DEG, `Mac's carrack's guns (${mine.elevation / DEG})`);
 });
 
 test('AUDIT NAV1 G5 no friend across the line: a ship she does not take for an enemy within FRIEND_CLEAR of the line from her guns out past the lead holds the battery - neither run out nor fired; an enemy there does not, nor a friend off the line (mutants: lineFoul never, an enemy counted a friend, the clearance)', () => {
@@ -345,12 +354,14 @@ test('AUDIT NAV1 G12 the rig is a target: a ball through her canvas tears it - a
   const heeled = rigBoxesOf(h.boat)[0];
   near(Math.acos(heeled.ay[1]) / DEG, 12, 0.01, 'the masts heel with her');
   assert.equal(HULL_BUILDS[HULL.Rowboat].rig.length, 0);
-  assert.equal(HULL_BUILDS[HULL.Carrack].rig.length, 3, 'two courses and a lateen mizzen');
+  // PIN MOVED (SHIPS-2, 2026-10-07): Mac's carrack's five sails, her lateen in two
+  assert.equal(HULL_BUILDS[HULL.Carrack].rig.length, 6, 'her spritsail, two courses, her main topsail and her lateen mizzen');
   // PIN MOVED (AUDIT GALLEON R5/G9): the Small Ship's boxes hang down to her canvas under her roof (her course's foot,
   // her gaff sail's, her jib's) - each still reaches out of her hull's box, and the chain shot's band (navalAI.js rigBand)
   // starts at her roof; every other hull's canvas stands over its roof as it did
   for (const b of HULL_BUILDS) for (const [mn, mx] of b.rig) {
-    if (b.hull === HULL.SmallShip) assert.ok(mx[1] > b.top || mx[2] > b.bowZ || mn[2] < b.aftZ || mx[0] > b.halfWidth || mn[0] < -b.halfWidth, `hull ${b.hull}: each box out of her hull's`);
+    // (SHIPS-2: and Mac's carrack's - her spritsail under her bowsprit and her courses' feet under her houses' roofs)
+    if (b.hull === HULL.SmallShip || b.hull === HULL.Carrack) assert.ok(mx[1] > b.top || mx[2] > b.bowZ || mn[2] < b.aftZ || mx[0] > b.halfWidth || mn[0] < -b.halfWidth, `hull ${b.hull}: each box out of her hull's`);
     else assert.ok(mn[1] >= b.top - 1e-9, `hull ${b.hull}: the canvas stands over her roof`);
   }
 });
