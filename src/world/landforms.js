@@ -93,14 +93,39 @@
 // online" - onlineLane.js ONLINE_ROOM_MOD_KEYS): a river cut into the
 // land is ground, and a room stands on one ground.
 //
+// LANDFORM4 - A TOWN STANDS IN ITS LAND (2026-10-07, Mac, of a town
+// walled in by its own levelling: "I dont care about DFU. I want
+// detailed generation, rolling hills, varied terrian"). DFU levels a
+// location to its pixel's mean and ramps back to raw ground by the
+// pixel's edge, so the whole rise between the town and the land round it
+// is taken inside one pixel - and with the lift, that rise stood as a
+// wall a hundred metres and more tall. Here every one of the game's own
+// locations (`sites`, landformSites - the same table on every thread and
+// every client) pulls the ground toward its level with a falloff that
+// reaches past its pixel's edge into the neighbours (`site`): the town's
+// rect at its level, the land easing back over hundreds of metres. The
+// level is its pixel's mean over a coarse grid (siteLevel), so DFU's own
+// blend after the kernel - still run, still the location's - finds the
+// pixel already all but level and moves little.
+//
+// LANDFORM5 - THE LAND ROLLS. A field of hills over every land sample
+// (hillsAt): a domain-warped sum of three octaves, its height set by a
+// region field (some country rolls hard, some lies almost flat) and by
+// the small heightmap (uplands roll taller), eased out toward the beach so
+// it never reaches the knee, and stilled along the painted rivers
+// (waterFade), so a river lies in its valley rather than climbing a
+// hill. A road and a track are graded to the land WITH its hills, so they
+// ride them; a town's pull levels them.
+//
 // ALL THE DIALS ARE IN ONE PLACE, LANDFORM_DIALS (ROAD_DIALS' rule).
 // Distances are in samples (6.4 m), heights in the kernel's units
 // (1.25 m - STREAMING_TERRAIN_SCALE).
 // ═══════════════════════════════════════════════════════════════════
 
 import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, kernelTerms, sampleKernel, generateSamples, cubicInterpolator } from './terrainSampler.js';
-import { BEACH_JITTER, blendLocationTerrain } from './terrainTiles.js';
+import { BEACH_JITTER, WORLD_MAP_TILE_DIM, blendLocationTerrain, locationFootprintRect } from './terrainTiles.js';
 import { DIR_DELTA, MAP_W, MAP_H } from './roadNetwork.js';
+import { perlinNoise } from './perlin.js';
 
 
 /** At or under this, a height is DFU's: the beach line with its jitter, the highest height the tile classifier can
@@ -137,6 +162,15 @@ export const LANDFORM_DIALS = Object.freeze({
   // AUDIT LANDFORMS II I1: the lift beside the sea - none at a byte node within `from` map pixels of a sea byte, all of it
   // from `full`, a smoothstep between (cliffFadeAt)
   cliff: Object.freeze({ from: 1, full: 3 }),
+  // LANDFORM5: the hills. `low`/`high` their height (kernel units, either side of the land) where the region field lies
+  // flat and where it rolls hardest; `upland` how much taller they stand on the high ground (fully from `uplandAt` of
+  // `low` over the knee); `coast` the height over the knee across which they ease in from nothing (it keeps them off the
+  // knee: their height never reaches the land's own over it); `region` the region field's wavelength, `warp` how far the
+  // octaves' domain is pushed about (over `warpScale`), and the octaves' wavelengths and weights (samples).
+  hills: Object.freeze({ low: 4, high: 48, upland: 1.6, uplandAt: 700, coast: 96, region: 2400, warp: 80, warpScale: 520, scales: Object.freeze([300, 125, 50]), weights: Object.freeze([1, 0.36, 0.1]) }),
+  // LANDFORM4: a site's pull - it reaches `reach` samples past its rect plus `per` times its rect's half-extent, never
+  // more than `most` (so no further than the pixels beside its own); `grid` the stride of the level's mean over its pixel.
+  site: Object.freeze({ reach: 40, per: 3, most: 124, grid: 8 }),
 });
 
 /** The four path layers in lerp order, with the network field each reads; `ford`, a layer the water is painted over
@@ -250,9 +284,240 @@ export function reliefLift(low) {
   return gain * e * smooth01((e - from) / (full - from));
 }
 
-/** LANDFORM1: the highest the landforms stand anything, in kernel units - DFU's ceiling and the most the lift adds
- *  (about 3,020 m). Only WOODS.WLD's one glitch byte reaches it (the header, THE CEILING). */
-export const LANDFORM_CEILING = MAX_TERRAIN_HEIGHT + reliefLift(LOW_TOP);
+/** LANDFORM5: the most a hill stands over (or a dale under) the land, in kernel units - the hills' top height on the
+ *  high ground (76.8 units, 96 m). */
+export const HILLS_TOP = LANDFORM_DIALS.hills.high * LANDFORM_DIALS.hills.upland;
+
+/** LANDFORM1: the highest the landforms stand anything, in kernel units - DFU's ceiling, the most the lift adds and the
+ *  tallest hill (about 3,116 m). Only WOODS.WLD's one glitch byte reaches it (the header, THE CEILING). */
+export const LANDFORM_CEILING = MAX_TERRAIN_HEIGHT + reliefLift(LOW_TOP) + HILLS_TOP;
+
+/** LANDFORM5: the octaves' offsets into the noise, so no two octaves (and neither field) share a lattice. */
+const HILL_OFFSETS = Object.freeze([[11.3, 47.9], [83.1, 5.7], [29.5, 71.3]]);
+const signed = (x, y) => 2 * perlinNoise(x, y) - 1;
+/** LANDFORM5: the slow fields' lattice, in samples - the region field (15 km) and the warp (3.3 km) are read at its
+ *  nodes, which sit on world positions (every pixel's origin is one), and between them bilinearly: half the noise
+ *  reads a sample costs, the same number from every pixel. */
+const HILL_NODE = 16;
+
+/** LANDFORM5: the slow fields at one lattice node - the region's height share (0..1) and the warp's two pushes. */
+function hillNode(nx, ny, out, o) {
+  const H = LANDFORM_DIALS.hills;
+  const gx = nx * HILL_NODE, gy = ny * HILL_NODE;
+  out[o] = smooth01((perlinNoise(gx / H.region + 31.7, gy / H.region + 57.3) - 0.3) / 0.4);
+  out[o + 1] = H.warp * signed(gx / H.warpScale + 5.2, gy / H.warpScale + 1.3);
+  out[o + 2] = H.warp * signed(gx / H.warpScale + 9.7, gy / H.warpScale + 3.1);
+}
+
+/**
+ * LANDFORM5: the slow fields' nodes over a box of world samples, made once (a pixel's shaper makes one for its own
+ * samples); a node outside it is made where it is asked. Every node is hillNode's, so a box changes no number.
+ * @param {number} x0 - the box's west edge, world samples
+ * @param {number} y0 - its south edge
+ * @param {number} size - its side, samples
+ */
+function hillLattice(x0, y0, size) {
+  const nx0 = Math.floor(x0 / HILL_NODE), ny0 = Math.floor(y0 / HILL_NODE);
+  const side = Math.ceil(size / HILL_NODE) + 2;
+  const vals = new Float64Array(side * side * 3);
+  for (let j = 0; j < side; j++) for (let i = 0; i < side; i++) hillNode(nx0 + i, ny0 + j, vals, (j * side + i) * 3);
+  return { nx0, ny0, side, vals };
+}
+const _node = new Float64Array(12);
+const HILL_OCTAVES = LANDFORM_DIALS.hills.scales.length;
+const HILL_WEIGHT = LANDFORM_DIALS.hills.weights.reduce((t, w) => t + w, 0);
+
+/**
+ * LANDFORM5: the hills at a world sample, in kernel units - a pure function of world position (x east, y north, in
+ * samples: a pixel's edge is one number from both pixels) and the land's own macro height. Their height is the region
+ * field's (`low` to `high`), taller on the high ground, eased in over `coast` over the knee - so a hill or a dale is
+ * always smaller than the land's height over the knee, and nothing it touches crosses it. The region and the warp are
+ * read off the lattice (HILL_NODE); the three octaves at the sample itself.
+ * @param {number} gx
+ * @param {number} gy
+ * @param {number} macro - the land's macro height (DFU's, no ground noise), kernel units
+ * @param {number} low - its small-heightmap term
+ * @param {?ReturnType<typeof hillLattice>} [lattice] - nodes made already (a pixel's own); the same numbers without
+ * @returns {number}
+ */
+export function hillsAt(gx, gy, macro, low, lattice = null) {
+  const H = LANDFORM_DIALS.hills;
+  const e = macro - LANDFORM_KNEE;
+  if (!(e > 0)) return 0;
+  const fx = gx / HILL_NODE, fy = gy / HILL_NODE, ix = Math.floor(fx), iy = Math.floor(fy), u = fx - ix, v = fy - iy;
+  let vals = _node, i00 = 0, i10 = 3, i01 = 6, i11 = 9;
+  const li = lattice ? ix - lattice.nx0 : -1, lj = lattice ? iy - lattice.ny0 : -1;
+  if (lattice && li >= 0 && lj >= 0 && li + 1 < lattice.side && lj + 1 < lattice.side) {
+    vals = lattice.vals;
+    i00 = (lj * lattice.side + li) * 3; i10 = i00 + 3; i01 = i00 + lattice.side * 3; i11 = i01 + 3;
+  } else {
+    hillNode(ix, iy, _node, 0); hillNode(ix + 1, iy, _node, 3); hillNode(ix, iy + 1, _node, 6); hillNode(ix + 1, iy + 1, _node, 9);
+  }
+  const a = (1 - u) * (1 - v), b = u * (1 - v), c = (1 - u) * v, d = u * v;
+  const region = vals[i00] * a + vals[i10] * b + vals[i01] * c + vals[i11] * d;
+  const up = smooth01((low - LANDFORM_KNEE) / H.uplandAt);
+  const amp = (H.low + (H.high - H.low) * region) * (1 + (H.upland - 1) * up) * smooth01(e / H.coast);
+  const wx = gx + (vals[i00 + 1] * a + vals[i10 + 1] * b + vals[i01 + 1] * c + vals[i11 + 1] * d);
+  const wy = gy + (vals[i00 + 2] * a + vals[i10 + 2] * b + vals[i01 + 2] * c + vals[i11 + 2] * d);
+  let n = 0;
+  for (let i = 0; i < HILL_OCTAVES; i++) n += signed(wx / H.scales[i] + HILL_OFFSETS[i][0], wy / H.scales[i] + HILL_OFFSETS[i][1]) * H.weights[i];
+  n /= HILL_WEIGHT;
+  return amp * (n < -1 ? -1 : n > 1 ? 1 : n);
+}
+
+/** LANDFORM5: createLandforms' `hills: false` - no hills. */
+const NO_HILLS = () => 0;
+
+/**
+ * LANDFORM5: how much of the hills a world sample keeps beside the painted water - a node at every map pixel's centre,
+ * 1 where a river or a stream is painted in the pixel, read through a smoothstep-weighted bilinear, so a channel's
+ * centre line between two of its pixels keeps none and the hills come back over about a third of a pixel. null with no
+ * water cut (every sample keeps them all).
+ * @param {Array<?Uint8Array>} nets - the layers' networks, LAYERS' order (the water's null when it is not cut)
+ * @param {number} span
+ * @returns {?(gx: number, gy: number) => number}
+ */
+function waterFade(nets, span) {
+  const streams = nets[0], rivers = nets[1];
+  if (!streams && !rivers) return null;
+  const node = (qx, qy) => {
+    if (qx < 0 || qy < 0 || qx >= MAP_W || qy >= MAP_H) return 0;
+    const i = qy * MAP_W + qx;
+    return (rivers && rivers[i]) || (streams && streams[i]) ? 1 : 0;
+  };
+  return (gx, gy) => {
+    const fx = gx / span - 0.5, fy = MAP_H + 0.5 - gy / span;   // pixel centres at whole numbers; the row runs south
+    const ix = Math.floor(fx), iy = Math.floor(fy);
+    const u = smooth01(fx - ix), v = smooth01(fy - iy);
+    const b = (node(ix, iy) * (1 - u) + node(ix + 1, iy) * u) * (1 - v) + (node(ix, iy + 1) * (1 - u) + node(ix + 1, iy + 1) * u) * v;
+    return 1 - smooth01(b * 2);
+  };
+}
+
+/** LANDFORM4: a site rect's bytes stand this far over its tile values (a city's clearance runs under 0). */
+const SITE_BIAS = 16;
+
+/**
+ * LANDFORM4: the game's own locations as the landforms read them - for every map pixel its footprint rect
+ * (terrainTiles.js locationFootprintRect), four bytes a pixel (xMin, xMax, yMin, yMax, each SITE_BIAS over its tile
+ * value; zero where no site stands). Made once from the map table, on the main thread, and handed whole to the worker:
+ * every kernel of the world reads the same sites, so a seam is one number from both pixels and a room one ground.
+ * @param {Iterable<{px: number, py: number, loc: object}>} rows - the game's own rows (never a mod's addition or a spawn)
+ * @returns {Uint8Array}
+ */
+export function landformSites(rows) {
+  const out = new Uint8Array(4 * MAP_W * MAP_H);
+  const b = (v) => Math.max(1, Math.min(255, v + SITE_BIAS));
+  for (const { px, py, loc } of rows) {
+    if (!loc?.exterior?.exteriorData || !loc.mapTableData || px < 0 || py < 0 || px >= MAP_W || py >= MAP_H) continue;
+    const r = locationFootprintRect(loc);
+    const i = 4 * (py * MAP_W + px);
+    out[i] = b(r.xMin); out[i + 1] = b(r.xMax); out[i + 2] = b(r.yMin); out[i + 3] = b(r.yMax);
+  }
+  return out;
+}
+
+/** LANDFORM4: the levels asked, per world (its WoodsFile) - a pure function of the bytes, kept while they are read. */
+const _siteLevels = new WeakMap();
+const SITE_LEVELS_KEPT = 4096;
+
+/**
+ * LANDFORM4: the level a site pulls its ground to, in kernel units - the mean of its pixel's land on a coarse grid
+ * (every `site.grid` samples, its edges included): DFU's kernel, the lift faded as the shaper fades it, the hills - no
+ * path's cut, no water's stilling and no site's pull, so it is one number however the network stands. The sea and the
+ * beach count as they stand.
+ * @param {object} woods
+ * @param {number} sx
+ * @param {number} sy
+ * @param {number} hDim
+ * @param {Function} hill - the shaper's hills (NO_HILLS leaves them out of the level too)
+ * @returns {number}
+ */
+function siteLevel(woods, sx, sy, hDim, hill) {
+  let kept = _siteLevels.get(woods);
+  if (!kept) _siteLevels.set(woods, kept = new Map());
+  const k = ((sy * MAP_W + sx) * 1024 + hDim) * 2 + (hill === NO_HILLS ? 1 : 0);
+  let level = kept.get(k);
+  if (level !== undefined) return level;
+  const span = hDim - 1, step = LANDFORM_DIALS.site.grid;
+  const kernel = sampleKernel(woods, sx, sy, hDim, true, null);
+  const { base, noise } = kernelTerms(woods, sx, sy, hDim);
+  const cliff = cliffFade(woods, sx, sy, hDim);
+  const ox = sx * span, oy = (MAP_H - sy) * span;
+  let sum = 0, n = 0;
+  for (let x = 0; x <= span; x += step) {
+    for (let y = 0; y <= span; y += step) {
+      const h = kernel(x, y) * MAX_TERRAIN_HEIGHT;
+      n++;
+      if (!(h > LANDFORM_KNEE)) { sum += h; continue; }
+      const low = base(x, y) * BASE_HEIGHT_SCALE;
+      const macro = Math.min(Math.max(low + noise(x, y) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);
+      sum += h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low)) + (hill === NO_HILLS ? 0 : hillsAt(ox + x, oy + y, macro, low));
+    }
+  }
+  level = sum / n;
+  if (kept.size >= SITE_LEVELS_KEPT) kept.clear();
+  kept.set(k, level);
+  return level;
+}
+
+/**
+ * LANDFORM4: the sites about one pixel - every site in the 5x5 of pixels round it (a path's profile is read in the
+ * 3x3, and a site reaches no further than the pixels beside its own), in ONE global order, by pixel row then column, so
+ * two pixels that share a sample fold the same sites into it in the same order and land on the same float.
+ * @returns {Array<{x0: number, x1: number, y0: number, y1: number, reach: number, level: () => number}>}
+ */
+function sitesAbout(woods, sites, px, py, span, hDim, hill) {
+  const out = [];
+  if (!sites) return out;
+  const { reach, per, most } = LANDFORM_DIALS.site;
+  const scale = span / WORLD_MAP_TILE_DIM;
+  for (let qy = py - 2; qy <= py + 2; qy++) {
+    if (qy < 0 || qy >= MAP_H) continue;
+    for (let qx = px - 2; qx <= px + 2; qx++) {
+      if (qx < 0 || qx >= MAP_W) continue;
+      const i = 4 * (qy * MAP_W + qx);
+      if (!sites[i]) continue;
+      const ox = qx * span, oy = (MAP_H - qy) * span;
+      const x0 = ox + (sites[i] - SITE_BIAS) * scale, x1 = ox + (sites[i + 1] - SITE_BIAS) * scale;
+      const y0 = oy + (sites[i + 2] - SITE_BIAS) * scale, y1 = oy + (sites[i + 3] - SITE_BIAS) * scale;
+      let level;
+      out.push({ x0, x1, y0, y1, reach: Math.min(most, reach + per * Math.max(x1 - x0, y1 - y0) / 2), level: () => (level ??= siteLevel(woods, qx, qy, hDim, hill)) });
+    }
+  }
+  return out;
+}
+
+/**
+ * LANDFORM4: the sites' pull at a world sample - each site's weight 1 inside its rect, easing to 0 at its reach past it
+ * (1 - smoothstep); together they keep `keep` = the product of (1 - weight) of the land, and the rest goes to their
+ * levels, each weighted by its weight to the fourth (the nearest all but alone where two reach). Writes `keep` to
+ * `out[0]` and answers the pulled height.
+ * @param {ReturnType<typeof sitesAbout>} list
+ * @param {number} gx
+ * @param {number} gy
+ * @param {number} land
+ * @param {Float64Array} out
+ * @returns {number}
+ */
+function pullTo(list, gx, gy, land, out) {
+  let keep = 1, ws = 0, wt = 0;
+  for (let i = 0; i < list.length; i++) {
+    const s = list[i];
+    const dx = gx < s.x0 ? s.x0 - gx : gx > s.x1 ? gx - s.x1 : 0;
+    const dy = gy < s.y0 ? s.y0 - gy : gy > s.y1 ? gy - s.y1 : 0;
+    if (!(dx < s.reach && dy < s.reach)) continue;
+    const d = Math.sqrt(dx * dx + dy * dy);
+    if (!(d < s.reach)) continue;
+    const w = 1 - smooth01(d / s.reach);
+    keep *= 1 - w;
+    const w4 = w * w * w * w;
+    ws += w4;
+    wt += w4 * s.level();
+  }
+  out[0] = keep;
+  return keep === 1 || !(ws > 0) ? land : keep * land + (1 - keep) * (wt / ws);
+}
 
 /** LANDFORM1: a map-pixel byte's macro height with the lift, in kernel units - the far ring's law (farRing.js
  *  ringHeight), max(byte * 8, ocean) plus the lift its own `low` earns, faded beside the sea by the node's own
@@ -338,25 +603,44 @@ export function landformLiftField(woods, px, py, locationRect = null, hDim = HEI
  *   pixels it painted without one, and they come back cut).
  *   Rivers and streams are cut where they are PAINTED and only there (the network's `water`, RiversAndStreams - the
  *   room's online): a channel with no water in it is a ditch. `rivers` answers whether they are.
+ * @param {?Uint8Array} [o.sites] - LANDFORM4: landformSites' table, the game's own locations; null pulls no ground (a
+ *   world whose map table is not read - a test, a tool).
+ * @param {boolean} [o.hills] - LANDFORM5: false leaves the hills out - the land the paths' own pins read their cuts on
+ *   (test/auditlandforms.test.js); no kernel of the game passes it.
  * @param {number} [o.hDim]
  * @returns {{ pixel: (px: number, py: number) => (x: number, y: number, h: number, low: number, g: number) => number, rivers: boolean }}
  */
-export function createLandforms({ woods, roads = null, hDim = HEIGHTMAP_DIMENSION } = {}) {
+export function createLandforms({ woods, roads = null, sites = null, hills = true, hDim = HEIGHTMAP_DIMENSION } = {}) {
   const span = hDim - 1;
   const half = span / 2;
   const cutRivers = !!roads?.water;
   const nets = LAYERS.map((l) => (l.water && !cutRivers ? null : roads?.[l.key] ?? null));
-  return { pixel: (px, py) => pixelShaper(woods, nets, px, py, span, half, hDim), rivers: cutRivers };
+  const still = hills ? waterFade(nets, span) : null;   // LANDFORM5: the hills stilled along the painted water
+  const hill = !hills ? NO_HILLS : still ? (gx, gy, macro, low, lattice) => hillsAt(gx, gy, macro, low, lattice) * still(gx, gy) : hillsAt;
+  return { pixel: (px, py) => pixelShaper(woods, nets, hill, sites, px, py, span, half, hDim), rivers: cutRivers };
 }
 
-/** One pixel's shaper: its paths' segments gathered from the 3x3 pixels round it, and the closure the kernel calls. */
-function pixelShaper(woods, nets, px, py, span, half, hDim) {
+/** One pixel's shaper: its paths' segments gathered from the 3x3 pixels round it, the sites about it, and the closure
+ *  the kernel calls. */
+function pixelShaper(woods, nets, hill, sites, px, py, span, half, hDim) {
   // the pixel's own sample origin in world samples: x east from the map's west edge, y NORTH from its south edge (the
   // ground noise's own frame, terrainSampler.js `noisey`), so pixel (px, py)'s (128, y) is (px + 1, py)'s (0, y) and
   // its (x, 128) is (px, py - 1)'s (x, 0) - one number each, from either pixel
   const ox = px * span;
   const oy = (MAP_H - py) * span;
   const cliff = cliffFade(woods, px, py, hDim);   // AUDIT LANDFORMS II I1: the lift's fade beside the sea, null inland
+  // LANDFORM4: the sites a path's profile may meet (the 5x5), and the ones that reach this pixel's own box
+  const around = sitesAbout(woods, sites, px, py, span, hDim, hill);
+  const near = around.filter((s) => s.x1 + s.reach > ox && s.x0 - s.reach < ox + span && s.y1 + s.reach > oy && s.y0 - s.reach < oy + span);
+  const kept = new Float64Array(1);
+  const lattice = hill === NO_HILLS ? null : hillLattice(ox, oy, span);   // LANDFORM5: the slow fields' nodes over this pixel
+  /** LANDFORMS 1, 4, 5: the land at a world sample - DFU's height, the lift, the hills (stilled by the water) - pulled to
+   *  the sites about it; `kept[0]` the share of the land's own left (so of its ground noise). */
+  const landAt = (gx, gy, h, macro, low, fade, list) => {
+    const l = h + reliefLift(low) * fade + hill(gx, gy, macro, low, lattice);
+    if (!list.length) { kept[0] = 1; return l; }
+    return pullTo(list, gx, gy, l, kept);
+  };
   const terms = new Map();
   const termsOf = (qx, qy) => {
     const k = qy * MAP_W + qx;
@@ -403,12 +687,15 @@ function pixelShaper(woods, nets, px, py, span, half, hDim) {
     if (s.prof) return s.prof;
     const { base, noise, cliff } = termsOf(s.qx, s.qy);
     const prof = new Float64Array(half + 1);
+    const sox = s.qx * span, soy = (MAP_H - s.qy) * span;
     for (let k = 0; k <= half; k++) {
       const lx = half + s.dx * k, ly = half + s.dy * k;
       const b = base(lx, ly);
       const low = b * BASE_HEIGHT_SCALE;
-      const macro = low + noise(lx, ly) * NOISE_MAP_SCALE;
-      prof[k] = Math.min(Math.max(macro, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT) + (cliff ? reliefLift(low) * cliff(lx, ly) : reliefLift(low));   // DFU's macro as DFU stands it; the lift faded beside the sea (AUDIT LANDFORMS II I1)
+      const macro = Math.min(Math.max(low + noise(lx, ly) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);   // DFU's macro as DFU stands it
+      // the lift faded beside the sea (AUDIT LANDFORMS II I1); LANDFORMS 4/5: the hills and the sites' pull, so a road
+      // rides the land's hills and comes into a town on its level
+      prof[k] = macro > LANDFORM_KNEE ? landAt(sox + lx, soy + ly, macro, macro, low, cliff ? cliff(lx, ly) : 1, around) : macro;
     }
     return (s.prof = prof);
   };
@@ -432,9 +719,16 @@ function pixelShaper(woods, nets, px, py, span, half, hDim) {
    */
   return (x, y, h, low, g) => {
     if (!(h > LANDFORM_KNEE)) return h;   // the knee: DFU's own height, the sea and the beach whole
-    const land = h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low));   // AUDIT LANDFORMS II I1: faded beside the sea
-    if (!layers.length) return land;
     const gx = ox + x, gy = oy + y;
+    // the lift faded beside the sea (AUDIT LANDFORMS II I1), the hills, the sites' pull (LANDFORMS 4/5). A hill never
+    // takes the land under the knee (hillsAt); a site's level can lie under it (a pixel mostly sea), so the pulled land is
+    // held over it as a cut is - never under the smaller of the unpulled land and LANDFORM_FLOOR
+    const raw = h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low));
+    const least = raw < LANDFORM_FLOOR ? raw : LANDFORM_FLOOR;
+    let land = landAt(gx, gy, h, h - g, low, cliff ? cliff(x, y) : 1, near);
+    if (land < least) land = least;
+    const keep = kept[0];
+    if (!layers.length) return land;
     let touched = false;
     for (let li = 0; li < layers.length; li++) {
       const { dial, reach, segs } = layers[li];
@@ -467,7 +761,7 @@ function pixelShaper(woods, nets, px, py, span, half, hDim) {
       // land as its high bank rises to it. Its top was `floor + 0` there, a level shelf the bank's whole width: a bed
       // 32 m wide on a hillside, and on the real WOODS.WLD fills to 11 m where 4 now stand.
       const floor = wf / ws - dial.drop;
-      const smoothLand = land - g;
+      const smoothLand = land - g * keep;   // LANDFORM4: a site's pull levels the ground noise by as much as the land
       const top = dial.drop > 0 && !(smoothLand > floor + dial.drop) ? floor + dial.drop : smoothLand;
       const edge = dial.flat + dial.bank;
       targets[li] = dmin <= edge
@@ -500,7 +794,6 @@ function pixelShaper(woods, nets, px, py, span, half, hDim) {
       if (chan > 0 && !layers[li].water && (layers[li].ford || dmins[li] > layers[li].dial.flat)) a *= 1 - chan;
       if (a > 0) out += (targets[li] - out) * a;
     }
-    const least = land < LANDFORM_FLOOR ? land : LANDFORM_FLOOR;
     return out > least ? out : least;
   };
 }

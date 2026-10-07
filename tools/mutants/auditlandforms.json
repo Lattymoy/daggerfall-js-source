@@ -66,7 +66,7 @@
   {
     "name": "AUDIT-LANDFORMS-D-least-always-the-floor",
     "file": "src/world/landforms.js",
-    "old": "const least = land < LANDFORM_FLOOR ? land : LANDFORM_FLOOR;",
+    "old": "const least = raw < LANDFORM_FLOOR ? raw : LANDFORM_FLOOR;",
     "new": "const least = LANDFORM_FLOOR;",
     "tests": [
       "test/landform.test.js",
@@ -148,7 +148,7 @@
   {
     "name": "AUDIT-LANDFORMS-D-bank-top-noisy-land",
     "file": "src/world/landforms.js",
-    "old": "const smoothLand = land - g;",
+    "old": "const smoothLand = land - g * keep;",
     "new": "const smoothLand = land;",
     "tests": [
       "test/landform.test.js",
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-profile-not-ocean-floored",
     "file": "src/world/landforms.js",
-    "old": "prof[k] = Math.min(Math.max(macro, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT) +",
-    "new": "prof[k] = Math.min(macro, MAX_TERRAIN_HEIGHT) +",
+    "old": "const macro = Math.min(Math.max(low + noise(lx, ly) * NOISE_MAP_SCALE, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);",
+    "new": "const macro = Math.min(low + noise(lx, ly) * NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT);",
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js"
@@ -404,8 +404,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-lift-of-whole-height",
     "file": "src/world/landforms.js",
-    "old": "const land = h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low));",
-    "new": "const land = h + (cliff ? reliefLift(h) * cliff(x, y) : reliefLift(h));",
+    "old": "const l = h + reliefLift(low) * fade + hill(gx, gy, macro, low, lattice);",
+    "new": "const l = h + reliefLift(h) * fade + hill(gx, gy, macro, low, lattice);",
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js"
@@ -575,8 +575,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-promotion-ghosts-uncut",
     "file": "src/world/terrainGen.js",
-    "old": "const lf = landforms ?? (landform ? createLandforms({ woods, roads }) : null);",
-    "new": "const lf = landforms ?? (landform ? createLandforms({ woods }) : null);",
+    "old": "const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites }) : null);",
+    "new": "const lf = landforms ?? (landform ? createLandforms({ woods, sites }) : null);",
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js",
@@ -599,8 +599,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-client-fallback-grid-uncut",
     "file": "src/world/terrainGenClient.js",
-    "old": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, ...job }));",
-    "new": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, ...job }));",
+    "old": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, ...job }));",
+    "new": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, sites: this._sites, ...job }));",
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js",
@@ -1159,8 +1159,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-I1-never-faded",
     "file": "src/world/landforms.js",
-    "old": "const land = h + (cliff ? reliefLift(low) * cliff(x, y) : reliefLift(low));",
-    "new": "const land = h + reliefLift(low);",
+    "old": "let land = landAt(gx, gy, h, h - g, low, cliff ? cliff(x, y) : 1, near);",
+    "new": "let land = landAt(gx, gy, h, h - g, low, 1, near);",
     "tests": [
       "test/auditlandforms.test.js"
     ]
@@ -1168,8 +1168,8 @@
   {
     "name": "AUDIT-LANDFORMS-II-I1-profile-unfaded",
     "file": "src/world/landforms.js",
-    "old": "+ (cliff ? reliefLift(low) * cliff(lx, ly) : reliefLift(low));",
-    "new": "+ reliefLift(low);",
+    "old": "landAt(sox + lx, soy + ly, macro, macro, low, cliff ? cliff(lx, ly) : 1, around)",
+    "new": "landAt(sox + lx, soy + ly, macro, macro, low, 1, around)",
     "tests": [
       "test/auditlandforms.test.js"
     ]

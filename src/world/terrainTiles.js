@@ -240,6 +240,20 @@ export function getLocationTerrainTileOrigin(dfLocation) {
 const LOCATION_TYPE_TOWN_CITY = 0; // DFRegion.LocationTypes.TownCity
 
 /**
+ * LANDFORM4: the rect setLocationTiles can stamp at most - the location's whole block grid from its tile origin, with
+ * setLocationTiles' own clearance - read off the map table alone (no BLOCKS.BSA), so every thread derives the same one.
+ * setLocationTiles' rect is the stamped tiles' and lies inside it.
+ * @param {object} dfLocation - MapsFile location (hasExterior).
+ * @returns {{xMin,xMax,yMin,yMax}} tile space.
+ */
+export function locationFootprintRect(dfLocation) {
+  const o = getLocationTerrainTileOrigin(dfLocation);
+  const { width, height } = dfLocation.exterior.exteriorData;
+  const c = dfLocation.mapTableData.locationType === LOCATION_TYPE_TOWN_CITY ? 3 : 2;
+  return { xMin: o.x - c, xMax: o.x + width * RMB_TILES_PER_BLOCK - 1 + c, yMin: o.y - c, yMax: o.y + height * RMB_TILES_PER_BLOCK - 1 + c };
+}
+
+/**
  * Verbatim TerrainHelper.SetLocationTiles: stamp the location's RMB ground
  * tiles into the pixel tilemap and compute the location rect.
  * @param {object} dfLocation - MapsFile location (hasExterior).

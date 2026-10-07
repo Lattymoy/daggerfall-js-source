@@ -1,10 +1,16 @@
-# Landforms - the heightmap raised, the roads cut in, the rivers in the land
+# Landforms - the heightmap raised, the roads cut in, the rivers in the land, the towns stood in it, the land rolling
 
 LANDFORM1-3, 2026-10-06. Mac, with a picture of the Iliac Bay's heightmap - the
 bay black, the land grey, the Wrothgarian and Dragontail ranges white: *"Can we
 adjust the heightmap to be more of this? and allow roads to carve through
 terrian and caverns without breaking anything and rivers to actually have
 depth, not just lying flat on land."*
+
+LANDFORM4-5, 2026-10-07. Mac, with a shot of a walled town sunk in a pit, a
+straight wall of ground a hundred metres tall round it: *"Whats up with these
+steep cliffs?"*, then, of the answer that offered to stand the town on DFU's own
+ground: *"I dont care about DFU. I want detailed generation, rolling hills,
+varied terrian. This isnt about being 1:1"* (LANDFORM4 and LANDFORM5, below).
 
 The port's own terrain, behind the Features row `landforms` (Enhanced, World;
 on by default; FORCED ON ONLINE; `?landforms=off` the kill door, offline). On
@@ -129,7 +135,9 @@ THE CEILING (2026-10-07, found on the real WOODS.WLD). The shaper is handed
 DFU's height as DFU stands it - clamped at MAX_TERRAIN_HEIGHT, 1539 - and the
 lift is level past the heightmap's 7-bit top (`low` 8 x 127, the byte DFU's
 ceiling is built on), so nothing stands over `LANDFORM_CEILING`, DFU's ceiling
-plus the most the lift adds (2416 units, about 3,020 m). Real ground never
+plus the most the lift adds (2416 units, about 3,020 m) - and since LANDFORM5
+the tallest hill, `HILLS_TOP` (76.8 units: 2493, about 3,116 m). The numbers
+below are the lift's, the hills left out. Real ground never
 reaches either: its bytes stop at 109 (at (963, 442), read raw - AUDIT
 LANDFORMS D13) and DFU's kernel never meets its own
 ceiling on them. WOODS.WLD's one byte over 127 does - a 255 at map pixel
@@ -255,6 +263,103 @@ lesson: the eye was never in the loop. It lowered the drawn ground under a
 surface that kept the old height, and the game stood on neither. This slice
 moves the ground everything reads - the collider, the nature, the grass and the
 film alike - and draws nothing new.
+
+## LANDFORM4 - A TOWN STANDS IN ITS LAND
+
+WHAT THE SHOT SHOWED. DFU levels a location after the kernel
+(`blendLocationTerrain`, BlendLocationTerrainJob verbatim): its rect to the
+mean of its whole pixel, and a linear ramp from the rect's edge back to raw
+ground by the pixel's edge - so the whole rise between a town and the land round
+it is taken inside one pixel, over the band the rect leaves (about 30 samples,
+190 m, beside a 4x4 town; about 13, 85 m, beside a 6x6). DFU's own ground on a
+hillside already stood that ramp steep; LANDFORM1's lift steepens a slope by up
+to 2.8 times, and the ramp stood as a wall. On a synthetic upland like the
+shot's (bytes rising 5 a pixel, lifted), the steepest 51 m grade round a 4x4
+town was 39 degrees, round a 6x6 53, on land whose own steepest is 24.
+
+THE LAW. Every one of the game's own locations is a SITE (`landformSites`):
+its footprint - the block grid from its tile origin with setLocationTiles' own
+clearance, read off the map table alone (`locationFootprintRect`,
+terrainTiles.js, beside setLocationTiles; its rect is the stamped tiles' and
+lies inside) - four bytes a pixel, made once on the main thread as the world
+mounts and handed to both kernels (`TerrainGenClient.setSites`, the worker's
+`sites` message) before the first pixel is asked of either. The game's own rows
+alone (HUB1's): a mod's addition and a spawn never move the ground, so every
+client of a room stands on one. Inside the shaper each site pulls the ground
+toward its LEVEL (`pullTo`): weight 1 inside its rect, easing to 0 at its reach
+past it (1 - smoothstep), the land keeping the product of (1 - weight) and the
+rest going to the sites' levels, each weighted by its weight to the fourth.
+The reach is `reach` (40 samples) plus `per` (3) times the rect's half-extent,
+never more than `most` (124 - so no further than the pixels beside the site's
+own): 70 samples (450 m) round a 1x1, 94 round a 2x2, the most round a 4x4 and
+over. The LEVEL (`siteLevel`) is the mean of the site's pixel's land on a coarse
+grid (every 8 samples, its edges included): DFU's kernel, the lift faded as the
+shaper fades it, the hills - no path's cut, no water's stilling and no site's
+pull, so it is one number however the network stands. DFU's own blend still
+runs after the kernel, still the location's, and finds its pixel all but level
+at that mean (the 6x6 below stands within 3 m of its level). A road's profile
+is pulled too, so a road comes into a town on its level; the ground noise is
+levelled by the share the pull takes. A site whose level the sea drags under the
+knee (a pixel mostly sea) pulls its land down no further than LANDFORM_FLOOR,
+as a cut is held. The pull is a pure function of world position and the sites:
+the sites about a pixel are gathered in one global order (pixel row, then
+column), so a seam is one number from both pixels.
+
+Measured on that synthetic upland (`test/landform45.test.js`): round the 4x4
+town 24.1 degrees on land of 24.3, round the 6x6 22.9 on 23.5, round a 2x2
+hamlet 23.6 on 23.6 (walled: 39.4, 53.4, 28.5). NOT MEASURED ON THE REAL DATA:
+this container holds no ARENA2 - the real ground's numbers, and the shot's own
+town, are Mac's eye before the merge.
+
+## LANDFORM5 - THE LAND ROLLS
+
+A field of hills over every land sample (`hillsAt`), a pure function of world
+position (x east, y north, in samples - a seam is one number from both pixels)
+and the land's own macro height:
+
+- THE SHAPE: three octaves of the port's Perlin noise (wavelengths 300, 125 and
+  50 samples - 1.9 km, 800 m, 320 m - weighted 1, 0.36, 0.1), their domain
+  pushed about by a warp of 80 samples over 520, so the hills wander rather than
+  sit on the noise's grid; the sum held to -1..1. The two slow fields - the
+  region and the warp - are read at the nodes of a 16-sample lattice on world
+  positions and bilinearly between (`HILL_NODE`, `hillLattice`: a pixel's shaper
+  makes its own nodes once, and a point off them makes the same nodes where it
+  is asked, so no number changes with who asks); the octaves at the sample.
+- THE HEIGHT: a REGION field (wavelength 2,400 samples, about 15 km) sets it
+  between `low` (4 units, 5 m) where the country lies near flat and `high` (48,
+  60 m) where it rolls hardest; on the high ground it stands up to `upland`
+  (1.6) times that, fully by 700 units of the small heightmap's term over the
+  knee - so the tallest hill or deepest dale is `HILLS_TOP`, 76.8 units (96 m).
+  Across 13 km squares of the synthetic world the field's span runs from a few
+  units to over three times as much.
+- THE KNEE: eased in from nothing over `coast` (96 units) of the land's height
+  over the knee, so a hill or a dale is always smaller than that height (at most
+  0.9 of it): nothing the hills touch crosses the beach line, and the sea, the
+  beach and every tile class stand where they stood (THE LAW above).
+- THE WATER STILLS THEM (`waterFade`): a node at every map pixel's centre, 1
+  where a river or a stream is painted, read through a smoothstep-weighted
+  bilinear, so a channel's centre line keeps no hill and they come back over
+  about a third of a pixel: a river lies in a valley and its floor stays the
+  land it was graded to, never climbing a hill. Only where rivers are cut (the
+  network's `water`); with them off the hills stand there too.
+- THE PATHS RIDE THEM: a road's and a track's profile is the land with its hills
+  (and the water's stilling, and the sites' pull), so a road follows the hills
+  and cuts only the ground noise, as before.
+- THE SITES LEVEL THEM: a town's pull takes its hills with the rest of its land.
+
+Steepest 51 m grade of the hills alone on the high ground: about 7 degrees -
+rolling, never a cliff; on a sea cliff's rim they leave DFU's grade as it was
+(1.082 against 1.079, AUDIT LANDFORMS II I1's pin). The path laws' own pins
+read their cuts on the land without the hills (`createLandforms`' `hills:
+false`, which no kernel of the game passes) - taking a river away now gives its
+valley's hills back, which is the stilling, not the cut.
+
+COST, measured on the synthetic world in this container (not on the real data):
+the kernel's pass over a pixel 5.5 ms without the hills, 9.4 ms with them - the
+three octaves a sample, about 200 ns; the lattice halved the slow fields' share
+(11.8 ms read at every sample) - and a whole job with the network about 17-18 ms.
+It runs on the terrain worker, off the frame. A site's level is asked once a
+session per site (289 kernel reads), kept per world (the last 4,096).
 
 ## THE SAVES: EVERY HEIGHT IN DFU'S FRAME
 
@@ -389,6 +494,35 @@ Roads network, in scratch, with the slice's own functions:
   samples.
 
 ## RESIDUES, NAMED
+
+- NOT SEEN ON THE REAL DATA (LANDFORM4-5). This container holds no ARENA2:
+  every number in LANDFORM4 and LANDFORM5 is the synthetic world's. The field
+  shot's own town, the real hills' look and the real cost are Mac's eye before
+  the merge - WATER2's lesson.
+- THE FAR RING TAKES NEITHER THE HILLS NOR A SITE'S PULL (LANDFORM4-5): it
+  stands a pixel's byte at its centre with the lift (EV8's law, below), and the
+  travel view past the built grid the same. The hills average to nothing over a
+  pixel, and a pull is within a pixel of its site; at the ring's distance both
+  are under its own gap to the streamed ground.
+- A SITE IS ONE OF THE GAME'S OWN ROWS (LANDFORM4): a world-data mod's added
+  location, a spawned dungeon and a World of Daggerfall camp pull nothing - they
+  keep DFU's blend inside their pixel alone, the wall it stands the lift's. The
+  rows are HUB1's so every client stands on one ground; a mod's rows are each
+  client's own switch. A footprint is read off the row's block grid as this
+  client reads it, so a mod that resized a town's grid on one client and not
+  another would move its footprint between them. WD3 measured that the town
+  mods keep the game's map ids and names; whether one resizes a grid is not
+  measured here.
+- A SITE'S RECT IS ITS BLOCK GRID (LANDFORM4), read off the map table; the
+  stamped tiles' rect (setLocationTiles) lies inside it, so a site whose blocks
+  stamp less than their grid is levelled a little past its tiles.
+- THE NETWORK'S LANDING MOVES MORE GROUND (LANDFORM5): the stilling reaches a
+  third of a pixel round every painted river and stream, so when Basic Roads'
+  arrays land after a pixel's first build, the ground there moves by its hills as
+  well as its channel. WHAT LIES ON THE GROUND RIDES THE NETWORK'S LANDING
+  (G1/G2, above) carries it; the counts measured there are the cuts' alone.
+- TWO BUILDS IN ONE ROOM (C2, below) now part by the hills and the pulls as
+  well as the lift, until the older side reloads.
 
 - Deep Waters' cap repaints a coastal pixel's above-sea water tiles as land
   (DW-B), so a river channel crossing a coastal pixel can show dry there - as

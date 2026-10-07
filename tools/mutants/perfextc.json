@@ -784,8 +784,8 @@
  {
   "name": "PERF-EXT26-the-worker-builds-a-different-grid",
   "file": "src/world/terrainGenWorker.js",
-  "old": "    const { positions, normals } = restrideGrid({ ...m, woods, roads });",
-  "new": "    const { positions, normals } = restrideGrid({ ...m, woods, roads, stride: 4 });",
+  "old": "    const { positions, normals } = restrideGrid({ ...m, woods, roads, sites });",
+  "new": "    const { positions, normals } = restrideGrid({ ...m, woods, roads, sites, stride: 4 });",
   "tests": [
    "test/restrideworker.test.js"
   ]
@@ -811,7 +811,7 @@
  {
   "name": "PERF-EXT26-a-failed-grid-is-left-unbuilt",
   "file": "src/world/terrainGenClient.js",
-  "old": "      g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, ...g.job }));\n      return;",
+  "old": "      g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, ...g.job }));\n      return;",
   "new": "      g.resolve(null);\n      return;",
   "tests": [
    "test/restrideworker.test.js"
@@ -820,7 +820,7 @@
  {
   "name": "PERF-EXT26-a-dead-worker-strands-its-grids",
   "file": "src/world/terrainGenClient.js",
-  "old": "    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, ...g.job }));",
+  "old": "    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, ...g.job }));",
   "new": "    void grids;",
   "tests": [
    "test/restrideworker.test.js"

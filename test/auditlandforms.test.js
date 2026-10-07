@@ -72,11 +72,14 @@ test('AUDIT LANDFORMS E2: a channel is the water\'s - a road crossing a river st
   // and the road keeps its own bed across the river: the causeway's top, level at the road's grade
   for (const x of [63, 64, 65]) assert.ok(at(full, x, 64) > at(water, x, 64) + 1 / UNIT, `x=${x}: the causeway stands over the channel`);
   // away from the river the road's bank and verge are whole, as they were
-  const roadOnly = generateSamples(woods, px, py, H, createLandforms({ woods, roads: { ...NET, rivers: dry, streams: dry } }));
-  for (const x of [60, 58, 55]) assert.ok(Object.is(at(full, x, 20), at(roadOnly, x, 20)), `(${x}, 20): the road's own bank, off the channel`);
+  // (LANDFORM5: on the land without its hills - the painted water stills the hills about it, so taking the river away
+  // moves the land a third of a pixel round, not the road's cut)
+  const fullFlat = generateSamples(woods, px, py, H, createLandforms({ woods, roads: NET, hills: false }));
+  const roadOnly = generateSamples(woods, px, py, H, createLandforms({ woods, roads: { ...NET, rivers: dry, streams: dry }, hills: false }));
+  for (const x of [60, 58, 55]) assert.ok(Object.is(at(fullFlat, x, 20), at(roadOnly, x, 20)), `(${x}, 20): the road's own bank, off the channel`);
   // and past the channel's bank top - in the river's verge - the road's bank is whole again: the channel is the floor and
   // the bank, not the river's whole reach
-  for (const y of [58, 70]) for (const x of [61, 67]) assert.ok(Object.is(at(full, x, y), at(roadOnly, x, y)), `(${x}, ${y}): in the river's verge the road's bank stands`);
+  for (const y of [58, 70]) for (const x of [61, 67]) assert.ok(Object.is(at(fullFlat, x, y), at(roadOnly, x, y)), `(${x}, ${y}): in the river's verge the road's bank stands`);
   // the painted water, as the pipeline paints it: every wet corner off the road's bed stands on the channel's floor
   const out = generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), climateType: 231, roads: NET, landform: true });
   let wet = 0;
@@ -521,7 +524,12 @@ test('AUDIT LANDFORMS D8: the law, written out, is the shaper - at every sample 
     relief: { from: 200, full: 900, gain: 0.9 }, stream: { flat: 1, bank: 1.25, verge: 4, drop: 0.8 }, river: { flat: 2, bank: 1.5, verge: 6, drop: 1.92 },
     track: { flat: 1.25, bank: 2, verge: 5, drop: 0 }, road: { flat: 1.25, bank: 2.5, verge: 6, drop: 0 }, coast: 12, bankGrade: 0.5,
     cliff: { from: 1, full: 3 },   // PIN MOVED (AUDIT LANDFORMS II I1)
+    // PIN MOVED (LANDFORMS 4/5): the hills and a site's pull (test/landform45.test.js pins what they do)
+    hills: { low: 4, high: 48, upland: 1.6, uplandAt: 700, coast: 96, region: 2400, warp: 80, warpScale: 520, scales: [300, 125, 50], weights: [1, 0.36, 0.1] },
+    site: { reach: 40, per: 3, most: 124, grid: 8 },
   });
+  // the law below is the paths' on the land without its hills (LANDFORM5's own pins hold the hills)
+  const LF = createLandforms({ woods, roads: NET, hills: false });
   const pixels = [[350, 200], [351, 200], [352, 200], [352, 201], [352, 204], [353, 200], [354, 200], [354, 199], [354, 196], [355, 199],
     [356, 204], [357, 203], [358, 202], [358, 201], [358, 200], [300, 250], [300, 255], [301, 255], [293, 241], [312, 248], [312, 252], [100, 200], [101, 300], [102, 300]];
   let shaped = 0, worst = 0;
@@ -799,7 +807,8 @@ test('AUDIT LANDFORMS II J1: a track over a river is a ford, as it is painted - 
   }
   assert.ok(wet > 200 && onBed > 10, `the river's water tiles were read (${wet}), across the track's bed too (${onBed})`);
   // and off the river the track keeps its own bed, whole
-  const full = generateSamples(woods, px, py, H, LF), trackAlone = generateSamples(woods, px, py, H, createLandforms({ woods, roads: { ...NET, rivers: dry, streams: dry } }));
+  // (LANDFORM5: on the land without its hills - taking the river away gives the hills about it back)
+  const full = generateSamples(woods, px, py, H, createLandforms({ woods, roads: NET, hills: false })), trackAlone = generateSamples(woods, px, py, H, createLandforms({ woods, roads: { ...NET, rivers: dry, streams: dry }, hills: false }));
   for (const y of [20, 108]) for (const x of [63, 64, 65, 61]) assert.ok(Object.is(at(full, x, y), at(trackAlone, x, y)), `(${x}, ${y}): the track's bed`);
 });
 
@@ -868,7 +877,7 @@ test('AUDIT LANDFORMS II I2: a bank is never a launch ramp - a track benched alo
   assert.ok(g1 - g0 <= LANDFORM_DIALS.bankGrade + 0.05, `a bank ${g1.toFixed(2)} on a hillside of ${g0.toFixed(2)} (${(Math.atan(g1) * 180 / Math.PI).toFixed(0)} degrees) - level across it stood 2.46`);
   // the law written out, held, is the shaper at every sample of the bench - and the hold is what it says there: unheld,
   // the law parts from it under the banks
-  const shape = lf.pixel(500, 250), law = lawOf(net, 500, 250, hill), loose = lawOf(net, 500, 250, hill, { held: false });
+  const shape = createLandforms({ woods: hill, roads: net, hills: false }).pixel(500, 250), law = lawOf(net, 500, 250, hill), loose = lawOf(net, 500, 250, hill, { held: false });   // the law on the land without its hills (LANDFORM5)
   const { base, noise } = kernelTerms(hill, 500, 250);
   let held = 0;
   for (let x = 0; x <= 128; x++) for (let y = 0; y <= 128; y++) {
@@ -921,7 +930,7 @@ test('AUDIT LANDFORMS II G1/G2: a pixel rebuilt under the live pools carries wha
   const before = job(null), after = job(NET);
   const cell = TERRAIN_SIZE / (H - 1), M = UNIT * STREAMING_TERRAIN_SCALE, x = sx * cell, z = sy * cell;
   const gB = before[sx * H + sy] * M, gA = after[sx * H + sy] * M;
-  assert.ok(gA < gB - 1, `the landing cut the channel here (${(gA - gB).toFixed(2)} m)`);
+  assert.ok(Math.abs(gA - gB) > 1, `the landing moved the ground here (${(gA - gB).toFixed(2)} m)`);   // PIN MOVED (LANDFORM5): it cut it - the landing also stills the hills about the river, so the floor can stand over a dale the hills had
   const run = ({ grounded }) => {
     const loot = createDroppedLoot({ renderer: { createBillboardBatch: () => ({}), destroyBillboardBatch: () => {} }, getTexture: async () => ({ getSize: () => ({ width: 32, height: 32 }), getScale: () => ({ width: 0, height: 0 }), recordCount: 64, getFrameCount: () => 1 }), uploadRecordFrame: () => {} });
     const pile = loot.dropPile([{ group: 'Gems', templateIndex: 0 }], [x, gB, z], key);
@@ -1140,7 +1149,7 @@ test('AUDIT LANDFORMS II I1: the lift fades beside the sea - a sea cliff\'s rim 
   const cw = load(bytes), byteAt = (x, y) => cw.getHeightMapValue(x, y);
   const net = network();
   for (let x = 96; x <= 108; x++) net.roads[430 * MAP_WIDTH + x] |= DIR.E | DIR.W;
-  const CUT = createLandforms({ woods: cw, roads: net }), RELIEF_ALONE = createLandforms({ woods: cw });
+  const CUT = createLandforms({ woods: cw, roads: net, hills: false }), RELIEF_ALONE = createLandforms({ woods: cw, hills: false });   // the lift's law, the hills left out (LANDFORM5 - held below)
   // the byte nodes: the sea's and the rim's none of the lift, two in half, three in all of it - in 1024ths, so the
   // kernel's cubic over them is exact (a node a diagonal or a knight's move from the sea too)
   assert.deepEqual([98, 99, 100, 101, 102, 103].map((x) => cliffFadeAt(byteAt, x, 430)), [0, 0, 0, 0.5, 1, 1]);
@@ -1170,6 +1179,9 @@ test('AUDIT LANDFORMS II I1: the lift fades beside the sea - a sea cliff\'s rim 
   };
   const gDfu = steepest(dfuAt), gFaded = steepest(reliefAt);
   assert.ok(gDfu > 1 && gFaded <= gDfu * 1.02, `the rim's steepest grade ${gFaded.toFixed(2)} against DFU's ${gDfu.toFixed(2)}`);
+  // LANDFORM5: and with the hills, as the ground ships - eased in by the height over the beach line, they leave the rim be
+  const gRolling = steepest((px) => generateSamples(cw, px, 430, H, createLandforms({ woods: cw })));
+  assert.ok(gRolling <= gDfu * 1.02, `the rim's steepest grade with the hills ${gRolling.toFixed(3)} against DFU's ${gDfu.toFixed(3)}`);
   // a road down over the rim is graded to the faded ground (the written-out law states the fade on its own), every sample
   for (const px of [99, 100, 101, 102, 103]) {
     const shape = CUT.pixel(px, 430), law = lawOf(net, px, 430, cw), terms = kernelTerms(cw, px, 430);

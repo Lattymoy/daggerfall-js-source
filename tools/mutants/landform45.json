@@ -1,0 +1,166 @@
+[
+  {
+    "name": "LANDFORM4-no-pull",
+    "file": "src/world/landforms.js",
+    "old": "    if (!list.length) { kept[0] = 1; return l; }",
+    "new": "    if (list) { kept[0] = 1; return l; }",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM4-reach-short",
+    "file": "src/world/landforms.js",
+    "old": "site: Object.freeze({ reach: 40, per: 3, most: 124, grid: 8 }),",
+    "new": "site: Object.freeze({ reach: 24, per: 3, most: 124, grid: 8 }),",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM4-reach-past-the-neighbour",
+    "file": "src/world/landforms.js",
+    "old": "site: Object.freeze({ reach: 40, per: 3, most: 124, grid: 8 }),",
+    "new": "site: Object.freeze({ reach: 40, per: 3, most: 160, grid: 8 }),",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM4-weight-linear",
+    "file": "src/world/landforms.js",
+    "old": "    const w = 1 - smooth01(d / s.reach);",
+    "new": "    const w = 1 - d / s.reach;",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM4-near-misses-a-neighbour-site",
+    "file": "src/world/landforms.js",
+    "old": "s.x1 + s.reach > ox && s.x0 - s.reach < ox + span",
+    "new": "s.x1 > ox && s.x0 - s.reach < ox + span",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM4-pulled-under-the-knee",
+    "file": "src/world/landforms.js",
+    "old": "    if (land < least) land = least;",
+    "new": "    void least;",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM4-level-off-the-pixel",
+    "file": "src/world/landforms.js",
+    "old": "  const ox = sx * span, oy = (MAP_H - sy) * span;",
+    "new": "  const ox = sx * span, oy = sy * span;",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM4-site-rect-y-flipped",
+    "file": "src/world/landforms.js",
+    "old": "      const ox = qx * span, oy = (MAP_H - qy) * span;",
+    "new": "      const ox = qx * span, oy = (MAP_H - qy - 1) * span;",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM4-footprint-no-clearance",
+    "file": "src/world/terrainTiles.js",
+    "old": "  const c = dfLocation.mapTableData.locationType === LOCATION_TYPE_TOWN_CITY ? 3 : 2;",
+    "new": "  const c = 0;",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM4-worker-drops-the-sites",
+    "file": "src/world/terrainGenWorker.js",
+    "old": "    if (m.t === 'sites') { sites = m.sites ?? null; return; }",
+    "new": "    if (m.t === 'sites') { return; }",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM4-worker-grid-unpulled",
+    "file": "src/world/terrainGenWorker.js",
+    "old": "    const { positions, normals } = restrideGrid({ ...m, woods, roads, sites });",
+    "new": "    const { positions, normals } = restrideGrid({ ...m, woods, roads });",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM4-client-keeps-them-to-itself",
+    "file": "src/world/terrainGenClient.js",
+    "old": "    this._worker.postMessage({ t: 'sites', sites: copy }, copy ? [copy.buffer] : []);",
+    "new": "    void copy;",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM5-coast-too-short",
+    "file": "src/world/landforms.js",
+    "old": "coast: 96, region",
+    "new": "coast: 60, region",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM5-no-region",
+    "file": "src/world/landforms.js",
+    "old": "  out[o] = smooth01((perlinNoise(gx / H.region + 31.7, gy / H.region + 57.3) - 0.3) / 0.4);",
+    "new": "  out[o] = 1;",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM5-no-stilling",
+    "file": "src/world/landforms.js",
+    "old": "    return 1 - smooth01(b * 2);",
+    "new": "    return 1;",
+    "tests": [
+      "test/landform45.test.js",
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM5-hills-under-the-knee-too",
+    "file": "src/world/landforms.js",
+    "old": "  if (!(e > 0)) return 0;\n  const fx = gx / HILL_NODE",
+    "new": "  if (!(e > -20)) return 0;\n  const fx = gx / HILL_NODE",
+    "tests": [
+      "test/landform45.test.js",
+      "test/landform.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM5-unclamped",
+    "file": "src/world/landforms.js",
+    "old": "  return amp * (n < -1 ? -1 : n > 1 ? 1 : n);",
+    "new": "  return amp * n * 1.6;",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM5-road-ignores-the-hills",
+    "file": "src/world/landforms.js",
+    "old": "      prof[k] = macro > LANDFORM_KNEE ? landAt(",
+    "new": "      prof[k] = macro > 1e9 ? landAt(",
+    "tests": [
+      "test/landform45.test.js"
+    ]
+  }
+]

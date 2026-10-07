@@ -251,7 +251,7 @@ test('EV7: the worker shell imports only pure modules and spells the Worker URL 
   // every test green
   // ROADS 3: `roads` joined `woods` as worker-owned state that rides
   // beside the spread - the job itself still crosses WHOLE.
-  assert.ok(shell.includes('generatePixelTerrain({ ...m, woods, roads })'), 'the job forwards whole');
+  assert.ok(shell.includes('generatePixelTerrain({ ...m, woods, roads, sites })'), 'the job forwards whole');   // LANDFORM4: the worker's sites beside its network
   // the client spells the constructor the way Vite's static analysis
   // bundles (eslint.config.js's RA1 note: never globalThis.Worker)
   const client = readFileSync('src/world/terrainGenClient.js', 'utf8');

@@ -411,5 +411,5 @@ test('WOD2: THE FOUR HOSTS - world.js streams terrain and is wired; exterior.js,
     assert.doesNotMatch(rd(f), /openWodWorld|wodLocationLoader/, `${f} has no terrain to stand a wilderness site on`);
   }
   assert.match(rd('bible/03-World/World-Of-Daggerfall.md'), /THE FOUR HOSTS/);
-  assert.match(rd('src/world/terrainGenWorker.js'), /generatePixelTerrain\(\{ \.\.\.m, woods, roads \}\)/, 'the job crosses whole, so `wod` reaches the worker');
+  assert.match(rd('src/world/terrainGenWorker.js'), /generatePixelTerrain\(\{ \.\.\.m, woods, roads, sites \}\)/, 'the job crosses whole, so `wod` reaches the worker');
 });
