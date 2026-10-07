@@ -8,6 +8,33 @@
 
 Newest first.
 
+**2026-10-07 - FIELD BUGS 2026-10-07.** Eight player reports from the Discord's bug-reports channel, through Mac, read
+one at a time. Six paid, two are recorded and left as they stand:
+- CRASH-BLUR - the crash screen's "NotFoundError: Failed to execute 'replaceChildren' ... moved in a 'blur' event
+  handler": the Notice Board's Market list repainted INSIDE a repaint (marketTab.js's redraw waits on a held list's
+  blur, and emptying the window blurs it). noticeWindow.js's render coalesces a paint asked mid-paint; read back in a
+  real Chromium (`crashblur_board.test.js`).
+- UMI-NAMES - "Use Magic Item Menu is crowded": every row read the raw `name` ("Glass Bottle", "%it of Lightning"),
+  never DFU's LongName; the list asks `itemLongName` now (`10-UI/UI-Arc.md`).
+- HIGH-CAST - "fishing popup shows up wayy too early" and "couldn't get it off my screen when on my ship": the cast's
+  point was asked over water in the ground's plane alone; it must stand within CAST_OVER_WATER_M of the water's
+  surface now (`06-Systems/Professions-Arc.md`, PROF8).
+- SHOT1 - "dark screenshots": PrintScreen read the canvas on a frame of its own, which a Frame Rate Cap's held frame
+  or a pad's press left undrawn; the shot is paid at the host's frame foot now (`10-UI/Loading-Screens.md`).
+- HALL-FOLK - "Npcs in purchased guild halls": a rest by day in a House2-4 hall or home stood its residents back up
+  through UpdateNpcPresence; a player's room online refuses the re-roll now (`06-Systems/Online-Arc.md`).
+- INDOOR-SKIN - "Cannot skin indoors": a building's bodies were never Hunting's nodes (the host read the street's
+  dead, the gather host ran outdoors and in dungeons alone); buildings skin now, exterior.js FLAGGED as before
+  (`06-Systems/Professions-Arc.md` section 29).
+- GUARD-RETURN, NOT CHANGED - "Protect an Honored Mage: assassins spawn again": DFU's own law (PcAt clears and
+  re-sets its task, CreateFoe.InitialiseOnSet zeroes its count), pinned as such; 26 vendored quests share it, and the
+  departure is Mac's to decide (`06-Systems/Quest-Arc.md` GUARD-RETURN).
+- "Items dropped for quests", NOT REPRODUCED: DroppedItemAtPlace, the transfer's refusal and every drop door matched
+  DFU end to end on The Acceptance Test (L0A01L00) and The Postman (A0C00Y00), save and load between included. Open
+  leads, unproven: a party's resync carrying the drop task cleared, and `_questLoc()` reading the live interior
+  position where DFU's GPS stands at the door. It waits on the reporter's save. The abandon-a-quest suggestion is not
+  DFU's and was not taken.
+
 **2026-10-07 - AUDIT LANDFORMS II.** Mac: *"Do another deep audit on this"*, of LANDFORM1-3 and its first audit (#655).
 Six lenses on the audited head - the first audit's fixes, the network's timing, main's arrivals since, the body on the
 ground, the tests' and the record's honesty (five independent adversarial reviewers on a snapshot), and this session's

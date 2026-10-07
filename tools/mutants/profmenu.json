@@ -233,8 +233,8 @@
   {
     "name": "PROFMENU-modes-click",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (!interact && !pressCast && !actClick && !host.profActing?.() && host.profClick?.()) return true;\n",
-    "new": "",
+    "old": "    if (!interact && !pressCast && !actClick && !host.profActing?.() && host.profClick?.()) return true;\n    // AUDIT 32 H5: and a click mid-act is the act's (D3's law for E) - it opened the body's loot under the knife.",
+    "new": "    // AUDIT 32 H5: and a click mid-act is the act's (D3's law for E) - it opened the body's loot under the knife.",
     "tests": [
       "test/fb0930b_toolsaid.test.js",
       "test/audit32_client.test.js",
