@@ -242,16 +242,25 @@ export function foundFamily(entity, { model = MODELS.enduring, seat = null, at =
  * LEGACY-NAME - THE HOUSE NAMED FOR ITS SEAT (section 5's naming): a founder with no surname of their own founds a house
  * named for its seat ("of Sentinel"). The seat is the first town the house stands in, and a new character founds in
  * Privateer's Hold, where none stands - so a house founded nameless is named when its seat is noted (the host's tick),
- * or when a copy that knows the seat merges in (store.js mergeFacts); every member of the blood born under the nameless
- * house takes the name (a spouse keeps their own). A house with a name, or with no seat yet, is left as it is.
+ * or when a copy that knows the seat merges in (store.js mergeFacts; a copy that knows the NAME hands the name itself,
+ * AUDIT FB1007b S1); every member of the blood born under the nameless house takes the name (a spouse keeps their own).
+ * A house with a name, or with no seat yet, is left as it is.
  * Answers whether it named the house.
  */
 export function nameAtSeat(family) {
   if (!family || String(family.surname ?? '').trim() || !family.seat?.loc) return false;
-  const sur = `of ${family.seat.loc}`;
+  nameHouse(family, `of ${family.seat.loc}`);
+  return true;
+}
+
+/**
+ * The house takes the name `sur`, and every member of its blood with none yet takes it with the house (a spouse keeps
+ * their own). AUDIT FB1007b S1: the merge names a house this way too (store.js mergeFacts) - with the name the other
+ * copy holds, never its seat's, since the seat moves (FAMILY-SEAT) and a house named for its first seat stays that house.
+ */
+export function nameHouse(family, sur) {
   family.surname = sur;
   for (const p of family.people ?? []) if ((p.kind ?? 'member') === 'member' && !String(p.surname ?? '').trim()) p.surname = sur;
-  return true;
 }
 
 /** B12: the heir answer, rolled once per person at birth - "Always" is true, "Random" the mod's 50%. */

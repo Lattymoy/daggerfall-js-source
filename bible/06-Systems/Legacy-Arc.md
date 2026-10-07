@@ -552,9 +552,13 @@ than standing still.
     presses as a switch is, to the town the one played stands in (its streets or a building of it, never a dungeon
     under it; never while a Succession waits): `Make <town> the family seat` (`scenes/legacyHost.js` familySeatHere,
     moveFamilySeat). The heirs are born there, the fallen laid to rest there, the house's news told there, and a house
-    with no home lives there; the house keeps its name. A moved seat carries when (`seat.at`, the wall clock), and the
-    later move stands in every merge (`systems/legacy/store.js` mergeFacts) - the newer copy by rev kept its own seat, so
-    a stale tab's write carried the old one back over the move.
+    with no home lives there; the house keeps its name. A moved seat carries when (`seat.at`, the wall clock - after the
+    stamp of the seat it moves), and the later move stands in every merge, whichever copy is the newer
+    (`systems/legacy/store.js` mergeFacts, `scenes/legacyHost.js` mergeFamily) - the newer copy by rev kept its own seat,
+    so a stale tab's write carried the old one back over the move. The name stays the house's in every merge: a copy
+    that never learned it takes it from the copy that holds it (`systems/legacy/family.js` nameHouse) - never names
+    itself for a moved seat. Where the move is not offered, the page says where it is. (AUDIT FB1007b S1-S5, T3:
+    `01-Overview/Audit-FB1007b.md`.)
   - **The Hall of Ancestors**: every house founded on this machine, living and ended, with its generations and counts.
 - **The Succession** (at a final death, a passing of the mantle, or a save of the past loaded): its own window
   (`ui/legacySuccession.js`, `ui/legacyDoor.js`), the death's own screen while it stands - the fallen's line, then the
@@ -591,7 +595,7 @@ than standing still.
 | LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name; two players wed (part three); the line in its own body (part four) and in its online homes (part five) | built |
 | LEGACY-SHEET | the house on the character sheet: the model, the generation, an Enduring house's age, toll and elder's word (section 11) | built |
 | LEGACY-NAME | a house founded nameless named at its seat; a seat's house said once; the news's doubled surname (section 8) | built |
-| FAMILY-SEAT | the seat moved from the House page to the town the one played stands in; the later move stands in every merge (section 11; `01-Overview/Field-Bugs-2026-10-07b.md`) | built |
+| FAMILY-SEAT | the seat moved from the House page to the town the one played stands in; the later move stands in every merge, and the house's name with it (section 11; `01-Overview/Field-Bugs-2026-10-07b.md`, `01-Overview/Audit-FB1007b.md`) | built, audited |
 | LEGACY-CHOICE | the popup online: Enduring, Bloodline or no lineage at chargen, kept on the character; online a house founded at a birth alone - a character loaded with no house plays without one (section 6) | built |
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |
 | AUDIT LEGACY II | the six-lens audit of LEGACY1-4 and LEGACY-HOME (`01-Overview/Audit-Legacy-II.md`) | built |

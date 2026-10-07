@@ -48,27 +48,19 @@ export const PROP_MODEL_TYPE = 3;
 /** FIELD BUGS 2026-10-07b TOWER-FLOORS (Jacob: "The two Daggerfall Castle courtyard tower interiors are very bugged.
  *  Everything inside them seems to be shifted up several meters including stairs, and there is open void in some
  *  spots"). Classic writes ObjectType 5 at the height of the floor the model stands on: 1,250 of its 1,433 interior
- *  records are flat floor planes (1000, 1100, 1300, 1500, 1700, 1800, 2700, no height), and every one of the 1,433 sits on
- *  a storey (YPos a multiple of STOREY). The other 183 are models centred on their own origin - room shells such as
- *  31024 and 31031, the two-storey stair 31023, the hall 28703 - in seven records alone: Castle Daggerfall's two
- *  courtyard towers (CUSTAA05 #0 and #1), the castle's three dungeon-door wings (#4-#6) and two shops (LIBRAM00 #7,
- *  BOOKAS00 #8). Written as ObjectType 13, each of those models is put at its centre with its lowest vertex on a
- *  storey (31024 at YPos -63, half its 126), in every one of its uses; written as 5, at its storey, DFU stood it half
- *  its height under that (DaggerfallInterior.cs:433-436) - a tower storey's furniture, lights and markers 1.58 m over
- *  its floor, the stair 3.2 m under its own, the room's door 1.6 m under the street's. So DFU carries the castle's
- *  broken towers (the DFWorkshop thread "CUSTAA05.RMB - Restored Tower Buildings' Interior"). Stood on its lowest
- *  vertex, a model stands on its storey and a floor plane stays where it lay (2700's lowest vertex is 0.1 mm under). */
+ *  records are flat planes (1000, 1100, 1300, 1500, 1700, 1800, and 2700 - a ceiling, facing down), and every one of the
+ *  1,433 sits on a storey (YPos a multiple of 129). The other 183 are models centred on their own origin - room shells
+ *  such as 31024 and 31031, the two-storey stair 31023, the hall 28703 - in seven records alone: Castle Daggerfall's two
+ *  courtyard towers (CUSTAA05 #0 and #1), the castle's three dungeon-door wings (#4-#6, never entered as rooms) and two
+ *  House2 rooms of blocks no location places (LIBRAM00 #7, BOOKAS00 #8). Written as ObjectType 13, each of those models
+ *  is put at its centre with its lowest vertex on a storey (31024 at YPos -63, half its 126), in every one of its uses;
+ *  written as 5, at its storey, DFU stood it half its height under that (DaggerfallInterior.cs:433-436) - a tower
+ *  storey's furniture, lights and markers 1.6 m over its floor, the stair 3.2 m under its own, the room's door 1.6 m
+ *  under the street's. So DFU carries the castle's broken towers (the DFWorkshop thread "CUSTAA05.RMB - Restored Tower
+ *  Buildings' Interior"). Stood on its lowest vertex, a model stands on its storey and a plane stays where it lay (2700's
+ *  lowest vertex is 0.1 mm under it). AUDIT FB1007b F1: the hall 28703 of the two unplaced rooms is written off even
+ *  that convention - a storey high, and at its stair shaft's X/Z - and is left as written: no player can enter them. */
 export const FLOOR_MODEL_TYPE = 5;
-/** TOWER-FLOORS: one classic storey in model units - the towers' YPos step, and the step between every storey an
- *  ObjectType 13 room stands its shells on (-63, -192, -321, -450). */
-export const STOREY = 129;
-/** TOWER-FLOORS' repair, as DaggerfallInterior.IsBadInteriorModel repairs classic data: the one floor model classic
- *  writes a storey over the convention. The hall 28703's floor is exactly a storey over the foot of the stair shaft
- *  beneath it; its 89 ObjectType 13 uses stand that foot on a storey (YPos -159), and its two ObjectType 5 uses
- *  (LIBRAM00 #7, BOOKAS00 #8) name the storey of its floor - the shops' upper storey, where the ladder's top and two
- *  enter markers are. Model id -> the storeys its lowest vertex stands under the one its record names. */
-const FLOOR_MODEL_STOREYS_UNDER = new Map([[28703, 1]]);
-export const floorModelStoreysUnder = (modelIdNum) => FLOOR_MODEL_STOREYS_UNDER.get(modelIdNum) ?? 0;
 /** DaggerfallInterior's action doors: model 9000 plus the record's door model index, of five (AddActionDoors). HOME-DOORS
  *  reads the same five as the doors an owner may hang in a doorway (systems/decorDoorways.js). */
 export const DOOR_MODEL_BASE_ID = 9000;
@@ -197,7 +189,7 @@ export function layoutInterior(dfBlock, blockIndex, recordIndex, getModel) {
     } else if (obj.objectType === FLOOR_MODEL_TYPE) {
       // TOWER-FLOORS: the storey it is written at, under its lowest vertex.
       px = obj.xPos * GLOBAL_SCALE;
-      py = (-obj.yPos - STOREY * floorModelStoreysUnder(obj.modelIdNum)) * GLOBAL_SCALE + -lowestY(model);
+      py = -obj.yPos * GLOBAL_SCALE + -lowestY(model);
       pz = obj.zPos * GLOBAL_SCALE;
     } else {
       px = obj.xPos * GLOBAL_SCALE;

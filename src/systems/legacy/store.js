@@ -12,7 +12,7 @@
 //
 // Storage is handed in (systems/appStorage.js appStorage / tabStorage), so this is headless-testable; every read and
 // write is shielded, because storage throws under some privacy modes and a family must never cost the player a game.
-import { readFamily, FAMILY_VERSION, nameAtSeat, leanRecord } from './family.js';
+import { readFamily, FAMILY_VERSION, nameAtSeat, nameHouse, leanRecord } from './family.js';
 import { mergeNews, mergeHeard } from './influence.js';   // LEGACY6; AUDIT LEGACY III A8: a reader's heard news
 
 export const FAMILY_KEY_PREFIX = 'dagger.legacy.family.';
@@ -177,6 +177,11 @@ export function mergeFacts(mine, other) {
   // whichever copy is the base by rev: a stale tab's or device's write carried the old seat back over the move. A seat
   // neither copy moved is the base's, or the other's when the base has none (the first town noted, as ever)
   if (other.seat && (!mine.seat || (Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0))) mine.seat = { ...other.seat };
+  // AUDIT FB1007b S1: THE NAME IS THE HOUSE'S, never its seat's - the seat moves now, and a copy that never learned the
+  // name (a tab still in Privateer's Hold) named itself for the moved seat: the house's name flipped, the founder's with
+  // it. It takes the name the other copy holds; and a member of the blood a stale save left nameless takes the house's
+  const houseName = String(mine.surname ?? '').trim() || String(other.surname ?? '').trim();
+  if (houseName) nameHouse(mine, houseName);
   nameAtSeat(mine);   // LEGACY-NAME: a nameless house is named with the seat it learned - here, from the copy that saw it
   if (!mine.home && other.home) mine.home = { ...other.home };
   mine.news = mergeNews(mine.news, other.news);   // LEGACY6: what the towns heard is never unheard

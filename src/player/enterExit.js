@@ -113,9 +113,10 @@ export const INTERIOR_VOID_DROP = 10;
  * over nothing (SetStanding's ray finds no floor, PlayerEnterExit.cs
  * :1240-1254, and the room has no ground): 146 of the 10,309 entries of
  * both packs (Warvale's GENRAS00 #1, #2 and #7), 16 of Daggerfall's own
- * 11,452 (the desert blocks' floorless halves - ALCHAS00/01/03 and their
- * kin; FIELD BUGS 2026-10-07b TOWER-FLOORS stood two more on their floors
- * - interiorLayout.js FLOOR_MODEL_TYPE). Handed `standsAt`, each of DFU's two arms takes only a spot it
+ * 11,452 (floorless halves of rooms in ten blocks no location places -
+ * ALCHAS00/01/03 and their kin, AUDIT FB1007b T1; FIELD BUGS 2026-10-07b
+ * TOWER-FLOORS stood two more on their floors - interiorLayout.js
+ * FLOOR_MODEL_TYPE). Handed `standsAt`, each of DFU's two arms takes only a spot it
  * stands: the doors in FindClosestInteriorDoor's order (nearest the
  * check first), then the markers in FindClosestEnterMarker's (nearest
  * the exterior door first) - every landing DFU makes on a floor is
@@ -410,7 +411,7 @@ export function interiorVoidRescue(collider, at) {
 
 /** FIELD BUGS 2026-10-04d VOID-ENTRY: THE FAILSAFE. A body below `rescue.belowY` is under everything the building
  *  stands on - nothing can catch it there, and it falls for good, in the black, every door and light out of reach
- *  ("Complete darkness and possibly stuck"): a floorless half of a room walked off (Daggerfall's own desert blocks),
+ *  ("Complete darkness and possibly stuck"): a floorless half of a room walked off (in blocks of Daggerfall's own),
  *  a save or a Recall anchor made in the void (RestorePosition lands it there raw). It stands again where the door
  *  landed it - the spawn clears the fall a load carried in - and the answer is whether it did. */
 export function standFromVoid(rescue, player) {

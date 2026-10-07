@@ -62,7 +62,7 @@ export const LEGACY_TEXT = Object.freeze({
   seat: (loc) => `${loc} is your family's seat.`,
   // FAMILY-SEAT (FIELD BUGS 2026-10-07b): the seat moved where the one played stands (the House page)
   seatMoved: (loc) => `The house moves its seat: ${loc} is your family's seat.`,
-  seatNowhere: 'Stand in a town - its streets or one of its buildings - to make it the family\'s seat.',
+  seatNowhere: 'Stand in another town - its streets or one of its buildings - to make it the family\'s seat.',   // AUDIT FB1007b S5: and the House page's hint
   named: (sur) => `Your house takes its seat's name: the house of ${houseWord(sur)}.`,   // LEGACY-NAME: a house founded nameless, named
   elder: (name, age) => `${name} is ${age} - an elder of the house now. The years ahead are fewer than those behind.`,
   born: (name, loc) => `${name} takes up the family's name in ${loc}.`,
@@ -131,6 +131,9 @@ export function mergeFamily(stored, saved, cid) {
   // AUDIT LEGACY III A2: a save's copy newer than the store's takes the store's facts in - the page's copy is made from
   // the store as it stands (adopt notes it), so its first write never drops a death another tab stored meanwhile
   if (base === saved) mergeFacts(out, stored);
+  // AUDIT FB1007b T3: and the store's copy the newer, the save's LATER MOVE of the seat stands all the same (FAMILY-SEAT's
+  // stamp, as every merge reads it) - a save that carries a move its store never took (another device's) lost it here
+  else if (saved.seat && (Number(saved.seat.at) || 0) > (Number(out.seat?.at) || 0)) out.seat = { ...saved.seat };
   const me = cid ? out.people.find((p) => p.characterId === cid) : null;
   if (!me) return out;
   // the save's own word on them, by who they are - never by an id the store may have given another (store.js rekeyClashes)
@@ -1208,7 +1211,9 @@ export function createLegacyHost(deps) {
   function moveFamilySeat() {
     const t = familySeatHere();
     if (!t) return { ok: false, why: family?.pending ? LEGACY_TEXT.pending : LEGACY_TEXT.seatNowhere };
-    family.seat = { ...t, at: Math.floor(deps.wall?.() ?? Date.now()) };
+    // AUDIT FB1007b S2: the newest word on the seat, as writeCurrent's savedAt is - after the stamp of the seat it moves,
+    // so a move stands over that seat in every merge though this clock run behind the one that stamped it (a device's)
+    family.seat = { ...t, at: Math.max((Number(family.seat?.at) || 0) + 1, Math.floor(deps.wall?.() ?? Date.now())) };
     const nameTaken = nameAtSeat(family);   // LEGACY-NAME: a nameless house takes its seat's name, as at the first
     touch(family);
     store();

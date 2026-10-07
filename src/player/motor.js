@@ -1738,6 +1738,10 @@ export class PlayerMotor {
 
   /** CLIMB2: on the wall - hanging from a lip, or free-climbing a face. */
   get onWall() { return !!this._wall; }
+  /** AUDIT FB1007b C3: a hold a save (or a re-anchor) carried, waiting for the next step to take it again (restoreFall) -
+   *  the body is on the wall in all but that step, and a host that read it as on foot meanwhile sped the keys' travel up
+   *  under it, and the travel let the hold go. */
+  get holdPending() { return !!this._pkRestore; }
   /** CLIMB4: the move in flight (read-only: its kind, its clock `t`), or null - the feel's and the sounds'. */
   get climbMove() { return this._pkMove; }
   /** AUDIT CLIMB-ARC F3/F8: the body's OWN way on the wall, a frame at a time: the render-frame feet (bodyFeetAt - the

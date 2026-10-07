@@ -15013,16 +15013,23 @@ Every dungeon's room is keyed by its map id (`net/online.js` roomKeyFor), so eve
 in ONE world room, `dungeon:m187853213`: the others' bodies, the room's memory (WORLD1 - the dead stay dead, the doors
 stay open), its simulation (WORLD2), its acts (WORLD3) and its loot (WORLD4), and a trade from anyone there (a peer in
 the room). The tutorial dungeon now keys NO room: `scenes/worldModes.js` roomIdentity marks it `solo` - the location on
-the classic start's own cell, read off the configured Startup.StartCellX/Y as the classic start reads it
-(`systems/startDungeon.js` isStartDungeon, which PH1's online respawn there reads too) - and `scenes/world.js`'s key
-block answers `solo` with null, which the frame's `!key` arm leaves (AUDIT ONLINE D4: a place keyed no room is no room).
+the shipped start's cell, 109/158 (`systems/startDungeon.js` isTutorialHold; AUDIT FB1007b H1: never the player's own
+Startup.StartCellX/Y, a setting, which took any dungeon a player named out of the shared world - the classic start, PH1
+and D-ONLINE2 read the configured cell as ever, isStartDungeon) - and `scenes/world.js`'s key block answers `solo` with
+null, which the frame's `!key` arm leaves (AUDIT ONLINE D4: a place keyed no room is no room).
 Every shared lane asks `isWorldRoom` of the room it is in, so they go quiet with it; the dungeon is the character's own
 save's, as it is offline. Chat's World, Region, Party and Guild tabs ride the hub and keep talking; the Local tab has
-nobody to hear. The street outside the Hold is the shared world again (its cell's room). The relay is untouched: an
-older client still joins the old room, and only with other older clients.
+nobody to hear, and says so (AUDIT FB1007b H5, with a page held out, the party card and the Online pane). The street
+outside the Hold is the shared world again (its cell's room). The relay is untouched: an older client still joins the old
+room, and only with other older clients.
+
+AUDIT FB1007b (`01-Overview/Audit-FB1007b.md`): no room remembers the Hold, so every entry built it whole, its loot
+rolled anew at the player's level - online the page keeps its memory as a room keeps one, at the door out, laid back at
+the next door in (WORLD8's hour on it), forgotten by a load (H2); the hub's link hears the relay's clock for it, where
+the presence session hears no welcome (H4); and a staff `/tp` to a player there is refused as unavailable (H3).
 
 Of every location in the world, the start cell holds one: Daggerfall's Privateer's Hold (map id 187853213, pixel
 109/158; MAPS.BSA read through the port's own reader).
 
-- **Pinned**: `test/fb1007b_holdsolo.test.js` (4; one gated on ARENA2); `tools/mutants/fb1007b.json` (its five
-  FB1007B-HOLD / START-CELL / PH1 records, all dead). Record: `01-Overview/Field-Bugs-2026-10-07b.md`.
+- **Pinned**: `test/fb1007b_holdsolo.test.js` (9; one gated on ARENA2); `tools/mutants/fb1007b.json` (its
+  FB1007B-HOLD / START-CELL / PH1 records and the audit's H records). Record: `01-Overview/Field-Bugs-2026-10-07b.md`.

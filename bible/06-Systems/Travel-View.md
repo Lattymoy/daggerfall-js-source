@@ -1926,17 +1926,25 @@ travel."* - and Sahh, of House R'is: *"would also reduce the mortality rate of t
 The time scale grows the motor's fixed step, never its count (`systems/timeScale.js`): at x60 a step is a second of
 game time, and every climb timer - the classic climb's 0.77 s start and 0.82 s checks, the free climb's start and its
 wall tally - fell due every step or two. Measured on the world host's own motor (motorStats, climbingDeps, parkourDeps;
-Climbing 40, two real seconds walking into a wall): at walking pace one hold and one or two Climbing rolls; at x60 eight
-to ten holds, 59 rolls (the classic climb) or 94 (the free climb), and six or seven falls of more than five metres.
+Climbing 40, two real seconds walking into a wall): at walking pace one hold and one or two Climbing rolls; at x60 the
+free climb's 8 holds, 94 rolls and 7 falls of more than five metres, and the classic climb's 59 to 62 rolls (its rolls
+left to chance, 6 to 16 holds and 4 to 8 such falls).
 
 While a journey runs or the keys travel under the view (`scenes/world.js` wildTravelling - the same "fast traveller"
 WILD-ALERT's gate reads), neither climb takes a wall: the motor's `travelling` (`player/motor.js`) is a third thing
 that holds no wall, beside levitation and the saddle - the classic climb's abort ladder (`player/climbing.js`) and the
-free climb's `unheld`, so no walk-in start, no jump's grab, no lower and no mantle, and a hold the journey finds lets
-go. The keys' travel walks at walking pace while the hands hold a wall (TV-WASD's `onFoot`), so a climber is never
-put to a journey's pace by the keys. The four hosts: world.js wired (its one motor, the street's, a building's and a
-dungeon's - worldModes.js drives it indoors); exterior.js builds its own motor and has no travel; dungeonContext.js
-builds no motor.
+free climb's `unheld`, so no climb begins (no walk-in start, no jump's grab, no lower and no mantle; a move already
+under way finishes) and a hold the journey finds lets go. The keys' travel walks at walking pace while the hands hold a
+wall (TV-WASD's `onFoot`), so a climber is never put to a journey's pace by the keys. The four hosts: world.js wired
+(its one motor, the street's, a building's and a dungeon's - worldModes.js drives it indoors); exterior.js builds its
+own motor and has no travel; dungeonContext.js builds no motor (the standalone `scenes/dungeon.js` builds its own and
+writes no time scale).
 
-- **Pinned**: `test/fb1007b_climbtravel.test.js` (4); `tools/mutants/fb1007b.json` (its five CLIMB / ENHANCED / HOST /
-  KEYS records, all dead).
+AUDIT FB1007b (`01-Overview/Audit-FB1007b.md`): the motor's journey is out of doors alone (`travellingOutdoors`, C1 -
+only the exterior frame's governor clears the keys' travel, so a load taken with the keys held left it standing and no
+wall indoors climbed); a hold a load carried is no body on foot until the step takes it again (the motor's
+`holdPending`, C3 - the keys' travel sped up under it and let it go); and no journey sets out from a wall
+(`climbingNow`, C2 - the view's click and the map's walked trip refuse it, `TRAVEL_VIEW_TEXT.climbing`).
+
+- **Pinned**: `test/fb1007b_climbtravel.test.js` (7); `tools/mutants/fb1007b.json` (its CLIMB / ENHANCED / HOST / KEYS
+  records and the audit's C records).

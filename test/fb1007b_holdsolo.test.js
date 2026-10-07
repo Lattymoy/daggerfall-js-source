@@ -17,13 +17,19 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { parse } from 'acorn';
-import { isStartDungeon, isStartCell } from '../src/systems/startDungeon.js';
+import { isStartDungeon, isStartCell, isTutorialHold, SHIPPED_START_CELL } from '../src/systems/startDungeon.js';
 import { mapPixelToLongitudeLatitude, MapsFile } from '../src/formats/mapsFile.js';
 import { setValue } from '../src/systems/settings.js';
 import { roomKeyFor } from '../src/net/online.js';
-import { isWorldRoom } from '../src/net/wire.js';
+import { isWorldRoom, SOCIAL_ROOM, RELAY_VERSION } from '../src/net/wire.js';
+import { OnlineSession } from '../src/net/online.js';
+import { fakeSocketClass } from './fakeSocket.mjs';
+import { SOLO_LOCAL_TEXT } from '../src/net/chat.js';
+import { withMe } from '../src/ui/partyPanel.js';
+import { PAGE_NO_READERS_TEXT } from '../src/net/journalPage.js';
 import { privateInteriorOf } from '../src/net/privateInterior.js';
 import { worldCoordToMapPixel } from '../src/world/streamingWorld.js';
+import { validStaffDestination } from '../src/net/staffTeleport.js';
 
 const read = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 const HOLD_MAP_ID = 187853213;   // DaggerfallDungeon.cs:151 `case 187853213: // Daggerfall/Privateer's Hold`
@@ -57,8 +63,8 @@ const props = new Map();
   if (n.type === 'Property' && n.key?.name) props.set(n.key.name, WM.slice(n.start, n.end));
   for (const v of Object.values(n)) if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === 'object') walk(v);
 })(parse(WM, { ecmaVersion: 'latest', sourceType: 'module' }));
-const roomIdentityIn = (dungeonLoc) => Function('mode', 'dungeonLoc', 'isGateArena', 'isArenaFloor', 'isStartDungeon',
-  `return ({${props.get('roomIdentity')}}).roomIdentity();`)('dungeon', dungeonLoc, () => false, () => false, isStartDungeon);
+const roomIdentityIn = (dungeonLoc) => Function('mode', 'dungeonLoc', 'isGateArena', 'isArenaFloor', 'isStartDungeon', 'isTutorialHold',
+  `return ({${props.get('roomIdentity')}}).roomIdentity();`)('dungeon', dungeonLoc, () => false, () => false, isStartDungeon, isTutorialHold);
 
 // world.js's key block, executed from its source - the one the frame names its room by
 const W = read('src/scenes/world.js');
@@ -92,8 +98,125 @@ test('HOLD-SOLO: the tutorial dungeon\'s room identity says it is every characte
 
 test('HOLD-SOLO: worldModes\' online death in the Hold (PH1) asks the same helper - one reading of the tutorial dungeon in the mode machine', () => {
   assert.match(WM, /const isPrivateersHold = isStartDungeon\(dfLocation\);/);
-  assert.match(WM, /\.\.\.\(isStartDungeon\(dungeonLoc\) \? \{ solo: true \} : \{\}\)/);
+  assert.match(WM, /\.\.\.\(isTutorialHold\(dungeonLoc\) \? \{ solo: true \} : \{\}\)/);
   assert.doesNotMatch(WM, /getInt\('Startup', 'StartCell[XY]'\)/, 'no second reading of the start cell in the mode machine');
+});
+
+test('AUDIT FB1007b H1: the dungeon no one shares is the SHIPPED start\'s - a player\'s own start cell (a setting) takes no dungeon out of the shared world, and leaves the Hold their own', () => {
+  assert.deepEqual(SHIPPED_START_CELL, { x: 109, y: 158 });
+  assert.deepEqual([locationAt(109, 158), locationAt(108, 158), locationAt(109, 157), { name: 'no table' }, null].map(isTutorialHold), [true, false, false, false, false], 'both coordinates');
+  const barrow = locationAt(958, 450, { name: 'Scourg Barrow', mapId: 701948302 });
+  try {
+    setValue('Startup', 'StartCellX', '958');
+    setValue('Startup', 'StartCellY', '450');
+    assert.equal(isStartDungeon(barrow), true, 'PH1\'s tutorial follows the configured start, as the classic start does');
+    assert.equal(isTutorialHold(barrow), false);
+    const there = roomIdentityIn(barrow);
+    assert.equal(there.solo, undefined, 'the start cell a player set keys its dungeon\'s shared room all the same');
+    assert.equal(keyIn(there), 'dungeon:m701948302');
+    const hold = roomIdentityIn(locationAt(109, 158));
+    assert.equal(hold.solo, true, 'and the Hold is their own still');
+    assert.equal(keyIn(hold), null);
+  } finally { setValue('Startup', 'StartCellX', '109'); setValue('Startup', 'StartCellY', '158'); }
+});
+
+test('AUDIT FB1007b H3: a staff /tp to a player in the Hold is refused as unavailable - the Hold is each character\'s own, and the staff landed in their own empty copy, told they stood at the player\'s exact position', () => {
+  const at = W.indexOf('  function staffDestination() {');
+  const end = W.indexOf('\n  }\n', at);
+  assert.ok(at > 0 && end > at);
+  const capture = (ident) => new Function('walkMode', 'playerSpawned', 'worldMoveBusy', 'modes', 'seatOut', 'playerEntity', 'siegeSession', 'royalSession', 'privateRoomHere',
+    'state', 'player', 'cam', 'playerTravelPixel', 'ohAbyss', 'csaOn', 'validStaffDestination',
+    `${W.slice(at, end + 4)} return staffDestination();`)(true, true, () => false,
+    { mode: 'dungeon', transitioning: false, roomIdentity: () => ident, anchorContext: () => null, gateArenaGate: () => null, dungeonLocation: locationAt(109, 158) },
+    () => false, { health: 10 }, null, null, () => null, { current: { x: 109, y: 158 } }, { pos: [1, 2, 3] }, { yaw: 0, pitch: 0 }, () => ({ x: 109, y: 158 }), null, () => false, validStaffDestination);
+  const hold = roomIdentityIn(locationAt(109, 158));
+  assert.deepEqual(capture(hold), { error: 'unavailable' }, 'the Hold: unavailable');
+  const other = capture(roomIdentityIn(locationAt(120, 150, { name: 'Castle Necromoghan', mapId: 12345 })));
+  assert.equal(other.dest?.kind, 'dungeon', 'any other dungeon: its place, as ever');
+});
+
+test('AUDIT FB1007b H4: in the Hold the presence session keys no room and hears no welcome - the hub\'s link hears the relay\'s clock for it, as the presence session\'s own welcome is heard', () => {
+  const line = /\n {6}if \(tab\.room === SOCIAL_ROOM\) link\.onClock = (\(offsetMs\) => online\?\.onClock\?\.\(offsetMs\));\n/.exec(W)?.[1];
+  assert.ok(line, 'the hub link\'s clock, handed to the presence session\'s handler');
+  assert.match(W, /\n {4}online\.onClock = \(offsetMs\) => \{ const was = _sharedOffsetMs;[^\n]*hearSharedClock\(\); \};/, 'the handler: the offset, the arrival, the absence paid');
+  const heard = [];
+  const online = { onClock: (ms) => heard.push(ms) };
+  const { FakeWS, sockets } = fakeSocketClass();
+  const info = console.info; console.info = () => {};
+  try {
+    const link = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'peer-me', secret: 'secret-of-peer-me', WebSocketImpl: FakeWS, presence: false });
+    link.onClock = new Function('online', `return ${line};`)(online);
+    link.join(SOCIAL_ROOM, null);
+    sockets[0].open();
+    sockets[0].receive({ t: 'welcome', id: 'peer-me', peers: [], n: 1, v: RELAY_VERSION, now: Date.now() + 5000 });
+  } finally { console.info = info; }
+  assert.equal(heard.length, 1, 'heard once, on the hub\'s welcome');
+  assert.ok(Math.abs(heard[0] - 5000) < 500, `the relay's offset (${heard[0]})`);
+});
+
+test('AUDIT FB1007b H2: the tutorial dungeon keeps its own memory online - taken at the door out, laid back at the next door in (its dead stay dead, its emptied containers empty, WORLD8\'s hour on them) - and a load forgets it; offline, and every shared dungeon, as ever', () => {
+  const from = W.indexOf('  let _soloMemory = null;');
+  const to = W.indexOf('\n  };\n', W.indexOf('  const restoreSoloMemory = () => {', from));
+  assert.ok(from > 0 && to > from, 'the memory\'s two doors');
+  const host = (onlineOn) => new Function('onlineOn', 'modes', `let _loading = false; ${W.slice(from, to + 5)}
+    return { keepSoloMemory, restoreSoloMemory, loading: (v) => { _loading = v; }, memory: () => _soloMemory };`)(onlineOn, modes);
+  let ident = null, built = 0;
+  const restored = [];
+  const modes = { roomIdentity: () => ident, placeSharedWorld: () => ({ locationKey: 'dungeon:7', stamp: `build-${built}`, world: { foes: [] } }), restorePlaceSharedWorld: (m) => restored.push(m.stamp) };
+  const hold = roomIdentityIn(locationAt(109, 158));
+  // online: out of the Hold and in again
+  const h = host(true);
+  ident = hold; built = 1;
+  h.keepSoloMemory();
+  h.restoreSoloMemory();
+  assert.deepEqual(restored, ['build-1'], 'the next door in lays the last visit\'s memory back');
+  // a shared dungeon keeps nothing here - its room remembers it
+  ident = roomIdentityIn(locationAt(120, 150, { name: 'Castle Necromoghan', mapId: 12345 }));
+  h.restoreSoloMemory();
+  assert.deepEqual(restored, ['build-1'], 'another dungeon is not the Hold');
+  // a load is its own time
+  ident = hold; built = 2;
+  h.loading(true);
+  h.keepSoloMemory();
+  assert.equal(h.memory(), null, 'the load\'s leave forgets');
+  h.restoreSoloMemory();
+  h.loading(false);
+  h.restoreSoloMemory();
+  assert.deepEqual(restored, ['build-1'], 'and nothing is laid over the save\'s own dungeon');
+  // offline the Hold is every dungeon's way - built whole at every entry, as DFU builds it
+  const off = host(false);
+  off.keepSoloMemory();
+  assert.equal(off.memory(), null);
+  // the doors: the dungeon's leave and its entry, and the load's reset
+  assert.match(W, /onDungeonLeave: \(\) => \{[^\n]*worldPublish\(performance\.now\(\), true\); keepSoloMemory\(\); \},/);
+  assert.match(W, /onTransitionDungeonInterior: \(ctx\) => \{[^\n]*navalTransition\(\); restoreSoloMemory\(\); \},/);
+  assert.match(W.slice(W.indexOf('  function overworldLoadReset() {'), W.indexOf('  function applyPose(pose) {')), /\n {4}_soloMemory = null;/);
+});
+
+test('AUDIT FB1007b H5: in the Hold the game says the player is alone - never silence on the Local tab, never "not connected" on a page held out, never a party member "with me" in another\'s Hold, and the Online pane says the Hold is each player\'s own', () => {
+  // the Local tab's door, executed: in the Hold a line is refused aloud; anywhere else it goes
+  const cut = (head, tail = '\n  };\n') => { const at = W.indexOf(head); const end = W.indexOf(tail, at); assert.ok(at > 0 && end > at, head); return W.slice(at, end + tail.length); };
+  const send = (ident) => {
+    const pushed = [], sent = [];
+    const ok = new Function('online', 'modes', 'chatLog', 'chanOld', 'guildOld', 'socialLink', 'chatLinks', 'social', 'myGuildTag',
+      'SOLO_LOCAL_TEXT', 'CHAN_OLD_RELAY_TEXT', 'GUILD_OLD_RELAY_TEXT', 'EMOTE_OLD_RELAY_TEXT', 'NO_PARTY_TEXT', 'NO_GUILD_TEXT',
+      `${cut('  const soloHere = () =>', ';\n')} ${cut('  const chatSend = (tabId, text, from = tabId, { me = false } = {}) => {')} return chatSend('local', 'hello');`)(
+      { status: 'open', emoteOk: true, sendChat: (t) => { sent.push(t); return true; } }, { roomIdentity: () => ident }, { push: (tab, l) => pushed.push([tab, l.text]) },
+      () => false, () => false, () => null, new Map(), null, () => null, SOLO_LOCAL_TEXT, 'old', 'old', 'old', 'no party', 'no guild');
+    return { ok, pushed, sent };
+  };
+  assert.deepEqual(send(roomIdentityIn(locationAt(109, 158))), { ok: false, pushed: [['local', SOLO_LOCAL_TEXT]], sent: [] }, 'the Hold: said, and nothing sent');
+  assert.deepEqual(send(roomIdentityIn(locationAt(120, 150, { mapId: 12345 }))), { ok: true, pushed: [], sent: ['hello'] }, 'another dungeon: the room hears it');
+  assert.match(W, /if \(tabId === 'local' && soloHere\(\)\) return SOLO_LOCAL_TEXT;/, 'the strip says it before a line is typed');
+  assert.match(cut('  const chatRoll = (tabId, spec) => {'), /if \(tabId === 'local' && soloHere\(\)\) return why\(SOLO_LOCAL_TEXT\);/, 'and a roll asked there');
+  assert.match(cut('  const pageShareHere = () => {'), /: soloHere\(\) \? PAGE_NO_READERS_TEXT/, 'a page held out: nobody near, never "not connected"');
+  assert.equal(PAGE_NO_READERS_TEXT, 'No one is near enough to show it to.');
+  // the party card: two members, each in their own Hold, are not together
+  const inHold = { px: 109, py: 158, in: 1, loc: "Privateer's Hold" };
+  assert.equal(withMe({ ...inHold }, { ...inHold }), false, 'each in their own Hold: the place line is drawn');
+  assert.equal(withMe({ ...inHold, px: 120, py: 150 }, { ...inHold, px: 120, py: 150 }), true, 'another dungeon: together');
+  assert.equal(withMe({ ...inHold, in: 0 }, { ...inHold, in: 0 }), true, 'on the cell\'s ground outside: together');
+  assert.match(read('src/ui/enhancedMenu.js'), /those monsters can hurt you too\. Privateer\\u2019s Hold, where every character begins, is each player\\u2019s own\. /);
 });
 
 const ARENA2 = process.env.ARENA2_PATH;

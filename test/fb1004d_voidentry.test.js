@@ -12,8 +12,8 @@
 // outside) into the black, every door and every light out of reach. Warvale (location-17-842) stands GENRAS00, whose
 // houses #1, #2 and #7 are three of the 146 entries of both packs that land so (54 village, 92 city - 2,214 of the
 // 7,317 villages and 405 of the 410 cities hold one), out of 10,309; Daggerfall's own blocks have 16 of 11,452 (the
-// desert blocks' floorless halves; FIELD BUGS 2026-10-07b TOWER-FLOORS stood two more - a library's and a bookshop's
-// rooms, half a shell under the street - on their floors). The fix: the landing law takes only a spot it can stand on (enterExit.js
+// floorless halves of rooms in ten blocks no location places, AUDIT FB1007b T1; FIELD BUGS 2026-10-07b TOWER-FLOORS
+// stood two more - two House2 rooms of two more such blocks, half a shell under the street - on their floors). The fix: the landing law takes only a spot it can stand on (enterExit.js
 // interiorLanding's `standsAt`, the host's standsOnFloor over the room), a room with nowhere to stand is refused in
 // DFU's own words, a room that will not lay out says them as DFU does, and a body below everything a building stands
 // on is stood again at the door (worldModes.js frame()).
@@ -531,8 +531,8 @@ test('VOID-ENTRY with ARENA2: every building of both packs and of BLOCKS.BSA ent
       no8: 4, no8DfuVoid: 4, no8LawFloor: 4, noMarker: 0, markerVoid: 0, markerVoidLawFloor: 0, markerVoidRefused: 0 });
     assert.deepEqual(packs['beautiful-cities'], { entries: 7504, dfuVoid: 92, lawVoid: 0, refused: 0, moved: 0, unbuilt: 0,
       no8: 5, no8DfuVoid: 5, no8LawFloor: 5, noMarker: 0, markerVoid: 0, markerVoidLawFloor: 0, markerVoidRefused: 0 });
-    // Daggerfall's own: 16 over nothing, every one from a check marker over nothing (the desert blocks' floorless
-    // halves) - 12 landed, 4 with nowhere to stand refused; two rooms with no marker at all land as DFU lands them.
+    // Daggerfall's own: 16 over nothing, every one from a check marker over nothing (floorless halves, in ten blocks no
+    // location places) - 12 landed, 4 with nowhere to stand refused; two rooms with no marker at all land as DFU lands them.
     // There were 18: LIBRAM00 #7's and BOOKAS00 #8's second doors stood their rooms half a shell under the street
     // until FIELD BUGS 2026-10-07b TOWER-FLOORS stood their floor models on their storeys
     assert.deepEqual(classic, { entries: 11452, dfuVoid: 16, lawVoid: 0, refused: 4, moved: 0, unbuilt: 6,

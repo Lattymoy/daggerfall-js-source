@@ -8,7 +8,8 @@
 // model (DaggerfallInterior.cs:433-436), so each shell stood half a shell (1.58 m) under its storey: the furniture,
 // lights and markers 1.58 m over the floor the player walks, the two-storey stair 3.2 m under its own, the room's door
 // 1.6 m under the street's. world/interiorLayout.js stands an ObjectType 5 model on its lowest vertex, as a prop is
-// stood - and the one model classic writes a storey over that (the hall 28703, in two shops) a storey lower.
+// stood. (AUDIT FB1007b F1/T1: two more records hold such models - House2 rooms of blocks no location places, whose
+// hall 28703 is written off the convention and left as written.)
 //
 // Fixtures: the layout's own input shape (BlocksFile's records), and with ARENA2 the player's own BLOCKS.BSA and
 // ARCH3D.BSA through the port's readers - nothing of either is kept.
@@ -16,12 +17,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { layoutInterior, isBadInteriorModel, floorModelStoreysUnder, FLOOR_MODEL_TYPE, PROP_MODEL_TYPE, STOREY, INTERIOR_MARKER } from '../src/world/interiorLayout.js';
+import { layoutInterior, isBadInteriorModel, FLOOR_MODEL_TYPE, PROP_MODEL_TYPE } from '../src/world/interiorLayout.js';
 import { getStaticDoors } from '../src/world/staticDoors.js';
 import { identity } from '../src/world/mat4.js';
 import { GLOBAL_SCALE, DOOR_TYPE, dfMeshToModel } from '../src/world/meshReader.js';
-import { doorWorldPosition } from '../src/player/enterExit.js';
+import { doorWorldPosition, standsOnFloor } from '../src/player/enterExit.js';
+import { Collider } from '../src/player/collider.js';
 
+const STOREY = 129;   // one classic storey in model units: every ObjectType 5 record's YPos is a multiple of it
 const STOREY_M = STOREY * GLOBAL_SCALE;   // 3.225
 const approx = (a, b, msg, eps = 1e-5) => assert.ok(Math.abs(a - b) < eps, `${msg}: ${a} vs ${b}`);
 /** A model as dfMeshToModel answers it: its Y-negated positions, and one building door plane up its middle. */
@@ -35,22 +38,18 @@ const roomOf = (records) => ({ rmbBlock: { subRecords: [{ interior: {
   header: { num3dObjectRecords: records.length }, block3dObjectRecords: records,
   blockFlatObjectRecords: [], blockDoorRecords: [], blockSection3Records: [] } }] } });
 
-test('TOWER-FLOORS: an ObjectType 5 model stands its lowest vertex on the storey it is written at - a centred shell rises half its height, the stair its own half, the hall 28703 to a storey under, a floor plane does not move - and every other type is placed as DFU places it', () => {
+test('TOWER-FLOORS: an ObjectType 5 model stands its lowest vertex on the storey it is written at - a centred shell rises half its height, the stair its own half, a floor plane does not move - and every other type is placed as DFU places it', () => {
   assert.equal(FLOOR_MODEL_TYPE, 5);
   assert.equal(PROP_MODEL_TYPE, 3);
-  assert.equal(STOREY, 129);
-  assert.deepEqual([28703, 31024, 31023, 1000].map(floorModelStoreysUnder), [1, 0, 0, 0]);
   const models = {
     31024: modelOf(-1.575, 1.575, true),   // a room shell, centred on its origin, with the room's door
     31023: modelOf(-3.2, 3.17),            // the two-storey stair
-    28703: modelOf(-3.975, 3.95),          // the hall: its floor at -0.75, a storey over the foot of its stair shaft
     1000: modelOf(0, 0),                   // a floor plane: no height
     41100: modelOf(-0.5, 0.7),             // a prop
   };
   const it = layoutInterior(roomOf([
     record(31024, 5, -129),   // the second storey's shell
     record(31023, 5, 0),      // the stair up from the ground storey
-    record(28703, 5, -129),   // the hall, written at its floor's storey
     record(1000, 5, -258),    // the third storey's floor plane
     record(31024, 13, -63),   // an ordinary room: ObjectType 13 at its centre
     record(41100, 3, 2),      // a prop on the ground floor
@@ -59,12 +58,10 @@ test('TOWER-FLOORS: an ObjectType 5 model stands its lowest vertex on the storey
   const y = it.placements.map((p) => p.matrix[13]);
   approx(y[0] - 1.575, STOREY_M, 'the shell\'s floor is its storey, not half a shell under it');
   approx(y[1] - 3.2, 0, 'the stair stands on the ground storey, not 3.2 m under it');
-  approx(y[2] - 3.975, 0, 'the hall\'s stair shaft stands on the ground storey');
-  approx(y[2] - 0.75, STOREY_M, 'and its floor on the storey its record names');
-  assert.equal(y[3], Math.fround(258 * GLOBAL_SCALE), 'a floor plane is placed exactly where DFU places it (the matrix is a Float32Array)');
-  assert.equal(y[4], Math.fround(63 * GLOBAL_SCALE), 'ObjectType 13 is DFU\'s (X, -Y, Z)');
-  assert.equal(y[5], Math.fround(2 * GLOBAL_SCALE + 0.5), 'the prop is DFU\'s +Y and lowest vertex');
-  assert.equal(y[6], Math.fround(-80 * GLOBAL_SCALE), 'any other type is DFU\'s (X, -Y, Z)');
+  assert.equal(y[2], Math.fround(258 * GLOBAL_SCALE), 'a floor plane is placed exactly where DFU places it (the matrix is a Float32Array)');
+  assert.equal(y[3], Math.fround(63 * GLOBAL_SCALE), 'ObjectType 13 is DFU\'s (X, -Y, Z)');
+  assert.equal(y[4], Math.fround(2 * GLOBAL_SCALE + 0.5), 'the prop is DFU\'s +Y and lowest vertex');
+  assert.equal(y[5], Math.fround(-80 * GLOBAL_SCALE), 'any other type is DFU\'s (X, -Y, Z)');
   // the shell's door rides the shell: the room's way out stands at its floor, where the street's door meets it
   assert.equal(it.doors.length, 3, 'the three placements of the door\'s shell');
   approx(doorWorldPosition(it.doors[0])[1], STOREY_M + 1.575, 'the door stands with its shell');
@@ -92,6 +89,12 @@ async function data() {
   return _data;
 }
 const storeyOf = (y) => Math.round(y / STOREY_M);
+/** The room's collider, as the hosts build it: every placement's mesh at its matrix. */
+function colliderOf(it, getModel) {
+  const c = new Collider();
+  it.placements.forEach((p, i) => { const m = getModel(p.modelIdNum); c.addMesh(`p${i}`, m.positions, m.indices, p.matrix); });
+  return c;
+}
 
 test('TOWER-FLOORS with ARENA2: Castle Daggerfall\'s two courtyard towers (CUSTAA05 #0 and #1) - five storeys whose shells stand on 0, 3.225, 6.45, 9.675 and 12.9, every piece of furniture and every marker on a storey, each stair from its storey up to the next, and the room\'s two doors where the tower\'s outside has them', { skip: SKIP }, async () => {
   const { blocks, getModel, extent } = await data();
@@ -127,7 +130,10 @@ test('TOWER-FLOORS with ARENA2: Castle Daggerfall\'s two courtyard towers (CUSTA
     });
     assert.deepEqual([...storeys].sort(), [0, 1, 2, 3, 4], `#${ri} five storeys from the street's own level`);
     assert.equal(stairs, 4, `#${ri} a stair up from each storey but the top`);
-    for (const m of it.markers) approx(m.y, storeyOf(m.y) * STOREY_M, `#${ri} a marker on a storey`, 1e-3);
+    // AUDIT FB1007b F1: every marker stands on a floor the room's own geometry holds, within a hand of it - a marker's
+    // height is its record's, which the layout never moves; the floor under it is what moved (1.575 m under, before)
+    const room = colliderOf(it, getModel);
+    for (const m of it.markers) assert.ok(standsOnFloor(room, [m.x, m.y, m.z], 0.1), `#${ri} marker ${m.type} at (${m.x.toFixed(2)}, ${m.y.toFixed(2)}, ${m.z.toFixed(2)}) stands on a floor`);
     const inside = it.doors.map((d) => doorWorldPosition(d)[1]).sort((a, b) => a - b);
     assert.equal(inside.length, 2);
     assert.ok(Math.abs(inside[0] - streetY) < 0.1, `#${ri} the room's door meets the street's (${inside[0].toFixed(2)} vs ${streetY.toFixed(2)})`);
@@ -135,30 +141,37 @@ test('TOWER-FLOORS with ARENA2: Castle Daggerfall\'s two courtyard towers (CUSTA
   }
 });
 
-test('TOWER-FLOORS with ARENA2: the two shops (LIBRAM00 #7, BOOKAS00 #8) - the ground storey\'s shells on the floor its furniture and markers stand on, and the hall 28703\'s floor on the upper storey, where the ladder\'s top and two enter markers are', { skip: SKIP }, async () => {
+const HAVE_MAPS = HAVE_ARENA2 && ['MAPS.BSA', 'CLIMATE.PAK', 'POLITIC.PAK'].every((f) => existsSync(join(ARENA2, f)));
+test('AUDIT FB1007b F1/T1 with ARENA2: the two other rooms the law moves (LIBRAM00 #7, BOOKAS00 #8) are houses (House2) of blocks no location places - no shop, no player\'s way in; their ground storey\'s shells stand on its floor all the same', { skip: HAVE_MAPS ? false : 'ARENA2_PATH not set' }, async () => {
   const { blocks, getModel, extent } = await data();
+  const { MapsFile } = await import('../src/formats/mapsFile.js');
+  const maps = new MapsFile();
+  const bytes = (f) => new Uint8Array(readFileSync(join(ARENA2, f)));
+  assert.ok(maps.load(bytes('MAPS.BSA'), bytes('CLIMATE.PAK'), bytes('POLITIC.PAK')));
+  const placed = new Set();
+  for (let r = 0; r < maps.regionCount; r++) {
+    const reg = maps.getRegion(r); if (!reg) continue;
+    for (let l = 0; l < reg.locationCount; l++) for (const n of maps.getLocation(r, l)?.exterior?.exteriorData?.blockNames ?? []) placed.add(n);
+  }
+  assert.ok(placed.has('CUSTAA05.RMB'), 'Daggerfall places the castle\'s block');
   for (const [name, ri] of [['LIBRAM00.RMB', 7], ['BOOKAS00.RMB', 8]]) {
+    assert.equal(placed.has(name), false, `no location places ${name}`);
     const bi = blocks.getBlockIndex(name);
     const block = blocks.getBlock(bi);
+    assert.equal(block.rmbBlock.fldHeader.buildingDataList[ri].buildingType, 18, `${name} #${ri} is a House2 (DFLocation.BuildingTypes)`);
     const it = layoutInterior(block, bi, ri, getModel);
     const recs = block.rmbBlock.subRecords[ri].interior.block3dObjectRecords;
-    let hall = null;
+    let shells = 0;
     it.placements.forEach((p, i) => {
-      if (recs[i].objectType !== FLOOR_MODEL_TYPE) return;
+      if (recs[i].objectType !== FLOOR_MODEL_TYPE || p.modelIdNum === 28703) return;
       const [lo, hi] = extent(p.modelIdNum);
-      if (p.modelIdNum === 28703) { hall = p; return; }
-      if (hi - lo > 0.01) approx(p.matrix[13] + lo, 0, `${name} #${ri} shell ${p.modelIdNum} on the ground storey`, 1e-3);
+      if (hi - lo > 0.01) { shells++; approx(p.matrix[13] + lo, 0, `${name} #${ri} shell ${p.modelIdNum} on the ground storey`, 1e-3); }
     });
-    assert.ok(hall, `${name} #${ri} has the hall`);
-    approx(hall.matrix[13] + extent(28703)[0], 0, `${name} #${ri} the hall's stair shaft stands on the ground storey`, 1e-3);
-    approx(hall.matrix[13] - 0.75, STOREY_M, `${name} #${ri} the hall's floor is the upper storey`, 1e-3);
-    const upper = it.markers.filter((m) => m.type === INTERIOR_MARKER.LADDER_TOP || (m.type === INTERIOR_MARKER.ENTER && m.y > 1));
-    assert.equal(upper.length, 3, `${name} #${ri} the ladder's top and two enter markers upstairs`);
-    for (const m of upper) approx(m.y, STOREY_M, `${name} #${ri} marker ${m.type} on the hall's floor`, 0.01);
+    assert.ok(shells > 0, `${name} #${ri} has shells the law stands`);
   }
 });
 
-test('TOWER-FLOORS with ARENA2: across every RMB block the law moves only ObjectType 5 placements off DFU\'s - the 183 centred models of seven records (the two towers, the castle\'s three dungeon-door wings, the two shops) to their storeys, the two of floor plane 2700 by its 0.1 mm, and none of the other 1,248 planes at all', { skip: SKIP, timeout: 120000 }, async () => {
+test('TOWER-FLOORS with ARENA2: across every RMB block the law moves only ObjectType 5 placements off DFU\'s - the 183 centred models of seven records (the two towers, the castle\'s three dungeon-door wings, the two unplaced House2 rooms) to their storeys, the two of floor plane 2700 by its 0.1 mm, and none of the other 1,248 planes at all', { skip: SKIP, timeout: 120000 }, async () => {
   const { blocks, getModel } = await data();
   const moved = new Map();
   let hairs = 0, planes = 0;

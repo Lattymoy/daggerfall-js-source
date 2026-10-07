@@ -24,7 +24,7 @@ import { Collider } from '../src/player/collider.js';
 import { motorStats, climbingDeps, parkourDeps } from '../src/scenes/shared.js';
 import { playerEntity } from '../src/characters/playerEntity.js';
 import { setTimeScale, resetTimeScale, TRAVEL_OPEN_RATE } from '../src/systems/timeScale.js';
-import { travelWalkRate } from '../src/scenes/travelView.js';
+import { travelWalkRate, TRAVEL_VIEW_TEXT } from '../src/scenes/travelView.js';
 
 const read = (f) => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 const CLIMB = SKILLS.Climbing;
@@ -124,10 +124,10 @@ test('CLIMB-TRAVEL: the world host wires its own travel to the motor - a journey
   const W = read('src/scenes/world.js');
   const motorLine = W.split('\n').find((l) => l.includes('const player = new PlayerMotor(collider, motorStats(playerEntity)'));
   assert.ok(motorLine, 'the world host builds one motor (the street\'s, the dungeon\'s and a building\'s)');
-  assert.match(motorLine, /travelling: \(\) => wildTravelling\(\)/, 'its travelling is the host\'s');
+  assert.match(motorLine, /travelling: \(\) => travellingOutdoors\(\)/, 'its travelling is the host\'s (out of doors: AUDIT FB1007b C1)');
   assert.match(W, /const wildTravelling = \(\) => \(!!travelControlUI\?\.isShowing && !!travelOptions\?\.state\?\.autopilot\) \|\| tvWalking > 0;/,
     'a journey on the panel, or the keys\' travel');
-  assert.match(W, /onFoot: walkMode && playerSpawned && !player\.isPlayerSwimming && !csaBoatUnderMe\(\) && !\(player\.climb\?\.isClimbing \|\| player\.mantling \|\| player\.onWall\),/,
+  assert.match(W, /onFoot: walkMode && playerSpawned && !player\.isPlayerSwimming && !csaBoatUnderMe\(\) && !\(player\.climb\?\.isClimbing \|\| player\.mantling \|\| player\.onWall \|\| player\.holdPending\),/,
     'TV-WASD: hands on a wall are not on foot');
   assert.equal(travelWalkRate({ viewUp: true, moving: true, onFoot: false, travels: true }), 0, 'and a traveller not on foot walks at walking pace');
   assert.equal(travelWalkRate({ viewUp: true, moving: true, onFoot: true, travels: true }), TRAVEL_OPEN_RATE, 'on foot, the keys travel');
@@ -135,4 +135,109 @@ test('CLIMB-TRAVEL: the world host wires its own travel to the motor - a journey
   assert.doesNotMatch(read('src/scenes/worldModes.js'), /new PlayerMotor\(/);
   assert.doesNotMatch(read('src/scenes/exterior.js'), /setTimeScale|setWorldTimeScale|wildTravelling|createTravelView/);
   assert.doesNotMatch(read('src/scenes/dungeonContext.js'), /new PlayerMotor\(/);
+});
+
+// world.js's own lines, executed: the motor's journey (AUDIT FB1007b C1) and the keys' on-foot (C3)
+const WORLD = read('src/scenes/world.js');
+const constLine = (name) => WORLD.split('\n').find((l) => l.trimStart().startsWith(`const ${name} = () =>`))?.trim();
+const ON_FOOT = /onFoot: (walkMode && playerSpawned && .*?),   \/\/ CLIMB-TRAVEL/.exec(WORLD)?.[1];
+
+test('AUDIT FB1007b C1: the motor\'s journey is out of doors - a load or a door taken with the keys held leaves their travel standing (only the exterior frame\'s governor clears it), and a wall indoors climbs all the same', () => {
+  assert.ok(constLine('wildTravelling') && constLine('travellingOutdoors'));
+  const h = new Function('travelControlUI', 'travelOptions', 'modes',
+    `let tvWalking = 60; ${constLine('wildTravelling')} ${constLine('travellingOutdoors')} return { wildTravelling, travellingOutdoors, stop: () => { tvWalking = 0; } };`);
+  const modes = { mode: 'interior' };
+  const host = h({ isShowing: false }, { state: { autopilot: null } }, modes);
+  assert.equal(host.wildTravelling(), true, 'the keys\' travel stands, stale, indoors');
+  assert.equal(host.travellingOutdoors(), false, 'the motor reads no journey indoors');
+  for (const enhanced of [false, true]) {
+    const inside = walkInto({ enhanced, travelling: host.travellingOutdoors, seconds: 4 });
+    assert.ok(inside.holds >= 1 && inside.top > 1, `${enhanced ? 'enhanced' : 'classic'}: a wall indoors climbs (${inside.top.toFixed(2)} m up)`);
+  }
+  modes.mode = 'dungeon';
+  assert.equal(host.travellingOutdoors(), false);
+  modes.mode = 'exterior';
+  assert.equal(host.travellingOutdoors(), true, 'out of doors the keys\' travel holds the climb');
+  host.stop();
+  assert.equal(host.travellingOutdoors(), false);
+});
+
+test('AUDIT FB1007b C3: a hold a load carried is no body on foot - the keys held under the view stay at walking pace until the step takes it again; and while a journey runs the restore takes nothing, no hold and no let-go', () => {
+  assert.ok(ON_FOOT, 'TV-WASD\'s on-foot');
+  const onFootOf = new Function('walkMode', 'playerSpawned', 'player', 'csaBoatUnderMe', `return ${ON_FOOT};`);
+  let travel = false;
+  const p = traveller();
+  const m = new PlayerMotor(street(), motorStats(p), {
+    climbing: { ...climbingDeps(p), rolls: () => 0 },
+    parkour: { ...parkourDeps(p), enabled: () => true },
+    travelling: () => travel,
+  });
+  m.spawn(0, 0.05, 0);
+  let f = 0;
+  while (m.pos[1] < 3 && f++ < 3600) m.update(1 / 60, FORWARD, 0);
+  assert.ok(m.onWall && m.pos[1] >= 3, 'on the wall, 3 m up');
+  const fall = m.fallSnapshot();
+  assert.ok(fall?.hold, 'a save there carries the hold');
+  const at = [...m.pos];
+  // the load's placement (world.js: the spawn, then restoreFall), W held under the view
+  m.spawn(at[0], at[1], at[2]);
+  m.restoreFall(fall);
+  assert.equal(m.onWall, false);
+  assert.equal(m.holdPending, true, 'the hold waits for the next step');
+  const onFoot = onFootOf(true, true, m, () => null);
+  assert.equal(onFoot, false, 'and the body is not on foot meanwhile');
+  const rate = travelWalkRate({ viewUp: true, moving: true, onFoot, travels: true });
+  assert.equal(rate, 0, 'the keys walk at walking pace');
+  travel = rate > 0;
+  m.update(1 / 60, FORWARD, 0);
+  assert.equal(m.onWall, true, 'the step takes the hold again');
+  assert.equal(m.holdPending, false);
+  // a journey running as the hold comes back: nothing takes the wall, and nothing is let go of
+  m.spawn(at[0], at[1], at[2]);
+  m.restoreFall(fall);
+  m.climbEvents.length = 0;
+  travel = true;
+  m.update(1 / 60, FORWARD, 0);
+  assert.equal(m.onWall, false);
+  assert.deepEqual(m.climbEvents.filter((e) => e.type === 'hold' || e.type === 'release'), [], 'no hold taken to be let go');
+});
+
+/** A function of world.js's, cut whole from its source (its braces matched). */
+function cutFn(src, head) {
+  const at = src.indexOf(head);
+  assert.ok(at >= 0, head);
+  let depth = 0;
+  for (let i = at + head.length - 1; i < src.length; i++) {   // the head ends at its body's brace
+    if (src[i] === '{') depth++;
+    else if (src[i] === '}' && --depth === 0) return src.slice(at, i + 1);
+  }
+  throw new Error(`unbalanced: ${head}`);
+}
+
+test('AUDIT FB1007b C2: no journey sets out from a wall - the journey would let the hold go and the traveller fall its height: the view\'s click and the map\'s walked trip refuse it, said, and never put DFU\'s fast travel in its stead', () => {
+  // a body on the wall, as the world host's motor holds it
+  const p = traveller();
+  const m = new PlayerMotor(street(), motorStats(p), { climbing: { ...climbingDeps(p), rolls: () => 0 }, parkour: { ...parkourDeps(p), enabled: () => true } });
+  m.spawn(0, 0.05, 0);
+  let f = 0;
+  while (!m.onWall && f++ < 600) m.update(1 / 60, FORWARD, 0);
+  assert.ok(m.onWall);
+  const said = [], began = [];
+  const run = (player, src, call) => new Function('player', 'travelOptions', 'tvSay', 'TRAVEL_VIEW_TEXT', 'duelEnemyNear', 'areEnemiesNearby', 'exteriorFoePool', 'csaAboard', 'tvRoutesJourneys',
+    `${constLine('climbingNow')} ${src} return ${call};`)(player, { beginTravel: (...a) => began.push(a), beginTravelToCoords: (...a) => began.push(a) }, (l) => said.push(l), TRAVEL_VIEW_TEXT,
+    () => false, () => false, () => [], { aboard: false }, () => false);
+  const canGo = cutFn(WORLD, 'function travelViewCanGo() {');
+  assert.equal(run(m, canGo, 'travelViewCanGo()'), false, 'the view\'s click: refused');
+  assert.deepEqual(said, [TRAVEL_VIEW_TEXT.climbing]);
+  const begin = cutFn(WORLD, 'function beginAcceleratedTravel(pick, opts, { coords = false, estimateMinutes = null } = {}) {');
+  const pick = { pixel: { x: 100, y: 100 }, name: 'Wayrest' };
+  said.length = 0;
+  assert.equal(run(m, begin, 'beginAcceleratedTravel(pick, {})'.replace('pick', JSON.stringify(pick))), true, 'the map\'s walked trip: answered - its callers never fall through to the fast travel');
+  assert.deepEqual([said, began], [[TRAVEL_VIEW_TEXT.climbing], []], 'said, and no journey begun');
+  // off the wall, both go
+  const ground = { climb: null, mantling: false, onWall: false, holdPending: false };
+  said.length = 0;
+  assert.equal(run(ground, canGo, 'travelViewCanGo()'), true);
+  assert.equal(run(ground, begin, 'beginAcceleratedTravel(pick, {})'.replace('pick', JSON.stringify(pick))), true);
+  assert.deepEqual([said, began.length], [[], 1], 'the journey begun');
 });

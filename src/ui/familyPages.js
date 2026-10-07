@@ -79,6 +79,9 @@ let _said = null;     // { ok, text } - the last act's word
 let _armed = null;    // 'switch:<id>' | 'mantle' - a press that asks again before it acts
 let _homeSaid = null; // the House page's word on a home marked (AUDIT LEGACY II U7)
 let _seatSaid = null; // FAMILY-SEAT: the House page's word on the seat (armed: what the second press will do)
+/** AUDIT FB1007b S5: where the seat's move is not offered, the House page says where it is - the host's refusal says the
+ *  same (scenes/legacyHost.js LEGACY_TEXT.seatNowhere). */
+export const SEAT_HINT = 'Stand in another town - its streets or one of its buildings - to make it the family\'s seat.';
 /** A fresh visit: nothing pressed, the tree centred, no word left over. */
 export function resetFamilyPages() { _sel = null; _zoom = 1; _pan = null; _said = null; _armed = null; _homeSaid = null; _seatSaid = null; }
 /** AUDIT LEGACY U8: another page or tab pressed - an armed act and its word never wait for the way back. */
@@ -569,8 +572,17 @@ export function drawHousePage(detail, rerender, { el, divider } = /** @type {any
       rerender();
     };
     detail.append(b);
+  } else if (prov.moveFamilySeat && family.seat?.loc && !family.pending && me && isAlive(me) && !prov.past?.()) {
+    // AUDIT FB1007b S5: where the move is not offered, the page says where it is - else the seat looked fixed for good
+    detail.append(el('p', 'px-note fam-seathint', SEAT_HINT));
   }
-  if (_seatSaid) { detail.append(liveLine(el, _seatSaid)); if (_armed !== 'seat') _seatSaid = null; }
+  if (_seatSaid) {
+    const n = liveLine(el, _seatSaid);
+    // AUDIT FB1007b S4: the move said, the keyboard kept on the page (AUDIT LEGACY II U7's way) - the pressed button goes
+    // with the move, and the focus fell to the page, whose next Tab went back to the tabs. Armed, it stays on the button
+    if (_armed !== 'seat') { n.setAttribute('tabindex', '-1'); n.setAttribute('data-focus', 'fam-seat-said'); setTimeout(() => n.focus?.({ preventScroll: true }), 0); _seatSaid = null; }
+    detail.append(n);
+  }
   // LEGACY-HOME: THE HOMES - every house one of the line holds, the family home among them (where the never-played and
   // the retired live, and where a member saved in it waits), the player's to choose
   detail.append(el('p', 'fam-h', 'The homes'));
