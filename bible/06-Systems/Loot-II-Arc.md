@@ -521,3 +521,33 @@ row's part and its default, each rung over one pile - what stays, what is always
 and handled, the ladder off, a lit row taken whatever it is, a quest's item never the filter's); and the line compare
 (up, new, down, lost, the resistance count and its cap, nothing to compare with, an unknown piece either side, off) and
 its block on the card. `tools/mutants/loot18.json` (45, all dead).
+
+### LOOT19 - scrying (2026-10-07)
+
+`src/systems/lootScry.js` (new): `SCRY_PRICE` (3 Welkynd Shards and 500 gold); `familyKinds` - a family's dungeon kinds,
+read off LOOT6's `DUNGEON_FAMILY` - and `SCRY_FAMILIES`, every family (each has a kind of its own; a mine is no
+family's); `SCRY_FAMILY_WORDS`, `DUNGEON_KIND_WORDS` and `familyPlaces` ("crypts, vampire haunts, ruined castles and
+cemeteries"); `scryRows`, a region's map table as the law reads it (each row's name, its region's and its map pixel,
+`longitudeLatitudeToMapPixel`); `nearestHidden` - of the family's kinds, on no map (the table's baked Discovered flag and
+the player's own store, `discovery.js` `hasDiscoveredLocationId`: DiscoverRandomLocation's two tests), the nearest by
+the map from the player's pixel, a tie to the lower map id; `scryRefusal` ('off', 'family', 'nowhere', 'none',
+'shards', 'gold' - 'none' asked of the region before a coin is taken) and `scryPlace`, paid (the shards, then the gold)
+and the place put on the map through DFU's own `discoverLocation`, the store the travel map's dots read.
+
+The page: `src/ui/reforgeWindow.js` 'scry', the guild's fifth (`REFORGE_GUILD_PAGES`) - a row a family with its kinds,
+the price and a press that says why not ("None hidden", "No map here", a short purse) or names the place (`SCRIED`);
+an unfound record's card on the Codex page carries `SCRY_FOR_KIN`, which opens the page on its family's row (the pack's
+own Codex, with no guild, has none). The hosts: `src/scenes/world.js` `scryWhere` (the current region's rows and the
+player's pixel, null at sea), handed to the interior host, and `src/scenes/worldModes.js` `openReforge`'s `scry` and
+`scryWhere`.
+
+**What moved.** LOOT10's pin of the guild's tabs reads five (the scryers' the fifth), and LOOT16's of the guild's pages
+with it.
+
+Pinned: `test/loot19_scry.test.js` (4) - the families, their kinds and words, the region's rows; the nearest hidden haunt
+(five away over five and a fraction, the baked flag and the player's store each hiding one, a tie to the lower id, none
+of a family's); the scrying (every refusal asked first and nothing taken, paid, on the map and named, the next nearest
+and then none, off); the page (a row a family, "None hidden" refused, the press and its word, the row lit), the codex's
+unfound record leading to its own kin's row and the pack's Codex having none, and the hosts' hooks.
+`tools/mutants/loot19.json` (28, all dead - the first run's survivor was the codex's way to the page, which the test
+walked with a record of the family already lit: it walks another family's now).

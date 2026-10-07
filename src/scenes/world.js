@@ -754,6 +754,7 @@ const RACE_BY_NAME_BANK = Object.freeze(Object.fromEntries(
 import { startDisease, endDisease, diseaseCount } from '../systems/diseases.js';   // AUDIT 24: the quest bridge's MakePcDiseased / CurePcDisease seams; U41: the popup's diseased warning
 import { poisonCount } from '../systems/poisons.js';   // U41: the warning's other half
 import { discoverRandomLocation, discoverLocation, undiscoverBuilding, discoverBuilding, discoveredBuildings, hasDiscoveredLocationId, setDiscoveredBuildingCustomName, discoveryGeneration, restampQuestNames, pruneDiscoveryLayouts } from '../systems/discovery.js';   // G8 + TV: the guild map reveals + the entry writer; TK-ii: the quest-residence undiscover; AUDIT DISC28 QS-K2: the town map's re-stamp
+import { scryRows } from '../systems/lootScry.js';   // LOOT19: the region a scrying reads
 import {
   WEATHER_TYPES, fogForWeather, scaleFogForDistance, skyOffsetForWeather, weatherSunlightScale,
   weatherRng, fogFactor, precipitationForWeather,
@@ -11553,6 +11554,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     return picked?.name ?? null;
   };
   let _locationRevealedByMapItem = null;
+  /** LOOT19 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 11): THE REGION A SCRYING READS - the current
+   *  region's map table as systems/lootScry.js reads it, and the player's map pixel; null where there is no region (the
+   *  open sea). The Mages Guild's window asks it through the interior host (scenes/worldModes.js openReforge). */
+  const scryWhere = () => {
+    const at = playerTravelPixel();
+    const region = maps.getRegion(maps.getRegionIndexAt(at.x, at.y));
+    return region ? { rows: scryRows(region), at: { x: at.x, y: at.y } } : null;
+  };
 
   let _spellbook = null;   // U42: the live window, for the probe surface
   // PX23: the book's ONE door (ui/spellbookDoor.js). This host hands it
@@ -24836,6 +24845,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     repairQuests: () => questBridge?.repair?.() ?? null,   // QREPAIR: the interior pause's Settings row, off this host's bridge
     journalClean: () => questBridge?.journalClean ?? null,   // JOURNAL-CLEAN: the Quests tab's remove / clear archive / hide / unhide (scenes/questBridge.js journalClean), for the interior pause
     revealLocation,
+    scryWhere,   // LOOT19: the guild's scryers read this host's region
     magic, spellsByIndex: () => spellsByIndex,   // M2: the one cast engine + SPELLS.STD ride into the interior arm
     townTalk,   // U23: the interior host borrows FACTION.TXT/TEXT.RSC + the talk seam
     // A5b: the tavern arm needs the host's clock, and leaving one has to

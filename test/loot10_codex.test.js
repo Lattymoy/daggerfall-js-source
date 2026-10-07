@@ -211,7 +211,7 @@ test('LOOT10: the pages - the Codex alone from the pack, the Imprint at the guil
     });
     try {
       const shell = one(host, 'reforge-shell');
-      assert.deepEqual(kids(shell, 'reforge-tab').map((t) => t.dataset.page), ['reforge', 'salvage', 'imprint', 'codex'], 'the guild\'s four');
+      assert.deepEqual(kids(shell, 'reforge-tab').map((t) => t.dataset.page), ['reforge', 'salvage', 'imprint', 'codex', 'scry'], 'the guild\'s four - PIN MOVED (LOOT19, bible/06-Systems/Loot-II-Arc.md section 11): and its scryers\' page, the fifth');
       const choice = kids(shell, 'imprint-choice').find((li) => li.dataset.record === 'nightwhisper');
       assert.ok(choice, 'a found power of its group');
       one(choice, 'imprint-press').onclick({ stopPropagation() {} });
