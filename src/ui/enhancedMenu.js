@@ -2383,8 +2383,8 @@ function peerSpritesCard() {
   c.append(prefRow('peerAttackSounds', 'Attack sounds', 'On: hear other players\u2019 weapon swings. Off: silent, no matter how close.', { home: true }));   // PEER-FS1: the two peer-sound switches, beside the sprite one
   c.append(prefRow('peerFootsteps', 'Footstep sounds', 'On: hear other players\u2019 footsteps as they walk. Off: silent, no matter how close.', { home: true }));
   // GATE-CROWD (2026-10-07, Mac: "some type of filter when there are too many people"): a crowded court, thinned
-  c.append(choiceRow('gateCrowd', 'Crowd in an Oblivion Gate',
-    'In a gate\u2019s court, only this many other players are drawn: the nearest, and your party always. The fight is the same either way.',
+  c.append(choiceRow('gateCrowd', 'Crowd in the Burning Court',
+    'In the Burning Court, only this many other players are drawn: the nearest, and your party always. The fight is the same either way.',
     GATE_CROWD_TIERS.map((n) => [n, n ? `Nearest ${n}` : 'Everyone']), { home: true }));
   // SPELL-GIFT (2026-09-27, Tabitha: "Allow casting of buffs on players outside party"): the receiver's say
   c.append(prefRow('acceptStrangerSpells', 'Spells from strangers',

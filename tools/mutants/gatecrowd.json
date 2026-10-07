@@ -200,7 +200,7 @@
   {
     "name": "GATECROWD-pref-default-literal",
     "file": "src/systems/uiPrefs.js",
-    "old": "  gateCrowd: GATE_CROWD_DEFAULT,\n",
+    "old": "  gateCrowd: 12,\n",
     "new": "  gateCrowd: 24,\n",
     "tests": [
       "test/gatecrowd.test.js"
@@ -209,8 +209,8 @@
   {
     "name": "GATECROWD-row-gone",
     "file": "src/ui/enhancedMenu.js",
-    "old": "  c.append(choiceRow('gateCrowd', 'Crowd in an Oblivion Gate',",
-    "new": "  void (choiceRow('gateCrowd', 'Crowd in an Oblivion Gate',",
+    "old": "  c.append(choiceRow('gateCrowd', 'Crowd in the Burning Court',",
+    "new": "  void (choiceRow('gateCrowd', 'Crowd in the Burning Court',",
     "tests": [
       "test/gatecrowd.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "GATECROWD-row-key",
     "file": "src/ui/enhancedMenu.js",
-    "old": "choiceRow('gateCrowd', 'Crowd in an Oblivion Gate',",
-    "new": "choiceRow('gateCrowds', 'Crowd in an Oblivion Gate',",
+    "old": "choiceRow('gateCrowd', 'Crowd in the Burning Court',",
+    "new": "choiceRow('gateCrowds', 'Crowd in the Burning Court',",
     "tests": [
       "test/gatecrowd.test.js"
     ]
@@ -337,6 +337,69 @@
     "file": "src/world/gateArena.js",
     "old": "noCompanions: 'Your companions cannot follow you into the Deadlands.',",
     "new": "noCompanions: 'Your companions wait outside.',",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-everyone-shown",
+    "file": "src/net/gateCrowd.js",
+    "old": "shows: (id) => !live || held.has(id),",
+    "new": "shows: () => true,",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-nobody-shown-outside",
+    "file": "src/net/gateCrowd.js",
+    "old": "shows: (id) => !live || held.has(id),",
+    "new": "shows: (id) => held.has(id),",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-court-never-marked",
+    "file": "src/net/gateCrowd.js",
+    "old": "      live = !!on;\n",
+    "new": "",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-pick-uncut",
+    "file": "src/scenes/world.js",
+    "old": "openPeers(peersNear(), isPartyMate).filter(crowdDrawnHere), SOCIAL_REACH",
+    "new": "openPeers(peersNear(), isPartyMate), SOCIAL_REACH",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-gift-uncut",
+    "file": "src/scenes/world.js",
+    "old": "p.id === duelMgr.opponent) && crowdDrawnHere(p));",
+    "new": "p.id === duelMgr.opponent));",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-spark-uncut",
+    "file": "src/scenes/world.js",
+    "old": "if (!p?.shown || !online.visible(p) || !gateCrowd.shows(p.id)) {",
+    "new": "if (!p?.shown || !online.visible(p)) {",
+    "tests": [
+      "test/gatecrowd.test.js"
+    ]
+  },
+  {
+    "name": "GATECROWD-everyone-drawn-here",
+    "file": "src/scenes/world.js",
+    "old": "const crowdDrawnHere = (p) => gateCrowd.shows(p.id);",
+    "new": "const crowdDrawnHere = () => true;",
     "tests": [
       "test/gatecrowd.test.js"
     ]

@@ -144,7 +144,7 @@ test('INVIS-NET by source: the host packs my concealment onto every pose; on the
   assert.match(w, /seen\.push\(d\);\n\s*\}\n\s*peerCandlesFrame\(seen, dt\);/, 'the candles off the seen');
   assert.doesNotMatch(w, /peerCandlesFrame\(drawable/, 'never off the whole list');
   assert.match(w, /out\.push\(\{ id: p\.id, feet: onlineToScene\(p\.shown\), height: _peerHeights\.get\(p\.id\), cv: p\.shown\?\.cv \| 0 \}\);/, 'the peers the foes read carry it');
-  assert.match(w, /pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\), SOCIAL_REACH, rayPersonDistance\);/, 'the F door and the plaque skip a concealed peer (CONCEAL-MATE: a stranger - a mate stays open)');
+  assert.match(w, /pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\)\.filter\(crowdDrawnHere\), SOCIAL_REACH, rayPersonDistance\);/, 'the F door and the plaque skip a concealed peer (CONCEAL-MATE: a stranger - a mate stays open)');
 });
 
 // ---- AUDIT (the pre-merge audit, 2026-09-27, Mac: "Audit before we merge"): what else named or showed a concealed player.
@@ -207,7 +207,7 @@ test('CONCEAL-MATE executed: openPeers keeps every open player and a concealed p
 test('CONCEAL-MATE by source: every social door reads ONE law (openPeers over the host\'s party test) - the F key and its plaque, the Nearby list, a page\'s readers and a gift - and the party test is the session\'s own', () => {
   const w = rd('src/scenes/world.js');
   assert.match(w, /function isPartyMate\(id\) \{ return !!social\?\.party && social\.isPartyPeer\(id\); \}/, 'a mate is a member of my party, and nobody without one');
-  assert.match(w, /pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\), SOCIAL_REACH, rayPersonDistance\);/, 'the F key and the plaque');
+  assert.match(w, /pickPeerInFront\(eye, dir, openPeers\(peersNear\(\), isPartyMate\)\.filter\(crowdDrawnHere\), SOCIAL_REACH, rayPersonDistance\);/, 'the F key and the plaque');
   assert.match(w, /localRosterSource\(s, openPeers\(peersNear\(\), isPartyMate\), player\.feetAt\(\)\)/, 'the Nearby list');
   assert.match(w, /return openPeers\(near, isPartyMate\)\.map\(/, 'a page\'s readers');
   assert.match(w, /const giftablePeers = \(list\) => openPeers\(list, isPartyMate\)\.filter\(/, 'a gift');

@@ -2359,10 +2359,10 @@ telegraphs. Now:
 **The crowd thinned (GATE-CROWD).** A court holds as many challengers as come (`net/gateBrain.js` GATE_FIGHTERS_MAX),
 and forty round one boss were forty bodies, names, lights, spells and footsteps over his telegraphs. WB9h made the
 crowd's Morrowind bodies affordable; it did not make the fight readable. Now, in a gate's court, past the count on the
-Other players card - **Crowd in an Oblivion Gate**: the nearest 12 by default, the nearest 24, or everyone - only that
-many other players are drawn: every party mate, then the nearest across the floor (`net/gateCrowd.js crowdDrawn`). The
-rest stand nowhere on this screen - no body, sprite, name, light, aura, spell's flight or step - until they are among
-the nearest again.
+Other players card - **Crowd in the Burning Court** (the court by its own name: WB12a's guard holds every shipped string
+to the breach's words): the nearest 12 by default, the nearest 24, or everyone - only that many other players are
+drawn: every party mate, then the nearest across the floor (`net/gateCrowd.js crowdDrawn`). The rest stand nowhere on
+this screen - no body, sprite, name, light, aura, spell's flight or step - until they are among the nearest again.
 
 - HELD PLACES. The drawn are chosen again every frame, and a crowd milling at the edge of the count traded players in
   and out every frame - a sprite built and a body handed over each time (WB9h's churn). A player drawn last frame keeps
@@ -2372,16 +2372,25 @@ the nearest again.
   the map's poses are taken off the whole list, before anything is drawn from it. A party mate is never cut, and counts
   toward the number. A stored choice that is none of the three reads as twelve (`gateCrowdMax`).
 - Nothing of the fight is cut. The relay judges every blow; the boss, his host, the bar's count of challengers, the
-  damage chart, the spoils and the chat are the fight's. A spell cast at the crowd still finds a player not drawn - the
-  cast's targets are the room's (`peersNear`), not this screen's.
+  damage chart, the spoils and the chat are the fight's.
+- NOT THERE TO PRESS. A player the crowd leaves undrawn is not there to press, aim at or hear either - INVIS-NET's law
+  for the concealed (`createGateCrowd().shows`): the crosshair's pick and the plaque (`peerInSight`), a gift's aim and
+  its burst (`giftablePeers`), and a blow's spark and a struck player's cry (`peerFxFrame`) ask the cut. Found on the
+  change's own re-read, before it was pushed: the first cut left the plaque naming players it had not drawn, a heal
+  aimed past them landing on them, and their cries heard. The party panel, the Nearby list and the chat still name them.
+- THE SHELF'S DEFAULT is a literal (`systems/uiPrefs.js` `gateCrowd: 12`), pinned equal to the law's: the shelf is on
+  the boot path, and importing the law made `net/gateCrowd.js` the entry's 69th file, past BOOT2's ceiling of 68.
 - THE COURT ALONE. The street, a building and a dungeon hold duels, arena bouts and battles, where the player cut from
   the screen could be the one fighting me. In a court nobody fights anybody but him, so the count is applied nowhere
   else.
 
-Pinned: `test/gatecrowd.test.js` (9) - the law and its held places, the host's crowd, the online frame's cut (lifted and
-evaluated), the card, `companionPlace` (lifted and run), the companion layer through a court, the court's word (lifted);
-the party panel's cards in `test/auditwatchkit_net.test.js` (none in a court). Moved with it: the drawn list's pins in
-`test/invisnet.test.js` and `test/mwbody1.test.js`. Mutants `tools/mutants/gatecrowd.json` (38, all dead). No relay
+Pinned: `test/gatecrowd.test.js` (9) - the law and its held places, the host's crowd and who it shows, the online
+frame's cut (lifted and evaluated) and the doors that ask it, the card and the shelf's literal, `companionPlace` (lifted
+and run), the companion layer through a court, the court's word (lifted); the party panel's cards in
+`test/auditwatchkit_net.test.js` (none in a court). Moved with it: the drawn list's pins in `test/invisnet.test.js` and
+`test/mwbody1.test.js`, the pick's in `test/invisnet.test.js`, `test/peerplaque.test.js` and
+`test/soc5_interact.test.js`, the gift's in `test/audit27d.test.js`; AUDIT-CC-F-world-helm-stands
+(`tools/mutants/auditcrew.json`) re-aimed by content. Mutants `tools/mutants/gatecrowd.json` (45, all dead). No relay
 change, no account change. Not yet seen in a browser over a real court.
 
 ## Shipped
@@ -2886,10 +2895,11 @@ once.
 - No companion steps into a gate's court: lifted at the step, health and spells carried, stood behind the player again
   outside; no card for them in the court's party panel; the court says so once as a fighter steps in with any.
 - In the court, past the Other players card's count (12 by default, 24, or everyone) only the nearest other players are
-  drawn, the party always, the places held against one less than four metres nearer.
+  drawn, the party always, the places held against one less than four metres nearer; one left undrawn is not there to
+  press, aim a gift at or hear struck.
 - No relay or account change.
-- Pins `test/gatecrowd.test.js` (9), with auditwatchkit_net, invisnet and mwbody1 re-pinned; mutants
-  `tools/mutants/gatecrowd.json` (38).
+- Pins `test/gatecrowd.test.js` (9), with auditwatchkit_net, invisnet, mwbody1, peerplaque, soc5_interact and audit27d
+  re-pinned; mutants `tools/mutants/gatecrowd.json` (45).
 
 ## At sea - the sea serpent (SERPENT1, 2026-10-04)
 

@@ -60,10 +60,13 @@ export function crowdDrawn(peers, me, { at, max = GATE_CROWD_DEFAULT, mate = () 
 /**
  * THE HOST'S CROWD - `cut(peers, o)`: the peers drawn this frame, the places held from the frame before. `peers` itself
  * when every one is drawn, else a list refilled each frame; out of a court (`o.on` false) every peer, and the held
- * places forgotten - a court stepped into again chooses afresh.
+ * places forgotten - a court stepped into again chooses afresh. `shows(id)`: whether the last cut drew that player -
+ * every player out of a court. The doors that answer a player on this screen ask it (the crosshair's pick and the
+ * plaque, a gift's aim, a blow's spark and a cry): one the crowd leaves undrawn is not there to press, aim at or hear,
+ * INVIS-NET's law for the concealed.
  */
 export function createGateCrowd() {
-  let held = new Set(), spare = new Set();
+  let held = new Set(), spare = new Set(), live = false;
   /** @type {any[]} */
   const drawn = [];
   return {
@@ -74,6 +77,7 @@ export function createGateCrowd() {
      * @returns {P[]}
      */
     cut(peers, { on, me, at, max = GATE_CROWD_DEFAULT, mate = () => false }) {
+      live = !!on;
       if (!on) { held.clear(); return peers; }
       const now = crowdDrawn(peers, me, { at, max, mate, was: held }, spare);
       spare = held; held = now;
@@ -82,6 +86,8 @@ export function createGateCrowd() {
       for (const p of peers) if (held.has(p.id)) drawn.push(p);
       return drawn;
     },
+    /** Whether the last cut drew `id` - every player out of a court. */
+    shows: (id) => !live || held.has(id),
     /** The ids drawn by the last cut (the tests' window on the held places). */
     held: () => held,
   };
