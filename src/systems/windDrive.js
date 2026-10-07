@@ -107,9 +107,10 @@ export const WIND_NONE = Object.freeze({ on: false, w: [0, 0], dir: [1, 0], slid
  *  short one (a bush, a shrub) takes six tenths - a bush is stiffer than
  *  a crown. Every other archive (people, lights, signs, the dungeon's
  *  flats, the foes) stands still: 0. The renderer multiplies the lean by
- *  this per batch (uSway). */
+ *  this per batch (uSway). ECOTONE1: `natureArchive` may be a Set - a
+ *  pixel at a climate border stands its neighbour's nature too. */
 export function floraSwayOf(archive, natureArchive, height) {
-  if (archive !== natureArchive) return 0;
+  if (natureArchive instanceof Set ? !natureArchive.has(archive) : archive !== natureArchive) return 0;
   return height >= TALL_FLAT_HEIGHT ? 1 : 0.6;
 }
 
