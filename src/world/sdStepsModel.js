@@ -13,6 +13,7 @@
 //                     step's own thickness): the wall run up
 //       the Crumble's - cracked stone, the void's light in its cracks, on the islands' dark stone
 //   THE CHECKPOINTS B and C - islands as the first step is (A, world/sdHall.js), at their heights.
+//   THE BREATH'S STREAKS (AUDIT SD II) - brass light blowing across the Crumble, the Warp's breath seen (buildBreathModel).
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { realmToDungeon } from '../net/sdBrain.js';
@@ -20,7 +21,7 @@ import { faces } from './gateModel.js';
 import { realmIsland, packRealmFaces, SD_REALM_FLOOR_RECORD, SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD, SD_ISLAND_SIDES } from './sdRealm.js';
 import { SD_HALL_GLOW_RECORD } from './sdHallArt.js';
 import { SD_STEPS_CRACKED_RECORD, SD_STEPS_BEAT_RECORD } from './sdStepsArt.js';
-import { SD_STEP_THICK, SD_DRIFT_SIZE, SD_BEAT_SIZE, SD_CRUMBLE_SIZE, SD_RISER_H, SD_CHECKPOINTS } from './sdSteps.js';
+import { SD_STEP_THICK, SD_DRIFT_SIZE, SD_BEAT_SIZE, SD_CRUMBLE_SIZE, SD_RISER_H, SD_CHECKPOINTS, SD_COURSE_END } from './sdSteps.js';
 
 /** The kinds of step, in the order their meshes are made. */
 export const SD_STEP_KINDS = Object.freeze(['drift', 'beat', 'riser', 'crumble']);
@@ -81,4 +82,30 @@ export function checkFloorTris() {
     }
   }
   return new Float32Array(out);
+}
+
+/** AUDIT SD II (L2 F18): THE BREATH'S STREAKS - how many, how far either side of the course's line they lie, how far the
+ *  breath carries them over its two seconds (scenes/sdSteps.js), and each one's length and its head's thickness. */
+export const SD_BREATH = Object.freeze({ n: 64, halfX: 10, sweep: 10, len: 1.4, thick: 0.04 });
+/**
+ * THE WARP'S BREATH SEEN: SD_BREATH.n streaks of brass light (the hands' glow, as the Beat's sides wear it) over the
+ * Crumble - from C's far edge to the course's end, each at the course's height there or a little over it - one mesh in
+ * the REALM's frame (x 0 the course's line; the draw's matrix stands it at SD_REALM_ORIGIN, moves it across, and turns it
+ * by x's sign the way the breath blows). Each a streak tapering from its head (toward +x) to its tail, upright and lying flat, every face both ways - a
+ * player sees it from the side, from above, and as the mirror turns it. The same streaks every boot.
+ */
+export function buildBreathModel() {
+  const f = faces(), C = SD_CHECKPOINTS[2], z0 = C.z + C.r, z1 = SD_COURSE_END;
+  let seed = 0x5db7;
+  const rnd = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+  const rec = SD_HALL_GLOW_RECORD.brass, UV = [[0, 0], [0, 1], [1, 1], [1, 0]];
+  const both = (a, b, c, d) => { f.quad(rec, a, b, c, d, ...UV); f.quad(rec, d, c, b, a, ...UV); };
+  for (let k = 0; k < SD_BREATH.n; k++) {
+    const x = (rnd() * 2 - 1) * SD_BREATH.halfX, z = z0 + rnd() * (z1 - z0);
+    const y = C.y * (1 - (z - z0) / (z1 - z0)) - 0.4 + rnd() * 2.6;   // about the course's height there
+    const half = (SD_BREATH.len * (0.6 + 0.4 * rnd())) / 2, t = SD_BREATH.thick, tail = t * 0.2;
+    both([x - half, y - tail, z], [x - half, y + tail, z], [x + half, y + t, z], [x + half, y - t, z]);   // upright
+    both([x - half, y, z + tail], [x - half, y, z - tail], [x + half, y, z - t], [x + half, y, z + t]);   // lying flat
+  }
+  return packRealmFaces(f);
 }

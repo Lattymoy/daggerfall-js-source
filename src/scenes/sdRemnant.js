@@ -21,8 +21,8 @@
 // Its blows on ME are SD8d's (the telegraphs and each one judged on my own machine): here they are named on the bar alone.
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_ARENA, realmToDungeon, dungeonToRealm } from '../net/sdBrain.js';
-import { SD_REM, SD_ECHO, SD_HEART, SD_REM_START, SD_BREAK_MS, SD_BLOWS, SD_HEARTS_CLOSE_MS, SD_HEARTS, arenaOf, inArena } from '../net/sdRemnant.js';
+import { SD_ARENA, SD_REALM_ORIGIN, realmToDungeon } from '../net/sdBrain.js';
+import { SD_REM, SD_ECHO, SD_HEART, SD_REM_START, SD_BREAK_MS, SD_BLOWS, SD_HEARTS_CLOSE_MS, SD_HEARTS, inArena } from '../net/sdRemnant.js';
 import { HIT_KINDS } from '../net/gateBrain.js';
 import { sdBodyAt, sdHeartsOf, SD_FIGHT_EMPTY } from '../net/sdFightLink.js';
 import { SD_REALM_ARCHIVE } from '../world/sdRealm.js';
@@ -43,6 +43,16 @@ export const SD_ECHO_SINK_MS = 1500;
 export const SD_HEART_SPIN = 0.9;
 const ZERO = new Float32Array(16);
 const NONE = Object.freeze([]);
+/** AUDIT SD II (L2 F9): a body not shown - one pose for every hidden one (eight Hearts' literals were made a frame), never
+ *  written (and not frozen: one shape with the frame's own poses, filled in place, so their reads stay one kind). */
+const HIDDEN = { x: 0, z: 0, yw: 0, sink: 0, shown: false };
+const _remPose = { x: 0, z: 0, yw: 0, sink: 0, shown: false };
+const _echoPose = { x: 0, z: 0, yw: 0, sink: 0, shown: false };
+const _heartPose = { x: 0, z: 0, yw: 0, sink: 0, shown: true };
+/** An Echo's scale beside the Remnant's (world/sdRemnantModel.js remnantScale), once. */
+const ECHO_SCALE = remnantScale(true);
+/** A pose `{ x, z, yw, sink, shown }`, set in `out`. */
+const posed = (out, x, z, yw, sink, shown) => { out.x = x; out.z = z; out.yw = yw; out.sink = sink; out.shown = shown; return out; };
 
 const _uploaded = new WeakSet();
 /** The Echoes' metals, uploaded once a renderer (the Remnant's own brass and the heart's light are the realm's and the
@@ -50,7 +60,7 @@ const _uploaded = new WeakSet();
 export function ensureSdRemnantArt(renderer) {
   if (!renderer || _uploaded.has(renderer) || typeof renderer.uploadTexture !== 'function') return;
   _uploaded.add(renderer);
-  for (const [rec, art] of remnantArt()) { renderer.uploadTexture(SD_REALM_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission); }
+  for (const [rec, art] of remnantArt()) { renderer.uploadTexture(SD_REALM_ARCHIVE, rec, art.albedo); renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission, { white: true }); }   // AUDIT SD II (L2 F3): their own light, never the window's day tint
 }
 
 /** A point of the arena's frame in the dungeon's, on its floor. */
@@ -61,36 +71,37 @@ const live = (s) => s.fi > 0 && !s.lost;
 /**
  * WHERE THE REMNANT STANDS at `now` and how: `{ x, z, yw, sink, shown }` (the arena's frame; `sink` metres under the
  * floor). Waiting at its start with no fight to fight; gone outside time in the Dragon Break; risen out of the floor at
- * the centre over the break for the Last Moment; kneeling while stunned; sinking away where it fell. Pure.
- * @param {any} s the fight (net/sdFightLink.js SdFightState) @param {number} now the relay's clock
+ * the centre over the break for the Last Moment; kneeling while stunned; sinking away where it fell. Pure (AUDIT SD II,
+ * L2 F9: into `out` when one is given - the set's frame makes nothing waiting for a fight).
+ * @param {any} s the fight (net/sdFightLink.js SdFightState) @param {number} now the relay's clock @param {any} [out]
  */
-export function remnantPose(s, now) {
-  if (!live(s)) return { x: SD_REM_START[0], z: SD_REM_START[1], yw: Math.PI, sink: 0, shown: true };
+export function remnantPose(s, now, out = { x: 0, z: 0, yw: 0, sink: 0, shown: false }) {
+  if (!live(s)) return posed(out, SD_REM_START[0], SD_REM_START[1], Math.PI, 0, true);
   const B = s.rem;
   if (s.fell) {
     const sink = (Math.max(0, now - s.fell.at) / SD_REM_SINK_MS) * SD_REM.h;
-    return { x: B.x, z: B.z, yw: B.yw, sink: Math.min(SD_REM.h, sink), shown: sink < SD_REM.h };
+    return posed(out, B.x, B.z, B.yw, Math.min(SD_REM.h, sink), sink < SD_REM.h);
   }
-  if (s.ph === 2) return { x: B.x, z: B.z, yw: B.yw, sink: 0, shown: false };   // outside time
+  if (s.ph === 2) return posed(out, B.x, B.z, B.yw, 0, false);   // outside time
   const [x, z] = sdBodyAt(B, now);
   const rising = now < s.ou ? Math.min(1, (s.ou - now) / SD_BREAK_MS) * SD_REM.h : 0;
   const kneel = now < s.su ? SD_KNEEL_M : 0;
-  return { x, z, yw: B.yw, sink: Math.max(rising, kneel), shown: true };
+  return posed(out, x, z, B.yw, Math.max(rising, kneel), true);
 }
 /**
  * WHERE ECHO `e` STANDS at `now`: `{ x, z, yw, sink, shown }` - rising out of the floor at its spot until it stands,
- * sinking away where it fell; none outside the Dragon Break. Pure.
- * @param {any} s @param {number} e @param {number} now
+ * sinking away where it fell; none outside the Dragon Break. Pure (into `out` when one is given - AUDIT SD II, L2 F9).
+ * @param {any} s @param {number} e @param {number} now @param {any} [out]
  */
-export function echoPose(s, e, now) {
+export function echoPose(s, e, now, out = { x: 0, z: 0, yw: 0, sink: 0, shown: false }) {
   const E = live(s) && !s.fell && s.ph === 2 ? s.ec?.[e] ?? null : null;
-  if (!E) return { x: 0, z: 0, yw: 0, sink: SD_ECHO.h, shown: false };
+  if (!E) return posed(out, 0, 0, 0, SD_ECHO.h, false);
   if (!(E.h > 0)) {
     const sink = E.dn > 0 ? (Math.max(0, now - E.dn) / SD_ECHO_SINK_MS) * SD_ECHO.h : SD_ECHO.h;
-    return { x: E.x, z: E.z, yw: E.yw, sink: Math.min(SD_ECHO.h, sink), shown: sink < SD_ECHO.h };
+    return posed(out, E.x, E.z, E.yw, Math.min(SD_ECHO.h, sink), sink < SD_ECHO.h);
   }
   const [x, z] = sdBodyAt(E, now);
-  return { x, z, yw: E.yw, sink: now < E.up ? Math.min(1, (E.up - now) / SD_BREAK_MS) * SD_ECHO.h : 0, shown: true };
+  return posed(out, x, z, E.yw, now < E.up ? Math.min(1, (E.up - now) / SD_BREAK_MS) * SD_ECHO.h : 0, true);
 }
 /** Whether the Reset's Hearts take blows at `now`: while it winds up, not in its last SD_HEARTS_CLOSE_MS (the law's
  *  heartsOpen, read off the page's fight). Pure. */
@@ -130,12 +141,17 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
   }
   const make = (model) => { if (!model || !renderer?.createMesh) return null; try { return renderer.createMesh(model); } catch (e) { console.warn('[sd] the Remnant would not build', e?.message ?? e); return null; } };
   const drop = (mesh) => { if (mesh) { try { renderer?.destroyMesh?.(mesh); } catch { /* gone */ } } };
-  const hide = (d) => { if (d) d.object.matrix.set(ZERO); };
+  const hide = (d) => { if (d && !d.hidden) { d.object.matrix.set(ZERO); d.hidden = true; } };   // AUDIT SD II (L2 F11): a hidden body is no draw
   const place = (d, p, scale) => {
     if (!d) return;
     if (!p.shown) { hide(d); return; }
-    const [x, y, z] = arenaToDungeon(p.x, p.z);
-    remnantMatrix(x, y - p.sink, z, p.yw, scale, d.object.matrix);
+    // AUDIT SD II (L2 F9): a body standing as it stood keeps its matrix - one waiting for its fight made its matrix's
+    // numbers every frame; and arenaToDungeon's own sums, in place
+    const was = d.posed;
+    if (!d.hidden && was[0] === p.x && was[1] === p.z && was[2] === p.yw && was[3] === p.sink && was[4] === scale) return;
+    was[0] = p.x; was[1] = p.z; was[2] = p.yw; was[3] = p.sink; was[4] = scale;
+    remnantMatrix(SD_REALM_ORIGIN[0] + SD_ARENA.x + p.x, SD_REALM_ORIGIN[1] - p.sink, SD_REALM_ORIGIN[2] + SD_ARENA.z + p.z, p.yw, scale, d.object.matrix);
+    d.hidden = false;
   };
   /** The fight now: the link's state at the relay's clock (none offline). */
   const read = () => { const L = link(); return L ? { L, s: L.state(), t: L.now() } : { L: null, s: SD_FIGHT_EMPTY, t: 0 }; };
@@ -147,7 +163,7 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
       draws = dynamicDraws;
       ensureSdHallArt(renderer);
       ensureSdRemnantArt(renderer);
-      const add = (mesh) => { if (!mesh) return null; const d = { gpu: mesh, object: { matrix: new Float32Array(ZERO) } }; draws.push(d); return d; };
+      const add = (mesh) => { if (!mesh) return null; const d = { gpu: mesh, object: { matrix: new Float32Array(ZERO) }, hidden: true, posed: new Float64Array(5) }; draws.push(d); return d; };
       remMesh = make(buildRemnantModel('brass'));
       goldMesh = make(buildRemnantModel('gold'));
       silverMesh = make(buildRemnantModel('silver'));
@@ -159,20 +175,20 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
     },
     /** One frame: `feet` where I stand (the dungeon's frame) - my `in` when it is due, every body placed. */
     frame(dt, feet) {
-      blowMet.clear();   // a frame ends my blow
-      const { L, s, t } = read();
+      if (blowMet.size) blowMet.clear();   // a frame ends my blow (AUDIT SD II, L2 F9: an empty Set's clear makes it a new table)
+      const L = link(), s = L ? L.state() : SD_FIGHT_EMPTY, t = L ? L.now() : 0;   // read()'s own, with no object made (AUDIT SD II, L2 F9)
       if (L && feet && alive()) {
-        const [rx, , rz] = dungeonToRealm(feet[0], feet[1], feet[2]);
-        const [ax, az] = arenaOf(rx, rz);
+        // the arena's frame: net/sdBrain.js dungeonToRealm's and net/sdRemnant.js arenaOf's sums, in place
+        const ax = feet[0] - SD_REALM_ORIGIN[0] - SD_ARENA.x, az = feet[2] - SD_REALM_ORIGIN[2] - SD_ARENA.z;
         if (inArena(ax, az) && L.inDue(t) && sendIn()) L.sentIn(t);
       }
       if (!draws) return;
-      place(remDraw, remnantPose(s, t), 1);
-      for (let e = 0; e < echoDraws.length; e++) place(echoDraws[e], echoPose(s, e, t), remnantScale(true));
+      place(remDraw, remnantPose(s, t, _remPose), 1);
+      for (let e = 0; e < echoDraws.length; e++) place(echoDraws[e], echoPose(s, e, t, _echoPose), ECHO_SCALE);
       const cx = live(s) && !s.fell ? sdHeartsOf(s, t) : null;   // standing while the Reset winds up - gone as it lands
       for (let c = 0; c < heartDraws.length; c++) {
         const q = cx?.c[c];
-        place(heartDraws[c], q && q[2] > 0 ? { x: q[0], z: q[1], yw: (t / 1000) * SD_HEART_SPIN + c, sink: 0, shown: true } : { x: 0, z: 0, yw: 0, sink: 0, shown: false }, 1);
+        place(heartDraws[c], q && q[2] > 0 ? posed(_heartPose, q[0], q[1], (t / 1000) * SD_HEART_SPIN + c, 0, true) : HIDDEN, 1);
       }
     },
     /**

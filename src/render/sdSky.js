@@ -5,15 +5,16 @@
 // stars behind the arena whose hands run backwards."
 //
 // PAINTED, NOT BUILT - the Deadlands' law (render/deadlands.js): one triangle over the screen AT THE FAR PLANE,
-// depth-tested and never written, each pixel reading its own ray (`skyBasis`), drawn in the realm's world pass after its
-// solid geometry and before its flats (PERF2's law: the Hour's islands drawn first, so the sky shows only where they do
-// not). Azimuth is measured from the realm's +z - toward the arena, where the clock-face hangs - turning toward +x.
+// depth-tested and never written, each pixel reading its own ray (`skyBasis`'s, filled in place - AUDIT SD II), drawn in
+// the realm's world pass after its solid geometry and before its flats (PERF2's law: the Hour's islands drawn first, so
+// the sky shows only where they do not). Azimuth is measured from the realm's +z - toward the arena, where the clock-face
+// hangs - turning toward +x.
 //
 //   THE VOID - near black brass, a glow of brass along the horizon that meets the frame's haze (SD_REALM_FOG), and stars.
 //   THE AURORAE - slow curtains of brass light high over the islands, a pale green at their hems (the Mantella's).
 //   THE SHARDS - three of the Bay's skylines hanging upside down from the upper sky, dark against the glow with a lit
 //     rim: DAGGERFALL'S towers and their spires, SENTINEL'S domes and minarets, WAYREST'S bridge on its piers. Each
-//     drifts round the sky its own way.
+//     drifts round the sky its own way, hung wholly over the clock-face's highest point (AUDIT SD II): never across it.
 //   THE CLOCK-FACE - a ring of stars over the arena, its twelve hours the brightest, and two hands of light turning
 //     BACKWARDS - the Hour unwinding.
 //
@@ -24,7 +25,7 @@
 // Colours are display-encoded (the lit lane's frame image), scaled by `gain` with the realm's fog (render/deadlands.js
 // skyGain's law). Not a DFU member. Ledger A (SUPER-DUNGEONS).
 import { buildProgram } from './glProgram.js';
-import { skyBasis, DEAD_NOISE_GLSL } from './deadlands.js';
+import { DEAD_NOISE_GLSL } from './deadlands.js';
 
 /** Every rate is whole cycles over this many seconds; the clock is handed wrapped to it. */
 export const SD_SKY_PERIOD = 720;
@@ -37,8 +38,16 @@ export const SD_SKY_SHARDS = Object.freeze([
   Object.freeze({ name: 'sentinel', az: -2.1, halfW: 0.38, depth: 0.26, turns: -1 }),
   Object.freeze({ name: 'wayrest', az: 3.05, halfW: 0.5, depth: 0.22, turns: 2 }),
 ]);
-/** Where the shards hang from (the upper sky, radians of elevation), the aurorae's band, and their slow drift's turns. */
-export const SD_SHARD_TOP = 1.02;
+/** The clock-face's ring: its half-width (in the face's radii) - and so the face's highest drawn point, its ring's outer
+ *  edge over its centre (radians of elevation). */
+export const SD_CLOCK_RING_W = 0.03;
+export const SD_CLOCK_TOP = SD_CLOCK_FACE.elev + SD_CLOCK_FACE.r * (1 + SD_CLOCK_RING_W);
+/** Where the shards hang from (the upper sky, radians of elevation), the aurorae's band, and their slow drift's turns.
+ *  AUDIT SD II (L2 F15): every shard hangs wholly over the clock-face's highest point, SD_SHARD_CLEAR clear of it, so no
+ *  drift ever carries one across it - each turns a whole sky a period, and from 1.02 Daggerfall's spires (to 0.725)
+ *  crossed the ring's top arc (0.729-0.751) for some twenty seconds in every twelve minutes. */
+export const SD_SHARD_CLEAR = 0.05;
+export const SD_SHARD_TOP = SD_CLOCK_TOP + SD_SHARD_CLEAR + Math.max(...SD_SKY_SHARDS.map((s) => s.depth));
 export const SD_AURORA = Object.freeze({ low: 0.3, high: 1.15, turns: 3 });
 
 const HEAD = `#version 300 es
@@ -54,6 +63,17 @@ void main() {
   gl_Position = vec4(aPos, 1.0, 1.0); }`;
 
 const f4 = (v) => v.toFixed(4);
+const f6 = (v) => v.toFixed(6);
+/** AUDIT SD II (L2 F15): the clock-face's frame on the sky - its centre's direction (the realm's azimuth from +z toward
+ *  +x, its elevation), the way its third hour lies (azimuth growing) and its twelfth (elevation growing). */
+export const CLOCK_BASIS = Object.freeze((() => {
+  const { az, elev } = SD_CLOCK_FACE;
+  return {
+    centre: Object.freeze([Math.cos(elev) * Math.sin(az), Math.sin(elev), Math.cos(elev) * Math.cos(az)]),
+    right: Object.freeze([Math.cos(az), 0, -Math.sin(az)]),
+    up: Object.freeze([-Math.sin(elev) * Math.sin(az), Math.cos(elev), -Math.sin(elev) * Math.cos(az)]),
+  };
+})());
 const shardGlsl = SD_SKY_SHARDS.map((s, i) => `  { float c = ${f4(s.az)} + ${f4(s.turns)} * TAU * uTime / PERIOD; float du = wrapPi(az - c) / ${f4(s.halfW)}; float dv = (${f4(SD_SHARD_TOP)} - e) / ${f4(s.depth)};
     if (abs(du) < 1.0 && dv > -0.05 && dv < 1.0) { float m = skyline${i}(du, dv); float rim = skyline${i}(du * 1.03, dv - 0.025) * (1.0 - m);
       col = mix(col, SHARD_DARK * uGain, m * 0.92); col += BRASS_BRIGHT * rim * 0.9 * uGain; } }`).join('\n');
@@ -99,7 +119,8 @@ float skyline1(float u, float v) {
 float skyline2(float u, float v) {
   float m = step(v, 0.08);                         // the city's edge
   float cell = fract((u + 1.0) * 2.0);             // four spans across the shard
-  float curve = 0.14 + 0.36 * pow(2.0 * cell - 1.0, 2.0);
+  float arch = 2.0 * cell - 1.0;                   // AUDIT SD II (L2 F12): squared by itself - negative over half a span,
+  float curve = 0.14 + 0.36 * arch * arch;         // where GLSL ES leaves a power of it undefined (D3D answers NaN)
   m = max(m, step(v, curve) * step(0.08, v));      // the deck, and the piers thickening to its arches' feet
   m = max(m, box(u, v, -0.5, 0.05, 0.62));
   m = max(m, box(u, v, 0.5, 0.05, 0.62));
@@ -116,6 +137,23 @@ float segment(vec2 p, vec2 a, vec2 b, float w) {
   vec2 pa = p - a, ba = b - a; float t = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
   return smoothstep(w, w * 0.25, length(pa - ba * t));
 }
+// THE AURORAE's curtain at (azimuth, elevation) and the drift: AUDIT SD II (L2 F7) its noise read round a circle (the
+// Deadlands' ridge's way) - read off the raw azimuth, which leaps from PI to -PI, it was cut by a hard seam toward -z;
+// the curtain's own sin(az * 3.0) is whole round already
+float auroraCurtain(float az, float e, float drift) {
+  return sin(az * 3.0 + dfbm(vec2(cos(az), sin(az)) * (0.7 + 2.0 * e) + vec2(cos(drift), sin(drift)) * 0.7, 4) * 4.0 + drift);
+}
+// THE CLOCK-FACE's own frame for a ray d: how far along the sky from the face's centre, in the face's radii, and which
+// way - the twelfth hour up (toward the zenith), the third toward the arena's right. AUDIT SD II (L2 F15): read on the
+// sphere (the azimuthal equidistant frame about its centre) - laid out in raw azimuth and elevation, an arc of azimuth
+// counted whole where the sky gives it cos(e) of itself, it stood 7% narrower than tall
+vec2 clockFaceAt(vec3 d) {
+  const vec3 CENTRE = vec3(${CLOCK_BASIS.centre.map(f6).join(', ')});
+  const vec3 RIGHT = vec3(${CLOCK_BASIS.right.map(f6).join(', ')});
+  const vec3 UPWARD = vec3(${CLOCK_BASIS.up.map(f6).join(', ')});
+  vec2 t = vec2(dot(d, RIGHT), dot(d, UPWARD));
+  return t * (acos(clamp(dot(d, CENTRE), -1.0, 1.0)) / max(length(t), 1e-6)) / ${f6(SD_CLOCK_FACE.r)};
+}
 void main() {
   vec3 d = normalize(vRay);
   float e = asin(clamp(d.y, -1.0, 1.0));
@@ -128,18 +166,18 @@ void main() {
   // THE AURORAE: slow curtains high over the islands
   if (e > ${f4(SD_AURORA.low)} && e < ${f4(SD_AURORA.high)}) {
     float drift = ${f4(SD_AURORA.turns)} * TAU * uTime / PERIOD;
-    float curtain = sin(az * 3.0 + dfbm(vec2(az * 1.3, e * 2.0) + vec2(cos(drift), sin(drift)) * 0.7, 4) * 4.0 + drift);
+    float curtain = auroraCurtain(az, e, drift);
     float k = smoothstep(0.55, 1.0, curtain) * smoothstep(${f4(SD_AURORA.low)}, ${f4(SD_AURORA.low)} + 0.2, e) * smoothstep(${f4(SD_AURORA.high)}, ${f4(SD_AURORA.high)} - 0.25, e);
     float hem = smoothstep(0.55, 0.7, curtain) * (1.0 - smoothstep(0.7, 0.95, curtain));
     col += (BRASS * 0.55 * k + MANTELLA * 0.25 * hem * k) * uGain;
   }
   // THE CLOCK-FACE over the arena: a ring of stars, its twelve hours bright, two hands turning backwards
   {
-    vec2 p = vec2(wrapPi(az - ${f4(SD_CLOCK_FACE.az)}), e - ${f4(SD_CLOCK_FACE.elev)}) / ${f4(SD_CLOCK_FACE.r)};
+    vec2 p = clockFaceAt(d);
     float r = length(p);
     if (r < 1.25) {
       float ang = atan(p.x, p.y);
-      float ring = smoothstep(0.03, 0.0, abs(r - 1.0)) * 0.5;
+      float ring = smoothstep(${f4(SD_CLOCK_RING_W)}, 0.0, abs(r - 1.0)) * 0.5;
       float hourMark = smoothstep(0.06, 0.0, length(p - 0.9 * vec2(sin(floor(ang / (TAU / 12.0) + 0.5) * TAU / 12.0), cos(floor(ang / (TAU / 12.0) + 0.5) * TAU / 12.0))));
       float back = -TAU * uTime / PERIOD;
       float hHand = segment(p, vec2(0.0), 0.55 * vec2(sin(back * ${f4(SD_CLOCK_FACE.hourTurns)}), cos(back * ${f4(SD_CLOCK_FACE.hourTurns)})), 0.035);
@@ -151,6 +189,16 @@ void main() {
 ${shardGlsl}
   o = vec4(col, 1.0);
 }`;
+
+/** AUDIT SD II (L2 F9): the sky's ray basis into `out`'s own arrays - render/deadlands.js skyBasis's reading, which makes
+ *  four arrays a call (pinned equal to it). The pass's frame makes nothing. */
+export function sdSkyBasisInto(view, proj, out) {
+  out.right[0] = view[0]; out.right[1] = view[4]; out.right[2] = view[8];
+  out.up[0] = view[1]; out.up[1] = view[5]; out.up[2] = view[9];
+  out.fwd[0] = -view[2]; out.fwd[1] = -view[6]; out.fwd[2] = -view[10];
+  out.lens[0] = proj[0]; out.lens[1] = proj[5]; out.lens[2] = proj[8]; out.lens[3] = proj[9];
+  return out;
+}
 
 /** The Hour's sky, one foreign pass. */
 export class SdSkyRenderer {
@@ -168,12 +216,14 @@ export class SdSkyRenderer {
     gl.bindVertexArray(null);
     /** whether the last draw put the sky up (the stats and the tests) */
     this.drawn = false;
+    /** the frame's basis, filled in place (sdSkyBasisInto) */
+    this._b = { right: new Float32Array(3), up: new Float32Array(3), fwd: new Float32Array(3), lens: new Float32Array(4) };
   }
 
   /** Paint the sky where nothing nearer has drawn: `seconds` the realm's clock (wrapped here), `fog` the frame's (its
    *  colour the haze the horizon meets), `gain` the realm's light against its own. Answers true. */
   draw(proj, view, seconds, fog = null, gain = 1) {
-    const gl = this.gl, U = this.u, b = skyBasis(view, proj);
+    const gl = this.gl, U = this.u, b = sdSkyBasisInto(view, proj, this._b);
     gl.disable(gl.BLEND);
     gl.disable(gl.CULL_FACE);
     gl.useProgram(this.program);

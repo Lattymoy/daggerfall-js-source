@@ -6,7 +6,8 @@
 //   THE STONES - six slabs on the hall's ring (net/sdBrain.js SD_STONE_POS), each facing the hall's centre: its dial at
 //     chest height with a brass notch over its twelfth hour, its sign above, a brass cap, and TWO HANDLES - the right
 //     (as you face it) turns it forward, the left back. Each stone's HAND is its own mesh, turned on its dial by a
-//     matrix of its own (handMatrix): clockwise as you face it, the twelfth hour straight up.
+//     matrix of its own (handMatrix): clockwise as you face it, the twelfth hour straight up. Slabs, caps and handles,
+//     and the plaques' posts and tablets, are solid (hallSolidTris - AUDIT SD II).
 //   THE LEDGER PLAQUES - six bronze tablets on posts round the rim, facing in, numbered by pips - none on the walk in or
 //     the way on.
 //   THE DIAL'S LIGHT - the six segments the Hour-dial carries (world/sdRealmArt.js) lit in the Mantella's green, one for
@@ -28,8 +29,9 @@ export const SD_STONE_SIZE = Object.freeze({ w: 1.6, d: 0.7, h: 2.6 });
 export const SD_DIAL = Object.freeze({ y: 1.55, r: 0.5 });
 /** A hand: from the dial's centre to its point, behind it, its width, the hub's, and how far it stands off the face. */
 export const SD_HAND = Object.freeze({ len: 0.42, tail: 0.1, w: 0.06, hub: 0.065, off: 0.03 });
-/** The sign above the dial: its centre's height and its half-size. */
-export const SD_EMBLEM = Object.freeze({ y: 2.2, half: 0.28 });
+/** The sign above the dial: its centre's height and its half-size. AUDIT SD II (L2 F5): clear of the dial (to 2.05) and
+ *  under the cap (from 2.6) - it stood 1.92-2.48, over the dial's twelfth hour, both a hair before the face: they fought. */
+export const SD_EMBLEM = Object.freeze({ y: 2.34, half: 0.25 });
 /** The handles: their height, how far they stand out from the face, how far in from its edges, and their activation
  *  box's half-size. */
 export const SD_HANDLE = Object.freeze({ y: 1.2, out: 0.14, inset: 0.14, reach: 0.25 });
@@ -56,40 +58,63 @@ const UP = [0, 1, 0];
 
 /**
  * A stone's frame in the realm's: its foot's centre `at`, `n` the way its face looks (toward the hall's centre), and `R`
- * the right of one who faces it (up x n: the right of a camera looking along -n, render/mat4 lookAt's own).
+ * the right of one who faces it AS THE SCREEN SHOWS IT - n x up, the game's own camRight (cos yaw, 0, -sin yaw) for an eye
+ * looking along -n. AUDIT SD II (L2 F1): it was up x n, render/mat4 lookAt's +x BEFORE the projection's one mirror (mat4's
+ * handedness law: lookAt puts world +x on screen-LEFT) - so every hand turned anticlockwise with its third hour at nine
+ * o'clock, the forward handle stood on the left, and every sign and plaque read mirrored.
  */
 export function stoneFrame(i) {
   const b = SD_STONE_BEARINGS[i], p = SD_STONE_POS[i];
   const n = [-Math.sin(b), 0, -Math.cos(b)];
-  return { at: [p.x, 0, p.z], n, R: [n[2], 0, -n[0]] };
+  return { at: [p.x, 0, p.z], n, R: [-n[2], 0, n[0]] };
 }
 /** The point on a stone's face (the realm's frame) `right` across, `up` high, `out` before it. */
 export function stonePoint(i, right, up, out = 0) {
   const { at, n, R } = stoneFrame(i);
   return add(add(add(at, mul(n, SD_STONE_SIZE.d / 2 + out)), mul(R, right)), [0, up, 0]);
 }
-/** A plaque's frame: its foot `at` on the rim, `n` facing in, `R` the right of one who faces it. */
+/** AUDIT SD II (L2 F2): whether a point of the realm's floor (x, z) stands before stone `i`'s face - past its face's
+ *  plane, on the side it looks to: where a hand on its handles stands (the slab is solid now; the handles' boxes still
+ *  reach a little past its edges, so the press asks this too). */
+export function beforeStone(i, x, z) {
+  const { at, n } = stoneFrame(i);
+  return (x - at[0]) * n[0] + (z - at[2]) * n[2] > SD_STONE_SIZE.d / 2;
+}
+/** A plaque's frame: its foot `at` on the rim, `n` facing in, `R` the right of one who faces it (n x up, as the stones'). */
 export function plaqueFrame(k) {
   const b = deg(SD_PLAQUE.bearings[k]);
   const n = [-Math.sin(b), 0, -Math.cos(b)];
-  return { at: [SD_ORRERY.x + SD_PLAQUE.r * Math.sin(b), 0, SD_ORRERY.z + SD_PLAQUE.r * Math.cos(b)], n, R: [n[2], 0, -n[0]] };
+  return { at: [SD_ORRERY.x + SD_PLAQUE.r * Math.sin(b), 0, SD_ORRERY.z + SD_PLAQUE.r * Math.cos(b)], n, R: [-n[2], 0, n[0]] };
 }
 
-/** A face standing up: `c` its bottom middle (the realm's frame), across `R`, out `n` (R x up = n), w by h, `uv` its
- *  texture's corners - wound so it faces `n`. */
-function upright(f, rec, c, R, w, h, uv = [[0, 0], [1, 0], [1, 1], [0, 1]]) {
+/** A face standing up: `c` its bottom middle (the realm's frame), across `R` (left to right as it is seen), out up x R (a
+ *  stone's n, for its own R), w by h - its corners in the dungeon's frame, bottom-left, top-left, top-right, bottom-right:
+ *  wound to face out (AUDIT SD II, L2 F1: with R the eye's right, its picture's u runs left to right as it is seen). */
+function uprightQuad(c, R, w, h) {
   const T = (p) => realmToDungeon(p[0], p[1], p[2]);
   const bl = add(c, mul(R, -w / 2)), br = add(c, mul(R, w / 2));
-  f.quad(rec, T(bl), T(br), T(add(br, mul(UP, h))), T(add(bl, mul(UP, h))), ...uv);
+  return [T(bl), T(add(bl, mul(UP, h))), T(add(br, mul(UP, h))), T(br)];
 }
-/** A box (a cap, a handle, a post): its bottom middle `c`, its axes `R` and `n`, half-sizes, its top a face too. */
-function box(f, rec, c, R, n, hw, hd, h) {
+const UPRIGHT_UV = [[0, 0], [0, 1], [1, 1], [1, 0]];
+const TOP_UV = [[0, 0], [1, 0], [1, 1], [0, 1]];
+function upright(f, rec, c, R, w, h) {
+  const [a, b, d, e] = uprightQuad(c, R, w, h);
+  f.quad(rec, a, b, d, e, ...UPRIGHT_UV);
+}
+/** A box (a slab, a cap, a handle, a post): its bottom middle `c`, its axes `R` and `n`, half-sizes and height - its four
+ *  sides and its top as quads (four corners each, the dungeon's frame, wound to face out): AUDIT SD II (L2 F2) ONE
+ *  geometry for its draw and its collider, as the arena's pillars are (world/sdRealm.js pillarQuads). */
+function boxQuads(c, R, n, hw, hd, h) {
+  const out = [];
   for (const [N, A, half, across] of [[n, R, hd, hw], [mul(n, -1), mul(R, -1), hd, hw], [R, mul(n, -1), hw, hd], [mul(R, -1), n, hw, hd]])
-    upright(f, rec, add(c, mul(N, half)), A, across * 2, h);
-  const T = (p) => realmToDungeon(p[0], p[1], p[2]);
+    out.push(uprightQuad(add(c, mul(N, half)), A, across * 2, h));
   const top = add(c, [0, h, 0]);
-  const p = (a, b) => T(add(add(top, mul(R, a * hw)), mul(n, b * hd)));
-  f.quad(rec, p(-1, 1), p(1, 1), p(1, -1), p(-1, -1), [0, 0], [1, 0], [1, 1], [0, 1]);
+  const p = (a, b) => realmToDungeon(...add(add(top, mul(R, a * hw)), mul(n, b * hd)));
+  out.push([p(-1, -1), p(1, -1), p(1, 1), p(-1, 1)]);
+  return out;
+}
+function box(f, rec, c, R, n, hw, hd, h) {
+  boxQuads(c, R, n, hw, hd, h).forEach(([a, b, d, e], k) => f.quad(rec, a, b, d, e, ...(k < 4 ? UPRIGHT_UV : TOP_UV)));
 }
 
 /**
@@ -98,29 +123,55 @@ function box(f, rec, c, R, n, hw, hd, h) {
  */
 export function buildHallModel() {
   const f = faces();
-  const { w, d, h } = SD_STONE_SIZE;
   for (let i = 0; i < SD_STONES.length; i++) {
-    const { at, n, R } = stoneFrame(i);
-    // the slab, and its brass cap
-    box(f, SD_REALM_ROOT_RECORD, at, R, n, w / 2, d / 2, h);
-    box(f, SD_REALM_BRASS_RECORD, add(at, [0, h, 0]), R, n, w / 2 + 0.05, d / 2 + 0.05, 0.12);
+    const { R } = stoneFrame(i);
+    // the slab, its brass cap and the two handles out from the face's edges (stoneSolids - the collider's own boxes)
+    for (const [rec, quads] of stoneSolids(i)) quads.forEach(([a, b, d, e], k) => f.quad(rec, a, b, d, e, ...(k % 5 < 4 ? UPRIGHT_UV : TOP_UV)));
     // the dial, a hair before the face; the notch over its twelfth hour; the sign above
     upright(f, SD_HALL_FACE_RECORD, stonePoint(i, 0, SD_DIAL.y - SD_DIAL.r, 0.005), R, SD_DIAL.r * 2, SD_DIAL.r * 2);
     const T = (p) => realmToDungeon(p[0], p[1], p[2]);
     const tip = stonePoint(i, 0, SD_DIAL.y + SD_DIAL.r + 0.01, 0.01);   // the notch points down at the twelfth hour
-    f.tri(SD_REALM_BRASS_RECORD, T(tip), T(add(add(tip, [0, 0.12, 0]), mul(R, 0.07))), T(add(add(tip, [0, 0.12, 0]), mul(R, -0.07))), [0.5, 0], [1, 1], [0, 1]);
+    f.tri(SD_REALM_BRASS_RECORD, T(tip), T(add(add(tip, [0, 0.12, 0]), mul(R, -0.07))), T(add(add(tip, [0, 0.12, 0]), mul(R, 0.07))), [0.5, 0], [0, 1], [1, 1]);
     upright(f, SD_HALL_EMBLEM_RECORD + i, stonePoint(i, 0, SD_EMBLEM.y - SD_EMBLEM.half, 0.005), R, SD_EMBLEM.half * 2, SD_EMBLEM.half * 2);
-    // the two handles, out from the face's edges
-    for (const side of [-1, 1]) box(f, SD_REALM_BRASS_RECORD, handleFoot(i, side), R, n, 0.06, SD_HANDLE.out / 2, 0.22);
   }
   for (let k = 0; k < SD_PLAQUE.bearings.length; k++) {
     const { at, n, R } = plaqueFrame(k);
     box(f, SD_REALM_BRASS_RECORD, at, R, n, 0.07, 0.07, SD_PLAQUE.post);
-    upright(f, SD_HALL_PLAQUE_RECORD + k, add(at, add(mul(n, 0.09), [0, SD_PLAQUE.post, 0])), R, SD_PLAQUE.w, SD_PLAQUE.h);
+    upright(f, SD_HALL_PLAQUE_RECORD + k, plaqueFaceFoot(k), R, SD_PLAQUE.w, SD_PLAQUE.h);
     upright(f, SD_REALM_BRASS_RECORD, add(at, add(mul(n, 0.07), [0, SD_PLAQUE.post, 0])), mul(R, -1), SD_PLAQUE.w, SD_PLAQUE.h);
   }
   realmIsland(f, SD_FIRST_STEP.x, SD_FIRST_STEP.z, SD_FIRST_STEP.r, SD_REALM_FLOOR_RECORD, { lean: -1 });
   return packRealmFaces(f);
+}
+/** A plaque's face's bottom middle (the realm's frame): on its post's top, a little before it. */
+const plaqueFaceFoot = (k) => { const { at, n } = plaqueFrame(k); return add(at, add(mul(n, 0.09), [0, SD_PLAQUE.post, 0])); };
+/** AUDIT SD II (L2 F2): STONE `i`'s SOLIDS - its slab, its brass cap and its two handles, each `[record, quads]` (five
+ *  quads a box, boxQuads') - the draw's and the collider's one geometry.
+ * @returns {Array<[number, number[][][]]>} */
+function stoneSolids(i) {
+  const { at, n, R } = stoneFrame(i);
+  const { w, d, h } = SD_STONE_SIZE;
+  return [
+    [SD_REALM_ROOT_RECORD, boxQuads(at, R, n, w / 2, d / 2, h)],
+    [SD_REALM_BRASS_RECORD, boxQuads(add(at, [0, h, 0]), R, n, w / 2 + 0.05, d / 2 + 0.05, 0.12)],
+    [SD_REALM_BRASS_RECORD, [-1, 1].flatMap((side) => boxQuads(handleFoot(i, side), R, n, 0.06, SD_HANDLE.out / 2, 0.22))],
+  ];
+}
+/** AUDIT SD II (L2 F2): THE HALL'S SOLIDS, FOR THE COLLIDER - every stone's slab, cap and handles and every plaque's post
+ *  and tablet, from the corners their draw is made of (both faces are one to the collider): a body stops at a stone and a
+ *  ray meets it, as the arena's pillars are met (world/sdRealm.js realmPillarTris). They were drawn and never solid - the
+ *  player walked through the 1.6 x 0.7 x 2.6 m slabs. */
+export function hallSolidTris() {
+  const out = [];
+  /** @param {number[][]} q */
+  const tri2 = (q) => out.push(...q[0], ...q[1], ...q[2], ...q[0], ...q[2], ...q[3]);
+  for (let i = 0; i < SD_STONES.length; i++) for (const [, quads] of stoneSolids(i)) quads.forEach(tri2);
+  for (let k = 0; k < SD_PLAQUE.bearings.length; k++) {
+    const { at, n, R } = plaqueFrame(k);
+    boxQuads(at, R, n, 0.07, 0.07, SD_PLAQUE.post).forEach(tri2);
+    tri2(uprightQuad(plaqueFaceFoot(k), R, SD_PLAQUE.w, SD_PLAQUE.h));
+  }
+  return new Float32Array(out);
 }
 /** A handle's foot (the realm's frame): `side` 1 the right of one facing the stone (forward), -1 the left (back). */
 export const handleFoot = (i, side) => stonePoint(i, side * (SD_STONE_SIZE.w / 2 - SD_HANDLE.inset), SD_HANDLE.y - 0.11, SD_HANDLE.out / 2);
@@ -153,14 +204,15 @@ export function buildHandModel() {
 }
 /**
  * A hand's place on stone `i` at `hour` (0 to 12, fractions between): the matrix that stands the hand's own frame on the
- * dial - turned CLOCKWISE as one facing the stone sees it, the twelfth hour straight up (column-major, the dungeon's
- * frame).
+ * dial - turned CLOCKWISE as one facing the stone sees it, the twelfth hour straight up and the third toward R, the eye's
+ * right (column-major, the dungeon's frame). AUDIT SD II (L2 F1): a proper turn - its own +z the face's n, and its own +x
+ * y x n, so x x y = n (with R the eye's right, R and up beside n are a mirror's three).
  */
 export function handMatrix(i, hour) {
   const { n, R } = stoneFrame(i);
   const t = ((hour % 12) / 12) * Math.PI * 2, c = Math.cos(t), s = Math.sin(t);
-  const x = [R[0] * c - UP[0] * s, R[1] * c - UP[1] * s, R[2] * c - UP[2] * s];   // its own +x: across, turned
   const y = [R[0] * s + UP[0] * c, R[1] * s + UP[1] * c, R[2] * s + UP[2] * c];   // its own +y: to its point, turned
+  const x = [y[1] * n[2] - y[2] * n[1], y[2] * n[0] - y[0] * n[2], y[0] * n[1] - y[1] * n[0]];   // its own +x: y x n
   const o = realmToDungeon(...stonePoint(i, 0, SD_DIAL.y, SD_HAND.off));
   return new Float32Array([x[0], x[1], x[2], 0, y[0], y[1], y[2], 0, n[0], n[1], n[2], 0, o[0], o[1], o[2], 1]);
 }

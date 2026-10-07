@@ -6977,8 +6977,6 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     // layout stood, every seam this host builds made)
     if (playerFeet && !_lairAsked) { _lairAsked = true; standLairRevenant().catch(() => null); }
     if (sdEnd) sdEndFrame(playerFeet);   // SD4b: a Super dungeon's Rift and Return - stood, the Return's boss asked, the step
-    if (sdHall) sdHallFrame(dt, playerFeet);   // SD6c: the Orrery's hall - stood, its word heard, its hands turned
-    if (sdRemnant) sdRemnantFrame(dt, playerFeet);   // SD8c: the Brass Remnant - stood, my `in`, its bodies placed
     if (_blockWaterOverride && playerFeet && blockAtXZ(playerFeet[0], playerFeet[2]) !== _blockWaterOverride.block) _blockWaterOverride = null;   // OH-D: a new block reads its own level   // ROAD-H H2: the enemy AoC blast reads the player's live capsule through castEnemySpell
     // ENHANCED AI 3b: ONE BAKE PER DUNGEON, off the frame, once the
     // player's feet are known - they are the anchor, the component the
@@ -9885,6 +9883,14 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     /** SD7b: the Unmoored Steps' frame, BEFORE the motor (the mode machine's, beside the movers' ride): the steps moved and
      *  `body` carried; while `live`, the breath, the touch and the void - the landing of a cast-back, or null. */
     sdStepsRide(dt, body, live = true) { return sdStepsRide(dt, body, live); },
+    /** AUDIT SD II (L2 F10): the Shattered Hour's hall and arena posed BEFORE the world pass draws them (the mode machine's
+     *  dungeon arm, with no window up, as the Steps are ridden before the motor): the Orrery's hall stood, its word heard,
+     *  its hands turned (SD6c); the Brass Remnant stood, my `in`, its bodies placed (SD8c). Posed in drawFoes, after the
+     *  world pass had drawn them, they were a frame late - the Remnant behind its own telegraph. */
+    sdPose(dt, playerFeet) {
+      if (sdHall) sdHallFrame(dt, playerFeet);
+      if (sdRemnant) sdRemnantFrame(dt, playerFeet);
+    },
     /** SD5a: where a player back from the Shattered Hour is stood - beside this Hollow's Rift (stood now if the first frame
      *  has not stood it yet); null in any other dungeon. */
     sdRiftLanding() {

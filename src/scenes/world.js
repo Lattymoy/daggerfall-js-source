@@ -13282,6 +13282,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _deathWasOnline = null;   // armed fresh for the NEXT death
     const mode = modes?.mode ?? 'exterior';
     const wasInDungeon = mode === 'dungeon';
+    const diedInHour = modes?.sdRealmSlot?.() != null;   // AUDIT SD II (L6 F4): a death in the Shattered Hour is the Hour's - its veil and its words, read while the Hour stands
     // AUDIT OH-F B5: a death in the drowned dungeon wakes at ITS door - the pit (the dungeon's own pixel is the borrowed
     // template's, perhaps across the map), stood on the entrance as the way up stands it. Read before the exit clears it.
     const ohReturn = wasInDungeon ? ohAbyss?.returnPoint() ?? null : null;
@@ -13292,7 +13293,6 @@ export async function bootWorld(canvas, renderer, params, status) {
     // west or south of the dungeon's corner (a negative x or z) woke on the neighbouring pixel
     const px = ohReturn?.pixel ?? playerTravelPixel();
     const courtGate = modes?.gateArenaGate?.() ?? null;   // WB3b: a death in the Burning Court is CAST OUT - before its gate, not at a temple
-    const diedInHour = modes?.sdRealmSlot?.() != null;   // AUDIT SD II (L6 F4): and one in the Shattered Hour is the Hour's - its veil and its words
     Promise.resolve().then(async () => {
       if (courtGate) {
         modes?.forceExitToExterior();
@@ -21457,6 +21457,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // Hour refuses every save, so what it gave stood on the device alone until the next one, two minutes on)
     if (!inRealm && _sdFightHeld) { sdSpoilsBurst?.leave(); saveSoon.changed(); }
     if (!inRealm && _sdFightHeld) { sdFightLink.leave(); sdBlows?.leave(); _sdFightHeld = false; }
+    if (!inRealm) _sdHall = null;   // AUDIT SD II (L2 F17): the hall's word forgotten out of the realm - kept, the next visit to the slot's Hour turned its stones from stale places and chimed a Concord reached meanwhile
     if (inRealm) { try { sdBlows?.frame(); } catch (e) { console.warn('[sd] blows', e?.message ?? e); } }   // SD8d: its blows on me
     if (inRealm) { try { sdSpoilsBurst?.frame(); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } }   // SD9e: its spoils, thrown and flying
     let bar = null;

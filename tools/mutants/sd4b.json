@@ -156,8 +156,8 @@
   {
     "name": "SD4B-a-jump-a-step",
     "file": "src/scenes/sdEnd.js",
-    "old": "      const gap = t - lastAt > SD_STEP_GAP_MS || !lastFeet || Math.hypot(",
-    "new": "      const gap = false && Math.hypot(",
+    "old": "      const gap = t - lastAt[0] > SD_STEP_GAP_MS || !hasLast || ",
+    "new": "      const gap = false && ",
     "tests": [
       "test/sd4b_rift.test.js"
     ]

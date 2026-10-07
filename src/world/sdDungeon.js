@@ -233,5 +233,7 @@ export function sdReturnStands(rec, s, now) {
  *  (less a step) and its top. */
 export function inSdPortal(feet, at, reach, height) {
   if (!feet || !at) return false;
-  return Math.hypot(feet[0] - at[0], feet[2] - at[2]) <= reach && feet[1] >= at[1] - SD_STEP_M && feet[1] <= at[1] + height;
+  // AUDIT SD II (L2 F9): the reach by its square - Math.hypot made a list of its numbers on every frame's ask
+  const dx = feet[0] - at[0], dz = feet[2] - at[2];
+  return dx * dx + dz * dz <= reach * reach && feet[1] >= at[1] - SD_STEP_M && feet[1] <= at[1] + height;
 }

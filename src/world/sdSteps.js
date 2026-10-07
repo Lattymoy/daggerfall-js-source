@@ -13,7 +13,8 @@
 //     course a riser higher after each.
 //   THE CRUMBLE - eight cracked steps each a step down, falling 0.7 s after a foot touches one (back after 5 s - each
 //     player's own: a step one broke is whole for the next), and THE WARP'S BREATH across them: a gust every 6 s pushing
-//     3 m/s sideways for a second, its rising wind heard the second before.
+//     3 m/s sideways for a second, its rising wind heard the second before - and seen from then through the gust, brass
+//     streaks blowing across the span the way it blows (breathSeen - AUDIT SD II).
 // A body below y -30 is cast back to its span's checkpoint, 15% of its health lost (no shield takes it).
 //
 // Amended from the design (section 9) to the engine as it is (SD7a): the gaps are a plain running jump's at a modest
@@ -72,9 +73,11 @@ const CHECK_R = 3;
 function layCourse() {
   const steps = [], checkpoints = [{ x: SD_FIRST_STEP.x, y: 0, z: SD_FIRST_STEP.z, r: SD_FIRST_STEP.r }];
   let edge = SD_FIRST_STEP.z + SD_FIRST_STEP.r, y = 0;
-  const put = (kind, span, size, gap, extra = {}) => {
+  // AUDIT SD II (L2 F9): every step ONE shape, its unused fields nought - the page's frame reads them for every step, and
+  // four shapes made those reads megamorphic, a number made at each
+  const put = (kind, span, size, gap, { amp = 0, period = 0, phase = 0, beat = 0 } = {}) => {
     const z = edge + gap + size.d / 2;
-    steps.push({ i: steps.length, kind, span, x: 0, y, z, w: size.w, d: size.d, ...extra });
+    steps.push({ i: steps.length, kind, span, x: 0, y, z, w: size.w, d: size.d, amp, period, phase, beat });
     edge = z + size.d / 2;
   };
   const check = (gap) => { const z = edge + gap + CHECK_R; checkpoints.push({ x: 0, y, z, r: CHECK_R }); edge = z + CHECK_R; };
@@ -107,7 +110,7 @@ export const SD_STEPS_FLOORS = Object.freeze([
   Object.freeze({ kind: 'band', x: 0, z0: SD_STEPS_FREE.z0, z1: SD_STEPS_FREE.z1, halfW: SD_STEPS_FREE_HALF_W }),
   Object.freeze({ kind: 'disc', ...SD_ARENA }),
 ]);
-/** The span a z falls in (0 the Drift, 1 the Beat, 2 the Crumble), by the checkpoints' far edges; -1 before A's. */
+/** The span a z falls in (0 the Drift, 1 the Beat, 2 the Crumble), by the checkpoints' near edges; -1 before A's. */
 export function spanAt(z) {
   for (let k = SD_CHECKPOINTS.length - 1; k >= 0; k--) if (z >= SD_CHECKPOINTS[k].z - SD_CHECKPOINTS[k].r) return k;
   return -1;
@@ -116,7 +119,9 @@ export function spanAt(z) {
 /** A step's top-centre at `t` (the realm's anchored seconds), the realm's frame: the Drift's swing across x. AUDIT SD: into
  *  `out` when one is given - the page's frame makes nothing. */
 export function stepAt(s, t, out = [0, 0, 0]) {
-  out[0] = s.kind === 'drift' ? s.x + s.amp * Math.sin((2 * Math.PI * t) / s.period + s.phase) : s.x;
+  // AUDIT SD II (L2 F9): two stores - a choice between a made number and a whole one was a number made a step a frame
+  if (s.kind === 'drift') out[0] = s.x + s.amp * Math.sin((2 * Math.PI * t) / s.period + s.phase);
+  else out[0] = s.x;
   out[1] = s.y;
   out[2] = s.z;
   return out;
@@ -136,20 +141,33 @@ export function beatBlinks(s, t) {
 }
 /**
  * A Crumble step `since` seconds after a foot first touched it (null: untouched): `{ drop, whole, shaking }` - how far it
- * has fallen, whether it stands whole (untouched, still shaking, or back), and whether it shakes (its warning).
+ * has fallen, whether it stands whole (untouched, still shaking, or back), and whether it shakes (its warning). AUDIT SD
+ * II (L2 F9): into `out` when one is given - the page's frame makes nothing.
  */
-export function crumbleAfter(since) {
-  if (since == null || since < 0 || since >= SD_CRUMBLE_DELAY + SD_CRUMBLE_BACK) return { drop: 0, whole: true, shaking: false };
-  if (since < SD_CRUMBLE_DELAY) return { drop: 0, whole: true, shaking: true };
+export function crumbleAfter(since, out = { drop: 0, whole: true, shaking: false }) {
+  if (since == null || since < 0 || since >= SD_CRUMBLE_DELAY + SD_CRUMBLE_BACK) { out.drop = 0; out.whole = true; out.shaking = false; return out; }
+  if (since < SD_CRUMBLE_DELAY) { out.drop = 0; out.whole = true; out.shaking = true; return out; }
   const f = since - SD_CRUMBLE_DELAY;
-  return { drop: 0.5 * SD_CRUMBLE_FALL_G * f * f, whole: false, shaking: false };
+  out.drop = 0.5 * SD_CRUMBLE_FALL_G * f * f; out.whole = false; out.shaking = false;
+  return out;
 }
+/** The way gust `n` blows: +x for the even, -x for the odd (the turns). */
+const gustSign = (n) => (n % 2 === 0 ? 1 : -1);
 /** The Warp's breath at `t`: `{ push, warn }` - the sideways speed it pushes with now (m/s along x, 0 between gusts),
- *  and whether its wind is rising (the second before a gust). */
-export function gustAt(t) {
+ *  and whether its wind is rising (the second before a gust). AUDIT SD II (L2 F9): into `out` when one is given. */
+export function gustAt(t, out = { push: 0, warn: false }) {
   const n = Math.floor(t / SD_GUST_EVERY), u = t - n * SD_GUST_EVERY;
-  const push = u < SD_GUST_FOR ? (n % 2 === 0 ? 1 : -1) * SD_GUST_SPEED : 0;
-  return { push, warn: u >= SD_GUST_EVERY - SD_GUST_WARN };
+  out.push = u < SD_GUST_FOR ? gustSign(n) * SD_GUST_SPEED : 0;
+  out.warn = u >= SD_GUST_EVERY - SD_GUST_WARN;
+  return out;
+}
+/** AUDIT SD II (L2 F18): THE BREATH SEEN - from the instant its wind rises (SD_GUST_WARN before a gust) through the gust,
+ *  the way that gust blows: `{ dir, k }` - +1 or -1 along x (0 when no breath is due) and how far through that span it
+ *  is (0 to 1). It was heard alone: a player with the sound off met each gust unwarned. Into `out` when one is given. */
+export function breathSeen(t, out = { dir: 0, k: 0 }) {
+  const n = Math.floor((t + SD_GUST_WARN) / SD_GUST_EVERY), u = t + SD_GUST_WARN - n * SD_GUST_EVERY, span = SD_GUST_WARN + SD_GUST_FOR;
+  if (u < span) { out.dir = gustSign(n); out.k = u / span; } else { out.dir = 0; out.k = 0; }
+  return out;
 }
 /** Whether a body at realm z feels the Warp's breath - over the Crumble alone, from C's far edge to the arena. */
 export const inBreath = (z) => z > SD_CHECKPOINTS[2].z + SD_CHECKPOINTS[2].r && z < SD_COURSE_END;

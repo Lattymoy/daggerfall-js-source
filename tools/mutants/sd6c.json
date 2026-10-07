@@ -2,8 +2,8 @@
   {
     "name": "SD6C-a-stone-turned-away",
     "file": "src/world/sdHall.js",
-    "old": "  const n = [-Math.sin(b), 0, -Math.cos(b)];\n  return { at: [p.x, 0, p.z], n, R: [n[2], 0, -n[0]] };",
-    "new": "  const n = [Math.sin(b), 0, Math.cos(b)];\n  return { at: [p.x, 0, p.z], n, R: [n[2], 0, -n[0]] };",
+    "old": "  const n = [-Math.sin(b), 0, -Math.cos(b)];\n  return { at: [p.x, 0, p.z], n, R: [-n[2], 0, n[0]] };",
+    "new": "  const n = [Math.sin(b), 0, Math.cos(b)];\n  return { at: [p.x, 0, p.z], n, R: [-n[2], 0, n[0]] };",
     "tests": [
       "test/sd6c_hall.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD6C-the-right-the-left",
     "file": "src/world/sdHall.js",
-    "old": "  return { at: [p.x, 0, p.z], n, R: [n[2], 0, -n[0]] };",
-    "new": "  return { at: [p.x, 0, p.z], n, R: [-n[2], 0, n[0]] };",
+    "old": "  return { at: [p.x, 0, p.z], n, R: [-n[2], 0, n[0]] };",
+    "new": "  return { at: [p.x, 0, p.z], n, R: [n[2], 0, -n[0]] };",
     "tests": [
       "test/sd6c_hall.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "SD6C-the-bridge-never-laid",
     "file": "src/scenes/sdHall.js",
-    "old": "      if (bridgeDraw) bridgeDraw.object.matrix = identity();\n",
+    "old": "      if (bridgeDraw) { bridgeDraw.object.matrix = identity(); bridgeDraw.hidden = false; }\n",
     "new": "",
     "tests": [
       "test/sd6c_hall.test.js"

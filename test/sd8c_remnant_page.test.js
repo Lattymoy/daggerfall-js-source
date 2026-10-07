@@ -25,7 +25,7 @@ import { remnantBarModel, sdBarNear, SD_BAR_TEXT, SD_BAR_NEAR_M, SD_ENDS_WARN_MS
 import { drawGateBossBar, destroyGateBossBar, FELL_HOLD_MS, FELL_FADE_MS } from '../src/ui/gateBossBar.js';
 import { buildRemnantModel, buildHeartModel, remnantMatrix, remnantScale, SD_REMNANT_WEAR, SD_REMNANT_HEART_RECORD, SD_REMNANT_EYE_RECORD } from '../src/world/sdRemnantModel.js';
 import { remnantArt, echoMetalArt, SD_REMNANT_GOLD_RECORD, SD_REMNANT_SILVER_RECORD, SD_REMNANT_ART_SIZE, SD_ECHO_METALS } from '../src/world/sdRemnantArt.js';
-import { realmPillarTris, realmFloorTris, realmColliderTris, SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD, SD_REALM_ARCHIVE } from '../src/world/sdRealm.js';
+import { realmPillarTris, realmFloorTris, realmColliderTris, realmLampTris, SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD, SD_REALM_ARCHIVE } from '../src/world/sdRealm.js';
 import { SD_STEPS_CRACKED_RECORD, SD_STEPS_BEAT_RECORD } from '../src/world/sdStepsArt.js';
 import { identity } from '../src/world/mat4.js';
 import { SD_HALL_GLOW_RECORD } from '../src/world/sdHallArt.js';
@@ -600,9 +600,9 @@ test('SD8c THE BODIES MADE: the Remnant its own height from its feet, its body w
 test('SD8c THE PILLARS STAND: the arena\'s four pillars on the collider, their sides and tops - the same squares the Hour-Hand\'s shade is judged by (net/sdRemnant.js behindPillar): a ray from the Remnant to a body the law shades meets the stone short of it, and one the law leaves in the open meets nothing; the realm\'s collider the floors and the pillars, one bucket (mutants: the pillars left off; a pillar out of its square)', () => {
   const p = realmPillarTris();
   assert.equal(p.length, 4 * 5 * 2 * 9, 'four pillars, four sides and a top each, two triangles a face');
-  const all = realmColliderTris(), floors = realmFloorTris();
-  assert.equal(all.length, floors.length + p.length);
-  assert.deepEqual([...all.slice(floors.length)], [...p]);
+  const all = realmColliderTris(), floors = realmFloorTris(), lamps = realmLampTris();
+  assert.equal(all.length, floors.length + p.length + lamps.length);   // AUDIT SD II (L2 F14 - PIN MOVED): and the lamps' posts after them
+  assert.deepEqual([...all.slice(floors.length, floors.length + p.length)], [...p]);
   for (let i = 0; i < p.length; i += 3) {
     const [x, y, z] = dungeonToRealm(p[i], p[i + 1], p[i + 2]);
     const ax = x - SD_ARENA.x, az = z - SD_ARENA.z;

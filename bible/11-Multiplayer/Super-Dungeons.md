@@ -285,7 +285,8 @@ begun at a stone checkpoint:
    up (CLIMB3's wall run) or climbed, the course a riser higher after each.
 3. **The Crumble** - eight cracked platforms, each a step down to the arena's floor, that shake for 0.7 s after a foot
    touches them and fall (back after 5 s), and the Warp's breath across them: a gust every 6 s pushing 3 m/s sideways
-   for a second, left and right by turns, its wind heard the second before.
+   for a second, left and right by turns, its wind heard the second before and seen from then through the gust - brass
+   streaks blowing across the span the way it will push (AUDIT SD II).
 
 Amended to the engine (SD7a): the design's gaps were a running leap's (4-6.5 m), and a leap flies 4.1 m at Jumping 0 -
 gaps that only a trained leap crosses shut out every build that never trained it, so the gaps are a plain running
@@ -293,10 +294,11 @@ jump's at a modest build (Speed 40, Running 20: 3.1 m), the skill buying margin,
 (CLIMB3 runs up a wall met straight, and the engine has no run along one), so they are risers, not a corridor; and the
 course is 145 m from the first step, so the Steps run to z 220 and the arena stands at z 246.
 
-Falling below the course (y < -30) casts the player back to the span's checkpoint with 15% of their health lost (*"The
-Hour casts you back."*). The platforms move on the realm's anchored clock, so every player sees the same Step in the
-same place; crumbling is each player's own (a platform one player broke is whole for the next). The Steps are not the
-relay's: a player who reaches the arena simply arrives, and the fight judges where they stand.
+Falling below the course (y < -30) casts the player back to the checkpoint of the span they last stood in (a
+checkpoint's island its own span's; one who stood on none, A) with 15% of their health lost (*"The Hour casts you
+back."*). The platforms move on the realm's anchored clock, so every player sees the same Step in the same place;
+crumbling is each player's own (a platform one player broke is whole for the next). The Steps are not the relay's: a
+player who reaches the arena simply arrives, and the fight judges where they stand.
 
 ## 10. The Last Moment - the Brass Remnant
 
@@ -870,12 +872,16 @@ dungeon host with a level made in code - never a fifth host.
   (no tier, no size). Its blocks file answers its one empty block, its start marker on the Threshold.
 - **The Hour itself** (`buildRealmModel`, art made in code - `world/sdRealmArt.js`, pseudo-archive 38151): each stage an
   island hanging in the void on a root of dark stone, its floor dark stone set in brass with a brass lip; the walk
-  between brass kerbs; the Orrery's floor the Hour-dial (twelve brass hours round its rim, a ring of six segments within
-  for the stones of SD6); the arena's floor cracked brass with the Mantella's light in its seams, and its four pillars.
-  Its floors go to the collider (`realmFloorTris`), its lamps (`realmLights`, warm brass on the rims) to the frame's
-  lights after the player's own, its light a brass trilight with a key from the clock-face behind the arena
-  (`realmLighting`), its air a thin brass haze (`SD_REALM_FOG`). Its edge keeps a player on the Threshold, the walk and
-  the hall (`realmClamp`, the motor's `arena`) until SD6's bridge lays more.
+  between brass kerbs, its floor drawn from the Threshold's edge to the Orrery's and over neither (AUDIT SD II: its last
+  metre lay in the dial's own plane, the two fighting for the screen; its collider and edge z 7-25 as before); the
+  Orrery's floor the Hour-dial (twelve brass hours round its rim, a ring of six segments within for the stones of SD6);
+  the arena's floor cracked brass with the Mantella's light in its seams, and its four pillars. Its floors, its pillars
+  (SD8c) and its lamps' posts go to the collider (`realmColliderTris`); its lamps (`realmLights`, warm brass on the
+  rims, each a brass post, a head of the hands' brass glow round its light inside the light's shadow's near plane, and a
+  cap - `realmLampFeet`, AUDIT SD II: the lights stood on nothing) to the frame's lights after the player's own, nearest
+  first, into the realm's own arrays (`realmLightsWith`), its light a brass trilight with a key from the clock-face
+  behind the arena (`realmLighting`), its air a thin brass haze (`SD_REALM_FOG`). Its edge keeps a player on the
+  Threshold, the walk and the hall (`realmClamp`, the motor's `arena`) until SD6's bridge lays more.
 - **What the Hour refuses** - the court's refusals, beside the court's own lines: rest, save (the pause's Save says
   why), map (no automap slot either), a Mark and a Recall (*"Nothing answers a Recall in the Shattered Hour."*), and
   regeneration (`courtRules`, switched on in the Hour). No drip, no door, no fire of the dungeon's own.
@@ -915,18 +921,21 @@ SD5b next: the Hour's sky (`render/sdSky.js`) on the realm's anchored clock.
 ### SD5b - shipped 2026-10-07 (the Hour's sky)
 
 Section 7's sky (`render/sdSky.js`), on the Deadlands' law (`render/deadlands.js`): PAINTED, NOT BUILT - one triangle
-over the screen at the far plane, depth-tested at LEQUAL and never written, each pixel reading its own ray
-(`skyBasis`), drawn in the dungeon arm's world pass after the Hour's islands and before its flats (PERF2's law: it
-burns only where nothing nearer drew), every state it touches handed back.
+over the screen at the far plane, depth-tested at LEQUAL and never written, each pixel reading its own ray (`skyBasis`,
+read into the pass's own arrays - `sdSkyBasisInto`), drawn in the dungeon arm's world pass after the Hour's islands and
+before its flats (PERF2's law: it burns only where nothing nearer drew), every state it touches handed back.
 
 - **The void**: near-black brass, a glow of brass along the horizon that meets the frame's haze, and two fields of
   stars.
-- **The aurorae**: slow curtains of brass light high over the islands, a pale green at their hems (the Mantella's).
+- **The aurorae**: slow curtains of brass light high over the islands, whole round the sky with no seam (AUDIT SD II), a
+  pale green at their hems (the Mantella's).
 - **The shards**: three of the Bay's skylines hanging upside down from the upper sky, dark against the glow with a lit
-  rim - Daggerfall's towers and spires, Sentinel's domes and minarets, Wayrest's bridge on its piers - round the sides
-  and behind, never over the arena's clock, each drifting its own way round the sky.
-- **The clock-face**: over the arena (+z, the realm's forward), a ring of stars, its twelve hours the brightest, and
-  two hands of light turning BACKWARDS, the minute hand twelve turns to the hour's one - the Hour unwinding.
+  rim - Daggerfall's towers and spires, Sentinel's domes and minarets, Wayrest's bridge on its piers - each drifting its
+  own way round the whole sky, hung wholly above the clock-face's highest drawn point (`SD_SHARD_TOP`), so never over
+  the arena's clock (AUDIT SD II: Daggerfall's spires crossed its ring twenty seconds in every twelve minutes).
+- **The clock-face**: over the arena (+z, the realm's forward), a ring of stars round on the sky (`clockFaceAt`, read on
+  the sphere - AUDIT SD II: it was 7% narrow across), its twelve hours the brightest, and two hands of light turning
+  BACKWARDS, the minute hand twelve turns to the hour's one - the Hour unwinding.
 - **The clock**: the Deadlands' own anchored clock (`deadlandsSeconds`, anchored to the relay's), so every screen shows
   the same moment; every rate is whole cycles over `SD_SKY_PERIOD` (720 s) and the clock is handed wrapped
   (`sdSkyClock`), so the sky never jumps.
@@ -1033,37 +1042,43 @@ Section 8 on the page - the dungeon host's set for the Hour's puzzle (`scenes/sd
 Rift. The realm judges every turn (SD6b); this shows what the realm says.
 
 - **The hall, made** (`world/sdHall.js`; its art made in code, `world/sdHallArt.js`, the realm's own archive after the
-  Hour's five records): six Ending-stones on the hall's ring, each facing its centre - a slab of dark stone under a brass
-  cap, its dial at chest height with a brass notch over the twelfth hour (built, so no picture can turn it), its sign
-  above (the lion's face, the sun, the ship, the tusk, the crown of bone, the dragon), and TWO HANDLES: the right (as
-  you face it) turns it forward, the left back - the activation ray takes boxes, and a stone's face split in halves
-  would overlap where it stands at a slant. Each stone's hand is its own mesh on its own matrix (`handMatrix`): clockwise
-  as one facing the stone sees it, a proper turn, never a mirror. Six Ledger plaques of bronze on posts round the rim,
+  Hour's five records): six Ending-stones on the hall's ring, each facing its centre - a slab of dark stone under a
+  brass cap, its dial at chest height with a brass notch over the twelfth hour (built, so no picture can turn it), its
+  sign above (the lion's face, the sun, the ship, the tusk, the crown of bone, the dragon), and TWO HANDLES: the right
+  (as you face it) turns it forward, the left back - the activation ray takes boxes, and a stone's face split in halves
+  would overlap where it stands at a slant. Each stone's hand is its own mesh on its own matrix (`handMatrix`):
+  clockwise as one facing the stone sees it, a proper turn, never a mirror (AUDIT SD II: a stone's right is the eye's
+  right as the screen shows it, n x up - it was lookAt's +x, which the projection mirrors, and three o'clock stood at
+  nine, the hands running back and the forward handle on the left). Six Ledger plaques of bronze on posts round the rim,
   facing in, numbered in pips as a die is (no numeral to read backwards), none on the walk in or the way on. Past the
   hall on its way on hangs the first step of the Unmoored Steps (SD7's first island).
 - **The dial's light and the fray**: the six segments the Hour-dial carries, lit in the Mantella's green - one for each
   stone at its true hour, how many and not which, clockwise from the twelfth (`buildLitModel`); and an ember arc just
-  inside the rim, a step a turn, all the way round at the snap (`buildFrayModel`) - each rebuilt as the realm's counts
-  change.
-- **Heard**: the hall reads the realm's latest word each frame (the world host keeps it - `onSdHall`). The first word is
-  where the stones ARE: the hands are put there. A later one sets them going the short way round at the gear's pace (an
-  hour inside the 700 ms the realm settles a stone in), with a clunk at the turned stone and a lesser one at each
-  partner it moved; the snap's toll (the ship's bell, low); the Concord's chime and its line.
+  inside the rim, a step a turn, all the way round at the snap for a moment (`SD_FRAY_FULL_MS`, 1.5 s - the snap's word
+  itself counts none), then the word's own count (`buildFrayModel`) - each rebuilt as the realm's counts change.
+- **Heard**: the hall reads the realm's latest word each frame (the world host keeps it while I am in the realm and
+  forgets it as I leave - `onSdHall`). The first word is where the stones ARE: the hands are put there. A later one sets
+  them going the short way round at the gear's pace (an hour inside the 700 ms the realm settles a stone in), with a
+  clunk at the turned stone and a lesser one at each partner it moved; the snap's toll (the ship's bell, low); the
+  Concord's chime and its line.
 - **Pressed**: a handle turns its stone from within reach (the realm's own law, `stoneInReach` - else *"Stand closer to
-  the stone."*), never inside its gear's settling, never after the Concord. Its plaque names the stone, its sign, its
-  hour and the handle's way. A Ledger plaque's riddle shows on the plaque as the ray finds it, and is said when pressed.
+  the stone."*) and from before its face (`beforeStone` - else *"Stand before the stone's face."*), never inside its
+  gear's settling, never after the Concord. Its plaque names the stone, its sign, its hour and the handle's way. A
+  Ledger plaque's riddle shows on the plaque as the ray finds it, and is said when pressed.
 - **The lash** (the world host, `sdHallHeard`): a word that says the Hour snapped back lashes me if I stand in the hall -
   a quarter of my health, no shield taking it (`hurtPlayer`'s `bypassShield`) - and *"The Hour snaps back."* is said to
   everyone in the realm.
 - **The Concord's bridge**: a band of light from the hall's rim to the first step, laid as the Concord is heard. Its
   floor and the step's stand in the collider from the first; the edge keeps a body off them until the Concord adds them
-  (`SD_HALL_FLOORS` - the world host widens its edge then).
+  (`SD_HALL_FLOORS` - the world host widens its edge then). The stones (slab, cap and handles) and the plaques (post and
+  tablet) stand in the collider too, one geometry with their draw (`hallSolidTris` - AUDIT SD II: a body walked through
+  them); the bridge is a hidden draw until the Concord.
 
-THE FOUR HOSTS: `scenes/world.js` WIRED (the realm's word kept and handed to the hall, the lash, the edge widened with
-the Concord, a turn sent - `sdTurn`, `sdHallWord`); `scenes/worldModes.js` WIRED (the handles' and plaques' keys routed
-to the dungeon host's press, the turn and the word forwarded); `scenes/dungeonContext.js` WIRED (the hall made for the
-Hour alone, stood, framed, its targets, names and presses, freed); `scenes/exterior.js` FLAGGED - no Hour opens on the
-bench.
+THE FOUR HOSTS: `scenes/world.js` WIRED (the realm's word kept while I am in the realm and handed to the hall, the lash,
+the edge widened with the Concord, a turn sent - `sdTurn`, `sdHallWord`); `scenes/worldModes.js` WIRED (the handles' and
+plaques' keys routed to the dungeon host's press, the turn and the word forwarded; the hall posed before the world pass,
+`sdPose`); `scenes/dungeonContext.js` WIRED (the hall made for the Hour alone, stood, framed in `sdPose` before the
+world pass, its targets, names and presses, freed); `scenes/exterior.js` FLAGGED - no Hour opens on the bench.
 
 Pins: `test/sd6c_hall.test.js` (9 - the layout, the hand's turn, the models, the floors and the edge, the art, the set
 over a fake renderer, the press, the world host's hall run from its own text, the hosts by source);
@@ -1096,10 +1111,12 @@ realm's frame. The page stands, moves and judges it (SD7b); the relay never does
   risers always stand); a Crumble step touched shakes 0.7 s, falls under gravity and is whole again 5 s after it fell
   (`crumbleAfter`, from the touch - each player's own).
 - **The Warp's breath** (`gustAt`, `inBreath`): over the Crumble alone, a gust every 6 s, a second long, 3 m/s across,
-  +x then -x by turns, its wind rising the second before.
-- **The void** (`inVoid`, `spanAt`, `castBackTo`): below y -30 a body is cast back to its span's checkpoint - A over the
-  Drift, B over the Beat, C over the Crumble - 15% of its health lost (`SD_CAST_BACK_LOSS`). The edge lets go from just
-  inside the first step's far edge to just inside the arena's near edge (`SD_STEPS_FREE`, for SD7b's clamp).
+  +x then -x by turns, its wind rising the second before; `breathSeen` says which way it shows and how far through, from
+  its wind's rising through the gust (AUDIT SD II).
+- **The void** (`inVoid`, `spanAt`, `castBackTo`): below y -30 a body is cast back to the checkpoint of the span it last
+  stood in (the page keeps it, SD7b; `spanAt` reads a span from its checkpoint's near edge) - A for the Drift, B for the
+  Beat, C for the Crumble - 15% of its health lost (`SD_CAST_BACK_LOSS`). The edge lets go from just inside the first
+  step's far edge to just inside the arena's near edge (`SD_STEPS_FREE`, for SD7b's clamp).
 - **The frame moved** (`net/sdBrain.js`): the Steps run z 60-220 and the arena stands at z 246 (z 60-190 and 220 before)
   - the course the engine can jump is 145 m. Section 9 is amended to the engine (the gaps, the risers); the stage table
   of section 7 moves with it.
@@ -1126,7 +1143,9 @@ player sees the same step in the same place; what a foot breaks is its own.
   Drift's the Hour's floor on brass; the Beat's a brass plate alight on glowing sides; a riser the floor on brass,
   reaching from its top past the step it rises from; the Crumble's cracked stone, the void's ember light in its cracks.
   Top, sides and underside are all in the collider: a body that jumps short meets a side, and a riser's face is the wall
-  run up. The checkpoints B and C are islands as the first step is (`realmIsland` takes a height).
+  run up. The checkpoints B and C are islands as the first step is (`realmIsland` takes a height). The Warp's breath is
+  made too: 64 brass streaks over the Crumble, faced both ways (`buildBreathModel`, `SD_BREATH` - AUDIT SD II: it was
+  heard and never seen).
 - **Stood and moved**: a draw and a MOVER's collider bucket for every step (`sd:step:<i>`, its translation read at every
   query - the step moves, its triangles never do), stood the first frame. Every frame each step is put where the law has
   it at the realm's now: the Drift swinging; a Beat step there or gone - its bucket sunk far under the void
@@ -1141,10 +1160,13 @@ player sees the same step in the same place; what a foot breaks is its own.
 - **While the motor runs**: THE WARP'S BREATH over the Crumble - the body moved through the resolver as the movers' ride
   moves it (the motor's own push stops at every edge; the breath does not), snapped to the ground only when it stands,
   never more than a tenth of a second's push in a frame - its wind (AmbientWindBlow1) heard once a gust, the second
-  before; the Beat's tick on each half beat, as its steps come back; and THE VOID - a body past y -30 is answered with
-  its span's checkpoint (the void's moan heard): the mode machine stands it there as the action teleport does
-  (`TELEPORT_FREEZE_S`'s settle), and the world host takes 15% of its health, no shield taking it, and says *"The Hour
-  casts you back."*
+  before, and seen - the streaks over the Crumble blowing its way from then through the gust (`breathSeen`; one draw,
+  hidden between); the Beat's tick on each half beat, as its steps come back; and THE VOID - a body past y -30 is
+  answered with the checkpoint of the span it last stood in, the void's moan heard (a step's own span, a checkpoint's
+  island its own; none, A - AUDIT SD II, L4 F1: a run back off the first Drift step fell past A's near edge and was
+  answered with nothing, and a run off a span's far end was cast on to the next checkpoint): the mode machine stands it
+  there as the action teleport does (`TELEPORT_FREEZE_S`'s settle), and the world host takes 15% of its health, no
+  shield taking it, and says *"The Hour casts you back."*
 - **The edge let go**: with the Concord the realm's edge takes the Steps' band (`SD_STEPS_FREE`, 40 m either way - no
   fall meets its sides before the void has it) and the arena among its floors (`SD_STEPS_FLOORS`); a body over the
   Steps is the void's, and the cast-back is the edge.
@@ -1281,12 +1303,13 @@ struck player's own machine) - here they are named on the bar alone.
   past its Hour; again into a fight lost, or a fresh one; a refusal said once and standing for the fight it was said in
   (an older game's and a closed Hour's for the visit). The turns said over the screen as they come (the Dragon Break, an
   Echo felled by name, an Echo risen, the Last Moment, the stun, the loss). Out of the realm, all forgotten.
-- **The arena's set** (`scenes/sdRemnant.js`, the dungeon host's, as the hall's): the Remnant, the GOLD and SILVER Echoes and
-  eight Hearts (`world/sdRemnantModel.js`; the Echoes' metals `world/sdRemnantArt.js`, records 23 and 24), each a draw
-  placed every frame where the fight says (`remnantPose`, `echoPose`): waiting at its start with no fight to fight;
-  walking; kneeling while stunned; gone outside time in the Dragon Break and risen out of the floor at the centre for
-  the Last Moment; sinking away where it fell; an Echo rising at its spot and sinking where it fell; a Heart standing
-  and turning while the Reset winds up.
+- **The arena's set** (`scenes/sdRemnant.js`, the dungeon host's, as the hall's): the Remnant, the GOLD and SILVER
+  Echoes and eight Hearts (`world/sdRemnantModel.js`; the Echoes' metals `world/sdRemnantArt.js`, records 23 and 24),
+  each a draw placed where the fight says before the world pass draws it (`remnantPose`, `echoPose`, in `sdPose` - AUDIT
+  SD II: they were placed after it, a frame late), a still body keeping its matrix and one not shown a hidden draw:
+  waiting at its start with no fight to fight; walking; kneeling while stunned; gone outside time in the Dragon Break
+  and risen out of the floor at the centre for the Last Moment; sinking away where it fell; an Echo rising at its spot
+  and sinking where it fell; a Heart standing and turning while the Reset winds up.
 - **My blows, the gate's three seams**: in the Hour the dungeon context asks the set where it asked the court - the
   Remnant as the boss (`target`: warded asleep and while it rises at its return; none outside time, fallen, past its
   Hour, or in a fight that never answered me), the Echoes as the host's bodies (`echoTargets`), the Hearts as the
@@ -1302,10 +1325,11 @@ struck player's own machine) - here they are named on the bar alone.
   geometry with their draw) - the same squares the Hour-Hand's shade is judged by (`behindPillar`): a body stands behind
   one, never walks through it.
 
-THE FOUR HOSTS: `scenes/dungeonContext.js` WIRED (the set, framed beside the hall; the three seams and their doors in the
-Hour); `scenes/worldModes.js` WIRED (the fight and the two doors handed down; the pillars with the floors);
-`scenes/world.js` WIRED (the link, online alone; the realm's fight words from its own slot; my `in` with my level and my
-blows; the fight forgotten out of the realm; the bar); `scenes/exterior.js` FLAGGED (no Hour offline).
+THE FOUR HOSTS: `scenes/dungeonContext.js` WIRED (the set, framed beside the hall in `sdPose`, before the world pass;
+the three seams and their doors in the Hour); `scenes/worldModes.js` WIRED (the fight and the two doors handed down; the
+pillars and the lamps' posts with the floors; the hall and the arena posed before the world pass, a hidden draw
+skipped); `scenes/world.js` WIRED (the link, online alone; the realm's fight words from its own slot; my `in` with my
+level and my blows; the fight forgotten out of the realm; the bar); `scenes/exterior.js` FLAGGED (no Hour offline).
 
 Pins: `test/sd8c_remnant_page.test.js` (11 - the page follows the law; the fold word by word; my place in the fight; the
 realm's `me`; the set; my `in` and my blows; the bar; the bar's marks; the bodies made; the pillars; the hosts by source);
@@ -1467,14 +1491,15 @@ Section 11's aura - "a slow wheel of brass gears and gold light about the wearer
   through the aura's own door and signed into the token as every aura is. Its word *The Turning Hour* and its paint
   the Hourbreaker's (`ui/playerBadge.js` - the button in the bar's gold).
 - **Drawn** (`render/auraRing.js`, the aura pass's seventh look, added whole as the radiance is, in the Hourbreaker's
-  own colours): THE GROUND - a brass wheel about the feet (its rim; 24 teeth out of it; its hub and six spokes)
-  STEPPING on the second as a clock's escapement does (`turningWheelAngle` - eased over a quarter of each second, held
-  the rest, never back, two turns over the aura's clock), a light that does not turn gleaming on the brass as it passes
-  under; outside it the Hour's dial - a line of gold and its twelve marks, the Hour's own the longer - turning BACK,
-  as the Hour's sky's hands do; gold light pooled at the feet, breathing. THE WALL (the pass's strip at the teeth's
-  tips): the wheel's edge seen from the side, its teeth's faces passing round with it and gold along their top; gold
-  light rising off it, gone by the knee; fourteen motes rising. It kindles up, as the radiance does; every rate whole
-  over the clock, the teeth, spokes and marks whole round - no seam behind the wearer.
+  own colours): THE GROUND - a brass wheel about the feet (its rim; 24 teeth out of it; its hub and six spokes) STEPPING
+  on the second as a clock's escapement does (`turningWheelAngle` - eased over a quarter of each second, held the rest,
+  never back, two turns over the aura's clock), a light that does not turn gleaming on the brass as it passes under;
+  outside it the Hour's dial - a line of gold and its twelve marks, the Hour's own the longer - turning BACK, as the
+  Hour's sky's hands do - as the eye sees it, anticlockwise through the game's camera (AUDIT SD II: its angle fell, and
+  the camera's one mirror turned it clockwise on screen); gold light pooled at the feet, breathing. THE WALL (the pass's
+  strip at the teeth's tips): the wheel's edge seen from the side, its teeth's faces passing round with it and gold
+  along their top; gold light rising off it, gone by the knee; fourteen motes rising. It kindles up, as the radiance
+  does; every rate whole over the clock, the teeth, spokes and marks whole round - no seam behind the wearer.
 
 THE FOUR HOSTS: unchanged - the pass draws every wearer's look already (`scenes/world.js`, `scenes/worldModes.js`);
 `scenes/dungeonContext.js`, `scenes/exterior.js` untouched.
@@ -1673,7 +1698,8 @@ are said as they stand now (6, 10, 11 and 14).
 - The claim's *"The Hour names you Hourbreaker."* is said again when a later kill rolls a title already held (the
   answer is what the kill rolled, as SD9b documents).
 - The Remnant's telegraph shapes and the driver's lists are made each frame - a handful of small objects while blows
-  fly; the gate's court refills its own (AUDIT WB11 C8), and the arena's are left for a follow-up.
+  fly; the gate's court refills its own (AUDIT WB11 C8), and the arena's are left for a follow-up (AUDIT SD II: none is
+  made while no blow is in flight).
 
 Pins: `test/sd10b_audit.test.js` (17 - a fresh fight's blows; the next Hour's lines; the way home one place a fall; the
 Rift's memory; the receipts wherever they come; clear of the pillars; nothing made a frame for nothing; Gearward and the
@@ -1696,6 +1722,50 @@ the tests' gaps found by probe mutants (66 aimed at laws no record covered; 31 l
 the arc's own code - by the lens's own script, and every HIGH and MEDIUM again before it was fixed. What was real is
 fixed and pinned, slice by slice below; what was not is said so. The relay stays `world176`, re-hashed in place
 (undeployed).
+
+#### SD11a - the realm's scenes and how they render
+
+| | what was wrong | now |
+|---|---|---|
+| L2 F1 | THE ORRERY'S HANDS IN A MIRROR. Each stone's frame took lookAt's +x for its right, and the projection mirrors x (world/mat4.js, the one mirror on the lens): through the game's own camera a stone's third hour stood at nine o'clock, its hand ran anticlockwise, the handle that turns it forward stood on the left, and every sign and plaque read backwards - the puzzle's whole reading turned round | a stone's right is the eye's right as the screen shows it, `n x up` (the game's camRight); its faces wound out, the pictures' u left to right; the hand a proper turn (`handMatrix`); key `f` the right handle, *"Turn it forward"* (`world/sdHall.js` `stoneFrame`, `plaqueFrame`, `boxQuads`) |
+| L2 F2 | THE STONES WALKED THROUGH. The stones and the plaques were drawn and never stood: a body walked through a slab, and a handle was turned from behind its stone | one geometry for the draw and the collider (`hallSolidTris` - slab, cap and handles; post and tablet), on the hall's floors; a press from behind refused, *"Stand before the stone's face."* (`beforeStone`) |
+| L2 F3 | THE GLOWS IN THE WINDOWS' DAYLIGHT. An emission uploaded without `white` is multiplied by the arm's window colour - the dungeon arm's 'day', (0.175, 0.302, 0.349): every glow of the Hour (the realm's, the hall's, the Steps', the Echoes') burned at a sixth of its red and shifted blue | uploaded `white`, as the Rift's is (`standSdRealm`, `ensureSdHallArt`, `ensureSdStepsArt`, `ensureSdRemnantArt`) |
+| L2 F4 | THE WALK FOUGHT THE DIAL. The walk's floor ran z 7-25 at y 0 and the dial's disc starts at z 24 at y 0: its last metre fought the dial for the screen | the walk's floor laid in strips from the Threshold's edge to the Orrery's, its sides, underside and kerbs on those edges (`walkNearZ`, `walkFarZ`); its collider and edge z 7-25 as before |
+| L2 F5 | THE SIGN OVER THE DIAL. Each stone's sign stood 1.92-2.48 m, over the dial's twelfth hour (to 2.05), both a hair before the face: they fought | the sign between the dial and the cap (`SD_EMBLEM`, 2.09-2.59) |
+| L2 F6 | FACES TURNED IN. The left kerb's top faced down and was culled; the walk's underside faced up; no lip had an inner side | the kerbs boxes of brass wound out on every side; the underside down; every lip's inner side |
+| L2 F7 | THE AURORAE'S SEAM. Their curtain's noise read the raw azimuth, which leaps from pi to -pi behind the Threshold: a hard seam down the sky | read round a circle (`auroraCurtain`), as the Deadlands' ridges are |
+| L2 F8 | BLOOD LEFT HANGING. A drip, a pool, a print or a thrown drop on a moving step was laid where the step stood, and hung in the air as the step moved on | no mark on a surface whose bucket the collider moves (`combat/bloodMarks.js` `onMover`: the Hour's steps, a deck) |
+| L2 F9 | A FRAME OF THE HOUR MADE GARBAGE (AUDIT WB D10's law). Measured: the hall's targets 18 KB each ask (twice a frame), the Steps' ride 1.4 KB a frame, the Remnant's frame with no fight 0.7 KB, the End's 0.7 KB, the arm's Hour lines 8.7 KB, the blows with no fight 0.5 KB | nothing: the targets and the End's batches made once; scratches for the Steps' law; a still body keeps its matrix; squared distances; the lights into the realm's own arrays (`realmLightsWith`) and the sky's basis in place (`sdSkyBasisInto`); the blows' driver idle while none is in flight (`sdAnyInFlight`) |
+| L2 F10 | POSED A FRAME LATE. The hall and the Remnant were framed in `drawFoes`, after the world pass had drawn them | posed before the frame's draws (`sdPose`), under the same window gate |
+| L2 F11 | THE HIDDEN DRAWN. A step gone, the breath between gusts, a body outside time, the bridge before the Concord - each drawn somewhere hidden, with its shadow | a draw that says it is `hidden` is no draw, and casts no shadow (the world's dungeon arm) |
+| L2 F12 | A POW OF A NEGATIVE. Wayrest's arches (`pow(2.0 * cell - 1.0, 2.0)`, negative over half of every span) and the Turning Hour's gleam: undefined in GLSL ES, NaN on D3D | squared; the gleam's base clamped |
+| L2 F13 | THE TURNING HOUR'S DIAL TURNED FORWARD. Its angle fell, and the camera's one mirror turned it clockwise on screen - forward, where it turns BACK | its angle rises: anticlockwise as the eye sees it (`turningDialAngle`, the shader's own) |
+| L2 F14 | LIGHT FROM NOWHERE. Each of the Hour's twenty lights was a pool of light 2.4 m over the rim with no lamp | a lamp at each: a brass post, a head of the hands' brass glow round the light (inside its shadow's near plane, so it shadows nothing of its own) and a cap; the posts on the collider (`realmLampFeet`, `realmLampTris`) |
+| L2 F15 | THE CLOCK-FACE NARROW, A SHARD ACROSS IT. Laid out in raw azimuth and elevation, the clock-face stood 7% narrower than tall; and Daggerfall's spires crossed its ring twenty seconds in every twelve minutes | the face read on the sphere (`clockFaceAt` about `CLOCK_BASIS`); every shard hung wholly above its highest drawn point (`SD_SHARD_TOP`) |
+| L2 F16 | THE FRAY NEVER FULL. The snap's word counts the fray none, so the ember arc went from all but full to empty and never showed the snap | full for a moment at the snap (`SD_FRAY_FULL_MS`, 1.5 s), then the word's own count |
+| L2 F17 | AN OLD HALL'S WORD. The world host kept the realm's last word on the hall across visits: the next Hour's hall stood its stones where the last left them until its first word | forgotten as I leave the realm (`sdFightFrame`) |
+| L2 F18 | THE BREATH ONLY HEARD. The Warp's breath pushed with nothing to see | 64 brass streaks over the Crumble, from its wind's rising through the gust, blowing its way (`breathSeen`, `buildBreathModel` - one draw, hidden between) |
+| L4 F1 | THE VOID'S WRONG CHECKPOINT. The cast-back read the span under the body as it fell past y -30: a run back off the first Drift step fell under A's near edge (`spanAt` -1) and was never cast back; a run off Drift step 6 crossed past B's edge and was cast on to B | the span the body last stood in (`ride`'s `lastSpan` - a step's own span, a checkpoint's island its own; none, A) |
+
+**Found, not changed** (the gate's own code - for Mac): the Burning Court's art goes up without `white` as the Hour's did
+(`scenes/worldModes.js` `standCourt`), so the court's lava, runes and membrane burn in the dungeon arm's 'day' colour;
+outdoors the gate's glows follow the clock's window style, which its art means ("the veins burn by night"). Whether the
+court's fire should be its own colour is the gate's call.
+
+Pins: `test/sd11a_scenes.test.js` (17 - the hall through the game's camera; the stones and plaques stand; the glows
+`white`; the walk; the sign; every face out; the aurorae whole round; no pow of a negative; the clock-face and the shards
+over its whole period; no blood on a mover; a frame makes nothing, measured in a child against a control; the same lights
+and sky made in place; posed before the world pass and a hidden draw no draw; a lamp under every light; the hall's word
+forgotten; the breath seen; the void's span); `tools/mutants/sd11a.json` (68, all dead - three dropped that cannot die:
+TurboFan's escape analysis takes the allocations they put back). RE-AIMED BY CONTENT, each still dead: `blood1.json` (2),
+`sd4b.json`, `sd5a.json`, `sd6c.json` (3), `sd7a.json` (5), `sd7b.json` (4), `sd8c.json` (3), `sd9c.json` (2), `sd9e.json`
+- four of them now the other way, the law itself turned (`SD6C-the-right-the-left`, `SD9C-the-dial-forward-in-law`,
+`SD9C-the-dial-forward`, `SD7B-the-void-before-the-first-step`). PINS MOVED: `test/sd6c_hall.test.js` (the layout on
+camRight; the floors with the solids; the full fray; the bridge hidden), `test/sd7b_steps.test.js` (the void's span; the
+breath's draw), `test/sd5a_realm.test.js` (one light object; six sub-meshes), `test/sd8c_remnant_page.test.js` (the
+collider's posts), `test/sd9c_turning.test.js` (through the game's camera), `test/sd9e_spoils.test.js` (the spoils'
+lights through `realmLightsWith`), and the dungeon arm's draw loop in `test/perf5.test.js`, `test/disc15.test.js`,
+`test/wb6a_deadlands.test.js` and `test/crashreport.test.js` (a hidden draw skipped).
 
 #### SD11b - the relay
 

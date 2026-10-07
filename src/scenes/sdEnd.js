@@ -48,6 +48,9 @@ export const SD_STEP_JUMP_M = 1.5;
 
 const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
 const NONE = Object.freeze([]);
+/** AUDIT SD II (L2 F9): the frames' records by name, made once - the frame turned a number into its name every frame. */
+const RIFT_RECS = Object.freeze(Array.from({ length: RIFT_FRAMES }, (_, k) => String(k)));
+const RETURN_RECS = Object.freeze(Array.from({ length: RETURN_FRAMES }, (_, k) => String(k)));
 
 /**
  * One frame of the Rift as RGBA rows from the BOTTOM up (a world billboard's color32 order) - pure, for the upload and
@@ -145,11 +148,21 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
   /** @type {{ at: number[], batch: any } | null} */
   let ret = null;
   let bell = null;
-  let wasRift = null, wasRet = null, lastFeet = null, lastAt = -Infinity;
+  let wasRift = null, wasRet = null, hasLast = false;
+  /** AUDIT SD II (L2 F9): where the feet were last frame, and when - one scratch each (a copy was made every frame, and a
+   *  time kept loose was a new number every frame) */
+  const lastFeet = [0, 0, 0], lastAt = new Float64Array([-Infinity]);
   const born = now();
-  /** AUDIT SD: the batches as the draw asks for them - one list, made again only when a portal stands or goes */
-  let _batches = NONE;
-  const rebatch = () => { _batches = rift || ret ? [rift?.batch, ret?.batch].filter(Boolean) : NONE; };
+  /** AUDIT SD: the batches as the draw asks for them - one list, made again only when a portal stands or goes; AUDIT SD
+   *  II (L2 F9): and the activation ray's boxes the same - they were made every frame the hover asked */
+  let _batches = NONE, _targets = NONE;
+  const rebatch = () => {
+    _batches = rift || ret ? [rift?.batch, ret?.batch].filter(Boolean) : NONE;
+    const out = [];
+    if (rift) out.push({ key: SD_RIFT_KEY, aabb: boxOf(rift.at, rift.size / 2, rift.size), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });
+    if (ret) out.push({ key: SD_RETURN_KEY, aabb: boxOf(ret.at, SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });
+    _targets = out.length ? Object.freeze(out) : NONE;
+  };
 
   const batchAt = (archive, at, w, h) => {
     if (!renderer?.createBillboardBatch) return null;
@@ -186,11 +199,13 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     frame(feet) {
       const t = now();
       const age = (t - born) / 1000;
-      if (rift?.batch) rift.batch.record = String(Math.floor(age * RIFT_FPS) % RIFT_FRAMES);
-      if (ret?.batch) ret.batch.record = String(Math.floor(age * RETURN_FPS) % RETURN_FRAMES);
-      if (!feet) { wasRift = wasRet = null; lastFeet = null; return null; }
-      const gap = t - lastAt > SD_STEP_GAP_MS || !lastFeet || Math.hypot(feet[0] - lastFeet[0], feet[1] - lastFeet[1], feet[2] - lastFeet[2]) > SD_STEP_JUMP_M;
-      lastAt = t; lastFeet = [feet[0], feet[1], feet[2]];
+      if (rift?.batch) rift.batch.record = RIFT_RECS[((Math.floor(age * RIFT_FPS) % RIFT_FRAMES) + RIFT_FRAMES) % RIFT_FRAMES];
+      if (ret?.batch) ret.batch.record = RETURN_RECS[((Math.floor(age * RETURN_FPS) % RETURN_FRAMES) + RETURN_FRAMES) % RETURN_FRAMES];
+      if (!feet) { wasRift = wasRet = null; hasLast = false; return null; }
+      // AUDIT SD II (L2 F9): the jump's length by its square - Math.hypot made a list of its numbers every frame
+      const dx = feet[0] - lastFeet[0], dy = feet[1] - lastFeet[1], dz = feet[2] - lastFeet[2];
+      const gap = t - lastAt[0] > SD_STEP_GAP_MS || !hasLast || dx * dx + dy * dy + dz * dz > SD_STEP_JUMP_M * SD_STEP_JUMP_M;
+      lastAt[0] = t; lastFeet[0] = feet[0]; lastFeet[1] = feet[1]; lastFeet[2] = feet[2]; hasLast = true;
       const inRift = !!rift && inSdPortal(feet, rift.at, Math.min(SD_RIFT_REACH_M, rift.size / 4), rift.size);
       const inRet = !!ret && inSdPortal(feet, ret.at, SD_RETURN_REACH_M, SD_RETURN_SIZE.h);
       const enteredRift = inRift && wasRift === false && !gap;
@@ -200,13 +215,8 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
       if (enteredRet) { onReturn(); return 'return'; }
       return null;
     },
-    /** The two in the activation ray. */
-    targets() {
-      const out = [];
-      if (rift) out.push({ key: SD_RIFT_KEY, aabb: boxOf(rift.at, rift.size / 2, rift.size), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });
-      if (ret) out.push({ key: SD_RETURN_KEY, aabb: boxOf(ret.at, SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });
-      return out.length ? out : NONE;
-    },
+    /** The two in the activation ray - the one list, made as either stands or goes. */
+    targets() { return _targets; },
     /** The plaque's words for either - a namer is handed every key the ray can win. */
     hoverName(key) {
       if (key === SD_RIFT_KEY && rift) return { title: SD_END_TEXT.rift, subs: [riftTo] };
@@ -227,7 +237,7 @@ export function createSdEnd({ renderer = null, audio = null, now = () => perform
     /** Gone with the dungeon: the batches freed, the bell stopped. */
     clear() {
       free(rift?.batch); free(ret?.batch);
-      rift = null; ret = null; _batches = NONE;
+      rift = null; ret = null; _batches = NONE; _targets = NONE;
       try { bell?.stop?.(); } catch { /* stopped */ }
       bell = null;
     },

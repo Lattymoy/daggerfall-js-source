@@ -92,8 +92,8 @@
   {
     "name": "SD7B-a-gone-step-still-solid",
     "file": "src/scenes/sdSteps.js",
-    "old": "st.T[1] = solid ? y : SD_STEP_GONE_Y;",
-    "new": "st.T[1] = y;",
+    "old": "else st.T[1] = SD_STEP_GONE_Y;",
+    "new": "else st.T[1] = y;",
     "tests": [
       "test/sd7b_steps.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SD7B-never-back",
     "file": "src/scenes/sdSteps.js",
-    "old": "if (since != null && !(since >= 0 && since < SD_CRUMBLE_DELAY + SD_CRUMBLE_BACK)) st.touched = null;",
-    "new": "if (since != null && since < 0) st.touched = null;",
+    "old": "if (!(since >= 0 && since < SD_CRUMBLE_DELAY + SD_CRUMBLE_BACK)) { st.touched = null; since = -1; }",
+    "new": "if (since < 0) { st.touched = null; since = -1; }",
     "tests": [
       "test/sd7b_steps.test.js"
     ]
@@ -218,7 +218,7 @@
   {
     "name": "SD7B-every-fall-to-A",
     "file": "src/scenes/sdSteps.js",
-    "old": "return realmToDungeon(...castBackTo(span));",
+    "old": "return realmToDungeon(...castBackTo(lastSpan));",
     "new": "return realmToDungeon(...castBackTo(0));",
     "tests": [
       "test/sd7b_steps.test.js"
@@ -227,8 +227,8 @@
   {
     "name": "SD7B-the-void-before-the-first-step",
     "file": "src/scenes/sdSteps.js",
-    "old": "if (inVoid(ry) && span >= 0) {",
-    "new": "if (inVoid(ry)) {",
+    "old": "if (inVoid(ry)) {",
+    "new": "if (inVoid(ry) && spanAt(rz) >= 0) {",
     "tests": [
       "test/sd7b_steps.test.js"
     ]
