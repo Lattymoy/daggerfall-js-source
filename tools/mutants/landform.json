@@ -219,8 +219,8 @@
   {
     "name": "LANDFORM-job-uncut",
     "file": "src/world/terrainGen.js",
-    "old": "  const landforms = landform ? createLandforms({ woods, roads, sites }) : null;\n  // AUDIT LANDFORMS D3",
-    "new": "  const landforms = landform ? createLandforms({ woods, sites }) : null;\n  // AUDIT LANDFORMS D3",
+    "old": "  const landforms = landform ? createLandforms({ woods, roads, sites, climates }) : null;\n  // AUDIT LANDFORMS D3",
+    "new": "  const landforms = landform ? createLandforms({ woods, sites, climates }) : null;\n  // AUDIT LANDFORMS D3",
     "tests": [
       "test/landform.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "LANDFORM-worker-grid-no-network",
     "file": "src/world/terrainGenWorker.js",
-    "old": "const { positions, normals } = restrideGrid({ ...m, woods, roads, sites });",
-    "new": "const { positions, normals } = restrideGrid({ ...m, woods, sites });",
+    "old": "const { positions, normals } = restrideGrid({ ...m, woods, roads, sites, climates });",
+    "new": "const { positions, normals } = restrideGrid({ ...m, woods, sites, climates });",
     "tests": [
       "test/landform.test.js"
     ]

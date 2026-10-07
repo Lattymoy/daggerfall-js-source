@@ -83,8 +83,8 @@
   {
     "name": "LANDFORM4-worker-drops-the-sites",
     "file": "src/world/terrainGenWorker.js",
-    "old": "    if (m.t === 'sites') { sites = m.sites ?? null; return; }",
-    "new": "    if (m.t === 'sites') { return; }",
+    "old": "    if (m.t === 'landform-tables') { sites = m.sites ?? null; climates = m.climates ?? null; return; }",
+    "new": "    if (m.t === 'landform-tables') { climates = m.climates ?? null; return; }",
     "tests": [
       "test/landform45.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LANDFORM4-worker-grid-unpulled",
     "file": "src/world/terrainGenWorker.js",
-    "old": "    const { positions, normals } = restrideGrid({ ...m, woods, roads, sites });",
-    "new": "    const { positions, normals } = restrideGrid({ ...m, woods, roads });",
+    "old": "    const { positions, normals } = restrideGrid({ ...m, woods, roads, sites, climates });",
+    "new": "    const { positions, normals } = restrideGrid({ ...m, woods, roads, climates });",
     "tests": [
       "test/landform45.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LANDFORM4-client-keeps-them-to-itself",
     "file": "src/world/terrainGenClient.js",
-    "old": "    this._worker.postMessage({ t: 'sites', sites: copy }, copy ? [copy.buffer] : []);",
-    "new": "    void copy;",
+    "old": "    this._worker.postMessage({ t: 'landform-tables', sites: s, climates: c }, [s, c].filter(Boolean).map((a) => a.buffer));",
+    "new": "    void s; void c;",
     "tests": [
       "test/landform45.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LANDFORM5-coast-too-short",
     "file": "src/world/landforms.js",
-    "old": "coast: 96, region",
-    "new": "coast: 60, region",
+    "old": "coast: 1.25, region",
+    "new": "coast: 0.8, region",
     "tests": [
       "test/landform45.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "LANDFORM5-unclamped",
     "file": "src/world/landforms.js",
-    "old": "  return amp * (n < -1 ? -1 : n > 1 ? 1 : n);",
-    "new": "  return amp * n * 1.6;",
+    "old": "  return saturate((shapeRaw(land.shape, wx, wy, gx, gy, rock, land) - norm[0]) * norm[1]);",
+    "new": "  return (shapeRaw(land.shape, wx, wy, gx, gy, rock, land) - norm[0]) * norm[1] * 1.6;",
     "tests": [
       "test/landform45.test.js"
     ]

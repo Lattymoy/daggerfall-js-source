@@ -575,8 +575,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-promotion-ghosts-uncut",
     "file": "src/world/terrainGen.js",
-    "old": "const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites }) : null);",
-    "new": "const lf = landforms ?? (landform ? createLandforms({ woods, sites }) : null);",
+    "old": "const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, climates }) : null);",
+    "new": "const lf = landforms ?? (landform ? createLandforms({ woods, sites, climates }) : null);",
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js",
@@ -599,8 +599,8 @@
   {
     "name": "AUDIT-LANDFORMS-D-client-fallback-grid-uncut",
     "file": "src/world/terrainGenClient.js",
-    "old": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, ...job }));",
-    "new": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, sites: this._sites, ...job }));",
+    "old": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...job }));",
+    "new": "if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, sites: this._sites, climates: this._climates, ...job }));",
     "tests": [
       "test/landform.test.js",
       "test/auditlandforms.test.js",

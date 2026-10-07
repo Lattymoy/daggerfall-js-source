@@ -1,4 +1,4 @@
-# Landforms - the heightmap raised, the roads cut in, the rivers in the land, the towns stood in it, the land rolling
+# Landforms - the heightmap raised, the roads cut in, the rivers in the land, the towns stood in it, the land rolling, each climate its own land
 
 LANDFORM1-3, 2026-10-06. Mac, with a picture of the Iliac Bay's heightmap - the
 bay black, the land grey, the Wrothgarian and Dragontail ranges white: *"Can we
@@ -11,6 +11,8 @@ straight wall of ground a hundred metres tall round it: *"Whats up with these
 steep cliffs?"*, then, of the answer that offered to stand the town on DFU's own
 ground: *"I dont care about DFU. I want detailed generation, rolling hills,
 varied terrian. This isnt about being 1:1"* (LANDFORM4 and LANDFORM5, below).
+Then, asked whether that varies between environments: *"Shit, dude go all out
+with this. I trust you"* (LANDFORM6, below).
 
 The port's own terrain, behind the Features row `landforms` (Enhanced, World;
 on by default; FORCED ON ONLINE; `?landforms=off` the kill door, offline). On
@@ -136,8 +138,8 @@ DFU's height as DFU stands it - clamped at MAX_TERRAIN_HEIGHT, 1539 - and the
 lift is level past the heightmap's 7-bit top (`low` 8 x 127, the byte DFU's
 ceiling is built on), so nothing stands over `LANDFORM_CEILING`, DFU's ceiling
 plus the most the lift adds (2416 units, about 3,020 m) - and since LANDFORM5
-the tallest hill, `HILLS_TOP` (76.8 units: 2493, about 3,116 m). The numbers
-below are the lift's, the hills left out. Real ground never
+the tallest hill, `HILLS_TOP` (since LANDFORM6 the mountains', 128 units: 2544,
+about 3,180 m). The numbers below are the lift's, the hills left out. Real ground never
 reaches either: its bytes stop at 109 (at (963, 442), read raw - AUDIT
 LANDFORMS D13) and DFU's kernel never meets its own
 ceiling on them. WOODS.WLD's one byte over 127 does - a 255 at map pixel
@@ -326,16 +328,18 @@ and the land's own macro height:
   makes its own nodes once, and a point off them makes the same nodes where it
   is asked, so no number changes with who asks); the octaves at the sample.
 - THE HEIGHT: a REGION field (wavelength 2,400 samples, about 15 km) sets it
-  between `low` (4 units, 5 m) where the country lies near flat and `high` (48,
-  60 m) where it rolls hardest; on the high ground it stands up to `upland`
-  (1.6) times that, fully by 700 units of the small heightmap's term over the
-  knee - so the tallest hill or deepest dale is `HILLS_TOP`, 76.8 units (96 m).
-  Across 13 km squares of the synthetic world the field's span runs from a few
-  units to over three times as much.
-- THE KNEE: eased in from nothing over `coast` (96 units) of the land's height
-  over the knee, so a hill or a dale is always smaller than that height (at most
-  0.9 of it): nothing the hills touch crosses the beach line, and the sea, the
-  beach and every tile class stand where they stood (THE LAW above).
+  between a land's `low` where the country lies near flat and its `high` where
+  it rolls hardest; on the high ground it stands up to the land's `upland` times
+  that, fully by 700 units of the small heightmap's term over the knee. The
+  woodlands' (these rolling hills; every land's before LANDFORM6, and every
+  sample's with no climate table): 4 to 48 units (5 to 60 m), 1.6 on the high
+  ground, 76.8 units (96 m) at the most. Across 13 km squares of the synthetic
+  world the field's span runs from a few units to over three times as much.
+- THE KNEE: eased in from nothing over `coast` (1.25) times the land's tallest
+  hill of its height over the knee - 96 units for the woodlands - so a hill or a
+  dale is always smaller than that height (at most 0.9 of it): nothing the hills
+  touch crosses the beach line, and the sea, the beach and every tile class
+  stand where they stood (THE LAW above).
 - THE WATER STILLS THEM (`waterFade`): a node at every map pixel's centre, 1
   where a river or a stream is painted, read through a smoothstep-weighted
   bilinear, so a channel's centre line keeps no hill and they come back over
@@ -359,7 +363,106 @@ the kernel's pass over a pixel 5.5 ms without the hills, 9.4 ms with them - the
 three octaves a sample, about 200 ns; the lattice halved the slow fields' share
 (11.8 ms read at every sample) - and a whole job with the network about 17-18 ms.
 It runs on the terrain worker, off the frame. A site's level is asked once a
-session per site (289 kernel reads), kept per world (the last 4,096).
+session per site (289 kernel reads), kept per world and climate table (the last
+4,096). LANDFORM6's costs are its own (below).
+
+## LANDFORM6 - THE LAND WEARS ITS CLIMATE
+
+Every climate's land wears its own hills (`LANDFORM_DIALS.lands`, one entry a
+land; CLIMATE.PAK's ten values each name one, any other value the woodlands').
+Each land's height is LANDFORM5's law with its own `low`, `high` and `upland`;
+its SHAPE is its own (`shapeRaw`), centred on its own field so the land's mean
+height is untouched (`SHAPE_NORM`: each shape's mean and spread measured over its
+field, nine in ten of its points inside -1..1) and held inside -1..1 without a
+crease (`saturate`: itself to 0.6, easing toward 1 past it, so a summit or a
+valley floor a shape overreaches rounds off instead of being cut flat):
+
+| land | climate | shape | height (units) | on the synthetic field (10 km, 51 m grades) |
+|---|---|---|---|---|
+| woodlands | Woodlands (231) | rolling: LANDFORM5's octaves | 4-48 x 1.6 | 88 m across; p99 5 deg |
+| mountain woods | MountainWoods (230) | foothills: half rolling, half ridgelines | 8-56 x 1.6 | 180 m; p99 14 deg |
+| mountain | Mountain (226) | ridgelines | 16-80 x 1.6 | 259 m; p99 24, at most 37 deg |
+| desert | Desert (224), the Alik'r | dune seas, mesas where the rock field rises past 0.3 | 6-26 x 1.3 | 52 m; p99 23 deg |
+| desert2 | Desert2 (225), Dak'fron | the same, mesas from -0.1: far more rock | 6-30 x 1.3 | 58 m; p99 17 deg |
+| rainforest | Rainforest (227) | karst towers over plains | 8-50 x 1.4 | 86 m; at most 44 deg |
+| subtropical | Subtropical (229) | soft broad domes over a roll | 6-44 x 1.4 | 110 m; at most 29 deg |
+| swamp | Swamp (228) | hummocks: broad shallow hollows, low mounds | 2-6 | 14 m; p99 2 deg |
+| haunted | HauntedWoodlands (232) | broken: a roll gashed by ravines, studded with crags | 6-40 x 1.5 | 127 m; p99 25 deg |
+| ocean | Ocean (223), the coastal pixels the boot's dilation gives a land climate | rolling, low | 2-24 x 1.6 | 44 m; p99 3 deg |
+
+THE SHAPES:
+
+- RIDGELINES (`ridgeline`, `ridged`): a ridged multifractal - each octave
+  folded about zero, so the noise's zero lines stand as crests, and squared, so
+  its far reaches fall away as valleys; the finer octaves ride the high ground
+  of the coarser, so ridges carry spurs and valleys stay smooth; only the first
+  crest is sharp (`softAbs` rounds the others). The ridges are stretched 2.2
+  times along a TREND, so a range keeps its line for kilometres - one of two
+  trends (`RANGE_A`, `RANGE_B`), the slow rock field choosing and blending
+  between them, so ranges turn between massifs. The first pass, isotropic,
+  stood closed crater rims (the noise's zero lines close on themselves); the
+  stretch made them ranges.
+- DUNES (`dunes`): crests across a fixed wind (`DUNE_WIND`, a little south of
+  west), 64 samples (410 m) apart; each a long windward rise over 72% of the
+  spacing and a short slip face over the rest - a cosine either side of the
+  crest, so neither crest nor trough is a crease. The phase is pushed about
+  (along and across the wind, never so fast it runs backward) so the crests
+  wander, fork and break, and a slower field thins them to bare pans between
+  dune trains; a broad swell under them. On the field crests cross a line run
+  downwind twice as often as one run across it, and the slip face falls twice
+  as steeply as the windward face rises.
+- MESAS (`mesas`): two flat-topped tiers with steep sides, cut where the noise
+  crosses two levels; a desert's sand gives way to them where the slow ROCK
+  field (a fourth lattice value, 17 km) rises past the land's `rockFrom` - 0.3
+  for the Alik'r, mostly sand; -0.1 for Dak'fron, mostly rock (six times the
+  flat-topped high ground on the field).
+- KNOLLS (`knollField`, `knolls`): one hill to a cell of `cell` samples, a
+  `fill` of the cells holding one, each at its own place, girth, height and lean
+  (an ellipse to 1.6 to 1, turned its own way - an integer hash of its cell,
+  `cellHash`, world-placed), its side `edge` of its radius wide, a dome on its
+  top, the broad ones the taller; where two meet the taller stands. The slow
+  rock field gathers them - tall in clusters, low mounds between - as a height,
+  never whether one stands, so none is ever cut through. The rainforest's are
+  karst towers (cells of 120, edge 0.88); the subtropics' soft broad domes
+  (cells of 210, edge 1, over a roll of their own). The first pass thresholded a
+  noise and stood sausages; the cells stood towers.
+- HUMMOCKS (`hummocks`): three soft octaves at long wavelengths and a few metres
+  - a swamp is flat ground.
+- BROKEN (`broken`): a rolling land read through twice the warp, gashed by
+  ravines - narrow V cuts along a twisted noise's zero lines, three quarters of
+  the land's height deep - and studded with crags; it cuts down more than it
+  stands up.
+
+THE BORDERS (`landShares`): a node at every map pixel's centre wears its pixel's
+climate, read through a smoothstep-weighted bilinear (the water's stilling's
+law), so a land holds whole over its own pixels and gives way to its neighbour's
+across about a pixel; where lands share a sample their hills are summed by their
+shares, each land's own height and shape, and the ease over the knee by the
+shares' tallest hills. A pixel in from a border a land's hills are its own to the
+bit; across the border the blend's steepest step is within the steeper land's
+own. The climates are a table (`landformClimates`, CLIMATE.PAK's value for every
+pixel, read after the boot's coastal dilation), made once on the main thread and
+posted to the worker beside the sites (`TerrainGenClient.setLandformTables`, the
+worker's `landform-tables`); every kernel reads the same climates, so every seam
+is one number from both pixels and every client of a room stands one ground.
+Nothing here reads a climate's season, weather or nature - the shape is the
+climate's own, all year.
+
+THE STEEPEST: no land's 51 m grade passes 45 degrees on the field (the mountains
+37, the rainforest's towers 44, the haunted woods' ravines 41, the dunes' slip
+faces 33). Each first pass stood steeper - slip faces at 59, mesa walls at 53,
+towers at 57 - and was softened (the dunes spaced wider and lower, the mesas'
+sides widened, the towers' sides 0.88 of their radius and their height tied to
+their girth).
+
+COST (the synthetic world, this container): the kernel's pass over a pixel 9.6
+ms in a swamp, 10.1 in the mountains, 10.9 on the coasts, 11.4-12.5 in the
+deserts, 11.6 in the woodlands (0.9 ms more than with no table), 12.7-13.5 in
+the haunted woods, the rainforest, the subtropics and the foothills, and 14.8
+at the worst border (a checkerboard of two lands, every sample blended). The
+knolls ask only the cells a knoll can reach from the sample's side, and reject a
+cell on its circle before any trigonometry; the climate lookup reads its four
+nodes without a closure. Against LANDFORM5's 9.4-10.4.
 
 ## THE SAVES: EVERY HEIGHT IN DFU'S FRAME
 
@@ -495,11 +598,17 @@ Roads network, in scratch, with the slice's own functions:
 
 ## RESIDUES, NAMED
 
-- NOT SEEN ON THE REAL DATA (LANDFORM4-5). This container holds no ARENA2:
-  every number in LANDFORM4 and LANDFORM5 is the synthetic world's. The field
-  shot's own town, the real hills' look and the real cost are Mac's eye before
-  the merge - WATER2's lesson.
-- THE FAR RING TAKES NEITHER THE HILLS NOR A SITE'S PULL (LANDFORM4-5): it
+- NOT SEEN ON THE REAL DATA (LANDFORM4-6). This container holds no ARENA2:
+  every number in LANDFORM4, LANDFORM5 and LANDFORM6 is the synthetic world's
+  (LANDFORM6's on climate tables filled for the test - the real map's climates,
+  how far its deserts, ranges and swamps reach, were never read here). The
+  field shot's own town, the real lands' look and the real cost are Mac's eye
+  before the merge - WATER2's lesson.
+- A CLIMATE'S LAND STANDS ON ITS PIXELS (LANDFORM6): a desert pixel's dunes run
+  as far as its pixel's climate says, blended a pixel either side - not as far
+  as the tiles' ecotone blends a border (ECOTONE1's own law), so a dune can
+  stand on a border tile its neighbour's climate paints.
+- THE FAR RING TAKES NEITHER THE HILLS NOR A SITE'S PULL (LANDFORM4-6): it
   stands a pixel's byte at its centre with the lift (EV8's law, below), and the
   travel view past the built grid the same. The hills average to nothing over a
   pixel, and a pull is within a pixel of its site; at the ring's distance both

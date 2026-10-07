@@ -59,6 +59,8 @@ import { createLandforms } from './landforms.js';   // LANDFORM1-3: the port's o
  *   kernel's own network - its rivers where they are painted.
  * @param {?Uint8Array} [job.sites] - LANDFORM4: landforms.js landformSites, the game's own locations the shaped ground
  *   is pulled to (the client's, never the job's: it rides beside the woods and the network).
+ * @param {?Uint8Array} [job.climates] - LANDFORM6: landforms.js landformClimates, the land each climate wears (the
+ *   client's, beside the sites).
  * @param {?{nature:number[], type:number[]}} [job.ecotone] - ECOTONE1: the
  *   3x3 of pixels' climates about this one (world/terrainNature.js
  *   layoutNature's `ecotone`), null with the Blended climates row off or
@@ -68,11 +70,12 @@ import { createLandforms } from './landforms.js';   // LANDFORM1-3: the port's o
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
  *   nature: Array<{record:number,x:number,y:number,z:number}>, beach: ?Float32Array}}
  */
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, wod = null, forests = null, landform = false, ecotone = null }) {
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, climates = null, wod = null, forests = null, landform = false, ecotone = null }) {
   // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
   // are the same roads; restrideGrid's ghost rows take the same landforms, so the edge normals read the shaped ground.
-  // LANDFORM4: and the sites this kernel holds (landforms.js landformSites, the client's to hand both threads).
-  const landforms = landform ? createLandforms({ woods, roads, sites }) : null;
+  // LANDFORM4: and the sites this kernel holds (landforms.js landformSites, the client's to hand both threads); LANDFORM6:
+  // and the world's climates beside them.
+  const landforms = landform ? createLandforms({ woods, roads, sites, climates }) : null;
   // AUDIT LANDFORMS D3: THE LANDFORMS MOVE THE GROUND, NEVER A TILE. A location's blend pulls its whole pixel toward the
   // pixel's mean, and the landforms move that mean (a road's bed and a river's channel by centimetres, a massif in the
   // pixel by up to 268 m - Chesterbrugh), so a beach sample the classifier read on the shaped blend crossed the beach
@@ -183,10 +186,10 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
  * on the main thread is, by construction.
  * LANDFORM1-3: the ghost rows are the neighbours' SHAPED ground - `landforms` when the caller holds them (the build
  * above), else made here from `landform` and the network (a promotion: the host's job, the worker's own network).
- * @param {{ woods: object, px: number, py: number, stride?: number, samples: Float32Array, landform?: boolean, roads?: ?object, sites?: ?Uint8Array, landforms?: ?object }} job
+ * @param {{ woods: object, px: number, py: number, stride?: number, samples: Float32Array, landform?: boolean, roads?: ?object, sites?: ?Uint8Array, climates?: ?Uint8Array, landforms?: ?object }} job
  * @returns {{ positions: Float32Array, normals: Float32Array }}
  */
-export function restrideGrid({ woods, px, py, stride = 1, samples, landform = false, roads = null, sites = null, landforms = null }) {
-  const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites }) : null);
+export function restrideGrid({ woods, px, py, stride = 1, samples, landform = false, roads = null, sites = null, climates = null, landforms = null }) {
+  const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, climates }) : null);
   return buildTerrainGrid(samples, stride, ghostSampler(woods, px, py, HEIGHTMAP_DIMENSION, lf));
 }

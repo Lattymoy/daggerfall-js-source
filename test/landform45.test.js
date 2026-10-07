@@ -9,7 +9,8 @@ import { readFileSync } from 'node:fs';
 
 import { WoodsFile, MAP_WIDTH } from '../src/formats/woodsFile.js';
 import { generateSamples, sampleKernel, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE } from '../src/world/terrainSampler.js';
-import { createLandforms, landformSites, hillsAt, HILLS_TOP, LANDFORM_KNEE, LANDFORM_FLOOR, LANDFORM_DIALS } from '../src/world/landforms.js';
+import { createLandforms, landformSites, hillsAt, hillsTopOf, LANDFORM_KNEE, LANDFORM_FLOOR, LANDFORM_DIALS } from '../src/world/landforms.js';
+import { CLIMATES } from '../src/formats/mapsTables.js';
 import { generatePixelTerrain, restrideGrid } from '../src/world/terrainGen.js';
 import { locationFootprintRect, getLocationTerrainTileOrigin } from '../src/world/terrainTiles.js';
 import { syntheticWoodsBytes, network } from './landformWorld.mjs';
@@ -156,9 +157,14 @@ test('LANDFORM5: the land rolls - hills over every land sample, a pure function 
   assert.ok(worst < 0.95, `a hill never reaches the knee (at most ${worst.toFixed(3)} of the land's height over it)`);
   // ...and that is the dials' own law, not the noise's luck: the tallest hill the ease lets stand at every height over
   // the knee is smaller than that height
+  // (LANDFORM6: every land's ease is its own - `coast` times its tallest hill - so the bound holds for each)
   const { coast } = LANDFORM_DIALS.hills;
-  for (let e = 0.25; e <= 4 * coast; e += 0.25) { const t = Math.min(1, e / coast); assert.ok(HILLS_TOP * t * t * (3 - 2 * t) < e, `${e} over the knee: the tallest hill ${(HILLS_TOP * t * t * (3 - 2 * t)).toFixed(2)}`); }
-  assert.ok(most <= HILLS_TOP && most > HILLS_TOP * 0.5, `the hills stand up to ${most.toFixed(1)} units of their top ${HILLS_TOP}`);
+  for (const climate of Object.values(CLIMATES)) {
+    const top = hillsTopOf(climate);
+    for (let e = 0.25; e <= 4 * coast * top; e += 0.25) { const t = Math.min(1, e / (coast * top)); assert.ok(top * t * t * (3 - 2 * t) < 0.91 * e, `climate ${climate}, ${e} over the knee: the tallest hill ${(top * t * t * (3 - 2 * t)).toFixed(2)}`); }
+  }
+  const WOOD_TOP = hillsTopOf(CLIMATES.Woodlands);   // with no climates every sample is woodlands
+  assert.ok(most <= WOOD_TOP && most > WOOD_TOP * 0.5, `the hills stand up to ${most.toFixed(1)} units of their top ${WOOD_TOP}`);
   // they roll, and they vary: a region field that lies near flat in some country and rolls hard in other
   const amp = (gx0, gy0) => { let lo = Infinity, hi = -Infinity; for (let x = 0; x < 2048; x += 32) for (let y = 0; y < 2048; y += 32) { const v = hillsAt(gx0 + x, gy0 + y, 400, 400); lo = Math.min(lo, v); hi = Math.max(hi, v); } return hi - lo; };
   const spans = [];
@@ -191,7 +197,7 @@ test('LANDFORM4: the sites ride every kernel - the worker keeps the ones the cli
   try {
     await import('../src/world/terrainGenWorker.js?landform45');
     globalThis.onmessage({ data: { t: 'init', woodsBytes: UPLAND_BYTES.slice() } });
-    globalThis.onmessage({ data: { t: 'sites', sites: SITES.slice() } });
+    globalThis.onmessage({ data: { t: 'landform-tables', sites: SITES.slice(), climates: null } });
     const t = TOWNS[0];
     const job = { px: t.px + 1, py: t.py, stride: 1, tilemap: new Uint8Array(128 * 128), climateType: 231, landform: true };
     globalThis.onmessage({ data: { t: 'job', ...job, tilemap: job.tilemap.slice() } });
@@ -205,10 +211,10 @@ test('LANDFORM4: the sites ride every kernel - the worker keeps the ones the cli
     assert.deepEqual([...grid.normals], [...restrideGrid({ woods: upland, px: t.px + 1, py: t.py, stride: 4, samples: here.samples, landform: true, sites: SITES }).normals], 'a promotion\'s ghost rows too');
   } finally { globalThis.postMessage = prevPost; globalThis.onmessage = prevOn; }
   const client = src('src/world/terrainGenClient.js');
-  assert.equal((client.match(/roads: this\._roads \?\? null, sites: this\._sites, /g) ?? []).length, 6, 'every same-thread kernel the client runs takes them');
-  assert.match(client, /this\._worker\.postMessage\(\{ t: 'sites', sites: copy \}, copy \? \[copy\.buffer\] : \[\]\);/, 'the worker gets a copy');
+  assert.equal((client.match(/roads: this\._roads \?\? null, sites: this\._sites, climates: this\._climates, /g) ?? []).length, 6, 'every same-thread kernel the client runs takes them');
+  assert.match(client, /this\._worker\.postMessage\(\{ t: 'landform-tables', sites: s, climates: c \}, \[s, c\]\.filter\(Boolean\)\.map\(\(a\) => a\.buffer\)\);/, 'the worker gets copies');
   const world = src('src/scenes/world.js');
-  assert.match(world, /if \(landform\) \{\n    _landformSites = landformSites\(_hubRows\.map\(\(loc\) => \{ const p = longitudeLatitudeToMapPixel\(loc\.mapTableData\.longitude, loc\.mapTableData\.latitude\); return \{ px: p\.x, py: p\.y, loc \}; \}\)\);\n    terrainGen\.setSites\(_landformSites\);\n  \}/, 'made once of the game\'s own rows (HUB1\'s - the same sites on every client), handed to both kernels');
+  assert.match(world, /if \(landform\) \{\n    _landformSites = landformSites\(_hubRows\.map\(\(loc\) => \{ const p = longitudeLatitudeToMapPixel\(loc\.mapTableData\.longitude, loc\.mapTableData\.latitude\); return \{ px: p\.x, py: p\.y, loc \}; \}\)\);\n    _landformClimates = landformClimates\(\(x, y\) => maps\.getClimateIndex\(x, y\)\);[^\n]*\n    terrainGen\.setLandformTables\(\{ sites: _landformSites, climates: _landformClimates \}\);\n  \}/, 'made once of the game\'s own rows (HUB1\'s - the same sites on every client), handed to both kernels with the climates');
   assert.ok(world.indexOf('_landformSites = landformSites(_hubRows') > world.indexOf('if (l < baseCount) { _hubRows.push(loc);'), 'after the rows are gathered');
-  assert.ok(world.indexOf('terrainGen.setSites(_landformSites)') < world.indexOf('await terrainGen.generate({'), 'before the first pixel is asked of either');
+  assert.ok(world.indexOf('terrainGen.setLandformTables(') < world.indexOf('await terrainGen.generate({'), 'before the first pixel is asked of either');
 });

@@ -1,0 +1,128 @@
+[
+  {
+    "name": "LANDFORM6-every-land-woodlands",
+    "file": "src/world/landforms.js",
+    "old": "  if (!climates) { _share[0] = 1; return 1; }",
+    "new": "  if (climates) { _share[0] = 1; return 1; }",
+    "tests": [
+      "test/landform6.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM6-desert-wears-the-mountains",
+    "file": "src/world/landforms.js",
+    "old": "[CLIMATES.Desert]: 'desert',",
+    "new": "[CLIMATES.Desert]: 'mountain',",
+    "tests": [
+      "test/landform6.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM6-ease-on-the-woodlands-top",
+    "file": "src/world/landforms.js",
+    "old": "  return sum * smooth01(e / (H.coast * top));",
+    "new": "  return sum * smooth01(e / (H.coast * LAND_TOP[0]));",
+    "tests": [
+      "test/landform6.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM6-dunes-symmetric",
+    "file": "src/world/landforms.js",
+    "old": "const DUNE_SPACING = 64, DUNE_WINDWARD = 0.72;",
+    "new": "const DUNE_SPACING = 64, DUNE_WINDWARD = 0.5;",
+    "tests": [
+      "test/landform6.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM6-dunes-along-the-wind",
+    "file": "src/world/landforms.js",
+    "old": "  const u = wx * DUNE_COS + wy * DUNE_SIN, v = wy * DUNE_COS - wx * DUNE_SIN, L = DUNE_SPACING;",
+    "new": "  const v = wx * DUNE_COS + wy * DUNE_SIN, u = wy * DUNE_COS - wx * DUNE_SIN, L = DUNE_SPACING;",
+    "tests": [
+      "test/landform6.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM6-dakfron-all-sand",
+    "file": "src/world/landforms.js",
+    "old": "    desert2: Object.freeze({ low: 6, high: 30, upland: 1.3, shape: 'desert', rockFrom: -0.1 }),",
+    "new": "    desert2: Object.freeze({ low: 6, high: 30, upland: 1.3, shape: 'desert', rockFrom: 0.3 }),",
+    "tests": [
+      "test/landform6.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM6-swamp-hilly",
+    "file": "src/world/landforms.js",
+    "old": "    swamp: Object.freeze({ low: 2, high: 6, upland: 1, shape: 'hummocks' }),",
+    "new": "    swamp: Object.freeze({ low: 2, high: 30, upland: 1, shape: 'hummocks' }),",
+    "tests": [
+      "test/landform6.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM6-ravines-stand-up",
+    "file": "src/world/landforms.js",
+    "old": "  return rolling(wx, wy, 0.8) - 0.75 * ravine",
+    "new": "  return rolling(wx, wy, 0.8) + 0.75 * ravine",
+    "tests": [
+      "test/landform6.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM6-towers-sunk",
+    "file": "src/world/landforms.js",
+    "old": "  return gather * knollField(",
+    "new": "  return -gather * knollField(",
+    "tests": [
+      "test/landform6.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM6-border-hard",
+    "file": "src/world/landforms.js",
+    "old": "  if (l00 === l10 && l00 === l01 && l00 === l11) { _share[l00] = 1; return 1 << l00; }",
+    "new": "  if (l00 === l00) { _share[l00] = 1; return 1 << l00; }",
+    "tests": [
+      "test/landform6.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM6-mountains-gentle",
+    "file": "src/world/landforms.js",
+    "old": "    mountain: Object.freeze({ low: 16, high: 80, upland: 1.6, shape: 'ridged' }),",
+    "new": "    mountain: Object.freeze({ low: 16, high: 40, upland: 1.6, shape: 'ridged' }),",
+    "tests": [
+      "test/landform6.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM6-worker-drops-the-climates",
+    "file": "src/world/terrainGenWorker.js",
+    "old": "    if (m.t === 'landform-tables') { sites = m.sites ?? null; climates = m.climates ?? null; return; }",
+    "new": "    if (m.t === 'landform-tables') { sites = m.sites ?? null; return; }",
+    "tests": [
+      "test/landform6.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM6-job-on-no-climates",
+    "file": "src/world/terrainGen.js",
+    "old": "  const landforms = landform ? createLandforms({ woods, roads, sites, climates }) : null;",
+    "new": "  const landforms = landform ? createLandforms({ woods, roads, sites }) : null;",
+    "tests": [
+      "test/landform6.test.js"
+    ]
+  },
+  {
+    "name": "LANDFORM6-ranges-inverted",
+    "file": "src/world/landforms.js",
+    "old": "  return r1 + 0.45 * r1 * r2 + 0.16 * r1 * r2 * c * c;",
+    "new": "  return -(r1 + 0.45 * r1 * r2 + 0.16 * r1 * r2 * c * c);",
+    "tests": [
+      "test/landform6.test.js"
+    ]
+  }
+]

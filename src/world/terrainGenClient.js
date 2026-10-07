@@ -52,7 +52,8 @@ export class TerrainGenClient {
    */
   constructor({ woods, woodsBytes = null, workerFactory = null } = {}) {
     this._woods = woods;
-    this._sites = null;   // LANDFORM4: setSites
+    this._sites = null;   // LANDFORM4: setLandformTables
+    this._climates = null;   // LANDFORM6: setLandformTables
     this._worker = null;
     this._fifo = [];   // {job, resolve} - the worker answers in arrival order
     this._grids = new Map();   // PERF-EXT26: id -> {job, resolve}, the promotions out on the worker
@@ -127,14 +128,16 @@ export class TerrainGenClient {
     else if (!this._worker) this._roadsFallback();
   }
 
-  /** LANDFORM4: the game's own locations the landforms pull the ground to (world/landforms.js landformSites) - kept
-   *  here for the same-thread kernel, a COPY posted to the worker (the RA1 law). Handed once as the world mounts, before
-   *  its first job, so no pixel is ever cut without them; null clears both. */
-  setSites(sites) {
-    this._sites = sites ?? null;
+  /** LANDFORM4/6: the landforms' tables - the game's own locations they pull the ground to and the world's climates
+   *  whose lands they stand (world/landforms.js landformSites, landformClimates) - kept here for the same-thread kernel,
+   *  COPIES posted to the worker (the RA1 law). Handed once as the world mounts, before its first job, so no pixel is
+   *  ever cut without them; null clears either. */
+  setLandformTables({ sites = null, climates = null } = {}) {
+    this._sites = sites;
+    this._climates = climates;
     if (!this._worker) return;
-    const copy = this._sites ? this._sites.slice() : null;
-    this._worker.postMessage({ t: 'sites', sites: copy }, copy ? [copy.buffer] : []);
+    const s = sites ? sites.slice() : null, c = climates ? climates.slice() : null;
+    this._worker.postMessage({ t: 'landform-tables', sites: s, climates: c }, [s, c].filter(Boolean).map((a) => a.buffer));
   }
 
   /** ROADS 7: the network for whoever draws it - null until built. */
@@ -193,7 +196,7 @@ export class TerrainGenClient {
   generate(job) {
     if (!this._worker) {
       this._roadsFallback();
-      return Promise.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, ...job }));
+      return Promise.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...job }));
     }
     return new Promise((resolve) => {
       this._fifo.push({ job, resolve });
@@ -218,7 +221,7 @@ export class TerrainGenClient {
    * @returns {Promise<{ positions: Float32Array, normals: Float32Array }>}
    */
   grid(job) {
-    if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, ...job }));   // LANDFORM1-3: the fallback's own network
+    if (!this._worker) return Promise.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...job }));   // LANDFORM1-3: the fallback's own network
     const id = ++this._gridId;
     return new Promise((resolve) => {
       this._grids.set(id, { job, resolve });
@@ -232,7 +235,7 @@ export class TerrainGenClient {
     this._grids.delete(m.id);
     if (m.t === 'gridError') {
       console.warn('[terrain] worker grid failed; building it on the main thread -', m.message);
-      g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, ...g.job }));
+      g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...g.job }));
       return;
     }
     g.resolve({ positions: m.positions, normals: m.normals });
@@ -246,7 +249,7 @@ export class TerrainGenClient {
       // this job's inputs are still whole on this side - run them here
       console.warn('[terrain] worker job failed; generating on the main thread -', m.message);
       this._roadsFallback();   // AUDIT ROADS F2: a one-off same-thread job still wants its roads
-      p.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, ...p.job }));
+      p.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...p.job }));
       return;
     }
     // The reply crosses WHOLE, like the job: the envelope tag comes
@@ -265,10 +268,10 @@ export class TerrainGenClient {
     try { this._worker?.terminate?.(); } catch { /* already gone */ }
     this._worker = null;
     this._roadsFallback();   // AUDIT ROADS F2: the worker took its network down with it
-    for (const p of pending) p.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, ...p.job }));
+    for (const p of pending) p.resolve(generatePixelTerrain({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...p.job }));
     // PERF-EXT26: and the promotions it held - built here, once each
     const grids = [...this._grids.values()];
     this._grids.clear();
-    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, ...g.job }));
+    for (const g of grids) g.resolve(restrideGrid({ woods: this._woods, roads: this._roads ?? null, sites: this._sites, climates: this._climates, ...g.job }));
   }
 }

@@ -131,7 +131,7 @@ test('LANDFORM1: nothing stands over the ceiling - the shaper takes DFU\'s heigh
   // the shipped file carries one byte over 127: a 255 at map pixel (470, 355), in the sea off Tigonus - DFU's
   // kernel stands it at its ceiling, a 1.9 km pillar; unclamped and lifted it was 5 km
   assert.equal(LANDFORM_CEILING, MAX_TERRAIN_HEIGHT + reliefLift(127 * 8) + HILLS_TOP);   // PIN MOVED (LANDFORM5): and the tallest hill
-  assert.ok(Math.abs(LANDFORM_CEILING * STREAMING_TERRAIN_SCALE - 3116.06) < 0.01, 'about 3.1 km');
+  assert.ok(Math.abs(LANDFORM_CEILING * STREAMING_TERRAIN_SCALE - 3180.06) < 0.01, 'about 3.2 km');   // PIN MOVED (LANDFORM6): the mountains' hills are the tallest
   const LIFT_CEILING = MAX_TERRAIN_HEIGHT + reliefLift(127 * 8);   // the glitch's top with the hills left out (LANDFORM5)
   assert.equal(reliefLift(255 * 8), reliefLift(127 * 8), 'the lift is level past the top');
   assert.ok(reliefLift(126 * 8) < reliefLift(127 * 8), '...and rising up to it');
@@ -365,11 +365,11 @@ test('LANDFORM1-3: the switch is the Features row on the enhanced skin, the room
 
 test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promotion with it, raises the ring and the beacon by it, and stands every record\'s height again by it', () => {
   assert.match(WORLD, /\n  const landform = landformsOn\(\);\n/, 'once, at the mount - the same job online and off: the room\'s river switch decides online');
-  assert.match(WORLD, /const landformsHere = \(\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites \}\) : null\);/, 'this thread\'s landforms, over its own network and the sites it handed both kernels');
+  assert.match(WORLD, /const landformsHere = \(\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\), sites: _landformSites, climates: _landformClimates \}\) : null\);/, 'this thread\'s landforms, over its own network and the sites and climates it handed both kernels');
   assert.equal((WORLD.match(/landformsOn\(/g) ?? []).length, 1);
   assert.match(WORLD, /\n      landform,   \/\/ LANDFORM1-3: the shaped ground, cut along the kernel's own network\n    \}\);/, 'the pixel job');
   assert.match(WORLD, /terrainGen\.grid\(\{ px: p\.px, py: p\.py, stride: 1, samples: p\.samples, landform \}\)/, 'the promotion off the thread');
-  assert.match(WORLD, /grid = restrideGrid\(\{ woods, px: p\.px, py: p\.py, stride, samples: p\.samples, landform, roads: terrainGen\.roads\(\), sites: _landformSites \}\)/, 'and on it');
+  assert.match(WORLD, /grid = restrideGrid\(\{ woods, px: p\.px, py: p\.py, stride, samples: p\.samples, landform, roads: terrainGen\.roads\(\), sites: _landformSites, climates: _landformClimates \}\)/, 'and on it');
   assert.match(WORLD, /_gateKernel = sampleKernel\(woods, px, py, HEIGHTMAP_DIMENSION, true, landformsHere\(\)\);/, 'the gate\'s beacon stands on the shaped ground');
   assert.match(WORLD, /relief: !!landform,   \/\/ LANDFORM1: the ring stands the massifs/, 'the far ring');
   assert.match(WORLD, /ringHeight\(byte, !!landform, fade\)/, 'the travel view past the built grid');   // PIN MOVED (AUDIT LANDFORMS II I1): faded beside the sea, as the ring is
@@ -380,8 +380,8 @@ test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promo
   assert.match(WORLD, /return restandHeight\(y, x, z, was\); \};   \/\/ LANDFORM1: the row's lift put back on\n    droppedLoot\.restoreWorld\(arrived/, 'the exterior scene cache');
   const tg = src('src/world/terrainGen.js');
   // AUDIT LANDFORMS D3 MOVED THIS PIN: the same pass writes DFU's own samples beside, for a location's tiles
-  assert.match(tg, /const landforms = landform \? createLandforms\(\{ woods, roads, sites \}\) : null;\n(?:  \/\/[^\n]*\n)*  const classic = landforms && hasLocation \? new Float32Array\(HEIGHTMAP_DIMENSION \* HEIGHTMAP_DIMENSION\) : null;\n  const samples = generateSamples\(woods, px, py, HEIGHTMAP_DIMENSION, landforms, classic\);/, 'the kernel cuts along the network the painter paints');
-  assert.match(tg, /const lf = landforms \?\? \(landform \? createLandforms\(\{ woods, roads, sites \}\) : null\);/, 'and a promotion\'s ghost rows along the same');
+  assert.match(tg, /const landforms = landform \? createLandforms\(\{ woods, roads, sites, climates \}\) : null;\n(?:  \/\/[^\n]*\n)*  const classic = landforms && hasLocation \? new Float32Array\(HEIGHTMAP_DIMENSION \* HEIGHTMAP_DIMENSION\) : null;\n  const samples = generateSamples\(woods, px, py, HEIGHTMAP_DIMENSION, landforms, classic\);/, 'the kernel cuts along the network the painter paints');
+  assert.match(tg, /const lf = landforms \?\? \(landform \? createLandforms\(\{ woods, roads, sites, climates \}\) : null\);/, 'and a promotion\'s ghost rows along the same');
   assert.match(src('src/world/terrainGenWorker.js'), /if \(m\.t === 'grid' && m\.landform && pendingRoads\) \{ pendingRoads\.then\(\(\) => handle\(m\)\); return; \}/, 'a landforms promotion waits for the network its pixel was cut along');
 });
 
