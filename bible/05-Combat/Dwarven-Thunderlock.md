@@ -110,7 +110,7 @@ an invisible gun.
 | damage | **7-26** (Long Bow 4-18, Dai-Katana 3-21) |
 | weight | 6.0 — the heaviest weapon in the game |
 | price | 480 base, on the material ladder |
-| condition | 90 |
+| condition | 90 on its row - minted 4,800 at Dwarven since WEAPON-POOL (2026-10-06; AUDIT WEAPON-POOL P8): every weapon from one pool of 1,600, on the material ladder (`05-Combat/Physical-Combat-Overhaul.md`) |
 | pellet | 0.2 weight, 4 base, stackable |
 
 Harder per shot than anything classic, and paid for everywhere else:

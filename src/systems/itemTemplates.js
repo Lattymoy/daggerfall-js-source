@@ -7,7 +7,7 @@
 // (ItemHelper.GetEnumArray/GetItemTemplate).
 
 import { clampArmorVariant } from './armorMaterials.js';   // AUDIT 23 (items-6)
-import { conditionMultipliersByMaterial, valueMultipliersByMaterial, WEAPONS } from '../characters/weapons.js';   // AUDIT 23 (items-5); AUDIT 68 S27-weightForMaterial-dup: ItemBuilder's value ladder and the Weapons enum, one home each
+import { conditionMultipliersByMaterial, valueMultipliersByMaterial, WEAPONS, WEAPON_CONDITION_POOL } from '../characters/weapons.js';   // AUDIT 23 (items-5); AUDIT 68 S27-weightForMaterial-dup: ItemBuilder's value ladder and the Weapons enum, one home each; WEAPON-POOL: the one pool
 import { GROUP_TEMPLATE_INDICES } from './itemTemplatesData.js';
 import { WAGON_MODEL_ID } from './horseCartLaw.js';   // DISC24-B: the cart's picture is the wagon's model
 import TEMPLATES_JSON from '../characters/itemTemplates.json' with { type: 'json' };
@@ -220,7 +220,11 @@ export function usesWorldTexture(item, template = templateByIndex(item.templateI
  *  :651-652, C# int division). The port's plain-object factories
  *  minted none, so every torch/lantern/candle read as empty and no
  *  looted weapon carried a condition. Idempotent - an item that
- *  already has a condition (magic uses, a save round-trip) keeps it. */
+ *  already has a condition (magic uses, a save round-trip) keeps it.
+ *  WEAPON-POOL (2026-10-06): a weapon's hitPoints is the one pool every
+ *  weapon type shares (characters/weapons.js WEAPON_CONDITION_POOL),
+ *  not its row's - ammunition alone keeps the row's - and the material
+ *  scales it as before. */
 /** The OTHER SetItem law with a draw in it (DaggerfallUnityItem.cs
  *  :571): `message = (itemGroup == ItemGroups.Paintings) ?
  *  UnityEngine.Random.Range(0, 65536) : 0`. A painting's message is
@@ -279,7 +283,7 @@ export function mintCondition(item) {
   if (item.maxCondition != null) return item;
   if (!Object.isExtensible(item)) return item;   // C-slice: the frozen pre-chargen stand-ins (INTERIM_WEAPON) carry no condition
   const t = templateByIndex(item.templateIndex);
-  let max = t?.hitPoints ?? 0;
+  let max = t && item.group === 'Weapons' && !isAmmunition(item) ? WEAPON_CONDITION_POOL : (t?.hitPoints ?? 0);   // WEAPON-POOL: one pool for every weapon type
   const mat = item.material;
   if (mat != null && max > 0) {
     if (item.group === 'Weapons') max = Math.trunc((max * (conditionMultipliersByMaterial[mat] ?? 4)) / 4);

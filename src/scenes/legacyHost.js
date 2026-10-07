@@ -40,6 +40,7 @@ import { birthSearch } from '../systems/legacy/places.js';
 import { payToll, tollLine, ageOf, isElder, isSpent } from '../systems/legacy/age.js';
 import { legacySettings } from '../systems/legacy/settings.js';
 import { registerModSaveData } from '../systems/modSaveData.js';
+import { repairItemLists } from '../systems/save.js';   // ITEM-WALK B: the load's item repairs, on what leaves the line's record
 import { rollStats, rollSkills, spendPoolLowest, STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { LEVELING_CLASSIC } from '../systems/oblivionLeveling.js';
 import { pickHeirloom, markHeirloom, mintRemainsItem, isRemainsItem, isHeirloom, attuneHeirloom, blessingOf, blessedIn, remainsGoldOf, REMAINS_LIST, BLESSING_POINTS } from '../systems/legacy/heirloom.js';
@@ -371,8 +372,14 @@ export function createLegacyHost(deps) {
     touch(family);
     if (due) { deps.payEstate?.(due); deps.say(LEGACY_TEXT.estate(due)); }
     if (pieces.length) {
-      deps.giveItems?.(pieces.map((it) => JSON.parse(JSON.stringify(it))));
-      for (const it of pieces) deps.say(LEGACY_TEXT.bequest(it.heirloom?.base ?? it.name ?? 'an heirloom'));
+      // ITEM-WALK B (2026-10-07): A BEQUEST IS REPAIRED AS IT IS PAID. It reaches its heir from the line's record, by no
+      // load - at the heir's birth, or on their first days played - and that record may be the device's copy, never the
+      // save's (mergeFamily). So the load's item repairs (systems/save.js repairItemLists) run on the pieces paid, as a
+      // load runs them on every list a save holds; the line's record keeps its own, paid once.
+      const given = pieces.map((it) => JSON.parse(JSON.stringify(it)));
+      repairItemLists([given]);
+      deps.giveItems?.(given);
+      for (const it of given) deps.say(LEGACY_TEXT.bequest(it.heirloom?.base ?? it.name ?? 'an heirloom'));
     }
     if (write) store();
   }
@@ -569,6 +576,7 @@ export function createLegacyHost(deps) {
         // AUDIT LEGACY II H4: the list wears its remains' mark while open - the bones go back into it, and into nothing
         // that is not the character's own keeping (systems/itemTransfer.js planStore)
         Object.defineProperty(r.items, REMAINS_LIST, { value: r.of, configurable: true, writable: true, enumerable: false });
+        repairItemLists([r.items]);   // ITEM-WALK B: the load's item repairs on the list as it opens, whichever copy it came from - before its claim's mark
         if (deps.openRemains?.(r, r.items)) {
           openedThisVisit.add(r.id);
           if (r.by == null && !openedSig.has(r.id)) openedSig.set(r.id, itemsSig(r.items));   // claimed once changed (claimTouched)

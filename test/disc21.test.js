@@ -10,7 +10,7 @@ import { repairUnmintedConditions, WEARABLE_GROUPS, isQuestionsDagger } from '..
 import { isBrokenItem, equipItem } from '../src/systems/equip.js';
 import { repairRefusal } from '../src/systems/repairService.js';
 import { templateByIndex } from '../src/systems/itemTemplates.js';
-import { conditionMultipliersByMaterial, WEAPONS, WEAPON_MATERIALS } from '../src/characters/weapons.js';
+import { conditionMultipliersByMaterial, WEAPONS, WEAPON_MATERIALS, WEAPON_CONDITION_POOL } from '../src/characters/weapons.js';
 import { snapshotPlayer, restorePlayer } from '../src/systems/save.js';
 import { ServiceFlowWindow } from '../src/ui/guildServiceWindows.js';
 import { useQuickslot, emptySlotLine, QUICKSLOT_TEXT, clearQuickslots } from '../src/systems/quickslots.js';
@@ -20,7 +20,8 @@ import { PlayerWeapon } from '../src/combat/playerWeapon.js';
 
 const rd = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const P = () => ({ isPlayer: true, level: 1, gender: 'male', activeEffects: [], health: 30, maxHealth: 30, items: [], spells: [], stats: {}, skills: {}, career: { primarySkills: [], majorSkills: [], luck: 50 } });
-const EBONY_DAGGER_MAX = Math.trunc(templateByIndex(WEAPONS.Dagger).hitPoints * conditionMultipliersByMaterial[WEAPON_MATERIALS.Ebony] / 4);
+// WEAPON-POOL (2026-10-06): the one pool every weapon type shares, where this read the Dagger's row (test/weaponpool.test.js)
+const EBONY_DAGGER_MAX = Math.trunc(WEAPON_CONDITION_POOL * conditionMultipliersByMaterial[WEAPON_MATERIALS.Ebony] / 4);
 
 // ── DISC21-A: "Starting ebony dagger says 'broken and cannot be worn,' repair says it isn't damaged" ──
 test('DISC21-A: the questions\' ebony dagger is minted as CreateWeapon mints it, and Roleplay & Realism\'s skill-based kit wears it to 20% of a real condition - worn, not broken; equipped; a repairer takes it (mutants: the biography\'s hand-built record; the kit\'s 20% of nothing; the kit\'s mint dropped)', () => {
@@ -77,7 +78,12 @@ test('DISC21-A: a save made since - the questions\' dagger at 0 with no maxCondi
   // the load door runs it over the pack, the wagon and the repairer's shelf - and (AUDIT PRE-MERGE 0929 D3) every list
   // of the character's own things the save carries beside them, the one walk DISC29-B's name repair takes
   // BAG1 (PIN MOVED): the Materials Bag's list is repaired with the rest (bible/06-Systems/Materials-Bag.md)
-  assert.match(rd('src/systems/save.js'), /const repairLists = \[entity\.items, entity\.wagonItems, entity\.bagItems, entity\.otherItems, \.\.\.stashedItemLists\(snap\)\];[\s\S]*?for \(const list of repairLists\) \{\s+const n = repairUnmintedConditions\(list\);/);
+  // ITEM-WALK (PIN MOVED): the lists are the one walk of everything the save holds (savedItemLists, the entity's own
+  // first), and the repairs one runner (repairItemLists) - test/itemwalk.test.js pins the walk's reach
+  const save = rd('src/systems/save.js');
+  assert.match(save, /const repairLists = savedItemLists\(snap, entity\);[^\n]*\n\s+repairItemLists\(repairLists\);/);
+  assert.match(save, /export const savedItemLists = \(snap, own = snap\) => \[\.\.\.listsOf\(own\?\.items, own\?\.wagonItems, own\?\.bagItems, own\?\.furnishings, own\?\.otherItems\), \.\.\.stashedItemLists\(snap\), \.\.\.heldItemLists\(snap\)\];/);
+  assert.match(save, /export function repairItemLists\(repairLists\) \{[\s\S]*?for \(const list of repairLists\) \{\s+const n = repairUnmintedConditions\(list\);/);
   const snap = JSON.parse(JSON.stringify(snapshotPlayer(P(), { classicMinutes: 100 })));
   snap.sceneCache = { scenes: [{ sceneName: 'DaggerfallInterior [MapID=1, BuildingKey=2]', lootContainers: [{ items: [{ ...stuck, UID: 7 }] }] }] };
   const r = {};
