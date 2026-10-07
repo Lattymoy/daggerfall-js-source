@@ -253,7 +253,8 @@ import { LPT_SCALE_MAX, lptVariety, buildTreeSet } from '../world/lowPolyTrees.j
 import { realForestsOn, FOREST_HIDDEN_LOCATION_TYPES, roadVergesOn, climateBlendOn } from './shared.js';   // FOREST1: the Real forests switch, and the places the woods hide; VERGE1: the clear roadsides' switch; ECOTONE1: the blended climates'
 import { landformsOn } from './shared.js';   // LANDFORM1-3: the Landforms switch
 import { createLandforms, landformLiftField, cliffFadeAt } from '../world/landforms.js';   // LANDFORM1-3: the shaped ground, and what it lifts a point by; AUDIT LANDFORMS II I1: the lift's fade beside the sea
-import { vergeClear, natureReach } from '../world/roadVerge.js';   // VERGE1: a wild flat's footprint off the roads
+import { vergeClear, natureReach, pathTileMask, lptFitCap } from '../world/roadVerge.js';   // VERGE1: a wild flat's footprint off the roads; LPT-FIT: every Low Poly tree's crown off them
+import { LPT_CROWNS } from '../world/lptCrowns.js';   // LPT-FIT: the drawn prototype's crown, turned (its radial reach)
 import { ecotoneOwner, ecoOrigin } from '../world/ecotone.js'; import { MAP_W, MAP_H } from '../world/roadNetwork.js';   // ECOTONE1: a border point's owner, the pixel's lattice origin, the map's edges
 import { insideRocks, forestAt } from '../world/terrainNature.js';   // FOREST1 (AUDIT F1): a wood's flats keep out of the rock pieces; GRASS-LIT2: the shot hook's woods
 import { huntKind, createBodyStamps, bodiesOf, trackerMarks } from './huntHost.js';   // PROF7: Hunting's bodies - a kind in it, the kills that stamp them, a Tracker's marks
@@ -5219,6 +5220,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (lowPolyTreesFrame - AUDIT LPT B10)
     const lptHandles = [], lptGroups = [];
     made.lptHandles = lptHandles;   // BUILD-FAIL1
+    let lptPathMask = null;   // LPT-FIT: the pixel's path tiles, made at its first fitted tree
     // ECOTONE1: the pixel's nature archives - its own and any a border stood - each the flora (it sways, it is the forest
     // a tree is felled in, its Trees are cover's trunks) and each named by its summer archive (the Tree table's key; the
     // season's own number named none in winter, so a winter wood's trees were cover as flats - mended with it)
@@ -5242,11 +5244,19 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (far) {
         lowPolyTrees.acquire(far); lptHandles.push(far);   // AUDIT LPT B5: held until the pixel goes
         const scales = new Float32Array(centers.length), wild = new Uint8Array(centers.length);
+        // LPT-FIT (Mac: "roads still show on roads and pathways. You're not taking the entire model into account"):
+        // under clear roadsides every tree here - a location's as well as the wild's - is drawn no wider than the room
+        // its root has from the pixel's roads, tracks and streets (world/roadVerge.js lptFitCap): its crown, turned
+        const crown = verges ? (LPT_CROWNS[lpt.key] ?? 0) : 0;
+        if (crown > 0 && !lptPathMask) lptPathMask = pathTileMask(tilemap, paths);
+        const fit = crown > 0 ? new Float32Array(centers.length) : null;
         centers.forEach((c, i) => {
           wild[i] = wildFlats.has(`${k}#${i}`) ? 1 : 0;
-          scales[i] = lptVariety(px, py, c[0], c[2], !wild[i]).scale / LPT_SCALE_MAX;
+          const v = lptVariety(px, py, c[0], c[2], !wild[i]).scale;
+          if (fit) fit[i] = lptFitCap(lptPathMask, vergeNet, px, py, c[0], c[2], crown, v);
+          scales[i] = (fit ? Math.min(v, fit[i]) : v) / LPT_SCALE_MAX;
         });
-        lptGroups.push({ h: lptHandles.length - 1, centers, wild });
+        lptGroups.push({ h: lptHandles.length - 1, centers, wild, fit });
         const batch = renderer.createBillboardBatch(archive, far.record, far.size, centers, { scales });
         batch.lptProto = far;
         batch.farH = plain.h;   // AUDIT LPT A8/B1: MAC1's far rings stand the trees they stood - the flat's height, not the picture's
