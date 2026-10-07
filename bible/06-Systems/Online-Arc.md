@@ -12765,8 +12765,23 @@ for `drawVeiled`, which draws it through the sprite box's quad with the billboar
 picture's span of the RT) AFTER each mode's opaque world - the exterior after the grass, the dungeon after the foes'
 flats and before the water (`opts.lateWorldDraw`, WATER-D1's law), the building after its last opaque draw. No name
 over a concealed peer; a concealed walker's lantern is not drawn; no hit reveal (a blow on a peer lands on their own
-screen). F and the plaque still skip a concealed peer, and its foes still read its flags (INVIS-NET).
+screen). F and the plaque still skip a concealed stranger (CONCEAL-MATE: a party mate stays open), and its foes still
+read its flags (INVIS-NET).
 `01-Overview/Field-Bugs-2026-09-27b.md`. Pinned: `test/invislook.test.js` (7). `tools/mutants/invislook.json` (31 dead).
+
+## CONCEAL-MATE (2026-10-07, a player: "you're not interactable with party members - would be a QoL if you can interact with at least your party members while chameleon or shadow form, invis etc on") - a concealed player stays open to their party
+
+INVIS-NET took a concealed player out of every social door, a party mate's included: a mate who cast Chameleon or
+Shadow to slip past a guard could not be pressed with F, traded with, handed a page or found on the Nearby list until
+it wore off. The doors read one law now, `player/socialPick.js openPeers(peers, isMate)`: every unconcealed player, and
+a concealed one only when `isMate` answers exactly `true`. The host's test is `isPartyMate` (scenes/world.js, the
+session's `social.isPartyPeer` behind a party), and every door takes it - `peerInSight` (the F key, its plaque and the
+held menu; the building and the dungeon reach it through `peerHoverPick`, and `?exterior` has no online layer), the
+Nearby list, `pageReaders` and `giftablePeers` (SPELL-GIFT B1/B3 already kept a concealed mate - its copy of the law is
+this one now). A concealed STRANGER is still nobody's to press or name. What it does not change: the draw. On the
+classic lane a concealed mate still stands nowhere on my screen (INVIS-NET) - F reaches them where they stand, unseen;
+under Enhanced Combat Visuals they are drawn translucent (INVIS-LOOK) as before.
+Pinned: `test/invisnet.test.js` (+2). `tools/mutants/invisnet.json` (+5, 20 dead).
 
 ## KEPT-KILL (2026-10-01, Mac: "If someone kills a quest target regardless of relation then it should ping the quest for the players involved regardless") - a kept quest foe's fall reaches every copy
 
