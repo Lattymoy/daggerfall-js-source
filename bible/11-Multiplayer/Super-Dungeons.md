@@ -340,7 +340,9 @@ law (online only, asleep in duels, the Sigil Sets' rules):
 **The title and the aura (account service).** `POST /v1/sd/claim` verifies the `h1` receipt, writes one row per
 (slot, account) and, ON THAT FIRST WRITE ONLY, rolls from the receipt's seed: the title **Hourbreaker** one time in
 four, the aura **The Turning Hour** - a slow wheel of brass gears and gold light about the wearer - one time in eight.
-Once held, held for good. The profile counts *Hours broken*.
+Once held, held for good. The profile counts *Hours broken*. (SD9b: the roll is the seed's own stream, salted - never
+the spoils' draws off the same seed; the grants are laid on the account's row, `players.sd_honours`, by the kill's
+row alone, and read off it as the Broker's sale is - so every badge the service mints carries them with no other read.)
 
 **The collapse.** The kill sets the record `fell`; for `SD_COLLAPSE_MS` (3 minutes) the realm stands so the spoils can
 be taken and a way home rises where the Remnant fell (to the Hollow's door, OUTSIDE). Then `gone`: on every client the
@@ -1345,3 +1347,49 @@ my lines were reworded so the gate's records keep one site each (`earned` as a f
 
 SD9b next: the claim - the account service verifies the `h1`, writes the kill once a slot and account, and rolls
 Hourbreaker and The Turning Hour on that first write.
+
+### SD9b - shipped 2026-10-07 (the claim, the Hours broken and Hourbreaker)
+
+Section 11's claim, on the account service - `acct91`, migration 0087; the relay's `world176` re-hashed in place (the
+token's titles).
+
+- **The claim** (`server-account/src/sds.js` `claimSd`, `POST /v1/sd/claim` behind a session - the gate's `claimGate`
+  rung for rung): the `h1` verified with the relay's public half (`GATE_PUBLIC_KEY`; none, 503), naming the session's
+  account (another's, 403; a refusal 400 with its rung); one row a (slot, account) in `sd_kills` - how it was earned,
+  the level, what it granted - so a receipt counts once whatever happens to it; a guest's fought and not counted,
+  counted once the account registers inside the receipt's week.
+- **The grants** (`sdHonoursRoll`): Hourbreaker one kill in four, The Turning Hour one in eight, off the receipt's seed
+  - its own stream, salted (`SD_HONOURS_SALT`), so never the spoils' draws - rolled on the row's FIRST write alone: the
+  row stamped with the claim's nonce, the grants OR-ed onto the account's `players.sd_honours` by that row alone in the
+  same batch. Once held, held for good: a later kill that grants nothing takes nothing, a second receipt for a slot
+  already counted grants nothing.
+- **The title** (`server-account/src/titles.js`): Hourbreaker held off the row (`sd_honours`), the Broker's sale's way
+  - a registered account's alone; on the wardrobe, worn and signed into the token like every title. Its word and its
+  colours (`ui/playerBadge.js`): the Remnant's brass into its bar's gold into the light of its heart, the bar's gold
+  where a face draws no gradient. `net/identityToken.js` TITLES gains it, last. The aura's grant is recorded now and
+  worn with its look (SD9c).
+- **The count**: *Hours broken* on the account card (`sdRecordText`) and the Inspect card (`profileSdLine`, said once
+  there is one), from `/v1/account` and the record the Inspect card reads.
+- **The device's book** (`net/sdClaims.js`, the gate's `gateClaims.js` without its rite or embers): every receipt the
+  relay hands (`onSdReceipt`) kept on the device (one a Hollow and account, eight at most) and offered at once, again
+  every ten minutes and at once when another account signs in; counted or claimed before, let go with its lines - the
+  count, *"The Hour names you Hourbreaker."*, *"The Turning Hour turns about you."*; a guest's kept and told once to
+  register; a refusal the service can mend kept; an unsigned or expired one never kept; another account's waits.
+
+THE FOUR HOSTS: `scenes/world.js` WIRED (the book made online on the account service's call and the spoils' store,
+handed every receipt the relay hands, offered again each frame); `scenes/worldModes.js`, `scenes/dungeonContext.js`
+unchanged; `scenes/exterior.js` FLAGGED (no Hour offline).
+
+Pins: `test/sd9b_claim.test.js` (8 - the roll; the claim; the grants; the worker; the client's call; the device's
+book; the words and the cards; the hosts and the service by source); `tools/mutants/sd9b.json` (34, all dead - at first one hung: a roll that drew once for both grants could never give the aura alone, and the pins' search for such a seed looped; it is bounded now, and fails).
+PINS MOVED: `ACCOUNT_VERSION` acct91 in the fifteen files that hold it and `server-account/wrangler.toml`;
+`test/duel_record.test.js` (the Inspect card's record carries the Hours); the vocabulary's newest (`test/acc3titles`,
+`test/aegis`, `test/primarch`, `test/crystalfist` - Hourbreaker after the Crystal Fist); `test/relayversion.test.js`
+(`world176` re-hashed: the token's titles); `.github/workflows/account-deploy.yml` (the service now bundles
+`net/sdReceipt.js` and `systems/wind.js` - `test/accountdeploy.test.js` walks the graph); three records from earlier
+slices re-aimed by content (`fb1004d_knight_house.json`'s version and `gatekeys.json`'s empty var - acct91 -, and
+`raid4.json`'s Inspect record, which carries the Hours now). Found by the whole suite: `test/accountworker.test.js`
+(the schema - `sd_kills` among the tables, `sd_honours` among the row's columns) and
+`test/serpent1_auditclient.test.js` (the Inspect card's facts - the Hours after the serpents).
+
+SD9c next: The Turning Hour - the aura's look, worn.

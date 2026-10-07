@@ -95,6 +95,7 @@ export const TITLE_TEXT = Object.freeze({
   aegis: 'Aegis of Oblivion',        // AEGIS (2026-10-03, the owner): Sureme's own
   primarch: 'Primarch',              // PRIMARCH (2026-10-04, GA00250: "the title will be Primarch"): GA00250's own
   crystalfist: 'Crystal Fist',       // CRYSTAL-FIST (2026-10-05, the owner: "Title: Crystal Fist"): Flylighter's own
+  hourbreaker: 'Hourbreaker',        // SD9b (2026-10-07, the Super Dungeons arc): one Brass Remnant's kill in four grants it
 });
 
 /** WB9g (2026-09-30, Mac: "an animated burning ground aura that circles the ground where your character stands"): AN
@@ -168,6 +169,14 @@ const PRIMARCH_GOLD = Object.freeze([0.847, 0.812, 0.682, 1]);   // #d8cfae
  *  colour kept as asked. */
 export const CRYSTAL_PURPLE = Object.freeze([0.639, 0.286, 0.643, 1]);   // #a349a4
 
+/** SD9b (2026-10-07, the Super Dungeons arc; bible/11-Multiplayer/Super-Dungeons.md section 11): HOURBREAKER - the
+ *  Brass Remnant's title, one kill in four on its first write. Drawn in the Hour's own colours: the Remnant's brass into
+ *  its bar's gold (ui/gateBossBar.js's brass theme, `.wb-boss-name`) into the light of its heart; its one colour the
+ *  bar's gold, for a face that draws no gradient - yellower and darker than the Founder's, warmer than the Primarch's. */
+const HOUR_BRASS = Object.freeze([0.71, 0.525, 0.184, 1]);   // #b5862f
+const HOUR_GOLD = Object.freeze([0.91, 0.753, 0.376, 1]);    // #e8c060
+const HOUR_LIGHT = Object.freeze([1, 0.945, 0.769, 1]);      // #fff1c4
+
 /** A title's colour, RGBA 0..1 - the same shape SOC4's PARTY_GREEN is
  *  in, so `nameLayer.cssRgba` turns it into CSS and `drawText` takes it
  *  as a tint, and neither face writes a colour down a second time.
@@ -216,6 +225,7 @@ export const TITLE_RGBA = Object.freeze({
   // CRYSTAL-FIST: the reference's purple, as Flylighter drew the glyph - redder than the Aegis's violet, the Protector's
   // royal purple and the Apostle's periwinkle, darker and bluer than the Hierophant's rose
   crystalfist: CRYSTAL_PURPLE,
+  hourbreaker: HOUR_GOLD,   // SD9b: the Remnant's bar's gold
 });
 
 /** SHADOW-FANG: A TITLE DRAWN AS A GRADIENT - its stops, RGBA 0..1, left
@@ -227,6 +237,7 @@ export const TITLE_GRADIENT = Object.freeze({
   shadowfang: Object.freeze([SHADOW_BLACK, SHADOW_CRIMSON]),
   penitent: Object.freeze([PENITENT_GOLD, PENITENT_LIGHT, PENITENT_SKY]),
   gatebreaker: Object.freeze([GATEBREAKER_CRIMSON, GATEBREAKER_FIRE, GATEBREAKER_EMBER]),   // WB9g: coal, fire, ember
+  hourbreaker: Object.freeze([HOUR_BRASS, HOUR_GOLD, HOUR_LIGHT]),   // SD9b: the Remnant's brass into the light of its heart
   aegis: Object.freeze([OBLIVION_VOID, OBLIVION_VIOLET, OBLIVION_LILAC]),   // AEGIS: out of the void into the ward's light
 });
 

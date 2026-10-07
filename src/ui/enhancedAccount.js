@@ -34,6 +34,7 @@ import { gateRecordText } from '../net/gateClaims.js';   // WB5b: and its gates-
 import { marksText } from '../net/marksLaw.js';   // MARKS1: and its Marks row
 import { raidRecordText } from '../net/raidClaims.js';   // RAID4: and its towns-defended row
 import { serpentRecordText } from '../net/serpentClaims.js';   // AUDIT SERPENT D4: and its serpents-slain row
+import { sdRecordText } from '../net/sdClaims.js';   // SD9b: and its Hours-broken row
 
 /** RENOWN-CHAR (Mac: "Can we make renown per character again"): the card's Renown tracks as the service sends them -
  *  its characters', the most recently played first - or none: none earned yet, or a service from RENOWN-ACCOUNT's day
@@ -471,6 +472,10 @@ export function accountCard(doc, flow, { onClose = null } = {}) {
       // service counted once (net/serpentClaims.js carries the receipts). A service from before it says nothing.
       const serpents = serpentRecordText(flow.account.serpents);
       if (serpents) row('Serpents slain', serpents);
+      // SD9b: the Hours this account broke - each a Brass Remnant's fall the relay signed and this service counted once
+      // (net/sdClaims.js carries the receipts). A service from before it says nothing.
+      const hours = sdRecordText(flow.account.sds);
+      if (hours) row('Hours broken', hours);
       // RENOWN1: each character's Renown and how far into it they are - online's own level, never the save's. The
       // service sends the RENOWN_CARD_TRACKS (five) most recently played (RENOWN-CHAR: a row each again).
       for (const t of tracks) {
