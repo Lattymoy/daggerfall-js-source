@@ -20,8 +20,12 @@ import { readSdReceipt } from './sdReceipt.js';
 
 /** The device's Hour receipts not yet settled with the account service. */
 export const SD_CLAIMS_KEY = 'sd9.sdClaims';
-/** The most it keeps - a Hollow rises after a rest and lives two days, so a week holds a few; the oldest go first. */
-export const SD_CLAIMS_MAX = 8;
+/** The most it keeps for one account - a week of Hollows at the fastest (a kill at the rise, the collapse and the rest: a
+ *  Hollow about every two hours, 84 a week); its oldest go first. AUDIT SD II (L5 F6): it was 8 for the whole device,
+ *  "a week holds a few" - a guest that broke nine Hours inside its week lost the first before it registered, and a
+ *  shared device's other accounts pushed one account's out. And the most for every account the device holds. */
+export const SD_CLAIMS_MAX = 96;
+export const SD_CLAIMS_ALL_MAX = 256;
 /** The least time between two offers of what is kept, ms (the gate's). */
 export const SD_CLAIM_RETRY_MS = 10 * 60 * 1000;
 /** How often a frame asks who is signed in (the gate's AUDIT WBX W4). */
@@ -109,7 +113,11 @@ export function createSdClaims({ claim, store = null, nowS = () => Math.floor(Da
       const c = live(r);
       if (!c || settled.has(r)) return false;
       const list = kept();
-      if (!list.some((k) => { const o = readSdReceipt(k); return k === r || (o?.d === c.d && o?.s === c.s); })) keep([...list, r].slice(-SD_CLAIMS_MAX));
+      if (!list.some((k) => { const o = readSdReceipt(k); return k === r || (o?.d === c.d && o?.s === c.s); })) {
+        const theirs = list.filter((k) => readSdReceipt(k)?.s === c.s);
+        const drop = theirs.length >= SD_CLAIMS_MAX ? theirs[0] : null;   // the account's own oldest, never another's
+        keep([...list.filter((k) => k !== drop), r].slice(-SD_CLAIMS_ALL_MAX));
+      }
       void flush();
       return true;
     },

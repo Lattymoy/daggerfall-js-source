@@ -16,7 +16,7 @@ import { fakeRooms } from './fakeRoom.mjs';
 import {
   SD_KEY, SD_SLOT_KEY, SD_HELD_KEY, SD_FIGHT_KEY, SD_REALM_KEY, SD_HERE_HOLD_MS, SD_TELL_RETRY_MS, SD_INTERNAL_FELL,
   SD_INTERNAL_FOUND, SD_INTERNAL_LIVE, SD_NO_WORDS, SD_FIGHTERS_MAX, SOCIAL_ROOM, CLOSE_BUSY, PIXEL_UNITS, worldRoom,
-  chatRegionRoom, sdReceiptKey, validSdOut,
+  chatRegionRoom, sdReceiptKey, validSdOut, CHAT_SOCKETS_MAX,
 } from '../src/net/wire.js';
 import { sdRoomKey, sdFell, SD_NO_FULL, SD_FADE_GRACE_MS, SD_FIRST_RISE_MS } from '../src/net/sdLaw.js';
 import {
@@ -715,4 +715,55 @@ test('SD11b THE PAGE LASHES WHOM THE REALM NAMES (L7 H2): a snap\'s word lashes 
   assert.equal(hurt.length, 1);
   heard({ ...hall, s: 5, ls: ['peer-me'] });
   assert.equal(hurt.length, 1, 'another Hour\'s word: nothing');
+});
+
+// ── L8 G13: the relay's smaller arms (added at SD11c) ───────────────────
+
+test('SD11b THE RELAY\'S SMALLER ARMS (L8 G13, added at SD11c): a fighter\'s NEWEST socket speaks for its body (the gate\'s law - an older tab\'s pose is not where it stands); a stored fight of another slot is no fight here, and the next `in` makes this Hollow\'s own; a realm\'s admitted list of another slot admits nobody here; a hub that THROWS is no answer - with no answer kept, a newcomer is refused busy, never "closed"; a region channel\'s census answer is bounded by its sockets (mutants: the oldest socket; another slot\'s fight or list kept; a throw read as no record; the census unbounded)', async () => {
+  await withRealm(async ({ realm, hub, rec, hello, beat, step }) => {
+    const ann = await hello('peer-ann', inArenaAt(-10, 4));
+    const f = await fightWith(realm, beat, ann);
+    const annAt = { ...realm.room._all().get(ann) };
+    step(100);
+    const ann2 = await hello('peer-ann2', inArenaAt(8, -6), { tokenSub: 'acct-peer-ann' });
+    assert.equal(ann2.closed, null);
+    // the window a realm's one-fighter-an-account law leaves: the older tab refused but not yet gone from the runtime's
+    // list - it stands first in the index, and still says where it was
+    const idx = realm.room._all();
+    realm.room._idx = new Map([[ann, annAt], ...[...idx].filter(([ws]) => ws !== ann)]);
+    realm.room._idxAt = Date.now();
+    const bodies = realm.room._sdFightBodies(f).filter((b) => b.sub === 'acct-peer-ann');
+    assert.equal(bodies.length, 1, 'one body an account');
+    assert.ok(Math.abs(bodies[0].x - 8) < 1e-6 && Math.abs(bodies[0].z + 6) < 1e-6, `the newest socket's pose: ${JSON.stringify(bodies[0])}`);
+    realm.room._idx = null;
+    // another slot's fight, stored (ann's account a fighter in it): no fight here - a blow lands on nothing, and the next
+    // `in` makes this Hollow's own
+    realm.room._sdFight = undefined;
+    const other = newRemnantFight(rec.s + 40, 9, Date.now() - SD_OPENING_MS - 1000);
+    joinRemnant(other, 'acct-peer-ann', 'ann', 30, Date.now() - SD_OPENING_MS - 1000);
+    other.lastTickAt = Date.now();
+    await realm.room.state.storage.put(SD_FIGHT_KEY, other);
+    await realm.raw(ann2, say({ k: 'hit', q: 7, d: 40, r: HIT_KINDS.Spell }));
+    assert.equal(realm.room._sdFight, null, 'another slot\'s fight is no fight here');
+    await realm.raw(ann2, say({ k: 'in', lv: 30, bv: 1 }));
+    assert.equal(realm.room._sdFight?.s, rec.s, 'the next `in`: this Hollow\'s own fight');
+    // another slot's admitted list: nobody admitted here by it
+    realm.room._sdRealm = undefined;
+    await realm.room.state.storage.put(SD_REALM_KEY, { s: rec.s + 40, in: ['acct-x', 'acct-y'], gu: [] });
+    const list = await realm.room._sdRealmOf(rec.s);
+    assert.deepEqual([list.s, list.in, list.gu], [rec.s, [], []]);
+    // a hub that throws, with no answer kept: busy, never closed
+    step(10 * 60_000);
+    const ROOMS = realm.room.env.ROOMS;
+    realm.room.env.ROOMS = { idFromName: ROOMS.idFromName, get: (id) => (id === SOCIAL_ROOM ? { fetch: () => { throw new Error('the hub is gone'); } } : ROOMS.get(id)) };
+    const cy = await hello('peer-cy', inArenaAt(-3, -12));
+    assert.deepEqual(cy.closed, { code: CLOSE_BUSY, reason: 'busy' }, 'a throw is no answer: busy');
+    realm.room.env.ROOMS = ROOMS;
+    // the census: a channel's answer past its sockets is bounded
+    const HR = hub.room.env.ROOMS;
+    hub.room.env.ROOMS = { idFromName: HR.idFromName, get: () => ({ fetch: async () => new Response(JSON.stringify({ n: 1e9 }), { status: 200 }) }) };
+    const counts = await hub.room._sdCensus();
+    hub.room.env.ROOMS = HR;
+    assert.ok(counts.length > 0 && counts.every((n) => n === CHAT_SOCKETS_MAX), 'bounded by a channel\'s sockets');
+  });
 });

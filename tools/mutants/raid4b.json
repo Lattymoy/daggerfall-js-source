@@ -533,8 +533,8 @@
   {
     "name": "RAID4b-pool-keys-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "  onSpent = () => {}, keys = SPOILS_KEYS, recordsMax = SPOILS_RECORDS_MAX, itemName = (item) => item?.name ?? 'Something',\n}) {\n  const STORE_KEY = keys.store, DAY_KEY = keys.day;",
-    "new": "  onSpent = () => {}, keys = SPOILS_KEYS, recordsMax = SPOILS_RECORDS_MAX, itemName = (item) => item?.name ?? 'Something',\n}) {\n  const STORE_KEY = SPOILS_KEYS.store, DAY_KEY = SPOILS_KEYS.day;",
+    "old": "  me = () => null,\n}) {\n  const STORE_KEY = keys.store, DAY_KEY = keys.day;",
+    "new": "  me = () => null,\n}) {\n  const STORE_KEY = SPOILS_KEYS.store, DAY_KEY = SPOILS_KEYS.day;",
     "tests": [
       "test/raid4b_sets.test.js"
     ]

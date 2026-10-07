@@ -299,7 +299,7 @@
   {
     "name": "SD9E-spent-unsaid",
     "file": "src/scenes/world.js",
-    "old": "    onSpent: (day) => { const s = sdSpoilsSlot(day); if (s != null) socialLink()?.sendSdSpent?.(s); },",
+    "old": "    onSpent: (day) => { const s = sdSpoilsSlot(day); return s == null || socialLink()?.sendSdSpent?.(s) === true; },",
     "new": "    onSpent: () => {},",
     "tests": [
       "test/sd9e_spoils.test.js"
@@ -308,7 +308,7 @@
   {
     "name": "SD9E-the-burst-receipt-granted",
     "file": "src/scenes/world.js",
-    "old": "    if (isSdRoom(room) && modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }\n",
+    "old": "    if (modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }\n",
     "new": "",
     "tests": [
       "test/sd9e_spoils.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "SD9E-never-gathered-in-the-host",
     "file": "src/scenes/world.js",
-    "old": "    if (!inRealm && _sdFightHeld) sdSpoilsBurst?.leave();",
-    "new": "    if (false) sdSpoilsBurst?.leave();",
+    "old": "    if (!inRealm && _sdFightHeld) { sdSpoilsBurst?.leave(); saveSoon.changed(); }",
+    "new": "    if (false) { sdSpoilsBurst?.leave(); saveSoon.changed(); }",
     "tests": [
       "test/sd9e_spoils.test.js"
     ]

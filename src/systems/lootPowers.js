@@ -326,12 +326,15 @@ export function lootDeathSave(entity) {
 }
 /** A HURT LANDED on me (told after it): Divine Grace's heal, after the door left me at 1; the Ghost-King's Vigil when a
  *  hurt takes me under its line. */
-export function lootHurt(entity, { before, after }) {
+export function lootHurt(entity, { before, after, saved = false }) {
   if (!mine(entity)) return;
   const max = entity.maxHealth;
   if (_s.graceHeal > 0) { healMine(entity, (max * _s.graceHeal) / 100); _s.graceHeal = 0; }
   const v = powerKind(entity, 'vigil');
-  if (!v || !(max > 0) || !(after > 0)) return;
+  // AUDIT SD II (L5 F7): nor a killing blow a death save turned aside (`saved` - AUDIT 625 P1's law for Shed Skin): The
+  // Hour Turns (and Unbroken, and Divine Grace) left 1 and healed, and the Vigil healed again on top and spent its
+  // minute on a death that never happened. Divine Grace's own heal, above, stays
+  if (!v || !(max > 0) || !(after > 0) || saved) return;
   const line = (max * v.below) / 100;
   if (!(before >= line && after < line)) return;
   const now = _now();

@@ -114,8 +114,8 @@
   {
     "name": "AUDWBX2-M6-the-word-for-any-mark",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day); return false; }   // AUDIT WBX S1: spent - said so again, for a hub that missed it",
-    "new": "      if (spentOn(day, acct)) { said(day); return false; }   // AUDIT WBX S1: spent - said so again, for a hub that missed it",
+    "old": "      if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day, acct); return false; }   // AUDIT WBX S1: spent - said so again, for a hub that missed it",
+    "new": "      if (spentOn(day, acct)) { said(day, acct); return false; }   // AUDIT WBX S1: spent - said so again, for a hub that missed it",
     "tests": [
       "test/auditwbx2.test.js"
     ]

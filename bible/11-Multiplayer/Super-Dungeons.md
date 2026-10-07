@@ -201,7 +201,8 @@ The difficulty word is the location's (`loc.superTier`), read by one law (`dunge
   its sound a bell heard under water. Pressing it (or walking into it) steps the player through to the Shattered Hour
   (the veil, `ui/gateVeil.js`), if the realm room admits them (`found` or later, before `gone`). Refusals are said in
   words an old client already understands: *"The Rift will not take you yet."* / *"The Hour has closed."* During the
-  collapse it refuses a newcomer and admits again whoever went through it this session, as the realm keeps them.
+  collapse it refuses a newcomer and admits again whoever went through it, as the realm keeps them - remembered on the
+  device, the last eight Hours (SD11c: a reload forgot them, and the Rift shut on its own fighters).
 - **The Return** - a small portal of pale light beside it: it carries the player back to the dungeon's entrance (the
   start marker), and stands until the boss falls. With the kill the Hollow collapses (section 11) and the Return goes
   out with it.
@@ -391,7 +392,9 @@ Hollow sinks into its pixel, its column of light goes out, and anyone still in t
 before its door: *"The Hour closes, and the Hollow folds in on itself behind you."* (SD10a: the way home is the
 Return's pale light, risen once the Remnant's body has sunk; whoever stands in the Hollow or the Hour is told how long
 is left - at the fall, then at a minute, thirty seconds and ten. The Hollow is taken down at its end, not sunk: a
-location's blocks have no sink in this port.)
+location's blocks have no sink in this port.) (SD11c: one dead at the end is cast out the frame a Resurrect raises
+them where they lay - never left standing in an ended Hollow; out of the Hour under its veil; and the end is judged
+where a player stands, so a step under the veil that lands after it is cast out on landing.)
 
 ## 12. Regular, Elite, Super - the labels
 
@@ -735,7 +738,8 @@ Next: a save inside a Hollow and the cast-out at its end (SD2d).
 
 The ground is never pulled from under a player (SD2b) - and they do not stay in a Hollow that has ended. When its record
 stops standing it (its collapse's end after the kill, its fading unbeaten, or a later slot's word) while the player is
-inside, `scenes/sdHost.js` casts them out once (`castOut`, the host's seam, `castOutS` its slot); the next frame finds
+inside, `scenes/sdHost.js` casts them out once (`castOut`, the host's seam, `castOutS` its slot - AUDIT SD II: once it
+has ACTED, a refusal asked again the next frame); the next frame finds
 them outside and takes it down. The world host's cast-out is the dungeon's own way out - the mode machine's exit
 (`modes.unstuck`), drained at its safe point into `exitDungeonNow`, PositionPlayerToDungeonExit's landing before its
 door - with the closing line, *"The Hour closes, and the Hollow folds in on itself behind you."* (sdLaw.js
@@ -884,13 +888,16 @@ dungeon host with a level made in code - never a fifth host.
   walked into - under the veil, out of the Hour, to the Hollow's pixel, into the Hollow by its door, stood beside its
   Rift (the Return's place, `dungeonContext.js sdRiftLanding`). A Hollow gone meanwhile: outside, at its pixel.
 - **Out by force**: a death, or the Hour's end (SD2d's cast-out reaches the Hour now - the Hollow counts a player in its
-  Hour as inside it), lands before the Hollow's door (the mode machine's landing reads `sdHollow`). A room that refuses
+  Hour as inside it), lands before the Hollow's door (the mode machine's landing reads `sdHollow`) - a death in the Hour
+  wakes under its veil with its own words, *"The Shattered Hour casts you out. You wake before the Hollow's door."*
+  (SD11c: it woke with a plain dungeon's). A room that refuses
   the player for good (the Hour full, or closed) casts them out the same way with the relay's own words, once.
 
 THE FOUR HOSTS: `scenes/world.js` WIRED (the way in and back, the eject, the room key, the edge, Mark, Recall,
 regeneration, the Hollow's count of who is inside); `scenes/worldModes.js` WIRED (`enterSdRealm`, `standSdRealm`, the
 landing, the light, air and lamps every frame, the room identity, `sdRealmSlot`, `stepThroughFire` handed out);
-`scenes/dungeonContext.js` WIRED (the refusals, the way back's Rift, the landing beside a Hollow's Rift);
+`scenes/dungeonContext.js` WIRED (the refusals, the way back's Rift, the landing beside a Hollow's Rift - SD11c: past
+its Return, never on its foot);
 `scenes/exterior.js` FLAGGED - the bench is offline, and no Hour opens there.
 
 Pins: `test/sd5a_realm.test.js` (12 - the frame, the made location and block, the mesh, the floors, the edge, the lamps
@@ -1421,9 +1428,11 @@ token's titles).
   where a face draws no gradient. `net/identityToken.js` TITLES gains it, last. The aura's grant is recorded now and
   worn with its look (SD9c).
 - **The count**: *Hours broken* on the account card (`sdRecordText`) and the Inspect card (`profileSdLine`, said once
-  there is one), from `/v1/account` and the record the Inspect card reads.
+  there is one), from `/v1/account` and the record the Inspect card reads (SD11c: the page's read of that record kept
+  the duels and the gates alone - until AUDIT SD II the card said none of the Hours, nor the towns or the serpents).
 - **The device's book** (`net/sdClaims.js`, the gate's `gateClaims.js` without its rite or embers): every receipt the
-  relay hands (`onSdReceipt`) kept on the device (one a Hollow and account, eight at most) and offered at once, again
+  relay hands (`onSdReceipt`) kept on the device (one a Hollow and account; ninety-six an account, 256 in all - SD11c:
+  it was eight for the whole device) and offered at once, again
   every ten minutes and at once when another account signs in; counted or claimed before, let go with its lines - the
   count, *"The Hour names you Hourbreaker."*, *"The Turning Hour turns about you."*; a guest's kept and told once to
   register; a refusal the service can mend kept; an unsigned or expired one never kept; another account's waits.
@@ -1540,8 +1549,10 @@ already keeps a receipt until a slot's spoils are said spent (`spent {s}`).
   the fall is told so, once; a watcher is told nothing (`net/sdFightLink.js` `counted` - the realm counted me in this
   fight, fallen or not). Leaving the Hour gathers whatever is still on the floor.
 - **The pool** (`scenes/spoilsPool.js`): the burst takes a `roll` as the grant does, and a pool says its own words
-  gathering (`gathered`). The Hour's pool keeps its own keys (`SD_SPOILS_KEYS`), its crash records (eight), each
-  piece's own picture and the loot piles' words; a spent receipt is said to the hub as its slot (`sendSdSpent`).
+  gathering (`gathered` - the Hour's said in the chat, SD11c). The Hour's pool keeps its own keys (`SD_SPOILS_KEYS`),
+  its crash records (eight), each piece's own picture and the loot piles' words; a spent receipt is said to the hub as
+  its slot (`sendSdSpent`) - and a word that cannot go is owed on the device and said again until it goes, on its own
+  account's socket alone (SD11c).
 - **The host** (`scenes/world.js`, `scenes/worldModes.js`): my realm's receipt is kept for the burst while I stand in it;
   any other (the hub's at a hello, a realm I have left) is its spoils straight into the pack, one tab at a time. The
   saves, the loads, the realm's checkpoints and the crash's door hold the Hour's pool as they hold the others. The
@@ -1730,3 +1741,55 @@ the realm names); `tools/mutants/sd11b.json` (55, all dead). RE-AIMED BY CONTENT
 the hello's gate after the token; a find told once the hub's word has grown old), `test/sd6b_hall.test.js` (the snap
 names whom it lashes; `w`), `test/sd6c_hall.test.js` (the lash on whom the snap names), `test/sd10b_audit.test.js` (a
 miss's back-off), `test/relayversion.test.js` (`world176` re-hashed in place).
+
+#### SD11c - the hosts, the page and the rewards
+
+| | what was wrong | now |
+|---|---|---|
+| L1 F1 | THE CAST-OUT LEFT THE WINDOW UP. The Hollow's end casts out through the dungeon's own way out (`unstuck`, drained at the modal frame's safe point whatever window holds the slot) - and that way out never popped the slot's window: a rest left `isResting` up for good (no fatigue drain; held enchantments eating their items at the rest's rate), an open pack or pause menu painted over the street with its hooks on a context destroyed | `exitDungeonNow` pops the context's own slot before it destroys the context - forceExitToExterior's OnPop, one law for both doors out (`scenes/worldModes.js`) |
+| L1 F2 | THE RISEN STOOD IN AN ENDED HOLLOW. A player dead inside at the end is the death's - and the host latched "cast out" on the refused word: a Resurrect raising them where they lay left them standing in an ended Hollow or Hour that no frame would ever cast them out of | the world host's `castOut` answers whether it acted (false for the dead, and for a way out the mode machine would not take); the host latches the slot only once it acted, and asks again each frame - once a frame (`scenes/sdHost.js`) |
+| L1 F3 | AN END THAT OVERTOOK A STEP. A step under the veil - into the Hour, or back into its Hollow, a whole dungeon's build - could finish after the end had taken the Hollow down, and land the player in a Hollow or an Hour no frame would ever cast them out of; the Rift's word was asked before the walk to the Hollow's pixel alone | THE END JUDGED WHERE I STAND (`standing`, the Hollow or Hour the dungeon I stand in is): one standing in a Hollow or Hour the hub's record no longer stands is cast out on the frame they land, once - judged once the hub has said its record; the Rift's word asked again after the walk (`sdEnterRealm`) |
+| L1 F4, L5 C2 | "NO SPOILS" AFTER THE HUB'S HAND. A receipt for the Hour I stood in went straight into the pack when the hub's link handed it (my realm's socket blinking at the kill) - and the floor then said *"No spoils"* | kept for the throw whichever link handed it (`sdSpoilsReceipt`); anywhere else into the pack, once |
+| L1 F8 | A MARK IN A HOLLOW GONE ENTERED ITS NEIGHBOUR. A save's or a Mark's dungeon whose pixel holds no dungeon of its own now (a Hollow taken down, its pixel bare) entered the first dungeon door in the stream - the nearest dungeon, at the Hollow's own position | never a neighbour's door: such a pixel enters nothing, and each caller's own "all else fails" arm wakes them (`systems/save.js` `dungeonStartDoorFor` - DFU's StartDungeonInterior builds the player's own location or fails) |
+| L1 F9, L6 F4 | OUT OF THE HOUR WITH NO VEIL; A DUNGEON'S WAKING. Every way out of the Hour is taken under its veil but the end's cast-out; and a death in the Hour woke with a plain dungeon's words | the cast-out flashes the veil out of the Hour; a death there wakes under it with the Hour's own, *"The Shattered Hour casts you out. You wake before the Hollow's door."* (`SD_REALM_TEXT.died`, a respawn kind of its own - `systems/deathRespawn.js` `hour`; the respawn reads the Hour before it leaves it) |
+| L1 F5, L6 F12 | "SAVE" WHERE NO SAVE IS. An older game refused at the arena was told to save - in the one place that refuses a save | *"Your game is older than this Hour. Leave it, then reload or update the app to fight."* |
+| L1 | A HOLLOW KNOWN WITHOUT ITS SITE. The step through read the Hollow's site unguarded - a memo of another slot carries none (latent: no path builds one today) | no site, no step |
+| L5 F1 | THE INSPECT CARD SAID NO HOURS. The account service's one answer carries the duels, the gates closed, the towns defended, the serpents slain and the Hours broken - the page's read of it kept the first two, and no host laid the other three: SD9b's *"Hours broken"* on the Inspect card was never said | each count kept (a malformed one dropped - `net/duelRecord.js`), and the world host lays all three off the same record |
+| L5 F4 | A SPENT WORD SAID ONCE. A receipt's spoils taken are said to the hub, which then hands no other device that receipt - and a word that could not go (the hub's link between sockets, its bucket spent) was said again only if the hub handed this same device the receipt: past the hold another device or browser of the account was handed it, and its empty store granted the same spoils | the word owed: kept on the device under the pool's own key with its account and said again every `SPOILS_SPENT_RESEND_MS` (5 s) while the hub's link is open, until it goes - on its own account's socket alone (AUDIT WBX2 M6's law: said on another's, the hub forgets a receipt that account still holds); the gate's pool and the Hour's both (`scenes/spoilsPool.js` `resendSpent`) |
+| L5 F5 | THE HOUR'S SPOILS ON THE DEVICE ALONE. The Hour refuses every save, so what its floor gave stood on the device alone until the next checkpoint, minutes on | a checkpoint asked the frame I leave the Hour (`saveSoon`) |
+| L5 F6 | EIGHT RECEIPTS FOR A WHOLE DEVICE. The claims book held eight - "a week holds a few": a guest that broke nine Hours inside its week lost the first before it registered, and one account's pushed another's out on a shared device | `SD_CLAIMS_MAX` (96) an account - a week of Hollows at the fastest - its own oldest out first, never another's; `SD_CLAIMS_ALL_MAX` (256) for the device |
+| L5 F7 | THE VIGIL ON A DEATH TURNED ASIDE. The Ghost-King's Vigil healed on top of a killing blow a death save had turned aside (The Hour Turns, Unbroken, Divine Grace) and spent its minute on a death that never happened | not on a saved blow (`saved`, AUDIT 625 P1's law for Shed Skin); Divine Grace's own heal stays |
+| L6 F14 | THE FLOOR'S LAST WORDS OVER THE WAY HOME'S. What the floor still held, gathered as I leave, was said over the screen - a frame after the way home's line or the cast-out's, in their place | said in the chat |
+| L6 F17 | THE RIFT FORGOT AT A RELOAD. Who had gone through the Hour was this session's memory: after a reload the Rift said *"The Hour has closed."* to a fighter its realm would have admitted | kept on the device, the last `SD_ENTERED_MAX` (8) slots (`SD_ENTERED_KEY`); a store that refuses keeps it in the session |
+| L6 F18 | BACK ON THE RETURN'S FOOT. One back from the Hour was stood on the Return's own foot: one step off it and back carried them straight to the way in | stood `SD_LANDING_PAST_M` (1.5 m) past the Return, along the line from the Rift through it - else the first bearing that leads away from the Rift, else the Return's foot (`world/sdDungeon.js` `sdLandingPlace`) |
+
+**The page's untested arms** (the probe mutants that lived, and the gaps the lens named): the page folds the whole state
+the relay sends every five seconds, the Hearts and the stun with it (G2 - SD8c's shadow skipped every `st`; folded now,
+the page stays the law's at every beat, through the Hearts, the stun and the Hour's end: nothing was wrong, and nothing
+can go wrong unseen); the world host's fight seams run from their own text (G3); the Echoes' and the Hearts' belief - a
+pose in the arena, a melee blow in reach (G5); the one hand every body shares (G6 - the fifth blow a second nothing on
+each, one blow's number counted once across the bodies it meets); a fighter away taking its share out and back, the
+Echoes rescaled with it (G7); the Hour's End in the Dragon Break, both Echoes stopped on the law and the page (G10); a
+blow never thrice running (G12); a fallen Echo striking nothing, the Silver named Silver, a world with no Hollow for a
+slot, and the relay's newest socket, another slot's fight and list, a hub that throws and the census's bound (G13).
+
+**Said so, not changed:**
+- L5 C1: a claim whose answer is lost (the service counted it; the page heard nothing) is let go at the next offer as
+  claimed - its count's line and its titles' lines are never said for it. The count is right at the next read of the
+  account; the gate's book is the same.
+- A death in the Hour's last seconds of collapse wakes at the Hollow's pixel after the Hollow has gone; its words still
+  say "before the Hollow's door".
+
+Pins: `test/sd11c_page.test.js` (17 - the cast-out closes the window; cast out once it acts; the end judged where I
+stand; the step asks again and the Rift remembers; the way back past the Return; a Mark in a Hollow gone; my Hour's
+receipt waits; the Inspect card's four; the spent word owed; the claims book's week; no Vigil on a saved blow; the world
+host's fight from its text; the Hour's death and the floor's last words; the whole state; the End stops the Echoes; the
+smaller gaps; an older Hour's words), `test/sd11c_law.test.js` (4 - the Echoes' and Hearts' belief; one hand; the share
+away and back; never thrice running), `test/sd11b_relay.test.js` (+1 - the relay's smaller arms);
+`tools/mutants/sd11c.json` (77, all dead). RE-AIMED BY CONTENT, each still dead: `auditwb_spoils.json`, `auditwbx2.json`,
+`raid4b.json`, `sd2d.json` (4), `sd9b.json`, `sd9e.json` (3), `wb5b.json`. PINS MOVED: `test/castle1.test.js`
+(a pixel with no dungeon enters nothing), `test/sd2d_castout.test.js` (the cast-out answers, under the Hour's veil),
+`test/sd4b_rift.test.js` and `test/sd5a_realm.test.js` (the landing past the Return; the Hour's waking words),
+`test/sd9e_spoils.test.js` (the spent word answered; the receipt kept whichever link; a checkpoint as I leave),
+`test/sd10b_audit.test.js` (the same), `test/wb5b_gate_claim.test.js` (the card's four), `test/world1.test.js` (the exit's
+window, its slot popped first - still inside the function).

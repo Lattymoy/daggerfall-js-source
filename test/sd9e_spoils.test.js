@@ -224,18 +224,18 @@ test('SD9e ON THE ARENA\'S FLOOR: over the realm\'s REAL collider (its floors an
 test('SD9e THE HOST: world.js keeps the Hour\'s pool under its own keys - the dungeon\'s ray, the pack\'s take, each piece\'s own picture, its words - says a spent receipt to the hub as its slot, keeps my realm\'s receipt for the burst and grants one that came outside it, hands the pool to the saves, the loads and the crash\'s door; the realm stands its pieces to the ray and the press, lights them and draws their lines (mutants: the gate\'s keys; spent unsaid; the burst\'s receipt granted; no crash door; the realm\'s targets unstood)', () => {
   const w = strip(read('src/scenes/world.js'));
   assert.match(w, /const sdSpoilsPool = createSpoilsPool\(\{[\s\S]*?keys: SD_SPOILS_KEYS, recordsMax: SD_SPOILS_RECORDS_MAX,[\s\S]*?\}\);/);
-  assert.match(w, /onSpent: \(day\) => \{ const s = sdSpoilsSlot\(day\); if \(s != null\) socialLink\(\)\?\.sendSdSpent\?\.\(s\); \}/);
+  assert.match(w, /onSpent: \(day\) => \{ const s = sdSpoilsSlot\(day\); return s == null \|\| socialLink\(\)\?\.sendSdSpent\?\.\(s\) === true; \}/);   // AUDIT SD II (L5 F4, PIN MOVED): whether it went - a word that did not is owed
   assert.doesNotMatch(/const sdSpoilsPool = createSpoilsPool\(\{[\s\S]*?\n {2}\}\);/.exec(w)[0], /feet:/, 'the press is its one hand (GATE-UX): no feet');
   assert.match(/const sdSpoilsPool = createSpoilsPool\(\{[\s\S]*?\n {2}\}\);/.exec(w)[0], /take: takeSpoil, [\s\S]*gathered: SD_SPOILS_TEXT\.gathered,/, 'the pack\'s plain take - no embers here - and its own words');
   assert.match(w, /online\.onSdReceipt = \(r, room\) => \{ sdClaims\?\.add\(r\); sdSpoilsReceipt\(r, room\); \};/);
-  assert.match(w, /function sdSpoilsReceipt\(r, room\) \{[\s\S]*?if \(isSdRoom\(room\) && modes\?\.sdRealmSlot\?\.\(\) === c\.d\) \{ _sdReceipts\.set\(c\.d, r\); return; \}[\s\S]*?sdSpoilsPool\.grant\(\{ day: sdSpoilsDay\(c\.d\), acct: c\.s, roll: \(\) => sdSpoilsList\(c\.c, level\), text: SD_SPOILS_TEXT\.granted \}\)/);
+  assert.match(w, /function sdSpoilsReceipt\(r, room\) \{[\s\S]*?if \(modes\?\.sdRealmSlot\?\.\(\) === c\.d\) \{ _sdReceipts\.set\(c\.d, r\); return; \}[\s\S]*?sdSpoilsPool\.grant\(\{ day: sdSpoilsDay\(c\.d\), acct: c\.s, roll: \(\) => sdSpoilsList\(c\.c, level\), text: SD_SPOILS_TEXT\.granted \}\)/);
   assert.match(w, /onSlotSaved\(\(characterId\) => \{ try \{ sdSpoilsPool\.saved\(characterId\); \}/);
   assert.match(w, /recoverSpoils\(_spoilsStore, takeSpoil, \{ who, saves: enumerateSaves\(\)\.info\.values\(\), onHanded: \(rec\) => sdSpoilsPool\.adopt\(rec\), key: SD_SPOILS_KEYS\.store, inSave: _spoilsInSave \}\)/);
   assert.match(w, /sdSpoilsPool\.loaded\(characterId\);/);
   assert.match(w, /sdSpoilsPool\?\.heldIds\?\.\(who\)/);
   assert.match(w, /try \{ sdSpoilsPool\?\.saved\(who, ids\); \}/);
   assert.match(w, /const sdSpoilsBurst = sdFightLink \? createSdSpoils\(\{/);
-  assert.match(w, /if \(!inRealm && _sdFightHeld\) sdSpoilsBurst\?\.leave\(\);[^\n]*\n\s*if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\);/, 'gathered before the fight is forgotten');
+  assert.match(w, /if \(!inRealm && _sdFightHeld\) \{ sdSpoilsBurst\?\.leave\(\); saveSoon\.changed\(\); \}[^\n]*\n\s*if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\);/, 'gathered before the fight is forgotten');   // AUDIT SD II (L5 F5, PIN MOVED): and a checkpoint asked
   assert.match(w, /if \(inRealm\) \{ try \{ sdSpoilsBurst\?\.frame\(\); \}/);
   assert.match(w, /const floorPool = \(\) => \(modes\?\.sdRealmSlot\?\.\(\) != null \? sdSpoilsPool : spoilsPool\);/);
   assert.match(w, /spoilTargets: \(\) => floorPool\(\)\?\.targets\(\) \?\? null,/);

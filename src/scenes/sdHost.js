@@ -61,12 +61,15 @@ export function sdCollapseLine(left, { hour = false, first = false } = {}) {
  *   sendFound: (word: {s:number, px:number, py:number}, cell: string) => boolean,
  *   say: (text: string) => void,
  *   regionName?: (r: number) => string,
- *   castOut?: (key: string) => void,
+ *   castOut?: (key: string) => (boolean|void),
  *   warn?: (text: string) => void,
  *   inHour?: () => boolean,
- * }} o SD10: `warn` the collapse's readouts (over the screen), `inHour` whether I stand in the Hour rather than the Hollow
+ *   standing?: () => (number|null),
+ * }} o SD10: `warn` the collapse's readouts (over the screen), `inHour` whether I stand in the Hour rather than the Hollow.
+ *   AUDIT SD II (L1 F2, F3): `castOut` answers false when it could not act (the dead are the death's) - asked again the
+ *   next frame; `standing` the slot of the Hollow or Hour I stand in, or null
  */
-export function createSdHost({ now, scan, warmScan = () => {}, cities, templates, where, stand, unstand, inside, door, feet, sendFound, say, regionName = () => '', castOut = () => {}, warn = () => {}, inHour = () => false }) {
+export function createSdHost({ now, scan, warmScan = () => {}, cities, templates, where, stand, unstand, inside, door, feet, sendFound, say, regionName = () => '', castOut = () => {}, warn = () => {}, inHour = () => false, standing = () => null }) {
   /** @type {SdRecord|null} */
   let rec = null;
   let heardAny = false;
@@ -135,10 +138,19 @@ export function createSdHost({ now, scan, warmScan = () => {}, cities, templates
     const h = sdStands(phase) ? hollowOf(rec) : null;
     // what stood and should not: down - unless the player stands in it (the ground is never pulled from under them), and
     // then they are cast out before its door, once (SD2d); the next frame finds them outside
+    let asked = false;
     if (stood && (!h || h.s !== stood.s)) {
       if (!inside(stood.loc)) { unstand(stood.key); stood = null; }
-      else if (castOutS !== stood.s) { castOutS = stood.s; castOut(stood.key); }
+      // AUDIT SD II (L1 F2): latched once it ACTED - a player dead at the end and raised where they lay (a Resurrect) was
+      // latched as cast out, and stood in an ended Hollow or Hour for good
+      else if (castOutS !== stood.s) { asked = true; if (castOut(stood.key) !== false) castOutS = stood.s; }
     }
+    // AUDIT SD II (L1 F3): THE END JUDGED WHERE I STAND, too - a step under the veil (into the Hour, or back into its
+    // Hollow: a whole dungeon's build) could finish after the end had taken the Hollow down, and land me in a Hollow or an
+    // Hour no frame would ever cast me out of. Judged once the hub has said its record (a page that has heard nothing
+    // knows no end)
+    const at = standing();
+    if (!asked && at != null && rec && !(rec.s === at && sdStands(phase)) && castOutS !== at && castOut(`slot:${at}`) !== false) castOutS = at;
     if (h && !stood) { stand(h.key, h.loc); stood = { s: h.s, key: h.key, loc: h.loc }; }
     // SD10: THE COLLAPSE'S READOUTS - to whoever stands in it (the Hollow, or its Hour) while it collapses
     if (phase === 'fell' && stood && stood.s === rec?.s && rec.fellAt != null && inside(stood.loc)) {

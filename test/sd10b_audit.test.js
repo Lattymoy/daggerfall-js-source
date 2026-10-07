@@ -216,7 +216,7 @@ function receiptHost() {
 test('AUDIT SD MY HOUR RECEIPT, WHEREVER IT COMES: the hub\'s hand of it (at the kill, when I stood outside the realm; at my hello) is heard by the hub\'s own link - the chat tab\'s, the one in chat:world - to the account service and the spoils, as the realm\'s is; one my realm handed me, kept for a burst that never came (I left before it - the way back, a death, the Hour\'s end), is its spoils straight into the pack as I am out of the realm, once (mutants: the hub\'s hand unheard; the kept receipt left for a week; granted every frame)', async () => {
   const w = strip(W);
   assert.match(w, /if \(tab\.room === SOCIAL_ROOM\) link\.onSdReceipt = \(r, room\) => \{ sdClaims\?\.add\(r\); sdSpoilsReceipt\(r, room\); \};/);
-  assert.match(w, /if \(!inRealm && _sdReceipts\.size\) sdReceiptsLeft\(\);\s*\n\s*if \(!inRealm && _sdFightHeld\) sdSpoilsBurst\?\.leave\(\);/, 'before the floor is gathered and the fight forgotten');
+  assert.match(w, /if \(!inRealm && _sdReceipts\.size\) sdReceiptsLeft\(\);\s*\n\s*if \(!inRealm && _sdFightHeld\) \{ sdSpoilsBurst\?\.leave\(\); saveSoon\.changed\(\); \}/, 'before the floor is gathered and the fight forgotten');   // AUDIT SD II (L5 F5, PIN MOVED): and a checkpoint asked
   const h = receiptHost();
   h.at(7);
   const r = await receiptFor(7);

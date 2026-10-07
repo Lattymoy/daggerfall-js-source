@@ -236,7 +236,7 @@ import { collectDungeonEnemies, expandEliteEnemies, enemyHierarchyOrder } from '
 import { isOnlinePage } from '../systems/onlineLane.js';   // ELITE FOES: online play only
 import { elitesAllowed, pickDungeonElites, promoteEliteFoe, grantEliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, eliteCorpseSize } from '../systems/eliteFoes.js';   // ELITE FOES: 3-4 champions in an Elite Dungeon
 import { ELITE_FOE_MULTIPLIER, ELITE_HEALTH_SCALE, ELITE_DAMAGE_SCALE, ELITE_LOOT_DROP_MULT, ELITE_LOOT_QUALITY_MULT } from '../world/spawnedDungeons.js';   // ELITE: an elite spawn's foe count and strength
-import { superFoeLevel, scaleSuperFoe, SUPER_ELITE_FOES, SUPER_LOOT_OPTS, SUPER_LOOT_DROP_MULT, SUPER_LOOT_QUALITY_MULT, sdEndMarks, sdRiftPlace, sdReturnPlace } from '../world/sdDungeon.js';   // SD4a: a Super dungeon's difficulty; SD4b: its end's place
+import { superFoeLevel, scaleSuperFoe, SUPER_ELITE_FOES, SUPER_LOOT_OPTS, SUPER_LOOT_DROP_MULT, SUPER_LOOT_QUALITY_MULT, sdEndMarks, sdRiftPlace, sdReturnPlace, sdLandingPlace } from '../world/sdDungeon.js';   // SD4a: a Super dungeon's difficulty; SD4b: its end's place
 import { dungeonEndOf } from '../world/dungeonEnd.js';   // SD4b: RVN7d's lair law, lifted - the lair's stand and a Super dungeon's end read one law
 import { createSdEnd, SD_HOME_TEXT } from './sdEnd.js';   // SD4b: a Super dungeon's Rift and Return; SD10: the Hour's way home
 import { createSdHall } from './sdHall.js';   // SD6c: the Orrery's hall in the Shattered Hour
@@ -1812,8 +1812,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
     if (playerFeet && !_sdRemnantStood) { _sdRemnantStood = true; sdRemnant.stand({ dynamicDraws }); }
     sdRemnant.frame(dt, playerFeet ?? null);
   }
-  /** SD5a: where a player coming back through the Rift is stood - the Return's place, beside it (kept as it stands). */
-  let _sdLanding = null;
+  /** SD5a: where a player coming back through the Rift is stood - kept as it stands. AUDIT SD II (L6 F18): past the Return
+   *  (`_sdRetAt`, its own place), never on its foot. */
+  let _sdLanding = null, _sdRetAt = null;
   let _sdEndAsked = false, _sdEndCheckAt = 0;
   /** The outer host's word on this Hollow's end (world.js, through the mode machine): { word, returns, enter }, or null. */
   const sdEndWord = () => opts.superRift?.(dfLocation?.sdSlot) ?? null;
@@ -1829,8 +1830,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       ray: (o, dir, max) => { const d = collider.raycast(o, dir, max); return Number.isFinite(d) ? d : null; },
     };
     const rift = sdRiftPlace(floorLanding(collider, [end.x, end.y + 0.2, end.z]), probe);
-    _sdLanding = sdReturnPlace(rift, probe);
-    sdEnd.stand({ rift, retAt: _sdLanding });
+    _sdRetAt = sdReturnPlace(rift, probe);
+    _sdLanding = sdLandingPlace(rift, _sdRetAt, probe);
+    sdEnd.stand({ rift, retAt: _sdRetAt });
   }
   /** Into the Rift: its own word first (the outer host's, off the hub's record) - through to the Shattered Hour where it
    *  admits and the realm's door takes me (SD5), else its refusal said. */

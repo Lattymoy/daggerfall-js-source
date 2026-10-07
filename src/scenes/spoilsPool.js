@@ -177,6 +177,8 @@ export const spoilsLevel = (playerLevel, claimLevel) => Math.max(1, Math.min(Mat
 /** AUDIT WB A7: the most crash records the device keeps (one a day and character), and spent receipts it remembers. */
 export const SPOILS_RECORDS_MAX = 8;
 export const SPOILS_SPENT_MAX = 32;
+/** AUDIT SD II (L5 F4): how often a host says again the spent words a pool still owes the hub (`resendSpent`), ms. */
+export const SPOILS_SPENT_RESEND_MS = 5000;
 /** A spent receipt's key: its day and account (AUDIT WB A9). */
 export const spentKey = (day, acct) => `${day}:${acct ?? ''}`;
 /** The records as a list - an older build's single record is a list of one. */
@@ -241,11 +243,14 @@ export function recoverSpoils(store, take, { who = null, saves = [], onHanded = 
  *   store?: { get: (k: string) => any, set: (k: string, v: any) => void, remove: (k: string) => void, hold?: (k: string, v: any) => void, persisted?: (k: string) => boolean }|null,
  *   who?: () => string|null, wall?: () => number,
  *   iconOf?: ((item: any) => Promise<{key: string, width: number, height: number, colors: ArrayLike<number>}|null>)|null,
- *   onSpent?: (day: number|string) => void, keys?: { store: string, day: string }, recordsMax?: number, itemName?: ((item: any) => string)|null,
+ *   onSpent?: (day: number|string) => (boolean|void), keys?: { store: string, day: string }, recordsMax?: number, itemName?: ((item: any) => string)|null,
+ *   me?: () => (string|null),
  *   gathered?: string,
  * }} deps
  *   AUDIT WBX S1: `onSpent` is told each day whose receipt is spent here and safe (its record on the device, or a save
  *   holding its pieces) - and again whenever a spent one is offered - so the hub forgets its kept copy.
+ *   AUDIT SD II (L5 F4): it answers false when the word did not go - kept on the device as owed, and said again by
+ *   `resendSpent` until it goes.
  *   WBX3: `iconOf` answers an item's own picture - the pack's (color32 order, and a `key` naming the picture: two pieces
  *   that look alike share one upload) - or null when it has none; without it every piece keeps its treasure pile.
  *   RAID4b: `keys` the device keys its records and its spent receipts go under (SPOILS_KEYS, a boss's, by default).
@@ -255,11 +260,15 @@ export function recoverSpoils(store, take, { who = null, saves = [], onHanded = 
  *   own), when a resting piece is under the crosshair.
  *   SD9e: `gathered` the words leaving says when it gathers what is still on the floor (the Burning Court's by default;
  *   the Brass Remnant's arena says its own - systems/sdSpoils.js).
+ *   AUDIT SD II (L5 F4): `me` the account the hub's link speaks for now (the signed-in session's - the token's subject),
+ *   or null when unknown: a spent word is said only on its own account's socket (AUDIT WBX2 M6's law - said on another's,
+ *   the hub forgot that account's copy of a receipt it never had the spoils of), and owed until it can be.
  */
 export function createSpoilsPool({
   renderer = null, gl = null, getTexture = null, uploadRecordFrame = null, audio = null,
   ray, now, take, say = () => {}, store = null, who = () => null, wall = () => Date.now(), iconOf = null, gathered = SPOILS_TEXT.gathered,
   onSpent = () => {}, keys = SPOILS_KEYS, recordsMax = SPOILS_RECORDS_MAX, itemName = (item) => item?.name ?? 'Something',
+  me = () => null,
 }) {
   const STORE_KEY = keys.store, DAY_KEY = keys.day;   // RAID4b: a town's thanks keep their own
   let glow = null;
@@ -289,7 +298,21 @@ export function createSpoilsPool({
   const ackOnSave = new Map();
   /** the record of the spew under way, until its last piece is in the pack */
   let spewId = null;
-  const said = (day) => { try { onSpent(day); } catch { /* said again the next time the hub gives it */ } };
+  // AUDIT SD II (L5 F4): THE SPENT WORD OWED. `onSpent` answers false when nothing went (the hub's link between sockets,
+  // its bucket spent) - and the word was said again only if the hub handed this same device the receipt: past the hold,
+  // another device or browser of the account was handed it, and its empty store granted the same spoils. A word that did
+  // not go is kept on the device (its pool's own key) with its account, and said again by `resendSpent` until it goes -
+  // on its own account's socket alone (`me`).
+  const OWED_KEY = `${DAY_KEY}.owed`;
+  const owedWords = () => { const v = read(OWED_KEY); return Array.isArray(v) ? v.filter((o) => o && typeof o === 'object' && o.d != null) : []; };
+  const meNow = () => { try { return me() ?? null; } catch { return null; } };
+  /** Whether the hub's link may say `acct`'s word now - its own socket, or an account unknown (an older record's). */
+  const mine = (acct) => { const m = meNow(); return !acct || m == null || m === acct; };
+  const said = (day, acct = '') => {
+    let went = false;
+    if (mine(acct)) { try { went = onSpent(day) !== false; } catch { went = false; } }
+    if (!went) { const o = owedWords(); if (!o.some((w) => w.d === day && w.a === acct)) keep(OWED_KEY, [...o, { d: day, a: acct }].slice(-SPOILS_SPENT_MAX)); }
+  };
   /** the receipts spent this session - the device's word may be lost (no store), this one is not */
   const spentHere = new Set();
   /** Whether the spoils of `day` for `acct` have left him already - this session's word, or the device's (an older
@@ -319,7 +342,7 @@ export function createSpoilsPool({
     const durable = store?.persisted?.(STORE_KEY) ?? true;
     const kept = read(DAY_KEY);
     const marks = [...(Array.isArray(kept) ? kept : Number.isSafeInteger(kept) ? [spentKey(kept, '*')] : []), spentKey(day, acct)].slice(-SPOILS_SPENT_MAX);
-    if (durable) { keep(DAY_KEY, marks); said(day); }
+    if (durable) { keep(DAY_KEY, marks); said(day, acct); }
     else { try { store?.hold?.(DAY_KEY, marks); } catch { /* the session's own set holds it */ } ackOnSave.set(id, { day, acct }); }
     return id;
   }
@@ -391,8 +414,17 @@ export function createSpoilsPool({
      * WB9f: `keep` the court's floor they must come to rest on (`{ centre, r, floorY }` - world/gateSpew.js keepLaunch).
      * SD9e: `roll` answers the pieces instead, as the grant's does (the Brass Remnant's - systems/sdSpoils.js sdSpoilsList).
      */
+    /** AUDIT SD II (L5 F4): the spent words still owed said again (the host's, while its hub link stands) - each on its
+     *  own account's socket alone, the rest kept - answers how many are owed still. */
+    resendSpent() {
+      const list = owedWords();
+      if (!list.length) return 0;
+      const left = list.filter((w) => { if (!mine(w.a)) return true; try { return onSpent(w.d) === false; } catch { return true; } });
+      if (left.length !== list.length) { if (left.length) keep(OWED_KEY, left); else { try { store?.remove(OWED_KEY); } catch { /* nothing owed */ } } }
+      return left.length;
+    },
     spew({ day, seed, level, at, bearing, acct = '', keep = null, claims = null, roll = null }) {
-      if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day); return false; }   // AUDIT WBX S1: spent - said so again, for a hub that missed it
+      if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day, acct); return false; }   // AUDIT WBX S1: spent - said so again, for a hub that missed it
       rec = { day };
       t0 = now(); lastT = t0; from = [...at];
       const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d: the receipt's rite; SD9e: or a pool's own roll (the Brass Remnant's)
@@ -411,7 +443,7 @@ export function createSpoilsPool({
      *  once. Once a receipt, as the burst is; answers whether they were given. RAID4b: `roll` answers the pieces instead
      *  (a town's thanks - raidSpoils.js raidSpoilsList), asked only for a receipt not yet spent, and `text` is said. */
     grant({ day, seed, level, acct = '', roll = null, text = SPOILS_TEXT.granted, owner = undefined, kept = null, claims = null }) {
-      if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day); return false; }   // AUDIT WBX S1: spent - said so again
+      if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day, acct); return false; }   // AUDIT WBX S1: spent - said so again
       const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b: a town's thanks roll their own; WB12d: the receipt's rite
       // AUDIT RAID R4: ANOTHER CHARACTER'S - the one that fought for them, when another stands here: kept on the device
       // as a crash's record is (never in this pack), and the crash's door hands them over when that character stands up
@@ -454,7 +486,7 @@ export function createSpoilsPool({
           ackOnSave.delete(id);
           const kept = read(DAY_KEY);
           keep(DAY_KEY, [...(Array.isArray(kept) ? kept : []), spentKey(a.day, a.acct)].filter((v, i, xs) => xs.indexOf(v) === i).slice(-SPOILS_SPENT_MAX));
-          said(a.day);
+          said(a.day, a.acct);
         }
       }
       return all.length - left.length;

@@ -190,6 +190,7 @@ test('SD5a the dungeon host by source: the Hour\'s refusals beside the court\'s 
     wayBack: 'To the Hollow', noRest: 'You cannot rest in the Shattered Hour.', noSave: 'You cannot save in the Shattered Hour.',
     noMap: 'You cannot map the Shattered Hour.', noMark: 'You cannot set a Mark in the Shattered Hour.',
     noRecall: 'Nothing answers a Recall in the Shattered Hour.', lost: 'The way to the Shattered Hour is lost.',
+    died: 'The Shattered Hour casts you out. You wake before the Hollow\'s door.',   // AUDIT SD II (L6 F4, PIN MOVED): a death in the Hour is the Hour's
   });
 });
 

@@ -41,7 +41,7 @@ export const SD_FIGHT_TEXT = Object.freeze({
     'the Hour has closed': 'The Hour has closed.',
     'the fight is over': 'The Last Moment is over.',
     'the arena is full': 'The arena is full.',
-    'an older Hour': 'Your game is older than this Hour - save, then reload (or update the app) to fight.',
+    'an older Hour': 'Your game is older than this Hour. Leave it, then reload or update the app to fight.',   // AUDIT SD II (L1 F5, L6 F12): it said "save" where the Hour refuses a save
   }),
   dragonBreak: 'The Dragon Break! The Remnant steps outside time - strike down the GOLD and SILVER Echoes together.',
   lastMoment: 'The Last Moment! The Remnant returns.',

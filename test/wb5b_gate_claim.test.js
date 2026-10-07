@@ -337,7 +337,7 @@ test('WB5b the seams: the gate link tells every receipt it folds; the world host
   assert.match(w, /const gateClaims = params\.has\('online'\) \? createGateClaims\(\{\n    claim: \(r\) => _accountGates\.claim\(r, gateSeatWord\(r\)\),\n    me: _accountGates\.me,\n    nowS: relayNowS,\n    store: _spoilsStore,/, 'AUDIT WB A6/A9: the one store, and the signed-in account; AUDIT ONLINE2 F2: on the relay\'s clock');
   assert.match(w, /\n    onReceipt: \(r\) => \{ gateClaims\?\.add\(r\); grantSpoilsOutside\(r\); \},/);
   assert.match(w, /\n    gateClaims\?\.tick\(\);   \/\/ WB5b/);
-  assert.match(w, /duels: _profileSub \? profileDuelLine\(rec\) : null, gates: profileGateLine\(rec\) \};/);
+  assert.match(w, /duels: _profileSub \? profileDuelLine\(rec\) : null, gates: profileGateLine\(rec\), raids: profileRaidLine\(rec\), serpents: profileSerpentLine\(rec\), hours: profileSdLine\(rec\) \};/);   // AUDIT SD II (L5 F1, PIN MOVED): and the towns, the serpents and the Hours, off the same record
   assert.ok(w.indexOf('const gateClaims = ') < w.indexOf('const gateLink = '), 'the queue stands before the link that feeds it');
 });
 

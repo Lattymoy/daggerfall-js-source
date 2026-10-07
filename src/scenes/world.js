@@ -299,7 +299,7 @@ import { SD_STEPS_TEXT } from './sdSteps.js';   // SD7b: the cast-back's line
 import { inOrreryHall, dungeonToRealm as sdDungeonToRealm, SD_FRAY_LASH, SD_ARENA, realmToDungeon as sdRealmToDungeon, SD_TURN_WAIT_LINE } from '../net/sdBrain.js';   // SD6c: the snap's lash, on whoever stands in the hall; SD10: the arena, where the way home stands; AUDIT SD II (L7 H2): a turn the stones refused
 import { SD_REM_SINK_MS } from './sdRemnant.js';   // SD10: the way home rises once the Remnant's body has sunk
 import { SD_HOME_TEXT } from './sdEnd.js';   // SD10: the way home's words
-import { sdRiftWord, sdReturnStands } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
+import { sdRiftWord, sdReturnStands, SD_ENTERED_KEY, SD_ENTERED_MAX } from '../world/sdDungeon.js';   // SD4b: a Super dungeon's Rift and Return, off the hub's record
 import { sdCities, sdTemplates } from '../systems/sdSite.js';   // SD2b: the Hollow's cities and templates, over the game's own rows
 import { RANDOM_TREASURE_ARCHIVE } from '../systems/lootDataTables.js';   // WB12d: the casket's pile, undrawn
 import { createSigilBroker } from './sigilBrokerPool.js';   // SET7: the Sigil Broker - her body, her box and name, her press; BROKER-CAGE: caged at the faithful's circle
@@ -336,7 +336,7 @@ import { DeadlandsRenderer, skyGain, anchoredClock } from '../render/deadlands.j
 import { createDeadlandsAir } from './deadlandsAir.js';   // WB6b: and their air - the wind, the fire, the thunder of the sky's strikes
 import { createGateVeil } from '../ui/gateVeil.js';   // WB6c: the step through the gate - a vortex of fire in and out
 import { gateScoreSongs, createCourtScore, GATE_SONGS, SCORE_SILENCE } from '../systems/gateScore.js';   // WB7: the Warden's score - the court's own music
-import { createSpoilsPool, spoilsStore, recoverSpoils, spoilsLevel, SPOILS_TEXT } from './spoilsPool.js';
+import { createSpoilsPool, spoilsStore, recoverSpoils, spoilsLevel, SPOILS_TEXT, SPOILS_SPENT_RESEND_MS } from './spoilsPool.js';
 import { breachBookFor, BREACH_BOOK_TEXT } from '../systems/breachBook.js';   // WB12c: the first ember brings the Guild's book
 import { bossPlace } from '../world/gateBoss.js';   // AUDIT WBX F3: where he fell - a charge's head, a leap's flight - frozen by the link's fold   // WB5: a fallen boss's spoils, spewed, glowing and taken
 import { itemIconColor32 } from '../ui/itemIconColor32.js';   // WBX3: a spoil's own picture on the court's floor
@@ -714,7 +714,7 @@ import { isLocked } from '../systems/itemLock.js';   // PROF5: a locked piece is
 import { createPlayerTradeWindow, playerTradeReady } from '../ui/playerTradeDoor.js';   // TRADE1: the enhanced window two players share
 import { createPeerMenuReader } from '../systems/peerMenuBind.js';   // PEERMENU1: the player menu opens on a bind (hold E / hold A)
 import { createSocialMenu, socialPlaqueRows, plaqueRowFor } from '../ui/socialMenu.js';   // SOC5: the F-menu over that body - Add friend, Invite to party
-import { createProfileWindow, profileView, profileDuelLine, profileRenown, profileGateLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
+import { createProfileWindow, profileView, profileDuelLine, profileRenown, profileGateLine, profileRaidLine, profileSerpentLine, profileSdLine } from '../ui/profileWindow.js';   // INSPECT1: the profile the F-menu's Inspect opens
 import { createDuelManager, DUEL_RADIUS_M, DUEL_RANGE_M, DUEL_COUNTDOWN_MS, ringCentre, validRingRecord } from '../net/duelSession.js';   // DUEL1: the duel's state machine (pure)
 import { createWedManager, wedWhyText, wedMineText } from '../net/wedSession.js';   // LEGACY7 part three: two players wed - the handshake's state machine (pure)
 import { createFamilyBodies, familyRoomSprites } from '../world/familyBodies.js';   // LEGACY7 part four: the line drawn in its own body, as an online peer is
@@ -13292,6 +13292,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // west or south of the dungeon's corner (a negative x or z) woke on the neighbouring pixel
     const px = ohReturn?.pixel ?? playerTravelPixel();
     const courtGate = modes?.gateArenaGate?.() ?? null;   // WB3b: a death in the Burning Court is CAST OUT - before its gate, not at a temple
+    const diedInHour = modes?.sdRealmSlot?.() != null;   // AUDIT SD II (L6 F4): and one in the Shattered Hour is the Hour's - its veil and its words
     Promise.resolve().then(async () => {
       if (courtGate) {
         modes?.forceExitToExterior();
@@ -13341,6 +13342,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       // this is idempotent rather than a second mercy.
       if (!(playerEntity.health > 0)) { reviveForPlay(playerEntity); surfacePlayer(); }
       ohAbyss?.onRespawnerComplete();   // OH-D: the port's own respawn - a respawn anywhere but the bound abyss clears it, as the respawner's does
+      if (diedInHour) { gateVeil?.flash(); kind = 'hour'; }   // AUDIT SD II (L6 F4): the Hour's veil, and its own words
       townTalk.showOverlay(new ActionTextBox([respawnFlavorText(kind), deathPenaltyText(goldLost), took?.line].filter(Boolean)));   // DEATH-PENALTY: and what the fall cost; RVN8: and what it took
     }).catch((e) => {
       // RISE-STUCK: A RISE THAT THREW STILL RISES. The heal ran first
@@ -20469,7 +20471,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     _profileView = profileRenown(v, online?.renownOf?.(peerId) ?? null);   // AUDIT RENOWN1 UI-3: the Renown as the session knows it now
     v = _profileView;
     const rec = _profileSub ? duelRecords.get(_profileSub) : null;
-    return { ...v, duel: duelButtonFor(peerId), wed: wedButtonFor(peerId), duels: _profileSub ? profileDuelLine(rec) : null, gates: profileGateLine(rec) };   // LEGACY7 part three: and the Propose button   // WB5b: and the gates they closed, off the same answer
+    return { ...v, duel: duelButtonFor(peerId), wed: wedButtonFor(peerId), duels: _profileSub ? profileDuelLine(rec) : null, gates: profileGateLine(rec), raids: profileRaidLine(rec), serpents: profileSerpentLine(rec), hours: profileSdLine(rec) };   // LEGACY7 part three: and the Propose button   // WB5b: and the gates they closed, off the same answer   // AUDIT SD II (L5 F1): and the towns defended, the serpents slain and the Hours broken - laid by no host before
   };
   const repaintDuelProfile = () => {
     const id = profileWin?.isOpen() ? profileWin.peerId() : null;
@@ -20710,7 +20712,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     store: _spoilsStore,
     who: () => characterIdOf(playerEntity),
     iconOf: (item) => itemIconColor32(item, { identity: playerEntity }),   // WBX3: each piece as its own picture - the pack's; AUDIT WBX S6: drawn for its wearer, as the pack draws it
-    onSpent: (day) => { socialLink()?.sendGateSpent?.(day); },   // AUDIT WBX S1: a receipt spent here - the hub forgets its copy, so no other device or tab gives it again
+    onSpent: (day) => socialLink()?.sendGateSpent?.(day) === true,   // AUDIT WBX S1: a receipt spent here - the hub forgets its copy, so no other device or tab gives it again; AUDIT SD II (L5 F4): whether it went - a word that did not is owed
+    me: _accountGates.me,   // AUDIT SD II (L5 F4): said on its own account's socket alone
     itemName: (item) => lootPileName([item]),   // WB9f: a piece's word on the plaque, the loot piles' own (.cs:534-548)
   });
   /** RAID4b: A TOWN'S THANKS (systems/raidSpoils.js) - the spoils pool's door with no floor, under keys of its own (a
@@ -20740,10 +20743,13 @@ export async function bootWorld(canvas, renderer, params, status) {
   const sdSpoilsPool = createSpoilsPool({
     renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio,
     ray: (from, dir, len) => { const c = modes?.dungeonCtx?.collider; const h = c?.raycastHit ? c.raycastHit(from, dir, len) : { dist: c?.raycast?.(from, dir, len) ?? Infinity, normal: null }; return Number.isFinite(h?.dist) ? h : null; },   // the Hour's own floors and pillars
-    now: () => Date.now() + _sharedOffsetMs, take: takeSpoil, say: (text) => setMidScreenText(text),
+    // AUDIT SD II (L6 F14): what the floor still held, gathered as I leave, said in the chat - over the screen it took the
+    // place of the way home's line, or the cast-out's, a frame after it was said
+    now: () => Date.now() + _sharedOffsetMs, take: takeSpoil, say: (text) => (text === SD_SPOILS_TEXT.gathered ? chatNotice(text) : setMidScreenText(text)),
     store: _spoilsStore, who: () => characterIdOf(playerEntity),
     iconOf: (item) => itemIconColor32(item, { identity: playerEntity }),
-    onSpent: (day) => { const s = sdSpoilsSlot(day); if (s != null) socialLink()?.sendSdSpent?.(s); },
+    onSpent: (day) => { const s = sdSpoilsSlot(day); return s == null || socialLink()?.sendSdSpent?.(s) === true; },   // AUDIT SD II (L5 F4): whether it went
+    me: _accountGates.me,
     keys: SD_SPOILS_KEYS, recordsMax: SD_SPOILS_RECORDS_MAX,
     itemName: (item) => lootPileName([item]), gathered: SD_SPOILS_TEXT.gathered,
   });
@@ -20784,7 +20790,9 @@ export async function bootWorld(canvas, renderer, params, status) {
   function sdSpoilsReceipt(r, room) {
     const c = readSdReceipt(r);
     if (!c) return;
-    if (isSdRoom(room) && modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }
+    // AUDIT SD II (L1 F4, L5 C2): a receipt for the Hour I stand in waits for its throw WHICHEVER link handed it - the
+    // hub's (my realm's socket blinking at the kill) went straight into the pack, and the floor then said "No spoils"
+    if (modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }
     grantSdSpoils(c);
   }
   /** Its spoils straight into the pack - once a receipt and account (the pool refuses one already thrown or given). */
@@ -20930,10 +20938,23 @@ export async function bootWorld(canvas, renderer, params, status) {
     const s = _gateClearNow() ? _gateClearOf.site : null;
     if (s) socialLink()?.sendGateSite?.(s.day, s.px, s.py, s.place);
   };
+  /** AUDIT SD II (L5 F4): THE SPENT WORDS A POOL STILL OWES THE HUB (scenes/spoilsPool.js `resendSpent`) - said again
+   *  every few seconds while the hub's link stands: a word that could not go (the link between sockets, its bucket spent)
+   *  was never said again, and past the hold another device of the account was handed the receipt and granted the same
+   *  spoils. */
+  let _spentResendAt = -Infinity;
+  const resendSpentWords = () => {
+    const t = performance.now();
+    if (t - _spentResendAt < SPOILS_SPENT_RESEND_MS) return;
+    _spentResendAt = t;
+    if (socialLink()?.status !== 'open') return;
+    try { spoilsPool.resendSpent(); sdSpoilsPool.resendSpent(); } catch (e) { console.warn('[spoils] owed words', e?.message ?? e); }
+  };
   /** WB1: the gate's frame - its line when a new moment comes. Runs before the death return, as the chat's does. */
   const gateFrame = () => {
     try { gateOmen?.frame(); } catch (e) { console.warn('[gate] frame', e?.message ?? e); }
     gateClaims?.tick();   // WB5b: what the account service has not counted yet, offered again on its own clock
+    resendSpentWords();   // AUDIT SD II (L5 F4): the spent words a pool still owes the hub
     if (gateOmen) reportGateSite();   // DISCORD-GATES: where the gate stands, to the hub
     raidClaims?.tick();   // RAID4: and the raids' receipts, on theirs
     if (profBook?.state.open === true) { try { motherlodeBook?.tick({ sense: profBook.track('mining').specs?.[100] === 'motherlode-sense' }); } catch (e) { console.warn('[motherlode] frame', e?.message ?? e); } }   // PROF2b: the day's Motherlodes read, warned of and stood
@@ -21230,7 +21251,18 @@ export async function bootWorld(canvas, renderer, params, status) {
     // SD2d: its end with me inside - cast out before its door by the dungeon's own way out (the mode machine's exit,
     // drained at its safe point: PositionPlayerToDungeonExit's landing) and the closing line said; a dead player is the
     // death's (its own door wakes them), and the Hollow goes the frame they are out
-    castOut: () => { if (!(playerEntity.health > 0) || modes?.deathUp?.()) return; if (modes?.unstuck?.()) setMidScreenText(SD_CAST_OUT_LINE); },
+    // AUDIT SD II (L1 F2): false when it could not act - the host asks again, so one raised where they lay is cast out
+    // then; (L1 F9) out of the Hour under its veil, as every other way out of it is
+    castOut: () => {
+      if (!(playerEntity.health > 0) || modes?.deathUp?.()) return false;
+      const hour = modes?.sdRealmSlot?.() != null;
+      if (!modes?.unstuck?.()) return false;
+      if (hour) gateVeil?.flash();
+      setMidScreenText(SD_CAST_OUT_LINE);
+      return true;
+    },
+    // AUDIT SD II (L1 F3): the Hollow or the Hour I stand in, by the dungeon I stand in - its end judged against it
+    standing: () => ((modes?.mode ?? 'exterior') === 'dungeon' ? (modes?.dungeonLocation?.sdSlot ?? modes?.dungeonLocation?.sdRealm ?? null) : null),
     // SD10: the collapse's readouts over the screen, in the Hour's words while I stand in it
     warn: (text) => setMidScreenText(text),
     inHour: () => modes?.sdRealmSlot?.() != null,
@@ -21262,9 +21294,17 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  Rift's own word off the hub's record for the Hollow's slot `s` (null: step through), whether the Return still stands
    *  (until the boss falls), and the realm's door (SD5a: the step through to the Shattered Hour, taken under the veil).
    *  Null offline - no Hollow stands there. */
-  /** AUDIT SD: the Hollows' slots whose Hour I went through, this session - during its collapse the Rift admits me again
-   *  (world/sdDungeon.js sdRiftWord's `entered`; the realm keeps me as it does - SD4b, section 6). */
-  const _sdEntered = new Set();
+  /** AUDIT SD: the Hollows' slots whose Hour I went through - during its collapse the Rift admits me again
+   *  (world/sdDungeon.js sdRiftWord's `entered`; the realm keeps me as it does - SD4b, section 6). AUDIT SD II (L6 F17):
+   *  kept on the device, the last few slots (SD_ENTERED_KEY) - a reload forgot it, and the Rift said "The Hour has
+   *  closed." to a fighter its realm would have admitted. */
+  const _sdEntered = (() => {
+    const kept = new Set((() => { try { const v = JSON.parse(appStorage()?.getItem?.(SD_ENTERED_KEY) ?? '[]'); return Array.isArray(v) ? v.filter(Number.isSafeInteger) : []; } catch { return []; } })());
+    return {
+      has: (s) => kept.has(s),
+      add: (s) => { kept.add(s); try { appStorage()?.setItem?.(SD_ENTERED_KEY, JSON.stringify([...kept].slice(-SD_ENTERED_MAX))); } catch { /* this session's memory holds it */ } },
+    };
+  })();
   const sdRiftOf = (s) => {
     if (!sdHost) return null;
     const rec = sdHost.record(), now = Date.now() + _sharedOffsetMs;
@@ -21278,7 +21318,7 @@ export async function bootWorld(canvas, renderer, params, status) {
    *  the step began. */
   function sdEnterRealm(s) {
     const h = sdHost?.hollow();
-    if (!h || h.s !== s || !modes?.stepThroughFire) return false;
+    if (!h || h.s !== s || !h.site || !modes?.stepThroughFire) return false;   // AUDIT SD II (L1): a Hollow known by another slot's memo carries no site
     const hollow = { key: h.key, px: h.site.px, py: h.site.py, name: h.loc.name };
     const site = { climateBase: h.loc.climate?.climateType ?? 2, season: INTERIOR_SEASON, climate: h.loc.climate, regionIndex: h.loc.regionIndex ?? -1, regionName: h.loc.regionName ?? '' };
     modes?.stepThroughFire(async () => {
@@ -21287,6 +21327,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       if (word) { setMidScreenText(word); return false; }
       modes?.forceExitToExterior();
       await _teleportToPixel(hollow.px, hollow.py);
+      // AUDIT SD II (L1 F3): its word asked again after the walk - the end may have overtaken the step (outside, at its pixel)
+      const late = sdRiftOf(s)?.word;
+      if (late) { setMidScreenText(late); return false; }
       if (await modes?.enterSdRealm?.({ s, hollow, site })) { _sdEntered.add(s); return true; }   // AUDIT SD: through - its Rift admits me again in its collapse
       setMidScreenText(SD_REALM_TEXT.lost);   // the realm would not build: outside, at the Hollow's pixel
       return false;
@@ -21410,7 +21453,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (!sdFightLink) return;
     const inRealm = modes?.sdRealmSlot?.() != null;
     if (!inRealm && _sdReceipts.size) sdReceiptsLeft();   // AUDIT SD: a receipt that never burst - its spoils into the pack
-    if (!inRealm && _sdFightHeld) sdSpoilsBurst?.leave();   // SD9e: whatever is still on the arena's floor into the pack
+    // SD9e: whatever is still on the arena's floor into the pack - and AUDIT SD II (L5 F5): a checkpoint asked at once (the
+    // Hour refuses every save, so what it gave stood on the device alone until the next one, two minutes on)
+    if (!inRealm && _sdFightHeld) { sdSpoilsBurst?.leave(); saveSoon.changed(); }
     if (!inRealm && _sdFightHeld) { sdFightLink.leave(); sdBlows?.leave(); _sdFightHeld = false; }
     if (inRealm) { try { sdBlows?.frame(); } catch (e) { console.warn('[sd] blows', e?.message ?? e); } }   // SD8d: its blows on me
     if (inRealm) { try { sdSpoilsBurst?.frame(); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } }   // SD9e: its spoils, thrown and flying

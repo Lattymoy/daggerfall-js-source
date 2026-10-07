@@ -64,7 +64,14 @@ export function createDuelRecords({ read, now = () => Date.now(), onRecord = () 
       // WB5b: the gates closed ride the same answer (server-account/src/index.js `/v1/duel/record`) - absent from a
       // service before them
       const gates = Number.isSafeInteger(d?.gates?.closed) ? { gates: { closed: d.gates.closed } } : {};
-      const rec = d && Number.isSafeInteger(d.wins) && Number.isSafeInteger(d.losses) ? { wins: d.wins, losses: d.losses, ...gates } : null;
+      // AUDIT SD II (L5 F1): and the towns defended (RAID4), the serpents slain (SERPENT1) and the Hours broken (SD9b) -
+      // the same answer carried all three, and this kept none: the Inspect card never said them
+      const more = {
+        ...(Number.isSafeInteger(d?.raids?.defended) ? { raids: { defended: d.raids.defended } } : {}),
+        ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),
+        ...(Number.isSafeInteger(d?.sds?.broken) ? { sds: { broken: d.sds.broken } } : {}),
+      };
+      const rec = d && Number.isSafeInteger(d.wins) && Number.isSafeInteger(d.losses) ? { wins: d.wins, losses: d.losses, ...gates, ...more } : null;
       e.rec = rec; e.at = now(); e.asking = false;
       onRecord(id, rec);
     }, () => { e.at = now(); e.asking = false; onRecord(id, e.rec); });

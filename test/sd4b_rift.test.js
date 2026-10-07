@@ -323,7 +323,7 @@ test('SD4b the hosts by source: the dungeon stands them for a Super dungeon alon
   const D = read('src/scenes/dungeonContext.js');
   assert.match(D, /const sdEnd = _superTier \? createSdEnd\(\{ renderer, audio, onRift: \(\) => sdRiftStep\(\), onReturn: \(\) => sdReturnStep\(\) \}\)\n\s*: _sdRealm \? createSdEnd\([^\n]*\) : null;/);   // SD5a (PIN MOVED): the Shattered Hour stands its way back with the same set
   assert.match(D, /const sdEndWord = \(\) => opts\.superRift\?\.\(dfLocation\?\.sdSlot\) \?\? null;/);
-  assert.match(D, /const rift = sdRiftPlace\(floorLanding\(collider, \[end\.x, end\.y \+ 0\.2, end\.z\]\), probe\);\n\s*_sdLanding = sdReturnPlace\(rift, probe\);\n\s*sdEnd\.stand\(\{ rift, retAt: _sdLanding \}\);/);   // SD5a (PIN MOVED): the Return's place kept - the way back from the Hour stands a player there
+  assert.match(D, /const rift = sdRiftPlace\(floorLanding\(collider, \[end\.x, end\.y \+ 0\.2, end\.z\]\), probe\);\n\s*_sdRetAt = sdReturnPlace\(rift, probe\);\n\s*_sdLanding = sdLandingPlace\(rift, _sdRetAt, probe\);\n\s*sdEnd\.stand\(\{ rift, retAt: _sdRetAt \}\);/);   // SD5a (PIN MOVED): the Return's place kept - the way back from the Hour stands a player there; AUDIT SD II (L6 F18, PIN MOVED): past it, never on its foot
   assert.match(D, /if \(playerFeet && !_sdEndAsked\) \{ _sdEndAsked = true; standSdEnd\(\); \}/);
   assert.match(D, /if \(sdEnd\.ret && t >= _sdEndCheckAt\) \{ _sdEndCheckAt = t \+ 1000; const w = sdEndWord\(\); if \(w && !w\.returns\) sdEnd\.returnOut\(\); \}/);
   assert.match(D, /if \(playerFeet && !_lairAsked\) \{[^\n]*\n {4}if \(sdEnd\) sdEndFrame\(playerFeet\);/, 'the frame, beside the lair\'s stand');

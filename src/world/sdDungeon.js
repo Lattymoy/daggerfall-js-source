@@ -184,6 +184,25 @@ export function sdReturnPlace(rift, probe) {
   return [rift.at[0], rift.at[1], rift.at[2]];
 }
 
+/** AUDIT SD II (L6 F18): WHERE ONE BACK FROM THE HOUR IS STOOD - past the Return, never on its foot (one step off it and
+ *  back carried them straight to the way in): SD_LANDING_PAST_M on along the line from the Rift's foot through the
+ *  Return's, else on the first bearing from the Return that leads away from the Rift with a clear line and the Return's
+ *  own floor, else the Return's foot. */
+export const SD_LANDING_PAST_M = 1.5;
+export function sdLandingPlace(rift, ret, probe) {
+  const dx = ret[0] - rift.at[0], dz = ret[2] - rift.at[2], len = Math.hypot(dx, dz);
+  if (len > 1e-6) { const at = besideOn(ret, [dx / len, 0, dz / len], SD_LANDING_PAST_M, probe); if (at) return at; }
+  for (const dir of BEARINGS) {
+    const at = besideOn(ret, dir, SD_LANDING_PAST_M, probe);
+    if (at && Math.hypot(at[0] - rift.at[0], at[2] - rift.at[2]) > len) return at;
+  }
+  return [ret[0], ret[1], ret[2]];
+}
+
+/** AUDIT SD II (L6 F17): where the device keeps the slots whose Hour this player went through (the Rift's `entered`), and
+ *  how many it keeps - a reload no longer forgets them. */
+export const SD_ENTERED_KEY = 'sd11.entered';
+export const SD_ENTERED_MAX = 8;
 /**
  * The Rift's own word before it asks (section 6): null - step through; else its refusal. Not yet found, or the hub's
  * record not heard: "The Rift will not take you yet." The Hour closed - the slot gone or another's - or closing to a

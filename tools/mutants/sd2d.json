@@ -2,7 +2,7 @@
   {
     "name": "SD2D-never-cast-out",
     "file": "src/scenes/sdHost.js",
-    "old": "      else if (castOutS !== stood.s) { castOutS = stood.s; castOut(stood.key); }\n",
+    "old": "      else if (castOutS !== stood.s) { asked = true; if (castOut(stood.key) !== false) castOutS = stood.s; }\n",
     "new": "",
     "tests": [
       "test/sd2d_castout.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "SD2D-cast-out-every-frame",
     "file": "src/scenes/sdHost.js",
-    "old": "      else if (castOutS !== stood.s) { castOutS = stood.s; castOut(stood.key); }",
-    "new": "      else { castOutS = stood.s; castOut(stood.key); }",
+    "old": "      else if (castOutS !== stood.s) { asked = true; if (castOut(stood.key) !== false) castOutS = stood.s; }",
+    "new": "      else { asked = true; if (castOut(stood.key) !== false) castOutS = stood.s; }",
     "tests": [
       "test/sd2d_castout.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD2D-the-line-unsaid",
     "file": "src/scenes/world.js",
-    "old": "if (modes?.unstuck?.()) setMidScreenText(SD_CAST_OUT_LINE); },",
-    "new": "modes?.unstuck?.(); },",
+    "old": "      setMidScreenText(SD_CAST_OUT_LINE);\n      return true;\n    },",
+    "new": "      return true;\n    },",
     "tests": [
       "test/sd2d_castout.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD2D-the-dead-cast-out",
     "file": "src/scenes/world.js",
-    "old": "    castOut: () => { if (!(playerEntity.health > 0) || modes?.deathUp?.()) return; if (modes?.unstuck?.())",
-    "new": "    castOut: () => { if (modes?.unstuck?.())",
+    "old": "      if (!(playerEntity.health > 0) || modes?.deathUp?.()) return false;\n      const hour = ",
+    "new": "      const hour = ",
     "tests": [
       "test/sd2d_castout.test.js"
     ]

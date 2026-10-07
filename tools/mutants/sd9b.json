@@ -236,8 +236,8 @@
   {
     "name": "SD9B-unbounded",
     "file": "src/net/sdClaims.js",
-    "old": "keep([...list, r].slice(-SD_CLAIMS_MAX));",
-    "new": "keep([...list, r]);",
+    "old": "        const drop = theirs.length >= SD_CLAIMS_MAX ? theirs[0] : null;",
+    "new": "        const drop = null;",
     "tests": [
       "test/sd9b_claim.test.js"
     ]

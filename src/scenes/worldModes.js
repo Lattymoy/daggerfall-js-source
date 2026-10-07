@@ -8699,6 +8699,7 @@ export function createWorldModes(host) {
     // Verbatim PositionPlayerToDungeonExit; the camera faces the normal.
     const landing = returnLanding();   // WB3b: before the gate, out of the court
     const carried = dungeonCtx.camps?.packOwnFires?.({ quiet: true }) ?? 0;   // AUDIT REST-PARTY B3: before the room's memory goes - AUDIT REST II H4: said outside, below
+    dungeonCtx.overlayWindow?.()?.dispose?.();   // AUDIT SD II (L1 F1): forceExitToExterior's OnPop for the slot - a Hollow's end casts out here under any window
     const pose = dungeonPose();
     host.onDungeonLeave?.();   // WORLD1: the room's memory goes out while the dungeon still stands
     teardownDungeonQuestFlats();   // B2: OnDestroy for the quest stands, before the batch teardown
