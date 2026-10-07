@@ -178,8 +178,8 @@
  {
   "name": "GRASSPX-the-renderer-compiles-the-labs-text-so-the-pixel-uniforms-do-not-exist",
   "file": "src/render/labGrass.js",
-  "old": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }, tuft = null } = {}) {",
-  "new": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: LAB_GRASS_FS }, tuft = null } = {}) {",
+  "old": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }, tuft = null, provoke = true } = {}) {",
+  "new": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: LAB_GRASS_FS }, tuft = null, provoke = true } = {}) {",
   "tests": [
    "test/grasspx.test.js"
   ]

@@ -10,7 +10,8 @@
 // trees"): the cards cut to their sprites' drawn boxes and drawn indexed, the tuft's seed off its cell's lane (no shift
 // of the floating origin re-rolls it), the level by the card's height, the cards on the ground's slope, the face law by
 // the light's height, the third card handed over tuft by tuft, the box the meadow's own and the wind's, the gust wave
-// carried across the floating origin, the field still under the trees' switch, and the grass Off by default.
+// carried across the floating origin, the field still under the trees' switch, and the grass Off by default (Full
+// again since GRASS-ON, 2026-10-07: test/grass_on.test.js).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -727,7 +728,7 @@ test('AUDIT MEADOW1: the gust wave stands still under a crossing of the floating
   assert.ok(w.includes('windV: wd.windV, sway: floraSwayOn() && wd.on }'), 'and the grass held still with the trees');
 });
 
-test('MEADOW1: the meadow\'s edits land once each over the four lists before them, every one says why, and its words are the game\'s alone; AUDIT MEADOW1: the row ships the meadow as the style and the grass Off, and the wind\'s sway is the grass\'s too (mutants: the grass on by default, the style another)', () => {
+test('MEADOW1: the meadow\'s edits land once each over the four lists before them, every one says why, and its words are the game\'s alone; AUDIT MEADOW1: the row ships the meadow as the style, and the wind\'s sway is the grass\'s too; GRASS-ON: and the grass Full again (mutants: the grass off by default, the style another)', () => {
   let text = applyGrassEdits(applyGrassEdits(applyGrassEdits(LAB_GRASS_VS, GRASSPX_VS_EDITS), GRASSFOG_VS_EDITS), GRASSLIT_VS_EDITS);
   for (const e of GRASSMEADOW_VS_EDITS) { assert.equal(text.split(e.from).length - 1, 1, `VS: ${e.why}`); assert.ok(e.why.length > 20); text = applyGrassEdits(text, [e]); }
   assert.equal(text, GAME_GRASS_VS);
@@ -744,9 +745,9 @@ test('MEADOW1: the meadow\'s edits land once each over the four lists before the
   // the style's word: anything but the two older words is the meadow, and the meadow is a pixel style
   assert.deepEqual(['meadow', 'pixel', 'smooth', undefined, 'junk'].map(meadowGrass), [true, false, false, true, true]);
   assert.deepEqual(['meadow', 'pixel', 'smooth'].map(pixelGrass), [true, true, false]);
-  // the rows: the grass Off until asked for, the meadow its style; the wind's sway the grass's as well as the trees'
+  // the rows: the grass Full (GRASS-ON; AUDIT MEADOW1 had it Off), the meadow its style; the wind's sway the grass's as well as the trees'
   const grass = FEATURES.find((f) => f.id === 'grass'), wind = FEATURES.find((f) => f.id === 'wind');
-  assert.deepEqual([grass.control.key, grass.control.initial, grass.control.tiers.map(([v]) => v)], ['grassDensity', 0, [1, 0.5, 0.25, 0]], 'Off by default (Mac: "Let\'s have our grass tufts off by default also")');
+  assert.deepEqual([grass.control.key, grass.control.initial, grass.control.tiers.map(([v]) => v)], ['grassDensity', 1, [1, 0.5, 0.25, 0]], 'PIN MOVED (GRASS-ON, Mac: "Can you please turn grass on by default"): Full by default again');
   assert.deepEqual({ ...grass.control.also[0] }, { store: 'prefs', key: 'grassStyle', initial: 'meadow', online: 'player' });
   assert.deepEqual(grass.control.parts[0].tiers.map(([v]) => v), ['meadow', 'pixel', 'smooth']);
   assert.deepEqual(wind.control.parts.map((p) => [p.key, p.label]), [['floraSway', 'Sway'], ['windWisps', 'Wisps']]);

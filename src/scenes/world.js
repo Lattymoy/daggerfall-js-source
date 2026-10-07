@@ -2102,7 +2102,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   // same as ?grass=off - no renderer, no field, nothing drawn.
   const grassDensity = Math.max(0, Math.min(1, Number(getPref('grassDensity')) || 0)) * LAB_GRASS.density;
   const labGrass = isEnhanced() && getPref('enhancedEnvironments') && grassDensity > 0 && pageParam('grass') !== 'off'
-    ? new LabGrassRenderer(renderer.gl) : null;
+    ? new LabGrassRenderer(renderer.gl, { provoke: pageParam('provoke') !== 'last' }) : null;   // GRASS-ON: `?provoke=last` draws the field under GL's own convention, to time it both ways (render/labGrass.js)
   let labGrassField = null;   // GR5: the world-anchored field, filled a cell or two a frame
   if (labGrass) discSlotCount(LAB_GRASS.span);   // PERF-EXT20: the field's one sweep, paid here behind the loading screen - every createGrassField after reads the memo
   const grassNormalScratch = [0, 1, 0];   // GRASS-LIT2: the slope's answer, one array for every blade (the placer copies it)
