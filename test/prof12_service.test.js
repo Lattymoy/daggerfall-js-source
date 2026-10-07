@@ -74,7 +74,7 @@ test('PROF12 service: a Healing brewed at rank 0 - DFU\'s own recipe law on the 
   const r = await steered(0x00, () => s.call('/v1/prof/brew', ask, mac.secret));
   assert.equal(r.status, 200, JSON.stringify(r.body));
   assert.deepEqual([r.body.potion, r.body.count, r.body.potent, r.body.unbruised, r.body.steps, r.body.first, r.body.xp], ['healing', 1, 0, 0, 0, true, 20 + FIRST_CRAFT_XP], 'Novice: one potion, the lowest roll never Potent');
-  assert.deepEqual([r.body.track.profession, r.body.track.xp, s.xpOf(mac, 'alchemy')], ['alchemy', 520, 520]);
+  assert.deepEqual([r.body.track.profession, r.body.track.xp, s.xpOf(mac, 'provisioning')], ['provisioning', 520, 520]);   // PIN MOVED (CRAFT3): a brew raises Provisioning, Alchemy's craft - the track answered and the row credited are its
   assert.deepEqual(r.body.keys, HEALING);
   assert.deepEqual([s.stores(mac, 'p1:16'), s.stores(mac, 'metal:mercury')], [[['own', 2]], [['own', 1]]], 'the bought Red Berries spent first');
   assert.deepEqual(r.body.stores.map((st) => st.material).sort(), [...HEALING].sort());
@@ -83,7 +83,7 @@ test('PROF12 service: a Healing brewed at rank 0 - DFU\'s own recipe law on the 
   assert.deepEqual([again.body.repeat, again.body.xp, again.body.count], [true, 520, 1], 'asked twice: the row\'s answer - looked for before the switch (AUDIT 28 M2\'s rule)');
   assert.deepEqual((await s.brew(mac, 'healing', HEALING)).body, { error: 'prof-closed' }, 'a new brew under a shut switch');
   s.env.PROFESSIONS_OPEN = 'on';
-  assert.deepEqual([s.stores(mac, 'metal:mercury'), s.xpOf(mac, 'alchemy')], [[['own', 1]], 520], 'nothing moved twice');
+  assert.deepEqual([s.stores(mac, 'metal:mercury'), s.xpOf(mac, 'provisioning')], [[['own', 1]], 520], 'nothing moved twice');   // PIN MOVED (CRAFT3): Provisioning's row, Alchemy's craft's
   const shuffled = await s.brew(mac, 'healing', [HEALING[3], HEALING[1], HEALING[0], HEALING[2]]);
   assert.deepEqual([shuffled.status, shuffled.body.first, shuffled.body.xp], [200, false, 20], 'DFU sorts the cauldron: any order; the second no 500');
   assert.deepEqual((await s.brew(mac, 'healing', HEALING)).body, { error: 'stores-short' }, 'the Red Berries\' own one left, the Troll\'s Blood none');
@@ -99,7 +99,7 @@ test('PROF12 service: a Healing brewed at rank 0 - DFU\'s own recipe law on the 
   s.raw.prepare("DELETE FROM prof_stores WHERE player = ? AND material = 'p1:16'").run(mac.id);
   s.give(mac, 'p1:16', 'gold', 1);
   assert.deepEqual((await s.brew(mac, 'healing', HEALING)).body, { error: 'stores-gold' });
-  assert.match(ACCOUNT_VERSION, /^acct92$/   /* PIN MOVED (AUDIT PROF-541, SILVER-WAYS' acct71, the arena merge's acct72, AEGIS's acct73, BAG1 and GUILD2's acct74, HOME-PRICE's acct75, PRIMARCH and FOUNDER4's acct76, FIELD BUGS 2026-10-04d KNIGHT-HOUSE's acct77, SERPENT1's acct78, GLOBAL-MARKET's acct79, SHADOW-CLOAK's acct80, SERAPH-WINGS' acct81, AUDIT ARENA-LADDER's acct82, CRYSTAL-FIST's acct83, SERPENT-SET and SILVER-FINDS' acct84, YARD-SHED's acct85, YARD-HEIGHT's acct86, LEGACY7's acct87, STORM-SHED's acct88, STORM-SHED 2's acct89, TEXT-F1's acct90, CAP-OFF's acct91, FOUNDER5's acct92): the live version */);
+  assert.match(ACCOUNT_VERSION, /^acct93$/   /* PIN MOVED (AUDIT PROF-541, SILVER-WAYS' acct71, the arena merge's acct72, AEGIS's acct73, BAG1 and GUILD2's acct74, HOME-PRICE's acct75, PRIMARCH and FOUNDER4's acct76, FIELD BUGS 2026-10-04d KNIGHT-HOUSE's acct77, SERPENT1's acct78, GLOBAL-MARKET's acct79, SHADOW-CLOAK's acct80, SERAPH-WINGS' acct81, AUDIT ARENA-LADDER's acct82, CRYSTAL-FIST's acct83, SERPENT-SET and SILVER-FINDS' acct84, YARD-SHED's acct85, YARD-HEIGHT's acct86, LEGACY7's acct87, STORM-SHED's acct88, STORM-SHED 2's acct89, TEXT-F1's acct90, CAP-OFF's acct91, FOUNDER5's acct92): the live version */);
 });
 
 test('PROF12 service: the alchemist\'s ladder asked (Invisibility at 70, refused below, nothing spent); a brew\'s potions - 2 at Journeyman, a Brewer\'s 3, 3 at Master; Potent at Expert\'s 10% (the roll under it Potent, at it plain), a Distiller\'s +10 at 50, a Master Alchemist\'s +40% share; no 500 for a cauldron wholly of the Apothecaries\' goods', async () => {
@@ -107,14 +107,14 @@ test('PROF12 service: the alchemist\'s ladder asked (Invisibility at 70, refused
   const mac = await s.registered('Mac');
   const INVIS = ['gem:diamond', 'reagent:ectoplasm', 'reagent:rain-water', 'reagent:nectar'];
   s.cauldron(mac, INVIS);
-  s.setXp(mac, 'alchemy', xpForRank(69));
+  s.setXp(mac, 'provisioning', xpForRank(69));   // PIN MOVED (CRAFT3): the brewer's rank (and choices) on Provisioning, Alchemy's craft's track
   assert.deepEqual((await s.brew(mac, 'invisibility', INVIS)).body, { error: 'prof-rank' });
   assert.deepEqual(s.stores(mac, 'gem:diamond'), [['own', 1]], 'refused before anything moved');
-  s.setXp(mac, 'alchemy', xpForRank(70));
+  s.setXp(mac, 'provisioning', xpForRank(70));   // PIN MOVED (CRAFT3): the brewer's rank (and choices) on Provisioning, Alchemy's craft's track
   const inv = await steered(0xff, () => s.brew(mac, 'invisibility', INVIS));
   assert.deepEqual([inv.status, inv.body.count, inv.body.potent, inv.body.xp], [200, 2, 0, 120 + FIRST_CRAFT_XP], 'tier 6: 120, and two potions past Journeyman');
   const plain = async (spec50 = null, spec100 = null, rank = 50) => {
-    s.setXp(mac, 'alchemy', xpForRank(rank), { spec50, spec100 });
+    s.setXp(mac, 'provisioning', xpForRank(rank), { spec50, spec100 });   // PIN MOVED (CRAFT3): the brewer's rank (and choices) on Provisioning, Alchemy's craft's track
     s.cauldron(mac, HEALING);
     return s.brew(mac, 'healing', HEALING);
   };
@@ -130,14 +130,14 @@ test('PROF12 service: the alchemist\'s ladder asked (Invisibility at 70, refused
   assert.equal((await steered(0x32, () => plain(null, null, 100))).body.potent, 25, 'a roll of 19.5 Potent - at +25%');
   assert.equal((await steered(0x00, () => plain(null, 'master-alchemist', 100))).body.potent, 40, 'a Master Alchemist\'s +40%');
   const LEVIT = ['reagent:ectoplasm', 'reagent:pure-water', 'reagent:nectar'];
-  s.setXp(mac, 'alchemy', xpForRank(40));
+  s.setXp(mac, 'provisioning', xpForRank(40));   // PIN MOVED (CRAFT3): the brewer's rank (and choices) on Provisioning, Alchemy's craft's track
   s.cauldron(mac, LEVIT, 'bought');
   const lev = await s.brew(mac, 'levitation', LEVIT);
   assert.deepEqual([lev.status, lev.body.first, lev.body.xp], [200, false, 80], 'the counter\'s goods alone: tier 4\'s 80 and no 500 (AUDIT 32 S1\'s law) - and not called the first (AUDIT PROF-541 B6: as smeltAtForge\'s)');
   assert.equal(s.raw.prepare("SELECT first FROM prof_brews WHERE potion = 'levitation'").get().first, 0, 'nor stored so');
   // AUDIT PROF-541 R2-S1: the counter's goods alone brew ONE, whatever the rank or the Brewer - the Apothecaries' silver is
   // no gold past the Bank; a cauldron with a gathered herb still the rank's
-  s.setXp(mac, 'alchemy', xpForRank(100), { spec50: 'brewer' });
+  s.setXp(mac, 'provisioning', xpForRank(100), { spec50: 'brewer' });   // PIN MOVED (CRAFT3): the brewer's rank (and choices) on Provisioning, Alchemy's craft's track
   s.cauldron(mac, LEVIT, 'bought');
   const lev3 = await s.brew(mac, 'levitation', LEVIT);
   assert.deepEqual([lev3.status, lev3.body.count], [200, 1], 'a Master Brewer: one Levitation');
@@ -176,7 +176,7 @@ test('PROF12 service: an herb picked unbruised is counted beside the Stores (a b
   assert.equal(bruised.status, 200, JSON.stringify(bruised.body));
   assert.equal(s.unbruised(mac, 'p2:28'), got, 'a bruised herb is not');
   const FREE = ['p1:8', 'p2:28', 'part:venom', 'reagent:ichor'];
-  s.setXp(mac, 'alchemy', xpForRank(75));
+  s.setXp(mac, 'provisioning', xpForRank(75));   // PIN MOVED (CRAFT3): the brewer's rank (and choices) on Provisioning, Alchemy's craft's track
   s.give(mac, 'p2:28', 'bought', 1);
   s.cauldron(mac, ['p1:8', 'part:venom', 'reagent:ichor']);
   const boughtBrew = await steered(0x22, () => s.brew(mac, 'freeAction', FREE));
@@ -202,11 +202,11 @@ test('PROF12 service: the Apothecaries\' counter sells its sixteen into the Stor
   const smelt = (count = 1) => s.call('/v1/prof/smelt', { character: mac.character, recipe: 'transmute:tin', count, rid: rid() }, mac.secret);
   s.give(mac, 'metal:tin', 'own', 4);
   s.give(mac, 'metal:mercury', 'own', 2);
-  s.setXp(mac, 'alchemy', xpForRank(100), { spec100: 'master-alchemist' });
+  s.setXp(mac, 'provisioning', xpForRank(100), { spec100: 'master-alchemist' });   // PIN MOVED (CRAFT3): the brewer's rank (and choices) on Provisioning, Alchemy's craft's track
   const no = await smelt();
   assert.deepEqual([no.status, no.body], [403, { error: 'prof-transmuter' }]);
   assert.deepEqual([s.stores(mac, 'metal:tin'), s.stores(mac, 'metal:mercury')], [[['own', 4]], [['own', 2]]], 'nothing spent');
-  s.setXp(mac, 'alchemy', xpForRank(100), { spec100: 'transmuter' });
+  s.setXp(mac, 'provisioning', xpForRank(100), { spec100: 'transmuter' });   // PIN MOVED (CRAFT3): the brewer's rank (and choices) on Provisioning, Alchemy's craft's track
   const yes = await smelt();
   assert.equal(yes.status, 200, JSON.stringify(yes.body));
   assert.deepEqual([yes.body.own, yes.body.bought, yes.body.xp, yes.body.track], [1, 0, 0, null]);
@@ -222,7 +222,7 @@ test('PROF12 service: the Apothecaries\' counter sells its sixteen into the Stor
 test('PROF12 service: a Gold Ruby Ring disenchanted - its record\'s 2,160 points 21 Arcane Essence, own (its maker\'s, never sold), Enchanting XP 5 x 3 x 21 (the ring\'s tier - AUDIT PROF12 E2); the piece\'s row gone; asked twice one; asked again under a new id, no piece; a Disenchanter\'s twice and the same 5 x 3 x 21 at 50', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
-  s.setXp(mac, 'jewelcrafting', xpForRank(25));
+  s.setXp(mac, 'smithing', xpForRank(25));   // PIN MOVED (CRAFT3): a Ring's rank read on Smithing, Jewelcrafting's craft's track
   const pv = await s.craft(mac, 'ring:gold:ruby');
   const id = rid();
   const r = await s.disenchant(mac, pv, id);
@@ -241,7 +241,7 @@ test('PROF12 service: a Gold Ruby Ring disenchanted - its record\'s 2,160 points
   const d = await s.disenchant(mac, pv2);
   assert.deepEqual([d.body.essence, d.body.xp, s.stores(mac, 'essence:arcane')], [42, 315, [['own', 63]]], 'a Disenchanter\'s two an Essence; XP on the one, the piece\'s tier');
   // a Gemcutter's gemmed ring carries its hand's points (+30%: 2,340) into the disenchant, from the service's own row
-  s.setXp(mac, 'jewelcrafting', xpForRank(50), { spec50: 'gemcutter' });
+  s.setXp(mac, 'smithing', xpForRank(50), { spec50: 'gemcutter' });   // PIN MOVED (CRAFT3): the Gemcutter (Jewelcrafting's choice) stands under Smithing, its craft's track
   const cut = await s.craft(mac, 'ring:gold:ruby');
   s.setXp(mac, 'enchanting', 0);
   const g = await s.disenchant(mac, cut);
@@ -255,7 +255,7 @@ test('PROF12 service: what may not be disenchanted - another\'s piece (403), a l
   const s = await stand();
   const mac = await s.registered('Mac');
   const ann = await s.registered('Ann');
-  s.setXp(mac, 'jewelcrafting', xpForRank(25));
+  s.setXp(mac, 'smithing', xpForRank(25));   // PIN MOVED (CRAFT3): a Ring's rank read on Smithing, Jewelcrafting's craft's track
   const mine = await s.craft(mac, 'ring:gold:ruby');
   const hers = await s.disenchant(ann, mine);
   assert.deepEqual([hers.status, hers.body], [403, { error: 'prof-not-yours' }]);
@@ -357,7 +357,7 @@ test('AUDIT PROF12 A1 service: the unbruised count never outlives its herbs - a 
 test('AUDIT PROF-541 B1/B3 service: a cauldron whose templates only COLLIDE with a recipe\'s hash is refused (Purification of Jade for its Diamond - bad-brew, nothing spent); a Cure of DFU\'s default magnitude is never Potent at the roll that makes a Purification Potent', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
-  s.setXp(mac, 'alchemy', xpForRank(100));
+  s.setXp(mac, 'provisioning', xpForRank(100));   // PIN MOVED (CRAFT3): the brewer's rank (and choices) on Provisioning, Alchemy's craft's track
   const JADE = ['gem:jade', 'p1:9', 'p1:17', 'p2:27', 'reagent:werewolf-blood', 'reagent:rain-water', 'reagent:elixir-vitae', 'reagent:nectar'];
   const PURE = ['gem:diamond', 'p2:31', 'reagent:ectoplasm', 'reagent:mummy-wrappings', 'part:tooth', 'reagent:rain-water', 'reagent:elixir-vitae', 'reagent:nectar'];
   assert.equal(potionKeyFromCauldron(JADE.map(keyTemplate)), potionKeyFromCauldron(PURE.map(keyTemplate)), 'DFU\'s hash: the same key');
@@ -377,7 +377,7 @@ test('AUDIT PROF-541 B1/B3 service: a cauldron whose templates only COLLIDE with
 test('AUDIT PROF-541 B2 service: a realm character\'s piece leaves its RECORD with the disenchant - `realm` asked first (realm-needed without it), refused where the record does not hold it loose (traded away, worn: prof-piece-gone, nothing moved), taken out of the record at the next sequence in the disenchant\'s own batch; a stale record refused `seq` with the service\'s own; and a deleted realm character\'s unbruised count goes with it (B5)', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
-  s.setXp(mac, 'jewelcrafting', xpForRank(25));
+  s.setXp(mac, 'smithing', xpForRank(25));   // PIN MOVED (CRAFT3): a Ring's rank read on Smithing, Jewelcrafting's craft's track
   const pv = await s.craft(mac, 'ring:gold:ruby');
   const worn = await s.craft(mac, 'ring:gold:ruby');
   const away = await s.craft(mac, 'ring:gold:ruby');
@@ -419,7 +419,7 @@ test('AUDIT PROF-541 B2 service: a crafted piece set down in a home stands with 
   const HOME = { mapId: 1291010263, buildingKey: 0x10203 };
   const house = await s.seatHome(mac, { ...HOME, region: 17, price: 42000 });
   assert.equal(house.status, 200, JSON.stringify(house.body));
-  s.setXp(mac, 'jewelcrafting', xpForRank(25));
+  s.setXp(mac, 'smithing', xpForRank(25));   // PIN MOVED (CRAFT3): a Ring's rank read on Smithing, Jewelcrafting's craft's track
   const pv = await s.craft(mac, 'ring:gold:ruby');
   const piece = (id, p) => ({ id, model: null, flat: [254, 1], pos: [1, 0, 1], rot: [0, 0, 0], scale: 1, light: null, storage: false, paid: 0, item: { t: 135, g: 4, pv: p } });
   const pv2 = await s.craft(mac, 'ring:gold:ruby');

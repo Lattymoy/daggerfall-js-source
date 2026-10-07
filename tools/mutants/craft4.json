@@ -1,0 +1,649 @@
+[
+  {
+    "name": "CRAFT4-law-kinds-no-garment",
+    "file": "src/net/temperLaw.js",
+    "old": "export const TEMPER_KINDS = Object.freeze(['weapon', 'plate', 'shield', 'chain', 'leather', 'garment']);",
+    "new": "export const TEMPER_KINDS = Object.freeze(['weapon', 'plate', 'shield', 'chain', 'leather']);",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-any-recipe",
+    "file": "src/net/temperLaw.js",
+    "old": "export const temperableRecipe = (/** @type {any} */ r) => !!r && TEMPER_KINDS.includes(r.kind);",
+    "new": "export const temperableRecipe = (/** @type {any} */ r) => !!r;",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-top-masterwork",
+    "file": "src/net/temperLaw.js",
+    "old": "export const TEMPER_TOP = 3;",
+    "new": "export const TEMPER_TOP = 4;",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-found-fine",
+    "file": "src/net/temperLaw.js",
+    "old": "export const pieceQuality = (/** @type {any} */ item) => (Number.isInteger(item?.quality) ? item.quality : 1);",
+    "new": "export const pieceQuality = (/** @type {any} */ item) => (Number.isInteger(item?.quality) ? item.quality : 2);",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-made-not-own",
+    "file": "src/net/temperLaw.js",
+    "old": "if (typeof item.recipe === 'string') { const r = recipeById(item.recipe); return temperableRecipe(r) ? r : null; }",
+    "new": "if (typeof item.recipe === 'string') { const r = recipeById(item.recipe); return r ?? null; }",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-weapon-any-metal",
+    "file": "src/net/temperLaw.js",
+    "old": "RECIPES.find((r) => r.kind === 'weapon' && r.templateIndex === t && r.material === m)",
+    "new": "RECIPES.find((r) => r.kind === 'weapon' && r.templateIndex === t)",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-leather-any",
+    "file": "src/net/temperLaw.js",
+    "old": "r.kind === 'leather' && r.templateIndex === t && r.leather === 'leather:cured'",
+    "new": "r.kind === 'leather' && r.templateIndex === t",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ],
+    "equivalent": true,
+    "why": "equivalent by the tables: every leather template's first recipe is its Cured Leather's (RECIPES lists the cured first) - the clause holds 41.2's DECIDED word against a table reordered"
+  },
+  {
+    "name": "CRAFT4-law-chain-as-plate",
+    "file": "src/net/temperLaw.js",
+    "old": "if ((m & 0xff00) === ARMOR_CHAIN) return",
+    "new": "if (m === ARMOR_CHAIN + 1) return",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-plate-any-metal",
+    "file": "src/net/temperLaw.js",
+    "old": "(r.kind === 'plate' || r.kind === 'shield') && r.templateIndex === t && r.material === m",
+    "new": "(r.kind === 'plate' || r.kind === 'shield') && r.templateIndex === t",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-no-shield",
+    "file": "src/net/temperLaw.js",
+    "old": "(r.kind === 'plate' || r.kind === 'shield')",
+    "new": "(r.kind === 'plate')",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-womens-none",
+    "file": "src/net/temperLaw.js",
+    "old": "if (item.group === 'MensClothing' || item.group === 'WomensClothing') {",
+    "new": "if (item.group === 'MensClothing') {",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-garment-any-cloth",
+    "file": "src/net/temperLaw.js",
+    "old": "r.kind === 'garment' && r.templateIndex === t && r.cloth === 'cloth:linen'",
+    "new": "r.kind === 'garment' && r.templateIndex === t",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ],
+    "equivalent": true,
+    "why": "equivalent by the tables: every garment template's first recipe is its Linen's - the clause holds the DECIDED word against a table reordered"
+  },
+  {
+    "name": "CRAFT4-law-cost-down",
+    "file": "src/net/temperLaw.js",
+    "old": "n: Math.ceil(r.inputs[0].n / 2)",
+    "new": "n: Math.floor(r.inputs[0].n / 2)",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-cost-whole",
+    "file": "src/net/temperLaw.js",
+    "old": "n: Math.ceil(r.inputs[0].n / 2)",
+    "new": "n: r.inputs[0].n",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-xp-first",
+    "file": "src/net/temperLaw.js",
+    "old": "export const temperXp = (r, rank) => craftXp(r.tier, rank, false);",
+    "new": "export const temperXp = (r, rank) => craftXp(r.tier, rank, true);",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-from-top",
+    "file": "src/net/temperLaw.js",
+    "old": "export const temperFrom = (q) => Number.isInteger(q) && q >= 0 && q < TEMPER_TOP;",
+    "new": "export const temperFrom = (q) => Number.isInteger(q) && q >= 0 && q <= TEMPER_TOP;",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-from-any",
+    "file": "src/net/temperLaw.js",
+    "old": "export const temperFrom = (q) => Number.isInteger(q) && q >= 0 && q < TEMPER_TOP;",
+    "new": "export const temperFrom = (q) => Number(q) >= 0 && Number(q) < TEMPER_TOP;",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-sigil-open",
+    "file": "src/net/temperLaw.js",
+    "old": "  if (item.sigil != null) return 'sigil';\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-artifact-open",
+    "file": "src/net/temperLaw.js",
+    "old": "if (TEMPER_SHUT.includes(item.rarity) || item.artifact) return 'rarity';",
+    "new": "if (TEMPER_SHUT.includes(item.rarity)) return 'rarity';",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-legendary-open",
+    "file": "src/net/temperLaw.js",
+    "old": "export const TEMPER_SHUT = Object.freeze(['legendary', 'aetheric', 'artifact']);",
+    "new": "export const TEMPER_SHUT = Object.freeze(['aetheric', 'artifact']);",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-masterwork-open",
+    "file": "src/net/temperLaw.js",
+    "old": "  if (q === MASTERWORK) return 'masterwork';\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-top-open",
+    "file": "src/net/temperLaw.js",
+    "old": "  if (q >= TEMPER_TOP) return 'top';\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-step-flat",
+    "file": "src/net/temperLaw.js",
+    "old": "return { condition: to.condition / from.condition, weight: to.weight / from.weight };",
+    "new": "return { condition: to.condition, weight: to.weight };",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-reforge-rank",
+    "file": "src/net/temperLaw.js",
+    "old": "export const REFORGE_RANK = 50;",
+    "new": "export const REFORGE_RANK = 49;",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-reforge-rare-price",
+    "file": "src/net/temperLaw.js",
+    "old": "export const REFORGE_ESSENCE = Object.freeze({ magic: 2, rare: 5 });",
+    "new": "export const REFORGE_ESSENCE = Object.freeze({ magic: 2, rare: 2 });",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-law-reforge-legendary",
+    "file": "src/net/temperLaw.js",
+    "old": "(tier === 'magic' || tier === 'rare' ? REFORGE_ESSENCE[tier] : null)",
+    "new": "(tier === 'magic' || tier === 'rare' ? REFORGE_ESSENCE[tier] : tier ? 5 : null)",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-any-recipe",
+    "file": "server-account/src/professions.js",
+    "old": "  if (!temperableRecipe(r)) return { error: 'prof-temper' };\n",
+    "new": "  if (!r) return { error: 'prof-temper' };\n",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-any-quality",
+    "file": "server-account/src/professions.js",
+    "old": "  if (!temperFrom(quality)) return { error: 'prof-temper-top' };\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-bad-piece",
+    "file": "server-account/src/professions.js",
+    "old": "  if (provenance !== null && (typeof provenance !== 'string' || !PROVENANCE_RE.test(provenance))) return { error: 'bad-piece' };\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-no-rank",
+    "file": "server-account/src/professions.js",
+    "old": "  if (rank < r.rank) return { error: 'prof-rank' };\n  let record = null;",
+    "new": "  let record = null;",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-discipline-track",
+    "file": "server-account/src/professions.js",
+    "old": "  const craft = trackOf(r.profession);   // Smithing's or Outfitting's",
+    "new": "  const craft = r.profession;   // Smithing's or Outfitting's",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ],
+    "equivalent": true,
+    "why": "equivalent: every recipe a temper takes is Smithing's or Outfitting's own (no discipline's - a jewel, a cut, a dish is no temper's), so trackOf is the recipe's profession; kept, as every XP credit is the craft's (41.6)"
+  },
+  {
+    "name": "CRAFT4-svc-not-yours",
+    "file": "server-account/src/professions.js",
+    "old": "    if (p.owner !== player.id) return { error: 'prof-not-yours' };\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-other-recipe",
+    "file": "server-account/src/professions.js",
+    "old": "    if (p.recipe !== r.id) return { error: 'prof-temper' };\n    if (Number(p.quality) !== quality) return { error: 'prof-temper-stale' };",
+    "new": "    if (Number(p.quality) !== quality) return { error: 'prof-temper-stale' };",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-record-same-q",
+    "file": "server-account/src/professions.js",
+    "old": "r: c.r, q: quality + 1, m: c.m",
+    "new": "r: c.r, q: quality, m: c.m",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-gold-spends",
+    "file": "server-account/src/professions.js",
+    "old": "      WHERE ${spendableSql('?1', '?2', '?7')} >= ?8 AND ${piece}`)",
+    "new": "      WHERE 1 AND ${piece}`)",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-listed-ok",
+    "file": "server-account/src/professions.js",
+    "old": "quality = ?6 - 1 AND listed = 0)",
+    "new": "quality = ?6 - 1)",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-row-same-q",
+    "file": "server-account/src/professions.js",
+    "old": "UPDATE products SET quality = ?4, record = ?5 WHERE provenance = ?6 AND ${decided}`).bind(player.id, rid, nonce, quality + 1, record, provenance)",
+    "new": "UPDATE products SET record = ?5 WHERE provenance = ?6 AND ${decided}`).bind(player.id, rid, nonce, quality + 1, record, provenance)",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-no-xp",
+    "file": "server-account/src/professions.js",
+    "old": ".bind(player.id, character, rid, r.id, provenance, quality + 1, cost.key, cost.n, temperXp(r, rank), nowS, nonce, craft),",
+    "new": ".bind(player.id, character, rid, r.id, provenance, quality + 1, cost.key, cost.n, 0, nowS, nonce, craft),",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-made-quality",
+    "file": "server-account/src/professions.js",
+    "old": ".bind(player.id, character, rid, r.id, provenance, quality + 1, cost.key, cost.n, temperXp(r, rank), nowS, nonce, craft),",
+    "new": ".bind(player.id, character, rid, r.id, provenance, quality, cost.key, cost.n, temperXp(r, rank), nowS, nonce, craft),",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-repeat-spends",
+    "file": "server-account/src/professions.js",
+    "old": "  if (prior) return temperAnswer(db, player, prior, nowS, { repeat: true });\n  const closed = shut(player, env);\n  if (closed) return closed;\n  const r = recipeById(id);",
+    "new": "  const closed = shut(player, env);\n  if (closed) return closed;\n  const r = recipeById(id);",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-busy-unsaid",
+    "file": "server-account/src/professions.js",
+    "old": "    if (st.own + st.bought >= cost.n) return { error: 'prof-piece-busy' };   // listed, on the road or standing in a home\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-stale-unsaid",
+    "file": "server-account/src/professions.js",
+    "old": "    if (Number(p.quality) !== quality) return { error: 'prof-temper-stale' };\n    const st = await storeOf",
+    "new": "    const st = await storeOf",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ],
+    "equivalent": true,
+    "why": "equivalent outside a race: the read before the batch says a piece of another quality first; this one says a temper made elsewhere between that read and the batch, which a test cannot stand between"
+  },
+  {
+    "name": "CRAFT4-svc-gold-short",
+    "file": "server-account/src/professions.js",
+    "old": "  return { error: st.own + st.bought + (st.gold ?? 0) >= cost.n ? 'stores-gold' : 'stores-short', material: cost.key };\n}",
+    "new": "  return { error: 'stores-short', material: cost.key };\n}",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-reforge-tier",
+    "file": "server-account/src/alchemy.js",
+    "old": "  if (!essence) return { error: 'prof-reforge' };\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-reforge-rank",
+    "file": "server-account/src/alchemy.js",
+    "old": "  if (rank < REFORGE_RANK) return { error: 'prof-rank' };\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-reforge-gold",
+    "file": "server-account/src/alchemy.js",
+    "old": "SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8 WHERE ${spendableSql('?1', '?2', '?9')} >= ?5`)",
+    "new": "SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8 WHERE 1`)",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-reforge-repeat",
+    "file": "server-account/src/alchemy.js",
+    "old": "  if (prior) return reforgeAnswer(db, player, prior, nowS, { repeat: true });\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-reforge-gold-word",
+    "file": "server-account/src/alchemy.js",
+    "old": "  return { error: st.own + st.bought + (st.gold ?? 0) >= essence ? 'stores-gold' : 'stores-short', material: ARCANE_ESSENCE.key };",
+    "new": "  return { error: 'stores-short', material: ARCANE_ESSENCE.key };",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-svc-routes",
+    "file": "server-account/src/service.js",
+    "old": "  '/v1/prof/temper', '/v1/prof/reforge',\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-piece-any-step",
+    "file": "src/systems/smithItems.js",
+    "old": "  if (!item || temperRefusal(item) || quality !== from + 1) return false;",
+    "new": "  if (!item || temperRefusal(item)) return false;",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-piece-refusal-open",
+    "file": "src/systems/smithItems.js",
+    "old": "  if (!item || temperRefusal(item) || quality !== from + 1) return false;",
+    "new": "  if (!item || quality !== from + 1) return false;",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-piece-no-remint",
+    "file": "src/systems/smithItems.js",
+    "old": "  const c = typeof item.provenance === 'string' && asMinted(item) ? readProductRecord(record) : null;",
+    "new": "  const c = null;",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-piece-remint-enchanted",
+    "file": "src/systems/smithItems.js",
+    "old": "  const c = typeof item.provenance === 'string' && asMinted(item) ? readProductRecord(record) : null;",
+    "new": "  const c = typeof item.provenance === 'string' ? readProductRecord(record) : null;",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-piece-wear-mended",
+    "file": "src/systems/smithItems.js",
+    "old": "  item.currentCondition = Math.max(0, Math.min(item.maxCondition, Math.round(item.maxCondition * share)));",
+    "new": "  item.currentCondition = item.maxCondition;",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-piece-weight-kept",
+    "file": "src/systems/smithItems.js",
+    "old": "    if (step.weight !== 1) item.weightInKg = Math.round(unitWeightInKg(item) * step.weight * 100) / 100;\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-piece-quality-kept",
+    "file": "src/systems/smithItems.js",
+    "old": "    item.quality = quality;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-piece-rarity-kept",
+    "file": "src/systems/smithItems.js",
+    "old": "for (const k of TEMPER_MINTED) { if (fresh[k] === undefined) delete item[k]; else item[k] = fresh[k]; }",
+    "new": "for (const k of TEMPER_MINTED) { if (fresh[k] !== undefined && k !== 'rarity' && k !== 'affixes') item[k] = fresh[k]; }",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-reforge-unknown",
+    "file": "src/systems/smithItems.js",
+    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-reforge-worn",
+    "file": "src/systems/smithItems.js",
+    "old": "  if (isEquipped(item)) return 'worn';\n  if (!reforgeableLines(item).includes(index)) return 'line';",
+    "new": "  if (!reforgeableLines(item).includes(index)) return 'line';",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-reforge-legendary",
+    "file": "src/systems/smithItems.js",
+    "old": "  if (!reforgeEssence(item?.rarity) || !reforgeableLines(item).length) return 'not';",
+    "new": "  if (!reforgeableLines(item).length) return 'not';",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-reforge-own-rng",
+    "file": "src/systems/smithItems.js",
+    "old": "reforgeAffix(item, index, seededRng(seed >>> 0)))",
+    "new": "reforgeAffix(item, index))",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-reforge-any-seed",
+    "file": "src/systems/smithItems.js",
+    "old": "(essenceReforgeRefusal(item, index) || !Number.isSafeInteger(seed) ? null",
+    "new": "(essenceReforgeRefusal(item, index) ? null",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-found-quality-unsaid",
+    "file": "src/net/recipeLaw.js",
+    "old": "return Number.isInteger(item?.quality) && item.quality > 1 && item.quality < MASTERWORK ? [QUALITY_NAMES[item.quality]] : [];",
+    "new": "return [];",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-book-reforge-no-store",
+    "file": "src/net/profBook.js",
+    "old": "        if (r?.ok) { applyStore(r.data?.store); applyTrack(r.data?.track); } else shutBy(r);\n        return r;\n      })();\n      return m.promise;\n    },\n    /** The smith's stock",
+    "new": "        return r;\n      })();\n      return m.promise;\n    },\n    /** The smith's stock",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-pages-temper-rank-open",
+    "file": "src/ui/profPages.js",
+    "old": "    const open = rank >= r.rank, have = book.held(cost.key) >= cost.n;",
+    "new": "    const open = true, have = book.held(cost.key) >= cost.n;",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-pages-temper-short-open",
+    "file": "src/ui/profPages.js",
+    "old": "    const open = rank >= r.rank, have = book.held(cost.key) >= cost.n;",
+    "new": "    const open = rank >= r.rank, have = true;",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-pages-reforge-rank-open",
+    "file": "src/ui/profPages.js",
+    "old": "  if (rank < REFORGE_RANK) { detail.append(el('p', 'px-note', ESSENCE_REFORGE_RANK_LINE)); return; }\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-pages-reforge-short-open",
+    "file": "src/ui/profPages.js",
+    "old": "      b.disabled = !!_essReforge.busy || !!short || have < n;",
+    "new": "      b.disabled = !!_essReforge.busy || !!short;",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-pages-no-loom",
+    "file": "src/ui/profPages.js",
+    "old": "  drawTemper(detail, rerender, kit, 'loom');   // CRAFT4: the tailor's\n",
+    "new": "",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-pages-reforge-index",
+    "file": "src/ui/profPages.js",
+    "old": "        const res = await /** @type {any} */ (p.essenceReforge)(pc, line.index);",
+    "new": "        const res = await /** @type {any} */ (p.essenceReforge)(pc, 0 * line.index + 1);",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT4-host-worn-offered",
+    "file": "src/scenes/world.js",
+    "old": "filter((it) => it && !isEquipped(it) && !temperRefusal(it) && !(typeof it.provenance === 'string' && pieceKept(it.provenance)))",
+    "new": "filter((it) => it && !temperRefusal(it) && !(typeof it.provenance === 'string' && pieceKept(it.provenance)))",
+    "tests": [
+      "test/craft4_temper.test.js"
+    ]
+  }
+]

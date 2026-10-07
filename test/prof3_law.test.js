@@ -88,7 +88,10 @@ test('PROF3 law: the XP - 20 x the tier, a quarter more than two tiers below the
   assert.deepEqual([makerName('  Silverthorn  '), makerName(''), makerName(null), makerName('x'.repeat(40)).length, makerName('Ta\u0007ra')], ['Silverthorn', null, null, MAKER_MAX, 'Tara']);
   assert.deepEqual(pieceLines({ quality: 2, maker: 'Ann', provenance: '0123456789abcdef' }), ['Fine', 'Made by Ann']);
   assert.deepEqual(pieceLines({ kitMetal: 5, provenance: '0123456789abcdef' }), ['Mends a quarter of a Mithril piece\'s condition, up to 75%, once'], 'KIT-CEILING');
-  assert.deepEqual(pieceLines({ quality: 2, maker: 'Ann' }), [], 'no provenance, no anvil made it');
+  // PIN MOVED (CRAFT4, Professions-Arc 41.7): a piece no anvil made says no maker - but a found piece a temper raised says
+  // its quality (Fine, Superior); the Standard it was says nothing
+  assert.deepEqual(pieceLines({ quality: 2, maker: 'Ann' }), ['Fine'], 'no provenance, no anvil made it - a temper\'s quality alone');
+  assert.deepEqual([pieceLines({ quality: 1 }), pieceLines({ quality: 3 }), pieceLines({ quality: 4 }), pieceLines({})], [[], ['Superior'], [], []]);
 });
 
 test('PROF3 law: the smith\'s stock - Cured Leather 4, Oak Plank 4, Pine Plank 2, Charcoal 2 Marks (twice each one\'s value), materials the Stores know, Cured Leather never withdrawn (PROF4: the planks and Charcoal are); a `stock` line burns', () => {
@@ -120,7 +123,10 @@ test('PROF3 law: the product record - p1, signed with the identity key, read by 
   assert.deepEqual(await verifyProductRecord(rec.replace(/^p1/, 'w1'), kp.publicKey, { subtle }), { ok: false, why: 'version' });
   for (const k of ['n', 'k', 't', 'o', 'd', 'b', 'w', 'y', 'e']) assert.equal(productRecordValid({ ...what, i: 1, [k]: 1 }), false, `a record never carries ${k}`);
   assert.equal(productRecordValid({ ...what, i: 1, q: 5 }), false);
-  assert.equal(productRecordValid({ ...what, i: 1, r: 'kit:iron', q: 0 }), false, 'a kit has no quality');
+  // PIN MOVED (CRAFT5, Professions-Arc 41.8): a kit's craft rolls a quality now (its reach) - a kit made before none
+  assert.equal(productRecordValid({ ...what, i: 1, r: 'kit:iron', q: 0 }), true, 'a kit its quality');
+  assert.equal(productRecordValid({ ...what, i: 1, r: 'kit:iron', q: 5 }), false, 'never past Masterwork');
+  assert.equal(productRecordValid({ ...what, i: 1, q: -1 }), false, 'a piece that takes a quality always carries one - only a kit made before none');
   assert.equal(productRecordValid({ ...what, i: 1, r: 'kit:iron', q: -1, m: null }), true);
   assert.equal(productRecordValid({ ...what, i: 1, p: '00FF00FF00FF00FF' }), false, 'lower-case hex');
   await assert.rejects(mintProductRecord({ ...what, r: 'staff:iron' }, null, { subtle, nowS: 1 }), /refused/);

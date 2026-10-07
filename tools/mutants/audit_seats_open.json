@@ -277,8 +277,8 @@
  {
   "name": "ASO-loom-note",
   "file": "src/ui/profPages.js",
-  "old": "if (_loom.family === 'clothing' && _loom.cloth === STANDARD_SILK.key) detail.append(",
-  "new": "if (_loom.family === 'clothing' && _loom.cloth === 'nothing') detail.append(",
+  "old": "if (r.cloth === STANDARD_SILK.key) box.append(",
+  "new": "if (r.cloth === 'nothing') box.append(",
   "tests": [
    "test/audit32_pages.test.js"
   ]

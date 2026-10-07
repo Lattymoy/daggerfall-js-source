@@ -126,7 +126,7 @@ test('AUDIT SEATS-2 S1: A CAPTURE RAISES THE PROJECTS WHOSE DAY HAS COME BEFORE 
   const s = await stood(t);
   const { sh, eo, a1, d1 } = await siegeWeek(s);
   // the defender a Fortifier (Masonry 100), on the defending roster
-  s.raw.prepare("INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'masonry', 100000, 'builder', 'fortifier', ?)").run(d1.id, d1.character, T0);
+  s.raw.prepare("INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'building', 100000, 'builder', 'fortifier', ?)").run(d1.id, d1.character, T0);   // PIN MOVED (CRAFT3): Masonry's choices are Building's track's
   // after the Turning (its own reads raise what is due by then): three projects, two due before the claim
   const due = START + 1000;
   s.fort(ANTICLERE, 'walls', 0, 1, { guild: sh.gid, standsAt: due, held: { 'stone:cut': 400, 'plank:oak': 100 } });
