@@ -56,8 +56,8 @@
   {
     "name": "TOAST-SPLIT-pin-form-hint-the-toasts",
     "file": "src/ui/noticeWindow.js",
-    "old": "form.append(el('p', 'notice-tip', 'A recruitment",
-    "new": "form.append(el('p', 'notice-hint', 'A recruitment",
+    "old": "form.append(el('p', 'notice-tip', BOARD_WORDS.pinTip));",
+    "new": "form.append(el('p', 'notice-hint', BOARD_WORDS.pinTip));",
     "tests": [
       "test/toast_split.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TOAST-SPLIT-notice-form-hint-the-toasts",
     "file": "src/ui/noticeWindow.js",
-    "old": "form.append(el('p', 'notice-tip', 'The server",
-    "new": "form.append(el('p', 'notice-hint', 'The server",
+    "old": "form.append(el('p', 'notice-tip', BOARD_WORDS.noticeTip));",
+    "new": "form.append(el('p', 'notice-hint', BOARD_WORDS.noticeTip));",
     "tests": [
       "test/toast_split.test.js"
     ]

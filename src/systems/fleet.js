@@ -21,7 +21,7 @@
 
 import { mintDeed, BOAT_DEED_TEMPLATE, BOAT_PARTS_TEMPLATE } from './comeSailAwayItems.js';
 import { HULL_NAMES, HULL_PRICES, VARIANT_NAMES, HULL_VARIANT_COUNTS } from './comeSailAwayBoat.js';
-import { checkName } from '../net/nameFilter.js';
+import { checkName, textCaught } from '../net/nameFilter.js';
 
 export const FLEET_SAVE_VENDOR = 'Fleet';
 export const FLEET_SAVE_VERSION = 1;
@@ -32,8 +32,10 @@ export const SHIP_NAME_MAX = 24;
 /**
  * A name a captain gives her, as it is kept and said: the printable ASCII of it (the wire's own band - net/wire.js
  * sanitizeName's), its runs of spaces closed, trimmed, SHIP_NAME_MAX at most; and allowed by the name filter every
- * player's name passes (net/nameFilter.js checkName). An empty name is her hull's again. Answers `{ ok, name, reason }`.
- * Pure.
+ * player's name passes (net/nameFilter.js checkName) - and AUDIT 657 T4, word by word as a rank's name is (textCaught):
+ * a ship's name is words ("Laden Gull"), checkName reads them as one, and a word the lists catch stood in one beside its
+ * others - said to every crew that sees her (comeSailAwayWire.js shipNameOf judges her name again by this). An empty name
+ * is her hull's again. Answers `{ ok, name, reason }`. Pure.
  */
 export function shipNameVerdict(raw) {
   let s = '';
@@ -41,6 +43,8 @@ export function shipNameVerdict(raw) {
   s = s.replace(/\s+/g, ' ').trim().slice(0, SHIP_NAME_MAX).trim();
   if (!s) return { ok: true, name: '', reason: null };
   const v = checkName(s);
+  const caught = v.ok ? textCaught(s) : null;
+  if (caught) return { ok: false, name: '', reason: `That name reads as "${caught}". Please pick another.` };
   return v.ok ? { ok: true, name: s, reason: null } : { ok: false, name: '', reason: v.reason ?? 'That name will not do.' };
 }
 /** What she is called where a line names her: her own name, else her hull's ("Small Ship 'I'"). */

@@ -59,7 +59,7 @@ import {
 } from '../../src/net/professionLaw.js';
 import {
   recipeById, recipeOpen, qualityOdds, rollQuality, qualitySteps, craftQuality, takesQuality, craftXp, craftCount,
-  makerName, FIRST_CRAFT_XP, firstCraftPays, firstCraftKey, recipeInputs, takesHeartwood, carriesMark, dyeOk,
+  makerMark, FIRST_CRAFT_XP, firstCraftPays, firstCraftKey, recipeInputs, takesHeartwood, carriesMark, dyeOk,
   masonXp,   // PROF11: the mason's bench's XP
   cookXp, dishHand,   // PROF9: a dish's XP and its cook's hand
   jewelHand, takesCracked, masterworkSpec, LAPIDARY,   // PROF10: the jeweller's hand, a Lapidary's cracked gem, the Master Jeweller's points
@@ -1128,7 +1128,7 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
   // bought unit spent or laid in between no longer misnames the kit
   const siege = r.kind === 'siege';
   const count = craftCount(r, specs[100], specs[50]);   // PROF9: a Cook's dish two
-  const maker = makerName(name);
+  const maker = makerMark(name);   // TEXT-F1: a mark the filter lets stand, or the piece unmarked
   const marked = carriesMark(r, quality, specs[100]) ? 1 : 0;
   const seed = Math.floor(dice(rand) * 4294967296);
   const provs = Array.from({ length: count }, () => provenanceId(rand));

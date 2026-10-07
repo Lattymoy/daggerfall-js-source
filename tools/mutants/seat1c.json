@@ -365,8 +365,8 @@
   {
     "name": "SEAT1c-tab-relinquish-any-rank",
     "file": "src/ui/seatTab.js",
-    "old": "      if (holder && data.mine?.guild === holder.guild.id && data.mine.rank === GUILD_RANK_MASTER) {",
-    "new": "      if (holder && data.mine?.guild === holder.guild.id) {",
+    "old": "        if (ruling && data.mine.rank === GUILD_RANK_MASTER) {",
+    "new": "        if (ruling) {",
     "tests": [
       "test/seat1c_client.test.js"
     ]

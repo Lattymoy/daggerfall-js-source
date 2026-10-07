@@ -40,10 +40,11 @@ import { bookTitle } from './books.js';   // IM1: GetBookTitle's legacy-data arm
 import { dfRandPick } from '../formats/textRsc.js';   // ROAD-A7: GetRandomTokens' dfRand draw
 import { hasArtifactEffect, hasArtifactSubtype, ARTIFACTS } from './artifactEffects.js';
 import { isRestItem, restItemLines } from './restItems.js'; import { isPortalStone, portalStoneLines } from './portalStone.js';   // REST6: the seven's cards; PORTAL1: and the Portal Stone's
+import { maskText } from '../net/nameFilter.js';   // TEXT-F1: a name a player typed, its words starred
 import { isWalletItem, WALLET_CARD_LINES } from './walletItem.js';   // WALLET1: the wallet's card
 import { isSurvivalItem, isCampingEquipment, isCampfireKit, isSkillet } from './survival/items.js';   // SURV5: the survival items' own info box
 import { isFood, foodOf, foodStage, foodSatiety, isWaterskin, waterIn, WATERSKIN_CAPACITY_KG, STAGE_WORDS } from './survival/food.js';   // ROAD-U: the identity DFU reads off the item's own record
-import { makerName, PROVENANCE_RE } from '../net/recipeLaw.js';   // AUDIT 30 C7: a maker's mark as the law writes it
+import { makerMark, PROVENANCE_RE } from '../net/recipeLaw.js';   // AUDIT 30 C7: a maker's mark as the law writes it
 
 /** The thirteen ids GetItemInfo names as constants (:750-762). */
 export const INFO_TEXT = Object.freeze({
@@ -504,10 +505,28 @@ export function potionRecipeIngredientNames(item) {
  *  UNIDENTIFIED item gives up its short name entirely and reads as the
  *  bare template, an ARTIFACT is its shortName and nothing else, and a
  *  BOOK "is handled differently": its name IS its title. */
+/** TEXT-F1 (2026-10-07, Mac: "Any human input elements need filtering"): AN ITEM'S OWN NAME AS IT MAY BE SHOWN. A name
+ *  a player gave a piece (the Item Maker's - DFU's own window, untouched) travels with it to every holder, every shelf
+ *  and every market, so its words are starred as a chat line's (net/nameFilter.js maskText) wherever it is named; a
+ *  game's own name reads through unchanged (every name the port carries - the pin's). Remembered, a few hundred at a
+ *  time: a pack names the same pieces every draw. */
+const _shownNames = new Map();
+export function shownItemName(item) {
+  const raw = item?.name;
+  if (raw == null) return raw;
+  const name = String(raw);
+  let shown = _shownNames.get(name);
+  if (shown === undefined) {
+    if (_shownNames.size >= 512) _shownNames.clear();
+    shown = maskText(name);
+    _shownNames.set(name, shown);
+  }
+  return shown;
+}
 export function resolveItemName(item) {
   const templateName = templateByIndex(item?.templateIndex)?.name ?? '';
   if (!itemIsIdentified(item)) return templateName;
-  const short = item?.name ?? templateName;
+  const short = shownItemName(item) ?? templateName;
   if (item?.artifact) return short;
   if (item?.group === 'Books') return bookTitle(item?.message ?? -1) ?? short;
   return templateName ? short.replaceAll('%it', templateName) : short;
@@ -572,7 +591,7 @@ function namePartsOf(item, { getQuest = null, differentiatePlantIngredients = tr
   // Longsword", the mark before the material, one name; PROF4: and a Master Joiner's furniture at any quality (`marked`)
   // AUDIT 30 C7: only a mark the law would write (a peer's, the wire's or an old save's text is not a name), on a piece
   // with a real provenance - the tooltip's and DECOR's own tests
-  if ((item?.quality === 4 || item?.marked === true) && typeof item.maker === 'string' && item.maker && makerName(item.maker) === item.maker
+  if ((item?.quality === 4 || item?.marked === true) && typeof item.maker === 'string' && item.maker && makerMark(item.maker) === item.maker
     && typeof item.provenance === 'string' && PROVENANCE_RE.test(item.provenance)) return { name: `${item.maker}'s ${material ? `${material} ` : ''}${base}`, material: '' };
   // PROF12: a Potent potion (an alchemy station's brew, net/alchemyLaw.js) is named so (9.3: "+25% magnitude, named so")
   if (isPotion(item)) return { name: `${Number.isInteger(item.potent) && item.potent > 0 ? 'Potent ' : ''}${potionMacroName(item) ?? base}`, material };
@@ -609,8 +628,8 @@ export function expandItemInfo(text, item, { name = null, soul = null, potion = 
   // ItemName in MacroHelper's own table (:62), so the title reaches
   // both macros through this one arm.
   const itemName = !identified ? (t?.name ?? '')
-    : item?.group === 'Books' ? (bookTitle(item?.message ?? -1) ?? name ?? item?.name ?? t?.name ?? '')
-      : (name ?? item?.name ?? t?.name ?? '') + soulTrapNameSuffix(item, enemyDisplayName);
+    : item?.group === 'Books' ? (bookTitle(item?.message ?? -1) ?? name ?? shownItemName(item) ?? t?.name ?? '')
+      : (name ?? shownItemName(item) ?? t?.name ?? '') + soulTrapNameSuffix(item, enemyDisplayName);
   const soulName = soul ?? (item?.trappedSoulType != null ? enemyDisplayName(item.trappedSoulType) : null);
   // IM1 - Potion() (DaggerfallUnityItemMCP.cs:230-241): the recipe by
   // the item's own key, "Unknown Powers" when the broker knows none
@@ -693,7 +712,7 @@ export const getBookAuthor = (id) => _bookAuthors.get(id) ?? null;
  *  skin's water, the gear's uses. Built tokens in the box's own row shape. */
 export function survivalInfoTokens(item) {
   const t = templateByIndex(item?.templateIndex);
-  const out = [{ text: item?.name ?? t?.name ?? '', center: true }, { text: `Weight: ${unitWeightInKg(item).toFixed(2)} kilograms`, center: true }];
+  const out = [{ text: shownItemName(item) ?? t?.name ?? '', center: true }, { text: `Weight: ${unitWeightInKg(item).toFixed(2)} kilograms`, center: true }];
   if (isFood(item)) {
     const s = foodStage(item);
     out.push({ text: `Nourishes for ${foodSatiety(item)} minutes${s > 0 ? ` (${STAGE_WORDS[s].toLowerCase()})` : ''}`, center: true });

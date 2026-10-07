@@ -768,8 +768,8 @@
  {
   "name": "SEAT1d-tab-levers-anyone",
   "file": "src/ui/seatTab.js",
-  "old": "        if (SEAT_LEVER_RANKS.includes(data.mine?.rank)) body.append(holdingNode(data.holding));",
-  "new": "        body.append(holdingNode(data.holding));",
+  "old": "      const levers = !!data.holding && SEAT_LEVER_RANKS.includes(data.mine?.rank);",
+  "new": "      const levers = !!data.holding;",
   "tests": [
    "test/seat1d_client.test.js"
   ]

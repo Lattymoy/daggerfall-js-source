@@ -971,7 +971,7 @@
  {
   "name": "CROWN2-tab-node",
   "file": "src/ui/seatTab.js",
-  "old": "      if (data.mine?.politics) body.append(politicsNode(data.mine.politics, SEAT_LEVER_RANKS.includes(data.mine.rank)));   // CROWN2\n",
+  "old": "      if (data.mine?.politics) mine.append(politicsNode(data.mine.politics, SEAT_LEVER_RANKS.includes(data.mine.rank)));   // CROWN2\n",
   "new": "",
   "tests": [
    "test/crown2_client.test.js"

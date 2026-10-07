@@ -261,7 +261,7 @@ test('MARKET-BAG: what the bag and the pack carry counts toward a silver listing
   const empty = createMarketTab(hostOf(book, { carried: () => new Map() }), ui());
   empty.state.view = 'mine';
   await empty.load(true);
-  assert.match(empty.body().textContent, /You have no materials to sell - in your Stores, your bag or your pack\./);
+  assert.match(empty.body().textContent, /You have no materials to sell\./);   // BOARD-UI (PIN MOVED): the words cut
 });
 
 test('MARKET-AUDIT U2, U3: a crafted piece is offered with its quality and wear; one past the read\'s first 64 is offered too - the service says which way it goes', async () => {
@@ -291,7 +291,7 @@ test('MARKET-AUDIT U5, U7: a failed read keeps the filters and the counters, its
   const tab = createMarketTab(hostOf(book, { weavers: [{ key: 'cloth:wool', marks: 3 }] }), ui());
   await tab.open();
   const node = tab.body();
-  assert.match(node.textContent, /The counting-house is not answering\. The market cannot be read now\.Try again/);
+  assert.match(node.textContent, /The market did not load\.Try again/);   // BOARD-UI (PIN MOVED)
   assert.ok([...node.querySelectorAll('select')].some((x) => x.getAttribute('aria-label') === 'Family'), 'the filters');
   assert.match(node.textContent, /The Weavers' counter/);
   assert.match(node.textContent, /a piece from Wayrest - waiting for another of your characters/);

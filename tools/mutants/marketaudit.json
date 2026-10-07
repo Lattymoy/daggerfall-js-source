@@ -119,10 +119,11 @@
   {
     "name": "MARKET-AUDIT-U4-shut-tab-vanishes",
     "file": "src/ui/noticeWindow.js",
-    "old": "(marketHost.book?.state?.open !== false || tab === 'market')",
-    "new": "(marketHost.book?.state?.open !== false)",
+    "old": "(marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market')",
+    "new": "(marketAtOpen || marketHost.book?.state?.open !== false)",
     "tests": [
-      "test/marketaudit.test.js"
+      "test/marketaudit.test.js",
+      "test/audit657_board.test.js"
     ]
   },
   {

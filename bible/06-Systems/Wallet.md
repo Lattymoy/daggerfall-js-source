@@ -113,3 +113,26 @@ once a mount, an answer that lands while a piece is picked kept for the way back
 hotbar, the hosts). Moved: `test/packPages.test.js` (the letter's page, the pages' list), `test/auditrealm.test.js`
 (the twelfth registrar, its bound row), `test/audit17f.test.js` and `test/settings.test.js` (DFU's bag, the wallet set
 aside). `tools/mutants/wallet1.json` (54, all dead).
+
+## WALLET-UI (2026-10-07, Mac: "Polish and organize the ingame wallet item for ease of readability") - the sheet a ledger
+
+The enhanced sheet said the wallet's currencies in the classic box's words, a centred paragraph each - "Gold: 1,240",
+"Silver: kept by your account online", "Letters of credit: 2, worth 12,000 gold" - spaced as paragraphs, nothing in a
+column, the first crowding the card's weight line. It is a LEDGER now (`src/systems/walletItem.js` walletLedger): two
+parts under their names, **Coin** (the purse's gold, the account's silver) and **In the wallet** (the letters of
+credit, the Deadlands Embers, the Welkynd Shards), a row a currency - its label left, its figure right, every figure in
+one column (`tabular-nums`) - an empty one's `none` dimmed, a silver not counted here giving its why in the figure's
+place, and a letter's worth on a line of its own under its count. The pieces it holds stand under the part that names
+them, as before (AUDIT 625 W3's rows).
+
+ONE SET OF WORDS: the classic box says the same rows as lines (walletLines: `${label}: ${figure, note}`), so its words
+are exactly what they were (the WALLET1 pin holds them unmoved) and the two skins cannot disagree. The four hosts are
+untouched.
+
+- **Pinned**: `test/wallet_ui.test.js` (2: the ledger and the classic lines it says; the sheet drawn through the
+  mounted pack, and its rules); `tools/mutants/wallet_ui.json` (7, all dead). PIN MOVED: `test/wallet1.test.js` (the
+  sheet's words read off the ledger's rows - its heads, each row's label and figure, the worth's note - where they read
+  the paragraphs). Re-aimed: wallet1.json's two lines' records onto the ledger (an unknown silver said as a count; an
+  empty holding said as nought). `tools/walletProbe.mjs` stands the real pack in Chromium at a desktop's width and a
+  phone's, the silver counted and kept online: the sheet inside the viewport, nothing spilling, a row for every
+  currency, the figures in one column.

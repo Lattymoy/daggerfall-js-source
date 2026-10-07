@@ -407,6 +407,10 @@ export function rewardStory({ town = 'town', gold, itemName }, h = 0) {
   return fillStory(pick(BOUNTY_REWARD_STORIES, h >>> 0), { town, gold, item: itemName || 'a small trinket' });
 }
 
+/** The boards by position - x, then z, then y - as `[box, index]`; a board with no box takes no place. */
+const boardOrder = (boards) => (Array.isArray(boards) ? boards : []).map((b, i) => [b?.box, i]).filter(([b]) => Array.isArray(b))
+  .sort(([a], [b]) => (a[0] - b[0]) || (a[2] - b[2]) || (a[1] - b[1]));
+
 /** Which of a town's boards are bounty boards (Mac, 2026-09-28: "always the half of the bounty boards in every city
  *  should share the same quests"): HALF of them, spread through the town - the boards sorted by position (x, then z,
  *  then y) and every other one taken, starting with the first. Two boards give one, four give two, five give two. A
@@ -416,12 +420,29 @@ export function rewardStory({ town = 'town', gold, itemName }, h = 0) {
  *  @returns {Set<number>} the indices into `boards` that are bounty boards */
 export function questBoardIndices(boards) {
   const out = new Set();
-  if (!Array.isArray(boards)) return out;
-  const order = boards.map((b, i) => [b?.box, i]).filter(([b]) => Array.isArray(b))
-    .sort(([a], [b]) => (a[0] - b[0]) || (a[2] - b[2]) || (a[1] - b[1]));
+  const order = boardOrder(boards);
   const want = Math.floor(order.length / 2);
   for (let k = 0; k < order.length && out.size < want; k += 2) out.add(order[k][1]);
   return out;
+}
+
+/** ONE-BOARD (2026-10-06, Mac: "Some towns have double notice boards"): THE TOWN'S ONE NOTICE BOARD. Online, every board
+ *  questBoardIndices left was a Notice Board, so a town of three boards or more stood two or three, each with its own
+ *  count, map mark and pennant. Now one: of the boards left, the one nearest `centre` (the town's middle on the ground,
+ *  [x, z]), the first by position on a tie or with no centre. The rest stay Daggerfall's rumour boards, as every board
+ *  is offline. Pure.
+ *  @param {Array<{box:number[]}>} boards pixel-local boxes, as questBoardIndices reads them
+ *  @param {Set<number>} [bounty] the indices questBoardIndices took
+ *  @param {number[]|null} [centre]
+ *  @returns {number} the Notice Board's index into `boards`, or -1 where every board is a bounty board */
+export function noticeBoardIndex(boards, bounty = questBoardIndices(boards), centre = null) {
+  let best = -1, near = Infinity;
+  for (const [box, i] of boardOrder(boards)) {
+    if (bounty.has(i)) continue;
+    const d = Array.isArray(centre) ? Math.hypot((box[0] + box[3]) / 2 - centre[0], (box[2] + box[5]) / 2 - centre[1]) : 0;
+    if (d < near) { near = d; best = i; }
+  }
+  return best;
 }
 
 // ── the ledger ────────────────────────────────────────────────────────
