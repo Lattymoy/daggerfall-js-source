@@ -38,7 +38,7 @@
   {
     "name": "AUDIT-GN-T4b-her-pictures-never-registered",
     "file": "src/scenes/comeSailAwayPool.js",
-    "old": "        registerGalleonArt(addVendorTextures);\n",
+    "old": "        art.register(addVendorTextures);\n",
     "new": "",
     "tests": [
       "test/auditgalleon_sea.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-GN-T4b-her-glass-never-glows",
     "file": "src/scenes/comeSailAwayPool.js",
-    "old": "if (sm.textureArchive === GALLEON_ARCHIVE) { const glow = galleonGlow(sm.textureRecord);",
-    "new": "if (false) { const glow = galleonGlow(sm.textureRecord);",
+    "old": "{ const glow = glowOf(sm.textureArchive, sm.textureRecord); if (glow)",
+    "new": "{ const glow = null; if (glow)",
     "tests": [
       "test/auditgalleon_sea.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "AUDIT-GN-T4b-her-glow-not-a-replacement",
     "file": "src/scenes/comeSailAwayPool.js",
-    "old": "toColor32(glow), { replacement: !pipeline.isClassicArt?.(GALLEON_ARCHIVE) }); }",
+    "old": "toColor32(glow), { replacement: !pipeline.isClassicArt?.(sm.textureArchive) }); }",
     "new": "toColor32(glow)); }",
     "tests": [
       "test/auditgalleon_sea.test.js"

@@ -65,7 +65,7 @@ import { createSeaShip, stepCaptain, quatOfYaw, forwardOfYaw, velocityOf, provok
 import { wrapAngle, multiply } from '../world/mat4.js';   // ONCRASH1: the port's one angle wrap; AUDIT GN-R5: a rig box turned with its boom
 import { createShipDamage, shotDamage, shotMen, ballMen, playerMen, SHIP_STATES, SINK_SECONDS, SINK_CLEAR, sinkAngles, sinkDepth, BRACE_TAKEN, FIRE_CHANCE, WRECKED_OARS, repairCost, STRUCK_AT } from '../systems/naval/navalDamage.js';
 import { createGunDeck, aimSolution, volleyLaunches, bearingOf, sideForBearing, toWorld, RIPPLE_S, READY_FLASH_S } from '../systems/naval/navalGunnery.js';
-import { hullBuild, firstBuildOf, batteryOf, batteriesOf, GUNS, classById, classFor, shipNames, crownOf, classLine, SIDES, SIDE_DIR, BARREL, NAVAL_FACTIONS, HULL, PLAYER_CREW_TOUGHNESS, playerBatteryWeight } from '../systems/naval/navalShips.js';
+import { hullBuild, firstBuildOf, batteryOf, batteriesOf, GUNS, classById, classFor, shipNames, crownOf, classLine, SIDES, SIDE_DIR, BARREL, NAVAL_FACTIONS, HULL, PLAYER_CREW_TOUGHNESS, shipBatteryWeight, MOD_BUILDS } from '../systems/naval/navalShips.js';
 import { createWaterGrid, errandFor, errandRng, dwellOf, offsetErrand, alongside, BERTH_SNAP_M, BERTH_WAY } from '../systems/naval/shipLife.js';   // SHIP-LIFE
 import { createHarbourBook, HARBOUR_RETRY_S } from '../systems/naval/harbourBook.js';   // HARBOUR-BOOK: the harbours, the world's and mine
 import { hash32 } from '../world/spawnedDungeons.js';
@@ -489,7 +489,9 @@ export function rigBoxesOf(boat) {
   const lp = mo.localPosition ?? [0, 0, 0];
   const at = (p) => [p[0] - lp[0], p[1] - lp[1], p[2] - lp[2]];   // the root's frame in her mesh object's
   const hangs = (k) => { const s = boat.Sails?.[k]; return !s || (s.activeSelf && !animatorOf(s)?.GetBool('Stowed')); };
-  return rig.filter((box) => /** @type {any} */ (box).sail == null || hangs(/** @type {any} */ (box).sail)).map((box) => {
+  // SHIPS-2: a box of another sail plan than hers is not her canvas (her Booms and Sails are her own plan's)
+  const plan = (box) => /** @type {any} */ (box).variant == null || /** @type {any} */ (box).variant === (boat.variant ?? 0);
+  return rig.filter((box) => plan(box) && (/** @type {any} */ (box).sail == null || hangs(/** @type {any} */ (box).sail))).map((box) => {
     const [mn, mx] = box, b = /** @type {any} */ (box);
     if (b.obb) return orientedBox(multiply(m, mat4FromQuatPos(quatAngleAxis(b.obb.pitch, [1, 0, 0]), at(b.obb.c)), new Float32Array(16)), [0, 0, 0], b.obb.h);
     const c = at([(mn[0] + mx[0]) / 2, (mn[1] + mx[1]) / 2, (mn[2] + mx[2]) / 2]), h = [(mx[0] - mn[0]) / 2, (mx[1] - mn[1]) / 2, (mx[2] - mn[2]) / 2];
@@ -803,7 +805,7 @@ export function createNavalHost(deps) {
       return solution.landings.length;
     }
     const seed = u32();
-    const weight = isMine(shooter) ? playerBatteryWeight(hull, solution.side) : 1;   // GALLEON-WEIGHT: my galleon's broadside, never a captain's
+    const weight = shipBatteryWeight(hull, solution.side, isMine(shooter));   // GALLEON-WEIGHT: my galleon's broadside, never a captain's galleon's (SHIPS-2: a captain's carrack's, the mod's seven)
     const launches = volleyLaunches(heeled(solution, pose, boatOfShooter(shooter)), seed, { skill, carry: pose.velocity, weight });
     const id = u32();
     shots.fireVolley({ id: String(id), shooter, launches, resolve, side: solution.side });
@@ -828,7 +830,7 @@ export function createNavalHost(deps) {
     // the lay the shooter used, not a range this client would pick
     const g = GUNS[solution.gun];
     solution.elevation = clamp(v.elevation, g.minEl * NAVAL_DEG, g.maxEl * NAVAL_DEG);
-    const weight = v.shooter < 0 ? playerBatteryWeight(v.hull, v.side) : 1;   // GALLEON-WEIGHT: a peer's own galleon's broadside, never a captain's
+    const weight = shipBatteryWeight(v.hull, v.side, v.shooter < 0);   // GALLEON-WEIGHT: a peer's own galleon's broadside, never a captain's galleon's (SHIPS-2: a captain's carrack's)
     const launches = volleyLaunches(heeled(solution, pose, boat), v.seed, { skill: v.skill, carry: v.vel, weight });
     shots.fireVolley({ id: `${owner}:${v.id}`, shooter, launches, resolve: false, side: v.side, owner, since: (v.age ?? 0) / 1000 });   // AUDIT NAV1 (online #15): as far along as she is
   }
@@ -1954,8 +1956,9 @@ export function createNavalHost(deps) {
     return !!where().cityLights && carriesLanterns(e.boat, e.ship.hull) && !runsDark({ faction: e.ship.cls.faction, mode: e.ship.mode, afloat: e.ship.damage.state === SHIP_STATES.afloat });
   }
   /** AUDIT WK-N4: whether a boat carries lanterns to be lit by - a built one by her own (Come Sail Away's carrack prefab
-   *  has none, so she was seen as a lit ship while she sailed black), one not yet built by her hull's. */
-  const carriesLanterns = (boat, hull) => (boat ? (boat.Lights?.length ?? 0) > 0 : hull !== HULL.Carrack);
+   *  has none, so she was seen as a lit ship while she sailed black), one not yet built by her hull's (SHIPS-2: Mac's
+   *  carrack carries seven - the mod's own, standing in for her, none). */
+  const carriesLanterns = (boat, hull) => (boat ? (boat.Lights?.length ?? 0) > 0 : !(hull === HULL.Carrack && hullBuild(hull) === MOD_BUILDS[HULL.Carrack]));
   // ── contacts the captains see ────────────────────────────────────────────────────────────────────────────────────
   // SHIP-WATCH: each with whether she shows a light (`lit`) - by night a captain sees a lit one far, a dark one close
   function contacts() {

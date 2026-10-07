@@ -336,13 +336,20 @@ test('AUDIT HOLDINGS Q1: the gangway runs square to her side at her waist and to
     const f = quayFrame(b, h.harbour.hull), x0 = f.halfWidth + QUAY_GAP;
     const [fx, fz] = sceneToQuay(f, g.foot[0], g.foot[2]), [hx, hz] = sceneToQuay(f, g.head[0], g.head[2]);
     assert.ok(Math.abs(fz - hz) < 1e-9, `hull ${hull}: square to her`);
-    if (hull >= 2) {
+    // PIN MOVED (SHIPS-2, 2026-10-07): hull 1 is Mac's Tiny Ship - her gunwale 2.25 m over the sea, over the quay's kerb
+    // (1.75), so her plank climbs from the deck as a ship's (onto her cap's outer edge: quays.js GANGWAY_SIDE)
+    if (hull >= 1) {
       // PIN MOVED (GALLEON-HOLDINGS): a ship's climbs from the deck at GANGWAY_SLOPE - but a head too high for that on the
       // quay (Mac's galleon's at 6.7 m wants 8.8 m of run, and the quay is 4.5 m deep) stops GANGWAY_BACK short of its back
       // and climbs steeper: hers alone of the hulls that dock
+      // (SHIPS-2: a head as low as the Tiny Ship's, 0.66 m over the deck, wants 1.14 m of run - its foot GANGWAY_CLEAR in
+      // from the face, the plank gentler)
       const slope = Math.atan2(g.head[1] - g.foot[1], fx - hx) / DEG, back = Math.abs(fx - (x0 + QUAY_WIDTH - GANGWAY_BACK)) < 1e-9;
-      assert.equal(back, hull === 2, `hull ${hull}: ${back ? 'stopped at' : 'clear of'} the quay's back`);
-      assert.ok((back ? slope > GANGWAY_SLOPE : Math.abs(slope - GANGWAY_SLOPE) < 1e-6) && Math.abs(g.foot[1] - seaY - QUAY_DECK_UP) < 1e-9, `hull ${hull}: up from the deck at GANGWAY_SLOPE, or steeper from GANGWAY_BACK (${slope.toFixed(2)} degrees)`);
+      const clear = Math.abs(fx - (x0 + GANGWAY_CLEAR)) < 1e-9;
+      // (SHIPS-2: Mac's carrack's entry port too, its sill 7.94 m up)
+      assert.equal(back, hull === 2 || hull === 4, `hull ${hull}: ${back ? 'stopped at' : 'clear of'} the quay's back`);
+      assert.equal(clear, hull === 1, `hull ${hull}: ${clear ? 'held at' : 'past'} GANGWAY_CLEAR`);
+      assert.ok((back ? slope > GANGWAY_SLOPE : clear ? slope < GANGWAY_SLOPE : Math.abs(slope - GANGWAY_SLOPE) < 1e-6) && Math.abs(g.foot[1] - seaY - QUAY_DECK_UP) < 1e-9, `hull ${hull}: up from the deck at GANGWAY_SLOPE, steeper from GANGWAY_BACK or gentler from GANGWAY_CLEAR (${slope.toFixed(2)} degrees)`);
     } else {
       assert.ok(Math.abs(fx - x0) < 1e-9 && Math.abs(g.foot[1] - seaY - QUAY_DECK_UP - QUAY_KERB_H) < 1e-9 && g.head[1] < g.foot[1], `hull ${hull}: down from the kerb's edge`);
     }

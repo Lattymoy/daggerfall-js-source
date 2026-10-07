@@ -16,8 +16,8 @@ import { CAPSULE_RADIUS } from '../src/player/motor.js';
 import { MELEE_DISTANCE } from '../src/characters/enemyMotor.js';
 import * as ships from '../src/systems/naval/navalShips.js';
 import { createComeSailAwayPool } from '../src/scenes/comeSailAwayPool.js';
-import { MODELS, ctxFor } from './csaScene.mjs';
-import { sea, readyPool } from './navalSea.mjs';
+import { MODELS, ctxFor, modCtxFor } from './csaScene.mjs';
+import { sea, readyPool, modShipsPool } from './navalSea.mjs';
 
 const { hullBuild, HULL } = ships;
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -33,6 +33,10 @@ const line = (start) => { const i = WORLD.indexOf(start); assert.ok(i >= 0, `lif
 const geometry = (c) => (c.m_Mesh?.mesh ? MODELS.geometry(c.m_Mesh.mesh) : c.m_Mesh?.builtin ? BUILTIN_COLLIDER_MESHES[c.m_Mesh.builtin] : null);
 /** A hull stood at rest - her colliders, her mesh node's frame. */
 const standing = (hull, variant = 0) => { const b = new Boat(hull, variant); spawnBoat(b, ctxFor({ position: [0, 0, 0], rotation: [0, 0, 0, 1] })); return b; };
+/** SHIPS-2: a hull stood as the mod built it - hull 4 the mod's own Carrack, the game's when the new carrack's model will
+ *  not load (test/navalSea.mjs modShipsPool): her cargo doors, her forecastle's stair and her five doors, the laws
+ *  below were found on and still hold her. */
+const standingMod = (hull, variant = 0) => { const b = new Boat(hull, variant); spawnBoat(b, modCtxFor({ position: [0, 0, 0], rotation: [0, 0, 0, 1] })); return b; };
 /** A deck's cells' centres, `[x, y, z]` in her frame. */
 const cellsOf = (d) => { const out = []; for (let j = 0; j < d.y.length; j++) if (!Number.isNaN(d.y[j])) { const i = j % d.nx, k = (j - i) / d.nx; out.push([d.minX + (i + 0.5) * d.cell, d.y[j], d.minZ + (k + 0.5) * d.cell]); } return out; };
 const fmt = (p) => p.map((v) => v.toFixed(2)).join(', ');
@@ -187,8 +191,11 @@ test('AUDIT GALLEON-2 DK2: THE LEASH KEEPS A BODY ON THE LEVEL IT LAST STOOD ON 
     assert.ok(starts > 50, `${HULL_NAMES[hull]}: her standable starts (${starts})`);
     assert.equal(bad, 0, `${HULL_NAMES[hull]}: ${bad} of ${walks} walks set more than a step off the floor they walk - first ${first}`);
   }
-  // the Carrack's forecastle stair: across its top treads, 5 cm a frame, the feet on the tread
-  const d = pool.deckOf(HULL.Carrack, 0), F = facesOf(HULL.Carrack), main = mainLevel(d);
+  // the Carrack's forecastle stair: across its top treads, 5 cm a frame, the feet on the tread. SHIPS-2: the mod's own
+  // Carrack's (Mac's carrack has no stair over her deck - her open deck one level, walked above)
+  const mod = await modShipsPool();
+  try {
+  const d = mod.pool.deckOf(HULL.Carrack, 0), F = facesOf(HULL.Carrack, standingMod(HULL.Carrack)), main = mainLevel(d);
   const treadAt = (x, z, near) => { let best = NaN; for (const y of standable(F, x, z)) if (Math.abs(y - near) < 0.3 && !(Math.abs(best - near) < Math.abs(y - near))) best = y; return best; };
   let walks = 0, dropped = 0, first = '';
   for (let z = 11.8; z <= 14.6; z += 0.1) {
@@ -233,6 +240,7 @@ test('AUDIT GALLEON-2 DK2: THE LEASH KEEPS A BODY ON THE LEVEL IT LAST STOOD ON 
     const y0 = d.heightAt(x, z, main), got = leashOne(d, F.boat).step([x, y0, z], [x, y0 - drop, z]);
     assert.ok(Math.abs(y0 - main) < 0.01 && Math.abs(got[1] - main) < 0.01, `fallen ${drop} m through her deck at (${x}, ${z}): set at ${fmt(got)}`);
   }
+  } finally { mod.restore(); }
 });
 
 test('AUDIT GALLEON-2 DK2: NEVER ONTO ANOTHER PIECE\'S FLOOR, WITHIN A FLIGHT\'S RISE OR PAST IT - two pieces of a deck beside each other across a 0.8 m ledge and no tread (past the motors\' step, within FLIGHT_JOIN): a body on either pressed over the ledge is put back on its own piece\'s edge at its own level, never stepped up or down onto the other (AUDIT GN-D1\'s law: the leash\'s threshold alone would let it) (mutants: any piece\'s floor in the cell, the piece filter unread, her open deck read in every piece)', () => {
@@ -256,8 +264,13 @@ test('AUDIT GALLEON-2 DK2: NEVER ONTO ANOTHER PIECE\'S FLOOR, WITHIN A FLIGHT\'S
 // ── DK1: a shut cover stood on ────────────────────────────────────────────────────────────────────────────────────
 
 test('AUDIT GALLEON-2 DK1: A SHUT COVER IS STOOD ON - D7 made a part that opens no floor, so the Carrack\'s two cargo doors (4 x 5 m mid her main deck, spawned shut) were a hole to standing aboard and to the leash: 600 of the 1575 points on them read ASHORE by the host\'s aboard() (none on the base or the galleon commits), and a boarder pressing across them at a player standing there was held 2.48 m off him (MELEE_DISTANCE 2.25); now her parts\' upward faces as they stand shut are baked beside her deck (`ajar`): standing aboard reads them, and the leash lets a body be within a step of one - her walk, her spots and a landing still never on one (D7), a foe gone down the open hatchway still set back at its edge (mutants: the covers unbaked, unread by aboard, unread by the leash, their margin unbaked, the leash\'s band a metre)', async () => {
+  // SHIPS-2: the cargo doors are the mod's own Carrack's (test/navalSea.mjs modShipsPool - hull 4 as the game stands it
+  // when the new carrack's model will not load); Mac's carrack has none (her hatchways open companions under her houses)
+  const mod = await modShipsPool();
+  try {
   for (const [hull, what, x0, x1, z0, z1, y, total] of [[HULL.Carrack, 'the Carrack\'s cargo doors', -2.01, 1.99, 1.0, 6.0, 3.64, 1575], [HULL.SmallShip, 'the galleon\'s fore cover', -1.25, 1.25, 2.95, 6.34, 6.44, 560], [HULL.SmallShip, 'the galleon\'s aft cover', -1.25, 1.25, -6.34, -2.95, 6.44, 560]]) {
-    const h = await sea({ hull });
+    if (hull === HULL.SmallShip) mod.restore();
+    const h = await sea(hull === HULL.Carrack ? { hull, pool: mod.pool } : { hull });
     h.runtime.sailing = false;   // moored, off her helm (D3's own setup)
     const m = h.boat.MeshObject.worldMatrix();
     let n = 0, ashore = 0, firstA = '';
@@ -270,7 +283,7 @@ test('AUDIT GALLEON-2 DK1: A SHUT COVER IS STOOD ON - D7 made a part that opens 
     assert.equal(ashore, 0, `${what} shut: ${ashore} of ${n} read ashore - first ${firstA}`);
   }
   const pool = await readyPool();
-  const d = pool.deckOf(HULL.Carrack, 0), boat = standing(HULL.Carrack), main = mainLevel(d);
+  const d = mod.pool.deckOf(HULL.Carrack, 0), boat = standingMod(HULL.Carrack), main = mainLevel(d);
   // a boarder pressing across her shut cargo doors at a player standing on them
   const player = [0.09, 3.64, 2.8], body = leashOne(d, boat);
   body.step([3.0, main, 2.8], [3.0, main, 2.8]);
@@ -293,6 +306,7 @@ test('AUDIT GALLEON-2 DK1: A SHUT COVER IS STOOD ON - D7 made a part that opens 
     const got = leashOne(d, boat).step([3.0, main, 3.5], [0.4, yy, 3.5]);
     assert.ok(Math.abs(got[1] - main) < 0.01 && d.walkable(got[0], got[2]) && !inHatch(got[0], got[2]), `fallen to ${yy} down her cargo hatch: set at ${fmt(got)}`);
   }
+  } finally { mod.restore(); }
 });
 
 // ── DK3: her doors ────────────────────────────────────────────────────────────────────────────────────────────────
@@ -326,9 +340,13 @@ test('AUDIT GALLEON-2 DK3: HER DOORS ARE WAYS IN - a door\'s leaf is baked a wal
   // through every door of hers at her main deck or over it - the galleon's castle door, the Carrack's five - each way, a
   // body walking straight through at the leaf's middle from a floor of hers 1.5 m one side to 1.5 m the other, 5 cm a
   // frame (each held at the doorway's near margin, 2.6-3.0 m short of 2 m beyond it)
+  // SHIPS-2: the Carrack's five are the mod's own Carrack's (test/navalSea.mjs modShipsPool); Mac's carrack's one door
+  // opens onto her aft companion, down to her gun deck - under her main deck, where no deck is (AUDIT NAV2 F34)
   let doors = 0;
+  const mod = await modShipsPool();
+  try {
   for (const hull of [HULL.SmallShip, HULL.Carrack]) {
-    const dk = pool.deckOf(hull, 0), bt = standing(hull), lv = mainLevel(dk);
+    const dk = (hull === HULL.Carrack ? mod.pool : pool).deckOf(hull, 0), bt = hull === HULL.Carrack ? standingMod(hull) : standing(hull), lv = mainLevel(dk);
     for (const leaf of leavesOf(bt)) {
       if (leaf.y1 - leaf.y0 < 1 || leaf.y0 < lv - DECK_STEP) continue;   // a door's leaf at her main deck or over it
       const x = (leaf.x0 + leaf.x1) / 2, zc = (leaf.z0 + leaf.z1) / 2;
@@ -344,6 +362,7 @@ test('AUDIT GALLEON-2 DK3: HER DOORS ARE WAYS IN - a door\'s leaf is baked a wal
       }
     }
   }
+  } finally { mod.restore(); }
   assert.equal(doors, 12, 'the galleon\'s castle door and the Carrack\'s five, each both ways');
   // her deck the bake it was: her great cabin a piece of its own, her castle's doorway no deck, her walk never in
   assert.ok(d.pieceAt(0, -14, main) > 0, 'her great cabin a piece of its own');

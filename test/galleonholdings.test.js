@@ -47,7 +47,10 @@ test('GALLEON-HOLDINGS: every docking hull\'s gangway meets her - its head no mo
     const s = await standing(hull);
     const [sx, sy] = gangwaySide(hull);
     for (const side of [1, -1]) {
-      const x = s.sideAt(side, s.main + 0.05, 0);
+      // SHIPS-2: a boat whose gunwale stands well over her deck (Mac's Tiny Ship's, 1.35 m) takes the plank on her cap -
+      // met at its own height, her side turned in there from her flare's widest (2.0 m out at her deck, 1.89 at her cap)
+      const at = hull === HULL.LargeBoat ? sy - 0.05 : s.main + 0.05;
+      const x = s.sideAt(side, at, 0);
       if (x == null || !(sx - x > 0 && sx - x <= OFF_SIDE)) bad.push(`hull ${hull} ${side > 0 ? 'starboard' : 'port'}: her side ${x?.toFixed(2)} m out, the head ${sx}`);
     }
     if (hull >= HULL.SmallShip && Math.abs(sy - s.main - 0.5) > 0.01) bad.push(`hull ${hull}: the head ${sy} over her main deck ${s.main.toFixed(3)}`);
@@ -101,7 +104,7 @@ test('GALLEON-HOLDINGS: the mod\'s own galleon keeps her own gangway while she s
   assert.deepEqual(heads, [[5.45, 6.7], [7.65, 4.14]]);
 });
 
-test('GALLEON-HOLDINGS: her Carpenter beside her hatch on her own deck - Mac\'s galleon\'s hatch stands to port of her open fore hatchway (AUDIT GN-D7), so he stands to port of it, facing it (asked in the hole, he stood across it 3.5 m off); every other hull\'s to starboard of it as HOLDINGS stood him', async () => {
+test('GALLEON-HOLDINGS: her Carpenter beside her hatch on her own deck - Mac\'s galleon\'s hatch stands to port of her open fore hatchway (AUDIT GN-D7), so he stands to port of it, facing it (asked in the hole, he stood across it 3.5 m off) - and Mac\'s carrack\'s, beside her mizzen\'s partner; every other hull\'s to starboard of it as HOLDINGS stood him', async () => {
   const pool = await readyPool();
   pool.destroyAll();
   const roster = Array.from({ length: 8 }, (_, i) => ({ mobile: [MOBILE.Warrior, MOBILE.Archer, MOBILE.Monk][i % 3], gender: i % 2 ? 'female' : 'male' }));
@@ -111,7 +114,10 @@ test('GALLEON-HOLDINGS: her Carpenter beside her hatch on her own deck - Mac\'s 
     const deck = pool.deckOf(hull, 0);
     const life = createCrewLife({ deck, roster, seed: 3 });
     life.step(0.05, { roles, lookout: 3 });
-    const h = life.hatch, c = life.postOf(2), port = hull === HULL.SmallShip;
+    // PIN MOVED (SHIPS-2, 2026-10-07): Mac's carrack's hatch (her main deck's cell nearest its middle) stands beside her
+    // mizzen's partner, to starboard of her deck there - her Carpenter to port of it, as the galleon's
+    const h = life.hatch, c = life.postOf(2), port = hull === HULL.SmallShip || hull === HULL.Carrack;
+    if (hull === HULL.Carrack) assert.ok(!deck.walkable(h[0] + 1.1, h[2]) && deck.walkable(h[0] - 1.1, h[2]), `the Carrack's hatch beside her mizzen's partner: ${h}`);
     const d = Math.hypot(c.at[0] - h[0], c.at[2] - h[2]);
     if (!deck.walkable(c.at[0], c.at[2]) || d > 1.2) bad.push(`hull ${hull}: ${d.toFixed(2)} m off her hatch`);
     if (Math.sign(c.at[0] - h[0]) !== (port ? -1 : 1)) bad.push(`hull ${hull}: to ${c.at[0] < h[0] ? 'port' : 'starboard'} of it`);

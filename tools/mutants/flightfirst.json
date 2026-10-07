@@ -1,0 +1,137 @@
+[
+  {
+    "name": "FLIGHT-FIRST-young-roll-the-old-ones",
+    "file": "src/systems/revenant.js",
+    "old": "youngRevenant(entity) ? REVENANT_FLEE_CHANCE_YOUNG : REVENANT_FLEE_CHANCE_REVENANT",
+    "new": "REVENANT_FLEE_CHANCE_REVENANT",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-FIRST-young-line-the-old-ones",
+    "file": "src/systems/revenant.js",
+    "old": "(youngRevenant(entity) ? REVENANT_FLEE_HEALTH_YOUNG : REVENANT_FLEE_HEALTH)",
+    "new": "REVENANT_FLEE_HEALTH",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-FIRST-the-wills-rank-read-as-young",
+    "file": "src/systems/revenant.js",
+    "old": "!!entity?.revenant && !willMatters(entity.revenant.rank);",
+    "new": "!!entity?.revenant;",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-FIRST-young-chance-moved",
+    "file": "src/systems/revenant.js",
+    "old": "export const REVENANT_FLEE_CHANCE_YOUNG = 0.8;",
+    "new": "export const REVENANT_FLEE_CHANCE_YOUNG = 0.6;",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-FIRST-young-line-moved",
+    "file": "src/systems/revenant.js",
+    "old": "export const REVENANT_FLEE_HEALTH_YOUNG = 0.35;",
+    "new": "export const REVENANT_FLEE_HEALTH_YOUNG = 0.3;",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-FIRST-pace-moved",
+    "file": "src/systems/revenant.js",
+    "old": "export const REVENANT_FLEE_PACE = 2;",
+    "new": "export const REVENANT_FLEE_PACE = 1.6;",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-FIRST-the-pace-unpassed",
+    "file": "src/systems/revenant.js",
+    "old": "f.ai.flee(feet, REVENANT_FLEE_SECONDS, REVENANT_FLEE_PACE);",
+    "new": "f.ai.flee(feet, REVENANT_FLEE_SECONDS);",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-FIRST-the-line-back-to-20",
+    "file": "src/systems/revenant.js",
+    "old": "export const REVENANT_ESCAPE_NEAR = 12;",
+    "new": "export const REVENANT_ESCAPE_NEAR = 20;",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-FIRST-the-motors-walk-unpaced",
+    "file": "src/characters/enemyMotor.js",
+    "old": "this._walkStep(dt, this.fleePace);",
+    "new": "this._walkStep(dt);",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-FIRST-the-pace-kept-past-a-later-run",
+    "file": "src/characters/enemyMotor.js",
+    "old": "this.fleePace = pace > 0 ? pace : 1;",
+    "new": "if (pace > 1) this.fleePace = pace;",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-FIRST-the-step-kept",
+    "file": "src/characters/enemyMotor.js",
+    "old": "    this._tacDir = null;   // FLIGHT-FIRST",
+    "new": "    // FLIGHT-FIRST",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-FIRST-the-will-read-off-every-fight",
+    "file": "tools/tellDuel.mjs",
+    "old": "WILL_WEAK: { kneel: at(ref, 'trade', true).will, held: at(ref, 'trade', true).will >= T.KNEEL_WEAK },",
+    "new": "WILL_WEAK: { kneel: at(ref, 'trade', true).kneel, held: at(ref, 'trade', true).kneel >= T.KNEEL_WEAK },",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-FIRST-a-fled-fight-counted-as-ended",
+    "file": "tools/tellDuel.mjs",
+    "old": "const ended = rows.filter((x) => x.end === 'knelt' || x.end === 'tore');",
+    "new": "const ended = rows;",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-FIRST-the-weight-read-off-the-running-cells",
+    "file": "tools/tellDuel.mjs",
+    "old": "  const verdict = feudVerdict(duel, ranks, weight);",
+    "new": "  const verdict = feudVerdict(duel, ranks);",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  },
+  {
+    "name": "FLIGHT-FIRST-the-weights-cells-running",
+    "file": "tools/tellDuel.mjs",
+    "old": "...revenantCell({ weapon: 'Longsword', mode, rank, flight: false }, fights) });\n  const verdict",
+    "new": "...revenantCell({ weapon: 'Longsword', mode, rank }, fights) });\n  const verdict",
+    "tests": [
+      "test/flightfirst.test.js"
+    ]
+  }
+]

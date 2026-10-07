@@ -26,7 +26,7 @@ Two deeds make one:
 | Deed | How | Seam |
 |---|---|---|
 | **Slew** | Its blow takes the player's last health (melee or an arrow) | The struck seam marks the attacker (`combat/formulas.js`), the damage door takes the mark, the hurt tells `registerPlayerBlowLanded` (`systems/sigilSetPowers.js`). Confirmed a microtask later, after `hurtPlayer` is done, so a death Stendarr's mercy (`setAvoidDeathHook`) undoes makes no revenant. |
-| **Fled** | Under 20% of its health for the first time, it wins a roll (5%; 15% for a revenant already) and runs. Out of reach before its run ends, it has escaped. | `scenes/exteriorFoes.js` update: `revenantFleeHealth` and `rollRevenantFlee`, then `ai.flee(playerFeet, 8 s)` (`characters/enemyMotor.js`). While fleeing it does nothing else. At the end of its run or 45 m off, `escapeFoe` removes it with no corpse and no kill. |
+| **Fled** | Under 20% of its health for the first time (35% for a revenant of rank 1 or 2), it wins a roll (5%; 80% for a revenant of rank 1 or 2, 15% from rank 3, where its will takes over - FLIGHT-FIRST, section 38) and runs, at twice its walk. Out of reach before its run ends, it has escaped. | `scenes/exteriorFoes.js` update: `revenantFleeHealth` and `rollRevenantFlee`, then `ai.flee(playerFeet, 8 s)` (`characters/enemyMotor.js`). While fleeing it does nothing else. At the end of its run or 45 m off, `escapeFoe` removes it with no corpse and no kill. |
 
 A kill no blow names (a spell's burn, a lingering effect's round, a poison's tick) goes to the foe whose harm last
 reached the player (**REVENANT-HARM**, `systems/harmMark.js`, a leaf):
@@ -43,7 +43,7 @@ while running, its walk still drawn. It is retired through the quest pool's own 
 revenant closes there too.
 
 **One flee law** for every pool: `revenantFleeStep` answers each frame with `start`, `run`, `escape`, `cornered` or
-nothing. A foe chased down, its run spent within 20 m (`REVENANT_ESCAPE_NEAR`), is **cornered**: it turns and fights to
+nothing. A foe chased down, its run spent within 12 m (`REVENANT_ESCAPE_NEAR`; 20 m until FLIGHT-FIRST), is **cornered**: it turns and fights to
 the end and never runs again ("Then I take you with me!"). Only out of reach does it escape. The step is asked only of a
 foe running or under the line, so nothing is made per foe per frame.
 
@@ -179,9 +179,11 @@ Every number is a named constant at the top of `systems/revenant.js`:
 | `REVENANT_MIN_LEVEL` | 3 |
 | `REVENANT_MAX` | 5 |
 | `REVENANT_MAX_RANK` | 5 |
-| `REVENANT_FLEE_HEALTH` | 0.2 |
-| `REVENANT_FLEE_CHANCE` / `_REVENANT` | 0.05 / 0.15 |
+| `REVENANT_FLEE_HEALTH` / `_YOUNG` | 0.2 / 0.35 (FLIGHT-FIRST: ranks 1-2) |
+| `REVENANT_FLEE_CHANCE` / `_YOUNG` / `_REVENANT` | 0.05 / 0.8 (ranks 1-2) / 0.15 (rank 3 and up) |
 | `REVENANT_FLEE_SECONDS` | 8 |
+| `REVENANT_FLEE_PACE` | 2 (its run, a share of its walk - FLIGHT-FIRST) |
+| `REVENANT_ESCAPE_NEAR` | 12 (20 until FLIGHT-FIRST) |
 | `REVENANT_ESCAPE_DISTANCE` | 45 |
 | `REVENANT_RETURN_MIN/MAX_MINUTES` | 1440 / 4320 |
 | `REVENANT_RETURN_CHANCE` | 0.5 |
@@ -571,3 +573,49 @@ and a rank 5 is about two and two-thirds times a rank 1's fight. Modelling the f
 in its last stand while running away kept running, untargeted, until its run was spent - it now turns and fights its
 last stand where it rose. The law: `bible/12-Enhanced-AI/Feud-Arc.md`, the FEUD HARNESS record.
 
+
+## 38. Flight first (FLIGHT-FIRST, 2026-10-07)
+
+Mac: "revenants often can easily be killed and recruited at rank 1 and player death advances their rank. Player death
+shouldnt be the common way of revenant growth, it should be more common for revenants to flee instead of being easily
+captured."
+
+**Measured before** (`tools/tellDuel.mjs`, a Longsword, 300 fights a rank): ranks 1 and 2 knelt in every fight. One in
+ten broke and ran, and every one of those was brought down as it ran - not one flight in the whole measure escaped, at
+any rank. So the one deed that ranked a young revenant up was killing the player. Three causes:
+
+- **Its roll**: 15% for a revenant already, at a fifth of its health - and one blow often carried it past the line
+  without a roll at all.
+- **Its run**: the flee walked it at its own walk (4.5-6 m/s), and a player runs at 8.1 m/s at Speed and Running 50. A
+  chase always caught it.
+- **A fault in the motor**: the flee kept the brain's last step (TACT2's ring, a back-step - `_tacDir`), and the walk
+  reads that step before its own way, so a foe that broke while circling ran on round the ring at the ring's pace, in
+  reach. Half of all flights ran that way.
+
+**Now**:
+
+- A revenant **under its will's rank** (ranks 1 and 2 - `revenantFeud.js WILL_RANK`; from rank 3 its will tears it away
+  at the killing blow, section 19) breaks at **35%** of its health (`REVENANT_FLEE_HEALTH_YOUNG`) on an **80%** roll
+  (`REVENANT_FLEE_CHANCE_YOUNG`). An elite or a champion not yet a revenant keeps Mac's "very small chance" (5% at a
+  fifth); a revenant from rank 3, 15% at a fifth.
+- Every run of the flee law is at **twice its walk** (`REVENANT_FLEE_PACE`; the motor's `flee(from, seconds, pace)` -
+  the watch's fright and a scattered band still walk). An Orc runs 10 m/s: faster than a player at Speed and Running 50,
+  slower than one at about 9.5 m/s and up.
+- The flee **drops the brain's step**: it runs straight away.
+- A run spent within **12 m** of the player (`REVENANT_ESCAPE_NEAR`, 20 before) is cornered; past it, it escaped. A
+  run's lead on a chaser at Speed and Running 50 is about 17 m - a flight that got away, not one run down.
+
+**Measured after** (the same, 1,000 fights a rank): rank 1 escapes in 70% of fights and kneels in 30%, rank 2 68% and
+32%; against a Dagger about 80% escape, against a Warhammer about 60% (150 fights a rank). A fast runner (Speed and Running 90) runs every flight down;
+a bow or a spell can bring it down as it runs. From rank 3 about one fight in eight now ends in a real flight.
+
+**The balance targets** (`12-Enhanced-AI/Feud-Arc.md` section 28) all hold. The will's three now read the fights its
+will decided - knelt of knelt and torn away; a flight that got away decided nothing - and a rank's weight is read off
+ranks 1 and 5 fought never running (a young revenant's flight ends most of its fights, so its time to the end is no
+measure of how hard it is to bring down): the will by its weakness 100%, by dodging 93.1%, by trading 11.5%; rank 5
+over rank 1, 2.67 trading and 2.64 dodging.
+
+Killing the player still ranks a revenant up; it is no longer nearly the only way. Pinned: `test/flightfirst.test.js`
+(6), `tools/mutants/flightfirst.json` (15 dead). PIN MOVED: `test/feudharness.test.js` - its flight and rank 5's
+rally chase as a fast runner, and a rank 3 run down is cornered (its last stand comes before a kneel mid-run);
+`test/audittell.test.js` - the flee's signature.

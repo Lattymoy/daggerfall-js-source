@@ -28,7 +28,7 @@ import {
   SERPENT_FIGHTERS_MAX, SERPENT_ABSENT_RETIRE_MS, ARENA_R, MAEL_ORBIT_R, RAM_V, ramLen, BREACH_LEAD_MS, SERPENT_COIL_PASS, SERPENT_STAND_R, SERPENT_IDLE_RETIRE_MS, SERPENT_TARGET_R, serpentWreck, serpentShareWanted, COIL_WORD_EARLY_MS, serpentAtkFrame,
   SERPENT_SAY_AHEAD_MS,   // AUDIT SHIPS B5: an end's swim said ahead
 } from '../src/net/serpentBrain.js';
-import { HULL, HULL_BUILDS, GUNS } from '../src/systems/naval/navalShips.js';
+import { HULL, HULL_BUILDS, GUNS, playerBatteryWeight } from '../src/systems/naval/navalShips.js';
 import { orientedBox, segmentBoxEntry } from '../src/systems/naval/navalBallistics.js';
 import { MINUTES_PER_DAY } from '../src/systems/gameDate.js';
 
@@ -269,8 +269,9 @@ test('SERPENT1 brain: A SHIP\'S CLAIM SETS BOTH WHAT IT BRINGS AND WHAT IT MAY D
   assert.deepEqual(SHIP_REF, [0, 3.6, 10, 13, 12]);   // AUDIT SERPENT T6: the Large Boat's swivels are uncrewed (reload x1.4)
   assert.equal(SHIP_REF.length, HULL_BUILDS.length, 'a reference for every hull');
   assert.equal(refOf(-1), 0); assert.equal(refOf(99), 0); assert.equal(clampHull(2.5), -1);
-  // the reference is a hull's broadside a second, both sides in turn - the guns' own numbers
-  const side = (h) => (h.broadside.length * GUNS[h.gun].hull) / GUNS[h.gun].reload;
+  // the reference is a hull's broadside a second, both sides in turn - the guns' own numbers (SHIPS-2: a player's
+  // broadside's weight with them - a player's galleon's the mod's six, his carrack's the mod's seven: playerBatteryWeight)
+  const side = (h) => (h.broadside.length * GUNS[h.gun].hull * playerBatteryWeight(h.hull, 'starboard')) / GUNS[h.gun].reload;
   for (const hl of [HULL.SmallShip, HULL.Carrack]) assert.ok(Math.abs(SHIP_REF[hl] - side(HULL_BUILDS[hl]) * 1.15) < 2.5, `hull ${hl}`);
   const fastest = (SERPENT_TTK_S - SERPENT_BUCKET_DEPTH_X) / SERPENT_BUCKET_RATE_X;
   for (const hl of [HULL.LargeBoat, HULL.SmallShip, HULL.LargeGalley, HULL.Carrack]) {
