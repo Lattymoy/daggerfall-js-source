@@ -131,6 +131,71 @@ test('EOTB-IL: the walk clock is LoopIdleBillboard’s - frameTimer > frameTime 
   assert.equal(d.state().shown.table, 'Move', 'the third frame paints it');
 });
 
+test('SPRITE-FLICKER (Mac: "very finicky when moving and then switching to run at angles"): a repaint queued after a turn paints the turn - three frames after the choice the screen shows it, and goes on showing it', async () => {
+  // THE LAW, over one recorded run (one turn in it): from DELAYED_FRAMES after UpdateOrientation chose its last view, the
+  // view on screen is that view - the turn's own repaint landed then, and every one queued after it carries the choice
+  const settles = (rows) => {
+    const c = rows.at(-1).chosen;
+    let j = rows.length - 1;
+    while (j > 0 && rows[j - 1].chosen === c) j--;
+    return rows.slice(j + 3).every((r) => r.shown === c);
+  };
+  const row = (b) => ({ chosen: b.state().orientationChosen, shown: b.state().shown.orientation, table: b.state().shown.table });
+  const show = (rows) => rows.map((r) => `${r.table[0]}${r.chosen}${r.shown}`).join(' ');
+  // the camera straight behind (-z): a run forward is the back (4), forward and right together is 3
+  const run = (strafe) => walk({ motion: { forward: 1, strafe, standing: false, running: true, speed: 6, grounded: true, height: 1.8 } });
+  // THE WALK CLOCK: the strafe pressed at every phase of the eighth-of-a-second run clock and the tenth-of-a-second
+  // orientation clock - its repaint queued inside the turn's three frames painted the old view back
+  const clock = [];
+  for (let k = 0; k < 24; k++) {
+    const { b } = await liveBody();
+    ticks(b, 30 + k, run(0));
+    assert.equal(b.state().shown.orientation, 4);
+    const rows = [];
+    for (let i = 0; i < 40; i++) { b.tick(1 / 60, run(1)); rows.push(row(b)); }
+    assert.equal(rows.at(-1).shown, 3, `phase ${k}: it turns`);
+    if (!settles(rows)) clock.push(`phase ${k}: ${show(rows)}`);
+  }
+  assert.deepEqual(clock, [], 'the walk clock repaints the view chosen, not the one on screen');
+  // A START AT AN ANGLE: the turn and the Idle-to-Move change can be queued in one LateUpdate, the change last
+  const start = [];
+  for (let k = 0; k < 12; k++) {
+    const { b } = await liveBody();
+    ticks(b, 30, run(0)); ticks(b, 30 + k, still());
+    assert.equal(b.state().shown.table, 'Idle');
+    assert.equal(b.state().shown.orientation, 4);
+    const rows = [];
+    for (let i = 0; i < 30; i++) { b.tick(1 / 60, run(1)); rows.push(row(b)); }
+    assert.equal(rows.at(-1).table, 'Move');
+    assert.equal(rows.at(-1).shown, 3, `phase ${k}: it walks off facing the walk`);
+    if (!settles(rows)) start.push(`phase ${k}: ${show(rows)}`);
+  }
+  assert.deepEqual(start, [], 'the table change repaints the view chosen');
+  // THE MIRROR REVERT (Update, IL_3cd1-IL_3d18) queues one too: a swing under Mirror, the weapon still out (the sprite
+  // turns with the camera), and the camera swung to the right side at every frame about the revert
+  const revert = [];
+  try {
+    for (let k = 0; k < 14; k++) {
+      const { b } = await liveBody();
+      setModSetting(MOD, 'Graphics.AttackStrings', 1);   // Mirror
+      setModSetting(MOD, 'Graphics.MirrorTime', 1);
+      b.toggle(true, false);
+      ticks(b, 12, still({ sheathed: false }));
+      b.tick(1 / 60, still({ sheathed: false, attacking: true }));
+      for (let i = 0; i < 240 && b.state().clip; i++) b.tick(1 / 60, still({ sheathed: false }));
+      assert.equal(b.state().mirrorCount, 1);
+      ticks(b, 44 + k, still({ sheathed: false }));   // the revert falls about a second on: this sweeps the turn across it
+      assert.equal(b.state().shown.orientation, 4);
+      const rows = [];
+      for (let i = 0; i < 30; i++) { b.tick(1 / 60, still({ sheathed: false, cameraPos: [2, 1.5, 0] })); rows.push(row(b)); }
+      assert.equal(b.state().mirrorCount, 0, `phase ${k}: reverted`);
+      assert.equal(rows.at(-1).shown, 2, `phase ${k}: it turns`);
+      if (!settles(rows)) revert.push(`phase ${k}: ${show(rows)}`);
+    }
+  } finally { _resetModSettings(); }
+  assert.deepEqual(revert, [], 'the mirror revert repaints the view chosen');
+});
+
 test('EOTB-IL: the footfall is the picture’s - frames 0 and 2 of the four-frame walk, once each, at twice the volume, and a landing', async () => {
   const { b } = await liveBody();
   const fell = [];
