@@ -34,7 +34,8 @@
 // "More of this" is that map standing taller in the world: the kernel's
 // own small-heightmap term (`low`, 8 x the bicubic byte) lifts each
 // sample by reliefLift(low) - nothing under the median land, then a
-// smooth rise that stands the highest ground nearly twice as tall. Only
+// smooth rise to 0.9 x that term itself, which stands the highest real
+// ground about half as tall again (the Dragontail summit 1.7 -> 2.7 km). Only
 // that term is lifted: the large heightmap's hills and the ground noise
 // keep DFU's scale, so the massifs grow and the footing under a walker
 // is the footing DFU gives (a lifted ground noise is 25-metre spikes).

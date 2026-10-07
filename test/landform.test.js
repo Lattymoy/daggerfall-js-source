@@ -121,7 +121,7 @@ test('LANDFORM1: at or under the knee a height is DFU\'s to the bit, and over it
   assert.ok(tried > 0, 'the river crosses the coast band');
 });
 
-test('LANDFORM1: the small heightmap is lifted - nothing under the median land, then a smooth rise to nearly twice as tall at the top; the ring takes the same lift', () => {
+test('LANDFORM1: the small heightmap is lifted - nothing under the median land, then a smooth rise to 1.9 x its own term at the top; the ring takes the same lift', () => {
   const { from, full, gain } = LANDFORM_DIALS.relief;
   assert.deepEqual([from, full, gain], [200, 900, 0.9]);
   assert.equal(reliefLift(LANDFORM_KNEE + from), 0, 'nothing at the start of the rise');
