@@ -42,7 +42,7 @@ const at = (s, x, y) => s[x * H + y];
 
 test('LANDFORM1: at or under the knee a height is DFU\'s to the bit, and over it it stays over it - the sea, the beach and every tile class stand where they stood, a road run down to the shore included', () => {
   assert.equal(LANDFORM_KNEE, 40 + BEACH_JITTER, 'the beach line with its jitter (terrainTiles.js generateTileData)');
-  assert.ok(LANDFORM_FLOOR > LANDFORM_KNEE);
+  assert.equal(LANDFORM_FLOOR - LANDFORM_KNEE, 0.5, 'half a unit over the knee');   // PIN MOVED (AUDIT LANDFORMS II J4): it was `>`, which +5 and +0.05 both passed
   let under = 0, over = 0;
   for (const [px, py] of [[99, 200], [100, 200], [101, 200], [102, 200], [103, 200], [100, 199], [100, 300], [101, 300], [102, 300], [103, 300], [105, 300]]) {
     const dfu = generateSamples(woods, px, py);
@@ -145,7 +145,7 @@ test('LANDFORM1: nothing stands over the ceiling - the shaper takes DFU\'s heigh
   assert.equal(dfuTop, 1, 'DFU stands the glitch at its ceiling');
   assert.ok(Math.abs(top * UNIT - LANDFORM_CEILING) < 1e-3, `the landforms stand it at theirs (${(top * UNIT).toFixed(2)})`);
   assert.ok(Math.abs(roadAtCorner * UNIT - LANDFORM_CEILING) < 1e-3, 'a road graded over it is graded to the same - DFU\'s macro as DFU stands it');
-  assert.ok(worst < 1e-3, `and the lift the re-stand puts on is still exactly what the landforms added (${worst})`);
+  assert.ok(worst < 1e-3, `and the relief's lift is reliefLift of the kernel's own small-heightmap term, the glitch's pixels too (${worst})`);   // AUDIT LANDFORMS II J9: the re-stand's field is the cuts' too since B2 - this is the lift alone
   assert.ok(Math.abs(reliefByteHeight(255) - 255 * 8 - reliefLift(127 * 8)) < 1e-9, 'the ring takes the same lift');
 });
 

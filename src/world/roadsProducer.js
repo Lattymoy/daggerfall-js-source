@@ -108,16 +108,27 @@ export function basicRoadsPathsPoint(net, x, y) {
   return (net.roads[i] | net.tracks[i]) & 0xff;
 }
 
-export async function loadModRoads(fetchFn = globalThis.fetch, urls = MOD_ROADS) {
+/** AUDIT LANDFORMS II G3: how long one of his files may take to arrive (each asked in turn) before the ask counts as
+ *  failed. A fetch has no timeout of its own: one that never answered never settled, so the page stood roadless for the
+ *  session - offline the port's own network never stood in, and online C3's retry never asked again. */
+export const MOD_ROADS_FETCH_TIMEOUT_MS = 30000;
+
+export async function loadModRoads(fetchFn = globalThis.fetch, urls = MOD_ROADS, timeoutMs = MOD_ROADS_FETCH_TIMEOUT_MS) {
   if (!fetchFn) return null;
   try {
     const out = {};
     for (const [k, url] of Object.entries(urls)) {
-      const r = await fetchFn(url);
-      if (!r || !r.ok) return null;
-      const b = new Uint8Array(await r.arrayBuffer());
-      if (b.length !== MAP_WIDTH * MAP_HEIGHT) return null;   // the wrong file, or a truncated one, is no file
-      out[k] = b;
+      // raced, so a fetch that ignores its signal times out too; the file's body inside the same span
+      const ac = typeof globalThis.AbortController === 'function' ? new globalThis.AbortController() : null;
+      let timer = null;
+      const late = new Promise((_, no) => { timer = setTimeout(() => { ac?.abort(); no(new Error(`${url}: no answer in ${timeoutMs} ms`)); }, timeoutMs); });
+      try {
+        const r = await Promise.race([fetchFn(url, ac ? { signal: ac.signal } : undefined), late]);
+        if (!r || !r.ok) return null;
+        const b = new Uint8Array(await Promise.race([r.arrayBuffer(), late]));
+        if (b.length !== MAP_WIDTH * MAP_HEIGHT) return null;   // the wrong file, or a truncated one, is no file
+        out[k] = b;
+      } finally { clearTimeout(timer); }
     }
     let n = 0; for (const v of out.roads) if (v) n++;
     return { ...out, source: 'basic-roads', stats: { source: 'basic-roads', roadPixels: n } };

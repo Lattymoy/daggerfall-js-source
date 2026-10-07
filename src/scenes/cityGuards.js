@@ -1707,6 +1707,22 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     }
   }
 
+  /** AUDIT LANDFORMS II G1: THE GROUND MOVED UNDER A PIXEL - a rebuild the reference never makes (the road network
+   *  landing, which the landforms cut metres into the land; a late World of Daggerfall pack; the gate's clearing) - and
+   *  a body lying in its box [x0, x1) x [z0, z1) rides it by `dy(x, z)` (world.js's publish): its marker, which is where
+   *  the body is drawn and searched (the lens's feetOf reads it). The living walk on whatever is there. */
+  function groundMoved(x0, z0, x1, z1, dy) {
+    for (const c of corpseBatches) {
+      if (!(c.pos[0] >= x0 && c.pos[0] < x1 && c.pos[2] >= z0 && c.pos[2] < z1)) continue;
+      const d = dy(c.pos[0], c.pos[2]);
+      if (!d) continue;
+      c.pos[1] += d;
+      renderer.destroyBillboardBatch(c.batch);
+      c.batch = renderer.createBillboardBatch(c.archive, c.record, c.size, [c.pos]);
+      c.batch.frame = 0;   // FA1 slice 3: a REBUILT batch is a new object - it needs the frame too
+    }
+  }
+
   /** AUDIT 26 F217: the watch's half of the SAVE ENVELOPE - the same
    *  law as the encounter pool's (exteriorFoes.js snapshotWorld):
    *  natives in, dead guards out. A quickload during a pursuit
@@ -1764,7 +1780,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     releaseGuardBatch(g);
     g.dead = true;   // no `corpse` - a removed guard is destroyed, not killed
   }
-  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, frighten, guardSeesPlayer, update, offsetAll, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, playerSpares, playerSparesPerson, activeCount, summonDefenders, standDefender, dismissDefenders, defenderCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, pileBody: (key) => pileBody(corpseEntryFor(guards, key, 'guardCorpse', corpseLens)), snapshotWorld, restoreWorld, removeGuard, handleAttackFromPlayer,   // LOOT-STACK: a body as the loot window's tab
+  return { guards, spawnCityGuards, makeNpcGuardsIntoEnemies, anyWatchStanding, frighten, guardSeesPlayer, update, offsetAll, groundMoved, collectPixel, clearLive, resolvePlayerHit, resolveCivilianHit, playerSpares, playerSparesPerson, activeCount, summonDefenders, standDefender, dismissDefenders, defenderCount, lootTargets, hoverName, hoverContents, liveTargets, liveHoverName, takeLoot, pileBody: (key) => pileBody(corpseEntryFor(guards, key, 'guardCorpse', corpseLens)), snapshotWorld, restoreWorld, removeGuard, handleAttackFromPlayer,   // LOOT-STACK: a body as the loot window's tab
     /** RR2: PlayerEntity.SpawnCityGuard(position, direction) (PlayerEntity.cs:678-694) for a caller
      *  outside the watch's own call - the ONE watchman minted where a walker stood, facing their
      *  way, hostile to the player. Resolves to the guard record (or null when the world moved on). */

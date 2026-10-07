@@ -138,8 +138,8 @@
   {
     "name": "LANDFORM-river-over-road",
     "file": "src/world/landforms.js",
-    "old": "  Object.freeze({ key: 'rivers', dial: LANDFORM_DIALS.river, water: true }),\n  Object.freeze({ key: 'tracks', dial: LANDFORM_DIALS.track, water: false }),\n  Object.freeze({ key: 'roads', dial: LANDFORM_DIALS.road, water: false }),",
-    "new": "  Object.freeze({ key: 'tracks', dial: LANDFORM_DIALS.track, water: false }),\n  Object.freeze({ key: 'roads', dial: LANDFORM_DIALS.road, water: false }),\n  Object.freeze({ key: 'rivers', dial: LANDFORM_DIALS.river, water: true }),",
+    "old": "  Object.freeze({ key: 'rivers', dial: LANDFORM_DIALS.river, water: true }),\n  Object.freeze({ key: 'tracks', dial: LANDFORM_DIALS.track, water: false, ford: true }),   // AUDIT LANDFORMS II J1\n  Object.freeze({ key: 'roads', dial: LANDFORM_DIALS.road, water: false }),",
+    "new": "  Object.freeze({ key: 'tracks', dial: LANDFORM_DIALS.track, water: false, ford: true }),   // AUDIT LANDFORMS II J1\n  Object.freeze({ key: 'roads', dial: LANDFORM_DIALS.road, water: false }),\n  Object.freeze({ key: 'rivers', dial: LANDFORM_DIALS.river, water: true }),",
     "tests": [
       "test/landform.test.js"
     ]

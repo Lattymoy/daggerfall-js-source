@@ -2160,6 +2160,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   const grassNormalScratch = [0, 1, 0];   // GRASS-LIT2: the slope's answer, one array for every blade (the placer copies it)
   let gustPhase = 0, gustWind = [0, 0];   // AUDIT MEADOW1: the gust wave's phase the crossings carried, and the wind it was last drawn under (systems/windDrive.js gustClock)
   let hccGroundMoved = null;   // DISC20-C: the horse-cart pool's re-stand over a pixel just built - bound once the pool is (the boot's first pixel builds before it)
+  let campsGroundMoved = null;   // AUDIT LANDFORMS II G1: the camps' ride on a rebuilt pixel's ground - bound once the pool is, as the carts'
   // WATER1: the water surface - enhanced skin, its own switch, `?water=off`
   // the kill door. A draw only: nothing here tells the game where water is.
   const waterOn = waterSwitchOn();   // FT6: the one composition (render/waterSurface.js)
@@ -3738,6 +3739,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** AUDIT DW-F: a pixel the port rebuilds (a season's re-skin, the roads, a WoD sweep - rebuilds DFU never makes) keeps its
    *  rubble: pixel key -> the list, batches and all, adopted by the entry that stands next (pixel-local, so it is where it lay). */
   const _dwRubbleCarry = new Map();
+  /** AUDIT LANDFORMS II G1: ...and the GROUND a pixel the port rebuilds under the live pools stood on: pixel key -> its
+   *  samples as they were, until the entry that stands next publishes and the pools ride the ground's move (the carry
+   *  below, beside DISC20-C's carts). The last few rebuilds' alone - one never published (walked away from) goes with
+   *  the oldest. */
+  const _groundBefore = new Map();
   /** SpawnRubbleBatches' Spawn for one terrain: FilterPlacements now (its count is the C#'s), the batch stood when its pictures are warm. */
   function dwSpawnRubble(entry, placements) {
     const kept = dwDecor.filter(entry, placements);
@@ -4508,7 +4514,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // EV4: the far ring builds strided with its skirt; the kernel's
     // ghost rows keep edge normals central differences either way.
     const stride = strideFor(px, py);
-    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads, paths, wodAverages } = await terrainGen.generate({
+    const { samples, tilemap, positions, normals, tilemapBytes, avg, nature, withRoads, paths, wodAverages, beach } = await terrainGen.generate({
       px, py, stride, tilemap: seedTilemap, locationRect, hasLocation: !!dfLocation, climateType: climateBase,
       // WOD2: the smoothing arms run in the kernel; FOREST1: and whether each pick is a SITE the woods close round (a camp, a
       // fort, a ruin - not a rock field or a mountain, AUDIT FOREST1 F1) and its whole footprint (its objects, F7)
@@ -5390,6 +5396,7 @@ export async function bootWorld(canvas, renderer, params, status) {
       _lookV: homeLookRead,   // HOME-LOOK (AUDIT)
       homeFrames: pixelHomeFrames, homeRegion: dfLocation?.regionIndex ?? 0,   // HOME-YARD: each building's frame, and the town's region (a yard's pieces are paid there)
       seatAnchors, _boardSplit: pixelBoardSplit, festivalAnchors, festivalLanterns,   // SEAT1a (above); FESTIVAL-STAGE (above)
+      beach: beach ?? null,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel with the row on - where a gathering node asks the beach line
       px, py, terrain, water, tilemapTex, tilemap, groundArchive, models, windmills, batches, flatAnims, texRemap, lights: pixelLights, hearths: pixelHearths, animals: pixelAnimals, springs: pixelSprings, skyBase: climate.skyBase, samples, natureCount: nature.length,
       tilemapBytes, season,   // GR1: the placer reads the tiles and the season
       townClimate: townClimateBase,   // DECOR-OUTDOOR: the climate its town's buildings wear - a yard's pieces wear it too (scenes/homeYards.js)
@@ -5474,6 +5481,28 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (hccGroundMoved) {
       const t = state.pixelTranslation(px, py);
       hccGroundMoved(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE);
+    }
+    // AUDIT LANDFORMS II G1/G2: A REBUILD CARRIES WHAT LIES ON ITS GROUND. The road network's landing (ROADS 25) cuts the
+    // landforms' roads and channels metres into a pixel built before it - 14% of the network's samples move, up to 30 m
+    // on the Menevia escarpment - and a late World of Daggerfall pack or the gate's clearing flattens one. The pools'
+    // piles, dropped lights, camps and bodies stayed on the ground as it was, hung over a cut or buried in a fill, and
+    // the next save kept them so (written and read through the landed field). Each rides the ground's own move under it,
+    // the new samples less the old (TERRAIN-SCALE1's law); and the player the hold held over this pixel, on their feet,
+    // rides it too - put back where they stood, they fell the cut (28.7 m, 118 HP, at the worst); a fall under way is
+    // their own (FALL-KEPT).
+    const groundWas = _groundBefore.get(key);
+    if (groundWas) {
+      _groundBefore.delete(key);
+      const now = built.get(key).samples, t = state.pixelTranslation(px, py);
+      const groundIn = (smp, x, z) => {   // heightAt's own read: bilinear over the pixel's samples, pixel-local
+        const fx = Math.max(0, Math.min(TERRAIN_SIZE, x - t[0])) / heightCell, fz = Math.max(0, Math.min(TERRAIN_SIZE, z - t[2])) / heightCell;
+        const ix = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fx)), iz = Math.min(HEIGHTMAP_DIMENSION - 2, Math.floor(fz)), sx = fx - ix, sz = fz - iz;
+        const at = (a, b) => smp[a * HEIGHTMAP_DIMENSION + b];
+        return (at(ix, iz) * (1 - sx) * (1 - sz) + at(ix + 1, iz) * sx * (1 - sz) + at(ix, iz + 1) * (1 - sx) * sz + at(ix + 1, iz + 1) * sx * sz) * worldHeight;
+      };
+      const moved = (x, z) => groundIn(now, x, z) - groundIn(groundWas, x, z);
+      for (const ride of [droppedLoot.groundMoved, droppedTorches.groundMoved, campsGroundMoved, exteriorFoes.groundMoved, cityGuards.groundMoved]) ride?.(t[0], t[2], t[0] + TERRAIN_SIZE, t[2] + TERRAIN_SIZE, moved);
+      if (_seasonHoldKey === key && walkMode && playerSpawned && player.grounded) player.pos[1] += moved(player.pos[0], player.pos[2]);
     }
     if (homeTown) _homeLookV = -1;   // HOME-LOOK (AUDIT): a town's pixel stood after the registry moved is painted by the next refresh
     // AUDIT-TO1 B3: the second hook. BOOT-TDZ2: THE MOD IS ASKED FIRST,
@@ -5753,6 +5782,11 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (oceanHoles) oceanHoles.destroyed(p);   // OH-B: and its pit (the terrain's OceanHole_Pit child)
     if (collectLoose) for (const r of [...(_dwRubble.get(p) ?? [])]) dwFreeRubble(r);   // DW-E5: the sunken loot's rubble goes with an unload (Port-Ledger: DFU pools the terrain with its children)
     else if (_dwRubble.has(p)) { _dwRubbleCarry.set(key, _dwRubble.get(p)); _dwRubble.delete(p); }   // AUDIT DW-F: ...and outlives the port's own rebuilds, as the piles do
+    if (!collectLoose && p.samples) {   // AUDIT LANDFORMS II G1: the ground the rebuild will carry the pools off
+      _groundBefore.delete(key);
+      if (_groundBefore.size >= 64) _groundBefore.delete(_groundBefore.keys().next().value);
+      _groundBefore.set(key, p.samples);
+    }
     if (collectLoose && _dwGuards.has(key)) { for (const h of _dwGuards.get(key)) h.destroy(); _dwGuards.delete(key); }   // AUDIT DW-F: and the wrecks' guards, their terrain's children
     if (p.dwTerrain) { renderer.destroyWaterSurface(p.dwTerrain); p.dwTerrain._dead = true; p.dwTerrain = null; }   // DW-C: the clip's own index set and VAO (the ground's buffers it read went above)
     if (p.personBatches) for (const b of p.personBatches.values()) renderer.destroyBatch(b);   // T2
@@ -7065,6 +7099,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   });
   hcc.setPeerLook((id) => (_hiddenPeers.has(id) ? 'hidden' : (_veils.get(id) ?? null)));   // AUDIT (pre-merge) I-B: a concealed owner's team is concealed with it (last frame's word - the pool steps before the peers sync)
   hccGroundMoved = hcc.groundMoved;   // DISC20-C
+  campsGroundMoved = camps.groundMoved;   // AUDIT LANDFORMS II G1
   const hccRuntime = createHorseCartRuntime({
     ready: () => walkMode && playerSpawned && !_teleporting && !_traveling,   // TryGetGameManager: a game in progress, the player standing, the world up
     transport: {

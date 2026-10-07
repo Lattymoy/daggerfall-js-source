@@ -8,15 +8,22 @@ import { readFileSync } from 'node:fs';
 import * as acorn from 'acorn';
 
 import { WoodsFile, MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
-import { generateSamples, sampleKernel, kernelTerms, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, SCALED_OCEAN_ELEVATION, TERRAIN_SIZE } from '../src/world/terrainSampler.js';
+import { generateSamples, sampleKernel, kernelTerms, HEIGHTMAP_DIMENSION, MAX_TERRAIN_HEIGHT, STREAMING_TERRAIN_SCALE, SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, TERRAIN_SIZE } from '../src/world/terrainSampler.js';
 import { createLandforms, reliefLift, landformLift, landformLiftField, LANDFORM_DIALS, LANDFORM_KNEE, LANDFORM_FLOOR } from '../src/world/landforms.js';
 import { generatePixelTerrain, restrideGrid } from '../src/world/terrainGen.js';
 import { waterCorners, WATER_DRAW_MASK_TABLE } from '../src/world/waterCorners.js';
 import { DIR, DIR_DELTA } from '../src/world/roadNetwork.js';
-import { retryModRoads, MOD_ROADS, MOD_ROADS_RETRY_MAX } from '../src/world/roadsProducer.js';
+import { retryModRoads, loadModRoads, MOD_ROADS, MOD_ROADS_RETRY_MAX, MOD_ROADS_FETCH_TIMEOUT_MS } from '../src/world/roadsProducer.js';
 import { ringHeight, buildFarRingGrid } from '../src/render/farRing.js';
 import { StreamingWorldState } from '../src/world/streamingWorld.js';
 import { syntheticWoodsBytes, network } from './landformWorld.mjs';
+import { PlayerMotor } from '../src/player/motor.js';
+import { Collider } from '../src/player/collider.js';
+import { _setTimeScaleForTest, TRAVEL_ROAD_RATE } from '../src/systems/timeScale.js';
+import { TRANSPORT_MODES } from '../src/systems/transport.js';
+import { createDroppedLoot } from '../src/scenes/droppedLoot.js';
+import { natureStandsAt, layoutNature, groundAt } from '../src/world/terrainNature.js';
+import { sampleHeight } from '../src/world/terrainTiles.js';
 
 const H = HEIGHTMAP_DIMENSION;
 const UNIT = MAX_TERRAIN_HEIGHT;
@@ -267,9 +274,14 @@ test('AUDIT LANDFORMS B1: the lift a record takes is the scene point\'s own - it
   const bare = liftAtHost();
   const [bx, bz] = bare.scene(px, py, 20.5, 70.25);
   assert.ok(Math.abs(bare.landformLiftAt(bx, bz) - wild) < 1e-9);
-  // the edges of a pixel and a point off the map
-  const [ex, ez] = bare.scene(px, py, 127.5, 0.5);
-  assert.ok(Math.abs(bare.landformLiftAt(ex, ez) - landformLift(woods, px, py, 127.5, 0.5, null, H, LF) * STREAMING_TERRAIN_SCALE) < 1e-9);
+  // the edges of a pixel and a point off the map - PIN MOVED (AUDIT LANDFORMS II J6): on a row the cone's flank slopes
+  // north-south (its centre's rows 247..252 hold one byte, where a frame read a row off in z answered the same), and the
+  // map's north row: py 0 takes its lift, py -1 none
+  const [ex, ez] = bare.scene(px, 240, 127.5, 0.5);
+  assert.ok(Math.abs(bare.landformLiftAt(ex, ez) - landformLift(woods, px, 240, 127.5, 0.5, null, H, LF) * STREAMING_TERRAIN_SCALE) < 1e-9);
+  assert.ok(Math.abs(landformLift(woods, px, 240, 127.5, 0.5, null, H, LF) - landformLift(woods, px, 241, 127.5, 0.5, null, H, LF)) > 0.01, 'a row its neighbour differs from');
+  assert.ok(bare.landformLiftAt(...bare.scene(500, 0, 64, 64)) > 1, 'the map\'s north row takes its lift');
+  assert.equal(bare.landformLiftAt(...bare.scene(500, -1, 64, 64)), 0, 'and past it none');
   const far = bare.scene(-5, py, 10, 10);
   assert.equal(bare.landformLiftAt(...far), 0, 'off the map: no lift');
   // B2: by a road the lift a record takes is the cut's too, over the network this thread holds - and made again once
@@ -298,14 +310,17 @@ test('AUDIT LANDFORMS B1: a pixel not built yet is asked what its build will sta
   const line = WORLD.match(/\n {2}const (_liftLocationAt = \(x, y\) => [^\n]*;)/);   // PIN MOVED (AUDIT LANDFORMS II F1): declared, not bound later
   assert.ok(line, 'the boot declares it');
   const probe = (index, gone, at) => new Function('locationIndex', 'tvSpawnGone', 'tvLocationAt', `let _liftLocationAt = null; ${line[1]}\nreturn _liftLocationAt;`)(index, gone, at);
+  // AUDIT LANDFORMS II J3: every key OFF the diagonal, each asked with its mirror - on (1, 1), (2, 2) and (3, 3) a probe that
+  // swapped its x and y answered the same, so three transposed bindings survived
   const town = { name: 'Town' }, rolled = { name: 'Rolled', spawned: true };
-  const index = new Map([['1,1', town], ['2,2', spawn]]), before = [...index];
-  const tvLocationAt = (x2, y2) => index.get(`${x2},${y2}`) ?? (x2 === 3 ? rolled : null);
-  const ask = probe(index, (x2) => x2 === 2, tvLocationAt);
-  assert.equal(ask(1, 1), town, 'the index\'s place');
-  assert.equal(ask(2, 2), null, 'a spawn past its time with nobody in it: built empty');
-  assert.equal(probe(index, () => false, tvLocationAt)(2, 2), spawn, 'one in its time: the spawn');
-  assert.equal(ask(3, 3), rolled, 'a pixel the index has not met: the roll\'s spawn');
+  const index = new Map([['5,2', town], ['2,5', spawn]]), before = [...index];
+  const tvLocationAt = (x2, y2) => index.get(`${x2},${y2}`) ?? (x2 === 3 && y2 === 7 ? rolled : null);
+  const ask = probe(index, (x2, y2) => x2 === 2 && y2 === 5, tvLocationAt);
+  assert.equal(ask(5, 2), town, 'the index\'s place');
+  assert.equal(ask(2, 5), null, 'a spawn past its time with nobody in it: built empty');
+  assert.equal(probe(index, () => false, tvLocationAt)(2, 5), spawn, 'one in its time: the spawn');
+  assert.equal(ask(3, 7), rolled, 'a pixel the index has not met: the roll\'s spawn');
+  assert.equal(ask(7, 3), null, 'and its mirror none');
   assert.equal(ask(4, 4), null);
   assert.deepEqual([...index], before, 'and the index is as it was');
   assert.match(WORLD, /const tvLocationAt = \(x, y\) => locationIndex\.get\(`\$\{x\},\$\{y\}`\) \?\? \(params\.has\('online'\) && spawnsDungeon\(_spawnSalt, x, y\) \? tvSpawnAt\(x, y\) : null\);\n(?: {2}\/?\*{1,2}[^\n]*\n| {3}\*[^\n]*\n)* {2}const _liftLocationAt = /, 'declared right where the probe stands');
@@ -321,7 +336,10 @@ test('AUDIT LANDFORMS B2: a record\'s frame follows the cuts - the field is the 
     let followed = 0;
     for (let x = 0; x <= 128; x++) for (let y = 0; y <= 128; y++) {
       const truth = (at(shaped, x, y) - at(dfu, x, y)) * UNIT;
-      assert.ok(Math.abs(field(x, y) - truth) < 1e-3, `${px},${py}${rect ? ' (a town)' : ''} (${x},${y}): ${field(x, y)} against the pipeline's ${truth}`);
+      // PIN MOVED (AUDIT LANDFORMS II J12): in the wild the field IS the pipeline's float32 samples less DFU's, exactly - a
+      // field that dropped the float32 rounding (0.1 mm off) passed the 1e-3 this was; through a town's blend, as near
+      if (!rect) assert.ok(Object.is(field(x, y), truth), `${px},${py} (${x},${y}): ${field(x, y)} against the pipeline's ${truth}, exactly`);
+      else assert.ok(Math.abs(field(x, y) - truth) < 1e-3, `${px},${py} (a town) (${x},${y}): ${field(x, y)} against the pipeline's ${truth}`);
       if (Math.abs(truth - liftAlone(x, y)) > 0.5) followed++;
     }
     assert.ok(followed > 100, `${px},${py}: the cut followed where the lift alone was half a unit off (${followed} samples)`);
@@ -413,18 +431,19 @@ test('AUDIT LANDFORMS C4: the ground\'s online note names the rivers - their row
  *  sample lies beyond the end of all but standing down; then the floor (`drop` under for water), its bank to the top (the
  *  smooth land, or a levee for water), the verge back to the land; the layers lerped in paint order, a channel the
  *  water's (E2), the coast fading it all out, nothing under min(land, LANDFORM_FLOOR). */
-function lawOf(net, px, py) {
+function lawOf(net, px, py, w = woods, { held = true } = {}) {
   const span = H - 1, half = span / 2;
   const sm = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
   const step = (a, b, v) => sm((v - a) / (b - a));
-  const layers = [['streams', LANDFORM_DIALS.stream, true], ['rivers', LANDFORM_DIALS.river, true], ['tracks', LANDFORM_DIALS.track, false], ['roads', LANDFORM_DIALS.road, false]]
+  // AUDIT LANDFORMS II J1: a track is a ford - the water is painted over it - so the channel is the water's on its bed too
+  const layers = [['streams', LANDFORM_DIALS.stream, true], ['rivers', LANDFORM_DIALS.river, true], ['tracks', LANDFORM_DIALS.track, false, true], ['roads', LANDFORM_DIALS.road, false]]
     .filter(([key, , water]) => net[key] && (!water || net.water))
-    .map(([key, dial, water]) => {
+    .map(([key, dial, water, ford = false]) => {
       const arms = [];
       for (let qy = py - 1; qy <= py + 1; qy++) for (let qx = px - 1; qx <= px + 1; qx++) {
         for (const [bit, mdx, mdy] of DIR_DELTA) {
           if (!(net[key][qy * MAP_WIDTH + qx] & bit)) continue;
-          const { base, noise } = kernelTerms(woods, qx, qy);
+          const { base, noise } = kernelTerms(w, qx, qy);
           const prof = Array.from({ length: half + 1 }, (_, k) => {
             const lx = half + mdx * k, ly = half - mdy * k, low = base(lx, ly) * 8;
             return Math.min(Math.max(low + noise(lx, ly) * 4, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT) + reliefLift(low);
@@ -433,13 +452,15 @@ function lawOf(net, px, py) {
           arms.push({ ax: qx * span + half, ay: (MAP_HEIGHT - qy) * span + half, ux: (mdx * half) / len, uy: (-mdy * half) / len, len, prof });
         }
       }
-      return { dial, water, reach: dial.flat + dial.bank + dial.verge, arms };
+      // AUDIT LANDFORMS II I2: a road's or a track's floor and bank held within bankGrade over the hillside of the smooth land
+      const hold = water || !held ? Infinity : (LANDFORM_DIALS.bankGrade * (TERRAIN_SIZE / span / STREAMING_TERRAIN_SCALE) * dial.bank) / 1.5;
+      return { dial, water, ford, hold, reach: dial.flat + dial.bank + dial.verge, arms };
     });
   return (x, y, h, low, g) => {
     if (!(h > LANDFORM_KNEE)) return h;
     const land = h + reliefLift(low);
     const gx = px * span + x, gy = (MAP_HEIGHT - py) * span + y;
-    const near = layers.map(({ dial, reach, arms }) => {
+    const near = layers.map(({ dial, reach, arms, hold }) => {
       let dmin = Infinity, ws = 0, wf = 0;
       for (const a of arms) {
         const t0 = (gx - a.ax) * a.ux + (gy - a.ay) * a.uy;
@@ -455,7 +476,8 @@ function lawOf(net, px, py) {
       if (dmin === Infinity) return null;
       const floor = wf / ws - dial.drop, smoothLand = land - g, edge = dial.flat + dial.bank;
       const top = dial.drop > 0 && smoothLand <= floor + dial.drop ? floor + dial.drop : smoothLand;
-      const target = dmin <= edge ? floor + (top - floor) * step(dial.flat, edge, dmin) : top + (land - top) * step(edge, reach, dmin);
+      let target = dmin <= edge ? floor + (top - floor) * step(dial.flat, edge, dmin) : top + (land - top) * step(edge, reach, dmin);
+      if (dmin <= edge) target = Math.min(Math.max(target, smoothLand - hold), smoothLand + hold);
       return { dmin, target, weight: 1 - step(edge, reach, dmin) };
     });
     if (near.every((n) => n === null)) return land;
@@ -466,7 +488,7 @@ function lawOf(net, px, py) {
     layers.forEach((l, i) => {
       if (!near[i]) return;
       let a = near[i].weight * fade;
-      if (chan > 0 && !l.water && near[i].dmin > l.dial.flat) a *= 1 - chan;
+      if (chan > 0 && !l.water && (l.ford || near[i].dmin > l.dial.flat)) a *= 1 - chan;
       if (a > 0) out += (near[i].target - out) * a;
     });
     return Math.max(out, Math.min(land, LANDFORM_FLOOR));
@@ -477,7 +499,7 @@ test('AUDIT LANDFORMS D8: the law, written out, is the shaper - at every sample 
   // the law reads the dials, so the dials are pinned as the page gives them (Landforms.md's table, the relief, the coast)
   assert.deepEqual(JSON.parse(JSON.stringify(LANDFORM_DIALS)), {
     relief: { from: 200, full: 900, gain: 0.9 }, stream: { flat: 1, bank: 1.25, verge: 4, drop: 0.8 }, river: { flat: 2, bank: 1.5, verge: 6, drop: 1.92 },
-    track: { flat: 1.25, bank: 2, verge: 5, drop: 0 }, road: { flat: 1.25, bank: 2.5, verge: 6, drop: 0 }, coast: 12,
+    track: { flat: 1.25, bank: 2, verge: 5, drop: 0 }, road: { flat: 1.25, bank: 2.5, verge: 6, drop: 0 }, coast: 12, bankGrade: 0.5,
   });
   const pixels = [[350, 200], [351, 200], [352, 200], [352, 201], [352, 204], [353, 200], [354, 200], [354, 199], [354, 196], [355, 199],
     [356, 204], [357, 203], [358, 202], [358, 201], [358, 200], [300, 250], [300, 255], [301, 255], [293, 241], [312, 248], [312, 252], [100, 200], [101, 300], [102, 300]];
@@ -680,4 +702,402 @@ test('AUDIT LANDFORMS II F4: an anchor set in a dungeon keeps its feet in the du
   assert.equal(anchorOf('Exterior').y, 23);
   assert.equal(anchorOf('Interior').y, 23, 'a building\'s frame is the exterior\'s: DFU\'s frame');
   assert.deepEqual(asked, [[123.5, 77.25], [123.5, 77.25]]);
+});
+
+test('AUDIT LANDFORMS II I3: a Travel Options journey down a road under the slope limit follows it - no fall at the road rate (x100) on a horse or on foot, as at x1', () => {
+  // a mountain road: the large heightmap steps 120 between its columns 1499 and 1500 - a slope of about 2.2 (65 degrees,
+  // under the slope limit) across pixel (500, 250) - and a road east-west down it, cut level across (the lifted Dragontail's
+  // summit roads are graded 1.4 to 1.5 by their profiles, and steeper between samples)
+  const mountain = {
+    getHeightMapValue: () => 20,
+    getHeightMapValuesRange1Dim: (x, y, dim) => new Uint8Array(dim * dim).fill(20),
+    getLargeHeightMapValuesRange(px, py, dim) {
+      const side = dim * 3, out = new Uint8Array(side * side);
+      for (let r = 0; r < side; r++) for (let c = 0; c < side; c++) out[r + c * side] = 3 * px + r <= 1499 ? 60 : 180;
+      return out;
+    },
+  };
+  const net = { roads: new Uint8Array(MAP_WIDTH * MAP_HEIGHT), tracks: new Uint8Array(MAP_WIDTH * MAP_HEIGHT), water: false };
+  for (let x = 495; x <= 505; x++) net.roads[250 * MAP_WIDTH + x] = DIR.E | DIR.W;
+  const s = generateSamples(mountain, 500, 250, H, createLandforms({ woods: mountain, roads: net }));
+  const M = UNIT * STREAMING_TERRAIN_SCALE, CELL = TERRAIN_SIZE / (H - 1);
+  const heightAt = (x, z) => {   // world.js heightAt's read: bilinear over the pixel's float32 samples
+    const fx = Math.max(0, Math.min(127.999, x / CELL)), fz = Math.max(0, Math.min(127.999, z / CELL));
+    const ix = Math.floor(fx), iz = Math.floor(fz), ax = fx - ix, az = fz - iz, v = (a, b) => s[a * H + b] * M;
+    return v(ix, iz) * (1 - ax) * (1 - az) + v(ix + 1, iz) * ax * (1 - az) + v(ix, iz + 1) * (1 - ax) * az + v(ix + 1, iz + 1) * ax * az;
+  };
+  let grade = 0;
+  for (let x = 44; x < 84; x++) grade = Math.max(grade, Math.abs(s[(x + 1) * H + 63] - s[x * H + 63]) * M / CELL);
+  assert.ok(grade > 1.95 && grade < Math.tan((70 * Math.PI) / 180), `the road's grade ${grade.toFixed(2)}: steep, under the slope limit`);
+  const ride = (scale, mode) => {
+    const col = new Collider(heightAt);
+    const m = new PlayerMotor(col, { speed: 50, running: 30, swimming: 30 });
+    m.transportMode = mode;
+    const z = 63.5 * CELL;   // the road's centre line
+    _setTimeScaleForTest(1);
+    m.spawn(120 * CELL, col.restFloor(120 * CELL, z), z);
+    const idle = { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false };
+    for (let i = 0; i < 30; i++) m.update(1 / 60, idle, -Math.PI / 2);
+    _setTimeScaleForTest(scale);
+    const falls = [];
+    try {
+      for (let f = 0; f < 6000 && m.pos[0] > 10 * CELL; f++) {   // 700 m: 65 s at x1
+        m.update(1 / 60, { ...idle, forward: 1 }, -Math.PI / 2);
+        if (m.landedFallDistance > 0.5) falls.push(+m.landedFallDistance.toFixed(1));
+      }
+    } finally { _setTimeScaleForTest(1); }
+    assert.ok(m.pos[0] <= 10 * CELL, `rode the whole road down (${mode} at x${scale})`);
+    return falls.filter((d) => d > 5);
+  };
+  assert.equal(TRAVEL_ROAD_RATE, 100);
+  assert.deepEqual(ride(1, TRANSPORT_MODES.Horse), [], 'at x1 the horse keeps to the road');
+  assert.deepEqual(ride(TRAVEL_ROAD_RATE, TRANSPORT_MODES.Horse), [], 'a journey on a horse: it flew level off a missed substep and landed 45-118 m falls');
+  assert.deepEqual(ride(TRAVEL_ROAD_RATE, TRANSPORT_MODES.Foot), [], 'and on foot');
+});
+
+/** Every corner of a water tile the pipeline paints in this pixel, as sample coordinates (E2's own read). */
+const wetCornersOf = (tilemapBytes) => {
+  const out = [];
+  for (let ty = 0; ty < 128; ty++) for (let tx = 0; tx < 128; tx++) {
+    const m = waterCorners(tilemapBytes[ty * 128 + tx], WATER_DRAW_MASK_TABLE);
+    for (let k = 0; k < 4; k++) if (m & (1 << k)) out.push([tx + (k & 1), ty + (k >> 1)]);
+  }
+  return out;
+};
+
+test('AUDIT LANDFORMS II J1: a track over a river is a ford, as it is painted - the water is painted across the track (roadPainter: road, river, stream, track), so the channel is the water\'s on the track\'s bed too and every wet corner lies on its floor', () => {
+  // the fixture's ford: the track north-south down x = 64 of pixel (285, 255), the river east-west down y = 64
+  const px = 285, py = 255, track = LANDFORM_DIALS.track;
+  const water = generateSamples(woods, px, py, H, createLandforms({ woods, roads: { ...NET, roads: dry, tracks: dry } }));
+  const out = generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), climateType: 231, roads: NET, landform: true });
+  let wet = 0, onBed = 0;
+  for (const [x, y] of wetCornersOf(out.tilemapBytes)) {
+    wet++;
+    if (Math.abs(x - 64) <= track.flat) onBed++;
+    assert.ok(Math.abs(out.samples[x * H + y] - at(water, x, y)) * UNIT < 1e-3, `wet corner (${x}, ${y}) on the channel's floor, ${((out.samples[x * H + y] - at(water, x, y)) * UNIT).toFixed(2)} units over it`);
+  }
+  assert.ok(wet > 200 && onBed > 10, `the river's water tiles were read (${wet}), across the track's bed too (${onBed})`);
+  // and off the river the track keeps its own bed, whole
+  const full = generateSamples(woods, px, py, H, LF), trackAlone = generateSamples(woods, px, py, H, createLandforms({ woods, roads: { ...NET, rivers: dry, streams: dry } }));
+  for (const y of [20, 108]) for (const x of [63, 64, 65, 61]) assert.ok(Object.is(at(full, x, y), at(trackAlone, x, y)), `(${x}, ${y}): the track's bed`);
+});
+
+test('AUDIT LANDFORMS II J2: a stream is water too - with the rivers off it has no channel; where it joins a river the river\'s channel stands; a road over it stands on its own bed alone and the painted water lies on the stream\'s floor', () => {
+  // the stream down x = 64 of pixel (316, 251): a metre under the land with the rivers on, not cut at all with them off
+  const sOn = generateSamples(woods, 316, 251, H, LF), lifted = generateSamples(woods, 316, 251, H, RELIEF);
+  const sOff = generateSamples(woods, 316, 251, H, createLandforms({ woods, roads: { ...NET, water: false } }));
+  for (const y of [30, 64, 100]) {
+    assert.ok(Object.is(at(sOff, 64, y), at(lifted, 64, y)), `the rivers off, y=${y}: no channel - a channel with no water in it is a ditch`);
+    assert.ok(at(sOn, 64, y) < at(lifted, 64, y) - 0.5 / UNIT, `the rivers on, y=${y}: the stream's channel`);
+  }
+  // the join (316, 255): on the river's floor the river's channel stands, the stream's arm giving way to it - the river is
+  // painted first (paintPathWithSubPathJoins, the stream its sub-path) and lerped last
+  const join = generateSamples(woods, 316, 255, H, LF), riverAlone = generateSamples(woods, 316, 255, H, createLandforms({ woods, roads: { ...NET, streams: dry } }));
+  const streamAt = generateSamples(woods, 316, 255, H, createLandforms({ woods, roads: { ...NET, rivers: dry } }));
+  assert.ok(Math.abs(at(streamAt, 64, 64) - at(riverAlone, 64, 64)) * UNIT > 0.5, 'the two channels part at the join');
+  for (let y = 62; y <= 66; y++) for (const x of [56, 60, 64, 68, 72]) assert.ok(Math.abs(at(join, x, y) - at(riverAlone, x, y)) * UNIT < 1e-6, `(${x}, ${y}): the river's floor`);
+  // the road east-west over the stream at (316, 252): E2's law at a stream - on the stream's floor off the road's bed the
+  // channel is the stream's; the causeway stands over it; the painted water lies on the floor
+  const px = 316, py = 252, road = LANDFORM_DIALS.road;
+  const full = generateSamples(woods, px, py, H, LF), streamAlone = generateSamples(woods, px, py, H, createLandforms({ woods, roads: { ...NET, roads: dry, tracks: dry } }));
+  for (let x = 64 - LANDFORM_DIALS.stream.flat; x <= 64 + LANDFORM_DIALS.stream.flat; x++) {
+    for (const y of [61, 60, 58, 55, 67, 68, 70, 73]) assert.ok(Object.is(at(full, x, y), at(streamAlone, x, y)), `(${x}, ${y}): the stream's floor, not the road's fill`);
+  }
+  for (const x of [63, 64, 65]) assert.ok(at(full, x, 64) > at(streamAlone, x, 64) + 0.4 / UNIT, `x=${x}: the causeway over the stream`);
+  const out = generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), climateType: 231, roads: NET, landform: true });
+  let wet = 0;
+  for (const [x, y] of wetCornersOf(out.tilemapBytes)) {
+    if (Math.abs(y - 64) <= road.flat) continue;   // the corner a water tile shares with the road's bed: the causeway's edge
+    wet++;
+    assert.ok(Math.abs(out.samples[x * H + y] - at(streamAlone, x, y)) * UNIT < 1e-3, `wet corner (${x}, ${y}) on the stream's floor`);
+  }
+  assert.ok(wet > 50, `the stream's water tiles were read (${wet})`);
+});
+
+test('AUDIT LANDFORMS II I2: a bank is never a launch ramp - a track benched along a steep hillside stands its banks at most bankGrade steeper than the hillside, and a run straight down across it lands no fall', () => {
+  // a hillside the kernel's own large-heightmap term makes: every small byte 20 (no lift), the large heightmap stepping 60
+  // between its columns 1499 and 1500 - DFU's CubicInterpolator draws it a uniform 1.29 (52 degrees, walkable at a run)
+  // across pixel (500, y)'s middle, the steepness the real ground reaches where a track is benched across it (1.35 at
+  // (627, 282)) - and a track north-south along its contour
+  const hill = {
+    getHeightMapValue: () => 20,
+    getHeightMapValuesRange1Dim: (x, y, dim) => new Uint8Array(dim * dim).fill(20),
+    getLargeHeightMapValuesRange(px, py, dim) {
+      const side = dim * 3, out = new Uint8Array(side * side);
+      for (let r = 0; r < side; r++) for (let c = 0; c < side; c++) out[r + c * side] = 3 * px + r <= 1499 ? 60 : 120;
+      return out;
+    },
+  };
+  const net = { roads: new Uint8Array(MAP_WIDTH * MAP_HEIGHT), tracks: new Uint8Array(MAP_WIDTH * MAP_HEIGHT), water: false };
+  for (let y = 245; y <= 255; y++) net.tracks[y * MAP_WIDTH + 500] = DIR.N | DIR.S;
+  const M = UNIT * STREAMING_TERRAIN_SCALE, CELL = TERRAIN_SIZE / (H - 1);
+  const steepest = (smp) => {
+    let m = 0;
+    const h = (x, y) => smp[x * H + y] * M;
+    for (let x = 0; x < 128; x++) for (let y = 0; y < 128; y++) {
+      const a = h(x, y), b = h(x + 1, y), c = h(x, y + 1), d = h(x + 1, y + 1);
+      m = Math.max(m, Math.hypot(b - a, c - a), Math.hypot(b - a, d - b), Math.hypot(d - c, c - a), Math.hypot(d - c, d - b));
+    }
+    return m / CELL;
+  };
+  const lf = createLandforms({ woods: hill, roads: net });
+  const relief = generateSamples(hill, 500, 250, H, createLandforms({ woods: hill })), cut = generateSamples(hill, 500, 250, H, lf);
+  const g0 = steepest(relief), g1 = steepest(cut);
+  assert.ok(g0 > 1.2 && g0 < 1.4, `the hillside: ${g0.toFixed(2)}`);
+  assert.ok(g1 - g0 <= LANDFORM_DIALS.bankGrade + 0.05, `a bank ${g1.toFixed(2)} on a hillside of ${g0.toFixed(2)} (${(Math.atan(g1) * 180 / Math.PI).toFixed(0)} degrees) - level across it stood 2.46`);
+  // the law written out, held, is the shaper at every sample of the bench - and the hold is what it says there: unheld,
+  // the law parts from it under the banks
+  const shape = lf.pixel(500, 250), law = lawOf(net, 500, 250, hill), loose = lawOf(net, 500, 250, hill, { held: false });
+  const { base, noise } = kernelTerms(hill, 500, 250);
+  let held = 0;
+  for (let x = 0; x <= 128; x++) for (let y = 0; y <= 128; y++) {
+    const low = base(x, y) * 8, g = 4.5 + 4.5 * Math.sin(0.37 * x + 0.61 * y), h = Math.min(Math.max(low + noise(x, y) * 4 + g, SCALED_OCEAN_ELEVATION), MAX_TERRAIN_HEIGHT);
+    const got = shape(x, y, h, low, g);
+    assert.ok(Math.abs(got - law(x, y, h, low, g)) < 1e-9, `(${x},${y}): the shaper against the law`);
+    if (Math.abs(got - loose(x, y, h, low, g)) > 0.1) held++;
+  }
+  assert.ok(held > 500, `the hold holds the bench's banks (${held} samples)`);
+  // a run at Speed 100, Running 100 straight down the hillside across the track: no landing bills HP
+  const heightAt = (x, z) => {
+    const fx = Math.max(0, Math.min(127.999, x / CELL)), fz = Math.max(0, Math.min(127.999, z / CELL));
+    const ix = Math.floor(fx), iz = Math.floor(fz), ax = fx - ix, az = fz - iz, v = (a, b) => cut[a * H + b] * M;
+    return v(ix, iz) * (1 - ax) * (1 - az) + v(ix + 1, iz) * ax * (1 - az) + v(ix, iz + 1) * (1 - ax) * az + v(ix + 1, iz + 1) * ax * az;
+  };
+  const falls = [];
+  for (const z of [200, 300, 400, 500, 600]) {
+    const col = new Collider(heightAt), m = new PlayerMotor(col, { speed: 100, running: 100, swimming: 30 });
+    m.spawn(520, col.restFloor(520, z), z);
+    const idle = { forward: 0, strafe: 0, run: false, jump: false, up: false, down: false };
+    for (let i = 0; i < 30; i++) m.update(1 / 60, idle, -Math.PI / 2);
+    for (let f = 0; f < 600 && m.pos[0] > 300; f++) { m.update(1 / 60, { ...idle, forward: 1, run: true }, -Math.PI / 2); if (m.landedFallDistance > 0) falls.push(+m.landedFallDistance.toFixed(1)); }
+  }
+  assert.deepEqual(falls.filter((d) => d > 5), [], `falls landed across the track: ${JSON.stringify(falls)} m`);
+});
+
+/** world.js's roads sweep, destroyPixel and the publish's re-stand block, sliced and run as written over the real loot
+ *  pool, every name they do not ask for answered by a do-nothing stand-in (lane G's harness). */
+function rebuildHost(vars) {
+  const sliceTo = (head, end) => { const i = WORLD.indexOf(head), j = WORLD.indexOf(end, i); assert.ok(i > 0 && j > i, head); return WORLD.slice(i, j + end.length); };
+  const SWEEP = sliceTo('  function sweepRoadless() {', '\n  }\n');
+  const DESTROY = sliceTo('  function destroyPixel(px, py, { collectLoose = true } = {}) {', '\n  }\n');
+  const i = WORLD.indexOf('    if (labGrassField) {   // WOD2'), j = WORLD.indexOf('    if (homeTown) _homeLookV = -1;', i);
+  assert.ok(i > 0 && j > i, 'the publish\'s re-stand block');
+  const noop = new Proxy(function () {}, { get: (t, k) => (k === Symbol.toPrimitive ? () => NaN : k === Symbol.iterator ? function* () {} : noop), apply: () => noop });
+  const KEEP = new Set(['Math', 'Number', 'Object', 'Array', 'Map', 'Set', 'JSON', 'Infinity', 'NaN', 'undefined', 'String', 'Boolean', 'Symbol', 'console', 'Float32Array']);
+  const scope = new Proxy(vars, { has: (t, k) => !KEEP.has(k), get: (t, k) => (k === Symbol.unscopables ? undefined : k in t ? t[k] : noop), set: (t, k, v) => { t[k] = v; return true; } });
+  const fns = new Function('scope', `with (scope) { ${DESTROY}\n${SWEEP}\n return { destroyPixel, sweepRoadless }; }`)(scope);
+  const publish = new Function('scope', `with (scope) { ${WORLD.slice(i, j)} }`);
+  // the publish's own names ride the scope: under `with` the stand-in answers before a parameter would
+  return { ...fns, publish: (px, py) => { Object.assign(vars, { px, py, key: `${px},${py}` }); publish(scope); } };
+}
+
+test('AUDIT LANDFORMS II G1/G2: a pixel rebuilt under the live pools carries what lies on its ground - a pile on the river\'s floor stood before the network landed rides the cut down with it, and the player the hold kept standing there rides it too; a fall under way keeps its own', () => {
+  // the river's floor at (300, 255), off the road: built before the network landed (the lift alone), then cut
+  const px = 300, py = 255, key = `${px},${py}`, sx = 40, sy = 64;
+  const job = (roads) => generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), climateType: 231, roads, landform: true }).samples;
+  const before = job(null), after = job(NET);
+  const cell = TERRAIN_SIZE / (H - 1), M = UNIT * STREAMING_TERRAIN_SCALE, x = sx * cell, z = sy * cell;
+  const gB = before[sx * H + sy] * M, gA = after[sx * H + sy] * M;
+  assert.ok(gA < gB - 1, `the landing cut the channel here (${(gA - gB).toFixed(2)} m)`);
+  const run = ({ grounded }) => {
+    const loot = createDroppedLoot({ renderer: { createBillboardBatch: () => ({}), destroyBillboardBatch: () => {} }, getTexture: async () => ({ getSize: () => ({ width: 32, height: 32 }), getScale: () => ({ width: 0, height: 0 }), recordCount: 64, getFrameCount: () => 1 }), uploadRecordFrame: () => {} });
+    const pile = loot.dropPile([{ group: 'Gems', templateIndex: 0 }], [x, gB, z], key);
+    const player = { pos: [x + 3, gB + 0.25, z], grounded };
+    const built = new Map([[key, { px, py, withRoads: false, samples: before, batches: [], models: [] }]]);
+    const host = rebuildHost({
+      built, queue: [], droppedLoot: loot, walkMode: true, playerSpawned: true, player, _seasonHoldKey: null, _groundBefore: new Map(),
+      state: { current: { x: px, y: py }, pixelTranslation: () => [0, 0, 0] }, nearestFirstFrom: () => () => 0,
+      TERRAIN_SIZE, HEIGHTMAP_DIMENSION: H, heightCell: cell, worldHeight: M,
+    });
+    host.sweepRoadless();   // the network landed: the roadless pixel torn down (collectLoose: false), queued again
+    assert.equal(built.has(key), false);
+    built.set(key, { px, py, withRoads: true, samples: after, batches: [], models: [] });   // the rebuild, cut along the network
+    host.publish(px, py);
+    return { pile, player, gP: (() => { const fx = (x + 3) / cell, ix = Math.floor(fx), a = fx - ix; return ((after[ix * H + sy] * (1 - a) + after[(ix + 1) * H + sy] * a) - (before[ix * H + sy] * (1 - a) + before[(ix + 1) * H + sy] * a)) * M; })() };
+  };
+  const stood = run({ grounded: true });
+  assert.ok(Math.abs(stood.pile.pos[1] - gA) < 1e-6, `the pile stands ${(stood.pile.pos[1] - gA).toFixed(2)} m over the rebuilt ground - stood on the ground before the network and never again`);
+  assert.ok(Math.abs(stood.player.pos[1] - (gB + 0.25 + stood.gP)) < 1e-6, `the held player rides the cut (${(stood.player.pos[1] - gB - 0.25).toFixed(2)} m) - put back where they stood, they fell it`);
+  const falling = run({ grounded: false });
+  assert.equal(falling.player.pos[1], gB + 0.25, 'a fall under way is its own (FALL-KEPT)');
+  assert.ok(Math.abs(falling.pile.pos[1] - gA) < 1e-6);
+});
+
+test('AUDIT LANDFORMS II G3: a Basic Roads file that never arrives is a failed ask - its fetch and its body each time out - so the port\'s own network or the next retry stands in, never a roadless session', async () => {
+  assert.equal(MOD_ROADS_FETCH_TIMEOUT_MS, 30000);
+  const guard = (p) => Promise.race([p, new Promise((res) => setTimeout(() => res('still waiting'), 2000))]);
+  const signals = [];
+  const never = (url, init) => { signals.push(init?.signal); return new Promise(() => {}); };
+  assert.equal(await guard(loadModRoads(never, MOD_ROADS, 20)), null, 'a fetch that never answers: settled, failed');
+  assert.ok(signals[0]?.aborted, 'and asked to stop');
+  const bodiless = () => Promise.resolve({ ok: true, arrayBuffer: () => new Promise(() => {}) });
+  assert.equal(await guard(loadModRoads(bodiless, MOD_ROADS, 20)), null, 'a body that never arrives: settled, failed');
+  // and an answer in time is the arrays, as before - every file asked in turn
+  const files = Object.keys(MOD_ROADS), asked = [];
+  const quick = (url) => { asked.push(url); return Promise.resolve({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(MAP_WIDTH * MAP_HEIGHT)) }); };
+  const got = await loadModRoads(quick, MOD_ROADS, 20);
+  assert.deepEqual(Object.keys(got).filter((k) => files.includes(k)).sort(), [...files].sort());
+  assert.deepEqual(asked, Object.values(MOD_ROADS));
+});
+
+test('AUDIT LANDFORMS II H2: nature asks the beach line of DFU\'s own blend in a town\'s pixel, as the tiles do - the landforms move the ground, never where the beach is', () => {
+  // THE LAW, at every door nature asks it: on a ground whose own samples lie a hair under the beach line, nature stands
+  // where `beach` says land - the scatter, the woods, the ecotone's border tiles and the gathering nodes' natureStandsAt -
+  // and nowhere without it
+  const low = new Float32Array(H * H).fill(SCALED_BEACH_ELEVATION / UNIT - 1e-4), over = new Float32Array(H * H).fill(SCALED_BEACH_ELEVATION / UNIT + 0.02);
+  const grass = new Uint8Array(128 * 128).fill(2);
+  const base = { mapPixelX: 300, mapPixelY: 250, rawWorldHeight: 60, climateType: 2, locationRect: null };
+  // (each counts its own flats: the border's are the ones a neighbour's climate lays, carrying its archive - the pixel's
+  // own scatter beside them would stand without the border's door)
+  const all = () => true, borders = (f) => f.archive != null;
+  for (const [what, opts, own] of [['the scatter', {}, all], ['the woods', { forests: { archive: 504, pois: [], paths: null } }, all],
+    ['the border', { ecotone: { nature: [504, 504, 506, 504, 504, 506, 503, 503, 503], type: [2, 2, 3, 2, 2, 3, 0, 0, 0] } }, borders]]) {
+    assert.equal(layoutNature(low, grass, { ...base, ...opts }).length, 0, `${what}: under the beach line, nothing`);
+    assert.ok(layoutNature(low, grass, { ...base, ...opts, beach: over }).filter(own).length > 50, `${what}: the beach line asked of the blend it is handed`);
+  }
+  assert.equal(natureStandsAt(low, grass, null, 64, 64), null);
+  assert.ok(natureStandsAt(low, grass, null, 64, 64, null, over), 'the gathering nodes\' door');
+  // ...and through the pipeline: the fixture's river out to sea (x 92..112 along y = 300) through a town on the shore - its
+  // channel moves the pixel's mean, and the blend carries that onto the beach by hundredths of a unit
+  const px = 100, py = 300, rect = { xMin: 80, xMax: 112, yMin: 48, yMax: 80 };
+  const run = (landform) => generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), locationRect: rect, hasLocation: true, climateType: 231, roads: NET, landform });
+  const dfu = run(false), shaped = run(true);
+  assert.deepEqual(shaped.tilemapBytes, dfu.tilemapBytes, 'D3: every tile DFU\'s');
+  assert.equal(dfu.beach, null, 'the row off: no second blend');
+  // the beach nature asks is DFU's own ground to the bit - its blend and the road's smoothing under the painted tiles - here
+  // and on a town the road crosses
+  assert.ok(Object.is(shaped.beach.length, dfu.samples.length) && shaped.beach.every((v, i) => Object.is(v, dfu.samples[i])), 'DFU\'s samples, the shore\'s');
+  const roadTown = (landform) => generatePixelTerrain({ woods, px: 300, py: 250, tilemap: new Uint8Array(128 * 128), locationRect: { xMin: 20, xMax: 50, yMin: 40, yMax: 90 }, hasLocation: true, climateType: 231, roads: NET, landform });
+  const town = roadTown(true), townDfu = roadTown(false);
+  assert.ok(town.beach.some((v, i) => v !== town.samples[i]), 'a town the landforms move');
+  assert.ok(town.beach.every((v, i) => Object.is(v, townDfu.samples[i])), 'DFU\'s samples under the road\'s smoothing too');
+  let refused = 0, crossed = 0;
+  const moved = [];
+  for (let ty = 0; ty < 128; ty++) for (let tx = 0; tx < 128; tx++) {
+    const t = shaped.tilemap[ty * 128 + tx] & 0x3f;
+    if (t !== 1 && t !== 2 && t !== 3) continue;
+    const hx = Math.min(128, Math.trunc(129 * (tx / 128))), hy = Math.min(128, Math.trunc(129 * (ty / 128)));
+    const under = (smp) => sampleHeight(smp[hy + hx * 129]) < SCALED_BEACH_ELEVATION;
+    if (under(dfu.samples)) refused++;
+    if (under(dfu.samples) !== under(shaped.samples)) crossed++;
+    const a = !!natureStandsAt(dfu.samples, dfu.tilemap, rect, tx, ty), b = !!natureStandsAt(shaped.samples, shaped.tilemap, rect, tx, ty, null, shaped.beach);
+    if (under(dfu.samples) !== under(shaped.samples) && a !== b) moved.push([tx, ty, a, b]);
+  }
+  assert.ok(refused > 0 && crossed > 0, `the shore has land tiles DFU's nature refuses as beach (${refused}), and the shaped blend crosses the line at ${crossed}`);
+  assert.deepEqual(moved, [], `nature's beach answer moved at ${moved.length} land tiles: ${JSON.stringify(moved.slice(0, 6))}`);
+  // ...and the pipeline hands its own nature that blend: a hamlet where the fixture's road comes down to the beach (103, 200),
+  // the cut moving its blend across the line - its scatter and its woods stand every flat where DFU's own do, flat for flat
+  // (the ground under them is the landforms', H3; where they stand is the beach's)
+  const place = (f) => [f.x, f.z, f.record];
+  for (const forests of [null, { archive: 504, hidden: false }]) {
+    const hamlet = (landform) => generatePixelTerrain({ woods, px: 103, py: 200, tilemap: new Uint8Array(128 * 128), locationRect: { xMin: 56, xMax: 72, yMin: 56, yMax: 72 }, hasLocation: true, climateType: 231, roads: NET, landform, forests });
+    const on = hamlet(true), off = hamlet(false);
+    const across = on.beach.filter((v, i) => (sampleHeight(v) < SCALED_BEACH_ELEVATION) !== (sampleHeight(on.samples[i]) < SCALED_BEACH_ELEVATION)).length;
+    assert.ok(across > 0 && on.nature.length > 1000, `the cut moves ${across} samples across the line, under ${on.nature.length} flats`);
+    assert.deepEqual(on.nature.map(place), off.nature.map(place), `${forests ? 'the woods' : 'the scatter'}: where DFU's nature stands`);
+  }
+});
+
+test('AUDIT LANDFORMS II H3: with the row on a town pixel\'s nature - its scatter, its woods and the ecotone\'s border flats - stands on the shaped ground the pixel is built of, never DFU\'s blend', () => {
+  // a town on the fixture's rising land: the relief lifts it, and DFU's blend (the kernel's `classic`) stands a lift under it;
+  // a temperate pixel with a swamp to its east and a desert to its north, so ECOTONE1 lays border tiles by their rules
+  const px = 300, py = 150, rect = { xMin: 48, xMax: 80, yMin: 48, yMax: 80 };
+  const ecotone = { nature: [504, 504, 506, 504, 504, 506, 503, 503, 503], type: [2, 2, 3, 2, 2, 3, 0, 0, 0] };
+  let checked = 0, border = 0;
+  for (const forests of [null, { archive: 504, hidden: false }]) {
+    const out = generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), locationRect: rect, hasLocation: true, climateType: 2, roads: NET, landform: true, forests, ecotone });
+    assert.ok(out.beach, 'the town\'s own DFU blend rode beside it');
+    for (const f of out.nature) {
+      const sink = groundAt(out.samples, f.x, f.z) - f.y;
+      assert.ok(sink >= -1e-6 && sink <= 50 / 70 + 1e-6, `a flat at (${f.x.toFixed(1)}, ${f.z.toFixed(1)}) stands ${sink.toFixed(2)} under its ground`);
+      checked++; if (f.archive != null) border++;
+    }
+  }
+  assert.ok(checked > 1000 && border > 50, `${checked} flats, ${border} of the border's`);
+});
+
+test('AUDIT LANDFORMS II H1: THE ONE CONSTRUCTION SEAM for C1 - every height world.js sheds the frame\'s compensation off goes into DFU\'s frame, or is a named transient with its why; a new writer of an exterior height fails here, not in a save', () => {
+  // C1's own pin names the twelve writers of today and cannot fail on a thirteenth; this sweeps the host. (It cannot see a
+  // writer outside world.js - the hosts' others hand world.js their heights, THE FOUR HOSTS in Landforms.md.)
+  const TRANSIENT = new Map([
+    ['if (Number.isFinite(h)) return y - (h - state.compensation[1] - now) * (r - 1) + now;', 'restandHeight itself: the read side'],
+    ['const campToNatives = (pos) => { const wc = state.worldCoords(pos); return [wc.x, pos[1] - state.compensation[1], wc.z]; };', 'a recenter, this ground both ways (campToRecord is the record\'s)'],
+    ['toNative: (p) => { const w = state.worldCoords(p); return [w.x, p[1] - state.compensation[1], w.z]; },', 'the sailing cabins\' live access'],
+    ['const cabin = { v: 1, uid: boat.uid, hull: boat.hull, origin: [origin.x, boat.GameObject.position[1] - state.compensation[1], origin.z],', 'a boat at sea - its pixel is what is read, under the knee'],
+    ['y: player.pos[1] - state.compensation[1], yaw: cam.yaw,', 'the horse cart\'s party departure, one trip\'s'],
+    ['const campToWire = (p) => { const wc = state.worldCoords(p); return [wc.x, p[1] - state.compensation[1], wc.z]; };   // SURV3: the pose\'s own law for the world frame', 'the wire: the room stands on one ground (C2)'],
+    ['pos: inDungeon ? [...player.pos] : [wc.x, player.pos[1] - state.compensation[1], wc.z],', 'a staff teleport\'s live destination'],
+    ['toWire: (feet) => { const wc = state.worldCoords(feet); return [wc.x, feet[1] - state.compensation[1], wc.z]; },', 'the wire'],
+    ['const partyFeetOf = (pos) => { const wc = state.worldCoords(pos); return { wx: wc.x, wy: pos[1] - state.compensation[1], wz: wc.z }; };', 'the party\'s live feet'],
+    ['? { x: wc.x, y: player.pos[1] - state.compensation[1], z: wc.z, yaw: cam.yaw, pitch: cam.pitch, mv: 0 }', 'the online pose'],
+    [': { x: player.pos[0], y: shedY ? player.pos[1] - state.compensation[1] : player.pos[1], z: player.pos[2], yaw: cam.yaw, pitch: cam.pitch, mv: 0 };', 'the online pose'],
+    ['sceneToOnline = nativeFrame ? campToWire : (q) => [q[0], shedY ? q[1] - state.compensation[1] : q[1], q[2]];   // AUDIT MERGE-PLUS B1', 'the online pose'],
+    ['restandSceneHeight: (y, x, z, was) => restandHeight(y - state.compensation[1], x, z, was) + state.compensation[1],', 'the read side'],
+    ['toWire: (feet) => [feet[0], feet[1] - state.compensation[1], feet[2]],', 'the wire'],
+  ]);
+  const raw = WORLD.split('\n').map((l) => l.trim()).filter((l) => /-\s*state\.compensation\[1\]/.test(l) && !/groundFrame(Height|Native)\(/.test(l));
+  assert.deepEqual(raw.filter((l) => !TRANSIENT.has(l)), [], 'an exterior height shed raw - into DFU\'s frame (groundFrameHeight / groundFrameNative), or named here with its why');
+  for (const l of TRANSIENT.keys()) assert.ok(raw.includes(l), `a transient named here that the host no longer has: ${l}`);
+});
+
+test('AUDIT LANDFORMS II J4: a cut is held at the floor, half a unit over the knee - the river\'s mouth stands there exactly, never under it', () => {
+  // the fixture's river out to sea (x 92..112 along y = 300): its channel would run under the beach line at the mouth,
+  // and LANDFORM_FLOOR holds it - the floor's value was pinned only by an inequality, and +5 or +0.05 survived
+  const floor = Math.fround(LANDFORM_FLOOR / UNIT);
+  let held = 0;
+  for (const px of [99, 100, 101, 102, 103, 104, 105]) {
+    const s = generateSamples(woods, px, 300, H, LF), d = generateSamples(woods, px, 300, H, null);
+    for (let i = 0; i < s.length; i++) {
+      if (s[i] === floor) held++;
+      if (d[i] * UNIT > LANDFORM_KNEE) assert.ok(s[i] >= Math.min(floor, d[i] + reliefLift(0)), `${px},300 #${i}: over the knee, never under the floor (${(s[i] * UNIT).toFixed(3)})`);
+    }
+  }
+  assert.ok(held >= 3, `the mouth's cut held at exactly the floor (${held} samples)`);
+});
+
+test('AUDIT LANDFORMS II J5: a record on a town pixel\'s west or south edge reads the town\'s field at its edge - the field holds its reads to the pixel, never past its first row', () => {
+  // world.js's own arithmetic, recentred, hands the field a hair under 0 at a pixel's edge (-3.6e-14 at 4,681 of 200,000
+  // points lane J ran) - unclamped, a town's field read before its first row, a NaN into the save
+  const px = 330, py = 250, rect = { xMin: 40, xMax: 80, yMin: 50, yMax: 90 };
+  const field = landformLiftField(woods, px, py, rect, H, LF);
+  for (const [sx, sy] of [[-3.6e-14, 40], [40, -3.6e-14], [-3.6e-14, -3.6e-14], [128 + 3.6e-14, 40]]) {
+    const v = field(sx, sy);
+    assert.ok(Number.isFinite(v), `(${sx}, ${sy}): ${v}`);
+    assert.ok(Object.is(v, field(Math.min(128, Math.max(0, sx)), Math.min(128, Math.max(0, sy)))), 'the edge\'s own value');
+  }
+});
+
+test('AUDIT LANDFORMS II J7: online the host asks Basic Roads again on the retry\'s own defaults - the page\'s fetch, the backoff\'s real waits, twelve more tries - and hands it nothing else', async (t) => {
+  // the host's call: onTry alone (a `max: 0`, a wait of nought or no fetch there survived every test, which stubbed it)
+  assert.match(WORLD, /retryModRoads\(\{ onTry: \(n, ms\) => console\.warn\([^\n]*\}\)\.then\(\(late\) => \{/, 'the host asks with onTry alone');
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const realFetch = globalThis.fetch, asked = [];
+  let failing = 2;   // the first two tries fail at his first file, the third answers
+  globalThis.fetch = (url) => {
+    asked.push(url);
+    if (url === Object.values(MOD_ROADS)[0] && failing > 0) { failing--; return Promise.resolve({ ok: false }); }
+    return Promise.resolve({ ok: true, arrayBuffer: () => Promise.resolve(new ArrayBuffer(MAP_WIDTH * MAP_HEIGHT)) });
+  };
+  const flush = async () => { for (let i = 0; i < 20; i++) await new Promise((r) => setImmediate(r)); };
+  const drive = async (state, waits) => { for (let i = 0; i < 20 && state.done === undefined; i++) { await flush(); if (waits.length) t.mock.timers.tick(waits.at(-1)); await flush(); } };
+  try {
+    const waits = [], state = { done: undefined };
+    retryModRoads({ onTry: (n, ms) => waits.push(ms) }).then((r) => { state.done = r; });
+    await flush();
+    assert.deepEqual(asked, [], 'nothing asked before the first wait');
+    t.mock.timers.tick(waits[0] - 1); await flush();
+    assert.deepEqual(asked, [], 'nor a millisecond before it ends - the backoff waits its whole length');
+    await drive(state, waits);
+    assert.deepEqual(waits, [5000, 10000, 20000], 'WOD6\'s backoff, waited for real');
+    assert.ok(state.done?.roads instanceof Uint8Array, 'his arrays, on the third try');
+    assert.deepEqual(asked, [Object.values(MOD_ROADS)[0], Object.values(MOD_ROADS)[0], ...Object.values(MOD_ROADS)], 'through the page\'s own fetch: his first file twice, then all four');
+    // ...and every try failing: twelve more, then none
+    asked.length = 0; failing = Infinity;
+    const all = [], none = { done: undefined };
+    retryModRoads({ onTry: (n, ms) => all.push(ms) }).then((r) => { none.done = r; });
+    await drive(none, all);
+    assert.equal(none.done, null);
+    assert.deepEqual(all, [5000, 10000, 20000, 40000, ...Array(8).fill(60000)]);
+    assert.equal(asked.length, MOD_ROADS_RETRY_MAX);
+  } finally { globalThis.fetch = realFetch; }
 });

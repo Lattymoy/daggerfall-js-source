@@ -54,5 +54,16 @@ export function network({ water = true } = {}) {
   set(n.tracks, 358, 202, DIR.SW | DIR.N);                                           // ...into the north-south
   set(n.tracks, 358, 201, DIR.S | DIR.N);
   set(n.tracks, 358, 200, DIR.S);
+  // AUDIT LANDFORMS II J1/J2: a track that fords the river, a stream that joins it, and a road over that stream - water
+  // met by every other layer, where the painter's order and the shaper's lerp must agree
+  set(n.tracks, 285, 251, DIR.S);                                                    // a track north-south...
+  for (let y = 252; y <= 258; y++) set(n.tracks, 285, y, DIR.N | DIR.S);             // ...across the river at (285, 255)
+  set(n.tracks, 285, 259, DIR.N);
+  set(n.streams, 316, 250, DIR.S);                                                   // a stream south...
+  for (let y = 251; y <= 254; y++) set(n.streams, 316, y, DIR.N | DIR.S);
+  set(n.streams, 316, 255, DIR.N);                                                   // ...into the river at (316, 255)
+  set(n.roads, 314, 252, DIR.E);                                                     // a road east-west...
+  for (let x = 315; x <= 317; x++) set(n.roads, x, 252, DIR.E | DIR.W);              // ...over the stream at (316, 252)
+  set(n.roads, 318, 252, DIR.W);
   return n;
 }

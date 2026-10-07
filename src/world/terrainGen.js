@@ -64,7 +64,7 @@ import { createLandforms } from './landforms.js';   // LANDFORM1-3: the port's o
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
- *   nature: Array<{record:number,x:number,y:number,z:number}>}}
+ *   nature: Array<{record:number,x:number,y:number,z:number}>, beach: ?Float32Array}}
  */
 export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, wod = null, forests = null, landform = false, ecotone = null }) {
   // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
@@ -108,6 +108,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     // switch (`smooth`, default on, the design's SmoothRoads) so the
     // worker needs no settings access.
     if (roads.smooth !== false) smoothRoadHeights(samples, tilemap, 129, hasLocation ? locationRect : null);   // AUDIT 51: the mod skips the rect
+    if (roads.smooth !== false && classic) smoothRoadHeights(classic, tilemap, 129, locationRect);   // AUDIT LANDFORMS II H2: DFU's own samples as its nature reads them
   }
   assignTiles(tileData, tilemap, true);
   // WOD2: World of Daggerfall's "Smooth the terrain" arms
@@ -149,6 +150,11 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
       paths,
     } : null,
     ecotone,   // ECOTONE1: the neighbours' climates - a border's tiles laid by the climate the ground's border gives them
+    // AUDIT LANDFORMS II H2: and its beach line asked of DFU's own blend, as the tiles' is (D3) - on the shaped blend a
+    // road's bed or a river's channel moved a coastal town's mean, and the line moved with it at 85 tiles in 43 of the
+    // 351 coastal location pixels (a tree there, none here; the scatter's records reshuffled after each). The flats
+    // still stand on the shaped ground.
+    beach: classic,
   });
   return { samples, tilemap, positions: grid.positions, normals: grid.normals, tilemapBytes, avg, nature,
     paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says
@@ -158,6 +164,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     // kept, roadless, while the map (rebuilt on arrival) showed the roads.
     withRoads: !!roads,
     wodAverages: wodResult ? wodResult.averages : null,   // WOD2: per pick, the normalized average its objects stand on
+    beach: classic,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel (null else) - the gathering nodes' beach line
   };
 }
 

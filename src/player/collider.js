@@ -59,6 +59,7 @@ const SUBSTEP_LEN = CAPSULE_RADIUS * 0.75;
  *  whole motion, however long. */
 export const EXACT_SWEEP_MAX = SUBSTEPS_MAX * SUBSTEP_LEN;
 const GROUND_NY = Math.cos((SLOPE_LIMIT_DEG * Math.PI) / 180);
+const TAN_SLOPE_LIMIT = Math.tan((SLOPE_LIMIT_DEG * Math.PI) / 180);   // AUDIT LANDFORMS II I3: the terrain floor snap's reach
 const SKIN = 0.02;
 
 /** The slack on the broad-phase box, in world units: the triangles' own arithmetic is float, so the box is grown by
@@ -2017,8 +2018,19 @@ export class Collider {
     // below the centre); this collider's answer to that spike is its
     // own snap (player/motor.js A6), so the floor takes the same
     // STEP_OFFSET reach, under the same jump gate.
+    // AUDIT LANDFORMS II I3: ...or as far as the feet's own run this
+    // substep falls at the slope limit, the controller's own law. A
+    // Travel Options journey's step is the clock's (TO1: FIXED_DT times
+    // the scale, a second at x60), swept in SUBSTEP_LEN substeps, and
+    // one that missed the 0.5 m reach flew level for the rest of the
+    // step and landed as a fall: on the lifted Dragontail's summit
+    // roads over 2,000 HP a descent at x20 to x100 (on DFU's ground,
+    // 1,792 HP down one Menevia track at x100). An ordinary step's
+    // reach is STEP_OFFSET as it was (a Speed-50 horse runs 0.18 m a
+    // step: 0.49 m).
     const floor = this.restFloor(feet[0], feet[2]);
-    if (snap && dy <= 0 && !out.grounded && feet[1] > floor && feet[1] - floor <= STEP_OFFSET) {
+    const floorReach = Math.max(STEP_OFFSET, Math.hypot(feet[0] - beforeX, feet[2] - beforeZ) * TAN_SLOPE_LIMIT);
+    if (snap && dy <= 0 && !out.grounded && feet[1] > floor && feet[1] - floor <= floorReach) {
       // ...but never against the step-up LADDER above: a capsule lifted
       // in front of a riser is off the floor on purpose, and the floor
       // takes it only where the mesh leaves the capsule alone there.

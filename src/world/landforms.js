@@ -59,10 +59,12 @@
 // pixel's centre to its edge or corner), the one the painter paints -
 // the cardinal road down the seam of tiles 63 and 64, the diagonal down
 // x == y - so the cut runs under the painted tiles. A CHANNEL IS THE
-// WATER'S (AUDIT LANDFORMS E2): a road or track crossing a river or a
-// stream stands there on its own bed alone - the causeway's top - and
-// its bank and verge give way to the channel, so the painted water lies
-// on the channel's floor right up to the causeway.
+// WATER'S (AUDIT LANDFORMS E2): a road crossing a river or a stream
+// stands there on its own bed alone - the causeway's top - and its bank
+// and verge give way to the channel, so the painted water lies on the
+// channel's floor right up to the causeway. A track gives way on its own
+// bed too (AUDIT LANDFORMS II J1): the painter paints the water over a
+// track, so a track crosses water by a ford.
 //
 // LANDFORM3 - THE RIVERS LIE IN THE LAND. Basic Roads' rivers and
 // streams (painted when RiversAndStreams is on) take the same cut,
@@ -83,7 +85,7 @@
 // (1.25 m - STREAMING_TERRAIN_SCALE).
 // ═══════════════════════════════════════════════════════════════════
 
-import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, kernelTerms, sampleKernel, generateSamples } from './terrainSampler.js';
+import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, kernelTerms, sampleKernel, generateSamples } from './terrainSampler.js';
 import { BEACH_JITTER, blendLocationTerrain } from './terrainTiles.js';
 import { DIR_DELTA, MAP_W, MAP_H } from './roadNetwork.js';
 
@@ -104,9 +106,11 @@ export const LANDFORM_DIALS = Object.freeze({
   // `verge` the distance past the bank over which the land comes back (the ground noise with it), `drop` how far the
   // floor lies under the land it is graded to (a river's water under its banks) - and the least a river's or a
   // stream's bank top stands over its floor, so one on a hillside is held by a levee on its low side; a road's or a
-  // track's low bank falls to the land (AUDIT LANDFORMS E1). Paint order is the lerp order, last wins: stream, river,
-  // track, road (roadPainter.js: the first painter to write a tile keeps it, and roads paint first - a road over a
-  // river is a causeway, on its own bed: AUDIT LANDFORMS E2).
+  // track's low bank falls to the land (AUDIT LANDFORMS E1). The lerp runs stream, river, track, road, last wins
+  // (roadPainter.js paints a tile road, river, stream, track, the first to write it keeping it): a road over water is a
+  // causeway on its own bed (AUDIT LANDFORMS E2), and a track over water a ford, the channel the water's across its
+  // bed too, as the water is painted there (AUDIT LANDFORMS II J1 - lerped after the water, it was a causeway the
+  // painter painted the river over: the water stood up to 7.9 m over its channel at a track's crossing).
   stream: Object.freeze({ flat: 1, bank: 1.25, verge: 4, drop: 0.8 }),     // the bank art's water down the middle: 1 m under
   river: Object.freeze({ flat: 2, bank: 1.5, verge: 6, drop: 1.92 }),      // the whole painted width, 2.4 m under
   track: Object.freeze({ flat: 1.25, bank: 2, verge: 5, drop: 0 }),
@@ -114,18 +118,35 @@ export const LANDFORM_DIALS = Object.freeze({
   // the height over the knee across which a cut fades in from nothing, so a path that reaches the beach meets it
   // without a step (the knee is a hard line for heights; a cut must not be)
   coast: 12,
+  // AUDIT LANDFORMS II I2: how much steeper than its hillside a road's or a track's bank may stand (a grade, rise over
+  // run) - its cut and fill are held to the smooth land within what a bank of its width carries at that (bankHold)
+  bankGrade: 0.5,
 });
 
-/** The four path layers in lerp order, with the network field each reads. */
+/** The four path layers in lerp order, with the network field each reads; `ford`, a layer the water is painted over
+ *  where they cross (a track), so the channel is the water's across its bed too. */
 const LAYERS = Object.freeze([
   Object.freeze({ key: 'streams', dial: LANDFORM_DIALS.stream, water: true }),
   Object.freeze({ key: 'rivers', dial: LANDFORM_DIALS.river, water: true }),
-  Object.freeze({ key: 'tracks', dial: LANDFORM_DIALS.track, water: false }),
+  Object.freeze({ key: 'tracks', dial: LANDFORM_DIALS.track, water: false, ford: true }),   // AUDIT LANDFORMS II J1
   Object.freeze({ key: 'roads', dial: LANDFORM_DIALS.road, water: false }),
 ]);
 
 const smooth01 = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 const smoothstep = (a, b, v) => smooth01((v - a) / (b - a));
+
+/**
+ * AUDIT LANDFORMS II I2: A BANK IS NEVER A LAUNCH RAMP. How far a road's or a track's cut or fill may part from the smooth
+ * land, in kernel units: what its bank (`bank` samples, its smoothstep peaking at 1.5 over the width) climbs at
+ * `bankGrade` over the hillside. Level across, a bench on a steep hillside stood banks about twice the hillside's grade -
+ * 72 degrees, 19 m tall, on a 53-degree hillside at (627, 282) - and a run down across one launched into falls of 20 to
+ * 49 m where DFU's ground is safe. Held, a bank is never more than `bankGrade` steeper than its hillside; the bed stays
+ * level wherever its cut is under the hold (every straight road of 400 sampled on the real data; 10 of 1,500 path
+ * pixels move at all). A river's or a stream's floor is never held - its water is level.
+ * @param {{bank: number}} dial
+ * @param {number} span - the pixel's samples less one (128)
+ */
+const bankHold = (dial, span) => (LANDFORM_DIALS.bankGrade * (TERRAIN_SIZE / span / STREAMING_TERRAIN_SCALE) * dial.bank) / 1.5;
 
 /** The small heightmap's top as `low`: WOODS.WLD's bytes are 7-bit, and DFU's MAX_TERRAIN_HEIGHT is built on 127. */
 const LOW_TOP = 127 * BASE_HEIGHT_SCALE;
@@ -164,8 +185,9 @@ export function reliefByteHeight(byte) {
  * AUDIT LANDFORMS B2: with the world's `landforms` the field is the kernel's own shaped samples less DFU's, so a road's
  * cut and fill and a river's channel are followed too; it was the lift alone, and a record from before the row stood
  * up to 29.8 m over a road's cut (a fall billing over 120 HP) - on the real data now 1.6 m over at worst, 2.0 m under
- * (the mod's SmoothRoads, which smooths DFU's own road and not the level bed). Without them, the lift alone (no
- * network). Not followed: World of Daggerfall's flatten.
+ * (the mod's SmoothRoads, which smooths DFU's own road and not the level bed). Without them - no network - the relief's
+ * lift, through the same kernel (AUDIT LANDFORMS II J9: it was a second formula the game never ran, and the pins that
+ * read it as "the real pipeline" read that). Not followed: World of Daggerfall's flatten.
  * @param {object} woods - the sampler's three-method surface.
  * @param {number} px
  * @param {number} py
@@ -174,7 +196,7 @@ export function reliefByteHeight(byte) {
  * @param {?{xMin: number, xMax: number, yMin: number, yMax: number}} [locationRect] - the pixel's location rect
  *   (setLocationTiles' answer), or null in the wild.
  * @param {number} [hDim]
- * @param {?object} [landforms] - createLandforms over the network the pixel is cut along, or null: the lift alone
+ * @param {?object} [landforms] - createLandforms over the network the pixel is cut along, or null: the relief alone
  * @returns {number}
  */
 export function landformLift(woods, px, py, sx, sy, locationRect = null, hDim = HEIGHTMAP_DIMENSION, landforms = null) {
@@ -190,9 +212,10 @@ export function landformLift(woods, px, py, sx, sy, locationRect = null, hDim = 
  */
 export function landformLiftField(woods, px, py, locationRect = null, hDim = HEIGHTMAP_DIMENSION, landforms = null) {
   const span = hDim - 1;
+  const lf = landforms ?? createLandforms({ woods, hDim });   // AUDIT LANDFORMS II J9: no network - the relief alone, the kernel's own way
   let f;
-  if (landforms && !locationRect) {
-    const shaped = sampleKernel(woods, px, py, hDim, true, landforms), plain = sampleKernel(woods, px, py, hDim, true, null);
+  if (!locationRect) {
+    const shaped = sampleKernel(woods, px, py, hDim, true, lf), plain = sampleKernel(woods, px, py, hDim, true, null);
     const memo = new Map();   // a sample as generateSamples keeps it, float32 - the ground the pixel is built of
     f = (x, y) => {
       const k = x * hDim + y;
@@ -201,17 +224,10 @@ export function landformLiftField(woods, px, py, locationRect = null, hDim = HEI
       return v;
     };
   } else {
-    const { base } = kernelTerms(woods, px, py, hDim);
-    const at = (x, y) => reliefLift(base(x, y) * BASE_HEIGHT_SCALE);
-    if (!locationRect) return at;
     const field = new Float32Array(hDim * hDim);
     let sum = 0;
-    if (landforms) {
-      const classic = new Float32Array(hDim * hDim), shaped = generateSamples(woods, px, py, hDim, landforms, classic);
-      for (let i = 0; i < field.length; i++) sum += (field[i] = (shaped[i] - classic[i]) * MAX_TERRAIN_HEIGHT);
-    } else {
-      for (let x = 0; x < hDim; x++) for (let y = 0; y < hDim; y++) sum += (field[x * hDim + y] = at(x, y));
-    }
+    const classic = new Float32Array(hDim * hDim), shaped = generateSamples(woods, px, py, hDim, lf, classic);
+    for (let i = 0; i < field.length; i++) sum += (field[i] = (shaped[i] - classic[i]) * MAX_TERRAIN_HEIGHT);
     blendLocationTerrain(field, sum / field.length, locationRect, hDim);
     f = (x, y) => field[x * hDim + y];
   }
@@ -291,7 +307,7 @@ function pixelShaper(woods, nets, px, py, span, half, hDim) {
         }
       }
     }
-    if (segs.length) layers.push({ dial, reach, segs, water: LAYERS[li].water });
+    if (segs.length) layers.push({ dial, reach, segs, water: LAYERS[li].water, ford: !!LAYERS[li].ford, hold: LAYERS[li].water ? Infinity : bankHold(dial, span) });
   }
   // The macro height a path is graded to, along one arm: at each whole sample of the arm (the arm runs from the centre
   // (64, 64) of its own pixel by a whole sample a step - a diagonal's steps are its own samples' diagonal), the
@@ -370,14 +386,21 @@ function pixelShaper(woods, nets, px, py, span, half, hDim) {
       targets[li] = dmin <= edge
         ? floor + (top - floor) * smoothstep(dial.flat, edge, dmin)
         : top + (land - top) * smoothstep(edge, reach, dmin);
+      // AUDIT LANDFORMS II I2: a road's or a track's floor and bank held to the smooth land (bankHold) - past its bank the
+      // verge hands the ground noise back, which no hold may take
+      if (dmin <= edge) {
+        const hold = layers[li].hold;
+        if (targets[li] > smoothLand + hold) targets[li] = smoothLand + hold;
+        else if (targets[li] < smoothLand - hold) targets[li] = smoothLand - hold;
+      }
       weights[li] = 1 - smoothstep(edge, reach, dmin);
     }
     if (!touched) return land;
     const fade = smoothstep(LANDFORM_KNEE, LANDFORM_KNEE + LANDFORM_DIALS.coast, land);
     // AUDIT LANDFORMS E2: how far into a channel the sample lies - 1 on a river's or a stream's floor, 0 at its bank's top.
-    // There a road or a track stands on its own bed alone (a causeway's top); its bank and verge give way to the channel
-    // by as much. They refilled it: on the real WOODS.WLD the painted water climbed up to 19 m out of its floor beside
-    // 629 crossings and riverside roads.
+    // There a road stands on its own bed alone (a causeway's top); its bank and verge give way to the channel by as much,
+    // and a track's bed with them (a ford, AUDIT LANDFORMS II J1). They refilled it: on the real WOODS.WLD the painted
+    // water climbed up to 19 m out of its floor beside 629 crossings and riverside roads.
     let chan = 0;
     for (let li = 0; li < layers.length; li++) {
       if (!layers[li].water || !(weights[li] > 0)) continue;
@@ -387,7 +410,7 @@ function pixelShaper(woods, nets, px, py, span, half, hDim) {
     let out = land;
     for (let li = 0; li < layers.length; li++) {
       let a = weights[li] * fade;
-      if (chan > 0 && !layers[li].water && dmins[li] > layers[li].dial.flat) a *= 1 - chan;
+      if (chan > 0 && !layers[li].water && (layers[li].ford || dmins[li] > layers[li].dial.flat)) a *= 1 - chan;
       if (a > 0) out += (targets[li] - out) * a;
     }
     const least = land < LANDFORM_FLOOR ? land : LANDFORM_FLOOR;
