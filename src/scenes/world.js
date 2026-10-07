@@ -289,7 +289,7 @@ import { createRiteHost, RITE_TEXT } from './riteHost.js';   // WB12d: the faith
 import { createSdHost } from './sdHost.js';   // SD2b: the Hollow in the world - the hub's record in, the Hollow stood at its pixel, the find, the lines
 import { sdOmenSeen, sdNoticeCard, SD_COMPASS_M } from '../systems/sdOmen.js';   // SD2c: the Hollow seen and heard of - its column, its note, its compass's reach
 import { SdOmenPassRenderer } from '../render/sdOmenPass.js';   // SD2c: the Hollow's omen, the gate's beacon in brass
-import { SD_CAST_OUT_LINE, sdRoomKey } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room
+import { SD_CAST_OUT_LINE, sdRoomKey, isSdRoom } from '../net/sdLaw.js';   // SD2d: a Hollow's end said to whoever it casts out; SD5a: the Hour's room; SD9e: a receipt from my realm's
 import { isSdRealm, realmArena, SD_REALM_TEXT, SD_REALM_FOG, SD_REALM_FLOORS } from '../world/sdRealm.js';   // SD5a: the Shattered Hour - its edge, its refusals
 import { SdSkyRenderer } from '../render/sdSky.js';   // SD5b: the Hour's sky
 import { SD_HALL_FLOORS } from '../world/sdHall.js';   // SD6c: the bridge and the first step, the Concord's floors
@@ -325,6 +325,9 @@ import { playSerpentSound } from '../systems/serpentSounds.js';   // SERPENT1: i
 import { serpentSpoilsList, serpentSpoilsDay, SERPENT_SPOILS_KEYS, SERPENT_SPOILS_TEXT, SERPENT_SPOILS_RECORDS_MAX } from '../systems/serpentSpoils.js';   // SERPENT1: the Old Coil's hoard
 import { createSerpentClaims } from '../net/serpentClaims.js';   // SERPENT1: its receipts carried to the account service
 import { createSdClaims } from '../net/sdClaims.js';   // SD9b: the Hour's receipts carried to the account service
+import { readSdReceipt } from '../net/sdReceipt.js';   // SD9e: my Hour receipt, read for its spoils
+import { SD_SPOILS_KEYS, SD_SPOILS_RECORDS_MAX, SD_SPOILS_TEXT, sdSpoilsDay, sdSpoilsSlot, sdSpoilsList } from '../systems/sdSpoils.js';   // SD9e: the Brass Remnant's spoils
+import { createSdSpoils } from './sdSpoils.js';   // SD9e: thrown from where it fell
 import { slainLine, serpentBossOf, serpentBossById, sameSerpentSite, SERPENT_NATIVE_PER_M } from '../net/serpentLaw.js';   // SERPENT1: the hub's word of its kill, in the chat (AUDIT SERPENT S1: my own site's alone)
 import { createGateCourt, courtSaySeconds } from './gateCourt.js';   // WB4: the fight on this screen - the boss drawn, heard and read, and his blows on me
 import { DeadlandsRenderer, skyGain, anchoredClock } from '../render/deadlands.js';   // WB6a: the Deadlands' sky and sea round the Burning Court
@@ -19306,7 +19309,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     online.onGate = (g) => gateLink?.word(g);   // WB3b: the court's room's word about its boss
     online.onSdHall = (w) => sdHallHeard(w);   // SD6c: the realm's word on the Orrery's hall - the stones, the fray, the Concord; the snap's lash
     online.onSdFight = (w) => sdFightHeard(w);   // SD8c: the realm's word on the Last Moment's fight
-    online.onSdReceipt = (r) => { sdClaims?.add(r); };   // SD9b: my Hour receipt (my realm's at the fall, the hub's at a hello) - to the account service, kept until it is counted
+    online.onSdReceipt = (r, room) => { sdClaims?.add(r); sdSpoilsReceipt(r, room); };   // SD9b: my Hour receipt (my realm's at the fall, the hub's at a hello) - to the account service, kept until it is counted; SD9e: and its spoils
     online.onSerpent = (w) => serpentLink?.word(w);   // SERPENT1: the sea serpent's cell's word (on my cell's socket or a halo's) - its fight, its swim, its blows, my receipt
     online.onRaid = (f, room) => raidRelayWord(f, room);   // RAID3: a town cell's word about its raid - the ledger, the cleanse, my receipt
     online.onRite = (w) => riteHost?.onBroken(w);   // WB12d: the hub's broken rite
@@ -20718,8 +20721,8 @@ export async function bootWorld(canvas, renderer, params, status) {
   onSlotSaved((characterId) => { try { spoilsPool.saved(characterId); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } });
   // REALM P1.3: a realm checkpoint's spoils. AUDIT REALM2 C1: a town's thanks with them - RAID4b's own pool was cleared by a
   // slot's save alone (onSlotSaved, below), which a realm character never writes, so every join handed the thanks back
-  _realmSaveHooks.held = (who) => { try { return [...(spoilsPool?.heldIds?.(who) ?? []), ...(raidSpoils?.heldIds?.(who) ?? []), ...(serpentSpoils?.heldIds?.(who) ?? [])]; } catch { return null; } };   // SERPENT1: and the Old Coil's hoard
-  _realmSaveHooks.landed = (who, ids) => { try { spoilsPool?.saved(who, ids); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } try { raidSpoils?.saved(who, ids); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } try { serpentSpoils?.saved(who, ids); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } };
+  _realmSaveHooks.held = (who) => { try { return [...(spoilsPool?.heldIds?.(who) ?? []), ...(raidSpoils?.heldIds?.(who) ?? []), ...(serpentSpoils?.heldIds?.(who) ?? []), ...(sdSpoilsPool?.heldIds?.(who) ?? [])]; } catch { return null; } };   // SERPENT1: and the Old Coil's hoard; SD9e: and the Brass Remnant's spoils
+  _realmSaveHooks.landed = (who, ids) => { try { spoilsPool?.saved(who, ids); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); } try { raidSpoils?.saved(who, ids); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } try { serpentSpoils?.saved(who, ids); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } try { sdSpoilsPool?.saved(who, ids); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } };
   onSlotSaved((characterId) => { try { raidSpoils.saved(characterId); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); } });   // RAID4b
   /** SERPENT1: THE OLD COIL'S HOARD (systems/serpentSpoils.js) - the raids' door, under keys of its own: no floor, no word
    *  to the hub, the crash's records a save clears. Made online or not, as the pools are. */
@@ -20728,6 +20731,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     store: _spoilsStore, who: () => characterIdOf(playerEntity), keys: SERPENT_SPOILS_KEYS, recordsMax: SERPENT_SPOILS_RECORDS_MAX,
   });
   onSlotSaved((characterId) => { try { serpentSpoils.saved(characterId); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } });   // SERPENT1
+  /** SD9e: THE BRASS REMNANT'S SPOILS (systems/sdSpoils.js) - thrown on the arena's floor from where it fell
+   *  (scenes/sdSpoils.js, the court's burst), under keys of their own; a spent receipt said to the hub as its slot, so no
+   *  other tab or device gives it again. Made online or not, as the pools are: it keeps the crash's records a save clears. */
+  const sdSpoilsPool = createSpoilsPool({
+    renderer, gl: renderer.gl, getTexture, uploadRecordFrame, audio,
+    ray: (from, dir, len) => { const c = modes?.dungeonCtx?.collider; const h = c?.raycastHit ? c.raycastHit(from, dir, len) : { dist: c?.raycast?.(from, dir, len) ?? Infinity, normal: null }; return Number.isFinite(h?.dist) ? h : null; },   // the Hour's own floors and pillars
+    now: () => Date.now() + _sharedOffsetMs, take: takeSpoil, say: (text) => setMidScreenText(text),
+    store: _spoilsStore, who: () => characterIdOf(playerEntity),
+    iconOf: (item) => itemIconColor32(item, { identity: playerEntity }),
+    onSpent: (day) => { const s = sdSpoilsSlot(day); if (s != null) socialLink()?.sendSdSpent?.(s); },
+    keys: SD_SPOILS_KEYS, recordsMax: SD_SPOILS_RECORDS_MAX,
+    itemName: (item) => lootPileName([item]), gathered: SD_SPOILS_TEXT.gathered,
+  });
+  onSlotSaved((characterId) => { try { sdSpoilsPool.saved(characterId); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } });   // SD9e
   /** AUDIT WBX S4: the spoils given outside a court, one tab at a time - two tabs of one account on one device each
    *  checked the store before the other had written it, and both gave them (the Web Locks API; without it, at once). */
   const spoilsLock = (fn) => { const locks = globalThis.navigator?.locks; return locks?.request ? locks.request('wb5.spoils', () => fn()) : Promise.resolve().then(fn); };
@@ -20756,6 +20773,19 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** SERPENT1: THE OLD COIL'S HOARD, off a receipt the relay signed at the kill - given when the account service says
    *  this claim is the (serpent, account)'s (net/serpentClaims.js onSpoils), rolled at the level the character fought at
    *  and by how it earned it, straight into the pack when that character stands here - else kept for it. */
+  /** SD9e: MY HOUR RECEIPT'S SPOILS - one from my own realm, while I stand in it, is kept for the burst on the arena's
+   *  floor (scenes/sdSpoils.js - SD_SPEW_AT_MS into the fall); any other (the hub's at a hello, a realm I have left) is
+   *  its spoils straight into the pack, rolled at the level the fight admitted and mine, once a receipt and account, one
+   *  tab at a time. */
+  const _sdReceipts = new Map();
+  function sdSpoilsReceipt(r, room) {
+    const c = readSdReceipt(r);
+    if (!c) return;
+    if (isSdRoom(room) && modes?.sdRealmSlot?.() === c.d) { _sdReceipts.set(c.d, r); return; }
+    const level = spoilsLevel(playerEntity.level ?? 1, c.l);
+    spoilsLock(() => sdSpoilsPool.grant({ day: sdSpoilsDay(c.d), acct: c.s, roll: () => sdSpoilsList(c.c, level), text: SD_SPOILS_TEXT.granted }))
+      .catch((e) => console.warn('[sd] spoils', e?.message ?? e));
+  }
   function grantSerpentSpoils(entry) {
     const c = readSerpentReceipt(entry?.r);
     if (!c) return undefined;
@@ -20806,12 +20836,14 @@ export async function bootWorld(canvas, renderer, params, status) {
     try { if (recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => spoilsPool.adopt(rec), inSave: _spoilsInSave })) setMidScreenText(SPOILS_TEXT.gathered); } catch (e) { console.warn('[gate] spoils', e?.message ?? e); }   // AUDIT WBX S3: in the pack now - the next save clears it
     try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => raidSpoils.adopt(rec), key: RAID_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(RAID_SPOILS_TEXT.recovered); } catch (e) { console.warn('[raid] spoils', e?.message ?? e); }   // RAID4b: a town's thanks, the same door
     try { if (recoverSpoils(_spoilsStore, takeGateSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => serpentSpoils.adopt(rec), key: SERPENT_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SERPENT_SPOILS_TEXT.recovered); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); }   // SERPENT1: the Old Coil's hoard, the same door; SERPENT-SET: its embers by the gate's
+    try { if (recoverSpoils(_spoilsStore, takeSpoil, { who, saves: enumerateSaves().info.values(), onHanded: (rec) => sdSpoilsPool.adopt(rec), key: SD_SPOILS_KEYS.store, inSave: _spoilsInSave })) setMidScreenText(SD_SPOILS_TEXT.recovered); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); }   // SD9e: the Brass Remnant's spoils, the same door
     _spoilsInSave = null;   // AUDIT RESCUE-SAVE A1: the boot's load alone - a load in the session is its own pack
   };
   // AUDIT ONLINE2 F3 (AUDIT RAID R8d): A LOAD IN THE SESSION IS A STAND-UP - the pack is the loaded save's, so the pools
   // let go of what they held in the old one, and the crash's door asks again for the loaded character (a town's thanks
   // given, a load of a save from before them, then a save: the record cleared with its pieces in no pack at all)
   onSlotLoaded((characterId) => { spoilsPool.loaded(characterId); raidSpoils.loaded(characterId); serpentSpoils.loaded(characterId); _spoilsAskedFor = null; });   // AUDIT SERPENT D5: and the Old Coil's hoard
+  onSlotLoaded((characterId) => { sdSpoilsPool.loaded(characterId); });   // SD9e: and the Brass Remnant's spoils
   /** WB9b: the court's floor as the dungeon arm asks for it each frame - the fight's crossings and the relay's clock */
   const _gateFloor = { xa: [], now: 0, none: Object.freeze([]) };
   const _courtArena = courtArena(_gateFloor.none, 0);
@@ -21308,6 +21340,20 @@ export async function bootWorld(canvas, renderer, params, status) {
     me: () => (online ? online.name ?? null : null),   // my row of the chart
     hudHidden: () => gamePaused() || !!townTalk.hudHidden,
   }) : null;
+  /** SD9e (Super-Dungeons.md section 11): ITS SPOILS ON THE ARENA'S FLOOR (scenes/sdSpoils.js) - SD_SPEW_AT_MS into its
+   *  fall, off my receipt from my own realm (sdSpoilsReceipt), thrown from where it fell; leaving the Hour gathers the
+   *  floor. Online alone, beside the link. */
+  const sdSpoilsBurst = sdFightLink ? createSdSpoils({
+    link: sdFightLink, pool: sdSpoilsPool,
+    slot: () => modes?.sdRealmSlot?.() ?? null,
+    receipt: (slot) => _sdReceipts.get(slot) ?? null,
+    level: () => playerEntity.level ?? 1,
+    feet: () => (playerSpawned && modes?.sdRealmSlot?.() != null ? player.feetAt() : null),
+    say: (t) => setMidScreenText(t),
+  }) : null;
+  /** SD9e: the floor a press, a plaque and the ray ask of - the Hour's pool in the Hour, the court's anywhere else (the two
+   *  are never stood in at once). */
+  const floorPool = () => (modes?.sdRealmSlot?.() != null ? sdSpoilsPool : spoilsPool);
   function sdFightHeard(w) {
     const slot = modes?.sdRealmSlot?.();
     if (!sdFightLink || slot == null || (w.k === 'st' && w.s !== slot)) return;
@@ -21319,8 +21365,10 @@ export async function bootWorld(canvas, renderer, params, status) {
   const sdFightFrame = () => {
     if (!sdFightLink) return;
     const inRealm = modes?.sdRealmSlot?.() != null;
+    if (!inRealm && _sdFightHeld) sdSpoilsBurst?.leave();   // SD9e: whatever is still on the arena's floor into the pack
     if (!inRealm && _sdFightHeld) { sdFightLink.leave(); sdBlows?.leave(); _sdFightHeld = false; }
     if (inRealm) { try { sdBlows?.frame(); } catch (e) { console.warn('[sd] blows', e?.message ?? e); } }   // SD8d: its blows on me
+    if (inRealm) { try { sdSpoilsBurst?.frame(); } catch (e) { console.warn('[sd] spoils', e?.message ?? e); } }   // SD9e: its spoils, thrown and flying
     let bar = null;
     if (inRealm) {
       const [x, , z] = sdDungeonToRealm(player.pos[0], player.pos[1], player.pos[2]);
@@ -24672,7 +24720,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     // now draws, which the enemy sprite gives way to, would be nothing at all indoors and underground
     // (and DISC23-B's walkers: a peer standing as their chosen set gives the class sprite way just the same, so the
     // merge of the two hands their batches here too)
-    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? []), ...(peerWalkers?.batches() ?? []), ...(gateCourt?.batches() ?? []), ...(csaOn() && !modes?.sailingCabin ? csa.batches() : []), ...((modes?.mode ?? 'exterior') === 'dungeon' ? arenaBouts.batches() : [])],   // WB4: and the Burning Court's boss; CSA-C: a boat's crew and lanterns where it stands indoors (CABIN-HULL: never in a ship's cabin - the fleet's are the street's)
+    extraBillboards: () => [...(remotePlayers?.batches() ?? []), ...(peerRiders?.batches() ?? []), ...(peerWalkers?.batches() ?? []), ...(gateCourt?.batches() ?? []), ...(sdSpoilsPool?.batches() ?? []), ...(csaOn() && !modes?.sailingCabin ? csa.batches() : []), ...((modes?.mode ?? 'exterior') === 'dungeon' ? arenaBouts.batches() : [])],   // WB4: and the Burning Court's boss; CSA-C: a boat's crew and lanterns where it stands indoors (CABIN-HULL: never in a ship's cabin - the fleet's are the street's)
     drawModeMeshes: () => { if (csaOn() && !modes?.sailingCabin) { csa.draw(renderer); csaDrawParticlesOpaque(); } },   // CSA-C: a boat placed on a dungeon's water (UpdateBoatVisibility's inside arm keeps it active there); CSA-F: its wake's and splashes' quads and its flag; CABIN-HULL: never in a ship's cabin - the fleet kept afloat there is the street's, and her hull drawn round the room cut its floor into planks and holes
     csaDrawParticlesBlended: () => { if (csaOn() && !modes?.sailingCabin) csaDrawParticlesBlended(); },   // CSA-F: ...and its drops, after the mode's last world draw (CABIN-HULL: none below deck)
     modeLights: () => (csaOn() && !modes?.sailingCabin ? csa.lights(cam.pos) : []),   // CSA-C: ...and its lit lanterns (CABIN-HULL: none lights her cabin from outside)
@@ -24699,11 +24747,13 @@ export async function bootWorld(canvas, renderer, params, status) {
     arenaRival: () => arenaRivalBody(),   // ARENA4: my opponent on a relay's sand, as a body my blows meet
     onArenaHit: (hit) => !!arenaOnline?.hit(hit),   // ARENA4: a blow's number on them, out to the referee
     // WB9f: HIS SPOILS ON THE FLOOR, pressed - the pool's resting pieces as targets, their words and their items for the
-    // plaque, and the press that takes one into the pack (the court's dungeon arm, worldModes.js standCourt)
-    spoilTargets: () => spoilsPool?.targets() ?? null,
-    spoilName: (key) => spoilsPool?.nameOf(key) ?? null,
-    spoilContents: (key) => spoilsPool?.contentsOf(key) ?? null,
-    takeSpoil: (key) => !!spoilsPool?.pick(key),
+    // plaque, and the press that takes one into the pack (the court's dungeon arm, worldModes.js standCourt); SD9e: in the
+    // Hour, the Brass Remnant's (standSdRealm) - the floor of the place I stand in
+    spoilTargets: () => floorPool()?.targets() ?? null,
+    spoilName: (key) => floorPool()?.nameOf(key) ?? null,
+    spoilContents: (key) => floorPool()?.contentsOf(key) ?? null,
+    takeSpoil: (key) => !!floorPool()?.pick(key),
+    sdRealmLights: () => sdSpoilsPool?.lights() ?? [],   // SD9e: its spoils' light, first in the Hour's channel
     // WB6a: the Deadlands' sea and sky, in the dungeon arm's world pass after the court's solid geometry - in the court's
     // own air (the renderer's fog as it set it for the court, the sky's light following the lane's with the fog's colour)
     drawGateBackdrop: ({ proj, view }) => {
@@ -24726,8 +24776,9 @@ export async function bootWorld(canvas, renderer, params, status) {
       const lived = deadlandsPass()?.drawLife(proj, view, _courtCentre, deadlandsSeconds(), fog, glow, _courtBeds, renderer.worldViewportPx?.[3]);
       if (told || lived) renderer.markForeignPass();
     },
-    // SD8d: the Brass Remnant's blows on the arena's floor, in the dungeon arm's world pass - fogged as the floor is
-    drawSdTelegraph: ({ proj, view, eye }) => { if (sdBlows?.drawPass(proj, view, eye, performance.now() / 1000, courtFogNow())) renderer.markForeignPass(); },
+    // SD8d: the Brass Remnant's blows on the arena's floor, in the dungeon arm's world pass - fogged as the floor is; SD9e:
+    // and its spoils' loot lines, in the same pass
+    drawSdTelegraph: ({ proj, view, eye }) => { const t = performance.now() / 1000, fog = courtFogNow(); const blows = !!sdBlows?.drawPass(proj, view, eye, t, fog), lines = !!sdSpoilsPool?.drawPass(proj, view, eye, t, fog); if (blows || lines) renderer.markForeignPass(); },
     deadlandsSeconds: () => deadlandsSeconds(),   // WB6b: the court's flash and the shards' drift keep the sky's clock
     staffTeleportHeld: () => staffTeleportHeld,
     canVisitPrivateRoom: () => !seatOut() && isStaff(_staffGlyphs) && !!chatLinks.get('world')?.staffTeleportOk,

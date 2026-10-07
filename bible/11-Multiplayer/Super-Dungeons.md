@@ -321,7 +321,10 @@ fighter who EARNED it (dealt 2% of their own share, or stood alive half the figh
 `h1` signed with the relay's key: `{d:s, b, s:account, c:seed, x, l}` - the slot, the boss, the account, the relay's
 own seed, how it was earned, the admitted level. The hub keeps each as `sdrc:<sub>` for the week a receipt lives.
 
-**The spoils (client, from the receipt's seed).** Thrown from where it fell (the gate's spoils pool, its keys its own):
+**The spoils (client, from the receipt's seed).** Thrown from where it fell (the gate's spoils pool, its keys its own -
+SD9e: `systems/sdSpoils.js` rolls them, `scenes/sdSpoils.js` throws them a moment into the fall from the cage of its
+chest toward the fighter, kept on the arena's floor; a receipt that comes outside the realm is its spoils straight into
+the pack). A fighter who dealt and one who stood are paid alike, as the gate pays them:
 
 | | |
 |---|---|
@@ -1470,3 +1473,49 @@ The Hour Turns; the host); `tools/mutants/sd9d.json` (44, all dead). PINS MOVED:
 records).
 
 SD9e next: the spoils thrown from where the Remnant fell.
+
+### SD9e - shipped 2026-10-07 (the spoils thrown from where it fell)
+
+Section 11's spoils, whole. No relay or account change: the receipt (SD9a) carries the seed and the level, and the hub
+already keeps a receipt until a slot's spoils are said spent (`spent {s}`).
+
+- **The roll** (`systems/sdSpoils.js`, the gate's makers on the receipt's own stream): gold 400 a level, a fifth either
+  way; a first piece Legendary a quarter of the time, else Rare; two Rare or better by a boss's chances past the
+  ladder's top tier with a lucky hand (`SD_SPOILS_SOURCE` - tier 24, luck 70; `rareOrBetter` cuts the Common and Magic
+  shares away); every piece known; the ladder's last pass; and LAST the Brass of Numidium a third of the time (SD9d's
+  `rollNumidiumPiece`), so no roll before it ever moves. `sdSpoilsList` is the pool's list - the pieces, then the gold,
+  each dressed in the treasure flat its own look-stream picks. A fighter who dealt and one who stood are paid alike, as
+  the gate pays them.
+- **The burst** (`scenes/sdSpoils.js`, the court's burst for the arena): `SD_SPEW_AT_MS` (1.2 s) into the fall, off my
+  receipt from my own realm, the spoils leave the cage of its chest where it fell - at its height as it sinks - toward
+  my feet, kept on the arena's floor (`SD_SPOILS_KEEP`, two metres inside its rim: never off its edge into the void,
+  over the realm's real collider with its pillars); once a fight; never off another slot's receipt; rolled at the
+  level the fight admitted or mine, the lower. A fighter the realm counted in with no receipt `SD_RECEIPT_WAIT_MS` into
+  the fall is told so, once; a watcher is told nothing (`net/sdFightLink.js` `counted` - the realm counted me in this
+  fight, fallen or not). Leaving the Hour gathers whatever is still on the floor.
+- **The pool** (`scenes/spoilsPool.js`): the burst takes a `roll` as the grant does, and a pool says its own words
+  gathering (`gathered`). The Hour's pool keeps its own keys (`SD_SPOILS_KEYS`), its crash records (eight), each
+  piece's own picture and the loot piles' words; a spent receipt is said to the hub as its slot (`sendSdSpent`).
+- **The host** (`scenes/world.js`, `scenes/worldModes.js`): my realm's receipt is kept for the burst while I stand in it;
+  any other (the hub's at a hello, a realm I have left) is its spoils straight into the pack, one tab at a time. The
+  saves, the loads, the realm's checkpoints and the crash's door hold the Hour's pool as they hold the others. The
+  floor's press, plaque and ray ask the pool of the place I stand in (`floorPool` - the court's anywhere but the Hour);
+  the realm stands its pieces as targets and names them, lights them before its lamps, and draws their loot lines in
+  the arena floor's pass.
+
+THE FOUR HOSTS: the burst, the pool's floor and its press are the streaming page's - `scenes/world.js` with
+`scenes/worldModes.js`'s dungeon arm, where the Hour stands; `scenes/dungeonContext.js` asks its plaque through the hooks
+it already asks for the court's; `scenes/exterior.js`, the offline town page, has no Hour. A receipt granted outside
+the realm is the world host's, in every mode.
+
+Pins: `test/sd9e_spoils.test.js` (9 - the roll; the order, an oracle over 300 seeds; the list; the keys; the pool's
+roll; the burst; no spoils, said; on the arena's floor, over the real collider; the host); `tools/mutants/sd9e.json`
+(44, all dead). PINS MOVED: the gate's spoils seams (`test/wb9f_gate_spoils` - the floor of the place I stand in;
+`test/gateux_gate` - the press), the receipt's handler (`test/sd9b_claim`), the arena floor's pass (`test/sd8d_remnant_blows`
+- the spoils' lines in it), the realm's lights (`test/sd5a`), the billboards (`test/prww1_werewolf`, `test/wb4_gate_boss`,
+`test/fb1003b_cabinhull`), the dungeon's target families (`test/worldhover` - eight) and the systems' module count;
+seven records re-aimed by content (`raid4b.json`'s roll, `wb9f.json`'s press, `sd9b.json`'s book, `prww1.json`'s and
+`wb4.json`'s billboards, `serpent1_audit.json`'s two realm hooks). The realm's target lines are worded apart from the
+court's, so `wb9f.json`'s stands keeps one site.
+
+SD10 next: the collapse, the readouts and the arc's audit.

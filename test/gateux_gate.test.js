@@ -96,7 +96,7 @@ test('GATE-UX 3 the pool asks for no feet and takes nothing underfoot; the host 
   const made = /const spoilsPool = createSpoilsPool\(\{[\s\S]*?\n {2}\}\);/.exec(w)?.[0];
   assert.ok(made);
   assert.doesNotMatch(made, /feet:/, 'the host hands the pool no feet');
-  assert.match(w, /takeSpoil: \(key\) => !!spoilsPool\?\.pick\(key\),/, 'the press reaches it');
+  assert.match(w, /takeSpoil: \(key\) => !!floorPool\(\)\?\.pick\(key\),/, 'the press reaches it');   // SD9e: the floor of the place I stand in (PIN MOVED)
 });
 
 // ═══ 4. THE DAMAGE CHART ═══════════════════════════════════════════════════════════════════════════════════════════

@@ -7945,6 +7945,10 @@ export function createWorldModes(host) {
     const idx = n > 65535 ? new Uint32Array(n) : new Uint16Array(n);
     for (let i = 0; i < n; i++) idx[i] = i;
     ctx.collider.addMesh(REALM_BUCKET, tris, idx, identity());
+    // SD9e: THE BRASS REMNANT'S SPOILS ON THE ARENA'S FLOOR, PRESSED - the court's way (standCourt): each resting piece a
+    // target the one ray can win (the outer host's pool for the place I stand in), named by its own word, taken by the press
+    ctx.addActivationTargets(() => (host.spoilTargets?.() ?? NO_TARGETS));
+    ctx.addActivationNamer((key) => ((typeof key === 'string' && key.startsWith('spoil')) ? host.spoilName?.(key) ?? null : null));
   }
   /** WB6b: THE DEADLANDS' LAND stood into the court's context, after the court (whose art it is cut from): the islands
    *  among its draws, and each of the floor's shards with a matrix of its own - moved every frame on the sky's clock
@@ -9334,7 +9338,7 @@ export function createWorldModes(host) {
       // fight's own lights first (his glow, the crystals, the spoils), then the braziers nearest first, so the renderer's
       // cap drops a far court's fire, never him
       if (isGateArena(dungeonLoc)) { const _court = withCourtLights(_dgLit, [...(host.gateCourtLights?.() ?? []), ...courtLightsNear(cam.pos)]); renderer.setPointLights(_court.data, null, _court.colors); }
-      if (isSdRealm(dungeonLoc)) { const _hour = withCourtLights(_dgLit, realmLightsNear(cam.pos)); renderer.setPointLights(_hour.data, null, _hour.colors); }   // SD5a: the Hour's lamps, after the player's own lights, nearest first
+      if (isSdRealm(dungeonLoc)) { const _hour = withCourtLights(_dgLit, [...(host.sdRealmLights?.() ?? []), ...realmLightsNear(cam.pos)]); renderer.setPointLights(_hour.data, null, _hour.colors); }   // SD5a: the Hour's lamps, after the player's own lights, nearest first; SD9e: the spoils' light before them, as the court's
       renderer.everyLightCasts();   // LA-SHADOW3: the level is drawn whole below (no view cull) - every torch keeps a shadow map, none lights through the rock as the nearest eight change (DISC15's rooms)
       renderer.setClearColor(INTERIOR_CLEAR);   // REVIEW 2026-09-05 (PR #55 review): the world-hosted dungeon/interior frame is THIS one - the host's own setClearColor sits after its `modes.frame` return
       renderer.setWorldViewport(worldViewportRect(canvas.clientWidth, canvas.clientHeight));   // E5: ViewportChanger.Update, every frame

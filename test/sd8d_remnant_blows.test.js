@@ -294,7 +294,7 @@ test('SD8d THE HOSTS, by source: the world host makes the blows online beside th
   assert.match(W, /strike: \(dmg, how\) => \{ modes\?\.dungeonCtx\?\.strikePlayer\?\.\(dmg, how\); \},[^\n]*\n\s+say: \(t\) => setMidScreenText\(t, courtSaySeconds\(t\)\),/);
   assert.match(W, /if \(!inRealm && _sdFightHeld\) \{ sdFightLink\.leave\(\); sdBlows\?\.leave\(\); _sdFightHeld = false; \}/);
   assert.match(W, /if \(inRealm\) \{ try \{ sdBlows\?\.frame\(\); \}/);
-  assert.match(W, /drawSdTelegraph: \(\{ proj, view, eye \}\) => \{ if \(sdBlows\?\.drawPass\(proj, view, eye, performance\.now\(\) \/ 1000, courtFogNow\(\)\)\) renderer\.markForeignPass\(\); \},/);
+  assert.match(W, /drawSdTelegraph: \(\{ proj, view, eye \}\) => \{ const t = performance\.now\(\) \/ 1000, fog = courtFogNow\(\); const blows = !!sdBlows\?\.drawPass\(proj, view, eye, t, fog\), lines = !!sdSpoilsPool\?\.drawPass\(proj, view, eye, t, fog\); if \(blows \|\| lines\) renderer\.markForeignPass\(\); \},/);   // SD9e: and its spoils' loot lines, in the same pass (PIN MOVED)
   const M = read('src/scenes/worldModes.js');
   assert.match(M, /if \(isGateArena\(dungeonLoc\)\) host\.drawGateCourt\?\.\(\{ proj, view, eye: mwv\.eye \}\);[^\n]*\n\s+if \(isSdRealm\(dungeonLoc\)\) host\.drawSdTelegraph\?\.\(\{ proj, view, eye: mwv\.eye \}\);/);
 });

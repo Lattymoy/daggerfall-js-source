@@ -197,6 +197,8 @@ export function createSdFightLink({ now, say = () => {}, onRefused = () => {} })
     now: () => now(),
     /** Whether the realm has counted me in the fight it is fighting - a blow of mine may go out. */
     joined: () => state.fi > 0 && mine === state.fi && !state.lost && !state.fell && !state.ended,
+    /** SD9e: whether the realm counted me in the fight it holds - fallen or not (its spoils' word, scenes/sdSpoils.js). */
+    counted: () => state.fi > 0 && mine === state.fi,
     /**
      * Whether my `in` is due at `t`, standing alive in the arena: not counted in a fight still to fight (none heard, a
      * fight lost, or one that never answered me), no refusal standing against it (one for good; else one said while the

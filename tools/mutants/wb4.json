@@ -308,11 +308,12 @@
   {
     "name": "WB4-the-body-not-drawn",
     "file": "src/scenes/world.js",
-    "old": ", ...(gateCourt?.batches() ?? []), ...(csaOn() && !modes?.sailingCabin ? csa.batches() : []), ...((modes?.mode ?? 'exterior') === 'dungeon' ? arenaBouts.batches() : [])],   // WB4: and the Burning Court's boss",
-    "new": ", ...(csaOn() && !modes?.sailingCabin ? csa.batches() : []), ...((modes?.mode ?? 'exterior') === 'dungeon' ? arenaBouts.batches() : [])],   // WB4: and the Burning Court's boss",
+    "old": ", ...(gateCourt?.batches() ?? []), ...(sdSpoilsPool?.batches() ?? []),",
+    "new": ", ...(sdSpoilsPool?.batches() ?? []),",
     "tests": [
       "test/wb4_gate_boss.test.js"
-    ]
+    ],
+    "note": "SD9e (PIN MOVED): the Brass Remnant's spoils pool joins the line - re-aimed by content."
   },
   {
     "name": "WB4-the-glow-not-handed",

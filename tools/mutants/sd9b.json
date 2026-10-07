@@ -290,11 +290,12 @@
   {
     "name": "SD9B-never-handed-the-book",
     "file": "src/scenes/world.js",
-    "old": "    online.onSdReceipt = (r) => { sdClaims?.add(r); };",
-    "new": "    online.onSdReceipt = (r) => { void r; };",
+    "old": "    online.onSdReceipt = (r, room) => { sdClaims?.add(r);",
+    "new": "    online.onSdReceipt = (r, room) => {",
     "tests": [
       "test/sd9b_claim.test.js"
-    ]
+    ],
+    "note": "SD9e (PIN MOVED): the handler takes the room for the spoils - re-aimed by content."
   },
   {
     "name": "SD9B-never-offered-again",

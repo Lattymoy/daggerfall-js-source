@@ -542,11 +542,12 @@
   {
     "name": "RAID4b-pool-roll-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);",
-    "new": "const list = spoilsList(seed >>> 0, Math.max(1, level | 0), claims);",
+    "old": "const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b",
+    "new": "const list = spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b",
     "tests": [
       "test/raid4b_sets.test.js"
-    ]
+    ],
+    "note": "SD9e (PIN MOVED): the burst's line takes a pool's own roll too - re-aimed by content to the grant's."
   },
   {
     "name": "RAID4b-pool-gate-words",

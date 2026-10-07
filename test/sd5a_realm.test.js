@@ -205,7 +205,7 @@ test('SD5a the mode machine by source: into the Hour from the open world (its ma
   assert.match(W, /dungeonEntranceLanding\(dungeonReturn\.sdHollow \? host\.sdHollowDoors\?\.\(dungeonReturn\.sdHollow\) \?\? \[\] : dungeonReturn\.candidates\.map\(\(e\) => e\.door\)\)\);/);
   assert.match(W, /if \(isSdRealm\(dungeonLoc\)\) \{ const _rl = realmLighting\(\); const _rt = dungeonTrilight\(!!renderer\.lightingLane, _rl\.tri\); renderer\.setLighting\(courtEquatorOf\(_rt\), 0, undefined, _rt\); renderer\.setMoonlight\(_rl\.key\); \}/);
   assert.match(W, /if \(isSdRealm\(dungeonLoc\)\) applyFog\(renderer, dungeonFog\(!!renderer\.lightingLane, SD_REALM_FOG\)\);/);
-  assert.match(W, /if \(isSdRealm\(dungeonLoc\)\) \{ const _hour = withCourtLights\(_dgLit, realmLightsNear\(cam\.pos\)\); renderer\.setPointLights\(_hour\.data, null, _hour\.colors\); \}/);
+  assert.match(W, /if \(isSdRealm\(dungeonLoc\)\) \{ const _hour = withCourtLights\(_dgLit, \[\.\.\.\(host\.sdRealmLights\?\.\(\) \?\? \[\]\), \.\.\.realmLightsNear\(cam\.pos\)\]\); renderer\.setPointLights\(_hour\.data, null, _hour\.colors\); \}/);   // SD9e: the spoils' light before the lamps, as the court's (PIN MOVED)
   assert.match(W, /isGateArena\(dungeonLoc\) \? \{ kind: 'gate', day: dungeonLoc\.gate \} : isSdRealm\(dungeonLoc\) \? \{ kind: 'sd', s: dungeonLoc\.sdRealm \} :/);
   assert.match(W, /sdRealmSlot: \(\) => \(mode === 'dungeon' && isSdRealm\(dungeonLoc\) \? dungeonLoc\.sdRealm : null\),/);
   assert.match(W, /\n\s+enterSdRealm,[^\n]*\n\s+stepThroughFire,/);

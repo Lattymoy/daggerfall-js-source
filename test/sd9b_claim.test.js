@@ -266,7 +266,7 @@ test('SD9b THE WORDS AND THE CARDS: the account card\'s row says the count or "N
 test('SD9b the hosts and the service by source: the world host keeps a book online on the account service\'s call, hands it every receipt the relay hands it and offers it again each frame; the service\'s route, its count on the cards, the grant on the row, the toml and the deploy\'s paths', () => {
   const w = src('src/scenes/world.js');
   assert.match(w, /const sdClaims = params\.has\('online'\) \? createSdClaims\(\{/);
-  assert.match(w, /online\.onSdReceipt = \(r\) => \{ sdClaims\?\.add\(r\);/);
+  assert.match(w, /online\.onSdReceipt = \(r, room\) => \{ sdClaims\?\.add\(r\);/);   // SD9e: and its spoils, by the room it came from (PIN MOVED)
   assert.match(w, /sdClaims\?\.tick\(\);/);
   const idx = src('server-account/src/index.js');
   assert.match(idx, /if \(path === '\/v1\/sd\/claim' && request\.method === 'POST'\) \{/);

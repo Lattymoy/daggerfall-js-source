@@ -1320,26 +1320,28 @@
   {
     "name": "AUDIT-SERPENT-D-world-realm-held-no-hoard",
     "file": "src/scenes/world.js",
-    "old": ", ...(serpentSpoils?.heldIds?.(who) ?? [])]",
-    "new": "]",
+    "old": ", ...(serpentSpoils?.heldIds?.(who) ?? []), ...(sdSpoilsPool",
+    "new": ", ...(sdSpoilsPool",
     "tests": [
       "test/serpent1_law.test.js",
       "test/serpent1_relay.test.js",
       "test/serpent1_client.test.js",
       "test/serpent1_auditbooks.test.js"
-    ]
+    ],
+    "note": "SD9e (PIN MOVED): the Brass Remnant's spoils pool joins the line - re-aimed by content."
   },
   {
     "name": "AUDIT-SERPENT-D-world-realm-landed-no-hoard",
     "file": "src/scenes/world.js",
-    "old": " try { serpentSpoils?.saved(who, ids); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } };",
-    "new": " };",
+    "old": " try { serpentSpoils?.saved(who, ids); } catch (e) { console.warn('[serpent] spoils', e?.message ?? e); } try { sdSpoilsPool",
+    "new": " try { sdSpoilsPool",
     "tests": [
       "test/serpent1_law.test.js",
       "test/serpent1_relay.test.js",
       "test/serpent1_client.test.js",
       "test/serpent1_auditbooks.test.js"
-    ]
+    ],
+    "note": "SD9e (PIN MOVED): the Brass Remnant's spoils pool joins the line - re-aimed by content."
   },
   {
     "name": "AUDIT-SERPENT-D-world-hoard-unlocked",

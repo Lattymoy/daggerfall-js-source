@@ -241,7 +241,8 @@ export function recoverSpoils(store, take, { who = null, saves = [], onHanded = 
  *   store?: { get: (k: string) => any, set: (k: string, v: any) => void, remove: (k: string) => void, hold?: (k: string, v: any) => void, persisted?: (k: string) => boolean }|null,
  *   who?: () => string|null, wall?: () => number,
  *   iconOf?: ((item: any) => Promise<{key: string, width: number, height: number, colors: ArrayLike<number>}|null>)|null,
- *   onSpent?: (day: number) => void, keys?: { store: string, day: string }, recordsMax?: number, itemName?: ((item: any) => string)|null,
+ *   onSpent?: (day: number|string) => void, keys?: { store: string, day: string }, recordsMax?: number, itemName?: ((item: any) => string)|null,
+ *   gathered?: string,
  * }} deps
  *   AUDIT WBX S1: `onSpent` is told each day whose receipt is spent here and safe (its record on the device, or a save
  *   holding its pieces) - and again whenever a spent one is offered - so the hub forgets its kept copy.
@@ -252,10 +253,12 @@ export function recoverSpoils(store, take, { who = null, saves = [], onHanded = 
  *   come many a session, and a ninth unsaved pushed the first's pieces out of the crash's reach).
  *   WB9f: `itemName` an item's word on the plaque (the host's - systems/worldTooltips.js lootPileName, the loot piles'
  *   own), when a resting piece is under the crosshair.
+ *   SD9e: `gathered` the words leaving says when it gathers what is still on the floor (the Burning Court's by default;
+ *   the Brass Remnant's arena says its own - systems/sdSpoils.js).
  */
 export function createSpoilsPool({
   renderer = null, gl = null, getTexture = null, uploadRecordFrame = null, audio = null,
-  ray, now, take, say = () => {}, store = null, who = () => null, wall = () => Date.now(), iconOf = null,
+  ray, now, take, say = () => {}, store = null, who = () => null, wall = () => Date.now(), iconOf = null, gathered = SPOILS_TEXT.gathered,
   onSpent = () => {}, keys = SPOILS_KEYS, recordsMax = SPOILS_RECORDS_MAX, itemName = (item) => item?.name ?? 'Something',
 }) {
   const STORE_KEY = keys.store, DAY_KEY = keys.day;   // RAID4b: a town's thanks keep their own
@@ -386,12 +389,13 @@ export function createSpoilsPool({
      * (the dungeon's frame) toward `bearing` (the angle from him to the player). Once a day, on this device: a day
      * already spent is nothing. The pieces as rolled go into the device's record the moment they leave him.
      * WB9f: `keep` the court's floor they must come to rest on (`{ centre, r, floorY }` - world/gateSpew.js keepLaunch).
+     * SD9e: `roll` answers the pieces instead, as the grant's does (the Brass Remnant's - systems/sdSpoils.js sdSpoilsList).
      */
-    spew({ day, seed, level, at, bearing, acct = '', keep = null, claims = null }) {
+    spew({ day, seed, level, at, bearing, acct = '', keep = null, claims = null, roll = null }) {
       if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day); return false; }   // AUDIT WBX S1: spent - said so again, for a hub that missed it
       rec = { day };
       t0 = now(); lastT = t0; from = [...at];
-      const list = spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d: the receipt's rite
+      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d: the receipt's rite; SD9e: or a pool's own roll (the Brass Remnant's)
       launches = spewLaunches(seededRng(((seed >>> 0) ^ 0x5a5a) >>> 0), list.length, bearing);
       if (keep) launches = launches.map((l) => keepLaunch(from, l, keep));   // WB9f: every piece rests on the court's floor
       const plane = keep && Number.isFinite(keep.floorY) ? floorRayAt(keep.floorY) : null;
@@ -541,7 +545,7 @@ export function createSpoilsPool({
       floor.forEach((f) => takeOne(f));
       if (spewId) { held.set(spewId, { who: who(), day: rec?.day }); spewId = null; }   // AUDIT WBX S3: all of it in the pack now
       rec = null; floor = []; launches = [];
-      if (left) say(SPOILS_TEXT.gathered);
+      if (left) say(gathered);   // SD9e: the pool's own words
       return left;
     },
     /** What the pool holds, for the tests and the stats. */
