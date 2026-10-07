@@ -22,7 +22,7 @@ import { deref, TEX_SLOT } from './mwNifFile.js';
 // `ninode->mChildren` for anything that casts to Nif::NiNode, and the switch
 // and LOD classes get their own osg wrapper first (:907-924) rather than a
 // pruned subtree. Four of these were parsed and then dropped on the floor.
-const NODE_TYPES = new Set([
+export const NODE_TYPES = new Set([   // MW-SPELLFX1: exported - an effect mesh's node graph is the drawing walk's own membership (formats/mwVfx.js)
   'NiNode',
   'NiBSAnimationNode',
   'NiBSParticleNode',
@@ -46,7 +46,7 @@ const NODE_TYPES = new Set([
  * NiSortAdjustNode and NiCollisionSwitch are plain NiNodes in the
  * reference (no Switch/LOD wrapper), so they keep every child.
  */
-function selectedChild(rec) {
+export function selectedChild(rec) {   // MW-SPELLFX1: exported - an effect's switch shows the one branch the flattener shows
   if (rec.type === 'NiLODNode') {
     const levels = rec.lodLevels;
     if (Array.isArray(levels)) {
@@ -70,7 +70,7 @@ function selectedChild(rec) {
  *  1631) and a batch here is a triangle list by contract, so a line shape
  *  has no honest home downstream - it is dropped rather than drawn as
  *  triangles. */
-const GEOMETRY_TYPES = new Set(['NiTriShape', 'NiTriStrips']);
+export const GEOMETRY_TYPES = new Set(['NiTriShape', 'NiTriStrips']);   // MW-SPELLFX1: exported (formats/mwVfx.js)
 
 /** MAC-Q (2026-09-17, Mac: "the torch doesn't emit fire"): the PARTICLE
  *  geometries. A batch here is a triangle list by contract, and a particle
@@ -83,15 +83,15 @@ const GEOMETRY_TYPES = new Set(['NiTriShape', 'NiTriStrips']);
  *  enclosing NiBSAnimationNode or NiBSParticleNode). formats/mwParticles.js
  *  turns a bundle into a system. A caller with no sink gets exactly what
  *  it always got: nothing. */
-const PARTICLE_TYPES = new Set(['NiParticles', 'NiAutoNormalParticles', 'NiRotatingParticles']);
-const ANIM_FLAG_NODES = new Set(['NiBSAnimationNode', 'NiBSParticleNode']);
+export const PARTICLE_TYPES = new Set(['NiParticles', 'NiAutoNormalParticles', 'NiRotatingParticles']);   // MW-SPELLFX1: exported - an effect's particle geometry is a node of its graph
+export const ANIM_FLAG_NODES = new Set(['NiBSAnimationNode', 'NiBSParticleNode']);   // MW-SPELLFX1: exported - formats/mwVfx.js reads the same AutoPlay/LocalSpace flags
 
 /** nifloader.cpp:1609-1621: one TRIANGLE_STRIP primitive per strip, strips
  *  shorter than 3 skipped, and a shape whose strips are ALL short draws
  *  nothing. Unrolled to the triangle list this module emits, with GL's own
  *  winding flip on odd triangles and the degenerate joins (a repeated index,
  *  which GL drops) left out. */
-function stripsToTriangles(data) {
+export function stripsToTriangles(data) {   // MW-SPELLFX1: exported - an effect mesh's strips, the one expansion
   const out = [];
   for (const strip of data.strips ?? []) {
     if (!strip || strip.length < 3) continue;

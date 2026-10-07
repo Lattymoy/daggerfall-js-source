@@ -10757,7 +10757,10 @@ export async function bootWorld(canvas, renderer, params, status) {
     // (combat/fpsSpellCasting.js, DFU's GameManager.cs:322), and
     // whichever rig owns the frame is the one that steps them to the
     // release.
-    startCastAnim: (sp, onRelease) => !!weaponRig?.castSpellAnim?.(sp?.rangeType, sp?.element, onRelease),
+    // MW-CAST1 (AUDIT WORLD C1's law, for the cast): THE LIVE RIG starts it - indoors that is the interior rig, whose
+    // count the pose reads (`cn`), so a cast inside a building reaches the peers; the hands and the arm are singletons,
+    // so which rig asks moves nothing else.
+    startCastAnim: (sp, onRelease) => !!(modes?.liveArm?.()?.rig ?? weaponRig)?.castSpellAnim?.(sp?.rangeType, sp?.element, onRelease),
     // ALLY-CAST (2026-09-23, Mac: "the use of spells on players ... some sort of ally targeting system"): the party
     // mate under the crosshair (allyTargetPick, beside socialFwd) and the door the cast leaves through
     allyTarget: (eye, dir, reach, sp) => allyTargetPick(eye, dir, reach, sp),   // lazily: the pick is declared beside socialFwd, below this engine's build - SPELL-GIFT: with the spell

@@ -239,7 +239,10 @@ test('AUDIT WORLD: the hosts by source - the dungeon host stamps its memory and 
   assert.match(fp, /if \(upper !== UPPER_BODY\.WeaponEquipped && upper !== UPPER_BODY\.Casting && !\(upper === UPPER_BODY\.None && sheathed\)\) return false;/, 'C2: the sheathed arm casts');
   assert.match(fp, /case UPPER_BODY\.Casting:[\s\S]*?upper = sheathed \? UPPER_BODY\.None : UPPER_BODY\.WeaponEquipped;/, 'C2: and comes back to None');
   assert.match(fp, /const from = upper;[^\n]*\n\s*upper = UPPER_BODY\.Casting;[\s\S]*?upper = from;/, 'C2: a range the group cannot answer stands where it came from');
-  assert.match(fp, /if \(!want && upper === UPPER_BODY\.Casting\) \{ actionState = null; actionSource = null; upper = sheathed \? UPPER_BODY\.None : UPPER_BODY\.WeaponEquipped; \}/, 'C2: an un-ready mid-cast too');
+  // PIN MOVED (MW-CAST1): an un-ready mid-cast is the spell GOING (Daggerfall clears the ready at its release), so the
+  // cast now finishes and the stance drops at its end - back to None for a sheathed caster by the Casting case above
+  assert.match(fp, /if \(!want && upper === UPPER_BODY\.Casting\) \{ unreadyAfterCast = true; return false; \}/, 'C2 / MW-CAST1: an un-ready mid-cast waits for the cast to end');
+  assert.match(fp, /if \(unreadyAfterCast\) \{ unreadyAfterCast = false; spellReady = false; refreshWeaponGroup\(\); resetIdle\(\); resetMovement\(\); \}/, 'and the stance drops there');
   const pb = rd('src/net/peerBodies.js');
   assert.doesNotMatch(pb, /a peer's drawn bow shows no arrow/, 'D7: the build doc');
   assert.match(pb, /if \(b\.goneAt == null\) \{ b\.goneAt = now; b\.swing = null; b\.pending = null; b\.posed = false; \}/, 'C7: the linger re-latches (AUDIT PEER-CADENCE F2: and forgets its skin)');

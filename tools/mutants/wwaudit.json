@@ -62,8 +62,8 @@
   {
     "name": "WWAUDIT-E6-the-wolf-readies-a-spell",
     "file": "src/combat/fpArm.js",
-    "old": "      if (!built || !built.ok || spellReady === want || (want && built.werewolf)) return false;",
-    "new": "      if (!built || !built.ok || spellReady === want) return false;",
+    "old": "      if (!built || !built.ok || (want && built.werewolf)) return false;",
+    "new": "      if (!built || !built.ok) return false;",
     "tests": [
       "test/werewolf1.test.js"
     ],
@@ -302,7 +302,7 @@
   {
     "name": "WWAUDIT-C2-version-left",
     "file": "src/formats/mwFirstPerson.js",
-    "old": "export const ARM_RECORDS_VERSION = 3;",
+    "old": "export const ARM_RECORDS_VERSION = 4;",
     "new": "export const ARM_RECORDS_VERSION = 2;",
     "tests": [
       "test/werewolf1.test.js"

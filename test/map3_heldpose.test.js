@@ -537,8 +537,8 @@ test('MAP3 weaponRig: armsDrawn() is the draw seam\'s own record - reset at the 
   // three legs for exactly this reason; the sheet's leg says the same,
   // and says it POSITIVELY (`playerWeapon.sheathed`) so no later leg of
   // `shown()` can be relaxed here by accident.
-  assert.match(src, /const sheetOnly = playerWeapon\.sheathed && !spellArmed\(\) && !fpsSpellCasting\.isPlayingAnim\s*\n\s*&& \(entity\?\.equipCountdown \?\? 0\) <= 0 && fpArm\.active\(\) && fpArm\.holdingPaper\(\);\s*\n\s*(?:[\s\S]{0,4000}?)if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly && !shieldRect && !gunSliding\)\) return;/,
-    'the held sheet draws the SHEATHED arm, beside the torch\'s own leg, SW1b\'s shield and FIELD-GUN13\'s sliding gun - and no other leg of shown()');
+  assert.match(src, /const sheetOnly = playerWeapon\.sheathed && !spellArmed\(\) && !fpsSpellCasting\.isPlayingAnim\s*\n\s*&& \(entity\?\.equipCountdown \?\? 0\) <= 0 && fpArm\.active\(\) && fpArm\.holdingPaper\(\);\s*\n\s*(?:[\s\S]{0,4000}?)if \(paralyzed \|\| \(!shown\(\) && !torchOnly && !sheetOnly && !shieldRect && !gunSliding && !armCasts\)\) return;/,
+    'the held sheet draws the SHEATHED arm, beside the torch\'s own leg, SW1b\'s shield, FIELD-GUN13\'s sliding gun and MW-CAST1\'s casting hands - and no other leg of shown()');   // PIN MOVED (MW-CAST1): the Morrowind arm's casting hands are the gate's fifth exception (mwcast1.test.js pins its legs)
   for (const leg of ['!spellArmed()', '!fpsSpellCasting.isPlayingAnim', '(entity?.equipCountdown ?? 0) <= 0']) {
     const torch = src.slice(src.indexOf('const torchOnly'), src.indexOf('const sheetOnly'));
     const sheet = src.slice(src.indexOf('const sheetOnly'), src.indexOf('const sheetOnly') + 400);
