@@ -521,7 +521,8 @@ test('PROF11 wiring: the mason\'s bench a General Store\'s (open for trade) or a
   assert.match(idx, /POST \/v1\/prof\/smelt \{ character, recipe, count, clean\?, rid \}/);
   assert.doesNotMatch(accountRefusalText('prof-sculptor'), /problem|could not be read/);
   const p = src('src/ui/profPages.js');
-  assert.match(p, /drawLoom\(detail, rerender, kit\);   \/\/ PROF7\n\s*drawMasonBench\(detail, rerender, kit\);   \/\/ PROF11/);
+  // PIN MOVED (CRAFT4): the loom's Temper beside it, then the bench
+  assert.match(p, /drawLoom\(detail, rerender, kit\);   \/\/ PROF7\n\s*drawTemper\(detail, rerender, kit, 'loom'\);   \/\/ CRAFT4: the tailor's\n\s*drawMasonBench\(detail, rerender, kit\);   \/\/ PROF11/);
   assert.match(src('src/ui/enhancedPlusStyle.js'), /\.prof-chisel-line\.marked \{[^}]*double/, 'the marked line a shape as well as a colour (5.1)');
   assert.match(src('src/scenes/decorTool.js'), /if \(PROF_STATIONS\.includes\(want\) && !forgeOffered\(\)\) \{ deps\.say\?\.\(stationColdLine\(want\)\); return false; \}/, 'the mason\'s bench sold where the bench works, as the forge');
 });

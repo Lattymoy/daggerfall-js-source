@@ -60,6 +60,7 @@ import { CARRIED_MAX, DEPOSIT_MAX, carriedUsable, carriedTotal, clampCarried } f
 import { recipeById, recipeInputs, recipeOpen } from './recipeLaw.js';   // BAG1: a craft's inputs, moved in from the bag first; AUDIT CRAFT1: whether the rank opens it
 import { potionById, brewSpends } from './alchemyLaw.js';   // BAG1: a brew's
 import { chainPlan, chainNeeded, storesRoom } from './chainLaw.js';   // CRAFT1: the works a craft's inputs want first
+import { temperableRecipe, temperCost } from './temperLaw.js';   // CRAFT4: a temper's input, moved in from the bag first
 import { pixelKey, parseNodeKey } from './nodeLaw.js';
 import { accountRefusalText } from './accountClient.js';
 import { ASK_AGAIN_NOW, jittered } from './backoff.js';   // SCALE1: asks again spread out, and never at once into a minute's refusal
@@ -724,6 +725,50 @@ export function createProfBook({ door, storage = null, character = () => null, n
           ? door.disenchant(c, provenance, m.id, realm)
           : Promise.resolve({ ok: false, error: 'elsewhere', elsewhere: true });
         const r = realm ? await Promise.resolve().then(once).catch(() => ({ ok: false, error: 'offline' })) : await ask(once);
+        m.promise = null;
+        if (!keptAnswer(r) && r?.error !== 'elsewhere') ids.delete(key);
+        if (origin !== slot()) return { ...r, elsewhere: true };
+        if (r?.ok) { applyStore(r.data?.store); applyTrack(r.data?.track); } else shutBy(r);
+        return r;
+      })();
+      return m.promise;
+    },
+    /** CRAFT4: A TEMPER (Professions-Arc 41.7) - a piece of `recipe` a quality step better than `quality`, half the
+     *  recipe's main input from the Stores; a made piece names its `provenance` (its record re-signed - the answer's
+     *  `record`). The id is the ask's own until an answer comes, so a press after a lost answer is the same temper, and
+     *  its answer (`repeat`) the one the piece takes. Answers the service's answer; the Stores and the track moved. */
+    async temper(recipe, quality, provenance = null) {
+      const c = character();
+      if (!c) return { ok: false, error: 'prof-character' };
+      const origin = slot();
+      const key = `temper|${origin}|${recipe}|${quality}|${provenance ?? ''}`;
+      const m = idFor(key, PROF_QUEUE_MS);
+      if (m.promise) return m.promise;
+      m.promise = (async () => {
+        // BAG1: what the Stores lack, from the bag and the pack first - as a craft's
+        const r0 = recipeById(recipe);
+        const ready = temperableRecipe(r0) ? await book.ensureInStores([temperCost(r0)]) : { ok: true };
+        if (!ready.ok) { m.promise = null; ids.delete(key); return { ok: false, error: ready.error ?? 'materials-short', material: ready.material, moved: ready.moved ?? 0 }; }
+        const r = await ask(() => door.temper(c, recipe, quality, provenance, m.id), origin);
+        m.promise = null;
+        if (!keptAnswer(r) && r?.error !== 'elsewhere') ids.delete(key);
+        if (origin !== slot()) return { ...r, elsewhere: true };
+        if (r?.ok) { for (const s of r.data?.stores ?? []) applyStore(s); applyTrack(r.data?.track); } else shutBy(r);
+        return r;
+      })();
+      return m.promise;
+    },
+    /** CRAFT4: A REFORGE WITH ESSENCE (Professions-Arc 41.7) - an Enchanter's: 2 Arcane Essence for a Magic piece's line,
+     *  5 for a Rare's, answered the seed the line is rolled again with. Kept as a temper is. */
+    async reforge(tier) {
+      const c = character();
+      if (!c) return { ok: false, error: 'prof-character' };
+      const origin = slot();
+      const key = `reforge|${origin}|${tier}`;
+      const m = idFor(key, PROF_QUEUE_MS);
+      if (m.promise) return m.promise;
+      m.promise = (async () => {
+        const r = await ask(() => door.reforge(c, tier, m.id), origin);
         m.promise = null;
         if (!keptAnswer(r) && r?.error !== 'elsewhere') ids.delete(key);
         if (origin !== slot()) return { ...r, elsewhere: true };

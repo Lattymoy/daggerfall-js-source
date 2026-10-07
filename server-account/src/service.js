@@ -241,6 +241,8 @@ export const ROUTES = new Set([
   '/v1/prof/state', '/v1/prof/pixels', '/v1/prof/harvest', '/v1/prof/spec', '/v1/prof/smelt', '/v1/prof/craft', '/v1/prof/stock', '/v1/stores/withdraw', '/v1/writs/list', '/v1/writs/deliver',
   // PROF12: the alchemy station's brew and an enchanting station's disenchant (alchemy.js) - the same doors
   '/v1/prof/brew', '/v1/prof/disenchant',
+  // CRAFT4: a temper (professions.js) and an Enchanter's Reforge with Essence (alchemy.js) - the same doors
+  '/v1/prof/temper', '/v1/prof/reforge',
   // BAG1: a deposit - carried units into the Stores (professions.js depositStores), the same door
   '/v1/stores/deposit',
   // PROF2b: today's Motherlodes (a strike rides /v1/prof/harvest, its node naming it)

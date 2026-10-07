@@ -73,6 +73,7 @@ import {
   recipeById,   // AUDIT PROF12 E2: a disenchant's XP is its piece's recipe's tier
   patternsOf,   // CRAFT2: a station lists its patterns, the material chosen from what is held
 } from '../net/recipeLaw.js';
+import { temperableRecipe, temperCost, temperXp, REFORGE_RANK, REFORGE_ESSENCE, reforgeEssence } from '../net/temperLaw.js';   // CRAFT4: the temper and the Reforge with Essence
 import { createStitchAct } from '../systems/stitchAct.js';
 import { createChiselAct } from '../systems/chiselAct.js';   // PROF11
 import { createPanAct } from '../systems/panAct.js';   // PROF9
@@ -133,6 +134,15 @@ import { getPref, setPref } from '../systems/uiPrefs.js';
  * @property {() => Array<{ provenance: string, name: string, points: number, essence: number, recipe?: string }>} [disenchantable]   PROF12: the
  *   pack's crafted pieces an enchanting station may take apart, each its Essence (AUDIT PROF12 E2: and its recipe, the XP's tier)
  * @property {(provenance: string) => Promise<{ ok: boolean, text: string }>} [disenchant]   PROF12: a piece taken apart
+ * @property {(where: 'anvil'|'loom') => Array<{ item: any, name: string, recipe: string, quality: number, provenance: string|null }>} [temperable]
+ *   CRAFT4: the pack's pieces the station's craft tempers (the smith's at the anvil, the tailor's at the loom), each its
+ *   recipe and its quality
+ * @property {(offer: { item: any, name: string, recipe: string, quality: number, provenance: string|null }) => Promise<{ ok: boolean, text: string }>} [temper]
+ *   CRAFT4: a temper, the step laid on the piece and the station's fee paid
+ * @property {() => Array<{ item: any, name: string, tier: string, lines: Array<{ index: number, text: string }> }>} [reforgeable]
+ *   CRAFT4: the pack's known Magic and Rare pieces an Enchanter reforges with Essence, each line it may roll
+ * @property {(offer: { item: any, name: string, tier: string }, index: number) => Promise<{ ok: boolean, text: string }>} [essenceReforge]
+ *   CRAFT4: a line rolled again for Arcane Essence
  * @property {(key: string, qty: number) => Promise<{ ok: boolean, text: string, kept?: boolean }>} [deposit]   BAG1: carried units of a
  *   material - out of the bag and the pack - into the Stores
  * @property {() => boolean} [inTown]   BAG1: whether the Stores are reached here - in a town, indoors or out
@@ -275,6 +285,10 @@ const _alchemy = {
 };
 /** PROF12: the enchanting station - the piece pressed once (a disenchant is pressed twice), one in flight and its word. */
 const _enchant = { armed: /** @type {string|null} */ (null), busy: false, word: /** @type {string|null} */ (null) };
+/** CRAFT4: the temper - the piece in flight, the station its word is (the anvil's or the loom's) and the word; the
+ *  Reforge with Essence's piece in flight and its word. */
+const _temper = { busy: /** @type {any} */ (null), where: /** @type {string|null} */ (null), word: /** @type {string|null} */ (null) };
+const _essReforge = { busy: /** @type {any} */ (null), word: /** @type {string|null} */ (null) };
 /** AUDIT 30 U20: the one row a smelt, burn or saw is under way on - its button alone says so. */
 let _workingOn = /** @type {string|null} */ (null);
 /**
@@ -663,8 +677,10 @@ export function drawStoresPage(detail, rerender, kit) {
   if (_stores.word) detail.append(el('p', 'prof-word', _stores.word));
   drawForge(detail, rerender, kit);
   drawAnvil(detail, rerender, kit);   // PROF3
+  drawTemper(detail, rerender, kit, 'anvil');   // CRAFT4: the smith's temper
   drawWorkbench(detail, rerender, kit);   // PROF4
   drawLoom(detail, rerender, kit);   // PROF7
+  drawTemper(detail, rerender, kit, 'loom');   // CRAFT4: the tailor's
   drawMasonBench(detail, rerender, kit);   // PROF11
   drawCookFire(detail, rerender, kit);   // PROF9
   drawJewellerBench(detail, rerender, kit);   // PROF10
@@ -2468,4 +2484,104 @@ function drawEnchantingStation(detail, rerender, { el, divider }) {
     detail.append(row);
   }
   if (_enchant.word) detail.append(el('p', 'prof-word', _enchant.word));
+  drawEssenceReforge(detail, rerender, { el, divider }, rank, short);   // CRAFT4
+}
+
+// ─── CRAFT4: THE TEMPER AND THE REFORGE WITH ESSENCE (bible/06-Systems/Professions-Arc.md 41.7) ─────
+
+/** What the temper says it is, at the anvil and at the loom. */
+export const TEMPER_HOW = (where) => (where === 'loom'
+  ? 'A tailor tempers leather armour or a garment a quality step better, up to Superior - found or made, Rare or below - for half its recipe\'s leather or bolts, at that recipe\'s rank.'
+  : 'A smith tempers a weapon or a piece of metal armour a quality step better, up to Superior - found or made, Rare or below - for half its recipe\'s ingots, at that recipe\'s rank.');
+/** What the temper says with nothing to take. */
+export const TEMPER_NONE = 'Nothing in your pack takes a temper here. A Legendary, an Aetheric piece, an artifact and a Sigil\'s piece are past any crafter; a Superior and a Masterwork have no step left; take a worn piece off first.';
+/** Tests: the temper's state and the Reforge with Essence's. */
+export const _temperForTests = () => _temper;
+export const _essReforgeForTests = () => _essReforge;
+/**
+ * CRAFT4: THE TEMPER - at the anvil the smith's pieces of the pack (a weapon, plate, a shield, chain), at the loom the
+ * tailor's (leather armour, a garment): each a quality step better, up to Superior, for half its recipe's main input
+ * from the Stores (temperLaw temperCost) and the craft's XP, at the recipe's rank. Loot and made pieces alike, Rare or
+ * below (law 7). Only where the station stands.
+ * @param {HTMLElement} detail @param {() => void} rerender @param {{ el: Function, divider: (w: string) => HTMLElement }} kit
+ * @param {'anvil'|'loom'} where
+ */
+function drawTemper(detail, rerender, { el, divider }, where) {
+  const p = _provider;
+  if (!p?.temperable || !p.temper) return;
+  const station = (where === 'loom' ? p.loom?.() : p.forge?.()) ?? null;
+  if (!station) return;
+  const craft = where === 'loom' ? 'outfitting' : 'smithing';
+  const book = p.book;
+  const rank = book.track(craft)?.rank ?? 0;
+  detail.append(divider(where === 'loom' ? 'Temper at the Loom' : 'Temper at the Anvil'), el('p', 'px-note', TEMPER_HOW(where)));
+  const short = purseShort(station, where === 'loom' ? 'tailor' : 'smith', 'a temper');
+  if (short) detail.append(el('p', 'px-note prof-short', short));
+  const pieces = p.temperable(where);
+  if (!pieces.length) detail.append(el('p', 'px-note', TEMPER_NONE));
+  for (const pc of pieces) {
+    const r = recipeById(pc.recipe);
+    if (!temperableRecipe(r)) continue;
+    const cost = temperCost(r);
+    const open = rank >= r.rank, have = book.held(cost.key) >= cost.n;
+    const row = el('div', 'prof-smelt');
+    row.append(el('b', null, pc.name), el('span', 'prof-split', `${QUALITY_NAMES[pc.quality]} to ${QUALITY_NAMES[pc.quality + 1]} - ${cost.n} ${p.name(cost.key)}, +${temperXp(r, rank)} ${professionName(craft)} XP`));
+    if (open && !have) row.append(el('span', 'prof-short', `Needs ${cost.n} ${p.name(cost.key)}.`));
+    const b = el('button', 'act', _temper.busy === pc.item ? 'Tempering...' : open ? 'Temper' : `${professionName(craft)} ${r.rank}`);
+    b.type = 'button';
+    b.disabled = !!_temper.busy || !!short || !open || !have || !!handsAt(null);
+    b.onclick = async () => {
+      if (_temper.busy) return;
+      _temper.busy = pc.item; _temper.where = where; _temper.word = null; rerender();
+      const res = await /** @type {any} */ (p.temper)(pc);
+      _temper.busy = null; _temper.word = res?.text ?? null; rerender();
+    };
+    row.append(b);
+    detail.append(row);
+  }
+  if (_temper.word && _temper.where === where) detail.append(el('p', 'prof-word', _temper.word));
+}
+
+/** What the Reforge with Essence says it is, and below its rank. */
+export const ESSENCE_REFORGE_HOW = `An Enchanter rolls one line of a Magic piece again for ${REFORGE_ESSENCE.magic} Arcane Essence, a Rare's for ${REFORGE_ESSENCE.rare} - the Mages Guild's Reforge, paid in Essence. Once a piece is reforged, that line alone.`;
+export const ESSENCE_REFORGE_RANK_LINE = `From Enchanting ${REFORGE_RANK}, one line of a Magic or Rare piece is rolled again here for Arcane Essence.`;
+export const ESSENCE_REFORGE_NONE = 'Nothing in your pack the Reforge takes - a known Magic or Rare piece, not worn.';
+/**
+ * CRAFT4: THE REFORGE WITH ESSENCE - at the enchanting station, an Enchanter of rank 50's: each known Magic and Rare piece
+ * of the pack, each line it may roll again (the Loot arc's own Reforge, lootRarity.js reforgeAffix), for 2 or 5 Arcane
+ * Essence from the Stores - never gold's units.
+ * @param {HTMLElement} detail @param {() => void} rerender @param {{ el: Function, divider: (w: string) => HTMLElement }} kit
+ * @param {number} rank @param {string|null} short
+ */
+function drawEssenceReforge(detail, rerender, { el, divider }, rank, short) {
+  const p = _provider;
+  if (!p?.reforgeable || !p.essenceReforge) return;
+  detail.append(divider('Reforge with Essence'));
+  if (rank < REFORGE_RANK) { detail.append(el('p', 'px-note', ESSENCE_REFORGE_RANK_LINE)); return; }
+  detail.append(el('p', 'px-note', ESSENCE_REFORGE_HOW));
+  const ess = p.book.store?.(ARCANE_ESSENCE.key) ?? { own: p.book.held(ARCANE_ESSENCE.key) };
+  const have = (ess.own | 0) + (ess.bought | 0);   // never gold's units, as the service spends
+  const pieces = p.reforgeable();
+  if (!pieces.length) detail.append(el('p', 'px-note', ESSENCE_REFORGE_NONE));
+  for (const pc of pieces) {
+    const n = reforgeEssence(pc.tier);
+    if (!n) continue;
+    const row = el('div', 'prof-smelt');
+    row.append(el('b', null, pc.name), el('span', 'prof-split', `${n} Arcane Essence a line`));
+    if (have < n) row.append(el('span', 'prof-short', `Needs ${n} Arcane Essence; your Stores hold ${have}.`));
+    for (const line of pc.lines) {
+      const b = el('button', 'act', _essReforge.busy === pc.item ? 'Reforging...' : `Reforge: ${line.text}`);
+      b.type = 'button';
+      b.disabled = !!_essReforge.busy || !!short || have < n;
+      b.onclick = async () => {
+        if (_essReforge.busy) return;
+        _essReforge.busy = pc.item; _essReforge.word = null; rerender();
+        const res = await /** @type {any} */ (p.essenceReforge)(pc, line.index);
+        _essReforge.busy = null; _essReforge.word = res?.text ?? null; rerender();
+      };
+      row.append(b);
+    }
+    detail.append(row);
+  }
+  if (_essReforge.word) detail.append(el('p', 'prof-word', _essReforge.word));
 }

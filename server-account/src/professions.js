@@ -64,8 +64,10 @@ import {
   masonXp,   // PROF11: the mason's bench's XP
   cookXp, dishHand,   // PROF9: a dish's XP and its cook's hand
   jewelHand, takesCracked, masterworkSpec, LAPIDARY,   // PROF10: the jeweller's hand, a Lapidary's cracked gem, the Master Jeweller's points
+  PROVENANCE_RE,   // CRAFT4: a tempered piece's id
 } from '../../src/net/recipeLaw.js';
-import { mintProductRecord } from '../../src/net/productRecord.js';
+import { mintProductRecord, readProductRecord } from '../../src/net/productRecord.js';   // CRAFT4: a tempered piece's record re-signed
+import { temperableRecipe, temperFrom, temperCost, temperXp } from '../../src/net/temperLaw.js';   // CRAFT4: the temper
 import { signingKey } from './signing.js';
 import {
   parseNodeKey, nodeCount, herbPatch, herbSeasonMult, daySeason, HERB_TABLES, HERB_YIELD, FOOD_YIELD, herbYield, foodYield,
@@ -1230,6 +1232,103 @@ export async function craftAtAnvil(ctx, player, env, { character, recipe: id, cl
   }
   if (siege) return { error: 'stores-full', material: RAM_KIT.key };   // SEAT2b part two: every input held - the kit's room is what failed
   return { error: 'stores-short' };
+}
+
+// ─── CRAFT4: THE TEMPER (Professions-Arc 41.7) ───────────────────────
+
+/** A temper's answer, read back from its row. */
+async function temperAnswer(db, player, row, nowS, extra = {}) {
+  const r = recipeById(row.recipe);
+  const piece = row.provenance ? await db.prepare('SELECT record FROM products WHERE provenance = ?1').bind(row.provenance).first() : null;
+  return {
+    ok: true, ...extra, recipe: row.recipe, quality: Number(row.quality), provenance: row.provenance ?? null,
+    ...(row.provenance ? { record: piece?.record ?? null } : {}), xp: Number(row.xp),
+    track: trackView(await trackRow(db, player.id, row.char_id, r?.profession ?? 'smithing'), r?.profession ?? 'smithing', nowS),
+    stores: [await storeOf(db, player.id, row.char_id, row.material)],
+  };
+}
+
+/**
+ * A TEMPER (CRAFT4, Professions-Arc 41.2 and 41.7): `{ character, recipe, quality, provenance?, rid }` - a piece of the
+ * smith's (a weapon, plate, a shield, chain) or the tailor's (leather armour, a garment) made a quality step better, from
+ * `quality` (Crude, Standard or Fine - temperLaw temperFrom; a found piece is Standard) to the next, up to Superior. The
+ * service cannot see the pack (as it cannot see the anvil, PROF0 23): `recipe` is the piece's, which the client reads off
+ * its template and material (temperLaw temperRecipeOf), and the save's piece is the save's word, as its condition is - the
+ * Stores' spend is the bound (41.2). It asks the recipe's rank of its craft's track (`prof-rank`), and spends half the
+ * recipe's main input of its material, rounded up (temperCost - never gold's units); it pays the craft's XP at the
+ * recipe's tier, no first (temperXp), under the crafter's limit. A MADE piece names its `provenance`: this account's,
+ * of the recipe asked, at the quality asked, on no listing, no road and in no home - or refused (`prof-no-piece`,
+ * `prof-not-yours`, `prof-temper`, `prof-temper-stale`, `prof-piece-busy`) - and its record is re-signed at its new
+ * quality in the temper's own batch (41.2: "so the market sees what it is"). Refused: a recipe no temper takes
+ * (`prof-temper`), a quality with no step (`prof-temper-top`), the input short (`stores-short`, `stores-gold`).
+ */
+export async function temperPiece(ctx, player, env, { character, recipe: id, quality, provenance = null, rid } = {}) {
+  const { db, nowS, rand, subtle } = ctx;
+  const refused = asks(player, { character, rid });
+  if (refused) return refused;
+  const prior = await db.prepare('SELECT * FROM prof_tempers WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
+  if (prior) return temperAnswer(db, player, prior, nowS, { repeat: true });
+  const closed = shut(player, env);
+  if (closed) return closed;
+  const r = recipeById(id);
+  if (!temperableRecipe(r)) return { error: 'prof-temper' };
+  if (!temperFrom(quality)) return { error: 'prof-temper-top' };
+  if (provenance !== null && (typeof provenance !== 'string' || !PROVENANCE_RE.test(provenance))) return { error: 'bad-piece' };
+  if (await overRate(ctx, `prof:${player.id}`, PROF_OPS_MAX, PROF_OPS_WINDOW_S)) return { error: 'prof-rate' };
+  const { results: tracks = [] } = await db.prepare('SELECT * FROM prof_tracks WHERE player = ?1 AND char_id = ?2').bind(player.id, character).all();
+  const ranks = Object.fromEntries(tracks.map((t) => [t.profession, rankOfXp(Number(t.xp))]));
+  const craft = trackOf(r.profession);   // Smithing's or Outfitting's
+  const rank = ranks[craft] ?? 0;
+  if (rank < r.rank) return { error: 'prof-rank' };
+  let record = null;
+  if (provenance !== null) {
+    const p = await db.prepare('SELECT * FROM products WHERE provenance = ?1').bind(provenance).first();
+    if (!p) return { error: 'prof-no-piece' };
+    if (p.owner !== player.id) return { error: 'prof-not-yours' };
+    if (p.recipe !== r.id) return { error: 'prof-temper' };
+    if (Number(p.quality) !== quality) return { error: 'prof-temper-stale' };
+    const c = readProductRecord(p.record);
+    if (!c) return { error: 'prof-temper' };
+    record = await mintProductRecord({ p: c.p, s: c.s, h: c.h, r: c.r, q: quality + 1, m: c.m, c: c.c, a: c.a === 1, u: c.u ?? null, f: c.f ?? null }, await signingKey(env, subtle), { subtle, nowS });
+  }
+  const cost = temperCost(r);
+  const cap = craftXpCap(craft, ranks);
+  const nonce = mintId(rand);
+  const decided = 'EXISTS (SELECT 1 FROM prof_tempers WHERE player = ?1 AND rid = ?2 AND n = ?3)';
+  // ?1 player ?2 character ?3 rid ?4 recipe ?5 provenance ?6 the quality made ?7 the input ?8 its units ?9 the XP ?10 now
+  // ?11 nonce ?12 the craft
+  const piece = provenance === null ? '1' : `EXISTS (SELECT 1 FROM products WHERE provenance = ?5 AND owner = ?1 AND recipe = ?4 AND quality = ?6 - 1 AND listed = 0)
+      AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = ?5 AND collected = 0)
+      AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = ?5)`;
+  await db.batch([
+    // THE DECISION: the input held (never gold's units), a made piece as asked - and the XP what the track can take
+    db.prepare(`INSERT OR IGNORE INTO prof_tempers (player, rid, char_id, recipe, provenance, quality, material, qty, xp, at, n)
+      SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8,
+        MAX(0, MIN(?9, ${Number(cap)} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = ?12), 0))), ?10, ?11
+      WHERE ${spendableSql('?1', '?2', '?7')} >= ?8 AND ${piece}`)
+      .bind(player.id, character, rid, r.id, provenance, quality + 1, cost.key, cost.n, temperXp(r, rank), nowS, nonce, craft),
+    // the input out, bought first
+    ...spendStatements(db, { player: player.id, character, materialSql: '?3', qtySql: '?4', guard: 'EXISTS (SELECT 1 FROM prof_tempers WHERE player = ?1 AND rid = ?5 AND n = ?6)', binds: [cost.key, cost.n, rid, nonce] }),
+    // a made piece's row at its new quality, its record re-signed
+    ...(provenance !== null ? [db.prepare(`UPDATE products SET quality = ?4, record = ?5 WHERE provenance = ?6 AND ${decided}`).bind(player.id, rid, nonce, quality + 1, record, provenance)] : []),
+    // the XP the decision credited, under the crafter's limit - the craft's
+    db.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, updated_at)
+      SELECT ?1, ?2, ?7, MIN(?4, xp), ?5 FROM prof_tempers WHERE player = ?1 AND rid = ?3 AND n = ?6
+      ON CONFLICT (player, char_id, profession) DO UPDATE SET xp = MAX(prof_tracks.xp, MIN(?4, prof_tracks.xp + excluded.xp)), updated_at = excluded.updated_at`)
+      .bind(player.id, character, rid, cap, nowS, nonce, craft),
+  ]);
+  const made = await db.prepare('SELECT * FROM prof_tempers WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
+  if (made?.n === nonce) return temperAnswer(db, player, made, nowS);
+  if (made) return temperAnswer(db, player, made, nowS, { repeat: true });
+  if (provenance !== null) {
+    const p = await db.prepare('SELECT quality, listed FROM products WHERE provenance = ?1 AND owner = ?2').bind(provenance, player.id).first();
+    if (!p) return { error: 'prof-no-piece' };
+    if (Number(p.quality) !== quality) return { error: 'prof-temper-stale' };
+    const st = await storeOf(db, player.id, character, cost.key);
+    if (st.own + st.bought >= cost.n) return { error: 'prof-piece-busy' };   // listed, on the road or standing in a home
+  }
+  const st = await storeOf(db, player.id, character, cost.key);
+  return { error: st.own + st.bought + (st.gold ?? 0) >= cost.n ? 'stores-gold' : 'stores-short', material: cost.key };
 }
 
 // ─── THE SMITH'S STOCK (PROF0 24) ────────────────────────────────────

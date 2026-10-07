@@ -3649,7 +3649,7 @@ between a modified client and an unbounded claim go with it: **"Keep both"**.
   (`audit29`, `audit32`, `bag1`, `fb1001_ground`, `prof1`, `prof2`, `prof7`, `prof8`). FOUND, not this slice's:
   `AUDIT29-A17-motherlode-sense-chosen` survives on main as here (PROF2b moved A17's pins to the Sense chosen as any).
 
-## 41. CRAFT0 - fewer moving parts, a crafter worth seeking (DECIDED 2026-10-07); CRAFT1 - the chain, as built (BUILT 2026-10-07); CRAFT2 - patterns, as built (BUILT 2026-10-07); CRAFT3 - five crafts, as built (BUILT 2026-10-07)
+## 41. CRAFT0 - fewer moving parts, a crafter worth seeking (DECIDED 2026-10-07); CRAFT1 - the chain, as built (BUILT 2026-10-07); CRAFT2 - patterns, as built (BUILT 2026-10-07); CRAFT3 - five crafts, as built (BUILT 2026-10-07); CRAFT4 - tempering and reforging, as built (BUILT 2026-10-07)
 
 Mac: **"How could we enhance the profession element of the game while reducing complexity and making crafting more
 viable"**; given the five proposals below, **"This is amazing. Lets do it"**. Each is DECIDED (Mac) as a direction; the
@@ -3878,6 +3878,57 @@ A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each stil
   `tools/mutants/craft3.json`. FOUND by the moved pins: the jeweller's bench still said "Jewelcrafting XP" - its
   craft's now. PIN MOVED (a discipline's track its craft's; ten professions; four cards a merged rank): the profession
   suites - `prof1`, `prof2`, `prof3`, `prof4`, `prof9`, `prof10`, `prof11`, `prof12`, `audit29`, `audit30`, `audit32`.
+
+### 41.7 CRAFT4 - tempering and reforging, as built (BUILT 2026-10-07)
+
+- **The law** - `src/net/temperLaw.js`, pure. THE TEMPER: `TEMPER_KINDS` the recipes' kinds a temper takes (the
+  smith's weapons, plate, shields and chain; the tailor's leather and garments), `TEMPER_TOP` 3 (Superior). DECIDED,
+  each: a made piece is tempered by its own recipe (`recipe`); a FOUND piece by the recipe that makes its template in its
+  material (`temperRecipeOf`) - a weapon or plate in its metal (Ebony's, never the Warforged's: loot is never Warforged),
+  chain the Steel's (the anvil's one chain), leather the Cured Leather's (Daggerfall has one leather), a garment the
+  Linen's (its cloth names none); a staff, a bow, jewellery, a tool, a kit is none of it. A found piece is Standard
+  (`pieceQuality` - Daggerfall's own item, 9.2). `temperCost` half the recipe's main input, rounded up (a Steel
+  Longsword's 3 ingots, 2; a Leather Cuirass's 6 Cured Leather, 3; Plain Robes' 3 bolts, 2); `temperXp` the craft's at
+  the recipe's tier, no first; the rank the recipe's own (the material's tier's). `temperRefusal`: no recipe, a Sigil's
+  piece, Legendary, Aetheric or an artifact (law 7), a Masterwork (a maker's), a Superior (no step left). `temperStep`
+  the next quality's condition and weight over its own. THE REFORGE: `REFORGE_RANK` 50, `REFORGE_ESSENCE` 2 (Magic) and
+  5 (Rare); `reforgeEssence` none for any other tier.
+- **The service** - `server-account/src/professions.js` `temperPiece` (`/v1/prof/temper`): `{ character, recipe,
+  quality, provenance?, rid }`; the craft's track (`trackOf`) at the recipe's rank, the cost from the Stores (never gold's
+  units), the XP under the crafter's limit, one `prof_tempers` row deciding and answering a request asked twice. The
+  service cannot see the pack: a found piece's recipe and quality are the save's word, as its condition is - the Stores'
+  spend is the bound (41.2). A MADE piece names its `provenance` - this account's, of that recipe, at that quality, on no
+  listing, no road and in no home - and its `products` row moves to the new quality with its record RE-SIGNED there, in
+  the temper's own batch ("so the market sees what it is"); refused `prof-no-piece`, `prof-not-yours`, `prof-temper`,
+  `prof-temper-stale`, `prof-piece-busy`. `server-account/src/alchemy.js` `reforgeWithEssence` (`/v1/prof/reforge`):
+  `{ character, tier, rid }`, Enchanting 50, the Essence from the Stores, answered the SEED the line is rolled with (the
+  service's CSPRNG, a `prof_reforges` row). DECIDED: no XP - the Essence's XP was its disenchanting's. Migration
+  `0089_temper_reforge.sql` (the two tables); `src/net/temperLaw.js` joins the Worker's deploy filter.
+- **The piece** - `src/systems/smithItems.js` `temperItem`: a made piece still as its record mints (`asMinted`) is what
+  the NEW record mints - the quality's condition, weight and roll (a Fine made piece tempered to Superior takes the
+  Superior's Magic roll off its record's seed, as the market would mint it), its wear kept as a share; any other piece (a
+  found one, a made one enchanted since) the step's condition and weight alone - its Loot Rarity and its lines are its
+  own. `essenceReforgeRefusal` and `reforgeItem`: the Loot arc's own Reforge (`lootRarity.js reforgeAffix` - one line,
+  once reforged that line alone), a known piece, never worn, rolled on the service's seed. `recipeLaw.js pieceLines`: a
+  found piece a temper raised says its quality ("Fine", "Superior").
+- **The client** - `src/net/profBook.js` `temper` (the input from the bag and the pack first, as a craft's) and
+  `reforge`, each kept by its ask until an answer comes. `src/ui/profPages.js`: Temper at the Anvil and Temper at the
+  Loom beside each station - every piece the craft tempers, its step, its input and XP, Temper pressed or the rank said,
+  the input short said; Reforge with Essence at the enchanting station - its rank below 50, each line a press from it,
+  the Essence short said. The station's fee is a temper's and a reforge's, as a craft's and a disenchant's.
+- **The four hosts**: `scenes/world.js` wired (the pack's pieces - not worn, no market act kept on them - and the step and
+  the line laid on the answer); `worldModes.js` holds the stations the pages read and no piece of its own; `exterior.js`
+  and `dungeonContext.js` hold no station - none to wire.
+- **As built**: `src/net/temperLaw.js`, `src/net/recipeLaw.js`, `src/net/profBook.js`, `src/net/accountClient.js`,
+  `src/systems/smithItems.js`, `src/ui/profPages.js`, `src/scenes/world.js`, `server-account/src/professions.js`,
+  `server-account/src/alchemy.js`, `server-account/src/index.js`, `server-account/src/service.js`,
+  `server-account/migrations/0089_temper_reforge.sql`, `.github/workflows/account-deploy.yml`. Pinned:
+  `test/craft4_temper.test.js` (8) - the done-when through the real Worker (a found Steel Longsword Standard to Fine to
+  Superior, 2 ingots each, the craft's XP, its card), a made piece's row and record re-signed and the piece what it
+  mints, the temper's refusals, the law, the Reforge with Essence through the Worker and on the piece, the pages, the
+  host. `tools/mutants/craft4.json` (71: 67 dead, 4 equivalent as recorded - two by the tables' order, one by the
+  recipes a temper takes, one a race). PIN MOVED: `accountworker` (0089's two tables), `prof3_law` (a found piece a
+  temper raised says its quality), `prof11_client` (the loom's Temper beside it).
 
 ## Appendix A - a day of a gatherer
 

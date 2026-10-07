@@ -31,6 +31,7 @@ import {
 import { prepareRealmRecord, realmActFirst, recordMovedOf, mustChange, dropObjects, dropIfUnnamed } from './realm.js';   // AUDIT PROF-541 B2: a realm character's piece out of its record
 import { takeTradeGoods, tradeableRecord } from '../../src/net/realmTradeLaw.js';   // AUDIT PROF-541 B2: as MARKET-ANY's listGood takes a record's piece
 import { pieceListable } from '../../src/net/marketLaw.js';   // AUDIT PROF-541 R2-S6: what the market lists is what disenchants
+import { reforgeEssence, REFORGE_RANK } from '../../src/net/temperLaw.js';   // CRAFT4: the Reforge with Essence
 
 const HERB_RE = /^p[12]:\d+$/;
 
@@ -266,4 +267,54 @@ export async function disenchantPiece(ctx, player, env, { character, provenance,
   const room = await storeOf(db, player.id, character, ARCANE_ESSENCE.key);
   if (room.own + room.bought + (room.gold ?? 0) + essence > STORES_MAX) return { error: 'stores-full', material: ARCANE_ESSENCE.key };
   return { error: 'prof-piece-busy' };
+}
+
+// ─── CRAFT4: THE REFORGE WITH ESSENCE (Professions-Arc 41.7) ─────────
+
+/** A Reforge with Essence's answer, read back from its row. */
+async function reforgeAnswer(db, player, row, nowS, extra = {}) {
+  return {
+    ok: true, ...extra, tier: row.tier, essence: Number(row.essence), seed: Number(row.seed),
+    track: trackView(await trackRow(db, player.id, row.char_id, 'enchanting'), 'enchanting', nowS),
+    store: await storeOf(db, player.id, row.char_id, ARCANE_ESSENCE.key),
+  };
+}
+
+/**
+ * A REFORGE WITH ESSENCE (CRAFT4, Professions-Arc 41.2 and 41.7): `{ character, tier, rid }` - an Enchanter of rank 50
+ * (temperLaw REFORGE_RANK; `prof-rank`) spends 2 Arcane Essence for a Magic piece's line or 5 for a Rare's (temperLaw
+ * reforgeEssence - Legendary and up, none: law 7, `prof-reforge`), never gold's units, and is answered the seed the line
+ * is rolled again with - the service's CSPRNG, as a craft's quality is its roll. The service cannot see the pack: the
+ * piece and its line are the client's (systems/lootRarity.js reforgeAffix - the Loot arc's own Reforge: one line, and
+ * once a piece is reforged, that line alone), the save's word as the Mages Guild's reforge is; the Essence is the bound.
+ * DECIDED: no XP - the Essence's XP was its disenchanting's. Refused: the Essence short (`stores-short`, `stores-gold`).
+ */
+export async function reforgeWithEssence(ctx, player, env, { character, tier, rid } = {}) {
+  const { db, nowS, rand } = ctx;
+  const refused = asks(player, { character, rid });
+  if (refused) return refused;
+  const prior = await db.prepare('SELECT * FROM prof_reforges WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
+  if (prior) return reforgeAnswer(db, player, prior, nowS, { repeat: true });
+  const closed = shut(player, env);
+  if (closed) return closed;
+  const essence = reforgeEssence(tier);
+  if (!essence) return { error: 'prof-reforge' };
+  if (await overRate(ctx, `prof:${player.id}`, PROF_OPS_MAX, PROF_OPS_WINDOW_S)) return { error: 'prof-rate' };
+  const { rank } = await tracksOf(db, player.id, character, 'enchanting', nowS);
+  if (rank < REFORGE_RANK) return { error: 'prof-rank' };
+  const seed = Math.floor(dice(rand) * 4294967296);
+  const nonce = mintId(rand);
+  await db.batch([
+    // THE DECISION: the Essence held, never gold's units
+    db.prepare(`INSERT OR IGNORE INTO prof_reforges (player, rid, char_id, tier, essence, seed, at, n)
+      SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8 WHERE ${spendableSql('?1', '?2', '?9')} >= ?5`)
+      .bind(player.id, character, rid, tier, essence, seed, nowS, nonce, ARCANE_ESSENCE.key),
+    // the Essence out, bought first
+    ...spendStatements(db, { player: player.id, character, materialSql: '?3', qtySql: '?4', guard: 'EXISTS (SELECT 1 FROM prof_reforges WHERE player = ?1 AND rid = ?5 AND n = ?6)', binds: [ARCANE_ESSENCE.key, essence, rid, nonce] }),
+  ]);
+  const made = await db.prepare('SELECT * FROM prof_reforges WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
+  if (made?.n === nonce) return reforgeAnswer(db, player, made, nowS);
+  if (made) return reforgeAnswer(db, player, made, nowS, { repeat: true });
+  const st = await storeOf(db, player.id, character, ARCANE_ESSENCE.key);
+  return { error: st.own + st.bought + (st.gold ?? 0) >= essence ? 'stores-gold' : 'stores-short', material: ARCANE_ESSENCE.key };
 }

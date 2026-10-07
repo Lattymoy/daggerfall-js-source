@@ -182,7 +182,7 @@
   {
     "name": "PROF3-law-lines-any-item",
     "file": "src/net/recipeLaw.js",
-    "old": "  if (!item || typeof item.provenance !== 'string' || !PROVENANCE_RE.test(item.provenance)) return [];",
+    "old": "  if (!item || typeof item.provenance !== 'string' || !PROVENANCE_RE.test(item.provenance)) return Number.isInteger(item?.quality) && item.quality > 1 && item.quality < MASTERWORK ? [QUALITY_NAMES[item.quality]] : [];",
     "new": "  if (!item) return [];",
     "tests": [
       "test/prof3_law.test.js"

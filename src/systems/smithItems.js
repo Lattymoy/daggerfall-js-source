@@ -89,7 +89,11 @@ import { setItemFields, mintCondition, templateByIndex, registerItemUseHandler, 
 import { registerTabledLootHandler, registerEnemyLootExtra } from './loot.js';   // REPAIR-EASE: the field kit's two loot doors
 import { itemLongName } from './itemInfo.js';
 import './profTemplates.js';   // the Repair Kit's row (692), registered with the ores and ingots
-import { applyRarity, rarityEligible, RARE_FLAVOURS } from './lootRarity.js';
+import { applyRarity, rarityEligible, RARE_FLAVOURS, reforgeAffix, reforgeableLines } from './lootRarity.js';   // CRAFT4: and the Reforge with Essence's roll
+import { pieceQuality, temperRefusal, temperStep, reforgeEssence } from '../net/temperLaw.js';   // CRAFT4: the temper
+import { readProductRecord } from '../net/productRecord.js';   // CRAFT4: a tempered piece's record, re-signed
+import { itemIsIdentified } from './tradeModes.js';   // CRAFT4: a line the Reforge sees, known
+import { isEquipped } from './equip.js';   // CRAFT4: and never on a worn piece
 import { unitWeightInKg, ARROW_TEMPLATE } from './inventory.js';   // MEND-AIM: the arrow, never mended
 import { seededRng } from './wind.js';
 import { createForagingItem } from './foragingInstall.js';
@@ -243,6 +247,56 @@ export function pieceOfRecipe(item, recipeId) {
 }
 /** PROF4: whether a minted piece is furniture - the home's things (DECOR2b's furnishings), never the pack. */
 export const isCraftedFurniture = (item) => item?.group === 'Furniture';
+
+// ─── CRAFT4: THE TEMPER AND THE REFORGE, ON THE PIECE (Professions-Arc 41.7) ─────
+
+/** The fields a temper takes off the piece its new record mints - the quality's condition, weight and roll. */
+const TEMPER_MINTED = Object.freeze(['maxCondition', 'weightInKg', 'quality', 'rarity', 'affixes', 'enchantments', 'name', 'isIdentified', 'value']);
+/**
+ * A TEMPER, ON THE PIECE (temperLaw.js): the service's answer - `quality` the quality it made, a made piece's `record`
+ * re-signed - laid on the pack's piece, one step from its own. A made piece still as its record mints (asMinted) is
+ * what the new record mints: the quality's condition, weight and roll (a Superior's Magic, off the record's seed), its
+ * wear kept as a share. Any other piece - a found one, a made one enchanted since - takes the step's condition and
+ * weight alone (temperStep): its Loot Rarity and its lines are its own. Answers whether the piece took it (an answer of
+ * another step, or a record of another piece, changes nothing).
+ * @param {any} item @param {{ quality?: number, record?: string|null }} answer
+ */
+export function temperItem(item, { quality, record = null } = {}) {
+  const from = pieceQuality(item);
+  if (!item || temperRefusal(item) || quality !== from + 1) return false;
+  const share = item.maxCondition > 0 ? conditionShare(item) : 1;
+  const c = typeof item.provenance === 'string' && asMinted(item) ? readProductRecord(record) : null;
+  const fresh = c && c.p === item.provenance && c.r === item.recipe && c.q === quality
+    ? mintPiece({ recipe: c.r, quality: c.q, seed: c.c, maker: c.m, marked: c.a === 1, dye: c.u ?? null, hand: c.f ?? null }, c.p) : null;
+  if (fresh) {
+    for (const k of TEMPER_MINTED) { if (fresh[k] === undefined) delete item[k]; else item[k] = fresh[k]; }
+  } else {
+    const step = temperStep(from);
+    item.maxCondition = Math.max(1, Math.round(item.maxCondition * step.condition));
+    if (step.weight !== 1) item.weightInKg = Math.round(unitWeightInKg(item) * step.weight * 100) / 100;
+    item.quality = quality;
+  }
+  item.currentCondition = Math.max(0, Math.min(item.maxCondition, Math.round(item.maxCondition * share)));
+  return true;
+}
+/** Why a piece's line may not be reforged with Essence, or null: 'not' (no Magic or Rare line the Reforge may roll -
+ *  reforge.js's own law), 'unknown' (not yet identified), 'worn' (take it off first), 'line' (not the line it was
+ *  reforged on). */
+export function essenceReforgeRefusal(item, index) {
+  if (!reforgeEssence(item?.rarity) || !reforgeableLines(item).length) return 'not';
+  if (!itemIsIdentified(item)) return 'unknown';
+  if (isEquipped(item)) return 'worn';
+  if (!reforgeableLines(item).includes(index)) return 'line';
+  return null;
+}
+/** CRAFT4: the stations' words - a piece changed under the press (taken off, moved, raised elsewhere), and a temper or a
+ *  reforge the service made that the piece left the pack before it took. */
+export const TEMPER_MOVED_TEXT = 'That piece is not as it was - look again.';
+export const TEMPER_LOST_TEXT = 'The temper was paid for, but the piece left your pack or changed before it took the step.';
+export const REFORGE_LOST_TEXT = 'The Essence was spent, but the piece left your pack or changed before its line was rolled.';
+/** A REFORGE WITH ESSENCE, ON THE PIECE: the line rolled again off the service's `seed` (lootRarity.js reforgeAffix - the
+ *  Loot arc's own Reforge, its name and price following, the line marked). Answers the new line, or null. */
+export const reforgeItem = (item, index, seed) => (essenceReforgeRefusal(item, index) || !Number.isSafeInteger(seed) ? null : reforgeAffix(item, index, seededRng(seed >>> 0)));
 
 // ─── THE REPAIR KIT'S USE ────────────────────────────────────────────
 

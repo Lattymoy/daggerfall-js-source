@@ -88,7 +88,10 @@ test('PROF3 law: the XP - 20 x the tier, a quarter more than two tiers below the
   assert.deepEqual([makerName('  Silverthorn  '), makerName(''), makerName(null), makerName('x'.repeat(40)).length, makerName('Ta\u0007ra')], ['Silverthorn', null, null, MAKER_MAX, 'Tara']);
   assert.deepEqual(pieceLines({ quality: 2, maker: 'Ann', provenance: '0123456789abcdef' }), ['Fine', 'Made by Ann']);
   assert.deepEqual(pieceLines({ kitMetal: 5, provenance: '0123456789abcdef' }), ['Mends a quarter of a Mithril piece\'s condition, up to 75%, once'], 'KIT-CEILING');
-  assert.deepEqual(pieceLines({ quality: 2, maker: 'Ann' }), [], 'no provenance, no anvil made it');
+  // PIN MOVED (CRAFT4, Professions-Arc 41.7): a piece no anvil made says no maker - but a found piece a temper raised says
+  // its quality (Fine, Superior); the Standard it was says nothing
+  assert.deepEqual(pieceLines({ quality: 2, maker: 'Ann' }), ['Fine'], 'no provenance, no anvil made it - a temper\'s quality alone');
+  assert.deepEqual([pieceLines({ quality: 1 }), pieceLines({ quality: 3 }), pieceLines({ quality: 4 }), pieceLines({})], [[], ['Superior'], [], []]);
 });
 
 test('PROF3 law: the smith\'s stock - Cured Leather 4, Oak Plank 4, Pine Plank 2, Charcoal 2 Marks (twice each one\'s value), materials the Stores know, Cured Leather never withdrawn (PROF4: the planks and Charcoal are); a `stock` line burns', () => {
