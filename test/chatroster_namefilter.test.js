@@ -309,7 +309,8 @@ test('NAME-F2: the filter is in the RELAY’s graph, and the entry pane is the o
   // imports nothing, which is what keeps that graph flat - the same
   // reason mat4.js is the only other thing wire.js takes.
   assert.match(rd('server/src/relay.js'), /export \* from '\.\.\/\.\.\/src\/net\/wire\.js';/);
-  assert.match(rd('src/net/wire.js'), /import \{ nameAllowed \} from '\.\/nameFilter\.js';/);
+  // PIN MOVED (TEXT-F1): the words' reader and verdict ride the same import into the same graph
+  assert.match(rd('src/net/wire.js'), /import \{ nameAllowed, maskText, textCaught \} from '\.\/nameFilter\.js';/);
   assert.equal((rd('src/net/nameFilter.js').match(/^import /gm) ?? []).length, 0,
     'nameFilter.js must import nothing, or the relay’s bundle grows a graph');
 

@@ -157,7 +157,8 @@ test('PERF-SUN: the tree sway is CLEARED as a suspect - the lean is baked at bui
   assert.equal(floraSwayOf(210, 500, 3), 0, 'and anything that is not the climate’s flora does not lean at all');
   const w = read('src/scenes/world.js'), ex = read('src/scenes/exterior.js');
   for (const [name, src] of [['world', w], ['exterior', ex]]) {
-    assert.match(src, /batch\.sway = floraSwayOf\(archive, natureArchive, size\.h\);/, `${name}: set at BUILD`);
+    // PIN MOVED (ECOTONE1, 2026-10-07): the streaming host's pixel asks by its nature set (its climate's and a border's)
+    assert.match(src, name === 'world' ? /batch\.sway = floraSwayOf\(archive, natureSet, size\.h\);/ : /batch\.sway = floraSwayOf\(archive, natureArchive, size\.h\);/, `${name}: set at BUILD`);
     assert.equal((src.match(/renderer\.setFlatWind\(/g) ?? []).length, 1, `${name}: one wind upload a frame, for every flat there is`);
   }
   assert.doesNotMatch(w, /floraSwayOf\([^)]*\)[^\n]*\n[^\n]*for \(const b of p\.batches\)/, 'nothing recomputes a lean inside the draw walk');

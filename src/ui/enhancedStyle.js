@@ -4256,6 +4256,19 @@ ${paceControlsCss('tview')}
   gap: 6px; align-content: flex-start; }
 /* AUDIT 625 W3: the wallet's sheet holds its pieces as the dock's own tiles, wrapped as the dock wraps them */
 .pack-shell .walletsheet .walletpieces { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 0 2px; }
+/* WALLET-UI: the wallet's ledger - its two parts under their names, a label and a figure a row, the figures in one
+   column at the right; an empty one dimmed, a letter's worth under its count */
+.pack-shell .walletsheet { text-align: left; margin: 2px 0 6px; }
+.pack-shell .walletsheet .wallet-head { margin: 12px 0 4px; padding: 0 0 4px; border-bottom: 1px solid rgba(125,116,96,0.35);
+  font-family: inherit; font-weight: 400; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dim); }
+.pack-shell .walletsheet .wallet-head:first-child { margin-top: 8px; }
+.pack-shell .walletsheet .wallet-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding: 3px 0; font-size: 14px; line-height: 1.35; }
+.pack-shell .walletsheet .wallet-k { color: var(--dim); }
+.pack-shell .walletsheet .wallet-v { color: var(--bone); text-align: right; font-variant-numeric: tabular-nums; }
+.pack-shell .walletsheet .wallet-row.none .wallet-v, .pack-shell .walletsheet .wallet-v.why { color: var(--dim); opacity: 0.75; }
+.pack-shell .walletsheet .wallet-v.why { font-size: 12px; }
+.pack-shell .walletsheet .wallet-note { margin: -2px 0 3px; text-align: right; font-size: 12px; color: var(--dim); }
 /* PX22: the tab strip is ALSO a .packcol and inherited that 8px; it
    carries its tabs and nothing else, so 0 vertical padding - the 16px
    is the difference between one row of tiles and two at 660px. */

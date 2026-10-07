@@ -53,12 +53,16 @@ import { applyPicks } from './wodLocationLoader.js';   // WOD2: World of Daggerf
  *   Real forests switch (null off, DFU's scatter): the climate's summer
  *   nature archive, and whether the pixel's location is a place the woods
  *   hide (a dungeon, a shrine) rather than one they draw back from (a town).
+ * @param {?{nature:number[], type:number[]}} [job.ecotone] - ECOTONE1: the
+ *   3x3 of pixels' climates about this one (world/terrainNature.js
+ *   layoutNature's `ecotone`), null with the Blended climates row off or
+ *   every neighbour this pixel's own climate.
  * @returns {{samples: Float32Array, tilemap: Uint8Array,
  *   positions: Float32Array, normals: Float32Array,
  *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
  *   nature: Array<{record:number,x:number,y:number,z:number}>}}
  */
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, wod = null, forests = null }) {
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, wod = null, forests = null, ecotone = null }) {
   const samples = generateSamples(woods, px, py);
   let avg = 0;
   if (hasLocation) {
@@ -129,6 +133,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
       ],
       paths,
     } : null,
+    ecotone,   // ECOTONE1: the neighbours' climates - a border's tiles laid by the climate the ground's border gives them
   });
   return { samples, tilemap, positions: grid.positions, normals: grid.normals, tilemapBytes, avg, nature,
     paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says

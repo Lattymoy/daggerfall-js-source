@@ -399,6 +399,7 @@ import { loadGraceActive as dwLoadGraceActive } from '../world/deepWaterRuntime.
 import { livingWorldOn } from '../systems/livingWorld/livingSwitch.js';   // HALT-ONE: the living watch's lane, for a watch called into a building
 /** BOUNTY1: the plaque over a town's bounty board. */
 const BOUNTY_BOARD_TEXT = 'Bounty Board';
+const NOTICE_BOARD_TEXT = 'Notice Board';   // ONE-BOARD: the town's one Notice Board, while it is open to this account
 let _charT0 = (typeof performance !== 'undefined' ? performance.now() : 0);
 let _charAnimMode = 'idle'; // in-engine character animation: idle | walk | off (window.__anim)
 
@@ -6181,7 +6182,7 @@ export function createWorldModes(host) {
       return _doorText;
     }
     if (typeof key !== 'string') return null;
-    if (key.startsWith('board:')) return { title: _extList?.boards?.[Number(key.split(':')[1])]?.bounty ? BOUNTY_BOARD_TEXT : BULLETIN_BOARD_TEXT };
+    if (key.startsWith('board:')) { const bd = _extList?.boards?.[Number(key.split(':')[1])]; return { title: bd?.bounty ? BOUNTY_BOARD_TEXT : bd?.named ? NOTICE_BOARD_TEXT : BULLETIN_BOARD_TEXT }; }
     if (key.startsWith('grave:')) return { title: 'Grave' };   // SEARCH1   // .cs:315-318; BOUNTY1: a bounty board names itself
     if (key.startsWith('person:')) {                                       // .cs:325-393
       const pn = npcs[Number(key.split(':')[1])];

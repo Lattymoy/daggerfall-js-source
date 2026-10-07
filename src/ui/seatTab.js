@@ -13,12 +13,20 @@
 //
 // A seat is run from its town's board, in person - that is the point of a physical board: the war has a place.
 //
+// BOARD-UI (2026-10-06, Mac: "Enhance the guild war tab of the board for better organization, instruction and
+// readability"): the same parts, each on its own panel under its own name, in the order a reader asks them - the
+// Charter (who holds it, how firmly, the Tithe and Edict); This week (the phase on a strip - Muster, Reckoning,
+// Turning - and its clock, the Season, the Tide); the battle; the standings, each guild's bar toward what it needs (the
+// claim, or the holder's defence); your guild (its pledge, your part, the levers, its Fealty and Pacts - AUDIT 657 B10);
+// the holder's orders; the Works; HOW THE SEAT WAR WORKS, five steps folded under one line (its counts the law's own);
+// and the Chronicle.
+//
 // Every act goes through the window's one-at-a-time door (`ui.run`), and the standings are read again after each.
 import { HALL_OF_RECORDS_SHUT } from '../systems/onlineHomes.js';   // AUDIT-SEATS: the Hall of Records' words where it cannot be read
 import { accountRefusalText } from '../net/accountClient.js';
 import {
   seatInfoLine, seatWeekLine, seatStandingLine, seatNoStandingsLine, seatMineLines, seatTributeLine, seatMay,
-  SEAT_PLEDGE_WORDS, SEAT_PLEDGE_REGIONS_MAX, TRIBUTE_MARKS_PER_INFLUENCE,
+  SEAT_PLEDGE_WORDS, SEAT_PLEDGE_REGIONS_MAX, TRIBUTE_MARKS_PER_INFLUENCE, CLAIM_THRESHOLD, CLAIM_FEE, CONTESTED_MARGIN, ACCOUNT_SEAT_WEEK_CAP, SEAT_MEMBER_WAIT_S,
   seatHolderLine, seatBattleLine, seatClaimLine, chronicleLine, SEAT_RELINQUISH_WORDS,
   seatRuleLine, seatHoldingLines, edictLine, edictMayFollow, edictForTier, royalTourneyLines, EDICTS, seatTitheCap, SEAT_LEVER_RANKS, BOUNTY_MARKS,
   politicsRows, POLITICS_ACTS, seasonLine, guildWords,
@@ -53,9 +61,35 @@ const button = (cls, text, onPress) => {
 /** What the tab says while it has no standings to show. */
 export const SEAT_TAB_WORDS = Object.freeze({
   reading: 'Reading the week\'s standings...',
-  slow: 'The standings could not be read - the counting-house is slow to answer.',
+  slow: 'The standings did not load.',
   shut: 'The seats are not open to you yet.',
 });
+/** BOARD-UI: the panels' names, in the order they stand. */
+export const SEAT_PANELS = Object.freeze({
+  week: 'This week', battle: 'This week\'s battle', standings: 'Standings', mine: 'Your guild', holding: 'The holder\'s orders',
+  guide: 'How the seat war works', chronicle: 'The Chronicle',
+});
+/** BOARD-UI: the week's three phases, as the strip names them - the Muster (pledges open), the Reckoning (locked), the
+ *  Turning (the week settles). */
+export const SEAT_PHASES = Object.freeze([['muster', 'Muster'], ['reckoning', 'Reckoning'], ['turning', 'Turning']]);
+/**
+ * BOARD-UI (Mac: "better organization, instruction"): HOW THE SEAT WAR WORKS, five steps - `[name, words]` - for a seat
+ * of `seat.tier`. Its numbers are the law's own (net/townSeatLaw.js), so the words never drift from the rules. Pure.
+ * @param {{ tier?: string }} seat
+ */
+export function seatGuide(seat) {
+  const t = seat?.tier === 'crown' ? 'crown' : 'palace';
+  const n = (x) => Number(x).toLocaleString('en-US');
+  return [
+    ['Pledge', `In the Muster, a guild's Officers or Guildmaster pledge it to one seat a region, in up to ${SEAT_PLEDGE_REGIONS_MAX} regions. Pledges lock at the Reckoning, Friday 18:00 UTC.`],
+    // AUDIT 657 B9: Tribute is the Guildmaster's, paid from the treasury - never a member's earning; D6: the wait the law's
+    ['Earn', `Members ${n(SEAT_MEMBER_WAIT_S / 86400)} days in the guild earn influence in the seat's region: walking the town (the Watch), closing Dagon's Breaches, a home in the town, Renown and seat writs. The Guildmaster adds Tribute from the treasury. One account counts for at most ${n(ACCOUNT_SEAT_WEEK_CAP)} a week at a seat.`],
+    // AUDIT 657 B9: the law's taker - the strongest past the line whose treasury holds the fee (townSeatLaw.js turningPlan)
+    ['Claim', `At the Turning, Sunday 18:00 UTC, an unheld Charter goes to the strongest guild with at least ${n(CLAIM_THRESHOLD[t])} influence whose treasury can pay ${n(CLAIM_FEE[t])} silver. Two guilds within ${Math.round(CONTESTED_MARGIN * 100)}% of each other meet in a Tourney for it.`],
+    ['Siege', `A held Charter is challenged by beating the holder's defence with at least ${n(CLAIM_THRESHOLD[t])}: the strongest challenger wins a Right of Siege, fought in the holder's battle window. Sign for your side on this tab.`],
+    ['Hold', 'The holder sets the Tithe and an Edict and pays upkeep each week. Keeping the town raises its Standing; a Standing of nought brings revolt.'],
+  ];
+}
 /** The refusals that say the seats are shut to this account (no retry offered). */
 const SHUT = new Set(['seats-closed', 'no-session', 'auth', 'seat-unconfirmed']);
 
@@ -81,6 +115,7 @@ export function createSeatTab(host, ui) {
   let windowAsk = null, hireHandle = '', hireFee = 0;   // SEAT2a: the window and the contract asked, kept across redraws
   let politicsTag = '';   // CROWN2: the guild an offer is made to, kept across redraws
   let forts = null;   // SEAT2b: the works as last read, read with the standings
+  let guideOpen = false;   // BOARD-UI: the guide unfolded
 
   async function load(force) {
     // AUDIT-SEATS C9: a reload asked mid-read is queued - the act's read after another act's was dropped, and the tab
@@ -88,9 +123,11 @@ export function createSeatTab(host, ui) {
     if (loading) { queued = !!(queued || force); return; }
     loading = true; ui.rerender();
     let r, f;
+    // SEAT2b: the works beside them - a reader who cannot read them sees the board without its panel. BOARD-UI (Mac:
+    // "Enhance the speed at which the notice board ... loads"): asked AT ONCE with the standings, never after their answer
+    const works = book.forts ? Promise.resolve().then(() => book.forts(seat.key)).catch(() => null) : null;
     try { r = await book.standings(seat.key, { force }); } catch { r = { data: null, error: 'offline' }; }
-    // SEAT2b: the works beside them - a reader who cannot read them sees the board without its panel
-    try { f = r.data && book.forts ? await book.forts(seat.key) : null; } catch { f = null; }
+    try { f = r.data && works ? await works : null; } catch { f = null; }
     loading = false;
     if (ui.alive && !ui.alive()) { queued = null; return; }
     if (r.data) data = r.data;
@@ -108,14 +145,32 @@ export function createSeatTab(host, ui) {
     disarm = setTimeout(() => { disarm = null; if (!ui.alive || ui.alive()) ui.rerender(); }, SEAT_RELINQUISH_ARM_MS);
   };
 
+  /** BOARD-UI: what a challenger's influence must reach this week - the claim's threshold at an unheld seat, past the
+   *  holder's defence (and the threshold) at a held one. */
+  const targetOf = () => {
+    const need = CLAIM_THRESHOLD[seat.tier === 'crown' ? 'crown' : 'palace'];
+    return Number.isFinite(data?.defence) ? Math.max(need, data.defence + 1) : need;
+  };
   function standingsNode() {
     const list = el('ol', 'notice-standings');
     const rows = data?.standings ?? [];
+    const holderId = data?.holder?.guild?.id ?? null;
+    const target = targetOf();
     rows.forEach((s, i) => {
       const li = el('li', `notice-standing${data?.mine?.guild === s.guild.id ? ' mine' : ''}`);
       const img = banner(s.guild.heraldry, 26);
-      if (img) li.append(img);
+      li.append(img ?? el('span', 'seat-nobanner'));
       li.append(el('span', null, seatStandingLine(s, i)));
+      // BOARD-UI: a challenger's bar toward what it needs (never the holder's - its influence is its defence)
+      if (s.guild.id !== holderId) {
+        const share = Math.max(0, Math.min(1, (Number(s.influence) || 0) / target));
+        const bar = el('span', `seat-bar${share >= 1 ? ' past' : ''}`);
+        bar.setAttribute('title', `${Number(s.influence || 0).toLocaleString('en-US')} of ${target.toLocaleString('en-US')} ${holderId ? 'to win a Right of Siege' : 'to claim the Charter'}`);
+        const fill = el('i');
+        fill.style.width = `${(share * 100).toFixed(1)}%`;
+        bar.append(fill);
+        li.append(bar);
+      }
       list.append(li);
     });
     if (!rows.length) list.append(el('li', 'notice-empty', seatNoStandingsLine(seat)));
@@ -367,13 +422,17 @@ export function createSeatTab(host, ui) {
     reload: () => load(true),
     body() {
       const body = el('div', 'notice-cork notice-seat');
+      /** BOARD-UI: a part of the tab - its own panel, under its own name. */
+      const panel = (name, cls = '') => { const p = el('section', `notice-panel${cls ? ` ${cls}` : ''}`); if (name) p.append(el('h3', null, name)); body.append(p); return p; };
       // SEAT1c: the Charter under its holder's banner, the holder, this week's battle
       const holder = data?.holder ?? null;
-      const head = el('p', 'notice-section');
+      const charter = el('section', 'notice-panel seat-head');
       const img = holder ? banner(holder.guild.heraldry, 30) : null;
-      if (img) head.append(img);
-      head.append(el('span', null, seatInfoLine(seat, holder?.guild ?? null)));
-      body.append(head);
+      if (img) charter.append(img);
+      const who = el('div', 'seat-who');
+      who.append(el('p', 'seat-charter', seatInfoLine(seat, holder?.guild ?? null)));
+      charter.append(who);
+      body.append(charter);
       if (!data) {
         const shut = SHUT.has(error ?? '');
         const p = el('p', 'notice-empty', loading || !error ? SEAT_TAB_WORDS.reading : shut ? (error === 'seat-unconfirmed' ? accountRefusalText(error) : SEAT_TAB_WORDS.shut) : SEAT_TAB_WORDS.slow);
@@ -381,80 +440,108 @@ export function createSeatTab(host, ui) {
         body.append(p);
         return body;
       }
-      body.append(el('p', 'notice-seat-mine', seatHolderLine(holder)));
+      who.append(el('p', 'notice-seat-mine', seatHolderLine(holder)));
       // SEAT1d: the Tithe and the Edict for everyone; the holder's own lines and its Officers' levers
       const rule = seatRuleLine(seat, holder);
-      if (rule) body.append(el('p', 'notice-seat-mine', rule));
-      if (data.holding) {
-        for (const line of seatHoldingLines(seat, data.holding)) body.append(el('p', 'notice-seat-mine', line));
-        if (SEAT_LEVER_RANKS.includes(data.mine?.rank)) body.append(holdingNode(data.holding));
+      if (rule) who.append(el('p', 'notice-seat-mine', rule));
+      if (data.holding) for (const line of seatHoldingLines(seat, data.holding)) who.append(el('p', 'notice-seat-mine', line));
+      // THIS WEEK: the phase on its strip, the Season, the Tide, the clock
+      const week = panel(SEAT_PANELS.week, 'seat-weekpanel');
+      const strip = el('ol', 'seat-phases');
+      for (const [id, name] of SEAT_PHASES) {
+        const li = el('li', data.phase === id ? 'on' : null, name);
+        if (data.phase === id) li.setAttribute('aria-current', 'step');
+        strip.append(li);
+      }
+      week.append(strip);
+      const season = seasonLine(data.week, data.season ?? null);   // SEASON1
+      if (season) week.append(el('p', 'notice-seat-week notice-seat-season', season));
+      const tide = data.tides ? tideLine(seat.region, data.tides.now, data.tides.next) : null;   // SEASON1 part two (9.3)
+      if (tide) week.append(el('p', 'notice-seat-week notice-seat-tide', tide));
+      week.append(el('p', 'notice-seat-week', seatWeekLine(data, ui.nowS())));
+      // SEAT2a: the battle placed in the week, with its sides - or the Turning's line where none is placed (an older week);
+      // CROWN1 part two: the Royal Tourney ruling here
+      const battle = data.fight?.kind ? null : seatBattleLine(data.battle ?? null);
+      if (data.fight?.kind || battle || data.royal) {
+        const b = panel(SEAT_PANELS.battle, 'seat-battlepanel');
+        if (data.fight?.kind) b.append(fightNode(data.fight));
+        else if (battle) b.append(el('p', 'notice-seat-battle', battle));
+        if (data.royal) b.append(royalNode(data.royal));
+      }
+      // THE STANDINGS, and what it takes
+      const standings = panel(SEAT_PANELS.standings, 'seat-standingspanel');
+      standings.append(standingsNode(), el('p', 'notice-seat-mine', seatClaimLine(seat, data.defence ?? null)));
+      // YOUR GUILD: its pledge, your part, the levers (SEAT1b); CROWN2's Fealty and Pacts under it
+      const mine = panel(SEAT_PANELS.mine, 'seat-minepanel');
+      for (const line of seatMineLines(seat, data.mine ?? null, nameOf)) mine.append(el('p', 'notice-seat-mine', line));
+      if (data.mine) mine.append(leversNode(data.mine));
+      if (data.mine?.politics) mine.append(politicsNode(data.mine.politics, SEAT_LEVER_RANKS.includes(data.mine.rank)));   // CROWN2
+      // THE HOLDER'S ORDERS - its Officers' and Guildmaster's levers: the Tithe and the Edict (SEAT1d), the battle window
+      // (SEAT2a), and the Charter given up (SEAT1c, the Guildmaster's)
+      const ruling = !!holder && data.mine?.guild === holder.guild.id && SEAT_LEVER_RANKS.includes(data.mine?.rank);
+      const levers = !!data.holding && SEAT_LEVER_RANKS.includes(data.mine?.rank);
+      if (ruling || levers) {
+        const orders = panel(SEAT_PANELS.holding, 'seat-holdingpanel');
+        if (levers) orders.append(holdingNode(data.holding));
+        if (ruling) orders.append(windowNode(data.fight?.window ?? null));
+        // SEAT1c: the guildmaster of the holder gives the Charter up here, at its board - armed by a first press
+        if (ruling && data.mine.rank === GUILD_RANK_MASTER) {
+          const armed = () => ui.nowS() * 1000 - armedAt < SEAT_RELINQUISH_ARM_MS;   // asked at the press, not at the draw
+          const b = button('notice-seat-relinquish', armed() ? SEAT_RELINQUISH_WORDS.sure : SEAT_RELINQUISH_WORDS.arm, () => {
+            if (!armed()) { armedAt = ui.nowS() * 1000; ui.rerender(); disarmLater(); return null; }
+            armedAt = -Infinity;
+            return act(() => book.relinquish(seat));
+          });
+          b.disabled = ui.busy();
+          orders.append(b);
+        }
       }
       // SEAT2b (Seats-Arc 7.9): the works and the stockpile - a holder's Officers and guildmaster begin a project here
       if (holder && forts) {
-        drawSeatWorks(body, {
+        drawSeatWorks(panel(null, 'seat-workspanel'), {
           forts, seat, port: host.port === true, busy: ui.busy(),
-          lever: data.mine?.guild === holder.guild.id && SEAT_LEVER_RANKS.includes(data.mine?.rank),
+          lever: ruling,
           nameOf: host.countName ?? ((k) => k),
           onBegin: (work) => act(() => book.fortFund(seat, work, host.port === true)),
         });
       }
-      // SEAT2a: the battle placed in the week, with its sides - or the Turning's line where none is placed (an older week)
-      if (data.fight?.kind) body.append(fightNode(data.fight));
-      else {
-        const battle = seatBattleLine(data.battle ?? null);
-        if (battle) body.append(el('p', 'notice-seat-battle', battle));
-      }
-      if (data.royal) body.append(royalNode(data.royal));   // CROWN1 part two: the Royal Tourney ruling here
-      // SEAT2a: the holder's window, its Officers' and guildmaster's to set
-      if (holder && data.mine?.guild === holder.guild.id && SEAT_LEVER_RANKS.includes(data.mine?.rank)) body.append(windowNode(data.fight?.window ?? null));
-      const season = seasonLine(data.week, data.season ?? null);   // SEASON1
-      if (season) body.append(el('p', 'notice-seat-week notice-seat-season', season));
-      const tide = data.tides ? tideLine(seat.region, data.tides.now, data.tides.next) : null;   // SEASON1 part two (9.3)
-      if (tide) body.append(el('p', 'notice-seat-week notice-seat-tide', tide));
-      body.append(el('p', 'notice-seat-week', seatWeekLine(data, ui.nowS())));
-      body.append(el('p', 'notice-section', 'This week\'s standings'));
-      body.append(standingsNode());
-      body.append(el('p', 'notice-seat-mine', seatClaimLine(seat, data.defence ?? null)));
-      for (const line of seatMineLines(seat, data.mine ?? null, nameOf)) body.append(el('p', 'notice-seat-mine', line));
-      if (data.mine) body.append(leversNode(data.mine));
-      if (data.mine?.politics) body.append(politicsNode(data.mine.politics, SEAT_LEVER_RANKS.includes(data.mine.rank)));   // CROWN2
-      // SEAT1c: the guildmaster of the holder gives the Charter up here, at its board - armed by a first press
-      if (holder && data.mine?.guild === holder.guild.id && data.mine.rank === GUILD_RANK_MASTER) {
-        const armed = () => ui.nowS() * 1000 - armedAt < SEAT_RELINQUISH_ARM_MS;   // asked at the press, not at the draw
-        const b = button('notice-seat-relinquish', armed() ? SEAT_RELINQUISH_WORDS.sure : SEAT_RELINQUISH_WORDS.arm, () => {
-          if (!armed()) { armedAt = ui.nowS() * 1000; ui.rerender(); disarmLater(); return null; }
-          armedAt = -Infinity;
-          return act(() => book.relinquish(seat));
-        });
-        b.disabled = ui.busy();
-        body.append(b);
-      }
+      // BOARD-UI: HOW THE SEAT WAR WORKS - folded under its line, and kept open across the tab's redraws
+      const guide = /** @type {any} */ (el('details', 'notice-panel seat-guide'));
+      guide.open = guideOpen;
+      guide.addEventListener?.('toggle', () => { guideOpen = !!guide.open; });
+      guide.append(el('summary', null, SEAT_PANELS.guide));
+      const steps = el('ol');
+      for (const [name, words] of seatGuide(seat)) { const li = el('li'); li.append(el('b', null, `${name}. `), words); steps.append(li); }
+      guide.append(steps);
+      body.append(guide);
       // SEAT1c: the Chronicle (SEAT0 9.2), newest first
       const lines = (data.chronicle ?? []).map((r) => chronicleLine(r, seat, book.zero ?? null)).filter(Boolean);   // SEASON1 part three: in its Season's words
-      if (lines.length) {
-        body.append(el('p', 'notice-section', 'The Chronicle'));
-        const ol = el('ol', 'notice-chronicle');
-        // HERALDRY-SHOWN (Seats-Arc 8.1: "drawn on ... the Chronicle"): each line under the shield of the guild it is about,
-        // where the client knows that guild's heraldry - this answer's (its holder, battle and standings), then the seats' list
-        const arms = heraldryIndex(data, book.data);
-        const about = (data.chronicle ?? []).filter((r) => chronicleLine(r, seat)).map(chronicleGuildOf);
-        lines.forEach((l, i) => {
-          const li = el('li');
-          const g = about[i];
-          // AUDIT HERALDRY H3: the tag's guild by its name too; AUDIT2 GUILD2 G1: as the guild is named NOW (`now`, the service's)
-          const shield = g ? heraldrySwatch(document, armsNamed(arms, g.now?.tag ?? g.tag, g.now?.name ?? g.name)) : null;
-          if (shield) li.append(shield);
-          li.append(el('span', null, l));
-          ol.append(li);
-        });
-        body.append(ol);
-      }
-      // AUDIT-SEATS (9.2: "the board's Chronicle pinboard ... read it as prose"): the whole Chronicle, the Hall of Records
-      // book, from the board - every seat's, a crown's and a palace with no shelf to hold it included
-      if (host.readRecords) {
-        const b = button('notice-seat-records', 'Read the Hall of Records', () => ui.run(async () => ((await host.readRecords(seat)) ? { ok: true, text: '' } : { ok: false, text: HALL_OF_RECORDS_SHUT })));
-        b.disabled = ui.busy();
-        body.append(b);
+      if (lines.length || host.readRecords) {
+        const chron = panel(SEAT_PANELS.chronicle, 'seat-chroniclepanel');
+        if (lines.length) {
+          const ol = el('ol', 'notice-chronicle');
+          // HERALDRY-SHOWN (Seats-Arc 8.1: "drawn on ... the Chronicle"): each line under the shield of the guild it is about,
+          // where the client knows that guild's heraldry - this answer's (its holder, battle and standings), then the seats' list
+          const arms = heraldryIndex(data, book.data);
+          const about = (data.chronicle ?? []).filter((r) => chronicleLine(r, seat)).map(chronicleGuildOf);
+          lines.forEach((l, i) => {
+            const li = el('li');
+            const g = about[i];
+            // AUDIT HERALDRY H3: the tag's guild by its name too; AUDIT2 GUILD2 G1: as the guild is named NOW (`now`, the service's)
+            const shield = g ? heraldrySwatch(document, armsNamed(arms, g.now?.tag ?? g.tag, g.now?.name ?? g.name)) : null;
+            if (shield) li.append(shield);
+            li.append(el('span', null, l));
+            ol.append(li);
+          });
+          chron.append(ol);
+        }
+        // AUDIT-SEATS (9.2: "the board's Chronicle pinboard ... read it as prose"): the whole Chronicle, the Hall of Records
+        // book, from the board - every seat's, a crown's and a palace with no shelf to hold it included
+        if (host.readRecords) {
+          const b = button('notice-seat-records', 'Read the Hall of Records', () => ui.run(async () => ((await host.readRecords(seat)) ? { ok: true, text: '' } : { ok: false, text: HALL_OF_RECORDS_SHUT })));
+          b.disabled = ui.busy();
+          chron.append(b);
+        }
       }
       return body;
     },

@@ -45,6 +45,7 @@ import { withArenaHonoursAll } from './arena.js';   // AUDIT PRE-MERGE 1003 S8: 
 import { guildActorOf } from './guilds.js';
 import { heraldryOfRow } from './halls.js';   // GUILD1e: a recruitment note's guild's banner
 import { guildMay } from '../../src/net/guildLaw.js';
+import { maskText } from '../../src/net/nameFilter.js';   // TEXT-F1: a note kept before the filter, starred as it is read
 import {
   NOTES_LIVE_MAX, NOTE_DAY_S, BOARD_NOTES_SHOWN, BOARD_NOTICES_SHOWN, NOTES_PINNED_MAX, BOARD_OPS_MAX, BOARD_WINDOW_S,
   NOTE_REPORTS_HIDE, NOTE_ID_RE, BOARD_RID_RE, boardSwitchOf, boardKeyOk, noteWords, noticeWords,
@@ -74,7 +75,8 @@ const recruits = (n) => !!n.guild_name && n.author_rank != null && guildMay(Numb
 function noteView(n, row, env, nowS, { mine = false, mod = false, reports = 0 } = {}) {
   const guildOk = recruits(n);
   return {
-    id: n.id, from: n.author_name, ...badgeOf(row, env, nowS), subject: n.subject, body: n.body,
+    // TEXT-F1: the words starred as they are read - a note pinned before the filter reads as one pinned after it
+    id: n.id, from: n.author_name, ...badgeOf(row, env, nowS), subject: maskText(n.subject), body: maskText(n.body),
     // a recruitment note whose guild is gone - or whose author can no longer invite to it - keeps its words and loses
     // its button and its seal (0026_board.sql)
     button: n.button === 'guild' && !guildOk ? null : (n.button ?? null),
@@ -122,7 +124,7 @@ export async function readBoard({ db, nowS }, reader, env, map) {
   const live = await liveCount(db, reader.id, nowS);
   return {
     map: mapId,
-    notices: notices.map((x) => ({ id: x.id, from: x.author_name, subject: x.subject, body: x.body, at: x.at, expiresAt: x.expires_at })),
+    notices: notices.map((x) => ({ id: x.id, from: x.author_name, subject: maskText(x.subject), body: maskText(x.body), at: x.at, expiresAt: x.expires_at })),   // TEXT-F1
     notes: notes.map((n) => noteView(n, rows.get(n.author), env, nowS, { mine: n.author === reader.id, mod, reports: Number(n.reports ?? 0) })),
     me: {
       canPin: accountKind(reader) === 'linked' && !isMuted(reader, nowS),

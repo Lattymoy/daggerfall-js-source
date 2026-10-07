@@ -32,8 +32,8 @@
   {
     "name": "SD3-the-gate-a-version-early",
     "file": "src/net/wire.js",
-    "old": "export const SD_RELAY_MIN = 175;",
-    "new": "export const SD_RELAY_MIN = 174;",
+    "old": "export const SD_RELAY_MIN = 176;",
+    "new": "export const SD_RELAY_MIN = 175;",
     "tests": [
       "test/sd3_relay.test.js"
     ],

@@ -110,8 +110,8 @@
   {
     "name": "FOREST1-deserts-keep-dfu",
     "file": "src/world/terrainNature.js",
-    "old": "if (opts.forests && opts.climateType !== CLIMATE_TYPE_DESERT",
-    "new": "if (opts.forests",
+    "old": "const forestsFor = (forests, archive, climateType) => !!forests && climateType !== CLIMATE_TYPE_DESERT && !!TREE_RECORDS[archive];",
+    "new": "const forestsFor = (forests, archive, climateType) => !!forests && !!TREE_RECORDS[archive];",
     "tests": [
       "test/forest1.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "FOREST1-beach-line",
     "file": "src/world/terrainNature.js",
-    "old": "if (sampleHeight(heightmapData[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) continue;\n\n      const wood",
+    "old": "if (sampleHeight(heightmapData[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;\n\n    const wood",
     "new": "const wood",
     "tests": [
       "test/forest1.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "FOREST1-steepness",
     "file": "src/world/terrainNature.js",
-    "old": "if (g2 > TAN_MAX_STEEP_SQ) continue;",
-    "new": "if (false) continue;",
+    "old": "if (g2 > TAN_MAX_STEEP_SQ) return null;",
+    "new": "if (false) return null;",
     "tests": [
       "test/forest1.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "FOREST1-tracks",
     "file": "src/world/terrainNature.js",
-    "old": "if (!ground || paths?.[ti]) continue;",
-    "new": "if (!ground) continue;",
+    "old": "if (!ground || paths?.[ti]) return null;",
+    "new": "if (!ground) return null;",
     "tests": [
       "test/forest1.test.js"
     ]

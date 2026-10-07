@@ -401,7 +401,8 @@ The Worker mints an `sd:<s>` object only for the slot the hub's record names and
 
 SD3 shipped the first of the table: `found` (client -> cell) and `ev` (hub -> client); the rest arrive with the slices
 that use them (SD6's `pz`, SD8's fight, SD9's receipts), each extending `SD_KINDS`/`SD_OUT_KINDS` under the arc's one
-relay version while it is undeployed. SD6b shipped `pz` each way - the realm's out frame is the hall,
+relay version while it is undeployed - `world176` now (`world171` on the branch, renumbered past main's CRYSTAL-FIST,
+WATCH-FIX, SERPENT3, LEGACY7 and TEXT-F1 at the merges). SD6b shipped `pz` each way - the realm's out frame is the hall,
 `pz {s,st,f,lit,ok,i?,a?,id?,q?,x?}` (the turn that made it so, its turner and number, and `x` when the Hour snapped
 back).
 

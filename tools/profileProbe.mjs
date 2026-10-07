@@ -10,6 +10,10 @@
 // row wider than its column, the Close a thumb can press and on screen. A card taller than the screen scrolls inside
 // itself, with its Close reachable. The waiting card and the silent one are photographed too. Photographs to
 // tools/shots/ (or SHOT_DIR).
+// PROFILE-UI (2026-10-07, Mac: "Lets only organize and polish the player profile. Its a mess"): every glyph a player can
+// show - the identity token's whole vocabulary, eighteen now where three were - stands on a row of its own under the
+// name, which keeps one line; the record's four plaques wrap inside the card; what they wear stands in its parts, a pair
+// one row under the plural. The front door's film is taken down before each photograph (it mounts on its own clock).
 //
 //     node tools/profileProbe.mjs
 import { createServer } from 'vite';
@@ -30,11 +34,13 @@ for (const [W, H, width] of [[1440, 900, 'desktop'], [480, 800, 'narrow'], [390,
   const tag = `${width} ${sheet}`;
   const page = await browser.newPage({ viewport: { width: W, height: H } });
   page.on('pageerror', (e) => pageErrors.push(String(e.message)));
-  await page.goto('http://localhost:5237/play/?skin=enhanced&touch=off');
+  // ?nointro, the probes' own switch (main.js): the front door's film takes Escape at the window, stopped, whenever it
+  // mounts before the card - the Escape check below was a race the film sometimes won
+  await page.goto('http://localhost:5237/play/?skin=enhanced&touch=off&nointro');
   const r = await page.evaluate(async (sheet) => {
     const { createProfileWindow, profileView, GEAR_ROWS } = await import('/src/ui/profileWindow.js');
     const { NAME_MAX, CARD_LEVEL_MAX, CARD_STAT_MAX, CARD_VITAL_MAX } = await import('/src/net/wire.js');
-    const { TITLES, GLYPHS } = await import('/src/net/identityToken.js');
+    const { TITLES, GLYPHS, RENOWN_MAX } = await import('/src/net/identityToken.js');
     const { itemLongName } = await import('/src/systems/itemInfo.js');
     document.body.innerHTML = '';
     document.body.style.cssText = 'margin:0;background:repeating-linear-gradient(45deg,#2a2721 0 14px,#231f1a 14px 28px);height:100vh';
@@ -70,7 +76,12 @@ for (const [W, H, width] of [[1440, 900, 'desktop'], [480, 800, 'narrow'], [390,
     const look = { race: 'DarkElf', gender: 'female', faceIndex: 3, class: 'Nightblade', items };
     const card = { level: CARD_LEVEL_MAX, attrs: Array(8).fill(CARD_STAT_MAX), vitals: [CARD_VITAL_MAX, CARD_VITAL_MAX, CARD_VITAL_MAX], look };
     const title = TITLES.reduce((x, y) => (y.length > x.length ? y : x));
-    const peer = { id: 'peer-0002', name: 'W'.repeat(NAME_MAX), title, glyphs: [...GLYPHS] };
+    // the widest name line a player can be shown: a Renown at its most (RENOWN_MAX), the longest tag the guild law takes
+    const peer = { id: 'peer-0002', name: 'W'.repeat(NAME_MAX), title, glyphs: [...GLYPHS], lv: RENOWN_MAX, gt: 'WWWW' };
+    const { titleBadge, glyphBadges } = await import('/src/ui/playerBadge.js');
+    const want = { title: titleBadge(peer)?.text ?? null, glyphs: glyphBadges(peer).length };
+    // PROFILE-UI: the record at its widest - every plaque, the duels' longest words
+    const record = { wins: 99_999, losses: 99_999, gates: { closed: 99_999 }, raids: { defended: 99_999 }, serpents: { slain: 99_999 } };
     let closed = 0;
     const w = createProfileWindow({ onClose: () => closed++ });
     window.__profile = w;
@@ -97,6 +108,9 @@ for (const [W, H, width] of [[1440, 900, 'desktop'], [480, 800, 'narrow'], [390,
       const name = c.querySelector('.dfprofile-name').getBoundingClientRect();   // the name and its glyphs, one line centred as the name layer draws them
       const nameRange = document.createRange(); nameRange.selectNodeContents(c.querySelector('.dfprofile-nametext'));
       const nameLines = new Set([...nameRange.getClientRects()].map((q) => Math.round(q.top))).size;
+      // PROFILE-UI: the glyphs' row under the name, the record's plaques, the parts of what they wear
+      const glyphRow = c.querySelector('.dfprofile-glyphs')?.getBoundingClientRect() ?? null;
+      const facts = [...c.querySelectorAll('.dfprofile-fact')].map((f) => f.getBoundingClientRect());
       const t = c.querySelector('.dfprofile-title');
       const rows = [...c.querySelectorAll('.dfprofile-row')].map((row) => {
         const slot = row.querySelector('.dfprofile-slot').getBoundingClientRect(), item = row.querySelector('.dfprofile-item').getBoundingClientRect();
@@ -113,13 +127,15 @@ for (const [W, H, width] of [[1440, 900, 'desktop'], [480, 800, 'narrow'], [390,
         nameCentred: Math.abs((name.left + name.right) / 2 - (box.left + box.right) / 2) < 2, nameLines,
         rows: rows.length, rowsOverlapping: rows.filter((x) => x.overlap).length, rowsSpilling: rows.filter((x) => !x.inside).length,
         stats: c.querySelectorAll('.dfprofile-stat').length, vitals: c.querySelectorAll('.dfprofile-vital').length,
+        glyphsUnderName: !!glyphRow && glyphRow.top >= name.bottom - 0.5, facts: facts.length, factsInside: facts.every((q) => q.left >= box.left - 0.5 && q.right <= box.right + 0.5),
+        parts: [...c.querySelectorAll('.dfprofile-sub')].map((n) => n.textContent), items: c.querySelectorAll('.dfprofile-item').length,
         note: c.querySelector('.dfprofile-note')?.textContent ?? null,
       };
     };
     const out = {};
     w.show('peer-0002', profileView({ name: peer.name, peer, look, state: 'asking' }));
     out.asking = read();
-    w.update('peer-0002', profileView({ name: peer.name, peer, look, card, state: 'answered' }));
+    w.update('peer-0002', profileView({ name: peer.name, peer, look, card, state: 'answered', record }));
     out.answered = read();
     // the Close reached by scrolling the card to its foot, then pressed
     const c = document.querySelector('.dfprofile-card');
@@ -127,23 +143,27 @@ for (const [W, H, width] of [[1440, 900, 'desktop'], [480, 800, 'narrow'], [390,
     const close = c.querySelector('.dfprofile-close').getBoundingClientRect();
     out.closeOnScreen = close.top >= 0 && close.bottom <= innerHeight;
     out.worn = GEAR_ROWS.filter(([slot]) => best.has(slot)).length;
+    out.want = want;
     return out;
   }, sheet);
-  const shot = async (name) => page.screenshot({ path: `${OUT}/profile-${width}-${sheet}-${name}.png` });
+  // the front door mounts on its own clock, after the page is cleared - it is taken down before every photograph
+  const shot = async (name) => { await page.evaluate(() => { for (const id of ['intro', 'enhanced-menu']) document.getElementById(id)?.remove(); }); await page.screenshot({ path: `${OUT}/profile-${width}-${sheet}-${name}.png` }); };
   for (const [state, v] of [['asking', r.asking], ['answered', r.answered]]) {
     check(`${tag} ${state}: the card stands, inside the viewport`, !!v && v.inView, v && JSON.stringify(v.box));
     if (!v) continue;
     check(`${tag} ${state}: the card keeps the 14px gutter its sides keep, top and bottom too`, v.box.t >= 13.5 && v.box.b <= v.vh - 13.5 && v.box.l >= 13.5 && v.box.r <= v.vw - 13.5, JSON.stringify(v.box));
     check(`${tag} ${state}: nothing spills sideways out of the card`, v.spills.length === 0 && !v.horizontalScroll && !v.pageScroll, v.spills.slice(0, 3).join('; '));
-    check(`${tag} ${state}: every glyph drawn at its size`, v.glyphs.length === 3 && v.glyphs.every((g) => g.w === 16 && g.h === 16), JSON.stringify(v.glyphs));
-    check(`${tag} ${state}: the title in its colour, the name and its glyphs centred under it`, v.titleText === 'Developer' && v.titleColor === 'rgb(226, 69, 58)' && v.nameCentred, `${v.titleText} ${v.titleColor}`);
-    check(`${tag} ${state}: the widest name stands on one line, its glyphs beside it`, v.nameLines === 1, `${v.nameLines} lines`);
+    check(`${tag} ${state}: every glyph drawn at its size - all ${r.want.glyphs} a player can show`, v.glyphs.length === r.want.glyphs && v.glyphs.every((g) => g.w === 16 && g.h === 16), `${v.glyphs.length}`);
+    check(`${tag} ${state}: the title in its colour, the name centred under it`, v.titleText === r.want.title && v.titleColor !== 'rgb(233, 228, 217)' && v.nameCentred, `${v.titleText} ${v.titleColor}`);
+    check(`${tag} ${state}: the widest name stands on one line, its glyphs on a row of their own under it`, v.nameLines === 1 && v.glyphsUnderName, `${v.nameLines} lines, glyphs under: ${v.glyphsUnderName}`);
     check(`${tag} ${state}: every worn row whole - the slot and the name side by side, inside the row`, v.rows > 0 && v.rowsOverlapping === 0 && v.rowsSpilling === 0, `${v.rows} rows, ${v.rowsOverlapping} overlapping, ${v.rowsSpilling} spilling`);
     check(`${tag} ${state}: the Close a thumb can press, its word in its middle`, v.closeH >= 44 && v.closeW >= 120 && v.closeCentred, `${v.closeW}x${v.closeH}, centred: ${v.closeCentred}`);
   }
-  if (r.asking) check(`${tag} asking: the room's gear at once - a row for every slot worn - no sheet yet, the line under it`, r.asking.rows === r.worn && r.worn >= 20 && r.asking.stats === 0 && /Asking/.test(r.asking.note ?? ''), `${r.asking.rows} rows of ${r.worn} worn, ${r.asking.stats} stats`);
+  if (r.asking) check(`${tag} asking: the room's gear at once - every piece worn named, a pair one row - no sheet yet, the line said`, r.asking.items === r.worn && r.asking.rows < r.worn && r.worn >= 20 && r.asking.stats === 0 && /Asking/.test(r.asking.note ?? ''), `${r.asking.items} named in ${r.asking.rows} rows of ${r.worn} worn, ${r.asking.stats} stats`);
+  if (r.asking) check(`${tag} asking: what they wear in its parts, in order`, r.asking.parts.join('|') === ['In hand', 'Armour', 'Clothing', 'Jewellery'].filter((x) => r.asking.parts.includes(x)).join('|') && r.asking.parts.length >= 3, r.asking.parts.join(', '));
   if (r.answered) {
     check(`${tag} answered: the sheet - eight attributes, three vitals - and no line`, r.answered.stats === 8 && r.answered.vitals === 3 && r.answered.note === null);
+    check(`${tag} answered: the record's four plaques, every one inside the card`, r.answered.facts === 4 && r.answered.factsInside, `${r.answered.facts}`);
     const wide = r.answered.box.w > 400;
     check(`${tag} answered: the sheet ${wide ? 'beside' : 'above'} what they wear`, wide ? r.answered.sideBySide : r.answered.stacked, `card ${r.answered.box.w}px`);
     check(`${tag} answered: a card taller than the screen scrolls inside itself, its Close reachable`, (r.answered.scrollsInside ? r.answered.overflowY === 'auto' : true) && r.closeOnScreen, `scrolls: ${r.answered.scrollsInside}`);

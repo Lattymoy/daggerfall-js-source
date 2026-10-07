@@ -986,8 +986,8 @@
   {
     "name": "LPT1-sway-of-the-tree",
     "file": "src/scenes/world.js",
-    "old": "        batch.sway = floraSwayOf(archive, natureArchive, plain.h);\n        _lptSway",
-    "new": "        batch.sway = floraSwayOf(archive, natureArchive, far.size.h);\n        _lptSway",
+    "old": "        batch.sway = floraSwayOf(archive, natureSet, plain.h);\n        _lptSway",
+    "new": "        batch.sway = floraSwayOf(archive, natureSet, far.size.h);\n        _lptSway",
     "tests": [
       "test/lpt1_lowpolytrees.test.js"
     ]
