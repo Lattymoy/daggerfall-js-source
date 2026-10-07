@@ -1083,8 +1083,8 @@
   {
     "name": "PROF9-pages-hands-not-at-the-fire",
     "file": "src/ui/profPages.js",
-    "old": ": me !== _cook && _cook.act ? 'the fire'\n",
-    "new": "\n",
+    "old": ": me !== _cook && (_cook.act || _cook.crafting) ? 'the fire' : me !== _jewel",
+    "new": ": me !== _jewel",
     "tests": [
       "test/prof9_client.test.js"
     ]

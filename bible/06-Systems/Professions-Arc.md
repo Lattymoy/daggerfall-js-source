@@ -3679,9 +3679,9 @@ Nothing here touches law 1 (offline stays DFU's makers), law 3 (the Stores) or l
 - **The four hosts**: `scenes/world.js` wired (the stations' pages and the craft's answer are its alone); `worldModes.js`,
   `exterior.js` and `dungeonContext.js` build no station page - none to wire.
 - **As built**: `src/net/chainLaw.js` (new), `src/net/profBook.js`, `src/ui/profPages.js`, `src/scenes/world.js`.
-  Pinned: `test/craft1_chain.test.js` (10) - the done-when through the real Worker (a Steel Longsword from raw goods in
+  Pinned: `test/craft1_chain.test.js` (10 at the build; 12 since AUDIT CRAFT1, 41.4) - the done-when through the real Worker (a Steel Longsword from raw goods in
   one press: the four works asked in order as the service's own, every unit spent, Smithing the works' XP and the
-  craft's), the law, the book over a stand-in door, the anvil page, the host. `tools/mutants/craft1.json` (15, all dead).
+  craft's), the law, the book over a stand-in door, the anvil page, the host. `tools/mutants/craft1.json` (15 at the build, all dead; 28 since 41.4).
   FOUND, and taken out rather than pinned: a cheapest-first sort that no product's table order ever needed (its mutant
   survived) - the order is the table's, and the fact is pinned. FOUND by the suite: a first cut refused a craft the
   book's plan could not cover before asking the service - seven book tests over stand-in doors (no Stores read) went
@@ -3689,6 +3689,32 @@ Nothing here touches law 1 (offline stays DFU's makers), law 3 (the Stores) or l
   PIN MOVED (the craft's refusal now says what the chain refined): `audit30_client` C4 + A4, `prof12_client` R2-C2,
   `prof3_client` wiring. Mutant records re-aimed by content, each still dead: `audit32` B4, `bag1` K5, `prof10`'s one
   act a page.
+
+### 41.4 AUDIT CRAFT1 (2026-10-07, Mac: "I give you autonomy. Just ensure it's perfection")
+
+Three cold reviews of a frozen snapshot of the head (the law against the service; the client's flow; the tests and the
+record), none fixing while the others read. No blocker, no major. The law's review fuzzed 14,300 holdings over every one
+of the 220 input shapes the 815 recipes ask against a model of the service and a brute-force search: no ok plan the
+service refuses, no plan missed. What it found, and what was done:
+
+| | Finding | Done |
+|---|---|---|
+| F1 law | A plan could be ok where the Stores had no room for a product - the service counts every origin, gold's too (`stores-full`) | `chainPlan`'s `room`: a work never makes more than the room leaves; a plan that would is `full`, and the bench says so. `storesRoom` the service's count from the book's view |
+| F2 law | An earlier input's works could spend a raw good a later input asks as it is (order-dependent; no recipe today) | every input's held units taken before any work is planned |
+| F3 law | `spent` booked a work's spare product as held (no recipe today) | the plan keeps what is held and what its works made apart; only the held is `spent` |
+| F4 law | The answer said what was made from the yield the book reads now | the book keeps each work's made (the service's own and bought); `refinedText` says that |
+| F1 client | A chain's work and a station's press of the same work and count shared one id - a forge press under the chain was answered the chain's kept products, and paid the smith for them | the chain's works asked under their own id key; and every station's work rows held while a craft RUNNING ITS CHAIN is in flight (the chain may run any station's works) - a craft of what is held keeps AUDIT 32 P5's word, its station's works live under it (a first cut held them under every craft, and P5's pin said no) |
+| F2 client | A chain answer lost, the page went on offering a plan the service refused (`stores-short`) until the day turned | a work refused for what the Stores hold has the book read again (REFUSALS-LEARNED's `reread`) |
+| F3 client | A kept craft's word hid what its chain refined | said with it |
+| F4 client | A refused chain did not say where it stopped | "The chain stopped at the Charcoal, short of Pine Log." (`chainStopText`) |
+| N1 client | Another bench's act could be played under a craft in flight, to end in `prof-busy` | the hands are at a bench while its craft is in flight, as while its act is |
+| F5, F6 law | The depth's comment was wrong; a carrying book's `held` read the pack and bag ten times a row | the comment says what is true (no product's works are more than two deep); `held` read once a key a plan |
+
+Kept as they are: the counter's "Buy" beside an input the chain would make (a choice - buy rather than refine); a
+`prof-chain` style (none needed, the note is the kit's). Pinned: `test/craft1_chain.test.js` (12 - +2 for the audit);
+`tools/mutants/craft1.json` (28, all dead - +13). PIN MOVED again (the kept word says the chain): `audit30_client` C4 +
+A4, `prof12_client` R2-C2, `prof3_client` wiring. Re-aimed by content, each still dead: `audit32` B4, `prof9`'s,
+`prof10`'s and `prof11`'s hands-not-at-the-bench (the hands held under a craft too).
 
 ## Appendix A - a day of a gatherer
 

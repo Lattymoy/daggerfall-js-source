@@ -4,104 +4,252 @@
     "file": "src/net/chainLaw.js",
     "old": "!!r && !r.spec && r.inputs.every((/** @type {any} */ inp) => tierOf(inp.key) <= tierOf(r.out));",
     "new": "!!r && !r.spec;",
-    "tests": ["test/craft1_chain.test.js"]
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
   },
   {
     "name": "CRAFT1-law-transmutes",
     "file": "src/net/chainLaw.js",
     "old": "!!r && !r.spec && r.inputs.every(",
     "new": "!!r && r.inputs.every(",
-    "tests": ["test/craft1_chain.test.js"]
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
   },
   {
     "name": "CRAFT1-law-one-deep",
     "file": "src/net/chainLaw.js",
     "old": "export const CHAIN_DEPTH = 4;",
     "new": "export const CHAIN_DEPTH = 1;",
-    "tests": ["test/craft1_chain.test.js"]
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
   },
   {
     "name": "CRAFT1-law-rank-unasked",
     "file": "src/net/chainLaw.js",
     "old": "  const rankOf = (/** @type {any} */ r) => (r.xp ? track(r.xp)?.rank ?? 0 : 0);",
     "new": "  const rankOf = (/** @type {any} */ r) => 100;",
-    "tests": ["test/craft1_chain.test.js"]
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
   },
   {
     "name": "CRAFT1-law-yield-unspecialised",
     "file": "src/net/chainLaw.js",
     "old": "  const perOf = (/** @type {any} */ r) => chainYield(r, track);",
     "new": "  const perOf = (/** @type {any} */ r) => r.per;",
-    "tests": ["test/craft1_chain.test.js"]
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
   },
   {
     "name": "CRAFT1-law-spare-lost",
     "file": "src/net/chainLaw.js",
-    "old": "        p.spare(key, made - Math.min(made, left));",
-    "new": "        p.spare(key, 0);",
-    "tests": ["test/craft1_chain.test.js"]
+    "old": "        p.produce(key, made, Math.min(made, left));",
+    "new": "        p.produce(key, made, made);",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
   },
   {
     "name": "CRAFT1-law-short-at-the-top",
     "file": "src/net/chainLaw.js",
     "old": "    const r = works[0];",
     "new": "    const r = null;",
-    "tests": ["test/craft1_chain.test.js"]
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
   },
   {
     "name": "CRAFT1-law-no-split",
     "file": "src/net/chainLaw.js",
     "old": "count: Math.min(SMELT_MAX, w.count - i * SMELT_MAX) })));",
     "new": "count: w.count })).slice(0, 1));",
-    "tests": ["test/craft1_chain.test.js"]
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
   },
   {
     "name": "CRAFT1-law-xp-unsaid",
     "file": "src/net/chainLaw.js",
     "old": "    if (r.xp && Number(w.xp) > 0) xp.set(",
     "new": "    if (false) xp.set(",
-    "tests": ["test/craft1_chain.test.js"]
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
   },
   {
     "name": "CRAFT1-book-chain-always",
     "file": "src/net/profBook.js",
     "old": "        if (r0 && chain !== false && chainNeeded(",
     "new": "        if (r0 && chainNeeded(",
-    "tests": ["test/craft1_chain.test.js"]
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
   },
   {
     "name": "CRAFT1-book-short-runs-anyway",
     "file": "src/net/profBook.js",
     "old": "          if (plan.ok) for (const w of plan.works) {",
     "new": "          for (const w of plan.works) {",
-    "tests": ["test/craft1_chain.test.js"]
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
   },
   {
     "name": "CRAFT1-book-carried-out",
     "file": "src/net/profBook.js",
     "old": "if (r?.ok && carry && work && stay !== true) r.data.put",
     "new": "if (r?.ok && carry && work) r.data.put",
-    "tests": ["test/craft1_chain.test.js"]
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
   },
   {
     "name": "CRAFT1-anvil-not-offered",
     "file": "src/ui/profPages.js",
     "old": "    const ready = recipeOpen(r, rank) && (craftable(r, held, spends) || chain?.ok === true) && !_anvil.busy",
     "new": "    const ready = recipeOpen(r, rank) && craftable(r, held, spends) && !_anvil.busy",
-    "tests": ["test/craft1_chain.test.js"]
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
   },
   {
     "name": "CRAFT1-loom-not-offered",
     "file": "src/ui/profPages.js",
     "old": "    const ready = recipeOpen(r, rank) && (craftable(r, held) || chain?.ok === true) && !_loom.busy",
     "new": "    const ready = recipeOpen(r, rank) && craftable(r, held) && !_loom.busy",
-    "tests": ["test/craft1_chain.test.js"]
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
   },
   {
     "name": "CRAFT1-host-unsaid",
     "file": "src/scenes/world.js",
-    "old": "          const chain = refinedText(r?.refined, materialLabel, (prof) => profBook.track(prof));",
+    "old": "          const chain = [refinedText(r?.refined, materialLabel, (prof) => profBook.track(prof)), r?.ok ? '' : chainStopText(r?.stopped, r?.material, materialLabel)].filter(Boolean).join(' ');",
     "new": "          const chain = '';",
-    "tests": ["test/craft1_chain.test.js"]
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-F1-room-unasked",
+    "file": "src/net/chainLaw.js",
+    "old": "      let lo = 0, hi = Math.min(Math.ceil(left / per), Math.floor(p.roomFor(key) / per)), best = null;",
+    "new": "      let lo = 0, hi = Math.ceil(left / per), best = null;",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-F1-full-unsaid",
+    "file": "src/net/chainLaw.js",
+    "old": "      if (count * per > p.roomFor(key)) p.full.set(",
+    "new": "      if (false) p.full.set(",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-F1-gold-uncounted",
+    "file": "src/net/chainLaw.js",
+    "old": " - ((s?.bought ?? 0) | 0) - ((s?.gold ?? 0) | 0));",
+    "new": " - ((s?.bought ?? 0) | 0));",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-F2-held-not-first",
+    "file": "src/net/chainLaw.js",
+    "old": "  const rest = asked.map((inp) => ({ key: inp.key, n: p.use(inp.key, units(inp.n)) }));",
+    "new": "  const rest = asked.map((inp) => ({ key: inp.key, n: units(inp.n) }));",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-F3-made-spent-as-held",
+    "file": "src/net/chainLaw.js",
+    "old": "    const fromPool = Math.min(this.pool.get(key) ?? 0, n);",
+    "new": "    const fromPool = 0;",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-F4-made-unread",
+    "file": "src/net/chainLaw.js",
+    "old": "    const n = Number.isSafeInteger(w.made) && /** @type {number} */ (w.made) >= 0 ? /** @type {number} */ (w.made) : w.count * chainYield(r, track);",
+    "new": "    const n = w.count * chainYield(r, track);",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-F4-stop-unsaid",
+    "file": "src/net/chainLaw.js",
+    "old": "  return `The chain stopped at the ${name(r.out)}",
+    "new": "  return '' && `The chain stopped at the ${name(r.out)}",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-F1-key-shared",
+    "file": "src/net/profBook.js",
+    "old": "      const key = `${stay === true ? 'chain' : 'smelt'}|${owner}|${recipe}|${count}`;",
+    "new": "      const key = `smelt|${owner}|${recipe}|${count}`;",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-F2-no-reread",
+    "file": "src/net/profBook.js",
+    "old": "if (s?.error === 'stores-short' || s?.error === 'stores-gold' || s?.error === 'stores-full') state.reread = true;",
+    "new": "if (false) state.reread = true;",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-F4-stop-unkept",
+    "file": "src/net/profBook.js",
+    "old": "refined, stopped: w.id, ...(s?.elsewhere",
+    "new": "refined, ...(s?.elsewhere",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-F1-rows-unheld",
+    "file": "src/ui/profPages.js",
+    "old": "  hold = hold || chaining();   // AUDIT CRAFT1 F1: held under a craft running its chain\n",
+    "new": "",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-F3-kept-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "text: r?.kept ? `${st.kept}${chain ? ` ${chain}` : ''}` : `",
+    "new": "text: r?.kept ? st.kept : `",
+    "tests": [
+      "test/craft1_chain.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT1-F1-rows-held-under-every-craft",
+    "file": "src/ui/profPages.js",
+    "old": "some((s) => s.crafting && s.chained === true);",
+    "new": "some((s) => s.crafting);",
+    "tests": [
+      "test/craft1_chain.test.js",
+      "test/audit32_pages.test.js"
+    ]
   }
 ]

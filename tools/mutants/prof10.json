@@ -1004,8 +1004,8 @@
   {
     "name": "PROF10-pages-hands-not-at-the-bench",
     "file": "src/ui/profPages.js",
-    "old": "    : me !== _jewel && _jewel.act ? 'the jeweller\\'s bench' : null);",
-    "new": "    : null);",
+    "old": ": me !== _jewel && (_jewel.act || _jewel.crafting) ? 'the jeweller\\'s bench' : null);",
+    "new": ": null);",
     "tests": [
       "test/prof10_client.test.js"
     ]

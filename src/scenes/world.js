@@ -272,7 +272,7 @@ import { withdrawIntoPack, materialLabel, materialCountLabel } from '../systems/
 import { heldOf as bagHeldOf, roomFor as bagRoomFor, mintCarried, takeCarried, giveCarried, bagTakesOf, bagWeight, hasBag, emptyBagIntoPack } from '../systems/materialsBag.js';   // BAG1: the Materials Bag and the pack, the book's hands
 import { BAG_KG_LIMIT, madeWhere, movedFirstText } from '../net/bagLaw.js';   // AUDIT BAG1 B9: where a station's work went; AUDIT2 K8: what went in before a refusal
 import { smeltRecipe, stockOf, WEAVERS_STOCK, APOTHECARY_STOCK, professionName } from '../net/professionLaw.js';   // PROF2: a smelt's product, for its word; PROF4: a counter's; PROF5: the Weavers'
-import { refinedText } from '../net/chainLaw.js';   // CRAFT1: what a craft's chain refined first, said with it
+import { refinedText, chainStopText } from '../net/chainLaw.js';   // CRAFT1: what a craft's chain refined first, said with it; AUDIT CRAFT1 F4: where it stopped
 import { createMarketBook } from '../net/marketBook.js';   // PROF5: the market's book
 import { createWritBook } from '../net/writBook.js';   // PROF6: guild writs, commissions, the guild Stores
 import { wearCondition, wearOf, WEAR_WHOLE } from '../net/marketLaw.js';   // PROF5: a bought piece's wear; PROF6: a commission's piece unworn
@@ -10509,8 +10509,9 @@ export async function bootWorld(canvas, renderer, params, status) {
           const { seat } = myHall(recipeById(recipe)?.profession);
           const r = await profBook.craft(recipe, { clean, heartwood, dye, cracked, fee: f.fee > 0 ? f.fee : 0, name: typeof playerEntity?.name === 'string' ? playerEntity.name : null, seat }, profMintCraft);   // PROF10: a Lapidary's cracked gem
           // CRAFT1 (bible/06-Systems/Professions-Arc.md 41): the chain's works the craft ran first - said, made or refused
-          const chain = refinedText(r?.refined, materialLabel, (prof) => profBook.track(prof));
-          if (!r?.ok) return { ok: false, text: r?.kept ? st.kept : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };
+          // AUDIT CRAFT1 F3: a kept craft says it too; F4: and a refused one where the chain stopped
+          const chain = [refinedText(r?.refined, materialLabel, (prof) => profBook.track(prof)), r?.ok ? '' : chainStopText(r?.stopped, r?.material, materialLabel)].filter(Boolean).join(' ');
+          if (!r?.ok) return { ok: false, text: r?.kept ? `${st.kept}${chain ? ` ${chain}` : ''}` : `${accountRefusalText(r?.error)}${movedFirstText(r)}${chain ? ` ${chain}` : ''}` };
           const paid = f.fee > 0 && !r.elsewhere;
           const rec = recipeById(recipe);
           const made = rec?.kind === 'siege' ? storedText(rec.name, Number(r.data.count) || 1) : craftedText(mintPieces(r.data));   // SEAT2b part two: a Ram Kit is the Stores'

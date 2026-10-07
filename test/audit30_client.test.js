@@ -413,7 +413,7 @@ test('AUDIT 30 C4 + A4: a kept craft keeps its station\'s fee and hands it to th
   const w = src('src/scenes/world.js');
   assert.match(w, /const profMintCraft = \(data, kept = null\) => \{\n\s*if \(kept\?\.fee > 0\) \{ deductGold\(playerEntity, Math\.min\(kept\.fee, totalGoldAmount\(playerEntity\)\)\); saveSoon\.changed\(\); \}/);
   // PROF7 moved it: each station its own kept word, the loom's too (craftStation)
-  assert.match(w, /if \(!r\?\.ok\) return \{ ok: false, text: r\?\.kept \? st\.kept : `\$\{accountRefusalText\(r\?\.error\)\}\$\{movedFirstText\(r\)\}\$\{chain \? ` \$\{chain\}` : ''\}` \};/, 'a workbench\'s kept craft said "The anvil rang" (AUDIT 32 B4; AUDIT PROF-541 R2-C2: the busy word the book\'s, naming no station)');   // PIN MOVED (AUDIT2 BAG1 K8): and what went in first; (CRAFT1) and what the chain refined first
+  assert.match(w, /if \(!r\?\.ok\) return \{ ok: false, text: r\?\.kept \? `\$\{st\.kept\}\$\{chain \? ` \$\{chain\}` : ''\}` : `\$\{accountRefusalText\(r\?\.error\)\}\$\{movedFirstText\(r\)\}\$\{chain \? ` \$\{chain\}` : ''\}` \};/, 'a workbench\'s kept craft said "The anvil rang" (AUDIT 32 B4; AUDIT PROF-541 R2-C2: the busy word the book\'s, naming no station)');   // PIN MOVED (AUDIT2 BAG1 K8): and what went in first; (CRAFT1) and what the chain refined first - kept or refused (AUDIT CRAFT1 F3)
   assert.match(w, /profession === 'carpentry'\n\s*\? \{ here: \(\) => modes\?\.workbenchHere\?\.\(\) \?\? null, a: 'a workbench', who: 'furnisher', noun: 'workbench', kept: BENCH_KEPT_TEXT/);
   assert.equal((w.match(/if \(f\.fee > 0\) \{ deductGold\(playerEntity, f\.fee\); saveSoon\.changed\(\); \}/g) ?? []).length, 1, 'the smelt\'s alone - the craft\'s is the mint\'s (PROF-SAVE: each saved soon)');
 });

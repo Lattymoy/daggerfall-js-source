@@ -927,8 +927,8 @@
   {
     "name": "PROF11-pages-hands-not-at-the-bench",
     "file": "src/ui/profPages.js",
-    "old": ": me !== _mason && _mason.act ? 'the mason\\'s bench' : me !== _cook",
-    "new": ": me !== _cook",
+    "old": ": me !== _mason && (_mason.act || _mason.crafting) ? 'the mason\\'s bench'\n    : me !== _cook",
+    "new": "\n    : me !== _cook",
     "tests": [
       "test/prof11_client.test.js"
     ],
