@@ -17,22 +17,23 @@ repo) and every string literal in `src/` through the reader, and named each list
 
 Twenty-five distinct findings: twelve on the board (B), nine on the docs and pins (D), four more on the filter (T2-T5;
 T1 is D1); the profile's lens found nothing beyond D8. Every one was read again here before any line changed. Twenty-
-three are fixed, one is decided and left (B8), and two design calls were put to Mac (below). Each fix carries an `AUDIT
+three are fixed, one is decided and left (B8), and two were design calls, which Mac made (below). Each fix carries an `AUDIT
 657 <ID>` comment. They are pinned in `test/audit657_board.test.js` (10) and `test/audit657_filter.test.js` (7), and
 mutated in `tools/mutants/audit657.json`: **24 mutants, 24 dead.** A pin a fix moved says `PIN MOVED` where it stands.
 
 ## Mac's calls
 
-Each was put to Mac with its options and the trade-off. Until his answer is written here, the code stands as described:
+Each was put to Mac with its options and the trade-off. Mac's answer is the law:
 
-- **B11 - the Work tab's count before the tab is opened.** BOARD-UI's tab counts read what each tab has read: the
-  Notices' new notes are read as the board opens, the Work tab's writs only once its tab is pressed, so its count shows
-  only after a first look. Reading the writs as the board opens (as the Market's first view is) would show it at once,
-  for one more request at every opening. As it stands: the count after the first look.
-- **T1 - the words with two readings.** Some listed words are also ordinary English: "a chink in the armour", "a door
-  knob", "the cock crowed", "a blue tit", a donkey called an ass. T1 freed the words that are almost never the insult
-  (below); these bare words stay starred in chat and notes. Freeing them in sentences (a name would still refuse them)
-  lets the insult through when it is meant. As it stands: starred.
+- **B11 - the Work tab's count before the tab is opened: "Keep it as is".** BOARD-UI's tab counts read what each tab has
+  read: the Notices' new notes are read as the board opens, the Work tab's writs only once its tab is pressed, so its
+  count shows after a first look. Reading the writs as the board opens (as the Market's first view is) would show it at
+  once, for one more request to the account service at every opening - the service STORM-SHED shed load from twice. The
+  patch notes say the count comes once Work has been looked at.
+- **T1 - the words with two readings: "Keep them starred".** Some listed words are also ordinary English: "a chink in
+  the armour", "a door knob", "the cock crowed", "a blue tit", a donkey called an ass. T1 freed the forms that are almost
+  never the insult (below); the bare words stay starred in chat and notes, as in names - the insult is starred when it
+  is meant, at the cost of an innocent sentence starred now and then.
 
 ## Fixed
 
@@ -56,7 +57,7 @@ Each was put to Mac with its options and the trade-off. Until his answer is writ
 
 | ID | Sev | Finding | Fix |
 |---|---|---|---|
-| T1 = D1 | minor | TEXT-F1 said no English word holds an ANYWHERE word, and two do: snigger and niggard, with every word made of them. Names NAME-F1 had let through (Snigger, Sniggerton, Niggardly) were refused, and so were their players' names at the relay's hello. A sentence also reads a listed word's tails (stage 2's `s`, `ed`, `y`), so the ordinary words a listed word and a tail spell were starred: "spiced wine", "a booby trap", "don't get cocky", "a cocked crossbow", "pricked his finger", a merchant's "dicker", "titter", "knobby". Of 274,937 dictionary words, 277 were starred, most of them the lists' own words and their compounds. The game's own names were hit too: the Spices shop, the Spiced ships and the tavern's Spicy Grilled Lizard, which `shownItemName` stars wherever an item carries the name. TEXT-F1's walk read only a `name:` key's literals, so it never read any of the three. | `INNOCENT` (`nameFilter.js`): twenty ordinary words, read out before the ANYWHERE words are looked for (names and sentences), and never read against the lists when a sentence's word IS one. A name's verdict on the rest is NAME-F1's, unmoved. The pin parses `src/` (acorn) and reads every capitalised literal of up to six words: 6,950 names, none starred. The cost: "cocking" and "pricking" pass in a sentence. The bare words with two readings stay listed (Mac's call, above). |
+| T1 = D1 | minor | TEXT-F1 said no English word holds an ANYWHERE word, and two do: snigger and niggard, with every word made of them. Names NAME-F1 had let through (Snigger, Sniggerton, Niggardly) were refused, and so were their players' names at the relay's hello. A sentence also reads a listed word's tails (stage 2's `s`, `ed`, `y`), so the ordinary words a listed word and a tail spell were starred: "spiced wine", "a booby trap", "don't get cocky", "a cocked crossbow", "pricked his finger", a merchant's "dicker", "titter", "knobby". Of 274,937 dictionary words, 277 were starred, most of them the lists' own words and their compounds. The game's own names were hit too: the Spices shop, the Spiced ships and the tavern's Spicy Grilled Lizard, which `shownItemName` stars wherever an item carries the name. TEXT-F1's walk read only a `name:` key's literals, so it never read any of the three. | `INNOCENT` (`nameFilter.js`): twenty ordinary words, read out before the ANYWHERE words are looked for (names and sentences), and never read against the lists when a sentence's word IS one. A name's verdict on the rest is NAME-F1's, unmoved. The pin parses `src/` (acorn) and reads every capitalised literal of up to six words: 6,950 names, none starred. The cost: "cocking" and "pricking" pass in a sentence. The bare words with two readings stay listed (Mac's call: "Keep them starred"). |
 | T2 | minor | The reader split a word at a combining accent (`u` and U+0301): the accent was no word character, so a word written with one read as two halves, and the accent fold stage 1 makes never saw the whole word. 58 of the lists' 60 words passed this way. | A letter's combining marks are its word's. A one-letter word is a letter and its marks, so a spelled word with an accent on a letter is still read. |
 | T3 | nit | An at sign before a word (`@word`) hid it: `@` is the leet `a`, so the word read as "aword". 52 of 60 passed. | `@` is a word's edge mark at its head: the word is read without it, and the sign stays the sentence's. Inside a word it is still the letter. |
 | T4 | minor | A ship's name was judged by `checkName`, which reads a name as one word, so a name of words ("Big X Barge") carried any word the lists catch beside its others. A ship's name rides the wire to every crew that sees her (`comeSailAwayWire.js` shipNameOf), which judges it by the same verdict. | `shipNameVerdict` refuses a name the sentence reader catches, naming the word, as a rank's name is refused. |
