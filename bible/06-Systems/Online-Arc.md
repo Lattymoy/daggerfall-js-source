@@ -7399,8 +7399,9 @@ URL, which a dev door can carry with no clock behind it), and for a SHOP
 alone, a classic closure is covered by a continuous relief shift. `isBuildingOpen` and `buildingIsUnlocked`'s
 shop arm route through it, so the door, the entry-time `insideOpenShop`
 latch, the shelves and the interior people stand on one rule; houses,
-guild halls, temples, palaces and ships keep R1's rules online, and
-offline nothing moves. A restored interior (AUDIT ALL O2: Play Online
+guild halls, temples, palaces and ships keep R1's rules online (OL4's
+cut: OL5 widened it to the guild hall, OL6 to the bank, the library and
+the palace), and offline nothing moves. A restored interior (AUDIT ALL O2: Play Online
 always begins on a restore, and a save taken inside a shop entered while
 classically closed carried the latch `false` - the door opened, the
 shelf opened in STEALING mode, no clerk stood) keeps the saved latch and
@@ -7411,10 +7412,11 @@ offline load stands its clerk in a shop DFU has locked until the player
 leaves. The classic closures are 45 real minutes (the alchemist's night)
 and a two-hour real outage on Suns Rest at TimeScale 12, not a real day.
 
-**Recorded, not carried.** The Bank (8:00-15:00) and the Library
-(9:00-23:00) are not shops and keep their hours online: a night player
-can shop but cannot bank or read - a follow-up if wanted (the tavern is
-0/25, never closed, and OL3 prices the stay). The night clerk is not
+**Recorded, then carried.** The Bank (8:00-15:00) and the Library
+(9:00-23:00) are not shops and kept their hours online - a night player
+could shop but not bank or read - until OL6 (2026-10-07,
+`Online-Waits.md` WAIT1) gave them, and the palace, the shift (the tavern
+is 0/25, never closed, and OL3 prices the stay). The night clerk is not
 drawn distinctly - the existing shop people stand the shift; ONLINE_SHIFT
 is the hook for that
 presentation slice. The shared ECONOMY (one region memory, one owner
@@ -15108,3 +15110,34 @@ whenever it mounts before the card, which made the probe's Escape check a race.
 - **Pinned**: `test/profile_ui.test.js` (3); `tools/mutants/profile_ui.json` (9, all dead). PIN MOVED:
   serpent1_auditclient (the serpents slain are a plaque). Re-aimed: inspect1.json INS-gear-out-of-order (the row carries
   its part).
+
+## HOLD-SOLO (2026-10-07, FIELD BUGS 2026-10-07b, nObOdy on the Discord: "Lock privateer's hold. The first dungeon is a tutorial area") - the tutorial dungeon is every character's own
+
+"New players loading in in front of 50 players in a dead dungeon with no enemies ruins the magic. ... I couldnt even get
+gear or experience for my character cause i had to zoom past dead enemies and already open doors to get out and i sure
+as heck don't want to be given stuff i didn't earn by players standing there waiting all day."
+
+Every dungeon's room is keyed by its map id (`net/online.js` roomKeyFor), so every character in Privateer's Hold stood
+in ONE world room, `dungeon:m187853213`: the others' bodies, the room's memory (WORLD1 - the dead stay dead, the doors
+stay open), its simulation (WORLD2), its acts (WORLD3) and its loot (WORLD4), and a trade from anyone there (a peer in
+the room). The tutorial dungeon now keys NO room: `scenes/worldModes.js` roomIdentity marks it `solo` - the location on
+the shipped start's cell, 109/158 (`systems/startDungeon.js` isTutorialHold; AUDIT FB1007b H1: never the player's own
+Startup.StartCellX/Y, a setting, which took any dungeon a player named out of the shared world - the classic start, PH1
+and D-ONLINE2 read the configured cell as ever, isStartDungeon) - and `scenes/world.js`'s key block answers `solo` with
+null, which the frame's `!key` arm leaves (AUDIT ONLINE D4: a place keyed no room is no room).
+Every shared lane asks `isWorldRoom` of the room it is in, so they go quiet with it; the dungeon is the character's own
+save's, as it is offline. Chat's World, Region, Party and Guild tabs ride the hub and keep talking; the Local tab has
+nobody to hear, and says so (AUDIT FB1007b H5, with a page held out, the party card and the Online pane). The street
+outside the Hold is the shared world again (its cell's room). The relay is untouched: an older client still joins the old
+room, and only with other older clients.
+
+AUDIT FB1007b (`01-Overview/Audit-FB1007b.md`): no room remembers the Hold, so every entry built it whole, its loot
+rolled anew at the player's level - online the page keeps its memory as a room keeps one, at the door out, laid back at
+the next door in (WORLD8's hour on it), forgotten by a load (H2); the hub's link hears the relay's clock for it, where
+the presence session hears no welcome (H4); and a staff `/tp` to a player there is refused as unavailable (H3).
+
+Of every location in the world, the start cell holds one: Daggerfall's Privateer's Hold (map id 187853213, pixel
+109/158; MAPS.BSA read through the port's own reader).
+
+- **Pinned**: `test/fb1007b_holdsolo.test.js` (9; one gated on ARENA2); `tools/mutants/fb1007b.json` (its
+  FB1007B-HOLD / START-CELL / PH1 records and the audit's H records). Record: `01-Overview/Field-Bugs-2026-10-07b.md`.

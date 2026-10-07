@@ -110,7 +110,7 @@ test('TIER1: the words on the overworld - the sight line names the tier, the pla
   assert.match(w, /const tier = params\.has\('online'\) \? tierPhrase\(dungeonTierLabel\(g\.loc\)\) : '';[^\n]*\n\s*marks\.push\(\{ key: g\.key, [^\n]*sub: tier \? `\$\{tier\} - \$\{farDistanceText\(km\)\}` : farDistanceText\(km\),/, 'a far plate: the tier before the distance');
   assert.match(w, /tierAt: params\.has\('online'\) \? \(summary\) => \(summary \? dungeonTierLabel\(maps\.getLocation\(summary\.regionIndex, summary\.locationIndex \?\? summary\.mapIndex\)\) : null\) : null,/, 'the held map\'s seam: the whole location, online alone');
   // the entry line: the BUILT dungeon's word, online, said once on the transition
-  assert.match(w, /onTransitionDungeonInterior: \(ctx\) => \{ navalStow\(\); ohAbyss\?\.onDungeonEntered\(ohDungeonOf\(ctx\)\); csaOnTransition\(\); navalTransition\(\); dungeonTierSay\(\); \},/);
+  assert.match(w, /onTransitionDungeonInterior: \(ctx\) => \{ navalStow\(\); ohAbyss\?\.onDungeonEntered\(ohDungeonOf\(ctx\)\); csaOnTransition\(\); dungeonTierSay\(\); navalTransition\(\); restoreSoloMemory\(\); \},/);   // PIN MOVED (the merge of #668): HOLD-SOLO's beside it
   const say = w.slice(w.indexOf('function dungeonTierSay() {'), w.indexOf('\n  }\n', w.indexOf('function dungeonTierSay() {')));
   assert.match(say, /if \(!params\.has\('online'\)\) return;\s*const line = tierPhrase\(dungeonTierLabel\(modes\?\.dungeonLocation \?\? null\)\);\s*if \(line\) townTalk\.say\(line, 4\);/);
 });

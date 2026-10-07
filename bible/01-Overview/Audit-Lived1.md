@@ -93,7 +93,9 @@ test that fails on the unfixed tree for the finding's reason, and mutation-prove
    per real hour before), and a rank's 28 days are about five minutes of resting - as offline, and as OPEN 3 (a rest
    cooldown) asks.
 4. **Calendar-gated services can no longer be waited out**: a Daedra prince's day is one 2-hour window every 30 real
-   days, on the world's calendar.
+   days, on the world's calendar. [ANSWERED by SUMMON-NAME (2026-10-07, `06-Systems/Online-Waits.md` WAIT3): online
+   the temple's and the guild's summoner calls the prince the player names, on any day. Found still marked open by
+   AUDIT WAITS (S3).]
 5. **A hidden tab** (requestAnimationFrame paused) bills its whole hidden span to the character on the first frame back
    (as the base did): "stands while away" holds for a logout, not a background tab.
 6. **A new vampire turned online** wakes in the world's present, possibly by day - the fortnight is the character's,

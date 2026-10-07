@@ -112,8 +112,8 @@
   {
     "name": "SD-ONLINE-the-identity-blind",
     "file": "src/scenes/worldModes.js",
-    "old": "name: dungeonLoc?.name ?? '', size: builtDungeonSize(dungeonLoc) })",
-    "new": "name: dungeonLoc?.name ?? '', size: null })",
+    "old": "name: dungeonLoc?.name ?? '', size: builtDungeonSize(dungeonLoc), ",
+    "new": "name: dungeonLoc?.name ?? '', size: null, ",
     "tests": [
       "test/sdonline.test.js"
     ],

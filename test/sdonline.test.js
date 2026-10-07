@@ -157,7 +157,7 @@ test('SD-ONLINE: driven end to end - the online size law, the build and its room
 test('SD-ONLINE: the hosts carry the size - the mode machine\'s identity reads the build, the world host hands it to roomKeyFor', () => {
   const m = rd('src/scenes/worldModes.js'), w = rd('src/scenes/world.js');
   assert.match(m, /import \{ dungeonLocationFor, builtDungeonSize \} from '\.\.\/world\/smallerDungeons\.js';/);
-  assert.match(m, /\{ kind: 'dungeon', mapId: dungeonLoc\?\.mapTableData\?\.mapId \?\? null, regionIndex: dungeonLoc\?\.regionIndex \?\? -1, name: dungeonLoc\?\.name \?\? '', size: builtDungeonSize\(dungeonLoc\) \}/, 'the identity is the BUILT location\'s (dungeonLoc is the sized copy the context was built from)');
+  assert.match(m, /\{ kind: 'dungeon', mapId: dungeonLoc\?\.mapTableData\?\.mapId \?\? null, regionIndex: dungeonLoc\?\.regionIndex \?\? -1, name: dungeonLoc\?\.name \?\? '', size: builtDungeonSize\(dungeonLoc\), \.\.\.\(isTutorialHold\(dungeonLoc\) \? \{ solo: true \} : \{\}\) \}/, 'the identity is the BUILT location\'s (dungeonLoc is the sized copy the context was built from)');
   assert.match(m, /dungeonLoc = dfLocation;/, '...which is the one the transition built');
   assert.match(w, /layout: ident\?\.layout \?\? null,[^\n]*\n\s*size: ident\?\.kind === 'dungeon' \? \(ident\.size \?\? null\) : null,/, 'the room is named with it');
   assert.match(rd('src/net/online.js'), /if \(mode === 'dungeon'\) return loc \? `dungeon:\$\{loc\}\$\{dungeonRoomTag\(size\)\}` : null;/);
