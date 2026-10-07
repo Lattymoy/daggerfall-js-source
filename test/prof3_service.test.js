@@ -102,7 +102,7 @@ test('PROF3 service: the quality is the service\'s roll on the margin, then a st
   assert.equal(await at('dagger:daedric', 0xff), 4, 'the top 5 points are Masterwork\'s');
 });
 
-test('PROF3 service: a craft refused - the rank, the inputs (naming the short one), the recipe; a kit takes no quality, a Quartermaster\'s is two pieces; the crafter\'s limit; the switch shut, a craft made answered after', async () => {
+test('PROF3 service: a craft refused - the rank, the inputs (naming the short one), the recipe; a kit\'s quality rolled (CRAFT5: its reach), a Quartermaster\'s is two pieces; the crafter\'s limit; the switch shut, a craft made answered after', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
   s.setXp(mac, xpForRank(55) - 1);
