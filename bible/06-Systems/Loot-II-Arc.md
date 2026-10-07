@@ -593,3 +593,28 @@ every refusal taking nothing, unset free and the gem gone) and the wire's forger
 alone, the gems held, set, unset asked first, nothing held, nothing socketed) and the host's hooks.
 `tools/mutants/loot20.json` (51, all dead - the first run's two survivors were pins this suite lacked: a kit's garment
 handed to the pass, and a gem's line marked with another gem).
+
+### LOOT21 - the Ayleid stones (2026-10-07)
+
+`src/systems/ayleidStones.js` (new): two rows of the port's own, 573 (the Welkynd Stone) and 574 (the Varla Stone),
+beside the shard's 571 and the Portal Stone's 572 - miscellany, as the Portal Stone is (a Gems piece is a crystal a slot
+takes), on DFU's gem art (TEXTURE.254: Turquoise's blue, Amber's lamplight). Both registered with the Thunderlock's
+registry (`registerUniqueFind`) as LATE finds, from source tier 6 (`WELKYND_STONE_TIER`) and tier 10
+(`VARLA_STONE_TIER`); `src/systems/lootRarity.js` grows `rollLateFinds`, which the host door runs as its very last draws
+(after the sockets' pass), while `rollUniqueFinds` passes a late find by - so a find added after a seed was cut moves
+none of the draws the seed already made (law 9), and a find under its tier costs no draw. Their uses go through
+useItem's own registered arm (`registerItemUseHandler`): the Welkynd Stone fills the user's magicka; the Varla Stone
+makes every enchanted piece the user wears whole (`varlaMends`: its condition full, a DFU magic item's charges among
+them); each spends one stone off a stack, and a stone that would do nothing says so and is not spent (`STONE_TEXT`).
+`src/systems/worldTick.js` imports the module (the import is the registration, the Thunderlock's wire), and the Test
+Room lays one of each.
+
+**What moved.** LR1's Test Room count takes the two stones.
+
+Pinned: `test/loot21_stones.test.js` (4) - the rows (their indices past DFU's table, their art, miscellany, the wire,
+Use offered, never laddered); the finds (late, their tiers, never in rollUniqueFinds' place, rollLateFinds rolling them
+alone and the Welkynd first, a find under its tier no draw, and over 29 seeds each door's own draws replayed with the
+last two found and not found - the stones last, everything before them the seed's own; off nothing); the uses through
+`useItem` (the pool full and one off a stack, full already said and not spent, the last one gone; the worn enchanted
+pieces whole - a Rare's and a DFU magic ring's - and never a plain or a carried one, all whole said and not spent) and the
+Test Room's and the registration's wire. `tools/mutants/loot21.json` (20, all dead).

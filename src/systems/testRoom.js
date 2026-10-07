@@ -38,6 +38,7 @@ import { setPref } from './uiPrefs.js';   // LR3: the loot door turns the ladder
 import { setModSetting } from './modSettings.js';   // FIELD BUGS 2026-09-29 (the sea) #5: the sea door turns Come Sail Away on
 import { applyRarity, LEGENDARIES, ROLLED_TIERS, exaltLegendary, WARDROBE_LEGENDARIES, cursePiece, SOCKET_EMPTY, GEM_IDS } from './lootRarity.js';   // LR3: one of everything the ladder can mint; LOOT2: and an Exalted; LOOT15: the wardrobe's; LOOT16: a curse
 import { AETHERIC_RECORDS, mintAetheric } from './aetheric.js';   // SET6: the Aetheric rung - Ruhn's Regalia, whole (RAID4b: and the raiding parties' three sets)
+import { welkyndStone, varlaStone } from './ayleidStones.js';   // LOOT21: the Ayleid stones
 import { createThunderlock, createPellets, THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE } from './thunderlock.js';   // TSR-GUN: the port's own weapon, and the import IS its registration
 
 /** The prebuilt characters. `race` is the DF race key (races.js RACES
@@ -333,6 +334,9 @@ export function seedTestLoot(entity, rolls = Math.random) {
   // LOOT20 (section 12): a Rare with an empty socket and a Ruby to set in it, at the Mages Guild's Reforge
   { const s = applyRarity(base(TEST_LOOT_BASES[0]), 'rare', rolls); s.socket = SOCKET_EMPTY; put(s); }
   put(mintCondition(setItemFields({ group: 'Gems', templateIndex: GEM_IDS.indexOf('ruby') })));
+  // LOOT21 (section 13): the two Ayleid stones, found at the deepest sources - here to be used
+  put(welkyndStone());
+  put(varlaStone());
   return added;
 }
 /** LOOT14: the room's garments - a Formal Cloak and an Evening Gown, minted as a shelf mints clothing. */

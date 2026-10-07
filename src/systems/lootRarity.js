@@ -397,6 +397,7 @@ export function uniqueFindChance(find, { kind = 'corpse', tier = 0, boss = false
 export function rollUniqueFinds(source, rolls = Math.random) {
   const out = [];
   for (const find of _uniqueFinds) {
+    if (find.late === true) continue;   // LOOT21: a late find is the door's last roll (rollLateFinds)
     const chance = uniqueFindChance(find, source);
     if (chance <= 0) continue;
     if (rolls() * 1000 < chance) out.push(...(find.mint(rolls) ?? []));
@@ -404,6 +405,19 @@ export function rollUniqueFinds(source, rolls = Math.random) {
   return out;
 }
 
+/** LOOT21 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 13): THE LATE FINDS - a find registered `late`
+ *  rolls here, the door's very last draws (after the sockets' pass), not in rollUniqueFinds' place before the door's last
+ *  pass: the arc's law 9 - a find added after a seed was cut moves none of the draws that seed already made. The
+ *  Ayleid stones (systems/ayleidStones.js) are its finds. Answers the items to add. */
+export function rollLateFinds(source, rolls = Math.random) {
+  const out = [];
+  for (const find of _uniqueFinds) {
+    if (find.late !== true) continue;
+    const chance = uniqueFindChance(find, source);
+    if (chance > 0 && rolls() * 1000 < chance) out.push(...(find.mint(rolls) ?? []));
+  }
+  return out;
+}
 /** A legendary record a mod adds - the pool is DFU-shaped but not
  *  DFU's, so it is allowed to grow. */
 const _customLegendaries = [];
@@ -1185,6 +1199,7 @@ export function rollLootRarity(items, source, { rolls = Math.random, luck = 50 }
   const dressed = wardrobePass(items, source, { rolls, luck, find });   // LOOT14: the garments, after all of it
   cursePass([...minted, ...dressed], rolls);   // LOOT16: one Rare or Legendary in twelve cursed, after that
   socketPass(minted, rolls);   // LOOT20: and a socket, after the curse (a garment never takes one)
+  items.push(...rollLateFinds({ ...source, luck }, rolls));   // LOOT21: the late finds - the Ayleid stones - last of all
   return items;
 }
 /** LOOT14 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 6): THE WARDROBE'S PASS - every eligible garment of
