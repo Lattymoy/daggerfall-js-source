@@ -7,7 +7,7 @@
 // strikes it lands on me out.
 //
 //   THE STOMP - its disc as it lands (`r` about its feet); then its ring rolling out to `r1`: a body ON THE GROUND as the
-//     front passes is struck (a body in the air lets it pass under) - each part once a blow.
+//     front's centre crosses it is struck (a body in the air lets it pass under) - each part once a blow.
 //   THE HOUR-HAND - its beam sweeping a half-circle over its span: struck as it passes over me, within its length -
 //     unless a pillar stands between me and where it was cast from.
 //   THE GEAR VOLLEY - a disc at each mark as it lands (one strike however many meet me); the brass then burns there
@@ -16,12 +16,12 @@
 //     broken Reset never lands: the stun's word takes it out of flight) and the Hour's End: the whole arena, no save.
 //
 // A landing this screen first sees later than SD_STRIKE_LATE_MS after it is not judged (a hidden tab, a stalled frame -
-// the gate's AUDIT WB B7 law): the relay never learns who was struck, and a stale verdict would be a blow nobody saw.
+// the gate's AUDIT WB B7 law): the relay never learns who was struck, and a stale verdict would be a blow nobody saw. Nor
+// a rolling part (the ring, the beam) over a span that ends SD_STRIKE_LATE_MS past it (AUDIT SD II, L4 F6).
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_RESET_PCT, SD_END_PCT, pulsePct, ringPassed, handSwept, behindPillar, inArena } from './sdRemnant.js';
+import { SD_BLOW_BY_ID, SD_BLOWS, SD_RESET_PCT, SD_END_PCT, SD_ARENA_SLACK, pulsePct, stompFrontAt, ringPassed, handSwept, behindPillar, inArena } from './sdRemnant.js';
 import { STRIKE_LATE_MS } from './gateStrike.js';
-import { POSE_SLACK } from './gateBrain.js';
 
 /** A landing first seen later than this is not judged (the gate's). */
 export const SD_STRIKE_LATE_MS = STRIKE_LATE_MS;
@@ -30,8 +30,8 @@ const dist = (ax, az, bx, bz) => Math.hypot(ax - bx, az - bz);
 /**
  * ONE BLOW JUDGED over the span `t0`..`t1` on me at (px, pz) - the strikes it lands (`hits`, each `{ part, pct, base }`
  * - a share of my own maximum health and a base, net/gateStrike.js strikeDamage), what of it has been judged (`seen`,
- * carried from the frame before), and whether it is DONE (nothing of it can strike me again). `grounded`: I stood on the
- * ground over the span.
+ * carried from the frame before), and whether it is DONE (nothing of it can strike me again). `grounded`: I stand on the
+ * ground this frame.
  * @param {any} atk a blow as the page holds it ({a, at, x, z, yw, tg, sw?, n?}) @param {number} px @param {number} pz
  * @param {number} t0 @param {number} t1 @param {boolean} grounded @param {Record<string, boolean>} [seen]
  * @returns {{ hits: Array<{part: string, pct: number, base: number}>, seen: Record<string, boolean>, done: boolean }}
@@ -48,18 +48,30 @@ export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}) {
     return !late;
   };
   const end = atk.at + Math.max(A.active, 0);
+  // AUDIT SD II (L4 F6): a rolling part over a span that ends this late past it is done, with no hit - the gate's rolling
+  // charge's law (net/gateStrike.js strikeVerdict). A tab hidden across a Stomp's landing and shown 2.5 s on was struck by
+  // its ring, one shown 4.9 s into a Hand by its beam: the page judges the span from the last frame it drew
+  const stale = t1 > end + SD_STRIKE_LATE_MS;
   switch (A.shape) {
     case 'stomp': {
       const d = dist(px, pz, atk.x, atk.z);
       if (landing('disc') && d <= A.r) hits.push({ part: 'disc', pct: A.pct, base: A.base });
-      if (!out.ring && grounded && t0 <= end && ringPassed(atk, d, Math.max(t0, atk.at), t1)) {
-        out.ring = true;
-        hits.push({ part: 'ring', pct: A.ringPct, base: A.ringBase });
+      // AUDIT SD II (L4 F7): the ring judged ONCE, the frame its front's centre crosses me, on that frame's ground - where
+      // I stood the frame before kept (`ro`: outside its front), so a body running out with it is crossed once and one
+      // running in through it is never past its centre unjudged. The band was judged whole, on any grounded frame inside
+      // it: running out with it at 7-10 m/s, it stayed over a body longer than any jump
+      if (!out.ring && !stale && t0 <= end) {
+        const was = out.ro ?? d > stompFrontAt(atk, t0);
+        out.ro = d > stompFrontAt(atk, t1);
+        if (ringPassed(atk, d, t0, t1, was)) {
+          out.ring = true;
+          if (grounded) hits.push({ part: 'ring', pct: A.ringPct, base: A.ringBase });
+        }
       }
       return { hits, seen: out, done: t1 > end };
     }
     case 'sweep': {
-      if (!out.beam && t0 <= end && handSwept(atk, px, pz, Math.max(t0, atk.at), t1) && !behindPillar(atk.x, atk.z, px, pz)) {
+      if (!out.beam && !stale && t0 <= end && handSwept(atk, px, pz, Math.max(t0, atk.at), t1) && !behindPillar(atk.x, atk.z, px, pz)) {
         out.beam = true;
         hits.push({ part: 'beam', pct: A.pct, base: A.base });
       }
@@ -71,7 +83,7 @@ export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}) {
     }
     case 'all': {
       const pct = A === SD_BLOWS.pulse ? pulsePct(atk.n ?? 0) : A === SD_BLOWS.reset ? SD_RESET_PCT : SD_END_PCT;
-      if (landing('all') && inArena(px, pz, POSE_SLACK)) hits.push({ part: 'all', pct, base: A.base });
+      if (landing('all') && inArena(px, pz, SD_ARENA_SLACK)) hits.push({ part: 'all', pct, base: A.base });   // AUDIT SD II (L4 C2): never the Steps
       return { hits, seen: out, done: true };
     }
     default: return { hits, seen: out, done: true };

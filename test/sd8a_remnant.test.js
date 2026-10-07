@@ -13,7 +13,7 @@ import {
   SD_PULSE_EVERY_MS, SD_PULSE_PCT, SD_PULSE_STEP, SD_ENDS_MS, SD_END_EVERY_MS, SD_END_PCT, SD_PILLARS, SD_BLOWS,
   SD_BLOW_BY_ID, heartCountFor, heartHpFor, pulsePct, windupFor, blowsFor, arenaOf, inArena, keepInArena, stompRingAt,
   ringPassed, handAngleAt, handSwept, behindPillar, newRemnantFight, joinRemnant, applyRemnantHit, applyEchoHit,
-  applyHeartHit, heartsOpen, remnantOpen, stepRemnant, remnantStateOf, atkFrameOf,
+  applyHeartHit, heartsOpen, remnantOpen, stepRemnant, remnantStateOf, atkFrameOf, pairWay,
 } from '../src/net/sdRemnant.js';
 import { SD_ARENA, SD_PILLAR_R, SD_PILLAR_W } from '../src/net/sdBrain.js';
 import { SD_FIGHTERS_MAX } from '../src/net/sdLaw.js';
@@ -233,7 +233,12 @@ test('SD8a THE DRAGON BREAK: at 70% it steps outside time and two Echoes rise, e
     for (const h of hands) byAt.set(h.at, [...(byAt.get(h.at) ?? []), h]);
     for (const hs of byAt.values()) {
       assert.equal(hs.length, 2, `seed ${seed}: from both at once`);
-      assert.ok(hs.some((h) => h.b === SD_BODY.gold && h.sw === 1) && hs.some((h) => h.b === SD_BODY.silver && h.sw === -1), 'each its own way');
+      // AUDIT SD II (SD11e, PIN MOVED): L4 F2 - gold the way the bearing grows, silver the other; both at ONE fighter
+      // beyond the two, silver gold's way (pairWay - the two beams cross it the same way, never a pincer)
+      const gh = hs.find((h) => h.b === SD_BODY.gold), sh = hs.find((h) => h.b === SD_BODY.silver);
+      const aimed = (h) => ringOf(g, 20).find((b) => { const a = Math.atan2(b.x - h.x, b.z - h.z) - h.yw; return Math.abs(Math.sin(a)) < 0.02 && Math.cos(a) > 0; });
+      const T = aimed(gh), one = !!T && T.sub === aimed(sh)?.sub;
+      assert.ok(gh.sw === 1 && sh.sw === (one ? pairWay(gh, sh, T) : -1), 'each its own way');
     }
     const begun = [...new Set(hands.map((h) => h.now))];
     assert.ok(begun[0] >= wake + SD_BREAK_MS + SD_ECHO_HAND_FIRST_MS, 'the first after they rise');
@@ -372,7 +377,7 @@ test('SD8a THE GEOMETRY every struck screen judges by: the Stomp\'s ring rolls o
   assert.equal(ringPassed(st, 15, 1250, 1350), false);
   assert.equal(ringPassed(st, 6, 1000, 1100), false, 'inside it the disc, not the ring');
   assert.equal(ringPassed(st, 23, 2400, 2600), false, 'past 22 m');
-  assert.equal(ringPassed(st, 22.5, 2400, 2600), true, 'the front\'s width at its end');
+  assert.equal(ringPassed(st, 22.5, 2400, 2600), false, 'its front\'s centre stops at 22 m');   // AUDIT SD II (SD11e, PIN MOVED): L4 F7 - the ring strikes where its front's centre crosses, never its band's edge
   // the hand: yw 0 (+z), turning the way the bearing grows
   const h = { at: 0, x: 0, z: 0, yw: 0, sw: 1 };
   assert.ok(near(handAngleAt(h, 0), -Math.PI / 2));

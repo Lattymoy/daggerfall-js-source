@@ -83,8 +83,8 @@
   {
     "name": "SD8A-awake-from-the-birth",
     "file": "src/net/sdRemnant.js",
-    "old": "export const remnantOpen = (f, now) => !over(f) && now >= f.op && f.phase !== 2",
-    "new": "export const remnantOpen = (f, now) => !over(f) && f.phase !== 2",
+    "old": "export const remnantOpen = (f, now) => !over(f, now) && now >= f.op && f.phase !== 2",
+    "new": "export const remnantOpen = (f, now) => !over(f, now) && f.phase !== 2",
     "tests": [
       "test/sd8a_remnant.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "SD8A-blows-believed-past-the-Hour",
     "file": "src/net/sdRemnant.js",
-    "old": "const over = (f) => !!(f.fell || f.lost || f.ended);",
-    "new": "const over = (f) => !!(f.fell || f.lost);",
+    "old": "const over = (f, now) => !!(f.fell || f.lost || now >= f.endsAt);",
+    "new": "const over = (f, now) => !!(f.fell || f.lost);",
     "tests": [
       "test/sd8a_remnant.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "SD8A-the-dead-counted-living",
     "file": "src/net/sdRemnant.js",
-    "old": "  const here = bodies.filter((b) => !b.dead && f.players[b.sub] && inArena(b.x, b.z, POSE_SLACK));",
-    "new": "  const here = bodies.filter((b) => f.players[b.sub] && inArena(b.x, b.z, POSE_SLACK));",
+    "old": "  const here = bodies.filter((b) => !b.dead && f.players[b.sub] && inArena(b.x, b.z, SD_ARENA_SLACK));",
+    "new": "  const here = bodies.filter((b) => f.players[b.sub] && inArena(b.x, b.z, SD_ARENA_SLACK));",
     "tests": [
       "test/sd8a_remnant.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "SD8A-the-ring-no-width",
     "file": "src/net/sdRemnant.js",
-    "old": "  return d >= r0 - A.width / 2 && d <= Math.min(A.r1, r1) + A.width / 2;",
-    "new": "  return d >= r0 && d <= Math.min(A.r1, r1);",
+    "old": "  return was && d <= stompFrontAt(atk, t1);",
+    "new": "  return was && d <= stompFrontAt(atk, t1) + SD_BLOWS.stomp.width / 2;",
     "tests": [
       "test/sd8a_remnant.test.js"
     ]

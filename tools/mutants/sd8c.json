@@ -164,7 +164,7 @@
   {
     "name": "SD8C-joined-to-a-lost-fight",
     "file": "src/net/sdFightLink.js",
-    "old": "    joined: () => state.fi > 0 && mine === state.fi && !state.lost && !state.fell && !state.ended,",
+    "old": "    joined: () => state.fi > 0 && mine === state.fi && !state.lost && !state.fell && !sdHourOver(state, now()),",
     "new": "    joined: () => state.fi > 0 && mine === state.fi,",
     "tests": [
       "test/sd8c_remnant_page.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "SD8C-a-body-for-a-stranger",
     "file": "src/scenes/sdRemnant.js",
-    "old": "      if (!L?.joined() || s.fell || s.ended || s.ph === 2) return null;",
-    "new": "      if (!L || s.fell || s.ended || s.ph === 2) return null;",
+    "old": "      if (!L?.joined() || s.fell || sdHourOver(s, t) || s.ph === 2) return null;",
+    "new": "      if (!L || s.fell || sdHourOver(s, t) || s.ph === 2) return null;",
     "tests": [
       "test/sd8c_remnant_page.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "SD8C-the-end-never-counted",
     "file": "src/ui/sdRemnantBar.js",
-    "old": "    wrath: s.fell ? null : s.ended ? SD_BAR_TEXT.ended : toEnd <= SD_ENDS_WARN_MS ?",
-    "new": "    wrath: s.fell ? null : s.ended ? SD_BAR_TEXT.ended : false ?",
+    "old": "    wrath: s.fell ? null : sdHourOver(s, now) ? SD_BAR_TEXT.ended : toEnd <= SD_ENDS_WARN_MS ?",
+    "new": "    wrath: s.fell ? null : sdHourOver(s, now) ? SD_BAR_TEXT.ended : false ?",
     "tests": [
       "test/sd8c_remnant_page.test.js"
     ]

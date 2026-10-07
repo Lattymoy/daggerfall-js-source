@@ -6,13 +6,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  SD_BLOWS, SD_BODY, SD_PILLARS, pulsePct, SD_RESET_PCT, SD_END_PCT, newRemnantFight, joinRemnant, remnantStateOf, behindPillar,
+  SD_BLOWS, SD_BODY, SD_PILLARS, pulsePct, SD_RESET_PCT, SD_END_PCT, newRemnantFight, joinRemnant, remnantStateOf, behindPillar, SD_ARENA_SLACK,
 } from '../src/net/sdRemnant.js';
 import { sdBlowVerdict, sdVolleyPools, sdPoolUnder, SD_STRIKE_LATE_MS } from '../src/net/sdStrike.js';
 import { createSdFightLink } from '../src/net/sdFightLink.js';
 import { validSdOut } from '../src/net/wire.js';
 import { SD_ARENA, realmToDungeon } from '../src/net/sdBrain.js';
-import { POOL_TICK_MS, POSE_SLACK, COURT_R } from '../src/net/gateBrain.js';
+import { POOL_TICK_MS, COURT_R } from '../src/net/gateBrain.js';
 import { strikeDamage, STRIKE_LATE_MS } from '../src/net/gateStrike.js';
 import {
   createSdRemnantBlows, sdTelegraphShapes, sdPoolShapes, sdBlowsInFlight, SD_BLOW_COLOR, SD_BLOWS_TEXT, SD_BLOW_CUES, SD_TELEGRAPH_FLOOR, SD_ARENA_CENTRE,
@@ -90,8 +90,8 @@ test('SD8d THE GEAR VOLLEY AND THE HOUR\'S OWN: the Volley one strike however ma
   assert.deepEqual(one(SD_BLOWS.pulse, { n: 3 }), [['all', pulsePct(3), 0]], 'the Pulse grows with its count');
   assert.deepEqual(one(SD_BLOWS.reset), [['all', SD_RESET_PCT, 0]]);
   assert.deepEqual(one(SD_BLOWS.end), [['all', SD_END_PCT, 0]]);
-  assert.equal(run(blow(SD_BLOWS.end, at), at - 100, at + 300, () => [0, SD_ARENA.r + POSE_SLACK - 0.5]).length, 1, 'at its rim, within the slack');
-  assert.deepEqual(run(blow(SD_BLOWS.end, at), at - 100, at + 300, () => [0, -(SD_ARENA.r + POSE_SLACK + 4)]), [], 'off the arena - on the Steps - nothing');
+  assert.equal(run(blow(SD_BLOWS.end, at), at - 100, at + 300, () => [0, SD_ARENA.r + SD_ARENA_SLACK - 0.5]).length, 1, 'at its rim, within the slack');   // AUDIT SD II (SD11e, PIN MOVED): L4 C2 - the arena's own slack, short of the Steps
+  assert.deepEqual(run(blow(SD_BLOWS.end, at), at - 100, at + 300, () => [0, -(SD_ARENA.r + SD_ARENA_SLACK + 4)]), [], 'off the arena - on the Steps - nothing');
 });
 
 // ── the floor ─────────────────────────────────────────────────────────

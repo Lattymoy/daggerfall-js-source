@@ -6,8 +6,9 @@
 //
 //   SEEN: every blow in flight - the Remnant's, each Echo's, the Hour's own - on the arena's floor as it winds up and
 //     lands (sdTelegraphShapes - the gate's telegraph pass over the arena, render/gateTelegraph.js): the Stomp's disc and
-//     then its ring rolling out; the Hour-Hand's half-circle as it gathers, then its beam sweeping; the Gear Volley's
-//     marks; the Hour's own over the whole floor; the Volley's brass burning where it fell.
+//     then its ring rolling out; the Hour-Hand's half-circle as it gathers with its beam standing where it begins, then
+//     the beam sweeping; the Gear Volley's marks; the Hour's own over the whole floor; the Volley's brass burning where
+//     it fell.
 //   HEARD: each blow's wind-up at its word and its landing (DAGGER.SND's own, pitched for a colossus of brass).
 //   JUDGED HERE, on my own feet (net/sdStrike.js sdBlowVerdict): each part of each blow once, a share of my own health
 //     and its base; the Stomp's ring on the ground alone; the Hand outrun or shaded by a pillar; the burning brass a bite
@@ -90,8 +91,8 @@ const shapeOf = (kind, o) => ({
 /**
  * WHAT THE FLOOR SHOWS of blow `atk` of body `b` in `phase` at `now` (the arena's frame), pushed onto `out`: as it winds up
  * (its fill rising to its landing) and as it lands (its flash, then gone) - the Stomp's disc and then its ring rolling
- * out; the Hand's half-circle, then its beam where it stands in its sweep; the Volley's marks; the Hour's own over the
- * whole floor. Pure.
+ * out; the Hand's half-circle and its beam at its first edge, then its beam where it stands in its sweep; the Volley's
+ * marks; the Hour's own over the whole floor. Pure.
  * @param {any} atk @param {number} b @param {number} phase @param {number} now @param {any[]} [out]
  */
 export function sdTelegraphShapes(atk, b, phase, now, out = []) {
@@ -114,7 +115,14 @@ export function sdTelegraphShapes(atk, b, phase, now, out = []) {
       break;
     }
     case 'sweep': {
-      if (after < 0) { out.push(shapeOf(TELEGRAPH_KIND.cone, { ...common, origin, yaw: atk.yw, r: A.len, halfArc: A.arc / 2 })); break; }
+      if (after < 0) {
+        out.push(shapeOf(TELEGRAPH_KIND.cone, { ...common, origin, yaw: atk.yw, r: A.len, halfArc: A.arc / 2 }));
+        // AUDIT SD II (L4 F10): and the hand standing where its sweep begins - the way it turns (`sw`), which the
+        // half-circle alone never showed: the Remnant's is a coin's, and a straight run the wrong way met it
+        const a0 = handAngleAt(atk, atk.at);
+        out.push(shapeOf(TELEGRAPH_KIND.lane, { ...common, origin, end: [atk.x + Math.sin(a0) * A.len, atk.z + Math.cos(a0) * A.len], halfW: A.width / 2 }));
+        break;
+      }
       const a = handAngleAt(atk, now);
       if (a != null) out.push(shapeOf(TELEGRAPH_KIND.lane, { ...common, origin, end: [atk.x + Math.sin(a) * A.len, atk.z + Math.cos(a) * A.len], halfW: A.width / 2 }));
       break;

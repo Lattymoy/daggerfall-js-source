@@ -24,7 +24,7 @@
 import { SD_ARENA, SD_REALM_ORIGIN, realmToDungeon } from '../net/sdBrain.js';
 import { SD_REM, SD_ECHO, SD_HEART, SD_REM_START, SD_BREAK_MS, SD_BLOWS, SD_HEARTS_CLOSE_MS, SD_HEARTS, inArena } from '../net/sdRemnant.js';
 import { HIT_KINDS } from '../net/gateBrain.js';
-import { sdBodyAt, sdHeartsOf, SD_FIGHT_EMPTY } from '../net/sdFightLink.js';
+import { sdBodyAt, sdHeartsOf, sdHourOver, SD_FIGHT_EMPTY } from '../net/sdFightLink.js';
 import { SD_REALM_ARCHIVE } from '../world/sdRealm.js';
 import { remnantArt } from '../world/sdRemnantArt.js';
 import { ensureSdHallArt } from './sdHall.js';
@@ -111,7 +111,7 @@ export function heartsOpenAt(s, now) {
 /** Whether the Remnant takes a blow at `now`: awake, inside time, returned, the fight not over (the law's remnantOpen,
  *  read off the page's fight). Pure. */
 export function remnantOpenAt(s, now) {
-  return live(s) && !s.fell && !s.ended && now >= s.op && s.ph !== 2 && now >= s.ou;
+  return live(s) && !s.fell && !sdHourOver(s, now) && now >= s.op && s.ph !== 2 && now >= s.ou;   // AUDIT SD II (L4 F3): its End by the clock
 }
 
 /**
@@ -198,7 +198,7 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
      */
     target() {
       const { L, s, t } = read();
-      if (!L?.joined() || s.fell || s.ended || s.ph === 2) return null;
+      if (!L?.joined() || s.fell || sdHourOver(s, t) || s.ph === 2) return null;
       const p = remnantPose(s, t);
       return { feet: arenaToDungeon(p.x, p.z), yaw: p.yw, height: SD_REM.h, radius: SD_REM.r, warded: !remnantOpenAt(s, t), entity: standIn, mobile: SD_REMNANT_MOBILE };
     },

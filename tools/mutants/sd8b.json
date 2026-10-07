@@ -93,8 +93,8 @@
   {
     "name": "SD8B-in-from-anywhere",
     "file": "server/src/index.js",
-    "old": "      if (!inArena(at.x, at.z, POSE_SLACK)) return;   // from the arena alone",
-    "new": "      if (false) return;   // from the arena alone",
+    "old": "      if (!inArena(at.x, at.z, SD_ARENA_SLACK)) return;   // from the arena alone (AUDIT SD II, L4 C2: never the Steps)",
+    "new": "      if (false) return;   // from the arena alone (AUDIT SD II, L4 C2: never the Steps)",
     "tests": [
       "test/sd8b_fight.test.js"
     ]

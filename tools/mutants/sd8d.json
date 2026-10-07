@@ -2,8 +2,8 @@
   {
     "name": "SD8D-the-ring-on-the-airborne",
     "file": "src/net/sdStrike.js",
-    "old": "      if (!out.ring && grounded && t0 <= end && ringPassed(",
-    "new": "      if (!out.ring && t0 <= end && ringPassed(",
+    "old": "          if (grounded) hits.push({ part: 'ring', pct: A.ringPct, base: A.ringBase });",
+    "new": "          hits.push({ part: 'ring', pct: A.ringPct, base: A.ringBase });",
     "tests": [
       "test/sd8d_remnant_blows.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD8D-the-beam-from-behind",
     "file": "src/net/sdStrike.js",
-    "old": "if (!out.beam && t0 <= end && handSwept(atk, px, pz, Math.max(t0, atk.at), t1) &&",
-    "new": "if (!out.beam && t0 <= end && Math.hypot(px - atk.x, pz - atk.z) <= SD_BLOWS.hand.len &&",
+    "old": "if (!out.beam && !stale && t0 <= end && handSwept(atk, px, pz, Math.max(t0, atk.at), t1) &&",
+    "new": "if (!out.beam && !stale && t0 <= end && Math.hypot(px - atk.x, pz - atk.z) <= SD_BLOWS.hand.len &&",
     "tests": [
       "test/sd8d_remnant_blows.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "SD8D-the-arena-reaching-the-steps",
     "file": "src/net/sdStrike.js",
-    "old": "      if (landing('all') && inArena(px, pz, POSE_SLACK)) hits.push(",
+    "old": "      if (landing('all') && inArena(px, pz, SD_ARENA_SLACK)) hits.push(",
     "new": "      if (landing('all')) hits.push(",
     "tests": [
       "test/sd8d_remnant_blows.test.js"

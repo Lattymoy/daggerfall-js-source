@@ -338,7 +338,7 @@ test('SD8b the relay by source: the fight\'s words routed in a realm alone on th
   assert.match(w, /if \(m\.k === 'in' \|\| m\.k === 'hit' \|\| m\.k === 'ehit' \|\| m\.k === 'xhit'\) \{\n\s+if \(!this\._spend\(ws, now, sdFightRelayGate, 'sdFightBucket', 'sdFightDrops', 'too many fight frames'\)\) return;\n\s+if \(!isSdRoom\(a\.key\)\) \{ this\._junk\(ws\); return; \}/);
   assert.match(w, /if \(await this\._sdFightTick\(\)\) return;/);
   assert.match(w, /if \(path === SD_INTERNAL_FELL\) return this\._sdFellInternal\(request\);/);
-  assert.match(w, /import \{ newRemnantFight, joinRemnant, applyRemnantHit, applyEchoHit, applyHeartHit, stepRemnant, remnantStateOf, arenaOf, inArena, SD_LOST_MS \} from '\.\.\/\.\.\/src\/net\/sdRemnant\.js';/);
+  assert.match(w, /import \{ newRemnantFight, joinRemnant, applyRemnantHit, applyEchoHit, applyHeartHit, stepRemnant, remnantStateOf, arenaOf, inArena, SD_ARENA_SLACK, SD_LOST_MS \} from '\.\.\/\.\.\/src\/net\/sdRemnant\.js';/);   // AUDIT SD II (SD11e, PIN MOVED): L4 C2 - the arena's own slack
   assert.match(read('test/relayversion.test.js'), /'src\/net\/sdBrain\.js', 'src\/net\/sdRemnant\.js'[\],]/);   // SD9a: net/sdReceipt.js after it (PIN MOVED)
   assert.match(read('bible/11-Multiplayer/Super-Dungeons.md'), /### SD8b - shipped 2026-10-07/);
 });

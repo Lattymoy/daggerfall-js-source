@@ -680,8 +680,8 @@
   {
     "name": "SD11c-G7-never-restored",
     "file": "src/net/sdRemnant.js",
-    "old": "if (p && inArena(b.x, b.z, POSE_SLACK)) { p.seenAt = now; restoreShare(f, p); }",
-    "new": "if (p && inArena(b.x, b.z, POSE_SLACK)) { p.seenAt = now; }",
+    "old": "if (p && inArena(b.x, b.z, SD_ARENA_SLACK)) { p.seenAt = now; restoreShare(f, p); }",
+    "new": "if (p && inArena(b.x, b.z, SD_ARENA_SLACK)) { p.seenAt = now; }",
     "tests": [
       "test/sd11c_law.test.js"
     ]

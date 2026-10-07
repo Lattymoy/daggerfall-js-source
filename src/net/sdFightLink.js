@@ -26,6 +26,9 @@ import { SD_BLOW_BY_ID, SD_BLOWS, SD_BODY, SD_REM, SD_REM_START, SD_ECHO_SPOTS, 
  *   the Reset's Hearts ([x, z, health] each), `su` the stun's end and `stunAt` its moment, `rk` the next Reset.
  */
 const STILL = Object.freeze({ x: SD_REM_START[0], z: SD_REM_START[1], yw: Math.PI, mv: null, atk: null });
+/** AUDIT SD II (L4 F3): whether fight `s`'s Hour has ended at `now` - by the clock, as the law's (`ends`): the End's word
+ *  (`ended`, said 2 s before it lands) stops the bodies, and a blow in its wind-up is still a blow. */
+export const sdHourOver = (s, now) => !!s && s.ends > 0 && now >= s.ends;
 /** The empty state: no fight heard. @type {Readonly<SdFightState>} */
 export const SD_FIGHT_EMPTY = Object.freeze({
   fi: 0, s: 0, ph: 1, h: 0, m: 0, op: 0, ou: 0, rem: STILL, ec: null, clk: null, pu: 0, pa: 0, ends: 0, ended: 0,
@@ -205,7 +208,7 @@ export function createSdFightLink({ now, say = () => {}, onRefused = () => {} })
     /** The relay's clock. */
     now: () => now(),
     /** Whether the realm has counted me in the fight it is fighting - a blow of mine may go out. */
-    joined: () => state.fi > 0 && mine === state.fi && !state.lost && !state.fell && !state.ended,
+    joined: () => state.fi > 0 && mine === state.fi && !state.lost && !state.fell && !sdHourOver(state, now()),   // AUDIT SD II (L4 F3): its End by the clock
     /** SD9e: whether the realm counted me in the fight it holds - fallen or not (its spoils' word, scenes/sdSpoils.js). */
     counted: () => state.fi > 0 && mine === state.fi,
     /**
