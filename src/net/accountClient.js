@@ -597,6 +597,13 @@ export const REFUSALS = Object.freeze({
   // CUSTOMS-PASS: the developer's route (server-account/src/realm.js grantCustomsPass), said by tools/customsPass.mjs - its
   // `not-developer` is MARKS1's one word above (MERGE 2: both sides wrote it; the one refusal says both routes)
   ambiguous: 'More than one account goes by that name - name the account by its id instead.',
+  // CHAP1: the Roll (server-account/src/npcRoll.js) - said only where a player would read one; the tracker keeps
+  // the save's standing quietly while the Roll is shut (net/npcRollTracker.js)
+  'chapters-closed': 'The guilds do not keep your standing on the realm yet.',
+  'roll-seed': 'Your standing with the guilds could not be read. The game may need updating.',
+  'roll-claim': 'Your standing with the guilds could not be sent. The game may need updating.',
+  'roll-unseeded': 'The realm has not read your standing with the guilds yet. It will try again.',
+  'roll-busy': 'Your standing with the guilds was being written. It will try again.',
 });
 
 /** The sentence for a refusal, never `undefined` and never the raw
@@ -1316,6 +1323,24 @@ export function accountMarks({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
     guildWithdraw: (character, marks, rid) => post('/v1/marks/guild/withdraw', { character, marks, rid }),
     report: () => post('/v1/marks/report', {}),
     find: (kind, rid, account = null) => post('/v1/marks/find', { kind, rid }, account),   // SILVER-FINDS: a loot find the device rolled - AUDIT 625 S4: under the account it was found by
+  };
+}
+
+/**
+ * CHAP1: THE ROLL (server-account/src/npcRoll.js) through the one door - a realm character's standing with Daggerfall's
+ * guilds read (and seeded, the first time), and what moved claimed, each under the playing tab's lease. Every answer is
+ * `call`'s shape; each is waited for ACCOUNT_ACT_WAIT_MS at most.
+ */
+export function accountRoll({ fetch, storage, waitMs = ACCOUNT_ACT_WAIT_MS }) {
+  const post = waitedPost({ fetch, storage }, waitMs);
+  /** The page's last claim, as it goes: `keepalive`, so the browser finishes it (AUDIT RENOWN1 GAME-8's door). */
+  const leaving = async (body) => {
+    const s = storedSession(storage);
+    return s ? call({ fetch, base: serviceBase(storage), secret: s.secret, keepalive: true }, '/v1/chapters/claim', body) : { ok: false, error: 'no-session' };
+  };
+  return {
+    read: (character, lease, seed = null) => post('/v1/chapters/roll', { character, lease, ...(seed ? { seed } : {}) }),
+    claim: (character, lease, rid, deltas, members, leave = false) => (leave ? leaving : (b) => post('/v1/chapters/claim', b))({ character, lease, rid, deltas, members }),
   };
 }
 

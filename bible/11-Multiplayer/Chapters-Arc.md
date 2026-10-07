@@ -1,7 +1,8 @@
 # THE CHAPTERS ARC - Daggerfall's guilds, held online (CHAP0, the design record)
 
 **Status: DESIGN RECORD, every question decided (2026-10-07): Mac's four calls (the table below), and the rest by the
-record at his instruction ("You make the best decisions" - section 14); nothing is built. CHAP1 is next.** Every claim about today's code was read off the tree at
+record at his instruction ("You make the best decisions" - section 14). CHAP1 BUILT (2026-10-07, Mac: "Continue"; its
+record is at the foot, and where it narrowed section 3 the section says so); CHAP2 is next.** Every claim about today's code was read off the tree at
 `9ed5a681` and is cited by file and symbol, never by line, so the page survives the next merge.
 
 Its neighbours: `11-Multiplayer/Seats-Arc.md` (SEAT0 - the week, the Season, the Tides and the witnessed influence this
@@ -110,54 +111,64 @@ account service - so balance is an edit to one file, pinned by its own tests.
 ### 3.1 What moves
 
 DECIDED. For a realm character, the service keeps **the Roll**: the character's memberships in the guild groups
-(the mortal and vampire books of `newMembershipStore`), its reputation with each of the twenty-two guild factions, its
-last rank review and its probation. Every other faction - the regions' people, the nobles, the witches, the Daedra -
-stays the save's, as today (CALL 1).
+(the mortal and vampire books of `newMembershipStore`) and its reputation with each of the twenty-two guild factions.
+Every other faction - the regions' people, the nobles, the witches, the Daedra - stays the save's, as today (CALL 1).
+BUILT (CHAP1), narrowed: the last rank review and REP6's probation stay the save's, where DFU's law keeps them - the
+Roll holds what a seat will ask (the reputation, the membership, its rank as the client reports it, and the tenure).
 
 ### 3.2 The layer
 
-DECIDED. Coming online, the client fetches its Roll and writes it over the entity's `factionRep` rows and
-`guildMemberships` for those twenty-two ids, as Renown's layer adds its health and magicka. Online, the save's copy of
-those rows is never read; the save may keep writing them (a realm character never loads offline - Realm decision 2), so
-the save's shape is unchanged.
+DECIDED. Coming online, the client fetches its Roll and writes it over the entity's `factionRep` rows for those
+twenty-two ids, as Renown's layer adds its health and magicka. Online, the save's copy of those rows is never read; the
+save may keep writing them (a realm character never loads offline - Realm decision 2), so the save's shape is
+unchanged. BUILT (CHAP1), narrowed: the MEMBERSHIPS are not written over. A join, an expulsion and the rank review are
+acts of DFU's law on the client, so the book stays the save's and the Roll records it with the service's own clock -
+the tenure is the thing only the service can vouch for.
 
 ### 3.3 What moves a reputation
 
 | Source | Trust | Reputation | Cap |
 |---|---|---|---|
 | A hall writ delivered (section 4) | Service-witnessed (the Stores took the units) or relay-signed (a receipt) | +2 with the posting guild | The writ supply and the account's 3 a day |
-| A guild quest succeeded | Client-reported, bounded | DFU's +5 (QFAIL-FREE: a failure costs nothing online) | 3 a character a UTC day a guild group |
+| Anything DFU's law moves on the client - a guild quest (DFU's +5; QFAIL-FREE: a failure costs nothing online), a donation, the ally and enemy spread | Client-reported, bounded | What moved | 15 a guild faction a character a UTC day, from every claim together |
 | A gate, raid or serpent receipt in a region where the character's guild keeps a chapter | Relay-signed | +1 with each guild the character belongs to | Under `MARKS_COMBAT`'s day |
-| A temple donation | Client gold, bounded | DFU's law (`guildServiceActions.js`) | 1 a character a UTC day a temple |
 | Any LOSS of reputation (a crime against a guild, a probation, an expulsion) | Client-reported | DFU's law | None - a client that lies against itself is believed |
+
+BUILT (CHAP1), narrowed: the first draft gave the quest and the donation caps of their own (3 quests and 1 donation a
+day). A claim is what moved since the Roll's last word, and the source it named would be the client's word too, so the
+service bounds the one thing it can: the day's ceiling, which three quests already fill. The two service-side sources -
+a hall writ and a receipt - need the chapters, and arrive with CHAP2.
 
 - **The spread.** DFU spreads a change to a faction's allies and enemies, and the allies and enemies are FACTION.TXT's,
   which the service never holds. DECIDED (CALL 2): the client computes the spread with `factionRep.js`'s own law and
   reports each touched guild faction's share in the same claim; a spread to a faction outside the twenty-two stays the
-  client's. **Every claimed gain is bounded twice**: by its source's cap above, and by **15 a guild faction a character
-  a UTC day** from claims of every kind together (three quests' worth), so a spread cannot carry a lie past what the
-  quests themselves could.
-- **The ledger.** Every change is one row with a source and a reference, unique on both (`npc_rep_events`), so a claim
-  replayed is a claim counted once.
+  client's. **Every claimed gain is bounded** by **15 a guild faction a character a UTC day** from claims of every kind
+  together (three quests' worth), so a spread cannot carry a lie past what the quests themselves could.
+- **The ledger.** Every line of every claim is a row of `npc_rep_events` - what it asked and what it was credited. A
+  claim replayed is counted once by the head's `last_rid` (BUILT, CHAP1: the record keeps no uniqueness of its own).
 
 ### 3.4 Ranks 0-7 - DFU's law over the server's numbers
 
 DECIDED. `baseCalculateNewRank` and `updateRank` run unchanged, over the Roll's reputation and the save's skills.
 FACT: the skills are the client's word until Realm phase 3 checks a save; a lied skill buys a rank that costs no rival
-anything, which law 3 allows. The 28-day gate counts on the shared clock. REP6's probation is kept, and recorded on the
-Roll.
+anything, which law 3 allows. BUILT (CHAP1): the 28-day gate and REP6's probation stay DFU's, on the client's own
+calendar, untouched; the Roll records the rank the client reports.
 
 ### 3.5 Ranks 8 and 9 are seats
 
 DECIDED. A character whose own law would reach rank 8 or 9 holds rank 7 and is **Eligible** until it holds a seat
-(section 6). The rank-8 and rank-9 titles are the guild's own (`guilds.js`'s rank titles; `guildVariants.js`'s for the
+(section 6) - from CHAP4, with the seats: CHAP1 moves no rank, so nobody loses a rank before there is a seat to win it
+back in. The rank-8 and rank-9 titles are the guild's own (`guilds.js`'s rank titles; `guildVariants.js`'s for the
 temples and the orders), worn only by a seat's holder.
 
 ### 3.6 Customs and a new character
 
 DECIDED. A character crossing into the realm through customs keeps its memberships, and its reputation with each
 guild faction is carried capped at **40** (rank 4's need), so an offline grind cannot buy a seat's eligibility (CALL 3).
-A new realm character starts at DFU's zero.
+A new realm character starts at DFU's zero. BUILT (CHAP1): the cap is read off the realm character's AGE, not the door
+it came in by - every realm character the realm made from 2026-10-08 00:00 UTC (`ROLL_EPOCH_S`), born or brought in, is
+seeded capped at 40; one made before is seeded whole, keeping what it earned online before the Roll. Its tenure begins
+at the seed either way, so a seed never buys a seat (CHAP4 asks fourteen days on the Roll).
 
 ## 4. Hall writs - the chapter's work (CHAP2)
 
@@ -317,23 +328,29 @@ classic skin, the row off, the service unreachable - the living world is exactly
 
 DECIDED.
 
-- **Account service (D1)**: `npc_roll` (char_id, faction_id, member, rank, rep, reviewed_at, probation);
-  `npc_rep_events` (char_id, faction_id, delta, source, ref, at - `UNIQUE (source, ref)`); `npc_chapters` (key -
+- **Account service (D1)**: BUILT (CHAP1, migration `0088_npc_roll`): `npc_roll_heads` (char_id, player, cap, seq,
+  last_rid, seeded_at, updated_at - a claim moves `seq` on and names `last_rid`); `npc_roll` (char_id, faction_id,
+  player, rep, gained_day, gained, member, rank, joined_at); `npc_rep_events` (seq, char_id, player, faction_id, asked,
+  credited, rid, at). Still drawn: `npc_chapters` (key -
   guild faction and region - strength, event, event_state JSON, doctrine, focus); `npc_chapter_merit` (week, key,
   account, char_id, source, amount, ref - `UNIQUE (source, ref)`); `npc_chapter_seats` (key, seat, char_id, since);
   `npc_chapter_history` (seq, key, week, kind, data JSON).
-- **Endpoints** (`/v1/chapters/...`): `roll` (the character's own), `claim` (a bounded reputation claim), `list` (the
-  sheet), `standings` (a chapter's Merit), `history`; the hall writs ride the board's own writ endpoints.
+- **Endpoints** (`/v1/chapters/...`): `roll` and `claim` BUILT (CHAP1, behind `CHAPTERS_OPEN`, shipped `dev`; each
+  names the realm character and the playing tab's lease); `list` (the sheet), `standings` (a chapter's Merit),
+  `history` still drawn; the hall writs ride the board's own writ endpoints.
 - **The settle**: inside `settleWeek`, after the seats' steps - Merit summed, Strength moved, seats placed, and at a
   Season's boundary the events resolved and drawn.
 - **The relay**: no change (DECIDED - the gate, raid and serpent receipts already name an account and a region).
-- **Law modules, pure, shared**: `net/npcChapterLaw.js` (Appendix A, the bands, the event weights, the rivals);
-  `systems/npcChapters.js` (the client's layer and its read of the sheet).
+- **Law modules, pure, shared**: `net/npcChapterLaw.js` (Appendix A, the bands, the event weights, the rivals - BUILT
+  for the Roll, CHAP1); the playing tab's side is `net/npcRollTracker.js` (CHAP1; the first draft named it
+  systems/npcChapters.js, which the sheet's reader, CHAP3, may still be); DFU's guild faction ids live in the leaf
+  `systems/guildFactions.js`, which the service can reach and `guilds.js` cannot be.
 
 ## 12. The slices, in order
 
-1. **CHAP1 - the Roll.** The service owns the twenty-two factions' reputation and the memberships for realm
-   characters; the layer; the bounded claims and the daily ceiling; customs' cap. Port-Ledger section A row added.
+1. **CHAP1 - the Roll.** BUILT (2026-10-07). The service owns the twenty-two factions' reputation and records the
+   memberships for realm characters; the layer; the bounded claims and the daily ceiling; customs' cap. Port-Ledger
+   section A row added.
 2. **CHAP2 - hall writs.** The chapters derived and witnessed; their writs on the board; the pay.
 3. **CHAP3 - Merit and Strength.** The week's Merit, the Turning's Strength, the bands on the halls' prices, the sheet.
 4. **CHAP4 - the seats.** Ranks 8 and 9 contested; the titles; the Focus; the Chronicle's rows.
@@ -345,10 +362,12 @@ CALL 1 retired the eighth slice the first draft carried (the other factions to t
 
 ## 13. The four hosts
 
-THE FOUR HOSTS RULE, named before the first slice:
+THE FOUR HOSTS RULE, named before the first slice (and CHAP1's, as built: the tracker lives in `world.js`, the one
+host online runs in - the interiors and the dungeons are that same page and that same entity):
 
 - `scenes/worldModes.js` (interiors) - the hall's service window: the rank from the Roll, the prices from Strength
-  (CHAP1, CHAP3), and the hall's roll (CHAP5).
+  (CHAP1, CHAP3), and the hall's roll (CHAP5). CHAP1: nothing to wire - the window reads the entity's reputation and
+  book as it always did, and online the reputation it reads is the Roll's.
 - `scenes/world.js` (the streets) - the living world's read of the sheet and the Notice Board's hall writs (CHAP2,
   CHAP5).
 - `scenes/exterior.js` (the fixed city) - no online, so no Roll: flagged by name, DFU's guilds as today.
@@ -386,10 +405,11 @@ is Mac's to overrule.
 | Guild factions on the Roll | 22 (4 guilds, 8 temples, 10 orders) | 3.1 |
 | Writ delivered, reputation | +2 | 3.3 |
 | Quest success, reputation | +5 (DFU's), failure 0 online | 3.3 |
-| Quest claims | 3 a character a UTC day a guild group | 3.3 |
-| Claimed gain ceiling | 15 a guild faction a character a UTC day | 3.3 |
+| Claimed gain ceiling | 15 a guild faction a character a UTC day (`ROLL_GAIN_DAY_MAX`; CHAP1 folded the first draft's 3 quests a day into it) | 3.3 |
+| A claim's line | 1 to 200 either way (`ROLL_DELTA_MAX`) | 3.3 |
+| A claim's pace | at most one a minute (`ROLL_CLAIM_MS`), asked again after 30 seconds doubling to 15 minutes | 3.3 |
 | Receipt, reputation | +1 a guild | 3.3 |
-| Customs reputation cap | 40 | 3.6 |
+| Customs reputation cap | 40 (`ROLL_CUSTOMS_CAP`), for every realm character made from `ROLL_EPOCH_S` - 1,791,417,600, 2026-10-08 00:00 UTC | 3.6 |
 | Writs an account a UTC day | 3, hall and Court together (`COURT_WRITS_PER_DAY`) | 4 |
 | Receipt writ's own Marks | 0 | 4 |
 | Writ supply | `6 x max(1, ceil(active / 100))`, x0.5 Failing, x1.5 Thriving | 4 |
@@ -408,3 +428,44 @@ is Mac's to overrule.
 | Event weights | Calm 30, Schism 15, Succession 10, Crackdown 10, Rivalry 15, Decline 10, Ascendancy 10 | 7 |
 | Rivalry's swing | 10 Strength | 7 |
 | Crackdown's shut line | Strength 30 | 7 |
+
+---
+
+## CHAP1 - the Roll, as built (2026-10-07, Mac: "Continue")
+
+The first slice: a realm character's standing with Daggerfall's guilds moves to the account service. Section 3 carries
+the law and every place this slice narrowed it (BUILT, CHAP1).
+
+- **The leaf.** `src/systems/guildFactions.js` - no imports - holds DFU's four guild ids (`GUILD_FACTION_IDS`), the
+  divines (`DIVINES`), the orders (`ORDERS`) and the reputation's bounds (`MIN_REPUTATION`, `MAX_REPUTATION`).
+  `guilds.js` builds GUILDS on it; `guildVariants.js` and `factionRep.js` hand its tables on. ONE DFU MEMBER, ONE
+  EXPORT: each was written once before and is written once now, in a home the account service can import (its graph
+  stops at the leaf; `guilds.js`'s reaches the skills and the prefs).
+- **The law.** `src/net/npcChapterLaw.js`: the twenty-two (`ROLL_FACTIONS`), the day's ceiling and its credit
+  (`rollCredit` - a loss whole, a gain under 15 a faction a UTC day, the day counting what moved), the seed and its
+  cap by age (`rollSeedCapOf`, `rollSeedOf`), the shapes, the adoption (`rollAdopt` - the service's number plus
+  whatever moved while the claim was out) and the memberships off both books (`rollMembersOf`).
+- **The service.** `server-account/src/npcRoll.js` over migration `0088_npc_roll`: `POST /v1/chapters/roll` reads the
+  Roll, seeding it the first time from the save's standing (twenty-two rows and a head, one batch, each INSERT OR
+  IGNORE); `POST /v1/chapters/claim` credits what moved, in one batch whose first statement moves the head's `seq` on
+  and whose every other write stands only at that `seq` under the claim's id - a lost race writes nothing and says
+  `roll-busy`, a claim already taken is answered `repeat`. Every act names a realm character of the session's account,
+  standing, under the playing tab's lease. A realm character's delete takes its head, rows and record. Behind
+  `CHAPTERS_OPEN` (`server-account/wrangler.toml`), shipped `dev`: the developers' characters first, everyone else's
+  standing still the save's until the line says `on`. The service is `acct93`; deploy it before the site. No relay
+  change.
+- **The playing tab.** `src/net/npcRollTracker.js`, built in `scenes/world.js` online for a realm character alone and
+  ticked in the online frame beside Renown's: the first read carries the seed and adopts the answer over the save's
+  standing (`setReputation`, DFU's own door); then what moved is claimed at most once a minute, a claim the network lost
+  is sent again as it was, a shut Roll or a lost lease ends the asking, and the page's going sends the last claim by
+  `keepalive`. A gain the day's ceiling cut is said: "Your standing with the Mages Guild can rise no further today."
+  `systems/realmSaves.js` gained one read-only getter, the session's lease.
+- **Pins.** `test/chap1_roll.test.js`, 19 tests: the twenty-two and the leaf as the one home; the credit, the seed and
+  the shapes against literals; the service over the real migrations - the switch at off, dev and on, the seed's cap
+  either side of the epoch, a second seed refused, the day's bound and its rollover, the record line by line, a repeat,
+  a lost race, the tenure, the lease, a stranger, a tombstone, the delete; the tab against a fake door - the seed, the
+  minute, the cut said, a lost claim sent again unchanged, a shut Roll, a membership claimed alone, the page's last
+  claim; and the wiring. `tools/mutants/chap1.json`: 26 mutants, 26 dead - one (CHAP1-TAB-RESEND) survived the first
+  run, because the pin compared the last call with itself when no new call had been made, and the pin now counts the
+  calls. Sixteen tests that pin the service's version moved to `acct93` with it.
+

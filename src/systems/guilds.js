@@ -65,6 +65,7 @@ import { SKILLS, permanentSkillValue } from './skills.js';
 import { getReputation, setReputation } from './factionRep.js';   // RR1: the underworld guilds' join floor
 import { GUILD_GROUPS, FACTION_TYPES } from '../formats/factionFile.js';
 import { dayOfYear } from './gameDate.js';   // S28: DaggerfallDateTime.DayOfYear
+import { GUILD_FACTION_IDS } from './guildFactions.js';   // CHAP1: the four ids' one home, a leaf the account service reads
 
 /** Internal_Strings "nonMember". Guild.GetTitle returns the PLAYER'S
  *  NAME for a non-member; three subclasses override that with this
@@ -116,7 +117,7 @@ export const GUILDS = Object.freeze({
   FightersGuild: {
     name: 'FightersGuild',
     guildGroup: GUILD_GROUPS.FightersGuild,
-    factionId: 41,
+    factionId: GUILD_FACTION_IDS.FightersGuild,
     // FGH2H (2026-09-24, Mac: "change the fighter guild requirements where it
     // allows bare handed"): HandToHand joins DFU's seven (FightersGuild.cs's
     // guildSkills) and Giantish stays - a DEPARTURE, rowed in the Port-Ledger
@@ -133,7 +134,7 @@ export const GUILDS = Object.freeze({
   MagesGuild: {
     name: 'MagesGuild',
     guildGroup: GUILD_GROUPS.MagesGuild,
-    factionId: 40,
+    factionId: GUILD_FACTION_IDS.MagesGuild,
     skills: [SKILLS.Alteration, SKILLS.Destruction, SKILLS.Illusion,
       SKILLS.Mysticism, SKILLS.Restoration, SKILLS.Thaumaturgy],
     rankTitles: ['Apprentice', 'Journeyman', 'Evoker', 'Conjurer', 'Magician',
@@ -151,7 +152,7 @@ export const GUILDS = Object.freeze({
     name: 'ThievesGuild',
     neverExpels: true,          // AllowGuildExpulsion (ThievesGuild.cs:128-131)
     guildGroup: GUILD_GROUPS.GeneralPopulace,
-    factionId: 42,
+    factionId: GUILD_FACTION_IDS.ThievesGuild,
     skills: [SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.Lockpicking, SKILLS.Pickpocket,
       SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
     rankTitles: ['Apprentice', 'Journeyman', 'Filcher', 'Crook', 'Robber',
@@ -171,7 +172,7 @@ export const GUILDS = Object.freeze({
     name: 'DarkBrotherhood',
     neverExpels: true,          // AllowGuildExpulsion (DarkBrotherhood.cs:132-135)
     guildGroup: GUILD_GROUPS.DarkBrotherHood,
-    factionId: 108,
+    factionId: GUILD_FACTION_IDS.DarkBrotherhood,
     skills: [SKILLS.Archery, SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.CriticalStrike,
       SKILLS.Daedric, SKILLS.Destruction, SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
     rankTitles: ['Apprentice', 'Journeyman', 'Operator', 'Slayer', 'Executioner',

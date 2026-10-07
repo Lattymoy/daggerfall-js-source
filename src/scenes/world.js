@@ -602,12 +602,14 @@ import { createSeatLock, SEAT_NOTICE, SEAT_MID_TEXT, PLAY_HERE_LABEL } from '../
 import { readAccount, buyInsignia, equipTitle, equipAura, adoptIdentity as adoptSessionIdentity } from '../net/accountClient.js';   // WB9g: the Broker's insignia - the account's wardrobe, its sale and its wearing, and my own screen's word of it
 import { ownAura } from '../systems/ownGlyphs.js';   // WB9g: the aura at my own feet - the service's last word, kept on the stored session
 import { INSIGNIA, insigniaRefusal } from '../net/insignia.js';   // WB9g
-import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
+import { accountTokenMinter, storedSession, accountPlayBeat, muteAccount, serviceBase, accountRefusalText, accountDuels, accountRenown, accountRoll, accountHomes, accountDecor, accountGuilds, accountGates, accountMarks, accountBoard, accountProf, accountRaids, accountMarket, accountWrits, accountSeats, accountSerpents } from '../net/accountClient.js';   // ACC1d: the hello's signed word, minted per connection from the account session this device holds   // ACC4: and the beat that counts time played
 import { parseModCommand, runModCommand, mutedText, mutedNotices } from '../net/moderation.js';   // MOD1: /mute and /unmute, and the line a muted player reads
 import { startPlayClock } from '../net/playClock.js';   // ACC4: time played, knocked from here and measured by the account service's clock
 import { renownKillXp, renownQuestXp, renownPartyXp, renownText } from '../net/renown.js';   // RENOWN1: what a kill and a quest are worth, and the party's bonus (RENOWN3: read against my Renown)
 import { createRenownTracker, setRenownKillHandler, renownFoeLevel, renownAnswer, renownFoeCarry, renownStruckAt } from '../net/renownTracker.js';   // RENOWN1: what this character earns online, carried to the account service
 import { setRenownLayer } from '../systems/renownLayer.js';   // RENOWN1: the level's health and magicka, on top of Daggerfall's while online
+import { createRollTracker, rollValuesOf } from '../net/npcRollTracker.js';   // CHAP1: the Roll - this realm character's standing with Daggerfall's guilds, the account service's
+import { rollMembersOf } from '../net/npcChapterLaw.js';   // CHAP1: the memberships a claim carries
 import { setHudRenown } from '../ui/hudRenown.js';   // RENOWN4: my own Renown and its bar, under the vitals
 import { pickRegionHubs, hubAtMapId, hubArrivalLine } from '../systems/regionHubs.js';   // HUB1: every region's main city, its hub
 import { deriveTownSeats, seatAtMapId } from '../systems/townSeats.js';   // SEAT1a: every palace a seat, the three capitals crowns
@@ -720,7 +722,7 @@ import { morrowindDataCount, morrowindDataGeneration, getBytes } from './dataSou
 // Q4-v: THE QUEST BRIDGE - the machine goes live in this host.
 import { createQuestBridge, tokensToRows } from './questBridge.js';
 import { loadQuestPack } from './questData.js';
-import { ensureFactionRep, getReputation, changeReputation } from '../systems/factionRep.js';
+import { ensureFactionRep, getReputation, changeReputation, setReputation } from '../systems/factionRep.js';
 import { changeLegalRep, legalRepOf, CRIMES, setCrimeCommitted, lowerRepForCrime, setCrimeRepFactor } from '../systems/court.js';   // the region's LegalRep: the status box, the quest actions, the crimes (REP1 retired :498-511's levy)
 import { isEquipped, unequipSlot, unequipItem } from '../systems/equip.js';
 import { ServiceFlowWindow } from '../ui/guildServiceWindows.js';
@@ -19216,6 +19218,31 @@ export async function bootWorld(canvas, renderer, params, status) {
     // AUDIT RENOWN1 UI-4: a refusal that ends reporting is SAID - the sentences were written and nothing ever showed them
     onStop: (error) => tradeSay(`${accountRefusalText(error)} This character is earning no Renown.`),
   }) : null;
+  // CHAP1 (bible/11-Multiplayer/Chapters-Arc.md 3; Mac: "Server-owned"): THE ROLL - online, this realm character's
+  // standing with Daggerfall's guilds (the twenty-two guild factions and its memberships) is the account service's. Read
+  // as it comes online - the save's standing its seed, taken once - and written over the save's; then what DFU's own law
+  // moves here is claimed back, and the service's answer adopted (net/npcRollTracker.js). Built only online and only for
+  // a realm character, as the Renown tracker is; offline, and while CHAPTERS_OPEN keeps the account out, the save keeps
+  // it exactly as DFU does.
+  const rollTracker = onlineOn && realmSession ? createRollTracker({
+    io: accountRoll({ fetch: (u, i) => globalThis.fetch(u, i), storage: appStorage() }),
+    character: () => realmSession.id,
+    lease: () => realmSession.lease,
+    read: () => rollValuesOf(playerEntity?.factionRep),
+    write: (values) => {
+      const store = playerEntity?.factionRep;
+      if (store) for (const [f, rep] of Object.entries(values)) setReputation(store, Number(f), rep);
+    },
+    members: () => rollMembersOf(playerEntity?.guildMemberships),
+    onCeiling: (factions) => {
+      for (const f of factions) {
+        const name = String(playerEntity?.factionRep?.dict?.get(f)?.name ?? 'the guild').replace(/^The /, 'the ');
+        townTalk.say(`Your standing with ${name} can rise no further today.`);
+      }
+    },
+    onStop: (error) => { if (error !== 'chapters-closed') console.warn('[roll] the Roll stopped:', error); },   // shut: the save keeps it, quietly
+  }) : null;
+  if (rollTracker) globalThis.addEventListener?.('pagehide', () => { rollTracker.leave(); });   // CHAP1: what moved since the last claim goes as the page does
   // SIGIL1: THE DRINK - the weapon in my hand takes every point of Renown XP I earn with it (a kill, a quest), and a
   // rise to a new stage is said (systems/sigil.js drinkSigil: nothing while my Renown is unknown). Past the hour's cap
   // the service keeps nothing, and the sigil drinks nothing either - as the page last heard it.
@@ -24137,6 +24164,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     gateFrame();   // WB1: the Oblivion Gate's omen - its line when a new moment comes, before the dead return (the omen speaks to the dead too)
     serpentFrame();   // SERPENT1: the sea serpent's sighting (to the dead too), and on the street its fight and its bar
     renownTracker?.tick();   // RENOWN1: what this character earned, to the account service when a report is due
+    rollTracker?.tick();   // CHAP1: this character's standing with the guilds - read once, then what moved claimed when due
     peerMenuFrame();   // PEERMENU1: the bind's hold timer
     peerFxFrame();   // PEERFX1: the others' blows and hurts, played
     // REALM-DOOR: the relay shut its door on this tab's token as naming no realm character of its account - the character
