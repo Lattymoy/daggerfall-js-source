@@ -33,7 +33,7 @@
 // (undefined or null) is Hard, the law at full strength. A tier that
 // repays (Casual) keeps one more field, `borrowed`: the stamina each need
 // took, returned when that need is met.
-import { feltTemperature, temperatureWord } from './temperature.js';
+import { feltTemperature, temperatureWord, wardrobeCtx } from './temperature.js';
 import { drinkFrom, findDrink, waterskinName, DRINK_RELIEF, TEMPLATE, isFood, foodStage, FOOD_STAGE, rotFoodDay, rotWeight, ROT_DAY_MINUTES } from './food.js';
 import { STAT_KEYS_ORDER, maxFatigue, liveStat } from '../statMods.js';
 import { HARD_RULES } from './difficulty.js';
@@ -351,7 +351,7 @@ export function survivalMinute(entity, now, env = {}, deps = {}) {
   const rules = deps.rules ?? HARD_RULES;   // AUDIT SURV-TIERS: null is no rules too - survivalRules() answers null for Off
   const say = sinks.say ?? deps.say ?? null;
   const items = entity.items ?? [];
-  const ctx = { ...(deps.ctx ?? {}), wet: s.wet, hasWater: !!findDrink(items) };
+  const ctx = { ...(deps.ctx ?? {}), wet: s.wet, hasWater: !!findDrink(items), ...wardrobeCtx(deps.ctx, entity._mods) };   // LOOT14/LOOT15: the wardrobe's warmth, weatherproofing and degrees
   const temp = feltTemperature(env, worn, ctx);
   const resting = !!env.resting;
   const sleeping = env.sleeping ?? null;

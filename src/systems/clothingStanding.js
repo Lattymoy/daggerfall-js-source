@@ -98,6 +98,11 @@ export const DRESS_EFFECT = Object.freeze({
   [DRESS_CLASS.Religious]: Object.freeze({ groups: Object.freeze([0, 0, 1, 0, 0]), temple: 3 }),
 });
 export const DRESS_CAP = 10;
+/** LOOT14 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 6): THE WARDROBE'S STANDING - a garment's `standing`
+ *  lines and a Legendary's Royal Bearing, summed by the loot ladder's fold onto `entity._mods.standing` (read here as a
+ *  field, so this stays a leaf; empty with the ladder off) - held to its own cap a group, BESIDE the dress's: a fine
+ *  outfit already at the dress's +10 with the Nobility still feels a Courtier's line. */
+export const GEAR_STANDING_CAP = 10;
 
 const CLOTHING_GROUPS = new Set([ITEM_GROUPS.MensClothing, ITEM_GROUPS.WomensClothing]);
 const groupOf = (item) => (typeof item.group === 'string' ? ITEM_GROUPS[item.group] : item.group);
@@ -132,7 +137,9 @@ export function dressStanding(entity) {
     for (let g = 0; g < DRESS_GROUP_COUNT; g++) groups[g] += fx.groups[g];
     temple += fx.temple;
   }
-  return { groups: groups.map(clamp), temple: clamp(temple) };
+  const gear = entity?._mods?.standing;   // LOOT14
+  const capGear = (v) => Math.max(-GEAR_STANDING_CAP, Math.min(GEAR_STANDING_CAP, Number(v) || 0));
+  return { groups: groups.map((v, g) => clamp(v) + capGear(gear?.[g])), temple: clamp(temple) };
 }
 
 /** The magic-round hook: fold the dress into the (just-cleared) live

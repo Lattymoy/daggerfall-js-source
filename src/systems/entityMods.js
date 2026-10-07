@@ -31,6 +31,13 @@
 //   skills{id}      a skill, by id (skillValue)
 //   resist{element} a saving-throw bonus per element name
 //   weightMult      a fraction on the carrying capacity
+//   standing[5]     LOOT14: standing with the five social groups (clothingStanding.js reads it into reactionMods)
+//   warmth          LOOT14: degrees of clothing warmth (survival/needs.js hands it to the felt temperature)
+//   dry             LOOT14: % less of the weather's soaking (the same)
+//   coldDegrees     LOOT15: degrees the cold is felt less (as a spell's frost resistance is, in degrees)
+//   heatDegrees     LOOT15: degrees the heat is felt less
+//   fatigueLess     LOOT15: % less of the minute's fatigue drain (scenes/shared.js fatigueLossMultiplierFor)
+//   fallLess        LOOT15: % less of a fall's damage (scenes/shared.js applyFallLanding)
 // and, for the item in hand rather than the wearer:
 //   weapon damage   registerWeaponDamageMod - a function over the
 //                   weapon's rolled damage (calculateAttackDamage)
@@ -45,13 +52,20 @@ import { enchantArmorMod, enchantArmorDisplayMod, enchantSkillMod, enchantWeight
 import { addEquipChangeListener } from './equip.js';
 import { NUMBER_BODY_PARTS } from './armorMaterials.js';   // one home for the seven (audit24's one-home ratchet)
 export { NUMBER_BODY_PARTS };
+/** LOOT14/LOOT15 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md sections 6 and 7): the social groups a standing
+ *  channel counts (FactionFile.SocialGroups 0..4), and the wardrobe's plain numbers, summed fold by fold. */
+export const STANDING_CHANNELS = 5;
+export const WARDROBE_CHANNELS = Object.freeze(['warmth', 'dry', 'coldDegrees', 'heatDegrees', 'fatigueLess', 'fallLess']);
 /** The empty record every fold may answer; frozen, shared. */
 export const EMPTY_MODS = Object.freeze({
   armorParts: Object.freeze(new Array(NUMBER_BODY_PARTS).fill(0)),
   stats: Object.freeze({}), skills: Object.freeze({}), resist: Object.freeze({}), weightMult: 0,
+  standing: Object.freeze(new Array(STANDING_CHANNELS).fill(0)),
+  ...Object.fromEntries(WARDROBE_CHANNELS.map((k) => [k, 0])),
 });
 /** A fresh, writable record for a fold to fill. */
-export const newMods = () => ({ armorParts: new Array(NUMBER_BODY_PARTS).fill(0), stats: {}, skills: {}, resist: {}, weightMult: 0 });
+export const newMods = () => ({ armorParts: new Array(NUMBER_BODY_PARTS).fill(0), stats: {}, skills: {}, resist: {}, weightMult: 0,
+  standing: new Array(STANDING_CHANNELS).fill(0), ...Object.fromEntries(WARDROBE_CHANNELS.map((k) => [k, 0])) });
 
 const _folds = new Map();
 /** Register a fold by name: `fn(entity) -> mods` (any channel may be
@@ -99,6 +113,8 @@ export function computeEntityMods(entity) {
     for (const [k, v] of Object.entries(m.skills ?? {})) out.skills[k] = (out.skills[k] ?? 0) + (v | 0);
     for (const [k, v] of Object.entries(m.resist ?? {})) out.resist[k] = (out.resist[k] ?? 0) + (v | 0);
     out.weightMult += Number(m.weightMult) || 0;
+    if (Array.isArray(m.standing)) for (let g = 0; g < STANDING_CHANNELS; g++) out.standing[g] += Number(m.standing[g]) || 0;   // LOOT14
+    for (const k of WARDROBE_CHANNELS) out[k] += Number(m[k]) || 0;
   }
   entity._mods = out;
   return out;

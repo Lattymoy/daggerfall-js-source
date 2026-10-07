@@ -1244,6 +1244,9 @@ export function applyNightStars(bmp, random) {
   return bmp;
 }
 
+/** LOOT15: the most the wardrobe takes off a fall's damage and off the minute's fatigue drain (%). */
+export const WARDROBE_FALL_MOST = 75;
+export const WARDROBE_FATIGUE_MOST = 50;
 /** AcrobatMotor.CheckFallingDamage (:214-222) + PlayerHealth
  *  .ApplyPlayerFallDamage, verbatim: past fallingDamageThreshold the
  *  fall bills HPPerMetre * (distance - threshold), truncated; past
@@ -1274,7 +1277,10 @@ export function applyFallLanding(entity, distance, { hurt = null, sound = null, 
   // -1 the streaming world reports off terrain (indoors, dungeons).
   if (inOutdoorWater) return;
   if (distance > FALL_DAMAGE_THRESHOLD) {
-    const dmg = Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD));
+    // LOOT15 (bible/06-Systems/Loot-II-Arc.md section 7): the Pilgrim's Sandals' Long Road - `fallLess` off the bill, the
+    // loot ladder's fold's (entity._mods; empty with the ladder off), at most WARDROBE_FALL_MOST
+    const less = Math.min(WARDROBE_FALL_MOST, Math.max(0, Number(entity?._mods?.fallLess) || 0)) / 100;
+    const dmg = Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD) * (1 - less));
     // AUDIT 21 (hosts lane, F6): the no-`hurt` arm went through the ONE
     // damage door now, so a fatal fall outdoors or in a building raises the
     // death screen instead of leaving you walking around at 0 HP.
@@ -1810,7 +1816,9 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
 export function fatigueLossMultiplierFor(entity) {
   // PROF9 (Professions-Arc.md 35): an Orchard Tart's stamina - every minute's drain divided by 1.2 while it lasts
   // (systems/cookItems.js dishStaminaFactor), laid over the career's own
-  const tart = dishStaminaFactor(entity);
+  // LOOT15 (bible/06-Systems/Loot-II-Arc.md section 7): and the Pilgrim's Sandals' Long Road - the loot ladder's fold's
+  // `fatigueLess` (entity._mods; empty with the ladder off), at most WARDROBE_FATIGUE_MOST off, laid over the tart's
+  const tart = dishStaminaFactor(entity) * (1 - Math.min(WARDROBE_FATIGUE_MOST, Math.max(0, Number(entity?._mods?.fatigueLess) || 0)) / 100);
   if (!hasSpecialAbility(entity?.career, SPECIAL_ABILITY.Athleticism)) return 1.0 * tart;
   return (entityImprovedAthleticism(entity) ? 0.8 : 0.9) * tart;
 }

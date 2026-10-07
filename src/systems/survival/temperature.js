@@ -160,6 +160,20 @@ export function weatherWetGain(weather, { cloak = false, hood = false, insideBui
   return cloak ? (hood ? row[2] : row[1]) : row[0];
 }
 
+/** LOOT14 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 6): the most of the weather's soaking a wardrobe's
+ *  weatherproofing turns aside (%) - a river, a wade and a dive soak you whatever you wear. */
+export const GEAR_DRY_MOST = 75;
+/** LOOT14/LOOT15: what the loot ladder's fold put on the wearer (`entity._mods` - empty with the ladder off), as the
+ *  felt temperature's context reads it: a garment's warmth and weatherproofing, and a Legendary's degrees, laid on the
+ *  host's own frost and fire resistance (spells, in degrees). */
+export function wardrobeCtx(ctx, mods) {
+  if (!mods) return {};
+  return {
+    gearWarmth: Number(mods.warmth) || 0, gearDry: Number(mods.dry) || 0,
+    frostResist: (ctx?.frostResist ?? 0) + (Number(mods.coldDegrees) || 0),
+    fireResist: (ctx?.fireResist ?? 0) + (Number(mods.heatDegrees) || 0),
+  };
+}
 /** The environment's wetness: under water you are soaked at once,
  *  wading soaks the legs. */
 export const environmentWet = ({ submerged = false, wading = false } = {}) =>
@@ -232,11 +246,12 @@ export function hoodUp(item) {
 export const CLOTHES_BREATHE_ABOVE = 10;
 /** Clothing warmth: chest, legs, feet and the cloaks, less the wetness,
  *  never below nothing; a hood in strong sun cools the head. */
-export function clothingWarmth(worn, { wet = 0, natural = 0, inSunlight = false } = {}) {
+export function clothingWarmth(worn, { wet = 0, natural = 0, inSunlight = false, gear = 0 } = {}) {
   const chest = at(worn, EQUIP_SLOTS.ChestClothes), legs = at(worn, EQUIP_SLOTS.LegsClothes), feet = at(worn, EQUIP_SLOTS.Feet);
   let warmth = (chest ? CHEST_WARMTH[chest.templateIndex] ?? 0 : 0)
     + (legs ? LEGS_WARMTH[legs.templateIndex] ?? 0 : 0)
-    + (feet && feet.group !== 'Armor' ? FEET_WARMTH[feet.templateIndex] ?? 0 : 0);
+    + (feet && feet.group !== 'Armor' ? FEET_WARMTH[feet.templateIndex] ?? 0 : 0)
+    + Math.max(0, Number(gear) || 0);   // LOOT14: a garment's warmth lines - a lining, halved in the heat and eaten by the wet as the cloth is
   const { cloaks, hood } = cloakState(worn);
   for (const c of cloaks) {
     const v = CLOAK_WARMTH[c.variant ?? 0] ?? CLOAK_WARMTH[0];
@@ -290,7 +305,7 @@ export function feltTemperature(env = {}, worn = null, ctx = {}) {
   const wet = Math.min(Math.max(0, ctx.wet ?? 0), WET_MAX);
   let natTemp = resistTemperature(natural, ctx);
   if (env.insideDungeon) natTemp = dungeonTemperature(natTemp);
-  const clothes = clothingWarmth(worn, { wet, natural, inSunlight: !!env.inSunlight });
+  const clothes = clothingWarmth(worn, { wet, natural, inSunlight: !!env.inSunlight, gear: ctx.gearWarmth });
   const armour = armorWarmth(worn, { natural, wet, inSunlight: !!env.inSunlight });
   const race = RACE_TEMP[ctx.raceId] ?? 0;
   const water = Math.trunc(wet / 20);
@@ -303,6 +318,7 @@ export function feltTemperature(env = {}, worn = null, ctx = {}) {
     clothes: clothes.warmth, clothesDry: clothes.pure, armour: armour.warmth, metal: armour.heat, race, water, fire,
     cloak: cloakState(worn).cloak, hood: clothes.hood, wet,
     wetGain: weatherWetGain(env.weather, { cloak: cloakState(worn).cloak, hood: clothes.hood, insideBuilding: env.insideBuilding, insideDungeon: env.insideDungeon })
+        * (1 - Math.min(GEAR_DRY_MOST, Math.max(0, Number(ctx.gearDry) || 0)) / 100)   // LOOT14: weatherproofing turns the weather's soaking aside
       + environmentWet(env),
   };
 }
