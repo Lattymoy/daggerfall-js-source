@@ -9,6 +9,9 @@
 //     negated - then the axis is transformed to the lowest vertex Y of the
 //     model (+= -bottomY). DFU stops these combining (loot containers); for
 //     us they are ordinary placements.
+//   - Floor models (ObjectType 5): the port's one departure here (FIELD
+//     BUGS 2026-10-07b TOWER-FLOORS) - (X, -Y, Z) * scale, then stood on
+//     their lowest vertex like a prop. DFU places them like any model.
 //   - IsBadInteriorModel: DFU's classic-data repair table - 27 block/record
 //     combos where a misplaced model 31000 overlaps stairs and traps the
 //     player upstairs. Filtered identically.
@@ -42,6 +45,22 @@ import { modelScaleVector } from './rmbLayout.js';   // WD1: RMBLayout.GetModelS
 // because DFU gates the ladder (:492) and the whole furniture-action
 // chain (:500) on the SAME clause.
 export const PROP_MODEL_TYPE = 3;
+/** FIELD BUGS 2026-10-07b TOWER-FLOORS (Jacob: "The two Daggerfall Castle courtyard tower interiors are very bugged.
+ *  Everything inside them seems to be shifted up several meters including stairs, and there is open void in some
+ *  spots"). Classic writes ObjectType 5 at the height of the floor the model stands on: 1,250 of its 1,433 interior
+ *  records are flat planes (1000, 1100, 1300, 1500, 1700, 1800, and 2700 - a ceiling, facing down), and every one of the
+ *  1,433 sits on a storey (YPos a multiple of 129). The other 183 are models centred on their own origin - room shells
+ *  such as 31024 and 31031, the two-storey stair 31023, the hall 28703 - in seven records alone: Castle Daggerfall's two
+ *  courtyard towers (CUSTAA05 #0 and #1), the castle's three dungeon-door wings (#4-#6, never entered as rooms) and two
+ *  House2 rooms of blocks no location places (LIBRAM00 #7, BOOKAS00 #8). Written as ObjectType 13, each of those models
+ *  is put at its centre with its lowest vertex on a storey (31024 at YPos -63, half its 126), in every one of its uses;
+ *  written as 5, at its storey, DFU stood it half its height under that (DaggerfallInterior.cs:433-436) - a tower
+ *  storey's furniture, lights and markers 1.6 m over its floor, the stair 3.2 m under its own, the room's door 1.6 m
+ *  under the street's. So DFU carries the castle's broken towers (the DFWorkshop thread "CUSTAA05.RMB - Restored Tower
+ *  Buildings' Interior"). Stood on its lowest vertex, a model stands on its storey and a plane stays where it lay (2700's
+ *  lowest vertex is 0.1 mm under it). AUDIT FB1007b F1: the hall 28703 of the two unplaced rooms is written off even
+ *  that convention - a storey high, and at its stair shaft's X/Z - and is left as written: no player can enter them. */
+export const FLOOR_MODEL_TYPE = 5;
 /** DaggerfallInterior's action doors: model 9000 plus the record's door model index, of five (AddActionDoors). HOME-DOORS
  *  reads the same five as the doors an owner may hang in a doorway (systems/decorDoorways.js). */
 export const DOOR_MODEL_BASE_ID = 9000;
@@ -103,6 +122,16 @@ export function isBadInteriorModel(blockIndex, recordIndex, modelIdNum) {
   return records !== undefined && records.includes(recordIndex);
 }
 
+/** The lowest vertex Y of a model (DaggerfallInterior.cs:423-428's `bottom`) - the prop's anchor, and TOWER-FLOORS'. */
+function lowestY(model) {
+  const verts = model.positions;
+  let bottomY = verts[1];
+  for (let i = 4; i < verts.length; i += 3) {
+    if (verts[i] < bottomY) bottomY = verts[i];
+  }
+  return bottomY;
+}
+
 /** DaggerfallInterior.AssignBlockData's refusal (DaggerfallInterior.cs:388-389): a building subrecord whose interior
  *  holds no 3D model cannot be laid out - TransitionInterior says "This house has nothing of value." (PlayerEnterExit.cs
  *  :719-730). FIELD BUGS 2026-10-05 CRYPT-SALE: the one law the layout refuses by and the house market asks of a door.
@@ -154,13 +183,13 @@ export function layoutInterior(dfBlock, blockIndex, recordIndex, getModel) {
     let px, py, pz;
     if (obj.objectType === PROP_MODEL_TYPE) {
       // Props axis needs to be transformed to lowest Y point.
-      const verts = model.positions;
-      let bottomY = verts[1];
-      for (let i = 4; i < verts.length; i += 3) {
-        if (verts[i] < bottomY) bottomY = verts[i];
-      }
       px = obj.xPos * GLOBAL_SCALE;
-      py = obj.yPos * GLOBAL_SCALE + -bottomY;
+      py = obj.yPos * GLOBAL_SCALE + -lowestY(model);
+      pz = obj.zPos * GLOBAL_SCALE;
+    } else if (obj.objectType === FLOOR_MODEL_TYPE) {
+      // TOWER-FLOORS: the storey it is written at, under its lowest vertex.
+      px = obj.xPos * GLOBAL_SCALE;
+      py = -obj.yPos * GLOBAL_SCALE + -lowestY(model);
       pz = obj.zPos * GLOBAL_SCALE;
     } else {
       px = obj.xPos * GLOBAL_SCALE;

@@ -435,7 +435,7 @@ export class PlayerMotor {
    *  step is a teleport). See eyeAt's snap guard. */
   static SNAP_SPAN = 2;
 
-  constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }, { jumpBoost = null, enhancedJumping = null, climbing = null, carriedWeight = null, parkour = null } = {}) {
+  constructor(collider, stats = { speed: 50, running: 30, swimming: 30 }, { jumpBoost = null, enhancedJumping = null, climbing = null, carriedWeight = null, parkour = null, travelling = null } = {}) {
     this.collider = collider;
     this.stats = stats;
     this.jumpBoost = jumpBoost;    // () => AcrobatMotor jumpSpeedMultiplier (systems/skills owns the formula)
@@ -469,6 +469,13 @@ export class PlayerMotor {
     // parkourDeps), mounted like the climb's. No deps, or a switch that
     // answers no, and not one ray is cast: the classic lane is untouched.
     this.parkour = parkour;
+    // CLIMB-TRAVEL (FIELD BUGS 2026-10-07b, Shabalako: "Overworld Travel can be used to exploit climbing levelling"):
+    // () => the host's fast travel is running (a journey, or the keys' travel under the view - scenes/world.js
+    // wildTravelling). At x60 a fixed step is a second of game time, so every climb timer runs out within a step or two:
+    // a walk into a wall took it and let go four or five times a real second and rolled Climbing thirty to fifty, and a
+    // rock was climbed a storey a step and fallen from. Nothing climbs at a journey's pace - both lanes refuse the wall
+    // as they refuse it to a rider (climbing.js's abort ladder, the enhanced lane's `unheld`). None: never travelling.
+    this.travelling = travelling;
     this._pkMove = null;         // the move in flight (player/parkour.js planMantle/planVault), null between moves
     this.parkoured = null;       // 'mantle' | 'vault' for the frame a move starts (the fatigue/tally consumer, as `jumped`)
     this.climbEvents = [];       // CLIMB4: the frame's climb events ({ type, ... }) - the feel's and the sounds' (climbFeel.js, climbSounds.js)
@@ -1649,6 +1656,7 @@ export class PlayerMotor {
       grounded: this.grounded,
       levitating: this.levitating,
       riding: isRiding(this.transportMode),   // TR1: ClimbingMotor :398 - no climbing from a saddle
+      travelling: !!this.travelling?.(),   // CLIMB-TRAVEL: nor at a journey's pace
       touchingSides: probe.touching,
       horizontalPos: [this.pos[0], this.pos[2]],
       // ":318-320: ground directly below too close for climbing" -
@@ -1730,6 +1738,10 @@ export class PlayerMotor {
 
   /** CLIMB2: on the wall - hanging from a lip, or free-climbing a face. */
   get onWall() { return !!this._wall; }
+  /** AUDIT FB1007b C3: a hold a save (or a re-anchor) carried, waiting for the next step to take it again (restoreFall) -
+   *  the body is on the wall in all but that step, and a host that read it as on foot meanwhile sped the keys' travel up
+   *  under it, and the travel let the hold go. */
+  get holdPending() { return !!this._pkRestore; }
   /** CLIMB4: the move in flight (read-only: its kind, its clock `t`), or null - the feel's and the sounds'. */
   get climbMove() { return this._pkMove; }
   /** AUDIT CLIMB-ARC F3/F8: the body's OWN way on the wall, a frame at a time: the render-frame feet (bodyFeetAt - the
@@ -1829,7 +1841,7 @@ export class PlayerMotor {
     }
     if (this.grounded || this.swimming || this.sunk || this._wall) this._pkLeap = null;
     const on = this._pkOn = !!pk.enabled?.();
-    const unheld = this.levitating || this.riding || this.paralyzed;   // nothing holds a wall from these
+    const unheld = this.levitating || this.riding || this.paralyzed || !!this.travelling?.();   // nothing holds a wall from these (CLIMB-TRAVEL: nor at a journey's pace)
     if (this._pkRestore) {   // AUDIT CLIMB2 H1: the hold a save (or a re-anchor) carried, taken again where the body was put
       const r = this._pkRestore;
       this._pkRestore = null;
