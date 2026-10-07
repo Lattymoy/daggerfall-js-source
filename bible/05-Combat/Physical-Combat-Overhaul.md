@@ -400,14 +400,69 @@ can't keep the numbers as is"), and what is left for another pass:
   cannot be told from a classic piece the player enchanted.
 - **Not this change's, for its own pass:** the load's other repairs (DISC21-A's mint, DISC29-B's names, RARITY-WEAR)
   walk the same lists, so they miss the stores P2 names - a piece is repaired at a later load once it is back in the
-  pack, or never; and customs' walk (`net/realmGoldLaw.js` stashedItemLists) misses a revenant companion's pack.
+  pack, or never; and customs' walk (`net/realmGoldLaw.js` stashedItemLists) misses a revenant companion's pack. DONE
+  in the same pull request, on Mac's word: ITEM-WALK, below.
 
 Checked and found sound: every weapon mint runs through mintCondition (the loot factories, shops, enemies and Roleplay
 & Realism's, quests, the biography, the starting kit, the smith, the spell, the trophy, the spoils, the Broker, the
 Aetheric pieces, the Thunderlock and its pellet, the market's re-mint, the duel, the ocean's re-mint); no weapon reader
 takes a template's hitPoints but the mint, the viewer and the migration, and every other reader takes a share; nothing
-in `src/net` mints a condition, and neither service's bundle reaches a changed file; the templates the fingerprint
+in `src/net` mints a condition, and neither service's bundle reaches a file WEAPON-POOL changed (ITEM-WALK C's, below, is the account service's); the templates the fingerprint
 needs are registered before the first load (save.js reaches thunderlock.js, and Roleplay & Realism's rows are laid at
 every host's start); an equipped weapon is the moved object (the repool runs before the equip table is rebuilt and the
 held enchantments restarted); quickslots keep no condition; `quality` is the smith's alone; furnishings hold furniture
 alone; a guild's shelf holds no weapon a mint gives.
+
+## ITEM-WALK (2026-10-07, Mac: "Do them now within this PR") - the audit's two follow-ups, in the same pull request
+
+AUDIT WEAPON-POOL left two gaps it did not cause for their own pass: the load's other repairs walked the lists the
+weapon migration walked, and customs did not count a sworn revenant's pack. Mac asked for both in this pull request.
+`test/itemwalk.test.js` (5), `tools/mutants/itemwalk.json` (25 of 25 dead).
+
+- **A - one walk of every list a save holds** (`systems/save.js` savedItemLists, heldItemLists). The load's one-time
+  item repairs (DISC21-A's mint, WEAPON-POOL's move, DISC29-B's names, WB12a's Embers, RARITY-WEAR's bases) ran over
+  the pack's lists and customs' walk, and nowhere else. A piece kept anywhere else was repaired only once it was back
+  in the pack and the game loaded again: a weapon by P2's door at its first wear, the others never. Now one walk holds
+  every list: the character's own five (the pack, the wagon, the Materials Bag, the furnisher's deliveries and the
+  repairer's shelf), every list customs reads (`net/realmGoldLaw.js` stashedItemLists), and every other one
+  (heldItemLists):
+  - in each cached scene, the owner's own things set out in a room (`decorOwn`; never a weapon or armour) and a guild's
+    day's Buy shelves (`guildShelves`);
+  - a living foe's kit and a guard's, in the world bag and in a building's half of the save (`interior`);
+  - in the feud's record, what a revenant took;
+  - in the quest block, each quest's item as its Item resource keeps it (`resourceSpecific.item`), and what a Foe
+    resource will hand its spawns (`itemQueue`);
+  - in Project Legacy's record, each member's bequest, the waiting Succession's, and each fallen member's remains, the
+    list as it lies and as it was laid.
+
+  Not walked, because they are pictures of items and not items: a Legacy member's `look` (a paperdoll's recipe of
+  template, group and slot, which DISC21-A would read as an unminted piece) and a set-out piece's descriptor in the
+  room (`decor[].item`).
+
+  One runner (`repairItemLists`) holds the five repairs, and the load runs it over the walk before any host restores
+  from the save. The furnisher's deliveries and a guild's shelves hold nothing any repair touches today; they are in
+  the walk so the next repair reaches them.
+- **B - a bequest and the remains are repaired as they leave the line's record** (`scenes/legacyHost.js`). Project
+  Legacy keeps its record on the device as well as in a save, and plays the newer (`mergeFamily`). A bequest reaches
+  its heir at birth, with no load at all, and the remains open where they lie. The runner now runs on each bequest
+  piece as it is paid (`payEstateOf`) and on a remains list as it opens, before the claim's mark is taken, so opening
+  a list still claims nothing.
+- **C - customs counts a sworn revenant's pack** (`net/realmGoldLaw.js` stashedItemLists). The player stores into a
+  sworn revenant's pack as into a crew hand's (`revenantCompanions.js` packOf), and AUDIT WK-P1 counted the crew's alone:
+  a million gold in the revenant's pack crossed whole. Each sworn, undefeated record's `companion.items` is now counted
+  and taken from as the crew's are, and the account service's first-save gate reads the same walk. A record the load
+  keeps no pack for (not sworn, or defeated) counts nothing. What a revenant took is its own until it falls and is
+  never counted. **Deploy:** the account service bundles `realmGoldLaw.js`, so `account-deploy.yml` redeploys it on
+  merge; it holds no sockets and drops nobody. The relay reaches none of these files.
+
+Recorded, not changed:
+- **A rolled wand set out in a room before RARITY-WEAR** loads on its Amulet, and its piece keeps the Wand's picture and
+  name where it stands. The room draws a piece from its own descriptor and matches the item to it by id alone, so this
+  is only how it looks; taken down, the piece goes and the item comes back as the Amulet it is. An online home's
+  pieces are the account service's, out of a save's reach.
+- **Found beside it, older than this change:** `systems/quest/questRepair.js` goneOnPurpose knows an Item given to a
+  Foe by the same object in the Foe's `itemQueue`, and a load restores the two as separate copies. After a load, the
+  quest repair (`repairActiveQuests`) can place such an item at its marker again, while the foe still carries it.
+
+Re-aimed: `test/disc21.test.js`'s pin on the load's repair line (the walk and the runner), and
+`tools/mutants/audit0929_actions.json`'s D3 record (customs' walk dropped from savedItemLists).

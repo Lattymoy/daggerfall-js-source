@@ -78,7 +78,12 @@ test('DISC21-A: a save made since - the questions\' dagger at 0 with no maxCondi
   // the load door runs it over the pack, the wagon and the repairer's shelf - and (AUDIT PRE-MERGE 0929 D3) every list
   // of the character's own things the save carries beside them, the one walk DISC29-B's name repair takes
   // BAG1 (PIN MOVED): the Materials Bag's list is repaired with the rest (bible/06-Systems/Materials-Bag.md)
-  assert.match(rd('src/systems/save.js'), /const repairLists = \[entity\.items, entity\.wagonItems, entity\.bagItems, entity\.otherItems, \.\.\.stashedItemLists\(snap\)\];[\s\S]*?for \(const list of repairLists\) \{\s+const n = repairUnmintedConditions\(list\);/);
+  // ITEM-WALK (PIN MOVED): the lists are the one walk of everything the save holds (savedItemLists, the entity's own
+  // first), and the repairs one runner (repairItemLists) - test/itemwalk.test.js pins the walk's reach
+  const save = rd('src/systems/save.js');
+  assert.match(save, /const repairLists = savedItemLists\(snap, entity\);[^\n]*\n\s+repairItemLists\(repairLists\);/);
+  assert.match(save, /export const savedItemLists = \(snap, own = snap\) => \[\.\.\.listsOf\(own\?\.items, own\?\.wagonItems, own\?\.bagItems, own\?\.furnishings, own\?\.otherItems\), \.\.\.stashedItemLists\(snap\), \.\.\.heldItemLists\(snap\)\];/);
+  assert.match(save, /export function repairItemLists\(repairLists\) \{[\s\S]*?for \(const list of repairLists\) \{\s+const n = repairUnmintedConditions\(list\);/);
   const snap = JSON.parse(JSON.stringify(snapshotPlayer(P(), { classicMinutes: 100 })));
   snap.sceneCache = { scenes: [{ sceneName: 'DaggerfallInterior [MapID=1, BuildingKey=2]', lootContainers: [{ items: [{ ...stuck, UID: 7 }] }] }] };
   const r = {};

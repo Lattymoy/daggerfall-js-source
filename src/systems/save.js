@@ -632,6 +632,96 @@ export function resolvePendingSpells(entity, spellsByIndex) {
   return got;
 }
 
+/** The feud's and Project Legacy's records in a save's per-mod slot (systems/revenant.js REVENANT_SAVE and
+ *  systems/legacy/family.js LEGACY_VENDOR, pinned equal by test/itemwalk.test.js through the real records - both
+ *  modules reach this one through their imports, so this one names their keys). */
+const REVENANT_VENDOR = 'Revenant';
+const LEGACY_VENDOR = 'ProjectLegacy';
+const listsOf = (/** @type {any[]} */ ...ls) => ls.filter(Array.isArray);
+const arrayOf = (/** @type {any} */ x) => (Array.isArray(x) ? x : []);
+/**
+ * ITEM-WALK A (2026-10-07, Mac: "Do them now within this PR"): EVERY OTHER LIST OF ITEMS A SAVE HOLDS - the lists
+ * customs never reads, because no one's wealth lies in them (net/realmGoldLaw.js stashedItemLists reads the rest):
+ * in each cached scene, the owner's own things set out in a room (DECOR2a `decorOwn`, one item a piece) and a guild's
+ * day's Buy shelves (GUILD-SHELF `guildShelves`); a living foe's kit and a guard's, in the world bag and in a
+ * building's half of the save (`interior`; a dead foe's is a container customs reads); what a revenant took (the
+ * feud's `list[].took`, its own until it falls); each quest's item as its Item resource keeps it (quest/item.js
+ * getSaveData `item`) and what a Foe resource will hand its spawns (quest/foe.js `itemQueue`); and Project Legacy's
+ * bequests (each member's and the waiting Succession's) and remains (each list as it lies and as it was laid). Not its
+ * pictures of items: a member's `look` is a paperdoll's recipe, a piece's `decor[].item` a descriptor.
+ * @param {any} snap
+ */
+function heldItemLists(snap) {
+  const out = [];
+  for (const scene of arrayOf(snap?.sceneCache?.scenes)) {
+    out.push(...listsOf(Object.values(scene?.decorOwn ?? {})));
+    for (const shelf of Object.values(scene?.guildShelves ?? {})) out.push(...listsOf(shelf?.items));
+  }
+  for (const foe of arrayOf(snap?.world?.foes)) if (!foe?.dead) out.push(...listsOf(foe?.items));
+  for (const guard of arrayOf(snap?.world?.guards)) out.push(...listsOf(guard?.items));
+  for (const foe of arrayOf(snap?.interior?.foes)) out.push(...listsOf(foe?.items));
+  for (const guard of arrayOf(snap?.interior?.guards)) out.push(...listsOf(guard?.items));
+  for (const r of arrayOf(snap?.modData?.[REVENANT_VENDOR]?.list)) out.push(...listsOf(r?.took));
+  for (const q of arrayOf(snap?.quest?.machine?.quests)) {
+    for (const res of arrayOf(q?.resources)) {
+      if (res?.resourceSpecific?.item) out.push([res.resourceSpecific.item]);
+      out.push(...listsOf(res?.resourceSpecific?.itemQueue));
+    }
+  }
+  const line = snap?.modData?.[LEGACY_VENDOR];
+  for (const p of arrayOf(line?.people)) out.push(...listsOf(p?.bequest));
+  out.push(...listsOf(line?.pending?.bequest));
+  for (const r of arrayOf(line?.remains)) out.push(...listsOf(r?.items, r?.first));
+  return out;
+}
+/**
+ * ITEM-WALK A: EVERY LIST OF ITEMS A SAVE HOLDS, ONE WALK - the character's own five (`own`'s: the pack, the wagon, the
+ * Materials Bag, the furnisher's deliveries and the repairer's shelf), every list customs reads (stashedItemLists) and
+ * every other (heldItemLists). The load passes the entity it restores as `own`: its copies are the ones the game plays.
+ * @param {any} snap @param {any} [own]
+ */
+export const savedItemLists = (snap, own = snap) => [...listsOf(own?.items, own?.wagonItems, own?.bagItems, own?.furnishings, own?.otherItems), ...stashedItemLists(snap), ...heldItemLists(snap)];
+
+/**
+ * ITEM-WALK (2026-10-07, Mac: "Do them now within this PR"): THE LOAD'S ITEM REPAIRS, ONE RUNNER - each one-time repair a
+ * load makes to the items it reads, over every list in `repairLists`, in place. The load runs it over every list the
+ * save holds (savedItemLists); Project Legacy over what leaves the line's record by no load - a bequest as it is paid,
+ * a fallen member's remains as they open (scenes/legacyHost.js). Each repair leaves a piece it has made right as it
+ * is, so a second run changes nothing.
+ * @param {any[][]} repairLists
+ */
+export function repairItemLists(repairLists) {
+  // DISC21-A: a biography item was minted with no condition until DISC21, and Roleplay & Realism wore the questions'
+  // ebony dagger to 20% of nothing - broken, and undamaged to the repairer. Minted now, by the law it missed.
+  for (const list of repairLists) {
+    const n = repairUnmintedConditions(list);
+    if (n) console.info(`[save] DISC21-A: ${n} item(s) given the condition they were never minted with`);
+  }
+  // WEAPON-POOL: a weapon minted on its row's pool (an iron dagger at 50) moves to the one pool every type shares now,
+  // its condition the same share of it - every list, as the repairs above
+  for (const list of repairLists) {
+    const n = repoolWeaponConditions(list);
+    if (n) console.info(`[save] WEAPON-POOL: ${n} weapon(s) moved to the one condition pool`);
+  }
+  // DISC29-B: a Magic or Rare piece of Roleplay & Realism: Items armour rolled before the fix lost Brigandine, Fur or
+  // Mail from its name (lootRarity.js rarityName) - given back, so the piece a class check refuses says what it is.
+  for (const list of repairLists) {
+    const n = repairRarityNames(list);
+    if (n) console.info(`[save] DISC29-B: ${n} item name(s) given back the word their make wrote`);
+  }
+  // WB12a: the Sigil Stones a save kept under their old name are Deadlands Embers - every list, as the names above
+  for (const list of repairLists) {
+    const n = nameEmbers(list);
+    if (n) console.info(`[save] WB12a: ${n} stone record(s) named Deadlands Embers`);
+  }
+  // RARITY-WEAR (FIELD BUGS 2026-10-01): a Magic, Rare or Legendary piece the spoils minted on a Wand - no slot takes it,
+  // so its tier was read by nothing - moved to its wearable home (lootRarity.js repairRarityBases: the Amulet)
+  for (const list of repairLists) {
+    const n = repairRarityBases(list);
+    if (n) console.info(`[save] RARITY-WEAR: ${n} rolled piece(s) on a base nothing can wear moved to one a slot takes`);
+  }
+}
+
 /** PORTAL1 (AUDIT PORTAL1 U9): how many saves this page has restored - every load, whichever host runs it, passes the one
  *  door below, so a host that must end something at EVERY load (scenes/world.js: the portals standing) asks this count
  *  rather than each branch of each load. */
@@ -714,36 +804,9 @@ export function restorePlayer(entity, snap, spellsByIndex = null) {
   // Come Sail Away's boats and cargoes), repaired in the save itself before the scene cache is restored from it and
   // before the world and the mods' data go back to their hosts. A piece kept in a house chest loaded with the name its
   // make had lost, and kept it once carried out - "pieces you already have are renamed when you load".
-  const repairLists = [entity.items, entity.wagonItems, entity.bagItems, entity.otherItems, ...stashedItemLists(snap)];   // BAG1: and the bag's
-  // DISC21-A: a biography item was minted with no condition until DISC21, and Roleplay & Realism wore the questions'
-  // ebony dagger to 20% of nothing - broken, and undamaged to the repairer. Minted now, by the law it missed.
-  for (const list of repairLists) {
-    const n = repairUnmintedConditions(list);
-    if (n) console.info(`[save] DISC21-A: ${n} item(s) given the condition they were never minted with`);
-  }
-  // WEAPON-POOL: a weapon minted on its row's pool (an iron dagger at 50) moves to the one pool every type shares now,
-  // its condition the same share of it - every list, as the repairs above
-  for (const list of repairLists) {
-    const n = repoolWeaponConditions(list);
-    if (n) console.info(`[save] WEAPON-POOL: ${n} weapon(s) moved to the one condition pool`);
-  }
-  // DISC29-B: a Magic or Rare piece of Roleplay & Realism: Items armour rolled before the fix lost Brigandine, Fur or
-  // Mail from its name (lootRarity.js rarityName) - given back, so the piece a class check refuses says what it is.
-  for (const list of repairLists) {
-    const n = repairRarityNames(list);
-    if (n) console.info(`[save] DISC29-B: ${n} item name(s) given back the word their make wrote`);
-  }
-  // WB12a: the Sigil Stones a save kept under their old name are Deadlands Embers - every list, as the names above
-  for (const list of repairLists) {
-    const n = nameEmbers(list);
-    if (n) console.info(`[save] WB12a: ${n} stone record(s) named Deadlands Embers`);
-  }
-  // RARITY-WEAR (FIELD BUGS 2026-10-01): a Magic, Rare or Legendary piece the spoils minted on a Wand - no slot takes it,
-  // so its tier was read by nothing - moved to its wearable home (lootRarity.js repairRarityBases: the Amulet)
-  for (const list of repairLists) {
-    const n = repairRarityBases(list);
-    if (n) console.info(`[save] RARITY-WEAR: ${n} rolled piece(s) on a base nothing can wear moved to one a slot takes`);
-  }
+  // ITEM-WALK: and every other list the save holds (savedItemLists), by the one runner (repairItemLists)
+  const repairLists = savedItemLists(snap, entity);   // BAG1: and the bag's
+  repairItemLists(repairLists);
   entity.rentedRooms = (snap.rentedRooms ?? []).map((r) => ({ ...r }));   // U39: the rented rooms (pre-U39 saves restore empty)
   // JAN1 (2026-09-18, Janome: CRASH `region 17 is outside the 0 bank accounts`, a softlock at the bank): a pre-B1 save
   // restored an EMPTY table, which is truthy, so worldModes' `??= createBankAccounts` never minted one and every bank

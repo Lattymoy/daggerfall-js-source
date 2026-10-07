@@ -93,8 +93,8 @@
   {
     "name": "AUDIT0929-D3-the-stashes-unrepaired",
     "file": "src/systems/save.js",
-    "old": "  const repairLists = [entity.items, entity.wagonItems, entity.bagItems, entity.otherItems, ...stashedItemLists(snap)];",
-    "new": "  const repairLists = [entity.items, entity.wagonItems, entity.bagItems, entity.otherItems];",
+    "old": ", ...stashedItemLists(snap), ...heldItemLists(snap)];",
+    "new": ", ...heldItemLists(snap)];",
     "tests": [
       "test/disc29_rarity.test.js",
       "test/disc21.test.js"
