@@ -479,5 +479,16 @@ export const CREDITS = Object.freeze({
       vendor: Object.freeze(['immersive-travel']),
       link: 'https://www.nexusmods.com/daggerfallunity/mods/986',
     }),
+    // PI1: demifiend000's items in the world as themselves.
+    Object.freeze({
+      title: 'Physical Items',
+      version: '0.1.29',
+      author: 'demifiend000',
+      what: 'Items in the world as themselves (PI1): a fallen foe\u2019s gear is thrown out round the body and picked up piece by piece, and Shift-clicking an item in your pack drops it in front of you - each wearing its own picture, its Morrowind one when Morrowind data is attached, and the port\u2019s rarity glow. Ported off the mod\u2019s compiled assembly.',
+      terms: 'Ported from the shipped bundle, read off its compiled assembly; it carries no art - see vendor/physical-items/README.md for the permission record.',
+      contact: 'demifiend000, through the Nexus page (daggerfallunity mod 1411)',
+      vendor: Object.freeze(['physical-items']),
+      link: 'https://www.nexusmods.com/daggerfallunity/mods/1411',
+    }),
   ]),
 });

@@ -2047,6 +2047,20 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   //    ui/input.js now passes the code through for a native window,
   //    exactly as townTalk's seam has since G2.
   const droppedLoot = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });
+  // PI1 (Physical Items, scenes/physicalItemsLayer.js): THE DUNGEON'S HALF of the layer - its collider, its searchable
+  // bodies (`corpse:<i>`, the pool's own keys - a dungeon's foe list is never spliced), the pack's wearer, the take's
+  // hooks, the outer host's reveal for a map, and the ROOM's word on a take: a body is the world room's container, so an
+  // item taken off one is published as the quick door's take is (WORLD4 / LOOT-REGEN). Read at the frame.
+  droppedLoot.physical.attach({
+    collider: () => collider,
+    corpses: () => foes.map((f, i) => (lootableBody(f) && f.corpsePos && !f.corpseDisabled ? { entity: f.entity, pos: f.corpsePos, key: `corpse:${i}` } : null)).filter(Boolean),
+    identity: () => playerEntity,
+    getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null,
+    took: (moved, who) => showPickups(moved, who),
+    say: (l) => hudText.add(l),
+    revealMap: opts.revealMap ? () => opts.revealMap() : null,
+    taken: (b) => { if (b?.kind === 'corpse' && b.key) { const q = roomLootKey(b.key); if (q) publishLoot(q); } },
+  });
   preloadInventoryArt({ renderer, fetchBytes, palette });
   preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0/01I0 + the ICON/MASK sheets warm at boot
     .catch((e) => console.warn('[spellbook] classic spellbook art unavailable:', e?.message ?? e));
@@ -2260,6 +2274,9 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       onDrop: (items, icon = null, at = null) => (lastPlayerFeet
         ? droppedLoot.dropPile(items, containerDropPos(at, [...lastPlayerFeet]), null, icon)
         : console.warn('[loot] dropped before the first frame; no ground position yet')),
+      // PI1: Physical Items' shift-drop - each item its own pile, laid out ahead of the player (droppedLoot.js dropPhysical)
+      physicalDropOn: () => droppedLoot.physical.on() && !!lastPlayerFeet,
+      physicalDrop: (items) => droppedLoot.dropPhysical(items, [...lastPlayerFeet], [Math.sin(_fpYaw), 0, Math.cos(_fpYaw)]),
       // WORLD4: what is LEFT goes to the room on the close - the same moment DFU frees an emptied container's flat,
       // and the moment the taking is finished rather than half done
       onClose: () => { onEmptied?.(); if (lootKey) { _lootOpenKey = null; publishLoot(lootKey); } droppedLoot.releaseEmptied(); surfacePlayer(); },   // AUDIT WORLD4 C1: the window is closed before the close's word goes, so the room's next word may land
@@ -9646,6 +9663,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
      *  back here (player/lootStack.js lootPile) - a tab's open, which
      *  quick loot does not take on. */
     takeLoot(key, mode = 'grab', pileKeys = null) {
+      if (droppedLoot.physical.owns(key)) return droppedLoot.physical.pick(key, playerEntity) ? 1 : 0;   // PI1: an item standing as itself is taken on the press
       const [kind, iStr] = key.split(':');
       const i = Number(iStr);
       if (kind === 'droppedTorch') return droppedTorches.activate(key, mode) ? 1 : 0;   // HT1: PickUpLightSource
@@ -9873,6 +9891,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // is still warming cannot mint onto the orphan.
       for (const p of droppedLoot._piles) { p.dead = true; if (p.batch) renderer.destroyBillboardBatch(p.batch); }
       droppedLoot._piles.length = 0;
+      droppedLoot.physical.destroy();   // PI1: and the items standing as themselves - their batches and their pictures
       portals.clear();   // COMPANION-PORTAL: the portals standing own a batch each and leave with the dungeon
       // NT1 (F214): the context minted its own cast engine; a spell in
       // flight at the exit owned a batch nothing else can reach.

@@ -1507,6 +1507,18 @@ export async function bootExterior(canvas, renderer, params, status) {
     if (Number.isFinite(d)) p0[1] -= d;
     return p0;
   };
+  // PI1 (Physical Items, scenes/physicalItemsLayer.js): THE TOWN'S HALF of the layer - world.js's twin: the town's
+  // collider, both corpse pools' bodies, the pack's wearer, the take's hooks. No reveal: this page has no region index
+  // (useHooks' revealMap below says why), so a map lying here comes into the pack whole. Read at the frame.
+  droppedLoot.physical.attach({
+    collider: () => collider,
+    corpses: () => [...exteriorFoes.physicalCorpses(), ...cityGuards.physicalCorpses()],
+    identity: () => playerEntity,
+    getQuest: (uid) => questBridge?.machine?.getQuest?.(uid) ?? null,
+    took: (moved, who) => showPickups(moved, who),
+    say: (l) => townTalk.say(l),
+    revealMap: null,
+  });
   surfacePlayer();   // the probe surface exists from boot (T3b: pickpocket gold reads)
   const _livePersons = [];
   // PERF-TOWN1: world.js's own scratch - see scenes/townScratch.js.
@@ -2815,6 +2827,9 @@ export async function bootExterior(canvas, renderer, params, status) {
     // and, when the window replaced a loot target, that container's
     // own x/z (:710-714).
     onDrop: (items, icon = null, at = null) => droppedLoot.dropPile(items, containerDropPos(at, dropFeet()), null, icon),
+    // PI1: Physical Items' shift-drop - each item its own pile, laid out ahead of the player (droppedLoot.js dropPhysical)
+    physicalDropOn: () => droppedLoot.physical.on(),
+    physicalDrop: (items) => droppedLoot.dropPhysical(items, dropFeet(), [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)]),
     ...extra,
   });
   /** MAC-E's corpse door, and LOOT-STACK's tabs through it - world.js
@@ -5266,6 +5281,8 @@ export async function bootExterior(canvas, renderer, params, status) {
           // other pack arm asks - and on the classic skin it still comes
           // down to the same art.
           else if (dropKey && _dropPick.distance > _dropPick.reach) setMidScreenText(TOO_FAR_AWAY_TEXT);   // MC-2: ActivateLootContainer's (:868-873)
+          // PI1: an item standing as itself is taken on the press (Physical Items' TryPickup) - no window
+          else if (dropKey && droppedLoot.physical.owns(dropKey)) droppedLoot.physical.pick(dropKey, playerEntity);
           else if (dropKey && inventoryDoorReady()) {
             // U8e: a pile under the ray opens the inventory WITH the
             // pile as the remote target (Remove defaults - the OnPush law)

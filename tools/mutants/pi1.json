@@ -1,0 +1,425 @@
+[
+  {
+    "name": "PI1-potion-read-as-its-group",
+    "file": "src/systems/physicalItems.js",
+    "old": "  if (isPotion(item)) return 'Potions';",
+    "new": "  if (false) return 'Potions';",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-arrow-a-weapon",
+    "file": "src/systems/physicalItems.js",
+    "old": "item.templateIndex === TEMPLATES.Arrow ? 'Arrows' : 'Weapons'",
+    "new": "'Weapons'",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-map-other",
+    "file": "src/systems/physicalItems.js",
+    "old": "item.templateIndex === TEMPLATES.Map ? 'Maps' : 'Other Items'",
+    "new": "'Other Items'",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-artifact-not-magic",
+    "file": "src/systems/physicalItems.js",
+    "old": "Artifacts: 'Magic Items',",
+    "new": "Artifacts: 'Other Items',",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-gold-other",
+    "file": "src/systems/physicalItems.js",
+    "old": "Currency: 'Gold',",
+    "new": "Currency: 'Other Items',",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-arrow-height",
+    "file": "src/systems/physicalItems.js",
+    "old": "arrow: 0.32,",
+    "new": "arrow: 0.33,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-clothing-height",
+    "file": "src/systems/physicalItems.js",
+    "old": "clothing: 0.52,",
+    "new": "clothing: 0.5,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-pauldrons-two-keys",
+    "file": "src/systems/physicalItems.js",
+    "old": "105: 'Pauldrons',",
+    "new": "105: 'Left Pauldron',",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-impulse-unclamped",
+    "file": "src/systems/physicalItems.js",
+    "old": "clamp(pct, 0, PI_IMPULSE_MAX_PCT) / 100",
+    "new": "pct / 100",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-override-zero-taken",
+    "file": "src/systems/physicalItems.js",
+    "old": "if (finite(v) && v > 0) overrides.set",
+    "new": "if (finite(v)) overrides.set",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-alpha-127",
+    "file": "src/systems/physicalItems.js",
+    "old": "export const PI_ALPHA_VISIBLE = 128;",
+    "new": "export const PI_ALPHA_VISIBLE = 127;",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-empty-picture-nothing",
+    "file": "src/systems/physicalItems.js",
+    "old": "if (x1 < x0 || y1 < y0) return { x: 0, y: 0, w: width, h: height };",
+    "new": "if (x1 < x0 || y1 < y0) return { x: 0, y: 0, w: 1, h: 1 };",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-size-by-height",
+    "file": "src/systems/physicalItems.js",
+    "old": "const k = worldH / Math.max(visW, visH);",
+    "new": "const k = worldH / visH;",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-depth-half",
+    "file": "src/systems/physicalItems.js",
+    "old": "Math.max(w, h * 0.4)",
+    "new": "Math.max(w, h * 0.5)",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-scatter-nearer",
+    "file": "src/systems/physicalItems.js",
+    "old": "PI_SCATTER = Object.freeze({ min: 0.45,",
+    "new": "PI_SCATTER = Object.freeze({ min: 0.5,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-scatter-lower",
+    "file": "src/systems/physicalItems.js",
+    "old": "max: 0.85, up: 0.65 });",
+    "new": "max: 0.85, up: 0.6 });",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-throw-reach",
+    "file": "src/systems/physicalItems.js",
+    "old": "PI_LAUNCH = Object.freeze({ reach: 0.85,",
+    "new": "PI_LAUNCH = Object.freeze({ reach: 0.8,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-nudge",
+    "file": "src/systems/physicalItems.js",
+    "old": "nudge: 0.08,",
+    "new": "nudge: 0.1,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-nudge-scaled",
+    "file": "src/systems/physicalItems.js",
+    "old": "const k = fresh ? impulse : 1;",
+    "new": "const k = impulse;",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-ring",
+    "file": "src/systems/physicalItems.js",
+    "old": "PI_SPIRAL = Object.freeze({ ahead: 1.1, ring: 0.78,",
+    "new": "PI_SPIRAL = Object.freeze({ ahead: 1.1, ring: 0.8,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-golden",
+    "file": "src/systems/physicalItems.js",
+    "old": "golden: 2.399963140487671,",
+    "new": "golden: 2.4,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-overlap-no-margin",
+    "file": "src/systems/physicalItems.js",
+    "old": "overlap: 0.1 });",
+    "new": "overlap: 0 });",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-bounce",
+    "file": "src/systems/physicalItems.js",
+    "old": "drag: 0.9, bounce: 0.35,",
+    "new": "drag: 0.9, bounce: 0.3,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-bounce-threshold",
+    "file": "src/systems/physicalItems.js",
+    "old": "bounceThreshold: 2,",
+    "new": "bounceThreshold: 1,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-settle-sooner",
+    "file": "src/systems/physicalItems.js",
+    "old": "settleSq: 0.0025, settleS: 0.5,",
+    "new": "settleSq: 0.0025, settleS: 0.2,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-drag",
+    "file": "src/systems/physicalItems.js",
+    "old": "gravity: 9.81, dt: 0.02, drag: 0.9,",
+    "new": "gravity: 9.81, dt: 0.02, drag: 0,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-shoulder-speed",
+    "file": "src/systems/physicalItems.js",
+    "old": "pad: 0.04, speed: 0.45,",
+    "new": "pad: 0.04, speed: 0.5,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-shoulder-fast-too",
+    "file": "src/systems/physicalItems.js",
+    "old": "PI_SEPARATION = Object.freeze({ maxAcross: 0.65,",
+    "new": "PI_SEPARATION = Object.freeze({ maxAcross: 1.5,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-rim-magic",
+    "file": "src/systems/physicalItems.js",
+    "old": "PI_RIM = Object.freeze({ magic: 0.3,",
+    "new": "PI_RIM = Object.freeze({ magic: 0.35,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-rim-off-worn",
+    "file": "src/systems/physicalItems.js",
+    "old": "  if (!lootRarityOn()) return null;\n  const tier = rarityOf(item);",
+    "new": "  const tier = rarityOf(item);",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-transport-refused-silently",
+    "file": "src/systems/physicalItems.js",
+    "old": "(item?.group === 'Transportation' ? { text: CANNOT_REMOVE_ITEM_TEXT } : null)",
+    "new": "null",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-lock-ignored",
+    "file": "src/systems/physicalItems.js",
+    "old": "  if (lockRefuses(item, 'drop')) return { refusal: { text: lockedText(name()) } };",
+    "new": "",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-floor-unasked",
+    "file": "src/systems/physicalItems.js",
+    "old": "groundRefusal: dropRefusal?.() ?? null,",
+    "new": "groundRefusal: null,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-every-category-shown",
+    "file": "src/systems/physicalItems.js",
+    "old": "settings?.enemyDrops !== false && !settings?.disabled?.has(itemCategory(item))",
+    "new": "settings?.enemyDrops !== false",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-every-body-fresh",
+    "file": "src/systems/physicalItems.js",
+    "old": "return t !== undefined && at - t <= PI_FRESH_MS;",
+    "new": "return true;",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-layer-fresh-always",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "const fresh = !g && diedRecently(entity, now());",
+    "new": "const fresh = !g;",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-layer-unpresented",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "    presentItem(item, true);\n",
+    "new": "",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-room-untold",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "        try { host.taken?.(b); }",
+    "new": "        try { void b; }",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-window-take-unseen",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "if (!want.has(it) || p.dead) { retire(p); g.proxies.delete(it); }",
+    "new": "if (p.dead) { retire(p); g.proxies.delete(it); }",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-piles-never-presented",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "presents: (pile) => { const p = on() ? pileProxies.get(pile) : null; return !!p && p.pic !== 'none'; },",
+    "new": "presents: () => false,",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-drop-unlifted",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "return [at[0], at[1] + PI_SPIRAL.lift, at[2]];",
+    "new": "return at;",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-off-still-standing",
+    "file": "src/scenes/physicalItemsLayer.js",
+    "old": "if (!on()) { if (proxies.size) this.clear(); return; }",
+    "new": "if (!on()) return;",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-save-forgets-physical",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "items: p.items.map((it) => ({ ...it })), ...(p.physical ? { physical: true } : {}) };",
+    "new": "items: p.items.map((it) => ({ ...it })) };",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-restore-drops-again",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "...(s.physical ? { physical: true, settled: true } : {}) };   // PI1: a shift-drop lies where it was saved",
+    "new": "...(s.physical ? { physical: true } : {}) };   // PI1: a shift-drop lies where it was saved",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-layer-unticked",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "flatAnims.tick(dt); physical.frame(dt, piles.filter((p) => p.physical === true && alive(p)));",
+    "new": "flatAnims.tick(dt);",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-line-counted-twice",
+    "file": "src/scenes/lootLines.js",
+    "old": "bestRarity(f.own ? f.items : f.items.filter((it) => !isPresented(it)))",
+    "new": "bestRarity(f.items)",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  },
+  {
+    "name": "PI1-puppet-body-shown",
+    "file": "src/scenes/corpseMarker.js",
+    "old": "if (!isCorpse(e) || e.corpseDisabled || e.puppet || !e.corpseMarker) return;",
+    "new": "if (!isCorpse(e) || e.corpseDisabled || !e.corpseMarker) return;",
+    "tests": [
+      "test/pi1_physicalitems.test.js"
+    ]
+  }
+]

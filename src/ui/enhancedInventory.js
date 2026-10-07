@@ -119,7 +119,8 @@ import {
   storeCapacityOf,   // COMPANION-WEIGHT: a storage's own weight limit
   planBagToggle, hasMaterialsBag,   // BAG1: the Materials Bag, a list beside the wagon's
 } from '../systems/inventorySession.js';
-import { bagStoreRefusal, bagMayLeave } from '../systems/materialsBag.js';   // BAG1: only materials go in the bag; AUDIT2 H11: and a loaded one stays
+import { bagStoreRefusal, bagMayLeave } from '../systems/materialsBag.js';
+import { shiftDrop } from '../systems/physicalItems.js';   // PI1: Physical Items' shift-drop, one law for both packs   // BAG1: only materials go in the bag; AUDIT2 H11: and a loaded one stays
 import { BAG_KG_LIMIT } from '../net/bagLaw.js';
 import { STORE_FILTER_KINDS, filterStore, storeFilterOptions, freshStoreFilter } from './storeFilter.js';   // WAGON-FILTER: the wagon, the storage and the bag, filtered
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all
@@ -1572,6 +1573,21 @@ function stow(item) {
   render();
 }
 
+/** PI1: THE SHIFT-DROP - the pack's piece into the world as itself (systems/physicalItems.js shiftDrop: the ground's
+ *  guards, then the whole stack onto the host's own `physicalDrop`). Its refusals are this pack's; a map is read as a
+ *  Remove's is (F156). */
+function physicalDrop(item) {
+  notice = null;
+  const r = shiftDrop(item, { items: deps.items?.() ?? [], entity: deps.entity, getQuest: deps.getQuest ?? null, dropRefusal: deps.dropRefusal ?? null, drop: (list) => deps.physicalDrop?.(list) });
+  if (r.refusal) return refuse(r.refusal);
+  if (r.map) { use(item, deps.items?.() ?? []); return; }
+  audio.playOneShot(r.sound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);   // DoTransferItem's own cue, as stow's
+  if (qty.item === item) qty = { item: null, text: '' };
+  if (picked === item) picked = null;
+  refresh();
+  render();
+}
+
 /** REMOTE -> LOCAL, through the same ladder. */
 function take(item) {
   notice = null;
@@ -2462,6 +2478,10 @@ function itemRow(item, from = 'local') {
       stow(item);
       return;
     }
+    // PI1 (Physical Items - systems/physicalItems.js shiftDrop): Shift on a pack row with no store of the player's
+    // beside it drops the piece in the world as itself (LocalItemLeftClickPrefix [IL_0528]: any remote target but a
+    // reward tray). SHIFT-STOW keeps its stores - it was here first and it is the player's own deposit.
+    if (from === 'local' && e?.shiftKey && !session.chooseOne && deps.physicalDropOn?.()) { physicalDrop(item); return; }
     // DBLEQUIP: the pack's second click on the same piece wears it (or lights it); the loot side's click already takes
     if (from === 'local' && equipByDoubleClick(secondClick(item, item, e))) return;
     // AUDIT 26: "Send click to quest system" (:2027-2037) - the FIRST

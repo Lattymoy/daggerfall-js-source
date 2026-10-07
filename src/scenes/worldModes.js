@@ -714,6 +714,18 @@ export function createWorldModes(host) {
    *  NO pixel key - that argument is `TrackLooseObject`, and DFU puts
    *  it behind `!IsPlayerInside`. */
   const interiorDropped = createDroppedLoot({ renderer, getTexture, uploadRecordFrame });
+  // PI1 (Physical Items, scenes/physicalItemsLayer.js): THE ROOM'S HALF of the layer - the room's collider, the room's
+  // foes' bodies (the pool lives as long as the interior does), the pack's wearer, the take's hooks and the outer host's
+  // reveal for a map. Read at the frame.
+  interiorDropped.physical.attach({
+    collider: () => player.collider ?? null,
+    corpses: () => interiorFoes?.physicalCorpses?.() ?? [],
+    identity: () => playerEntity,
+    getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null,
+    took: (moved, who) => showPickups(moved, who),
+    say: (l) => say(l),
+    revealMap: host.revealLocation ? () => host.revealLocation('readMap') : null,
+  });
   // HT1: the interior's dropped-torch pool - the room's, destroyed on the way in and the way out, cached with the scene
   const interiorTorches = createDroppedTorches({
     renderer, audio, getTexture, uploadRecordFrame, collider: () => player.collider ?? null,
@@ -907,6 +919,10 @@ export function createWorldModes(host) {
       return interiorDropped.dropPile(items, containerDropPos(at, interiorDropFeet()), null, icon);
     },
     dropRefusal: () => visitorDropRefusal(),
+    // PI1: Physical Items' shift-drop onto THIS room's floor (never the street's pool the builder's own hooks name);
+    // a visitor's floor refuses it in the window as it refuses the drop (dropRefusal)
+    physicalDropOn: () => interiorDropped.physical.on(),
+    physicalDrop: (items) => interiorDropped.dropPhysical(items, interiorDropFeet(), [Math.sin(cam.yaw), 0, Math.cos(cam.yaw)]),
     openCharSheet: openInteriorSheet,   // AUDIT 27h A1: the pack's F5 crosses over to this building's page, not the street's
     ...extra,
     onClose: () => { interiorDropped.releaseEmptied(); onClose?.(); },
@@ -7491,6 +7507,7 @@ export function createWorldModes(host) {
         return true;
       }
       if (key.startsWith('hearth:')) { interiorCamps.activate(key, getInteractionMode(), plaqueActionFor(key)); return true; }   // HEARTH1: name it, or cook on it - AUDIT REST II H2: the plaque's lit row, as the other hosts pass it
+      if (interiorDropped.physical.owns(key)) { interiorDropped.physical.pick(key, playerEntity); return true; }   // PI1: an item standing as itself is taken on the press
       if (key.startsWith('droppedLoot:')) {
         // ID1: the pile the player dropped in this room. Activating a
         // container opens the inventory WITH it as the remote target

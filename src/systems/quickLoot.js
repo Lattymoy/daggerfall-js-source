@@ -392,6 +392,19 @@ export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQue
   }
   const item = quickLootItemAt(key, items);
   if (!item) return null;
+  return takeOneItem(playerEntity, items, item, say, { getQuest, took });   // PI1: the one-item take, one home (below)
+}
+
+/**
+ * PI1 (Physical Items - scenes/physicalItemsLayer.js): ONE ITEM, NO WINDOW. The press on an item lying in the world as
+ * itself takes it through this file's one-item door (`takeThrough`: the quest click, planTake's summoned refusal and
+ * carry check, gold into the purse) - the mod's TryPickup (vendor/physical-items, [IL_847c]) is DFU's own transfer
+ * rules, and these are the port's reading of them. No switch and no armed key: the item is the press's target.
+ * Answers the item moved, QUICK_LOOT_REFUSED (the refusal said), or null for a map - the caller's (planTake's map arm
+ * reads it, never moves it). Quick loot's own one-row take is this (quickLootTake above): one law for one item.
+ */
+export function takeOneItem(playerEntity, items, item, say = () => {}, { getQuest = null, took = null } = {}) {
+  if (!playerEntity || !Array.isArray(items) || !items.includes(item)) return null;
   _tookSound = null;
   const moved = [];
   const got = takeThrough(playerEntity, items, item, getQuest, moved);
