@@ -24,6 +24,9 @@
 //   - LOOT17 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 9):
 //     THE HONE - a line taken up its own band, never lower (lootRarity.js
 //     honeAffix), the price doubling with every hone on the piece.
+//   - LOOT20 (section 12): THE SOCKETS - one of DFU's eight gems from the
+//     pack set in a piece's empty socket for gold (lootRarity.js setGem),
+//     and unset, the gem shattering.
 //
 // The window (ui/reforgeWindow.js) and the pack card's Salvage button
 // (ui/enhancedInventory.js) draw and ask; everything they do is here.
@@ -32,6 +35,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { lootRarityOn, reforgeableLines, reforgeAffix, honeableLines, honeAffix, affixBand } from './lootRarity.js';   // LOOT17: and the hone
+import { GEM_IDS, gemOf, hasSocket, socketGem, setGem, unsetGem } from './lootRarity.js';   // LOOT20: the sockets
 import { welkyndShards, isWelkyndShard, WELKYND_SHARD } from './gateSpoils.js';
 import { isBound } from './itemBound.js';
 import { isLocked } from './itemLock.js';
@@ -175,6 +179,63 @@ export function honePiece(item, index, player, rolls = Math.random) {
   spendShards(player.items, shards);
   deductGold(player, gold);
   return { ok: true, line, price };
+}
+// ── LOOT20: the sockets ──────────────────────────────────────────────
+/** What setting a gem costs, the gem besides. */
+export const SET_GEM_PRICE = 100;
+/** A gem item the setting may take: of its kind, unlocked and not worn - the shards' own law (a gem is a jewel a slot
+ *  takes too). */
+const looseGem = (it, gem) => gemOf(it) === gem && !isLocked(it) && !isEquipped(it);
+/** The pack's loose gems, by kind: `{ ruby: 2, ... }`. */
+export const gemsHeld = (items) => Object.fromEntries(GEM_IDS.map((g) => [g, (Array.isArray(items) ? items : []).reduce((n, it) => n + (looseGem(it, g) ? (it.stackCount ?? 1) : 0), 0)]));
+/** Take one loose gem of a kind out of a pack (a stack shrinks, a last one goes). Answers whether it could. */
+export function takeGem(items, gem) {
+  for (let i = items.length - 1; i >= 0; i--) {
+    const it = items[i];
+    if (!looseGem(it, gem)) continue;
+    if ((it.stackCount ?? 1) > 1) it.stackCount -= 1; else items.splice(i, 1);
+    return true;
+  }
+  return false;
+}
+/** What either socket press asks of a piece first, or null: 'off', 'not' (no socket), 'unknown', 'worn'. */
+function socketWork(item) {
+  if (!lootRarityOn()) return 'off';
+  if (!hasSocket(item)) return 'not';
+  return !itemIsIdentified(item) ? 'unknown' : isEquipped(item) ? 'worn' : null;
+}
+/** Why a gem may not be set in a piece now, or null: socketWork's, 'set' (a gem is in it - unset it first), 'nogem'
+ *  (none of that kind loose in the pack), 'gold'. */
+export function setGemRefusal(item, gem, player) {
+  const work = socketWork(item);
+  if (work) return work;
+  if (socketGem(item)) return 'set';
+  if (!GEM_IDS.includes(gem) || !(gemsHeld(player?.items)[gem] > 0)) return 'nogem';
+  if (totalGoldAmount(player) < SET_GEM_PRICE) return 'gold';
+  return null;
+}
+/** THE SETTING, MADE: the gem out of the pack, the gold paid, its line on the piece. Answers `{ ok: true, line }` or
+ *  `{ ok: false, reason }` with nothing taken. */
+export function setGemPiece(item, gem, player) {
+  if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };
+  const why = setGemRefusal(item, gem, player);
+  if (why) return { ok: false, reason: why };
+  takeGem(player.items, gem);
+  deductGold(player, SET_GEM_PRICE);
+  return { ok: true, line: setGem(item, gem) };
+}
+/** Why a piece's gem may not be unset now, or null: socketWork's, 'empty' (no gem in it). Unsetting is free - and the
+ *  gem shatters. */
+export function unsetGemRefusal(item) {
+  return socketWork(item) ?? (socketGem(item) ? null : 'empty');
+}
+/** THE UNSETTING, MADE: the gem's line gone, the socket empty, the gem shattered. Answers `{ ok: true, gem }` or
+ *  `{ ok: false, reason }`. */
+export function unsetGemPiece(item, player) {
+  if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };
+  const why = unsetGemRefusal(item);
+  if (why) return { ok: false, reason: why };
+  return { ok: true, gem: unsetGem(item) };
 }
 /** THE REFORGE, MADE: paid (the shards, then the gold - DFU's purse-then-letters law), the line rolled again. Answers
  *  `{ ok: true, line, price }` or `{ ok: false, reason }` with nothing taken. */

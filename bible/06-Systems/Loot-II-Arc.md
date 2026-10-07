@@ -551,3 +551,45 @@ and then none, off); the page (a row a family, "None hidden" refused, the press 
 unfound record leading to its own kin's row and the pack's Codex having none, and the hosts' hooks.
 `tools/mutants/loot19.json` (28, all dead - the first run's survivor was the codex's way to the page, which the test
 walked with a record of the family already lit: it walks another family's now).
+
+### LOOT20 - sockets (2026-10-07)
+
+`src/systems/lootRarity.js`: `SOCKET_PER_MILLE` (a Rare 150, a Legendary 300), `SOCKET_GROUPS` (a weapon, armour, a
+jewel - never a garment: a gem's resistance or a blow's fire is a line of fight, which LOOT14's pool keeps off the
+clothes), `SOCKET_EMPTY` and `socket`, a declared item field (`SOCKET_VALUES`); `GEM_IDS` and `GEM_NAMES` - DFU's eight
+gems in their templates' order, the Gems group's 0 to 7 (`gemOf`) - and `GEM_LINES`, the design's table, each line of a
+kind the port already reads (`elemental`, `leech`, `damage`, `stat`, `resist`). `socketPass` gives a socket after the
+curse's pass at the host door and a body's kit; `setGem` appends the gem's line to `affixes`, marked with its gem, and
+names the socket, the price by the line's worth; `unsetGem` takes it off and the socket is empty - the gem shatters.
+Because the line is a line, every reader reads it - `affixFold` (and LOOT12's cap counts it: a rolled tier's line),
+`lootPowers.js` `linesOf` (a weapon's fire, its leech), `affixWeaponDamage` (a diamond's 6%), the card's compare - and
+the readers that must not, do not: `affixBand` gives it no band (so the hone never takes it), `reforgeableLines` never
+takes it and an Exalted's own line is still the one before it, `isPerfect` reads the rolled lines alone, and it never
+names the piece (set last, after a Rare's own prefix and suffix). `affixLine` says it "Ruby: +10% Fire resistance";
+`socketLine` says an empty one; `validSocket` is the wire's - a socket only on a Rare or a Legendary of its groups,
+empty with no gem's line or set with exactly its own gem's line.
+
+`src/systems/reforge.js`: `SET_GEM_PRICE` (100 gold), `gemsHeld` (loose gems - unlocked, never worn, the shards' own
+law), `takeGem` (a stack shrinks), `setGemRefusal` ('off', 'not', 'unknown', 'worn', 'set', 'nogem', 'gold') and
+`setGemPiece` - the gem out of the pack, the gold paid, the line set; `unsetGemRefusal` ('off', 'not', 'unknown',
+'worn', 'empty') and `unsetGemPiece`, free. `src/ui/reforgeWindow.js` 'sockets', the guild's sixth page: a row a
+socketed piece; an empty socket's card offers each gem the pack holds with its line (a weapon's or a jewel's), a set
+one's its unsetting, asked first ("Shatter it"). `src/scenes/worldModes.js` hands `setGem` and `unsetGem`. The Test
+Room lays a Rare with an empty socket and a Ruby.
+
+Measured through the real door over 40,000 seeded boss corpses: 143 Rares in a thousand socketed and 294 Legendaries
+(the law's 150 and 300), and not one garment.
+
+**What moved.** The guild's tabs read six in LOOT10's pin and LOOT16's, and LR1's Test Room counts take the socketed
+Rare and the Ruby.
+
+Pinned: `test/loot20_sockets.test.js` (5) - the eight gems in their templates' order, their lines by the piece's kind,
+set and unset in place (the line after the piece's own, the socket named, the price by the worth, the name kept, one gem
+at a time, unset as it was); the gem's line through the fold, LOOT12's cap, a weapon's fire, leech and damage and the
+card, and never a roll's (no band, never reforged or honed, a Perfect kept Perfect, an Exalted's own line still its
+own); the door's rates over 40,000 seeded bodies, never a garment (the door's, a kit's, the pass's), the same seed with
+every socket and none the same but the socket, a kit, off; the presses (a locked gem kept, one from a stack, the gold,
+every refusal taking nothing, unset free and the gem gone) and the wire's forgeries; the Sockets page (the socketed piece
+alone, the gems held, set, unset asked first, nothing held, nothing socketed) and the host's hooks.
+`tools/mutants/loot20.json` (51, all dead - the first run's two survivors were pins this suite lacked: a kit's garment
+handed to the pass, and a gem's line marked with another gem).

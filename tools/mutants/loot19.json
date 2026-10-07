@@ -182,8 +182,8 @@
   {
     "name": "LOOT19-the-guild-without-scryers",
     "file": "src/ui/reforgeWindow.js",
-    "old": "export const REFORGE_GUILD_PAGES = Object.freeze(['reforge', 'salvage', 'imprint', 'codex', 'scry']);",
-    "new": "export const REFORGE_GUILD_PAGES = Object.freeze(['reforge', 'salvage', 'imprint', 'codex']);",
+    "old": "export const REFORGE_GUILD_PAGES = Object.freeze(['reforge', 'salvage', 'imprint', 'codex', 'scry', 'sockets']);",
+    "new": "export const REFORGE_GUILD_PAGES = Object.freeze(['reforge', 'salvage', 'imprint', 'codex', 'sockets']);",
     "tests": [
       "test/loot10_codex.test.js",
       "test/loot19_scry.test.js"

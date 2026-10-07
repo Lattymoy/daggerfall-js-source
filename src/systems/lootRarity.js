@@ -1184,6 +1184,7 @@ export function rollLootRarity(items, source, { rolls = Math.random, luck = 50 }
   lastPass(minted, rolls);   // LOOT2: the door's last pass, after every draw it already makes
   const dressed = wardrobePass(items, source, { rolls, luck, find });   // LOOT14: the garments, after all of it
   cursePass([...minted, ...dressed], rolls);   // LOOT16: one Rare or Legendary in twelve cursed, after that
+  socketPass(minted, rolls);   // LOOT20: and a socket, after the curse (a garment never takes one)
   return items;
 }
 /** LOOT14 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 6): THE WARDROBE'S PASS - every eligible garment of
@@ -1271,6 +1272,7 @@ const recordLines = (item) => (item?.legendary ? (legendaryById(item.legendary)?
 export function affixBand(item, i) {
   const a = item?.affixes?.[i];
   if (!validAffix(a)) return null;
+  if (a.gem != null) return null;   // LOOT20: a set gem's line is the gem's, fixed - no roll made it
   if (item.rarity === 'magic' || item.rarity === 'rare') return AFFIX_RANGES[a.id][item.rarity];
   if (item.rarity === 'legendary' && (item.exalted === true || isCursed(item))) {   // LOOT16: and a curse's line
     const own = recordLines(item);
@@ -1282,6 +1284,8 @@ export function affixBand(item, i) {
 export function affixLine(item, i) {
   const label = affixLabel(item?.affixes?.[i]);
   if (!label) return '';
+  const gem = item.affixes[i].gem;
+  if (gem != null) return `${GEM_NAMES[gem] ?? 'Gem'}: ${label}`;   // LOOT20: "Ruby: +3 Fire damage"
   const band = affixBand(item, i);
   return band ? `${label} [${band[0]}-${band[1]}]` : label;
 }
@@ -1293,6 +1297,7 @@ export const asleepNote = (a) => (AFFIX_KINDS[a?.id]?.survival && !survivalOn() 
  *  Magic in eight, no word's worth. */
 export function isPerfect(item) {
   if (item?.rarity !== 'rare' || !Array.isArray(item.affixes) || !item.affixes.length) return false;
+  if (item.affixes.some((a) => a?.gem != null)) return isPerfect({ ...item, affixes: item.affixes.filter((a) => a?.gem == null) });   // LOOT20: a gem's line is no roll's
   return item.affixes.every((a, i) => { const b = affixBand(item, i); return !!b && a.value === b[1]; });
 }
 /** LOOT16: the word a known curse puts before its tier - "Cursed Rare", "Cursed Legendary". */
@@ -1429,6 +1434,94 @@ export function curseLine(item) {
   const param = enchantmentParamName(key, item.cursed.param);
   return param && param !== 'None' ? `${enchantmentName(key)}: ${param}` : enchantmentName(key);
 }
+// ── LOOT20: sockets ─────────────────────────────────────────────────
+/** LOOT20 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 12): A SOCKET - a Rare (this many in a thousand) or a
+ *  Legendary a body or a pile mints may carry one, empty (`socket: 'empty'`, a declared item field), on a weapon, a
+ *  piece of armour or a jewel: never a garment, whose wardrobe pool keeps the fight off the clothes (LOOT14). At the
+ *  Reforge one of DFU's eight gems is set in it (systems/reforge.js setGemPiece) and its LINE joins the piece's own - one
+ *  more line in `affixes`, marked with its gem (`gem`), so every reader of a line reads it (the fold, a weapon's procs
+ *  and damage, LOOT12's cap, the card's compare) - and no roll made it: it has no band, is never reforged or honed, and
+ *  never names the piece (it is set last, after a Rare's own prefix and suffix). Unset, the gem shatters. */
+export const SOCKET_PER_MILLE = Object.freeze({ rare: 150, legendary: 300 });
+let _socketPerMille = null;
+/** Tests only: every tier's chance (per mille; null puts the table back). */
+export function _setSocketForTests(perMille) { _socketPerMille = perMille; }
+export const SOCKET_GROUPS = Object.freeze(['Weapons', 'Armor', 'Jewellery']);
+export const SOCKET_EMPTY = 'empty';
+/** DFU's eight gems, in their templates' order (the Gems group, 0..7), and their names. */
+export const GEM_IDS = Object.freeze(['ruby', 'emerald', 'sapphire', 'diamond', 'jade', 'turquoise', 'malachite', 'amber']);
+export const GEM_NAMES = Object.freeze({ ruby: 'Ruby', emerald: 'Emerald', sapphire: 'Sapphire', diamond: 'Diamond', jade: 'Jade', turquoise: 'Turquoise', malachite: 'Malachite', amber: 'Amber' });
+/** The values a `socket` field may hold. */
+export const SOCKET_VALUES = Object.freeze([SOCKET_EMPTY, ...GEM_IDS]);
+/** A gem's line by the piece's kind - a weapon's blow, every other piece's wearer - each of a kind the port already reads. */
+export const GEM_LINES = Object.freeze({
+  ruby: Object.freeze({ weapon: Object.freeze({ id: 'elemental', param: 'fire', value: 3 }), other: Object.freeze({ id: 'resist', param: 'fire', value: 10 }) }),
+  sapphire: Object.freeze({ weapon: Object.freeze({ id: 'elemental', param: 'frost', value: 3 }), other: Object.freeze({ id: 'resist', param: 'frost', value: 10 }) }),
+  emerald: Object.freeze({ weapon: Object.freeze({ id: 'leech', value: 3 }), other: Object.freeze({ id: 'resist', param: 'poison', value: 10 }) }),
+  diamond: Object.freeze({ weapon: Object.freeze({ id: 'damage', value: 6 }), other: Object.freeze({ id: 'resist', param: 'magic', value: 10 }) }),
+  amber: Object.freeze({ weapon: Object.freeze({ id: 'stat', param: 'speed', value: 4 }), other: Object.freeze({ id: 'stat', param: 'luck', value: 3 }) }),
+  jade: Object.freeze({ weapon: Object.freeze({ id: 'stat', param: 'willpower', value: 4 }), other: Object.freeze({ id: 'stat', param: 'willpower', value: 4 }) }),
+  turquoise: Object.freeze({ weapon: Object.freeze({ id: 'stat', param: 'agility', value: 4 }), other: Object.freeze({ id: 'stat', param: 'personality', value: 4 }) }),
+  malachite: Object.freeze({ weapon: Object.freeze({ id: 'stat', param: 'strength', value: 4 }), other: Object.freeze({ id: 'stat', param: 'endurance', value: 4 }) }),
+});
+/** A gem item's id, or null for anything else. */
+export const gemOf = (item) => (item?.group === 'Gems' && Number.isInteger(item.templateIndex) ? GEM_IDS[item.templateIndex] ?? null : null);
+/** Whether a piece carries a socket, empty or set; the gem set in it, or null. */
+export const hasSocket = (item) => SOCKET_VALUES.includes(item?.socket);
+export const socketGem = (item) => (GEM_IDS.includes(item?.socket) ? item.socket : null);
+/** The line a gem gives a piece, marked with its gem; null for no gem. */
+export function gemLine(item, gem) {
+  const row = GEM_LINES[gem];
+  return row ? { ...(item?.group === 'Weapons' ? row.weapon : row.other), gem } : null;
+}
+/** THE SOCKETS' PASS over the pieces a door just laddered - a Rare 150 in a thousand, a Legendary 300, of the socket's
+ *  groups - after the curse's (law 9: every draw the door made before stays its seed's). Answers the pieces it gave one. */
+export function socketPass(pieces, rolls = Math.random) {
+  const given = [];
+  if (!lootRarityOn()) return given;
+  for (const it of pieces ?? []) {
+    const perMille = SOCKET_PER_MILLE[it?.rarity] == null ? 0 : (_socketPerMille ?? SOCKET_PER_MILLE[it.rarity]);
+    if (!perMille || !SOCKET_GROUPS.includes(it.group) || it.socket != null) continue;
+    if (rolls() * 1000 < perMille) { it.socket = SOCKET_EMPTY; given.push(it); }
+  }
+  return given;
+}
+/** SET A GEM IN A PIECE'S EMPTY SOCKET, in place: its line after the piece's own, the socket named, the price by the
+ *  line's worth. Answers the line, or null (no empty socket, no such gem; nothing changed). */
+export function setGem(item, gem) {
+  if (item?.socket !== SOCKET_EMPTY || !GEM_LINES[gem]) return null;
+  const line = /** @type {any} */ (gemLine(item, gem));
+  item.affixes = [...(Array.isArray(item.affixes) ? item.affixes : []), line];
+  item.socket = gem;
+  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);
+  return line;
+}
+/** UNSET IT, in place: the gem's line gone and the socket empty again - the gem shatters (nothing comes back). Answers
+ *  the gem that was set, or null. */
+export function unsetGem(item) {
+  const gem = socketGem(item);
+  if (!gem) return null;
+  const at = item.affixes.findIndex((a) => a?.gem === gem);
+  const line = at >= 0 ? item.affixes[at] : null;
+  item.affixes = item.affixes.filter((_, i) => i !== at);
+  item.socket = SOCKET_EMPTY;
+  if (line) item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([line], item);
+  return gem;
+}
+/** LOOT20: a socket only as the pass and the Reforge make one (loot.js validLootItem) - none and no gem's line; or on a
+ *  Rare or a Legendary of the socket's groups, empty with no gem's line, or set with exactly its gem's own line. */
+export function validSocket(item) {
+  const gems = (Array.isArray(item?.affixes) ? item.affixes : []).filter((a) => a?.gem != null);
+  if (item?.socket == null) return gems.length === 0;
+  if (!SOCKET_GROUPS.includes(item.group) || (item.rarity !== 'rare' && item.rarity !== 'legendary')) return false;
+  if (item.socket === SOCKET_EMPTY) return gems.length === 0;
+  const want = gemLine(item, item.socket);
+  if (!want || gems.length !== 1) return false;
+  const g = gems[0];
+  return g.gem === item.socket && g.id === want.id && g.param === want.param && g.value === want.value;
+}
+/** The card's word for a socket: "Socket: empty", or null (a set gem's line says itself - "Ruby: ..."). */
+export const socketLine = (item) => (item?.socket === SOCKET_EMPTY ? 'Socket: empty' : null);
 /** LOOT9 (bible/06-Systems/Loot-Arc.md section 11): THE LINES THE REFORGE MAY TAKE - every line of a Magic or Rare
  *  piece; an Exalted Legendary's own extra line (its last - exaltLegendary appends it) and never a record's; and once a
  *  piece has been reforged, that line alone (`reforged`, the line's index). Indices into `affixes`; none for anything
@@ -1438,7 +1531,8 @@ export function reforgeableLines(item) {
   let lines = [];
   if (item?.rarity === 'magic' || item?.rarity === 'rare') lines = list.map((_, i) => i);
   else if (item?.rarity === 'legendary' && item.exalted === true && list.length) lines = [list.length - 1];
-  lines = lines.filter((i) => validAffix(list[i]));
+  if (lines.length === 1 && item?.rarity === 'legendary' && list[lines[0]]?.gem != null) lines = [lines[0] - 1];   // LOOT20: a set gem's line is last - the Exalted's own is the one before it
+  lines = lines.filter((i) => validAffix(list[i]) && list[i].gem == null);   // LOOT20: and a gem's line is never reforged
   return Number.isInteger(item?.reforged) ? lines.filter((i) => i === item.reforged) : lines;
 }
 /** LOOT9: REFORGE ONE LINE, IN PLACE - rolled again from its tier's pool, never a kind (or, for a kind with params, a
@@ -1718,6 +1812,7 @@ export function rarityLines(item, { sigil = true, set = true, lore = true } = {}
       out.push(param && param !== 'None' ? `${enchantmentName(key)}: ${param}` : enchantmentName(key ?? ''));
     }
   }
+  { const s = socketLine(item); if (s) out.push(s); }   // LOOT20: an empty socket says so; a set gem's line said itself above
   { const p = item.legendary ? powerOf(item.legendary) : null; if (p) out.push(powerLine(p)); }   // LOOT5: its power, by name and brief
   { const im = imprintLine(item); if (im) out.push(im); }   // LOOT10: a Rare's imprinted power
   if (sigil) out.push(...setSigilLines(item));   // SIGIL1: what the sigil gives in my hand, and how far it has grown (AUDIT SET U11: a set piece's, asleep in a duel)

@@ -34,6 +34,7 @@
 import {
   corpseSource, rarityRank, lootRarityOn, rarityEligible, rollRarity, applyRarity, lastPass, legendaryFindMult, isGarment, RARITIES,
   cursePass,   // LOOT16
+  socketPass,   // LOOT20
 } from './lootRarity.js';
 import { isGoldPieces } from './inventory.js';
 import { isPotion } from './useItem.js';   // CAP-SUPPLIES: a potion IS the glass bottle - DFU's IsPotion, its one export (AUDIT 625 L7)
@@ -182,6 +183,7 @@ export function capFoeLoot(entity) {
 export function rollCorpseKit(entity, opts = {}) {
   const kit = [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)];   // LOOT14: the garments after every draw the kit made
   cursePass(kit, opts.rolls ?? Math.random);   // LOOT16: a body's own Rares and Legendaries, one in twelve cursed - after all of it
+  socketPass(kit, opts.rolls ?? Math.random);   // LOOT20: and a socket, after the curse
   return kit;
 }
 /** The first arc's kit roll, whole: every piece of the kit but its garments. */

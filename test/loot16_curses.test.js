@@ -348,7 +348,7 @@ test('LOOT16: the temple\'s row - a Cure Disease priest\'s, in the Reforge\'s pl
   on();
   const kids = (n, cls) => (n?.children ?? []).flatMap((c) => [...(c.classList?.contains(cls) ? [c] : []), ...kids(c, cls)]);
   const one = (n, cls) => kids(n, cls)[0] ?? null;
-  assert.deepEqual(REFORGE_GUILD_PAGES, ['reforge', 'salvage', 'imprint', 'codex', 'scry'], 'the guild\'s window never shows the temple\'s page (LOOT19: its scryers\' is its own)');
+  assert.deepEqual(REFORGE_GUILD_PAGES, ['reforge', 'salvage', 'imprint', 'codex', 'scry', 'sockets'], 'the guild\'s window never shows the temple\'s page (LOOT19, LOOT20: its scryers\' and its sockets\' are its own)');
   withDom((dom) => {
     const cursed = known(cursedWith(amulet, T.BadRepWith, 3));
     const unknown = cursedWith(amulet, T.BadReactionsFrom);
