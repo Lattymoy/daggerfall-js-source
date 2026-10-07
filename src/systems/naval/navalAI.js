@@ -80,7 +80,7 @@
 // host forgives the player's stray ball on her (navalHost.js ALLY_STRAY_SHARE). And the bay is gentler: a quarter of
 // the pirates bold (BOLD_SHARE), and a boat lying still grappled only after GRAPPLE_STILL_S.
 
-import { classById, batteryOf, hullBuild, GUNS, HULL, SHIP_CLASSES, buildsStamp, SHIP_TOUGHNESS, playerBatteryWeight } from './navalShips.js';
+import { classById, batteryOf, hullBuild, GUNS, HULL, SHIP_CLASSES, buildsStamp, SHIP_TOUGHNESS, shipBatteryWeight } from './navalShips.js';
 import { mulberry32 } from '../../combat/bloodArt.js';   // SEA-PEACE: the temper's draw (navalShips.js names on the same stream kind)
 import { createShipDamage, SHIP_STATES, STRUCK_AT, HOLED_BONUS, WATERLINE_BAND } from './navalDamage.js';
 import { createGunDeck, aimSolution, reloadSeconds } from './navalGunnery.js';
@@ -517,7 +517,7 @@ export function strikeTime(a, b) {
     const g = GUNS[bat.gun];
     const balls = bat.muzzles.length / sides.length / (reloadSeconds(bat.gun, a.crewShare, a.crewed) + TURN_PER_VOLLEY / Math.max(1, a.turn));
     const hits = balls * hitShare(bat, a.skill, b.hull);
-    const w = a.player ? playerBatteryWeight(a.hull, side) : 1;   // GALLEON-WEIGHT: a player's galleon's broadside, six guns' weight
+    const w = shipBatteryWeight(a.hull, side, !!a.player);   // GALLEON-WEIGHT: a player's galleon's broadside, six guns' weight (SHIPS-2: a carrack's, the mod's seven)
     hull += hits * g.hull * w * (1 + HOLED_BONUS * Math.min(1, WATERLINE_BAND / hullBuild(b.hull).top));   // a low hull is holed at the waterline
     men += (hits * g.crew) / SHIP_TOUGHNESS;   // TOUGHER-SHIPS: a ball's men (navalDamage.js ballMen), as her hull's points
   }

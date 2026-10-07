@@ -329,6 +329,15 @@ export function batteryOf(hull, side) {
  */
 export const playerBatteryWeight = (hull, side) => (MOD_BUILDS[hull] && (side === 'starboard' || side === 'port')
   ? MOD_BUILDS[hull].broadside.length / Math.max(1, hullBuild(hull).broadside.length) : 1);
+/**
+ * SHIPS-2 (2026-10-07): THE BROADSIDE EVERY TUNED DUEL WAS MEASURED WITH, A CAPTAIN'S TOO. A captain's galleon keeps her
+ * five guns' weight (GALLEON-WEIGHT: the duels were measured with them - AUDIT NAV2 F25, Mac's bar); a captain's carrack
+ * - the Pirate Flagship, the Merchant Carrack - throws the mod's carrack's seven from Mac's carrack's five, as a
+ * player's does (playerBatteryWeight's 7/5), for her duels were measured with the mod's seven: at her five guns' weight
+ * the flagship fell from 1.69 to one over the Navy Cutter to 1.2 (the model calling neither) and from 1.79 to 1.27 over
+ * the War Galley. A ship's broadside's weight, `player` hers a player's (mine or a peer's).
+ */
+export const shipBatteryWeight = (hull, side, player) => (player || hull === HULL.Carrack ? playerBatteryWeight(hull, side) : 1);
 /** Every battery a hull carries. */
 export const batteriesOf = (hull) => SIDES.map((s) => batteryOf(hull, s)).filter(Boolean);
 
@@ -359,7 +368,7 @@ export const FACTION_IDS = Object.freeze(Object.keys(NAVAL_FACTIONS));
  * carries a named captain the quest makes its boss.
  */
 export const SHIP_CLASSES = Object.freeze([
-  cls('pirateSloop', 'pirate', HULL.LargeBoat, 'Pirate Sloop', { hullHp: 1.1, sailHp: 1, crew: 10, speed: 4.6, turn: 16, skill: 0.45, range: 55, cargo: 1, minLevel: 1, weight: 5, boarders: 8 }),
+  cls('pirateSloop', 'pirate', HULL.LargeBoat, 'Pirate Sloop', { hullHp: 1.1, sailHp: 1, crew: 10, speed: 4.6, turn: 16, skill: 0.45, range: 50, cargo: 1, minLevel: 1, weight: 5, boarders: 8 }),
   cls('pirateBrig', 'pirate', HULL.SmallShip, 'Pirate Brigantine', { hullHp: 0.9, sailHp: 0.9, crew: 22, speed: 7.6, turn: 9, skill: 0.55, range: 95, cargo: 2, minLevel: 4, weight: 4, boarders: 13 }),
   cls('pirateGalley', 'pirate', HULL.LargeGalley, 'Corsair Galley', { hullHp: 0.85, sailHp: 1, crew: 40, speed: 6.6, turn: 8, skill: 0.5, range: 80, cargo: 2, minLevel: 7, weight: 2, boarders: 13, tactic: 'bow' }),
   cls('pirateFlagship', 'pirate', HULL.Carrack, 'Pirate Flagship', { hullHp: 1.15, sailHp: 1, crew: 34, speed: 6.4, turn: 6, skill: 0.7, range: 110, cargo: 4, minLevel: 9, weight: 1, boarders: 20, flagship: true }),
