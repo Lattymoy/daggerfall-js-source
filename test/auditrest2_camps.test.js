@@ -133,7 +133,9 @@ test('AUDIT REST II H6: a dungeon save carries the camps I left standing outside
   assert.match(rd('src/scenes/dungeonContext.js'), /world: \{ \.\.\.collectWorld\(\), outerCamps: opts\.outerCampsSave\?\.\(\) \?\? null \},/);
   assert.match(rd('src/scenes/worldModes.js'), /outerCampsSave: \(\) => host\.outerCampsSave\?\.\(\) \?\? null,/);
   const w = rd('src/scenes/world.js');
-  assert.match(w, /outerCampsSave: \(\) => camps\.snapshot\(campToNatives\),/);
+  // AUDIT LANDFORMS C1 MOVED THIS PIN: in natives, with the height in DFU's frame (campToRecord - the Landforms row's lift
+  // taken off, so a build without the row reads it as it always did)
+  assert.match(w, /outerCampsSave: \(\) => camps\.snapshot\(campToRecord\),/);
   const branch = w.slice(w.indexOf("} else if (String(extras.locationKey ?? '').startsWith('dungeon:')) {"), w.indexOf("} else if (extras.locationKey && extras.locationKey !== 'world') {"));
   // AUDIT REST III A1 (RE-AIMED): the stand has one home now, the dungeon's own load's too - standSavedOuterCamps
   const stand = w.slice(w.indexOf('function standSavedOuterCamps(extras) {'), w.indexOf('camps.dropOwn(); camps.restore(rows, campFromNatives);') + 60);

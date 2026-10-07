@@ -392,6 +392,25 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
     }
   }
 
+  /** AUDIT LANDFORMS II G1: THE GROUND MOVED UNDER A PIXEL - a rebuild the reference never makes (the road network
+   *  landing, which the landforms cut metres into the land; a late World of Daggerfall pack; the gate's clearing) -
+   *  and what lies in its box [x0, x1) x [z0, z1) rides it by `dy(x, z)`, the ground's own move under it (world.js's
+   *  publish). Left where it lay, a pile hung over a cut or lay buried in a fill - up to 28 m - and the next save kept it so. */
+  function groundMoved(x0, z0, x1, z1, dy) {
+    for (const p of piles) {
+      if (!(p.pos[0] >= x0 && p.pos[0] < x1 && p.pos[2] >= z0 && p.pos[2] < z1)) continue;
+      const d = dy(p.pos[0], p.pos[2]);
+      if (!d) continue;
+      p.pos[1] += d;
+      if (p.batch) {
+        renderer.destroyBillboardBatch(p.batch);
+        p.batch = renderer.createBillboardBatch(p.archive, p.record, p.size, [[p.pos[0], p.pos[1], p.pos[2]]]);
+        p.batch.noShadow = true;   // F2
+        p.batch.frame = 0;
+      }
+    }
+  }
+
   /** PX21c: what a pile HOLDS, by the same key lootTargets emits -
    *  read-only, for the hover plaque. */
   const contents = (key) => piles.find((p) => `droppedLoot:${p.id}` === key && !p.dead)?.items ?? null;
@@ -400,5 +419,5 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
   /** LOOT11 (the Loot arc): the piles a line of light may stand over - a dropped pile, a house's or a camp's treasure - each
    *  its crown and its list, read live (scenes/lootLines.js picks the Rare-or-better). */
   const lootFinds = () => piles.filter((p) => alive(p) && p.items?.length).map((p) => ({ root: lootCrown(p.pos, p.size), items: p.items }));
-  return { contents, dropPile, seedPile, removePile, restorePiles, collectPixel, takePixel, snapshotWorld, restoreWorld, batches, tickFlats, lootTargets, pileFor, activePiles, undrawnPiles, containerSeeded, snapshotScene, releaseEmptied, offsetAll, lootFinds, _piles: piles };
+  return { contents, dropPile, seedPile, removePile, restorePiles, collectPixel, takePixel, snapshotWorld, restoreWorld, batches, tickFlats, lootTargets, pileFor, activePiles, undrawnPiles, containerSeeded, snapshotScene, releaseEmptied, offsetAll, groundMoved, lootFinds, _piles: piles };
 }
