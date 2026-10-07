@@ -1,7 +1,7 @@
 # THE CHAPTERS ARC - Daggerfall's guilds, held online (CHAP0, the design record)
 
-**Status: DESIGN RECORD, opened 2026-10-07. Mac's four calls are taken (the table below); every other line is
-PROPOSED and is Mac's to overrule; nothing is built.** Every claim about today's code was read off the tree at
+**Status: DESIGN RECORD, every question decided (2026-10-07): Mac's four calls (the table below), and the rest by the
+record at his instruction ("You make the best decisions" - section 14); nothing is built. CHAP1 is next.** Every claim about today's code was read off the tree at
 `9ed5a681` and is cited by file and symbol, never by line, so the page survives the next merge.
 
 Its neighbours: `11-Multiplayer/Seats-Arc.md` (SEAT0 - the week, the Season, the Tides and the witnessed influence this
@@ -16,7 +16,7 @@ page reuses rather than rebuilds), `06-Systems/Professions-Arc.md` (PROF0 - Mark
   only modernize it, but also allow for way for replayability and detail. Making it more immersive and tying into the
   world more and maybe even the living world system"
 - "This is mostly with online in mind"
-- His four calls, asked the same day:
+- His four calls, asked the same day (and on the eight left open: **"You make the best decisions"**):
 
 | | The question | Mac's call |
 |---|---|---|
@@ -30,9 +30,9 @@ page reuses rather than rebuilds), `06-Systems/Professions-Arc.md` (PROF0 - Mark
 | Mark | Meaning |
 |---|---|
 | **DECIDED (Mac)** | One of the four calls above. |
-| **PROPOSED** | The record's proposal. Binding on nothing until Mac says so; a slice that builds it records the change here first. |
+| **DECIDED** | The record's decision, made at Mac's instruction ("You make the best decisions"). Binding for the build slices; Mac may overrule any of it, and a slice that changes one records the change here first. |
 | **FACT** | What the tree does today, read off the file named. |
-| **OPEN n** | A call still Mac's, listed in section 14. |
+| **CALL n** | One of the eight calls section 14 decides, with its reason. |
 
 Every number lives in ONE pure law module, src/net/npcChapterLaw.js, to be written with CHAP1 (Appendix A), shared by the client and the
 account service - so balance is an edit to one file, pinned by its own tests.
@@ -109,21 +109,21 @@ account service - so balance is an edit to one file, pinned by its own tests.
 
 ### 3.1 What moves
 
-PROPOSED. For a realm character, the service keeps **the Roll**: the character's memberships in the guild groups
+DECIDED. For a realm character, the service keeps **the Roll**: the character's memberships in the guild groups
 (the mortal and vampire books of `newMembershipStore`), its reputation with each of the twenty-two guild factions, its
 last rank review and its probation. Every other faction - the regions' people, the nobles, the witches, the Daedra -
-stays the save's, as today (OPEN 1).
+stays the save's, as today (CALL 1).
 
 ### 3.2 The layer
 
-PROPOSED. Coming online, the client fetches its Roll and writes it over the entity's `factionRep` rows and
+DECIDED. Coming online, the client fetches its Roll and writes it over the entity's `factionRep` rows and
 `guildMemberships` for those twenty-two ids, as Renown's layer adds its health and magicka. Online, the save's copy of
 those rows is never read; the save may keep writing them (a realm character never loads offline - Realm decision 2), so
 the save's shape is unchanged.
 
 ### 3.3 What moves a reputation
 
-| Source | Trust | Reputation | Cap (PROPOSED) |
+| Source | Trust | Reputation | Cap |
 |---|---|---|---|
 | A hall writ delivered (section 4) | Service-witnessed (the Stores took the units) or relay-signed (a receipt) | +2 with the posting guild | The writ supply and the account's 3 a day |
 | A guild quest succeeded | Client-reported, bounded | DFU's +5 (QFAIL-FREE: a failure costs nothing online) | 3 a character a UTC day a guild group |
@@ -132,35 +132,36 @@ the save's shape is unchanged.
 | Any LOSS of reputation (a crime against a guild, a probation, an expulsion) | Client-reported | DFU's law | None - a client that lies against itself is believed |
 
 - **The spread.** DFU spreads a change to a faction's allies and enemies, and the allies and enemies are FACTION.TXT's,
-  which the service never holds. PROPOSED: the client computes the spread with `factionRep.js`'s own law and reports
-  each touched guild faction's share in the same claim, bounded by the same cap; a spread to a faction outside the
-  twenty-two stays the client's (OPEN 2: the witnessed registry could confirm the twenty-two factions' ally and enemy
-  columns, as Seats-Arc 3.2 confirms a seat).
+  which the service never holds. DECIDED (CALL 2): the client computes the spread with `factionRep.js`'s own law and
+  reports each touched guild faction's share in the same claim; a spread to a faction outside the twenty-two stays the
+  client's. **Every claimed gain is bounded twice**: by its source's cap above, and by **15 a guild faction a character
+  a UTC day** from claims of every kind together (three quests' worth), so a spread cannot carry a lie past what the
+  quests themselves could.
 - **The ledger.** Every change is one row with a source and a reference, unique on both (`npc_rep_events`), so a claim
   replayed is a claim counted once.
 
 ### 3.4 Ranks 0-7 - DFU's law over the server's numbers
 
-PROPOSED. `baseCalculateNewRank` and `updateRank` run unchanged, over the Roll's reputation and the save's skills.
+DECIDED. `baseCalculateNewRank` and `updateRank` run unchanged, over the Roll's reputation and the save's skills.
 FACT: the skills are the client's word until Realm phase 3 checks a save; a lied skill buys a rank that costs no rival
 anything, which law 3 allows. The 28-day gate counts on the shared clock. REP6's probation is kept, and recorded on the
 Roll.
 
 ### 3.5 Ranks 8 and 9 are seats
 
-PROPOSED. A character whose own law would reach rank 8 or 9 holds rank 7 and is **Eligible** until it holds a seat
+DECIDED. A character whose own law would reach rank 8 or 9 holds rank 7 and is **Eligible** until it holds a seat
 (section 6). The rank-8 and rank-9 titles are the guild's own (`guilds.js`'s rank titles; `guildVariants.js`'s for the
 temples and the orders), worn only by a seat's holder.
 
 ### 3.6 Customs and a new character
 
-PROPOSED. A character crossing into the realm through customs keeps its memberships, and its reputation with each
-guild faction is carried capped at **40** (rank 4's need), so an offline grind cannot buy a seat's eligibility (OPEN 3).
+DECIDED. A character crossing into the realm through customs keeps its memberships, and its reputation with each
+guild faction is carried capped at **40** (rank 4's need), so an offline grind cannot buy a seat's eligibility (CALL 3).
 A new realm character starts at DFU's zero.
 
 ## 4. Hall writs - the chapter's work (CHAP2)
 
-PROPOSED. A **chapter** is one guild in one region where that guild keeps at least one hall (the client derives the
+DECIDED. A **chapter** is one guild in one region where that guild keeps at least one hall (the client derives the
 halls from each building's faction id, as `guildHallReveal.js` does, and the service learns the list through the witnessed registry
 as it learned the seats - Seats-Arc 3.2). Each chapter posts writs on the Notice Board of each town it keeps a hall in,
 on the Work tab beside the Court's.
@@ -176,9 +177,12 @@ on the Work tab beside the Court's.
 
 - **Supply**: each chapter posts `chapterWritCount(active, strength)` a UTC day - the Court's
   `6 x max(1, ceil(active / 100))` shape, halved for a Failing chapter and raised half again for a Thriving one.
-- **Pay**: Marks as the Court's writ pays (minted only for a witnessed act - PROF0's law 8), reputation (3.3), and
-  **Merit** (5.1).
-- **Limit**: 3 hall writs an account a UTC day, beside the Court's 3.
+- **Pay** (DECIDED, CALL 8): a **delivery** writ pays Marks as the Court's does (minted only for a witnessed act -
+  PROF0's law 8); a **receipt** writ (a gate, a raid, the serpent) mints no Marks of its own, because the receipt
+  already struck its silver under `MARKS_COMBAT`'s day. Both pay reputation (3.3) and **Merit** (5.1).
+- **Limit** (DECIDED, CALL 8): hall writs and Court writs share **one** allowance - `COURT_WRITS_PER_DAY`, 3 an account
+  a UTC day, whichever board posted them. A hall writ adds no Marks the economy model (PROF0 Appendix C) has not
+  already counted; it changes what the day's writs are for.
 - **Where it is delivered**: the units are the Stores', witnessed; the board they are delivered at is the client's word
   as a guild writ's is today (PROF0 11, AUDIT 31 R6). A delivery earns Merit only where it is witnessed as a seat
   writ's must be (Seats-Arc 4.2); until then it pays Marks and reputation alone.
@@ -187,7 +191,7 @@ on the Work tab beside the Court's.
 
 ### 5.1 Merit
 
-PROPOSED. Merit is counted per character, per chapter, per week - from **witnessed sources alone**: a hall writ
+DECIDED. Merit is counted per character, per chapter, per week - from **witnessed sources alone**: a hall writ
 filled for that chapter, a receipt in that chapter's region while a member. Never from a quest claim.
 
 - **Tenure**: a character in the guild fewer than **7 days** on the Roll earns no Merit (Seats-Arc 4.2's new member).
@@ -198,7 +202,7 @@ filled for that chapter, a receipt in that chapter's region while a member. Neve
 
 ### 5.2 Strength
 
-PROPOSED. Each chapter has a **Strength**, 0 to 100, starting at 50. At each Turning it moves toward what its members
+DECIDED. Each chapter has a **Strength**, 0 to 100, starting at 50. At each Turning it moves toward what its members
 did: `+ min(10, merit / target)` where `target` scales with the region's active accounts, and `- 3` for a week with no
 Merit at all. Between Seasons it moves halfway back toward 50 (as a seat's Standing does - Seats-Arc 9.1).
 
@@ -213,15 +217,16 @@ DFU's own price law stays the base; Strength is a multiplier laid over it online
 
 ### 5.3 The chapter sheet
 
-PROPOSED. `/v1/chapters/list` publishes every chapter: its Strength and band, its seats' holders, its Season's event
+DECIDED. `/v1/chapters/list` publishes every chapter: its Strength and band, its seats' holders, its Season's event
 and that event's standing. The client caches it as it caches the seats' list. It is the one thing the living world
 reads from the service (9).
 
 ## 6. The seats - ranks 8 and 9 (CHAP4)
 
-PROPOSED (DECIDED (Mac): limited, contested seats).
+DECIDED (Mac): limited, contested seats; the shape below is the record's.
 
-- **Per chapter**: one **Master** (rank 9) and three **officers** (rank 8) (OPEN 4).
+- **Per chapter** (CALL 4): one **Master** (rank 9) and three **officers** (rank 8). A seat no Eligible member has
+  Merit for stands **vacant** - it is never filled from below.
 - **Who may hold one**: an Eligible member (3.5) with **14 days** in the guild on the Roll, whose account is at least
   7 days old.
 - **How it is held**: at each Turning, the seats go to the Eligible members with the most Merit at that chapter over
@@ -238,7 +243,7 @@ PROPOSED (DECIDED (Mac): limited, contested seats).
 
 ## 7. Seasons - the chapter's story (CHAP6)
 
-PROPOSED (DECIDED (Mac): seasonal events, driven by players; personal rank carries over).
+DECIDED (Mac): seasonal events, driven by players; personal rank carries over. The events below are the record's.
 
 At the Turning that opens a Season, each chapter draws one event - a pure function of the Season, the chapter's key
 and a salt, as a Tide is (`net/tideLaw.js`) - from weights its last Season moved:
@@ -249,7 +254,7 @@ and a salt, as a Tide is (`net/tideLaw.js`) - from weights its last Season moved
 | **Schism** | 15 | +10 if the Master's seat changed hands twice last Season | Two of the hall's residents stand for the chapter's doctrine. Members back one with their Merit; at the Season's end the winner's doctrine holds the next Season (a perk set in the law module: cheaper training, or a deeper shelf, or more writs) |
 | **Succession** | 10 | +10 if the chapter was Ascendant | The hall's head steps down. The Master names the successor from the hall's residents at the Season's third Turning; with no Master, the most-Merit member's choice stands |
 | **Crackdown** | 10 | Thieves and Brotherhood x2; +10 if the region's seat holder's Edict is Curfew | The watch or a rival hunts the chapter: its writs pay half again, and a chapter under 30 Strength at the Season's end shuts its halls for the next |
-| **Rivalry** | 15 | +10 if a rival chapter (section 8) in the region is Thriving | Two chapters in one region race on Merit; the winner takes 10 Strength from the loser at the Season's end |
+| **Rivalry** | 15 | +10 if a rival chapter (section 8) in the region is Thriving; 0 with no rival chapter in the region | Two chapters in one region race on Merit; the winner takes 10 Strength from the loser at the Season's end |
 | **Decline** | 10 | +15 if Failing | Strength falls 2 more each week unless the week's Merit meets twice the target |
 | **Ascendancy** | 10 | +15 if Ascendant | The halls' prices a further tenth off; the Master's title gains "High" for the Season |
 
@@ -259,16 +264,26 @@ and a salt, as a Tide is (`net/tideLaw.js`) - from weights its last Season moved
 
 ## 8. Rivals and patrons (CHAP7)
 
-- **Rivals**: PROPOSED, the port's own table in the law module (never FACTION.TXT): the Fighters Guild and the Thieves
-  Guild; the Mages Guild and the Temple of Stendarr; the Dark Brotherhood and every knightly order; the Thieves Guild and
-  the region's watch (a Crackdown's hunter). OPEN 5.
-- **Patrons**: OPEN 6 - a player guild (GUILD1) may pledge as a chapter's patron for a Season, and its members' Merit
-  there could count toward its influence at that region's seat. It joins this arc to the seats; it is the last slice for
-  that reason.
+- **Rivals** (DECIDED, CALL 5): the port's own table in the law module, never FACTION.TXT. Each pair is a Rivalry's
+  draw (7) where both keep a chapter in the region:
+
+  | Chapter | Its rivals | Why |
+  |---|---|---|
+  | Fighters Guild | Thieves Guild | The sword for hire against the hand in the purse |
+  | Dark Brotherhood | Temple of Arkay; Temple of Stendarr; every knightly order | Murder against the god of death's order, the god of mercy, and the oath-bound knights |
+  | Mages Guild | Temple of Julianos | Two claims to learning, one of them a god's |
+
+  The watch is no chapter: it is a Crackdown's hunter alone (7).
+- **Patrons** (DECIDED, CALL 6): a player guild (GUILD1) may be a chapter's **patron** for a Season - one patron a
+  chapter, the highest Marks bid at the Season's first Turning, the winner's bid burnt and every other bid returned.
+  A patron's banner hangs in the chapter's halls, its members pay the Thriving band's prices there whatever the
+  chapter's Strength, and the Chronicle names it. **A patron gains no seat influence**: a gate or raid receipt already
+  raises influence (Seats-Arc 4.2), and letting the same act raise Merit, Strength and influence for one guild would
+  count it twice into a war the Seats' caps were balanced without.
 
 ## 9. The living world shows it (CHAP5)
 
-PROPOSED. LW0 decision 2 narrows by one input: the living world is a pure function of the world's data, a seed, the
+DECIDED. LW0 decision 2 narrows by one input: the living world is a pure function of the world's data, a seed, the
 clock **and the chapter sheet**. Every player reading the same sheet sees the same hall. With no sheet - offline, the
 classic skin, the row off, the service unreachable - the living world is exactly today's.
 
@@ -295,12 +310,12 @@ classic skin, the row off, the service unreachable - the living world is exactly
 | One account holds a guild's seats through its alts | One seat an account a guild (6) |
 | A fresh account takes a seat | 14 days in the guild, an account 7 days old (6) |
 | A seat farmed by a friendly pair | Seats follow four weeks' Merit, and Merit comes from witnessed work, not from each other |
-| A writ's Marks inflate the purse | Minted only for witnessed acts, 3 an account a day, under PROF0's economy model (OPEN 8) |
+| A writ's Marks inflate the purse | Hall writs share the Court's 3 a day, and a receipt writ mints nothing the receipt did not (4) |
 | Two readers settle a week at once | The Seats' one transaction, keyed by the week (law 7) |
 
 ## 11. The server's shape
 
-PROPOSED.
+DECIDED.
 
 - **Account service (D1)**: `npc_roll` (char_id, faction_id, member, rank, rep, reviewed_at, probation);
   `npc_rep_events` (char_id, faction_id, delta, source, ref, at - `UNIQUE (source, ref)`); `npc_chapters` (key -
@@ -311,21 +326,22 @@ PROPOSED.
   sheet), `standings` (a chapter's Merit), `history`; the hall writs ride the board's own writ endpoints.
 - **The settle**: inside `settleWeek`, after the seats' steps - Merit summed, Strength moved, seats placed, and at a
   Season's boundary the events resolved and drawn.
-- **The relay**: no change (PROPOSED - the gate, raid and serpent receipts already name an account and a region).
+- **The relay**: no change (DECIDED - the gate, raid and serpent receipts already name an account and a region).
 - **Law modules, pure, shared**: `net/npcChapterLaw.js` (Appendix A, the bands, the event weights, the rivals);
   `systems/npcChapters.js` (the client's layer and its read of the sheet).
 
 ## 12. The slices, in order
 
 1. **CHAP1 - the Roll.** The service owns the twenty-two factions' reputation and the memberships for realm
-   characters; the layer; the bounded claims; customs' cap. Port-Ledger section A row added.
+   characters; the layer; the bounded claims and the daily ceiling; customs' cap. Port-Ledger section A row added.
 2. **CHAP2 - hall writs.** The chapters derived and witnessed; their writs on the board; the pay.
 3. **CHAP3 - Merit and Strength.** The week's Merit, the Turning's Strength, the bands on the halls' prices, the sheet.
 4. **CHAP4 - the seats.** Ranks 8 and 9 contested; the titles; the Focus; the Chronicle's rows.
 5. **CHAP5 - the living world reads the sheet.** The hall's people, the lines, the roll.
 6. **CHAP6 - the Seasons' events.** The roll, the seven events, their endings.
-7. **CHAP7 - rivals and patrons.** Last, because it touches the seats.
-8. **CHAP8 - the other factions.** OPEN 1's answer.
+7. **CHAP7 - rivals and patrons.** Last, because it reads the Seats' guilds.
+
+CALL 1 retired the eighth slice the first draft carried (the other factions to the service): they wait on Realm phase 3.
 
 ## 13. The four hosts
 
@@ -338,21 +354,32 @@ THE FOUR HOSTS RULE, named before the first slice:
 - `scenes/exterior.js` (the fixed city) - no online, so no Roll: flagged by name, DFU's guilds as today.
 - `scenes/dungeonContext.js` - no hall; the receipts a dungeon's foes give are the relay's already: none.
 
-## 14. OPEN - Mac's calls still to make
+## 14. The calls, decided (Mac: "You make the best decisions")
 
-1. **The other factions.** Do the regions' people, the nobles and the rest move to the service too (CHAP8), or stay the
-   save's, bounded by nothing until Realm phase 3?
-2. **The spread.** The client's computed, bounded share (3.3), or the twenty-two factions' ally and enemy columns
-   confirmed by the witnessed registry?
-3. **Customs.** Reputation carried capped at 40 (3.6), or something else?
-4. **The seats.** One Master and three officers a chapter, settled on four weeks' Merit (6)?
-5. **The rivals** (8).
-6. **Patrons** - does a chapter's patron guild gain seat influence (8)?
-7. **The law.** Does legal standing (`standing.js`) move to the service with the Roll, or stay the client's?
-8. **The purse.** Hall writs are a new Marks faucet; PROF0's Appendix C economy model should be re-run with them before
-   CHAP2 ships.
+The first draft left eight calls open. Mac handed them to the record; each is decided here with its reason, and each
+is Mac's to overrule.
 
-## Appendix A - every number (`net/npcChapterLaw.js`, PROPOSED)
+1. **The other factions stay the save's.** The regions' people, the nobles and the rest are read by no seat, no Merit
+   and no Strength, so law 3 asks nothing of them; and their spread runs through FACTION.TXT, which the servers never
+   hold. Moving them buys no protection until Realm phase 3 checks a save - so they move then, not before.
+2. **The spread is the client's, bounded.** A registry of the twenty-two factions' ally and enemy columns is a second
+   witnessed registry to build and dispute for a number that only moves personal ranks 0-7. The daily ceiling (3.3:
+   15 a guild faction a character a day) bounds the spread as hard as it bounds the quests.
+3. **Customs carries reputation capped at 40.** Rank 4's need: a crossing character keeps a real place in its guild,
+   and a seat - which needs the law's rank 8, reputation 80 - is still earned online.
+4. **One Master and three officers a chapter, on four weeks' Merit; an unearned seat stands vacant.** Four seats keep a
+   chapter's top worth contesting; four weeks let a holder miss a week without losing a seat and keep a single
+   week's surge from taking one. Vacant over filled-from-below, so a seat is never a gift.
+5. **The rivals** are section 8's table: three pairings Daggerfall's own guilds already imply, and every chapter that
+   has none draws Calm in a Rivalry's place.
+6. **A patron gains no seat influence** (8): one act would count three times for one guild.
+7. **Legal standing stays the client's.** A crime is seen by the client's watch (`standing.js`, `standingHost.js`);
+   moving the number to the service would hold a client's claim in a different place, not witness it. Nothing a rival
+   loses reads it (the Curfew Edict's doubled cost is "each player's own, client-side" - Seats-Arc 7.6).
+8. **No new Marks faucet.** Hall writs share the Court writs' 3 a day, and a receipt writ mints nothing of its own (4),
+   so PROF0's economy model stands without a re-run.
+
+## Appendix A - every number (`net/npcChapterLaw.js`)
 
 | Constant | Value | Section |
 |---|---|---|
@@ -360,9 +387,11 @@ THE FOUR HOSTS RULE, named before the first slice:
 | Writ delivered, reputation | +2 | 3.3 |
 | Quest success, reputation | +5 (DFU's), failure 0 online | 3.3 |
 | Quest claims | 3 a character a UTC day a guild group | 3.3 |
+| Claimed gain ceiling | 15 a guild faction a character a UTC day | 3.3 |
 | Receipt, reputation | +1 a guild | 3.3 |
 | Customs reputation cap | 40 | 3.6 |
-| Hall writs an account a UTC day | 3 | 4 |
+| Writs an account a UTC day | 3, hall and Court together (`COURT_WRITS_PER_DAY`) | 4 |
+| Receipt writ's own Marks | 0 | 4 |
 | Writ supply | `6 x max(1, ceil(active / 100))`, x0.5 Failing, x1.5 Thriving | 4 |
 | Merit tenure | 7 days | 5.1 |
 | Merit cap | 600 an account a chapter a week | 5.1 |
@@ -373,6 +402,8 @@ THE FOUR HOSTS RULE, named before the first slice:
 | Seats | 1 Master, 3 officers a chapter | 6 |
 | Seat eligibility | 14 days in the guild, account 7 days old | 6 |
 | Merit window | 4 weeks | 6 |
+| Unearned seat | vacant | 6 |
+| Patron | one a chapter a Season, highest Marks bid, burnt | 8 |
 | Holder's Merit | x1.2 | 6 |
 | Event weights | Calm 30, Schism 15, Succession 10, Crackdown 10, Rivalry 15, Decline 10, Ascendancy 10 | 7 |
 | Rivalry's swing | 10 Strength | 7 |
