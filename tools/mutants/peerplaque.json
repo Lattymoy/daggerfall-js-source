@@ -121,8 +121,8 @@
   {
     "name": "PEER-PLAQUE1-pick-with-a-reach-of-its-own",
     "file": "src/scenes/world.js",
-    "old": "    const hit = pickPeerInFront(eye, dir, (peersNear() ?? []).filter((q) => !q.cv), SOCIAL_REACH, rayPersonDistance);",
-    "new": "    const hit = pickPeerInFront(eye, dir, (peersNear() ?? []).filter((q) => !q.cv), 40, rayPersonDistance);",
+    "old": "    const hit = pickPeerInFront(eye, dir, openPeers(peersNear(), isPartyMate), SOCIAL_REACH, rayPersonDistance);",
+    "new": "    const hit = pickPeerInFront(eye, dir, openPeers(peersNear(), isPartyMate), 40, rayPersonDistance);",
     "tests": [
       "test/peerplaque.test.js"
     ]

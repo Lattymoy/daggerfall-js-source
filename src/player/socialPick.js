@@ -37,6 +37,25 @@ import { WHY_IN_PARTY } from '../net/social.js';   // AUDIT DROPS: the seat's re
 export const SOCIAL_REACH = MOBILE_NPC_ACTIVATION_DISTANCE;
 
 /**
+ * CONCEAL-MATE (2026-10-07, a player: "you're not interactable with party members - would be a QoL if you can interact
+ * with at least your party members while chameleon or shadow form, invis etc on"): THE PLAYERS I CAN REACH OUT TO.
+ * INVIS-NET took a concealed player (`cv`: invisible, blending, a shade) out of every social door - the F key and its
+ * plaque, the Nearby list, a page held out - so a stranger's spell is not given away by a menu that names them. A
+ * PARTY MATE is not a stranger: the party already keeps them (its HUD, the roll, a gift - SPELL-GIFT B1/B3's law), and
+ * a mate who cast Chameleon to sneak past a guard could not be traded with, read a page or be left the party. So a
+ * concealed peer stays open to the people they partied with, and to nobody else. One law for every door - the gift's
+ * pick reads it too. `isMate(id)` is the host's party test (social.isPartyPeer); null or not a function is nobody.
+ * @template {{ id: string, cv?: number }} P
+ * @param {P[]|null|undefined} peers
+ * @param {((id: string) => boolean)|null} isMate
+ * @returns {P[]}
+ */
+export function openPeers(peers, isMate) {
+  if (!Array.isArray(peers)) return [];
+  return peers.filter((p) => p && (!p.cv || (typeof isMate === 'function' && isMate(p.id) === true)));
+}
+
+/**
  * THE PEER UNDER THE RAY, or null.
  *
  * `peers` is scenes/world.js's `peersNear()` - `[{ id, feet, height }]`, each `feet` in THIS scene's frame. `fwd` is

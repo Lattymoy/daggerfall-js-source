@@ -83,7 +83,7 @@
   {
     "name": "AINV-F-nearby-names-the-concealed",
     "file": "src/scenes/world.js",
-    "old": "localRosterSource(s, (peersNear() ?? []).filter((q) => !q.cv), player.feetAt())",
+    "old": "localRosterSource(s, openPeers(peersNear(), isPartyMate), player.feetAt())",
     "new": "localRosterSource(s, (peersNear() ?? []), player.feetAt())",
     "tests": [
       "test/invisnet.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "AINV-F-page-to-the-concealed",
     "file": "src/scenes/world.js",
-    "old": "    return near.filter((p) => !p.cv).map((p) => ({ id: p.id, name: peerName(p.id) ?? 'Someone',",
+    "old": "    return openPeers(near, isPartyMate).map((p) => ({ id: p.id, name: peerName(p.id) ?? 'Someone',",
     "new": "    return near.map((p) => ({ id: p.id, name: peerName(p.id) ?? 'Someone',",
     "tests": [
       "test/invisnet.test.js"
