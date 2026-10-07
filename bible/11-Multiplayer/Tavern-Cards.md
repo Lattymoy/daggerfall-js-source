@@ -1,6 +1,6 @@
 # TAVERN CARDS - a card table in every tavern (CARDS0, the design record)
 
-**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"). Mac answered
+**Status: DESIGN RECORD, being built - CARDS1 SHIPPED (2026-10-07, section 10; Mac: "Do it"), CARDS2 SHIPPED (the same day, section 11; Mac: "Continue") - the seat, without the seated body (CARDS2b). Mac answered
 four of section 9's five questions the same day; the card art is still open. Every DECIDED below binds the build
 slices, and a slice that ships one records any change here first.**
 
@@ -45,8 +45,9 @@ narrows its Ledger section A row (`01-Overview/Port-Ledger.md`), the way DICE1 a
 - **FACT:** `src/world/buildingNames.js` keys the tavern (`BUILDING_TYPES.Tavern` 15, `isTavern`), and an interior is a
   presence room by building (`src/net/online.js`, `interior:${loc}.${layoutRoomKey(bk, layout)}`), so every player in
   one tavern already stands in one room and sees the others (`src/net/remotePlayers.js`).
-- **MEASURE (CARDS2):** which interior models in the tavern blocks are tables, and their top's height and footprint.
-  The record does not guess model ids. The slice reads them off the tavern interiors' RMB records and lists them here.
+- **MEASURE (CARDS2, still open):** which interior models in the tavern blocks are tables. The record does not guess
+  model ids, and this container carries no ARENA2: CARDS2 ships the one id the tree can name (41130) and the census
+  that names the rest (section 11).
 - **DECIDED: a table is a card table if it is a table model in a tavern interior** with clear floor on at least two
   sides. No placed prop, no new mesh: the game finds the tables Daggerfall already put there. Two to six seats per
   table, set by its footprint (MEASURE: the seat spacing, from the table's size).
@@ -171,7 +172,8 @@ Each ships alone and is verifiable without the next.
 | Slice | What it builds |
 |---|---|
 | **CARDS1** SHIPPED | The deck law, pure and DOM-free, one home for both ends: the 52-card deck, the unbiased shuffle, the Hold'em evaluator, the betting round's state machine, side pots. Pins deepEqual against hand tables; mutants. |
-| **CARDS2** | The table: tavern table models measured and listed here, the seat (activation, the seat view, held movement, standing up), the seated pose for both bodies, peers drawn seated. Offline, alone at the table. |
+| **CARDS2** SHIPPED | The table and the seat: a tavern's own table (the one nameable id, and the census for the rest), its seats, the seat view, held movement, standing up. Offline, alone at the table. |
+| **CARDS2b** | The seated pose for both bodies (sprite and Morrowind), the body moved to its seat, peers drawn seated (a pose field on the wire, so a RELAY_VERSION), a hit standing you up, Escape. |
 | **CARDS3** | The card bodies: the plate, the pass, the deal arcs, the flip, the slide and settle, the fanned hand and the peek, the chips. Frame cost measured on the probe. |
 | **CARDS4** | Offline Hold'em: the patrons, their temperaments and purses, gold stakes. The first playable game. |
 | **CARDS5** | Online Hold'em: the relay deals and runs the table, hidden hands, spectators, the seat clock. Friendly tables. |
@@ -224,3 +226,36 @@ or deals yet; the relay (CARDS5) and the patrons (CARDS4) will read it.
   `tools/mutants/cards1.json`: 40 mutants, 40 dead. Two survived the first pass - `parseCard` reading a capital suit,
   and the minimum bet carried from one street to the next - and each was pinned.
 - **Ledger:** section A row TAVERN CARDS - THE CARDS' LAW.
+
+## 11. CARDS2 (2026-10-07): the table and the seat
+
+Mac: **"Continue"**.
+
+- **The table** (`src/world/cardTables.js`, pure). A card table is a table model a tavern already stands - no placed
+  prop. FLAGGED: `CARD_TABLE_MODELS` holds the ONE id the tree can name as a table, 41130 ("Table" in the vendored
+  World of Daggerfall's `LocationHelper.cs` model list; 41100 is a chair there, though two of our tests' fixtures call
+  it a table). This container carries no ARENA2, so the tavern blocks' other tables could not be measured. The census
+  measures them: `node tools/cardTableCensus.mjs <arena2 folder>` lists every prop in the furniture range (41000-43999)
+  the tavern interiors stand, how often, in how many blocks, and its size in metres - the ids whose size reads as a
+  table go into the set, and the flag retires.
+- **The seats.** Round the table's world box on the floor it stands on: along each side as many as fit at 0.75 m (one
+  on a side of 0.6 m or more), 0.45 m out from the edge, in a fixed order (+x, -x, +z, -z). A seat is kept when the
+  host's probe finds nothing of the room between the table's middle and the seat's eye, and something to sit over
+  under it - the floor, a chair, a bench, never a table's top or the air. At most six, taken round the sides in turn;
+  fewer than two kept and the table is no card table. Every length is MEASURE: they are a person's, not Daggerfall's.
+- **The seat** (`scenes/worldModes.js`, the interior host). In a tavern, a card table that seats two is an activation
+  target (`cardtable:i`, struck at its surface as a bed is, the default reach, the hover word "Card table"). The press
+  seats the player at the nearest free seat: the eye moves to a seated eye (1.15 m) looking at the table's middle and
+  the view stays first person. The body is given nothing to walk with: the press again, a move key, a jump, the
+  stick's throw or the autorun latch stands them up first, so the motor runs on unheld and gravity and the crouch edge
+  stay DFU's. (The paralysis bag was the first thought; AUDIT 39's pin holds its text in all four hosts, and a seat is
+  not a paralysis - `player.paralyzed` feeds the rig.) The room's end empties the seat. The body stays where it
+  stood: moving it, and drawing it seated, is CARDS2b.
+- **THE FOUR HOSTS.** `scenes/worldModes.js` (interiors): WIRED. `scenes/exterior.js`, `scenes/world.js`,
+  `scenes/dungeonContext.js`: no tavern table stands in them, so no seat - pinned (the test sweeps them for the seat's
+  key). The `?interior` viewer (`scenes/interior.js`) flies a camera and has no body to seat.
+- **Not verified in a live tavern.** No ARENA2 here, so no browser probe reached a tavern: the seat is pinned by its
+  law and by source. The first eye on it is Mac's, with the census.
+- **Pins:** `test/cards2_seat.test.js`, 8 tests. `tools/mutants/cards2.json`: 38, 38 dead; the one first-pass
+  survivor was a finite guard the upper bound already made, and it was deleted rather than pinned.
+- **Ledger:** section A row TAVERN CARDS, narrowed to say CARDS2 landed and CARDS2b is open.
