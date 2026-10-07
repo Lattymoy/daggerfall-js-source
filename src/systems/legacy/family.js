@@ -129,7 +129,7 @@ export const fullNameOf = (given, sur) => (sur ? `${given} ${sur}` : given);
  *   realm?:{ sid:string, player:string, char:string, house:any }|null, look?:any
  * }} Person - LEGACY7 part three: `kind: 'player'` another player's realm character wed to a member, `realm` the union.
  *   LEGACY7 part four: `look` what the member wore at their newest save (memberLook) - how the world draws them
- * @typedef {{ v:number, id:string, surname:string, model:string, seat:{region:string, loc:string, mapId?:number}|null, rev:number,
+ * @typedef {{ v:number, id:string, surname:string, model:string, seat:{region:string, loc:string, mapId?:number, at?:number}|null, rev:number,
  *   nextId:number, currentId:number, founded:number, ended:number|null, people:Person[], remains:any[], settings?:any,
  *   pending:Pending|null, houses?:any[], home?:{mapId:number, buildingKey:number}|null,
  *   news?:import('./influence.js').News[] }} Family
@@ -242,16 +242,25 @@ export function foundFamily(entity, { model = MODELS.enduring, seat = null, at =
  * LEGACY-NAME - THE HOUSE NAMED FOR ITS SEAT (section 5's naming): a founder with no surname of their own founds a house
  * named for its seat ("of Sentinel"). The seat is the first town the house stands in, and a new character founds in
  * Privateer's Hold, where none stands - so a house founded nameless is named when its seat is noted (the host's tick),
- * or when a copy that knows the seat merges in (store.js mergeFacts); every member of the blood born under the nameless
- * house takes the name (a spouse keeps their own). A house with a name, or with no seat yet, is left as it is.
+ * or when a copy that knows the seat merges in (store.js mergeFacts; a copy that knows the NAME hands the name itself,
+ * AUDIT FB1007b S1); every member of the blood born under the nameless house takes the name (a spouse keeps their own).
+ * A house with a name, or with no seat yet, is left as it is.
  * Answers whether it named the house.
  */
 export function nameAtSeat(family) {
   if (!family || String(family.surname ?? '').trim() || !family.seat?.loc) return false;
-  const sur = `of ${family.seat.loc}`;
+  nameHouse(family, `of ${family.seat.loc}`);
+  return true;
+}
+
+/**
+ * The house takes the name `sur`, and every member of its blood with none yet takes it with the house (a spouse keeps
+ * their own). AUDIT FB1007b S1: the merge names a house this way too (store.js mergeFacts) - with the name the other
+ * copy holds, never its seat's, since the seat moves (FAMILY-SEAT) and a house named for its first seat stays that house.
+ */
+export function nameHouse(family, sur) {
   family.surname = sur;
   for (const p of family.people ?? []) if ((p.kind ?? 'member') === 'member' && !String(p.surname ?? '').trim()) p.surname = sur;
-  return true;
 }
 
 /** B12: the heir answer, rolled once per person at birth - "Always" is true, "Random" the mod's 50%. */
@@ -564,7 +573,8 @@ export function readFamily(rec) {
   const maxId = Math.max(...people.map((p) => p.id));
   return {
     v: FAMILY_VERSION, id: rec.id, surname: String(rec.surname ?? ''), model: isModel(rec.model) ? rec.model : MODELS.enduring,
-    seat: rec.seat && typeof rec.seat === 'object' ? { region: String(rec.seat.region ?? ''), loc: String(rec.seat.loc ?? ''), ...(Number.isInteger(rec.seat.mapId) ? { mapId: rec.seat.mapId } : {}) } : null,
+    seat: rec.seat && typeof rec.seat === 'object' ? { region: String(rec.seat.region ?? ''), loc: String(rec.seat.loc ?? ''), ...(Number.isInteger(rec.seat.mapId) ? { mapId: rec.seat.mapId } : {}),
+      ...(Number(rec.seat.at) > 0 ? { at: Math.floor(Number(rec.seat.at)) } : {}) } : null,   // FAMILY-SEAT: a seat the player moved, when (legacyHost.js moveFamilySeat)
     rev: Math.max(1, rec.rev | 0), nextId: Math.max(maxId + 1, rec.nextId | 0),   // D4: ids from the record's own counter, never a constant
     currentId: people.some((p) => p.id === rec.currentId) ? rec.currentId : people[0].id,
     founded: Number(rec.founded) || 0, ended: rec.ended == null ? null : Number(rec.ended), people,

@@ -264,6 +264,17 @@ tool at any scene. Routed onward: people flats (Characters), furniture
 actions / loot / spawn points (Systems), point lights (Rendering), ladder +
 door behavior (Player). Pins in test/interior.test.js.
 
+TOWER-FLOORS (FIELD BUGS 2026-10-07b, `01-Overview/Field-Bugs-2026-10-07b.md`; Jacob: "The two Daggerfall Castle
+courtyard tower interiors are very bugged") - the port's one departure in AddModels: an ObjectType 5 model is
+stood on its lowest vertex at the storey it is written at (`FLOOR_MODEL_TYPE`), where DFU places it centred like any
+model. Classic writes the type at a storey - 1,250 of its 1,433 interior records are flat planes, which do not
+move (2700's two by its 0.1 mm) - and in seven records it writes centred room shells so: Castle Daggerfall's two
+courtyard towers (CUSTAA05 #0 and #1, five storeys), the castle's three dungeon-door wings and two House2 rooms of
+blocks no location places (LIBRAM00 #7, BOOKAS00 #8). Each stood half its height under its storey - the towers'
+furniture 1.625 m over the floor and their lights and markers 1.575 m, a stair 3.2 m under its own, the room's door
+1.6 m under the street's. The two House2 rooms' hall 28703 is written off even this convention and left as written
+(AUDIT FB1007b F1, `01-Overview/Audit-FB1007b.md`). Pinned by `test/fb1007b_towerfloors.test.js`.
+
 ## Milestone 3 - flats and billboards (SHIPPED)
 
 Every RMB flat path from RMBLayout, verbatim: misc block flats (lights

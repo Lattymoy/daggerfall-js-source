@@ -125,7 +125,7 @@ export class ClimbingState {
 
   /** ClimbingCheck (:307-488), the classic arms, per fixed step.
    *  c = { forward, back, anyMove, falling, grounded, levitating,
-   *  riding, touchingSides, horizontalPos: [x, z], slowFalling,
+   *  riding, touchingSides, horizontalPos: [x, z], slowFalling, travelling,
    *  tooCloseToGround: () => bool (thunk - short-circuit, :319) }.
    *  Returns isClimbing. */
   step(dt, c) {
@@ -146,6 +146,7 @@ export class ClimbingState {
         || !c.touchingSides
         || c.levitating
         || c.riding
+        || c.travelling   // CLIMB-TRAVEL (FIELD BUGS 2026-10-07b): no climb at a journey's pace - at x60 the 0.77 s start and 0.82 s checks fell due every step or two, a roll and a tally each
         || (airborneGraspWall && c.slowFalling)   // SLOW-GRASP (FIELD BUGS 2026-10-01): a slow fall is not grasped onto a wall (the spell makes the 0.77 s timer 1.6 m of descent, re-rolled all the way down)
         || slippedToGround
         || tooClose
