@@ -88,6 +88,6 @@ test('MACRO-2: a NULL in a caller’s map is "I do not know" - the world answers
 test('MACRO-2: the coven and the summoning walk off the WORLD, not a quest-posed machine context that throws', () => {
   const modes = read('src/scenes/worldModes.js');
   assert.match(modes, /const rows = \(id\) => expandRowValues\(rawRows\(id\), null, null\);/);
-  assert.match(modes, /const say = \(id, d = daedra\) => expandRowValues\(rows\?\.\(id\) \?\? \[\], summonMacroValues\(d\), null\);/);
+  assert.match(modes, /const say = \(id, d = daedra, part = \(record\) => record\) => expandRowValues\(part\(rows\?\.\(id\) \?\? \[\]\), summonMacroValues\(d\), null\);/);
   assert.doesNotMatch(modes, /expandRowValues\([^\n]*machine\.macroContext\(\)/, 'no row walk poses the machine as a quest');
 });

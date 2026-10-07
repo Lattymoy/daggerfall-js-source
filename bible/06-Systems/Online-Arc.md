@@ -7399,8 +7399,9 @@ URL, which a dev door can carry with no clock behind it), and for a SHOP
 alone, a classic closure is covered by a continuous relief shift. `isBuildingOpen` and `buildingIsUnlocked`'s
 shop arm route through it, so the door, the entry-time `insideOpenShop`
 latch, the shelves and the interior people stand on one rule; houses,
-guild halls, temples, palaces and ships keep R1's rules online, and
-offline nothing moves. A restored interior (AUDIT ALL O2: Play Online
+guild halls, temples, palaces and ships keep R1's rules online (OL4's
+cut: OL5 widened it to the guild hall, OL6 to the bank, the library and
+the palace), and offline nothing moves. A restored interior (AUDIT ALL O2: Play Online
 always begins on a restore, and a save taken inside a shop entered while
 classically closed carried the latch `false` - the door opened, the
 shelf opened in STEALING mode, no clerk stood) keeps the saved latch and
@@ -7411,10 +7412,11 @@ offline load stands its clerk in a shop DFU has locked until the player
 leaves. The classic closures are 45 real minutes (the alchemist's night)
 and a two-hour real outage on Suns Rest at TimeScale 12, not a real day.
 
-**Recorded, not carried.** The Bank (8:00-15:00) and the Library
-(9:00-23:00) are not shops and keep their hours online: a night player
-can shop but cannot bank or read - a follow-up if wanted (the tavern is
-0/25, never closed, and OL3 prices the stay). The night clerk is not
+**Recorded, then carried.** The Bank (8:00-15:00) and the Library
+(9:00-23:00) are not shops and kept their hours online - a night player
+could shop but not bank or read - until OL6 (2026-10-07,
+`Online-Waits.md` WAIT1) gave them, and the palace, the shift (the tavern
+is 0/25, never closed, and OL3 prices the stay). The night clerk is not
 drawn distinctly - the existing shop people stand the shift; ONLINE_SHIFT
 is the hook for that
 presentation slice. The shared ECONOMY (one region memory, one owner

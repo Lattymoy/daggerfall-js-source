@@ -38,7 +38,7 @@
  {
   "name": "DAEDRA1-the-summoning-loses-its-prince",
   "file": "src/scenes/worldModes.js",
-  "old": "      const say = (id, d = daedra) => expandRowValues(rows?.(id) ?? [], summonMacroValues(d), null);",
+  "old": "      const say = (id, d = daedra, part = (record) => record) => expandRowValues(part(rows?.(id) ?? []), summonMacroValues(d), null);",
   "new": "      const say = (id) => rows?.(id) ?? [];",
   "tests": [
    "test/daedrasummoning.test.js"
@@ -56,8 +56,8 @@
  {
   "name": "DAEDRA1-the-princes-offer-goes-out-raw",
   "file": "src/scenes/worldModes.js",
-  "old": "            const boxes = offered ? questBridge.offerBoxes(offered, (id) => say(id, r.daedra)) : [];",
-  "new": "            const boxes = offered ? questBridge.offerBoxes(offered, (id) => townTalk?.lines?.(id) ?? []) : [];",
+  "old": "          const boxes = offered ? questBridge.offerBoxes(offered, (id) => say(id, r.daedra)) : [];",
+  "new": "          const boxes = offered ? questBridge.offerBoxes(offered, (id) => townTalk?.lines?.(id) ?? []) : [];",
   "tests": [
    "test/daedrasummoning.test.js"
   ]
@@ -83,8 +83,8 @@
  {
   "name": "DAEDRA2-the-summoning-gates-on-coins-again",
   "file": "src/scenes/worldModes.js",
-  "old": "            gold: totalGoldAmount(playerEntity),",
-  "new": "            gold: goldAmount(playerEntity),",
+  "old": "          gold: totalGoldAmount(playerEntity),",
+  "new": "          gold: goldAmount(playerEntity),",
   "tests": [
    "test/daedrasummoning.test.js"
   ]

@@ -126,11 +126,14 @@ test('R1 hours: the verbatim tables and their edge rows (PlayerActivate.cs:91-10
     'the entry-time shop latch reads the effective online answer');
   assert.equal(isBuildingOpen(BUILDING_TYPES.House2, 23, { online: true }), false,
     'online staffing does not flatten residence hours');
-  assert.equal(isBuildingOpen(BUILDING_TYPES.Palace, 23, { online: true }), false,
-    'online staffing does not flatten palace hours');
+  // PIN MOVED (OL6, 2026-10-07): the palace joined the relief - test/ol6_service_hours.test.js holds the three it
+  // added; the house for sale (8-16) is the hours this pin keeps.
+  assert.equal(isBuildingOpen(BUILDING_TYPES.HouseForSale, 23, { online: true }), false,
+    'online staffing does not flatten the house for sale\'s hours');
 
-  // OL5 (Mac, 2026-09-20): the guild hall JOINS the relief, and nothing else
-  // does. Held as a SWEEP over every building type rather than a list of the
+  // OL5 (Mac, 2026-09-20): the guild hall JOINS the relief (and OL6, 2026-10-07,
+  // the bank, the library and the palace - test/ol6_service_hours.test.js holds
+  // the set exactly). Held as a SWEEP over every building type rather than a list of the
   // ones that changed - an enumeration would go stale the moment a type was
   // added, and the point of the predicate is that it is the only place the
   // membership is written down.
@@ -147,8 +150,8 @@ test('R1 hours: the verbatim tables and their edge rows (PlayerActivate.cs:91-10
   }
   assert.ok(relieved.includes(BUILDING_TYPES.GuildHall), 'the guild hall is in the relieved set');
   assert.ok(!relieved.includes(BUILDING_TYPES.House1) && !relieved.includes(BUILDING_TYPES.House2)
-    && !relieved.includes(BUILDING_TYPES.Palace) && !relieved.includes(BUILDING_TYPES.Ship),
-    'residences, palaces and ships keep R1 whole');
+    && !relieved.includes(BUILDING_TYPES.HouseForSale) && !relieved.includes(BUILDING_TYPES.Ship),
+    'residences, the house for sale and ships keep R1 whole (PIN MOVED, OL6: the palace joined the relief)');
 
   // The staffing answer follows the widened subject, so a later night-clerk
   // slice can tell a staffed guild hall from a classic one.
@@ -255,7 +258,8 @@ test('OL4 (AUDIT ALL O1/O2): the PRODUCTION default is the shared clock - no cal
     assert.equal(buildingIsUnlocked(shop, { hour: 23 }), true, 'and its door opens');
     assert.equal(buildingIsUnlocked(shop, { hour: 12, holidayId: HOLIDAYS.Suns_Rest }), true, 'Suns Rest too');
     assert.equal(isBuildingOpen(BUILDING_TYPES.House2, 23), false, 'a residence keeps R1');
-    assert.equal(isBuildingOpen(BUILDING_TYPES.Bank, 23), false, 'the bank keeps its hours online (recorded as a follow-up)');
+    assert.equal(isBuildingOpen(BUILDING_TYPES.Bank, 23), true, 'PIN MOVED (OL6 carried the follow-up OL4 recorded): the bank is on the shift too');
+    assert.equal(isBuildingOpen(BUILDING_TYPES.HouseForSale, 23), false, 'the house for sale keeps R1');
     assert.equal(isBuildingOpen(BUILDING_TYPES.Alchemist, 23, { hour: 12 }), true, 'the seam\'s contract: the positional hour wins - 23 is the hour asked, open by the shift'); assert.equal(isBuildingOpen(BUILDING_TYPES.Alchemist, 12, { hour: 23, online: false }), true, 'and 12 offline is open by the classic table, whatever opts says');
   } finally { setSharedClock(null); }
   assert.equal(isBuildingOpen(BUILDING_TYPES.Alchemist, 23), false, 'the clock gone, the classic answer');

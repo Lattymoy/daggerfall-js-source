@@ -110,8 +110,8 @@
   {
     "name": "OL5-the-guild-hall-is-dropped-from-the-relief",
     "file": "src/systems/buildingLocks.js",
-    "old": "export const onlineReliefBuilding = (type) => isShop(type) || type === BUILDING_TYPES.GuildHall;",
-    "new": "export const onlineReliefBuilding = (type) => isShop(type);",
+    "old": "export const onlineReliefBuilding = (type) => isShop(type) || type === BUILDING_TYPES.GuildHall\n",
+    "new": "export const onlineReliefBuilding = (type) => isShop(type)\n",
     "tests": [
       "test/lockpicking.test.js"
     ]
