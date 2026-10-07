@@ -48,6 +48,7 @@ import { ID_RE } from '../../src/net/identityToken.js';   // CUSTOMS-PASS: an ac
 import { isGuestShaped, isHandleShaped } from '../../src/net/handleShape.js';   // CUSTOMS-PASS: a handle and a guest's name, told apart by their shape alone
 import { isDeveloper } from './titles.js';   // CUSTOMS-PASS: a developer grants one
 import { displayName } from './accounts.js';
+import { linkFirstPlay } from './founderLink.js';   // FOUNDER5: a character brought in links its first play
 import { saveTextOf, REALM_TEXT_MAX_BYTES } from '../../src/net/realmSaveCodec.js';   // REALM-GZIP: a save read packed or plain
 import { lineageBirthRefusal, houseOn, endUnionsOf } from './legacy.js';   // LEGACY7: a realm character born as a person of the account's own line
 
@@ -378,6 +379,7 @@ export async function customsRealm(ctx, playerId, { origin, name, summary = null
     throw e;
   }
   await freeOthers({ db }, playerId, id);
+  await linkFirstPlay({ db }, playerId, origin);   // FOUNDER5: the character arrived on this account
   return { id, lease, seq: 0 };
 }
 

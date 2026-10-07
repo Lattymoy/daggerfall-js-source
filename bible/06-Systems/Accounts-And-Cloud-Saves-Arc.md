@@ -2418,7 +2418,7 @@ ENUMERATED** applied to the one place a grant is usually a row:
 
 | | held when |
 |---|---|
-| **Founder** | registered, and first played by `FOUNDER_UNTIL`: `min(created_at, registered_at, first_played_at) <= FOUNDER_UNTIL` - `first_played_at` since FOUNDER4 (the first contact of a row the account shares a character with, migration 0078), the two before it since FOUNDER3 (it read `registered_at` alone before; 1790294400 — 2026-09-25T00:00:00Z since FOUNDER2; it was 1790121600, 2026-09-23T00:00:00Z) |
+| **Founder** | registered, and first played by `FOUNDER_UNTIL` or named in `env.FOUNDER_HANDLES` (FOUNDER5): `min(created_at, registered_at, first_played_at) <= FOUNDER_UNTIL` - 1790337600, 2026-09-25T12:00:00Z since FOUNDER5 (the end of the 24th at UTC-12); `first_played_at` since FOUNDER4 (the first contact of a row the account shares a character with, migration 0078), the two before it since FOUNDER3 (it read `registered_at` alone before; 1790294400 — 2026-09-25T00:00:00Z since FOUNDER2; it was 1790121600, 2026-09-23T00:00:00Z) |
 | **Developer** | the handle is in `env.DEVELOPER_HANDLES` |
 | **sprout** | `nowS - created_at < SPROUT_S` (two weeks) |
 | **dev** | the same list as the Developer title |
@@ -4566,6 +4566,50 @@ sign-in; link shared characters; grant by name; move the cutoff later), Mac chos
   filled); its shape (the five sources, no table left behind); and the real Worker before and after 0078 (Founder in
   the wardrobe and on the signed token). `tools/mutants/founder4.json` (12, all dead); three of `founder3.json`'s
   re-aimed by content at the new `firstPlayed` (6, all dead). The acct76 pins credit FOUNDER4 beside PRIMARCH.
+
+## FOUNDER5 — Founder before the 25th on any clock, linked live, and by name (2026-10-07, acct92, migration 0087)
+
+Mac: "Can we grant every account before sept 25th the founder title. Ive tried this multiple times and its never
+worked". Asked how to reach the players no rule could prove (time zone and a name list; the cutoff moved to today;
+linking characters at every save; every account), Mac chose "Time zone + name list".
+
+- **Why four tries left people out.** FOUNDER2 to FOUNDER4 each held Founder for an account the service could PROVE
+  first played by 2026-09-25T00:00Z, and each widened the proof. Two kinds of player stayed outside every one of them.
+  The clock: 00:00Z on the 25th is 8pm on the 24th in New York and 5pm in Los Angeles, so a player in the Americas who
+  first played that evening - before the 25th on their own clock - held nothing (FOUNDER3 said so and kept the
+  instant). And no record: a player whose play before the cutoff the service never recorded - a guest's storage
+  cleared, a character never saved to the cloud, play on a device that shares no character with the account
+  (FOUNDER4's "Not reached") - cannot be proven by any rule the service can run.
+- **The clock** (`server-account/src/titles.js` FOUNDER_UNTIL): 1790337600, 2026-09-25T12:00:00Z - the end of
+  24 September on the last clock to reach the 25th (UTC-12). Twelve hours LATER than FOUNDER2's instant, so nobody who
+  held Founder loses it; every rule before it (first contact, FOUNDER4's link) is read against the new instant.
+- **The names** (`env.FOUNDER_HANDLES`, `titles.js` founderHandles and isNamedFounder): a comma list of handles in
+  `wrangler.toml`, case-insensitive, read the developers' way (handleList). A handle on it holds Founder whenever it
+  first played; a guest has no handle and holds none; a founder by the date holds it unlisted, and never twice. A list
+  in config and not a column, ACC3's law: Mac grants one by a reviewed, deployed edit, and taking a handle off takes the
+  title from the next token. Empty at ship: nobody by name yet - a player who reports it missing is added there.
+- **The link, kept live** (Mac, then: "I want to do this without my input"; `server-account/src/founderLink.js`
+  linkFirstPlay). FOUNDER4's link was written once, at 0078's deploy, and a character carried onto a new account after
+  it linked nothing until a person re-ran the statement. The same fact is now written as a character ARRIVES on an
+  account - a cloud save's new slot (`saves.js` putCard) and a customs (`realm.js` customsRealm) - for that account and
+  that character: the earliest first play of another row holding it, where earlier than the account's own. Never on
+  the token's path (about a mint a second, STORM-SHED); both writes are rare acts a player makes. It asks 0078's
+  holdings less `renown_tracks`, whose key puts the character second (the census was seeded from it when the realm
+  opened, and a track since is keyed by a realm id, which links nothing). One hop, earlier only; a failure is
+  swallowed after the write it follows has landed, and the next arrival links it. Migration
+  `0087_founder_live.sql` indexes `saves (character_id)` and `realm_characters (origin_id)` so neither is read whole.
+- **Still not reached, and why.** A player whose play before the 25th left no record on ANY row the service keeps -
+  never online as a guest, a guest row whose characters never reached it - cannot be proven by anything the service
+  can check: a character's id is a random UUID with no date in it, and anything the player's own machine says could
+  be typed by anyone. FOUNDER_HANDLES stays for them, optional and empty.
+- `ACCOUNT_VERSION` acct92 in both the Worker and `wrangler.toml`; migration 0087 (two indexes), no relay change
+  (Founder is already in the token's vocabulary), no client change. The version's pins moved to acct92.
+- Pins: `test/founder5.test.js` (7) - the clock, the names, the config and the real Worker (an account first seen at
+  10pm New York time on the 24th and one named in the config each wear Founder on the signed token; one neither holds
+  none); the live link's statement and indexes (its query plans read them), and the real Worker through a cloud save
+  and a customs (Founder the moment the character arrives; nothing for a character no earlier row holds, nor one
+  linked to a later row). `tools/mutants/founder5.json` (14: 12 dead, 2 equivalent as recorded). The pins of the old instant moved
+  (founder2, founder3, founder4, titlen, acc3titles; founder2.json's two records and titlen.json's TR-founder-cutoff-moved-forward re-aimed by content).
 
 ## KNIGHT-HOUSE — a deed the realm gave, held off its character's record (2026-10-04, acct77)
 
