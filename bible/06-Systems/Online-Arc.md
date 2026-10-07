@@ -10029,6 +10029,7 @@ home's alone - they are about other players.
 
 - **The law** (`net/decorLaw.js` decorYardPieceOf, both ends): a yard's piece is a catalogue piece standing outside -
   never one's own item, holding nothing, serving no craft, giving no light - within 48 m of its frame; sixty a yard.
+  (YARD-LIGHT, below: no light OF ITS OWN - a yard's lamp lights as the town lights its own.)
 - **The frame** is the building's own place in its town (`world/rmbLayout.js` `recordAt`, the subrecord's origin -
   not a DFU field) in the world's axes, as a room's pieces stand from the door; `scenes/world.js` records each
   building's frame and the box round its models at the build (`homeFrames`).
@@ -10065,6 +10066,45 @@ home's alone - they are about other players.
   (`07-Rendering/Low-Poly-Trees.md`).
 - Known limits: the lot is a box round the footprint (a building turned off the grid has a wider lot); yard pieces are
   not activation targets; the street's wandering folk are not steered round them.
+
+### YARD-LIGHT - a yard's lamp lights as the town's (2026-10-07)
+
+Discord, through Mac: a screenshot at night - a lamp post and a torch standing in a yard before a house, both flames
+drawn, neither lighting the ground or the wall beside it - "i wish lights worked outside.."; Mac: "I guess enhanced
+lighting isnt shown lantern light anymore?"
+
+- **What was dark.** Not Enhanced Lighting: the town's own lanterns - the TEXTURE.210 flats its RMB blocks stand - light
+  at night on both lanes as they did (measured in the world host over ARENA2, headless on SwiftShader: Daggerfall at
+  22:00 on the Enhanced Lighting lane holds 48 point lights, the lane's whole cap, and the stone beside the city's
+  lanterns is lit by them; `tools/enhancedLightingProbe.mjs`'s night street lights its ground on both lanes). The lamps in the picture were a YARD's. HOME-YARD's law
+  gives a yard's piece no light of its own (`net/decorLaw.js` decorYardPieceOf - "an outdoor lamp is the town's"), the
+  decorator strips the catalogue's light from a piece placed outside and hides its Light button there, and nothing lit
+  it as the town either: a lamp post placed in a yard stood dark beside the street's lit ones, while the yard's
+  catalogue said "gives light" of every lamp.
+- **The law: an outdoor lamp IS the town's.** Daggerfall lights every TEXTURE.210 flat standing in a town block
+  (RMBLayout.AddLight - `world/cityLights.js` collectCityLights), so a yard's lights too (`scenes/homeYards.js`
+  yardLampOf): the town's lantern (YARD_LAMP - DaggerfallLight [City]: range 18, intensity 1, white), hung where the
+  town hangs its own - the flat's base plus its drawn height, the piece's scale with it. Any other piece gives none.
+  Nothing is stored and nothing is switched: the piece still carries no light of its own, the service and its law are
+  untouched, and a lamp placed before this lights as it stands.
+- **Standing.** The room's own machinery carries it (`scenes/decorRoom.js` `lampOf` - a host's law over the light a
+  piece gives, in place of the piece's own; a room passes none and gives the light its pieces carry, as ever): a yard's
+  lamp is mounted into the yard's own list once its picture stands, moved in place with a recentre (restand, FB1001
+  YARD-RECENTRE), and taken down with its piece or its pixel. `lamps()` answers the lamps of every yard drawn - the
+  owner's own, and any within YARD_DRAW_M of the eye.
+- **Lit** (`scenes/world.js`): beside the quays' lanterns, among the scene lights - ranked with the street's own in the
+  night's one selection, never the player's extras (AUDIT HOLDINGS Q3's law) - in the lanterns' hours
+  (isCityLightsOn, 17:00-08:00), in the town lanterns' colour (CITY_LIGHT_COLOR_F32: white on the classic set, EL1's
+  flame on the lane), each on the town's flicker (CityLightAnimator) at a slot named by its piece (yardLampSlot, FNV-1a
+  of the id - LA-LIGHTS1's law: its own flicker whatever else stands). The lamp's flame flat is a TEXTURE.210 batch, so
+  it never shadows its own light (EL6, SHADOW_LIGHT_FLATS).
+- **The four hosts.** `scenes/world.js` WIRED. `scenes/exterior.js` (the bench) stands no online homes - HOME-YARD's own
+  FLAG - so no yard to light. `scenes/worldModes.js` and `scenes/dungeonContext.js` stand no street.
+- Pinned in `test/yardlight.test.js` (6) - the law, the flicker's slot, decorRoom under the host's law and a room
+  without one, the real yard host, and world.js's own night composition run out of its source over a real Renderer -
+  `tools/mutants/yardlight.json` 18 of 18 dead. audit0928_render's R2 scope stands `yards: null`.
+- Known limits: the yard's Light button stays hidden - a yard's lamp keeps the town's hours, not its owner's; only a
+  TEXTURE.210 flat lights (a model, or a flame of another archive, gives none, as in the town).
 
 ### YARD-HEIGHT and DECOR-TURN - a yard's piece stands at most 4 m up; a placed piece turned where it stands (2026-10-06)
 

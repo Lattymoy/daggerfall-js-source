@@ -170,10 +170,15 @@ export function decorMatrix(piece, origin) {
  *                  season - scenes/yardNature.js): null for one it leaves to the room, else a Promise of `{ batch, size,
  *                  release? }` (the room destroys the batch with the piece and calls `release`) or of null (nothing to
  *                  draw); `live()` whether the piece still stands as it was asked
+ *   lampOf(piece, size) - YARD-LIGHT: the host's own law over the light a piece gives, IN PLACE of the piece's own (a
+ *                  yard's: scenes/homeYards.js yardLampOf - a TEXTURE.210 flat lights as the town's own lanterns, at
+ *                  its top): `{ light, lift }` - the light and how far above the piece's base it hangs - or null for
+ *                  none. `size` is the drawn picture's, null until it stands. None for a room: a piece gives the light
+ *                  it carries (`piece.light`), where decorLightLift hangs it
  */
 export function createDecorRoom({
   meshes, renderer, getTexture, uploadRecord, uploadRecordFrame, flatAnims = () => null, collider, origin, roomLights = () => null,
-  mwPicture = null, later = setTimeout, doors = null, prepareModel = null, standFlat = null,
+  mwPicture = null, later = setTimeout, doors = null, prepareModel = null, standFlat = null, lampOf = null,
 }) {
   /** @type {Map<string, {piece: any, o: number[], gpu: any, box: any, cpu: any, matrix: Float32Array, batch: any, anims: any, size: any, light: any, mount: any, door: any, release?: any}>} */
   const standing = new Map();
@@ -245,13 +250,15 @@ export function createDecorRoom({
     return flats.get(k);
   }
 
-  /** A lit piece's light, into the room's list - `lift` above its base (decorLightLift). */
+  /** A lit piece's light, into the room's list - `lift` above its base (decorLightLift). YARD-LIGHT: or the host's own
+   *  law's light, where that law hangs it (`lampOf`), the piece's own never asked. */
   function mountLight(entry, o, lift) {
     const { piece } = entry;
-    if (!piece.light || lift == null) return;
+    const law = lampOf ? lampOf(piece, entry.size) : { light: piece.light, lift };
+    if (!law?.light || law.lift == null) return;
     entry.light = {
-      x: o[0] + piece.pos[0], y: o[1] + piece.pos[1] + lift, z: o[2] + piece.pos[2],
-      range: piece.light.range, intensity: piece.light.intensity, color: [...piece.light.color], decor: piece.id,
+      x: o[0] + piece.pos[0], y: o[1] + piece.pos[1] + law.lift, z: o[2] + piece.pos[2],
+      range: law.light.range, intensity: law.light.intensity, color: [...law.light.color], decor: piece.id,
     };
     roomLights?.()?.push(entry.light);
   }
