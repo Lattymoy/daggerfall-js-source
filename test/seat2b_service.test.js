@@ -106,7 +106,7 @@ test('SEAT2b THE SUPPLY AND THE RISE: the stockpile\'s units move into the proje
   const raised = s.chronicle(ANTICLERE.key).find((c) => c.kind === 'fort-raised');
   assert.deepEqual(raised.data, { work: 'walls', tier: 1 });
   // the next tier: begun from tier 1; a Builder's asks 720 of 800 stone
-  s.raw.prepare("INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, updated_at) VALUES (?, ?, 'masonry', 5000, 'builder', ?)").run(sh.gm.id, sh.gm.character, T0);
+  s.raw.prepare("INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, updated_at) VALUES (?, ?, 'building', 5000, 'builder', ?)").run(sh.gm.id, sh.gm.character, T0);  // PIN MOVED (CRAFT3): Carpentry's and Masonry's are Building's track
   const b = await s.fund(sh.gm, ANTICLERE.key, 'walls');
   assert.deepEqual([b.body.tier, b.body.builder, b.body.needs], [2, true, [['stone:cut', 720], ['ingot:iron', 200]]]);
 });
@@ -255,7 +255,7 @@ test('SEAT2b THE FORTIFIER\'S SAVE: a Fortifier on the defending roster saves st
   const sh = await s.guild('Gamal', 'The Silver Hand', 'SH');
   const eo = await s.guild('Horst', 'Ebon Oath', 'EO');
   const roster = (who, gid, side) => s.raw.prepare('INSERT INTO town_seat_rosters (week, key, account, char_id, guild_id, side, at) VALUES (?, ?, ?, ?, ?, ?, ?)').run(W, ANTICLERE.key, who.id, who.character, gid, side, T0);
-  const fortifier = (who) => s.raw.prepare("INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'masonry', 100000, 'builder', 'fortifier', ?)").run(who.id, who.character, T0);
+  const fortifier = (who) => s.raw.prepare("INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'building', 100000, 'builder', 'fortifier', ?)").run(who.id, who.character, T0);  // PIN MOVED (CRAFT3): Carpentry's and Masonry's are Building's track
   fortifier(eo.gm);
   roster(eo.gm, eo.gid, 'attack');
   s.raw.prepare("INSERT INTO town_seat_forts (key, work, tier, at) VALUES (?, 'walls', 2, ?)").run(ANTICLERE.key, T0);

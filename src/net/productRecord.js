@@ -4,7 +4,7 @@
 //
 //     p1.<base64url({ p, s, h, r, q, m, c, i })>.<base64url(64-byte Ed25519 signature)>
 //         p the provenance id (16 hex, the service's CSPRNG)   s the account (the identity token's sub)
-//         h the character   r the recipe (net/recipeLaw.js)   q the quality (0 Crude .. 4 Masterwork; a kit's, arrows' -1)
+//         h the character   r the recipe (net/recipeLaw.js)   q the quality (0 Crude .. 4 Masterwork; arrows' -1, and a kit's made before CRAFT5)
 //         m the maker's name (null for none)   c a seed (32 bits) - the piece's Loot Rarity rolls come off it
 //         i issued, epoch seconds - a record is history, and carries no expiry
 //         a AUDIT 30 L4: 1 where the piece bears its maker's mark (a Masterwork, or a Master Joiner's furniture - the
@@ -26,7 +26,7 @@
 //
 // PURE; the account service mints, the client reads. Not a DFU member. Ledger A (the professions' row).
 import { _b64url, SIG_BYTES, ID_RE } from './identityToken.js';
-import { PROVENANCE_RE, MAKER_MAX, recipeById, MASTERWORK, takesQuality, dyeOk, HAND_CHEF, HAND_PROVISIONER, dishOf, jewelHandOk } from './recipeLaw.js';
+import { PROVENANCE_RE, MAKER_MAX, recipeById, MASTERWORK, rollsQuality, dyeOk, HAND_CHEF, HAND_PROVISIONER, dishOf, jewelHandOk } from './recipeLaw.js';
 
 /** The only version this file reads or writes. */
 export const PRODUCT_RECORD_V = 'p1';
@@ -47,7 +47,7 @@ export function productRecordValid(c) {
   if (typeof c.h !== 'string' || !CHAR_RE.test(c.h)) return false;
   const r = recipeById(c.r);
   if (!r) return false;
-  if (!Number.isInteger(c.q) || (!takesQuality(r) ? c.q !== -1 : c.q < 0 || c.q > MASTERWORK)) return false;   // PROF4: arrows take none, as a kit
+  if (!Number.isInteger(c.q) || (!rollsQuality(r) ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))) return false;   // PROF4: arrows take none; CRAFT5: a kit its quality - or none, one made before kits took one
   if (c.m !== null && (typeof c.m !== 'string' || !c.m.length || c.m.length > MAKER_MAX)) return false;
   if (!Number.isSafeInteger(c.c) || c.c < 0 || c.c > 0xffffffff) return false;
   if (!Number.isSafeInteger(c.i) || c.i < 0) return false;

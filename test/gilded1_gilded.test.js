@@ -33,6 +33,7 @@ import { validLootItem } from '../src/systems/loot.js';
 import { salvageRefusal, reforgeRefusal, honeRefusal } from '../src/systems/reforge.js';
 import { itemMakerRefuses } from '../src/systems/enchanting.js';
 import { heirloomEligible } from '../src/systems/legacy/heirloom.js';
+import { temperRefusal } from '../src/net/temperLaw.js';   // CRAFT4's temper, law 7
 import { itemLongName } from '../src/systems/itemInfo.js';
 import { quickslotKey } from '../src/systems/quickslots.js';
 import { ownWeaponModelFor } from '../src/characters/ownWeaponModels.js';
@@ -149,7 +150,7 @@ test('GILDED1 A STATIC ROLL: the wire holds it to its record EXACTLY - one numbe
   assert.equal(validGildedMarks(null), null);
 });
 
-test('GILDED1 NO DOOR ALTERS IT: the salvage, the Reforge, the hone, the item maker, the exalt, the curse and the heirloom each refuse a Gilded piece - and the codex\'s imprint is never its (mutants: the salvage; the item maker; the heirloom)', () => {
+test('GILDED1 NO DOOR ALTERS IT: the salvage, the Reforge, the hone, the item maker, the exalt, the curse, the heirloom and the crafter\'s temper each refuse a Gilded piece - and the codex\'s imprint is never its (mutants: the salvage; the item maker; the heirloom)', () => {
   on();
   const h = mintHourlock();
   assert.equal(salvageRefusal(h), 'gilded', 'never broken down');
@@ -164,6 +165,8 @@ test('GILDED1 NO DOOR ALTERS IT: the salvage, the Reforge, the hone, the item ma
   assert.equal(h.cursed, undefined);
   assert.equal(heirloomEligible({ ...h, equipSlot: 1 }), false, 'never an heirloom - it is its record\'s');
   assert.equal(CX.imprintRefusal(h, 'nightwhisper', { items: [] }), 'not', 'the imprint is a Rare\'s');
+  assert.equal(temperRefusal({ ...createWeapon(120, 1), rarity: GILDED }), 'rarity', 'CRAFT4\'s temper: law 7 shuts the rung - on any base a smith could temper');
+  assert.equal(temperRefusal(h), 'not', 'and the gun itself is no recipe\'s');
   assert.equal(JSON.stringify(h), JSON.stringify(mintHourlock()).replace(/"currentCondition":\d+/, `"currentCondition":${h.currentCondition}`), 'and nothing laid on it');
 });
 

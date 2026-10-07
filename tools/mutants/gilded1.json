@@ -205,5 +205,14 @@
     "tests": [
       "test/gilded1_gilded.test.js"
     ]
+  },
+  {
+    "name": "GILDED1-the-temper",
+    "file": "src/net/temperLaw.js",
+    "old": "export const TEMPER_SHUT = Object.freeze(['legendary', 'aetheric', 'artifact', 'gilded']);",
+    "new": "export const TEMPER_SHUT = Object.freeze(['legendary', 'aetheric', 'artifact']);",
+    "tests": [
+      "test/gilded1_gilded.test.js"
+    ]
   }
 ]

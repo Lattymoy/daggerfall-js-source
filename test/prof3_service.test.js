@@ -102,7 +102,7 @@ test('PROF3 service: the quality is the service\'s roll on the margin, then a st
   assert.equal(await at('dagger:daedric', 0xff), 4, 'the top 5 points are Masterwork\'s');
 });
 
-test('PROF3 service: a craft refused - the rank, the inputs (naming the short one), the recipe; a kit takes no quality, a Quartermaster\'s is two pieces; the crafter\'s limit; the switch shut, a craft made answered after', async () => {
+test('PROF3 service: a craft refused - the rank, the inputs (naming the short one), the recipe; a kit\'s quality rolled (CRAFT5: its reach), a Quartermaster\'s is two pieces; the crafter\'s limit; the switch shut, a craft made answered after', async () => {
   const s = await stand();
   const mac = await s.registered('Mac');
   s.setXp(mac, xpForRank(55) - 1);
@@ -118,16 +118,18 @@ test('PROF3 service: a craft refused - the rank, the inputs (naming the short on
   s.give(mac, 'ingot:iron', 'own', 2);
   s.give(mac, 'leather:cured', 'own', 2);
   const kit = await s.call('/v1/prof/craft', craft(mac, 'kit:iron'), mac.secret);
-  assert.deepEqual([kit.body.quality, kit.body.pieces.length], [-1, 1]);
+  // PIN MOVED (CRAFT5, Professions-Arc 41.8): a kit's craft rolls a quality - its reach (a Superior's nine tenths)
+  assert.deepEqual([Number.isInteger(kit.body.quality) && kit.body.quality >= 0 && kit.body.quality <= 4, kit.body.pieces.length], [true, 1]);
   s.setXp(mac, xpForRank(100), 'smithing', { spec100: 'quartermaster' });
   const two = await s.call('/v1/prof/craft', craft(mac, 'kit:iron'), mac.secret);
-  assert.deepEqual([two.body.quality, two.body.count, two.body.pieces.length], [-1, 2, 2]);
+  assert.deepEqual([Number.isInteger(two.body.quality) && two.body.quality >= 0, two.body.count, two.body.pieces.length], [true, 2, 2]);
   assert.notEqual(two.body.pieces[0].provenance, two.body.pieces[1].provenance);
   assert.deepEqual(s.stores(mac, 'ingot:iron'), [], 'two kits, one ingot');
-  assert.equal(readProductRecord(two.body.pieces[1].record).q, -1);
+  assert.equal(readProductRecord(two.body.pieces[1].record).q, two.body.quality, 'PIN MOVED (CRAFT5): signed at its quality');
   // the crafter's limit: two crafts past Journeyman hold Smithing at 50
-  s.setXp(mac, xpForRank(60), 'alchemy');
-  s.setXp(mac, xpForRank(60), 'cooking');
+  // PIN MOVED (CRAFT3): Alchemy and Cooking are one track (Provisioning) - the two crafts past Journeyman are Provisioning and Building, seeded under the craft's id
+  s.setXp(mac, xpForRank(60), 'provisioning');
+  s.setXp(mac, xpForRank(60), 'building');
   s.setXp(mac, xpForRank(51) - 50);
   s.give(mac, 'ingot:iron', 'own', 1);
   s.give(mac, 'metal:tin', 'own', 1);

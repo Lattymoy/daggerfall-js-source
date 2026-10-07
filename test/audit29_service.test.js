@@ -205,8 +205,8 @@ test('AUDIT 29 A7 + A14: a smelt\'s Smithing XP keeps the quarter at the smith\'
   assert.equal(r.body.xp, 25, 'Iron (tier 1) at Smithing 40: a quarter of 100');
   // two crafts past Journeyman: Smithing stops at 50
   const ann = await s.registered('Ann');
-  s.setXp(ann, xpForRank(60), 'alchemy');
-  s.setXp(ann, xpForRank(60), 'carpentry');
+  s.setXp(ann, xpForRank(60), 'provisioning');   // PIN MOVED (CRAFT3): Alchemy's rank is the Provisioning track's
+  s.setXp(ann, xpForRank(60), 'building');   // PIN MOVED (CRAFT3): Carpentry's rank is the Building track's
   s.setXp(ann, xpForRank(51) - 3, 'smithing');
   s.give(ann, 'metal:iron', 'own', 20);
   const c = await s.call('/v1/prof/smelt', { character: ann.character, recipe: 'ingot:iron', count: 10, rid: rid() }, ann.secret);

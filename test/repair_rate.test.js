@@ -155,5 +155,5 @@ test('KIT-CEILING: on the hotbar a kept kit is a refusal - said once, and never 
 test('KIT-CEILING: what a kit says it does - the tooltip lines and the smithing page name the ceiling (mutants: a line without it)', () => {
   assert.deepEqual(pieceLines(mintFieldRepairKit()), ['Mends 15% of a weapon\'s or armour\'s condition, up to 75%, once']);
   assert.deepEqual(pieceLines({ kitMetal: 4, provenance: '0123456789abcdef' }), ['Mends a quarter of a Dwarven piece\'s condition, up to 75%, once']);
-  assert.match(rd('src/ui/profPages.js'), /A Repair Kit mends a quarter of a piece\\'s condition, up to three quarters, once/);
+  assert.match(rd('src/ui/profPages.js'), /A Repair Kit mends a quarter of a piece\\'s condition, once - a weapon or armour of its metal - up to three quarters of it, or nine tenths from a Superior or Masterwork kit\./);   // PIN MOVED (CRAFT5): the reach a kit's quality gives
 });

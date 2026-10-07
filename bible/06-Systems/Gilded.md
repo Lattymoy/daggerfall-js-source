@@ -63,7 +63,9 @@ forgery, there is no band to sit inside - and none of the marks another door lay
 
 No door alters it: the Reforge's lines and the hone's are a Magic's, a Rare's or an Exalted's (`reforgeableLines`,
 `honeableLines` answer none); `exaltLegendary` is a Legendary's; `cursePiece` a Rare's or a Legendary's; the socket's
-per-mille has no row for it; the imprint is a Rare's; the salvage, the item maker and the heirloom refuse it by name.
+per-mille has no row for it; the imprint is a Rare's; the salvage, the item maker and the heirloom refuse it by name;
+and the crafter's temper (CRAFT4, `net/temperLaw.js` TEMPER_SHUT - law 7, which main's arc wrote for the Legendary,
+the Aetheric and the Artifact while this one was being built) shuts the rung too, at the merge that brought it.
 
 ### The power, as it runs
 
@@ -142,7 +144,7 @@ with it).
 
 `test/gilded1_gilded.test.js` - the rung, the record, the mint, a static roll, no door alters it, the drop, the power
 (the toll and the pellet back), the look, the art and the gold in the hand (a sketch of the idle frame: a glove at the
-foot, the brass above, a glove-hued crevice that touches nothing). Its mutants, `tools/mutants/gilded1.json`: 23, all
+foot, the brass above, a glove-hued crevice that touches nothing). Its mutants, `tools/mutants/gilded1.json`: 24, all
 dead. The ladder's own enumerations moved with it, each saying so: LR1, SET6, PI1, WB5, RF5, LOOT9 (the salvage's
 refusals), LOOT10/AUDIT LOOT (the codex count), DW1 and AUDIT-DW F4 (the rig's key), FIELD-GUN-MW2 (the preload's two
 rows and the bake's two twins), SD9e (the spoils' order and the Hourlock's rate).

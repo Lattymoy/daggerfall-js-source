@@ -102,19 +102,24 @@ test('PROF11 law: the bench\'s XP - 20 a tier a unit of work at the RANK\'s own 
   assert.equal(firstCraftPays(MASON_RECIPES[0]), true, 'quarried stone is the world\'s, never a counter\'s');
   assert.equal(firstCraftPays(MASON_RECIPES[1]), true);
   // the crafter's limit stands over Masonry as over every craft
-  assert.equal(craftXpCap('masonry', { smithing: 60, carpentry: 70 }), xpForRank(51) - 1);
+  assert.equal(craftXpCap('masonry', { smithing: 60, provisioning: 70 }), xpForRank(51) - 1);   // PIN MOVED (CRAFT3): Carpentry is Building's with Masonry now - the two other crafts past 50 are tracks (Smithing, Provisioning)
+  assert.equal(craftXpCap('masonry', { building: 70, smithing: 60 }), xpForRank(PROF_RANK_MAX), 'Masonry raises Building - its own track is none of the two');   // PIN MOVED (CRAFT3): the ranks are the tracks'
   assert.equal(craftXpCap('masonry', { smithing: 60, mining: 90 }), xpForRank(PROF_RANK_MAX));
 });
 
 // ─── THE SPECIALISATIONS (3.3) ───────────────────────────────────────
 
 test('PROF11 law: Masonry\'s four (3.3) - the Quarryman (50) and the Sculptor (100) chosen now, the bench\'s; the Builder (50) and the Fortifier (100) chosen since SEAT2b built the fortifications they act on (AUDIT 29 A17, the Siegewright\'s law, until then)', () => {
-  assert.deepEqual(SPECIALISATIONS.masonry[50].map((s) => [s.id, s.name, s.text, s.later ?? null]), [
+  // PIN MOVED (CRAFT3): Masonry's choices stand under the Building track, after Carpentry's two - four a rank, one chosen
+  assert.deepEqual(SPECIALISATIONS.building[50].map((s) => [s.id, s.name, s.text, s.later ?? null]), [
+    ['bowyer', 'Bowyer', 'Bows +1 quality step (arrows take none).', null], ['joiner', 'Joiner', 'Furniture at half the planks.', null],
     ['quarryman', 'Quarryman', 'Rough Stone cuts 1:1, not 2:1.', null], ['builder', 'Builder', 'Fortification projects need 10% less stone.', null],   // PIN MOVED (SEAT2b): chosen now
   ]);
-  assert.deepEqual(SPECIALISATIONS.masonry[100].map((s) => [s.id, s.name, s.text, s.later ?? null]), [
+  assert.deepEqual(SPECIALISATIONS.building[100].map((s) => [s.id, s.name, s.text, s.later ?? null]), [
+    ['siegewright', 'Siegewright', 'Rams +50% vitality; siege works a day sooner.', null], ['master-joiner', 'Master Joiner', 'Furniture carries the maker\'s mark.', null],
     ['fortifier', 'Fortifier', 'Once a Season a seat\'s Walls skip their drop on capture.', null], ['sculptor', 'Sculptor', 'Stone decor pieces.', null],   // PIN MOVED (SEAT2b)
   ]);
+  assert.equal(SPECIALISATIONS.masonry, undefined, 'no track of its own');   // PIN MOVED (CRAFT3): a discipline, not a track
   assert.deepEqual([specOk('masonry', 50, 'quarryman'), specOk('masonry', 50, 'builder'), specOk('masonry', 100, 'fortifier'), specOk('masonry', 100, 'sculptor'), specOk('masonry', 50, 'sculptor')],
     [true, true, true, true, false]);   // PIN MOVED (SEAT2b): the Builder and the Fortifier chosen
   assert.equal(specOf('masonry', 100, 'fortifier').later, undefined);   // PIN MOVED (SEAT2b): the fortifications stand

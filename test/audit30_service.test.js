@@ -167,8 +167,8 @@ test('AUDIT 30 S6 + S8/L2: a piece standing in a home is not listed, and stands 
   const HOME = { mapId: 1291010263, buildingKey: 0x10203 };
   const house = await s.seatHome(mac, { ...HOME, region: DF, price: 42000 });   // MERGE 2: a house is a realm character's (AUDIT REALM2 S2)
   assert.equal(house.status, 200);
-  s.raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'carpentry', ?, NULL, 'master-joiner', 1)`)
-    .run(mac.id, mac.character, xpForRank(100));
+  s.raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'building', ?, NULL, 'master-joiner', 1)`)
+    .run(mac.id, mac.character, xpForRank(100));   // PIN MOVED (CRAFT3): a table is Carpentry's, read from the Building track (a 'carpentry' row is read by nothing)
   s.give(mac, 'plank:oak', 'own', 3);
   const made = await s.call('/v1/prof/craft', { character: mac.character, recipe: 'table-small:oak', clean: false, name: 'Silverthorn', rid: rid() }, mac.secret);
   assert.equal(made.status, 200, JSON.stringify(made.body));
@@ -270,8 +270,8 @@ test('AUDIT 30 L4: a marked piece\'s record signs its mark (`a`), an unmarked on
   // a Master Joiner's table bears the mark at any quality; a crafter at the table's own rank (margin 0) never rolls a
   // Masterwork (qualityOdds(0)), whose mark is its own - so hers bears none
   for (const [w, rank, spec] of [[mac, 100, 'master-joiner'], [ann, 10, null]]) {
-    s.raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'carpentry', ?, NULL, ?, 1)`)
-      .run(w.id, w.character, xpForRank(rank), spec);
+    s.raw.prepare(`INSERT INTO prof_tracks (player, char_id, profession, xp, spec50, spec100, updated_at) VALUES (?, ?, 'building', ?, NULL, ?, 1)`)
+      .run(w.id, w.character, xpForRank(rank), spec);   // PIN MOVED (CRAFT3): a table is Carpentry's, read from the Building track (a 'carpentry' row is read by nothing)
     s.give(w, 'plank:oak', 'own', 3);
   }
   const claims = async (w) => {
