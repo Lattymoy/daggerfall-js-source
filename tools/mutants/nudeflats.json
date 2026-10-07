@@ -164,8 +164,8 @@
   {
     "name": "NUDEFLATS-mw-weld-unwired",
     "file": "src/combat/fpArm.js",
-    "old": "      : composeWornModest({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf }, showNudity());",
-    "new": "      : composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf });",
+    "old": "      : composeWornModest({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf, helmStyle }, showNudity());",
+    "new": "      : composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf, helmStyle });",
     "tests": [
       "test/nudeflats.test.js",
       "test/fparm.test.js"

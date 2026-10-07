@@ -25,8 +25,9 @@ light set mints any plate material as **Brigandine** (`rriItems.js`
 Jerkin" - and on the Morrowind body it wore retail's `steel_cuirass`
 (MW-ASSIGN: the jerkin resolves by the cuirass row). Mac's answer,
 asked: **the Steel Brigandine only**. Every other material of the jerkin
-- Silver included, though it shares Steel's Morrowind token - and the
-classic Steel Cuirass keep what they had.
+- Silver included, though it shares Steel's Morrowind token - keeps what
+it had. (The classic Steel Cuirass wears Mac's steel plate since
+MW-STEEL1 - `04-Characters/Steel-Plate.md`.)
 
 ## The file, read
 

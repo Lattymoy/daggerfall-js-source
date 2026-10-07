@@ -79,6 +79,7 @@ import { WEAPONS } from '../characters/weapons.js';
 import { materialName } from '../systems/itemInfo.js';
 import { composeWornArmor, composeWornModest, shadowSkinRows, fpWornAdds, mwArmorRecords, mwClothingRecord, CLOTHING_NAME, werewolfRobeOf, firstPersonPartGroup } from '../formats/mwItemMap.js';   // WEREWOLF1: the robe and its first-person ladder; NUDE-FLATS: the upper weld
 import { showNudity } from '../characters/nudeFlats.js';   // NUDE-FLATS: Show Nudity, the weld's switch
+import { getPref } from '../systems/uiPrefs.js';   // MW-STEEL1: the Steel Helm switch, read where the worn set is composed
 import { skinMips, skinUseOf, skinUseKey } from '../characters/werewolfSkin.js';   // SHADOW-FANG: the werewolf's skin, a law over its own textures
 import { correctTexturePath, correctActorModelPath, wrapModes, warningImage, decodeTextureImage } from '../formats/mwTexture.js';
 import { decodeTextureOffThread } from '../formats/mwTextureClient.js';   // MW-TEXTHREAD: the preload's decodes, in the pool
@@ -1647,6 +1648,31 @@ export function resolveWeaponParts({ weapon, hasAmmo = false, allWeapons, find, 
   return { mwType, parts, weaponInfo, arrowInfo, notes };
 }
 
+/** MW-BRIG2 / MW-STEEL1: THE BODY FILES A WORN MODEL OF THE PORT'S OWN TAKES TO THE BINDER - the player's own
+ *  third-person skin parts (`rows`, playerBodyRows) for the slots it is skinned from (`skinFrom`) and the slots its
+ *  fit measures (`fitFrom`), SHADOWED OR NOT (the cuirass hides the very chest it copies; hidden is not drawn, and
+ *  the skin is still the body's). One reading for both rigs - the third person's body and the first person's
+ *  gauntlets - so neither can grow a slot the other forgets. */
+export function ownBodyPaths(add, rows) {
+  const under = (slots) => (slots ?? []).flatMap((slot) => rows
+    .filter((r) => r.record && r.slot === slot).map((r) => ({ slot, path: `meshes/${r.record.model}` })));
+  return { skinFrom: under(add.skinFrom), fitFrom: under(add.fitFrom) };
+}
+
+/** ...and what the binder takes beside the add's own mesh: those bodies' bytes out of the loaded archives, the part it
+ *  is fitted onto (MW-BRIG3 `fitTo`), its fit (MW-STEEL1 `fit`), and the skeleton it is solved on when that is not the
+ *  rig it is worn on (`solveOn`, bytes). Nothing at all for a retail add. */
+export function ownBodyPart(add, rows, find, solveOn = null) {
+  if (!add.skinFrom) return {};
+  const read = (list) => list.map((b) => ({ slot: b.slot, bytes: find(b.path)?.get(b.path)?.slice() })).filter((b) => b.bytes);
+  const p = ownBodyPaths(add, rows);
+  return {
+    skinFrom: read(p.skinFrom), fitTo: add.fitTo ?? null,
+    ...(add.fit ? { fit: add.fit, fitFrom: read(p.fitFrom) } : {}),
+    ...(solveOn ? { solveOn } : {}),
+  };
+}
+
 /**
  * MW-D24: THE THIRD-PERSON BODY, built through the very same doors as
  * the arm - rule 6's other skeleton column (tpSkeletonPath), rules 1-3's
@@ -1701,8 +1727,8 @@ async function buildTpBody({
     // meshes resolveWeaponParts reads further down.
     // MW-BRIG2: the body a worn model is skinned from - the player's own skin parts for the slots it names, SHADOWED
     // OR NOT (the cuirass hides the very chest it copies; hidden is not drawn, and the skin is still the body's).
-    const bodyUnder = (add) => (add.skinFrom ?? []).flatMap((slot) => rows
-      .filter((r) => r.record && r.slot === slot).map((r) => ({ slot, path: `meshes/${r.record.model}` })));
+    // MW-STEEL1: and the parts its fit measures (ownBodyPaths).
+    const bodyUnder = (add) => { const p = ownBodyPaths(add, rows); return [...p.skinFrom, ...p.fitFrom]; };
     await loadFromArchives(archives, [
       ...[...skinRows, ...worn.adds].map((row) => `meshes/${row.model}`),
       ...worn.adds.flatMap(bodyUnder).map((b) => b.path),   // MW-BRIG2
@@ -1718,7 +1744,7 @@ async function buildTpBody({
       // partName rides along: a worn add's slot is a label carrying its
       // record id, and the binder's part rules key on the part itself.
       partBytes.push({ slot: row.slot, partName: row.partName, bones: row.bones, bytes: arc.get(path).slice(),
-        ...(row.skinFrom ? { skinFrom: bodyUnder(row).map((b) => ({ slot: b.slot, bytes: find(b.path)?.get(b.path)?.slice() })).filter((b) => b.bytes), fitTo: row.fitTo ?? null } : {}) });   // MW-BRIG2; MW-BRIG3: and the part it is fitted onto
+        ...ownBodyPart(row, rows, find) });   // MW-BRIG2: the body under it; MW-BRIG3: the part it is fitted onto; MW-STEEL1: its fit
     }
     if (!partBytes.length) {
       return { ok: false, stage: 'parts', error: werewolf ? 'no werewolf body mesh resolved - its robe, head and hair are Bloodmoon\'s' : `no third-person body mesh resolved for race "${race}"`, notes: missing, rows };
@@ -2026,6 +2052,10 @@ export async function buildFpArm({
     // references the whole body (getBodyParts answers nothing for a werewolf, npcanimation.cpp:1200-1203). No
     // Daggerfall piece is composed and no garment's colour is measured.
     const robe = werewolf ? werewolfRobeOf(clothes) : null;
+    // MW-STEEL1: THE STEEL HELM SWITCH (systems/features.js, pref `mwSteelHelm`) - closed or open, read here where the
+    // worn set is composed, so the player's own figure and every peer's are drawn by the viewer's switch, as Show
+    // Nudity's weld below is. A switch thrown rebuilds the player (ui/enhancedMenu.js TILE_AFTER); a peer, its next build.
+    const helmStyle = getPref('mwSteelHelm');
     // MW-LOAD: covers clothingColourOf's two synchronous reads (a
     // garment's part mesh and its texture) for every candidate the
     // resolver will hand it - the pool is discovered by running the
@@ -2033,14 +2063,14 @@ export async function buildFpArm({
     // not carry a second copy of mwClothingRecord's pool law.
     if (!werewolf) {
       await prepareClothingColours(
-        (probe) => composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf: probe }),
+        (probe) => composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf: probe, helmStyle }),
         parts, archives, gen);
     }
     // NUDE-FLATS: and a woman's bare chest wears the upper weld while Show Nudity is off - this body is the
     // player's own figure and every peer's, each drawn by the viewer's setting as the classic doll is.
     const worn = werewolf
       ? composeWornArmor({ pieces: robe ? [{ kind: 'record', record: robe, reserve: 'robe' }] : [], armors: [], clothes: [], bodyPool: parts, female })
-      : composeWornModest({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf }, showNudity());
+      : composeWornModest({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf, helmStyle }, showNudity());
     // AUDIT C7: which of the two it is - Bloodmoon.esm not attached, or attached and naming no robe (a mod's master)
     if (werewolf && !robe) {
       worn.notes.push(esmNames.some((n) => /^bloodmoon\.esm$/i.test(n))
@@ -2124,6 +2154,13 @@ export async function buildFpArm({
     // for a hand, wrist, forearm or upper arm, else the slot reserved with nothing in it (mwItemMap
     // firstPersonPartGroup). A human's worn adds keep the arm-bone filter (fpWornAdds).
     const fpAdds = werewolf ? firstPersonPartGroup(robe, parts, female).adds : fpWornAdds(worn.adds);
+    // MW-STEEL1: A WORN MODEL OF THE PORT'S OWN IN FIRST PERSON (the steel gauntlets) is skinned from the THIRD-person
+    // body and solved on the third-person skeleton - the T-pose Mac's scene stands in, measured by the same fit - and
+    // worn on this rig by its bones' names (mwFirstPerson.js bindSkinnedFromBody `solveOn`). The first person's own
+    // rest is not that pose, and its hand is a different mesh; the bones are the same bones.
+    const ownFp = fpAdds.filter((a) => a.skinFrom);
+    const tpRows = ownFp.length ? playerBodyRows(parts, race, female, { beast, faceIndex, faceMatch }) : [];
+    const tpSkeletonFile = ownFp.length ? correctActorModelPath(tpSkeletonPath({ female, beast, werewolf }), (p) => archives.some((a) => a.has(p))) : null;
     // MW-LOAD: ONE ROUND OF RANGED READS, concurrent, for every
     // synchronous read in the rest of this build - the first-person
     // skin parts (the fpRows loop), the worn adds the fp camera keeps
@@ -2134,6 +2171,8 @@ export async function buildFpArm({
     await loadFromArchives(archives, [
       ...fpRows.map((w) => w.path),
       ...fpAdds.map((add) => `meshes/${add.model}`),
+      ...ownFp.flatMap((add) => { const p = ownBodyPaths(add, tpRows); return [...p.skinFrom, ...p.fitFrom].map((b) => b.path); }),   // MW-STEEL1
+      ...(tpSkeletonFile ? [tpSkeletonFile] : []),   // MW-STEEL1: the skeleton they are solved on
       ...weaponPartPaths({ weapon, hasAmmo, allWeapons, has: archiveHas(archives) }),   // MW-D50
       ...torchPartPaths({ torch, allLights, has: archiveHas(archives) }),   // MW-D51
       ...sourcePaths,
@@ -2147,11 +2186,13 @@ export async function buildFpArm({
     // sleeves, the shield - fpWornAdds' filter - never a helmet in
     // your face.
     missing.push(...worn.notes);
+    const tpSkeletonBytes = tpSkeletonFile ? find(tpSkeletonFile)?.get(tpSkeletonFile)?.slice() ?? null : null;   // MW-STEEL1
     for (const add of fpAdds) {
       const path = `meshes/${add.model}`;
       const arc = find(path);
       if (!arc) { missing.push(`${add.slot}: ${path} is not in your archives`); continue; }
-      partBytes.push({ slot: add.slot, partName: add.partName, bones: add.bones, bytes: arc.get(path).slice() });
+      partBytes.push({ slot: add.slot, partName: add.partName, bones: add.bones, bytes: arc.get(path).slice(),
+        ...ownBodyPart(add, tpRows, find, tpSkeletonBytes) });   // MW-STEEL1: an own model, its third-person body and skeleton
     }
     // MW-D9: THE WEAPON - resolveWeaponParts above, the one home MW-D19
     // gave it so a live weapon swap resolves through the very same door
