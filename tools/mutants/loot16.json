@@ -1,0 +1,644 @@
+[
+  {
+    "name": "LOOT16-one-in-six",
+    "file": "src/systems/lootRarity.js",
+    "old": "export const CURSE_IN = 12;",
+    "new": "export const CURSE_IN = 6;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-pass-twice-as-often",
+    "file": "src/systems/lootRarity.js",
+    "old": "    if (rolls() * _curseIn < 1 && cursePiece(it, rolls)) cursed.push(it);",
+    "new": "    if (rolls() * _curseIn < 2 && cursePiece(it, rolls)) cursed.push(it);",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-no-bad-rep",
+    "file": "src/systems/lootRarity.js",
+    "old": "  Object.freeze({ type: T.BadRepWith, params: Object.freeze([0, 1, 2, 3, 4]) }),   // a social group - never All\n",
+    "new": "",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-bad-rep-with-all",
+    "file": "src/systems/lootRarity.js",
+    "old": "  Object.freeze({ type: T.BadRepWith, params: Object.freeze([0, 1, 2, 3, 4]) }),",
+    "new": "  Object.freeze({ type: T.BadRepWith, params: Object.freeze([0, 1, 2, 3, 4, 5]) }),",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-deteriorates-all-the-time",
+    "file": "src/systems/lootRarity.js",
+    "old": "  Object.freeze({ type: T.ItemDeteriorates, params: Object.freeze([2]), metal: Object.freeze([1, 2]) }),",
+    "new": "  Object.freeze({ type: T.ItemDeteriorates, params: Object.freeze([0, 2]), metal: Object.freeze([1, 2]) }),",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-metal-never-in-the-sun",
+    "file": "src/systems/lootRarity.js",
+    "old": "  Object.freeze({ type: T.ItemDeteriorates, params: Object.freeze([2]), metal: Object.freeze([1, 2]) }),",
+    "new": "  Object.freeze({ type: T.ItemDeteriorates, params: Object.freeze([2]) }),",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-hurt-in-the-sun",
+    "file": "src/systems/lootRarity.js",
+    "old": "  Object.freeze({ type: T.UserTakesDamage, params: Object.freeze([1]) }),",
+    "new": "  Object.freeze({ type: T.UserTakesDamage, params: Object.freeze([0, 1]) }),",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-a-blunt-jewel",
+    "file": "src/systems/lootRarity.js",
+    "old": "  Object.freeze({ type: T.LowDamageVs, params: Object.freeze([0, 1, 2, 3]), groups: Object.freeze(['Weapons']) }),",
+    "new": "  Object.freeze({ type: T.LowDamageVs, params: Object.freeze([0, 1, 2, 3]) }),",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-a-leeching-ring",
+    "file": "src/systems/lootRarity.js",
+    "old": "  Object.freeze({ type: T.HealthLeech, params: Object.freeze([1]), groups: Object.freeze(['Weapons']) }),",
+    "new": "  Object.freeze({ type: T.HealthLeech, params: Object.freeze([1]) }),",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-leech-whenever-used",
+    "file": "src/systems/lootRarity.js",
+    "old": "  Object.freeze({ type: T.HealthLeech, params: Object.freeze([1]), groups: Object.freeze(['Weapons']) }),",
+    "new": "  Object.freeze({ type: T.HealthLeech, params: Object.freeze([0]), groups: Object.freeze(['Weapons']) }),",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-every-group-every-row",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (row.groups && !row.groups.includes(item?.group)) return [];\n",
+    "new": "",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-metal-read-as-cloth",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const params = row.metal && CURSE_METAL.includes(item?.group) ? row.metal : row.params;",
+    "new": "  const params = row.params;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-good-rep-for-all-unread",
+    "file": "src/systems/lootRarity.js",
+    "old": "e?.type === T.GoodRepWith && (e.param === p || e.param === 5))",
+    "new": "e?.type === T.GoodRepWith && e.param === p)",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-good-rep-undone",
+    "file": "src/systems/lootRarity.js",
+    "old": "(row.type === T.BadRepWith && e?.type === T.GoodRepWith && (e.param === p || e.param === 5))",
+    "new": "false",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-potent-undone",
+    "file": "src/systems/lootRarity.js",
+    "old": "    || (row.type === T.LowDamageVs && e?.type === T.PotentVs && e.param === p)));",
+    "new": "    ));",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-never-a-legendary",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if ((item?.rarity !== 'rare' && item?.rarity !== 'legendary') || item.exalted === true || isCursed(item) || !Array.isArray(item.affixes)) return false;",
+    "new": "  if (item?.rarity !== 'rare' || item.exalted === true || isCursed(item) || !Array.isArray(item.affixes)) return false;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-an-exalted-cursed",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if ((item?.rarity !== 'rare' && item?.rarity !== 'legendary') || item.exalted === true || isCursed(item) || !Array.isArray(item.affixes)) return false;",
+    "new": "  if ((item?.rarity !== 'rare' && item?.rarity !== 'legendary') || isCursed(item) || !Array.isArray(item.affixes)) return false;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-cursed-twice",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if ((item?.rarity !== 'rare' && item?.rarity !== 'legendary') || item.exalted === true || isCursed(item) || !Array.isArray(item.affixes)) return false;",
+    "new": "  if ((item?.rarity !== 'rare' && item?.rarity !== 'legendary') || item.exalted === true || !Array.isArray(item.affixes)) return false;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-a-proc-for-a-curse",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const numbers = AFFIX_IDS.filter((id) => !AFFIX_KINDS[id].proc && AFFIX_KINDS[id].groups.includes(item.group));",
+    "new": "  const numbers = AFFIX_IDS.filter((id) => AFFIX_KINDS[id].groups.includes(item.group));",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-a-carried-kind",
+    "file": "src/systems/lootRarity.js",
+    "old": "  let pool = numbers.filter((id) => !carried.has(id));",
+    "new": "  let pool = numbers;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-none-left-no-curse",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (!pool.length) pool = numbers.filter((id) => AFFIX_KINDS[id].params && unclaimed(id).length);\n",
+    "new": "",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-a-row-of-nothing",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const rows = CURSE_DRAWBACKS.filter((row) => curseParams(row, item).length);",
+    "new": "  const rows = CURSE_DRAWBACKS;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-whole-band",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const top = Math.ceil((lo + hi) / 2);   // the top half of its tier's band, as an Exalted's line",
+    "new": "  const top = lo;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-a-rare-band-on-a-legendary",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const [lo, hi] = AFFIX_RANGES[id][item.rarity];\n  const top = Math.ceil((lo + hi) / 2);",
+    "new": "  const [lo, hi] = AFFIX_RANGES[id].rare;\n  const top = Math.ceil((lo + hi) / 2);",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-a-carried-param",
+    "file": "src/systems/lootRarity.js",
+    "old": "param: pick(carried.has(id) ? unclaimed(id) : kindParams(id, item), rolls), value } : { id, value };\n  const row = pick(rows, rolls);",
+    "new": "param: pick(kindParams(id, item), rolls), value } : { id, value };\n  const row = pick(rows, rolls);",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-flavour-lost",
+    "file": "src/systems/lootRarity.js",
+    "old": "  item.enchantments = [...(Array.isArray(item.enchantments) ? item.enchantments : []), { ...drawback }];",
+    "new": "  item.enchantments = [{ ...drawback }];",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-curse-unnamed",
+    "file": "src/systems/lootRarity.js",
+    "old": "  item.cursed = drawback;\n",
+    "new": "",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-line-worthless",
+    "file": "src/systems/lootRarity.js",
+    "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);\n  return true;\n}\n/** THE CURSE'S PASS",
+    "new": "  item.value = Number.isFinite(item.value) ? item.value : itemBaseValue(item);\n  return true;\n}\n/** THE CURSE'S PASS",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-pass-ignores-the-switch",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const cursed = [];\n  if (!lootRarityOn()) return cursed;",
+    "new": "  const cursed = [];",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-pass-curses-magic",
+    "file": "src/systems/lootRarity.js",
+    "old": "    if ((it?.rarity !== 'rare' && it?.rarity !== 'legendary') || it.exalted === true || isCursed(it)) continue;",
+    "new": "    if (!it?.rarity || it.exalted === true || isCursed(it)) continue;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ],
+    "note": "the pass's guard is cursePiece's too - what it adds is that a Magic costs the stream no draw (the counting pin)"
+  },
+  {
+    "name": "LOOT16-the-pass-rolls-for-an-exalted",
+    "file": "src/systems/lootRarity.js",
+    "old": "    if ((it?.rarity !== 'rare' && it?.rarity !== 'legendary') || it.exalted === true || isCursed(it)) continue;",
+    "new": "    if ((it?.rarity !== 'rare' && it?.rarity !== 'legendary') || isCursed(it)) continue;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-pass-rolls-for-the-cursed",
+    "file": "src/systems/lootRarity.js",
+    "old": "    if ((it?.rarity !== 'rare' && it?.rarity !== 'legendary') || it.exalted === true || isCursed(it)) continue;",
+    "new": "    if ((it?.rarity !== 'rare' && it?.rarity !== 'legendary') || it.exalted === true) continue;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-wire-any-row",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (!row || (row.groups && !row.groups.includes(item.group))) return false;",
+    "new": "  if (!row) return false;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-wire-any-param",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (!(row.metal && CURSE_METAL.includes(item.group) ? row.metal : row.params).includes(c.param)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-wire-uncarried",
+    "file": "src/systems/lootRarity.js",
+    "old": "  return Array.isArray(item.enchantments) && item.enchantments.some((e) => e?.type === c.type && e?.param === c.param);\n}",
+    "new": "  return true;\n}",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-wire-on-a-magic-or-exalted",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (!isCursed(item) || (item.rarity !== 'rare' && item.rarity !== 'legendary') || item.exalted === true) return false;",
+    "new": "  if (!isCursed(item)) return false;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-curse-said-unknown",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const cursed = isCursed(item) && identified(item) ? CURSED_WORD : '';",
+    "new": "  const cursed = isCursed(item) ? CURSED_WORD : '';",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-curse-never-said",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const cursed = isCursed(item) && identified(item) ? CURSED_WORD : '';",
+    "new": "  const cursed = '';",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-perfect-hides-the-curse",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (tier === 'rare' && isPerfect(item) && identified(item)) return `${cursed}Perfect Rare`;",
+    "new": "  if (tier === 'rare' && isPerfect(item) && identified(item)) return 'Perfect Rare';",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-curse-line-bandless",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (item.rarity === 'legendary' && (item.exalted === true || isCursed(item))) {",
+    "new": "  if (item.rarity === 'legendary' && item.exalted === true) {",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-drawback-unparamed",
+    "file": "src/systems/lootRarity.js",
+    "old": "  return param && param !== 'None' ? `${enchantmentName(key)}: ${param}` : enchantmentName(key);\n}",
+    "new": "  return enchantmentName(key);\n}",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-door-skips-the-garments",
+    "file": "src/systems/lootRarity.js",
+    "old": "  cursePass([...minted, ...dressed], rolls);",
+    "new": "  cursePass(minted, rolls);",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-door-never-curses",
+    "file": "src/systems/lootRarity.js",
+    "old": "  cursePass([...minted, ...dressed], rolls);",
+    "new": "  void cursePass;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-kit-never-cursed",
+    "file": "src/systems/foeLootCap.js",
+    "old": "  cursePass(kit, opts.rolls ?? Math.random);",
+    "new": "  void cursePass;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-wire-unchecked",
+    "file": "src/systems/loot.js",
+    "old": "  if (!validCurse(out)) return null;   // LOOT16: a curse only as a door's pass makes one\n",
+    "new": "",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-lift-floor-200",
+    "file": "src/systems/lootCurse.js",
+    "old": "export const LIFT_FLOOR = 300;",
+    "new": "export const LIFT_FLOOR = 200;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-lift-a-fifth",
+    "file": "src/systems/lootCurse.js",
+    "old": "export const LIFT_SHARE = 0.25;",
+    "new": "export const LIFT_SHARE = 0.2;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-lift-no-floor",
+    "file": "src/systems/lootCurse.js",
+    "old": "  return Math.max(LIFT_FLOOR, Math.round(value * LIFT_SHARE));",
+    "new": "  return Math.round(value * LIFT_SHARE);",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-a-price-for-nothing",
+    "file": "src/systems/lootCurse.js",
+    "old": "  if (!isCursed(item)) return null;\n  const value",
+    "new": "  const value",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-temple-sees-the-unknown",
+    "file": "src/systems/lootCurse.js",
+    "old": "export const cursedKnown = (items) => (Array.isArray(items) ? items : []).filter((it) => isCursed(it) && itemIsIdentified(it));",
+    "new": "export const cursedKnown = (items) => (Array.isArray(items) ? items : []).filter((it) => isCursed(it));",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-lift-off-too",
+    "file": "src/systems/lootCurse.js",
+    "old": "  if (!lootRarityOn()) return 'off';\n  if (!isCursed(item)) return 'not';",
+    "new": "  if (!isCursed(item)) return 'not';",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-lift-the-clean",
+    "file": "src/systems/lootCurse.js",
+    "old": "  if (!isCursed(item)) return 'not';\n  if (!itemIsIdentified(item)) return 'unknown';",
+    "new": "  if (!itemIsIdentified(item)) return 'unknown';",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-lift-unknown",
+    "file": "src/systems/lootCurse.js",
+    "old": "  if (!itemIsIdentified(item)) return 'unknown';\n  if (isEquipped(item)) return 'worn';",
+    "new": "  if (isEquipped(item)) return 'worn';",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-lift-worn",
+    "file": "src/systems/lootCurse.js",
+    "old": "  if (isEquipped(item)) return 'worn';\n",
+    "new": "",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-lift-unpaid-check",
+    "file": "src/systems/lootCurse.js",
+    "old": "  if (totalGoldAmount(player) < /** @type {number} */ (liftPrice(item))) return 'gold';\n",
+    "new": "",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-lift-anywhere",
+    "file": "src/systems/lootCurse.js",
+    "old": "  if (!player || !Array.isArray(player.items) || !player.items.includes(item)) return { ok: false, reason: 'gone' };",
+    "new": "  if (!player || !Array.isArray(player.items)) return { ok: false, reason: 'gone' };",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-drawback-stays",
+    "file": "src/systems/lootCurse.js",
+    "old": "  item.enchantments = list.filter((_, i) => i !== at);",
+    "new": "  item.enchantments = list;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-mark-stays",
+    "file": "src/systems/lootCurse.js",
+    "old": "  delete item.cursed;\n",
+    "new": "",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-lifted-for-free",
+    "file": "src/systems/lootCurse.js",
+    "old": "  deductGold(player, price);\n",
+    "new": "",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-guild-shows-the-temple",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "  const pages = (deps.pages ?? REFORGE_GUILD_PAGES).filter((id) => REFORGE_PAGES[id]);",
+    "new": "  const pages = (deps.pages ?? Object.keys(REFORGE_PAGES)).filter((id) => REFORGE_PAGES[id]);",
+    "tests": [
+      "test/loot10_codex.test.js",
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-page-unrouted",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "    if (page === 'lift') { renderLift(items, payer, have, picture); return; }   // LOOT16\n",
+    "new": "",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-page-lists-all",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "    const rows = cursedKnown(items);\n",
+    "new": "    const rows = items;\n",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-a-refusal-pressable",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', LIFT_REFUSALS[why] ?? ''); }\n      btn.onclick = (e) => {\n        e.stopPropagation();\n        if (why) return;\n        const done = deps.lift",
+    "new": "      btn.onclick = (e) => {\n        e.stopPropagation();\n        if (why) return;\n        const done = deps.lift",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-page-untitled",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "  const titleText = codexOnly ? CODEX_TITLE : liftOnly ? LIFT_TITLE : REFORGE_TITLE;",
+    "new": "  const titleText = codexOnly ? CODEX_TITLE : REFORGE_TITLE;",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-popup-row-without-hook",
+    "file": "src/ui/guildServiceWindow.js",
+    "old": "    if (!this.hooks.reforge && this.hooks.lift && inRect(REFORGE_RECT, vx, vy)) {",
+    "new": "    if (!this.hooks.reforge && inRect(REFORGE_RECT, vx, vy)) {",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-popup-no-key",
+    "file": "src/ui/guildServiceWindow.js",
+    "old": "    const liftKey = !this.hooks.reforge && !!this.hooks.lift && code === LIFT_KEY;",
+    "new": "    const liftKey = !this.hooks.reforge && !!this.hooks.lift && code === 'KeyQ';",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-popup-key-over-dfu",
+    "file": "src/ui/guildServiceWindow.js",
+    "old": "    const hit = reforgeKey ? 'Reforge' : firstHotkey(buttons, code, e) ?? (liftKey ? 'Lift' : null);",
+    "new": "    const hit = reforgeKey ? 'Reforge' : liftKey ? 'Lift' : firstHotkey(buttons, code, e);",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-popup-key-unrouted",
+    "file": "src/ui/guildServiceWindow.js",
+    "old": "      case 'Lift': this._lift(); return;   // LOOT16\n",
+    "new": "",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-plus-face-without",
+    "file": "src/ui/enhancedPorts.js",
+    "old": "        ...(!w.hooks.reforge && w.hooks.lift ? [{ label: LIFT_ROW, act: () => w._lift() }] : []),   // LOOT16: the temple's lifting, beside its Cure Disease\n",
+    "new": "",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-host-any-priest",
+    "file": "src/scenes/worldModes.js",
+    "old": "      lift: route.guildGroup === GUILD_GROUPS.HolyOrder && service === 'CureDisease' && lootRarityOn() ?",
+    "new": "      lift: route.guildGroup === GUILD_GROUPS.HolyOrder && lootRarityOn() ?",
+    "tests": [
+      "test/loot16_curses.test.js"
+    ]
+  },
+  {
+    "name": "LOOT16-the-room-uncursed",
+    "file": "src/systems/testRoom.js",
+    "old": "  { const r = applyRarity(base(TEST_LOOT_BASES[0]), 'rare', rolls); cursePiece(r, rolls); put(r); }\n",
+    "new": "",
+    "tests": [
+      "test/lr1_lootrarity.test.js",
+      "test/loot3_legendaries.test.js"
+    ]
+  }
+]

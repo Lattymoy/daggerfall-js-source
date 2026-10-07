@@ -39,11 +39,12 @@
   {
     "name": "LOOT2-perfect-before-it-is-read",
     "file": "src/systems/lootRarity.js",
-    "old": "  if (tier === 'rare' && isPerfect(item) && identified(item)) return 'Perfect Rare';",
-    "new": "  if (tier === 'rare' && isPerfect(item)) return 'Perfect Rare';",
+    "old": "  if (tier === 'rare' && isPerfect(item) && identified(item)) return `${cursed}Perfect Rare`;",
+    "new": "  if (tier === 'rare' && isPerfect(item)) return `${cursed}Perfect Rare`;",
     "tests": [
       "test/loot2_exalted.test.js"
-    ]
+    ],
+    "note": "LOOT16 (RE-AIMED BY CONTENT, bible/06-Systems/Loot-II-Arc.md section 8): the Perfect's line carries a known curse's word before it now; the law it pins - a Perfect said only once its numbers are read - unmoved"
   },
   {
     "name": "LOOT2-the-chance-a-half",

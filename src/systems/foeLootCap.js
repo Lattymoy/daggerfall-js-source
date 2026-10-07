@@ -33,6 +33,7 @@
 
 import {
   corpseSource, rarityRank, lootRarityOn, rarityEligible, rollRarity, applyRarity, lastPass, legendaryFindMult, isGarment, RARITIES,
+  cursePass,   // LOOT16
 } from './lootRarity.js';
 import { isGoldPieces } from './inventory.js';
 import { isPotion } from './useItem.js';   // CAP-SUPPLIES: a potion IS the glass bottle - DFU's IsPotion, its one export (AUDIT 625 L7)
@@ -179,7 +180,9 @@ export function capFoeLoot(entity) {
  *    their better ladders stay their carried loot's. A revenant never: its list holds a player's own pieces.
  */
 export function rollCorpseKit(entity, opts = {}) {
-  return [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)];   // LOOT14: the garments after every draw the kit made
+  const kit = [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)];   // LOOT14: the garments after every draw the kit made
+  cursePass(kit, opts.rolls ?? Math.random);   // LOOT16: a body's own Rares and Legendaries, one in twelve cursed - after all of it
+  return kit;
 }
 /** The first arc's kit roll, whole: every piece of the kit but its garments. */
 function rollKitPieces(entity, { rolls = Math.random, luck = 50 } = {}) {

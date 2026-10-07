@@ -363,6 +363,7 @@ import { DaedraSummonedWindow, REFUSAL_FOE_COUNT, COVEN_FAIL_FOE_COUNT } from '.
 import { orderOf } from '../systems/guildVariants.js';
 import { joinedGuildOfGroup } from '../systems/guilds.js';
 import { GUILD_GROUPS } from '../formats/factionFile.js'; import { lootRarityOn } from '../systems/lootRarity.js'; import { reforgePiece, salvagePiece, shardsHeld } from '../systems/reforge.js'; import { buyPortalStone, portalStoneRefusal, shardsKept, PORTAL_TEXT } from '../systems/portalStone.js'; import { createReforgeOverlay } from '../ui/reforgeDoor.js'; import { imprintPiece } from '../systems/lootCodex.js';   // LOOT9: the Mages Guild's Reforge; LOOT10: its imprint
+import { liftCurse } from '../systems/lootCurse.js';   // LOOT16: the temple's lifting
 import { SpellMakerWindow, preloadSpellMakerArt, spellMakerArtLoaded } from '../ui/spellMakerWindow.js';   // S1: the Mages Guild / Kynareth spell maker; E8: on INFO01I0 art
 import { hasSpellbook } from '../systems/spellMaker.js';   // AUDIT 63 F12: MakeSpells' door gate (DaggerfallGuildServicePopupWindow.cs:391)
 // M2: the potion maker - the other half of the guild's magic economy.
@@ -4826,6 +4827,9 @@ export function createWorldModes(host) {
       // LOOT9 (the Loot arc, bible/06-Systems/Loot-Arc.md section 11): the Mages Guild's Identify NPC keeps the Reforge
       // too - the popup's fourth row on either skin; a dispatch, as a service's is
       reforge: route.guildGroup === GUILD_GROUPS.MagesGuild && service === 'Identify' && lootRarityOn() ? () => (openReforge() ? { dispatched: true } : null) : null,
+      // LOOT16 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 8): a temple's Cure Disease priest lifts a curse
+      // too - the popup's row in the Reforge's place, on either skin; a dispatch, as a service's is
+      lift: route.guildGroup === GUILD_GROUPS.HolyOrder && service === 'CureDisease' && lootRarityOn() ? () => (openLift() ? { dispatched: true } : null) : null,
     });  win = enhancedWindow(win, 'guild');   // PORT4: the enhanced skin's face; the classic window unchanged
     mountServiceWindow(win);
   }
@@ -4837,6 +4841,18 @@ export function createWorldModes(host) {
       reforge: (item, line) => reforgePiece(item, line, playerEntity),
       salvage: (item) => salvagePiece(item, { items: (playerEntity.items ??= []) }),
       imprint: (item, id) => imprintPiece(item, id, playerEntity),   // LOOT10: a Rare takes a found Legendary's power
+      wearer: playerEntity, nameOf: (item) => itemLongName(item),
+    });
+    return o ? mountServiceWindow(o) : null;
+  }
+  /** LOOT16: THE TEMPLE'S LIFTING - the Reforge's window on its one page over the player's own pack, the law's
+   *  (systems/lootCurse.js liftCurse), paid from the player's purse. Answers the window, or null with no page. */
+  function openLift() {
+    const o = createReforgeOverlay({
+      items: () => playerEntity.items ?? [], payer: () => playerEntity, gold: () => totalGoldAmount(playerEntity),
+      reforge: () => ({ ok: false, reason: 'not' }), salvage: () => ({ ok: false, reason: 'not' }),   // the temple's page has neither
+      lift: (item) => { const done = liftCurse(item, playerEntity); if (done.ok) { audio.playOneShot(SOUND.GoldPieces, 1); surfacePlayer(); } return done; },
+      pages: ['lift'], page: 'lift',
       wearer: playerEntity, nameOf: (item) => itemLongName(item),
     });
     return o ? mountServiceWindow(o) : null;

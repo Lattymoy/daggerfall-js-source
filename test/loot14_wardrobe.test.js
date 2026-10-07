@@ -250,13 +250,17 @@ test('LOOT14: the doors - the host door rolls its garments after every draw it m
   on();
   const src = { kind: 'corpse', tier: 12, boss: false, family: null };
   const pieces = () => [createWeapon(120, 1), mintCondition({ group: 'Armor', templateIndex: 102, material: 0x0201, name: 'c', flags: 0 })];
+  // PIN MOVED (LOOT16, bible/06-Systems/Loot-II-Arc.md section 8): a curse is the door's pass after the garments' (law 9),
+  // so WHICH piece a curse lands on is the stream's after them; a piece's own draws - its tier, its name, the lines it was
+  // minted with - are its seed's, and that is what is compared (a curse's line, its last, set aside)
+  const ownLines = (it) => JSON.stringify(it.cursed ? it.affixes.slice(0, -1) : it.affixes ?? null);
   for (let seed = 1; seed < 40; seed++) {
     const alone = pieces();
     LR.rollLootRarity(alone, src, { rolls: lcg(seed) });
     const dressed = [...pieces(), garment(155), garment(195)];
     LR.rollLootRarity(dressed, src, { rolls: lcg(seed) });
-    assert.deepEqual(dressed.slice(0, 2).map((it) => [it.rarity ?? null, it.name, JSON.stringify(it.affixes ?? null)]),
-      alone.map((it) => [it.rarity ?? null, it.name, JSON.stringify(it.affixes ?? null)]), `seed ${seed}: the other pieces are their seed's`);
+    assert.deepEqual(dressed.slice(0, 2).map((it) => [it.rarity ?? null, it.name, ownLines(it)]),
+      alone.map((it) => [it.rarity ?? null, it.name, ownLines(it)]), `seed ${seed}: the other pieces are their seed's`);
     for (const g of dressed.slice(2)) assert.equal(g.untaken, true, 'a garment the door rolled is marked for the drought');
   }
   // a garment the door rolled is a garment of its tier: over enough seeds, the colours come
@@ -295,7 +299,7 @@ test('LOOT14: the doors - the host door rolls its garments after every draw it m
     const bare = kitOf(false), dressedKit = kitOf(true);
     rollCorpseKit(bare, { rolls: lcg(seed) });
     rollCorpseKit(dressedKit, { rolls: lcg(seed) });
-    const sum = (b) => b.items.filter((it) => !LR.isGarment(it)).map((it) => [it.rarity ?? null, JSON.stringify(it.affixes ?? null)]);
+    const sum = (b) => b.items.filter((it) => !LR.isGarment(it)).map((it) => [it.rarity ?? null, ownLines(it)]);   // LOOT16: a curse's line set aside, as above
     assert.deepEqual(sum(dressedKit), sum(bare), `seed ${seed}: the kit's pieces are their seed's`);
   }
   const once = { ...body, items: [worn] };

@@ -14,7 +14,8 @@
 // dress it as they dress his (the classic skin lays the Broker's own sheet, `brokerSkinCss`). Everything the window does
 // to the world is handed in: the pack, the payer, the reforge and the salvage (systems/reforge.js, which the host
 // calls) - this file draws and asks, and never touches a pack.
-import { rarityAttr, affixLine, reforgeableLines, RARITIES, tierLabel, imprintLine, powerLine, powerOf, legendaryById } from '../systems/lootRarity.js';
+import { rarityAttr, affixLine, reforgeableLines, RARITIES, tierLabel, imprintLine, powerLine, powerOf, legendaryById, curseLine } from '../systems/lootRarity.js';
+import { cursedKnown, liftPrice, liftRefusal } from '../systems/lootCurse.js';   // LOOT16: the temple's lifting
 import { codexRows, codexSets, codexCount, imprintChoices, imprintRefusal, IMPRINT_PRICE } from '../systems/lootCodex.js';   // LOOT10: the codex's page and the imprint's
 import { setById } from '../systems/sigilSets.js';
 import { itemIsIdentified } from '../systems/tradeModes.js';
@@ -40,7 +41,21 @@ const el = (tag, cls = null, text = null) => {
 /** The window's words. */
 export const REFORGE_TITLE = 'The Reforge';
 export const REFORGE_SUB = 'Welkynd Shards and gold roll one line again · a piece salvaged breaks into shards';
-export const REFORGE_PAGES = Object.freeze({ reforge: 'Reforge', salvage: 'Salvage', imprint: 'Imprint', codex: 'Codex' });   // LOOT10: the imprint and the codex
+export const REFORGE_PAGES = Object.freeze({ reforge: 'Reforge', salvage: 'Salvage', imprint: 'Imprint', codex: 'Codex', lift: 'Lift Curse' });   // LOOT10: the imprint and the codex; LOOT16: the temple's lifting
+/** The pages the guild's window shows when its host names none - never the temple's (LOOT16). */
+export const REFORGE_GUILD_PAGES = Object.freeze(['reforge', 'salvage', 'imprint', 'codex']);
+/** LOOT16 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 8): THE TEMPLE'S PAGE - the window on its one page,
+ *  opened by a temple's Cure Disease priest (scenes/worldModes.js openLift): every known cursed piece of the pack, its
+ *  drawback named, its price, and a press that lifts it (systems/lootCurse.js liftCurse). */
+export const LIFT_TITLE = 'Lift a Curse';
+export const LIFT_SUB = 'The temple lifts a curse for gold - the drawback gone, the line it came with kept';
+export const LIFT_NONE = 'Nothing cursed in your pack that the temple can see - a curse is known once the piece is identified.';
+export const LIFTED = (name) => `Lifted: ${name} - the curse is gone, and its line stays.`;
+/** Why a lifting is refused, by the law's word (lootCurse.js liftRefusal). */
+export const LIFT_REFUSALS = Object.freeze({
+  off: 'Loot rarity is off', not: 'No curse on it', unknown: 'Not yet identified - the guild identifies it first',
+  worn: 'Take it off first', gold: 'Not enough gold', gone: 'No longer in your pack',
+});
 export const CODEX_TITLE = 'The Codex';
 export const CODEX_SUB = 'Every Legendary and every Aetheric piece you have found - and where the rest are said to be';
 /** LOOT10: the imprint's words. */
@@ -106,11 +121,13 @@ function injectSkinStyle(doc = document) {
  *   reforge: (item: any, line: number) => { ok: boolean, reason?: string|null, line?: any },
  *   salvage: (item: any) => { ok: boolean, reason?: string|null, shards?: number },
  *   picture?: ((item: any) => any) | null, wearer?: any, nameOf?: (item: any) => string, onExit?: (() => void) | null,
- *   page?: 'reforge'|'salvage'|'imprint'|'codex', pages?: string[] | null,
+ *   page?: 'reforge'|'salvage'|'imprint'|'codex'|'lift', pages?: string[] | null,
  *   imprint?: ((item: any, recordId: string) => { ok: boolean, reason?: string|null }) | null,
+ *   lift?: ((item: any) => { ok: boolean, reason?: string|null }) | null,
  * }} deps
  *   LOOT10: `pages` the pages this window shows (the guild's all four; the pack's Codex its one), `imprint` the host's
- *   imprint (systems/lootCodex.js imprintPiece).
+ *   imprint (systems/lootCodex.js imprintPiece). LOOT16: the temple's `['lift']`, and its `lift` (systems/lootCurse.js
+ *   liftCurse).
  * @returns {{ repaint: () => void, unmount: () => void }}
  */
 export function mountReforgeWindow(host, deps) {
@@ -119,9 +136,11 @@ export function mountReforgeWindow(host, deps) {
   injectSkinStyle();
   const nameOf = deps.nameOf ?? ((it) => String(it?.name ?? ''));
   const exit = () => deps.onExit?.();
-  const pages = (deps.pages ?? Object.keys(REFORGE_PAGES)).filter((id) => REFORGE_PAGES[id]);
+  const pages = (deps.pages ?? REFORGE_GUILD_PAGES).filter((id) => REFORGE_PAGES[id]);   // LOOT16: the guild's four unless the host names its own
   let page = pages.includes(deps.page ?? '') ? deps.page : pages[0] ?? 'reforge';
   const codexOnly = pages.length === 1 && pages[0] === 'codex';
+  const liftOnly = pages.length === 1 && pages[0] === 'lift';   // LOOT16: the temple's
+  const titleText = codexOnly ? CODEX_TITLE : liftOnly ? LIFT_TITLE : REFORGE_TITLE;
   let picked = null;
   let asking = null;
   /** The last press's word, and whether it was done (a refusal is read in the refusal's colour). */
@@ -129,15 +148,15 @@ export function mountReforgeWindow(host, deps) {
   const shell = el('div', 'broker-shell reforge-shell');
   shell.id = 'reforge';
   shell.setAttribute('role', 'dialog');
-  shell.setAttribute('aria-label', codexOnly ? CODEX_TITLE : REFORGE_TITLE);
+  shell.setAttribute('aria-label', titleText);
   const win = el('div', 'broker-win');
   shell.append(win);
   const head = el('header', 'broker-head');
   const title = el('div', 'broker-title');
-  const sub = el('p', 'broker-sub', codexOnly ? CODEX_SUB : REFORGE_SUB);
+  const sub = el('p', 'broker-sub', codexOnly ? CODEX_SUB : liftOnly ? LIFT_SUB : REFORGE_SUB);
   const noteLine = el('p', 'broker-note');
   noteLine.setAttribute('aria-live', 'polite');
-  title.append(el('h2', null, codexOnly ? CODEX_TITLE : REFORGE_TITLE), sub, noteLine);
+  title.append(el('h2', null, titleText), sub, noteLine);
   const purse = el('span', 'broker-purse');
   const close = el('button', 'act broker-close', 'Close');
   close.setAttribute('type', 'button');
@@ -197,6 +216,7 @@ export function mountReforgeWindow(host, deps) {
     card = null;
     if (page === 'codex') { renderCodex(); return; }   // LOOT10
     if (page === 'imprint') { renderImprint(items, payer, have, picture); return; }
+    if (page === 'lift') { renderLift(items, payer, have, picture); return; }   // LOOT16
     const rows = page === 'reforge'
       ? items.filter((it) => reforgePrice(it) && reforgeableLines(it).length)
       : items.filter((it) => salvageShards(it) > 0 && !['aetheric', 'artifact', 'quest', 'off'].includes(salvageRefusal(it) ?? ''));
@@ -375,6 +395,34 @@ export function mountReforgeWindow(host, deps) {
     }
     card.append(ul, el('p', 'boundline', `An imprint costs ${reforgePriceText(IMPRINT_PRICE)}. ${IMPRINT_ONCE}`));
     body.append(card);
+  }
+  /** LOOT16: THE TEMPLE'S LIFTING - every known cursed piece of the pack, its drawback and its price; a press lifts it. */
+  function renderLift(items, payer, have, picture) {
+    purse.textContent = `${Math.max(0, have.gold | 0)} gold`;
+    const rows = cursedKnown(items);
+    if (!rows.length) list.append(head2(LIFT_NONE));
+    for (const it of rows) {
+      const r = rarityAttr(it);
+      const price = /** @type {number} */ (liftPrice(it));
+      const why = liftRefusal(it, payer);
+      const row = el('li', 'broker-offer lift-row');
+      if (r) row.dataset.rarity = r;
+      const text = el('div', 'broker-offer-body');
+      text.append(el('span', 'broker-name', nameOf(it)), el('span', 'broker-set', `${tierLabel(it)} · ${curseLine(it)}`));
+      const btn = el('button', 'act broker-buy lift-press', reforgeLabel(why, { shards: 0, gold: price }, have, 'Lift'));
+      btn.setAttribute('type', 'button');
+      btn.setAttribute('aria-label', why ? `${nameOf(it)}: ${LIFT_REFUSALS[why] ?? ''}` : `Lift the curse on ${nameOf(it)} for ${price} gold`);
+      if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', LIFT_REFUSALS[why] ?? ''); }
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        if (why) return;
+        const done = deps.lift?.(it) ?? { ok: false, reason: 'not' };
+        if (done.ok) say(true, LIFTED(nameOf(it))); else say(false, LIFT_REFUSALS[done.reason ?? ''] ?? 'The priest will not lift that.');
+        render();
+      };
+      row.append(frameOf(it, picture), text, el('span', 'broker-price', `${price} gold`), btn);
+      list.append(row);
+    }
   }
   render();
   host.append(shell);

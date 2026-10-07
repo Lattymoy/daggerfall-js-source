@@ -1182,7 +1182,8 @@ export function rollLootRarity(items, source, { rolls = Math.random, luck = 50 }
     items.push(found);
   }
   lastPass(minted, rolls);   // LOOT2: the door's last pass, after every draw it already makes
-  wardrobePass(items, source, { rolls, luck, find });   // LOOT14: the garments, after all of it
+  const dressed = wardrobePass(items, source, { rolls, luck, find });   // LOOT14: the garments, after all of it
+  cursePass([...minted, ...dressed], rolls);   // LOOT16: one Rare or Legendary in twelve cursed, after that
   return items;
 }
 /** LOOT14 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 6): THE WARDROBE'S PASS - every eligible garment of
@@ -1271,7 +1272,7 @@ export function affixBand(item, i) {
   const a = item?.affixes?.[i];
   if (!validAffix(a)) return null;
   if (item.rarity === 'magic' || item.rarity === 'rare') return AFFIX_RANGES[a.id][item.rarity];
-  if (item.rarity === 'legendary' && item.exalted === true) {
+  if (item.rarity === 'legendary' && (item.exalted === true || isCursed(item))) {   // LOOT16: and a curse's line
     const own = recordLines(item);
     return own != null && i >= own ? AFFIX_RANGES[a.id].legendary : null;
   }
@@ -1294,13 +1295,17 @@ export function isPerfect(item) {
   if (item?.rarity !== 'rare' || !Array.isArray(item.affixes) || !item.affixes.length) return false;
   return item.affixes.every((a, i) => { const b = affixBand(item, i); return !!b && a.value === b[1]; });
 }
+/** LOOT16: the word a known curse puts before its tier - "Cursed Rare", "Cursed Legendary". */
+export const CURSED_WORD = 'Cursed ';
 /** The tier's words on the first line: "Exalted Legendary", "Perfect Rare", else the tier's own label. An Exalted is
- *  said while the piece is still unknown (its tile's pips say it too); a Perfect only once its numbers are read. */
+ *  said while the piece is still unknown (its tile's pips say it too); a Perfect only once its numbers are read; LOOT16:
+ *  a curse before either, once the piece is identified (DFU's IsIdentified - worn unknowing, it bites unsaid). */
 export function tierLabel(item) {
   const tier = rarityOf(item);
   if (tier === 'legendary' && item?.exalted === true) return 'Exalted Legendary';
-  if (tier === 'rare' && isPerfect(item) && identified(item)) return 'Perfect Rare';
-  return RARITIES[tier].label;
+  const cursed = isCursed(item) && identified(item) ? CURSED_WORD : '';   // LOOT16: a curse is said once the piece is known
+  if (tier === 'rare' && isPerfect(item) && identified(item)) return `${cursed}Perfect Rare`;
+  return `${cursed}${RARITIES[tier].label}`;
 }
 /** EXALT a Legendary IN PLACE: one more line - a kind its lines do not carry and its group may, or (none left) a kind
  *  with a param its lines leave free - its value from the top half of the Legendary band; the mark, and the price.
@@ -1329,6 +1334,100 @@ export function rollExalted(item, rolls = Math.random) {
   if (!lootRarityOn() || item?.rarity !== 'legendary' || item.exalted === true) return false;
   if (!(rolls() * 1000 < _exaltedPerMille)) return false;
   return exaltLegendary(item, rolls);
+}
+// ── LOOT16: a cursed find ───────────────────────────────────────────
+/** LOOT16 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 8): A CURSED FIND - one Rare or Legendary in this
+ *  many that a body or a pile mints (rollLootRarity's door, a foe's kit) takes a curse in the door's last breath: a line
+ *  more, its reward, and a drawback. Never an Exalted (its own extra line is its find's), and never a piece no door
+ *  mints - a made one, the Broker's, the spoils, a quest's. */
+export const CURSE_IN = 12;
+let _curseIn = CURSE_IN;
+/** Tests only: one in how many (null puts it back - 1 curses every piece the pass meets, Infinity none). */
+export function _setCurseForTests(n) { _curseIn = n == null ? CURSE_IN : n; }
+/** THE DRAWBACKS: DFU catalogue rows the port reads live (systems/enchantments.js - Bad Rep With's magic round, Bad
+ *  Reactions From's constant, Item Deteriorates' and User Takes Damage's rounds, Low Damage Vs' strike, Health Leech's idle
+ *  round), each with the params a curse takes; `groups` the groups a row is for (none: any), `metal` a weapon's or a
+ *  piece of armour's params where they differ. Never Extra Weight (a payload of the item maker's alone - a found piece
+ *  would carry a line that does nothing), Weakens Armor (DFU's own inert row) or Vision and Walking Problems (no class
+ *  in DFU): law 8, no dead lines. Nor the rows that bite all the time, or in the sun on cloth and jewels. */
+export const CURSE_DRAWBACKS = Object.freeze([
+  Object.freeze({ type: T.BadRepWith, params: Object.freeze([0, 1, 2, 3, 4]) }),   // a social group - never All
+  Object.freeze({ type: T.BadReactionsFrom, params: Object.freeze([0, 1, 2]) }),   // humanoids, animals, Daedra
+  Object.freeze({ type: T.ItemDeteriorates, params: Object.freeze([2]), metal: Object.freeze([1, 2]) }),   // in holy places; a weapon's or armour's in sunlight too
+  Object.freeze({ type: T.UserTakesDamage, params: Object.freeze([1]) }),   // in holy places
+  Object.freeze({ type: T.LowDamageVs, params: Object.freeze([0, 1, 2, 3]), groups: Object.freeze(['Weapons']) }),   // undead, Daedra, humanoids, animals
+  Object.freeze({ type: T.HealthLeech, params: Object.freeze([1]), groups: Object.freeze(['Weapons']) }),   // unless used daily
+]);
+const CURSE_METAL = Object.freeze(['Weapons', 'Armor']);
+/** The params of a drawback row a piece may take - none for a row not of its group, and none that would cancel a good
+ *  the piece already carries (Good Rep With the same group or every group, Potent Vs the same kind): a drawback that
+ *  undoes a flavour is two dead lines (law 8). */
+export function curseParams(row, item) {
+  if (row.groups && !row.groups.includes(item?.group)) return [];
+  const own = Array.isArray(item?.enchantments) ? item.enchantments : [];
+  const params = row.metal && CURSE_METAL.includes(item?.group) ? row.metal : row.params;
+  return params.filter((p) => !own.some((e) => (row.type === T.BadRepWith && e?.type === T.GoodRepWith && (e.param === p || e.param === 5))
+    || (row.type === T.LowDamageVs && e?.type === T.PotentVs && e.param === p)));
+}
+/** Whether a piece carries a curse not yet lifted. */
+export const isCursed = (item) => !!item?.cursed && typeof item.cursed === 'object';
+/** CURSE A PIECE IN PLACE - a Rare or a Legendary that is no Exalted and no cursed one: one more line, a number kind its
+ *  group may carry and its lines do not (or, none left, a kind with a param they leave free), its value from the top
+ *  half of its tier's band; one drawback, a row of its group's drawn and then its param; the drawback beside its
+ *  enchantment (`enchantments`) and named (`cursed`, what the temple lifts); the line's worth on its price (a drawback
+ *  is worth nothing, DFU's own law - enchantments.js VALUE_COUNTS_BELOW). It never renames the piece: a Rare's prefix and
+ *  suffix are its first lines'. Answers whether it was cursed. */
+export function cursePiece(item, rolls = Math.random) {
+  if ((item?.rarity !== 'rare' && item?.rarity !== 'legendary') || item.exalted === true || isCursed(item) || !Array.isArray(item.affixes)) return false;
+  const numbers = AFFIX_IDS.filter((id) => !AFFIX_KINDS[id].proc && AFFIX_KINDS[id].groups.includes(item.group));   // a number - LOOT4's kinds that do something are the last pass's
+  const carried = new Set(item.affixes.map((a) => a?.id));
+  const unclaimed = (id) => kindParams(id, item).filter((p) => !item.affixes.some((a) => a?.id === id && a.param === p));
+  let pool = numbers.filter((id) => !carried.has(id));
+  if (!pool.length) pool = numbers.filter((id) => AFFIX_KINDS[id].params && unclaimed(id).length);
+  const rows = CURSE_DRAWBACKS.filter((row) => curseParams(row, item).length);
+  if (!pool.length || !rows.length) return false;
+  const id = pick(pool, rolls);
+  const [lo, hi] = AFFIX_RANGES[id][item.rarity];
+  const top = Math.ceil((lo + hi) / 2);   // the top half of its tier's band, as an Exalted's line
+  const value = rangeInt(top, hi, rolls);
+  const line = AFFIX_KINDS[id].params ? { id, param: pick(carried.has(id) ? unclaimed(id) : kindParams(id, item), rolls), value } : { id, value };
+  const row = pick(rows, rolls);
+  const drawback = { type: row.type, param: pick(curseParams(row, item), rolls) };
+  item.affixes = [...item.affixes, line];
+  item.enchantments = [...(Array.isArray(item.enchantments) ? item.enchantments : []), { ...drawback }];
+  item.cursed = drawback;
+  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item);
+  return true;
+}
+/** THE CURSE'S PASS over the pieces a door just laddered - each Rare and Legendary that is no Exalted, one in CURSE_IN -
+ *  AFTER every draw the door makes (law 9: the last pass, the wardrobe's, then this). Answers the pieces it cursed. */
+export function cursePass(pieces, rolls = Math.random) {
+  const cursed = [];
+  if (!lootRarityOn()) return cursed;
+  for (const it of pieces ?? []) {
+    if ((it?.rarity !== 'rare' && it?.rarity !== 'legendary') || it.exalted === true || isCursed(it)) continue;
+    if (rolls() * _curseIn < 1 && cursePiece(it, rolls)) cursed.push(it);
+  }
+  return cursed;
+}
+/** LOOT16: a curse only as the pass makes one (loot.js validLootItem) - absent, or on a Rare or a Legendary that is no
+ *  Exalted: a drawback of the table its group takes, carried among its enchantments. */
+export function validCurse(item) {
+  if (item?.cursed == null) return true;
+  const c = item.cursed;
+  if (!isCursed(item) || (item.rarity !== 'rare' && item.rarity !== 'legendary') || item.exalted === true) return false;
+  const row = CURSE_DRAWBACKS.find((r) => r.type === c.type);
+  if (!row || (row.groups && !row.groups.includes(item.group))) return false;
+  if (!(row.metal && CURSE_METAL.includes(item.group) ? row.metal : row.params).includes(c.param)) return false;
+  return Array.isArray(item.enchantments) && item.enchantments.some((e) => e?.type === c.type && e?.param === c.param);
+}
+/** LOOT16: a curse's drawback as the card names it - "Bad Rep With: Commoners" - or '' for a piece with none. */
+export function curseLine(item) {
+  if (!isCursed(item)) return '';
+  const key = Object.keys(T).find((k) => T[k] === item.cursed.type);
+  if (!key) return '';
+  const param = enchantmentParamName(key, item.cursed.param);
+  return param && param !== 'None' ? `${enchantmentName(key)}: ${param}` : enchantmentName(key);
 }
 /** LOOT9 (bible/06-Systems/Loot-Arc.md section 11): THE LINES THE REFORGE MAY TAKE - every line of a Magic or Rare
  *  piece; an Exalted Legendary's own extra line (its last - exaltLegendary appends it) and never a record's; and once a

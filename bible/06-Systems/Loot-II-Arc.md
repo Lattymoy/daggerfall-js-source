@@ -395,3 +395,55 @@ the caps and a negative; once with an imprinted gown; a peer's copy, a foe, off 
 Restoration, a Destruction and a mixed spell, and the port's price unmodded; survival Off said on a climate power's
 line, never on Royal Bearing's; the codex's rows and hints, the imprint offered to a shirt, a gown and a hooded cloak,
 a sword none, and the wire. `tools/mutants/loot15.json` (46, all dead).
+
+### LOOT16 - cursed finds, and the temple's lifting (2026-10-07)
+
+`src/systems/lootRarity.js`: `CURSE_IN` (12) and `CURSE_DRAWBACKS`, six live rows of DFU's catalogue with the params a
+curse takes - Bad Rep With a social group (never All), Bad Reactions From humanoids, animals or Daedra, Item
+Deteriorates in holy places (a weapon's or armour's in the sun too), User Takes Damage in holy places, and on a weapon
+Low Damage Vs a kind and Health Leech unless used daily. `curseParams` also refuses a drawback that would undo the
+piece's own good - Good Rep With the group or every group, Potent Vs the kind: two dead lines. `cursePiece` adds the
+line (a number kind of the group the piece lacks or, none left, a param its lines leave free; from the top half of its
+tier's band, as an Exalted's), sets the drawback beside the piece's enchantment and names it (`cursed`, a declared item
+field), and prices the line - a drawback is worth nothing, DFU's own law. `cursePass` takes one roll for each Rare and
+Legendary a door laddered that is no Exalted, and draws for nothing else; `rollLootRarity` runs it after the wardrobe's
+pass, and `src/systems/foeLootCap.js` `rollCorpseKit` after the kit's - every body and pile door, never a made piece,
+the Broker's, the spoils or a quest's. `tierLabel` puts `CURSED_WORD` before a known curse's tier ("Cursed Rare",
+"Cursed Perfect Rare"); `affixBand` gives a cursed Legendary's line its band; `curseLine` names the drawback;
+`validCurse` is the wire's (`src/systems/loot.js` validLootItem). The payloads are DFU's, ungated by identification:
+worn unknowing, a curse bites unsaid.
+
+`src/systems/lootCurse.js` (new): `liftPrice` (a quarter of the piece's price, at least `LIFT_FLOOR`, 300),
+`liftRefusal` ('off', 'not', 'unknown', 'worn', 'gold'), `cursedKnown` and `liftCurse` - paid, the drawback out of the
+enchantments, the mark gone, the line and the price kept. The temple's row: `src/ui/guildServiceWindow.js` `LIFT_ROW`
+and `LIFT_KEY` (L, after DFU's own keys) in the Reforge's place when the host hands `hooks.lift`, and
+`src/ui/enhancedPorts.js` on the Plus face; `src/scenes/worldModes.js` hands it to a temple's Cure Disease priest
+(HolyOrder), and `openLift` opens the Reforge's window on its one page - `src/ui/reforgeWindow.js` 'lift'
+(`REFORGE_GUILD_PAGES` keeps the guild's four when a host names none).
+
+Measured through the real door over 40,000 seeded boss corpses, a weapon and a cloak each: 1,681 of 20,886 Rares and
+Legendaries cursed, 0.97 of one in twelve; the six rows drawn about evenly, and each row's params evenly (Bad Rep With
+less often with the group a Good Rep With flavour names); a lifting at a median of 685 gold for a Rare and 1,071 for a
+Legendary, 300 at the least.
+
+**What moved.** The Test Room lays a cursed Rare and a cursed Legendary, known, and LR1's and LOOT3's room counts read
+them beside the Exalted. LOOT14's door pin compares each piece's own draws - its tier, its name and the lines it was
+minted with - since a curse is the pass after the garments' and WHICH piece it lands on is the stream's after them.
+AUDIT 26's count of the guild popup's click sounds is six (the temple's row clicks as the Reforge's does). One record
+was re-aimed by content (`loot2.json` LOOT2-perfect-before-it-is-read: the Perfect's line carries a curse's word now),
+its law unmoved; LOOT14's two door records follow the door's new lines.
+
+Pinned: `test/loot16_curses.test.js` (5) - the curse's law (the table's six live rows and their params by group, no
+drawback that undoes the piece's own good; over 1,100 seeded mints of every group at Rare and Legendary the line a
+number of the group the piece lacked or a free param, from the top half, the name kept, the line's worth on the price,
+the flavour kept and the drawback beside it, never twice; never a Magic, an Exalted or a plain piece); the doors (one in
+twelve over 30,000 seeded bodies and never a Magic; the same seed cursed and not, every piece's own draws the same; an
+Exalted passed by; a body's kit; one draw a Rare and none for anything else; off nothing); every drawback through DFU's
+own payload walk, unknown and worn (the group's -10, -5 to hit with the kind near, a point in a temple and never in the
+sun, a point of condition, five off a blow on the kind, a day's leech); the card (unknown nothing said, "Cursed Rare",
+the drawback named, a Legendary's curse line its band, "Cursed Perfect Rare"); the lifting (the price, each refusal
+taking nothing, the drawback gone and the line, the price and the flavour kept, once) and the wire's six forgeries; the
+temple's row (its click and its key, no hook no row, the Reforge's row its own, DFU's L first), the Plus face, the
+host's hook and the page (the known cursed alone, the drawback and the price, a worn piece's refusal, a short purse's,
+the press, nothing to lift said). `tools/mutants/loot16.json` (71, all dead - the first run's survivor was the pass's own
+guard, which `cursePiece` repeats: what it adds is that a Magic costs a seeded stream no draw, now pinned).

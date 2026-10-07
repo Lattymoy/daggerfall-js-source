@@ -119,8 +119,8 @@
   {
     "name": "LOOT14-no-wardrobe-pass",
     "file": "src/systems/lootRarity.js",
-    "old": "  wardrobePass(items, source, { rolls, luck, find });   // LOOT14: the garments, after all of it",
-    "new": "  void wardrobePass;",
+    "old": "  const dressed = wardrobePass(items, source, { rolls, luck, find });   // LOOT14: the garments, after all of it",
+    "new": "  const dressed = [];",
     "tests": [
       "test/loot14_wardrobe.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "LOOT14-the-kit-garments-never-roll",
     "file": "src/systems/foeLootCap.js",
-    "old": "  return [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)];",
-    "new": "  return [...rollKitPieces(entity, opts)];",
+    "old": "  const kit = [...rollKitPieces(entity, opts), ...rollKitGarments(entity, opts)];",
+    "new": "  const kit = [...rollKitPieces(entity, opts)];",
     "tests": [
       "test/loot14_wardrobe.test.js"
     ]
