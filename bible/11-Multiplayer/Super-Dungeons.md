@@ -387,6 +387,17 @@ of brass as its body sinks, and the way home's pale light where it rises. Nine o
 fell (the whole arena for the Hour's own), and eleven light the floor where they fall; the fall flashes the arena
 white-gold.
 
+**How it moves** (SD17, `scenes/sdRemnantRig.js`). The Remnant and its Echoes stand in seven parts - a pelvis where the
+body stands and six turned about their joints (two legs at the hips, the torso at the waist, the head at the neck and
+two arms at the shoulders, riding the torso) - by a pure law of the fight, in 18 states: bowed and dormant before its
+wake, flinging its arms wide as it wakes, breathing, striding a leg planted at each footfall the voice hears, a leg
+raised for the Stomp and slammed at its release, its right arm raised to point and its waist turning with the
+Hour-Hand's beam, its arms gathered back and thrown for the Volley as its gears leave its hands, arched for the Pulse,
+its arms raised and trembling for the Reset and slammed down as it lands, spread to the sky as the Hour Ends, slumped
+kneeling when stunned, its arms lowered as it rises, staggering on a seeded beat under a fifth, and toppling as it
+sinks. The Volley's gears fly from between its hands to their marks, and the Hand's beam runs out of its pointing hand
+along the sweep's bearing to the floor - stopped at a pillar's face, as the law shades what stands behind one.
+
 ## 11. The feat - receipts, spoils, the set, the title, the aura, the collapse
 
 **The kill (relay).** As the gate's: kept before it is said, one fall at a time, the hub told until it answers. Each
@@ -2251,3 +2262,46 @@ world host's); `tools/mutants/sd16.json` (28). PINS MOVED: `test/sd8c_remnant_pa
 `test/sd8d_remnant_blows.test.js`, `test/sd14a_voice.test.js`, `test/sd11c_page.test.js` (its sparks framed and left
 beside the voice), `test/sd14c_motes.test.js`, `test/sd9e_spoils.test.js` (drawn after the motes; lit after the spoils);
 records re-aimed by content: `sd11c.json` G3, `sd14a.json` never-let-go, `sd9e.json` unlit.
+
+### SD17 - shipped 2026-10-07 (the body moved)
+
+The Warden is a sprite of 10 states (`world/gateBoss.js`); the Remnant stood rigid in every one of its blows - one mesh
+moved and turned whole. Now:
+
+- **Seven parts** (`world/sdRemnantModel.js` `buildRemnantParts`, `SD_REMNANT_PARTS`): the pelvis (the hip - never
+turned, the body's own draw, so a body stands, hides and scales where it always did), the right leg (at -x: it faces
++z), the left, the torso (cage, heart, shoulders), the head and its eyes, the right arm and the left - together
+`buildRemnantModel`'s faces, every one. An Echo the same in its own metal at its own height.
+- **The rig** (`scenes/sdRemnantRig.js`, pure): `remnantRig(s, who, t)` the pose of a body - the legs' swings, the
+torso's bob, lean and twist, the head's nod, each arm's raise forward and outward - in 18 states (`SD_REM_STATES`);
+`rigMatrices` each turned part's matrix on the body's own, every joint kept where its parent holds it, the head and the
+arms riding the torso. The walk plants a leg at every `SD_STRIDE_M` walked (`SD_ECHO_STRIDE_M` an Echo's - the voice's
+own, so each footfall is heard as a leg plants), eased over its first and last metre, the body dipping on the planted
+foot. Every blow is moved, on the blow's own wind-up (an Echo's and the Last Moment's faster - `windupFor`): the Stomp's
+leg 0.95 rad up, slammed at `SD_RELEASE_MS`; the Hand's arm level and the waist turned to the sweep's start, then with
+the beam; the Volley's arms back, then thrown as the gears leave; the Reset's hands over its head, trembling more as it
+nears. The rig's numbers live in typed arrays and its joints go by index (AUDIT SD II, L2 F9's law: the Hour's frame
+makes nothing - a number written into an object's field, or handed to a function the engine has not taken up, is a box
+made).
+- **The gears** (`sdGearsAt`): each Volley mark's gear thrown `gearFlightOf` (900 ms, at most 45% of the wind-up) before
+it lands, from between its hands as they leave them, arcing `SD_GEAR_ARC_M` (7 m) over the straight line, spinning, down
+on its mark as the Volley lands (SD16's burst takes it there); a broken Echo throws none. Fifteen draws
+(`SD_GEAR_DRAWS`: five marks from each of three bodies), a brass cog of nine teeth (`buildGearModel`).
+- **The beam** (`sdBeamsAt`, `sdBeamDraws`, `render/sdBeam.js`): out of the pointing hand along the sweep's bearing (the
+law's own: `yw + sw (arc k - arc/2)`) to the floor at the blow's length - or to the first pillar's face (`beamReach`,
+halving on `behindPillar`), as the law shades what stands behind one; its light up over the sweep's first 120 ms and out
+over its last 220.
+
+The scene stands each body's six turned parts after the Hearts and the gears after them (the bodies and the Hearts keep
+their places), turns them on the body's own matrix each frame and hides them with it; the world draws the beams in the
+Hour's world pass after the sparks. In a real browser (`tools/sdBodyProbe.mjs`, 37 checks): the beam's program links;
+every one of 17 poses names its state, draws its body and differs from its rest by 900 to 4,000 pixels; the beam lights
+the frame out of the hand. `SD_BODY_SHOT=<png>` writes the tiles.
+
+Pins: `test/sd17_body.test.js` (6 - the parts; eighteen states, at rest the whole, the joints kept, the turns' senses;
+the states as the fight turns, the walk in step and dipping; every blow moved; the gears and the beam; the scene and the
+world); `tools/mutants/sd17.json` (38). Found by its own test: the falling ease read nought before its start, so the
+stun's slump, the Hand's raised arm and the Volley's throw never showed - fixed before it shipped. PINS MOVED:
+`test/sd8c_remnant_page.test.js`, `test/sd11a_scenes.test.js` (the draws after the Hearts), `test/sd14c_motes.test.js`,
+`test/sd16_fx.test.js`, `test/sd8d_remnant_blows.test.js`, `test/sd9e_spoils.test.js` (the beam after the sparks);
+`sd8c.json` SD8C-an-echo-unscaled re-aimed by content.

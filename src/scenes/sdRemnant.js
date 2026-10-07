@@ -4,7 +4,9 @@
 // The realm runs the fight (SD8b - net/sdRemnant.js its law); this shows what the realm says of it and carries my blows.
 //
 //   STOOD once (stand): the Remnant's body, the GOLD and SILVER Echoes' and the Reset's Hearts' (world/sdRemnantModel.js),
-//     each a draw of its own among the dungeon's, hidden until the fight stands it.
+//     each a draw of its own among the dungeon's, hidden until the fight stands it. SD17: each body as its parts - its
+//     pelvis (the body's own draw, stood where it stands) and the six its rig turns (scenes/sdRemnantRig.js), after the
+//     Hearts - and the Volley's gears in flight.
 //   EACH FRAME (frame): the fight as the page holds it (net/sdFightLink.js) read at the relay's clock - each body where its
 //     walk has taken it, facing its walk or its aim (remnantPose, echoPose - pure); the Remnant kneeling while stunned,
 //     gone outside time in the Dragon Break and risen at the centre for the Last Moment, sinking where it fell; an Echo
@@ -28,7 +30,8 @@ import { sdBodyAt, sdHeartsOf, sdHourOver, SD_FIGHT_EMPTY } from '../net/sdFight
 import { SD_REALM_ARCHIVE } from '../world/sdRealm.js';
 import { remnantArt } from '../world/sdRemnantArt.js';
 import { ensureSdHallArt } from './sdHall.js';
-import { buildRemnantModel, buildHeartModel, remnantMatrix, remnantScale } from '../world/sdRemnantModel.js';
+import { buildRemnantParts, buildHeartModel, buildGearModel, remnantMatrix, remnantScale } from '../world/sdRemnantModel.js';
+import { remnantRig, rigMatrices, restRig, sdGearsAt, gearMatrix, SD_RIG_PARTS } from './sdRemnantRig.js';
 import { bossStandIn, crystalStandIn, hostStandIn } from '../world/gateBoss.js';
 
 /** The look the stand-ins wear for the formulas (characters/enemyBasics.js): an Iron Atronach's - a thing of metal. */
@@ -41,6 +44,8 @@ export const SD_KNEEL_M = 1.6;
 export const SD_REM_SINK_MS = 4000;
 export const SD_ECHO_SINK_MS = 1500;
 export const SD_HEART_SPIN = 0.9;
+/** SD17: the gears in flight at once at most - a Volley's five marks from each of three bodies. */
+export const SD_GEAR_DRAWS = SD_BLOWS.volley.max * 3;
 const ZERO = new Float32Array(16);
 const NONE = Object.freeze([]);
 /** AUDIT SD II (L2 F9): a body not shown - one pose for every hidden one (eight Hearts' literals were made a frame), never
@@ -123,9 +128,13 @@ export function remnantOpenAt(s, now) {
 export function createSdRemnant({ renderer = null, link = () => null, sendIn = () => false, sendBlow = () => false, alive = () => true }) {
   /** @type {any[]|null} the dungeon's draws, as stood into */
   let draws = null;
-  let remMesh = null, goldMesh = null, silverMesh = null, heartMesh = null;
+  /** every mesh made, to free (SD17: each body's parts, the Hearts', the gears') */
+  const meshes = [];
   let remDraw = null;
   const echoDraws = [], heartDraws = [];
+  /** SD17: each body's turned parts (the Remnant's, gold's, silver's), the gears' draws, the rig's pose and matrices */
+  const partDraws = [[], [], []], gearDraws = [];
+  const _rig = restRig(), _parts = SD_RIG_PARTS.map(() => new Float32Array(16));
   /** the stand-ins (made once), my blows' sequence and the bodies one blow of mine has met this frame */
   const standIn = bossStandIn({ mobile: SD_REMNANT_MOBILE }, SD_REMNANT_NAMES.remnant);
   const echoIns = [0, 1].map((e) => hostStandIn({ mobile: SD_REMNANT_MOBILE, name: SD_REMNANT_NAMES.echoes[e] }, e));
@@ -139,7 +148,7 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
     blowMet.add(who);
     return blowSeq;
   }
-  const make = (model) => { if (!model || !renderer?.createMesh) return null; try { return renderer.createMesh(model); } catch (e) { console.warn('[sd] the Remnant would not build', e?.message ?? e); return null; } };
+  const make = (model) => { if (!model || !renderer?.createMesh) return null; try { const m = renderer.createMesh(model); if (m) meshes.push(m); return m; } catch (e) { console.warn('[sd] the Remnant would not build', e?.message ?? e); return null; } };
   const drop = (mesh) => { if (mesh) { try { renderer?.destroyMesh?.(mesh); } catch { /* gone */ } } };
   const hide = (d) => { if (d && !d.hidden) { d.object.matrix.set(ZERO); d.hidden = true; } };   // AUDIT SD II (L2 F11): a hidden body is no draw
   const place = (d, p, scale) => {
@@ -153,6 +162,12 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
     remnantMatrix(SD_REALM_ORIGIN[0] + SD_ARENA.x + p.x, SD_REALM_ORIGIN[1] - p.sink, SD_REALM_ORIGIN[2] + SD_ARENA.z + p.z, p.yw, scale, d.object.matrix);
     d.hidden = false;
   };
+  /** SD17: a body's turned parts, stood on its pelvis's matrix (the body's own) as its rig turns them - hidden with it. */
+  const limbs = (list, body, who, s, t) => {
+    if (!body || body.hidden) { for (const d of list) hide(d); return; }
+    rigMatrices(body.object.matrix, remnantRig(s, who, t, _rig), _parts);
+    for (let i = 0; i < list.length; i++) { const d = list[i]; if (!d) continue; d.object.matrix.set(_parts[i]); d.hidden = false; }
+  };
   /** The fight now: the link's state at the relay's clock (none offline). */
   const read = () => { const L = link(); return L ? { L, s: L.state(), t: L.now() } : { L: null, s: SD_FIGHT_EMPTY, t: 0 }; };
 
@@ -164,13 +179,15 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
       ensureSdHallArt(renderer);
       ensureSdRemnantArt(renderer);
       const add = (mesh) => { if (!mesh) return null; const d = { gpu: mesh, object: { matrix: new Float32Array(ZERO) }, hidden: true, posed: new Float64Array(5) }; draws.push(d); return d; };
-      remMesh = make(buildRemnantModel('brass'));
-      goldMesh = make(buildRemnantModel('gold'));
-      silverMesh = make(buildRemnantModel('silver'));
-      heartMesh = make(buildHeartModel());
-      remDraw = add(remMesh);
-      echoDraws.push(add(goldMesh), add(silverMesh));
+      // SD17: each body its parts - the pelvis first (the body's own draw, where the bodies always stood), the rest after
+      const bodies = ['brass', 'gold', 'silver'].map((metal) => buildRemnantParts(metal).map(make));
+      const heartMesh = make(buildHeartModel());
+      remDraw = add(bodies[0][0]);
+      echoDraws.push(add(bodies[1][0]), add(bodies[2][0]));
       for (let c = 0; c < SD_HEARTS[1]; c++) heartDraws.push(add(heartMesh));
+      bodies.forEach((parts, b) => { for (const m of parts.slice(1)) partDraws[b].push(add(m)); });
+      const gearMesh = make(buildGearModel());
+      for (let g = 0; g < SD_GEAR_DRAWS; g++) gearDraws.push(add(gearMesh));
       return true;
     },
     /** One frame: `feet` where I stand (the dungeon's frame) - my `in` when it is due, every body placed. */
@@ -184,7 +201,16 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
       }
       if (!draws) return;
       place(remDraw, remnantPose(s, t, _remPose), 1);
-      for (let e = 0; e < echoDraws.length; e++) place(echoDraws[e], echoPose(s, e, t, _echoPose), ECHO_SCALE);
+      limbs(partDraws[0], remDraw, -1, s, t);   // SD17: its body moved
+      for (let e = 0; e < echoDraws.length; e++) { place(echoDraws[e], echoPose(s, e, t, _echoPose), ECHO_SCALE); limbs(partDraws[1 + e], echoDraws[e], e, s, t); }
+      // SD17: the Volley's gears in flight
+      const gears = live(s) ? sdGearsAt(s, t) : NONE;
+      for (let g = 0; g < gearDraws.length; g++) {
+        const d = gearDraws[g], q = gears[g];
+        if (!d) continue;
+        if (!q) { hide(d); continue; }
+        gearMatrix(q.x, q.y, q.z, q.spin, d.object.matrix); d.hidden = false;
+      }
       const cx = live(s) && !s.fell ? sdHeartsOf(s, t) : null;   // standing while the Reset winds up - gone as it lands
       for (let c = 0; c < heartDraws.length; c++) {
         const q = cx?.c[c];
@@ -254,9 +280,11 @@ export function createSdRemnant({ renderer = null, link = () => null, sendIn = (
     },
     /** Gone with the dungeon: every mesh freed. */
     clear() {
-      for (const m of [remMesh, goldMesh, silverMesh, heartMesh]) drop(m);
-      remMesh = goldMesh = silverMesh = heartMesh = null;
+      for (const m of meshes) drop(m);
+      meshes.length = 0;
       remDraw = null; echoDraws.length = 0; heartDraws.length = 0; draws = null;
+      for (const l of partDraws) l.length = 0;
+      gearDraws.length = 0;
     },
   };
 }

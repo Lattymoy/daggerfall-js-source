@@ -30,6 +30,8 @@ import { SD_HALL_FACE_RECORD, SD_HALL_EMBLEM_RECORD, SD_HALL_PLAQUE_RECORD, SD_H
 import { createSdHall, ensureSdHallArt, sdStoneKey, SD_HALL_TEXT } from '../src/scenes/sdHall.js';
 import { createSdSteps, ensureSdStepsArt, sdStepKey, SD_CHECKS_KEY } from '../src/scenes/sdSteps.js';
 import { createSdRemnant, ensureSdRemnantArt } from '../src/scenes/sdRemnant.js';
+import { SD_RIG_PARTS } from '../src/scenes/sdRemnantRig.js';   // SD17 (PIN MOVED): the bodies' parts
+import { SD_HEARTS } from '../src/net/sdRemnant.js';
 import { createSdEnd, SD_RIFT_KEY } from '../src/scenes/sdEnd.js';
 import { SD_FIGHT_EMPTY } from '../src/net/sdFightLink.js';
 import { sdAnyInFlight, sdBlowsInFlight } from '../src/scenes/sdRemnantBlows.js';
@@ -529,8 +531,10 @@ test('AUDIT SD II L2 F10, F11: THE HOUR POSED BEFORE THE WORLD PASS, AND A HIDDE
   const rem = createSdRemnant({ renderer: fakeRenderer() }), rl = [];
   rem.stand({ dynamicDraws: rl });
   rem.frame(1 / 60, realmToDungeon(0, 0, 42));
-  assert.deepEqual(rl.map((d) => d.hidden), [false, ...rl.slice(1).map(() => true)], 'no fight: the Remnant stands, its Echoes and hearts hidden');
-  for (const d of rl.slice(1)) assert.ok(d.object.matrix.every((v) => v === 0));
+  // SD17 (PIN MOVED): the Remnant's own turned parts (after the Hearts) stand with it
+  const H = 3 + SD_HEARTS[1], up = rl.map((d, i) => i === 0 || (i >= H && i < H + SD_RIG_PARTS.length));
+  assert.deepEqual(rl.map((d) => !d.hidden), up, 'no fight: the Remnant stands, its Echoes, hearts and gears hidden');
+  for (const [i, d] of rl.entries()) if (!up[i]) assert.ok(d.object.matrix.every((v) => v === 0));
   // a body shown, hidden and shown again where it stood: hidden says so, and it is drawn again (a still body keeps its
   // matrix - L2 F9 - but never a hidden one's nought)
   let S = { ...SD_FIGHT_EMPTY, fi: 1 };

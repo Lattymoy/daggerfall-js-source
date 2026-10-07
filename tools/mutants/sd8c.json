@@ -317,8 +317,8 @@
   {
     "name": "SD8C-an-echo-unscaled",
     "file": "src/scenes/sdRemnant.js",
-    "old": "      for (let e = 0; e < echoDraws.length; e++) place(echoDraws[e], echoPose(s, e, t, _echoPose), ECHO_SCALE);",
-    "new": "      for (let e = 0; e < echoDraws.length; e++) place(echoDraws[e], echoPose(s, e, t, _echoPose), 1);",
+    "old": "place(echoDraws[e], echoPose(s, e, t, _echoPose), ECHO_SCALE);",
+    "new": "place(echoDraws[e], echoPose(s, e, t, _echoPose), 1);",
     "tests": [
       "test/sd8c_remnant_page.test.js"
     ]

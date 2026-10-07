@@ -232,6 +232,6 @@ test('SD16 THE BURSTS AS THE SPARK PASS TAKES THEM: sixteen at most, the oldest 
   assert.match(W, /const sdFx = sdFightLink \? createSdFx\(\{\n\s+link: sdFightLink,\n\s+feet: \(\) => \(playerSpawned && modes\?\.sdRealmSlot\?\.\(\) != null \? player\.feetAt\(\) : null\),\n\s+shake: \(k\) => betterAmbience\.weaponKick\(k\),/);
   assert.match(W, /if \(inRealm\) \{ try \{ sdFx\?\.frame\(\); \} catch/);
   assert.match(W, /sdRemVoice\?\.leave\(\); sdFx\?\.leave\(\); _sdFightHeld = false;/);
-  assert.match(W, /const sparks = !!\(sdFx && sdFightLink && sdFx\.draw\(renderer\.gl, proj, view, eye, sdFightLink\.now\(\), fog, renderer\.worldViewportPx\?\.\[3\]\)\); if \(blows \|\| lines \|\| motes \|\| sparks\) renderer\.markForeignPass\(\);/);
+  assert.match(W, /const sparks = !!\(sdFx && sdFightLink && sdFx\.draw\(renderer\.gl, proj, view, eye, sdFightLink\.now\(\), fog, renderer\.worldViewportPx\?\.\[3\]\)\); const beams = [^\n]*; const beam = [^\n]*; if \(blows \|\| lines \|\| motes \|\| sparks \|\| beam\) renderer\.markForeignPass\(\);/);   // SD17 (PIN MOVED): the Hour-Hand's beam after the sparks
   assert.match(W, /fx = sdFx && sdFightLink \? sdFx\.lights\(sdFightLink\.now\(\)\) : \[\];\n\s+return fx\.length \? \[\.\.\.lit, \.\.\.fx\] : lit;/);
 });

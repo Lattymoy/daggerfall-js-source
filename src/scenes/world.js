@@ -328,6 +328,8 @@ import { createSdAir } from './sdAir.js';   // SD14b: the Hour's air - its beds 
 import { SdMotesRenderer } from '../render/sdMotes.js';   // SD14c: the Hour's motes
 import { sdPerilAt, sdGroundModel, createSdBeats } from './sdArenaRead.js';   // SD15: the arena read - in it, and the fight's beats
 import { createSdFx } from './sdFx.js';   // SD16: the blows seen - bursts, shakes and lights
+import { sdBeamDraws } from './sdRemnantRig.js';   // SD17: the Hour-Hand's beam in the air
+import { SdBeamRenderer } from '../render/sdBeam.js';
 import { drawSdTitleCard } from '../ui/sdTitleCard.js';   // SD15: the Hour's own card
 import { titleCardModel } from '../ui/gateTitleCard.js';   // SD15: the card's pure model, the Warden's
 import { remnantBarModel, sdBarNear } from '../ui/sdRemnantBar.js';   // SD8c: the Brass Remnant's bar, the gate's in brass
@@ -21528,6 +21530,12 @@ export async function bootWorld(canvas, renderer, params, status) {
     if (_sdSkyPass === undefined) { try { _sdSkyPass = new SdSkyRenderer(renderer.gl); } catch (e) { console.warn('[sd] the Hour\'s sky could not be built', e); _sdSkyPass = null; } }
     return _sdSkyPass;
   };
+  /** SD17: the Hour-Hand's beam (render/sdBeam.js) - made the first time one sweeps, null where a context cannot. */
+  let _sdBeamPass;
+  const sdBeamPassOf = () => {
+    if (_sdBeamPass === undefined) { try { _sdBeamPass = new SdBeamRenderer(renderer.gl); } catch (e) { console.warn('[sd] the Hour-Hand\'s beam could not be built', e); _sdBeamPass = null; } }
+    return _sdBeamPass;
+  };
   /** SD14c: the Hour's motes (render/sdMotes.js) - made the first time the Hour is drawn, null where a context cannot. */
   let _sdMotesPass;
   const sdMotesPassOf = () => {
@@ -25188,8 +25196,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     },
     // SD8d: the Brass Remnant's blows on the arena's floor, in the dungeon arm's world pass - fogged as the floor is; SD9e:
     // and its spoils' loot lines, in the same pass; SD14c: and the Hour's motes (render/sdMotes.js), in its fog and its sky's light;
-    // SD16: and its blows' sparks (scenes/sdFx.js, the gate's spark pass) on the fight's clock
-    drawSdTelegraph: ({ proj, view, eye }) => { const t = performance.now() / 1000, fog = courtFogNow(); const blows = !!sdBlows?.drawPass(proj, view, eye, t, fog), lines = !!sdSpoilsPool?.drawPass(proj, view, eye, t, fog); const motes = !!sdMotesPassOf()?.draw(proj, view, deadlandsSeconds(), fog, skyGain(renderer._fogColor, SD_REALM_FOG.color), renderer.worldViewportPx?.[3]); const sparks = !!(sdFx && sdFightLink && sdFx.draw(renderer.gl, proj, view, eye, sdFightLink.now(), fog, renderer.worldViewportPx?.[3])); if (blows || lines || motes || sparks) renderer.markForeignPass(); },
+    // SD16: and its blows' sparks (scenes/sdFx.js, the gate's spark pass) on the fight's clock; SD17: and the Hour-Hand's
+    // beam (render/sdBeam.js) out of its pointing hand
+    drawSdTelegraph: ({ proj, view, eye }) => { const t = performance.now() / 1000, fog = courtFogNow(); const blows = !!sdBlows?.drawPass(proj, view, eye, t, fog), lines = !!sdSpoilsPool?.drawPass(proj, view, eye, t, fog); const motes = !!sdMotesPassOf()?.draw(proj, view, deadlandsSeconds(), fog, skyGain(renderer._fogColor, SD_REALM_FOG.color), renderer.worldViewportPx?.[3]); const sparks = !!(sdFx && sdFightLink && sdFx.draw(renderer.gl, proj, view, eye, sdFightLink.now(), fog, renderer.worldViewportPx?.[3])); const beams = sdFightLink ? sdBeamDraws(sdFightLink.state(), sdFightLink.now()) : []; const beam = beams.length > 0 && !!sdBeamPassOf()?.draw(beams, proj, view, eye, t, fog); if (blows || lines || motes || sparks || beam) renderer.markForeignPass(); },
     deadlandsSeconds: () => deadlandsSeconds(),   // WB6b: the court's flash and the shards' drift keep the sky's clock
     staffTeleportHeld: () => staffTeleportHeld,
     canVisitPrivateRoom: () => !seatOut() && isStaff(_staffGlyphs) && !!chatLinks.get('world')?.staffTeleportOk,

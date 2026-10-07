@@ -56,12 +56,17 @@ function shard(f, rec, cx, cz, lo, wy, hi, r) {
   }
 }
 
-/** THE REMNANT (or an Echo, in `metal` 'gold' or 'silver'), one mesh in its own frame. */
-export function buildRemnantModel(metal = 'brass') {
-  const B = SD_REMNANT_BODY, W = SD_REMNANT_WEAR[metal], f = faces();
+/** SD17: the parts a body is stood as: its pelvis (the hip - never turned, stood where the body stands), then the six
+ *  scenes/sdRemnantRig.js SD_RIG_PARTS turns - its right leg (at -x: it faces +z), its left, the torso (the cage, the
+ *  heart, the shoulders), the head and its eyes, its right arm, its left. */
+export const SD_REMNANT_PARTS = Object.freeze(['pelvis', 'legR', 'legL', 'torso', 'head', 'armR', 'armL']);
+/** Every face of a body, each into the collector `into(part)` answers for its part. */
+function emitRemnant(metal, into) {
+  const B = SD_REMNANT_BODY, W = SD_REMNANT_WEAR[metal];
   // the legs, the hip
-  for (const s of [-1, 1]) box(f, W.metal, s * B.legX, 0, 0, B.legW, B.legH, B.legD);
-  box(f, W.joint, 0, B.legH, 0, B.hipW, B.hipH, B.hipD);
+  for (const s of [-1, 1]) box(into(s < 0 ? 'legR' : 'legL'), W.metal, s * B.legX, 0, 0, B.legW, B.legH, B.legD);
+  box(into('pelvis'), W.joint, 0, B.legH, 0, B.hipW, B.hipH, B.hipD);
+  let f = into('torso');
   // the cage: bars on an ellipse about the heart, from the hip to the shoulders
   const cy0 = B.legH + B.hipH;
   for (let k = 0; k < B.bars; k++) {
@@ -72,12 +77,44 @@ export function buildRemnantModel(metal = 'brass') {
   // the shoulders, the arms hanging from them, the head and its eyes
   const sy = cy0 + B.cageH;
   box(f, W.metal, 0, sy, 0, B.shoulderW, B.shoulderH, B.shoulderD);
-  for (const s of [-1, 1]) box(f, W.metal, s * B.armX, B.armBot, 0, B.armW, sy + B.shoulderH - B.armBot, B.armD);
+  for (const s of [-1, 1]) box(into(s < 0 ? 'armR' : 'armL'), W.metal, s * B.armX, B.armBot, 0, B.armW, sy + B.shoulderH - B.armBot, B.armD);
   const hy = sy + B.shoulderH, headH = SD_REM.h - hy;
+  f = into('head');
   box(f, W.joint, 0, hy, 0, B.headW, headH, B.headD);
   for (const s of [-1, 1]) {
     const ex = s * B.eyeX, ey = hy + B.eyeY, ez = B.headD / 2 + 0.01;
     f.quad(SD_REMNANT_EYE_RECORD, [ex - B.eyeW / 2, ey, ez], [ex + B.eyeW / 2, ey, ez], [ex + B.eyeW / 2, ey + B.eyeH, ez], [ex - B.eyeW / 2, ey + B.eyeH, ez], [0, 0], [1, 0], [1, 1], [0, 1]);
+  }
+}
+/** THE REMNANT (or an Echo, in `metal` 'gold' or 'silver'), one mesh in its own frame. */
+export function buildRemnantModel(metal = 'brass') {
+  const f = faces();
+  emitRemnant(metal, () => f);
+  return packRealmFaces(f);
+}
+/** SD17: THE REMNANT AS ITS PARTS (SD_REMNANT_PARTS' order), each a mesh in the body's own frame - stood whole, they are
+ *  buildRemnantModel's faces, every one. */
+export function buildRemnantParts(metal = 'brass') {
+  const fs = Object.fromEntries(SD_REMNANT_PARTS.map((n) => [n, faces()]));
+  emitRemnant(metal, (n) => fs[n]);
+  return SD_REMNANT_PARTS.map((n) => packRealmFaces(fs[n]));
+}
+/** SD17: A GEAR of the Volley - a brass cog SD_GEAR.r across with SD_GEAR.teeth teeth, SD_GEAR.d thick, its disc in the
+ *  x-y plane about its own centre; both sides of every face (it tumbles). */
+export const SD_GEAR = Object.freeze({ r: 0.62, root: 0.46, hub: 0.16, teeth: 9, d: 0.2 });
+export function buildGearModel() {
+  const f = faces(), G = SD_GEAR, n = G.teeth * 2, z0 = -G.d / 2, z1 = G.d / 2, rec = SD_REALM_BRASS_RECORD;
+  const ring = Array.from({ length: n }, (_, i) => { const a0 = (i / n) * Math.PI * 2, a1 = ((i + 1) / n) * Math.PI * 2, r = i % 2 ? G.root : G.r; return [a0, a1, r]; });
+  const both = (a, b, c, d) => { f.quad(rec, a, b, c, d, [0, 0], [1, 0], [1, 1], [0, 1]); f.quad(rec, d, c, b, a, [0, 1], [1, 1], [1, 0], [0, 0]); };
+  for (const [a0, a1, r] of ring) {
+    const p = (a, rr, z) => [Math.cos(a) * rr, Math.sin(a) * rr, z];
+    both(p(a0, G.hub, z1), p(a1, G.hub, z1), p(a1, r, z1), p(a0, r, z1));   // its face
+    both(p(a0, r, z0), p(a1, r, z0), p(a1, G.hub, z0), p(a0, G.hub, z0));   // its back
+    both(p(a0, r, z0), p(a0, r, z1), p(a1, r, z1), p(a1, r, z0));           // its rim
+  }
+  for (let i = 0; i < n; i++) {   // the teeth's flanks
+    const a = ((i + 1) / n) * Math.PI * 2, r0 = i % 2 ? G.root : G.r, r1 = i % 2 ? G.r : G.root, p = (rr, z) => [Math.cos(a) * rr, Math.sin(a) * rr, z];
+    both(p(r0, z0), p(r1, z0), p(r1, z1), p(r0, z1));
   }
   return packRealmFaces(f);
 }

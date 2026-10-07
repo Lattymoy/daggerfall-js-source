@@ -20,10 +20,12 @@ import { PIXEL_M } from '../src/net/gateLaw.js';
 import {
   createSdRemnant, remnantPose, echoPose, heartsOpenAt, remnantOpenAt, arenaToDungeon, SD_KNEEL_M, SD_REM_SINK_MS, SD_ECHO_SINK_MS,
   SD_REMNANT_MOBILE, SD_REMNANT_NAMES,
+  SD_GEAR_DRAWS,
 } from '../src/scenes/sdRemnant.js';
 import { remnantBarModel, sdBarNear, SD_BAR_TEXT, SD_BAR_NEAR_M, SD_ENDS_WARN_MS, SD_ENDS_NEAR_MS } from '../src/ui/sdRemnantBar.js';
 import { drawGateBossBar, destroyGateBossBar, FELL_HOLD_MS, FELL_FADE_MS } from '../src/ui/gateBossBar.js';
 import { buildRemnantModel, buildHeartModel, remnantMatrix, remnantScale, SD_REMNANT_WEAR, SD_REMNANT_HEART_RECORD, SD_REMNANT_EYE_RECORD } from '../src/world/sdRemnantModel.js';
+import { SD_RIG_PARTS } from '../src/scenes/sdRemnantRig.js';   // SD17 (PIN MOVED): the bodies' parts
 import { remnantArt, echoMetalArt, SD_REMNANT_GOLD_RECORD, SD_REMNANT_SILVER_RECORD, SD_REMNANT_ART_SIZE, SD_ECHO_METALS } from '../src/world/sdRemnantArt.js';
 import { realmPillarTris, realmFloorTris, realmColliderTris, realmLampTris, SD_REALM_BRASS_RECORD, SD_REALM_ROOT_RECORD, SD_REALM_ARCHIVE } from '../src/world/sdRealm.js';
 import { SD_STEPS_CRACKED_RECORD, SD_STEPS_BEAT_RECORD } from '../src/world/sdStepsArt.js';
@@ -332,12 +334,12 @@ const feetAt = (x, z) => arenaToDungeon(x, z);
 
 test('SD8c THE SET STANDS THE BODIES: the Remnant, the two Echoes and the most Hearts a Reset raises, each a draw hidden until the fight stands it; their metals uploaded; with no fight to fight the Remnant waits where a fight begins it, facing the way in; it walks where the realm says, kneels stunned, is gone outside time and rises at the centre for the Last Moment, and sinks where it fell; an Echo rises out of the floor and sinks where it fell; a Heart stands while the Reset winds up (mutants: a body drawn outside time; no kneel; the fall left standing)', () => {
   const { set, draws, r, L, at } = rig();
-  assert.equal(draws.length, 1 + 2 + SD_HEARTS[1]);
+  assert.equal(draws.length, 1 + 2 + SD_HEARTS[1] + 3 * SD_RIG_PARTS.length + SD_GEAR_DRAWS);   // PIN MOVED (SD17): each body's turned parts and the gears after the Hearts
   assert.ok(draws.every(hidden), 'hidden until the first frame');
   assert.ok(r.up.some(([a, rec]) => a === SD_REALM_ARCHIVE && rec === SD_REMNANT_GOLD_RECORD) && r.up.some(([, rec]) => rec === SD_REMNANT_SILVER_RECORD), 'the Echoes\' metals uploaded');
   set.frame(0.016, null);
   assert.deepEqual(translation(draws[0]).map((v) => Math.round(v * 100) / 100), arenaToDungeon(...SD_REM_START).map((v) => Math.round(v * 100) / 100), 'waiting at its start');
-  assert.ok(draws.slice(1).every(hidden), 'no Echo, no Heart');
+  assert.ok(draws.slice(1, 3 + SD_HEARTS[1]).every(hidden) && draws.slice(3 + SD_HEARTS[1] + SD_RIG_PARTS.length).every(hidden), 'no Echo, no Heart');   // PIN MOVED (SD17): the Remnant's own parts stand with it
   // pure: where it stands, and how
   const s0 = L.state();
   assert.deepEqual(remnantPose(SD_FIGHT_EMPTY, T0), { x: SD_REM_START[0], z: SD_REM_START[1], yw: Math.PI, sink: 0, shown: true }, 'no fight: waiting');
@@ -376,11 +378,11 @@ test('SD8c THE SET STANDS THE BODIES: the Remnant, the two Echoes and the most H
   L.word(validSdOut({ k: 'cxb', i: 7, c: 1, n: 'A', at: T0 + 94_000 }));
   at(T0 + 95_000);
   set.frame(0.016, null);
-  assert.deepEqual(draws.slice(3).map(hidden), [false, true, false, true, true, true, true, true], 'the two standing Hearts');
+  assert.deepEqual(draws.slice(3, 3 + SD_HEARTS[1]).map(hidden), [false, true, false, true, true, true, true, true], 'the two standing Hearts');   // PIN MOVED (SD17)
   assert.ok(near(translation(draws[3])[0], arenaToDungeon(10, 0)[0], 1e-4) && near(translation(draws[3])[2], arenaToDungeon(10, 0)[2], 1e-4), 'at its spot');
   at(T0 + 100_000);
   set.frame(0.016, null);
-  assert.ok(draws.slice(3).every(hidden), 'gone as the Reset lands - the law says no word for it');
+  assert.ok(draws.slice(3, 3 + SD_HEARTS[1]).every(hidden), 'gone as the Reset lands - the law says no word for it');   // PIN MOVED (SD17)
   set.clear();
 });
 
