@@ -969,6 +969,13 @@ test('AUDIT LANDFORMS II H2: nature asks the beach line of DFU\'s own blend in a
   // the beach nature asks is DFU's own ground to the bit - its blend and the road's smoothing under the painted tiles - here
   // and on a town the road crosses
   assert.ok(Object.is(shaped.beach.length, dfu.samples.length) && shaped.beach.every((v, i) => Object.is(v, dfu.samples[i])), 'DFU\'s samples, the shore\'s');
+  // ...and where World of Daggerfall levels a site in the pixel (WOD2: after the tiles, before the nature - DFU's nature
+  // reads the levelled ground), DFU's samples levelled by the same picks, to the bit
+  const site = { picks: [{ flatten: true, rect: { x: 20, y: 30, width: 8, height: 8 } }] };
+  const levelled = (landform) => generatePixelTerrain({ woods, px, py, tilemap: new Uint8Array(128 * 128), locationRect: rect, hasLocation: true, climateType: 231, roads: NET, landform, wod: site });
+  const wDfu = levelled(false), wShaped = levelled(true);
+  assert.ok(wDfu.samples.some((v, i) => v !== dfu.samples[i]), 'the site levels DFU\'s pixel');
+  assert.ok(wShaped.beach.every((v, i) => Object.is(v, wDfu.samples[i])), 'DFU\'s samples, levelled by the site as DFU levels them');
   const roadTown = (landform) => generatePixelTerrain({ woods, px: 300, py: 250, tilemap: new Uint8Array(128 * 128), locationRect: { xMin: 20, xMax: 50, yMin: 40, yMax: 90 }, hasLocation: true, climateType: 231, roads: NET, landform });
   const town = roadTown(true), townDfu = roadTown(false);
   assert.ok(town.beach.some((v, i) => v !== town.samples[i]), 'a town the landforms move');

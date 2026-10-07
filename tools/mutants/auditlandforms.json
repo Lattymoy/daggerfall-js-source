@@ -1339,6 +1339,15 @@
     ]
   },
   {
+    "name": "AUDIT-LANDFORMS-II-H2-site-unlevelled",
+    "file": "src/world/terrainGen.js",
+    "old": "  if (classic && wodResult) applyPicks(classic, wod.picks);",
+    "new": "  if (false) applyPicks(classic, wod.picks);",
+    "tests": [
+      "test/auditlandforms.test.js"
+    ]
+  },
+  {
     "name": "AUDIT-LANDFORMS-II-H3-nature-on-dfu",
     "file": "src/world/terrainGen.js",
     "old": "  const nature = layoutNature(samples, tilemap, {",

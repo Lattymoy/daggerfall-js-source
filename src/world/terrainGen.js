@@ -122,6 +122,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // a real location starts from its own mean (MapData.averageHeight is
   // only ever computed there), every other from 0.
   const wodResult = wod && wod.picks.length ? applyPicks(samples, wod.picks, hasLocation ? avg : 0) : null;
+  if (classic && wodResult) applyPicks(classic, wod.picks);   // AUDIT LANDFORMS II H2: DFU's nature reads the ground a site levelled (above) - so the beach it asks is DFU's own samples levelled by the same picks
   const grid = restrideGrid({ woods, px, py, stride, samples, landforms });   // PERF-EXT26: the one grid law, the restride's too
   const tilemapBytes = convertTilemap(tilemap);
   const nature = layoutNature(samples, tilemap, {
