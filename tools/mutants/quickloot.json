@@ -158,11 +158,12 @@
   {
     "name": "QUICK-LOOT-the-bulk-take-walks-the-list-it-is-splicing",
     "file": "src/systems/quickLoot.js",
-    "old": "    for (const it of [...items]) {\n      const got = takeThrough(playerEntity, items, it, getQuest, moved);",
-    "new": "    for (const it of items) {\n      const got = takeThrough(playerEntity, items, it, getQuest, moved);",
+    "old": "    for (const it of [...items]) {\n      if (takeAllLeaves(it)) { left++; continue; }",
+    "new": "    for (const it of items) {\n      if (takeAllLeaves(it)) { left++; continue; }",
     "tests": [
       "test/quickloot.test.js"
-    ]
+    ],
+    "note": "LOOT18 (RE-AIMED BY CONTENT, bible/06-Systems/Loot-II-Arc.md section 10): the take-all's filter stands between the walk and its take now; the law it pins - the walk is over a copy of the list it splices - unmoved"
   },
   {
     "name": "QUICK-LOOT-the-take-runs-with-the-switch-off",

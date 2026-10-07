@@ -14,11 +14,15 @@
 // dress it as they dress his (the classic skin lays the Broker's own sheet, `brokerSkinCss`). Everything the window does
 // to the world is handed in: the pack, the payer, the reforge and the salvage (systems/reforge.js, which the host
 // calls) - this file draws and asks, and never touches a pack.
-import { rarityAttr, affixLine, reforgeableLines, RARITIES, tierLabel, imprintLine, powerLine, powerOf, legendaryById } from '../systems/lootRarity.js';
+import { rarityAttr, affixLine, reforgeableLines, RARITIES, tierLabel, imprintLine, powerLine, powerOf, legendaryById, curseLine, honeableLines } from '../systems/lootRarity.js';
+import { cursedKnown, liftPrice, liftRefusal } from '../systems/lootCurse.js';   // LOOT16: the temple's lifting
+import { SCRY_FAMILIES, SCRY_FAMILY_WORDS, SCRY_PRICE, familyPlaces, scryRefusal } from '../systems/lootScry.js';   // LOOT19: scrying
+import { foundAmong, hasSocket, socketGem, gemLine, affixLabel, GEM_IDS, GEM_NAMES } from '../systems/lootRarity.js';   // LOOT20: the sockets
+import { gemsHeld, setGemRefusal, unsetGemRefusal, SET_GEM_PRICE } from '../systems/reforge.js';
 import { codexRows, codexSets, codexCount, imprintChoices, imprintRefusal, IMPRINT_PRICE } from '../systems/lootCodex.js';   // LOOT10: the codex's page and the imprint's
 import { setById } from '../systems/sigilSets.js';
 import { itemIsIdentified } from '../systems/tradeModes.js';
-import { reforgePrice, reforgeRefusal, salvageShards, salvageRefusal, shardsHeld, shardsText } from '../systems/reforge.js';
+import { reforgePrice, reforgeRefusal, salvageShards, salvageRefusal, shardsHeld, shardsText, honePrice, honeRefusal } from '../systems/reforge.js';   // LOOT17: and the hone
 import { inventoryItemImage } from '../systems/itemTemplates.js';
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 import { SLOT_BOX, screenDpr } from './iconFit.js';
@@ -39,8 +43,34 @@ const el = (tag, cls = null, text = null) => {
 
 /** The window's words. */
 export const REFORGE_TITLE = 'The Reforge';
-export const REFORGE_SUB = 'Welkynd Shards and gold roll one line again · a piece salvaged breaks into shards';
-export const REFORGE_PAGES = Object.freeze({ reforge: 'Reforge', salvage: 'Salvage', imprint: 'Imprint', codex: 'Codex' });   // LOOT10: the imprint and the codex
+export const REFORGE_SUB = 'Welkynd Shards and gold roll one line again or hone it up its band · a piece salvaged breaks into shards';   // LOOT17: the hone
+export const REFORGE_PAGES = Object.freeze({ reforge: 'Reforge', salvage: 'Salvage', imprint: 'Imprint', codex: 'Codex', scry: 'Scry', sockets: 'Sockets', lift: 'Lift Curse' });   // LOOT10: the imprint and the codex; LOOT16: the temple's lifting; LOOT19: scrying; LOOT20: sockets
+/** The pages the guild's window shows when its host names none - never the temple's (LOOT16); LOOT19: and its scryers'. */
+export const REFORGE_GUILD_PAGES = Object.freeze(['reforge', 'salvage', 'imprint', 'codex', 'scry', 'sockets']);   // LOOT20: and its sockets
+/** LOOT20 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 12): THE SOCKETS' PAGE - every piece of the pack with
+ *  a socket; picked, its card - an empty socket offers each gem the pack holds, a set one its unsetting, asked first. */
+export const SOCKETS_NONE = 'Nothing in your pack carries a socket - a Rare or a Legendary found on a body or in a pile may.';
+export const GEMS_NONE = 'No gem in your pack to set - a Ruby, an Emerald, a Sapphire, a Diamond, Jade, Turquoise, Malachite or Amber.';
+export const GEM_SET = (name, gem) => `Set: the ${GEM_NAMES[gem] ?? 'gem'} in ${name}.`;
+export const UNSET_ASK = (gem) => `Unset the ${GEM_NAMES[gem] ?? 'gem'}? It shatters.`;
+export const GEM_SHATTERED = (name, gem) => `The ${GEM_NAMES[gem] ?? 'gem'} in ${name} shatters; the socket is empty.`;
+/** LOOT19 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 11): THE SCRYERS' PAGE - a row a family, its dungeon
+ *  kinds, the price, and a press that names the nearest of its haunts in the region not yet on the map (systems/
+ *  lootScry.js); asked first of the region, so a family with nothing hidden says so before a coin is taken. */
+export const SCRIED = (name, family) => `Scried: ${name} - a haunt of ${String(SCRY_FAMILY_WORDS[family] ?? 'them').toLowerCase()}, on your map now.`;
+export const SCRY_FOR_KIN = 'Scry for its kin';
+/** LOOT16 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 8): THE TEMPLE'S PAGE - the window on its one page,
+ *  opened by a temple's Cure Disease priest (scenes/worldModes.js openLift): every known cursed piece of the pack, its
+ *  drawback named, its price, and a press that lifts it (systems/lootCurse.js liftCurse). */
+export const LIFT_TITLE = 'Lift a Curse';
+export const LIFT_SUB = 'The temple lifts a curse for gold - the drawback gone, the line it came with kept';
+export const LIFT_NONE = 'Nothing cursed in your pack that the temple can see - a curse is known once the piece is identified.';
+export const LIFTED = (name) => `Lifted: ${name} - the curse is gone, and its line stays.`;
+/** Why a lifting is refused, by the law's word (lootCurse.js liftRefusal). */
+export const LIFT_REFUSALS = Object.freeze({
+  off: 'Loot rarity is off', not: 'No curse on it', unknown: 'Not yet identified - the guild identifies it first',
+  worn: 'Take it off first', gold: 'Not enough gold', gone: 'No longer in your pack',
+});
 export const CODEX_TITLE = 'The Codex';
 export const CODEX_SUB = 'Every Legendary and every Aetheric piece you have found - and where the rest are said to be';
 /** LOOT10: the imprint's words. */
@@ -55,7 +85,10 @@ export const reforgePriceText = (p) => (p ? `${shardsText(p.shards)} and ${p.gol
 export const REFORGE_REFUSALS = Object.freeze({
   off: 'Loot rarity is off', not: 'Nothing the Reforge can roll', unknown: 'Not yet identified - the guild identifies it first',
   worn: 'Take it off first', line: 'Only the line it was reforged on', shards: 'Not enough Welkynd Shards', gold: 'Not enough gold',
+  top: 'At the top of its band',   // LOOT17
   imprinted: 'It has taken a power already', unfound: 'Not a power your codex holds for it',
+  none: 'Nothing of theirs is hidden in this region', nowhere: 'No map to scry here', family: 'No such kin',   // LOOT19
+  set: 'A gem is set in it - unset it first', nogem: 'None of that gem in your pack', empty: 'No gem in it',   // LOOT20
   gone: 'No longer in your pack', aetheric: 'An Aetheric piece is the Broker\'s to dismantle', artifact: 'An artifact will not break',
   quest: 'A quest\'s item will not break', bound: 'Bound - it will not break', locked: 'Locked - unlock it first',
 });
@@ -68,12 +101,22 @@ export function reforgeLabel(why, price, have, verb = 'Reforge') {
   if (why === 'unknown') return 'Not identified';
   if (why === 'worn') return 'Worn';
   if (why === 'imprinted') return 'Imprinted';
+  if (why === 'none') return 'None hidden';   // LOOT19
+  if (why === 'nowhere') return 'No map here';
   return 'Cannot';
 }
 /** The last word of a press. */
 export const REFORGED = (name, line) => `Reforged: ${name} - ${line}.`;
+export const HONED = (name, line) => `Honed: ${name} - ${line}.`;   // LOOT17
+/** LOOT17: the card's word on the hone's price. */
+export const HONE_NOTE = (price) => `A hone costs ${reforgePriceText(price)} - it doubles with every hone the piece takes, and a line at the top of its band takes none.`;
 export const SALVAGED = (name, n) => `Salvaged: ${name}, for ${shardsText(n)}.`;
 export const BREAK_ASK = (name, n) => `Break ${name} for ${shardsText(n)}? It is gone for good.`;
+/** LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): SALVAGE EVERY MAGIC - one press, asked first. */
+export const EVERY_MAGIC = 'every-magic';
+export const EVERY_MAGIC_LABEL = (n) => `Salvage every Magic (${n})`;
+export const EVERY_MAGIC_ASK = (n, shards) => `Break all ${n} Magic pieces for ${shardsText(shards)}? They are gone for good.`;
+export const SALVAGED_EVERY = (n, shards) => `Salvaged ${n} Magic piece${n === 1 ? '' : 's'}, for ${shardsText(shards)}.`;
 
 /** An item's classic picture fitted to the row's box, or null while it loads (`onReady` repaints when it lands). */
 function classicPicture(item, wearer, onReady) {
@@ -106,11 +149,20 @@ function injectSkinStyle(doc = document) {
  *   reforge: (item: any, line: number) => { ok: boolean, reason?: string|null, line?: any },
  *   salvage: (item: any) => { ok: boolean, reason?: string|null, shards?: number },
  *   picture?: ((item: any) => any) | null, wearer?: any, nameOf?: (item: any) => string, onExit?: (() => void) | null,
- *   page?: 'reforge'|'salvage'|'imprint'|'codex', pages?: string[] | null,
+ *   page?: 'reforge'|'salvage'|'imprint'|'codex'|'lift'|'scry'|'sockets', pages?: string[] | null,
  *   imprint?: ((item: any, recordId: string) => { ok: boolean, reason?: string|null }) | null,
+ *   lift?: ((item: any) => { ok: boolean, reason?: string|null }) | null,
+ *   hone?: ((item: any, line: number) => { ok: boolean, reason?: string|null }) | null,
+ *   scry?: ((family: string) => { ok: boolean, reason?: string|null, place?: any }) | null,
+ *   scryWhere?: (() => any) | null,
+ *   setGem?: ((item: any, gem: string) => { ok: boolean, reason?: string|null }) | null,
+ *   unsetGem?: ((item: any) => { ok: boolean, reason?: string|null }) | null,
  * }} deps
  *   LOOT10: `pages` the pages this window shows (the guild's all four; the pack's Codex its one), `imprint` the host's
- *   imprint (systems/lootCodex.js imprintPiece).
+ *   imprint (systems/lootCodex.js imprintPiece). LOOT16: the temple's `['lift']`, and its `lift` (systems/lootCurse.js
+ *   liftCurse). LOOT17: `hone` the host's hone (systems/reforge.js honePiece). LOOT19: `scry` the host's scrying
+ *   (systems/lootScry.js scryPlace) and `scryWhere` its region (scenes/world.js). LOOT20: `setGem` and `unsetGem` the
+ *   host's (systems/reforge.js setGemPiece, unsetGemPiece).
  * @returns {{ repaint: () => void, unmount: () => void }}
  */
 export function mountReforgeWindow(host, deps) {
@@ -119,9 +171,11 @@ export function mountReforgeWindow(host, deps) {
   injectSkinStyle();
   const nameOf = deps.nameOf ?? ((it) => String(it?.name ?? ''));
   const exit = () => deps.onExit?.();
-  const pages = (deps.pages ?? Object.keys(REFORGE_PAGES)).filter((id) => REFORGE_PAGES[id]);
+  const pages = (deps.pages ?? REFORGE_GUILD_PAGES).filter((id) => REFORGE_PAGES[id]);   // LOOT16: the guild's four unless the host names its own
   let page = pages.includes(deps.page ?? '') ? deps.page : pages[0] ?? 'reforge';
   const codexOnly = pages.length === 1 && pages[0] === 'codex';
+  const liftOnly = pages.length === 1 && pages[0] === 'lift';   // LOOT16: the temple's
+  const titleText = codexOnly ? CODEX_TITLE : liftOnly ? LIFT_TITLE : REFORGE_TITLE;
   let picked = null;
   let asking = null;
   /** The last press's word, and whether it was done (a refusal is read in the refusal's colour). */
@@ -129,15 +183,15 @@ export function mountReforgeWindow(host, deps) {
   const shell = el('div', 'broker-shell reforge-shell');
   shell.id = 'reforge';
   shell.setAttribute('role', 'dialog');
-  shell.setAttribute('aria-label', codexOnly ? CODEX_TITLE : REFORGE_TITLE);
+  shell.setAttribute('aria-label', titleText);
   const win = el('div', 'broker-win');
   shell.append(win);
   const head = el('header', 'broker-head');
   const title = el('div', 'broker-title');
-  const sub = el('p', 'broker-sub', codexOnly ? CODEX_SUB : REFORGE_SUB);
+  const sub = el('p', 'broker-sub', codexOnly ? CODEX_SUB : liftOnly ? LIFT_SUB : REFORGE_SUB);
   const noteLine = el('p', 'broker-note');
   noteLine.setAttribute('aria-live', 'polite');
-  title.append(el('h2', null, codexOnly ? CODEX_TITLE : REFORGE_TITLE), sub, noteLine);
+  title.append(el('h2', null, titleText), sub, noteLine);
   const purse = el('span', 'broker-purse');
   const close = el('button', 'act broker-close', 'Close');
   close.setAttribute('type', 'button');
@@ -152,7 +206,7 @@ export function mountReforgeWindow(host, deps) {
     t.setAttribute('type', 'button');
     t.setAttribute('role', 'tab');
     t.dataset.page = id;
-    t.onclick = (e) => { e.stopPropagation(); page = /** @type {any} */ (id); picked = null; asking = null; render(); };
+    t.onclick = (e) => { e.stopPropagation(); page = /** @type {any} */ (id); picked = null; dropAsk(); render(); };
     tabOf[id] = t;
     tabs.append(t);
   }
@@ -181,6 +235,14 @@ export function mountReforgeWindow(host, deps) {
     return frame;
   };
   const say = (ok, text) => { note = { ok, text }; };
+  /** AUDIT LOOT II B4: a pending ask let go - another page, another piece - takes its question with it ("Break all 3 Magic
+   *  pieces...?" stood over the next page); any other word stays. */
+  const dropAsk = () => { if (asking) note = null; asking = null; };
+  const drawNote = () => {
+    noteLine.textContent = note ? note.text : '';
+    noteLine.className = `broker-note${note?.ok ? ' ok' : ''}`;
+    if (!note) noteLine.setAttribute('hidden', ''); else noteLine.removeAttribute?.('hidden');
+  };
   const render = () => {
     if (!alive) return;
     const items = deps.items() ?? [];
@@ -188,19 +250,21 @@ export function mountReforgeWindow(host, deps) {
     const have = { shards: shardsHeld(items), gold: deps.gold() };
     const picture = deps.picture !== undefined ? deps.picture : (it) => classicPicture(it, deps.wearer, () => render());
     purse.textContent = reforgePurseText(have.shards, have.gold);
-    noteLine.textContent = note ? note.text : '';
-    noteLine.className = `broker-note${note?.ok ? ' ok' : ''}`;
-    if (!note) noteLine.setAttribute('hidden', ''); else noteLine.removeAttribute?.('hidden');
+    drawNote();
     for (const [id, t] of Object.entries(tabOf)) { t.setAttribute('aria-selected', id === page ? 'true' : 'false'); t.classList.toggle('on', id === page); }   // AUDIT LOOT F6: the chosen page the kit's brass
     for (const c of [...list.children]) c.remove();
     card?.remove();
     card = null;
     if (page === 'codex') { renderCodex(); return; }   // LOOT10
     if (page === 'imprint') { renderImprint(items, payer, have, picture); return; }
+    if (page === 'lift') { renderLift(items, payer, have, picture); return; }   // LOOT16
+    if (page === 'scry') { renderScry(payer, have); return; }   // LOOT19
+    if (page === 'sockets') { renderSockets(items, payer, have, picture); return; }   // LOOT20
     const rows = page === 'reforge'
       ? items.filter((it) => reforgePrice(it) && reforgeableLines(it).length)
       : items.filter((it) => salvageShards(it) > 0 && !['aetheric', 'artifact', 'quest', 'off'].includes(salvageRefusal(it) ?? ''));
     if (!rows.includes(picked)) picked = page === 'reforge' ? rows[0] ?? null : null;
+    if (page === 'salvage') everyMagic(rows);   // LOOT18
     if (!rows.length) {
       const empty = el('li', 'broker-insignia-head reforge-empty', page === 'reforge' ? 'Nothing in your pack the Reforge takes - a Magic or Rare piece, or an Exalted Legendary.' : 'Nothing in your pack that will break - a Magic piece or better the ladder graded.');
       empty.setAttribute('role', 'presentation');
@@ -251,6 +315,8 @@ export function mountReforgeWindow(host, deps) {
     card.append(el('h3', null, nameOf(it)));
     const may = reforgeableLines(it);
     const price = reforgePrice(it);
+    const hone = honeableLines(it);   // LOOT17
+    const hp = honePrice(it);
     const ul = el('ul', 'rarity');
     ul.append(el('li', null, tierLabel(it)));
     if (!itemIsIdentified(it)) {   // its lines are not known yet - the guild's Identify first, and the card says nothing of them
@@ -277,13 +343,59 @@ export function mountReforgeWindow(host, deps) {
         };
         li.append(btn);
       }
+      if (hp && hone.includes(i)) {   // LOOT17: the hone, beside the line's Reforge - a line under its band's top
+        const why = honeRefusal(it, i, payer);
+        const hb = el('button', 'act broker-buy hone-press', reforgeLabel(why, hp, have, 'Hone'));
+        hb.setAttribute('type', 'button');
+        hb.setAttribute('aria-label', why ? `${affixLine(it, i)}: ${REFORGE_REFUSALS[why] ?? ''}` : `Hone ${affixLine(it, i)} for ${reforgePriceText(hp)}`);
+        if (why) { hb.setAttribute('disabled', ''); hb.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
+        hb.onclick = (e) => {
+          e.stopPropagation();
+          if (why) return;
+          const done = deps.hone?.(it, i) ?? { ok: false, reason: 'not' };
+          if (done.ok) say(true, HONED(nameOf(it), affixLine(it, i))); else say(false, REFORGE_REFUSALS[done.reason ?? ''] ?? 'The Reforge will not take that.');
+          render();
+        };
+        li.append(hb);
+      }
       ul.append(li);
     });
     card.append(ul);
     if (Number.isInteger(it.reforged)) card.append(el('p', 'boundline', 'Reforged once - only that line may be rolled again.'));
     else if (price) card.append(el('p', 'boundline', `A reforge costs ${reforgePriceText(price)}. Once a line is reforged, only it may be again.`));
+    if (hp && hone.length) card.append(el('p', 'boundline hone-note', HONE_NOTE(hp)));   // LOOT17
     body.append(card);
   };
+  /** LOOT18: SALVAGE EVERY MAGIC, at the head of the Salvage page - every Magic piece the page could break now (not worn,
+   *  locked or bound), in one press that asks first ("Break them all" / "Keep"), through the host's own salvage a piece
+   *  at a time. Two at the least: one is its own row's press. */
+  function everyMagic(rows) {
+    const magics = rows.filter((it) => it.rarity === 'magic' && !salvageRefusal(it));
+    if (magics.length < 2) { if (asking === EVERY_MAGIC) { dropAsk(); drawNote(); } return; }   // the ask lapsed under it (B4: its question drawn away now - the line was drawn before the page)
+    const shards = magics.reduce((n, it) => n + salvageShards(it), 0);
+    const head = el('li', 'broker-insignia-head salvage-every');
+    head.setAttribute('role', 'presentation');
+    const btn = el('button', 'act broker-buy every-magic', asking === EVERY_MAGIC ? 'Break them all' : EVERY_MAGIC_LABEL(magics.length));
+    btn.setAttribute('type', 'button');
+    btn.setAttribute('aria-label', asking === EVERY_MAGIC ? EVERY_MAGIC_ASK(magics.length, shards) : `${EVERY_MAGIC_LABEL(magics.length)} for ${shardsText(shards)}`);
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      if (asking !== EVERY_MAGIC) { asking = EVERY_MAGIC; say(false, EVERY_MAGIC_ASK(magics.length, shards)); render(); return; }
+      asking = null;
+      let n = 0, got = 0;
+      for (const it of magics) { const done = deps.salvage(it); if (done?.ok) { n++; got += done.shards ?? salvageShards(it); } }
+      say(n > 0, n ? SALVAGED_EVERY(n, got) : 'Nothing would break.');
+      render();
+    };
+    head.append(btn);
+    if (asking === EVERY_MAGIC) {
+      const keep = el('button', 'act broker-buy reforge-keep', 'Keep');
+      keep.setAttribute('type', 'button');
+      keep.onclick = (e) => { e.stopPropagation(); asking = null; note = null; render(); };
+      head.append(keep);
+    }
+    list.append(head);
+  }
   /** LOOT10: THE CODEX - every Legendary record, found and not, then the Aetheric sets; a row pressed shows it whole. */
   let pickedRec = null;
   const head2 = (text) => { const h = el('li', 'broker-insignia-head codex-head', text); h.setAttribute('role', 'presentation'); return h; };
@@ -327,6 +439,13 @@ export function mountReforgeWindow(host, deps) {
       ul.append(el('li', null, `First found on day ${r.day}`));
     } else ul.append(el('li', null, 'Not yet found'));
     card.append(ul, el('p', 'boundline', r.hint));
+    const kin = !r.found ? foundAmong(r.id) : null;   // LOOT19: an unfound record's family, to the scryers' page
+    if (kin && pages.includes('scry') && SCRY_FAMILIES.includes(kin)) {
+      const go = el('button', 'act broker-buy scry-kin', SCRY_FOR_KIN);
+      go.setAttribute('type', 'button');
+      go.onclick = (e) => { e.stopPropagation(); page = 'scry'; scryKin = kin; note = null; render(); };
+      card.append(go);
+    }
     body.append(card);
   }
   /** LOOT10: THE IMPRINT - a Rare of the pack takes the power of a found Legendary of its group. */
@@ -375,6 +494,135 @@ export function mountReforgeWindow(host, deps) {
     }
     card.append(ul, el('p', 'boundline', `An imprint costs ${reforgePriceText(IMPRINT_PRICE)}. ${IMPRINT_ONCE}`));
     body.append(card);
+  }
+  /** LOOT20: THE SOCKETS - a row a socketed piece; its card sets a gem the pack holds, or unsets one (asked first). */
+  function renderSockets(items, payer, have, picture) {
+    const rows = items.filter((it) => hasSocket(it));
+    if (!rows.includes(picked)) picked = rows[0] ?? null;
+    if (!rows.length) list.append(head2(SOCKETS_NONE));
+    for (const it of rows) {
+      const r = rarityAttr(it);
+      const row = el('li', `broker-offer socket-row${it === picked ? ' on' : ''}`);
+      if (r) row.dataset.rarity = r;
+      const text = el('div', 'broker-offer-body');
+      const gem = socketGem(it);
+      text.append(el('span', 'broker-name', nameOf(it)), el('span', 'broker-set', gem ? `${tierLabel(it)} · ${GEM_NAMES[gem]}` : `${tierLabel(it)} · an empty socket`));
+      row.append(frameOf(it, picture), text);
+      pressable(row, () => { picked = it; dropAsk(); render(); });
+      list.append(row);
+    }
+    if (!picked) return;
+    const it = picked;
+    card = el('div', 'card broker-card socket-card');
+    const r = rarityAttr(it);
+    if (r) card.dataset.rarity = r;
+    card.append(el('h3', null, nameOf(it)));
+    const ul = el('ul', 'rarity');
+    ul.append(el('li', null, tierLabel(it)));
+    const gem = socketGem(it);
+    if (gem) {
+      const li = el('li', 'socket-gem', `${GEM_NAMES[gem]}: ${affixLabel(/** @type {any} */ (gemLine(it, gem)))}`);
+      const why = unsetGemRefusal(it);
+      const btn = el('button', 'act broker-buy unset-press', why ? reforgeLabel(why, null, have) : asking === it ? 'Shatter it' : 'Unset');
+      btn.setAttribute('type', 'button');
+      btn.setAttribute('aria-label', why ? `${GEM_NAMES[gem]}: ${REFORGE_REFUSALS[why] ?? ''}` : UNSET_ASK(gem));
+      if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        if (why) return;
+        if (asking !== it) { asking = it; say(false, UNSET_ASK(gem)); render(); return; }
+        asking = null;
+        const done = deps.unsetGem?.(it) ?? { ok: false, reason: 'not' };
+        if (done.ok) say(true, GEM_SHATTERED(nameOf(it), gem)); else say(false, REFORGE_REFUSALS[done.reason ?? ''] ?? 'The Reforge will not take that.');
+        render();
+      };
+      li.append(btn);
+      ul.append(li);
+      card.append(ul);
+      body.append(card);
+      return;
+    }
+    ul.append(el('li', null, 'Socket: empty'));
+    const held = gemsHeld(items);
+    const kinds = GEM_IDS.filter((g) => held[g] > 0);
+    if (!kinds.length) ul.append(el('li', null, GEMS_NONE));
+    for (const g of kinds) {
+      const li = el('li', 'socket-choice', `${GEM_NAMES[g]} (${held[g]}) - ${affixLabel(/** @type {any} */ (gemLine(it, g)))}`);
+      li.dataset.gem = g;
+      const why = setGemRefusal(it, g, payer);
+      const btn = el('button', 'act broker-buy set-press', reforgeLabel(why, { shards: 0, gold: SET_GEM_PRICE }, have, 'Set'));
+      btn.setAttribute('type', 'button');
+      btn.setAttribute('aria-label', why ? `${GEM_NAMES[g]}: ${REFORGE_REFUSALS[why] ?? ''}` : `Set the ${GEM_NAMES[g]} in ${nameOf(it)} for ${SET_GEM_PRICE} gold`);
+      if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        if (why) return;
+        const done = deps.setGem?.(it, g) ?? { ok: false, reason: 'not' };
+        if (done.ok) say(true, GEM_SET(nameOf(it), g)); else say(false, REFORGE_REFUSALS[done.reason ?? ''] ?? 'The Reforge will not take that.');
+        render();
+      };
+      li.append(btn);
+      ul.append(li);
+    }
+    card.append(ul, el('p', 'boundline', `Setting a gem costs ${SET_GEM_PRICE} gold and the gem; unset, it shatters.`));
+    body.append(card);
+  }
+  /** LOOT19: THE SCRYERS - a row a family; a press names the nearest of its haunts not yet on the map. */
+  let scryKin = null;
+  function renderScry(payer, have) {
+    purse.textContent = reforgePurseText(have.shards, have.gold);
+    const where = deps.scryWhere?.() ?? null;
+    for (const f of SCRY_FAMILIES) {
+      const row = el('li', `broker-offer scry-row${scryKin === f ? ' on' : ''}`);
+      row.dataset.family = f;
+      const text = el('div', 'broker-offer-body');
+      const places = familyPlaces(f);
+      text.append(el('span', 'broker-name', SCRY_FAMILY_WORDS[f]), el('span', 'broker-set', places.charAt(0).toUpperCase() + places.slice(1)));
+      const why = scryRefusal(payer, f, where);
+      const btn = el('button', 'act broker-buy scry-press', reforgeLabel(why, SCRY_PRICE, have, 'Scry'));
+      btn.setAttribute('type', 'button');
+      btn.setAttribute('aria-label', why ? `${SCRY_FAMILY_WORDS[f]}: ${REFORGE_REFUSALS[why] ?? ''}` : `Scry a haunt of ${SCRY_FAMILY_WORDS[f].toLowerCase()} for ${reforgePriceText(SCRY_PRICE)}`);
+      if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        if (why) return;
+        const done = deps.scry?.(f) ?? { ok: false, reason: 'nowhere' };
+        if (done.ok && done.place) say(true, SCRIED(done.place.name, f)); else say(false, REFORGE_REFUSALS[done.reason ?? ''] ?? 'The scryers see nothing.');
+        scryKin = f;
+        render();
+      };
+      row.append(text, el('span', 'broker-price', reforgePriceText(SCRY_PRICE)), btn);
+      pressable(row, () => { scryKin = f; render(); });
+      list.append(row);
+    }
+  }
+  /** LOOT16: THE TEMPLE'S LIFTING - every known cursed piece of the pack, its drawback and its price; a press lifts it. */
+  function renderLift(items, payer, have, picture) {
+    purse.textContent = `${Math.max(0, have.gold | 0)} gold`;
+    const rows = cursedKnown(items);
+    if (!rows.length) list.append(head2(LIFT_NONE));
+    for (const it of rows) {
+      const r = rarityAttr(it);
+      const price = /** @type {number} */ (liftPrice(it));
+      const why = liftRefusal(it, payer);
+      const row = el('li', 'broker-offer lift-row');
+      if (r) row.dataset.rarity = r;
+      const text = el('div', 'broker-offer-body');
+      text.append(el('span', 'broker-name', nameOf(it)), el('span', 'broker-set', `${tierLabel(it)} · ${curseLine(it)}`));
+      const btn = el('button', 'act broker-buy lift-press', reforgeLabel(why, { shards: 0, gold: price }, have, 'Lift'));
+      btn.setAttribute('type', 'button');
+      btn.setAttribute('aria-label', why ? `${nameOf(it)}: ${LIFT_REFUSALS[why] ?? ''}` : `Lift the curse on ${nameOf(it)} for ${price} gold`);
+      if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', LIFT_REFUSALS[why] ?? ''); }
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        if (why) return;
+        const done = deps.lift?.(it) ?? { ok: false, reason: 'not' };
+        if (done.ok) say(true, LIFTED(nameOf(it))); else say(false, LIFT_REFUSALS[done.reason ?? ''] ?? 'The priest will not lift that.');
+        render();
+      };
+      row.append(frameOf(it, picture), text, el('span', 'broker-price', `${price} gold`), btn);
+      list.append(row);
+    }
   }
   render();
   host.append(shell);

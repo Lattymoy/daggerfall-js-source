@@ -85,6 +85,12 @@ export const REFORGE_RECT = Object.freeze([5, 53, 120, 10]);
 export const REFORGE_ROW = 'Reforge';
 export const REFORGE_KEY = 'KeyF';
 export const REFORGE_ROW_BG = Object.freeze([0.16, 0.11, 0.06, 0.92]);   // PORTAL1: the shop popups' Portal Stone row wears it too
+/** LOOT16 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 8): THE TEMPLE'S ROW - a temple's Cure Disease
+ *  priest offers the lifting of a curse (the Reforge's window on its one page - ui/reforgeDoor.js) when its host hands
+ *  `hooks.lift`: the Reforge's row's place and dress (the two never stand on one NPC - the Mages Guild's Identify and the
+ *  temple's Cure Disease), its key L. */
+export const LIFT_ROW = 'Lift Curse';
+export const LIFT_KEY = 'KeyL';
 
 let _art = null;
 /** BOX1: the test seam every other art-gated window carries. */
@@ -157,6 +163,13 @@ export class GuildServiceWindow {
     if (r?.dispatched) this._close();
   }
 
+  /** LOOT16: the temple's row - the Reforge's law. */
+  _lift() {
+    const r = this.hooks.lift?.();
+    if (isServiceBox(r)) { this._push({ ...r, closesWindow: !!r.closesWindow }); return; }
+    if (r?.dispatched) this._close();
+  }
+
   _join() {
     // JoinButton_OnMouseClick (:497-525): the popup CLOSES first, then
     // the eligibility box shows over whatever is beneath it. The port
@@ -198,7 +211,8 @@ export class GuildServiceWindow {
       'GuildsExit',
     ];
     const reforgeKey = !!this.hooks.reforge && code === REFORGE_KEY;   // LOOT9: the Reforge's row, its key F - the one sound below
-    const hit = reforgeKey ? 'Reforge' : firstHotkey(buttons, code, e);
+    const liftKey = !this.hooks.reforge && !!this.hooks.lift && code === LIFT_KEY;   // LOOT16: the temple's, its key L - after DFU's own (Teleport's L is another NPC's)
+    const hit = reforgeKey ? 'Reforge' : firstHotkey(buttons, code, e) ?? (liftKey ? 'Lift' : null);
     if (hit === null) return;
     // F141 on the KEYBOARD side too: Talk/Service/Exit each play
     // ButtonClick in their OnKeyboardEvent's KeyDown arm (:299, :460,
@@ -215,6 +229,7 @@ export class GuildServiceWindow {
       case 'GuildsTalk': this.hooks.onTalk?.(); return;
       case 'GuildsExit': this._close(); return;
       case 'Reforge': this._reforge(); return;   // LOOT9
+      case 'Lift': this._lift(); return;   // LOOT16
       default: this._service();   // whichever of the nineteen service buttons hit
     }
   }
@@ -246,6 +261,7 @@ export class GuildServiceWindow {
     if (inRect(GUILD_RECTS.service, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._service(); return true; }
     if (inRect(GUILD_RECTS.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
     if (this.hooks.reforge && inRect(REFORGE_RECT, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._reforge(); return true; }   // LOOT9
+    if (!this.hooks.reforge && this.hooks.lift && inRect(REFORGE_RECT, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._lift(); return true; }   // LOOT16: the temple's, in its place
     return false;
   }
 
@@ -274,6 +290,10 @@ export class GuildServiceWindow {
       const [rx, ry, rw, rh] = REFORGE_RECT;
       drawRect(renderer, m, PANEL_X + rx, PANEL_Y + ry, rw, rh, REFORGE_ROW_BG);
       shadowText(renderer, font, REFORGE_ROW, m, PANEL_X + rx, PANEL_Y + ry + 2, { align: 'center', w: rw });
+    } else if (this.hooks.lift) {   // LOOT16: the temple's row, in the Reforge's place and dress
+      const [rx, ry, rw, rh] = REFORGE_RECT;
+      drawRect(renderer, m, PANEL_X + rx, PANEL_Y + ry, rw, rh, REFORGE_ROW_BG);
+      shadowText(renderer, font, LIFT_ROW, m, PANEL_X + rx, PANEL_Y + ry + 2, { align: 'center', w: rw });
     }
     const top = this.top;
     if (noticeFrame(this, top && top.buttons !== 'YesNo' ? latchBoxRows(top, this.hooks.rows) : null)) { this._box = null; return; }   // ENH-NOTICE2

@@ -1,0 +1,77 @@
+[
+  {
+    "name": "LOOT12-cap-fifty",
+    "file": "src/systems/lootRarity.js",
+    "old": "export const RESIST_CAP = 45;",
+    "new": "export const RESIST_CAP = 50;",
+    "tests": [
+      "test/loot12_resistcap.test.js"
+    ]
+  },
+  {
+    "name": "LOOT12-rolled-lines-uncapped",
+    "file": "src/systems/lootRarity.js",
+    "old": "mods.resist[el] = (mods.resist[el] ?? 0) + rolledCounts(v, mods.resist[el] ?? 0);",
+    "new": "mods.resist[el] = (mods.resist[el] ?? 0) + v;",
+    "tests": [
+      "test/loot12_resistcap.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A8): the rolled lines fill to the cap beside an Aetheric piece's own (rolledCounts)."
+  },
+  {
+    "name": "LOOT12-the-aetheric-capped-too",
+    "file": "src/systems/lootRarity.js",
+    "old": "    const rolled = ROLLED_TIERS.includes(it.rarity);",
+    "new": "    const rolled = true;",
+    "tests": [
+      "test/loot12_resistcap.test.js"
+    ]
+  },
+  {
+    "name": "LOOT12-rolled-lines-dropped",
+    "file": "src/systems/lootRarity.js",
+    "old": "          if (rolled) rolledResist[a.param] = (rolledResist[a.param] ?? 0) + v;",
+    "new": "          if (rolled) void 0;",
+    "tests": [
+      "test/loot12_resistcap.test.js"
+    ]
+  },
+  {
+    "name": "LOOT12-the-aetheric-line-dropped",
+    "file": "src/systems/lootRarity.js",
+    "old": "          else mods.resist[a.param] = (mods.resist[a.param] ?? 0) + v;   // an Aetheric piece's: its own design, whole",
+    "new": "          else void 0;",
+    "tests": [
+      "test/loot12_resistcap.test.js"
+    ]
+  },
+  {
+    "name": "LOOT12-the-card-reads-the-aetheric",
+    "file": "src/systems/lootRarity.js",
+    "old": "    if (ROLLED_TIERS.includes(p.rarity)) rolled += pts; else own += pts;",
+    "new": "    rolled += pts;",
+    "tests": [
+      "test/loot12_resistcap.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A8/B5): the card's reader splits rolled from Aetheric in resistSplit."
+  },
+  {
+    "name": "LOOT12-the-card-reads-off",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (!entity || !lootRarityOn()) return { worn: 0, counts: 0 };",
+    "new": "  if (!entity) return { worn: 0, counts: 0 };",
+    "tests": [
+      "test/loot12_resistcap.test.js"
+    ]
+  },
+  {
+    "name": "LOOT12-the-card-counts-uncapped",
+    "file": "src/systems/lootRarity.js",
+    "old": "  return { worn: rolled, counts: rolledCounts(rolled, own) };",
+    "new": "  return { worn: rolled, counts: rolled };",
+    "tests": [
+      "test/loot12_resistcap.test.js"
+    ],
+    "note": "Re-aimed by content (AUDIT LOOT II A8/B5): rolledResistOf answers through rolledCounts."
+  }
+]

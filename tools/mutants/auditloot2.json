@@ -1,0 +1,267 @@
+[
+  {
+    "name": "AUDIT-LOOT-II-A1-the-dungeon-bills-its-own",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const _fallDmg = playerFallDamage(playerEntity, fell);",
+    "new": "const _fallDmg = Math.trunc(FALL_HP_PER_METRE * (fell - FALL_DAMAGE_THRESHOLD));",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A1-applyFallLanding-its-own",
+    "file": "src/scenes/shared.js",
+    "old": "    const dmg = playerFallDamage(entity, distance);",
+    "new": "    const dmg = Math.trunc(FALL_HP_PER_METRE * (distance - FALL_DAMAGE_THRESHOLD));",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A2-the-degrees-on-the-resistance",
+    "file": "src/systems/survival/temperature.js",
+    "old": "    coldDegrees: Number(mods.coldDegrees) || 0, heatDegrees: Number(mods.heatDegrees) || 0,",
+    "new": "    frostResist: (ctx?.frostResist ?? 0) + (Number(mods.coldDegrees) || 0), fireResist: (ctx?.fireResist ?? 0) + (Number(mods.heatDegrees) || 0),",
+    "tests": [
+      "test/auditloot2.test.js",
+      "test/loot15_garments.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A2-past-comfortable",
+    "file": "src/systems/survival/temperature.js",
+    "old": "  else if (felt > 0) felt = Math.max(felt - heatLess, 0);",
+    "new": "  else if (felt > 0) felt -= heatLess;",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A2-both-sides",
+    "file": "src/systems/survival/temperature.js",
+    "old": "  if (felt < 0) felt = Math.min(felt + coldLess, 0);\n  else if (felt > 0) felt = Math.max(felt - heatLess, 0);",
+    "new": "  if (felt !== 0) felt = felt + coldLess - heatLess;",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-B1-a-quest-gem-loose",
+    "file": "src/systems/reforge.js",
+    "old": "gemKindOf(it) === gem && !it.questItem && !isLocked(it)",
+    "new": "gemKindOf(it) === gem && !isLocked(it)",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A4-a-gem-takes-a-kind",
+    "file": "src/systems/lootRarity.js",
+    "old": "const others = item.affixes.filter((a, i) => i !== index && a?.gem == null);",
+    "new": "const others = item.affixes.filter((a, i) => i !== index);",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A5-a-row-a-line",
+    "file": "src/systems/lootRarity.js",
+    "old": "    const value = sumIn(mine, k);",
+    "new": "    const value = a.value;",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A6-a-standing-soured",
+    "file": "src/systems/lootRarity.js",
+    "old": "    && !lines.some((a) => (row.type === T.BadRepWith && a?.id === 'standing' && a.param === STANDING_GROUPS[p])",
+    "new": "    && !lines.some((a) => (false && a?.id === 'standing' && a.param === STANDING_GROUPS[p])",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A6-a-slayer-weakened",
+    "file": "src/systems/lootRarity.js",
+    "old": "      || (row.type === T.LowDamageVs && a?.id === 'slayer' && a.param === SLAYER_FOES[p])));",
+    "new": "      || (false && a?.id === 'slayer' && a.param === SLAYER_FOES[p])));",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A6-the-reward-unseen",
+    "file": "src/systems/lootRarity.js",
+    "old": "  const lined = { ...item, affixes: [...item.affixes, line] };",
+    "new": "  const lined = item;",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A7-a-curse-line-even",
+    "file": "src/systems/lootRarity.js",
+    "old": "param: lineParam(item, id, carried.has(id) ? unclaimed(id) : kindParams(id, item), rolls)",
+    "new": "param: pick(carried.has(id) ? unclaimed(id) : kindParams(id, item), rolls)",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A7-an-exalted-garment-even",
+    "file": "src/systems/lootRarity.js",
+    "old": "param: isGarment(item) ? lineParam(item, id, free, rolls) : pick(free, rolls)",
+    "new": "param: pick(free, rolls)",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A7-armour-leaned-its-seeds-moved",
+    "file": "src/systems/lootRarity.js",
+    "old": "param: isGarment(item) ? lineParam(item, id, free, rolls) : pick(free, rolls)",
+    "new": "param: lineParam(item, id, free, rolls)",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A8-a-rolled-line-tops-up",
+    "file": "src/systems/lootRarity.js",
+    "old": "const rolledCounts = (rolled, own) => Math.min(rolled, Math.max(0, RESIST_CAP - own));",
+    "new": "const rolledCounts = (rolled, own) => Math.min(rolled, RESIST_CAP);",
+    "tests": [
+      "test/auditloot2.test.js",
+      "test/loot12_resistcap.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-B5-the-note-reads-a-hidden-line",
+    "file": "src/systems/lootRarity.js",
+    "old": "resistSplit(wornItems(entity).filter(identified), element)",
+    "new": "resistSplit(wornItems(entity), element)",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A9-a-garment-ranks-off",
+    "file": "src/systems/foeLootCap.js",
+    "old": "const garmentRank = (it) => (lootRarityOn() && isGarment(it)",
+    "new": "const garmentRank = (it) => (isGarment(it)",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A9-a-garment-eligible-off",
+    "file": "src/systems/lootRarity.js",
+    "old": "  if (isGarment(item)) return lootRarityOn();",
+    "new": "  if (isGarment(item)) return true;",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-A10-every-shirt-counts",
+    "file": "src/systems/lootDrought.js",
+    "old": "  if (isGarment(item) && !legendariesFor(item).length) return false;\n",
+    "new": "",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-B2-the-words-in-the-frame",
+    "file": "src/ui/enhancedPlusStyle.js",
+    "old": ".broker-offer.scry-row > .broker-offer-body { grid-column: 1 / span 2; }",
+    "new": ".broker-offer.scry-row > .broker-offer-body { }",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-B3-counted-not-laid",
+    "file": "src/ui/enhancedTrade.js",
+    "old": "&& localListAccepts(mode, it, { accepts: deps.accepts, enchanted: deps.enchanted }) && junkStages(it));",
+    "new": "&& localListAccepts(mode, it, { accepts: deps.accepts, enchanted: deps.enchanted }));",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-B4-the-question-stays",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "const dropAsk = () => { if (asking) note = null; asking = null; };",
+    "new": "const dropAsk = () => { asking = null; };",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-B4-the-lapse-drawn-late",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "if (asking === EVERY_MAGIC) { dropAsk(); drawNote(); } return; }",
+    "new": "if (asking === EVERY_MAGIC) { dropAsk(); } return; }",
+    "tests": [
+      "test/auditloot2.test.js",
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-B6-the-handed-comparison-unread",
+    "file": "src/ui/armourCard.js",
+    "old": "  const cmp = wear === undefined ? wearComparison(entity, item) : wear;\n  if (!cmp || !cmp.replaces.length) return null;",
+    "new": "  const cmp = wearComparison(entity, item);\n  if (!cmp || !cmp.replaces.length) return null;",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-B6-compared-with-the-ladder-off",
+    "file": "src/ui/armourCard.js",
+    "old": "  if (!lootRarityOn()) return null;\n  const cmp = wear === undefined",
+    "new": "  const cmp = wear === undefined",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-B6-the-card-compares-twice",
+    "file": "src/ui/enhancedInventory.js",
+    "old": "    const lc = lineCompareBlock(deps.entity, picked, wear); if (lc) into.append(lc);",
+    "new": "    const lc = lineCompareBlock(deps.entity, picked); if (lc) into.append(lc);",
+    "tests": [
+      "test/auditloot2.test.js",
+      "test/loot18_seen.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-C1-a-hone-minted-back",
+    "file": "src/systems/smithItems.js",
+    "old": "  if (item.honed !== undefined) return false;",
+    "new": "",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-C5-junk-on-the-counter-shelf",
+    "file": "src/scenes/worldModes.js",
+    "old": "        setJunk(it, false);   // AUDIT LOOT II C5: the junk mark is the seller's word for what goes - gone, it is the merchant's, unmarked if bought back\n",
+    "new": "",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-LOOT-II-C5-junk-on-the-keyed-shelf",
+    "file": "src/scenes/worldModes.js",
+    "old": "    setJunk(it, false);   // AUDIT LOOT II C5: sold, its junk mark ends\n",
+    "new": "",
+    "tests": [
+      "test/auditloot2.test.js"
+    ]
+  }
+]

@@ -25,6 +25,7 @@ import { STORES_ROW } from '../src/systems/naval/navalStores.js';   // SEA-REPAI
 import { KEEPSAKE_ROW } from '../src/systems/livingWorld/keepsake.js';   // LW6c: the eleventh registrar
 import { REMAINS_ROW } from '../src/systems/legacy/heirloom.js';   // LEGACY4: the thirteenth (WALLET1's the twelfth, at the merge of main)
 import { WALLET_ROW } from '../src/systems/walletItem.js';   // WALLET1: the twelfth registrar
+import { AYLEID_STONE_TEMPLATES } from '../src/systems/ayleidStones.js';   // LOOT21: the fourteenth registrar
 import { createTradePack, tradeRefusal } from '../src/systems/tradePack.js';
 import { createWeapon } from '../src/combat/enemyEquipment.js';
 import { realmIo, realmCreate, realmFetch, realmPut, realmTradeCall, realmJoin, realmDelete, createRealmSession, realmGoldAct, realmTradeEscrow } from '../src/systems/realmSaves.js';
@@ -157,10 +158,12 @@ test('AUDIT REALM F1: BOUND_TEMPLATES is every row the game registers with `boun
     KEEPSAKE_ROW,   // LW6c: a keepsake of the fallen of a dive - not bound: it changes hands
     REMAINS_ROW,   // LEGACY4: an ancestor's remains - not bound: worth nothing, and only their own line can lay them to rest
     WALLET_ROW,   // WALLET1: the wallet - bound (and pack-only): it never changes hands
+    ...AYLEID_STONE_TEMPLATES,   // LOOT21: the Welkynd and Varla Stones - neither bound: a stone changes hands, as the Thunderlock does
   ];
   assert.deepEqual(rows.filter((t) => t.bound === true).map((t) => t.index).sort((a, b) => a - b), [...BOUND_TEMPLATES]);
   assert.ok(BOUND_TEMPLATES.includes(SIGIL_STONE_TEMPLATE));
   // PIN MOVED (SEA-REPAIR): the carpenter's stores the ninth registrar - a tenth must join the list above, or its bound rows would pass the service unseen
+  // PIN MOVED (LOOT21): the Ayleid stones the fourteenth (systems/ayleidStones.js), their rows joined above
   const registrars = [];
   const walk = (dir) => {
     for (const e of readdirSync(new URL(`../${dir}`, import.meta.url), { withFileTypes: true })) {
@@ -170,7 +173,7 @@ test('AUDIT REALM F1: BOUND_TEMPLATES is every row the game registers with `boun
     }
   };
   walk('src');
-  assert.deepEqual(registrars.sort(), ['src/systems/comeSailAwayItems.js', 'src/systems/deepWatersFishItems.js', 'src/systems/foragingInstall.js', 'src/systems/gateSpoils.js', 'src/systems/legacy/heirloom.js', 'src/systems/livingWorld/keepsake.js', 'src/systems/naval/navalStores.js', 'src/systems/profTemplates.js', 'src/systems/restItems.js', 'src/systems/rriInstall.js', 'src/systems/survival/items.js', 'src/systems/thunderlock.js', 'src/systems/walletItem.js']);   // SEA-REPAIR: the ninth, the carpenter's stores; REST6: the tenth, the rest supplies; LW6c: the eleventh, the keepsake; LEGACY4: the twelfth, an ancestor's remains
+  assert.deepEqual(registrars.sort(), ['src/systems/ayleidStones.js', 'src/systems/comeSailAwayItems.js', 'src/systems/deepWatersFishItems.js', 'src/systems/foragingInstall.js', 'src/systems/gateSpoils.js', 'src/systems/legacy/heirloom.js', 'src/systems/livingWorld/keepsake.js', 'src/systems/naval/navalStores.js', 'src/systems/profTemplates.js', 'src/systems/restItems.js', 'src/systems/rriInstall.js', 'src/systems/survival/items.js', 'src/systems/thunderlock.js', 'src/systems/walletItem.js']);   // SEA-REPAIR: the ninth, the carpenter's stores; REST6: the tenth, the rest supplies; LW6c: the eleventh, the keepsake; LEGACY4: the twelfth, an ancestor's remains; LOOT21: the fourteenth, the Ayleid stones
   // and the honest client never offers one: the window's pack refuses it before a half is ever written
   const holder = { items: [{ ...sigilStone(), stackCount: 2 }], goldPieces: 0 };
   assert.equal(createTradePack(holder).offerable(holder.items[0]), tradeRefusal(holder.items[0]));

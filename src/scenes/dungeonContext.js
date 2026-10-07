@@ -158,7 +158,7 @@ import { tickPlayerMinutes, claimMagicRounds, runMagicRoundsFor, playerWeaponHit
 import { mintSharedStamp, hitPoisonOf, hitSpellOf, hitSpellFields, HIT_ARROWS_MAX, respawnDue, wallMsForClassicMinutes, validFoeRecord, validSharedFoe, FOE_HEALTH_MAX, FOES_FRAME_MAX, CELL_FRAME_RECORDS_MAX } from '../net/wire.js';   // AUDIT ONCRASH1 B4a/A3: the stream's door and the memory's, which this host had neither of   // WORLD8: the hour's respawn   // AUDIT WORLD6a B7: the memory's stamp, from the wire's one mint
 import { spendPoolLowest } from '../systems/chargen.js';
 import { ClassFile } from '../formats/classFile.js';
-import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, nearbyLootRecords, restFullyHealed, createRestDeps, fatigueLossMultiplierFor, realmSaveSink} from './shared.js';
+import { fetchBytes, ensureAudio, loadMagicRegistries, wireInfectionVideos, endRunToTitleMenu, exitToTitleMenu, sensesContext, wireDoorSpells, createDetectFeed, foeNearbyRecord, nearbyLootRecords, restFullyHealed, createRestDeps, fatigueLossMultiplierFor, realmSaveSink, playerFallDamage} from './shared.js';
 import { sayRealmSave } from '../systems/realmSaves.js';   // REALM P1.3: a save online lands in the realm; AUDIT REALM2 C2: said once it has
 import { getNearbyObjects } from '../systems/nearbyObjects.js';   // X9: the dispel sweep filters the same scan
 import { preloadBookArt } from '../ui/bookReader.js'; import { makeOpenBookHook } from '../ui/bookDoor.js';   // B1; EB1: the reader's ONE door
@@ -8720,7 +8720,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       // THREE hosts use - flashes for this exact reason; only a
       // dungeon fall was silent, behind a stale pending comment.
       if (fell > FALL_DAMAGE_THRESHOLD) {
-        const _fallDmg = Math.trunc(FALL_HP_PER_METRE * (fell - FALL_DAMAGE_THRESHOLD));
+        const _fallDmg = playerFallDamage(playerEntity, fell);   // AUDIT LOOT II A1: shared.js's one bill, the Long Road off it
         hurtPlayer(_fallDmg);
         flashPlayerDamage(_fallDmg);   // BA1: RemoveHealth carries the amount
         if (!immersiveFootsteps.applyPlayerFallDamage()) audio.playOneShot(SOUND.FallDamage, FOOTSTEP_VOLUME);   // AUDIT 58: PlayerFootsteps.cs:307-311; IF1: the mod's Hard_Landing_2 when it owns the stride
