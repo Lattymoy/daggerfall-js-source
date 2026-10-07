@@ -76,8 +76,8 @@
  {
   "name": "GRAIN1-the-water-pass-keeps-the-wrapped-footprint-so-the-scroll-rollover-draws-a-line",
   "file": "src/render/waterSurface.js",
-  "old": "  vec3 tex = textureGrad(uTileArr, vec3(uv, 0.0), wgx, wgy).rgb * uTint;",
-  "new": "  vec3 tex = texture(uTileArr, vec3(uv, 0.0)).rgb * uTint;",
+  "old": "      edge *= smoothstep(0.3, 0.7, textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a);",
+  "new": "      edge *= smoothstep(0.3, 0.7, texture(uTileArr, vec3(puv, float(rec))).a);",
   "tests": [
    "test/grain1_terrainmip.test.js",
    "test/water.test.js"
@@ -241,8 +241,8 @@
  {
   "name": "AUDIT-GRAIN-the-water-takes-its-derivatives-after-the-discards",
   "file": "src/render/waterSurface.js",
-  "old": "  vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);\n  ivec2 cell",
-  "new": "  ivec2 cell",
+  "old": "    vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);\n    ivec2 cell",
+  "new": "    ivec2 cell",
   "tests": [
    "test/water.test.js",
    "test/grain1_terrainmip.test.js"

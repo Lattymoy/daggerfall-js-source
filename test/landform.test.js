@@ -352,8 +352,8 @@ test('LANDFORM1-3: the host reads the row once, cuts every pixel and every promo
   assert.match(WORLD, /const landformsHere = \(\) => \(landform \? createLandforms\(\{ woods, roads: terrainGen\.roads\(\) \}\) : null\);/, 'this thread\'s landforms, over its own network');
   assert.equal((WORLD.match(/landformsOn\(/g) ?? []).length, 1);
   assert.match(WORLD, /\n      landform,   \/\/ LANDFORM1-3: the shaped ground, cut along the kernel's own network\n    \}\);/, 'the pixel job');
-  assert.match(WORLD, /terrainGen\.grid\(\{ px: p\.px, py: p\.py, stride: 1, samples: p\.samples, landform \}\)/, 'the promotion off the thread');
-  assert.match(WORLD, /grid = restrideGrid\(\{ woods, px: p\.px, py: p\.py, stride, samples: p\.samples, landform, roads: terrainGen\.roads\(\) \}\)/, 'and on it');
+  assert.match(WORLD, /terrainGen\.grid\(\{ px: p\.px, py: p\.py, stride: 1, samples: p\.samples, landform, bed: bedBytes \}\)/, 'the promotion off the thread');   // PIN MOVED (AUDIT WATER-NEXT P1): the bed carved with it
+  assert.match(WORLD, /grid = restrideGrid\(\{ woods, px: p\.px, py: p\.py, stride, samples: p\.samples, landform, roads: terrainGen\.roads\(\), bed: waterOn \? bedBytesOf\(p\) : null \}\)/, 'and on it');   // PIN MOVED (AUDIT WATER-NEXT P1)
   assert.match(WORLD, /_gateKernel = sampleKernel\(woods, px, py, HEIGHTMAP_DIMENSION, true, landformsHere\(\)\);/, 'the gate\'s beacon stands on the shaped ground');
   assert.match(WORLD, /relief: !!landform,   \/\/ LANDFORM1: the ring stands the massifs/, 'the far ring');
   assert.match(WORLD, /ringHeight\(byte, !!landform, fade\)/, 'the travel view past the built grid');   // PIN MOVED (AUDIT LANDFORMS II I1): faded beside the sea, as the ring is

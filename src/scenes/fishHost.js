@@ -52,6 +52,19 @@ export const CAST_REACH_M = 6;
  *  over the level: looking out over the water there was no prompt, E went to the door behind, and the net's Use told an
  *  angler in the water to "stand in it". */
 export const CAST_RISE_M = 4.5;
+/** HIGH-CAST (FIELD BUGS 2026-10-07, the Discord: "fishing popup shows up wayy too early" - "miles above the water" on the
+ *  high ground under Daggerfall; and "I couldn't get it off my screen when on my ship"): SHORE-CAST asked whether the
+ *  cast's point is over water in the ground's plane alone, so a cliff over the sea, or a deck, stood "Open Water" at any
+ *  height and at any look. The cast's point stands no higher than this over the water's surface under it: the
+ *  carrack's main deck is the highest a ship carries (world/carrackModel.js MEASURED.mainDeckY, 7.81 m over her
+ *  waterline), and from it, the eye 1.7 m up (player/motor.js EYE_HEIGHT), a look straight down stands the cast
+ *  CAST_RISE_M under the eye - 5.01 m over the sea; half a metre more rides her swell. So every deck fishes looking down
+ *  over the side, and a level look from a ship's high deck, or any look from a cliff, does not; at the water's edge a
+ *  level look stands 1.7 m over it. */
+export const CAST_OVER_WATER_M = 5.5;
+/** HIGH-CAST: whether a cast's point stands too high over the water to be cast on - `surfaceY` the water's surface under
+ *  it (the host's `waterY`); unknown (null, off the built ground) is not refused, as SHORE-CAST's. */
+export const castOverWater = (at, surfaceY) => surfaceY != null && Number.isFinite(surfaceY) && at[1] - surfaceY > CAST_OVER_WATER_M;
 /** The prompt says a school rises within this far of the angler (m). */
 export const SCHOOL_SAID_M = 40;
 /** A school's flats: three of its species' fish, small, a metre apart on the water. */
@@ -178,10 +191,11 @@ export function standSchools({ px, py, day, samples, tilemap }) {
  *   eye: () => ({ pos: number[], dir: number[] }), feet: () => number[], hour: () => number, storm: () => boolean,
  *   climateAt: (x: number, y: number) => number|null, trophy: (species: any) => boolean,
  *   day: () => number, rand?: () => number, tug?: () => void, busy?: () => boolean,
- *   waterAt?: (pos: ArrayLike<number>) => boolean|null } }} deps `tug` - the floats dip (the
- *   touch layer's buzz); `busy` - the hands are the ship's (HELM-NET: at a helm, the guns laid, a boarding): no cast;
- *   `waterAt` - whether a scene point is over water the feet would swim in, null where the ground is not built
- *   (FIELD BUGS 2026-10-05 SHORE-CAST)
+ *   waterAt?: (pos: ArrayLike<number>) => boolean|null, waterY?: (pos: ArrayLike<number>) => number|null } }} deps
+ *   `tug` - the floats dip (the touch layer's buzz); `busy` - the hands are the ship's (HELM-NET: at a helm, the guns
+ *   laid, a boarding): no cast; `waterAt` - whether a scene point is over water the feet would swim in, null where the
+ *   ground is not built (FIELD BUGS 2026-10-05 SHORE-CAST); `waterY` - the height of the water's surface under a scene
+ *   point (the sea's top over a carved seabed), null where the ground is not built (HIGH-CAST)
  * @returns {import('./gatherHost.js').GatherKind}
  */
 export function fishKind({ book, host }) {
@@ -268,6 +282,9 @@ export function fishKind({ book, host }) {
       // onto the sand (AUDIT FB1005 W3).
       const acting = !!live && !live.act.state.done && !live.act.state.cancelled && live.act.state.phase !== 'wind';
       if (!acting && host.waterAt?.(castAt(host.eye())) === false) return [];
+      // HIGH-CAST (FIELD BUGS 2026-10-07): and at the water's level - waterAt reads the ground's plane alone, so the cast
+      // stood over the sea from a cliff tens of metres up, and on a deck at every look (the deck, the mast, the crew)
+      if (!acting && host.waterY && castOverWater(castAt(host.eye()), host.waterY(castAt(host.eye())))) return [];
       const c = castNow();
       if (!c) return [];
       // CAST-LOOK: on the look at its distance ahead, at any pitch to CAST_RISE_M - and the look itself, so a node in the

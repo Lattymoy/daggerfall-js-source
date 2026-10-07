@@ -1,0 +1,42 @@
+[
+  {
+    "name": "FB1007-HALL-FOLK-REVERTED",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (interiorHome || privateVisitRoom) return;",
+    "new": "      if (false) return;",
+    "tests": [
+      "test/fb1007_hallfolk.test.js"
+    ],
+    "why": "the field bug itself: a rest by day in a guild's hall (or a home) in a House2-4 stood the house's old residents back up"
+  },
+  {
+    "name": "FB1007-HALL-FOLK-PRIVATE-ROOM-ONLY",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (interiorHome || privateVisitRoom) return;",
+    "new": "      if (privateVisitRoom) return;",
+    "tests": [
+      "test/fb1007_hallfolk.test.js"
+    ],
+    "why": "the visit's home unread: the hall and the home both take their residents back"
+  },
+  {
+    "name": "FB1007-HALL-FOLK-HOME-ONLY",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (interiorHome || privateVisitRoom) return;",
+    "new": "      if (interiorHome) return;",
+    "tests": [
+      "test/fb1007_hallfolk.test.js"
+    ],
+    "why": "a tenant's private room re-rolled: the source pin holds the room's second latch"
+  },
+  {
+    "name": "FB1007-HALL-FOLK-REFUSED-EVERYWHERE",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (interiorHome || privateVisitRoom) return;",
+    "new": "      return;",
+    "tests": [
+      "test/fb1007_hallfolk.test.js"
+    ],
+    "why": "DFU's UpdateNpcPresence taken from every building: a shut stranger's house rested in by day must take its people back"
+  }
+]

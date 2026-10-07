@@ -147,14 +147,14 @@ test('LOAD1 the key: the PNG goes to the gallery AND the download, the download 
     const png = { png: true };
     const kept = [];
     const said = [];
-    const name = await takeScreenshot({ toBlob: (cb) => cb(png) }, { raf: null, doc, later() {}, keep: async (b) => { kept.push(b); return 7; }, said: (l) => said.push(l) });
+    const name = await takeScreenshot({ toBlob: (cb) => cb(png) }, { afterDraw: null, doc, later() {}, keep: async (b) => { kept.push(b); return 7; }, said: (l) => said.push(l) });
     await flush();
     assert.match(name, /^daggerfall-\d{8}-\d{6}\.png$/);
     assert.equal(clicks.length, 1);
     assert.deepEqual(kept, [png], 'the very PNG the download saved');
     assert.deepEqual(said, ['Screenshot kept - see Screenshots in the menu.']);
     clicks.length = 0; said.length = 0;
-    const none = await takeScreenshot({ toBlob: (cb) => cb(png) }, { raf: null, doc, later() {}, download: false, keep: async () => 'full', said: (l) => said.push(l) });
+    const none = await takeScreenshot({ toBlob: (cb) => cb(png) }, { afterDraw: null, doc, later() {}, download: false, keep: async () => 'full', said: (l) => said.push(l) });
     await flush();
     assert.equal(none, null);
     assert.equal(clicks.length, 0, 'the download switched off saves no file');

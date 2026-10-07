@@ -253,7 +253,11 @@ test('DW-C: the renderer carries the fog as a FRAME\'s - beginFrame clears it, a
   assert.match(r, /sf = this\._fogMode;\n\s*const sw = this\._dwFog\[0\];[^\n]*\n[\s\S]{0,400}this\._fogMode = 0; this\._dwFog\[0\] = 0;[\s\S]*?this\._fogMode = sf; this\._dwFog\[0\] = sw;/, 'the sprite bracket borrows it off and back');   // AUDIT 39 F47 keeps the scene's own borrow its own statement
   assert.equal((r.match(/outColor = vec4\(dwWaterFog\(/g) || []).length, 7, 'the seven classic world programs');
   assert.match(rd('src/render/enhancedLighting.js'), /return dwWaterFog\(col, wp\) \+ \(bayer4/, 'the lane: on the display colour (EL-DISTANCE: col is already encoded), before the dither');
-  assert.match(rd('src/render/waterSurface.js'), /outColor = vec4\(dwWaterFog\(mix\(uFogColor, col, fogFactorAt\(vWorldPos\)\), vWorldPos\), alpha\);/);
+  // PIN MOVED (AUDIT WATER-NEXT G1): the water's own light takes the sea's fog at its share, premultiplied (an affine fog: the
+  // added share through dwWaterFogAdd, the constant through dwWaterFog of nothing); the scene's copy, fogged when drawn, none
+  const ws = rd('src/render/waterSurface.js');
+  assert.match(ws, /fogged = dwWaterFogAdd\(fogged, vWorldPos\) \+ dwWaterFog\(vec3\(0\.0\), vWorldPos\) \* ownShare;/);
+  assert.match(ws, /outColor = uSceneOn == 1 \? vec4\(under \* trans \+ fogged, edge\) : vec4\(fogged \/ max\(cover, 1e-3\), edge \* cover\);/);
   // the behaviour of the door itself, on a bare renderer
   const calls = [];
   const bare = { gl: { uniform3fv() {}, uniform1i() {}, uniform1f() {}, uniform2fv() {}, uniform4fv: (loc, v) => calls.push([loc, Array.from(v)]) }, _fogColor: new Float32Array(3), _fogMode: 0, _fogDensity: 0, _fogRange: new Float32Array(2), _camPos: new Float32Array(3), _dwFog: new Float32Array(20) };
@@ -274,7 +278,7 @@ test('DW-C: the world host - the fog\'s presentation drives the surfaces\' _Deep
   assert.match(w, /renderer\.setClearColor\(SKY_CLEAR\);/);
   const ring = w.indexOf('farRing.draw(view, {');
   const skyFog = w.indexOf('if (deepWaters) dwRender.drawSkyFog();');
-  assert.ok(skyFog > ring && skyFog < w.indexOf('const wu = waterUniforms({'), 'after the ring, before the first blend');
+  assert.ok(skyFog > ring && skyFog < w.indexOf('const wu = _waterU = waterUniforms({'), 'after the ring, before the first blend');
   assert.match(w, /if \(wisps && wd\.on && wispsOn\(\) && !_dwAirOff\) \{/);
   assert.match(w, /if \(boltsGl && boltFrame\.bolts\.length && !_dwAirOff\) \{/);
   // PIN MOVED (PUDDLE-RAIN, FIELD BUGS 2026-10-01 #1): DW-D's swimmer arm is gone - the water over the eye alone hides

@@ -96,8 +96,8 @@
  {
   "name": "WATER-DRAW1-the-pass-takes-the-feets-table-back",
   "file": "src/render/waterSurface.js",
-  "old": "export function buildWaterIndices(bytes, stride = 1, table = WATER_DRAW_MASK_TABLE, tileDim = 128) {",
-  "new": "export function buildWaterIndices(bytes, stride = 1, table = buildWaterMaskTable(), tileDim = 128) {",
+  "old": "export function buildWaterIndices(bytes, stride = 1, table = WATER_DRAW_MASK_TABLE, tileDim = 128, width = tileDim, height = tileDim) {",
+  "new": "export function buildWaterIndices(bytes, stride = 1, table = buildWaterMaskTable(), tileDim = 128, width = tileDim, height = tileDim) {",
   "tests": [
    "test/grasspath.test.js"
   ]

@@ -95,22 +95,22 @@
   {
     "name": "TOOL-USE-a-window-holds-nothing-off",
     "file": "src/scenes/gatherHost.js",
-    "old": "      if (!own.length || !(deps.active() || inDungeon()) || book.state.open !== true) return false;",
+    "old": "      if (!own.length || !live() || book.state.open !== true) return false;",
     "new": "      if (!own.length || book.state.open !== true) return false;",
     "tests": ["test/fb0930b_toolsaid.test.js"]
   },
   {
     "name": "TOOL-USE-a-shut-book-takes-the-use",
     "file": "src/scenes/gatherHost.js",
-    "old": "      if (!own.length || !(deps.active() || inDungeon()) || book.state.open !== true) return false;",
-    "new": "      if (!own.length || !(deps.active() || inDungeon())) return false;",
+    "old": "      if (!own.length || !live() || book.state.open !== true) return false;",
+    "new": "      if (!own.length || !live()) return false;",
     "tests": ["test/fb0930b_toolsaid.test.js"]
   },
   {
     "name": "TOOL-USE-the-spade-is-a-profession-tool",
     "file": "src/scenes/gatherHost.js",
-    "old": "      if (!own.length || !(deps.active() || inDungeon()) || book.state.open !== true) return false;",
-    "new": "      if (!(deps.active() || inDungeon()) || book.state.open !== true) return false;",
+    "old": "      if (!own.length || !live() || book.state.open !== true) return false;",
+    "new": "      if (!live() || book.state.open !== true) return false;",
     "tests": ["test/fb0930b_toolsaid.test.js"]
   },
   {

@@ -510,7 +510,10 @@ const GARMENT_WORDS = (buttons) => {
 test('PROF7 wiring: the street and the dungeon stamp and list their bodies for Hunting\'s kind, the knife drawn while E is held; the loom a Clothing Store\'s or a home\'s station, its crafts and works at it, the Weavers\' counter by name, the stitch\'s band off AGI and SPD, the player\'s own clothing first; a Butcher\'s meat withdrawn slow to rot; a Tracker\'s animals on the compass; the service\'s routes, statuses, refusals and deploy', () => {
   const w = src('src/scenes/world.js');
   assert.match(w, /registerPlayerKillListener\('hunting', \(entity\) => \{ bodyStamps\.stamp\(entity\); \}\);/);
-  assert.match(w, /\? bodiesOf\(modes\?\.dungeonCtx\?\.foes, bodyStamps, \(f\) => modes\?\.dungeonCtx\?\.corpseAt\?\.\(f\), \(f\) => modes\?\.dungeonCtx\?\.corpseKeyOf\?\.\(f\)\)[^\n]*\n\s*: bodiesOf\(exteriorFoes\.foes, bodyStamps, exteriorFoes\.corpseAt, exteriorFoes\.corpseKeyOf\)\);/);
+  // PIN MOVED (FIELD BUGS 2026-10-07 INDOOR-SKIN): the pool by the mode, a building's too - huntHost.js bodiesHere
+  // (test/fb1007_indoorskin.test.js drives it over the real pools)
+  assert.match(w, /huntBodies = \(\) => bodiesHere\(modeNow\(\), \{ street: exteriorFoes, dungeon: modes\?\.dungeonCtx, interior: modes\?\.interiorFoes \}, bodyStamps\);/);
+  assert.match(src('src/scenes/huntHost.js'), /return bodiesOf\(pool\.foes, stamps, \(f\) => pool\.corpseAt\?\.\(f\), \(f\) => pool\.corpseKeyOf\?\.\(f\)\);/);
   assert.match(src('src/scenes/exteriorFoes.js'), /corpseAt: corpseLens\.feetOf,/, 'where a body lies has one home (DT1)');
   assert.doesNotMatch(w, /held\(keys, 'SwingWeapon'\)/, 'the knife is drawn with E held - attack is the weapon\'s, and its swing modes hold the look');
   // PIN MOVED (2026-10-01 part four, TOUCH-HOLD): the key named unless the knife's Use holds it
