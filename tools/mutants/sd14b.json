@@ -1,0 +1,146 @@
+[
+  {
+    "name": "SD14b-the-gears-never-stood",
+    "file": "src/scenes/sdAir.js",
+    "old": "        engine.setLoop3d(SD_AIR_GEARS.loop, SD_AIR_GEARS.clip, SD_AIR_GEARS_AT,",
+    "new": "        engine.setLoop3d(SD_AIR_GEARS.loop, null, SD_AIR_GEARS_AT,",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-the-hum-anywhere",
+    "file": "src/scenes/sdAir.js",
+    "old": "export const SD_AIR_HUM_AT = Object.freeze(realmToDungeon(SD_ORRERY.x, 3, SD_ORRERY.z));",
+    "new": "export const SD_AIR_HUM_AT = Object.freeze(realmToDungeon(SD_ARENA.x, 3, SD_ARENA.z));",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-one-left-looping",
+    "file": "src/scenes/sdAir.js",
+    "old": "        engine.setLoop3d(SD_AIR_HUM.loop, null, null);\n",
+    "new": "",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-made-every-frame",
+    "file": "src/scenes/sdAir.js",
+    "old": "    if (made || !engine?.registerSamples || !engine?.samplesOf) return made;",
+    "new": "    if (!engine?.registerSamples || !engine?.samplesOf) return made;",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-the-old-air-left",
+    "file": "src/scenes/sdAir.js",
+    "old": "  _heard?.stop();\n  /** The two made sounds",
+    "new": "  /** The two made sounds",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-no-tock",
+    "file": "src/scenes/sdAir.js",
+    "old": "    addVoice(out, rate, clunk, srcRate, { ratio: 1.2, offset: seconds / 2, gain: 0.8, wrap: true });\n",
+    "new": "",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-the-hum-bright",
+    "file": "src/scenes/sdAir.js",
+    "old": "  lowpass(out, rate, 700);",
+    "new": "  lowpass(out, rate, 9000);",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-a-kind-never-sounding",
+    "file": "src/scenes/sdAir.js",
+    "old": "  moan: Object.freeze({ slot: 30, chance: 0.4,",
+    "new": "  moan: Object.freeze({ slot: 30, chance: 0,",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-every-slot-sounding",
+    "file": "src/scenes/sdAir.js",
+    "old": "      if (h(0) >= E.chance) continue;\n",
+    "new": "",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-the-period-not-whole",
+    "file": "src/scenes/sdAir.js",
+    "old": "  const n = Math.round(SD_SKY_PERIOD / slotS), out = [];",
+    "new": "  const n = Math.round(SD_SKY_PERIOD / slotS) + 1, out = [];",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-the-shards-below",
+    "file": "src/scenes/sdAir.js",
+    "old": "  grind: Object.freeze({ slot: 36, chance: 0.5, clip: GRIND, volume: [0.15, 0.3], pitch: [0.3, 0.42], lift: 35 }),",
+    "new": "  grind: Object.freeze({ slot: 36, chance: 0.5, clip: GRIND, volume: [0.15, 0.3], pitch: [0.3, 0.42], lift: -35 }),",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-events-at-the-ear",
+    "file": "src/scenes/sdAir.js",
+    "old": "engine.play3d(e.clip, airSourceAt(ear, e.az, e.lift), e.volume,",
+    "new": "engine.play3d(e.clip, ear, e.volume,",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-the-backlog-played",
+    "file": "src/scenes/sdAir.js",
+    "old": "        if (last != null && seconds > last && seconds - last <= AIR_BACKLOG_S) {",
+    "new": "        if (last != null && seconds > last) {",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-the-wind-flat",
+    "file": "src/scenes/sdAir.js",
+    "old": "  return SD_AIR_VOID.volume * (1 - SD_AIR_VOID.depth * (0.5 - 0.5 * Math.sin(u)));",
+    "new": "  return SD_AIR_VOID.volume;",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-never-framed",
+    "file": "src/scenes/world.js",
+    "old": "    sdAirFrame();   // SD14b: and the Hour's, the same way\n",
+    "new": "",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  },
+  {
+    "name": "SD14b-never-stopped",
+    "file": "src/scenes/world.js",
+    "old": "sdAir.frame(deadlandsSeconds(), cam.pos); else sdAir.stop(); };",
+    "new": "sdAir.frame(deadlandsSeconds(), cam.pos); };",
+    "tests": [
+      "test/sd14b_air.test.js"
+    ]
+  }
+]

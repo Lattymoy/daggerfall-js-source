@@ -324,6 +324,7 @@ import { SerpentRenderer } from '../render/serpentRender.js';   // SERPENT1: its
 import { createSdFightLink } from '../net/sdFightLink.js';   // SD8c: the realm's fight as the page holds it
 import { createSdRemnantBlows } from './sdRemnantBlows.js';   // SD8d: its blows on me - seen, heard, judged on my feet
 import { createSdRemnantVoice } from './sdRemnantVoice.js';   // SD14a: its body and its Echoes heard
+import { createSdAir } from './sdAir.js';   // SD14b: the Hour's air - its beds and its far events
 import { remnantBarModel, sdBarNear } from '../ui/sdRemnantBar.js';   // SD8c: the Brass Remnant's bar, the gate's in brass
 import { createSdVoice, SD_VOICE_RANK } from './sdVoice.js';   // AUDIT SD II (SD11d): the Hour's lines over the screen, paced
 import { serpentBarModel } from '../ui/serpentBar.js'; import { drawGateBossBar } from '../ui/gateBossBar.js';   // SERPENT1: its boss bar, in the sea's colours - the gate's bar, its one node
@@ -21054,6 +21055,7 @@ export async function bootWorld(canvas, renderer, params, status) {
   /** WB6b: the court's air (scenes/deadlandsAir.js) - the wind, the fire, the thunder, the beasts; the braziers' fire
    *  beds in the dungeon's frame, where their loops burn. */
   const deadlandsAir = createDeadlandsAir(audio);
+  const sdAir = createSdAir(audio);   // SD14b: the Shattered Hour's air, on the sky's own clock
   /** AUDIT WB D10: what the court's passes are handed every frame, made once - its sea's and its centre's place, its
    *  braziers, and the frame's fog (one object, filled from the renderer's own as it stands) */
   const _courtSea = courtToDungeon(0, LAVA_Y, 0), _courtCentre = courtToDungeon(0, 0, 0);
@@ -21381,6 +21383,9 @@ export async function bootWorld(canvas, renderer, params, status) {
     return true;
   };
   const deadlandsAirFrame = () => { if (modes?.gateArenaDay?.() != null) deadlandsAir.frame(deadlandsSeconds(), cam.pos, courtFireBeds); else deadlandsAir.stop(); };
+  /** SD14b: THE HOUR'S AIR (scenes/sdAir.js) - its beds and its far events while I stand in the Shattered Hour, on the sky's
+   *  clock; silent, nothing left looping, the frame I do not. */
+  const sdAirFrame = () => { if (modes?.sdRealmSlot?.() != null) sdAir.frame(deadlandsSeconds(), cam.pos); else sdAir.stop(); };
   /** WB2: THE GATE THE WORLD STANDS (scenes/gatePool.js) - online alone, as the omen is; stood each exterior frame from
    *  the omen's word, drawn in the world pass (the stone) and after the duel wall (the fire and the beacon). Its door
    *  answers "not yet" until the relay can hold a gate's arena (WB3). */
@@ -28099,6 +28104,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     spoilsRecoverFrame();   // WB5: a boss's spoils no save holds, back to their character as it stands up - before it can save, online or not
     if (onlineOn && playerSpawned) { if (!online) onlineStart(); onlineFrame(now, dt); } else { if (_peerCandleLights.length) peerCandlesFrame([], dt);   /* PEERLIGHT2: offline, no one's candle stays lit */ serpentAway(!onlineOn); /* SERPENT1: its bar put away - offline, my ship let go of its coil */ sdFightAway(); /* SD8c: and the Remnant's */ if (!onlineOn && modes?.gateArenaDay?.() != null) { ejectFromCourt(COURT_TEXT.collapse); gateCourt?.leave(); /* AUDIT SS: and its floor into the pack - online, the frame's own court does it */ } if (player.arena) player.arena = modes?.gateArenaDay?.() != null ? courtRing() : null; if (!player.arena) player.arena = arenaBouts.ring(); /* ARENA2: my bout's ring on the arena's sand */ siegeHud?.hide(); /* AUDIT-SEATS C1: no online frame (a load, a spawn), no battle's tick - its HUD hidden, never frozen; the next tick draws it again */ }   // DUEL1: no online frame, no duel's law to hold the body - the ring is the live duel's alone; WB3b: the court's is its floor's, and offline there is no court   // ONLINE1: the pose out, the peers in - after the look is paid, before the camera is read and any mode draws
     deadlandsAirFrame();   // WB6b: after the court's ways out have run, online or not - the frame it is gone is the frame its air falls silent
+    sdAirFrame();   // SD14b: and the Hour's, the same way
     if (onlineOn && playerSpawned && (seatOut() || townTalk.overlay instanceof DeathScreen || modes?.deathUp?.())) { siegeHud?.hide(); siegeNpcs?.leave(); }   // AUDIT SEATS-2 C4: the dead and a tab out of the seat draw no battle - the online frame returns before its tick
     arenaFrame(dt);   // ARENA2: the bout on the city's floor or the instance's - before the modal return, so the instance's runs too
     setCourtRules(modes?.gateArenaDay?.() != null);

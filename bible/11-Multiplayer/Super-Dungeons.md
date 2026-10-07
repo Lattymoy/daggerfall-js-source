@@ -247,6 +247,10 @@ Hollow's walk; the Orrery's riddle; the Steps over the void; the Remnant's three
 in canon (silver two beats behind gold); the Hour's last minute; the fall; the collapse. Where I stand chooses (the
 hall, the Steps, the arena as near as its bar is heard), and in the arena the fight does.
 
+**Its air** (SD14b, `scenes/sdAir.js`): four beds - the void's wind breathing, the Hour's works (a tick and a tock a
+second) everywhere, the Orrery's hum in the hall, the arena's gears under its floor - and four kinds of far event on
+the sky's clock: a bell tolled, a gear falling into the void, the void's moan, the shards grinding overhead.
+
 ## 8. The Orrery of Endings - the puzzle
 
 Six Ending-stones stand on a ring in the hall, each carved with one of the Bay's endings: **Daggerfall** (the lion),
@@ -2114,3 +2118,31 @@ Pins: `test/sd14a_voice.test.js` (7 - the voice; the turns; hurt and the slip; s
 releases, the shock and the sting; forgotten and the host's); `tools/mutants/sd14a.json` (27). RE-AIMED BY CONTENT:
 `sd11c.json` (the fight left once). PINS MOVED: `test/sd11c_page.test.js`, `test/sd8c_remnant_page.test.js`,
 `test/sd8d_remnant_blows.test.js` (the voice framed and let go beside the blows).
+
+### SD14b - shipped 2026-10-07 (the Hour's air)
+
+The Deadlands have three beds and three kinds of event; the Hour had none - its dungeon's drips and doors silenced and
+nothing put back but the Rift's bell. `scenes/sdAir.js`, on the Deadlands' model (`scenes/deadlandsAir.js`):
+
+| bed | what | where |
+|---|---|---|
+| the void's wind | DAGGER.SND's deep moan at 0.55 (the Deadlands' at 0.74), breathing 24 times a period between 60% and its level | everywhere in the Hour |
+| the Hour's works | a tick (the Orrery's clunk at 1.6) and a tock (at 1.2) a second, the gears' grind faint under them - MADE at runtime out of the player's own archive, as the Rift's bell is (`buildHourWorks`) | everywhere |
+| the Orrery's hum | the ship's bell slowed to a drone at a quarter, its fifth and its octave over it, darkened, swelling twice a loop (`buildOrreryHum`) | over the Orrery's centre, 50 m (never the arena) |
+| the arena's gears | the grind at 0.55 | under the arena's floor, 70 m |
+
+| event | slot (s) | share | from |
+|---|---|---|---|
+| a bell tolled far off | 24 | 50% | 20 m over the ear |
+| a gear falling into the void | 12 | 45% | 25 m under |
+| the void's moan | 30 | 40% | 15 m under |
+| the shards grinding | 36 | 50% | 35 m over |
+
+Each slot whole over the sky's period (720 s; 59 events in one), seeded and pure, each from a stand-in in its own
+quarter held at its bearing (`airSourceAt`, `far`); a gap longer than `AIR_BACKLOG_S` plays none of what it passed. The
+made two are registered once the archive is read and asked again until then; all four beds let go the frame I leave
+the Hour, one engine's at a time. The world host frames it on the sky's clock (`deadlandsSeconds`) after the ways out
+have run, beside the Deadlands' own. With the Remnant's voice (SD14a) the arc speaks in 64 cues and four beds.
+
+Pins: `test/sd14b_air.test.js` (5 - the beds; the made sounds; the events; heard from its quarter; the world host);
+`tools/mutants/sd14b.json` (16).
