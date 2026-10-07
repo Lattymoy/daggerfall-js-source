@@ -1,0 +1,83 @@
+[
+  {
+    "name": "FOUNDER5-the-old-instant",
+    "file": "server-account/src/titles.js",
+    "old": "export const FOUNDER_UNTIL = 1_790_337_600;",
+    "new": "export const FOUNDER_UNTIL = 1_790_294_400;",
+    "tests": [
+      "test/founder5.test.js"
+    ],
+    "note": "00:00Z again: a player who first played on the evening of the 24th in the Americas - before the 25th on their own clock - holds nothing."
+  },
+  {
+    "name": "FOUNDER5-the-cutoff-an-open-end",
+    "file": "server-account/src/titles.js",
+    "old": "export const FOUNDER_UNTIL = 1_790_337_600;",
+    "new": "export const FOUNDER_UNTIL = Infinity;",
+    "tests": [
+      "test/founder5.test.js"
+    ],
+    "note": "Every registered account a founder, however late it first played: the title is no longer closed."
+  },
+  {
+    "name": "FOUNDER5-the-cutoff-exclusive",
+    "file": "server-account/src/titles.js",
+    "old": "firstPlayed(player) <= FOUNDER_UNTIL",
+    "new": "firstPlayed(player) < FOUNDER_UNTIL",
+    "tests": [
+      "test/founder5.test.js"
+    ],
+    "note": "The last second of the 24th at UTC-12 falls outside."
+  },
+  {
+    "name": "FOUNDER5-the-list-ignored",
+    "file": "server-account/src/titles.js",
+    "old": "  if (!held.includes('founder') && isNamedFounder(player, env)) held.push('founder');   // FOUNDER5: or by name",
+    "new": "",
+    "tests": [
+      "test/founder5.test.js"
+    ],
+    "note": "A player Mac names in FOUNDER_HANDLES holds nothing: the one way to reach a player no record proves is gone."
+  },
+  {
+    "name": "FOUNDER5-the-list-held-twice",
+    "file": "server-account/src/titles.js",
+    "old": "  if (!held.includes('founder') && isNamedFounder(player, env)) held.push('founder');   // FOUNDER5: or by name",
+    "new": "  if (isNamedFounder(player, env)) held.push('founder');   // FOUNDER5: or by name",
+    "tests": [
+      "test/founder5.test.js"
+    ],
+    "note": "A founder by the date AND the name is offered the title twice in the wardrobe."
+  },
+  {
+    "name": "FOUNDER5-the-list-grants-guests",
+    "file": "server-account/src/titles.js",
+    "old": "export const isNamedFounder = (player, env) =>\n  typeof player?.handle === 'string' && !!player.handle\n  && founderHandles(env).has(player.handle.toLowerCase());",
+    "new": "export const isNamedFounder = (player, env) =>\n  founderHandles(env).has(String(player?.handle ?? '').toLowerCase());",
+    "tests": [
+      "test/founder5.test.js"
+    ],
+    "equivalent": true,
+    "why": "Belt and braces, kept as the developers' and moderators' guards are: handleList drops empty entries, so no set holds '' and a guest's NULL handle - the one handle a guest has - is never in it. The guard says the law where it is read; the pin that a guest holds none (founder5's names) stands either way."
+  },
+  {
+    "name": "FOUNDER5-the-list-case-blind",
+    "file": "server-account/src/titles.js",
+    "old": "  && founderHandles(env).has(player.handle.toLowerCase());",
+    "new": "  && founderHandles(env).has(player.handle);",
+    "tests": [
+      "test/founder5.test.js"
+    ],
+    "note": "A handle named in another case than it was registered in holds nothing - handle_lc is what uniqueness is on."
+  },
+  {
+    "name": "FOUNDER5-the-list-read-off-another-var",
+    "file": "server-account/src/titles.js",
+    "old": "  return handleList(env?.FOUNDER_HANDLES);",
+    "new": "  return handleList(env?.DEVELOPER_HANDLES);",
+    "tests": [
+      "test/founder5.test.js"
+    ],
+    "note": "The config's FOUNDER_HANDLES names nobody."
+  }
+]
