@@ -188,7 +188,7 @@ test('AUDIT FB1007b H2: the tutorial dungeon keeps its own memory online - taken
   off.keepSoloMemory();
   assert.equal(off.memory(), null);
   // the doors: the dungeon's leave and its entry, and the load's reset
-  assert.match(W, /onDungeonLeave: \(\) => \{[^\n]*worldPublish\(performance\.now\(\), true\); keepSoloMemory\(\); \},/);
+  assert.match(W, /onDungeonLeave: \(\) => \{[^\n]*keepSoloMemory\(\); gatherHost\?\.leaveDungeon\(\); worldPublish\(performance\.now\(\), true\); \},/, 'while the dungeon still stands');
   assert.match(W, /onTransitionDungeonInterior: \(ctx\) => \{[^\n]*navalTransition\(\); restoreSoloMemory\(\); \},/);
   assert.match(W.slice(W.indexOf('  function overworldLoadReset() {'), W.indexOf('  function applyPose(pose) {')), /\n {4}_soloMemory = null;/);
 });
@@ -216,7 +216,7 @@ test('AUDIT FB1007b H5: in the Hold the game says the player is alone - never si
   assert.equal(withMe({ ...inHold }, { ...inHold }), false, 'each in their own Hold: the place line is drawn');
   assert.equal(withMe({ ...inHold, px: 120, py: 150 }, { ...inHold, px: 120, py: 150 }), true, 'another dungeon: together');
   assert.equal(withMe({ ...inHold, in: 0 }, { ...inHold, in: 0 }), true, 'on the cell\'s ground outside: together');
-  assert.match(read('src/ui/enhancedMenu.js'), /those monsters can hurt you too\. Privateer\\u2019s Hold, where every character begins, is each player\\u2019s own\. /);
+  assert.match(read('src/ui/enhancedMenu.js'), /talk to each other anywhere\. Privateer\\u2019s Hold, where every character begins, is each player\\u2019s own\. Dungeons and buildings are shared:/);
 });
 
 const ARENA2 = process.env.ARENA2_PATH;

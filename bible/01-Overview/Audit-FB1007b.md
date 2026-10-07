@@ -15,8 +15,8 @@ for every claim it could run), with the player's ARENA2 (the DFU freeware set) a
 Nothing was fixed in the snapshot (Home.md, 17l); the fixes went to the branch while the lenses read their copy. Each fix
 carries an `AUDIT FB1007b <ID>` comment and is pinned; `tools/mutants/fb1007b.json` holds **59 mutants, all dead** without
 game data (23 of the batch's, re-aimed by content where a fix moved their line, one retired with the repair it tested,
-and 37 of the audit's - every survivor the lenses found among them), beside `tv_wasd.json` (12) and `legacyname.json`
-(21), all dead.
+and 37 of the audit's - every survivor the lenses found among them), beside `tv_wasd.json` (12), `legacyname.json` (21)
+and `auditparty8.json` (23, one record re-aimed by content), all dead.
 
 ## Fixed
 

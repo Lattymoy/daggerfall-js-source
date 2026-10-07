@@ -466,7 +466,7 @@
   {
     "name": "FB1007B-AUDIT-H2-NO-MEMORY",
     "file": "src/scenes/world.js",
-    "old": "    else if (id?.solo) _soloMemory = { mapId: id.mapId, shared: modes.placeSharedWorld() };",
+    "old": "    else if (id?.solo) _soloMemory = { mapId: id.mapId, shared: modes?.placeSharedWorld() };",
     "new": "    else if (id?.solo) _soloMemory = null;",
     "tests": [
       "test/fb1007b_holdsolo.test.js"

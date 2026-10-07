@@ -18544,11 +18544,11 @@ export async function bootWorld(canvas, renderer, params, status) {
   const keepSoloMemory = () => {
     const id = onlineOn ? modes?.roomIdentity?.() : null;
     if (_loading) _soloMemory = null;
-    else if (id?.solo) _soloMemory = { mapId: id.mapId, shared: modes.placeSharedWorld() };
+    else if (id?.solo) _soloMemory = { mapId: id.mapId, shared: modes?.placeSharedWorld() };
   };
   const restoreSoloMemory = () => {
     const id = onlineOn ? modes?.roomIdentity?.() : null;
-    if (!_loading && id?.solo && _soloMemory?.mapId === id.mapId) modes.restorePlaceSharedWorld(_soloMemory.shared);
+    if (!_loading && id?.solo && _soloMemory?.mapId === id.mapId) modes?.restorePlaceSharedWorld(_soloMemory.shared);
   };
   // WORLD2: ONE SIMULATION PER ROOM. While I host a world room the dungeon's layout foes are mine to step and I
   // stream every changed one FOES_MS apart (every one FOES_FULL_MS apart, so a dropped delta heals); while another
@@ -24476,7 +24476,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     raiseFallen: (f) => raiseFallenDoor(f),
     plaquePeerAct: (eye, dir) => plaquePeerAct(eye ?? cam.pos, dir ?? socialFwd()),   // ACT-MENU: the building's and the dungeon's press on a player the plaque lit, on the press's own ray (AUDIT DISC7 A9)
     pointerSurfaceUp: () => pointerSurfaces.size > 0,   // AUDIT DROPS E1: the plaque comes down under the F-menu, the chat and the friends panel indoors and underground too (AUDIT-WH2 L3-F3's law, the street's own term)
-    onDungeonLeave: () => { const n = handOverRoomFoes(); if (n) console.info(`[foes] handed ${n} quest foe(s) at the dungeon's door`); gatherHost?.leaveDungeon(); worldPublish(performance.now(), true); keepSoloMemory(); },   // WORLD1: the room's memory goes out while the dungeon still stands; QUEST-PARTY phase 3c: my shared quest's foes to the party who stay
+    onDungeonLeave: () => { const n = handOverRoomFoes(); if (n) console.info(`[foes] handed ${n} quest foe(s) at the dungeon's door`); keepSoloMemory(); gatherHost?.leaveDungeon(); worldPublish(performance.now(), true); },   // WORLD1: the room's memory goes out while the dungeon still stands; QUEST-PARTY phase 3c: my shared quest's foes to the party who stay
     // OH-D: the four DFU events There's a Hole in the Bottom of the Ocean subscribes to (its Install), raised by the doors
     onSetDungeon: (ctx) => ohAbyss?.onDungeonSet(ohDungeonOf(ctx)),   // DaggerfallDungeon.OnSetDungeon
     onTransitionDungeonInterior: (ctx) => { navalStow(); ohAbyss?.onDungeonEntered(ohDungeonOf(ctx)); csaOnTransition(); navalTransition(); restoreSoloMemory(); },   // PlayerEnterExit.OnTransitionDungeonInterior (CSA-C: Come Sail Away's OnTransition after OceanHoles' - the mods' load order)

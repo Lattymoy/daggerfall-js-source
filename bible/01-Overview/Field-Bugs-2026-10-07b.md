@@ -5,7 +5,7 @@ courtyard tower interiors are very bugged"*: *"Everything inside them seems to b
 stairs, and there is open void in some spots."* From `#feature-feedback`: afjiz, *"Family Seat - Option to ..."*;
 nObOdy, *"Lock privateer's hold."*; and Shabalako, *"Overworld Travel can be used to exploit climbing levelling"*, with
 Sahh, of House R'is, under it. Every change below is pinned by tests that fail on the record's own code (39f728de), the
-new pins mutation-checked (`tools/mutants/fb1007b.json`, 23 of 23 dead). The player's own ARENA2 was at hand (the
+new pins mutation-checked (`tools/mutants/fb1007b.json`, 23 of 23 dead; 59 of 59 since AUDIT FB1007b, `01-Overview/Audit-FB1007b.md`). The player's own ARENA2 was at hand (the
 DFU-distributed freeware set, outside the tree): the towers were measured and drawn from it.
 
 | | Report | What it was | Done |
