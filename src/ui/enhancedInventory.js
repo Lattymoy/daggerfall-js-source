@@ -119,8 +119,8 @@ import {
   storeCapacityOf,   // COMPANION-WEIGHT: a storage's own weight limit
   planBagToggle, hasMaterialsBag,   // BAG1: the Materials Bag, a list beside the wagon's
 } from '../systems/inventorySession.js';
-import { bagStoreRefusal, bagMayLeave } from '../systems/materialsBag.js';
-import { shiftDrop } from '../systems/physicalItems.js';   // PI1: Physical Items' shift-drop, one law for both packs   // BAG1: only materials go in the bag; AUDIT2 H11: and a loaded one stays
+import { bagStoreRefusal, bagMayLeave } from '../systems/materialsBag.js';   // BAG1: only materials go in the bag; AUDIT2 H11: and a loaded one stays
+import { shiftDrop } from '../systems/physicalItems.js';   // PI1: Physical Items' shift-drop, one law for both packs
 import { BAG_KG_LIMIT } from '../net/bagLaw.js';
 import { STORE_FILTER_KINDS, filterStore, storeFilterOptions, freshStoreFilter } from './storeFilter.js';   // WAGON-FILTER: the wagon, the storage and the bag, filtered
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all

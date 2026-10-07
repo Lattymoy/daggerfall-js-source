@@ -60,12 +60,17 @@ an offset there. The pure law is `src/systems/physicalItems.js`; the scene half 
 ### The throw
 
 - **Where it starts** (`RandomScatterOffset [IL_51d8]`): a direction in the disc,
-  0.45 to 0.85 m out, 0.65 m up from the body's foot.
+  0.45 to 0.85 m out, 0.65 m up from the body's foot. The item is set 0.65 m over the
+  body and moved out to that point through `ConstrainItemMovement` (`[IL_4fdc]`;
+  the port's `constrainMove`): a wall on the way stops it short by its own half-width
+  and the rest of the move slides along the face, so a body against a wall never
+  throws its items through it.
 - **How it leaves** (`CreateCorpseProxy [IL_4fe6]`): AT THE FALL, 0.75 to 1 of 0.85
   m/s out along its bearing plus a tenth of a disc, and 0.7 to 1.1 m/s up - all
   times Impulse Strength (shipped 200 percent: 2x; clamped 0 to 400 - `[IL_2e73]`).
-  A body met LATER (a load, a return) has its items nudged 0.08 out and 0.08 up,
-  unscaled. The port knows the fall from DFU's own `OnEnemyDeath`
+  A body met LATER (a load, a return) has its items launched at 0.08 m/s along their
+  bearing and 0.08 m/s up, unscaled. Both are the body's velocity at its start
+  (`StartDynamic` sets it), never a force. The port knows the fall from DFU's own `OnEnemyDeath`
   (`HandleEnemyDeath [IL_4790]` - `scenes/corpseMarker.js raiseEnemyDeath`): the
   layer registers a handler that notes the entity, and a body first met within 4 s
   of its death is thrown.
@@ -82,16 +87,24 @@ the body as a fixed-step integrator (`stepBody`, Unity's 0.02 s step and 9.81 m/
   bounce, so Maximum gives 0.35) - and none under PhysX's 2 m/s bounce threshold;
 - the grip is the Average of the item's and the default material's 0.6: 0.525
   sliding, 0.575 holding;
-- a wall stops the move across and takes the speed into it back at the bounce;
+- a wall stops the move across and takes the speed into it back at the bounce, and
+  a ceiling over a rising item turns it back the same way;
+- the floor is asked from 0.05 m over the item's foot, so an item rolling under a
+  table stays on the floor rather than climbing onto the top;
 - **it settles** (`Update [IL_1da7]`) once the ground is within 0.1 m and the speed
   has stayed under 0.05 m/s for half a second;
-- **the shoulder** (`FixedUpdate [IL_1e94]`): a body slower than 0.65 m/s across and
-  0.5 m/s up or down eases toward 0.45 m/s away from every box it overlaps (grown
-  0.04 m), at 1.5 m/s a second; two on one spot part by order.
+- **the shoulder** (`FixedUpdate [IL_1e94]`): a body by the ground (within 0.15 m
+  of it) and slower than 0.65 m/s across and 0.5 m/s up or down eases toward 0.45
+  m/s away from every box it overlaps (grown 0.04 m across, 0.08 m in height),
+  settled neighbours included, at 1.5 m/s a second. It never restarts the settle
+  clock. Two on one spot part by order: the lower index goes to -x.
 
 The floor is the host's collider (the torch's own door); with no collider, or
-nothing under the item, it is the floor the item came from. An item never found
-by a floor stands after 8 s (the port's own floor - the gate spoils' rule).
+nothing under the item, it is the floor the item came from. Any flight still moving
+after 8 s stands where it is: that limit is the port's own (the gate spoils' spew
+gives up after 6 s, `SPEW_FLIGHT_MAX_S`). A body that moves (a ship's deck) carries
+the items lying round it, and the flights hold while the game is paused (`FixedUpdate`
+returns on `IsGamePaused` `[IL_1eb6]`): each host hands its own pause answer.
 
 ### The shift-drop
 
@@ -107,22 +120,44 @@ by a floor stands after 8 s (the port's own floor - the gate spoils' rule).
   onto the ground always fits; TransferItem's split asks only when it would not).
 - **The layout** (`GetBatchSpreadCentre [IL_3fa4]`, `GetBatchDropPosition
   [IL_4028]`): the spiral's centre 1.1 m ahead of the player's feet (flat); point i
-  is 0.78 * sqrt(i) out at i times the golden angle, taken when the floor is there,
-  the way from the feet is clear and no drop lying there overlaps
-  (`OverlapsPlacedDrop [IL_4338]`: nearer than the two radii and 0.1 m); 256 tries,
-  then the feet. Each lands 0.025 m above the floor and drops (`PhysicalizeIndependent
-  [IL_46fc]`: StartDynamic(zero)).
+  is 0.78 * sqrt(i) out at i times the golden angle. A point is taken when:
+  - there is a floor (`TryProjectBatchPointToFloor [IL_4104]`): a ray from 2 m over
+    the feet's height and 5 m down, each face it meets with a normal at least 0.5 up,
+    the one nearest the feet's height (a table over the spot is not the floor);
+  - the way from the feet is clear (`HasClearBatchPath [IL_4248]`: lifted 0.2 m, a
+    0.05 m skin);
+  - no drop already placed overlaps it (`OverlapsPlacedDrop [IL_4338]`): across the
+    ground (x and z), nearer than the two footprints and 0.1 m. A footprint is
+    max(0.2, 0.6 x the item's size) (`FlushPendingDrops`).
+
+  After 256 tries it falls back to the feet. Each lands 0.025 m above the floor and
+  drops (`PhysicalizeIndependent [IL_46fc]`: StartDynamic(zero)).
 
 ### The press
 
-`TryPickup [IL_847c]` is DFU's own rules: a summoned item refused, a map read and
-spent, a quest item's click, the carry check, gold into the purse. The port's one
-door for one item is `systems/quickLoot.js takeOneItem` (quick loot's own
-`takeThrough` - planTake's summoned refusal, the quest click, CanCarryAmount, the
-gold counter; the pickup cards or the line). A map goes to the host's reveal
+`TryPickup [IL_847c]` is the mod's own logic, in this order:
+1. a summoned item is refused ("cannotRemoveItem", `[IL_8494]`);
+2. a map is read and spent (`RecordLocationFromMap`, then `RemoveItem`);
+3. a quest item's click;
+4. the WHOLE stack, or nothing (`CanCarryWholeStack [IL_858c]`: "cannotCarryAnymore");
+5. gold goes into the purse.
+
+The port's one door for one item is `systems/quickLoot.js takeOneItem`, quick
+loot's own `takeThrough` with `wholeStack` set: planTake's summoned refusal, the
+quest click, the carry check, the gold counter, then the pickup cards or the line.
+Quick loot itself keeps taking the part that fits. A map goes to the host's reveal
 (`world.js revealLocation('readMap')`, through worldModes into the dungeon): it is
 spent, and "You have already discovered..." is said when there was nothing left to
-find.
+find. The port adds guards the pack already keeps:
+- a transformed lycanthrope's paws take nothing;
+- a quick-loot key armed over the item is spent on that press (WB9's law for the
+  spoils);
+- a body's silver is rolled at its first take (SILVER-FINDS' door; the dungeon's by
+  the room's name for the body);
+- the room hears every take that moved anything.
+
+The press reaches 3 m (`RaycastPhysicalItem [IL_5b54]`), whatever the host's own
+pile reach.
 
 The name under the crosshair is World Tooltips' own for a pile of one -
 `lootPileName`: the long name, and the stack in brackets - which is the mod's
@@ -139,24 +174,38 @@ replacement, the item's dye, for the wearer's gender and race). A build that lan
 or goes (`mountPictureStamp`) has every item ask again. Either is cut to its visible
 texels and sized by the mod's law above, under the pseudo-archive 38161.
 
+The Morrowind picture is rendered 64 texels on its longer side (`PI_MW_PX`), the
+classic icons' density, so the tier rim reads as a rim. Each cut picture's clear
+edge is bled from its shown texels (`bleedEdges`), so the mips draw no dark fringe.
+A render with nothing in it is a miss, and the classic picture stands instead. A
+Morrowind miss while a build stands is asked again 5, 10 and 20 s on; so is a
+picture that did not come at all. An item is PRESENTED only once its picture
+stands: until then its pile keeps its bag and its press, and its body's line counts
+it. A re-ask that fails keeps the picture already standing. A size or rim setting
+moved re-dresses what stands.
+
+The pictures are the renderer's, held across every layer: a dungeon's teardown frees
+only what nothing else on that renderer still stands in (`heldTextureCount`).
+
 ## The rarity dress
 
 Mac: *"the rarity treatment (like we do for the world boss)"*. The mod draws no
-rarity; the port dresses each item as the world boss's spoils are dressed
-(`11-Multiplayer/World-Bosses.md` section 12, WBX3):
+rarity. The port dresses each item in two ways:
 
-- **the rim**: a Magic-or-better picture wears its tier's colour as an outline and a
-  lift (`systems/hitFlash.js setBatchGlint` - the outline's own texel test),
-  stronger up the ladder (`PI_RIM`: Magic 0.3, Rare 0.45, Legendary 0.6, Aetheric
-  and Artifact 0.7);
-- **the line**: a Rare-or-better item stands the world boss's loot line out of the
+- **the line** is the world boss's: a Rare-or-better item stands the loot line the
+  boss's spoils stand (`11-Multiplayer/World-Bosses.md` section 12, WBX3) out of the
   top of its own picture (`scenes/lootLines.js`, LOOT11's pick and its eight-nearest
   cap). An item standing as itself is its own find, and the body or pile it lies for
   no longer counts it toward its own line (`isPresented`);
-- the rarity row off (LR5's switch), neither is drawn.
+- **the rim** is the port's own, because the boss's spoils wear none: a
+  Magic-or-better picture wears its tier's colour as an outline and a lift
+  (`systems/hitFlash.js setBatchGlint` - the outline's own texel test), stronger up
+  the ladder (`PI_RIM`: Magic 0.3, Rare 0.45, Legendary 0.6, Aetheric and Artifact
+  0.7);
+- with the rarity row off (LR5's switch), neither is drawn.
 
-A Rare-or-better body already chimes at the kill (`playRareDrop`); its items do not
-chime again as they land.
+Nothing chimes as the items land. A Rare-or-better body already chimes at the kill
+(`playRareDrop`).
 
 ## The seam
 
@@ -177,11 +226,13 @@ Each of THE FOUR HOSTS attaches its half (`physical.attach`) and takes on the pr
 |---|---|---|---|---|
 | `scenes/world.js` | the world's | the encounter pool's and the watch's (`physicalCorpses`) | `revealLocation('readMap')` | the pile arm, after the too-far line |
 | `scenes/exterior.js` | the town's | the encounter pool's and the watch's | none (no region index - useHooks' own note) | the pile arm, after the too-far line |
-| `scenes/worldModes.js` (interiors) | the room's | the room's foes' | the outer host's | the `droppedLoot:` arm |
-| `scenes/dungeonContext.js` | the dungeon's | its searchable bodies (`corpse:<i>`) | the outer host's (none on `?dungeon`) | `takeLoot` |
+| `scenes/worldModes.js` (interiors) | the room's | the room's foes' and the watch called in | the outer host's | the `droppedLoot:` arm |
+| `scenes/dungeonContext.js` | the dungeon's | its searchable bodies (`corpse:<i>`) whose room word this build can read | the outer host's (none on `?dungeon`) | `takeLoot` |
 
 And each hands the pack its shift-drop (`physicalDrop` / `physicalDropOn`, beside
-`onDrop`) onto its own pool - the interior's onto the room's, never the street's.
+`onDrop`) onto its own pool - the interior's onto the room's, never the street's. The
+fate window (a body's pack opened from the street host, indoors or underground too)
+drops nothing. A dungeon's save keeps a shift-drop one, and it is restored lying.
 A body comes from `scenes/corpseMarker.js physicalCorpseSources`, the one walk both
 street pools share: a searchable body (not disabled) whose marker has landed, never
 a peer's puppet.
@@ -213,22 +264,61 @@ or off.
 4. **SHIFT-STOW keeps its stores**: Shift on a pack row with the wagon or the
    player's own storage beside it deposits there (the port's own, 2026-10-04, here
    first); everywhere else it is the mod's shift-drop.
-5. **Maps** with no host reveal (`?town`) come into the pack as the item; the mod
-   reads every map. The reveal's message box (TEXT.RSC 499) is not shown on a press -
-   the notebook's note is written and the location is marked.
+5. **Maps** with no host reveal (`?town` and `?dungeon`) come into the pack as the
+   item; the mod reads every map. The reveal's message box (TEXT.RSC 499) is not
+   shown on a press: the notebook's note is written and the location is marked. In
+   the wilderness `revealLocation` has nothing to name, and the press says
+   "readMapFail", as the pack's own Use does.
 6. **The rarity dress and the Morrowind picture** are the port's own (Mac's asks):
-   the mod draws every item from its inventory art and no rarity.
+   the mod draws every item from its inventory art and no rarity. Each Rare item
+   stands its own line, and so takes one of LOOT11's eight slots; the rim's padding
+   is not in the batch's bounding sphere (`batchSphere`), so a rim at the screen's
+   edge can be culled a frame early. The Morrowind picture's framing on the ground
+   is the wall mount's (MW-MOUNT), and needs an in-game look. `exterior.js`
+   (`?town`) draws no loot lines at all (before this mod too), so its Rare items
+   stand none there.
+7. **The press box** is at least 0.2 m half-wide and 0.25 m tall
+   (`PI_BOX_MIN_HALF`, `PI_BOX_MIN_H`), so a dagger lying flat is still a thing to
+   aim at. The mod's hitbox is the picture's own box.
+8. **A body is opened, not searched for its nearest item.** The mod's ray, landing
+   on a body, takes the item standing nearest it (`FindNearestProxyForCorpse
+   [IL_5bd3]`, within 3 m); the port's body keeps its own press (its window), and an
+   item is taken by pressing the item.
+9. **Every searchable body stands its items**, not only the bodies the mod saw die:
+   the mod's groups are made at `OnEnemyDeath` and restored from its save, and the
+   port reads each host's list of bodies.
+10. **Shift and Control does not split.** TransferItem's split asks under Control;
+    the shift-drop always moves the whole stack.
+11. **Each click is laid at once**, clear of the shift-drops already lying. The mod
+    queues a window's drops and lays them together at its close
+    (`FlushPendingDrops`).
+12. **"At the fall" is 4 s** (`PI_FRESH_MS`): a body first met within 4 s of its
+    `OnEnemyDeath` is thrown. The mod throws inside the event itself; the port's
+    layers meet a body on their next frame.
+13. **A restored shift-drop lies settled** where it was saved. The mod restores it
+    dynamic (`StartDynamic(zero)`), and it settles half a second later.
+14. **Words, not message boxes.** The mod's refusals are message boxes; the port's
+    are said on the host's line, and a take shows the pickup cards or the line, as
+    quick loot's do.
+15. **A load lays the bodies' items again** (3, above), so a player who saves beside
+    a body sees its items land again after the load.
 
 ## Pins
 
 `test/pi1_physicalitems.test.js` (15): the record (the manifest and every declared
 key verbatim, the four undeclared ones named), the categories against `.cctor`'s
 list and over every item producer, the sizes and clamps with the IL's constants,
-the picture's box and cut, the scatter and the throw, the spiral, the body (no
-bounce under 2 m/s, 0.35 over it, the slide, the settle, the port's floor), the
-shoulder, the rarity rim, the bodies (thrown at the fall, nudged later, a category
-off left in, the window's take), the press (out of the body, the gold to the purse,
-the room told), the pool (one pile an item, presented, saved, restored lying, the
-bags back with the mod off), the lines (a presented item's line is its own), the
-shift-drop law (the refusals, the whole stack, the map), and the seams (one maker,
-the four hosts' halves, both packs, both street pools).
+the picture's box and cut, the scatter and the throw, the spiral (and its 0.1 m
+margin), the body (no bounce under 2 m/s, 0.35 over it, the slide, the settle, the
+port's floor), the shoulder (by the ground only, settled neighbours, the height
+gate, the tie), the rarity rim, the bodies (thrown at the fall, nudged later, a
+category off left in, presented once pictured, the window's take), the press (out
+of the body, the gold to the purse, the room told of a take off a body), the pool
+(one pile an item, presented, saved, restored lying, the bags back with the mod
+off), the lines (a presented item's line is its own), the shift-drop law (the
+refusals, the whole stack, the map), and the seams (one maker, the four hosts'
+halves, both packs, both street pools).
+
+`test/audit_pi1.test.js` (20) holds the audit's fixes, one test a finding group
+(`01-Overview/Audit-PI1.md`). Mutants: `tools/mutants/pi1.json` (47) and
+`tools/mutants/audit_pi1.json` (52), all dead.

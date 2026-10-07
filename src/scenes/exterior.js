@@ -1518,6 +1518,7 @@ export async function bootExterior(canvas, renderer, params, status) {
     took: (moved, who) => showPickups(moved, who),
     say: (l) => townTalk.say(l),
     revealMap: null,
+    paused: () => !!gamePaused(),   // AUDIT PI1 L10: the flights hold while the game does (this host's one pause answer)
   });
   surfacePlayer();   // the probe surface exists from boot (T3b: pickpocket gold reads)
   const _livePersons = [];

@@ -6844,6 +6844,7 @@ export async function bootWorld(canvas, renderer, params, status) {
     took: (moved, who) => showPickups(moved, who),
     say: (l) => townTalk.say(l),
     revealMap() { return revealLocation('readMap'); },   // useHooks' own reveal (U44), named as a method: that bag's line is a cite's anchor
+    paused: () => !!gamePaused(),   // AUDIT PI1 L10: the flights hold while the game does (this host's one pause answer)
   });
   // T3d: the Where-is directory follows the player's LOCATION PIXEL
   // (DFU's TalkManager builds its list for PlayerGPS.CurrentLocation).
@@ -8057,7 +8058,8 @@ export async function bootWorld(canvas, renderer, params, status) {
     // choice is never silent): said
     const choose = model.choose;
     model.choose = (id) => { if (!model.live() || !choose(id)) townTalk.say(`${model.given ?? 'It'} is gone.`); };
-    const w = makeInventoryWindow({ fate: model, loot: { items: () => [], playerOwned: false } });   // a body's door: the loot window, its fate side alone
+    // AUDIT PI1 H4: no shift-drop from a fate's pack - it opens indoors and underground too, where the street's pool is not the floor
+    const w = makeInventoryWindow({ fate: model, loot: { items: () => [], playerOwned: false }, physicalDropOn: () => false });   // a body's door: the loot window, its fate side alone
     if (!w) return false;
     const mounted = !!modes?.mountWindow?.(w);
     if (!mounted) (w.dispose?.bind(w) ?? w._closeSilently?.bind(w))?.();   // a slot already held: the window built for it put away again

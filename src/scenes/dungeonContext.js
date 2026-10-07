@@ -2053,13 +2053,21 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
   // item taken off one is published as the quick door's take is (WORLD4 / LOOT-REGEN). Read at the frame.
   droppedLoot.physical.attach({
     collider: () => collider,
-    corpses: () => foes.map((f, i) => (lootableBody(f) && f.corpsePos && !f.corpseDisabled ? { entity: f.entity, pos: f.corpsePos, key: `corpse:${i}` } : null)).filter(Boolean),
+    // AUDIT PI1 H7: a body whose room word this build cannot read stands no items (its window refuses it too); its
+    // silver is rolled by the room's own name for it (silverFindKey - SILVER-FINDS' door)
+    corpses: () => foes.map((f, i) => {
+      if (!lootableBody(f) || !f.corpsePos || f.corpseDisabled) return null;
+      const key = `corpse:${i}`, u = roomLootKey(key);
+      if (u && _lootUnreadable.has(lootKeyOf(u))) return null;
+      return { entity: f.entity, pos: f.corpsePos, key, silver: silverFindKey(key, 'corpse', i) };
+    }).filter(Boolean),
     identity: () => playerEntity,
     getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null,
     took: (moved, who) => showPickups(moved, who),
     say: (l) => hudText.add(l),
     revealMap: opts.revealMap ? () => opts.revealMap() : null,
     taken: (b) => { if (b?.kind === 'corpse' && b.key) { const q = roomLootKey(b.key); if (q) publishLoot(q); } },
+    paused: () => dungeonPaused(),   // AUDIT PI1 L10: the flights hold while a window does
   });
   preloadInventoryArt({ renderer, fetchBytes, palette });
   preloadSpellbookArt({ renderer, fetchBytes, palette })   // U42: SPBK00I0/01I0 + the ICON/MASK sheets warm at boot
@@ -5867,6 +5875,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
       camps: camps.snapshot(),   // SURV3: my fires, the same law
       droppedLoot: droppedLoot._piles.map((p) => ({
         pos: [...p.pos], archive: p.archive, record: p.record, items: p.items.map((it) => ({ ...it })),
+        ...(p.physical ? { physical: true } : {}),   // AUDIT PI1 H6: a shift-drop stays one - restorePiles lays it back lying
       })),
       actions: actions.collectSaveData(),
       // AUDIT 63 F30: PlayerEnterExit.PlayerTeleportedIntoDungeon.

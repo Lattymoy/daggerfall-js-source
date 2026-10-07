@@ -1279,8 +1279,8 @@ export const MOD_SETTINGS = Object.freeze({
     keys: Object.freeze({
       Enabled: Object.freeze({
         default: true,
-        description: 'A fallen foe\'s gear lands round its body and is picked up a piece at a time, and Shift-clicking an '
-          + 'item in your pack drops it in front of you. Each shows its own picture and its rarity\'s glow.',
+        description: 'A fallen foe\'s gear lands round its body and is picked up a piece at a time; Shift-clicking a pack '
+          + 'item with no wagon or chest open drops it before you. Each shows its own picture, Magic or better outlined.',
       }),
       'Enemy Loot.Physical Enemy Drops': Object.freeze({ default: true, description: 'Show enabled enemy categories in the world. Corpse contents remain unchanged.' }),
       'Enemy Loot.Impulse Strength': Object.freeze({ default: 200, min: 0, max: 400, description: 'Enemy launch strength in percent. 200 is the default and slider midpoint (the previous maximum); 400 doubles that launch velocity. 0 adds no launch velocity (items still fall). Does not affect player throws.' }),

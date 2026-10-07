@@ -10,7 +10,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import {
   PHYSICAL_ITEMS_VENDOR, PI_CATEGORIES, itemCategory, defaultWorldHeight, readPhysicalItemsSettings, worldHeight, showsOnCorpse,
   visibleBox, cropTo, artworkSize, colliderDepth, scatterOffset, proxyLaunch, spiralPoint, spiralDrop, PI_SPIRAL, makeBody,
-  stepBody, flyBody, shoulder, PI_BODY, rarityRim, PI_RIM, isPresented, markDeath, diedRecently, shiftDrop, shiftDropRefusal,
+  stepBody, flyBody, shoulder, settleBody, PI_BODY, rarityRim, PI_RIM, isPresented, markDeath, diedRecently, shiftDrop, shiftDropRefusal,
 } from '../src/systems/physicalItems.js';
 import { createPhysicalItems, PI_KEY_PREFIX, PI_ICON_ARCHIVE } from '../src/scenes/physicalItemsLayer.js';
 import { createDroppedLoot } from '../src/scenes/droppedLoot.js';
@@ -130,6 +130,9 @@ test('PI1 the spiral: GetBatchDropPosition [IL_4028] - 0.78 * sqrt(i) at the gol
   const at = spiralDrop([0, 0, -1.1], [0, 0, 0], 0.2, next, placed, () => 0);
   assert.ok(Math.hypot(at[0], at[2]) >= 0.5, 'clear of the drop lying at the centre (0.2 + 0.2 + 0.1)');
   assert.equal(next.i, 2, 'the centre was tried and refused, ring 1 taken - the index past both');
+  const tight = { i: 0 };
+  spiralDrop([0, 0, -1.1], [0, 0, 0], 0.35, tight, [{ pos: [0, 0, 0], r: 0.35 }], () => 0);
+  assert.equal(tight.i, 3, 'ring 1 (0.78 out) is inside 0.35 + 0.35 + the 0.1 margin: ring 2 taken');
   const none = spiralDrop([9, 1, 9], [0, 0, 0], 0.2, { i: 0 }, [], () => null);
   assert.deepEqual(none, [9, 1, 9], 'no floor anywhere: the anchor');
   assert.equal(PI_SPIRAL.tries, 256);
@@ -168,15 +171,27 @@ test('PI1 the body: a drop falls, a hard landing bounces at 0.35 and a soft one 
   assert.ok(method('PhysicalItemInstance::BuildVisual').includes('0.8999999761581421'), 'the drag');
 });
 
-test('PI1 the shoulder: FixedUpdate [IL_1e94] - two slow bodies on one spot ease apart at 0.45 m/s; a fast or settled one is left alone', () => {
-  const a = makeBody([0, 0, 0], [0, 0, 0], [0.2, 0.2]), c = makeBody([0.1, 0, 0], [0, 0, 0], [0.2, 0.2]);
+test('PI1 the shoulder: FixedUpdate [IL_1e94] - two slow bodies on one spot by the ground ease apart at 0.45 m/s; a fast, a settled or a flying one is left alone', () => {
+  const grounded = (...a) => Object.assign(makeBody(...a), { nearGround: true });   // stepBody's own word: within 0.15 m of the floor
+  const a = grounded([0, 0, 0], [0, 0, 0], [0.2, 0.2]), c = grounded([0.1, 0, 0], [0, 0, 0], [0.2, 0.2]);
   for (let i = 0; i < 30; i++) shoulder([a, c], 0.02);
   assert.ok(a.vel[0] < 0 && c.vel[0] > 0, 'apart');
   assert.ok(Math.abs(c.vel[0] - 0.45) < 1e-9, 'at the shoulder\'s speed once eased');
-  const fast = makeBody([0, 0, 0], [1, 0, 0], [0.2, 0.2]), d = makeBody([0, 0, 0], [0, 0, 0], [0.2, 0.2]);
+  const fast = grounded([0, 0, 0], [1, 0, 0], [0.2, 0.2]), d = grounded([0, 0, 0], [0, 0, 0], [0.2, 0.2]);
   shoulder([fast, d], 0.02);
   assert.equal(fast.vel[0], 1, 'over 0.65 m/s across it is not slowed');
-  assert.ok(d.vel[0] < 0 && d.vel[0] > -0.031, 'the slow one is eased, by 1.5 m/s a second (left, by order)');
+  assert.ok(Math.abs(d.vel[0] - 0.03) < 1e-12 && d.vel[2] === 0, 'the slow one is eased by exactly 1.5 m/s a second x 0.02 s - right, the higher index of a tie');
+  const high = makeBody([0, 0, 0]), low = grounded([0, 0, 0]);
+  shoulder([high, low], 0.02);
+  assert.deepEqual([high.vel, low.vel], [[0, 0, 0], [0.03, 0, 0]], 'a body in the air is not shouldered - the one by the ground is, off it');
+  const stood = grounded([0, 0, 0]), by = grounded([0.05, 0, 0]);
+  settleBody(stood);
+  shoulder([stood, by], 0.02);
+  assert.deepEqual(stood.vel, [0, 0, 0], 'a settled body is not moved');
+  assert.ok(by.vel[0] > 0, 'but it still shoulders the one beside it');
+  const over = grounded([0, 0, 0]), under = grounded([0, 0.6, 0]);
+  shoulder([over, under], 0.02);
+  assert.deepEqual([over.vel, under.vel], [[0, 0, 0], [0, 0, 0]], 'one over the other (0.4 + 0.08 apart in height) is not a neighbour');
 });
 
 test('PI1 the rarity dress: a Magic-or-better item wears its tier\'s rim, stronger up the ladder; a Common one and the rarity row off wear none', () => {
@@ -211,8 +226,9 @@ test('PI1 the bodies: a fresh death throws each shown item out of the body (OnEn
   const v = (it) => first.find((p) => p.item === it).vel;
   assert.ok(Math.hypot(v(fresh.items[0])[0], v(fresh.items[0])[2]) > 1, 'thrown out at the fall');
   assert.ok(Math.abs(v(old.items[0])[1] - 0.08) < 1e-9, 'laid by a body met later - the nudge');
-  assert.ok(isPresented(fresh.items[0]) && !isPresented(fresh.items[1]));
+  assert.equal(isPresented(fresh.items[0]), false, 'not presented while its picture is on its way - the body\'s line still counts it');
   await settle((dt) => layer.frame(dt));
+  assert.ok(isPresented(fresh.items[0]) && !isPresented(fresh.items[1]), 'presented once it stands in its picture; the gold left in the body never');
   for (const p of layer.state()) assert.ok(p.settled && Math.abs(p.pos[1]) < 1e-9, 'on the floor');
   assert.equal(layer.targets().length, 2);
   assert.ok(layer.targets().every((t) => t.key.startsWith(PI_KEY_PREFIX)));
@@ -273,13 +289,15 @@ test('PI1 the pool: a shift-drop is one pile an item laid on the spiral, present
   assert.ok(sceneSnap.every((s) => s.physical === true), 'the scene cache keeps them one too');
 });
 
-test('PI1 the lines: a presented item leaves its body\'s line and stands its own (LOOT11\'s pick)', () => {
+test('PI1 the lines: a presented item leaves its body\'s line and stands its own (LOOT11\'s pick)', async () => {
   const rare = { ...sword(), rarity: 'rare' };
   const body = { root: [0, 1, 0], items: [rare] };
   assert.equal(pickLootLines([body], [0, 1, 5]).length, 1, 'the body\'s line while the item is in it');
-  const layer = createPhysicalItems({ renderer: fakeRenderer(), enabled: () => true, settings: () => readPhysicalItemsSettings(shippedRead()), iconOf: async () => null, mw: { stamp: () => null, picture: async () => null } });
+  const layer = createPhysicalItems({ renderer: fakeRenderer(), enabled: () => true, settings: () => readPhysicalItemsSettings(shippedRead()), iconOf: async () => picture, mw: { stamp: () => null, picture: async () => null } });
   layer.attach({ corpses: () => [{ entity: { items: body.items }, pos: [0, 0, 0] }] });
   layer.frame(0.016);
+  assert.equal(pickLootLines([body], [0, 1, 5]).length, 1, 'the picture still on its way: the body\'s line stands for it');
+  await new Promise((r) => setTimeout(r, 5));
   assert.equal(isPresented(rare), true);
   assert.equal(pickLootLines([body], [0, 1, 5]).length, 0, 'the body no longer counts it');
   assert.equal(pickLootLines([{ root: [1, 1, 0], items: [rare], own: true }], [0, 1, 5]).length, 1, 'its own line');

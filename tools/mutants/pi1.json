@@ -236,8 +236,8 @@
   {
     "name": "PI1-shoulder-speed",
     "file": "src/systems/physicalItems.js",
-    "old": "pad: 0.04, speed: 0.45,",
-    "new": "pad: 0.04, speed: 0.5,",
+    "old": "ground: 0.15, speed: 0.45,",
+    "new": "ground: 0.15, speed: 0.5,",
     "tests": [
       "test/pi1_physicalitems.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "PI1-layer-unpresented",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "    presentItem(item, true);\n",
-    "new": "",
+    "old": "    setBatchGlint(p.batch, rarityRim(p.item));\n    presentItem(p.item, true);\n",
+    "new": "    setBatchGlint(p.batch, rarityRim(p.item));\n",
     "tests": [
       "test/pi1_physicalitems.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "PI1-room-untold",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "        try { host.taken?.(b); }",
-    "new": "        try { void b; }",
+    "old": "try { host.taken?.(backingOf(p)); }",
+    "new": "try { void backingOf(p); }",
     "tests": [
       "test/pi1_physicalitems.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "PI1-window-take-unseen",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "if (!want.has(it) || p.dead) { retire(p); g.proxies.delete(it); }",
-    "new": "if (p.dead) { retire(p); g.proxies.delete(it); }",
+    "old": "if (!wanted.has(it)) orphans.push(it);",
+    "new": "if (false) orphans.push(it);",
     "tests": [
       "test/pi1_physicalitems.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "PI1-piles-never-presented",
     "file": "src/scenes/physicalItemsLayer.js",
-    "old": "presents: (pile) => { const p = on() ? pileProxies.get(pile) : null; return !!p && p.pic !== 'none'; },",
-    "new": "presents: () => false,",
+    "old": "return !!p && p.batch != null; },",
+    "new": "return false && !!p; },",
     "tests": [
       "test/pi1_physicalitems.test.js"
     ]

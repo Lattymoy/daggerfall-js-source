@@ -80,7 +80,9 @@ export function createDroppedLoot({ renderer, getTexture, uploadRecordFrame, pic
   // host attaches its half (`physical.attach` - its collider, its bodies, the take's hooks); a shift-dropped item is a
   // pile of its own (`dropPhysical`) the layer presents as itself, its bag drawn only when the mod is off.
   const physical = createPhysicalItems({ renderer, ...physicalDeps });
-  physical.attach({ emptied: (backing) => { if (backing?.kind === 'pile') releaseEmptied(); } });
+  // AUDIT PI1 H8: a shift-drop pressed empty is that pile freed - not every emptied container of the pool (releaseEmptied
+  // would deactivate a scene's unopened, empty treasure too)
+  physical.attach({ emptied: (backing) => { if (backing?.kind === 'pile' && backing.pile && !backing.pile.items.length) removePile(backing.pile); } });
   const presented = (p) => p.physical === true && physical.presents(p);
   const flatAnims = new FlatAnimator();   // FA1 slice 3: the rule lives in ONE place
   let _nextId = 0;   // AUDIT 17e F28: stable ids - keys must survive releaseEmptied's splice

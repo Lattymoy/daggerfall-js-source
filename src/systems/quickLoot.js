@@ -46,7 +46,7 @@ import { setClassicLootFrame } from './classicLootFrame.js';   // DISC22-C: a le
 import { getPref } from './uiPrefs.js';
 import { itemNameParts, itemStatRows } from './itemInfo.js';   // RF6: the long name's name part, the same one the plaque's rows wear; QUICK-LOOT-STATS: and the rows the lit one says about itself
 import { nextSelection, selectedRow, hoverItemAt } from './worldHover.js';   // the fold's LAW and the row -> item walk, both driven there
-import { planTake, applyTransfer, sendQuestItemClick } from './itemTransfer.js';   // QL-WEIGHT1: the window's own plan and move - the carry gate, the summoned and quest guards, the split, the gold door
+import { planTake, applyTransfer, sendQuestItemClick, REFUSAL } from './itemTransfer.js';   // QL-WEIGHT1: the window's own plan and move - the carry gate, the summoned and quest guards, the split, the gold door
 import { isMap } from './useItem.js';   // the map the window USES rather than takes (F156) - left for the window here
 import { racialSuppressInventory } from './lycanthropy.js';   // DISC10-E L3: the beast takes nothing into a pack it cannot open
 import { audio } from './audio.js';   // SND1: the take's own sound
@@ -127,7 +127,7 @@ function takeSound() {
   if (_tookSound) audio.playOneShot(_tookSound === 'gold' ? SOUND.GoldPieces : SOUND.ButtonClick, 1);
   _tookSound = null;
 }
-function takeThrough(playerEntity, items, item, getQuest, moved = null) {
+function takeThrough(playerEntity, items, item, getQuest, moved = null, wholeStack = false) {
   if (isMap(item)) return null;
   // WHERE-ROBES (FIELD BUGS 2026-10-04c): a row taken here IS the remote list's click with no window around it, and that
   // click's first act is the quest's (DaggerfallInventoryWindow.cs:2027-2037) - before the plan, as DFU sends it before
@@ -135,6 +135,9 @@ function takeThrough(playerEntity, items, item, getQuest, moved = null) {
   sendQuestItemClick(item, getQuest);
   const plan = planTake(item, { bag: playerEntity.items ?? [], entity: playerEntity, getQuest });
   if (!plan.ok) return { refusal: plan.refusal };
+  // PI1 (AUDIT PI1 I2): Physical Items' press takes the whole stack or nothing (CanCarryWholeStack [IL_858c] ->
+  // "cannotCarryAnymore") - quick loot's own take keeps CanCarryAmount's part
+  if (wholeStack && plan.amount < (item.stackCount ?? 1)) return { refusal: REFUSAL.cannotCarry };
   if (plan.sound === 'gold' || !_tookSound) _tookSound = plan.sound === 'gold' ? 'gold' : 'click';
   const got = applyTransfer(item, plan, items, (playerEntity.items ??= []), { entity: playerEntity, toPlayer: true }) ?? item;
   moved?.push({ item: got, count: plan.amount });   // PICKUP-FEED: the plan's amount, not the record's - gold answers the pile's own row, whose stack is what STAYED
@@ -398,16 +401,18 @@ export function quickLootTake(key, hooks, playerEntity, say = () => {}, { getQue
 /**
  * PI1 (Physical Items - scenes/physicalItemsLayer.js): ONE ITEM, NO WINDOW. The press on an item lying in the world as
  * itself takes it through this file's one-item door (`takeThrough`: the quest click, planTake's summoned refusal and
- * carry check, gold into the purse) - the mod's TryPickup (vendor/physical-items, [IL_847c]) is DFU's own transfer
- * rules, and these are the port's reading of them. No switch and no armed key: the item is the press's target.
+ * carry check, gold into the purse) - the mod's own TryPickup (vendor/physical-items, [IL_847c]) asks the same
+ * questions, and these are the port's answers to them. No switch and no armed key: the item is the press's target.
  * Answers the item moved, QUICK_LOOT_REFUSED (the refusal said), or null for a map - the caller's (planTake's map arm
  * reads it, never moves it). Quick loot's own one-row take is this (quickLootTake above): one law for one item.
+ * `wholeStack` (the press's): the whole stack or nothing - the mod's CanCarryWholeStack, where quick loot takes the part
+ * that fits.
  */
-export function takeOneItem(playerEntity, items, item, say = () => {}, { getQuest = null, took = null } = {}) {
+export function takeOneItem(playerEntity, items, item, say = () => {}, { getQuest = null, took = null, wholeStack = false } = {}) {
   if (!playerEntity || !Array.isArray(items) || !items.includes(item)) return null;
   _tookSound = null;
   const moved = [];
-  const got = takeThrough(playerEntity, items, item, getQuest, moved);
+  const got = takeThrough(playerEntity, items, item, getQuest, moved, wholeStack);
   if (got?.refusal) { say(got.refusal.text); return QUICK_LOOT_REFUSED; }
   if (got) { takeSound(); if (!shownBy(took, moved, playerEntity)) say(tookItemText(got)); }   // SND1; PICKUP-FEED: the card, or the line
   return got;

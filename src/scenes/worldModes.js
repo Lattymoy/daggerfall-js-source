@@ -719,12 +719,13 @@ export function createWorldModes(host) {
   // reveal for a map. Read at the frame.
   interiorDropped.physical.attach({
     collider: () => player.collider ?? null,
-    corpses: () => interiorFoes?.physicalCorpses?.() ?? [],
+    corpses: () => [...(interiorFoes?.physicalCorpses?.() ?? []), ...(interiorGuards?.physicalCorpses?.() ?? [])],   // AUDIT PI1 D1f: and the watch called in, as on the street
     identity: () => playerEntity,
     getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null,
     took: (moved, who) => showPickups(moved, who),
     say: (l) => say(l),
     revealMap: host.revealLocation ? () => host.revealLocation('readMap') : null,
+    paused: () => !!townTalk?.overlayActive || interiorPaused(),   // AUDIT PI1 L10: the flights hold while a window does
   });
   // HT1: the interior's dropped-torch pool - the room's, destroyed on the way in and the way out, cached with the scene
   const interiorTorches = createDroppedTorches({

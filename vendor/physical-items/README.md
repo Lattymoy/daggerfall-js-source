@@ -41,9 +41,11 @@ and over), on a DFU billboard, at a world size its category sets.
   reward tray) drops it as its own loot container, presented as itself and
   laid out round the spot 1.1 m ahead of the player on a golden-angle
   spiral. A Transportation item is refused ("cannotRemoveItem").
-- **Pickup.** Activate on an item takes it into the pack through DFU's own
-  rules (a summoned item refused, a map read and spent, a quest item's
-  click, the carry check, gold into the purse).
+- **Pickup.** Activate on an item, from 3 m, takes it into the pack by the
+  mod's own TryPickup: a summoned item refused, a map read and spent, a
+  quest item's click, the whole stack or nothing ("cannotCarryAnymore"),
+  gold into the purse. Activate on a body takes the item standing nearest
+  it.
 - **Physics.** A Unity Rigidbody under gravity, drag 0.9, rotation frozen,
   a box collider; the material bounces 0.35 (Maximum) and grips 0.45 /
   0.55 (Average). At rest - the ground within reach, the speed under 0.05
@@ -51,7 +53,8 @@ and over), on a DFU billboard, at a world size its category sets.
   apart.
 - **Placement** (hold Activate 0.25 s): carry, throw, billboard or flat,
   freeze, scale and rotate by the wheel; a contact shadow; nearby labels.
-- **Persistence.** Its own save data: each item's placement, keyed by its
+- **Persistence.** Its own save data: each item's placement (a body's
+  items beside it, a dropped container's where it lies), keyed by its
   container's LoadID and the scene.
 
 ## What is here
@@ -73,5 +76,9 @@ and over), on a DFU billboard, at a world size its category sets.
 `bible/06-Systems/Physical-Items.md` is the record: what is ported, the
 two pictures (the pack's classic picture, or the item's Morrowind one
 while a Morrowind build stands), the rarity dress (the world boss's loot
-line and the tier's rim), and what is not yet ported (placement - the
-hold, the throw, the freeze, the wheel - and the contact shadow).
+line and the port's own tier rim), and what is not yet ported (placement -
+the hold, the throw, the freeze, the wheel - the contact shadow, and a
+body's items' saved places: they are laid round it again after a load,
+while a shift-drop is saved where it lies, as any pile is). Its fifteen
+departures are listed there; `bible/01-Overview/Audit-PI1.md` is the
+audit.
