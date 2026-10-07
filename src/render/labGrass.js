@@ -1667,6 +1667,15 @@ export function labBladeCorners(segments = 5) {
   return new Float32Array(corners);
 }
 
+/** GRASS-ON: a triangle list with each triangle turned to BEGIN on the corner it ended on - (a, b, c) to (c, a, b), the
+ *  same winding - so the corner that provokes under GL's last-vertex convention provokes under the first-vertex one
+ *  (WEBGL_provoking_vertex; LabGrassRenderer's constructor says why the field asks for it). */
+export function provokeFirst(indices) {
+  const out = new Uint16Array(indices.length);
+  for (let t = 0; t + 2 < indices.length; t += 3) { out[t] = indices[t + 2]; out[t + 1] = indices[t]; out[t + 2] = indices[t + 1]; }
+  return out;
+}
+
 /** GRASS2: THE FAR BLADE IS ONE QUAD. The lab's blade is five stacked
  *  quads so that it can CURVE - the sway is weighted by height squared
  *  along the stalk, and a straight blade cannot bend. Past a certain
@@ -1768,7 +1777,7 @@ export class LabGrassRenderer {
    *  and the lab's text reads the height lane as GRASS5 packed it (a
    *  u16 height), so since GRASS-LIT2 its blades stand up to 7 mm off
    *  the game's - the lab's pair draws the lab's look, not the game's. */
-  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }, tuft = null } = {}) {   // GRASS-PX4: `tuft` ({ w, h }) lays the sheet at another size - the probe photographs the old 16x32 beside the shipped 8x16 through it
+  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }, tuft = null, provoke = true } = {}) {   // GRASS-PX4: `tuft` ({ w, h }) lays the sheet at another size - the probe photographs the old 16x32 beside the shipped 8x16 through it; GRASS-ON: `provoke` false keeps GL's convention (below)
     this.gl = gl;
     const prog = buildProgram(gl, LAB_GRASS_HEAD + GAME_GRASS_FIELD + stages.vs, LAB_GRASS_HEAD + stages.fs);   // GRASS-PX: the lab's text under the declared edits
     this.program = prog;
@@ -1813,11 +1822,28 @@ export class LabGrassRenderer {
       Object.freeze({ loc: 2, type: gl.UNSIGNED_BYTE, bytes: 4 }),
       Object.freeze({ loc: 4, type: gl.UNSIGNED_BYTE, bytes: 4 }),
     ]);
+    // GRASS-ON (2026-10-07, Mac: "Can you please turn grass on by default", then "People are also saying it really has
+    // bad performance"): THE FIELD DRAWS UNDER THE FIRST-VERTEX CONVENTION WHERE THE BROWSER OFFERS IT. vVar, vSun and
+    // vPoint go down `flat`, read in each triangle's provoking vertex alone (GRASS-LIT's law) - GL's LAST, WebGL's
+    // default. Direct3D provokes from the FIRST, so ANGLE on Windows (every browser there, and the desktop app) keeps
+    // GL's convention for a program with a flat varying by drawing it through a geometry shader that copies the last
+    // vertex's flats onto the other two, every triangle of every draw - and the field is the heaviest geometry outdoors
+    // (Metal's backend rewrites the indices instead). WEBGL_provoking_vertex is how a page takes the native one. Under
+    // it each triangle is listed provoking corner first (provokeFirst: the cards' own indices turned, a blade's corners
+    // through a turned list of them in order), so the corner the stage reads (`gl_VertexID % 3 == 2`) is the one that
+    // provokes under either convention and the stage's text is unchanged. A browser without it draws as it always did,
+    // and so does `provoke` false - the world host's `?provoke=last`, so a machine can time the field both ways on its
+    // own GPU (`?perf=zones`, its `grass` span).
+    this._pv = provoke ? (gl.getExtension('WEBGL_provoking_vertex') ?? null) : null;
+    const first = !!this._pv;
     /** one vertex array over a corner buffer - labBladeCorners' quads, two floats a vertex; MEADOW1: or the meadow's
      *  cards, three floats a vertex, the third the card's turn on attribute 3 - AUDIT MEADOW1: drawn through their
-     *  `indices` (meadowCardIndices), so `verts` is what a tuft SHADES (each corner once) and `count` what it submits */
-    const buildVao = (corners, indices = null) => {
-      const cards = !!indices;
+     *  `indices` (meadowCardIndices), so `verts` is what a tuft SHADES (each corner once) and `count` what it submits;
+     *  GRASS-ON: under the first-vertex convention every array is drawn through indices, each triangle turned */
+    const buildVao = (corners, cardIndices = null) => {
+      const cards = !!cardIndices;
+      const n = cards ? 0 : corners.length / 2;   // a blade's corners (a card's count is its indices')
+      const indices = cards ? (first ? provokeFirst(cardIndices) : cardIndices) : (first ? provokeFirst(Uint16Array.from({ length: n }, (_, i) => i)) : null);
       const vao = gl.createVertexArray();
       gl.bindVertexArray(vao);
       const cb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, cb);
@@ -1825,7 +1851,7 @@ export class LabGrassRenderer {
       const stride = cards ? 12 : 0;
       gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, stride, 0);
       if (cards) { gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 1, gl.FLOAT, false, stride, 8); }
-      const ib = cards ? gl.createBuffer() : null;   // AUDIT MEADOW1: the index buffer is the array's own state
+      const ib = indices ? gl.createBuffer() : null;   // AUDIT MEADOW1: the index buffer is the array's own state
       if (ib) { gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW); }
       // GRASS5: NORMALIZED integer attributes - the GPU does the unpack,
       // so the shader reads floats in 0..1 and the decode is two
@@ -1837,7 +1863,7 @@ export class LabGrassRenderer {
         gl.vertexAttribDivisor(L.loc, 1);
       }
       gl.bindVertexArray(null);
-      return { vao, verts: cards ? new Set(indices).size : corners.length / 2, count: cards ? indices.length : corners.length / 2, cb, ib };
+      return { vao, verts: cards ? new Set(cardIndices).size : n, count: cards ? cardIndices.length : n, cb, ib };
     };
     const near = buildVao(labBladeCorners(5)), far = buildVao(labBladeCorners(GRASS_FAR_SEGMENTS));
     const cards = buildVao(meadowCardCorners(MEADOW_CARDS), meadowCardIndices(MEADOW_CARDS));   // MEADOW1: the tuft's cards, near and far
@@ -1846,7 +1872,7 @@ export class LabGrassRenderer {
     this.vaoFar = far.vao; this.vertsFar = far.verts;
     this.vaoCards = cards.vao; this.vertsCards = cards.verts; this.countCards = cards.count;   // MEADOW1; AUDIT MEADOW1: shaded, and submitted
     this.vaoCardsFar = cardsFar.vao; this.vertsCardsFar = cardsFar.verts; this.countCardsFar = cardsFar.count;
-    this._cornerBufs = [near.cb, far.cb, cards.cb, cardsFar.cb, cards.ib, cardsFar.ib];
+    this._cornerBufs = [near.cb, far.cb, cards.cb, cardsFar.cb, cards.ib, cardsFar.ib, near.ib, far.ib].filter((b) => b !== null);   // GRASS-ON: the blades' two lists only under the first-vertex convention
     gl.bindVertexArray(null);
     // the field the lab's grass reads: nothing, so the snow and wet terms are zero
     this.zeroField = gl.createTexture();
@@ -2190,7 +2216,10 @@ export class LabGrassRenderer {
     gl.uniform3fv(u.uCamPos, fog?.camPos ?? eye);
     if (u.uDwFog) gl.uniform4fv(u.uDwFog, fog?.dw ?? NO_WATER_FOG);   // DW-C: the frame's (renderer.setWaterFog); none handed, off
     gl.bindVertexArray(this.vao);
+    const pv = this._pv;
+    if (pv) pv.provokingVertexWEBGL(pv.FIRST_VERTEX_CONVENTION_WEBGL);   // GRASS-ON: the native convention for the field's draws (the constructor says why)
     this._drawVisibleSlots(o, eye, range);   // PERF2: the field, culled by cell
+    if (pv) pv.provokingVertexWEBGL(pv.LAST_VERTEX_CONVENTION_WEBGL);   // GRASS-ON: and WebGL's own back, for every pass after the field
     gl.bindVertexArray(null);
     gl.disable(gl.BLEND);
     if (culled) gl.enable(gl.CULL_FACE);
@@ -2228,7 +2257,18 @@ export class LabGrassRenderer {
     let slots = 0, blades = 0, kept = 0, verts_ = 0, farSlots = 0, cardSlots = 0, cardsFarSlots = 0;
     gl.bindVertexArray(this.vao);   // GRASS2: the near array is the one the caller bound; the loop tracks it from here
     let wasVao = this.vao;   // MEADOW1: which array is bound - the blade's, the far blade's, or the meadow's near or far cards
-    for (let slot = 0; slot < this.slotBox.length; slot++) {
+    // GRASS-ON: THE CELLS IN VIEW ARE FOUND FIRST AND DRAWN AFTER - in a sprite style NEAREST FIRST. A sprite style is
+    // opaque (every fragment it keeps has an alpha of exactly 1, drawn unblended - AUDIT MEADOW1), so its picture is the
+    // nearest fragment whatever the order; in the slots' order a far cell's tufts were shaded behind near ones the
+    // depth test could only have thrown away had those been drawn first. The smooth style blends, so its order is its
+    // picture: it keeps the slots'. An insertion over the cells in view - a hundred or so - is stable, so cells at one
+    // distance keep the slots' order, and allocates nothing a frame. Nearest first also draws a level of detail's
+    // cells together (it is a cell's by its distance), so the arrays are bound once each.
+    const S = this.slotBox.length;
+    if (!this._order || this._order.length < S) { this._order = new Int32Array(S); this._near = new Float64Array(S); }
+    const order = this._order, near = this._near;
+    let shown = 0;
+    for (let slot = 0; slot < S; slot++) {
       const box = this.slotBox[slot];
       if (!box) continue;
       const dx = Math.max(box[0] - eye[0], 0, eye[0] - box[3]);
@@ -2245,6 +2285,20 @@ export class LabGrassRenderer {
         seen = cb;
       }
       if (aabbOutside(planes, seen)) continue;
+      if ((this.slotCount ? this.slotCount[slot] : p) <= 0) continue;   // GRASS2: a slot no blade stood in (below)
+      near[slot] = Math.sqrt(dx * dx + dz * dz);
+      order[shown++] = slot;
+    }
+    if (this._oneQuad) {
+      for (let i = 1; i < shown; i++) {
+        const s = order[i], d = near[s];
+        let j = i - 1;
+        for (; j >= 0 && near[order[j]] > d; j--) order[j + 1] = order[j];
+        order[j + 1] = s;
+      }
+    }
+    for (let i = 0; i < shown; i++) {
+      const slot = order[i], box = this.slotBox[slot], dn = near[slot];
       // GRASS2: A SLOT IS NOT A CELL. `perCell` is the slot's SIZE; the
       // blades that actually stood in it is `slotCount` - every candidate
       // the placer dropped for standing on a road, in water, off grass or
@@ -2255,7 +2309,6 @@ export class LabGrassRenderer {
       // picture for less work - the kept blades are the run's FRONT,
       // because the placer appends and the pad is what is left over.
       const n = this.slotCount ? this.slotCount[slot] : p;
-      if (n <= 0) continue;
       // GRASS2: THE PREFIX THAT CAN SURVIVE. The shader keeps a blade
       // when its index fraction is under `vFade * 1.15`, and vFade only
       // ever FALLS with distance - so no blade in this cell can beat the
@@ -2274,7 +2327,6 @@ export class LabGrassRenderer {
       // density, the same look and the same statistics, but a different
       // individual blade here and there. The probe measures that: the
       // lit pixel count moved by 8 in 67,800.
-      const dn = Math.sqrt(dx * dx + dz * dz);
       const fade = 1 - smoothstep(range * 0.55, range, dn);
       // GRASS AUDIT 1: a tuft stands in for two of the lab's blades, so
       // the pixel style submits HALF the cell - the placer's order is
@@ -2304,6 +2356,7 @@ export class LabGrassRenderer {
       if (this._pn > 0) this._cellLights(box);   // AUDIT GRASS-LIT2 A1
       this._point(slot);
       if (this._meadow) gl.drawElementsInstanced(gl.TRIANGLES, cardsFar ? this.countCardsFar : this.countCards, gl.UNSIGNED_SHORT, 0, budget);   // AUDIT MEADOW1: indexed - each corner shaded once
+      else if (this._pv) gl.drawElementsInstanced(gl.TRIANGLES, verts, gl.UNSIGNED_SHORT, 0, budget);   // GRASS-ON: a blade's corners in order, through its turned list
       else gl.drawArraysInstanced(gl.TRIANGLES, 0, verts, budget);
       slots++; blades += budget; kept += n; verts_ += verts * budget;
       if (this._meadow) { cardSlots++; if (cardsFar) cardsFarSlots++; } else if (far) farSlots++;
